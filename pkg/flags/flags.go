@@ -24,25 +24,38 @@ const (
 	namespace  = "namespace"
 )
 
-// AddTektonOptions amends command to add flags required to initialise a cli.Param
-func AddTektonOptions(cmd *cobra.Command) {
+// Options is a set of configurations used to configure cobra.Command
+type Options struct {
+	Required bool // Required when set marks the flag as mandatory
+}
+
+// Initializer accepts a cli.Param and sets/initializes it based on flags in cobra.Command
+type Initializer func(p cli.Params, cmd *cobra.Command) error
+
+// RunE is the type for cobra.RunE
+type RunE func(cmd *cobra.Command, args []string) error
+
+// InitParams initialises cli.Params
+func InitParams(p cli.Params, ilist ...Initializer) RunE {
+	return func(cmd *cobra.Command, args []string) error {
+		for _, fn := range ilist {
+			if err := fn(p, cmd); err != nil {
+				return err
+			}
+		}
+		return nil
+	}
+}
+
+// FromKubeConfig adds an optional --kubeconfig to cmd
+func FromKubeConfig(cmd *cobra.Command) Initializer {
 	cmd.PersistentFlags().StringP(
 		kubeConfig, "k", "",
 		"kubectl config file (default: $HOME/.kube/config)")
-
-	cmd.PersistentFlags().StringP(
-		namespace, "n", "",
-		"namespace to use (mandatory)")
-
-	cmd.MarkPersistentFlagRequired(namespace)
+	return kcInitializer
 }
 
-// InitParams initialises cli.Params based on flags defined in command
-func InitParams(p cli.Params, cmd *cobra.Command) error {
-	// NOTE: breaks symmetry with AddTektonOptions as this uses Flags instead of
-	// PersistentFlags as it could be the sub command that is trying to access
-	// the flags defined by the parent and hence need to use `Flag` instead
-	// e.g. `list` accessing kubeconfig defined by `pipeline`
+func kcInitializer(p cli.Params, cmd *cobra.Command) error {
 	kcPath, err := cmd.Flags().GetString(kubeConfig)
 	if err != nil {
 		return err
@@ -50,10 +63,23 @@ func InitParams(p cli.Params, cmd *cobra.Command) error {
 	p.SetKubeConfigPath(kcPath)
 
 	// ensure that the config is valid by creating a client
-	if _, err := p.Clientset(); err != nil {
-		return err
-	}
+	_, err = p.Clientset()
+	return err
+}
 
+// FromNamespace add a mandatory namespace flag to cmd
+func FromNamespace(cmd *cobra.Command, o Options) Initializer {
+	cmd.PersistentFlags().StringP(
+		namespace, "n", "",
+		"namespace to use (mandatory)")
+
+	if o.Required {
+		cmd.MarkPersistentFlagRequired(namespace)
+	}
+	return nsInitializer
+}
+
+func nsInitializer(p cli.Params, cmd *cobra.Command) error {
 	ns, err := cmd.Flags().GetString(namespace)
 	if err != nil {
 		return err

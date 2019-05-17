@@ -24,13 +24,10 @@ import (
 
 //Command instantiates the pipelinerun command
 func Command(p cli.Params) *cobra.Command {
-	c := &cobra.Command{
+	cmd := &cobra.Command{
 		Use:     "pipelineruns",
 		Aliases: []string{"pr", "pipelinerun"},
 		Short:   "Manage pipelineruns",
-		PersistentPreRunE: func(cmd *cobra.Command, args []string) error {
-			return flags.InitParams(p, cmd)
-		},
 		RunE: func(cmd *cobra.Command, args []string) error {
 			if len(args) == 0 {
 				return fmt.Errorf("pipelinerun requires a subcommand; see help and examples")
@@ -40,7 +37,12 @@ func Command(p cli.Params) *cobra.Command {
 		},
 	}
 
-	flags.AddTektonOptions(c)
-	c.AddCommand(listCommand(p))
-	return c
+	cmd.PersistentPreRunE = flags.InitParams(
+		p,
+		flags.FromKubeConfig(cmd),
+		flags.FromNamespace(cmd, flags.Options{Required: true}),
+	)
+
+	cmd.AddCommand(listCommand(p))
+	return cmd
 }

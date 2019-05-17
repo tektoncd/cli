@@ -28,10 +28,6 @@ func Command(p cli.Params) *cobra.Command {
 		Aliases: []string{"t", "tasks"},
 		Short:   "Manage tasks",
 
-		PersistentPreRunE: func(cmd *cobra.Command, args []string) error {
-			return flags.InitParams(p, cmd)
-		},
-
 		RunE: func(cmd *cobra.Command, args []string) error {
 			if len(args) == 0 {
 				return fmt.Errorf("task requires a subcommand; see help")
@@ -40,7 +36,12 @@ func Command(p cli.Params) *cobra.Command {
 		},
 	}
 
-	flags.AddTektonOptions(cmd)
+	cmd.PersistentPreRunE = flags.InitParams(
+		p,
+		flags.FromKubeConfig(cmd),
+		flags.FromNamespace(cmd, flags.Options{Required: true}),
+	)
+
 	cmd.AddCommand(listCommand(p))
 	return cmd
 }
