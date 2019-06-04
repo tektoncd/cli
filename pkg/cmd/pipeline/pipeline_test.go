@@ -1,4 +1,4 @@
-// Copyright © 2019 The Knative Authors.
+// Copyright © 2019 The Tekton Authors.
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -15,27 +15,18 @@
 package pipeline
 
 import (
-	"os"
+	"testing"
 
-	"github.com/spf13/cobra"
-	"github.com/tektoncd/cli/pkg/cli"
-	"github.com/tektoncd/cli/pkg/flags"
+	"github.com/tektoncd/cli/pkg/test"
 )
 
-func Command(p cli.Params) *cobra.Command {
-	cmd := &cobra.Command{
-		Use:     "pipeline",
-		Aliases: []string{"p", "pipelines"},
-		Short:   "Manage pipelines",
-		Args:    cobra.NoArgs,
-		PersistentPreRunE: func(cmd *cobra.Command, args []string) error {
-			return flags.InitParams(p, cmd)
-		},
-		RunE: cli.ShowHelp(os.Stderr),
-	}
+func TestPipelines_invalid(t *testing.T) {
 
-	flags.AddTektonOptions(cmd)
-	cmd.AddCommand(listCommand(p))
-	cmd.AddCommand(describeCommand(p))
-	return cmd
+	p := &test.Params{}
+
+	pipeline := Command(p)
+	out, err := test.ExecuteCommand(pipeline, "foobar")
+	if err == nil {
+		t.Errorf("No errors was defined. Output: %s", out)
+	}
 }
