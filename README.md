@@ -63,7 +63,6 @@ The following commands help you understand and effectively use Tekton CLI:
 For every tkn command you can use `-h` or `--help` flags to display specific help for that command.
 
 
-
 ## Want to contribute
 
 We are so excited to have you!
