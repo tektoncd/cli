@@ -45,14 +45,15 @@ type Log struct {
 }
 
 type LogReader struct {
-	Task     string
-	Run      string
-	Number   int
-	Ns       string
-	Clients  *cli.Clients
-	Streamer stream.NewStreamerFunc
-	Follow   bool
-	AllSteps bool
+	Task      string
+	Run       string
+	Number    int
+	Ns        string
+	Clients   *cli.Clients
+	Streamer  stream.NewStreamerFunc
+	Follow    bool
+	AllSteps  bool
+	TailLines int64
 }
 
 func (lr *LogReader) Read() (<-chan Log, <-chan error, error) {
@@ -105,7 +106,7 @@ func (lr *LogReader) readLiveLogs(tr *v1alpha1.TaskRun) (<-chan Log, <-chan erro
 	}
 
 	steps := filterSteps(pod, lr.AllSteps)
-	logC, errC := lr.readStepsLogs(steps, p, lr.Follow)
+	logC, errC := lr.readStepsLogs(steps, p, lr.Follow, lr.TailLines)
 	return logC, errC, err
 }
 
@@ -126,11 +127,11 @@ func (lr *LogReader) readAvailableLogs(tr *v1alpha1.TaskRun) (<-chan Log, <-chan
 	}
 
 	steps := filterSteps(pod, lr.AllSteps)
-	logC, errC := lr.readStepsLogs(steps, p, lr.Follow)
+	logC, errC := lr.readStepsLogs(steps, p, lr.Follow, lr.TailLines)
 	return logC, errC, nil
 }
 
-func (lr *LogReader) readStepsLogs(steps []*step, pod *pods.Pod, follow bool) (<-chan Log, <-chan error) {
+func (lr *LogReader) readStepsLogs(steps []*step, pod *pods.Pod, follow bool, taillines int64) (<-chan Log, <-chan error) {
 	logC := make(chan Log)
 	errC := make(chan error)
 
@@ -144,7 +145,7 @@ func (lr *LogReader) readStepsLogs(steps []*step, pod *pods.Pod, follow bool) (<
 			}
 
 			container := pod.Container(step.container)
-			podC, perrC, err := container.LogReader(follow).Read()
+			podC, perrC, err := container.LogReader(follow, taillines).Read()
 			if err != nil {
 				errC <- fmt.Errorf("error in getting logs for step %s : %s", step.name, err)
 				continue

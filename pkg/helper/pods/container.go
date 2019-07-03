@@ -17,8 +17,9 @@ package pods
 import (
 	"bufio"
 	"fmt"
-	"github.com/tektoncd/cli/pkg/helper/pods/stream"
 	"io"
+
+	"github.com/tektoncd/cli/pkg/helper/pods/stream"
 	corev1 "k8s.io/api/core/v1"
 )
 
@@ -78,10 +79,11 @@ type LogReader struct {
 	containerName string
 	pod           *Pod
 	follow        bool
+	taillines     int64
 }
 
-func (c *Container) LogReader(follow bool) *LogReader {
-	return &LogReader{c.name, c.pod, follow}
+func (c *Container) LogReader(follow bool, taillines int64) *LogReader {
+	return &LogReader{c.name, c.pod, follow, taillines}
 }
 
 func (lr *LogReader) Read() (<-chan Log, <-chan error, error) {
@@ -89,6 +91,10 @@ func (lr *LogReader) Read() (<-chan Log, <-chan error, error) {
 	opts := &corev1.PodLogOptions{
 		Follow:    lr.follow,
 		Container: lr.containerName,
+	}
+
+	if lr.taillines > 0 {
+		opts.TailLines = &lr.taillines
 	}
 
 	stream, err := pod.Stream(opts)
