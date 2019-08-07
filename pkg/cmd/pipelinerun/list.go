@@ -133,11 +133,12 @@ func printFormatted(s *cli.Stream, prs *v1alpha1.PipelineRunList, c clockwork.Cl
 	w := tabwriter.NewWriter(s.Out, 0, 5, 3, ' ', tabwriter.TabIndent)
 	fmt.Fprintln(w, "NAME\tSTARTED\tDURATION\tSTATUS\t")
 	for _, pr := range prs.Items {
+
 		fmt.Fprintf(w, "%s\t%s\t%s\t%s\t\n",
 			pr.Name,
-			formatted.Age(*pr.Status.StartTime, c),
+			formatted.Age(pr.Status.StartTime, c),
 			formatted.Duration(pr.Status.StartTime, pr.Status.CompletionTime),
-			formatted.Condition(pr.Status.Conditions[0]),
+			formatted.Condition(pr.Status.Conditions),
 		)
 	}
 
@@ -146,6 +147,14 @@ func printFormatted(s *cli.Stream, prs *v1alpha1.PipelineRunList, c clockwork.Cl
 
 type byStartTime []v1alpha1.PipelineRun
 
-func (s byStartTime) Len() int           { return len(s) }
-func (s byStartTime) Swap(i, j int)      { s[i], s[j] = s[j], s[i] }
-func (s byStartTime) Less(i, j int) bool { return s[j].Status.StartTime.Before(s[i].Status.StartTime) }
+func (s byStartTime) Len() int      { return len(s) }
+func (s byStartTime) Swap(i, j int) { s[i], s[j] = s[j], s[i] }
+func (s byStartTime) Less(i, j int) bool {
+	if s[j].Status.StartTime == nil {
+		return false
+	} else if s[i].Status.StartTime == nil {
+		return true
+	}
+
+	return s[j].Status.StartTime.Before(s[i].Status.StartTime)
+}
