@@ -139,7 +139,7 @@ func printFormatted(s *cli.Stream, trs *v1alpha1.TaskRunList, c clockwork.Clock)
 
 		fmt.Fprintf(w, "%s\t%s\t%s\t%s\t\n",
 			tr.Name,
-			formatted.Age(*tr.Status.StartTime, c),
+			formatted.Age(tr.Status.StartTime, c),
 			formatted.Duration(tr.Status.StartTime, tr.Status.CompletionTime),
 			formatted.Condition(tr.Status.Conditions[0]),
 		)

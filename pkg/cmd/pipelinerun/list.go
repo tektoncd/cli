@@ -164,7 +164,7 @@ func printFormatted(s *cli.Stream, prs *v1alpha1.PipelineRunList, c clockwork.Cl
 	for _, pr := range prs.Items {
 		fmt.Fprintf(w, "%s\t%s\t%s\t%s\t\n",
 			pr.Name,
-			formatted.Age(*pr.Status.StartTime, c),
+			formatted.Age(pr.Status.StartTime, c),
 			formatted.Duration(pr.Status.StartTime, pr.Status.CompletionTime),
 			formatted.Condition(pr.Status.Conditions[0]),
 		)

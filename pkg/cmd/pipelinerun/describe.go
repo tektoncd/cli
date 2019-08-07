@@ -39,6 +39,7 @@ Service Account:	{{ .PipelineRun.Spec.ServiceAccount }}
 Status
 STARTED	DURATION	STATUS
 {{ formatAge .PipelineRun.Status.StartTime  .Params.Time }}	{{ formatDuration .PipelineRun.Status.StartTime .PipelineRun.Status.CompletionTime }}	{{ index .PipelineRun.Status.Conditions 0 | formatCondition }}
+
 {{- $msg := hasFailed .PipelineRun -}}
 {{-  if ne $msg "" }}
 
