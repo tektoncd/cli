@@ -26,16 +26,17 @@ Show pipeline logs
 
   # show logs for given pipeline and pipelinerun
     tkn pipeline logs pipeline run -n namespace
-  
+
    
 
 ### Options
 
 ```
-  -a, --all      show all logs including init steps injected by tekton
-  -f, --follow   stream live logs
-  -h, --help     help for logs
-  -l, --last     show logs for last run
+  -a, --all         show all logs including init steps injected by tekton
+  -f, --follow      stream live logs
+  -h, --help        help for logs
+  -l, --last        show logs for last run
+  -L, --limit int   lists number of pipelineruns (default 5)
 ```
 
 ### Options inherited from parent commands
