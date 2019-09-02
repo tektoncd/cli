@@ -37,6 +37,7 @@ func Command(p cli.Params) *cobra.Command {
 	cmd.AddCommand(
 		listCommand(p),
 		deleteCommand(p),
+		createCommand(p),
 	)
 	return cmd
 }

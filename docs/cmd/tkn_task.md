@@ -20,6 +20,7 @@ Manage tasks
 ### SEE ALSO
 
 * [tkn](tkn.md)	 - CLI for tekton pipelines
+* [tkn task create](tkn_task_create.md)	 - Create a task resource in a namespace
 * [tkn task delete](tkn_task_delete.md)	 - Delete a task resource in a namespace
 * [tkn task list](tkn_task_list.md)	 - Lists tasks in a namespace
 
