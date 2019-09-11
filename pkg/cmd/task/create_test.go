@@ -44,7 +44,7 @@ func TestTaskCreate(t *testing.T) {
 	}{
 		{
 			name:        "Create successfully",
-			command:     []string{"create", "--from", "../../../test/resources/task.yaml", "-n", "ns"},
+			command:     []string{"create", "--from", "./testdata/task.yaml", "-n", "ns"},
 			input:       seeds[0],
 			inputStream: nil,
 			wantError:   false,
@@ -52,23 +52,23 @@ func TestTaskCreate(t *testing.T) {
 		},
 		{
 			name:        "Filename does not exist",
-			command:     []string{"create", "-f", "test/resources/task.yaml", "-n", "ns"},
+			command:     []string{"create", "-f", "./testdata/notexist.yaml", "-n", "ns"},
 			input:       seeds[1],
 			inputStream: nil,
 			wantError:   true,
-			want:        "open test/resources/task.yaml: no such file or directory",
+			want:        "open ./testdata/notexist.yaml: no such file or directory",
 		},
 		{
 			name:        "Unsupported file type",
-			command:     []string{"create", "-f", "../../../test/resources/task.txt", "-n", "ns"},
+			command:     []string{"create", "-f", "./testdata/task.txt", "-n", "ns"},
 			input:       seeds[1],
 			inputStream: nil,
 			wantError:   true,
-			want:        "does not support such extension for ../../../test/resources/task.txt",
+			want:        "does not support such extension for ./testdata/task.txt",
 		},
 		{
 			name:        "Mismatched resource file",
-			command:     []string{"create", "-f", "../../../test/resources/taskrun.yaml", "-n", "ns"},
+			command:     []string{"create", "-f", "./testdata/taskrun.yaml", "-n", "ns"},
 			input:       seeds[1],
 			inputStream: nil,
 			wantError:   true,
@@ -76,7 +76,7 @@ func TestTaskCreate(t *testing.T) {
 		},
 		{
 			name:        "Existing task",
-			command:     []string{"create", "-f", "../../../test/resources/task.yaml", "-n", "ns"},
+			command:     []string{"create", "-f", "./testdata/task.yaml", "-n", "ns"},
 			input:       seeds[3],
 			inputStream: nil,
 			wantError:   true,
@@ -157,9 +157,9 @@ spec:
 
 	cli := NewClient(time.Duration(0))
 	cli.httpClient = httpClient
-	remoteContent, _ := loadFileContent("https://gist.githubusercontent.com/tekton/test.yaml", cli)
+	remoteContent, _ := loadFileContent("https://foo.com/task.yaml", cli)
 
-	localContent, _ := loadFileContent("../../../test/resources/task.yaml", nil)
+	localContent, _ := loadFileContent("./testdata/task.yaml", nil)
 
 	if d := cmp.Diff(remoteContent, localContent); d != "" {
 		t.Errorf("Unexpected output mismatch: %s", d)
