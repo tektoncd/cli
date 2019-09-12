@@ -77,7 +77,7 @@ against, i.e. override
 [your environment variables](/DEVELOPMENT.md#environment-setup):
 
 ```bash
-go test -v -tags=e2e -count=1 ./test --kubeconfig ~/special/kubeconfig --cluster myspecialcluster
+go test -v -tags=e2e -count=1 ./test/e2e --kubeconfig ~/special/kubeconfig --cluster myspecialcluster
 ```
 
 ### One test case
@@ -86,8 +86,8 @@ To run one e2e test case, e.g. TestTaskRun, use
 [the `-run` flag with `go test`](https://golang.org/cmd/go/#hdr-Testing_flags):
 
 ```shell
-go test -v -count=1 -tags=e2e -timeout=20m github.com/tektoncd/cli/test/e2e -run ^TestTaskRunListe2eUsingCli$
-go test -v -count=1 -tags=e2e -timeout=20m github.com/tektoncd/cli/test/e2e  --kubeconfig ~/special/kubeconfig --cluster myspecialcluster -run ^TestTaskRunListe2eUsingCli$
+go test -v -count=1 -tags=e2e -timeout=20m github.com/tektoncd/cli/test/e2e -run ^TestTaskRune2eUsingCli$
+go test -v -count=1 -tags=e2e -timeout=20m github.com/tektoncd/cli/test/e2e  --kubeconfig ~/special/kubeconfig --cluster myspecialcluster -run ^TestTaskRune2eUsingCli$
 ```
 
 ### Smoke test case
