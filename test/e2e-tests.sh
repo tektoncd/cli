@@ -86,8 +86,9 @@ kubectl create namespace tektoncd
 kubectl config set-context $(kubectl config current-context) --namespace=tektoncd
 
 # create pipeline, pipelinerun, task, and taskrun
-kubectl apply -f ./test/resources/output-pipelinerun.yaml
-kubectl apply -f ./test/resources/task-volume.yaml
+kubectl apply -f $GOPATH/src/github.com/tektoncd/cli/test/resources/output-pipelinerun.yaml
+kubectl apply -f $GOPATH/src/github.com/tektoncd/cli/test/resources/task-volume.yaml
+
 
 
 echo Waiting for resources to be ready
