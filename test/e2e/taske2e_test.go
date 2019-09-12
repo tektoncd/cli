@@ -14,7 +14,7 @@ import (
 	knativetest "knative.dev/pkg/test"
 )
 
-func TestTaskListe2eUsingCli(t *testing.T) {
+func TestTaske2eUsingCli(t *testing.T) {
 	t.Helper()
 	t.Parallel()
 
@@ -86,7 +86,7 @@ func TestTaskListe2eUsingCli(t *testing.T) {
 		}
 	})
 }
-func TestTaskListe2eUsingCli_1(t *testing.T) {
+func TestTaske2eUsingCli_1(t *testing.T) {
 	t.Helper()
 	t.Parallel()
 
