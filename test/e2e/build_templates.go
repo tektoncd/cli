@@ -11,8 +11,9 @@ import (
 	"text/template"
 	"time"
 
+	"github.com/google/go-cmp/cmp"
 	"github.com/jonboulle/clockwork"
-	"github.com/r3labs/diff"
+
 	"github.com/tektoncd/cli/pkg/formatted"
 	"github.com/tektoncd/pipeline/pkg/apis/pipeline/v1alpha1"
 	corev1 "k8s.io/api/core/v1"
@@ -795,10 +796,7 @@ func GetTaskListWithTestData(t *testing.T, c *Clients, td map[int]interface{}) *
 		}
 	}
 
-	changelog, err := diff.Diff(tasklist, GetTaskList(c))
-	if err != nil {
-		t.Errorf("Error occured while performing Diff operation on Real and Mock data %+v", err)
-	} else {
+	if changelog := cmp.Diff(tasklist, GetTaskList(c)); changelog != "" {
 		t.Logf("Changes occured while performing diff operation %+v", changelog)
 	}
 	return tasklist
@@ -867,10 +865,7 @@ func GetTaskRunListWithMockData(t *testing.T, c *Clients, td map[int]interface{}
 
 	}
 
-	changelog, err := diff.Diff(taskRunlist, GetTaskRunList(c))
-	if err != nil {
-		t.Errorf("Error occured while performing Diff operation on Real and Mock data %+v", err)
-	} else {
+	if changelog := cmp.Diff(taskRunlist, GetTaskRunList(c)); changelog != "" {
 		t.Logf("Changes occured while performing diff operation %+v", changelog)
 	}
 	return taskRunlist
@@ -969,10 +964,7 @@ func GetPipelineResourceListWithMockData(c *Clients, td map[int]interface{}) *v1
 
 	}
 
-	changelog, err := diff.Diff(pipelineResourceList, GetPipelineResourceList(c))
-	if err != nil {
-		log.Fatalf("Error occured while performing Diff operation on Real and Mock data %+v", err)
-	} else {
+	if changelog := cmp.Diff(pipelineResourceList, GetPipelineResourceList(c)); changelog != "" {
 		log.Printf("Changes occured while performing diff operation %+v", changelog)
 	}
 	return pipelineResourceList
@@ -1074,10 +1066,7 @@ func GetPipelineResourceWithMockData(c *Clients, name string, td map[int]interfa
 
 	}
 
-	changelog, err := diff.Diff(pipelineResource, GetPipelineResource(c, name))
-	if err != nil {
-		log.Fatalf("Error occured while performing Diff operation on Real and Mock data %+v", err)
-	} else {
+	if changelog := cmp.Diff(pipelineResource, GetPipelineResource(c, name)); changelog != "" {
 		log.Printf("Changes occured while performing diff operation %+v", changelog)
 	}
 
@@ -1185,12 +1174,11 @@ func GetPipelineListWithMockData(c *Clients, td map[int]interface{}) *v1alpha1.P
 			log.Panicf("Test Data Format Didn't Match please do check Test Data which you passing")
 		}
 	}
-	changelog, err := diff.Diff(ps, GetPipelineList(c))
-	if err != nil {
-		log.Fatalf("Error occured while performing Diff operation on Real and Mock data %+v", err)
-	} else {
+
+	if changelog := cmp.Diff(ps, GetPipelineList(c)); changelog != "" {
 		log.Printf("Changes occured while performing diff operation %+v", changelog)
 	}
+
 	return ps
 }
 
@@ -1309,12 +1297,10 @@ func GetPipelineWithMockData(c *Clients, name string, td map[int]interface{}) *v
 		}
 	}
 
-	changelog, err := diff.Diff(pipeline, GetPipeline(c, name))
-	if err != nil {
-		log.Fatalf("Error occured while performing Diff operation on Real and Mock data %+v", err)
-	} else {
+	if changelog := cmp.Diff(pipeline, GetPipeline(c, name)); changelog != "" {
 		log.Printf("Changes occured while performing diff operation %+v", changelog)
 	}
+
 	if err != nil {
 		log.Fatalf("Couldn't get expected pipelineList  %s", err)
 	}
@@ -1354,10 +1340,8 @@ func GetPipelineRunListWithNameAndMockData(c *Clients, pname string, td map[int]
 			log.Panicf(" Pipeline Describe Data type doesnt match with Expected Type Recheck your Test Data for pipeline %s", p.(*PipelineDescribeData).Name)
 		}
 	}
-	changelog, err := diff.Diff(pipelineRunList, GetPipelineRunListWithName(c, pname))
-	if err != nil {
-		log.Fatalf("Error occured while performing Diff operation on Real and Mock data %+v", err)
-	} else {
+
+	if changelog := cmp.Diff(pipelineRunList, GetPipelineRunListWithName(c, pname)); changelog != "" {
 		log.Printf("Changes occured while performing diff operation %+v", changelog)
 	}
 
