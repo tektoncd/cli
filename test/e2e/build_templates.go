@@ -6,6 +6,7 @@ import (
 	"log"
 	"regexp"
 	"sort"
+	"strings"
 	"testing"
 	"text/tabwriter"
 	"text/template"
@@ -19,80 +20,6 @@ import (
 	corev1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 )
-
-const describeTemplate = `Name:	{{ .PipelineName }}
-
-Resources
-{{- $rl := len .Pipeline.Spec.Resources }}{{ if eq $rl 0 }}
-No resources
-{{- else }}
-NAME	TYPE
-{{- range $i, $r := .Pipeline.Spec.Resources }}
-{{$r.Name }}	{{ $r.Type }}
-{{- end }}
-{{- end }}
-
-Tasks
-{{- $tl := len .Pipeline.Spec.Tasks }}{{ if eq $tl 0 }}
-No tasks
-{{- else }}
-NAME	TASKREF	RUNAFTER
-{{- range $i, $t := .Pipeline.Spec.Tasks }}
-{{ $t.Name }}	{{ $t.TaskRef.Name }}	{{ $t.RunAfter }}
-{{- end }}
-{{- end }}
-
-Runs
-{{- $rl := len .PipelineRuns.Items }}{{ if eq $rl 0 }}
-No runs
-{{- else }}
-NAME	STARTED	DURATION	STATUS
-{{- range $i, $pr := .PipelineRuns.Items }}
-{{ $pr.Name }}	{{ formatAge $pr.Status.StartTime $.Params }}	{{ formatDuration $pr.Status.StartTime $pr.Status.CompletionTime }}	{{ index $pr.Status.Conditions | formatCondition }}
-{{- end }}
-{{- end }}
-`
-
-func DescribeTemplateForPipelines(cs *Clients, pname string) string {
-	log.Printf("validating Pipeline : %s describe command\n", pname)
-	clock := clockwork.NewFakeClockAt(time.Now())
-
-	pipeline := GetPipeline(cs, pname)
-	pipelineRuns := GetPipelineRunListWithName(cs, pname)
-
-	var data = struct {
-		Pipeline     *v1alpha1.Pipeline
-		PipelineRuns *v1alpha1.PipelineRunList
-		PipelineName string
-		Params       clockwork.Clock
-	}{
-		Pipeline:     pipeline,
-		PipelineRuns: pipelineRuns,
-		PipelineName: pname,
-		Params:       clock,
-	}
-
-	funcMap := template.FuncMap{
-		"formatAge":       formatted.Age,
-		"formatDuration":  formatted.Duration,
-		"formatCondition": formatted.Condition,
-	}
-
-	var tmplBytes bytes.Buffer
-
-	w := tabwriter.NewWriter(&tmplBytes, 0, 5, 3, ' ', tabwriter.TabIndent)
-
-	t := template.Must(template.New("Describe Pipeline").Funcs(funcMap).Parse(describeTemplate))
-
-	err1 := t.Execute(w, data)
-	if err1 != nil {
-		panic(err1)
-	}
-
-	w.Flush()
-	return tmplBytes.String()
-
-}
 
 const describeTemplateForPipelinesRun = `Name:	{{ .PipelineRun.Name }}
 Namespace:	{{ .PipelineRun.Namespace }}
@@ -296,92 +223,6 @@ func DescribeTemplateForTaskRunList(cs *Clients) string {
 
 type pipelineruns map[string]v1alpha1.PipelineRun
 
-const pipelineslistTemplate = `{{- $pl := len .Pipelines.Items }}{{ if eq $pl 0 -}}
-No pipelines
-{{- else -}}
-NAME	AGE	LAST RUN	STARTED	DURATION	STATUS
-{{- range $_, $p := .Pipelines.Items }}
-{{- $pr := accessMap $.PipelineRuns $p.Name }}
-{{- if $pr }}
-{{ $p.Name }}	{{ formatAge $p.CreationTimestamp $.Params }}	{{ $pr.Name }}	{{ formatAge $pr.Status.StartTime $.Params }}	{{ formatDuration $pr.Status.StartTime $pr.Status.CompletionTime }}	{{ index $pr.Status.Conditions | formatCondition }}
-{{- else }}
-{{ $p.Name }}	{{ formatAge $p.CreationTimestamp $.Params }}	---	---	---	---
-{{- end }}
-{{- end }}
-{{- end }}
-`
-
-func DescribeTemplateForPipelineList(cs *Clients) string {
-	log.Print("validating Pipelines List command\n")
-	clock := clockwork.NewFakeClockAt(time.Now())
-	ps, prs, err := listPipelineDetails(cs)
-	if err != nil {
-		log.Println("Failed to list pipelines")
-	}
-	var data = struct {
-		Pipelines    *v1alpha1.PipelineList
-		PipelineRuns pipelineruns
-		Params       clockwork.Clock
-	}{
-		Pipelines:    ps,
-		PipelineRuns: prs,
-		Params:       clock,
-	}
-
-	funcMap := template.FuncMap{
-		"accessMap": func(prs pipelineruns, name string) *v1alpha1.PipelineRun {
-			if pr, ok := prs[name]; ok {
-				return &pr
-			}
-
-			return nil
-		},
-		"formatAge":       formatted.Age,
-		"formatDuration":  formatted.Duration,
-		"formatCondition": formatted.Condition,
-	}
-
-	t := template.Must(template.New("Pipelines List").Funcs(funcMap).Parse(pipelineslistTemplate))
-
-	var tmplBytes bytes.Buffer
-
-	w := tabwriter.NewWriter(&tmplBytes, 0, 5, 3, ' ', tabwriter.TabIndent)
-
-	err1 := t.Execute(w, data)
-	if err1 != nil {
-		panic(err1)
-	}
-
-	w.Flush()
-	return tmplBytes.String()
-}
-
-func listPipelineDetails(cs *Clients) (*v1alpha1.PipelineList, pipelineruns, error) {
-	ps := GetPipelineList(cs)
-
-	if len(ps.Items) == 0 {
-		return ps, pipelineruns{}, nil
-	}
-
-	runs := GetPipelineRunList(cs)
-
-	latestRuns := pipelineruns{}
-
-	for _, run := range runs.Items {
-		pipelineName := run.Spec.PipelineRef.Name
-		latest, ok := latestRuns[pipelineName]
-		if !ok {
-			latestRuns[pipelineName] = run
-			continue
-		}
-		if run.CreationTimestamp.After(latest.CreationTimestamp.Time) {
-			latestRuns[pipelineName] = run
-		}
-	}
-
-	return ps, latestRuns, nil
-}
-
 func DescribeTemplateForPipelineResourceList(cs *Clients) string {
 
 	const (
@@ -412,60 +253,6 @@ func DescribeTemplateForPipelineResourceList(cs *Clients) string {
 	}
 	w.Flush()
 
-	return tmplBytes.String()
-}
-
-const describeTemplateForPipelinesResources = `Name:	{{ .PipelineResource.Name }}
-Namespace:	{{ .PipelineResource.Namespace }}
-PipelineResource Type:	{{ .PipelineResource.Spec.Type }}
-
-Params
-{{- $l := len .PipelineResource.Spec.Params }}{{ if eq $l 0 }}
-No params
-{{- else }}
-NAME	VALUE
-{{- range $i, $p := .PipelineResource.Spec.Params }}
-{{ $p.Name }}	{{ $p.Value }}
-{{- end }}
-{{- end }}
-
-Secret Params
-{{- $l := len .PipelineResource.Spec.SecretParams }}{{ if eq $l 0 }}
-No secret params
-{{- else }}
-FIELDNAME	SECRETNAME
-{{- range $i, $p := .PipelineResource.Spec.SecretParams }}
-{{ $p.FieldName }}	{{ $p.SecretName }}
-{{- end }}
-{{- end }}
-`
-
-func DescribeTemplateForPipelinesResources(cs *Clients, prname string) string {
-	log.Printf("validating  PipelineResource: %s describe command\n", prname)
-	clock := clockwork.NewFakeClockAt(time.Now())
-	pipelineResource := GetPipelineResource(cs, prname)
-	var data = struct {
-		PipelineResource *v1alpha1.PipelineResource
-		Params           clockwork.Clock
-	}{
-		PipelineResource: pipelineResource,
-		Params:           clock,
-	}
-
-	funcMap := template.FuncMap{}
-
-	t := template.Must(template.New("Describe PipelineResource").Funcs(funcMap).Parse(describeTemplateForPipelinesResources))
-
-	var tmplBytes bytes.Buffer
-
-	w := tabwriter.NewWriter(&tmplBytes, 0, 5, 3, ' ', tabwriter.TabIndent)
-
-	err1 := t.Execute(w, data)
-	if err1 != nil {
-		panic(err1)
-	}
-
-	w.Flush()
 	return tmplBytes.String()
 }
 
@@ -604,11 +391,11 @@ func (s byStartTime) Less(i, j int) bool { return s[j].Status.StartTime.Before(s
 func details(pre v1alpha1.PipelineResource) string {
 	var key = "url"
 	if pre.Spec.Type == v1alpha1.PipelineResourceTypeStorage {
-		key = "Location"
+		key = "location"
 	}
 
 	for _, p := range pre.Spec.Params {
-		if p.Name == key {
+		if strings.ToLower(p.Name) == key {
 			return p.Name + ": " + p.Value
 		}
 	}
@@ -619,7 +406,6 @@ func details(pre v1alpha1.PipelineResource) string {
 func GetTask(c *Clients, name string) *v1alpha1.Task {
 
 	task, err := c.TaskClient.Get(name, metav1.GetOptions{})
-	// 	require.Nil(t, err)
 	if err != nil {
 		log.Fatalf("Couldn't get expected task  %s", err)
 	}
@@ -782,7 +568,7 @@ func GetTaskListWithTestData(t *testing.T, c *Clients, td map[int]interface{}) *
 	tasklist := GetTaskList(c)
 
 	if len(tasklist.Items) != len(td) {
-		t.Errorf("Lenght of task list and Testdata provided not matching")
+		t.Errorf("Length of task list and Testdata provided not matching")
 	}
 	if len(tasklist.Items) == 0 {
 		return tasklist
@@ -807,7 +593,7 @@ type TaskRunData struct {
 	Status string
 }
 
-func CreateTemplateForTaskRunListWithMockData(t *testing.T, cs *Clients, td map[int]interface{}) string {
+func CreateTemplateForTaskRunListWithTestData(t *testing.T, cs *Clients, td map[int]interface{}) string {
 
 	const (
 		emptyMsg = "No taskruns found"
@@ -816,7 +602,7 @@ func CreateTemplateForTaskRunListWithMockData(t *testing.T, cs *Clients, td map[
 	)
 
 	clock := clockwork.NewFakeClockAt(time.Now())
-	taskrun := GetTaskRunListWithMockData(t, cs, td)
+	taskrun := GetTaskRunListWithTestData(t, cs, td)
 
 	sort.Sort(byStartTime(taskrun.Items))
 
@@ -842,10 +628,10 @@ func CreateTemplateForTaskRunListWithMockData(t *testing.T, cs *Clients, td map[
 	return tmplBytes.String()
 }
 
-func GetTaskRunListWithMockData(t *testing.T, c *Clients, td map[int]interface{}) *v1alpha1.TaskRunList {
-	taskRunlist := GetTaskRunList(c) //c.TaskRunClient.List(metav1.ListOptions{})
+func GetTaskRunListWithTestData(t *testing.T, c *Clients, td map[int]interface{}) *v1alpha1.TaskRunList {
+	taskRunlist := GetTaskRunList(c)
 	if len(taskRunlist.Items) != len(td) {
-		t.Errorf("Lenght of taskrun list and Testdata provided not matching")
+		t.Errorf("Length of taskrun list and Testdata provided not matching")
 	}
 	if len(taskRunlist.Items) == 0 {
 		return taskRunlist
@@ -871,6 +657,191 @@ func GetTaskRunListWithMockData(t *testing.T, c *Clients, td map[int]interface{}
 	return taskRunlist
 }
 
+const TaskRunDescribeTemplate = `Name:	{{ .TaskRun.Name }}
+Namespace:	{{ .TaskRun.Namespace }}
+Task Ref:	{{ .TaskRun.Spec.TaskRef.Name }}
+{{- if ne .TaskRun.Spec.ServiceAccount "" }}
+Service Account:	{{ .TaskRun.Spec.ServiceAccount }}
+{{- end }}
+
+Status
+STARTED 	DURATION 	STATUS
+{{ formatAge .TaskRun.Status.StartTime  .Params}}	{{ formatDuration .TaskRun.Status.StartTime .TaskRun.Status.CompletionTime }}	{{ formatCondition .TaskRun.Status.Conditions }}
+{{- $msg := hasFailed .TaskRun -}}
+{{-  if ne $msg "" }}
+
+Message
+{{ $msg }}
+{{- end }}
+
+Inputs
+{{- $l := len .TaskRun.Spec.Inputs.Resources }}{{ if eq $l 0 }}
+No resources
+{{- else }}
+NAME	RESOURCE REF
+{{- range $i, $r := .TaskRun.Spec.Inputs.Resources }}
+{{$r.Name }}	{{ $r.ResourceRef.Name }}
+{{- end }}
+{{- end }}
+
+Outputs
+{{- $l := len .TaskRun.Spec.Outputs.Resources }}{{ if eq $l 0 }}
+No resources
+{{- else }}
+NAME	RESOURCE REF
+{{- range $i, $r := .TaskRun.Spec.Outputs.Resources }}
+{{$r.Name }}	{{ $r.ResourceRef.Name }}
+{{- end }}
+{{- end }}
+
+Params
+{{- $l := len .TaskRun.Spec.Inputs.Params }}{{ if eq $l 0 }}
+No params
+{{- else }}
+NAME	VALUE
+{{- range $i, $p := .TaskRun.Spec.Inputs.Params }}
+{{- if eq $p.Value.Type "string" }}
+{{ $p.Name }}	{{ $p.Value.StringVal }}
+{{- else }}
+{{ $p.Name }}	{{ $p.Value.ArrayVal }}
+{{- end }}
+{{- end }}
+{{- end }}
+
+Steps
+{{- $l := len .TaskRun.Status.Steps }}{{ if eq $l 0 }}
+No steps
+{{- else }}
+STEP NAME
+{{- range $steps := .TaskRun.Status.Steps }}
+{{ $steps.Name }}
+{{- end }}
+{{- end }}
+`
+
+func CreateDescribeTemplateForTaskRunResourceWithTestData(t *testing.T, c *Clients, trname string, td map[int]interface{}) string {
+	t.Helper()
+	clock := clockwork.NewFakeClockAt(time.Now())
+	taskRun := GetTaskRunWithTestData(t, c, trname, td)
+	var data = struct {
+		TaskRun *v1alpha1.TaskRun
+		Params  clockwork.Clock
+	}{
+		TaskRun: taskRun,
+		Params:  clock,
+	}
+
+	funcMap := template.FuncMap{
+		"formatAge":       formatted.Age,
+		"formatDuration":  formatted.Duration,
+		"formatCondition": formatted.Condition,
+		"hasFailed":       taskRunHasFailed,
+	}
+
+	tmp := template.Must(template.New("Describe TaskRun").Funcs(funcMap).Parse(TaskRunDescribeTemplate))
+
+	var tmplBytes bytes.Buffer
+
+	w := tabwriter.NewWriter(&tmplBytes, 0, 5, 3, ' ', tabwriter.TabIndent)
+
+	err1 := tmp.Execute(w, data)
+	if err1 != nil {
+		panic(err1)
+	}
+
+	w.Flush()
+	return tmplBytes.String()
+
+}
+
+func taskRunHasFailed(tr *v1alpha1.TaskRun) string {
+	if len(tr.Status.Conditions) == 0 {
+		return ""
+	}
+
+	if tr.Status.Conditions[0].Status == corev1.ConditionFalse {
+		return tr.Status.Conditions[0].Message
+	}
+	return ""
+}
+
+type TaskRunDescribeData struct {
+	Name            string
+	Namespace       string
+	Task_Ref        string
+	Service_Account string
+	Status          string
+	FailureMessage  string
+	Input           map[string]string
+	Output          map[string]string
+	Params          map[string]interface{}
+	Steps           []string
+}
+
+func GetTaskRunWithTestData(t *testing.T, c *Clients, trname string, td map[int]interface{}) *v1alpha1.TaskRun {
+	t.Helper()
+	taskRun := GetTaskRun(c, trname)
+	for _, tr := range td {
+		switch tr.(type) {
+		case *TaskRunDescribeData:
+			taskRun.Name = tr.(*TaskRunDescribeData).Name
+			taskRun.Namespace = tr.(*TaskRunDescribeData).Namespace
+			taskRun.Spec.TaskRef.Name = tr.(*TaskRunDescribeData).Task_Ref
+			taskRun.Spec.ServiceAccount = tr.(*TaskRunDescribeData).Service_Account
+			taskRun.Status.Conditions[0].Reason = tr.(*TaskRunDescribeData).Status
+			if tr.(*TaskRunDescribeData).FailureMessage != "" {
+				taskRun.Status.Conditions[0].Message = tr.(*TaskRunDescribeData).FailureMessage
+			}
+			if len(tr.(*TaskRunDescribeData).Input) == len(taskRun.Spec.Inputs.Resources) {
+				counter := 0
+				for rname, rref := range tr.(*TaskRunDescribeData).Input {
+					taskRun.Spec.Inputs.Resources[counter].Name = rname
+					taskRun.Spec.Inputs.Resources[counter].ResourceRef.Name = rref
+					counter++
+				}
+
+			} else {
+				t.Error("Input Resource length didnt match with test data")
+			}
+			if len(tr.(*TaskRunDescribeData).Output) == len(taskRun.Spec.Outputs.Resources) {
+				counter := 0
+				for rname, rref := range tr.(*TaskRunDescribeData).Output {
+					taskRun.Spec.Outputs.Resources[counter].Name = rname
+					taskRun.Spec.Outputs.Resources[counter].ResourceRef.Name = rref
+					counter++
+				}
+
+			} else {
+				t.Error("Input Resource length didnt match with test data")
+			}
+			counter := 0
+			for ipname, ipvalue := range tr.(*TaskRunDescribeData).Params {
+				taskRun.Spec.Inputs.Params[counter].Name = ipname
+				switch ipvalue.(type) {
+				case *string:
+					taskRun.Spec.Inputs.Params[counter].Value.StringVal = ipvalue.(string)
+					counter++
+				case *[]string:
+					taskRun.Spec.Inputs.Params[counter].Value.ArrayVal = ipvalue.([]string)
+					counter++
+				default:
+					t.Error("Input parameter test data type mismatch ")
+				}
+			}
+
+			for i, stepname := range tr.(*TaskRunDescribeData).Steps {
+				taskRun.Status.Steps[i].Name = stepname
+			}
+
+		default:
+			t.Error("Test Data Format Didn't Match please do check Test Data which you passing")
+		}
+	}
+
+	return taskRun
+
+}
+
 //----------------Pipeline Resources -----------------------------
 
 type PipelineResourcesData struct {
@@ -879,15 +850,15 @@ type PipelineResourcesData struct {
 	Details string
 }
 
-func DescribeTemplateForPipelineResourceListWithMockData(cs *Clients, td map[int]interface{}) string {
-
+func CreateTemplateForPipelineResourceListWithTestData(t *testing.T, cs *Clients, td map[int]interface{}) string {
+	t.Helper()
 	const (
 		emptyMsg = "No pipelineresources found."
 		header   = "NAME\tTYPE\tDETAILS"
 		body     = "%s\t%s\t%s\n"
 	)
 
-	pipelineResourcelist := GetPipelineResourceListWithMockData(cs, td)
+	pipelineResourcelist := GetPipelineResourceListWithTestData(t, cs, td)
 
 	var tmplBytes bytes.Buffer
 	w := tabwriter.NewWriter(&tmplBytes, 0, 5, 3, ' ', tabwriter.TabIndent)
@@ -910,14 +881,12 @@ func DescribeTemplateForPipelineResourceListWithMockData(cs *Clients, td map[int
 	return tmplBytes.String()
 }
 
-func GetPipelineResourceListWithMockData(c *Clients, td map[int]interface{}) *v1alpha1.PipelineResourceList {
+func GetPipelineResourceListWithTestData(t *testing.T, c *Clients, td map[int]interface{}) *v1alpha1.PipelineResourceList {
+	t.Helper()
+	pipelineResourceList := GetPipelineResourceList(c)
 
-	pipelineResourceList, err := c.PipelineResourceClient.List(metav1.ListOptions{})
-	if err != nil {
-		log.Fatalf("Couldn't get expected PipelineResourcelist  %s", err)
-	}
 	if len(pipelineResourceList.Items) != len(td) {
-		log.Panic("Lenght of PipelineResources list and Testdata provided not matching")
+		t.Error("Length of PipelineResources list and Testdata provided not matching")
 	}
 	if len(pipelineResourceList.Items) == 0 {
 		return pipelineResourceList
@@ -936,7 +905,7 @@ func GetPipelineResourceListWithMockData(c *Clients, td map[int]interface{}) *v1
 				pipelineResourceList.Items[i].Spec.Type = v1alpha1.PipelineResourceTypeGit
 			} else if pr.(*PipelineResourcesData).Type == "storage" {
 				pipelineResourceList.Items[i].Spec.Type = v1alpha1.PipelineResourceTypeStorage
-				key = "Location"
+				key = "location"
 			} else if pr.(*PipelineResourcesData).Type == "image" {
 				pipelineResourceList.Items[i].Spec.Type = v1alpha1.PipelineResourceTypeImage
 			} else if pr.(*PipelineResourcesData).Type == "cluster" {
@@ -948,24 +917,24 @@ func GetPipelineResourceListWithMockData(c *Clients, td map[int]interface{}) *v1
 			} else if pr.(*PipelineResourcesData).Type == "gcs" {
 				pipelineResourceList.Items[i].Spec.Type = v1alpha1.PipelineResourceTypeGCS
 			} else {
-				log.Panicf("Provided PipelineResourcesData is not Valid Type : Need to Provide (%s, %s, %s, %s, %s)", v1alpha1.PipelineResourceTypeGit, v1alpha1.PipelineResourceTypeImage, v1alpha1.PipelineResourceTypePullRequest, v1alpha1.PipelineResourceTypeBuildGCS, v1alpha1.PipelineResourceTypeCluster)
+				t.Errorf("Provided PipelineResourcesData is not Valid Type : Need to Provide (%s, %s, %s, %s, %s)", v1alpha1.PipelineResourceTypeGit, v1alpha1.PipelineResourceTypeImage, v1alpha1.PipelineResourceTypePullRequest, v1alpha1.PipelineResourceTypeBuildGCS, v1alpha1.PipelineResourceTypeCluster)
 			}
 
 			for i, p := range pipelineResourceList.Items[i].Spec.Params {
-				if p.Name == key {
+				if strings.ToLower(p.Name) == key {
 					pipelineResourceList.Items[i].Spec.Params[i].Value = pr.(*PipelineResourcesData).Details
 					break
 				}
 			}
 
 		default:
-			log.Panicf("Test Data Format Didn't Match please do check Test Data which you passing")
+			t.Error("Test Data Format Didn't Match please do check Test Data which you passing")
 		}
 
 	}
 
 	if changelog := cmp.Diff(pipelineResourceList, GetPipelineResourceList(c)); changelog != "" {
-		log.Printf("Changes occured while performing diff operation %+v", changelog)
+		t.Logf("Changes occured while performing diff operation %+v", changelog)
 	}
 	return pipelineResourceList
 }
@@ -978,10 +947,35 @@ type PipelineResourcesDescribeData struct {
 	SecretParams          map[string]string
 }
 
-func DescribeTemplateForPipelinesResourcesWithMockData(cs *Clients, prname string, td map[int]interface{}) string {
+const describeTemplateForPipelinesResources = `Name:	{{ .PipelineResource.Name }}
+Namespace:	{{ .PipelineResource.Namespace }}
+PipelineResource Type:	{{ .PipelineResource.Spec.Type }}
 
+Params
+{{- $l := len .PipelineResource.Spec.Params }}{{ if eq $l 0 }}
+No params
+{{- else }}
+NAME	VALUE
+{{- range $i, $p := .PipelineResource.Spec.Params }}
+{{ $p.Name }}	{{ $p.Value }}
+{{- end }}
+{{- end }}
+
+Secret Params
+{{- $l := len .PipelineResource.Spec.SecretParams }}{{ if eq $l 0 }}
+No secret params
+{{- else }}
+FIELDNAME	SECRETNAME
+{{- range $i, $p := .PipelineResource.Spec.SecretParams }}
+{{ $p.FieldName }}	{{ $p.SecretName }}
+{{- end }}
+{{- end }}
+`
+
+func CreateDescribeTemplateForPipelinesResourcesWithTestData(t *testing.T, cs *Clients, prname string, td map[int]interface{}) string {
+	t.Helper()
 	clock := clockwork.NewFakeClockAt(time.Now())
-	pipelineResource := GetPipelineResourceWithMockData(cs, prname, td)
+	pipelineResource := GetPipelineResourceWithTestData(t, cs, prname, td)
 	var data = struct {
 		PipelineResource *v1alpha1.PipelineResource
 		Params           clockwork.Clock
@@ -992,13 +986,13 @@ func DescribeTemplateForPipelinesResourcesWithMockData(cs *Clients, prname strin
 
 	funcMap := template.FuncMap{}
 
-	t := template.Must(template.New("Describe PipelineResource").Funcs(funcMap).Parse(describeTemplateForPipelinesResources))
+	tmp := template.Must(template.New("Describe PipelineResource").Funcs(funcMap).Parse(describeTemplateForPipelinesResources))
 
 	var tmplBytes bytes.Buffer
 
 	w := tabwriter.NewWriter(&tmplBytes, 0, 5, 3, ' ', tabwriter.TabIndent)
 
-	err1 := t.Execute(w, data)
+	err1 := tmp.Execute(w, data)
 	if err1 != nil {
 		panic(err1)
 	}
@@ -1007,12 +1001,10 @@ func DescribeTemplateForPipelinesResourcesWithMockData(cs *Clients, prname strin
 	return tmplBytes.String()
 }
 
-func GetPipelineResourceWithMockData(c *Clients, name string, td map[int]interface{}) *v1alpha1.PipelineResource {
+func GetPipelineResourceWithTestData(t *testing.T, c *Clients, name string, td map[int]interface{}) *v1alpha1.PipelineResource {
+	t.Helper()
+	pipelineResource := GetPipelineResource(c, name)
 
-	pipelineResource, err := c.PipelineResourceClient.Get(name, metav1.GetOptions{})
-	if err != nil {
-		log.Fatalf("Couldn't get expected PipelineResourcelist  %s", err)
-	}
 	for _, pr := range td {
 
 		switch pr.(type) {
@@ -1037,7 +1029,7 @@ func GetPipelineResourceWithMockData(c *Clients, name string, td map[int]interfa
 				} else if pr.(*PipelineResourcesDescribeData).PipelineResource_Type == "gcs" {
 					pipelineResource.Spec.Type = v1alpha1.PipelineResourceTypeGCS
 				} else {
-					log.Panicf("Provided PipelineResourcesData is not Valid Type : Need to Provide (%s, %s, %s, %s, %s)", v1alpha1.PipelineResourceTypeGit, v1alpha1.PipelineResourceTypeImage, v1alpha1.PipelineResourceTypePullRequest, v1alpha1.PipelineResourceTypeBuildGCS, v1alpha1.PipelineResourceTypeCluster)
+					t.Errorf("Provided PipelineResourcesData is not Valid Type : Need to Provide (%s, %s, %s, %s, %s)", v1alpha1.PipelineResourceTypeGit, v1alpha1.PipelineResourceTypeImage, v1alpha1.PipelineResourceTypePullRequest, v1alpha1.PipelineResourceTypeBuildGCS, v1alpha1.PipelineResourceTypeCluster)
 				}
 
 				if len(pr.(*PipelineResourcesDescribeData).Params) == len(pipelineResource.Spec.Params) {
@@ -1045,7 +1037,7 @@ func GetPipelineResourceWithMockData(c *Clients, name string, td map[int]interfa
 						pipelineResource.Spec.Params[i].Value = pr.(*PipelineResourcesDescribeData).Params[pipelineResource.Spec.Params[i].Name]
 					}
 				} else {
-					log.Panicf("Pipeline Resources Params lenght didnt match...")
+					t.Error("Pipeline Resources Params lenght didnt match...")
 				}
 
 				if len(pr.(*PipelineResourcesDescribeData).SecretParams) == len(pipelineResource.Spec.SecretParams) {
@@ -1054,20 +1046,20 @@ func GetPipelineResourceWithMockData(c *Clients, name string, td map[int]interfa
 						pipelineResource.Spec.SecretParams[i].SecretName = pr.(*PipelineResourcesDescribeData).SecretParams[pipelineResource.Spec.SecretParams[i].FieldName]
 					}
 				} else {
-					log.Panicf("Pipeline Resources Params lenght didnt match...")
+					t.Error("Pipeline Resources secret Params lenght didnt match...")
 				}
 			} else {
 				continue
 			}
 
 		default:
-			log.Panicf("Test Data Format Didn't Match please do check Test Data which you passing")
+			t.Errorf("Test Data Format Didn't Match please do check Test Data which you passing")
 		}
 
 	}
 
 	if changelog := cmp.Diff(pipelineResource, GetPipelineResource(c, name)); changelog != "" {
-		log.Printf("Changes occured while performing diff operation %+v", changelog)
+		t.Logf("Changes occured while performing diff operation %+v", changelog)
 	}
 
 	return pipelineResource
@@ -1078,12 +1070,28 @@ type PipelinesListData struct {
 	Status []string
 }
 
-func DescribeTemplateForPipelineListWithMockData(cs *Clients, td map[int]interface{}) string {
-	log.Print("validating Pipelines List command\n")
+const pipelineslistTemplate = `{{- $pl := len .Pipelines.Items }}{{ if eq $pl 0 -}}
+No pipelines
+{{- else -}}
+NAME	AGE	LAST RUN	STARTED	DURATION	STATUS
+{{- range $_, $p := .Pipelines.Items }}
+{{- $pr := accessMap $.PipelineRuns $p.Name }}
+{{- if $pr }}
+{{ $p.Name }}	{{ formatAge $p.CreationTimestamp $.Params }}	{{ $pr.Name }}	{{ formatAge $pr.Status.StartTime $.Params }}	{{ formatDuration $pr.Status.StartTime $pr.Status.CompletionTime }}	{{ index $pr.Status.Conditions | formatCondition }}
+{{- else }}
+{{ $p.Name }}	{{ formatAge $p.CreationTimestamp $.Params }}	---	---	---	---
+{{- end }}
+{{- end }}
+{{- end }}
+`
+
+func CreateTemplateForPipelineListWithTestData(t *testing.T, cs *Clients, td map[int]interface{}) string {
+	t.Helper()
+	t.Log("validating Pipelines List command\n")
 	clock := clockwork.NewFakeClockAt(time.Now())
-	ps, prs, err := listPipelineDetailsWithMockData(cs, td)
+	ps, prs, err := listPipelineDetailsWithTestData(t, cs, td)
 	if err != nil {
-		log.Println("Failed to list pipelines")
+		t.Error("Failed to list pipelines")
 	}
 	var data = struct {
 		Pipelines    *v1alpha1.PipelineList
@@ -1108,13 +1116,13 @@ func DescribeTemplateForPipelineListWithMockData(cs *Clients, td map[int]interfa
 		"formatCondition": formatted.Condition,
 	}
 
-	t := template.Must(template.New("Pipelines List").Funcs(funcMap).Parse(pipelineslistTemplate))
+	tmp := template.Must(template.New("Pipelines List").Funcs(funcMap).Parse(pipelineslistTemplate))
 
 	var tmplBytes bytes.Buffer
 
 	w := tabwriter.NewWriter(&tmplBytes, 0, 5, 3, ' ', tabwriter.TabIndent)
 
-	err1 := t.Execute(w, data)
+	err1 := tmp.Execute(w, data)
 	if err1 != nil {
 		panic(err1)
 	}
@@ -1123,9 +1131,9 @@ func DescribeTemplateForPipelineListWithMockData(cs *Clients, td map[int]interfa
 	return tmplBytes.String()
 }
 
-func listPipelineDetailsWithMockData(cs *Clients, td map[int]interface{}) (*v1alpha1.PipelineList, pipelineruns, error) {
-	ps := GetPipelineListWithMockData(cs, td)
-
+func listPipelineDetailsWithTestData(t *testing.T, cs *Clients, td map[int]interface{}) (*v1alpha1.PipelineList, pipelineruns, error) {
+	t.Helper()
+	ps := GetPipelineListWithTestData(t, cs, td)
 	runs := GetPipelineRunList(cs)
 	latestRuns := pipelineruns{}
 	for _, p := range td {
@@ -1150,20 +1158,16 @@ func listPipelineDetailsWithMockData(cs *Clients, td map[int]interface{}) (*v1al
 	return ps, latestRuns, nil
 }
 
-func GetPipelineListWithMockData(c *Clients, td map[int]interface{}) *v1alpha1.PipelineList {
-
-	ps, err := c.PipelineClient.List(metav1.ListOptions{})
-
-	if err != nil {
-		log.Fatalf("Couldn't get expected pipelineList  %s", err)
-	}
+func GetPipelineListWithTestData(t *testing.T, c *Clients, td map[int]interface{}) *v1alpha1.PipelineList {
+	t.Helper()
+	ps := GetPipelineList(c)
 
 	if len(ps.Items) == 0 {
 		return ps
 	}
 
 	if len(ps.Items) != len(td) {
-		log.Panic("Lenght of taskrun list and Testdata provided not matching")
+		t.Error("Lenght of pipeline list and Testdata provided not matching")
 	}
 
 	for i, p := range td {
@@ -1171,12 +1175,12 @@ func GetPipelineListWithMockData(c *Clients, td map[int]interface{}) *v1alpha1.P
 		case *PipelinesListData:
 			ps.Items[i].Name = p.(*PipelinesListData).Name
 		default:
-			log.Panicf("Test Data Format Didn't Match please do check Test Data which you passing")
+			t.Error("Test Data Format Didn't Match please do check Test Data which you passing")
 		}
 	}
 
 	if changelog := cmp.Diff(ps, GetPipelineList(c)); changelog != "" {
-		log.Printf("Changes occured while performing diff operation %+v", changelog)
+		t.Logf("Changes occured while performing diff operation %+v", changelog)
 	}
 
 	return ps
@@ -1195,12 +1199,45 @@ type TaskRefData struct {
 	RunAfter []string
 }
 
-func DescribeTemplateForPipelinesWithMockData(cs *Clients, pname string, td map[int]interface{}) string {
-	log.Printf("validating Pipeline : %s describe command\n", pname)
+const describeTemplate = `Name:	{{ .PipelineName }}
+
+Resources
+{{- $rl := len .Pipeline.Spec.Resources }}{{ if eq $rl 0 }}
+No resources
+{{- else }}
+NAME	TYPE
+{{- range $i, $r := .Pipeline.Spec.Resources }}
+{{$r.Name }}	{{ $r.Type }}
+{{- end }}
+{{- end }}
+
+Tasks
+{{- $tl := len .Pipeline.Spec.Tasks }}{{ if eq $tl 0 }}
+No tasks
+{{- else }}
+NAME	TASKREF	RUNAFTER
+{{- range $i, $t := .Pipeline.Spec.Tasks }}
+{{ $t.Name }}	{{ $t.TaskRef.Name }}	{{ $t.RunAfter }}
+{{- end }}
+{{- end }}
+
+Runs
+{{- $rl := len .PipelineRuns.Items }}{{ if eq $rl 0 }}
+No runs
+{{- else }}
+NAME	STARTED	DURATION	STATUS
+{{- range $i, $pr := .PipelineRuns.Items }}
+{{ $pr.Name }}	{{ formatAge $pr.Status.StartTime $.Params }}	{{ formatDuration $pr.Status.StartTime $pr.Status.CompletionTime }}	{{ index $pr.Status.Conditions | formatCondition }}
+{{- end }}
+{{- end }}
+`
+
+func CreateDescribeTemplateForPipelinesWithTestData(t *testing.T, cs *Clients, pname string, td map[int]interface{}) string {
+	t.Logf("validating Pipeline : %s describe command\n", pname)
 	clock := clockwork.NewFakeClockAt(time.Now())
 
-	pipeline := GetPipelineWithMockData(cs, pname, td)
-	pipelineRuns := GetPipelineRunListWithNameAndMockData(cs, pname, td)
+	pipeline := GetPipelineWithTestData(t, cs, pname, td)
+	pipelineRuns := GetPipelineRunListWithNameAndTestData(t, cs, pname, td)
 
 	var data = struct {
 		Pipeline     *v1alpha1.Pipeline
@@ -1224,9 +1261,9 @@ func DescribeTemplateForPipelinesWithMockData(cs *Clients, pname string, td map[
 
 	w := tabwriter.NewWriter(&tmplBytes, 0, 5, 3, ' ', tabwriter.TabIndent)
 
-	t := template.Must(template.New("Describe Pipeline").Funcs(funcMap).Parse(describeTemplate))
+	tmp := template.Must(template.New("Describe Pipeline").Funcs(funcMap).Parse(describeTemplate))
 
-	err1 := t.Execute(w, data)
+	err1 := tmp.Execute(w, data)
 	if err1 != nil {
 		panic(err1)
 	}
@@ -1236,13 +1273,9 @@ func DescribeTemplateForPipelinesWithMockData(cs *Clients, pname string, td map[
 
 }
 
-func GetPipelineWithMockData(c *Clients, name string, td map[int]interface{}) *v1alpha1.Pipeline {
+func GetPipelineWithTestData(t *testing.T, c *Clients, name string, td map[int]interface{}) *v1alpha1.Pipeline {
 
-	pipeline, err := c.PipelineClient.Get(name, metav1.GetOptions{})
-	// 	require.Nil(t, err)
-	if err != nil {
-		log.Fatalf("Couldn't get expected pipeline  %s", err)
-	}
+	pipeline := GetPipeline(c, name)
 
 	for _, p := range td {
 		switch p.(type) {
@@ -1268,57 +1301,56 @@ func GetPipelineWithMockData(c *Clients, name string, td map[int]interface{}) *v
 					} else if v == "gcs" {
 						pipeline.Spec.Resources[count].Type = v1alpha1.PipelineResourceTypeGCS
 					} else {
-						log.Panicf("Provided PipelineResourcesData is not Valid Type : Need to Provide (%s, %s, %s, %s, %s)", v1alpha1.PipelineResourceTypeGit, v1alpha1.PipelineResourceTypeImage, v1alpha1.PipelineResourceTypePullRequest, v1alpha1.PipelineResourceTypeBuildGCS, v1alpha1.PipelineResourceTypeCluster)
+						t.Errorf("Provided PipelineResourcesData is not Valid Type : Need to Provide (%s, %s, %s, %s, %s)", v1alpha1.PipelineResourceTypeGit, v1alpha1.PipelineResourceTypeImage, v1alpha1.PipelineResourceTypePullRequest, v1alpha1.PipelineResourceTypeBuildGCS, v1alpha1.PipelineResourceTypeCluster)
 					}
 					count++
 				}
 			} else {
-				log.Fatalf("length of Resources didn't match with testdata for pipeline %s", p.(*PipelineDescribeData).Name)
+				t.Errorf("length of Resources didn't match with testdata for pipeline %s", p.(*PipelineDescribeData).Name)
 			}
 
 			if len(pipeline.Spec.Tasks) == len(p.(*PipelineDescribeData).Task) {
 
-				for i, t := range p.(*PipelineDescribeData).Task {
-					switch t.(type) {
+				for i, tref := range p.(*PipelineDescribeData).Task {
+					switch tref.(type) {
 					case *TaskRefData:
-						pipeline.Spec.Tasks[i].Name = t.(*TaskRefData).TaskName
-						pipeline.Spec.Tasks[i].TaskRef.Name = t.(*TaskRefData).TaskRef
-						pipeline.Spec.Tasks[i].RunAfter = t.(*TaskRefData).RunAfter
+						pipeline.Spec.Tasks[i].Name = tref.(*TaskRefData).TaskName
+						pipeline.Spec.Tasks[i].TaskRef.Name = tref.(*TaskRefData).TaskRef
+						pipeline.Spec.Tasks[i].RunAfter = tref.(*TaskRefData).RunAfter
 					default:
-						log.Panicf(" TaskRef Data type doesnt match with Expected Type Recheck your Test Data for pipeline %s", p.(*PipelineDescribeData).Name)
+						t.Errorf(" TaskRef Data type doesnt match with Expected Type Recheck your Test Data for pipeline %s", p.(*PipelineDescribeData).Name)
 					}
 
 				}
 			} else {
-				log.Fatalf("length of Task didn't match with testdata for pipeline %s", p.(*PipelineDescribeData).Name)
+				t.Errorf("length of Task didn't match with testdata for pipeline %s", p.(*PipelineDescribeData).Name)
 			}
 		default:
-			log.Panicf(" Pipeline Describe Data type doesnt match with Expected Type Recheck your Test Data for pipeline %s", p.(*PipelineDescribeData).Name)
+			t.Errorf(" Pipeline Describe Data type doesnt match with Expected Type Recheck your Test Data for pipeline %s", p.(*PipelineDescribeData).Name)
 		}
 	}
 
 	if changelog := cmp.Diff(pipeline, GetPipeline(c, name)); changelog != "" {
-		log.Printf("Changes occured while performing diff operation %+v", changelog)
-	}
-
-	if err != nil {
-		log.Fatalf("Couldn't get expected pipelineList  %s", err)
+		t.Logf("Changes occured while performing diff operation %+v", changelog)
 	}
 
 	return pipeline
 }
 
-func GetPipelineRunListWithNameAndMockData(c *Clients, pname string, td map[int]interface{}) *v1alpha1.PipelineRunList {
+func GetPipelineRunListWithNameAndTestData(t *testing.T, c *Clients, pname string, td map[int]interface{}) *v1alpha1.PipelineRunList {
 	opts := metav1.ListOptions{
 		LabelSelector: fmt.Sprintf("tekton.dev/pipeline=%s", pname),
 	}
 	pipelineRunList, err := c.PipelineRunClient.List(opts)
-	// 	require.Nil(t, err)
 	if err != nil {
-		log.Fatalf("Couldn't get expected pipelineRunList  %s", err)
+		t.Errorf("Couldn't get expected pipelineRunList  %s", err)
 	}
 	if len(pipelineRunList.Items) == 0 {
 		return pipelineRunList
+	}
+
+	if len(pipelineRunList.Items) != len(td) {
+		t.Error("Lenght of pipeline list and Testdata provided not matching")
 	}
 
 	for _, p := range td {
@@ -1333,16 +1365,16 @@ func GetPipelineRunListWithNameAndMockData(c *Clients, pname string, td map[int]
 					count++
 				}
 			} else {
-				log.Fatalf("length of PipelineRuns didn't match with testdata for pipeline %s", p.(*PipelineDescribeData).Name)
+				t.Errorf("length of PipelineRuns didn't match with testdata for pipeline %s", p.(*PipelineDescribeData).Name)
 			}
 
 		default:
-			log.Panicf(" Pipeline Describe Data type doesnt match with Expected Type Recheck your Test Data for pipeline %s", p.(*PipelineDescribeData).Name)
+			t.Errorf(" Pipeline Describe Data type doesnt match with Expected Type Recheck your Test Data for pipeline %s", p.(*PipelineDescribeData).Name)
 		}
 	}
 
 	if changelog := cmp.Diff(pipelineRunList, GetPipelineRunListWithName(c, pname)); changelog != "" {
-		log.Printf("Changes occured while performing diff operation %+v", changelog)
+		t.Logf("Changes occured while performing diff operation %+v", changelog)
 	}
 
 	return pipelineRunList

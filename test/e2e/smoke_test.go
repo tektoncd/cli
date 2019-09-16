@@ -188,4 +188,39 @@ Use "tkn [command] --help" for more information about a command.
 		})
 	})
 
+	t.Run("Get help to  delete/rm pipeline resources delete /rm command ", func(t *testing.T) {
+		res := i.cmd.RunCmd(run("resource", "delete", "-h"))
+		res.Assert(t, icmd.Expected{
+			ExitCode: 1,
+		})
+		expected := `Delete a pipeline resource in a namespace
+
+Usage:
+tkn resource delete [flags]
+
+Aliases:
+  delete, rm
+
+Examples:
+
+# Delete a PipelineResource of name 'foo' in namespace 'bar'
+tkn resource delete foo -n bar
+
+tkn res rm foo -n bar
+
+
+Flags:
+      --allow-missing-template-keys   If true, ignore any errors in templates when a field or map key is missing in the template. Only applies to golang and jsonpath output formats. (default true)
+  -f, --force                         Whether to force deletion (default: false)
+  -h, --help                          help for delete
+  -o, --output string                 Output format. One of: json|yaml|name|go-template|go-template-file|template|templatefile|jsonpath|jsonpath-file.
+	  --template string               Template string or path to template file to use when -o=go-template, -o=go-template-file. The template format is golang templates [http://golang.org/pkg/text/template/#pkg-overview].
+	  
+Global Flags:
+  -k, --kubeconfig string   kubectl config file (default: $HOME/.kube/config)
+  -n, --namespace string    namespace to use (default: from $KUBECONFIG)
+`
+		assert.Assert(t, is.Equal(expected, res.Stderr()))
+	})
+
 }

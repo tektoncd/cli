@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"log"
 	"sync"
+	"time"
 
 	"github.com/tektoncd/pipeline/pkg/apis/pipeline/v1alpha1"
 	"golang.org/x/xerrors"
@@ -28,6 +29,25 @@ func WaitForTaskRunToComplete(c *Clients, trname string, namespace string) {
 	}, "TaskRunSuccess"); err != nil {
 		log.Fatalf("Error waiting for TaskRun %s to finish: %s", trname, err)
 	}
+}
+
+//Wait For Task Run Resource to be completed
+func WaitForTaskRunToBeStarted(c *Clients, trname string, namespace string) {
+	log.Printf("Waiting for TaskRun %s in namespace %s to be started", trname, namespace)
+	if err := WaitForTaskRunState(c, trname, func(tr *v1alpha1.TaskRun) (bool, error) {
+		cond := tr.Status.GetCondition(apis.ConditionSucceeded)
+		if cond != nil {
+			if cond.Status == corev1.ConditionTrue || cond.Status == corev1.ConditionFalse {
+				return true, xerrors.Errorf("taskRun %s already finished!", trname)
+			} else if cond.Status == corev1.ConditionUnknown && (cond.Reason == "Running" || cond.Reason == "Pending") {
+				return true, nil
+			}
+		}
+		return false, nil
+	}, "TaskRunStartedSuccessfully"); err != nil {
+		log.Fatalf("Error waiting for TaskRun %s to start: %s", trname, err)
+	}
+	time.Sleep(1 * time.Second)
 }
 
 //Wait for Pipeline Run to complete
