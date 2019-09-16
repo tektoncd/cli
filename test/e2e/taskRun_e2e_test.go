@@ -148,7 +148,7 @@ func TestTaskRune2eUsingCli(t *testing.T) {
 			Err:      icmd.None,
 		})
 
-		expected := CreateDescribeTemplateForTaskRunResourceWithTestData(t, c, teTaskRunName,
+		expected := CreateTemplateForTaskRunResourceDescribeWithTestData(t, c, teTaskRunName,
 			map[int]interface{}{
 				0: &TaskRunDescribeData{
 					Name:            teTaskRunName,
@@ -169,18 +169,6 @@ func TestTaskRune2eUsingCli(t *testing.T) {
 
 	})
 
-}
-
-func getTaskRun(c *Clients, taskName string, taskRunName string, namespace string) *v1alpha1.TaskRun {
-	log.Printf("Creating Task and TaskRun in namespace %s", namespace)
-	task := tb.Task(taskName, namespace,
-		tb.TaskSpec(tb.Step("amazing-busybox", "busybox", tb.StepCommand("/bin/sh"), tb.StepArgs("-c", "echo Hello")),
-			tb.Step("amazing-busybox-1", "busybox", tb.StepCommand("/bin/sh"), tb.StepArgs("-c", "echo Welcome To Tekton!!")),
-		))
-	if _, err := c.TaskClient.Create(task); err != nil {
-		log.Fatalf("Failed to create Task `%s`: %s", task.Name, err)
-	}
-	return tb.TaskRun(taskRunName, namespace, tb.TaskRunSpec(tb.TaskRunTaskRef(task.Name)))
 }
 
 func TestTaskRunCancelAndDeletee2e(t *testing.T) {
@@ -221,7 +209,7 @@ func TestTaskRunCancelAndDeletee2e(t *testing.T) {
 			Err:      icmd.None,
 		})
 
-		expected := CreateDescribeTemplateForTaskRunResourceWithTestData(t, c, teTaskRunName,
+		expected := CreateTemplateForTaskRunResourceDescribeWithTestData(t, c, teTaskRunName,
 			map[int]interface{}{
 				0: &TaskRunDescribeData{
 					Name:            teTaskRunName,
@@ -262,4 +250,16 @@ func TestTaskRunCancelAndDeletee2e(t *testing.T) {
 		})
 	})
 
+}
+
+func getTaskRun(c *Clients, taskName string, taskRunName string, namespace string) *v1alpha1.TaskRun {
+	log.Printf("Creating Task and TaskRun in namespace %s", namespace)
+	task := tb.Task(taskName, namespace,
+		tb.TaskSpec(tb.Step("amazing-busybox", "busybox", tb.StepCommand("/bin/sh"), tb.StepArgs("-c", "echo Hello")),
+			tb.Step("amazing-busybox-1", "busybox", tb.StepCommand("/bin/sh"), tb.StepArgs("-c", "echo Welcome To Tekton!!")),
+		))
+	if _, err := c.TaskClient.Create(task); err != nil {
+		log.Fatalf("Failed to create Task `%s`: %s", task.Name, err)
+	}
+	return tb.TaskRun(taskRunName, namespace, tb.TaskRunSpec(tb.TaskRunTaskRef(task.Name)))
 }

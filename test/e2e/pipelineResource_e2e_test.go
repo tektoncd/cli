@@ -3,10 +3,13 @@
 package e2e
 
 import (
+	"encoding/json"
 	"fmt"
+	"log"
 	"strings"
 	"testing"
 
+	"github.com/google/go-cmp/cmp"
 	"github.com/tektoncd/pipeline/pkg/apis/pipeline/v1alpha1"
 	tb "github.com/tektoncd/pipeline/test/builder"
 	"gotest.tools/icmd"
@@ -74,9 +77,170 @@ func TestPipelineResourceDelete(t *testing.T) {
 	})
 }
 
+func TestPipelineResourcesE2E(t *testing.T) {
+
+	PipelineResourceName := []string{"go-example-git", "go-example-image"}
+	c, namespace := Setup(t)
+	knativetest.CleanupOnInterrupt(func() { TearDown(t, c, namespace) }, t.Logf)
+	defer TearDown(t, c, namespace)
+
+	run := Prepare(t)
+
+	t.Logf("Creating Git PipelineResource %s", PipelineResourceName[0])
+	if _, err := c.PipelineResourceClient.Create(getGitResource(PipelineResourceName[0], namespace)); err != nil {
+		t.Fatalf("Failed to create Pipeline Resource `%s`: %s", PipelineResourceName[0], err)
+	}
+
+	t.Logf("Creating Image PipelineResource %s", PipelineResourceName[1])
+	if _, err := c.PipelineResourceClient.Create(getImageResource(PipelineResourceName[1], namespace)); err != nil {
+		t.Fatalf("Failed to create Pipeline Resource `%s`: %s", PipelineResourceName[1], err)
+	}
+
+	t.Run("Get list of Pipeline Resources from namespace  "+namespace, func(t *testing.T) {
+		res := icmd.RunCmd(run("resources", "list", "-n", namespace))
+		expected := CreateTemplateForPipelineResourceListWithTestData(t, c,
+			map[int]interface{}{
+				0: &PipelineResourcesData{
+					Name:    PipelineResourceName[0],
+					Type:    "git",
+					Details: "https://github.com/GoogleContainerTools/kaniko",
+				},
+				1: &PipelineResourcesData{
+					Name:    PipelineResourceName[1],
+					Type:    "image",
+					Details: "gcr.io/staging-images/kritis",
+				}},
+		)
+		res.Assert(t, icmd.Expected{
+			ExitCode: 0,
+			Err:      icmd.None,
+		})
+
+		if d := cmp.Diff(expected, res.Stdout()); d != "" {
+			t.Errorf("Unexpected output mismatch: \n%s\n", d)
+		}
+
+	})
+
+	t.Run("Get list of Pipeline Resources from other namespace [default] should throw Error", func(t *testing.T) {
+		res := icmd.RunCmd(run("resources", "list", "-n", "default"))
+		res.Assert(t, icmd.Expected{
+			ExitCode: 0,
+			Err:      "No pipelineresources found.\n",
+		})
+
+		if d := cmp.Diff("No pipelineresources found.\n", res.Stderr()); d != "" {
+			t.Errorf("Unexpected output mismatch: \n%s\n", d)
+		}
+	})
+
+	t.Run("Validate Pipeline Resources format for -o (output) flag,  Json Path ", func(t *testing.T) {
+		res := icmd.RunCmd(run("resource", "list", "-n", namespace,
+			`-o=jsonpath={range.items[*]}{.metadata.name}{"\n"}{end}`))
+
+		expected := CreateTemplateResourcesForOutputpath(GetPipelineResourceListWithTestData(t, c,
+			map[int]interface{}{
+				0: &PipelineResourcesData{
+					Name:    PipelineResourceName[0],
+					Type:    "git",
+					Details: "https://github.com/GoogleContainerTools/kaniko",
+				},
+				1: &PipelineResourcesData{
+					Name:    PipelineResourceName[1],
+					Type:    "image",
+					Details: "gcr.io/staging-images/kritis",
+				}}))
+
+		res.Assert(t, icmd.Expected{
+			ExitCode: 0,
+			Err:      icmd.None,
+		})
+		if d := cmp.Diff(expected, res.Stdout()); d != "" {
+			t.Errorf("Unexpected output mismatch: \n%s\n", d)
+		}
+	})
+
+	t.Run("Pipeline Resources json Schema validation with -o (output) flag, as Json ", func(t *testing.T) {
+		res := icmd.RunCmd(run("resource", "list", "-n", namespace, "-o", "json"))
+
+		res.Assert(t, icmd.Expected{
+			ExitCode: 0,
+			Err:      icmd.None,
+		})
+		err := json.Unmarshal([]byte(res.Stdout()), &v1alpha1.PipelineResourceList{})
+		if err != nil {
+			log.Fatalf("error: %v", err)
+		}
+	})
+
+	t.Run("Validate  Pipeline Resources(git) describe command", func(t *testing.T) {
+		res := icmd.RunCmd(run("resource", "describe", PipelineResourceName[0], "-n", namespace))
+
+		res.Assert(t, icmd.Expected{
+			ExitCode: 0,
+			Err:      icmd.None,
+		})
+
+		expected := CreateTemplateForPipelinesResourcesDescribeWithTestData(t, c, PipelineResourceName[0],
+			map[int]interface{}{
+
+				0: &PipelineResourcesDescribeData{
+					Name:                  PipelineResourceName[0],
+					Namespace:             namespace,
+					PipelineResource_Type: "git",
+					Params: map[string]string{
+						"Url":      "https://github.com/GoogleContainerTools/kaniko",
+						"revision": "master",
+					},
+					SecretParams: map[string]string{},
+				},
+			})
+		if d := cmp.Diff(expected, res.Stdout()); d != "" {
+			t.Errorf("Unexpected output mismatch: \n%s\n", d)
+		}
+
+	})
+
+	t.Run("Validate  Pipeline Resources(image) describe command", func(t *testing.T) {
+		res := icmd.RunCmd(run("resource", "describe", PipelineResourceName[1], "-n", namespace))
+
+		res.Assert(t, icmd.Expected{
+			ExitCode: 0,
+			Err:      icmd.None,
+		})
+
+		expected := CreateTemplateForPipelinesResourcesDescribeWithTestData(t, c, PipelineResourceName[1],
+			map[int]interface{}{
+
+				0: &PipelineResourcesDescribeData{
+					Name:                  PipelineResourceName[0],
+					Namespace:             namespace,
+					PipelineResource_Type: "image",
+					Params: map[string]string{
+						"Url": "gcr.io/staging-images/kritis",
+					},
+					SecretParams: map[string]string{},
+				},
+			})
+		if d := cmp.Diff(expected, res.Stdout()); d != "" {
+			t.Errorf("Unexpected output mismatch: \n%s\n", d)
+		}
+
+	})
+
+}
+
 func getGitResource(prname string, namespace string) *v1alpha1.PipelineResource {
 	return tb.PipelineResource(prname, namespace, tb.PipelineResourceSpec(
 		v1alpha1.PipelineResourceTypeGit,
 		tb.PipelineResourceSpecParam("Url", "https://github.com/GoogleContainerTools/kaniko"),
+		tb.PipelineResourceSpecParam("revision", "master"),
+	))
+}
+
+func getImageResource(prname string, namespace string) *v1alpha1.PipelineResource {
+	return tb.PipelineResource(prname, namespace, tb.PipelineResourceSpec(
+		v1alpha1.PipelineResourceTypeImage,
+		tb.PipelineResourceSpecParam("Url", "gcr.io/staging-images/kritis"),
 	))
 }

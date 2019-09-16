@@ -719,7 +719,7 @@ STEP NAME
 {{- end }}
 `
 
-func CreateDescribeTemplateForTaskRunResourceWithTestData(t *testing.T, c *Clients, trname string, td map[int]interface{}) string {
+func CreateTemplateForTaskRunResourceDescribeWithTestData(t *testing.T, c *Clients, trname string, td map[int]interface{}) string {
 	t.Helper()
 	clock := clockwork.NewFakeClockAt(time.Now())
 	taskRun := GetTaskRunWithTestData(t, c, trname, td)
@@ -920,10 +920,12 @@ func GetPipelineResourceListWithTestData(t *testing.T, c *Clients, td map[int]in
 				t.Errorf("Provided PipelineResourcesData is not Valid Type : Need to Provide (%s, %s, %s, %s, %s)", v1alpha1.PipelineResourceTypeGit, v1alpha1.PipelineResourceTypeImage, v1alpha1.PipelineResourceTypePullRequest, v1alpha1.PipelineResourceTypeBuildGCS, v1alpha1.PipelineResourceTypeCluster)
 			}
 
-			for i, p := range pipelineResourceList.Items[i].Spec.Params {
+			for k, p := range pipelineResourceList.Items[i].Spec.Params {
 				if strings.ToLower(p.Name) == key {
-					pipelineResourceList.Items[i].Spec.Params[i].Value = pr.(*PipelineResourcesData).Details
+					pipelineResourceList.Items[i].Spec.Params[k].Value = pr.(*PipelineResourcesData).Details
 					break
+				} else {
+					pipelineResourceList.Items[i].Spec.Params[k].Value = pr.(*PipelineResourcesData).Details
 				}
 			}
 
@@ -972,7 +974,7 @@ FIELDNAME	SECRETNAME
 {{- end }}
 `
 
-func CreateDescribeTemplateForPipelinesResourcesWithTestData(t *testing.T, cs *Clients, prname string, td map[int]interface{}) string {
+func CreateTemplateForPipelinesResourcesDescribeWithTestData(t *testing.T, cs *Clients, prname string, td map[int]interface{}) string {
 	t.Helper()
 	clock := clockwork.NewFakeClockAt(time.Now())
 	pipelineResource := GetPipelineResourceWithTestData(t, cs, prname, td)
