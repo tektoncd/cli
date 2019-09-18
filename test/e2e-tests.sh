@@ -128,4 +128,12 @@ must_fail  "describe deleted pipelinerun" tkn pipelinerun describe output-pipeli
 must_fail  "describe deleted resource" tkn resource describe skaffold-git
 must_fail  "show logs deleted taskrun" tkn taskrun logs test-template-volume
 
+
+ci_run && {
+  header "Running Go e2e tests"
+  failed=0
+  go_test_e2e ./test/e2e || failed=1
+  (( failed )) && fail_test
+}
+
 success

@@ -60,6 +60,7 @@ test-unit: ./vendor ## run unit tests
 test-e2e: bin/tkn ## run e2e tests
 	@echo "Running e2e tests..."
 	@LOCAL_CI_RUN=true bash ./test/e2e-tests.sh
+	
 
 .PHONY: docs
 docs: bin/docs ## update docs
