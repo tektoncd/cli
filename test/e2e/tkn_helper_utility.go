@@ -10,6 +10,7 @@ import (
 	"testing"
 	"time"
 
+	"gotest.tools/icmd"
 	knativetest "knative.dev/pkg/test"
 
 	"knative.dev/pkg/test/logging"
@@ -75,7 +76,13 @@ func CleanUpResources() {
 	for _, element := range ar {
 		vars["Element"] = element
 		cmd := ProcessString(msg, vars)
-		CmdShouldPass(cmd)
+		cmdArgs := strings.Fields(cmd)
+
+		res := icmd.RunCmd(icmd.Command(cmdArgs[0], cmdArgs[1:len(cmdArgs)]...))
+
+		if res.ExitCode != 0 {
+			log.Fatalf("Failed to execute %s", res.Stderr())
+		}
 	}
 	log.Println("Cleaned up existing resources.. successfully")
 }
@@ -88,7 +95,13 @@ func InstallTektonPipelines(kubeClient *knativetest.KubeClient, namespace string
 
 	Header(log.Printf, fmt.Sprintf("Installing CRD in namespace: tekton-pipelines, version: v%s ", os.Getenv("PIPELINE_VERSION")))
 	cmdName := fmt.Sprintf("kubectl apply -f https://github.com/tektoncd/pipeline/releases/download/v%s/release.yaml", os.Getenv("PIPELINE_VERSION"))
-	log.Println(CmdShouldPass(cmdName))
+	cmdArgs := strings.Fields(cmdName)
+
+	res := icmd.RunCmd(icmd.Command(cmdArgs[0], cmdArgs[1:len(cmdArgs)]...))
+
+	if res.ExitCode != 0 {
+		log.Fatalf("Failed to execute %s", res.Stderr())
+	}
 	log.Println("waiting for pipeline resources to come up")
 	WaitForPodStatus(kubeClient, namespace)
 	log.Println("Cleaning up cluster...")
@@ -100,7 +113,13 @@ func UninstallTektonPipelines() {
 	Header(log.Printf, fmt.Sprintf("Uninstalling CRD in namespace: tekton-pipelines, version: v%s", os.Getenv("PIPELINE_VERSION")))
 	cmdName := fmt.Sprintf("kubectl delete -f https://github.com/tektoncd/pipeline/releases/download/v%s/release.yaml", os.Getenv("PIPELINE_VERSION"))
 	log.Println("Uninstalled CRD successfully..")
-	CmdShouldPass(cmdName)
+	cmdArgs := strings.Fields(cmdName)
+
+	res := icmd.RunCmd(icmd.Command(cmdArgs[0], cmdArgs[1:len(cmdArgs)]...))
+
+	if res.ExitCode != 0 {
+		log.Fatalf("Failed to execute %s", res.Stderr())
+	}
 
 }
 
@@ -198,18 +217,6 @@ func CreateNamespace(namespace string, kubeClient *knativetest.KubeClient) {
 	}); err != nil {
 		log.Printf("Failed to create namespace %s for tests: %s", namespace, err)
 	}
-}
-
-func CreateNamespaceAndChangeContext(namespace string, kubeClient *knativetest.KubeClient) {
-	vars := make(map[string]interface{})
-
-	CreateNamespace(namespace, kubeClient)
-	msg := "kubectl config set-context {{.Element}} --namespace=" + namespace
-	current_context := CmdShouldPass("kubectl config current-context")
-	vars["Element"] = strings.TrimSuffix(current_context, "\n")
-	cmd := ProcessString(msg, vars)
-	log.Printf("change default context to %s -> %s ", namespace, CmdShouldPass(cmd))
-	VerifyServiceAccountExistence(namespace, kubeClient)
 }
 
 func DeleteNamespace(namespace string, cs *Clients) {

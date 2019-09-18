@@ -1,6 +1,7 @@
 package e2e
 
 import (
+	"log"
 	"testing"
 
 	"gotest.tools/icmd"
@@ -18,7 +19,13 @@ func NewTknRunner(tknPath string) TknRunner {
 
 func (tkn *TknRunner) BuildTknClient() string {
 
-	return (CmdShouldPass("go build "+tkn.path) + " tekton client build successfully!")
+	res := icmd.RunCmd(icmd.Command("go", "build", tkn.path))
+
+	if res.ExitCode != 0 {
+		log.Fatalf("Go Build Failed....")
+	}
+
+	return " tekton client build successfully!"
 }
 
 func Prepare(t *testing.T) func(args ...string) icmd.Cmd {
