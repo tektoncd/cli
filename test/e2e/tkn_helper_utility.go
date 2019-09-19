@@ -58,14 +58,13 @@ func Header(logf logging.FormatLogger, text string) {
 }
 
 func SetupTektonPipelines() (*Clients, string) {
-
 	namespace := "tekton-pipelines"
 	initializeLogsAndMetrics()
 	c := NewClients(knativetest.Flags.Kubeconfig, knativetest.Flags.Cluster, namespace)
 	InstallTektonPipelines(c.KubeClient, namespace)
 	VerifyServiceAccountExistence(namespace, c.KubeClient)
-
 	log.Println("CRD Installation successful")
+
 	return c, namespace
 }
 

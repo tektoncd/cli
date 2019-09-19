@@ -14,13 +14,7 @@ var originalDir string
 var context1 string
 
 const (
-	tknContext        = "github.com/tektoncd/cli/cmd/tkn"
-	teTaskName        = "te-task"
-	teTaskRunName     = "te-task-run"
-	tePipelineName    = "te-pipeline"
-	tePipelineRunName = "te-pipelinerun"
-	PipelineName      = "output-pipeline"
-	PipelineRunName   = "output-pipeline-run"
+	tknContext = "github.com/tektoncd/cli/cmd/tkn"
 )
 
 func TestMain(m *testing.M) {

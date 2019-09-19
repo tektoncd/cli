@@ -38,7 +38,7 @@ func WaitForTaskRunToBeStarted(c *Clients, trname string, namespace string) {
 		if cond != nil {
 			if cond.Status == corev1.ConditionTrue || cond.Status == corev1.ConditionFalse {
 				return true, xerrors.Errorf("taskRun %s already finished!", trname)
-			} else if cond.Status == corev1.ConditionUnknown && (cond.Reason == "Running" || cond.Reason != "Pending") {
+			} else if cond.Status == corev1.ConditionUnknown && cond.Reason == "Running" || cond.Reason != "Pending" {
 				return true, nil
 			}
 		}

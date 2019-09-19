@@ -16,7 +16,7 @@ import (
 	knativetest "knative.dev/pkg/test"
 )
 
-func TestPipelineResourceDelete(t *testing.T) {
+func TestPipelineResourceDeleteE2EUsingCli(t *testing.T) {
 	PipelineResourceName := []string{"go-example-git", "go-example-git-1", "go-example-git-2"}
 	c, namespace := Setup(t)
 	knativetest.CleanupOnInterrupt(func() { TearDown(t, c, namespace) }, t.Logf)
@@ -77,7 +77,7 @@ func TestPipelineResourceDelete(t *testing.T) {
 	})
 }
 
-func TestPipelineResourcesE2E(t *testing.T) {
+func TestPipelineResourcesE2EUsingCli(t *testing.T) {
 
 	PipelineResourceName := []string{"go-example-git", "go-example-image"}
 	c, namespace := Setup(t)

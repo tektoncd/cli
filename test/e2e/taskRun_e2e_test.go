@@ -7,6 +7,7 @@ import (
 	"log"
 	"strings"
 	"testing"
+	"time"
 
 	"github.com/google/go-cmp/cmp"
 	knativetest "knative.dev/pkg/test"
@@ -18,7 +19,11 @@ import (
 	"gotest.tools/icmd"
 )
 
-func TestTaskRune2eUsingCli(t *testing.T) {
+const (
+	teTaskRunName = "te-task-run"
+)
+
+func TestTaskRunE2EUsingCli(t *testing.T) {
 	t.Helper()
 	t.Parallel()
 
@@ -27,7 +32,7 @@ func TestTaskRune2eUsingCli(t *testing.T) {
 	knativetest.CleanupOnInterrupt(func() { TearDown(t, c, namespace) }, t.Logf)
 	defer TearDown(t, c, namespace)
 
-	t.Logf("Creating Task Run Resource %s", teTaskRunName)
+	t.Logf("Creating Task Run Resource  %s", teTaskRunName)
 	if _, err := c.TaskRunClient.Create(getTaskRun(c, teTaskName, teTaskRunName, namespace)); err != nil {
 		t.Fatalf("Failed to create Task Run Resource `%s`: %s", teTaskRunName, err)
 	}
@@ -118,7 +123,6 @@ func TestTaskRune2eUsingCli(t *testing.T) {
 
 			assert.Assert(t, is.Regexp((expected[i]).(string), res.Stdout()))
 		}
-
 	})
 
 	t.Run("Validate Taskrun logs using all containers flag (-a) ", func(t *testing.T) {
@@ -171,7 +175,7 @@ func TestTaskRune2eUsingCli(t *testing.T) {
 
 }
 
-func TestTaskRunCancelAndDeletee2e(t *testing.T) {
+func TestTaskRunCancelAndDeleteE2EUsingCli(t *testing.T) {
 	t.Helper()
 	t.Parallel()
 
@@ -201,6 +205,8 @@ func TestTaskRunCancelAndDeletee2e(t *testing.T) {
 
 	})
 
+	time.Sleep(1 * time.Second)
+
 	t.Run("Check for Error message and status of Taskrun after Task Run Cancelled Successfully", func(t *testing.T) {
 		res := icmd.RunCmd(run("taskrun", "describe", teTaskRunName, "-n", namespace))
 
@@ -227,6 +233,17 @@ func TestTaskRunCancelAndDeletee2e(t *testing.T) {
 		if d := cmp.Diff(expected, res.Stdout()); d != "" {
 			t.Errorf("Unexpected output mismatch: \n%s\n", d)
 		}
+
+	})
+
+	t.Run("Delete Taskrun "+teTaskRunName+" from namespace "+namespace+" Without force delete flag, reply no", func(t *testing.T) {
+		res := icmd.RunCmd(run("taskrun", "rm", teTaskRunName, "-n", namespace),
+			icmd.WithStdin(strings.NewReader("n")))
+
+		res.Assert(t, icmd.Expected{
+			ExitCode: 1,
+			Err:      "Error: canceled deleting taskrun \"" + teTaskRunName + "\"\n",
+		})
 
 	})
 

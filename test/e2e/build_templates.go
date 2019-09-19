@@ -1069,7 +1069,7 @@ func GetPipelineResourceWithTestData(t *testing.T, c *Clients, name string, td m
 
 type PipelinesListData struct {
 	Name   string
-	Status []string
+	Status string
 }
 
 const pipelineslistTemplate = `{{- $pl := len .Pipelines.Items }}{{ if eq $pl 0 -}}
@@ -1145,12 +1145,12 @@ func listPipelineDetailsWithTestData(t *testing.T, cs *Clients, td map[int]inter
 				pipelineName := p.(*PipelinesListData).Name
 				latest, ok := latestRuns[pipelineName]
 				if !ok {
-					run.Status.Conditions[0].Reason = p.(*PipelinesListData).Status[0]
+					run.Status.Conditions[0].Reason = p.(*PipelinesListData).Status
 					latestRuns[pipelineName] = run
 					continue
 				}
 				if run.CreationTimestamp.After(latest.CreationTimestamp.Time) {
-					run.Status.Conditions[0].Reason = p.(*PipelinesListData).Status[0]
+					run.Status.Conditions[0].Reason = p.(*PipelinesListData).Status
 					latestRuns[pipelineName] = run
 				}
 			}
@@ -1234,7 +1234,7 @@ NAME	STARTED	DURATION	STATUS
 {{- end }}
 `
 
-func CreateDescribeTemplateForPipelinesWithTestData(t *testing.T, cs *Clients, pname string, td map[int]interface{}) string {
+func CreateTemplateForPipelinesDescribeWithTestData(t *testing.T, cs *Clients, pname string, td map[int]interface{}) string {
 	t.Logf("validating Pipeline : %s describe command\n", pname)
 	clock := clockwork.NewFakeClockAt(time.Now())
 
@@ -1322,7 +1322,6 @@ func GetPipelineWithTestData(t *testing.T, c *Clients, name string, td map[int]i
 					default:
 						t.Errorf(" TaskRef Data type doesnt match with Expected Type Recheck your Test Data for pipeline %s", p.(*PipelineDescribeData).Name)
 					}
-
 				}
 			} else {
 				t.Errorf("length of Task didn't match with testdata for pipeline %s", p.(*PipelineDescribeData).Name)
@@ -1349,10 +1348,6 @@ func GetPipelineRunListWithNameAndTestData(t *testing.T, c *Clients, pname strin
 	}
 	if len(pipelineRunList.Items) == 0 {
 		return pipelineRunList
-	}
-
-	if len(pipelineRunList.Items) != len(td) {
-		t.Error("Lenght of pipeline list and Testdata provided not matching")
 	}
 
 	for _, p := range td {
