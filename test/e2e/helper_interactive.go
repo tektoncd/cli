@@ -16,6 +16,7 @@ import (
 )
 
 type CapturingPassThroughWriter struct {
+	m   sync.RWMutex
 	buf bytes.Buffer
 	w   io.Writer
 }
@@ -28,12 +29,16 @@ func NewCapturingPassThroughWriter(w io.Writer) *CapturingPassThroughWriter {
 }
 
 func (w *CapturingPassThroughWriter) Write(d []byte) (int, error) {
+	w.m.Lock()
+	defer w.m.Unlock()
 	w.buf.Write(d)
 	return w.w.Write(d)
 }
 
 // Bytes returns bytes written to the writer
 func (w *CapturingPassThroughWriter) Bytes() []byte {
+	w.m.RLock()
+	defer w.m.RUnlock()
 	return w.buf.Bytes()
 }
 
