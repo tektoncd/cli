@@ -38,6 +38,220 @@ func TestPipelinesE2EUsingCli(t *testing.T) {
 		t.Fatalf("Failed to create Pipeline Resource `%s`: %s", tePipelineGitResourceName, err)
 	}
 
+	t.Logf("Creating Task  %s", TaskName1)
+	if _, err := c.TaskClient.Create(getCreateFileTask(TaskName1, namespace)); err != nil {
+		t.Fatalf("Failed to create Task Resource `%s`: %s", TaskName1, err)
+	}
+
+	t.Logf("Creating Task  %s", TaskName2)
+	if _, err := c.TaskClient.Create(getReadFileTask(TaskName2, namespace)); err != nil {
+		t.Fatalf("Failed to create Task Resource `%s`: %s", TaskName2, err)
+	}
+
+	t.Logf("Create Pipeline %s", tePipelineName)
+	if _, err := c.PipelineClient.Create(getPipeline(tePipelineName, namespace, TaskName1, TaskName2)); err != nil {
+		t.Fatalf("Failed to create pipeline `%s`: %s", tePipelineName, err)
+	}
+
+	time.Sleep(1 * time.Second)
+
+	run := Prepare(t)
+
+	t.Run("Get list of Pipelines from namespace  "+namespace, func(t *testing.T) {
+
+		res := icmd.RunCmd(run("pipelines", "list", "-n", namespace))
+
+		expected := CreateTemplateForPipelineListWithTestData(t, c, map[int]interface{}{
+			0: &PipelinesListData{
+				Name:   tePipelineName,
+				Status: "---",
+			},
+		})
+
+		res.Assert(t, icmd.Expected{
+			ExitCode: 0,
+			Err:      icmd.None,
+		})
+		if d := cmp.Diff(expected, res.Stdout()); d != "" {
+			t.Errorf("Unexpected output mismatch: \n%s\n", d)
+		}
+	})
+	// Bug to fix
+	t.Run("Get list of pipelines from other namespace [default] should throw Error", func(t *testing.T) {
+
+		res := icmd.RunCmd(run("pipelines", "list", "-n", "default"))
+
+		res.Assert(t, icmd.Expected{
+			ExitCode: 0,
+			Out:      "No pipelines\n",
+			Err:      icmd.None,
+		})
+	})
+
+	t.Run("Validate pipelines format for -o (output) flag, as Json Path", func(t *testing.T) {
+
+		res := icmd.RunCmd(run("pipelines", "list", "-n", namespace,
+			`-o=jsonpath={range.items[*]}{.metadata.name}{"\n"}{end}`))
+
+		expected := CreateTemplateResourcesForOutputpath(
+			GetPipelineListWithTestData(t, c,
+				map[int]interface{}{
+					0: &PipelinesListData{
+						Name:   tePipelineName,
+						Status: "---",
+					},
+				}))
+
+		res.Assert(t, icmd.Expected{
+			ExitCode: 0,
+			Err:      icmd.None,
+		})
+
+		if d := cmp.Diff(expected, res.Stdout()); d != "" {
+			t.Errorf("Unexpected output mismatch: \n%s\n", d)
+		}
+	})
+
+	t.Run("Pipeline json Schema validation with -o (output) flag, as Json ", func(t *testing.T) {
+		res := icmd.RunCmd(run("pipelines", "list", "-n", namespace, "-o", "json"))
+
+		res.Assert(t, icmd.Expected{
+			ExitCode: 0,
+			Err:      icmd.None,
+		})
+		err := json.Unmarshal([]byte(res.Stdout()), &v1alpha1.PipelineList{})
+		if err != nil {
+			log.Fatalf("error: %v", err)
+		}
+	})
+
+	t.Run("Validate Pipeline describe command in namespace "+namespace, func(t *testing.T) {
+		res := icmd.RunCmd(run("pipeline", "describe", tePipelineName, "-n", namespace))
+
+		res.Assert(t, icmd.Expected{
+			ExitCode: 0,
+			Err:      icmd.None,
+		})
+
+		expected := CreateTemplateForPipelinesDescribeWithTestData(t, c, tePipelineName,
+			map[int]interface{}{
+				0: &PipelineDescribeData{
+					Name: tePipelineName,
+					Resources: map[string]string{
+						"source-repo": "git",
+					},
+					Task: map[int]interface{}{
+						0: &TaskRefData{
+							TaskName: "first-create-file",
+							TaskRef:  TaskName1,
+							RunAfter: nil,
+						},
+						1: &TaskRefData{
+							TaskName: "then-check",
+							TaskRef:  TaskName2,
+							RunAfter: nil,
+						},
+					},
+					Runs: map[string]string{},
+				},
+			})
+		if d := cmp.Diff(expected, res.Stdout()); d != "" {
+			t.Errorf("Unexpected output mismatch: \n%s\n", d)
+		}
+	})
+
+	vars := make(map[string]interface{})
+	var pipelineGeneratedName string
+	
+
+	t.Run("Start Pipeline Run using pipeline start command with SA as default ", func(t *testing.T) {
+
+		res := icmd.RunCmd(run("pipeline", "start", tePipelineName,
+			"-r=source-repo="+tePipelineGitResourceName,
+			"-s=default",
+			"-n", namespace))
+
+		time.Sleep(1 * time.Second)
+
+		pipelineGeneratedName = GetPipelineRunListWithName(c, tePipelineName).Items[0].Name
+		vars["Element"] = pipelineGeneratedName
+		expected := ProcessString(`Pipelinerun started: {{.Element}}
+
+In order to track the pipelinerun progress run:
+tkn pipelinerun logs -n `+namespace+` {{.Element}} -f
+`, vars)
+
+		res.Assert(t, icmd.Expected{
+			ExitCode: 0,
+			Out:      expected,
+			Err:      icmd.None,
+		})
+	})
+
+	WaitForPipelineRunToComplete(c, pipelineGeneratedName, namespace)
+
+	time.Sleep(1 * time.Second)
+
+	t.Run("Validate Pipeline describe command in namespace "+namespace+" after PipelineRun completed successfully", func(t *testing.T) {
+		res := icmd.RunCmd(run("pipeline", "describe", tePipelineName, "-n", namespace))
+
+		res.Assert(t, icmd.Expected{
+			ExitCode: 0,
+			Err:      icmd.None,
+		})
+
+		expected := CreateTemplateForPipelinesDescribeWithTestData(t, c, tePipelineName,
+			map[int]interface{}{
+				0: &PipelineDescribeData{
+					Name: tePipelineName,
+					Resources: map[string]string{
+						"source-repo": "git",
+					},
+					Task: map[int]interface{}{
+						0: &TaskRefData{
+							TaskName: "first-create-file",
+							TaskRef:  TaskName1,
+							RunAfter: nil,
+						},
+						1: &TaskRefData{
+							TaskName: "then-check",
+							TaskRef:  TaskName2,
+							RunAfter: nil,
+						},
+					},
+					Runs: map[string]string{
+						pipelineGeneratedName: "Succeeded",
+					},
+				},
+			})
+		if d := cmp.Diff(expected, res.Stdout()); d != "" {
+			t.Errorf("Unexpected output mismatch: \n%s\n", d)
+		}
+	})
+
+	t.Run("Validate interactive pipeline logs, with  follow mode (-f) ", func(t *testing.T) {
+
+		td := &InteractiveTestData{
+			Cmd: []string{"pipeline", "logs", "-f", "-n", namespace},
+			OpsVsExpected: []interface{}{
+				&Operation{
+					Ops:      string(terminal.KeyEnter),
+					Expected: tePipelineName,
+				},
+			},
+
+			ExpectedLogs: []string{`.*(\[first-create-file : read-docs-old\].*/workspace/damnworkspace/docs/README.md).*`, `.*(\[then-check : read\] some stuff).*`},
+		}
+		RunInteractivePipelineLogs(t, namespace, td)
+	})
+}
+
+func TestPipelinesNegativeE2EUsingCli(t *testing.T) {
+	t.Parallel()
+	c, namespace := Setup(t)
+	knativetest.CleanupOnInterrupt(func() { TearDown(t, c, namespace) }, t.Logf)
+	defer TearDown(t, c, namespace)
+
 	t.Logf("Creating (Fault) Git PipelineResource %s", tePipelineFaultGitResourceName)
 	if _, err := c.PipelineResourceClient.Create(getFaultGitResource(tePipelineFaultGitResourceName, namespace)); err != nil {
 		t.Fatalf("Failed to create fault Pipeline Resource `%s`: %s", tePipelineFaultGitResourceName, err)
@@ -166,21 +380,19 @@ func TestPipelinesE2EUsingCli(t *testing.T) {
 	})
 
 	vars := make(map[string]interface{})
-	var pipelineGeneratedName []string
-	var prnamegenerated string
-	var pipelineRunStatus []string
+	var pipelineGeneratedName string
 
 	t.Run("Start Pipeline Run using pipeline start command with SA as default ", func(t *testing.T) {
 
 		res := icmd.RunCmd(run("pipeline", "start", tePipelineName,
-			"-r=source-repo=skaffold-git",
+			"-r=source-repo="+tePipelineFaultGitResourceName,
 			"-s=default",
 			"-n", namespace))
 
 		time.Sleep(1 * time.Second)
 
-		prnamegenerated = GetPipelineRunListWithName(c, tePipelineName).Items[0].Name
-		vars["Element"] = prnamegenerated
+		pipelineGeneratedName = GetPipelineRunListWithName(c, tePipelineName).Items[0].Name
+		vars["Element"] = pipelineGeneratedName
 		expected := ProcessString(`Pipelinerun started: {{.Element}}
 
 In order to track the pipelinerun progress run:
@@ -194,127 +406,47 @@ tkn pipelinerun logs -n `+namespace+` {{.Element}} -f
 		})
 	})
 
-	pipelineGeneratedName = append(pipelineGeneratedName, prnamegenerated)
-	pipelineRunStatus = append(pipelineRunStatus, "Succeeded")
+	WaitForPipelineRunToComplete(c, pipelineGeneratedName, namespace)
 
-	t.Run("Start Pipeline Run using pipeline start with falut gitResource, pipeline run status should be failed  ", func(t *testing.T) {
+	time.Sleep(1 * time.Second)
 
-		res := icmd.RunCmd(run("pipeline", "start", tePipelineName,
-			"-r=source-repo=skaffold-git-1",
-			"-s=default",
-			"-n", namespace))
-
-		time.Sleep(1 * time.Second)
+	t.Run("Validate Pipeline describe command in namespace "+namespace+" after PipelineRun completed successfully", func(t *testing.T) {
+		res := icmd.RunCmd(run("pipeline", "describe", tePipelineName, "-n", namespace))
 
 		res.Assert(t, icmd.Expected{
 			ExitCode: 0,
 			Err:      icmd.None,
 		})
+
+		expected := CreateTemplateForPipelinesDescribeWithTestData(t, c, tePipelineName,
+			map[int]interface{}{
+				0: &PipelineDescribeData{
+					Name: tePipelineName,
+					Resources: map[string]string{
+						"source-repo": "git",
+					},
+					Task: map[int]interface{}{
+						0: &TaskRefData{
+							TaskName: "first-create-file",
+							TaskRef:  TaskName1,
+							RunAfter: nil,
+						},
+						1: &TaskRefData{
+							TaskName: "then-check",
+							TaskRef:  TaskName2,
+							RunAfter: nil,
+						},
+					},
+					Runs: map[string]string{
+						pipelineGeneratedName: "Failed",
+					},
+				},
+			})
+		if d := cmp.Diff(expected, res.Stdout()); d != "" {
+			t.Errorf("Unexpected output mismatch: \n%s\n", d)
+		}
 	})
 
-	WaitForPipelineRunToComplete(c, prnamegenerated, namespace)
-
-	time.Sleep(1 * time.Second)
-
-	for _, pr := range GetPipelineRunList(c).Items {
-
-		if pipelineGeneratedName[0] != pr.Name {
-			pipelineGeneratedName = append(pipelineGeneratedName, pr.Name)
-			pipelineRunStatus = append(pipelineRunStatus, pr.Status.Conditions[0].Reason)
-		}
-
-	}
-
-	// t.Run("Validate Pipeline describe command in namespace "+namespace+" after PipelineRun completed successfully", func(t *testing.T) {
-	// 	res := icmd.RunCmd(run("pipeline", "describe", tePipelineName, "-n", namespace))
-
-	// 	res.Assert(t, icmd.Expected{
-	// 		ExitCode: 0,
-	// 		Err:      icmd.None,
-	// 	})
-
-	// 	expected := CreateTemplateForPipelinesDescribeWithTestData(t, c, tePipelineName,
-	// 		map[int]interface{}{
-	// 			0: &PipelineDescribeData{
-	// 				Name: tePipelineName,
-	// 				Resources: map[string]string{
-	// 					"source-repo": "git",
-	// 				},
-	// 				Task: map[int]interface{}{
-	// 					0: &TaskRefData{
-	// 						TaskName: "first-create-file",
-	// 						TaskRef:  TaskName1,
-	// 						RunAfter: nil,
-	// 					},
-	// 					1: &TaskRefData{
-	// 						TaskName: "then-check",
-	// 						TaskRef:  TaskName2,
-	// 						RunAfter: nil,
-	// 					},
-	// 				},
-	// 				Runs: map[string]string{
-	// 					pipelineGeneratedName[0]: pipelineRunStatus[0],
-	// 					pipelineGeneratedName[1]: pipelineRunStatus[1],
-	// 				},
-	// 			},
-	// 		})
-	// 	if d := cmp.Diff(expected, res.Stdout()); d != "" {
-	// 		expected := CreateTemplateForPipelinesDescribeWithTestData(t, c, tePipelineName,
-	// 			map[int]interface{}{
-	// 				0: &PipelineDescribeData{
-	// 					Name: tePipelineName,
-	// 					Resources: map[string]string{
-	// 						"source-repo": "git",
-	// 					},
-	// 					Task: map[int]interface{}{
-	// 						0: &TaskRefData{
-	// 							TaskName: "first-create-file",
-	// 							TaskRef:  TaskName1,
-	// 							RunAfter: nil,
-	// 						},
-	// 						1: &TaskRefData{
-	// 							TaskName: "then-check",
-	// 							TaskRef:  TaskName2,
-	// 							RunAfter: nil,
-	// 						},
-	// 					},
-	// 					Runs: map[string]string{
-	// 						pipelineGeneratedName[1]: pipelineRunStatus[1],
-	// 						pipelineGeneratedName[0]: pipelineRunStatus[0],
-	// 					},
-	// 				},
-	// 			})
-
-	// 		if d := cmp.Diff(expected, res.Stdout()); d != "" {
-	// 			t.Errorf("Unexpected output mismatch: \n%s\n", d)
-	// 		}
-
-	// 	}
-	// })
-
-	t.Run("Validate interactive pipeline logs, with  follow mode (-f) ", func(t *testing.T) {
-
-		td := &InteractiveTestData{
-			Cmd: []string{"pipeline", "logs", "-f", "-n", namespace},
-			OpsVsExpected: []interface{}{
-				&Operation{
-					Ops:      string(terminal.KeyEnter),
-					Expected: tePipelineName,
-				},
-				&Operation{
-					Ops:      string(terminal.KeyArrowDown),
-					Expected: pipelineGeneratedName[1],
-				},
-				&Operation{
-					Ops:      string(terminal.KeyEnter),
-					Expected: pipelineGeneratedName[0],
-				},
-			},
-
-			ExpectedLogs: []string{`.*(\[first-create-file : read-docs-old\].*/workspace/damnworkspace/docs/README.md).*`, `.*(\[then-check : read\] some stuff).*`},
-		}
-		RunInteractivePipelineLogs(t, namespace, td)
-	})
 }
 
 func TestDeletePipelinesE2EUsingCli(t *testing.T) {
@@ -466,3 +598,4 @@ func getPipelineRun(PipelineRunName string, namespace string, serviceAccount str
 			tb.PipelineRunResourceBinding("source-repo", tb.PipelineResourceBindingRef(pipelineResourceName)),
 		))
 }
+
