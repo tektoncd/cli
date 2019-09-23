@@ -26,6 +26,16 @@ func TestTaskRunCancel(t *testing.T) {
 			tb.TaskRunStatus(
 				tb.StatusCondition(apis.Condition{
 					Status: corev1.ConditionTrue,
+					Reason: resources.ReasonRunning,
+				}),
+			),
+		),
+		tb.TaskRun("taskrun-2", "ns",
+			tb.TaskRunLabel("tekton.dev/task", "failure-task"),
+			tb.TaskRunSpec(tb.TaskRunTaskRef("failure-task")),
+			tb.TaskRunStatus(
+				tb.StatusCondition(apis.Condition{
+					Status: corev1.ConditionTrue,
 					Reason: resources.ReasonSucceeded,
 				}),
 			),
@@ -38,7 +48,7 @@ func TestTaskRunCancel(t *testing.T) {
 			tb.TaskRunStatus(
 				tb.StatusCondition(apis.Condition{
 					Status: corev1.ConditionTrue,
-					Reason: resources.ReasonSucceeded,
+					Reason: resources.ReasonFailed,
 				}),
 			),
 		),
@@ -80,6 +90,13 @@ func TestTaskRunCancel(t *testing.T) {
 			input:     failures[0],
 			wantError: true,
 			want:      "failed to cancel taskrun \"failure-taskrun-1\": test error",
+		},
+		{
+			name:      "Failed canceling taskrun that succeeded",
+			command:   []string{"cancel", "taskrun-2", "-n", "ns"},
+			input:     seeds[0],
+			wantError: true,
+			want:      "failed to cancel taskrun taskrun-2: taskrun has already finished execution",
 		},
 	}
 
