@@ -392,8 +392,13 @@ gopkg.in/inf.v0
 gopkg.in/yaml.v2
 # gotest.tools v2.2.0+incompatible
 gotest.tools/assert
+<<<<<<< HEAD
 gotest.tools/icmd
 gotest.tools/assert/cmp
+=======
+gotest.tools/assert/cmp
+gotest.tools/icmd
+>>>>>>> Added PipelineRun e2e tests
 gotest.tools/internal/format
 gotest.tools/internal/source
 gotest.tools/internal/difflib

@@ -57,6 +57,30 @@ func TestPipelinesE2EUsingCli(t *testing.T) {
 
 	run := Prepare(t)
 
+<<<<<<< HEAD
+=======
+	t.Run("Get list of Tasks from namespace  "+namespace, func(t *testing.T) {
+		res := icmd.RunCmd(run("task", "list", "-n", namespace))
+
+		expected := CreateTemplateForTaskListWithTestData(t, c, map[int]interface{}{
+			0: &TaskData{
+				Name: TaskName2,
+			},
+			1: &TaskData{
+				Name: TaskName1,
+			},
+		})
+
+		res.Assert(t, icmd.Expected{
+			ExitCode: 0,
+			Err:      icmd.None,
+		})
+		if d := cmp.Diff(expected, res.Stdout()); d != "" {
+			t.Errorf("Unexpected output myismatch: \n%s\n", d)
+		}
+	})
+
+>>>>>>> Added PipelineRun e2e tests
 	t.Run("Get list of Pipelines from namespace  "+namespace, func(t *testing.T) {
 
 		res := icmd.RunCmd(run("pipelines", "list", "-n", namespace))
@@ -162,7 +186,10 @@ func TestPipelinesE2EUsingCli(t *testing.T) {
 
 	vars := make(map[string]interface{})
 	var pipelineGeneratedName string
+<<<<<<< HEAD
 	
+=======
+>>>>>>> Added PipelineRun e2e tests
 
 	t.Run("Start Pipeline Run using pipeline start command with SA as default ", func(t *testing.T) {
 
@@ -192,6 +219,34 @@ tkn pipelinerun logs -n `+namespace+` {{.Element}} -f
 
 	time.Sleep(1 * time.Second)
 
+<<<<<<< HEAD
+=======
+	t.Run("Get list of Taskruns from namespace  "+namespace, func(t *testing.T) {
+		time.Sleep(1 * time.Second)
+
+		res := icmd.RunCmd(run("taskrun", "list", "-n", namespace))
+
+		expected := CreateTemplateForTaskRunListWithTestData(t, c, map[int]interface{}{
+			0: &TaskRunData{
+				Name:   "output-pipeline-run-",
+				Status: "Succeeded",
+			},
+			1: &TaskRunData{
+				Name:   "output-pipeline-run-",
+				Status: "Succeeded",
+			},
+		})
+
+		res.Assert(t, icmd.Expected{
+			ExitCode: 0,
+			Err:      icmd.None,
+		})
+		if d := cmp.Diff(expected, res.Stdout()); d != "" {
+			t.Errorf("Unexpected output mismatch: \n%s\n", d)
+		}
+	})
+
+>>>>>>> Added PipelineRun e2e tests
 	t.Run("Validate Pipeline describe command in namespace "+namespace+" after PipelineRun completed successfully", func(t *testing.T) {
 		res := icmd.RunCmd(run("pipeline", "describe", tePipelineName, "-n", namespace))
 
@@ -560,6 +615,10 @@ func getCreateFileTask(taskname string, namespace string) *v1alpha1.Task {
 		tb.TaskOutputs(tb.OutputsResource("workspace", v1alpha1.PipelineResourceTypeGit)),
 		tb.Step("read-docs-old", "ubuntu", tb.StepCommand("/bin/bash"), tb.StepArgs("-c", "ls -la /workspace/damnworkspace/docs/README.md")),
 		tb.Step("write-new-stuff", "ubuntu", tb.StepCommand("bash"), tb.StepArgs("-c", "ln -s /workspace/damnworkspace /workspace/output/workspace && echo some stuff > /workspace/output/workspace/stuff")),
+<<<<<<< HEAD
+=======
+		//tb.Step("write-new-stuff", "ubuntu", tb.StepCommand("bash"), tb.StepArgs("-c", "echo some stuff > /workspace/damnworkspace/stuff")),
+>>>>>>> Added PipelineRun e2e tests
 	}
 
 	return tb.Task(taskname, namespace, tb.TaskSpec(taskSpecOps...))
@@ -598,4 +657,7 @@ func getPipelineRun(PipelineRunName string, namespace string, serviceAccount str
 			tb.PipelineRunResourceBinding("source-repo", tb.PipelineResourceBindingRef(pipelineResourceName)),
 		))
 }
+<<<<<<< HEAD
 
+=======
+>>>>>>> Added PipelineRun e2e tests

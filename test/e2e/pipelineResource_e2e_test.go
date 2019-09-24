@@ -73,7 +73,10 @@ func TestPipelineResourceDeleteE2EUsingCli(t *testing.T) {
 			Err:      icmd.None,
 			Out:      "Are you sure you want to delete pipelineresource \"" + PipelineResourceName[2] + "\" (y/n): PipelineResource deleted: " + PipelineResourceName[2] + "\n",
 		})
+<<<<<<< HEAD
 
+=======
+>>>>>>> Added PipelineRun e2e tests
 	})
 }
 

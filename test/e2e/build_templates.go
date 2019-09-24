@@ -21,6 +21,7 @@ import (
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 )
 
+<<<<<<< HEAD
 const describeTemplateForPipelinesRun = `Name:	{{ .PipelineRun.Name }}
 Namespace:	{{ .PipelineRun.Namespace }}
 Pipeline Ref:	{{ .PipelineRun.Spec.PipelineRef.Name }}
@@ -148,6 +149,8 @@ func (s taskrunList) Less(i, j int) bool {
 	return s[j].Status.StartTime.Before(s[i].Status.StartTime)
 }
 
+=======
+>>>>>>> Added PipelineRun e2e tests
 func DescribeTemplateForTaskList(cs *Clients) string {
 
 	const (
@@ -178,6 +181,7 @@ func DescribeTemplateForTaskList(cs *Clients) string {
 	return tmplBytes.String()
 }
 
+<<<<<<< HEAD
 // const describeTemplateForTaskRunList = `{{- $l := len .Taskrun.Items }}{{ if eq $l 0 }}
 // No taskruns found
 // {{- else }}
@@ -188,6 +192,8 @@ func DescribeTemplateForTaskList(cs *Clients) string {
 // {{- end }}
 // `
 
+=======
+>>>>>>> Added PipelineRun e2e tests
 func DescribeTemplateForTaskRunList(cs *Clients) string {
 
 	const (
@@ -256,6 +262,7 @@ func DescribeTemplateForPipelineResourceList(cs *Clients) string {
 	return tmplBytes.String()
 }
 
+<<<<<<< HEAD
 func DescribeTemplateForPipelineRunList(cs *Clients) string {
 
 	const (
@@ -289,6 +296,8 @@ func DescribeTemplateForPipelineRunList(cs *Clients) string {
 	return tmplBytes.String()
 }
 
+=======
+>>>>>>> Added PipelineRun e2e tests
 func CreateTemplateResourcesForOutputpath(obj interface{}) string {
 	const (
 		emptyMsg = ""
@@ -1235,7 +1244,12 @@ NAME	STARTED	DURATION	STATUS
 `
 
 func CreateTemplateForPipelinesDescribeWithTestData(t *testing.T, cs *Clients, pname string, td map[int]interface{}) string {
+<<<<<<< HEAD
 	t.Logf("validating Pipeline : %s describe command\n", pname)
+=======
+
+	t.Helper()
+>>>>>>> Added PipelineRun e2e tests
 	clock := clockwork.NewFakeClockAt(time.Now())
 
 	pipeline := GetPipelineWithTestData(t, cs, pname, td)
@@ -1276,7 +1290,11 @@ func CreateTemplateForPipelinesDescribeWithTestData(t *testing.T, cs *Clients, p
 }
 
 func GetPipelineWithTestData(t *testing.T, c *Clients, name string, td map[int]interface{}) *v1alpha1.Pipeline {
+<<<<<<< HEAD
 
+=======
+	t.Helper()
+>>>>>>> Added PipelineRun e2e tests
 	pipeline := GetPipeline(c, name)
 
 	for _, p := range td {
@@ -1339,6 +1357,10 @@ func GetPipelineWithTestData(t *testing.T, c *Clients, name string, td map[int]i
 }
 
 func GetPipelineRunListWithNameAndTestData(t *testing.T, c *Clients, pname string, td map[int]interface{}) *v1alpha1.PipelineRunList {
+<<<<<<< HEAD
+=======
+	t.Helper()
+>>>>>>> Added PipelineRun e2e tests
 	opts := metav1.ListOptions{
 		LabelSelector: fmt.Sprintf("tekton.dev/pipeline=%s", pname),
 	}
@@ -1376,3 +1398,335 @@ func GetPipelineRunListWithNameAndTestData(t *testing.T, c *Clients, pname strin
 
 	return pipelineRunList
 }
+<<<<<<< HEAD
+=======
+
+// ------------------------ PR -------------------------------
+
+type PipelineRunListData struct {
+	Name   string
+	Status string
+}
+
+func CreateTemplateForPipelineRunListWithTestData(t *testing.T, cs *Clients, pipeline string, td map[int]interface{}) string {
+	t.Helper()
+	const (
+		emptyMsg = "No pipelineruns found"
+		header   = "NAME\tSTARTED\tDURATION\tSTATUS\t"
+		body     = "%s\t%s\t%s\t%s\t\n"
+	)
+
+	log.Print("validating PipelineRun List command\n")
+	clock := clockwork.NewFakeClockAt(time.Now())
+	pipelinerunlst := GetSortedPipelineRunListWithTestData(t, cs, pipeline, td)
+
+	var tmplBytes bytes.Buffer
+	w := tabwriter.NewWriter(&tmplBytes, 0, 5, 3, ' ', tabwriter.TabIndent)
+
+	if len(pipelinerunlst.Items) == 0 {
+		fmt.Fprintln(w, emptyMsg)
+		w.Flush()
+		return tmplBytes.String()
+	}
+	fmt.Fprintln(w, header)
+	for _, pr := range pipelinerunlst.Items {
+		fmt.Fprintf(w, body,
+			pr.Name,
+			formatted.Age(pr.Status.StartTime, clock),
+			formatted.Duration(pr.Status.StartTime, pr.Status.CompletionTime),
+			formatted.Condition(pr.Status.Conditions),
+		)
+	}
+	w.Flush()
+	return tmplBytes.String()
+}
+
+func GetSortedPipelineRunListWithTestData(t *testing.T, c *Clients, pipeline string, td map[int]interface{}) *v1alpha1.PipelineRunList {
+	t.Helper()
+	options := metav1.ListOptions{
+		LabelSelector: fmt.Sprintf("tekton.dev/pipeline=%s", pipeline),
+	}
+
+	pipelineRunList, err := c.PipelineRunClient.List(options)
+	// 	require.Nil(t, err)
+	if err != nil {
+		log.Fatalf("Couldn't get expected pipelineRunList  %s", err)
+	}
+
+	if len(pipelineRunList.Items) == 0 {
+		return pipelineRunList
+	}
+
+	if len(pipelineRunList.Items) != len(td) {
+		t.Error("Lenght of pipeline run list and Testdata provided not matching")
+	}
+
+	for i, p := range td {
+		switch p.(type) {
+		case *PipelineRunListData:
+			pipelineRunList.Items[i].Name = p.(*PipelineRunListData).Name
+			pipelineRunList.Items[i].Status.Conditions[0].Reason = p.(*PipelineRunListData).Status
+		default:
+			t.Error("Test Data Format Didn't Match please do check Test Data which you passing")
+		}
+	}
+
+	prslen := len(pipelineRunList.Items)
+
+	if prslen != 0 {
+		pipelineRunList.Items = SortPipelineRunsByStartTime(pipelineRunList.Items)
+	}
+
+	return pipelineRunList
+}
+
+func SortPipelineRunsByStartTime(prs []v1alpha1.PipelineRun) []v1alpha1.PipelineRun {
+	sort.Slice(prs, func(i, j int) bool {
+		if prs[j].Status.StartTime == nil {
+			return false
+		}
+
+		if prs[i].Status.StartTime == nil {
+			return true
+		}
+		return prs[j].Status.StartTime.Before(prs[i].Status.StartTime)
+	})
+
+	return prs
+}
+
+const describeTemplateForPipelinesRun = `Name:	{{ .PipelineRun.Name }}
+Namespace:	{{ .PipelineRun.Namespace }}
+Pipeline Ref:	{{ .PipelineRun.Spec.PipelineRef.Name }}
+{{- if ne .PipelineRun.Spec.ServiceAccount "" }}
+Service Account:	{{ .PipelineRun.Spec.ServiceAccount }}
+{{- end }}
+
+Status
+STARTED	DURATION	STATUS
+{{ formatAge .PipelineRun.Status.StartTime  .Params }}	{{ formatDuration .PipelineRun.Status.StartTime .PipelineRun.Status.CompletionTime }}	{{ formatCondition .PipelineRun.Status.Conditions }}
+{{- $msg := hasFailed .PipelineRun -}}
+{{-  if ne $msg "" }}
+
+Message
+{{ $msg }}
+{{- end }}
+
+Resources
+{{- $l := len .PipelineRun.Spec.Resources }}{{ if eq $l 0 }}
+No resources
+{{- else }}
+NAME	RESOURCE REF
+{{- range $i, $r := .PipelineRun.Spec.Resources }}
+{{$r.Name }}	{{ $r.ResourceRef.Name }}
+{{- end }}
+{{- end }}
+
+Params
+{{- $l := len .PipelineRun.Spec.Params }}{{ if eq $l 0 }}
+No params
+{{- else }}
+NAME	VALUE
+{{- range $i, $p := .PipelineRun.Spec.Params }}
+{{- if eq $p.Value.Type "string" }}
+{{ $p.Name }}	{{ $p.Value.StringVal }}
+{{- else }}
+{{ $p.Name }}	{{ $p.Value.ArrayVal }}
+{{- end }}
+{{- end }}
+{{- end }}
+
+Taskruns
+{{- $l := len .TaskrunList }}{{ if eq $l 0 }}
+No taskruns
+{{- else }}
+NAME	TASK NAME	STARTED	DURATION	STATUS
+{{- range $taskrun := .TaskrunList }}
+{{ $taskrun.TaskrunName }}	{{ $taskrun.PipelineTaskName }}	{{ formatAge $taskrun.Status.StartTime $.Params }}	{{ formatDuration $taskrun.Status.StartTime $taskrun.Status.CompletionTime }}	{{ formatCondition $taskrun.Status.Conditions }}
+{{- end }}
+{{- end }}
+`
+
+func CreateDescribeTemplateForPipelineRunWithTestData(t *testing.T, cs *Clients, prname string, td map[int]interface{}) string {
+	t.Helper()
+
+	clock := clockwork.NewFakeClockAt(time.Now())
+	pipelinerun := GetPipelineRunWithTestData(t, cs, prname, td)
+
+	var trl taskrunList
+
+	if len(pipelinerun.Status.TaskRuns) != 0 {
+		trl = newTaskrunListFromMapWithTestData(t, pipelinerun.Status.TaskRuns, td)
+		sort.Sort(trl)
+	}
+
+	var data = struct {
+		PipelineRun *v1alpha1.PipelineRun
+		Params      clockwork.Clock
+		TaskrunList taskrunList
+	}{
+		PipelineRun: pipelinerun,
+		Params:      clock,
+		TaskrunList: trl,
+	}
+
+	funcMap := template.FuncMap{
+		"formatAge":       formatted.Age,
+		"formatDuration":  formatted.Duration,
+		"formatCondition": formatted.Condition,
+		"hasFailed":       hasFailed,
+	}
+
+	tmp := template.Must(template.New("Describe PipelineRun").Funcs(funcMap).Parse(describeTemplateForPipelinesRun))
+
+	var tmplBytes bytes.Buffer
+
+	w := tabwriter.NewWriter(&tmplBytes, 0, 5, 3, ' ', tabwriter.TabIndent)
+
+	err1 := tmp.Execute(w, data)
+	if err1 != nil {
+		panic(err1)
+	}
+
+	w.Flush()
+
+	return tmplBytes.String()
+}
+
+func hasFailed(pr *v1alpha1.PipelineRun) string {
+	if pr.Status.Conditions[0].Status == corev1.ConditionFalse {
+		return pr.Status.Conditions[0].Message
+	}
+	return ""
+}
+
+type taskrunList []tkr
+
+type tkr struct {
+	TaskrunName string
+	*v1alpha1.PipelineRunTaskRunStatus
+}
+
+func (s taskrunList) Len() int      { return len(s) }
+func (s taskrunList) Swap(i, j int) { s[i], s[j] = s[j], s[i] }
+func (s taskrunList) Less(i, j int) bool {
+	return s[j].Status.StartTime.Before(s[i].Status.StartTime)
+}
+
+type PipelineRunDescribeData struct {
+	Name            string
+	Namespace       string
+	Pipeline_Ref    string
+	Service_Account string
+	Status          string
+	FailureMessage  string
+	Resources       map[int]interface{}
+	Params          map[string]interface{}
+	TaskRuns        map[int]interface{}
+}
+
+type ResourceRefData struct {
+	ResourceName string
+	ResourceRef  string
+}
+
+type TaskRunRefData struct {
+	TaskRunName string
+	TaskRef     string
+	Status      string
+}
+
+func newTaskrunListFromMapWithTestData(t *testing.T, statusMap map[string]*v1alpha1.PipelineRunTaskRunStatus, td map[int]interface{}) taskrunList {
+	t.Helper()
+	var trl taskrunList
+
+	for _, tr := range td {
+		switch tr.(type) {
+		case *PipelineRunDescribeData:
+			if len(tr.(*PipelineRunDescribeData).TaskRuns) == len(statusMap) {
+				for _, tref := range tr.(*PipelineRunDescribeData).TaskRuns {
+					switch tref.(type) {
+
+					case *TaskRunRefData:
+						statusMap[tref.(*TaskRunRefData).TaskRunName].Status.Conditions[0].Reason = tref.(*TaskRunRefData).Status
+						trl = append(trl, tkr{
+							tref.(*TaskRunRefData).TaskRunName,
+							statusMap[tref.(*TaskRunRefData).TaskRunName],
+						})
+					default:
+						t.Error("TaskRunRef Test Data Format Didn't Match please do check Test Data which you passing")
+					}
+
+				}
+
+			} else {
+				t.Error("Test data length didnt match with Real data")
+			}
+
+		default:
+			t.Error("Test Data Format Didn't Match please do recheck Test Data")
+		}
+	}
+
+	return trl
+}
+
+func GetPipelineRunWithTestData(t *testing.T, c *Clients, name string, td map[int]interface{}) *v1alpha1.PipelineRun {
+	t.Helper()
+	pipelineRun := GetPipelineRun(c, name)
+
+	for _, tr := range td {
+		switch tr.(type) {
+		case *PipelineRunDescribeData:
+			pipelineRun.Name = tr.(*PipelineRunDescribeData).Name
+			pipelineRun.Namespace = tr.(*PipelineRunDescribeData).Namespace
+			pipelineRun.Spec.PipelineRef.Name = tr.(*PipelineRunDescribeData).Pipeline_Ref
+			pipelineRun.Spec.ServiceAccount = tr.(*PipelineRunDescribeData).Service_Account
+			pipelineRun.Status.Conditions[0].Reason = tr.(*PipelineRunDescribeData).Status
+			if tr.(*PipelineRunDescribeData).FailureMessage != "" {
+				pipelineRun.Status.Conditions[0].Message = tr.(*PipelineRunDescribeData).FailureMessage
+			}
+			if len(tr.(*PipelineRunDescribeData).Resources) == len(pipelineRun.Spec.Resources) {
+				for i, rref := range tr.(*PipelineRunDescribeData).Resources {
+
+					switch rref.(type) {
+					case *ResourceRefData:
+						pipelineRun.Spec.Resources[i].Name = rref.(*ResourceRefData).ResourceName
+						pipelineRun.Spec.Resources[i].ResourceRef.Name = rref.(*ResourceRefData).ResourceRef
+					default:
+						t.Error("ResourceRef Test Data Format Didn't Match please do check Test Data which you passing")
+					}
+				}
+
+			} else {
+				t.Error("PipelineRun Resources length didnt match with test data")
+			}
+
+			counter := 0
+
+			if len(tr.(*PipelineRunDescribeData).Params) == len(pipelineRun.Spec.Params) {
+				for ipname, ipvalue := range tr.(*PipelineRunDescribeData).Params {
+					pipelineRun.Spec.Params[counter].Name = ipname
+					switch ipvalue.(type) {
+					case *string:
+						pipelineRun.Spec.Params[counter].Value.StringVal = ipvalue.(string)
+						counter++
+					case *[]string:
+						pipelineRun.Spec.Params[counter].Value.ArrayVal = ipvalue.([]string)
+						counter++
+					default:
+						t.Error("PipelineRun  parameter and test data type mismatch ")
+					}
+				}
+			} else {
+				t.Error("PipelineRun Params length didnt match with test data")
+			}
+
+		default:
+			t.Error("Test Data Format Didn't Match please do check Test Data which you passing")
+		}
+	}
+
+	return pipelineRun
+}
+>>>>>>> Added PipelineRun e2e tests

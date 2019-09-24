@@ -1,5 +1,8 @@
+<<<<<<< HEAD
 
 
+=======
+>>>>>>> Added PipelineRun e2e tests
 // Copyright © 2018 The Tekton Authors
 //
 // Licensed under the Apache License, Version 2.0 (the "License");

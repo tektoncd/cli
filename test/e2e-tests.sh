@@ -38,6 +38,7 @@ ci_run && {
 
 kubectl get crds|grep tekton\\.dev && fail_test "TektonCD CRDS should not be installed, you should reset them before each runs"
 
+<<<<<<< HEAD
 
 
 install_pipeline_crd
@@ -49,5 +50,17 @@ ci_run && {
   go_test_e2e ./test/e2e || failed=1
   (( failed )) && fail_test
 }
+=======
+
+install_pipeline_crd
+
+ci_run && {
+  header "Running Go e2e tests"
+  failed=0
+  go_test_e2e ./test/e2e/ || failed=1
+  (( failed )) && fail_test
+}
+
+>>>>>>> Added PipelineRun e2e tests
 
 success

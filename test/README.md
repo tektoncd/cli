@@ -18,17 +18,22 @@ Unit tests live side by side with the code they are testing and can be run with:
 go test ./...
 ```
 
-By default `go test` will not run [the end to end tests](#end-to-end-tests),
-which need `-tags=e2e` to be enabled.
 
 
+<<<<<<< HEAD
 ## End to end tests
 
+=======
+>>>>>>> Added PipelineRun e2e tests
 To run end to end tests, you will need to have a running Tekton
 pipeline deployed on your cluster, see [Install Pipeline](../DEVELOPMENT.md#install-pipeline)
 
 End to end tests live in e2e directory. To run these tests, you must provide
+<<<<<<< HEAD
 `go` with `-tags=e2e`. By default the tests run against your current kubeconfig
+=======
+`go` with `--tags=e2e`. By default the tests run against your current kubeconfig
+>>>>>>> Added PipelineRun e2e tests
 context, but you can change that and other settings with [the flags](#flags):
 
 ```shell
