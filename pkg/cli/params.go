@@ -15,6 +15,8 @@
 package cli
 
 import (
+	"net/http"
+
 	"k8s.io/client-go/rest"
 
 	"github.com/fatih/color"
@@ -56,6 +58,13 @@ func (p *TektonParams) kubeClient(config *rest.Config) (k8s.Interface, error) {
 	return k8scs, nil
 }
 
+func (p *TektonParams) httpClient(config *rest.Config) *http.Client {
+	client := &http.Client{
+		Timeout: config.Timeout,
+	}
+	return client
+}
+
 func (p *TektonParams) Clients() (*Clients, error) {
 	if p.clients != nil {
 		return p.clients, nil
@@ -76,9 +85,12 @@ func (p *TektonParams) Clients() (*Clients, error) {
 		return nil, err
 	}
 
+	httpClient := p.httpClient(config)
+
 	p.clients = &Clients{
-		Tekton: tekton,
-		Kube:   kube,
+		Tekton:     tekton,
+		Kube:       kube,
+		HTTPClient: httpClient,
 	}
 
 	return p.clients, nil

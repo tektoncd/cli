@@ -16,6 +16,7 @@ package cli
 
 import (
 	"io"
+	"net/http"
 
 	"github.com/jonboulle/clockwork"
 	"github.com/tektoncd/pipeline/pkg/client/clientset/versioned"
@@ -29,8 +30,9 @@ type Stream struct {
 }
 
 type Clients struct {
-	Tekton versioned.Interface
-	Kube   k8s.Interface
+	Tekton     versioned.Interface
+	Kube       k8s.Interface
+	HTTPClient *http.Client
 }
 
 // Params interface provides

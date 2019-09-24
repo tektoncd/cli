@@ -15,45 +15,20 @@
 package task
 
 import (
-	"bytes"
 	"encoding/json"
 	"fmt"
-	"io/ioutil"
-	"log"
-	"net/http"
 	"path/filepath"
-	"strings"
-	"time"
 
-	"github.com/ghodss/yaml"
 	"github.com/spf13/cobra"
 	"github.com/tektoncd/cli/pkg/cli"
+	"github.com/tektoncd/cli/pkg/helper/file"
 	"github.com/tektoncd/pipeline/pkg/apis/pipeline/v1alpha1"
 	v1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	cliopts "k8s.io/cli-runtime/pkg/genericclioptions"
 )
 
-type Client struct {
-	httpClient *http.Client
-}
-
-type Option func(*Client)
-
 type createOptions struct {
 	from string
-}
-
-func NewClient(timeout time.Duration, options ...Option) *Client {
-	client := Client{
-		httpClient: &http.Client{
-			Timeout: timeout,
-		},
-	}
-
-	for i := range options {
-		options[i](&client)
-	}
-	return &client
 }
 
 func createCommand(p cli.Params) *cobra.Command {
@@ -93,7 +68,7 @@ func createTask(s *cli.Stream, p cli.Params, path string) error {
 		return fmt.Errorf("failed to create tekton client")
 	}
 
-	task, err := loadTask(path)
+	task, err := loadTask(p, path)
 	if err != nil {
 		return err
 	}
@@ -113,51 +88,8 @@ func createTask(s *cli.Stream, p cli.Params, path string) error {
 	return nil
 }
 
-func loadFileContent(target string, client *Client) ([]byte, error) {
-	var content []byte
-	var err error
-	if strings.HasSuffix(target, ".yaml") || strings.HasSuffix(target, ".yml") {
-		if strings.HasPrefix(target, "http") {
-			content, err = client.getRemoteContent(target)
-		} else {
-			content, err = ioutil.ReadFile(target)
-		}
-		if err != nil {
-			return nil, err
-		}
-		content, err = yaml.YAMLToJSON(content)
-		if err != nil {
-			return nil, err
-		}
-	} else {
-		return nil, fmt.Errorf("does not support such extension for %s", target)
-	}
-	return content, nil
-}
-
-func (client *Client) getRemoteContent(url string) ([]byte, error) {
-	resp, err := client.httpClient.Get(url)
-	defer func() {
-		err := resp.Body.Close()
-		if err != nil {
-			log.Fatal(err)
-		}
-	}()
-	if err != nil {
-		return nil, err
-	}
-	buf := new(bytes.Buffer)
-	_, err = buf.ReadFrom(resp.Body)
-	if err != nil {
-		return nil, err
-	}
-	content := buf.Bytes()
-	return content, nil
-}
-
-func loadTask(target string) (*v1alpha1.Task, error) {
-	client := NewClient(time.Duration(3 * time.Second))
-	content, err := loadFileContent(target, client)
+func loadTask(p cli.Params, target string) (*v1alpha1.Task, error) {
+	content, err := file.LoadFileContent(p, target, file.IsYamlFile())
 	if err != nil {
 		return nil, err
 	}
