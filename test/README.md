@@ -7,7 +7,7 @@ To run tests:
 go test ./...
 
 # Integration tests (against your current kube cluster)
-go test -v -count=1 -tags=e2e ./test
+go test -v -count=1 --tags=e2e ./test
 ```
 
 ## Unit tests
@@ -20,25 +20,18 @@ go test ./...
 
 
 
-<<<<<<< HEAD
 ## End to end tests
 
-=======
->>>>>>> Added PipelineRun e2e tests
 To run end to end tests, you will need to have a running Tekton
 pipeline deployed on your cluster, see [Install Pipeline](../DEVELOPMENT.md#install-pipeline)
 
 End to end tests live in e2e directory. To run these tests, you must provide
-<<<<<<< HEAD
-`go` with `-tags=e2e`. By default the tests run against your current kubeconfig
-=======
 `go` with `--tags=e2e`. By default the tests run against your current kubeconfig
->>>>>>> Added PipelineRun e2e tests
 context, but you can change that and other settings with [the flags](#flags):
 
 ```shell
-go test -v -count=1 -tags=e2e -timeout=20m github.com/tektoncd/cli/test/e2e 
-go test -v -count=1 -tags=e2e -timeout=20m github.com/tektoncd/cli/test/e2e  --kubeconfig ~/special/kubeconfig --cluster myspecialcluster
+go test -v -count=1 --tags=e2e -timeout=20m github.com/tektoncd/cli/test/e2e 
+go test -v -count=1 --tags=e2e -timeout=20m github.com/tektoncd/cli/test/e2e  --kubeconfig ~/special/kubeconfig --cluster myspecialcluster
 ```
 Its Runs all tests in parallel and each test runs on its own namespace(testcli-*)
 
@@ -55,7 +48,7 @@ go get -u github.com/jstemmer/go-junit-report
 Command to Execute to generate .xml file at runtime
 
 ```shell
-go test -v -count=1 -tags=e2e -timeout=20m github.com/tektoncd/cli/test/e2e 2>&1 |  go-junit-report > <path_to_create_junit.xml>/junit.xml
+go test -v -count=1 --tags=e2e -timeout=20m github.com/tektoncd/cli/test/e2e 2>&1 |  go-junit-report > <path_to_create_junit.xml>/junit.xml
 
 ```
 
@@ -82,7 +75,7 @@ against, i.e. override
 [your environment variables](/DEVELOPMENT.md#environment-setup):
 
 ```bash
-go test -v -tags=e2e -count=1 ./test/e2e --kubeconfig ~/special/kubeconfig --cluster myspecialcluster
+go test -v --tags=e2e -count=1 ./test/e2e --kubeconfig ~/special/kubeconfig --cluster myspecialcluster
 ```
 
 ### One test case
@@ -91,8 +84,8 @@ To run one e2e test case, e.g. TestTaskRun, use
 [the `-run` flag with `go test`](https://golang.org/cmd/go/#hdr-Testing_flags):
 
 ```shell
-go test -v -count=1 -tags=e2e -timeout=20m github.com/tektoncd/cli/test/e2e -run ^TestTaskRune2eUsingCli$
-go test -v -count=1 -tags=e2e -timeout=20m github.com/tektoncd/cli/test/e2e  --kubeconfig ~/special/kubeconfig --cluster myspecialcluster -run ^TestTaskRune2eUsingCli$
+go test -v -count=1 --tags=e2e -timeout=20m github.com/tektoncd/cli/test/e2e -run ^TestTaskRune2eUsingCli$
+go test -v -count=1 --tags=e2e -timeout=20m github.com/tektoncd/cli/test/e2e  --kubeconfig ~/special/kubeconfig --cluster myspecialcluster -run ^TestTaskRune2eUsingCli$
 ```
 
 ### Smoke test case
@@ -105,7 +98,7 @@ End to end tests live in e2e directory. To run these tests, you must provide
 context, but you can change that and other settings with [the flags](#flags):
 
 ```shell
-go test -v -count=1 -tags=smoke -timeout=20m github.com/tektoncd/cli/test/e2e 
-go test -v -count=1 -tags=smoke -timeout=20m github.com/tektoncd/cli/test/e2e  --kubeconfig ~/special/kubeconfig --cluster myspecialcluster
+go test -v -count=1 --tags=smoke -timeout=20m github.com/tektoncd/cli/test/e2e 
+go test -v -count=1 --tags=smoke -timeout=20m github.com/tektoncd/cli/test/e2e  --kubeconfig ~/special/kubeconfig --cluster myspecialcluster
 ```
 
