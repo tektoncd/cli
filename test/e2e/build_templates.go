@@ -496,7 +496,7 @@ Service Account:	{{ .TaskRun.Spec.ServiceAccount }}
 
 Status
 STARTED 	DURATION 	STATUS
-{{ formatAge .TaskRun.Status.StartTime  .Params}}	{{ formatDuration .TaskRun.Status.StartTime .TaskRun.Status.CompletionTime }}	{{ formatCondition .TaskRun.Status.Conditions }}
+{{ formatAge .TaskRun.Status.StartTime  .Params }}	{{ formatDuration .TaskRun.Status.StartTime .TaskRun.Status.CompletionTime }}	{{ formatCondition .TaskRun.Status.Conditions }}
 {{- $msg := hasFailed .TaskRun -}}
 {{-  if ne $msg "" }}
 
@@ -504,7 +504,7 @@ Message
 {{ $msg }}
 {{- end }}
 
-Inputs
+Input Resources
 {{- $l := len .TaskRun.Spec.Inputs.Resources }}{{ if eq $l 0 }}
 No resources
 {{- else }}
@@ -514,7 +514,7 @@ NAME	RESOURCE REF
 {{- end }}
 {{- end }}
 
-Outputs
+Output Resources
 {{- $l := len .TaskRun.Spec.Outputs.Resources }}{{ if eq $l 0 }}
 No resources
 {{- else }}
@@ -542,7 +542,7 @@ Steps
 {{- $l := len .TaskRun.Status.Steps }}{{ if eq $l 0 }}
 No steps
 {{- else }}
-STEP NAME
+NAME
 {{- range $steps := .TaskRun.Status.Steps }}
 {{ $steps.Name }}
 {{- end }}
@@ -1053,13 +1053,13 @@ NAME	TASKREF	RUNAFTER
 {{- end }}
 {{- end }}
 
-Runs
+Pipelineruns
 {{- $rl := len .PipelineRuns.Items }}{{ if eq $rl 0 }}
-No runs
+No pipelineruns
 {{- else }}
 NAME	STARTED	DURATION	STATUS
 {{- range $i, $pr := .PipelineRuns.Items }}
-{{ $pr.Name }}	{{ formatAge $pr.Status.StartTime $.Params }}	{{ formatDuration $pr.Status.StartTime $pr.Status.CompletionTime }}	{{ index $pr.Status.Conditions | formatCondition }}
+{{ $pr.Name }}	{{ formatAge $pr.Status.StartTime $.Params }}	{{ formatDuration $pr.Status.StartTime $pr.Status.CompletionTime }}	{{ formatCondition $pr.Status.Conditions }}
 {{- end }}
 {{- end }}
 `

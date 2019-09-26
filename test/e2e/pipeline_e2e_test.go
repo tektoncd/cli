@@ -198,7 +198,7 @@ func TestPipelinesE2EUsingCli(t *testing.T) {
 		expected := ProcessString(`Pipelinerun started: {{.Element}}
 
 In order to track the pipelinerun progress run:
-tkn pipelinerun logs -n `+namespace+` {{.Element}} -f
+tkn pipelinerun logs {{.Element}} -f -n `+namespace+`
 `, vars)
 
 		res.Assert(t, icmd.Expected{
@@ -441,7 +441,7 @@ func TestPipelinesNegativeE2EUsingCli(t *testing.T) {
 		expected := ProcessString(`Pipelinerun started: {{.Element}}
 
 In order to track the pipelinerun progress run:
-tkn pipelinerun logs -n `+namespace+` {{.Element}} -f
+tkn pipelinerun logs {{.Element}} -f -n `+namespace+`
 `, vars)
 
 		res.Assert(t, icmd.Expected{
