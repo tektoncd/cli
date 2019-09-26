@@ -34,7 +34,7 @@ import (
 
 var (
 	errNoPipeline      = errors.New("missing pipeline name")
-	errInvalidPipeline = errors.New("invalid pipeline name")
+	errInvalidPipeline = "pipeline name %s does not exist in namespace %s"
 )
 
 const (
@@ -76,7 +76,7 @@ func NameArg(args []string, p cli.Params) error {
 	name, ns := args[0], p.Namespace()
 	_, err = c.Tekton.TektonV1alpha1().Pipelines(ns).Get(name, metav1.GetOptions{})
 	if err != nil {
-		return errInvalidPipeline
+		return fmt.Errorf(errInvalidPipeline, name, ns)
 	}
 
 	return nil
@@ -368,7 +368,7 @@ func (opt *startOptions) startPipeline(pName string) error {
 	}
 
 	fmt.Fprintf(opt.stream.Out, "Pipelinerun started: %s\n\n"+
-		"In order to track the pipelinerun progress run:\ntkn pipelinerun logs -n %s %s -f\n", prCreated.Name, prCreated.Namespace, prCreated.Name)
+		"In order to track the pipelinerun progress run:\ntkn pipelinerun logs %s -f -n %s\n", prCreated.Name, prCreated.Name, prCreated.Namespace)
 	return nil
 }
 
