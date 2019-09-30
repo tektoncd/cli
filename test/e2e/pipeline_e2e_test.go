@@ -439,7 +439,7 @@ func TestPipelinesNegativeE2EUsingCli(t *testing.T) {
 		pipelineGeneratedName = GetPipelineRunListWithName(c, tePipelineName).Items[0].Name
 		vars["Element"] = pipelineGeneratedName
 		expected := ProcessString(`Pipelinerun started: {{.Element}}
-		
+
 In order to track the pipelinerun progress run:
 tkn pipelinerun logs {{.Element}} -f -n `+namespace+`
 `, vars)

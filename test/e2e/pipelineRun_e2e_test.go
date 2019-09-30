@@ -351,7 +351,7 @@ func TestPipelineRunCancelAndDeleteUsingCli(t *testing.T) {
 
 	})
 
-	time.Sleep(1 * time.Second)
+	time.Sleep(2 * time.Second)
 
 	t.Run("Cancel Running Pipeline Run "+tePipelineRunName+" in another namespace default", func(t *testing.T) {
 

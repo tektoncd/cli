@@ -83,7 +83,7 @@ func WaitForPipelineRunToStart(c *Clients, prname string, namespace string) {
 				if c != nil {
 					if c.Status == corev1.ConditionTrue || c.Status == corev1.ConditionFalse {
 						return true, xerrors.Errorf("taskRun %s already finished!", name)
-					} else if c.Status == corev1.ConditionUnknown && (c.Reason == "Running" || c.Reason != "Pending") {
+					} else if c.Status == corev1.ConditionUnknown && (c.Reason == "Running" || c.Reason == "Pending") {
 						return true, nil
 					}
 				}
