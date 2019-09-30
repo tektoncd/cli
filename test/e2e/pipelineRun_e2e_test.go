@@ -61,6 +61,7 @@ func TestPipelineRunE2EUsingCli(t *testing.T) {
 	if _, err := c.PipelineRunClient.Create(getPipelineRun(tePipelineRunName+"-"+strconv.Itoa(1), namespace, "default", tePipelineName, tePipelineFaultGitResourceName)); err != nil {
 		t.Fatalf("Failed to create pipeline `%s`: %s", tePipelineRunName+"-"+strconv.Itoa(1), err)
 	}
+	time.Sleep(1 * time.Second)
 
 	run := Prepare(t)
 

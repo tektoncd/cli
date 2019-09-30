@@ -191,7 +191,7 @@ func TestPipelinesE2EUsingCli(t *testing.T) {
 			"-s=default",
 			"-n", namespace))
 
-		time.Sleep(2 * time.Second)
+		time.Sleep(1 * time.Second)
 
 		pipelineGeneratedName = GetPipelineRunListWithName(c, tePipelineName).Items[0].Name
 		vars["Element"] = pipelineGeneratedName
@@ -604,8 +604,8 @@ func getCreateFileTask(taskname string, namespace string) *v1alpha1.Task {
 		tb.TaskInputs(tb.InputsResource("workspace", v1alpha1.PipelineResourceTypeGit, tb.ResourceTargetPath("damnworkspace"))),
 		tb.TaskOutputs(tb.OutputsResource("workspace", v1alpha1.PipelineResourceTypeGit)),
 		tb.Step("read-docs-old", "ubuntu", tb.StepCommand("/bin/bash"), tb.StepArgs("-c", "ls -la /workspace/damnworkspace/docs/README.md")),
-		tb.Step("write-new-stuff", "ubuntu", tb.StepCommand("bash"), tb.StepArgs("-c", "ln -s /workspace/damnworkspace /workspace/output/workspace && echo some stuff > /workspace/output/workspace/stuff")),
-		//tb.Step("write-new-stuff", "ubuntu", tb.StepCommand("bash"), tb.StepArgs("-c", "echo some stuff > /workspace/damnworkspace/stuff")),
+		//tb.Step("write-new-stuff", "ubuntu", tb.StepCommand("bash"), tb.StepArgs("-c", "ln -s /workspace/damnworkspace /workspace/output/workspace && echo some stuff > /workspace/output/workspace/stuff")),
+		tb.Step("write-new-stuff", "ubuntu", tb.StepCommand("bash"), tb.StepArgs("-c", "echo some stuff > /workspace/damnworkspace/stuff")),
 	}
 
 	return tb.Task(taskname, namespace, tb.TaskSpec(taskSpecOps...))
