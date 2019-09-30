@@ -191,7 +191,7 @@ func TestPipelinesE2EUsingCli(t *testing.T) {
 			"-s=default",
 			"-n", namespace))
 
-		time.Sleep(1 * time.Second)
+		time.Sleep(2 * time.Second)
 
 		pipelineGeneratedName = GetPipelineRunListWithName(c, tePipelineName).Items[0].Name
 		vars["Element"] = pipelineGeneratedName
@@ -285,7 +285,7 @@ tkn pipelinerun logs {{.Element}} -f -n `+namespace+`
 				},
 			},
 
-			ExpectedLogs: []string{`.*(\[first-create-file : read-docs-old\].*/workspace/damnworkspace/docs/README.md).*`, `.*(\[then-check : read\] some stuff).*`},
+			ExpectedLogs: []string{`.*(\[first-create-file : read-docs-old\].*/workspace/damnworkspace/docs/README.md).*`, `.*(\[then-check : read\].*some stuff).*`},
 		}
 		RunInteractivePipelineLogs(t, namespace, td)
 	})
@@ -434,7 +434,7 @@ func TestPipelinesNegativeE2EUsingCli(t *testing.T) {
 			"-s=default",
 			"-n", namespace))
 
-		time.Sleep(1 * time.Second)
+		time.Sleep(2 * time.Second)
 
 		pipelineGeneratedName = GetPipelineRunListWithName(c, tePipelineName).Items[0].Name
 		vars["Element"] = pipelineGeneratedName

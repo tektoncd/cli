@@ -223,7 +223,7 @@ func TestPipelineRunE2EUsingCli(t *testing.T) {
 
 	t.Run("Validate PipelineRun logs using follow flag (-f), which streams logs to console ", func(t *testing.T) {
 
-		expected := []string{`.*(\[first-create-file : read-docs-old\].*/workspace/damnworkspace/docs/README.md).*`, `.*(\[then-check : read\] some stuff).*`}
+		expected := []string{`.*(\[first-create-file : read-docs-old\].*/workspace/damnworkspace/docs/README.md)`, `.*(\[then-check : read\].*some stuff).*?`}
 
 		res := icmd.RunCmd(run("pr", "logs", "-f", tePipelineRunName, "-n", namespace))
 		res.Assert(t, icmd.Expected{
@@ -238,7 +238,7 @@ func TestPipelineRunE2EUsingCli(t *testing.T) {
 
 	t.Run("Validate PipelineRun logs using  flag (-a), gets logs from all containers eg., like nop ", func(t *testing.T) {
 
-		expected := []string{`.*(\[first-create-file : read-docs-old\].*/workspace/damnworkspace/docs/README.md).*`, `.*(\[then-check : read\] some stuff).*`}
+		expected := []string{`.*(\[first-create-file : read-docs-old\].*/workspace/damnworkspace/docs/README.md)`, `.*(\[then-check : read\].*some stuff).*?`}
 
 		res := icmd.RunCmd(run("pr", "logs", "-a", tePipelineRunName, "-n", namespace))
 		res.Assert(t, icmd.Expected{
@@ -253,7 +253,7 @@ func TestPipelineRunE2EUsingCli(t *testing.T) {
 
 	t.Run("Validate PipelineRun logs using  flag (-a), show all logs including init steps injected by tekton", func(t *testing.T) {
 
-		expected := []string{`.*(\[first-create-file : read-docs-old\].*/workspace/damnworkspace/docs/README.md).*`, `.*(\[then-check : read\] some stuff).*`}
+		expected := []string{`.*(\[first-create-file : read-docs-old\].*/workspace/damnworkspace/docs/README.md)`, `.*(\[then-check : read\].*some stuff).*?`}
 
 		res := icmd.RunCmd(run("pr", "logs", "-a", tePipelineRunName, "-n", namespace))
 		res.Assert(t, icmd.Expected{
@@ -268,7 +268,7 @@ func TestPipelineRunE2EUsingCli(t *testing.T) {
 
 	t.Run("Validate PipelineRun logs for specified task only using (-t) flag ", func(t *testing.T) {
 
-		expected := []string{`.*(\[then-check : read\] some stuff).*`}
+		expected := []string{`.*(\[then-check : read\].*some stuff).*?`}
 
 		res := icmd.RunCmd(run("pr", "logs", tePipelineRunName, "-t", "then-check", "-n", namespace))
 		res.Assert(t, icmd.Expected{

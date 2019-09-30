@@ -111,7 +111,7 @@ func TestTaskRunE2EUsingCli(t *testing.T) {
 	t.Run("Validate Taskrun logs using follow flag (-f), which streams logs to console ", func(t *testing.T) {
 
 		expected := map[int]interface{}{
-			0: string(`.*(\[amazing-busybox\] Hello|\[amazing-busybox-1\] Welcome To Tekton!!).*`),
+			0: []string{`.*(\[amazing-busybox\].*Hello)`, `.*(\[amazing-busybox-1\].*Welcome To Tekton!!)`},
 		}
 
 		for i, tr := range GetTaskRunList(c).Items {
@@ -121,14 +121,17 @@ func TestTaskRunE2EUsingCli(t *testing.T) {
 				Err:      icmd.None,
 			})
 
-			assert.Assert(t, is.Regexp((expected[i]).(string), res.Stdout()))
+			for _, logRegex := range expected[i].([]string) {
+				assert.Assert(t, is.Regexp(logRegex, res.Stdout()))
+			}
+
 		}
 	})
 
 	t.Run("Validate Taskrun logs using all containers flag (-a) ", func(t *testing.T) {
 
 		expected := map[int]interface{}{
-			0: string(`.*(\[amazing-busybox\] Hello|\[amazing-busybox-1\] Welcome To Tekton!!).*`),
+			0: []string{`.*(\[amazing-busybox\].*Hello)`, `.*(\[amazing-busybox-1\].*Welcome To Tekton!!)`},
 		}
 
 		for i, tr := range GetTaskRunList(c).Items {
@@ -139,7 +142,9 @@ func TestTaskRunE2EUsingCli(t *testing.T) {
 				Err:      icmd.None,
 			})
 
-			assert.Assert(t, is.Regexp((expected[i]).(string), res.Stdout()))
+			for _, logRegex := range expected[i].([]string) {
+				assert.Assert(t, is.Regexp(logRegex, res.Stdout()))
+			}
 		}
 
 	})
