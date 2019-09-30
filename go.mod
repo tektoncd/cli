@@ -54,7 +54,8 @@ require (
 	go.uber.org/atomic v1.3.2 // indirect
 	go.uber.org/multierr v1.1.0 // indirect
 	go.uber.org/zap v0.0.0-20180814183419-67bc79d13d15 // indirect
-<<<<<<< HEAD
+	gopkg.in/yaml.v2 v2.2.2
+	gotest.tools v2.2.0+incompatible //indirect
 	golang.org/x/crypto v0.0.0-20190923035154-9ee001bba392 // indirect
 	golang.org/x/net v0.0.0-20190923162816-aa69164e4478 // indirect
 	golang.org/x/sync v0.0.0-20190911185100-cd5d95a43a6e // indirect
