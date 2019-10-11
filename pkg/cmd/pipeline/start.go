@@ -24,6 +24,7 @@ import (
 	"github.com/AlecAivazis/survey/v2/terminal"
 	"github.com/spf13/cobra"
 	"github.com/tektoncd/cli/pkg/cli"
+	"github.com/tektoncd/cli/pkg/cmd/pipelinerun"
 	"github.com/tektoncd/cli/pkg/flags"
 	"github.com/tektoncd/cli/pkg/helper/pipeline"
 	"github.com/tektoncd/pipeline/pkg/apis/pipeline/v1alpha1"
@@ -40,6 +41,7 @@ var (
 const (
 	invalidResource = "invalid input format for resource parameter : "
 	invalidParam    = "invalid input format for param parameter : "
+	invalidLabel    = "invalid input format for label parameter : "
 	invalidSvc      = "invalid service account parameter: "
 )
 
@@ -52,6 +54,8 @@ type startOptions struct {
 	ServiceAccountName string
 	ServiceAccounts    []string
 	Last               bool
+	Labels             []string
+	ShowLog            bool
 }
 
 type resourceOptionsFilter struct {
@@ -125,13 +129,15 @@ like cat,foo.bar
 		},
 	}
 
+	c.Flags().BoolVarP(&opt.ShowLog, "showlog", "", true, "show logs right after starting the pipeline")
 	c.Flags().StringSliceVarP(&opt.Resources, "resource", "r", []string{}, "pass the resource name and ref as name=ref")
 	c.Flags().StringSliceVarP(&opt.Params, "param", "p", []string{}, "pass the param as key=value")
 	c.Flags().StringVarP(&opt.ServiceAccountName, "serviceaccount", "s", "", "pass the serviceaccount name")
 	flags.AddShellCompletion(c.Flags().Lookup("serviceaccount"), "__kubectl_get_serviceaccount")
 	c.Flags().StringSliceVar(&opt.ServiceAccounts, "task-serviceaccount", []string{}, "pass the service account corresponding to the task")
 	flags.AddShellCompletion(c.Flags().Lookup("task-serviceaccount"), "__kubectl_get_serviceaccount")
-	c.Flags().BoolVarP(&opt.Last, "last", "l", false, "re-run the pipeline using last pipelinerun values")
+	c.Flags().BoolVarP(&opt.Last, "last", "L", false, "re-run the pipeline using last pipelinerun values")
+	c.Flags().StringSliceVarP(&opt.Labels, "labels", "l", []string{}, "pass labels as label=value.")
 
 	_ = c.MarkZshCompPositionalArgumentCustom(1, "__tkn_get_pipeline")
 
@@ -350,6 +356,10 @@ func (opt *startOptions) startPipeline(pName string) error {
 		return err
 	}
 
+	if err := mergeLabels(pr, opt.Labels); err != nil {
+		return err
+	}
+
 	if err := mergeParam(pr, opt.Params); err != nil {
 		return err
 	}
@@ -367,9 +377,21 @@ func (opt *startOptions) startPipeline(pName string) error {
 		return err
 	}
 
-	fmt.Fprintf(opt.stream.Out, "Pipelinerun started: %s\n\n"+
-		"In order to track the pipelinerun progress run:\ntkn pipelinerun logs %s -f -n %s\n", prCreated.Name, prCreated.Name, prCreated.Namespace)
-	return nil
+	fmt.Fprintf(opt.stream.Out, "Pipelinerun started: %s\n", prCreated.Name)
+	if !opt.ShowLog {
+		fmt.Fprintf(opt.stream.Out, "\nIn order to track the pipelinerun progress run:\ntkn pipelinerun logs %s -f -n %s\n", prCreated.Name, prCreated.Namespace)
+		return nil
+	}
+
+	fmt.Fprintf(opt.stream.Out, "Showing logs...\n")
+	runLogOpts := &pipelinerun.LogOptions{
+		PipelineName:    pName,
+		PipelineRunName: prCreated.Name,
+		Stream:          opt.stream,
+		Follow:          true,
+		Params:          opt.cliparams,
+	}
+	return runLogOpts.Run()
 }
 
 func mergeRes(pr *v1alpha1.PipelineRun, optRes []string) error {
@@ -390,6 +412,26 @@ func mergeRes(pr *v1alpha1.PipelineRun, optRes []string) error {
 	}
 	for _, v := range res {
 		pr.Spec.Resources = append(pr.Spec.Resources, v)
+	}
+	return nil
+}
+
+func mergeLabels(pr *v1alpha1.PipelineRun, labelPar []string) error {
+	labels, err := parseLabels(labelPar)
+	if err != nil {
+		return err
+	}
+	if len(labels) == 0 {
+		return nil
+	}
+
+	if pr.ObjectMeta.Labels == nil {
+		pr.ObjectMeta.Labels = labels
+	} else {
+		// This will update the updated value and add the new ones passed
+		for k, v := range labels {
+			pr.ObjectMeta.Labels[k] = v
+		}
 	}
 	return nil
 }
@@ -457,6 +499,18 @@ func parseRes(res []string) (map[string]v1alpha1.PipelineResourceBinding, error)
 		}
 	}
 	return resources, nil
+}
+
+func parseLabels(p []string) (map[string]string, error) {
+	labels := map[string]string{}
+	for _, v := range p {
+		r := strings.SplitN(v, "=", 2)
+		if len(r) != 2 {
+			return nil, errors.New(invalidLabel + v)
+		}
+		labels[r[0]] = r[1]
+	}
+	return labels, nil
 }
 
 func parseParam(p []string) (map[string]v1alpha1.Param, error) {

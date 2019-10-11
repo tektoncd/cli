@@ -37,10 +37,12 @@ two parameters (foo and bar)
 
 ```
   -h, --help                          help for start
-  -l, --last                          re-run the pipeline using last pipelinerun values
+  -l, --labels strings                pass labels as label=value.
+  -L, --last                          re-run the pipeline using last pipelinerun values
   -p, --param strings                 pass the param as key=value
   -r, --resource strings              pass the resource name and ref as name=ref
   -s, --serviceaccount string         pass the serviceaccount name
+      --showlog                       show logs right after starting the pipeline (default true)
       --task-serviceaccount strings   pass the service account corresponding to the task
 ```
 
