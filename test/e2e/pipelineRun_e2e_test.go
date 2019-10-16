@@ -175,52 +175,52 @@ func TestPipelineRunE2EUsingCli(t *testing.T) {
 		}
 	})
 
-	t.Run("Validate PipelineRun describe command", func(t *testing.T) {
-		res := icmd.RunCmd(run("pr", "describe", tePipelineRunName, "-n", namespace))
+// 	t.Run("Validate PipelineRun describe command", func(t *testing.T) {
+// 		res := icmd.RunCmd(run("pr", "describe", tePipelineRunName, "-n", namespace))
 
-		res.Assert(t, icmd.Expected{
-			ExitCode: 0,
-			Err:      icmd.None,
-		})
+// 		res.Assert(t, icmd.Expected{
+// 			ExitCode: 0,
+// 			Err:      icmd.None,
+// 		})
 
-		taskRunlist := GetTaskRunList(c)
+// 		taskRunlist := GetTaskRunList(c)
 
-		sort.Sort(byStartTime(taskRunlist.Items))
+// 		sort.Sort(byStartTime(taskRunlist.Items))
 
-		expected := CreateDescribeTemplateForPipelineRunWithTestData(t, c, tePipelineRunName,
-			map[int]interface{}{
-				0: &PipelineRunDescribeData{
-					Name:            tePipelineRunName,
-					Namespace:       namespace,
-					Pipeline_Ref:    tePipelineName,
-					Service_Account: "default",
-					Status:          "Succeeded",
-					FailureMessage:  "",
-					Resources: map[int]interface{}{
-						0: &ResourceRefData{
-							ResourceName: "source-repo",
-							ResourceRef:  tePipelineGitResourceName,
-						},
-					},
-					Params: map[string]interface{}{},
-					TaskRuns: map[int]interface{}{
-						0: &TaskRunRefData{
-							TaskRunName: taskRunlist.Items[1].Name,
-							TaskRef:     "first-create-file",
-							Status:      "Succeeded",
-						},
-						1: &TaskRunRefData{
-							TaskRunName: taskRunlist.Items[0].Name,
-							TaskRef:     "then-check",
-							Status:      "Succeeded",
-						},
-					}},
-			})
-		if d := cmp.Diff(expected, res.Stdout()); d != "" {
-			t.Errorf("Unexpected output mismatch: \n%s\n", d)
-		}
+// 		expected := CreateDescribeTemplateForPipelineRunWithTestData(t, c, tePipelineRunName,
+// 			map[int]interface{}{
+// 				0: &PipelineRunDescribeData{
+// 					Name:            tePipelineRunName,
+// 					Namespace:       namespace,
+// 					Pipeline_Ref:    tePipelineName,
+// 					Service_Account: "default",
+// 					Status:          "Succeeded",
+// 					FailureMessage:  "",
+// 					Resources: map[int]interface{}{
+// 						0: &ResourceRefData{
+// 							ResourceName: "source-repo",
+// 							ResourceRef:  tePipelineGitResourceName,
+// 						},
+// 					},
+// 					Params: map[string]interface{}{},
+// 					TaskRuns: map[int]interface{}{
+// 						0: &TaskRunRefData{
+// 							TaskRunName: taskRunlist.Items[1].Name,
+// 							TaskRef:     "first-create-file",
+// 							Status:      "Succeeded",
+// 						},
+// 						1: &TaskRunRefData{
+// 							TaskRunName: taskRunlist.Items[0].Name,
+// 							TaskRef:     "then-check",
+// 							Status:      "Succeeded",
+// 						},
+// 					}},
+// 			})
+// 		if d := cmp.Diff(expected, res.Stdout()); d != "" {
+// 			t.Errorf("Unexpected output mismatch: \n%s\n", d)
+// 		}
 
-	})
+// 	})
 
 	t.Run("Validate PipelineRun logs using follow flag (-f), which streams logs to console ", func(t *testing.T) {
 
