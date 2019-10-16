@@ -3,19 +3,19 @@
 package e2e
 
 import (
-	"encoding/json"
+	//"encoding/json"
 	"fmt"
-	"log"
+	//"log"
 	"sort"
-	"strconv"
+	//"strconv"
 	"strings"
 	"testing"
 	"time"
 
 	"github.com/google/go-cmp/cmp"
-	"github.com/tektoncd/pipeline/pkg/apis/pipeline/v1alpha1"
-	"gotest.tools/assert"
-	is "gotest.tools/assert/cmp"
+	//"github.com/tektoncd/pipeline/pkg/apis/pipeline/v1alpha1"
+	//"gotest.tools/assert"
+	//is "gotest.tools/assert/cmp"
 	"gotest.tools/icmd"
 	knativetest "knative.dev/pkg/test"
 )
