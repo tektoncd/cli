@@ -20,6 +20,8 @@ import (
 	knativetest "knative.dev/pkg/test"
 )
 
+
+
 func TestPipelineRunE2EUsingCli(t *testing.T) {
 
 	t.Parallel()
@@ -47,25 +49,25 @@ func TestPipelineRunE2EUsingCli(t *testing.T) {
 		t.Fatalf("Failed to create Task Resource `%s`: %s", TaskName2, err)
 	}
 
-	t.Logf("Create Pipeline %s", tePipelineName)
-	if _, err := c.PipelineClient.Create(getPipeline(tePipelineName, namespace, TaskName1, TaskName2)); err != nil {
-		t.Fatalf("Failed to create pipeline `%s`: %s", tePipelineName, err)
+	t.Logf("Create Pipeline %s", tePipelineName+"-"+strconv.Itoa(4))
+	if _, err := c.PipelineClient.Create(getPipeline(tePipelineName+"-"+strconv.Itoa(4), namespace, TaskName1, TaskName2)); err != nil {
+		t.Fatalf("Failed to create pipeline `%s`: %s", tePipelineName+"-"+strconv.Itoa(4), err)
 	}
 
-	t.Logf("Create Pipeline run %s", tePipelineRunName)
-	if _, err := c.PipelineRunClient.Create(getPipelineRun(tePipelineRunName, namespace, "default", tePipelineName, tePipelineGitResourceName)); err != nil {
-		t.Fatalf("Failed to create pipeline `%s`: %s", tePipelineRunName, err)
+	t.Logf("Create Pipeline run %s", tePipelineRunName+"-"+strconv.Itoa(4))
+	if _, err := c.PipelineRunClient.Create(getPipelineRun(tePipelineRunName+"-"+strconv.Itoa(4), namespace, "default", tePipelineName+"-"+strconv.Itoa(4), tePipelineGitResourceName)); err != nil {
+		t.Fatalf("Failed to create pipeline `%s`: %s", tePipelineRunName+"-"+strconv.Itoa(4), err)
 	}
 
-	t.Logf("Create Failure Pipeline run %s", tePipelineRunName+"-"+strconv.Itoa(1))
-	if _, err := c.PipelineRunClient.Create(getPipelineRun(tePipelineRunName+"-"+strconv.Itoa(1), namespace, "default", tePipelineName, tePipelineFaultGitResourceName)); err != nil {
-		t.Fatalf("Failed to create pipeline `%s`: %s", tePipelineRunName+"-"+strconv.Itoa(1), err)
+	t.Logf("Create Failure Pipeline run %s", tePipelineRunName+"-"+strconv.Itoa(5))
+	if _, err := c.PipelineRunClient.Create(getPipelineRun(tePipelineRunName+"-"+strconv.Itoa(5), namespace, "default", tePipelineName+"-"+strconv.Itoa(4), tePipelineFaultGitResourceName)); err != nil {
+		t.Fatalf("Failed to create pipeline `%s`: %s", tePipelineRunName+"-"+strconv.Itoa(5), err)
 	}
 	time.Sleep(1 * time.Second)
 
 	run := Prepare(t)
 
-	WaitForPipelineRunToComplete(c, tePipelineRunName, namespace)
+	WaitForPipelineRunToComplete(c, tePipelineRunName+"-"+strconv.Itoa(4), namespace)
 
 	t.Run("Get list of Pipeline Runs from namespace  "+namespace, func(t *testing.T) {
 
@@ -73,12 +75,12 @@ func TestPipelineRunE2EUsingCli(t *testing.T) {
 
 		expected := CreateTemplateForPipelineRunListWithTestData(t, c, tePipelineName, map[int]interface{}{
 			0: &PipelineRunListData{
-				Name:   tePipelineRunName,
+				Name:   tePipelineRunName+"-"+strconv.Itoa(4),
 				Status: "Succeeded",
 			},
 
 			1: &PipelineRunListData{
-				Name:   tePipelineRunName + "-" + strconv.Itoa(1),
+				Name:   tePipelineRunName + "-" + strconv.Itoa(5),
 				Status: "Failed",
 			},
 		})
@@ -111,12 +113,12 @@ func TestPipelineRunE2EUsingCli(t *testing.T) {
 		expected := CreateTemplateResourcesForOutputpath(
 			GetSortedPipelineRunListWithTestData(t, c, tePipelineName, map[int]interface{}{
 				0: &PipelineRunListData{
-					Name:   tePipelineRunName,
+					Name:   tePipelineRunName+"-"+strconv.Itoa(4),
 					Status: "Succeeded",
 				},
 
 				1: &PipelineRunListData{
-					Name:   tePipelineRunName + "-" + strconv.Itoa(1),
+					Name:   tePipelineRunName + "-" + strconv.Itoa(5),
 					Status: "Failed",
 				},
 			}))
@@ -145,23 +147,23 @@ func TestPipelineRunE2EUsingCli(t *testing.T) {
 
 	t.Run("Remove pipeline Run With force delete flag (shorthand)", func(t *testing.T) {
 
-		res := icmd.RunCmd(run("pr", "rm", tePipelineRunName+"-"+strconv.Itoa(1), "-n", namespace, "-f"))
+		res := icmd.RunCmd(run("pr", "rm", tePipelineRunName+"-"+strconv.Itoa(5), "-n", namespace, "-f"))
 		fmt.Printf("Output : %+v", res.Stdout())
 		res.Assert(t, icmd.Expected{
 			ExitCode: 0,
 			Err:      icmd.None,
-			Out:      "PipelineRun deleted: " + tePipelineRunName + "-" + strconv.Itoa(1) + "\n",
+			Out:      "PipelineRun deleted: " + tePipelineRunName + "-" + strconv.Itoa(5) + "\n",
 		})
 
 	})
 
-	t.Run("Check for Pipeline Runs "+tePipelineRunName+"-"+strconv.Itoa(1)+" from namespace  "+namespace+" shouldn't exist", func(t *testing.T) {
+	t.Run("Check for Pipeline Runs "+tePipelineRunName+"-"+strconv.Itoa(5)+" from namespace  "+namespace+" shouldn't exist", func(t *testing.T) {
 
 		res := icmd.RunCmd(run("pr", "list", "-n", namespace))
 
 		expected := CreateTemplateForPipelineRunListWithTestData(t, c, tePipelineName, map[int]interface{}{
 			0: &PipelineRunListData{
-				Name:   tePipelineRunName,
+				Name:   tePipelineRunName+"-"+strconv.Itoa(4),
 				Status: "Succeeded",
 			},
 		})
@@ -226,7 +228,7 @@ func TestPipelineRunE2EUsingCli(t *testing.T) {
 
 		expected := []string{`.*(\[first-create-file : read-docs-old\].*/workspace/damnworkspace/docs/README.md)`, `.*(\[then-check : read\].*some stuff).*?`}
 
-		res := icmd.RunCmd(run("pr", "logs", "-f", tePipelineRunName, "-n", namespace))
+		res := icmd.RunCmd(run("pr", "logs", "-f", tePipelineRunName+"-"+strconv.Itoa(4), "-n", namespace))
 		res.Assert(t, icmd.Expected{
 			ExitCode: 0,
 			Err:      icmd.None,
@@ -241,7 +243,7 @@ func TestPipelineRunE2EUsingCli(t *testing.T) {
 
 		expected := []string{`.*(\[first-create-file : read-docs-old\].*/workspace/damnworkspace/docs/README.md)`, `.*(\[then-check : read\].*some stuff).*?`}
 
-		res := icmd.RunCmd(run("pr", "logs", "-a", tePipelineRunName, "-n", namespace))
+		res := icmd.RunCmd(run("pr", "logs", "-a", tePipelineRunName+"-"+strconv.Itoa(4), "-n", namespace))
 		res.Assert(t, icmd.Expected{
 			ExitCode: 0,
 			Err:      icmd.None,
@@ -256,7 +258,7 @@ func TestPipelineRunE2EUsingCli(t *testing.T) {
 
 		expected := []string{`.*(\[first-create-file : read-docs-old\].*/workspace/damnworkspace/docs/README.md)`, `.*(\[then-check : read\].*some stuff).*?`}
 
-		res := icmd.RunCmd(run("pr", "logs", "-a", tePipelineRunName, "-n", namespace))
+		res := icmd.RunCmd(run("pr", "logs", "-a", tePipelineRunName+"-"+strconv.Itoa(4), "-n", namespace))
 		res.Assert(t, icmd.Expected{
 			ExitCode: 0,
 			Err:      icmd.None,
@@ -271,7 +273,7 @@ func TestPipelineRunE2EUsingCli(t *testing.T) {
 
 		expected := []string{`.*(\[then-check : read\].*some stuff).*?`}
 
-		res := icmd.RunCmd(run("pr", "logs", tePipelineRunName, "-t", "then-check", "-n", namespace))
+		res := icmd.RunCmd(run("pr", "logs", tePipelineRunName+"-"+strconv.Itoa(4), "-t", "then-check", "-n", namespace))
 		res.Assert(t, icmd.Expected{
 			ExitCode: 0,
 			Err:      icmd.None,
@@ -286,7 +288,7 @@ func TestPipelineRunE2EUsingCli(t *testing.T) {
 
 		expected := []string{`.*(\[first-create-file : read-docs-old\].*/workspace/damnworkspace/docs/README.md).*`}
 
-		res := icmd.RunCmd(run("pr", "logs", tePipelineRunName, "-t", "first-create-file", "-n", namespace))
+		res := icmd.RunCmd(run("pr", "logs", tePipelineRunName+"-"+strconv.Itoa(4), "-t", "first-create-file", "-n", namespace))
 		res.Assert(t, icmd.Expected{
 			ExitCode: 0,
 			Err:      icmd.None,
@@ -326,47 +328,47 @@ func TestPipelineRunCancelAndDeleteUsingCli(t *testing.T) {
 		t.Fatalf("Failed to create Task Resource `%s`: %s", TaskName2, err)
 	}
 
-	t.Logf("Create Pipeline %s", tePipelineName)
-	if _, err := c.PipelineClient.Create(getPipeline(tePipelineName, namespace, TaskName1, TaskName2)); err != nil {
-		t.Fatalf("Failed to create pipeline `%s`: %s", tePipelineName, err)
+	t.Logf("Create Pipeline %s", tePipelineName+"-"+strconv.Itoa(6))
+	if _, err := c.PipelineClient.Create(getPipeline(tePipelineName+"-"+strconv.Itoa(6), namespace, TaskName1, TaskName2)); err != nil {
+		t.Fatalf("Failed to create pipeline `%s`: %s", tePipelineName+"-"+strconv.Itoa(6), err)
 	}
 
-	t.Logf("Create Pipeline run %s", tePipelineRunName)
-	if _, err := c.PipelineRunClient.Create(getPipelineRun(tePipelineRunName, namespace, "default", tePipelineName, tePipelineGitResourceName)); err != nil {
-		t.Fatalf("Failed to create pipeline `%s`: %s", tePipelineRunName, err)
+	t.Logf("Create Pipeline run %s", tePipelineRunName+"-"+strconv.Itoa(6))
+	if _, err := c.PipelineRunClient.Create(getPipelineRun(tePipelineRunName+"-"+strconv.Itoa(6), namespace, "default", tePipelineName+"-"+strconv.Itoa(6), tePipelineGitResourceName)); err != nil {
+		t.Fatalf("Failed to create pipeline `%s`: %s", tePipelineRunName+"-"+strconv.Itoa(6), err)
 	}
 
 	run := Prepare(t)
 
-	WaitForPipelineRunToStart(c, tePipelineRunName, namespace)
+	WaitForPipelineRunToStart(c, tePipelineRunName+"-"+strconv.Itoa(6), namespace)
 
-	t.Run("Cancel Running Pipeline Run "+tePipelineRunName+" in namespace "+namespace, func(t *testing.T) {
+	t.Run("Cancel Running Pipeline Run "+tePipelineRunName+"-"+strconv.Itoa(6)+" in namespace "+namespace, func(t *testing.T) {
 
-		res := icmd.RunCmd(run("pr", "cancel", tePipelineRunName, "-n", namespace))
+		res := icmd.RunCmd(run("pr", "cancel", tePipelineRunName+"-"+strconv.Itoa(6), "-n", namespace))
 
 		res.Assert(t, icmd.Expected{
 			ExitCode: 0,
 			Err:      icmd.None,
-			Out:      "Pipelinerun cancelled: " + tePipelineRunName + "\n",
+			Out:      "Pipelinerun cancelled: " + tePipelineRunName+"-"+strconv.Itoa(6) + "\n",
 		})
 
 	})
 
 	time.Sleep(2 * time.Second)
 
-	t.Run("Cancel Running Pipeline Run "+tePipelineRunName+" in another namespace default", func(t *testing.T) {
+	t.Run("Cancel Running Pipeline Run "+tePipelineRunName+"-"+strconv.Itoa(6)+" in another namespace default", func(t *testing.T) {
 
-		res := icmd.RunCmd(run("pr", "cancel", tePipelineRunName, "-n", "default"))
+		res := icmd.RunCmd(run("pr", "cancel", tePipelineRunName+"-"+strconv.Itoa(6), "-n", "default"))
 
 		res.Assert(t, icmd.Expected{
 			ExitCode: 1,
-			Err:      "Error: failed to find pipelinerun: " + tePipelineRunName + "\n",
+			Err:      "Error: failed to find pipelinerun: " + tePipelineRunName+"-"+strconv.Itoa(6) + "\n",
 		})
 
 	})
 
 	t.Run("Validate PipelineRun describe command", func(t *testing.T) {
-		res := icmd.RunCmd(run("pr", "describe", tePipelineRunName, "-n", namespace))
+		res := icmd.RunCmd(run("pr", "describe", tePipelineRunName+"-"+strconv.Itoa(6), "-n", namespace))
 
 		res.Assert(t, icmd.Expected{
 			ExitCode: 0,
@@ -377,15 +379,15 @@ func TestPipelineRunCancelAndDeleteUsingCli(t *testing.T) {
 
 		sort.Sort(byStartTime(taskRunlist.Items))
 
-		expected := CreateDescribeTemplateForPipelineRunWithTestData(t, c, tePipelineRunName,
+		expected := CreateDescribeTemplateForPipelineRunWithTestData(t, c, tePipelineRunName+"-"+strconv.Itoa(6),
 			map[int]interface{}{
 				0: &PipelineRunDescribeData{
-					Name:            tePipelineRunName,
+					Name:            tePipelineRunName+"-"+strconv.Itoa(6),
 					Namespace:       namespace,
-					Pipeline_Ref:    tePipelineName,
+					Pipeline_Ref:    tePipelineName+"-"+strconv.Itoa(6),
 					Service_Account: "default",
 					Status:          "PipelineRunCancelled",
-					FailureMessage:  "PipelineRun \"" + tePipelineRunName + "\" was cancelled (TaskRun \"" + taskRunlist.Items[0].Name + "\" was cancelled)",
+					FailureMessage:  "PipelineRun \"" + tePipelineRunName+"-"+strconv.Itoa(6) + "\" was cancelled (TaskRun \"" + taskRunlist.Items[0].Name + "\" was cancelled)",
 					Resources: map[int]interface{}{
 						0: &ResourceRefData{
 							ResourceName: "source-repo",
@@ -408,25 +410,25 @@ func TestPipelineRunCancelAndDeleteUsingCli(t *testing.T) {
 
 	t.Run("Remove pipeline Run Without force delete flag, reply no", func(t *testing.T) {
 
-		res := icmd.RunCmd(run("pr", "rm", tePipelineRunName, "-n", namespace),
+		res := icmd.RunCmd(run("pr", "rm", tePipelineRunName+"-"+strconv.Itoa(6), "-n", namespace),
 			icmd.WithStdin(strings.NewReader("n")))
 		fmt.Printf("Output : %+v", res.Stdout())
 		res.Assert(t, icmd.Expected{
 			ExitCode: 1,
-			Err:      "Error: canceled deleting pipelinerun \"" + tePipelineRunName + "\"\n",
+			Err:      "Error: canceled deleting pipelinerun \"" + tePipelineRunName+"-"+strconv.Itoa(6) + "\"\n",
 		})
 
 	})
 
 	t.Run("Remove pipeline Run Without force delete flag, reply yes", func(t *testing.T) {
 
-		res := icmd.RunCmd(run("pr", "rm", tePipelineRunName, "-n", namespace),
+		res := icmd.RunCmd(run("pr", "rm", tePipelineRunName+"-"+strconv.Itoa(6), "-n", namespace),
 			icmd.WithStdin(strings.NewReader("y")))
 		fmt.Printf("Output : %+v", res.Stdout())
 		res.Assert(t, icmd.Expected{
 			ExitCode: 0,
 			Err:      icmd.None,
-			Out:      "PipelineRun deleted: " + tePipelineRunName + "\n",
+			Out:      "PipelineRun deleted: " + tePipelineRunName+"-"+strconv.Itoa(6) + "\n",
 		})
 
 	})
