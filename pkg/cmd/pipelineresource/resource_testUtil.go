@@ -17,6 +17,7 @@ package pipelineresource
 import (
 	"bytes"
 	"testing"
+	"time"
 
 	"github.com/AlecAivazis/survey/v2"
 	"github.com/AlecAivazis/survey/v2/terminal"
@@ -62,6 +63,7 @@ func (pt *promptTest) runTest(t *testing.T, procedure func(*goexpect.Console) er
 	donec := make(chan struct{})
 	go func() {
 		defer close(donec)
+		time.Sleep(500 * time.Millisecond)
 		if err := procedure(c); err != nil {
 			t.Logf("procedure failed: %v", err)
 		}

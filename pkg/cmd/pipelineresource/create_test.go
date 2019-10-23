@@ -255,6 +255,7 @@ func TestPipelineResource_allResourceType(t *testing.T) {
 				if err := c.Close(); err != nil {
 					return err
 				}
+
 				return nil
 			},
 		},
@@ -1242,6 +1243,7 @@ func TestPipelineResource_create_pullRequestResource(t *testing.T) {
 				}
 
 				if _, err := c.SendLine("https://github.com/tektoncd/cli/pull/1"); err != nil {
+
 					return err
 				}
 
