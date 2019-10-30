@@ -41,7 +41,17 @@ function test_documentation_has_been_generated() {
         exit 1
     fi
 
-    results_banner "Build" 0
+    results_banner "Documentation" 0
+}
+
+function check_lint() {
+    header "Testing if golint has been done"
+
+    curl -sfL https://raw.githubusercontent.com/golangci/golangci-lint/master/install.sh| sh -s -- -b $(go env GOPATH)/bin v1.21.0
+
+    make lint
+
+    results_banner "Lint" 0
 }
 
 function pre_build_tests() {
@@ -50,7 +60,7 @@ function pre_build_tests() {
 
 function post_build_tests() {
     test_documentation_has_been_generated
-    golangci-lint run
+    check_lint
 }
 
 # We use the default build, unit and integration test runners.
