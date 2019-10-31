@@ -37,7 +37,7 @@ function test_documentation_has_been_generated() {
         echo "-- FATAL: The documentation or manpages didn't seem to be generated :"
         git status docs
         git diff docs
-        results_banner "Build" 1
+        results_banner "Documentation" 1
         exit 1
     fi
 
@@ -47,9 +47,12 @@ function test_documentation_has_been_generated() {
 function check_lint() {
     header "Testing if golint has been done"
 
-    curl -sfL https://raw.githubusercontent.com/golangci/golangci-lint/master/install.sh| sh -s -- -b $(go env GOPATH)/bin v1.21.0
+    golangci-lint run ./... --timeout 5m
 
-    make lint
+    if [[ "$?" = "1" ]]; then
+        results_banner "Lint" 1
+        exit 1
+    fi
 
     results_banner "Lint" 0
 }
