@@ -98,6 +98,10 @@ func (lr *LogReader) readLiveLogs(tr *v1alpha1.TaskRun) (<-chan Log, <-chan erro
 		kube    = lr.Clients.Kube
 	)
 
+	if podName == "" {
+		return nil, nil, fmt.Errorf("task %s create failed or has not started yet", lr.Task)
+	}
+
 	p := pods.New(podName, lr.Ns, kube, lr.Streamer)
 	pod, err := p.Wait()
 	if err != nil {
@@ -115,8 +119,12 @@ func (lr *LogReader) readAvailableLogs(tr *v1alpha1.TaskRun) (<-chan Log, <-chan
 		podName = tr.Status.PodName
 	)
 
+	if podName == "" {
+		return nil, nil, fmt.Errorf("task %s create failed or has not started yet", lr.Task)
+	}
+
 	if !tr.HasStarted() {
-		return nil, nil, fmt.Errorf("task %s has not hasStarted yet", lr.Task)
+		return nil, nil, fmt.Errorf("task %s has not started yet", lr.Task)
 	}
 
 	p := pods.New(podName, lr.Ns, kube, lr.Streamer)
