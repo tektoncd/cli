@@ -617,7 +617,7 @@ func GetTaskRunWithTestData(t *testing.T, c *Clients, trname string, td map[int]
 			taskRun.Name = tr.(*TaskRunDescribeData).Name
 			taskRun.Namespace = tr.(*TaskRunDescribeData).Namespace
 			taskRun.Spec.TaskRef.Name = tr.(*TaskRunDescribeData).Task_Ref
-			taskRun.Spec.ServiceAccount = tr.(*TaskRunDescribeData).Service_Account
+			taskRun.Spec.ServiceAccountName = tr.(*TaskRunDescribeData).Service_Account
 			taskRun.Status.Conditions[0].Reason = tr.(*TaskRunDescribeData).Status
 			if tr.(*TaskRunDescribeData).FailureMessage != "" {
 				taskRun.Status.Conditions[0].Message = tr.(*TaskRunDescribeData).FailureMessage
@@ -1489,7 +1489,7 @@ func GetPipelineRunWithTestData(t *testing.T, c *Clients, name string, td map[in
 			pipelineRun.Name = tr.(*PipelineRunDescribeData).Name
 			pipelineRun.Namespace = tr.(*PipelineRunDescribeData).Namespace
 			pipelineRun.Spec.PipelineRef.Name = tr.(*PipelineRunDescribeData).Pipeline_Ref
-			pipelineRun.Spec.ServiceAccount = tr.(*PipelineRunDescribeData).Service_Account
+			pipelineRun.Spec.ServiceAccountName = tr.(*PipelineRunDescribeData).Service_Account
 			pipelineRun.Status.Conditions[0].Reason = tr.(*PipelineRunDescribeData).Status
 			if tr.(*PipelineRunDescribeData).FailureMessage != "" {
 				pipelineRun.Status.Conditions[0].Message = tr.(*PipelineRunDescribeData).FailureMessage
