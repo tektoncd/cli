@@ -640,7 +640,7 @@ func getPipeline(PipelineName string, namespace string, createFiletaskName strin
 func getPipelineRun(PipelineRunName string, namespace string, serviceAccount string, pipelineName string, pipelineResourceName string) *v1alpha1.PipelineRun {
 	return tb.PipelineRun(PipelineRunName, namespace,
 		tb.PipelineRunSpec(pipelineName,
-			tb.PipelineRunServiceAccount(serviceAccount),
+			tb.PipelineRunServiceAccountName(serviceAccount),
 			tb.PipelineRunResourceBinding("source-repo", tb.PipelineResourceBindingRef(pipelineResourceName)),
 		))
 }
