@@ -489,9 +489,14 @@ func GetTaskRunListWithTestData(t *testing.T, c *Clients, td map[int]interface{}
 
 const TaskRunDescribeTemplate = `Name:	{{ .TaskRun.Name }}
 Namespace:	{{ .TaskRun.Namespace }}
-Task Ref:	{{ .TaskRun.Spec.TaskRef.Name }}
-{{- if ne .TaskRun.Spec.ServiceAccount "" }}
-Service Account:	{{ .TaskRun.Spec.ServiceAccount }}
+{{- $tRefName := taskRefExists .TaskRun.Spec }}{{- if ne $tRefName "" }}
+Task Ref:    {{ $tRefName }}
+{{- end }}
+{{- if ne .TaskRun.Spec.DeprecatedServiceAccount "" }}
+Service Account (deprecated):	{{ .TaskRun.Spec.DeprecatedServiceAccount }}
+{{- end }}
+{{- if ne .TaskRun.Spec.ServiceAccountName "" }}
+Service Account:	{{ .TaskRun.Spec.ServiceAccountName }}
 {{- end }}
 
 Status
