@@ -1476,20 +1476,40 @@ func newTaskrunListFromMapWithTestData(t *testing.T, statusMap map[string]*v1alp
 		switch tr.(type) {
 		case *PipelineRunDescribeData:
 			if len(tr.(*PipelineRunDescribeData).TaskRuns) == len(statusMap) {
-				for _, tref := range tr.(*PipelineRunDescribeData).TaskRuns {
-					switch tref.(type) {
 
+				taskRefData := []*TaskRunRefData{}
+
+				for _, ref := range tr.(*PipelineRunDescribeData).TaskRuns {
+					switch ref.(type) {
 					case *TaskRunRefData:
-						statusMap[tref.(*TaskRunRefData).TaskRunName].Status.Conditions[0].Reason = tref.(*TaskRunRefData).Status
-						trl = append(trl, tkr{
-							tref.(*TaskRunRefData).TaskRunName,
-							statusMap[tref.(*TaskRunRefData).TaskRunName],
-						})
+						taskRefData = append(taskRefData, ref.(*TaskRunRefData))
 					default:
 						t.Error("TaskRunRef Test Data Format Didn't Match please do check Test Data which you passing")
 					}
+				}
+				for _, tref := range taskRefData {
+					statusMap[tref.TaskRunName].Status.Conditions[0].Reason = tref.Status
+					trl = append(trl, tkr{
+						tref.TaskRunName,
+						statusMap[tref.TaskRunName],
+					})
 
 				}
+
+				// for _, tref := range tr.(*PipelineRunDescribeData).TaskRuns {
+				// 	switch tref.(type) {
+
+				// 	case *TaskRunRefData:
+				// 		statusMap[tref.(*TaskRunRefData).TaskRunName].Status.Conditions[0].Reason = tref.(*TaskRunRefData).Status
+				// 		trl = append(trl, tkr{
+				// 			tref.(*TaskRunRefData).TaskRunName,
+				// 			statusMap[tref.(*TaskRunRefData).TaskRunName],
+				// 		})
+				// 	default:
+				// 		t.Error("TaskRunRef Test Data Format Didn't Match please do check Test Data which you passing")
+				// 	}
+
+				// }
 
 			} else {
 				t.Error("Test data length didnt match with Real data")
