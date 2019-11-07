@@ -28,6 +28,7 @@ import (
 	"github.com/tektoncd/cli/pkg/formatted"
 	"github.com/tektoncd/cli/pkg/helper/pipeline"
 	prhsort "github.com/tektoncd/cli/pkg/helper/pipelinerun/sort"
+	validate "github.com/tektoncd/cli/pkg/helper/validate"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 )
 
@@ -65,6 +66,7 @@ func logCommand(p cli.Params) *cobra.Command {
 				Out: os.Stdout,
 				Err: os.Stderr,
 			}
+
 			return nil
 		},
 	}
@@ -103,6 +105,11 @@ func logCommand(p cli.Params) *cobra.Command {
 				Out: cmd.OutOrStdout(),
 				Err: cmd.OutOrStderr(),
 			}
+
+			if err := validate.NamespaceExists(p); err != nil {
+				return err
+			}
+
 			return opts.run(args)
 		},
 	}
@@ -161,7 +168,7 @@ func (opts *logOptions) init(args []string) error {
 }
 
 func (opts *logOptions) getAllInputs() error {
-	if err := validate(opts); err != nil {
+	if err := validateLogOpts(opts); err != nil {
 		return err
 	}
 
@@ -192,7 +199,7 @@ func (opts *logOptions) getAllInputs() error {
 }
 
 func (opts *logOptions) askRunName() error {
-	if err := validate(opts); err != nil {
+	if err := validateLogOpts(opts); err != nil {
 		return err
 	}
 
@@ -300,7 +307,7 @@ func allRuns(p cli.Params, pName string, limit int) ([]string, error) {
 	return ret, nil
 }
 
-func validate(opts *logOptions) error {
+func validateLogOpts(opts *logOptions) error {
 
 	if opts.limit <= 0 {
 		return fmt.Errorf("limit was %d but must be a positive number", opts.limit)

@@ -24,9 +24,13 @@ import (
 	"github.com/AlecAivazis/survey/v2/terminal"
 	"github.com/spf13/cobra"
 	"github.com/tektoncd/cli/pkg/cli"
+	"github.com/tektoncd/cli/pkg/cmd/pipelineresource"
 	"github.com/tektoncd/cli/pkg/cmd/pipelinerun"
 	"github.com/tektoncd/cli/pkg/flags"
+	"github.com/tektoncd/cli/pkg/helper/labels"
+	"github.com/tektoncd/cli/pkg/helper/params"
 	"github.com/tektoncd/cli/pkg/helper/pipeline"
+	validate "github.com/tektoncd/cli/pkg/helper/validate"
 	"github.com/tektoncd/pipeline/pkg/apis/pipeline/v1alpha1"
 	"github.com/tektoncd/pipeline/pkg/client/clientset/versioned"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
@@ -39,9 +43,7 @@ var (
 )
 
 const (
-	invalidResource = "invalid input format for resource parameter : "
-	invalidParam    = "invalid input format for param parameter : "
-	invalidLabel    = "invalid input format for label parameter : "
+	invalidResource = "invalid input format for resource parameter: "
 	invalidSvc      = "invalid service account parameter: "
 )
 
@@ -70,6 +72,10 @@ type resourceOptionsFilter struct {
 func NameArg(args []string, p cli.Params) error {
 	if len(args) == 0 {
 		return errNoPipeline
+	}
+
+	if err := validate.NamespaceExists(p); err != nil {
+		return err
 	}
 
 	c, err := p.Clients()
@@ -111,13 +117,14 @@ func startCommand(p cli.Params) *cobra.Command {
 tkn pipeline start foo -s ServiceAccountName -n bar
 
 For params value, if you want to provide multiple values, provide them comma separated
-like cat,foo.bar
+like cat,foo,bar
 `,
 		SilenceUsage: true,
 		Args: func(cmd *cobra.Command, args []string) error {
 			if err := flags.InitParams(p, cmd); err != nil {
 				return err
 			}
+
 			return NameArg(args, p)
 		},
 		RunE: func(cmd *cobra.Command, args []string) error {
@@ -125,13 +132,14 @@ like cat,foo.bar
 				Out: cmd.OutOrStdout(),
 				Err: cmd.OutOrStderr(),
 			}
+
 			return opt.run(args[0])
 		},
 	}
 
 	c.Flags().BoolVarP(&opt.ShowLog, "showlog", "", true, "show logs right after starting the pipeline")
 	c.Flags().StringSliceVarP(&opt.Resources, "resource", "r", []string{}, "pass the resource name and ref as name=ref")
-	c.Flags().StringSliceVarP(&opt.Params, "param", "p", []string{}, "pass the param as key=value")
+	c.Flags().StringArrayVarP(&opt.Params, "param", "p", []string{}, "pass the param as key=value or key=value1,value2")
 	c.Flags().StringVarP(&opt.ServiceAccountName, "serviceaccount", "s", "", "pass the serviceaccount name")
 	flags.AddShellCompletion(c.Flags().Lookup("serviceaccount"), "__kubectl_get_serviceaccount")
 	c.Flags().StringSliceVar(&opt.ServiceAccounts, "task-serviceaccount", []string{}, "pass the service account corresponding to the task")
@@ -188,14 +196,26 @@ func (opt *startOptions) getInput(pname string) error {
 }
 
 func (opt *startOptions) getInputResources(resources resourceOptionsFilter, pipeline *v1alpha1.Pipeline) error {
-	var ans string
 	for _, res := range pipeline.Spec.Resources {
 		options := getOptionsByType(resources, string(res.Type))
+		// directly create resource
 		if len(options) == 0 {
-			return fmt.Errorf("no pipeline resource of type %s found in namespace: %s",
-				string(res.Type), opt.cliparams.Namespace())
+			ns := opt.cliparams.Namespace()
+			fmt.Fprintf(opt.stream.Out, "no pipeline resource of type \"%s\" found in namespace: %s\n", string(res.Type), ns)
+			fmt.Fprintf(opt.stream.Out, "please create new \"%s\" resource\n", string(res.Type))
+			newres, err := opt.createPipelineResource(res.Name, res.Type)
+			if err != nil {
+				return err
+			}
+			fmt.Printf("resource status %s\n\n", newres.Status)
+			opt.Resources = append(opt.Resources, res.Name+"="+newres.Name)
+			return nil
 		}
 
+		// shows create option in the resource list
+		resCreateOpt := fmt.Sprintf("create new \"%s\" resource", res.Type)
+		options = append(options, resCreateOpt)
+		var ans string
 		var qs = []*survey.Question{
 			{
 				Name: "pipelineresource",
@@ -211,8 +231,16 @@ func (opt *startOptions) getInputResources(resources resourceOptionsFilter, pipe
 			return err
 		}
 
-		name := strings.TrimSpace(strings.Split(ans, " ")[0])
-		opt.Resources = append(opt.Resources, res.Name+"="+name)
+		if ans == resCreateOpt {
+			newres, err := opt.createPipelineResource(res.Name, res.Type)
+			if err != nil {
+				return err
+			}
+			opt.Resources = append(opt.Resources, res.Name+"="+newres.Name)
+		} else {
+			name := strings.TrimSpace(strings.Split(ans, " ")[0])
+			opt.Resources = append(opt.Resources, res.Name+"="+name)
+		}
 	}
 	return nil
 }
@@ -348,28 +376,37 @@ func (opt *startOptions) startPipeline(pName string) error {
 		}
 		pr.Spec.Resources = prLast.Spec.Resources
 		pr.Spec.Params = prLast.Spec.Params
-		pr.Spec.ServiceAccount = prLast.Spec.ServiceAccount
-		pr.Spec.ServiceAccounts = prLast.Spec.ServiceAccounts
+		// TODO(vdemeester) remove those 2 lines with bump to 0.9.0
+		pr.Spec.DeprecatedServiceAccount = prLast.Spec.DeprecatedServiceAccount
+		pr.Spec.DeprecatedServiceAccounts = prLast.Spec.DeprecatedServiceAccounts
+		// If the prLast is a "new" PR, let's populate those fields too
+		pr.Spec.ServiceAccountName = prLast.Spec.ServiceAccountName
+		pr.Spec.ServiceAccountNames = prLast.Spec.ServiceAccountNames
 	}
 
 	if err := mergeRes(pr, opt.Resources); err != nil {
 		return err
 	}
 
-	if err := mergeLabels(pr, opt.Labels); err != nil {
+	labels, err := labels.MergeLabels(pr.ObjectMeta.Labels, opt.Labels)
+	if err != nil {
 		return err
 	}
+	pr.ObjectMeta.Labels = labels
 
-	if err := mergeParam(pr, opt.Params); err != nil {
+	param, err := params.MergeParam(pr.Spec.Params, opt.Params)
+	if err != nil {
 		return err
 	}
+	pr.Spec.Params = param
 
 	if err := mergeSvc(pr, opt.ServiceAccounts); err != nil {
 		return err
 	}
 
 	if len(opt.ServiceAccountName) > 0 {
-		pr.Spec.ServiceAccount = opt.ServiceAccountName
+		// FIXME(vdemeester) Populate the ServiceAccountName instead with bump to 0.9.0
+		pr.Spec.DeprecatedServiceAccount = opt.ServiceAccountName
 	}
 
 	prCreated, err := cs.Tekton.TektonV1alpha1().PipelineRuns(opt.cliparams.Namespace()).Create(pr)
@@ -390,6 +427,7 @@ func (opt *startOptions) startPipeline(pName string) error {
 		Stream:          opt.stream,
 		Follow:          true,
 		Params:          opt.cliparams,
+		AllSteps:        false,
 	}
 	return runLogOpts.Run()
 }
@@ -416,69 +454,41 @@ func mergeRes(pr *v1alpha1.PipelineRun, optRes []string) error {
 	return nil
 }
 
-func mergeLabels(pr *v1alpha1.PipelineRun, labelPar []string) error {
-	labels, err := parseLabels(labelPar)
-	if err != nil {
-		return err
-	}
-	if len(labels) == 0 {
-		return nil
-	}
-
-	if pr.ObjectMeta.Labels == nil {
-		pr.ObjectMeta.Labels = labels
-	} else {
-		// This will update the updated value and add the new ones passed
-		for k, v := range labels {
-			pr.ObjectMeta.Labels[k] = v
-		}
-	}
-	return nil
-}
-
-func mergeParam(pr *v1alpha1.PipelineRun, optPar []string) error {
-	params, err := parseParam(optPar)
-	if err != nil {
-		return err
-	}
-
-	if len(params) == 0 {
-		return nil
-	}
-
-	for i := range pr.Spec.Params {
-		if v, ok := params[pr.Spec.Params[i].Name]; ok {
-			pr.Spec.Params[i] = v
-			delete(params, v.Name)
-		}
-	}
-
-	for _, v := range params {
-		pr.Spec.Params = append(pr.Spec.Params, v)
-	}
-
-	return nil
-}
-
 func mergeSvc(pr *v1alpha1.PipelineRun, optSvc []string) error {
 	svcs, err := parseTaskSvc(optSvc)
 	if err != nil {
 		return err
 	}
+	dsvcs, err := parseDeprecatedTaskSvc(optSvc)
+	if err != nil {
+		return err
+	}
 
-	if len(svcs) == 0 {
+	if len(svcs) == 0 && len(dsvcs) == 0 {
 		return nil
 	}
 
-	for i := range pr.Spec.ServiceAccounts {
-		if v, ok := svcs[pr.Spec.ServiceAccounts[i].TaskName]; ok {
-			pr.Spec.ServiceAccounts[i] = v
+	// FIXME(vdemeester) Remove the next 2 loops with bump to 0.9.0
+	for i := range pr.Spec.DeprecatedServiceAccounts {
+		if v, ok := dsvcs[pr.Spec.DeprecatedServiceAccounts[i].TaskName]; ok {
+			pr.Spec.DeprecatedServiceAccounts[i] = v
+			delete(dsvcs, v.TaskName)
+		}
+	}
+
+	for _, v := range dsvcs {
+		pr.Spec.DeprecatedServiceAccounts = append(pr.Spec.DeprecatedServiceAccounts, v)
+	}
+
+	for i := range pr.Spec.ServiceAccountNames {
+		if v, ok := svcs[pr.Spec.ServiceAccountNames[i].TaskName]; ok {
+			pr.Spec.ServiceAccountNames[i] = v
 			delete(svcs, v.TaskName)
 		}
 	}
 
 	for _, v := range svcs {
-		pr.Spec.ServiceAccounts = append(pr.Spec.ServiceAccounts, v)
+		pr.Spec.ServiceAccountNames = append(pr.Spec.ServiceAccountNames, v)
 	}
 
 	return nil
@@ -501,50 +511,8 @@ func parseRes(res []string) (map[string]v1alpha1.PipelineResourceBinding, error)
 	return resources, nil
 }
 
-func parseLabels(p []string) (map[string]string, error) {
-	labels := map[string]string{}
-	for _, v := range p {
-		r := strings.SplitN(v, "=", 2)
-		if len(r) != 2 {
-			return nil, errors.New(invalidLabel + v)
-		}
-		labels[r[0]] = r[1]
-	}
-	return labels, nil
-}
-
-func parseParam(p []string) (map[string]v1alpha1.Param, error) {
-	params := map[string]v1alpha1.Param{}
-	for _, v := range p {
-		r := strings.SplitN(v, "=", 2)
-		if len(r) != 2 {
-			return nil, errors.New(invalidParam + v)
-		}
-		values := strings.Split(r[1], ",")
-		if len(values) == 1 {
-			params[r[0]] = v1alpha1.Param{
-				Name: r[0],
-				Value: v1alpha1.ArrayOrString{
-					Type:      v1alpha1.ParamTypeString,
-					StringVal: r[1],
-				},
-			}
-		}
-		if len(values) > 1 {
-			params[r[0]] = v1alpha1.Param{
-				Name: r[0],
-				Value: v1alpha1.ArrayOrString{
-					Type:     v1alpha1.ParamTypeArray,
-					ArrayVal: values,
-				},
-			}
-		}
-	}
-	return params, nil
-}
-
-func parseTaskSvc(s []string) (map[string]v1alpha1.PipelineRunSpecServiceAccount, error) {
-	svcs := map[string]v1alpha1.PipelineRunSpecServiceAccount{}
+func parseTaskSvc(s []string) (map[string]v1alpha1.PipelineRunSpecServiceAccountName, error) {
+	svcs := map[string]v1alpha1.PipelineRunSpecServiceAccountName{}
 	for _, v := range s {
 		r := strings.Split(v, "=")
 		if len(r) != 2 || len(r[0]) == 0 {
@@ -553,10 +521,65 @@ func parseTaskSvc(s []string) (map[string]v1alpha1.PipelineRunSpecServiceAccount
 				"--task-serviceaccount TaskName=ServiceAccount"
 			return nil, errors.New(errMsg)
 		}
-		svcs[r[0]] = v1alpha1.PipelineRunSpecServiceAccount{
-			TaskName:       r[0],
-			ServiceAccount: r[1],
+		svcs[r[0]] = v1alpha1.PipelineRunSpecServiceAccountName{
+			TaskName:           r[0],
+			ServiceAccountName: r[1],
 		}
 	}
 	return svcs, nil
+}
+
+func parseDeprecatedTaskSvc(s []string) (map[string]v1alpha1.DeprecatedPipelineRunSpecServiceAccount, error) {
+	svcs := map[string]v1alpha1.DeprecatedPipelineRunSpecServiceAccount{}
+	for _, v := range s {
+		r := strings.Split(v, "=")
+		if len(r) != 2 || len(r[0]) == 0 {
+			errMsg := invalidSvc + v +
+				"\nPlease pass task service accounts as " +
+				"--task-serviceaccount TaskName=ServiceAccount"
+			return nil, errors.New(errMsg)
+		}
+		svcs[r[0]] = v1alpha1.DeprecatedPipelineRunSpecServiceAccount{
+			TaskName:                 r[0],
+			DeprecatedServiceAccount: r[1],
+		}
+	}
+	return svcs, nil
+}
+
+func (opt *startOptions) createPipelineResource(resName string, resType v1alpha1.PipelineResourceType) (*v1alpha1.PipelineResource, error) {
+	res := pipelineresource.Resource{
+		AskOpts: opt.askOpts,
+		Params:  opt.cliparams,
+		PipelineResource: v1alpha1.PipelineResource{
+			ObjectMeta: v1.ObjectMeta{Namespace: opt.cliparams.Namespace()},
+			Spec:       v1alpha1.PipelineResourceSpec{Type: resType},
+		}}
+
+	if err := res.AskMeta(); err != nil {
+		return nil, err
+	}
+
+	resourceTypeParams := map[v1alpha1.PipelineResourceType]func() error{
+		v1alpha1.PipelineResourceTypeGit:         res.AskGitParams,
+		v1alpha1.PipelineResourceTypeStorage:     res.AskStorageParams,
+		v1alpha1.PipelineResourceTypeImage:       res.AskImageParams,
+		v1alpha1.PipelineResourceTypeCluster:     res.AskClusterParams,
+		v1alpha1.PipelineResourceTypePullRequest: res.AskPullRequestParams,
+	}
+	if res.PipelineResource.Spec.Type != "" {
+		if err := resourceTypeParams[res.PipelineResource.Spec.Type](); err != nil {
+			return nil, err
+		}
+	}
+	cs, err := opt.cliparams.Clients()
+	if err != nil {
+		return nil, err
+	}
+	newRes, err := cs.Tekton.TektonV1alpha1().PipelineResources(opt.cliparams.Namespace()).Create(&res.PipelineResource)
+	if err != nil {
+		return nil, err
+	}
+	fmt.Fprintf(opt.stream.Out, "New %s resource \"%s\" has been created\n", newRes.Spec.Type, newRes.Name)
+	return newRes, nil
 }

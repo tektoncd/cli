@@ -21,12 +21,13 @@ import (
 
 	"github.com/AlecAivazis/survey/v2/core"
 	"github.com/AlecAivazis/survey/v2/terminal"
-	"github.com/Netflix/go-expect"
+	goexpect "github.com/Netflix/go-expect"
 	"github.com/tektoncd/cli/pkg/cli"
 	"github.com/tektoncd/cli/pkg/test"
 	"github.com/tektoncd/pipeline/pkg/apis/pipeline/v1alpha1"
 	pipelinetest "github.com/tektoncd/pipeline/test"
 	tb "github.com/tektoncd/pipeline/test/builder"
+	corev1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 )
 
@@ -43,13 +44,20 @@ func TestPipelineResource_resource_noName(t *testing.T) {
 					tb.PipelineResourceSpecParam("url", "git@github.com:tektoncd/cli.git"),
 				)),
 		},
+		Namespaces: []*corev1.Namespace{
+			{
+				ObjectMeta: metav1.ObjectMeta{
+					Name: "namespace",
+				},
+			},
+		},
 	})
 
 	tests := []promptTest{
 		{
 			name: "no input for name",
 
-			procedure: func(c *expect.Console) error {
+			procedure: func(c *goexpect.Console) error {
 				if _, err := c.ExpectString("Enter a name for a pipeline resource :"); err != nil {
 					return err
 				}
@@ -104,13 +112,20 @@ func TestPipelineResource_resource_already_exist(t *testing.T) {
 				),
 			),
 		},
+		Namespaces: []*corev1.Namespace{
+			{
+				ObjectMeta: metav1.ObjectMeta{
+					Name: "namespace",
+				},
+			},
+		},
 	})
 
 	tests := []promptTest{
 		{
 			name: "pre-existing-resource",
 
-			procedure: func(c *expect.Console) error {
+			procedure: func(c *goexpect.Console) error {
 				if _, err := c.ExpectString("Enter a name for a pipeline resource :"); err != nil {
 					return err
 				}
@@ -146,13 +161,21 @@ func TestPipelineResource_resource_already_exist(t *testing.T) {
 
 func TestPipelineResource_allResourceType(t *testing.T) {
 
-	cs, _ := test.SeedTestData(t, pipelinetest.Data{})
+	cs, _ := test.SeedTestData(t, pipelinetest.Data{
+		Namespaces: []*corev1.Namespace{
+			{
+				ObjectMeta: metav1.ObjectMeta{
+					Name: "namespace",
+				},
+			},
+		},
+	})
 
 	tests := []promptTest{
 		{
 			name: "check all type of resource",
 
-			procedure: func(c *expect.Console) error {
+			procedure: func(c *goexpect.Console) error {
 				if _, err := c.ExpectString("Enter a name for a pipeline resource :"); err != nil {
 					return err
 				}
@@ -246,13 +269,21 @@ func TestPipelineResource_allResourceType(t *testing.T) {
 }
 
 func TestPipelineResource_create_cloudEventResource(t *testing.T) {
-	cs, _ := test.SeedTestData(t, pipelinetest.Data{})
+	cs, _ := test.SeedTestData(t, pipelinetest.Data{
+		Namespaces: []*corev1.Namespace{
+			{
+				ObjectMeta: metav1.ObjectMeta{
+					Name: "namespace",
+				},
+			},
+		},
+	})
 
 	tests := []promptTest{
 		{
 			name: "create-cloudEventResource",
 
-			procedure: func(c *expect.Console) error {
+			procedure: func(c *goexpect.Console) error {
 				if _, err := c.ExpectString("Enter a name for a pipeline resource :"); err != nil {
 					return err
 				}
@@ -308,13 +339,21 @@ func TestPipelineResource_create_cloudEventResource(t *testing.T) {
 }
 
 func TestPipelineResource_create_clusterResource_secure_password_text(t *testing.T) {
-	cs, _ := test.SeedTestData(t, pipelinetest.Data{})
+	cs, _ := test.SeedTestData(t, pipelinetest.Data{
+		Namespaces: []*corev1.Namespace{
+			{
+				ObjectMeta: metav1.ObjectMeta{
+					Name: "namespace",
+				},
+			},
+		},
+	})
 
 	tests := []promptTest{
 		{
 			name: "clusterResource-securePasswordText",
 
-			procedure: func(c *expect.Console) error {
+			procedure: func(c *goexpect.Console) error {
 				if _, err := c.ExpectString("Enter a name for a pipeline resource :"); err != nil {
 					return err
 				}
@@ -367,11 +406,15 @@ func TestPipelineResource_create_clusterResource_secure_password_text(t *testing
 					return err
 				}
 
-				if _, err := c.ExpectString("Enter a value for insecure :"); err != nil {
+				if _, err := c.ExpectString("Is the cluster secure?"); err != nil {
 					return err
 				}
 
-				if _, err := c.SendLine("false"); err != nil {
+				if _, err := c.ExpectString("yes"); err != nil {
+					return err
+				}
+
+				if _, err := c.Send(string(terminal.KeyEnter)); err != nil {
 					return err
 				}
 
@@ -388,6 +431,10 @@ func TestPipelineResource_create_clusterResource_secure_password_text(t *testing
 				}
 
 				if _, err := c.SendLine("abcd#@123"); err != nil {
+					return err
+				}
+
+				if _, err := c.ExpectString("*********"); err != nil {
 					return err
 				}
 
@@ -438,13 +485,21 @@ func TestPipelineResource_create_clusterResource_secure_password_text(t *testing
 }
 
 func TestPipelineResource_create_clusterResource_secure_token_text(t *testing.T) {
-	cs, _ := test.SeedTestData(t, pipelinetest.Data{})
+	cs, _ := test.SeedTestData(t, pipelinetest.Data{
+		Namespaces: []*corev1.Namespace{
+			{
+				ObjectMeta: metav1.ObjectMeta{
+					Name: "namespace",
+				},
+			},
+		},
+	})
 
 	tests := []promptTest{
 		{
 			name: "clusterResource-secureTokenText",
 
-			procedure: func(c *expect.Console) error {
+			procedure: func(c *goexpect.Console) error {
 				if _, err := c.ExpectString("Enter a name for a pipeline resource :"); err != nil {
 					return err
 				}
@@ -497,11 +552,15 @@ func TestPipelineResource_create_clusterResource_secure_token_text(t *testing.T)
 					return err
 				}
 
-				if _, err := c.ExpectString("Enter a value for insecure :"); err != nil {
+				if _, err := c.ExpectString("Is the cluster secure?"); err != nil {
 					return err
 				}
 
-				if _, err := c.SendLine("false"); err != nil {
+				if _, err := c.ExpectString("yes"); err != nil {
+					return err
+				}
+
+				if _, err := c.Send(string(terminal.KeyEnter)); err != nil {
 					return err
 				}
 
@@ -576,13 +635,21 @@ func TestPipelineResource_create_clusterResource_secure_token_text(t *testing.T)
 }
 
 func TestPipelineResource_create_gitResource(t *testing.T) {
-	cs, _ := test.SeedTestData(t, pipelinetest.Data{})
+	cs, _ := test.SeedTestData(t, pipelinetest.Data{
+		Namespaces: []*corev1.Namespace{
+			{
+				ObjectMeta: metav1.ObjectMeta{
+					Name: "namespace",
+				},
+			},
+		},
+	})
 
 	tests := []promptTest{
 		{
 			name: "gitResource",
 
-			procedure: func(c *expect.Console) error {
+			procedure: func(c *goexpect.Console) error {
 				if _, err := c.ExpectString("Enter a name for a pipeline resource :"); err != nil {
 					return err
 				}
@@ -665,13 +732,21 @@ func TestPipelineResource_create_gitResource(t *testing.T) {
 }
 
 func TestPipelineResource_create_imageResource(t *testing.T) {
-	cs, _ := test.SeedTestData(t, pipelinetest.Data{})
+	cs, _ := test.SeedTestData(t, pipelinetest.Data{
+		Namespaces: []*corev1.Namespace{
+			{
+				ObjectMeta: metav1.ObjectMeta{
+					Name: "namespace",
+				},
+			},
+		},
+	})
 
 	tests := []promptTest{
 		{
 			name: "imageResource",
 
-			procedure: func(c *expect.Console) error {
+			procedure: func(c *goexpect.Console) error {
 				if _, err := c.ExpectString("Enter a name for a pipeline resource :"); err != nil {
 					return err
 				}
@@ -759,13 +834,21 @@ func TestPipelineResource_create_imageResource(t *testing.T) {
 }
 
 func TestPipelineResource_create_clusterResource_secure_password_secret(t *testing.T) {
-	cs, _ := test.SeedTestData(t, pipelinetest.Data{})
+	cs, _ := test.SeedTestData(t, pipelinetest.Data{
+		Namespaces: []*corev1.Namespace{
+			{
+				ObjectMeta: metav1.ObjectMeta{
+					Name: "namespace",
+				},
+			},
+		},
+	})
 
 	tests := []promptTest{
 		{
 			name: "clusterResource-securePasswordSecrets",
 
-			procedure: func(c *expect.Console) error {
+			procedure: func(c *goexpect.Console) error {
 				if _, err := c.ExpectString("Enter a name for a pipeline resource :"); err != nil {
 					return err
 				}
@@ -818,11 +901,15 @@ func TestPipelineResource_create_clusterResource_secure_password_secret(t *testi
 					return err
 				}
 
-				if _, err := c.ExpectString("Enter a value for insecure :"); err != nil {
+				if _, err := c.ExpectString("Is the cluster secure?"); err != nil {
 					return err
 				}
 
-				if _, err := c.SendLine("false"); err != nil {
+				if _, err := c.ExpectString("yes"); err != nil {
+					return err
+				}
+
+				if _, err := c.Send(string(terminal.KeyEnter)); err != nil {
 					return err
 				}
 
@@ -839,6 +926,10 @@ func TestPipelineResource_create_clusterResource_secure_password_secret(t *testi
 				}
 
 				if _, err := c.SendLine("abcd#@123"); err != nil {
+					return err
+				}
+
+				if _, err := c.ExpectString("*********"); err != nil {
 					return err
 				}
 
@@ -905,13 +996,21 @@ func TestPipelineResource_create_clusterResource_secure_password_secret(t *testi
 }
 
 func TestPipelineResource_create_clusterResource_secure_token_secret(t *testing.T) {
-	cs, _ := test.SeedTestData(t, pipelinetest.Data{})
+	cs, _ := test.SeedTestData(t, pipelinetest.Data{
+		Namespaces: []*corev1.Namespace{
+			{
+				ObjectMeta: metav1.ObjectMeta{
+					Name: "namespace",
+				},
+			},
+		},
+	})
 
 	tests := []promptTest{
 		{
 			name: "clusterResource-secureTokenSecrets",
 
-			procedure: func(c *expect.Console) error {
+			procedure: func(c *goexpect.Console) error {
 				if _, err := c.ExpectString("Enter a name for a pipeline resource :"); err != nil {
 					return err
 				}
@@ -964,11 +1063,15 @@ func TestPipelineResource_create_clusterResource_secure_token_secret(t *testing.
 					return err
 				}
 
-				if _, err := c.ExpectString("Enter a value for insecure :"); err != nil {
+				if _, err := c.ExpectString("Is the cluster secure?"); err != nil {
 					return err
 				}
 
-				if _, err := c.SendLine("false"); err != nil {
+				if _, err := c.ExpectString("yes"); err != nil {
+					return err
+				}
+
+				if _, err := c.Send(string(terminal.KeyEnter)); err != nil {
 					return err
 				}
 
@@ -1067,13 +1170,21 @@ func TestPipelineResource_create_clusterResource_secure_token_secret(t *testing.
 }
 
 func TestPipelineResource_create_pullRequestResource(t *testing.T) {
-	cs, _ := test.SeedTestData(t, pipelinetest.Data{})
+	cs, _ := test.SeedTestData(t, pipelinetest.Data{
+		Namespaces: []*corev1.Namespace{
+			{
+				ObjectMeta: metav1.ObjectMeta{
+					Name: "namespace",
+				},
+			},
+		},
+	})
 
 	tests := []promptTest{
 		{
 			name: "pullRequestResource",
 
-			procedure: func(c *expect.Console) error {
+			procedure: func(c *goexpect.Console) error {
 				if _, err := c.ExpectString("Enter a name for a pipeline resource :"); err != nil {
 					return err
 				}
@@ -1130,7 +1241,7 @@ func TestPipelineResource_create_pullRequestResource(t *testing.T) {
 					return err
 				}
 
-				if _, err := c.SendLine("	https://github.com/wizzbangcorp/wizzbang/pulls/1"); err != nil {
+				if _, err := c.SendLine("https://github.com/tektoncd/cli/pull/1"); err != nil {
 					return err
 				}
 
@@ -1188,13 +1299,21 @@ func TestPipelineResource_create_pullRequestResource(t *testing.T) {
 }
 
 func TestPipelineResource_create_gcsStorageResource(t *testing.T) {
-	cs, _ := test.SeedTestData(t, pipelinetest.Data{})
+	cs, _ := test.SeedTestData(t, pipelinetest.Data{
+		Namespaces: []*corev1.Namespace{
+			{
+				ObjectMeta: metav1.ObjectMeta{
+					Name: "namespace",
+				},
+			},
+		},
+	})
 
 	tests := []promptTest{
 		{
 			name: "gcsStorageResource",
 
-			procedure: func(c *expect.Console) error {
+			procedure: func(c *goexpect.Console) error {
 				if _, err := c.ExpectString("Enter a name for a pipeline resource :"); err != nil {
 					return err
 				}
@@ -1322,13 +1441,21 @@ func TestPipelineResource_create_gcsStorageResource(t *testing.T) {
 }
 
 func TestPipelineResource_create_buildGCSstorageResource(t *testing.T) {
-	cs, _ := test.SeedTestData(t, pipelinetest.Data{})
+	cs, _ := test.SeedTestData(t, pipelinetest.Data{
+		Namespaces: []*corev1.Namespace{
+			{
+				ObjectMeta: metav1.ObjectMeta{
+					Name: "namespace",
+				},
+			},
+		},
+	})
 
 	tests := []promptTest{
 		{
 			name: "buildGCSstorageResource",
 
-			procedure: func(c *expect.Console) error {
+			procedure: func(c *goexpect.Console) error {
 				if _, err := c.ExpectString("Enter a name for a pipeline resource :"); err != nil {
 					return err
 				}
@@ -1483,56 +1610,16 @@ func TestPipelineResource_create_buildGCSstorageResource(t *testing.T) {
 	}
 }
 
-func TestPipelineResource_interrupt(t *testing.T) {
-	cs, _ := test.SeedTestData(t, pipelinetest.Data{
-		PipelineResources: []*v1alpha1.PipelineResource{
-			tb.PipelineResource("res", "namespace",
-				tb.PipelineResourceSpec("git",
-					tb.PipelineResourceSpecParam("url", "git@github.com:tektoncd/cli.git"),
-				)),
-		},
-	})
+func resOpts(ns string, cs pipelinetest.Clients) *Resource {
 
-	tests := []promptTest{
-		{
-			name: "no input for name",
-
-			procedure: func(c *expect.Console) error {
-				if _, err := c.ExpectString("Enter a name for a pipeline resource :"); err != nil {
-					return err
-				}
-
-				if _, err := c.Send(string(terminal.KeyInterrupt)); err != nil {
-					return err
-				}
-
-				if _, err := c.ExpectEOF(); err != nil {
-					return err
-				}
-
-				return nil
-			},
-		},
-	}
-
-	res := resOpts("namespace", cs)
-	for _, test := range tests {
-		t.Run(test.name, func(t *testing.T) {
-			res.RunPromptTest(t, test)
-
-		})
-	}
-}
-
-func resOpts(ns string, cs pipelinetest.Clients) *resource {
 	p := test.Params{
 		Kube:   cs.Kube,
 		Tekton: cs.Pipeline,
 	}
 	out := new(bytes.Buffer)
 	p.SetNamespace(ns)
-	resOp := resource{
-		params: &p,
+	resOp := Resource{
+		Params: &p,
 		stream: &cli.Stream{Out: out, Err: out},
 	}
 

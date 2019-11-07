@@ -29,7 +29,7 @@ import (
 	"knative.dev/pkg/apis"
 )
 
-func TestPipelinesList_latest_run(t *testing.T) {
+func TestPipelineRunLast_two_run(t *testing.T) {
 	clock := clockwork.NewFakeClock()
 	//  Time --->
 	//  |---5m ---|------------ ││--││------------- ---│--│
@@ -103,4 +103,30 @@ func TestPipelinesList_latest_run(t *testing.T) {
 	}
 
 	test.AssertOutput(t, "pipeline-run-2", lastRun.Name)
+}
+
+func TestPipelinerunLatest_no_run(t *testing.T) {
+	clock := clockwork.NewFakeClock()
+
+	cs, _ := test.SeedTestData(t, pipelinetest.Data{
+		Pipelines: []*v1alpha1.Pipeline{
+			tb.Pipeline("pipeline", "ns",
+				cb.PipelineCreationTimestamp(clock.Now().Add(5*time.Minute)),
+			),
+		},
+	})
+
+	p := &test.Params{Tekton: cs.Pipeline, Clock: clock}
+	client, err := p.Clients()
+	if err != nil {
+		t.Errorf("Unexpected error: %v", err)
+	}
+
+	_, err = LastRun(client.Tekton, "pipeline", "ns")
+	if err == nil {
+		t.Errorf("Expected error, got nil")
+	}
+
+	expected := "no pipelineruns related to pipeline pipeline found in namespace ns"
+	test.AssertOutput(t, expected, err.Error())
 }

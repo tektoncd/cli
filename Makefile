@@ -4,6 +4,10 @@ ifneq (,$(wildcard ./VERSION))
 LDFLAGS := -ldflags "-X github.com/tektoncd/cli/pkg/cmd/version.clientVersion=`cat VERSION`"
 endif
 
+ifneq ($(RELEASE_VERSION),)
+LDFLAGS := -ldflags "-X github.com/tektoncd/cli/pkg/cmd/version.clientVersion=$(RELEASE_VERSION)"
+endif
+
 all: bin/tkn test
 
 FORCE:
@@ -45,7 +49,7 @@ test: test-unit ## run all tests
 .PHONY: lint
 lint: ## run linter(s)
 	@echo "Linting..."
-	@golangci-lint run ./...
+	@golangci-lint run ./... --timeout 5m
 
 .PHONY: lint-yaml
 lint-yaml: ${YAML_FILES} ## runs yamllint on all yaml files

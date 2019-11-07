@@ -23,7 +23,7 @@ import (
 )
 
 //LastRun returns the last run for a given pipeline
-func LastRun(tekton versioned.Interface, pipeline, ns string) (*v1alpha1.PipelineRun, error) {
+func LastRun(tekton versioned.Interface, pipeline string, ns string) (*v1alpha1.PipelineRun, error) {
 	options := metav1.ListOptions{}
 	if pipeline != "" {
 		options = metav1.ListOptions{
@@ -37,7 +37,7 @@ func LastRun(tekton versioned.Interface, pipeline, ns string) (*v1alpha1.Pipelin
 	}
 
 	if len(runs.Items) == 0 {
-		return nil, fmt.Errorf("no pipelineruns found in namespace: %s", ns)
+		return nil, fmt.Errorf("no pipelineruns related to pipeline %s found in namespace %s", pipeline, ns)
 	}
 
 	latest := runs.Items[0]

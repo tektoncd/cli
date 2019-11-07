@@ -28,6 +28,8 @@ export DISABLE_MD_LINTING=1
 source $(dirname $0)/../vendor/github.com/tektoncd/plumbing/scripts/presubmit-tests.sh
 
 function test_documentation_has_been_generated() {
+    header "Testing if documentation has been generated"
+
     make docs
     make man
 
@@ -35,8 +37,24 @@ function test_documentation_has_been_generated() {
         echo "-- FATAL: The documentation or manpages didn't seem to be generated :"
         git status docs
         git diff docs
+        results_banner "Documentation" 1
         exit 1
     fi
+
+    results_banner "Documentation" 0
+}
+
+function check_lint() {
+    header "Testing if golint has been done"
+
+    golangci-lint run ./... --timeout 5m
+
+    if [[ "$?" = "1" ]]; then
+        results_banner "Lint" 1
+        exit 1
+    fi
+
+    results_banner "Lint" 0
 }
 
 function pre_build_tests() {
@@ -45,8 +63,7 @@ function pre_build_tests() {
 
 function post_build_tests() {
     test_documentation_has_been_generated
-
-    golangci-lint run
+    check_lint
 }
 
 # We use the default build, unit and integration test runners.

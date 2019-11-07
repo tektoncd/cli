@@ -23,6 +23,7 @@ import (
 	"github.com/spf13/cobra"
 	"github.com/tektoncd/cli/pkg/cli"
 	"github.com/tektoncd/cli/pkg/formatted"
+	validate "github.com/tektoncd/cli/pkg/helper/validate"
 	"github.com/tektoncd/pipeline/pkg/apis/pipeline/v1alpha1"
 	corev1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
@@ -31,9 +32,14 @@ import (
 
 const templ = `Name:	{{ .TaskRun.Name }}
 Namespace:	{{ .TaskRun.Namespace }}
-Task Ref:	{{ .TaskRun.Spec.TaskRef.Name }}
-{{- if ne .TaskRun.Spec.ServiceAccount "" }}
-Service Account:	{{ .TaskRun.Spec.ServiceAccount }}
+{{- $tRefName := taskRefExists .TaskRun.Spec }}{{- if ne $tRefName "" }}
+Task Ref:    {{ $tRefName }}
+{{- end }}
+{{- if ne .TaskRun.Spec.DeprecatedServiceAccount "" }}
+Service Account (deprecated):	{{ .TaskRun.Spec.DeprecatedServiceAccount }}
+{{- end }}
+{{- if ne .TaskRun.Spec.ServiceAccountName "" }}
+Service Account:	{{ .TaskRun.Spec.ServiceAccountName }}
 {{- end }}
 
 Status
@@ -115,6 +121,11 @@ tkn tr desc foo -n bar
 				Out: cmd.OutOrStdout(),
 				Err: cmd.OutOrStderr(),
 			}
+
+			if err := validate.NamespaceExists(p); err != nil {
+				return err
+			}
+
 			return printTaskRunDescription(s, args[0], p)
 		},
 	}
@@ -149,6 +160,7 @@ func printTaskRunDescription(s *cli.Stream, trName string, p cli.Params) error {
 		"formatDuration":  formatted.Duration,
 		"formatCondition": formatted.Condition,
 		"hasFailed":       hasFailed,
+		"taskRefExists":   validate.TaskRefExists,
 	}
 
 	w := tabwriter.NewWriter(s.Out, 0, 5, 3, ' ', tabwriter.TabIndent)

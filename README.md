@@ -12,14 +12,15 @@ Tekton!
 Download the latest binary executable for your operating system:
 
 * Mac OS X
-  - `tektoncd-cli` can be installed as a [brew tap](https://brew.sh) :
+
+  - `tektoncd-cli` can be installed as a [brew tap](https://brew.sh):
 
   ```shell
   brew tap tektoncd/tools
   brew install tektoncd-cli
   ```
 
-  - Or by the [released tarball](https://github.com/tektoncd/cli/releases/download/v0.4.0/tkn_0.4.0_Darwin_x86_64.tar.gz) :
+  - Or by the [released tarball](https://github.com/tektoncd/cli/releases/download/v0.4.0/tkn_0.4.0_Darwin_x86_64.tar.gz):
 
   ```shell
   # Get the tar.xz
@@ -27,6 +28,14 @@ Download the latest binary executable for your operating system:
   # Extract tkn to your PATH (e.g. /usr/local/bin)
   sudo tar xvzf tkn_0.4.0_Darwin_x86_64.tar.gz -C /usr/local/bin tkn
   ```
+
+* Windows
+
+  - Uncompress the [zip file](https://github.com/tektoncd/cli/releases/download/v0.4.0/tkn_0.4.0_Windows_x86_64.zip)
+  - Add the location of where the executable is to your `Path` by opening `Control Panel>System and Security>System>Advanced System Settings`
+  - Click on `Environment Variables`, select the `Path` variable, and click `Edit`
+  - Click `New` and add the location of the uncompressed zip to the `Path`
+  - Finish by clicking `Ok`
 
 * [Linux AMD 64](https://github.com/tektoncd/cli/releases/download/v0.4.0/tkn_0.4.0_Linux_x86_64.tar.gz)
 
@@ -93,6 +102,7 @@ The following commands help you understand and effectively use the Tekton CLI:
  * [`tkn taskrun:`](docs/cmd/tkn_taskrun.md) Parent command of the Taskrun command group.
  * [`tkn clustertask:`](docs/cmd/tkn_clustertask.md) Parent command of the ClusterTask command group.
  * [`tkn resource:`](docs/cmd/tkn_resource.md) Parent command of the Resource command group.
+ * [`tkn condition:`](docs/cmd/tkn_condition.md) Parent command of the Condition command group.
 
 For every `tkn` command, you can use `-h` or `--help` flags to display specific help for that command.
 

@@ -21,6 +21,7 @@ import (
 	"github.com/tektoncd/cli/pkg/cli"
 	"github.com/tektoncd/cli/pkg/helper/pods"
 	"github.com/tektoncd/cli/pkg/helper/pods/stream"
+	validate "github.com/tektoncd/cli/pkg/helper/validate"
 )
 
 const (
@@ -30,16 +31,16 @@ const (
 // LogOptions provides options on what logs to fetch. An empty LogOptions
 // implies fetching all logs including init steps
 type LogOptions struct {
-	taskrunName string
-	allSteps    bool
-	follow      bool
-	stream      *cli.Stream
-	params      cli.Params
-	streamer    stream.NewStreamerFunc
+	TaskrunName string
+	AllSteps    bool
+	Follow      bool
+	Stream      *cli.Stream
+	Params      cli.Params
+	Streamer    stream.NewStreamerFunc
 }
 
 func logCommand(p cli.Params) *cobra.Command {
-	opts := LogOptions{params: p}
+	opts := LogOptions{Params: p}
 	eg := `
 # show the logs of TaskRun named "foo" from the namespace "bar"
 tkn taskrun logs foo -n bar
@@ -57,41 +58,50 @@ tkn taskrun logs -f foo -n bar
 		},
 		Args: cobra.ExactArgs(1),
 		RunE: func(cmd *cobra.Command, args []string) error {
-			opts.taskrunName = args[0]
-			opts.stream = &cli.Stream{
+			opts.TaskrunName = args[0]
+			opts.Stream = &cli.Stream{
 				Out: cmd.OutOrStdout(),
 				Err: cmd.OutOrStderr(),
 			}
-			opts.streamer = pods.NewStream
 
-			return opts.run()
+			if err := validate.NamespaceExists(p); err != nil {
+				return err
+			}
+
+			return opts.Run()
 		},
 	}
 
-	c.Flags().BoolVarP(&opts.allSteps, "all", "a", false, "show all logs including init steps injected by tekton")
-	c.Flags().BoolVarP(&opts.follow, "follow", "f", false, "stream live logs")
+	c.Flags().BoolVarP(&opts.AllSteps, "all", "a", false, "show all logs including init steps injected by tekton")
+	c.Flags().BoolVarP(&opts.Follow, "follow", "f", false, "stream live logs")
 
 	_ = c.MarkZshCompPositionalArgumentCustom(1, "__tkn_get_taskrun")
 	return c
 }
 
-func (lo *LogOptions) run() error {
-	if lo.taskrunName == "" {
-		return fmt.Errorf("missing mandatory argument taskrun")
+func (lo *LogOptions) Run() error {
+	if lo.TaskrunName == "" {
+		return fmt.Errorf("missing mandatory argument taskrun name")
 	}
 
-	cs, err := lo.params.Clients()
+	streamer := pods.NewStream
+	if lo.Streamer != nil {
+		streamer = lo.Streamer
+	}
+
+	cs, err := lo.Params.Clients()
 	if err != nil {
 		return err
 	}
 
 	lr := &LogReader{
-		Run:      lo.taskrunName,
-		Ns:       lo.params.Namespace(),
+		Run:      lo.TaskrunName,
+		Ns:       lo.Params.Namespace(),
 		Clients:  cs,
-		Streamer: lo.streamer,
-		Follow:   lo.follow,
-		AllSteps: lo.allSteps,
+		Streamer: streamer,
+		Stream:   lo.Stream,
+		Follow:   lo.Follow,
+		AllSteps: lo.AllSteps,
 	}
 
 	logC, errC, err := lr.Read()
@@ -99,6 +109,6 @@ func (lo *LogOptions) run() error {
 		return err
 	}
 
-	NewLogWriter().Write(lo.stream, logC, errC)
+	NewLogWriter().Write(lo.Stream, logC, errC)
 	return nil
 }

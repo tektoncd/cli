@@ -28,6 +28,7 @@ import (
 	pipelinetest "github.com/tektoncd/pipeline/test"
 	tb "github.com/tektoncd/pipeline/test/builder"
 	corev1 "k8s.io/api/core/v1"
+	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"knative.dev/pkg/apis"
 )
 
@@ -75,6 +76,13 @@ func TestPipelineDelete(t *testing.T) {
 					),
 				),
 			},
+			Namespaces: []*corev1.Namespace{
+				{
+					ObjectMeta: metav1.ObjectMeta{
+						Name: "ns",
+					},
+				},
+			},
 		})
 		seeds = append(seeds, cs)
 	}
@@ -87,6 +95,14 @@ func TestPipelineDelete(t *testing.T) {
 		wantError   bool
 		want        string
 	}{
+		{
+			name:        "Invalid namespace",
+			command:     []string{"rm", "pipeline", "-n", "invalid"},
+			input:       seeds[0],
+			inputStream: nil,
+			wantError:   true,
+			want:        "namespaces \"invalid\" not found",
+		},
 		{
 			name:        "With force delete flag (shorthand)",
 			command:     []string{"rm", "pipeline", "-n", "ns", "-f"},
@@ -133,7 +149,7 @@ func TestPipelineDelete(t *testing.T) {
 			input:       seeds[3],
 			inputStream: strings.NewReader("y"),
 			wantError:   false,
-			want:        "Are you sure you want to delete pipeline and related resources (pipelineruns) \"pipeline\" (y/n): Pipeline deleted: pipeline\nPipelineRun deleted: pipeline-run-1\nPipelineRun deleted: pipeline-run-2\n",
+			want:        "Are you sure you want to delete pipeline and related resources \"pipeline\" (y/n): Pipeline deleted: pipeline\nPipelineRun deleted: pipeline-run-1\nPipelineRun deleted: pipeline-run-2\n",
 		},
 		{
 			name:        "With delete all and force delete flag",
@@ -147,7 +163,7 @@ func TestPipelineDelete(t *testing.T) {
 
 	for _, tp := range testParams {
 		t.Run(tp.name, func(t *testing.T) {
-			p := &test.Params{Tekton: tp.input.Pipeline}
+			p := &test.Params{Tekton: tp.input.Pipeline, Kube: tp.input.Kube}
 			pipeline := Command(p)
 
 			if tp.inputStream != nil {

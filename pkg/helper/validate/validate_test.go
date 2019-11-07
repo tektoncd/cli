@@ -18,6 +18,7 @@ import (
 	"testing"
 
 	"github.com/tektoncd/cli/pkg/test"
+	"github.com/tektoncd/pipeline/pkg/apis/pipeline/v1alpha1"
 	pipelinetest "github.com/tektoncd/pipeline/test"
 	corev1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
@@ -33,8 +34,9 @@ func TestNamespaceExists_Invalid_Namespace(t *testing.T) {
 	}
 	cs, _ := test.SeedTestData(t, pipelinetest.Data{Namespaces: ns})
 	p := &test.Params{Kube: cs.Kube}
+	p.SetNamespace("foo")
 
-	err := NamespaceExists(p.Kube, "foo")
+	err := NamespaceExists(p)
 	test.AssertOutput(t, "namespaces \"foo\" not found", err.Error())
 }
 
@@ -49,6 +51,26 @@ func TestNamespaceExists_Valid_Namespace(t *testing.T) {
 	cs, _ := test.SeedTestData(t, pipelinetest.Data{Namespaces: ns})
 	p := &test.Params{Kube: cs.Kube}
 
-	err := NamespaceExists(p.Kube, "default")
+	err := NamespaceExists(p)
 	test.AssertOutput(t, nil, err)
+}
+
+func TestTaskRefExists_Present(t *testing.T) {
+	spec := v1alpha1.TaskRunSpec{
+		TaskRef: &v1alpha1.TaskRef{
+			Name: "Task",
+		},
+	}
+
+	output := TaskRefExists(spec)
+	test.AssertOutput(t, "Task", output)
+}
+
+func TestTaskRefExists_Not_Present(t *testing.T) {
+	spec := v1alpha1.TaskRunSpec{
+		TaskRef: nil,
+	}
+
+	output := TaskRefExists(spec)
+	test.AssertOutput(t, "", output)
 }

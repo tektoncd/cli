@@ -16,9 +16,7 @@ builds:
   - darwin
   - windows
   goarch:
-  - 386
   - amd64
-  - arm
   - arm64
   ldflags:
   - -w -X github.com/tektoncd/cli/pkg/cmd/version.clientVersion={{.Version}}
@@ -30,6 +28,9 @@ archives:
     windows: Windows
     386: i386
     amd64: x86_64
+  format_overrides:
+    - goos: windows
+      format: zip
 checksum:
   name_template: 'checksums.txt'
 snapshot:

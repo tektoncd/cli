@@ -24,6 +24,7 @@ import (
 	"github.com/spf13/cobra"
 	"github.com/tektoncd/cli/pkg/cli"
 	"github.com/tektoncd/cli/pkg/formatted"
+	validate "github.com/tektoncd/cli/pkg/helper/validate"
 	"github.com/tektoncd/pipeline/pkg/apis/pipeline/v1alpha1"
 	corev1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
@@ -32,9 +33,14 @@ import (
 
 const templ = `Name:	{{ .PipelineRun.Name }}
 Namespace:	{{ .PipelineRun.Namespace }}
+{{- if ne .PipelineRun.Spec.PipelineRef.Name "" }}
 Pipeline Ref:	{{ .PipelineRun.Spec.PipelineRef.Name }}
-{{- if ne .PipelineRun.Spec.ServiceAccount "" }}
-Service Account:	{{ .PipelineRun.Spec.ServiceAccount }}
+{{- end }}
+{{- if ne .PipelineRun.Spec.DeprecatedServiceAccount "" }}
+Service Account (deprecated):	{{ .PipelineRun.Spec.DeprecatedServiceAccount }}
+{{- end }}
+{{- if ne .PipelineRun.Spec.ServiceAccountName "" }}
+Service Account:	{{ .PipelineRun.Spec.ServiceAccountName }}
 {{- end }}
 
 Status
@@ -106,6 +112,11 @@ tkn pr desc foo -n bar
 				Out: cmd.OutOrStdout(),
 				Err: cmd.OutOrStderr(),
 			}
+
+			if err := validate.NamespaceExists(p); err != nil {
+				return err
+			}
+
 			return printPipelineRunDescription(s, args[0], p)
 		},
 	}
