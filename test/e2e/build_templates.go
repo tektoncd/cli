@@ -571,6 +571,7 @@ func CreateTemplateForTaskRunResourceDescribeWithTestData(t *testing.T, c *Clien
 		"formatDuration":  formatted.Duration,
 		"formatCondition": formatted.Condition,
 		"hasFailed":       taskRunHasFailed,
+		"taskRefExists":   TaskRefExists,
 	}
 
 	tmp := template.Must(template.New("Describe TaskRun").Funcs(funcMap).Parse(TaskRunDescribeTemplate))
@@ -598,6 +599,19 @@ func taskRunHasFailed(tr *v1alpha1.TaskRun) string {
 		return tr.Status.Conditions[0].Message
 	}
 	return ""
+}
+
+const (
+	fieldNotPresent = ""
+)
+
+func TaskRefExists(spec v1alpha1.TaskRunSpec) string {
+
+	if spec.TaskRef == nil {
+		return fieldNotPresent
+	}
+
+	return spec.TaskRef.Name
 }
 
 type TaskRunDescribeData struct {
