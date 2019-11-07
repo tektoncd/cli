@@ -167,7 +167,7 @@ func (lr *LogReader) readStepsLogs(steps []*step, pod *pods.Pod, follow bool) (<
 				case l, ok := <-podC:
 					if !ok {
 						podC = nil
-						logC <- Log{Task: lr.Task, Step: step.name, Log: "EOFLOG"}
+						logC <- Log{Task: lr.Task, Step: step.name, Log: "Step completed"}
 						continue
 					}
 					logC <- Log{Task: lr.Task, Step: step.name, Log: l.Log}
