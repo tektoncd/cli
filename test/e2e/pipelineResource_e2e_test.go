@@ -59,7 +59,7 @@ func TestPipelineResourceDeleteE2EUsingCli(t *testing.T) {
 		fmt.Printf("Output : %+v", res.Stdout())
 		res.Assert(t, icmd.Expected{
 			ExitCode: 1,
-			Err:      "Error: Canceled deleting pipelineresource \"" + PipelineResourceName[2] + "\"\n",
+			Err:      "Error: Canceled deleting pipelineresource \"" + PipelineResourceName[2] + "\"",
 		})
 
 	})

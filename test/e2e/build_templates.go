@@ -1305,9 +1305,14 @@ func SortPipelineRunsByStartTime(prs []v1alpha1.PipelineRun) []v1alpha1.Pipeline
 
 const describeTemplateForPipelinesRun = `Name:	{{ .PipelineRun.Name }}
 Namespace:	{{ .PipelineRun.Namespace }}
+{{- if ne .PipelineRun.Spec.PipelineRef.Name "" }}
 Pipeline Ref:	{{ .PipelineRun.Spec.PipelineRef.Name }}
-{{- if ne .PipelineRun.Spec.ServiceAccount "" }}
-Service Account:	{{ .PipelineRun.Spec.ServiceAccount }}
+{{- end }}
+{{- if ne .PipelineRun.Spec.DeprecatedServiceAccount "" }}
+Service Account (deprecated):	{{ .PipelineRun.Spec.DeprecatedServiceAccount }}
+{{- end }}
+{{- if ne .PipelineRun.Spec.ServiceAccountName "" }}
+Service Account:	{{ .PipelineRun.Spec.ServiceAccountName }}
 {{- end }}
 
 Status
