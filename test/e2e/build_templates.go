@@ -1066,7 +1066,7 @@ Params
 {{- $l := len .Pipeline.Spec.Params }}{{ if eq $l 0 }}
 No params
 {{- else }}
-NAME	TYPE	DEFAULT_VALUE
+NAME	TYPE	DEFAULT VALUE
 {{- range $i, $p := .Pipeline.Spec.Params }}
 {{- if not $p.Default }}
 {{ $p.Name }}	{{ $p.Type }}	{{ "" }}
