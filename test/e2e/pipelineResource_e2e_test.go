@@ -184,9 +184,9 @@ func TestPipelineResourcesE2EUsingCli(t *testing.T) {
 			map[int]interface{}{
 
 				0: &PipelineResourcesDescribeData{
-					Name:                  PipelineResourceName[0],
-					Namespace:             namespace,
-					PipelineResource_Type: "git",
+					Name:                 PipelineResourceName[0],
+					Namespace:            namespace,
+					PipelineResourceType: "git",
 					Params: map[string]string{
 						"Url":      "https://github.com/GoogleContainerTools/kaniko",
 						"revision": "master",
@@ -212,9 +212,9 @@ func TestPipelineResourcesE2EUsingCli(t *testing.T) {
 			map[int]interface{}{
 
 				0: &PipelineResourcesDescribeData{
-					Name:                  PipelineResourceName[0],
-					Namespace:             namespace,
-					PipelineResource_Type: "image",
+					Name:                 PipelineResourceName[0],
+					Namespace:            namespace,
+					PipelineResourceType: "image",
 					Params: map[string]string{
 						"Url": "gcr.io/staging-images/kritis",
 					},

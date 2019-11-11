@@ -4,7 +4,6 @@ import (
 	"context"
 	"fmt"
 	"log"
-	"sync"
 	"time"
 
 	"github.com/tektoncd/pipeline/pkg/apis/pipeline/v1alpha1"
@@ -18,8 +17,6 @@ import (
 	"knative.dev/pkg/apis"
 	knativetest "knative.dev/pkg/test"
 )
-
-var wg sync.WaitGroup
 
 type TaskStateFn func(r *v1alpha1.Task) (bool, error)
 
@@ -80,7 +77,7 @@ func WaitForPodStateKube(c *knativetest.KubeClient, namespace string, inState Po
 		_, span := trace.StartSpan(context.Background(), metricName)
 		defer span.End()
 
-		wait.PollImmediate(interval, timeout, func() (bool, error) {
+		err1 := wait.PollImmediate(interval, timeout, func() (bool, error) {
 			fmt.Println("v.Name", v.Name)
 			r, err := c.Kube.CoreV1().Pods(namespace).Get(v.Name, metav1.GetOptions{})
 			if r.Status.Phase == "Running" || r.Status.Phase == "Succeeded" && err != nil {
@@ -89,6 +86,9 @@ func WaitForPodStateKube(c *knativetest.KubeClient, namespace string, inState Po
 			}
 			return inState(r)
 		})
+		if err1 != nil {
+			log.Fatal(err1.Error())
+		}
 	}
 
 	return err
@@ -199,10 +199,9 @@ func PodRunSucceed(name string) PodRunStateFn {
 			if c == "Running" || c == "Succeeded" {
 				fmt.Println("pods running !! ")
 				return true, nil
-			} else {
-				fmt.Println("pods not running!!")
-				return true, xerrors.Errorf("Pod run in namespace  %s failed!", name)
 			}
+			fmt.Println("pods not running!!")
+			return true, xerrors.Errorf("Pod run in namespace  %s failed!", name)
 		}
 
 		return false, nil

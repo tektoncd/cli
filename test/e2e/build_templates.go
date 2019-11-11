@@ -127,15 +127,15 @@ func CreateTemplateResourcesForOutputpath(obj interface{}) string {
 	var tmplBytes bytes.Buffer
 	w := tabwriter.NewWriter(&tmplBytes, 0, 5, 3, ' ', tabwriter.TabIndent)
 
-	switch obj.(type) {
+	switch obj := obj.(type) {
 	case *v1alpha1.TaskList:
 
-		if len(obj.(*v1alpha1.TaskList).Items) == 0 {
+		if len(obj.Items) == 0 {
 
 			return emptyMsg
 		}
 
-		for _, r := range obj.(*v1alpha1.TaskList).Items {
+		for _, r := range obj.Items {
 			fmt.Fprintf(w, body,
 				r.Name,
 			)
@@ -144,13 +144,13 @@ func CreateTemplateResourcesForOutputpath(obj interface{}) string {
 		return tmplBytes.String()
 	case *v1alpha1.TaskRunList:
 		//sort by start Time
-		sort.Sort(byStartTime(obj.(*v1alpha1.TaskRunList).Items))
-		if len(obj.(*v1alpha1.TaskRunList).Items) == 0 {
+		sort.Sort(byStartTime(obj.Items))
+		if len(obj.Items) == 0 {
 
 			return emptyMsg
 		}
 
-		for _, r := range obj.(*v1alpha1.TaskRunList).Items {
+		for _, r := range obj.Items {
 			fmt.Fprintf(w, body,
 				r.Name,
 			)
@@ -158,11 +158,11 @@ func CreateTemplateResourcesForOutputpath(obj interface{}) string {
 		w.Flush()
 		return tmplBytes.String()
 	case *v1alpha1.PipelineList:
-		if len(obj.(*v1alpha1.PipelineList).Items) == 0 {
+		if len(obj.Items) == 0 {
 			return emptyMsg
 		}
 
-		for _, r := range obj.(*v1alpha1.PipelineList).Items {
+		for _, r := range obj.Items {
 			fmt.Fprintf(w, body,
 				r.Name,
 			)
@@ -171,11 +171,11 @@ func CreateTemplateResourcesForOutputpath(obj interface{}) string {
 		return tmplBytes.String()
 
 	case *v1alpha1.PipelineRunList:
-		if len(obj.(*v1alpha1.PipelineRunList).Items) == 0 {
+		if len(obj.Items) == 0 {
 			return emptyMsg
 		}
 
-		for _, r := range obj.(*v1alpha1.PipelineRunList).Items {
+		for _, r := range obj.Items {
 			fmt.Fprintf(w, body,
 				r.Name,
 			)
@@ -183,11 +183,11 @@ func CreateTemplateResourcesForOutputpath(obj interface{}) string {
 		w.Flush()
 		return tmplBytes.String()
 	case *v1alpha1.PipelineResourceList:
-		if len(obj.(*v1alpha1.PipelineResourceList).Items) == 0 {
+		if len(obj.Items) == 0 {
 			return emptyMsg
 		}
 
-		for _, r := range obj.(*v1alpha1.PipelineResourceList).Items {
+		for _, r := range obj.Items {
 			fmt.Fprintf(w, body,
 				r.Name,
 			)
@@ -195,11 +195,11 @@ func CreateTemplateResourcesForOutputpath(obj interface{}) string {
 		w.Flush()
 		return tmplBytes.String()
 	case *v1alpha1.ClusterTaskList:
-		if len(obj.(*v1alpha1.ClusterTaskList).Items) == 0 {
+		if len(obj.Items) == 0 {
 			return emptyMsg
 		}
 
-		for _, r := range obj.(*v1alpha1.ClusterTaskList).Items {
+		for _, r := range obj.Items {
 			fmt.Fprintf(w, body,
 				r.Name,
 			)
@@ -404,9 +404,9 @@ func GetTaskListWithTestData(t *testing.T, c *Clients, td map[int]interface{}) *
 		return tasklist
 	}
 	for i, task := range td {
-		switch task.(type) {
+		switch task := task.(type) {
 		case *TaskData:
-			tasklist.Items[i].Name = task.(*TaskData).Name
+			tasklist.Items[i].Name = task.Name
 		default:
 			t.Error("Test Data Format Didn't Match please do check Test Data which you passing")
 		}
@@ -467,13 +467,13 @@ func GetTaskRunListWithTestData(t *testing.T, c *Clients, td map[int]interface{}
 		return taskRunlist
 	}
 	for i, tr := range td {
-		switch tr.(type) {
+		switch tr := tr.(type) {
 		case *TaskRunData:
-			match, _ := regexp.Compile(tr.(*TaskRunData).Name + ".*")
+			match, _ := regexp.Compile(tr.Name + ".*")
 			if match.MatchString(taskRunlist.Items[i].Name) {
-				taskRunlist.Items[i].Status.Conditions[0].Reason = tr.(*TaskRunData).Status
+				taskRunlist.Items[i].Status.Conditions[0].Reason = tr.Status
 			} else {
-				t.Errorf("TaskRun Name didnt match , Expected %s Got %s", tr.(*TaskRunData).Name, taskRunlist.Items[i].Name)
+				t.Errorf("TaskRun Name didnt match , Expected %s Got %s", tr.Name, taskRunlist.Items[i].Name)
 			}
 		default:
 			t.Errorf("Test Data Format Didn't Match please do check Test Data which you passing")
@@ -615,35 +615,35 @@ func TaskRefExists(spec v1alpha1.TaskRunSpec) string {
 }
 
 type TaskRunDescribeData struct {
-	Name            string
-	Namespace       string
-	Task_Ref        string
-	Service_Account string
-	Status          string
-	FailureMessage  string
-	Input           map[string]string
-	Output          map[string]string
-	Params          map[string]interface{}
-	Steps           []string
+	Name           string
+	Namespace      string
+	TaskRef        string
+	ServiceAccount string
+	Status         string
+	FailureMessage string
+	Input          map[string]string
+	Output         map[string]string
+	Params         map[string]interface{}
+	Steps          []string
 }
 
 func GetTaskRunWithTestData(t *testing.T, c *Clients, trname string, td map[int]interface{}) *v1alpha1.TaskRun {
 	t.Helper()
 	taskRun := GetTaskRun(c, trname)
 	for _, tr := range td {
-		switch tr.(type) {
+		switch tr := tr.(type) {
 		case *TaskRunDescribeData:
-			taskRun.Name = tr.(*TaskRunDescribeData).Name
-			taskRun.Namespace = tr.(*TaskRunDescribeData).Namespace
-			taskRun.Spec.TaskRef.Name = tr.(*TaskRunDescribeData).Task_Ref
-			taskRun.Spec.ServiceAccountName = tr.(*TaskRunDescribeData).Service_Account
-			taskRun.Status.Conditions[0].Reason = tr.(*TaskRunDescribeData).Status
-			if tr.(*TaskRunDescribeData).FailureMessage != "" {
-				taskRun.Status.Conditions[0].Message = tr.(*TaskRunDescribeData).FailureMessage
+			taskRun.Name = tr.Name
+			taskRun.Namespace = tr.Namespace
+			taskRun.Spec.TaskRef.Name = tr.TaskRef
+			taskRun.Spec.ServiceAccountName = tr.ServiceAccount
+			taskRun.Status.Conditions[0].Reason = tr.Status
+			if tr.FailureMessage != "" {
+				taskRun.Status.Conditions[0].Message = tr.FailureMessage
 			}
-			if len(tr.(*TaskRunDescribeData).Input) == len(taskRun.Spec.Inputs.Resources) {
+			if len(tr.Input) == len(taskRun.Spec.Inputs.Resources) {
 				counter := 0
-				for rname, rref := range tr.(*TaskRunDescribeData).Input {
+				for rname, rref := range tr.Input {
 					taskRun.Spec.Inputs.Resources[counter].Name = rname
 					taskRun.Spec.Inputs.Resources[counter].ResourceRef.Name = rref
 					counter++
@@ -652,9 +652,9 @@ func GetTaskRunWithTestData(t *testing.T, c *Clients, trname string, td map[int]
 			} else {
 				t.Error("Input Resource length didnt match with test data")
 			}
-			if len(tr.(*TaskRunDescribeData).Output) == len(taskRun.Spec.Outputs.Resources) {
+			if len(tr.Output) == len(taskRun.Spec.Outputs.Resources) {
 				counter := 0
-				for rname, rref := range tr.(*TaskRunDescribeData).Output {
+				for rname, rref := range tr.Output {
 					taskRun.Spec.Outputs.Resources[counter].Name = rname
 					taskRun.Spec.Outputs.Resources[counter].ResourceRef.Name = rref
 					counter++
@@ -664,7 +664,7 @@ func GetTaskRunWithTestData(t *testing.T, c *Clients, trname string, td map[int]
 				t.Error("Input Resource length didnt match with test data")
 			}
 			counter := 0
-			for ipname, ipvalue := range tr.(*TaskRunDescribeData).Params {
+			for ipname, ipvalue := range tr.Params {
 				taskRun.Spec.Inputs.Params[counter].Name = ipname
 				switch ipvalue.(type) {
 				case *string:
@@ -678,7 +678,7 @@ func GetTaskRunWithTestData(t *testing.T, c *Clients, trname string, td map[int]
 				}
 			}
 
-			for i, stepname := range tr.(*TaskRunDescribeData).Steps {
+			for i, stepname := range tr.Steps {
 				taskRun.Status.Steps[i].Name = stepname
 			}
 
@@ -743,27 +743,27 @@ func GetPipelineResourceListWithTestData(t *testing.T, c *Clients, td map[int]in
 
 	var key = "url"
 	for i, pr := range td {
-		switch pr.(type) {
+		switch pr := pr.(type) {
 		case *PipelineResourcesData:
 
 			//Mock Name
-			pipelineResourceList.Items[i].Name = pr.(*PipelineResourcesData).Name
+			pipelineResourceList.Items[i].Name = pr.Name
 
 			//Mock Resource Type
-			if pr.(*PipelineResourcesData).Type == "git" {
+			if pr.Type == "git" {
 				pipelineResourceList.Items[i].Spec.Type = v1alpha1.PipelineResourceTypeGit
-			} else if pr.(*PipelineResourcesData).Type == "storage" {
+			} else if pr.Type == "storage" {
 				pipelineResourceList.Items[i].Spec.Type = v1alpha1.PipelineResourceTypeStorage
 				key = "location"
-			} else if pr.(*PipelineResourcesData).Type == "image" {
+			} else if pr.Type == "image" {
 				pipelineResourceList.Items[i].Spec.Type = v1alpha1.PipelineResourceTypeImage
-			} else if pr.(*PipelineResourcesData).Type == "cluster" {
+			} else if pr.Type == "cluster" {
 				pipelineResourceList.Items[i].Spec.Type = v1alpha1.PipelineResourceTypeCluster
-			} else if pr.(*PipelineResourcesData).Type == "pullRequest" {
+			} else if pr.Type == "pullRequest" {
 				pipelineResourceList.Items[i].Spec.Type = v1alpha1.PipelineResourceTypePullRequest
-			} else if pr.(*PipelineResourcesData).Type == "build-gcs" {
+			} else if pr.Type == "build-gcs" {
 				pipelineResourceList.Items[i].Spec.Type = v1alpha1.PipelineResourceTypeBuildGCS
-			} else if pr.(*PipelineResourcesData).Type == "gcs" {
+			} else if pr.Type == "gcs" {
 				pipelineResourceList.Items[i].Spec.Type = v1alpha1.PipelineResourceTypeGCS
 			} else {
 				t.Errorf("Provided PipelineResourcesData is not Valid Type : Need to Provide (%s, %s, %s, %s, %s)", v1alpha1.PipelineResourceTypeGit, v1alpha1.PipelineResourceTypeImage, v1alpha1.PipelineResourceTypePullRequest, v1alpha1.PipelineResourceTypeBuildGCS, v1alpha1.PipelineResourceTypeCluster)
@@ -771,10 +771,10 @@ func GetPipelineResourceListWithTestData(t *testing.T, c *Clients, td map[int]in
 
 			for k, p := range pipelineResourceList.Items[i].Spec.Params {
 				if strings.ToLower(p.Name) == key {
-					pipelineResourceList.Items[i].Spec.Params[k].Value = pr.(*PipelineResourcesData).Details
+					pipelineResourceList.Items[i].Spec.Params[k].Value = pr.Details
 					break
 				} else {
-					pipelineResourceList.Items[i].Spec.Params[k].Value = pr.(*PipelineResourcesData).Details
+					pipelineResourceList.Items[i].Spec.Params[k].Value = pr.Details
 				}
 			}
 
@@ -791,11 +791,11 @@ func GetPipelineResourceListWithTestData(t *testing.T, c *Clients, td map[int]in
 }
 
 type PipelineResourcesDescribeData struct {
-	Name                  string
-	Namespace             string
-	PipelineResource_Type string
-	Params                map[string]string
-	SecretParams          map[string]string
+	Name                 string
+	Namespace            string
+	PipelineResourceType string
+	Params               map[string]string
+	SecretParams         map[string]string
 }
 
 const describeTemplateForPipelinesResources = `Name:	{{ .PipelineResource.Name }}
@@ -858,43 +858,43 @@ func GetPipelineResourceWithTestData(t *testing.T, c *Clients, name string, td m
 
 	for _, pr := range td {
 
-		switch pr.(type) {
+		switch pr := pr.(type) {
 		case *PipelineResourcesDescribeData:
-			if pr.(*PipelineResourcesDescribeData).Name == name {
-				pipelineResource.Name = pr.(*PipelineResourcesDescribeData).Name
+			if pr.Name == name {
+				pipelineResource.Name = pr.Name
 
-				pipelineResource.Namespace = pr.(*PipelineResourcesDescribeData).Namespace
+				pipelineResource.Namespace = pr.Namespace
 
-				if pr.(*PipelineResourcesDescribeData).PipelineResource_Type == "git" {
+				if pr.PipelineResourceType == "git" {
 					pipelineResource.Spec.Type = v1alpha1.PipelineResourceTypeGit
-				} else if pr.(*PipelineResourcesDescribeData).PipelineResource_Type == "storage" {
+				} else if pr.PipelineResourceType == "storage" {
 					pipelineResource.Spec.Type = v1alpha1.PipelineResourceTypeStorage
-				} else if pr.(*PipelineResourcesDescribeData).PipelineResource_Type == "image" {
+				} else if pr.PipelineResourceType == "image" {
 					pipelineResource.Spec.Type = v1alpha1.PipelineResourceTypeImage
-				} else if pr.(*PipelineResourcesDescribeData).PipelineResource_Type == "cluster" {
+				} else if pr.PipelineResourceType == "cluster" {
 					pipelineResource.Spec.Type = v1alpha1.PipelineResourceTypeCluster
-				} else if pr.(*PipelineResourcesDescribeData).PipelineResource_Type == "pullRequest" {
+				} else if pr.PipelineResourceType == "pullRequest" {
 					pipelineResource.Spec.Type = v1alpha1.PipelineResourceTypePullRequest
-				} else if pr.(*PipelineResourcesDescribeData).PipelineResource_Type == "build-gcs" {
+				} else if pr.PipelineResourceType == "build-gcs" {
 					pipelineResource.Spec.Type = v1alpha1.PipelineResourceTypeBuildGCS
-				} else if pr.(*PipelineResourcesDescribeData).PipelineResource_Type == "gcs" {
+				} else if pr.PipelineResourceType == "gcs" {
 					pipelineResource.Spec.Type = v1alpha1.PipelineResourceTypeGCS
 				} else {
 					t.Errorf("Provided PipelineResourcesData is not Valid Type : Need to Provide (%s, %s, %s, %s, %s)", v1alpha1.PipelineResourceTypeGit, v1alpha1.PipelineResourceTypeImage, v1alpha1.PipelineResourceTypePullRequest, v1alpha1.PipelineResourceTypeBuildGCS, v1alpha1.PipelineResourceTypeCluster)
 				}
 
-				if len(pr.(*PipelineResourcesDescribeData).Params) == len(pipelineResource.Spec.Params) {
-					for i, _ := range pipelineResource.Spec.Params {
-						pipelineResource.Spec.Params[i].Value = pr.(*PipelineResourcesDescribeData).Params[pipelineResource.Spec.Params[i].Name]
+				if len(pr.Params) == len(pipelineResource.Spec.Params) {
+					for i := range pipelineResource.Spec.Params {
+						pipelineResource.Spec.Params[i].Value = pr.Params[pipelineResource.Spec.Params[i].Name]
 					}
 				} else {
 					t.Error("Pipeline Resources Params lenght didnt match...")
 				}
 
-				if len(pr.(*PipelineResourcesDescribeData).SecretParams) == len(pipelineResource.Spec.SecretParams) {
+				if len(pr.SecretParams) == len(pipelineResource.Spec.SecretParams) {
 
-					for i, _ := range pipelineResource.Spec.SecretParams {
-						pipelineResource.Spec.SecretParams[i].SecretName = pr.(*PipelineResourcesDescribeData).SecretParams[pipelineResource.Spec.SecretParams[i].FieldName]
+					for i := range pipelineResource.Spec.SecretParams {
+						pipelineResource.Spec.SecretParams[i].SecretName = pr.SecretParams[pipelineResource.Spec.SecretParams[i].FieldName]
 					}
 				} else {
 					t.Error("Pipeline Resources secret Params lenght didnt match...")
@@ -988,18 +988,18 @@ func listPipelineDetailsWithTestData(t *testing.T, cs *Clients, td map[int]inter
 	runs := GetPipelineRunList(cs)
 	latestRuns := pipelineruns{}
 	for _, p := range td {
-		switch p.(type) {
+		switch p := p.(type) {
 		case *PipelinesListData:
 			for _, run := range runs.Items {
-				pipelineName := p.(*PipelinesListData).Name
+				pipelineName := p.Name
 				latest, ok := latestRuns[pipelineName]
 				if !ok {
-					run.Status.Conditions[0].Reason = p.(*PipelinesListData).Status
+					run.Status.Conditions[0].Reason = p.Status
 					latestRuns[pipelineName] = run
 					continue
 				}
 				if run.CreationTimestamp.After(latest.CreationTimestamp.Time) {
-					run.Status.Conditions[0].Reason = p.(*PipelinesListData).Status
+					run.Status.Conditions[0].Reason = p.Status
 					latestRuns[pipelineName] = run
 				}
 			}
@@ -1022,9 +1022,9 @@ func GetPipelineListWithTestData(t *testing.T, c *Clients, td map[int]interface{
 	}
 
 	for i, p := range td {
-		switch p.(type) {
+		switch p := p.(type) {
 		case *PipelinesListData:
-			ps.Items[i].Name = p.(*PipelinesListData).Name
+			ps.Items[i].Name = p.Name
 		default:
 			t.Error("Test Data Format Didn't Match please do check Test Data which you passing")
 		}
@@ -1168,12 +1168,12 @@ func GetPipelineWithTestData(t *testing.T, c *Clients, name string, td map[int]i
 	pipeline := GetPipeline(c, name)
 
 	for _, p := range td {
-		switch p.(type) {
+		switch p := p.(type) {
 		case *PipelineDescribeData:
-			pipeline.Name = p.(*PipelineDescribeData).Name
-			if len(pipeline.Spec.Resources) == len(p.(*PipelineDescribeData).Resources) {
+			pipeline.Name = p.Name
+			if len(pipeline.Spec.Resources) == len(p.Resources) {
 				count := 0
-				for k, v := range p.(*PipelineDescribeData).Resources {
+				for k, v := range p.Resources {
 					pipeline.Spec.Resources[count].Name = k
 					if v == "git" {
 						pipeline.Spec.Resources[count].Type = v1alpha1.PipelineResourceTypeGit
@@ -1196,23 +1196,23 @@ func GetPipelineWithTestData(t *testing.T, c *Clients, name string, td map[int]i
 					count++
 				}
 			} else {
-				t.Errorf("length of Resources didn't match with testdata for pipeline %s", p.(*PipelineDescribeData).Name)
+				t.Errorf("length of Resources didn't match with testdata for pipeline %s", p.Name)
 			}
 
-			if len(pipeline.Spec.Tasks) == len(p.(*PipelineDescribeData).Task) {
+			if len(pipeline.Spec.Tasks) == len(p.Task) {
 
-				for i, tref := range p.(*PipelineDescribeData).Task {
-					switch tref.(type) {
+				for i, tref := range p.Task {
+					switch tref := tref.(type) {
 					case *TaskRefData:
-						pipeline.Spec.Tasks[i].Name = tref.(*TaskRefData).TaskName
-						pipeline.Spec.Tasks[i].TaskRef.Name = tref.(*TaskRefData).TaskRef
-						pipeline.Spec.Tasks[i].RunAfter = tref.(*TaskRefData).RunAfter
+						pipeline.Spec.Tasks[i].Name = tref.TaskName
+						pipeline.Spec.Tasks[i].TaskRef.Name = tref.TaskRef
+						pipeline.Spec.Tasks[i].RunAfter = tref.RunAfter
 					default:
-						t.Errorf(" TaskRef Data type doesnt match with Expected Type Recheck your Test Data for pipeline %s", p.(*PipelineDescribeData).Name)
+						t.Errorf(" TaskRef Data type doesnt match with Expected Type Recheck your Test Data for pipeline %s", p.Name)
 					}
 				}
 			} else {
-				t.Errorf("length of Task didn't match with testdata for pipeline %s", p.(*PipelineDescribeData).Name)
+				t.Errorf("length of Task didn't match with testdata for pipeline %s", p.Name)
 			}
 		default:
 			t.Errorf(" Pipeline Describe Data type doesnt match with Expected Type Recheck your Test Data for pipeline %s", p.(*PipelineDescribeData).Name)
@@ -1240,18 +1240,18 @@ func GetPipelineRunListWithNameAndTestData(t *testing.T, c *Clients, pname strin
 	}
 
 	for _, p := range td {
-		switch p.(type) {
+		switch p := p.(type) {
 		case *PipelineDescribeData:
 
-			if len(pipelineRunList.Items) == len(p.(*PipelineDescribeData).Runs) {
+			if len(pipelineRunList.Items) == len(p.Runs) {
 				count := 0
-				for k, v := range p.(*PipelineDescribeData).Runs {
+				for k, v := range p.Runs {
 					pipelineRunList.Items[count].Name = k
 					pipelineRunList.Items[count].Status.Conditions[0].Reason = v
 					count++
 				}
 			} else {
-				t.Errorf("length of PipelineRuns didn't match with testdata for pipeline %s", p.(*PipelineDescribeData).Name)
+				t.Errorf("length of PipelineRuns didn't match with testdata for pipeline %s", p.Name)
 			}
 
 		default:
@@ -1327,10 +1327,10 @@ func GetSortedPipelineRunListWithTestData(t *testing.T, c *Clients, pipeline str
 	}
 
 	for i, p := range td {
-		switch p.(type) {
+		switch p := p.(type) {
 		case *PipelineRunListData:
-			pipelineRunList.Items[i].Name = p.(*PipelineRunListData).Name
-			pipelineRunList.Items[i].Status.Conditions[0].Reason = p.(*PipelineRunListData).Status
+			pipelineRunList.Items[i].Name = p.Name
+			pipelineRunList.Items[i].Status.Conditions[0].Reason = p.Status
 		default:
 			t.Error("Test Data Format Didn't Match please do check Test Data which you passing")
 		}
@@ -1484,15 +1484,15 @@ func (s taskrunList) Less(i, j int) bool {
 }
 
 type PipelineRunDescribeData struct {
-	Name            string
-	Namespace       string
-	Pipeline_Ref    string
-	Service_Account string
-	Status          string
-	FailureMessage  string
-	Resources       map[int]interface{}
-	Params          map[string]interface{}
-	TaskRuns        map[int]interface{}
+	Name           string
+	Namespace      string
+	PipelineRef    string
+	ServiceAccount string
+	Status         string
+	FailureMessage string
+	Resources      map[int]interface{}
+	Params         map[string]interface{}
+	TaskRuns       map[int]interface{}
 }
 
 type ResourceRefData struct {
@@ -1511,16 +1511,16 @@ func newTaskrunListFromMapWithTestData(t *testing.T, statusMap map[string]*v1alp
 	var trl taskrunList
 
 	for _, tr := range td {
-		switch tr.(type) {
+		switch tr := tr.(type) {
 		case *PipelineRunDescribeData:
-			if len(tr.(*PipelineRunDescribeData).TaskRuns) == len(statusMap) {
+			if len(tr.TaskRuns) == len(statusMap) {
 
 				taskRefData := []*TaskRunRefData{}
 
-				for _, ref := range tr.(*PipelineRunDescribeData).TaskRuns {
-					switch ref.(type) {
+				for _, ref := range tr.TaskRuns {
+					switch ref := ref.(type) {
 					case *TaskRunRefData:
-						taskRefData = append(taskRefData, ref.(*TaskRunRefData))
+						taskRefData = append(taskRefData, ref)
 					default:
 						t.Error("TaskRunRef Test Data Format Didn't Match please do check Test Data which you passing")
 					}
@@ -1566,23 +1566,23 @@ func GetPipelineRunWithTestData(t *testing.T, c *Clients, name string, td map[in
 	pipelineRun := GetPipelineRun(c, name)
 
 	for _, tr := range td {
-		switch tr.(type) {
+		switch tr := tr.(type) {
 		case *PipelineRunDescribeData:
-			pipelineRun.Name = tr.(*PipelineRunDescribeData).Name
-			pipelineRun.Namespace = tr.(*PipelineRunDescribeData).Namespace
-			pipelineRun.Spec.PipelineRef.Name = tr.(*PipelineRunDescribeData).Pipeline_Ref
-			pipelineRun.Spec.ServiceAccountName = tr.(*PipelineRunDescribeData).Service_Account
-			pipelineRun.Status.Conditions[0].Reason = tr.(*PipelineRunDescribeData).Status
-			if tr.(*PipelineRunDescribeData).FailureMessage != "" {
-				pipelineRun.Status.Conditions[0].Message = tr.(*PipelineRunDescribeData).FailureMessage
+			pipelineRun.Name = tr.Name
+			pipelineRun.Namespace = tr.Namespace
+			pipelineRun.Spec.PipelineRef.Name = tr.PipelineRef
+			pipelineRun.Spec.ServiceAccountName = tr.ServiceAccount
+			pipelineRun.Status.Conditions[0].Reason = tr.Status
+			if tr.FailureMessage != "" {
+				pipelineRun.Status.Conditions[0].Message = tr.FailureMessage
 			}
-			if len(tr.(*PipelineRunDescribeData).Resources) == len(pipelineRun.Spec.Resources) {
-				for i, rref := range tr.(*PipelineRunDescribeData).Resources {
+			if len(tr.Resources) == len(pipelineRun.Spec.Resources) {
+				for i, rref := range tr.Resources {
 
-					switch rref.(type) {
+					switch rref := rref.(type) {
 					case *ResourceRefData:
-						pipelineRun.Spec.Resources[i].Name = rref.(*ResourceRefData).ResourceName
-						pipelineRun.Spec.Resources[i].ResourceRef.Name = rref.(*ResourceRefData).ResourceRef
+						pipelineRun.Spec.Resources[i].Name = rref.ResourceName
+						pipelineRun.Spec.Resources[i].ResourceRef.Name = rref.ResourceRef
 					default:
 						t.Error("ResourceRef Test Data Format Didn't Match please do check Test Data which you passing")
 					}
@@ -1594,8 +1594,8 @@ func GetPipelineRunWithTestData(t *testing.T, c *Clients, name string, td map[in
 
 			counter := 0
 
-			if len(tr.(*PipelineRunDescribeData).Params) == len(pipelineRun.Spec.Params) {
-				for ipname, ipvalue := range tr.(*PipelineRunDescribeData).Params {
+			if len(tr.Params) == len(pipelineRun.Spec.Params) {
+				for ipname, ipvalue := range tr.Params {
 					pipelineRun.Spec.Params[counter].Name = ipname
 					switch ipvalue.(type) {
 					case *string:

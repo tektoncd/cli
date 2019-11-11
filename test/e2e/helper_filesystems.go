@@ -8,8 +8,6 @@ import (
 	"log"
 	"os"
 	"path/filepath"
-	"reflect"
-	"regexp"
 	"runtime"
 	"strings"
 	"testing"
@@ -79,7 +77,7 @@ func ReplaceString(filename string, oldString string, newString string, t *testi
 
 	newContent := strings.Replace(string(f), oldString, newString, 1)
 
-	err = ioutil.WriteFile(filename, []byte(newContent), 644)
+	err = ioutil.WriteFile(filename, []byte(newContent), 0644)
 	assert.NilError(t, err)
 }
 
@@ -127,68 +125,30 @@ func copyDir(src string, dst string, info os.FileInfo) error {
 	return err
 }
 
-// CreateFileWithContent creates a file at the given path and writes the given content
-// path is the path to the required file
-// fileContent is the content to be written to the given file
-func createFileWithContent(path string, fileContent string) error {
-	// create and open file if not exists
-	var file, err = os.OpenFile(path, os.O_RDWR|os.O_CREATE, 0644)
-	if err != nil {
-		return err
-	}
-	defer file.Close()
-	// write to file
-	_, err = file.WriteString(fileContent)
-	if err != nil {
-		return err
-	}
-	return nil
-}
+// func hasElement(s interface{}, elem interface{}) bool {
+// 	arrV := reflect.ValueOf(s)
 
-func hasElement(s interface{}, elem interface{}) bool {
-	arrV := reflect.ValueOf(s)
+// 	if arrV.Kind() == reflect.Slice {
+// 		for i := 0; i < arrV.Len(); i++ {
+// 			if arrV.Index(i).Interface() == elem {
+// 				return true
+// 			}
+// 		}
+// 	}
 
-	if arrV.Kind() == reflect.Slice {
-		for i := 0; i < arrV.Len(); i++ {
-			if arrV.Index(i).Interface() == elem {
-				return true
-			}
-		}
-	}
+// 	return false
+// }
 
-	return false
-}
-
-func containsString(sl []string, v string) bool {
-	for _, vv := range sl {
-		x := strings.Join(strings.Fields(vv), "")
-		y := strings.Join(strings.Fields(v), "")
-		if x == y {
-			return true
-		}
-	}
-	return false
-}
-
-func ignoreStartedTimeField(temp string) string {
-
-	re := regexp.MustCompile(`(\b\d\d?\s.*)(\b[\d]|[-])`)
-
-	for _, match := range re.FindAllString(temp, -1) {
-		x := re.FindStringSubmatch(match)
-
-		for i, _ := range re.SubexpNames() {
-			if i > 0 && i <= len(x) {
-
-				if i == 1 {
-					temp = strings.Replace(temp, x[i], " --- ", 1)
-				}
-			}
-		}
-	}
-
-	return temp
-}
+// func containsString(sl []string, v string) bool {
+// 	for _, vv := range sl {
+// 		x := strings.Join(strings.Fields(vv), "")
+// 		y := strings.Join(strings.Fields(v), "")
+// 		if x == y {
+// 			return true
+// 		}
+// 	}
+// 	return false
+// }
 
 func Process(t *template.Template, vars interface{}) string {
 	var tmplBytes bytes.Buffer
