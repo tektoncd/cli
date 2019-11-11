@@ -160,16 +160,16 @@ func TestTaskRunE2EUsingCli(t *testing.T) {
 		expected := CreateTemplateForTaskRunResourceDescribeWithTestData(t, c, teTaskRunName,
 			map[int]interface{}{
 				0: &TaskRunDescribeData{
-					Name:            teTaskRunName,
-					Namespace:       namespace,
-					Task_Ref:        teTaskName,
-					Service_Account: "",
-					Status:          "Succeeded",
-					FailureMessage:  "",
-					Input:           map[string]string{},
-					Output:          map[string]string{},
-					Params:          map[string]interface{}{},
-					Steps:           []string{"amazing-busybox", "amazing-busybox-1"},
+					Name:           teTaskRunName,
+					Namespace:      namespace,
+					TaskRef:        teTaskName,
+					ServiceAccount: "",
+					Status:         "Succeeded",
+					FailureMessage: "",
+					Input:          map[string]string{},
+					Output:         map[string]string{},
+					Params:         map[string]interface{}{},
+					Steps:          []string{"amazing-busybox", "amazing-busybox-1"},
 				},
 			})
 		if d := cmp.Diff(expected, res.Stdout()); d != "" {
@@ -223,16 +223,16 @@ func TestTaskRunCancelAndDeleteE2EUsingCli(t *testing.T) {
 		expected := CreateTemplateForTaskRunResourceDescribeWithTestData(t, c, teTaskRunName,
 			map[int]interface{}{
 				0: &TaskRunDescribeData{
-					Name:            teTaskRunName,
-					Namespace:       namespace,
-					Task_Ref:        teTaskName,
-					Service_Account: "",
-					Status:          "TaskRunCancelled",
-					FailureMessage:  "TaskRun \"" + teTaskRunName + "\" was cancelled",
-					Input:           map[string]string{},
-					Output:          map[string]string{},
-					Params:          map[string]interface{}{},
-					Steps:           []string{"amazing-busybox", "amazing-busybox-1"},
+					Name:           teTaskRunName,
+					Namespace:      namespace,
+					TaskRef:        teTaskName,
+					ServiceAccount: "",
+					Status:         "TaskRunCancelled",
+					FailureMessage: "TaskRun \"" + teTaskRunName + "\" was cancelled",
+					Input:          map[string]string{},
+					Output:         map[string]string{},
+					Params:         map[string]interface{}{},
+					Steps:          []string{"amazing-busybox", "amazing-busybox-1"},
 				},
 			})
 		if d := cmp.Diff(expected, res.Stdout()); d != "" {

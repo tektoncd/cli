@@ -86,7 +86,10 @@ func RunInteractivePipelineLogs(t *testing.T, namespace string, ops *Interactive
 	wg.Add(1)
 	go func() {
 		defer wg.Done()
-		c.ExpectEOF()
+		_, err := c.ExpectEOF()
+		if err != nil {
+			t.Error(err)
+		}
 	}()
 
 	go func() {

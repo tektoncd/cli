@@ -3,10 +3,8 @@
 package e2e
 
 import (
-	"fmt"
 	"log"
 	"os"
-	"runtime"
 	"testing"
 )
 
@@ -27,11 +25,11 @@ func TestMain(m *testing.M) {
 
 // Verify the other tests didn't leave
 // any goroutines running.
-func goroutineLeaked() bool {
-	//... need to implement
-	fmt.Printf("#goroutines: %d\n", runtime.NumGoroutine())
-	return true
-}
+// func goroutineLeaked() bool {
+// 	//... need to implement
+// 	fmt.Printf("#goroutines: %d\n", runtime.NumGoroutine())
+// 	return true
+// }
 
 func SetupProcess() (string, string) {
 

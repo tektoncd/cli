@@ -16,7 +16,6 @@ import (
 	"knative.dev/pkg/test/logging"
 
 	//"github.com/tektoncd/cli/test/helper"
-	"github.com/tektoncd/pipeline/pkg/apis/pipeline/v1alpha1"
 	"github.com/tektoncd/pipeline/pkg/names"
 	"golang.org/x/xerrors"
 	"gopkg.in/yaml.v2"
@@ -77,7 +76,7 @@ func CleanUpResources() {
 		cmd := ProcessString(msg, vars)
 		cmdArgs := strings.Fields(cmd)
 
-		res := icmd.RunCmd(icmd.Command(cmdArgs[0], cmdArgs[1:len(cmdArgs)]...))
+		res := icmd.RunCmd(icmd.Command(cmdArgs[0], cmdArgs[1:]...))
 
 		if res.ExitCode != 0 {
 			log.Fatalf("Failed to execute %s", res.Stderr())
@@ -96,7 +95,7 @@ func InstallTektonPipelines(kubeClient *knativetest.KubeClient, namespace string
 	cmdName := fmt.Sprintf("kubectl apply -f https://github.com/tektoncd/pipeline/releases/download/v%s/release.yaml", os.Getenv("PIPELINE_VERSION"))
 	cmdArgs := strings.Fields(cmdName)
 
-	res := icmd.RunCmd(icmd.Command(cmdArgs[0], cmdArgs[1:len(cmdArgs)]...))
+	res := icmd.RunCmd(icmd.Command(cmdArgs[0], cmdArgs[1:]...))
 
 	if res.ExitCode != 0 {
 		log.Fatalf("Failed to execute %s", res.Stderr())
@@ -114,7 +113,7 @@ func UninstallTektonPipelines() {
 	log.Println("Uninstalled CRD successfully..")
 	cmdArgs := strings.Fields(cmdName)
 
-	res := icmd.RunCmd(icmd.Command(cmdArgs[0], cmdArgs[1:len(cmdArgs)]...))
+	res := icmd.RunCmd(icmd.Command(cmdArgs[0], cmdArgs[1:]...))
 
 	if res.ExitCode != 0 {
 		log.Fatalf("Failed to execute %s", res.Stderr())
@@ -183,17 +182,17 @@ func TearDown(t *testing.T, cs *Clients, namespace string) {
 
 }
 
-func getPodForTaskRun(t *testing.T, cs *Clients, namespace string, tr *v1alpha1.TaskRun) *corev1.Pod {
-	// The Pod name has a random suffix, so we filter by label to find the one we care about.
-	pods, err := cs.KubeClient.Kube.CoreV1().Pods(namespace).List(metav1.ListOptions{})
-	if err != nil {
-		t.Fatalf("Couldn't get expected Pod for %s: %s", tr.Name, err)
-	}
-	if numPods := len(pods.Items); numPods != 1 {
-		t.Fatalf("Expected 1 Pod for %s, but got %d Pods", tr.Name, numPods)
-	}
-	return &pods.Items[0]
-}
+// func getPodForTaskRun(t *testing.T, cs *Clients, namespace string, tr *v1alpha1.TaskRun) *corev1.Pod {
+// 	// The Pod name has a random suffix, so we filter by label to find the one we care about.
+// 	pods, err := cs.KubeClient.Kube.CoreV1().Pods(namespace).List(metav1.ListOptions{})
+// 	if err != nil {
+// 		t.Fatalf("Couldn't get expected Pod for %s: %s", tr.Name, err)
+// 	}
+// 	if numPods := len(pods.Items); numPods != 1 {
+// 		t.Fatalf("Expected 1 Pod for %s, but got %d Pods", tr.Name, numPods)
+// 	}
+// 	return &pods.Items[0]
+// }
 
 func initializeLogsAndMetrics() {
 	initMetrics.Do(func() {
