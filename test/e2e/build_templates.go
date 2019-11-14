@@ -568,11 +568,11 @@ func CreateTemplateForTaskRunResourceDescribeWithTestData(t *testing.T, c *Clien
 	}
 
 	funcMap := template.FuncMap{
-		"formatAge":       formatted.Age,
-		"formatDuration":  formatted.Duration,
-		"formatCondition": formatted.Condition,
-		"hasFailed":       taskRunHasFailed,
-		"taskRefExists":   TaskRefExists,
+		"formatAge":        formatted.Age,
+		"formatDuration":   formatted.Duration,
+		"formatCondition":  formatted.Condition,
+		"hasFailed":        taskRunHasFailed,
+		"taskRefExists":    TaskRefExists,
 		"stepReasonExists": StepReasonExists,
 	}
 
@@ -635,7 +635,6 @@ func StepReasonExists(state v1alpha1.StepState) string {
 
 	return state.Waiting.Reason
 }
-
 
 type TaskRunDescribeData struct {
 	Name           string
