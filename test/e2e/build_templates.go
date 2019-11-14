@@ -547,9 +547,10 @@ Steps
 {{- $l := len .TaskRun.Status.Steps }}{{ if eq $l 0 }}
 No steps
 {{- else }}
-NAME
-{{- range $steps := .TaskRun.Status.Steps }}
-{{ $steps.Name }}
+NAME	STATUS
+{{- range $step := .TaskRun.Status.Steps }}
+{{- $reason := stepReasonExists $step }}
+{{ $step.Name }}	{{ $reason }}
 {{- end }}
 {{- end }}
 `
@@ -572,6 +573,7 @@ func CreateTemplateForTaskRunResourceDescribeWithTestData(t *testing.T, c *Clien
 		"formatCondition": formatted.Condition,
 		"hasFailed":       taskRunHasFailed,
 		"taskRefExists":   TaskRefExists,
+		"stepReasonExists": StepReasonExists,
 	}
 
 	tmp := template.Must(template.New("Describe TaskRun").Funcs(funcMap).Parse(TaskRunDescribeTemplate))
@@ -603,6 +605,7 @@ func taskRunHasFailed(tr *v1alpha1.TaskRun) string {
 
 const (
 	fieldNotPresent = ""
+	pendingState    = "---"
 )
 
 func TaskRefExists(spec v1alpha1.TaskRunSpec) string {
@@ -613,6 +616,26 @@ func TaskRefExists(spec v1alpha1.TaskRunSpec) string {
 
 	return spec.TaskRef.Name
 }
+
+// Check if step is in waiting, running, or terminated state by checking StepState of the step.
+func StepReasonExists(state v1alpha1.StepState) string {
+
+	if state.Waiting == nil {
+
+		if state.Running != nil {
+			return "Running"
+		}
+
+		if state.Terminated != nil {
+			return state.Terminated.Reason
+		}
+
+		return pendingState
+	}
+
+	return state.Waiting.Reason
+}
+
 
 type TaskRunDescribeData struct {
 	Name           string
