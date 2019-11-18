@@ -379,6 +379,7 @@ k8s.io/kubernetes v1.13.3 h1:46t44D87wKtdKFgr/lXM60K8xPrW0wO67Woof3Vsv6E=
 k8s.io/kubernetes v1.13.3/go.mod h1:ocZa8+6APFNC2tX1DZASIbocyYT5jHzqFVsY5aoB7Jk=
 knative.dev/pkg v0.0.0-20190719141030-e4bc08cc8ded h1:CHn7mNgIE5GHMJqfNPFLBLcZlCdaTdQmAA8Uu6XLOKc=
 knative.dev/pkg v0.0.0-20190719141030-e4bc08cc8ded/go.mod h1:pgODObA1dTyhNoFxPZTTjNWfx6F0aKsKzn+vaT9XO/Q=
+knative.dev/pkg v0.0.0-20191121191108-8c1fb5fe0446 h1:29XUTvB++mEHuZxVgx8+Wh3wqkzEspgfzMwsHPgw9Tk=
 rsc.io/binaryregexp v0.2.0/go.mod h1:qTv7/COck+e2FymRvadv62gMdZztPaShugOCi3I+8D8=
 sigs.k8s.io/yaml v1.1.0 h1:4A07+ZFc2wgJwo8YNlQpr1rVlgUDlxXHhPJciaPY5gs=
 sigs.k8s.io/yaml v1.1.0/go.mod h1:UJmg0vDUVViEyp3mgSv9WPwZCDxu4rQW1olrI1uml+o=
