@@ -16,6 +16,7 @@ package taskrun
 
 import (
 	"fmt"
+	"strings"
 	"time"
 
 	"github.com/pkg/errors"
@@ -27,6 +28,7 @@ import (
 	corev1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/fields"
+	"knative.dev/pkg/apis/duck/v1beta1"
 )
 
 type step struct {
@@ -109,7 +111,7 @@ func (lr *LogReader) readLiveLogs() (<-chan Log, <-chan error, error) {
 	p := pods.New(podName, lr.Ns, kube, lr.Streamer)
 	pod, err := p.Wait()
 	if err != nil {
-		return nil, nil, errors.Wrap(err, fmt.Sprintf("task %s failed", lr.Task))
+		return nil, nil, errors.New(fmt.Sprintf("task %s failed: %s. Run tkn tr desc %s for more details.", lr.Task, strings.TrimSpace(err.Error()), tr.Name))
 	}
 
 	steps := filterSteps(pod, lr.AllSteps)
@@ -120,6 +122,11 @@ func (lr *LogReader) readLiveLogs() (<-chan Log, <-chan error, error) {
 func (lr *LogReader) readAvailableLogs(tr *v1alpha1.TaskRun) (<-chan Log, <-chan error, error) {
 	if !tr.HasStarted() {
 		return nil, nil, fmt.Errorf("task %s has not started yet", lr.Task)
+	}
+
+	//Check if taskrun failed on start up
+	if err := hasTaskRunFailed(tr.Status.Conditions, lr.Task); err != nil {
+		return nil, nil, err
 	}
 
 	if tr.Status.PodName == "" {
@@ -134,7 +141,7 @@ func (lr *LogReader) readAvailableLogs(tr *v1alpha1.TaskRun) (<-chan Log, <-chan
 	p := pods.New(podName, lr.Ns, kube, lr.Streamer)
 	pod, err := p.Get()
 	if err != nil {
-		return nil, nil, errors.Wrap(err, fmt.Sprintf("task %s failed", lr.Task))
+		return nil, nil, errors.New(fmt.Sprintf("task %s failed: %s. Run tkn tr desc %s for more details.", lr.Task, strings.TrimSpace(err.Error()), tr.Name))
 	}
 
 	steps := filterSteps(pod, lr.AllSteps)
@@ -158,7 +165,7 @@ func (lr *LogReader) readStepsLogs(steps []*step, pod *pods.Pod, follow bool) (<
 			container := pod.Container(step.container)
 			podC, perrC, err := container.LogReader(follow).Read()
 			if err != nil {
-				errC <- fmt.Errorf("error in getting logs for step %s : %s", step.name, err)
+				errC <- fmt.Errorf("error in getting logs for step %s: %s", step.name, err)
 				continue
 			}
 
@@ -178,7 +185,7 @@ func (lr *LogReader) readStepsLogs(steps []*step, pod *pods.Pod, follow bool) (<
 						continue
 					}
 
-					errC <- fmt.Errorf("failed to get logs for %s : %s", step.name, e)
+					errC <- fmt.Errorf("failed to get logs for %s: %s", step.name, e)
 				}
 			}
 
@@ -240,10 +247,10 @@ func getSteps(pod *corev1.Pod) []*step {
 	return steps
 }
 
-// reading of logs should wait untill the name of pod is
-// updates in the status. Open a watch channel on run
-// and keep checking the status until the pod name updatea
-// or the timeout is reached
+// Reading of logs should wait until the name of the pod is
+// updated in the status. Open a watch channel on the task run
+// and keep checking the status until the pod name updates
+// or the timeout is reached.
 func (lr *LogReader) waitUntilPodNameAvailable(timeout time.Duration) (*v1alpha1.TaskRun, error) {
 	var first = true
 	opts := metav1.ListOptions{
@@ -273,11 +280,24 @@ func (lr *LogReader) waitUntilPodNameAvailable(timeout time.Duration) (*v1alpha1
 			}
 			if first {
 				first = false
-				fmt.Fprintln(lr.Stream.Out, "Task still running ...")
 			}
 		case <-time.After(timeout * time.Second):
 			watchRun.Stop()
-			return nil, fmt.Errorf("task %s create failed or has not started yet or pod for task not yet available", lr.Task)
+
+			//Check if taskrun failed on start up
+			if err = hasTaskRunFailed(run.Status.Conditions, lr.Task); err != nil {
+				return nil, err
+			}
+
+			return nil, fmt.Errorf("task %s create has not started yet or pod for task not yet available", lr.Task)
 		}
 	}
+}
+
+func hasTaskRunFailed(trConditions v1beta1.Conditions, taskName string) error {
+	if len(trConditions) != 0 && trConditions[0].Status == corev1.ConditionFalse {
+		return fmt.Errorf("task %s has failed: %s", taskName, trConditions[0].Message)
+	}
+
+	return nil
 }

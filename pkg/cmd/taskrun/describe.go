@@ -184,5 +184,6 @@ func hasFailed(tr *v1alpha1.TaskRun) string {
 	if tr.Status.Conditions[0].Status == corev1.ConditionFalse {
 		return tr.Status.Conditions[0].Message
 	}
+
 	return ""
 }
