@@ -125,7 +125,7 @@ func DescribeTemplateForPipelineResourceList(cs *Clients) string {
 	return tmplBytes.String()
 }
 
-func ListResourceNamesForJsonPath(obj interface{}) string {
+func ListResourceNamesForJSONPath(obj interface{}) string {
 	const (
 		emptyMsg = ""
 		body     = "%s\n"
@@ -1360,7 +1360,7 @@ func CreateDescribeTemplateForPipelineRunWithTestData(t *testing.T, cs *Clients,
 	clock := clockwork.NewFakeClockAt(time.Now())
 	pipelinerun := GetPipelineRunWithTestData(t, cs, prname, td)
 
-	var trl taskrunList
+	var trl TaskrunList
 
 	if len(pipelinerun.Status.TaskRuns) != 0 {
 		trl = NewTaskrunListFromMapWithTestData(t, pipelinerun.Status.TaskRuns, td)
@@ -1370,7 +1370,7 @@ func CreateDescribeTemplateForPipelineRunWithTestData(t *testing.T, cs *Clients,
 	var data = struct {
 		PipelineRun *v1alpha1.PipelineRun
 		Params      clockwork.Clock
-		TaskrunList taskrunList
+		TaskrunList TaskrunList
 	}{
 		PipelineRun: pipelinerun,
 		Params:      clock,

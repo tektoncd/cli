@@ -10,7 +10,6 @@ import (
 	"go.opencensus.io/trace"
 	"golang.org/x/xerrors"
 	corev1 "k8s.io/api/core/v1"
-	v1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/util/wait"
 	watch "k8s.io/apimachinery/pkg/watch"
@@ -119,7 +118,7 @@ func WaitForPodStatus(kubeClient *knativetest.KubeClient, namespace string) {
 func PodStatus(respond chan<- string, watch watch.Interface) {
 	count := 0
 	for event := range watch.ResultChan() {
-		p, ok := event.Object.(*v1.Pod)
+		p, ok := event.Object.(*corev1.Pod)
 		if !ok {
 			log.Fatal("unexpected type")
 		}

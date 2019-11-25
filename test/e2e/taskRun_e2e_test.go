@@ -71,7 +71,7 @@ func TestTaskRunE2EUsingCli(t *testing.T) {
 		res := icmd.RunCmd(run("taskrun", "list", "-n", namespace,
 			`-o=jsonpath={range.items[*]}{.metadata.name}{"\n"}{end}`))
 
-		expected := ListResourceNamesForJsonPath(
+		expected := ListResourceNamesForJSONPath(
 			GetTaskRunListWithTestData(t, c,
 				map[int]interface{}{
 					0: &TaskRunData{

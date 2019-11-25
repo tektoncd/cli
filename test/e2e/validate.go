@@ -78,22 +78,22 @@ func PipelineRunHasFailed(pr *v1alpha1.PipelineRun) string {
 	return ""
 }
 
-type taskrunList []tkr
+type TaskrunList []tkr
 
 type tkr struct {
 	TaskrunName string
 	*v1alpha1.PipelineRunTaskRunStatus
 }
 
-func (s taskrunList) Len() int      { return len(s) }
-func (s taskrunList) Swap(i, j int) { s[i], s[j] = s[j], s[i] }
-func (s taskrunList) Less(i, j int) bool {
+func (s TaskrunList) Len() int      { return len(s) }
+func (s TaskrunList) Swap(i, j int) { s[i], s[j] = s[j], s[i] }
+func (s TaskrunList) Less(i, j int) bool {
 	return s[j].Status.StartTime.Before(s[i].Status.StartTime)
 }
 
-func NewTaskrunListFromMapWithTestData(t *testing.T, statusMap map[string]*v1alpha1.PipelineRunTaskRunStatus, td map[int]interface{}) taskrunList {
+func NewTaskrunListFromMapWithTestData(t *testing.T, statusMap map[string]*v1alpha1.PipelineRunTaskRunStatus, td map[int]interface{}) TaskrunList {
 	t.Helper()
-	var trl taskrunList
+	var trl TaskrunList
 
 	for _, tr := range td {
 		switch tr := tr.(type) {

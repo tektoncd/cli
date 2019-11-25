@@ -112,7 +112,7 @@ func TestPipelinesE2EUsingCli(t *testing.T) {
 		res := icmd.RunCmd(run("pipelines", "list", "-n", namespace,
 			`-o=jsonpath={range.items[*]}{.metadata.name}{"\n"}{end}`))
 
-		expected := ListResourceNamesForJsonPath(
+		expected := ListResourceNamesForJSONPath(
 			GetPipelineListWithTestData(t, c,
 				map[int]interface{}{
 					0: &PipelinesListData{
@@ -346,7 +346,7 @@ func TestPipelinesNegativeE2EUsingCli(t *testing.T) {
 		res := icmd.RunCmd(run("pipelines", "list", "-n", namespace,
 			`-o=jsonpath={range.items[*]}{.metadata.name}{"\n"}{end}`))
 
-		expected := ListResourceNamesForJsonPath(
+		expected := ListResourceNamesForJSONPath(
 			GetPipelineListWithTestData(t, c,
 				map[int]interface{}{
 					0: &PipelinesListData{

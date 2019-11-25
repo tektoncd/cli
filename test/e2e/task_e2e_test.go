@@ -79,7 +79,7 @@ func TestTaskResourcesE2E(t *testing.T) {
 		res := icmd.RunCmd(run("task", "list", "-n", namespace,
 			`-o=jsonpath={range.items[*]}{.metadata.name}{"\n"}{end}`))
 
-		expected := ListResourceNamesForJsonPath(GetTaskListWithTestData(t, c, map[int]interface{}{
+		expected := ListResourceNamesForJSONPath(GetTaskListWithTestData(t, c, map[int]interface{}{
 			0: &TaskData{
 				Name: teTaskName + "-1",
 			},

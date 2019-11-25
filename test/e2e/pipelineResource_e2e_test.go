@@ -137,7 +137,7 @@ func TestPipelineResourcesE2EUsingCli(t *testing.T) {
 		res := icmd.RunCmd(run("resource", "list", "-n", namespace,
 			`-o=jsonpath={range.items[*]}{.metadata.name}{"\n"}{end}`))
 
-		expected := ListResourceNamesForJsonPath(GetPipelineResourceListWithTestData(t, c,
+		expected := ListResourceNamesForJSONPath(GetPipelineResourceListWithTestData(t, c,
 			map[int]interface{}{
 				0: &PipelineResourcesData{
 					Name:    PipelineResourceName[0],
