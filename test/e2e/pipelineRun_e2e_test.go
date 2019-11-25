@@ -13,9 +13,9 @@ import (
 
 	"github.com/google/go-cmp/cmp"
 	"github.com/tektoncd/pipeline/pkg/apis/pipeline/v1alpha1"
-	"gotest.tools/assert"
-	is "gotest.tools/assert/cmp"
-	"gotest.tools/icmd"
+	"gotest.tools/v3/assert"
+	is "gotest.tools/v3/assert/cmp"
+	"gotest.tools/v3/icmd"
 	knativetest "knative.dev/pkg/test"
 )
 
@@ -107,7 +107,7 @@ func TestPipelineRunE2EUsingCli(t *testing.T) {
 		res := icmd.RunCmd(run("pr", "list", "-n", namespace,
 			`-o=jsonpath={range.items[*]}{.metadata.name}{"\n"}{end}`))
 
-		expected := CreateTemplateResourcesForOutputpath(
+		expected := ListResourceNamesForJsonPath(
 			GetSortedPipelineRunListWithTestData(t, c, tePipelineName, map[int]interface{}{
 				0: &PipelineRunListData{
 					Name:   tePipelineRunName,

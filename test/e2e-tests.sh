@@ -38,7 +38,10 @@ ci_run && {
 }
 
 
+<<<<<<< HEAD
 
+=======
+>>>>>>> Updated gotest.tools to v3 and removed duplicate codes
 kubectl get crds|grep tekton\\.dev && fail_test "TektonCD CRDS should not be installed, you should reset them before each runs"
 
 

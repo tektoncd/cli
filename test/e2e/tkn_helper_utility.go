@@ -10,12 +10,10 @@ import (
 	"testing"
 	"time"
 
-	"gotest.tools/icmd"
 	knativetest "knative.dev/pkg/test"
 
 	"knative.dev/pkg/test/logging"
 
-	//"github.com/tektoncd/cli/test/helper"
 	"github.com/tektoncd/pipeline/pkg/names"
 	"golang.org/x/xerrors"
 	"gopkg.in/yaml.v2"
@@ -23,9 +21,6 @@ import (
 	"k8s.io/apimachinery/pkg/api/errors"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/util/wait"
-
-	// Mysteriously by k8s libs, or they fail to create `KubeClient`s from config. Apparently just importing it is enough. @_@ side effects @_@. https://github.com/kubernetes/client-go/issues/242
-	_ "k8s.io/client-go/plugin/pkg/client/auth/gcp"
 )
 
 var initMetrics sync.Once
@@ -54,71 +49,6 @@ func Header(logf logging.FormatLogger, text string) {
 	logf(bar)
 	logf(txt)
 	logf(bar)
-}
-
-func SetupTektonPipelines() (*Clients, string) {
-	namespace := "tekton-pipelines"
-	initializeLogsAndMetrics()
-	c := NewClients(knativetest.Flags.Kubeconfig, knativetest.Flags.Cluster, namespace)
-	InstallTektonPipelines(c.KubeClient, namespace)
-	VerifyServiceAccountExistence(namespace, c.KubeClient)
-	log.Println("CRD Installation successful")
-
-	return c, namespace
-}
-
-func CleanUpResources() {
-	msg := "kubectl delete --ignore-not-found=true {{.Element}}.tekton.dev --all"
-	ar := [...]string{"pipelineresources", "tasks", "pipelines", "taskruns", "pipelineruns"}
-	vars := make(map[string]interface{})
-	for _, element := range ar {
-		vars["Element"] = element
-		cmd := ProcessString(msg, vars)
-		cmdArgs := strings.Fields(cmd)
-
-		res := icmd.RunCmd(icmd.Command(cmdArgs[0], cmdArgs[1:]...))
-
-		if res.ExitCode != 0 {
-			log.Fatalf("Failed to execute %s", res.Stderr())
-		}
-	}
-	log.Println("Cleaned up existing resources.. successfully")
-}
-
-func InstallTektonPipelines(kubeClient *knativetest.KubeClient, namespace string) {
-	if os.Getenv("PIPELINE_VERSION") == "" {
-		log.Printf("Environment Varaiable PIPELINE_VERSION is not set")
-		os.Setenv("PIPELINE_VERSION", "0.5.2")
-	}
-
-	Header(log.Printf, fmt.Sprintf("Installing CRD in namespace: tekton-pipelines, version: v%s ", os.Getenv("PIPELINE_VERSION")))
-	cmdName := fmt.Sprintf("kubectl apply -f https://github.com/tektoncd/pipeline/releases/download/v%s/release.yaml", os.Getenv("PIPELINE_VERSION"))
-	cmdArgs := strings.Fields(cmdName)
-
-	res := icmd.RunCmd(icmd.Command(cmdArgs[0], cmdArgs[1:]...))
-
-	if res.ExitCode != 0 {
-		log.Fatalf("Failed to execute %s", res.Stderr())
-	}
-	log.Println("waiting for pipeline resources to come up")
-	WaitForPodStatus(kubeClient, namespace)
-	log.Println("Cleaning up cluster...")
-	CleanUpResources()
-
-}
-
-func UninstallTektonPipelines() {
-	Header(log.Printf, fmt.Sprintf("Uninstalling CRD in namespace: tekton-pipelines, version: v%s", os.Getenv("PIPELINE_VERSION")))
-	cmdName := fmt.Sprintf("kubectl delete -f https://github.com/tektoncd/pipeline/releases/download/v%s/release.yaml", os.Getenv("PIPELINE_VERSION"))
-	log.Println("Uninstalled CRD successfully..")
-	cmdArgs := strings.Fields(cmdName)
-
-	res := icmd.RunCmd(icmd.Command(cmdArgs[0], cmdArgs[1:]...))
-
-	if res.ExitCode != 0 {
-		log.Fatalf("Failed to execute %s", res.Stderr())
-	}
-
 }
 
 //Create Service Account
@@ -181,18 +111,6 @@ func TearDown(t *testing.T, cs *Clients, namespace string) {
 	}
 
 }
-
-// func getPodForTaskRun(t *testing.T, cs *Clients, namespace string, tr *v1alpha1.TaskRun) *corev1.Pod {
-// 	// The Pod name has a random suffix, so we filter by label to find the one we care about.
-// 	pods, err := cs.KubeClient.Kube.CoreV1().Pods(namespace).List(metav1.ListOptions{})
-// 	if err != nil {
-// 		t.Fatalf("Couldn't get expected Pod for %s: %s", tr.Name, err)
-// 	}
-// 	if numPods := len(pods.Items); numPods != 1 {
-// 		t.Fatalf("Expected 1 Pod for %s, but got %d Pods", tr.Name, numPods)
-// 	}
-// 	return &pods.Items[0]
-// }
 
 func initializeLogsAndMetrics() {
 	initMetrics.Do(func() {

@@ -11,12 +11,11 @@ import (
 	"time"
 
 	"github.com/AlecAivazis/survey/v2/terminal"
-	"github.com/google/go-cmp/cmp"
 	"github.com/tektoncd/pipeline/pkg/apis/pipeline/v1alpha1"
 	tb "github.com/tektoncd/pipeline/test/builder"
-	"gotest.tools/assert"
-	is "gotest.tools/assert/cmp"
-	"gotest.tools/icmd"
+	"gotest.tools/v3/assert"
+	is "gotest.tools/v3/assert/cmp"
+	"gotest.tools/v3/icmd"
 	knativetest "knative.dev/pkg/test"
 )
 
@@ -62,7 +61,7 @@ func TestPipelinesE2EUsingCli(t *testing.T) {
 	t.Run("Get list of Tasks from namespace  "+namespace, func(t *testing.T) {
 		res := icmd.RunCmd(run("task", "list", "-n", namespace))
 
-		expected := CreateTemplateForTaskListWithTestData(t, c, map[int]interface{}{
+		expected := ListAllTasksOutput(t, c, map[int]interface{}{
 			0: &TaskData{
 				Name: TaskName2,
 			},
@@ -74,17 +73,15 @@ func TestPipelinesE2EUsingCli(t *testing.T) {
 		res.Assert(t, icmd.Expected{
 			ExitCode: 0,
 			Err:      icmd.None,
+			Out:      expected,
 		})
-		if d := cmp.Diff(expected, res.Stdout()); d != "" {
-			t.Errorf("Unexpected output myismatch: \n%s\n", d)
-		}
 	})
 
 	t.Run("Get list of Pipelines from namespace  "+namespace, func(t *testing.T) {
 
 		res := icmd.RunCmd(run("pipelines", "list", "-n", namespace))
 
-		expected := CreateTemplateForPipelineListWithTestData(t, c, map[int]interface{}{
+		expected := ListAllPipelinesOutput(t, c, map[int]interface{}{
 			0: &PipelinesListData{
 				Name:   tePipelineName,
 				Status: "---",
@@ -94,10 +91,9 @@ func TestPipelinesE2EUsingCli(t *testing.T) {
 		res.Assert(t, icmd.Expected{
 			ExitCode: 0,
 			Err:      icmd.None,
+			Out:      expected,
 		})
-		if d := cmp.Diff(expected, res.Stdout()); d != "" {
-			t.Errorf("Unexpected output mismatch: \n%s\n", d)
-		}
+
 	})
 	// Bug to fix
 	t.Run("Get list of pipelines from other namespace [default] should throw Error", func(t *testing.T) {
@@ -116,7 +112,7 @@ func TestPipelinesE2EUsingCli(t *testing.T) {
 		res := icmd.RunCmd(run("pipelines", "list", "-n", namespace,
 			`-o=jsonpath={range.items[*]}{.metadata.name}{"\n"}{end}`))
 
-		expected := CreateTemplateResourcesForOutputpath(
+		expected := ListResourceNamesForJsonPath(
 			GetPipelineListWithTestData(t, c,
 				map[int]interface{}{
 					0: &PipelinesListData{
@@ -128,11 +124,9 @@ func TestPipelinesE2EUsingCli(t *testing.T) {
 		res.Assert(t, icmd.Expected{
 			ExitCode: 0,
 			Err:      icmd.None,
+			Out:      expected,
 		})
 
-		if d := cmp.Diff(expected, res.Stdout()); d != "" {
-			t.Errorf("Unexpected output mismatch: \n%s\n", d)
-		}
 	})
 
 	t.Run("Pipeline json Schema validation with -o (output) flag, as Json ", func(t *testing.T) {
@@ -151,12 +145,7 @@ func TestPipelinesE2EUsingCli(t *testing.T) {
 	t.Run("Validate Pipeline describe command in namespace "+namespace, func(t *testing.T) {
 		res := icmd.RunCmd(run("pipeline", "describe", tePipelineName, "-n", namespace))
 
-		res.Assert(t, icmd.Expected{
-			ExitCode: 0,
-			Err:      icmd.None,
-		})
-
-		expected := CreateTemplateForPipelinesDescribeWithTestData(t, c, tePipelineName,
+		expected := GetPipelineDescribeOutput(t, c, tePipelineName,
 			map[int]interface{}{
 				0: &PipelineDescribeData{
 					Name: tePipelineName,
@@ -178,9 +167,13 @@ func TestPipelinesE2EUsingCli(t *testing.T) {
 					Runs: map[string]string{},
 				},
 			})
-		if d := cmp.Diff(expected, res.Stdout()); d != "" {
-			t.Errorf("Unexpected output mismatch: \n%s\n", d)
-		}
+
+		res.Assert(t, icmd.Expected{
+			ExitCode: 0,
+			Err:      icmd.None,
+			Out:      expected,
+		})
+
 	})
 
 	vars := make(map[string]interface{})
@@ -216,7 +209,7 @@ Showing logs...
 
 		res := icmd.RunCmd(run("taskrun", "list", "-n", namespace))
 
-		expected := CreateTemplateForTaskRunListWithTestData(t, c, map[int]interface{}{
+		expected := ListAllTaskRunsOutput(t, c, map[int]interface{}{
 			0: &TaskRunData{
 				Name:   "output-pipeline-run-",
 				Status: "Succeeded",
@@ -230,21 +223,15 @@ Showing logs...
 		res.Assert(t, icmd.Expected{
 			ExitCode: 0,
 			Err:      icmd.None,
+			Out:      expected,
 		})
-		if d := cmp.Diff(expected, res.Stdout()); d != "" {
-			t.Errorf("Unexpected output mismatch: \n%s\n", d)
-		}
+
 	})
 
 	t.Run("Validate Pipeline describe command in namespace "+namespace+" after PipelineRun completed successfully", func(t *testing.T) {
 		res := icmd.RunCmd(run("pipeline", "describe", tePipelineName, "-n", namespace))
 
-		res.Assert(t, icmd.Expected{
-			ExitCode: 0,
-			Err:      icmd.None,
-		})
-
-		expected := CreateTemplateForPipelinesDescribeWithTestData(t, c, tePipelineName,
+		expected := GetPipelineDescribeOutput(t, c, tePipelineName,
 			map[int]interface{}{
 				0: &PipelineDescribeData{
 					Name: tePipelineName,
@@ -268,9 +255,13 @@ Showing logs...
 					},
 				},
 			})
-		if d := cmp.Diff(expected, res.Stdout()); d != "" {
-			t.Errorf("Unexpected output mismatch: \n%s\n", d)
-		}
+
+		res.Assert(t, icmd.Expected{
+			ExitCode: 0,
+			Err:      icmd.None,
+			Out:      expected,
+		})
+
 	})
 
 	t.Run("Validate interactive pipeline logs, with  follow mode (-f) ", func(t *testing.T) {
@@ -324,7 +315,7 @@ func TestPipelinesNegativeE2EUsingCli(t *testing.T) {
 
 		res := icmd.RunCmd(run("pipelines", "list", "-n", namespace))
 
-		expected := CreateTemplateForPipelineListWithTestData(t, c, map[int]interface{}{
+		expected := ListAllPipelinesOutput(t, c, map[int]interface{}{
 			0: &PipelinesListData{
 				Name:   tePipelineName,
 				Status: "---",
@@ -334,10 +325,9 @@ func TestPipelinesNegativeE2EUsingCli(t *testing.T) {
 		res.Assert(t, icmd.Expected{
 			ExitCode: 0,
 			Err:      icmd.None,
+			Out:      expected,
 		})
-		if d := cmp.Diff(expected, res.Stdout()); d != "" {
-			t.Errorf("Unexpected output mismatch: \n%s\n", d)
-		}
+
 	})
 	// Bug to fix
 	t.Run("Get list of pipelines from other namespace [default] should throw Error", func(t *testing.T) {
@@ -356,7 +346,7 @@ func TestPipelinesNegativeE2EUsingCli(t *testing.T) {
 		res := icmd.RunCmd(run("pipelines", "list", "-n", namespace,
 			`-o=jsonpath={range.items[*]}{.metadata.name}{"\n"}{end}`))
 
-		expected := CreateTemplateResourcesForOutputpath(
+		expected := ListResourceNamesForJsonPath(
 			GetPipelineListWithTestData(t, c,
 				map[int]interface{}{
 					0: &PipelinesListData{
@@ -368,11 +358,8 @@ func TestPipelinesNegativeE2EUsingCli(t *testing.T) {
 		res.Assert(t, icmd.Expected{
 			ExitCode: 0,
 			Err:      icmd.None,
+			Out:      expected,
 		})
-
-		if d := cmp.Diff(expected, res.Stdout()); d != "" {
-			t.Errorf("Unexpected output mismatch: \n%s\n", d)
-		}
 	})
 
 	t.Run("Pipeline json Schema validation with -o (output) flag, as Json ", func(t *testing.T) {
@@ -391,12 +378,7 @@ func TestPipelinesNegativeE2EUsingCli(t *testing.T) {
 	t.Run("Validate Pipeline describe command in namespace "+namespace, func(t *testing.T) {
 		res := icmd.RunCmd(run("pipeline", "describe", tePipelineName, "-n", namespace))
 
-		res.Assert(t, icmd.Expected{
-			ExitCode: 0,
-			Err:      icmd.None,
-		})
-
-		expected := CreateTemplateForPipelinesDescribeWithTestData(t, c, tePipelineName,
+		expected := GetPipelineDescribeOutput(t, c, tePipelineName,
 			map[int]interface{}{
 				0: &PipelineDescribeData{
 					Name: tePipelineName,
@@ -418,9 +400,12 @@ func TestPipelinesNegativeE2EUsingCli(t *testing.T) {
 					Runs: map[string]string{},
 				},
 			})
-		if d := cmp.Diff(expected, res.Stdout()); d != "" {
-			t.Errorf("Unexpected output mismatch: \n%s\n", d)
-		}
+
+		res.Assert(t, icmd.Expected{
+			ExitCode: 0,
+			Err:      icmd.None,
+			Out:      expected,
+		})
 	})
 
 	vars := make(map[string]interface{})
@@ -441,13 +426,10 @@ func TestPipelinesNegativeE2EUsingCli(t *testing.T) {
 Showing logs...
 .*)`, vars)
 
-		//err := `(failed to get logs for task first-create-file : container step-git-source-skaffold-git-1.* has failed)`
-
 		res.Assert(t, icmd.Expected{
 			ExitCode: 0,
 		})
 		assert.Assert(t, is.Regexp(expected, res.Stdout()))
-		//assert.Assert(t, is.Regexp(err, res.Stderr()))
 	})
 
 	time.Sleep(1 * time.Second)
@@ -455,12 +437,7 @@ Showing logs...
 	t.Run("Validate Pipeline describe command in namespace "+namespace+" after PipelineRun completed successfully", func(t *testing.T) {
 		res := icmd.RunCmd(run("pipeline", "describe", tePipelineName, "-n", namespace))
 
-		res.Assert(t, icmd.Expected{
-			ExitCode: 0,
-			Err:      icmd.None,
-		})
-
-		expected := CreateTemplateForPipelinesDescribeWithTestData(t, c, tePipelineName,
+		expected := GetPipelineDescribeOutput(t, c, tePipelineName,
 			map[int]interface{}{
 				0: &PipelineDescribeData{
 					Name: tePipelineName,
@@ -484,9 +461,13 @@ Showing logs...
 					},
 				},
 			})
-		if d := cmp.Diff(expected, res.Stdout()); d != "" {
-			t.Errorf("Unexpected output mismatch: \n%s\n", d)
-		}
+
+		res.Assert(t, icmd.Expected{
+			ExitCode: 0,
+			Err:      icmd.None,
+			Out:      expected,
+		})
+
 	})
 
 }
@@ -602,7 +583,6 @@ func getCreateFileTask(taskname string, namespace string) *v1alpha1.Task {
 		tb.TaskOutputs(tb.OutputsResource("workspace", v1alpha1.PipelineResourceTypeGit)),
 		tb.Step("read-docs-old", "ubuntu", tb.StepCommand("/bin/bash"), tb.StepArgs("-c", "ls -la /workspace/damnworkspace/docs/README.md")),
 		tb.Step("write-new-stuff", "ubuntu", tb.StepCommand("bash"), tb.StepArgs("-c", "ln -s /workspace/damnworkspace /workspace/output/workspace && echo some stuff > /workspace/output/workspace/stuff")),
-		//tb.Step("write-new-stuff", "ubuntu", tb.StepCommand("bash"), tb.StepArgs("-c", "echo some stuff > /workspace/damnworkspace/stuff")),
 	}
 
 	return tb.Task(taskname, namespace, tb.TaskSpec(taskSpecOps...))

@@ -9,14 +9,13 @@ import (
 	"testing"
 	"time"
 
-	"github.com/google/go-cmp/cmp"
 	knativetest "knative.dev/pkg/test"
 
 	"github.com/tektoncd/pipeline/pkg/apis/pipeline/v1alpha1"
 	tb "github.com/tektoncd/pipeline/test/builder"
-	"gotest.tools/assert"
-	is "gotest.tools/assert/cmp"
-	"gotest.tools/icmd"
+	"gotest.tools/v3/assert"
+	is "gotest.tools/v3/assert/cmp"
+	"gotest.tools/v3/icmd"
 )
 
 const (
@@ -45,7 +44,7 @@ func TestTaskRunE2EUsingCli(t *testing.T) {
 
 		res := icmd.RunCmd(run("taskrun", "list", "-n", namespace))
 
-		expected := CreateTemplateForTaskRunListWithTestData(t, c, map[int]interface{}{
+		expected := ListAllTaskRunsOutput(t, c, map[int]interface{}{
 			0: &TaskRunData{
 				Name:   teTaskRunName,
 				Status: "Succeeded",
@@ -55,10 +54,8 @@ func TestTaskRunE2EUsingCli(t *testing.T) {
 		res.Assert(t, icmd.Expected{
 			ExitCode: 0,
 			Err:      icmd.None,
+			Out:      expected,
 		})
-		if d := cmp.Diff(expected, res.Stdout()); d != "" {
-			t.Errorf("Unexpected output mismatch: \n%s\n", d)
-		}
 	})
 
 	t.Run("Get list of Taskruns from other namespace [default] should throw Error", func(t *testing.T) {
@@ -68,16 +65,13 @@ func TestTaskRunE2EUsingCli(t *testing.T) {
 			Err:      "No taskruns found\n",
 		})
 
-		if d := cmp.Diff("No taskruns found\n", res.Stderr()); d != "" {
-			t.Errorf("Unexpected output mismatch: \n%s\n", d)
-		}
 	})
 
 	t.Run("Validate Taskruns format for -o (output) flag, as Json Path ", func(t *testing.T) {
 		res := icmd.RunCmd(run("taskrun", "list", "-n", namespace,
 			`-o=jsonpath={range.items[*]}{.metadata.name}{"\n"}{end}`))
 
-		expected := CreateTemplateResourcesForOutputpath(
+		expected := ListResourceNamesForJsonPath(
 			GetTaskRunListWithTestData(t, c,
 				map[int]interface{}{
 					0: &TaskRunData{
@@ -89,10 +83,8 @@ func TestTaskRunE2EUsingCli(t *testing.T) {
 		res.Assert(t, icmd.Expected{
 			ExitCode: 0,
 			Err:      icmd.None,
+			Out:      expected,
 		})
-		if d := cmp.Diff(expected, res.Stdout()); d != "" {
-			t.Errorf("Unexpected output mismatch: \n%s\n", d)
-		}
 	})
 
 	t.Run("Validate Taskruns Schema for -o (output) flag as Json ", func(t *testing.T) {
@@ -152,12 +144,7 @@ func TestTaskRunE2EUsingCli(t *testing.T) {
 	t.Run("Validate Taskrun describe command", func(t *testing.T) {
 		res := icmd.RunCmd(run("taskrun", "describe", teTaskRunName, "-n", namespace))
 
-		res.Assert(t, icmd.Expected{
-			ExitCode: 0,
-			Err:      icmd.None,
-		})
-
-		expected := CreateTemplateForTaskRunResourceDescribeWithTestData(t, c, teTaskRunName,
+		expected := GetTaskRunDescribeOutput(t, c, teTaskRunName,
 			map[int]interface{}{
 				0: &TaskRunDescribeData{
 					Name:           teTaskRunName,
@@ -172,9 +159,12 @@ func TestTaskRunE2EUsingCli(t *testing.T) {
 					Steps:          []string{"amazing-busybox", "amazing-busybox-1"},
 				},
 			})
-		if d := cmp.Diff(expected, res.Stdout()); d != "" {
-			t.Errorf("Unexpected output mismatch: \n%s\n", d)
-		}
+
+		res.Assert(t, icmd.Expected{
+			ExitCode: 0,
+			Err:      icmd.None,
+			Out:      expected,
+		})
 
 	})
 
@@ -215,12 +205,7 @@ func TestTaskRunCancelAndDeleteE2EUsingCli(t *testing.T) {
 	t.Run("Check for Error message and status of Taskrun after Task Run Cancelled Successfully", func(t *testing.T) {
 		res := icmd.RunCmd(run("taskrun", "describe", teTaskRunName, "-n", namespace))
 
-		res.Assert(t, icmd.Expected{
-			ExitCode: 0,
-			Err:      icmd.None,
-		})
-
-		expected := CreateTemplateForTaskRunResourceDescribeWithTestData(t, c, teTaskRunName,
+		expected := GetTaskRunDescribeOutput(t, c, teTaskRunName,
 			map[int]interface{}{
 				0: &TaskRunDescribeData{
 					Name:           teTaskRunName,
@@ -235,9 +220,12 @@ func TestTaskRunCancelAndDeleteE2EUsingCli(t *testing.T) {
 					Steps:          []string{"amazing-busybox", "amazing-busybox-1"},
 				},
 			})
-		if d := cmp.Diff(expected, res.Stdout()); d != "" {
-			t.Errorf("Unexpected output mismatch: \n%s\n", d)
-		}
+
+		res.Assert(t, icmd.Expected{
+			ExitCode: 0,
+			Err:      icmd.None,
+			Out:      expected,
+		})
 
 	})
 

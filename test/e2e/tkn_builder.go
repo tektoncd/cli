@@ -1,10 +1,10 @@
 package e2e
 
 import (
+	"gotest.tools/v3/icmd"
 	"log"
 	"testing"
-
-	"gotest.tools/icmd"
+	"time"
 )
 
 type TknRunner struct {
@@ -29,9 +29,8 @@ func (tkn *TknRunner) BuildTknClient() string {
 }
 
 func Prepare(t *testing.T) func(args ...string) icmd.Cmd {
-
 	run := func(args ...string) icmd.Cmd {
-		return icmd.Command("./tkn", append([]string{}, args...)...)
+		return icmd.Cmd{Command: append([]string{"./tkn"}, args...), Timeout: 10 * time.Minute}
 	}
 	return run
 }

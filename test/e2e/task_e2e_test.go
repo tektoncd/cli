@@ -9,11 +9,9 @@ import (
 	"testing"
 	"time"
 
-	"github.com/google/go-cmp/cmp"
-
 	"github.com/tektoncd/pipeline/pkg/apis/pipeline/v1alpha1"
 	tb "github.com/tektoncd/pipeline/test/builder"
-	"gotest.tools/icmd"
+	"gotest.tools/v3/icmd"
 	knativetest "knative.dev/pkg/test"
 )
 
@@ -47,7 +45,7 @@ func TestTaskResourcesE2E(t *testing.T) {
 	t.Run("Get list of Tasks from namespace  "+namespace, func(t *testing.T) {
 		res := icmd.RunCmd(run("task", "list", "-n", namespace))
 
-		expected := CreateTemplateForTaskListWithTestData(t, c, map[int]interface{}{
+		expected := ListAllTasksOutput(t, c, map[int]interface{}{
 			0: &TaskData{
 				Name: teTaskName + "-1",
 			},
@@ -62,10 +60,9 @@ func TestTaskResourcesE2E(t *testing.T) {
 		res.Assert(t, icmd.Expected{
 			ExitCode: 0,
 			Err:      icmd.None,
+			Out:      expected,
 		})
-		if d := cmp.Diff(expected, res.Stdout()); d != "" {
-			t.Errorf("Unexpected output myismatch: \n%s\n", d)
-		}
+
 	})
 
 	t.Run("Get list of Tasks from other namespace [default] should throw Error", func(t *testing.T) {
@@ -76,16 +73,13 @@ func TestTaskResourcesE2E(t *testing.T) {
 			Err:      "No tasks found\n",
 		})
 
-		if d := cmp.Diff("No tasks found\n", res.Stderr()); d != "" {
-			t.Errorf("Unexpected output mismatch: \n%s\n", d)
-		}
 	})
 
 	t.Run("Validate Tasks list format for -o (output) flag, as Json Path ", func(t *testing.T) {
 		res := icmd.RunCmd(run("task", "list", "-n", namespace,
 			`-o=jsonpath={range.items[*]}{.metadata.name}{"\n"}{end}`))
 
-		expected := CreateTemplateResourcesForOutputpath(GetTaskListWithTestData(t, c, map[int]interface{}{
+		expected := ListResourceNamesForJsonPath(GetTaskListWithTestData(t, c, map[int]interface{}{
 			0: &TaskData{
 				Name: teTaskName + "-1",
 			},
@@ -100,10 +94,9 @@ func TestTaskResourcesE2E(t *testing.T) {
 		res.Assert(t, icmd.Expected{
 			ExitCode: 0,
 			Err:      icmd.None,
+			Out:      expected,
 		})
-		if d := cmp.Diff(expected, res.Stdout()); d != "" {
-			t.Errorf("Unexpected output mismatch: \n%s\n", d)
-		}
+
 	})
 
 	t.Run("Validate Taskruns Schema for -o (output) flag as Json ", func(t *testing.T) {
@@ -145,7 +138,7 @@ func TestTaskResourcesE2E(t *testing.T) {
 	t.Run("Check for Task Resource, After Successfull Deletion of task in namespace "+namespace+" , Resource shouldn't exist", func(t *testing.T) {
 		res := icmd.RunCmd(run("task", "list", "-n", namespace))
 
-		expected := CreateTemplateForTaskListWithTestData(t, c, map[int]interface{}{
+		expected := ListAllTasksOutput(t, c, map[int]interface{}{
 			0: &TaskData{
 				Name: teTaskName + "-2",
 			},
@@ -157,10 +150,8 @@ func TestTaskResourcesE2E(t *testing.T) {
 		res.Assert(t, icmd.Expected{
 			ExitCode: 0,
 			Err:      icmd.None,
+			Out:      expected,
 		})
-		if d := cmp.Diff(expected, res.Stdout()); d != "" {
-			t.Errorf("Unexpected output myismatch: \n%s\n", d)
-		}
 	})
 
 }
@@ -237,9 +228,6 @@ func TestTaskDeleteE2EUsingCli(t *testing.T) {
 			Err:      "No tasks found\n",
 		})
 
-		if d := cmp.Diff("No tasks found\n", res.Stderr()); d != "" {
-			t.Errorf("Unexpected output mismatch: \n%s\n", d)
-		}
 	})
 
 }

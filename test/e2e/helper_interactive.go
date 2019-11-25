@@ -11,8 +11,8 @@ import (
 	"time"
 
 	"github.com/Netflix/go-expect"
-	"gotest.tools/assert"
-	is "gotest.tools/assert/cmp"
+	"gotest.tools/v3/assert"
+	is "gotest.tools/v3/assert/cmp"
 )
 
 type CapturingPassThroughWriter struct {

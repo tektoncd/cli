@@ -12,7 +12,7 @@ import (
 	"github.com/google/go-cmp/cmp"
 	"github.com/tektoncd/pipeline/pkg/apis/pipeline/v1alpha1"
 	tb "github.com/tektoncd/pipeline/test/builder"
-	"gotest.tools/icmd"
+	"gotest.tools/v3/icmd"
 	knativetest "knative.dev/pkg/test"
 )
 
@@ -97,7 +97,7 @@ func TestPipelineResourcesE2EUsingCli(t *testing.T) {
 
 	t.Run("Get list of Pipeline Resources from namespace  "+namespace, func(t *testing.T) {
 		res := icmd.RunCmd(run("resources", "list", "-n", namespace))
-		expected := CreateTemplateForPipelineResourceListWithTestData(t, c,
+		expected := ListAllPipelineResourcesOutput(t, c,
 			map[int]interface{}{
 				0: &PipelineResourcesData{
 					Name:    PipelineResourceName[0],
@@ -137,7 +137,7 @@ func TestPipelineResourcesE2EUsingCli(t *testing.T) {
 		res := icmd.RunCmd(run("resource", "list", "-n", namespace,
 			`-o=jsonpath={range.items[*]}{.metadata.name}{"\n"}{end}`))
 
-		expected := CreateTemplateResourcesForOutputpath(GetPipelineResourceListWithTestData(t, c,
+		expected := ListResourceNamesForJsonPath(GetPipelineResourceListWithTestData(t, c,
 			map[int]interface{}{
 				0: &PipelineResourcesData{
 					Name:    PipelineResourceName[0],
@@ -180,7 +180,7 @@ func TestPipelineResourcesE2EUsingCli(t *testing.T) {
 			Err:      icmd.None,
 		})
 
-		expected := CreateTemplateForPipelinesResourcesDescribeWithTestData(t, c, PipelineResourceName[0],
+		expected := GetPipelineResourceDescribeOutput(t, c, PipelineResourceName[0],
 			map[int]interface{}{
 
 				0: &PipelineResourcesDescribeData{
@@ -189,7 +189,7 @@ func TestPipelineResourcesE2EUsingCli(t *testing.T) {
 					PipelineResourceType: "git",
 					Params: map[string]string{
 						"Url":      "https://github.com/GoogleContainerTools/kaniko",
-						"revision": "master",
+						"Revision": "master",
 					},
 					SecretParams: map[string]string{},
 				},
@@ -208,7 +208,7 @@ func TestPipelineResourcesE2EUsingCli(t *testing.T) {
 			Err:      icmd.None,
 		})
 
-		expected := CreateTemplateForPipelinesResourcesDescribeWithTestData(t, c, PipelineResourceName[1],
+		expected := GetPipelineResourceDescribeOutput(t, c, PipelineResourceName[1],
 			map[int]interface{}{
 
 				0: &PipelineResourcesDescribeData{
@@ -233,7 +233,7 @@ func getGitResource(prname string, namespace string) *v1alpha1.PipelineResource 
 	return tb.PipelineResource(prname, namespace, tb.PipelineResourceSpec(
 		v1alpha1.PipelineResourceTypeGit,
 		tb.PipelineResourceSpecParam("Url", "https://github.com/GoogleContainerTools/kaniko"),
-		tb.PipelineResourceSpecParam("revision", "master"),
+		tb.PipelineResourceSpecParam("Revision", "master"),
 	))
 }
 
