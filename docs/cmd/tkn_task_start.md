@@ -39,6 +39,7 @@ like cat,foo,bar
   -p, --param stringArray        pass the param as key=value or key=value1,value2
   -s, --serviceaccount string    pass the serviceaccount name
       --showlog                  show logs right after starting the task (default true)
+  -t, --timeout int              timeout for taskrun in seconds (default 3600)
 ```
 
 ### Options inherited from parent commands

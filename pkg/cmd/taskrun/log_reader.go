@@ -16,6 +16,7 @@ package taskrun
 
 import (
 	"fmt"
+	"strings"
 	"time"
 
 	"github.com/pkg/errors"
@@ -109,7 +110,7 @@ func (lr *LogReader) readLiveLogs() (<-chan Log, <-chan error, error) {
 	p := pods.New(podName, lr.Ns, kube, lr.Streamer)
 	pod, err := p.Wait()
 	if err != nil {
-		return nil, nil, errors.Wrap(err, fmt.Sprintf("task %s failed", lr.Task))
+		return nil, nil, errors.New(fmt.Sprintf("task %s failed: %s. Run tkn tr desc %s for more details.", lr.Task, strings.TrimSpace(err.Error()), tr.Name))
 	}
 
 	steps := filterSteps(pod, lr.AllSteps)
@@ -134,7 +135,7 @@ func (lr *LogReader) readAvailableLogs(tr *v1alpha1.TaskRun) (<-chan Log, <-chan
 	p := pods.New(podName, lr.Ns, kube, lr.Streamer)
 	pod, err := p.Get()
 	if err != nil {
-		return nil, nil, errors.Wrap(err, fmt.Sprintf("task %s failed", lr.Task))
+		return nil, nil, errors.New(fmt.Sprintf("task %s failed: %s. Run tkn tr desc %s for more details.", lr.Task, strings.TrimSpace(err.Error()), tr.Name))
 	}
 
 	steps := filterSteps(pod, lr.AllSteps)
@@ -158,7 +159,7 @@ func (lr *LogReader) readStepsLogs(steps []*step, pod *pods.Pod, follow bool) (<
 			container := pod.Container(step.container)
 			podC, perrC, err := container.LogReader(follow).Read()
 			if err != nil {
-				errC <- fmt.Errorf("error in getting logs for step %s : %s", step.name, err)
+				errC <- fmt.Errorf("error in getting logs for step %s: %s", step.name, err)
 				continue
 			}
 
@@ -178,7 +179,7 @@ func (lr *LogReader) readStepsLogs(steps []*step, pod *pods.Pod, follow bool) (<
 						continue
 					}
 
-					errC <- fmt.Errorf("failed to get logs for %s : %s", step.name, e)
+					errC <- fmt.Errorf("failed to get logs for %s: %s", step.name, e)
 				}
 			}
 
@@ -273,7 +274,6 @@ func (lr *LogReader) waitUntilPodNameAvailable(timeout time.Duration) (*v1alpha1
 			}
 			if first {
 				first = false
-				fmt.Fprintln(lr.Stream.Out, "Task still running ...")
 			}
 		case <-time.After(timeout * time.Second):
 			watchRun.Stop()

@@ -19,6 +19,7 @@ import (
 	"fmt"
 	"io/ioutil"
 	"strings"
+	"time"
 
 	"github.com/ghodss/yaml"
 
@@ -52,6 +53,7 @@ type startOptions struct {
 	Labels             []string
 	ShowLog            bool
 	Filename           string
+	TimeOut            int64
 }
 
 // NameArg validates that the first argument is a valid task name
@@ -132,6 +134,7 @@ like cat,foo,bar
 	c.Flags().StringSliceVarP(&opt.Labels, "labels", "l", []string{}, "pass labels as label=value.")
 	c.Flags().BoolVarP(&opt.ShowLog, "showlog", "", true, "show logs right after starting the task")
 	c.Flags().StringVarP(&opt.Filename, "filename", "f", "", "filename containing a task definition")
+	c.Flags().Int64VarP(&opt.TimeOut, "timeout", "t", 3600, "timeout for taskrun in seconds")
 
 	_ = c.MarkZshCompPositionalArgumentCustom(1, "__tkn_get_task")
 
@@ -159,10 +162,13 @@ func startTask(opt startOptions, args []string) error {
 	}
 
 	var tname string
+	timeoutSeconds := time.Duration(opt.TimeOut) * time.Second
+
 	if len(args) > 0 {
 		tname = args[0]
 		tr.Spec = v1alpha1.TaskRunSpec{
 			TaskRef: &v1alpha1.TaskRef{Name: tname},
+			Timeout: &metav1.Duration{Duration: timeoutSeconds},
 		}
 	} else {
 		task, err := parseTask(opt.Filename)
@@ -233,7 +239,7 @@ func startTask(opt startOptions, args []string) error {
 		return nil
 	}
 
-	fmt.Fprintf(opt.stream.Out, "Showing logs...\n")
+	fmt.Fprintf(opt.stream.Out, "Waiting for logs to be available...\n")
 	runLogOpts := &taskrun.LogOptions{
 		TaskrunName: trCreated.Name,
 		Stream:      opt.stream,
