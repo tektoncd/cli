@@ -660,7 +660,7 @@ func TestLog_taskrun_follow_mode_update_timeout(t *testing.T) {
 		t.Error("Expecting an error but it's empty")
 	}
 
-	expectedOut := "Task still running ...\n"
+	expectedOut := ""
 	test.AssertOutput(t, expectedOut, output)
 
 	expectedErr := "task output-task create failed or has not started yet or pod for task not yet available"
