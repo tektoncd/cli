@@ -38,6 +38,9 @@ type Params interface {
 	// SetKubeConfigPath uses the kubeconfig path to instantiate tekton
 	// returned by Clientset function
 	SetKubeConfigPath(string)
+	// SetKubeContext extends the specificity of the above SetKubeConfigPath
+	// by using a context other than the default context in the given kubeconfig
+	SetKubeContext(string)
 	Clients() (*Clients, error)
 	KubeClient() (k8s.Interface, error)
 

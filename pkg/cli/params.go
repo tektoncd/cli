@@ -28,6 +28,7 @@ import (
 type TektonParams struct {
 	clients        *Clients
 	kubeConfigPath string
+	kubeContext    string
 	namespace      string
 }
 
@@ -36,6 +37,10 @@ var _ Params = (*TektonParams)(nil)
 
 func (p *TektonParams) SetKubeConfigPath(path string) {
 	p.kubeConfigPath = path
+}
+
+func (p *TektonParams) SetKubeContext(context string) {
+	p.kubeContext = context
 }
 
 func (p *TektonParams) tektonClient(config *rest.Config) (versioned.Interface, error) {
@@ -108,6 +113,9 @@ func (p *TektonParams) config() (*rest.Config, error) {
 		loadingRules.ExplicitPath = p.kubeConfigPath
 	}
 	configOverrides := &clientcmd.ConfigOverrides{}
+	if p.kubeContext != "" {
+		configOverrides.CurrentContext = p.kubeContext
+	}
 	kubeConfig := clientcmd.NewNonInteractiveDeferredLoadingClientConfig(loadingRules, configOverrides)
 	if p.namespace == "" {
 		namespace, _, err := kubeConfig.Namespace()

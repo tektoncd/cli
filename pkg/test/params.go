@@ -22,11 +22,11 @@ import (
 )
 
 type Params struct {
-	ns, kc string
-	Tekton versioned.Interface
-	Kube   k8s.Interface
-	Clock  clockwork.Clock
-	Cls    *cli.Clients
+	ns, kConfig, kContext string
+	Tekton                versioned.Interface
+	Kube                  k8s.Interface
+	Clock                 clockwork.Clock
+	Cls                   *cli.Clients
 }
 
 var _ cli.Params = &Params{}
@@ -42,11 +42,15 @@ func (p *Params) SetNoColour(b bool) {
 }
 
 func (p *Params) SetKubeConfigPath(path string) {
-	p.kc = path
+	p.kConfig = path
+}
+
+func (p *Params) SetKubeContext(context string) {
+	p.kContext = context
 }
 
 func (p *Params) KubeConfigPath() string {
-	return p.kc
+	return p.kConfig
 }
 
 func (p *Params) tektonClient() (versioned.Interface, error) {
