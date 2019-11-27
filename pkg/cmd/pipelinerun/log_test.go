@@ -22,6 +22,7 @@ import (
 
 	"github.com/jonboulle/clockwork"
 	"github.com/tektoncd/cli/pkg/cli"
+	"github.com/tektoncd/cli/pkg/helper/options"
 	"github.com/tektoncd/cli/pkg/helper/pods/fake"
 	"github.com/tektoncd/cli/pkg/helper/pods/stream"
 	"github.com/tektoncd/cli/pkg/test"
@@ -77,6 +78,44 @@ func TestLog_no_pipelinerun_argument(t *testing.T) {
 
 	if err == nil {
 		t.Error("Expecting an error but it's empty")
+	}
+}
+
+func TestLog_run_found(t *testing.T) {
+	clock := clockwork.NewFakeClock()
+
+	cs, _ := test.SeedTestData(t, pipelinetest.Data{
+		Pipelines: []*v1alpha1.Pipeline{
+			tb.Pipeline("pipeline", "ns",
+				cb.PipelineCreationTimestamp(clock.Now().Add(-15*time.Minute)),
+			),
+		},
+		PipelineRuns: []*v1alpha1.PipelineRun{
+			tb.PipelineRun("pipelinerun-1", "ns",
+				tb.PipelineRunLabel("tekton.dev/pipeline", "pipeline"),
+				tb.PipelineRunSpec("pipeline"),
+				tb.PipelineRunStatus(
+					tb.PipelineRunStatusCondition(apis.Condition{
+						Status: corev1.ConditionTrue,
+						Reason: resources.ReasonSucceeded,
+					}),
+				),
+			),
+		},
+		Namespaces: []*corev1.Namespace{
+			{
+				ObjectMeta: metav1.ObjectMeta{
+					Name: "ns",
+				},
+			},
+		},
+	})
+	p := &test.Params{Tekton: cs.Pipeline, Kube: cs.Kube}
+
+	c := Command(p)
+	_, err := test.ExecuteCommand(c, "logs", "-n", "ns")
+	if err != nil {
+		t.Errorf("Unexpected error %v", err)
 	}
 }
 
@@ -838,14 +877,14 @@ func updatePR(finalRuns []*v1alpha1.PipelineRun, watcher *watch.FakeWatcher) {
 	}()
 }
 
-func logOpts(name string, ns string, cs pipelinetest.Clients, streamer stream.NewStreamerFunc, allSteps bool, follow bool, onlyTasks ...string) *LogOptions {
+func logOpts(name string, ns string, cs pipelinetest.Clients, streamer stream.NewStreamerFunc, allSteps bool, follow bool, onlyTasks ...string) *options.LogOptions {
 	p := test.Params{
 		Kube:   cs.Kube,
 		Tekton: cs.Pipeline,
 	}
 	p.SetNamespace(ns)
 
-	logOptions := LogOptions{
+	logOptions := options.LogOptions{
 		PipelineRunName: name,
 		Tasks:           onlyTasks,
 		AllSteps:        allSteps,
@@ -857,11 +896,11 @@ func logOpts(name string, ns string, cs pipelinetest.Clients, streamer stream.Ne
 	return &logOptions
 }
 
-func fetchLogs(lo *LogOptions) (string, error) {
+func fetchLogs(lo *options.LogOptions) (string, error) {
 	out := new(bytes.Buffer)
 	lo.Stream = &cli.Stream{Out: out, Err: out}
 
-	err := lo.Run()
+	err := Run(lo)
 
 	return out.String(), err
 }

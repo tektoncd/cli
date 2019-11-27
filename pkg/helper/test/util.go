@@ -12,7 +12,7 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-package pipeline
+package test
 
 import (
 	"bytes"
@@ -23,55 +23,14 @@ import (
 	goexpect "github.com/Netflix/go-expect"
 	"github.com/hinshun/vt10x"
 	"github.com/stretchr/testify/require"
-	"github.com/tektoncd/cli/pkg/cli"
-	"github.com/tektoncd/cli/pkg/helper/options"
 )
 
-type promptTest struct {
-	name      string
-	cmdArgs   []string
-	procedure func(*goexpect.Console) error
+type PromptTest struct {
+	CmdArgs   []string
+	Procedure func(*goexpect.Console) error
 }
 
-func RunPromptTest(t *testing.T, test promptTest, opts *options.LogOptions) {
-
-	test.runTest(t, test.procedure, func(stdio terminal.Stdio) error {
-		var err error
-		opts.AskOpts = WithStdio(stdio)
-		err = run(opts, test.cmdArgs)
-		if err != nil {
-			return err
-		}
-
-		return err
-	})
-}
-
-func (opts *startOptions) RunPromptTest(t *testing.T, test promptTest) {
-
-	test.runTest(t, test.procedure, func(stdio terminal.Stdio) error {
-		var err error
-		opts.askOpts = WithStdio(stdio)
-		opts.stream = &cli.Stream{
-			Out: stdio.Out,
-			Err: stdio.Err,
-		}
-		err = opts.run(test.cmdArgs[0])
-		if err != nil {
-			return err
-		}
-
-		return err
-	})
-}
-
-func stdio(c *goexpect.Console) terminal.Stdio {
-	return terminal.Stdio{In: c.Tty(), Out: c.Tty(), Err: c.Tty()}
-}
-
-func (pt *promptTest) runTest(t *testing.T, procedure func(*goexpect.Console) error, test func(terminal.Stdio) error) {
-	t.Parallel()
-
+func (pt *PromptTest) RunTest(t *testing.T, procedure func(*goexpect.Console) error, test func(terminal.Stdio) error) {
 	// Multiplex output to a buffer as well for the raw bytes.
 	buf := new(bytes.Buffer)
 	c, state, err := vt10x.NewVT10XConsole(goexpect.WithStdout(buf))
@@ -109,4 +68,8 @@ func WithStdio(stdio terminal.Stdio) survey.AskOpt {
 		options.Stdio.Err = stdio.Err
 		return nil
 	}
+}
+
+func stdio(c *goexpect.Console) terminal.Stdio {
+	return terminal.Stdio{In: c.Tty(), Out: c.Tty(), Err: c.Tty()}
 }
