@@ -23,6 +23,7 @@ import (
 
 const (
 	kubeConfig = "kubeconfig"
+	context    = "context"
 	namespace  = "namespace"
 	nocolour   = "nocolour"
 )
@@ -32,6 +33,10 @@ func AddTektonOptions(cmd *cobra.Command) {
 	cmd.PersistentFlags().StringP(
 		kubeConfig, "k", "",
 		"kubectl config file (default: $HOME/.kube/config)")
+
+	cmd.PersistentFlags().StringP(
+		context, "c", "",
+		"name of the kubeconfig context to use (default: kubectl config current-context)")
 
 	cmd.PersistentFlags().StringP(
 		namespace, "n", "",
@@ -60,6 +65,12 @@ func InitParams(p cli.Params, cmd *cobra.Command) error {
 		return err
 	}
 	p.SetKubeConfigPath(kcPath)
+
+	kContext, err := cmd.Flags().GetString(context)
+	if err != nil {
+		return err
+	}
+	p.SetKubeContext(kContext)
 
 	// ensure that the config is valid by creating a client
 	if _, err := p.Clients(); err != nil {
