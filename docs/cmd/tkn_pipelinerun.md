@@ -11,6 +11,7 @@ Manage pipelineruns
 ### Options
 
 ```
+  -c, --context string      name of the kubeconfig context to use (default: kubectl config current-context)
   -h, --help                help for pipelinerun
   -k, --kubeconfig string   kubectl config file (default: $HOME/.kube/config)
   -n, --namespace string    namespace to use (default: from $KUBECONFIG)
