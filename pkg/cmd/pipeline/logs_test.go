@@ -24,6 +24,7 @@ import (
 	"github.com/AlecAivazis/survey/v2/terminal"
 	goexpect "github.com/Netflix/go-expect"
 	"github.com/jonboulle/clockwork"
+	"github.com/tektoncd/cli/pkg/helper/options"
 	"github.com/tektoncd/cli/pkg/test"
 	cb "github.com/tektoncd/cli/pkg/test/builder"
 	"github.com/tektoncd/pipeline/pkg/apis/pipeline/v1alpha1"
@@ -300,7 +301,7 @@ func TestLogs_interactive_get_all_inputs(t *testing.T) {
 
 	for _, test := range tests {
 		t.Run(test.name, func(t *testing.T) {
-			opts.RunPromptTest(t, test)
+			RunPromptTest(t, test, opts)
 		})
 	}
 }
@@ -394,7 +395,7 @@ func TestLogs_interactive_ask_runs(t *testing.T) {
 	opts := logOpts(prName, ns, 5, false, cs)
 	for _, test := range tests {
 		t.Run(test.name, func(t *testing.T) {
-			opts.RunPromptTest(t, test)
+			RunPromptTest(t, test, opts)
 		})
 	}
 }
@@ -496,7 +497,7 @@ func TestLogs_interactive_limit_2(t *testing.T) {
 	opts := logOpts(prName, ns, 2, false, cs)
 	for _, test := range tests {
 		t.Run(test.name, func(t *testing.T) {
-			opts.RunPromptTest(t, test)
+			RunPromptTest(t, test, opts)
 		})
 	}
 }
@@ -590,7 +591,7 @@ func TestLogs_interactive_limit_1(t *testing.T) {
 	opts := logOpts(prName, ns, 1, false, cs)
 	for _, test := range tests {
 		t.Run(test.name, func(t *testing.T) {
-			opts.RunPromptTest(t, test)
+			RunPromptTest(t, test, opts)
 		})
 	}
 }
@@ -685,7 +686,7 @@ func TestLogs_interactive_ask_all_last_run(t *testing.T) {
 
 	for _, test := range tests {
 		t.Run(test.name, func(t *testing.T) {
-			opts.RunPromptTest(t, test)
+			RunPromptTest(t, test, opts)
 		})
 	}
 }
@@ -763,7 +764,7 @@ func TestLogs_interactive_ask_run_last_run(t *testing.T) {
 	opts := logOpts(prName, ns, 5, true, cs)
 	for _, test := range tests {
 		t.Run(test.name, func(t *testing.T) {
-			opts.RunPromptTest(t, test)
+			RunPromptTest(t, test, opts)
 		})
 	}
 }
@@ -888,22 +889,22 @@ func TestLogs_have_one_get_one(t *testing.T) {
 	opts := logOpts(prName, ns, 5, false, cs)
 	for _, test := range tests {
 		t.Run(test.name, func(t *testing.T) {
-			opts.RunPromptTest(t, test)
+			RunPromptTest(t, test, opts)
 		})
 	}
 }
 
-func logOpts(name string, ns string, prLimit int, last bool, cs pipelinetest.Clients) *logOptions {
+func logOpts(name string, ns string, prLimit int, last bool, cs pipelinetest.Clients) *options.LogOptions {
 	p := test.Params{
 		Kube:   cs.Kube,
 		Tekton: cs.Pipeline,
 	}
 	p.SetNamespace(ns)
-	logOp := logOptions{
-		runName: name,
-		limit:   prLimit,
-		last:    last,
-		params:  &p,
+	logOp := options.LogOptions{
+		PipelineRunName: name,
+		Limit:           prLimit,
+		Last:            last,
+		Params:          &p,
 	}
 
 	return &logOp

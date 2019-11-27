@@ -28,6 +28,7 @@ import (
 	"github.com/tektoncd/cli/pkg/cmd/pipelinerun"
 	"github.com/tektoncd/cli/pkg/flags"
 	"github.com/tektoncd/cli/pkg/helper/labels"
+	"github.com/tektoncd/cli/pkg/helper/options"
 	"github.com/tektoncd/cli/pkg/helper/params"
 	"github.com/tektoncd/cli/pkg/helper/pipeline"
 	validate "github.com/tektoncd/cli/pkg/helper/validate"
@@ -228,7 +229,6 @@ func (opt *startOptions) getInputResources(resources resourceOptionsFilter, pipe
 		}
 
 		if err := survey.Ask(qs, &ans, opt.askOpts); err != nil {
-			fmt.Println(err.Error())
 			return err
 		}
 
@@ -270,7 +270,6 @@ func (opt *startOptions) getInputParams(pipeline *v1alpha1.Pipeline) error {
 		}
 
 		if err := survey.Ask(qs, &ans, opt.askOpts); err != nil {
-			fmt.Println(err.Error())
 			return err
 		}
 
@@ -442,7 +441,7 @@ func (opt *startOptions) startPipeline(pName string) error {
 	}
 
 	fmt.Fprintf(opt.stream.Out, "Showing logs...\n")
-	runLogOpts := &pipelinerun.LogOptions{
+	runLogOpts := &options.LogOptions{
 		PipelineName:    pName,
 		PipelineRunName: prCreated.Name,
 		Stream:          opt.stream,
@@ -450,7 +449,7 @@ func (opt *startOptions) startPipeline(pName string) error {
 		Params:          opt.cliparams,
 		AllSteps:        false,
 	}
-	return runLogOpts.Run()
+	return pipelinerun.Run(runLogOpts)
 }
 
 func mergeRes(pr *v1alpha1.PipelineRun, optRes []string) error {

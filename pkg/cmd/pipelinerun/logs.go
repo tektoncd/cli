@@ -16,27 +16,19 @@ package pipelinerun
 
 import (
 	"fmt"
+	"strings"
 
 	"github.com/spf13/cobra"
 	"github.com/tektoncd/cli/pkg/cli"
+	"github.com/tektoncd/cli/pkg/helper/options"
+	prhelper "github.com/tektoncd/cli/pkg/helper/pipelinerun"
 	"github.com/tektoncd/cli/pkg/helper/pods"
-	"github.com/tektoncd/cli/pkg/helper/pods/stream"
 	validate "github.com/tektoncd/cli/pkg/helper/validate"
+	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 )
 
-type LogOptions struct {
-	AllSteps        bool
-	Follow          bool
-	Params          cli.Params
-	PipelineName    string
-	PipelineRunName string
-	Stream          *cli.Stream
-	Streamer        stream.NewStreamerFunc
-	Tasks           []string
-}
-
 func logCommand(p cli.Params) *cobra.Command {
-	opts := &LogOptions{Params: p}
+	opts := &options.LogOptions{Params: p}
 	eg := `
   # show the logs of PipelineRun named "foo" from the namesspace "bar"
     tkn pipelinerun logs foo -n bar
@@ -57,9 +49,10 @@ func logCommand(p cli.Params) *cobra.Command {
 			"commandType": "main",
 		},
 		Example: eg,
-		Args:    cobra.ExactArgs(1),
 		RunE: func(cmd *cobra.Command, args []string) error {
-			opts.PipelineRunName = args[0]
+			if len(args) != 0 {
+				opts.PipelineRunName = args[0]
+			}
 
 			opts.Stream = &cli.Stream{
 				Out: cmd.OutOrStdout(),
@@ -70,40 +63,43 @@ func logCommand(p cli.Params) *cobra.Command {
 				return err
 			}
 
-			return opts.Run()
+			return Run(opts)
 		},
 	}
 
 	c.Flags().BoolVarP(&opts.AllSteps, "all", "a", false, "show all logs including init steps injected by tekton")
 	c.Flags().BoolVarP(&opts.Follow, "follow", "f", false, "stream live logs")
 	c.Flags().StringSliceVarP(&opts.Tasks, "only-tasks", "t", []string{}, "show logs for mentioned tasks only")
+	c.Flags().IntVarP(&opts.Limit, "limit", "", 5, "lists number of pipelineruns")
 
 	_ = c.MarkZshCompPositionalArgumentCustom(1, "__tkn_get_pipelinerun")
 	return c
 }
 
-func (lo *LogOptions) Run() error {
-	if lo.PipelineRunName == "" {
-		return fmt.Errorf("missing mandatory argument pipelinerun")
+func Run(opts *options.LogOptions) error {
+	if opts.PipelineRunName == "" {
+		if err := askRunName(opts); err != nil {
+			return err
+		}
 	}
 	streamer := pods.NewStream
-	if lo.Streamer != nil {
-		streamer = lo.Streamer
+	if opts.Streamer != nil {
+		streamer = opts.Streamer
 	}
-	cs, err := lo.Params.Clients()
+	cs, err := opts.Params.Clients()
 	if err != nil {
 		return err
 	}
 
 	lr := &LogReader{
-		Run:      lo.PipelineRunName,
-		Ns:       lo.Params.Namespace(),
+		Run:      opts.PipelineRunName,
+		Ns:       opts.Params.Namespace(),
 		Clients:  cs,
 		Streamer: streamer,
-		Stream:   lo.Stream,
-		Follow:   lo.Follow,
-		AllSteps: lo.AllSteps,
-		Tasks:    lo.Tasks,
+		Stream:   opts.Stream,
+		Follow:   opts.Follow,
+		AllSteps: opts.AllSteps,
+		Tasks:    opts.Tasks,
 	}
 
 	logC, errC, err := lr.Read()
@@ -111,7 +107,27 @@ func (lo *LogOptions) Run() error {
 		return err
 	}
 
-	NewLogWriter().Write(lo.Stream, logC, errC)
+	NewLogWriter().Write(opts.Stream, logC, errC)
 
 	return nil
+}
+
+func askRunName(opts *options.LogOptions) error {
+	lOpts := metav1.ListOptions{}
+
+	prs, err := prhelper.GetAllPipelineRuns(opts.Params, lOpts, opts.Limit)
+	if err != nil {
+		return err
+	}
+
+	if len(prs) == 0 {
+		return fmt.Errorf("No pipelineruns found")
+	}
+
+	if len(prs) == 1 {
+		opts.PipelineRunName = strings.Fields(prs[0])[0]
+		return nil
+	}
+
+	return opts.Ask("pipelinerun", prs)
 }

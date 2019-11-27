@@ -16,33 +16,19 @@ package pipeline
 
 import (
 	"fmt"
-	"os"
 	"strings"
 
-	"github.com/AlecAivazis/survey/v2"
-	"github.com/AlecAivazis/survey/v2/terminal"
 	"github.com/spf13/cobra"
 	"github.com/tektoncd/cli/pkg/cli"
 	"github.com/tektoncd/cli/pkg/cmd/pipelinerun"
 	"github.com/tektoncd/cli/pkg/flags"
-	"github.com/tektoncd/cli/pkg/formatted"
+	"github.com/tektoncd/cli/pkg/helper/options"
 	"github.com/tektoncd/cli/pkg/helper/pipeline"
-	prhsort "github.com/tektoncd/cli/pkg/helper/pipelinerun/sort"
+	phelper "github.com/tektoncd/cli/pkg/helper/pipeline"
+	prhelper "github.com/tektoncd/cli/pkg/helper/pipelinerun"
 	validate "github.com/tektoncd/cli/pkg/helper/validate"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 )
-
-type logOptions struct {
-	params       cli.Params
-	stream       *cli.Stream
-	askOpts      survey.AskOpt
-	last         bool
-	allSteps     bool
-	follow       bool
-	pipelineName string
-	runName      string
-	limit        int
-}
 
 func nameArg(args []string, p cli.Params) error {
 	if len(args) == 1 {
@@ -59,17 +45,7 @@ func nameArg(args []string, p cli.Params) error {
 }
 
 func logCommand(p cli.Params) *cobra.Command {
-	opts := &logOptions{params: p,
-		askOpts: func(opt *survey.AskOptions) error {
-			opt.Stdio = terminal.Stdio{
-				In:  os.Stdin,
-				Out: os.Stdout,
-				Err: os.Stderr,
-			}
-
-			return nil
-		},
-	}
+	opts := options.NewLogOptions(p)
 
 	eg := `
   # interactive mode: shows logs of the selected pipeline run
@@ -101,7 +77,7 @@ func logCommand(p cli.Params) *cobra.Command {
 			return nameArg(args, p)
 		},
 		RunE: func(cmd *cobra.Command, args []string) error {
-			opts.stream = &cli.Stream{
+			opts.Stream = &cli.Stream{
 				Out: cmd.OutOrStdout(),
 				Err: cmd.OutOrStderr(),
 			}
@@ -110,56 +86,47 @@ func logCommand(p cli.Params) *cobra.Command {
 				return err
 			}
 
-			return opts.run(args)
+			return run(opts, args)
 		},
 	}
-	c.Flags().BoolVarP(&opts.last, "last", "L", false, "show logs for last run")
-	c.Flags().BoolVarP(&opts.allSteps, "all", "a", false, "show all logs including init steps injected by tekton")
-	c.Flags().BoolVarP(&opts.follow, "follow", "f", false, "stream live logs")
-	c.Flags().IntVarP(&opts.limit, "limit", "", 5, "lists number of pipelineruns")
+	c.Flags().BoolVarP(&opts.Last, "last", "L", false, "show logs for last run")
+	c.Flags().BoolVarP(&opts.AllSteps, "all", "a", false, "show all logs including init steps injected by tekton")
+	c.Flags().BoolVarP(&opts.Follow, "follow", "f", false, "stream live logs")
+	c.Flags().IntVarP(&opts.Limit, "limit", "", 5, "lists number of pipelineruns")
 
 	_ = c.MarkZshCompPositionalArgumentCustom(1, "__tkn_get_pipeline")
 	return c
 }
 
-func (opts *logOptions) run(args []string) error {
-	if err := opts.init(args); err != nil {
+func run(opts *options.LogOptions, args []string) error {
+	if err := initOpts(opts, args); err != nil {
 		return err
 	}
 
-	if opts.pipelineName == "" || opts.runName == "" {
+	if opts.PipelineName == "" || opts.PipelineRunName == "" {
 		return nil
 	}
 
-	runLogOpts := &pipelinerun.LogOptions{
-		PipelineName:    opts.pipelineName,
-		PipelineRunName: opts.runName,
-		Stream:          opts.stream,
-		Params:          opts.params,
-		Follow:          opts.follow,
-		AllSteps:        opts.allSteps,
-	}
-
-	return runLogOpts.Run()
+	return pipelinerun.Run(opts)
 }
 
-func (opts *logOptions) init(args []string) error {
+func initOpts(opts *options.LogOptions, args []string) error {
 	// ensure the client is properly initialized
-	if _, err := opts.params.Clients(); err != nil {
+	if _, err := opts.Params.Clients(); err != nil {
 		return err
 	}
 
 	switch len(args) {
 	case 0: // no inputs
-		return opts.getAllInputs()
+		return getAllInputs(opts)
 
 	case 1: // pipeline name provided
-		opts.pipelineName = args[0]
-		return opts.askRunName()
+		opts.PipelineName = args[0]
+		return askRunName(opts)
 
 	case 2: // both pipeline and run provided
-		opts.pipelineName = args[0]
-		opts.runName = args[1]
+		opts.PipelineName = args[0]
+		opts.PipelineRunName = args[1]
 
 	default:
 		return fmt.Errorf("too many arguments")
@@ -167,151 +134,68 @@ func (opts *logOptions) init(args []string) error {
 	return nil
 }
 
-func (opts *logOptions) getAllInputs() error {
-	if err := validateLogOpts(opts); err != nil {
+func getAllInputs(opts *options.LogOptions) error {
+	if err := opts.ValidateOpts(); err != nil {
 		return err
 	}
 
-	ps, err := allPipelines(opts)
+	ps, err := phelper.GetAllPipelineNames(opts.Params)
 	if err != nil {
 		return err
 	}
 
 	if len(ps) == 0 {
-		fmt.Fprintln(opts.stream.Err, "No pipelines found in namespace:", opts.params.Namespace())
+		fmt.Fprintln(opts.Stream.Err, "No pipelines found in namespace:", opts.Params.Namespace())
 		return nil
 	}
 
-	var qs1 = []*survey.Question{{
-		Name: "pipeline",
-		Prompt: &survey.Select{
-			Message: "Select pipeline :",
-			Options: ps,
-		},
-	}}
-
-	if err = survey.Ask(qs1, &opts.pipelineName, opts.askOpts); err != nil {
-		fmt.Println(err.Error())
-		return err
+	if err := opts.Ask(options.ResourceNamePipeline, ps); err != nil {
+		return nil
 	}
 
-	return opts.askRunName()
+	return askRunName(opts)
 }
 
-func (opts *logOptions) askRunName() error {
-	if err := validateLogOpts(opts); err != nil {
+func askRunName(opts *options.LogOptions) error {
+	if err := opts.ValidateOpts(); err != nil {
 		return err
 	}
 
-	if opts.last {
-		return opts.initLastRunName()
+	if opts.Last {
+		return initLastRunName(opts)
 	}
 
-	var ans string
+	lOpts := metav1.ListOptions{
+		LabelSelector: fmt.Sprintf("tekton.dev/pipeline=%s", opts.PipelineName),
+	}
 
-	prs, err := allRuns(opts.params, opts.pipelineName, opts.limit)
+	prs, err := prhelper.GetAllPipelineRuns(opts.Params, lOpts, opts.Limit)
 	if err != nil {
 		return err
 	}
+
 	if len(prs) == 0 {
-		fmt.Fprintln(opts.stream.Err, "No pipelineruns found for pipeline:", opts.pipelineName)
+		fmt.Fprintln(opts.Stream.Err, "No pipelineruns found for pipeline:", opts.PipelineName)
 		return nil
 	}
 
 	if len(prs) == 1 {
-		opts.runName = strings.Fields(prs[0])[0]
+		opts.PipelineRunName = strings.Fields(prs[0])[0]
 		return nil
 	}
 
-	var qs2 = []*survey.Question{
-		{
-			Name: "pipelinerun",
-			Prompt: &survey.Select{
-				Message: "Select pipelinerun :",
-				Options: prs,
-			},
-		},
-	}
-
-	if err = survey.Ask(qs2, &ans, opts.askOpts); err != nil {
-		fmt.Println(err.Error())
-		return err
-	}
-
-	opts.runName = strings.Fields(ans)[0]
-	return nil
+	return opts.Ask(options.ResourceNamePipelineRun, prs)
 }
 
-func (opts *logOptions) initLastRunName() error {
-	cs, err := opts.params.Clients()
+func initLastRunName(opts *options.LogOptions) error {
+	cs, err := opts.Params.Clients()
 	if err != nil {
 		return err
 	}
-	lastrun, err := pipeline.LastRun(cs.Tekton, opts.pipelineName, opts.params.Namespace())
+	lastrun, err := pipeline.LastRun(cs.Tekton, opts.PipelineName, opts.Params.Namespace())
 	if err != nil {
 		return err
 	}
-	opts.runName = lastrun.Name
-	return nil
-}
-
-func allPipelines(opts *logOptions) ([]string, error) {
-	cs, err := opts.params.Clients()
-	if err != nil {
-		return nil, err
-	}
-
-	tkn := cs.Tekton.TektonV1alpha1()
-	ps, err := tkn.Pipelines(opts.params.Namespace()).List(metav1.ListOptions{})
-	if err != nil {
-		return nil, err
-	}
-
-	ret := []string{}
-	for _, item := range ps.Items {
-		ret = append(ret, item.ObjectMeta.Name)
-	}
-	return ret, nil
-}
-
-func allRuns(p cli.Params, pName string, limit int) ([]string, error) {
-	cs, err := p.Clients()
-	if err != nil {
-		return nil, err
-	}
-	opts := metav1.ListOptions{
-		LabelSelector: fmt.Sprintf("tekton.dev/pipeline=%s", pName),
-	}
-
-	runs, err := cs.Tekton.TektonV1alpha1().PipelineRuns(p.Namespace()).List(opts)
-	if err != nil {
-		return nil, err
-	}
-
-	runslen := len(runs.Items)
-
-	if runslen > 1 {
-		runs.Items = prhsort.SortPipelineRunsByStartTime(runs.Items)
-	}
-
-	if limit > runslen {
-		limit = runslen
-	}
-
-	ret := []string{}
-	for i, run := range runs.Items {
-		if i < limit {
-			ret = append(ret, run.ObjectMeta.Name+" started "+formatted.Age(run.Status.StartTime, p.Time()))
-		}
-	}
-	return ret, nil
-}
-
-func validateLogOpts(opts *logOptions) error {
-
-	if opts.limit <= 0 {
-		return fmt.Errorf("limit was %d but must be a positive number", opts.limit)
-	}
-
+	opts.PipelineRunName = lastrun.Name
 	return nil
 }
