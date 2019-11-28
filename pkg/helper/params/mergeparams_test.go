@@ -22,7 +22,7 @@ import (
 	"github.com/tektoncd/pipeline/pkg/apis/pipeline/v1alpha1"
 )
 
-func Test_MergeParam(t *testing.T) {
+func Test_MergeParam_String(t *testing.T) {
 	params := []v1alpha1.Param{
 		{
 			Name: "key1",
@@ -40,33 +40,95 @@ func Test_MergeParam(t *testing.T) {
 		},
 	}
 
+	paramByType["key1"] = v1alpha1.ParamTypeString
+	paramByType["key2"] = v1alpha1.ParamTypeString
 	_, err := MergeParam(params, []string{"test"})
 	if err == nil {
 		t.Errorf("Expected error")
 	}
+	test.AssertOutput(t, "invalid input format for param parameter: test", err.Error())
+
+	_, err = MergeParam(params, []string{"test=value"})
+	if err == nil {
+		t.Errorf("Expected error")
+	}
+	test.AssertOutput(t, "param 'test' not present in spec", err.Error())
 
 	params, err = MergeParam(params, []string{})
 	if err != nil {
 		t.Errorf("Did not expect error")
 	}
 	test.AssertOutput(t, 2, len(params))
+	test.AssertOutput(t, "value1", params[0].Value.StringVal)
+	test.AssertOutput(t, "value2", params[1].Value.StringVal)
 
-	params, err = MergeParam(params, []string{"key3=test"})
+	params, err = MergeParam(params, []string{"key1=test"})
 	if err != nil {
 		t.Errorf("Did not expect error")
 	}
-	test.AssertOutput(t, 3, len(params))
+	test.AssertOutput(t, 2, len(params))
+	test.AssertOutput(t, "test", params[0].Value.StringVal)
+	test.AssertOutput(t, "value2", params[1].Value.StringVal)
 
-	params, err = MergeParam(params, []string{"key3=test-new", "key4=test-2"})
+	params, err = MergeParam(params, []string{"key1=test-new", "key2=test-2"})
 	if err != nil {
 		t.Errorf("Did not expect error")
 	}
-	test.AssertOutput(t, 4, len(params))
+	test.AssertOutput(t, 2, len(params))
+	test.AssertOutput(t, "test-new", params[0].Value.StringVal)
+	test.AssertOutput(t, "test-2", params[1].Value.StringVal)
+}
+
+func Test_MergeParam_Array(t *testing.T) {
+	params := []v1alpha1.Param{
+		{
+			Name: "key1",
+			Value: v1alpha1.ArrayOrString{
+				Type:     v1alpha1.ParamTypeArray,
+				ArrayVal: []string{"value1", "value2"},
+			},
+		},
+	}
+
+	paramByType["key1"] = v1alpha1.ParamTypeArray
+	_, err := MergeParam(params, []string{"test"})
+	if err == nil {
+		t.Errorf("Expected error")
+	}
+	test.AssertOutput(t, "invalid input format for param parameter: test", err.Error())
+
+	_, err = MergeParam(params, []string{"test=value"})
+	if err == nil {
+		t.Errorf("Expected error")
+	}
+	test.AssertOutput(t, "param 'test' not present in spec", err.Error())
+
+	params, err = MergeParam(params, []string{})
+	if err != nil {
+		t.Errorf("Did not expect error")
+	}
+	test.AssertOutput(t, 1, len(params))
+	test.AssertOutput(t, []string{"value1", "value2"}, params[0].Value.ArrayVal)
+
+	params, err = MergeParam(params, []string{"key1=test"})
+	if err != nil {
+		t.Errorf("Did not expect error")
+	}
+	test.AssertOutput(t, 1, len(params))
+	test.AssertOutput(t, []string{"test"}, params[0].Value.ArrayVal)
+
+	params, err = MergeParam(params, []string{"key1=test-new,test-new-2"})
+	if err != nil {
+		t.Errorf("Did not expect error")
+	}
+	test.AssertOutput(t, 1, len(params))
+	test.AssertOutput(t, []string{"test-new", "test-new-2"}, params[0].Value.ArrayVal)
 }
 
 func Test_parseParam(t *testing.T) {
 	type args struct {
-		p []string
+		p  []string
+		pt []v1alpha1.ParamSpec
 	}
 	tests := []struct {
 		name    string
@@ -76,7 +138,25 @@ func Test_parseParam(t *testing.T) {
 	}{{
 		name: "Test_parseParam No Err",
 		args: args{
-			p: []string{"key1=value1", "key2=value2", "key3=value3,value4,value5"},
+			p: []string{"key1=value1", "key2=value2", "key3=value3,value4,value5", "key4=value4"},
+			pt: []v1alpha1.ParamSpec{
+				{
+					Name: "key1",
+					Type: "string",
+				},
+				{
+					Name: "key2",
+					Type: "string",
+				},
+				{
+					Name: "key3",
+					Type: "array",
+				},
+				{
+					Name: "key4",
+					Type: "array",
+				},
+			},
 		},
 		want: map[string]v1alpha1.Param{
 			"key1": {Name: "key1", Value: v1alpha1.ArrayOrString{
@@ -94,6 +174,11 @@ func Test_parseParam(t *testing.T) {
 				ArrayVal: []string{"value3", "value4", "value5"},
 			},
 			},
+			"key4": {Name: "key4", Value: v1alpha1.ArrayOrString{
+				Type:     v1alpha1.ParamTypeArray,
+				ArrayVal: []string{"value4"},
+			},
+			},
 		},
 		wantErr: false,
 	}, {
@@ -106,6 +191,7 @@ func Test_parseParam(t *testing.T) {
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
+			FilterParamsByType(tt.args.pt)
 			got, err := parseParam(tt.args.p)
 			if (err != nil) != tt.wantErr {
 				t.Errorf("parseParams() error = %v, wantErr %v", err, tt.wantErr)

@@ -188,6 +188,7 @@ func (opt *startOptions) getInput(pname string) error {
 		}
 	}
 
+	params.FilterParamsByType(pipeline.Spec.Params)
 	if len(opt.Params) == 0 && !opt.Last {
 		if err = opt.getInputParams(pipeline); err != nil {
 			return err

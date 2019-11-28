@@ -177,7 +177,7 @@ func Test_start_pipeline(t *testing.T) {
 	got, _ := test.ExecuteCommand(pipeline, "start", pipelineName,
 		"-r=source=scaffold-git",
 		"--showlog=false",
-		"-p=key1=value1",
+		"-p=pipeline-param=value1",
 		"-p=rev-param=cat,foo,bar",
 		"-l=jemange=desfrites",
 		"-s=svc1",
@@ -239,7 +239,7 @@ func Test_start_pipeline_showlogs_false(t *testing.T) {
 
 	got, _ := test.ExecuteCommand(pipeline, "start", pipelineName,
 		"-r=source=scaffold-git",
-		"-p=key1=value1",
+		"-p=pipeline-param=value1",
 		"-l=jemange=desfrites",
 		"--showlog=false",
 		"-s=svc1",
@@ -617,6 +617,75 @@ func Test_start_pipeline_last_merge(t *testing.T) {
 	test.AssertOutput(t, "svc1", pr.Spec.DeprecatedServiceAccount)
 }
 
+func Test_start_pipeline_allkindparam(t *testing.T) {
+	pipelineName := "test-pipeline"
+
+	ps := []*v1alpha1.Pipeline{
+		tb.Pipeline(pipelineName, "ns",
+			tb.PipelineSpec(
+				tb.PipelineDeclaredResource("git-repo", "git"),
+				tb.PipelineParamSpec("pipeline-param", v1alpha1.ParamTypeString, tb.ParamSpecDefault("somethingdifferent")),
+				tb.PipelineParamSpec("rev-param", v1alpha1.ParamTypeArray, tb.ParamSpecDefault("booms", "booms", "booms")),
+				tb.PipelineParamSpec("rev-param-new", v1alpha1.ParamTypeArray, tb.ParamSpecDefault("booms", "booms", "booms")),
+				tb.PipelineTask("unit-test-1", "unit-test-task",
+					tb.PipelineTaskInputResource("workspace", "git-repo"),
+					tb.PipelineTaskOutputResource("image-to-use", "best-image"),
+					tb.PipelineTaskOutputResource("workspace", "git-repo"),
+				),
+			), // spec
+		), // pipeline
+	}
+
+	ns := []*corev1.Namespace{
+		{
+			ObjectMeta: metav1.ObjectMeta{
+				Name: "ns",
+			},
+		},
+	}
+
+	cs, _ := test.SeedTestData(t, pipelinetest.Data{Pipelines: ps, Namespaces: ns})
+	p := &test.Params{Tekton: cs.Pipeline, Kube: cs.Kube}
+	pipeline := Command(p)
+
+	got, _ := test.ExecuteCommand(pipeline, "start", pipelineName,
+		"-r=source=scaffold-git",
+		"--showlog=false",
+		"-p=pipeline-param=value1",
+		"-p=rev-param=cat,foo,bar",
+		"-p=rev-param-new=help",
+		"-l=jemange=desfrites",
+		"-s=svc1",
+		"-n", "ns")
+
+	expected := "Pipelinerun started: \n\nIn order to track the pipelinerun progress run:\ntkn pipelinerun logs  -f -n ns\n"
+	test.AssertOutput(t, expected, got)
+
+	pr, err := cs.Pipeline.TektonV1alpha1().PipelineRuns("ns").List(v1.ListOptions{})
+	if err != nil {
+		t.Errorf("Error listing pipelineruns %s", err.Error())
+	}
+
+	if pr.Items[0].ObjectMeta.GenerateName != (pipelineName + "-run-") {
+		t.Errorf("Error pipelinerun generated is different %+v", pr)
+	}
+
+	for _, v := range pr.Items[0].Spec.Params {
+		if v.Name == "rev-param" {
+			test.AssertOutput(t, v1alpha1.ArrayOrString{Type: v1alpha1.ParamTypeArray, ArrayVal: []string{"cat", "foo", "bar"}}, v.Value)
+		}
+
+		if v.Name == "rev-param-new" {
+			test.AssertOutput(t, v1alpha1.ArrayOrString{Type: v1alpha1.ParamTypeArray, ArrayVal: []string{"help"}}, v.Value)
+		}
+	}
+
+	if d := cmp.Equal(pr.Items[0].ObjectMeta.Labels, map[string]string{"jemange": "desfrites"}); !d {
+		t.Errorf("Error labels generated is different Labels Got: %+v", pr.Items[0].ObjectMeta.Labels)
+	}
+
+}
+
 func Test_start_pipeline_last_no_pipelineruns(t *testing.T) {
 
 	pipelineName := "test-pipeline"
@@ -720,6 +789,47 @@ func Test_start_pipeline_last_list_err(t *testing.T) {
 		"-n", "ns")
 
 	expected := "Error: test generated error\n"
+	test.AssertOutput(t, expected, got)
+}
+
+func Test_start_pipeline_wrong_param_err(t *testing.T) {
+
+	pipelineName := "test-pipeline"
+
+	ps := []*v1alpha1.Pipeline{
+		tb.Pipeline(pipelineName, "ns",
+			tb.PipelineSpec(
+				tb.PipelineDeclaredResource("git-repo", "git"),
+				tb.PipelineParamSpec("rev-param", v1alpha1.ParamTypeString, tb.ParamSpecDefault("revision")),
+				tb.PipelineTask("unit-test-1", "unit-test-task",
+					tb.PipelineTaskInputResource("workspace", "git-repo"),
+					tb.PipelineTaskOutputResource("image-to-use", "best-image"),
+					tb.PipelineTaskOutputResource("workspace", "git-repo"),
+				),
+			), // spec
+		), // pipeline
+	}
+
+	ns := []*corev1.Namespace{
+		{
+			ObjectMeta: metav1.ObjectMeta{
+				Name: "ns",
+			},
+		},
+	}
+
+	cs, _ := test.SeedTestData(t, pipelinetest.Data{Pipelines: ps, Namespaces: ns})
+	p := &test.Params{Tekton: cs.Pipeline, Kube: cs.Kube}
+
+	pipeline := Command(p)
+	got, _ := test.ExecuteCommand(pipeline, "start", pipelineName,
+		"-s=svc1",
+		"--showlog=false",
+		"-r=git-repo=scaffold-git",
+		"-p=rev-parm=revision2",
+		"-n", "ns")
+
+	expected := "Error: param 'rev-parm' not present in spec\n"
 	test.AssertOutput(t, expected, got)
 }
 
