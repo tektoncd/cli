@@ -72,9 +72,13 @@ func NameArg(args []string, p cli.Params) error {
 	}
 
 	name, ns := args[0], p.Namespace()
-	_, err = c.Tekton.TektonV1alpha1().Tasks(ns).Get(name, metav1.GetOptions{})
+	t, err := c.Tekton.TektonV1alpha1().Tasks(ns).Get(name, metav1.GetOptions{})
 	if err != nil {
 		return fmt.Errorf(errInvalidTask, name, ns)
+	}
+
+	if t.Spec.Inputs != nil {
+		params.FilterParamsByType(t.Spec.Inputs.Params)
 	}
 
 	return nil

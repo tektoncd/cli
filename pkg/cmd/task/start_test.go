@@ -665,6 +665,145 @@ func Test_start_task_invalid_label(t *testing.T) {
 	test.AssertOutput(t, expected, got)
 }
 
+func Test_start_task_allkindparam(t *testing.T) {
+	tasks := []*v1alpha1.Task{
+		tb.Task("task-1", "ns",
+			tb.TaskSpec(
+				tb.TaskInputs(
+					tb.InputsResource("my-repo", v1alpha1.PipelineResourceTypeGit),
+					tb.InputsResource("my-image", v1alpha1.PipelineResourceTypeImage),
+					tb.InputsParamSpec("myarg", v1alpha1.ParamTypeString),
+					tb.InputsParamSpec("print", v1alpha1.ParamTypeArray),
+					tb.InputsParamSpec("printafter", v1alpha1.ParamTypeArray),
+				),
+				tb.TaskOutputs(
+					tb.OutputsResource("code-image", v1alpha1.PipelineResourceTypeImage),
+				),
+				tb.Step("hello", "busybox"),
+				tb.Step("exit", "busybox"),
+			),
+		),
+	}
+
+	ns := []*corev1.Namespace{
+		{
+			ObjectMeta: metav1.ObjectMeta{
+				Name: "ns",
+			},
+		},
+	}
+
+	cs, _ := test.SeedTestData(t, pipelinetest.Data{Tasks: tasks, Namespaces: ns})
+	p := &test.Params{Tekton: cs.Pipeline, Kube: cs.Kube}
+
+	task := Command(p)
+	got, _ := test.ExecuteCommand(task, "start", "task-1",
+		"-i=my-repo=git",
+		"-i=my-image=image",
+		"-p=myarg=value1",
+		"-p=print=boom,boom",
+		"-p=printafter=booms",
+		"-l=key=value",
+		"-o=code-image=output-image",
+		"-s=svc1",
+		"--showlog=false",
+		"-n=ns")
+
+	expected := "Taskrun started: \n\nIn order to track the taskrun progress run:\ntkn taskrun logs  -f -n ns\n"
+	test.AssertOutput(t, expected, got)
+
+	tr, err := cs.Pipeline.TektonV1alpha1().TaskRuns("ns").List(v1.ListOptions{})
+	if err != nil {
+		t.Errorf("Error listing taskruns %s", err.Error())
+	}
+
+	if tr.Items[0].ObjectMeta.GenerateName != "task-1-run-" {
+		t.Errorf("Error taskrun generated is different %+v", tr)
+	}
+
+	for _, v := range tr.Items[0].Spec.Inputs.Resources {
+		if v.Name == "my-repo" {
+			test.AssertOutput(t, "git", v.ResourceRef.Name)
+		}
+
+		if v.Name == "my-image" {
+			test.AssertOutput(t, "image", v.ResourceRef.Name)
+		}
+	}
+
+	for _, v := range tr.Items[0].Spec.Inputs.Params {
+		if v.Name == "my-arg" {
+			test.AssertOutput(t, v1alpha1.ArrayOrString{Type: v1alpha1.ParamTypeString, StringVal: "value1"}, v.Value)
+		}
+
+		if v.Name == "print" {
+			test.AssertOutput(t, v1alpha1.ArrayOrString{Type: v1alpha1.ParamTypeArray, ArrayVal: []string{"boom", "boom"}}, v.Value)
+		}
+
+		if v.Name == "printafter" {
+			test.AssertOutput(t, v1alpha1.ArrayOrString{Type: v1alpha1.ParamTypeArray, ArrayVal: []string{"booms"}}, v.Value)
+		}
+	}
+
+	for _, v := range tr.Items[0].Spec.Outputs.Resources {
+		if v.Name == "code-image" {
+			test.AssertOutput(t, "output-image", v.ResourceRef.Name)
+		}
+	}
+
+	if d := cmp.Equal(tr.Items[0].ObjectMeta.Labels, map[string]string{"key": "value"}); !d {
+		t.Errorf("Error labels generated is different Labels Got: %+v", tr.Items[0].ObjectMeta.Labels)
+	}
+
+	test.AssertOutput(t, "svc1", tr.Items[0].Spec.DeprecatedServiceAccount)
+}
+
+func Test_start_task_wrong_param(t *testing.T) {
+	tasks := []*v1alpha1.Task{
+		tb.Task("task-1", "ns",
+			tb.TaskSpec(
+				tb.TaskInputs(
+					tb.InputsResource("my-repo", v1alpha1.PipelineResourceTypeGit),
+					tb.InputsResource("my-image", v1alpha1.PipelineResourceTypeImage),
+					tb.InputsParamSpec("myarg", v1alpha1.ParamTypeString),
+					tb.InputsParamSpec("print", v1alpha1.ParamTypeArray),
+				),
+				tb.TaskOutputs(
+					tb.OutputsResource("code-image", v1alpha1.PipelineResourceTypeImage),
+				),
+				tb.Step("hello", "busybox"),
+				tb.Step("exit", "busybox"),
+			),
+		),
+	}
+
+	ns := []*corev1.Namespace{
+		{
+			ObjectMeta: metav1.ObjectMeta{
+				Name: "ns",
+			},
+		},
+	}
+
+	cs, _ := test.SeedTestData(t, pipelinetest.Data{Tasks: tasks, Namespaces: ns})
+	p := &test.Params{Tekton: cs.Pipeline, Kube: cs.Kube}
+
+	task := Command(p)
+	got, _ := test.ExecuteCommand(task, "start", "task-1",
+		"-i=my-repo=git",
+		"-i=my-image=image",
+		"-p=myar=value1",
+		"-p=print=boom,boom",
+		"-l=key=value",
+		"-o=code-image=output-image",
+		"-s=svc1",
+		"--showlog=false",
+		"-n=ns")
+
+	expected := "Error: param 'myar' not present in spec\n"
+	test.AssertOutput(t, expected, got)
+}
+
 func Test_mergeResource(t *testing.T) {
 	res := []v1alpha1.TaskResourceBinding{{
 		PipelineResourceBinding: v1alpha1.PipelineResourceBinding{
