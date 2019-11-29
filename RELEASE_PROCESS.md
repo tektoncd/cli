@@ -36,6 +36,10 @@ dnf upgrade tektoncd-cli
 
   https://github.com/Homebrew/homebrew-core/pull/46492
 
+- Make an update to the `test-runner` image in the [plumbing](https://github.com/tektoncd/plumbing/) repo (the image where we run the CI on pipeline which use CLI) to increase the version here :
+
+  https://github.com/tektoncd/plumbing/blob/master/tekton/images/test-runner/Dockerfile#L51
+
 - Announce and spread the love on twitter, make sure you tag
   [@tektoncd](https://twitter.com/tektoncd) account so you get retweeted and
   perhaps add the major new features in the tweet. See [here](https://twitter.com/chmouel/status/1177172542144036869) for an example.
