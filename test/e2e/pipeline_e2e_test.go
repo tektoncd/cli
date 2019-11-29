@@ -28,7 +28,7 @@ const (
 	tePipelineFaultGitResourceName = "skaffold-git-1"
 )
 
-func TestPipelinesE2EUsingCli(t *testing.T) {
+func TestPipelinesE2E(t *testing.T) {
 	t.Parallel()
 	c, namespace := Setup(t)
 	knativetest.CleanupOnInterrupt(func() { TearDown(t, c, namespace) }, t.Logf)
@@ -281,7 +281,7 @@ Showing logs...
 	})
 }
 
-func TestPipelinesNegativeE2EUsingCli(t *testing.T) {
+func TestPipelinesNegativeE2E(t *testing.T) {
 	t.Parallel()
 	c, namespace := Setup(t)
 	knativetest.CleanupOnInterrupt(func() { TearDown(t, c, namespace) }, t.Logf)
@@ -472,7 +472,7 @@ Showing logs...
 
 }
 
-func TestDeletePipelinesE2EUsingCli(t *testing.T) {
+func TestDeletePipelinesE2E(t *testing.T) {
 	t.Parallel()
 	c, namespace := Setup(t)
 	knativetest.CleanupOnInterrupt(func() { TearDown(t, c, namespace) }, t.Logf)

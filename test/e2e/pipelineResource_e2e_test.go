@@ -16,7 +16,7 @@ import (
 	knativetest "knative.dev/pkg/test"
 )
 
-func TestPipelineResourceDeleteE2EUsingCli(t *testing.T) {
+func TestPipelineResourceDeleteE2E(t *testing.T) {
 	PipelineResourceName := []string{"go-example-git", "go-example-git-1", "go-example-git-2"}
 	c, namespace := Setup(t)
 	knativetest.CleanupOnInterrupt(func() { TearDown(t, c, namespace) }, t.Logf)
@@ -76,7 +76,7 @@ func TestPipelineResourceDeleteE2EUsingCli(t *testing.T) {
 	})
 }
 
-func TestPipelineResourcesE2EUsingCli(t *testing.T) {
+func TestPipelineResourcesE2E(t *testing.T) {
 
 	PipelineResourceName := []string{"go-example-git", "go-example-image"}
 	c, namespace := Setup(t)
@@ -113,6 +113,7 @@ func TestPipelineResourcesE2EUsingCli(t *testing.T) {
 		res.Assert(t, icmd.Expected{
 			ExitCode: 0,
 			Err:      icmd.None,
+			Out:      expected,
 		})
 
 		if d := cmp.Diff(expected, res.Stdout()); d != "" {
@@ -128,9 +129,9 @@ func TestPipelineResourcesE2EUsingCli(t *testing.T) {
 			Err:      "No pipelineresources found.\n",
 		})
 
-		if d := cmp.Diff("No pipelineresources found.\n", res.Stderr()); d != "" {
-			t.Errorf("Unexpected output mismatch: \n%s\n", d)
-		}
+		// if d := cmp.Diff("No pipelineresources found.\n", res.Stderr()); d != "" {
+		// 	t.Errorf("Unexpected output mismatch: \n%s\n", d)
+		// }
 	})
 
 	t.Run("Validate Pipeline Resources format for -o (output) flag,  Json Path ", func(t *testing.T) {
@@ -153,10 +154,11 @@ func TestPipelineResourcesE2EUsingCli(t *testing.T) {
 		res.Assert(t, icmd.Expected{
 			ExitCode: 0,
 			Err:      icmd.None,
+			Out:      expected,
 		})
-		if d := cmp.Diff(expected, res.Stdout()); d != "" {
-			t.Errorf("Unexpected output mismatch: \n%s\n", d)
-		}
+		// if d := cmp.Diff(expected, res.Stdout()); d != "" {
+		// 	t.Errorf("Unexpected output mismatch: \n%s\n", d)
+		// }
 	})
 
 	t.Run("Pipeline Resources json Schema validation with -o (output) flag, as Json ", func(t *testing.T) {
@@ -175,11 +177,6 @@ func TestPipelineResourcesE2EUsingCli(t *testing.T) {
 	t.Run("Validate  Pipeline Resources(git) describe command", func(t *testing.T) {
 		res := icmd.RunCmd(run("resource", "describe", PipelineResourceName[0], "-n", namespace))
 
-		res.Assert(t, icmd.Expected{
-			ExitCode: 0,
-			Err:      icmd.None,
-		})
-
 		expected := GetPipelineResourceDescribeOutput(t, c, PipelineResourceName[0],
 			map[int]interface{}{
 
@@ -194,19 +191,19 @@ func TestPipelineResourcesE2EUsingCli(t *testing.T) {
 					SecretParams: map[string]string{},
 				},
 			})
-		if d := cmp.Diff(expected, res.Stdout()); d != "" {
-			t.Errorf("Unexpected output mismatch: \n%s\n", d)
-		}
+		res.Assert(t, icmd.Expected{
+			ExitCode: 0,
+			Err:      icmd.None,
+			Out:      expected,
+		})
+		// if d := cmp.Diff(expected, res.Stdout()); d != "" {
+		// 	t.Errorf("Unexpected output mismatch: \n%s\n", d)
+		// }
 
 	})
 
 	t.Run("Validate  Pipeline Resources(image) describe command", func(t *testing.T) {
 		res := icmd.RunCmd(run("resource", "describe", PipelineResourceName[1], "-n", namespace))
-
-		res.Assert(t, icmd.Expected{
-			ExitCode: 0,
-			Err:      icmd.None,
-		})
 
 		expected := GetPipelineResourceDescribeOutput(t, c, PipelineResourceName[1],
 			map[int]interface{}{
@@ -221,9 +218,16 @@ func TestPipelineResourcesE2EUsingCli(t *testing.T) {
 					SecretParams: map[string]string{},
 				},
 			})
-		if d := cmp.Diff(expected, res.Stdout()); d != "" {
-			t.Errorf("Unexpected output mismatch: \n%s\n", d)
-		}
+
+		res.Assert(t, icmd.Expected{
+			ExitCode: 0,
+			Err:      icmd.None,
+			Out:      expected,
+		})
+
+		// if d := cmp.Diff(expected, res.Stdout()); d != "" {
+		// 	t.Errorf("Unexpected output mismatch: \n%s\n", d)
+		// }
 
 	})
 

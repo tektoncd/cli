@@ -22,7 +22,7 @@ const (
 	teTaskRunName = "te-task-run"
 )
 
-func TestTaskRunE2EUsingCli(t *testing.T) {
+func TestTaskRunE2E(t *testing.T) {
 	t.Helper()
 	t.Parallel()
 
@@ -170,7 +170,7 @@ func TestTaskRunE2EUsingCli(t *testing.T) {
 
 }
 
-func TestTaskRunCancelAndDeleteE2EUsingCli(t *testing.T) {
+func TestTaskRunCancelAndDeleteE2E(t *testing.T) {
 	t.Helper()
 	t.Parallel()
 

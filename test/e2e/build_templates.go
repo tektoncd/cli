@@ -1218,14 +1218,12 @@ func GetPipelineRunListWithNameAndTestData(t *testing.T, c *Clients, pname strin
 	return pipelineRunList
 }
 
-// ------------------------ PR -------------------------------
-
 type PipelineRunListData struct {
 	Name   string
 	Status string
 }
 
-func CreateTemplateForPipelineRunListWithTestData(t *testing.T, cs *Clients, pipeline string, td map[int]interface{}) string {
+func PipelineRunListOutput(t *testing.T, cs *Clients, pipeline string, td map[int]interface{}) string {
 	t.Helper()
 	const (
 		emptyMsg = "No pipelineruns found"

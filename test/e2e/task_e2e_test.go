@@ -19,7 +19,7 @@ const (
 	teTaskName = "te-task"
 )
 
-func TestTaskResourcesE2E(t *testing.T) {
+func TestTaskE2E(t *testing.T) {
 
 	t.Helper()
 	t.Parallel()
@@ -29,7 +29,7 @@ func TestTaskResourcesE2E(t *testing.T) {
 	knativetest.CleanupOnInterrupt(func() { TearDown(t, c, namespace) }, t.Logf)
 	defer TearDown(t, c, namespace)
 
-	//Creates Task Resource
+	//Creates duplicate Task Resource
 
 	for i := 1; i <= 3; i++ {
 		t.Logf("Creating Task Resource %s", teTaskName+"-"+strconv.Itoa(i))
@@ -79,17 +79,18 @@ func TestTaskResourcesE2E(t *testing.T) {
 		res := icmd.RunCmd(run("task", "list", "-n", namespace,
 			`-o=jsonpath={range.items[*]}{.metadata.name}{"\n"}{end}`))
 
-		expected := ListResourceNamesForJSONPath(GetTaskListWithTestData(t, c, map[int]interface{}{
-			0: &TaskData{
-				Name: teTaskName + "-1",
-			},
-			1: &TaskData{
-				Name: teTaskName + "-2",
-			},
-			2: &TaskData{
-				Name: teTaskName + "-3",
-			},
-		}))
+		expected := ListResourceNamesForJSONPath(
+			GetTaskListWithTestData(t, c, map[int]interface{}{
+				0: &TaskData{
+					Name: teTaskName + "-1",
+				},
+				1: &TaskData{
+					Name: teTaskName + "-2",
+				},
+				2: &TaskData{
+					Name: teTaskName + "-3",
+				},
+			}))
 
 		res.Assert(t, icmd.Expected{
 			ExitCode: 0,
@@ -156,7 +157,7 @@ func TestTaskResourcesE2E(t *testing.T) {
 
 }
 
-func TestTaskDeleteE2EUsingCli(t *testing.T) {
+func TestTaskDeleteE2E(t *testing.T) {
 	t.Helper()
 	t.Parallel()
 

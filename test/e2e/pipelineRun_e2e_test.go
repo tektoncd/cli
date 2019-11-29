@@ -11,7 +11,6 @@ import (
 	"testing"
 	"time"
 
-	"github.com/google/go-cmp/cmp"
 	"github.com/tektoncd/pipeline/pkg/apis/pipeline/v1alpha1"
 	"gotest.tools/v3/assert"
 	is "gotest.tools/v3/assert/cmp"
@@ -19,7 +18,7 @@ import (
 	knativetest "knative.dev/pkg/test"
 )
 
-func TestPipelineRunE2EUsingCli(t *testing.T) {
+func TestPipelineRunE2E(t *testing.T) {
 
 	t.Parallel()
 	c, namespace := Setup(t)
@@ -70,7 +69,7 @@ func TestPipelineRunE2EUsingCli(t *testing.T) {
 
 		res := icmd.RunCmd(run("pr", "list", "-n", namespace))
 
-		expected := CreateTemplateForPipelineRunListWithTestData(t, c, tePipelineName, map[int]interface{}{
+		expected := PipelineRunListOutput(t, c, tePipelineName, map[int]interface{}{
 			0: &PipelineRunListData{
 				Name:   tePipelineRunName,
 				Status: "Succeeded",
@@ -85,10 +84,8 @@ func TestPipelineRunE2EUsingCli(t *testing.T) {
 		res.Assert(t, icmd.Expected{
 			ExitCode: 0,
 			Err:      icmd.None,
+			Out:      expected,
 		})
-		if d := cmp.Diff(expected, res.Stdout()); d != "" {
-			t.Errorf("Unexpected output mismatch: \n%s\n", d)
-		}
 	})
 
 	t.Run("Get list of Pipelineruns from other namespace [default] should throw Error", func(t *testing.T) {
@@ -97,10 +94,6 @@ func TestPipelineRunE2EUsingCli(t *testing.T) {
 			ExitCode: 0,
 			Err:      "No pipelineruns found\n",
 		})
-
-		if d := cmp.Diff("No pipelineruns found\n", res.Stderr()); d != "" {
-			t.Errorf("Unexpected output mismatch: \n%s\n", d)
-		}
 	})
 
 	t.Run("Validate PipelineRun list format for -o (output) flag, as Json Path ", func(t *testing.T) {
@@ -123,10 +116,8 @@ func TestPipelineRunE2EUsingCli(t *testing.T) {
 		res.Assert(t, icmd.Expected{
 			ExitCode: 0,
 			Err:      icmd.None,
+			Out:      expected,
 		})
-		if d := cmp.Diff(expected, res.Stdout()); d != "" {
-			t.Errorf("Unexpected output mismatch: \n%s\n", d)
-		}
 	})
 
 	t.Run("Validate PipelineRun Schema for -o (output) flag as Json ", func(t *testing.T) {
@@ -158,7 +149,7 @@ func TestPipelineRunE2EUsingCli(t *testing.T) {
 
 		res := icmd.RunCmd(run("pr", "list", "-n", namespace))
 
-		expected := CreateTemplateForPipelineRunListWithTestData(t, c, tePipelineName, map[int]interface{}{
+		expected := PipelineRunListOutput(t, c, tePipelineName, map[int]interface{}{
 			0: &PipelineRunListData{
 				Name:   tePipelineRunName,
 				Status: "Succeeded",
@@ -168,10 +159,8 @@ func TestPipelineRunE2EUsingCli(t *testing.T) {
 		res.Assert(t, icmd.Expected{
 			ExitCode: 0,
 			Err:      icmd.None,
+			Out:      expected,
 		})
-		if d := cmp.Diff(expected, res.Stdout()); d != "" {
-			t.Errorf("Unexpected output mismatch: \n%s\n", d)
-		}
 	})
 
 	t.Run("Validate PipelineRun logs using follow flag (-f), which streams logs to console ", func(t *testing.T) {
@@ -251,7 +240,7 @@ func TestPipelineRunE2EUsingCli(t *testing.T) {
 
 }
 
-func TestPipelineRunCancelAndDeleteUsingCli(t *testing.T) {
+func TestPipelineRunCancelAndDeleteE2E(t *testing.T) {
 
 	t.Parallel()
 	c, namespace := Setup(t)
@@ -348,10 +337,6 @@ func TestPipelineRunCancelAndDeleteUsingCli(t *testing.T) {
 			ExitCode: 0,
 			Err:      "No pipelineruns found\n",
 		})
-
-		if d := cmp.Diff("No pipelineruns found\n", res.Stderr()); d != "" {
-			t.Errorf("Unexpected output mismatch: \n%s\n", d)
-		}
 	})
 
 }
