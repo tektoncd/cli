@@ -205,7 +205,7 @@ func (opt *startOptions) getInputResources(resources resourceOptionsFilter, pipe
 		if len(options) == 0 {
 			ns := opt.cliparams.Namespace()
 			fmt.Fprintf(opt.stream.Out, "no pipeline resource of type \"%s\" found in namespace: %s\n", string(res.Type), ns)
-			fmt.Fprintf(opt.stream.Out, "please create new \"%s\" resource\n", string(res.Type))
+			fmt.Fprintf(opt.stream.Out, "Please create a new \"%s\" resource for pipeline resource \"%s\"\n", string(res.Type), res.Name)
 			newres, err := opt.createPipelineResource(res.Name, res.Type)
 			if err != nil {
 				return err
