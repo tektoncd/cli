@@ -2,8 +2,7 @@
 
 [![Go Report Card](https://goreportcard.com/badge/tektoncd/cli)](https://goreportcard.com/report/tektoncd/cli)
 
-The Tekton Pipelines cli project provides a CLI for interacting with
-Tekton!
+The Tekton Pipelines cli project provides a CLI for interacting with Tekton!
 
 ## Getting Started
 
@@ -20,39 +19,39 @@ Download the latest binary executable for your operating system:
   brew install tektoncd/tools/tektoncd-cli
   ```
 
-  - Or by the [released tarball](https://github.com/tektoncd/cli/releases/download/v0.5.0/tkn_0.5.0_Darwin_x86_64.tar.gz):
+  - Or by the [released tarball](https://github.com/tektoncd/cli/releases/download/v0.5.1/tkn_0.5.1_Darwin_x86_64.tar.gz):
 
   ```shell
   # Get the tar.xz
-  curl -LO https://github.com/tektoncd/cli/releases/download/v0.5.0/tkn_0.5.0_Darwin_x86_64.tar.gz
+  curl -LO https://github.com/tektoncd/cli/releases/download/v0.5.1/tkn_0.5.1_Darwin_x86_64.tar.gz
   # Extract tkn to your PATH (e.g. /usr/local/bin)
-  sudo tar xvzf tkn_0.5.0_Darwin_x86_64.tar.gz -C /usr/local/bin tkn
+  sudo tar xvzf tkn_0.5.1_Darwin_x86_64.tar.gz -C /usr/local/bin tkn
   ```
 
 * Windows
 
-  - Uncompress the [zip file](https://github.com/tektoncd/cli/releases/download/v0.5.0/tkn_0.5.0_Windows_x86_64.zip)
+  - Uncompress the [zip file](https://github.com/tektoncd/cli/releases/download/v0.5.1/tkn_0.5.1_Windows_x86_64.zip)
   - Add the location of where the executable is to your `Path` by opening `Control Panel>System and Security>System>Advanced System Settings`
   - Click on `Environment Variables`, select the `Path` variable, and click `Edit`
   - Click `New` and add the location of the uncompressed zip to the `Path`
   - Finish by clicking `Ok`
 
-* [Linux AMD 64](https://github.com/tektoncd/cli/releases/download/v0.5.0/tkn_0.5.0_Linux_x86_64.tar.gz)
+* [Linux AMD 64](https://github.com/tektoncd/cli/releases/download/v0.5.1/tkn_0.5.1_Linux_x86_64.tar.gz)
 
   ```shell
   # Get the tar.xz
-  curl -LO https://github.com/tektoncd/cli/releases/download/v0.5.0/tkn_0.5.0_Linux_x86_64.tar.gz
+  curl -LO https://github.com/tektoncd/cli/releases/download/v0.5.1/tkn_0.5.1_Linux_x86_64.tar.gz
   # Extract tkn to your PATH (e.g. /usr/local/bin)
-  sudo tar xvzf tkn_0.5.0_Linux_x86_64.tar.gz -C /usr/local/bin/ tkn
+  sudo tar xvzf tkn_0.5.1_Linux_x86_64.tar.gz -C /usr/local/bin/ tkn
   ```
 
-* [Linux ARM 64](https://github.com/tektoncd/cli/releases/download/v0.5.0/tkn_0.5.0_Linux_arm64.tar.gz)
+* [Linux ARM 64](https://github.com/tektoncd/cli/releases/download/v0.5.1/tkn_0.5.1_Linux_arm64.tar.gz)
 
   ```shell
   # Get the tar.xz
-  curl -LO https://github.com/tektoncd/cli/releases/download/v0.5.0/tkn_0.5.0_Linux_arm64.tar.gz
+  curl -LO https://github.com/tektoncd/cli/releases/download/v0.5.1/tkn_0.5.1_Linux_arm64.tar.gz
   # Extract tkn to your PATH (e.g. /usr/local/bin)
-  sudo tar xvzf tkn_0.5.0_Linux_arm64.tar.gz -C /usr/local/bin/ tkn
+  sudo tar xvzf tkn_0.5.1_Linux_arm64.tar.gz -C /usr/local/bin/ tkn
   ```
 
   If you are running on any of the following rpm based distros:
@@ -76,10 +75,10 @@ Download the latest binary executable for your operating system:
 
   If you have [go](https://golang.org/) installed, and you want to compile the CLI from source you can checkout the [Git repository](https://github.com/tektoncd/cli) and run the following commands:
 
-```shell
-export GO111MODULE=on
-make bin/tkn
-```
+  ```shell
+  export GO111MODULE=on
+  make bin/tkn
+  ```
   This will output the `tkn` binary in `bin/tkn`
 
 ### `tkn` as a `kubectl` plugin
