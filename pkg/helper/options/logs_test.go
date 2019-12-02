@@ -78,6 +78,11 @@ func TestLogOptions_Ask(t *testing.T) {
 		"sample-pipeline-run2 started 2 minutes ago",
 		"sample-pipeline-run3 started 3 minutes ago",
 	}
+	options3 := []string{
+		"sample-task-run1 started 1 minutes ago",
+		"sample-task-run2 started 2 minutes ago",
+		"sample-task-run3 started 3 minutes ago",
+	}
 
 	testParams := []struct {
 		name     string
@@ -105,6 +110,7 @@ func TestLogOptions_Ask(t *testing.T) {
 			want: LogOptions{
 				PipelineName:    "pipeline1",
 				PipelineRunName: "",
+				TaskrunName:     "",
 			},
 		},
 		{
@@ -126,6 +132,29 @@ func TestLogOptions_Ask(t *testing.T) {
 			want: LogOptions{
 				PipelineName:    "",
 				PipelineRunName: "sample-pipeline-run1",
+				TaskrunName:     "",
+			},
+		},
+		{
+			name:     "select taskrun name",
+			resource: ResourceNameTaskRun,
+			prompt: htest.PromptTest{
+				CmdArgs: []string{},
+				Procedure: func(c *goexpect.Console) error {
+					if _, err := c.ExpectString("Select taskrun :"); err != nil {
+						return err
+					}
+					if _, err := c.SendLine(options3[0]); err != nil {
+						return err
+					}
+					return nil
+				},
+			},
+			options: options3,
+			want: LogOptions{
+				PipelineName:    "",
+				PipelineRunName: "",
+				TaskrunName:     "sample-task-run1",
 			},
 		},
 	}
@@ -142,6 +171,9 @@ func TestLogOptions_Ask(t *testing.T) {
 			}
 			if opts.PipelineRunName != tp.want.PipelineRunName {
 				t.Errorf("unexpected PipelineRunName")
+			}
+			if opts.TaskrunName != tp.want.TaskrunName {
+				t.Errorf("unexpected TaskRunName")
 			}
 		})
 	}

@@ -16,31 +16,23 @@ package taskrun
 
 import (
 	"fmt"
+	"strings"
 
 	"github.com/spf13/cobra"
 	"github.com/tektoncd/cli/pkg/cli"
+	"github.com/tektoncd/cli/pkg/helper/options"
 	"github.com/tektoncd/cli/pkg/helper/pods"
-	"github.com/tektoncd/cli/pkg/helper/pods/stream"
+	trlist "github.com/tektoncd/cli/pkg/helper/taskrun/list"
 	validate "github.com/tektoncd/cli/pkg/helper/validate"
+	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 )
 
 const (
 	msgTRNotFoundErr = "Unable to get Taskrun"
 )
 
-// LogOptions provides options on what logs to fetch. An empty LogOptions
-// implies fetching all logs including init steps
-type LogOptions struct {
-	TaskrunName string
-	AllSteps    bool
-	Follow      bool
-	Stream      *cli.Stream
-	Params      cli.Params
-	Streamer    stream.NewStreamerFunc
-}
-
 func logCommand(p cli.Params) *cobra.Command {
-	opts := LogOptions{Params: p}
+	opts := &options.LogOptions{Params: p}
 	eg := `
 # show the logs of TaskRun named "foo" from the namespace "bar"
 tkn taskrun logs foo -n bar
@@ -56,9 +48,11 @@ tkn taskrun logs -f foo -n bar
 		Annotations: map[string]string{
 			"commandType": "main",
 		},
-		Args: cobra.ExactArgs(1),
 		RunE: func(cmd *cobra.Command, args []string) error {
-			opts.TaskrunName = args[0]
+			if len(args) != 0 {
+				opts.TaskrunName = args[0]
+			}
+
 			opts.Stream = &cli.Stream{
 				Out: cmd.OutOrStdout(),
 				Err: cmd.OutOrStderr(),
@@ -68,40 +62,43 @@ tkn taskrun logs -f foo -n bar
 				return err
 			}
 
-			return opts.Run()
+			return Run(opts)
 		},
 	}
 
 	c.Flags().BoolVarP(&opts.AllSteps, "all", "a", false, "show all logs including init steps injected by tekton")
 	c.Flags().BoolVarP(&opts.Follow, "follow", "f", false, "stream live logs")
+	c.Flags().IntVarP(&opts.Limit, "limit", "", 5, "lists number of taskruns")
 
 	_ = c.MarkZshCompPositionalArgumentCustom(1, "__tkn_get_taskrun")
 	return c
 }
 
-func (lo *LogOptions) Run() error {
-	if lo.TaskrunName == "" {
-		return fmt.Errorf("missing mandatory argument taskrun name")
+func Run(opts *options.LogOptions) error {
+	if opts.TaskrunName == "" {
+		if err := askRunName(opts); err != nil {
+			return err
+		}
 	}
 
 	streamer := pods.NewStream
-	if lo.Streamer != nil {
-		streamer = lo.Streamer
+	if opts.Streamer != nil {
+		streamer = opts.Streamer
 	}
 
-	cs, err := lo.Params.Clients()
+	cs, err := opts.Params.Clients()
 	if err != nil {
 		return err
 	}
 
 	lr := &LogReader{
-		Run:      lo.TaskrunName,
-		Ns:       lo.Params.Namespace(),
+		Run:      opts.TaskrunName,
+		Ns:       opts.Params.Namespace(),
 		Clients:  cs,
 		Streamer: streamer,
-		Stream:   lo.Stream,
-		Follow:   lo.Follow,
-		AllSteps: lo.AllSteps,
+		Stream:   opts.Stream,
+		Follow:   opts.Follow,
+		AllSteps: opts.AllSteps,
 	}
 
 	logC, errC, err := lr.Read()
@@ -109,6 +106,26 @@ func (lo *LogOptions) Run() error {
 		return err
 	}
 
-	NewLogWriter().Write(lo.Stream, logC, errC)
+	NewLogWriter().Write(opts.Stream, logC, errC)
 	return nil
+}
+
+func askRunName(opts *options.LogOptions) error {
+	lOpts := metav1.ListOptions{}
+
+	trs, err := trlist.GetAllTaskRuns(opts.Params, lOpts, opts.Limit)
+	if err != nil {
+		return err
+	}
+
+	if len(trs) == 0 {
+		return fmt.Errorf("No taskruns found")
+	}
+
+	if len(trs) == 1 {
+		opts.TaskrunName = strings.Fields(trs[0])[0]
+		return nil
+	}
+
+	return opts.Ask(options.ResourceNameTaskRun, trs)
 }
