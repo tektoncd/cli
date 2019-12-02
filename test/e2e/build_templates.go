@@ -5,8 +5,6 @@ import (
 	"fmt"
 	"log"
 	"regexp"
-	"sort"
-	"strings"
 	"testing"
 	"text/tabwriter"
 	"text/template"
@@ -16,210 +14,10 @@ import (
 	"github.com/jonboulle/clockwork"
 
 	"github.com/tektoncd/cli/pkg/formatted"
-	prhsort "github.com/tektoncd/cli/pkg/helper/pipelinerun/sort"
 	trhsort "github.com/tektoncd/cli/pkg/helper/taskrun/sort"
-	"github.com/tektoncd/cli/pkg/helper/validate"
 	"github.com/tektoncd/pipeline/pkg/apis/pipeline/v1alpha1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 )
-
-func DescribeTemplateForTaskList(cs *Clients) string {
-
-	const (
-		emptyMsg = "No tasks found"
-		header   = "NAME\tAGE"
-		body     = "%s\t%s\n"
-	)
-
-	log.Print("validating Task List command\n")
-	clock := clockwork.NewFakeClockAt(time.Now())
-	task := GetTaskList(cs)
-	var tmplBytes bytes.Buffer
-	w := tabwriter.NewWriter(&tmplBytes, 0, 5, 3, ' ', tabwriter.TabIndent)
-
-	if len(task.Items) == 0 {
-		fmt.Fprintln(w, emptyMsg)
-		w.Flush()
-		return tmplBytes.String()
-	}
-	fmt.Fprintln(w, header)
-	for _, task := range task.Items {
-		fmt.Fprintf(w, body,
-			task.Name,
-			formatted.Age(&task.CreationTimestamp, clock),
-		)
-	}
-	w.Flush()
-	return tmplBytes.String()
-}
-
-func DescribeTemplateForTaskRunList(cs *Clients) string {
-
-	const (
-		emptyMsg = "No taskruns found"
-		header   = "NAME\tSTARTED\tDURATION\tSTATUS\t"
-		body     = "%s\t%s\t%s\t%s\t\n"
-	)
-
-	clock := clockwork.NewFakeClockAt(time.Now())
-	taskrun := GetTaskRunList(cs)
-	trslen := len(taskrun.Items)
-
-	if trslen != 0 {
-		taskrun.Items = trhsort.SortTaskRunsByStartTime(taskrun.Items)
-	}
-
-	var tmplBytes bytes.Buffer
-	w := tabwriter.NewWriter(&tmplBytes, 0, 5, 3, ' ', tabwriter.TabIndent)
-
-	if len(taskrun.Items) == 0 {
-		fmt.Fprintln(w, emptyMsg)
-		w.Flush()
-		return tmplBytes.String()
-	}
-	fmt.Fprintln(w, header)
-	for _, tr := range taskrun.Items {
-		fmt.Fprintf(w, body,
-			tr.Name,
-			formatted.Age(tr.Status.StartTime, clock),
-			formatted.Duration(tr.Status.StartTime, tr.Status.CompletionTime),
-			formatted.Condition(tr.Status.Conditions),
-		)
-	}
-	w.Flush()
-	return tmplBytes.String()
-}
-
-type pipelineruns map[string]v1alpha1.PipelineRun
-
-func DescribeTemplateForPipelineResourceList(cs *Clients) string {
-
-	const (
-		emptyMsg = "No pipelineresources found."
-		header   = "NAME\tTYPE\tDETAILS"
-		body     = "%s\t%s\t%s\n"
-	)
-
-	log.Print("validating Pipeline Resources List command\n")
-
-	pipelineResourcelist := GetPipelineResourceList(cs)
-
-	var tmplBytes bytes.Buffer
-	w := tabwriter.NewWriter(&tmplBytes, 0, 5, 3, ' ', tabwriter.TabIndent)
-
-	if len(pipelineResourcelist.Items) == 0 {
-		fmt.Fprintln(w, emptyMsg)
-		w.Flush()
-		return tmplBytes.String()
-	}
-	fmt.Fprintln(w, header)
-	for _, pre := range pipelineResourcelist.Items {
-		fmt.Fprintf(w, body,
-			pre.Name,
-			pre.Spec.Type,
-			Details(pre),
-		)
-	}
-	w.Flush()
-
-	return tmplBytes.String()
-}
-
-func ListResourceNamesForJSONPath(obj interface{}) string {
-	const (
-		emptyMsg = ""
-		body     = "%s\n"
-	)
-	var tmplBytes bytes.Buffer
-	w := tabwriter.NewWriter(&tmplBytes, 0, 5, 3, ' ', tabwriter.TabIndent)
-
-	switch obj := obj.(type) {
-	case *v1alpha1.TaskList:
-
-		if len(obj.Items) == 0 {
-
-			return emptyMsg
-		}
-
-		for _, r := range obj.Items {
-			fmt.Fprintf(w, body,
-				r.Name,
-			)
-		}
-		w.Flush()
-		return tmplBytes.String()
-	case *v1alpha1.TaskRunList:
-		if len(obj.Items) == 0 {
-
-			return emptyMsg
-		}
-		//sort by start Time
-		trslen := len(obj.Items)
-		if trslen != 0 {
-			obj.Items = trhsort.SortTaskRunsByStartTime(obj.Items)
-		}
-
-		for _, r := range obj.Items {
-			fmt.Fprintf(w, body,
-				r.Name,
-			)
-		}
-		w.Flush()
-		return tmplBytes.String()
-	case *v1alpha1.PipelineList:
-		if len(obj.Items) == 0 {
-			return emptyMsg
-		}
-
-		for _, r := range obj.Items {
-			fmt.Fprintf(w, body,
-				r.Name,
-			)
-		}
-		w.Flush()
-		return tmplBytes.String()
-
-	case *v1alpha1.PipelineRunList:
-		if len(obj.Items) == 0 {
-			return emptyMsg
-		}
-
-		for _, r := range obj.Items {
-			fmt.Fprintf(w, body,
-				r.Name,
-			)
-		}
-		w.Flush()
-		return tmplBytes.String()
-	case *v1alpha1.PipelineResourceList:
-		if len(obj.Items) == 0 {
-			return emptyMsg
-		}
-
-		for _, r := range obj.Items {
-			fmt.Fprintf(w, body,
-				r.Name,
-			)
-		}
-		w.Flush()
-		return tmplBytes.String()
-	case *v1alpha1.ClusterTaskList:
-		if len(obj.Items) == 0 {
-			return emptyMsg
-		}
-
-		for _, r := range obj.Items {
-			fmt.Fprintf(w, body,
-				r.Name,
-			)
-		}
-		w.Flush()
-		return tmplBytes.String()
-	}
-
-	return ""
-
-}
 
 func GetTask(c *Clients, name string) *v1alpha1.Task {
 
@@ -343,7 +141,102 @@ func GetPipelineRunList(c *Clients) *v1alpha1.PipelineRunList {
 	return pipelineRunList
 }
 
-////////////////////TestData//////////////////////
+func ListResourceNamesForJSONPath(obj interface{}) string {
+	const (
+		emptyMsg = ""
+		body     = "%s\n"
+	)
+	var tmplBytes bytes.Buffer
+	w := tabwriter.NewWriter(&tmplBytes, 0, 5, 3, ' ', tabwriter.TabIndent)
+
+	switch obj := obj.(type) {
+	case *v1alpha1.TaskList:
+
+		if len(obj.Items) == 0 {
+
+			return emptyMsg
+		}
+
+		for _, r := range obj.Items {
+			fmt.Fprintf(w, body,
+				r.Name,
+			)
+		}
+		w.Flush()
+		return tmplBytes.String()
+	case *v1alpha1.TaskRunList:
+		if len(obj.Items) == 0 {
+
+			return emptyMsg
+		}
+		//sort by start Time
+		trslen := len(obj.Items)
+		if trslen != 0 {
+			obj.Items = trhsort.SortTaskRunsByStartTime(obj.Items)
+		}
+
+		for _, r := range obj.Items {
+			fmt.Fprintf(w, body,
+				r.Name,
+			)
+		}
+		w.Flush()
+		return tmplBytes.String()
+	case *v1alpha1.PipelineList:
+		if len(obj.Items) == 0 {
+			return emptyMsg
+		}
+
+		for _, r := range obj.Items {
+			fmt.Fprintf(w, body,
+				r.Name,
+			)
+		}
+		w.Flush()
+		return tmplBytes.String()
+
+	case *v1alpha1.PipelineRunList:
+		if len(obj.Items) == 0 {
+			return emptyMsg
+		}
+
+		for _, r := range obj.Items {
+			fmt.Fprintf(w, body,
+				r.Name,
+			)
+		}
+		w.Flush()
+		return tmplBytes.String()
+	case *v1alpha1.PipelineResourceList:
+		if len(obj.Items) == 0 {
+			return emptyMsg
+		}
+
+		for _, r := range obj.Items {
+			fmt.Fprintf(w, body,
+				r.Name,
+			)
+		}
+		w.Flush()
+		return tmplBytes.String()
+	case *v1alpha1.ClusterTaskList:
+		if len(obj.Items) == 0 {
+			return emptyMsg
+		}
+
+		for _, r := range obj.Items {
+			fmt.Fprintf(w, body,
+				r.Name,
+			)
+		}
+		w.Flush()
+		return tmplBytes.String()
+	}
+
+	return ""
+
+}
+
 type TaskData struct {
 	Name string
 }
@@ -478,412 +371,7 @@ func GetTaskRunListWithTestData(t *testing.T, c *Clients, td map[int]interface{}
 	return taskRunlist
 }
 
-const TaskRunDescribeTemplate = `Name:	{{ .TaskRun.Name }}
-Namespace:	{{ .TaskRun.Namespace }}
-{{- $tRefName := taskRefExists .TaskRun.Spec }}{{- if ne $tRefName "" }}
-Task Ref:    {{ $tRefName }}
-{{- end }}
-{{- if ne .TaskRun.Spec.DeprecatedServiceAccount "" }}
-Service Account (deprecated):	{{ .TaskRun.Spec.DeprecatedServiceAccount }}
-{{- end }}
-{{- if ne .TaskRun.Spec.ServiceAccountName "" }}
-Service Account:	{{ .TaskRun.Spec.ServiceAccountName }}
-{{- end }}
-
-Status
-STARTED 	DURATION 	STATUS
-{{ formatAge .TaskRun.Status.StartTime  .Params }}	{{ formatDuration .TaskRun.Status.StartTime .TaskRun.Status.CompletionTime }}	{{ formatCondition .TaskRun.Status.Conditions }}
-{{- $msg := hasFailed .TaskRun -}}
-{{-  if ne $msg "" }}
-
-Message
-{{ $msg }}
-{{- end }}
-
-Input Resources
-{{- $l := len .TaskRun.Spec.Inputs.Resources }}{{ if eq $l 0 }}
-No resources
-{{- else }}
-NAME	RESOURCE REF
-{{- range $i, $r := .TaskRun.Spec.Inputs.Resources }}
-{{$r.Name }}	{{ $r.ResourceRef.Name }}
-{{- end }}
-{{- end }}
-
-Output Resources
-{{- $l := len .TaskRun.Spec.Outputs.Resources }}{{ if eq $l 0 }}
-No resources
-{{- else }}
-NAME	RESOURCE REF
-{{- range $i, $r := .TaskRun.Spec.Outputs.Resources }}
-{{$r.Name }}	{{ $r.ResourceRef.Name }}
-{{- end }}
-{{- end }}
-
-Params
-{{- $l := len .TaskRun.Spec.Inputs.Params }}{{ if eq $l 0 }}
-No params
-{{- else }}
-NAME	VALUE
-{{- range $i, $p := .TaskRun.Spec.Inputs.Params }}
-{{- if eq $p.Value.Type "string" }}
-{{ $p.Name }}	{{ $p.Value.StringVal }}
-{{- else }}
-{{ $p.Name }}	{{ $p.Value.ArrayVal }}
-{{- end }}
-{{- end }}
-{{- end }}
-
-Steps
-{{- $l := len .TaskRun.Status.Steps }}{{ if eq $l 0 }}
-No steps
-{{- else }}
-NAME	STATUS
-{{- range $step := .TaskRun.Status.Steps }}
-{{- $reason := stepReasonExists $step }}
-{{ $step.Name }}	{{ $reason }}
-{{- end }}
-{{- end }}
-`
-
-func GetTaskRunDescribeOutput(t *testing.T, c *Clients, trname string, td map[int]interface{}) string {
-	t.Helper()
-	clock := clockwork.NewFakeClockAt(time.Now())
-	taskRun := GetTaskRunWithTestData(t, c, trname, td)
-	var data = struct {
-		TaskRun *v1alpha1.TaskRun
-		Params  clockwork.Clock
-	}{
-		TaskRun: taskRun,
-		Params:  clock,
-	}
-
-	funcMap := template.FuncMap{
-		"formatAge":        formatted.Age,
-		"formatDuration":   formatted.Duration,
-		"formatCondition":  formatted.Condition,
-		"hasFailed":        TaskRunHasFailed,
-		"taskRefExists":    validate.TaskRefExists,
-		"stepReasonExists": validate.StepReasonExists,
-	}
-
-	tmp := template.Must(template.New("Describe TaskRun").Funcs(funcMap).Parse(TaskRunDescribeTemplate))
-
-	var tmplBytes bytes.Buffer
-
-	w := tabwriter.NewWriter(&tmplBytes, 0, 5, 3, ' ', tabwriter.TabIndent)
-
-	err1 := tmp.Execute(w, data)
-	if err1 != nil {
-		panic(err1)
-	}
-
-	w.Flush()
-	return tmplBytes.String()
-
-}
-
-type TaskRunDescribeData struct {
-	Name           string
-	Namespace      string
-	TaskRef        string
-	ServiceAccount string
-	Status         string
-	FailureMessage string
-	Input          map[string]string
-	Output         map[string]string
-	Params         map[string]interface{}
-	Steps          []string
-}
-
-func GetTaskRunWithTestData(t *testing.T, c *Clients, trname string, td map[int]interface{}) *v1alpha1.TaskRun {
-	t.Helper()
-	taskRun := GetTaskRun(c, trname)
-	for _, tr := range td {
-		switch tr := tr.(type) {
-		case *TaskRunDescribeData:
-			taskRun.Name = tr.Name
-			taskRun.Namespace = tr.Namespace
-			taskRun.Spec.TaskRef.Name = tr.TaskRef
-			taskRun.Spec.ServiceAccountName = tr.ServiceAccount
-			taskRun.Status.Conditions[0].Reason = tr.Status
-			if tr.FailureMessage != "" {
-				taskRun.Status.Conditions[0].Message = tr.FailureMessage
-			}
-			if len(tr.Input) == len(taskRun.Spec.Inputs.Resources) {
-				counter := 0
-				for rname, rref := range tr.Input {
-					taskRun.Spec.Inputs.Resources[counter].Name = rname
-					taskRun.Spec.Inputs.Resources[counter].ResourceRef.Name = rref
-					counter++
-				}
-
-			} else {
-				t.Error("Input Resource length didnt match with test data")
-			}
-			if len(tr.Output) == len(taskRun.Spec.Outputs.Resources) {
-				counter := 0
-				for rname, rref := range tr.Output {
-					taskRun.Spec.Outputs.Resources[counter].Name = rname
-					taskRun.Spec.Outputs.Resources[counter].ResourceRef.Name = rref
-					counter++
-				}
-
-			} else {
-				t.Error("Input Resource length didnt match with test data")
-			}
-			counter := 0
-			for ipname, ipvalue := range tr.Params {
-				taskRun.Spec.Inputs.Params[counter].Name = ipname
-				switch ipvalue.(type) {
-				case *string:
-					taskRun.Spec.Inputs.Params[counter].Value.StringVal = ipvalue.(string)
-					counter++
-				case *[]string:
-					taskRun.Spec.Inputs.Params[counter].Value.ArrayVal = ipvalue.([]string)
-					counter++
-				default:
-					t.Error("Input parameter test data type mismatch ")
-				}
-			}
-
-			for i, stepname := range tr.Steps {
-				taskRun.Status.Steps[i].Name = stepname
-			}
-
-		default:
-			t.Error("Test Data Format Didn't Match please do check Test Data which you passing")
-		}
-	}
-
-	return taskRun
-
-}
-
-//----------------Pipeline Resources -----------------------------
-
-type PipelineResourcesData struct {
-	Name    string
-	Type    string
-	Details string
-}
-
-func ListAllPipelineResourcesOutput(t *testing.T, cs *Clients, td map[int]interface{}) string {
-	t.Helper()
-	const (
-		emptyMsg = "No pipelineresources found."
-		header   = "NAME\tTYPE\tDETAILS"
-		body     = "%s\t%s\t%s\n"
-	)
-
-	pipelineResourcelist := GetPipelineResourceListWithTestData(t, cs, td)
-
-	var tmplBytes bytes.Buffer
-	w := tabwriter.NewWriter(&tmplBytes, 0, 5, 3, ' ', tabwriter.TabIndent)
-
-	if len(pipelineResourcelist.Items) == 0 {
-		fmt.Fprintln(w, emptyMsg)
-		w.Flush()
-		return tmplBytes.String()
-	}
-	fmt.Fprintln(w, header)
-	for _, pre := range pipelineResourcelist.Items {
-		fmt.Fprintf(w, body,
-			pre.Name,
-			pre.Spec.Type,
-			Details(pre),
-		)
-	}
-	w.Flush()
-
-	return tmplBytes.String()
-}
-
-func GetPipelineResourceListWithTestData(t *testing.T, c *Clients, td map[int]interface{}) *v1alpha1.PipelineResourceList {
-	t.Helper()
-	pipelineResourceList := GetPipelineResourceList(c)
-
-	if len(pipelineResourceList.Items) != len(td) {
-		t.Error("Length of PipelineResources list and Testdata provided not matching")
-	}
-	if len(pipelineResourceList.Items) == 0 {
-		return pipelineResourceList
-	}
-
-	var key = "url"
-	for i, pr := range td {
-		switch pr := pr.(type) {
-		case *PipelineResourcesData:
-
-			//Mock Name
-			pipelineResourceList.Items[i].Name = pr.Name
-
-			//Mock Resource Type
-			if pr.Type == "git" {
-				pipelineResourceList.Items[i].Spec.Type = v1alpha1.PipelineResourceTypeGit
-			} else if pr.Type == "storage" {
-				pipelineResourceList.Items[i].Spec.Type = v1alpha1.PipelineResourceTypeStorage
-				key = "location"
-			} else if pr.Type == "image" {
-				pipelineResourceList.Items[i].Spec.Type = v1alpha1.PipelineResourceTypeImage
-			} else if pr.Type == "cluster" {
-				pipelineResourceList.Items[i].Spec.Type = v1alpha1.PipelineResourceTypeCluster
-			} else if pr.Type == "pullRequest" {
-				pipelineResourceList.Items[i].Spec.Type = v1alpha1.PipelineResourceTypePullRequest
-			} else if pr.Type == "build-gcs" {
-				pipelineResourceList.Items[i].Spec.Type = v1alpha1.PipelineResourceTypeBuildGCS
-			} else if pr.Type == "gcs" {
-				pipelineResourceList.Items[i].Spec.Type = v1alpha1.PipelineResourceTypeGCS
-			} else {
-				t.Errorf("Provided PipelineResourcesData is not Valid Type : Need to Provide (%s, %s, %s, %s, %s)", v1alpha1.PipelineResourceTypeGit, v1alpha1.PipelineResourceTypeImage, v1alpha1.PipelineResourceTypePullRequest, v1alpha1.PipelineResourceTypeBuildGCS, v1alpha1.PipelineResourceTypeCluster)
-			}
-
-			for k, p := range pipelineResourceList.Items[i].Spec.Params {
-				if strings.ToLower(p.Name) == key {
-					pipelineResourceList.Items[i].Spec.Params[k].Value = pr.Details
-					break
-				} else {
-					pipelineResourceList.Items[i].Spec.Params[k].Value = pr.Details
-				}
-			}
-
-		default:
-			t.Error("Test Data Format Didn't Match please do check Test Data which you passing")
-		}
-
-	}
-
-	if changelog := cmp.Diff(pipelineResourceList, GetPipelineResourceList(c)); changelog != "" {
-		t.Logf("Changes occured while performing diff operation %+v", changelog)
-	}
-	return pipelineResourceList
-}
-
-type PipelineResourcesDescribeData struct {
-	Name                 string
-	Namespace            string
-	PipelineResourceType string
-	Params               map[string]string
-	SecretParams         map[string]string
-}
-
-const describeTemplateForPipelinesResources = `Name:	{{ .PipelineResource.Name }}
-Namespace:	{{ .PipelineResource.Namespace }}
-PipelineResource Type:	{{ .PipelineResource.Spec.Type }}
-
-Params
-{{- $l := len .PipelineResource.Spec.Params }}{{ if eq $l 0 }}
-No params
-{{- else }}
-NAME	VALUE
-{{- range $i, $p := .PipelineResource.Spec.Params }}
-{{ $p.Name }}	{{ $p.Value }}
-{{- end }}
-{{- end }}
-
-Secret Params
-{{- $l := len .PipelineResource.Spec.SecretParams }}{{ if eq $l 0 }}
-No secret params
-{{- else }}
-FIELDNAME	SECRETNAME
-{{- range $i, $p := .PipelineResource.Spec.SecretParams }}
-{{ $p.FieldName }}	{{ $p.SecretName }}
-{{- end }}
-{{- end }}
-`
-
-func GetPipelineResourceDescribeOutput(t *testing.T, cs *Clients, prname string, td map[int]interface{}) string {
-	t.Helper()
-	clock := clockwork.NewFakeClockAt(time.Now())
-	pipelineResource := GetPipelineResourceWithTestData(t, cs, prname, td)
-	var data = struct {
-		PipelineResource *v1alpha1.PipelineResource
-		Params           clockwork.Clock
-	}{
-		PipelineResource: pipelineResource,
-		Params:           clock,
-	}
-
-	funcMap := template.FuncMap{}
-
-	tmp := template.Must(template.New("Describe PipelineResource").Funcs(funcMap).Parse(describeTemplateForPipelinesResources))
-
-	var tmplBytes bytes.Buffer
-
-	w := tabwriter.NewWriter(&tmplBytes, 0, 5, 3, ' ', tabwriter.TabIndent)
-
-	err1 := tmp.Execute(w, data)
-	if err1 != nil {
-		panic(err1)
-	}
-
-	w.Flush()
-	return tmplBytes.String()
-}
-
-func GetPipelineResourceWithTestData(t *testing.T, c *Clients, name string, td map[int]interface{}) *v1alpha1.PipelineResource {
-	t.Helper()
-	pipelineResource := GetPipelineResource(c, name)
-
-	for _, pr := range td {
-
-		switch pr := pr.(type) {
-		case *PipelineResourcesDescribeData:
-			if pr.Name == name {
-				pipelineResource.Name = pr.Name
-
-				pipelineResource.Namespace = pr.Namespace
-
-				if pr.PipelineResourceType == "git" {
-					pipelineResource.Spec.Type = v1alpha1.PipelineResourceTypeGit
-				} else if pr.PipelineResourceType == "storage" {
-					pipelineResource.Spec.Type = v1alpha1.PipelineResourceTypeStorage
-				} else if pr.PipelineResourceType == "image" {
-					pipelineResource.Spec.Type = v1alpha1.PipelineResourceTypeImage
-				} else if pr.PipelineResourceType == "cluster" {
-					pipelineResource.Spec.Type = v1alpha1.PipelineResourceTypeCluster
-				} else if pr.PipelineResourceType == "pullRequest" {
-					pipelineResource.Spec.Type = v1alpha1.PipelineResourceTypePullRequest
-				} else if pr.PipelineResourceType == "build-gcs" {
-					pipelineResource.Spec.Type = v1alpha1.PipelineResourceTypeBuildGCS
-				} else if pr.PipelineResourceType == "gcs" {
-					pipelineResource.Spec.Type = v1alpha1.PipelineResourceTypeGCS
-				} else {
-					t.Errorf("Provided PipelineResourcesData is not Valid Type : Need to Provide (%s, %s, %s, %s, %s)", v1alpha1.PipelineResourceTypeGit, v1alpha1.PipelineResourceTypeImage, v1alpha1.PipelineResourceTypePullRequest, v1alpha1.PipelineResourceTypeBuildGCS, v1alpha1.PipelineResourceTypeCluster)
-				}
-
-				if len(pr.Params) == len(pipelineResource.Spec.Params) {
-					for i := range pipelineResource.Spec.Params {
-						pipelineResource.Spec.Params[i].Value = pr.Params[pipelineResource.Spec.Params[i].Name]
-					}
-				} else {
-					t.Error("Pipeline Resources Params lenght didnt match...")
-				}
-
-				if len(pr.SecretParams) == len(pipelineResource.Spec.SecretParams) {
-
-					for i := range pipelineResource.Spec.SecretParams {
-						pipelineResource.Spec.SecretParams[i].SecretName = pr.SecretParams[pipelineResource.Spec.SecretParams[i].FieldName]
-					}
-				} else {
-					t.Error("Pipeline Resources secret Params lenght didnt match...")
-				}
-			} else {
-				continue
-			}
-
-		default:
-			t.Errorf("Test Data Format Didn't Match please do check Test Data which you passing")
-		}
-
-	}
-
-	if changelog := cmp.Diff(pipelineResource, GetPipelineResource(c, name)); changelog != "" {
-		t.Logf("Changes occured while performing diff operation %+v", changelog)
-	}
-
-	return pipelineResource
-}
+type pipelineruns map[string]v1alpha1.PipelineRun
 
 type PipelinesListData struct {
 	Name   string
@@ -1216,266 +704,4 @@ func GetPipelineRunListWithNameAndTestData(t *testing.T, c *Clients, pname strin
 	}
 
 	return pipelineRunList
-}
-
-type PipelineRunListData struct {
-	Name   string
-	Status string
-}
-
-func PipelineRunListOutput(t *testing.T, cs *Clients, pipeline string, td map[int]interface{}) string {
-	t.Helper()
-	const (
-		emptyMsg = "No pipelineruns found"
-		header   = "NAME\tSTARTED\tDURATION\tSTATUS\t"
-		body     = "%s\t%s\t%s\t%s\t\n"
-	)
-
-	log.Print("validating PipelineRun List command\n")
-	clock := clockwork.NewFakeClockAt(time.Now())
-	pipelinerunlst := GetSortedPipelineRunListWithTestData(t, cs, pipeline, td)
-
-	var tmplBytes bytes.Buffer
-	w := tabwriter.NewWriter(&tmplBytes, 0, 5, 3, ' ', tabwriter.TabIndent)
-
-	if len(pipelinerunlst.Items) == 0 {
-		fmt.Fprintln(w, emptyMsg)
-		w.Flush()
-		return tmplBytes.String()
-	}
-	fmt.Fprintln(w, header)
-	for _, pr := range pipelinerunlst.Items {
-		fmt.Fprintf(w, body,
-			pr.Name,
-			formatted.Age(pr.Status.StartTime, clock),
-			formatted.Duration(pr.Status.StartTime, pr.Status.CompletionTime),
-			formatted.Condition(pr.Status.Conditions),
-		)
-	}
-	w.Flush()
-	return tmplBytes.String()
-}
-
-func GetSortedPipelineRunListWithTestData(t *testing.T, c *Clients, pipeline string, td map[int]interface{}) *v1alpha1.PipelineRunList {
-	t.Helper()
-	options := metav1.ListOptions{
-		LabelSelector: fmt.Sprintf("tekton.dev/pipeline=%s", pipeline),
-	}
-
-	pipelineRunList, err := c.PipelineRunClient.List(options)
-	// 	require.Nil(t, err)
-	if err != nil {
-		log.Fatalf("Couldn't get expected pipelineRunList  %s", err)
-	}
-
-	if len(pipelineRunList.Items) == 0 {
-		return pipelineRunList
-	}
-
-	if len(pipelineRunList.Items) != len(td) {
-		t.Error("Lenght of pipeline run list and Testdata provided not matching")
-	}
-
-	for i, p := range td {
-		switch p := p.(type) {
-		case *PipelineRunListData:
-			pipelineRunList.Items[i].Name = p.Name
-			pipelineRunList.Items[i].Status.Conditions[0].Reason = p.Status
-		default:
-			t.Error("Test Data Format Didn't Match please do check Test Data which you passing")
-		}
-	}
-
-	prslen := len(pipelineRunList.Items)
-
-	if prslen != 0 {
-		pipelineRunList.Items = prhsort.SortPipelineRunsByStartTime(pipelineRunList.Items)
-	}
-
-	return pipelineRunList
-}
-
-const describeTemplateForPipelinesRun = `Name:	{{ .PipelineRun.Name }}
-Namespace:	{{ .PipelineRun.Namespace }}
-{{- if ne .PipelineRun.Spec.PipelineRef.Name "" }}
-Pipeline Ref:	{{ .PipelineRun.Spec.PipelineRef.Name }}
-{{- end }}
-{{- if ne .PipelineRun.Spec.DeprecatedServiceAccount "" }}
-Service Account (deprecated):	{{ .PipelineRun.Spec.DeprecatedServiceAccount }}
-{{- end }}
-{{- if ne .PipelineRun.Spec.ServiceAccountName "" }}
-Service Account:	{{ .PipelineRun.Spec.ServiceAccountName }}
-{{- end }}
-
-Status
-STARTED	DURATION	STATUS
-{{ formatAge .PipelineRun.Status.StartTime  .Params }}	{{ formatDuration .PipelineRun.Status.StartTime .PipelineRun.Status.CompletionTime }}	{{ formatCondition .PipelineRun.Status.Conditions }}
-{{- $msg := hasFailed .PipelineRun -}}
-{{-  if ne $msg "" }}
-
-Message
-{{ $msg }}
-{{- end }}
-
-Resources
-{{- $l := len .PipelineRun.Spec.Resources }}{{ if eq $l 0 }}
-No resources
-{{- else }}
-NAME	RESOURCE REF
-{{- range $i, $r := .PipelineRun.Spec.Resources }}
-{{$r.Name }}	{{ $r.ResourceRef.Name }}
-{{- end }}
-{{- end }}
-
-Params
-{{- $l := len .PipelineRun.Spec.Params }}{{ if eq $l 0 }}
-No params
-{{- else }}
-NAME	VALUE
-{{- range $i, $p := .PipelineRun.Spec.Params }}
-{{- if eq $p.Value.Type "string" }}
-{{ $p.Name }}	{{ $p.Value.StringVal }}
-{{- else }}
-{{ $p.Name }}	{{ $p.Value.ArrayVal }}
-{{- end }}
-{{- end }}
-{{- end }}
-
-Taskruns
-{{- $l := len .TaskrunList }}{{ if eq $l 0 }}
-No taskruns
-{{- else }}
-NAME	TASK NAME	STARTED	DURATION	STATUS
-{{- range $taskrun := .TaskrunList }}
-{{ $taskrun.TaskrunName }}	{{ $taskrun.PipelineTaskName }}	{{ formatAge $taskrun.Status.StartTime $.Params }}	{{ formatDuration $taskrun.Status.StartTime $taskrun.Status.CompletionTime }}	{{ formatCondition $taskrun.Status.Conditions }}
-{{- end }}
-{{- end }}
-`
-
-func CreateDescribeTemplateForPipelineRunWithTestData(t *testing.T, cs *Clients, prname string, td map[int]interface{}) string {
-	t.Helper()
-
-	clock := clockwork.NewFakeClockAt(time.Now())
-	pipelinerun := GetPipelineRunWithTestData(t, cs, prname, td)
-
-	var trl TaskrunList
-
-	if len(pipelinerun.Status.TaskRuns) != 0 {
-		trl = NewTaskrunListFromMapWithTestData(t, pipelinerun.Status.TaskRuns, td)
-		sort.Sort(trl)
-	}
-
-	var data = struct {
-		PipelineRun *v1alpha1.PipelineRun
-		Params      clockwork.Clock
-		TaskrunList TaskrunList
-	}{
-		PipelineRun: pipelinerun,
-		Params:      clock,
-		TaskrunList: trl,
-	}
-
-	funcMap := template.FuncMap{
-		"formatAge":       formatted.Age,
-		"formatDuration":  formatted.Duration,
-		"formatCondition": formatted.Condition,
-		"hasFailed":       PipelineRunHasFailed,
-	}
-
-	tmp := template.Must(template.New("Describe PipelineRun").Funcs(funcMap).Parse(describeTemplateForPipelinesRun))
-
-	var tmplBytes bytes.Buffer
-
-	w := tabwriter.NewWriter(&tmplBytes, 0, 5, 3, ' ', tabwriter.TabIndent)
-
-	err1 := tmp.Execute(w, data)
-	if err1 != nil {
-		panic(err1)
-	}
-
-	w.Flush()
-
-	return tmplBytes.String()
-}
-
-type PipelineRunDescribeData struct {
-	Name           string
-	Namespace      string
-	PipelineRef    string
-	ServiceAccount string
-	Status         string
-	FailureMessage string
-	Resources      map[int]interface{}
-	Params         map[string]interface{}
-	TaskRuns       map[int]interface{}
-}
-
-type ResourceRefData struct {
-	ResourceName string
-	ResourceRef  string
-}
-
-type TaskRunRefData struct {
-	TaskRunName string
-	TaskRef     string
-	Status      string
-}
-
-func GetPipelineRunWithTestData(t *testing.T, c *Clients, name string, td map[int]interface{}) *v1alpha1.PipelineRun {
-	t.Helper()
-	pipelineRun := GetPipelineRun(c, name)
-
-	for _, tr := range td {
-		switch tr := tr.(type) {
-		case *PipelineRunDescribeData:
-			pipelineRun.Name = tr.Name
-			pipelineRun.Namespace = tr.Namespace
-			pipelineRun.Spec.PipelineRef.Name = tr.PipelineRef
-			pipelineRun.Spec.ServiceAccountName = tr.ServiceAccount
-			pipelineRun.Status.Conditions[0].Reason = tr.Status
-			if tr.FailureMessage != "" {
-				pipelineRun.Status.Conditions[0].Message = tr.FailureMessage
-			}
-			if len(tr.Resources) == len(pipelineRun.Spec.Resources) {
-				for i, rref := range tr.Resources {
-
-					switch rref := rref.(type) {
-					case *ResourceRefData:
-						pipelineRun.Spec.Resources[i].Name = rref.ResourceName
-						pipelineRun.Spec.Resources[i].ResourceRef.Name = rref.ResourceRef
-					default:
-						t.Error("ResourceRef Test Data Format Didn't Match please do check Test Data which you passing")
-					}
-				}
-
-			} else {
-				t.Error("PipelineRun Resources length didnt match with test data")
-			}
-
-			counter := 0
-
-			if len(tr.Params) == len(pipelineRun.Spec.Params) {
-				for ipname, ipvalue := range tr.Params {
-					pipelineRun.Spec.Params[counter].Name = ipname
-					switch ipvalue.(type) {
-					case *string:
-						pipelineRun.Spec.Params[counter].Value.StringVal = ipvalue.(string)
-						counter++
-					case *[]string:
-						pipelineRun.Spec.Params[counter].Value.ArrayVal = ipvalue.([]string)
-						counter++
-					default:
-						t.Error("PipelineRun  parameter and test data type mismatch ")
-					}
-				}
-			} else {
-				t.Error("PipelineRun Params length didnt match with test data")
-			}
-
-		default:
-			t.Error("Test Data Format Didn't Match please do check Test Data which you passing")
-		}
-	}
-
-	return pipelineRun
 }

@@ -4,7 +4,6 @@ import (
 	"fmt"
 	"sort"
 	"strings"
-	"testing"
 
 	"github.com/tektoncd/pipeline/pkg/apis/pipeline/v1alpha1"
 	corev1 "k8s.io/api/core/v1"
@@ -89,43 +88,4 @@ func (s TaskrunList) Len() int      { return len(s) }
 func (s TaskrunList) Swap(i, j int) { s[i], s[j] = s[j], s[i] }
 func (s TaskrunList) Less(i, j int) bool {
 	return s[j].Status.StartTime.Before(s[i].Status.StartTime)
-}
-
-func NewTaskrunListFromMapWithTestData(t *testing.T, statusMap map[string]*v1alpha1.PipelineRunTaskRunStatus, td map[int]interface{}) TaskrunList {
-	t.Helper()
-	var trl TaskrunList
-
-	for _, tr := range td {
-		switch tr := tr.(type) {
-		case *PipelineRunDescribeData:
-			if len(tr.TaskRuns) == len(statusMap) {
-
-				taskRefData := []*TaskRunRefData{}
-
-				for _, ref := range tr.TaskRuns {
-					switch ref := ref.(type) {
-					case *TaskRunRefData:
-						taskRefData = append(taskRefData, ref)
-					default:
-						t.Error("TaskRunRef Test Data Format Didn't Match please do check Test Data which you passing")
-					}
-				}
-				for _, tref := range taskRefData {
-					statusMap[tref.TaskRunName].Status.Conditions[0].Reason = tref.Status
-					trl = append(trl, tkr{
-						tref.TaskRunName,
-						statusMap[tref.TaskRunName],
-					})
-
-				}
-			} else {
-				t.Error("Test data length didnt match with Real data")
-			}
-
-		default:
-			t.Error("Test Data Format Didn't Match please do recheck Test Data")
-		}
-	}
-
-	return trl
 }

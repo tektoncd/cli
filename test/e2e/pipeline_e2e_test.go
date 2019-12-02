@@ -23,7 +23,6 @@ const (
 	TaskName1                      = "create-file"
 	TaskName2                      = "check-stuff-file-exists"
 	tePipelineName                 = "output-pipeline"
-	tePipelineRunName              = "output-pipeline-run"
 	tePipelineGitResourceName      = "skaffold-git"
 	tePipelineFaultGitResourceName = "skaffold-git-1"
 )
@@ -612,12 +611,4 @@ func getPipeline(PipelineName string, namespace string, createFiletaskName strin
 	}
 
 	return tb.Pipeline(PipelineName, namespace, tb.PipelineSpec(pipelineSpec...))
-}
-
-func getPipelineRun(PipelineRunName string, namespace string, serviceAccount string, pipelineName string, pipelineResourceName string) *v1alpha1.PipelineRun {
-	return tb.PipelineRun(PipelineRunName, namespace,
-		tb.PipelineRunSpec(pipelineName,
-			tb.PipelineRunServiceAccountName(serviceAccount),
-			tb.PipelineRunResourceBinding("source-repo", tb.PipelineResourceBindingRef(pipelineResourceName)),
-		))
 }
