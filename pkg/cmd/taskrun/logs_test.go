@@ -22,6 +22,7 @@ import (
 
 	"github.com/jonboulle/clockwork"
 	"github.com/tektoncd/cli/pkg/cli"
+	"github.com/tektoncd/cli/pkg/helper/options"
 	"github.com/tektoncd/cli/pkg/helper/pods/fake"
 	"github.com/tektoncd/cli/pkg/helper/pods/stream"
 	"github.com/tektoncd/cli/pkg/test"
@@ -29,6 +30,7 @@ import (
 	"github.com/tektoncd/pipeline/pkg/apis/pipeline/v1alpha1"
 	"github.com/tektoncd/pipeline/pkg/reconciler/pipelinerun/resources"
 	pipelinetest "github.com/tektoncd/pipeline/test"
+	ptest "github.com/tektoncd/pipeline/test"
 	tb "github.com/tektoncd/pipeline/test/builder"
 	corev1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
@@ -62,11 +64,88 @@ func TestLog_invalid_namespace(t *testing.T) {
 }
 
 func TestLog_no_taskrun_arg(t *testing.T) {
-	c := Command(&test.Params{})
+	cs, _ := test.SeedTestData(t, pipelinetest.Data{
+		Namespaces: []*corev1.Namespace{
+			{
+				ObjectMeta: metav1.ObjectMeta{
+					Name: "ns",
+				},
+			},
+		},
+	})
 
-	_, err := test.ExecuteCommand(c, "logs", "-n", "ns")
-	if err == nil {
-		t.Error("Expecting an error but it's empty")
+	cs2, _ := test.SeedTestData(t, pipelinetest.Data{
+		Tasks: []*v1alpha1.Task{
+			tb.Task("task", "ns", cb.TaskCreationTime(clockwork.NewFakeClock().Now())),
+		},
+		TaskRuns: []*v1alpha1.TaskRun{
+			tb.TaskRun("taskrun1", "ns",
+				tb.TaskRunLabel("tekton.dev/task", "task"),
+				tb.TaskRunSpec(tb.TaskRunTaskRef("task")),
+				tb.TaskRunStatus(
+					tb.PodName("pod"),
+					tb.TaskRunStartTime(clockwork.NewFakeClock().Now()),
+					tb.StatusCondition(apis.Condition{
+						Status: corev1.ConditionTrue,
+						Reason: resources.ReasonSucceeded,
+					}),
+					tb.StepState(
+						cb.StepName("step1"),
+						tb.StateTerminated(0),
+					),
+				),
+			),
+		},
+		Namespaces: []*corev1.Namespace{
+			{
+				ObjectMeta: metav1.ObjectMeta{
+					Name: "ns",
+				},
+			},
+		},
+		Pods: []*corev1.Pod{
+			tb.Pod("pod", "ns",
+				tb.PodSpec(
+					tb.PodContainer("step1", "step1:latest"),
+				),
+				cb.PodStatus(
+					cb.PodPhase(corev1.PodSucceeded),
+				),
+			),
+		},
+	})
+
+	testParams := []struct {
+		name      string
+		input     ptest.Clients
+		wantError bool
+	}{
+		{
+			name:      "found no data",
+			input:     cs,
+			wantError: true,
+		},
+		{
+			name:      "found single data",
+			input:     cs2,
+			wantError: false,
+		},
+	}
+
+	for _, tp := range testParams {
+		t.Run(tp.name, func(t *testing.T) {
+			trlo := logOpts("", "ns", tp.input, fake.Streamer(fake.Logs()), false, false)
+			_, err := fetchLogs(trlo)
+			if tp.wantError {
+				if err == nil {
+					t.Error("Expecting an error but it's empty")
+				}
+			} else {
+				if err != nil {
+					t.Errorf("unexpected Error")
+				}
+			}
+		})
 	}
 }
 
@@ -748,27 +827,28 @@ func TestLog_taskrun_follow_mode_no_output_provided(t *testing.T) {
 	test.AssertOutput(t, expected, err.Error())
 }
 
-func logOpts(run, ns string, cs pipelinetest.Clients, streamer stream.NewStreamerFunc, allSteps bool, follow bool) *LogOptions {
+func logOpts(run, ns string, cs pipelinetest.Clients, streamer stream.NewStreamerFunc, allSteps bool, follow bool) *options.LogOptions {
 	p := test.Params{
 		Kube:   cs.Kube,
 		Tekton: cs.Pipeline,
 	}
 	p.SetNamespace(ns)
 
-	return &LogOptions{
+	return &options.LogOptions{
 		TaskrunName: run,
 		AllSteps:    allSteps,
 		Follow:      follow,
 		Params:      &p,
 		Streamer:    streamer,
+		Limit:       5,
 	}
 }
 
-func fetchLogs(lo *LogOptions) (string, error) {
+func fetchLogs(lo *options.LogOptions) (string, error) {
 	out := new(bytes.Buffer)
 	lo.Stream = &cli.Stream{Out: out, Err: out}
 
-	err := lo.Run()
+	err := Run(lo)
 
 	return out.String(), err
 }
