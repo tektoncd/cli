@@ -25,9 +25,10 @@ tkn taskrun logs -f foo -n bar
 ### Options
 
 ```
-  -a, --all      show all logs including init steps injected by tekton
-  -f, --follow   stream live logs
-  -h, --help     help for logs
+  -a, --all         show all logs including init steps injected by tekton
+  -f, --follow      stream live logs
+  -h, --help        help for logs
+      --limit int   lists number of taskruns (default 5)
 ```
 
 ### Options inherited from parent commands

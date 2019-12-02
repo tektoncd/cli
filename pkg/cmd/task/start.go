@@ -28,6 +28,7 @@ import (
 	"github.com/tektoncd/cli/pkg/cmd/taskrun"
 	"github.com/tektoncd/cli/pkg/flags"
 	"github.com/tektoncd/cli/pkg/helper/labels"
+	"github.com/tektoncd/cli/pkg/helper/options"
 	"github.com/tektoncd/cli/pkg/helper/params"
 	"github.com/tektoncd/cli/pkg/helper/task"
 	validate "github.com/tektoncd/cli/pkg/helper/validate"
@@ -244,14 +245,14 @@ func startTask(opt startOptions, args []string) error {
 	}
 
 	fmt.Fprintf(opt.stream.Out, "Waiting for logs to be available...\n")
-	runLogOpts := &taskrun.LogOptions{
+	runLogOpts := &options.LogOptions{
 		TaskrunName: trCreated.Name,
 		Stream:      opt.stream,
 		Follow:      true,
 		Params:      opt.cliparams,
 		AllSteps:    false,
 	}
-	return runLogOpts.Run()
+	return taskrun.Run(runLogOpts)
 }
 
 func mergeRes(r []v1alpha1.TaskResourceBinding, optRes []string) ([]v1alpha1.TaskResourceBinding, error) {

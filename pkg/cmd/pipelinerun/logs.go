@@ -129,5 +129,5 @@ func askRunName(opts *options.LogOptions) error {
 		return nil
 	}
 
-	return opts.Ask("pipelinerun", prs)
+	return opts.Ask(options.ResourceNamePipelineRun, prs)
 }
