@@ -90,7 +90,7 @@ func TestLog_missing_taskrun(t *testing.T) {
 
 	c := Command(p)
 	got, _ := test.ExecuteCommand(c, "logs", "output-taskrun-2", "-n", "ns")
-	expected := "Error: " + msgTRNotFoundErr + " : taskruns.tekton.dev \"output-taskrun-2\" not found\n"
+	expected := "Error: " + msgTRNotFoundErr + ": taskruns.tekton.dev \"output-taskrun-2\" not found\n"
 	test.AssertOutput(t, expected, got)
 }
 

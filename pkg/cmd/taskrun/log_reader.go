@@ -64,7 +64,7 @@ func (lr *LogReader) Read() (<-chan Log, <-chan error, error) {
 	tkn := lr.Clients.Tekton
 	tr, err := tkn.TektonV1alpha1().TaskRuns(lr.Ns).Get(lr.Run, metav1.GetOptions{})
 	if err != nil {
-		return nil, nil, fmt.Errorf("%s : %s", msgTRNotFoundErr, err)
+		return nil, nil, fmt.Errorf("%s: %s", msgTRNotFoundErr, err)
 	}
 
 	lr.formTaskName(tr)
