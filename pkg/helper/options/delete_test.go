@@ -83,10 +83,8 @@ func TestDeleteOptions(t *testing.T) {
 					t.Fatal("error expected here")
 				}
 				test.AssertOutput(t, tp.want, err.Error())
-			} else {
-				if err != nil {
-					t.Fatal("unexpected Error")
-				}
+			} else if err != nil {
+				t.Fatal("unexpected Error")
 			}
 		})
 	}

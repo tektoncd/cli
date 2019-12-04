@@ -21,9 +21,7 @@ type Log struct {
 
 func Logs(logs ...Log) []Log {
 	ret := []Log{}
-	for _, l := range logs {
-		ret = append(logs, l)
-	}
+	ret = append(ret, logs...)
 	return ret
 }
 

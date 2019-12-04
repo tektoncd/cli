@@ -258,7 +258,7 @@ func (opt *startOptions) getInputParams(pipeline *v1alpha1.Pipeline) error {
 			} else {
 				defaultValue = strings.Join(param.Default.ArrayVal, ",")
 			}
-			ques = ques + fmt.Sprintf(" (Default is `%s`)", defaultValue)
+			ques += fmt.Sprintf(" (Default is `%s`)", defaultValue)
 			input.Default = defaultValue
 		}
 		input.Message = ques
