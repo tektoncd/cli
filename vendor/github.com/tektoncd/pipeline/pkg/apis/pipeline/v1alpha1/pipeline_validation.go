@@ -21,17 +21,22 @@ import (
 	"fmt"
 	"strings"
 
+	"github.com/tektoncd/pipeline/pkg/apis/validate"
 	"github.com/tektoncd/pipeline/pkg/list"
+	"github.com/tektoncd/pipeline/pkg/reconciler/pipeline/dag"
+	"github.com/tektoncd/pipeline/pkg/substitution"
 	"golang.org/x/xerrors"
 	"k8s.io/apimachinery/pkg/api/equality"
 	"k8s.io/apimachinery/pkg/util/validation"
 	"knative.dev/pkg/apis"
 )
 
+var _ apis.Validatable = (*Pipeline)(nil)
+
 // Validate checks that the Pipeline structure is valid but does not validate
 // that any references resources exist, that is done at run time.
 func (p *Pipeline) Validate(ctx context.Context) *apis.FieldError {
-	if err := validateObjectMetadata(p.GetObjectMeta()); err != nil {
+	if err := validate.ObjectMetadata(p.GetObjectMeta()); err != nil {
 		return err.ViaField("metadata")
 	}
 	return p.Spec.Validate(ctx)
@@ -110,7 +115,7 @@ func validateFrom(tasks []PipelineTask) error {
 // cycle or that they rely on values from Tasks that ran previously, and that the PipelineResource
 // is actually an output of the Task it should come from.
 func validateGraph(tasks []PipelineTask) error {
-	if _, err := BuildDAG(tasks); err != nil {
+	if _, err := dag.Build(PipelineTaskList(tasks)); err != nil {
 		return err
 	}
 	return nil
@@ -229,13 +234,13 @@ func validatePipelineVariables(tasks []PipelineTask, prefix string, paramNames m
 }
 
 func validatePipelineVariable(name, value, prefix string, vars map[string]struct{}) *apis.FieldError {
-	return ValidateVariable(name, value, prefix, "", "task parameter", "pipelinespec.params", vars)
+	return substitution.ValidateVariable(name, value, prefix, "", "task parameter", "pipelinespec.params", vars)
 }
 
 func validatePipelineNoArrayReferenced(name, value, prefix string, vars map[string]struct{}) *apis.FieldError {
-	return ValidateVariableProhibited(name, value, prefix, "", "task parameter", "pipelinespec.params", vars)
+	return substitution.ValidateVariableProhibited(name, value, prefix, "", "task parameter", "pipelinespec.params", vars)
 }
 
 func validatePipelineArraysIsolated(name, value, prefix string, vars map[string]struct{}) *apis.FieldError {
-	return ValidateVariableIsolated(name, value, prefix, "", "task parameter", "pipelinespec.params", vars)
+	return substitution.ValidateVariableIsolated(name, value, prefix, "", "task parameter", "pipelinespec.params", vars)
 }

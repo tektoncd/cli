@@ -45,6 +45,30 @@ const (
 
 	// PvcStorageClassNameKey is the name of the configmap entry that specifies the storage class of the PVC to create
 	PvcStorageClassNameKey = "storageClassName"
+
+	// BucketConfigName is the name of the configmap containing all
+	// customizations for the storage bucket.
+	BucketConfigName = "config-artifact-bucket"
+
+	// BucketLocationKey is the name of the configmap entry that specifies
+	// loction of the bucket.
+	BucketLocationKey = "location"
+
+	// BucketServiceAccountSecretName is the name of the configmap entry that specifies
+	// the name of the secret that will provide the servie account with bucket access.
+	// This secret must  have a key called serviceaccount that will have a value with
+	// the service account with access to the bucket
+	BucketServiceAccountSecretName = "bucket.service.account.secret.name"
+
+	// BucketServiceAccountSecretKey is the name of the configmap entry that specifies
+	// the secret key that will have a value with the service account json with access
+	// to the bucket
+	BucketServiceAccountSecretKey = "bucket.service.account.secret.key"
+
+	// BucketServiceAccountFieldName is the name of the configmap entry that specifies
+	// the field name that should be used for the service account.
+	// Valid values: GOOGLE_APPLICATION_CREDENTIALS, BOTO_CONFIG. Defaults to GOOGLE_APPLICATION_CREDENTIALS.
+	BucketServiceAccountFieldName = "bucket.service.account.field.name"
 )
 
 // ArtifactStorageInterface is an interface to define the steps to copy
@@ -57,11 +81,67 @@ type ArtifactStorageInterface interface {
 	StorageBasePath(pr *v1alpha1.PipelineRun) string
 }
 
+// ArtifactStorageNone is used when no storage is needed.
+type ArtifactStorageNone struct{}
+
+// GetCopyToStorageFromSteps returns no containers because none are needed.
+func (a *ArtifactStorageNone) GetCopyToStorageFromSteps(name, sourcePath, destinationPath string) []v1alpha1.Step {
+	return nil
+}
+
+// GetCopyFromStorageToSteps returns no containers because none are needed.
+func (a *ArtifactStorageNone) GetCopyFromStorageToSteps(name, sourcePath, destinationPath string) []v1alpha1.Step {
+	return nil
+}
+
+// GetSecretsVolumes returns no volumes because none are needed.
+func (a *ArtifactStorageNone) GetSecretsVolumes() []corev1.Volume {
+	return nil
+}
+
+// GetType returns the string "none" to indicate this is the None storage type.
+func (a *ArtifactStorageNone) GetType() string {
+	return "none"
+}
+
+// StorageBasePath returns an empty string because no storage is being used and so
+// there is no path that resources should be copied from / to.
+func (a *ArtifactStorageNone) StorageBasePath(pr *v1alpha1.PipelineRun) string {
+	return ""
+}
+
 // InitializeArtifactStorage will check if there is there is a
-// bucket configured or create a PVC
-func InitializeArtifactStorage(images pipeline.Images, pr *v1alpha1.PipelineRun, c kubernetes.Interface, logger *zap.SugaredLogger) (ArtifactStorageInterface, error) {
-	configMap, err := c.CoreV1().ConfigMaps(system.GetNamespace()).Get(v1alpha1.BucketConfigName, metav1.GetOptions{})
-	shouldCreatePVC, err := NeedsPVC(configMap, err, logger)
+// bucket configured, create a PVC or return nil if no storage is required.
+func InitializeArtifactStorage(images pipeline.Images, pr *v1alpha1.PipelineRun, ps *v1alpha1.PipelineSpec, c kubernetes.Interface, logger *zap.SugaredLogger) (ArtifactStorageInterface, error) {
+	// Artifact storage is needed under the following condition:
+	//  Any Task in the pipeline contains an Output resource
+	//  AND that Output resource is one of the AllowedOutputResource types.
+
+	needStorage := false
+	// Build an index of resources used in the pipeline that are an AllowedOutputResource
+	possibleOutputs := map[string]struct{}{}
+	for _, r := range ps.Resources {
+		if _, ok := v1alpha1.AllowedOutputResources[r.Type]; ok {
+			possibleOutputs[r.Name] = struct{}{}
+		}
+	}
+
+	// Use that index to see if any of these are used as OutputResources.
+	for _, t := range ps.Tasks {
+		if t.Resources != nil {
+			for _, o := range t.Resources.Outputs {
+				if _, ok := possibleOutputs[o.Resource]; ok {
+					needStorage = true
+				}
+			}
+		}
+	}
+	if !needStorage {
+		return &ArtifactStorageNone{}, nil
+	}
+
+	configMap, err := c.CoreV1().ConfigMaps(system.GetNamespace()).Get(BucketConfigName, metav1.GetOptions{})
+	shouldCreatePVC, err := ConfigMapNeedsPVC(configMap, err, logger)
 	if err != nil {
 		return nil, err
 	}
@@ -70,7 +150,7 @@ func InitializeArtifactStorage(images pipeline.Images, pr *v1alpha1.PipelineRun,
 		if err != nil {
 			return nil, err
 		}
-		return &v1alpha1.ArtifactPVC{Name: pr.Name, PersistentVolumeClaim: pvc, BashNoopImage: images.BashNoopImage}, nil
+		return &v1alpha1.ArtifactPVC{Name: pr.Name, PersistentVolumeClaim: pvc, ShellImage: images.ShellImage}, nil
 	}
 
 	return NewArtifactBucketConfigFromConfigMap(images)(configMap)
@@ -79,8 +159,8 @@ func InitializeArtifactStorage(images pipeline.Images, pr *v1alpha1.PipelineRun,
 // CleanupArtifactStorage will delete the PipelineRun's artifact storage PVC if it exists. The PVC is created for using
 // an output workspace or artifacts from one Task to another Task. No other PVCs will be impacted by this cleanup.
 func CleanupArtifactStorage(pr *v1alpha1.PipelineRun, c kubernetes.Interface, logger *zap.SugaredLogger) error {
-	configMap, err := c.CoreV1().ConfigMaps(system.GetNamespace()).Get(v1alpha1.BucketConfigName, metav1.GetOptions{})
-	shouldCreatePVC, err := NeedsPVC(configMap, err, logger)
+	configMap, err := c.CoreV1().ConfigMaps(system.GetNamespace()).Get(BucketConfigName, metav1.GetOptions{})
+	shouldCreatePVC, err := ConfigMapNeedsPVC(configMap, err, logger)
 	if err != nil {
 		return err
 	}
@@ -93,9 +173,9 @@ func CleanupArtifactStorage(pr *v1alpha1.PipelineRun, c kubernetes.Interface, lo
 	return nil
 }
 
-// NeedsPVC checks if the possibly-nil config map passed to it is configured to use a bucket for artifact storage,
+// ConfigMapNeedsPVC checks if the possibly-nil config map passed to it is configured to use a bucket for artifact storage,
 // returning true if instead a PVC is needed.
-func NeedsPVC(configMap *corev1.ConfigMap, err error, logger *zap.SugaredLogger) (bool, error) {
+func ConfigMapNeedsPVC(configMap *corev1.ConfigMap, err error, logger *zap.SugaredLogger) (bool, error) {
 	if err != nil {
 		if errors.IsNotFound(err) {
 			return true, nil
@@ -109,10 +189,10 @@ func NeedsPVC(configMap *corev1.ConfigMap, err error, logger *zap.SugaredLogger)
 		logger.Warn("the configmap has no data")
 		return true, nil
 	}
-	if location, ok := configMap.Data[v1alpha1.BucketLocationKey]; !ok {
+	if location, ok := configMap.Data[BucketLocationKey]; !ok {
 		return true, nil
 	} else {
-		logger.Warnf("the configmap key %q is empty", v1alpha1.BucketLocationKey)
+		logger.Warnf("the configmap key %q is empty", BucketLocationKey)
 		if strings.TrimSpace(location) == "" {
 			return true, nil
 		}
@@ -123,13 +203,13 @@ func NeedsPVC(configMap *corev1.ConfigMap, err error, logger *zap.SugaredLogger)
 // GetArtifactStorage returns the storage interface to enable
 // consumer code to get a container step for copy to/from storage
 func GetArtifactStorage(images pipeline.Images, prName string, c kubernetes.Interface, logger *zap.SugaredLogger) (ArtifactStorageInterface, error) {
-	configMap, err := c.CoreV1().ConfigMaps(system.GetNamespace()).Get(v1alpha1.BucketConfigName, metav1.GetOptions{})
-	pvc, err := NeedsPVC(configMap, err, logger)
+	configMap, err := c.CoreV1().ConfigMaps(system.GetNamespace()).Get(BucketConfigName, metav1.GetOptions{})
+	pvc, err := ConfigMapNeedsPVC(configMap, err, logger)
 	if err != nil {
 		return nil, xerrors.Errorf("couldn't determine if PVC was needed from config map: %w", err)
 	}
 	if pvc {
-		return &v1alpha1.ArtifactPVC{Name: prName, BashNoopImage: images.BashNoopImage}, nil
+		return &v1alpha1.ArtifactPVC{Name: prName, ShellImage: images.ShellImage}, nil
 	}
 	return NewArtifactBucketConfigFromConfigMap(images)(configMap)
 }
@@ -138,23 +218,23 @@ func GetArtifactStorage(images pipeline.Images, prName string, c kubernetes.Inte
 func NewArtifactBucketConfigFromConfigMap(images pipeline.Images) func(configMap *corev1.ConfigMap) (*v1alpha1.ArtifactBucket, error) {
 	return func(configMap *corev1.ConfigMap) (*v1alpha1.ArtifactBucket, error) {
 		c := &v1alpha1.ArtifactBucket{
-			BashNoopImage: images.BashNoopImage,
-			GsutilImage:   images.GsutilImage,
+			ShellImage:  images.ShellImage,
+			GsutilImage: images.GsutilImage,
 		}
 
 		if configMap.Data == nil {
 			return c, nil
 		}
-		if location, ok := configMap.Data[v1alpha1.BucketLocationKey]; !ok {
+		if location, ok := configMap.Data[BucketLocationKey]; !ok {
 			c.Location = ""
 		} else {
 			c.Location = location
 		}
 		sp := v1alpha1.SecretParam{}
-		if secretName, ok := configMap.Data[v1alpha1.BucketServiceAccountSecretName]; ok {
-			if secretKey, ok := configMap.Data[v1alpha1.BucketServiceAccountSecretKey]; ok {
+		if secretName, ok := configMap.Data[BucketServiceAccountSecretName]; ok {
+			if secretKey, ok := configMap.Data[BucketServiceAccountSecretKey]; ok {
 				sp.FieldName = "GOOGLE_APPLICATION_CREDENTIALS"
-				if fieldName, ok := configMap.Data[v1alpha1.BucketServiceAccountFieldName]; ok {
+				if fieldName, ok := configMap.Data[BucketServiceAccountFieldName]; ok {
 					sp.FieldName = fieldName
 				}
 				sp.SecretName = secretName

@@ -17,17 +17,24 @@ limitations under the License.
 package v1alpha1
 
 import (
+	"github.com/google/go-cmp/cmp"
 	"github.com/tektoncd/pipeline/pkg/apis/pipeline"
 	"golang.org/x/xerrors"
 	v1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
-	"knative.dev/pkg/apis"
 )
 
 // PipelineResourceType represents the type of endpoint the pipelineResource is, so that the
 // controller will know this pipelineResource should be fetched and optionally what
 // additional metatdata should be provided for it.
 type PipelineResourceType string
+
+var (
+	AllowedOutputResources = map[PipelineResourceType]bool{
+		PipelineResourceTypeStorage: true,
+		PipelineResourceTypeGit:     true,
+	}
+)
 
 const (
 	// PipelineResourceTypeGit indicates that this source is a GitHub repo.
@@ -54,10 +61,18 @@ var AllResourceTypes = []PipelineResourceType{PipelineResourceTypeGit, PipelineR
 
 // PipelineResourceInterface interface to be implemented by different PipelineResource types
 type PipelineResourceInterface interface {
+	// GetName returns the name of this PipelineResource instance.
 	GetName() string
+	// GetType returns the type of this PipelineResource (often a super type, e.g. in the case of storage).
 	GetType() PipelineResourceType
+	// Replacements returns all the attributes that this PipelineResource has that
+	// can be used for variable replacement.
 	Replacements() map[string]string
+	// GetOutputTaskModifier returns the TaskModifier instance that should be used on a Task
+	// in order to add this kind of resource when it is being used as an output.
 	GetOutputTaskModifier(ts *TaskSpec, path string) (TaskModifier, error)
+	// GetInputTaskModifier returns the TaskModifier instance that should be used on a Task
+	// in order to add this kind of resource when it is being used as an input.
 	GetInputTaskModifier(ts *TaskSpec, path string) (TaskModifier, error)
 }
 
@@ -80,7 +95,7 @@ func (tm *InternalTaskModifier) GetStepsToPrepend() []Step {
 	return tm.StepsToPrepend
 }
 
-// GetStepsToPrepend returns a set of Steps to append to the Task.
+// GetStepsToAppend returns a set of Steps to append to the Task.
 func (tm *InternalTaskModifier) GetStepsToAppend() []Step {
 	return tm.StepsToAppend
 }
@@ -90,16 +105,55 @@ func (tm *InternalTaskModifier) GetVolumes() []v1.Volume {
 	return tm.Volumes
 }
 
+func checkStepNotAlreadyAdded(s Step, steps []Step) error {
+	for _, step := range steps {
+		if s.Name == step.Name {
+			return xerrors.Errorf("Step %s cannot be added again", step.Name)
+		}
+	}
+	return nil
+}
+
 // ApplyTaskModifier applies a modifier to the task by appending and prepending steps and volumes.
-func ApplyTaskModifier(ts *TaskSpec, tm TaskModifier) {
+// If steps with the same name exist in ts an error will be returned. If identical Volumes have
+// been added, they will not be added again. If Volumes with the same name but different contents
+// have been added, an error will be returned.
+func ApplyTaskModifier(ts *TaskSpec, tm TaskModifier) error {
 	steps := tm.GetStepsToPrepend()
+	for _, step := range steps {
+		if err := checkStepNotAlreadyAdded(step, ts.Steps); err != nil {
+			return err
+		}
+	}
 	ts.Steps = append(steps, ts.Steps...)
 
 	steps = tm.GetStepsToAppend()
+	for _, step := range steps {
+		if err := checkStepNotAlreadyAdded(step, ts.Steps); err != nil {
+			return err
+		}
+	}
 	ts.Steps = append(ts.Steps, steps...)
 
 	volumes := tm.GetVolumes()
-	ts.Volumes = append(ts.Volumes, volumes...)
+	for _, volume := range volumes {
+		var alreadyAdded bool
+		for _, v := range ts.Volumes {
+			if volume.Name == v.Name {
+				// If a Volume with the same name but different contents has already been added, we can't add both
+				if d := cmp.Diff(volume, v); d != "" {
+					return xerrors.Errorf("Tried to add volume %s already added but with different contents", volume.Name)
+				}
+				// If an identical Volume has already been added, don't add it again
+				alreadyAdded = true
+			}
+		}
+		if !alreadyAdded {
+			ts.Volumes = append(ts.Volumes, volume)
+		}
+	}
+
+	return nil
 }
 
 // SecretParam indicates which secret can be used to populate a field of the resource
@@ -124,10 +178,6 @@ type PipelineResourceSpec struct {
 type PipelineResourceStatus struct {
 }
 
-// Check that PipelineResource may be validated and defaulted.
-var _ apis.Validatable = (*PipelineResource)(nil)
-var _ apis.Defaultable = (*PipelineResource)(nil)
-
 // +genclient
 // +k8s:deepcopy-gen:interfaces=k8s.io/apimachinery/pkg/runtime.Object
 
@@ -141,7 +191,6 @@ type PipelineResource struct {
 	metav1.ObjectMeta `json:"metadata,omitempty"`
 
 	// Spec holds the desired state of the PipelineResource from the client
-	// +optional
 	Spec PipelineResourceSpec `json:"spec,omitempty"`
 	// Status communicates the observed state of the PipelineResource from the controller
 	// +optional
@@ -155,10 +204,11 @@ type PipelineResourceBinding struct {
 	Name string `json:"name,omitempty"`
 	// ResourceRef is a reference to the instance of the actual PipelineResource
 	// that should be used
-	ResourceRef PipelineResourceRef `json:"resourceRef,omitempty"`
 	// +optional
+	ResourceRef *PipelineResourceRef `json:"resourceRef,omitempty"`
 	// ResourceSpec is specification of a resource that should be created and
 	// consumed by the task
+	// +optional
 	ResourceSpec *PipelineResourceSpec `json:"resourceSpec,omitempty"`
 }
 
@@ -201,7 +251,9 @@ type ResourceDeclaration struct {
 	TargetPath string `json:"targetPath,omitempty"`
 }
 
-// ResourceFromType returns a PipelineResourceInterface from a PipelineResource's type.
+// ResourceFromType returns an instance of the correct PipelineResource object type which can be
+// used to add input and ouput containers as well as volumes to a TaskRun's pod in order to realize
+// a PipelineResource in a pod.
 func ResourceFromType(r *PipelineResource, images pipeline.Images) (PipelineResourceInterface, error) {
 	switch r.Spec.Type {
 	case PipelineResourceTypeGit:
