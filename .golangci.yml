@@ -8,7 +8,9 @@ linters-settings:
     exclude: .errcheck.txt
 linters:
   enable:
-    - gofmt
-    - goimports
-    - errcheck
-    - golint
+  - errcheck
+  - gofmt
+  - goimports
+  - gosec
+  - gocritic
+  - golint
