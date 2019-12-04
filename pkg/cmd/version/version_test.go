@@ -135,6 +135,7 @@ func testingHTTPClient(handler http.Handler) (*http.Client, func()) {
 				return net.Dial(network, s.Listener.Addr().String())
 			},
 			TLSClientConfig: &tls.Config{
+				// nolint: gosec
 				InsecureSkipVerify: true,
 			},
 		},
