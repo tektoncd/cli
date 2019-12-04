@@ -244,7 +244,7 @@ func Test_start_task(t *testing.T) {
 		t.Errorf("Error labels generated is different Labels Got: %+v", tr.Items[0].ObjectMeta.Labels)
 	}
 
-	test.AssertOutput(t, "svc1", tr.Items[0].Spec.DeprecatedServiceAccount)
+	test.AssertOutput(t, "svc1", tr.Items[0].Spec.ServiceAccountName)
 }
 
 func Test_start_task_last(t *testing.T) {
@@ -270,7 +270,7 @@ func Test_start_task_last(t *testing.T) {
 			tb.TaskRunLabel("tekton.dev/task", "task"),
 			tb.TaskRunSpec(
 				tb.TaskRunTaskRef("task"),
-				tb.TaskRunDeprecatedServiceAccount("", "svc"),
+				tb.TaskRunServiceAccountName("svc"),
 				tb.TaskRunInputs(tb.TaskRunInputsParam("myarg", "value")),
 				tb.TaskRunInputs(tb.TaskRunInputsParam("print", "booms", "booms", "booms")),
 				tb.TaskRunInputs(tb.TaskRunInputsResource("my-repo", tb.TaskResourceBindingRef("git"))),
@@ -335,7 +335,7 @@ func Test_start_task_last(t *testing.T) {
 		}
 	}
 
-	test.AssertOutput(t, "svc", tr.Spec.DeprecatedServiceAccount)
+	test.AssertOutput(t, "svc", tr.Spec.ServiceAccountName)
 }
 
 func Test_start_task_last_with_inputs(t *testing.T) {
@@ -361,7 +361,7 @@ func Test_start_task_last_with_inputs(t *testing.T) {
 			tb.TaskRunLabel("tekton.dev/task", "task"),
 			tb.TaskRunSpec(
 				tb.TaskRunTaskRef("task"),
-				tb.TaskRunDeprecatedServiceAccount("", "svc"),
+				tb.TaskRunServiceAccountName("svc"),
 				tb.TaskRunInputs(tb.TaskRunInputsParam("myarg", "value")),
 				tb.TaskRunInputs(tb.TaskRunInputsParam("print", "booms", "booms", "booms")),
 				tb.TaskRunInputs(tb.TaskRunInputsResource("my-repo", tb.TaskResourceBindingRef("git"))),
@@ -431,7 +431,7 @@ func Test_start_task_last_with_inputs(t *testing.T) {
 		}
 	}
 
-	test.AssertOutput(t, "svc1", tr.Spec.DeprecatedServiceAccount)
+	test.AssertOutput(t, "svc1", tr.Spec.ServiceAccountName)
 }
 
 func Test_start_task_last_without_pipelinerun(t *testing.T) {
@@ -755,7 +755,7 @@ func Test_start_task_allkindparam(t *testing.T) {
 		t.Errorf("Error labels generated is different Labels Got: %+v", tr.Items[0].ObjectMeta.Labels)
 	}
 
-	test.AssertOutput(t, "svc1", tr.Items[0].Spec.DeprecatedServiceAccount)
+	test.AssertOutput(t, "svc1", tr.Items[0].Spec.ServiceAccountName)
 }
 
 func Test_start_task_wrong_param(t *testing.T) {
@@ -808,7 +808,7 @@ func Test_mergeResource(t *testing.T) {
 	res := []v1alpha1.TaskResourceBinding{{
 		PipelineResourceBinding: v1alpha1.PipelineResourceBinding{
 			Name: "source",
-			ResourceRef: v1alpha1.PipelineResourceRef{
+			ResourceRef: &v1alpha1.PipelineResourceRef{
 				Name: "git",
 			},
 		},
@@ -855,14 +855,14 @@ func Test_parseRes(t *testing.T) {
 		want: map[string]v1alpha1.TaskResourceBinding{"source": {
 			PipelineResourceBinding: v1alpha1.PipelineResourceBinding{
 				Name: "source",
-				ResourceRef: v1alpha1.PipelineResourceRef{
+				ResourceRef: &v1alpha1.PipelineResourceRef{
 					Name: "git",
 				},
 			},
 		}, "image": {
 			PipelineResourceBinding: v1alpha1.PipelineResourceBinding{
 				Name: "image",
-				ResourceRef: v1alpha1.PipelineResourceRef{
+				ResourceRef: &v1alpha1.PipelineResourceRef{
 					Name: "docker2",
 				},
 			},

@@ -33,11 +33,8 @@ import (
 
 const templ = `Name:	{{ .PipelineRun.Name }}
 Namespace:	{{ .PipelineRun.Namespace }}
-{{- if ne .PipelineRun.Spec.PipelineRef.Name "" }}
-Pipeline Ref:	{{ .PipelineRun.Spec.PipelineRef.Name }}
-{{- end }}
-{{- if ne .PipelineRun.Spec.DeprecatedServiceAccount "" }}
-Service Account (deprecated):	{{ .PipelineRun.Spec.DeprecatedServiceAccount }}
+{{- $pRefName := pipelineRefExists .PipelineRun.Spec }}{{- if ne $pRefName "" }}
+Pipeline Ref:	{{ $pRefName }}
 {{- end }}
 {{- if ne .PipelineRun.Spec.ServiceAccountName "" }}
 Service Account:	{{ .PipelineRun.Spec.ServiceAccountName }}
@@ -59,7 +56,11 @@ No resources
 {{- else }}
 NAME	RESOURCE REF
 {{- range $i, $r := .PipelineRun.Spec.Resources }}
+{{- $rRefName := pipelineResourceRefExists $r }}{{- if ne $rRefName "" }}
 {{$r.Name }}	{{ $r.ResourceRef.Name }}
+{{- else }}
+{{$r.Name }}	{{ "" }}
+{{- end }}
 {{- end }}
 {{- end }}
 
@@ -156,10 +157,12 @@ func printPipelineRunDescription(s *cli.Stream, prName string, p cli.Params) err
 	}
 
 	funcMap := template.FuncMap{
-		"formatAge":       formatted.Age,
-		"formatDuration":  formatted.Duration,
-		"formatCondition": formatted.Condition,
-		"hasFailed":       hasFailed,
+		"formatAge":                 formatted.Age,
+		"formatDuration":            formatted.Duration,
+		"formatCondition":           formatted.Condition,
+		"hasFailed":                 hasFailed,
+		"pipelineRefExists":         validate.PipelineRefExists,
+		"pipelineResourceRefExists": validate.PipelineResourceRefExists,
 	}
 
 	w := tabwriter.NewWriter(s.Out, 0, 5, 3, ' ', tabwriter.TabIndent)
