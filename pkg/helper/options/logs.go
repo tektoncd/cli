@@ -72,7 +72,7 @@ func (opts *LogOptions) Ask(resource string, options []string) error {
 		{
 			Name: resource,
 			Prompt: &survey.Select{
-				Message: fmt.Sprintf("Select %s :", resource),
+				Message: fmt.Sprintf("Select %s:", resource),
 				Options: options,
 			},
 		},
