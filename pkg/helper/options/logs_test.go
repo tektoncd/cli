@@ -57,10 +57,8 @@ func TestLogOptions_ValidateOpts(t *testing.T) {
 					t.Errorf("Error expected here")
 				}
 				test.AssertOutput(t, tp.want, err.Error())
-			} else {
-				if err != nil {
-					t.Errorf("Unexpected error")
-				}
+			} else if err != nil {
+				t.Errorf("unexpected Error")
 			}
 		})
 	}
