@@ -245,7 +245,7 @@ func TestLogs_interactive_get_all_inputs(t *testing.T) {
 			cmdArgs: []string{},
 
 			procedure: func(c *goexpect.Console) error {
-				if _, err := c.ExpectString("Select pipeline :"); err != nil {
+				if _, err := c.ExpectString("Select pipeline:"); err != nil {
 					return err
 				}
 
@@ -261,7 +261,7 @@ func TestLogs_interactive_get_all_inputs(t *testing.T) {
 					return err
 				}
 
-				if _, err := c.ExpectString("Select pipelinerun :"); err != nil {
+				if _, err := c.ExpectString("Select pipelinerun:"); err != nil {
 					return err
 				}
 
@@ -364,7 +364,7 @@ func TestLogs_interactive_ask_runs(t *testing.T) {
 			cmdArgs: []string{pipelineName},
 
 			procedure: func(c *goexpect.Console) error {
-				if _, err := c.ExpectString("Select pipelinerun :"); err != nil {
+				if _, err := c.ExpectString("Select pipelinerun:"); err != nil {
 					return err
 				}
 
@@ -466,7 +466,7 @@ func TestLogs_interactive_limit_2(t *testing.T) {
 					return err
 				}
 
-				if _, err := c.ExpectString("Select pipelinerun :"); err != nil {
+				if _, err := c.ExpectString("Select pipelinerun:"); err != nil {
 					return err
 				}
 
@@ -568,7 +568,7 @@ func TestLogs_interactive_limit_1(t *testing.T) {
 					return err
 				}
 
-				if _, err := c.ExpectString("Select pipelinerun :"); err != nil {
+				if _, err := c.ExpectString("Select pipelinerun:"); err != nil {
 					return err
 				}
 
@@ -654,7 +654,7 @@ func TestLogs_interactive_ask_all_last_run(t *testing.T) {
 			cmdArgs: []string{},
 
 			procedure: func(c *goexpect.Console) error {
-				if _, err := c.ExpectString("Select pipeline :"); err != nil {
+				if _, err := c.ExpectString("Select pipeline:"); err != nil {
 					return err
 				}
 
@@ -670,7 +670,7 @@ func TestLogs_interactive_ask_all_last_run(t *testing.T) {
 					return err
 				}
 
-				if _, err := c.ExpectString("Select pipelinerun :"); err == nil {
+				if _, err := c.ExpectString("Select pipelinerun:"); err == nil {
 					return errors.New("unexpected error")
 				}
 

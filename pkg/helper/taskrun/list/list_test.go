@@ -104,7 +104,7 @@ func TestPipelinesList_GetAllTaskRuns(t *testing.T) {
 		t.Run(tp.name, func(t *testing.T) {
 			got, err := GetAllTaskRuns(tp.params, metav1.ListOptions{}, 5)
 			if err != nil {
-				t.Errorf("unexpected Error")
+				t.Errorf("Unexpected error")
 			}
 			test.AssertOutput(t, tp.want, got)
 		})
