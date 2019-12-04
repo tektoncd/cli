@@ -58,6 +58,36 @@ func TaskRefExists(spec v1alpha1.TaskRunSpec) string {
 	return spec.TaskRef.Name
 }
 
+// Check if PipelineRef exists on a PipelineRunSpec. Returns empty string if not present.
+func PipelineRefExists(spec v1alpha1.PipelineRunSpec) string {
+
+	if spec.PipelineRef == nil {
+		return fieldNotPresent
+	}
+
+	return spec.PipelineRef.Name
+}
+
+// Check if PipelineResourceRef exists on a PipelineResourceBinding. Returns empty string if not present.
+func PipelineResourceRefExists(res v1alpha1.PipelineResourceBinding) string {
+
+	if res.ResourceRef == nil {
+		return fieldNotPresent
+	}
+
+	return res.ResourceRef.Name
+}
+
+// Check if TaskResourceRef exists on a TaskResourceBinding. Returns empty string if not present.
+func TaskResourceRefExists(res v1alpha1.TaskResourceBinding) string {
+
+	if res.ResourceRef == nil {
+		return fieldNotPresent
+	}
+
+	return res.ResourceRef.Name
+}
+
 // Check if step is in waiting, running, or terminated state by checking StepState of the step.
 func StepReasonExists(state v1alpha1.StepState) string {
 

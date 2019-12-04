@@ -24,7 +24,6 @@ import (
 	"github.com/tektoncd/cli/pkg/helper/pods"
 	"github.com/tektoncd/cli/pkg/helper/pods/stream"
 	"github.com/tektoncd/pipeline/pkg/apis/pipeline/v1alpha1"
-	"github.com/tektoncd/pipeline/pkg/reconciler/taskrun/resources"
 	corev1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/fields"
@@ -220,7 +219,7 @@ func getInitSteps(pod *corev1.Pod) []*step {
 	steps := []*step{}
 	for _, ic := range pod.Spec.InitContainers {
 		steps = append(steps, &step{
-			name:      resources.TrimContainerNamePrefix(ic.Name),
+			name:      strings.TrimPrefix(ic.Name, "step-"),
 			container: ic.Name,
 			state:     status[ic.Name],
 		})
@@ -238,7 +237,7 @@ func getSteps(pod *corev1.Pod) []*step {
 	steps := []*step{}
 	for _, c := range pod.Spec.Containers {
 		steps = append(steps, &step{
-			name:      resources.TrimContainerNamePrefix(c.Name),
+			name:      strings.TrimPrefix(c.Name, "step-"),
 			container: c.Name,
 			state:     status[c.Name],
 		})

@@ -259,7 +259,7 @@ func TestPipelineRunDescribe_failed(t *testing.T) {
 				cb.PipelineRunCreationTimestamp(clock.Now()),
 				tb.PipelineRunLabel("tekton.dev/pipeline", "pipeline"),
 				tb.PipelineRunSpec("pipeline",
-					tb.PipelineRunDeprecatedServiceAccountName("", "test-sa"),
+					tb.PipelineRunServiceAccountName("test-sa"),
 				),
 				tb.PipelineRunStatus(
 					tb.PipelineRunTaskRunsStatus("tr-1", &v1alpha1.PipelineRunTaskRunStatus{
@@ -293,10 +293,10 @@ func TestPipelineRunDescribe_failed(t *testing.T) {
 	if err != nil {
 		t.Errorf("Unexpected error: %v", err)
 	}
-	expected := `Name:                           pipeline-run
-Namespace:                      ns
-Pipeline Ref:                   pipeline
-Service Account (deprecated):   test-sa
+	expected := `Name:              pipeline-run
+Namespace:         ns
+Pipeline Ref:      pipeline
+Service Account:   test-sa
 
 Status
 STARTED          DURATION    STATUS
@@ -337,7 +337,7 @@ func TestPipelineRunDescribe_failed_withoutTRCondition(t *testing.T) {
 				cb.PipelineRunCreationTimestamp(clock.Now()),
 				tb.PipelineRunLabel("tekton.dev/pipeline", "pipeline"),
 				tb.PipelineRunSpec("pipeline",
-					tb.PipelineRunDeprecatedServiceAccountName("", "test-sa"),
+					tb.PipelineRunServiceAccountName("test-sa"),
 				),
 				tb.PipelineRunStatus(
 					tb.PipelineRunTaskRunsStatus("tr-1", &v1alpha1.PipelineRunTaskRunStatus{
@@ -371,10 +371,10 @@ func TestPipelineRunDescribe_failed_withoutTRCondition(t *testing.T) {
 	if err != nil {
 		t.Errorf("Unexpected error: %v", err)
 	}
-	expected := `Name:                           pipeline-run
-Namespace:                      ns
-Pipeline Ref:                   pipeline
-Service Account (deprecated):   test-sa
+	expected := `Name:              pipeline-run
+Namespace:         ns
+Pipeline Ref:      pipeline
+Service Account:   test-sa
 
 Status
 STARTED          DURATION    STATUS
@@ -415,7 +415,7 @@ func TestPipelineRunDescribe_failed_withoutPRCondition(t *testing.T) {
 				cb.PipelineRunCreationTimestamp(clock.Now()),
 				tb.PipelineRunLabel("tekton.dev/pipeline", "pipeline"),
 				tb.PipelineRunSpec("pipeline",
-					tb.PipelineRunDeprecatedServiceAccountName("test-sa", ""),
+					tb.PipelineRunServiceAccountName("test-sa"),
 				),
 				tb.PipelineRunStatus(
 					tb.PipelineRunTaskRunsStatus("tr-1", &v1alpha1.PipelineRunTaskRunStatus{
@@ -489,7 +489,7 @@ func TestPipelineRunDescribe_with_resources_taskrun(t *testing.T) {
 				cb.PipelineRunCreationTimestamp(clock.Now()),
 				tb.PipelineRunLabel("tekton.dev/pipeline", "pipeline"),
 				tb.PipelineRunSpec("pipeline",
-					tb.PipelineRunDeprecatedServiceAccountName("test-sa", "test-sa-deprecated"),
+					tb.PipelineRunServiceAccountName("test-sa"),
 					tb.PipelineRunParam("test-param", "param-value"),
 					tb.PipelineRunResourceBinding("test-resource",
 						tb.PipelineResourceBindingRef("test-resource-ref"),
@@ -526,11 +526,10 @@ func TestPipelineRunDescribe_with_resources_taskrun(t *testing.T) {
 	if err != nil {
 		t.Errorf("Unexpected error: %v", err)
 	}
-	expected := `Name:                           pipeline-run
-Namespace:                      ns
-Pipeline Ref:                   pipeline
-Service Account (deprecated):   test-sa-deprecated
-Service Account:                test-sa
+	expected := `Name:              pipeline-run
+Namespace:         ns
+Pipeline Ref:      pipeline
+Service Account:   test-sa
 
 Status
 STARTED          DURATION    STATUS
@@ -672,7 +671,7 @@ func TestPipelineRunDescribe_no_resourceref(t *testing.T) {
 				cb.PipelineRunCreationTimestamp(clock.Now()),
 				tb.PipelineRunLabel("tekton.dev/pipeline", "pipeline"),
 				tb.PipelineRunSpec("pipeline",
-					tb.PipelineRunDeprecatedServiceAccountName("test-sa", "test-sa-deprecated"),
+					tb.PipelineRunServiceAccountName("test-sa"),
 					tb.PipelineRunParam("test-param", "param-value"),
 					tb.PipelineRunResourceBinding("test-resource"),
 				),
@@ -707,11 +706,10 @@ func TestPipelineRunDescribe_no_resourceref(t *testing.T) {
 	if err != nil {
 		t.Errorf("Unexpected error: %v", err)
 	}
-	expected := `Name:                           pipeline-run
-Namespace:                      ns
-Pipeline Ref:                   pipeline
-Service Account (deprecated):   test-sa-deprecated
-Service Account:                test-sa
+	expected := `Name:              pipeline-run
+Namespace:         ns
+Pipeline Ref:      pipeline
+Service Account:   test-sa
 
 Status
 STARTED          DURATION    STATUS

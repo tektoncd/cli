@@ -35,9 +35,6 @@ Namespace:	{{ .TaskRun.Namespace }}
 {{- $tRefName := taskRefExists .TaskRun.Spec }}{{- if ne $tRefName "" }}
 Task Ref:    {{ $tRefName }}
 {{- end }}
-{{- if ne .TaskRun.Spec.DeprecatedServiceAccount "" }}
-Service Account (deprecated):	{{ .TaskRun.Spec.DeprecatedServiceAccount }}
-{{- end }}
 {{- if ne .TaskRun.Spec.ServiceAccountName "" }}
 Service Account:	{{ .TaskRun.Spec.ServiceAccountName }}
 {{- end }}
@@ -58,7 +55,11 @@ No resources
 {{- else }}
 NAME	RESOURCE REF
 {{- range $i, $r := .TaskRun.Spec.Inputs.Resources }}
+{{- $rRefName := taskResourceRefExists $r }}{{- if ne $rRefName "" }}
 {{$r.Name }}	{{ $r.ResourceRef.Name }}
+{{- else }}
+{{$r.Name }}	{{ "" }}
+{{- end }}
 {{- end }}
 {{- end }}
 
@@ -68,7 +69,11 @@ No resources
 {{- else }}
 NAME	RESOURCE REF
 {{- range $i, $r := .TaskRun.Spec.Outputs.Resources }}
+{{- $rRefName := taskResourceRefExists $r }}{{- if ne $rRefName "" }}
 {{$r.Name }}	{{ $r.ResourceRef.Name }}
+{{- else }}
+{{$r.Name }}	{{ "" }}
+{{- end }}
 {{- end }}
 {{- end }}
 
@@ -157,12 +162,13 @@ func printTaskRunDescription(s *cli.Stream, trName string, p cli.Params) error {
 	}
 
 	funcMap := template.FuncMap{
-		"formatAge":        formatted.Age,
-		"formatDuration":   formatted.Duration,
-		"formatCondition":  formatted.Condition,
-		"hasFailed":        hasFailed,
-		"taskRefExists":    validate.TaskRefExists,
-		"stepReasonExists": validate.StepReasonExists,
+		"formatAge":             formatted.Age,
+		"formatDuration":        formatted.Duration,
+		"formatCondition":       formatted.Condition,
+		"hasFailed":             hasFailed,
+		"taskRefExists":         validate.TaskRefExists,
+		"taskResourceRefExists": validate.TaskResourceRefExists,
+		"stepReasonExists":      validate.StepReasonExists,
 	}
 
 	w := tabwriter.NewWriter(s.Out, 0, 5, 3, ' ', tabwriter.TabIndent)

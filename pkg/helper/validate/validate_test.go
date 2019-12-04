@@ -76,6 +76,70 @@ func TestTaskRefExists_Not_Present(t *testing.T) {
 	test.AssertOutput(t, "", output)
 }
 
+func TestPipelineRefExists_Present(t *testing.T) {
+	spec := v1alpha1.PipelineRunSpec{
+		PipelineRef: &v1alpha1.PipelineRef{
+			Name: "Pipeline",
+		},
+	}
+
+	output := PipelineRefExists(spec)
+	test.AssertOutput(t, "Pipeline", output)
+}
+
+func TestPipelineRefExists_Not_Present(t *testing.T) {
+	spec := v1alpha1.PipelineRunSpec{
+		PipelineRef: nil,
+	}
+
+	output := PipelineRefExists(spec)
+	test.AssertOutput(t, "", output)
+}
+
+func TestPipelineResourceRefExists_Present(t *testing.T) {
+	res := v1alpha1.PipelineResourceBinding{
+		ResourceRef: &v1alpha1.PipelineResourceRef{
+			Name: "Resource",
+		},
+	}
+
+	output := PipelineResourceRefExists(res)
+	test.AssertOutput(t, "Resource", output)
+}
+
+func TestPipelineResourceRefExists_Not_Present(t *testing.T) {
+	res := v1alpha1.PipelineResourceBinding{
+		ResourceRef: nil,
+	}
+
+	output := PipelineResourceRefExists(res)
+	test.AssertOutput(t, "", output)
+}
+
+func TestTaskResourceRefExists_Present(t *testing.T) {
+	res := v1alpha1.TaskResourceBinding{
+		PipelineResourceBinding: v1alpha1.PipelineResourceBinding{
+			ResourceRef: &v1alpha1.PipelineResourceRef{
+				Name: "Resource",
+			},
+		},
+	}
+
+	output := TaskResourceRefExists(res)
+	test.AssertOutput(t, "Resource", output)
+}
+
+func TestTaskResourceRefExists_Not_Present(t *testing.T) {
+	res := v1alpha1.TaskResourceBinding{
+		PipelineResourceBinding: v1alpha1.PipelineResourceBinding{
+			ResourceRef: nil,
+		},
+	}
+
+	output := TaskResourceRefExists(res)
+	test.AssertOutput(t, "", output)
+}
+
 func TestStepReasonExists_Terminated_Not_Present(t *testing.T) {
 	state := v1alpha1.StepState{}
 
