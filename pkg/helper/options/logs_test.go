@@ -54,12 +54,12 @@ func TestLogOptions_ValidateOpts(t *testing.T) {
 			err := opts.ValidateOpts()
 			if tp.wantError {
 				if err == nil {
-					t.Errorf("error expected here")
+					t.Errorf("Error expected here")
 				}
 				test.AssertOutput(t, tp.want, err.Error())
 			} else {
 				if err != nil {
-					t.Errorf("unexpected Error")
+					t.Errorf("Unexpected error")
 				}
 			}
 		})
@@ -97,7 +97,7 @@ func TestLogOptions_Ask(t *testing.T) {
 			prompt: htest.PromptTest{
 				CmdArgs: []string{},
 				Procedure: func(c *goexpect.Console) error {
-					if _, err := c.ExpectString("Select pipeline :"); err != nil {
+					if _, err := c.ExpectString("Select pipeline:"); err != nil {
 						return err
 					}
 					if _, err := c.SendLine(options[0]); err != nil {
@@ -119,7 +119,7 @@ func TestLogOptions_Ask(t *testing.T) {
 			prompt: htest.PromptTest{
 				CmdArgs: []string{},
 				Procedure: func(c *goexpect.Console) error {
-					if _, err := c.ExpectString("Select pipelinerun :"); err != nil {
+					if _, err := c.ExpectString("Select pipelinerun:"); err != nil {
 						return err
 					}
 					if _, err := c.SendLine(options2[0]); err != nil {
@@ -141,7 +141,7 @@ func TestLogOptions_Ask(t *testing.T) {
 			prompt: htest.PromptTest{
 				CmdArgs: []string{},
 				Procedure: func(c *goexpect.Console) error {
-					if _, err := c.ExpectString("Select taskrun :"); err != nil {
+					if _, err := c.ExpectString("Select taskrun:"); err != nil {
 						return err
 					}
 					if _, err := c.SendLine(options3[0]); err != nil {
@@ -167,13 +167,13 @@ func TestLogOptions_Ask(t *testing.T) {
 				return opts.Ask(tp.resource, tp.options)
 			})
 			if opts.PipelineName != tp.want.PipelineName {
-				t.Errorf("unexpected PipelineName")
+				t.Errorf("Unexpected Pipeline Name")
 			}
 			if opts.PipelineRunName != tp.want.PipelineRunName {
-				t.Errorf("unexpected PipelineRunName")
+				t.Errorf("Unexpected PipelineRun Name")
 			}
 			if opts.TaskrunName != tp.want.TaskrunName {
-				t.Errorf("unexpected TaskRunName")
+				t.Errorf("Unexpected TaskRun Name")
 			}
 		})
 	}
