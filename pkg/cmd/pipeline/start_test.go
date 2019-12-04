@@ -373,7 +373,7 @@ func Test_start_pipeline_last(t *testing.T) {
 		tb.PipelineRun("test-pipeline-run-123", "ns",
 			tb.PipelineRunLabel("tekton.dev/pipeline", pipelineName),
 			tb.PipelineRunSpec(pipelineName,
-				tb.PipelineRunDeprecatedServiceAccountName("", "test-sa"),
+				tb.PipelineRunServiceAccountName("test-sa"),
 				tb.PipelineRunResourceBinding("git-repo", tb.PipelineResourceBindingRef("some-repo")),
 				tb.PipelineRunResourceBinding("build-image", tb.PipelineResourceBindingRef("some-image")),
 				tb.PipelineRunParam("pipeline-param-1", "somethingmorefun"),
@@ -434,7 +434,7 @@ func Test_start_pipeline_last(t *testing.T) {
 			test.AssertOutput(t, v1alpha1.ArrayOrString{Type: v1alpha1.ParamTypeString, StringVal: "revision2"}, v.Value)
 		}
 	}
-	test.AssertOutput(t, "svc1", pr.Spec.DeprecatedServiceAccount)
+	test.AssertOutput(t, "svc1", pr.Spec.ServiceAccountName)
 }
 
 func Test_start_pipeline_last_without_res_param(t *testing.T) {
@@ -461,7 +461,7 @@ func Test_start_pipeline_last_without_res_param(t *testing.T) {
 		tb.PipelineRun("test-pipeline-run-123", "ns",
 			tb.PipelineRunLabel("tekton.dev/pipeline", pipelineName),
 			tb.PipelineRunSpec(pipelineName,
-				tb.PipelineRunDeprecatedServiceAccountName("", "test-sa"),
+				tb.PipelineRunServiceAccountName("test-sa"),
 				tb.PipelineRunResourceBinding("git-repo", tb.PipelineResourceBindingRef("some-repo")),
 				tb.PipelineRunResourceBinding("build-image", tb.PipelineResourceBindingRef("some-image")),
 				tb.PipelineRunParam("pipeline-param-1", "somethingmorefun"),
@@ -517,7 +517,7 @@ func Test_start_pipeline_last_without_res_param(t *testing.T) {
 			test.AssertOutput(t, v1alpha1.ArrayOrString{Type: v1alpha1.ParamTypeString, StringVal: "revision1"}, v.Value)
 		}
 	}
-	test.AssertOutput(t, "test-sa", pr.Spec.DeprecatedServiceAccount)
+	test.AssertOutput(t, "test-sa", pr.Spec.ServiceAccountName)
 }
 
 func Test_start_pipeline_last_merge(t *testing.T) {
@@ -544,9 +544,9 @@ func Test_start_pipeline_last_merge(t *testing.T) {
 		tb.PipelineRun("test-pipeline-run-123", "ns",
 			tb.PipelineRunLabel("tekton.dev/pipeline", pipelineName),
 			tb.PipelineRunSpec(pipelineName,
-				tb.PipelineRunDeprecatedServiceAccountName("", "test-sa"),
-				tb.PipelineRunDeprecatedServiceAccountTask("task1", "task1svc"),
-				tb.PipelineRunDeprecatedServiceAccountTask("task3", "task3svc"),
+				tb.PipelineRunServiceAccountName("test-sa"),
+				tb.PipelineRunServiceAccountNameTask("task1", "task1svc"),
+				tb.PipelineRunServiceAccountNameTask("task3", "task3svc"),
 				tb.PipelineRunResourceBinding("git-repo", tb.PipelineResourceBindingRef("some-repo")),
 				tb.PipelineRunResourceBinding("build-image", tb.PipelineResourceBindingRef("some-image")),
 				tb.PipelineRunParam("pipeline-param-1", "somethingmorefun"),
@@ -608,13 +608,13 @@ func Test_start_pipeline_last_merge(t *testing.T) {
 		}
 	}
 
-	for _, v := range pr.Spec.DeprecatedServiceAccounts {
+	for _, v := range pr.Spec.ServiceAccountNames {
 		if v.TaskName == "task3" {
-			test.AssertOutput(t, "task3svc3", v.DeprecatedServiceAccount)
+			test.AssertOutput(t, "task3svc3", v.ServiceAccountName)
 		}
 	}
 
-	test.AssertOutput(t, "svc1", pr.Spec.DeprecatedServiceAccount)
+	test.AssertOutput(t, "svc1", pr.Spec.ServiceAccountName)
 }
 
 func Test_start_pipeline_allkindparam(t *testing.T) {
@@ -1056,11 +1056,11 @@ func Test_mergeResource(t *testing.T) {
 			GenerateName: "test-run",
 		},
 		Spec: v1alpha1.PipelineRunSpec{
-			PipelineRef: v1alpha1.PipelineRef{Name: "test"},
+			PipelineRef: &v1alpha1.PipelineRef{Name: "test"},
 			Resources: []v1alpha1.PipelineResourceBinding{
 				{
 					Name: "source",
-					ResourceRef: v1alpha1.PipelineResourceRef{
+					ResourceRef: &v1alpha1.PipelineResourceRef{
 						Name: "git",
 					},
 				},
@@ -1204,12 +1204,12 @@ func Test_parseRes(t *testing.T) {
 		},
 		want: map[string]v1alpha1.PipelineResourceBinding{"source": {
 			Name: "source",
-			ResourceRef: v1alpha1.PipelineResourceRef{
+			ResourceRef: &v1alpha1.PipelineResourceRef{
 				Name: "git",
 			},
 		}, "image": {
 			Name: "image",
-			ResourceRef: v1alpha1.PipelineResourceRef{
+			ResourceRef: &v1alpha1.PipelineResourceRef{
 				Name: "docker2",
 			},
 		}},
@@ -1266,47 +1266,6 @@ func Test_parseTaskSvc(t *testing.T) {
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			got, err := parseTaskSvc(tt.args.p)
-			if (err != nil) != tt.wantErr {
-				t.Errorf("parseSvc() error = %v, wantErr %v", err, tt.wantErr)
-				return
-			}
-			if !reflect.DeepEqual(got, tt.want) {
-				t.Errorf("parseSvc() = %v, want %v", got, tt.want)
-			}
-		})
-	}
-}
-
-func Test_parseDeprecatedTaskSvc(t *testing.T) {
-	type args struct {
-		p []string
-	}
-	tests := []struct {
-		name    string
-		args    args
-		want    map[string]v1alpha1.DeprecatedPipelineRunSpecServiceAccount
-		wantErr bool
-	}{{
-		name: "Test_parseParam No Err",
-		args: args{
-			p: []string{"key1=value1", "key2=value2"},
-		},
-		want: map[string]v1alpha1.DeprecatedPipelineRunSpecServiceAccount{
-			"key1": {TaskName: "key1", DeprecatedServiceAccount: "value1"},
-			"key2": {TaskName: "key2", DeprecatedServiceAccount: "value2"},
-		},
-		wantErr: false,
-	}, {
-		name: "Test_parseParam Err",
-		args: args{
-			p: []string{"value1", "value2"},
-		},
-		wantErr: true,
-	}}
-
-	for _, tt := range tests {
-		t.Run(tt.name, func(t *testing.T) {
-			got, err := parseDeprecatedTaskSvc(tt.args.p)
 			if (err != nil) != tt.wantErr {
 				t.Errorf("parseSvc() error = %v, wantErr %v", err, tt.wantErr)
 				return

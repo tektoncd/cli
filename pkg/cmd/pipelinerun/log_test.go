@@ -235,6 +235,7 @@ func TestPipelinerunLogs(t *testing.T) {
 	prs := []*v1alpha1.PipelineRun{
 		tb.PipelineRun(prName, ns,
 			tb.PipelineRunLabel("tekton.dev/pipeline", prName),
+			tb.PipelineRunSpec(pipelineName),
 			tb.PipelineRunStatus(
 				tb.PipelineRunStatusCondition(apis.Condition{
 					Status: corev1.ConditionTrue,
@@ -409,6 +410,7 @@ func TestPipelinerunLog_completed_taskrun_only(t *testing.T) {
 	prs := []*v1alpha1.PipelineRun{
 		tb.PipelineRun(prName, ns,
 			tb.PipelineRunLabel("tekton.dev/pipeline", prName),
+			tb.PipelineRunSpec(pipelineName),
 			tb.PipelineRunStatus(
 				tb.PipelineRunStatusCondition(apis.Condition{
 					Status: corev1.ConditionTrue,
@@ -515,6 +517,7 @@ func TestPipelinerunLog_follow_mode(t *testing.T) {
 	prs := []*v1alpha1.PipelineRun{
 		tb.PipelineRun(prName, ns,
 			tb.PipelineRunLabel("tekton.dev/pipeline", prName),
+			tb.PipelineRunSpec(pipelineName),
 			tb.PipelineRunStatus(
 				tb.PipelineRunStatusCondition(apis.Condition{
 					Status: corev1.ConditionTrue,

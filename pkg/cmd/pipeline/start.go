@@ -381,7 +381,7 @@ func (opt *startOptions) startPipeline(pName string) error {
 			GenerateName: pName + "-run-",
 		},
 		Spec: v1alpha1.PipelineRunSpec{
-			PipelineRef: v1alpha1.PipelineRef{Name: pName},
+			PipelineRef: &v1alpha1.PipelineRef{Name: pName},
 		},
 	}
 
@@ -397,9 +397,6 @@ func (opt *startOptions) startPipeline(pName string) error {
 		}
 		pr.Spec.Resources = prLast.Spec.Resources
 		pr.Spec.Params = prLast.Spec.Params
-		// TODO(vdemeester) remove those 2 lines with bump to 0.9.0
-		pr.Spec.DeprecatedServiceAccount = prLast.Spec.DeprecatedServiceAccount
-		pr.Spec.DeprecatedServiceAccounts = prLast.Spec.DeprecatedServiceAccounts
 		// If the prLast is a "new" PR, let's populate those fields too
 		pr.Spec.ServiceAccountName = prLast.Spec.ServiceAccountName
 		pr.Spec.ServiceAccountNames = prLast.Spec.ServiceAccountNames
@@ -426,8 +423,7 @@ func (opt *startOptions) startPipeline(pName string) error {
 	}
 
 	if len(opt.ServiceAccountName) > 0 {
-		// FIXME(vdemeester) Populate the ServiceAccountName instead with bump to 0.9.0
-		pr.Spec.DeprecatedServiceAccount = opt.ServiceAccountName
+		pr.Spec.ServiceAccountName = opt.ServiceAccountName
 	}
 
 	prCreated, err := cs.Tekton.TektonV1alpha1().PipelineRuns(opt.cliparams.Namespace()).Create(pr)
@@ -480,25 +476,9 @@ func mergeSvc(pr *v1alpha1.PipelineRun, optSvc []string) error {
 	if err != nil {
 		return err
 	}
-	dsvcs, err := parseDeprecatedTaskSvc(optSvc)
-	if err != nil {
-		return err
-	}
 
-	if len(svcs) == 0 && len(dsvcs) == 0 {
+	if len(svcs) == 0 {
 		return nil
-	}
-
-	// FIXME(vdemeester) Remove the next 2 loops with bump to 0.9.0
-	for i := range pr.Spec.DeprecatedServiceAccounts {
-		if v, ok := dsvcs[pr.Spec.DeprecatedServiceAccounts[i].TaskName]; ok {
-			pr.Spec.DeprecatedServiceAccounts[i] = v
-			delete(dsvcs, v.TaskName)
-		}
-	}
-
-	for _, v := range dsvcs {
-		pr.Spec.DeprecatedServiceAccounts = append(pr.Spec.DeprecatedServiceAccounts, v)
 	}
 
 	for i := range pr.Spec.ServiceAccountNames {
@@ -524,7 +504,7 @@ func parseRes(res []string) (map[string]v1alpha1.PipelineResourceBinding, error)
 		}
 		resources[r[0]] = v1alpha1.PipelineResourceBinding{
 			Name: r[0],
-			ResourceRef: v1alpha1.PipelineResourceRef{
+			ResourceRef: &v1alpha1.PipelineResourceRef{
 				Name: r[1],
 			},
 		}
@@ -545,24 +525,6 @@ func parseTaskSvc(s []string) (map[string]v1alpha1.PipelineRunSpecServiceAccount
 		svcs[r[0]] = v1alpha1.PipelineRunSpecServiceAccountName{
 			TaskName:           r[0],
 			ServiceAccountName: r[1],
-		}
-	}
-	return svcs, nil
-}
-
-func parseDeprecatedTaskSvc(s []string) (map[string]v1alpha1.DeprecatedPipelineRunSpecServiceAccount, error) {
-	svcs := map[string]v1alpha1.DeprecatedPipelineRunSpecServiceAccount{}
-	for _, v := range s {
-		r := strings.Split(v, "=")
-		if len(r) != 2 || len(r[0]) == 0 {
-			errMsg := invalidSvc + v +
-				"\nPlease pass task service accounts as " +
-				"--task-serviceaccount TaskName=ServiceAccount"
-			return nil, errors.New(errMsg)
-		}
-		svcs[r[0]] = v1alpha1.DeprecatedPipelineRunSpecServiceAccount{
-			TaskName:                 r[0],
-			DeprecatedServiceAccount: r[1],
 		}
 	}
 	return svcs, nil
