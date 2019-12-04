@@ -29,6 +29,7 @@ import (
 	"github.com/tektoncd/pipeline/pkg/apis/pipeline/v1alpha1"
 	"github.com/tektoncd/pipeline/pkg/list"
 	"github.com/tektoncd/pipeline/pkg/names"
+	"github.com/tektoncd/pipeline/pkg/reconciler/pipeline/dag"
 	"github.com/tektoncd/pipeline/pkg/reconciler/taskrun/resources"
 )
 
@@ -131,7 +132,7 @@ func (state PipelineRunState) IsDone() (isDone bool) {
 
 // GetNextTasks will return the next ResolvedPipelineRunTasks to execute, which are the ones in the
 // list of candidateTasks which aren't yet indicated in state to be running.
-func (state PipelineRunState) GetNextTasks(candidateTasks map[string]v1alpha1.PipelineTask) []*ResolvedPipelineRunTask {
+func (state PipelineRunState) GetNextTasks(candidateTasks map[string]struct{}) []*ResolvedPipelineRunTask {
 	tasks := []*ResolvedPipelineRunTask{}
 	for _, t := range state {
 		if _, ok := candidateTasks[t.PipelineTask.Name]; ok && t.TaskRun == nil {
@@ -317,7 +318,7 @@ func getTaskRunName(taskRunsStatus map[string]*v1alpha1.PipelineRunTaskRunStatus
 
 // GetPipelineConditionStatus will return the Condition that the PipelineRun prName should be
 // updated with, based on the status of the TaskRuns in state.
-func GetPipelineConditionStatus(pr *v1alpha1.PipelineRun, state PipelineRunState, logger *zap.SugaredLogger, dag *v1alpha1.DAG) *apis.Condition {
+func GetPipelineConditionStatus(pr *v1alpha1.PipelineRun, state PipelineRunState, logger *zap.SugaredLogger, dag *dag.Graph) *apis.Condition {
 	// We have 4 different states here:
 	// 1. Timed out -> Failed
 	// 2. Any one TaskRun has failed - >Failed. This should change with #1020 and #1023
@@ -379,7 +380,7 @@ func GetPipelineConditionStatus(pr *v1alpha1.PipelineRun, state PipelineRunState
 // isSkipped returns true if a Task in a TaskRun will not be run either because
 //  its Condition Checks failed or because one of the parent tasks's conditions failed
 // Note that this means isSkipped returns false if a conditionCheck is in progress
-func isSkipped(rprt *ResolvedPipelineRunTask, stateMap map[string]*ResolvedPipelineRunTask, d *v1alpha1.DAG) bool {
+func isSkipped(rprt *ResolvedPipelineRunTask, stateMap map[string]*ResolvedPipelineRunTask, d *dag.Graph) bool {
 	// Taskrun not skipped if it already exists
 	if rprt.TaskRun != nil {
 		return false
@@ -397,7 +398,7 @@ func isSkipped(rprt *ResolvedPipelineRunTask, stateMap map[string]*ResolvedPipel
 	// if any of the parents have been skipped, skip as well
 	node := d.Nodes[rprt.PipelineTask.Name]
 	for _, p := range node.Prev {
-		skip := isSkipped(stateMap[p.Task.Name], stateMap, d)
+		skip := isSkipped(stateMap[p.Task.HashKey()], stateMap, d)
 		if skip {
 			return true
 		}
@@ -405,55 +406,10 @@ func isSkipped(rprt *ResolvedPipelineRunTask, stateMap map[string]*ResolvedPipel
 	return false
 }
 
-func findReferencedTask(pb string, state []*ResolvedPipelineRunTask) *ResolvedPipelineRunTask {
-	for _, rprtRef := range state {
-		if rprtRef.PipelineTask.Name == pb {
-			return rprtRef
-		}
-	}
-	return nil
-}
-
-// ValidateFrom will look at any `from` clauses in the resolved PipelineRun state
-// and validate it: the `from` must specify an input of the current `Task`. The `PipelineTask`
-// it corresponds to must actually exist in the `Pipeline`. The `PipelineResource` that is bound to the input
-// must be the same `PipelineResource` that was bound to the output of the previous `Task`. If the state is
-// not valid, it will return an error.
-func ValidateFrom(state PipelineRunState) error {
-	for _, rprt := range state {
-		if rprt.PipelineTask.Resources != nil {
-			for _, dep := range rprt.PipelineTask.Resources.Inputs {
-				inputBinding := rprt.ResolvedTaskResources.Inputs[dep.Name]
-				for _, pb := range dep.From {
-					if pb == rprt.PipelineTask.Name {
-						return xerrors.Errorf("PipelineTask %s is trying to depend on a PipelineResource from itself", pb)
-					}
-					depTask := findReferencedTask(pb, state)
-					if depTask == nil {
-						return xerrors.Errorf("pipelineTask %s is trying to depend on previous Task %q but it does not exist", rprt.PipelineTask.Name, pb)
-					}
-
-					sameBindingExists := false
-					for _, output := range depTask.ResolvedTaskResources.Outputs {
-						if output.Name == inputBinding.Name {
-							sameBindingExists = true
-						}
-					}
-					if !sameBindingExists {
-						return xerrors.Errorf("from is ambiguous: input %q for PipelineTask %q is bound to %q but no outputs in PipelineTask %q are bound to same resource",
-							dep.Name, rprt.PipelineTask.Name, inputBinding.Name, depTask.PipelineTask.Name)
-					}
-				}
-			}
-		}
-	}
-
-	return nil
-}
-
 func resolveConditionChecks(pt *v1alpha1.PipelineTask, taskRunStatus map[string]*v1alpha1.PipelineRunTaskRunStatus, taskRunName string, getTaskRun resources.GetTaskRun, getCondition GetCondition, providedResources map[string]*v1alpha1.PipelineResource) ([]*ResolvedConditionCheck, error) {
 	rccs := []*ResolvedConditionCheck{}
-	for _, ptc := range pt.Conditions {
+	for i := range pt.Conditions {
+		ptc := pt.Conditions[i]
 		cName := ptc.ConditionRef
 		c, err := getCondition(cName)
 		if err != nil {

@@ -59,18 +59,17 @@ var validArtifactTypes = []GCSArtifactType{
 // BuildGCSResource describes a resource in the form of an archive,
 // or a source manifest describing files to fetch.
 // BuildGCSResource does incremental uploads for files in  directory.
-
 type BuildGCSResource struct {
 	Name         string
 	Type         PipelineResourceType
 	Location     string
 	ArtifactType GCSArtifactType
 
-	BashNoopImage        string `json:"-"`
+	ShellImage           string `json:"-"`
 	BuildGCSFetcherImage string `json:"-"`
 }
 
-//  creates a new BuildGCS resource to pass to a Task
+// NewBuildGCSResource creates a new BuildGCS resource to pass to a Task.
 func NewBuildGCSResource(images pipeline.Images, r *PipelineResource) (*BuildGCSResource, error) {
 	if r.Spec.Type != PipelineResourceTypeStorage {
 		return nil, xerrors.Errorf("BuildGCSResource: Cannot create a BuildGCS resource from a %s Pipeline Resource", r.Spec.Type)
@@ -103,7 +102,7 @@ func NewBuildGCSResource(images pipeline.Images, r *PipelineResource) (*BuildGCS
 		Type:                 r.Spec.Type,
 		Location:             location,
 		ArtifactType:         aType,
-		BashNoopImage:        images.BashNoopImage,
+		ShellImage:           images.ShellImage,
 		BuildGCSFetcherImage: images.BuildGCSFetcherImage,
 	}, nil
 }
@@ -135,7 +134,7 @@ func (s *BuildGCSResource) GetInputTaskModifier(ts *TaskSpec, sourcePath string)
 	}
 
 	steps := []Step{
-		CreateDirStep(s.BashNoopImage, s.Name, sourcePath),
+		CreateDirStep(s.ShellImage, s.Name, sourcePath),
 		{Container: corev1.Container{
 			Name:    names.SimpleNameGenerator.RestrictLengthWithRandomSuffix(fmt.Sprintf("storage-fetch-%s", s.Name)),
 			Command: []string{"/ko-app/gcs-fetcher"},

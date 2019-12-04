@@ -38,14 +38,10 @@ var (
 	}
 )
 
-// Check that TaskRun may be validated and defaulted.
-var _ apis.Validatable = (*PipelineRun)(nil)
-var _ apis.Defaultable = (*PipelineRun)(nil)
-
 // PipelineRunSpec defines the desired state of PipelineRun
 type PipelineRunSpec struct {
 	// +optional
-	PipelineRef PipelineRef `json:"pipelineRef,omitempty"`
+	PipelineRef *PipelineRef `json:"pipelineRef,omitempty"`
 	// +optional
 	PipelineSpec *PipelineSpec `json:"pipelineSpec,omitempty"`
 	// Resources is a list of bindings specifying which actual instances of
@@ -56,12 +52,6 @@ type PipelineRunSpec struct {
 	Params []Param `json:"params,omitempty"`
 	// +optional
 	ServiceAccountName string `json:"serviceAccountName,omitempty"`
-	// DeprecatedServiceAccount is a depreciated alias for ServiceAccountName.
-	// Deprecated: Use serviceAccountName instead.
-	// +optional
-	DeprecatedServiceAccount string `json:"serviceAccount,omitempty"`
-	// +optional
-	DeprecatedServiceAccounts []DeprecatedPipelineRunSpecServiceAccount `json:"serviceAccounts,omitempty"`
 	// +optional
 	ServiceAccountNames []PipelineRunSpecServiceAccountName `json:"serviceAccountNames,omitempty"`
 	// Used for cancelling a pipelinerun (and maybe more later on)
@@ -160,16 +150,6 @@ func (pr *PipelineRunStatus) InitializeConditions() {
 	pipelineRunCondSet.Manage(pr).InitializeConditions()
 }
 
-// DeprecatedPipelineRunSpecServiceAccount can be used to configure specific
-// ServiceAccount for a concrete Task
-// Deprecated: Use pipelineRunSpecServiceAccountName instead.
-type DeprecatedPipelineRunSpecServiceAccount struct {
-	TaskName string `json:"taskName,omitempty"`
-	// DeprecatedServiceAccount is a depreciated alias for ServiceAccountName.
-	// Deprecated: Use serviceAccountName instead.
-	DeprecatedServiceAccount string `json:"serviceAccount,omitempty"`
-}
-
 // PipelineRunSpecServiceAccountName can be used to configure specific
 // ServiceAccountName for a concrete Task
 type PipelineRunSpecServiceAccountName struct {
@@ -226,7 +206,7 @@ type PipelineTaskRun struct {
 // GetTaskRunRef for pipelinerun
 func (pr *PipelineRun) GetTaskRunRef() corev1.ObjectReference {
 	return corev1.ObjectReference{
-		APIVersion: "tekton.dev/v1alpha1",
+		APIVersion: SchemeGroupVersion.String(),
 		Kind:       "TaskRun",
 		Namespace:  pr.Namespace,
 		Name:       pr.Name,
@@ -283,14 +263,6 @@ func (pr *PipelineRun) IsTimedOut() bool {
 // PipelineTask if configured, otherwise it returns the PipelineRun's serviceAccountName.
 func (pr *PipelineRun) GetServiceAccountName(pipelineTaskName string) string {
 	serviceAccountName := pr.Spec.ServiceAccountName
-	if serviceAccountName == "" {
-		serviceAccountName = pr.Spec.DeprecatedServiceAccount
-	}
-	for _, sa := range pr.Spec.DeprecatedServiceAccounts {
-		if sa.TaskName == pipelineTaskName {
-			serviceAccountName = sa.DeprecatedServiceAccount
-		}
-	}
 	for _, sa := range pr.Spec.ServiceAccountNames {
 		if sa.TaskName == pipelineTaskName {
 			serviceAccountName = sa.ServiceAccountName

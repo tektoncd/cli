@@ -27,10 +27,6 @@ import (
 	duckv1beta1 "knative.dev/pkg/apis/duck/v1beta1"
 )
 
-// Check that TaskRun may be validated and defaulted.
-var _ apis.Validatable = (*TaskRun)(nil)
-var _ apis.Defaultable = (*TaskRun)(nil)
-
 // TaskRunSpec defines the desired state of TaskRun
 type TaskRunSpec struct {
 	// +optional
@@ -39,10 +35,6 @@ type TaskRunSpec struct {
 	Outputs TaskRunOutputs `json:"outputs,omitempty"`
 	// +optional
 	ServiceAccountName string `json:"serviceAccountName"`
-	// DeprecatedServiceAccount is a depreciated alias for ServiceAccountName.
-	// Deprecated: Use serviceAccountName instead.
-	// +optional
-	DeprecatedServiceAccount string `json:"serviceAccount,omitempty"`
 	// no more than one of the TaskRef and TaskSpec may be specified.
 	// +optional
 	TaskRef *TaskRef `json:"taskRef,omitempty"`
@@ -129,6 +121,10 @@ type TaskRunStatus struct {
 	// the digest of build container images
 	// optional
 	ResourcesResult []PipelineResourceResult `json:"resourcesResult,omitempty"`
+
+	// The list has one entry per sidecar in the manifest. Each entry is
+	// represents the imageid of the corresponding sidecar.
+	Sidecars []SidecarState `json:"sidecars,omitempty"`
 }
 
 // GetCondition returns the Condition matching the given type.
@@ -159,6 +155,12 @@ type StepState struct {
 	Name          string `json:"name,omitempty"`
 	ContainerName string `json:"container,omitempty"`
 	ImageID       string `json:"imageID,omitempty"`
+}
+
+// SidecarState reports the results of sidecar in the Task.
+type SidecarState struct {
+	Name    string `json:"name,omitempty"`
+	ImageID string `json:"imageID,omitempty"`
 }
 
 // CloudEventDelivery is the target of a cloud event along with the state of
@@ -283,15 +285,6 @@ func (tr *TaskRun) IsCancelled() bool {
 func (tr *TaskRun) GetRunKey() string {
 	// The address of the pointer is a threadsafe unique identifier for the taskrun
 	return fmt.Sprintf("%s/%p", "TaskRun", tr)
-}
-
-func (tr *TaskRun) GetServiceAccountName() string {
-	name := tr.Spec.ServiceAccountName
-	if name == "" {
-		name = tr.Spec.DeprecatedServiceAccount
-	}
-	return name
-
 }
 
 // IsPartOfPipeline return true if TaskRun is a part of a Pipeline.
