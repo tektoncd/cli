@@ -18,6 +18,7 @@
 
 # TODO: fix common.sh and  enable set  -euo pipefail
 #set -euxo pipefail
+set -x
 
 source $(dirname $0)/e2e-common.sh
 
