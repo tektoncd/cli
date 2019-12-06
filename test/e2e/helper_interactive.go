@@ -69,7 +69,7 @@ func RunInteractivePipelineLogs(t *testing.T, namespace string, ops *Interactive
 	}
 	defer testCloser(t, c)
 
-	cmd := exec.Command("./tkn", ops.Cmd[0:len(ops.Cmd)]...)
+	cmd := exec.Command("./tkn", ops.Cmd[0:len(ops.Cmd)]...) //nolint:gosec
 	cmd.Stdin = c.Tty()
 	var errStdout, errStderr error
 	stdoutIn, _ := cmd.StdoutPipe()

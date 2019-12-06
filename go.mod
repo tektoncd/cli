@@ -14,6 +14,7 @@ require (
 	github.com/ghodss/yaml v1.0.0
 	github.com/google/go-cmp v0.3.1
 	github.com/google/gofuzz v0.0.0-20161122191042-44d81051d367 // indirect
+	github.com/google/licenseclassifier v0.0.0-20190926221455-842c0d70d702 // indirect
 	github.com/google/uuid v1.1.1 // indirect
 	github.com/googleapis/gnostic v0.0.0-20170729233727-0c5108395e2d // indirect
 	github.com/gregjones/httpcache v0.0.0-20180305231024-9cad4c3443a7 // indirect

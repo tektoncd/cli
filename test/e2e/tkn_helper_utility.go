@@ -162,8 +162,8 @@ func VerifyServiceAccountExistence(namespace string, kubeClient *knativetest.Kub
 	}
 }
 
-func VerifyServiceAccountExistenceForSecrets(namespace string, kubeClient *knativetest.KubeClient, SA string) {
-	defaultSA := SA
+func VerifyServiceAccountExistenceForSecrets(namespace string, kubeClient *knativetest.KubeClient, sa string) {
+	defaultSA := sa
 	log.Printf("Verify SA %q is created in namespace %q", defaultSA, namespace)
 
 	if err := wait.PollImmediate(interval, timeout, func() (bool, error) {

@@ -445,18 +445,17 @@ func listPipelineDetailsWithTestData(t *testing.T, cs *Clients, td map[int]inter
 	runs := GetPipelineRunList(cs)
 	latestRuns := pipelineruns{}
 	for _, p := range td {
-		switch p := p.(type) {
-		case *PipelinesListData:
+		if _, ok := p.(*PipelinesListData); ok {
 			for _, run := range runs.Items {
-				pipelineName := p.Name
+				pipelineName := p.(*PipelinesListData).Name
 				latest, ok := latestRuns[pipelineName]
 				if !ok {
-					run.Status.Conditions[0].Reason = p.Status
+					run.Status.Conditions[0].Reason = p.(*PipelinesListData).Status
 					latestRuns[pipelineName] = run
 					continue
 				}
 				if run.CreationTimestamp.After(latest.CreationTimestamp.Time) {
-					run.Status.Conditions[0].Reason = p.Status
+					run.Status.Conditions[0].Reason = p.(*PipelinesListData).Status
 					latestRuns[pipelineName] = run
 				}
 			}
@@ -615,24 +614,25 @@ func GetPipelineWithTestData(t *testing.T, c *Clients, name string, td map[int]i
 				count := 0
 				for k, v := range p.Resources {
 					pipeline.Spec.Resources[count].Name = k
-					if v == "git" {
+					switch v {
+					case "git":
 						pipeline.Spec.Resources[count].Type = v1alpha1.PipelineResourceTypeGit
-					} else if v == "storage" {
+					case "storage":
 						pipeline.Spec.Resources[count].Type = v1alpha1.PipelineResourceTypeStorage
-
-					} else if v == "image" {
+					case "image":
 						pipeline.Spec.Resources[count].Type = v1alpha1.PipelineResourceTypeImage
-					} else if v == "cluster" {
+					case "cluster":
 						pipeline.Spec.Resources[count].Type = v1alpha1.PipelineResourceTypeCluster
-					} else if v == "pullRequest" {
+					case "pullRequest":
 						pipeline.Spec.Resources[count].Type = v1alpha1.PipelineResourceTypePullRequest
-					} else if v == "build-gcs" {
+					case "build-gcs":
 						pipeline.Spec.Resources[count].Type = v1alpha1.PipelineResourceTypeBuildGCS
-					} else if v == "gcs" {
+					case "gcs":
 						pipeline.Spec.Resources[count].Type = v1alpha1.PipelineResourceTypeGCS
-					} else {
+					default:
 						t.Errorf("Provided PipelineResourcesData is not Valid Type : Need to Provide (%s, %s, %s, %s, %s)", v1alpha1.PipelineResourceTypeGit, v1alpha1.PipelineResourceTypeImage, v1alpha1.PipelineResourceTypePullRequest, v1alpha1.PipelineResourceTypeBuildGCS, v1alpha1.PipelineResourceTypeCluster)
 					}
+
 					count++
 				}
 			} else {

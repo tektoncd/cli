@@ -597,7 +597,7 @@ func getReadFileTask(taskname string, namespace string) *v1alpha1.Task {
 	return tb.Task(taskname, namespace, tb.TaskSpec(taskSpecOps...))
 }
 
-func getPipeline(PipelineName string, namespace string, createFiletaskName string, readFileTaskName string) *v1alpha1.Pipeline {
+func getPipeline(pipelineName string, namespace string, createFiletaskName string, readFileTaskName string) *v1alpha1.Pipeline {
 
 	pipelineSpec := []tb.PipelineSpecOp{
 		tb.PipelineDeclaredResource("source-repo", "git"),
@@ -610,5 +610,5 @@ func getPipeline(PipelineName string, namespace string, createFiletaskName strin
 		),
 	}
 
-	return tb.Pipeline(PipelineName, namespace, tb.PipelineSpec(pipelineSpec...))
+	return tb.Pipeline(pipelineName, namespace, tb.PipelineSpec(pipelineSpec...))
 }
