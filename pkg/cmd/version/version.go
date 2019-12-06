@@ -17,6 +17,7 @@ package version
 import (
 	"encoding/json"
 	"fmt"
+	"github.com/tektoncd/pipeline/pkg/version"
 	"io/ioutil"
 	"log"
 	"net/http"
@@ -30,6 +31,7 @@ import (
 
 // NOTE: use go build -ldflags "-X github.com/tektoncd/cli/pkg/cmd/version.clientVersion=$(git describe)"
 var clientVersion = devVersion
+var pipelineVersion = version.PipelineVersion
 
 const devVersion = "dev"
 const latestReleaseURL = "https://api.github.com/repos/tektoncd/cli/releases/latest"
@@ -46,6 +48,7 @@ func Command() *cobra.Command {
 		},
 		RunE: func(cmd *cobra.Command, args []string) error {
 			fmt.Fprintf(cmd.OutOrStdout(), "Client version: %s\n", clientVersion)
+			fmt.Fprintf(cmd.OutOrStdout(), "Pipeline version: %s\n", pipelineVersion)
 
 			if !check || clientVersion == devVersion {
 				return nil
