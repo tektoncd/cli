@@ -32,9 +32,8 @@ type promptTest struct {
 
 func (res *Resource) RunPromptTest(t *testing.T, test promptTest) {
 	test.runTest(t, test.procedure, func(stdio terminal.Stdio) error {
-		var err error
 		res.AskOpts = WithStdio(stdio)
-		err = res.create()
+		err := res.createInteractive()
 		if err != nil {
 			if err.Error() == "resource already exist" {
 				return nil

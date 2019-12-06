@@ -5,7 +5,7 @@
 
 .SH NAME
 .PP
-tkn\-resource\-create \- Creates pipeline resource
+tkn\-resource\-create \- Create a pipeline resource in a namespace
 
 
 .SH SYNOPSIS
@@ -15,13 +15,30 @@ tkn\-resource\-create \- Creates pipeline resource
 
 .SH DESCRIPTION
 .PP
-Creates pipeline resource
+Create a pipeline resource in a namespace
 
 
 .SH OPTIONS
 .PP
+\fB\-\-allow\-missing\-template\-keys\fP[=true]
+    If true, ignore any errors in templates when a field or map key is missing in the template. Only applies to golang and jsonpath output formats.
+
+.PP
+\fB\-f\fP, \fB\-\-from\fP=""
+    local or remote filename to use to create the pipeline resource
+
+.PP
 \fB\-h\fP, \fB\-\-help\fP[=false]
     help for create
+
+.PP
+\fB\-o\fP, \fB\-\-output\fP=""
+    Output format. One of: json|yaml|name|go\-template|go\-template\-file|template|templatefile|jsonpath|jsonpath\-file.
+
+.PP
+\fB\-\-template\fP=""
+    Template string or path to template file to use when \-o=go\-template, \-o=go\-template\-file. The template format is golang templates [
+\[la]http://golang.org/pkg/text/template/#pkg-overview\[ra]].
 
 
 .SH OPTIONS INHERITED FROM PARENT COMMANDS
@@ -44,8 +61,12 @@ Creates pipeline resource
 
 .SH EXAMPLE
 .PP
-# creates new resource as per the given input
+# Creates new PipelineResource as per the given input
     tkn resource create \-n namespace
+
+.PP
+# Create a PipelineResource defined by foo.yaml in namespace 'bar'
+    tkn resource create \-f foo.yaml \-n bar
 
 
 .SH SEE ALSO
