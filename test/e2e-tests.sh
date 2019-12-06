@@ -39,9 +39,12 @@ ci_run && {
 tkn() {
     if [[ -e ./bin/tkn ]];then
         export TEST_CLIENT_BINARY='/bin'
+        echo $TEST_CLIENT_BINARY
     else
         go build github.com/tektoncd/cli/cmd/tkn
-         export TEST_CLIENT_BINARY=$PWD
+        echo "Build was success"
+        export TEST_CLIENT_BINARY=$PWD
+        echo $TEST_CLIENT_BINARY
     fi
 }
 
