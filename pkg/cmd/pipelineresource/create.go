@@ -22,11 +22,14 @@ import (
 
 	"github.com/AlecAivazis/survey/v2"
 	"github.com/AlecAivazis/survey/v2/terminal"
+	"github.com/ghodss/yaml"
 	"github.com/spf13/cobra"
 	"github.com/tektoncd/cli/pkg/cli"
+	"github.com/tektoncd/cli/pkg/helper/file"
 	validateinput "github.com/tektoncd/cli/pkg/helper/validate"
 	"github.com/tektoncd/pipeline/pkg/apis/pipeline/v1alpha1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+	cliopts "k8s.io/cli-runtime/pkg/genericclioptions"
 )
 
 type Resource struct {
@@ -34,6 +37,7 @@ type Resource struct {
 	stream           *cli.Stream
 	AskOpts          survey.AskOpt
 	PipelineResource v1alpha1.PipelineResource
+	from             string
 }
 
 func createCommand(p cli.Params) *cobra.Command {
@@ -47,16 +51,19 @@ func createCommand(p cli.Params) *cobra.Command {
 			return nil
 		},
 	}
-
+	f := cliopts.NewPrintFlags("create")
+	opts := &Resource{from: ""}
 	eg := `
-  # creates new resource as per the given input
-    tkn resource create -n namespace
+  # Creates new PipelineResource as per the given input
+	tkn resource create -n namespace
+	
+  # Create a PipelineResource defined by foo.yaml in namespace 'bar'
+	tkn resource create -f foo.yaml -n bar`
 
-   `
 	c := &cobra.Command{
 		Use:                   "create",
 		DisableFlagsInUseLine: true,
-		Short:                 "Creates pipeline resource",
+		Short:                 "Create a pipeline resource in a namespace",
 		Example:               eg,
 		SilenceUsage:          true,
 		Annotations: map[string]string{
@@ -74,14 +81,24 @@ func createCommand(p cli.Params) *cobra.Command {
 				return err
 			}
 
-			return res.create()
+			if opts.from != "" {
+				s := &cli.Stream{
+					In:  cmd.InOrStdin(),
+					Out: cmd.OutOrStdout(),
+					Err: cmd.OutOrStderr(),
+				}
+				return createFrom(s, p, opts.from)
+			}
+
+			return res.createInteractive()
 		},
 	}
-
+	f.AddFlags(c)
+	c.Flags().StringVarP(&opts.from, "from", "f", "", "local or remote filename to use to create the pipeline resource")
 	return c
 }
 
-func (res *Resource) create() error {
+func (res *Resource) createInteractive() error {
 	res.PipelineResource.Namespace = res.Params.Namespace()
 
 	// ask for the object meta data name, namespace
@@ -574,4 +591,43 @@ func validate(name string, p cli.Params) error {
 	}
 
 	return nil
+}
+
+func createFrom(s *cli.Stream, p cli.Params, path string) error {
+	cs, err := p.Clients()
+	if err != nil {
+		return fmt.Errorf("failed to create tekton client")
+	}
+
+	resource, err := loadResource(p, path)
+	if err != nil {
+		return err
+	}
+
+	_, err = cs.Tekton.TektonV1alpha1().PipelineResources(p.Namespace()).Create(resource)
+	if err != nil {
+		return fmt.Errorf("failed to create pipeline resource %q: %s", resource.Name, err)
+	}
+
+	fmt.Fprintf(s.Out, "PipelineResource created: %s\n", resource.Name)
+	return nil
+}
+
+func loadResource(p cli.Params, target string) (*v1alpha1.PipelineResource, error) {
+	content, err := file.LoadFileContent(p, target, file.IsYamlFile(), fmt.Errorf("inavlid file format for %s: .yaml or .yml file extension and format required", target))
+	if err != nil {
+		return nil, err
+	}
+
+	var resource v1alpha1.PipelineResource
+	err = yaml.Unmarshal(content, &resource)
+	if err != nil {
+		return nil, err
+	}
+
+	if resource.Kind != "PipelineResource" {
+		return nil, fmt.Errorf("provided kind %s instead of kind PipelineResource", resource.Kind)
+	}
+
+	return &resource, nil
 }

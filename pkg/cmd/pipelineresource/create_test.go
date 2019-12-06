@@ -17,6 +17,7 @@ package pipelineresource
 import (
 	"bytes"
 	"errors"
+	"io"
 	"testing"
 
 	"github.com/AlecAivazis/survey/v2/core"
@@ -1606,6 +1607,98 @@ func TestPipelineResource_create_buildGCSstorageResource(t *testing.T) {
 	for _, test := range tests {
 		t.Run(test.name, func(t *testing.T) {
 			res.RunPromptTest(t, test)
+		})
+	}
+}
+
+func Test_Pipeline_Resource_Create(t *testing.T) {
+
+	ns := []*corev1.Namespace{
+		{
+			ObjectMeta: metav1.ObjectMeta{
+				Name: "ns",
+			},
+		},
+	}
+
+	seeds := make([]pipelinetest.Clients, 0)
+	for i := 0; i < 1; i++ {
+		cs, _ := test.SeedTestData(t, pipelinetest.Data{Namespaces: ns})
+		seeds = append(seeds, cs)
+	}
+
+	testParams := []struct {
+		name        string
+		command     []string
+		input       pipelinetest.Clients
+		inputStream io.Reader
+		wantError   bool
+		want        string
+	}{
+		{
+			name:        "Create pipeline resource successfully",
+			command:     []string{"create", "--from", "./testdata/pipelineresource.yaml", "-n", "ns"},
+			input:       seeds[0],
+			inputStream: nil,
+			wantError:   false,
+			want:        "PipelineResource created: test-resource\n",
+		},
+		{
+			name:        "Filename does not exist",
+			command:     []string{"create", "-f", "./testdata/notexist.yaml", "-n", "ns"},
+			input:       seeds[0],
+			inputStream: nil,
+			wantError:   true,
+			want:        "open ./testdata/notexist.yaml: no such file or directory",
+		},
+		{
+			name:        "Unsupported file type",
+			command:     []string{"create", "-f", "./testdata/pipelineresource.txt", "-n", "ns"},
+			input:       seeds[0],
+			inputStream: nil,
+			wantError:   true,
+			want:        "inavlid file format for ./testdata/pipelineresource.txt: .yaml or .yml file extension and format required",
+		},
+		{
+			name:        "Mismatched resource file",
+			command:     []string{"create", "-f", "./testdata/pipelinerun.yaml", "-n", "ns"},
+			input:       seeds[0],
+			inputStream: nil,
+			wantError:   true,
+			want:        "provided kind PipelineRun instead of kind PipelineResource",
+		},
+		{
+			name:        "Existing pipeline",
+			command:     []string{"create", "-f", "./testdata/pipelineresource.yaml", "-n", "ns"},
+			input:       seeds[0],
+			inputStream: nil,
+			wantError:   true,
+			want:        "failed to create pipeline resource \"test-resource\": pipelineresources.tekton.dev \"test-resource\" already exists",
+		},
+	}
+
+	for _, tp := range testParams {
+		t.Run(tp.name, func(t *testing.T) {
+			p := &test.Params{Tekton: tp.input.Pipeline, Kube: tp.input.Kube}
+			resource := Command(p)
+
+			if tp.inputStream != nil {
+				resource.SetIn(tp.inputStream)
+			}
+
+			out, err := test.ExecuteCommand(resource, tp.command...)
+			if tp.wantError {
+				if err == nil {
+					t.Errorf("Error expected here")
+				} else {
+					test.AssertOutput(t, tp.want, err.Error())
+				}
+			} else {
+				if err != nil {
+					t.Errorf("Unexpected error")
+				}
+				test.AssertOutput(t, tp.want, out)
+			}
 		})
 	}
 }
