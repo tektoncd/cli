@@ -36,10 +36,6 @@ ci_run && {
   (( failed )) && fail_test
 }
 
-<<<<<<< HEAD
-
-=======
->>>>>>> updated lint failures
 kubectl get crds|grep tekton\\.dev && fail_test "TektonCD CRDS should not be installed, you should reset them before each runs"
 
 install_pipeline_crd
@@ -47,18 +43,10 @@ install_pipeline_crd
 # Run the e2e tests
 ci_run && {
   header "Running Go e2e tests"
-  failed=0
-<<<<<<< HEAD
-=======
-  if [[ -e ./bin/tkn ]];then
-        export TEST_CLIENT_BINARY='/bin'
-        echo $TEST_CLIENT_BINARY
-    else
-        go build github.com/tektoncd/cli/cmd/tkn
-        export TEST_CLIENT_BINARY=$PWD
-        echo $TEST_CLIENT_BINARY
-    fi
->>>>>>> updated lint failures
+  failed=0 
+  env GOOS=linux GOARCH=amd64 go build github.com/tektoncd/cli/cmd/tkn
+  export TEST_CLIENT_BINARY=$PWD
+  echo $TEST_CLIENT_BINARY
   go_test_e2e ./test/e2e/ || failed=1
   (( failed )) && fail_test
 }
