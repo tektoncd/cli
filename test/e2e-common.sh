@@ -232,3 +232,4 @@ must_fail() {
   (( failed )) || fail_test "failed to $desc"
   echo
 }
+

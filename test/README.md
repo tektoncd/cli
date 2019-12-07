@@ -23,6 +23,11 @@ which need `-tags=e2e` to be enabled.
 
 ## End to end tests
 
+### prerequisite
+```shell
+go build -o tkn github.com/tektoncd/cli/cmd/tkn
+export TEST_CLIENT_BINARY=<path-to-tkn-binary-directory>/tkn ( eg: export TEST_CLIENT_BINARY=$PWD/tkn ) 
+```
 ### Running
 
 To run end to end tests, you will need to have a running Tekton
@@ -33,8 +38,8 @@ End to end tests live in this directory. To run these tests, you must provide
 context, but you can change that and other settings with [the flags](#flags):
 
 ```shell
-go test -v -count=1 -tags=e2e -timeout=20m ./test
-go test -v -count=1 -tags=e2e -timeout=20m ./test --kubeconfig ~/special/kubeconfig --cluster myspecialcluster
+go test -v -count=1 -tags=e2e -timeout=20m ./test/e2e
+go test -v -count=1 -tags=e2e -timeout=20m ./test/e2e --kubeconfig ~/special/kubeconfig --cluster myspecialcluster
 ```
 
 You can also use
@@ -50,7 +55,7 @@ You can also use
 - Using [`--logverbose`](#output-verbose-log) to see the verbose log output from
   test as well as from k8s libraries.
 - Using `-count=1` is
-  [the idiomatic way to disable test caching](https://golang.org/doc/go1.10#test).
+  the idiomatic way to disable test caching
 - The end to end tests take a long time to run so a value like `-timeout=20m`
   can be useful depending on what you're running
 
@@ -59,15 +64,15 @@ against, i.e. override
 [your environment variables](/DEVELOPMENT.md#environment-setup):
 
 ```bash
-go test -v -tags=e2e -count=1 ./test --kubeconfig ~/special/kubeconfig --cluster myspecialcluster
+go test -v -count=1 ./test/e2e --kubeconfig ~/special/kubeconfig --cluster myspecialcluster
 ```
 
 ### One test case
 
 To run one e2e test case, e.g. TestTaskRun, use
-[the `-run` flag with `go test`](https://golang.org/cmd/go/#hdr-Testing_flags):
+the `-run` flag with `go test`
 
 ```bash
-go test -v -tags=e2e -count=1 ./test -run ^TestTaskRun$
+go test -v -count=1 ./test/e2e -run ^TestPipelinesE2E$
 ```
 

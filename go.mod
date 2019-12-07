@@ -27,8 +27,11 @@ require (
 	github.com/tektoncd/triggers v0.2.1-preview.0.20200130181252-68f571334722
 	github.com/tidwall/gjson v1.6.0 // indirect
 	github.com/tidwall/sjson v1.0.4 // indirect
+	go.opencensus.io v0.22.1
 	go.uber.org/multierr v1.4.0
 	golang.org/x/crypto v0.0.0-20191206172530-e9b2fee46413
+	golang.org/x/xerrors v0.0.0-20191204190536-9bdfabe68543
+	gopkg.in/yaml.v2 v2.2.5
 	gotest.tools/v3 v3.0.1
 	k8s.io/api v0.17.2
 	k8s.io/apimachinery v0.17.2

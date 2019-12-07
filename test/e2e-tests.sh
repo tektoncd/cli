@@ -31,19 +31,10 @@ ci_run && {
 
 # Run the integration tests
 ci_run && {
-  header "Running Go e2e tests"
+  header "Running Go integration tests"
   failed=0
   go_test_e2e ./test || failed=1
   (( failed )) && fail_test
-}
-
-tkn() {
-    if [[ -e ./bin/tkn ]];then
-        ./bin/tkn $@
-    else
-        go build github.com/tektoncd/cli/cmd/tkn
-        ./tkn "$@"
-    fi
 }
 
 kubectl get crds|grep tekton\\.dev && fail_test "TektonCD CRDS should not be installed, you should reset them before each runs"
@@ -62,7 +53,6 @@ must_fail  "list taskrun for task foo before installing crd" tkn taskrun list fo
 
 must_fail  "logs of pipelinerun before installing crd" tkn pipelinerun logs foo
 must_fail  "logs of taskrun before installing crd" tkn taskrun logs foo
-
 
 install_pipeline_crd
 
@@ -91,8 +81,6 @@ kubectl config set-context $(kubectl config current-context) --namespace=tektonc
 # create pipeline, pipelinerun, task, and taskrun
 kubectl apply -f ./test/resources/output-pipelinerun.yaml
 kubectl apply -f ./test/resources/task-volume.yaml
-
-
 echo Waiting for resources to be ready
 echo ---------------------------------
 wait_until_ready 600 pipelinerun/output-pipeline-run || exit 1
@@ -129,5 +117,25 @@ must_fail  "describe deleted pipeline" tkn pipeline describe output-pipeline
 must_fail  "describe deleted pipelinerun" tkn pipelinerun describe output-pipeline-run
 must_fail  "describe deleted resource" tkn resource describe skaffold-git
 must_fail  "show logs deleted taskrun" tkn taskrun logs test-template-volume
+
+# Make sure that eveything is cleaned up in the current namespace.
+for res in pipelineresources tasks pipelines taskruns pipelineruns; do
+  kubectl delete --ignore-not-found=true ${res}.tekton.dev --all
+done
+
+# Run the e2e tests
+ci_run && {
+  header "Running Go e2e tests"
+  failed=0
+  if [[ -e ./bin/tkn ]];then
+        export TEST_CLIENT_BINARY='./bin/tkn'
+  else
+        go build -o tkn github.com/tektoncd/cli/cmd/tkn
+        echo "Go Build successfull"
+        export TEST_CLIENT_BINARY=$PWD/tkn
+  fi
+  go_test_e2e ./test/e2e || failed=1
+  (( failed )) && fail_test
+}
 
 success
