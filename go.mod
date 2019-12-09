@@ -35,7 +35,7 @@ require (
 	github.com/spf13/cobra v0.0.5
 	github.com/spf13/pflag v1.0.3
 	github.com/stretchr/testify v1.4.0
-	github.com/tektoncd/pipeline v0.9.0
+	github.com/tektoncd/pipeline v0.9.1
 	github.com/tektoncd/plumbing v0.0.0-20191114095731-51c53a31e779
 	go.opencensus.io v0.22.1 // indirect
 	golang.org/x/crypto v0.0.0-20190923035154-9ee001bba392 // indirect
