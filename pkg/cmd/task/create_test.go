@@ -49,6 +49,14 @@ func Test_Task_Create(t *testing.T) {
 		want        string
 	}{
 		{
+			name:        "Invalid namespace",
+			command:     []string{"create", "--from", "./testdata/task.yaml", "-n", "invalid"},
+			input:       seeds[0],
+			inputStream: nil,
+			wantError:   true,
+			want:        "namespaces \"invalid\" not found",
+		},
+		{
 			name:        "Create task successfully",
 			command:     []string{"create", "--from", "./testdata/task.yaml", "-n", "ns"},
 			input:       seeds[0],

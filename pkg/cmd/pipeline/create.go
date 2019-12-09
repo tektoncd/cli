@@ -18,10 +18,10 @@ import (
 	"fmt"
 
 	"github.com/ghodss/yaml"
-
 	"github.com/spf13/cobra"
 	"github.com/tektoncd/cli/pkg/cli"
 	"github.com/tektoncd/cli/pkg/helper/file"
+	validate "github.com/tektoncd/cli/pkg/helper/validate"
 	"github.com/tektoncd/pipeline/pkg/apis/pipeline/v1alpha1"
 	cliopts "k8s.io/cli-runtime/pkg/genericclioptions"
 )
@@ -51,6 +51,10 @@ tkn pipeline create -f foo.yaml -n bar
 				In:  cmd.InOrStdin(),
 				Out: cmd.OutOrStdout(),
 				Err: cmd.OutOrStderr(),
+			}
+
+			if err := validate.NamespaceExists(p); err != nil {
+				return err
 			}
 
 			return createPipeline(s, p, opts.from)
