@@ -1,0 +1,5 @@
+tektoncd-cli (0.5.1-1) stable; urgency=medium
+
+  * Initial release.
+
+ -- Chmouel Boudjnah <chmouel@redhat.com>  Tue, 10 Dec 2019 16:54:58 +0000
