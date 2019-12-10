@@ -58,3 +58,22 @@ brews:
       output = Utils.popen_read("SHELL=zsh #{bin}/tkn completion zsh")
       (zsh_completion/"_tkn").write output
       prefix.install_metafiles
+nfpms:
+  - file_name_template: "{{.ProjectName}}_{{.Version}}_{{.Os}}-{{.Arch}}"
+    homepage: https://github.com/tektoncd/cli/
+    description: A command line interface for interacting with Tekton
+    maintainer: Tekton Developers <tekton@tekton.dev>
+    license: BSD
+    vendor: Tekton Developers
+    formats:
+    - deb
+    - rpm
+    bindir: /usr/bin
+    replacements:
+      amd64: 64bit
+      386: 32bit
+      arm: ARM
+      arm64: ARM64
+      darwin: macOS
+      linux: Linux
+      windows: Windows
