@@ -1,0 +1,29 @@
+#!/usr/bin/make -f
+
+TKN := obj-$(DEB_HOST_GNU_TYPE)/bin/tkn
+
+DATE_FMT = %Y-%m-%dT%H:%M:%S%z
+ifdef SOURCE_DATE_EPOCH
+	BUILD_DATE ?= $(shell date -u -d "@$(SOURCE_DATE_EPOCH)" "+$(DATE_FMT)" 2>/dev/null || date -u -r "$(SOURCE_DATE_EPOCH)" "+$(DATE_FMT)" 2>/dev/null || date -u "+$(DATE_FMT)")
+else
+	BUILD_DATE ?= $(shell date "+$(DATE_FMT)")
+endif
+BUILD_DATE := $(BUILD_DATE:+0000=Z)
+
+%:
+	dh $@ 
+
+override_dh_auto_build:
+	export XDG_CACHE_HOME=/tmp/cache ; \
+	test -e ./VERSION && VERSION=`cat VERSION` || VERSION=$(BUILD_DATE) ; \
+		go build -mod=vendor -v -o ${TKN} -ldflags "-X github.com/tektoncd/cli/pkg/cmd/version.clientVersion=$$VERSION" ./cmd/tkn
+	$(TKN) version
+	$(TKN) completion zsh > debian/tkn.zsh-completion
+	$(TKN) completion bash > debian/tektoncd-cli.bash-completion
+
+override_dh_auto_test:
+
+override_dh_auto_install:
+	dh_auto_install -O--buildsystem=golang
+	dh_bash-completion -O--buildsystem=golang
+	install -D -m644 debian/tkn.zsh-completion debian/tektoncd-cli/usr/share/zsh/vendor-completions/_zsh

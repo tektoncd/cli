@@ -1,0 +1,16 @@
+Source: tektoncd-cli
+Maintainer: Chmouel Boudjnah <chmouel@redhat.com>
+Section: misc
+Priority: optional
+Standards-Version: 4.3.0
+Build-Depends: debhelper (>= 11),
+               dh-golang (>= 1.34~),
+               golang-any (>= 2:1.12~),
+               bash-completion
+Vcs-Git: https://github.com/tektoncd/cli.git
+
+Package: tektoncd-cli
+Architecture: any
+Depends: ${misc:Depends}
+Description: A command line interface for interacting with Tekton
+ The Tekton Pipelines CLI project a user friendly CLI for interacting with Tekton !
