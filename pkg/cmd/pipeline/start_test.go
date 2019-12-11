@@ -195,6 +195,8 @@ func Test_start_pipeline(t *testing.T) {
 		t.Errorf("Error pipelinerun generated is different %+v", pr)
 	}
 
+	test.AssertOutput(t, 2, len(pr.Items[0].Spec.Params))
+
 	for _, v := range pr.Items[0].Spec.Params {
 		if v.Name == "rev-param" {
 			test.AssertOutput(t, v1alpha1.ArrayOrString{Type: v1alpha1.ParamTypeArray, ArrayVal: []string{"cat", "foo", "bar"}}, v.Value)
@@ -429,6 +431,7 @@ func Test_start_pipeline_last(t *testing.T) {
 		}
 	}
 
+	test.AssertOutput(t, 2, len(pr.Spec.Params))
 	for _, v := range pr.Spec.Params {
 		if v.Name == "rev-param" {
 			test.AssertOutput(t, v1alpha1.ArrayOrString{Type: v1alpha1.ParamTypeString, StringVal: "revision2"}, v.Value)
@@ -511,6 +514,8 @@ func Test_start_pipeline_last_without_res_param(t *testing.T) {
 			test.AssertOutput(t, "some-repo", v.ResourceRef.Name)
 		}
 	}
+
+	test.AssertOutput(t, 2, len(pr.Spec.Params))
 
 	for _, v := range pr.Spec.Params {
 		if v.Name == "rev-param" {
@@ -602,6 +607,8 @@ func Test_start_pipeline_last_merge(t *testing.T) {
 		}
 	}
 
+	test.AssertOutput(t, 2, len(pr.Spec.Params))
+
 	for _, v := range pr.Spec.Params {
 		if v.Name == "rev-param" {
 			test.AssertOutput(t, v1alpha1.ArrayOrString{Type: v1alpha1.ParamTypeString, StringVal: "revision2"}, v.Value)
@@ -670,6 +677,7 @@ func Test_start_pipeline_allkindparam(t *testing.T) {
 		t.Errorf("Error pipelinerun generated is different %+v", pr)
 	}
 
+	test.AssertOutput(t, 3, len(pr.Items[0].Spec.Params))
 	for _, v := range pr.Items[0].Spec.Params {
 		if v.Name == "rev-param" {
 			test.AssertOutput(t, v1alpha1.ArrayOrString{Type: v1alpha1.ParamTypeArray, ArrayVal: []string{"cat", "foo", "bar"}}, v.Value)

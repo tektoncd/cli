@@ -224,6 +224,8 @@ func Test_start_task(t *testing.T) {
 		}
 	}
 
+	test.AssertOutput(t, 2, len(tr.Items[0].Spec.Inputs.Params))
+
 	for _, v := range tr.Items[0].Spec.Inputs.Params {
 		if v.Name == "my-arg" {
 			test.AssertOutput(t, v1alpha1.ArrayOrString{Type: v1alpha1.ParamTypeString, StringVal: "value1"}, v.Value)
@@ -318,6 +320,8 @@ func Test_start_task_last(t *testing.T) {
 			test.AssertOutput(t, "git", v.ResourceRef.Name)
 		}
 	}
+
+	test.AssertOutput(t, 2, len(tr.Spec.Inputs.Params))
 
 	for _, v := range tr.Spec.Inputs.Params {
 		if v.Name == "my-arg" {
@@ -414,6 +418,8 @@ func Test_start_task_last_with_inputs(t *testing.T) {
 			test.AssertOutput(t, "git-new", v.ResourceRef.Name)
 		}
 	}
+
+	test.AssertOutput(t, 2, len(tr.Spec.Inputs.Params))
 
 	for _, v := range tr.Spec.Inputs.Params {
 		if v.Name == "my-arg" {
@@ -730,6 +736,8 @@ func Test_start_task_allkindparam(t *testing.T) {
 			test.AssertOutput(t, "image", v.ResourceRef.Name)
 		}
 	}
+
+	test.AssertOutput(t, 3, len(tr.Items[0].Spec.Inputs.Params))
 
 	for _, v := range tr.Items[0].Spec.Inputs.Params {
 		if v.Name == "my-arg" {
