@@ -43,6 +43,10 @@ func MergeParam(p []v1alpha1.Param, optPar []string) ([]v1alpha1.Param, error) {
 		}
 	}
 
+	for _, v := range params {
+		p = append(p, v)
+	}
+
 	return p, nil
 }
 
