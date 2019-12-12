@@ -13,7 +13,6 @@ RUN set -ex \
                equivs \
                vim \
                libdistro-info-perl \
-			   bash-completion \
 			   golang-any \
                devscripts \
 			   debhelper \

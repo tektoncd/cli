@@ -1,5 +1,9 @@
 #!/bin/bash
 set -eux
+# Increase this on minor *package* releases (ie fix on the packaging),
+# decrease it to 0 on major *package* release
+# (need ot find a better way to do that)
+RELEASE=2
 
 [[ -z ${GPG_KEY} ]] && {
     echo "You need to setup your GPG_KEY."
@@ -32,7 +36,7 @@ cd cli-${version}
 # Make it easy for devs
 [[ -d /debian ]] && { rm -rf debian && cp -a /debian . ; }
 
-dch -M -v ${version}-1 -D $(sed -n '/DISTRIB_CODENAME/ { s/.*=//;p;;}' /etc/lsb-release) "new update"
+dch -M -v ${version}-${RELEASE} -D $(sed -n '/DISTRIB_CODENAME/ { s/.*=//;p;;}' /etc/lsb-release) "new update"
 
 gpgconf --kill gpg-agent && gpg-agent --pinentry-program /usr/bin/pinentry-curses --verbose --daemon
 debuild -S --force-sign -k${GPG_KEY}

@@ -1,3 +1,9 @@
+tektoncd-cli (0.6.0-2) stable; urgency=medium
+
+  * Fix Bash and ZSH Completion
+
+ -- Chmouel Boudjnah <chmouel@redhat.com>  Tue, 10 Dec 2019 16:54:58 +0000
+
 tektoncd-cli (0.5.1-1) stable; urgency=medium
 
   * Initial release.
