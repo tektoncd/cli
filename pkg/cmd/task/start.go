@@ -146,8 +146,7 @@ like cat,foo,bar
 	return c
 }
 
-// Setting as var for stubbing in tests
-var parseTask = func(p string) (*v1alpha1.Task, error) {
+func parseTask(p string) (*v1alpha1.Task, error) {
 	b, err := ioutil.ReadFile(p)
 	if err != nil {
 		return nil, err
