@@ -111,17 +111,13 @@ func Test_start_has_task_filename(t *testing.T) {
 	cs, _ := test.SeedTestData(t, pipelinetest.Data{Namespaces: ns})
 	c := Command(&test.Params{Tekton: cs.Pipeline, Kube: cs.Kube})
 
-	oldParseTask := parseTask
-	defer func() {
-		parseTask = oldParseTask
-	}()
-	parseTask = func(p string) (*v1alpha1.Task, error) {
-		return tb.Task("task", "ns"), nil
-	}
-	_, err := test.ExecuteCommand(c, "start", "-n", "ns", "--filename=foo", "--showlog=false")
+	got, err := test.ExecuteCommand(c, "start", "-n", "ns", "--filename=./testdata/task.yaml", "--showlog=false")
 	if err != nil {
-		t.Errorf("Not expecting an error, but got %s", err)
+		t.Errorf("Not expecting an error, but got %s", err.Error())
 	}
+
+	expected := "Taskrun started: \n\nIn order to track the taskrun progress run:\ntkn taskrun logs  -f -n ns\n"
+	test.AssertOutput(t, expected, got)
 }
 
 func Test_start_task_not_found(t *testing.T) {
