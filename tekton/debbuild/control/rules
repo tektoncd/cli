@@ -11,7 +11,7 @@ endif
 BUILD_DATE := $(BUILD_DATE:+0000=Z)
 
 %:
-	dh $@ 
+	dh $@
 
 override_dh_auto_build:
 	export XDG_CACHE_HOME=/tmp/cache ; \
@@ -25,5 +25,5 @@ override_dh_auto_test:
 
 override_dh_auto_install:
 	dh_auto_install -O--buildsystem=golang
-	dh_bash-completion -O--buildsystem=golang
-	install -D -m644 debian/tkn.zsh-completion debian/tektoncd-cli/usr/share/zsh/vendor-completions/_zsh
+	install -D -m644 debian/tkn.zsh-completion debian/tektoncd-cli/usr/share/zsh/vendor-completions/_tkn
+	install -D -m644 debian/tkn.zsh-completion debian/tektoncd-cli/usr/share/bash-completion/completions/tkn
