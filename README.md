@@ -36,6 +36,8 @@ Download the latest binary executable for your operating system:
   - Click `New` and add the location of the uncompressed zip to the `Path`
   - Finish by clicking `Ok`
 
+#### Linux tarballs
+
 * [Linux AMD 64](https://github.com/tektoncd/cli/releases/download/v0.6.0/tkn_0.6.0_Linux_x86_64.tar.gz)
 
   ```shell
@@ -54,6 +56,8 @@ Download the latest binary executable for your operating system:
   sudo tar xvzf tkn_0.6.0_Linux_arm64.tar.gz -C /usr/local/bin/ tkn
   ```
 
+### Linux RPMs
+
   If you are running on any of the following rpm based distros:
 
   * Fedora30
@@ -71,7 +75,39 @@ Download the latest binary executable for your operating system:
   dnf install tektoncd-cli
   ```
 
-* Source install
+  * [Binary RPM package](https://github.com/tektoncd/cli/releases/download/v0.6.0/cli_0.6.0_Linux-64bit.rpm)
+
+  On any other RPM based distros you can install the rpm directly :
+
+   ```shell
+    rpm -Uvh https://github.com/tektoncd/cli/releases/download/v0.6.0/cli_0.6.0_Linux-64bit.rpm
+   ```
+
+#### Linux Debs
+
+  * [Ubuntu PPA](https://launchpad.net/~tektoncd/+archive/ubuntu/cli/+packages)
+
+  If you are running on a latest Ubuntu or Debian you would be able to use our TektonCD CLI PPA :
+
+  ```shell
+  sudo apt update;sudo apt install -y gnupg
+  sudo apt-key adv --keyserver keyserver.ubuntu.com --recv-keys 3EFE0E0A2F2F60AA
+  echo "deb http://ppa.launchpad.net/tektoncd/cli/ubuntu eoan main"|sudo tee /etc/apt/sources.list.d/tektoncd-ubuntu-cli.list
+  sudo apt update && sudo apt install -y tektoncd-cli
+  ```
+
+  this may works with older releases but that hasn't been tested.
+
+  * [Binary DEB package](https://github.com/tektoncd/cli/releases/download/v0.6.0/cli_0.6.0_Linux-64bit.deb)
+
+  On any other Debian or Ubuntu based distro, you can simply install the binary package directly with `dpkg` :
+
+  ```shell
+  curl -LO https://github.com/tektoncd/cli/releases/download/v0.6.0/cli_0.6.0_Linux-64bit.deb
+  dpkg -i cli_0.6.0_Linux-64bit.deb
+  ```
+
+# Source install
 
   If you have [go](https://golang.org/) installed, and you want to compile the CLI from source you can checkout the [Git repository](https://github.com/tektoncd/cli) and run the following commands:
 

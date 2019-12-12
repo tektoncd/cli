@@ -18,6 +18,12 @@
   able to upload it to the copr repository. This could take some time if copr
   builder is busy.
 
+- When it's released, you can build the rpm according to this
+  [README](tekton/debbuild/README.md). Make sure you have done the prerequist to
+  be able to upload to the [launchpad team](https://launchpad.net/~tektoncd),
+  and make sure as well that you have setup your GPG key and add it to your
+  profile on launchpad.
+
 - You need to edit the Changelog according to the other templates in there.
   Usually you may want to do this in hackmd so you can have other cli
   maintainers do this with you. You can see an example
