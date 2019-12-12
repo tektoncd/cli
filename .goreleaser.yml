@@ -59,7 +59,7 @@ brews:
       (zsh_completion/"_tkn").write output
       prefix.install_metafiles
 nfpms:
-  - file_name_template: "{{.ProjectName}}_{{.Version}}_{{.Os}}-{{.Arch}}"
+  - file_name_template: "tektoncd-cli-{{.Version}}_{{.Os}}-{{.Arch}}"
     homepage: https://github.com/tektoncd/cli/
     description: A command line interface for interacting with Tekton
     maintainer: Tekton Developers <tekton@tekton.dev>
