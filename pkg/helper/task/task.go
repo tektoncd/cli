@@ -15,32 +15,25 @@
 package task
 
 import (
-	"github.com/spf13/cobra"
 	"github.com/tektoncd/cli/pkg/cli"
-	"github.com/tektoncd/cli/pkg/flags"
+	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 )
 
-func Command(p cli.Params) *cobra.Command {
-	cmd := &cobra.Command{
-		Use:     "task",
-		Aliases: []string{"t", "tasks"},
-		Short:   "Manage tasks",
-		Annotations: map[string]string{
-			"commandType": "main",
-		},
-		PersistentPreRunE: func(cmd *cobra.Command, args []string) error {
-			return flags.InitParams(p, cmd)
-		},
+func GetAllTaskNames(p cli.Params) ([]string, error) {
+	cs, err := p.Clients()
+	if err != nil {
+		return nil, err
 	}
 
-	flags.AddTektonOptions(cmd)
-	cmd.AddCommand(
-		deleteCommand(p),
-		describeCommand(p),
-		listCommand(p),
-		startCommand(p),
-		createCommand(p),
-		logCommand(p),
-	)
-	return cmd
+	tkn := cs.Tekton.TektonV1alpha1()
+	ps, err := tkn.Tasks(p.Namespace()).List(metav1.ListOptions{})
+	if err != nil {
+		return nil, err
+	}
+
+	ret := []string{}
+	for _, item := range ps.Items {
+		ret = append(ret, item.ObjectMeta.Name)
+	}
+	return ret, nil
 }

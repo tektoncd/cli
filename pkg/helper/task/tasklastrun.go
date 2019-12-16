@@ -22,7 +22,7 @@ import (
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 )
 
-//LastRun returns the last run for a given task
+//LastRun returns the last taskrun for a given task
 func LastRun(tekton versioned.Interface, task string, ns string) (*v1alpha1.TaskRun, error) {
 	options := metav1.ListOptions{}
 	if task != "" {
