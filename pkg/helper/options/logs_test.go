@@ -77,6 +77,11 @@ func TestLogOptions_Ask(t *testing.T) {
 		"sample-pipeline-run3 started 3 minutes ago",
 	}
 	options3 := []string{
+		"task1",
+		"task2",
+		"task3",
+	}
+	options4 := []string{
 		"sample-task-run1 started 1 minutes ago",
 		"sample-task-run2 started 2 minutes ago",
 		"sample-task-run3 started 3 minutes ago",
@@ -108,6 +113,7 @@ func TestLogOptions_Ask(t *testing.T) {
 			want: LogOptions{
 				PipelineName:    "pipeline1",
 				PipelineRunName: "",
+				TaskName:        "",
 				TaskrunName:     "",
 			},
 		},
@@ -130,16 +136,17 @@ func TestLogOptions_Ask(t *testing.T) {
 			want: LogOptions{
 				PipelineName:    "",
 				PipelineRunName: "sample-pipeline-run1",
+				TaskName:        "",
 				TaskrunName:     "",
 			},
 		},
 		{
-			name:     "select taskrun name",
-			resource: ResourceNameTaskRun,
+			name:     "select task name",
+			resource: ResourceNameTask,
 			prompt: htest.PromptTest{
 				CmdArgs: []string{},
 				Procedure: func(c *goexpect.Console) error {
-					if _, err := c.ExpectString("Select taskrun:"); err != nil {
+					if _, err := c.ExpectString("Select task:"); err != nil {
 						return err
 					}
 					if _, err := c.SendLine(options3[0]); err != nil {
@@ -152,6 +159,30 @@ func TestLogOptions_Ask(t *testing.T) {
 			want: LogOptions{
 				PipelineName:    "",
 				PipelineRunName: "",
+				TaskName:        "task1",
+				TaskrunName:     "",
+			},
+		},
+		{
+			name:     "select taskrun name",
+			resource: ResourceNameTaskRun,
+			prompt: htest.PromptTest{
+				CmdArgs: []string{},
+				Procedure: func(c *goexpect.Console) error {
+					if _, err := c.ExpectString("Select taskrun:"); err != nil {
+						return err
+					}
+					if _, err := c.SendLine(options4[0]); err != nil {
+						return err
+					}
+					return nil
+				},
+			},
+			options: options4,
+			want: LogOptions{
+				PipelineName:    "",
+				PipelineRunName: "",
+				TaskName:        "",
 				TaskrunName:     "sample-task-run1",
 			},
 		},
@@ -169,6 +200,9 @@ func TestLogOptions_Ask(t *testing.T) {
 			}
 			if opts.PipelineRunName != tp.want.PipelineRunName {
 				t.Errorf("Unexpected PipelineRun Name")
+			}
+			if opts.TaskName != tp.want.TaskName {
+				t.Errorf("Unexpected Task Name")
 			}
 			if opts.TaskrunName != tp.want.TaskrunName {
 				t.Errorf("Unexpected TaskRun Name")

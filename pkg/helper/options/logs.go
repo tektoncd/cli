@@ -28,6 +28,7 @@ import (
 const (
 	ResourceNamePipeline    = "pipeline"
 	ResourceNamePipelineRun = "pipelinerun"
+	ResourceNameTask        = "task"
 	ResourceNameTaskRun     = "taskrun"
 )
 
@@ -37,6 +38,7 @@ type LogOptions struct {
 	Params          cli.Params
 	PipelineName    string
 	PipelineRunName string
+	TaskName        string
 	TaskrunName     string
 	Stream          *cli.Stream
 	Streamer        stream.NewStreamerFunc
@@ -87,6 +89,8 @@ func (opts *LogOptions) Ask(resource string, options []string) error {
 		opts.PipelineName = ans
 	case ResourceNamePipelineRun:
 		opts.PipelineRunName = strings.Fields(ans)[0]
+	case ResourceNameTask:
+		opts.TaskName = ans
 	case ResourceNameTaskRun:
 		opts.TaskrunName = strings.Fields(ans)[0]
 	}
