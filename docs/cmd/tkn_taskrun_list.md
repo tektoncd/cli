@@ -1,6 +1,6 @@
 ## tkn taskrun list
 
-Lists taskruns in a namespace
+Lists TaskRuns in a namespace
 
 ***Aliases**: ls*
 
@@ -12,16 +12,17 @@ tkn taskrun list
 
 ### Synopsis
 
-Lists taskruns in a namespace
+Lists TaskRuns in a namespace
 
 ### Examples
 
+List all TaskRuns in namespace 'bar':
 
-# List all taskruns in namespace 'bar'
-tkn tr list -n bar
+    tkn tr list -n bar
 
-# List all taskruns of task 'foo' in namespace 'bar'
-tkn taskrun list foo -n bar
+List all TaskRuns of Task 'foo' in namespace 'bar':
+
+    tkn taskrun list foo -n bar
 
 
 ### Options

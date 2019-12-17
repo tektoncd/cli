@@ -60,13 +60,29 @@ Delete a pipelinerun in a namespace
 
 
 .SH EXAMPLE
-
-.SH Delete a PipelineRun of name 'foo' in namespace 'bar'
 .PP
+Delete a PipelineRun of name 'foo' in namespace 'bar':
+
+.PP
+.RS
+
+.nf
 tkn pipelinerun delete foo \-n bar
 
+.fi
+.RE
+
 .PP
+or
+
+.PP
+.RS
+
+.nf
 tkn pr rm foo \-n bar
+
+.fi
+.RE
 
 
 .SH SEE ALSO

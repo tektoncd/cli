@@ -16,11 +16,13 @@ Delete a pipeline resource in a namespace
 
 ### Examples
 
+Delete a PipelineResource of name 'foo' in namespace 'bar':
 
-# Delete a PipelineResource of name 'foo' in namespace 'bar'
-tkn resource delete foo -n bar
+    tkn resource delete foo -n bar
 
-tkn res rm foo -n bar
+or
+
+    tkn res rm foo -n bar
 
 
 ### Options

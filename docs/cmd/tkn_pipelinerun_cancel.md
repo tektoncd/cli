@@ -14,10 +14,10 @@ Cancel the PipelineRun
 
 ### Examples
 
+Cancel the PipelineRun named 'foo' from namespace 'bar':
 
-  # cancel the PipelineRun named "foo" from the namespace "bar"
     tkn pipelinerun cancel foo -n bar
-   
+
 
 ### Options
 

@@ -114,9 +114,9 @@ func startCommand(p cli.Params) *cobra.Command {
 		Annotations: map[string]string{
 			"commandType": "main",
 		},
-		Example: `
-# start pipeline foo by creating a pipelinerun named "foo-run-xyz123" from the namespace "bar"
-tkn pipeline start foo -s ServiceAccountName -n bar
+		Example: `Start Pipeline foo by creating a PipelineRun named "foo-run-xyz123" from namespace 'bar':
+
+    tkn pipeline start foo -s ServiceAccountName -n bar
 
 For params value, if you want to provide multiple values, provide them comma separated
 like cat,foo,bar

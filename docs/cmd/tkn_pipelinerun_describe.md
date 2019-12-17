@@ -16,11 +16,13 @@ Describe a pipelinerun in a namespace
 
 ### Examples
 
+Describe a PipelineRun of name 'foo' in namespace 'bar':
 
-# Describe a PipelineRun of name 'foo' in namespace 'bar'
-tkn pipelinerun describe foo -n bar
+    tkn pipelinerun describe foo -n bar
 
-tkn pr desc foo -n bar
+or
+
+    tkn pr desc foo -n bar
 
 
 ### Options

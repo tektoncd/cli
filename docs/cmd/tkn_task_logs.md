@@ -14,20 +14,22 @@ Show task logs
 
 ### Examples
 
+Interactive mode: shows logs of the selected TaskRun:
 
-  # interactive mode: shows logs of the selected taskrun
     tkn task logs -n namespace
 
-  # interactive mode: shows logs of the selected taskrun of the given task
+Interactive mode: shows logs of the selected TaskRun of the given Task:
+
     tkn task logs task -n namespace
 
-  # show logs of given task for last taskrun
+Show logs of given Task for last TaskRun:
+
     tkn task logs task -n namespace --last
 
-  # show logs for given task and taskrun
+Show logs for given task and taskrun:
+
     tkn task logs task taskrun -n namespace
 
-   
 
 ### Options
 

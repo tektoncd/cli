@@ -44,12 +44,13 @@ func listCommand(p cli.Params) *cobra.Command {
 
 	opts := &ListOptions{Limit: 0}
 	f := cliopts.NewPrintFlags("list")
-	eg := `
-# List all PipelineRuns of Pipeline name 'foo'
-tkn pipelinerun list foo -n bar
+	eg := `List all PipelineRuns of Pipeline 'foo':
 
-# List all pipelineruns in a namespaces 'foo'
-tkn pr list -n foo
+    tkn pipelinerun list foo -n bar
+
+List all PipelineRuns in a namespace 'foo':
+
+    tkn pr list -n foo
 `
 
 	c := &cobra.Command{

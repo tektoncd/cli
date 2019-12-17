@@ -28,11 +28,13 @@ import (
 func deleteCommand(p cli.Params) *cobra.Command {
 	opts := &options.DeleteOptions{Resource: "taskrun", ForceDelete: false}
 	f := cliopts.NewPrintFlags("delete")
-	eg := `
-# Delete a TaskRun of name 'foo' in namespace 'bar'
-tkn taskrun delete foo -n bar
+	eg := `Delete a TaskRun of name 'foo' in namespace 'bar':
 
-tkn tr rm foo -n bar
+    tkn taskrun delete foo -n bar
+
+or
+
+    tkn tr rm foo -n bar
 `
 
 	c := &cobra.Command{

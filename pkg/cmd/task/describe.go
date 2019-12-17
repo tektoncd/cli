@@ -106,11 +106,13 @@ NAME	STARTED	DURATION	STATUS
 
 func describeCommand(p cli.Params) *cobra.Command {
 	f := cliopts.NewPrintFlags("describe")
-	eg := `
-# Describe a task of name 'foo' in namespace 'bar'
-tkn task describe foo -n bar
+	eg := `Describe a Task of name 'foo' in namespace 'bar':
 
-tkn t desc foo -n bar
+    tkn task describe foo -n bar
+
+or
+
+   tkn t desc foo -n bar
 `
 
 	c := &cobra.Command{

@@ -33,9 +33,9 @@ type createOptions struct {
 func createCommand(p cli.Params) *cobra.Command {
 	f := cliopts.NewPrintFlags("create")
 	opts := &createOptions{from: ""}
-	eg := `
-# Create a Pipeline defined by foo.yaml in namespace 'bar'
-tkn pipeline create -f foo.yaml -n bar
+	eg := `Create a Pipeline defined by foo.yaml in namespace 'bar':
+
+    tkn pipeline create -f foo.yaml -n bar
 `
 
 	c := &cobra.Command{

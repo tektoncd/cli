@@ -14,9 +14,9 @@ Create a task in a namespace
 
 ### Examples
 
+Create a Task defined by foo.yaml in namespace 'bar':
 
-# Create a Task defined by foo.yaml in namespace 'bar'
-tkn task create -f foo.yaml -n bar
+    tkn task create -f foo.yaml -n bar
 
 
 ### Options

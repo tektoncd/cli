@@ -33,7 +33,7 @@ import (
 )
 
 const (
-	emptyMsg = "No taskruns found"
+	emptyMsg = "No TaskRuns found"
 )
 
 type ListOptions struct {
@@ -44,18 +44,19 @@ func listCommand(p cli.Params) *cobra.Command {
 
 	opts := &ListOptions{Limit: 0}
 	f := cliopts.NewPrintFlags("list")
-	eg := `
-# List all taskruns in namespace 'bar'
-tkn tr list -n bar
+	eg := `List all TaskRuns in namespace 'bar':
 
-# List all taskruns of task 'foo' in namespace 'bar'
-tkn taskrun list foo -n bar
+    tkn tr list -n bar
+
+List all TaskRuns of Task 'foo' in namespace 'bar':
+
+    tkn taskrun list foo -n bar
 `
 
 	c := &cobra.Command{
 		Use:     "list",
 		Aliases: []string{"ls"},
-		Short:   "Lists taskruns in a namespace",
+		Short:   "Lists TaskRuns in a namespace",
 		Annotations: map[string]string{
 			"commandType": "main",
 		},

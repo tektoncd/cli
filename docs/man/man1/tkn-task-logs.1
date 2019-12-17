@@ -60,20 +60,52 @@ Show task logs
 
 .SH EXAMPLE
 .PP
-# interactive mode: shows logs of the selected taskrun
-    tkn task logs \-n namespace
+Interactive mode: shows logs of the selected TaskRun:
 
 .PP
-# interactive mode: shows logs of the selected taskrun of the given task
-    tkn task logs task \-n namespace
+.RS
+
+.nf
+tkn task logs \-n namespace
+
+.fi
+.RE
 
 .PP
-# show logs of given task for last taskrun
-    tkn task logs task \-n namespace \-\-last
+Interactive mode: shows logs of the selected TaskRun of the given Task:
 
 .PP
-# show logs for given task and taskrun
-    tkn task logs task taskrun \-n namespace
+.RS
+
+.nf
+tkn task logs task \-n namespace
+
+.fi
+.RE
+
+.PP
+Show logs of given Task for last TaskRun:
+
+.PP
+.RS
+
+.nf
+tkn task logs task \-n namespace \-\-last
+
+.fi
+.RE
+
+.PP
+Show logs for given task and taskrun:
+
+.PP
+.RS
+
+.nf
+tkn task logs task taskrun \-n namespace
+
+.fi
+.RE
 
 
 .SH SEE ALSO

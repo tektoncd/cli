@@ -16,7 +16,6 @@ package taskrun
 
 import (
 	"fmt"
-
 	"text/tabwriter"
 	"text/template"
 
@@ -105,11 +104,13 @@ NAME	STATUS
 
 func describeCommand(p cli.Params) *cobra.Command {
 	f := cliopts.NewPrintFlags("describe")
-	eg := `
-# Describe a TaskRun of name 'foo' in namespace 'bar'
-tkn taskrun describe foo -n bar
+	eg := `Describe a TaskRun of name 'foo' in namespace 'bar':
 
-tkn tr desc foo -n bar
+    tkn taskrun describe foo -n bar
+
+or
+
+    tkn tr desc foo -n bar
 `
 
 	c := &cobra.Command{

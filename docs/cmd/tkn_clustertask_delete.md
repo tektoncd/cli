@@ -16,11 +16,13 @@ Delete a clustertask resource in a cluster
 
 ### Examples
 
+Delete a ClusterTask of name 'foo':
 
-# Delete a ClusterTask of name 'foo'
-tkn clustertask delete foo
+    tkn clustertask delete foo
 
-tkn ct rm foo
+or
+
+    tkn ct rm foo
 
 
 ### Options

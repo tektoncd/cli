@@ -16,11 +16,13 @@ Delete a pipelinerun in a namespace
 
 ### Examples
 
+Delete a PipelineRun of name 'foo' in namespace 'bar':
 
-# Delete a PipelineRun of name 'foo' in namespace 'bar'
-tkn pipelinerun delete foo -n bar
+    tkn pipelinerun delete foo -n bar
 
-tkn pr rm foo -n bar
+or
+
+    tkn pr rm foo -n bar
 
 
 ### Options
