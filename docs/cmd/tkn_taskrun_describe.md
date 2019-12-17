@@ -16,11 +16,13 @@ Describe a taskrun in a namespace
 
 ### Examples
 
+Describe a TaskRun of name 'foo' in namespace 'bar':
 
-# Describe a TaskRun of name 'foo' in namespace 'bar'
-tkn taskrun describe foo -n bar
+    tkn taskrun describe foo -n bar
 
-tkn tr desc foo -n bar
+or
+
+    tkn tr desc foo -n bar
 
 
 ### Options

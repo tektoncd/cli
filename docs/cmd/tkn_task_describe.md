@@ -16,11 +16,13 @@ Describes a task in a namespace
 
 ### Examples
 
+Describe a Task of name 'foo' in namespace 'bar':
 
-# Describe a task of name 'foo' in namespace 'bar'
-tkn task describe foo -n bar
+    tkn task describe foo -n bar
 
-tkn t desc foo -n bar
+or
+
+   tkn t desc foo -n bar
 
 
 ### Options

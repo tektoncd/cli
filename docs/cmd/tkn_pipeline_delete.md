@@ -16,11 +16,13 @@ Delete a pipeline in a namespace
 
 ### Examples
 
+Delete a Pipeline of name 'foo' in namespace 'bar'
 
-# Delete a Pipeline of name 'foo' in namespace 'bar'
-tkn pipeline delete foo -n bar
+    tkn pipeline delete foo -n bar
 
-tkn p rm foo -n bar
+or
+
+    tkn p rm foo -n bar
 
 
 ### Options

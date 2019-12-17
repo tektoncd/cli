@@ -32,9 +32,9 @@ const (
 )
 
 func cancelCommand(p cli.Params) *cobra.Command {
-	eg := `
-# Cancel the TaskRun named "foo" from the namespace "bar"
-tkn taskrun cancel foo -n bar
+	eg := `Cancel the TaskRun named 'foo' from the namespace 'bar':
+
+    tkn taskrun cancel foo -n bar
 `
 
 	c := &cobra.Command{

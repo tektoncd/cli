@@ -16,11 +16,13 @@ Delete a task resource in a namespace
 
 ### Examples
 
+Delete a Task of name 'foo' in namespace 'bar':
 
-# Delete a Task of name 'foo' in namespace 'bar'
-tkn task delete foo -n bar
+    tkn task delete foo -n bar
 
-tkn t rm foo -n bar
+or
+
+    tkn t rm foo -n bar
 
 
 ### Options

@@ -28,11 +28,13 @@ import (
 func deleteCommand(p cli.Params) *cobra.Command {
 	opts := &options.DeleteOptions{Resource: "condition", ForceDelete: false}
 	f := cliopts.NewPrintFlags("delete")
-	eg := `
-# Delete a Condition of name 'foo' in namespace 'bar'
-tkn condition delete foo -n bar
+	eg := `Delete a Condition of name 'foo' in namespace 'bar':
 
-tkn cond rm foo -n bar
+    tkn condition delete foo -n bar
+
+or
+
+    tkn cond rm foo -n bar
 `
 
 	c := &cobra.Command{

@@ -14,9 +14,9 @@ Create a pipeline in a namespace
 
 ### Examples
 
+Create a Pipeline defined by foo.yaml in namespace 'bar':
 
-# Create a Pipeline defined by foo.yaml in namespace 'bar'
-tkn pipeline create -f foo.yaml -n bar
+    tkn pipeline create -f foo.yaml -n bar
 
 
 ### Options

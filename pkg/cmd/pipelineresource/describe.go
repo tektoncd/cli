@@ -54,11 +54,13 @@ FIELDNAME	SECRETNAME
 
 func describeCommand(p cli.Params) *cobra.Command {
 	f := cliopts.NewPrintFlags("describe")
-	eg := `
-# Describe a PipelineResource of name 'foo' in namespace 'bar'
-tkn resource describe foo -n bar
+	eg := `Describe a PipelineResource of name 'foo' in namespace 'bar':
 
-tkn res desc foo -n bar
+    tkn resource describe foo -n bar
+
+or
+
+    tkn res desc foo -n bar
 `
 
 	c := &cobra.Command{

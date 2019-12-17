@@ -17,7 +17,6 @@ package pipelinerun
 import (
 	"fmt"
 	"sort"
-
 	"text/tabwriter"
 	"text/template"
 
@@ -91,11 +90,13 @@ NAME	TASK NAME	STARTED	DURATION	STATUS
 
 func describeCommand(p cli.Params) *cobra.Command {
 	f := cliopts.NewPrintFlags("describe")
-	eg := `
-# Describe a PipelineRun of name 'foo' in namespace 'bar'
-tkn pipelinerun describe foo -n bar
+	eg := `Describe a PipelineRun of name 'foo' in namespace 'bar':
 
-tkn pr desc foo -n bar
+    tkn pipelinerun describe foo -n bar
+
+or
+
+    tkn pr desc foo -n bar
 `
 
 	c := &cobra.Command{

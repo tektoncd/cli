@@ -48,19 +48,22 @@ func logCommand(p cli.Params) *cobra.Command {
 	opts := options.NewLogOptions(p)
 
 	eg := `
-  # interactive mode: shows logs of the selected pipeline run
+Interactive mode: shows logs of the selected pipelinerun:
+
     tkn pipeline logs -n namespace
 
-  # interactive mode: shows logs of the selected pipelinerun of the given pipeline
+Interactive mode: shows logs of the selected pipelinerun of the given pipeline:
+
     tkn pipeline logs pipeline -n namespace
 
-  # show logs of given pipeline for last run
+Show logs of given pipeline for last run:
+
     tkn pipeline logs pipeline -n namespace --last
 
-  # show logs for given pipeline and pipelinerun
-    tkn pipeline logs pipeline run -n namespace
+Show logs for given pipeline and pipelinerun:
 
-   `
+    tkn pipeline logs pipeline run -n namespace
+`
 	c := &cobra.Command{
 		Use:                   "logs",
 		DisableFlagsInUseLine: true,

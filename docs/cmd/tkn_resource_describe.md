@@ -16,11 +16,13 @@ Describes a pipeline resource in a namespace
 
 ### Examples
 
+Describe a PipelineResource of name 'foo' in namespace 'bar':
 
-# Describe a PipelineResource of name 'foo' in namespace 'bar'
-tkn resource describe foo -n bar
+    tkn resource describe foo -n bar
 
-tkn res desc foo -n bar
+or
+
+    tkn res desc foo -n bar
 
 
 ### Options

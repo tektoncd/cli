@@ -32,10 +32,10 @@ const (
 )
 
 func cancelCommand(p cli.Params) *cobra.Command {
-	eg := `
-  # cancel the PipelineRun named "foo" from the namespace "bar"
+	eg := `Cancel the PipelineRun named 'foo' from namespace 'bar':
+
     tkn pipelinerun cancel foo -n bar
-   `
+`
 
 	c := &cobra.Command{
 		Use:          "cancel pipelinerunName",

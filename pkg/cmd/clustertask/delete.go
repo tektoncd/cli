@@ -28,11 +28,13 @@ import (
 func deleteCommand(p cli.Params) *cobra.Command {
 	opts := &options.DeleteOptions{Resource: "clustertask", ForceDelete: false}
 	f := cliopts.NewPrintFlags("delete")
-	eg := `
-# Delete a ClusterTask of name 'foo'
-tkn clustertask delete foo
+	eg := `Delete a ClusterTask of name 'foo':
 
-tkn ct rm foo
+    tkn clustertask delete foo
+
+or
+
+    tkn ct rm foo
 `
 
 	c := &cobra.Command{

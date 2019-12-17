@@ -61,12 +61,28 @@ Create a pipeline resource in a namespace
 
 .SH EXAMPLE
 .PP
-# Creates new PipelineResource as per the given input
-    tkn resource create \-n namespace
+Creates new PipelineResource as per the given input:
 
 .PP
-# Create a PipelineResource defined by foo.yaml in namespace 'bar'
-    tkn resource create \-f foo.yaml \-n bar
+.RS
+
+.nf
+tkn resource create \-n namespace
+
+.fi
+.RE
+
+.PP
+Create a PipelineResource defined by foo.yaml in namespace 'bar':
+
+.PP
+.RS
+
+.nf
+tkn resource create \-f foo.yaml \-n bar
+
+.fi
+.RE
 
 
 .SH SEE ALSO

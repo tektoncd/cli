@@ -28,11 +28,13 @@ import (
 func deleteCommand(p cli.Params) *cobra.Command {
 	opts := &options.DeleteOptions{Resource: "pipelineresource", ForceDelete: false}
 	f := cliopts.NewPrintFlags("delete")
-	eg := `
-# Delete a PipelineResource of name 'foo' in namespace 'bar'
-tkn resource delete foo -n bar
+	eg := `Delete a PipelineResource of name 'foo' in namespace 'bar':
 
-tkn res rm foo -n bar
+    tkn resource delete foo -n bar
+
+or
+
+    tkn res rm foo -n bar
 `
 
 	c := &cobra.Command{

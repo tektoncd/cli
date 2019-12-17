@@ -33,12 +33,13 @@ const (
 
 func logCommand(p cli.Params) *cobra.Command {
 	opts := &options.LogOptions{Params: p}
-	eg := `
-# show the logs of TaskRun named "foo" from the namespace "bar"
-tkn taskrun logs foo -n bar
+	eg := `Show the logs of TaskRun named 'foo' from the namespace 'bar':
 
-# show the live logs of TaskRun named "foo" from the namespace "bar"
-tkn taskrun logs -f foo -n bar
+    tkn taskrun logs foo -n bar
+
+Show the live logs of TaskRun named 'foo' from namespace 'bar':
+
+    tkn taskrun logs -f foo -n bar
 `
 	c := &cobra.Command{
 		Use:          "logs",

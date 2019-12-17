@@ -46,20 +46,22 @@ func nameArg(args []string, p cli.Params) error {
 func logCommand(p cli.Params) *cobra.Command {
 	opts := options.NewLogOptions(p)
 
-	eg := `
-  # interactive mode: shows logs of the selected taskrun
+	eg := `Interactive mode: shows logs of the selected TaskRun:
+
     tkn task logs -n namespace
 
-  # interactive mode: shows logs of the selected taskrun of the given task
+Interactive mode: shows logs of the selected TaskRun of the given Task:
+
     tkn task logs task -n namespace
 
-  # show logs of given task for last taskrun
+Show logs of given Task for last TaskRun:
+
     tkn task logs task -n namespace --last
 
-  # show logs for given task and taskrun
-    tkn task logs task taskrun -n namespace
+Show logs for given task and taskrun:
 
-   `
+    tkn task logs task taskrun -n namespace
+`
 	c := &cobra.Command{
 		Use:                   "logs",
 		DisableFlagsInUseLine: true,

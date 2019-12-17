@@ -5,7 +5,7 @@
 
 .SH NAME
 .PP
-tkn\-taskrun\-list \- Lists taskruns in a namespace
+tkn\-taskrun\-list \- Lists TaskRuns in a namespace
 
 
 .SH SYNOPSIS
@@ -15,7 +15,7 @@ tkn\-taskrun\-list \- Lists taskruns in a namespace
 
 .SH DESCRIPTION
 .PP
-Lists taskruns in a namespace
+Lists TaskRuns in a namespace
 
 
 .SH OPTIONS
@@ -60,15 +60,29 @@ Lists taskruns in a namespace
 
 
 .SH EXAMPLE
-
-.SH List all taskruns in namespace 'bar'
 .PP
+List all TaskRuns in namespace 'bar':
+
+.PP
+.RS
+
+.nf
 tkn tr list \-n bar
 
+.fi
+.RE
 
-.SH List all taskruns of task 'foo' in namespace 'bar'
 .PP
+List all TaskRuns of Task 'foo' in namespace 'bar':
+
+.PP
+.RS
+
+.nf
 tkn taskrun list foo \-n bar
+
+.fi
+.RE
 
 
 .SH SEE ALSO

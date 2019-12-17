@@ -60,17 +60,40 @@ Show the logs of PipelineRun
 
 .SH EXAMPLE
 .PP
-# show the logs of PipelineRun named "foo" from the namesspace "bar"
-    tkn pipelinerun logs foo \-n bar
+Show the logs of PipelineRun named 'foo' from namespace 'bar':
 
 .PP
-# show the logs of PipelineRun named "microservice\-1" for task "build" only, from the namespace "bar"
-    tkn pr logs microservice\-1 \-t build \-n bar
+.RS
+
+.nf
+tkn pipelinerun logs foo \-n bar
+
+.fi
+.RE
 
 .PP
-# show the logs of PipelineRun named "microservice\-1" for all tasks and steps (including init steps),
-    from the namespace "foo"
-    tkn pr logs microservice\-1 \-a \-n foo
+Show the logs of PipelineRun named 'microservice\-1' for task 'build' only from namespace 'bar':
+
+.PP
+.RS
+
+.nf
+tkn pr logs microservice\-1 \-t build \-n bar
+
+.fi
+.RE
+
+.PP
+Show the logs of PipelineRun named 'microservice\-1' for all tasks and steps (including init steps) from namespace 'foo':
+
+.PP
+.RS
+
+.nf
+tkn pr logs microservice\-1 \-a \-n foo
+
+.fi
+.RE
 
 
 .SH SEE ALSO

@@ -53,12 +53,14 @@ func createCommand(p cli.Params) *cobra.Command {
 	}
 	f := cliopts.NewPrintFlags("create")
 	opts := &Resource{from: ""}
-	eg := `
-  # Creates new PipelineResource as per the given input
-	tkn resource create -n namespace
-	
-  # Create a PipelineResource defined by foo.yaml in namespace 'bar'
-	tkn resource create -f foo.yaml -n bar`
+	eg := `Creates new PipelineResource as per the given input:
+
+    tkn resource create -n namespace
+
+Create a PipelineResource defined by foo.yaml in namespace 'bar':
+
+    tkn resource create -f foo.yaml -n bar
+`
 
 	c := &cobra.Command{
 		Use:                   "create",
