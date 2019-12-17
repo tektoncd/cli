@@ -86,12 +86,12 @@ func newPipelineClient(objs ...runtime.Object) *fakepipelineclientset.Clientset 
 	return c
 }
 
-func Test_start_invalid_namespace(t *testing.T) {
+func Test_run_invalid_namespace(t *testing.T) {
 
 	cs, _ := test.SeedTestData(t, pipelinetest.Data{})
 	c := Command(&test.Params{Tekton: cs.Pipeline, Kube: cs.Kube})
 
-	_, err := test.ExecuteCommand(c, "start", "pipeline", "-n", "invalid")
+	_, err := test.ExecuteCommand(c, "run", "pipeline", "-n", "invalid")
 
 	if err == nil {
 		t.Error("Expected an error for invalid namespace")
@@ -100,10 +100,10 @@ func Test_start_invalid_namespace(t *testing.T) {
 	test.AssertOutput(t, "namespaces \"invalid\" not found", err.Error())
 }
 
-func Test_start_has_pipeline_arg(t *testing.T) {
+func Test_run_has_pipeline_arg(t *testing.T) {
 	c := Command(&test.Params{})
 
-	_, err := test.ExecuteCommand(c, "start", "-n", "ns")
+	_, err := test.ExecuteCommand(c, "run", "-n", "ns")
 
 	if err == nil {
 		t.Error("Expecting an error but it's empty")
@@ -111,7 +111,7 @@ func Test_start_has_pipeline_arg(t *testing.T) {
 	test.AssertOutput(t, "missing pipeline name", err.Error())
 }
 
-func Test_start_pipeline_not_found(t *testing.T) {
+func Test_run_pipeline_not_found(t *testing.T) {
 	ps := []*v1alpha1.Pipeline{
 		tb.Pipeline("test-pipeline", "foo",
 			tb.PipelineSpec(
@@ -139,12 +139,12 @@ func Test_start_pipeline_not_found(t *testing.T) {
 	p := &test.Params{Tekton: cs.Pipeline, Kube: cs.Kube}
 
 	pipeline := Command(p)
-	got, _ := test.ExecuteCommand(pipeline, "start", "test-pipeline-2", "-n", "foo")
+	got, _ := test.ExecuteCommand(pipeline, "run", "test-pipeline-2", "-n", "foo")
 	expected := "Error: pipeline name test-pipeline-2 does not exist in namespace foo\n"
 	test.AssertOutput(t, expected, got)
 }
 
-func Test_start_pipeline(t *testing.T) {
+func Test_run_pipeline(t *testing.T) {
 	pipelineName := "test-pipeline"
 
 	ps := []*v1alpha1.Pipeline{
@@ -174,7 +174,7 @@ func Test_start_pipeline(t *testing.T) {
 	p := &test.Params{Tekton: cs.Pipeline, Kube: cs.Kube}
 	pipeline := Command(p)
 
-	got, _ := test.ExecuteCommand(pipeline, "start", pipelineName,
+	got, _ := test.ExecuteCommand(pipeline, "run", pipelineName,
 		"-r=source=scaffold-git",
 		"--showlog=false",
 		"-p=pipeline-param=value1",
@@ -209,7 +209,7 @@ func Test_start_pipeline(t *testing.T) {
 
 }
 
-func Test_start_pipeline_showlogs_false(t *testing.T) {
+func Test_run_pipeline_showlogs_false(t *testing.T) {
 	pipelineName := "test-pipeline"
 
 	ps := []*v1alpha1.Pipeline{
@@ -239,7 +239,7 @@ func Test_start_pipeline_showlogs_false(t *testing.T) {
 	p := &test.Params{Tekton: cs.Pipeline, Kube: cs.Kube}
 	pipeline := Command(p)
 
-	got, _ := test.ExecuteCommand(pipeline, "start", pipelineName,
+	got, _ := test.ExecuteCommand(pipeline, "run", pipelineName,
 		"-r=source=scaffold-git",
 		"-p=pipeline-param=value1",
 		"-l=jemange=desfrites",
@@ -251,7 +251,7 @@ func Test_start_pipeline_showlogs_false(t *testing.T) {
 	test.AssertOutput(t, expected, got)
 }
 
-func Test_start_pipeline_interactive(t *testing.T) {
+func Test_run_pipeline_interactive(t *testing.T) {
 
 	pipelineName := "test-pipeline"
 
@@ -342,7 +342,7 @@ func Test_start_pipeline_interactive(t *testing.T) {
 			},
 		},
 	}
-	opts := startOpts("ns", cs, false, "svc1", []string{"task1=svc1"})
+	opts := runOpts("ns", cs, false, "svc1", []string{"task1=svc1"})
 
 	for _, test := range tests {
 		t.Run(test.name, func(t *testing.T) {
@@ -351,7 +351,7 @@ func Test_start_pipeline_interactive(t *testing.T) {
 	}
 }
 
-func Test_start_pipeline_last(t *testing.T) {
+func Test_run_pipeline_last(t *testing.T) {
 
 	pipelineName := "test-pipeline"
 
@@ -406,7 +406,7 @@ func Test_start_pipeline_last(t *testing.T) {
 	p := &test.Params{Tekton: cs.Pipeline, Kube: cs.Kube}
 
 	pipeline := Command(p)
-	got, _ := test.ExecuteCommand(pipeline, "start", pipelineName,
+	got, _ := test.ExecuteCommand(pipeline, "run", pipelineName,
 		"--last",
 		"-r=git-repo=scaffold-git",
 		"-p=rev-param=revision2",
@@ -440,7 +440,7 @@ func Test_start_pipeline_last(t *testing.T) {
 	test.AssertOutput(t, "svc1", pr.Spec.ServiceAccountName)
 }
 
-func Test_start_pipeline_last_without_res_param(t *testing.T) {
+func Test_run_pipeline_last_without_res_param(t *testing.T) {
 
 	pipelineName := "test-pipeline"
 
@@ -495,7 +495,7 @@ func Test_start_pipeline_last_without_res_param(t *testing.T) {
 	p := &test.Params{Tekton: cs.Pipeline, Kube: cs.Kube}
 
 	pipeline := Command(p)
-	got, _ := test.ExecuteCommand(pipeline, "start", pipelineName,
+	got, _ := test.ExecuteCommand(pipeline, "run", pipelineName,
 		"--last",
 		"--showlog=false",
 		"-n", "ns")
@@ -525,7 +525,7 @@ func Test_start_pipeline_last_without_res_param(t *testing.T) {
 	test.AssertOutput(t, "test-sa", pr.Spec.ServiceAccountName)
 }
 
-func Test_start_pipeline_last_merge(t *testing.T) {
+func Test_run_pipeline_last_merge(t *testing.T) {
 
 	pipelineName := "test-pipeline"
 
@@ -582,7 +582,7 @@ func Test_start_pipeline_last_merge(t *testing.T) {
 	p := &test.Params{Tekton: cs.Pipeline, Kube: cs.Kube}
 
 	pipeline := Command(p)
-	got, _ := test.ExecuteCommand(pipeline, "start", pipelineName,
+	got, _ := test.ExecuteCommand(pipeline, "run", pipelineName,
 		"--last",
 		"--showlog=false",
 		"-s=svc1",
@@ -624,7 +624,7 @@ func Test_start_pipeline_last_merge(t *testing.T) {
 	test.AssertOutput(t, "svc1", pr.Spec.ServiceAccountName)
 }
 
-func Test_start_pipeline_allkindparam(t *testing.T) {
+func Test_run_pipeline_allkindparam(t *testing.T) {
 	pipelineName := "test-pipeline"
 
 	ps := []*v1alpha1.Pipeline{
@@ -655,7 +655,7 @@ func Test_start_pipeline_allkindparam(t *testing.T) {
 	p := &test.Params{Tekton: cs.Pipeline, Kube: cs.Kube}
 	pipeline := Command(p)
 
-	got, _ := test.ExecuteCommand(pipeline, "start", pipelineName,
+	got, _ := test.ExecuteCommand(pipeline, "run", pipelineName,
 		"-r=source=scaffold-git",
 		"--showlog=false",
 		"-p=pipeline-param=value1",
@@ -694,7 +694,7 @@ func Test_start_pipeline_allkindparam(t *testing.T) {
 
 }
 
-func Test_start_pipeline_last_no_pipelineruns(t *testing.T) {
+func Test_run_pipeline_last_no_pipelineruns(t *testing.T) {
 
 	pipelineName := "test-pipeline"
 
@@ -736,7 +736,7 @@ func Test_start_pipeline_last_no_pipelineruns(t *testing.T) {
 	p := &test.Params{Tekton: cs.Pipeline, Kube: cs.Kube}
 
 	pipeline := Command(p)
-	got, _ := test.ExecuteCommand(pipeline, "start", pipelineName,
+	got, _ := test.ExecuteCommand(pipeline, "run", pipelineName,
 		"--last",
 		"-s=svc1",
 		"--showlog=false",
@@ -750,7 +750,7 @@ func Test_start_pipeline_last_no_pipelineruns(t *testing.T) {
 	test.AssertOutput(t, expected, got)
 }
 
-func Test_start_pipeline_last_list_err(t *testing.T) {
+func Test_run_pipeline_last_list_err(t *testing.T) {
 
 	pipelineName := "test-pipeline"
 
@@ -786,7 +786,7 @@ func Test_start_pipeline_last_list_err(t *testing.T) {
 	})
 
 	pipeline := Command(p)
-	got, _ := test.ExecuteCommand(pipeline, "start", pipelineName,
+	got, _ := test.ExecuteCommand(pipeline, "run", pipelineName,
 		"--last",
 		"-s=svc1",
 		"--showlog=false",
@@ -800,7 +800,7 @@ func Test_start_pipeline_last_list_err(t *testing.T) {
 	test.AssertOutput(t, expected, got)
 }
 
-func Test_start_pipeline_wrong_param_err(t *testing.T) {
+func Test_run_pipeline_wrong_param_err(t *testing.T) {
 
 	pipelineName := "test-pipeline"
 
@@ -830,7 +830,7 @@ func Test_start_pipeline_wrong_param_err(t *testing.T) {
 	p := &test.Params{Tekton: cs.Pipeline, Kube: cs.Kube}
 
 	pipeline := Command(p)
-	got, _ := test.ExecuteCommand(pipeline, "start", pipelineName,
+	got, _ := test.ExecuteCommand(pipeline, "run", pipelineName,
 		"-s=svc1",
 		"--showlog=false",
 		"-r=git-repo=scaffold-git",
@@ -841,7 +841,7 @@ func Test_start_pipeline_wrong_param_err(t *testing.T) {
 	test.AssertOutput(t, expected, got)
 }
 
-func Test_start_pipeline_client_error(t *testing.T) {
+func Test_run_pipeline_client_error(t *testing.T) {
 
 	pipelineName := "test-pipeline"
 
@@ -873,7 +873,7 @@ func Test_start_pipeline_client_error(t *testing.T) {
 	p := &test.Params{Tekton: cs.Pipeline, Kube: cs.Kube}
 
 	pipeline := Command(p)
-	got, _ := test.ExecuteCommand(pipeline, "start", pipelineName,
+	got, _ := test.ExecuteCommand(pipeline, "run", pipelineName,
 		"--showlog=false",
 		"-s=svc1",
 		"-n=namespace")
@@ -882,7 +882,7 @@ func Test_start_pipeline_client_error(t *testing.T) {
 	test.AssertOutput(t, expected, got)
 }
 
-func Test_start_pipeline_res_err(t *testing.T) {
+func Test_run_pipeline_res_err(t *testing.T) {
 
 	pipelineName := "test-pipeline"
 
@@ -914,7 +914,7 @@ func Test_start_pipeline_res_err(t *testing.T) {
 	p := &test.Params{Tekton: cs.Pipeline, Kube: cs.Kube}
 
 	pipeline := Command(p)
-	got, _ := test.ExecuteCommand(pipeline, "start", pipelineName,
+	got, _ := test.ExecuteCommand(pipeline, "run", pipelineName,
 		"-s=svc1",
 		"--showlog=false",
 		"-r=git-reposcaffold-git",
@@ -927,7 +927,7 @@ func Test_start_pipeline_res_err(t *testing.T) {
 	test.AssertOutput(t, expected, got)
 }
 
-func Test_start_pipeline_param_err(t *testing.T) {
+func Test_run_pipeline_param_err(t *testing.T) {
 
 	pipelineName := "test-pipeline"
 
@@ -959,7 +959,7 @@ func Test_start_pipeline_param_err(t *testing.T) {
 	p := &test.Params{Tekton: cs.Pipeline, Kube: cs.Kube}
 
 	pipeline := Command(p)
-	got, _ := test.ExecuteCommand(pipeline, "start", pipelineName,
+	got, _ := test.ExecuteCommand(pipeline, "run", pipelineName,
 		"-s=svc1",
 		"--showlog=false",
 		"-r=git-repo=scaffold-git",
@@ -972,7 +972,7 @@ func Test_start_pipeline_param_err(t *testing.T) {
 	test.AssertOutput(t, expected, got)
 }
 
-func Test_start_pipeline_label_err(t *testing.T) {
+func Test_run_pipeline_label_err(t *testing.T) {
 
 	pipelineName := "test-pipeline"
 
@@ -1004,7 +1004,7 @@ func Test_start_pipeline_label_err(t *testing.T) {
 	p := &test.Params{Tekton: cs.Pipeline, Kube: cs.Kube}
 
 	pipeline := Command(p)
-	got, _ := test.ExecuteCommand(pipeline, "start", pipelineName,
+	got, _ := test.ExecuteCommand(pipeline, "run", pipelineName,
 		"-s=svc1",
 		"-r=git-repo=scaffold-git",
 		"-p=rev-param=revision2",
@@ -1017,7 +1017,7 @@ func Test_start_pipeline_label_err(t *testing.T) {
 	test.AssertOutput(t, expected, got)
 }
 
-func Test_start_pipeline_task_svc_error(t *testing.T) {
+func Test_run_pipeline_task_svc_error(t *testing.T) {
 
 	pipelineName := "test-pipeline"
 
@@ -1046,7 +1046,7 @@ func Test_start_pipeline_task_svc_error(t *testing.T) {
 	p := &test.Params{Tekton: cs.Pipeline, Kube: cs.Kube}
 
 	pipeline := Command(p)
-	got, _ := test.ExecuteCommand(pipeline, "start", pipelineName,
+	got, _ := test.ExecuteCommand(pipeline, "run", pipelineName,
 		"--task-serviceaccount=task3svc3",
 		"-n=foo")
 
@@ -1390,7 +1390,7 @@ func Test_lastPipelineRun(t *testing.T) {
 	}
 }
 
-func Test_start_pipeline_newGitRes_noExistingRes(t *testing.T) {
+func Test_run_pipeline_newGitRes_noExistingRes(t *testing.T) {
 
 	pipelineName := "gitpipeline"
 
@@ -1494,7 +1494,7 @@ func Test_start_pipeline_newGitRes_noExistingRes(t *testing.T) {
 			},
 		},
 	}
-	opts := startOpts("ns", cs, false, "svc1", []string{"task1=svc1"})
+	opts := runOpts("ns", cs, false, "svc1", []string{"task1=svc1"})
 
 	for _, test := range tests {
 		t.Run(test.name, func(t *testing.T) {
@@ -1503,7 +1503,7 @@ func Test_start_pipeline_newGitRes_noExistingRes(t *testing.T) {
 	}
 }
 
-func Test_start_pipeline_newMultipleRes_noExistingRes(t *testing.T) {
+func Test_run_pipeline_newMultipleRes_noExistingRes(t *testing.T) {
 
 	pipelineName := "gitpipeline"
 
@@ -1632,7 +1632,7 @@ func Test_start_pipeline_newMultipleRes_noExistingRes(t *testing.T) {
 			},
 		},
 	}
-	opts := startOpts("ns", cs, false, "svc1", []string{"task1=svc1"})
+	opts := runOpts("ns", cs, false, "svc1", []string{"task1=svc1"})
 
 	for _, test := range tests {
 		t.Run(test.name, func(t *testing.T) {
@@ -1641,7 +1641,7 @@ func Test_start_pipeline_newMultipleRes_noExistingRes(t *testing.T) {
 	}
 }
 
-func Test_start_pipeline_gitRes_withExistingRes_useExisting(t *testing.T) {
+func Test_run_pipeline_gitRes_withExistingRes_useExisting(t *testing.T) {
 
 	pipelineName := "gitpipeline"
 
@@ -1738,7 +1738,7 @@ func Test_start_pipeline_gitRes_withExistingRes_useExisting(t *testing.T) {
 			},
 		},
 	}
-	opts := startOpts("ns", cs, false, "svc1", []string{"task1=svc1"})
+	opts := runOpts("ns", cs, false, "svc1", []string{"task1=svc1"})
 
 	for _, test := range tests {
 		t.Run(test.name, func(t *testing.T) {
@@ -1747,7 +1747,7 @@ func Test_start_pipeline_gitRes_withExistingRes_useExisting(t *testing.T) {
 	}
 }
 
-func Test_start_pipeline_gitRes_withExistingRes_createNew(t *testing.T) {
+func Test_run_pipeline_gitRes_withExistingRes_createNew(t *testing.T) {
 
 	pipelineName := "gitpipeline"
 
@@ -1879,7 +1879,7 @@ func Test_start_pipeline_gitRes_withExistingRes_createNew(t *testing.T) {
 			},
 		},
 	}
-	opts := startOpts("ns", cs, false, "svc1", []string{"task1=svc1"})
+	opts := runOpts("ns", cs, false, "svc1", []string{"task1=svc1"})
 
 	for _, test := range tests {
 		t.Run(test.name, func(t *testing.T) {
@@ -1888,7 +1888,7 @@ func Test_start_pipeline_gitRes_withExistingRes_createNew(t *testing.T) {
 	}
 }
 
-func Test_start_pipeline_imageRes_withExistingRes_createNew(t *testing.T) {
+func Test_run_pipeline_imageRes_withExistingRes_createNew(t *testing.T) {
 
 	pipelineName := "imagepipeline"
 
@@ -1975,7 +1975,7 @@ func Test_start_pipeline_imageRes_withExistingRes_createNew(t *testing.T) {
 			},
 		},
 	}
-	opts := startOpts("ns", cs, false, "svc1", []string{"task1=svc1"})
+	opts := runOpts("ns", cs, false, "svc1", []string{"task1=svc1"})
 
 	for _, test := range tests {
 		t.Run(test.name, func(t *testing.T) {
@@ -1984,7 +1984,7 @@ func Test_start_pipeline_imageRes_withExistingRes_createNew(t *testing.T) {
 	}
 }
 
-func Test_start_pipeline_imageRes_withExistingRes_useExisting(t *testing.T) {
+func Test_run_pipeline_imageRes_withExistingRes_useExisting(t *testing.T) {
 
 	pipelineName := "imagepipeline"
 
@@ -2043,7 +2043,7 @@ func Test_start_pipeline_imageRes_withExistingRes_useExisting(t *testing.T) {
 			},
 		},
 	}
-	opts := startOpts("ns", cs, false, "svc1", []string{"task1=svc1"})
+	opts := runOpts("ns", cs, false, "svc1", []string{"task1=svc1"})
 
 	for _, test := range tests {
 		t.Run(test.name, func(t *testing.T) {
@@ -2052,7 +2052,7 @@ func Test_start_pipeline_imageRes_withExistingRes_useExisting(t *testing.T) {
 	}
 }
 
-func Test_start_pipeline_storageRes_withExistingRes_createNew(t *testing.T) {
+func Test_run_pipeline_storageRes_withExistingRes_createNew(t *testing.T) {
 
 	pipelineName := "storagepipeline"
 
@@ -2168,7 +2168,7 @@ func Test_start_pipeline_storageRes_withExistingRes_createNew(t *testing.T) {
 			},
 		},
 	}
-	opts := startOpts("ns", cs, false, "svc1", []string{"task1=svc1"})
+	opts := runOpts("ns", cs, false, "svc1", []string{"task1=svc1"})
 
 	for _, test := range tests {
 		t.Run(test.name, func(t *testing.T) {
@@ -2177,7 +2177,7 @@ func Test_start_pipeline_storageRes_withExistingRes_createNew(t *testing.T) {
 	}
 }
 
-func Test_start_pipeline_pullRequestRes_withExistingRes_createNew(t *testing.T) {
+func Test_run_pipeline_pullRequestRes_withExistingRes_createNew(t *testing.T) {
 
 	pipelineName := "pullrequestpipeline"
 
@@ -2291,7 +2291,7 @@ func Test_start_pipeline_pullRequestRes_withExistingRes_createNew(t *testing.T) 
 			},
 		},
 	}
-	opts := startOpts("ns", cs, false, "svc1", []string{"task1=svc1"})
+	opts := runOpts("ns", cs, false, "svc1", []string{"task1=svc1"})
 
 	for _, test := range tests {
 		t.Run(test.name, func(t *testing.T) {
@@ -2300,7 +2300,7 @@ func Test_start_pipeline_pullRequestRes_withExistingRes_createNew(t *testing.T) 
 	}
 }
 
-func Test_start_pipeline_clusterRes_withExistingRes_createNew(t *testing.T) {
+func Test_run_pipeline_clusterRes_withExistingRes_createNew(t *testing.T) {
 
 	pipelineName := "clusterpipeline"
 
@@ -2453,7 +2453,7 @@ func Test_start_pipeline_clusterRes_withExistingRes_createNew(t *testing.T) {
 			},
 		},
 	}
-	opts := startOpts("ns", cs, false, "svc1", []string{"task1=svc1"})
+	opts := runOpts("ns", cs, false, "svc1", []string{"task1=svc1"})
 
 	for _, test := range tests {
 		t.Run(test.name, func(t *testing.T) {
@@ -2462,7 +2462,7 @@ func Test_start_pipeline_clusterRes_withExistingRes_createNew(t *testing.T) {
 	}
 }
 
-func Test_start_pipeline_cloudEventRes_withExistingRes_createNew(t *testing.T) {
+func Test_run_pipeline_cloudEventRes_withExistingRes_createNew(t *testing.T) {
 
 	pipelineName := "cloudpipeline"
 
@@ -2548,7 +2548,7 @@ func Test_start_pipeline_cloudEventRes_withExistingRes_createNew(t *testing.T) {
 			},
 		},
 	}
-	opts := startOpts("ns", cs, false, "svc1", []string{"task1=svc1"})
+	opts := runOpts("ns", cs, false, "svc1", []string{"task1=svc1"})
 
 	for _, test := range tests {
 		t.Run(test.name, func(t *testing.T) {
@@ -2557,18 +2557,18 @@ func Test_start_pipeline_cloudEventRes_withExistingRes_createNew(t *testing.T) {
 	}
 }
 
-func startOpts(ns string, cs pipelinetest.Clients, last bool, svc string, svcs []string) *startOptions {
+func runOpts(ns string, cs pipelinetest.Clients, last bool, svc string, svcs []string) *runOptions {
 	p := test.Params{
 		Kube:   cs.Kube,
 		Tekton: cs.Pipeline,
 	}
 	p.SetNamespace(ns)
-	startOp := startOptions{
+	runOp := runOptions{
 		cliparams:          &p,
 		Last:               last,
 		ServiceAccountName: svc,
 		ServiceAccounts:    svcs,
 	}
 
-	return &startOp
+	return &runOp
 }

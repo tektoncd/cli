@@ -26,5 +26,5 @@ Manage pipelines
 * [tkn pipeline describe](tkn_pipeline_describe.md)	 - Describes a pipeline in a namespace
 * [tkn pipeline list](tkn_pipeline_list.md)	 - Lists pipelines in a namespace
 * [tkn pipeline logs](tkn_pipeline_logs.md)	 - Show pipeline logs
-* [tkn pipeline start](tkn_pipeline_start.md)	 - Start pipelines
+* [tkn pipeline run](tkn_pipeline_run.md)	 - Start pipelines
 

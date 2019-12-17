@@ -48,7 +48,7 @@ const (
 	invalidSvc      = "invalid service account parameter: "
 )
 
-type startOptions struct {
+type runOptions struct {
 	cliparams          cli.Params
 	stream             *cli.Stream
 	askOpts            survey.AskOpt
@@ -94,8 +94,8 @@ func NameArg(args []string, p cli.Params) error {
 	return nil
 }
 
-func startCommand(p cli.Params) *cobra.Command {
-	opt := startOptions{
+func runCommand(p cli.Params) *cobra.Command {
+	opt := runOptions{
 		cliparams: p,
 		askOpts: func(opt *survey.AskOptions) error {
 			opt.Stdio = terminal.Stdio{
@@ -108,15 +108,15 @@ func startCommand(p cli.Params) *cobra.Command {
 	}
 
 	c := &cobra.Command{
-		Use:     "start pipeline [RESOURCES...] [PARAMS...] [SERVICEACCOUNT]",
-		Aliases: []string{"trigger"},
+		Use:     "run pipeline [RESOURCES...] [PARAMS...] [SERVICEACCOUNT]",
+		Aliases: []string{"start", "trigger"},
 		Short:   "Start pipelines",
 		Annotations: map[string]string{
 			"commandType": "main",
 		},
 		Example: `
 # start pipeline foo by creating a pipelinerun named "foo-run-xyz123" from the namespace "bar"
-tkn pipeline start foo -s ServiceAccountName -n bar
+tkn pipeline run foo -s ServiceAccountName -n bar
 
 For params value, if you want to provide multiple values, provide them comma separated
 like cat,foo,bar
@@ -154,15 +154,15 @@ like cat,foo,bar
 	return c
 }
 
-func (opt *startOptions) run(pName string) error {
+func (opt *runOptions) run(pName string) error {
 	if err := opt.getInput(pName); err != nil {
 		return err
 	}
 
-	return opt.startPipeline(pName)
+	return opt.runPipeline(pName)
 }
 
-func (opt *startOptions) getInput(pname string) error {
+func (opt *runOptions) getInput(pname string) error {
 	cs, err := opt.cliparams.Clients()
 	if err != nil {
 		return err
@@ -198,7 +198,7 @@ func (opt *startOptions) getInput(pname string) error {
 	return nil
 }
 
-func (opt *startOptions) getInputResources(resources resourceOptionsFilter, pipeline *v1alpha1.Pipeline) error {
+func (opt *runOptions) getInputResources(resources resourceOptionsFilter, pipeline *v1alpha1.Pipeline) error {
 	for _, res := range pipeline.Spec.Resources {
 		options := getOptionsByType(resources, string(res.Type))
 		// directly create resource
@@ -247,7 +247,7 @@ func (opt *startOptions) getInputResources(resources resourceOptionsFilter, pipe
 	return nil
 }
 
-func (opt *startOptions) getInputParams(pipeline *v1alpha1.Pipeline) error {
+func (opt *runOptions) getInputParams(pipeline *v1alpha1.Pipeline) error {
 	for _, param := range pipeline.Spec.Params {
 		var ans, ques, defaultValue string
 		ques = fmt.Sprintf("Value for param `%s` of type `%s`?", param.Name, param.Type)
@@ -374,7 +374,7 @@ func getOptionsByType(resources resourceOptionsFilter, restype string) []string 
 	return []string{}
 }
 
-func (opt *startOptions) startPipeline(pName string) error {
+func (opt *runOptions) runPipeline(pName string) error {
 	pr := &v1alpha1.PipelineRun{
 		ObjectMeta: metav1.ObjectMeta{
 			Namespace:    opt.cliparams.Namespace(),
@@ -530,7 +530,7 @@ func parseTaskSvc(s []string) (map[string]v1alpha1.PipelineRunSpecServiceAccount
 	return svcs, nil
 }
 
-func (opt *startOptions) createPipelineResource(resName string, resType v1alpha1.PipelineResourceType) (*v1alpha1.PipelineResource, error) {
+func (opt *runOptions) createPipelineResource(resName string, resType v1alpha1.PipelineResourceType) (*v1alpha1.PipelineResource, error) {
 	res := pipelineresource.Resource{
 		AskOpts: opt.askOpts,
 		Params:  opt.cliparams,

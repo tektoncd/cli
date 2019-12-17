@@ -47,7 +47,7 @@ func RunPromptTest(t *testing.T, test promptTest, opts *options.LogOptions) {
 	})
 }
 
-func (opts *startOptions) RunPromptTest(t *testing.T, test promptTest) {
+func (opts *runOptions) RunPromptTest(t *testing.T, test promptTest) {
 
 	test.runTest(t, test.procedure, func(stdio terminal.Stdio) error {
 		var err error
