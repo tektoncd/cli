@@ -21,6 +21,7 @@ import (
 	"github.com/jonboulle/clockwork"
 	"github.com/pkg/errors"
 	"github.com/tektoncd/pipeline/pkg/client/clientset/versioned"
+	versionedTriggers "github.com/tektoncd/triggers/pkg/client/clientset/versioned"
 	k8s "k8s.io/client-go/kubernetes"
 	"k8s.io/client-go/tools/clientcmd"
 )
@@ -45,6 +46,15 @@ func (p *TektonParams) SetKubeContext(context string) {
 
 func (p *TektonParams) tektonClient(config *rest.Config) (versioned.Interface, error) {
 	cs, err := versioned.NewForConfig(config)
+	if err != nil {
+		return nil, err
+	}
+
+	return cs, nil
+}
+
+func (p *TektonParams) triggersClient(config *rest.Config) (versionedTriggers.Interface, error) {
+	cs, err := versionedTriggers.NewForConfig(config)
 	if err != nil {
 		return nil, err
 	}
@@ -94,14 +104,20 @@ func (p *TektonParams) Clients() (*Clients, error) {
 		return nil, err
 	}
 
+	triggers, err := p.triggersClient(config)
+	if err != nil {
+		return nil, err
+	}
+
 	kube, err := p.kubeClient(config)
 	if err != nil {
 		return nil, err
 	}
 
 	p.clients = &Clients{
-		Tekton: tekton,
-		Kube:   kube,
+		Tekton:   tekton,
+		Kube:     kube,
+		Triggers: triggers,
 	}
 
 	return p.clients, nil

@@ -18,12 +18,14 @@ import (
 	"github.com/jonboulle/clockwork"
 	"github.com/tektoncd/cli/pkg/cli"
 	"github.com/tektoncd/pipeline/pkg/client/clientset/versioned"
+	versionedTriggers "github.com/tektoncd/triggers/pkg/client/clientset/versioned"
 	k8s "k8s.io/client-go/kubernetes"
 )
 
 type Params struct {
 	ns, kConfig, kContext string
 	Tekton                versioned.Interface
+	Triggers              versionedTriggers.Interface
 	Kube                  k8s.Interface
 	Clock                 clockwork.Clock
 	Cls                   *cli.Clients
@@ -57,6 +59,10 @@ func (p *Params) tektonClient() (versioned.Interface, error) {
 	return p.Tekton, nil
 }
 
+func (p *Params) triggersClient() (versionedTriggers.Interface, error) {
+	return p.Triggers, nil
+}
+
 func (p *Params) KubeClient() (k8s.Interface, error) {
 	return p.Kube, nil
 }
@@ -76,9 +82,15 @@ func (p *Params) Clients() (*cli.Clients, error) {
 		return nil, err
 	}
 
+	triggers, err := p.triggersClient()
+	if err != nil {
+		return nil, err
+	}
+
 	p.Cls = &cli.Clients{
-		Tekton: tekton,
-		Kube:   kube,
+		Tekton:   tekton,
+		Kube:     kube,
+		Triggers: triggers,
 	}
 
 	return p.Cls, nil

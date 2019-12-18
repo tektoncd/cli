@@ -36,6 +36,7 @@ require (
 	github.com/stretchr/testify v1.4.0
 	github.com/tektoncd/pipeline v0.9.2
 	github.com/tektoncd/plumbing v0.0.0-20191218171343-56a836c50336
+	github.com/tektoncd/triggers v0.1.1-0.20191218175743-c5b8b4d9ee00
 	go.opencensus.io v0.22.1 // indirect
 	golang.org/x/crypto v0.0.0-20190923035154-9ee001bba392 // indirect
 	golang.org/x/net v0.0.0-20190923162816-aa69164e4478 // indirect
@@ -50,6 +51,7 @@ require (
 	k8s.io/client-go v0.0.0-20191004102537-eb5b9a8cfde7
 	k8s.io/klog v1.0.0 // indirect
 	k8s.io/kube-openapi v0.0.0-20171101183504-39a7bf85c140 // indirect
+	knative.dev/caching v0.0.0-20190719140829-2032732871ff // indirect
 	knative.dev/pkg v0.0.0-20190909195211-528ad1c1dd62
 	sigs.k8s.io/yaml v1.1.0 // indirect
 )

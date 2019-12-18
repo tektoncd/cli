@@ -20,6 +20,7 @@ import (
 
 	"github.com/jonboulle/clockwork"
 	"github.com/tektoncd/pipeline/pkg/client/clientset/versioned"
+	versionedTriggers "github.com/tektoncd/triggers/pkg/client/clientset/versioned"
 	k8s "k8s.io/client-go/kubernetes"
 )
 
@@ -32,6 +33,7 @@ type Stream struct {
 type Clients struct {
 	Tekton     versioned.Interface
 	Kube       k8s.Interface
+	Triggers   versionedTriggers.Interface
 	HTTPClient http.Client
 }
 

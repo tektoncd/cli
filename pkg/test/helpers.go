@@ -19,12 +19,18 @@ import (
 
 	"github.com/google/go-cmp/cmp"
 	"github.com/tektoncd/pipeline/test"
+	triggerstest "github.com/tektoncd/triggers/test"
 	rtesting "knative.dev/pkg/reconciler/testing"
 )
 
 func SeedTestData(t *testing.T, d test.Data) (test.Clients, test.Informers) {
 	ctx, _ := rtesting.SetupFakeContext(t)
 	return test.SeedTestData(t, ctx, d)
+}
+
+func SeedTestResources(t *testing.T, d triggerstest.Resources) triggerstest.Clients {
+	ctx, _ := rtesting.SetupFakeContext(t)
+	return triggerstest.SeedResources(t, ctx, d)
 }
 
 func AssertOutput(t *testing.T, expected, actual interface{}) {
