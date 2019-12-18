@@ -111,7 +111,7 @@ func Test_start_has_task_filename(t *testing.T) {
 	cs, _ := test.SeedTestData(t, pipelinetest.Data{Namespaces: ns})
 	c := Command(&test.Params{Tekton: cs.Pipeline, Kube: cs.Kube})
 
-	got, err := test.ExecuteCommand(c, "start", "-n", "ns", "--filename=./testdata/task.yaml", "--showlog=false")
+	got, err := test.ExecuteCommand(c, "start", "-n", "ns", "--filename=./testdata/task.yaml")
 	if err != nil {
 		t.Errorf("Not expecting an error, but got %s", err.Error())
 	}
@@ -195,7 +195,6 @@ func Test_start_task(t *testing.T) {
 		"-l=key=value",
 		"-o=code-image=output-image",
 		"-s=svc1",
-		"--showlog=false",
 		"-n=ns")
 
 	expected := "Taskrun started: \n\nIn order to track the taskrun progress run:\ntkn taskrun logs  -f -n ns\n"
@@ -300,7 +299,6 @@ func Test_start_task_last(t *testing.T) {
 	task := Command(p)
 	got, _ := test.ExecuteCommand(task, "start", "task",
 		"--last",
-		"--showlog=false",
 		"-n=ns")
 
 	expected := "Taskrun started: random\n\nIn order to track the taskrun progress run:\ntkn taskrun logs random -f -n ns\n"
@@ -398,7 +396,6 @@ func Test_start_task_last_with_inputs(t *testing.T) {
 		"-o=code-image=output-image",
 		"-s=svc1",
 		"-n=ns",
-		"--showlog=false",
 		"--last")
 
 	expected := "Taskrun started: random\n\nIn order to track the taskrun progress run:\ntkn taskrun logs random -f -n ns\n"
@@ -708,7 +705,6 @@ func Test_start_task_allkindparam(t *testing.T) {
 		"-l=key=value",
 		"-o=code-image=output-image",
 		"-s=svc1",
-		"--showlog=false",
 		"-n=ns")
 
 	expected := "Taskrun started: \n\nIn order to track the taskrun progress run:\ntkn taskrun logs  -f -n ns\n"
@@ -801,7 +797,6 @@ func Test_start_task_wrong_param(t *testing.T) {
 		"-l=key=value",
 		"-o=code-image=output-image",
 		"-s=svc1",
-		"--showlog=false",
 		"-n=ns")
 
 	expected := "Error: param 'myar' not present in spec\n"

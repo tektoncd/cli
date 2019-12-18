@@ -42,7 +42,7 @@ two parameters (foo and bar)
   -p, --param stringArray             pass the param as key=value or key=value1,value2
   -r, --resource strings              pass the resource name and ref as name=ref
   -s, --serviceaccount string         pass the serviceaccount name
-      --showlog                       show logs right after starting the pipeline (default true)
+      --showlog                       show logs right after starting the pipeline
       --task-serviceaccount strings   pass the service account corresponding to the task
 ```
 
