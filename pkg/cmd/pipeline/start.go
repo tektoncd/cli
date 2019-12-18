@@ -139,7 +139,7 @@ like cat,foo,bar
 		},
 	}
 
-	c.Flags().BoolVarP(&opt.ShowLog, "showlog", "", true, "show logs right after starting the pipeline")
+	c.Flags().BoolVarP(&opt.ShowLog, "showlog", "", false, "show logs right after starting the pipeline")
 	c.Flags().StringSliceVarP(&opt.Resources, "resource", "r", []string{}, "pass the resource name and ref as name=ref")
 	c.Flags().StringArrayVarP(&opt.Params, "param", "p", []string{}, "pass the param as key=value or key=value1,value2")
 	c.Flags().StringVarP(&opt.ServiceAccountName, "serviceaccount", "s", "", "pass the serviceaccount name")

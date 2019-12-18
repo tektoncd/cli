@@ -176,7 +176,6 @@ func Test_start_pipeline(t *testing.T) {
 
 	got, _ := test.ExecuteCommand(pipeline, "start", pipelineName,
 		"-r=source=scaffold-git",
-		"--showlog=false",
 		"-p=pipeline-param=value1",
 		"-p=rev-param=cat,foo,bar",
 		"-l=jemange=desfrites",
@@ -243,7 +242,6 @@ func Test_start_pipeline_showlogs_false(t *testing.T) {
 		"-r=source=scaffold-git",
 		"-p=pipeline-param=value1",
 		"-l=jemange=desfrites",
-		"--showlog=false",
 		"-s=svc1",
 		"-n", "ns")
 
@@ -411,7 +409,6 @@ func Test_start_pipeline_last(t *testing.T) {
 		"-r=git-repo=scaffold-git",
 		"-p=rev-param=revision2",
 		"-s=svc1",
-		"--showlog=false",
 		"--task-serviceaccount=task3=task3svc3",
 		"--task-serviceaccount=task5=task3svc5",
 		"-n", "ns")
@@ -497,7 +494,6 @@ func Test_start_pipeline_last_without_res_param(t *testing.T) {
 	pipeline := Command(p)
 	got, _ := test.ExecuteCommand(pipeline, "start", pipelineName,
 		"--last",
-		"--showlog=false",
 		"-n", "ns")
 
 	expected := "Pipelinerun started: random\n\nIn order to track the pipelinerun progress run:\ntkn pipelinerun logs random -f -n ns\n"
@@ -584,7 +580,6 @@ func Test_start_pipeline_last_merge(t *testing.T) {
 	pipeline := Command(p)
 	got, _ := test.ExecuteCommand(pipeline, "start", pipelineName,
 		"--last",
-		"--showlog=false",
 		"-s=svc1",
 		"-r=git-repo=scaffold-git",
 		"-p=rev-param=revision2",
@@ -657,7 +652,6 @@ func Test_start_pipeline_allkindparam(t *testing.T) {
 
 	got, _ := test.ExecuteCommand(pipeline, "start", pipelineName,
 		"-r=source=scaffold-git",
-		"--showlog=false",
 		"-p=pipeline-param=value1",
 		"-p=rev-param=cat,foo,bar",
 		"-p=rev-param-new=help",
@@ -739,7 +733,6 @@ func Test_start_pipeline_last_no_pipelineruns(t *testing.T) {
 	got, _ := test.ExecuteCommand(pipeline, "start", pipelineName,
 		"--last",
 		"-s=svc1",
-		"--showlog=false",
 		"-r=git-repo=scaffold-git",
 		"-p=rev-param=revision2",
 		"--task-serviceaccount=task3=task3svc3",
@@ -789,7 +782,6 @@ func Test_start_pipeline_last_list_err(t *testing.T) {
 	got, _ := test.ExecuteCommand(pipeline, "start", pipelineName,
 		"--last",
 		"-s=svc1",
-		"--showlog=false",
 		"-r=git-repo=scaffold-git",
 		"-p=rev-param=revision2",
 		"--task-serviceaccount=task3=task3svc3",
@@ -832,7 +824,6 @@ func Test_start_pipeline_wrong_param_err(t *testing.T) {
 	pipeline := Command(p)
 	got, _ := test.ExecuteCommand(pipeline, "start", pipelineName,
 		"-s=svc1",
-		"--showlog=false",
 		"-r=git-repo=scaffold-git",
 		"-p=rev-parm=revision2",
 		"-n", "ns")
@@ -874,7 +865,6 @@ func Test_start_pipeline_client_error(t *testing.T) {
 
 	pipeline := Command(p)
 	got, _ := test.ExecuteCommand(pipeline, "start", pipelineName,
-		"--showlog=false",
 		"-s=svc1",
 		"-n=namespace")
 
@@ -916,7 +906,6 @@ func Test_start_pipeline_res_err(t *testing.T) {
 	pipeline := Command(p)
 	got, _ := test.ExecuteCommand(pipeline, "start", pipelineName,
 		"-s=svc1",
-		"--showlog=false",
 		"-r=git-reposcaffold-git",
 		"-p=rev-param=revision2",
 		"--task-serviceaccount=task3=task3svc3",
@@ -961,7 +950,6 @@ func Test_start_pipeline_param_err(t *testing.T) {
 	pipeline := Command(p)
 	got, _ := test.ExecuteCommand(pipeline, "start", pipelineName,
 		"-s=svc1",
-		"--showlog=false",
 		"-r=git-repo=scaffold-git",
 		"-p=rev-paramrevision2",
 		"--task-serviceaccount=task3=task3svc3",
