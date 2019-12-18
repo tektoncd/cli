@@ -28,6 +28,7 @@ import (
 	"github.com/tektoncd/cli/pkg/cmd/pipelinerun"
 	"github.com/tektoncd/cli/pkg/cmd/task"
 	"github.com/tektoncd/cli/pkg/cmd/taskrun"
+	"github.com/tektoncd/cli/pkg/cmd/triggertemplate"
 	"github.com/tektoncd/cli/pkg/cmd/version"
 )
 
@@ -75,14 +76,15 @@ func Root(p cli.Params) *cobra.Command {
 	cmd.SetUsageTemplate(usageTemplate)
 
 	cmd.AddCommand(
+		clustertask.Command(p),
 		completion.Command(),
+		condition.Command(p),
 		pipeline.Command(p),
+		pipelineresource.Command(p),
 		pipelinerun.Command(p),
 		task.Command(p),
 		taskrun.Command(p),
-		pipelineresource.Command(p),
-		clustertask.Command(p),
-		condition.Command(p),
+		triggertemplate.Command(p),
 		version.Command(),
 	)
 

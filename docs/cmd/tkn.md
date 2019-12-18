@@ -22,5 +22,6 @@ CLI for tekton pipelines
 * [tkn resource](tkn_resource.md)	 - Manage pipeline resources
 * [tkn task](tkn_task.md)	 - Manage tasks
 * [tkn taskrun](tkn_taskrun.md)	 - Manage taskruns
+* [tkn triggertemplate](tkn_triggertemplate.md)	 - Manage triggertemplates
 * [tkn version](tkn_version.md)	 - Prints version information
 

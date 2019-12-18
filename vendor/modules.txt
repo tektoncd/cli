@@ -214,6 +214,30 @@ github.com/tektoncd/pipeline/test
 github.com/tektoncd/pipeline/test/builder
 # github.com/tektoncd/plumbing v0.0.0-20191218171343-56a836c50336
 github.com/tektoncd/plumbing/scripts
+# github.com/tektoncd/triggers v0.1.1-0.20191218175743-c5b8b4d9ee00
+github.com/tektoncd/triggers/pkg/apis/triggers/v1alpha1
+github.com/tektoncd/triggers/pkg/client/clientset/versioned
+github.com/tektoncd/triggers/pkg/client/clientset/versioned/fake
+github.com/tektoncd/triggers/pkg/client/clientset/versioned/scheme
+github.com/tektoncd/triggers/pkg/client/clientset/versioned/typed/triggers/v1alpha1
+github.com/tektoncd/triggers/pkg/client/clientset/versioned/typed/triggers/v1alpha1/fake
+github.com/tektoncd/triggers/pkg/client/informers/externalversions
+github.com/tektoncd/triggers/pkg/client/informers/externalversions/internalinterfaces
+github.com/tektoncd/triggers/pkg/client/informers/externalversions/triggers
+github.com/tektoncd/triggers/pkg/client/informers/externalversions/triggers/v1alpha1
+github.com/tektoncd/triggers/pkg/client/injection/client
+github.com/tektoncd/triggers/pkg/client/injection/client/fake
+github.com/tektoncd/triggers/pkg/client/injection/informers/factory
+github.com/tektoncd/triggers/pkg/client/injection/informers/factory/fake
+github.com/tektoncd/triggers/pkg/client/injection/informers/triggers/v1alpha1/eventlistener
+github.com/tektoncd/triggers/pkg/client/injection/informers/triggers/v1alpha1/eventlistener/fake
+github.com/tektoncd/triggers/pkg/client/injection/informers/triggers/v1alpha1/triggerbinding
+github.com/tektoncd/triggers/pkg/client/injection/informers/triggers/v1alpha1/triggerbinding/fake
+github.com/tektoncd/triggers/pkg/client/injection/informers/triggers/v1alpha1/triggertemplate
+github.com/tektoncd/triggers/pkg/client/injection/informers/triggers/v1alpha1/triggertemplate/fake
+github.com/tektoncd/triggers/pkg/client/listers/triggers/v1alpha1
+github.com/tektoncd/triggers/test
+github.com/tektoncd/triggers/test/builder
 # go.opencensus.io v0.22.1
 go.opencensus.io
 go.opencensus.io/internal
@@ -645,13 +669,20 @@ k8s.io/kube-openapi/pkg/util/proto
 knative.dev/pkg/apis
 knative.dev/pkg/apis/duck
 knative.dev/pkg/apis/duck/v1
+knative.dev/pkg/apis/duck/v1alpha1
 knative.dev/pkg/apis/duck/v1beta1
 knative.dev/pkg/apis/v1alpha1
 knative.dev/pkg/changeset
 knative.dev/pkg/client/injection/kube/client
 knative.dev/pkg/client/injection/kube/client/fake
+knative.dev/pkg/client/injection/kube/informers/apps/v1/deployment
+knative.dev/pkg/client/injection/kube/informers/apps/v1/deployment/fake
+knative.dev/pkg/client/injection/kube/informers/core/v1/configmap
+knative.dev/pkg/client/injection/kube/informers/core/v1/configmap/fake
 knative.dev/pkg/client/injection/kube/informers/core/v1/pod
 knative.dev/pkg/client/injection/kube/informers/core/v1/pod/fake
+knative.dev/pkg/client/injection/kube/informers/core/v1/service
+knative.dev/pkg/client/injection/kube/informers/core/v1/service/fake
 knative.dev/pkg/client/injection/kube/informers/factory
 knative.dev/pkg/client/injection/kube/informers/factory/fake
 knative.dev/pkg/configmap
