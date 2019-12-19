@@ -28,7 +28,7 @@ import (
 const (
 	succeeded   = "Succeeded"
 	failed      = "Failed"
-	prCancelled = "Failed(PipelineRunCancelled)"
+	prCancelled = "Cancelled(PipelineRunCancelled)"
 )
 
 func cancelCommand(p cli.Params) *cobra.Command {
@@ -38,8 +38,8 @@ func cancelCommand(p cli.Params) *cobra.Command {
 `
 
 	c := &cobra.Command{
-		Use:          "cancel pipelinerunName",
-		Short:        "Cancel the PipelineRun",
+		Use:          "cancel",
+		Short:        "Cancel a PipelineRun in a namespace",
 		Example:      eg,
 		SilenceUsage: true,
 		Annotations: map[string]string{

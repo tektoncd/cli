@@ -37,7 +37,12 @@ func Condition(c v1beta1.Conditions) string {
 	}
 
 	if c[0].Reason != "" && c[0].Reason != status {
-		status = status + "(" + c[0].Reason + ")"
+
+		if c[0].Reason == "PipelineRunCancelled" || c[0].Reason == "TaskRunCancelled" {
+			status = "Cancelled" + "(" + c[0].Reason + ")"
+		} else {
+			status = status + "(" + c[0].Reason + ")"
+		}
 	}
 
 	return status

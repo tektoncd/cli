@@ -28,18 +28,18 @@ import (
 const (
 	succeeded     = "Succeeded"
 	failed        = "Failed"
-	taskCancelled = "Failed(TaskRunCancelled)"
+	taskCancelled = "Cancelled(TaskRunCancelled)"
 )
 
 func cancelCommand(p cli.Params) *cobra.Command {
-	eg := `Cancel the TaskRun named 'foo' from the namespace 'bar':
+	eg := `Cancel the TaskRun named 'foo' from namespace 'bar':
 
     tkn taskrun cancel foo -n bar
 `
 
 	c := &cobra.Command{
 		Use:          "cancel",
-		Short:        "Cancel a taskrun in a namespace",
+		Short:        "Cancel a TaskRun in a namespace",
 		Example:      eg,
 		Args:         cobra.ExactArgs(1),
 		SilenceUsage: true,
