@@ -1,6 +1,6 @@
 ## tkn taskrun cancel
 
-Cancel a taskrun in a namespace
+Cancel a TaskRun in a namespace
 
 ### Usage
 
@@ -10,11 +10,11 @@ tkn taskrun cancel
 
 ### Synopsis
 
-Cancel a taskrun in a namespace
+Cancel a TaskRun in a namespace
 
 ### Examples
 
-Cancel the TaskRun named 'foo' from the namespace 'bar':
+Cancel the TaskRun named 'foo' from namespace 'bar':
 
     tkn taskrun cancel foo -n bar
 

@@ -1,16 +1,16 @@
 ## tkn pipelinerun cancel
 
-Cancel the PipelineRun
+Cancel a PipelineRun in a namespace
 
 ### Usage
 
 ```
-tkn pipelinerun cancel pipelinerunName
+tkn pipelinerun cancel
 ```
 
 ### Synopsis
 
-Cancel the PipelineRun
+Cancel a PipelineRun in a namespace
 
 ### Examples
 

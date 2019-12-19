@@ -714,3 +714,65 @@ step2   Running
 
 	test.AssertOutput(t, expected, actual)
 }
+
+func TestTaskRunDescribe_cancel_taskrun(t *testing.T) {
+	clock := clockwork.NewFakeClock()
+
+	trs := []*v1alpha1.TaskRun{
+		tb.TaskRun("tr-1", "ns",
+			tb.TaskRunStatus(
+				tb.TaskRunStartTime(clock.Now().Add(2*time.Minute)),
+				cb.TaskRunCompletionTime(clock.Now().Add(5*time.Minute)),
+				tb.StatusCondition(apis.Condition{
+					Status:  corev1.ConditionFalse,
+					Reason:  "TaskRunCancelled",
+					Message: "TaskRun \"tr-1\" was cancelled",
+				}),
+			),
+		),
+	}
+
+	cs, _ := test.SeedTestData(t, pipelinetest.Data{
+		TaskRuns: trs,
+		Namespaces: []*corev1.Namespace{
+			{
+				ObjectMeta: metav1.ObjectMeta{
+					Name: "ns",
+				},
+			},
+		},
+	})
+
+	p := &test.Params{Tekton: cs.Pipeline, Clock: clock, Kube: cs.Kube}
+
+	taskrun := Command(p)
+	clock.Advance(10 * time.Minute)
+	actual, err := test.ExecuteCommand(taskrun, "desc", "tr-1", "-n", "ns")
+	if err != nil {
+		t.Errorf("Unexpected error: %v", err)
+	}
+	expected := `Name:        tr-1
+Namespace:   ns
+
+Status
+STARTED         DURATION    STATUS
+8 minutes ago   3 minutes   Cancelled(TaskRunCancelled)
+
+Message
+TaskRun "tr-1" was cancelled
+
+Input Resources
+No resources
+
+Output Resources
+No resources
+
+Params
+No params
+
+Steps
+No steps
+`
+
+	test.AssertOutput(t, expected, actual)
+}
