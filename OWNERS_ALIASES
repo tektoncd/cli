@@ -1,0 +1,19 @@
+aliases:
+  tektoncd-approvers:
+  - vdemeester
+  - sthaha
+  - hrishin
+  - chmouel
+  tektoncd-reviewers:
+  - mgencur
+  - bbrowning
+  - jcrossley3
+  - markusthoemmes
+  - vdemeester
+  - arilivigni
+  - chmouel
+  - sthaha
+  - nikhil-thomas
+  - hrishin
+  - piyush-garg
+  - pradeepitm12
