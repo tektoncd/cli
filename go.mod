@@ -45,6 +45,7 @@ require (
 	golang.org/x/xerrors v0.0.0-20190717185122-a985d3407aa7 // indirect
 	gopkg.in/check.v1 v1.0.0-20190902080502-41f04d3bba15 // indirect
 	gopkg.in/inf.v0 v0.9.1 // indirect
+	gotest.tools/v3 v3.0.0
 	k8s.io/api v0.0.0-20191004102255-dacd7df5a50b
 	k8s.io/apimachinery v0.0.0-20191004074956-01f8b7d1121a
 	k8s.io/cli-runtime v0.0.0-20191004110054-fe9b9282443f
