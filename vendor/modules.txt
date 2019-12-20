@@ -166,7 +166,6 @@ github.com/spf13/cobra
 github.com/spf13/pflag
 # github.com/stretchr/testify v1.4.0
 github.com/stretchr/testify/assert
-github.com/stretchr/testify/require
 # github.com/tektoncd/pipeline v0.9.2
 github.com/tektoncd/pipeline/pkg/apis/config
 github.com/tektoncd/pipeline/pkg/apis/pipeline
@@ -370,6 +369,12 @@ google.golang.org/grpc/tap
 gopkg.in/inf.v0
 # gopkg.in/yaml.v2 v2.2.2
 gopkg.in/yaml.v2
+# gotest.tools/v3 v3.0.0
+gotest.tools/v3/assert
+gotest.tools/v3/assert/cmp
+gotest.tools/v3/internal/difflib
+gotest.tools/v3/internal/format
+gotest.tools/v3/internal/source
 # k8s.io/api v0.0.0-20191004102255-dacd7df5a50b
 k8s.io/api/admissionregistration/v1alpha1
 k8s.io/api/admissionregistration/v1beta1

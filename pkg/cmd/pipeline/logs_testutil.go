@@ -22,9 +22,9 @@ import (
 	"github.com/AlecAivazis/survey/v2/terminal"
 	goexpect "github.com/Netflix/go-expect"
 	"github.com/hinshun/vt10x"
-	"github.com/stretchr/testify/require"
 	"github.com/tektoncd/cli/pkg/cli"
 	"github.com/tektoncd/cli/pkg/helper/options"
+	"gotest.tools/v3/assert"
 )
 
 type promptTest struct {
@@ -75,7 +75,7 @@ func (pt *promptTest) runTest(t *testing.T, procedure func(*goexpect.Console) er
 	// Multiplex output to a buffer as well for the raw bytes.
 	buf := new(bytes.Buffer)
 	c, state, err := vt10x.NewVT10XConsole(goexpect.WithStdout(buf))
-	require.Nil(t, err)
+	assert.NilError(t, err)
 	defer c.Close()
 
 	donec := make(chan struct{})
@@ -86,9 +86,7 @@ func (pt *promptTest) runTest(t *testing.T, procedure func(*goexpect.Console) er
 		}
 	}()
 
-	err = test(stdio(c))
-
-	require.Nil(t, err)
+	assert.NilError(t, test(stdio(c)))
 
 	// Close the slave end of the pty, and read the remaining bytes from the master end.
 	c.Tty().Close()
