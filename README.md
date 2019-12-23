@@ -137,15 +137,17 @@ $ ./kubectl plugin list
 The following commands help you understand and effectively use the Tekton CLI:
 
  * `tkn help:` Displays a list of the commands with helpful information.
+ * [`tkn clustertask:`](docs/cmd/tkn_clustertask.md) Parent command of the ClusterTask command group.
  * [`tkn completion:`](docs/cmd/tkn_completion.md) Outputs a BASH or ZSH completion script for `tkn` to allow command completion with Tab.
- * [`tkn version:`](docs/cmd/tkn_version.md) Outputs the cli version.
+ * [`tkn condition:`](docs/cmd/tkn_condition.md) Parent command of the Condition command group.
  * [`tkn pipeline:`](docs/cmd/tkn_pipeline.md) Parent command of the Pipeline command group.
  * [`tkn pipelinerun:`](docs/cmd/tkn_pipelinerun.md) Parent command of the Pipelinerun command group.
+ * [`tkn resource:`](docs/cmd/tkn_resource.md) Parent command of the Resource command group.
  * [`tkn task:`](docs/cmd/tkn_task.md) Parent command of the Task command group.
  * [`tkn taskrun:`](docs/cmd/tkn_taskrun.md) Parent command of the Taskrun command group.
- * [`tkn clustertask:`](docs/cmd/tkn_clustertask.md) Parent command of the ClusterTask command group.
- * [`tkn resource:`](docs/cmd/tkn_resource.md) Parent command of the Resource command group.
- * [`tkn condition:`](docs/cmd/tkn_condition.md) Parent command of the Condition command group.
+ * [`tkn triggerbinding:`](docs/cmd/tkn_triggerbinding.md) Parent command of the Triggerbinding command group.
+ * [`tkn triggertemplate:`](docs/cmd/tkn_triggertemplate.md) Parent command of the Triggertemplate command group.
+ * [`tkn version:`](docs/cmd/tkn_version.md) Outputs the cli version.
 
 For every `tkn` command, you can use `-h` or `--help` flags to display specific help for that command.
 
