@@ -35,15 +35,17 @@ require (
 	github.com/spf13/pflag v1.0.3
 	github.com/stretchr/testify v1.4.0
 	github.com/tektoncd/pipeline v0.9.2
-	github.com/tektoncd/plumbing v0.0.0-20191218171343-56a836c50336
+	github.com/tektoncd/plumbing v0.0.0-20191114095731-51c53a31e779
 	github.com/tektoncd/triggers v0.1.1-0.20191218175743-c5b8b4d9ee00
 	go.opencensus.io v0.22.1 // indirect
 	golang.org/x/crypto v0.0.0-20190923035154-9ee001bba392 // indirect
 	golang.org/x/net v0.0.0-20190923162816-aa69164e4478 // indirect
 	golang.org/x/sync v0.0.0-20190911185100-cd5d95a43a6e // indirect
 	golang.org/x/sys v0.0.0-20190924154521-2837fb4f24fe // indirect
+	golang.org/x/xerrors v0.0.0-20191204190536-9bdfabe68543 // indirect
 	gopkg.in/check.v1 v1.0.0-20190902080502-41f04d3bba15 // indirect
 	gopkg.in/inf.v0 v0.9.1 // indirect
+	gopkg.in/yaml.v2 v2.2.4 // indirect
 	gotest.tools/v3 v3.0.0
 	k8s.io/api v0.0.0-20191004102255-dacd7df5a50b
 	k8s.io/apimachinery v0.0.0-20191004074956-01f8b7d1121a

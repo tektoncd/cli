@@ -123,7 +123,7 @@ github.com/jonboulle/clockwork
 github.com/json-iterator/go
 # github.com/kballard/go-shellquote v0.0.0-20180428030007-95032a82bc51
 github.com/kballard/go-shellquote
-# github.com/kr/pty v1.1.8 => github.com/creack/pty v1.1.7
+# github.com/kr/pty v1.1.4 => github.com/creack/pty v1.1.7
 github.com/kr/pty
 # github.com/mattbaird/jsonpatch v0.0.0-20171005235357-81af80346b1a
 github.com/mattbaird/jsonpatch
@@ -212,7 +212,7 @@ github.com/tektoncd/pipeline/pkg/substitution
 github.com/tektoncd/pipeline/pkg/system
 github.com/tektoncd/pipeline/test
 github.com/tektoncd/pipeline/test/builder
-# github.com/tektoncd/plumbing v0.0.0-20191218171343-56a836c50336
+# github.com/tektoncd/plumbing v0.0.0-20191114095731-51c53a31e779
 github.com/tektoncd/plumbing/scripts
 # github.com/tektoncd/triggers v0.1.1-0.20191218175743-c5b8b4d9ee00
 github.com/tektoncd/triggers/pkg/apis/triggers/v1alpha1
@@ -306,7 +306,7 @@ golang.org/x/text/unicode/bidi
 golang.org/x/text/unicode/norm
 # golang.org/x/time v0.0.0-20190308202827-9d24e82272b4
 golang.org/x/time/rate
-# golang.org/x/xerrors v0.0.0-20190717185122-a985d3407aa7
+# golang.org/x/xerrors v0.0.0-20191204190536-9bdfabe68543
 golang.org/x/xerrors
 golang.org/x/xerrors/internal
 # google.golang.org/api v0.7.0
@@ -391,7 +391,7 @@ google.golang.org/grpc/status
 google.golang.org/grpc/tap
 # gopkg.in/inf.v0 v0.9.1
 gopkg.in/inf.v0
-# gopkg.in/yaml.v2 v2.2.2
+# gopkg.in/yaml.v2 v2.2.4
 gopkg.in/yaml.v2
 # gotest.tools/v3 v3.0.0
 gotest.tools/v3/assert
