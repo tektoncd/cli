@@ -28,6 +28,7 @@ import (
 	"github.com/tektoncd/cli/pkg/cmd/pipelinerun"
 	"github.com/tektoncd/cli/pkg/cmd/task"
 	"github.com/tektoncd/cli/pkg/cmd/taskrun"
+	"github.com/tektoncd/cli/pkg/cmd/triggerbinding"
 	"github.com/tektoncd/cli/pkg/cmd/triggertemplate"
 	"github.com/tektoncd/cli/pkg/cmd/version"
 )
@@ -84,6 +85,7 @@ func Root(p cli.Params) *cobra.Command {
 		pipelinerun.Command(p),
 		task.Command(p),
 		taskrun.Command(p),
+		triggerbinding.Command(p),
 		triggertemplate.Command(p),
 		version.Command(),
 	)
