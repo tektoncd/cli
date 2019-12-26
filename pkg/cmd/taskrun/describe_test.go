@@ -30,35 +30,12 @@ import (
 	"knative.dev/pkg/apis"
 )
 
-func setStepStateTerminated(reason string) tb.StepStateOp {
-	return func(s *v1alpha1.StepState) {
-		s.ContainerState = corev1.ContainerState{
-			Terminated: &corev1.ContainerStateTerminated{
-				Reason: reason,
-			},
-		}
-	}
-}
-
-func setStepStateWaiting(reason string) tb.StepStateOp {
-	return func(s *v1alpha1.StepState) {
-		s.ContainerState = corev1.ContainerState{
-			Waiting: &corev1.ContainerStateWaiting{
-				Reason: reason,
-			},
-		}
-	}
-}
-
-func setStepStateRunning(time metav1.Time) tb.StepStateOp {
-	return func(s *v1alpha1.StepState) {
-		s.ContainerState = corev1.ContainerState{
-			Running: &corev1.ContainerStateRunning{
-				StartedAt: time,
-			},
-		}
-	}
-}
+var (
+	reasonCompleted = corev1.ContainerStateTerminated{Reason: "Completed"}
+	reasonWaiting   = corev1.ContainerStateWaiting{Reason: "PodInitializing"}
+	reasonFailed    = corev1.ContainerStateTerminated{Reason: "Error"}
+	reasonRunning   = corev1.ContainerStateRunning{StartedAt: metav1.Time{Time: time.Now()}}
+)
 
 func TestTaskRunDescribe_invalid_namespace(t *testing.T) {
 	cs, _ := test.SeedTestData(t, pipelinetest.Data{
@@ -164,8 +141,6 @@ No steps
 func TestTaskRunDescribe_only_taskrun(t *testing.T) {
 	clock := clockwork.NewFakeClock()
 
-	reasonCompleted := setStepStateTerminated("Completed")
-
 	trs := []*v1alpha1.TaskRun{
 		tb.TaskRun("tr-1", "ns",
 			tb.TaskRunStatus(
@@ -176,11 +151,11 @@ func TestTaskRunDescribe_only_taskrun(t *testing.T) {
 				}),
 				tb.StepState(
 					cb.StepName("step1"),
-					reasonCompleted,
+					tb.SetStepStateTerminated(reasonCompleted),
 				),
 				tb.StepState(
 					cb.StepName("step2"),
-					reasonCompleted,
+					tb.SetStepStateTerminated(reasonCompleted),
 				),
 			),
 			tb.TaskRunSpec(
@@ -377,8 +352,6 @@ No steps
 func TestTaskRunDescribe_no_resourceref(t *testing.T) {
 	clock := clockwork.NewFakeClock()
 
-	reasonCompleted := setStepStateTerminated("Completed")
-
 	trs := []*v1alpha1.TaskRun{
 		tb.TaskRun("tr-1", "ns",
 			tb.TaskRunStatus(
@@ -389,11 +362,11 @@ func TestTaskRunDescribe_no_resourceref(t *testing.T) {
 				}),
 				tb.StepState(
 					cb.StepName("step1"),
-					reasonCompleted,
+					tb.SetStepStateTerminated(reasonCompleted),
 				),
 				tb.StepState(
 					cb.StepName("step2"),
-					reasonCompleted,
+					tb.SetStepStateTerminated(reasonCompleted),
 				),
 			),
 			tb.TaskRunSpec(
@@ -462,8 +435,6 @@ step2   Completed
 func TestTaskRunDescribe_step_status_default(t *testing.T) {
 	clock := clockwork.NewFakeClock()
 
-	reasonFailed := setStepStateTerminated("Error")
-
 	trs := []*v1alpha1.TaskRun{
 		tb.TaskRun("tr-1", "ns",
 			tb.TaskRunStatus(
@@ -474,7 +445,7 @@ func TestTaskRunDescribe_step_status_default(t *testing.T) {
 				}),
 				tb.StepState(
 					cb.StepName("step1"),
-					reasonFailed,
+					tb.SetStepStateTerminated(reasonFailed),
 				),
 				tb.StepState(
 					cb.StepName("step2"),
@@ -546,8 +517,6 @@ step2   ---
 func TestTaskRunDescribe_step_status_pending(t *testing.T) {
 	clock := clockwork.NewFakeClock()
 
-	reasonWaiting := setStepStateWaiting("PodInitializing")
-
 	trs := []*v1alpha1.TaskRun{
 		tb.TaskRun("tr-1", "ns",
 			tb.TaskRunStatus(
@@ -559,11 +528,11 @@ func TestTaskRunDescribe_step_status_pending(t *testing.T) {
 				}),
 				tb.StepState(
 					cb.StepName("step1"),
-					reasonWaiting,
+					tb.SetStepStateWaiting(reasonWaiting),
 				),
 				tb.StepState(
 					cb.StepName("step2"),
-					reasonWaiting,
+					tb.SetStepStateWaiting(reasonWaiting),
 				),
 			),
 			tb.TaskRunSpec(
@@ -632,8 +601,6 @@ step2   PodInitializing
 func TestTaskRunDescribe_step_status_running(t *testing.T) {
 	clock := clockwork.NewFakeClock()
 
-	reasonRunning := setStepStateRunning(metav1.Time{Time: time.Now()})
-
 	trs := []*v1alpha1.TaskRun{
 		tb.TaskRun("tr-1", "ns",
 			tb.TaskRunStatus(
@@ -645,11 +612,11 @@ func TestTaskRunDescribe_step_status_running(t *testing.T) {
 				}),
 				tb.StepState(
 					cb.StepName("step1"),
-					reasonRunning,
+					tb.SetStepStateRunning(reasonRunning),
 				),
 				tb.StepState(
 					cb.StepName("step2"),
-					reasonRunning,
+					tb.SetStepStateRunning(reasonRunning),
 				),
 			),
 			tb.TaskRunSpec(
