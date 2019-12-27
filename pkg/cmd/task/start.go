@@ -115,7 +115,10 @@ like cat,foo,bar
 				return NameArg(args, p)
 			}
 			if opt.Filename == "" {
-				return errors.New("Either a task name or a --filename parameter must be supplied")
+				return errors.New("either a task name or a --filename parameter must be supplied")
+			}
+			if opt.Filename != "" && opt.Last {
+				return errors.New("cannot use --last option with --filename option")
 			}
 			return nil
 		},

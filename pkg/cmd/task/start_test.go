@@ -90,14 +90,24 @@ func Test_start_invalid_namespace(t *testing.T) {
 	test.AssertOutput(t, "namespaces \"invalid\" not found", err.Error())
 }
 
-func Test_start_has_task_arg(t *testing.T) {
+func Test_start_has_no_task_arg(t *testing.T) {
 	c := Command(&test.Params{})
 
 	_, err := test.ExecuteCommand(c, "start", "-n", "ns")
 	if err == nil {
 		t.Error("Expecting an error but it's empty")
 	}
-	test.AssertOutput(t, "Either a task name or a --filename parameter must be supplied", err.Error())
+	test.AssertOutput(t, "either a task name or a --filename parameter must be supplied", err.Error())
+}
+
+func Test_start_has_filename_arg_with_last(t *testing.T) {
+	c := Command(&test.Params{})
+
+	_, err := test.ExecuteCommand(c, "start", "-n", "ns", "--filename=./testdata/task.yaml", "--last")
+	if err == nil {
+		t.Error("Expecting an error but it's empty")
+	}
+	test.AssertOutput(t, "cannot use --last option with --filename option", err.Error())
 }
 
 func Test_start_has_task_filename(t *testing.T) {
