@@ -28,7 +28,7 @@ import (
 	rtesting "knative.dev/pkg/reconciler/testing"
 )
 
-func TestPipelineResourceDelete(t *testing.T) {
+func TestTriggerTemplateDelete(t *testing.T) {
 	ns := []*corev1.Namespace{
 		{
 			ObjectMeta: metav1.ObjectMeta{
