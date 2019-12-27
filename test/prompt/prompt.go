@@ -12,7 +12,7 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-package test
+package prompt
 
 import (
 	"bytes"
@@ -25,12 +25,15 @@ import (
 	"gotest.tools/v3/assert"
 )
 
-type PromptTest struct {
+// Prompt provides test utility for prompt test.
+type Prompt struct {
 	CmdArgs   []string
 	Procedure func(*goexpect.Console) error
 }
 
-func (pt *PromptTest) RunTest(t *testing.T, procedure func(*goexpect.Console) error, test func(terminal.Stdio) error) {
+// RunTest run the test cases of some prompt test.
+// It will start given procedure in background and eval the test.
+func (pt *Prompt) RunTest(t *testing.T, procedure func(*goexpect.Console) error, test func(terminal.Stdio) error) {
 	// Multiplex output to a buffer as well for the raw bytes.
 	buf := new(bytes.Buffer)
 	c, state, err := vt10x.NewVT10XConsole(goexpect.WithStdout(buf))
