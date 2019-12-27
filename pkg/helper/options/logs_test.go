@@ -20,8 +20,8 @@ import (
 	"github.com/AlecAivazis/survey/v2/terminal"
 	goexpect "github.com/Netflix/go-expect"
 	"github.com/tektoncd/cli/pkg/cli"
-	htest "github.com/tektoncd/cli/pkg/helper/test"
 	"github.com/tektoncd/cli/pkg/test"
+	"github.com/tektoncd/cli/test/prompt"
 )
 
 func TestLogOptions_ValidateOpts(t *testing.T) {
@@ -90,14 +90,14 @@ func TestLogOptions_Ask(t *testing.T) {
 	testParams := []struct {
 		name     string
 		resource string
-		prompt   htest.PromptTest
+		prompt   prompt.Prompt
 		options  []string
 		want     LogOptions
 	}{
 		{
 			name:     "select pipeline name",
 			resource: ResourceNamePipeline,
-			prompt: htest.PromptTest{
+			prompt: prompt.Prompt{
 				CmdArgs: []string{},
 				Procedure: func(c *goexpect.Console) error {
 					if _, err := c.ExpectString("Select pipeline:"); err != nil {
@@ -120,7 +120,7 @@ func TestLogOptions_Ask(t *testing.T) {
 		{
 			name:     "select pipelinerun name",
 			resource: ResourceNamePipelineRun,
-			prompt: htest.PromptTest{
+			prompt: prompt.Prompt{
 				CmdArgs: []string{},
 				Procedure: func(c *goexpect.Console) error {
 					if _, err := c.ExpectString("Select pipelinerun:"); err != nil {
@@ -143,7 +143,7 @@ func TestLogOptions_Ask(t *testing.T) {
 		{
 			name:     "select task name",
 			resource: ResourceNameTask,
-			prompt: htest.PromptTest{
+			prompt: prompt.Prompt{
 				CmdArgs: []string{},
 				Procedure: func(c *goexpect.Console) error {
 					if _, err := c.ExpectString("Select task:"); err != nil {
@@ -166,7 +166,7 @@ func TestLogOptions_Ask(t *testing.T) {
 		{
 			name:     "select taskrun name",
 			resource: ResourceNameTaskRun,
-			prompt: htest.PromptTest{
+			prompt: prompt.Prompt{
 				CmdArgs: []string{},
 				Procedure: func(c *goexpect.Console) error {
 					if _, err := c.ExpectString("Select taskrun:"); err != nil {
@@ -192,7 +192,7 @@ func TestLogOptions_Ask(t *testing.T) {
 		t.Run(tp.name, func(t *testing.T) {
 			opts := &LogOptions{}
 			tp.prompt.RunTest(t, tp.prompt.Procedure, func(stdio terminal.Stdio) error {
-				opts.AskOpts = htest.WithStdio(stdio)
+				opts.AskOpts = prompt.WithStdio(stdio)
 				return opts.Ask(tp.resource, tp.options)
 			})
 			if opts.PipelineName != tp.want.PipelineName {

@@ -25,9 +25,9 @@ import (
 	"github.com/tektoncd/cli/pkg/cli"
 	"github.com/tektoncd/cli/pkg/helper/options"
 	"github.com/tektoncd/cli/pkg/helper/pods/fake"
-	htest "github.com/tektoncd/cli/pkg/helper/test"
 	"github.com/tektoncd/cli/pkg/test"
 	cb "github.com/tektoncd/cli/pkg/test/builder"
+	"github.com/tektoncd/cli/test/prompt"
 	"github.com/tektoncd/pipeline/pkg/apis/pipeline/v1alpha1"
 	"github.com/tektoncd/pipeline/pkg/reconciler/pipelinerun/resources"
 	pipelinetest "github.com/tektoncd/pipeline/test"
@@ -78,7 +78,7 @@ func TestTaskLog(t *testing.T) {
 		want      string
 	}{
 		{
-			name:      "Invalid name space",
+			name:      "Invalid namespace",
 			command:   []string{"logs", "-n", "invalid"},
 			input:     cs,
 			wantError: true,
@@ -258,7 +258,7 @@ func TestTaskLog2(t *testing.T) {
 		last      bool
 		namespace string
 		input     pipelinetest.Clients
-		prompt    htest.PromptTest
+		prompt    prompt.Prompt
 	}{
 		{
 			name:      "Get all input",
@@ -266,7 +266,7 @@ func TestTaskLog2(t *testing.T) {
 			last:      false,
 			namespace: "ns",
 			input:     cs,
-			prompt: htest.PromptTest{
+			prompt: prompt.Prompt{
 				CmdArgs: []string{},
 				Procedure: func(c *goexpect.Console) error {
 					if _, err := c.ExpectString("Select task:"); err != nil {
@@ -327,7 +327,7 @@ func TestTaskLog2(t *testing.T) {
 			last:      false,
 			namespace: "ns",
 			input:     cs,
-			prompt: htest.PromptTest{
+			prompt: prompt.Prompt{
 				CmdArgs: []string{"task"},
 				Procedure: func(c *goexpect.Console) error {
 					if _, err := c.ExpectString("Select taskrun:"); err != nil {
@@ -364,7 +364,7 @@ func TestTaskLog2(t *testing.T) {
 			last:      false,
 			namespace: "ns",
 			input:     cs,
-			prompt: htest.PromptTest{
+			prompt: prompt.Prompt{
 				CmdArgs: []string{"task"},
 				Procedure: func(c *goexpect.Console) error {
 					if _, err := c.ExpectString("Select taskrun:"); err != nil {
@@ -401,7 +401,7 @@ func TestTaskLog2(t *testing.T) {
 			last:      false,
 			namespace: "ns",
 			input:     cs,
-			prompt: htest.PromptTest{
+			prompt: prompt.Prompt{
 				CmdArgs: []string{"task"},
 				Procedure: func(c *goexpect.Console) error {
 					if _, err := c.ExpectString("step1 log\r\n"); err != nil {
@@ -426,7 +426,7 @@ func TestTaskLog2(t *testing.T) {
 			last:      true,
 			namespace: "ns",
 			input:     cs,
-			prompt: htest.PromptTest{
+			prompt: prompt.Prompt{
 				CmdArgs: []string{},
 				Procedure: func(c *goexpect.Console) error {
 					if _, err := c.ExpectString("Select task:"); err != nil {
@@ -459,7 +459,7 @@ func TestTaskLog2(t *testing.T) {
 			last:      true,
 			namespace: "ns",
 			input:     cs,
-			prompt: htest.PromptTest{
+			prompt: prompt.Prompt{
 				CmdArgs: []string{"task"},
 				Procedure: func(c *goexpect.Console) error {
 					if _, err := c.ExpectEOF(); err != nil {
@@ -476,7 +476,7 @@ func TestTaskLog2(t *testing.T) {
 			last:      false,
 			namespace: "ns",
 			input:     cs2,
-			prompt: htest.PromptTest{
+			prompt: prompt.Prompt{
 				CmdArgs: []string{"task"},
 				Procedure: func(c *goexpect.Console) error {
 					if _, err := c.ExpectEOF(); err != nil {
@@ -505,14 +505,10 @@ func TestTaskLog2(t *testing.T) {
 			}
 
 			tp.prompt.RunTest(t, tp.prompt.Procedure, func(stdio terminal.Stdio) error {
-				opts.AskOpts = htest.WithStdio(stdio)
+				opts.AskOpts = prompt.WithStdio(stdio)
 				opts.Stream = &cli.Stream{Out: stdio.Out, Err: stdio.Err}
 
-				err := run(opts, tp.prompt.CmdArgs)
-				if err != nil {
-					return err
-				}
-				return err
+				return run(opts, tp.prompt.CmdArgs)
 			})
 		})
 	}
