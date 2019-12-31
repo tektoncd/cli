@@ -21,6 +21,7 @@ Manage pipelines
 ### SEE ALSO
 
 * [tkn](tkn.md)	 - CLI for tekton pipelines
+* [tkn pipeline apply](tkn_pipeline_apply.md)	 - Create or update a pipeline in a namespace
 * [tkn pipeline create](tkn_pipeline_create.md)	 - Create a pipeline in a namespace
 * [tkn pipeline delete](tkn_pipeline_delete.md)	 - Delete a pipeline in a namespace
 * [tkn pipeline describe](tkn_pipeline_describe.md)	 - Describes a pipeline in a namespace

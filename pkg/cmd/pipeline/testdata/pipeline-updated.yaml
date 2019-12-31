@@ -1,0 +1,55 @@
+# Copyright © 2019 The Tekton Authors.
+#
+# Licensed under the Apache License, Version 2.0 (the "License");
+# you may not use this file except in compliance with the License.
+# You may obtain a copy of the License at
+#
+#     http://www.apache.org/licenses/LICENSE-2.0
+#
+# Unless required by applicable law or agreed to in writing, software
+# distributed under the License is distributed on an "AS IS" BASIS,
+# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+# See the License for the specific language governing permissions and
+# limitations under the License.
+apiVersion: tekton.dev/v1alpha1
+kind: Pipeline
+metadata:
+  name: test-pipeline
+spec:
+  resources:
+    - name: source-repo-rename
+      type: git
+    - name: web-image-update
+      type: image
+  tasks:
+    - name: build-skaffold-web
+      taskRef:
+        name: build-docker-image-from-git-source
+      params:
+        - name: pathToDockerFile
+          value: Dockerfile
+        - name: pathToContext
+          value: /workspace/docker-source/examples/microservices/leeroy-web #configure: may change according to your source
+      resources:
+        inputs:
+          - name: docker-source
+            resource: source-repo-rename
+        outputs:
+          - name: builtImage
+            resource: web-image-update
+    - name: deploy-web
+      taskRef:
+        name: deploy-using-kubectl
+      resources:
+        inputs:
+          - name: source
+            resource: source-repo-rename
+          - name: image
+            resource: web-image-update
+            from:
+              - build-skaffold-web
+      params:
+        - name: path
+          value: /workspace/source/examples/microservices/leeroy-web/kubernetes/deployment.yaml #configure: may change according to your source
+        - name: yamlPathToImage
+          value: "spec.template.spec.containers[0].image"
