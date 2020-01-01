@@ -568,3 +568,59 @@ func TestPipelineLog_Interactive(t *testing.T) {
 		})
 	}
 }
+
+func TestLogs_Auto_Select_FirstPipeline(t *testing.T) {
+	pipelineName := "blahblah"
+	ns := "chouchou"
+	clock := clockwork.NewFakeClock()
+
+	cs, _ := test.SeedTestData(t, pipelinetest.Data{
+		Pipelines: []*v1alpha1.Pipeline{
+			tb.Pipeline(pipelineName, ns),
+		},
+		PipelineRuns: []*v1alpha1.PipelineRun{
+			tb.PipelineRun(prName, ns,
+				cb.PipelineRunCreationTimestamp(clock.Now().Add(-10*time.Minute)),
+				tb.PipelineRunLabel("tekton.dev/pipeline", pipelineName),
+				tb.PipelineRunSpec(pipelineName),
+				tb.PipelineRunStatus(
+					tb.PipelineRunStatusCondition(apis.Condition{
+						Status: corev1.ConditionTrue,
+						Reason: resources.ReasonSucceeded,
+					}),
+					// pipeline run started 5 minutes ago
+					tb.PipelineRunStartTime(clock.Now().Add(-5*time.Minute)),
+					// takes 10 minutes to complete
+					cb.PipelineRunCompletionTime(clock.Now().Add(10*time.Minute)),
+				),
+			),
+		},
+		Namespaces: []*corev1.Namespace{
+			{
+				ObjectMeta: metav1.ObjectMeta{
+					Name: ns,
+				},
+			},
+		},
+	})
+
+	p := test.Params{
+		Kube:   cs.Kube,
+		Tekton: cs.Pipeline,
+	}
+	p.SetNamespace(ns)
+
+	lopt := &options.LogOptions{
+		Follow: false,
+		Limit:  5,
+		Params: &p,
+	}
+	err := getAllInputs(lopt)
+	if err != nil {
+		t.Errorf("Unexpected error: %v", err)
+	}
+
+	if lopt.PipelineName != pipelineName {
+		t.Error("No auto selection of the first pipeline when we have only one")
+	}
+}
