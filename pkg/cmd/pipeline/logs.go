@@ -152,7 +152,9 @@ func getAllInputs(opts *options.LogOptions) error {
 		return nil
 	}
 
-	if err := opts.Ask(options.ResourceNamePipeline, ps); err != nil {
+	if len(ps) == 1 {
+		opts.PipelineName = strings.Fields(ps[0])[0]
+	} else if err := opts.Ask(options.ResourceNamePipeline, ps); err != nil {
 		return nil
 	}
 
