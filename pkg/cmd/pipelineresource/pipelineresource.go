@@ -35,6 +35,7 @@ func Command(p cli.Params) *cobra.Command {
 
 	flags.AddTektonOptions(cmd)
 	cmd.AddCommand(
+		applyCommand(p),
 		createCommand(p),
 		deleteCommand(p),
 		describeCommand(p),
