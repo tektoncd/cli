@@ -2,7 +2,7 @@
 apiVersion: tekton.dev/v1alpha1
 kind: TaskRun
 metadata:
-  name: rpmbuild-pipeline-run
+  name: rpmbuild-taskrun
 spec:
   taskRef:
     name: rpmbuild

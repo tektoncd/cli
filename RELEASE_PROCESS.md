@@ -1,14 +1,15 @@
-# TektonCD CLI release process
+# TektonCD CLI Release Process
 
-- You need to be a member of tektoncd-cli [OWNERS](OWNERS) to be able to push the new branch.
+- You need to be a member of tektoncd-cli [OWNERS](OWNERS) and be a member of the [CLI maintainers team](https://github.com/orgs/tektoncd/teams/cli-maintainers) to be able to push a new branch for the release and update the CLI Homebrew formula. 
 
-- You need to have your own tekton cluster under `minikube`, `gcp` or other means.
+- You will need to have a [GPG key set up](https://help.github.com/en/github/authenticating-to-github/managing-commit-signature-verification) with your git account to push the release branch.
+
+- You need to have your own Kubernetes cluster with Tekton installed under `minikube`, `gcp`, or other means.
 
 - Start reading this [README](tekton/README.md), and you can start a new release
   with the [release.sh](tekton/release.sh) script.
 
-- Update the main [README.md](README.md), and change the version number in there (i.e: `v0.5.0`)
-  to the version you are releasing. Make a PR and get it merged ASAP.
+- Update the version numbers in the main [README.md](README.md) to the version you are releasing by opening a pull request to the master branch of this repository. Do not worry about updating the README for the release branch.
 
 - When the release is done in https://github.com/tektoncd/cli/releases, edit the
   release and change it from pre-release as released.
@@ -42,9 +43,11 @@ dnf upgrade tektoncd-cli
 
   https://github.com/Homebrew/homebrew-core/pull/46492
 
-- Make an update to the `test-runner` image in the [plumbing](https://github.com/tektoncd/plumbing/) repo (the image where we run the CI on pipeline which uses `tkn`) to increase the version here:
+- Make an update to the `test-runner` and `tkn` image in the [plumbing](https://github.com/tektoncd/plumbing/) repo. The test-runner image is where we run the CI on pipeline which uses `tkn`:
 
-  https://github.com/tektoncd/plumbing/blob/master/tekton/images/test-runner/Dockerfile#L51
+  * [test-runner image](https://github.com/tektoncd/plumbing/blob/master/tekton/images/test-runner/Dockerfile#L51)
+
+  * [tkn image](https://github.com/tektoncd/plumbing/blob/master/tekton/images/tkn/Dockerfile#L17)
 
 - Announce and spread the love on twitter. Make sure you tag
   [@tektoncd](https://twitter.com/tektoncd) account so you get retweeted and
