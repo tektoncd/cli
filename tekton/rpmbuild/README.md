@@ -1,64 +1,63 @@
 Tekton CLI RPM Build
 ====================
 
-This is a tekton task to run a rpm build on copr
+This is a Tekton task to run an rpm build on copr.
 
-It only supports the latest release as released on github. It queries the github
-api to get the latest one.
+It only supports the latest release as released on GitHub. It queries the GitHub
+api to get the latest release.
 
-It uses the docker image from `quay.io/chmouel/rpmbuild`, the Dockerfile is in
+It uses the docker image from `quay.io/chmouel/rpmbuild`. The Dockerfile is located in
 this directory.
 
-It uploads it to
+The task uploads the release to
 `https://copr.fedorainfracloud.org/coprs/chmouel/tektoncd-cli/`. The distros
-supported are :
+supported are:
 
 * Epel for CentOS 7
 * Fedora 30/31
 * RHEL8
 
-You simply have to run this to get it installed
+You simply have to run this to get it installed:
 
 ```
 dnf copr enable chmouel/tektoncd-cli
 dnf install tektoncd-cli
 ```
 
-
-
 USAGE
 =====
 
-Same as when you use the [release.pipeline.yaml](../release-pipeline.yml) you
+Same as when you use the [release.pipeline.yaml](../release-pipeline.yml), you
 need to have a PipelineResource for your git repository. See
 [here](../release-pipeline-run.yml) for an example.
 
-* You need to have your user added to the `https://copr.fedorainfracloud.org/coprs/chmouel/tektoncd-cli/` request it by goign to [here ](https://copr.fedorainfracloud.org/coprs/chmouel/tektoncd-cli/permissions/) and ask for admin access.
+* You need to have your user added to the `https://copr.fedorainfracloud.org/coprs/chmouel/tektoncd-cli/` request it by going [here](https://copr.fedorainfracloud.org/coprs/chmouel/tektoncd-cli/permissions/) and asking for admin access.
 
-* You  need to get your API file from https://copr.fedorainfracloud.org/api/ and have it saved to `~/.config/copr`
+* You need to get your API file from https://copr.fedorainfracloud.org/api/ and have it saved to `~/.config/copr`. You will need to change the 
+`username` field to `chmouel` since the copr repo is currently `/chmouel/tektoncd-cli/`.
 
-* You create the secret from that copr config file :
+* You create the secret from that copr config file:
 
 ```
 kubectl create secret generic copr-cli-config --from-file=copr=${HOME}/.config/copr
 ```
 
-* And then you should be able create the task with :
+* You should be able create the task with:
 
 ```
 kubectl create -f rpmbuild.yml
 ```
 
-and  run it with :
+And run it with:
 
 ```
 kubectl create -f rpmbuild-run.yml
 ```
 
-* Use `tkn tr ls` to make sure it didn't fails on validation and
+* Use `tkn tr desc rpmbuild-taskrun` to make sure the taskrun didn't fail on validation 
+
+And use the following command to get the logs of the taskrun: 
 
 ```
-oc logs --all-containers=true $(oc get pod -l "tekton.dev/taskRun=rpmbuild-pipeline-run" -o name) --follow
+tkn tr logs rpmbuild-taskrun -f
 ```
-
-to get the output
