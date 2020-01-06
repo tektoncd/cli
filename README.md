@@ -30,6 +30,14 @@ Download the latest binary executable for your operating system:
 
 * Windows
 
+  - `tektoncd-cli` can be installed as a [Chocolatey package](https://chocolatey.org/packages/tektoncd-cli/):
+
+  ```shell
+  choco install tektoncd-cli --confirm
+  ```
+
+  - Or by the released zip file in the instructions below:
+
   - Uncompress the [zip file](https://github.com/tektoncd/cli/releases/download/v0.6.0/tkn_0.6.0_Windows_x86_64.zip)
   - Add the location of where the executable is to your `Path` by opening `Control Panel>System and Security>System>Advanced System Settings`
   - Click on `Environment Variables`, select the `Path` variable, and click `Edit`
@@ -56,7 +64,7 @@ Download the latest binary executable for your operating system:
   sudo tar xvzf tkn_0.6.0_Linux_arm64.tar.gz -C /usr/local/bin/ tkn
   ```
 
-### Linux RPMs
+#### Linux RPMs
 
   If you are running on any of the following rpm based distros:
 
@@ -77,7 +85,7 @@ Download the latest binary executable for your operating system:
 
   * [Binary RPM package](https://github.com/tektoncd/cli/releases/download/v0.6.0/cli_0.6.0_Linux-64bit.rpm)
 
-  On any other RPM based distros you can install the rpm directly :
+  On any other RPM based distros, you can install the rpm directly:
 
    ```shell
     rpm -Uvh https://github.com/tektoncd/cli/releases/download/v0.6.0/cli_0.6.0_Linux-64bit.rpm
@@ -87,7 +95,7 @@ Download the latest binary executable for your operating system:
 
   * [Ubuntu PPA](https://launchpad.net/~tektoncd/+archive/ubuntu/cli/+packages)
 
-  If you are running on a latest Ubuntu or Debian you would be able to use our TektonCD CLI PPA :
+  If you are running on the latest Ubuntu or Debian, you would be able to use our TektonCD CLI PPA:
 
   ```shell
   sudo apt update;sudo apt install -y gnupg
@@ -96,11 +104,11 @@ Download the latest binary executable for your operating system:
   sudo apt update && sudo apt install -y tektoncd-cli
   ```
 
-  this may works with older releases but that hasn't been tested.
+  The PPA may work with older releases, but that hasn't been tested.
 
   * [Binary DEB package](https://github.com/tektoncd/cli/releases/download/v0.6.0/cli_0.6.0_Linux-64bit.deb)
 
-  On any other Debian or Ubuntu based distro, you can simply install the binary package directly with `dpkg` :
+  On any other Debian or Ubuntu based distro, you can simply install the binary package directly with `dpkg`:
 
   ```shell
   curl -LO https://github.com/tektoncd/cli/releases/download/v0.6.0/cli_0.6.0_Linux-64bit.deb
@@ -109,7 +117,7 @@ Download the latest binary executable for your operating system:
 
 # Source install
 
-  If you have [go](https://golang.org/) installed, and you want to compile the CLI from source you can checkout the [Git repository](https://github.com/tektoncd/cli) and run the following commands:
+  If you have [go](https://golang.org/) installed and you want to compile the CLI from source, you can checkout the [Git repository](https://github.com/tektoncd/cli) and run the following commands:
 
   ```shell
   export GO111MODULE=on
