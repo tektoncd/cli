@@ -19,8 +19,10 @@ import (
 
 	"github.com/spf13/cobra"
 	"github.com/tektoncd/cli/pkg/cli"
+	"github.com/tektoncd/cli/pkg/helper/names"
 	"github.com/tektoncd/cli/pkg/helper/options"
 	validate "github.com/tektoncd/cli/pkg/helper/validate"
+	multierr "go.uber.org/multierr"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	cliopts "k8s.io/cli-runtime/pkg/genericclioptions"
 )
@@ -28,19 +30,19 @@ import (
 func deleteCommand(p cli.Params) *cobra.Command {
 	opts := &options.DeleteOptions{Resource: "pipeline", ForceDelete: false, DeleteAll: false}
 	f := cliopts.NewPrintFlags("delete")
-	eg := `Delete a Pipeline of name 'foo' in namespace 'bar'
+	eg := `Delete Pipelines with names 'foo' and 'bar' in namespace 'quux'
 
-    tkn pipeline delete foo -n bar
+    tkn pipeline delete foo bar -n quux
 
 or
 
-    tkn p rm foo -n bar
+    tkn p rm foo bar -n quux
 `
 
 	c := &cobra.Command{
 		Use:          "delete",
 		Aliases:      []string{"rm"},
-		Short:        "Delete a pipeline in a namespace",
+		Short:        "Delete pipelines in a namespace",
 		Example:      eg,
 		Args:         cobra.MinimumNArgs(1),
 		SilenceUsage: true,
@@ -58,11 +60,11 @@ or
 				return err
 			}
 
-			if err := opts.CheckOptions(s, args[0]); err != nil {
+			if err := opts.CheckOptions(s, args); err != nil {
 				return err
 			}
 
-			return deletePipeline(opts, s, p, args[0])
+			return deletePipelines(opts, s, p, args)
 		},
 	}
 	f.AddFlags(c)
@@ -73,37 +75,58 @@ or
 	return c
 }
 
-func deletePipeline(opts *options.DeleteOptions, s *cli.Stream, p cli.Params, pName string) error {
+func deletePipelines(opts *options.DeleteOptions, s *cli.Stream, p cli.Params, pNames []string) error {
 	cs, err := p.Clients()
 	if err != nil {
 		return fmt.Errorf("failed to create tekton client")
 	}
 
-	if err := cs.Tekton.TektonV1alpha1().Pipelines(p.Namespace()).Delete(pName, &metav1.DeleteOptions{}); err != nil {
-		return fmt.Errorf("failed to delete pipeline %q: %s", pName, err)
-	}
-	fmt.Fprintf(s.Out, "Pipeline deleted: %s\n", pName)
-
-	if !opts.DeleteAll {
-		return nil
+	var errs []error
+	addPrintErr := func(err error) {
+		errs = append(errs, err)
+		fmt.Fprintf(s.Err, "%s\n", err)
 	}
 
-	lOpts := metav1.ListOptions{
-		LabelSelector: fmt.Sprintf("tekton.dev/pipeline=%s", pName),
-	}
+	var successfulPipelines []string
+	var successfulPipelineRuns []string
 
-	pipelineRuns, err := cs.Tekton.TektonV1alpha1().PipelineRuns(p.Namespace()).List(lOpts)
-	if err != nil {
-		return err
-	}
+	for _, pName := range pNames {
+		if err := cs.Tekton.TektonV1alpha1().Pipelines(p.Namespace()).Delete(pName, &metav1.DeleteOptions{}); err != nil {
+			addPrintErr(fmt.Errorf("failed to delete pipeline %q: %s", pName, err))
+			continue
+		}
+		successfulPipelines = append(successfulPipelines, pName)
 
-	for _, pr := range pipelineRuns.Items {
-		if err := cs.Tekton.TektonV1alpha1().PipelineRuns(p.Namespace()).Delete(pr.Name, &metav1.DeleteOptions{}); err != nil {
-			return fmt.Errorf("failed to delete pipelinerun %q: %s", pr.Name, err)
+		if !opts.DeleteAll {
+			continue
 		}
 
-		fmt.Fprintf(s.Out, "PipelineRun deleted: %s\n", pr.Name)
+		lOpts := metav1.ListOptions{
+			LabelSelector: fmt.Sprintf("tekton.dev/pipeline=%s", pName),
+		}
+
+		pipelineRuns, err := cs.Tekton.TektonV1alpha1().PipelineRuns(p.Namespace()).List(lOpts)
+		if err != nil {
+			addPrintErr(err)
+			continue
+		}
+
+		for _, pr := range pipelineRuns.Items {
+			if err := cs.Tekton.TektonV1alpha1().PipelineRuns(p.Namespace()).Delete(pr.Name, &metav1.DeleteOptions{}); err != nil {
+				addPrintErr(fmt.Errorf("failed to delete pipelinerun %q: %s", pr.Name, err))
+				continue
+			}
+
+			successfulPipelineRuns = append(successfulPipelineRuns, pr.Name)
+		}
 	}
 
-	return nil
+	if len(successfulPipelineRuns) > 0 {
+		fmt.Fprintf(s.Out, "PipelineRuns deleted: %s\n", names.QuotedList(successfulPipelineRuns))
+	}
+	if len(successfulPipelines) > 0 {
+		fmt.Fprintf(s.Out, "Pipelines deleted: %s\n", names.QuotedList(successfulPipelines))
+	}
+
+	return multierr.Combine(errs...)
 }

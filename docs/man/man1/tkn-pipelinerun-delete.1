@@ -5,7 +5,7 @@
 
 .SH NAME
 .PP
-tkn\-pipelinerun\-delete \- Delete a pipelinerun in a namespace
+tkn\-pipelinerun\-delete \- Delete pipelineruns in a namespace
 
 
 .SH SYNOPSIS
@@ -15,7 +15,7 @@ tkn\-pipelinerun\-delete \- Delete a pipelinerun in a namespace
 
 .SH DESCRIPTION
 .PP
-Delete a pipelinerun in a namespace
+Delete pipelineruns in a namespace
 
 
 .SH OPTIONS
@@ -61,13 +61,13 @@ Delete a pipelinerun in a namespace
 
 .SH EXAMPLE
 .PP
-Delete a PipelineRun of name 'foo' in namespace 'bar':
+Delete PipelineRuns with names 'foo' and 'bar' in namespace 'quux':
 
 .PP
 .RS
 
 .nf
-tkn pipelinerun delete foo \-n bar
+tkn pipelinerun delete foo bar \-n quux
 
 .fi
 .RE
@@ -79,7 +79,7 @@ or
 .RS
 
 .nf
-tkn pr rm foo \-n bar
+tkn pr rm foo bar \-n quux
 
 .fi
 .RE

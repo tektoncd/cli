@@ -19,8 +19,10 @@ import (
 
 	"github.com/spf13/cobra"
 	"github.com/tektoncd/cli/pkg/cli"
+	"github.com/tektoncd/cli/pkg/helper/names"
 	"github.com/tektoncd/cli/pkg/helper/options"
 	"github.com/tektoncd/cli/pkg/helper/validate"
+	"go.uber.org/multierr"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	cliopts "k8s.io/cli-runtime/pkg/genericclioptions"
 )
@@ -28,19 +30,19 @@ import (
 func deleteCommand(p cli.Params) *cobra.Command {
 	opts := &options.DeleteOptions{Resource: "triggerbinding", ForceDelete: false}
 	f := cliopts.NewPrintFlags("delete")
-	eg := `Delete a TriggerBinding of name 'foo' in namespace 'bar'
+	eg := `Delete TriggerBindings with names 'foo' and 'bar' in namespace 'quux'
 
-    tkn triggerbinding delete foo -n bar
+    tkn triggerbinding delete foo bar -n quux
 
 or
 
-    tkn tb rm foo -n bar
+    tkn tb rm foo bar -n quux
 `
 
 	c := &cobra.Command{
 		Use:          "delete",
 		Aliases:      []string{"rm"},
-		Short:        "Delete a triggerbinding in a namespace",
+		Short:        "Delete triggerbindings in a namespace",
 		Example:      eg,
 		Args:         cobra.MinimumNArgs(1),
 		SilenceUsage: true,
@@ -58,11 +60,11 @@ or
 				return err
 			}
 
-			if err := opts.CheckOptions(s, args[0]); err != nil {
+			if err := opts.CheckOptions(s, args); err != nil {
 				return err
 			}
 
-			return deleteTriggerBinding(s, p, args[0])
+			return deleteTriggerBindings(s, p, args)
 		},
 	}
 	f.AddFlags(c)
@@ -72,16 +74,27 @@ or
 	return c
 }
 
-func deleteTriggerBinding(s *cli.Stream, p cli.Params, tbName string) error {
+func deleteTriggerBindings(s *cli.Stream, p cli.Params, tbNames []string) error {
 	cs, err := p.Clients()
 	if err != nil {
 		return fmt.Errorf("failed to create tekton client")
 	}
 
-	if err := cs.Triggers.TektonV1alpha1().TriggerBindings(p.Namespace()).Delete(tbName, &metav1.DeleteOptions{}); err != nil {
-		return fmt.Errorf("failed to delete triggerbinding %q: %s", tbName, err)
+	var errs []error
+	var success []string
+
+	for _, tbName := range tbNames {
+		if err := cs.Triggers.TektonV1alpha1().TriggerBindings(p.Namespace()).Delete(tbName, &metav1.DeleteOptions{}); err != nil {
+			err = fmt.Errorf("failed to delete triggerbinding %q: %s", tbName, err)
+			errs = append(errs, err)
+			fmt.Fprintf(s.Err, "%s\n", err)
+			continue
+		}
+		success = append(success, tbName)
+	}
+	if len(success) > 0 {
+		fmt.Fprintf(s.Out, "TriggerBindings deleted: %s\n", names.QuotedList(success))
 	}
 
-	fmt.Fprintf(s.Out, "TriggerBinding deleted: %s\n", tbName)
-	return nil
+	return multierr.Combine(errs...)
 }

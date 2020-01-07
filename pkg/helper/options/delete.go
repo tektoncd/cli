@@ -20,6 +20,7 @@ import (
 	"strings"
 
 	"github.com/tektoncd/cli/pkg/cli"
+	"github.com/tektoncd/cli/pkg/helper/names"
 )
 
 type DeleteOptions struct {
@@ -28,15 +29,16 @@ type DeleteOptions struct {
 	DeleteAll   bool
 }
 
-func (o *DeleteOptions) CheckOptions(s *cli.Stream, resourceName string) error {
+func (o *DeleteOptions) CheckOptions(s *cli.Stream, resourceNames []string) error {
 	if o.ForceDelete {
 		return nil
 	}
 
+	formattedNames := names.QuotedList(resourceNames)
 	if o.DeleteAll {
-		fmt.Fprintf(s.Out, "Are you sure you want to delete %s and related resources %q (y/n): ", o.Resource, resourceName)
+		fmt.Fprintf(s.Out, "Are you sure you want to delete %s and related resources %s (y/n): ", o.Resource, formattedNames)
 	} else {
-		fmt.Fprintf(s.Out, "Are you sure you want to delete %s %q (y/n): ", o.Resource, resourceName)
+		fmt.Fprintf(s.Out, "Are you sure you want to delete %s %s (y/n): ", o.Resource, formattedNames)
 	}
 
 	scanner := bufio.NewScanner(s.In)
@@ -45,7 +47,7 @@ func (o *DeleteOptions) CheckOptions(s *cli.Stream, resourceName string) error {
 		if t == "y" {
 			break
 		} else if t == "n" {
-			return fmt.Errorf("canceled deleting %s %q", o.Resource, resourceName)
+			return fmt.Errorf("canceled deleting %s %s", o.Resource, formattedNames)
 		}
 		fmt.Fprint(s.Out, "Please enter (y/n): ")
 	}

@@ -19,8 +19,10 @@ import (
 
 	"github.com/spf13/cobra"
 	"github.com/tektoncd/cli/pkg/cli"
+	"github.com/tektoncd/cli/pkg/helper/names"
 	"github.com/tektoncd/cli/pkg/helper/options"
 	validate "github.com/tektoncd/cli/pkg/helper/validate"
+	"go.uber.org/multierr"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	cliopts "k8s.io/cli-runtime/pkg/genericclioptions"
 )
@@ -28,13 +30,13 @@ import (
 func deleteCommand(p cli.Params) *cobra.Command {
 	opts := &options.DeleteOptions{Resource: "condition", ForceDelete: false}
 	f := cliopts.NewPrintFlags("delete")
-	eg := `Delete a Condition of name 'foo' in namespace 'bar':
+	eg := `Delete Conditions with names 'foo' and 'bar' in namespace 'quux':
 
-    tkn condition delete foo -n bar
+    tkn condition delete foo bar -n quux
 
 or
 
-    tkn cond rm foo -n bar
+    tkn cond rm foo bar -n quux
 `
 
 	c := &cobra.Command{
@@ -58,11 +60,11 @@ or
 				return err
 			}
 
-			if err := opts.CheckOptions(s, args[0]); err != nil {
+			if err := opts.CheckOptions(s, args); err != nil {
 				return err
 			}
 
-			return deleteCondition(s, p, args[0])
+			return deleteConditions(s, p, args)
 		},
 	}
 	f.AddFlags(c)
@@ -71,16 +73,26 @@ or
 	return c
 }
 
-func deleteCondition(s *cli.Stream, p cli.Params, condName string) error {
+func deleteConditions(s *cli.Stream, p cli.Params, condNames []string) error {
 	cs, err := p.Clients()
 	if err != nil {
 		return fmt.Errorf("failed to create tekton client")
 	}
 
-	if err := cs.Tekton.TektonV1alpha1().Conditions(p.Namespace()).Delete(condName, &metav1.DeleteOptions{}); err != nil {
-		return fmt.Errorf("failed to delete condition %q: %s", condName, err)
+	var errs []error
+	var success []string
+	for _, condName := range condNames {
+		if err := cs.Tekton.TektonV1alpha1().Conditions(p.Namespace()).Delete(condName, &metav1.DeleteOptions{}); err != nil {
+			err = fmt.Errorf("failed to delete condition %q: %s", condName, err)
+			errs = append(errs, err)
+			fmt.Fprintf(s.Err, "%s\n", err)
+			continue
+		}
+		success = append(success, condName)
+	}
+	if len(success) > 0 {
+		fmt.Fprintf(s.Out, "Conditions deleted: %s\n", names.QuotedList(success))
 	}
 
-	fmt.Fprintf(s.Out, "Condition deleted: %s\n", condName)
-	return nil
+	return multierr.Combine(errs...)
 }

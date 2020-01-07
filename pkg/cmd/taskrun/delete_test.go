@@ -78,7 +78,7 @@ func TestTaskRunDelete(t *testing.T) {
 			input:       seeds[0],
 			inputStream: nil,
 			wantError:   false,
-			want:        "TaskRun deleted: tr0-1\n",
+			want:        "TaskRuns deleted: \"tr0-1\"\n",
 		},
 		{
 			name:        "With force delete flag",
@@ -86,7 +86,7 @@ func TestTaskRunDelete(t *testing.T) {
 			input:       seeds[1],
 			inputStream: nil,
 			wantError:   false,
-			want:        "TaskRun deleted: tr0-1\n",
+			want:        "TaskRuns deleted: \"tr0-1\"\n",
 		},
 		{
 			name:        "Without force delete flag, reply no",
@@ -102,7 +102,7 @@ func TestTaskRunDelete(t *testing.T) {
 			input:       seeds[2],
 			inputStream: strings.NewReader("y"),
 			wantError:   false,
-			want:        "Are you sure you want to delete taskrun \"tr0-1\" (y/n): TaskRun deleted: tr0-1\n",
+			want:        "Are you sure you want to delete taskrun \"tr0-1\" (y/n): TaskRuns deleted: \"tr0-1\"\n",
 		},
 		{
 			name:        "Remove non existent resource",

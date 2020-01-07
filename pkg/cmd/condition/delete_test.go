@@ -73,7 +73,7 @@ func TestConditionDelete(t *testing.T) {
 			input:       seeds[0],
 			inputStream: nil,
 			wantError:   false,
-			want:        "Condition deleted: condition1\n",
+			want:        "Conditions deleted: \"condition1\"\n",
 		},
 		{
 			name:        "With force delete flag",
@@ -81,7 +81,7 @@ func TestConditionDelete(t *testing.T) {
 			input:       seeds[1],
 			inputStream: nil,
 			wantError:   false,
-			want:        "Condition deleted: condition1\n",
+			want:        "Conditions deleted: \"condition1\"\n",
 		},
 		{
 			name:        "Without force delete flag, reply no",
@@ -97,7 +97,7 @@ func TestConditionDelete(t *testing.T) {
 			input:       seeds[2],
 			inputStream: strings.NewReader("y"),
 			wantError:   false,
-			want:        "Are you sure you want to delete condition \"condition1\" (y/n): Condition deleted: condition1\n",
+			want:        "Are you sure you want to delete condition \"condition1\" (y/n): Conditions deleted: \"condition1\"\n",
 		},
 		{
 			name:        "Remove non existent resource",

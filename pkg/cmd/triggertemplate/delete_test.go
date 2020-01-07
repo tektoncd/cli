@@ -67,7 +67,7 @@ func TestTriggerTemplateDelete(t *testing.T) {
 			input:       seeds[0],
 			inputStream: nil,
 			wantError:   false,
-			want:        "TriggerTemplate deleted: tt-1\n",
+			want:        "TriggerTemplates deleted: \"tt-1\"\n",
 		},
 		{
 			name:        "With force delete flag",
@@ -75,7 +75,7 @@ func TestTriggerTemplateDelete(t *testing.T) {
 			input:       seeds[1],
 			inputStream: nil,
 			wantError:   false,
-			want:        "TriggerTemplate deleted: tt-1\n",
+			want:        "TriggerTemplates deleted: \"tt-1\"\n",
 		},
 		{
 			name:        "Without force delete flag, reply no",
@@ -91,7 +91,7 @@ func TestTriggerTemplateDelete(t *testing.T) {
 			input:       seeds[2],
 			inputStream: strings.NewReader("y"),
 			wantError:   false,
-			want:        "Are you sure you want to delete triggertemplate \"tt-1\" (y/n): TriggerTemplate deleted: tt-1\n",
+			want:        "Are you sure you want to delete triggertemplate \"tt-1\" (y/n): TriggerTemplates deleted: \"tt-1\"\n",
 		},
 		{
 			name:        "Remove non existent resource",

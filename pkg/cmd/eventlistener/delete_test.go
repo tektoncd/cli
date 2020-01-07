@@ -28,7 +28,7 @@ import (
 	rtesting "knative.dev/pkg/reconciler/testing"
 )
 
-func TestEvetListenerDelete(t *testing.T) {
+func TestEventListenerDelete(t *testing.T) {
 	ns := []*corev1.Namespace{
 		{
 			ObjectMeta: metav1.ObjectMeta{
@@ -67,7 +67,7 @@ func TestEvetListenerDelete(t *testing.T) {
 			input:       seeds[0],
 			inputStream: nil,
 			wantError:   false,
-			want:        "EventListener deleted: el-1\n",
+			want:        "EventListeners deleted: \"el-1\"\n",
 		},
 		{
 			name:        "With force delete flag",
@@ -75,7 +75,7 @@ func TestEvetListenerDelete(t *testing.T) {
 			input:       seeds[1],
 			inputStream: nil,
 			wantError:   false,
-			want:        "EventListener deleted: el-1\n",
+			want:        "EventListeners deleted: \"el-1\"\n",
 		},
 		{
 			name:        "Without force delete flag, reply no",
@@ -91,7 +91,7 @@ func TestEvetListenerDelete(t *testing.T) {
 			input:       seeds[2],
 			inputStream: strings.NewReader("y"),
 			wantError:   false,
-			want:        "Are you sure you want to delete eventlistener \"el-1\" (y/n): EventListener deleted: el-1\n",
+			want:        "Are you sure you want to delete eventlistener \"el-1\" (y/n): EventListeners deleted: \"el-1\"\n",
 		},
 		{
 			name:        "Remove non existent resource",

@@ -1,6 +1,6 @@
 ## tkn task delete
 
-Delete a task resource in a namespace
+Delete task resources in a namespace
 
 ***Aliases**: rm*
 
@@ -12,17 +12,17 @@ tkn task delete
 
 ### Synopsis
 
-Delete a task resource in a namespace
+Delete task resources in a namespace
 
 ### Examples
 
-Delete a Task of name 'foo' in namespace 'bar':
+Delete Tasks with names 'foo' and 'bar' in namespace 'quux':
 
-    tkn task delete foo -n bar
+    tkn task delete foo bar -n quux
 
 or
 
-    tkn t rm foo -n bar
+    tkn t rm foo bar -n quux
 
 
 ### Options

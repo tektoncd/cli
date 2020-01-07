@@ -5,7 +5,7 @@
 
 .SH NAME
 .PP
-tkn\-triggertemplate\-delete \- Delete a triggertemplate in a namespace
+tkn\-triggertemplate\-delete \- Delete triggertemplates in a namespace
 
 
 .SH SYNOPSIS
@@ -15,7 +15,7 @@ tkn\-triggertemplate\-delete \- Delete a triggertemplate in a namespace
 
 .SH DESCRIPTION
 .PP
-Delete a triggertemplate in a namespace
+Delete triggertemplates in a namespace
 
 
 .SH OPTIONS
@@ -61,13 +61,13 @@ Delete a triggertemplate in a namespace
 
 .SH EXAMPLE
 .PP
-Delete a TriggerTemplate of name 'foo' in namespace 'bar'
+Delete TriggerTemplates with names 'foo' and 'bar' in namespace 'quux'
 
 .PP
 .RS
 
 .nf
-tkn triggertemplate delete foo \-n bar
+tkn triggertemplate delete foo bar \-n quux
 
 .fi
 .RE
@@ -79,7 +79,7 @@ or
 .RS
 
 .nf
-tkn tt rm foo \-n bar
+tkn tt rm foo bar \-n quux
 
 .fi
 .RE

@@ -5,7 +5,7 @@
 
 .SH NAME
 .PP
-tkn\-task\-delete \- Delete a task resource in a namespace
+tkn\-task\-delete \- Delete task resources in a namespace
 
 
 .SH SYNOPSIS
@@ -15,7 +15,7 @@ tkn\-task\-delete \- Delete a task resource in a namespace
 
 .SH DESCRIPTION
 .PP
-Delete a task resource in a namespace
+Delete task resources in a namespace
 
 
 .SH OPTIONS
@@ -65,13 +65,13 @@ Delete a task resource in a namespace
 
 .SH EXAMPLE
 .PP
-Delete a Task of name 'foo' in namespace 'bar':
+Delete Tasks with names 'foo' and 'bar' in namespace 'quux':
 
 .PP
 .RS
 
 .nf
-tkn task delete foo \-n bar
+tkn task delete foo bar \-n quux
 
 .fi
 .RE
@@ -83,7 +83,7 @@ or
 .RS
 
 .nf
-tkn t rm foo \-n bar
+tkn t rm foo bar \-n quux
 
 .fi
 .RE

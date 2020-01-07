@@ -5,7 +5,7 @@
 
 .SH NAME
 .PP
-tkn\-eventlistener\-delete \- Delete an EventListener in a namespace
+tkn\-eventlistener\-delete \- Delete EventListeners in a namespace
 
 
 .SH SYNOPSIS
@@ -15,7 +15,7 @@ tkn\-eventlistener\-delete \- Delete an EventListener in a namespace
 
 .SH DESCRIPTION
 .PP
-Delete an EventListener in a namespace
+Delete EventListeners in a namespace
 
 
 .SH OPTIONS
@@ -61,13 +61,13 @@ Delete an EventListener in a namespace
 
 .SH EXAMPLE
 .PP
-Delete an EventListener of name 'foo' in namespace 'bar'
+Delete EventListeners with names 'foo' and 'bar' in namespace 'bar'
 
 .PP
 .RS
 
 .nf
-tkn eventlistener delete foo \-n bar
+tkn eventlistener delete foo bar \-n quux
 
 .fi
 .RE
@@ -79,7 +79,7 @@ or
 .RS
 
 .nf
-tkn el rm foo \-n bar
+tkn el rm foo bar \-n quux
 
 .fi
 .RE

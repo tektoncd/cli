@@ -5,7 +5,7 @@
 
 .SH NAME
 .PP
-tkn\-triggerbinding\-delete \- Delete a triggerbinding in a namespace
+tkn\-triggerbinding\-delete \- Delete triggerbindings in a namespace
 
 
 .SH SYNOPSIS
@@ -15,7 +15,7 @@ tkn\-triggerbinding\-delete \- Delete a triggerbinding in a namespace
 
 .SH DESCRIPTION
 .PP
-Delete a triggerbinding in a namespace
+Delete triggerbindings in a namespace
 
 
 .SH OPTIONS
@@ -61,13 +61,13 @@ Delete a triggerbinding in a namespace
 
 .SH EXAMPLE
 .PP
-Delete a TriggerBinding of name 'foo' in namespace 'bar'
+Delete TriggerBindings with names 'foo' and 'bar' in namespace 'quux'
 
 .PP
 .RS
 
 .nf
-tkn triggerbinding delete foo \-n bar
+tkn triggerbinding delete foo bar \-n quux
 
 .fi
 .RE
@@ -79,7 +79,7 @@ or
 .RS
 
 .nf
-tkn tb rm foo \-n bar
+tkn tb rm foo bar \-n quux
 
 .fi
 .RE

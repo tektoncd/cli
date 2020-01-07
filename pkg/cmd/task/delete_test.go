@@ -88,7 +88,7 @@ func TestTaskDelete(t *testing.T) {
 			input:       seeds[0],
 			inputStream: nil,
 			wantError:   false,
-			want:        "Task deleted: task\n",
+			want:        "Tasks deleted: \"task\"\n",
 		},
 		{
 			name:        "With force delete flag",
@@ -96,7 +96,7 @@ func TestTaskDelete(t *testing.T) {
 			input:       seeds[1],
 			inputStream: nil,
 			wantError:   false,
-			want:        "Task deleted: task\n",
+			want:        "Tasks deleted: \"task\"\n",
 		},
 		{
 			name:        "Without force delete flag, reply no",
@@ -112,7 +112,7 @@ func TestTaskDelete(t *testing.T) {
 			input:       seeds[2],
 			inputStream: strings.NewReader("y"),
 			wantError:   false,
-			want:        "Are you sure you want to delete task \"task\" (y/n): Task deleted: task\n",
+			want:        "Are you sure you want to delete task \"task\" (y/n): Tasks deleted: \"task\"\n",
 		},
 		{
 			name:        "Remove non existent resource",
@@ -128,7 +128,7 @@ func TestTaskDelete(t *testing.T) {
 			input:       seeds[3],
 			inputStream: strings.NewReader("y"),
 			wantError:   false,
-			want:        "Are you sure you want to delete task and related resources \"task\" (y/n): Task deleted: task\nTaskRun deleted: task-run-1\nTaskRun deleted: task-run-2\n",
+			want:        "Are you sure you want to delete task and related resources \"task\" (y/n): TaskRuns deleted: \"task-run-1\", \"task-run-2\"\nTasks deleted: \"task\"\n",
 		},
 		{
 			name:        "With delete all and force delete flag",
@@ -136,7 +136,7 @@ func TestTaskDelete(t *testing.T) {
 			input:       seeds[4],
 			inputStream: nil,
 			wantError:   false,
-			want:        "Task deleted: task\nTaskRun deleted: task-run-1\nTaskRun deleted: task-run-2\n",
+			want:        "TaskRuns deleted: \"task-run-1\", \"task-run-2\"\nTasks deleted: \"task\"\n",
 		},
 		{
 			name:        "Try to delete task from invalid namespace",

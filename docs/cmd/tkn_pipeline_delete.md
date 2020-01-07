@@ -1,6 +1,6 @@
 ## tkn pipeline delete
 
-Delete a pipeline in a namespace
+Delete pipelines in a namespace
 
 ***Aliases**: rm*
 
@@ -12,17 +12,17 @@ tkn pipeline delete
 
 ### Synopsis
 
-Delete a pipeline in a namespace
+Delete pipelines in a namespace
 
 ### Examples
 
-Delete a Pipeline of name 'foo' in namespace 'bar'
+Delete Pipelines with names 'foo' and 'bar' in namespace 'quux'
 
-    tkn pipeline delete foo -n bar
+    tkn pipeline delete foo bar -n quux
 
 or
 
-    tkn p rm foo -n bar
+    tkn p rm foo bar -n quux
 
 
 ### Options

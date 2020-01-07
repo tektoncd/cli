@@ -21,6 +21,6 @@ Manage triggerbindings
 ### SEE ALSO
 
 * [tkn](tkn.md)	 - CLI for tekton pipelines
-* [tkn triggerbinding delete](tkn_triggerbinding_delete.md)	 - Delete a triggerbinding in a namespace
+* [tkn triggerbinding delete](tkn_triggerbinding_delete.md)	 - Delete triggerbindings in a namespace
 * [tkn triggerbinding list](tkn_triggerbinding_list.md)	 - Lists triggerbindings in a namespace
 

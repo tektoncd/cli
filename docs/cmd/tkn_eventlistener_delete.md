@@ -1,6 +1,6 @@
 ## tkn eventlistener delete
 
-Delete an EventListener in a namespace
+Delete EventListeners in a namespace
 
 ***Aliases**: rm*
 
@@ -12,17 +12,17 @@ tkn eventlistener delete
 
 ### Synopsis
 
-Delete an EventListener in a namespace
+Delete EventListeners in a namespace
 
 ### Examples
 
-Delete an EventListener of name 'foo' in namespace 'bar'
+Delete EventListeners with names 'foo' and 'bar' in namespace 'bar'
 
-    tkn eventlistener delete foo -n bar
+    tkn eventlistener delete foo bar -n quux
 
 or
 
-    tkn el rm foo -n bar
+    tkn el rm foo bar -n quux
 
 
 ### Options
