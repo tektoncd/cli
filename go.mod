@@ -36,7 +36,7 @@ require (
 	github.com/pkg/errors v0.8.1
 	github.com/sergi/go-diff v1.1.0 // indirect
 	github.com/spf13/cobra v0.0.5
-	github.com/spf13/pflag v1.0.3
+	github.com/spf13/pflag v1.0.5
 	github.com/stretchr/testify v1.4.0
 	github.com/tektoncd/pipeline v0.9.2
 	github.com/tektoncd/plumbing v0.0.0-20191218171343-56a836c50336
@@ -61,6 +61,6 @@ require (
 
 replace github.com/kr/pty => github.com/creack/pty v1.1.7
 
-replace github.com/spf13/cobra => github.com/chmouel/cobra v0.0.0-20191021105835-a78788917390
+replace github.com/spf13/cobra => github.com/chmouel/cobra v0.0.0-20200107083527-379e7a80af0c
 
 replace git.apache.org/thrift.git => github.com/apache/thrift v0.0.0-20180902110319-2566ecd5d999
