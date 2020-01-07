@@ -19,8 +19,10 @@ import (
 
 	"github.com/spf13/cobra"
 	"github.com/tektoncd/cli/pkg/cli"
+	"github.com/tektoncd/cli/pkg/helper/names"
 	"github.com/tektoncd/cli/pkg/helper/options"
 	validateinput "github.com/tektoncd/cli/pkg/helper/validate"
+	"go.uber.org/multierr"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	cliopts "k8s.io/cli-runtime/pkg/genericclioptions"
 )
@@ -28,19 +30,19 @@ import (
 func deleteCommand(p cli.Params) *cobra.Command {
 	opts := &options.DeleteOptions{Resource: "pipelineresource", ForceDelete: false}
 	f := cliopts.NewPrintFlags("delete")
-	eg := `Delete a PipelineResource of name 'foo' in namespace 'bar':
+	eg := `Delete PipelineResources with names 'foo' and 'bar' in namespace 'quux':
 
-    tkn resource delete foo -n bar
+    tkn resource delete foo bar -n quux
 
 or
 
-    tkn res rm foo -n bar
+    tkn res rm foo bar -n quux
 `
 
 	c := &cobra.Command{
 		Use:          "delete",
 		Aliases:      []string{"rm"},
-		Short:        "Delete a pipeline resource in a namespace",
+		Short:        "Delete pipeline resources in a namespace",
 		Example:      eg,
 		Args:         cobra.MinimumNArgs(1),
 		SilenceUsage: true,
@@ -58,11 +60,11 @@ or
 				return err
 			}
 
-			if err := opts.CheckOptions(s, args[0]); err != nil {
+			if err := opts.CheckOptions(s, args); err != nil {
 				return err
 			}
 
-			return deleteResource(s, p, args[0])
+			return deleteResources(s, p, args)
 		},
 	}
 	f.AddFlags(c)
@@ -72,16 +74,26 @@ or
 	return c
 }
 
-func deleteResource(s *cli.Stream, p cli.Params, preName string) error {
+func deleteResources(s *cli.Stream, p cli.Params, preNames []string) error {
 	cs, err := p.Clients()
 	if err != nil {
 		return fmt.Errorf("failed to create tekton client")
 	}
 
-	if err := cs.Tekton.TektonV1alpha1().PipelineResources(p.Namespace()).Delete(preName, &metav1.DeleteOptions{}); err != nil {
-		return fmt.Errorf("failed to delete pipelineresource %q: %s", preName, err)
+	var errs []error
+	var success []string
+	for _, preName := range preNames {
+		if err := cs.Tekton.TektonV1alpha1().PipelineResources(p.Namespace()).Delete(preName, &metav1.DeleteOptions{}); err != nil {
+			err = fmt.Errorf("failed to delete pipelineresource %q: %s", preName, err)
+			errs = append(errs, err)
+			fmt.Fprintf(s.Err, "%s\n", err)
+			continue
+		}
+		success = append(success, preName)
+	}
+	if len(success) > 0 {
+		fmt.Fprintf(s.Out, "PipelineResources deleted: %s\n", names.QuotedList(success))
 	}
 
-	fmt.Fprintf(s.Out, "PipelineResource deleted: %s\n", preName)
-	return nil
+	return multierr.Combine(errs...)
 }

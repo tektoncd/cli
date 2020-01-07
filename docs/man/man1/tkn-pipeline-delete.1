@@ -5,7 +5,7 @@
 
 .SH NAME
 .PP
-tkn\-pipeline\-delete \- Delete a pipeline in a namespace
+tkn\-pipeline\-delete \- Delete pipelines in a namespace
 
 
 .SH SYNOPSIS
@@ -15,7 +15,7 @@ tkn\-pipeline\-delete \- Delete a pipeline in a namespace
 
 .SH DESCRIPTION
 .PP
-Delete a pipeline in a namespace
+Delete pipelines in a namespace
 
 
 .SH OPTIONS
@@ -65,13 +65,13 @@ Delete a pipeline in a namespace
 
 .SH EXAMPLE
 .PP
-Delete a Pipeline of name 'foo' in namespace 'bar'
+Delete Pipelines with names 'foo' and 'bar' in namespace 'quux'
 
 .PP
 .RS
 
 .nf
-tkn pipeline delete foo \-n bar
+tkn pipeline delete foo bar \-n quux
 
 .fi
 .RE
@@ -83,7 +83,7 @@ or
 .RS
 
 .nf
-tkn p rm foo \-n bar
+tkn p rm foo bar \-n quux
 
 .fi
 .RE

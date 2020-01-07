@@ -16,13 +16,13 @@ Delete a condition in a namespace
 
 ### Examples
 
-Delete a Condition of name 'foo' in namespace 'bar':
+Delete Conditions with names 'foo' and 'bar' in namespace 'quux':
 
-    tkn condition delete foo -n bar
+    tkn condition delete foo bar -n quux
 
 or
 
-    tkn cond rm foo -n bar
+    tkn cond rm foo bar -n quux
 
 
 ### Options

@@ -19,8 +19,10 @@ import (
 
 	"github.com/spf13/cobra"
 	"github.com/tektoncd/cli/pkg/cli"
+	"github.com/tektoncd/cli/pkg/helper/names"
 	"github.com/tektoncd/cli/pkg/helper/options"
 	validate "github.com/tektoncd/cli/pkg/helper/validate"
+	"go.uber.org/multierr"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	cliopts "k8s.io/cli-runtime/pkg/genericclioptions"
 )
@@ -28,19 +30,19 @@ import (
 func deleteCommand(p cli.Params) *cobra.Command {
 	opts := &options.DeleteOptions{Resource: "task", ForceDelete: false, DeleteAll: false}
 	f := cliopts.NewPrintFlags("delete")
-	eg := `Delete a Task of name 'foo' in namespace 'bar':
+	eg := `Delete Tasks with names 'foo' and 'bar' in namespace 'quux':
 
-    tkn task delete foo -n bar
+    tkn task delete foo bar -n quux
 
 or
 
-    tkn t rm foo -n bar
+    tkn t rm foo bar -n quux
 `
 
 	c := &cobra.Command{
 		Use:          "delete",
 		Aliases:      []string{"rm"},
-		Short:        "Delete a task resource in a namespace",
+		Short:        "Delete task resources in a namespace",
 		Example:      eg,
 		Args:         cobra.MinimumNArgs(1),
 		SilenceUsage: true,
@@ -58,11 +60,11 @@ or
 				return err
 			}
 
-			if err := opts.CheckOptions(s, args[0]); err != nil {
+			if err := opts.CheckOptions(s, args); err != nil {
 				return err
 			}
 
-			return deleteTask(opts, s, p, args[0])
+			return deleteTask(opts, s, p, args)
 		},
 	}
 	f.AddFlags(c)
@@ -73,37 +75,57 @@ or
 	return c
 }
 
-func deleteTask(opts *options.DeleteOptions, s *cli.Stream, p cli.Params, tName string) error {
+func deleteTask(opts *options.DeleteOptions, s *cli.Stream, p cli.Params, tNames []string) error {
 	cs, err := p.Clients()
 	if err != nil {
 		return fmt.Errorf("failed to create tekton client")
 	}
 
-	if err := cs.Tekton.TektonV1alpha1().Tasks(p.Namespace()).Delete(tName, &metav1.DeleteOptions{}); err != nil {
-		return fmt.Errorf("failed to delete task %q: %s", tName, err)
-	}
-	fmt.Fprintf(s.Out, "Task deleted: %s\n", tName)
-
-	if !opts.DeleteAll {
-		return nil
+	var errs []error
+	addPrintErr := func(err error) {
+		errs = append(errs, err)
+		fmt.Fprintf(s.Err, "%s\n", err)
 	}
 
-	lOpts := metav1.ListOptions{
-		LabelSelector: fmt.Sprintf("tekton.dev/task=%s", tName),
-	}
+	var successfulTasks []string
+	var successfulTaskRuns []string
 
-	taskRuns, err := cs.Tekton.TektonV1alpha1().TaskRuns(p.Namespace()).List(lOpts)
-	if err != nil {
-		return err
-	}
+	for _, tName := range tNames {
+		if err := cs.Tekton.TektonV1alpha1().Tasks(p.Namespace()).Delete(tName, &metav1.DeleteOptions{}); err != nil {
+			addPrintErr(fmt.Errorf("failed to delete task %q: %s", tName, err))
+			continue
+		}
+		successfulTasks = append(successfulTasks, tName)
 
-	for _, tr := range taskRuns.Items {
-		if err := cs.Tekton.TektonV1alpha1().TaskRuns(p.Namespace()).Delete(tr.Name, &metav1.DeleteOptions{}); err != nil {
-			return fmt.Errorf("failed to delete taskrun %q: %s", tr.Name, err)
+		if !opts.DeleteAll {
+			continue
 		}
 
-		fmt.Fprintf(s.Out, "TaskRun deleted: %s\n", tr.Name)
+		lOpts := metav1.ListOptions{
+			LabelSelector: fmt.Sprintf("tekton.dev/task=%s", tName),
+		}
+
+		taskRuns, err := cs.Tekton.TektonV1alpha1().TaskRuns(p.Namespace()).List(lOpts)
+		if err != nil {
+			addPrintErr(err)
+			continue
+		}
+
+		for _, tr := range taskRuns.Items {
+			if err := cs.Tekton.TektonV1alpha1().TaskRuns(p.Namespace()).Delete(tr.Name, &metav1.DeleteOptions{}); err != nil {
+				addPrintErr(fmt.Errorf("failed to delete taskrun %q: %s", tr.Name, err))
+				continue
+			}
+			successfulTaskRuns = append(successfulTaskRuns, tr.Name)
+		}
 	}
 
-	return nil
+	if len(successfulTaskRuns) > 0 {
+		fmt.Fprintf(s.Out, "TaskRuns deleted: %s\n", names.QuotedList(successfulTaskRuns))
+	}
+	if len(successfulTasks) > 0 {
+		fmt.Fprintf(s.Out, "Tasks deleted: %s\n", names.QuotedList(successfulTasks))
+	}
+
+	return multierr.Combine(errs...)
 }

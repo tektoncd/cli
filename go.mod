@@ -42,6 +42,7 @@ require (
 	github.com/tektoncd/plumbing v0.0.0-20191218171343-56a836c50336
 	github.com/tektoncd/triggers v0.1.1-0.20191218175743-c5b8b4d9ee00
 	go.opencensus.io v0.22.1 // indirect
+	go.uber.org/multierr v1.1.0
 	golang.org/x/crypto v0.0.0-20190923035154-9ee001bba392 // indirect
 	golang.org/x/net v0.0.0-20190923162816-aa69164e4478 // indirect
 	golang.org/x/sync v0.0.0-20190911185100-cd5d95a43a6e // indirect

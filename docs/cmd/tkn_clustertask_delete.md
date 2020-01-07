@@ -1,6 +1,6 @@
 ## tkn clustertask delete
 
-Delete a clustertask resource in a cluster
+Delete clustertask resources in a cluster
 
 ***Aliases**: rm*
 
@@ -12,17 +12,17 @@ tkn clustertask delete
 
 ### Synopsis
 
-Delete a clustertask resource in a cluster
+Delete clustertask resources in a cluster
 
 ### Examples
 
-Delete a ClusterTask of name 'foo':
+Delete ClusterTasks with names 'foo' and 'bar':
 
-    tkn clustertask delete foo
+    tkn clustertask delete foo bar
 
 or
 
-    tkn ct rm foo
+    tkn ct rm foo bar
 
 
 ### Options

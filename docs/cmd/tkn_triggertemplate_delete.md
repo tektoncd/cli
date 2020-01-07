@@ -1,6 +1,6 @@
 ## tkn triggertemplate delete
 
-Delete a triggertemplate in a namespace
+Delete triggertemplates in a namespace
 
 ***Aliases**: rm*
 
@@ -12,17 +12,17 @@ tkn triggertemplate delete
 
 ### Synopsis
 
-Delete a triggertemplate in a namespace
+Delete triggertemplates in a namespace
 
 ### Examples
 
-Delete a TriggerTemplate of name 'foo' in namespace 'bar'
+Delete TriggerTemplates with names 'foo' and 'bar' in namespace 'quux'
 
-    tkn triggertemplate delete foo -n bar
+    tkn triggertemplate delete foo bar -n quux
 
 or
 
-    tkn tt rm foo -n bar
+    tkn tt rm foo bar -n quux
 
 
 ### Options

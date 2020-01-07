@@ -1,6 +1,6 @@
 ## tkn pipelinerun delete
 
-Delete a pipelinerun in a namespace
+Delete pipelineruns in a namespace
 
 ***Aliases**: rm*
 
@@ -12,17 +12,17 @@ tkn pipelinerun delete
 
 ### Synopsis
 
-Delete a pipelinerun in a namespace
+Delete pipelineruns in a namespace
 
 ### Examples
 
-Delete a PipelineRun of name 'foo' in namespace 'bar':
+Delete PipelineRuns with names 'foo' and 'bar' in namespace 'quux':
 
-    tkn pipelinerun delete foo -n bar
+    tkn pipelinerun delete foo bar -n quux
 
 or
 
-    tkn pr rm foo -n bar
+    tkn pr rm foo bar -n quux
 
 
 ### Options

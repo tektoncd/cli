@@ -1,6 +1,6 @@
 ## tkn resource delete
 
-Delete a pipeline resource in a namespace
+Delete pipeline resources in a namespace
 
 ***Aliases**: rm*
 
@@ -12,17 +12,17 @@ tkn resource delete
 
 ### Synopsis
 
-Delete a pipeline resource in a namespace
+Delete pipeline resources in a namespace
 
 ### Examples
 
-Delete a PipelineResource of name 'foo' in namespace 'bar':
+Delete PipelineResources with names 'foo' and 'bar' in namespace 'quux':
 
-    tkn resource delete foo -n bar
+    tkn resource delete foo bar -n quux
 
 or
 
-    tkn res rm foo -n bar
+    tkn res rm foo bar -n quux
 
 
 ### Options

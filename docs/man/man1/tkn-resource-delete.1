@@ -5,7 +5,7 @@
 
 .SH NAME
 .PP
-tkn\-resource\-delete \- Delete a pipeline resource in a namespace
+tkn\-resource\-delete \- Delete pipeline resources in a namespace
 
 
 .SH SYNOPSIS
@@ -15,7 +15,7 @@ tkn\-resource\-delete \- Delete a pipeline resource in a namespace
 
 .SH DESCRIPTION
 .PP
-Delete a pipeline resource in a namespace
+Delete pipeline resources in a namespace
 
 
 .SH OPTIONS
@@ -61,13 +61,13 @@ Delete a pipeline resource in a namespace
 
 .SH EXAMPLE
 .PP
-Delete a PipelineResource of name 'foo' in namespace 'bar':
+Delete PipelineResources with names 'foo' and 'bar' in namespace 'quux':
 
 .PP
 .RS
 
 .nf
-tkn resource delete foo \-n bar
+tkn resource delete foo bar \-n quux
 
 .fi
 .RE
@@ -79,7 +79,7 @@ or
 .RS
 
 .nf
-tkn res rm foo \-n bar
+tkn res rm foo bar \-n quux
 
 .fi
 .RE

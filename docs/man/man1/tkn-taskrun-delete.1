@@ -5,7 +5,7 @@
 
 .SH NAME
 .PP
-tkn\-taskrun\-delete \- Delete a taskrun in a namespace
+tkn\-taskrun\-delete \- Delete taskruns in a namespace
 
 
 .SH SYNOPSIS
@@ -15,7 +15,7 @@ tkn\-taskrun\-delete \- Delete a taskrun in a namespace
 
 .SH DESCRIPTION
 .PP
-Delete a taskrun in a namespace
+Delete taskruns in a namespace
 
 
 .SH OPTIONS
@@ -61,13 +61,13 @@ Delete a taskrun in a namespace
 
 .SH EXAMPLE
 .PP
-Delete a TaskRun of name 'foo' in namespace 'bar':
+Delete TaskRuns with names 'foo' and 'bar' in namespace 'quux':
 
 .PP
 .RS
 
 .nf
-tkn taskrun delete foo \-n bar
+tkn taskrun delete foo bar \-n quux
 
 .fi
 .RE
@@ -79,7 +79,7 @@ or
 .RS
 
 .nf
-tkn tr rm foo \-n bar
+tkn tr rm foo bar \-n quux
 
 .fi
 .RE

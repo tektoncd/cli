@@ -96,7 +96,7 @@ func TestPipelineRunDelete(t *testing.T) {
 			input:       seeds[0],
 			inputStream: nil,
 			wantError:   false,
-			want:        "PipelineRun deleted: pipeline-run-1\n",
+			want:        "PipelineRuns deleted: \"pipeline-run-1\"\n",
 		},
 		{
 			name:        "With force delete flag",
@@ -104,7 +104,7 @@ func TestPipelineRunDelete(t *testing.T) {
 			input:       seeds[1],
 			inputStream: nil,
 			wantError:   false,
-			want:        "PipelineRun deleted: pipeline-run-1\n",
+			want:        "PipelineRuns deleted: \"pipeline-run-1\"\n",
 		},
 		{
 			name:        "Without force delete flag, reply no",
@@ -120,7 +120,7 @@ func TestPipelineRunDelete(t *testing.T) {
 			input:       seeds[2],
 			inputStream: strings.NewReader("y"),
 			wantError:   false,
-			want:        "Are you sure you want to delete pipelinerun \"pipeline-run-1\" (y/n): PipelineRun deleted: pipeline-run-1\n",
+			want:        "Are you sure you want to delete pipelinerun \"pipeline-run-1\" (y/n): PipelineRuns deleted: \"pipeline-run-1\"\n",
 		},
 		{
 			name:        "Remove non existent resource",

@@ -19,7 +19,9 @@ import (
 
 	"github.com/spf13/cobra"
 	"github.com/tektoncd/cli/pkg/cli"
+	"github.com/tektoncd/cli/pkg/helper/names"
 	"github.com/tektoncd/cli/pkg/helper/options"
+	"go.uber.org/multierr"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	cliopts "k8s.io/cli-runtime/pkg/genericclioptions"
 )
@@ -27,19 +29,19 @@ import (
 func deleteCommand(p cli.Params) *cobra.Command {
 	opts := &options.DeleteOptions{Resource: "clustertask", ForceDelete: false}
 	f := cliopts.NewPrintFlags("delete")
-	eg := `Delete a ClusterTask of name 'foo':
+	eg := `Delete ClusterTasks with names 'foo' and 'bar':
 
-    tkn clustertask delete foo
+    tkn clustertask delete foo bar
 
 or
 
-    tkn ct rm foo
+    tkn ct rm foo bar
 `
 
 	c := &cobra.Command{
 		Use:          "delete",
 		Aliases:      []string{"rm"},
-		Short:        "Delete a clustertask resource in a cluster",
+		Short:        "Delete clustertask resources in a cluster",
 		Example:      eg,
 		Args:         cobra.MinimumNArgs(1),
 		SilenceUsage: true,
@@ -53,11 +55,11 @@ or
 				Err: cmd.OutOrStderr(),
 			}
 
-			if err := opts.CheckOptions(s, args[0]); err != nil {
+			if err := opts.CheckOptions(s, args); err != nil {
 				return err
 			}
 
-			return deleteClusterTask(s, p, args[0])
+			return deleteClusterTasks(s, p, args)
 		},
 	}
 	f.AddFlags(c)
@@ -67,16 +69,27 @@ or
 	return c
 }
 
-func deleteClusterTask(s *cli.Stream, p cli.Params, tName string) error {
+func deleteClusterTasks(s *cli.Stream, p cli.Params, tNames []string) error {
 	cs, err := p.Clients()
 	if err != nil {
 		return fmt.Errorf("Failed to create tekton client")
 	}
 
-	if err := cs.Tekton.TektonV1alpha1().ClusterTasks().Delete(tName, &metav1.DeleteOptions{}); err != nil {
-		return fmt.Errorf("Failed to delete clustertask %q: %s", tName, err)
+	var errs []error
+	var success []string
+	for _, tName := range tNames {
+		if err := cs.Tekton.TektonV1alpha1().ClusterTasks().Delete(tName, &metav1.DeleteOptions{}); err != nil {
+			err = fmt.Errorf("Failed to delete clustertask %q: %s", tName, err)
+			errs = append(errs, err)
+			fmt.Fprintf(s.Err, "%s\n", err)
+			continue
+		}
+		success = append(success, tName)
 	}
 
-	fmt.Fprintf(s.Out, "ClusterTask deleted: %s\n", tName)
-	return nil
+	if len(success) > 0 {
+		fmt.Fprintf(s.Out, "ClusterTasks deleted: %s\n", names.QuotedList(success))
+	}
+
+	return multierr.Combine(errs...)
 }

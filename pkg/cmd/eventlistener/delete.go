@@ -19,8 +19,10 @@ import (
 
 	"github.com/spf13/cobra"
 	"github.com/tektoncd/cli/pkg/cli"
+	"github.com/tektoncd/cli/pkg/helper/names"
 	"github.com/tektoncd/cli/pkg/helper/options"
 	"github.com/tektoncd/cli/pkg/helper/validate"
+	"go.uber.org/multierr"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	cliopts "k8s.io/cli-runtime/pkg/genericclioptions"
 )
@@ -28,19 +30,19 @@ import (
 func deleteCommand(p cli.Params) *cobra.Command {
 	opts := &options.DeleteOptions{Resource: "eventlistener", ForceDelete: false}
 	f := cliopts.NewPrintFlags("delete")
-	eg := `Delete an EventListener of name 'foo' in namespace 'bar'
+	eg := `Delete EventListeners with names 'foo' and 'bar' in namespace 'bar'
 
-    tkn eventlistener delete foo -n bar
+    tkn eventlistener delete foo bar -n quux
 
 or
 
-    tkn el rm foo -n bar
+    tkn el rm foo bar -n quux
 `
 
 	c := &cobra.Command{
 		Use:          "delete",
 		Aliases:      []string{"rm"},
-		Short:        "Delete an EventListener in a namespace",
+		Short:        "Delete EventListeners in a namespace",
 		Example:      eg,
 		Args:         cobra.MinimumNArgs(1),
 		SilenceUsage: true,
@@ -58,11 +60,11 @@ or
 				return err
 			}
 
-			if err := opts.CheckOptions(s, args[0]); err != nil {
+			if err := opts.CheckOptions(s, args); err != nil {
 				return err
 			}
 
-			return deleteEventListener(s, p, args[0])
+			return deleteEventListeners(s, p, args)
 		},
 	}
 	f.AddFlags(c)
@@ -72,16 +74,27 @@ or
 	return c
 }
 
-func deleteEventListener(s *cli.Stream, p cli.Params, elName string) error {
+func deleteEventListeners(s *cli.Stream, p cli.Params, elNames []string) error {
 	cs, err := p.Clients()
 	if err != nil {
 		return fmt.Errorf("failed to create tekton client")
 	}
 
-	if err := cs.Triggers.TektonV1alpha1().EventListeners(p.Namespace()).Delete(elName, &metav1.DeleteOptions{}); err != nil {
-		return fmt.Errorf("failed to delete eventlistener %q: %s", elName, err)
+	var errs []error
+	var success []string
+	for _, elName := range elNames {
+		if err := cs.Triggers.TektonV1alpha1().EventListeners(p.Namespace()).Delete(elName, &metav1.DeleteOptions{}); err != nil {
+			err = fmt.Errorf("failed to delete eventlistener %q: %s", elName, err)
+			errs = append(errs, err)
+			fmt.Fprintf(s.Err, "%s\n", err)
+			continue
+		}
+		success = append(success, elName)
 	}
 
-	fmt.Fprintf(s.Out, "EventListener deleted: %s\n", elName)
-	return nil
+	if len(success) > 0 {
+		fmt.Fprintf(s.Out, "EventListeners deleted: %s\n", names.QuotedList(success))
+	}
+
+	return multierr.Combine(errs...)
 }

@@ -1,6 +1,6 @@
 ## tkn taskrun delete
 
-Delete a taskrun in a namespace
+Delete taskruns in a namespace
 
 ***Aliases**: rm*
 
@@ -12,17 +12,17 @@ tkn taskrun delete
 
 ### Synopsis
 
-Delete a taskrun in a namespace
+Delete taskruns in a namespace
 
 ### Examples
 
-Delete a TaskRun of name 'foo' in namespace 'bar':
+Delete TaskRuns with names 'foo' and 'bar' in namespace 'quux':
 
-    tkn taskrun delete foo -n bar
+    tkn taskrun delete foo bar -n quux
 
 or
 
-    tkn tr rm foo -n bar
+    tkn tr rm foo bar -n quux
 
 
 ### Options

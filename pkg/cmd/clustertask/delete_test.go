@@ -54,7 +54,7 @@ func TestClusterTaskDelete(t *testing.T) {
 			input:       seeds[0],
 			inputStream: nil,
 			wantError:   false,
-			want:        "ClusterTask deleted: tomatoes\n",
+			want:        "ClusterTasks deleted: \"tomatoes\"\n",
 		},
 		{
 			name:        "With force delete flag",
@@ -62,7 +62,7 @@ func TestClusterTaskDelete(t *testing.T) {
 			input:       seeds[1],
 			inputStream: nil,
 			wantError:   false,
-			want:        "ClusterTask deleted: tomatoes\n",
+			want:        "ClusterTasks deleted: \"tomatoes\"\n",
 		},
 		{
 			name:        "Without force delete flag, reply no",
@@ -78,7 +78,7 @@ func TestClusterTaskDelete(t *testing.T) {
 			input:       seeds[2],
 			inputStream: strings.NewReader("y"),
 			wantError:   false,
-			want:        "Are you sure you want to delete clustertask \"tomatoes\" (y/n): ClusterTask deleted: tomatoes\n",
+			want:        "Are you sure you want to delete clustertask \"tomatoes\" (y/n): ClusterTasks deleted: \"tomatoes\"\n",
 		},
 		{
 			name:        "Remove non existent resource",
