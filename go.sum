@@ -415,6 +415,7 @@ k8s.io/apimachinery v0.0.0-20191004074956-01f8b7d1121a/go.mod h1:ccL7Eh7zubPUSh9
 k8s.io/apimachinery v0.17.0 h1:xRBnuie9rXcPxUkDizUsGvPf1cnlZCFu210op7J7LJo=
 k8s.io/cli-runtime v0.0.0-20191004110054-fe9b9282443f h1:vJOrMsZe+RD884n+WQ5So2oOp7SajI0Op3oOBg64ZsY=
 k8s.io/cli-runtime v0.0.0-20191004110054-fe9b9282443f/go.mod h1:qWnH3/b8sp/l7EvlDh7ulDU3UWA4P4N1NFbEEP791tM=
+k8s.io/cli-runtime v0.17.0 h1:XEuStbJBHCQlEKFyTQmceDKEWOSYHZkcYWKp3SsQ9Hk=
 k8s.io/client-go v0.0.0-20191004102537-eb5b9a8cfde7 h1:WyPHgjjXvF4zVVwKGZKKiJGBUW45AuN44uSOuH8euuE=
 k8s.io/client-go v0.0.0-20191004102537-eb5b9a8cfde7/go.mod h1:7vJpHMYJwNQCWgzmNV+VYUl1zCObLyodBc8nIyt8L5s=
 k8s.io/client-go v11.0.0+incompatible h1:LBbX2+lOwY9flffWlJM7f1Ct8V2SRNiMRDFeiwnJo9o=
