@@ -19,10 +19,9 @@ import (
 
 	"github.com/spf13/cobra"
 	"github.com/tektoncd/cli/pkg/cli"
-	"github.com/tektoncd/cli/pkg/helper/names"
+	"github.com/tektoncd/cli/pkg/helper/deleter"
 	"github.com/tektoncd/cli/pkg/helper/options"
 	validate "github.com/tektoncd/cli/pkg/helper/validate"
-	"go.uber.org/multierr"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	cliopts "k8s.io/cli-runtime/pkg/genericclioptions"
 )
@@ -78,21 +77,8 @@ func deleteTaskRuns(s *cli.Stream, p cli.Params, trNames []string) error {
 	if err != nil {
 		return fmt.Errorf("failed to create tekton client")
 	}
-
-	var errs []error
-	var success []string
-	for _, trName := range trNames {
-		if err := cs.Tekton.TektonV1alpha1().TaskRuns(p.Namespace()).Delete(trName, &metav1.DeleteOptions{}); err != nil {
-			err = fmt.Errorf("failed to delete taskrun %q: %s", trName, err)
-			errs = append(errs, err)
-			fmt.Fprintf(s.Err, "%s\n", err)
-			continue
-		}
-		success = append(success, trName)
-	}
-	if len(success) > 0 {
-		fmt.Fprintf(s.Out, "TaskRuns deleted: %s\n", names.QuotedList(success))
-	}
-
-	return multierr.Combine(errs...)
+	d := deleter.New("TaskRun", func(taskRunName string) error {
+		return cs.Tekton.TektonV1alpha1().TaskRuns(p.Namespace()).Delete(taskRunName, &metav1.DeleteOptions{})
+	})
+	return d.Execute(s, trNames)
 }

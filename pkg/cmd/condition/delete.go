@@ -19,10 +19,9 @@ import (
 
 	"github.com/spf13/cobra"
 	"github.com/tektoncd/cli/pkg/cli"
-	"github.com/tektoncd/cli/pkg/helper/names"
+	"github.com/tektoncd/cli/pkg/helper/deleter"
 	"github.com/tektoncd/cli/pkg/helper/options"
 	validate "github.com/tektoncd/cli/pkg/helper/validate"
-	"go.uber.org/multierr"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	cliopts "k8s.io/cli-runtime/pkg/genericclioptions"
 )
@@ -78,21 +77,8 @@ func deleteConditions(s *cli.Stream, p cli.Params, condNames []string) error {
 	if err != nil {
 		return fmt.Errorf("failed to create tekton client")
 	}
-
-	var errs []error
-	var success []string
-	for _, condName := range condNames {
-		if err := cs.Tekton.TektonV1alpha1().Conditions(p.Namespace()).Delete(condName, &metav1.DeleteOptions{}); err != nil {
-			err = fmt.Errorf("failed to delete condition %q: %s", condName, err)
-			errs = append(errs, err)
-			fmt.Fprintf(s.Err, "%s\n", err)
-			continue
-		}
-		success = append(success, condName)
-	}
-	if len(success) > 0 {
-		fmt.Fprintf(s.Out, "Conditions deleted: %s\n", names.QuotedList(success))
-	}
-
-	return multierr.Combine(errs...)
+	d := deleter.New("Condition", func(conditionName string) error {
+		return cs.Tekton.TektonV1alpha1().Conditions(p.Namespace()).Delete(conditionName, &metav1.DeleteOptions{})
+	})
+	return d.Execute(s, condNames)
 }

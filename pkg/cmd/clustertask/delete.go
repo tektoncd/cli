@@ -19,9 +19,8 @@ import (
 
 	"github.com/spf13/cobra"
 	"github.com/tektoncd/cli/pkg/cli"
-	"github.com/tektoncd/cli/pkg/helper/names"
+	"github.com/tektoncd/cli/pkg/helper/deleter"
 	"github.com/tektoncd/cli/pkg/helper/options"
-	"go.uber.org/multierr"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	cliopts "k8s.io/cli-runtime/pkg/genericclioptions"
 )
@@ -64,7 +63,6 @@ or
 	}
 	f.AddFlags(c)
 	c.Flags().BoolVarP(&opts.ForceDelete, "force", "f", false, "Whether to force deletion (default: false)")
-
 	_ = c.MarkZshCompPositionalArgumentCustom(1, "__tkn_get_clustertasks")
 	return c
 }
@@ -74,22 +72,8 @@ func deleteClusterTasks(s *cli.Stream, p cli.Params, tNames []string) error {
 	if err != nil {
 		return fmt.Errorf("Failed to create tekton client")
 	}
-
-	var errs []error
-	var success []string
-	for _, tName := range tNames {
-		if err := cs.Tekton.TektonV1alpha1().ClusterTasks().Delete(tName, &metav1.DeleteOptions{}); err != nil {
-			err = fmt.Errorf("Failed to delete clustertask %q: %s", tName, err)
-			errs = append(errs, err)
-			fmt.Fprintf(s.Err, "%s\n", err)
-			continue
-		}
-		success = append(success, tName)
-	}
-
-	if len(success) > 0 {
-		fmt.Fprintf(s.Out, "ClusterTasks deleted: %s\n", names.QuotedList(success))
-	}
-
-	return multierr.Combine(errs...)
+	d := deleter.New("ClusterTask", func(taskName string) error {
+		return cs.Tekton.TektonV1alpha1().ClusterTasks().Delete(taskName, &metav1.DeleteOptions{})
+	})
+	return d.Execute(s, tNames)
 }

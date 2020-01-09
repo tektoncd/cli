@@ -19,10 +19,9 @@ import (
 
 	"github.com/spf13/cobra"
 	"github.com/tektoncd/cli/pkg/cli"
-	"github.com/tektoncd/cli/pkg/helper/names"
+	"github.com/tektoncd/cli/pkg/helper/deleter"
 	"github.com/tektoncd/cli/pkg/helper/options"
 	"github.com/tektoncd/cli/pkg/helper/validate"
-	"go.uber.org/multierr"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	cliopts "k8s.io/cli-runtime/pkg/genericclioptions"
 )
@@ -79,22 +78,8 @@ func deleteTriggerBindings(s *cli.Stream, p cli.Params, tbNames []string) error 
 	if err != nil {
 		return fmt.Errorf("failed to create tekton client")
 	}
-
-	var errs []error
-	var success []string
-
-	for _, tbName := range tbNames {
-		if err := cs.Triggers.TektonV1alpha1().TriggerBindings(p.Namespace()).Delete(tbName, &metav1.DeleteOptions{}); err != nil {
-			err = fmt.Errorf("failed to delete triggerbinding %q: %s", tbName, err)
-			errs = append(errs, err)
-			fmt.Fprintf(s.Err, "%s\n", err)
-			continue
-		}
-		success = append(success, tbName)
-	}
-	if len(success) > 0 {
-		fmt.Fprintf(s.Out, "TriggerBindings deleted: %s\n", names.QuotedList(success))
-	}
-
-	return multierr.Combine(errs...)
+	d := deleter.New("TriggerBinding", func(bindingName string) error {
+		return cs.Triggers.TektonV1alpha1().TriggerBindings(p.Namespace()).Delete(bindingName, &metav1.DeleteOptions{})
+	})
+	return d.Execute(s, tbNames)
 }

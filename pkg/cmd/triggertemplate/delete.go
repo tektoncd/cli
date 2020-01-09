@@ -19,10 +19,9 @@ import (
 
 	"github.com/spf13/cobra"
 	"github.com/tektoncd/cli/pkg/cli"
-	"github.com/tektoncd/cli/pkg/helper/names"
+	"github.com/tektoncd/cli/pkg/helper/deleter"
 	"github.com/tektoncd/cli/pkg/helper/options"
 	"github.com/tektoncd/cli/pkg/helper/validate"
-	"go.uber.org/multierr"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	cliopts "k8s.io/cli-runtime/pkg/genericclioptions"
 )
@@ -79,22 +78,8 @@ func deleteTriggerTemplates(s *cli.Stream, p cli.Params, ttNames []string) error
 	if err != nil {
 		return fmt.Errorf("failed to create tekton client")
 	}
-
-	var errs []error
-	var success []string
-
-	for _, ttName := range ttNames {
-		if err := cs.Triggers.TektonV1alpha1().TriggerTemplates(p.Namespace()).Delete(ttName, &metav1.DeleteOptions{}); err != nil {
-			err = fmt.Errorf("failed to delete triggertemplate %q: %s", ttName, err)
-			errs = append(errs, err)
-			fmt.Fprintf(s.Err, "%s\n", err)
-			continue
-		}
-		success = append(success, ttName)
-	}
-	if len(success) > 0 {
-		fmt.Fprintf(s.Out, "TriggerTemplates deleted: %s\n", names.QuotedList(success))
-	}
-
-	return multierr.Combine(errs...)
+	d := deleter.New("TriggerTemplate", func(templateName string) error {
+		return cs.Triggers.TektonV1alpha1().TriggerTemplates(p.Namespace()).Delete(templateName, &metav1.DeleteOptions{})
+	})
+	return d.Execute(s, ttNames)
 }

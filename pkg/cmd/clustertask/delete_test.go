@@ -86,7 +86,7 @@ func TestClusterTaskDelete(t *testing.T) {
 			input:       seeds[2],
 			inputStream: strings.NewReader("y"),
 			wantError:   true,
-			want:        "Failed to delete clustertask \"nonexistent\": clustertasks.tekton.dev \"nonexistent\" not found",
+			want:        "failed to delete clustertask \"nonexistent\": clustertasks.tekton.dev \"nonexistent\" not found",
 		},
 	}
 

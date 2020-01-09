@@ -19,10 +19,9 @@ import (
 
 	"github.com/spf13/cobra"
 	"github.com/tektoncd/cli/pkg/cli"
-	"github.com/tektoncd/cli/pkg/helper/names"
+	"github.com/tektoncd/cli/pkg/helper/deleter"
 	"github.com/tektoncd/cli/pkg/helper/options"
 	validate "github.com/tektoncd/cli/pkg/helper/validate"
-	multierr "go.uber.org/multierr"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	cliopts "k8s.io/cli-runtime/pkg/genericclioptions"
 )
@@ -80,53 +79,30 @@ func deletePipelines(opts *options.DeleteOptions, s *cli.Stream, p cli.Params, p
 	if err != nil {
 		return fmt.Errorf("failed to create tekton client")
 	}
-
-	var errs []error
-	addPrintErr := func(err error) {
-		errs = append(errs, err)
-		fmt.Fprintf(s.Err, "%s\n", err)
+	d := deleter.New("Pipeline", func(pipelineName string) error {
+		return cs.Tekton.TektonV1alpha1().Pipelines(p.Namespace()).Delete(pipelineName, &metav1.DeleteOptions{})
+	})
+	if opts.DeleteAll {
+		d.WithRelated("PipelineRun", pipelineRunLister(p, cs), func(pipelineRunName string) error {
+			return cs.Tekton.TektonV1alpha1().PipelineRuns(p.Namespace()).Delete(pipelineRunName, &metav1.DeleteOptions{})
+		})
 	}
+	return d.Execute(s, pNames)
+}
 
-	var successfulPipelines []string
-	var successfulPipelineRuns []string
-
-	for _, pName := range pNames {
-		if err := cs.Tekton.TektonV1alpha1().Pipelines(p.Namespace()).Delete(pName, &metav1.DeleteOptions{}); err != nil {
-			addPrintErr(fmt.Errorf("failed to delete pipeline %q: %s", pName, err))
-			continue
-		}
-		successfulPipelines = append(successfulPipelines, pName)
-
-		if !opts.DeleteAll {
-			continue
-		}
-
+func pipelineRunLister(p cli.Params, cs *cli.Clients) func(string) ([]string, error) {
+	return func(pipelineName string) ([]string, error) {
 		lOpts := metav1.ListOptions{
-			LabelSelector: fmt.Sprintf("tekton.dev/pipeline=%s", pName),
+			LabelSelector: fmt.Sprintf("tekton.dev/pipeline=%s", pipelineName),
 		}
-
 		pipelineRuns, err := cs.Tekton.TektonV1alpha1().PipelineRuns(p.Namespace()).List(lOpts)
 		if err != nil {
-			addPrintErr(err)
-			continue
+			return nil, err
 		}
-
+		var names []string
 		for _, pr := range pipelineRuns.Items {
-			if err := cs.Tekton.TektonV1alpha1().PipelineRuns(p.Namespace()).Delete(pr.Name, &metav1.DeleteOptions{}); err != nil {
-				addPrintErr(fmt.Errorf("failed to delete pipelinerun %q: %s", pr.Name, err))
-				continue
-			}
-
-			successfulPipelineRuns = append(successfulPipelineRuns, pr.Name)
+			names = append(names, pr.Name)
 		}
+		return names, nil
 	}
-
-	if len(successfulPipelineRuns) > 0 {
-		fmt.Fprintf(s.Out, "PipelineRuns deleted: %s\n", names.QuotedList(successfulPipelineRuns))
-	}
-	if len(successfulPipelines) > 0 {
-		fmt.Fprintf(s.Out, "Pipelines deleted: %s\n", names.QuotedList(successfulPipelines))
-	}
-
-	return multierr.Combine(errs...)
 }
