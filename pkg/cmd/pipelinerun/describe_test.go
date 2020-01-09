@@ -809,3 +809,89 @@ tr-1   t-1         8 minutes ago   3 minutes   Succeeded
 
 	test.AssertOutput(t, expected, actual)
 }
+
+func TestPipelineRunDescribe_without_tr_start_time(t *testing.T) {
+	clock := clockwork.NewFakeClock()
+
+	trs := []*v1alpha1.TaskRun{
+		tb.TaskRun("tr-1", "ns",
+			tb.TaskRunStatus(
+				tb.StatusCondition(apis.Condition{
+					Type:   apis.ConditionReady,
+					Status: corev1.ConditionUnknown,
+				}),
+			),
+		),
+		tb.TaskRun("tr-2", "ns",
+			tb.TaskRunStatus(
+				tb.StatusCondition(apis.Condition{
+					Type:   apis.ConditionReady,
+					Status: corev1.ConditionUnknown,
+				}),
+			),
+		),
+	}
+
+	cs, _ := test.SeedTestData(t, pipelinetest.Data{
+		PipelineRuns: []*v1alpha1.PipelineRun{
+			tb.PipelineRun("pipeline-run", "ns",
+				cb.PipelineRunCreationTimestamp(clock.Now()),
+				tb.PipelineRunLabel("tekton.dev/pipeline", "pipeline"),
+				tb.PipelineRunSpec("pipeline"),
+				tb.PipelineRunStatus(
+					tb.PipelineRunStatusCondition(apis.Condition{
+						Status: corev1.ConditionUnknown,
+						Reason: resources.ReasonRunning,
+					}),
+					tb.PipelineRunTaskRunsStatus("tr-1", &v1alpha1.PipelineRunTaskRunStatus{
+						PipelineTaskName: "t-1",
+						Status:           &trs[0].Status,
+					}),
+					tb.PipelineRunTaskRunsStatus("tr-2", &v1alpha1.PipelineRunTaskRunStatus{
+						PipelineTaskName: "t-2",
+						Status:           &trs[0].Status,
+					}),
+					tb.PipelineRunStartTime(clock.Now()),
+				),
+			),
+		},
+		Namespaces: []*corev1.Namespace{
+			{
+				ObjectMeta: metav1.ObjectMeta{
+					Name: "ns",
+				},
+			},
+		},
+		TaskRuns: trs,
+	})
+
+	p := &test.Params{Tekton: cs.Pipeline, Clock: clock, Kube: cs.Kube}
+
+	pipelinerun := Command(p)
+	clock.Advance(10 * time.Minute)
+	actual, err := test.ExecuteCommand(pipelinerun, "desc", "pipeline-run", "-n", "ns")
+	if err != nil {
+		t.Errorf("Unexpected error: %v", err)
+	}
+	expected := `Name:           pipeline-run
+Namespace:      ns
+Pipeline Ref:   pipeline
+
+Status
+STARTED          DURATION   STATUS
+10 minutes ago   ---        Running
+
+Resources
+No resources
+
+Params
+No params
+
+Taskruns
+NAME   TASK NAME   STARTED   DURATION   STATUS
+tr-1   t-1         ---       ---        Running
+tr-2   t-2         ---       ---        Running
+`
+
+	test.AssertOutput(t, expected, actual)
+}

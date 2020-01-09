@@ -425,6 +425,7 @@ knative.dev/caching v0.0.0-20190719140829-2032732871ff h1:PrlDvOGvCASqW5Fs3ZGes0
 knative.dev/caching v0.0.0-20190719140829-2032732871ff/go.mod h1:dHXFU6CGlLlbzaWc32g80cR92iuBSpsslDNBWI8C7eg=
 knative.dev/pkg v0.0.0-20190909195211-528ad1c1dd62 h1:0neKnC9hstF5Lewj6OaAJdXqk22IZ7pnOPQ8Zl8cfq4=
 knative.dev/pkg v0.0.0-20190909195211-528ad1c1dd62/go.mod h1:pgODObA1dTyhNoFxPZTTjNWfx6F0aKsKzn+vaT9XO/Q=
+knative.dev/pkg v0.0.0-20200108203553-8c6241207427 h1:swUPz/GhGE0bdXX8Ys6AXhjshbCcYXgW9weH7LvK28U=
 rsc.io/binaryregexp v0.2.0/go.mod h1:qTv7/COck+e2FymRvadv62gMdZztPaShugOCi3I+8D8=
 sigs.k8s.io/yaml v1.1.0 h1:4A07+ZFc2wgJwo8YNlQpr1rVlgUDlxXHhPJciaPY5gs=
 sigs.k8s.io/yaml v1.1.0/go.mod h1:UJmg0vDUVViEyp3mgSv9WPwZCDxu4rQW1olrI1uml+o=
