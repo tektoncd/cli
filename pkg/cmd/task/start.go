@@ -17,7 +17,6 @@ package task
 import (
 	"errors"
 	"fmt"
-	"io/ioutil"
 	"strings"
 	"time"
 
@@ -26,6 +25,7 @@ import (
 	"github.com/tektoncd/cli/pkg/cli"
 	"github.com/tektoncd/cli/pkg/cmd/taskrun"
 	"github.com/tektoncd/cli/pkg/flags"
+	"github.com/tektoncd/cli/pkg/helper/file"
 	"github.com/tektoncd/cli/pkg/helper/labels"
 	"github.com/tektoncd/cli/pkg/helper/options"
 	"github.com/tektoncd/cli/pkg/helper/params"
@@ -140,7 +140,7 @@ like cat,foo,bar
 	c.Flags().BoolVarP(&opt.Last, "last", "L", false, "re-run the task using last taskrun values")
 	c.Flags().StringSliceVarP(&opt.Labels, "labels", "l", []string{}, "pass labels as label=value.")
 	c.Flags().BoolVarP(&opt.ShowLog, "showlog", "", false, "show logs right after starting the task")
-	c.Flags().StringVarP(&opt.Filename, "filename", "f", "", "filename containing a task definition")
+	c.Flags().StringVarP(&opt.Filename, "filename", "f", "", "local or remote file name containing a task definition")
 	c.Flags().Int64VarP(&opt.TimeOut, "timeout", "t", 3600, "timeout for taskrun in seconds")
 
 	_ = c.MarkZshCompPositionalArgumentCustom(1, "__tkn_get_task")
@@ -148,8 +148,8 @@ like cat,foo,bar
 	return c
 }
 
-func parseTask(p string) (*v1alpha1.Task, error) {
-	b, err := ioutil.ReadFile(p)
+func parseTask(taskLocation string, p cli.Params) (*v1alpha1.Task, error) {
+	b, err := file.LoadFileContent(p, taskLocation, file.IsYamlFile(), fmt.Errorf("inavlid file format for %s: .yaml or .yml file extension and format required", taskLocation))
 	if err != nil {
 		return nil, err
 	}
@@ -177,7 +177,7 @@ func startTask(opt startOptions, args []string) error {
 			Timeout: &metav1.Duration{Duration: timeoutSeconds},
 		}
 	} else {
-		task, err := parseTask(opt.Filename)
+		task, err := parseTask(opt.Filename, opt.cliparams)
 		if err != nil {
 			return err
 		}

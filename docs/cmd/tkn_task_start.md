@@ -30,7 +30,7 @@ like cat,foo,bar
 ### Options
 
 ```
-  -f, --filename string          filename containing a task definition
+  -f, --filename string          local or remote file name containing a task definition
   -h, --help                     help for start
   -i, --inputresource strings    pass the input resource name and ref as name=ref
   -l, --labels strings           pass labels as label=value.
