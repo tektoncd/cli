@@ -217,8 +217,16 @@ func newTaskrunListFromMap(statusMap map[string]*v1alpha1.PipelineRunTaskRunStat
 	return trl
 }
 
-func (s taskrunList) Len() int      { return len(s) }
-func (s taskrunList) Swap(i, j int) { s[i], s[j] = s[j], s[i] }
-func (s taskrunList) Less(i, j int) bool {
-	return s[j].Status.StartTime.Before(s[i].Status.StartTime)
+func (trs taskrunList) Len() int      { return len(trs) }
+func (trs taskrunList) Swap(i, j int) { trs[i], trs[j] = trs[j], trs[i] }
+func (trs taskrunList) Less(i, j int) bool {
+	if trs[j].Status.StartTime == nil {
+		return false
+	}
+
+	if trs[i].Status.StartTime == nil {
+		return true
+	}
+
+	return trs[j].Status.StartTime.Before(trs[i].Status.StartTime)
 }
