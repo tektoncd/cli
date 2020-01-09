@@ -19,10 +19,9 @@ import (
 
 	"github.com/spf13/cobra"
 	"github.com/tektoncd/cli/pkg/cli"
-	"github.com/tektoncd/cli/pkg/helper/names"
+	"github.com/tektoncd/cli/pkg/helper/deleter"
 	"github.com/tektoncd/cli/pkg/helper/options"
 	validate "github.com/tektoncd/cli/pkg/helper/validate"
-	"go.uber.org/multierr"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	cliopts "k8s.io/cli-runtime/pkg/genericclioptions"
 )
@@ -78,22 +77,8 @@ func deletePipelineRuns(s *cli.Stream, p cli.Params, prNames []string) error {
 	if err != nil {
 		return fmt.Errorf("failed to create tekton client")
 	}
-
-	var errs []error
-	var success []string
-	for _, prName := range prNames {
-		if err := cs.Tekton.TektonV1alpha1().PipelineRuns(p.Namespace()).Delete(prName, &metav1.DeleteOptions{}); err != nil {
-			err = fmt.Errorf("failed to delete pipelinerun %q: %s", prName, err)
-			errs = append(errs, err)
-			fmt.Fprintf(s.Err, "%s\n", err)
-			continue
-		}
-		success = append(success, prName)
-	}
-
-	if len(success) > 0 {
-		fmt.Fprintf(s.Out, "PipelineRuns deleted: %s\n", names.QuotedList(success))
-	}
-
-	return multierr.Combine(errs...)
+	d := deleter.New("PipelineRun", func(pipelineRunName string) error {
+		return cs.Tekton.TektonV1alpha1().PipelineRuns(p.Namespace()).Delete(pipelineRunName, &metav1.DeleteOptions{})
+	})
+	return d.Execute(s, prNames)
 }

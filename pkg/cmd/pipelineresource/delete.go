@@ -19,10 +19,9 @@ import (
 
 	"github.com/spf13/cobra"
 	"github.com/tektoncd/cli/pkg/cli"
-	"github.com/tektoncd/cli/pkg/helper/names"
+	"github.com/tektoncd/cli/pkg/helper/deleter"
 	"github.com/tektoncd/cli/pkg/helper/options"
 	validateinput "github.com/tektoncd/cli/pkg/helper/validate"
-	"go.uber.org/multierr"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	cliopts "k8s.io/cli-runtime/pkg/genericclioptions"
 )
@@ -80,20 +79,8 @@ func deleteResources(s *cli.Stream, p cli.Params, preNames []string) error {
 		return fmt.Errorf("failed to create tekton client")
 	}
 
-	var errs []error
-	var success []string
-	for _, preName := range preNames {
-		if err := cs.Tekton.TektonV1alpha1().PipelineResources(p.Namespace()).Delete(preName, &metav1.DeleteOptions{}); err != nil {
-			err = fmt.Errorf("failed to delete pipelineresource %q: %s", preName, err)
-			errs = append(errs, err)
-			fmt.Fprintf(s.Err, "%s\n", err)
-			continue
-		}
-		success = append(success, preName)
-	}
-	if len(success) > 0 {
-		fmt.Fprintf(s.Out, "PipelineResources deleted: %s\n", names.QuotedList(success))
-	}
-
-	return multierr.Combine(errs...)
+	d := deleter.New("PipelineResource", func(resourceName string) error {
+		return cs.Tekton.TektonV1alpha1().PipelineResources(p.Namespace()).Delete(resourceName, &metav1.DeleteOptions{})
+	})
+	return d.Execute(s, preNames)
 }
