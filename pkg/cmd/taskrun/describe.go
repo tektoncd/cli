@@ -16,6 +16,7 @@ package taskrun
 
 import (
 	"fmt"
+	"sort"
 	"text/tabwriter"
 	"text/template"
 
@@ -95,13 +96,13 @@ No params
 {{- end }}
 {{- end }}
 
-{{decorate "steps" ""}}{{decorate "underline bold" "Steps\n"}}
-
-{{- $l := len .TaskRun.Status.Steps }}{{ if eq $l 0 }}
+{{decorate "steps" ""}}{{decorate "underline bold" "Steps"}}
+{{$sortedSteps := sortStepStates .TaskRun.Status.Steps }}
+{{- $l := len $sortedSteps }}{{ if eq $l 0 }}
 No steps
 {{- else }}
  NAME	STATUS
-{{- range $step := .TaskRun.Status.Steps }}
+{{- range $step := $sortedSteps }}
 {{- $reason := stepReasonExists $step }}
  {{decorate "bullet" $step.Name }}	{{ $reason }}
 {{- end }}
@@ -177,6 +178,7 @@ func printTaskRunDescription(s *cli.Stream, trName string, p cli.Params) error {
 		"taskResourceRefExists": validate.TaskResourceRefExists,
 		"stepReasonExists":      validate.StepReasonExists,
 		"decorate":              formatted.DecorateAttr,
+		"sortStepStates":        sortStepStatesByStartTime,
 	}
 
 	w := tabwriter.NewWriter(s.Out, 0, 5, 3, ' ', tabwriter.TabIndent)
@@ -200,4 +202,46 @@ func hasFailed(tr *v1alpha1.TaskRun) string {
 	}
 
 	return ""
+}
+
+func sortStepStatesByStartTime(steps []v1alpha1.StepState) []v1alpha1.StepState {
+	sort.Slice(steps, func(i, j int) bool {
+		if steps[j].Waiting != nil && steps[i].Waiting != nil {
+			return false
+		}
+
+		var jStartTime metav1.Time
+		jRunning := false
+		var iStartTime metav1.Time
+		iRunning := false
+		if steps[j].Terminated == nil {
+			if steps[j].Running != nil {
+				jStartTime = steps[j].Running.StartedAt
+				jRunning = true
+			} else {
+				return true
+			}
+		}
+
+		if steps[i].Terminated == nil {
+			if steps[i].Running != nil {
+				iStartTime = steps[i].Running.StartedAt
+				iRunning = true
+			} else {
+				return false
+			}
+		}
+
+		if !jRunning {
+			jStartTime = steps[j].Terminated.StartedAt
+		}
+
+		if !iRunning {
+			iStartTime = steps[i].Terminated.StartedAt
+		}
+
+		return iStartTime.Before(&jStartTime)
+	})
+
+	return steps
 }
