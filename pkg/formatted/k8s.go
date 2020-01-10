@@ -15,13 +15,24 @@
 package formatted
 
 import (
+	"github.com/fatih/color"
 	corev1 "k8s.io/api/core/v1"
 	"knative.dev/pkg/apis/duck/v1beta1"
 )
 
+var ConditionColor = map[string]color.Attribute{
+	"Failed":    color.FgHiRed,
+	"Succeeded": color.FgHiGreen,
+	"Running":   color.FgHiBlue,
+	"Cancelled": color.FgHiMagenta,
+}
+
+func colorStatus(status string) string {
+	return color.New(ConditionColor[status]).Sprint(status)
+}
+
 // Condition returns a human readable text based on the status of the Condition
 func Condition(c v1beta1.Conditions) string {
-
 	var status string
 	if len(c) == 0 {
 		return "---"
@@ -35,14 +46,17 @@ func Condition(c v1beta1.Conditions) string {
 	case corev1.ConditionUnknown:
 		status = "Running"
 	}
+	cstatus := colorStatus(status)
 
 	if c[0].Reason != "" && c[0].Reason != status {
 
 		if c[0].Reason == "PipelineRunCancelled" || c[0].Reason == "TaskRunCancelled" {
-			status = "Cancelled" + "(" + c[0].Reason + ")"
-		} else {
-			status = status + "(" + c[0].Reason + ")"
+			status = colorStatus("Cancelled") + "(" + c[0].Reason + ")"
+		} else if c[0].Reason != status {
+			status = cstatus + "(" + c[0].Reason + ")"
 		}
+	} else {
+		status = cstatus
 	}
 
 	return status
