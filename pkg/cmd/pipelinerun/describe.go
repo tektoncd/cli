@@ -30,60 +30,60 @@ import (
 	cliopts "k8s.io/cli-runtime/pkg/genericclioptions"
 )
 
-const templ = `Name:	{{ .PipelineRun.Name }}
-Namespace:	{{ .PipelineRun.Namespace }}
+const templ = `{{color "bold" "Name"}}:	{{ .PipelineRun.Name }}
+{{color "bold" "Namespace"}}:	{{ .PipelineRun.Namespace }}
 {{- $pRefName := pipelineRefExists .PipelineRun.Spec }}{{- if ne $pRefName "" }}
-Pipeline Ref:	{{ $pRefName }}
+{{color "bold" "Pipeline Ref"}}:	{{ $pRefName }}
 {{- end }}
 {{- if ne .PipelineRun.Spec.ServiceAccountName "" }}
-Service Account:	{{ .PipelineRun.Spec.ServiceAccountName }}
+{{color "bold" "Service Account"}}:	{{ .PipelineRun.Spec.ServiceAccountName }}
 {{- end }}
 
-Status
+{{color "underline bold" "Status\n"}}
 STARTED	DURATION	STATUS
 {{ formatAge .PipelineRun.Status.StartTime  .Params.Time }}	{{ formatDuration .PipelineRun.Status.StartTime .PipelineRun.Status.CompletionTime }}	{{ formatCondition .PipelineRun.Status.Conditions }}
 {{- $msg := hasFailed .PipelineRun -}}
 {{-  if ne $msg "" }}
 
-Message
+{{color "underline bold" "Message\n"}}
 {{ $msg }}
 {{- end }}
 
-Resources
+{{color "underline bold" "Resources\n"}}
 {{- $l := len .PipelineRun.Spec.Resources }}{{ if eq $l 0 }}
-No resources
+ No resources
 {{- else }}
-NAME	RESOURCE REF
+ NAME	RESOURCE REF
 {{- range $i, $r := .PipelineRun.Spec.Resources }}
 {{- $rRefName := pipelineResourceRefExists $r }}{{- if ne $rRefName "" }}
-{{$r.Name }}	{{ $r.ResourceRef.Name }}
+ ∙ {{$r.Name }}	{{ $r.ResourceRef.Name }}
 {{- else }}
-{{$r.Name }}	{{ "" }}
+ ∙ {{$r.Name }}	{{ "" }}
 {{- end }}
 {{- end }}
 {{- end }}
 
-Params
+{{color "underline bold" "Params\n"}}
 {{- $l := len .PipelineRun.Spec.Params }}{{ if eq $l 0 }}
-No params
+ No params
 {{- else }}
-NAME	VALUE
+ NAME	VALUE
 {{- range $i, $p := .PipelineRun.Spec.Params }}
 {{- if eq $p.Value.Type "string" }}
-{{ $p.Name }}	{{ $p.Value.StringVal }}
+ ∙ {{ $p.Name }}	{{ $p.Value.StringVal }}
 {{- else }}
-{{ $p.Name }}	{{ $p.Value.ArrayVal }}
+ ∙ {{ $p.Name }}	{{ $p.Value.ArrayVal }}
 {{- end }}
 {{- end }}
 {{- end }}
 
-Taskruns
+{{color "underline bold" "Taskruns\n"}}
 {{- $l := len .TaskrunList }}{{ if eq $l 0 }}
-No taskruns
+ No taskruns
 {{- else }}
-NAME	TASK NAME	STARTED	DURATION	STATUS
+ NAME	TASK NAME	STARTED	DURATION	STATUS
 {{- range $taskrun := .TaskrunList }}
-{{ $taskrun.TaskrunName }}	{{ $taskrun.PipelineTaskName }}	{{ formatAge $taskrun.Status.StartTime $.Params.Time }}	{{ formatDuration $taskrun.Status.StartTime $taskrun.Status.CompletionTime }}	{{ formatCondition $taskrun.Status.Conditions }}
+ ∙ {{ $taskrun.TaskrunName }}	{{ $taskrun.PipelineTaskName }}	{{ formatAge $taskrun.Status.StartTime $.Params.Time }}	{{ formatDuration $taskrun.Status.StartTime $taskrun.Status.CompletionTime }}	{{ formatCondition $taskrun.Status.Conditions }}
 {{- end }}
 {{- end }}
 `
@@ -164,6 +164,7 @@ func printPipelineRunDescription(s *cli.Stream, prName string, p cli.Params) err
 		"hasFailed":                 hasFailed,
 		"pipelineRefExists":         validate.PipelineRefExists,
 		"pipelineResourceRefExists": validate.PipelineResourceRefExists,
+		"color":                     formatted.ColorAttr,
 	}
 
 	w := tabwriter.NewWriter(s.Out, 0, 5, 3, ' ', tabwriter.TabIndent)

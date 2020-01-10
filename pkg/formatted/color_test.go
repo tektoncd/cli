@@ -39,3 +39,28 @@ func TestRainbowsColours(t *testing.T) {
 	}
 	assert.Equal(t, rb.counter.value, uint32(0)) // Looped back to 0
 }
+
+func TestColorAttr(t *testing.T) {
+	type args struct {
+		colorString string
+		message     string
+	}
+	tests := []struct {
+		name string
+		args args
+		want string
+	}{
+		{
+			name: "test that no colour get passed when running in tests",
+			args: args{"foo", "message"},
+			want: "message",
+		},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			if got := ColorAttr(tt.args.colorString, tt.args.message); got != tt.want {
+				t.Errorf("ColorAttr() = %v, want %v", got, tt.want)
+			}
+		})
+	}
+}

@@ -30,72 +30,77 @@ import (
 	cliopts "k8s.io/cli-runtime/pkg/genericclioptions"
 )
 
-const describeTemplate = `Name:	{{ .Task.Name }}
-Namespace:	{{ .Task.Namespace }}
+const describeTemplate = `{{color "bold" "Name"}}:	{{ .Task.Name }}
+{{color "bold" "Namespace"}}:	{{ .Task.Namespace }}
 
-Input Resources
+{{color "underline bold" "Input Resources\n"}}
+
 {{- if not .Task.Spec.Inputs }}
-No input resources
+ No input resources
 {{- else }}
 {{- if eq (len .Task.Spec.Inputs.Resources) 0 }}
-No input resources
+ No input resources
 {{- else }}
-NAME	TYPE
+ NAME	TYPE
 {{- range $ir := .Task.Spec.Inputs.Resources }}
-{{ $ir.Name }}	{{ $ir.Type }}
+ ∙ {{ $ir.Name }}	{{ $ir.Type }}
 {{- end }}
 {{- end }}
 {{- end }}
 
-Output Resources
+{{color "underline bold" "Output Resources\n"}}
+
 {{- if not .Task.Spec.Outputs }}
-No output resources
+ No output resources
 {{- else }}
 {{- if eq (len .Task.Spec.Outputs.Resources) 0 }}
-No output resources
+ No output resources
 {{- else }}
-NAME	TYPE
+ NAME	  TYPE
+ 
 {{- range $or := .Task.Spec.Outputs.Resources }}
-{{ $or.Name }}	{{ $or.Type }}
+ ∙ {{ $or.Name }}	{{ $or.Type }}
 {{- end }}
 {{- end }}
 {{- end }}
 
-Params
+{{color "underline bold" "Params\n"}}
+
 {{- if not .Task.Spec.Inputs }}
-No params
+ No params
 {{- else }}
 {{- if eq (len .Task.Spec.Inputs.Params) 0 }}
 No params
 {{- else }}
-NAME	TYPE	DEFAULT VALUE
+ NAME	TYPE	DEFAULT VALUE
 {{- range $p := .Task.Spec.Inputs.Params }}
 {{- if not $p.Default }}
-{{ $p.Name }}	{{ $p.Type }}	{{ "" }}
+ ∙ {{ $p.Name }}	{{ $p.Type }}	{{ "" }}
 {{- else }}
 {{- if eq $p.Type "string" }}
-{{ $p.Name }}	{{ $p.Type }}	{{ $p.Default.StringVal }}
+ ∙ {{ $p.Name }}	{{ $p.Type }}	{{ $p.Default.StringVal }}
 {{- else }}
-{{ $p.Name }}	{{ $p.Type }}	{{ $p.Default.ArrayVal }}
+ ∙ {{ $p.Name }}	{{ $p.Type }}	{{ $p.Default.ArrayVal }}
 {{- end }}
 {{- end }}
 {{- end }}
 {{- end }}
 {{- end }}
 
-Steps
+{{color "underline bold" "Steps\n"}}
+
 {{- if eq (len .Task.Spec.Steps) 0 }}
-No steps
+ No steps
 {{- else }}
-NAME
 {{- range $step := .Task.Spec.Steps }}
-{{ $step.Name }}
+ ∙ {{ $step.Name }}
 {{- end }}
 {{- end }}
 
-Taskruns
+{{color "underline bold" "Taskruns\n"}}
+
 {{- if eq (len .TaskRuns.Items) 0 }}
-No taskruns
+ No taskruns
 {{- else }}
 NAME	STARTED	DURATION	STATUS
 {{ range $tr:=.TaskRuns.Items }}
@@ -187,6 +192,7 @@ func printTaskDescription(s *cli.Stream, p cli.Params, tname string) error {
 		"formatAge":       formatted.Age,
 		"formatDuration":  formatted.Duration,
 		"formatCondition": formatted.Condition,
+		"color":           formatted.ColorAttr,
 	}
 
 	w := tabwriter.NewWriter(s.Out, 0, 5, 3, ' ', tabwriter.TabIndent)

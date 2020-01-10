@@ -29,75 +29,81 @@ import (
 	cliopts "k8s.io/cli-runtime/pkg/genericclioptions"
 )
 
-const templ = `Name:	{{ .TaskRun.Name }}
-Namespace:	{{ .TaskRun.Namespace }}
+const templ = `{{color "bold" "Name"}}:	{{ .TaskRun.Name }}
+{{color "bold" "Namespace"}}:	{{ .TaskRun.Namespace }}
 {{- $tRefName := taskRefExists .TaskRun.Spec }}{{- if ne $tRefName "" }}
-Task Ref:    {{ $tRefName }}
+{{color "bold" "Task Ref"}}:    {{ $tRefName }}
 {{- end }}
 {{- if ne .TaskRun.Spec.ServiceAccountName "" }}
-Service Account:	{{ .TaskRun.Spec.ServiceAccountName }}
+{{color "bold" "Service Account"}}:	{{ .TaskRun.Spec.ServiceAccountName }}
 {{- end }}
 
-Status
+{{color "underline bold" "Status"}}
+
 STARTED 	DURATION 	STATUS
 {{ formatAge .TaskRun.Status.StartTime  .Params.Time }}	{{ formatDuration .TaskRun.Status.StartTime .TaskRun.Status.CompletionTime }}	{{ formatCondition .TaskRun.Status.Conditions }}
 {{- $msg := hasFailed .TaskRun -}}
 {{-  if ne $msg "" }}
 
-Message
+{{color "underline bold" "Message"}}
+
 {{ $msg }}
 {{- end }}
 
-Input Resources
+{{color "underline bold" "Input Resources\n"}}
+
 {{- $l := len .TaskRun.Spec.Inputs.Resources }}{{ if eq $l 0 }}
 No resources
 {{- else }}
 NAME	RESOURCE REF
 {{- range $i, $r := .TaskRun.Spec.Inputs.Resources }}
 {{- $rRefName := taskResourceRefExists $r }}{{- if ne $rRefName "" }}
-{{$r.Name }}	{{ $r.ResourceRef.Name }}
+∙ {{$r.Name }}	{{ $r.ResourceRef.Name }}
 {{- else }}
-{{$r.Name }}	{{ "" }}
+∙ {{$r.Name }}	{{ "" }}
 {{- end }}
 {{- end }}
 {{- end }}
 
-Output Resources
+{{color "underline bold" "Output Resources\n"}}
+
 {{- $l := len .TaskRun.Spec.Outputs.Resources }}{{ if eq $l 0 }}
 No resources
 {{- else }}
 NAME	RESOURCE REF
 {{- range $i, $r := .TaskRun.Spec.Outputs.Resources }}
 {{- $rRefName := taskResourceRefExists $r }}{{- if ne $rRefName "" }}
-{{$r.Name }}	{{ $r.ResourceRef.Name }}
+∙ {{$r.Name }}	{{ $r.ResourceRef.Name }}
 {{- else }}
-{{$r.Name }}	{{ "" }}
+∙ {{$r.Name }}	{{ "" }}
 {{- end }}
 {{- end }}
 {{- end }}
 
-Params
+{{color "underline bold" "Params\n"}}
+
 {{- $l := len .TaskRun.Spec.Inputs.Params }}{{ if eq $l 0 }}
 No params
 {{- else }}
 NAME	VALUE
 {{- range $i, $p := .TaskRun.Spec.Inputs.Params }}
 {{- if eq $p.Value.Type "string" }}
-{{ $p.Name }}	{{ $p.Value.StringVal }}
+∙ {{ $p.Name }}	{{ $p.Value.StringVal }}
 {{- else }}
-{{ $p.Name }}	{{ $p.Value.ArrayVal }}
+∙ {{ $p.Name }}	{{ $p.Value.ArrayVal }}
 {{- end }}
 {{- end }}
 {{- end }}
 
-Steps
+{{color "underline bold" "Steps\n"}}
+
 {{- $l := len .TaskRun.Status.Steps }}{{ if eq $l 0 }}
 No steps
 {{- else }}
 NAME	STATUS
 {{- range $step := .TaskRun.Status.Steps }}
 {{- $reason := stepReasonExists $step }}
-{{ $step.Name }}	{{ $reason }}
+∙ {{ $step.Name }}	{{ $reason }}
 {{- end }}
 {{- end }}
 `
@@ -170,6 +176,7 @@ func printTaskRunDescription(s *cli.Stream, trName string, p cli.Params) error {
 		"taskRefExists":         validate.TaskRefExists,
 		"taskResourceRefExists": validate.TaskResourceRefExists,
 		"stepReasonExists":      validate.StepReasonExists,
+		"color":                 formatted.ColorAttr,
 	}
 
 	w := tabwriter.NewWriter(s.Out, 0, 5, 3, ' ', tabwriter.TabIndent)
