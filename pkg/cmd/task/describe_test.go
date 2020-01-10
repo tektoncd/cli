@@ -99,19 +99,24 @@ func TestTaskDescribe_OnlyName(t *testing.T) {
 Namespace:   ns
 
 Input Resources
-No input resources
+
+ No input resources
 
 Output Resources
-No output resources
+
+ No output resources
 
 Params
-No params
+
+ No params
 
 Steps
-No steps
+
+ No steps
 
 Taskruns
-No taskruns
+
+ No taskruns
 `
 	test.AssertOutput(t, expected, out)
 }
@@ -147,19 +152,24 @@ func TestTaskDescribe_OnlyNameDiffNameSpace(t *testing.T) {
 Namespace:   ns-2
 
 Input Resources
-No input resources
+
+ No input resources
 
 Output Resources
-No output resources
+
+ No output resources
 
 Params
-No params
+
+ No params
 
 Steps
-No steps
+
+ No steps
 
 Taskruns
-No taskruns
+
+ No taskruns
 `
 	test.AssertOutput(t, expected, out)
 }
@@ -203,22 +213,27 @@ func TestTaskDescribe_OnlyNameParams(t *testing.T) {
 Namespace:   ns
 
 Input Resources
-No input resources
+
+ No input resources
 
 Output Resources
-No output resources
+
+ No output resources
 
 Params
-NAME      TYPE     DEFAULT VALUE
-myarg     string   
-myprint   string   
-myarray   array    
+
+ NAME        TYPE     DEFAULT VALUE
+ ∙ myarg     string   
+ ∙ myprint   string   
+ ∙ myarray   array    
 
 Steps
-No steps
+
+ No steps
 
 Taskruns
-No taskruns
+
+ No taskruns
 `
 	test.AssertOutput(t, expected, out)
 }
@@ -293,29 +308,33 @@ func TestTaskDescribe_Full(t *testing.T) {
 Namespace:   ns
 
 Input Resources
-NAME          TYPE
-my-repo       git
-source-repo   git
-my-image      image
+
+ NAME            TYPE
+ ∙ my-repo       git
+ ∙ source-repo   git
+ ∙ my-image      image
 
 Output Resources
-NAME             TYPE
-artifact-image   image
-code-image       image
+
+ NAME                 TYPE
+ ∙ artifact-image   image
+ ∙ code-image       image
 
 Params
-NAME      TYPE     DEFAULT VALUE
-myarg     string   
-myarray   array    
-print     string   somethingdifferent
-output    array    [booms booms booms]
+
+ NAME        TYPE     DEFAULT VALUE
+ ∙ myarg     string   
+ ∙ myarray   array    
+ ∙ print     string   somethingdifferent
+ ∙ output    array    [booms booms booms]
 
 Steps
-NAME
-hello
-exit
+
+ ∙ hello
+ ∙ exit
 
 Taskruns
+
 NAME   STARTED          DURATION    STATUS
 tr-1   20 minutes ago   5 minutes   Failed
 tr-2   10 minutes ago   7 minutes   Succeeded

@@ -23,7 +23,7 @@ import (
 )
 
 var (
-	// Red is avoided as keeping it for errors
+	// Palette of colors for rainbow's tasks, Red is avoided as keeping it for errors
 	palette = []color.Attribute{
 		color.FgHiGreen,
 		color.FgHiYellow,
@@ -32,6 +32,37 @@ var (
 		color.FgHiCyan,
 	}
 )
+
+// ColorAttr maps color strings to an fatih/color attribute
+func ColorAttr(colorString, message string) string {
+	attr := color.Reset
+	switch colorString {
+	case "underline":
+		attr = color.Underline
+	case "underline bold":
+		return color.New(color.Underline).Add(color.Bold).Sprintf(message)
+	case "bold":
+		attr = color.Bold
+	case "yellow":
+		attr = color.FgHiYellow
+	case "green":
+		attr = color.FgHiGreen
+	case "red":
+		attr = color.FgHiRed
+	case "blue":
+		attr = color.FgHiBlue
+	case "magenta":
+		attr = color.FgHiMagenta
+	case "cyan":
+		attr = color.FgHiCyan
+	case "black":
+		attr = color.FgHiBlack
+	case "white":
+		attr = color.FgHiWhite
+	}
+
+	return color.New(attr).Sprintf(message)
+}
 
 type atomicCounter struct {
 	value     uint32

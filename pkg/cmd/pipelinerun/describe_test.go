@@ -130,18 +130,22 @@ Namespace:      ns
 Pipeline Ref:   pipeline
 
 Status
+
 STARTED          DURATION    STATUS
 10 minutes ago   5 minutes   Succeeded
 
 Resources
-No resources
+
+ No resources
 
 Params
-No params
+
+ No params
 
 Taskruns
-NAME   TASK NAME   STARTED         DURATION    STATUS
-tr-1   t-1         8 minutes ago   3 minutes   Succeeded
+
+ NAME     TASK NAME   STARTED         DURATION    STATUS
+ ∙ tr-1   t-1         8 minutes ago   3 minutes   Succeeded
 `
 
 	test.AssertOutput(t, expected, actual)
@@ -218,19 +222,23 @@ Namespace:      ns
 Pipeline Ref:   pipeline
 
 Status
+
 STARTED          DURATION     STATUS
 10 minutes ago   15 minutes   Succeeded
 
 Resources
-No resources
+
+ No resources
 
 Params
-No params
+
+ No params
 
 Taskruns
-NAME   TASK NAME   STARTED         DURATION    STATUS
-tr-2   t-2         5 minutes ago   4 minutes   Succeeded
-tr-1   t-1         8 minutes ago   3 minutes   Succeeded
+
+ NAME     TASK NAME   STARTED         DURATION    STATUS
+ ∙ tr-2   t-2         5 minutes ago   4 minutes   Succeeded
+ ∙ tr-1   t-1         8 minutes ago   3 minutes   Succeeded
 `
 	test.AssertOutput(t, expected, actual)
 
@@ -299,21 +307,26 @@ Pipeline Ref:      pipeline
 Service Account:   test-sa
 
 Status
+
 STARTED          DURATION    STATUS
 10 minutes ago   5 minutes   Failed(Resource not found)
 
 Message
+
 Resource test-resource not found in the pipelinerun (Testing tr failed)
 
 Resources
-No resources
+
+ No resources
 
 Params
-No params
+
+ No params
 
 Taskruns
-NAME   TASK NAME   STARTED         DURATION    STATUS
-tr-1   t-1         8 minutes ago   3 minutes   Failed
+
+ NAME     TASK NAME   STARTED         DURATION    STATUS
+ ∙ tr-1   t-1         8 minutes ago   3 minutes   Failed
 `
 
 	test.AssertOutput(t, expected, actual)
@@ -377,21 +390,26 @@ Pipeline Ref:      pipeline
 Service Account:   test-sa
 
 Status
+
 STARTED          DURATION    STATUS
 10 minutes ago   5 minutes   Failed(Resource not found)
 
 Message
+
 Resource test-resource not found in the pipelinerun
 
 Resources
-No resources
+
+ No resources
 
 Params
-No params
+
+ No params
 
 Taskruns
-NAME   TASK NAME   STARTED         DURATION    STATUS
-tr-1   t-1         8 minutes ago   3 minutes   ---
+
+ NAME     TASK NAME   STARTED         DURATION    STATUS
+ ∙ tr-1   t-1         8 minutes ago   3 minutes   ---
 `
 
 	test.AssertOutput(t, expected, actual)
@@ -450,18 +468,22 @@ Pipeline Ref:      pipeline
 Service Account:   test-sa
 
 Status
+
 STARTED          DURATION    STATUS
 10 minutes ago   5 minutes   ---
 
 Resources
-No resources
+
+ No resources
 
 Params
-No params
+
+ No params
 
 Taskruns
-NAME   TASK NAME   STARTED         DURATION    STATUS
-tr-1   t-1         8 minutes ago   3 minutes   ---
+
+ NAME     TASK NAME   STARTED         DURATION    STATUS
+ ∙ tr-1   t-1         8 minutes ago   3 minutes   ---
 `
 
 	test.AssertOutput(t, expected, actual)
@@ -532,20 +554,24 @@ Pipeline Ref:      pipeline
 Service Account:   test-sa
 
 Status
+
 STARTED          DURATION    STATUS
 10 minutes ago   5 minutes   Succeeded
 
 Resources
-NAME            RESOURCE REF
-test-resource   test-resource-ref
+
+ NAME              RESOURCE REF
+ ∙ test-resource   test-resource-ref
 
 Params
-NAME         VALUE
-test-param   param-value
+
+ NAME           VALUE
+ ∙ test-param   param-value
 
 Taskruns
-NAME   TASK NAME   STARTED         DURATION    STATUS
-tr-1   t-1         8 minutes ago   3 minutes   Succeeded
+
+ NAME     TASK NAME   STARTED         DURATION    STATUS
+ ∙ tr-1   t-1         8 minutes ago   3 minutes   Succeeded
 `
 
 	test.AssertOutput(t, expected, actual)
@@ -585,17 +611,21 @@ Namespace:      ns
 Pipeline Ref:   pipeline
 
 Status
+
 STARTED   DURATION   STATUS
 ---       ---        ---
 
 Resources
-No resources
+
+ No resources
 
 Params
-No params
+
+ No params
 
 Taskruns
-No taskruns
+
+ No taskruns
 `
 
 	test.AssertOutput(t, expected, actual)
@@ -633,19 +663,22 @@ func TestPipelineRunDescribe_without_pipelineref(t *testing.T) {
 Namespace:   ns
 
 Status
+
 STARTED   DURATION   STATUS
 ---       ---        ---
 
 Resources
-No resources
+
+ No resources
 
 Params
-No params
+
+ No params
 
 Taskruns
-No taskruns
-`
 
+ No taskruns
+`
 	test.AssertOutput(t, expected, actual)
 }
 
@@ -712,20 +745,24 @@ Pipeline Ref:      pipeline
 Service Account:   test-sa
 
 Status
+
 STARTED          DURATION    STATUS
 10 minutes ago   5 minutes   Succeeded
 
 Resources
-NAME            RESOURCE REF
-test-resource   
+
+ NAME              RESOURCE REF
+ ∙ test-resource   
 
 Params
-NAME         VALUE
-test-param   param-value
+
+ NAME           VALUE
+ ∙ test-param   param-value
 
 Taskruns
-NAME   TASK NAME   STARTED         DURATION    STATUS
-tr-1   t-1         8 minutes ago   3 minutes   Succeeded
+
+ NAME     TASK NAME   STARTED         DURATION    STATUS
+ ∙ tr-1   t-1         8 minutes ago   3 minutes   Succeeded
 `
 
 	test.AssertOutput(t, expected, actual)
@@ -790,21 +827,26 @@ Namespace:      ns
 Pipeline Ref:   pipeline
 
 Status
+
 STARTED          DURATION    STATUS
 10 minutes ago   5 minutes   Cancelled(PipelineRunCancelled)
 
 Message
+
 PipelineRun "pipeline-run" was cancelled
 
 Resources
-No resources
+
+ No resources
 
 Params
-No params
+
+ No params
 
 Taskruns
-NAME   TASK NAME   STARTED         DURATION    STATUS
-tr-1   t-1         8 minutes ago   3 minutes   Succeeded
+
+ NAME     TASK NAME   STARTED         DURATION    STATUS
+ ∙ tr-1   t-1         8 minutes ago   3 minutes   Succeeded
 `
 
 	test.AssertOutput(t, expected, actual)
@@ -866,19 +908,22 @@ Namespace:      ns
 Pipeline Ref:   pipeline
 
 Status
+
 STARTED          DURATION   STATUS
 10 minutes ago   ---        Running
 
 Resources
-No resources
+
+ No resources
 
 Params
-No params
+
+ No params
 
 Taskruns
-NAME   TASK NAME   STARTED   DURATION   STATUS
-tr-1   t-1         ---       ---        Running
-`
 
+ NAME     TASK NAME   STARTED   DURATION   STATUS
+ ∙ tr-1   t-1         ---       ---        Running
+`
 	test.AssertOutput(t, expected, actual)
 }

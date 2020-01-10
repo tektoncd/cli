@@ -94,15 +94,15 @@ func TestPipelinesDescribe_empty(t *testing.T) {
 	}
 
 	expected := []string{
-		"Name:   pipeline",
-		"\nResources",
-		"No resources\n",
-		"Params",
-		"No params\n",
-		"Tasks",
-		"No tasks\n",
-		"Pipelineruns",
-		"No pipelineruns\n",
+		"Name:   pipeline\n",
+		"Resources\n",
+		" No resources\n",
+		"Params\n",
+		" No params\n",
+		"Tasks\n",
+		" No tasks\n",
+		"PipelineRuns\n",
+		" No pipelineruns\n",
 	}
 
 	text := strings.Join(expected, "\n")
@@ -163,16 +163,16 @@ func TestPipelinesDescribe_with_run(t *testing.T) {
 	}
 
 	expected := []string{
-		"Name:   pipeline",
-		"\nResources",
-		"No resources\n",
-		"Params",
-		"No params\n",
-		"Tasks",
-		"No tasks\n",
-		"Pipelineruns",
-		"NAME             STARTED          DURATION     STATUS",
-		"pipeline-run-1   15 minutes ago   10 minutes   Succeeded\n",
+		"Name:   pipeline\n",
+		"Resources\n",
+		" No resources\n",
+		"Params\n",
+		" No params\n",
+		"Tasks\n",
+		" No tasks\n",
+		"PipelineRuns\n",
+		" NAME               STARTED          DURATION     STATUS",
+		" ∙ pipeline-run-1   15 minutes ago   10 minutes   Succeeded\n",
 	}
 
 	text := strings.Join(expected, "\n")
@@ -237,17 +237,17 @@ func TestPipelinesDescribe_with_task_run(t *testing.T) {
 	}
 
 	expected := []string{
-		"Name:   pipeline",
-		"\nResources",
-		"No resources\n",
-		"Params",
-		"No params\n",
-		"Tasks",
-		"NAME   TASKREF   RUNAFTER",
-		"task   taskref   [one two]\n",
-		"Pipelineruns",
-		"NAME             STARTED          DURATION     STATUS",
-		"pipeline-run-1   15 minutes ago   10 minutes   Succeeded\n",
+		"Name:   pipeline\n",
+		"Resources\n",
+		" No resources\n",
+		"Params\n",
+		" No params\n",
+		"Tasks\n",
+		" NAME     TASKREF   RUNAFTER",
+		" ∙ task   taskref   [one two]\n",
+		"PipelineRuns\n",
+		" NAME               STARTED          DURATION     STATUS",
+		" ∙ pipeline-run-1   15 minutes ago   10 minutes   Succeeded\n",
 	}
 
 	text := strings.Join(expected, "\n")
@@ -315,19 +315,19 @@ func TestPipelinesDescribe_with_resource_param_task_run(t *testing.T) {
 	}
 
 	expected := []string{
-		"Name:   pipeline",
-		"\nResources",
-		"NAME   TYPE",
-		"name   git\n",
-		"Params",
-		"NAME             TYPE     DEFAULT VALUE",
-		"pipeline-param   string   somethingdifferent\n",
-		"Tasks",
-		"NAME   TASKREF   RUNAFTER",
-		"task   taskref   [one two]\n",
-		"Pipelineruns",
-		"NAME             STARTED          DURATION     STATUS",
-		"pipeline-run-1   15 minutes ago   10 minutes   Succeeded\n",
+		"Name:   pipeline\n",
+		"Resources\n",
+		" NAME     TYPE",
+		" ∙ name   git\n",
+		"Params\n",
+		" NAME               TYPE     DEFAULT VALUE",
+		" ∙ pipeline-param   string   somethingdifferent\n",
+		"Tasks\n",
+		" NAME     TASKREF   RUNAFTER",
+		" ∙ task   taskref   [one two]\n",
+		"PipelineRuns\n",
+		" NAME               STARTED          DURATION     STATUS",
+		" ∙ pipeline-run-1   15 minutes ago   10 minutes   Succeeded\n",
 	}
 
 	text := strings.Join(expected, "\n")
@@ -402,26 +402,26 @@ func TestPipelinesDescribe_with_multiple_resource_param_task_run(t *testing.T) {
 	}
 
 	expected := []string{
-		"Name:   pipeline",
-		"\nResources",
-		"NAME             TYPE",
-		"code             git",
-		"name             git",
-		"repo             git",
-		"artifact-image   image",
-		"code-image       image\n",
-		"Params",
-		"NAME              TYPE     DEFAULT VALUE",
-		"pipeline-param    string   somethingdifferent",
-		"rev-param         array    [booms booms booms]",
-		"pipeline-param2   string   ",
-		"rev-param2        array    \n",
-		"Tasks",
-		"NAME   TASKREF   RUNAFTER",
-		"task   taskref   [one two]\n",
-		"Pipelineruns",
-		"NAME             STARTED          DURATION     STATUS",
-		"pipeline-run-1   15 minutes ago   10 minutes   Succeeded\n",
+		"Name:   pipeline\n",
+		"Resources\n",
+		" NAME               TYPE",
+		" ∙ code             git",
+		" ∙ name             git",
+		" ∙ repo             git",
+		" ∙ artifact-image   image",
+		" ∙ code-image       image\n",
+		"Params\n",
+		" NAME                TYPE     DEFAULT VALUE",
+		" ∙ pipeline-param    string   somethingdifferent",
+		" ∙ rev-param         array    [booms booms booms]",
+		" ∙ pipeline-param2   string   ",
+		" ∙ rev-param2        array    \n",
+		"Tasks\n",
+		" NAME     TASKREF   RUNAFTER",
+		" ∙ task   taskref   [one two]\n",
+		"PipelineRuns\n",
+		" NAME               STARTED          DURATION     STATUS",
+		" ∙ pipeline-run-1   15 minutes ago   10 minutes   Succeeded\n",
 	}
 
 	text := strings.Join(expected, "\n")

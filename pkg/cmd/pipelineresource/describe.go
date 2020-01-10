@@ -19,6 +19,8 @@ import (
 	"text/tabwriter"
 	"text/template"
 
+	"github.com/tektoncd/cli/pkg/formatted"
+
 	"github.com/spf13/cobra"
 	"github.com/tektoncd/cli/pkg/cli"
 	validateinput "github.com/tektoncd/cli/pkg/helper/validate"
@@ -27,27 +29,27 @@ import (
 	cliopts "k8s.io/cli-runtime/pkg/genericclioptions"
 )
 
-const templ = `Name:	{{ .PipelineResource.Name }}
-Namespace:	{{ .PipelineResource.Namespace }}
-PipelineResource Type:	{{ .PipelineResource.Spec.Type }}
+const templ = `{{color "bold" "Name"}}:	{{ .PipelineResource.Name }}
+{{color "bold" "Namespace"}}:	{{ .PipelineResource.Namespace }}
+{{color "bold" "PipelineResource Type"}}:	{{ .PipelineResource.Spec.Type }}
 
-Params
+{{color "underline bold" "Params\n"}}
 {{- $l := len .PipelineResource.Spec.Params }}{{ if eq $l 0 }}
-No params
+ No params
 {{- else }}
-NAME	VALUE
+ NAME	VALUE
 {{- range $i, $p := .PipelineResource.Spec.Params }}
-{{ $p.Name }}	{{ $p.Value }}
+ ∙ {{ $p.Name }}	{{ $p.Value }}
 {{- end }}
 {{- end }}
 
-Secret Params
+{{color "underline bold" "Secret Params\n"}}
 {{- $l := len .PipelineResource.Spec.SecretParams }}{{ if eq $l 0 }}
-No secret params
+ No secret params
 {{- else }}
-FIELDNAME	SECRETNAME
+ FIELDNAME	SECRETNAME
 {{- range $i, $p := .PipelineResource.Spec.SecretParams }}
-{{ $p.FieldName }}	{{ $p.SecretName }}
+ ∙ {{ $p.FieldName }}	{{ $p.SecretName }}
 {{- end }}
 {{- end }}
 `
@@ -112,7 +114,10 @@ func printPipelineResourceDescription(s *cli.Stream, p cli.Params, preName strin
 	}
 
 	w := tabwriter.NewWriter(s.Out, 0, 5, 3, ' ', tabwriter.TabIndent)
-	t := template.Must(template.New("Describe PipelineResource").Parse(templ))
+	FuncMap := template.FuncMap{
+		"color": formatted.ColorAttr,
+	}
+	t := template.Must(template.New("Describe PipelineResource").Funcs(FuncMap).Parse(templ))
 
 	err = t.Execute(w, data)
 	if err != nil {
