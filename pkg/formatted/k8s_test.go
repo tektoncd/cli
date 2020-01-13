@@ -8,7 +8,7 @@ import (
 
 func TestColor(t *testing.T) {
 	greenSuccess := color.New(color.FgHiGreen).Sprint("Succeeded")
-	cs := colorStatus("Succeeded")
+	cs := ColorStatus("Succeeded")
 	if cs != greenSuccess {
 		t.Errorf("%s != %s", cs, greenSuccess)
 	}
