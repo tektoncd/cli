@@ -17,6 +17,7 @@ package validate
 import (
 	"fmt"
 
+	"github.com/tektoncd/cli/pkg/formatted"
 	"github.com/tektoncd/pipeline/pkg/apis/pipeline/v1alpha1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	k8s "k8s.io/client-go/kubernetes"
@@ -94,15 +95,15 @@ func StepReasonExists(state v1alpha1.StepState) string {
 	if state.Waiting == nil {
 
 		if state.Running != nil {
-			return "Running"
+			return formatted.ColorStatus("Running")
 		}
 
 		if state.Terminated != nil {
-			return state.Terminated.Reason
+			return formatted.ColorStatus(state.Terminated.Reason)
 		}
 
-		return pendingState
+		return formatted.ColorStatus(pendingState)
 	}
 
-	return state.Waiting.Reason
+	return formatted.ColorStatus(state.Waiting.Reason)
 }

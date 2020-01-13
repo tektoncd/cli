@@ -24,10 +24,13 @@ var ConditionColor = map[string]color.Attribute{
 	"Failed":    color.FgHiRed,
 	"Succeeded": color.FgHiGreen,
 	"Running":   color.FgHiBlue,
-	"Cancelled": color.FgHiMagenta,
+	"Cancelled": color.FgHiYellow,
+	"Completed": color.FgHiMagenta,
+	"Pending":   color.FgHiWhite,
 }
 
-func colorStatus(status string) string {
+// ColorStatus Get a status coloured
+func ColorStatus(status string) string {
 	return color.New(ConditionColor[status]).Sprint(status)
 }
 
@@ -46,12 +49,12 @@ func Condition(c v1beta1.Conditions) string {
 	case corev1.ConditionUnknown:
 		status = "Running"
 	}
-	cstatus := colorStatus(status)
+	cstatus := ColorStatus(status)
 
 	if c[0].Reason != "" && c[0].Reason != status {
 
 		if c[0].Reason == "PipelineRunCancelled" || c[0].Reason == "TaskRunCancelled" {
-			status = colorStatus("Cancelled") + "(" + c[0].Reason + ")"
+			status = ColorStatus("Cancelled") + "(" + c[0].Reason + ")"
 		} else if c[0].Reason != status {
 			status = cstatus + "(" + c[0].Reason + ")"
 		}
