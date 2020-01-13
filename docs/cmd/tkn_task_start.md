@@ -20,7 +20,7 @@ Start Task foo by creating a TaskRun named "foo-run-xyz123" from namespace 'bar'
 
     tkn task start foo -s ServiceAccountName -n bar
 
-The rask can either be specified by reference in a cluster using the positional argument
+The task can either be specified by reference in a cluster using the positional argument
 or in a file using the --filename argument.
 
 For params value, if you want to provide multiple values, provide them comma separated
