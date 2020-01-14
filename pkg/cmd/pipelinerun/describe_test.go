@@ -822,14 +822,6 @@ func TestPipelineRunDescribe_without_tr_start_time(t *testing.T) {
 				}),
 			),
 		),
-		tb.TaskRun("tr-2", "ns",
-			tb.TaskRunStatus(
-				tb.StatusCondition(apis.Condition{
-					Type:   apis.ConditionReady,
-					Status: corev1.ConditionUnknown,
-				}),
-			),
-		),
 	}
 
 	cs, _ := test.SeedTestData(t, pipelinetest.Data{
@@ -845,10 +837,6 @@ func TestPipelineRunDescribe_without_tr_start_time(t *testing.T) {
 					}),
 					tb.PipelineRunTaskRunsStatus("tr-1", &v1alpha1.PipelineRunTaskRunStatus{
 						PipelineTaskName: "t-1",
-						Status:           &trs[0].Status,
-					}),
-					tb.PipelineRunTaskRunsStatus("tr-2", &v1alpha1.PipelineRunTaskRunStatus{
-						PipelineTaskName: "t-2",
 						Status:           &trs[0].Status,
 					}),
 					tb.PipelineRunStartTime(clock.Now()),
@@ -890,7 +878,6 @@ No params
 Taskruns
 NAME   TASK NAME   STARTED   DURATION   STATUS
 tr-1   t-1         ---       ---        Running
-tr-2   t-2         ---       ---        Running
 `
 
 	test.AssertOutput(t, expected, actual)
