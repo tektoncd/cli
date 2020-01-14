@@ -1,4 +1,4 @@
-// Copyright © 2019 The Tekton Authors.
+// Copyright © 2020 The Tekton Authors.
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -12,7 +12,7 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-package task
+package clustertask
 
 import (
 	"errors"
@@ -20,24 +20,21 @@ import (
 	"strings"
 	"time"
 
-	"github.com/ghodss/yaml"
 	"github.com/spf13/cobra"
 	"github.com/tektoncd/cli/pkg/cli"
 	"github.com/tektoncd/cli/pkg/cmd/taskrun"
 	"github.com/tektoncd/cli/pkg/flags"
-	"github.com/tektoncd/cli/pkg/helper/file"
 	"github.com/tektoncd/cli/pkg/helper/labels"
 	"github.com/tektoncd/cli/pkg/helper/options"
 	"github.com/tektoncd/cli/pkg/helper/params"
 	"github.com/tektoncd/cli/pkg/helper/task"
-	validate "github.com/tektoncd/cli/pkg/helper/validate"
 	"github.com/tektoncd/pipeline/pkg/apis/pipeline/v1alpha1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 )
 
 var (
-	errNoTask      = errors.New("missing task name")
-	errInvalidTask = "task name %s does not exist in namespace %s"
+	errNoClusterTask      = errors.New("missing clustertask name")
+	errInvalidClusterTask = "clustertask name %s does not exist"
 )
 
 const invalidResource = "invalid input format for resource parameter: "
@@ -52,18 +49,13 @@ type startOptions struct {
 	Last               bool
 	Labels             []string
 	ShowLog            bool
-	Filename           string
 	TimeOut            int64
 }
 
-// NameArg validates that the first argument is a valid task name
+// NameArg validates that the first argument is a valid clustertask name
 func NameArg(args []string, p cli.Params) error {
 	if len(args) == 0 {
-		return errNoTask
-	}
-
-	if err := validate.NamespaceExists(p); err != nil {
-		return err
+		return errNoClusterTask
 	}
 
 	c, err := p.Clients()
@@ -71,14 +63,14 @@ func NameArg(args []string, p cli.Params) error {
 		return err
 	}
 
-	name, ns := args[0], p.Namespace()
-	t, err := c.Tekton.TektonV1alpha1().Tasks(ns).Get(name, metav1.GetOptions{})
+	name := args[0]
+	ct, err := c.Tekton.TektonV1alpha1().ClusterTasks().Get(name, metav1.GetOptions{})
 	if err != nil {
-		return fmt.Errorf(errInvalidTask, name, ns)
+		return fmt.Errorf(errInvalidClusterTask, name)
 	}
 
-	if t.Spec.Inputs != nil {
-		params.FilterParamsByType(t.Spec.Inputs.Params)
+	if ct.Spec.Inputs != nil {
+		params.FilterParamsByType(ct.Spec.Inputs.Params)
 	}
 
 	return nil
@@ -89,38 +81,32 @@ func startCommand(p cli.Params) *cobra.Command {
 		cliparams: p,
 	}
 
+	eg := `Start ClusterTask foo by creating a TaskRun named "foo-run-xyz123" in namespace 'bar':
+
+    tkn clustertask start foo -n bar
+
+or
+
+    tkn ct start foo -n bar
+
+For params value, if you want to provide multiple values, provide them comma separated 
+like cat,foo,bar
+`
+
 	c := &cobra.Command{
-		Use:     "start task [RESOURCES...] [PARAMS...] [SERVICEACCOUNT]",
-		Aliases: []string{"trigger"},
-		Short:   "Start tasks",
+		Use:   "start clustertask [RESOURCES...] [PARAMS...] [SERVICEACCOUNT]",
+		Short: "Start clustertasks",
 		Annotations: map[string]string{
 			"commandType": "main",
 		},
-		Example: `Start Task foo by creating a TaskRun named "foo-run-xyz123" from namespace 'bar':
-
-    tkn task start foo -s ServiceAccountName -n bar
-
-The rask can either be specified by reference in a cluster using the positional argument
-or in a file using the --filename argument.
-
-For params value, if you want to provide multiple values, provide them comma separated
-like cat,foo,bar
-`,
+		Example:      eg,
 		SilenceUsage: true,
 		Args: func(cmd *cobra.Command, args []string) error {
 			if err := flags.InitParams(p, cmd); err != nil {
 				return err
 			}
-			if len(args) != 0 {
-				return NameArg(args, p)
-			}
-			if opt.Filename == "" {
-				return errors.New("either a task name or a --filename parameter must be supplied")
-			}
-			if opt.Filename != "" && opt.Last {
-				return errors.New("cannot use --last option with --filename option")
-			}
-			return nil
+			return NameArg(args, p)
+
 		},
 		RunE: func(cmd *cobra.Command, args []string) error {
 			opt.stream = &cli.Stream{
@@ -128,7 +114,7 @@ like cat,foo,bar
 				Err: cmd.OutOrStderr(),
 			}
 
-			return startTask(opt, args)
+			return startClusterTask(opt, args)
 		},
 	}
 
@@ -137,64 +123,42 @@ like cat,foo,bar
 	c.Flags().StringArrayVarP(&opt.Params, "param", "p", []string{}, "pass the param as key=value or key=value1,value2")
 	c.Flags().StringVarP(&opt.ServiceAccountName, "serviceaccount", "s", "", "pass the serviceaccount name")
 	flags.AddShellCompletion(c.Flags().Lookup("serviceaccount"), "__kubectl_get_serviceaccount")
-	c.Flags().BoolVarP(&opt.Last, "last", "L", false, "re-run the task using last taskrun values")
+	c.Flags().BoolVarP(&opt.Last, "last", "L", false, "re-run the clustertask using last taskrun values")
 	c.Flags().StringSliceVarP(&opt.Labels, "labels", "l", []string{}, "pass labels as label=value.")
-	c.Flags().BoolVarP(&opt.ShowLog, "showlog", "", false, "show logs right after starting the task")
-	c.Flags().StringVarP(&opt.Filename, "filename", "f", "", "local or remote file name containing a task definition")
+	c.Flags().BoolVarP(&opt.ShowLog, "showlog", "", false, "show logs right after starting the clustertask")
 	c.Flags().Int64VarP(&opt.TimeOut, "timeout", "t", 3600, "timeout for taskrun in seconds")
 
-	_ = c.MarkZshCompPositionalArgumentCustom(1, "__tkn_get_task")
+	_ = c.MarkZshCompPositionalArgumentCustom(1, "__tkn_get_clustertask")
 
 	return c
 }
 
-func parseTask(taskLocation string, p cli.Params) (*v1alpha1.Task, error) {
-	b, err := file.LoadFileContent(p, taskLocation, file.IsYamlFile(), fmt.Errorf("inavlid file format for %s: .yaml or .yml file extension and format required", taskLocation))
-	if err != nil {
-		return nil, err
-	}
-	task := v1alpha1.Task{}
-	if err := yaml.Unmarshal(b, &task); err != nil {
-		return nil, err
-	}
-	return &task, nil
-}
-
-func startTask(opt startOptions, args []string) error {
+func startClusterTask(opt startOptions, args []string) error {
 	tr := &v1alpha1.TaskRun{
-		ObjectMeta: metav1.ObjectMeta{
-			Namespace: opt.cliparams.Namespace(),
-		},
+		ObjectMeta: metav1.ObjectMeta{},
 	}
 
-	var tname string
+	var ctname string
 	timeoutSeconds := time.Duration(opt.TimeOut) * time.Second
 
-	if len(args) > 0 {
-		tname = args[0]
-		tr.Spec = v1alpha1.TaskRunSpec{
-			TaskRef: &v1alpha1.TaskRef{Name: tname},
-			Timeout: &metav1.Duration{Duration: timeoutSeconds},
-		}
-	} else {
-		task, err := parseTask(opt.Filename, opt.cliparams)
-		if err != nil {
-			return err
-		}
-		tname = task.ObjectMeta.Name
-		tr.Spec = v1alpha1.TaskRunSpec{
-			TaskSpec: &task.Spec,
-		}
+	ctname = args[0]
+	tr.Spec = v1alpha1.TaskRunSpec{
+		TaskRef: &v1alpha1.TaskRef{
+			Name: ctname,
+			Kind: v1alpha1.ClusterTaskKind, //Specify TaskRun is for a ClusterTask kind
+		},
+		Timeout: &metav1.Duration{Duration: timeoutSeconds},
 	}
-	tr.ObjectMeta.GenerateName = tname + "-run-"
+	tr.ObjectMeta.GenerateName = ctname + "-run-"
 
 	cs, err := opt.cliparams.Clients()
 	if err != nil {
 		return err
 	}
 
+	//TaskRuns are namespaced so using same LastRun method as Task
 	if opt.Last {
-		trLast, err := task.LastRun(cs.Tekton, tname, opt.cliparams.Namespace(), "task")
+		trLast, err := task.LastRun(cs.Tekton, ctname, opt.cliparams.Namespace(), "clustertask")
 		if err != nil {
 			return err
 		}

@@ -86,7 +86,7 @@ func TestTaskrunLatest_two_run(t *testing.T) {
 		t.Errorf("Unexpected error: %v", err)
 	}
 
-	lastRun, err := LastRun(client.Tekton, "task", "ns")
+	lastRun, err := LastRun(client.Tekton, "task", "ns", "task")
 	if err != nil {
 		t.Errorf("Unexpected error: %v", err)
 	}
@@ -111,7 +111,7 @@ func TestTaskrunLatest_no_run(t *testing.T) {
 		t.Errorf("Unexpected error: %v", err)
 	}
 
-	_, err = LastRun(client.Tekton, "task", "ns")
+	_, err = LastRun(client.Tekton, "task", "ns", "task")
 	if err == nil {
 		t.Errorf("Expected error, got nil")
 	}
