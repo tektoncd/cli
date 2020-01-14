@@ -23,7 +23,7 @@ import (
 )
 
 //LastRun returns the last taskrun for a given task
-func LastRun(tekton versioned.Interface, task string, ns string) (*v1alpha1.TaskRun, error) {
+func LastRun(tekton versioned.Interface, task string, ns string, kind string) (*v1alpha1.TaskRun, error) {
 	options := metav1.ListOptions{}
 	if task != "" {
 		options = metav1.ListOptions{
@@ -37,7 +37,7 @@ func LastRun(tekton versioned.Interface, task string, ns string) (*v1alpha1.Task
 	}
 
 	if len(runs.Items) == 0 {
-		return nil, fmt.Errorf("no taskruns related to task %s found in namespace %s", task, ns)
+		return nil, fmt.Errorf("no taskruns related to %s %s found in namespace %s", kind, task, ns)
 	}
 
 	latest := runs.Items[0]
