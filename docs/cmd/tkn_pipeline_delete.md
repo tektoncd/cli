@@ -28,7 +28,7 @@ or
 ### Options
 
 ```
-  -a, --all                           Whether to delete related resources (pipelineruns) (default: false)
+  -a, --all                           Whether to delete related resources (pipelineruns, taskruns) (default: false)
       --allow-missing-template-keys   If true, ignore any errors in templates when a field or map key is missing in the template. Only applies to golang and jsonpath output formats. (default true)
   -f, --force                         Whether to force deletion (default: false)
   -h, --help                          help for delete

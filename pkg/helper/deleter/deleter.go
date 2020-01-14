@@ -16,23 +16,29 @@ import (
 type Deleter struct {
 	errors                   []error
 	successfulDeletes        []string
-	successfulRelatedDeletes []string
+	successfulRelatedDeletes map[string][]string
 
-	kind        string
-	relatedKind string
+	kind string
 
 	delete func(string) error
 
-	listRelated   func(string) ([]string, error)
-	deleteRelated func(string) error
+	relatedKinds map[string]relatedFuncs
+}
+
+// relatedFuncs are the funcs needed when deleting related resources.
+type relatedFuncs struct {
+	list   func(string) ([]string, error)
+	delete func(string) error
 }
 
 // New returns a Deleter that will delete resources of kind with the given
 // delete func when Execute is called.
 func New(kind string, deleteFunc func(string) error) *Deleter {
 	return &Deleter{
-		kind:   kind,
-		delete: deleteFunc,
+		kind:                     kind,
+		delete:                   deleteFunc,
+		relatedKinds:             make(map[string]relatedFuncs),
+		successfulRelatedDeletes: make(map[string][]string),
 	}
 }
 
@@ -41,9 +47,10 @@ func New(kind string, deleteFunc func(string) error) *Deleter {
 // those resources must be provided by listFunc and each related resource will be
 // passed to deleteFunc for deletion.
 func (d *Deleter) WithRelated(kind string, listFunc func(string) ([]string, error), deleteFunc func(string) error) {
-	d.relatedKind = kind
-	d.listRelated = listFunc
-	d.deleteRelated = deleteFunc
+	d.relatedKinds[kind] = relatedFuncs{
+		list:   listFunc,
+		delete: deleteFunc,
+	}
 }
 
 // Execute performs the deletion of resources and relations. Errors are aggregated
@@ -56,27 +63,30 @@ func (d *Deleter) Execute(streams *cli.Stream, resourceNames []string) error {
 			d.successfulDeletes = append(d.successfulDeletes, name)
 		}
 	}
-	if d.relatedKind != "" && d.listRelated != nil && d.deleteRelated != nil {
+	if len(d.relatedKinds) != 0 {
 		for _, name := range d.successfulDeletes {
-			d.deleteRelatedList(streams, name)
+			d.deleteAllRelated(streams, name)
 		}
 	}
 	d.printSuccesses(streams)
 	return multierr.Combine(d.errors...)
 }
 
-// deleteRelatedList gets the list of resources related to resourceName using the
-// provided listFunc and then calls the deleteRelated func for each relation.
-func (d *Deleter) deleteRelatedList(streams *cli.Stream, resourceName string) {
-	if related, err := d.listRelated(resourceName); err != nil {
-		d.printAndAddError(streams, err)
-	} else {
-		for _, subresource := range related {
-			if err := d.deleteRelated(subresource); err != nil {
-				err = fmt.Errorf("failed to delete %s %q: %s", strings.ToLower(d.relatedKind), subresource, err)
-				d.printAndAddError(streams, err)
-			} else {
-				d.successfulRelatedDeletes = append(d.successfulRelatedDeletes, subresource)
+// deleteAllRelated gets the list of each resource related to resourceName using the
+// provided list func and then calls the delete func for each relation.
+func (d *Deleter) deleteAllRelated(streams *cli.Stream, resourceName string) {
+	for kind, funcs := range d.relatedKinds {
+		if related, err := funcs.list(resourceName); err != nil {
+			err = fmt.Errorf("fetching list of %ss related to %q failed: %s", strings.ToLower(kind), resourceName, err)
+			d.printAndAddError(streams, err)
+		} else {
+			for _, subresource := range related {
+				if err := funcs.delete(subresource); err != nil {
+					err = fmt.Errorf("deleting relation of %q, failed to delete %s %q: %s", resourceName, strings.ToLower(kind), subresource, err)
+					d.printAndAddError(streams, err)
+				} else {
+					d.successfulRelatedDeletes[kind] = append(d.successfulRelatedDeletes[kind], subresource)
+				}
 			}
 		}
 	}
@@ -85,7 +95,9 @@ func (d *Deleter) deleteRelatedList(streams *cli.Stream, resourceName string) {
 // printSuccesses writes success messages to the provided stdout stream.
 func (d *Deleter) printSuccesses(streams *cli.Stream) {
 	if len(d.successfulRelatedDeletes) > 0 {
-		fmt.Fprintf(streams.Out, "%ss deleted: %s\n", d.relatedKind, names.QuotedList(d.successfulRelatedDeletes))
+		for kind, relatedNames := range d.successfulRelatedDeletes {
+			fmt.Fprintf(streams.Out, "%ss deleted: %s\n", kind, names.QuotedList(relatedNames))
+		}
 	}
 	if len(d.successfulDeletes) > 0 {
 		fmt.Fprintf(streams.Out, "%ss deleted: %s\n", d.kind, names.QuotedList(d.successfulDeletes))
