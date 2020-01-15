@@ -68,7 +68,7 @@ or
 	}
 	f.AddFlags(c)
 	c.Flags().BoolVarP(&opts.ForceDelete, "force", "f", false, "Whether to force deletion (default: false)")
-	c.Flags().BoolVarP(&opts.DeleteAll, "all", "a", false, "Whether to delete related resources (taskruns) (default: false)")
+	c.Flags().BoolVarP(&opts.DeleteAll, "all", "a", false, "Whether to also delete related resources (taskruns) (default: false)")
 
 	_ = c.MarkZshCompPositionalArgumentCustom(1, "__tkn_get_task")
 	return c
@@ -82,12 +82,15 @@ func deleteTask(opts *options.DeleteOptions, s *cli.Stream, p cli.Params, taskNa
 	d := deleter.New("Task", func(taskName string) error {
 		return cs.Tekton.TektonV1alpha1().Tasks(p.Namespace()).Delete(taskName, &metav1.DeleteOptions{})
 	})
+	d.WithRelated("TaskRun", taskRunLister(p, cs), func(taskRunName string) error {
+		return cs.Tekton.TektonV1alpha1().TaskRuns(p.Namespace()).Delete(taskRunName, &metav1.DeleteOptions{})
+	})
+	deletedTaskNames := d.Delete(s, taskNames)
 	if opts.DeleteAll {
-		d.WithRelated("TaskRun", taskRunLister(p, cs), func(taskRunName string) error {
-			return cs.Tekton.TektonV1alpha1().TaskRuns(p.Namespace()).Delete(taskRunName, &metav1.DeleteOptions{})
-		})
+		d.DeleteRelated(s, deletedTaskNames)
 	}
-	return d.Execute(s, taskNames)
+	d.PrintSuccesses(s)
+	return d.Errors()
 }
 
 func taskRunLister(p cli.Params, cs *cli.Clients) func(string) ([]string, error) {

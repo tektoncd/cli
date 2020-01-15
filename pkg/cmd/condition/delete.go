@@ -80,5 +80,7 @@ func deleteConditions(s *cli.Stream, p cli.Params, condNames []string) error {
 	d := deleter.New("Condition", func(conditionName string) error {
 		return cs.Tekton.TektonV1alpha1().Conditions(p.Namespace()).Delete(conditionName, &metav1.DeleteOptions{})
 	})
-	return d.Execute(s, condNames)
+	d.Delete(s, condNames)
+	d.PrintSuccesses(s)
+	return d.Errors()
 }

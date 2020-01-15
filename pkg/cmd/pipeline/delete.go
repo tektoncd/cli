@@ -68,7 +68,7 @@ or
 	}
 	f.AddFlags(c)
 	c.Flags().BoolVarP(&opts.ForceDelete, "force", "f", false, "Whether to force deletion (default: false)")
-	c.Flags().BoolVarP(&opts.DeleteAll, "all", "a", false, "Whether to delete related resources (pipelineruns) (default: false)")
+	c.Flags().BoolVarP(&opts.DeleteAll, "all", "a", false, "Whether to also delete related resources (pipelineruns) (default: false)")
 
 	_ = c.MarkZshCompPositionalArgumentCustom(1, "__tkn_get_pipeline")
 	return c
@@ -82,12 +82,15 @@ func deletePipelines(opts *options.DeleteOptions, s *cli.Stream, p cli.Params, p
 	d := deleter.New("Pipeline", func(pipelineName string) error {
 		return cs.Tekton.TektonV1alpha1().Pipelines(p.Namespace()).Delete(pipelineName, &metav1.DeleteOptions{})
 	})
+	d.WithRelated("PipelineRun", pipelineRunLister(p, cs), func(pipelineRunName string) error {
+		return cs.Tekton.TektonV1alpha1().PipelineRuns(p.Namespace()).Delete(pipelineRunName, &metav1.DeleteOptions{})
+	})
+	deletedPipelineNames := d.Delete(s, pNames)
 	if opts.DeleteAll {
-		d.WithRelated("PipelineRun", pipelineRunLister(p, cs), func(pipelineRunName string) error {
-			return cs.Tekton.TektonV1alpha1().PipelineRuns(p.Namespace()).Delete(pipelineRunName, &metav1.DeleteOptions{})
-		})
+		d.DeleteRelated(s, deletedPipelineNames)
 	}
-	return d.Execute(s, pNames)
+	d.PrintSuccesses(s)
+	return d.Errors()
 }
 
 func pipelineRunLister(p cli.Params, cs *cli.Clients) func(string) ([]string, error) {

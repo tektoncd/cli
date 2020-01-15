@@ -36,7 +36,7 @@ func TestPipelineDelete(t *testing.T) {
 	clock := clockwork.NewFakeClock()
 
 	seeds := make([]pipelinetest.Clients, 0)
-	for i := 0; i < 5; i++ {
+	for i := 0; i < 7; i++ {
 		cs, _ := test.SeedTestData(t, pipelinetest.Data{
 			Pipelines: []*v1alpha1.Pipeline{
 				tb.Pipeline("pipeline", "ns",

@@ -24,9 +24,11 @@ import (
 )
 
 type DeleteOptions struct {
-	Resource    string
-	ForceDelete bool
-	DeleteAll   bool
+	Resource           string
+	ParentResource     string
+	ParentResourceName string
+	ForceDelete        bool
+	DeleteAll          bool
 }
 
 func (o *DeleteOptions) CheckOptions(s *cli.Stream, resourceNames []string) error {
@@ -35,9 +37,17 @@ func (o *DeleteOptions) CheckOptions(s *cli.Stream, resourceNames []string) erro
 	}
 
 	formattedNames := names.QuotedList(resourceNames)
-	if o.DeleteAll {
+
+	if len(resourceNames) == 0 && o.ParentResource != "" && o.ParentResourceName == "" {
+		return fmt.Errorf("must provide %ss to delete or --%s flag", o.Resource, o.ParentResource)
+	}
+
+	switch {
+	case o.ParentResource != "" && o.ParentResourceName != "":
+		fmt.Fprintf(s.Out, "Are you sure you want to delete all %ss related to %s %q (y/n): ", o.Resource, o.ParentResource, o.ParentResourceName)
+	case o.DeleteAll:
 		fmt.Fprintf(s.Out, "Are you sure you want to delete %s and related resources %s (y/n): ", o.Resource, formattedNames)
-	} else {
+	default:
 		fmt.Fprintf(s.Out, "Are you sure you want to delete %s %s (y/n): ", o.Resource, formattedNames)
 	}
 

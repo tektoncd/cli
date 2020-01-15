@@ -75,5 +75,7 @@ func deleteClusterTasks(s *cli.Stream, p cli.Params, tNames []string) error {
 	d := deleter.New("ClusterTask", func(taskName string) error {
 		return cs.Tekton.TektonV1alpha1().ClusterTasks().Delete(taskName, &metav1.DeleteOptions{})
 	})
-	return d.Execute(s, tNames)
+	d.Delete(s, tNames)
+	d.PrintSuccesses(s)
+	return d.Errors()
 }

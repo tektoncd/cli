@@ -81,5 +81,7 @@ func deleteTriggerTemplates(s *cli.Stream, p cli.Params, ttNames []string) error
 	d := deleter.New("TriggerTemplate", func(templateName string) error {
 		return cs.Triggers.TektonV1alpha1().TriggerTemplates(p.Namespace()).Delete(templateName, &metav1.DeleteOptions{})
 	})
-	return d.Execute(s, ttNames)
+	d.Delete(s, ttNames)
+	d.PrintSuccesses(s)
+	return d.Errors()
 }
