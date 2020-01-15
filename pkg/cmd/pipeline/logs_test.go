@@ -218,7 +218,8 @@ func TestPipelineLog(t *testing.T) {
 }
 
 func TestPipelineLog_Interactive(t *testing.T) {
-	t.Skip("Skipping this test due of some flakeyness")
+	t.Skip("Skipping due of flakiness")
+
 	clock := clockwork.NewFakeClock()
 
 	cs, _ := test.SeedTestData(t, pipelinetest.Data{

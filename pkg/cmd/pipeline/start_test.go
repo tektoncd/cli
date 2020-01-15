@@ -387,6 +387,7 @@ func TestPipelineStart_ExecuteCommand(t *testing.T) {
 }
 
 func TestPipelineStart_Interactive(t *testing.T) {
+	t.Skip("Skipping due of flakiness")
 
 	cs, _ := test.SeedTestData(t, pipelinetest.Data{
 		Pipelines: []*v1alpha1.Pipeline{
