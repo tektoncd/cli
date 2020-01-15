@@ -93,7 +93,7 @@ No params
  No steps
 {{- else }}
 {{- range $step := .Task.Spec.Steps }}
- {{decorate "bullet" $step.Name }}
+ {{ autoStepName $step.Name | decorate "bullet" }} 
 {{- end }}
 {{- end }}
 
@@ -193,6 +193,7 @@ func printTaskDescription(s *cli.Stream, p cli.Params, tname string) error {
 		"formatDuration":  formatted.Duration,
 		"formatCondition": formatted.Condition,
 		"decorate":        formatted.DecorateAttr,
+		"autoStepName":    formatted.AutoStepName,
 	}
 
 	w := tabwriter.NewWriter(s.Out, 0, 5, 3, ' ', tabwriter.TabIndent)

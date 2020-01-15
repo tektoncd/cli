@@ -15,6 +15,9 @@
 package formatted
 
 import (
+	"fmt"
+	"sync/atomic"
+
 	"github.com/fatih/color"
 	corev1 "k8s.io/api/core/v1"
 	"knative.dev/pkg/apis/duck/v1beta1"
@@ -29,9 +32,22 @@ var ConditionColor = map[string]color.Attribute{
 	"Pending":   color.FgHiWhite,
 }
 
+var stepCounter uint64
+
 // ColorStatus Get a status coloured
 func ColorStatus(status string) string {
 	return color.New(ConditionColor[status]).Sprint(status)
+}
+
+// AutoStepName when our stepName is empty return a generated name as generated
+// on pipeLine
+func AutoStepName(stepName string) string {
+	unnamedStep := fmt.Sprintf("unnamed-%d", stepCounter)
+	atomic.AddUint64(&stepCounter, 1)
+	if stepName != "" {
+		return stepName
+	}
+	return unnamedStep
 }
 
 // Condition returns a human readable text based on the status of the Condition
