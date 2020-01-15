@@ -31,6 +31,7 @@ import (
 )
 
 const describeTemplate = `{{decorate "bold" "Name"}}:	{{ .PipelineName }}
+{{decorate "bold" "Namespace"}}:	{{ .Pipeline.Namespace }}
 
 {{decorate "underline bold" "Resources\n"}}
 {{- $rl := len .Pipeline.Spec.Resources }}{{ if eq $rl 0 }}
