@@ -112,6 +112,22 @@ func TestTaskRunDelete(t *testing.T) {
 			wantError:   true,
 			want:        "failed to delete taskrun \"nonexistent\": taskruns.tekton.dev \"nonexistent\" not found",
 		},
+		{
+			name:        "Attempt remove forgetting to include taskrun names",
+			command:     []string{"rm", "-n", "ns"},
+			input:       seeds[2],
+			inputStream: nil,
+			wantError:   true,
+			want:        "must provide taskruns to delete or --task flag",
+		},
+		{
+			name:        "Remove taskruns of a task",
+			command:     []string{"rm", "--task", "task", "-n", "ns"},
+			input:       seeds[0],
+			inputStream: strings.NewReader("y"),
+			wantError:   false,
+			want:        `Are you sure you want to delete all taskruns related to task "task" (y/n): `,
+		},
 	}
 
 	for _, tp := range testParams {
@@ -127,8 +143,9 @@ func TestTaskRunDelete(t *testing.T) {
 			if tp.wantError {
 				if err == nil {
 					t.Errorf("error expected here")
+				} else {
+					test.AssertOutput(t, tp.want, err.Error())
 				}
-				test.AssertOutput(t, tp.want, err.Error())
 			} else {
 				if err != nil {
 					t.Errorf("unexpected Error")

@@ -81,5 +81,7 @@ func deleteTriggerBindings(s *cli.Stream, p cli.Params, tbNames []string) error 
 	d := deleter.New("TriggerBinding", func(bindingName string) error {
 		return cs.Triggers.TektonV1alpha1().TriggerBindings(p.Namespace()).Delete(bindingName, &metav1.DeleteOptions{})
 	})
-	return d.Execute(s, tbNames)
+	d.Delete(s, tbNames)
+	d.PrintSuccesses(s)
+	return d.Errors()
 }

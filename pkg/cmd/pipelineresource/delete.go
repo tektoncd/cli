@@ -82,5 +82,7 @@ func deleteResources(s *cli.Stream, p cli.Params, preNames []string) error {
 	d := deleter.New("PipelineResource", func(resourceName string) error {
 		return cs.Tekton.TektonV1alpha1().PipelineResources(p.Namespace()).Delete(resourceName, &metav1.DeleteOptions{})
 	})
-	return d.Execute(s, preNames)
+	d.Delete(s, preNames)
+	d.PrintSuccesses(s)
+	return d.Errors()
 }

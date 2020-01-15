@@ -46,9 +46,11 @@ func (d *Deleter) WithRelated(kind string, listFunc func(string) ([]string, erro
 	d.deleteRelated = deleteFunc
 }
 
-// Execute performs the deletion of resources and relations. Errors are aggregated
-// and returned at the end of the func.
-func (d *Deleter) Execute(streams *cli.Stream, resourceNames []string) error {
+// Delete performs the deletion of resources. Errors are printed to stderr of
+// the passed in streams struct and are also aggregated for later access
+// with d.Errors(). The names of successfully deleted resources are
+// returned.
+func (d *Deleter) Delete(streams *cli.Stream, resourceNames []string) []string {
 	for _, name := range resourceNames {
 		if err := d.delete(name); err != nil {
 			d.printAndAddError(streams, fmt.Errorf("failed to delete %s %q: %s", strings.ToLower(d.kind), name, err))
@@ -56,19 +58,24 @@ func (d *Deleter) Execute(streams *cli.Stream, resourceNames []string) error {
 			d.successfulDeletes = append(d.successfulDeletes, name)
 		}
 	}
+	return d.successfulDeletes
+}
+
+// DeleteRelated performs the deletion of resources related to d's kind. Errors are
+// aggregated and can be accessed with d.Errors().
+func (d *Deleter) DeleteRelated(streams *cli.Stream, resourceNames []string) {
 	if d.relatedKind != "" && d.listRelated != nil && d.deleteRelated != nil {
-		for _, name := range d.successfulDeletes {
+		for _, name := range resourceNames {
 			d.deleteRelatedList(streams, name)
 		}
 	}
-	d.printSuccesses(streams)
-	return multierr.Combine(d.errors...)
 }
 
 // deleteRelatedList gets the list of resources related to resourceName using the
 // provided listFunc and then calls the deleteRelated func for each relation.
 func (d *Deleter) deleteRelatedList(streams *cli.Stream, resourceName string) {
 	if related, err := d.listRelated(resourceName); err != nil {
+		err = fmt.Errorf("failed to list %ss: %s", strings.ToLower(d.relatedKind), err)
 		d.printAndAddError(streams, err)
 	} else {
 		for _, subresource := range related {
@@ -82,8 +89,8 @@ func (d *Deleter) deleteRelatedList(streams *cli.Stream, resourceName string) {
 	}
 }
 
-// printSuccesses writes success messages to the provided stdout stream.
-func (d *Deleter) printSuccesses(streams *cli.Stream) {
+// PrintSuccesses writes success messages to the provided stdout stream.
+func (d *Deleter) PrintSuccesses(streams *cli.Stream) {
 	if len(d.successfulRelatedDeletes) > 0 {
 		fmt.Fprintf(streams.Out, "%ss deleted: %s\n", d.relatedKind, names.QuotedList(d.successfulRelatedDeletes))
 	}
@@ -98,4 +105,9 @@ func (d *Deleter) printSuccesses(streams *cli.Stream) {
 func (d *Deleter) printAndAddError(streams *cli.Stream, err error) {
 	d.errors = append(d.errors, err)
 	fmt.Fprintf(streams.Err, "%s\n", err)
+}
+
+// Errors returns any accumulated errors in the operation of this deleter.
+func (d *Deleter) Errors() error {
+	return multierr.Combine(d.errors...)
 }

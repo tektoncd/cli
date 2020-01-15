@@ -130,6 +130,22 @@ func TestPipelineRunDelete(t *testing.T) {
 			wantError:   true,
 			want:        "failed to delete pipelinerun \"nonexistent\": pipelineruns.tekton.dev \"nonexistent\" not found",
 		},
+		{
+			name:        "Attempt remove forgetting to include pipelinerun names",
+			command:     []string{"rm", "-n", "ns"},
+			input:       seeds[2],
+			inputStream: nil,
+			wantError:   true,
+			want:        "must provide pipelineruns to delete or --pipeline flag",
+		},
+		{
+			name:        "Remove pipelineruns of a pipeline",
+			command:     []string{"rm", "--pipeline", "pipeline", "-n", "ns"},
+			input:       seeds[0],
+			inputStream: strings.NewReader("y"),
+			wantError:   false,
+			want:        `Are you sure you want to delete all pipelineruns related to pipeline "pipeline" (y/n): `,
+		},
 	}
 
 	for _, tp := range testParams {
@@ -144,12 +160,13 @@ func TestPipelineRunDelete(t *testing.T) {
 			out, err := test.ExecuteCommand(pipelinerun, tp.command...)
 			if tp.wantError {
 				if err == nil {
-					t.Errorf("Error expected here")
+					t.Errorf("error expected here")
+				} else {
+					test.AssertOutput(t, tp.want, err.Error())
 				}
-				test.AssertOutput(t, tp.want, err.Error())
 			} else {
 				if err != nil {
-					t.Errorf("Unexpected Error")
+					t.Errorf("unexpected Error")
 				}
 				test.AssertOutput(t, tp.want, out)
 			}

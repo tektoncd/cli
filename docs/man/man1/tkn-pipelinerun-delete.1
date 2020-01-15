@@ -36,6 +36,10 @@ Delete pipelineruns in a namespace
     Output format. One of: json|yaml|name|go\-template|go\-template\-file|template|templatefile|jsonpath|jsonpath\-file.
 
 .PP
+\fB\-p\fP, \fB\-\-pipeline\fP=""
+    The name of a pipeline whose pipelineruns should be deleted (does not delete the pipeline)
+
+.PP
 \fB\-\-template\fP=""
     Template string or path to template file to use when \-o=go\-template, \-o=go\-template\-file. The template format is golang templates [
 \[la]http://golang.org/pkg/text/template/#pkg-overview\[ra]].

@@ -81,5 +81,7 @@ func deleteEventListeners(s *cli.Stream, p cli.Params, elNames []string) error {
 	d := deleter.New("EventListener", func(listenerName string) error {
 		return cs.Triggers.TektonV1alpha1().EventListeners(p.Namespace()).Delete(listenerName, &metav1.DeleteOptions{})
 	})
-	return d.Execute(s, elNames)
+	d.Delete(s, elNames)
+	d.PrintSuccesses(s)
+	return d.Errors()
 }

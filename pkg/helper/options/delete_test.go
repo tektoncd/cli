@@ -89,6 +89,13 @@ func TestDeleteOptions(t *testing.T) {
 			wantError:      true,
 			want:           "canceled deleting testRes \"test1\", \"test2\"",
 		},
+		{
+			name:           "Specify parent resource, answer y",
+			opt:            &DeleteOptions{Resource: "testRes", ParentResource: "testParentRes", ParentResourceName: "my-test-resource-parent"},
+			stream:         &cli.Stream{In: strings.NewReader("y"), Out: os.Stdout},
+			resourcesNames: []string{""},
+			wantError:      false,
+		},
 	}
 
 	for _, tp := range testParams {
@@ -100,7 +107,7 @@ func TestDeleteOptions(t *testing.T) {
 				}
 				test.AssertOutput(t, tp.want, err.Error())
 			} else if err != nil {
-				t.Fatal("unexpected Error")
+				t.Fatalf("unexpected Error: %v", err)
 			}
 		})
 	}
