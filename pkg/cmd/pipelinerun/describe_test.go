@@ -144,8 +144,8 @@ Params
 
 Taskruns
 
- NAME     TASK NAME   STARTED         DURATION    STATUS
- ∙ tr-1   t-1         8 minutes ago   3 minutes   Succeeded
+ NAME   TASK NAME   STARTED         DURATION    STATUS
+ tr-1   t-1         8 minutes ago   3 minutes   Succeeded
 `
 
 	test.AssertOutput(t, expected, actual)
@@ -236,9 +236,9 @@ Params
 
 Taskruns
 
- NAME     TASK NAME   STARTED         DURATION    STATUS
- ∙ tr-2   t-2         5 minutes ago   4 minutes   Succeeded
- ∙ tr-1   t-1         8 minutes ago   3 minutes   Succeeded
+ NAME   TASK NAME   STARTED         DURATION    STATUS
+ tr-2   t-2         5 minutes ago   4 minutes   Succeeded
+ tr-1   t-1         8 minutes ago   3 minutes   Succeeded
 `
 	test.AssertOutput(t, expected, actual)
 
@@ -325,8 +325,8 @@ Params
 
 Taskruns
 
- NAME     TASK NAME   STARTED         DURATION    STATUS
- ∙ tr-1   t-1         8 minutes ago   3 minutes   Failed
+ NAME   TASK NAME   STARTED         DURATION    STATUS
+ tr-1   t-1         8 minutes ago   3 minutes   Failed
 `
 
 	test.AssertOutput(t, expected, actual)
@@ -408,8 +408,8 @@ Params
 
 Taskruns
 
- NAME     TASK NAME   STARTED         DURATION    STATUS
- ∙ tr-1   t-1         8 minutes ago   3 minutes   ---
+ NAME   TASK NAME   STARTED         DURATION    STATUS
+ tr-1   t-1         8 minutes ago   3 minutes   ---
 `
 
 	test.AssertOutput(t, expected, actual)
@@ -482,8 +482,8 @@ Params
 
 Taskruns
 
- NAME     TASK NAME   STARTED         DURATION    STATUS
- ∙ tr-1   t-1         8 minutes ago   3 minutes   ---
+ NAME   TASK NAME   STARTED         DURATION    STATUS
+ tr-1   t-1         8 minutes ago   3 minutes   ---
 `
 
 	test.AssertOutput(t, expected, actual)
@@ -560,18 +560,18 @@ STARTED          DURATION    STATUS
 
 Resources
 
- NAME              RESOURCE REF
- ∙ test-resource   test-resource-ref
+ NAME            RESOURCE REF
+ test-resource   test-resource-ref
 
 Params
 
- NAME           VALUE
- ∙ test-param   param-value
+ NAME         VALUE
+ test-param   param-value
 
 Taskruns
 
- NAME     TASK NAME   STARTED         DURATION    STATUS
- ∙ tr-1   t-1         8 minutes ago   3 minutes   Succeeded
+ NAME   TASK NAME   STARTED         DURATION    STATUS
+ tr-1   t-1         8 minutes ago   3 minutes   Succeeded
 `
 
 	test.AssertOutput(t, expected, actual)
@@ -751,18 +751,18 @@ STARTED          DURATION    STATUS
 
 Resources
 
- NAME              RESOURCE REF
- ∙ test-resource   
+ NAME            RESOURCE REF
+ test-resource   
 
 Params
 
- NAME           VALUE
- ∙ test-param   param-value
+ NAME         VALUE
+ test-param   param-value
 
 Taskruns
 
- NAME     TASK NAME   STARTED         DURATION    STATUS
- ∙ tr-1   t-1         8 minutes ago   3 minutes   Succeeded
+ NAME   TASK NAME   STARTED         DURATION    STATUS
+ tr-1   t-1         8 minutes ago   3 minutes   Succeeded
 `
 
 	test.AssertOutput(t, expected, actual)
@@ -845,8 +845,8 @@ Params
 
 Taskruns
 
- NAME     TASK NAME   STARTED         DURATION    STATUS
- ∙ tr-1   t-1         8 minutes ago   3 minutes   Succeeded
+ NAME   TASK NAME   STARTED         DURATION    STATUS
+ tr-1   t-1         8 minutes ago   3 minutes   Succeeded
 `
 
 	test.AssertOutput(t, expected, actual)
@@ -922,8 +922,8 @@ Params
 
 Taskruns
 
- NAME     TASK NAME   STARTED   DURATION   STATUS
- ∙ tr-1   t-1         ---       ---        Running
+ NAME   TASK NAME   STARTED   DURATION   STATUS
+ tr-1   t-1         ---       ---        Running
 `
 	test.AssertOutput(t, expected, actual)
 }

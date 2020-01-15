@@ -29,27 +29,27 @@ import (
 	cliopts "k8s.io/cli-runtime/pkg/genericclioptions"
 )
 
-const templ = `{{color "bold" "Name"}}:	{{ .PipelineResource.Name }}
-{{color "bold" "Namespace"}}:	{{ .PipelineResource.Namespace }}
-{{color "bold" "PipelineResource Type"}}:	{{ .PipelineResource.Spec.Type }}
+const templ = `{{decorate "bold" "Name"}}:	{{ .PipelineResource.Name }}
+{{decorate "bold" "Namespace"}}:	{{ .PipelineResource.Namespace }}
+{{decorate "bold" "PipelineResource Type"}}:	{{ .PipelineResource.Spec.Type }}
 
-{{color "underline bold" "Params\n"}}
+{{decorate "underline bold" "Params\n"}}
 {{- $l := len .PipelineResource.Spec.Params }}{{ if eq $l 0 }}
  No params
 {{- else }}
  NAME	VALUE
 {{- range $i, $p := .PipelineResource.Spec.Params }}
- ∙ {{ $p.Name }}	{{ $p.Value }}
+ {{decorate "bullet" $p.Name }}	{{ $p.Value }}
 {{- end }}
 {{- end }}
 
-{{color "underline bold" "Secret Params\n"}}
+{{decorate "underline bold" "Secret Params\n"}}
 {{- $l := len .PipelineResource.Spec.SecretParams }}{{ if eq $l 0 }}
  No secret params
 {{- else }}
  FIELDNAME	SECRETNAME
 {{- range $i, $p := .PipelineResource.Spec.SecretParams }}
- ∙ {{ $p.FieldName }}	{{ $p.SecretName }}
+ {{decorate "bullet" $p.FieldName }}	{{ $p.SecretName }}
 {{- end }}
 {{- end }}
 `
@@ -115,7 +115,7 @@ func printPipelineResourceDescription(s *cli.Stream, p cli.Params, preName strin
 
 	w := tabwriter.NewWriter(s.Out, 0, 5, 3, ' ', tabwriter.TabIndent)
 	FuncMap := template.FuncMap{
-		"color": formatted.ColorAttr,
+		"decorate": formatted.DecorateAttr,
 	}
 	t := template.Must(template.New("Describe PipelineResource").Funcs(FuncMap).Parse(templ))
 
