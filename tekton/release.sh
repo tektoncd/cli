@@ -101,7 +101,7 @@ for c in ${COMMITS};do
 done
 
 # Add our VERSION so Makefile will pick it up when compiling
-echo ${RELEASE_VERSION} > VERSION
+echo ${RELEASE_VERSION#v} > VERSION
 git add VERSION
 git commit -sm "New version ${RELEASE_VERSION}" -m "${changelog}" VERSION
 git tag --sign -m \
