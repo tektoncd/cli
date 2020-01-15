@@ -94,7 +94,8 @@ func TestPipelinesDescribe_empty(t *testing.T) {
 	}
 
 	expected := []string{
-		"Name:   pipeline\n",
+		"Name:        pipeline",
+		"Namespace:   ns\n",
 		"Resources\n",
 		" No resources\n",
 		"Params\n",
@@ -163,7 +164,8 @@ func TestPipelinesDescribe_with_run(t *testing.T) {
 	}
 
 	expected := []string{
-		"Name:   pipeline\n",
+		"Name:        pipeline",
+		"Namespace:   ns\n",
 		"Resources\n",
 		" No resources\n",
 		"Params\n",
@@ -237,7 +239,8 @@ func TestPipelinesDescribe_with_task_run(t *testing.T) {
 	}
 
 	expected := []string{
-		"Name:   pipeline\n",
+		"Name:        pipeline",
+		"Namespace:   ns\n",
 		"Resources\n",
 		" No resources\n",
 		"Params\n",
@@ -315,7 +318,8 @@ func TestPipelinesDescribe_with_resource_param_task_run(t *testing.T) {
 	}
 
 	expected := []string{
-		"Name:   pipeline\n",
+		"Name:        pipeline",
+		"Namespace:   ns\n",
 		"Resources\n",
 		" NAME   TYPE",
 		" name   git\n",
@@ -402,7 +406,8 @@ func TestPipelinesDescribe_with_multiple_resource_param_task_run(t *testing.T) {
 	}
 
 	expected := []string{
-		"Name:   pipeline\n",
+		"Name:        pipeline",
+		"Namespace:   ns\n",
 		"Resources\n",
 		" NAME             TYPE",
 		" code             git",
