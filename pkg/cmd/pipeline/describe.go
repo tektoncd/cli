@@ -30,53 +30,53 @@ import (
 	cliopts "k8s.io/cli-runtime/pkg/genericclioptions"
 )
 
-const describeTemplate = `{{color "bold" "Name"}}:	{{ .PipelineName }}
+const describeTemplate = `{{decorate "bold" "Name"}}:	{{ .PipelineName }}
 
-{{color "underline bold" "Resources\n"}}
+{{decorate "underline bold" "Resources\n"}}
 {{- $rl := len .Pipeline.Spec.Resources }}{{ if eq $rl 0 }}
  No resources
 {{- else }}
  NAME	TYPE
 {{- range $i, $r := .Pipeline.Spec.Resources }}
- ∙ {{$r.Name }}	{{ $r.Type }}
+ {{decorate "bullet" $r.Name }}	{{ $r.Type }}
 {{- end }}
 {{- end }}
 
-{{color "underline bold" "Params\n"}}
+{{decorate "underline bold" "Params\n"}}
 {{- $l := len .Pipeline.Spec.Params }}{{ if eq $l 0 }}
  No params
 {{- else }}
  NAME	TYPE	DEFAULT VALUE
 {{- range $i, $p := .Pipeline.Spec.Params }}
 {{- if not $p.Default }}
- ∙ {{ $p.Name }}	{{ $p.Type }}	{{ "" }}
+ {{decorate "bullet" $p.Name }}	{{ $p.Type }}	{{ "" }}
 {{- else }}
 {{- if eq $p.Type "string" }}
- ∙ {{ $p.Name }}	{{ $p.Type }}	{{ $p.Default.StringVal }}
+ {{decorate "bullet" $p.Name }}	{{ $p.Type }}	{{ $p.Default.StringVal }}
 {{- else }}
- ∙ {{ $p.Name }}	{{ $p.Type }}	{{ $p.Default.ArrayVal }}
+ {{decorate "bullet" $p.Name }}	{{ $p.Type }}	{{ $p.Default.ArrayVal }}
 {{- end }}
 {{- end }}
 {{- end }}
 {{- end }}
 
-{{color "underline bold" "Tasks\n"}}
+{{decorate "underline bold" "Tasks\n"}}
 {{- $tl := len .Pipeline.Spec.Tasks }}{{ if eq $tl 0 }}
  No tasks
 {{- else }}
  NAME	TASKREF	RUNAFTER
 {{- range $i, $t := .Pipeline.Spec.Tasks }}
- ∙ {{ $t.Name }}	{{ $t.TaskRef.Name }}	{{ $t.RunAfter }}
+ {{decorate "bullet" $t.Name }}	{{ $t.TaskRef.Name }}	{{ $t.RunAfter }}
 {{- end }}
 {{- end }}
 
-{{color "underline bold" "PipelineRuns\n"}}
+{{decorate "underline bold" "PipelineRuns\n"}}
 {{- $rl := len .PipelineRuns.Items }}{{ if eq $rl 0 }}
  No pipelineruns
 {{- else }}
  NAME	STARTED	DURATION	STATUS
 {{- range $i, $pr := .PipelineRuns.Items }}
- ∙ {{ $pr.Name }}	{{ formatAge $pr.Status.StartTime $.Params.Time }}	{{ formatDuration $pr.Status.StartTime $pr.Status.CompletionTime }}	{{ formatCondition $pr.Status.Conditions }}
+ {{decorate "bullet" $pr.Name }}	{{ formatAge $pr.Status.StartTime $.Params.Time }}	{{ formatDuration $pr.Status.StartTime $pr.Status.CompletionTime }}	{{ formatCondition $pr.Status.Conditions }}
 {{- end }}
 {{- end }}
 `
@@ -147,7 +147,7 @@ func printPipelineDescription(out io.Writer, p cli.Params, pname string) error {
 		"formatAge":       formatted.Age,
 		"formatDuration":  formatted.Duration,
 		"formatCondition": formatted.Condition,
-		"color":           formatted.ColorAttr,
+		"decorate":        formatted.DecorateAttr,
 	}
 
 	w := tabwriter.NewWriter(out, 0, 5, 3, ' ', tabwriter.TabIndent)

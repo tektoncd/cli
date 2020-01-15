@@ -205,27 +205,27 @@ STARTED         DURATION    STATUS
 
 Input Resources
 
-NAME            RESOURCE REF
-∙ git           git
-∙ image-input   image
+ NAME          RESOURCE REF
+ git           git
+ image-input   image
 
 Output Resources
 
-NAME              RESOURCE REF
-∙ image-output    image
-∙ image-output2   image
+ NAME            RESOURCE REF
+ image-output    image
+ image-output2   image
 
 Params
 
-NAME       VALUE
-∙ input    param
-∙ input2   param2
+ NAME     VALUE
+ input    param
+ input2   param2
 
 Steps
 
-NAME      STATUS
-∙ step1   Completed
-∙ step2   Completed
+ NAME    STATUS
+ step1   Completed
+ step2   Completed
 `
 
 	test.AssertOutput(t, expected, actual)
@@ -433,27 +433,27 @@ STARTED         DURATION    STATUS
 
 Input Resources
 
-NAME            RESOURCE REF
-∙ git           
-∙ image-input   image
+ NAME          RESOURCE REF
+ git           
+ image-input   image
 
 Output Resources
 
-NAME              RESOURCE REF
-∙ image-output    
-∙ image-output2   
+ NAME            RESOURCE REF
+ image-output    
+ image-output2   
 
 Params
 
-NAME       VALUE
-∙ input    param
-∙ input2   param2
+ NAME     VALUE
+ input    param
+ input2   param2
 
 Steps
 
-NAME      STATUS
-∙ step1   Completed
-∙ step2   Completed
+ NAME    STATUS
+ step1   Completed
+ step2   Completed
 `
 
 	test.AssertOutput(t, expected, actual)
@@ -520,27 +520,27 @@ STARTED         DURATION    STATUS
 
 Input Resources
 
-NAME            RESOURCE REF
-∙ git           
-∙ image-input   image
+ NAME          RESOURCE REF
+ git           
+ image-input   image
 
 Output Resources
 
-NAME              RESOURCE REF
-∙ image-output    
-∙ image-output2   
+ NAME            RESOURCE REF
+ image-output    
+ image-output2   
 
 Params
 
-NAME       VALUE
-∙ input    param
-∙ input2   param2
+ NAME     VALUE
+ input    param
+ input2   param2
 
 Steps
 
-NAME      STATUS
-∙ step1   Error
-∙ step2   ---
+ NAME    STATUS
+ step1   Error
+ step2   ---
 `
 
 	test.AssertOutput(t, expected, actual)
@@ -609,27 +609,27 @@ STARTED         DURATION    STATUS
 
 Input Resources
 
-NAME            RESOURCE REF
-∙ git           
-∙ image-input   image
+ NAME          RESOURCE REF
+ git           
+ image-input   image
 
 Output Resources
 
-NAME              RESOURCE REF
-∙ image-output    
-∙ image-output2   
+ NAME            RESOURCE REF
+ image-output    
+ image-output2   
 
 Params
 
-NAME       VALUE
-∙ input    param
-∙ input2   param2
+ NAME     VALUE
+ input    param
+ input2   param2
 
 Steps
 
-NAME      STATUS
-∙ step1   PodInitializing
-∙ step2   PodInitializing
+ NAME    STATUS
+ step1   PodInitializing
+ step2   PodInitializing
 `
 
 	test.AssertOutput(t, expected, actual)
@@ -698,27 +698,27 @@ STARTED         DURATION    STATUS
 
 Input Resources
 
-NAME            RESOURCE REF
-∙ git           
-∙ image-input   image
+ NAME          RESOURCE REF
+ git           
+ image-input   image
 
 Output Resources
 
-NAME              RESOURCE REF
-∙ image-output    
-∙ image-output2   
+ NAME            RESOURCE REF
+ image-output    
+ image-output2   
 
 Params
 
-NAME       VALUE
-∙ input    param
-∙ input2   param2
+ NAME     VALUE
+ input    param
+ input2   param2
 
 Steps
 
-NAME      STATUS
-∙ step1   Running
-∙ step2   Running
+ NAME    STATUS
+ step1   Running
+ step2   Running
 `
 
 	test.AssertOutput(t, expected, actual)

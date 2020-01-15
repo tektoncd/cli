@@ -222,10 +222,10 @@ Output Resources
 
 Params
 
- NAME        TYPE     DEFAULT VALUE
- ∙ myarg     string   
- ∙ myprint   string   
- ∙ myarray   array    
+ NAME      TYPE     DEFAULT VALUE
+ myarg     string   
+ myprint   string   
+ myarray   array    
 
 Steps
 
@@ -309,29 +309,29 @@ Namespace:   ns
 
 Input Resources
 
- NAME            TYPE
- ∙ my-repo       git
- ∙ source-repo   git
- ∙ my-image      image
+ NAME          TYPE
+ my-repo       git
+ source-repo   git
+ my-image      image
 
 Output Resources
 
- NAME                 TYPE
- ∙ artifact-image   image
- ∙ code-image       image
+ NAME               TYPE
+ artifact-image   image
+ code-image       image
 
 Params
 
- NAME        TYPE     DEFAULT VALUE
- ∙ myarg     string   
- ∙ myarray   array    
- ∙ print     string   somethingdifferent
- ∙ output    array    [booms booms booms]
+ NAME      TYPE     DEFAULT VALUE
+ myarg     string   
+ myarray   array    
+ print     string   somethingdifferent
+ output    array    [booms booms booms]
 
 Steps
 
- ∙ hello
- ∙ exit
+ hello
+ exit
 
 Taskruns
 

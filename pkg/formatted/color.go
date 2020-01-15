@@ -15,6 +15,7 @@
 package formatted
 
 import (
+	"fmt"
 	"io"
 	"sync"
 	"sync/atomic"
@@ -33,10 +34,21 @@ var (
 	}
 )
 
-// ColorAttr maps color strings to an fatih/color attribute
-func ColorAttr(colorString, message string) string {
+// DecorateAttr decorate strings with a color or an emoji, respecting the user
+// preference if no colour needed.
+func DecorateAttr(attrString, message string) string {
+	if color.NoColor {
+		return message
+	}
+
+	// May rewrite it as switch if we have more attributes, like "dancing
+	// penguins" or "drunk singer"
+	if attrString == "bullet" {
+		return fmt.Sprintf("∙ %s", message)
+	}
+
 	attr := color.Reset
-	switch colorString {
+	switch attrString {
 	case "underline":
 		attr = color.Underline
 	case "underline bold":
