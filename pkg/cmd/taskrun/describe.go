@@ -38,7 +38,7 @@ const templ = `{{decorate "bold" "Name"}}:	{{ .TaskRun.Name }}
 {{decorate "bold" "Service Account"}}:	{{ .TaskRun.Spec.ServiceAccountName }}
 {{- end }}
 
-{{decorate "underline bold" "Status"}}
+{{decorate "status" ""}}{{decorate "underline bold" "Status"}}
 
 STARTED 	DURATION 	STATUS
 {{ formatAge .TaskRun.Status.StartTime  .Params.Time }}	{{ formatDuration .TaskRun.Status.StartTime .TaskRun.Status.CompletionTime }}	{{ formatCondition .TaskRun.Status.Conditions }}
@@ -50,7 +50,7 @@ STARTED 	DURATION 	STATUS
 {{ $msg }}
 {{- end }}
 
-{{decorate "underline bold" "Input Resources\n"}}
+{{decorate "inputresources" ""}}{{decorate "underline bold" "Input Resources\n"}}
 
 {{- $l := len .TaskRun.Spec.Inputs.Resources }}{{ if eq $l 0 }}
 No resources
@@ -65,7 +65,7 @@ No resources
 {{- end }}
 {{- end }}
 
-{{decorate "underline bold" "Output Resources\n"}}
+{{decorate "outputresources" ""}}{{decorate "underline bold" "Output Resources\n"}}
 
 {{- $l := len .TaskRun.Spec.Outputs.Resources }}{{ if eq $l 0 }}
 No resources
@@ -80,7 +80,7 @@ No resources
 {{- end }}
 {{- end }}
 
-{{decorate "underline bold" "Params\n"}}
+{{decorate "params" ""}}{{decorate "underline bold" "Params\n"}}
 
 {{- $l := len .TaskRun.Spec.Inputs.Params }}{{ if eq $l 0 }}
 No params
@@ -95,7 +95,7 @@ No params
 {{- end }}
 {{- end }}
 
-{{decorate "underline bold" "Steps\n"}}
+{{decorate "steps" ""}}{{decorate "underline bold" "Steps\n"}}
 
 {{- $l := len .TaskRun.Status.Steps }}{{ if eq $l 0 }}
 No steps

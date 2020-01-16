@@ -34,7 +34,7 @@ import (
 const describeTemplate = `{{decorate "bold" "Name"}}:	{{ .PipelineName }}
 {{decorate "bold" "Namespace"}}:	{{ .Pipeline.Namespace }}
 
-{{decorate "underline bold" "Resources\n"}}
+{{decorate "resources" ""}}{{decorate "underline bold" "Resources\n"}}
 {{- $rl := len .Pipeline.Spec.Resources }}{{ if eq $rl 0 }}
  No resources
 {{- else }}
@@ -44,7 +44,7 @@ const describeTemplate = `{{decorate "bold" "Name"}}:	{{ .PipelineName }}
 {{- end }}
 {{- end }}
 
-{{decorate "underline bold" "Params\n"}}
+{{decorate "params" ""}}{{decorate "underline bold" "Params\n"}}
 {{- $l := len .Pipeline.Spec.Params }}{{ if eq $l 0 }}
  No params
 {{- else }}
@@ -62,7 +62,7 @@ const describeTemplate = `{{decorate "bold" "Name"}}:	{{ .PipelineName }}
 {{- end }}
 {{- end }}
 
-{{decorate "underline bold" "Tasks\n"}}
+{{decorate "tasks" ""}}{{decorate "underline bold" "Tasks\n"}}
 {{- $tl := len .Pipeline.Spec.Tasks }}{{ if eq $tl 0 }}
  No tasks
 {{- else }}
@@ -72,7 +72,7 @@ const describeTemplate = `{{decorate "bold" "Name"}}:	{{ .PipelineName }}
 {{- end }}
 {{- end }}
 
-{{decorate "underline bold" "PipelineRuns\n"}}
+{{decorate "pipelineruns" ""}}{{decorate "underline bold" "PipelineRuns\n"}}
 {{- $rl := len .PipelineRuns.Items }}{{ if eq $rl 0 }}
  No pipelineruns
 {{- else }}

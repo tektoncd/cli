@@ -41,10 +41,29 @@ func DecorateAttr(attrString, message string) string {
 		return message
 	}
 
-	// May rewrite it as switch if we have more attributes, like "dancing
-	// penguins" or "drunk singer"
-	if attrString == "bullet" {
+	switch attrString {
+	case "bullet":
 		return fmt.Sprintf("∙ %s", message)
+	case "resources":
+		return fmt.Sprintf("📦 ")
+	case "params":
+		return fmt.Sprintf("⚓ ")
+	case "tasks":
+		return fmt.Sprintf("🗒  ")
+	case "pipelineruns":
+		return fmt.Sprintf("⛩  ")
+	case "status":
+		return fmt.Sprintf("🌡️  ")
+	case "inputresources":
+		return fmt.Sprintf("📨 ")
+	case "outputresources":
+		return fmt.Sprintf("📡 ")
+	case "steps":
+		return fmt.Sprintf("🦶🏻 ")
+	case "message":
+		return fmt.Sprintf("💌 ")
+	case "taskruns":
+		return fmt.Sprintf("🗂  ")
 	}
 
 	attr := color.Reset
