@@ -15,10 +15,13 @@
 package flags
 
 import (
+	"os"
+
 	"github.com/spf13/cobra"
 	"github.com/spf13/pflag"
 	"github.com/tektoncd/cli/pkg/cli"
 	"github.com/tektoncd/cli/pkg/cmd/completion"
+	"golang.org/x/crypto/ssh/terminal"
 )
 
 const (
@@ -90,6 +93,11 @@ func InitParams(p cli.Params, cmd *cobra.Command) error {
 		return err
 	}
 	p.SetNoColour(nocolourFlag)
+
+	// Make sure we set as Nocolour if we don't have a terminal (ie redirection)
+	if !terminal.IsTerminal(int(os.Stdout.Fd())) {
+		p.SetNoColour(true)
+	}
 
 	return nil
 }
