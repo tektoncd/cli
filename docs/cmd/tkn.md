@@ -14,6 +14,7 @@ CLI for tekton pipelines
 
 ### SEE ALSO
 
+* [tkn apply](tkn_apply.md)	 - Uses kubectl apply to create and update Kubernetes resources
 * [tkn clustertask](tkn_clustertask.md)	 - Manage clustertasks
 * [tkn completion](tkn_completion.md)	 - Prints shell completion scripts
 * [tkn condition](tkn_condition.md)	 - Manage conditions

@@ -20,6 +20,7 @@ import (
 	"github.com/spf13/cobra"
 	"github.com/spf13/pflag"
 	"github.com/tektoncd/cli/pkg/cli"
+	"github.com/tektoncd/cli/pkg/cmd/apply"
 	"github.com/tektoncd/cli/pkg/cmd/clustertask"
 	"github.com/tektoncd/cli/pkg/cmd/completion"
 	"github.com/tektoncd/cli/pkg/cmd/condition"
@@ -79,6 +80,7 @@ func Root(p cli.Params) *cobra.Command {
 	cmd.SetUsageTemplate(usageTemplate)
 
 	cmd.AddCommand(
+		apply.Command(),
 		clustertask.Command(p),
 		completion.Command(),
 		condition.Command(p),
