@@ -39,17 +39,17 @@ const templ = `{{decorate "bold" "Name"}}:	{{ .PipelineRun.Name }}
 {{decorate "bold" "Service Account"}}:	{{ .PipelineRun.Spec.ServiceAccountName }}
 {{- end }}
 
-{{decorate "underline bold" "Status\n"}}
+{{decorate "status" ""}}{{decorate "underline bold" "Status\n"}}
 STARTED	DURATION	STATUS
 {{ formatAge .PipelineRun.Status.StartTime  .Params.Time }}	{{ formatDuration .PipelineRun.Status.StartTime .PipelineRun.Status.CompletionTime }}	{{ formatCondition .PipelineRun.Status.Conditions }}
 {{- $msg := hasFailed .PipelineRun -}}
 {{-  if ne $msg "" }}
 
-{{decorate "underline bold" "Message\n"}}
+{{decorate "message" ""}}{{decorate "underline bold" "Message\n"}}
 {{ $msg }}
 {{- end }}
 
-{{decorate "underline bold" "Resources\n"}}
+{{decorate "resources" ""}}{{decorate "underline bold" "Resources\n"}}
 {{- $l := len .PipelineRun.Spec.Resources }}{{ if eq $l 0 }}
  No resources
 {{- else }}
@@ -63,7 +63,7 @@ STARTED	DURATION	STATUS
 {{- end }}
 {{- end }}
 
-{{decorate "underline bold" "Params\n"}}
+{{decorate "params" ""}}{{decorate "underline bold" "Params\n"}}
 {{- $l := len .PipelineRun.Spec.Params }}{{ if eq $l 0 }}
  No params
 {{- else }}
@@ -77,7 +77,7 @@ STARTED	DURATION	STATUS
 {{- end }}
 {{- end }}
 
-{{decorate "underline bold" "Taskruns\n"}}
+{{decorate "taskruns" ""}}{{decorate "underline bold" "Taskruns\n"}}
 {{- $l := len .TaskrunList }}{{ if eq $l 0 }}
  No taskruns
 {{- else }}
