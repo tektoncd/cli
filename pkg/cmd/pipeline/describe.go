@@ -18,6 +18,7 @@ import (
 	"fmt"
 	"io"
 	"sort"
+	"strings"
 	"text/tabwriter"
 	"text/template"
 
@@ -67,7 +68,7 @@ const describeTemplate = `{{decorate "bold" "Name"}}:	{{ .PipelineName }}
 {{- else }}
  NAME	TASKREF	RUNAFTER
 {{- range $i, $t := .Pipeline.Spec.Tasks }}
- {{decorate "bullet" $t.Name }}	{{ $t.TaskRef.Name }}	{{ $t.RunAfter }}
+ {{decorate "bullet" $t.Name }}	{{ $t.TaskRef.Name }}	{{ join $t.RunAfter ", " }}
 {{- end }}
 {{- end }}
 
@@ -149,6 +150,7 @@ func printPipelineDescription(out io.Writer, p cli.Params, pname string) error {
 		"formatDuration":  formatted.Duration,
 		"formatCondition": formatted.Condition,
 		"decorate":        formatted.DecorateAttr,
+		"join":            strings.Join,
 	}
 
 	w := tabwriter.NewWriter(out, 0, 5, 3, ' ', tabwriter.TabIndent)
