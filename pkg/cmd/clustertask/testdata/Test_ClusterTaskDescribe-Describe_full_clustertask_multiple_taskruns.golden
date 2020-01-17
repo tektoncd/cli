@@ -1,0 +1,30 @@
+Name:   clustertask-full
+
+Input Resources
+
+ NAME       TYPE
+ my-repo    git
+ my-image   image
+
+Output Resources
+
+ NAME         TYPE
+ code-image   image
+
+Params
+
+ NAME    TYPE     DEFAULT VALUE
+ myarg   string   default
+ print   array    [booms booms booms]
+
+Steps
+
+ hello
+ exit
+
+Taskruns
+
+NAME        STARTED          DURATION     STATUS
+taskrun-1   10 minutes ago   27 minutes   Succeeded
+taskrun-3   10 minutes ago   ---          Running
+

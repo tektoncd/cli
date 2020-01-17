@@ -1,0 +1,26 @@
+Name:   clustertask-one-everything
+
+Input Resources
+
+ NAME      TYPE
+ my-repo   git
+
+Output Resources
+
+ NAME         TYPE
+ code-image   image
+
+Params
+
+ NAME    TYPE     DEFAULT VALUE
+ myarg   string   
+
+Steps
+
+ hello
+
+Taskruns
+
+NAME        STARTED          DURATION     STATUS
+taskrun-2   10 minutes ago   27 minutes   Succeeded
+
