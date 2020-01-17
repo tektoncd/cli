@@ -15,6 +15,7 @@
 package eventlistener
 
 import (
+	"fmt"
 	"strings"
 	"testing"
 	"time"
@@ -26,6 +27,7 @@ import (
 	"github.com/tektoncd/triggers/pkg/apis/triggers/v1alpha1"
 	triggertest "github.com/tektoncd/triggers/test"
 	tb "github.com/tektoncd/triggers/test/builder"
+	"gotest.tools/v3/golden"
 	corev1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 )
@@ -57,52 +59,30 @@ func TestListEventListener(t *testing.T) {
 		name      string
 		command   *cobra.Command
 		args      []string
-		expected  []string
 		wantError bool
 	}{
 		{
-			name:    "Invalid namespace",
-			command: command(t, els, now, ns),
-			args:    []string{"list", "-n", "default"},
-			expected: []string{
-				"Error: namespaces \"default\" not found\n",
-			},
+			name:      "Invalid namespace",
+			command:   command(t, els, now, ns),
+			args:      []string{"list", "-n", "default"},
 			wantError: true,
 		},
 		{
-			name:    "No EventListener",
-			command: command(t, els, now, ns),
-			args:    []string{"list", "-n", "random"},
-			expected: []string{
-				"No eventlisteners found\n",
-			},
+			name:      "No EventListener",
+			command:   command(t, els, now, ns),
+			args:      []string{"list", "-n", "random"},
 			wantError: false,
 		},
 		{
-			name:    "Multiple EventListener",
-			command: command(t, els, now, ns),
-			args:    []string{"list", "-n", "foo"},
-			expected: []string{
-				"NAME   AGE",
-				"tb1    2 minutes ago",
-				"tb2    30 seconds ago",
-				"tb3    1 week ago",
-				"tb4    ---",
-				"",
-			},
+			name:      "Multiple EventListener",
+			command:   command(t, els, now, ns),
+			args:      []string{"list", "-n", "foo"},
 			wantError: false,
 		},
 		{
-			name:    "Multiple EventListener with output format",
-			command: command(t, els, now, ns),
-			args:    []string{"list", "-n", "foo", "-o", "jsonpath={range .items[*]}{.metadata.name}{\"\\n\"}{end}"},
-			expected: []string{
-				"tb1",
-				"tb2",
-				"tb3",
-				"tb4",
-				"",
-			},
+			name:      "Multiple EventListener with output format",
+			command:   command(t, els, now, ns),
+			args:      []string{"list", "-n", "foo", "-o", "jsonpath={range .items[*]}{.metadata.name}{\"\\n\"}{end}"},
 			wantError: false,
 		},
 	}
@@ -114,7 +94,7 @@ func TestListEventListener(t *testing.T) {
 			if err != nil && !td.wantError {
 				t.Errorf("Unexpected error: %v", err)
 			}
-			test.AssertOutput(t, strings.Join(td.expected, "\n"), got)
+			golden.Assert(t, got, strings.ReplaceAll(fmt.Sprintf("%s.golden", t.Name()), "/", "-"))
 		})
 	}
 }
