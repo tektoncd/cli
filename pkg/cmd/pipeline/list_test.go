@@ -15,22 +15,21 @@
 package pipeline
 
 import (
-	"strings"
+	"fmt"
 	"testing"
 	"time"
 
-	"github.com/google/go-cmp/cmp"
 	"github.com/jonboulle/clockwork"
 	"github.com/tektoncd/cli/pkg/test"
 	cb "github.com/tektoncd/cli/pkg/test/builder"
-	"knative.dev/pkg/apis"
-
 	"github.com/tektoncd/pipeline/pkg/apis/pipeline/v1alpha1"
 	"github.com/tektoncd/pipeline/pkg/reconciler/pipelinerun/resources"
 	pipelinetest "github.com/tektoncd/pipeline/test"
 	tb "github.com/tektoncd/pipeline/test/builder"
+	"gotest.tools/v3/golden"
 	corev1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+	"knative.dev/pkg/apis"
 )
 
 func TestPipelinesList_invalid_namespace(t *testing.T) {
@@ -102,19 +101,7 @@ func TestPipelineList_only_pipelines(t *testing.T) {
 	if err != nil {
 		t.Errorf("Unexpected error: %v", err)
 	}
-
-	expected := []string{
-		"NAME       AGE              LAST RUN   STARTED   DURATION   STATUS",
-		"tomatoes   1 minute ago     ---        ---       ---        ---",
-		"mangoes    20 seconds ago   ---        ---       ---        ---",
-		"bananas    3 weeks ago      ---        ---       ---        ---",
-		"",
-	}
-
-	text := strings.Join(expected, "\n")
-	if d := cmp.Diff(text, output); d != "" {
-		t.Errorf("Unexpected output mismatch: %s", d)
-	}
+	golden.Assert(t, output, fmt.Sprintf("%s.golden", t.Name()))
 }
 
 func TestPipelinesList_with_single_run(t *testing.T) {
@@ -167,17 +154,7 @@ func TestPipelinesList_with_single_run(t *testing.T) {
 	if err != nil {
 		t.Errorf("Unexpected error: %v", err)
 	}
-
-	expected := []string{
-		"NAME       AGE              LAST RUN         STARTED          DURATION     STATUS",
-		"pipeline   20 minutes ago   pipeline-run-1   15 minutes ago   10 minutes   Succeeded",
-		"",
-	}
-
-	text := strings.Join(expected, "\n")
-	if d := cmp.Diff(text, got); d != "" {
-		t.Errorf("Unexpected output mismatch: \n%s\n", d)
-	}
+	golden.Assert(t, got, fmt.Sprintf("%s.golden", t.Name()))
 }
 
 func TestPipelinesList_latest_run(t *testing.T) {
@@ -258,17 +235,7 @@ func TestPipelinesList_latest_run(t *testing.T) {
 	if err != nil {
 		t.Errorf("Unexpected error: %v", err)
 	}
-
-	expected := []string{
-		"NAME       AGE              LAST RUN         STARTED          DURATION    STATUS",
-		"pipeline   35 minutes ago   pipeline-run-2   18 minutes ago   5 minutes   Succeeded",
-		"",
-	}
-
-	text := strings.Join(expected, "\n")
-	if d := cmp.Diff(text, got); d != "" {
-		t.Errorf("Unexpected output mismatch: \n%s\n", d)
-	}
+	golden.Assert(t, got, fmt.Sprintf("%s.golden", t.Name()))
 }
 
 type pipelineDetails struct {
