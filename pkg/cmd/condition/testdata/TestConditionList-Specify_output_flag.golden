@@ -1,0 +1,28 @@
+apiVersion: tekton.dev/v1alpha1
+items:
+- metadata:
+    creationTimestamp: "1984-04-03T23:59:00Z"
+    name: condition1
+    namespace: ns
+  spec:
+    check:
+      name: ""
+      resources: {}
+- metadata:
+    creationTimestamp: "1984-04-03T23:59:40Z"
+    name: condition2
+    namespace: ns
+  spec:
+    check:
+      name: ""
+      resources: {}
+- metadata:
+    creationTimestamp: "1984-03-13T16:00:00Z"
+    name: condition3
+    namespace: ns
+  spec:
+    check:
+      name: ""
+      resources: {}
+kind: ConditionList
+metadata: {}
