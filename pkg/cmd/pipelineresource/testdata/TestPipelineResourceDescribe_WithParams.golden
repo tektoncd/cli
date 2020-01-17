@@ -1,0 +1,12 @@
+Name:                    test-1
+Namespace:               test-ns-1
+PipelineResource Type:   image
+
+Params
+
+ NAME   VALUE
+ URL    quay.io/tekton/controller
+
+Secret Params
+
+ No secret params

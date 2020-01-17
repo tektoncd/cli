@@ -15,13 +15,14 @@
 package pipelineresource
 
 import (
-	"strings"
+	"fmt"
 	"testing"
 
 	"github.com/tektoncd/cli/pkg/test"
 	"github.com/tektoncd/pipeline/pkg/apis/pipeline/v1alpha1"
 	pipelinetest "github.com/tektoncd/pipeline/test"
 	tb "github.com/tektoncd/pipeline/test/builder"
+	"gotest.tools/v3/golden"
 	corev1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 )
@@ -91,21 +92,7 @@ func TestPipelineResourceDescribe_WithParams(t *testing.T) {
 	p := &test.Params{Tekton: cs.Pipeline, Kube: cs.Kube}
 	pipelineresource := Command(p)
 	out, _ := test.ExecuteCommand(pipelineresource, "desc", "test-1", "-n", "test-ns-1")
-	expected := []string{
-		"Name:                    test-1",
-		"Namespace:               test-ns-1",
-		"PipelineResource Type:   image",
-		"",
-		"Params\n",
-		" NAME   VALUE",
-		" URL    quay.io/tekton/controller",
-		"",
-		"Secret Params\n",
-		" No secret params",
-		"",
-	}
-
-	test.AssertOutput(t, strings.Join(expected, "\n"), out)
+	golden.Assert(t, out, fmt.Sprintf("%s.golden", t.Name()))
 }
 
 func TestPipelineResourceDescribe_WithSecretParams(t *testing.T) {
@@ -131,21 +118,5 @@ func TestPipelineResourceDescribe_WithSecretParams(t *testing.T) {
 	p := &test.Params{Tekton: cs.Pipeline, Kube: cs.Kube}
 	pipelineresource := Command(p)
 	out, _ := test.ExecuteCommand(pipelineresource, "desc", "test-1", "-n", "test-ns-1")
-	expected := []string{
-		"Name:                    test-1",
-		"Namespace:               test-ns-1",
-		"PipelineResource Type:   image",
-		"",
-		"Params\n",
-		" NAME   VALUE",
-		" URL    quay.io/tekton/controller",
-		" TAG    latest",
-		"",
-		"Secret Params\n",
-		" FIELDNAME     SECRETNAME",
-		" githubToken   github-secrets",
-		"",
-	}
-
-	test.AssertOutput(t, strings.Join(expected, "\n"), out)
+	golden.Assert(t, out, fmt.Sprintf("%s.golden", t.Name()))
 }
