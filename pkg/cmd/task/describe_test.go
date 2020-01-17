@@ -237,7 +237,7 @@ func TestTaskDescribe_Full(t *testing.T) {
 	golden.Assert(t, out, fmt.Sprintf("%s.golden", t.Name()))
 }
 
-func TestTaskDescribe_PipelineRunError(t *testing.T) {
+func TestTaskDescribe_TaskRunError(t *testing.T) {
 	cs, _ := test.SeedTestData(t, pipelinetest.Data{
 		Tasks: []*v1alpha1.Task{
 			tb.Task("task-1", "ns"),
