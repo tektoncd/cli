@@ -60,6 +60,11 @@ test-unit: ./vendor ## run unit tests
 	@echo "Running unit tests..."
 	@go test -failfast -v -cover ./...
 
+.PHONY: test-unit-update-golden
+test-unit-update-golden: ./vendor ## run unit tests (updating golden files)
+	@echo "Running unit tests updating golden files..."
+	@./hack/update-golden.sh
+
 .PHONY: test-e2e
 test-e2e: bin/tkn ## run e2e tests
 	@echo "Running e2e tests..."
