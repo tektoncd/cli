@@ -1,0 +1,35 @@
+Name:        task-1
+Namespace:   ns
+
+Input Resources
+
+ NAME          TYPE
+ my-repo       git
+ source-repo   git
+ my-image      image
+
+Output Resources
+
+ NAME               TYPE
+ artifact-image   image
+ code-image       image
+
+Params
+
+ NAME      TYPE     DEFAULT VALUE
+ myarg     string   
+ myarray   array    
+ print     string   somethingdifferent
+ output    array    [booms booms booms]
+
+Steps
+
+ hello
+ exit
+
+Taskruns
+
+NAME   STARTED          DURATION    STATUS
+tr-1   20 minutes ago   5 minutes   Failed
+tr-2   10 minutes ago   7 minutes   Succeeded
+

@@ -15,17 +15,17 @@
 package task
 
 import (
-	"strings"
+	"fmt"
 	"testing"
 	"time"
 
-	"github.com/google/go-cmp/cmp"
 	"github.com/jonboulle/clockwork"
 	"github.com/tektoncd/cli/pkg/test"
 	cb "github.com/tektoncd/cli/pkg/test/builder"
 	"github.com/tektoncd/pipeline/pkg/apis/pipeline/v1alpha1"
 	pipelinetest "github.com/tektoncd/pipeline/test"
 	tb "github.com/tektoncd/pipeline/test/builder"
+	"gotest.tools/v3/golden"
 	corev1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 )
@@ -91,16 +91,5 @@ func TestTaskList_Only_Tasks(t *testing.T) {
 		t.Errorf("Unexpected error: %v", err)
 	}
 
-	expected := []string{
-		"NAME       AGE",
-		"tomatoes   1 minute ago",
-		"mangoes    20 seconds ago",
-		"bananas    3 weeks ago",
-		"",
-	}
-
-	text := strings.Join(expected, "\n")
-	if d := cmp.Diff(text, output); d != "" {
-		t.Errorf("Unexpected output mismatch: %s", d)
-	}
+	golden.Assert(t, output, fmt.Sprintf("%s.golden", t.Name()))
 }
