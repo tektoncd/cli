@@ -16,9 +16,11 @@ package task
 
 import (
 	"errors"
+	"fmt"
 	"testing"
 	"time"
 
+	"gotest.tools/v3/golden"
 	"k8s.io/apimachinery/pkg/runtime"
 
 	"github.com/jonboulle/clockwork"
@@ -95,30 +97,7 @@ func TestTaskDescribe_OnlyName(t *testing.T) {
 	if err != nil {
 		t.Errorf("Unexpected error: %v", err)
 	}
-	expected := `Name:        task-1
-Namespace:   ns
-
-Input Resources
-
- No input resources
-
-Output Resources
-
- No output resources
-
-Params
-
- No params
-
-Steps
-
- No steps
-
-Taskruns
-
- No taskruns
-`
-	test.AssertOutput(t, expected, out)
+	golden.Assert(t, out, fmt.Sprintf("%s.golden", t.Name()))
 }
 
 func TestTaskDescribe_OnlyNameDiffNameSpace(t *testing.T) {
@@ -148,30 +127,7 @@ func TestTaskDescribe_OnlyNameDiffNameSpace(t *testing.T) {
 	if err != nil {
 		t.Errorf("Unexpected error: %v", err)
 	}
-	expected := `Name:        task
-Namespace:   ns-2
-
-Input Resources
-
- No input resources
-
-Output Resources
-
- No output resources
-
-Params
-
- No params
-
-Steps
-
- No steps
-
-Taskruns
-
- No taskruns
-`
-	test.AssertOutput(t, expected, out)
+	golden.Assert(t, out, fmt.Sprintf("%s.golden", t.Name()))
 }
 
 func TestTaskDescribe_OnlyNameParams(t *testing.T) {
@@ -209,33 +165,7 @@ func TestTaskDescribe_OnlyNameParams(t *testing.T) {
 	if err != nil {
 		t.Errorf("Unexpected error: %v", err)
 	}
-	expected := `Name:        task-1
-Namespace:   ns
-
-Input Resources
-
- No input resources
-
-Output Resources
-
- No output resources
-
-Params
-
- NAME      TYPE     DEFAULT VALUE
- myarg     string   
- myprint   string   
- myarray   array    
-
-Steps
-
- No steps
-
-Taskruns
-
- No taskruns
-`
-	test.AssertOutput(t, expected, out)
+	golden.Assert(t, out, fmt.Sprintf("%s.golden", t.Name()))
 }
 
 func TestTaskDescribe_Full(t *testing.T) {
@@ -304,43 +234,7 @@ func TestTaskDescribe_Full(t *testing.T) {
 	if err != nil {
 		t.Errorf("Unexpected error: %v", err)
 	}
-	expected := `Name:        task-1
-Namespace:   ns
-
-Input Resources
-
- NAME          TYPE
- my-repo       git
- source-repo   git
- my-image      image
-
-Output Resources
-
- NAME               TYPE
- artifact-image   image
- code-image       image
-
-Params
-
- NAME      TYPE     DEFAULT VALUE
- myarg     string   
- myarray   array    
- print     string   somethingdifferent
- output    array    [booms booms booms]
-
-Steps
-
- hello
- exit
-
-Taskruns
-
-NAME   STARTED          DURATION    STATUS
-tr-1   20 minutes ago   5 minutes   Failed
-tr-2   10 minutes ago   7 minutes   Succeeded
-
-`
-	test.AssertOutput(t, expected, out)
+	golden.Assert(t, out, fmt.Sprintf("%s.golden", t.Name()))
 }
 
 func TestTaskDescribe_PipelineRunError(t *testing.T) {
