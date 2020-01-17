@@ -1,0 +1,24 @@
+Name:        tr-1
+Namespace:   ns
+Task Ref:    t1
+
+Status
+
+STARTED    DURATION    STATUS
+---        ---         Succeeded
+
+Input Resources
+
+No resources
+
+Output Resources
+
+No resources
+
+Params
+
+No params
+
+Steps
+
+No steps

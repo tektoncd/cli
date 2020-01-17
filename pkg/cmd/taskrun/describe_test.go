@@ -15,6 +15,7 @@
 package taskrun
 
 import (
+	"fmt"
 	"testing"
 	"time"
 
@@ -25,6 +26,7 @@ import (
 	"github.com/tektoncd/pipeline/pkg/reconciler/pipelinerun/resources"
 	pipelinetest "github.com/tektoncd/pipeline/test"
 	tb "github.com/tektoncd/pipeline/test/builder"
+	"gotest.tools/v3/golden"
 	corev1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"knative.dev/pkg/apis"
@@ -114,33 +116,7 @@ func TestTaskRunDescribe_empty_taskrun(t *testing.T) {
 	if err != nil {
 		t.Errorf("Unexpected error: %v", err)
 	}
-	expected := `Name:        tr-1
-Namespace:   ns
-Task Ref:    t1
-
-Status
-
-STARTED    DURATION    STATUS
----        ---         Succeeded
-
-Input Resources
-
-No resources
-
-Output Resources
-
-No resources
-
-Params
-
-No params
-
-Steps
-
-No steps
-`
-
-	test.AssertOutput(t, expected, actual)
+	golden.Assert(t, actual, fmt.Sprintf("%s.golden", t.Name()))
 }
 
 func TestTaskRunDescribe_only_taskrun(t *testing.T) {
@@ -194,41 +170,7 @@ func TestTaskRunDescribe_only_taskrun(t *testing.T) {
 	if err != nil {
 		t.Errorf("Unexpected error: %v", err)
 	}
-	expected := `Name:        tr-1
-Namespace:   ns
-Task Ref:    t1
-
-Status
-
-STARTED         DURATION    STATUS
-9 minutes ago   ---         Succeeded
-
-Input Resources
-
- NAME          RESOURCE REF
- git           git
- image-input   image
-
-Output Resources
-
- NAME            RESOURCE REF
- image-output    image
- image-output2   image
-
-Params
-
- NAME     VALUE
- input    param
- input2   param2
-
-Steps
-
- NAME    STATUS
- step1   Completed
- step2   Completed
-`
-
-	test.AssertOutput(t, expected, actual)
+	golden.Assert(t, actual, fmt.Sprintf("%s.golden", t.Name()))
 }
 
 func TestTaskRunDescribe_failed(t *testing.T) {
@@ -270,37 +212,7 @@ func TestTaskRunDescribe_failed(t *testing.T) {
 	if err != nil {
 		t.Errorf("Unexpected error: %v", err)
 	}
-	expected := `Name:        tr-1
-Namespace:   ns
-Task Ref:    t1
-
-Status
-
-STARTED         DURATION    STATUS
-8 minutes ago   3 minutes   Failed
-
-Message
-
-Testing tr failed
-
-Input Resources
-
-No resources
-
-Output Resources
-
-No resources
-
-Params
-
-No params
-
-Steps
-
-No steps
-`
-
-	test.AssertOutput(t, expected, actual)
+	golden.Assert(t, actual, fmt.Sprintf("%s.golden", t.Name()))
 }
 
 func TestTaskRunDescribe_no_taskref(t *testing.T) {
@@ -339,36 +251,7 @@ func TestTaskRunDescribe_no_taskref(t *testing.T) {
 	if err != nil {
 		t.Errorf("Unexpected error: %v", err)
 	}
-	expected := `Name:        tr-1
-Namespace:   ns
-
-Status
-
-STARTED         DURATION    STATUS
-8 minutes ago   3 minutes   Failed
-
-Message
-
-Testing tr failed
-
-Input Resources
-
-No resources
-
-Output Resources
-
-No resources
-
-Params
-
-No params
-
-Steps
-
-No steps
-`
-
-	test.AssertOutput(t, expected, actual)
+	golden.Assert(t, actual, fmt.Sprintf("%s.golden", t.Name()))
 }
 
 func TestTaskRunDescribe_no_resourceref(t *testing.T) {
@@ -422,41 +305,7 @@ func TestTaskRunDescribe_no_resourceref(t *testing.T) {
 	if err != nil {
 		t.Errorf("Unexpected error: %v", err)
 	}
-	expected := `Name:        tr-1
-Namespace:   ns
-Task Ref:    t1
-
-Status
-
-STARTED         DURATION    STATUS
-9 minutes ago   ---         Succeeded
-
-Input Resources
-
- NAME          RESOURCE REF
- git           
- image-input   image
-
-Output Resources
-
- NAME            RESOURCE REF
- image-output    
- image-output2   
-
-Params
-
- NAME     VALUE
- input    param
- input2   param2
-
-Steps
-
- NAME    STATUS
- step1   Completed
- step2   Completed
-`
-
-	test.AssertOutput(t, expected, actual)
+	golden.Assert(t, actual, fmt.Sprintf("%s.golden", t.Name()))
 }
 
 func TestTaskRunDescribe_step_status_default(t *testing.T) {
@@ -509,41 +358,7 @@ func TestTaskRunDescribe_step_status_default(t *testing.T) {
 	if err != nil {
 		t.Errorf("Unexpected error: %v", err)
 	}
-	expected := `Name:        tr-1
-Namespace:   ns
-Task Ref:    t1
-
-Status
-
-STARTED         DURATION    STATUS
-9 minutes ago   ---         Failed
-
-Input Resources
-
- NAME          RESOURCE REF
- git           
- image-input   image
-
-Output Resources
-
- NAME            RESOURCE REF
- image-output    
- image-output2   
-
-Params
-
- NAME     VALUE
- input    param
- input2   param2
-
-Steps
-
- NAME    STATUS
- step1   Error
- step2   ---
-`
-
-	test.AssertOutput(t, expected, actual)
+	golden.Assert(t, actual, fmt.Sprintf("%s.golden", t.Name()))
 }
 
 func TestTaskRunDescribe_step_status_pending(t *testing.T) {
@@ -598,41 +413,7 @@ func TestTaskRunDescribe_step_status_pending(t *testing.T) {
 	if err != nil {
 		t.Errorf("Unexpected error: %v", err)
 	}
-	expected := `Name:        tr-1
-Namespace:   ns
-Task Ref:    t1
-
-Status
-
-STARTED         DURATION    STATUS
-9 minutes ago   ---         Running
-
-Input Resources
-
- NAME          RESOURCE REF
- git           
- image-input   image
-
-Output Resources
-
- NAME            RESOURCE REF
- image-output    
- image-output2   
-
-Params
-
- NAME     VALUE
- input    param
- input2   param2
-
-Steps
-
- NAME    STATUS
- step1   PodInitializing
- step2   PodInitializing
-`
-
-	test.AssertOutput(t, expected, actual)
+	golden.Assert(t, actual, fmt.Sprintf("%s.golden", t.Name()))
 }
 
 func TestTaskRunDescribe_step_status_running(t *testing.T) {
@@ -687,41 +468,7 @@ func TestTaskRunDescribe_step_status_running(t *testing.T) {
 	if err != nil {
 		t.Errorf("Unexpected error: %v", err)
 	}
-	expected := `Name:        tr-1
-Namespace:   ns
-Task Ref:    t1
-
-Status
-
-STARTED         DURATION    STATUS
-9 minutes ago   ---         Running
-
-Input Resources
-
- NAME          RESOURCE REF
- git           
- image-input   image
-
-Output Resources
-
- NAME            RESOURCE REF
- image-output    
- image-output2   
-
-Params
-
- NAME     VALUE
- input    param
- input2   param2
-
-Steps
-
- NAME    STATUS
- step1   Running
- step2   Running
-`
-
-	test.AssertOutput(t, expected, actual)
+	golden.Assert(t, actual, fmt.Sprintf("%s.golden", t.Name()))
 }
 
 func TestTaskRunDescribe_cancel_taskrun(t *testing.T) {
@@ -760,34 +507,5 @@ func TestTaskRunDescribe_cancel_taskrun(t *testing.T) {
 	if err != nil {
 		t.Errorf("Unexpected error: %v", err)
 	}
-	expected := `Name:        tr-1
-Namespace:   ns
-
-Status
-
-STARTED         DURATION    STATUS
-8 minutes ago   3 minutes   Cancelled(TaskRunCancelled)
-
-Message
-
-TaskRun "tr-1" was cancelled
-
-Input Resources
-
-No resources
-
-Output Resources
-
-No resources
-
-Params
-
-No params
-
-Steps
-
-No steps
-`
-
-	test.AssertOutput(t, expected, actual)
+	golden.Assert(t, actual, fmt.Sprintf("%s.golden", t.Name()))
 }

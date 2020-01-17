@@ -27,6 +27,7 @@ import (
 	"github.com/tektoncd/pipeline/pkg/reconciler/pipelinerun/resources"
 	pipelinetest "github.com/tektoncd/pipeline/test"
 	tb "github.com/tektoncd/pipeline/test/builder"
+	"gotest.tools/v3/golden"
 	corev1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"knative.dev/pkg/apis"
@@ -112,108 +113,59 @@ func TestListTaskRuns(t *testing.T) {
 		name      string
 		command   *cobra.Command
 		args      []string
-		expected  []string
 		wantError bool
 	}{
 		{
-			name:    "by Task name",
-			command: command(t, trs, now, ns),
-			args:    []string{"list", "bar", "-n", "foo"},
-			expected: []string{
-				"NAME    STARTED      DURATION   STATUS      ",
-				"tr1-1   1 hour ago   1 minute   Succeeded   ",
-				"",
-			},
+			name:      "by Task name",
+			command:   command(t, trs, now, ns),
+			args:      []string{"list", "bar", "-n", "foo"},
 			wantError: false,
 		},
 		{
-			name:    "all in namespace",
-			command: command(t, trs, now, ns),
-			args:    []string{"list", "-n", "foo"},
-			expected: []string{
-				"NAME    STARTED          DURATION   STATUS      ",
-				"tr0-1   ---              ---        Succeeded   ",
-				"tr3-1   ---              ---        Failed      ",
-				"tr2-2   59 minutes ago   1 minute   Failed      ",
-				"tr1-1   1 hour ago       1 minute   Succeeded   ",
-				"tr2-1   1 hour ago       ---        Running     ",
-				"",
-			},
+			name:      "all in namespace",
+			command:   command(t, trs, now, ns),
+			args:      []string{"list", "-n", "foo"},
 			wantError: false,
 		},
 		{
-			name:    "print by template",
-			command: command(t, trs, now, ns),
-			args:    []string{"list", "-n", "foo", "-o", "jsonpath={range .items[*]}{.metadata.name}{\"\\n\"}{end}"},
-			expected: []string{
-				"tr0-1",
-				"tr3-1",
-				"tr2-2",
-				"tr1-1",
-				"tr2-1",
-				"",
-			},
+			name:      "print by template",
+			command:   command(t, trs, now, ns),
+			args:      []string{"list", "-n", "foo", "-o", "jsonpath={range .items[*]}{.metadata.name}{\"\\n\"}{end}"},
 			wantError: false,
 		},
 		{
-			name:     "empty list",
-			command:  command(t, trs, now, ns),
-			args:     []string{"list", "-n", "random"},
-			expected: []string{emptyMsg, ""},
+			name:    "empty list",
+			command: command(t, trs, now, ns),
+			args:    []string{"list", "-n", "random"},
 		},
 		{
-			name:    "limit taskruns returned to 1",
-			command: command(t, trs, now, ns),
-			args:    []string{"list", "-n", "foo", "--limit", fmt.Sprintf("%d", 1)},
-			expected: []string{
-				"NAME    STARTED   DURATION   STATUS      ",
-				"tr0-1   ---       ---        Succeeded   ",
-				"",
-			},
+			name:      "limit taskruns returned to 1",
+			command:   command(t, trs, now, ns),
+			args:      []string{"list", "-n", "foo", "--limit", fmt.Sprintf("%d", 1)},
 			wantError: false,
 		},
 		{
-			name:    "limit taskruns negative case",
-			command: command(t, trs, now, ns),
-			args:    []string{"list", "-n", "foo", "--limit", fmt.Sprintf("%d", -1)},
-			expected: []string{
-				"",
-			},
+			name:      "limit taskruns negative case",
+			command:   command(t, trs, now, ns),
+			args:      []string{"list", "-n", "foo", "--limit", fmt.Sprintf("%d", -1)},
 			wantError: false,
 		},
 		{
-			name:    "limit taskruns greater than maximum case",
-			command: command(t, trs, now, ns),
-			args:    []string{"list", "-n", "foo", "--limit", fmt.Sprintf("%d", 7)},
-			expected: []string{
-				"NAME    STARTED          DURATION   STATUS      ",
-				"tr0-1   ---              ---        Succeeded   ",
-				"tr3-1   ---              ---        Failed      ",
-				"tr2-2   59 minutes ago   1 minute   Failed      ",
-				"tr1-1   1 hour ago       1 minute   Succeeded   ",
-				"tr2-1   1 hour ago       ---        Running     ",
-				"",
-			},
+			name:      "limit taskruns greater than maximum case",
+			command:   command(t, trs, now, ns),
+			args:      []string{"list", "-n", "foo", "--limit", fmt.Sprintf("%d", 7)},
 			wantError: false,
 		},
 		{
-			name:    "limit taskruns with output flag set",
-			command: command(t, trs, now, ns),
-			args:    []string{"list", "-n", "foo", "-o", "jsonpath={range .items[*]}{.metadata.name}{\"\\n\"}{end}", "--limit", fmt.Sprintf("%d", 2)},
-			expected: []string{
-				"tr0-1",
-				"tr3-1",
-				"",
-			},
+			name:      "limit taskruns with output flag set",
+			command:   command(t, trs, now, ns),
+			args:      []string{"list", "-n", "foo", "-o", "jsonpath={range .items[*]}{.metadata.name}{\"\\n\"}{end}", "--limit", fmt.Sprintf("%d", 2)},
 			wantError: false,
 		},
 		{
-			name:    "error from invalid namespace",
-			command: command(t, trs, now, ns),
-			args:    []string{"list", "-n", "invalid"},
-			expected: []string{
-				"Error: namespaces \"invalid\" not found\n",
-			},
+			name:      "error from invalid namespace",
+			command:   command(t, trs, now, ns),
+			args:      []string{"list", "-n", "invalid"},
 			wantError: true,
 		},
 	}
@@ -225,7 +177,7 @@ func TestListTaskRuns(t *testing.T) {
 			if err != nil && !td.wantError {
 				t.Errorf("Unexpected error: %v", err)
 			}
-			test.AssertOutput(t, strings.Join(td.expected, "\n"), got)
+			golden.Assert(t, got, strings.ReplaceAll(fmt.Sprintf("%s.golden", t.Name()), "/", "-"))
 		})
 	}
 }
@@ -258,12 +210,7 @@ func TestListTaskRuns_no_condition(t *testing.T) {
 	if err != nil {
 		t.Errorf("Unexpected error: %v", err)
 	}
-
-	expected := `NAME    STARTED      DURATION   STATUS   
-tr1-1   1 hour ago   1 minute   ---      
-`
-
-	test.AssertOutput(t, expected, got)
+	golden.Assert(t, got, fmt.Sprintf("%s.golden", t.Name()))
 }
 
 func command(t *testing.T, trs []*v1alpha1.TaskRun, now time.Time, ns []*corev1.Namespace) *cobra.Command {
