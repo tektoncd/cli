@@ -15,6 +15,7 @@
 package pipelinerun
 
 import (
+	"fmt"
 	"testing"
 	"time"
 
@@ -25,6 +26,7 @@ import (
 	"github.com/tektoncd/pipeline/pkg/reconciler/pipelinerun/resources"
 	pipelinetest "github.com/tektoncd/pipeline/test"
 	tb "github.com/tektoncd/pipeline/test/builder"
+	"gotest.tools/v3/golden"
 	corev1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"knative.dev/pkg/apis"
@@ -125,30 +127,7 @@ func TestPipelineRunDescribe_only_taskrun(t *testing.T) {
 	if err != nil {
 		t.Errorf("Unexpected error: %v", err)
 	}
-	expected := `Name:           pipeline-run
-Namespace:      ns
-Pipeline Ref:   pipeline
-
-Status
-
-STARTED          DURATION    STATUS
-10 minutes ago   5 minutes   Succeeded
-
-Resources
-
- No resources
-
-Params
-
- No params
-
-Taskruns
-
- NAME   TASK NAME   STARTED         DURATION    STATUS
- tr-1   t-1         8 minutes ago   3 minutes   Succeeded
-`
-
-	test.AssertOutput(t, expected, actual)
+	golden.Assert(t, actual, fmt.Sprintf("%s.golden", t.Name()))
 }
 
 func TestPipelineRunDescribe_multiple_taskrun_ordering(t *testing.T) {
@@ -217,30 +196,7 @@ func TestPipelineRunDescribe_multiple_taskrun_ordering(t *testing.T) {
 	if err != nil {
 		t.Errorf("Unexpected error: %v", err)
 	}
-	expected := `Name:           pipeline-run
-Namespace:      ns
-Pipeline Ref:   pipeline
-
-Status
-
-STARTED          DURATION     STATUS
-10 minutes ago   15 minutes   Succeeded
-
-Resources
-
- No resources
-
-Params
-
- No params
-
-Taskruns
-
- NAME   TASK NAME   STARTED         DURATION    STATUS
- tr-2   t-2         5 minutes ago   4 minutes   Succeeded
- tr-1   t-1         8 minutes ago   3 minutes   Succeeded
-`
-	test.AssertOutput(t, expected, actual)
+	golden.Assert(t, actual, fmt.Sprintf("%s.golden", t.Name()))
 
 }
 
@@ -301,35 +257,7 @@ func TestPipelineRunDescribe_failed(t *testing.T) {
 	if err != nil {
 		t.Errorf("Unexpected error: %v", err)
 	}
-	expected := `Name:              pipeline-run
-Namespace:         ns
-Pipeline Ref:      pipeline
-Service Account:   test-sa
-
-Status
-
-STARTED          DURATION    STATUS
-10 minutes ago   5 minutes   Failed(Resource not found)
-
-Message
-
-Resource test-resource not found in the pipelinerun (Testing tr failed)
-
-Resources
-
- No resources
-
-Params
-
- No params
-
-Taskruns
-
- NAME   TASK NAME   STARTED         DURATION    STATUS
- tr-1   t-1         8 minutes ago   3 minutes   Failed
-`
-
-	test.AssertOutput(t, expected, actual)
+	golden.Assert(t, actual, fmt.Sprintf("%s.golden", t.Name()))
 }
 
 func TestPipelineRunDescribe_failed_withoutTRCondition(t *testing.T) {
@@ -384,35 +312,7 @@ func TestPipelineRunDescribe_failed_withoutTRCondition(t *testing.T) {
 	if err != nil {
 		t.Errorf("Unexpected error: %v", err)
 	}
-	expected := `Name:              pipeline-run
-Namespace:         ns
-Pipeline Ref:      pipeline
-Service Account:   test-sa
-
-Status
-
-STARTED          DURATION    STATUS
-10 minutes ago   5 minutes   Failed(Resource not found)
-
-Message
-
-Resource test-resource not found in the pipelinerun
-
-Resources
-
- No resources
-
-Params
-
- No params
-
-Taskruns
-
- NAME   TASK NAME   STARTED         DURATION    STATUS
- tr-1   t-1         8 minutes ago   3 minutes   ---
-`
-
-	test.AssertOutput(t, expected, actual)
+	golden.Assert(t, actual, fmt.Sprintf("%s.golden", t.Name()))
 }
 
 func TestPipelineRunDescribe_failed_withoutPRCondition(t *testing.T) {
@@ -462,31 +362,7 @@ func TestPipelineRunDescribe_failed_withoutPRCondition(t *testing.T) {
 	if err != nil {
 		t.Errorf("Unexpected error: %v", err)
 	}
-	expected := `Name:              pipeline-run
-Namespace:         ns
-Pipeline Ref:      pipeline
-Service Account:   test-sa
-
-Status
-
-STARTED          DURATION    STATUS
-10 minutes ago   5 minutes   ---
-
-Resources
-
- No resources
-
-Params
-
- No params
-
-Taskruns
-
- NAME   TASK NAME   STARTED         DURATION    STATUS
- tr-1   t-1         8 minutes ago   3 minutes   ---
-`
-
-	test.AssertOutput(t, expected, actual)
+	golden.Assert(t, actual, fmt.Sprintf("%s.golden", t.Name()))
 }
 
 func TestPipelineRunDescribe_with_resources_taskrun(t *testing.T) {
@@ -548,33 +424,7 @@ func TestPipelineRunDescribe_with_resources_taskrun(t *testing.T) {
 	if err != nil {
 		t.Errorf("Unexpected error: %v", err)
 	}
-	expected := `Name:              pipeline-run
-Namespace:         ns
-Pipeline Ref:      pipeline
-Service Account:   test-sa
-
-Status
-
-STARTED          DURATION    STATUS
-10 minutes ago   5 minutes   Succeeded
-
-Resources
-
- NAME            RESOURCE REF
- test-resource   test-resource-ref
-
-Params
-
- NAME         VALUE
- test-param   param-value
-
-Taskruns
-
- NAME   TASK NAME   STARTED         DURATION    STATUS
- tr-1   t-1         8 minutes ago   3 minutes   Succeeded
-`
-
-	test.AssertOutput(t, expected, actual)
+	golden.Assert(t, actual, fmt.Sprintf("%s.golden", t.Name()))
 }
 
 func TestPipelineRunDescribe_without_start_time(t *testing.T) {
@@ -606,29 +456,7 @@ func TestPipelineRunDescribe_without_start_time(t *testing.T) {
 	if err != nil {
 		t.Errorf("Unexpected error: %v", err)
 	}
-	expected := `Name:           pipeline-run
-Namespace:      ns
-Pipeline Ref:   pipeline
-
-Status
-
-STARTED   DURATION   STATUS
----       ---        ---
-
-Resources
-
- No resources
-
-Params
-
- No params
-
-Taskruns
-
- No taskruns
-`
-
-	test.AssertOutput(t, expected, actual)
+	golden.Assert(t, actual, fmt.Sprintf("%s.golden", t.Name()))
 }
 
 func TestPipelineRunDescribe_without_pipelineref(t *testing.T) {
@@ -659,27 +487,7 @@ func TestPipelineRunDescribe_without_pipelineref(t *testing.T) {
 	if err != nil {
 		t.Errorf("Unexpected error: %v", err)
 	}
-	expected := `Name:        pipeline-run
-Namespace:   ns
-
-Status
-
-STARTED   DURATION   STATUS
----       ---        ---
-
-Resources
-
- No resources
-
-Params
-
- No params
-
-Taskruns
-
- No taskruns
-`
-	test.AssertOutput(t, expected, actual)
+	golden.Assert(t, actual, fmt.Sprintf("%s.golden", t.Name()))
 }
 
 func TestPipelineRunDescribe_no_resourceref(t *testing.T) {
@@ -739,33 +547,7 @@ func TestPipelineRunDescribe_no_resourceref(t *testing.T) {
 	if err != nil {
 		t.Errorf("Unexpected error: %v", err)
 	}
-	expected := `Name:              pipeline-run
-Namespace:         ns
-Pipeline Ref:      pipeline
-Service Account:   test-sa
-
-Status
-
-STARTED          DURATION    STATUS
-10 minutes ago   5 minutes   Succeeded
-
-Resources
-
- NAME            RESOURCE REF
- test-resource   
-
-Params
-
- NAME         VALUE
- test-param   param-value
-
-Taskruns
-
- NAME   TASK NAME   STARTED         DURATION    STATUS
- tr-1   t-1         8 minutes ago   3 minutes   Succeeded
-`
-
-	test.AssertOutput(t, expected, actual)
+	golden.Assert(t, actual, fmt.Sprintf("%s.golden", t.Name()))
 }
 
 func TestPipelineRunDescribe_cancelled_pipelinerun(t *testing.T) {
@@ -822,34 +604,7 @@ func TestPipelineRunDescribe_cancelled_pipelinerun(t *testing.T) {
 	if err != nil {
 		t.Errorf("Unexpected error: %v", err)
 	}
-	expected := `Name:           pipeline-run
-Namespace:      ns
-Pipeline Ref:   pipeline
-
-Status
-
-STARTED          DURATION    STATUS
-10 minutes ago   5 minutes   Cancelled(PipelineRunCancelled)
-
-Message
-
-PipelineRun "pipeline-run" was cancelled
-
-Resources
-
- No resources
-
-Params
-
- No params
-
-Taskruns
-
- NAME   TASK NAME   STARTED         DURATION    STATUS
- tr-1   t-1         8 minutes ago   3 minutes   Succeeded
-`
-
-	test.AssertOutput(t, expected, actual)
+	golden.Assert(t, actual, fmt.Sprintf("%s.golden", t.Name()))
 }
 
 func TestPipelineRunDescribe_without_tr_start_time(t *testing.T) {
@@ -903,27 +658,5 @@ func TestPipelineRunDescribe_without_tr_start_time(t *testing.T) {
 	if err != nil {
 		t.Errorf("Unexpected error: %v", err)
 	}
-	expected := `Name:           pipeline-run
-Namespace:      ns
-Pipeline Ref:   pipeline
-
-Status
-
-STARTED          DURATION   STATUS
-10 minutes ago   ---        Running
-
-Resources
-
- No resources
-
-Params
-
- No params
-
-Taskruns
-
- NAME   TASK NAME   STARTED   DURATION   STATUS
- tr-1   t-1         ---       ---        Running
-`
-	test.AssertOutput(t, expected, actual)
+	golden.Assert(t, actual, fmt.Sprintf("%s.golden", t.Name()))
 }

@@ -1,0 +1,24 @@
+Name:              pipeline-run
+Namespace:         ns
+Pipeline Ref:      pipeline
+Service Account:   test-sa
+
+Status
+
+STARTED          DURATION    STATUS
+10 minutes ago   5 minutes   Succeeded
+
+Resources
+
+ NAME            RESOURCE REF
+ test-resource   test-resource-ref
+
+Params
+
+ NAME         VALUE
+ test-param   param-value
+
+Taskruns
+
+ NAME   TASK NAME   STARTED         DURATION    STATUS
+ tr-1   t-1         8 minutes ago   3 minutes   Succeeded

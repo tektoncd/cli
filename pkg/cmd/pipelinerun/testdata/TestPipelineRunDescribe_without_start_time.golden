@@ -1,0 +1,20 @@
+Name:           pipeline-run
+Namespace:      ns
+Pipeline Ref:   pipeline
+
+Status
+
+STARTED   DURATION   STATUS
+---       ---        ---
+
+Resources
+
+ No resources
+
+Params
+
+ No params
+
+Taskruns
+
+ No taskruns
