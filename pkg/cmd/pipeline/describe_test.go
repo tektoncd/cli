@@ -15,11 +15,10 @@
 package pipeline
 
 import (
-	"strings"
+	"fmt"
 	"testing"
 	"time"
 
-	"github.com/google/go-cmp/cmp"
 	"github.com/jonboulle/clockwork"
 	"github.com/tektoncd/cli/pkg/test"
 	cb "github.com/tektoncd/cli/pkg/test/builder"
@@ -27,6 +26,7 @@ import (
 	"github.com/tektoncd/pipeline/pkg/reconciler/pipelinerun/resources"
 	pipelinetest "github.com/tektoncd/pipeline/test"
 	tb "github.com/tektoncd/pipeline/test/builder"
+	"gotest.tools/v3/golden"
 	corev1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"knative.dev/pkg/apis"
@@ -92,24 +92,7 @@ func TestPipelinesDescribe_empty(t *testing.T) {
 	if err != nil {
 		t.Errorf("Unexpected error: %v", err)
 	}
-
-	expected := []string{
-		"Name:        pipeline",
-		"Namespace:   ns\n",
-		"Resources\n",
-		" No resources\n",
-		"Params\n",
-		" No params\n",
-		"Tasks\n",
-		" No tasks\n",
-		"PipelineRuns\n",
-		" No pipelineruns\n",
-	}
-
-	text := strings.Join(expected, "\n")
-	if d := cmp.Diff(text, got); d != "" {
-		t.Errorf("Unexpected output mismatch: \n%s\n", d)
-	}
+	golden.Assert(t, got, fmt.Sprintf("%s.golden", t.Name()))
 }
 
 func TestPipelinesDescribe_with_run(t *testing.T) {
@@ -162,25 +145,7 @@ func TestPipelinesDescribe_with_run(t *testing.T) {
 	if err != nil {
 		t.Errorf("Unexpected error: %v", err)
 	}
-
-	expected := []string{
-		"Name:        pipeline",
-		"Namespace:   ns\n",
-		"Resources\n",
-		" No resources\n",
-		"Params\n",
-		" No params\n",
-		"Tasks\n",
-		" No tasks\n",
-		"PipelineRuns\n",
-		" NAME             STARTED          DURATION     STATUS",
-		" pipeline-run-1   15 minutes ago   10 minutes   Succeeded\n",
-	}
-
-	text := strings.Join(expected, "\n")
-	if d := cmp.Diff(text, got); d != "" {
-		t.Errorf("Unexpected output mismatch: \n%s\n", d)
-	}
+	golden.Assert(t, got, fmt.Sprintf("%s.golden", t.Name()))
 }
 
 func TestPipelinesDescribe_with_task_run(t *testing.T) {
@@ -237,26 +202,7 @@ func TestPipelinesDescribe_with_task_run(t *testing.T) {
 	if err != nil {
 		t.Errorf("Unexpected error: %v", err)
 	}
-
-	expected := []string{
-		"Name:        pipeline",
-		"Namespace:   ns\n",
-		"Resources\n",
-		" No resources\n",
-		"Params\n",
-		" No params\n",
-		"Tasks\n",
-		" NAME   TASKREF   RUNAFTER",
-		" task   taskref   one, two\n",
-		"PipelineRuns\n",
-		" NAME             STARTED          DURATION     STATUS",
-		" pipeline-run-1   15 minutes ago   10 minutes   Succeeded\n",
-	}
-
-	text := strings.Join(expected, "\n")
-	if d := cmp.Diff(text, got); d != "" {
-		t.Errorf("Unexpected output mismatch: \n%s\n", d)
-	}
+	golden.Assert(t, got, fmt.Sprintf("%s.golden", t.Name()))
 }
 
 func TestPipelinesDescribe_with_resource_param_task_run(t *testing.T) {
@@ -316,28 +262,7 @@ func TestPipelinesDescribe_with_resource_param_task_run(t *testing.T) {
 	if err != nil {
 		t.Errorf("Unexpected error: %v", err)
 	}
-
-	expected := []string{
-		"Name:        pipeline",
-		"Namespace:   ns\n",
-		"Resources\n",
-		" NAME   TYPE",
-		" name   git\n",
-		"Params\n",
-		" NAME             TYPE     DEFAULT VALUE",
-		" pipeline-param   string   somethingdifferent\n",
-		"Tasks\n",
-		" NAME   TASKREF   RUNAFTER",
-		" task   taskref   one, two\n",
-		"PipelineRuns\n",
-		" NAME             STARTED          DURATION     STATUS",
-		" pipeline-run-1   15 minutes ago   10 minutes   Succeeded\n",
-	}
-
-	text := strings.Join(expected, "\n")
-	if d := cmp.Diff(text, got); d != "" {
-		t.Errorf("Unexpected output mismatch: \n%s\n", d)
-	}
+	golden.Assert(t, got, fmt.Sprintf("%s.golden", t.Name()))
 }
 
 func TestPipelinesDescribe_with_multiple_resource_param_task_run(t *testing.T) {
@@ -404,33 +329,5 @@ func TestPipelinesDescribe_with_multiple_resource_param_task_run(t *testing.T) {
 	if err != nil {
 		t.Errorf("Unexpected error: %v", err)
 	}
-
-	expected := []string{
-		"Name:        pipeline",
-		"Namespace:   ns\n",
-		"Resources\n",
-		" NAME             TYPE",
-		" code             git",
-		" name             git",
-		" repo             git",
-		" artifact-image   image",
-		" code-image       image\n",
-		"Params\n",
-		" NAME              TYPE     DEFAULT VALUE",
-		" pipeline-param    string   somethingdifferent",
-		" rev-param         array    [booms booms booms]",
-		" pipeline-param2   string   ",
-		" rev-param2        array    \n",
-		"Tasks\n",
-		" NAME   TASKREF   RUNAFTER",
-		" task   taskref   one, two\n",
-		"PipelineRuns\n",
-		" NAME             STARTED          DURATION     STATUS",
-		" pipeline-run-1   15 minutes ago   10 minutes   Succeeded\n",
-	}
-
-	text := strings.Join(expected, "\n")
-	if d := cmp.Diff(text, got); d != "" {
-		t.Errorf("Unexpected output mismatch: \n%s\n", d)
-	}
+	golden.Assert(t, got, fmt.Sprintf("%s.golden", t.Name()))
 }

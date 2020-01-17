@@ -1,0 +1,29 @@
+Name:        pipeline
+Namespace:   ns
+
+Resources
+
+ NAME             TYPE
+ code             git
+ name             git
+ repo             git
+ artifact-image   image
+ code-image       image
+
+Params
+
+ NAME              TYPE     DEFAULT VALUE
+ pipeline-param    string   somethingdifferent
+ rev-param         array    [booms booms booms]
+ pipeline-param2   string   
+ rev-param2        array    
+
+Tasks
+
+ NAME   TASKREF   RUNAFTER
+ task   taskref   one, two
+
+PipelineRuns
+
+ NAME             STARTED          DURATION     STATUS
+ pipeline-run-1   15 minutes ago   10 minutes   Succeeded

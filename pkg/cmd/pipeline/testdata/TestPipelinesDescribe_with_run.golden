@@ -1,0 +1,19 @@
+Name:        pipeline
+Namespace:   ns
+
+Resources
+
+ No resources
+
+Params
+
+ No params
+
+Tasks
+
+ No tasks
+
+PipelineRuns
+
+ NAME             STARTED          DURATION     STATUS
+ pipeline-run-1   15 minutes ago   10 minutes   Succeeded
