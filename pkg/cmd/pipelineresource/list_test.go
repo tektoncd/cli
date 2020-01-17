@@ -15,6 +15,7 @@
 package pipelineresource
 
 import (
+	"fmt"
 	"strings"
 	"testing"
 
@@ -23,6 +24,7 @@ import (
 	"github.com/tektoncd/pipeline/pkg/apis/pipeline/v1alpha1"
 	pipelinetest "github.com/tektoncd/pipeline/test"
 	tb "github.com/tektoncd/pipeline/test/builder"
+	"gotest.tools/v3/golden"
 	corev1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 )
@@ -77,7 +79,6 @@ func TestPipelineResourceList(t *testing.T) {
 		name      string
 		command   *cobra.Command
 		args      []string
-		expected  []string
 		wantError bool
 	}{
 		{
@@ -85,82 +86,42 @@ func TestPipelineResourceList(t *testing.T) {
 			command:   command(t, pres, ns),
 			args:      []string{"list", "-n", "invalid"},
 			wantError: true,
-			expected: []string{
-				"Error: namespaces \"invalid\" not found\n",
-			},
 		},
 		{
 			name:      "Multiple pipeline resources",
 			command:   command(t, pres, ns),
 			args:      []string{"list", "-n", "test-ns-1"},
 			wantError: false,
-			expected: []string{
-				"NAME     TYPE         DETAILS",
-				"test-5   cloudEvent   targetURI: http://sink",
-				"test     git          url: git@github.com:tektoncd/cli-new.git",
-				"test-2   git          url: git@github.com:tektoncd/cli.git",
-				"test-1   image        URL: quey.io/tekton/controller",
-				"test-3   image        ---",
-				"",
-			},
 		},
 		{
 			name:      "Single pipeline resource",
 			command:   command(t, pres, ns),
 			args:      []string{"list", "-n", "test-ns-2"},
 			wantError: false,
-			expected: []string{
-				"NAME     TYPE    DETAILS",
-				"test-4   image   URL: quey.io/tekton/webhook",
-				"",
-			},
 		},
 		{
 			name:      "Single Pipeline Resource by type",
 			command:   command(t, pres, ns),
 			args:      []string{"list", "-n", "test-ns-2", "-t", "image"},
 			wantError: false,
-			expected: []string{
-				"NAME     TYPE    DETAILS",
-				"test-4   image   URL: quey.io/tekton/webhook",
-				"",
-			},
 		},
 		{
 			name:      "Multiple Pipeline Resource by type",
 			command:   command(t, pres, ns),
 			args:      []string{"list", "-n", "test-ns-1", "-t", "image"},
 			wantError: false,
-			expected: []string{
-				"NAME     TYPE    DETAILS",
-				"test-1   image   URL: quey.io/tekton/controller",
-				"test-3   image   ---",
-				"",
-			},
 		},
 		{
 			name:      "Empty Pipeline Resource by type",
 			command:   command(t, pres, ns),
 			args:      []string{"list", "-n", "test-ns-1", "-t", "storage"},
 			wantError: false,
-			expected: []string{
-				"No pipelineresources found.",
-				"",
-			},
 		},
 		{
 			name:      "By template",
 			command:   command(t, pres, ns),
 			args:      []string{"list", "-n", "test-ns-1", "-o", "jsonpath={range .items[*]}{.metadata.name}{\"\\n\"}{end}"},
 			wantError: false,
-			expected: []string{
-				"test-5",
-				"test",
-				"test-2",
-				"test-1",
-				"test-3",
-				"",
-			},
 		},
 	}
 
@@ -171,7 +132,7 @@ func TestPipelineResourceList(t *testing.T) {
 			if !td.wantError && err != nil {
 				t.Errorf("Unexpected error: %v", err)
 			}
-			test.AssertOutput(t, strings.Join(td.expected, "\n"), out)
+			golden.Assert(t, out, strings.ReplaceAll(fmt.Sprintf("%s.golden", t.Name()), "/", "-"))
 		})
 	}
 
