@@ -28,6 +28,7 @@ import (
 	"github.com/tektoncd/pipeline/pkg/reconciler/pipelinerun/resources"
 	pipelinetest "github.com/tektoncd/pipeline/test"
 	tb "github.com/tektoncd/pipeline/test/builder"
+	"gotest.tools/v3/golden"
 	corev1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"knative.dev/pkg/apis"
@@ -97,100 +98,54 @@ func TestListPipelineRuns(t *testing.T) {
 		command   *cobra.Command
 		args      []string
 		wantError bool
-		expected  []string
 	}{
 		{
 			name:      "Invalid namespace",
 			command:   command(t, prs, clock.Now(), ns),
 			args:      []string{"list", "-n", "invalid"},
 			wantError: true,
-			expected:  []string{"Error: namespaces \"invalid\" not found\n"},
 		},
 		{
 			name:      "by pipeline name",
 			command:   command(t, prs, clock.Now(), ns),
 			args:      []string{"list", "pipeline", "-n", "namespace"},
 			wantError: false,
-			expected: []string{
-				"NAME    STARTED          DURATION   STATUS      ",
-				"pr1-1   59 minutes ago   1 minute   Succeeded   ",
-				"",
-			},
 		},
 		{
 			name:      "all in namespace",
 			command:   command(t, prs, clock.Now(), ns),
 			args:      []string{"list", "-n", "namespace"},
 			wantError: false,
-			expected: []string{
-				"NAME    STARTED          DURATION   STATUS               ",
-				"pr0-1   ---              ---        ---                  ",
-				"pr3-1   ---              ---        ---                  ",
-				"pr1-1   59 minutes ago   1 minute   Succeeded            ",
-				"pr2-2   2 hours ago      1 minute   Failed               ",
-				"pr2-1   3 hours ago      ---        Succeeded(Running)   ",
-				"",
-			},
 		},
 		{
 			name:      "by template",
 			command:   command(t, prs, clock.Now(), ns),
 			args:      []string{"list", "-n", "namespace", "-o", "jsonpath={range .items[*]}{.metadata.name}{\"\\n\"}{end}"},
 			wantError: false,
-			expected: []string{
-				"pr0-1",
-				"pr3-1",
-				"pr1-1",
-				"pr2-2",
-				"pr2-1",
-				"",
-			},
 		},
 		{
 			name:      "limit pipelineruns returned to 1",
 			command:   command(t, prs, clock.Now(), ns),
 			args:      []string{"list", "-n", "namespace", "--limit", fmt.Sprintf("%d", 1)},
 			wantError: false,
-			expected: []string{
-				"NAME    STARTED   DURATION   STATUS   ",
-				"pr0-1   ---       ---        ---      ",
-				"",
-			},
 		},
 		{
 			name:      "limit pipelineruns negative case",
 			command:   command(t, prs, clock.Now(), ns),
 			args:      []string{"list", "-n", "namespace", "--limit", fmt.Sprintf("%d", -1)},
 			wantError: false,
-			expected: []string{
-				"",
-			},
 		},
 		{
 			name:      "limit pipelineruns greater than maximum case",
 			command:   command(t, prs, clock.Now(), ns),
 			args:      []string{"list", "-n", "namespace", "--limit", fmt.Sprintf("%d", 7)},
 			wantError: false,
-			expected: []string{
-				"NAME    STARTED          DURATION   STATUS               ",
-				"pr0-1   ---              ---        ---                  ",
-				"pr3-1   ---              ---        ---                  ",
-				"pr1-1   59 minutes ago   1 minute   Succeeded            ",
-				"pr2-2   2 hours ago      1 minute   Failed               ",
-				"pr2-1   3 hours ago      ---        Succeeded(Running)   ",
-				"",
-			},
 		},
 		{
 			name:      "limit pipelineruns with output flag set",
 			command:   command(t, prs, clock.Now(), ns),
 			args:      []string{"list", "-n", "namespace", "-o", "jsonpath={range .items[*]}{.metadata.name}{\"\\n\"}{end}", "--limit", fmt.Sprintf("%d", 2)},
 			wantError: false,
-			expected: []string{
-				"pr0-1",
-				"pr3-1",
-				"",
-			},
 		},
 	}
 
@@ -201,7 +156,7 @@ func TestListPipelineRuns(t *testing.T) {
 			if !td.wantError && err != nil {
 				t.Errorf("Unexpected error: %v", err)
 			}
-			test.AssertOutput(t, strings.Join(td.expected, "\n"), got)
+			golden.Assert(t, got, strings.ReplaceAll(fmt.Sprintf("%s.golden", t.Name()), "/", "-"))
 		})
 	}
 }

@@ -1,0 +1,26 @@
+Name:              pipeline-run
+Namespace:         ns
+Pipeline Ref:      pipeline
+Service Account:   test-sa
+
+Status
+
+STARTED          DURATION    STATUS
+10 minutes ago   5 minutes   Failed(Resource not found)
+
+Message
+
+Resource test-resource not found in the pipelinerun (Testing tr failed)
+
+Resources
+
+ No resources
+
+Params
+
+ No params
+
+Taskruns
+
+ NAME   TASK NAME   STARTED         DURATION    STATUS
+ tr-1   t-1         8 minutes ago   3 minutes   Failed
