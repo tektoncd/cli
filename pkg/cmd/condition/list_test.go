@@ -16,6 +16,7 @@ package condition
 
 import (
 	"errors"
+	"fmt"
 	"strings"
 	"testing"
 	"time"
@@ -26,6 +27,7 @@ import (
 	"github.com/tektoncd/pipeline/pkg/apis/pipeline/v1alpha1"
 	pipelinetest "github.com/tektoncd/pipeline/test"
 	tb "github.com/tektoncd/pipeline/test/builder"
+	"gotest.tools/v3/golden"
 	corev1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime"
@@ -75,85 +77,42 @@ func TestConditionList(t *testing.T) {
 		command   []string
 		input     pipelinetest.Clients
 		wantError bool
-		want      []string
 	}{
 		{
 			name:      "Invalid Namespace",
 			command:   []string{"ls", "-n", "invalid"},
 			input:     seeds[0],
 			wantError: true,
-			want:      []string{"namespaces \"invalid\" not found"},
 		},
 		{
 			name:      "Found no conditions",
 			command:   []string{"ls", "-n", "empty"},
 			input:     seeds[0],
 			wantError: false,
-			want:      []string{"No conditions found", ""},
 		},
 		{
 			name:      "Found conditions",
 			command:   []string{"ls", "-n", "ns"},
 			input:     seeds[0],
 			wantError: false,
-			want: []string{
-				"NAME         AGE",
-				"condition1   1 minute ago",
-				"condition2   20 seconds ago",
-				"condition3   3 weeks ago",
-				"",
-			},
 		},
 		{
 			name:      "Specify output flag",
 			command:   []string{"ls", "-n", "ns", "--output", "yaml"},
 			input:     seeds[0],
 			wantError: false,
-			want: []string{
-				"apiVersion: tekton.dev/v1alpha1",
-				"items:",
-				"- metadata:",
-				"    creationTimestamp: \"1984-04-03T23:59:00Z\"",
-				"    name: condition1",
-				"    namespace: ns",
-				"  spec:",
-				"    check:",
-				"      name: \"\"",
-				"      resources: {}",
-				"- metadata:",
-				"    creationTimestamp: \"1984-04-03T23:59:40Z\"",
-				"    name: condition2",
-				"    namespace: ns",
-				"  spec:",
-				"    check:",
-				"      name: \"\"",
-				"      resources: {}",
-				"- metadata:",
-				"    creationTimestamp: \"1984-03-13T16:00:00Z\"",
-				"    name: condition3",
-				"    namespace: ns",
-				"  spec:",
-				"    check:",
-				"      name: \"\"",
-				"      resources: {}",
-				"kind: ConditionList",
-				"metadata: {}",
-				"",
-			},
 		},
 		{
 			name:      "Failed to list condition resources",
 			command:   []string{"ls", "-n", "ns"},
 			input:     seeds[1],
 			wantError: true,
-			want:      []string{"test error"},
 		},
 		{
 			name:      "Failed to list condition resources with specify output flag",
 			command:   []string{"ls", "-n", "ns", "--output", "yaml"},
 			input:     seeds[1],
 			wantError: true,
-			want:      []string{"test error"},
 		},
 	}
 
@@ -162,20 +121,17 @@ func TestConditionList(t *testing.T) {
 			p := &test.Params{Tekton: tp.input.Pipeline, Kube: tp.input.Kube}
 			pipelineResource := Command(p)
 
-			want := strings.Join(tp.want, "\n")
-
 			out, err := test.ExecuteCommand(pipelineResource, tp.command...)
 			if tp.wantError {
 				if err == nil {
 					t.Errorf("Error expected here")
 				}
-				test.AssertOutput(t, want, err.Error())
 			} else {
 				if err != nil {
 					t.Errorf("Unexpected Error")
 				}
-				test.AssertOutput(t, want, out)
 			}
+			golden.Assert(t, out, strings.ReplaceAll(fmt.Sprintf("%s.golden", t.Name()), "/", "-"))
 		})
 	}
 }
