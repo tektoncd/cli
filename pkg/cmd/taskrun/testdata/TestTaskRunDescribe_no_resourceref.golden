@@ -1,0 +1,32 @@
+Name:        tr-1
+Namespace:   ns
+Task Ref:    t1
+
+Status
+
+STARTED         DURATION    STATUS
+9 minutes ago   ---         Succeeded
+
+Input Resources
+
+ NAME          RESOURCE REF
+ git           
+ image-input   image
+
+Output Resources
+
+ NAME            RESOURCE REF
+ image-output    
+ image-output2   
+
+Params
+
+ NAME     VALUE
+ input    param
+ input2   param2
+
+Steps
+
+ NAME    STATUS
+ step1   Completed
+ step2   Completed

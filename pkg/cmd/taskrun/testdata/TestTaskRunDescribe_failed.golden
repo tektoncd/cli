@@ -1,0 +1,28 @@
+Name:        tr-1
+Namespace:   ns
+Task Ref:    t1
+
+Status
+
+STARTED         DURATION    STATUS
+8 minutes ago   3 minutes   Failed
+
+Message
+
+Testing tr failed
+
+Input Resources
+
+No resources
+
+Output Resources
+
+No resources
+
+Params
+
+No params
+
+Steps
+
+No steps
