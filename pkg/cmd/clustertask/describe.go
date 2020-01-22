@@ -138,7 +138,7 @@ or
 		},
 	}
 
-	_ = c.MarkZshCompPositionalArgumentCustom(1, "__tkn_get_clustertask")
+	_ = c.MarkZshCompPositionalArgumentCustom(1, "__tkn_get_clustertasks")
 	f.AddFlags(c)
 	return c
 }
