@@ -31,7 +31,7 @@ import (
 
 const describeTemplate = `{{decorate "bold" "Name"}}:	{{ .ClusterTask.Name }}
 
-{{decorate "underline bold" "Input Resources\n"}}
+{{decorate "inputresources" ""}}{{decorate "underline bold" "Input Resources\n"}}
 
 {{- if not .ClusterTask.Spec.Inputs }}
  No input resources
@@ -46,7 +46,7 @@ const describeTemplate = `{{decorate "bold" "Name"}}:	{{ .ClusterTask.Name }}
 {{- end }}
 {{- end }}
 
-{{decorate "underline bold" "Output Resources\n"}}
+{{decorate "outputresources" ""}}{{decorate "underline bold" "Output Resources\n"}}
 
 {{- if not .ClusterTask.Spec.Outputs }}
  No output resources
@@ -62,7 +62,7 @@ const describeTemplate = `{{decorate "bold" "Name"}}:	{{ .ClusterTask.Name }}
 {{- end }}
 {{- end }}
 
-{{decorate "underline bold" "Params\n"}}
+{{decorate "params" ""}}{{decorate "underline bold" "Params\n"}}
 
 {{- if not .ClusterTask.Spec.Inputs }}
  No params
@@ -85,7 +85,7 @@ No params
 {{- end }}
 {{- end }}
 
-{{decorate "underline bold" "Steps\n"}}
+{{decorate "steps" ""}}{{decorate "underline bold" "Steps\n"}}
 
 {{- if eq (len .ClusterTask.Spec.Steps) 0 }}
  No steps
@@ -95,7 +95,7 @@ No params
 {{- end }}
 {{- end }}
 
-{{decorate "underline bold" "Taskruns\n"}}
+{{decorate "taskruns" ""}}{{decorate "underline bold" "Taskruns\n"}}
 
 {{- if eq (len .TaskRuns.Items) 0 }}
  No taskruns
