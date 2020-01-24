@@ -132,14 +132,16 @@ After installing tkn, create a link as kubectl-tkn
   ```shell
 $ ln -s /usr/local/bin/tkn /usr/local/bin/kubectl-tkn
   ```
-
-`kubectl` will find any binary named `kubectl-*` on your `PATH` and consider it as a plugin
-
+Run the following to confirm tkn is available as a plugin:
   ```shell
-$ ./kubectl plugin list
-/usr/local/bin/kubectl-tkn
+$ kubectl plugin list
   ```
-
+You should see the following after running kubectl plugin list if tkn is available as a plugin:
+  ```shell
+/usr/local/bin/kubectl-tkn
+```
+If the output above is shown, run kubectl-tkn to see the list of available tkn commands to run.
+  
 ### Useful Commands
 
 The following commands help you understand and effectively use the Tekton CLI:
