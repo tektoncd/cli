@@ -16,6 +16,7 @@ package pipeline
 
 import (
 	"fmt"
+	"strings"
 	"testing"
 	"time"
 
@@ -330,4 +331,37 @@ func TestPipelinesDescribe_with_multiple_resource_param_task_run(t *testing.T) {
 		t.Errorf("Unexpected error: %v", err)
 	}
 	golden.Assert(t, got, fmt.Sprintf("%s.golden", t.Name()))
+}
+
+func TestPipelinesDescribe_custom_output(t *testing.T) {
+	clock := clockwork.NewFakeClock()
+	cs, _ := test.SeedTestData(t, pipelinetest.Data{
+		Pipelines: []*v1alpha1.Pipeline{
+			tb.Pipeline("pipeline", "ns",
+				tb.PipelineSpec(
+					tb.PipelineDeclaredResource("name", v1alpha1.PipelineResourceTypeGit),
+				),
+			),
+		},
+		Namespaces: []*corev1.Namespace{
+			{
+				ObjectMeta: metav1.ObjectMeta{
+					Name: "ns",
+				},
+			},
+		},
+	})
+
+	p := &test.Params{Tekton: cs.Pipeline, Clock: clock, Kube: cs.Kube}
+	pipeline := Command(p)
+
+	got, err := test.ExecuteCommand(pipeline, "desc", "-o", "name", "-n", "ns", "pipeline")
+	if err != nil {
+		t.Errorf("Unexpected error: %v", err)
+	}
+
+	got = strings.TrimSpace(got)
+	if got != "pipeline.tekton.dev/pipeline" {
+		t.Errorf("Result should be 'pipeline.tekton.dev/pipeline' != '%s'", got)
+	}
 }
