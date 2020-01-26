@@ -17,6 +17,7 @@ package pipeline
 import (
 	"fmt"
 	"io"
+	"os"
 	"sort"
 	"strings"
 	"text/tabwriter"
@@ -26,8 +27,11 @@ import (
 	"github.com/tektoncd/cli/pkg/cli"
 	"github.com/tektoncd/cli/pkg/formatted"
 	validate "github.com/tektoncd/cli/pkg/helper/validate"
+	"github.com/tektoncd/cli/pkg/printer"
 	"github.com/tektoncd/pipeline/pkg/apis/pipeline/v1alpha1"
+	"github.com/tektoncd/pipeline/pkg/client/clientset/versioned"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+	"k8s.io/apimachinery/pkg/runtime/schema"
 	cliopts "k8s.io/cli-runtime/pkg/genericclioptions"
 )
 
@@ -101,6 +105,16 @@ func describeCommand(p cli.Params) *cobra.Command {
 				return err
 			}
 
+			output, err := cmd.LocalFlags().GetString("output")
+			if err != nil {
+				fmt.Fprint(os.Stderr, "Error: output option not set properly \n")
+				return err
+			}
+
+			if output != "" {
+				return describePipelineOutput(cmd.OutOrStdout(), p, f, args[0])
+			}
+
 			return printPipelineDescription(cmd.OutOrStdout(), p, args[0])
 		},
 	}
@@ -108,6 +122,37 @@ func describeCommand(p cli.Params) *cobra.Command {
 	_ = c.MarkZshCompPositionalArgumentCustom(1, "__tkn_get_pipeline")
 	f.AddFlags(c)
 	return c
+}
+
+func describePipelineOutput(w io.Writer, p cli.Params, f *cliopts.PrintFlags, pname string) error {
+	cs, err := p.Clients()
+	if err != nil {
+		return err
+	}
+
+	pipeline, err := outputPipeline(cs.Tekton, p.Namespace(), pname)
+	if err != nil {
+		return err
+	}
+	return printer.PrintObject(w, pipeline, f)
+}
+
+func outputPipeline(cs versioned.Interface, ns, pname string) (*v1alpha1.Pipeline, error) {
+	c := cs.TektonV1alpha1().Pipelines(ns)
+
+	pipeline, err := c.Get(pname, metav1.GetOptions{})
+	if err != nil {
+		return nil, err
+	}
+
+	// NOTE: this is required for -o json|yaml to work properly since
+	// tektoncd go client fails to set these; probably a bug
+	pipeline.GetObjectKind().SetGroupVersionKind(
+		schema.GroupVersionKind{
+			Version: "tekton.dev/v1alpha1",
+			Kind:    "Pipeline",
+		})
+	return pipeline, nil
 }
 
 func printPipelineDescription(out io.Writer, p cli.Params, pname string) error {
