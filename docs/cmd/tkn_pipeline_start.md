@@ -36,9 +36,11 @@ two parameters (foo and bar)
 ### Options
 
 ```
+      --dry-run                       preview pipelinerun without running it
   -h, --help                          help for start
   -l, --labels strings                pass labels as label=value.
   -L, --last                          re-run the pipeline using last pipelinerun values
+  -o, --output string                 format of pipelinerun dry-run (yaml or json)
   -p, --param stringArray             pass the param as key=value or key=value1,value2
   -r, --resource strings              pass the resource name and ref as name=ref
   -s, --serviceaccount string         pass the serviceaccount name

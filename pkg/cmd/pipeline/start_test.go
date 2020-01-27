@@ -360,6 +360,108 @@ func TestPipelineStart_ExecuteCommand(t *testing.T) {
 			wantError: true,
 			want:      "no pipelineruns related to pipeline test-pipeline found in namespace ns",
 		},
+		{
+			name: "Dry Run with invalid output",
+			command: []string{"start", "test-pipeline",
+				"-s=svc1",
+				"-r=source=scaffold-git",
+				"-p=pipeline-param=value1",
+				"-l=jemange=desfrites",
+				"-n", "ns",
+				"--dry-run",
+				"-o", "invalid",
+			},
+			namespace: "",
+			input:     cs2,
+			wantError: true,
+			want:      "output format specifed is invalid but must be yaml or json",
+		},
+		{
+			name: "Dry Run with only --dry-run specified",
+			command: []string{"start", "test-pipeline",
+				"-s=svc1",
+				"-r=source=scaffold-git",
+				"-p=pipeline-param=value1",
+				"-l=jemange=desfrites",
+				"-n", "ns",
+				"--dry-run",
+			},
+			namespace: "",
+			input:     cs2,
+			wantError: false,
+			want: `apiVersion: tekton.dev/v1alpha1
+kind: PipelineRun
+metadata:
+  creationTimestamp: null
+  generateName: test-pipeline-run-
+  labels:
+    jemange: desfrites
+  namespace: ns
+spec:
+  params:
+  - name: pipeline-param
+    value: value1
+  pipelineRef:
+    name: test-pipeline
+  podTemplate: {}
+  resources:
+  - name: source
+    resourceRef:
+      name: scaffold-git
+  serviceAccountName: svc1
+status: {}
+`,
+		},
+		{
+			name: "Dry Run with output=json",
+			command: []string{"start", "test-pipeline",
+				"-s=svc1",
+				"-r=source=scaffold-git",
+				"-p=pipeline-param=value1",
+				"-l=jemange=desfrites",
+				"-n", "ns",
+				"--dry-run",
+				"-o", "json",
+			},
+			namespace: "",
+			input:     cs2,
+			wantError: false,
+			want: `{
+	"kind": "PipelineRun",
+	"apiVersion": "tekton.dev/v1alpha1",
+	"metadata": {
+		"generateName": "test-pipeline-run-",
+		"namespace": "ns",
+		"creationTimestamp": null,
+		"labels": {
+			"jemange": "desfrites"
+		}
+	},
+	"spec": {
+		"pipelineRef": {
+			"name": "test-pipeline"
+		},
+		"resources": [
+			{
+				"name": "source",
+				"resourceRef": {
+					"name": "scaffold-git"
+				}
+			}
+		],
+		"params": [
+			{
+				"name": "pipeline-param",
+				"value": "value1"
+			}
+		],
+		"serviceAccountName": "svc1",
+		"podTemplate": {}
+	},
+	"status": {}
+}
+`,
+		},
 	}
 
 	for _, tp := range testParams {

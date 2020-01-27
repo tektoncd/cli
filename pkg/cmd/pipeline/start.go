@@ -15,6 +15,7 @@
 package pipeline
 
 import (
+	"encoding/json"
 	"errors"
 	"fmt"
 	"os"
@@ -22,6 +23,7 @@ import (
 
 	"github.com/AlecAivazis/survey/v2"
 	"github.com/AlecAivazis/survey/v2/terminal"
+	"github.com/ghodss/yaml"
 	"github.com/spf13/cobra"
 	"github.com/tektoncd/cli/pkg/cli"
 	"github.com/tektoncd/cli/pkg/cmd/pipelineresource"
@@ -59,6 +61,8 @@ type startOptions struct {
 	Last               bool
 	Labels             []string
 	ShowLog            bool
+	DryRun             bool
+	Output             string
 }
 
 type resourceOptionsFilter struct {
@@ -148,6 +152,8 @@ like cat,foo,bar
 	flags.AddShellCompletion(c.Flags().Lookup("task-serviceaccount"), "__kubectl_get_serviceaccount")
 	c.Flags().BoolVarP(&opt.Last, "last", "L", false, "re-run the pipeline using last pipelinerun values")
 	c.Flags().StringSliceVarP(&opt.Labels, "labels", "l", []string{}, "pass labels as label=value.")
+	c.Flags().BoolVarP(&opt.DryRun, "dry-run", "", false, "preview pipelinerun without running it")
+	c.Flags().StringVarP(&opt.Output, "output", "o", "", "format of pipelinerun dry-run (yaml or json)")
 
 	_ = c.MarkZshCompPositionalArgumentCustom(1, "__tkn_get_pipeline")
 
@@ -376,6 +382,10 @@ func getOptionsByType(resources resourceOptionsFilter, restype string) []string 
 
 func (opt *startOptions) startPipeline(pName string) error {
 	pr := &v1alpha1.PipelineRun{
+		TypeMeta: metav1.TypeMeta{
+			APIVersion: "tekton.dev/v1alpha1",
+			Kind:       "PipelineRun",
+		},
 		ObjectMeta: metav1.ObjectMeta{
 			Namespace:    opt.cliparams.Namespace(),
 			GenerateName: pName + "-run-",
@@ -424,6 +434,10 @@ func (opt *startOptions) startPipeline(pName string) error {
 
 	if len(opt.ServiceAccountName) > 0 {
 		pr.Spec.ServiceAccountName = opt.ServiceAccountName
+	}
+
+	if opt.DryRun {
+		return pipelineRunDryRun(opt.Output, opt.stream, pr)
 	}
 
 	prCreated, err := cs.Tekton.TektonV1alpha1().PipelineRuns(opt.cliparams.Namespace()).Create(pr)
@@ -566,4 +580,30 @@ func (opt *startOptions) createPipelineResource(resName string, resType v1alpha1
 	}
 	fmt.Fprintf(opt.stream.Out, "New %s resource \"%s\" has been created\n", newRes.Spec.Type, newRes.Name)
 	return newRes, nil
+}
+
+func pipelineRunDryRun(output string, s *cli.Stream, pr *v1alpha1.PipelineRun) error {
+	format := strings.ToLower(output)
+
+	if format != "" && format != "json" && format != "yaml" {
+		return fmt.Errorf("output format specifed is %s but must be yaml or json", output)
+	}
+
+	if format == "" || format == "yaml" {
+		prBytes, err := yaml.Marshal(pr)
+		if err != nil {
+			return err
+		}
+		fmt.Fprintf(s.Out, "%s", prBytes)
+	}
+
+	if format == "json" {
+		prBytes, err := json.MarshalIndent(pr, "", "\t")
+		if err != nil {
+			return err
+		}
+		fmt.Fprintf(s.Out, "%s\n", prBytes)
+	}
+
+	return nil
 }
