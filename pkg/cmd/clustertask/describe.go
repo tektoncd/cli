@@ -16,6 +16,8 @@ package clustertask
 
 import (
 	"fmt"
+	"io"
+	"os"
 	"sort"
 	"text/tabwriter"
 	"text/template"
@@ -24,8 +26,10 @@ import (
 	"github.com/spf13/cobra"
 	"github.com/tektoncd/cli/pkg/cli"
 	"github.com/tektoncd/cli/pkg/formatted"
+	"github.com/tektoncd/cli/pkg/printer"
 	"github.com/tektoncd/pipeline/pkg/apis/pipeline/v1alpha1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+	"k8s.io/apimachinery/pkg/runtime/schema"
 	cliopts "k8s.io/cli-runtime/pkg/genericclioptions"
 )
 
@@ -134,6 +138,16 @@ or
 				Err: cmd.OutOrStderr(),
 			}
 
+			output, err := cmd.LocalFlags().GetString("output")
+			if err != nil {
+				fmt.Fprint(os.Stderr, "Error: output option not set properly \n")
+				return err
+			}
+
+			if output != "" {
+				return describeClusterTaskOutput(cmd.OutOrStdout(), p, f, args[0])
+			}
+
 			return printClusterTaskDescription(s, p, args[0])
 		},
 	}
@@ -141,6 +155,30 @@ or
 	_ = c.MarkZshCompPositionalArgumentCustom(1, "__tkn_get_clustertasks")
 	f.AddFlags(c)
 	return c
+}
+
+func describeClusterTaskOutput(w io.Writer, p cli.Params, f *cliopts.PrintFlags, name string) error {
+	cs, err := p.Clients()
+	if err != nil {
+		return err
+	}
+
+	c := cs.Tekton.TektonV1alpha1().ClusterTasks()
+
+	clustertask, err := c.Get(name, metav1.GetOptions{})
+	if err != nil {
+		return err
+	}
+
+	// NOTE: this is required for -o json|yaml to work properly since
+	// tektoncd go client fails to set these; probably a bug
+	clustertask.GetObjectKind().SetGroupVersionKind(
+		schema.GroupVersionKind{
+			Version: "tekton.dev/v1alpha1",
+			Kind:    "ClusterTask",
+		})
+
+	return printer.PrintObject(w, clustertask, f)
 }
 
 func printClusterTaskDescription(s *cli.Stream, p cli.Params, tname string) error {
