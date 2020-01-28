@@ -215,3 +215,38 @@ func Test_ClusterTaskDescribe(t *testing.T) {
 		})
 	}
 }
+
+func TestClusterTask_custom_output(t *testing.T) {
+	name := "clustertask"
+	expected := "clustertask.tekton.dev/" + name
+
+	clock := clockwork.NewFakeClock()
+
+	cstasks := []*v1alpha1.ClusterTask{
+		tb.ClusterTask(name),
+	}
+
+	cs, _ := test.SeedTestData(t, pipelinetest.Data{
+		ClusterTasks: cstasks,
+		Namespaces: []*corev1.Namespace{
+			{
+				ObjectMeta: metav1.ObjectMeta{
+					Name: "",
+				},
+			},
+		},
+	})
+
+	p := &test.Params{Tekton: cs.Pipeline, Clock: clock, Kube: cs.Kube}
+	clustertask := Command(p)
+
+	got, err := test.ExecuteCommand(clustertask, "desc", "-o", "name", name)
+	if err != nil {
+		t.Errorf("Unexpected error: %v", err)
+	}
+
+	got = strings.TrimSpace(got)
+	if got != expected {
+		t.Errorf("Result should be '%s' != '%s'", got, expected)
+	}
+}
