@@ -29,7 +29,6 @@ import (
 	validate "github.com/tektoncd/cli/pkg/helper/validate"
 	"github.com/tektoncd/cli/pkg/printer"
 	"github.com/tektoncd/pipeline/pkg/apis/pipeline/v1alpha1"
-	"github.com/tektoncd/pipeline/pkg/client/clientset/versioned"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime/schema"
 	cliopts "k8s.io/cli-runtime/pkg/genericclioptions"
@@ -124,35 +123,28 @@ func describeCommand(p cli.Params) *cobra.Command {
 	return c
 }
 
-func describePipelineOutput(w io.Writer, p cli.Params, f *cliopts.PrintFlags, pname string) error {
+func describePipelineOutput(w io.Writer, p cli.Params, f *cliopts.PrintFlags, name string) error {
 	cs, err := p.Clients()
 	if err != nil {
 		return err
 	}
 
-	pipeline, err := outputPipeline(cs.Tekton, p.Namespace(), pname)
+	c := cs.Tekton.TektonV1alpha1().Pipelines(p.Namespace())
+
+	task, err := c.Get(name, metav1.GetOptions{})
 	if err != nil {
 		return err
-	}
-	return printer.PrintObject(w, pipeline, f)
-}
-
-func outputPipeline(cs versioned.Interface, ns, pname string) (*v1alpha1.Pipeline, error) {
-	c := cs.TektonV1alpha1().Pipelines(ns)
-
-	pipeline, err := c.Get(pname, metav1.GetOptions{})
-	if err != nil {
-		return nil, err
 	}
 
 	// NOTE: this is required for -o json|yaml to work properly since
 	// tektoncd go client fails to set these; probably a bug
-	pipeline.GetObjectKind().SetGroupVersionKind(
+	task.GetObjectKind().SetGroupVersionKind(
 		schema.GroupVersionKind{
 			Version: "tekton.dev/v1alpha1",
 			Kind:    "Pipeline",
 		})
-	return pipeline, nil
+
+	return printer.PrintObject(w, task, f)
 }
 
 func printPipelineDescription(out io.Writer, p cli.Params, pname string) error {
