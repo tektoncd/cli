@@ -16,8 +16,10 @@ package pipelineresource
 
 import (
 	"fmt"
+	"strings"
 	"testing"
 
+	"github.com/jonboulle/clockwork"
 	"github.com/tektoncd/cli/pkg/test"
 	"github.com/tektoncd/pipeline/pkg/apis/pipeline/v1alpha1"
 	pipelinetest "github.com/tektoncd/pipeline/test"
@@ -119,4 +121,39 @@ func TestPipelineResourceDescribe_WithSecretParams(t *testing.T) {
 	pipelineresource := Command(p)
 	out, _ := test.ExecuteCommand(pipelineresource, "desc", "test-1", "-n", "test-ns-1")
 	golden.Assert(t, out, fmt.Sprintf("%s.golden", t.Name()))
+}
+
+func TestPipelineResourcesDescribe_custom_output(t *testing.T) {
+	name := "pipeline-resource"
+	expected := "pipelineresource.tekton.dev/" + name
+
+	clock := clockwork.NewFakeClock()
+
+	prs := []*v1alpha1.PipelineResource{
+		tb.PipelineResource(name, "ns"),
+	}
+
+	cs, _ := test.SeedTestData(t, pipelinetest.Data{
+		PipelineResources: prs,
+		Namespaces: []*corev1.Namespace{
+			{
+				ObjectMeta: metav1.ObjectMeta{
+					Name: "",
+				},
+			},
+		},
+	})
+
+	p := &test.Params{Tekton: cs.Pipeline, Clock: clock, Kube: cs.Kube}
+	run := Command(p)
+
+	got, err := test.ExecuteCommand(run, "desc", "-o", "name", name)
+	if err != nil {
+		t.Errorf("Unexpected error: %v", err)
+	}
+
+	got = strings.TrimSpace(got)
+	if got != expected {
+		t.Errorf("Result should be '%s' != '%s'", got, expected)
+	}
 }
