@@ -16,6 +16,7 @@ package taskrun
 
 import (
 	"fmt"
+	"strings"
 	"testing"
 	"time"
 
@@ -698,5 +699,40 @@ func Test_SortStepStatesByStartTime_Steps_Terminated_And_Running(t *testing.T) {
 	element3 := sortedSteps[3].Name
 	if element3 != "step4" {
 		t.Errorf("sortStepStatesByStartTime should be step3 but returned: %s", element3)
+	}
+}
+
+func TestPipelineRunsDescribe_custom_output(t *testing.T) {
+	name := "task-run"
+	expected := "taskrun.tekton.dev/" + name
+
+	clock := clockwork.NewFakeClock()
+
+	trs := []*v1alpha1.TaskRun{
+		tb.TaskRun(name, "ns"),
+	}
+
+	cs, _ := test.SeedTestData(t, pipelinetest.Data{
+		TaskRuns: trs,
+		Namespaces: []*corev1.Namespace{
+			{
+				ObjectMeta: metav1.ObjectMeta{
+					Name: "ns",
+				},
+			},
+		},
+	})
+
+	p := &test.Params{Tekton: cs.Pipeline, Clock: clock, Kube: cs.Kube}
+	pipelinerun := Command(p)
+
+	got, err := test.ExecuteCommand(pipelinerun, "desc", "-o", "name", "-n", "ns", name)
+	if err != nil {
+		t.Errorf("Unexpected error: %v", err)
+	}
+
+	got = strings.TrimSpace(got)
+	if got != expected {
+		t.Errorf("Result should be '%s' != '%s'", got, expected)
 	}
 }
