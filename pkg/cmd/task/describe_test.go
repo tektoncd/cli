@@ -17,6 +17,7 @@ package task
 import (
 	"errors"
 	"fmt"
+	"strings"
 	"testing"
 	"time"
 
@@ -272,4 +273,38 @@ func TestTaskDescribe_TaskRunError(t *testing.T) {
 	expected := "failed to get taskruns for task task-1 \nError: fake list taskrun error\n"
 	test.AssertOutput(t, expected, out)
 	test.AssertOutput(t, "fake list taskrun error", err.Error())
+}
+
+func TestTaskDescribe_custom_output(t *testing.T) {
+	name := "task"
+	expected := "task.tekton.dev/" + name
+
+	clock := clockwork.NewFakeClock()
+
+	tasks := []*v1alpha1.Task{
+		tb.Task(name, "ns"),
+	}
+
+	cs, _ := test.SeedTestData(t, pipelinetest.Data{
+		Tasks: tasks,
+		Namespaces: []*corev1.Namespace{
+			{
+				ObjectMeta: metav1.ObjectMeta{
+					Name: "ns",
+				},
+			},
+		},
+	})
+
+	p := &test.Params{Tekton: cs.Pipeline, Clock: clock, Kube: cs.Kube}
+	task := Command(p)
+	got, err := test.ExecuteCommand(task, "desc", "-o", "name", "-n", "ns", name)
+	if err != nil {
+		t.Errorf("Unexpected error: %v", err)
+	}
+
+	got = strings.TrimSpace(got)
+	if got != expected {
+		t.Errorf("Result should be '%s' != '%s'", got, expected)
+	}
 }
