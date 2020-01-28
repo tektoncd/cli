@@ -59,7 +59,7 @@ func DecorateAttr(attrString, message string) string {
 	case "outputresources":
 		return fmt.Sprintf("📡 ")
 	case "steps":
-		return fmt.Sprintf("🦶🏻 ")
+		return fmt.Sprintf("🦶 ")
 	case "message":
 		return fmt.Sprintf("💌 ")
 	case "taskruns":
