@@ -16,6 +16,8 @@ package taskrun
 
 import (
 	"fmt"
+	"io"
+	"os"
 	"sort"
 	"text/tabwriter"
 	"text/template"
@@ -24,9 +26,11 @@ import (
 	"github.com/tektoncd/cli/pkg/cli"
 	"github.com/tektoncd/cli/pkg/formatted"
 	validate "github.com/tektoncd/cli/pkg/helper/validate"
+	"github.com/tektoncd/cli/pkg/printer"
 	"github.com/tektoncd/pipeline/pkg/apis/pipeline/v1alpha1"
 	corev1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+	"k8s.io/apimachinery/pkg/runtime/schema"
 	cliopts "k8s.io/cli-runtime/pkg/genericclioptions"
 )
 
@@ -135,9 +139,18 @@ or
 				Out: cmd.OutOrStdout(),
 				Err: cmd.OutOrStderr(),
 			}
-
 			if err := validate.NamespaceExists(p); err != nil {
 				return err
+			}
+
+			output, err := cmd.LocalFlags().GetString("output")
+			if err != nil {
+				fmt.Fprint(os.Stderr, "Error: output option not set properly \n")
+				return err
+			}
+
+			if output != "" {
+				return describeTaskRunOutput(cmd.OutOrStdout(), p, f, args[0])
 			}
 
 			return printTaskRunDescription(s, args[0], p)
@@ -148,6 +161,30 @@ or
 	f.AddFlags(c)
 
 	return c
+}
+
+func describeTaskRunOutput(w io.Writer, p cli.Params, f *cliopts.PrintFlags, name string) error {
+	cs, err := p.Clients()
+	if err != nil {
+		return err
+	}
+
+	c := cs.Tekton.TektonV1alpha1().TaskRuns(p.Namespace())
+
+	taskrun, err := c.Get(name, metav1.GetOptions{})
+	if err != nil {
+		return err
+	}
+
+	// NOTE: this is required for -o json|yaml to work properly since
+	// tektoncd go client fails to set these; probably a bug
+	taskrun.GetObjectKind().SetGroupVersionKind(
+		schema.GroupVersionKind{
+			Version: "tekton.dev/v1alpha1",
+			Kind:    "TaskRun",
+		})
+
+	return printer.PrintObject(w, taskrun, f)
 }
 
 func printTaskRunDescription(s *cli.Stream, trName string, p cli.Params) error {
