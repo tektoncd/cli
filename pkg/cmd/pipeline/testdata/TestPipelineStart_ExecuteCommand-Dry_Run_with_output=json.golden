@@ -1,0 +1,34 @@
+{
+	"kind": "PipelineRun",
+	"apiVersion": "tekton.dev/v1alpha1",
+	"metadata": {
+		"generateName": "test-pipeline-run-",
+		"namespace": "ns",
+		"creationTimestamp": null,
+		"labels": {
+			"jemange": "desfrites"
+		}
+	},
+	"spec": {
+		"pipelineRef": {
+			"name": "test-pipeline"
+		},
+		"resources": [
+			{
+				"name": "source",
+				"resourceRef": {
+					"name": "scaffold-git"
+				}
+			}
+		],
+		"params": [
+			{
+				"name": "pipeline-param",
+				"value": "value1"
+			}
+		],
+		"serviceAccountName": "svc1",
+		"podTemplate": {}
+	},
+	"status": {}
+}

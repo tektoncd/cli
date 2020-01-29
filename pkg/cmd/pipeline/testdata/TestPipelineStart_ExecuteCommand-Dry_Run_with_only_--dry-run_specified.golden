@@ -1,0 +1,21 @@
+apiVersion: tekton.dev/v1alpha1
+kind: PipelineRun
+metadata:
+  creationTimestamp: null
+  generateName: test-pipeline-run-
+  labels:
+    jemange: desfrites
+  namespace: ns
+spec:
+  params:
+  - name: pipeline-param
+    value: value1
+  pipelineRef:
+    name: test-pipeline
+  podTemplate: {}
+  resources:
+  - name: source
+    resourceRef:
+      name: scaffold-git
+  serviceAccountName: svc1
+status: {}
