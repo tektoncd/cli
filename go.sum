@@ -237,7 +237,6 @@ github.com/stretchr/testify v1.4.0 h1:2E4SXV/wtOkTonXsotYi4li6zVWxYlZuYNCXe9XRJy
 github.com/stretchr/testify v1.4.0/go.mod h1:j7eGeouHqKxXV5pUuKE4zz7dFj8WfuZ+81PSLYec5m4=
 github.com/tektoncd/pipeline v0.9.2 h1:eJ9x1KY/XpUGmTjNdowRHF7G9FozKGptHnEGwKO4W/I=
 github.com/tektoncd/pipeline v0.9.2/go.mod h1:IZzJdiX9EqEMuUcgdnElozdYYRh0/ZRC+NKMLj1K3Yw=
-github.com/tektoncd/pipeline v0.10.0 h1:znCqo/kMts+rvt8eB/8W2dBniN3e51tCzQ7aRo8PFKs=
 github.com/tektoncd/plumbing v0.0.0-20191218171343-56a836c50336 h1:gTedwNTH1vMF6wlA6wvQqinpH0ls8G6oQgsaHuuqCGc=
 github.com/tektoncd/plumbing v0.0.0-20191218171343-56a836c50336/go.mod h1:QZHgU07PRBTRF6N57w4+ApRu8OgfYLFNqCDlfEZaD9Y=
 github.com/tektoncd/plumbing/pipelinerun-logs v0.0.0-20191206114338-712d544c2c21/go.mod h1:S62EUWtqmejjJgUMOGB1CCCHRp6C706laH06BoALkzU=
@@ -405,7 +404,6 @@ k8s.io/api v0.0.0-20191004102255-dacd7df5a50b h1:38Nx0U83WjBqn1hUWxlgKc7mvH7WhyH
 k8s.io/api v0.0.0-20191004102255-dacd7df5a50b/go.mod h1:iuAfoD4hCxJ8Onx9kaTIt30j7jUFS00AXQi6QMi99vA=
 k8s.io/apimachinery v0.0.0-20191004074956-01f8b7d1121a h1:lDydUqHrbL/1l5ZQrqD1RIlabhmX8aiZEtxVUb+30iU=
 k8s.io/apimachinery v0.0.0-20191004074956-01f8b7d1121a/go.mod h1:ccL7Eh7zubPUSh9A3USN90/OzHNSVN6zxzde07TDCL0=
-k8s.io/apimachinery v0.17.2 h1:hwDQQFbdRlpnnsR64Asdi55GyCaIP/3WQpMmbNBeWr4=
 k8s.io/cli-runtime v0.0.0-20191004110054-fe9b9282443f h1:vJOrMsZe+RD884n+WQ5So2oOp7SajI0Op3oOBg64ZsY=
 k8s.io/cli-runtime v0.0.0-20191004110054-fe9b9282443f/go.mod h1:qWnH3/b8sp/l7EvlDh7ulDU3UWA4P4N1NFbEEP791tM=
 k8s.io/client-go v0.0.0-20191004102537-eb5b9a8cfde7 h1:WyPHgjjXvF4zVVwKGZKKiJGBUW45AuN44uSOuH8euuE=

@@ -24,8 +24,8 @@ import (
 	"testing"
 	"time"
 
-	"github.com/stretchr/testify/assert"
 	"github.com/tektoncd/cli/pkg/test"
+	"gotest.tools/v3/assert"
 )
 
 func TestVersionGood(t *testing.T) {
@@ -67,7 +67,7 @@ func TestVersionGood(t *testing.T) {
 			cli := NewClient(time.Duration(0))
 			cli.httpClient = httpClient
 			output, err := checkRelease(cli)
-			assert.Nil(t, err)
+			assert.NilError(t, err)
 			assert.Equal(t, s.expected, output)
 		})
 	}
@@ -75,7 +75,7 @@ func TestVersionGood(t *testing.T) {
 	clientVersion = "v1.2.3"
 	version := Command()
 	got, err := test.ExecuteCommand(version, "version", "")
-	assert.Nil(t, err)
+	assert.NilError(t, err)
 	assert.Equal(t, "Client version: "+clientVersion+"\n", got)
 
 }
@@ -121,7 +121,7 @@ func TestVersionBad(t *testing.T) {
 			cli.httpClient = httpClient
 			output, err := checkRelease(cli)
 			assert.Error(t, err, s.expectederr)
-			assert.Empty(t, output)
+			assert.Assert(t, output == "")
 		})
 	}
 }
