@@ -34,7 +34,7 @@ require (
 	github.com/pkg/errors v0.8.1
 	github.com/spf13/cobra v0.0.5
 	github.com/spf13/pflag v1.0.5
-	github.com/stretchr/testify v1.4.0
+	github.com/stretchr/testify v1.4.0 // indirect
 	github.com/tektoncd/pipeline v0.9.2
 	github.com/tektoncd/plumbing v0.0.0-20191218171343-56a836c50336
 	github.com/tektoncd/triggers v0.1.1-0.20191218175743-c5b8b4d9ee00

@@ -19,8 +19,8 @@ import (
 
 	"github.com/fatih/color"
 	"github.com/spf13/cobra"
-	"github.com/stretchr/testify/assert"
 	"github.com/tektoncd/cli/pkg/cli"
+	"gotest.tools/v3/assert"
 )
 
 func TestFlags_add_shell_completion(t *testing.T) {
@@ -50,6 +50,6 @@ func TestFlags_colouring(t *testing.T) {
 	// assert.False(t, color.NoColor)
 
 	_ = InitParams(&cli.TektonParams{}, &cobra.Command{})
-	assert.True(t, color.NoColor)
+	assert.Assert(t, color.NoColor == true)
 
 }

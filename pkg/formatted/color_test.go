@@ -20,16 +20,15 @@ import (
 	"testing"
 
 	"github.com/fatih/color"
-	"github.com/stretchr/testify/assert"
 	"github.com/tektoncd/cli/pkg/test"
+	"gotest.tools/v3/assert"
 )
 
 func TestRainbowsColours(t *testing.T) {
 	rb := newRainbow()
 	assert.Equal(t, rb.counter.value, uint32(0)) // nothing
 
-	c := rb.get("a") // get a label
-	assert.NotNil(t, c)
+	_ = rb.get("a") // get a label
 	assert.Equal(t, rb.counter.value, uint32(1))
 
 	_ = rb.get("b") // incremented

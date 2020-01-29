@@ -20,11 +20,10 @@ import (
 	"testing"
 
 	"github.com/ghodss/yaml"
-
 	"github.com/google/go-cmp/cmp"
-	"github.com/stretchr/testify/assert"
 	"github.com/tektoncd/cli/pkg/test"
 	"github.com/tektoncd/pipeline/pkg/apis/pipeline/v1alpha1"
+	"gotest.tools/v3/assert"
 )
 
 func TestLoadLocalFile(t *testing.T) {
@@ -62,6 +61,5 @@ func TestGetError(t *testing.T) {
 	target := "httpz://foo.com/task.yaml"
 
 	_, err := LoadFileContent(p, target, IsYamlFile(), fmt.Errorf("inavlid file format for %s: .yaml or .yml file extension and format required", target))
-	assert.NotNil(t, err)
-	test.AssertOutput(t, "Get httpz://foo.com/task.yaml: unsupported protocol scheme \"httpz\"", err.Error())
+	assert.Error(t, err, `Get httpz://foo.com/task.yaml: unsupported protocol scheme "httpz"`)
 }

@@ -3,13 +3,11 @@ package formatted
 import (
 	"testing"
 
-	"github.com/stretchr/testify/assert"
-	"knative.dev/pkg/apis/duck/v1beta1"
-
+	"github.com/fatih/color"
+	"gotest.tools/v3/assert"
 	corev1 "k8s.io/api/core/v1"
 	"knative.dev/pkg/apis"
-
-	"github.com/fatih/color"
+	"knative.dev/pkg/apis/duck/v1beta1"
 )
 
 func TestColor(t *testing.T) {
