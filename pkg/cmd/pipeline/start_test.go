@@ -18,6 +18,7 @@ import (
 	"errors"
 	"fmt"
 	"reflect"
+	"strings"
 	"testing"
 	"time"
 
@@ -35,6 +36,7 @@ import (
 	"github.com/tektoncd/pipeline/pkg/reconciler/pipelinerun/resources"
 	pipelinetest "github.com/tektoncd/pipeline/test"
 	tb "github.com/tektoncd/pipeline/test/builder"
+	"gotest.tools/v3/golden"
 	corev1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	v1 "k8s.io/apimachinery/pkg/apis/meta/v1"
@@ -200,12 +202,13 @@ func TestPipelineStart_ExecuteCommand(t *testing.T) {
 	cs5 := pipelinetest.Clients{Pipeline: pClient, Kube: seedData.Kube}
 
 	testParams := []struct {
-		name      string
-		command   []string
-		namespace string
-		input     pipelinetest.Clients
-		wantError bool
-		want      string
+		name       string
+		command    []string
+		namespace  string
+		input      pipelinetest.Clients
+		wantError  bool
+		want       string
+		goldenFile bool
 	}{
 		{
 			name:      "Invalid namespace",
@@ -386,31 +389,10 @@ func TestPipelineStart_ExecuteCommand(t *testing.T) {
 				"-n", "ns",
 				"--dry-run",
 			},
-			namespace: "",
-			input:     cs2,
-			wantError: false,
-			want: `apiVersion: tekton.dev/v1alpha1
-kind: PipelineRun
-metadata:
-  creationTimestamp: null
-  generateName: test-pipeline-run-
-  labels:
-    jemange: desfrites
-  namespace: ns
-spec:
-  params:
-  - name: pipeline-param
-    value: value1
-  pipelineRef:
-    name: test-pipeline
-  podTemplate: {}
-  resources:
-  - name: source
-    resourceRef:
-      name: scaffold-git
-  serviceAccountName: svc1
-status: {}
-`,
+			namespace:  "",
+			input:      cs2,
+			wantError:  false,
+			goldenFile: true,
 		},
 		{
 			name: "Dry Run with output=json",
@@ -423,44 +405,10 @@ status: {}
 				"--dry-run",
 				"-o", "json",
 			},
-			namespace: "",
-			input:     cs2,
-			wantError: false,
-			want: `{
-	"kind": "PipelineRun",
-	"apiVersion": "tekton.dev/v1alpha1",
-	"metadata": {
-		"generateName": "test-pipeline-run-",
-		"namespace": "ns",
-		"creationTimestamp": null,
-		"labels": {
-			"jemange": "desfrites"
-		}
-	},
-	"spec": {
-		"pipelineRef": {
-			"name": "test-pipeline"
-		},
-		"resources": [
-			{
-				"name": "source",
-				"resourceRef": {
-					"name": "scaffold-git"
-				}
-			}
-		],
-		"params": [
-			{
-				"name": "pipeline-param",
-				"value": "value1"
-			}
-		],
-		"serviceAccountName": "svc1",
-		"podTemplate": {}
-	},
-	"status": {}
-}
-`,
+			namespace:  "",
+			input:      cs2,
+			wantError:  false,
+			goldenFile: true,
 		},
 	}
 
@@ -472,7 +420,7 @@ status: {}
 			}
 			c := Command(p)
 
-			out, err := test.ExecuteCommand(c, tp.command...)
+			got, err := test.ExecuteCommand(c, tp.command...)
 			if tp.wantError {
 				if err == nil {
 					t.Errorf("error expected here")
@@ -482,7 +430,11 @@ status: {}
 				if err != nil {
 					t.Errorf("unexpected Error")
 				}
-				test.AssertOutput(t, tp.want, out)
+				if tp.goldenFile {
+					golden.Assert(t, got, strings.ReplaceAll(fmt.Sprintf("%s.golden", t.Name()), "/", "-"))
+				} else {
+					test.AssertOutput(t, tp.want, got)
+				}
 			}
 		})
 	}
