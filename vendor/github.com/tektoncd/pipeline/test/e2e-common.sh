@@ -16,7 +16,7 @@
 
 # Helper functions for E2E tests.
 
-source $(dirname $0)/../vendor/github.com/tektoncd/plumbing/scripts/e2e-tests.sh
+source $(git rev-parse --show-toplevel)/vendor/github.com/tektoncd/plumbing/scripts/e2e-tests.sh
 
 function teardown() {
     subheader "Tearing down Tekton Pipelines"
@@ -93,8 +93,9 @@ function create_resources() {
   local resource=$1
   echo ">> Creating resources ${resource}"
 
-  # Applying the resources, either *taskruns or * *pipelineruns
-  for file in $(find ${REPO_ROOT_DIR}/examples/${resource}s/ -name *.yaml -not -path "${REPO_ROOT_DIR}/examples/${resource}s/no-ci/*" | sort); do
+  # Applying the resources, either *taskruns or * *pipelineruns except those
+  # in the no-ci directory
+  for file in $(find ${REPO_ROOT_DIR}/examples/${resource}s/ -name '*.yaml' -not -path '*/no-ci/*' | sort); do
     perl -p -e 's/gcr.io\/christiewilson-catfactory/$ENV{KO_DOCKER_REPO}/g' ${file} | ko create -f - || return 1
   done
 }

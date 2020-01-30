@@ -12,7 +12,6 @@ spec:
     value: value1
   pipelineRef:
     name: test-pipeline
-  podTemplate: {}
   resources:
   - name: source
     resourceRef:

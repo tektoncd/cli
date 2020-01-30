@@ -92,10 +92,8 @@ func newStatsExporter(o Options) (*statsExporter, error) {
 	}
 
 	opts := append(o.MonitoringClientOptions, option.WithUserAgent(userAgent))
-	ctx := o.Context
-	if ctx == nil {
-		ctx = context.Background()
-	}
+	ctx, cancel := o.newContextWithTimeout()
+	defer cancel()
 	client, err := monitoring.NewMetricClient(ctx, opts...)
 	if err != nil {
 		return nil, err

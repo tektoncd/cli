@@ -138,13 +138,12 @@ func TaskSpec(ops ...TaskSpecOp) TaskOp {
 
 // Step adds a step with the specified name and image to the TaskSpec.
 // Any number of Container modifier can be passed to transform it.
-func Step(name, image string, ops ...StepOp) TaskSpecOp {
+func Step(image string, ops ...StepOp) TaskSpecOp {
 	return func(spec *v1alpha1.TaskSpec) {
 		if spec.Steps == nil {
 			spec.Steps = []v1alpha1.Step{}
 		}
 		step := v1alpha1.Step{Container: corev1.Container{
-			Name:  name,
 			Image: image,
 		}}
 		for _, op := range ops {
@@ -164,6 +163,18 @@ func Sidecar(name, image string, ops ...ContainerOp) TaskSpecOp {
 			op(&c)
 		}
 		spec.Sidecars = append(spec.Sidecars, c)
+	}
+}
+
+// TaskWorkspace adds a workspace declaration.
+func TaskWorkspace(name, desc, mountPath string, readOnly bool) TaskSpecOp {
+	return func(spec *v1alpha1.TaskSpec) {
+		spec.Workspaces = append(spec.Workspaces, v1alpha1.WorkspaceDeclaration{
+			Name:        name,
+			Description: desc,
+			MountPath:   mountPath,
+			ReadOnly:    readOnly,
+		})
 	}
 }
 
@@ -239,6 +250,12 @@ func InputsResource(name string, resourceType v1alpha1.PipelineResourceType, ops
 	}
 }
 
+func ResourceOptional(optional bool) TaskResourceOp {
+	return func(r *v1alpha1.TaskResource) {
+		r.Optional = optional
+	}
+}
+
 func ResourceTargetPath(path string) TaskResourceOp {
 	return func(r *v1alpha1.TaskResource) {
 		r.TargetPath = path
@@ -246,13 +263,17 @@ func ResourceTargetPath(path string) TaskResourceOp {
 }
 
 // OutputsResource adds a resource, with specified name and type, to the Outputs.
-func OutputsResource(name string, resourceType v1alpha1.PipelineResourceType) OutputsOp {
+func OutputsResource(name string, resourceType v1alpha1.PipelineResourceType, ops ...TaskResourceOp) OutputsOp {
 	return func(o *v1alpha1.Outputs) {
-		o.Resources = append(o.Resources, v1alpha1.TaskResource{
+		r := &v1alpha1.TaskResource{
 			ResourceDeclaration: v1alpha1.ResourceDeclaration{
 				Name: name,
 				Type: resourceType,
-			}})
+			}}
+		for _, op := range ops {
+			op(r)
+		}
+		o.Resources = append(o.Resources, *r)
 	}
 }
 
@@ -375,6 +396,9 @@ func TaskRunNilTimeout(spec *v1alpha1.TaskRunSpec) {
 // TaskRunNodeSelector sets the NodeSelector to the TaskRunSpec.
 func TaskRunNodeSelector(values map[string]string) TaskRunSpecOp {
 	return func(spec *v1alpha1.TaskRunSpec) {
+		if spec.PodTemplate == nil {
+			spec.PodTemplate = &v1alpha1.PodTemplate{}
+		}
 		spec.PodTemplate.NodeSelector = values
 	}
 }
@@ -382,6 +406,9 @@ func TaskRunNodeSelector(values map[string]string) TaskRunSpecOp {
 // TaskRunTolerations sets the Tolerations to the TaskRunSpec.
 func TaskRunTolerations(values []corev1.Toleration) TaskRunSpecOp {
 	return func(spec *v1alpha1.TaskRunSpec) {
+		if spec.PodTemplate == nil {
+			spec.PodTemplate = &v1alpha1.PodTemplate{}
+		}
 		spec.PodTemplate.Tolerations = values
 	}
 }
@@ -389,6 +416,9 @@ func TaskRunTolerations(values []corev1.Toleration) TaskRunSpecOp {
 // TaskRunAffinity sets the Affinity to the TaskRunSpec.
 func TaskRunAffinity(affinity *corev1.Affinity) TaskRunSpecOp {
 	return func(spec *v1alpha1.TaskRunSpec) {
+		if spec.PodTemplate == nil {
+			spec.PodTemplate = &v1alpha1.PodTemplate{}
+		}
 		spec.PodTemplate.Affinity = affinity
 	}
 }
@@ -396,6 +426,9 @@ func TaskRunAffinity(affinity *corev1.Affinity) TaskRunSpecOp {
 // TaskRunPodSecurityContext sets the SecurityContext to the TaskRunSpec (through PodTemplate).
 func TaskRunPodSecurityContext(context *corev1.PodSecurityContext) TaskRunSpecOp {
 	return func(spec *v1alpha1.TaskRunSpec) {
+		if spec.PodTemplate == nil {
+			spec.PodTemplate = &v1alpha1.PodTemplate{}
+		}
 		spec.PodTemplate.SecurityContext = context
 	}
 }
@@ -456,6 +489,17 @@ func Controller(o *metav1.OwnerReference) {
 
 func BlockOwnerDeletion(o *metav1.OwnerReference) {
 	o.BlockOwnerDeletion = &trueB
+}
+
+func TaskRunLabels(labels map[string]string) TaskRunOp {
+	return func(tr *v1alpha1.TaskRun) {
+		if tr.ObjectMeta.Labels == nil {
+			tr.ObjectMeta.Labels = map[string]string{}
+		}
+		for key, value := range labels {
+			tr.ObjectMeta.Labels[key] = value
+		}
+	}
 }
 
 func TaskRunLabel(key, value string) TaskRunOp {
@@ -649,6 +693,30 @@ func TaskRunOutputsResource(name string, ops ...TaskResourceBindingOp) TaskRunOu
 			op(binding)
 		}
 		i.Resources = append(i.Resources, *binding)
+	}
+}
+
+// TaskRunWorkspaceEmptyDir adds a workspace binding to an empty dir volume source.
+func TaskRunWorkspaceEmptyDir(name, subPath string) TaskRunSpecOp {
+	return func(spec *v1alpha1.TaskRunSpec) {
+		spec.Workspaces = append(spec.Workspaces, v1alpha1.WorkspaceBinding{
+			Name:     name,
+			SubPath:  subPath,
+			EmptyDir: &corev1.EmptyDirVolumeSource{},
+		})
+	}
+}
+
+// TaskRunWorkspacePVC adds a workspace binding to a PVC volume source.
+func TaskRunWorkspacePVC(name, subPath, claimName string) TaskRunSpecOp {
+	return func(spec *v1alpha1.TaskRunSpec) {
+		spec.Workspaces = append(spec.Workspaces, v1alpha1.WorkspaceBinding{
+			Name:    name,
+			SubPath: subPath,
+			PersistentVolumeClaim: &corev1.PersistentVolumeClaimVolumeSource{
+				ClaimName: claimName,
+			},
+		})
 	}
 }
 

@@ -27,8 +27,7 @@
 				"value": "value1"
 			}
 		],
-		"serviceAccountName": "svc1",
-		"podTemplate": {}
+		"serviceAccountName": "svc1"
 	},
 	"status": {}
 }

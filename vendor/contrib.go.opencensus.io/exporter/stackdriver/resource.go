@@ -90,7 +90,7 @@ func defaultMapResource(res *resource.Resource) *monitoredrespb.MonitoredResourc
 	if res == nil || res.Labels == nil {
 		return result
 	}
-	if res.Type == resourcekeys.ContainerType {
+	if res.Type == resourcekeys.K8SType {
 		result.Type = "k8s_container"
 		match = k8sResourceMap
 	} else if v, ok := res.Labels[resourcekeys.CloudKeyProvider]; ok {

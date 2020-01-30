@@ -39,7 +39,7 @@ func TestPipelineResourceDescribe_Invalid_Namespace(t *testing.T) {
 	}
 
 	cs, _ := test.SeedTestData(t, pipelinetest.Data{Namespaces: ns})
-	p := &test.Params{Tekton: cs.Pipeline, Kube: cs.Kube}
+	p := &test.Params{Tekton: cs.Pipeline, Kube: cs.Kube, Resource: cs.Resource}
 
 	res := Command(p)
 	_, err := test.ExecuteCommand(res, "desc", "bar", "-n", "invalid")
@@ -61,7 +61,7 @@ func TestPipelineResourceDescribe_Empty(t *testing.T) {
 	}
 
 	cs, _ := test.SeedTestData(t, pipelinetest.Data{Namespaces: ns})
-	p := &test.Params{Tekton: cs.Pipeline, Kube: cs.Kube}
+	p := &test.Params{Tekton: cs.Pipeline, Kube: cs.Kube, Resource: cs.Resource}
 
 	res := Command(p)
 	_, err := test.ExecuteCommand(res, "desc", "bar")
@@ -91,7 +91,7 @@ func TestPipelineResourceDescribe_WithParams(t *testing.T) {
 	}
 
 	cs, _ := test.SeedTestData(t, pipelinetest.Data{PipelineResources: pres, Namespaces: ns})
-	p := &test.Params{Tekton: cs.Pipeline, Kube: cs.Kube}
+	p := &test.Params{Tekton: cs.Pipeline, Kube: cs.Kube, Resource: cs.Resource}
 	pipelineresource := Command(p)
 	out, _ := test.ExecuteCommand(pipelineresource, "desc", "test-1", "-n", "test-ns-1")
 	golden.Assert(t, out, fmt.Sprintf("%s.golden", t.Name()))
@@ -117,7 +117,7 @@ func TestPipelineResourceDescribe_WithSecretParams(t *testing.T) {
 	}
 
 	cs, _ := test.SeedTestData(t, pipelinetest.Data{PipelineResources: pres, Namespaces: ns})
-	p := &test.Params{Tekton: cs.Pipeline, Kube: cs.Kube}
+	p := &test.Params{Tekton: cs.Pipeline, Kube: cs.Kube, Resource: cs.Resource}
 	pipelineresource := Command(p)
 	out, _ := test.ExecuteCommand(pipelineresource, "desc", "test-1", "-n", "test-ns-1")
 	golden.Assert(t, out, fmt.Sprintf("%s.golden", t.Name()))
@@ -144,7 +144,7 @@ func TestPipelineResourcesDescribe_custom_output(t *testing.T) {
 		},
 	})
 
-	p := &test.Params{Tekton: cs.Pipeline, Clock: clock, Kube: cs.Kube}
+	p := &test.Params{Tekton: cs.Pipeline, Clock: clock, Kube: cs.Kube, Resource: cs.Resource}
 	run := Command(p)
 
 	got, err := test.ExecuteCommand(run, "desc", "-o", "name", name)

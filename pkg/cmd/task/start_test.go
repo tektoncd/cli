@@ -143,8 +143,12 @@ func Test_start_task_not_found(t *testing.T) {
 				tb.TaskOutputs(
 					tb.OutputsResource("code-image", v1alpha1.PipelineResourceTypeImage),
 				),
-				tb.Step("hello", "busybox"),
-				tb.Step("exit", "busybox"),
+				tb.Step("busybox",
+					tb.StepName("hello"),
+				),
+				tb.Step("busybox",
+					tb.StepName("exit"),
+				),
 			),
 		),
 	}
@@ -179,8 +183,12 @@ func Test_start_task(t *testing.T) {
 				tb.TaskOutputs(
 					tb.OutputsResource("code-image", v1alpha1.PipelineResourceTypeImage),
 				),
-				tb.Step("hello", "busybox"),
-				tb.Step("exit", "busybox"),
+				tb.Step("busybox",
+					tb.StepName("hello"),
+				),
+				tb.Step("busybox",
+					tb.StepName("exit"),
+				),
 			),
 		),
 	}
@@ -266,8 +274,12 @@ func Test_start_task_last(t *testing.T) {
 				tb.TaskOutputs(
 					tb.OutputsResource("code-image", v1alpha1.PipelineResourceTypeImage),
 				),
-				tb.Step("hello", "busybox"),
-				tb.Step("exit", "busybox"),
+				tb.Step("busybox",
+					tb.StepName("hello"),
+				),
+				tb.Step("busybox",
+					tb.StepName("exit"),
+				),
 			),
 		),
 	}
@@ -358,8 +370,12 @@ func Test_start_task_last_with_inputs(t *testing.T) {
 				tb.TaskOutputs(
 					tb.OutputsResource("code-image", v1alpha1.PipelineResourceTypeImage),
 				),
-				tb.Step("hello", "busybox"),
-				tb.Step("exit", "busybox"),
+				tb.Step("busybox",
+					tb.StepName("hello"),
+				),
+				tb.Step("busybox",
+					tb.StepName("exit"),
+				),
 			),
 		),
 	}
@@ -456,8 +472,12 @@ func Test_start_task_last_without_pipelinerun(t *testing.T) {
 				tb.TaskOutputs(
 					tb.OutputsResource("code-image", v1alpha1.PipelineResourceTypeImage),
 				),
-				tb.Step("hello", "busybox"),
-				tb.Step("exit", "busybox"),
+				tb.Step("busybox",
+					tb.StepName("hello"),
+				),
+				tb.Step("busybox",
+					tb.StepName("exit"),
+				),
 			),
 		),
 	}
@@ -492,8 +512,12 @@ func Test_start_task_client_error(t *testing.T) {
 				tb.TaskOutputs(
 					tb.OutputsResource("code-image", v1alpha1.PipelineResourceTypeImage),
 				),
-				tb.Step("hello", "busybox"),
-				tb.Step("exit", "busybox"),
+				tb.Step("busybox",
+					tb.StepName("hello"),
+				),
+				tb.Step("busybox",
+					tb.StepName("exit"),
+				),
 			),
 		),
 	}
@@ -531,8 +555,12 @@ func Test_start_task_invalid_input_res(t *testing.T) {
 				tb.TaskOutputs(
 					tb.OutputsResource("code-image", v1alpha1.PipelineResourceTypeImage),
 				),
-				tb.Step("hello", "busybox"),
-				tb.Step("exit", "busybox"),
+				tb.Step("busybox",
+					tb.StepName("hello"),
+				),
+				tb.Step("busybox",
+					tb.StepName("exit"),
+				),
 			),
 		),
 	}
@@ -570,8 +598,12 @@ func Test_start_task_invalid_output_res(t *testing.T) {
 				tb.TaskOutputs(
 					tb.OutputsResource("code-image", v1alpha1.PipelineResourceTypeImage),
 				),
-				tb.Step("hello", "busybox"),
-				tb.Step("exit", "busybox"),
+				tb.Step("busybox",
+					tb.StepName("hello"),
+				),
+				tb.Step("busybox",
+					tb.StepName("exit"),
+				),
 			),
 		),
 	}
@@ -609,8 +641,12 @@ func Test_start_task_invalid_param(t *testing.T) {
 				tb.TaskOutputs(
 					tb.OutputsResource("code-image", v1alpha1.PipelineResourceTypeImage),
 				),
-				tb.Step("hello", "busybox"),
-				tb.Step("exit", "busybox"),
+				tb.Step("busybox",
+					tb.StepName("hello"),
+				),
+				tb.Step("busybox",
+					tb.StepName("exit"),
+				),
 			),
 		),
 	}
@@ -648,8 +684,12 @@ func Test_start_task_invalid_label(t *testing.T) {
 				tb.TaskOutputs(
 					tb.OutputsResource("code-image", v1alpha1.PipelineResourceTypeImage),
 				),
-				tb.Step("hello", "busybox"),
-				tb.Step("exit", "busybox"),
+				tb.Step("busybox",
+					tb.StepName("hello"),
+				),
+				tb.Step("busybox",
+					tb.StepName("exit"),
+				),
 			),
 		),
 	}
@@ -688,8 +728,12 @@ func Test_start_task_allkindparam(t *testing.T) {
 				tb.TaskOutputs(
 					tb.OutputsResource("code-image", v1alpha1.PipelineResourceTypeImage),
 				),
-				tb.Step("hello", "busybox"),
-				tb.Step("exit", "busybox"),
+				tb.Step("busybox",
+					tb.StepName("hello"),
+				),
+				tb.Step("busybox",
+					tb.StepName("exit"),
+				),
 			),
 		),
 	}
@@ -781,8 +825,12 @@ func Test_start_task_wrong_param(t *testing.T) {
 				tb.TaskOutputs(
 					tb.OutputsResource("code-image", v1alpha1.PipelineResourceTypeImage),
 				),
-				tb.Step("hello", "busybox"),
-				tb.Step("exit", "busybox"),
+				tb.Step("busybox",
+					tb.StepName("hello"),
+				),
+				tb.Step("busybox",
+					tb.StepName("exit"),
+				),
 			),
 		),
 	}

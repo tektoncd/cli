@@ -132,14 +132,22 @@ func PipelineTask(name, taskName string, ops ...PipelineTaskOp) PipelineSpecOp {
 	return func(ps *v1alpha1.PipelineSpec) {
 		pTask := &v1alpha1.PipelineTask{
 			Name: name,
-			TaskRef: v1alpha1.TaskRef{
+		}
+		if taskName != "" {
+			pTask.TaskRef = &v1alpha1.TaskRef{
 				Name: taskName,
-			},
+			}
 		}
 		for _, op := range ops {
 			op(pTask)
 		}
 		ps.Tasks = append(ps.Tasks, *pTask)
+	}
+}
+
+func PipelineTaskSpec(spec *v1alpha1.TaskSpec) PipelineTaskOp {
+	return func(pt *v1alpha1.PipelineTask) {
+		pt.TaskSpec = spec
 	}
 }
 
@@ -246,14 +254,24 @@ func PipelineTaskConditionParam(name, val string) PipelineTaskConditionOp {
 }
 
 // PipelineTaskConditionResource adds a resource to a PipelineTaskCondition
-func PipelineTaskConditionResource(name, resource string) PipelineTaskConditionOp {
+func PipelineTaskConditionResource(name, resource string, from ...string) PipelineTaskConditionOp {
 	return func(condition *v1alpha1.PipelineTaskCondition) {
 		if condition.Resources == nil {
-			condition.Resources = []v1alpha1.PipelineConditionResource{}
+			condition.Resources = []v1alpha1.PipelineTaskInputResource{}
 		}
-		condition.Resources = append(condition.Resources, v1alpha1.PipelineConditionResource{
+		condition.Resources = append(condition.Resources, v1alpha1.PipelineTaskInputResource{
 			Name:     name,
 			Resource: resource,
+			From:     from,
+		})
+	}
+}
+
+func PipelineTaskWorkspaceBinding(name, workspace string) PipelineTaskOp {
+	return func(pt *v1alpha1.PipelineTask) {
+		pt.Workspaces = append(pt.Workspaces, v1alpha1.WorkspacePipelineTaskBinding{
+			Name:      name,
+			Workspace: workspace,
 		})
 	}
 }
@@ -385,24 +403,46 @@ func PipelineRunNilTimeout(prs *v1alpha1.PipelineRunSpec) {
 	prs.Timeout = nil
 }
 
-// PipelineRunNodeSelector sets the Node selector to the PipelineSpec.
+// PipelineRunNodeSelector sets the Node selector to the PipelineRunSpec.
 func PipelineRunNodeSelector(values map[string]string) PipelineRunSpecOp {
 	return func(prs *v1alpha1.PipelineRunSpec) {
+		if prs.PodTemplate == nil {
+			prs.PodTemplate = &v1alpha1.PodTemplate{}
+		}
 		prs.PodTemplate.NodeSelector = values
 	}
 }
 
-// PipelineRunTolerations sets the Node selector to the PipelineSpec.
+// PipelineRunTolerations sets the Node selector to the PipelineRunSpec.
 func PipelineRunTolerations(values []corev1.Toleration) PipelineRunSpecOp {
 	return func(prs *v1alpha1.PipelineRunSpec) {
+		if prs.PodTemplate == nil {
+			prs.PodTemplate = &v1alpha1.PodTemplate{}
+		}
 		prs.PodTemplate.Tolerations = values
 	}
 }
 
-// PipelineRunAffinity sets the affinity to the PipelineSpec.
+// PipelineRunAffinity sets the affinity to the PipelineRunSpec.
 func PipelineRunAffinity(affinity *corev1.Affinity) PipelineRunSpecOp {
 	return func(prs *v1alpha1.PipelineRunSpec) {
+		if prs.PodTemplate == nil {
+			prs.PodTemplate = &v1alpha1.PodTemplate{}
+		}
 		prs.PodTemplate.Affinity = affinity
+	}
+}
+
+// PipelineRunPipelineSpec adds a PipelineSpec to the PipelineRunSpec.
+// Any number of PipelineSpec modifiers can be passed to transform it.
+func PipelineRunPipelineSpec(ops ...PipelineSpecOp) PipelineRunSpecOp {
+	return func(prs *v1alpha1.PipelineRunSpec) {
+		ps := &v1alpha1.PipelineSpec{}
+		prs.PipelineRef = nil
+		for _, op := range ops {
+			op(ps)
+		}
+		prs.PipelineSpec = ps
 	}
 }
 
@@ -494,6 +534,25 @@ func PipelineResourceSpecSecretParam(fieldname, secretName, secretKey string) Pi
 			FieldName:  fieldname,
 			SecretKey:  secretKey,
 			SecretName: secretName,
+		})
+	}
+}
+
+// PipelineWorkspaceDeclaration adds a Workspace to the workspaces listed in the pipeline spec.
+func PipelineWorkspaceDeclaration(names ...string) PipelineSpecOp {
+	return func(spec *v1alpha1.PipelineSpec) {
+		for _, name := range names {
+			spec.Workspaces = append(spec.Workspaces, v1alpha1.WorkspacePipelineDeclaration{Name: name})
+		}
+	}
+}
+
+// PipelineRunWorkspaceBindingEmptyDir adds an EmptyDir Workspace to the workspaces of a pipelinerun spec.
+func PipelineRunWorkspaceBindingEmptyDir(name string) PipelineRunSpecOp {
+	return func(spec *v1alpha1.PipelineRunSpec) {
+		spec.Workspaces = append(spec.Workspaces, v1alpha1.WorkspaceBinding{
+			Name:     name,
+			EmptyDir: &corev1.EmptyDirVolumeSource{},
 		})
 	}
 }

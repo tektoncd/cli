@@ -36,6 +36,7 @@ import (
 	validate "github.com/tektoncd/cli/pkg/helper/validate"
 	"github.com/tektoncd/pipeline/pkg/apis/pipeline/v1alpha1"
 	"github.com/tektoncd/pipeline/pkg/client/clientset/versioned"
+	versionedResource "github.com/tektoncd/pipeline/pkg/client/resource/clientset/versioned"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	v1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 )
@@ -181,7 +182,7 @@ func (opt *startOptions) getInput(pname string) error {
 	}
 
 	if len(opt.Resources) == 0 && !opt.Last {
-		pres, err := getPipelineResources(cs.Tekton, opt.cliparams.Namespace())
+		pres, err := getPipelineResources(cs.Resource, opt.cliparams.Namespace())
 		if err != nil {
 			fmt.Fprintf(opt.stream.Err, "failed to list pipelineresources from %s namespace \n", opt.cliparams.Namespace())
 			return err
@@ -285,7 +286,7 @@ func (opt *startOptions) getInputParams(pipeline *v1alpha1.Pipeline) error {
 	return nil
 }
 
-func getPipelineResources(client versioned.Interface, namespace string) (*v1alpha1.PipelineResourceList, error) {
+func getPipelineResources(client versionedResource.Interface, namespace string) (*v1alpha1.PipelineResourceList, error) {
 	pres, err := client.TektonV1alpha1().PipelineResources(namespace).List(v1.ListOptions{})
 	if err != nil {
 		return nil, err
@@ -574,7 +575,7 @@ func (opt *startOptions) createPipelineResource(resName string, resType v1alpha1
 	if err != nil {
 		return nil, err
 	}
-	newRes, err := cs.Tekton.TektonV1alpha1().PipelineResources(opt.cliparams.Namespace()).Create(&res.PipelineResource)
+	newRes, err := cs.Resource.TektonV1alpha1().PipelineResources(opt.cliparams.Namespace()).Create(&res.PipelineResource)
 	if err != nil {
 		return nil, err
 	}
