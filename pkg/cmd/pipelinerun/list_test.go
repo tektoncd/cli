@@ -112,6 +112,12 @@ func TestListPipelineRuns(t *testing.T) {
 			wantError: false,
 		},
 		{
+			name:      "by output as name",
+			command:   command(t, prs, clock.Now(), ns),
+			args:      []string{"list", "-n", "namespace", "-o", "name"},
+			wantError: false,
+		},
+		{
 			name:      "all in namespace",
 			command:   command(t, prs, clock.Now(), ns),
 			args:      []string{"list", "-n", "namespace"},
