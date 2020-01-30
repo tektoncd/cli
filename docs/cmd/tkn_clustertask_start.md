@@ -29,10 +29,12 @@ like cat,foo,bar
 ### Options
 
 ```
+      --dry-run                  preview taskrun without running it
   -h, --help                     help for start
   -i, --inputresource strings    pass the input resource name and ref as name=ref
   -l, --labels strings           pass labels as label=value.
   -L, --last                     re-run the clustertask using last taskrun values
+      --output string            format of taskrun dry-run (yaml or json)
   -o, --outputresource strings   pass the output resource name and ref as name=ref
   -p, --param stringArray        pass the param as key=value or key=value1,value2
   -s, --serviceaccount string    pass the serviceaccount name

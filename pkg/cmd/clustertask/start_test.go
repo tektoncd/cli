@@ -15,8 +15,10 @@
 package clustertask
 
 import (
+	"fmt"
 	"io"
 	"reflect"
+	"strings"
 	"testing"
 	"time"
 
@@ -27,6 +29,7 @@ import (
 	fakepipelineclientset "github.com/tektoncd/pipeline/pkg/client/clientset/versioned/fake"
 	pipelinetest "github.com/tektoncd/pipeline/test"
 	tb "github.com/tektoncd/pipeline/test/builder"
+	"gotest.tools/v3/golden"
 	corev1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	v1 "k8s.io/apimachinery/pkg/apis/meta/v1"
@@ -95,12 +98,25 @@ func Test_ClusterTask_Start(t *testing.T) {
 					tb.OutputsResource("code-image", v1alpha1.PipelineResourceTypeImage),
 				),
 				tb.Step("busybox",
-					tb.StepName("hello"),
+					tb.StepName("hello")),
+				tb.Step("busybox",
+					tb.StepName("exit")),
+				tb.TaskWorkspace("test", "test workspace", "/workspace/test/file", true),
+			),
+		),
+		tb.ClusterTask("clustertask-2", cb.ClusterTaskCreationTime(clock.Now().Add(-1*time.Minute)),
+			tb.ClusterTaskSpec(
+				tb.TaskInputs(
+					tb.InputsResource("my-repo", v1alpha1.PipelineResourceTypeGit),
+					tb.InputsParamSpec("myarg", v1alpha1.ParamTypeString),
+				),
+				tb.TaskOutputs(
+					tb.OutputsResource("code-image", v1alpha1.PipelineResourceTypeImage),
 				),
 				tb.Step("busybox",
-					tb.StepName("exit"),
-				),
-				tb.TaskWorkspace("test", "test workspace", "/workspace/test/file", true),
+					tb.StepName("hello")),
+				tb.Step("busybox",
+					tb.StepName("exit")),
 			),
 		),
 	}
@@ -165,6 +181,17 @@ func Test_ClusterTask_Start(t *testing.T) {
 
 	seeds = append(seeds, cs3)
 
+	//seeds[3] - For Dry Run tests
+	objs4 := []runtime.Object{clustertasks[1]}
+	pClient4 := newPipelineClient("taskrun-3", objs4...)
+
+	cs4 := pipelinetest.Clients{
+		Pipeline: pClient4,
+		Kube:     seedData.Kube,
+	}
+
+	seeds = append(seeds, cs4)
+
 	testParams := []struct {
 		name        string
 		command     []string
@@ -172,6 +199,7 @@ func Test_ClusterTask_Start(t *testing.T) {
 		inputStream io.Reader
 		wantError   bool
 		want        string
+		goldenFile  bool
 	}{
 		{
 			name:        "Start with no arguments",
@@ -295,6 +323,51 @@ func Test_ClusterTask_Start(t *testing.T) {
 			wantError:   true,
 			want:        "param 'myar' not present in spec",
 		},
+		{
+			name: "Dry run with invalid output",
+			command: []string{"start", "clustertask-1",
+				"-i", "my-repo=git",
+				"-p", "myarg=value1",
+				"-o", "code-image=output-image",
+				"-l", "key=value",
+				"-s=svc1",
+				"--dry-run",
+				"--output=invalid",
+			},
+			input:       seeds[0],
+			inputStream: nil,
+			wantError:   true,
+			want:        "output format specifed is invalid but must be yaml or json",
+		},
+		{
+			name: "Dry run with no output",
+			command: []string{"start", "clustertask-2",
+				"-i", "my-repo=git",
+				"-o", "code-image=output-image",
+				"-l", "key=value",
+				"-s=svc1",
+				"--dry-run",
+			},
+			input:       seeds[3],
+			inputStream: nil,
+			wantError:   false,
+			goldenFile:  true,
+		},
+		{
+			name: "Dry run with output=json",
+			command: []string{"start", "clustertask-2",
+				"-i", "my-repo=git",
+				"-o", "code-image=output-image",
+				"-l", "key=value",
+				"-s=svc1",
+				"--dry-run",
+				"--output=json",
+			},
+			input:       seeds[3],
+			inputStream: nil,
+			wantError:   false,
+			goldenFile:  true,
+		},
 	}
 
 	for _, tp := range testParams {
@@ -307,7 +380,7 @@ func Test_ClusterTask_Start(t *testing.T) {
 				clustertask.SetIn(tp.inputStream)
 			}
 
-			out, err := test.ExecuteCommand(clustertask, tp.command...)
+			got, err := test.ExecuteCommand(clustertask, tp.command...)
 			if tp.wantError {
 				if err == nil {
 					t.Errorf("Error expected here")
@@ -317,7 +390,11 @@ func Test_ClusterTask_Start(t *testing.T) {
 				if err != nil {
 					t.Errorf("Unexpected error")
 				}
-				test.AssertOutput(t, tp.want, out)
+				if tp.goldenFile {
+					golden.Assert(t, got, strings.ReplaceAll(fmt.Sprintf("%s.golden", t.Name()), "/", "-"))
+				} else {
+					test.AssertOutput(t, tp.want, got)
+				}
 			}
 		})
 	}

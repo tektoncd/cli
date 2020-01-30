@@ -1,0 +1,42 @@
+{
+	"kind": "TaskRun",
+	"apiVersion": "tekton.dev/v1alpha1",
+	"metadata": {
+		"generateName": "clustertask-2-run-",
+		"creationTimestamp": null,
+		"labels": {
+			"key": "value"
+		}
+	},
+	"spec": {
+		"inputs": {
+			"resources": [
+				{
+					"name": "my-repo",
+					"resourceRef": {
+						"name": "git"
+					}
+				}
+			]
+		},
+		"outputs": {
+			"resources": [
+				{
+					"name": "code-image",
+					"resourceRef": {
+						"name": "output-image"
+					}
+				}
+			]
+		},
+		"serviceAccountName": "svc1",
+		"taskRef": {
+			"name": "clustertask-2",
+			"kind": "ClusterTask"
+		},
+		"timeout": "1h0m0s"
+	},
+	"status": {
+		"podName": ""
+	}
+}
