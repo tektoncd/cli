@@ -15,6 +15,7 @@
 package task
 
 import (
+	"encoding/json"
 	"errors"
 	"fmt"
 	"strings"
@@ -54,6 +55,8 @@ type startOptions struct {
 	ShowLog            bool
 	Filename           string
 	TimeOut            int64
+	DryRun             bool
+	Output             string
 }
 
 // NameArg validates that the first argument is a valid task name
@@ -142,6 +145,8 @@ like cat,foo,bar
 	c.Flags().BoolVarP(&opt.ShowLog, "showlog", "", false, "show logs right after starting the task")
 	c.Flags().StringVarP(&opt.Filename, "filename", "f", "", "local or remote file name containing a task definition")
 	c.Flags().Int64VarP(&opt.TimeOut, "timeout", "t", 3600, "timeout for taskrun in seconds")
+	c.Flags().BoolVarP(&opt.DryRun, "dry-run", "", false, "preview taskrun without running it")
+	c.Flags().StringVarP(&opt.Output, "output", "", "", "format of taskrun dry-run (yaml or json)")
 
 	_ = c.MarkZshCompPositionalArgumentCustom(1, "__tkn_get_task")
 
@@ -162,6 +167,10 @@ func parseTask(taskLocation string, p cli.Params) (*v1alpha1.Task, error) {
 
 func startTask(opt startOptions, args []string) error {
 	tr := &v1alpha1.TaskRun{
+		TypeMeta: metav1.TypeMeta{
+			APIVersion: "tekton.dev/v1alpha1",
+			Kind:       "TaskRun",
+		},
 		ObjectMeta: metav1.ObjectMeta{
 			Namespace: opt.cliparams.Namespace(),
 		},
@@ -174,7 +183,6 @@ func startTask(opt startOptions, args []string) error {
 		tname = args[0]
 		tr.Spec = v1alpha1.TaskRunSpec{
 			TaskRef: &v1alpha1.TaskRef{Name: tname},
-			Timeout: &metav1.Duration{Duration: timeoutSeconds},
 		}
 	} else {
 		task, err := parseTask(opt.Filename, opt.cliparams)
@@ -186,6 +194,7 @@ func startTask(opt startOptions, args []string) error {
 			TaskSpec: &task.Spec,
 		}
 	}
+	tr.Spec.Timeout = &metav1.Duration{Duration: timeoutSeconds}
 	tr.ObjectMeta.GenerateName = tname + "-run-"
 
 	cs, err := opt.cliparams.Clients()
@@ -230,6 +239,10 @@ func startTask(opt startOptions, args []string) error {
 
 	if len(opt.ServiceAccountName) > 0 {
 		tr.Spec.ServiceAccountName = opt.ServiceAccountName
+	}
+
+	if opt.DryRun {
+		return taskRunDryRun(opt.Output, opt.stream, tr)
 	}
 
 	trCreated, err := cs.Tekton.TektonV1alpha1().TaskRuns(opt.cliparams.Namespace()).Create(tr)
@@ -293,4 +306,30 @@ func parseRes(res []string) (map[string]v1alpha1.TaskResourceBinding, error) {
 		}
 	}
 	return resources, nil
+}
+
+func taskRunDryRun(output string, s *cli.Stream, tr *v1alpha1.TaskRun) error {
+	format := strings.ToLower(output)
+
+	if format != "" && format != "json" && format != "yaml" {
+		return fmt.Errorf("output format specifed is %s but must be yaml or json", output)
+	}
+
+	if format == "" || format == "yaml" {
+		trBytes, err := yaml.Marshal(tr)
+		if err != nil {
+			return err
+		}
+		fmt.Fprintf(s.Out, "%s", trBytes)
+	}
+
+	if format == "json" {
+		trBytes, err := json.MarshalIndent(tr, "", "\t")
+		if err != nil {
+			return err
+		}
+		fmt.Fprintf(s.Out, "%s\n", trBytes)
+	}
+
+	return nil
 }
