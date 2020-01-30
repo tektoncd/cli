@@ -17,6 +17,7 @@ package task
 import (
 	"fmt"
 	"reflect"
+	"strings"
 	"testing"
 
 	"github.com/google/go-cmp/cmp"
@@ -25,6 +26,7 @@ import (
 	fakepipelineclientset "github.com/tektoncd/pipeline/pkg/client/clientset/versioned/fake"
 	pipelinetest "github.com/tektoncd/pipeline/test"
 	tb "github.com/tektoncd/pipeline/test/builder"
+	"gotest.tools/v3/golden"
 	corev1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	v1 "k8s.io/apimachinery/pkg/apis/meta/v1"
@@ -946,6 +948,125 @@ func Test_parseRes(t *testing.T) {
 			}
 			if !reflect.DeepEqual(got, tt.want) {
 				t.Errorf("parseRes() = %v, want %v", got, tt.want)
+			}
+		})
+	}
+}
+
+func TestTaskStart_ExecuteCommand(t *testing.T) {
+	tasks := []*v1alpha1.Task{
+		tb.Task("task-1", "ns",
+			tb.TaskSpec(
+				tb.TaskInputs(
+					tb.InputsResource("my-repo", v1alpha1.PipelineResourceTypeGit),
+					tb.InputsParamSpec("myarg", v1alpha1.ParamTypeString),
+				),
+				tb.TaskOutputs(
+					tb.OutputsResource("code-image", v1alpha1.PipelineResourceTypeImage),
+				),
+				tb.Step("busybox", tb.StepName("hello")),
+				tb.Step("busybox", tb.StepName("exit")),
+			),
+		),
+	}
+
+	ns := []*corev1.Namespace{
+		{
+			ObjectMeta: metav1.ObjectMeta{
+				Name: "ns",
+			},
+		},
+	}
+
+	cs, _ := test.SeedTestData(t, pipelinetest.Data{Tasks: tasks, Namespaces: ns})
+
+	testParams := []struct {
+		name       string
+		command    []string
+		namespace  string
+		input      pipelinetest.Clients
+		wantError  bool
+		want       string
+		goldenFile bool
+	}{
+		{
+			name: "Dry Run with invalid output",
+			command: []string{"start", "task-1",
+				"-i=my-repo=git-repo",
+				"-o=code-image=output-image",
+				"-s=svc1",
+				"-n", "ns",
+				"--dry-run",
+				"--output", "invalid"},
+			namespace: "",
+			input:     cs,
+			wantError: true,
+			want:      "output format specifed is invalid but must be yaml or json",
+		},
+		{
+			name: "Dry Run with only --dry-run specified",
+			command: []string{"start", "task-1",
+				"-i=my-repo=git-repo",
+				"-o=code-image=output-image",
+				"-s=svc1",
+				"-n", "ns",
+				"--dry-run"},
+			namespace:  "",
+			input:      cs,
+			wantError:  false,
+			goldenFile: true,
+		},
+		{
+			name: "Dry Run with output=json",
+			command: []string{"start", "task-1",
+				"-i=my-repo=git-repo",
+				"-o=code-image=output-image",
+				"-s=svc1",
+				"-n", "ns",
+				"--dry-run",
+				"--output=json"},
+			namespace:  "",
+			input:      cs,
+			wantError:  false,
+			goldenFile: true,
+		},
+		{
+			name: "Dry Run with -f",
+			command: []string{"start",
+				"-f", "./testdata/task.yaml",
+				"-n", "ns",
+				"-s=svc1",
+				"-i=docker-source=git",
+				"-o=builtImage=image",
+				"--dry-run",
+				"--output=yaml"},
+			namespace:  "",
+			input:      cs,
+			wantError:  false,
+			goldenFile: true,
+		},
+	}
+
+	for _, tp := range testParams {
+		t.Run(tp.name, func(t *testing.T) {
+			p := &test.Params{Tekton: tp.input.Pipeline, Kube: tp.input.Kube}
+			c := Command(p)
+
+			got, err := test.ExecuteCommand(c, tp.command...)
+			if tp.wantError {
+				if err == nil {
+					t.Errorf("error expected here")
+				}
+				test.AssertOutput(t, tp.want, err.Error())
+			} else {
+				if err != nil {
+					t.Errorf("unexpected Error")
+				}
+				if tp.goldenFile {
+					golden.Assert(t, got, strings.ReplaceAll(fmt.Sprintf("%s.golden", t.Name()), "/", "-"))
+				} else {
+					test.AssertOutput(t, tp.want, got)
+				}
 			}
 		})
 	}

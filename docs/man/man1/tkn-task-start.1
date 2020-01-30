@@ -20,6 +20,10 @@ Start tasks
 
 .SH OPTIONS
 .PP
+\fB\-\-dry\-run\fP[=false]
+    preview taskrun without running it
+
+.PP
 \fB\-f\fP, \fB\-\-filename\fP=""
     local or remote file name containing a task definition
 
@@ -38,6 +42,10 @@ Start tasks
 .PP
 \fB\-L\fP, \fB\-\-last\fP[=false]
     re\-run the task using last taskrun values
+
+.PP
+\fB\-\-output\fP=""
+    format of taskrun dry\-run (yaml or json)
 
 .PP
 \fB\-o\fP, \fB\-\-outputresource\fP=[]
