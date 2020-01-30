@@ -89,7 +89,16 @@ List all PipelineRuns in a namespace 'foo':
 				return err
 			}
 
-			if output != "" && prs != nil {
+			if output == "name" && prs != nil {
+				w := cmd.OutOrStdout()
+				for _, pr := range prs.Items {
+					_, err := fmt.Fprintf(w, "pipelinerun.tekton.dev/%s\n", pr.Name)
+					if err != nil {
+						return err
+					}
+				}
+				return nil
+			} else if output != "" && prs != nil {
 				return printer.PrintObject(cmd.OutOrStdout(), prs, f)
 			}
 			stream := &cli.Stream{
