@@ -26,7 +26,7 @@ import (
 	validinput "github.com/tektoncd/cli/pkg/helper/validate"
 	"github.com/tektoncd/cli/pkg/printer"
 	"github.com/tektoncd/pipeline/pkg/apis/pipeline/v1alpha1"
-	"github.com/tektoncd/pipeline/pkg/client/clientset/versioned"
+	versionedResource "github.com/tektoncd/pipeline/pkg/client/resource/clientset/versioned"
 	v1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime/schema"
 	cliopts "k8s.io/cli-runtime/pkg/genericclioptions"
@@ -81,7 +81,7 @@ func listCommand(p cli.Params) *cobra.Command {
 				return fmt.Errorf("failed to list pipelineresources. Invalid resource type %s", opts.Type)
 			}
 
-			pres, err := list(cs.Tekton, p.Namespace(), opts.Type)
+			pres, err := list(cs.Resource, p.Namespace(), opts.Type)
 			stream := &cli.Stream{
 				Out: cmd.OutOrStdout(),
 				Err: cmd.OutOrStderr(),
@@ -116,7 +116,7 @@ func listCommand(p cli.Params) *cobra.Command {
 	return cmd
 }
 
-func list(client versioned.Interface, namespace string, resourceType string) (*v1alpha1.PipelineResourceList, error) {
+func list(client versionedResource.Interface, namespace string, resourceType string) (*v1alpha1.PipelineResourceList, error) {
 
 	prec := client.TektonV1alpha1().PipelineResources(namespace)
 	pres, err := prec.List(v1.ListOptions{})

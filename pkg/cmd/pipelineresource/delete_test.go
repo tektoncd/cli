@@ -109,7 +109,7 @@ func TestPipelineResourceDelete(t *testing.T) {
 
 	for _, tp := range testParams {
 		t.Run(tp.name, func(t *testing.T) {
-			p := &test.Params{Tekton: tp.input.Pipeline, Kube: tp.input.Kube}
+			p := &test.Params{Tekton: tp.input.Pipeline, Kube: tp.input.Kube, Resource: tp.input.Resource}
 			pipelineResource := Command(p)
 
 			if tp.inputStream != nil {

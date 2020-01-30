@@ -114,7 +114,7 @@ func describePipelineResourceOutput(w io.Writer, p cli.Params, f *cliopts.PrintF
 		return err
 	}
 
-	c := cs.Tekton.TektonV1alpha1().PipelineResources(p.Namespace())
+	c := cs.Resource.TektonV1alpha1().PipelineResources(p.Namespace())
 
 	pipelineresource, err := c.Get(name, metav1.GetOptions{})
 	if err != nil {
@@ -138,7 +138,7 @@ func printPipelineResourceDescription(s *cli.Stream, p cli.Params, preName strin
 		return fmt.Errorf("failed to create tekton client")
 	}
 
-	pre, err := cs.Tekton.TektonV1alpha1().PipelineResources(p.Namespace()).Get(preName, metav1.GetOptions{})
+	pre, err := cs.Resource.TektonV1alpha1().PipelineResources(p.Namespace()).Get(preName, metav1.GetOptions{})
 	if err != nil {
 		return fmt.Errorf("failed to find pipelineresource %q", preName)
 	}

@@ -414,7 +414,7 @@ func TestPipelineStart_ExecuteCommand(t *testing.T) {
 
 	for _, tp := range testParams {
 		t.Run(tp.name, func(t *testing.T) {
-			p := &test.Params{Tekton: tp.input.Pipeline, Clock: clock, Kube: tp.input.Kube}
+			p := &test.Params{Tekton: tp.input.Pipeline, Clock: clock, Kube: tp.input.Kube, Resource: tp.input.Resource}
 			if tp.namespace != "" {
 				p.SetNamespace(tp.namespace)
 			}
@@ -499,7 +499,8 @@ func TestPipelineStart_Interactive(t *testing.T) {
 						tb.InputsResource("workspace", "git",
 							tb.ResourceTargetPath("newworkspace")),
 					),
-					tb.Step("read", "ubuntu",
+					tb.Step("ubuntu",
+						tb.StepName("read"),
 						tb.StepCommand("/bin/bash"),
 						tb.StepArgs("-c", "cat", "/workspace/newworkspace/stuff"),
 					),
@@ -514,11 +515,13 @@ func TestPipelineStart_Interactive(t *testing.T) {
 					tb.TaskOutputs(
 						tb.OutputsResource("workspace", "git"),
 					),
-					tb.Step("read-docs-old", "ubuntu",
+					tb.Step("ubuntu",
+						tb.StepName("read-docs-old"),
 						tb.StepCommand("/bin/bash"),
 						tb.StepArgs("-c", "ls -la /workspace/damnworkspace/docs/README.md"),
 					),
-					tb.Step("write-new-stuff", "ubuntu",
+					tb.Step("ubuntu",
+						tb.StepName("write-new-stuff"),
 						tb.StepCommand("bash"),
 						tb.StepArgs("-c", "ln -s /workspace/damnworkspace /workspace/output/workspace && echo some stuff > /workspace/output/workspace/stuff"),
 					),
@@ -552,7 +555,8 @@ func TestPipelineStart_Interactive(t *testing.T) {
 						tb.InputsResource("workspace", "git",
 							tb.ResourceTargetPath("newworkspace")),
 					),
-					tb.Step("read", "ubuntu",
+					tb.Step("ubuntu",
+						tb.StepName("read"),
 						tb.StepCommand("/bin/bash"),
 						tb.StepArgs("-c", "cat", "/workspace/newworkspace/stuff"),
 					),
@@ -567,11 +571,13 @@ func TestPipelineStart_Interactive(t *testing.T) {
 					tb.TaskOutputs(
 						tb.OutputsResource("workspace", "git"),
 					),
-					tb.Step("read-docs-old", "ubuntu",
+					tb.Step("ubuntu",
+						tb.StepName("read-docs-old"),
 						tb.StepCommand("/bin/bash"),
 						tb.StepArgs("-c", "ls -la /workspace/damnworkspace/docs/README.md"),
 					),
-					tb.Step("write-new-stuff", "ubuntu",
+					tb.Step("ubuntu",
+						tb.StepName("write-new-stuff"),
 						tb.StepCommand("bash"),
 						tb.StepArgs("-c", "ln -s /workspace/damnworkspace /workspace/output/workspace && echo some stuff > /workspace/output/workspace/stuff"),
 					),
@@ -613,7 +619,8 @@ func TestPipelineStart_Interactive(t *testing.T) {
 						tb.InputsResource("workspace", "git",
 							tb.ResourceTargetPath("newworkspace")),
 					),
-					tb.Step("read", "ubuntu",
+					tb.Step("ubuntu",
+						tb.StepName("read"),
 						tb.StepCommand("/bin/bash"),
 						tb.StepArgs("-c", "cat", "/workspace/newworkspace/stuff"),
 					),
@@ -628,11 +635,13 @@ func TestPipelineStart_Interactive(t *testing.T) {
 					tb.TaskOutputs(
 						tb.OutputsResource("workspace", "git"),
 					),
-					tb.Step("read-docs-old", "ubuntu",
+					tb.Step("ubuntu",
+						tb.StepName("read-docs-old"),
 						tb.StepCommand("/bin/bash"),
 						tb.StepArgs("-c", "ls -la /workspace/damnworkspace/docs/README.md"),
 					),
-					tb.Step("write-new-stuff", "ubuntu",
+					tb.Step("ubuntu",
+						tb.StepName("write-new-stuff"),
 						tb.StepCommand("bash"),
 						tb.StepArgs("-c", "ln -s /workspace/damnworkspace /workspace/output/workspace && echo some stuff > /workspace/output/workspace/stuff"),
 					),
@@ -674,7 +683,8 @@ func TestPipelineStart_Interactive(t *testing.T) {
 						tb.InputsResource("workspace", "git",
 							tb.ResourceTargetPath("newworkspace")),
 					),
-					tb.Step("read", "ubuntu",
+					tb.Step("ubuntu",
+						tb.StepName("read"),
 						tb.StepCommand("/bin/bash"),
 						tb.StepArgs("-c", "cat", "/workspace/newworkspace/stuff"),
 					),
@@ -689,11 +699,13 @@ func TestPipelineStart_Interactive(t *testing.T) {
 					tb.TaskOutputs(
 						tb.OutputsResource("workspace", "git"),
 					),
-					tb.Step("read-docs-old", "ubuntu",
+					tb.Step("ubuntu",
+						tb.StepName("read-docs-old"),
 						tb.StepCommand("/bin/bash"),
 						tb.StepArgs("-c", "ls -la /workspace/damnworkspace/docs/README.md"),
 					),
-					tb.Step("write-new-stuff", "ubuntu",
+					tb.Step("ubuntu",
+						tb.StepName("write-new-stuff"),
 						tb.StepCommand("bash"),
 						tb.StepArgs("-c", "ln -s /workspace/damnworkspace /workspace/output/workspace && echo some stuff > /workspace/output/workspace/stuff"),
 					),
@@ -1635,8 +1647,9 @@ func TestPipelineStart_Interactive(t *testing.T) {
 	for _, tp := range testParams {
 		t.Run(tp.name, func(t *testing.T) {
 			p := test.Params{
-				Kube:   tp.input.Kube,
-				Tekton: tp.input.Pipeline,
+				Kube:     tp.input.Kube,
+				Tekton:   tp.input.Pipeline,
+				Resource: tp.input.Resource,
 			}
 			p.SetNamespace(tp.namespace)
 
@@ -1684,7 +1697,7 @@ func Test_start_pipeline(t *testing.T) {
 	}
 
 	cs, _ := test.SeedTestData(t, pipelinetest.Data{Pipelines: ps, Namespaces: ns})
-	p := &test.Params{Tekton: cs.Pipeline, Kube: cs.Kube}
+	p := &test.Params{Tekton: cs.Pipeline, Kube: cs.Kube, Resource: cs.Resource}
 	pipeline := Command(p)
 
 	got, _ := test.ExecuteCommand(pipeline, "start", pipelineName,
@@ -1773,7 +1786,7 @@ func Test_start_pipeline_last(t *testing.T) {
 		Kube:     seedData.Kube,
 	}
 
-	p := &test.Params{Tekton: cs.Pipeline, Kube: cs.Kube}
+	p := &test.Params{Tekton: cs.Pipeline, Kube: cs.Kube, Resource: cs.Resource}
 
 	pipeline := Command(p)
 	got, _ := test.ExecuteCommand(pipeline, "start", pipelineName,
@@ -1861,7 +1874,7 @@ func Test_start_pipeline_last_without_res_param(t *testing.T) {
 		Kube:     seedData.Kube,
 	}
 
-	p := &test.Params{Tekton: cs.Pipeline, Kube: cs.Kube}
+	p := &test.Params{Tekton: cs.Pipeline, Kube: cs.Kube, Resource: cs.Resource}
 
 	pipeline := Command(p)
 	got, _ := test.ExecuteCommand(pipeline, "start", pipelineName,
@@ -1947,7 +1960,7 @@ func Test_start_pipeline_last_merge(t *testing.T) {
 		Kube:     seedData.Kube,
 	}
 
-	p := &test.Params{Tekton: cs.Pipeline, Kube: cs.Kube}
+	p := &test.Params{Tekton: cs.Pipeline, Kube: cs.Kube, Resource: cs.Resource}
 
 	pipeline := Command(p)
 	got, _ := test.ExecuteCommand(pipeline, "start", pipelineName,
@@ -2019,7 +2032,7 @@ func Test_start_pipeline_allkindparam(t *testing.T) {
 	}
 
 	cs, _ := test.SeedTestData(t, pipelinetest.Data{Pipelines: ps, Namespaces: ns})
-	p := &test.Params{Tekton: cs.Pipeline, Kube: cs.Kube}
+	p := &test.Params{Tekton: cs.Pipeline, Kube: cs.Kube, Resource: cs.Resource}
 	pipeline := Command(p)
 
 	got, _ := test.ExecuteCommand(pipeline, "start", pipelineName,
@@ -2153,7 +2166,7 @@ func Test_getPipelineResourceByFormat(t *testing.T) {
 	}
 
 	cs, _ := test.SeedTestData(t, pipelinetest.Data{PipelineResources: pipelineResources, Namespaces: ns})
-	res, _ := getPipelineResources(cs.Pipeline, "ns")
+	res, _ := getPipelineResources(cs.Resource, "ns")
 	resFormat := getPipelineResourcesByFormat(res.Items)
 
 	output := getOptionsByType(resFormat, "git")
@@ -2354,7 +2367,7 @@ func Test_lastPipelineRun(t *testing.T) {
 					clock.Advance(time.Duration(60) * time.Minute)
 
 					cs, _ := test.SeedTestData(t, pipelinetest.Data{PipelineRuns: prs, Namespaces: ns})
-					p := &test.Params{Tekton: cs.Pipeline, Clock: clock}
+					p := &test.Params{Tekton: cs.Pipeline, Clock: clock, Resource: cs.Resource}
 					p.SetNamespace("namespace")
 					return p
 
@@ -2369,7 +2382,7 @@ func Test_lastPipelineRun(t *testing.T) {
 				pipeline: "test",
 				p: func() *test.Params {
 					cs, _ := test.SeedTestData(t, pipelinetest.Data{Namespaces: ns})
-					p := &test.Params{Tekton: cs.Pipeline}
+					p := &test.Params{Tekton: cs.Pipeline, Resource: cs.Resource}
 					p.SetNamespace("namespace")
 					return p
 

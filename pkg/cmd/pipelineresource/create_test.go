@@ -324,7 +324,7 @@ func TestPipelineResource_create_cloudEventResource(t *testing.T) {
 				}
 
 				// check if the resource is created
-				res, err := cs.Pipeline.Tekton().PipelineResources("namespace").Get("cloudEvent-res", metav1.GetOptions{})
+				res, err := cs.Resource.Tekton().PipelineResources("namespace").Get("cloudEvent-res", metav1.GetOptions{})
 				if err != nil {
 					return err
 				}
@@ -472,7 +472,7 @@ func TestPipelineResource_create_clusterResource_secure_password_text(t *testing
 				}
 
 				// check if the resource is created
-				res, err := cs.Pipeline.Tekton().PipelineResources("namespace").Get("cluster-res", metav1.GetOptions{})
+				res, err := cs.Resource.Tekton().PipelineResources("namespace").Get("cluster-res", metav1.GetOptions{})
 				if err != nil {
 					return err
 				}
@@ -624,7 +624,7 @@ func TestPipelineResource_create_clusterResource_secure_token_text(t *testing.T)
 				}
 
 				// check if the resource is created
-				res, err := cs.Pipeline.Tekton().PipelineResources("namespace").Get("cluster-res", metav1.GetOptions{})
+				res, err := cs.Resource.Tekton().PipelineResources("namespace").Get("cluster-res", metav1.GetOptions{})
 				if err != nil {
 					return err
 				}
@@ -723,7 +723,7 @@ func TestPipelineResource_create_gitResource(t *testing.T) {
 				}
 
 				// check if the resource is created
-				res, err := cs.Pipeline.Tekton().PipelineResources("namespace").Get("git-res", metav1.GetOptions{})
+				res, err := cs.Resource.Tekton().PipelineResources("namespace").Get("git-res", metav1.GetOptions{})
 				if err != nil {
 					return err
 				}
@@ -827,7 +827,7 @@ func TestPipelineResource_create_imageResource(t *testing.T) {
 				}
 
 				// check if the resource is created
-				res, err := cs.Pipeline.Tekton().PipelineResources("namespace").Get("image-res", metav1.GetOptions{})
+				res, err := cs.Resource.Tekton().PipelineResources("namespace").Get("image-res", metav1.GetOptions{})
 				if err != nil {
 					return err
 				}
@@ -991,7 +991,7 @@ func TestPipelineResource_create_clusterResource_secure_password_secret(t *testi
 				}
 
 				// check if the resource is created
-				res, err := cs.Pipeline.Tekton().PipelineResources("namespace").Get("cluster-res", metav1.GetOptions{})
+				res, err := cs.Resource.Tekton().PipelineResources("namespace").Get("cluster-res", metav1.GetOptions{})
 				if err != nil {
 					return err
 				}
@@ -1167,7 +1167,7 @@ func TestPipelineResource_create_clusterResource_secure_token_secret(t *testing.
 				}
 
 				// check if the resource is created
-				res, err := cs.Pipeline.Tekton().PipelineResources("namespace").Get("cluster-res", metav1.GetOptions{})
+				res, err := cs.Resource.Tekton().PipelineResources("namespace").Get("cluster-res", metav1.GetOptions{})
 				if err != nil {
 					return err
 				}
@@ -1298,7 +1298,7 @@ func TestPipelineResource_create_pullRequestResource(t *testing.T) {
 				}
 
 				// check if the resource is created
-				res, err := cs.Pipeline.Tekton().PipelineResources("namespace").Get("pullRequest-res", metav1.GetOptions{})
+				res, err := cs.Resource.Tekton().PipelineResources("namespace").Get("pullRequest-res", metav1.GetOptions{})
 				if err != nil {
 					return err
 				}
@@ -1442,7 +1442,7 @@ func TestPipelineResource_create_gcsStorageResource(t *testing.T) {
 				}
 
 				// check if the resource is created
-				res, err := cs.Pipeline.Tekton().PipelineResources("namespace").Get("storage-res", metav1.GetOptions{})
+				res, err := cs.Resource.Tekton().PipelineResources("namespace").Get("storage-res", metav1.GetOptions{})
 				if err != nil {
 					return err
 				}
@@ -1614,7 +1614,7 @@ func TestPipelineResource_create_buildGCSstorageResource(t *testing.T) {
 				}
 
 				// check if the resource is created
-				res, err := cs.Pipeline.Tekton().PipelineResources("namespace").Get("storage-res", metav1.GetOptions{})
+				res, err := cs.Resource.Tekton().PipelineResources("namespace").Get("storage-res", metav1.GetOptions{})
 				if err != nil {
 					return err
 				}
@@ -1703,7 +1703,7 @@ func Test_Pipeline_Resource_Create(t *testing.T) {
 
 	for _, tp := range testParams {
 		t.Run(tp.name, func(t *testing.T) {
-			p := &test.Params{Tekton: tp.input.Pipeline, Kube: tp.input.Kube}
+			p := &test.Params{Tekton: tp.input.Pipeline, Kube: tp.input.Kube, Resource: tp.input.Resource}
 			resource := Command(p)
 
 			if tp.inputStream != nil {
@@ -1730,8 +1730,9 @@ func Test_Pipeline_Resource_Create(t *testing.T) {
 func resOpts(ns string, cs pipelinetest.Clients) *Resource {
 
 	p := test.Params{
-		Kube:   cs.Kube,
-		Tekton: cs.Pipeline,
+		Kube:     cs.Kube,
+		Tekton:   cs.Pipeline,
+		Resource: cs.Resource,
 	}
 	out := new(bytes.Buffer)
 	p.SetNamespace(ns)

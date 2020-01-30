@@ -133,7 +133,7 @@ func (res *Resource) createInteractive() error {
 		return err
 	}
 
-	newRes, err := cls.Tekton.TektonV1alpha1().PipelineResources(res.Params.Namespace()).Create(&res.PipelineResource)
+	newRes, err := cls.Resource.TektonV1alpha1().PipelineResources(res.Params.Namespace()).Create(&res.PipelineResource)
 	if err != nil {
 		return err
 	}
@@ -588,7 +588,7 @@ func validate(name string, p cli.Params) error {
 		return err
 	}
 
-	if _, err := c.Tekton.TektonV1alpha1().PipelineResources(p.Namespace()).Get(name, metav1.GetOptions{}); err == nil {
+	if _, err := c.Resource.TektonV1alpha1().PipelineResources(p.Namespace()).Get(name, metav1.GetOptions{}); err == nil {
 		return errors.New("resource already exist")
 	}
 
@@ -606,7 +606,7 @@ func createFrom(s *cli.Stream, p cli.Params, path string) error {
 		return err
 	}
 
-	_, err = cs.Tekton.TektonV1alpha1().PipelineResources(p.Namespace()).Create(resource)
+	_, err = cs.Resource.TektonV1alpha1().PipelineResources(p.Namespace()).Create(resource)
 	if err != nil {
 		return fmt.Errorf("failed to create pipeline resource %q: %s", resource.Name, err)
 	}

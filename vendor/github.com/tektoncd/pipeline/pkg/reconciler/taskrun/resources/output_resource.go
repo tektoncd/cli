@@ -17,13 +17,13 @@ limitations under the License.
 package resources
 
 import (
+	"fmt"
 	"path/filepath"
 
 	"github.com/tektoncd/pipeline/pkg/apis/pipeline"
 	"github.com/tektoncd/pipeline/pkg/apis/pipeline/v1alpha1"
 	"github.com/tektoncd/pipeline/pkg/artifacts"
 	"go.uber.org/zap"
-	"golang.org/x/xerrors"
 	"k8s.io/client-go/kubernetes"
 )
 
@@ -67,13 +67,17 @@ func AddOutputResources(
 	needsPvc := false
 	for _, output := range taskSpec.Outputs.Resources {
 		boundResource, err := getBoundResource(output.Name, taskRun.Spec.Outputs.Resources)
-		if err != nil {
-			return nil, xerrors.Errorf("failed to get bound resource: %w", err)
+		// Continue if the declared resource is optional and not specified in TaskRun
+		// boundResource is nil if the declared resource in Task does not have any resource specified in the TaskRun
+		if output.Optional && boundResource == nil {
+			continue
+		} else if err != nil {
+			// throw an error for required resources, if not specified in the TaskRun
+			return nil, fmt.Errorf("failed to get bound resource: %w", err)
 		}
-
 		resource, ok := outputResources[boundResource.Name]
 		if !ok || resource == nil {
-			return nil, xerrors.Errorf("failed to get output pipeline Resource for task %q resource %v", taskName, boundResource)
+			return nil, fmt.Errorf("failed to get output pipeline Resource for task %q resource %v", taskName, boundResource)
 		}
 
 		var sourcePath string
@@ -103,7 +107,7 @@ func AddOutputResources(
 			return nil, err
 		}
 		if err := v1alpha1.ApplyTaskModifier(taskSpec, modifier); err != nil {
-			return nil, xerrors.Errorf("Unabled to apply Resource %s: %w", boundResource.Name, err)
+			return nil, fmt.Errorf("Unabled to apply Resource %s: %w", boundResource.Name, err)
 		}
 	}
 	// Attach the PVC that will be used for `from` copying.

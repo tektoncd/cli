@@ -148,7 +148,7 @@ func TestPipelineResourceList_empty(t *testing.T) {
 	}
 
 	cs, _ := test.SeedTestData(t, pipelinetest.Data{Namespaces: ns})
-	p := &test.Params{Tekton: cs.Pipeline, Kube: cs.Kube}
+	p := &test.Params{Tekton: cs.Pipeline, Kube: cs.Kube, Resource: cs.Resource}
 	pipelineresource := Command(p)
 
 	out, _ := test.ExecuteCommand(pipelineresource, "list", "-n", "test-ns-3")
@@ -165,7 +165,7 @@ func TestPipelineResourceList_invalidType(t *testing.T) {
 	}
 
 	cs, _ := test.SeedTestData(t, pipelinetest.Data{Namespaces: ns})
-	p := &test.Params{Tekton: cs.Pipeline, Kube: cs.Kube}
+	p := &test.Params{Tekton: cs.Pipeline, Kube: cs.Kube, Resource: cs.Resource}
 	c := Command(p)
 
 	_, err := test.ExecuteCommand(c, "list", "-n", "ns", "-t", "registry")
@@ -179,6 +179,6 @@ func TestPipelineResourceList_invalidType(t *testing.T) {
 
 func command(t *testing.T, pres []*v1alpha1.PipelineResource, ns []*corev1.Namespace) *cobra.Command {
 	cs, _ := test.SeedTestData(t, pipelinetest.Data{PipelineResources: pres, Namespaces: ns})
-	p := &test.Params{Tekton: cs.Pipeline, Kube: cs.Kube}
+	p := &test.Params{Tekton: cs.Pipeline, Kube: cs.Kube, Resource: cs.Resource}
 	return Command(p)
 }

@@ -18,13 +18,13 @@ package artifacts
 
 import (
 	"fmt"
+	"os"
 	"strings"
 
 	"github.com/tektoncd/pipeline/pkg/apis/pipeline"
 	"github.com/tektoncd/pipeline/pkg/apis/pipeline/v1alpha1"
 	"github.com/tektoncd/pipeline/pkg/system"
 	"go.uber.org/zap"
-	"golang.org/x/xerrors"
 	corev1 "k8s.io/api/core/v1"
 	"k8s.io/apimachinery/pkg/api/errors"
 	"k8s.io/apimachinery/pkg/api/resource"
@@ -33,22 +33,14 @@ import (
 )
 
 const (
-	// PvcConfigName is the name of the configmap containing all
-	// customizations for the storage PVC.
-	PvcConfigName = "config-artifact-pvc"
+	// PVCSizeKey is the name of the configmap entry that specifies the size of the PVC to create
+	PVCSizeKey = "size"
 
-	// PvcSizeKey is the name of the configmap entry that specifies the size of the PVC to create
-	PvcSizeKey = "size"
+	// DefaultPVCSize is the default size of the PVC to create
+	DefaultPVCSize = "5Gi"
 
-	// DefaultPvcSize is the default size of the PVC to create
-	DefaultPvcSize = "5Gi"
-
-	// PvcStorageClassNameKey is the name of the configmap entry that specifies the storage class of the PVC to create
-	PvcStorageClassNameKey = "storageClassName"
-
-	// BucketConfigName is the name of the configmap containing all
-	// customizations for the storage bucket.
-	BucketConfigName = "config-artifact-bucket"
+	// PVCStorageClassNameKey is the name of the configmap entry that specifies the storage class of the PVC to create
+	PVCStorageClassNameKey = "storageClassName"
 
 	// BucketLocationKey is the name of the configmap entry that specifies
 	// loction of the bucket.
@@ -70,6 +62,24 @@ const (
 	// Valid values: GOOGLE_APPLICATION_CREDENTIALS, BOTO_CONFIG. Defaults to GOOGLE_APPLICATION_CREDENTIALS.
 	BucketServiceAccountFieldName = "bucket.service.account.field.name"
 )
+
+// GetBucketConfigName returns the name of the configmap containing all
+// customizations for the storage bucket.
+func GetBucketConfigName() string {
+	if e := os.Getenv("CONFIG_ARTIFACT_BUCKET_NAME"); e != "" {
+		return e
+	}
+	return "config-artifact-bucket"
+}
+
+// GetPVCConfigName returns the name of the configmap containing all
+// customizations for the storage PVC.
+func GetPVCConfigName() string {
+	if e := os.Getenv("CONFIG_ARTIFACT_PVC_NAME"); e != "" {
+		return e
+	}
+	return "config-artifact-pvc"
+}
 
 // ArtifactStorageInterface is an interface to define the steps to copy
 // an pipeline artifact to/from temporary storage
@@ -140,7 +150,7 @@ func InitializeArtifactStorage(images pipeline.Images, pr *v1alpha1.PipelineRun,
 		return &ArtifactStorageNone{}, nil
 	}
 
-	configMap, err := c.CoreV1().ConfigMaps(system.GetNamespace()).Get(BucketConfigName, metav1.GetOptions{})
+	configMap, err := c.CoreV1().ConfigMaps(system.GetNamespace()).Get(GetBucketConfigName(), metav1.GetOptions{})
 	shouldCreatePVC, err := ConfigMapNeedsPVC(configMap, err, logger)
 	if err != nil {
 		return nil, err
@@ -159,7 +169,7 @@ func InitializeArtifactStorage(images pipeline.Images, pr *v1alpha1.PipelineRun,
 // CleanupArtifactStorage will delete the PipelineRun's artifact storage PVC if it exists. The PVC is created for using
 // an output workspace or artifacts from one Task to another Task. No other PVCs will be impacted by this cleanup.
 func CleanupArtifactStorage(pr *v1alpha1.PipelineRun, c kubernetes.Interface, logger *zap.SugaredLogger) error {
-	configMap, err := c.CoreV1().ConfigMaps(system.GetNamespace()).Get(BucketConfigName, metav1.GetOptions{})
+	configMap, err := c.CoreV1().ConfigMaps(system.GetNamespace()).Get(GetBucketConfigName(), metav1.GetOptions{})
 	shouldCreatePVC, err := ConfigMapNeedsPVC(configMap, err, logger)
 	if err != nil {
 		return err
@@ -180,7 +190,7 @@ func ConfigMapNeedsPVC(configMap *corev1.ConfigMap, err error, logger *zap.Sugar
 		if errors.IsNotFound(err) {
 			return true, nil
 		}
-		return false, xerrors.Errorf("couldn't determine if PVC was needed from config map: %w", err)
+		return false, fmt.Errorf("couldn't determine if PVC was needed from config map: %w", err)
 	}
 	if configMap == nil {
 		return true, nil
@@ -189,13 +199,13 @@ func ConfigMapNeedsPVC(configMap *corev1.ConfigMap, err error, logger *zap.Sugar
 		logger.Warn("the configmap has no data")
 		return true, nil
 	}
-	if location, ok := configMap.Data[BucketLocationKey]; !ok {
+	location, ok := configMap.Data[BucketLocationKey]
+	if !ok {
 		return true, nil
-	} else {
-		logger.Warnf("the configmap key %q is empty", BucketLocationKey)
-		if strings.TrimSpace(location) == "" {
-			return true, nil
-		}
+	}
+	logger.Warnf("the configmap key %q is empty", BucketLocationKey)
+	if strings.TrimSpace(location) == "" {
+		return true, nil
 	}
 	return false, nil
 }
@@ -203,10 +213,10 @@ func ConfigMapNeedsPVC(configMap *corev1.ConfigMap, err error, logger *zap.Sugar
 // GetArtifactStorage returns the storage interface to enable
 // consumer code to get a container step for copy to/from storage
 func GetArtifactStorage(images pipeline.Images, prName string, c kubernetes.Interface, logger *zap.SugaredLogger) (ArtifactStorageInterface, error) {
-	configMap, err := c.CoreV1().ConfigMaps(system.GetNamespace()).Get(BucketConfigName, metav1.GetOptions{})
+	configMap, err := c.CoreV1().ConfigMaps(system.GetNamespace()).Get(GetBucketConfigName(), metav1.GetOptions{})
 	pvc, err := ConfigMapNeedsPVC(configMap, err, logger)
 	if err != nil {
-		return nil, xerrors.Errorf("couldn't determine if PVC was needed from config map: %w", err)
+		return nil, fmt.Errorf("couldn't determine if PVC was needed from config map: %w", err)
 	}
 	if pvc {
 		return &v1alpha1.ArtifactPVC{Name: prName, ShellImage: images.ShellImage}, nil
@@ -250,22 +260,22 @@ func createPVC(pr *v1alpha1.PipelineRun, c kubernetes.Interface) (*corev1.Persis
 	if _, err := c.CoreV1().PersistentVolumeClaims(pr.Namespace).Get(GetPVCName(pr), metav1.GetOptions{}); err != nil {
 		if errors.IsNotFound(err) {
 
-			configMap, err := c.CoreV1().ConfigMaps(system.GetNamespace()).Get(PvcConfigName, metav1.GetOptions{})
+			configMap, err := c.CoreV1().ConfigMaps(system.GetNamespace()).Get(GetPVCConfigName(), metav1.GetOptions{})
 			if err != nil && !errors.IsNotFound(err) {
-				return nil, xerrors.Errorf("failed to get PVC ConfigMap %s for %q due to error: %w", PvcConfigName, pr.Name, err)
+				return nil, fmt.Errorf("failed to get PVC ConfigMap %s for %q due to error: %w", GetPVCConfigName(), pr.Name, err)
 			}
 			var pvcSizeStr string
 			var pvcStorageClassNameStr string
 			if configMap != nil {
-				pvcSizeStr = configMap.Data[PvcSizeKey]
-				pvcStorageClassNameStr = configMap.Data[PvcStorageClassNameKey]
+				pvcSizeStr = configMap.Data[PVCSizeKey]
+				pvcStorageClassNameStr = configMap.Data[PVCStorageClassNameKey]
 			}
 			if pvcSizeStr == "" {
-				pvcSizeStr = DefaultPvcSize
+				pvcSizeStr = DefaultPVCSize
 			}
 			pvcSize, err := resource.ParseQuantity(pvcSizeStr)
 			if err != nil {
-				return nil, xerrors.Errorf("failed to create Persistent Volume spec for %q due to error: %w", pr.Name, err)
+				return nil, fmt.Errorf("failed to create Persistent Volume spec for %q due to error: %w", pr.Name, err)
 			}
 			var pvcStorageClassName *string
 			if pvcStorageClassNameStr == "" {
@@ -277,11 +287,11 @@ func createPVC(pr *v1alpha1.PipelineRun, c kubernetes.Interface) (*corev1.Persis
 			pvcSpec := GetPVCSpec(pr, pvcSize, pvcStorageClassName)
 			pvc, err := c.CoreV1().PersistentVolumeClaims(pr.Namespace).Create(pvcSpec)
 			if err != nil {
-				return nil, xerrors.Errorf("failed to claim Persistent Volume %q due to error: %w", pr.Name, err)
+				return nil, fmt.Errorf("failed to claim Persistent Volume %q due to error: %w", pr.Name, err)
 			}
 			return pvc, nil
 		}
-		return nil, xerrors.Errorf("failed to get claim Persistent Volume %q due to error: %w", pr.Name, err)
+		return nil, fmt.Errorf("failed to get claim Persistent Volume %q due to error: %w", pr.Name, err)
 	}
 	return nil, nil
 }
@@ -289,10 +299,10 @@ func createPVC(pr *v1alpha1.PipelineRun, c kubernetes.Interface) (*corev1.Persis
 func deletePVC(pr *v1alpha1.PipelineRun, c kubernetes.Interface) error {
 	if _, err := c.CoreV1().PersistentVolumeClaims(pr.Namespace).Get(GetPVCName(pr), metav1.GetOptions{}); err != nil {
 		if !errors.IsNotFound(err) {
-			return xerrors.Errorf("failed to get Persistent Volume %q due to error: %w", GetPVCName(pr), err)
+			return fmt.Errorf("failed to get Persistent Volume %q due to error: %w", GetPVCName(pr), err)
 		}
 	} else if err := c.CoreV1().PersistentVolumeClaims(pr.Namespace).Delete(GetPVCName(pr), &metav1.DeleteOptions{}); err != nil {
-		return xerrors.Errorf("failed to delete Persistent Volume %q due to error: %w", pr.Name, err)
+		return fmt.Errorf("failed to delete Persistent Volume %q due to error: %w", pr.Name, err)
 	}
 	return nil
 }

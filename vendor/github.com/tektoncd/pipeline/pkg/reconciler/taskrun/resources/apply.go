@@ -19,6 +19,8 @@ package resources
 import (
 	"fmt"
 
+	"github.com/tektoncd/pipeline/pkg/workspace"
+
 	"github.com/tektoncd/pipeline/pkg/apis/pipeline/v1alpha1"
 	"github.com/tektoncd/pipeline/pkg/substitution"
 )
@@ -79,6 +81,21 @@ func ApplyResources(spec *v1alpha1.TaskSpec, resolvedResources map[string]v1alph
 	return ApplyReplacements(spec, replacements, map[string][]string{})
 }
 
+// ApplyWorkspaces applies the substitution from paths that the workspaces in w are mounted to and the
+// volumes that wb are realized with in the task spec ts.
+func ApplyWorkspaces(spec *v1alpha1.TaskSpec, w []v1alpha1.WorkspaceDeclaration, wb []v1alpha1.WorkspaceBinding) *v1alpha1.TaskSpec {
+	stringReplacements := map[string]string{}
+
+	for _, ww := range w {
+		stringReplacements[fmt.Sprintf("workspaces.%s.path", ww.Name)] = ww.GetMountPath()
+	}
+	v := workspace.GetVolumes(wb)
+	for name, vv := range v {
+		stringReplacements[fmt.Sprintf("workspaces.%s.volume", name)] = vv.Name
+	}
+	return ApplyReplacements(spec, stringReplacements, map[string][]string{})
+}
+
 // ApplyReplacements replaces placeholders for declared parameters with the specified replacements.
 func ApplyReplacements(spec *v1alpha1.TaskSpec, stringReplacements map[string]string, arrayReplacements map[string][]string) *v1alpha1.TaskSpec {
 	spec = spec.DeepCopy()
@@ -106,6 +123,12 @@ func ApplyReplacements(spec *v1alpha1.TaskSpec, stringReplacements map[string]st
 		if v.PersistentVolumeClaim != nil {
 			spec.Volumes[i].PersistentVolumeClaim.ClaimName = substitution.ApplyReplacements(v.PersistentVolumeClaim.ClaimName, stringReplacements)
 		}
+	}
+
+	// Apply variable substitution to the sidecar definitions
+	sidecars := spec.Sidecars
+	for i := range sidecars {
+		v1alpha1.ApplyContainerReplacements(&sidecars[i], stringReplacements, arrayReplacements)
 	}
 
 	return spec

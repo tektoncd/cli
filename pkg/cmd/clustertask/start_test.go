@@ -94,8 +94,12 @@ func Test_ClusterTask_Start(t *testing.T) {
 				tb.TaskOutputs(
 					tb.OutputsResource("code-image", v1alpha1.PipelineResourceTypeImage),
 				),
-				tb.Step("hello", "busybox"),
-				tb.Step("exit", "busybox"),
+				tb.Step("busybox",
+					tb.StepName("hello"),
+				),
+				tb.Step("busybox",
+					tb.StepName("exit"),
+				),
 			),
 		),
 	}
