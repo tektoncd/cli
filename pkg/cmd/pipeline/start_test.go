@@ -1743,12 +1743,14 @@ func Test_start_pipeline_last(t *testing.T) {
 			tb.PipelineSpec(
 				tb.PipelineDeclaredResource("git-repo", "git"),
 				tb.PipelineDeclaredResource("build-image", "image"),
+				tb.PipelineWorkspaceDeclaration("test=workspace"),
 				tb.PipelineParamSpec("pipeline-param-1", v1alpha1.ParamTypeString, tb.ParamSpecDefault("somethingdifferent-1")),
 				tb.PipelineParamSpec("rev-param", v1alpha1.ParamTypeString, tb.ParamSpecDefault("revision")),
 				tb.PipelineTask("unit-test-1", "unit-test-task",
 					tb.PipelineTaskInputResource("workspace", "git-repo"),
 					tb.PipelineTaskOutputResource("image-to-use", "best-image"),
 					tb.PipelineTaskOutputResource("workspace", "git-repo"),
+					tb.PipelineTaskWorkspaceBinding("task-test-workspace", "test-workspace"),
 				),
 			), // spec
 		), // pipeline
@@ -1763,6 +1765,7 @@ func Test_start_pipeline_last(t *testing.T) {
 				tb.PipelineRunResourceBinding("build-image", tb.PipelineResourceBindingRef("some-image")),
 				tb.PipelineRunParam("pipeline-param-1", "somethingmorefun"),
 				tb.PipelineRunParam("rev-param", "revision1"),
+				tb.PipelineRunWorkspaceBindingEmptyDir("test-new"),
 			),
 		),
 	}
@@ -1819,7 +1822,9 @@ func Test_start_pipeline_last(t *testing.T) {
 			test.AssertOutput(t, v1alpha1.ArrayOrString{Type: v1alpha1.ParamTypeString, StringVal: "revision2"}, v.Value)
 		}
 	}
+
 	test.AssertOutput(t, "svc1", pr.Spec.ServiceAccountName)
+	test.AssertOutput(t, "test-new", pr.Spec.Workspaces[0].Name)
 }
 
 func Test_start_pipeline_last_without_res_param(t *testing.T) {

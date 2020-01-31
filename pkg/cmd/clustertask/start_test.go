@@ -100,6 +100,7 @@ func Test_ClusterTask_Start(t *testing.T) {
 				tb.Step("busybox",
 					tb.StepName("exit"),
 				),
+				tb.TaskWorkspace("test", "test workspace", "/workspace/test/file", true),
 			),
 		),
 	}
@@ -114,6 +115,7 @@ func Test_ClusterTask_Start(t *testing.T) {
 				tb.TaskRunInputs(tb.TaskRunInputsParam("print", "booms", "booms", "booms")),
 				tb.TaskRunInputs(tb.TaskRunInputsResource("my-repo", tb.TaskResourceBindingRef("git"))),
 				tb.TaskRunOutputs(tb.TaskRunOutputsResource("my-image", tb.TaskResourceBindingRef("image"))),
+				tb.TaskRunWorkspaceEmptyDir("test", ""),
 			),
 			tb.TaskRunStatus(
 				tb.TaskRunStartTime(time.Now()),
