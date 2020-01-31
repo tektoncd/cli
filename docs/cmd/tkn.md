@@ -17,7 +17,6 @@ CLI for tekton pipelines
 * [tkn clustertask](tkn_clustertask.md)	 - Manage clustertasks
 * [tkn completion](tkn_completion.md)	 - Prints shell completion scripts
 * [tkn condition](tkn_condition.md)	 - Manage conditions
-* [tkn create](tkn_create.md)	 - Uses kubectl create to create Kubernetes resources
 * [tkn eventlistener](tkn_eventlistener.md)	 - Manage eventlisteners
 * [tkn pipeline](tkn_pipeline.md)	 - Manage pipelines
 * [tkn pipelinerun](tkn_pipelinerun.md)	 - Manage pipelineruns
