@@ -280,6 +280,7 @@ func Test_start_task_last(t *testing.T) {
 				tb.Step("busybox",
 					tb.StepName("exit"),
 				),
+				tb.TaskWorkspace("test", "test workspace", "/workspace/test/file", true),
 			),
 		),
 	}
@@ -294,6 +295,7 @@ func Test_start_task_last(t *testing.T) {
 				tb.TaskRunInputs(tb.TaskRunInputsParam("print", "booms", "booms", "booms")),
 				tb.TaskRunInputs(tb.TaskRunInputsResource("my-repo", tb.TaskResourceBindingRef("git"))),
 				tb.TaskRunOutputs(tb.TaskRunOutputsResource("code-image", tb.TaskResourceBindingRef("image"))),
+				tb.TaskRunWorkspaceEmptyDir("test", ""),
 			),
 		),
 	}
@@ -356,6 +358,8 @@ func Test_start_task_last(t *testing.T) {
 	}
 
 	test.AssertOutput(t, "svc", tr.Spec.ServiceAccountName)
+	test.AssertOutput(t, "test", tr.Spec.Workspaces[0].Name)
+	test.AssertOutput(t, "", tr.Spec.Workspaces[0].SubPath)
 }
 
 func Test_start_task_last_with_inputs(t *testing.T) {

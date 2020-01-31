@@ -411,6 +411,7 @@ func (opt *startOptions) startPipeline(pName string) error {
 		// If the prLast is a "new" PR, let's populate those fields too
 		pr.Spec.ServiceAccountName = prLast.Spec.ServiceAccountName
 		pr.Spec.ServiceAccountNames = prLast.Spec.ServiceAccountNames
+		pr.Spec.Workspaces = prLast.Spec.Workspaces
 	}
 
 	if err := mergeRes(pr, opt.Resources); err != nil {

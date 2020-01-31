@@ -165,6 +165,7 @@ func startClusterTask(opt startOptions, args []string) error {
 		tr.Spec.Inputs = trLast.Spec.Inputs
 		tr.Spec.Outputs = trLast.Spec.Outputs
 		tr.Spec.ServiceAccountName = trLast.Spec.ServiceAccountName
+		tr.Spec.Workspaces = trLast.Spec.Workspaces
 	}
 
 	inputRes, err := mergeRes(tr.Spec.Inputs.Resources, opt.InputResources)
