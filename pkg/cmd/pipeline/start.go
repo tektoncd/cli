@@ -406,6 +406,11 @@ func (opt *startOptions) startPipeline(pName string) error {
 		if err != nil {
 			return err
 		}
+		if len(prLast.ObjectMeta.GenerateName) > 0 {
+			pr.ObjectMeta.GenerateName = prLast.ObjectMeta.GenerateName
+		} else {
+			pr.ObjectMeta.GenerateName = prLast.ObjectMeta.Name + "-"
+		}
 		pr.Spec.Resources = prLast.Spec.Resources
 		pr.Spec.Params = prLast.Spec.Params
 		// If the prLast is a "new" PR, let's populate those fields too
