@@ -4,7 +4,7 @@ import (
 	"testing"
 
 	"github.com/fatih/color"
-	"gotest.tools/v3/assert"
+	"gotest.tools/assert"
 	corev1 "k8s.io/api/core/v1"
 	"knative.dev/pkg/apis"
 	"knative.dev/pkg/apis/duck/v1beta1"

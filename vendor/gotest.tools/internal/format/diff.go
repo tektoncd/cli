@@ -6,7 +6,7 @@ import (
 	"strings"
 	"unicode"
 
-	"gotest.tools/v3/internal/difflib"
+	"gotest.tools/internal/difflib"
 )
 
 const (

@@ -21,7 +21,7 @@ import (
 
 	"github.com/fatih/color"
 	"github.com/tektoncd/cli/pkg/test"
-	"gotest.tools/v3/assert"
+	"gotest.tools/assert"
 )
 
 func TestRainbowsColours(t *testing.T) {

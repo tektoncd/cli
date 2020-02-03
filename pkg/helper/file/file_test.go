@@ -23,7 +23,7 @@ import (
 	"github.com/google/go-cmp/cmp"
 	"github.com/tektoncd/cli/pkg/test"
 	"github.com/tektoncd/pipeline/pkg/apis/pipeline/v1alpha1"
-	"gotest.tools/v3/assert"
+	"gotest.tools/assert"
 )
 
 func TestLoadLocalFile(t *testing.T) {

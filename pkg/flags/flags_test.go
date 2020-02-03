@@ -20,7 +20,7 @@ import (
 	"github.com/fatih/color"
 	"github.com/spf13/cobra"
 	"github.com/tektoncd/cli/pkg/cli"
-	"gotest.tools/v3/assert"
+	"gotest.tools/assert"
 )
 
 func TestFlags_add_shell_completion(t *testing.T) {

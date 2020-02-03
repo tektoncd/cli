@@ -21,7 +21,7 @@ import (
 	"testing"
 	"time"
 
-	"gotest.tools/v3/golden"
+	"gotest.tools/golden"
 	"k8s.io/apimachinery/pkg/runtime"
 
 	"github.com/jonboulle/clockwork"

@@ -27,7 +27,7 @@ import (
 	"github.com/tektoncd/triggers/pkg/apis/triggers/v1alpha1"
 	triggertest "github.com/tektoncd/triggers/test"
 	tb "github.com/tektoncd/triggers/test/builder"
-	"gotest.tools/v3/golden"
+	"gotest.tools/golden"
 	corev1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 )

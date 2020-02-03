@@ -25,7 +25,7 @@ import (
 	"time"
 
 	"github.com/tektoncd/cli/pkg/test"
-	"gotest.tools/v3/assert"
+	"gotest.tools/assert"
 )
 
 func TestVersionGood(t *testing.T) {

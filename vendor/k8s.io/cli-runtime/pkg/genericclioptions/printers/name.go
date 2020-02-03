@@ -50,6 +50,7 @@ func (p *NamePrinter) PrintObj(obj runtime.Object, w io.Writer) error {
 	}
 
 	if meta.IsListType(obj) {
+		fmt.Println("AAA")
 		// we allow unstructured lists for now because they always contain the GVK information.  We should chase down
 		// callers and stop them from passing unflattened lists
 		// TODO chase the caller that is setting this and remove it.
