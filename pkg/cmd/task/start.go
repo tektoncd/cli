@@ -207,6 +207,11 @@ func startTask(opt startOptions, args []string) error {
 		if err != nil {
 			return err
 		}
+		if len(trLast.ObjectMeta.GenerateName) > 0 {
+			tr.ObjectMeta.GenerateName = trLast.ObjectMeta.GenerateName
+		} else {
+			tr.ObjectMeta.GenerateName = trLast.ObjectMeta.Name + "-"
+		}
 		tr.Spec.Inputs = trLast.Spec.Inputs
 		tr.Spec.Outputs = trLast.Spec.Outputs
 		tr.Spec.ServiceAccountName = trLast.Spec.ServiceAccountName
