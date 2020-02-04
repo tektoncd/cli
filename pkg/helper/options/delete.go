@@ -28,24 +28,31 @@ type DeleteOptions struct {
 	ParentResource     string
 	ParentResourceName string
 	ForceDelete        bool
-	DeleteAll          bool
+	DeleteRelated      bool
+	DeleteAllNs        bool
 }
 
-func (o *DeleteOptions) CheckOptions(s *cli.Stream, resourceNames []string) error {
+func (o *DeleteOptions) CheckOptions(s *cli.Stream, resourceNames []string, ns string) error {
+	if len(resourceNames) > 0 && o.DeleteAllNs {
+		return fmt.Errorf("--all flag should not have any arguments or flags specified with it")
+	}
+
 	if o.ForceDelete {
 		return nil
 	}
 
 	formattedNames := names.QuotedList(resourceNames)
 
-	if len(resourceNames) == 0 && o.ParentResource != "" && o.ParentResourceName == "" {
+	if len(resourceNames) == 0 && o.ParentResource != "" && o.ParentResourceName == "" && !o.DeleteAllNs {
 		return fmt.Errorf("must provide %ss to delete or --%s flag", o.Resource, o.ParentResource)
 	}
 
 	switch {
+	case o.DeleteAllNs:
+		fmt.Fprintf(s.Out, "Are you sure you want to delete all %ss in namespace %q (y/n): ", o.Resource, ns)
 	case o.ParentResource != "" && o.ParentResourceName != "":
 		fmt.Fprintf(s.Out, "Are you sure you want to delete all %ss related to %s %q (y/n): ", o.Resource, o.ParentResource, o.ParentResourceName)
-	case o.DeleteAll:
+	case o.DeleteRelated:
 		fmt.Fprintf(s.Out, "Are you sure you want to delete %s and related resources %s (y/n): ", o.Resource, formattedNames)
 	default:
 		fmt.Fprintf(s.Out, "Are you sure you want to delete %s %s (y/n): ", o.Resource, formattedNames)

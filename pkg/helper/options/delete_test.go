@@ -35,7 +35,7 @@ func TestDeleteOptions(t *testing.T) {
 	}{
 		{
 			name:           "Default Option",
-			opt:            &DeleteOptions{Resource: "testRes", ForceDelete: false, DeleteAll: false},
+			opt:            &DeleteOptions{Resource: "testRes", ForceDelete: false, DeleteRelated: false, DeleteAllNs: false},
 			stream:         &cli.Stream{In: strings.NewReader("y"), Out: os.Stdout},
 			resourcesNames: []string{"test"},
 			wantError:      false,
@@ -43,7 +43,7 @@ func TestDeleteOptions(t *testing.T) {
 		},
 		{
 			name:           "Specify ForceDelete flag, answer yes",
-			opt:            &DeleteOptions{Resource: "testRes", ForceDelete: true, DeleteAll: false},
+			opt:            &DeleteOptions{Resource: "testRes", ForceDelete: true, DeleteRelated: false},
 			stream:         &cli.Stream{In: strings.NewReader("y"), Out: os.Stdout},
 			resourcesNames: []string{"test"},
 			wantError:      false,
@@ -51,23 +51,23 @@ func TestDeleteOptions(t *testing.T) {
 		},
 		{
 			name:           "Specify ForceDelete flag, answer no",
-			opt:            &DeleteOptions{Resource: "testRes", ForceDelete: true, DeleteAll: false},
+			opt:            &DeleteOptions{Resource: "testRes", ForceDelete: true, DeleteRelated: false},
 			stream:         &cli.Stream{In: strings.NewReader("n"), Out: os.Stdout},
 			resourcesNames: []string{"test"},
 			wantError:      false,
 			want:           "",
 		},
 		{
-			name:           "Specify DeleteAll flag, answer yes",
-			opt:            &DeleteOptions{Resource: "testRes", ForceDelete: false, DeleteAll: true},
+			name:           "Specify DeleteRelated flag, answer yes",
+			opt:            &DeleteOptions{Resource: "testRes", ForceDelete: false, DeleteRelated: true},
 			stream:         &cli.Stream{In: strings.NewReader("y"), Out: os.Stdout},
 			resourcesNames: []string{"test"},
 			wantError:      false,
 			want:           "",
 		},
 		{
-			name:           "Specify DeleteAll flag, answer no",
-			opt:            &DeleteOptions{Resource: "testRes", ForceDelete: false, DeleteAll: true},
+			name:           "Specify DeleteRelated flag, answer no",
+			opt:            &DeleteOptions{Resource: "testRes", ForceDelete: false, DeleteRelated: true},
 			stream:         &cli.Stream{In: strings.NewReader("n"), Out: os.Stdout},
 			resourcesNames: []string{"test"},
 			wantError:      true,
@@ -75,7 +75,7 @@ func TestDeleteOptions(t *testing.T) {
 		},
 		{
 			name:           "Specify multiple resources, answer yes",
-			opt:            &DeleteOptions{Resource: "testRes", ForceDelete: false, DeleteAll: false},
+			opt:            &DeleteOptions{Resource: "testRes", ForceDelete: false, DeleteRelated: false},
 			stream:         &cli.Stream{In: strings.NewReader("y"), Out: os.Stdout},
 			resourcesNames: []string{"test1", "test2"},
 			wantError:      false,
@@ -83,7 +83,7 @@ func TestDeleteOptions(t *testing.T) {
 		},
 		{
 			name:           "Specify multiple resources, answer no",
-			opt:            &DeleteOptions{Resource: "testRes", ForceDelete: false, DeleteAll: false},
+			opt:            &DeleteOptions{Resource: "testRes", ForceDelete: false, DeleteRelated: false},
 			stream:         &cli.Stream{In: strings.NewReader("n"), Out: os.Stdout},
 			resourcesNames: []string{"test1", "test2"},
 			wantError:      true,
@@ -96,11 +96,34 @@ func TestDeleteOptions(t *testing.T) {
 			resourcesNames: []string{""},
 			wantError:      false,
 		},
+		{
+			name:           "Specify DeleteAllNs option",
+			opt:            &DeleteOptions{DeleteAllNs: true},
+			stream:         &cli.Stream{In: strings.NewReader("y"), Out: os.Stdout},
+			resourcesNames: []string{},
+			wantError:      false,
+		},
+		{
+			name:           "Error when all defaults specified with ParentResource",
+			opt:            &DeleteOptions{Resource: "TaskRun", ParentResource: "task", ForceDelete: false, DeleteRelated: false, DeleteAllNs: false},
+			stream:         &cli.Stream{In: strings.NewReader("y"), Out: os.Stdout},
+			resourcesNames: []string{},
+			wantError:      true,
+			want:           "must provide TaskRuns to delete or --task flag",
+		},
+		{
+			name:           "Error when resource name provided with DeleteAllNs",
+			opt:            &DeleteOptions{DeleteAllNs: true},
+			stream:         &cli.Stream{In: strings.NewReader("y"), Out: os.Stdout},
+			resourcesNames: []string{"test1"},
+			wantError:      true,
+			want:           "--all flag should not have any arguments or flags specified with it",
+		},
 	}
 
 	for _, tp := range testParams {
 		t.Run(tp.name, func(t *testing.T) {
-			err := tp.opt.CheckOptions(tp.stream, tp.resourcesNames)
+			err := tp.opt.CheckOptions(tp.stream, tp.resourcesNames, "")
 			if tp.wantError {
 				if err == nil {
 					t.Fatal("error expected here")

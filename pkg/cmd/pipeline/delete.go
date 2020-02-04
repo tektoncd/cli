@@ -27,7 +27,7 @@ import (
 )
 
 func deleteCommand(p cli.Params) *cobra.Command {
-	opts := &options.DeleteOptions{Resource: "pipeline", ForceDelete: false, DeleteAll: false}
+	opts := &options.DeleteOptions{Resource: "pipeline", ForceDelete: false, DeleteRelated: false}
 	f := cliopts.NewPrintFlags("delete")
 	eg := `Delete Pipelines with names 'foo' and 'bar' in namespace 'quux'
 
@@ -59,7 +59,7 @@ or
 				return err
 			}
 
-			if err := opts.CheckOptions(s, args); err != nil {
+			if err := opts.CheckOptions(s, args, p.Namespace()); err != nil {
 				return err
 			}
 
@@ -68,7 +68,7 @@ or
 	}
 	f.AddFlags(c)
 	c.Flags().BoolVarP(&opts.ForceDelete, "force", "f", false, "Whether to force deletion (default: false)")
-	c.Flags().BoolVarP(&opts.DeleteAll, "all", "a", false, "Whether to also delete related resources (pipelineruns) (default: false)")
+	c.Flags().BoolVarP(&opts.DeleteRelated, "all", "a", false, "Whether to also delete related resources (pipelineruns) (default: false)")
 
 	_ = c.MarkZshCompPositionalArgumentCustom(1, "__tkn_get_pipeline")
 	return c
@@ -86,7 +86,7 @@ func deletePipelines(opts *options.DeleteOptions, s *cli.Stream, p cli.Params, p
 		return cs.Tekton.TektonV1alpha1().PipelineRuns(p.Namespace()).Delete(pipelineRunName, &metav1.DeleteOptions{})
 	})
 	deletedPipelineNames := d.Delete(s, pNames)
-	if opts.DeleteAll {
+	if opts.DeleteRelated {
 		d.DeleteRelated(s, deletedPipelineNames)
 	}
 	d.PrintSuccesses(s)
