@@ -12,7 +12,6 @@ require (
 	github.com/google/cel-go v0.3.2 // indirect
 	github.com/google/go-cmp v0.3.1
 	github.com/google/go-github v17.0.0+incompatible // indirect
-	github.com/google/go-licenses v0.0.0-20191220124820-2ee7a02f6ae4 // indirect
 	github.com/google/go-querystring v1.0.0 // indirect
 	github.com/hako/durafmt v0.0.0-20180520121703-7b7ae1e72ead
 	github.com/hashicorp/golang-lru v0.5.4 // indirect
@@ -41,6 +40,7 @@ replace (
 	git.apache.org/thrift.git => github.com/apache/thrift v0.0.0-20180902110319-2566ecd5d999
 	github.com/kr/pty => github.com/creack/pty v1.1.9
 	github.com/spf13/cobra => github.com/chmouel/cobra v0.0.0-20200107083527-379e7a80af0c
+	gotest.tools/v3 => github.com/vdemeester/gotest.tools/v3 v3.0.0-20200204071644-508f0e6cc012
 	knative.dev/pkg => knative.dev/pkg v0.0.0-20190909195211-528ad1c1dd62
 	knative.dev/pkg/vendor/github.com/spf13/pflag => github.com/spf13/pflag v1.0.5
 )
