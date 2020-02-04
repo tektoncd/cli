@@ -54,7 +54,7 @@ or
 				Err: cmd.OutOrStderr(),
 			}
 
-			if err := opts.CheckOptions(s, args); err != nil {
+			if err := opts.CheckOptions(s, args, ""); err != nil {
 				return err
 			}
 

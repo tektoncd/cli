@@ -27,7 +27,7 @@ import (
 )
 
 func deleteCommand(p cli.Params) *cobra.Command {
-	opts := &options.DeleteOptions{Resource: "task", ForceDelete: false, DeleteAll: false}
+	opts := &options.DeleteOptions{Resource: "task", ForceDelete: false, DeleteRelated: false}
 	f := cliopts.NewPrintFlags("delete")
 	eg := `Delete Tasks with names 'foo' and 'bar' in namespace 'quux':
 
@@ -59,7 +59,7 @@ or
 				return err
 			}
 
-			if err := opts.CheckOptions(s, args); err != nil {
+			if err := opts.CheckOptions(s, args, p.Namespace()); err != nil {
 				return err
 			}
 
@@ -68,7 +68,7 @@ or
 	}
 	f.AddFlags(c)
 	c.Flags().BoolVarP(&opts.ForceDelete, "force", "f", false, "Whether to force deletion (default: false)")
-	c.Flags().BoolVarP(&opts.DeleteAll, "all", "a", false, "Whether to also delete related resources (taskruns) (default: false)")
+	c.Flags().BoolVarP(&opts.DeleteRelated, "all", "a", false, "Whether to also delete related resources (taskruns) (default: false)")
 
 	_ = c.MarkZshCompPositionalArgumentCustom(1, "__tkn_get_task")
 	return c
@@ -86,7 +86,7 @@ func deleteTask(opts *options.DeleteOptions, s *cli.Stream, p cli.Params, taskNa
 		return cs.Tekton.TektonV1alpha1().TaskRuns(p.Namespace()).Delete(taskRunName, &metav1.DeleteOptions{})
 	})
 	deletedTaskNames := d.Delete(s, taskNames)
-	if opts.DeleteAll {
+	if opts.DeleteRelated {
 		d.DeleteRelated(s, deletedTaskNames)
 	}
 	d.PrintSuccesses(s)

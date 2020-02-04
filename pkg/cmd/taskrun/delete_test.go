@@ -39,9 +39,29 @@ func TestTaskRunDelete(t *testing.T) {
 	}
 
 	seeds := make([]pipelinetest.Clients, 0)
-	for i := 0; i < 3; i++ {
+	for i := 0; i < 5; i++ {
 		trs := []*v1alpha1.TaskRun{
 			tb.TaskRun("tr0-1", "ns",
+				tb.TaskRunLabel("tekton.dev/task", "random"),
+				tb.TaskRunSpec(tb.TaskRunTaskRef("random")),
+				tb.TaskRunStatus(
+					tb.StatusCondition(apis.Condition{
+						Status: corev1.ConditionTrue,
+						Reason: resources.ReasonSucceeded,
+					}),
+				),
+			),
+			tb.TaskRun("tr0-2", "ns",
+				tb.TaskRunLabel("tekton.dev/task", "random"),
+				tb.TaskRunSpec(tb.TaskRunTaskRef("random")),
+				tb.TaskRunStatus(
+					tb.StatusCondition(apis.Condition{
+						Status: corev1.ConditionTrue,
+						Reason: resources.ReasonSucceeded,
+					}),
+				),
+			),
+			tb.TaskRun("tr0-3", "ns",
 				tb.TaskRunLabel("tekton.dev/task", "random"),
 				tb.TaskRunSpec(tb.TaskRunTaskRef("random")),
 				tb.TaskRunStatus(
@@ -127,6 +147,30 @@ func TestTaskRunDelete(t *testing.T) {
 			inputStream: strings.NewReader("y"),
 			wantError:   false,
 			want:        `Are you sure you want to delete all taskruns related to task "task" (y/n): `,
+		},
+		{
+			name:        "Delete all with prompt",
+			command:     []string{"delete", "--all", "-n", "ns"},
+			input:       seeds[3],
+			inputStream: strings.NewReader("y"),
+			wantError:   false,
+			want:        "Are you sure you want to delete all taskruns in namespace \"ns\" (y/n): All TaskRuns deleted in namespace \"ns\"\n",
+		},
+		{
+			name:        "Delete all with -f",
+			command:     []string{"delete", "--all", "-f", "-n", "ns"},
+			input:       seeds[4],
+			inputStream: strings.NewReader("y"),
+			wantError:   false,
+			want:        "All TaskRuns deleted in namespace \"ns\"\n",
+		},
+		{
+			name:        "Error from using taskrun name with --all",
+			command:     []string{"delete", "taskrun", "--all", "-n", "ns"},
+			input:       seeds[4],
+			inputStream: strings.NewReader("y"),
+			wantError:   true,
+			want:        "--all flag should not have any arguments or flags specified with it",
 		},
 	}
 

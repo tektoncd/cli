@@ -43,7 +43,7 @@ or
 		Aliases:      []string{"rm"},
 		Short:        "Delete triggertemplates in a namespace",
 		Example:      eg,
-		Args:         cobra.MinimumNArgs(1),
+		Args:         cobra.MinimumNArgs(0),
 		SilenceUsage: true,
 		Annotations: map[string]string{
 			"commandType": "main",
@@ -59,7 +59,7 @@ or
 				return err
 			}
 
-			if err := opts.CheckOptions(s, args); err != nil {
+			if err := opts.CheckOptions(s, args, p.Namespace()); err != nil {
 				return err
 			}
 

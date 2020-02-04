@@ -59,7 +59,7 @@ or
 				return err
 			}
 
-			if err := opts.CheckOptions(s, args); err != nil {
+			if err := opts.CheckOptions(s, args, p.Namespace()); err != nil {
 				return err
 			}
 
