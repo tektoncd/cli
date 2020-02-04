@@ -12,6 +12,7 @@ require (
 	github.com/google/cel-go v0.3.2 // indirect
 	github.com/google/go-cmp v0.3.1
 	github.com/google/go-github v17.0.0+incompatible // indirect
+	github.com/google/go-licenses v0.0.0-20191220124820-2ee7a02f6ae4 // indirect
 	github.com/google/go-querystring v1.0.0 // indirect
 	github.com/hako/durafmt v0.0.0-20180520121703-7b7ae1e72ead
 	github.com/hashicorp/golang-lru v0.5.4 // indirect
