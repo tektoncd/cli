@@ -28,10 +28,12 @@ import (
 	"github.com/jonboulle/clockwork"
 	"github.com/tektoncd/cli/pkg/cli"
 	"github.com/tektoncd/cli/pkg/helper/pipeline"
+	hpipelinerun "github.com/tektoncd/cli/pkg/helper/pipelinerun"
 	"github.com/tektoncd/cli/pkg/test"
 	cb "github.com/tektoncd/cli/pkg/test/builder"
 	"github.com/tektoncd/cli/test/prompt"
 	"github.com/tektoncd/pipeline/pkg/apis/pipeline/v1alpha1"
+	"github.com/tektoncd/pipeline/pkg/apis/pipeline/v1alpha2"
 	fakepipelineclientset "github.com/tektoncd/pipeline/pkg/client/clientset/versioned/fake"
 	"github.com/tektoncd/pipeline/pkg/reconciler/pipelinerun/resources"
 	pipelinetest "github.com/tektoncd/pipeline/test"
@@ -1804,8 +1806,7 @@ func Test_start_pipeline_last(t *testing.T) {
 	expected := "Pipelinerun started: random\n\nIn order to track the pipelinerun progress run:\ntkn pipelinerun logs random -f -n ns\n"
 	test.AssertOutput(t, expected, got)
 
-	pr, err := cs.Pipeline.TektonV1alpha1().PipelineRuns(p.Namespace()).Get("random", v1.GetOptions{})
-
+	pr, err := hpipelinerun.GetPipelineRun(p, v1.GetOptions{}, "random")
 	if err != nil {
 		t.Errorf("Error getting pipelineruns %s", err.Error())
 	}
@@ -1889,8 +1890,7 @@ func Test_start_pipeline_last_without_res_param(t *testing.T) {
 	expected := "Pipelinerun started: random\n\nIn order to track the pipelinerun progress run:\ntkn pipelinerun logs random -f -n ns\n"
 	test.AssertOutput(t, expected, got)
 
-	pr, err := cs.Pipeline.TektonV1alpha1().PipelineRuns(p.Namespace()).Get("random", v1.GetOptions{})
-
+	pr, err := hpipelinerun.GetPipelineRun(p, v1.GetOptions{}, "random")
 	if err != nil {
 		t.Errorf("Error getting pipelineruns %s", err.Error())
 	}
@@ -1980,8 +1980,7 @@ func Test_start_pipeline_last_merge(t *testing.T) {
 	expected := "Pipelinerun started: random\n\nIn order to track the pipelinerun progress run:\ntkn pipelinerun logs random -f -n ns\n"
 	test.AssertOutput(t, expected, got)
 
-	pr, err := cs.Pipeline.TektonV1alpha1().PipelineRuns(p.Namespace()).Get("random", v1.GetOptions{})
-
+	pr, err := hpipelinerun.GetPipelineRun(p, v1.GetOptions{}, "random")
 	if err != nil {
 		t.Errorf("Error getting pipelineruns %s", err.Error())
 	}
@@ -2007,6 +2006,74 @@ func Test_start_pipeline_last_merge(t *testing.T) {
 	}
 
 	test.AssertOutput(t, "svc1", pr.Spec.ServiceAccountName)
+}
+
+func Test_start_pipeline_use_pipelinerun(t *testing.T) {
+
+	pipelineName := "test-pipeline"
+
+	ps := []*v1alpha1.Pipeline{
+		tb.Pipeline(pipelineName, "ns",
+			tb.PipelineSpec(
+				tb.PipelineDeclaredResource("git-repo", "git"),
+				tb.PipelineDeclaredResource("build-image", "image"),
+				tb.PipelineParamSpec("pipeline-param", v1alpha1.ParamTypeString, tb.ParamSpecDefault("somethingdifferent-1")),
+				tb.PipelineParamSpec("rev-param", v1alpha1.ParamTypeString, tb.ParamSpecDefault("revision")),
+				tb.PipelineTask("unit-test-1", "unit-test-task",
+					tb.PipelineTaskInputResource("workspace", "git-repo"),
+					tb.PipelineTaskOutputResource("image-to-use", "best-image"),
+					tb.PipelineTaskOutputResource("workspace", "git-repo"),
+				),
+			), // spec
+		), // pipeline
+	}
+
+	theonename := "test-pipeline-run-be-the-one"
+	prs := []*v1alpha1.PipelineRun{
+		tb.PipelineRun("dont-bother-me-trying", "ns",
+			tb.PipelineRunLabel("tekton.dev/pipeline", pipelineName),
+			tb.PipelineRunSpec(pipelineName),
+		),
+		tb.PipelineRun(theonename, "ns",
+			tb.PipelineRunLabel("tekton.dev/pipeline", pipelineName),
+			tb.PipelineRunSpec(pipelineName,
+				tb.PipelineRunParam("brush", "teeth"),
+			),
+		),
+	}
+
+	ns := []*corev1.Namespace{
+		{
+			ObjectMeta: metav1.ObjectMeta{
+				Name: "ns",
+			},
+		},
+	}
+
+	//Add namespaces to kube client
+	seedData, _ := test.SeedTestData(t, pipelinetest.Data{Namespaces: ns})
+
+	objs := []runtime.Object{ps[0], prs[0], prs[1]}
+	pClient := newPipelineClient(objs...)
+
+	cs := pipelinetest.Clients{
+		Pipeline: pClient,
+		Kube:     seedData.Kube,
+	}
+
+	p := &test.Params{Tekton: cs.Pipeline, Kube: cs.Kube, Resource: cs.Resource}
+
+	pipeline := Command(p)
+	// There is no point to checkout otuput since we would be checking if our testdata works!
+	_, _ = test.ExecuteCommand(pipeline, "start", pipelineName,
+		"--use-pipelinerun="+theonename)
+
+	pr, err := hpipelinerun.GetPipelineRun(p, v1.GetOptions{}, "random")
+	if err != nil {
+		t.Errorf("Error getting pipelineruns %s", err.Error())
+	}
+	test.AssertOutput(t, pr.Spec.Params[0].Name, "brush")
+	test.AssertOutput(t, pr.Spec.Params[0].Value, v1alpha2.ArrayOrString{Type: "string", StringVal: "teeth"})
 }
 
 func Test_start_pipeline_allkindparam(t *testing.T) {
@@ -2480,7 +2547,7 @@ func Test_start_pipeline_last_generate_name(t *testing.T) {
 	expected := "Pipelinerun started: random\n\nIn order to track the pipelinerun progress run:\ntkn pipelinerun logs random -f -n ns\n"
 	test.AssertOutput(t, expected, got)
 
-	pr, err := cs.Pipeline.TektonV1alpha1().PipelineRuns(p.Namespace()).Get("random", v1.GetOptions{})
+	pr, err := hpipelinerun.GetPipelineRun(p, v1.GetOptions{}, "random")
 	if err != nil {
 		t.Errorf("Error getting pipelineruns %s", err.Error())
 	}
