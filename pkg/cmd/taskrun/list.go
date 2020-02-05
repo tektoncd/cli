@@ -88,8 +88,16 @@ List all TaskRuns of Task 'foo' in namespace 'bar':
 				fmt.Fprint(os.Stderr, "Error: output option not set properly \n")
 				return err
 			}
-
-			if output != "" && trs != nil {
+			if output == "name" && trs != nil {
+				w := cmd.OutOrStdout()
+				for _, tr := range trs.Items {
+					_, err := fmt.Fprintf(w, "taskrun.tekton.dev/%s\n", tr.Name)
+					if err != nil {
+						return err
+					}
+				}
+				return nil
+			} else if output != "" && trs != nil {
 				return printer.PrintObject(cmd.OutOrStdout(), trs, f)
 			}
 

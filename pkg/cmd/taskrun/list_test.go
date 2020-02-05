@@ -122,6 +122,12 @@ func TestListTaskRuns(t *testing.T) {
 			wantError: false,
 		},
 		{
+			name:      "by output as name",
+			command:   command(t, trs, now, ns),
+			args:      []string{"list", "-n", "foo", "-o", "name"},
+			wantError: false,
+		},
+		{
 			name:      "all in namespace",
 			command:   command(t, trs, now, ns),
 			args:      []string{"list", "-n", "foo"},
