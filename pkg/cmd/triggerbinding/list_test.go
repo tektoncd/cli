@@ -80,6 +80,12 @@ func TestListTriggerBinding(t *testing.T) {
 			wantError: false,
 		},
 		{
+			name:      "by output as name",
+			command:   command(t, tbs, now, ns),
+			args:      []string{"list", "-n", "foo", "-o", "name"},
+			wantError: false,
+		},
+		{
 			name:      "Multiple TriggerBinding with output format",
 			command:   command(t, tbs, now, ns),
 			args:      []string{"list", "-n", "foo", "-o", "jsonpath={range .items[*]}{.metadata.name}{\"\\n\"}{end}"},
