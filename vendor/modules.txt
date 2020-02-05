@@ -429,7 +429,7 @@ google.golang.org/grpc/tap
 gopkg.in/inf.v0
 # gopkg.in/yaml.v2 v2.2.5
 gopkg.in/yaml.v2
-# gotest.tools/v3 v3.0.0 => github.com/vdemeester/gotest.tools/v3 v3.0.0-20200204071644-508f0e6cc012
+# gotest.tools/v3 v3.0.1
 gotest.tools/v3/assert
 gotest.tools/v3/assert/cmp
 gotest.tools/v3/golden

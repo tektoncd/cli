@@ -27,7 +27,7 @@ require (
 	go.uber.org/multierr v1.1.0
 	golang.org/x/crypto v0.0.0-20191206172530-e9b2fee46413
 	gopkg.in/check.v1 v1.0.0-20190902080502-41f04d3bba15 // indirect
-	gotest.tools/v3 v3.0.0
+	gotest.tools/v3 v3.0.1
 	k8s.io/api v0.17.0
 	k8s.io/apimachinery v0.17.1
 	k8s.io/cli-runtime v0.0.0-20191004110054-fe9b9282443f
@@ -40,7 +40,6 @@ replace (
 	git.apache.org/thrift.git => github.com/apache/thrift v0.0.0-20180902110319-2566ecd5d999
 	github.com/kr/pty => github.com/creack/pty v1.1.9
 	github.com/spf13/cobra => github.com/chmouel/cobra v0.0.0-20200107083527-379e7a80af0c
-	gotest.tools/v3 => github.com/vdemeester/gotest.tools/v3 v3.0.0-20200204071644-508f0e6cc012
 	knative.dev/pkg => knative.dev/pkg v0.0.0-20190909195211-528ad1c1dd62
 	knative.dev/pkg/vendor/github.com/spf13/pflag => github.com/spf13/pflag v1.0.5
 )
