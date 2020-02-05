@@ -32,6 +32,11 @@ commits.
 It will them use your Kubernetes cluster with Tekton and apply what needs to be done for
 running the release.
 
+For running the release pipeline, you will require a github token, which script will ask
+to provide. You can generate a GitHub token using the following 
+[instructions](https://help.github.com/en/github/authenticating-to-github/creating-a-personal-access-token-for-the-command-line). 
+Your token needs following access `admin:org, read:packages, repo, write:packages`
+
 Finally it will launch the `tkn` cli that you have installed locally to show the logs.
 
 Make sure we have a nice ChangeLog before doing the release, listing `features`

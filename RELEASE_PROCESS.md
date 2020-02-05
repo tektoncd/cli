@@ -39,9 +39,19 @@ dnf makecache
 dnf upgrade tektoncd-cli
 ```
 
-- Make an update for [homebrew-core](https://github.com/Homebrew/homebrew-core/blob/master/Formula/tektoncd-cli.rb) for tektoncd-cli formula, and make sure you get the proper `sha256sum` and update it like this:
+- Make an update on [homebrew-core](https://github.com/Homebrew/homebrew-core/blob/master/Formula/tektoncd-cli.rb) for tektoncd-cli formula.
 
-  https://github.com/Homebrew/homebrew-core/pull/46492
+  * Make sure you get the proper `sha256sum`. You need to download the `Source Code (tar.gz)` from the [release section of the cli GitHub](https://github.com/tektoncd/cli/releases) and run the command below for the release version you are working on:
+  
+    ```shell script
+    sha256sum cli-0.7.1.tar.gz 
+    ```
+    
+    You will get similar output to what is shown below:
+    
+    `72df3075303d2b0393bae9a0f9e9b8441060b8a4db57e613ba8f1bfda03809b5  cli-0.7.1.tar.gz`
+
+  * Raise a PR to update like [this](https://github.com/Homebrew/homebrew-core/pull/46492) to Homebrew Core
 
 - Make an update to the `test-runner` and `tkn` image in the [plumbing](https://github.com/tektoncd/plumbing/) repo. The test-runner image is where we run the CI on pipeline which uses `tkn`:
 
