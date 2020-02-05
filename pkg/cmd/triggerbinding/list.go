@@ -80,7 +80,16 @@ or
 				Err: cmd.OutOrStderr(),
 			}
 
-			if output != "" {
+			if output == "name" && tbs != nil {
+				w := cmd.OutOrStdout()
+				for _, pr := range tbs.Items {
+					_, err := fmt.Fprintf(w, "triggerbinding.tekton.dev/%s\n", pr.Name)
+					if err != nil {
+						return err
+					}
+				}
+				return nil
+			} else if output != "" {
 				return printer.PrintObject(stream.Out, tbs, f)
 			}
 
