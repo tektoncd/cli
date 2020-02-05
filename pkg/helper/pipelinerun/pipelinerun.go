@@ -18,9 +18,25 @@ import (
 	"github.com/tektoncd/cli/pkg/cli"
 	"github.com/tektoncd/cli/pkg/formatted"
 	prhsort "github.com/tektoncd/cli/pkg/helper/pipelinerun/sort"
+	"github.com/tektoncd/pipeline/pkg/apis/pipeline/v1alpha1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 )
 
+// GetPipelineRun return a pipelinerun in a namespace from its name
+func GetPipelineRun(p cli.Params, opts metav1.GetOptions, prname string) (*v1alpha1.PipelineRun, error) {
+	cs, err := p.Clients()
+	if err != nil {
+		return nil, err
+	}
+
+	prun, err := cs.Tekton.TektonV1alpha1().PipelineRuns(p.Namespace()).Get(prname, opts)
+	if err != nil {
+		return nil, err
+	}
+	return prun, nil
+}
+
+// GetAllPipelineRuns returns all pipelinesruns running in a namespace
 func GetAllPipelineRuns(p cli.Params, opts metav1.ListOptions, limit int) ([]string, error) {
 	cs, err := p.Clients()
 	if err != nil {

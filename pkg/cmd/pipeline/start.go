@@ -33,6 +33,7 @@ import (
 	"github.com/tektoncd/cli/pkg/helper/options"
 	"github.com/tektoncd/cli/pkg/helper/params"
 	"github.com/tektoncd/cli/pkg/helper/pipeline"
+	hpipelinerun "github.com/tektoncd/cli/pkg/helper/pipelinerun"
 	validate "github.com/tektoncd/cli/pkg/helper/validate"
 	"github.com/tektoncd/pipeline/pkg/apis/pipeline/v1alpha1"
 	"github.com/tektoncd/pipeline/pkg/client/clientset/versioned"
@@ -60,6 +61,7 @@ type startOptions struct {
 	ServiceAccountName string
 	ServiceAccounts    []string
 	Last               bool
+	UsePipelineRun     string
 	Labels             []string
 	ShowLog            bool
 	DryRun             bool
@@ -152,6 +154,8 @@ like cat,foo,bar
 	c.Flags().StringSliceVar(&opt.ServiceAccounts, "task-serviceaccount", []string{}, "pass the service account corresponding to the task")
 	flags.AddShellCompletion(c.Flags().Lookup("task-serviceaccount"), "__kubectl_get_serviceaccount")
 	c.Flags().BoolVarP(&opt.Last, "last", "L", false, "re-run the pipeline using last pipelinerun values")
+	c.Flags().StringVarP(&opt.UsePipelineRun, "use-pipelinerun", "", "", "use this pipelinerun values to re-run the pipeline. ")
+	flags.AddShellCompletion(c.Flags().Lookup("use-pipelinerun"), "__tkn_get_pipelinerun")
 	c.Flags().StringSliceVarP(&opt.Labels, "labels", "l", []string{}, "pass labels as label=value.")
 	c.Flags().BoolVarP(&opt.DryRun, "dry-run", "", false, "preview pipelinerun without running it")
 	c.Flags().StringVarP(&opt.Output, "output", "", "", "format of pipelinerun dry-run (yaml or json)")
@@ -175,13 +179,18 @@ func (opt *startOptions) getInput(pname string) error {
 		return err
 	}
 
+	if opt.Last && opt.UsePipelineRun != "" {
+		fmt.Fprintf(opt.stream.Err, "option --last and option --use-pipelinerun are not compatible \n")
+		return err
+	}
+
 	pipeline, err := getPipeline(cs.Tekton, opt.cliparams.Namespace(), pname)
 	if err != nil {
 		fmt.Fprintf(opt.stream.Err, "failed to get pipeline %s from %s namespace \n", pname, opt.cliparams.Namespace())
 		return err
 	}
 
-	if len(opt.Resources) == 0 && !opt.Last {
+	if len(opt.Resources) == 0 && !opt.Last && opt.UsePipelineRun == "" {
 		pres, err := getPipelineResources(cs.Resource, opt.cliparams.Namespace())
 		if err != nil {
 			fmt.Fprintf(opt.stream.Err, "failed to list pipelineresources from %s namespace \n", opt.cliparams.Namespace())
@@ -196,7 +205,7 @@ func (opt *startOptions) getInput(pname string) error {
 	}
 
 	params.FilterParamsByType(pipeline.Spec.Params)
-	if len(opt.Params) == 0 && !opt.Last {
+	if len(opt.Params) == 0 && !opt.Last && opt.UsePipelineRun == "" {
 		if err = opt.getInputParams(pipeline); err != nil {
 			return err
 		}
@@ -401,22 +410,30 @@ func (opt *startOptions) startPipeline(pName string) error {
 		return err
 	}
 
-	if opt.Last {
-		prLast, err := pipeline.LastRun(cs.Tekton, pName, opt.cliparams.Namespace())
-		if err != nil {
-			return err
-		}
-		if len(prLast.ObjectMeta.GenerateName) > 0 {
-			pr.ObjectMeta.GenerateName = prLast.ObjectMeta.GenerateName
+	if opt.Last || opt.UsePipelineRun != "" {
+		var usepr *v1alpha1.PipelineRun
+		if opt.Last {
+			usepr, err = pipeline.LastRun(cs.Tekton, pName, opt.cliparams.Namespace())
+			if err != nil {
+				return err
+			}
 		} else {
-			pr.ObjectMeta.GenerateName = prLast.ObjectMeta.Name + "-"
+			usepr, err = hpipelinerun.GetPipelineRun(opt.cliparams, v1.GetOptions{}, opt.UsePipelineRun)
+			if err != nil {
+				return err
+			}
 		}
-		pr.Spec.Resources = prLast.Spec.Resources
-		pr.Spec.Params = prLast.Spec.Params
-		// If the prLast is a "new" PR, let's populate those fields too
-		pr.Spec.ServiceAccountName = prLast.Spec.ServiceAccountName
-		pr.Spec.ServiceAccountNames = prLast.Spec.ServiceAccountNames
-		pr.Spec.Workspaces = prLast.Spec.Workspaces
+		if len(usepr.ObjectMeta.GenerateName) > 0 {
+			pr.ObjectMeta.GenerateName = usepr.ObjectMeta.GenerateName
+		} else {
+			pr.ObjectMeta.GenerateName = usepr.ObjectMeta.Name + "-"
+		}
+		pr.Spec.Resources = usepr.Spec.Resources
+		pr.Spec.Params = usepr.Spec.Params
+		// If the usepr is a "new" PR, let's populate those fields too
+		pr.Spec.ServiceAccountName = usepr.Spec.ServiceAccountName
+		pr.Spec.ServiceAccountNames = usepr.Spec.ServiceAccountNames
+		pr.Spec.Workspaces = usepr.Spec.Workspaces
 	}
 
 	if err := mergeRes(pr, opt.Resources); err != nil {
