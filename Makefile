@@ -47,7 +47,7 @@ check: lint test
 test: test-unit ## run all tests
 
 .PHONY: lint
-lint: ## run linter(s)
+lint: lint-yaml ## run linter(s)
 	@echo "Linting..."
 	@golangci-lint run ./... --timeout 5m
 
@@ -80,13 +80,16 @@ man: bin/docs ## update manpages
 	@echo "Update generated manpages"
 	@./bin/docs --target=./docs/man/man1 --kind=man
 
+.PHONY: generated
+generated: test-unit-update-golden man docs fmt ## generate all files that needs to be generated
+
 .PHONY: clean
 clean: ## clean build artifacts
 	rm -fR bin VERSION
 
-.PHONY: fmt ## formats teh god code(excludes vendors dir)
+.PHONY: fmt ## formats the GO code(excludes vendors dir)
 fmt:
-	@go fmt $(go list ./... | grep -v /vendor/)
+	@go fmt `go list ./... | grep -v /vendor/`
 
 .PHONY: help
 help: ## print this help
