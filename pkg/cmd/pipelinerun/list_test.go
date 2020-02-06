@@ -81,6 +81,7 @@ func TestListPipelineRuns(t *testing.T) {
 		),
 		tb.PipelineRun("pr3-1", "namespace",
 			tb.PipelineRunLabel("tekton.dev/pipeline", "random"),
+			tb.PipelineRunLabel("viva", "wakanda"),
 			tb.PipelineRunStatus(),
 		),
 	}
@@ -141,6 +142,19 @@ func TestListPipelineRuns(t *testing.T) {
 			args:      []string{"list", "-n", "namespace", "--limit", fmt.Sprintf("%d", -1)},
 			wantError: false,
 		},
+		{
+			name:      "filter pipelineruns by label",
+			command:   command(t, prs, clock.Now(), ns),
+			args:      []string{"list", "-n", "namespace", "--labels", "viva=wakanda"},
+			wantError: false,
+		},
+		{
+			name:      "no mixing pipelinename and labels",
+			command:   command(t, prs, clock.Now(), ns),
+			args:      []string{"list", "-n", "namespace", "--labels", "viva=wakanda", "pr3-1"},
+			wantError: true,
+		},
+
 		{
 			name:      "limit pipelineruns greater than maximum case",
 			command:   command(t, prs, clock.Now(), ns),

@@ -24,7 +24,7 @@ import (
 	"github.com/tektoncd/cli/pkg/cli"
 	"github.com/tektoncd/cli/pkg/formatted"
 	prhsort "github.com/tektoncd/cli/pkg/helper/pipelinerun/sort"
-	validate "github.com/tektoncd/cli/pkg/helper/validate"
+	"github.com/tektoncd/cli/pkg/helper/validate"
 	"github.com/tektoncd/cli/pkg/printer"
 	"github.com/tektoncd/pipeline/pkg/apis/pipeline/v1alpha1"
 	v1 "k8s.io/apimachinery/pkg/apis/meta/v1"
@@ -37,7 +37,8 @@ const (
 )
 
 type ListOptions struct {
-	Limit int
+	Limit         int
+	LabelSelector string
 }
 
 func listCommand(p cli.Params) *cobra.Command {
@@ -77,7 +78,7 @@ List all PipelineRuns in a namespace 'foo':
 				return nil
 			}
 
-			prs, err := list(p, pipeline, opts.Limit)
+			prs, err := list(p, pipeline, opts.Limit, opts.LabelSelector)
 			if err != nil {
 				fmt.Fprintf(os.Stderr, "Failed to list pipelineruns from %s namespace \n", p.Namespace())
 				return err
@@ -120,20 +121,32 @@ List all PipelineRuns in a namespace 'foo':
 
 	f.AddFlags(c)
 	c.Flags().IntVarP(&opts.Limit, "limit", "", 0, "limit pipelineruns listed (default: return all pipelineruns)")
-
+	c.Flags().StringVarP(&opts.LabelSelector, "labels", "", opts.LabelSelector, "Selector (label query) to filter on, supports '=', '==', and '!='.(e.g. -l key1=value1,key2=value2)")
 	return c
 }
 
-func list(p cli.Params, pipeline string, limit int) (*v1alpha1.PipelineRunList, error) {
+func list(p cli.Params, pipeline string, limit int, labelselector string) (*v1alpha1.PipelineRunList, error) {
+	var selector string
+	var options v1.ListOptions
+
 	cs, err := p.Clients()
 	if err != nil {
 		return nil, err
 	}
 
-	options := v1.ListOptions{}
+	if pipeline != "" && labelselector != "" {
+		return nil, fmt.Errorf("specifying a pipeline and labels are not compatible")
+	}
+
 	if pipeline != "" {
+		selector = fmt.Sprintf("tekton.dev/pipeline=%s", pipeline)
+	} else if labelselector != "" {
+		selector = labelselector
+	}
+
+	if selector != "" {
 		options = v1.ListOptions{
-			LabelSelector: fmt.Sprintf("tekton.dev/pipeline=%s", pipeline),
+			LabelSelector: selector,
 		}
 	}
 
