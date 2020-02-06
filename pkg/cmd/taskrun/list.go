@@ -24,7 +24,7 @@ import (
 	"github.com/tektoncd/cli/pkg/cli"
 	"github.com/tektoncd/cli/pkg/formatted"
 	trhsort "github.com/tektoncd/cli/pkg/helper/taskrun/sort"
-	validate "github.com/tektoncd/cli/pkg/helper/validate"
+	"github.com/tektoncd/cli/pkg/helper/validate"
 	"github.com/tektoncd/cli/pkg/printer"
 	"github.com/tektoncd/pipeline/pkg/apis/pipeline/v1alpha1"
 	v1 "k8s.io/apimachinery/pkg/apis/meta/v1"
@@ -37,7 +37,8 @@ const (
 )
 
 type ListOptions struct {
-	Limit int
+	Limit         int
+	LabelSelector string
 }
 
 func listCommand(p cli.Params) *cobra.Command {
@@ -77,7 +78,7 @@ List all TaskRuns of Task 'foo' in namespace 'bar':
 				return nil
 			}
 
-			trs, err := list(p, task, opts.Limit)
+			trs, err := list(p, task, opts.Limit, opts.LabelSelector)
 			if err != nil {
 				fmt.Fprintf(os.Stderr, "Failed to list taskruns from %s namespace \n", p.Namespace())
 				return err
@@ -121,20 +122,33 @@ List all TaskRuns of Task 'foo' in namespace 'bar':
 
 	f.AddFlags(c)
 	c.Flags().IntVarP(&opts.Limit, "limit", "", 0, "limit taskruns listed (default: return all taskruns)")
+	c.Flags().StringVarP(&opts.LabelSelector, "label", "", opts.LabelSelector, "A selector (label query) to filter on, supports '=', '==', and '!='")
 
 	return c
 }
 
-func list(p cli.Params, task string, limit int) (*v1alpha1.TaskRunList, error) {
+func list(p cli.Params, task string, limit int, labelselector string) (*v1alpha1.TaskRunList, error) {
+	var selector string
+	var options v1.ListOptions
+
 	cs, err := p.Clients()
 	if err != nil {
 		return nil, err
 	}
 
-	options := v1.ListOptions{}
+	if task != "" && labelselector != "" {
+		return nil, fmt.Errorf("specifying a task and labels are not compatible")
+	}
+
 	if task != "" {
+		selector = fmt.Sprintf("tekton.dev/task=%s", task)
+	} else if labelselector != "" {
+		selector = labelselector
+	}
+
+	if selector != "" {
 		options = v1.ListOptions{
-			LabelSelector: fmt.Sprintf("tekton.dev/task=%s", task),
+			LabelSelector: selector,
 		}
 	}
 

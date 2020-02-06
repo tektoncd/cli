@@ -74,6 +74,7 @@ func TestListTaskRuns(t *testing.T) {
 		),
 		tb.TaskRun("tr2-2", "foo",
 			tb.TaskRunLabel("tekton.dev/Task", "random"),
+			tb.TaskRunLabel("pot", "nutella"),
 			tb.TaskRunSpec(tb.TaskRunTaskRef("random")),
 			tb.TaskRunStatus(
 				tb.StatusCondition(apis.Condition{
@@ -86,6 +87,7 @@ func TestListTaskRuns(t *testing.T) {
 		),
 		tb.TaskRun("tr3-1", "foo",
 			tb.TaskRunLabel("tekton.dev/Task", "random"),
+			tb.TaskRunLabel("pot", "honey"),
 			tb.TaskRunSpec(tb.TaskRunTaskRef("random")),
 			tb.TaskRunStatus(
 				tb.StatusCondition(apis.Condition{
@@ -172,6 +174,24 @@ func TestListTaskRuns(t *testing.T) {
 			name:      "error from invalid namespace",
 			command:   command(t, trs, now, ns),
 			args:      []string{"list", "-n", "invalid"},
+			wantError: true,
+		},
+		{
+			name:      "filter taskruns by label",
+			command:   command(t, trs, now, ns),
+			args:      []string{"list", "-n", "foo", "--label", "pot=honey"},
+			wantError: false,
+		},
+		{
+			name:      "filter taskruns by label with in query",
+			command:   command(t, trs, now, ns),
+			args:      []string{"list", "-n", "foo", "--label", "pot in (honey,nutella)"},
+			wantError: false,
+		},
+		{
+			name:      "no mixing pipelinename and labels",
+			command:   command(t, trs, now, ns),
+			args:      []string{"list", "-n", "foo", "--label", "honey=nutella", "tr3-1"},
 			wantError: true,
 		},
 	}
