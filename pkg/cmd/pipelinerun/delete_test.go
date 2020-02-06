@@ -44,7 +44,7 @@ func TestPipelineRunDelete(t *testing.T) {
 	}
 
 	seeds := make([]pipelinetest.Clients, 0)
-	for i := 0; i < 3; i++ {
+	for i := 0; i < 5; i++ {
 		cs, _ := test.SeedTestData(t, pipelinetest.Data{
 			Pipelines: []*v1alpha1.Pipeline{
 				tb.Pipeline("pipeline", "ns",
@@ -68,7 +68,38 @@ func TestPipelineRunDelete(t *testing.T) {
 						cb.PipelineRunCompletionTime(clock.Now().Add(10*time.Minute)),
 					),
 				),
+				tb.PipelineRun("pipeline-run-2", "ns",
+					cb.PipelineRunCreationTimestamp(clock.Now()),
+					tb.PipelineRunLabel("tekton.dev/pipeline", "pipeline"),
+					tb.PipelineRunSpec("pipeline"),
+					tb.PipelineRunStatus(
+						tb.PipelineRunStatusCondition(apis.Condition{
+							Status: corev1.ConditionTrue,
+							Reason: resources.ReasonSucceeded,
+						}),
+						// pipeline run starts now
+						tb.PipelineRunStartTime(clock.Now()),
+						// takes 10 minutes to complete
+						cb.PipelineRunCompletionTime(clock.Now().Add(10*time.Minute)),
+					),
+				),
+				tb.PipelineRun("pipeline-run-3", "ns",
+					cb.PipelineRunCreationTimestamp(clock.Now()),
+					tb.PipelineRunLabel("tekton.dev/pipeline", "pipeline"),
+					tb.PipelineRunSpec("pipeline"),
+					tb.PipelineRunStatus(
+						tb.PipelineRunStatusCondition(apis.Condition{
+							Status: corev1.ConditionTrue,
+							Reason: resources.ReasonSucceeded,
+						}),
+						// pipeline run starts now
+						tb.PipelineRunStartTime(clock.Now()),
+						// takes 10 minutes to complete
+						cb.PipelineRunCompletionTime(clock.Now().Add(10*time.Minute)),
+					),
+				),
 			},
+
 			Namespaces: ns,
 		})
 		seeds = append(seeds, cs)
@@ -144,7 +175,31 @@ func TestPipelineRunDelete(t *testing.T) {
 			input:       seeds[0],
 			inputStream: strings.NewReader("y"),
 			wantError:   false,
-			want:        `Are you sure you want to delete all pipelineruns related to pipeline "pipeline" (y/n): `,
+			want:        "Are you sure you want to delete all pipelineruns related to pipeline \"pipeline\" (y/n): PipelineRuns deleted: \"pipeline-run-2\", \"pipeline-run-3\"\n",
+		},
+		{
+			name:        "Delete all with prompt",
+			command:     []string{"delete", "--all", "-n", "ns"},
+			input:       seeds[3],
+			inputStream: strings.NewReader("y"),
+			wantError:   false,
+			want:        "Are you sure you want to delete all pipelineruns in namespace \"ns\" (y/n): All PipelineRuns deleted in namespace \"ns\"\n",
+		},
+		{
+			name:        "Delete all with -f",
+			command:     []string{"delete", "--all", "-f", "-n", "ns"},
+			input:       seeds[4],
+			inputStream: nil,
+			wantError:   false,
+			want:        "All PipelineRuns deleted in namespace \"ns\"\n",
+		},
+		{
+			name:        "Error from using pipelinerun name with --all",
+			command:     []string{"delete", "pipelinerun", "--all", "-n", "ns"},
+			input:       seeds[4],
+			inputStream: nil,
+			wantError:   true,
+			want:        "--all flag should not have any arguments or flags specified with it",
 		},
 	}
 

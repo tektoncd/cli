@@ -28,7 +28,7 @@ import (
 )
 
 func deleteCommand(p cli.Params) *cobra.Command {
-	opts := &options.DeleteOptions{Resource: "pipelinerun", ForceDelete: false, ParentResource: "pipeline"}
+	opts := &options.DeleteOptions{Resource: "pipelinerun", ForceDelete: false, ParentResource: "pipeline", DeleteAllNs: false}
 	f := cliopts.NewPrintFlags("delete")
 	eg := `Delete PipelineRuns with names 'foo' and 'bar' in namespace 'quux':
 
@@ -64,37 +64,54 @@ or
 				return err
 			}
 
-			return deletePipelineRuns(s, p, args, opts.ParentResourceName)
+			return deletePipelineRuns(s, p, args, opts)
 		},
 	}
 	f.AddFlags(c)
 	c.Flags().BoolVarP(&opts.ForceDelete, "force", "f", false, "Whether to force deletion (default: false)")
 	c.Flags().StringVarP(&opts.ParentResourceName, "pipeline", "p", "", "The name of a pipeline whose pipelineruns should be deleted (does not delete the pipeline)")
+	c.Flags().BoolVarP(&opts.DeleteAllNs, "all", "", false, "Delete all pipelineruns in a namespace (default: false)")
 	_ = c.MarkZshCompPositionalArgumentCustom(1, "__tkn_get_pipelinerun")
 	return c
 }
 
-func deletePipelineRuns(s *cli.Stream, p cli.Params, prNames []string, parentPipeline string) error {
+func deletePipelineRuns(s *cli.Stream, p cli.Params, prNames []string, opts *options.DeleteOptions) error {
 	cs, err := p.Clients()
 	if err != nil {
 		return fmt.Errorf("failed to create tekton client")
 	}
 	var d *deleter.Deleter
-	if parentPipeline == "" {
+	switch {
+	case opts.DeleteAllNs:
+		d = deleter.New("PipelineRun", func(pipelineRunName string) error {
+			return cs.Tekton.TektonV1alpha1().PipelineRuns(p.Namespace()).Delete(pipelineRunName, &metav1.DeleteOptions{})
+		})
+		prs, err := allPipelineRunNames(p, cs)
+		if err != nil {
+			return err
+		}
+		d.Delete(s, prs)
+	case opts.ParentResourceName == "":
 		d = deleter.New("PipelineRun", func(pipelineRunName string) error {
 			return cs.Tekton.TektonV1alpha1().PipelineRuns(p.Namespace()).Delete(pipelineRunName, &metav1.DeleteOptions{})
 		})
 		d.Delete(s, prNames)
-	} else {
+	default:
 		d = deleter.New("Pipeline", func(_ string) error {
 			return errors.New("the pipeline should not be deleted")
 		})
 		d.WithRelated("PipelineRun", pipelineRunLister(p, cs), func(pipelineRunName string) error {
 			return cs.Tekton.TektonV1alpha1().PipelineRuns(p.Namespace()).Delete(pipelineRunName, &metav1.DeleteOptions{})
 		})
-		d.DeleteRelated(s, []string{parentPipeline})
+		d.DeleteRelated(s, []string{opts.ParentResourceName})
 	}
-	d.PrintSuccesses(s)
+	if !opts.DeleteAllNs {
+		d.PrintSuccesses(s)
+	} else if opts.DeleteAllNs {
+		if d.Errors() == nil {
+			fmt.Fprintf(s.Out, "All PipelineRuns deleted in namespace %q\n", p.Namespace())
+		}
+	}
 	return d.Errors()
 }
 
@@ -113,4 +130,16 @@ func pipelineRunLister(p cli.Params, cs *cli.Clients) func(string) ([]string, er
 		}
 		return names, nil
 	}
+}
+
+func allPipelineRunNames(p cli.Params, cs *cli.Clients) ([]string, error) {
+	pipelineRuns, err := cs.Tekton.TektonV1alpha1().PipelineRuns(p.Namespace()).List(metav1.ListOptions{})
+	if err != nil {
+		return nil, err
+	}
+	var names []string
+	for _, pr := range pipelineRuns.Items {
+		names = append(names, pr.Name)
+	}
+	return names, nil
 }
