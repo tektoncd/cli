@@ -70,6 +70,7 @@ func TestListPipelineRuns(t *testing.T) {
 		),
 		tb.PipelineRun("pr2-2", "namespace",
 			tb.PipelineRunLabel("tekton.dev/pipeline", "random"),
+			tb.PipelineRunLabel("viva", "galapagos"),
 			tb.PipelineRunStatus(
 				tb.PipelineRunStatusCondition(apis.Condition{
 					Status: corev1.ConditionFalse,
@@ -143,15 +144,21 @@ func TestListPipelineRuns(t *testing.T) {
 			wantError: false,
 		},
 		{
-			name:      "filter pipelineruns by label",
+			name:      "filter pipelineruns by label with in query",
 			command:   command(t, prs, clock.Now(), ns),
-			args:      []string{"list", "-n", "namespace", "--labels", "viva=wakanda"},
+			args:      []string{"list", "-n", "namespace", "--label", "viva in (wakanda,galapagos)"},
 			wantError: false,
 		},
 		{
-			name:      "no mixing pipelinename and labels",
+			name:      "filter pipelineruns by label",
 			command:   command(t, prs, clock.Now(), ns),
-			args:      []string{"list", "-n", "namespace", "--labels", "viva=wakanda", "pr3-1"},
+			args:      []string{"list", "-n", "namespace", "--label", "viva=wakanda"},
+			wantError: false,
+		},
+		{
+			name:      "no mixing pipelinename and label",
+			command:   command(t, prs, clock.Now(), ns),
+			args:      []string{"list", "-n", "namespace", "--label", "viva=wakanda", "pr3-1"},
 			wantError: true,
 		},
 

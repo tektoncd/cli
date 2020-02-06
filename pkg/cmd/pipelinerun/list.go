@@ -121,7 +121,7 @@ List all PipelineRuns in a namespace 'foo':
 
 	f.AddFlags(c)
 	c.Flags().IntVarP(&opts.Limit, "limit", "", 0, "limit pipelineruns listed (default: return all pipelineruns)")
-	c.Flags().StringVarP(&opts.LabelSelector, "labels", "", opts.LabelSelector, "Selector (label query) to filter on, supports '=', '==', and '!='.(e.g. -l key1=value1,key2=value2)")
+	c.Flags().StringVarP(&opts.LabelSelector, "label", "", opts.LabelSelector, "A selector (label query) to filter on, supports '=', '==', and '!='")
 	return c
 }
 
