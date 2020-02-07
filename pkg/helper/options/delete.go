@@ -30,10 +30,11 @@ type DeleteOptions struct {
 	ForceDelete        bool
 	DeleteRelated      bool
 	DeleteAllNs        bool
+	DeleteAll          bool
 }
 
 func (o *DeleteOptions) CheckOptions(s *cli.Stream, resourceNames []string, ns string) error {
-	if len(resourceNames) > 0 && o.DeleteAllNs {
+	if len(resourceNames) > 0 && (o.DeleteAllNs || o.DeleteAll) {
 		return fmt.Errorf("--all flag should not have any arguments or flags specified with it")
 	}
 
@@ -50,6 +51,8 @@ func (o *DeleteOptions) CheckOptions(s *cli.Stream, resourceNames []string, ns s
 	switch {
 	case o.DeleteAllNs:
 		fmt.Fprintf(s.Out, "Are you sure you want to delete all %ss in namespace %q (y/n): ", o.Resource, ns)
+	case o.DeleteAll:
+		fmt.Fprintf(s.Out, "Are you sure you want to delete all %ss (y/n): ", o.Resource)
 	case o.ParentResource != "" && o.ParentResourceName != "":
 		fmt.Fprintf(s.Out, "Are you sure you want to delete all %ss related to %s %q (y/n): ", o.Resource, o.ParentResource, o.ParentResourceName)
 	case o.DeleteRelated:
