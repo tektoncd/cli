@@ -32,9 +32,11 @@ func TestClusterTaskDelete(t *testing.T) {
 	clock := clockwork.NewFakeClock()
 
 	seeds := make([]pipelinetest.Clients, 0)
-	for i := 0; i < 3; i++ {
+	for i := 0; i < 5; i++ {
 		clustertasks := []*v1alpha1.ClusterTask{
 			tb.ClusterTask("tomatoes", cb.ClusterTaskCreationTime(clock.Now().Add(-1*time.Minute))),
+			tb.ClusterTask("tomatoes2", cb.ClusterTaskCreationTime(clock.Now().Add(-1*time.Minute))),
+			tb.ClusterTask("tomatoes3", cb.ClusterTaskCreationTime(clock.Now().Add(-1*time.Minute))),
 		}
 		cs, _ := test.SeedTestData(t, pipelinetest.Data{ClusterTasks: clustertasks})
 		seeds = append(seeds, cs)
@@ -87,6 +89,46 @@ func TestClusterTaskDelete(t *testing.T) {
 			inputStream: strings.NewReader("y"),
 			wantError:   true,
 			want:        "failed to delete clustertask \"nonexistent\": clustertasks.tekton.dev \"nonexistent\" not found",
+		},
+		{
+			name:        "With force delete flag, reply yes, multiple clustertasks",
+			command:     []string{"rm", "tomatoes2", "tomatoes3", "-f"},
+			input:       seeds[1],
+			inputStream: strings.NewReader("y"),
+			wantError:   false,
+			want:        "ClusterTasks deleted: \"tomatoes2\", \"tomatoes3\"\n",
+		},
+		{
+			name:        "Without force delete flag, reply yes, multiple clustertasks",
+			command:     []string{"rm", "tomatoes2", "tomatoes3"},
+			input:       seeds[2],
+			inputStream: strings.NewReader("y"),
+			wantError:   false,
+			want:        "Are you sure you want to delete clustertask \"tomatoes2\", \"tomatoes3\" (y/n): ClusterTasks deleted: \"tomatoes2\", \"tomatoes3\"\n",
+		},
+		{
+			name:        "Delete all with prompt",
+			command:     []string{"delete", "--all", "-n", "ns"},
+			input:       seeds[3],
+			inputStream: strings.NewReader("y"),
+			wantError:   false,
+			want:        "Are you sure you want to delete all clustertasks (y/n): All ClusterTasks deleted\n",
+		},
+		{
+			name:        "Delete all with -f",
+			command:     []string{"delete", "--all", "-f", "-n", "ns"},
+			input:       seeds[4],
+			inputStream: nil,
+			wantError:   false,
+			want:        "All ClusterTasks deleted\n",
+		},
+		{
+			name:        "Error from using clustertask name with --all",
+			command:     []string{"delete", "ct", "--all", "-n", "ns"},
+			input:       seeds[4],
+			inputStream: nil,
+			wantError:   true,
+			want:        "--all flag should not have any arguments or flags specified with it",
 		},
 	}
 

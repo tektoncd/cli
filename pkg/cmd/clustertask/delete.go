@@ -26,7 +26,7 @@ import (
 )
 
 func deleteCommand(p cli.Params) *cobra.Command {
-	opts := &options.DeleteOptions{Resource: "clustertask", ForceDelete: false}
+	opts := &options.DeleteOptions{Resource: "clustertask", ForceDelete: false, DeleteAll: false}
 	f := cliopts.NewPrintFlags("delete")
 	eg := `Delete ClusterTasks with names 'foo' and 'bar':
 
@@ -42,7 +42,7 @@ or
 		Aliases:      []string{"rm"},
 		Short:        "Delete clustertask resources in a cluster",
 		Example:      eg,
-		Args:         cobra.MinimumNArgs(1),
+		Args:         cobra.MinimumNArgs(0),
 		SilenceUsage: true,
 		Annotations: map[string]string{
 			"commandType": "main",
@@ -58,16 +58,17 @@ or
 				return err
 			}
 
-			return deleteClusterTasks(s, p, args)
+			return deleteClusterTasks(s, p, args, opts.DeleteAll)
 		},
 	}
 	f.AddFlags(c)
 	c.Flags().BoolVarP(&opts.ForceDelete, "force", "f", false, "Whether to force deletion (default: false)")
+	c.Flags().BoolVarP(&opts.DeleteAll, "all", "", false, "Delete all clustertasks (default: false)")
 	_ = c.MarkZshCompPositionalArgumentCustom(1, "__tkn_get_clustertasks")
 	return c
 }
 
-func deleteClusterTasks(s *cli.Stream, p cli.Params, tNames []string) error {
+func deleteClusterTasks(s *cli.Stream, p cli.Params, tNames []string, deleteAll bool) error {
 	cs, err := p.Clients()
 	if err != nil {
 		return fmt.Errorf("Failed to create tekton client")
@@ -75,7 +76,34 @@ func deleteClusterTasks(s *cli.Stream, p cli.Params, tNames []string) error {
 	d := deleter.New("ClusterTask", func(taskName string) error {
 		return cs.Tekton.TektonV1alpha1().ClusterTasks().Delete(taskName, &metav1.DeleteOptions{})
 	})
-	d.Delete(s, tNames)
-	d.PrintSuccesses(s)
+	if deleteAll {
+		cts, err := allClusterTaskNames(cs)
+		if err != nil {
+			return err
+		}
+		d.Delete(s, cts)
+	} else {
+		d.Delete(s, tNames)
+	}
+
+	if !deleteAll {
+		d.PrintSuccesses(s)
+	} else if deleteAll {
+		if d.Errors() == nil {
+			fmt.Fprint(s.Out, "All ClusterTasks deleted\n")
+		}
+	}
 	return d.Errors()
+}
+
+func allClusterTaskNames(cs *cli.Clients) ([]string, error) {
+	clusterTasks, err := cs.Tekton.TektonV1alpha1().ClusterTasks().List(metav1.ListOptions{})
+	if err != nil {
+		return nil, err
+	}
+	var names []string
+	for _, ct := range clusterTasks.Items {
+		names = append(names, ct.Name)
+	}
+	return names, nil
 }

@@ -119,6 +119,21 @@ func TestDeleteOptions(t *testing.T) {
 			wantError:      true,
 			want:           "--all flag should not have any arguments or flags specified with it",
 		},
+		{
+			name:           "Specify DeleteAll option",
+			opt:            &DeleteOptions{DeleteAll: true},
+			stream:         &cli.Stream{In: strings.NewReader("y"), Out: os.Stdout},
+			resourcesNames: []string{},
+			wantError:      false,
+		},
+		{
+			name:           "Error when resource name provided with DeleteAll",
+			opt:            &DeleteOptions{DeleteAll: true},
+			stream:         &cli.Stream{In: strings.NewReader("y"), Out: os.Stdout},
+			resourcesNames: []string{"test1"},
+			wantError:      true,
+			want:           "--all flag should not have any arguments or flags specified with it",
+		},
 	}
 
 	for _, tp := range testParams {
