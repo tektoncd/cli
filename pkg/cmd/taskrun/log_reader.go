@@ -126,7 +126,7 @@ func (lr *LogReader) readAvailableLogs(tr *v1alpha1.TaskRun) (<-chan Log, <-chan
 
 	//Check if taskrun failed on start up
 	if err := hasTaskRunFailed(tr.Status.Conditions, lr.Task); err != nil {
-		return nil, nil, err
+		fmt.Fprintf(lr.Stream.Err, "%s\n", err.Error())
 	}
 
 	if tr.Status.PodName == "" {
