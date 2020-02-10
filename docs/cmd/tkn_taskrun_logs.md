@@ -22,14 +22,19 @@ Show the live logs of TaskRun named 'foo' from namespace 'bar':
 
     tkn taskrun logs -f foo -n bar
 
+Show the logs of TaskRun named 'microservice-1' for step 'build' only from namespace 'bar':
+
+    tkn tr logs microservice-1 -s build -n bar
+
 
 ### Options
 
 ```
-  -a, --all         show all logs including init steps injected by tekton
-  -f, --follow      stream live logs
-  -h, --help        help for logs
-      --limit int   lists number of taskruns (default 5)
+  -a, --all            show all logs including init steps injected by tekton
+  -f, --follow         stream live logs
+  -h, --help           help for logs
+      --limit int      lists number of taskruns (default 5)
+  -s, --step strings   show logs for mentioned steps only
 ```
 
 ### Options inherited from parent commands

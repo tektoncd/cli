@@ -43,6 +43,7 @@ type LogOptions struct {
 	Stream          *cli.Stream
 	Streamer        stream.NewStreamerFunc
 	Tasks           []string
+	Steps           []string
 	Last            bool
 	Limit           int
 	AskOpts         survey.AskOpt

@@ -40,6 +40,10 @@ func logCommand(p cli.Params) *cobra.Command {
 Show the live logs of TaskRun named 'foo' from namespace 'bar':
 
     tkn taskrun logs -f foo -n bar
+
+Show the logs of TaskRun named 'microservice-1' for step 'build' only from namespace 'bar':
+
+    tkn tr logs microservice-1 -s build -n bar
 `
 	c := &cobra.Command{
 		Use:          "logs",
@@ -63,6 +67,10 @@ Show the live logs of TaskRun named 'foo' from namespace 'bar':
 				return err
 			}
 
+			if len(opts.Steps) > 0 && opts.AllSteps {
+				return fmt.Errorf("option --all and option --step are not compatible")
+			}
+
 			return Run(opts)
 		},
 	}
@@ -70,6 +78,7 @@ Show the live logs of TaskRun named 'foo' from namespace 'bar':
 	c.Flags().BoolVarP(&opts.AllSteps, "all", "a", false, "show all logs including init steps injected by tekton")
 	c.Flags().BoolVarP(&opts.Follow, "follow", "f", false, "stream live logs")
 	c.Flags().IntVarP(&opts.Limit, "limit", "", 5, "lists number of taskruns")
+	c.Flags().StringSliceVarP(&opts.Steps, "step", "s", []string{}, "show logs for mentioned steps only")
 
 	_ = c.MarkZshCompPositionalArgumentCustom(1, "__tkn_get_taskrun")
 	return c
@@ -100,6 +109,7 @@ func Run(opts *options.LogOptions) error {
 		Stream:   opts.Stream,
 		Follow:   opts.Follow,
 		AllSteps: opts.AllSteps,
+		Steps:    opts.Steps,
 	}
 
 	logC, errC, err := lr.Read()

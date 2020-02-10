@@ -70,7 +70,7 @@ Show the logs of PipelineRun named 'microservice-1' for all tasks and steps (inc
 
 	c.Flags().BoolVarP(&opts.AllSteps, "all", "a", false, "show all logs including init steps injected by tekton")
 	c.Flags().BoolVarP(&opts.Follow, "follow", "f", false, "stream live logs")
-	c.Flags().StringSliceVarP(&opts.Tasks, "only-tasks", "t", []string{}, "show logs for mentioned tasks only")
+	c.Flags().StringSliceVarP(&opts.Tasks, "task", "t", []string{}, "show logs for mentioned tasks only")
 	c.Flags().IntVarP(&opts.Limit, "limit", "", 5, "lists number of pipelineruns")
 
 	_ = c.MarkZshCompPositionalArgumentCustom(1, "__tkn_get_pipelinerun")

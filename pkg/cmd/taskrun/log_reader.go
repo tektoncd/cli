@@ -57,6 +57,7 @@ type LogReader struct {
 	Follow   bool
 	AllSteps bool
 	Stream   *cli.Stream
+	Steps    []string
 }
 
 func (lr *LogReader) Read() (<-chan Log, <-chan error, error) {
@@ -113,7 +114,7 @@ func (lr *LogReader) readLiveLogs() (<-chan Log, <-chan error, error) {
 		return nil, nil, errors.New(fmt.Sprintf("task %s failed: %s. Run tkn tr desc %s for more details.", lr.Task, strings.TrimSpace(err.Error()), tr.Name))
 	}
 
-	steps := filterSteps(pod, lr.AllSteps)
+	steps := filterSteps(pod, lr.AllSteps, lr.Steps)
 	logC, errC := lr.readStepsLogs(steps, p, lr.Follow)
 	return logC, errC, err
 }
@@ -143,7 +144,7 @@ func (lr *LogReader) readAvailableLogs(tr *v1alpha1.TaskRun) (<-chan Log, <-chan
 		return nil, nil, errors.New(fmt.Sprintf("task %s failed: %s. Run tkn tr desc %s for more details.", lr.Task, strings.TrimSpace(err.Error()), tr.Name))
 	}
 
-	steps := filterSteps(pod, lr.AllSteps)
+	steps := filterSteps(pod, lr.AllSteps, lr.Steps)
 	logC, errC := lr.readStepsLogs(steps, p, lr.Follow)
 	return logC, errC, nil
 }
@@ -198,14 +199,29 @@ func (lr *LogReader) readStepsLogs(steps []*step, pod *pods.Pod, follow bool) (<
 	return logC, errC
 }
 
-func filterSteps(pod *corev1.Pod, allSteps bool) []*step {
+func filterSteps(pod *corev1.Pod, allSteps bool, stepsGiven []string) []*step {
 	steps := []*step{}
+	stepsInPod := getSteps(pod)
 
 	if allSteps {
 		steps = append(steps, getInitSteps(pod)...)
 	}
 
-	steps = append(steps, getSteps(pod)...)
+	if len(stepsGiven) == 0 {
+		steps = append(steps, stepsInPod...)
+		return steps
+	}
+
+	stepsToAdd := map[string]bool{}
+	for _, s := range stepsGiven {
+		stepsToAdd[s] = true
+	}
+
+	for _, sp := range stepsInPod {
+		if stepsToAdd[sp.name] {
+			steps = append(steps, sp)
+		}
+	}
 
 	return steps
 }

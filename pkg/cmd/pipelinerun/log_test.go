@@ -880,7 +880,7 @@ func updatePR(finalRuns []*v1alpha1.PipelineRun, watcher *watch.FakeWatcher) {
 	}()
 }
 
-func logOpts(name string, ns string, cs pipelinetest.Clients, streamer stream.NewStreamerFunc, allSteps bool, follow bool, onlyTasks ...string) *options.LogOptions {
+func logOpts(name string, ns string, cs pipelinetest.Clients, streamer stream.NewStreamerFunc, allSteps bool, follow bool, tasks ...string) *options.LogOptions {
 	p := test.Params{
 		Kube:   cs.Kube,
 		Tekton: cs.Pipeline,
@@ -889,7 +889,7 @@ func logOpts(name string, ns string, cs pipelinetest.Clients, streamer stream.Ne
 
 	logOptions := options.LogOptions{
 		PipelineRunName: name,
-		Tasks:           onlyTasks,
+		Tasks:           tasks,
 		AllSteps:        allSteps,
 		Follow:          follow,
 		Params:          &p,
