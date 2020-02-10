@@ -134,7 +134,7 @@ func TestLog_no_taskrun_arg(t *testing.T) {
 
 	for _, tp := range testParams {
 		t.Run(tp.name, func(t *testing.T) {
-			trlo := logOpts("", "ns", tp.input, fake.Streamer(fake.Logs()), false, false)
+			trlo := logOpts("", "ns", tp.input, fake.Streamer(fake.Logs()), false, false, []string{})
 			_, err := fetchLogs(trlo)
 			if tp.wantError {
 				if err == nil {
@@ -170,6 +170,24 @@ func TestLog_missing_taskrun(t *testing.T) {
 	c := Command(p)
 	got, _ := test.ExecuteCommand(c, "logs", "output-taskrun-2", "-n", "ns")
 	expected := "Error: " + msgTRNotFoundErr + ": taskruns.tekton.dev \"output-taskrun-2\" not found\n"
+	test.AssertOutput(t, expected, got)
+}
+
+func TestLog_invalid_flags(t *testing.T) {
+	nsList := []*corev1.Namespace{
+		{
+			ObjectMeta: metav1.ObjectMeta{
+				Name: "ns",
+			},
+		},
+	}
+
+	cs, _ := test.SeedTestData(t, pipelinetest.Data{Namespaces: nsList})
+	p := &test.Params{Tekton: cs.Pipeline, Kube: cs.Kube}
+
+	c := Command(p)
+	got, _ := test.ExecuteCommand(c, "logs", "output-taskrun-2", "-n", "ns", "-a", "--step", "test")
+	expected := "Error: option --all and option --step are not compatible\n"
 	test.AssertOutput(t, expected, got)
 }
 
@@ -236,7 +254,7 @@ func TestLog_taskrun_logs(t *testing.T) {
 	)
 
 	cs, _ := test.SeedTestData(t, pipelinetest.Data{TaskRuns: trs, Pods: ps, Namespaces: nsList})
-	trlo := logOpts(trName, ns, cs, fake.Streamer(logs), false, false)
+	trlo := logOpts(trName, ns, cs, fake.Streamer(logs), false, false, []string{})
 	output, _ := fetchLogs(trlo)
 
 	expectedLogs := []string{
@@ -294,7 +312,7 @@ func TestLog_taskrun_logs_no_pod_name(t *testing.T) {
 	logs := fake.Logs()
 
 	cs, _ := test.SeedTestData(t, pipelinetest.Data{TaskRuns: trs, Pods: ps, Namespaces: nsList})
-	trlo := logOpts(trName, ns, cs, fake.Streamer(logs), false, false)
+	trlo := logOpts(trName, ns, cs, fake.Streamer(logs), false, false, []string{})
 	_, err := fetchLogs(trlo)
 
 	if err == nil {
@@ -379,7 +397,7 @@ func TestLog_taskrun_all_steps(t *testing.T) {
 
 	cs, _ := test.SeedTestData(t, pipelinetest.Data{TaskRuns: trs, Pods: p, Namespaces: nsList})
 
-	trl := logOpts(trName, ns, cs, fake.Streamer(logs), true, false)
+	trl := logOpts(trName, ns, cs, fake.Streamer(logs), true, false, []string{})
 	output, _ := fetchLogs(trl)
 
 	expectedLogs := []string{
@@ -387,6 +405,90 @@ func TestLog_taskrun_all_steps(t *testing.T) {
 		"[place-tools] place tools log\n",
 		"[writefile-step] written a file\n",
 		"[nop] Build successful\n",
+	}
+	expected := strings.Join(expectedLogs, "\n") + "\n"
+
+	test.AssertOutput(t, expected, output)
+}
+
+func TestLog_taskrun_given_steps(t *testing.T) {
+	var (
+		ns       = "namespace"
+		taskName = "output-task"
+
+		trName      = "output-task-run"
+		trStartTime = clockwork.NewFakeClock().Now().Add(20 * time.Second)
+		trPod       = "output-task-pod-123456"
+		trInitStep1 = "credential-initializer-mdzbr"
+		trInitStep2 = "place-tools"
+		trStep1Name = "writefile-step"
+		nopStep     = "nop"
+	)
+
+	trs := []*v1alpha1.TaskRun{
+		tb.TaskRun(trName, ns,
+			tb.TaskRunStatus(
+				tb.PodName(trPod),
+				tb.TaskRunStartTime(trStartTime),
+				tb.StatusCondition(apis.Condition{
+					Type:   apis.ConditionSucceeded,
+					Status: corev1.ConditionTrue,
+				}),
+				tb.StepState(
+					cb.StepName(trStep1Name),
+					tb.StateTerminated(0),
+				),
+				tb.StepState(
+					cb.StepName(nopStep),
+					tb.StateTerminated(0),
+				),
+			),
+			tb.TaskRunSpec(
+				tb.TaskRunTaskRef(taskName),
+			),
+		),
+	}
+
+	nsList := []*corev1.Namespace{
+		{
+			ObjectMeta: metav1.ObjectMeta{
+				Name: "namespace",
+			},
+		},
+	}
+
+	p := []*corev1.Pod{
+		tb.Pod(trPod, ns,
+			tb.PodSpec(
+				tb.PodInitContainer(trInitStep1, "override-with-creds:latest"),
+				tb.PodInitContainer(trInitStep2, "override-with-tools:latest"),
+				tb.PodContainer(trStep1Name, trStep1Name+":latest"),
+				tb.PodContainer(nopStep, "override-with-nop:latest"),
+			),
+			cb.PodStatus(
+				cb.PodPhase(corev1.PodSucceeded),
+				cb.PodInitContainerStatus(trInitStep1, "override-with-creds:latest"),
+				cb.PodInitContainerStatus(trInitStep2, "override-with-tools:latest"),
+			),
+		),
+	}
+
+	logs := fake.Logs(
+		fake.Task(trPod,
+			fake.Step(trInitStep1, "initialized the credentials"),
+			fake.Step(trInitStep2, "place tools log"),
+			fake.Step(trStep1Name, "written a file"),
+			fake.Step(nopStep, "Build successful"),
+		),
+	)
+
+	cs, _ := test.SeedTestData(t, pipelinetest.Data{TaskRuns: trs, Pods: p, Namespaces: nsList})
+
+	trl := logOpts(trName, ns, cs, fake.Streamer(logs), false, false, []string{trStep1Name})
+	output, _ := fetchLogs(trl)
+
+	expectedLogs := []string{
+		"[writefile-step] written a file\n",
 	}
 	expected := strings.Join(expectedLogs, "\n") + "\n"
 
@@ -466,7 +568,7 @@ func TestLog_taskrun_follow_mode(t *testing.T) {
 
 	cs, _ := test.SeedTestData(t, pipelinetest.Data{TaskRuns: trs, Pods: p, Namespaces: nsList})
 
-	trlo := logOpts(trName, ns, cs, fake.Streamer(logs), false, true)
+	trlo := logOpts(trName, ns, cs, fake.Streamer(logs), false, true, []string{})
 	output, _ := fetchLogs(trlo)
 
 	expectedLogs := []string{
@@ -550,7 +652,7 @@ func TestLog_taskrun_follow_mode_no_pod_name(t *testing.T) {
 
 	cs, _ := test.SeedTestData(t, pipelinetest.Data{TaskRuns: trs, Pods: p, Namespaces: nsList})
 
-	trlo := logOpts(trName, ns, cs, fake.Streamer(logs), false, true)
+	trlo := logOpts(trName, ns, cs, fake.Streamer(logs), false, true, []string{})
 	_, err := fetchLogs(trlo)
 
 	if err == nil {
@@ -634,7 +736,7 @@ func TestLog_taskrun_follow_mode_update_pod_name(t *testing.T) {
 	cs, _ := test.SeedTestData(t, pipelinetest.Data{TaskRuns: trs, Pods: p, Namespaces: nsList})
 	watcher := watch.NewRaceFreeFake()
 	cs.Pipeline.PrependWatchReactor("taskruns", k8stest.DefaultWatchReactor(watcher, nil))
-	trlo := logOpts(trName, ns, cs, fake.Streamer(logs), false, true)
+	trlo := logOpts(trName, ns, cs, fake.Streamer(logs), false, true, []string{})
 
 	go func() {
 		time.Sleep(time.Second * 1)
@@ -728,7 +830,7 @@ func TestLog_taskrun_follow_mode_update_timeout(t *testing.T) {
 	cs, _ := test.SeedTestData(t, pipelinetest.Data{TaskRuns: trs, Pods: p, Namespaces: nsList})
 	watcher := watch.NewRaceFreeFake()
 	cs.Pipeline.PrependWatchReactor("taskruns", k8stest.DefaultWatchReactor(watcher, nil))
-	trlo := logOpts(trName, ns, cs, fake.Streamer(logs), false, true)
+	trlo := logOpts(trName, ns, cs, fake.Streamer(logs), false, true, []string{})
 
 	go func() {
 		time.Sleep(time.Second * 1)
@@ -816,7 +918,7 @@ func TestLog_taskrun_follow_mode_no_output_provided(t *testing.T) {
 	cs, _ := test.SeedTestData(t, pipelinetest.Data{TaskRuns: trs, Pods: p, Namespaces: nsList})
 	watcher := watch.NewRaceFreeFake()
 	cs.Pipeline.PrependWatchReactor("taskruns", k8stest.DefaultWatchReactor(watcher, nil))
-	trlo := logOpts(trName, ns, cs, fake.Streamer(logs), false, true)
+	trlo := logOpts(trName, ns, cs, fake.Streamer(logs), false, true, []string{})
 
 	_, err := fetchLogs(trlo)
 	if err == nil {
@@ -827,7 +929,7 @@ func TestLog_taskrun_follow_mode_no_output_provided(t *testing.T) {
 	test.AssertOutput(t, expected, err.Error())
 }
 
-func logOpts(run, ns string, cs pipelinetest.Clients, streamer stream.NewStreamerFunc, allSteps bool, follow bool) *options.LogOptions {
+func logOpts(run, ns string, cs pipelinetest.Clients, streamer stream.NewStreamerFunc, allSteps bool, follow bool, steps []string) *options.LogOptions {
 	p := test.Params{
 		Kube:   cs.Kube,
 		Tekton: cs.Pipeline,
@@ -841,6 +943,7 @@ func logOpts(run, ns string, cs pipelinetest.Clients, streamer stream.NewStreame
 		Params:      &p,
 		Streamer:    streamer,
 		Limit:       5,
+		Steps:       steps,
 	}
 }
 

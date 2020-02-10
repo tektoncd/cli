@@ -35,6 +35,10 @@ Show taskruns logs
 \fB\-\-limit\fP=5
     lists number of taskruns
 
+.PP
+\fB\-s\fP, \fB\-\-step\fP=[]
+    show logs for mentioned steps only
+
 
 .SH OPTIONS INHERITED FROM PARENT COMMANDS
 .PP
@@ -75,6 +79,18 @@ Show the live logs of TaskRun named 'foo' from namespace 'bar':
 
 .nf
 tkn taskrun logs \-f foo \-n bar
+
+.fi
+.RE
+
+.PP
+Show the logs of TaskRun named 'microservice\-1' for step 'build' only from namespace 'bar':
+
+.PP
+.RS
+
+.nf
+tkn tr logs microservice\-1 \-s build \-n bar
 
 .fi
 .RE
