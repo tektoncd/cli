@@ -43,9 +43,11 @@ func TestConditionDelete(t *testing.T) {
 
 	seeds := make([]pipelinetest.Clients, 0)
 
-	for i := 0; i < 3; i++ {
+	for i := 0; i < 5; i++ {
 		conditions := []*v1alpha1.Condition{
 			tb.Condition("condition1", "ns", cb.ConditionCreationTime(clock.Now().Add(-1*time.Minute))),
+			tb.Condition("condition2", "ns", cb.ConditionCreationTime(clock.Now().Add(-1*time.Minute))),
+			tb.Condition("condition3", "ns", cb.ConditionCreationTime(clock.Now().Add(-1*time.Minute))),
 		}
 		s, _ := test.SeedTestData(t, pipelinetest.Data{Conditions: conditions, Namespaces: ns})
 		seeds = append(seeds, s)
@@ -76,6 +78,14 @@ func TestConditionDelete(t *testing.T) {
 			want:        "Conditions deleted: \"condition1\"\n",
 		},
 		{
+			name:        "With force delete flag (shorthand), multiple conditions",
+			command:     []string{"rm", "condition2", "condition3", "-n", "ns", "-f"},
+			input:       seeds[0],
+			inputStream: nil,
+			wantError:   false,
+			want:        "Conditions deleted: \"condition2\", \"condition3\"\n",
+		},
+		{
 			name:        "With force delete flag",
 			command:     []string{"rm", "condition1", "-n", "ns", "--force"},
 			input:       seeds[1],
@@ -100,12 +110,44 @@ func TestConditionDelete(t *testing.T) {
 			want:        "Are you sure you want to delete condition \"condition1\" (y/n): Conditions deleted: \"condition1\"\n",
 		},
 		{
+			name:        "Without force delete flag, reply yes, multiple conditions",
+			command:     []string{"rm", "condition2", "condition3", "-n", "ns"},
+			input:       seeds[2],
+			inputStream: strings.NewReader("y"),
+			wantError:   false,
+			want:        "Are you sure you want to delete condition \"condition2\", \"condition3\" (y/n): Conditions deleted: \"condition2\", \"condition3\"\n",
+		},
+		{
 			name:        "Remove non existent resource",
 			command:     []string{"rm", "nonexistent", "-n", "ns"},
 			input:       seeds[2],
 			inputStream: strings.NewReader("y"),
 			wantError:   true,
 			want:        "failed to delete condition \"nonexistent\": conditions.tekton.dev \"nonexistent\" not found",
+		},
+		{
+			name:        "Delete all with prompt",
+			command:     []string{"delete", "--all", "-n", "ns"},
+			input:       seeds[3],
+			inputStream: strings.NewReader("y"),
+			wantError:   false,
+			want:        "Are you sure you want to delete all conditions in namespace \"ns\" (y/n): All Conditions deleted in namespace \"ns\"\n",
+		},
+		{
+			name:        "Delete all with -f",
+			command:     []string{"delete", "--all", "-f", "-n", "ns"},
+			input:       seeds[4],
+			inputStream: nil,
+			wantError:   false,
+			want:        "All Conditions deleted in namespace \"ns\"\n",
+		},
+		{
+			name:        "Error from using condition name with --all",
+			command:     []string{"delete", "cond", "--all", "-n", "ns"},
+			input:       seeds[4],
+			inputStream: nil,
+			wantError:   true,
+			want:        "--all flag should not have any arguments or flags specified with it",
 		},
 	}
 
