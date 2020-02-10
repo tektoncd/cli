@@ -13,7 +13,7 @@ Output Resources
 Params
 
  NAME    TYPE     DEFAULT VALUE
- myarg   string   
+ myarg   string   ---
 
 Steps
 

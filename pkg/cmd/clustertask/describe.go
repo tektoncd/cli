@@ -77,7 +77,7 @@ No params
  NAME	TYPE	DEFAULT VALUE
 {{- range $p := .ClusterTask.Spec.Inputs.Params }}
 {{- if not $p.Default }}
- {{decorate "bullet" $p.Name }}	{{ $p.Type }}	{{ "" }}
+ {{decorate "bullet" $p.Name }}	{{ $p.Type }}	{{ "---" }}
 {{- else }}
 {{- if eq $p.Type "string" }}
  {{decorate "bullet" $p.Name }}	{{ $p.Type }}	{{ $p.Default.StringVal }}
