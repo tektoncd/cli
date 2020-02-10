@@ -38,8 +38,12 @@ func TestEventListenerDelete(t *testing.T) {
 	}
 
 	seeds := make([]triggertest.Clients, 0)
-	for i := 0; i < 3; i++ {
-		els := []*v1alpha1.EventListener{tb.EventListener("el-1", "ns")}
+	for i := 0; i < 5; i++ {
+		els := []*v1alpha1.EventListener{
+			tb.EventListener("el-1", "ns"),
+			tb.EventListener("el-2", "ns"),
+			tb.EventListener("el-3", "ns"),
+		}
 		ctx, _ := rtesting.SetupFakeContext(t)
 		cs := triggertest.SeedResources(t, ctx, triggertest.Resources{EventListeners: els, Namespaces: ns})
 		seeds = append(seeds, cs)
@@ -70,6 +74,14 @@ func TestEventListenerDelete(t *testing.T) {
 			want:        "EventListeners deleted: \"el-1\"\n",
 		},
 		{
+			name:        "With force delete flag (shorthand), multiple eventlisteners",
+			command:     []string{"rm", "el-2", "el-3", "-n", "ns", "-f"},
+			input:       seeds[0],
+			inputStream: nil,
+			wantError:   false,
+			want:        "EventListeners deleted: \"el-2\", \"el-3\"\n",
+		},
+		{
 			name:        "With force delete flag",
 			command:     []string{"rm", "el-1", "-n", "ns", "--force"},
 			input:       seeds[1],
@@ -94,12 +106,44 @@ func TestEventListenerDelete(t *testing.T) {
 			want:        "Are you sure you want to delete eventlistener \"el-1\" (y/n): EventListeners deleted: \"el-1\"\n",
 		},
 		{
+			name:        "Without force delete flag, reply yes, multiple eventlisteners",
+			command:     []string{"rm", "el-2", "el-3", "-n", "ns"},
+			input:       seeds[2],
+			inputStream: strings.NewReader("y"),
+			wantError:   false,
+			want:        "Are you sure you want to delete eventlistener \"el-2\", \"el-3\" (y/n): EventListeners deleted: \"el-2\", \"el-3\"\n",
+		},
+		{
 			name:        "Remove non existent resource",
 			command:     []string{"rm", "nonexistent", "-n", "ns"},
 			input:       seeds[2],
 			inputStream: strings.NewReader("y"),
 			wantError:   true,
 			want:        "failed to delete eventlistener \"nonexistent\": eventlisteners.tekton.dev \"nonexistent\" not found",
+		},
+		{
+			name:        "Delete all with prompt",
+			command:     []string{"delete", "--all", "-n", "ns"},
+			input:       seeds[3],
+			inputStream: strings.NewReader("y"),
+			wantError:   false,
+			want:        "Are you sure you want to delete all eventlisteners in namespace \"ns\" (y/n): All EventListeners deleted in namespace \"ns\"\n",
+		},
+		{
+			name:        "Delete all with -f",
+			command:     []string{"delete", "--all", "-f", "-n", "ns"},
+			input:       seeds[4],
+			inputStream: nil,
+			wantError:   false,
+			want:        "All EventListeners deleted in namespace \"ns\"\n",
+		},
+		{
+			name:        "Error from using eventlistener name with --all",
+			command:     []string{"delete", "el", "--all", "-n", "ns"},
+			input:       seeds[4],
+			inputStream: nil,
+			wantError:   true,
+			want:        "--all flag should not have any arguments or flags specified with it",
 		},
 	}
 
