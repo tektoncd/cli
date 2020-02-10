@@ -15,8 +15,8 @@ Params
  NAME              TYPE     DEFAULT VALUE
  pipeline-param    string   somethingdifferent
  rev-param         array    [booms booms booms]
- pipeline-param2   string   
- rev-param2        array    
+ pipeline-param2   string   ---
+ rev-param2        array    ---
 
 Tasks
 

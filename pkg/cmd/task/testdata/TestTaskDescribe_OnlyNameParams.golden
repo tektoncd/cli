@@ -12,9 +12,9 @@ Output Resources
 Params
 
  NAME      TYPE     DEFAULT VALUE
- myarg     string   
- myprint   string   
- myarray   array    
+ myarg     string   ---
+ myprint   string   ---
+ myarray   array    ---
 
 Steps
 

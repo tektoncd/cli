@@ -17,8 +17,8 @@ Output Resources
 Params
 
  NAME      TYPE     DEFAULT VALUE
- myarg     string   
- myarray   array    
+ myarg     string   ---
+ myarray   array    ---
  print     string   somethingdifferent
  output    array    [booms booms booms]
 
