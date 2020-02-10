@@ -37,7 +37,7 @@ func TestPipelineResourceDelete(t *testing.T) {
 	}
 
 	seeds := make([]pipelinetest.Clients, 0)
-	for i := 0; i < 3; i++ {
+	for i := 0; i < 5; i++ {
 		pres := []*v1alpha1.PipelineResource{
 			tb.PipelineResource("pre-1", "ns",
 				tb.PipelineResourceSpec("image",
@@ -104,6 +104,30 @@ func TestPipelineResourceDelete(t *testing.T) {
 			inputStream: strings.NewReader("y"),
 			wantError:   true,
 			want:        "failed to delete pipelineresource \"nonexistent\": pipelineresources.tekton.dev \"nonexistent\" not found",
+		},
+		{
+			name:        "Delete all with prompt",
+			command:     []string{"delete", "--all", "-n", "ns"},
+			input:       seeds[3],
+			inputStream: strings.NewReader("y"),
+			wantError:   false,
+			want:        "Are you sure you want to delete all pipelineresources in namespace \"ns\" (y/n): All PipelineResources deleted in namespace \"ns\"\n",
+		},
+		{
+			name:        "Delete all with -f",
+			command:     []string{"delete", "--all", "-f", "-n", "ns"},
+			input:       seeds[4],
+			inputStream: nil,
+			wantError:   false,
+			want:        "All PipelineResources deleted in namespace \"ns\"\n",
+		},
+		{
+			name:        "Error from using pipelineresource name with --all",
+			command:     []string{"delete", "pipelineresource", "--all", "-n", "ns"},
+			input:       seeds[4],
+			inputStream: nil,
+			wantError:   true,
+			want:        "--all flag should not have any arguments or flags specified with it",
 		},
 	}
 
