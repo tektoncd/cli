@@ -27,7 +27,7 @@ import (
 )
 
 func deleteCommand(p cli.Params) *cobra.Command {
-	opts := &options.DeleteOptions{Resource: "triggertemplate", ForceDelete: false}
+	opts := &options.DeleteOptions{Resource: "triggertemplate", ForceDelete: false, DeleteAllNs: false}
 	f := cliopts.NewPrintFlags("delete")
 	eg := `Delete TriggerTemplates with names 'foo' and 'bar' in namespace 'quux'
 
@@ -63,17 +63,18 @@ or
 				return err
 			}
 
-			return deleteTriggerTemplates(s, p, args)
+			return deleteTriggerTemplates(s, p, args, opts.DeleteAllNs)
 		},
 	}
 	f.AddFlags(c)
 	c.Flags().BoolVarP(&opts.ForceDelete, "force", "f", false, "Whether to force deletion (default: false)")
+	c.Flags().BoolVarP(&opts.DeleteAllNs, "all", "", false, "Delete all TriggerTemplates in a namespace (default: false)")
 
 	_ = c.MarkZshCompPositionalArgumentCustom(1, "__tkn_get_triggertemplate")
 	return c
 }
 
-func deleteTriggerTemplates(s *cli.Stream, p cli.Params, ttNames []string) error {
+func deleteTriggerTemplates(s *cli.Stream, p cli.Params, ttNames []string, deleteAll bool) error {
 	cs, err := p.Clients()
 	if err != nil {
 		return fmt.Errorf("failed to create tekton client")
@@ -81,7 +82,33 @@ func deleteTriggerTemplates(s *cli.Stream, p cli.Params, ttNames []string) error
 	d := deleter.New("TriggerTemplate", func(templateName string) error {
 		return cs.Triggers.TektonV1alpha1().TriggerTemplates(p.Namespace()).Delete(templateName, &metav1.DeleteOptions{})
 	})
+
+	if deleteAll {
+		ttNames, err = allTriggerTemplateNames(p, cs)
+		if err != nil {
+			return err
+		}
+	}
 	d.Delete(s, ttNames)
-	d.PrintSuccesses(s)
+
+	if !deleteAll {
+		d.PrintSuccesses(s)
+	} else if deleteAll {
+		if d.Errors() == nil {
+			fmt.Fprintf(s.Out, "All TriggerTemplates deleted in namespace %q\n", p.Namespace())
+		}
+	}
 	return d.Errors()
+}
+
+func allTriggerTemplateNames(p cli.Params, cs *cli.Clients) ([]string, error) {
+	tts, err := cs.Triggers.TektonV1alpha1().TriggerTemplates(p.Namespace()).List(metav1.ListOptions{})
+	if err != nil {
+		return nil, err
+	}
+	var names []string
+	for _, tt := range tts.Items {
+		names = append(names, tt.Name)
+	}
+	return names, nil
 }

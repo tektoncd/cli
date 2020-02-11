@@ -38,8 +38,12 @@ func TestTriggerTemplateDelete(t *testing.T) {
 	}
 
 	seeds := make([]triggertest.Clients, 0)
-	for i := 0; i < 3; i++ {
-		tts := []*v1alpha1.TriggerTemplate{tb.TriggerTemplate("tt-1", "ns")}
+	for i := 0; i < 5; i++ {
+		tts := []*v1alpha1.TriggerTemplate{
+			tb.TriggerTemplate("tt-1", "ns"),
+			tb.TriggerTemplate("tt-2", "ns"),
+			tb.TriggerTemplate("tt-3", "ns"),
+		}
 		ctx, _ := rtesting.SetupFakeContext(t)
 		cs := triggertest.SeedResources(t, ctx, triggertest.Resources{TriggerTemplates: tts, Namespaces: ns})
 		seeds = append(seeds, cs)
@@ -70,6 +74,14 @@ func TestTriggerTemplateDelete(t *testing.T) {
 			want:        "TriggerTemplates deleted: \"tt-1\"\n",
 		},
 		{
+			name:        "With force delete flag (shorthand), multiple triggertemplates",
+			command:     []string{"rm", "tt-2", "tt-3", "-n", "ns", "-f"},
+			input:       seeds[0],
+			inputStream: nil,
+			wantError:   false,
+			want:        "TriggerTemplates deleted: \"tt-2\", \"tt-3\"\n",
+		},
+		{
 			name:        "With force delete flag",
 			command:     []string{"rm", "tt-1", "-n", "ns", "--force"},
 			input:       seeds[1],
@@ -94,12 +106,44 @@ func TestTriggerTemplateDelete(t *testing.T) {
 			want:        "Are you sure you want to delete triggertemplate \"tt-1\" (y/n): TriggerTemplates deleted: \"tt-1\"\n",
 		},
 		{
+			name:        "Without force delete flag, reply yes, multiple triggertemplates",
+			command:     []string{"rm", "tt-2", "tt-3", "-n", "ns"},
+			input:       seeds[2],
+			inputStream: strings.NewReader("y"),
+			wantError:   false,
+			want:        "Are you sure you want to delete triggertemplate \"tt-2\", \"tt-3\" (y/n): TriggerTemplates deleted: \"tt-2\", \"tt-3\"\n",
+		},
+		{
 			name:        "Remove non existent resource",
 			command:     []string{"rm", "nonexistent", "-n", "ns"},
 			input:       seeds[2],
 			inputStream: strings.NewReader("y"),
 			wantError:   true,
 			want:        "failed to delete triggertemplate \"nonexistent\": triggertemplates.tekton.dev \"nonexistent\" not found",
+		},
+		{
+			name:        "Delete all with prompt",
+			command:     []string{"delete", "--all", "-n", "ns"},
+			input:       seeds[3],
+			inputStream: strings.NewReader("y"),
+			wantError:   false,
+			want:        "Are you sure you want to delete all triggertemplates in namespace \"ns\" (y/n): All TriggerTemplates deleted in namespace \"ns\"\n",
+		},
+		{
+			name:        "Delete all with -f",
+			command:     []string{"delete", "--all", "-f", "-n", "ns"},
+			input:       seeds[4],
+			inputStream: nil,
+			wantError:   false,
+			want:        "All TriggerTemplates deleted in namespace \"ns\"\n",
+		},
+		{
+			name:        "Error from using triggertemplate name with --all",
+			command:     []string{"delete", "tt", "--all", "-n", "ns"},
+			input:       seeds[4],
+			inputStream: nil,
+			wantError:   true,
+			want:        "--all flag should not have any arguments or flags specified with it",
 		},
 	}
 
