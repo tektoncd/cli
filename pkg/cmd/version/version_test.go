@@ -18,6 +18,7 @@ import (
 	"context"
 	"crypto/tls"
 	"encoding/json"
+	"fmt"
 	"net"
 	"net/http"
 	"net/http/httptest"
@@ -25,7 +26,9 @@ import (
 	"time"
 
 	"github.com/tektoncd/cli/pkg/test"
+	pipelinetest "github.com/tektoncd/pipeline/test"
 	"gotest.tools/v3/assert"
+	"gotest.tools/v3/golden"
 )
 
 func TestVersionGood(t *testing.T) {
@@ -68,16 +71,20 @@ func TestVersionGood(t *testing.T) {
 			cli.httpClient = httpClient
 			output, err := checkRelease(cli)
 			assert.NilError(t, err)
-			assert.Equal(t, s.expected, output)
+			golden.Assert(t, output, fmt.Sprintf("%s.golden", t.Name()))
 		})
 	}
 
 	clientVersion = "v1.2.3"
-	version := Command()
+
+	seedData, _ := test.SeedTestData(t, pipelinetest.Data{})
+
+	cs := pipelinetest.Clients{Kube: seedData.Kube}
+	p := &test.Params{Kube: cs.Kube}
+	version := Command(p)
 	got, err := test.ExecuteCommand(version, "version", "")
 	assert.NilError(t, err)
-	assert.Equal(t, "Client version: "+clientVersion+"\n", got)
-
+	golden.Assert(t, got, fmt.Sprintf("%s.golden", t.Name()))
 }
 
 func TestVersionBad(t *testing.T) {

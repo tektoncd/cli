@@ -35,7 +35,8 @@ import (
 )
 
 const usageTemplate = `Usage:{{if .Runnable}}
-{{.UseLine}}{{end}}{{if .HasAvailableSubCommands}}
+{{.UseLine}}{{end}}{{if .Ha
+sAvailableSubCommands}}
   {{.CommandPath}} [command]{{end}}{{if gt (len .Aliases) 0}}
 
 Aliases:
@@ -89,7 +90,7 @@ func Root(p cli.Params) *cobra.Command {
 		taskrun.Command(p),
 		triggerbinding.Command(p),
 		triggertemplate.Command(p),
-		version.Command(),
+		version.Command(p),
 	)
 
 	return cmd

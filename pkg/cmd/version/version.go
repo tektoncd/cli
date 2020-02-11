@@ -26,6 +26,8 @@ import (
 	"github.com/blang/semver"
 	"github.com/pkg/errors"
 	"github.com/spf13/cobra"
+	"github.com/tektoncd/cli/pkg/cli"
+	"github.com/tektoncd/cli/pkg/helper/version"
 )
 
 // NOTE: use go build -ldflags "-X github.com/tektoncd/cli/pkg/cmd/version.clientVersion=$(git describe)"
@@ -35,7 +37,7 @@ const devVersion = "dev"
 const latestReleaseURL = "https://api.github.com/repos/tektoncd/cli/releases/latest"
 
 // Command returns version command
-func Command() *cobra.Command {
+func Command(p cli.Params) *cobra.Command {
 	var check bool
 
 	var cmd = &cobra.Command{
@@ -46,6 +48,15 @@ func Command() *cobra.Command {
 		},
 		RunE: func(cmd *cobra.Command, args []string) error {
 			fmt.Fprintf(cmd.OutOrStdout(), "Client version: %s\n", clientVersion)
+
+			cs, err := p.Clients()
+			if err == nil {
+				version, _ := version.GetPipelineVersion(cs)
+				if version == "" {
+					version = "unknown"
+				}
+				fmt.Fprintf(cmd.OutOrStdout(), "Pipeline version: %s\n", version)
+			}
 
 			if !check || clientVersion == devVersion {
 				return nil
