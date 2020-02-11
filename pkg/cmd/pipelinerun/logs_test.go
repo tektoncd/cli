@@ -907,3 +907,128 @@ func fetchLogs(lo *options.LogOptions) (string, error) {
 
 	return out.String(), err
 }
+
+func TestLog_pipeline_last(t *testing.T) {
+	var (
+		pipelineName = "pipeline1"
+		prName       = "pr1"
+		prName2      = "pr2"
+		ns           = "namespaces"
+		taskName     = "task1"
+	)
+
+	namespaces := []*corev1.Namespace{
+		{
+			ObjectMeta: metav1.ObjectMeta{
+				Name: ns,
+			},
+		},
+	}
+
+	pipelines := []*v1alpha1.Pipeline{
+		tb.Pipeline(pipelineName, ns,
+			tb.PipelineSpec(
+				tb.PipelineTask(taskName, taskName),
+			),
+		),
+	}
+
+	pipelineruns := []*v1alpha1.PipelineRun{
+		tb.PipelineRun(prName2, ns,
+			tb.PipelineRunLabel("tekton.dev/pipeline", pipelineName),
+			tb.PipelineRunSpec(pipelineName),
+			tb.PipelineRunStatus(
+				tb.PipelineRunStatusCondition(apis.Condition{
+					Type:    apis.ConditionSucceeded,
+					Status:  corev1.ConditionUnknown,
+					Message: "Running",
+				}),
+			),
+		),
+		tb.PipelineRun(prName, ns,
+			tb.PipelineRunLabel("tekton.dev/pipeline", pipelineName),
+			tb.PipelineRunSpec(pipelineName),
+			tb.PipelineRunStatus(
+				tb.PipelineRunStatusCondition(apis.Condition{
+					Type:    apis.ConditionSucceeded,
+					Status:  corev1.ConditionUnknown,
+					Message: "Running",
+				}),
+			),
+		),
+	}
+
+	cs, _ := test.SeedTestData(t, pipelinetest.Data{PipelineRuns: pipelineruns, Pipelines: pipelines, Namespaces: namespaces})
+	p := test.Params{
+		Kube:   cs.Kube,
+		Tekton: cs.Pipeline,
+	}
+	p.SetNamespace(ns)
+	lopt := options.LogOptions{
+		Params: &p,
+		Last:   true,
+		Limit:  len(pipelineruns),
+	}
+	err := askRunName(&lopt)
+	if err != nil {
+		t.Errorf("Unexpected error: %v", err)
+	}
+	test.AssertOutput(t, prName2, lopt.PipelineRunName)
+}
+
+func TestLog_pipeline_only_one(t *testing.T) {
+	var (
+		pipelineName = "pipeline1"
+		prName       = "pr1"
+		ns           = "namespaces"
+		taskName     = "task1"
+	)
+
+	namespaces := []*corev1.Namespace{
+		{
+			ObjectMeta: metav1.ObjectMeta{
+				Name: ns,
+			},
+		},
+	}
+
+	pipelines := []*v1alpha1.Pipeline{
+		tb.Pipeline(pipelineName, ns,
+			tb.PipelineSpec(
+				tb.PipelineTask(taskName, taskName),
+			),
+		),
+	}
+
+	pipelineruns := []*v1alpha1.PipelineRun{
+		tb.PipelineRun(prName, ns,
+			tb.PipelineRunLabel("tekton.dev/pipeline", pipelineName),
+			tb.PipelineRunSpec(pipelineName),
+			tb.PipelineRunStatus(
+				tb.PipelineRunStatusCondition(apis.Condition{
+					Type:    apis.ConditionSucceeded,
+					Status:  corev1.ConditionUnknown,
+					Message: "Running",
+				}),
+			),
+		),
+	}
+
+	cs, _ := test.SeedTestData(t, pipelinetest.Data{PipelineRuns: pipelineruns, Pipelines: pipelines, Namespaces: namespaces})
+	p := test.Params{
+		Kube:   cs.Kube,
+		Tekton: cs.Pipeline,
+	}
+	p.SetNamespace(ns)
+	lopt := options.LogOptions{
+		Params: &p,
+		// This code https://git.io/JvCMV seems buggy so have to set the upper
+		// Limit.. but I guess that's another fight for another day.
+		Limit: len(pipelineruns),
+	}
+	err := askRunName(&lopt)
+	if err != nil {
+		t.Errorf("Unexpected error: %v", err)
+	}
+	test.AssertOutput(t, prName, lopt.PipelineRunName)
+}

@@ -69,6 +69,7 @@ Show the logs of PipelineRun named 'microservice-1' for all tasks and steps (inc
 	}
 
 	c.Flags().BoolVarP(&opts.AllSteps, "all", "a", false, "show all logs including init steps injected by tekton")
+	c.Flags().BoolVarP(&opts.Last, "last", "L", false, "show logs for last pipelinerun")
 	c.Flags().BoolVarP(&opts.Follow, "follow", "f", false, "stream live logs")
 	c.Flags().StringSliceVarP(&opts.Tasks, "task", "t", []string{}, "show logs for mentioned tasks only")
 	c.Flags().IntVarP(&opts.Limit, "limit", "", 5, "lists number of pipelineruns")
@@ -125,7 +126,7 @@ func askRunName(opts *options.LogOptions) error {
 		return fmt.Errorf("No pipelineruns found")
 	}
 
-	if len(prs) == 1 {
+	if len(prs) == 1 || opts.Last {
 		opts.PipelineRunName = strings.Fields(prs[0])[0]
 		return nil
 	}

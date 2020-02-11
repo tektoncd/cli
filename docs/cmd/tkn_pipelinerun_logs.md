@@ -33,6 +33,7 @@ Show the logs of PipelineRun named 'microservice-1' for all tasks and steps (inc
   -a, --all            show all logs including init steps injected by tekton
   -f, --follow         stream live logs
   -h, --help           help for logs
+  -L, --last           show logs for last pipelinerun
       --limit int      lists number of pipelineruns (default 5)
   -t, --task strings   show logs for mentioned tasks only
 ```
