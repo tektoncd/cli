@@ -66,6 +66,7 @@ type startOptions struct {
 	ShowLog            bool
 	DryRun             bool
 	Output             string
+	PrefixName         string
 }
 
 type resourceOptionsFilter struct {
@@ -159,6 +160,7 @@ like cat,foo,bar
 	c.Flags().StringSliceVarP(&opt.Labels, "labels", "l", []string{}, "pass labels as label=value.")
 	c.Flags().BoolVarP(&opt.DryRun, "dry-run", "", false, "preview pipelinerun without running it")
 	c.Flags().StringVarP(&opt.Output, "output", "", "", "format of pipelinerun dry-run (yaml or json)")
+	c.Flags().StringVarP(&opt.PrefixName, "prefix-name", "", "", "specify a prefix for the pipelinerun name (must be lowercase alphanumeric characters)")
 
 	_ = c.MarkZshCompPositionalArgumentCustom(1, "__tkn_get_pipeline")
 
@@ -391,15 +393,21 @@ func getOptionsByType(resources resourceOptionsFilter, restype string) []string 
 }
 
 func (opt *startOptions) startPipeline(pName string) error {
+	objMeta := metav1.ObjectMeta{
+		Namespace: opt.cliparams.Namespace(),
+	}
+	if opt.PrefixName == "" {
+		objMeta.GenerateName = pName + "-run-"
+	} else {
+		objMeta.GenerateName = opt.PrefixName + "-"
+	}
+
 	pr := &v1alpha1.PipelineRun{
 		TypeMeta: metav1.TypeMeta{
 			APIVersion: "tekton.dev/v1alpha1",
 			Kind:       "PipelineRun",
 		},
-		ObjectMeta: metav1.ObjectMeta{
-			Namespace:    opt.cliparams.Namespace(),
-			GenerateName: pName + "-run-",
-		},
+		ObjectMeta: objMeta,
 		Spec: v1alpha1.PipelineRunSpec{
 			PipelineRef: &v1alpha1.PipelineRef{Name: pName},
 		},
@@ -423,9 +431,11 @@ func (opt *startOptions) startPipeline(pName string) error {
 				return err
 			}
 		}
-		if len(usepr.ObjectMeta.GenerateName) > 0 {
+
+		// if --prefix-name is specified by user, allow name to be used for pipelinerun
+		if len(usepr.ObjectMeta.GenerateName) > 0 && opt.PrefixName == "" {
 			pr.ObjectMeta.GenerateName = usepr.ObjectMeta.GenerateName
-		} else {
+		} else if opt.PrefixName == "" {
 			pr.ObjectMeta.GenerateName = usepr.ObjectMeta.Name + "-"
 		}
 		pr.Spec.Resources = usepr.Spec.Resources
