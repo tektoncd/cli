@@ -194,6 +194,22 @@ func TestPipelineRunDelete(t *testing.T) {
 			want:        "All PipelineRuns deleted in namespace \"ns\"\n",
 		},
 		{
+			name:        "Delete all keeping 2",
+			command:     []string{"delete", "--all", "-f", "--keep", "2", "-n", "ns"},
+			input:       seeds[4],
+			inputStream: nil,
+			wantError:   false,
+			want:        "All but 2 PipelineRuns deleted in namespace \"ns\"\n",
+		},
+		{
+			name:        "Keep -1 is a no go",
+			command:     []string{"delete", "--all", "-f", "--keep", "-1", "-n", "ns"},
+			input:       seeds[4],
+			inputStream: nil,
+			wantError:   true,
+			want:        "keep option should not be lower than 0",
+		},
+		{
 			name:        "Error from using pipelinerun name with --all",
 			command:     []string{"delete", "pipelinerun", "--all", "-n", "ns"},
 			input:       seeds[4],

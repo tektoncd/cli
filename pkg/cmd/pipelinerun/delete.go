@@ -22,6 +22,7 @@ import (
 	"github.com/tektoncd/cli/pkg/cli"
 	"github.com/tektoncd/cli/pkg/helper/deleter"
 	"github.com/tektoncd/cli/pkg/helper/options"
+	prhsort "github.com/tektoncd/cli/pkg/helper/pipelinerun/sort"
 	validate "github.com/tektoncd/cli/pkg/helper/validate"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	cliopts "k8s.io/cli-runtime/pkg/genericclioptions"
@@ -70,6 +71,7 @@ or
 	f.AddFlags(c)
 	c.Flags().BoolVarP(&opts.ForceDelete, "force", "f", false, "Whether to force deletion (default: false)")
 	c.Flags().StringVarP(&opts.ParentResourceName, "pipeline", "p", "", "The name of a pipeline whose pipelineruns should be deleted (does not delete the pipeline)")
+	c.Flags().IntVarP(&opts.Keep, "keep", "", 0, "Keep n least recent number of pipelineruns when deleting alls")
 	c.Flags().BoolVarP(&opts.DeleteAllNs, "all", "", false, "Delete all pipelineruns in a namespace (default: false)")
 	_ = c.MarkZshCompPositionalArgumentCustom(1, "__tkn_get_pipelinerun")
 	return c
@@ -86,7 +88,7 @@ func deletePipelineRuns(s *cli.Stream, p cli.Params, prNames []string, opts *opt
 		d = deleter.New("PipelineRun", func(pipelineRunName string) error {
 			return cs.Tekton.TektonV1alpha1().PipelineRuns(p.Namespace()).Delete(pipelineRunName, &metav1.DeleteOptions{})
 		})
-		prs, err := allPipelineRunNames(p, cs)
+		prs, err := allPipelineRunNames(p, cs, opts.Keep)
 		if err != nil {
 			return err
 		}
@@ -109,7 +111,11 @@ func deletePipelineRuns(s *cli.Stream, p cli.Params, prNames []string, opts *opt
 		d.PrintSuccesses(s)
 	} else if opts.DeleteAllNs {
 		if d.Errors() == nil {
-			fmt.Fprintf(s.Out, "All PipelineRuns deleted in namespace %q\n", p.Namespace())
+			if opts.Keep > 0 {
+				fmt.Fprintf(s.Out, "All but %d PipelineRuns deleted in namespace %q\n", opts.Keep, p.Namespace())
+			} else {
+				fmt.Fprintf(s.Out, "All PipelineRuns deleted in namespace %q\n", p.Namespace())
+			}
 		}
 	}
 	return d.Errors()
@@ -132,13 +138,18 @@ func pipelineRunLister(p cli.Params, cs *cli.Clients) func(string) ([]string, er
 	}
 }
 
-func allPipelineRunNames(p cli.Params, cs *cli.Clients) ([]string, error) {
+func allPipelineRunNames(p cli.Params, cs *cli.Clients, keep int) ([]string, error) {
 	pipelineRuns, err := cs.Tekton.TektonV1alpha1().PipelineRuns(p.Namespace()).List(metav1.ListOptions{})
 	if err != nil {
 		return nil, err
 	}
 	var names []string
-	for _, pr := range pipelineRuns.Items {
+	var counter = 0
+	for _, pr := range prhsort.SortPipelineRunsByStartTime(pipelineRuns.Items) {
+		if keep > 0 && counter != keep {
+			counter++
+			continue
+		}
 		names = append(names, pr.Name)
 	}
 	return names, nil
