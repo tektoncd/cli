@@ -2554,3 +2554,152 @@ func Test_start_pipeline_last_generate_name(t *testing.T) {
 
 	test.AssertOutput(t, "test-generatename-pipeline-run-", pr.ObjectMeta.GenerateName)
 }
+
+func Test_start_pipeline_last_with_prefix_name(t *testing.T) {
+	pipelineName := "test-pipeline"
+
+	ps := []*v1alpha1.Pipeline{
+		tb.Pipeline(pipelineName, "ns",
+			tb.PipelineSpec(
+				tb.PipelineDeclaredResource("git-repo", "git"),
+				tb.PipelineDeclaredResource("build-image", "image"),
+				tb.PipelineParamSpec("pipeline-param-1", v1alpha1.ParamTypeString, tb.ParamSpecDefault("somethingdifferent-1")),
+				tb.PipelineParamSpec("rev-param", v1alpha1.ParamTypeString, tb.ParamSpecDefault("revision")),
+				tb.PipelineTask("unit-test-1", "unit-test-task",
+					tb.PipelineTaskInputResource("workspace", "git-repo"),
+					tb.PipelineTaskOutputResource("image-to-use", "best-image"),
+					tb.PipelineTaskOutputResource("workspace", "git-repo"),
+				),
+			),
+		),
+	}
+
+	prs := []*v1alpha1.PipelineRun{
+		tb.PipelineRun("test-pipeline-run-123", "ns",
+			tb.PipelineRunLabel("tekton.dev/pipeline", pipelineName),
+			tb.PipelineRunSpec(pipelineName,
+				tb.PipelineRunServiceAccountName("test-sa"),
+				tb.PipelineRunResourceBinding("git-repo", tb.PipelineResourceBindingRef("some-repo")),
+				tb.PipelineRunResourceBinding("build-image", tb.PipelineResourceBindingRef("some-image")),
+				tb.PipelineRunParam("pipeline-param-1", "somethingmorefun"),
+				tb.PipelineRunParam("rev-param", "revision1"),
+			),
+		),
+	}
+
+	ns := []*corev1.Namespace{
+		{
+			ObjectMeta: metav1.ObjectMeta{
+				Name: "ns",
+			},
+		},
+	}
+
+	seedData, _ := test.SeedTestData(t, pipelinetest.Data{Namespaces: ns})
+
+	objs := []runtime.Object{ps[0], prs[0]}
+	pClient := newPipelineClient(objs...)
+
+	cs := pipelinetest.Clients{
+		Pipeline: pClient,
+		Kube:     seedData.Kube,
+	}
+
+	p := &test.Params{Tekton: cs.Pipeline, Kube: cs.Kube}
+
+	pipeline := Command(p)
+	got, _ := test.ExecuteCommand(pipeline, "start", pipelineName,
+		"--last",
+		"-r=git-repo=scaffold-git",
+		"-p=rev-param=revision2",
+		"-s=svc1",
+		"--task-serviceaccount=task3=task3svc3",
+		"--task-serviceaccount=task5=task3svc5",
+		"-n", "ns",
+		"--prefix-name", "myprname",
+	)
+
+	expected := "Pipelinerun started: random\n\nIn order to track the pipelinerun progress run:\ntkn pipelinerun logs random -f -n ns\n"
+	test.AssertOutput(t, expected, got)
+
+	pr, err := hpipelinerun.GetPipelineRun(p, v1.GetOptions{}, "random")
+	if err != nil {
+		t.Errorf("Error getting pipelineruns %s", err.Error())
+	}
+
+	test.AssertOutput(t, "myprname-", pr.ObjectMeta.GenerateName)
+}
+
+func Test_start_pipeline_with_prefix_name(t *testing.T) {
+	pipelineName := "test-pipeline"
+
+	ps := []*v1alpha1.Pipeline{
+		tb.Pipeline(pipelineName, "ns",
+			tb.PipelineSpec(
+				tb.PipelineDeclaredResource("git-repo", "git"),
+				tb.PipelineDeclaredResource("build-image", "image"),
+				tb.PipelineParamSpec("pipeline-param-1", v1alpha1.ParamTypeString, tb.ParamSpecDefault("somethingdifferent-1")),
+				tb.PipelineParamSpec("rev-param", v1alpha1.ParamTypeString, tb.ParamSpecDefault("revision")),
+				tb.PipelineTask("unit-test-1", "unit-test-task",
+					tb.PipelineTaskInputResource("workspace", "git-repo"),
+					tb.PipelineTaskOutputResource("image-to-use", "best-image"),
+					tb.PipelineTaskOutputResource("workspace", "git-repo"),
+				),
+			),
+		),
+	}
+
+	prs := []*v1alpha1.PipelineRun{
+		tb.PipelineRun("test-pipeline-run-123", "ns",
+			tb.PipelineRunLabel("tekton.dev/pipeline", pipelineName),
+			tb.PipelineRunSpec(pipelineName,
+				tb.PipelineRunServiceAccountName("test-sa"),
+				tb.PipelineRunResourceBinding("git-repo", tb.PipelineResourceBindingRef("some-repo")),
+				tb.PipelineRunResourceBinding("build-image", tb.PipelineResourceBindingRef("some-image")),
+				tb.PipelineRunParam("pipeline-param-1", "somethingmorefun"),
+				tb.PipelineRunParam("rev-param", "revision1"),
+			),
+		),
+	}
+
+	ns := []*corev1.Namespace{
+		{
+			ObjectMeta: metav1.ObjectMeta{
+				Name: "ns",
+			},
+		},
+	}
+
+	seedData, _ := test.SeedTestData(t, pipelinetest.Data{Namespaces: ns})
+
+	objs := []runtime.Object{ps[0], prs[0]}
+	pClient := newPipelineClient(objs...)
+
+	cs := pipelinetest.Clients{
+		Pipeline: pClient,
+		Kube:     seedData.Kube,
+	}
+
+	p := &test.Params{Tekton: cs.Pipeline, Kube: cs.Kube}
+
+	pipeline := Command(p)
+	got, _ := test.ExecuteCommand(pipeline, "start", pipelineName,
+		"-r=git-repo=scaffold-git",
+		"-p=rev-param=revision2",
+		"-s=svc1",
+		"--task-serviceaccount=task3=task3svc3",
+		"--task-serviceaccount=task5=task3svc5",
+		"-n", "ns",
+		"--prefix-name", "myprname",
+	)
+
+	expected := "Pipelinerun started: random\n\nIn order to track the pipelinerun progress run:\ntkn pipelinerun logs random -f -n ns\n"
+	test.AssertOutput(t, expected, got)
+
+	pr, err := hpipelinerun.GetPipelineRun(p, v1.GetOptions{}, "random")
+	if err != nil {
+		t.Errorf("Error getting pipelineruns %s", err.Error())
+	}
+
+	test.AssertOutput(t, "myprname-", pr.ObjectMeta.GenerateName)
+}

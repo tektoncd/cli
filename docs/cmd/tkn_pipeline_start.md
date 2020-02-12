@@ -42,6 +42,7 @@ two parameters (foo and bar)
   -L, --last                          re-run the pipeline using last pipelinerun values
       --output string                 format of pipelinerun dry-run (yaml or json)
   -p, --param stringArray             pass the param as key=value or key=value1,value2
+      --prefix-name string            specify a prefix for the pipelinerun name (must be lowercase alphanumeric characters)
   -r, --resource strings              pass the resource name and ref as name=ref
   -s, --serviceaccount string         pass the serviceaccount name
       --showlog                       show logs right after starting the pipeline
