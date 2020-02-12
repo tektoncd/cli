@@ -31,9 +31,13 @@ type DeleteOptions struct {
 	DeleteRelated      bool
 	DeleteAllNs        bool
 	DeleteAll          bool
+	Keep               int
 }
 
 func (o *DeleteOptions) CheckOptions(s *cli.Stream, resourceNames []string, ns string) error {
+	if o.Keep > 0 && !(o.DeleteAllNs || o.DeleteAll) {
+		return fmt.Errorf("must provide pipelineruns to delete or --pipeline flag")
+	}
 	// make sure no resource names are provided when using --all flag
 	if len(resourceNames) > 0 && (o.DeleteAllNs || o.DeleteAll) {
 		return fmt.Errorf("--all flag should not have any arguments or flags specified with it")
@@ -51,17 +55,25 @@ func (o *DeleteOptions) CheckOptions(s *cli.Stream, resourceNames []string, ns s
 		return fmt.Errorf("must provide %s name(s) or use --all flag with delete", o.Resource)
 	}
 
+	if o.Keep < 0 {
+		return fmt.Errorf("keep option should not be lower than 0")
+	}
+
 	if o.ForceDelete {
 		return nil
 	}
 
 	formattedNames := names.QuotedList(resourceNames)
 
+	keepStr := ""
+	if o.Keep > 0 {
+		keepStr = fmt.Sprintf(" keeping %d %ss", o.Keep, o.Resource)
+	}
 	switch {
 	case o.DeleteAllNs:
-		fmt.Fprintf(s.Out, "Are you sure you want to delete all %ss in namespace %q (y/n): ", o.Resource, ns)
+		fmt.Fprintf(s.Out, "Are you sure you want to delete all %ss in namespace %q%s (y/n): ", o.Resource, ns, keepStr)
 	case o.DeleteAll:
-		fmt.Fprintf(s.Out, "Are you sure you want to delete all %ss (y/n): ", o.Resource)
+		fmt.Fprintf(s.Out, "Are you sure you want to delete all %ss%s (y/n): ", o.Resource, keepStr)
 	case o.ParentResource != "" && o.ParentResourceName != "":
 		fmt.Fprintf(s.Out, "Are you sure you want to delete all %ss related to %s %q (y/n): ", o.Resource, o.ParentResource, o.ParentResourceName)
 	case o.DeleteRelated:
