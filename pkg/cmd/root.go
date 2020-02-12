@@ -35,8 +35,7 @@ import (
 )
 
 const usageTemplate = `Usage:{{if .Runnable}}
-{{.UseLine}}{{end}}{{if .Ha
-sAvailableSubCommands}}
+{{.UseLine}}{{end}}{{if .HasAvailableSubCommands}}
   {{.CommandPath}} [command]{{end}}{{if gt (len .Aliases) 0}}
 
 Aliases:
