@@ -1,5 +1,6 @@
 ignore: |
   /vendor
+  .git
 
 rules:
   braces: enable

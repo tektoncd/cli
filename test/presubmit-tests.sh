@@ -45,9 +45,9 @@ function test_documentation_has_been_generated() {
 }
 
 function check_lint() {
-    header "Testing if golint has been done"
+    header "Testing if golint/yamllint has been done"
 
-    golangci-lint run ./... --timeout 5m
+    make lint
 
     if [[ "$?" = "1" ]]; then
         results_banner "Lint" 1
