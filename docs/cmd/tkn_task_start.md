@@ -42,6 +42,7 @@ like cat,foo,bar
   -s, --serviceaccount string    pass the serviceaccount name
       --showlog                  show logs right after starting the task
   -t, --timeout int              timeout for taskrun in seconds (default 3600)
+      --use-taskrun string       specify a taskrun name to use its values to re-run the taskrun
 ```
 
 ### Options inherited from parent commands

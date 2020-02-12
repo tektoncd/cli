@@ -364,6 +364,81 @@ func Test_start_task_last(t *testing.T) {
 	test.AssertOutput(t, "", tr.Spec.Workspaces[0].SubPath)
 }
 
+func Test_start_use_taskrun(t *testing.T) {
+	tasks := []*v1alpha1.Task{
+		tb.Task("task", "ns",
+			tb.TaskSpec(
+				tb.TaskInputs(
+					tb.InputsResource("my-repo", v1alpha1.PipelineResourceTypeGit),
+					tb.InputsParamSpec("myarg", v1alpha1.ParamTypeString),
+					tb.InputsParamSpec("print", v1alpha1.ParamTypeArray),
+				),
+				tb.TaskOutputs(
+					tb.OutputsResource("code-image", v1alpha1.PipelineResourceTypeImage),
+				),
+				tb.Step("busybox",
+					tb.StepName("hello"),
+				),
+				tb.Step("busybox",
+					tb.StepName("exit"),
+				),
+				tb.TaskWorkspace("test", "test workspace", "/workspace/test/file", true),
+			),
+		),
+	}
+
+	taskruns := []*v1alpha1.TaskRun{
+		tb.TaskRun("happy", "ns",
+			tb.TaskRunLabel("tekton.dev/task", "task"),
+			tb.TaskRunSpec(
+				tb.TaskRunTaskRef("task"),
+			),
+		),
+		tb.TaskRun("camper", "ns",
+			tb.TaskRunLabel("tekton.dev/task", "task"),
+			tb.TaskRunSpec(
+				tb.TaskRunTaskRef("task"),
+				tb.TaskRunServiceAccountName("camper"),
+			),
+		),
+	}
+
+	ns := []*corev1.Namespace{
+		{
+			ObjectMeta: metav1.ObjectMeta{
+				Name: "ns",
+			},
+		},
+	}
+
+	//Add namespaces to kube client
+	seedData, _ := test.SeedTestData(t, pipelinetest.Data{Namespaces: ns})
+
+	objs := []runtime.Object{tasks[0], taskruns[0], taskruns[1]}
+	pClient := newPipelineClient(objs...)
+
+	cs := pipelinetest.Clients{
+		Pipeline: pClient,
+		Kube:     seedData.Kube,
+	}
+	p := &test.Params{Tekton: cs.Pipeline, Kube: cs.Kube}
+
+	task := Command(p)
+	got, _ := test.ExecuteCommand(task, "start", "task",
+		"--use-taskrun", "camper",
+		"-n=ns")
+
+	expected := "Taskrun started: random\n\nIn order to track the taskrun progress run:\ntkn taskrun logs random -f -n ns\n"
+	test.AssertOutput(t, expected, got)
+
+	tr, err := cs.Pipeline.TektonV1alpha1().TaskRuns("ns").Get("random", v1.GetOptions{})
+	if err != nil {
+		t.Errorf("Error listing taskruns %s", err.Error())
+	}
+
+	test.AssertOutput(t, "camper", tr.Spec.ServiceAccountName)
+}
+
 func Test_start_task_last_generate_name(t *testing.T) {
 	tasks := []*v1alpha1.Task{
 		tb.Task("task", "ns",
