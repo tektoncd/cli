@@ -57,6 +57,7 @@ type startOptions struct {
 	TimeOut            int64
 	DryRun             bool
 	Output             string
+	UseTaskRun         string
 }
 
 // NameArg validates that the first argument is a valid task name
@@ -131,6 +132,10 @@ like cat,foo,bar
 				Err: cmd.OutOrStderr(),
 			}
 
+			if opt.Last && opt.UseTaskRun != "" {
+				return fmt.Errorf("using --last and --use-taskrun are not compatible")
+			}
+
 			return startTask(opt, args)
 		},
 	}
@@ -141,6 +146,9 @@ like cat,foo,bar
 	c.Flags().StringVarP(&opt.ServiceAccountName, "serviceaccount", "s", "", "pass the serviceaccount name")
 	flags.AddShellCompletion(c.Flags().Lookup("serviceaccount"), "__kubectl_get_serviceaccount")
 	c.Flags().BoolVarP(&opt.Last, "last", "L", false, "re-run the task using last taskrun values")
+	c.Flags().StringVarP(&opt.UseTaskRun, "use-taskrun", "", "", "specify a taskrun name to use its values to re-run the taskrun")
+	flags.AddShellCompletion(c.Flags().Lookup("use-taskrun"), "__tkn_get_taskrun")
+
 	c.Flags().StringSliceVarP(&opt.Labels, "labels", "l", []string{}, "pass labels as label=value.")
 	c.Flags().BoolVarP(&opt.ShowLog, "showlog", "", false, "show logs right after starting the task")
 	c.Flags().StringVarP(&opt.Filename, "filename", "f", "", "local or remote file name containing a task definition")
@@ -163,6 +171,37 @@ func parseTask(taskLocation string, p cli.Params) (*v1alpha1.Task, error) {
 		return nil, err
 	}
 	return &task, nil
+}
+
+func useTaskRunFrom(opt startOptions, tr *v1alpha1.TaskRun, cs *cli.Clients, tname string) error {
+	var (
+		trUsed *v1alpha1.TaskRun
+		err    error
+	)
+	if opt.Last {
+		trUsed, err = task.LastRun(cs.Tekton, tname, opt.cliparams.Namespace(), "task")
+		if err != nil {
+			return err
+		}
+	} else if opt.UseTaskRun != "" {
+		trUsed, err = cs.Tekton.TektonV1alpha1().TaskRuns(opt.cliparams.Namespace()).Get(
+			opt.UseTaskRun, metav1.GetOptions{})
+		if err != nil {
+			return err
+		}
+	}
+
+	if len(trUsed.ObjectMeta.GenerateName) > 0 {
+		tr.ObjectMeta.GenerateName = trUsed.ObjectMeta.GenerateName
+	} else {
+		tr.ObjectMeta.GenerateName = trUsed.ObjectMeta.Name + "-"
+	}
+	tr.Spec.Inputs = trUsed.Spec.Inputs
+	tr.Spec.Outputs = trUsed.Spec.Outputs
+	tr.Spec.ServiceAccountName = trUsed.Spec.ServiceAccountName
+	tr.Spec.Workspaces = trUsed.Spec.Workspaces
+
+	return nil
 }
 
 func startTask(opt startOptions, args []string) error {
@@ -202,20 +241,11 @@ func startTask(opt startOptions, args []string) error {
 		return err
 	}
 
-	if opt.Last {
-		trLast, err := task.LastRun(cs.Tekton, tname, opt.cliparams.Namespace(), "task")
+	if opt.Last || opt.UseTaskRun != "" {
+		err := useTaskRunFrom(opt, tr, cs, tname)
 		if err != nil {
 			return err
 		}
-		if len(trLast.ObjectMeta.GenerateName) > 0 {
-			tr.ObjectMeta.GenerateName = trLast.ObjectMeta.GenerateName
-		} else {
-			tr.ObjectMeta.GenerateName = trLast.ObjectMeta.Name + "-"
-		}
-		tr.Spec.Inputs = trLast.Spec.Inputs
-		tr.Spec.Outputs = trLast.Spec.Outputs
-		tr.Spec.ServiceAccountName = trLast.Spec.ServiceAccountName
-		tr.Spec.Workspaces = trLast.Spec.Workspaces
 	}
 
 	inputRes, err := mergeRes(tr.Spec.Inputs.Resources, opt.InputResources)
