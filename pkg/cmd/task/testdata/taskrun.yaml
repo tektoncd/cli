@@ -28,7 +28,7 @@ spec:
       - name: pathToDockerFile
         value: Dockerfile
       - name: pathToContext
-        value: /workspace/docker-source/examples/microservices/leeroy-web #configure: may change according to your source
+        value: /workspace/docker-source/examples/microservices/leeroy-web  # configure: may change according to your source
   outputs:
     resources:
       - name: builtImage
