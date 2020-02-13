@@ -733,7 +733,7 @@ func TestLog_run_failed_with_and_without_follow(t *testing.T) {
 	test.AssertOutput(t, failMessage+"\n", output)
 }
 
-func TestLog_pipeline_still_running(t *testing.T) {
+func TestLog_pipelinerun_still_running(t *testing.T) {
 	var (
 		pipelineName = "inprogress-pipeline"
 		prName       = "inprogress-run"
@@ -807,7 +807,7 @@ func TestLog_pipeline_still_running(t *testing.T) {
 	test.AssertOutput(t, "Pipeline still running ..."+"\n", output)
 }
 
-func TestLog_pipeline_status_done(t *testing.T) {
+func TestLog_pipelinerun_status_done(t *testing.T) {
 	var (
 		pipelineName = "done-pipeline"
 		prName       = "done-run"
@@ -908,7 +908,7 @@ func fetchLogs(lo *options.LogOptions) (string, error) {
 	return out.String(), err
 }
 
-func TestLog_pipeline_last(t *testing.T) {
+func TestLog_pipelinerun_last(t *testing.T) {
 	var (
 		pipelineName = "pipeline1"
 		prName       = "pr1"
@@ -976,7 +976,7 @@ func TestLog_pipeline_last(t *testing.T) {
 	test.AssertOutput(t, prName2, lopt.PipelineRunName)
 }
 
-func TestLog_pipeline_only_one(t *testing.T) {
+func TestLog_pipelinerun_only_one(t *testing.T) {
 	var (
 		pipelineName = "pipeline1"
 		prName       = "pr1"
