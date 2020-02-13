@@ -58,6 +58,7 @@ type startOptions struct {
 	DryRun             bool
 	Output             string
 	UseTaskRun         string
+	PrefixName         string
 }
 
 // NameArg validates that the first argument is a valid task name
@@ -155,6 +156,7 @@ like cat,foo,bar
 	c.Flags().Int64VarP(&opt.TimeOut, "timeout", "t", 3600, "timeout for taskrun in seconds")
 	c.Flags().BoolVarP(&opt.DryRun, "dry-run", "", false, "preview taskrun without running it")
 	c.Flags().StringVarP(&opt.Output, "output", "", "", "format of taskrun dry-run (yaml or json)")
+	c.Flags().StringVarP(&opt.PrefixName, "prefix-name", "", "", "specify a prefix for the taskrun name (must be lowercase alphanumeric characters)")
 
 	_ = c.MarkZshCompPositionalArgumentCustom(1, "__tkn_get_task")
 
@@ -191,11 +193,13 @@ func useTaskRunFrom(opt startOptions, tr *v1alpha1.TaskRun, cs *cli.Clients, tna
 		}
 	}
 
-	if len(trUsed.ObjectMeta.GenerateName) > 0 {
+	// if --prefix-name is specified by user, allow name to be used for taskrun
+	if len(trUsed.ObjectMeta.GenerateName) > 0 && opt.PrefixName == "" {
 		tr.ObjectMeta.GenerateName = trUsed.ObjectMeta.GenerateName
-	} else {
+	} else if opt.PrefixName == "" {
 		tr.ObjectMeta.GenerateName = trUsed.ObjectMeta.Name + "-"
 	}
+
 	tr.Spec.Inputs = trUsed.Spec.Inputs
 	tr.Spec.Outputs = trUsed.Spec.Outputs
 	tr.Spec.ServiceAccountName = trUsed.Spec.ServiceAccountName
@@ -234,7 +238,12 @@ func startTask(opt startOptions, args []string) error {
 		}
 	}
 	tr.Spec.Timeout = &metav1.Duration{Duration: timeoutSeconds}
-	tr.ObjectMeta.GenerateName = tname + "-run-"
+
+	if opt.PrefixName == "" {
+		tr.ObjectMeta.GenerateName = tname + "-run-"
+	} else {
+		tr.ObjectMeta.GenerateName = opt.PrefixName + "-"
+	}
 
 	cs, err := opt.cliparams.Clients()
 	if err != nil {
