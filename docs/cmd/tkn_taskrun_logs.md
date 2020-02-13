@@ -32,6 +32,7 @@ Show the logs of TaskRun named 'microservice-1' for step 'build' only from names
 ```
   -a, --all            show all logs including init steps injected by tekton
   -f, --follow         stream live logs
+  -F, --fzf            use fzf to select a taskrun
   -h, --help           help for logs
   -L, --last           show logs for last taskrun
       --limit int      lists number of taskruns (default 5)

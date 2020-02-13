@@ -15,14 +15,19 @@
 package options
 
 import (
+	"bytes"
 	"fmt"
 	"os"
 	"strings"
 
 	"github.com/AlecAivazis/survey/v2"
 	"github.com/AlecAivazis/survey/v2/terminal"
+	"github.com/fatih/color"
+	"github.com/ktr0731/go-fuzzyfinder"
 	"github.com/tektoncd/cli/pkg/cli"
+	prdesc "github.com/tektoncd/cli/pkg/helper/pipelinerun/description"
 	"github.com/tektoncd/cli/pkg/helper/pods/stream"
+	trdesc "github.com/tektoncd/cli/pkg/helper/taskrun/description"
 )
 
 const (
@@ -47,6 +52,7 @@ type LogOptions struct {
 	Last            bool
 	Limit           int
 	AskOpts         survey.AskOpt
+	Fzf             bool
 }
 
 func NewLogOptions(p cli.Params) *LogOptions {
@@ -85,6 +91,61 @@ func (opts *LogOptions) Ask(resource string, options []string) error {
 		return err
 	}
 
+	switch resource {
+	case ResourceNamePipeline:
+		opts.PipelineName = ans
+	case ResourceNamePipelineRun:
+		opts.PipelineRunName = strings.Fields(ans)[0]
+	case ResourceNameTask:
+		opts.TaskName = ans
+	case ResourceNameTaskRun:
+		opts.TaskrunName = strings.Fields(ans)[0]
+	}
+
+	return nil
+}
+
+func (opts *LogOptions) FuzzyAsk(resource string, options []string) error {
+	chosencolouring := color.NoColor
+	defer func() {
+		color.NoColor = chosencolouring
+	}()
+	// Remove colors as fuzzyfinder doesn't support it!
+	color.NoColor = true
+
+	idx, err := fuzzyfinder.FindMulti(options,
+		func(i int) string {
+			return strings.Fields(options[i])[0]
+		},
+		fuzzyfinder.WithPreviewWindow(func(i, w, h int) string {
+			if i == -1 {
+				return ""
+			}
+
+			buf := new(bytes.Buffer)
+			s := cli.Stream{
+				Out: buf,
+			}
+
+			bname := strings.Fields(options[i])[0]
+			switch resource {
+			case ResourceNameTaskRun:
+				err := trdesc.PrintTaskRunDescription(&s, bname, opts.Params)
+				if err != nil {
+					return fmt.Sprintf("Cannot get taskrun description for %s: %s", bname, err.Error())
+				}
+			case ResourceNamePipelineRun:
+				err := prdesc.PrintPipelineRunDescription(&s, bname, opts.Params)
+				if err != nil {
+					return fmt.Sprintf("Cannot get pipelinerun description for %s: %s", bname, err.Error())
+				}
+			}
+			return buf.String()
+		}))
+	if err != nil {
+		return err
+	}
+	ans := options[idx[0]]
 	switch resource {
 	case ResourceNamePipeline:
 		opts.PipelineName = ans

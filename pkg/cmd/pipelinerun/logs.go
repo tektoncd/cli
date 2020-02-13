@@ -16,6 +16,7 @@ package pipelinerun
 
 import (
 	"fmt"
+	"os"
 	"strings"
 
 	"github.com/spf13/cobra"
@@ -55,6 +56,12 @@ Show the logs of PipelineRun named 'microservice-1' for all tasks and steps (inc
 				opts.PipelineRunName = args[0]
 			}
 
+			if !opts.Fzf {
+				if _, ok := os.LookupEnv("TKN_USE_FZF"); ok {
+					opts.Fzf = true
+				}
+			}
+
 			opts.Stream = &cli.Stream{
 				Out: cmd.OutOrStdout(),
 				Err: cmd.OutOrStderr(),
@@ -70,6 +77,7 @@ Show the logs of PipelineRun named 'microservice-1' for all tasks and steps (inc
 
 	c.Flags().BoolVarP(&opts.AllSteps, "all", "a", false, "show all logs including init steps injected by tekton")
 	c.Flags().BoolVarP(&opts.Last, "last", "L", false, "show logs for last pipelinerun")
+	c.Flags().BoolVarP(&opts.Fzf, "fzf", "F", false, "use fzf to select a pipelinerun")
 	c.Flags().BoolVarP(&opts.Follow, "follow", "f", false, "stream live logs")
 	c.Flags().StringSliceVarP(&opts.Tasks, "task", "t", []string{}, "show logs for mentioned tasks only")
 	c.Flags().IntVarP(&opts.Limit, "limit", "", 5, "lists number of pipelineruns")
@@ -131,5 +139,8 @@ func askRunName(opts *options.LogOptions) error {
 		return nil
 	}
 
+	if opts.Fzf {
+		return opts.FuzzyAsk(options.ResourceNamePipelineRun, prs)
+	}
 	return opts.Ask(options.ResourceNamePipelineRun, prs)
 }
