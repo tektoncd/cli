@@ -77,6 +77,19 @@ github.com/dgrijalva/jwt-go
 github.com/evanphx/json-patch
 # github.com/fatih/color v1.7.0
 github.com/fatih/color
+# github.com/gdamore/encoding v1.0.0
+github.com/gdamore/encoding
+# github.com/gdamore/tcell v1.2.0
+github.com/gdamore/tcell
+github.com/gdamore/tcell/termbox
+github.com/gdamore/tcell/terminfo
+github.com/gdamore/tcell/terminfo/a/ansi
+github.com/gdamore/tcell/terminfo/base
+github.com/gdamore/tcell/terminfo/dynamic
+github.com/gdamore/tcell/terminfo/v/vt100
+github.com/gdamore/tcell/terminfo/v/vt102
+github.com/gdamore/tcell/terminfo/v/vt220
+github.com/gdamore/tcell/terminfo/x/xterm
 # github.com/ghodss/yaml v1.0.0
 github.com/ghodss/yaml
 # github.com/gogo/protobuf v1.3.1
@@ -147,12 +160,20 @@ github.com/json-iterator/go
 github.com/kballard/go-shellquote
 # github.com/kr/pty v1.1.8 => github.com/creack/pty v1.1.9
 github.com/kr/pty
+# github.com/ktr0731/go-fuzzyfinder v0.2.0
+github.com/ktr0731/go-fuzzyfinder
+github.com/ktr0731/go-fuzzyfinder/matching
+github.com/ktr0731/go-fuzzyfinder/scoring
+# github.com/lucasb-eyer/go-colorful v1.0.2
+github.com/lucasb-eyer/go-colorful
 # github.com/mattbaird/jsonpatch v0.0.0-20171005235357-81af80346b1a
 github.com/mattbaird/jsonpatch
 # github.com/mattn/go-colorable v0.1.2
 github.com/mattn/go-colorable
 # github.com/mattn/go-isatty v0.0.9
 github.com/mattn/go-isatty
+# github.com/mattn/go-runewidth v0.0.4
+github.com/mattn/go-runewidth
 # github.com/matttproud/golang_protobuf_extensions v1.0.1
 github.com/matttproud/golang_protobuf_extensions/pbutil
 # github.com/mgutz/ansi v0.0.0-20170206155736-9520e82c474b
