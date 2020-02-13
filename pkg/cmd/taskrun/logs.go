@@ -75,6 +75,7 @@ Show the logs of TaskRun named 'microservice-1' for step 'build' only from names
 		},
 	}
 
+	c.Flags().BoolVarP(&opts.Last, "last", "L", false, "show logs for last taskrun")
 	c.Flags().BoolVarP(&opts.AllSteps, "all", "a", false, "show all logs including init steps injected by tekton")
 	c.Flags().BoolVarP(&opts.Follow, "follow", "f", false, "stream live logs")
 	c.Flags().IntVarP(&opts.Limit, "limit", "", 5, "lists number of taskruns")
@@ -133,7 +134,7 @@ func askRunName(opts *options.LogOptions) error {
 		return fmt.Errorf("No taskruns found")
 	}
 
-	if len(trs) == 1 {
+	if len(trs) == 1 || opts.Last {
 		opts.TaskrunName = strings.Fields(trs[0])[0]
 		return nil
 	}

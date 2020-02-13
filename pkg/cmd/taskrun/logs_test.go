@@ -580,6 +580,91 @@ func TestLog_taskrun_follow_mode(t *testing.T) {
 	test.AssertOutput(t, expected, output)
 }
 
+func TestLog_taskrun_last(t *testing.T) {
+	var (
+		ns           = "namespaces"
+		trPod        = "pod"
+		taskName     = "task"
+		trName1      = "taskrun1"
+		trName2      = "taskrun2"
+		prstart      = clockwork.NewFakeClock()
+		tr1StartTime = prstart.Now().Add(30 * time.Second)
+		tr2StartTime = prstart.Now().Add(20 * time.Second)
+		trStepName   = "writefile-step"
+		nopStep      = "nop"
+	)
+
+	taskruns := []*v1alpha1.TaskRun{
+		tb.TaskRun(trName1, ns,
+			tb.TaskRunStatus(
+				tb.PodName(trPod),
+				tb.TaskRunStartTime(tr1StartTime),
+				tb.StatusCondition(apis.Condition{
+					Type:   apis.ConditionSucceeded,
+					Status: corev1.ConditionTrue,
+				}),
+				tb.StepState(
+					cb.StepName(trStepName),
+					tb.StateTerminated(0),
+				),
+				tb.StepState(
+					cb.StepName(nopStep),
+					tb.StateTerminated(0),
+				),
+			),
+			tb.TaskRunSpec(
+				tb.TaskRunTaskRef(taskName),
+			),
+		),
+		tb.TaskRun(trName2, ns,
+			tb.TaskRunStatus(
+				tb.PodName(trPod),
+				tb.TaskRunStartTime(tr2StartTime),
+				tb.StatusCondition(apis.Condition{
+					Type:   apis.ConditionSucceeded,
+					Status: corev1.ConditionTrue,
+				}),
+				tb.StepState(
+					cb.StepName(trStepName),
+					tb.StateTerminated(0),
+				),
+				tb.StepState(
+					cb.StepName(nopStep),
+					tb.StateTerminated(0),
+				),
+			),
+			tb.TaskRunSpec(
+				tb.TaskRunTaskRef(taskName),
+			),
+		),
+	}
+
+	namespaces := []*corev1.Namespace{
+		{
+			ObjectMeta: metav1.ObjectMeta{
+				Name: ns,
+			},
+		},
+	}
+
+	cs, _ := test.SeedTestData(t, pipelinetest.Data{TaskRuns: taskruns, Namespaces: namespaces})
+	p := test.Params{
+		Kube:   cs.Kube,
+		Tekton: cs.Pipeline,
+	}
+	p.SetNamespace(ns)
+	lopt := options.LogOptions{
+		Params: &p,
+		Last:   true,
+		Limit:  len(taskruns),
+	}
+	err := askRunName(&lopt)
+	if err != nil {
+		t.Errorf("Unexpected error: %v", err)
+	}
+	test.AssertOutput(t, trName1, lopt.TaskrunName)
+}
+
 func TestLog_taskrun_follow_mode_no_pod_name(t *testing.T) {
 	var (
 		prstart     = clockwork.NewFakeClock()
