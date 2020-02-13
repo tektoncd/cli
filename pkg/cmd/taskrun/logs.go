@@ -16,6 +16,7 @@ package taskrun
 
 import (
 	"fmt"
+	"os"
 	"strings"
 
 	"github.com/spf13/cobra"
@@ -58,6 +59,12 @@ Show the logs of TaskRun named 'microservice-1' for step 'build' only from names
 				opts.TaskrunName = args[0]
 			}
 
+			if !opts.Fzf {
+				if _, ok := os.LookupEnv("TKN_USE_FZF"); ok {
+					opts.Fzf = true
+				}
+			}
+
 			opts.Stream = &cli.Stream{
 				Out: cmd.OutOrStdout(),
 				Err: cmd.OutOrStderr(),
@@ -79,6 +86,7 @@ Show the logs of TaskRun named 'microservice-1' for step 'build' only from names
 	c.Flags().BoolVarP(&opts.AllSteps, "all", "a", false, "show all logs including init steps injected by tekton")
 	c.Flags().BoolVarP(&opts.Follow, "follow", "f", false, "stream live logs")
 	c.Flags().IntVarP(&opts.Limit, "limit", "", 5, "lists number of taskruns")
+	c.Flags().BoolVarP(&opts.Fzf, "fzf", "F", false, "use fzf to select a taskrun")
 	c.Flags().StringSliceVarP(&opts.Steps, "step", "s", []string{}, "show logs for mentioned steps only")
 
 	_ = c.MarkZshCompPositionalArgumentCustom(1, "__tkn_get_taskrun")
@@ -139,5 +147,8 @@ func askRunName(opts *options.LogOptions) error {
 		return nil
 	}
 
+	if opts.Fzf {
+		return opts.FuzzyAsk(options.ResourceNameTaskRun, trs)
+	}
 	return opts.Ask(options.ResourceNameTaskRun, trs)
 }
