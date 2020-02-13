@@ -39,6 +39,7 @@ like cat,foo,bar
       --output string            format of taskrun dry-run (yaml or json)
   -o, --outputresource strings   pass the output resource name and ref as name=ref
   -p, --param stringArray        pass the param as key=value or key=value1,value2
+      --prefix-name string       specify a prefix for the taskrun name (must be lowercase alphanumeric characters)
   -s, --serviceaccount string    pass the serviceaccount name
       --showlog                  show logs right after starting the task
   -t, --timeout int              timeout for taskrun in seconds (default 3600)

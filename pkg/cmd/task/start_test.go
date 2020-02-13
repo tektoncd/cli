@@ -515,6 +515,155 @@ func Test_start_task_last_generate_name(t *testing.T) {
 	test.AssertOutput(t, "test-generatename-task-run-", tr.ObjectMeta.GenerateName)
 }
 
+func Test_start_task_last_with_prefix_name(t *testing.T) {
+	tasks := []*v1alpha1.Task{
+		tb.Task("task", "ns",
+			tb.TaskSpec(
+				tb.TaskInputs(
+					tb.InputsResource("my-repo", v1alpha1.PipelineResourceTypeGit),
+					tb.InputsParamSpec("myarg", v1alpha1.ParamTypeString),
+					tb.InputsParamSpec("print", v1alpha1.ParamTypeArray),
+				),
+				tb.TaskOutputs(
+					tb.OutputsResource("code-image", v1alpha1.PipelineResourceTypeImage),
+				),
+				tb.Step("busybox",
+					tb.StepName("hello"),
+				),
+				tb.Step("busybox",
+					tb.StepName("exit"),
+				),
+				tb.TaskWorkspace("test", "test workspace", "/workspace/test/file", true),
+			),
+		),
+	}
+
+	taskruns := []*v1alpha1.TaskRun{
+		tb.TaskRun("taskrun-123", "ns",
+			tb.TaskRunLabel("tekton.dev/task", "task"),
+			tb.TaskRunSpec(
+				tb.TaskRunTaskRef("task"),
+				tb.TaskRunServiceAccountName("svc"),
+				tb.TaskRunInputs(tb.TaskRunInputsParam("myarg", "value")),
+				tb.TaskRunInputs(tb.TaskRunInputsParam("print", "booms", "booms", "booms")),
+				tb.TaskRunInputs(tb.TaskRunInputsResource("my-repo", tb.TaskResourceBindingRef("git"))),
+				tb.TaskRunOutputs(tb.TaskRunOutputsResource("code-image", tb.TaskResourceBindingRef("image"))),
+				tb.TaskRunWorkspaceEmptyDir("test", ""),
+			),
+		),
+	}
+
+	ns := []*corev1.Namespace{
+		{
+			ObjectMeta: metav1.ObjectMeta{
+				Name: "ns",
+			},
+		},
+	}
+
+	seedData, _ := test.SeedTestData(t, pipelinetest.Data{Namespaces: ns})
+
+	objs := []runtime.Object{tasks[0], taskruns[0]}
+	pClient := newPipelineClient(objs...)
+
+	cs := pipelinetest.Clients{
+		Pipeline: pClient,
+		Kube:     seedData.Kube,
+	}
+	p := &test.Params{Tekton: cs.Pipeline, Kube: cs.Kube}
+
+	task := Command(p)
+	got, _ := test.ExecuteCommand(task, "start", "task",
+		"--last",
+		"-n=ns",
+		"--prefix-name=mytrname",
+	)
+
+	expected := "Taskrun started: random\n\nIn order to track the taskrun progress run:\ntkn taskrun logs random -f -n ns\n"
+	test.AssertOutput(t, expected, got)
+
+	tr, err := cs.Pipeline.TektonV1alpha1().TaskRuns("ns").Get("random", v1.GetOptions{})
+	if err != nil {
+		t.Errorf("Error listing taskruns %s", err.Error())
+	}
+
+	test.AssertOutput(t, "mytrname-", tr.ObjectMeta.GenerateName)
+}
+
+func Test_start_task_with_prefix_name(t *testing.T) {
+	tasks := []*v1alpha1.Task{
+		tb.Task("task", "ns",
+			tb.TaskSpec(
+				tb.TaskInputs(
+					tb.InputsResource("my-repo", v1alpha1.PipelineResourceTypeGit),
+					tb.InputsParamSpec("myarg", v1alpha1.ParamTypeString),
+					tb.InputsParamSpec("print", v1alpha1.ParamTypeArray),
+				),
+				tb.TaskOutputs(
+					tb.OutputsResource("code-image", v1alpha1.PipelineResourceTypeImage),
+				),
+				tb.Step("busybox",
+					tb.StepName("hello"),
+				),
+				tb.Step("busybox",
+					tb.StepName("exit"),
+				),
+				tb.TaskWorkspace("test", "test workspace", "/workspace/test/file", true),
+			),
+		),
+	}
+
+	taskruns := []*v1alpha1.TaskRun{
+		tb.TaskRun("taskrun-123", "ns",
+			tb.TaskRunLabel("tekton.dev/task", "task"),
+			tb.TaskRunSpec(
+				tb.TaskRunTaskRef("task"),
+				tb.TaskRunServiceAccountName("svc"),
+				tb.TaskRunInputs(tb.TaskRunInputsParam("myarg", "value")),
+				tb.TaskRunInputs(tb.TaskRunInputsParam("print", "booms", "booms", "booms")),
+				tb.TaskRunInputs(tb.TaskRunInputsResource("my-repo", tb.TaskResourceBindingRef("git"))),
+				tb.TaskRunOutputs(tb.TaskRunOutputsResource("code-image", tb.TaskResourceBindingRef("image"))),
+				tb.TaskRunWorkspaceEmptyDir("test", ""),
+			),
+		),
+	}
+
+	ns := []*corev1.Namespace{
+		{
+			ObjectMeta: metav1.ObjectMeta{
+				Name: "ns",
+			},
+		},
+	}
+
+	seedData, _ := test.SeedTestData(t, pipelinetest.Data{Namespaces: ns})
+
+	objs := []runtime.Object{tasks[0], taskruns[0]}
+	pClient := newPipelineClient(objs...)
+
+	cs := pipelinetest.Clients{
+		Pipeline: pClient,
+		Kube:     seedData.Kube,
+	}
+	p := &test.Params{Tekton: cs.Pipeline, Kube: cs.Kube}
+
+	task := Command(p)
+	got, _ := test.ExecuteCommand(task, "start", "task",
+		"-n=ns",
+		"--prefix-name=mytrname",
+	)
+
+	expected := "Taskrun started: random\n\nIn order to track the taskrun progress run:\ntkn taskrun logs random -f -n ns\n"
+	test.AssertOutput(t, expected, got)
+
+	tr, err := cs.Pipeline.TektonV1alpha1().TaskRuns("ns").Get("random", v1.GetOptions{})
+	if err != nil {
+		t.Errorf("Error listing taskruns %s", err.Error())
+	}
+
+	test.AssertOutput(t, "mytrname-", tr.ObjectMeta.GenerateName)
+}
+
 func Test_start_task_last_with_inputs(t *testing.T) {
 	tasks := []*v1alpha1.Task{
 		tb.Task("task", "ns",
