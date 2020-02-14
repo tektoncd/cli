@@ -74,14 +74,11 @@ test-e2e: bin/tkn ## run e2e tests
 docs: bin/docs ## update docs
 	@echo "Update generated docs"
 	@./bin/docs --target=./docs/cmd
-
-.PHONY: man
-man: bin/docs ## update manpages
-	@echo "Update generated manpages"
 	@./bin/docs --target=./docs/man/man1 --kind=man
+	@rm -f ./bin/docs
 
 .PHONY: generated
-generated: test-unit-update-golden man docs fmt ## generate all files that needs to be generated
+generated: test-unit-update-golden docs fmt ## generate all files that needs to be generated
 
 .PHONY: clean
 clean: ## clean build artifacts
