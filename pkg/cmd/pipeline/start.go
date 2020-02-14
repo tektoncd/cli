@@ -610,7 +610,7 @@ func pipelineRunDryRun(output string, s *cli.Stream, pr *v1alpha1.PipelineRun) e
 	format := strings.ToLower(output)
 
 	if format != "" && format != "json" && format != "yaml" {
-		return fmt.Errorf("output format specifed is %s but must be yaml or json", output)
+		return fmt.Errorf("output format specified is %s but must be yaml or json", output)
 	}
 
 	if format == "" || format == "yaml" {

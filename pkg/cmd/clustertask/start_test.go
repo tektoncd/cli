@@ -337,7 +337,7 @@ func Test_ClusterTask_Start(t *testing.T) {
 			input:       seeds[0],
 			inputStream: nil,
 			wantError:   true,
-			want:        "output format specifed is invalid but must be yaml or json",
+			want:        "output format specified is invalid but must be yaml or json",
 		},
 		{
 			name: "Dry run with no output",
