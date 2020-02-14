@@ -27,7 +27,8 @@
 				"value": "value1"
 			}
 		],
-		"serviceAccountName": "svc1"
+		"serviceAccountName": "svc1",
+		"timeout": "1h0m0s"
 	},
 	"status": {}
 }
