@@ -16,6 +16,7 @@ package task
 
 import (
 	"fmt"
+	"log"
 
 	"github.com/spf13/cobra"
 	"github.com/tektoncd/cli/pkg/cli"
@@ -53,6 +54,10 @@ or
 				In:  cmd.InOrStdin(),
 				Out: cmd.OutOrStdout(),
 				Err: cmd.OutOrStderr(),
+			}
+
+			if opts.DeleteRelated {
+				log.Println("WARNING: The behavior of --all will change in v0.9.0, and the current --all flag will be given a new name.")
 			}
 
 			if err := validate.NamespaceExists(p); err != nil {
