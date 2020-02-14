@@ -31,7 +31,6 @@ function test_documentation_has_been_generated() {
     header "Testing if documentation has been generated"
 
     make docs
-    make man
 
     if [[ -n $(git status --porcelain docs/) ]];then
         echo "-- FATAL: The documentation or manpages didn't seem to be generated :"
