@@ -30,6 +30,7 @@ import (
 
 const (
 	msgTRNotFoundErr = "Unable to get Taskrun"
+	defaultLimit     = 5
 )
 
 func logCommand(p cli.Params) *cobra.Command {
@@ -85,7 +86,7 @@ Show the logs of TaskRun named 'microservice-1' for step 'build' only from names
 	c.Flags().BoolVarP(&opts.Last, "last", "L", false, "show logs for last taskrun")
 	c.Flags().BoolVarP(&opts.AllSteps, "all", "a", false, "show all logs including init steps injected by tekton")
 	c.Flags().BoolVarP(&opts.Follow, "follow", "f", false, "stream live logs")
-	c.Flags().IntVarP(&opts.Limit, "limit", "", 5, "lists number of taskruns")
+	c.Flags().IntVarP(&opts.Limit, "limit", "", defaultLimit, "lists number of taskruns")
 	c.Flags().BoolVarP(&opts.Fzf, "fzf", "F", false, "use fzf to select a taskrun")
 	c.Flags().StringSliceVarP(&opts.Steps, "step", "s", []string{}, "show logs for mentioned steps only")
 
@@ -132,6 +133,12 @@ func Run(opts *options.LogOptions) error {
 
 func askRunName(opts *options.LogOptions) error {
 	lOpts := metav1.ListOptions{}
+
+	// We are able to show much more than the default 5 with fzf, so let
+	// increase that limit limited to 100
+	if opts.Fzf && opts.Limit == defaultLimit {
+		opts.Limit = 100
+	}
 
 	trs, err := trlist.GetAllTaskRuns(opts.Params, lOpts, opts.Limit)
 	if err != nil {

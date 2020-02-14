@@ -28,6 +28,10 @@ import (
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 )
 
+const (
+	defaultLimit = 5
+)
+
 func logCommand(p cli.Params) *cobra.Command {
 	opts := &options.LogOptions{Params: p}
 	eg := `Show the logs of PipelineRun named 'foo' from namespace 'bar':
@@ -80,7 +84,7 @@ Show the logs of PipelineRun named 'microservice-1' for all tasks and steps (inc
 	c.Flags().BoolVarP(&opts.Fzf, "fzf", "F", false, "use fzf to select a pipelinerun")
 	c.Flags().BoolVarP(&opts.Follow, "follow", "f", false, "stream live logs")
 	c.Flags().StringSliceVarP(&opts.Tasks, "task", "t", []string{}, "show logs for mentioned tasks only")
-	c.Flags().IntVarP(&opts.Limit, "limit", "", 5, "lists number of pipelineruns")
+	c.Flags().IntVarP(&opts.Limit, "limit", "", defaultLimit, "lists number of pipelineruns")
 
 	_ = c.MarkZshCompPositionalArgumentCustom(1, "__tkn_get_pipelinerun")
 	return c
@@ -124,6 +128,12 @@ func Run(opts *options.LogOptions) error {
 
 func askRunName(opts *options.LogOptions) error {
 	lOpts := metav1.ListOptions{}
+
+	// We are able to show much more than the default 5 with fzf, so let
+	// increase that limit limited to 100
+	if opts.Fzf && opts.Limit == defaultLimit {
+		opts.Limit = 100
+	}
 
 	prs, err := prhelper.GetAllPipelineRuns(opts.Params, lOpts, opts.Limit)
 	if err != nil {
