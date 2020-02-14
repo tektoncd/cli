@@ -47,6 +47,7 @@ two parameters (foo and bar)
   -s, --serviceaccount string         pass the serviceaccount name
       --showlog                       show logs right after starting the pipeline
       --task-serviceaccount strings   pass the service account corresponding to the task
+      --timeout string                timeout for pipelinerun (default "1h")
       --use-pipelinerun string        use this pipelinerun values to re-run the pipeline. 
 ```
 

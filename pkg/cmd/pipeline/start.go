@@ -20,6 +20,7 @@ import (
 	"fmt"
 	"os"
 	"strings"
+	"time"
 
 	"github.com/AlecAivazis/survey/v2"
 	"github.com/AlecAivazis/survey/v2/terminal"
@@ -67,6 +68,7 @@ type startOptions struct {
 	DryRun             bool
 	Output             string
 	PrefixName         string
+	TimeOut            string
 }
 
 type resourceOptionsFilter struct {
@@ -161,6 +163,7 @@ like cat,foo,bar
 	c.Flags().BoolVarP(&opt.DryRun, "dry-run", "", false, "preview pipelinerun without running it")
 	c.Flags().StringVarP(&opt.Output, "output", "", "", "format of pipelinerun dry-run (yaml or json)")
 	c.Flags().StringVarP(&opt.PrefixName, "prefix-name", "", "", "specify a prefix for the pipelinerun name (must be lowercase alphanumeric characters)")
+	c.Flags().StringVarP(&opt.TimeOut, "timeout", "", "1h", "timeout for pipelinerun")
 
 	_ = c.MarkZshCompPositionalArgumentCustom(1, "__tkn_get_pipeline")
 
@@ -413,6 +416,12 @@ func (opt *startOptions) startPipeline(pName string) error {
 		},
 	}
 
+	timeoutDuration, err := time.ParseDuration(opt.TimeOut)
+	if err != nil {
+		return err
+	}
+	pr.Spec.Timeout = &metav1.Duration{Duration: timeoutDuration}
+
 	cs, err := opt.cliparams.Clients()
 	if err != nil {
 		return err
@@ -485,7 +494,7 @@ func (opt *startOptions) startPipeline(pName string) error {
 		return nil
 	}
 
-	fmt.Fprintf(opt.stream.Out, "Showing logs...\n")
+	fmt.Fprintf(opt.stream.Out, "Waiting for logs to be available...\n")
 	runLogOpts := &options.LogOptions{
 		PipelineName:    pName,
 		PipelineRunName: prCreated.Name,
