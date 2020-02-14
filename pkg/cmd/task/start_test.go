@@ -1077,7 +1077,7 @@ func TestTaskStart_ExecuteCommand(t *testing.T) {
 			namespace: "",
 			input:     cs,
 			wantError: true,
-			want:      "output format specifed is invalid but must be yaml or json",
+			want:      "output format specified is invalid but must be yaml or json",
 		},
 		{
 			name: "Dry Run with only --dry-run specified",

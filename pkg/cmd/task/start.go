@@ -317,7 +317,7 @@ func taskRunDryRun(output string, s *cli.Stream, tr *v1alpha1.TaskRun) error {
 	format := strings.ToLower(output)
 
 	if format != "" && format != "json" && format != "yaml" {
-		return fmt.Errorf("output format specifed is %s but must be yaml or json", output)
+		return fmt.Errorf("output format specified is %s but must be yaml or json", output)
 	}
 
 	if format == "" || format == "yaml" {
