@@ -43,6 +43,24 @@ function test_documentation_has_been_generated() {
     results_banner "Documentation" 0
 }
 
+
+function test_golden_has_been_generated() {
+    header "Testing if golden files has been generated"
+
+    make test-unit-update-golden
+
+    if [[ -n $(git status --porcelain pkg/) ]];then
+        echo "-- FATAL: The golden files didn't seem to be generated, rerun 'make generated' :"
+        git status docs
+        git diff docs
+        results_banner "Golden" 1
+        exit 1
+    fi
+
+    results_banner "Golden" 0
+}
+
+
 function check_lint() {
     header "Testing if golint/yamllint has been done"
 
@@ -57,6 +75,7 @@ function check_lint() {
 }
 
 function post_build_tests() {
+    test_golden_has_been_generated
     test_documentation_has_been_generated
     check_lint
 }
