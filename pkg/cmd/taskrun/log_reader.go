@@ -21,6 +21,7 @@ import (
 
 	"github.com/pkg/errors"
 	"github.com/tektoncd/cli/pkg/cli"
+	"github.com/tektoncd/cli/pkg/helper/log"
 	"github.com/tektoncd/cli/pkg/helper/pods"
 	"github.com/tektoncd/cli/pkg/helper/pods/stream"
 	"github.com/tektoncd/pipeline/pkg/apis/pipeline/v1alpha1"
@@ -40,13 +41,6 @@ func (s *step) hasStarted() bool {
 	return s.state.Waiting == nil
 }
 
-//Log data to write on log channel
-type Log struct {
-	Task string
-	Step string
-	Log  string
-}
-
 type LogReader struct {
 	Task     string
 	Run      string
@@ -60,7 +54,7 @@ type LogReader struct {
 	Steps    []string
 }
 
-func (lr *LogReader) Read() (<-chan Log, <-chan error, error) {
+func (lr *LogReader) Read() (<-chan log.Log, <-chan error, error) {
 	tkn := lr.Clients.Tekton
 	tr, err := tkn.TektonV1alpha1().TaskRuns(lr.Ns).Get(lr.Run, metav1.GetOptions{})
 	if err != nil {
@@ -72,7 +66,7 @@ func (lr *LogReader) Read() (<-chan Log, <-chan error, error) {
 	return lr.readLogs(tr)
 }
 
-func (lr *LogReader) readLogs(tr *v1alpha1.TaskRun) (<-chan Log, <-chan error, error) {
+func (lr *LogReader) readLogs(tr *v1alpha1.TaskRun) (<-chan log.Log, <-chan error, error) {
 	if lr.Follow {
 		return lr.readLiveLogs()
 	}
@@ -97,7 +91,7 @@ func (lr *LogReader) formTaskName(tr *v1alpha1.TaskRun) {
 	lr.Task = fmt.Sprintf("Task %d", lr.Number)
 }
 
-func (lr *LogReader) readLiveLogs() (<-chan Log, <-chan error, error) {
+func (lr *LogReader) readLiveLogs() (<-chan log.Log, <-chan error, error) {
 	tr, err := lr.waitUntilPodNameAvailable(10)
 	if err != nil {
 		return nil, nil, err
@@ -119,7 +113,7 @@ func (lr *LogReader) readLiveLogs() (<-chan Log, <-chan error, error) {
 	return logC, errC, err
 }
 
-func (lr *LogReader) readAvailableLogs(tr *v1alpha1.TaskRun) (<-chan Log, <-chan error, error) {
+func (lr *LogReader) readAvailableLogs(tr *v1alpha1.TaskRun) (<-chan log.Log, <-chan error, error) {
 	if !tr.HasStarted() {
 		return nil, nil, fmt.Errorf("task %s has not started yet", lr.Task)
 	}
@@ -149,8 +143,8 @@ func (lr *LogReader) readAvailableLogs(tr *v1alpha1.TaskRun) (<-chan Log, <-chan
 	return logC, errC, nil
 }
 
-func (lr *LogReader) readStepsLogs(steps []*step, pod *pods.Pod, follow bool) (<-chan Log, <-chan error) {
-	logC := make(chan Log)
+func (lr *LogReader) readStepsLogs(steps []*step, pod *pods.Pod, follow bool) (<-chan log.Log, <-chan error) {
+	logC := make(chan log.Log)
 	errC := make(chan error)
 
 	go func() {
@@ -174,10 +168,10 @@ func (lr *LogReader) readStepsLogs(steps []*step, pod *pods.Pod, follow bool) (<
 				case l, ok := <-podC:
 					if !ok {
 						podC = nil
-						logC <- Log{Task: lr.Task, Step: step.name, Log: "EOFLOG"}
+						logC <- log.Log{Task: lr.Task, Step: step.name, Log: "EOFLOG"}
 						continue
 					}
-					logC <- Log{Task: lr.Task, Step: step.name, Log: l.Log}
+					logC <- log.Log{Task: lr.Task, Step: step.name, Log: l.Log}
 
 				case e, ok := <-perrC:
 					if !ok {
