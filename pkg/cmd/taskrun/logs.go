@@ -21,6 +21,7 @@ import (
 
 	"github.com/spf13/cobra"
 	"github.com/tektoncd/cli/pkg/cli"
+	"github.com/tektoncd/cli/pkg/helper/log"
 	"github.com/tektoncd/cli/pkg/helper/options"
 	"github.com/tektoncd/cli/pkg/helper/pods"
 	trlist "github.com/tektoncd/cli/pkg/helper/taskrun/list"
@@ -127,7 +128,7 @@ func Run(opts *options.LogOptions) error {
 		return err
 	}
 
-	NewLogWriter().Write(opts.Stream, logC, errC)
+	log.NewLogWriter(log.LogTypeTask).Write(opts.Stream, logC, errC)
 	return nil
 }
 

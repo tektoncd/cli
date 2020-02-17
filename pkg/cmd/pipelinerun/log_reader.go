@@ -22,6 +22,7 @@ import (
 
 	"github.com/tektoncd/cli/pkg/cli"
 	"github.com/tektoncd/cli/pkg/cmd/taskrun"
+	"github.com/tektoncd/cli/pkg/helper/log"
 	"github.com/tektoncd/cli/pkg/helper/pipelinerun"
 	"github.com/tektoncd/cli/pkg/helper/pods/stream"
 	trh "github.com/tektoncd/cli/pkg/helper/taskrun"
@@ -42,15 +43,7 @@ type LogReader struct {
 	Tasks    []string
 }
 
-// Log is the data gets written to the log channel
-type Log struct {
-	Pipeline string
-	Task     string
-	Step     string
-	Log      string
-}
-
-func (lr *LogReader) Read() (<-chan Log, <-chan error, error) {
+func (lr *LogReader) Read() (<-chan log.Log, <-chan error, error) {
 	tkn := lr.Clients.Tekton
 	pr, err := tkn.TektonV1alpha1().PipelineRuns(lr.Ns).Get(lr.Run, metav1.GetOptions{})
 	if err != nil {
@@ -64,8 +57,8 @@ func (lr *LogReader) Read() (<-chan Log, <-chan error, error) {
 
 }
 
-func (lr *LogReader) readLiveLogs(pr *v1alpha1.PipelineRun) (<-chan Log, <-chan error, error) {
-	logC := make(chan Log)
+func (lr *LogReader) readLiveLogs(pr *v1alpha1.PipelineRun) (<-chan log.Log, <-chan error, error) {
+	logC := make(chan log.Log)
 	errC := make(chan error)
 
 	go func() {
@@ -103,7 +96,7 @@ func (lr *LogReader) readLiveLogs(pr *v1alpha1.PipelineRun) (<-chan Log, <-chan 
 	return logC, errC, nil
 }
 
-func (lr *LogReader) readAvailableLogs(pr *v1alpha1.PipelineRun) (<-chan Log, <-chan error, error) {
+func (lr *LogReader) readAvailableLogs(pr *v1alpha1.PipelineRun) (<-chan log.Log, <-chan error, error) {
 	if err := lr.waitUntilAvailable(10); err != nil {
 		return nil, nil, err
 	}
@@ -118,7 +111,7 @@ func (lr *LogReader) readAvailableLogs(pr *v1alpha1.PipelineRun) (<-chan Log, <-
 	ordered := trh.SortTasksBySpecOrder(pl.Spec.Tasks, pr.Status.TaskRuns)
 	taskRuns := trh.Filter(ordered, lr.Tasks)
 
-	logC := make(chan Log)
+	logC := make(chan log.Log)
 	errC := make(chan error)
 
 	go func() {
@@ -185,7 +178,7 @@ func (lr *LogReader) waitUntilAvailable(timeout time.Duration) error {
 	}
 }
 
-func pipeLogs(logC chan<- Log, errC chan<- error, tlr *taskrun.LogReader) {
+func pipeLogs(logC chan<- log.Log, errC chan<- error, tlr *taskrun.LogReader) {
 	tlogC, terrC, err := tlr.Read()
 	if err != nil {
 		errC <- err
@@ -199,7 +192,7 @@ func pipeLogs(logC chan<- Log, errC chan<- error, tlr *taskrun.LogReader) {
 				tlogC = nil
 				continue
 			}
-			logC <- Log{Task: l.Task, Step: l.Step, Log: l.Log}
+			logC <- log.Log{Task: l.Task, Step: l.Step, Log: l.Log}
 
 		case e, ok := <-terrC:
 			if !ok {

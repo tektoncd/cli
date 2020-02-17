@@ -12,7 +12,7 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-package taskrun
+package log
 
 import (
 	"fmt"
@@ -21,17 +21,21 @@ import (
 	"github.com/tektoncd/cli/pkg/formatted"
 )
 
+// LogWriter helps logging pod"s log
 type LogWriter struct {
-	fmt *formatted.Color
+	fmt     *formatted.Color
+	logType string
 }
 
-//NewLogWriter returns the new instance of LogWriter
-func NewLogWriter() *LogWriter {
+// NewLogWriter returns the new instance of LogWriter
+func NewLogWriter(logType string) *LogWriter {
 	return &LogWriter{
-		fmt: formatted.NewColor(),
+		fmt:     formatted.NewColor(),
+		logType: logType,
 	}
 }
 
+// Write formatted pod's logs
 func (lw *LogWriter) Write(s *cli.Stream, logC <-chan Log, errC <-chan error) {
 	for logC != nil || errC != nil {
 		select {
@@ -46,7 +50,13 @@ func (lw *LogWriter) Write(s *cli.Stream, logC <-chan Log, errC <-chan error) {
 				continue
 			}
 
-			lw.fmt.Rainbow.Fprintf(l.Step, s.Out, "[%s] ", l.Step)
+			switch lw.logType {
+			case LogTypePipeline:
+				lw.fmt.Rainbow.Fprintf(l.Step, s.Out, "[%s : %s] ", l.Task, l.Step)
+			case LogTypeTask:
+				lw.fmt.Rainbow.Fprintf(l.Step, s.Out, "[%s] ", l.Step)
+			}
+
 			fmt.Fprintf(s.Out, "%s\n", l.Log)
 		case e, ok := <-errC:
 			if !ok {
