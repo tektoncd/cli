@@ -106,15 +106,13 @@ func TestDeleteOptions(t *testing.T) {
 		{
 			name:           "Error when all defaults specified with ParentResource",
 			opt:            &DeleteOptions{Resource: "TaskRun", ParentResource: "task", ForceDelete: false, DeleteRelated: false, DeleteAllNs: false},
-			stream:         &cli.Stream{In: strings.NewReader("y"), Out: os.Stdout},
 			resourcesNames: []string{},
 			wantError:      true,
-			want:           "must provide TaskRuns to delete or --task flag",
+			want:           "must provide TaskRun name(s) or use --task flag or --all flag to use delete",
 		},
 		{
 			name:           "Error when resource name provided with DeleteAllNs",
 			opt:            &DeleteOptions{DeleteAllNs: true},
-			stream:         &cli.Stream{In: strings.NewReader("y"), Out: os.Stdout},
 			resourcesNames: []string{"test1"},
 			wantError:      true,
 			want:           "--all flag should not have any arguments or flags specified with it",
@@ -129,10 +127,16 @@ func TestDeleteOptions(t *testing.T) {
 		{
 			name:           "Error when resource name provided with DeleteAll",
 			opt:            &DeleteOptions{DeleteAll: true},
-			stream:         &cli.Stream{In: strings.NewReader("y"), Out: os.Stdout},
 			resourcesNames: []string{"test1"},
 			wantError:      true,
 			want:           "--all flag should not have any arguments or flags specified with it",
+		},
+		{
+			name:           "Error when not specifying resource name or --all flag in non PipelineRun/TaskRun deletion",
+			opt:            &DeleteOptions{Resource: "Condition", ParentResource: "", ParentResourceName: "", DeleteRelated: false, DeleteAllNs: false},
+			resourcesNames: []string{},
+			wantError:      true,
+			want:           "must provide Condition name(s) or use --all flag with delete",
 		},
 	}
 

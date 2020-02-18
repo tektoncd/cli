@@ -129,6 +129,14 @@ func TestPipelineResourceDelete(t *testing.T) {
 			wantError:   true,
 			want:        "--all flag should not have any arguments or flags specified with it",
 		},
+		{
+			name:        "Error from using resource delete with no names or --all",
+			command:     []string{"delete"},
+			input:       seeds[4],
+			inputStream: nil,
+			wantError:   true,
+			want:        "must provide pipelineresource name(s) or use --all flag with delete",
+		},
 	}
 
 	for _, tp := range testParams {

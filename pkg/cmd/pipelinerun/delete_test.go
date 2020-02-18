@@ -167,7 +167,7 @@ func TestPipelineRunDelete(t *testing.T) {
 			input:       seeds[2],
 			inputStream: nil,
 			wantError:   true,
-			want:        "must provide pipelineruns to delete or --pipeline flag",
+			want:        "must provide pipelinerun name(s) or use --pipeline flag or --all flag to use delete",
 		},
 		{
 			name:        "Remove pipelineruns of a pipeline",

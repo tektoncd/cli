@@ -138,7 +138,7 @@ func TestTaskRunDelete(t *testing.T) {
 			input:       seeds[2],
 			inputStream: nil,
 			wantError:   true,
-			want:        "must provide taskruns to delete or --task flag",
+			want:        "must provide taskrun name(s) or use --task flag or --all flag to use delete",
 		},
 		{
 			name:        "Remove taskruns of a task",

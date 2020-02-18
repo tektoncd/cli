@@ -34,8 +34,21 @@ type DeleteOptions struct {
 }
 
 func (o *DeleteOptions) CheckOptions(s *cli.Stream, resourceNames []string, ns string) error {
+	// make sure no resource names are provided when using --all flag
 	if len(resourceNames) > 0 && (o.DeleteAllNs || o.DeleteAll) {
 		return fmt.Errorf("--all flag should not have any arguments or flags specified with it")
+	}
+
+	// make sure either resource names are provided, name of related resource,
+	// or --all specified if deleting PipelineRuns or TaskRuns
+	if len(resourceNames) == 0 && o.ParentResource != "" && o.ParentResourceName == "" && !o.DeleteAllNs {
+		return fmt.Errorf("must provide %s name(s) or use --%s flag or --all flag to use delete", o.Resource, o.ParentResource)
+	}
+
+	// make sure that resource name or --all flag is specified to use delete
+	// in non PipelineRun or TaskRun deletions
+	if len(resourceNames) == 0 && o.ParentResource == "" && o.ParentResourceName == "" && !o.DeleteAllNs && !o.DeleteAll {
+		return fmt.Errorf("must provide %s name(s) or use --all flag with delete", o.Resource)
 	}
 
 	if o.ForceDelete {
@@ -43,10 +56,6 @@ func (o *DeleteOptions) CheckOptions(s *cli.Stream, resourceNames []string, ns s
 	}
 
 	formattedNames := names.QuotedList(resourceNames)
-
-	if len(resourceNames) == 0 && o.ParentResource != "" && o.ParentResourceName == "" && !o.DeleteAllNs {
-		return fmt.Errorf("must provide %ss to delete or --%s flag", o.Resource, o.ParentResource)
-	}
 
 	switch {
 	case o.DeleteAllNs:
