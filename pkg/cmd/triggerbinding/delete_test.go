@@ -145,6 +145,14 @@ func TestTriggerBindingDelete(t *testing.T) {
 			wantError:   true,
 			want:        "--all flag should not have any arguments or flags specified with it",
 		},
+		{
+			name:        "Error from using triggerbinding delete with no names or --all",
+			command:     []string{"delete"},
+			input:       seeds[4],
+			inputStream: nil,
+			wantError:   true,
+			want:        "must provide triggerbinding name(s) or use --all flag with delete",
+		},
 	}
 
 	for _, tp := range testParams {
