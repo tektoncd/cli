@@ -57,10 +57,6 @@ function check_lint() {
     results_banner "Lint" 0
 }
 
-function pre_build_tests() {
-    go get -u github.com/knative/test-infra/tools/dep-collector
-}
-
 function post_build_tests() {
     test_documentation_has_been_generated
     check_lint
