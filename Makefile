@@ -49,7 +49,10 @@ test: test-unit ## run all tests
 .PHONY: lint
 lint: lint-yaml ## run linter(s)
 	@echo "Linting..."
-	@golangci-lint run ./... --max-issues-per-linter=0 --max-same-issues=0 --deadline 5m
+	@golangci-lint run ./... --modules-download-mode=vendor \
+							--max-issues-per-linter=0 \
+							--max-same-issues=0 \
+							--deadline 5m
 
 .PHONY: lint-yaml
 lint-yaml: ${YAML_FILES} ## runs yamllint on all yaml files
