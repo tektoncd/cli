@@ -21,22 +21,22 @@ import (
 	"github.com/tektoncd/cli/pkg/formatted"
 )
 
-// LogWriter helps logging pod"s log
-type LogWriter struct {
+// Writer helps logging pod"s log
+type Writer struct {
 	fmt     *formatted.Color
 	logType string
 }
 
-// NewLogWriter returns the new instance of LogWriter
-func NewLogWriter(logType string) *LogWriter {
-	return &LogWriter{
+// NewWriter returns the new instance of LogWriter
+func NewWriter(logType string) *Writer {
+	return &Writer{
 		fmt:     formatted.NewColor(),
 		logType: logType,
 	}
 }
 
 // Write formatted pod's logs
-func (lw *LogWriter) Write(s *cli.Stream, logC <-chan Log, errC <-chan error) {
+func (lw *Writer) Write(s *cli.Stream, logC <-chan Log, errC <-chan error) {
 	for logC != nil || errC != nil {
 		select {
 		case l, ok := <-logC:

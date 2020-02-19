@@ -122,7 +122,7 @@ func Run(opts *options.LogOptions) error {
 		return err
 	}
 
-	log.NewLogWriter(log.LogTypePipeline).Write(opts.Stream, logC, errC)
+	log.NewWriter(log.LogTypePipeline).Write(opts.Stream, logC, errC)
 
 	return nil
 }
