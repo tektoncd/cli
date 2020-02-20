@@ -64,6 +64,8 @@ func DecorateAttr(attrString, message string) string {
 		return fmt.Sprintf("💌 ")
 	case "taskruns":
 		return fmt.Sprintf("🗂  ")
+	case "sidecars":
+		return fmt.Sprintf("🚗 ")
 	}
 
 	attr := color.Reset

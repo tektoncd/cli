@@ -91,6 +91,17 @@ No steps
  {{decorate "bullet" $step.Name }}	{{ $reason }}
 {{- end }}
 {{- end }}
+
+{{decorate "sidecars" ""}}{{decorate "underline bold" "Sidecars"}}
+{{$sidecars := .TaskRun.Status.Sidecars }}
+{{- $l := len $sidecars }}{{ if eq $l 0 }}
+No sidecars
+{{- else }}
+ NAME
+{{- range $sidecar := $sidecars }}
+ {{decorate "bullet" $sidecar.Name }}
+{{- end }}
+{{- end }}
 `
 
 func sortStepStatesByStartTime(steps []v1alpha1.StepState) []v1alpha1.StepState {
