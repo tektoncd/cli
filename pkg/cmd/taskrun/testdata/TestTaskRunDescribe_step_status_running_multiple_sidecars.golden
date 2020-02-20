@@ -28,5 +28,11 @@ Params
 Steps
 
  NAME    STATUS
- step1   PodInitializing
- step2   PodInitializing
+ step1   Running
+ step2   Running
+
+Sidecars
+
+ NAME
+ sidecar1
+ sidecar2

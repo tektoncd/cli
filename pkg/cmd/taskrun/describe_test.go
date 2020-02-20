@@ -40,6 +40,20 @@ var (
 	reasonRunning   = corev1.ContainerStateRunning{StartedAt: metav1.Time{Time: time.Now()}}
 )
 
+// Pass one or more names for sidecar containers for testing with tkn tr describe.
+// Replace with test builder option once https://github.com/tektoncd/pipeline/issues/2078
+// is closed.
+func sidecarState(names ...string) tb.TaskRunStatusOp {
+	return func(s *v1alpha1.TaskRunStatus) {
+		for _, name := range names {
+			sidecar := &v1alpha1.SidecarState{
+				Name: name,
+			}
+			s.Sidecars = append(s.Sidecars, *sidecar)
+		}
+	}
+}
+
 func TestTaskRunDescribe_invalid_namespace(t *testing.T) {
 	cs, _ := test.SeedTestData(t, pipelinetest.Data{
 		Namespaces: []*corev1.Namespace{
@@ -362,8 +376,10 @@ func TestTaskRunDescribe_step_status_default(t *testing.T) {
 	golden.Assert(t, actual, fmt.Sprintf("%s.golden", t.Name()))
 }
 
-func TestTaskRunDescribe_step_status_pending(t *testing.T) {
+func TestTaskRunDescribe_step_status_pending_one_sidecar(t *testing.T) {
 	clock := clockwork.NewFakeClock()
+
+	sidecarState := sidecarState("sidecar1")
 
 	trs := []*v1alpha1.TaskRun{
 		tb.TaskRun("tr-1", "ns",
@@ -382,6 +398,7 @@ func TestTaskRunDescribe_step_status_pending(t *testing.T) {
 					cb.StepName("step2"),
 					tb.SetStepStateWaiting(reasonWaiting),
 				),
+				sidecarState,
 			),
 			tb.TaskRunSpec(
 				tb.TaskRunTaskRef("t1"),
@@ -417,8 +434,10 @@ func TestTaskRunDescribe_step_status_pending(t *testing.T) {
 	golden.Assert(t, actual, fmt.Sprintf("%s.golden", t.Name()))
 }
 
-func TestTaskRunDescribe_step_status_running(t *testing.T) {
+func TestTaskRunDescribe_step_status_running_multiple_sidecars(t *testing.T) {
 	clock := clockwork.NewFakeClock()
+
+	sidecarState := sidecarState("sidecar1", "sidecar2")
 
 	trs := []*v1alpha1.TaskRun{
 		tb.TaskRun("tr-1", "ns",
@@ -437,6 +456,7 @@ func TestTaskRunDescribe_step_status_running(t *testing.T) {
 					cb.StepName("step2"),
 					tb.SetStepStateRunning(reasonRunning),
 				),
+				sidecarState,
 			),
 			tb.TaskRunSpec(
 				tb.TaskRunTaskRef("t1"),
