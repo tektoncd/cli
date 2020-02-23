@@ -24,7 +24,6 @@ import (
 	"github.com/tektoncd/cli/pkg/helper/log"
 	"github.com/tektoncd/cli/pkg/helper/options"
 	prhelper "github.com/tektoncd/cli/pkg/helper/pipelinerun"
-	"github.com/tektoncd/cli/pkg/helper/pods"
 	validate "github.com/tektoncd/cli/pkg/helper/validate"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 )
@@ -97,24 +96,10 @@ func Run(opts *options.LogOptions) error {
 			return err
 		}
 	}
-	streamer := pods.NewStream
-	if opts.Streamer != nil {
-		streamer = opts.Streamer
-	}
-	cs, err := opts.Params.Clients()
+
+	lr, err := log.NewReader(log.LogTypePipeline, opts)
 	if err != nil {
 		return err
-	}
-
-	lr := &LogReader{
-		Run:      opts.PipelineRunName,
-		Ns:       opts.Params.Namespace(),
-		Clients:  cs,
-		Streamer: streamer,
-		Stream:   opts.Stream,
-		Follow:   opts.Follow,
-		AllSteps: opts.AllSteps,
-		Tasks:    opts.Tasks,
 	}
 
 	logC, errC, err := lr.Read()
