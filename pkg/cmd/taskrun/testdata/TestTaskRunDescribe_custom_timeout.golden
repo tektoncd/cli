@@ -1,12 +1,11 @@
-Name:        tr-1
+Name:        tr-custom-timeout
 Namespace:   ns
-Task Ref:    t1
-Timeout:     1h0m0s
+Timeout:     1m0s
 
 Status
 
 STARTED    DURATION    STATUS
----        ---         Succeeded
+---        ---         ---
 
 Input Resources
 

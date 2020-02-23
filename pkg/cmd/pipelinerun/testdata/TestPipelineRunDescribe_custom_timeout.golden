@@ -1,7 +1,7 @@
-Name:           pipeline-run
+Name:           pr-custom-timeout
 Namespace:      ns
-Pipeline Ref:   pipeline
-Timeout:        1h0m0s
+Pipeline Ref:   pr-custom-timeout
+Timeout:        1m0s
 
 Status
 

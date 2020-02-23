@@ -24,6 +24,11 @@ const templ = `{{decorate "bold" "Name"}}:	{{ .PipelineRun.Name }}
 {{decorate "bold" "Service Account"}}:	{{ .PipelineRun.Spec.ServiceAccountName }}
 {{- end }}
 
+{{- $timeout := getTimeout .PipelineRun -}}
+{{- if ne $timeout "" }}
+{{decorate "bold" "Timeout"}}:	{{ .PipelineRun.Spec.Timeout.Duration.String }}
+{{- end }}
+
 {{decorate "status" ""}}{{decorate "underline bold" "Status\n"}}
 STARTED	DURATION	STATUS
 {{ formatAge .PipelineRun.Status.StartTime  .Params.Time }}	{{ formatDuration .PipelineRun.Status.StartTime .PipelineRun.Status.CompletionTime }}	{{ formatCondition .PipelineRun.Status.Conditions }}
@@ -144,6 +149,7 @@ func PrintPipelineRunDescription(s *cli.Stream, prName string, p cli.Params) err
 		"pipelineRefExists":         validate.PipelineRefExists,
 		"pipelineResourceRefExists": validate.PipelineResourceRefExists,
 		"decorate":                  formatted.DecorateAttr,
+		"getTimeout":                getTimeoutValue,
 	}
 
 	w := tabwriter.NewWriter(s.Out, 0, 5, 3, ' ', tabwriter.TabIndent)
@@ -172,6 +178,13 @@ func hasFailed(pr *v1alpha1.PipelineRun) string {
 			}
 		}
 		return pr.Status.Conditions[0].Message
+	}
+	return ""
+}
+
+func getTimeoutValue(pr *v1alpha1.PipelineRun) string {
+	if pr.Spec.Timeout != nil {
+		return pr.Spec.Timeout.Duration.String()
 	}
 	return ""
 }

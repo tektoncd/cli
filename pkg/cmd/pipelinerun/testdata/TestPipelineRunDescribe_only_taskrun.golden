@@ -1,6 +1,7 @@
 Name:           pipeline-run
 Namespace:      ns
 Pipeline Ref:   pipeline
+Timeout:        1h0m0s
 
 Status
 
