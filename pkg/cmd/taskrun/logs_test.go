@@ -22,6 +22,7 @@ import (
 
 	"github.com/jonboulle/clockwork"
 	"github.com/tektoncd/cli/pkg/cli"
+	"github.com/tektoncd/cli/pkg/helper/log"
 	"github.com/tektoncd/cli/pkg/helper/options"
 	"github.com/tektoncd/cli/pkg/helper/pods/fake"
 	"github.com/tektoncd/cli/pkg/helper/pods/stream"
@@ -169,7 +170,7 @@ func TestLog_missing_taskrun(t *testing.T) {
 
 	c := Command(p)
 	got, _ := test.ExecuteCommand(c, "logs", "output-taskrun-2", "-n", "ns")
-	expected := "Error: " + msgTRNotFoundErr + ": taskruns.tekton.dev \"output-taskrun-2\" not found\n"
+	expected := "Error: " + log.MsgTRNotFoundErr + ": taskruns.tekton.dev \"output-taskrun-2\" not found\n"
 	test.AssertOutput(t, expected, got)
 }
 

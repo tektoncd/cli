@@ -12,7 +12,7 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-package taskrun
+package log
 
 import (
 	"fmt"
@@ -20,15 +20,16 @@ import (
 	"time"
 
 	"github.com/pkg/errors"
-	"github.com/tektoncd/cli/pkg/cli"
-	"github.com/tektoncd/cli/pkg/helper/log"
 	"github.com/tektoncd/cli/pkg/helper/pods"
-	"github.com/tektoncd/cli/pkg/helper/pods/stream"
 	"github.com/tektoncd/pipeline/pkg/apis/pipeline/v1alpha1"
 	corev1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/fields"
 	"knative.dev/pkg/apis/duck/v1beta1"
+)
+
+const (
+	MsgTRNotFoundErr = "Unable to get Taskrun"
 )
 
 type step struct {
@@ -41,89 +42,73 @@ func (s *step) hasStarted() bool {
 	return s.state.Waiting == nil
 }
 
-type LogReader struct {
-	Task     string
-	Run      string
-	Number   int
-	Ns       string
-	Clients  *cli.Clients
-	Streamer stream.NewStreamerFunc
-	Follow   bool
-	AllSteps bool
-	Stream   *cli.Stream
-	Steps    []string
-}
-
-func (lr *LogReader) Read() (<-chan log.Log, <-chan error, error) {
-	tkn := lr.Clients.Tekton
-	tr, err := tkn.TektonV1alpha1().TaskRuns(lr.Ns).Get(lr.Run, metav1.GetOptions{})
+func (r *Reader) readTaskLog() (<-chan Log, <-chan error, error) {
+	tkn := r.clients.Tekton
+	tr, err := tkn.TektonV1alpha1().TaskRuns(r.ns).Get(r.run, metav1.GetOptions{})
 	if err != nil {
-		return nil, nil, fmt.Errorf("%s: %s", msgTRNotFoundErr, err)
+		return nil, nil, fmt.Errorf("%s: %s", MsgTRNotFoundErr, err)
 	}
 
-	lr.formTaskName(tr)
+	r.formTaskName(tr)
 
-	return lr.readLogs(tr)
-}
-
-func (lr *LogReader) readLogs(tr *v1alpha1.TaskRun) (<-chan log.Log, <-chan error, error) {
-	if lr.Follow {
-		return lr.readLiveLogs()
+	if r.follow {
+		return r.readLiveTaskLogs()
 	}
-	return lr.readAvailableLogs(tr)
+	return r.readAvailableTaskLogs(tr)
 }
 
-func (lr *LogReader) formTaskName(tr *v1alpha1.TaskRun) {
-	if lr.Task != "" {
+func (r *Reader) formTaskName(tr *v1alpha1.TaskRun) {
+	if r.task != "" {
 		return
 	}
 
 	if name, ok := tr.Labels["tekton.dev/pipelineTask"]; ok {
-		lr.Task = name
+		r.task = name
 		return
 	}
 
 	if tr.Spec.TaskRef != nil {
-		lr.Task = tr.Spec.TaskRef.Name
+		r.task = tr.Spec.TaskRef.Name
 		return
 	}
 
-	lr.Task = fmt.Sprintf("Task %d", lr.Number)
+	r.task = fmt.Sprintf("Task %d", r.number)
 }
 
-func (lr *LogReader) readLiveLogs() (<-chan log.Log, <-chan error, error) {
-	tr, err := lr.waitUntilPodNameAvailable(10)
+func (r *Reader) readLiveTaskLogs() (<-chan Log, <-chan error, error) {
+	tr, err := r.waitUntilTaskPodNameAvailable(10)
 	if err != nil {
 		return nil, nil, err
 	}
 
 	var (
 		podName = tr.Status.PodName
-		kube    = lr.Clients.Kube
+		kube    = r.clients.Kube
 	)
 
-	p := pods.New(podName, lr.Ns, kube, lr.Streamer)
+	p := pods.New(podName, r.ns, kube, r.streamer)
 	pod, err := p.Wait()
 	if err != nil {
-		return nil, nil, errors.New(fmt.Sprintf("task %s failed: %s. Run tkn tr desc %s for more details.", lr.Task, strings.TrimSpace(err.Error()), tr.Name))
+		return nil, nil, errors.New(fmt.Sprintf("task %s failed: %s. Run tkn tr desc %s for more details.", r.task, strings.TrimSpace(err.Error()), tr.Name))
 	}
 
-	steps := filterSteps(pod, lr.AllSteps, lr.Steps)
-	logC, errC := lr.readStepsLogs(steps, p, lr.Follow)
+	steps := filterSteps(pod, r.allSteps, r.steps)
+	logC, errC := r.readStepsLogs(steps, p, r.follow)
 	return logC, errC, err
 }
 
-func (lr *LogReader) readAvailableLogs(tr *v1alpha1.TaskRun) (<-chan log.Log, <-chan error, error) {
+func (r *Reader) readAvailableTaskLogs(tr *v1alpha1.TaskRun) (<-chan Log, <-chan error, error) {
 	if !tr.HasStarted() {
-		return nil, nil, fmt.Errorf("task %s has not started yet", lr.Task)
+		return nil, nil, fmt.Errorf("task %s has not started yet", r.task)
 	}
 
-	//Check if taskrun failed on start up
-	if err := hasTaskRunFailed(tr.Status.Conditions, lr.Task); err != nil {
-		if lr.Stream != nil {
-			fmt.Fprintf(lr.Stream.Err, "%s\n", err.Error())
+	// Check if taskrun failed on start up
+	if err := hasTaskRunFailed(tr.Status.Conditions, r.task); err != nil {
+		if r.stream != nil {
+			fmt.Fprintf(r.stream.Err, "%s\n", err.Error())
+		} else {
+			return nil, nil, err
 		}
-		return nil, nil, err
 	}
 
 	if tr.Status.PodName == "" {
@@ -131,23 +116,23 @@ func (lr *LogReader) readAvailableLogs(tr *v1alpha1.TaskRun) (<-chan log.Log, <-
 	}
 
 	var (
-		kube    = lr.Clients.Kube
+		kube    = r.clients.Kube
 		podName = tr.Status.PodName
 	)
 
-	p := pods.New(podName, lr.Ns, kube, lr.Streamer)
+	p := pods.New(podName, r.ns, kube, r.streamer)
 	pod, err := p.Get()
 	if err != nil {
-		return nil, nil, errors.New(fmt.Sprintf("task %s failed: %s. Run tkn tr desc %s for more details.", lr.Task, strings.TrimSpace(err.Error()), tr.Name))
+		return nil, nil, errors.New(fmt.Sprintf("task %s failed: %s. Run tkn tr desc %s for more details.", r.task, strings.TrimSpace(err.Error()), tr.Name))
 	}
 
-	steps := filterSteps(pod, lr.AllSteps, lr.Steps)
-	logC, errC := lr.readStepsLogs(steps, p, lr.Follow)
+	steps := filterSteps(pod, r.allSteps, r.steps)
+	logC, errC := r.readStepsLogs(steps, p, r.follow)
 	return logC, errC, nil
 }
 
-func (lr *LogReader) readStepsLogs(steps []*step, pod *pods.Pod, follow bool) (<-chan log.Log, <-chan error) {
-	logC := make(chan log.Log)
+func (r *Reader) readStepsLogs(steps []*step, pod *pods.Pod, follow bool) (<-chan Log, <-chan error) {
+	logC := make(chan Log)
 	errC := make(chan error)
 
 	go func() {
@@ -171,10 +156,10 @@ func (lr *LogReader) readStepsLogs(steps []*step, pod *pods.Pod, follow bool) (<
 				case l, ok := <-podC:
 					if !ok {
 						podC = nil
-						logC <- log.Log{Task: lr.Task, Step: step.name, Log: "EOFLOG"}
+						logC <- Log{Task: r.task, Step: step.name, Log: "EOFLOG"}
 						continue
 					}
-					logC <- log.Log{Task: lr.Task, Step: step.name, Log: l.Log}
+					logC <- Log{Task: r.task, Step: step.name, Log: l.Log}
 
 				case e, ok := <-perrC:
 					if !ok {
@@ -194,6 +179,53 @@ func (lr *LogReader) readStepsLogs(steps []*step, pod *pods.Pod, follow bool) (<
 	}()
 
 	return logC, errC
+}
+
+// Reading of logs should wait until the name of the pod is
+// updated in the status. Open a watch channel on the task run
+// and keep checking the status until the pod name updates
+// or the timeout is reached.
+func (r *Reader) waitUntilTaskPodNameAvailable(timeout time.Duration) (*v1alpha1.TaskRun, error) {
+	var first = true
+	opts := metav1.ListOptions{
+		FieldSelector: fields.OneTermEqualSelector("metadata.name", r.run).String(),
+	}
+	tkn := r.clients.Tekton
+	run, err := tkn.TektonV1alpha1().TaskRuns(r.ns).Get(r.run, metav1.GetOptions{})
+	if err != nil {
+		return nil, err
+	}
+
+	if run.Status.PodName != "" {
+		return run, nil
+	}
+
+	watchRun, err := tkn.TektonV1alpha1().TaskRuns(r.ns).Watch(opts)
+	if err != nil {
+		return nil, err
+	}
+	for {
+		select {
+		case event := <-watchRun.ResultChan():
+			run := event.Object.(*v1alpha1.TaskRun)
+			if run.Status.PodName != "" {
+				watchRun.Stop()
+				return run, nil
+			}
+			if first {
+				first = false
+			}
+		case <-time.After(timeout * time.Second):
+			watchRun.Stop()
+
+			// Check if taskrun failed on start up
+			if err = hasTaskRunFailed(run.Status.Conditions, r.task); err != nil {
+				return nil, err
+			}
+
+			return nil, fmt.Errorf("task %s create has not started yet or pod for task not yet available", r.task)
+		}
+	}
 }
 
 func filterSteps(pod *corev1.Pod, allSteps bool, stepsGiven []string) []*step {
@@ -259,57 +291,9 @@ func getSteps(pod *corev1.Pod) []*step {
 	return steps
 }
 
-// Reading of logs should wait until the name of the pod is
-// updated in the status. Open a watch channel on the task run
-// and keep checking the status until the pod name updates
-// or the timeout is reached.
-func (lr *LogReader) waitUntilPodNameAvailable(timeout time.Duration) (*v1alpha1.TaskRun, error) {
-	var first = true
-	opts := metav1.ListOptions{
-		FieldSelector: fields.OneTermEqualSelector("metadata.name", lr.Run).String(),
-	}
-	tkn := lr.Clients.Tekton
-	run, err := tkn.TektonV1alpha1().TaskRuns(lr.Ns).Get(lr.Run, metav1.GetOptions{})
-	if err != nil {
-		return nil, err
-	}
-
-	if run.Status.PodName != "" {
-		return run, nil
-	}
-
-	watchRun, err := tkn.TektonV1alpha1().TaskRuns(lr.Ns).Watch(opts)
-	if err != nil {
-		return nil, err
-	}
-	for {
-		select {
-		case event := <-watchRun.ResultChan():
-			run := event.Object.(*v1alpha1.TaskRun)
-			if run.Status.PodName != "" {
-				watchRun.Stop()
-				return run, nil
-			}
-			if first {
-				first = false
-			}
-		case <-time.After(timeout * time.Second):
-			watchRun.Stop()
-
-			//Check if taskrun failed on start up
-			if err = hasTaskRunFailed(run.Status.Conditions, lr.Task); err != nil {
-				return nil, err
-			}
-
-			return nil, fmt.Errorf("task %s create has not started yet or pod for task not yet available", lr.Task)
-		}
-	}
-}
-
 func hasTaskRunFailed(trConditions v1beta1.Conditions, taskName string) error {
 	if len(trConditions) != 0 && trConditions[0].Status == corev1.ConditionFalse {
 		return fmt.Errorf("task %s has failed: %s", taskName, trConditions[0].Message)
 	}
-
 	return nil
 }

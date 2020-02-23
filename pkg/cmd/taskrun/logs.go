@@ -23,15 +23,13 @@ import (
 	"github.com/tektoncd/cli/pkg/cli"
 	"github.com/tektoncd/cli/pkg/helper/log"
 	"github.com/tektoncd/cli/pkg/helper/options"
-	"github.com/tektoncd/cli/pkg/helper/pods"
 	trlist "github.com/tektoncd/cli/pkg/helper/taskrun/list"
 	validate "github.com/tektoncd/cli/pkg/helper/validate"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 )
 
 const (
-	msgTRNotFoundErr = "Unable to get Taskrun"
-	defaultLimit     = 5
+	defaultLimit = 5
 )
 
 func logCommand(p cli.Params) *cobra.Command {
@@ -102,25 +100,9 @@ func Run(opts *options.LogOptions) error {
 		}
 	}
 
-	streamer := pods.NewStream
-	if opts.Streamer != nil {
-		streamer = opts.Streamer
-	}
-
-	cs, err := opts.Params.Clients()
+	lr, err := log.NewReader(log.LogTypeTask, opts)
 	if err != nil {
 		return err
-	}
-
-	lr := &LogReader{
-		Run:      opts.TaskrunName,
-		Ns:       opts.Params.Namespace(),
-		Clients:  cs,
-		Streamer: streamer,
-		Stream:   opts.Stream,
-		Follow:   opts.Follow,
-		AllSteps: opts.AllSteps,
-		Steps:    opts.Steps,
 	}
 
 	logC, errC, err := lr.Read()

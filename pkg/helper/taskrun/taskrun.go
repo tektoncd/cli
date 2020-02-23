@@ -15,34 +15,12 @@
 package taskrun
 
 import (
-	"github.com/tektoncd/cli/pkg/cli"
-	"github.com/tektoncd/cli/pkg/cmd/taskrun"
-	"github.com/tektoncd/cli/pkg/helper/pods/stream"
 	"github.com/tektoncd/pipeline/pkg/apis/pipeline/v1alpha1"
 )
 
 type Run struct {
 	Name string
 	Task string
-}
-
-//NewLogReader returns the new instance of LogReader for
-//a Run instance
-func (t *Run) NewLogReader(ns string, clientSet *cli.Clients,
-	streamer stream.NewStreamerFunc,
-	num int, follow bool,
-	allSteps bool) *taskrun.LogReader {
-
-	return &taskrun.LogReader{
-		Run:      t.Name,
-		Task:     t.Task,
-		Number:   num,
-		Ns:       ns,
-		Clients:  clientSet,
-		Streamer: streamer,
-		Follow:   follow,
-		AllSteps: allSteps,
-	}
 }
 
 func IsFiltered(tr Run, allowed []string) bool {
