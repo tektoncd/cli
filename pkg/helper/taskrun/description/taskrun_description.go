@@ -17,10 +17,15 @@ import (
 const templ = `{{decorate "bold" "Name"}}:	{{ .TaskRun.Name }}
 {{decorate "bold" "Namespace"}}:	{{ .TaskRun.Namespace }}
 {{- $tRefName := taskRefExists .TaskRun.Spec }}{{- if ne $tRefName "" }}
-{{decorate "bold" "Task Ref"}}:    {{ $tRefName }}
+{{decorate "bold" "Task Ref"}}:	{{ $tRefName }}
 {{- end }}
 {{- if ne .TaskRun.Spec.ServiceAccountName "" }}
 {{decorate "bold" "Service Account"}}:	{{ .TaskRun.Spec.ServiceAccountName }}
+{{- end }}
+
+{{- $timeout := getTimeout .TaskRun -}}
+{{- if ne $timeout "" }}
+{{decorate "bold" "Timeout"}}:	{{ .TaskRun.Spec.Timeout.Duration.String }}
 {{- end }}
 
 {{decorate "status" ""}}{{decorate "underline bold" "Status"}}
@@ -175,6 +180,7 @@ func PrintTaskRunDescription(s *cli.Stream, trName string, p cli.Params) error {
 		"stepReasonExists":      validate.StepReasonExists,
 		"decorate":              formatted.DecorateAttr,
 		"sortStepStates":        sortStepStatesByStartTime,
+		"getTimeout":            getTimeoutValue,
 	}
 
 	w := tabwriter.NewWriter(s.Out, 0, 5, 3, ' ', tabwriter.TabIndent)
@@ -197,5 +203,12 @@ func hasFailed(tr *v1alpha1.TaskRun) string {
 		return tr.Status.Conditions[0].Message
 	}
 
+	return ""
+}
+
+func getTimeoutValue(tr *v1alpha1.TaskRun) string {
+	if tr.Spec.Timeout != nil {
+		return tr.Spec.Timeout.Duration.String()
+	}
 	return ""
 }

@@ -694,3 +694,32 @@ func TestPipelineRunsDescribe_custom_output(t *testing.T) {
 		t.Errorf("Result should be '%s' != '%s'", got, expected)
 	}
 }
+
+func TestPipelineRunDescribe_custom_timeout(t *testing.T) {
+
+	prun := []*v1alpha1.PipelineRun{
+		tb.PipelineRun("pr-custom-timeout", "ns",
+			tb.PipelineRunSpec("pr-custom-timeout", tb.PipelineRunTimeout(time.Minute)),
+		),
+	}
+
+	cs, _ := test.SeedTestData(t, pipelinetest.Data{
+		PipelineRuns: prun,
+		Namespaces: []*corev1.Namespace{
+			{
+				ObjectMeta: metav1.ObjectMeta{
+					Name: "ns",
+				},
+			},
+		},
+	})
+
+	p := &test.Params{Tekton: cs.Pipeline, Kube: cs.Kube}
+
+	pipelinerun := Command(p)
+	actual, err := test.ExecuteCommand(pipelinerun, "desc", "pr-custom-timeout", "-n", "ns")
+	if err != nil {
+		t.Errorf("Unexpected error: %v", err)
+	}
+	golden.Assert(t, actual, fmt.Sprintf("%s.golden", t.Name()))
+}
