@@ -41,7 +41,7 @@ like cat,foo,bar
   -p, --param stringArray        pass the param as key=value or key=value1,value2
   -s, --serviceaccount string    pass the serviceaccount name
       --showlog                  show logs right after starting the task
-  -t, --timeout int              timeout for taskrun in seconds (default 3600)
+      --timeout int              timeout for taskrun in seconds (default 3600)
       --use-taskrun string       specify a taskrun name to use its values to re-run the taskrun
 ```
 
