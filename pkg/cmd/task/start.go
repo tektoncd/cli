@@ -18,6 +18,7 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
+	"log"
 	"strings"
 	"time"
 
@@ -112,6 +113,10 @@ like cat,foo,bar
 `,
 		SilenceUsage: true,
 		Args: func(cmd *cobra.Command, args []string) error {
+			if opt.TimeOut != 3600 {
+				log.Println("WARNING: The --timeout flag will no longer be specified in seconds in v0.9.0. Learn more here: https://github.com/tektoncd/cli/issues/730")
+				log.Println("WARNING: The -t shortand for --timeout will no longer be available in v0.9.0.")
+			}
 			if err := flags.InitParams(p, cmd); err != nil {
 				return err
 			}
@@ -148,7 +153,6 @@ like cat,foo,bar
 	c.Flags().BoolVarP(&opt.Last, "last", "L", false, "re-run the task using last taskrun values")
 	c.Flags().StringVarP(&opt.UseTaskRun, "use-taskrun", "", "", "specify a taskrun name to use its values to re-run the taskrun")
 	flags.AddShellCompletion(c.Flags().Lookup("use-taskrun"), "__tkn_get_taskrun")
-
 	c.Flags().StringSliceVarP(&opt.Labels, "labels", "l", []string{}, "pass labels as label=value.")
 	c.Flags().BoolVarP(&opt.ShowLog, "showlog", "", false, "show logs right after starting the task")
 	c.Flags().StringVarP(&opt.Filename, "filename", "f", "", "local or remote file name containing a task definition")
