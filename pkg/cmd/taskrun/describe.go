@@ -21,9 +21,9 @@ import (
 
 	"github.com/spf13/cobra"
 	"github.com/tektoncd/cli/pkg/cli"
+	"github.com/tektoncd/cli/pkg/printer"
 	trdesc "github.com/tektoncd/cli/pkg/taskrun/description"
 	validate "github.com/tektoncd/cli/pkg/validate"
-	"github.com/tektoncd/cli/pkg/printer"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime/schema"
 	cliopts "k8s.io/cli-runtime/pkg/genericclioptions"
