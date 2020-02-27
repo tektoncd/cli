@@ -2,8 +2,6 @@
 
 Start tasks
 
-***Aliases**: trigger*
-
 ### Usage
 
 ```

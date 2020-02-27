@@ -2,8 +2,6 @@
 
 Start pipelines
 
-***Aliases**: trigger*
-
 ### Usage
 
 ```
