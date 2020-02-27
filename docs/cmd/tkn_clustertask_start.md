@@ -22,7 +22,7 @@ or
 
     tkn ct start foo -n bar
 
-For params value, if you want to provide multiple values, provide them comma separated 
+For params value, if you want to provide multiple values, provide them comma separated
 like cat,foo,bar
 
 
