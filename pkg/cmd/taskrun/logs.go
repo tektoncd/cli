@@ -22,9 +22,9 @@ import (
 	"github.com/spf13/cobra"
 	"github.com/tektoncd/cli/pkg/cli"
 	trlist "github.com/tektoncd/cli/pkg/helper/taskrun/list"
-	validate "github.com/tektoncd/cli/pkg/helper/validate"
 	"github.com/tektoncd/cli/pkg/log"
 	"github.com/tektoncd/cli/pkg/options"
+	validate "github.com/tektoncd/cli/pkg/validate"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 )
 

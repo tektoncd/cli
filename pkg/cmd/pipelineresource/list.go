@@ -23,7 +23,7 @@ import (
 
 	"github.com/spf13/cobra"
 	"github.com/tektoncd/cli/pkg/cli"
-	validinput "github.com/tektoncd/cli/pkg/helper/validate"
+	validinput "github.com/tektoncd/cli/pkg/validate"
 	"github.com/tektoncd/cli/pkg/printer"
 	"github.com/tektoncd/pipeline/pkg/apis/pipeline/v1alpha1"
 	versionedResource "github.com/tektoncd/pipeline/pkg/client/resource/clientset/versioned"

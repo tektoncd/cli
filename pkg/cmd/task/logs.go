@@ -25,7 +25,7 @@ import (
 	"github.com/tektoncd/cli/pkg/options"
 	thelper "github.com/tektoncd/cli/pkg/helper/task"
 	trlist "github.com/tektoncd/cli/pkg/helper/taskrun/list"
-	validate "github.com/tektoncd/cli/pkg/helper/validate"
+	validate "github.com/tektoncd/cli/pkg/validate"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 )
 

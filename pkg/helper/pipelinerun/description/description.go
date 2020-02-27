@@ -11,7 +11,7 @@ import (
 
 	"github.com/tektoncd/cli/pkg/cli"
 	"github.com/tektoncd/cli/pkg/formatted"
-	"github.com/tektoncd/cli/pkg/helper/validate"
+	"github.com/tektoncd/cli/pkg/validate"
 	"github.com/tektoncd/pipeline/pkg/apis/pipeline/v1alpha1"
 )
 

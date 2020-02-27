@@ -22,7 +22,7 @@ import (
 	"github.com/spf13/cobra"
 	"github.com/tektoncd/cli/pkg/cli"
 	prdesc "github.com/tektoncd/cli/pkg/helper/pipelinerun/description"
-	validate "github.com/tektoncd/cli/pkg/helper/validate"
+	validate "github.com/tektoncd/cli/pkg/validate"
 	"github.com/tektoncd/cli/pkg/printer"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime/schema"
