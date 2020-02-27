@@ -30,9 +30,9 @@ import (
 	"github.com/tektoncd/cli/pkg/helper/file"
 	"github.com/tektoncd/cli/pkg/helper/labels"
 	"github.com/tektoncd/cli/pkg/helper/options"
-	"github.com/tektoncd/cli/pkg/helper/params"
 	"github.com/tektoncd/cli/pkg/helper/task"
 	validate "github.com/tektoncd/cli/pkg/helper/validate"
+	"github.com/tektoncd/cli/pkg/params"
 	"github.com/tektoncd/pipeline/pkg/apis/pipeline/v1alpha1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 )
