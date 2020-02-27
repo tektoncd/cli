@@ -21,7 +21,7 @@ import (
 
 	"github.com/spf13/cobra"
 	"github.com/tektoncd/cli/pkg/cli"
-	trdesc "github.com/tektoncd/cli/pkg/helper/taskrun/description"
+	trdesc "github.com/tektoncd/cli/pkg/taskrun/description"
 	validate "github.com/tektoncd/cli/pkg/validate"
 	"github.com/tektoncd/cli/pkg/printer"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"

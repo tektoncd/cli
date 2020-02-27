@@ -18,7 +18,7 @@ import (
 	"testing"
 	"time"
 
-	trh "github.com/tektoncd/cli/pkg/helper/taskrun"
+	trh "github.com/tektoncd/cli/pkg/taskrun"
 	"github.com/tektoncd/cli/pkg/test"
 	clitest "github.com/tektoncd/cli/pkg/test"
 	"github.com/tektoncd/pipeline/pkg/apis/pipeline/v1alpha1"
