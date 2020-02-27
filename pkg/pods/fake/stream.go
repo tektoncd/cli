@@ -20,7 +20,7 @@ import (
 	"io/ioutil"
 	"strings"
 
-	"github.com/tektoncd/cli/pkg/helper/pods/stream"
+	"github.com/tektoncd/cli/pkg/pods/stream"
 	corev1 "k8s.io/api/core/v1"
 	typedv1 "k8s.io/client-go/kubernetes/typed/core/v1"
 )
