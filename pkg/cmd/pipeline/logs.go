@@ -22,7 +22,7 @@ import (
 	"github.com/tektoncd/cli/pkg/cli"
 	"github.com/tektoncd/cli/pkg/cmd/pipelinerun"
 	"github.com/tektoncd/cli/pkg/flags"
-	"github.com/tektoncd/cli/pkg/helper/options"
+	"github.com/tektoncd/cli/pkg/options"
 	"github.com/tektoncd/cli/pkg/helper/pipeline"
 	phelper "github.com/tektoncd/cli/pkg/helper/pipeline"
 	prhelper "github.com/tektoncd/cli/pkg/helper/pipelinerun"

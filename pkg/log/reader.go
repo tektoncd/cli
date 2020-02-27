@@ -18,9 +18,9 @@ import (
 	"fmt"
 
 	"github.com/tektoncd/cli/pkg/cli"
-	"github.com/tektoncd/cli/pkg/helper/options"
 	"github.com/tektoncd/cli/pkg/helper/pods"
 	"github.com/tektoncd/cli/pkg/helper/pods/stream"
+	"github.com/tektoncd/cli/pkg/options"
 )
 
 type Reader struct {
