@@ -28,8 +28,8 @@ import (
 	"github.com/tektoncd/cli/pkg/flags"
 	"github.com/tektoncd/cli/pkg/helper/labels"
 	"github.com/tektoncd/cli/pkg/helper/options"
-	"github.com/tektoncd/cli/pkg/helper/params"
 	"github.com/tektoncd/cli/pkg/helper/task"
+	"github.com/tektoncd/cli/pkg/params"
 	"github.com/tektoncd/pipeline/pkg/apis/pipeline/v1alpha1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 )
@@ -93,7 +93,7 @@ or
 
     tkn ct start foo -n bar
 
-For params value, if you want to provide multiple values, provide them comma separated 
+For params value, if you want to provide multiple values, provide them comma separated
 like cat,foo,bar
 `
 
