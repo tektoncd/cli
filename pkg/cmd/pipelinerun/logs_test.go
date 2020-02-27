@@ -22,7 +22,7 @@ import (
 
 	"github.com/jonboulle/clockwork"
 	"github.com/tektoncd/cli/pkg/cli"
-	"github.com/tektoncd/cli/pkg/helper/options"
+	"github.com/tektoncd/cli/pkg/options"
 	"github.com/tektoncd/cli/pkg/helper/pods/fake"
 	"github.com/tektoncd/cli/pkg/helper/pods/stream"
 	"github.com/tektoncd/cli/pkg/test"

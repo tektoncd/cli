@@ -22,7 +22,7 @@ import (
 	"github.com/tektoncd/cli/pkg/cli"
 	"github.com/tektoncd/cli/pkg/cmd/taskrun"
 	"github.com/tektoncd/cli/pkg/flags"
-	"github.com/tektoncd/cli/pkg/helper/options"
+	"github.com/tektoncd/cli/pkg/options"
 	thelper "github.com/tektoncd/cli/pkg/helper/task"
 	trlist "github.com/tektoncd/cli/pkg/helper/taskrun/list"
 	validate "github.com/tektoncd/cli/pkg/helper/validate"
