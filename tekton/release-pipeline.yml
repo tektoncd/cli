@@ -37,6 +37,8 @@ spec:
           value: $(params.package)
         - name: version
           value: 1.13.8
+        - name: flags
+          value: -v -mod=vendor
       resources:
         inputs:
           - name: source
@@ -50,6 +52,8 @@ spec:
           value: $(params.package)
         - name: version
           value: 1.13.8
+        - name: flags
+          value: -v -mod=vendor
       resources:
         inputs:
           - name: source
