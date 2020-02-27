@@ -20,7 +20,7 @@ import (
 	"strings"
 
 	"github.com/tektoncd/cli/pkg/cli"
-	"github.com/tektoncd/cli/pkg/helper/names"
+	"github.com/tektoncd/cli/pkg/names"
 )
 
 type DeleteOptions struct {
