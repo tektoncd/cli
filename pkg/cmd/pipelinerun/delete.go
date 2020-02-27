@@ -20,7 +20,7 @@ import (
 
 	"github.com/spf13/cobra"
 	"github.com/tektoncd/cli/pkg/cli"
-	"github.com/tektoncd/cli/pkg/helper/deleter"
+	"github.com/tektoncd/cli/pkg/deleter"
 	"github.com/tektoncd/cli/pkg/options"
 	prhsort "github.com/tektoncd/cli/pkg/pipelinerun/sort"
 	validate "github.com/tektoncd/cli/pkg/validate"
