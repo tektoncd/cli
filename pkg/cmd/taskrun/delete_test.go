@@ -165,6 +165,22 @@ func TestTaskRunDelete(t *testing.T) {
 			want:        "All TaskRuns deleted in namespace \"ns\"\n",
 		},
 		{
+			name:        "Delete all keeping 2",
+			command:     []string{"delete", "--all", "-f", "--keep", "2", "-n", "ns"},
+			input:       seeds[4],
+			inputStream: nil,
+			wantError:   false,
+			want:        "All but 2 TaskRuns deleted in namespace \"ns\"\n",
+		},
+		{
+			name:        "Keep -1 is a no go",
+			command:     []string{"delete", "--all", "-f", "--keep", "-1", "-n", "ns"},
+			input:       seeds[4],
+			inputStream: nil,
+			wantError:   true,
+			want:        "keep option should not be lower than 0",
+		},
+		{
 			name:        "Error from using taskrun name with --all",
 			command:     []string{"delete", "taskrun", "--all", "-n", "ns"},
 			input:       seeds[4],

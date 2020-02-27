@@ -71,6 +71,7 @@ or
 	c.Flags().BoolVarP(&opts.ForceDelete, "force", "f", false, "Whether to force deletion (default: false)")
 	c.Flags().StringVarP(&opts.ParentResourceName, "task", "t", "", "The name of a task whose taskruns should be deleted (does not delete the task)")
 	c.Flags().BoolVarP(&opts.DeleteAllNs, "all", "", false, "Delete all taskruns in a namespace (default: false)")
+	c.Flags().IntVarP(&opts.Keep, "keep", "", 0, "Keep n least recent number of pipelineruns when deleting alls")
 	_ = c.MarkZshCompPositionalArgumentCustom(1, "__tkn_get_taskrun")
 	return c
 }
@@ -86,7 +87,7 @@ func deleteTaskRuns(s *cli.Stream, p cli.Params, trNames []string, opts *options
 		d = deleter.New("TaskRun", func(taskRunName string) error {
 			return cs.Tekton.TektonV1alpha1().TaskRuns(p.Namespace()).Delete(taskRunName, &metav1.DeleteOptions{})
 		})
-		trs, err := allTaskRunNames(p, cs)
+		trs, err := allTaskRunNames(p, cs, opts.Keep)
 		if err != nil {
 			return err
 		}
@@ -109,7 +110,11 @@ func deleteTaskRuns(s *cli.Stream, p cli.Params, trNames []string, opts *options
 		d.PrintSuccesses(s)
 	} else if opts.DeleteAllNs {
 		if d.Errors() == nil {
-			fmt.Fprintf(s.Out, "All TaskRuns deleted in namespace %q\n", p.Namespace())
+			if opts.Keep > 0 {
+				fmt.Fprintf(s.Out, "All but %d TaskRuns deleted in namespace %q\n", opts.Keep, p.Namespace())
+			} else {
+				fmt.Fprintf(s.Out, "All TaskRuns deleted in namespace %q\n", p.Namespace())
+			}
 		}
 	}
 	return d.Errors()
@@ -132,13 +137,18 @@ func taskRunLister(p cli.Params, cs *cli.Clients) func(string) ([]string, error)
 	}
 }
 
-func allTaskRunNames(p cli.Params, cs *cli.Clients) ([]string, error) {
+func allTaskRunNames(p cli.Params, cs *cli.Clients, keep int) ([]string, error) {
 	taskRuns, err := cs.Tekton.TektonV1alpha1().TaskRuns(p.Namespace()).List(metav1.ListOptions{})
 	if err != nil {
 		return nil, err
 	}
 	var names []string
+	var counter = 0
 	for _, tr := range taskRuns.Items {
+		if keep > 0 && counter != keep {
+			counter++
+			continue
+		}
 		names = append(names, tr.Name)
 	}
 	return names, nil
