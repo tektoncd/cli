@@ -22,7 +22,7 @@ import (
 	"text/template"
 
 	"github.com/tektoncd/cli/pkg/formatted"
-	validateinput "github.com/tektoncd/cli/pkg/helper/validate"
+	validateinput "github.com/tektoncd/cli/pkg/validate"
 	"github.com/tektoncd/cli/pkg/printer"
 
 	"github.com/spf13/cobra"

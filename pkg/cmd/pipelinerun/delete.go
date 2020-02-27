@@ -21,9 +21,9 @@ import (
 	"github.com/spf13/cobra"
 	"github.com/tektoncd/cli/pkg/cli"
 	"github.com/tektoncd/cli/pkg/helper/deleter"
-	validate "github.com/tektoncd/cli/pkg/helper/validate"
 	"github.com/tektoncd/cli/pkg/options"
 	prhsort "github.com/tektoncd/cli/pkg/pipelinerun/sort"
+	validate "github.com/tektoncd/cli/pkg/validate"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	cliopts "k8s.io/cli-runtime/pkg/genericclioptions"
 )

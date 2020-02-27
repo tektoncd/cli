@@ -24,7 +24,7 @@ import (
 	"github.com/tektoncd/cli/pkg/cli"
 	"github.com/tektoncd/cli/pkg/formatted"
 	trhsort "github.com/tektoncd/cli/pkg/helper/taskrun/sort"
-	"github.com/tektoncd/cli/pkg/helper/validate"
+	"github.com/tektoncd/cli/pkg/validate"
 	"github.com/tektoncd/cli/pkg/printer"
 	"github.com/tektoncd/pipeline/pkg/apis/pipeline/v1alpha1"
 	v1 "k8s.io/apimachinery/pkg/apis/meta/v1"

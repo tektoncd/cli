@@ -26,7 +26,7 @@ import (
 	"github.com/tektoncd/cli/pkg/helper/pipeline"
 	phelper "github.com/tektoncd/cli/pkg/helper/pipeline"
 	prhelper "github.com/tektoncd/cli/pkg/helper/pipelinerun"
-	validate "github.com/tektoncd/cli/pkg/helper/validate"
+	validate "github.com/tektoncd/cli/pkg/validate"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 )
 
