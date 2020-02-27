@@ -36,7 +36,7 @@ type DeleteOptions struct {
 
 func (o *DeleteOptions) CheckOptions(s *cli.Stream, resourceNames []string, ns string) error {
 	if o.Keep > 0 && !(o.DeleteAllNs || o.DeleteAll) {
-		return fmt.Errorf("must provide pipelineruns to delete or --pipeline flag")
+		return fmt.Errorf("must use --all flag with --keep")
 	}
 	// make sure no resource names are provided when using --all flag
 	if len(resourceNames) > 0 && (o.DeleteAllNs || o.DeleteAll) {
