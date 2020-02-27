@@ -35,6 +35,8 @@ spec:
       params:
         - name: package
           value: $(params.package)
+        - name: version
+          value: 1.13.8
       resources:
         inputs:
           - name: source
@@ -46,6 +48,8 @@ spec:
       params:
         - name: package
           value: $(params.package)
+        - name: version
+          value: 1.13.8
       resources:
         inputs:
           - name: source
