@@ -20,7 +20,7 @@ import (
 	"github.com/ghodss/yaml"
 	"github.com/spf13/cobra"
 	"github.com/tektoncd/cli/pkg/cli"
-	"github.com/tektoncd/cli/pkg/helper/file"
+	"github.com/tektoncd/cli/pkg/file"
 	validate "github.com/tektoncd/cli/pkg/helper/validate"
 	"github.com/tektoncd/pipeline/pkg/apis/pipeline/v1alpha1"
 	cliopts "k8s.io/cli-runtime/pkg/genericclioptions"
