@@ -17,7 +17,7 @@ package pipelinerun
 import (
 	"time"
 
-	trh "github.com/tektoncd/cli/pkg/helper/taskrun"
+	trh "github.com/tektoncd/cli/pkg/taskrun"
 	"github.com/tektoncd/pipeline/pkg/apis/pipeline/v1alpha1"
 	"github.com/tektoncd/pipeline/pkg/client/clientset/versioned"
 	informers "github.com/tektoncd/pipeline/pkg/client/informers/externalversions"

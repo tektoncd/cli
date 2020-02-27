@@ -27,7 +27,7 @@ import (
 	"github.com/tektoncd/cli/pkg/cli"
 	prdesc "github.com/tektoncd/cli/pkg/helper/pipelinerun/description"
 	"github.com/tektoncd/cli/pkg/pods/stream"
-	trdesc "github.com/tektoncd/cli/pkg/helper/taskrun/description"
+	trdesc "github.com/tektoncd/cli/pkg/taskrun/description"
 )
 
 const (

@@ -23,7 +23,7 @@ import (
 	"github.com/spf13/cobra"
 	"github.com/tektoncd/cli/pkg/cli"
 	"github.com/tektoncd/cli/pkg/formatted"
-	trhsort "github.com/tektoncd/cli/pkg/helper/taskrun/sort"
+	trhsort "github.com/tektoncd/cli/pkg/taskrun/sort"
 	"github.com/tektoncd/cli/pkg/validate"
 	"github.com/tektoncd/cli/pkg/printer"
 	"github.com/tektoncd/pipeline/pkg/apis/pipeline/v1alpha1"

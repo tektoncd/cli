@@ -17,7 +17,7 @@ package list
 import (
 	"github.com/tektoncd/cli/pkg/cli"
 	"github.com/tektoncd/cli/pkg/formatted"
-	trsort "github.com/tektoncd/cli/pkg/helper/taskrun/sort"
+	trsort "github.com/tektoncd/cli/pkg/taskrun/sort"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 )
 
