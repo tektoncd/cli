@@ -25,7 +25,7 @@ import (
 	"github.com/fatih/color"
 	"github.com/ktr0731/go-fuzzyfinder"
 	"github.com/tektoncd/cli/pkg/cli"
-	prdesc "github.com/tektoncd/cli/pkg/helper/pipelinerun/description"
+	prdesc "github.com/tektoncd/cli/pkg/pipelinerun/description"
 	"github.com/tektoncd/cli/pkg/pods/stream"
 	trdesc "github.com/tektoncd/cli/pkg/taskrun/description"
 )

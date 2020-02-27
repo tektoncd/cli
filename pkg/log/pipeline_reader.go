@@ -19,7 +19,7 @@ import (
 	"sync"
 	"time"
 
-	"github.com/tektoncd/cli/pkg/helper/pipelinerun"
+	"github.com/tektoncd/cli/pkg/pipelinerun"
 	trh "github.com/tektoncd/cli/pkg/taskrun"
 	"github.com/tektoncd/pipeline/pkg/apis/pipeline/v1alpha1"
 	corev1 "k8s.io/api/core/v1"
