@@ -17,7 +17,6 @@ package log
 import (
 	"fmt"
 	"sync"
-	"sync/atomic"
 	"time"
 
 	"github.com/tektoncd/cli/pkg/helper/pipelinerun"
@@ -53,21 +52,22 @@ func (r *Reader) readLivePipelineLogs(pr *v1alpha1.PipelineRun) (<-chan Log, <-c
 		trC := prTracker.Monitor(r.tasks)
 
 		wg := sync.WaitGroup{}
-		taskIndex := int32(1)
+		taskIndex := 0
 
 		for trs := range trC {
 			wg.Add(len(trs))
 
 			for _, run := range trs {
+				taskIndex++
 				// NOTE: passing tr, taskIdx to avoid data race
-				go func(tr trh.Run, taskNum int32) {
+				go func(tr trh.Run, taskNum int) {
 					defer wg.Done()
 
 					// clone the object to keep task number and name separately
 					c := r.clone()
 					c.setUpTask(int(taskNum), tr)
 					c.pipeLogs(logC, errC)
-				}(run, atomic.AddInt32(&taskIndex, 1))
+				}(run, taskIndex)
 			}
 		}
 
@@ -103,9 +103,9 @@ func (r *Reader) readAvailablePipelineLogs(pr *v1alpha1.PipelineRun) (<-chan Log
 		defer close(logC)
 		defer close(errC)
 
+		// clone the object to keep task number and name separately
+		c := r.clone()
 		for i, tr := range taskRuns {
-			// clone the object to keep task number and name separately
-			c := r.clone()
 			c.setUpTask(i+1, tr)
 			c.pipeLogs(logC, errC)
 		}
