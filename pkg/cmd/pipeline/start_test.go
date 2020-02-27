@@ -28,7 +28,7 @@ import (
 	"github.com/jonboulle/clockwork"
 	"github.com/tektoncd/cli/pkg/cli"
 	"github.com/tektoncd/cli/pkg/helper/pipeline"
-	hpipelinerun "github.com/tektoncd/cli/pkg/helper/pipelinerun"
+	hpipelinerun "github.com/tektoncd/cli/pkg/pipelinerun"
 	"github.com/tektoncd/cli/pkg/test"
 	cb "github.com/tektoncd/cli/pkg/test/builder"
 	"github.com/tektoncd/cli/test/prompt"
