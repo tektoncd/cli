@@ -26,7 +26,7 @@ import (
 	"github.com/ktr0731/go-fuzzyfinder"
 	"github.com/tektoncd/cli/pkg/cli"
 	prdesc "github.com/tektoncd/cli/pkg/helper/pipelinerun/description"
-	"github.com/tektoncd/cli/pkg/helper/pods/stream"
+	"github.com/tektoncd/cli/pkg/pods/stream"
 	trdesc "github.com/tektoncd/cli/pkg/helper/taskrun/description"
 )
 
