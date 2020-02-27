@@ -26,10 +26,10 @@ import (
 	"github.com/tektoncd/cli/pkg/cli"
 	"github.com/tektoncd/cli/pkg/cmd/taskrun"
 	"github.com/tektoncd/cli/pkg/flags"
-	"github.com/tektoncd/cli/pkg/helper/task"
 	"github.com/tektoncd/cli/pkg/labels"
 	"github.com/tektoncd/cli/pkg/options"
 	"github.com/tektoncd/cli/pkg/params"
+	"github.com/tektoncd/cli/pkg/task"
 	"github.com/tektoncd/pipeline/pkg/apis/pipeline/v1alpha1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 )
