@@ -96,9 +96,8 @@ func startCommand(p cli.Params) *cobra.Command {
 	}
 
 	c := &cobra.Command{
-		Use:     "start task [RESOURCES...] [PARAMS...] [SERVICEACCOUNT]",
-		Aliases: []string{"trigger"},
-		Short:   "Start tasks",
+		Use:   "start task [RESOURCES...] [PARAMS...] [SERVICEACCOUNT]",
+		Short: "Start tasks",
 		Annotations: map[string]string{
 			"commandType": "main",
 		},

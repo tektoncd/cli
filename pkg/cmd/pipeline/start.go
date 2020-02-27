@@ -118,9 +118,8 @@ func startCommand(p cli.Params) *cobra.Command {
 	}
 
 	c := &cobra.Command{
-		Use:     "start pipeline [RESOURCES...] [PARAMS...] [SERVICEACCOUNT]",
-		Aliases: []string{"trigger"},
-		Short:   "Start pipelines",
+		Use:   "start pipeline [RESOURCES...] [PARAMS...] [SERVICEACCOUNT]",
+		Short: "Start pipelines",
 		Annotations: map[string]string{
 			"commandType": "main",
 		},
