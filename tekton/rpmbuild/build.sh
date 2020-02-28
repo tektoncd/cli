@@ -1,4 +1,4 @@
-#!/bin/bash
+#!/usr/bin/env bash
 
 currentdir=$(dirname $(readlink -f $0))
 repospecfile=${currentdir}/tekton.spec
