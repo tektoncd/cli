@@ -38,7 +38,9 @@ cd cli-${version}
 
 dch -M -v ${version}-${RELEASE} -D $(sed -n '/DISTRIB_CODENAME/ { s/.*=//;p;;}' /etc/lsb-release) "new update"
 
+pcscd
 gpgconf --kill gpg-agent && gpg-agent --pinentry-program /usr/bin/pinentry-curses --verbose --daemon
+gpg --card-status || true
 debuild -S --force-sign -k${GPG_KEY}
 
 cd ..
