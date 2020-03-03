@@ -38,8 +38,9 @@ func (o *DeleteOptions) CheckOptions(s *cli.Stream, resourceNames []string, ns s
 	if o.Keep > 0 && !(o.DeleteAllNs || o.DeleteAll) {
 		return fmt.Errorf("must use --all flag with --keep")
 	}
+
 	// make sure no resource names are provided when using --all flag
-	if len(resourceNames) > 0 && (o.DeleteAllNs || o.DeleteAll) {
+	if len(resourceNames) > 0 && (o.DeleteAllNs || o.DeleteAll) || o.DeleteAllNs && o.DeleteRelated {
 		return fmt.Errorf("--all flag should not have any arguments or flags specified with it")
 	}
 

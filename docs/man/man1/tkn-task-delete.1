@@ -20,8 +20,8 @@ Delete task resources in a namespace
 
 .SH OPTIONS
 .PP
-\fB\-a\fP, \fB\-\-all\fP[=false]
-    Whether to also delete related resources (taskruns) (default: false)
+\fB\-\-all\fP[=false]
+    Delete all Tasks in a namespace (default: false)
 
 .PP
 \fB\-\-allow\-missing\-template\-keys\fP[=true]
@@ -43,6 +43,10 @@ Delete task resources in a namespace
 \fB\-\-template\fP=""
     Template string or path to template file to use when \-o=go\-template, \-o=go\-template\-file. The template format is golang templates [
 \[la]http://golang.org/pkg/text/template/#pkg-overview\[ra]].
+
+.PP
+\fB\-\-trs\fP[=false]
+    Whether to delete Task(s) and related resources (TaskRuns) (default: false)
 
 
 .SH OPTIONS INHERITED FROM PARENT COMMANDS

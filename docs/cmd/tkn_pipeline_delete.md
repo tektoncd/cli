@@ -28,11 +28,12 @@ or
 ### Options
 
 ```
-  -a, --all                           Whether to also delete related resources (pipelineruns) (default: false)
+      --all                           Delete all Pipelines in a namespace (default: false)
       --allow-missing-template-keys   If true, ignore any errors in templates when a field or map key is missing in the template. Only applies to golang and jsonpath output formats. (default true)
   -f, --force                         Whether to force deletion (default: false)
   -h, --help                          help for delete
   -o, --output string                 Output format. One of: json|yaml|name|go-template|go-template-file|template|templatefile|jsonpath|jsonpath-file.
+      --prs                           Whether to delete pipeline(s) and related resources (pipelineruns) (default: false)
       --template string               Template string or path to template file to use when -o=go-template, -o=go-template-file. The template format is golang templates [http://golang.org/pkg/text/template/#pkg-overview].
 ```
 
