@@ -284,13 +284,6 @@ func (res *Resource) AskImageParams() error {
 }
 
 func (res *Resource) AskClusterParams() error {
-	nameParam, err := askParam("name", res.AskOpts)
-	if err != nil {
-		return err
-	}
-	if nameParam.Name != "" {
-		res.PipelineResource.Spec.Params = append(res.PipelineResource.Spec.Params, nameParam)
-	}
 
 	urlParam, err := askParam("url", res.AskOpts)
 	if err != nil {
