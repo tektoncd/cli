@@ -20,8 +20,8 @@ Delete pipelines in a namespace
 
 .SH OPTIONS
 .PP
-\fB\-a\fP, \fB\-\-all\fP[=false]
-    Whether to also delete related resources (pipelineruns) (default: false)
+\fB\-\-all\fP[=false]
+    Delete all Pipelines in a namespace (default: false)
 
 .PP
 \fB\-\-allow\-missing\-template\-keys\fP[=true]
@@ -38,6 +38,10 @@ Delete pipelines in a namespace
 .PP
 \fB\-o\fP, \fB\-\-output\fP=""
     Output format. One of: json|yaml|name|go\-template|go\-template\-file|template|templatefile|jsonpath|jsonpath\-file.
+
+.PP
+\fB\-\-prs\fP[=false]
+    Whether to delete pipeline(s) and related resources (pipelineruns) (default: false)
 
 .PP
 \fB\-\-template\fP=""

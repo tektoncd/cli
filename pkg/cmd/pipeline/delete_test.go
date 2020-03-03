@@ -36,10 +36,14 @@ func TestPipelineDelete(t *testing.T) {
 	clock := clockwork.NewFakeClock()
 
 	seeds := make([]pipelinetest.Clients, 0)
-	for i := 0; i < 7; i++ {
+	for i := 0; i < 8; i++ {
 		cs, _ := test.SeedTestData(t, pipelinetest.Data{
 			Pipelines: []*v1alpha1.Pipeline{
 				tb.Pipeline("pipeline", "ns",
+					// created  5 minutes back
+					cb.PipelineCreationTimestamp(clock.Now().Add(-5*time.Minute)),
+				),
+				tb.Pipeline("pipeline2", "ns",
 					// created  5 minutes back
 					cb.PipelineCreationTimestamp(clock.Now().Add(-5*time.Minute)),
 				),
@@ -145,7 +149,7 @@ func TestPipelineDelete(t *testing.T) {
 		},
 		{
 			name:        "With delete all flag, reply yes",
-			command:     []string{"rm", "pipeline", "-n", "ns", "-a"},
+			command:     []string{"rm", "pipeline", "-n", "ns", "--prs"},
 			input:       seeds[3],
 			inputStream: strings.NewReader("y"),
 			wantError:   false,
@@ -153,11 +157,51 @@ func TestPipelineDelete(t *testing.T) {
 		},
 		{
 			name:        "With delete all and force delete flag",
-			command:     []string{"rm", "pipeline", "-n", "ns", "-f", "--all"},
+			command:     []string{"rm", "pipeline", "-n", "ns", "-f", "--prs"},
 			input:       seeds[4],
 			inputStream: nil,
 			wantError:   false,
 			want:        "PipelineRuns deleted: \"pipeline-run-1\", \"pipeline-run-2\"\nPipelines deleted: \"pipeline\"\n",
+		},
+		{
+			name:        "Delete all with prompt",
+			command:     []string{"delete", "--all", "-n", "ns"},
+			input:       seeds[5],
+			inputStream: strings.NewReader("y"),
+			wantError:   false,
+			want:        "Are you sure you want to delete all pipelines in namespace \"ns\" (y/n): All Pipelines deleted in namespace \"ns\"\n",
+		},
+		{
+			name:        "Delete all with -f",
+			command:     []string{"delete", "--all", "-f", "-n", "ns"},
+			input:       seeds[6],
+			inputStream: nil,
+			wantError:   false,
+			want:        "All Pipelines deleted in namespace \"ns\"\n",
+		},
+		{
+			name:        "Error from using pipeline name with --all",
+			command:     []string{"delete", "pipeline", "--all", "-n", "ns"},
+			input:       seeds[6],
+			inputStream: nil,
+			wantError:   true,
+			want:        "--all flag should not have any arguments or flags specified with it",
+		},
+		{
+			name:        "Error from using --all with --prs",
+			command:     []string{"delete", "--all", "--prs", "-n", "ns"},
+			input:       seeds[6],
+			inputStream: nil,
+			wantError:   true,
+			want:        "--all flag should not have any arguments or flags specified with it",
+		},
+		{
+			name:        "With force delete flag (shorthand), multiple pipelines",
+			command:     []string{"rm", "pipeline", "pipeline2", "-n", "ns", "-f"},
+			input:       seeds[7],
+			inputStream: nil,
+			wantError:   false,
+			want:        "Pipelines deleted: \"pipeline\", \"pipeline2\"\n",
 		},
 	}
 

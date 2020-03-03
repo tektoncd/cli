@@ -118,6 +118,13 @@ func TestDeleteOptions(t *testing.T) {
 			want:           "--all flag should not have any arguments or flags specified with it",
 		},
 		{
+			name:           "Error when DeleteRelated with DeleteAllNs",
+			opt:            &DeleteOptions{DeleteAllNs: true, DeleteRelated: true},
+			resourcesNames: []string{"test1"},
+			wantError:      true,
+			want:           "--all flag should not have any arguments or flags specified with it",
+		},
+		{
 			name:           "Specify DeleteAll option",
 			opt:            &DeleteOptions{DeleteAll: true},
 			stream:         &cli.Stream{In: strings.NewReader("y"), Out: os.Stdout},

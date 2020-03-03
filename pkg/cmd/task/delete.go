@@ -16,7 +16,6 @@ package task
 
 import (
 	"fmt"
-	"log"
 
 	"github.com/spf13/cobra"
 	"github.com/tektoncd/cli/pkg/cli"
@@ -44,7 +43,7 @@ or
 		Aliases:      []string{"rm"},
 		Short:        "Delete task resources in a namespace",
 		Example:      eg,
-		Args:         cobra.MinimumNArgs(1),
+		Args:         cobra.MinimumNArgs(0),
 		SilenceUsage: true,
 		Annotations: map[string]string{
 			"commandType": "main",
@@ -54,10 +53,6 @@ or
 				In:  cmd.InOrStdin(),
 				Out: cmd.OutOrStdout(),
 				Err: cmd.OutOrStderr(),
-			}
-
-			if opts.DeleteRelated {
-				log.Println("WARNING: The behavior of --all will change in v0.9.0, and the current --all flag will be given a new name.")
 			}
 
 			if err := validate.NamespaceExists(p); err != nil {
@@ -73,7 +68,8 @@ or
 	}
 	f.AddFlags(c)
 	c.Flags().BoolVarP(&opts.ForceDelete, "force", "f", false, "Whether to force deletion (default: false)")
-	c.Flags().BoolVarP(&opts.DeleteRelated, "all", "a", false, "Whether to also delete related resources (taskruns) (default: false)")
+	c.Flags().BoolVarP(&opts.DeleteRelated, "trs", "", false, "Whether to delete Task(s) and related resources (TaskRuns) (default: false)")
+	c.Flags().BoolVarP(&opts.DeleteAllNs, "all", "", false, "Delete all Tasks in a namespace (default: false)")
 
 	_ = c.MarkZshCompPositionalArgumentCustom(1, "__tkn_get_task")
 	return c
@@ -87,14 +83,29 @@ func deleteTask(opts *options.DeleteOptions, s *cli.Stream, p cli.Params, taskNa
 	d := deleter.New("Task", func(taskName string) error {
 		return cs.Tekton.TektonV1alpha1().Tasks(p.Namespace()).Delete(taskName, &metav1.DeleteOptions{})
 	})
-	d.WithRelated("TaskRun", taskRunLister(p, cs), func(taskRunName string) error {
-		return cs.Tekton.TektonV1alpha1().TaskRuns(p.Namespace()).Delete(taskRunName, &metav1.DeleteOptions{})
-	})
-	deletedTaskNames := d.Delete(s, taskNames)
-	if opts.DeleteRelated {
+	switch {
+	case opts.DeleteAllNs:
+		taskNames, err = allTaskNames(p, cs)
+		if err != nil {
+			return err
+		}
+		d.Delete(s, taskNames)
+	case opts.DeleteRelated:
+		d.WithRelated("TaskRun", taskRunLister(p, cs), func(taskRunName string) error {
+			return cs.Tekton.TektonV1alpha1().TaskRuns(p.Namespace()).Delete(taskRunName, &metav1.DeleteOptions{})
+		})
+		deletedTaskNames := d.Delete(s, taskNames)
 		d.DeleteRelated(s, deletedTaskNames)
+	default:
+		d.Delete(s, taskNames)
 	}
-	d.PrintSuccesses(s)
+	if !opts.DeleteAllNs {
+		d.PrintSuccesses(s)
+	} else if opts.DeleteAllNs {
+		if d.Errors() == nil {
+			fmt.Fprintf(s.Out, "All Tasks deleted in namespace %q\n", p.Namespace())
+		}
+	}
 	return d.Errors()
 }
 
@@ -113,4 +124,16 @@ func taskRunLister(p cli.Params, cs *cli.Clients) func(string) ([]string, error)
 		}
 		return names, nil
 	}
+}
+
+func allTaskNames(p cli.Params, cs *cli.Clients) ([]string, error) {
+	ts, err := cs.Tekton.TektonV1alpha1().Tasks(p.Namespace()).List(metav1.ListOptions{})
+	if err != nil {
+		return nil, err
+	}
+	var names []string
+	for _, t := range ts.Items {
+		names = append(names, t.Name)
+	}
+	return names, nil
 }

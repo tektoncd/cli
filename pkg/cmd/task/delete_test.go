@@ -36,10 +36,11 @@ func TestTaskDelete(t *testing.T) {
 	clock := clockwork.NewFakeClock()
 
 	seeds := make([]pipelinetest.Clients, 0)
-	for i := 0; i < 5; i++ {
+	for i := 0; i < 8; i++ {
 		cs, _ := test.SeedTestData(t, pipelinetest.Data{
 			Tasks: []*v1alpha1.Task{
 				tb.Task("task", "ns", cb.TaskCreationTime(clock.Now().Add(-1*time.Minute))),
+				tb.Task("task2", "ns", cb.TaskCreationTime(clock.Now().Add(-1*time.Minute))),
 			},
 			TaskRuns: []*v1alpha1.TaskRun{
 				tb.TaskRun("task-run-1", "ns",
@@ -124,7 +125,7 @@ func TestTaskDelete(t *testing.T) {
 		},
 		{
 			name:        "With delete all flag, reply yes",
-			command:     []string{"rm", "task", "-n", "ns", "-a"},
+			command:     []string{"rm", "task", "-n", "ns", "--trs"},
 			input:       seeds[3],
 			inputStream: strings.NewReader("y"),
 			wantError:   false,
@@ -132,7 +133,7 @@ func TestTaskDelete(t *testing.T) {
 		},
 		{
 			name:        "With delete all and force delete flag",
-			command:     []string{"rm", "task", "-n", "ns", "-f", "--all"},
+			command:     []string{"rm", "task", "-n", "ns", "-f", "--trs"},
 			input:       seeds[4],
 			inputStream: nil,
 			wantError:   false,
@@ -145,6 +146,46 @@ func TestTaskDelete(t *testing.T) {
 			inputStream: nil,
 			wantError:   true,
 			want:        "namespaces \"invalid\" not found",
+		},
+		{
+			name:        "Delete all with prompt",
+			command:     []string{"delete", "--all", "-n", "ns"},
+			input:       seeds[5],
+			inputStream: strings.NewReader("y"),
+			wantError:   false,
+			want:        "Are you sure you want to delete all tasks in namespace \"ns\" (y/n): All Tasks deleted in namespace \"ns\"\n",
+		},
+		{
+			name:        "Delete all with -f",
+			command:     []string{"delete", "--all", "-f", "-n", "ns"},
+			input:       seeds[6],
+			inputStream: nil,
+			wantError:   false,
+			want:        "All Tasks deleted in namespace \"ns\"\n",
+		},
+		{
+			name:        "Error from using task name with --all",
+			command:     []string{"delete", "task", "--all", "-n", "ns"},
+			input:       seeds[6],
+			inputStream: nil,
+			wantError:   true,
+			want:        "--all flag should not have any arguments or flags specified with it",
+		},
+		{
+			name:        "Error from using --all with --trs",
+			command:     []string{"delete", "--all", "--trs", "-n", "ns"},
+			input:       seeds[6],
+			inputStream: nil,
+			wantError:   true,
+			want:        "--all flag should not have any arguments or flags specified with it",
+		},
+		{
+			name:        "With force delete flag (shorthand), multiple pipelines",
+			command:     []string{"rm", "task", "task2", "-n", "ns", "-f"},
+			input:       seeds[7],
+			inputStream: nil,
+			wantError:   false,
+			want:        "Tasks deleted: \"task\", \"task2\"\n",
 		},
 	}
 
