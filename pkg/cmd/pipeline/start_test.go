@@ -1484,14 +1484,6 @@ func TestPipelineStart_Interactive(t *testing.T) {
 						return err
 					}
 
-					if _, err := c.ExpectString("Enter a value for name :"); err != nil {
-						return err
-					}
-
-					if _, err := c.SendLine("some-cluster"); err != nil {
-						return err
-					}
-
 					if _, err := c.ExpectString("Enter a value for url :"); err != nil {
 						return err
 					}

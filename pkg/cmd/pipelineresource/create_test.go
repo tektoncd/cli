@@ -391,14 +391,6 @@ func TestPipelineResource_create_clusterResource_secure_password_text(t *testing
 					return err
 				}
 
-				if _, err := c.ExpectString("Enter a value for name :"); err != nil {
-					return err
-				}
-
-				if _, err := c.SendLine("some-cluster"); err != nil {
-					return err
-				}
-
 				if _, err := c.ExpectString("Enter a value for url :"); err != nil {
 					return err
 				}
@@ -536,14 +528,6 @@ func TestPipelineResource_create_clusterResource_secure_token_text(t *testing.T)
 				}
 
 				if _, err := c.Send(string(terminal.KeyEnter)); err != nil {
-					return err
-				}
-
-				if _, err := c.ExpectString("Enter a value for name :"); err != nil {
-					return err
-				}
-
-				if _, err := c.SendLine("some-cluster"); err != nil {
 					return err
 				}
 
@@ -894,14 +878,6 @@ func TestPipelineResource_create_clusterResource_secure_password_secret(t *testi
 					return err
 				}
 
-				if _, err := c.ExpectString("Enter a value for name :"); err != nil {
-					return err
-				}
-
-				if _, err := c.SendLine("some-cluster"); err != nil {
-					return err
-				}
-
 				if _, err := c.ExpectString("Enter a value for url :"); err != nil {
 					return err
 				}
@@ -1055,14 +1031,6 @@ func TestPipelineResource_create_clusterResource_secure_token_secret(t *testing.
 				}
 
 				if _, err := c.Send(string(terminal.KeyEnter)); err != nil {
-					return err
-				}
-
-				if _, err := c.ExpectString("Enter a value for name :"); err != nil {
-					return err
-				}
-
-				if _, err := c.SendLine("some-cluster"); err != nil {
 					return err
 				}
 
