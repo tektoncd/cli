@@ -167,7 +167,7 @@ like cat,foo,bar
 }
 
 func parseTask(taskLocation string, p cli.Params) (*v1alpha1.Task, error) {
-	b, err := file.LoadFileContent(p, taskLocation, file.IsYamlFile(), fmt.Errorf("inavlid file format for %s: .yaml or .yml file extension and format required", taskLocation))
+	b, err := file.LoadFileContent(p, taskLocation, file.IsYamlFile(), fmt.Errorf("invalid file format for %s: .yaml or .yml file extension and format required", taskLocation))
 	if err != nil {
 		return nil, err
 	}
