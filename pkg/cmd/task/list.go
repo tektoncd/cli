@@ -16,18 +16,16 @@ package task
 
 import (
 	"fmt"
-	"io"
 	"os"
 	"text/tabwriter"
 
 	"github.com/spf13/cobra"
 	"github.com/tektoncd/cli/pkg/cli"
 	"github.com/tektoncd/cli/pkg/formatted"
-	"github.com/tektoncd/cli/pkg/printer"
+	"github.com/tektoncd/cli/pkg/list"
 	validate "github.com/tektoncd/cli/pkg/validate"
-	"github.com/tektoncd/pipeline/pkg/apis/pipeline/v1alpha1"
-	"github.com/tektoncd/pipeline/pkg/client/clientset/versioned"
-	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+	"github.com/tektoncd/pipeline/pkg/apis/pipeline/v1beta1"
+	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/apimachinery/pkg/runtime/schema"
 	cliopts "k8s.io/cli-runtime/pkg/genericclioptions"
 )
@@ -61,7 +59,8 @@ func listCommand(p cli.Params) *cobra.Command {
 			}
 
 			if output != "" {
-				return printTaskListObj(cmd.OutOrStdout(), p, f)
+				taskGroupResource := schema.GroupVersionResource{Group: "tekton.dev", Resource: "tasks"}
+				return list.PrintObject(taskGroupResource, cmd.OutOrStdout(), p, f)
 			}
 			stream := &cli.Stream{
 				Out: cmd.OutOrStdout(),
@@ -78,10 +77,17 @@ func listCommand(p cli.Params) *cobra.Command {
 func printTaskDetails(s *cli.Stream, p cli.Params) error {
 	cs, err := p.Clients()
 	if err != nil {
-		return fmt.Errorf("failed to create tekton client")
+		return err
 	}
 
-	tasks, err := listAllTasks(cs.Tekton, p.Namespace())
+	unstructuredTask, err := list.AllObjecs(schema.GroupVersionResource{Group: "tekton.dev", Resource: "tasks"}, cs, p.Namespace())
+	if err != nil {
+		return err
+	}
+	var tasks v1beta1.TaskList
+	if err := runtime.DefaultUnstructuredConverter.FromUnstructured(unstructuredTask.UnstructuredContent(), &tasks); err != nil {
+		return err
+	}
 	if err != nil {
 		fmt.Fprintf(os.Stderr, "Failed to list tasks from %s namespace \n", p.Namespace())
 		return err
@@ -103,35 +109,4 @@ func printTaskDetails(s *cli.Stream, p cli.Params) error {
 		)
 	}
 	return w.Flush()
-}
-
-func printTaskListObj(w io.Writer, p cli.Params, f *cliopts.PrintFlags) error {
-	cs, err := p.Clients()
-	if err != nil {
-		return err
-	}
-
-	tasks, err := listAllTasks(cs.Tekton, p.Namespace())
-	if err != nil {
-		return err
-	}
-	return printer.PrintObject(w, tasks, f)
-}
-
-func listAllTasks(cs versioned.Interface, ns string) (*v1alpha1.TaskList, error) {
-	c := cs.TektonV1alpha1().Tasks(ns)
-
-	tasks, err := c.List(metav1.ListOptions{})
-	if err != nil {
-		return nil, err
-	}
-
-	// NOTE: this is required for -o json|yaml to work properly since
-	// tektoncd go client fails to set these; probably a bug
-	tasks.GetObjectKind().SetGroupVersionKind(
-		schema.GroupVersionKind{
-			Version: "tekton.dev/v1alpha1",
-			Kind:    "TaskList",
-		})
-	return tasks, nil
 }

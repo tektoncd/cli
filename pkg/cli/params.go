@@ -15,15 +15,15 @@
 package cli
 
 import (
-	"k8s.io/client-go/rest"
-
 	"github.com/fatih/color"
 	"github.com/jonboulle/clockwork"
 	"github.com/pkg/errors"
 	"github.com/tektoncd/pipeline/pkg/client/clientset/versioned"
 	versionedResource "github.com/tektoncd/pipeline/pkg/client/resource/clientset/versioned"
 	versionedTriggers "github.com/tektoncd/triggers/pkg/client/clientset/versioned"
+	"k8s.io/client-go/dynamic"
 	k8s "k8s.io/client-go/kubernetes"
+	"k8s.io/client-go/rest"
 	"k8s.io/client-go/tools/clientcmd"
 )
 
@@ -76,10 +76,19 @@ func (p *TektonParams) resourceClient(config *rest.Config) (versionedResource.In
 func (p *TektonParams) kubeClient(config *rest.Config) (k8s.Interface, error) {
 	k8scs, err := k8s.NewForConfig(config)
 	if err != nil {
-		return nil, errors.Wrapf(err, "Failed to create k8s client from config")
+		return nil, errors.Wrapf(err, "failed to create k8s client from config")
 	}
 
 	return k8scs, nil
+}
+
+func (p *TektonParams) dynamicClient(config *rest.Config) (dynamic.Interface, error) {
+	dynamicClient, err := dynamic.NewForConfig(config)
+	if err != nil {
+		return nil, errors.Wrapf(err, "failed to create dynamic client from config")
+
+	}
+	return dynamicClient, err
 }
 
 // Only returns kube client, not tekton client
@@ -129,11 +138,17 @@ func (p *TektonParams) Clients() (*Clients, error) {
 		return nil, err
 	}
 
+	dynamic, err := p.dynamicClient(config)
+	if err != nil {
+		return nil, err
+	}
+
 	p.clients = &Clients{
 		Tekton:   tekton,
 		Kube:     kube,
 		Resource: resource,
 		Triggers: triggers,
+		Dynamic:  dynamic,
 	}
 
 	return p.clients, nil

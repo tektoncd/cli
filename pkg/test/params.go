@@ -20,6 +20,7 @@ import (
 	"github.com/tektoncd/pipeline/pkg/client/clientset/versioned"
 	versionedResource "github.com/tektoncd/pipeline/pkg/client/resource/clientset/versioned"
 	versionedTriggers "github.com/tektoncd/triggers/pkg/client/clientset/versioned"
+	"k8s.io/client-go/dynamic"
 	k8s "k8s.io/client-go/kubernetes"
 )
 
@@ -31,6 +32,7 @@ type Params struct {
 	Kube                  k8s.Interface
 	Clock                 clockwork.Clock
 	Cls                   *cli.Clients
+	Dynamic               dynamic.Interface
 }
 
 var _ cli.Params = &Params{}
@@ -69,6 +71,10 @@ func (p *Params) triggersClient() (versionedTriggers.Interface, error) {
 	return p.Triggers, nil
 }
 
+func (p *Params) dynamicClient() (dynamic.Interface, error) {
+	return p.Dynamic, nil
+}
+
 func (p *Params) KubeClient() (k8s.Interface, error) {
 	return p.Kube, nil
 }
@@ -98,11 +104,17 @@ func (p *Params) Clients() (*cli.Clients, error) {
 		return nil, err
 	}
 
+	dynamic, err := p.dynamicClient()
+	if err != nil {
+		return nil, err
+	}
+
 	p.Cls = &cli.Clients{
 		Tekton:   tekton,
 		Kube:     kube,
 		Resource: resource,
 		Triggers: triggers,
+		Dynamic:  dynamic,
 	}
 
 	return p.Cls, nil

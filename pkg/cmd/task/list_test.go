@@ -19,9 +19,13 @@ import (
 	"testing"
 	"time"
 
+	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
+	"k8s.io/apimachinery/pkg/runtime"
+
 	"github.com/jonboulle/clockwork"
 	"github.com/tektoncd/cli/pkg/test"
 	cb "github.com/tektoncd/cli/pkg/test/builder"
+	testDynamic "github.com/tektoncd/cli/pkg/test/dynamic"
 	"github.com/tektoncd/pipeline/pkg/apis/pipeline/v1alpha1"
 	pipelinetest "github.com/tektoncd/pipeline/test"
 	tb "github.com/tektoncd/pipeline/test/builder"
@@ -55,8 +59,24 @@ func TestTaskList_Empty(t *testing.T) {
 		},
 	}
 	cs, _ := test.SeedTestData(t, pipelinetest.Data{Namespaces: ns})
-	p := &test.Params{Tekton: cs.Pipeline, Kube: cs.Kube}
-
+	cs.Pipeline.Resources = []*metav1.APIResourceList{
+		{TypeMeta: metav1.TypeMeta{
+			Kind:       "task",
+			APIVersion: "tekton.dev/v1beta1",
+		},
+			GroupVersion: "tekton.dev/v1beta1",
+			APIResources: []metav1.APIResource{
+				{
+					Name:  "tasks",
+					Group: "tekton.dev",
+				},
+			},
+		}}
+	dynamic, err := testDynamic.Client()
+	if err != nil {
+		fmt.Println(err)
+	}
+	p := &test.Params{Tekton: cs.Pipeline, Kube: cs.Kube, Dynamic: dynamic}
 	task := Command(p)
 	output, err := test.ExecuteCommand(task, "list", "-n", "foo")
 	if err != nil {
@@ -85,14 +105,51 @@ func TestTaskList_Only_Tasks(t *testing.T) {
 		},
 	}
 
-	cs, _ := test.SeedTestData(t, pipelinetest.Data{Tasks: tasks, Namespaces: ns})
-	p := &test.Params{Tekton: cs.Pipeline, Clock: clock, Kube: cs.Kube}
+	dynamic, err := testDynamic.Client(
+		newUnstructured(tasks[0]),
+		newUnstructured(tasks[1]),
+		newUnstructured(tasks[2]),
+		newUnstructured(tasks[3]),
+		newUnstructured(tasks[4]),
+		newUnstructured(tasks[5]))
+	if err != nil {
+		t.Errorf("unable to create dynamic client: %v", err)
+	}
 
+	cs, _ := test.SeedTestData(t, pipelinetest.Data{Tasks: tasks, Namespaces: ns})
+	p := &test.Params{Tekton: cs.Pipeline, Clock: clock, Kube: cs.Kube, Dynamic: dynamic}
+	cs.Pipeline.Resources = []*metav1.APIResourceList{
+		{TypeMeta: metav1.TypeMeta{
+			Kind:       "task",
+			APIVersion: "tekton.dev/v1alpha1",
+		},
+			GroupVersion: "tekton.dev/v1alpha1",
+			APIResources: []metav1.APIResource{
+				{
+					Name:  "tasks",
+					Group: "tekton.dev",
+				},
+			},
+		},
+	}
 	task := Command(p)
+
 	output, err := test.ExecuteCommand(task, "list", "-n", "namespace")
 	if err != nil {
 		t.Errorf("Unexpected error: %v", err)
 	}
 
 	golden.Assert(t, output, fmt.Sprintf("%s.golden", t.Name()))
+}
+
+func newUnstructured(task *v1alpha1.Task) *unstructured.Unstructured {
+	apiVersion := "tekton.dev/v1alpha1"
+	kind := "task"
+
+	task.APIVersion = apiVersion
+	task.Kind = kind
+	object, _ := runtime.DefaultUnstructuredConverter.ToUnstructured(task)
+	return &unstructured.Unstructured{
+		Object: object,
+	}
 }
