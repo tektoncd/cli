@@ -22,6 +22,7 @@ import (
 	"github.com/tektoncd/pipeline/pkg/client/clientset/versioned"
 	versionedResource "github.com/tektoncd/pipeline/pkg/client/resource/clientset/versioned"
 	versionedTriggers "github.com/tektoncd/triggers/pkg/client/clientset/versioned"
+	"k8s.io/client-go/dynamic"
 	k8s "k8s.io/client-go/kubernetes"
 )
 
@@ -37,6 +38,7 @@ type Clients struct {
 	Triggers   versionedTriggers.Interface
 	Resource   versionedResource.Interface
 	HTTPClient http.Client
+	Dynamic    dynamic.Interface
 }
 
 // Params interface provides
