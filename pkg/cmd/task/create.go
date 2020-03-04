@@ -86,7 +86,7 @@ func createTask(s *cli.Stream, p cli.Params, path string) error {
 }
 
 func loadTask(p cli.Params, target string) (*v1alpha1.Task, error) {
-	content, err := file.LoadFileContent(p, target, file.IsYamlFile(), fmt.Errorf("inavlid file format for %s: .yaml or .yml file extension and format required", target))
+	content, err := file.LoadFileContent(p, target, file.IsYamlFile(), fmt.Errorf("invalid file format for %s: .yaml or .yml file extension and format required", target))
 	if err != nil {
 		return nil, err
 	}

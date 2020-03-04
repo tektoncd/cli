@@ -1649,7 +1649,7 @@ func Test_Pipeline_Resource_Create(t *testing.T) {
 			input:       seeds[0],
 			inputStream: nil,
 			wantError:   true,
-			want:        "inavlid file format for ./testdata/pipelineresource.txt: .yaml or .yml file extension and format required",
+			want:        "invalid file format for ./testdata/pipelineresource.txt: .yaml or .yml file extension and format required",
 		},
 		{
 			name:        "Mismatched resource file",

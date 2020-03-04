@@ -609,7 +609,7 @@ func createFrom(s *cli.Stream, p cli.Params, path string) error {
 }
 
 func loadResource(p cli.Params, target string) (*v1alpha1.PipelineResource, error) {
-	content, err := file.LoadFileContent(p, target, file.IsYamlFile(), fmt.Errorf("inavlid file format for %s: .yaml or .yml file extension and format required", target))
+	content, err := file.LoadFileContent(p, target, file.IsYamlFile(), fmt.Errorf("invalid file format for %s: .yaml or .yml file extension and format required", target))
 	if err != nil {
 		return nil, err
 	}

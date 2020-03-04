@@ -40,7 +40,7 @@ func TestLoadLocalFile(t *testing.T) {
 	}
 
 	p := &test.Params{}
-	localContentLoad, err := LoadFileContent(p, localTarget, IsYamlFile(), fmt.Errorf("inavlid file format for %s: .yaml or .yml file extension and format required", localTarget))
+	localContentLoad, err := LoadFileContent(p, localTarget, IsYamlFile(), fmt.Errorf("invalid file format for %s: .yaml or .yml file extension and format required", localTarget))
 	if err != nil {
 		t.Errorf("Error from running localContentLoad")
 	}
@@ -60,6 +60,6 @@ func TestGetError(t *testing.T) {
 	p := &test.Params{}
 	target := "httpz://foo.com/task.yaml"
 
-	_, err := LoadFileContent(p, target, IsYamlFile(), fmt.Errorf("inavlid file format for %s: .yaml or .yml file extension and format required", target))
+	_, err := LoadFileContent(p, target, IsYamlFile(), fmt.Errorf("invalid file format for %s: .yaml or .yml file extension and format required", target))
 	assert.Error(t, err, `Get httpz://foo.com/task.yaml: unsupported protocol scheme "httpz"`)
 }
