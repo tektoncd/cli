@@ -40,7 +40,7 @@ like cat,foo,bar
       --prefix-name string       specify a prefix for the taskrun name (must be lowercase alphanumeric characters)
   -s, --serviceaccount string    pass the serviceaccount name
       --showlog                  show logs right after starting the task
-      --timeout int              timeout for taskrun in seconds (default 3600)
+      --timeout string           timeout for taskrun (default "1h")
       --use-taskrun string       specify a taskrun name to use its values to re-run the taskrun
 ```
 
