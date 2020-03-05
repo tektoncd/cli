@@ -2,9 +2,9 @@ package description
 
 import (
 	"fmt"
-	"html/template"
 	"sort"
 	"text/tabwriter"
+	"text/template"
 
 	corev1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
@@ -168,13 +168,13 @@ func hasFailed(pr *v1alpha1.PipelineRun) string {
 	}
 
 	if pr.Status.Conditions[0].Status == corev1.ConditionFalse {
-		for _, taskrunStatus := range pr.Status.TaskRuns {
-			if len(taskrunStatus.Status.Conditions) == 0 {
+		for _, tr := range pr.Status.TaskRuns {
+			if len(tr.Status.Conditions) == 0 {
 				continue
 			}
-			if taskrunStatus.Status.Conditions[0].Status == corev1.ConditionFalse {
+			if tr.Status.Conditions[0].Status == corev1.ConditionFalse {
 				return fmt.Sprintf("%s (%s)", pr.Status.Conditions[0].Message,
-					taskrunStatus.Status.Conditions[0].Message)
+					tr.Status.Conditions[0].Message)
 			}
 		}
 		return pr.Status.Conditions[0].Message
