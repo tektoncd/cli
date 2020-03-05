@@ -18,7 +18,6 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
-	"log"
 	"strings"
 	"time"
 
@@ -55,7 +54,7 @@ type startOptions struct {
 	Labels             []string
 	ShowLog            bool
 	Filename           string
-	TimeOut            int64
+	TimeOut            string
 	DryRun             bool
 	Output             string
 	UseTaskRun         string
@@ -113,10 +112,6 @@ like cat,foo,bar
 `,
 		SilenceUsage: true,
 		Args: func(cmd *cobra.Command, args []string) error {
-			if opt.TimeOut != 3600 {
-				log.Println("WARNING: The --timeout flag will no longer be specified in seconds in v0.9.0. Learn more here: https://github.com/tektoncd/cli/issues/730")
-				log.Println("WARNING: The -t shortand for --timeout will no longer be available in v0.9.0.")
-			}
 			if err := flags.InitParams(p, cmd); err != nil {
 				return err
 			}
@@ -156,7 +151,7 @@ like cat,foo,bar
 	c.Flags().StringSliceVarP(&opt.Labels, "labels", "l", []string{}, "pass labels as label=value.")
 	c.Flags().BoolVarP(&opt.ShowLog, "showlog", "", false, "show logs right after starting the task")
 	c.Flags().StringVarP(&opt.Filename, "filename", "f", "", "local or remote file name containing a task definition")
-	c.Flags().Int64VarP(&opt.TimeOut, "timeout", "", 3600, "timeout for taskrun in seconds")
+	c.Flags().StringVarP(&opt.TimeOut, "timeout", "", "1h", "timeout for taskrun")
 	c.Flags().BoolVarP(&opt.DryRun, "dry-run", "", false, "preview taskrun without running it")
 	c.Flags().StringVarP(&opt.Output, "output", "", "", "format of taskrun dry-run (yaml or json)")
 	c.Flags().StringVarP(&opt.PrefixName, "prefix-name", "", "", "specify a prefix for the taskrun name (must be lowercase alphanumeric characters)")
@@ -223,7 +218,12 @@ func startTask(opt startOptions, args []string) error {
 	}
 
 	var tname string
-	timeoutSeconds := time.Duration(opt.TimeOut) * time.Second
+
+	timeoutDuration, err := time.ParseDuration(opt.TimeOut)
+	if err != nil {
+		return err
+	}
+	tr.Spec.Timeout = &metav1.Duration{Duration: timeoutDuration}
 
 	if len(args) > 0 {
 		tname = args[0]
@@ -240,7 +240,6 @@ func startTask(opt startOptions, args []string) error {
 			TaskSpec: &task.Spec,
 		}
 	}
-	tr.Spec.Timeout = &metav1.Duration{Duration: timeoutSeconds}
 
 	if opt.PrefixName == "" {
 		tr.ObjectMeta.GenerateName = tname + "-run-"
