@@ -113,7 +113,6 @@ func (p *Pod) watcher(stopC <-chan struct{}, eventC chan<- interface{}) {
 
 func podOpts(name string) func(opts *v1.ListOptions) {
 	return func(opts *v1.ListOptions) {
-		opts.IncludeUninitialized = true
 		opts.FieldSelector = fields.OneTermEqualSelector("metadata.name", name).String()
 	}
 }

@@ -95,7 +95,6 @@ func (t *Tracker) Monitor(allowed []string) <-chan []trh.Run {
 
 func pipelinerunOpts(name string) func(opts *metav1.ListOptions) {
 	return func(opts *metav1.ListOptions) {
-		opts.IncludeUninitialized = true
 		opts.FieldSelector = fields.OneTermEqualSelector("metadata.name", name).String()
 	}
 

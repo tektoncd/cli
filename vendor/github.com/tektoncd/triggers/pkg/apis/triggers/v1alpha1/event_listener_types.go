@@ -65,19 +65,8 @@ type EventListenerTrigger struct {
 	Bindings []*EventListenerBinding `json:"bindings"`
 	Template EventListenerTemplate   `json:"template"`
 	// +optional
-	Name string `json:"name,omitempty"`
-	// +optional
-	// DEPRECATED. Use Interceptors instead.
-	// TODO(#290): Remove this before 0.3 release.
-	DeprecatedInterceptor *EventInterceptor   `json:"interceptor,omitempty"`
-	Interceptors          []*EventInterceptor `json:"interceptors,omitempty"`
-
-	// TODO(#248): Remove this before 0.3 release.
-	DeprecatedBinding *EventListenerBinding `json:"binding,omitempty"`
-
-	// TODO(#): Remove this before 0.3 release
-	// DEPRECATED: Use TriggerBindings with static values instead
-	DeprecatedParams []pipelinev1.Param `json:"params,omitempty"`
+	Name         string              `json:"name,omitempty"`
+	Interceptors []*EventInterceptor `json:"interceptors,omitempty"`
 }
 
 // EventInterceptor provides a hook to intercept and pre-process events
@@ -114,7 +103,14 @@ type GitLabInterceptor struct {
 
 // CELInterceptor provides a webhook to intercept and pre-process events
 type CELInterceptor struct {
-	Filter string `json:"filter,omitempty"`
+	Filter   string       `json:"filter,omitempty"`
+	Overlays []CELOverlay `json:"overlays,omitempty"`
+}
+
+// CELOverlay provides a way to modify the request body using CEL expressions
+type CELOverlay struct {
+	Key        string `json:"key,omitempty"`
+	Expression string `json:"expression,omitempty"`
 }
 
 // SecretRef contains the information required to reference a single secret string
@@ -126,10 +122,11 @@ type SecretRef struct {
 	Namespace  string `json:"namespace,omitempty"`
 }
 
-// EventListenerBinding refers to a particular TriggerBinding resource.
+// EventListenerBinding refers to a particular TriggerBinding or ClusterTriggerBindingresource.
 type EventListenerBinding struct {
-	Name       string `json:"name"`
-	APIVersion string `json:"apiversion,omitempty"`
+	Name       string             `json:"name"`
+	Kind       TriggerBindingKind `json:"kind"`
+	APIVersion string             `json:"apiversion,omitempty"`
 }
 
 // EventListenerTemplate refers to a particular TriggerTemplate resource.
@@ -177,6 +174,17 @@ const (
 	// DeploymentExists is the ConditionType set on the EventListener, which
 	// specifies Deployment existence.
 	DeploymentExists apis.ConditionType = "Deployment"
+)
+
+// Check that EventListener may be validated and defaulted.
+// TriggerBindingKind defines the type of TriggerBinding used by the EventListener.
+type TriggerBindingKind string
+
+const (
+	// NamespacedTriggerBindingKind indicates that triggerbinding type has a namespace scope.
+	NamespacedTriggerBindingKind TriggerBindingKind = "TriggerBinding"
+	// ClusterTriggerBindingKind indicates that triggerbinding type has a cluster scope.
+	ClusterTriggerBindingKind TriggerBindingKind = "ClusterTriggerBinding"
 )
 
 var eventListenerCondSet = apis.NewLivingConditionSet(ServiceExists, DeploymentExists)

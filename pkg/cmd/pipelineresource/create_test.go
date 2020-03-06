@@ -324,7 +324,7 @@ func TestPipelineResource_create_cloudEventResource(t *testing.T) {
 				}
 
 				// check if the resource is created
-				res, err := cs.Resource.Tekton().PipelineResources("namespace").Get("cloudEvent-res", metav1.GetOptions{})
+				res, err := cs.Resource.TektonV1alpha1().PipelineResources("namespace").Get("cloudEvent-res", metav1.GetOptions{})
 				if err != nil {
 					return err
 				}
@@ -464,7 +464,7 @@ func TestPipelineResource_create_clusterResource_secure_password_text(t *testing
 				}
 
 				// check if the resource is created
-				res, err := cs.Resource.Tekton().PipelineResources("namespace").Get("cluster-res", metav1.GetOptions{})
+				res, err := cs.Resource.TektonV1alpha1().PipelineResources("namespace").Get("cluster-res", metav1.GetOptions{})
 				if err != nil {
 					return err
 				}
@@ -608,7 +608,7 @@ func TestPipelineResource_create_clusterResource_secure_token_text(t *testing.T)
 				}
 
 				// check if the resource is created
-				res, err := cs.Resource.Tekton().PipelineResources("namespace").Get("cluster-res", metav1.GetOptions{})
+				res, err := cs.Resource.TektonV1alpha1().PipelineResources("namespace").Get("cluster-res", metav1.GetOptions{})
 				if err != nil {
 					return err
 				}
@@ -707,7 +707,7 @@ func TestPipelineResource_create_gitResource(t *testing.T) {
 				}
 
 				// check if the resource is created
-				res, err := cs.Resource.Tekton().PipelineResources("namespace").Get("git-res", metav1.GetOptions{})
+				res, err := cs.Resource.TektonV1alpha1().PipelineResources("namespace").Get("git-res", metav1.GetOptions{})
 				if err != nil {
 					return err
 				}
@@ -811,7 +811,7 @@ func TestPipelineResource_create_imageResource(t *testing.T) {
 				}
 
 				// check if the resource is created
-				res, err := cs.Resource.Tekton().PipelineResources("namespace").Get("image-res", metav1.GetOptions{})
+				res, err := cs.Resource.TektonV1alpha1().PipelineResources("namespace").Get("image-res", metav1.GetOptions{})
 				if err != nil {
 					return err
 				}
@@ -967,7 +967,7 @@ func TestPipelineResource_create_clusterResource_secure_password_secret(t *testi
 				}
 
 				// check if the resource is created
-				res, err := cs.Resource.Tekton().PipelineResources("namespace").Get("cluster-res", metav1.GetOptions{})
+				res, err := cs.Resource.TektonV1alpha1().PipelineResources("namespace").Get("cluster-res", metav1.GetOptions{})
 				if err != nil {
 					return err
 				}
@@ -1135,7 +1135,7 @@ func TestPipelineResource_create_clusterResource_secure_token_secret(t *testing.
 				}
 
 				// check if the resource is created
-				res, err := cs.Resource.Tekton().PipelineResources("namespace").Get("cluster-res", metav1.GetOptions{})
+				res, err := cs.Resource.TektonV1alpha1().PipelineResources("namespace").Get("cluster-res", metav1.GetOptions{})
 				if err != nil {
 					return err
 				}
@@ -1266,7 +1266,7 @@ func TestPipelineResource_create_pullRequestResource(t *testing.T) {
 				}
 
 				// check if the resource is created
-				res, err := cs.Resource.Tekton().PipelineResources("namespace").Get("pullRequest-res", metav1.GetOptions{})
+				res, err := cs.Resource.TektonV1alpha1().PipelineResources("namespace").Get("pullRequest-res", metav1.GetOptions{})
 				if err != nil {
 					return err
 				}
@@ -1410,7 +1410,7 @@ func TestPipelineResource_create_gcsStorageResource(t *testing.T) {
 				}
 
 				// check if the resource is created
-				res, err := cs.Resource.Tekton().PipelineResources("namespace").Get("storage-res", metav1.GetOptions{})
+				res, err := cs.Resource.TektonV1alpha1().PipelineResources("namespace").Get("storage-res", metav1.GetOptions{})
 				if err != nil {
 					return err
 				}
@@ -1582,7 +1582,7 @@ func TestPipelineResource_create_buildGCSstorageResource(t *testing.T) {
 				}
 
 				// check if the resource is created
-				res, err := cs.Resource.Tekton().PipelineResources("namespace").Get("storage-res", metav1.GetOptions{})
+				res, err := cs.Resource.TektonV1alpha1().PipelineResources("namespace").Get("storage-res", metav1.GetOptions{})
 				if err != nil {
 					return err
 				}
