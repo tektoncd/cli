@@ -9,6 +9,12 @@
 		}
 	},
 	"spec": {
+		"serviceAccountName": "svc1",
+		"taskRef": {
+			"name": "clustertask-2",
+			"kind": "ClusterTask"
+		},
+		"timeout": "1h0m0s",
 		"inputs": {
 			"resources": [
 				{
@@ -28,13 +34,7 @@
 					}
 				}
 			]
-		},
-		"serviceAccountName": "svc1",
-		"taskRef": {
-			"name": "clustertask-2",
-			"kind": "ClusterTask"
-		},
-		"timeout": "1h0m0s"
+		}
 	},
 	"status": {
 		"podName": ""

@@ -7,6 +7,10 @@
 		"creationTimestamp": null
 	},
 	"spec": {
+		"serviceAccountName": "svc1",
+		"taskRef": {
+			"name": "task-1"
+		},
 		"inputs": {
 			"resources": [
 				{
@@ -26,10 +30,6 @@
 					}
 				}
 			]
-		},
-		"serviceAccountName": "svc1",
-		"taskRef": {
-			"name": "task-1"
 		}
 	},
 	"status": {

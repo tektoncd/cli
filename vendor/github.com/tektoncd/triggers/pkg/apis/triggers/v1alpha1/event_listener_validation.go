@@ -44,19 +44,14 @@ func (s *EventListenerSpec) validate(ctx context.Context, el *EventListener) *ap
 }
 
 func (t *EventListenerTrigger) validate(ctx context.Context) *apis.FieldError {
-	// Validate that only one of binding or bindings is set
-	if t.DeprecatedBinding != nil && len(t.Bindings) > 0 {
-		return apis.ErrMultipleOneOf("binding", "bindings")
-	}
-	// Validate that only one of inteceptor or interceptors is set
-	if t.DeprecatedInterceptor != nil && len(t.Interceptors) > 0 {
-		return apis.ErrMultipleOneOf("interceptor", "interceptors")
-	}
-
-	// Validate optional TriggerBinding
+	// Validate optional Bindings
 	for i, b := range t.Bindings {
 		if b.Name == "" {
 			return apis.ErrMissingField(fmt.Sprintf("bindings[%d].name", i))
+		}
+
+		if b.Kind != NamespacedTriggerBindingKind && b.Kind != ClusterTriggerBindingKind {
+			return apis.ErrInvalidValue(fmt.Errorf("invalid kind"), fmt.Sprintf("bindings[%d].kind", i))
 		}
 	}
 	// Validate required TriggerTemplate
@@ -146,8 +141,8 @@ func (i *EventInterceptor) validate(ctx context.Context) *apis.FieldError {
 	// }
 
 	if i.CEL != nil {
-		if i.CEL.Filter == "" {
-			return apis.ErrMissingField("interceptor.cel.filter")
+		if i.CEL.Filter == "" && len(i.CEL.Overlays) == 0 {
+			return apis.ErrMultipleOneOf("cel.filter", "cel.overlays")
 		}
 	}
 	return nil

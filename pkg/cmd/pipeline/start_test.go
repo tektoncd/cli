@@ -33,7 +33,6 @@ import (
 	cb "github.com/tektoncd/cli/pkg/test/builder"
 	"github.com/tektoncd/cli/test/prompt"
 	"github.com/tektoncd/pipeline/pkg/apis/pipeline/v1alpha1"
-	"github.com/tektoncd/pipeline/pkg/apis/pipeline/v1alpha2"
 	fakepipelineclientset "github.com/tektoncd/pipeline/pkg/client/clientset/versioned/fake"
 	"github.com/tektoncd/pipeline/pkg/reconciler/pipelinerun/resources"
 	pipelinetest "github.com/tektoncd/pipeline/test"
@@ -949,7 +948,7 @@ func TestPipelineStart_Interactive(t *testing.T) {
 						return err
 					}
 
-					tekton := cs2.Pipeline.Tekton()
+					tekton := cs2.Pipeline.TektonV1alpha1()
 					runs, err := tekton.PipelineRuns("ns").List(v1.ListOptions{})
 					if err != nil {
 						return err
@@ -1026,7 +1025,7 @@ func TestPipelineStart_Interactive(t *testing.T) {
 						return err
 					}
 
-					tekton := cs3.Pipeline.Tekton()
+					tekton := cs3.Pipeline.TektonV1alpha1()
 					runs, err := tekton.PipelineRuns("ns").List(v1.ListOptions{})
 					if err != nil {
 						return err
@@ -1063,7 +1062,7 @@ func TestPipelineStart_Interactive(t *testing.T) {
 						return err
 					}
 
-					tekton := cs4.Pipeline.Tekton()
+					tekton := cs4.Pipeline.TektonV1alpha1()
 					runs, err := tekton.PipelineRuns("ns").List(v1.ListOptions{})
 					if err != nil {
 						return err
@@ -1135,7 +1134,7 @@ func TestPipelineStart_Interactive(t *testing.T) {
 						return err
 					}
 
-					tekton := cs5.Pipeline.Tekton()
+					tekton := cs5.Pipeline.TektonV1alpha1()
 					runs, err := tekton.PipelineRuns("ns").List(v1.ListOptions{})
 					if err != nil {
 						return err
@@ -1176,7 +1175,7 @@ func TestPipelineStart_Interactive(t *testing.T) {
 						return err
 					}
 
-					tekton := cs6.Pipeline.Tekton()
+					tekton := cs6.Pipeline.TektonV1alpha1()
 					runs, err := tekton.PipelineRuns("ns").List(v1.ListOptions{})
 					if err != nil {
 						return err
@@ -1245,7 +1244,7 @@ func TestPipelineStart_Interactive(t *testing.T) {
 						return err
 					}
 
-					tekton := cs7.Pipeline.Tekton()
+					tekton := cs7.Pipeline.TektonV1alpha1()
 					runs, err := tekton.PipelineRuns("ns").List(v1.ListOptions{})
 					if err != nil {
 						return err
@@ -1342,7 +1341,7 @@ func TestPipelineStart_Interactive(t *testing.T) {
 						return err
 					}
 
-					tekton := cs8.Pipeline.Tekton()
+					tekton := cs8.Pipeline.TektonV1alpha1()
 					runs, err := tekton.PipelineRuns("ns").List(v1.ListOptions{})
 					if err != nil {
 						return err
@@ -1435,7 +1434,7 @@ func TestPipelineStart_Interactive(t *testing.T) {
 						return err
 					}
 
-					tekton := cs9.Pipeline.Tekton()
+					tekton := cs9.Pipeline.TektonV1alpha1()
 					runs, err := tekton.PipelineRuns("ns").List(v1.ListOptions{})
 					if err != nil {
 						return err
@@ -1556,7 +1555,7 @@ func TestPipelineStart_Interactive(t *testing.T) {
 						return err
 					}
 
-					tekton := cs10.Pipeline.Tekton()
+					tekton := cs10.Pipeline.TektonV1alpha1()
 					runs, err := tekton.PipelineRuns("ns").List(v1.ListOptions{})
 					if err != nil {
 						return err
@@ -1621,7 +1620,7 @@ func TestPipelineStart_Interactive(t *testing.T) {
 						return err
 					}
 
-					tekton := cs11.Pipeline.Tekton()
+					tekton := cs11.Pipeline.TektonV1alpha1()
 					runs, err := tekton.PipelineRuns("ns").List(v1.ListOptions{})
 					if err != nil {
 						return err
@@ -2065,7 +2064,7 @@ func Test_start_pipeline_use_pipelinerun(t *testing.T) {
 		t.Errorf("Error getting pipelineruns %s", err.Error())
 	}
 	test.AssertOutput(t, pr.Spec.Params[0].Name, "brush")
-	test.AssertOutput(t, pr.Spec.Params[0].Value, v1alpha2.ArrayOrString{Type: "string", StringVal: "teeth"})
+	test.AssertOutput(t, pr.Spec.Params[0].Value, v1alpha1.ArrayOrString{Type: "string", StringVal: "teeth"})
 }
 
 func Test_start_pipeline_allkindparam(t *testing.T) {
