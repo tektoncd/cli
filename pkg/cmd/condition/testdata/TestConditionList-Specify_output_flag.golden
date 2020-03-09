@@ -24,5 +24,31 @@ items:
     check:
       name: ""
       resources: {}
+- metadata:
+    creationTimestamp: "1984-03-13T15:00:00Z"
+    name: condition4
+    namespace: ns
+  spec:
+    check:
+      name: ""
+      resources: {}
+    description: a test condition
+- metadata:
+    creationTimestamp: "1984-03-13T14:00:00Z"
+    name: condition5
+    namespace: ns
+  spec:
+    check:
+      name: ""
+      resources: {}
+    description: a test condition to check the trimming is working
+- metadata:
+    creationTimestamp: "1984-03-13T12:00:00Z"
+    name: condition6
+    namespace: ns
+  spec:
+    check:
+      name: ""
+      resources: {}
 kind: ConditionList
 metadata: {}

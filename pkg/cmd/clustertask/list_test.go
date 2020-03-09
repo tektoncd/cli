@@ -48,7 +48,9 @@ func TestClusterTaskListOnlyClusterTasks(t *testing.T) {
 	clustertasks := []*v1alpha1.ClusterTask{
 		tb.ClusterTask("guavas", cb.ClusterTaskCreationTime(clock.Now().Add(-1*time.Minute))),
 		tb.ClusterTask("avocados", cb.ClusterTaskCreationTime(clock.Now().Add(-20*time.Second))),
-		tb.ClusterTask("pineapple", cb.ClusterTaskCreationTime(clock.Now().Add(-512*time.Hour))),
+		tb.ClusterTask("pineapple", tb.ClusterTaskSpec(tb.TaskDescription("a test clustertask")), cb.ClusterTaskCreationTime(clock.Now().Add(-512*time.Hour))),
+		tb.ClusterTask("apple", tb.ClusterTaskSpec(tb.TaskDescription("a clustertask to test description")), cb.ClusterTaskCreationTime(clock.Now().Add(-513*time.Hour))),
+		tb.ClusterTask("mango", tb.ClusterTaskSpec(tb.TaskDescription("")), cb.ClusterTaskCreationTime(clock.Now().Add(-514*time.Hour))),
 	}
 
 	cs, _ := test.SeedTestData(t, pipelinetest.Data{ClusterTasks: clustertasks})

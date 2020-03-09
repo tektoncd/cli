@@ -33,8 +33,8 @@ import (
 
 const (
 	emptyMsg = "No clustertasks found"
-	header   = "NAME\tAGE"
-	body     = "%s\t%s\n"
+	header   = "NAME\tDESCRIPTION\tAGE"
+	body     = "%s\t%s\t%s\n"
 )
 
 func listCommand(p cli.Params) *cobra.Command {
@@ -94,6 +94,7 @@ func printClusterTaskDetails(s *cli.Stream, p cli.Params) error {
 	for _, clustertask := range clustertasks.Items {
 		fmt.Fprintf(w, body,
 			clustertask.Name,
+			formatted.FormatDesc(clustertask.Spec.Description),
 			formatted.Age(&clustertask.CreationTimestamp, p.Time()),
 		)
 	}
