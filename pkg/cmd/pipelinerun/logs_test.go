@@ -372,97 +372,187 @@ func TestPipelinerunLog_completed_taskrun_only(t *testing.T) {
 		task4Name = "teardown"
 	)
 
-	nsList := []*corev1.Namespace{
-		{
-			ObjectMeta: metav1.ObjectMeta{
-				Name: ns,
+	// define pipeline in pipelineRef
+	cs, _ := test.SeedTestData(t, pipelinetest.Data{
+		TaskRuns: []*v1alpha1.TaskRun{
+			tb.TaskRun(tr1Name, ns,
+				tb.TaskRunSpec(
+					tb.TaskRunTaskRef(task1Name),
+				),
+				tb.TaskRunStatus(
+					tb.PodName(tr1Pod),
+					tb.TaskRunStartTime(tr1StartTime),
+					tb.StatusCondition(apis.Condition{
+						Type:   apis.ConditionSucceeded,
+						Status: corev1.ConditionTrue,
+					}),
+					tb.StepState(
+						cb.StepName(tr1Step1Name),
+						tb.StateTerminated(0),
+					),
+					tb.StepState(
+						cb.StepName("nop"),
+						tb.StateTerminated(0),
+					),
+				),
+				tb.TaskRunSpec(
+					tb.TaskRunTaskRef(task1Name),
+				),
+			),
+		},
+		Pipelines: []*v1alpha1.Pipeline{
+			tb.Pipeline(pipelineName, ns,
+				tb.PipelineSpec(
+					tb.PipelineTask(task1Name, task1Name),
+					tb.PipelineTask(task2Name, task2Name),
+					tb.PipelineTask(task3Name, task3Name),
+					tb.PipelineTask(task4Name, task4Name),
+				),
+			),
+		},
+		PipelineRuns: []*v1alpha1.PipelineRun{
+			tb.PipelineRun(prName, ns,
+				tb.PipelineRunLabel("tekton.dev/pipeline", prName),
+				tb.PipelineRunSpec(pipelineName),
+				tb.PipelineRunStatus(
+					tb.PipelineRunStatusCondition(apis.Condition{
+						Status: corev1.ConditionTrue,
+						Reason: resources.ReasonRunning,
+					}),
+					tb.PipelineRunTaskRunsStatus(tr1Name, &v1alpha1.PipelineRunTaskRunStatus{
+						PipelineTaskName: task1Name,
+					}),
+				),
+			),
+		},
+		Namespaces: []*corev1.Namespace{
+			{
+				ObjectMeta: metav1.ObjectMeta{
+					Name: ns,
+				},
 			},
 		},
-	}
-
-	trs := []*v1alpha1.TaskRun{
-		tb.TaskRun(tr1Name, ns,
-			tb.TaskRunSpec(
-				tb.TaskRunTaskRef(task1Name),
-			),
-			tb.TaskRunStatus(
-				tb.PodName(tr1Pod),
-				tb.TaskRunStartTime(tr1StartTime),
-				tb.StatusCondition(apis.Condition{
-					Type:   apis.ConditionSucceeded,
-					Status: corev1.ConditionTrue,
-				}),
-				tb.StepState(
-					cb.StepName(tr1Step1Name),
-					tb.StateTerminated(0),
-				),
-				tb.StepState(
-					cb.StepName("nop"),
-					tb.StateTerminated(0),
+		Pods: []*corev1.Pod{
+			tb.Pod(tr1Pod, ns,
+				tb.PodLabel("tekton.dev/task", pipelineName),
+				tb.PodSpec(
+					tb.PodContainer(tr1Step1Name, tr1Step1Name+":latest"),
+					tb.PodContainer("nop", "override-with-nop:latest"),
 				),
 			),
-			tb.TaskRunSpec(
-				tb.TaskRunTaskRef(task1Name),
+		},
+	})
+
+	// define embedded pipeline
+	cs2, _ := test.SeedTestData(t, pipelinetest.Data{
+		Tasks: []*v1alpha1.Task{
+			tb.Task("output-task2", "ns", cb.TaskCreationTime(clockwork.NewFakeClock().Now())),
+		},
+		TaskRuns: []*v1alpha1.TaskRun{
+			tb.TaskRun("output-taskrun2", "ns",
+				tb.TaskRunLabel("tekton.dev/task", "task"),
+				tb.TaskRunSpec(tb.TaskRunTaskRef("output-task2")),
+				tb.TaskRunStatus(
+					tb.PodName("output-task-pod-embedded"),
+					tb.TaskRunStartTime(clockwork.NewFakeClock().Now()),
+					tb.StatusCondition(apis.Condition{
+						Type:   apis.ConditionSucceeded,
+						Status: corev1.ConditionTrue,
+						Reason: resources.ReasonSucceeded,
+					}),
+					tb.StepState(
+						cb.StepName("test-step"),
+						tb.StateTerminated(0),
+					),
+				),
 			),
-		),
-	}
-
-	prs := []*v1alpha1.PipelineRun{
-		tb.PipelineRun(prName, ns,
-			tb.PipelineRunLabel("tekton.dev/pipeline", prName),
-			tb.PipelineRunSpec(pipelineName),
-			tb.PipelineRunStatus(
-				tb.PipelineRunStatusCondition(apis.Condition{
-					Status: corev1.ConditionTrue,
-					Reason: resources.ReasonRunning,
-				}),
-				tb.PipelineRunTaskRunsStatus(tr1Name, &v1alpha1.PipelineRunTaskRunStatus{
-					PipelineTaskName: task1Name,
-					Status:           &trs[0].Status,
-				}),
+		},
+		PipelineRuns: []*v1alpha1.PipelineRun{
+			tb.PipelineRun("embedded-pipeline-1", "ns",
+				tb.PipelineRunLabel("tekton.dev/pipeline", "embedded-pipeline-1"),
+				tb.PipelineRunSpec("", tb.PipelineRunPipelineSpec(
+					tb.PipelineTask("output-task2", "output-task2"),
+				)),
+				tb.PipelineRunStatus(
+					tb.PipelineRunStatusCondition(apis.Condition{
+						Status: corev1.ConditionTrue,
+						Reason: resources.ReasonRunning,
+					}),
+					tb.PipelineRunTaskRunsStatus("output-taskrun2", &v1alpha1.PipelineRunTaskRunStatus{
+						PipelineTaskName: "output-task2",
+					}),
+				),
 			),
-		),
-	}
-
-	pps := []*v1alpha1.Pipeline{
-		tb.Pipeline(pipelineName, ns,
-			tb.PipelineSpec(
-				tb.PipelineTask(task1Name, task1Name),
-				tb.PipelineTask(task2Name, task2Name),
-				tb.PipelineTask(task3Name, task3Name),
-				tb.PipelineTask(task4Name, task4Name),
+		},
+		Namespaces: []*corev1.Namespace{
+			{
+				ObjectMeta: metav1.ObjectMeta{
+					Name: "ns",
+				},
+			},
+		},
+		Pods: []*corev1.Pod{
+			tb.Pod("output-task-pod-embedded", "ns",
+				tb.PodSpec(
+					tb.PodContainer("test-step", "test-step1:latest"),
+					tb.PodContainer("nop2", "override-with-nop:latest"),
+				),
+				cb.PodStatus(
+					cb.PodPhase(corev1.PodSucceeded),
+				),
 			),
-		),
-	}
+		},
+	})
 
-	p := []*corev1.Pod{
-		tb.Pod(tr1Pod, ns,
-			tb.PodLabel("tekton.dev/task", pipelineName),
-			tb.PodSpec(
-				tb.PodContainer(tr1Step1Name, tr1Step1Name+":latest"),
-				tb.PodContainer("nop", "override-with-nop:latest"),
+	for _, tt := range []struct {
+		name            string
+		pipelineRunName string
+		namespace       string
+		input           pipelinetest.Clients
+		logs            []fake.Log
+		want            []string
+	}{
+		{
+			name:            "Test PipelineRef",
+			pipelineRunName: prName,
+			namespace:       ns,
+			input:           cs,
+			logs: fake.Logs(
+				fake.Task(tr1Pod,
+					fake.Step(tr1Step1Name, "wrote a file"),
+					fake.Step("nop", "Build successful"),
+				),
 			),
-		),
+			want: []string{
+				"[output-task : writefile-step] wrote a file\n",
+				"[output-task : nop] Build successful\n",
+				"",
+			},
+		},
+		{
+			name:            "Test embedded Pipeline",
+			pipelineRunName: "embedded-pipeline-1",
+			namespace:       "ns",
+			input:           cs2,
+			logs: fake.Logs(
+				fake.Task("output-task-pod-embedded",
+					fake.Step("test-step", "test embedded"),
+					fake.Step("nop2", "Test successful"),
+				),
+			),
+			want: []string{
+				"[output-task2 : test-step] test embedded\n",
+				"[output-task2 : nop2] Test successful\n",
+				"",
+			},
+		},
+	} {
+		t.Run(tt.name, func(t *testing.T) {
+			prlo := logOpts(tt.pipelineRunName, tt.namespace, tt.input, fake.Streamer(tt.logs), false, false)
+			output, _ := fetchLogs(prlo)
+			test.AssertOutput(t, strings.Join(tt.want, "\n"), output)
+		})
 	}
-
-	fakeLogStream := fake.Logs(
-		fake.Task(tr1Pod,
-			fake.Step(tr1Step1Name, "wrote a file"),
-			fake.Step("nop", "Build successful"),
-		),
-	)
-
-	cs, _ := test.SeedTestData(t, pipelinetest.Data{PipelineRuns: prs, Pipelines: pps, TaskRuns: trs, Pods: p, Namespaces: nsList})
-	prlo := logOpts(prName, ns, cs, fake.Streamer(fakeLogStream), false, false)
-	output, _ := fetchLogs(prlo)
-
-	expectedLogs := []string{
-		"[output-task : writefile-step] wrote a file\n",
-		"[output-task : nop] Build successful\n",
-	}
-	expected := strings.Join(expectedLogs, "\n") + "\n"
-
-	test.AssertOutput(t, expected, output)
 }
 
 func TestPipelinerunLog_follow_mode(t *testing.T) {
