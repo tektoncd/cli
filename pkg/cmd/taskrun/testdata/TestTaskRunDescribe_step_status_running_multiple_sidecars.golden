@@ -34,6 +34,6 @@ Steps
 
 Sidecars
 
- NAME
- sidecar1
- sidecar2
+ NAME       STATUS
+ sidecar1   Running
+ sidecar2   Running

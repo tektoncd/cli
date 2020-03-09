@@ -527,6 +527,7 @@ github.com/stretchr/testify v1.2.2/go.mod h1:a8OnRcib4nhh0OaRAV+Yts87kKdq0PP7pXf
 github.com/stretchr/testify v1.3.0/go.mod h1:M5WIy9Dh21IEIfnGCwXGc5bZfKNJtfHm1UVUgZn+9EI=
 github.com/stretchr/testify v1.4.0 h1:2E4SXV/wtOkTonXsotYi4li6zVWxYlZuYNCXe9XRJyk=
 github.com/stretchr/testify v1.4.0/go.mod h1:j7eGeouHqKxXV5pUuKE4zz7dFj8WfuZ+81PSLYec5m4=
+github.com/tektoncd/pipeline v0.10.1 h1:pDsYK2b70o/Ze/CE1nisELwKVVE54FxwyfLznsW1JiE=
 github.com/tektoncd/pipeline v0.11.0-rc1 h1:NBX/PE9K6EkCyPg8psqErj8Lv2dwBsfgmliEMVzTUhQ=
 github.com/tektoncd/pipeline v0.11.0-rc1/go.mod h1:nXK3nCiNJQ/LDbRsJvo+3LU3MJIthNIomRI3xogsJqc=
 github.com/tektoncd/plumbing v0.0.0-20200217163359-cd0db6e567d2 h1:BksmpUwtap3THXJ8Z4KGcotsvpRdFQKySjDHgtc22lA=

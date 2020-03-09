@@ -34,4 +34,6 @@ Steps
 
 Sidecars
 
-No sidecars
+ NAME       STATUS
+ sidecar1   Error
+ sidecar2   ---

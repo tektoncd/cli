@@ -107,3 +107,22 @@ func StepReasonExists(state v1alpha1.StepState) string {
 
 	return formatted.ColorStatus(state.Waiting.Reason)
 }
+
+// Check if sidecar is in waiting, running, or terminated state by checking SidecarState of the sidecar.
+func SidecarReasonExists(state v1alpha1.SidecarState) string {
+
+	if state.Waiting == nil {
+
+		if state.Running != nil {
+			return formatted.ColorStatus("Running")
+		}
+
+		if state.Terminated != nil {
+			return formatted.ColorStatus(state.Terminated.Reason)
+		}
+
+		return formatted.ColorStatus(pendingState)
+	}
+
+	return formatted.ColorStatus(state.Waiting.Reason)
+}
