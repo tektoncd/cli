@@ -34,8 +34,8 @@ import (
 
 const (
 	emptyMsg = "No tasks found"
-	header   = "NAME\tAGE"
-	body     = "%s\t%s\n"
+	header   = "NAME\tDESCRIPTION\tAGE"
+	body     = "%s\t%s\t%s\n"
 )
 
 func listCommand(p cli.Params) *cobra.Command {
@@ -98,6 +98,7 @@ func printTaskDetails(s *cli.Stream, p cli.Params) error {
 	for _, task := range tasks.Items {
 		fmt.Fprintf(w, body,
 			task.Name,
+			formatted.FormatDesc(task.Spec.Description),
 			formatted.Age(&task.CreationTimestamp, p.Time()),
 		)
 	}

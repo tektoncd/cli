@@ -32,8 +32,8 @@ import (
 
 const (
 	emptyMsg = "No conditions found"
-	header   = "NAME\tAGE"
-	body     = "%s\t%s\n"
+	header   = "NAME\tDESCRIPTION\tAGE"
+	body     = "%s\t%s\t%s\n"
 )
 
 func listCommand(p cli.Params) *cobra.Command {
@@ -97,6 +97,7 @@ func printConditionDetails(s *cli.Stream, p cli.Params) error {
 	for _, condition := range conditions.Items {
 		fmt.Fprintf(w, body,
 			condition.Name,
+			formatted.FormatDesc(condition.Spec.Description),
 			formatted.Age(&condition.CreationTimestamp, p.Time()),
 		)
 	}

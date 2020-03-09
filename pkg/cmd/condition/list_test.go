@@ -57,6 +57,9 @@ func TestConditionList(t *testing.T) {
 		tb.Condition("condition1", "ns", cb.ConditionCreationTime(clock.Now().Add(-1*time.Minute))),
 		tb.Condition("condition2", "ns", cb.ConditionCreationTime(clock.Now().Add(-20*time.Second))),
 		tb.Condition("condition3", "ns", cb.ConditionCreationTime(clock.Now().Add(-512*time.Hour))),
+		tb.Condition("condition4", "ns", tb.ConditionSpec(tb.ConditionDescription("a test condition")), cb.ConditionCreationTime(clock.Now().Add(-513*time.Hour))),
+		tb.Condition("condition5", "ns", tb.ConditionSpec(tb.ConditionDescription("a test condition to check the trimming is working")), cb.ConditionCreationTime(clock.Now().Add(-514*time.Hour))),
+		tb.Condition("condition6", "ns", tb.ConditionSpec(tb.ConditionDescription("")), cb.ConditionCreationTime(clock.Now().Add(-516*time.Hour))),
 	}
 	s, _ := test.SeedTestData(t, pipelinetest.Data{Conditions: conditions, Namespaces: ns})
 
