@@ -86,14 +86,11 @@ func (r *Reader) readAvailablePipelineLogs(pr *v1alpha1.PipelineRun) (<-chan Log
 		return nil, nil, err
 	}
 
-	tkn := r.clients.Tekton
-	pl, err := tkn.TektonV1alpha1().Pipelines(r.ns).Get(pr.Spec.PipelineRef.Name, metav1.GetOptions{})
+	ordered, err := r.getOrderedTasks(pr)
 	if err != nil {
 		return nil, nil, err
 	}
 
-	// Sort taskruns, to display the taskrun logs as per pipeline tasks order
-	ordered := trh.SortTasksBySpecOrder(pl.Spec.Tasks, pr.Status.TaskRuns)
 	taskRuns := trh.Filter(ordered, r.tasks)
 
 	logC := make(chan Log)
@@ -192,6 +189,28 @@ func (r *Reader) setUpTask(taskNumber int, tr trh.Run) {
 	r.setNumber(taskNumber)
 	r.setRun(tr.Name)
 	r.setTask(tr.Task)
+}
+
+// getOrderedTasks get Tasks in order from Spec.PipelineRef or Spec.PipelineSpec
+// and return trh.Run after converted taskruns into trh.Run.
+func (r *Reader) getOrderedTasks(pr *v1alpha1.PipelineRun) ([]trh.Run, error) {
+	var tasks []v1alpha1.PipelineTask
+
+	switch {
+	case pr.Spec.PipelineRef != nil:
+		pl, err := r.clients.Tekton.TektonV1alpha1().Pipelines(r.ns).Get(pr.Spec.PipelineRef.Name, metav1.GetOptions{})
+		if err != nil {
+			return nil, err
+		}
+		tasks = pl.Spec.Tasks
+	case pr.Spec.PipelineSpec != nil:
+		tasks = pr.Spec.PipelineSpec.Tasks
+	default:
+		return nil, fmt.Errorf("pipelinerun %s did not provide PipelineRef or PipelineSpec", pr.Name)
+	}
+
+	// Sort taskruns, to display the taskrun logs as per pipeline tasks order
+	return trh.SortTasksBySpecOrder(tasks, pr.Status.TaskRuns), nil
 }
 
 func empty(status v1alpha1.PipelineRunStatus) bool {
