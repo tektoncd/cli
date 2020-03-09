@@ -187,3 +187,51 @@ func TestStepReasonExists_Waiting_Present(t *testing.T) {
 	output := StepReasonExists(state)
 	test.AssertOutput(t, "PodInitializing", output)
 }
+
+func TestSidecarReasonExists_Terminated_Not_Present(t *testing.T) {
+	state := v1alpha1.SidecarState{}
+
+	output := SidecarReasonExists(state)
+	test.AssertOutput(t, "---", output)
+}
+
+func TestSidecarReasonExists_Terminated_Present(t *testing.T) {
+	state := v1alpha1.SidecarState{
+		ContainerState: corev1.ContainerState{
+			Terminated: &corev1.ContainerStateTerminated{
+				Reason: "Completed",
+			},
+		},
+	}
+
+	output := SidecarReasonExists(state)
+	test.AssertOutput(t, "Completed", output)
+}
+
+func TestSidecarReasonExists_Running_Present(t *testing.T) {
+	state := v1alpha1.SidecarState{
+		ContainerState: corev1.ContainerState{
+			Running: &corev1.ContainerStateRunning{
+				StartedAt: metav1.Time{
+					Time: time.Now(),
+				},
+			},
+		},
+	}
+
+	output := SidecarReasonExists(state)
+	test.AssertOutput(t, "Running", output)
+}
+
+func TestSidecarReasonExists_Waiting_Present(t *testing.T) {
+	state := v1alpha1.SidecarState{
+		ContainerState: corev1.ContainerState{
+			Waiting: &corev1.ContainerStateWaiting{
+				Reason: "PodInitializing",
+			},
+		},
+	}
+
+	output := SidecarReasonExists(state)
+	test.AssertOutput(t, "PodInitializing", output)
+}

@@ -34,5 +34,5 @@ Steps
 
 Sidecars
 
- NAME
- sidecar1
+ NAME       STATUS
+ sidecar1   PodInitializing

@@ -102,9 +102,10 @@ No steps
 {{- $l := len $sidecars }}{{ if eq $l 0 }}
 No sidecars
 {{- else }}
- NAME
+ NAME	STATUS
 {{- range $sidecar := $sidecars }}
- {{decorate "bullet" $sidecar.Name }}
+{{- $reason := sidecarReasonExists $sidecar }}
+ {{decorate "bullet" $sidecar.Name }}	{{ $reason }}
 {{- end }}
 {{- end }}
 `
@@ -178,6 +179,7 @@ func PrintTaskRunDescription(s *cli.Stream, trName string, p cli.Params) error {
 		"taskRefExists":         validate.TaskRefExists,
 		"taskResourceRefExists": validate.TaskResourceRefExists,
 		"stepReasonExists":      validate.StepReasonExists,
+		"sidecarReasonExists":   validate.SidecarReasonExists,
 		"decorate":              formatted.DecorateAttr,
 		"sortStepStates":        sortStepStatesByStartTime,
 		"getTimeout":            getTimeoutValue,
