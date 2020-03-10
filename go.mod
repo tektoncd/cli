@@ -24,7 +24,7 @@ require (
 	github.com/spf13/pflag v1.0.5
 	github.com/tektoncd/pipeline v0.11.0-rc1
 	github.com/tektoncd/plumbing v0.0.0-20200217163359-cd0db6e567d2
-	github.com/tektoncd/triggers v0.2.1-preview.0.20200130181252-68f571334722
+	github.com/tektoncd/triggers v0.3.2-0.20200309195848-700e5df278fb
 	github.com/tidwall/gjson v1.6.0 // indirect
 	github.com/tidwall/sjson v1.0.4 // indirect
 	go.opencensus.io v0.22.1
@@ -59,6 +59,3 @@ replace (
 	k8s.io/code-generator => k8s.io/code-generator v0.16.5
 	k8s.io/gengo => k8s.io/gengo v0.0.0-20190327210449-e17681d19d3a
 )
-
-// Temporary
-replace github.com/tektoncd/triggers => github.com/vdemeester/tektoncd-triggers v0.0.0-20200302105517-91104f68d7c9
