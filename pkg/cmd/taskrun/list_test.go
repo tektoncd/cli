@@ -194,6 +194,18 @@ func TestListTaskRuns(t *testing.T) {
 			args:      []string{"list", "-n", "foo", "--label", "honey=nutella", "tr3-1"},
 			wantError: true,
 		},
+		{
+			name:      "print in reverse",
+			command:   command(t, trs, now, ns),
+			args:      []string{"list", "--reverse", "-n", "foo"},
+			wantError: false,
+		},
+		{
+			name:      "print in reverse with output flag",
+			command:   command(t, trs, now, ns),
+			args:      []string{"list", "--reverse", "-n", "foo", "-o", "jsonpath={range .items[*]}{.metadata.name}{\"\\n\"}{end}"},
+			wantError: false,
+		},
 	}
 
 	for _, td := range tests {

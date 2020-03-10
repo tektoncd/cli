@@ -39,6 +39,7 @@ const (
 type ListOptions struct {
 	Limit         int
 	LabelSelector string
+	Reverse       bool
 }
 
 func listCommand(p cli.Params) *cobra.Command {
@@ -84,6 +85,10 @@ List all PipelineRuns in a namespace 'foo':
 				return err
 			}
 
+			if prs != nil && opts.Reverse {
+				reverse(prs)
+			}
+
 			output, err := cmd.LocalFlags().GetString("output")
 			if err != nil {
 				fmt.Fprint(os.Stderr, "Error: output option not set properly \n")
@@ -122,6 +127,7 @@ List all PipelineRuns in a namespace 'foo':
 	f.AddFlags(c)
 	c.Flags().IntVarP(&opts.Limit, "limit", "", 0, "limit pipelineruns listed (default: return all pipelineruns)")
 	c.Flags().StringVarP(&opts.LabelSelector, "label", "", opts.LabelSelector, "A selector (label query) to filter on, supports '=', '==', and '!='")
+	c.Flags().BoolVarP(&opts.Reverse, "reverse", "", opts.Reverse, "list pipelineruns in reverse order")
 	return c
 }
 
@@ -181,6 +187,18 @@ func list(p cli.Params, pipeline string, limit int, labelselector string) (*v1al
 		})
 
 	return prs, nil
+}
+
+func reverse(prs *v1alpha1.PipelineRunList) {
+	i := 0
+	j := len(prs.Items) - 1
+	prItems := prs.Items
+	for i < j {
+		prItems[i], prItems[j] = prItems[j], prItems[i]
+		i++
+		j--
+	}
+	prs.Items = prItems
 }
 
 func printFormatted(s *cli.Stream, prs *v1alpha1.PipelineRunList, c clockwork.Clock) error {

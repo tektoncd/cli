@@ -39,6 +39,7 @@ const (
 type ListOptions struct {
 	Limit         int
 	LabelSelector string
+	Reverse       bool
 }
 
 func listCommand(p cli.Params) *cobra.Command {
@@ -84,6 +85,10 @@ List all TaskRuns of Task 'foo' in namespace 'bar':
 				return err
 			}
 
+			if trs != nil && opts.Reverse {
+				reverse(trs)
+			}
+
 			output, err := cmd.LocalFlags().GetString("output")
 			if err != nil {
 				fmt.Fprint(os.Stderr, "Error: output option not set properly \n")
@@ -123,8 +128,20 @@ List all TaskRuns of Task 'foo' in namespace 'bar':
 	f.AddFlags(c)
 	c.Flags().IntVarP(&opts.Limit, "limit", "", 0, "limit taskruns listed (default: return all taskruns)")
 	c.Flags().StringVarP(&opts.LabelSelector, "label", "", opts.LabelSelector, "A selector (label query) to filter on, supports '=', '==', and '!='")
-
+	c.Flags().BoolVarP(&opts.Reverse, "reverse", "", opts.Reverse, "list taskruns in reverse order")
 	return c
+}
+
+func reverse(trs *v1alpha1.TaskRunList) {
+	i := 0
+	j := len(trs.Items) - 1
+	trItems := trs.Items
+	for i < j {
+		trItems[i], trItems[j] = trItems[j], trItems[i]
+		i++
+		j--
+	}
+	trs.Items = trItems
 }
 
 func list(p cli.Params, task string, limit int, labelselector string) (*v1alpha1.TaskRunList, error) {
