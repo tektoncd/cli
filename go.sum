@@ -533,6 +533,9 @@ github.com/tektoncd/pipeline v0.11.0-rc1/go.mod h1:nXK3nCiNJQ/LDbRsJvo+3LU3MJIth
 github.com/tektoncd/plumbing v0.0.0-20200217163359-cd0db6e567d2 h1:BksmpUwtap3THXJ8Z4KGcotsvpRdFQKySjDHgtc22lA=
 github.com/tektoncd/plumbing v0.0.0-20200217163359-cd0db6e567d2/go.mod h1:QZHgU07PRBTRF6N57w4+ApRu8OgfYLFNqCDlfEZaD9Y=
 github.com/tektoncd/plumbing/pipelinerun-logs v0.0.0-20191206114338-712d544c2c21/go.mod h1:S62EUWtqmejjJgUMOGB1CCCHRp6C706laH06BoALkzU=
+github.com/tektoncd/triggers v0.2.1-preview.0.20200130181252-68f571334722/go.mod h1:sf5zayuDu6gUI4JsCYDunukfrb1ng/Lz0FoWcJ0cFt4=
+github.com/tektoncd/triggers v0.3.2-0.20200309195848-700e5df278fb h1:uHsFenPEYFnyBfvylIrgHYTqnODg0KvBTrUa+LKZhOI=
+github.com/tektoncd/triggers v0.3.2-0.20200309195848-700e5df278fb/go.mod h1:sf5zayuDu6gUI4JsCYDunukfrb1ng/Lz0FoWcJ0cFt4=
 github.com/tidwall/gjson v1.6.0 h1:9VEQWz6LLMUsUl6PueE49ir4Ka6CzLymOAZDxpFsTDc=
 github.com/tidwall/gjson v1.6.0/go.mod h1:P256ACg0Mn+j1RXIDXoss50DeIABTYK1PULOJHhxOls=
 github.com/tidwall/match v1.0.1 h1:PnKP62LPNxHKTwvHHZZzdOAOCtsJTjo6dZLCwpKm5xc=

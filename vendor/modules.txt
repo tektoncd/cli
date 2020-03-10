@@ -317,13 +317,15 @@ github.com/tektoncd/pipeline/test
 github.com/tektoncd/pipeline/test/builder
 # github.com/tektoncd/plumbing v0.0.0-20200217163359-cd0db6e567d2
 github.com/tektoncd/plumbing/scripts
-# github.com/tektoncd/triggers v0.2.1-preview.0.20200130181252-68f571334722 => github.com/vdemeester/tektoncd-triggers v0.0.0-20200302105517-91104f68d7c9
+# github.com/tektoncd/triggers v0.3.2-0.20200309195848-700e5df278fb
 github.com/tektoncd/triggers/pkg/apis/triggers/v1alpha1
 github.com/tektoncd/triggers/pkg/client/clientset/versioned
 github.com/tektoncd/triggers/pkg/client/clientset/versioned/fake
 github.com/tektoncd/triggers/pkg/client/clientset/versioned/scheme
 github.com/tektoncd/triggers/pkg/client/clientset/versioned/typed/triggers/v1alpha1
 github.com/tektoncd/triggers/pkg/client/clientset/versioned/typed/triggers/v1alpha1/fake
+github.com/tektoncd/triggers/pkg/client/dynamic/clientset
+github.com/tektoncd/triggers/pkg/client/dynamic/clientset/tekton
 github.com/tektoncd/triggers/pkg/client/informers/externalversions
 github.com/tektoncd/triggers/pkg/client/informers/externalversions/internalinterfaces
 github.com/tektoncd/triggers/pkg/client/informers/externalversions/triggers
@@ -660,6 +662,7 @@ k8s.io/client-go/discovery
 k8s.io/client-go/discovery/cached/disk
 k8s.io/client-go/discovery/fake
 k8s.io/client-go/dynamic
+k8s.io/client-go/dynamic/fake
 k8s.io/client-go/informers
 k8s.io/client-go/informers/admissionregistration
 k8s.io/client-go/informers/admissionregistration/v1
@@ -886,6 +889,8 @@ knative.dev/pkg/client/injection/kube/informers/core/v1/configmap
 knative.dev/pkg/client/injection/kube/informers/core/v1/configmap/fake
 knative.dev/pkg/client/injection/kube/informers/core/v1/pod
 knative.dev/pkg/client/injection/kube/informers/core/v1/pod/fake
+knative.dev/pkg/client/injection/kube/informers/core/v1/secret
+knative.dev/pkg/client/injection/kube/informers/core/v1/secret/fake
 knative.dev/pkg/client/injection/kube/informers/core/v1/service
 knative.dev/pkg/client/injection/kube/informers/core/v1/service/fake
 knative.dev/pkg/client/injection/kube/informers/factory
