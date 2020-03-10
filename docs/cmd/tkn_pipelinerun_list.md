@@ -33,6 +33,7 @@ List all PipelineRuns in a namespace 'foo':
       --label string                  A selector (label query) to filter on, supports '=', '==', and '!='
       --limit int                     limit pipelineruns listed (default: return all pipelineruns)
   -o, --output string                 Output format. One of: json|yaml|name|go-template|go-template-file|template|templatefile|jsonpath|jsonpath-file.
+      --reverse                       list pipelineruns in reverse order
       --template string               Template string or path to template file to use when -o=go-template, -o=go-template-file. The template format is golang templates [http://golang.org/pkg/text/template/#pkg-overview].
 ```
 

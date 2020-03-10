@@ -174,6 +174,18 @@ func TestListPipelineRuns(t *testing.T) {
 			args:      []string{"list", "-n", "namespace", "-o", "jsonpath={range .items[*]}{.metadata.name}{\"\\n\"}{end}", "--limit", fmt.Sprintf("%d", 2)},
 			wantError: false,
 		},
+		{
+			name:      "print in reverse",
+			command:   command(t, prs, clock.Now(), ns),
+			args:      []string{"list", "--reverse", "-n", "namespace"},
+			wantError: false,
+		},
+		{
+			name:      "print in reverse with output flag",
+			command:   command(t, prs, clock.Now(), ns),
+			args:      []string{"list", "--reverse", "-n", "namespace", "-o", "jsonpath={range .items[*]}{.metadata.name}{\"\\n\"}{end}"},
+			wantError: false,
+		},
 	}
 
 	for _, td := range tests {
