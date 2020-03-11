@@ -56,7 +56,7 @@ type startOptions struct {
 	Last               bool
 	Labels             []string
 	ShowLog            bool
-	TimeOut            int64
+	TimeOut            string
 	DryRun             bool
 	Output             string
 }
@@ -144,7 +144,7 @@ like cat,foo,bar
 	c.Flags().BoolVarP(&opt.Last, "last", "L", false, "re-run the clustertask using last taskrun values")
 	c.Flags().StringSliceVarP(&opt.Labels, "labels", "l", []string{}, "pass labels as label=value.")
 	c.Flags().BoolVarP(&opt.ShowLog, "showlog", "", false, "show logs right after starting the clustertask")
-	c.Flags().Int64VarP(&opt.TimeOut, "timeout", "t", 3600, "timeout for taskrun in seconds")
+	c.Flags().StringVar(&opt.TimeOut, "timeout", "1h", "timeout for taskrun")
 	c.Flags().BoolVarP(&opt.DryRun, "dry-run", "", false, "preview taskrun without running it")
 	c.Flags().StringVarP(&opt.Output, "output", "", "", "format of taskrun dry-run (yaml or json)")
 
@@ -168,15 +168,17 @@ func startClusterTask(opt startOptions, args []string) error {
 	}
 
 	var ctname string
-	timeoutSeconds := time.Duration(opt.TimeOut) * time.Second
-
+	timeout, err := time.ParseDuration(opt.TimeOut)
+	if err != nil {
+		return err
+	}
 	ctname = args[0]
 	tr.Spec = v1beta1.TaskRunSpec{
 		TaskRef: &v1beta1.TaskRef{
 			Name: ctname,
 			Kind: v1beta1.ClusterTaskKind, //Specify TaskRun is for a ClusterTask kind
 		},
-		Timeout: &metav1.Duration{Duration: timeoutSeconds},
+		Timeout: &metav1.Duration{Duration: timeout},
 	}
 	tr.ObjectMeta.GenerateName = ctname + "-run-"
 
