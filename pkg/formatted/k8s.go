@@ -68,7 +68,6 @@ func Condition(c v1beta1.Conditions) string {
 	cstatus := ColorStatus(status)
 
 	if c[0].Reason != "" && c[0].Reason != status {
-
 		if c[0].Reason == "PipelineRunCancelled" || c[0].Reason == "TaskRunCancelled" {
 			status = ColorStatus("Cancelled") + "(" + c[0].Reason + ")"
 		} else if c[0].Reason != status {

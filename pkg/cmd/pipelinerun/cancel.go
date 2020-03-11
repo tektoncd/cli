@@ -25,10 +25,10 @@ import (
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 )
 
-const (
-	succeeded   = "Succeeded"
-	failed      = "Failed"
-	prCancelled = "Cancelled(PipelineRunCancelled)"
+var (
+	succeeded   = formatted.ColorStatus("Succeeded")
+	failed      = formatted.ColorStatus("Failed")
+	prCancelled = formatted.ColorStatus("Cancelled") + "(PipelineRunCancelled)"
 )
 
 func cancelCommand(p cli.Params) *cobra.Command {
