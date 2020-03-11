@@ -17,7 +17,6 @@ spec:
         name: image
   serviceAccountName: svc1
   taskSpec:
-    Workspaces: null
     inputs:
       params:
       - default: /workspace/docker-source/Dockerfile
