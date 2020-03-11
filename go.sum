@@ -321,7 +321,7 @@ github.com/jbenet/go-context v0.0.0-20150711004518-d14ea06fba99 h1:BQSFePA1RWJOl
 github.com/jbenet/go-context v0.0.0-20150711004518-d14ea06fba99/go.mod h1:1lJo3i6rXxKeerYnT8Nvf0QmHCRC1n8sfWVwXF2Frvo=
 github.com/jcmturner/gofork v0.0.0-20190328161633-dc7c13fece03/go.mod h1:MK8+TM0La+2rjBD4jE12Kj1pCCxK7d2LK/UM3ncEo0o=
 github.com/jcmturner/gofork v1.0.0/go.mod h1:MK8+TM0La+2rjBD4jE12Kj1pCCxK7d2LK/UM3ncEo0o=
-github.com/jenkins-x/go-scm v1.5.73/go.mod h1:PCT338UhP/pQ0IeEeMEf/hoLTYKcH7qjGEKd7jPkeYg=
+github.com/jenkins-x/go-scm v1.5.79/go.mod h1:PCT338UhP/pQ0IeEeMEf/hoLTYKcH7qjGEKd7jPkeYg=
 github.com/jessevdk/go-flags v1.4.0/go.mod h1:4FA24M0QyGHXBuZZK/XkWh8h0e1EYbRYJSGM75WSRxI=
 github.com/jmespath/go-jmespath v0.0.0-20180206201540-c2b33e8439af h1:pmfjZENx5imkbgOkpRUYLnmbU7UEFbjtDA2hxJ1ichM=
 github.com/jmespath/go-jmespath v0.0.0-20180206201540-c2b33e8439af/go.mod h1:Nht3zPeWKUH0NzdCt2Blrr5ys8VGpn0CEB0cQHVjt7k=
@@ -527,13 +527,11 @@ github.com/stretchr/testify v1.2.2/go.mod h1:a8OnRcib4nhh0OaRAV+Yts87kKdq0PP7pXf
 github.com/stretchr/testify v1.3.0/go.mod h1:M5WIy9Dh21IEIfnGCwXGc5bZfKNJtfHm1UVUgZn+9EI=
 github.com/stretchr/testify v1.4.0 h1:2E4SXV/wtOkTonXsotYi4li6zVWxYlZuYNCXe9XRJyk=
 github.com/stretchr/testify v1.4.0/go.mod h1:j7eGeouHqKxXV5pUuKE4zz7dFj8WfuZ+81PSLYec5m4=
-github.com/tektoncd/pipeline v0.10.1 h1:pDsYK2b70o/Ze/CE1nisELwKVVE54FxwyfLznsW1JiE=
-github.com/tektoncd/pipeline v0.11.0-rc1 h1:NBX/PE9K6EkCyPg8psqErj8Lv2dwBsfgmliEMVzTUhQ=
-github.com/tektoncd/pipeline v0.11.0-rc1/go.mod h1:nXK3nCiNJQ/LDbRsJvo+3LU3MJIthNIomRI3xogsJqc=
+github.com/tektoncd/pipeline v0.11.0-rc2 h1:dMdrmxGt5J+BpDf6uv1QyvfnJBmjd/7X5fEQLcCmu+Q=
+github.com/tektoncd/pipeline v0.11.0-rc2/go.mod h1:QL3YmLzeKBdKk1THeQ6zmq2UXoPN+KdxeiU/7ynPtqY=
 github.com/tektoncd/plumbing v0.0.0-20200217163359-cd0db6e567d2 h1:BksmpUwtap3THXJ8Z4KGcotsvpRdFQKySjDHgtc22lA=
 github.com/tektoncd/plumbing v0.0.0-20200217163359-cd0db6e567d2/go.mod h1:QZHgU07PRBTRF6N57w4+ApRu8OgfYLFNqCDlfEZaD9Y=
 github.com/tektoncd/plumbing/pipelinerun-logs v0.0.0-20191206114338-712d544c2c21/go.mod h1:S62EUWtqmejjJgUMOGB1CCCHRp6C706laH06BoALkzU=
-github.com/tektoncd/triggers v0.2.1-preview.0.20200130181252-68f571334722/go.mod h1:sf5zayuDu6gUI4JsCYDunukfrb1ng/Lz0FoWcJ0cFt4=
 github.com/tektoncd/triggers v0.3.2-0.20200309195848-700e5df278fb h1:uHsFenPEYFnyBfvylIrgHYTqnODg0KvBTrUa+LKZhOI=
 github.com/tektoncd/triggers v0.3.2-0.20200309195848-700e5df278fb/go.mod h1:sf5zayuDu6gUI4JsCYDunukfrb1ng/Lz0FoWcJ0cFt4=
 github.com/tidwall/gjson v1.6.0 h1:9VEQWz6LLMUsUl6PueE49ir4Ka6CzLymOAZDxpFsTDc=
@@ -551,8 +549,6 @@ github.com/urfave/cli v1.20.0/go.mod h1:70zkFmudgCuE/ngEzBv17Jvp/497gISqfk5gWijb
 github.com/valyala/bytebufferpool v1.0.0/go.mod h1:6bBcMArwyJ5K/AmCkWv1jt77kVWyCJ6HpOuEn7z0Csc=
 github.com/vdemeester/k8s-pkg-credentialprovider v0.0.0-20200107171650-7c61ffa44238/go.mod h1:JwQJCMWpUDqjZrB5jpw0f5VbN7U95zxFy1ZDpoEarGo=
 github.com/vdemeester/k8s-pkg-credentialprovider v1.13.12-1/go.mod h1:Fko0rTxEtDW2kju5Ky7yFJNS3IcNvW8IPsp4/e9oev0=
-github.com/vdemeester/tektoncd-triggers v0.0.0-20200302105517-91104f68d7c9 h1:Kb2ddkGnY6BcIUozgUUe9uyrUhgnColdTEZBW+P5E38=
-github.com/vdemeester/tektoncd-triggers v0.0.0-20200302105517-91104f68d7c9/go.mod h1:LvqQa2xQxCbXTEXKE3IEVQ5ZvpCjhQZa+LepAtt0yVE=
 github.com/vmware/govmomi v0.20.3/go.mod h1:URlwyTFZX72RmxtxuaFL2Uj3fD1JTvZdx59bHWk6aFU=
 github.com/xanzy/ssh-agent v0.2.1 h1:TCbipTQL2JiiCprBWx9frJ2eJlCYT00NmctrHxVAr70=
 github.com/xanzy/ssh-agent v0.2.1/go.mod h1:mLlQY/MoOhWBj+gOGMQkOeiEvkx+8pJSI+0Bx9h2kr4=
