@@ -25,10 +25,10 @@ import (
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 )
 
-const (
-	succeeded     = "Succeeded"
-	failed        = "Failed"
-	taskCancelled = "Cancelled(TaskRunCancelled)"
+var (
+	succeeded        = formatted.ColorStatus("Succeeded")
+	failed           = formatted.ColorStatus("Failed")
+	taskrunCancelled = formatted.ColorStatus("Cancelled") + "(TaskRunCancelled)"
 )
 
 func cancelCommand(p cli.Params) *cobra.Command {
@@ -76,7 +76,7 @@ func cancelTaskRun(p cli.Params, s *cli.Stream, trName string) error {
 	}
 
 	taskrunCond := formatted.Condition(tr.Status.Conditions)
-	if taskrunCond == succeeded || taskrunCond == failed || taskrunCond == taskCancelled {
+	if taskrunCond == succeeded || taskrunCond == failed || taskrunCond == taskrunCancelled {
 		return fmt.Errorf("failed to cancel taskrun %s: taskrun has already finished execution", trName)
 	}
 

@@ -31,9 +31,6 @@ import (
 )
 
 func TestTaskRunCancel(t *testing.T) {
-	seeds := make([]pipelinetest.Clients, 0)
-	failures := make([]pipelinetest.Clients, 0)
-
 	trs := []*v1alpha1.TaskRun{
 		tb.TaskRun("taskrun-1", "ns",
 			tb.TaskRunLabel("tekton.dev/task", "task"),
@@ -70,6 +67,19 @@ func TestTaskRunCancel(t *testing.T) {
 		),
 	}
 
+	trs3 := []*v1alpha1.TaskRun{
+		tb.TaskRun("cancel-taskrun-1", "ns",
+			tb.TaskRunLabel("tekton.dev/task", "cancel-task"),
+			tb.TaskRunSpec(tb.TaskRunTaskRef("cancel-task")),
+			tb.TaskRunStatus(
+				tb.StatusCondition(apis.Condition{
+					Status: corev1.ConditionFalse,
+					Reason: "TaskRunCancelled",
+				}),
+			),
+		),
+	}
+
 	ns := []*corev1.Namespace{
 		{
 			ObjectMeta: metav1.ObjectMeta{
@@ -78,8 +88,13 @@ func TestTaskRunCancel(t *testing.T) {
 		},
 	}
 
+	seeds := make([]pipelinetest.Clients, 0)
+	failures := make([]pipelinetest.Clients, 0)
+	cancels := make([]pipelinetest.Clients, 0)
+
 	cs, _ := test.SeedTestData(t, pipelinetest.Data{TaskRuns: trs, Namespaces: ns})
 	cs2, _ := test.SeedTestData(t, pipelinetest.Data{TaskRuns: trs2, Namespaces: ns})
+	cs3, _ := test.SeedTestData(t, pipelinetest.Data{TaskRuns: trs3, Namespaces: ns})
 
 	cs2.Pipeline.PrependReactor("update", "taskruns", func(action k8stest.Action) (bool, runtime.Object, error) {
 		return true, nil, errors.New("test error")
@@ -87,6 +102,7 @@ func TestTaskRunCancel(t *testing.T) {
 
 	seeds = append(seeds, cs)
 	failures = append(failures, cs2)
+	cancels = append(cancels, cs3)
 
 	testParams := []struct {
 		name      string
@@ -129,6 +145,13 @@ func TestTaskRunCancel(t *testing.T) {
 			input:     seeds[0],
 			wantError: true,
 			want:      "failed to cancel taskrun taskrun-2: taskrun has already finished execution",
+		},
+		{
+			name:      "Failed canceling taskrun that was cancelled",
+			command:   []string{"cancel", "cancel-taskrun-1", "-n", "ns"},
+			input:     cancels[0],
+			wantError: true,
+			want:      "failed to cancel taskrun cancel-taskrun-1: taskrun has already finished execution",
 		},
 	}
 

@@ -34,6 +34,7 @@ import (
 var (
 	success = apis.Condition{Type: apis.ConditionSucceeded, Status: corev1.ConditionTrue}
 	failure = apis.Condition{Type: apis.ConditionSucceeded, Status: corev1.ConditionFalse}
+	cancel  = apis.Condition{Status: corev1.ConditionFalse, Reason: "PipelineRunCancelled"}
 )
 
 func Test_cancel_invalid_namespace(t *testing.T) {
@@ -211,6 +212,43 @@ func Test_finished_pipelinerun_failure(t *testing.T) {
 			),
 			tb.PipelineRunStatus(
 				tb.PipelineRunStatusCondition(failure),
+			),
+		),
+	}
+
+	cs, _ := test.SeedTestData(t, pipelinetest.Data{PipelineRuns: prs, Namespaces: ns})
+	p := &tu.Params{Tekton: cs.Pipeline, Kube: cs.Kube}
+
+	pRun := Command(p)
+	got, _ := tu.ExecuteCommand(pRun, "cancel", prName, "-n", "ns")
+
+	expected := "Error: failed to cancel pipelinerun " + prName + ": pipelinerun has already finished execution\n"
+	tu.AssertOutput(t, expected, got)
+}
+
+func Test_finished_pipelinerun_cancel(t *testing.T) {
+	ns := []*corev1.Namespace{
+		{
+			ObjectMeta: metav1.ObjectMeta{
+				Name: "ns",
+			},
+		},
+	}
+
+	prName := "test-pipeline-run-123"
+
+	prs := []*v1alpha1.PipelineRun{
+		tb.PipelineRun(prName, "ns",
+			tb.PipelineRunLabel("tekton.dev/pipeline", "pipelineName"),
+			tb.PipelineRunSpec("pipelineName",
+				tb.PipelineRunServiceAccountName("test-sa"),
+				tb.PipelineRunResourceBinding("git-repo", tb.PipelineResourceBindingRef("some-repo")),
+				tb.PipelineRunResourceBinding("build-image", tb.PipelineResourceBindingRef("some-image")),
+				tb.PipelineRunParam("pipeline-param-1", "somethingmorefun"),
+				tb.PipelineRunParam("rev-param", "revision1"),
+			),
+			tb.PipelineRunStatus(
+				tb.PipelineRunStatusCondition(cancel),
 			),
 		),
 	}
