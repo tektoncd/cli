@@ -36,6 +36,9 @@ import (
 const templ = `{{decorate "bold" "Name"}}:	{{ .PipelineResource.Name }}
 {{decorate "bold" "Namespace"}}:	{{ .PipelineResource.Namespace }}
 {{decorate "bold" "PipelineResource Type"}}:	{{ .PipelineResource.Spec.Type }}
+{{- if ne .PipelineResource.Spec.Description "" }}
+{{decorate "bold" "Description"}}:	{{ .PipelineResource.Spec.Description }}
+{{- end }}
 
 {{decorate "underline bold" "Params\n"}}
 {{- $l := len .PipelineResource.Spec.Params }}{{ if eq $l 0 }}

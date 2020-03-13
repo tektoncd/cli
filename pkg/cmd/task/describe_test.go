@@ -175,6 +175,7 @@ func TestTaskDescribe_Full(t *testing.T) {
 		Tasks: []*v1alpha1.Task{
 			tb.Task("task-1", "ns",
 				tb.TaskSpec(
+					tb.TaskDescription("a test description"),
 					tb.TaskInputs(
 						tb.InputsResource("my-repo", v1alpha1.PipelineResourceTypeGit),
 						tb.InputsResource("my-image", v1alpha1.PipelineResourceTypeImage),

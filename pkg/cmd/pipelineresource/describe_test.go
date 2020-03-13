@@ -89,6 +89,7 @@ func TestPipelineResourceDescribe_WithParams(t *testing.T) {
 			),
 		),
 	}
+	pres[0].Spec.Description = "a test description"
 
 	cs, _ := test.SeedTestData(t, pipelinetest.Data{PipelineResources: pres, Namespaces: ns})
 	p := &test.Params{Tekton: cs.Pipeline, Kube: cs.Kube, Resource: cs.Resource}
@@ -115,6 +116,7 @@ func TestPipelineResourceDescribe_WithSecretParams(t *testing.T) {
 			),
 		),
 	}
+	pres[0].Spec.Description = "a test description"
 
 	cs, _ := test.SeedTestData(t, pipelinetest.Data{PipelineResources: pres, Namespaces: ns})
 	p := &test.Params{Tekton: cs.Pipeline, Kube: cs.Kube, Resource: cs.Resource}

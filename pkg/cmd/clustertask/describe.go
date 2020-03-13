@@ -34,6 +34,9 @@ import (
 )
 
 const describeTemplate = `{{decorate "bold" "Name"}}:	{{ .ClusterTask.Name }}
+{{- if ne .ClusterTask.Spec.Description "" }}
+{{decorate "bold" "Description"}}:	{{ .ClusterTask.Spec.Description }}
+{{- end }}
 
 {{decorate "inputresources" ""}}{{decorate "underline bold" "Input Resources\n"}}
 
