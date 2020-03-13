@@ -510,6 +510,9 @@ type TaskRefData struct {
 
 const describeTemplate = `{{decorate "bold" "Name"}}:	{{ .PipelineName }}
 {{decorate "bold" "Namespace"}}:	{{ .Pipeline.Namespace }}
+{{- if ne .Pipeline.Spec.Description "" }}
+{{decorate "bold" "Description"}}:	{{ .Pipeline.Spec.Description }}
+{{- end }}
 
 {{decorate "resources" ""}}{{decorate "underline bold" "Resources\n"}}
 {{- $rl := len .Pipeline.Spec.Resources }}{{ if eq $rl 0 }}

@@ -63,6 +63,7 @@ func Test_ClusterTaskDescribe(t *testing.T) {
 		),
 		tb.ClusterTask("clustertask-one-everything", cb.ClusterTaskCreationTime(clock.Now().Add(1*time.Minute)),
 			tb.ClusterTaskSpec(
+				tb.TaskDescription("a test description"),
 				tb.TaskInputs(
 					tb.InputsResource("my-repo", v1alpha1.PipelineResourceTypeGit),
 					tb.InputsParamSpec("myarg", v1alpha1.ParamTypeString),

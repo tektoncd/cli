@@ -36,6 +36,9 @@ import (
 
 const describeTemplate = `{{decorate "bold" "Name"}}:	{{ .Task.Name }}
 {{decorate "bold" "Namespace"}}:	{{ .Task.Namespace }}
+{{- if ne .Task.Spec.Description "" }}
+{{decorate "bold" "Description"}}:	{{ .Task.Spec.Description }}
+{{- end }}
 
 {{decorate "inputresources" ""}}{{decorate "underline bold" "Input Resources\n"}}
 

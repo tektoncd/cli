@@ -158,6 +158,7 @@ func TestPipelinesDescribe_with_task_run(t *testing.T) {
 				// created  5 minutes back
 				cb.PipelineCreationTimestamp(clock.Now().Add(-5*time.Minute)),
 				tb.PipelineSpec(
+					tb.PipelineDescription("a test description"),
 					tb.PipelineTask("task", "taskref",
 						tb.RunAfter("one", "two")),
 				),
@@ -215,6 +216,7 @@ func TestPipelinesDescribe_with_resource_param_task_run(t *testing.T) {
 				// created  5 minutes back
 				cb.PipelineCreationTimestamp(clock.Now().Add(-5*time.Minute)),
 				tb.PipelineSpec(
+					tb.PipelineDescription("a test description"),
 					tb.PipelineTask("task", "taskref",
 						tb.RunAfter("one", "two"),
 					),
@@ -275,6 +277,7 @@ func TestPipelinesDescribe_with_multiple_resource_param_task_run(t *testing.T) {
 				// created  5 minutes back
 				cb.PipelineCreationTimestamp(clock.Now().Add(-5*time.Minute)),
 				tb.PipelineSpec(
+					tb.PipelineDescription("a test description"),
 					tb.PipelineTask("task", "taskref",
 						tb.RunAfter("one", "two"),
 					),

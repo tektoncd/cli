@@ -1,5 +1,6 @@
-Name:        pipeline
-Namespace:   ns
+Name:          pipeline
+Namespace:     ns
+Description:   a test description
 
 Resources
 
