@@ -71,7 +71,7 @@ or
 	c.Flags().BoolVarP(&opts.ForceDelete, "force", "f", false, "Whether to force deletion (default: false)")
 	c.Flags().StringVarP(&opts.ParentResourceName, "task", "t", "", "The name of a task whose taskruns should be deleted (does not delete the task)")
 	c.Flags().BoolVarP(&opts.DeleteAllNs, "all", "", false, "Delete all taskruns in a namespace (default: false)")
-	c.Flags().IntVarP(&opts.Keep, "keep", "", 0, "Keep n least recent number of pipelineruns when deleting alls")
+	c.Flags().IntVarP(&opts.Keep, "keep", "", 0, "Keep n least recent number of taskruns when using --all with delete")
 	_ = c.MarkZshCompPositionalArgumentCustom(1, "__tkn_get_taskrun")
 	return c
 }
