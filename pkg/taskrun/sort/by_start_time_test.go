@@ -1,4 +1,4 @@
-// Copyright © 2019 The Tekton Authors.
+// Copyright © 2020 The Tekton Authors.
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -60,19 +60,19 @@ func Test_TaskRunsByStartTime(t *testing.T) {
 		tr1,
 	}
 
-	sortResults := SortTaskRunsByStartTime(trs)
+	SortByStartTime(trs)
 
-	element1 := sortResults[0].Name
+	element1 := trs[0].Name
 	if element1 != "tr0-1" {
 		t.Errorf("SortTaskRunsByStartTime should be tr0-1 but returned: %s", element1)
 	}
 
-	element2 := sortResults[1].Name
+	element2 := trs[1].Name
 	if element2 != "tr2-1" {
 		t.Errorf("SortTaskRunsByStartTime should be tr2-1 but returned: %s", element2)
 	}
 
-	element3 := sortResults[2].Name
+	element3 := trs[2].Name
 	if element3 != "tr1-1" {
 		t.Errorf("SortTaskRunsByStartTime should be tr1-1 but returned: %s", element3)
 	}
@@ -107,19 +107,19 @@ func Test_TaskRunsByStartTime_NilStartTime(t *testing.T) {
 		tr1,
 	}
 
-	sortResults := SortTaskRunsByStartTime(trs)
+	SortByStartTime(trs)
 
-	element1 := sortResults[0].Name
+	element1 := trs[0].Name
 	if element1 != "tr1-1" {
 		t.Errorf("SortTaskRunsByStartTime should be tr1-1 but returned: %s", element1)
 	}
 
-	element2 := sortResults[1].Name
+	element2 := trs[1].Name
 	if element2 != "tr2-1" {
 		t.Errorf("SortTaskRunsByStartTime should be tr2-1 but returned: %s", element2)
 	}
 
-	element3 := sortResults[2].Name
+	element3 := trs[2].Name
 	if element3 != "tr0-1" {
 		t.Errorf("SortTaskRunsByStartTime should be tr0-1 but returned: %s", element3)
 	}

@@ -1,4 +1,4 @@
-// Copyright © 2019 The Tekton Authors.
+// Copyright © 2020 The Tekton Authors.
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -20,17 +20,20 @@ import (
 	"github.com/tektoncd/pipeline/pkg/apis/pipeline/v1alpha1"
 )
 
-func SortTaskRunsByStartTime(trs []v1alpha1.TaskRun) []v1alpha1.TaskRun {
-	sort.Slice(trs, func(i, j int) bool {
-		if trs[j].Status.StartTime == nil {
-			return false
-		}
+func SortByStartTime(trs []v1alpha1.TaskRun) {
+	sort.Sort(byStartTime(trs))
+}
 
-		if trs[i].Status.StartTime == nil {
-			return true
-		}
-		return trs[j].Status.StartTime.Before(trs[i].Status.StartTime)
-	})
+type byStartTime []v1alpha1.TaskRun
 
-	return trs
+func (trs byStartTime) Len() int      { return len(trs) }
+func (trs byStartTime) Swap(i, j int) { trs[i], trs[j] = trs[j], trs[i] }
+func (trs byStartTime) Less(i, j int) bool {
+	if trs[j].Status.StartTime == nil {
+		return false
+	}
+	if trs[i].Status.StartTime == nil {
+		return true
+	}
+	return trs[j].Status.StartTime.Before(trs[i].Status.StartTime)
 }

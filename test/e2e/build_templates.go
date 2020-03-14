@@ -11,11 +11,12 @@ import (
 	"text/template"
 	"time"
 
+	trsort "github.com/tektoncd/cli/pkg/taskrun/sort"
+
 	"github.com/google/go-cmp/cmp"
 	"github.com/jonboulle/clockwork"
 
 	"github.com/tektoncd/cli/pkg/formatted"
-	trhsort "github.com/tektoncd/cli/pkg/taskrun/sort"
 	"github.com/tektoncd/pipeline/pkg/apis/pipeline/v1alpha1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 )
@@ -171,10 +172,7 @@ func ListResourceNamesForJSONPath(obj interface{}) string {
 			return emptyMsg
 		}
 		//sort by start Time
-		trslen := len(obj.Items)
-		if trslen != 0 {
-			obj.Items = trhsort.SortTaskRunsByStartTime(obj.Items)
-		}
+		trsort.SortByStartTime(obj.Items)
 
 		for _, r := range obj.Items {
 			fmt.Fprintf(w, body,
@@ -316,11 +314,7 @@ func ListAllTaskRunsOutput(t *testing.T, cs *Clients, td map[int]interface{}) st
 
 	clock := clockwork.NewFakeClockAt(time.Now())
 	taskrun := GetTaskRunListWithTestData(t, cs, td)
-
-	trslen := len(taskrun.Items)
-	if trslen != 0 {
-		taskrun.Items = trhsort.SortTaskRunsByStartTime(taskrun.Items)
-	}
+	trsort.SortByStartTime(taskrun.Items)
 
 	var tmplBytes bytes.Buffer
 	w := tabwriter.NewWriter(&tmplBytes, 0, 5, 3, ' ', tabwriter.TabIndent)

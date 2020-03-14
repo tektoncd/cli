@@ -32,11 +32,8 @@ func GetAllTaskRuns(p cli.Params, opts metav1.ListOptions, limit int) ([]string,
 		return nil, err
 	}
 
+	trsort.SortByStartTime(runs.Items)
 	runslen := len(runs.Items)
-	if runslen > 1 {
-		runs.Items = trsort.SortTaskRunsByStartTime(runs.Items)
-	}
-
 	if limit > runslen {
 		limit = runslen
 	}

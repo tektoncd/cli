@@ -22,7 +22,7 @@ import (
 	"github.com/tektoncd/cli/pkg/cli"
 	"github.com/tektoncd/cli/pkg/deleter"
 	"github.com/tektoncd/cli/pkg/options"
-	prhsort "github.com/tektoncd/cli/pkg/pipelinerun/sort"
+	prsort "github.com/tektoncd/cli/pkg/pipelinerun/sort"
 	validate "github.com/tektoncd/cli/pkg/validate"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	cliopts "k8s.io/cli-runtime/pkg/genericclioptions"
@@ -145,7 +145,8 @@ func allPipelineRunNames(p cli.Params, cs *cli.Clients, keep int) ([]string, err
 	}
 	var names []string
 	var counter = 0
-	for _, pr := range prhsort.SortPipelineRunsByStartTime(pipelineRuns.Items) {
+	prsort.SortByStartTime(pipelineRuns.Items)
+	for _, pr := range pipelineRuns.Items {
 		if keep > 0 && counter != keep {
 			counter++
 			continue
