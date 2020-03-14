@@ -504,6 +504,105 @@ func TestPipelinerunLog_completed_taskrun_only(t *testing.T) {
 		},
 	})
 
+	// define conditional pipeline
+	conditionCheckName := "output-task-pod-conditional-output-task3-cond-1-xxxyyy"
+	prccs := make(map[string]*v1alpha1.PipelineRunConditionCheckStatus)
+	prccs[conditionCheckName] = &v1alpha1.PipelineRunConditionCheckStatus{
+		ConditionName: "cond-1",
+		Status:        &v1alpha1.ConditionCheckStatus{},
+	}
+
+	cs3, _ := test.SeedTestData(t, pipelinetest.Data{
+		Tasks: []*v1alpha1.Task{
+			tb.Task("output-task3", "ns", cb.TaskCreationTime(clockwork.NewFakeClock().Now())),
+		},
+		TaskRuns: []*v1alpha1.TaskRun{
+			tb.TaskRun("output-taskrun3", "ns",
+				tb.TaskRunLabel("tekton.dev/task", "task"),
+				tb.TaskRunSpec(tb.TaskRunTaskRef("output-task3")),
+				tb.TaskRunStatus(
+					tb.PodName("output-task-pod-conditional"),
+					tb.TaskRunStartTime(clockwork.NewFakeClock().Now()),
+					tb.StatusCondition(apis.Condition{
+						Type:   apis.ConditionSucceeded,
+						Status: corev1.ConditionTrue,
+						Reason: resources.ReasonSucceeded,
+					}),
+					tb.StepState(
+						cb.StepName("conditonal-step"),
+						tb.StateTerminated(0),
+					),
+				),
+			),
+			tb.TaskRun(conditionCheckName, "ns",
+				tb.TaskRunLabel("tekton.dev/task", "task"),
+				tb.TaskRunSpec(tb.TaskRunTaskSpec()),
+				tb.TaskRunStatus(
+					tb.PodName(conditionCheckName+"-pod"),
+					tb.TaskRunStartTime(clockwork.NewFakeClock().Now()),
+					tb.StatusCondition(apis.Condition{
+						Type:   apis.ConditionSucceeded,
+						Status: corev1.ConditionTrue,
+					}),
+					tb.StepState(
+						cb.StepName("test-condition"),
+						tb.StateTerminated(0),
+					),
+				),
+			),
+		},
+		PipelineRuns: []*v1alpha1.PipelineRun{
+			tb.PipelineRun("conditional-pipeline-1", "ns",
+				tb.PipelineRunLabel("tekton.dev/pipeline", "conditional-pipeline-1"),
+				tb.PipelineRunSpec("", tb.PipelineRunPipelineSpec(
+					tb.PipelineTask("output-task3", "output-task3",
+						tb.PipelineTaskCondition("cond-1")),
+				)),
+				tb.PipelineRunStatus(
+					tb.PipelineRunStatusCondition(apis.Condition{
+						Status: corev1.ConditionTrue,
+						Reason: resources.ReasonRunning,
+					}),
+					tb.PipelineRunTaskRunsStatus("output-taskrun3", &v1alpha1.PipelineRunTaskRunStatus{
+						PipelineTaskName: "output-task3",
+						Status:           &v1alpha1.TaskRunStatus{},
+						ConditionChecks:  prccs,
+					}),
+				),
+			),
+		},
+		Conditions: []*v1alpha1.Condition{
+			tb.Condition("cond-1", "ns", tb.ConditionSpec(
+				tb.ConditionSpecCheck("", "foo", tb.Args("bar")),
+			)),
+		},
+		Namespaces: []*corev1.Namespace{
+			{
+				ObjectMeta: metav1.ObjectMeta{
+					Name: "ns",
+				},
+			},
+		},
+		Pods: []*corev1.Pod{
+			tb.Pod("output-task-pod-conditional", "ns",
+				tb.PodSpec(
+					tb.PodContainer("conditonal-step", "conditional-step1:latest"),
+				),
+				cb.PodStatus(
+					cb.PodPhase(corev1.PodSucceeded),
+				),
+			),
+			tb.Pod(conditionCheckName+"-pod", "ns",
+				tb.PodSpec(
+					tb.PodContainer("test-condition", "test-condition:latest"),
+				),
+				cb.PodStatus(
+					cb.PodPhase(corev1.PodSucceeded),
+				),
+			),
+		},
+	})
+
 	for _, tt := range []struct {
 		name            string
 		pipelineRunName string
@@ -543,6 +642,25 @@ func TestPipelinerunLog_completed_taskrun_only(t *testing.T) {
 			want: []string{
 				"[output-task2 : test-step] test embedded\n",
 				"[output-task2 : nop2] Test successful\n",
+				"",
+			},
+		},
+		{
+			name:            "Test conditional Pipeline",
+			pipelineRunName: "conditional-pipeline-1",
+			namespace:       "ns",
+			input:           cs3,
+			logs: fake.Logs(
+				fake.Task("output-task-pod-conditional",
+					fake.Step("conditonal-step", "test condition"),
+				),
+				fake.Task("output-task-pod-conditional-output-task3-cond-1-xxxyyy-pod",
+					fake.Step("test-condition", "test condition"),
+				),
+			),
+			want: []string{
+				"[cond-1 : test-condition] test condition\n",
+				"[output-task3 : conditonal-step] test condition\n",
 				"",
 			},
 		},

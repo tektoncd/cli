@@ -61,11 +61,21 @@ func SortTasksBySpecOrder(pipelineTasks []v1alpha1.PipelineTask, pipelinesTaskRu
 	trNames := map[string]string{}
 
 	for name, t := range pipelinesTaskRuns {
+		// making mapping of (condtion name : pod name) if task has conditions.
+		for podName, cond := range t.ConditionChecks {
+			trNames[cond.ConditionName] = podName
+		}
 		trNames[t.PipelineTaskName] = name
 	}
 
 	trs := []Run{}
 	for _, ts := range pipelineTasks {
+		// checking conditions before appending task, pod names.
+		for _, cond := range ts.Conditions {
+			if podName, ok := trNames[cond.ConditionRef]; ok {
+				trs = append(trs, Run{Task: cond.ConditionRef, Name: podName})
+			}
+		}
 		if n, ok := trNames[ts.Name]; ok {
 			trs = append(trs, Run{
 				Task: ts.Name,
