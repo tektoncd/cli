@@ -1,4 +1,4 @@
-// Copyright © 2019 The Tekton Authors.
+// Copyright © 2020 The Tekton Authors.
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -60,19 +60,19 @@ func Test_PipelineRunsByStartTime(t *testing.T) {
 		pr1,
 	}
 
-	sortResults := SortPipelineRunsByStartTime(prs)
+	SortByStartTime(prs)
 
-	element1 := sortResults[0].Name
+	element1 := prs[0].Name
 	if element1 != "pr0-1" {
 		t.Errorf("SortPipelineRunsByStartTime should be pr0-1 but returned: %s", element1)
 	}
 
-	element2 := sortResults[1].Name
+	element2 := prs[1].Name
 	if element2 != "pr2-1" {
 		t.Errorf("SortPipelineRunsByStartTime should be pr2-1 but returned: %s", element2)
 	}
 
-	element3 := sortResults[2].Name
+	element3 := prs[2].Name
 	if element3 != "pr1-1" {
 		t.Errorf("SortPipelineRunsByStartTime should be pr1-1 but returned: %s", element3)
 	}
@@ -107,19 +107,19 @@ func Test_PipelineRunsByStartTime_NilStartTime(t *testing.T) {
 		pr1,
 	}
 
-	sortResults := SortPipelineRunsByStartTime(prs)
+	SortByStartTime(prs)
 
-	element1 := sortResults[0].Name
+	element1 := prs[0].Name
 	if element1 != "pr1-1" {
 		t.Errorf("SortPipelineRunsByStartTime should be pr1-1 but returned: %s", element1)
 	}
 
-	element2 := sortResults[1].Name
+	element2 := prs[1].Name
 	if element2 != "pr2-1" {
 		t.Errorf("SortPipelineRunsByStartTime should be pr2-1 but returned: %s", element2)
 	}
 
-	element3 := sortResults[2].Name
+	element3 := prs[2].Name
 	if element3 != "pr0-1" {
 		t.Errorf("SortPipelineRunsByStartTime should be pr0-1 but returned: %s", element3)
 	}

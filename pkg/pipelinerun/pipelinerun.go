@@ -17,7 +17,7 @@ package pipelinerun
 import (
 	"github.com/tektoncd/cli/pkg/cli"
 	"github.com/tektoncd/cli/pkg/formatted"
-	prhsort "github.com/tektoncd/cli/pkg/pipelinerun/sort"
+	prsort "github.com/tektoncd/cli/pkg/pipelinerun/sort"
 	"github.com/tektoncd/pipeline/pkg/apis/pipeline/v1alpha1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 )
@@ -50,7 +50,7 @@ func GetAllPipelineRuns(p cli.Params, opts metav1.ListOptions, limit int) ([]str
 
 	runslen := len(runs.Items)
 	if runslen > 1 {
-		runs.Items = prhsort.SortPipelineRunsByStartTime(runs.Items)
+		prsort.SortByStartTime(runs.Items)
 	}
 
 	if limit > runslen {

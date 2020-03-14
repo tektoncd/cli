@@ -24,7 +24,7 @@ import (
 	"github.com/tektoncd/cli/pkg/cli"
 	"github.com/tektoncd/cli/pkg/formatted"
 	"github.com/tektoncd/cli/pkg/printer"
-	trhsort "github.com/tektoncd/cli/pkg/taskrun/sort"
+	trsort "github.com/tektoncd/cli/pkg/taskrun/sort"
 	"github.com/tektoncd/cli/pkg/validate"
 	"github.com/tektoncd/pipeline/pkg/apis/pipeline/v1alpha1"
 	v1 "k8s.io/apimachinery/pkg/apis/meta/v1"
@@ -178,7 +178,7 @@ func list(p cli.Params, task string, limit int, labelselector string) (*v1alpha1
 	trslen := len(trs.Items)
 
 	if trslen != 0 {
-		trs.Items = trhsort.SortTaskRunsByStartTime(trs.Items)
+		trsort.SortByStartTime(trs.Items)
 	}
 
 	// If greater than maximum amount of taskruns, return all taskruns by setting limit to default

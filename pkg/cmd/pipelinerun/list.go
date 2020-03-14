@@ -23,7 +23,7 @@ import (
 	"github.com/spf13/cobra"
 	"github.com/tektoncd/cli/pkg/cli"
 	"github.com/tektoncd/cli/pkg/formatted"
-	prhsort "github.com/tektoncd/cli/pkg/pipelinerun/sort"
+	prsort "github.com/tektoncd/cli/pkg/pipelinerun/sort"
 	"github.com/tektoncd/cli/pkg/printer"
 	"github.com/tektoncd/cli/pkg/validate"
 	"github.com/tektoncd/pipeline/pkg/apis/pipeline/v1alpha1"
@@ -165,7 +165,7 @@ func list(p cli.Params, pipeline string, limit int, labelselector string) (*v1al
 	prslen := len(prs.Items)
 
 	if prslen != 0 {
-		prs.Items = prhsort.SortPipelineRunsByStartTime(prs.Items)
+		prsort.SortByStartTime(prs.Items)
 	}
 
 	// If greater than maximum amount of pipelineruns, return all pipelineruns by setting limit to default
