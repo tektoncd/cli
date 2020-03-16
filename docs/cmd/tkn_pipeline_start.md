@@ -35,6 +35,7 @@ two parameters (foo and bar)
 
 ```
       --dry-run                       preview pipelinerun without running it
+  -f, --filename string               local or remote file name containing a pipeline definition to start a pipelinerun
   -h, --help                          help for start
   -l, --labels strings                pass labels as label=value.
   -L, --last                          re-run the pipeline using last pipelinerun values

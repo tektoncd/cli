@@ -150,7 +150,7 @@ like cat,foo,bar
 	flags.AddShellCompletion(c.Flags().Lookup("use-taskrun"), "__tkn_get_taskrun")
 	c.Flags().StringSliceVarP(&opt.Labels, "labels", "l", []string{}, "pass labels as label=value.")
 	c.Flags().BoolVarP(&opt.ShowLog, "showlog", "", false, "show logs right after starting the task")
-	c.Flags().StringVarP(&opt.Filename, "filename", "f", "", "local or remote file name containing a task definition")
+	c.Flags().StringVarP(&opt.Filename, "filename", "f", "", "local or remote file name containing a task definition to start a taskrun")
 	c.Flags().StringVarP(&opt.TimeOut, "timeout", "", "1h", "timeout for taskrun")
 	c.Flags().BoolVarP(&opt.DryRun, "dry-run", "", false, "preview taskrun without running it")
 	c.Flags().StringVarP(&opt.Output, "output", "", "", "format of taskrun dry-run (yaml or json)")

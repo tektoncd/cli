@@ -29,6 +29,7 @@ import (
 	"github.com/tektoncd/cli/pkg/cli"
 	"github.com/tektoncd/cli/pkg/cmd/pipelineresource"
 	"github.com/tektoncd/cli/pkg/cmd/pipelinerun"
+	"github.com/tektoncd/cli/pkg/file"
 	"github.com/tektoncd/cli/pkg/flags"
 	"github.com/tektoncd/cli/pkg/labels"
 	"github.com/tektoncd/cli/pkg/options"
@@ -37,7 +38,6 @@ import (
 	hpipelinerun "github.com/tektoncd/cli/pkg/pipelinerun"
 	validate "github.com/tektoncd/cli/pkg/validate"
 	"github.com/tektoncd/pipeline/pkg/apis/pipeline/v1alpha1"
-	"github.com/tektoncd/pipeline/pkg/client/clientset/versioned"
 	versionedResource "github.com/tektoncd/pipeline/pkg/client/resource/clientset/versioned"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	v1 "k8s.io/apimachinery/pkg/apis/meta/v1"
@@ -69,6 +69,7 @@ type startOptions struct {
 	Output             string
 	PrefixName         string
 	TimeOut            string
+	Filename           string
 }
 
 type resourceOptionsFilter struct {
@@ -78,30 +79,6 @@ type resourceOptionsFilter struct {
 	storage     []string
 	pullRequest []string
 	cloudEvent  []string
-}
-
-// NameArg validates that the first argument is a valid pipeline name
-func NameArg(args []string, p cli.Params) error {
-	if len(args) == 0 {
-		return errNoPipeline
-	}
-
-	if err := validate.NamespaceExists(p); err != nil {
-		return err
-	}
-
-	c, err := p.Clients()
-	if err != nil {
-		return err
-	}
-
-	name, ns := args[0], p.Namespace()
-	_, err = c.Tekton.TektonV1alpha1().Pipelines(ns).Get(name, metav1.GetOptions{})
-	if err != nil {
-		return fmt.Errorf(errInvalidPipeline, name, ns)
-	}
-
-	return nil
 }
 
 func startCommand(p cli.Params) *cobra.Command {
@@ -135,8 +112,10 @@ like cat,foo,bar
 			if err := flags.InitParams(p, cmd); err != nil {
 				return err
 			}
-
-			return NameArg(args, p)
+			if opt.Filename != "" && opt.Last {
+				return errors.New("cannot use --last option with --filename option")
+			}
+			return nil
 		},
 		RunE: func(cmd *cobra.Command, args []string) error {
 			opt.stream = &cli.Stream{
@@ -144,7 +123,12 @@ like cat,foo,bar
 				Err: cmd.OutOrStderr(),
 			}
 
-			return opt.run(args[0])
+			pipeline, err := NameArg(args, p, opt.Filename)
+			if err != nil {
+				return err
+			}
+
+			return opt.run(pipeline)
 		},
 	}
 
@@ -163,21 +147,147 @@ like cat,foo,bar
 	c.Flags().StringVarP(&opt.Output, "output", "", "", "format of pipelinerun dry-run (yaml or json)")
 	c.Flags().StringVarP(&opt.PrefixName, "prefix-name", "", "", "specify a prefix for the pipelinerun name (must be lowercase alphanumeric characters)")
 	c.Flags().StringVarP(&opt.TimeOut, "timeout", "", "1h", "timeout for pipelinerun")
+	c.Flags().StringVarP(&opt.Filename, "filename", "f", "", "local or remote file name containing a pipeline definition to start a pipelinerun")
 
 	_ = c.MarkZshCompPositionalArgumentCustom(1, "__tkn_get_pipeline")
 
 	return c
 }
 
-func (opt *startOptions) run(pName string) error {
-	if err := opt.getInput(pName); err != nil {
+func (opt *startOptions) run(pipeline *v1alpha1.Pipeline) error {
+	if err := opt.getInput(pipeline); err != nil {
 		return err
 	}
 
-	return opt.startPipeline(pName)
+	return opt.startPipeline(pipeline)
 }
 
-func (opt *startOptions) getInput(pname string) error {
+func (opt *startOptions) startPipeline(pipelineStart *v1alpha1.Pipeline) error {
+	objMeta := metav1.ObjectMeta{
+		Namespace: opt.cliparams.Namespace(),
+	}
+	if opt.PrefixName == "" {
+		objMeta.GenerateName = pipelineStart.ObjectMeta.Name + "-run-"
+	} else {
+		objMeta.GenerateName = opt.PrefixName + "-"
+	}
+
+	var pr *v1alpha1.PipelineRun
+	if opt.Filename == "" {
+		pr = &v1alpha1.PipelineRun{
+			TypeMeta: metav1.TypeMeta{
+				APIVersion: "tekton.dev/v1alpha1",
+				Kind:       "PipelineRun",
+			},
+			ObjectMeta: objMeta,
+			Spec: v1alpha1.PipelineRunSpec{
+				PipelineRef: &v1alpha1.PipelineRef{Name: pipelineStart.ObjectMeta.Name},
+			},
+		}
+	} else {
+		pr = &v1alpha1.PipelineRun{
+			TypeMeta: metav1.TypeMeta{
+				APIVersion: "tekton.dev/v1alpha1",
+				Kind:       "PipelineRun",
+			},
+			ObjectMeta: objMeta,
+			Spec: v1alpha1.PipelineRunSpec{
+				PipelineSpec: &pipelineStart.Spec,
+			},
+		}
+	}
+
+	timeoutDuration, err := time.ParseDuration(opt.TimeOut)
+	if err != nil {
+		return err
+	}
+	pr.Spec.Timeout = &metav1.Duration{Duration: timeoutDuration}
+
+	cs, err := opt.cliparams.Clients()
+	if err != nil {
+		return err
+	}
+
+	if opt.Last || opt.UsePipelineRun != "" {
+		var usepr *v1alpha1.PipelineRun
+		if opt.Last {
+			usepr, err = pipeline.LastRun(cs.Tekton, pipelineStart.ObjectMeta.Name, opt.cliparams.Namespace())
+			if err != nil {
+				return err
+			}
+		} else {
+			usepr, err = hpipelinerun.GetPipelineRun(opt.cliparams, v1.GetOptions{}, opt.UsePipelineRun)
+			if err != nil {
+				return err
+			}
+		}
+
+		// if --prefix-name is specified by user, allow name to be used for pipelinerun
+		if len(usepr.ObjectMeta.GenerateName) > 0 && opt.PrefixName == "" {
+			pr.ObjectMeta.GenerateName = usepr.ObjectMeta.GenerateName
+		} else if opt.PrefixName == "" {
+			pr.ObjectMeta.GenerateName = usepr.ObjectMeta.Name + "-"
+		}
+		pr.Spec.Resources = usepr.Spec.Resources
+		pr.Spec.Params = usepr.Spec.Params
+		// If the usepr is a "new" PR, let's populate those fields too
+		pr.Spec.ServiceAccountName = usepr.Spec.ServiceAccountName
+		pr.Spec.ServiceAccountNames = usepr.Spec.ServiceAccountNames
+		pr.Spec.Workspaces = usepr.Spec.Workspaces
+	}
+
+	if err := mergeRes(pr, opt.Resources); err != nil {
+		return err
+	}
+
+	labels, err := labels.MergeLabels(pr.ObjectMeta.Labels, opt.Labels)
+	if err != nil {
+		return err
+	}
+	pr.ObjectMeta.Labels = labels
+
+	param, err := params.MergeParam(pr.Spec.Params, opt.Params)
+	if err != nil {
+		return err
+	}
+	pr.Spec.Params = param
+
+	if err := mergeSvc(pr, opt.ServiceAccounts); err != nil {
+		return err
+	}
+
+	if len(opt.ServiceAccountName) > 0 {
+		pr.Spec.ServiceAccountName = opt.ServiceAccountName
+	}
+
+	if opt.DryRun {
+		return pipelineRunDryRun(opt.Output, opt.stream, pr)
+	}
+
+	prCreated, err := cs.Tekton.TektonV1alpha1().PipelineRuns(opt.cliparams.Namespace()).Create(pr)
+	if err != nil {
+		return err
+	}
+
+	fmt.Fprintf(opt.stream.Out, "Pipelinerun started: %s\n", prCreated.Name)
+	if !opt.ShowLog {
+		fmt.Fprintf(opt.stream.Out, "\nIn order to track the pipelinerun progress run:\ntkn pipelinerun logs %s -f -n %s\n", prCreated.Name, prCreated.Namespace)
+		return nil
+	}
+
+	fmt.Fprintf(opt.stream.Out, "Waiting for logs to be available...\n")
+	runLogOpts := &options.LogOptions{
+		PipelineName:    pipelineStart.ObjectMeta.Name,
+		PipelineRunName: prCreated.Name,
+		Stream:          opt.stream,
+		Follow:          true,
+		Params:          opt.cliparams,
+		AllSteps:        false,
+	}
+	return pipelinerun.Run(runLogOpts)
+}
+
+func (opt *startOptions) getInput(pipeline *v1alpha1.Pipeline) error {
 	cs, err := opt.cliparams.Clients()
 	if err != nil {
 		return err
@@ -185,12 +295,6 @@ func (opt *startOptions) getInput(pname string) error {
 
 	if opt.Last && opt.UsePipelineRun != "" {
 		fmt.Fprintf(opt.stream.Err, "option --last and option --use-pipelinerun are not compatible \n")
-		return err
-	}
-
-	pipeline, err := getPipeline(cs.Tekton, opt.cliparams.Namespace(), pname)
-	if err != nil {
-		fmt.Fprintf(opt.stream.Err, "failed to get pipeline %s from %s namespace \n", pname, opt.cliparams.Namespace())
 		return err
 	}
 
@@ -307,14 +411,6 @@ func getPipelineResources(client versionedResource.Interface, namespace string) 
 	return pres, nil
 }
 
-func getPipeline(client versioned.Interface, namespace string, pname string) (*v1alpha1.Pipeline, error) {
-	pipeline, err := client.TektonV1alpha1().Pipelines(namespace).Get(pname, metav1.GetOptions{})
-	if err != nil {
-		return nil, err
-	}
-	return pipeline, nil
-}
-
 func getPipelineResourcesByFormat(resources []v1alpha1.PipelineResource) (ret resourceOptionsFilter) {
 	for _, res := range resources {
 		output := ""
@@ -392,117 +488,6 @@ func getOptionsByType(resources resourceOptionsFilter, restype string) []string 
 		return resources.cloudEvent
 	}
 	return []string{}
-}
-
-func (opt *startOptions) startPipeline(pName string) error {
-	objMeta := metav1.ObjectMeta{
-		Namespace: opt.cliparams.Namespace(),
-	}
-	if opt.PrefixName == "" {
-		objMeta.GenerateName = pName + "-run-"
-	} else {
-		objMeta.GenerateName = opt.PrefixName + "-"
-	}
-
-	pr := &v1alpha1.PipelineRun{
-		TypeMeta: metav1.TypeMeta{
-			APIVersion: "tekton.dev/v1alpha1",
-			Kind:       "PipelineRun",
-		},
-		ObjectMeta: objMeta,
-		Spec: v1alpha1.PipelineRunSpec{
-			PipelineRef: &v1alpha1.PipelineRef{Name: pName},
-		},
-	}
-
-	timeoutDuration, err := time.ParseDuration(opt.TimeOut)
-	if err != nil {
-		return err
-	}
-	pr.Spec.Timeout = &metav1.Duration{Duration: timeoutDuration}
-
-	cs, err := opt.cliparams.Clients()
-	if err != nil {
-		return err
-	}
-
-	if opt.Last || opt.UsePipelineRun != "" {
-		var usepr *v1alpha1.PipelineRun
-		if opt.Last {
-			usepr, err = pipeline.LastRun(cs.Tekton, pName, opt.cliparams.Namespace())
-			if err != nil {
-				return err
-			}
-		} else {
-			usepr, err = hpipelinerun.GetPipelineRun(opt.cliparams, v1.GetOptions{}, opt.UsePipelineRun)
-			if err != nil {
-				return err
-			}
-		}
-
-		// if --prefix-name is specified by user, allow name to be used for pipelinerun
-		if len(usepr.ObjectMeta.GenerateName) > 0 && opt.PrefixName == "" {
-			pr.ObjectMeta.GenerateName = usepr.ObjectMeta.GenerateName
-		} else if opt.PrefixName == "" {
-			pr.ObjectMeta.GenerateName = usepr.ObjectMeta.Name + "-"
-		}
-		pr.Spec.Resources = usepr.Spec.Resources
-		pr.Spec.Params = usepr.Spec.Params
-		// If the usepr is a "new" PR, let's populate those fields too
-		pr.Spec.ServiceAccountName = usepr.Spec.ServiceAccountName
-		pr.Spec.ServiceAccountNames = usepr.Spec.ServiceAccountNames
-		pr.Spec.Workspaces = usepr.Spec.Workspaces
-	}
-
-	if err := mergeRes(pr, opt.Resources); err != nil {
-		return err
-	}
-
-	labels, err := labels.MergeLabels(pr.ObjectMeta.Labels, opt.Labels)
-	if err != nil {
-		return err
-	}
-	pr.ObjectMeta.Labels = labels
-
-	param, err := params.MergeParam(pr.Spec.Params, opt.Params)
-	if err != nil {
-		return err
-	}
-	pr.Spec.Params = param
-
-	if err := mergeSvc(pr, opt.ServiceAccounts); err != nil {
-		return err
-	}
-
-	if len(opt.ServiceAccountName) > 0 {
-		pr.Spec.ServiceAccountName = opt.ServiceAccountName
-	}
-
-	if opt.DryRun {
-		return pipelineRunDryRun(opt.Output, opt.stream, pr)
-	}
-
-	prCreated, err := cs.Tekton.TektonV1alpha1().PipelineRuns(opt.cliparams.Namespace()).Create(pr)
-	if err != nil {
-		return err
-	}
-
-	fmt.Fprintf(opt.stream.Out, "Pipelinerun started: %s\n", prCreated.Name)
-	if !opt.ShowLog {
-		fmt.Fprintf(opt.stream.Out, "\nIn order to track the pipelinerun progress run:\ntkn pipelinerun logs %s -f -n %s\n", prCreated.Name, prCreated.Namespace)
-		return nil
-	}
-
-	fmt.Fprintf(opt.stream.Out, "Waiting for logs to be available...\n")
-	runLogOpts := &options.LogOptions{
-		PipelineName:    pName,
-		PipelineRunName: prCreated.Name,
-		Stream:          opt.stream,
-		Follow:          true,
-		Params:          opt.cliparams,
-		AllSteps:        false,
-	}
-	return pipelinerun.Run(runLogOpts)
 }
 
 func mergeRes(pr *v1alpha1.PipelineRun, optRes []string) error {
@@ -648,4 +633,51 @@ func pipelineRunDryRun(output string, s *cli.Stream, pr *v1alpha1.PipelineRun) e
 	}
 
 	return nil
+}
+
+// NameArg validates that the first argument is a valid pipeline name
+func NameArg(args []string, p cli.Params, file string) (*v1alpha1.Pipeline, error) {
+	pipelineErr := &v1alpha1.Pipeline{}
+	if len(args) == 0 && file == "" {
+		return pipelineErr, errNoPipeline
+	}
+
+	if err := validate.NamespaceExists(p); err != nil {
+		return pipelineErr, err
+	}
+
+	c, err := p.Clients()
+	if err != nil {
+		return pipelineErr, err
+	}
+
+	if file == "" {
+		name, ns := args[0], p.Namespace()
+		// get pipeline by pipeline name passed as arg[0] from namespace
+		pipelineNs, err := c.Tekton.TektonV1alpha1().Pipelines(ns).Get(name, metav1.GetOptions{})
+		if err != nil {
+			return pipelineErr, fmt.Errorf(errInvalidPipeline, name, ns)
+		}
+		return pipelineNs, nil
+	}
+
+	// file does not equal "" so the pipeline is parsed from local or remote file
+	pipelineFile, err := parsePipeline(file, p)
+	if err != nil {
+		return pipelineErr, err
+	}
+
+	return pipelineFile, nil
+}
+
+func parsePipeline(taskLocation string, p cli.Params) (*v1alpha1.Pipeline, error) {
+	b, err := file.LoadFileContent(p, taskLocation, file.IsYamlFile(), fmt.Errorf("inavlid file format for %s: .yaml or .yml file extension and format required", taskLocation))
+	if err != nil {
+		return nil, err
+	}
+	pipeline := v1alpha1.Pipeline{}
+	if err := yaml.Unmarshal(b, &pipeline); err != nil {
+		return nil, err
+	}
+	return &pipeline, nil
 }

@@ -202,6 +202,32 @@ func TestPipelineStart_ExecuteCommand(t *testing.T) {
 	pClient := newPipelineClient(objs...)
 	cs5 := pipelinetest.Clients{Pipeline: pClient, Kube: seedData.Kube}
 
+	// pipelineresources data for tests with --filename
+	objs2 := []runtime.Object{}
+	seedData2, _ := test.SeedTestData(t, pipelinetest.Data{
+		Namespaces: []*corev1.Namespace{
+			{
+				ObjectMeta: metav1.ObjectMeta{
+					Name: "ns",
+				},
+			},
+		},
+		PipelineResources: []*v1alpha1.PipelineResource{
+			tb.PipelineResource("scaffold-git", "ns",
+				tb.PipelineResourceSpec("git",
+					tb.PipelineResourceSpecParam("url", "git@github.com:tektoncd/cli.git"),
+				),
+			),
+			tb.PipelineResource("imageres", "ns",
+				tb.PipelineResourceSpec("image",
+					tb.PipelineResourceSpecParam("url", "gcr.io/christiewilson-catfactory/leeroy-web"),
+				),
+			),
+		},
+	})
+	pClient2 := newPipelineClient(objs2...)
+	cs6 := pipelinetest.Clients{Pipeline: pClient2, Kube: seedData2.Kube}
+
 	testParams := []struct {
 		name       string
 		command    []string
@@ -410,6 +436,44 @@ func TestPipelineStart_ExecuteCommand(t *testing.T) {
 			input:      cs2,
 			wantError:  false,
 			goldenFile: true,
+		},
+		{
+			name: "Dry Run using --filename",
+			command: []string{"start", "-f", "./testdata/pipeline.yaml",
+				"-r=source-repo=scaffold-git",
+				"-r=web-image=imageres",
+				"-n", "ns",
+				"--dry-run",
+			},
+			namespace:  "",
+			input:      cs6,
+			wantError:  false,
+			goldenFile: true,
+		},
+		{
+			name: "Start pipeline using --filename",
+			command: []string{"start", "-f", "./testdata/pipeline.yaml",
+				"-r=source-repo=scaffold-git",
+				"-r=web-image=imageres",
+				"-n", "ns",
+			},
+			namespace: "",
+			input:     cs6,
+			wantError: false,
+			want:      "Pipelinerun started: random\n\nIn order to track the pipelinerun progress run:\ntkn pipelinerun logs random -f -n ns\n",
+		},
+		{
+			name: "Error from using --last with --filename",
+			command: []string{"start", "-f", "./testdata/pipeline.yaml",
+				"-r=source-repo=scaffold-git",
+				"-r=web-image=imageres",
+				"-n", "ns",
+				"--last",
+			},
+			namespace: "",
+			input:     cs6,
+			wantError: true,
+			want:      "cannot use --last option with --filename option",
 		},
 	}
 
@@ -1656,8 +1720,9 @@ func TestPipelineStart_Interactive(t *testing.T) {
 			tp.prompt.RunTest(t, tp.prompt.Procedure, func(stdio terminal.Stdio) error {
 				opts.askOpts = prompt.WithStdio(stdio)
 				opts.stream = &cli.Stream{Out: stdio.Out, Err: stdio.Err}
-
-				return opts.run(tp.prompt.CmdArgs[0])
+				pipelineObj := &v1alpha1.Pipeline{}
+				pipelineObj.ObjectMeta.Name = tp.prompt.CmdArgs[0]
+				return opts.run(pipelineObj)
 			})
 		})
 	}

@@ -29,7 +29,7 @@ like cat,foo,bar
 
 ```
       --dry-run                  preview taskrun without running it
-  -f, --filename string          local or remote file name containing a task definition
+  -f, --filename string          local or remote file name containing a task definition to start a taskrun
   -h, --help                     help for start
   -i, --inputresource strings    pass the input resource name and ref as name=ref
   -l, --labels strings           pass labels as label=value.

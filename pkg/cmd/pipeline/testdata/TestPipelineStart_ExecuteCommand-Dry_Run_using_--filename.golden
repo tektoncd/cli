@@ -1,0 +1,54 @@
+apiVersion: tekton.dev/v1alpha1
+kind: PipelineRun
+metadata:
+  creationTimestamp: null
+  generateName: test-pipeline-run-
+  namespace: ns
+spec:
+  pipelineSpec:
+    resources:
+    - name: source-repo
+      type: git
+    - name: web-image
+      type: image
+    tasks:
+    - name: build-skaffold-web
+      params:
+      - name: pathToDockerFile
+        value: Dockerfile
+      - name: pathToContext
+        value: /workspace/docker-source/examples/microservices/leeroy-web
+      resources:
+        inputs:
+        - name: docker-source
+          resource: source-repo
+        outputs:
+        - name: builtImage
+          resource: web-image
+      taskRef:
+        name: build-docker-image-from-git-source
+    - name: deploy-web
+      params:
+      - name: path
+        value: /workspace/source/examples/microservices/leeroy-web/kubernetes/deployment.yaml
+      - name: yamlPathToImage
+        value: spec.template.spec.containers[0].image
+      resources:
+        inputs:
+        - name: source
+          resource: source-repo
+        - from:
+          - build-skaffold-web
+          name: image
+          resource: web-image
+      taskRef:
+        name: deploy-using-kubectl
+  resources:
+  - name: source-repo
+    resourceRef:
+      name: scaffold-git
+  - name: web-image
+    resourceRef:
+      name: imageres
+  timeout: 1h0m0s
+status: {}
