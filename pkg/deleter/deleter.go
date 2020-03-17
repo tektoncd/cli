@@ -53,7 +53,7 @@ func (d *Deleter) WithRelated(kind string, listFunc func(string) ([]string, erro
 func (d *Deleter) Delete(streams *cli.Stream, resourceNames []string) []string {
 	for _, name := range resourceNames {
 		if err := d.delete(name); err != nil {
-			d.printAndAddError(streams, fmt.Errorf("failed to delete %s %q: %s", strings.ToLower(d.kind), name, err))
+			d.appendError(streams, fmt.Errorf("failed to delete %s %q: %s", strings.ToLower(d.kind), name, err))
 		} else {
 			d.successfulDeletes = append(d.successfulDeletes, name)
 		}
@@ -76,12 +76,12 @@ func (d *Deleter) DeleteRelated(streams *cli.Stream, resourceNames []string) {
 func (d *Deleter) deleteRelatedList(streams *cli.Stream, resourceName string) {
 	if related, err := d.listRelated(resourceName); err != nil {
 		err = fmt.Errorf("failed to list %ss: %s", strings.ToLower(d.relatedKind), err)
-		d.printAndAddError(streams, err)
+		d.appendError(streams, err)
 	} else {
 		for _, subresource := range related {
 			if err := d.deleteRelated(subresource); err != nil {
 				err = fmt.Errorf("failed to delete %s %q: %s", strings.ToLower(d.relatedKind), subresource, err)
-				d.printAndAddError(streams, err)
+				d.appendError(streams, err)
 			} else {
 				d.successfulRelatedDeletes = append(d.successfulRelatedDeletes, subresource)
 			}
@@ -99,12 +99,10 @@ func (d *Deleter) PrintSuccesses(streams *cli.Stream) {
 	}
 }
 
-// printAndAddError prints the given error to the given stderr stream and
-// adds that error to the list of accumulated errors that have occurred
-// during execution.
-func (d *Deleter) printAndAddError(streams *cli.Stream, err error) {
+// appendError adds that error to the list of accumulated errors that
+// have occurred during execution.
+func (d *Deleter) appendError(streams *cli.Stream, err error) {
 	d.errors = append(d.errors, err)
-	fmt.Fprintf(streams.Err, "%s\n", err)
 }
 
 // Errors returns any accumulated errors in the operation of this deleter.

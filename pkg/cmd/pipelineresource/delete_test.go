@@ -101,9 +101,17 @@ func TestPipelineResourceDelete(t *testing.T) {
 			name:        "Remove non existent resource",
 			command:     []string{"rm", "nonexistent", "-n", "ns"},
 			input:       seeds[2],
-			inputStream: strings.NewReader("y"),
+			inputStream: nil,
 			wantError:   true,
 			want:        "failed to delete pipelineresource \"nonexistent\": pipelineresources.tekton.dev \"nonexistent\" not found",
+		},
+		{
+			name:        "Remove multiple non existent resources",
+			command:     []string{"rm", "nonexistent", "nonexistent2", "-n", "ns"},
+			input:       seeds[2],
+			inputStream: nil,
+			wantError:   true,
+			want:        "failed to delete pipelineresource \"nonexistent\": pipelineresources.tekton.dev \"nonexistent\" not found; failed to delete pipelineresource \"nonexistent2\": pipelineresources.tekton.dev \"nonexistent2\" not found",
 		},
 		{
 			name:        "Delete all with prompt",
