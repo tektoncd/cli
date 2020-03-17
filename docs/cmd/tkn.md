@@ -18,6 +18,7 @@ CLI for tekton pipelines
 * [tkn completion](tkn_completion.md)	 - Prints shell completion scripts
 * [tkn condition](tkn_condition.md)	 - Manage conditions
 * [tkn eventlistener](tkn_eventlistener.md)	 - Manage eventlisteners
+* [tkn image](tkn_image.md)	 - Upload OCI images
 * [tkn pipeline](tkn_pipeline.md)	 - Manage pipelines
 * [tkn pipelinerun](tkn_pipelinerun.md)	 - Manage pipelineruns
 * [tkn resource](tkn_resource.md)	 - Manage pipeline resources

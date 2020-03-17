@@ -11,6 +11,7 @@ require (
 	github.com/ghodss/yaml v1.0.0
 	github.com/google/cel-go v0.3.2 // indirect
 	github.com/google/go-cmp v0.4.0
+	github.com/google/go-containerregistry v0.0.0-20200115214256-379933c9c22b
 	github.com/google/go-github v17.0.0+incompatible // indirect
 	github.com/google/go-querystring v1.0.0 // indirect
 	github.com/hako/durafmt v0.0.0-20180520121703-7b7ae1e72ead
