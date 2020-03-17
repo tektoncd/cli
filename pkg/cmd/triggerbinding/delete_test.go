@@ -117,9 +117,17 @@ func TestTriggerBindingDelete(t *testing.T) {
 			name:        "Remove non existent resource",
 			command:     []string{"rm", "nonexistent", "-n", "ns"},
 			input:       seeds[2],
-			inputStream: strings.NewReader("y"),
+			inputStream: nil,
 			wantError:   true,
 			want:        "failed to delete triggerbinding \"nonexistent\": triggerbindings.tekton.dev \"nonexistent\" not found",
+		},
+		{
+			name:        "Remove multiple non existent resources",
+			command:     []string{"rm", "nonexistent", "nonexistent2", "-n", "ns"},
+			input:       seeds[2],
+			inputStream: nil,
+			wantError:   true,
+			want:        "failed to delete triggerbinding \"nonexistent\": triggerbindings.tekton.dev \"nonexistent\" not found; failed to delete triggerbinding \"nonexistent2\": triggerbindings.tekton.dev \"nonexistent2\" not found",
 		},
 		{
 			name:        "Delete all with prompt",

@@ -1,7 +1,6 @@
 package deleter
 
 import (
-	"errors"
 	"strings"
 	"testing"
 
@@ -27,19 +26,8 @@ func TestDelete(t *testing.T) {
 		expectedOut: "FooBars deleted: \"foo\", \"bar\"\n",
 		expectedErr: "",
 		deleteFunc:  func(string) error { return nil },
-	}, {
-		description: "prints errors if returned during delete",
-		names:       []string{"baz"},
-		expectedOut: "",
-		expectedErr: "failed to delete foobar \"baz\": there was an unfortunate incident\n",
-		deleteFunc:  unsuccessfulDeleteFunc("there was an unfortunate incident"),
-	}, {
-		description: "prints multiple errors if multiple deletions fail",
-		names:       []string{"baz", "quux"},
-		expectedOut: "",
-		expectedErr: "failed to delete foobar \"baz\": there was an unfortunate incident\nfailed to delete foobar \"quux\": there was an unfortunate incident\n",
-		deleteFunc:  unsuccessfulDeleteFunc("there was an unfortunate incident"),
-	}} {
+	},
+	} {
 		t.Run(tc.description, func(t *testing.T) {
 			stdout := &strings.Builder{}
 			stderr := &strings.Builder{}
@@ -78,18 +66,6 @@ func TestDeleteRelated(t *testing.T) {
 		listFunc:    successfulListFunc("fbr1", "fbr2"),
 		deleteFunc:  successfulDeleteFunc(),
 		expectedOut: "FooBarRuns deleted: \"fbr1\", \"fbr2\"\n",
-	}, {
-		description: "prints error message with problems encountered during deletes",
-		relatedKind: "FooBarRun",
-		listFunc:    successfulListFunc("fbr1"),
-		deleteFunc:  unsuccessfulDeleteFunc("bad times"),
-		expectedErr: "failed to delete foobarrun \"fbr1\": bad times\n",
-	}, {
-		description: "prints error message with problems encountered during list",
-		relatedKind: "FooBarRun",
-		listFunc:    unsuccessfulListFunc("bad times"),
-		deleteFunc:  successfulDeleteFunc(),
-		expectedErr: "failed to list foobarruns: bad times\n",
 	}} {
 		t.Run(tc.description, func(t *testing.T) {
 			stdout := &strings.Builder{}
@@ -138,15 +114,6 @@ func TestDeleteAndDeleteRelated(t *testing.T) {
 		listRelatedFunc:   successfulListFunc("fbr1", "fbr2"),
 		deleteRelatedFunc: successfulDeleteFunc(),
 		expectedOut:       "FooBarRuns deleted: \"fbr1\", \"fbr2\"\nFooBars deleted: \"fb1\"\n",
-	}, {
-		description:       "prints error message with errors encountered during deletes and does not attempt to delete related",
-		kind:              "FooBar",
-		names:             []string{"fb1"},
-		relatedKind:       "FooBarRun",
-		deleteFunc:        unsuccessfulDeleteFunc("bad times"),
-		listRelatedFunc:   successfulListFunc("fbr1"),
-		deleteRelatedFunc: successfulDeleteFunc(),
-		expectedErr:       "failed to delete foobar \"fb1\": bad times\n",
 	}} {
 		t.Run(tc.description, func(t *testing.T) {
 			stdout := &strings.Builder{}
@@ -178,20 +145,8 @@ func successfulDeleteFunc() func(string) error {
 	}
 }
 
-func unsuccessfulDeleteFunc(message string) func(string) error {
-	return func(string) error {
-		return errors.New(message)
-	}
-}
-
 func successfulListFunc(returnedNames ...string) func(string) ([]string, error) {
 	return func(string) ([]string, error) {
 		return returnedNames, nil
-	}
-}
-
-func unsuccessfulListFunc(message string) func(string) ([]string, error) {
-	return func(string) ([]string, error) {
-		return nil, errors.New(message)
 	}
 }

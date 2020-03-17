@@ -91,6 +91,14 @@ func TestClusterTaskDelete(t *testing.T) {
 			want:        "failed to delete clustertask \"nonexistent\": clustertasks.tekton.dev \"nonexistent\" not found",
 		},
 		{
+			name:        "Remove multiple non existent resources",
+			command:     []string{"rm", "nonexistent", "nonexistent2", "-n", "ns"},
+			input:       seeds[2],
+			inputStream: strings.NewReader("y"),
+			wantError:   true,
+			want:        "failed to delete clustertask \"nonexistent\": clustertasks.tekton.dev \"nonexistent\" not found; failed to delete clustertask \"nonexistent2\": clustertasks.tekton.dev \"nonexistent2\" not found",
+		},
+		{
 			name:        "With force delete flag, reply yes, multiple clustertasks",
 			command:     []string{"rm", "tomatoes2", "tomatoes3", "-f"},
 			input:       seeds[1],
