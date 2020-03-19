@@ -85,7 +85,7 @@ func TestTaskList_Empty(t *testing.T) {
 	test.AssertOutput(t, emptyMsg+"\n", output)
 }
 
-func TestTaskList_Only_Tasks(t *testing.T) {
+func TestTaskList_Only_Tasks_v1alpha1(t *testing.T) {
 	clock := clockwork.NewFakeClock()
 
 	tasks := []*v1alpha1.Task{
@@ -105,13 +105,15 @@ func TestTaskList_Only_Tasks(t *testing.T) {
 		},
 	}
 
+	version := "v1alpha1"
 	dynamic, err := testDynamic.Client(
-		newUnstructured(tasks[0]),
-		newUnstructured(tasks[1]),
-		newUnstructured(tasks[2]),
-		newUnstructured(tasks[3]),
-		newUnstructured(tasks[4]),
-		newUnstructured(tasks[5]))
+		newUnstructured(tasks[0], version),
+		newUnstructured(tasks[1], version),
+		newUnstructured(tasks[2], version),
+		newUnstructured(tasks[3], version),
+		newUnstructured(tasks[4], version),
+		newUnstructured(tasks[5], version),
+	)
 	if err != nil {
 		t.Errorf("unable to create dynamic client: %v", err)
 	}
@@ -121,9 +123,9 @@ func TestTaskList_Only_Tasks(t *testing.T) {
 	cs.Pipeline.Resources = []*metav1.APIResourceList{
 		{TypeMeta: metav1.TypeMeta{
 			Kind:       "task",
-			APIVersion: "tekton.dev/v1alpha1",
+			APIVersion: "tekton.dev/" + version,
 		},
-			GroupVersion: "tekton.dev/v1alpha1",
+			GroupVersion: "tekton.dev/" + version,
 			APIResources: []metav1.APIResource{
 				{
 					Name:  "tasks",
@@ -142,8 +144,67 @@ func TestTaskList_Only_Tasks(t *testing.T) {
 	golden.Assert(t, output, fmt.Sprintf("%s.golden", t.Name()))
 }
 
-func newUnstructured(task *v1alpha1.Task) *unstructured.Unstructured {
-	apiVersion := "tekton.dev/v1alpha1"
+func TestTaskList_Only_Tasks_v1beta1(t *testing.T) {
+	clock := clockwork.NewFakeClock()
+
+	tasks := []*v1alpha1.Task{
+		tb.Task("tomatoes", "namespace", cb.TaskCreationTime(clock.Now().Add(-1*time.Minute))),
+		tb.Task("mangoes", "namespace", cb.TaskCreationTime(clock.Now().Add(-20*time.Second))),
+		tb.Task("bananas", "namespace", cb.TaskCreationTime(clock.Now().Add(-512*time.Hour))),
+		tb.Task("apples", "namespace", tb.TaskSpec(tb.TaskDescription("")), cb.TaskCreationTime(clock.Now().Add(-513*time.Hour))),
+		tb.Task("potatoes", "namespace", tb.TaskSpec(tb.TaskDescription("a test task")), cb.TaskCreationTime(clock.Now().Add(-514*time.Hour))),
+		tb.Task("onionss", "namespace", tb.TaskSpec(tb.TaskDescription("a test task to test description of task")), cb.TaskCreationTime(clock.Now().Add(-515*time.Hour))),
+	}
+
+	ns := []*corev1.Namespace{
+		{
+			ObjectMeta: metav1.ObjectMeta{
+				Name: "namespace",
+			},
+		},
+	}
+
+	version := "v1beta1"
+	dynamic, err := testDynamic.Client(
+		newUnstructured(tasks[0], version),
+		newUnstructured(tasks[1], version),
+		newUnstructured(tasks[2], version),
+		newUnstructured(tasks[3], version),
+		newUnstructured(tasks[4], version),
+		newUnstructured(tasks[5], version),
+	)
+	if err != nil {
+		t.Errorf("unable to create dynamic client: %v", err)
+	}
+
+	cs, _ := test.SeedTestData(t, pipelinetest.Data{Tasks: tasks, Namespaces: ns})
+	p := &test.Params{Tekton: cs.Pipeline, Clock: clock, Kube: cs.Kube, Dynamic: dynamic}
+	cs.Pipeline.Resources = []*metav1.APIResourceList{
+		{TypeMeta: metav1.TypeMeta{
+			Kind:       "task",
+			APIVersion: "tekton.dev/" + version,
+		},
+			GroupVersion: "tekton.dev/" + version,
+			APIResources: []metav1.APIResource{
+				{
+					Name:  "tasks",
+					Group: "tekton.dev",
+				},
+			},
+		},
+	}
+	task := Command(p)
+
+	output, err := test.ExecuteCommand(task, "list", "-n", "namespace")
+	if err != nil {
+		t.Errorf("Unexpected error: %v", err)
+	}
+
+	golden.Assert(t, output, fmt.Sprintf("%s.golden", t.Name()))
+}
+
+func newUnstructured(task *v1alpha1.Task, version string) *unstructured.Unstructured {
+	apiVersion := "tekton.dev/" + version
 	kind := "task"
 
 	task.APIVersion = apiVersion
