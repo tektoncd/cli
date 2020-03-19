@@ -16,17 +16,15 @@ package clustertask
 
 import (
 	"fmt"
-	"io"
 	"os"
 	"text/tabwriter"
 
 	"github.com/spf13/cobra"
 	"github.com/tektoncd/cli/pkg/cli"
 	"github.com/tektoncd/cli/pkg/formatted"
-	"github.com/tektoncd/cli/pkg/printer"
-	"github.com/tektoncd/pipeline/pkg/apis/pipeline/v1alpha1"
-	"github.com/tektoncd/pipeline/pkg/client/clientset/versioned"
-	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+	"github.com/tektoncd/cli/pkg/list"
+	"github.com/tektoncd/pipeline/pkg/apis/pipeline/v1beta1"
+	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/apimachinery/pkg/runtime/schema"
 	cliopts "k8s.io/cli-runtime/pkg/genericclioptions"
 )
@@ -56,7 +54,8 @@ func listCommand(p cli.Params) *cobra.Command {
 			}
 
 			if output != "" {
-				return printClusterTaskListObj(cmd.OutOrStdout(), p, f)
+				ctGroupResource := schema.GroupVersionResource{Group: "tekton.dev", Resource: "clustertasks"}
+				return list.PrintObject(ctGroupResource, cmd.OutOrStdout(), p, f, "")
 			}
 			stream := &cli.Stream{
 				Out: cmd.OutOrStdout(),
@@ -77,9 +76,16 @@ func printClusterTaskDetails(s *cli.Stream, p cli.Params) error {
 		return err
 	}
 
-	clustertasks, err := listAllClusterTasks(cs.Tekton)
+	unstructuredCT, err := list.AllObjecs(schema.GroupVersionResource{Group: "tekton.dev", Resource: "clustertasks"}, cs, "")
 	if err != nil {
-		fmt.Fprintln(s.Err, emptyMsg)
+		return err
+	}
+	var clustertasks v1beta1.ClusterTaskList
+	if err := runtime.DefaultUnstructuredConverter.FromUnstructured(unstructuredCT.UnstructuredContent(), &clustertasks); err != nil {
+		return err
+	}
+	if err != nil {
+		fmt.Fprintf(os.Stderr, "failed to list clustertasks\n")
 		return err
 	}
 
@@ -99,35 +105,4 @@ func printClusterTaskDetails(s *cli.Stream, p cli.Params) error {
 		)
 	}
 	return w.Flush()
-}
-
-func printClusterTaskListObj(w io.Writer, p cli.Params, f *cliopts.PrintFlags) error {
-	cs, err := p.Clients()
-	if err != nil {
-		return err
-	}
-
-	clustertasks, err := listAllClusterTasks(cs.Tekton)
-	if err != nil {
-		return err
-	}
-	return printer.PrintObject(w, clustertasks, f)
-}
-
-func listAllClusterTasks(cs versioned.Interface) (*v1alpha1.ClusterTaskList, error) {
-	c := cs.TektonV1alpha1().ClusterTasks()
-
-	clustertasks, err := c.List(metav1.ListOptions{})
-	if err != nil {
-		return nil, err
-	}
-
-	// NOTE: this is required for -o json|yaml to work properly since
-	// tektoncd go client fails to set these; probably a bug
-	clustertasks.GetObjectKind().SetGroupVersionKind(
-		schema.GroupVersionKind{
-			Version: "tekton.dev/v1alpha1",
-			Kind:    "ClusterTaskList",
-		})
-	return clustertasks, nil
 }

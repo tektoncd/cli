@@ -60,7 +60,7 @@ func listCommand(p cli.Params) *cobra.Command {
 
 			if output != "" {
 				taskGroupResource := schema.GroupVersionResource{Group: "tekton.dev", Resource: "tasks"}
-				return list.PrintObject(taskGroupResource, cmd.OutOrStdout(), p, f)
+				return list.PrintObject(taskGroupResource, cmd.OutOrStdout(), p, f, p.Namespace())
 			}
 			stream := &cli.Stream{
 				Out: cmd.OutOrStdout(),
