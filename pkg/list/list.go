@@ -27,13 +27,13 @@ import (
 	"k8s.io/client-go/restmapper"
 )
 
-func PrintObject(groupResource schema.GroupVersionResource, w io.Writer, p cli.Params, f *cliopts.PrintFlags) error {
+func PrintObject(groupResource schema.GroupVersionResource, w io.Writer, p cli.Params, f *cliopts.PrintFlags, ns string) error {
 	cs, err := p.Clients()
 	if err != nil {
 		return err
 	}
 
-	allres, err := AllObjecs(groupResource, cs, p.Namespace())
+	allres, err := AllObjecs(groupResource, cs, ns)
 	if err != nil {
 		return err
 	}
@@ -46,7 +46,6 @@ func AllObjecs(gr schema.GroupVersionResource, clients *cli.Clients, n string) (
 	if err != nil {
 		return nil, err
 	}
-
 	allRes, err := clients.Dynamic.Resource(*gvr).Namespace(n).List(metav1.ListOptions{})
 	if err != nil {
 		return nil, err
