@@ -286,12 +286,10 @@ func TestTaskDescribe_custom_output(t *testing.T) {
 
 	clock := clockwork.NewFakeClock()
 
-	tasks := []*v1alpha1.Task{
-		tb.Task(name, "ns"),
-	}
-
 	cs, _ := test.SeedTestData(t, pipelinetest.Data{
-		Tasks: tasks,
+		Tasks: []*v1alpha1.Task{
+		tb.Task(name, "ns"),
+	},
 		Namespaces: []*corev1.Namespace{
 			{
 				ObjectMeta: metav1.ObjectMeta{
@@ -312,4 +310,37 @@ func TestTaskDescribe_custom_output(t *testing.T) {
 	if got != expected {
 		t.Errorf("Result should be '%s' != '%s'", got, expected)
 	}
+}
+
+func TestTaskDescribe_Result(t *testing.T) {
+	name := "task"
+
+	clock := clockwork.NewFakeClock()
+
+	tasks := []*v1alpha1.Task{
+		tb.Task(name, "ns",
+			tb.TaskSpec(
+				tb.TaskResults("date", "dattebayo"),
+				),
+			),
+	}
+
+	cs, _ := test.SeedTestData(t, pipelinetest.Data{
+		Tasks: tasks,
+		Namespaces: []*corev1.Namespace{
+			{
+				ObjectMeta: metav1.ObjectMeta{
+					Name: "ns",
+				},
+			},
+		},
+	})
+
+	p := &test.Params{Tekton: cs.Pipeline, Clock: clock, Kube: cs.Kube}
+	task := Command(p)
+	out, err := test.ExecuteCommand(task, "desc", "task-1")
+	if err != nil {
+		t.Errorf("Unexpected error: %v", err)
+	}
+	golden.Assert(t, out, fmt.Sprintf("%s.golden", t.Name()))
 }

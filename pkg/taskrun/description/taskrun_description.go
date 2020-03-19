@@ -108,8 +108,26 @@ No sidecars
  {{decorate "bullet" $sidecar.Name }}	{{ $reason }}
 {{- end }}
 {{- end }}
+
+{{decorate "results" ""}}{{decorate "underline bold" "Results\n"}}
+{{- if eq (len .TaskRun.Status.TaskRunResults) 0 }}
+ No results
+{{- else }}
+{{- range $result := .TaskRun.Status.TaskRunResults }}
+NAME	VALUE
+{{ $result.Name }}	{{ $result.Value }}
+{{- end }}
+{{- end }}
 `
 
+
+/*{{- if not .TaskRun.Status.Result }}
+ No result
+{{- else }}
+{{- $result := .TaskRun.Status.Result }}
+NAME	DESCRIPTION
+{{ $result.Name }}	{{ $result.Description }}
+{{- end }}*/
 func sortStepStatesByStartTime(steps []v1alpha1.StepState) []v1alpha1.StepState {
 	sort.Slice(steps, func(i, j int) bool {
 		if steps[j].Waiting != nil && steps[i].Waiting != nil {

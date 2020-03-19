@@ -66,6 +66,9 @@ func DecorateAttr(attrString, message string) string {
 		return fmt.Sprintf("🗂  ")
 	case "sidecars":
 		return fmt.Sprintf("🚗 ")
+	case "results":
+		return fmt.Sprintf("🎯 ")
+
 	}
 
 	attr := color.Reset

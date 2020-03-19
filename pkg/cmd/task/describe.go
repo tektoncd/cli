@@ -113,6 +113,17 @@ NAME	STARTED	DURATION	STATUS
 {{ range $tr:=.TaskRuns.Items }}
 {{- $tr.Name }}	{{ formatAge $tr.Status.StartTime $.Time}}	{{ formatDuration $tr.Status.StartTime $tr.Status.CompletionTime }}	{{ formatCondition $tr.Status.Conditions }}
 {{ end }}
+
+{{decorate "results" ""}}{{decorate "underline bold" "Results\n"}}
+{{- if eq (len .Task.Spec.Results) 0 }}
+ No results
+{{- else }}
+{{- range $result := .Task.Spec.Results }}
+NAME	DESCRIPTION
+{{ $result.Name }}	{{ $result.Description }}
+{{ end }}
+{{- end }}
+
 {{- end }}
 `
 
