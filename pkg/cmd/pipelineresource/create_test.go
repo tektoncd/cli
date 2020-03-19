@@ -1633,7 +1633,7 @@ func Test_Pipeline_Resource_Create(t *testing.T) {
 			input:       seeds[0],
 			inputStream: nil,
 			wantError:   false,
-			want:        "PipelineResource created: test-resource\n",
+			want:        "Flag --from has been deprecated, from and -f will be removed in v1.0.0. Use kubectl create -f instead. Learn more here: https://github.com/tektoncd/cli/issues/816\nPipelineResource created: test-resource\n",
 		},
 		{
 			name:        "Filename does not exist",

@@ -62,7 +62,7 @@ func Test_Task_Create(t *testing.T) {
 			input:       seeds[0],
 			inputStream: nil,
 			wantError:   false,
-			want:        "Task created: test-task\n",
+			want:        "Command \"create\" is deprecated, tkn task create will be removed in v1.0.0. Use kubectl create -f instead. Learn more here: https://github.com/tektoncd/cli/issues/816\nTask created: test-task\n",
 		},
 		{
 			name:        "Filename does not exist",
