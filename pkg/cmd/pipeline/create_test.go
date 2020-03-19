@@ -62,7 +62,7 @@ func Test_Pipeline_Create(t *testing.T) {
 			input:       seeds[0],
 			inputStream: nil,
 			wantError:   false,
-			want:        "Pipeline created: test-pipeline\n",
+			want:        "Command \"create\" is deprecated, tkn pipeline create will be removed in v1.0.0. Use kubectl create -f instead. Learn more here: https://github.com/tektoncd/cli/issues/816\nPipeline created: test-pipeline\n",
 		},
 		{
 			name:        "Filename does not exist",

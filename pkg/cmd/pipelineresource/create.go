@@ -97,6 +97,7 @@ Create a PipelineResource defined by foo.yaml in namespace 'bar':
 	}
 	f.AddFlags(c)
 	c.Flags().StringVarP(&opts.from, "from", "f", "", "local or remote filename to use to create the pipeline resource")
+	c.Flags().MarkDeprecated("from", "from and -f will be removed in v1.0.0. Use kubectl create -f instead. Learn more here: https://github.com/tektoncd/cli/issues/816")
 	return c
 }
 

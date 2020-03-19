@@ -62,6 +62,7 @@ func createCommand(p cli.Params) *cobra.Command {
 	}
 	f.AddFlags(c)
 	c.Flags().StringVarP(&opts.from, "from", "f", "", "local or remote filename to use to create the task")
+	c.Deprecated = "tkn task create will be removed in v1.0.0. Use kubectl create -f instead. Learn more here: https://github.com/tektoncd/cli/issues/816"
 	return c
 }
 
