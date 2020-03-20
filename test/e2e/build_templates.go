@@ -318,36 +318,51 @@ type TaskRunData struct {
 	Status string
 }
 
-func ListAllTaskRunsOutput(t *testing.T, cs *Clients, td map[int]interface{}) string {
+func ListAllTaskRunsOutput(t *testing.T, cs *Clients, allnamespaces bool, td map[int]interface{}) string {
 
-	const (
-		emptyMsg = "No taskruns found"
-		header   = "NAME\tSTARTED\tDURATION\tSTATUS\t"
-		body     = "%s\t%s\t%s\t%s\t\n"
-	)
-
+	const listTemplate = `{{- $trl := len .TaskRuns.Items }}{{ if eq $trl 0 -}}
+No TaskRuns found
+{{- else -}}
+NAME	STARTED	DURATION	STATUS{{- if $.AllNamespaces }}	NAMESPACE{{- end }}
+{{- range $_, $tr := .TaskRuns.Items }}
+{{- if $tr }}
+{{ $tr.Name }}	{{ formatAge $tr.Status.StartTime $.Time }}	{{ formatDuration $tr.Status.StartTime $tr.Status.CompletionTime }}	{{ formatCondition $tr.Status.Conditions }}{{- if $.AllNamespaces }}	{{ $tr.Namespace }}{{- end }}
+{{- end }}
+{{- end }}
+{{- end }}
+`
 	clock := clockwork.NewFakeClockAt(time.Now())
 	taskrun := GetTaskRunListWithTestData(t, cs, td)
-	trsort.SortByStartTime(taskrun.Items)
+	trslen := len(taskrun.Items)
+
+	if trslen != 0 {
+		trsort.SortByStartTime(taskrun.Items)
+	}
+	var data = struct {
+		TaskRuns      *v1alpha1.TaskRunList
+		Time          clockwork.Clock
+		AllNamespaces bool
+	}{
+		TaskRuns:      taskrun,
+		Time:          clock,
+		AllNamespaces: allnamespaces,
+	}
+
+	funcMap := template.FuncMap{
+		"formatAge":       formatted.Age,
+		"formatDuration":  formatted.Duration,
+		"formatCondition": formatted.Condition,
+	}
 
 	var tmplBytes bytes.Buffer
 	w := tabwriter.NewWriter(&tmplBytes, 0, 5, 3, ' ', tabwriter.TabIndent)
+	tmp := template.Must(template.New("List TaskRuns").Funcs(funcMap).Parse(listTemplate))
 
-	if len(taskrun.Items) == 0 {
-		fmt.Fprintln(w, emptyMsg)
-		w.Flush()
-		return tmplBytes.String()
+	err := tmp.Execute(w, data)
+	if err != nil {
+		t.Errorf("Error: while parsing template %+v", err)
 	}
 
-	fmt.Fprintln(w, header)
-	for _, tr := range taskrun.Items {
-		fmt.Fprintf(w, body,
-			tr.Name,
-			formatted.Age(tr.Status.StartTime, clock),
-			formatted.Duration(tr.Status.StartTime, tr.Status.CompletionTime),
-			formatted.Condition(tr.Status.Conditions),
-		)
-	}
 	w.Flush()
 	return tmplBytes.String()
 }
