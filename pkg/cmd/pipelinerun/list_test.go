@@ -87,6 +87,17 @@ func TestListPipelineRuns(t *testing.T) {
 		),
 	}
 
+	prsMultipleNs := []*v1alpha1.PipelineRun{
+		tb.PipelineRun("pr4-1", "namespace-tout",
+			tb.PipelineRunLabel("tekton.dev/pipeline", "random"),
+			tb.PipelineRunStatus(),
+		),
+		tb.PipelineRun("pr4-2", "namespace-lacher",
+			tb.PipelineRunLabel("tekton.dev/pipeline", "random"),
+			tb.PipelineRunStatus(),
+		),
+	}
+
 	ns := []*corev1.Namespace{
 		{
 			ObjectMeta: metav1.ObjectMeta{
@@ -186,6 +197,12 @@ func TestListPipelineRuns(t *testing.T) {
 			args:      []string{"list", "--reverse", "-n", "namespace", "-o", "jsonpath={range .items[*]}{.metadata.name}{\"\\n\"}{end}"},
 			wantError: false,
 		},
+		{
+			name:      "print pipelineruns in all namespaces",
+			command:   command(t, prsMultipleNs, clock.Now(), ns),
+			args:      []string{"list", "--all-namespaces"},
+			wantError: false,
+		},
 	}
 
 	for _, td := range tests {
@@ -218,7 +235,7 @@ func TestListPipeline_empty(t *testing.T) {
 		t.Errorf("Unexpected error: %v", err)
 	}
 
-	test.AssertOutput(t, emptyMsg+"\n", output)
+	test.AssertOutput(t, "No PipelineRuns found\n", output)
 }
 
 func command(t *testing.T, prs []*v1alpha1.PipelineRun, now time.Time, ns []*corev1.Namespace) *cobra.Command {
