@@ -222,7 +222,7 @@ Waiting for logs to be available...
 
 		res := icmd.RunCmd(run("taskrun", "list", "-n", namespace))
 
-		expected := ListAllTaskRunsOutput(t, c, map[int]interface{}{
+		expected := ListAllTaskRunsOutput(t, c, false, map[int]interface{}{
 			0: &TaskRunData{
 				Name:   "output-pipeline-run-",
 				Status: "Succeeded",
