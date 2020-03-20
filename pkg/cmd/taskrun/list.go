@@ -18,11 +18,13 @@ import (
 	"fmt"
 	"os"
 	"text/tabwriter"
+	"text/template"
+
+	"github.com/tektoncd/cli/pkg/formatted"
 
 	"github.com/jonboulle/clockwork"
 	"github.com/spf13/cobra"
 	"github.com/tektoncd/cli/pkg/cli"
-	"github.com/tektoncd/cli/pkg/formatted"
 	"github.com/tektoncd/cli/pkg/printer"
 	trsort "github.com/tektoncd/cli/pkg/taskrun/sort"
 	"github.com/tektoncd/cli/pkg/validate"
@@ -32,14 +34,28 @@ import (
 	cliopts "k8s.io/cli-runtime/pkg/genericclioptions"
 )
 
-const (
-	emptyMsg = "No TaskRuns found"
-)
+const listTemplate = `{{- $trl := len .TaskRuns.Items }}{{ if eq $trl 0 -}}
+No TaskRuns found
+{{- else -}}
+{{- if $.AllNamespaces }}NAMESPACE	NAME	STARTED	DURATION	STATUS
+{{- else -}}
+NAME	STARTED	DURATION	STATUS
+{{- end }}
+{{- range $_, $tr := .TaskRuns.Items }}{{- if $tr }}{{- if $.AllNamespaces }}
+{{ $tr.Namespace }}	{{ $tr.Name }}	{{ formatAge $tr.Status.StartTime $.Time }}	{{ formatDuration $tr.Status.StartTime $tr.Status.CompletionTime }}	{{ formatCondition $tr.Status.Conditions }}
+{{- else -}}
+{{ printf "\n" }}{{ $tr.Name }}	{{ formatAge $tr.Status.StartTime $.Time }}	{{ formatDuration $tr.Status.StartTime $tr.Status.CompletionTime }}	{{ formatCondition $tr.Status.Conditions }}
+{{- end }}
+{{- end }}
+{{- end }}
+{{- end }}
+`
 
 type ListOptions struct {
 	Limit         int
 	LabelSelector string
 	Reverse       bool
+	AllNamespaces bool
 }
 
 func listCommand(p cli.Params) *cobra.Command {
@@ -79,7 +95,7 @@ List all TaskRuns of Task 'foo' in namespace 'bar':
 				return nil
 			}
 
-			trs, err := list(p, task, opts.Limit, opts.LabelSelector)
+			trs, err := list(p, task, opts.Limit, opts.LabelSelector, opts.AllNamespaces)
 			if err != nil {
 				fmt.Fprintf(os.Stderr, "Failed to list taskruns from %s namespace \n", p.Namespace())
 				return err
@@ -113,7 +129,7 @@ List all TaskRuns of Task 'foo' in namespace 'bar':
 			}
 
 			if trs != nil {
-				err = printFormatted(stream, trs, p.Time())
+				err = printFormatted(stream, trs, p.Time(), opts.AllNamespaces)
 			}
 
 			if err != nil {
@@ -129,6 +145,7 @@ List all TaskRuns of Task 'foo' in namespace 'bar':
 	c.Flags().IntVarP(&opts.Limit, "limit", "", 0, "limit taskruns listed (default: return all taskruns)")
 	c.Flags().StringVarP(&opts.LabelSelector, "label", "", opts.LabelSelector, "A selector (label query) to filter on, supports '=', '==', and '!='")
 	c.Flags().BoolVarP(&opts.Reverse, "reverse", "", opts.Reverse, "list taskruns in reverse order")
+	c.Flags().BoolVarP(&opts.AllNamespaces, "all-namespaces", "A", opts.AllNamespaces, "list taskruns from all namespaces")
 	return c
 }
 
@@ -144,7 +161,7 @@ func reverse(trs *v1alpha1.TaskRunList) {
 	trs.Items = trItems
 }
 
-func list(p cli.Params, task string, limit int, labelselector string) (*v1alpha1.TaskRunList, error) {
+func list(p cli.Params, task string, limit int, labelselector string, allnamespaces bool) (*v1alpha1.TaskRunList, error) {
 	var selector string
 	var options v1.ListOptions
 
@@ -169,7 +186,11 @@ func list(p cli.Params, task string, limit int, labelselector string) (*v1alpha1
 		}
 	}
 
-	trc := cs.Tekton.TektonV1alpha1().TaskRuns(p.Namespace())
+	ns := p.Namespace()
+	if allnamespaces {
+		ns = ""
+	}
+	trc := cs.Tekton.TektonV1alpha1().TaskRuns(ns)
 	trs, err := trc.List(options)
 	if err != nil {
 		return nil, err
@@ -178,7 +199,11 @@ func list(p cli.Params, task string, limit int, labelselector string) (*v1alpha1
 	trslen := len(trs.Items)
 
 	if trslen != 0 {
-		trsort.SortByStartTime(trs.Items)
+		if allnamespaces {
+			trsort.SortByNamespace(trs.Items)
+		} else {
+			trsort.SortByStartTime(trs.Items)
+		}
 	}
 
 	// If greater than maximum amount of taskruns, return all taskruns by setting limit to default
@@ -202,22 +227,31 @@ func list(p cli.Params, task string, limit int, labelselector string) (*v1alpha1
 	return trs, nil
 }
 
-func printFormatted(s *cli.Stream, trs *v1alpha1.TaskRunList, c clockwork.Clock) error {
-	if len(trs.Items) == 0 {
-		fmt.Fprintln(s.Err, emptyMsg)
-		return nil
+func printFormatted(s *cli.Stream, trs *v1alpha1.TaskRunList, c clockwork.Clock, allnamespaces bool) error {
+
+	var data = struct {
+		TaskRuns      *v1alpha1.TaskRunList
+		Time          clockwork.Clock
+		AllNamespaces bool
+	}{
+		TaskRuns:      trs,
+		Time:          c,
+		AllNamespaces: allnamespaces,
+	}
+
+	funcMap := template.FuncMap{
+		"formatAge":       formatted.Age,
+		"formatDuration":  formatted.Duration,
+		"formatCondition": formatted.Condition,
 	}
 
 	w := tabwriter.NewWriter(s.Out, 0, 5, 3, ' ', tabwriter.TabIndent)
-	fmt.Fprintln(w, "NAME\tSTARTED\tDURATION\tSTATUS\t")
-	for _, tr := range trs.Items {
+	t := template.Must(template.New("List TaskRuns").Funcs(funcMap).Parse(listTemplate))
 
-		fmt.Fprintf(w, "%s\t%s\t%s\t%s\t\n",
-			tr.Name,
-			formatted.Age(tr.Status.StartTime, c),
-			formatted.Duration(tr.Status.StartTime, tr.Status.CompletionTime),
-			formatted.Condition(tr.Status.Conditions),
-		)
+	err := t.Execute(w, data)
+	if err != nil {
+		return err
 	}
+
 	return w.Flush()
 }

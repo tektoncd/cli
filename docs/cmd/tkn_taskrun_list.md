@@ -28,6 +28,7 @@ List all TaskRuns of Task 'foo' in namespace 'bar':
 ### Options
 
 ```
+  -A, --all-namespaces                list taskruns from all namespaces
       --allow-missing-template-keys   If true, ignore any errors in templates when a field or map key is missing in the template. Only applies to golang and jsonpath output formats. (default true)
   -h, --help                          help for list
       --label string                  A selector (label query) to filter on, supports '=', '==', and '!='
