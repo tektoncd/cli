@@ -18,6 +18,7 @@ import (
 	"fmt"
 	"os"
 	"text/tabwriter"
+	"text/template"
 
 	"github.com/jonboulle/clockwork"
 	"github.com/spf13/cobra"
@@ -32,14 +33,30 @@ import (
 	cliopts "k8s.io/cli-runtime/pkg/genericclioptions"
 )
 
-const (
-	emptyMsg = "No pipelineruns found"
-)
+const listTemplate = `{{- $prl := len .PipelineRuns.Items }}{{ if eq $prl 0 -}}
+No PipelineRuns found
+{{- else -}}
+{{- if $.AllNamespaces }}NAMESPACE	NAME	STARTED	DURATION	STATUS	
+{{- else -}}
+NAME	STARTED	DURATION	STATUS
+{{- end }}	
+{{- range $_, $pr := .PipelineRuns.Items }}
+{{- if $pr }}
+{{- if $.AllNamespaces }}
+{{ $pr.Namespace }}	{{ $pr.Name }}	{{ formatAge $pr.Status.StartTime $.Time }}	{{ formatDuration $pr.Status.StartTime $pr.Status.CompletionTime }}	{{ formatCondition $pr.Status.Conditions }}
+{{- else -}}
+{{ printf "\n" }}{{ $pr.Name }}	{{ formatAge $pr.Status.StartTime $.Time }}	{{ formatDuration $pr.Status.StartTime $pr.Status.CompletionTime }}	{{ formatCondition $pr.Status.Conditions }}
+{{- end }}
+{{- end }}
+{{- end }}
+{{- end }}
+`
 
 type ListOptions struct {
 	Limit         int
 	LabelSelector string
 	Reverse       bool
+	AllNamespaces bool
 }
 
 func listCommand(p cli.Params) *cobra.Command {
@@ -79,7 +96,7 @@ List all PipelineRuns in a namespace 'foo':
 				return nil
 			}
 
-			prs, err := list(p, pipeline, opts.Limit, opts.LabelSelector)
+			prs, err := list(p, pipeline, opts.Limit, opts.LabelSelector, opts.AllNamespaces)
 			if err != nil {
 				fmt.Fprintf(os.Stderr, "Failed to list pipelineruns from %s namespace \n", p.Namespace())
 				return err
@@ -113,7 +130,7 @@ List all PipelineRuns in a namespace 'foo':
 			}
 
 			if prs != nil {
-				err = printFormatted(stream, prs, p.Time())
+				err = printFormatted(stream, prs, p.Time(), opts.AllNamespaces)
 			}
 
 			if err != nil {
@@ -128,10 +145,12 @@ List all PipelineRuns in a namespace 'foo':
 	c.Flags().IntVarP(&opts.Limit, "limit", "", 0, "limit pipelineruns listed (default: return all pipelineruns)")
 	c.Flags().StringVarP(&opts.LabelSelector, "label", "", opts.LabelSelector, "A selector (label query) to filter on, supports '=', '==', and '!='")
 	c.Flags().BoolVarP(&opts.Reverse, "reverse", "", opts.Reverse, "list pipelineruns in reverse order")
+	c.Flags().BoolVarP(&opts.AllNamespaces, "all-namespaces", "A", opts.AllNamespaces, "list pipelineruns from all namespaces")
+
 	return c
 }
 
-func list(p cli.Params, pipeline string, limit int, labelselector string) (*v1alpha1.PipelineRunList, error) {
+func list(p cli.Params, pipeline string, limit int, labelselector string, allnamespaces bool) (*v1alpha1.PipelineRunList, error) {
 	var selector string
 	var options v1.ListOptions
 
@@ -156,7 +175,11 @@ func list(p cli.Params, pipeline string, limit int, labelselector string) (*v1al
 		}
 	}
 
-	prc := cs.Tekton.TektonV1alpha1().PipelineRuns(p.Namespace())
+	ns := p.Namespace()
+	if allnamespaces {
+		ns = ""
+	}
+	prc := cs.Tekton.TektonV1alpha1().PipelineRuns(ns)
 	prs, err := prc.List(options)
 	if err != nil {
 		return nil, err
@@ -165,7 +188,11 @@ func list(p cli.Params, pipeline string, limit int, labelselector string) (*v1al
 	prslen := len(prs.Items)
 
 	if prslen != 0 {
-		prsort.SortByStartTime(prs.Items)
+		if allnamespaces {
+			prsort.SortByNamespace(prs.Items)
+		} else {
+			prsort.SortByStartTime(prs.Items)
+		}
 	}
 
 	// If greater than maximum amount of pipelineruns, return all pipelineruns by setting limit to default
@@ -201,22 +228,30 @@ func reverse(prs *v1alpha1.PipelineRunList) {
 	prs.Items = prItems
 }
 
-func printFormatted(s *cli.Stream, prs *v1alpha1.PipelineRunList, c clockwork.Clock) error {
-	if len(prs.Items) == 0 {
-		fmt.Fprintln(s.Err, emptyMsg)
-		return nil
+func printFormatted(s *cli.Stream, prs *v1alpha1.PipelineRunList, c clockwork.Clock, allnamespaces bool) error {
+
+	var data = struct {
+		PipelineRuns  *v1alpha1.PipelineRunList
+		Time          clockwork.Clock
+		AllNamespaces bool
+	}{
+		PipelineRuns:  prs,
+		Time:          c,
+		AllNamespaces: allnamespaces,
+	}
+
+	funcMap := template.FuncMap{
+		"formatAge":       formatted.Age,
+		"formatDuration":  formatted.Duration,
+		"formatCondition": formatted.Condition,
 	}
 
 	w := tabwriter.NewWriter(s.Out, 0, 5, 3, ' ', tabwriter.TabIndent)
-	fmt.Fprintln(w, "NAME\tSTARTED\tDURATION\tSTATUS\t")
-	for _, pr := range prs.Items {
+	t := template.Must(template.New("List PipelineRuns").Funcs(funcMap).Parse(listTemplate))
 
-		fmt.Fprintf(w, "%s\t%s\t%s\t%s\t\n",
-			pr.Name,
-			formatted.Age(pr.Status.StartTime, c),
-			formatted.Duration(pr.Status.StartTime, pr.Status.CompletionTime),
-			formatted.Condition(pr.Status.Conditions),
-		)
+	err := t.Execute(w, data)
+	if err != nil {
+		return err
 	}
 
 	return w.Flush()
