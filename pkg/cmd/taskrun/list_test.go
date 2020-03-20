@@ -98,6 +98,29 @@ func TestListTaskRuns(t *testing.T) {
 		),
 	}
 
+	trsMultipleNs := []*v1alpha1.TaskRun{
+		tb.TaskRun("tr4-1", "tout",
+			tb.TaskRunLabel("tekton.dev/task", "random"),
+			tb.TaskRunSpec(tb.TaskRunTaskRef("random")),
+			tb.TaskRunStatus(
+				tb.StatusCondition(apis.Condition{
+					Status: corev1.ConditionTrue,
+					Reason: resources.ReasonSucceeded,
+				}),
+			),
+		),
+		tb.TaskRun("tr4-2", "lacher",
+			tb.TaskRunLabel("tekton.dev/task", "random"),
+			tb.TaskRunSpec(tb.TaskRunTaskRef("random")),
+			tb.TaskRunStatus(
+				tb.StatusCondition(apis.Condition{
+					Status: corev1.ConditionTrue,
+					Reason: resources.ReasonSucceeded,
+				}),
+			),
+		),
+	}
+
 	ns := []*corev1.Namespace{
 		{
 			ObjectMeta: metav1.ObjectMeta{
@@ -204,6 +227,12 @@ func TestListTaskRuns(t *testing.T) {
 			name:      "print in reverse with output flag",
 			command:   command(t, trs, now, ns),
 			args:      []string{"list", "--reverse", "-n", "foo", "-o", "jsonpath={range .items[*]}{.metadata.name}{\"\\n\"}{end}"},
+			wantError: false,
+		},
+		{
+			name:      "print taskrunsruns in all namespaces",
+			command:   command(t, trsMultipleNs, now, ns),
+			args:      []string{"list", "--all-namespaces", "-n", "foo"},
 			wantError: false,
 		},
 	}
