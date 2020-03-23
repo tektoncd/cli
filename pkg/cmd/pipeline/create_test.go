@@ -58,7 +58,7 @@ func Test_Pipeline_Create(t *testing.T) {
 		},
 		{
 			name:        "Create pipeline successfully",
-			command:     []string{"create", "--from", "./testdata/pipeline.yaml", "-n", "ns"},
+			command:     []string{"create", "--from", "./testdata/pipeline-v1alpha1.yaml", "-n", "ns"},
 			input:       seeds[0],
 			inputStream: nil,
 			wantError:   false,
@@ -90,7 +90,7 @@ func Test_Pipeline_Create(t *testing.T) {
 		},
 		{
 			name:        "Existing pipeline",
-			command:     []string{"create", "-f", "./testdata/pipeline.yaml", "-n", "ns"},
+			command:     []string{"create", "-f", "./testdata/pipeline-v1alpha1.yaml", "-n", "ns"},
 			input:       seeds[0],
 			inputStream: nil,
 			wantError:   true,
