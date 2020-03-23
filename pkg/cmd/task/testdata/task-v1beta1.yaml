@@ -1,4 +1,4 @@
-# Copyright © 2019 The Tekton Authors.
+# Copyright 2020 The Tekton Authors.
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -11,34 +11,33 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
-apiVersion: tekton.dev/v1alpha1
+---
+apiVersion: tekton.dev/v1beta1
 kind: Task
 metadata:
   name: test-task
 spec:
-  inputs:
-    resources:
+  params:
+    - name: pathToDockerFile
+      type: string
+      description: The path to the dockerfile to build
+      default: /workspace/docker-source/Dockerfile
+    - name: pathToContext
+      type: string
+      description:
+        The build context used by Kaniko
+        (https://github.com/GoogleContainerTools/kaniko#kaniko-build-contexts)
+      default: /workspace/docker-source
+  resources:
+    inputs:
       - name: docker-source
         type: git
-    params:
-      - name: pathToDockerFile
-        type: string
-        description: The path to the dockerfile to build
-        default: /workspace/docker-source/Dockerfile
-      - name: pathToContext
-        type: string
-        description:
-          The build context used by Kaniko
-          (https://github.com/GoogleContainerTools/kaniko#kaniko-build-contexts)
-        default: /workspace/docker-source
-  outputs:
-    resources:
+    outputs:
       - name: builtImage
         type: image
   steps:
     - name: build-and-push
       image: gcr.io/kaniko-project/executor:v0.14.0
-      # specifying DOCKER_CONFIG is required to allow kaniko to detect docker credential
       env:
         - name: "DOCKER_CONFIG"
           value: "/tekton/home/.docker/"

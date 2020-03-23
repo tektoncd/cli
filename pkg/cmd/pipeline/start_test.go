@@ -119,6 +119,7 @@ func TestPipelineStart_ExecuteCommand(t *testing.T) {
 			},
 		},
 	})
+	cs2.Pipeline.Resources = cb.APIResourceList("v1alpha1", []string{"pipeline"})
 
 	// With list error mocking
 	cs3, _ := test.SeedTestData(t, pipelinetest.Data{
@@ -227,6 +228,32 @@ func TestPipelineStart_ExecuteCommand(t *testing.T) {
 	})
 	pClient2 := newPipelineClient(objs2...)
 	cs6 := pipelinetest.Clients{Pipeline: pClient2, Kube: seedData2.Kube}
+
+	cs7, _ := test.SeedTestData(t, pipelinetest.Data{
+		Pipelines: []*v1alpha1.Pipeline{
+			tb.Pipeline("test-pipeline", "ns",
+				tb.PipelineSpec(
+					tb.PipelineDeclaredResource("git-repo", "git"),
+					tb.PipelineDeclaredResource("build-image", "image"),
+					tb.PipelineParamSpec("pipeline-param", v1alpha1.ParamTypeString, tb.ParamSpecDefault("somethingdifferent")),
+					tb.PipelineParamSpec("rev-param", v1alpha1.ParamTypeString, tb.ParamSpecDefault("revision")),
+					tb.PipelineTask("unit-test-1", "unit-test-task",
+						tb.PipelineTaskInputResource("workspace", "git-repo"),
+						tb.PipelineTaskOutputResource("image-to-use", "best-image"),
+						tb.PipelineTaskOutputResource("workspace", "git-repo"),
+					),
+				),
+			),
+		},
+		Namespaces: []*corev1.Namespace{
+			{
+				ObjectMeta: metav1.ObjectMeta{
+					Name: "ns",
+				},
+			},
+		},
+	})
+	cs7.Pipeline.Resources = cb.APIResourceList("v1beta1", []string{"pipeline"})
 
 	testParams := []struct {
 		name       string
@@ -439,6 +466,21 @@ func TestPipelineStart_ExecuteCommand(t *testing.T) {
 			goldenFile: true,
 		},
 		{
+			name: "Dry Run with only --dry-run specified v1beta1",
+			command: []string{"start", "test-pipeline",
+				"-s=svc1",
+				"-r=source=scaffold-git",
+				"-p=pipeline-param=value1",
+				"-l=jemange=desfrites",
+				"-n", "ns",
+				"--dry-run",
+			},
+			namespace:  "",
+			input:      cs7,
+			wantError:  false,
+			goldenFile: true,
+		},
+		{
 			name: "Dry Run with output=json",
 			command: []string{"start", "test-pipeline",
 				"-s=svc1",
@@ -455,8 +497,35 @@ func TestPipelineStart_ExecuteCommand(t *testing.T) {
 			goldenFile: true,
 		},
 		{
-			name: "Dry Run using --filename",
-			command: []string{"start", "-f", "./testdata/pipeline.yaml",
+			name: "Dry Run using --filename v1alpha1",
+			command: []string{"start", "-f", "./testdata/pipeline-v1alpha1.yaml",
+				"-r=source-repo=scaffold-git",
+				"-r=web-image=imageres",
+				"-n", "ns",
+				"--dry-run",
+			},
+			namespace:  "",
+			input:      cs6,
+			wantError:  false,
+			goldenFile: true,
+		},
+		{
+			name: "Dry Run with output=json -f",
+			command: []string{"start", "-f", "./testdata/pipeline-v1alpha1.yaml",
+				"-r=source-repo=scaffold-git",
+				"-r=web-image=imageres",
+				"-n", "ns",
+				"--dry-run",
+				"--output", "json",
+			},
+			namespace:  "",
+			input:      cs6,
+			wantError:  false,
+			goldenFile: true,
+		},
+		{
+			name: "Dry Run using --filename v1beta1",
+			command: []string{"start", "-f", "./testdata/pipeline-v1beta1.yaml",
 				"-r=source-repo=scaffold-git",
 				"-r=web-image=imageres",
 				"-n", "ns",
@@ -469,7 +538,7 @@ func TestPipelineStart_ExecuteCommand(t *testing.T) {
 		},
 		{
 			name: "Start pipeline using --filename",
-			command: []string{"start", "-f", "./testdata/pipeline.yaml",
+			command: []string{"start", "-f", "./testdata/pipeline-v1alpha1.yaml",
 				"-r=source-repo=scaffold-git",
 				"-r=web-image=imageres",
 				"-n", "ns",

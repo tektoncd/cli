@@ -50,7 +50,7 @@ func Test_Task_Create(t *testing.T) {
 	}{
 		{
 			name:        "Invalid namespace",
-			command:     []string{"create", "--from", "./testdata/task.yaml", "-n", "invalid"},
+			command:     []string{"create", "--from", "./testdata/task-v1alpha1.yaml", "-n", "invalid"},
 			input:       seeds[0],
 			inputStream: nil,
 			wantError:   true,
@@ -58,7 +58,7 @@ func Test_Task_Create(t *testing.T) {
 		},
 		{
 			name:        "Create task successfully",
-			command:     []string{"create", "--from", "./testdata/task.yaml", "-n", "ns"},
+			command:     []string{"create", "--from", "./testdata/task-v1alpha1.yaml", "-n", "ns"},
 			input:       seeds[0],
 			inputStream: nil,
 			wantError:   false,
@@ -90,7 +90,7 @@ func Test_Task_Create(t *testing.T) {
 		},
 		{
 			name:        "Existing task",
-			command:     []string{"create", "-f", "./testdata/task.yaml", "-n", "ns"},
+			command:     []string{"create", "-f", "./testdata/task-v1alpha1.yaml", "-n", "ns"},
 			input:       seeds[0],
 			inputStream: nil,
 			wantError:   true,

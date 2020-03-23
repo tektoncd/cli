@@ -181,16 +181,15 @@ func Test_ClusterTask_Start(t *testing.T) {
 
 	seeds = append(seeds, cs3)
 
-	//seeds[3] - For Dry Run tests
-	objs4 := []runtime.Object{clustertasks[1]}
-	pClient4 := newPipelineClient("taskrun-3", objs4...)
-
-	cs4 := pipelinetest.Clients{
-		Pipeline: pClient4,
-		Kube:     seedData.Kube,
-	}
-
+	//seeds[3] - For Dry Run tests with v1alpha1
+	cs4, _ := test.SeedTestData(t, pipelinetest.Data{ClusterTasks: clustertasks, Namespaces: ns})
+	cs4.Pipeline.Resources = cb.APIResourceList("v1alpha1", []string{"clustertask"})
 	seeds = append(seeds, cs4)
+
+	//seeds[4] - For Dry Run tests with v1beta1
+	cs5, _ := test.SeedTestData(t, pipelinetest.Data{ClusterTasks: clustertasks, Namespaces: ns})
+	cs5.Pipeline.Resources = cb.APIResourceList("v1beta1", []string{"clustertask"})
+	seeds = append(seeds, cs5)
 
 	testParams := []struct {
 		name        string
@@ -368,6 +367,20 @@ func Test_ClusterTask_Start(t *testing.T) {
 			wantError:   false,
 			goldenFile:  true,
 		},
+		{
+			name: "Dry run with no output v1beta1",
+			command: []string{"start", "clustertask-2",
+				"-i", "my-repo=git",
+				"-o", "code-image=output-image",
+				"-l", "key=value",
+				"-s=svc1",
+				"--dry-run",
+			},
+			input:       seeds[4],
+			inputStream: nil,
+			wantError:   false,
+			goldenFile:  true,
+		},
 	}
 
 	for _, tp := range testParams {
@@ -375,7 +388,6 @@ func Test_ClusterTask_Start(t *testing.T) {
 			p := &test.Params{Tekton: tp.input.Pipeline, Kube: tp.input.Kube}
 			p.SetNamespace("ns")
 			clustertask := Command(p)
-
 			if tp.inputStream != nil {
 				clustertask.SetIn(tp.inputStream)
 			}

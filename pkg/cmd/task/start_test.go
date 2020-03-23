@@ -23,6 +23,7 @@ import (
 
 	"github.com/google/go-cmp/cmp"
 	"github.com/tektoncd/cli/pkg/test"
+	cb "github.com/tektoncd/cli/pkg/test/builder"
 	"github.com/tektoncd/pipeline/pkg/apis/pipeline/v1alpha1"
 	fakepipelineclientset "github.com/tektoncd/pipeline/pkg/client/clientset/versioned/fake"
 	tb "github.com/tektoncd/pipeline/test/builder"
@@ -106,14 +107,14 @@ func Test_start_has_no_task_arg(t *testing.T) {
 func Test_start_has_filename_arg_with_last(t *testing.T) {
 	c := Command(&test.Params{})
 
-	_, err := test.ExecuteCommand(c, "start", "-n", "ns", "--filename=./testdata/task.yaml", "--last")
+	_, err := test.ExecuteCommand(c, "start", "-n", "ns", "--filename=./testdata/task-v1alpha1.yaml", "--last")
 	if err == nil {
 		t.Error("Expecting an error but it's empty")
 	}
 	test.AssertOutput(t, "cannot use --last option with --filename option", err.Error())
 }
 
-func Test_start_has_task_filename(t *testing.T) {
+func Test_start_has_task_filename_v1alpha1(t *testing.T) {
 	ns := []*corev1.Namespace{
 		{
 			ObjectMeta: metav1.ObjectMeta{
@@ -124,7 +125,7 @@ func Test_start_has_task_filename(t *testing.T) {
 	cs, _ := test.SeedTestData(t, pipelinetest.Data{Namespaces: ns})
 	c := Command(&test.Params{Tekton: cs.Pipeline, Kube: cs.Kube})
 
-	got, err := test.ExecuteCommand(c, "start", "-n", "ns", "--filename=./testdata/task.yaml")
+	got, err := test.ExecuteCommand(c, "start", "-n", "ns", "--filename=./testdata/task-v1alpha1.yaml")
 	if err != nil {
 		t.Errorf("Not expecting an error, but got %s", err.Error())
 	}
@@ -1332,6 +1333,10 @@ func TestTaskStart_ExecuteCommand(t *testing.T) {
 	}
 
 	cs, _ := test.SeedTestData(t, pipelinetest.Data{Tasks: tasks, Namespaces: ns})
+	cs.Pipeline.Resources = cb.APIResourceList("v1alpha1", []string{"task"})
+
+	cs2, _ := test.SeedTestData(t, pipelinetest.Data{Tasks: tasks, Namespaces: ns})
+	cs2.Pipeline.Resources = cb.APIResourceList("v1beta1", []string{"task"})
 
 	testParams := []struct {
 		name       string
@@ -1370,6 +1375,19 @@ func TestTaskStart_ExecuteCommand(t *testing.T) {
 			goldenFile: true,
 		},
 		{
+			name: "Dry Run with only --dry-run specified v1beta1",
+			command: []string{"start", "task-1",
+				"-i=my-repo=git-repo",
+				"-o=code-image=output-image",
+				"-s=svc1",
+				"-n", "ns",
+				"--dry-run"},
+			namespace:  "",
+			input:      cs2,
+			wantError:  false,
+			goldenFile: true,
+		},
+		{
 			name: "Dry Run with output=json",
 			command: []string{"start", "task-1",
 				"-i=my-repo=git-repo",
@@ -1384,9 +1402,24 @@ func TestTaskStart_ExecuteCommand(t *testing.T) {
 			goldenFile: true,
 		},
 		{
-			name: "Dry Run with -f",
+			name: "Dry Run with -f v1alpha1",
 			command: []string{"start",
-				"-f", "./testdata/task.yaml",
+				"-f", "./testdata/task-v1alpha1.yaml",
+				"-n", "ns",
+				"-s=svc1",
+				"-i=docker-source=git",
+				"-o=builtImage=image",
+				"--dry-run",
+				"--output=yaml"},
+			namespace:  "",
+			input:      cs,
+			wantError:  false,
+			goldenFile: true,
+		},
+		{
+			name: "Dry Run with -f v1beta1",
+			command: []string{"start",
+				"-f", "./testdata/task-v1beta1.yaml",
 				"-n", "ns",
 				"-s=svc1",
 				"-i=docker-source=git",
@@ -1406,8 +1439,22 @@ func TestTaskStart_ExecuteCommand(t *testing.T) {
 				"-s=svc1",
 				"-n", "ns",
 				"--dry-run",
-				"--timeout", "1s",
-			},
+				"--timeout", "1s"},
+			namespace:  "",
+			input:      cs,
+			wantError:  false,
+			goldenFile: true,
+		},
+		{
+			name: "Dry Run with output=json -f",
+			command: []string{"start",
+				"-f", "./testdata/task-v1alpha1.yaml",
+				"-n", "ns",
+				"-s=svc1",
+				"-i=docker-source=git",
+				"-o=builtImage=image",
+				"--dry-run",
+				"--output=json"},
 			namespace:  "",
 			input:      cs,
 			wantError:  false,

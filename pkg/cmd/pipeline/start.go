@@ -43,6 +43,7 @@ import (
 	versionedResource "github.com/tektoncd/pipeline/pkg/client/resource/clientset/versioned"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	v1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+	"k8s.io/client-go/discovery"
 )
 
 var (
@@ -118,6 +119,12 @@ like cat,foo,bar
 			if opt.Filename != "" && opt.Last {
 				return errors.New("cannot use --last option with --filename option")
 			}
+			if opt.DryRun {
+				format := strings.ToLower(opt.Output)
+				if format != "" && format != "json" && format != "yaml" {
+					return fmt.Errorf("output format specified is %s but must be yaml or json", opt.Output)
+				}
+			}
 			return nil
 		},
 		RunE: func(cmd *cobra.Command, args []string) error {
@@ -176,11 +183,25 @@ func (opt *startOptions) startPipeline(pipelineStart *v1alpha1.Pipeline) error {
 		objMeta.GenerateName = opt.PrefixName + "-"
 	}
 
+	cs, err := opt.cliparams.Clients()
+	if err != nil {
+		return err
+	}
+
 	var pr *v1alpha1.PipelineRun
 	if opt.Filename == "" {
+		apiVersion := "tekton.dev/vlalpha1"
+		if opt.DryRun {
+			// Get most recent API version available on cluster for --dry-run
+			apiVersion, err = getAPIVersion(cs.Tekton.Discovery())
+			if err != nil {
+				return err
+			}
+		}
+
 		pr = &v1alpha1.PipelineRun{
 			TypeMeta: metav1.TypeMeta{
-				APIVersion: "tekton.dev/v1alpha1",
+				APIVersion: apiVersion,
 				Kind:       "PipelineRun",
 			},
 			ObjectMeta: objMeta,
@@ -191,7 +212,7 @@ func (opt *startOptions) startPipeline(pipelineStart *v1alpha1.Pipeline) error {
 	} else {
 		pr = &v1alpha1.PipelineRun{
 			TypeMeta: metav1.TypeMeta{
-				APIVersion: "tekton.dev/v1alpha1",
+				APIVersion: pipelineStart.TypeMeta.APIVersion,
 				Kind:       "PipelineRun",
 			},
 			ObjectMeta: objMeta,
@@ -206,11 +227,6 @@ func (opt *startOptions) startPipeline(pipelineStart *v1alpha1.Pipeline) error {
 		return err
 	}
 	pr.Spec.Timeout = &metav1.Duration{Duration: timeoutDuration}
-
-	cs, err := opt.cliparams.Clients()
-	if err != nil {
-		return err
-	}
 
 	if opt.Last || opt.UsePipelineRun != "" {
 		var usepr *v1alpha1.PipelineRun
@@ -629,11 +645,6 @@ func (opt *startOptions) createPipelineResource(resName string, resType v1alpha1
 
 func pipelineRunDryRun(output string, s *cli.Stream, pr *v1alpha1.PipelineRun) error {
 	format := strings.ToLower(output)
-
-	if format != "" && format != "json" && format != "yaml" {
-		return fmt.Errorf("output format specified is %s but must be yaml or json", output)
-	}
-
 	if format == "" || format == "yaml" {
 		prBytes, err := yaml.Marshal(pr)
 		if err != nil {
@@ -649,7 +660,6 @@ func pipelineRunDryRun(output string, s *cli.Stream, pr *v1alpha1.PipelineRun) e
 		}
 		fmt.Fprintf(s.Out, "%s\n", prBytes)
 	}
-
 	return nil
 }
 
@@ -753,7 +763,7 @@ func (opt *startOptions) getInputWorkspaces(pipeline *v1alpha1.Pipeline) error {
 			if err != nil {
 				return err
 			}
-			workspace = workspace + items
+			workspace += items
 		case "secret":
 			secret, err := askParam("Name of the secret :", opt.askOpts)
 			if err != nil {
@@ -764,7 +774,7 @@ func (opt *startOptions) getInputWorkspaces(pipeline *v1alpha1.Pipeline) error {
 			if err != nil {
 				return err
 			}
-			workspace = workspace + items
+			workspace += items
 		}
 		opt.Workspaces = append(opt.Workspaces, workspace)
 
@@ -807,5 +817,16 @@ func askParam(ques string, askOpts survey.AskOpt, def ...string) (string, error)
 	}
 
 	return ans, nil
+}
 
+func getAPIVersion(discovery discovery.DiscoveryInterface) (string, error) {
+	_, err := discovery.ServerResourcesForGroupVersion("tekton.dev/v1beta1")
+	if err != nil {
+		_, err = discovery.ServerResourcesForGroupVersion("tekton.dev/v1alpha1")
+		if err != nil {
+			return "", fmt.Errorf("couldn't get available Tekton api versions from server")
+		}
+		return "tekton.dev/v1alpha1", nil
+	}
+	return "tekton.dev/v1beta1", nil
 }
