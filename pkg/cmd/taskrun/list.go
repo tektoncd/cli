@@ -20,17 +20,16 @@ import (
 	"text/tabwriter"
 	"text/template"
 
-	"github.com/tektoncd/cli/pkg/formatted"
-
 	"github.com/jonboulle/clockwork"
 	"github.com/spf13/cobra"
 	"github.com/tektoncd/cli/pkg/cli"
+	"github.com/tektoncd/cli/pkg/formatted"
 	"github.com/tektoncd/cli/pkg/printer"
+	trlist "github.com/tektoncd/cli/pkg/taskrun/list"
 	trsort "github.com/tektoncd/cli/pkg/taskrun/sort"
 	"github.com/tektoncd/cli/pkg/validate"
-	"github.com/tektoncd/pipeline/pkg/apis/pipeline/v1alpha1"
+	"github.com/tektoncd/pipeline/pkg/apis/pipeline/v1beta1"
 	v1 "k8s.io/apimachinery/pkg/apis/meta/v1"
-	"k8s.io/apimachinery/pkg/runtime/schema"
 	cliopts "k8s.io/cli-runtime/pkg/genericclioptions"
 )
 
@@ -149,7 +148,7 @@ List all TaskRuns of Task 'foo' in namespace 'bar':
 	return c
 }
 
-func reverse(trs *v1alpha1.TaskRunList) {
+func reverse(trs *v1beta1.TaskRunList) {
 	i := 0
 	j := len(trs.Items) - 1
 	trItems := trs.Items
@@ -161,14 +160,9 @@ func reverse(trs *v1alpha1.TaskRunList) {
 	trs.Items = trItems
 }
 
-func list(p cli.Params, task string, limit int, labelselector string, allnamespaces bool) (*v1alpha1.TaskRunList, error) {
+func list(p cli.Params, task string, limit int, labelselector string, allnamespaces bool) (*v1beta1.TaskRunList, error) {
 	var selector string
 	var options v1.ListOptions
-
-	cs, err := p.Clients()
-	if err != nil {
-		return nil, err
-	}
 
 	if task != "" && labelselector != "" {
 		return nil, fmt.Errorf("specifying a task and labels are not compatible")
@@ -190,8 +184,8 @@ func list(p cli.Params, task string, limit int, labelselector string, allnamespa
 	if allnamespaces {
 		ns = ""
 	}
-	trc := cs.Tekton.TektonV1alpha1().TaskRuns(ns)
-	trs, err := trc.List(options)
+
+	trs, err := trlist.TaskRuns(p, options, ns)
 	if err != nil {
 		return nil, err
 	}
@@ -216,21 +210,13 @@ func list(p cli.Params, task string, limit int, labelselector string, allnamespa
 		trs.Items = trs.Items[0:limit]
 	}
 
-	// NOTE: this is required for -o json|yaml to work properly since
-	// tektoncd go client fails to set these; probably a bug
-	trs.GetObjectKind().SetGroupVersionKind(
-		schema.GroupVersionKind{
-			Version: "tekton.dev/v1alpha1",
-			Kind:    "TaskRunList",
-		})
-
 	return trs, nil
 }
 
-func printFormatted(s *cli.Stream, trs *v1alpha1.TaskRunList, c clockwork.Clock, allnamespaces bool) error {
+func printFormatted(s *cli.Stream, trs *v1beta1.TaskRunList, c clockwork.Clock, allnamespaces bool) error {
 
 	var data = struct {
-		TaskRuns      *v1alpha1.TaskRunList
+		TaskRuns      *v1beta1.TaskRunList
 		Time          clockwork.Clock
 		AllNamespaces bool
 	}{

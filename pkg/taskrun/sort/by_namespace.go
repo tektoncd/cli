@@ -1,17 +1,18 @@
 package taskrun
 
 import (
-	"github.com/tektoncd/pipeline/pkg/apis/pipeline/v1alpha1"
 	"sort"
+
+	"github.com/tektoncd/pipeline/pkg/apis/pipeline/v1beta1"
 )
 
-func SortByNamespace(trs []v1alpha1.TaskRun) {
+func SortByNamespace(trs []v1beta1.TaskRun) {
 	sort.Sort(byNamespace(trs))
 }
 
-type byNamespace []v1alpha1.TaskRun
+type byNamespace []v1beta1.TaskRun
 
-func (prs byNamespace) compareNamespace(ins, jns string) (lt, eq bool) {
+func (trs byNamespace) compareNamespace(ins, jns string) (lt, eq bool) {
 	lt, eq = ins < jns, ins == jns
 	return lt, eq
 }

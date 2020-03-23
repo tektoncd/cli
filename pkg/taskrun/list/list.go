@@ -15,19 +15,21 @@
 package list
 
 import (
+	"fmt"
+	"os"
+
 	"github.com/tektoncd/cli/pkg/cli"
 	"github.com/tektoncd/cli/pkg/formatted"
+	trlist "github.com/tektoncd/cli/pkg/list"
 	trsort "github.com/tektoncd/cli/pkg/taskrun/sort"
+	"github.com/tektoncd/pipeline/pkg/apis/pipeline/v1beta1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+	"k8s.io/apimachinery/pkg/runtime"
+	"k8s.io/apimachinery/pkg/runtime/schema"
 )
 
 func GetAllTaskRuns(p cli.Params, opts metav1.ListOptions, limit int) ([]string, error) {
-	cs, err := p.Clients()
-	if err != nil {
-		return nil, err
-	}
-
-	runs, err := cs.Tekton.TektonV1alpha1().TaskRuns(p.Namespace()).List(opts)
+	runs, err := TaskRuns(p, opts, p.Namespace())
 	if err != nil {
 		return nil, err
 	}
@@ -45,4 +47,28 @@ func GetAllTaskRuns(p cli.Params, opts metav1.ListOptions, limit int) ([]string,
 		}
 	}
 	return ret, nil
+}
+
+func TaskRuns(p cli.Params, opts metav1.ListOptions, ns string) (*v1beta1.TaskRunList, error) {
+	cs, err := p.Clients()
+	if err != nil {
+		return nil, err
+	}
+
+	trGroupResource := schema.GroupVersionResource{Group: "tekton.dev", Resource: "taskruns"}
+	unstructuredTR, err := trlist.AllObjecs(trGroupResource, cs, ns, opts)
+	if err != nil {
+		return nil, err
+	}
+
+	var runs *v1beta1.TaskRunList
+	if err := runtime.DefaultUnstructuredConverter.FromUnstructured(unstructuredTR.UnstructuredContent(), &runs); err != nil {
+		return nil, err
+	}
+	if err != nil {
+		fmt.Fprintf(os.Stderr, "Failed to list taskruns from %s namespace \n", p.Namespace())
+		return nil, err
+	}
+
+	return runs, nil
 }

@@ -19,7 +19,7 @@ import (
 	"time"
 
 	"github.com/jonboulle/clockwork"
-	"github.com/tektoncd/pipeline/pkg/apis/pipeline/v1alpha1"
+	"github.com/tektoncd/pipeline/pkg/apis/pipeline/v1beta1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 )
 
@@ -30,7 +30,7 @@ func Test_TaskRunsByStartTime(t *testing.T) {
 	tr1Started := clock.Now().Add(-2 * time.Hour)
 	tr2Started := clock.Now().Add(-1 * time.Hour)
 
-	tr1 := v1alpha1.TaskRun{
+	tr1 := v1beta1.TaskRun{
 		ObjectMeta: metav1.ObjectMeta{
 			Namespace: "namespace",
 			Name:      "tr0-1",
@@ -38,7 +38,7 @@ func Test_TaskRunsByStartTime(t *testing.T) {
 	}
 	tr1.Status.StartTime = &metav1.Time{Time: tr0Started}
 
-	tr2 := v1alpha1.TaskRun{
+	tr2 := v1beta1.TaskRun{
 		ObjectMeta: metav1.ObjectMeta{
 			Namespace: "namespace",
 			Name:      "tr1-1",
@@ -46,7 +46,7 @@ func Test_TaskRunsByStartTime(t *testing.T) {
 	}
 	tr2.Status.StartTime = &metav1.Time{Time: tr1Started}
 
-	tr3 := v1alpha1.TaskRun{
+	tr3 := v1beta1.TaskRun{
 		ObjectMeta: metav1.ObjectMeta{
 			Namespace: "namespace",
 			Name:      "tr2-1",
@@ -54,7 +54,7 @@ func Test_TaskRunsByStartTime(t *testing.T) {
 	}
 	tr3.Status.StartTime = &metav1.Time{Time: tr2Started}
 
-	trs := []v1alpha1.TaskRun{
+	trs := []v1beta1.TaskRun{
 		tr2,
 		tr3,
 		tr1,
@@ -80,28 +80,28 @@ func Test_TaskRunsByStartTime(t *testing.T) {
 
 func Test_TaskRunsByStartTime_NilStartTime(t *testing.T) {
 
-	tr1 := v1alpha1.TaskRun{
+	tr1 := v1beta1.TaskRun{
 		ObjectMeta: metav1.ObjectMeta{
 			Namespace: "namespace",
 			Name:      "tr0-1",
 		},
 	}
 
-	tr2 := v1alpha1.TaskRun{
+	tr2 := v1beta1.TaskRun{
 		ObjectMeta: metav1.ObjectMeta{
 			Namespace: "namespace",
 			Name:      "tr1-1",
 		},
 	}
 
-	tr3 := v1alpha1.TaskRun{
+	tr3 := v1beta1.TaskRun{
 		ObjectMeta: metav1.ObjectMeta{
 			Namespace: "namespace",
 			Name:      "tr2-1",
 		},
 	}
 
-	trs := []v1alpha1.TaskRun{
+	trs := []v1beta1.TaskRun{
 		tr2,
 		tr3,
 		tr1,

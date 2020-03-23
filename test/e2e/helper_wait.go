@@ -20,6 +20,7 @@ import (
 	"sync"
 
 	"github.com/tektoncd/pipeline/pkg/apis/pipeline/v1alpha1"
+	"github.com/tektoncd/pipeline/pkg/apis/pipeline/v1beta1"
 	"golang.org/x/xerrors"
 	corev1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
@@ -29,7 +30,7 @@ import (
 // WaitForTaskRunToComplete Wait For Task Run Resource to be completed
 func WaitForTaskRunToComplete(c *Clients, trname string, namespace string) {
 	log.Printf("Waiting for TaskRun %s in namespace %s to complete", trname, namespace)
-	if err := WaitForTaskRunState(c, trname, func(tr *v1alpha1.TaskRun) (bool, error) {
+	if err := WaitForTaskRunState(c, trname, func(tr *v1beta1.TaskRun) (bool, error) {
 		cond := tr.Status.GetCondition(apis.ConditionSucceeded)
 		if cond != nil {
 			if cond.Status == corev1.ConditionTrue || cond.Status == corev1.ConditionFalse {
@@ -47,7 +48,7 @@ func WaitForTaskRunToComplete(c *Clients, trname string, namespace string) {
 // WaitForTaskRunToBeStarted Wait For Task Run Resource to be completed
 func WaitForTaskRunToBeStarted(c *Clients, trname string, namespace string) {
 	log.Printf("Waiting for TaskRun %s in namespace %s to be started", trname, namespace)
-	if err := WaitForTaskRunState(c, trname, func(tr *v1alpha1.TaskRun) (bool, error) {
+	if err := WaitForTaskRunState(c, trname, func(tr *v1beta1.TaskRun) (bool, error) {
 		cond := tr.Status.GetCondition(apis.ConditionSucceeded)
 		if cond != nil {
 			if cond.Status == corev1.ConditionTrue || cond.Status == corev1.ConditionFalse {
@@ -111,7 +112,7 @@ func WaitForPipelineRunToComplete(c *Clients, prname string, namespace string) {
 
 	for _, taskrunItem := range taskrunList.Items {
 		go func(name string) {
-			err := WaitForTaskRunState(c, name, func(tr *v1alpha1.TaskRun) (bool, error) {
+			err := WaitForTaskRunState(c, name, func(tr *v1beta1.TaskRun) (bool, error) {
 				c := tr.Status.GetCondition(apis.ConditionSucceeded)
 				if c != nil {
 					if c.Status == corev1.ConditionTrue || c.Status == corev1.ConditionFalse {
@@ -157,7 +158,7 @@ func WaitForPipelineRunToComplete(c *Clients, prname string, namespace string) {
 		wg.Add(1)
 		go func(name string) {
 			defer wg.Done()
-			err := WaitForTaskRunState(c, name, func(tr *v1alpha1.TaskRun) (bool, error) {
+			err := WaitForTaskRunState(c, name, func(tr *v1beta1.TaskRun) (bool, error) {
 				cond := tr.Status.GetCondition(apis.ConditionSucceeded)
 				if cond != nil {
 					if cond.Status == corev1.ConditionTrue || cond.Status == corev1.ConditionFalse {

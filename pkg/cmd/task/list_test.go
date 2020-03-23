@@ -19,9 +19,6 @@ import (
 	"testing"
 	"time"
 
-	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
-	"k8s.io/apimachinery/pkg/runtime"
-
 	"github.com/jonboulle/clockwork"
 	"github.com/tektoncd/cli/pkg/test"
 	cb "github.com/tektoncd/cli/pkg/test/builder"
@@ -59,19 +56,8 @@ func TestTaskList_Empty(t *testing.T) {
 		},
 	}
 	cs, _ := test.SeedTestData(t, pipelinetest.Data{Namespaces: ns})
-	cs.Pipeline.Resources = []*metav1.APIResourceList{
-		{TypeMeta: metav1.TypeMeta{
-			Kind:       "task",
-			APIVersion: "tekton.dev/v1beta1",
-		},
-			GroupVersion: "tekton.dev/v1beta1",
-			APIResources: []metav1.APIResource{
-				{
-					Name:  "tasks",
-					Group: "tekton.dev",
-				},
-			},
-		}}
+	cs.Pipeline.Resources = cb.APIResourceList("v1alpha1", "task")
+
 	dynamic, err := testDynamic.Client()
 	if err != nil {
 		fmt.Println(err)
@@ -107,12 +93,12 @@ func TestTaskList_Only_Tasks_v1alpha1(t *testing.T) {
 
 	version := "v1alpha1"
 	dynamic, err := testDynamic.Client(
-		newUnstructured(tasks[0], version),
-		newUnstructured(tasks[1], version),
-		newUnstructured(tasks[2], version),
-		newUnstructured(tasks[3], version),
-		newUnstructured(tasks[4], version),
-		newUnstructured(tasks[5], version),
+		cb.UnstructuredT(tasks[0], version),
+		cb.UnstructuredT(tasks[1], version),
+		cb.UnstructuredT(tasks[2], version),
+		cb.UnstructuredT(tasks[3], version),
+		cb.UnstructuredT(tasks[4], version),
+		cb.UnstructuredT(tasks[5], version),
 	)
 	if err != nil {
 		t.Errorf("unable to create dynamic client: %v", err)
@@ -120,20 +106,7 @@ func TestTaskList_Only_Tasks_v1alpha1(t *testing.T) {
 
 	cs, _ := test.SeedTestData(t, pipelinetest.Data{Tasks: tasks, Namespaces: ns})
 	p := &test.Params{Tekton: cs.Pipeline, Clock: clock, Kube: cs.Kube, Dynamic: dynamic}
-	cs.Pipeline.Resources = []*metav1.APIResourceList{
-		{TypeMeta: metav1.TypeMeta{
-			Kind:       "task",
-			APIVersion: "tekton.dev/" + version,
-		},
-			GroupVersion: "tekton.dev/" + version,
-			APIResources: []metav1.APIResource{
-				{
-					Name:  "tasks",
-					Group: "tekton.dev",
-				},
-			},
-		},
-	}
+	cs.Pipeline.Resources = cb.APIResourceList("v1alpha1", "task")
 	task := Command(p)
 
 	output, err := test.ExecuteCommand(task, "list", "-n", "namespace")
@@ -166,12 +139,12 @@ func TestTaskList_Only_Tasks_v1beta1(t *testing.T) {
 
 	version := "v1beta1"
 	dynamic, err := testDynamic.Client(
-		newUnstructured(tasks[0], version),
-		newUnstructured(tasks[1], version),
-		newUnstructured(tasks[2], version),
-		newUnstructured(tasks[3], version),
-		newUnstructured(tasks[4], version),
-		newUnstructured(tasks[5], version),
+		cb.UnstructuredT(tasks[0], version),
+		cb.UnstructuredT(tasks[1], version),
+		cb.UnstructuredT(tasks[2], version),
+		cb.UnstructuredT(tasks[3], version),
+		cb.UnstructuredT(tasks[4], version),
+		cb.UnstructuredT(tasks[5], version),
 	)
 	if err != nil {
 		t.Errorf("unable to create dynamic client: %v", err)
@@ -179,20 +152,7 @@ func TestTaskList_Only_Tasks_v1beta1(t *testing.T) {
 
 	cs, _ := test.SeedTestData(t, pipelinetest.Data{Tasks: tasks, Namespaces: ns})
 	p := &test.Params{Tekton: cs.Pipeline, Clock: clock, Kube: cs.Kube, Dynamic: dynamic}
-	cs.Pipeline.Resources = []*metav1.APIResourceList{
-		{TypeMeta: metav1.TypeMeta{
-			Kind:       "task",
-			APIVersion: "tekton.dev/" + version,
-		},
-			GroupVersion: "tekton.dev/" + version,
-			APIResources: []metav1.APIResource{
-				{
-					Name:  "tasks",
-					Group: "tekton.dev",
-				},
-			},
-		},
-	}
+	cs.Pipeline.Resources = cb.APIResourceList("v1beta1", "task")
 	task := Command(p)
 
 	output, err := test.ExecuteCommand(task, "list", "-n", "namespace")
@@ -201,16 +161,4 @@ func TestTaskList_Only_Tasks_v1beta1(t *testing.T) {
 	}
 
 	golden.Assert(t, output, fmt.Sprintf("%s.golden", t.Name()))
-}
-
-func newUnstructured(task *v1alpha1.Task, version string) *unstructured.Unstructured {
-	apiVersion := "tekton.dev/" + version
-	kind := "task"
-
-	task.APIVersion = apiVersion
-	task.Kind = kind
-	object, _ := runtime.DefaultUnstructuredConverter.ToUnstructured(task)
-	return &unstructured.Unstructured{
-		Object: object,
-	}
 }

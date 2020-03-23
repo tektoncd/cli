@@ -27,6 +27,7 @@ import (
 	"github.com/tektoncd/cli/pkg/pods/fake"
 	"github.com/tektoncd/cli/pkg/test"
 	cb "github.com/tektoncd/cli/pkg/test/builder"
+	testDynamic "github.com/tektoncd/cli/pkg/test/dynamic"
 	"github.com/tektoncd/cli/test/prompt"
 	"github.com/tektoncd/pipeline/pkg/apis/pipeline/v1alpha1"
 	"github.com/tektoncd/pipeline/pkg/reconciler/pipelinerun/resources"
@@ -34,6 +35,7 @@ import (
 	tb "github.com/tektoncd/pipeline/test/builder"
 	corev1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+	"k8s.io/client-go/dynamic"
 	"knative.dev/pkg/apis"
 )
 
@@ -44,11 +46,9 @@ func init() {
 
 func TestTaskLog(t *testing.T) {
 	clock := clockwork.NewFakeClock()
-
+	task1 := []*v1alpha1.Task{tb.Task("task", "ns")}
 	cs, _ := test.SeedTestData(t, pipelinetest.Data{
-		Tasks: []*v1alpha1.Task{
-			tb.Task("task", "ns"),
-		},
+		Tasks: task1,
 		Namespaces: []*corev1.Namespace{
 			{
 				ObjectMeta: metav1.ObjectMeta{
@@ -57,10 +57,23 @@ func TestTaskLog(t *testing.T) {
 			},
 		},
 	})
+	taskreslist := cb.APIResourceList("v1alpha1", "task")
+	taskrunreslist := cb.APIResourceList("v1alpha1", "taskrun")
+	cs.Pipeline.Resources = append(cs.Pipeline.Resources, taskreslist...)
+	cs.Pipeline.Resources = append(cs.Pipeline.Resources, taskrunreslist...)
+
+	dc1, err := testDynamic.Client(
+		cb.UnstructuredT(task1[0], "v1alpha1"),
+	)
+	if err != nil {
+		t.Errorf("unable to create dynamic clinet: %v", err)
+	}
+
+	task2 := []*v1alpha1.Task{
+		tb.Task("task", "namespace"),
+	}
 	cs2, _ := test.SeedTestData(t, pipelinetest.Data{
-		Tasks: []*v1alpha1.Task{
-			tb.Task("task", "namespace"),
-		},
+		Tasks: task2,
 		Namespaces: []*corev1.Namespace{
 			{
 				ObjectMeta: metav1.ObjectMeta{
@@ -69,11 +82,19 @@ func TestTaskLog(t *testing.T) {
 			},
 		},
 	})
+	cs2.Pipeline.Resources = cb.APIResourceList("v1alpha1", "task")
+	dc2, err := testDynamic.Client(
+		cb.UnstructuredT(task2[0], "v1alpha1"),
+	)
+	if err != nil {
+		t.Errorf("unable to create dynamic clinet: %v", err)
+	}
 
 	testParams := []struct {
 		name      string
 		command   []string
 		input     pipelinetest.Clients
+		dc        dynamic.Interface
 		wantError bool
 		want      string
 	}{
@@ -81,6 +102,7 @@ func TestTaskLog(t *testing.T) {
 			name:      "Invalid namespace",
 			command:   []string{"logs", "-n", "invalid"},
 			input:     cs,
+			dc:        dc1,
 			wantError: true,
 			want:      "namespaces \"invalid\" not found",
 		},
@@ -88,6 +110,7 @@ func TestTaskLog(t *testing.T) {
 			name:      "Found no tasks",
 			command:   []string{"logs", "-n", "ns"},
 			input:     cs2,
+			dc:        dc2,
 			wantError: false,
 			want:      "No tasks found in namespace: ns\n",
 		},
@@ -95,6 +118,7 @@ func TestTaskLog(t *testing.T) {
 			name:      "Found no taskruns",
 			command:   []string{"logs", "task", "-n", "ns"},
 			input:     cs,
+			dc:        dc1,
 			wantError: false,
 			want:      "No taskruns found for task: task\n",
 		},
@@ -102,6 +126,7 @@ func TestTaskLog(t *testing.T) {
 			name:      "Specify notexist task name",
 			command:   []string{"logs", "notexist", "-n", "ns"},
 			input:     cs,
+			dc:        dc1,
 			wantError: true,
 			want:      "tasks.tekton.dev \"notexist\" not found",
 		},
@@ -109,6 +134,7 @@ func TestTaskLog(t *testing.T) {
 			name:      "Specify notexist taskrun name",
 			command:   []string{"logs", "task", "notexist", "-n", "ns"},
 			input:     cs,
+			dc:        dc1,
 			wantError: true,
 			want:      "Unable to get Taskrun: taskruns.tekton.dev \"notexist\" not found",
 		},
@@ -116,6 +142,7 @@ func TestTaskLog(t *testing.T) {
 			name:      "Specify negative number to limit",
 			command:   []string{"logs", "task", "-n", "ns", "--limit", "-1"},
 			input:     cs,
+			dc:        dc1,
 			wantError: true,
 			want:      "limit was -1 but must be a positive number",
 		},
@@ -123,7 +150,7 @@ func TestTaskLog(t *testing.T) {
 
 	for _, tp := range testParams {
 		t.Run(tp.name, func(t *testing.T) {
-			p := &test.Params{Tekton: tp.input.Pipeline, Clock: clock, Kube: tp.input.Kube}
+			p := &test.Params{Tekton: tp.input.Pipeline, Clock: clock, Kube: tp.input.Kube, Dynamic: tp.dc}
 			c := Command(p)
 
 			out, err := test.ExecuteCommand(c, tp.command...)
