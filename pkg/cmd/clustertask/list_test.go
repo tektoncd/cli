@@ -27,14 +27,11 @@ import (
 	pipelinetest "github.com/tektoncd/pipeline/test"
 	tb "github.com/tektoncd/pipeline/test/builder"
 	"gotest.tools/v3/golden"
-	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
-	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
-	"k8s.io/apimachinery/pkg/runtime"
 )
 
 func TestClusterTaskList_Empty(t *testing.T) {
 	cs, _ := test.SeedTestData(t, pipelinetest.Data{})
-	cs.Pipeline.Resources = apiResourceList("v1alpha1")
+	cs.Pipeline.Resources = cb.APIResourceList("v1alpha1", "clustertask")
 
 	dynamic, err := testDynamic.Client()
 	if err != nil {
@@ -66,11 +63,11 @@ func TestClusterTaskListOnlyClusterTasksv1alpha1(t *testing.T) {
 	version := "v1alpha1"
 
 	dynamic, err := testDynamic.Client(
-		newUnstructured(clustertasks[0], version),
-		newUnstructured(clustertasks[1], version),
-		newUnstructured(clustertasks[2], version),
-		newUnstructured(clustertasks[3], version),
-		newUnstructured(clustertasks[4], version),
+		cb.UnstructuredCT(clustertasks[0], version),
+		cb.UnstructuredCT(clustertasks[1], version),
+		cb.UnstructuredCT(clustertasks[2], version),
+		cb.UnstructuredCT(clustertasks[3], version),
+		cb.UnstructuredCT(clustertasks[4], version),
 	)
 	if err != nil {
 		t.Errorf("unable to create dynamic clinet: %v", err)
@@ -78,7 +75,7 @@ func TestClusterTaskListOnlyClusterTasksv1alpha1(t *testing.T) {
 
 	cs, _ := test.SeedTestData(t, pipelinetest.Data{ClusterTasks: clustertasks})
 	p := &test.Params{Tekton: cs.Pipeline, Kube: cs.Kube, Clock: clock, Dynamic: dynamic}
-	cs.Pipeline.Resources = apiResourceList(version)
+	cs.Pipeline.Resources = cb.APIResourceList(version, "clustertask")
 
 	clustertask := Command(p)
 	output, err := test.ExecuteCommand(clustertask, "list")
@@ -102,11 +99,11 @@ func TestClusterTaskListOnlyClusterTasksv1beta1(t *testing.T) {
 	version := "v1beta1"
 
 	dynamic, err := testDynamic.Client(
-		newUnstructured(clustertasks[0], version),
-		newUnstructured(clustertasks[1], version),
-		newUnstructured(clustertasks[2], version),
-		newUnstructured(clustertasks[3], version),
-		newUnstructured(clustertasks[4], version),
+		cb.UnstructuredCT(clustertasks[0], version),
+		cb.UnstructuredCT(clustertasks[1], version),
+		cb.UnstructuredCT(clustertasks[2], version),
+		cb.UnstructuredCT(clustertasks[3], version),
+		cb.UnstructuredCT(clustertasks[4], version),
 	)
 	if err != nil {
 		t.Errorf("unable to create dynamic clinet: %v", err)
@@ -114,7 +111,7 @@ func TestClusterTaskListOnlyClusterTasksv1beta1(t *testing.T) {
 
 	cs, _ := test.SeedTestData(t, pipelinetest.Data{ClusterTasks: clustertasks})
 	p := &test.Params{Tekton: cs.Pipeline, Kube: cs.Kube, Clock: clock, Dynamic: dynamic}
-	cs.Pipeline.Resources = apiResourceList(version)
+	cs.Pipeline.Resources = cb.APIResourceList(version, "clustertask")
 
 	clustertask := Command(p)
 	output, err := test.ExecuteCommand(clustertask, "list")
@@ -122,33 +119,4 @@ func TestClusterTaskListOnlyClusterTasksv1beta1(t *testing.T) {
 		t.Errorf("Unexpected error: %v", err)
 	}
 	golden.Assert(t, output, fmt.Sprintf("%s.golden", t.Name()))
-}
-
-func newUnstructured(clustertask *v1alpha1.ClusterTask, version string) *unstructured.Unstructured {
-	apiVersion := "tekton.dev/" + version
-	kind := "clustertask"
-	clustertask.ClusterName = "demo"
-	clustertask.APIVersion = apiVersion
-	clustertask.Kind = kind
-	object, _ := runtime.DefaultUnstructuredConverter.ToUnstructured(clustertask)
-	return &unstructured.Unstructured{
-		Object: object,
-	}
-}
-
-func apiResourceList(version string) []*metav1.APIResourceList {
-	return []*metav1.APIResourceList{
-		{TypeMeta: metav1.TypeMeta{
-			Kind:       "clustertask",
-			APIVersion: "tekton.dev/" + version,
-		},
-			GroupVersion: "tekton.dev/" + version,
-			APIResources: []metav1.APIResource{
-				{
-					Name:  "clustertasks",
-					Group: "tekton.dev",
-				},
-			},
-		},
-	}
 }

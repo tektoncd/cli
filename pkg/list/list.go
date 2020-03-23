@@ -33,7 +33,7 @@ func PrintObject(groupResource schema.GroupVersionResource, w io.Writer, p cli.P
 		return err
 	}
 
-	allres, err := AllObjecs(groupResource, cs, ns)
+	allres, err := AllObjecs(groupResource, cs, ns, metav1.ListOptions{})
 	if err != nil {
 		return err
 	}
@@ -41,12 +41,13 @@ func PrintObject(groupResource schema.GroupVersionResource, w io.Writer, p cli.P
 	return printer.PrintObject(w, allres, f)
 }
 
-func AllObjecs(gr schema.GroupVersionResource, clients *cli.Clients, n string) (*unstructured.UnstructuredList, error) {
+func AllObjecs(gr schema.GroupVersionResource, clients *cli.Clients, n string, op metav1.ListOptions) (*unstructured.UnstructuredList, error) {
 	gvr, err := getGVR(gr, clients.Tekton.Discovery())
 	if err != nil {
 		return nil, err
 	}
-	allRes, err := clients.Dynamic.Resource(*gvr).Namespace(n).List(metav1.ListOptions{})
+
+	allRes, err := clients.Dynamic.Resource(*gvr).Namespace(n).List(op)
 	if err != nil {
 		return nil, err
 	}

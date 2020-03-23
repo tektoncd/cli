@@ -24,6 +24,7 @@ import (
 	"github.com/tektoncd/cli/pkg/formatted"
 	"github.com/tektoncd/cli/pkg/list"
 	"github.com/tektoncd/pipeline/pkg/apis/pipeline/v1beta1"
+	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/apimachinery/pkg/runtime/schema"
 	cliopts "k8s.io/cli-runtime/pkg/genericclioptions"
@@ -76,7 +77,7 @@ func printClusterTaskDetails(s *cli.Stream, p cli.Params) error {
 		return err
 	}
 
-	unstructuredCT, err := list.AllObjecs(schema.GroupVersionResource{Group: "tekton.dev", Resource: "clustertasks"}, cs, "")
+	unstructuredCT, err := list.AllObjecs(schema.GroupVersionResource{Group: "tekton.dev", Resource: "clustertasks"}, cs, "", metav1.ListOptions{})
 	if err != nil {
 		return err
 	}

@@ -20,6 +20,8 @@ import (
 
 	"github.com/jonboulle/clockwork"
 	"github.com/tektoncd/cli/pkg/test"
+	cb "github.com/tektoncd/cli/pkg/test/builder"
+	testDynamic "github.com/tektoncd/cli/pkg/test/dynamic"
 	"github.com/tektoncd/pipeline/pkg/apis/pipeline/v1alpha1"
 	"github.com/tektoncd/pipeline/pkg/reconciler/pipelinerun/resources"
 	pipelinetest "github.com/tektoncd/pipeline/test"
@@ -35,37 +37,140 @@ func TestPipelinesList_GetAllTaskRuns(t *testing.T) {
 	runDuration1 := 1 * time.Minute
 	runDuration2 := 1 * time.Minute
 
-	cs, _ := test.SeedTestData(t, pipelinetest.Data{
-		TaskRuns: []*v1alpha1.TaskRun{
-			tb.TaskRun("taskrun1", "ns",
-				tb.TaskRunLabel("tekton.dev/task", "task"),
-				tb.TaskRunSpec(tb.TaskRunTaskRef("task")),
-				tb.TaskRunStatus(
-					tb.StatusCondition(apis.Condition{
-						Status: corev1.ConditionTrue,
-						Reason: resources.ReasonSucceeded,
-					}),
-					tb.TaskRunStartTime(trStarted),
-					taskRunCompletionTime(trStarted.Add(runDuration1)),
-				),
+	trs := []*v1alpha1.TaskRun{
+		tb.TaskRun("taskrun1", "ns",
+			tb.TaskRunLabel("tekton.dev/task", "task"),
+			tb.TaskRunSpec(tb.TaskRunTaskRef("task")),
+			tb.TaskRunStatus(
+				tb.StatusCondition(apis.Condition{
+					Status: corev1.ConditionTrue,
+					Reason: resources.ReasonSucceeded,
+				}),
+				tb.TaskRunStartTime(trStarted),
+				taskRunCompletionTime(trStarted.Add(runDuration1)),
 			),
-			tb.TaskRun("taskrun2", "ns",
-				tb.TaskRunLabel("tekton.dev/task", "task"),
-				tb.TaskRunSpec(tb.TaskRunTaskRef("task")),
-				tb.TaskRunStatus(
-					tb.StatusCondition(apis.Condition{
-						Status: corev1.ConditionTrue,
-						Reason: resources.ReasonSucceeded,
-					}),
-					tb.TaskRunStartTime(trStarted),
-					taskRunCompletionTime(trStarted.Add(runDuration2)),
-				),
+		),
+		tb.TaskRun("taskrun2", "ns",
+			tb.TaskRunLabel("tekton.dev/task", "task"),
+			tb.TaskRunSpec(tb.TaskRunTaskRef("task")),
+			tb.TaskRunStatus(
+				tb.StatusCondition(apis.Condition{
+					Status: corev1.ConditionTrue,
+					Reason: resources.ReasonSucceeded,
+				}),
+				tb.TaskRunStartTime(trStarted),
+				taskRunCompletionTime(trStarted.Add(runDuration2)),
 			),
-		},
-	})
+		),
+	}
 
-	p := &test.Params{Tekton: cs.Pipeline, Clock: clock, Kube: cs.Kube}
-	p2 := &test.Params{Tekton: cs.Pipeline, Clock: clock, Kube: cs.Kube}
+	version := "v1alpha1"
+
+	cs, _ := test.SeedTestData(t, pipelinetest.Data{TaskRuns: trs})
+	cs.Pipeline.Resources = cb.APIResourceList(version, "taskrun")
+
+	dynamic, err := testDynamic.Client(
+		cb.UnstructuredTR(trs[0], version),
+		cb.UnstructuredTR(trs[1], version),
+	)
+	if err != nil {
+		t.Errorf("unable to create dynamic clinet: %v", err)
+	}
+
+	p := &test.Params{Tekton: cs.Pipeline, Clock: clock, Kube: cs.Kube, Dynamic: dynamic}
+	p2 := &test.Params{Tekton: cs.Pipeline, Clock: clock, Kube: cs.Kube, Dynamic: dynamic}
+	p2.SetNamespace("unknown")
+
+	testParams := []struct {
+		name        string
+		params      *test.Params
+		listOptions metav1.ListOptions
+		want        []string
+	}{
+		{
+			name:        "Specify related task",
+			params:      p,
+			listOptions: metav1.ListOptions{LabelSelector: "tekton.dev/task=task"},
+			want: []string{
+				"taskrun1 started -10 seconds ago",
+				"taskrun2 started -10 seconds ago",
+			},
+		},
+		{
+			name:        "Not specify related task",
+			params:      p,
+			listOptions: metav1.ListOptions{},
+			want: []string{
+				"taskrun1 started -10 seconds ago",
+				"taskrun2 started -10 seconds ago",
+			},
+		},
+		{
+			name:        "Specify unknown namespace",
+			params:      p2,
+			listOptions: metav1.ListOptions{},
+			want:        []string{},
+		},
+	}
+
+	for _, tp := range testParams {
+		t.Run(tp.name, func(t *testing.T) {
+			got, err := GetAllTaskRuns(tp.params, metav1.ListOptions{}, 5)
+			if err != nil {
+				t.Errorf("Unexpected error")
+			}
+			test.AssertOutput(t, tp.want, got)
+		})
+	}
+}
+
+func TestPipelinesList_GetAllTaskRuns_v1beta1(t *testing.T) {
+	clock := clockwork.NewFakeClock()
+	trStarted := clock.Now().Add(10 * time.Second)
+	runDuration1 := 1 * time.Minute
+	runDuration2 := 1 * time.Minute
+
+	trs := []*v1alpha1.TaskRun{
+		tb.TaskRun("taskrun1", "ns",
+			tb.TaskRunLabel("tekton.dev/task", "task"),
+			tb.TaskRunSpec(tb.TaskRunTaskRef("task")),
+			tb.TaskRunStatus(
+				tb.StatusCondition(apis.Condition{
+					Status: corev1.ConditionTrue,
+					Reason: resources.ReasonSucceeded,
+				}),
+				tb.TaskRunStartTime(trStarted),
+				taskRunCompletionTime(trStarted.Add(runDuration1)),
+			),
+		),
+		tb.TaskRun("taskrun2", "ns",
+			tb.TaskRunLabel("tekton.dev/task", "task"),
+			tb.TaskRunSpec(tb.TaskRunTaskRef("task")),
+			tb.TaskRunStatus(
+				tb.StatusCondition(apis.Condition{
+					Status: corev1.ConditionTrue,
+					Reason: resources.ReasonSucceeded,
+				}),
+				tb.TaskRunStartTime(trStarted),
+				taskRunCompletionTime(trStarted.Add(runDuration2)),
+			),
+		),
+	}
+
+	version := "v1beta1"
+	cs, _ := test.SeedTestData(t, pipelinetest.Data{TaskRuns: trs})
+	cs.Pipeline.Resources = cb.APIResourceList(version, "taskrun")
+
+	dynamic, err := testDynamic.Client(
+		cb.UnstructuredTR(trs[0], version),
+		cb.UnstructuredTR(trs[1], version),
+	)
+	if err != nil {
+		t.Errorf("unable to create dynamic clinet: %v", err)
+	}
+
+	p := &test.Params{Tekton: cs.Pipeline, Clock: clock, Kube: cs.Kube, Dynamic: dynamic}
+	p2 := &test.Params{Tekton: cs.Pipeline, Clock: clock, Kube: cs.Kube, Dynamic: dynamic}
 	p2.SetNamespace("unknown")
 
 	testParams := []struct {

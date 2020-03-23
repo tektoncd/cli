@@ -20,6 +20,8 @@ import (
 	"log"
 	"time"
 
+	"github.com/tektoncd/pipeline/pkg/apis/pipeline/v1beta1"
+
 	"github.com/tektoncd/pipeline/pkg/apis/pipeline/v1alpha1"
 	"go.opencensus.io/trace"
 	"golang.org/x/xerrors"
@@ -34,7 +36,7 @@ import (
 type TaskStateFn func(r *v1alpha1.Task) (bool, error)
 
 // TaskRunStateFn is a condition function on TaskRun used polling functions
-type TaskRunStateFn func(r *v1alpha1.TaskRun) (bool, error)
+type TaskRunStateFn func(r *v1beta1.TaskRun) (bool, error)
 
 // PipelineRunStateFn is a condition function on TaskRun used polling functions
 type PipelineRunStateFn func(pr *v1alpha1.PipelineRun) (bool, error)
@@ -189,7 +191,7 @@ func WaitForServiceExternalIPState(c *Clients, namespace, name string, inState f
 // TaskRunSucceed provides a poll condition function that checks if the TaskRun
 // has successfully completed.
 func TaskRunSucceed(name string) TaskRunStateFn {
-	return func(tr *v1alpha1.TaskRun) (bool, error) {
+	return func(tr *v1beta1.TaskRun) (bool, error) {
 		c := tr.Status.GetCondition(apis.ConditionSucceeded)
 		if c != nil {
 			if c.Status == corev1.ConditionTrue {
@@ -224,7 +226,7 @@ func PodRunSucceed(name string) PodRunStateFn {
 // TaskRunFailed provides a poll condition function that checks if the TaskRun
 // has failed.
 func TaskRunFailed(name string) TaskRunStateFn {
-	return func(tr *v1alpha1.TaskRun) (bool, error) {
+	return func(tr *v1beta1.TaskRun) (bool, error) {
 		c := tr.Status.GetCondition(apis.ConditionSucceeded)
 		if c != nil {
 			if c.Status == corev1.ConditionTrue {

@@ -1,36 +1,37 @@
 package taskrun
 
 import (
-	"github.com/jonboulle/clockwork"
-	"github.com/tektoncd/pipeline/pkg/apis/pipeline/v1alpha1"
-	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"testing"
 	"time"
+
+	"github.com/jonboulle/clockwork"
+	"github.com/tektoncd/pipeline/pkg/apis/pipeline/v1beta1"
+	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 )
 
 func Test_TaskRunsByNamespace(t *testing.T) {
-	tr1 := v1alpha1.TaskRun{
+	tr1 := v1beta1.TaskRun{
 		ObjectMeta: metav1.ObjectMeta{
 			Namespace: "abc",
 			Name:      "tr0-1",
 		},
 	}
 
-	tr2 := v1alpha1.TaskRun{
+	tr2 := v1beta1.TaskRun{
 		ObjectMeta: metav1.ObjectMeta{
 			Namespace: "def",
 			Name:      "tr1-1",
 		},
 	}
 
-	tr3 := v1alpha1.TaskRun{
+	tr3 := v1beta1.TaskRun{
 		ObjectMeta: metav1.ObjectMeta{
 			Namespace: "ghi",
 			Name:      "tr2-1",
 		},
 	}
 
-	trs := []v1alpha1.TaskRun{
+	trs := []v1beta1.TaskRun{
 		tr2,
 		tr3,
 		tr1,
@@ -65,7 +66,7 @@ func Test_PipelineRunsByNamespaceWithStartTime(t *testing.T) {
 	tr20Started := clock.Now().Add(10 * time.Second)
 	tr21Started := clock.Now().Add(-1 * time.Hour)
 
-	tr00 := v1alpha1.TaskRun{
+	tr00 := v1beta1.TaskRun{
 		ObjectMeta: metav1.ObjectMeta{
 			Namespace: "abc",
 			Name:      "tr0-0",
@@ -74,7 +75,7 @@ func Test_PipelineRunsByNamespaceWithStartTime(t *testing.T) {
 
 	tr00.Status.StartTime = &metav1.Time{Time: tr00Started}
 
-	tr01 := v1alpha1.TaskRun{
+	tr01 := v1beta1.TaskRun{
 		ObjectMeta: metav1.ObjectMeta{
 			Namespace: "abc",
 			Name:      "tr0-1",
@@ -83,7 +84,7 @@ func Test_PipelineRunsByNamespaceWithStartTime(t *testing.T) {
 
 	tr01.Status.StartTime = &metav1.Time{Time: tr01Started}
 
-	tr10 := v1alpha1.TaskRun{
+	tr10 := v1beta1.TaskRun{
 		ObjectMeta: metav1.ObjectMeta{
 			Namespace: "def",
 			Name:      "tr1-0",
@@ -92,7 +93,7 @@ func Test_PipelineRunsByNamespaceWithStartTime(t *testing.T) {
 
 	tr10.Status.StartTime = &metav1.Time{Time: tr10Started}
 
-	tr11 := v1alpha1.TaskRun{
+	tr11 := v1beta1.TaskRun{
 		ObjectMeta: metav1.ObjectMeta{
 			Namespace: "def",
 			Name:      "tr1-1",
@@ -101,7 +102,7 @@ func Test_PipelineRunsByNamespaceWithStartTime(t *testing.T) {
 
 	tr11.Status.StartTime = &metav1.Time{Time: tr11Started}
 
-	tr20 := v1alpha1.TaskRun{
+	tr20 := v1beta1.TaskRun{
 		ObjectMeta: metav1.ObjectMeta{
 			Namespace: "ghi",
 			Name:      "tr2-0",
@@ -110,7 +111,7 @@ func Test_PipelineRunsByNamespaceWithStartTime(t *testing.T) {
 
 	tr20.Status.StartTime = &metav1.Time{Time: tr20Started}
 
-	tr21 := v1alpha1.TaskRun{
+	tr21 := v1beta1.TaskRun{
 		ObjectMeta: metav1.ObjectMeta{
 			Namespace: "ghi",
 			Name:      "tr2-1",
@@ -119,7 +120,7 @@ func Test_PipelineRunsByNamespaceWithStartTime(t *testing.T) {
 
 	tr21.Status.StartTime = &metav1.Time{Time: tr21Started}
 
-	trs := []v1alpha1.TaskRun{
+	trs := []v1beta1.TaskRun{
 		tr11,
 		tr21,
 		tr01,

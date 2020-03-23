@@ -25,6 +25,7 @@ import (
 	"github.com/tektoncd/cli/pkg/list"
 	validate "github.com/tektoncd/cli/pkg/validate"
 	"github.com/tektoncd/pipeline/pkg/apis/pipeline/v1beta1"
+	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/apimachinery/pkg/runtime/schema"
 	cliopts "k8s.io/cli-runtime/pkg/genericclioptions"
@@ -80,7 +81,7 @@ func printTaskDetails(s *cli.Stream, p cli.Params) error {
 		return err
 	}
 
-	unstructuredTask, err := list.AllObjecs(schema.GroupVersionResource{Group: "tekton.dev", Resource: "tasks"}, cs, p.Namespace())
+	unstructuredTask, err := list.AllObjecs(schema.GroupVersionResource{Group: "tekton.dev", Resource: "tasks"}, cs, p.Namespace(), metav1.ListOptions{})
 	if err != nil {
 		return err
 	}

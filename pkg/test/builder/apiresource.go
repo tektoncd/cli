@@ -12,28 +12,26 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-package taskrun
+package builder
 
 import (
-	"sort"
-
-	"github.com/tektoncd/pipeline/pkg/apis/pipeline/v1beta1"
+	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 )
 
-func SortByStartTime(trs []v1beta1.TaskRun) {
-	sort.Sort(byStartTime(trs))
-}
-
-type byStartTime []v1beta1.TaskRun
-
-func (trs byStartTime) Len() int      { return len(trs) }
-func (trs byStartTime) Swap(i, j int) { trs[i], trs[j] = trs[j], trs[i] }
-func (trs byStartTime) Less(i, j int) bool {
-	if trs[j].Status.StartTime == nil {
-		return false
+func APIResourceList(version, kind string) []*metav1.APIResourceList {
+	group := "tekton.dev"
+	return []*metav1.APIResourceList{
+		{TypeMeta: metav1.TypeMeta{
+			Kind:       kind,
+			APIVersion: group + "/" + version,
+		},
+			GroupVersion: group + "/" + version,
+			APIResources: []metav1.APIResource{
+				{
+					Name:  kind + "s",
+					Group: group,
+				},
+			},
+		},
 	}
-	if trs[i].Status.StartTime == nil {
-		return true
-	}
-	return trs[j].Status.StartTime.Before(trs[i].Status.StartTime)
 }

@@ -25,13 +25,12 @@ import (
 	"text/template"
 	"time"
 
-	trsort "github.com/tektoncd/cli/pkg/taskrun/sort"
-
 	"github.com/google/go-cmp/cmp"
 	"github.com/jonboulle/clockwork"
-
 	"github.com/tektoncd/cli/pkg/formatted"
+	trsort "github.com/tektoncd/cli/pkg/taskrun/sort"
 	"github.com/tektoncd/pipeline/pkg/apis/pipeline/v1alpha1"
+	"github.com/tektoncd/pipeline/pkg/apis/pipeline/v1beta1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 )
 
@@ -56,7 +55,7 @@ func GetTaskList(c *Clients) *v1alpha1.TaskList {
 	return tasklist
 }
 
-func GetTaskRun(c *Clients, name string) *v1alpha1.TaskRun {
+func GetTaskRun(c *Clients, name string) *v1beta1.TaskRun {
 
 	taskRun, err := c.TaskRunClient.Get(name, metav1.GetOptions{})
 
@@ -67,8 +66,7 @@ func GetTaskRun(c *Clients, name string) *v1alpha1.TaskRun {
 	return taskRun
 }
 
-func GetTaskRunList(c *Clients) *v1alpha1.TaskRunList {
-
+func GetTaskRunList(c *Clients) *v1beta1.TaskRunList {
 	taskRunlist, err := c.TaskRunClient.List(metav1.ListOptions{})
 
 	if err != nil {
@@ -180,7 +178,7 @@ func ListResourceNamesForJSONPath(obj interface{}) string {
 		}
 		w.Flush()
 		return tmplBytes.String()
-	case *v1alpha1.TaskRunList:
+	case *v1beta1.TaskRunList:
 		if len(obj.Items) == 0 {
 
 			return emptyMsg
@@ -339,7 +337,7 @@ NAME	STARTED	DURATION	STATUS{{- if $.AllNamespaces }}	NAMESPACE{{- end }}
 		trsort.SortByStartTime(taskrun.Items)
 	}
 	var data = struct {
-		TaskRuns      *v1alpha1.TaskRunList
+		TaskRuns      *v1beta1.TaskRunList
 		Time          clockwork.Clock
 		AllNamespaces bool
 	}{
@@ -367,7 +365,7 @@ NAME	STARTED	DURATION	STATUS{{- if $.AllNamespaces }}	NAMESPACE{{- end }}
 	return tmplBytes.String()
 }
 
-func GetTaskRunListWithTestData(t *testing.T, c *Clients, td map[int]interface{}) *v1alpha1.TaskRunList {
+func GetTaskRunListWithTestData(t *testing.T, c *Clients, td map[int]interface{}) *v1beta1.TaskRunList {
 	taskRunlist := GetTaskRunList(c)
 	if len(taskRunlist.Items) != len(td) {
 		t.Errorf("Length of taskrun list and Testdata provided not matching")

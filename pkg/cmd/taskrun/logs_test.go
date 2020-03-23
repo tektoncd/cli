@@ -28,6 +28,7 @@ import (
 	"github.com/tektoncd/cli/pkg/pods/stream"
 	"github.com/tektoncd/cli/pkg/test"
 	cb "github.com/tektoncd/cli/pkg/test/builder"
+	testDynamic "github.com/tektoncd/cli/pkg/test/dynamic"
 	"github.com/tektoncd/pipeline/pkg/apis/pipeline/v1alpha1"
 	"github.com/tektoncd/pipeline/pkg/reconciler/pipelinerun/resources"
 	pipelinetest "github.com/tektoncd/pipeline/test"
@@ -36,6 +37,7 @@ import (
 	corev1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/watch"
+	"k8s.io/client-go/dynamic"
 	k8stest "k8s.io/client-go/testing"
 	"knative.dev/pkg/apis"
 )
@@ -74,29 +76,36 @@ func TestLog_no_taskrun_arg(t *testing.T) {
 			},
 		},
 	})
+	cs.Pipeline.Resources = cb.APIResourceList("v1alpha1", "taskrun")
 
-	cs2, _ := test.SeedTestData(t, pipelinetest.Data{
-		Tasks: []*v1alpha1.Task{
-			tb.Task("task", "ns", cb.TaskCreationTime(clockwork.NewFakeClock().Now())),
-		},
-		TaskRuns: []*v1alpha1.TaskRun{
-			tb.TaskRun("taskrun1", "ns",
-				tb.TaskRunLabel("tekton.dev/task", "task"),
-				tb.TaskRunSpec(tb.TaskRunTaskRef("task")),
-				tb.TaskRunStatus(
-					tb.PodName("pod"),
-					tb.TaskRunStartTime(clockwork.NewFakeClock().Now()),
-					tb.StatusCondition(apis.Condition{
-						Status: corev1.ConditionTrue,
-						Reason: resources.ReasonSucceeded,
-					}),
-					tb.StepState(
-						cb.StepName("step1"),
-						tb.StateTerminated(0),
-					),
+	dc1, err := testDynamic.Client()
+	if err != nil {
+		t.Errorf("unable to create dynamic clinet: %v", err)
+	}
+	task2 := []*v1alpha1.Task{
+		tb.Task("task", "ns", cb.TaskCreationTime(clockwork.NewFakeClock().Now())),
+	}
+	taskrun2 := []*v1alpha1.TaskRun{
+		tb.TaskRun("taskrun1", "ns",
+			tb.TaskRunLabel("tekton.dev/task", "task"),
+			tb.TaskRunSpec(tb.TaskRunTaskRef("task")),
+			tb.TaskRunStatus(
+				tb.PodName("pod"),
+				tb.TaskRunStartTime(clockwork.NewFakeClock().Now()),
+				tb.StatusCondition(apis.Condition{
+					Status: corev1.ConditionTrue,
+					Reason: resources.ReasonSucceeded,
+				}),
+				tb.StepState(
+					cb.StepName("step1"),
+					tb.StateTerminated(0),
 				),
 			),
-		},
+		),
+	}
+	cs2, _ := test.SeedTestData(t, pipelinetest.Data{
+		Tasks:    task2,
+		TaskRuns: taskrun2,
 		Namespaces: []*corev1.Namespace{
 			{
 				ObjectMeta: metav1.ObjectMeta{
@@ -115,27 +124,35 @@ func TestLog_no_taskrun_arg(t *testing.T) {
 			),
 		},
 	})
+	cs2.Pipeline.Resources = cb.APIResourceList("v1alpha1", "taskrun")
+	dc2, err := testDynamic.Client(cb.UnstructuredTR(taskrun2[0], "v1alpha1"))
+	if err != nil {
+		t.Errorf("unable to create dynamic clinet: %v", err)
+	}
 
 	testParams := []struct {
 		name      string
 		input     ptest.Clients
+		dc        dynamic.Interface
 		wantError bool
 	}{
 		{
 			name:      "found no data",
 			input:     cs,
+			dc:        dc1,
 			wantError: true,
 		},
 		{
 			name:      "found single data",
 			input:     cs2,
+			dc:        dc2,
 			wantError: false,
 		},
 	}
 
 	for _, tp := range testParams {
 		t.Run(tp.name, func(t *testing.T) {
-			trlo := logOpts("", "ns", tp.input, fake.Streamer(fake.Logs()), false, false, []string{})
+			trlo := logOpts("", "ns", tp.input, fake.Streamer(fake.Logs()), false, false, []string{}, tp.dc)
 			_, err := fetchLogs(trlo)
 			if tp.wantError {
 				if err == nil {
@@ -163,10 +180,15 @@ func TestLog_missing_taskrun(t *testing.T) {
 		},
 	}
 
+	dc, err := testDynamic.Client(cb.UnstructuredTR(tr[0], "v1alpha1"))
+	if err != nil {
+		t.Errorf("unable to create dynamic clinet: %v", err)
+	}
 	cs, _ := test.SeedTestData(t, pipelinetest.Data{TaskRuns: tr, Namespaces: nsList})
+	cs.Pipeline.Resources = cb.APIResourceList("v1alpha1", "taskrun")
 	watcher := watch.NewFake()
 	cs.Kube.PrependWatchReactor("pods", k8stest.DefaultWatchReactor(watcher, nil))
-	p := &test.Params{Tekton: cs.Pipeline, Kube: cs.Kube}
+	p := &test.Params{Tekton: cs.Pipeline, Kube: cs.Kube, Dynamic: dc}
 
 	c := Command(p)
 	got, _ := test.ExecuteCommand(c, "logs", "output-taskrun-2", "-n", "ns")
@@ -255,7 +277,11 @@ func TestLog_taskrun_logs(t *testing.T) {
 	)
 
 	cs, _ := test.SeedTestData(t, pipelinetest.Data{TaskRuns: trs, Pods: ps, Namespaces: nsList})
-	trlo := logOpts(trName, ns, cs, fake.Streamer(logs), false, false, []string{})
+	dc, err := testDynamic.Client()
+	if err != nil {
+		t.Errorf("unable to create dynamic clinet: %v", err)
+	}
+	trlo := logOpts(trName, ns, cs, fake.Streamer(logs), false, false, []string{}, dc)
 	output, _ := fetchLogs(trlo)
 
 	expectedLogs := []string{
@@ -313,8 +339,12 @@ func TestLog_taskrun_logs_no_pod_name(t *testing.T) {
 	logs := fake.Logs()
 
 	cs, _ := test.SeedTestData(t, pipelinetest.Data{TaskRuns: trs, Pods: ps, Namespaces: nsList})
-	trlo := logOpts(trName, ns, cs, fake.Streamer(logs), false, false, []string{})
-	_, err := fetchLogs(trlo)
+	dc, err := testDynamic.Client()
+	if err != nil {
+		t.Errorf("unable to create dynamic clinet: %v", err)
+	}
+	trlo := logOpts(trName, ns, cs, fake.Streamer(logs), false, false, []string{}, dc)
+	_, err = fetchLogs(trlo)
 
 	if err == nil {
 		t.Error("Expecting an error but it's empty")
@@ -397,8 +427,11 @@ func TestLog_taskrun_all_steps(t *testing.T) {
 	)
 
 	cs, _ := test.SeedTestData(t, pipelinetest.Data{TaskRuns: trs, Pods: p, Namespaces: nsList})
-
-	trl := logOpts(trName, ns, cs, fake.Streamer(logs), true, false, []string{})
+	dc, err := testDynamic.Client()
+	if err != nil {
+		t.Errorf("unable to create dynamic clinet: %v", err)
+	}
+	trl := logOpts(trName, ns, cs, fake.Streamer(logs), true, false, []string{}, dc)
 	output, _ := fetchLogs(trl)
 
 	expectedLogs := []string{
@@ -484,8 +517,12 @@ func TestLog_taskrun_given_steps(t *testing.T) {
 	)
 
 	cs, _ := test.SeedTestData(t, pipelinetest.Data{TaskRuns: trs, Pods: p, Namespaces: nsList})
+	dc, err := testDynamic.Client()
+	if err != nil {
+		t.Errorf("unable to create dynamic clinet: %v", err)
+	}
 
-	trl := logOpts(trName, ns, cs, fake.Streamer(logs), false, false, []string{trStep1Name})
+	trl := logOpts(trName, ns, cs, fake.Streamer(logs), false, false, []string{trStep1Name}, dc)
 	output, _ := fetchLogs(trl)
 
 	expectedLogs := []string{
@@ -568,8 +605,12 @@ func TestLog_taskrun_follow_mode(t *testing.T) {
 	)
 
 	cs, _ := test.SeedTestData(t, pipelinetest.Data{TaskRuns: trs, Pods: p, Namespaces: nsList})
+	dc, err := testDynamic.Client()
+	if err != nil {
+		t.Errorf("unable to create dynamic clinet: %v", err)
+	}
 
-	trlo := logOpts(trName, ns, cs, fake.Streamer(logs), false, true, []string{})
+	trlo := logOpts(trName, ns, cs, fake.Streamer(logs), false, true, []string{}, dc)
 	output, _ := fetchLogs(trlo)
 
 	expectedLogs := []string{
@@ -649,9 +690,18 @@ func TestLog_taskrun_last(t *testing.T) {
 	}
 
 	cs, _ := test.SeedTestData(t, pipelinetest.Data{TaskRuns: taskruns, Namespaces: namespaces})
+	dc, err := testDynamic.Client(
+		cb.UnstructuredTR(taskruns[0], "v1alpha1"),
+		cb.UnstructuredTR(taskruns[1], "v1alpha1"),
+	)
+	if err != nil {
+		t.Errorf("unable to create dynamic clinet: %v", err)
+	}
+	cs.Pipeline.Resources = cb.APIResourceList("v1alpha1", "taskrun")
 	p := test.Params{
-		Kube:   cs.Kube,
-		Tekton: cs.Pipeline,
+		Kube:    cs.Kube,
+		Tekton:  cs.Pipeline,
+		Dynamic: dc,
 	}
 	p.SetNamespace(ns)
 	lopt := options.LogOptions{
@@ -659,7 +709,7 @@ func TestLog_taskrun_last(t *testing.T) {
 		Last:   true,
 		Limit:  len(taskruns),
 	}
-	err := askRunName(&lopt)
+	err = askRunName(&lopt)
 	if err != nil {
 		t.Errorf("Unexpected error: %v", err)
 	}
@@ -737,9 +787,13 @@ func TestLog_taskrun_follow_mode_no_pod_name(t *testing.T) {
 	)
 
 	cs, _ := test.SeedTestData(t, pipelinetest.Data{TaskRuns: trs, Pods: p, Namespaces: nsList})
+	dc, err := testDynamic.Client()
+	if err != nil {
+		t.Errorf("unable to create dynamic clinet: %v", err)
+	}
 
-	trlo := logOpts(trName, ns, cs, fake.Streamer(logs), false, true, []string{})
-	_, err := fetchLogs(trlo)
+	trlo := logOpts(trName, ns, cs, fake.Streamer(logs), false, true, []string{}, dc)
+	_, err = fetchLogs(trlo)
 
 	if err == nil {
 		t.Error("Expecting an error but it's empty")
@@ -822,7 +876,12 @@ func TestLog_taskrun_follow_mode_update_pod_name(t *testing.T) {
 	cs, _ := test.SeedTestData(t, pipelinetest.Data{TaskRuns: trs, Pods: p, Namespaces: nsList})
 	watcher := watch.NewRaceFreeFake()
 	cs.Pipeline.PrependWatchReactor("taskruns", k8stest.DefaultWatchReactor(watcher, nil))
-	trlo := logOpts(trName, ns, cs, fake.Streamer(logs), false, true, []string{})
+	dc, err := testDynamic.Client()
+	if err != nil {
+		t.Errorf("unable to create dynamic clinet: %v", err)
+	}
+
+	trlo := logOpts(trName, ns, cs, fake.Streamer(logs), false, true, []string{}, dc)
 
 	go func() {
 		time.Sleep(time.Second * 1)
@@ -916,7 +975,12 @@ func TestLog_taskrun_follow_mode_update_timeout(t *testing.T) {
 	cs, _ := test.SeedTestData(t, pipelinetest.Data{TaskRuns: trs, Pods: p, Namespaces: nsList})
 	watcher := watch.NewRaceFreeFake()
 	cs.Pipeline.PrependWatchReactor("taskruns", k8stest.DefaultWatchReactor(watcher, nil))
-	trlo := logOpts(trName, ns, cs, fake.Streamer(logs), false, true, []string{})
+	dc, err := testDynamic.Client()
+	if err != nil {
+		t.Errorf("unable to create dynamic clinet: %v", err)
+	}
+
+	trlo := logOpts(trName, ns, cs, fake.Streamer(logs), false, true, []string{}, dc)
 
 	go func() {
 		time.Sleep(time.Second * 1)
@@ -1004,9 +1068,14 @@ func TestLog_taskrun_follow_mode_no_output_provided(t *testing.T) {
 	cs, _ := test.SeedTestData(t, pipelinetest.Data{TaskRuns: trs, Pods: p, Namespaces: nsList})
 	watcher := watch.NewRaceFreeFake()
 	cs.Pipeline.PrependWatchReactor("taskruns", k8stest.DefaultWatchReactor(watcher, nil))
-	trlo := logOpts(trName, ns, cs, fake.Streamer(logs), false, true, []string{})
+	dc, err := testDynamic.Client()
+	if err != nil {
+		t.Errorf("unable to create dynamic clinet: %v", err)
+	}
 
-	_, err := fetchLogs(trlo)
+	trlo := logOpts(trName, ns, cs, fake.Streamer(logs), false, true, []string{}, dc)
+
+	_, err = fetchLogs(trlo)
 	if err == nil {
 		t.Errorf("Expected error but no error occurred ")
 	}
@@ -1015,10 +1084,12 @@ func TestLog_taskrun_follow_mode_no_output_provided(t *testing.T) {
 	test.AssertOutput(t, expected, err.Error())
 }
 
-func logOpts(run, ns string, cs pipelinetest.Clients, streamer stream.NewStreamerFunc, allSteps bool, follow bool, steps []string) *options.LogOptions {
+func logOpts(run, ns string, cs pipelinetest.Clients, streamer stream.NewStreamerFunc,
+	allSteps bool, follow bool, steps []string, dc dynamic.Interface) *options.LogOptions {
 	p := test.Params{
-		Kube:   cs.Kube,
-		Tekton: cs.Pipeline,
+		Kube:    cs.Kube,
+		Tekton:  cs.Pipeline,
+		Dynamic: dc,
 	}
 	p.SetNamespace(ns)
 
