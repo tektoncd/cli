@@ -21,6 +21,7 @@ import (
 	"github.com/spf13/pflag"
 	"github.com/tektoncd/cli/pkg/cli"
 	"github.com/tektoncd/cli/pkg/cmd/clustertask"
+	"github.com/tektoncd/cli/pkg/cmd/clustertriggerbinding"
 	"github.com/tektoncd/cli/pkg/cmd/completion"
 	"github.com/tektoncd/cli/pkg/cmd/condition"
 	"github.com/tektoncd/cli/pkg/cmd/eventlistener"
@@ -79,6 +80,7 @@ func Root(p cli.Params) *cobra.Command {
 
 	cmd.AddCommand(
 		clustertask.Command(p),
+		clustertriggerbinding.Command(p),
 		completion.Command(),
 		condition.Command(p),
 		eventlistener.Command(p),
