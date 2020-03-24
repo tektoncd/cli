@@ -50,14 +50,129 @@ func TestTracker_pipelinerun_complete(t *testing.T) {
 		onlyTask1 = []string{task1Name}
 	)
 
+	taskruns := []*v1alpha1.TaskRun{
+		tb.TaskRun(tr1Name, ns,
+			tb.TaskRunSpec(
+				tb.TaskRunTaskRef(task1Name),
+			),
+			tb.TaskRunStatus(
+				tb.PodName(tr1Pod),
+			),
+		),
+		tb.TaskRun(tr2Name, ns,
+			tb.TaskRunSpec(
+				tb.TaskRunTaskRef(task2Name),
+			),
+			tb.TaskRunStatus(
+				tb.PodName(tr2Pod),
+			),
+		),
+	}
+
+	initialPR := []*v1alpha1.PipelineRun{
+		tb.PipelineRun(prName, ns,
+			tb.PipelineRunLabel("tekton.dev/pipeline", prName),
+			tb.PipelineRunStatus(
+				tb.PipelineRunStatusCondition(apis.Condition{
+					Status: corev1.ConditionUnknown,
+					Reason: resources.ReasonRunning,
+				}),
+				tb.PipelineRunTaskRunsStatus(tr1Name, &v1alpha1.PipelineRunTaskRunStatus{
+					PipelineTaskName: task1Name,
+					Status:           &taskruns[0].Status,
+				}),
+			),
+		),
+	}
+
+	prStatusFn := tb.PipelineRunStatus(
+		tb.PipelineRunStatusCondition(apis.Condition{
+			Status: corev1.ConditionTrue,
+			Reason: resources.ReasonSucceeded,
+		}),
+		tb.PipelineRunTaskRunsStatus(tr1Name, &v1alpha1.PipelineRunTaskRunStatus{
+			PipelineTaskName: task1Name,
+			Status:           &taskruns[0].Status,
+		}),
+		tb.PipelineRunTaskRunsStatus(tr2Name, &v1alpha1.PipelineRunTaskRunStatus{
+			PipelineTaskName: task2Name,
+			Status:           &taskruns[1].Status,
+		}),
+	)
+	pr := &v1alpha1.PipelineRun{}
+	prStatusFn(pr)
+	data1 := pipelinetest.Data{PipelineRuns: initialPR, TaskRuns: taskruns}
+
+	// define conditional pipelinerun
+	tr2 := []*v1alpha1.TaskRun{
+		tb.TaskRun("condition-taskrun", "ns",
+			tb.TaskRunSpec(tb.TaskRunTaskRef("condition-task")),
+			tb.TaskRunStatus(tb.PodName("condition-taskrun-pod-123")),
+		),
+	}
+
+	prccs := make(map[string]*v1alpha1.PipelineRunConditionCheckStatus)
+	prccs["condition-pod-123"] = &v1alpha1.PipelineRunConditionCheckStatus{
+		ConditionName: "cond-1",
+		Status: &v1alpha1.ConditionCheckStatus{
+			ConditionCheckStatusFields: v1alpha1.ConditionCheckStatusFields{
+				PodName: "condition-pod-123",
+			},
+		},
+	}
+
+	initialPR2 := []*v1alpha1.PipelineRun{
+		tb.PipelineRun("condition-pipeline-run", "ns",
+			tb.PipelineRunLabel("tekton.dev/pipeline", "condition-pipeline-run"),
+			tb.PipelineRunSpec("", tb.PipelineRunPipelineSpec(
+				tb.PipelineTask("condition-task", "condition-task",
+					tb.PipelineTaskCondition("cond-1")),
+			)),
+			tb.PipelineRunStatus(
+				tb.PipelineRunStatusCondition(apis.Condition{
+					Status: corev1.ConditionUnknown,
+					Reason: resources.ReasonRunning,
+				}),
+				tb.PipelineRunTaskRunsStatus("condition-taskrun", &v1alpha1.PipelineRunTaskRunStatus{
+					PipelineTaskName: "condition-task",
+					Status:           &tr2[0].Status,
+					ConditionChecks:  prccs,
+				}),
+			),
+		),
+	}
+
+	prStatusFn2 := tb.PipelineRunStatus(
+		tb.PipelineRunStatusCondition(apis.Condition{
+			Status: corev1.ConditionTrue,
+			Reason: resources.ReasonSucceeded,
+		}),
+		tb.PipelineRunTaskRunsStatus("condition-taskrun", &v1alpha1.PipelineRunTaskRunStatus{
+			PipelineTaskName: "condition-task",
+			Status:           &tr2[0].Status,
+			ConditionChecks:  prccs,
+		}),
+	)
+	pr2 := &v1alpha1.PipelineRun{}
+	prStatusFn2(pr2)
+	data2 := pipelinetest.Data{PipelineRuns: initialPR2, TaskRuns: tr2}
+
 	scenarios := []struct {
-		name     string
-		tasks    []string
-		expected []trh.Run
+		name         string
+		pipelineName string
+		tasks        []string
+		namespace    string
+		data         pipelinetest.Data
+		prStatus     v1alpha1.PipelineRunStatus
+		expected     []trh.Run
 	}{
 		{
-			name:  "for all tasks",
-			tasks: allTasks,
+			name:         "for all tasks",
+			pipelineName: pipelineName,
+			tasks:        allTasks,
+			namespace:    ns,
+			data:         data1,
+			prStatus:     pr.Status,
 			expected: []trh.Run{
 				{
 					Name: tr1Name,
@@ -69,8 +184,12 @@ func TestTracker_pipelinerun_complete(t *testing.T) {
 			},
 		},
 		{
-			name:  "for one task",
-			tasks: onlyTask1,
+			name:         "for one task",
+			pipelineName: pipelineName,
+			tasks:        onlyTask1,
+			namespace:    ns,
+			data:         data1,
+			prStatus:     pr.Status,
 			expected: []trh.Run{
 				{
 					Name: tr1Name,
@@ -78,66 +197,34 @@ func TestTracker_pipelinerun_complete(t *testing.T) {
 				},
 			},
 		},
+		{
+			name:         "conditonal pipeline",
+			pipelineName: "condition-pipeline",
+			tasks:        allTasks,
+			namespace:    "ns",
+			data:         data2,
+			prStatus:     pr2.Status,
+			expected: []trh.Run{
+				{
+					Name: "condition-pod-123",
+					Task: "cond-1",
+				}, {
+					Name: "condition-taskrun",
+					Task: "condition-task",
+				},
+			},
+		},
 	}
 
 	for _, s := range scenarios {
-		taskruns := []*v1alpha1.TaskRun{
-			tb.TaskRun(tr1Name, ns,
-				tb.TaskRunSpec(
-					tb.TaskRunTaskRef(task1Name),
-				),
-				tb.TaskRunStatus(
-					tb.PodName(tr1Pod),
-				),
-			),
-			tb.TaskRun(tr2Name, ns,
-				tb.TaskRunSpec(
-					tb.TaskRunTaskRef(task2Name),
-				),
-				tb.TaskRunStatus(
-					tb.PodName(tr2Pod),
-				),
-			),
-		}
+		t.Run(s.name, func(t *testing.T) {
+			tc := startPipelineRun(t, s.data, s.prStatus)
 
-		initialPR := []*v1alpha1.PipelineRun{
-			tb.PipelineRun(prName, ns,
-				tb.PipelineRunLabel("tekton.dev/pipeline", prName),
-				tb.PipelineRunStatus(
-					tb.PipelineRunStatusCondition(apis.Condition{
-						Status: corev1.ConditionUnknown,
-						Reason: resources.ReasonRunning,
-					}),
-					tb.PipelineRunTaskRunsStatus(tr1Name, &v1alpha1.PipelineRunTaskRunStatus{
-						PipelineTaskName: task1Name,
-						Status:           &taskruns[0].Status,
-					}),
-				),
-			),
-		}
+			tracker := NewTracker(s.pipelineName, s.namespace, tc)
+			output := taskRunsFor(s.tasks, tracker)
 
-		prStatusFn := tb.PipelineRunStatus(
-			tb.PipelineRunStatusCondition(apis.Condition{
-				Status: corev1.ConditionTrue,
-				Reason: resources.ReasonSucceeded,
-			}),
-			tb.PipelineRunTaskRunsStatus(tr1Name, &v1alpha1.PipelineRunTaskRunStatus{
-				PipelineTaskName: task1Name,
-				Status:           &taskruns[0].Status,
-			}),
-			tb.PipelineRunTaskRunsStatus(tr2Name, &v1alpha1.PipelineRunTaskRunStatus{
-				PipelineTaskName: task2Name,
-				Status:           &taskruns[1].Status,
-			}),
-		)
-		pr := &v1alpha1.PipelineRun{}
-		prStatusFn(pr)
-
-		tc := startPipelineRun(t, pipelinetest.Data{PipelineRuns: initialPR, TaskRuns: taskruns}, pr.Status)
-		tracker := NewTracker(pipelineName, ns, tc)
-		output := taskRunsFor(s.tasks, tracker)
-
-		clitest.AssertOutput(t, s.expected, output)
+			clitest.AssertOutput(t, s.expected, output)
+		})
 	}
 }
 
@@ -160,7 +247,9 @@ func startPipelineRun(t *testing.T, data pipelinetest.Data, prStatus ...v1alpha1
 		for _, status := range prStatus {
 			time.Sleep(time.Second * 2)
 			data.PipelineRuns[0].Status = status
-			watcher.Modify(data.PipelineRuns[0])
+			if !watcher.IsStopped() {
+				watcher.Modify(data.PipelineRuns[0])
+			}
 		}
 	}()
 

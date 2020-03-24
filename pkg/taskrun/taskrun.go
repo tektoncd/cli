@@ -28,9 +28,12 @@ func IsFiltered(tr Run, allowed []string) bool {
 	return len(Filter(trs, allowed)) == 0
 }
 
-func HasScheduled(trs *v1alpha1.PipelineRunTaskRunStatus) bool {
-	if trs.Status != nil {
-		return trs.Status.PodName != ""
+func HasScheduled(status interface{}) bool {
+	switch s := status.(type) {
+	case *v1alpha1.PipelineRunTaskRunStatus:
+		return s.Status != nil && s.Status.PodName != ""
+	case *v1alpha1.PipelineRunConditionCheckStatus:
+		return s.Status != nil && s.Status.PodName != ""
 	}
 	return false
 }

@@ -105,20 +105,32 @@ func pipelinerunOpts(name string) func(opts *metav1.ListOptions) {
 // returns true if the pipelinerun has finished
 func (t *Tracker) findNewTaskruns(pr *v1alpha1.PipelineRun, allowed []string) []trh.Run {
 	ret := []trh.Run{}
-	for tr, trs := range pr.Status.TaskRuns {
-		run := trh.Run{Name: tr, Task: trs.PipelineTaskName}
-
-		if t.loggingInProgress(tr) ||
-			!trh.HasScheduled(trs) ||
-			trh.IsFiltered(run, allowed) {
-			continue
+	for trName, trStatus := range pr.Status.TaskRuns {
+		// append condtion pod names if tr has condtions.
+		for condName, condStatus := range trStatus.ConditionChecks {
+			t.checkTaskrunStatus(condName, condStatus, allowed, &ret)
 		}
+		t.checkTaskrunStatus(trName, trStatus, allowed, &ret)
+	}
+	return ret
+}
 
-		t.ongoingTasks[tr] = true
-		ret = append(ret, run)
+func (t *Tracker) checkTaskrunStatus(name string, status interface{}, allowed []string, ret *[]trh.Run) {
+	var run trh.Run
+
+	switch s := status.(type) {
+	case *v1alpha1.PipelineRunTaskRunStatus:
+		run = trh.Run{Name: name, Task: s.PipelineTaskName}
+	case *v1alpha1.PipelineRunConditionCheckStatus:
+		run = trh.Run{Name: name, Task: s.ConditionName}
 	}
 
-	return ret
+	if t.loggingInProgress(name) || !trh.HasScheduled(status) || trh.IsFiltered(run, allowed) {
+		return
+	}
+
+	t.ongoingTasks[name] = true
+	*ret = append(*ret, run)
 }
 
 func hasCompleted(pr *v1alpha1.PipelineRun) bool {

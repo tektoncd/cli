@@ -36,6 +36,7 @@ import (
 	"k8s.io/apimachinery/pkg/watch"
 	k8stest "k8s.io/client-go/testing"
 	"knative.dev/pkg/apis"
+	duckv1beta1 "knative.dev/pkg/apis/duck/v1beta1"
 )
 
 func TestLog_invalid_namespace(t *testing.T) {
@@ -603,6 +604,91 @@ func TestPipelinerunLog_completed_taskrun_only(t *testing.T) {
 		},
 	})
 
+	// define failed conditional pipeline
+	conditionCheckName2 := "output-task-pod-conditional-output-task4-cond-2-xxxyyy"
+	prccs2 := make(map[string]*v1alpha1.PipelineRunConditionCheckStatus)
+	prccs2[conditionCheckName2] = &v1alpha1.PipelineRunConditionCheckStatus{
+		ConditionName: "cond-2",
+		Status: &v1alpha1.ConditionCheckStatus{
+			ConditionCheckStatusFields: v1alpha1.ConditionCheckStatusFields{
+				Check: corev1.ContainerState{
+					Terminated: &corev1.ContainerStateTerminated{ExitCode: 127},
+				},
+			},
+			Status: duckv1beta1.Status{
+				Conditions: []apis.Condition{{Type: apis.ConditionSucceeded, Status: corev1.ConditionFalse}},
+			},
+		},
+	}
+
+	cs4, _ := test.SeedTestData(t, pipelinetest.Data{
+		Tasks: []*v1alpha1.Task{
+			tb.Task("output-task4", "ns", cb.TaskCreationTime(clockwork.NewFakeClock().Now())),
+		},
+		TaskRuns: []*v1alpha1.TaskRun{
+			// if condition is failed, only condtion taskrun is created.
+			tb.TaskRun(conditionCheckName2, "ns",
+				tb.TaskRunLabel("tekton.dev/task", "task"),
+				tb.TaskRunSpec(tb.TaskRunTaskSpec()),
+				tb.TaskRunStatus(
+					tb.PodName(conditionCheckName2+"-pod"),
+					tb.TaskRunStartTime(clockwork.NewFakeClock().Now()),
+					tb.StatusCondition(apis.Condition{
+						Type:   apis.ConditionSucceeded,
+						Status: corev1.ConditionTrue,
+					}),
+					tb.StepState(
+						cb.StepName("test-condition2"),
+						tb.StateTerminated(0),
+					),
+				),
+			),
+		},
+		PipelineRuns: []*v1alpha1.PipelineRun{
+			tb.PipelineRun("conditional-pipeline-2", "ns",
+				tb.PipelineRunLabel("tekton.dev/pipeline", "conditional-pipeline-2"),
+				tb.PipelineRunSpec("", tb.PipelineRunPipelineSpec(
+					tb.PipelineTask("output-task4", "output-task4",
+						tb.PipelineTaskCondition("cond-2")),
+				)),
+				tb.PipelineRunStatus(
+					tb.PipelineRunStatusCondition(apis.Condition{
+						Status: corev1.ConditionTrue,
+						Reason: resources.ReasonRunning,
+					}),
+					// if condition is failed, taskrun definition is remain, but taskrun is not created
+					tb.PipelineRunTaskRunsStatus("output-taskrun4", &v1alpha1.PipelineRunTaskRunStatus{
+						PipelineTaskName: "output-task4",
+						Status:           &v1alpha1.TaskRunStatus{},
+						ConditionChecks:  prccs2,
+					}),
+				),
+			),
+		},
+		Conditions: []*v1alpha1.Condition{
+			tb.Condition("cond-2", "ns", tb.ConditionSpec(
+				tb.ConditionSpecCheck("", "foo", tb.Args("bar")),
+			)),
+		},
+		Namespaces: []*corev1.Namespace{
+			{
+				ObjectMeta: metav1.ObjectMeta{
+					Name: "ns",
+				},
+			},
+		},
+		Pods: []*corev1.Pod{
+			tb.Pod(conditionCheckName2+"-pod", "ns",
+				tb.PodSpec(
+					tb.PodContainer("test-condition2", "test-condition2:latest"),
+				),
+				cb.PodStatus(
+					cb.PodPhase(corev1.PodSucceeded),
+				),
+			),
+		},
+	})
+
 	for _, tt := range []struct {
 		name            string
 		pipelineRunName string
@@ -661,6 +747,22 @@ func TestPipelinerunLog_completed_taskrun_only(t *testing.T) {
 			want: []string{
 				"[cond-1 : test-condition] test condition\n",
 				"[output-task3 : conditonal-step] test condition\n",
+				"",
+			},
+		},
+		{
+			name:            "Test failed conditional Pipeline",
+			pipelineRunName: "conditional-pipeline-2",
+			namespace:       "ns",
+			input:           cs4,
+			logs: fake.Logs(
+				fake.Task("output-task-pod-conditional-output-task4-cond-2-xxxyyy-pod",
+					fake.Step("test-condition2", "condition failed"),
+				),
+			),
+			want: []string{
+				"[cond-2 : test-condition2] condition failed\n",
+				"Unable to get Taskrun: taskruns.tekton.dev \"output-taskrun4\" not found",
 				"",
 			},
 		},
