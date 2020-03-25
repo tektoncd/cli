@@ -20,6 +20,15 @@ import (
 	"k8s.io/apimachinery/pkg/runtime"
 )
 
+func UnstructuredP(pipeline *v1alpha1.Pipeline, version string) *unstructured.Unstructured {
+	pipeline.APIVersion = "tekton.dev/" + version
+	pipeline.Kind = "pipeline"
+	object, _ := runtime.DefaultUnstructuredConverter.ToUnstructured(pipeline)
+	return &unstructured.Unstructured{
+		Object: object,
+	}
+}
+
 func UnstructuredTR(taskrun *v1alpha1.TaskRun, version string) *unstructured.Unstructured {
 	taskrun.APIVersion = "tekton.dev/" + version
 	taskrun.Kind = "taskrun"
