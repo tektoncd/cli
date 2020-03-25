@@ -17,6 +17,7 @@ package file
 import (
 	"fmt"
 	"io/ioutil"
+	"strings"
 	"testing"
 
 	"github.com/ghodss/yaml"
@@ -61,5 +62,10 @@ func TestGetError(t *testing.T) {
 	target := "httpz://foo.com/task.yaml"
 
 	_, err := LoadFileContent(p, target, IsYamlFile(), fmt.Errorf("invalid file format for %s: .yaml or .yml file extension and format required", target))
-	assert.Error(t, err, `Get httpz://foo.com/task.yaml: unsupported protocol scheme "httpz"`)
+
+	if strings.Contains(err.Error(), `"httpz://foo.com/task.yaml"`) {
+		assert.Error(t, err, `Get "httpz://foo.com/task.yaml": unsupported protocol scheme "httpz"`)
+	} else {
+		assert.Error(t, err, `Get httpz://foo.com/task.yaml: unsupported protocol scheme "httpz"`)
+	}
 }
