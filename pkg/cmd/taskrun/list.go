@@ -185,7 +185,12 @@ func list(p cli.Params, task string, limit int, labelselector string, allnamespa
 		ns = ""
 	}
 
-	trs, err := trlist.TaskRuns(p, options, ns)
+	cs, err := p.Clients()
+	if err != nil {
+		return nil, err
+	}
+
+	trs, err := trlist.TaskRuns(cs, options, ns)
 	if err != nil {
 		return nil, err
 	}

@@ -16,7 +16,6 @@ package pipeline
 
 import (
 	"fmt"
-	"io"
 	"os"
 	"text/tabwriter"
 	"text/template"
@@ -24,11 +23,11 @@ import (
 	"github.com/spf13/cobra"
 	"github.com/tektoncd/cli/pkg/cli"
 	"github.com/tektoncd/cli/pkg/formatted"
+	"github.com/tektoncd/cli/pkg/list"
 	"github.com/tektoncd/cli/pkg/pipeline"
-	"github.com/tektoncd/cli/pkg/printer"
 	validate "github.com/tektoncd/cli/pkg/validate"
 	"github.com/tektoncd/pipeline/pkg/apis/pipeline/v1alpha1"
-	"github.com/tektoncd/pipeline/pkg/client/clientset/versioned"
+	"github.com/tektoncd/pipeline/pkg/apis/pipeline/v1beta1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime/schema"
 	cliopts "k8s.io/cli-runtime/pkg/genericclioptions"
@@ -73,7 +72,8 @@ func listCommand(p cli.Params) *cobra.Command {
 			}
 
 			if output != "" {
-				return printPipelineListObj(cmd.OutOrStdout(), p, f)
+				pipelineGroupResource := schema.GroupVersionResource{Group: "tekton.dev", Resource: "pipelines"}
+				return list.PrintObject(pipelineGroupResource, cmd.OutOrStdout(), p, f, p.Namespace())
 			}
 			stream := &cli.Stream{
 				Out: cmd.OutOrStdout(),
@@ -102,7 +102,7 @@ func printPipelineDetails(s *cli.Stream, p cli.Params) error {
 	}
 
 	var data = struct {
-		Pipelines    *v1alpha1.PipelineList
+		Pipelines    *v1beta1.PipelineList
 		PipelineRuns pipelineruns
 		Params       cli.Params
 	}{
@@ -134,43 +134,11 @@ func printPipelineDetails(s *cli.Stream, p cli.Params) error {
 	return w.Flush()
 }
 
-func printPipelineListObj(w io.Writer, p cli.Params, f *cliopts.PrintFlags) error {
-	cs, err := p.Clients()
-	if err != nil {
-		return err
-	}
-
-	ps, err := listAllPipelines(cs.Tekton, p.Namespace())
-	if err != nil {
-		return err
-	}
-
-	return printer.PrintObject(w, ps, f)
-}
-
-func listAllPipelines(cs versioned.Interface, ns string) (*v1alpha1.PipelineList, error) {
-	c := cs.TektonV1alpha1().Pipelines(ns)
-
-	ps, err := c.List(metav1.ListOptions{})
-	if err != nil {
-		return nil, err
-	}
-
-	// NOTE: this is required for -o json|yaml to work properly since
-	// tektoncd go client fails to set these; probably a bug
-	ps.GetObjectKind().SetGroupVersionKind(
-		schema.GroupVersionKind{
-			Version: "tekton.dev/v1alpha1",
-			Kind:    "PipelineList",
-		})
-	return ps, nil
-}
-
 type pipelineruns map[string]v1alpha1.PipelineRun
 
-func listPipelineDetails(cs *cli.Clients, ns string) (*v1alpha1.PipelineList, pipelineruns, error) {
+func listPipelineDetails(cs *cli.Clients, ns string) (*v1beta1.PipelineList, pipelineruns, error) {
 
-	ps, err := listAllPipelines(cs.Tekton, ns)
+	ps, err := pipeline.List(cs, metav1.ListOptions{}, ns)
 	if err != nil {
 		return nil, nil, err
 	}

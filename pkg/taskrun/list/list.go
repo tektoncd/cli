@@ -29,7 +29,12 @@ import (
 )
 
 func GetAllTaskRuns(p cli.Params, opts metav1.ListOptions, limit int) ([]string, error) {
-	runs, err := TaskRuns(p, opts, p.Namespace())
+	cs, err := p.Clients()
+	if err != nil {
+		return nil, err
+	}
+
+	runs, err := TaskRuns(cs, opts, p.Namespace())
 	if err != nil {
 		return nil, err
 	}
@@ -49,14 +54,10 @@ func GetAllTaskRuns(p cli.Params, opts metav1.ListOptions, limit int) ([]string,
 	return ret, nil
 }
 
-func TaskRuns(p cli.Params, opts metav1.ListOptions, ns string) (*v1beta1.TaskRunList, error) {
-	cs, err := p.Clients()
-	if err != nil {
-		return nil, err
-	}
+func TaskRuns(c *cli.Clients, opts metav1.ListOptions, ns string) (*v1beta1.TaskRunList, error) {
 
 	trGroupResource := schema.GroupVersionResource{Group: "tekton.dev", Resource: "taskruns"}
-	unstructuredTR, err := trlist.AllObjecs(trGroupResource, cs, ns, opts)
+	unstructuredTR, err := trlist.AllObjecs(trGroupResource, c, ns, opts)
 	if err != nil {
 		return nil, err
 	}
@@ -66,7 +67,7 @@ func TaskRuns(p cli.Params, opts metav1.ListOptions, ns string) (*v1beta1.TaskRu
 		return nil, err
 	}
 	if err != nil {
-		fmt.Fprintf(os.Stderr, "Failed to list taskruns from %s namespace \n", p.Namespace())
+		fmt.Fprintf(os.Stderr, "Failed to list taskruns from %s namespace \n", ns)
 		return nil, err
 	}
 

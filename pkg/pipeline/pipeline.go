@@ -15,8 +15,15 @@
 package pipeline
 
 import (
+	"fmt"
+	"os"
+
 	"github.com/tektoncd/cli/pkg/cli"
+	plist "github.com/tektoncd/cli/pkg/list"
+	"github.com/tektoncd/pipeline/pkg/apis/pipeline/v1beta1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+	"k8s.io/apimachinery/pkg/runtime"
+	"k8s.io/apimachinery/pkg/runtime/schema"
 )
 
 func GetAllPipelineNames(p cli.Params) ([]string, error) {
@@ -36,4 +43,24 @@ func GetAllPipelineNames(p cli.Params) ([]string, error) {
 		ret = append(ret, item.ObjectMeta.Name)
 	}
 	return ret, nil
+}
+
+func List(c *cli.Clients, opts metav1.ListOptions, ns string) (*v1beta1.PipelineList, error) {
+
+	pipelineGroupResource := schema.GroupVersionResource{Group: "tekton.dev", Resource: "pipelines"}
+	unstructuredP, err := plist.AllObjecs(pipelineGroupResource, c, ns, opts)
+	if err != nil {
+		return nil, err
+	}
+
+	var pipelines *v1beta1.PipelineList
+	if err := runtime.DefaultUnstructuredConverter.FromUnstructured(unstructuredP.UnstructuredContent(), &pipelines); err != nil {
+		return nil, err
+	}
+	if err != nil {
+		fmt.Fprintf(os.Stderr, "Failed to list pipelines from %s namespace \n", ns)
+		return nil, err
+	}
+
+	return pipelines, nil
 }
