@@ -1,0 +1,161 @@
+// Copyright © 2019 The Tekton Authors.
+//
+// Licensed under the Apache License, Version 2.0 (the "License");
+// you may not use this file except in compliance with the License.
+// You may obtain a copy of the License at
+//
+//     http://www.apache.org/licenses/LICENSE-2.0
+//
+// Unless required by applicable law or agreed to in writing, software
+// distributed under the License is distributed on an "AS IS" BASIS,
+// WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+// See the License for the specific language governing permissions and
+// limitations under the License.
+
+package workspaces
+
+import (
+	"testing"
+
+	"github.com/tektoncd/cli/pkg/test"
+	"github.com/tektoncd/pipeline/pkg/apis/pipeline/v1alpha1"
+	"github.com/tektoncd/pipeline/pkg/apis/pipeline/v1beta1"
+	corev1 "k8s.io/api/core/v1"
+	v1 "k8s.io/api/core/v1"
+)
+
+func TestMerge(t *testing.T) {
+	ws := []v1alpha1.WorkspaceBinding{
+		v1alpha1.WorkspaceBinding{
+			Name: "foo",
+			ConfigMap: &corev1.ConfigMapVolumeSource{
+				LocalObjectReference: corev1.LocalObjectReference{
+					Name: "bar"},
+			},
+		},
+		v1alpha1.WorkspaceBinding{
+			Name: "emptydir-data",
+			EmptyDir: &corev1.EmptyDirVolumeSource{
+				Medium: corev1.StorageMediumDefault,
+			},
+		},
+	}
+
+	optWS := []string{}
+	outWS, err := Merge(ws, optWS)
+	if err != nil {
+		t.Errorf("Not expected error:" + err.Error())
+	}
+	test.AssertOutput(t, ws, outWS)
+
+	optWS = []string{"test"}
+	_, err = Merge(ws, optWS)
+	if err == nil {
+		t.Errorf("Expected error")
+	}
+	test.AssertOutput(t, "Name not found for workspace", err.Error())
+
+	optWS = []string{"name"}
+	_, err = Merge(ws, optWS)
+	if err == nil {
+		t.Errorf("Expected error")
+	}
+	test.AssertOutput(t, "Name not found for workspace", err.Error())
+
+	optWS = []string{"name=test,configsecret=wrong"}
+	_, err = Merge(ws, optWS)
+	if err == nil {
+		t.Errorf("Expected error")
+	}
+	test.AssertOutput(t, invalidWorkspace+optWS[0], err.Error())
+
+	optWS = []string{"name=emptydir-data-hp,emptyDir=s3"}
+	_, err = Merge(ws, optWS)
+	if err == nil {
+		t.Errorf("Expected error")
+	}
+	test.AssertOutput(t, invalidWorkspace+optWS[0], err.Error())
+
+	optWS = []string{"name=recipe-store,config=sensitive-recipe-storage,item=brownies"}
+	_, err = Merge(ws, optWS)
+	if err == nil {
+		t.Errorf("Expected error")
+	}
+	test.AssertOutput(t, "invalid key value", err.Error())
+
+	optWS = []string{"name=recipe-store,secret=secret-name,item=brownies"}
+	_, err = Merge(ws, optWS)
+	if err == nil {
+		t.Errorf("Expected error")
+	}
+	test.AssertOutput(t, "invalid key value", err.Error())
+
+	optWS = []string{"name=recipe-store,config=sensitive-recipe-storage," +
+		"secret=secret-name,item=brownies=recipe.txt"}
+	_, err = Merge(ws, optWS)
+	if err == nil {
+		t.Errorf("Expected error")
+	}
+	test.AssertOutput(t, invalidWorkspace+optWS[0], err.Error())
+
+	optWS = []string{"name=password-vault,secret=secret-name,item=pass=/etc/passwd",
+		"name=recipe-store,config=sensitive-recipe-storage,item=brownies=recipe.txt",
+		"name=emptydir-data-hp,emptyDir=HugePages",
+		"name=emptydir-data-mem,emptyDir=Memory",
+		"name=emptydir-data,emptyDir=",
+		"name=shared-data-path,claimName=pvc3,subPath=dir"}
+	outWS, err = Merge(ws, optWS)
+	if err != nil {
+		t.Errorf("Not expected error:" + err.Error())
+	}
+	test.AssertOutput(t, 7, len(outWS))
+
+	expectedWS := []v1beta1.WorkspaceBinding{
+		{Name: "foo", ConfigMap: &corev1.ConfigMapVolumeSource{LocalObjectReference: v1.LocalObjectReference{Name: "bar"}}},
+		{Name: "emptydir-data", EmptyDir: &corev1.EmptyDirVolumeSource{}},
+		{
+			Name: "password-vault",
+			Secret: &corev1.SecretVolumeSource{
+				SecretName: "secret-name",
+				Items:      []corev1.KeyToPath{corev1.KeyToPath{Key: "pass", Path: "/etc/passwd"}}},
+		},
+		{
+			Name: "recipe-store",
+			ConfigMap: &corev1.ConfigMapVolumeSource{
+				LocalObjectReference: corev1.LocalObjectReference{Name: "sensitive-recipe-storage"},
+				Items:                []corev1.KeyToPath{corev1.KeyToPath{Key: "brownies", Path: "recipe.txt"}}},
+		},
+		{
+			Name:     "emptydir-data-hp",
+			EmptyDir: &corev1.EmptyDirVolumeSource{Medium: corev1.StorageMediumHugePages},
+		},
+		{
+			Name:     "emptydir-data-mem",
+			EmptyDir: &corev1.EmptyDirVolumeSource{Medium: corev1.StorageMediumMemory},
+		},
+		{
+			Name:                  "shared-data-path",
+			SubPath:               "dir",
+			PersistentVolumeClaim: &corev1.PersistentVolumeClaimVolumeSource{ClaimName: "pvc3"},
+		},
+	}
+
+	for i := range outWS {
+		switch outWS[i].Name {
+		case "foo":
+			test.AssertOutput(t, expectedWS[0], outWS[i])
+		case "emptydir-data":
+			test.AssertOutput(t, expectedWS[1], outWS[i])
+		case "password-vault":
+			test.AssertOutput(t, expectedWS[2], outWS[i])
+		case "recipe-store":
+			test.AssertOutput(t, expectedWS[3], outWS[i])
+		case "emptydir-data-hp":
+			test.AssertOutput(t, expectedWS[4], outWS[i])
+		case "emptydir-data-mem":
+			test.AssertOutput(t, expectedWS[5], outWS[i])
+		case "shared-data-path":
+			test.AssertOutput(t, expectedWS[6], outWS[i])
+		}
+	}
+}
