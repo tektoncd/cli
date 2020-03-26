@@ -37,6 +37,7 @@ import (
 	"github.com/tektoncd/cli/pkg/pipeline"
 	hpipelinerun "github.com/tektoncd/cli/pkg/pipelinerun"
 	validate "github.com/tektoncd/cli/pkg/validate"
+	"github.com/tektoncd/cli/pkg/workspaces"
 	"github.com/tektoncd/pipeline/pkg/apis/pipeline/v1alpha1"
 	versionedResource "github.com/tektoncd/pipeline/pkg/client/resource/clientset/versioned"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
@@ -70,6 +71,7 @@ type startOptions struct {
 	PrefixName         string
 	TimeOut            string
 	Filename           string
+	Workspaces         []string
 }
 
 type resourceOptionsFilter struct {
@@ -143,6 +145,7 @@ like cat,foo,bar
 	c.Flags().StringVarP(&opt.UsePipelineRun, "use-pipelinerun", "", "", "use this pipelinerun values to re-run the pipeline. ")
 	flags.AddShellCompletion(c.Flags().Lookup("use-pipelinerun"), "__tkn_get_pipelinerun")
 	c.Flags().StringSliceVarP(&opt.Labels, "labels", "l", []string{}, "pass labels as label=value.")
+	c.Flags().StringArrayVarP(&opt.Workspaces, "workspace", "w", []string{}, "pass the workspace.")
 	c.Flags().BoolVarP(&opt.DryRun, "dry-run", "", false, "preview pipelinerun without running it")
 	c.Flags().StringVarP(&opt.Output, "output", "", "", "format of pipelinerun dry-run (yaml or json)")
 	c.Flags().StringVarP(&opt.PrefixName, "prefix-name", "", "", "specify a prefix for the pipelinerun name (must be lowercase alphanumeric characters)")
@@ -251,6 +254,12 @@ func (opt *startOptions) startPipeline(pipelineStart *v1alpha1.Pipeline) error {
 		return err
 	}
 	pr.Spec.Params = param
+
+	workspaces, err := workspaces.Merge(pr.Spec.Workspaces, opt.Workspaces)
+	if err != nil {
+		return err
+	}
+	pr.Spec.Workspaces = workspaces
 
 	if err := mergeSvc(pr, opt.ServiceAccounts); err != nil {
 		return err
