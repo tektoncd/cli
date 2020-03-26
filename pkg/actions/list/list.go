@@ -17,14 +17,13 @@ package list
 import (
 	"io"
 
+	"github.com/tektoncd/cli/pkg/actions"
 	"github.com/tektoncd/cli/pkg/cli"
 	"github.com/tektoncd/cli/pkg/printer"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
 	"k8s.io/apimachinery/pkg/runtime/schema"
 	cliopts "k8s.io/cli-runtime/pkg/genericclioptions"
-	"k8s.io/client-go/discovery"
-	"k8s.io/client-go/restmapper"
 )
 
 func PrintObject(groupResource schema.GroupVersionResource, w io.Writer, p cli.Params, f *cliopts.PrintFlags, ns string) error {
@@ -42,7 +41,7 @@ func PrintObject(groupResource schema.GroupVersionResource, w io.Writer, p cli.P
 }
 
 func AllObjecs(gr schema.GroupVersionResource, clients *cli.Clients, n string, op metav1.ListOptions) (*unstructured.UnstructuredList, error) {
-	gvr, err := getGVR(gr, clients.Tekton.Discovery())
+	gvr, err := actions.GetGVR(gr, clients.Tekton.Discovery())
 	if err != nil {
 		return nil, err
 	}
@@ -53,19 +52,4 @@ func AllObjecs(gr schema.GroupVersionResource, clients *cli.Clients, n string, o
 	}
 
 	return allRes, nil
-}
-
-func getGVR(gr schema.GroupVersionResource, discovery discovery.DiscoveryInterface) (*schema.GroupVersionResource, error) {
-	apiGroupRes, err := restmapper.GetAPIGroupResources(discovery)
-	if err != nil {
-		return nil, err
-	}
-
-	rm := restmapper.NewDiscoveryRESTMapper(apiGroupRes)
-	gvr, err := rm.ResourceFor(gr)
-	if err != nil {
-		return nil, err
-	}
-
-	return &gvr, nil
 }

@@ -21,9 +21,9 @@ import (
 	"text/template"
 
 	"github.com/spf13/cobra"
+	"github.com/tektoncd/cli/pkg/actions/list"
 	"github.com/tektoncd/cli/pkg/cli"
 	"github.com/tektoncd/cli/pkg/formatted"
-	"github.com/tektoncd/cli/pkg/list"
 	"github.com/tektoncd/cli/pkg/pipeline"
 	validate "github.com/tektoncd/cli/pkg/validate"
 	"github.com/tektoncd/pipeline/pkg/apis/pipeline/v1alpha1"
