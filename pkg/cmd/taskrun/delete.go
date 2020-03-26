@@ -19,11 +19,14 @@ import (
 	"fmt"
 
 	"github.com/spf13/cobra"
+	traction "github.com/tektoncd/cli/pkg/actions/delete"
 	"github.com/tektoncd/cli/pkg/cli"
 	"github.com/tektoncd/cli/pkg/deleter"
 	"github.com/tektoncd/cli/pkg/options"
+	trlist "github.com/tektoncd/cli/pkg/taskrun/list"
 	validate "github.com/tektoncd/cli/pkg/validate"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+	"k8s.io/apimachinery/pkg/runtime/schema"
 	cliopts "k8s.io/cli-runtime/pkg/genericclioptions"
 )
 
@@ -77,6 +80,7 @@ or
 }
 
 func deleteTaskRuns(s *cli.Stream, p cli.Params, trNames []string, opts *options.DeleteOptions) error {
+	trGroupResource := schema.GroupVersionResource{Group: "tekton.dev", Resource: "taskruns"}
 	cs, err := p.Clients()
 	if err != nil {
 		return fmt.Errorf("failed to create tekton client")
@@ -85,16 +89,16 @@ func deleteTaskRuns(s *cli.Stream, p cli.Params, trNames []string, opts *options
 	switch {
 	case opts.DeleteAllNs:
 		d = deleter.New("TaskRun", func(taskRunName string) error {
-			return cs.Tekton.TektonV1alpha1().TaskRuns(p.Namespace()).Delete(taskRunName, &metav1.DeleteOptions{})
+			return traction.Delete(trGroupResource, cs, taskRunName, p.Namespace(), &metav1.DeleteOptions{})
 		})
-		trs, err := allTaskRunNames(p, cs, opts.Keep)
+		trs, err := allTaskRunNames(cs, opts.Keep, p.Namespace())
 		if err != nil {
 			return err
 		}
 		d.Delete(s, trs)
 	case opts.ParentResourceName == "":
 		d = deleter.New("TaskRun", func(taskRunName string) error {
-			return cs.Tekton.TektonV1alpha1().TaskRuns(p.Namespace()).Delete(taskRunName, &metav1.DeleteOptions{})
+			return traction.Delete(trGroupResource, cs, taskRunName, p.Namespace(), &metav1.DeleteOptions{})
 		})
 		d.Delete(s, trNames)
 	default:
@@ -102,7 +106,7 @@ func deleteTaskRuns(s *cli.Stream, p cli.Params, trNames []string, opts *options
 			return errors.New("the task should not be deleted")
 		})
 		d.WithRelated("TaskRun", taskRunLister(p, cs), func(taskRunName string) error {
-			return cs.Tekton.TektonV1alpha1().TaskRuns(p.Namespace()).Delete(taskRunName, &metav1.DeleteOptions{})
+			return traction.Delete(trGroupResource, cs, taskRunName, p.Namespace(), &metav1.DeleteOptions{})
 		})
 		d.DeleteRelated(s, []string{opts.ParentResourceName})
 	}
@@ -137,8 +141,9 @@ func taskRunLister(p cli.Params, cs *cli.Clients) func(string) ([]string, error)
 	}
 }
 
-func allTaskRunNames(p cli.Params, cs *cli.Clients, keep int) ([]string, error) {
-	taskRuns, err := cs.Tekton.TektonV1alpha1().TaskRuns(p.Namespace()).List(metav1.ListOptions{})
+func allTaskRunNames(cs *cli.Clients, keep int, ns string) ([]string, error) {
+
+	taskRuns, err := trlist.TaskRuns(cs, metav1.ListOptions{}, ns)
 	if err != nil {
 		return nil, err
 	}
