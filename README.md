@@ -141,7 +141,7 @@ You should see the following after running kubectl plugin list if tkn is availab
 /usr/local/bin/kubectl-tkn
 ```
 If the output above is shown, run kubectl-tkn to see the list of available tkn commands to run.
-  
+
 ### Useful Commands
 
 The following commands help you understand and effectively use the Tekton CLI:
@@ -168,6 +168,7 @@ We are so excited to have you!
 
 - See [CONTRIBUTING.md](CONTRIBUTING.md) for an overview of our processes
 - See [DEVELOPMENT.md](DEVELOPMENT.md) for how to get started
+- See [ROADMAP.md](ROADMAP.md) for the current roadmap
 - Look at our
   [good first issues](https://github.com/tektoncd/cli/issues?q=is%3Aissue+is%3Aopen+label%3A%22good+first+issue%22)
   and our
