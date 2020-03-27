@@ -22,7 +22,7 @@ import (
 )
 
 func Delete(gr schema.GroupVersionResource, clients *cli.Clients, trname, n string, op *metav1.DeleteOptions) error {
-	gvr, err := actions.GetGVR(gr, clients.Tekton.Discovery())
+	gvr, err := actions.GetGroupVersionResource(gr, clients.Tekton.Discovery())
 	if err != nil {
 		return err
 	}

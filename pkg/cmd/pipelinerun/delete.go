@@ -19,12 +19,15 @@ import (
 	"fmt"
 
 	"github.com/spf13/cobra"
+	praction "github.com/tektoncd/cli/pkg/actions/delete"
 	"github.com/tektoncd/cli/pkg/cli"
 	"github.com/tektoncd/cli/pkg/deleter"
 	"github.com/tektoncd/cli/pkg/options"
+	pr "github.com/tektoncd/cli/pkg/pipelinerun"
 	prsort "github.com/tektoncd/cli/pkg/pipelinerun/sort"
 	validate "github.com/tektoncd/cli/pkg/validate"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+	"k8s.io/apimachinery/pkg/runtime/schema"
 	cliopts "k8s.io/cli-runtime/pkg/genericclioptions"
 )
 
@@ -78,6 +81,8 @@ or
 }
 
 func deletePipelineRuns(s *cli.Stream, p cli.Params, prNames []string, opts *options.DeleteOptions) error {
+	prGroupResource := schema.GroupVersionResource{Group: "tekton.dev", Resource: "pipelineruns"}
+
 	cs, err := p.Clients()
 	if err != nil {
 		return fmt.Errorf("failed to create tekton client")
@@ -86,24 +91,24 @@ func deletePipelineRuns(s *cli.Stream, p cli.Params, prNames []string, opts *opt
 	switch {
 	case opts.DeleteAllNs:
 		d = deleter.New("PipelineRun", func(pipelineRunName string) error {
-			return cs.Tekton.TektonV1alpha1().PipelineRuns(p.Namespace()).Delete(pipelineRunName, &metav1.DeleteOptions{})
+			return praction.Delete(prGroupResource, cs, pipelineRunName, p.Namespace(), &metav1.DeleteOptions{})
 		})
-		prs, err := allPipelineRunNames(p, cs, opts.Keep)
+		prs, err := allPipelineRunNames(cs, opts.Keep, p.Namespace())
 		if err != nil {
 			return err
 		}
 		d.Delete(s, prs)
 	case opts.ParentResourceName == "":
 		d = deleter.New("PipelineRun", func(pipelineRunName string) error {
-			return cs.Tekton.TektonV1alpha1().PipelineRuns(p.Namespace()).Delete(pipelineRunName, &metav1.DeleteOptions{})
+			return praction.Delete(prGroupResource, cs, pipelineRunName, p.Namespace(), &metav1.DeleteOptions{})
 		})
 		d.Delete(s, prNames)
 	default:
 		d = deleter.New("Pipeline", func(_ string) error {
 			return errors.New("the pipeline should not be deleted")
 		})
-		d.WithRelated("PipelineRun", pipelineRunLister(p, cs), func(pipelineRunName string) error {
-			return cs.Tekton.TektonV1alpha1().PipelineRuns(p.Namespace()).Delete(pipelineRunName, &metav1.DeleteOptions{})
+		d.WithRelated("PipelineRun", pipelineRunLister(cs, p.Namespace()), func(pipelineRunName string) error {
+			return praction.Delete(prGroupResource, cs, pipelineRunName, p.Namespace(), &metav1.DeleteOptions{})
 		})
 		d.DeleteRelated(s, []string{opts.ParentResourceName})
 	}
@@ -121,37 +126,37 @@ func deletePipelineRuns(s *cli.Stream, p cli.Params, prNames []string, opts *opt
 	return d.Errors()
 }
 
-func pipelineRunLister(p cli.Params, cs *cli.Clients) func(string) ([]string, error) {
+func pipelineRunLister(cs *cli.Clients, ns string) func(string) ([]string, error) {
 	return func(pipelineName string) ([]string, error) {
 		lOpts := metav1.ListOptions{
 			LabelSelector: fmt.Sprintf("tekton.dev/pipeline=%s", pipelineName),
 		}
-		pipelineRuns, err := cs.Tekton.TektonV1alpha1().PipelineRuns(p.Namespace()).List(lOpts)
+		pipelineRuns, err := pr.List(cs, lOpts, ns)
 		if err != nil {
 			return nil, err
 		}
 		var names []string
-		for _, pr := range pipelineRuns.Items {
-			names = append(names, pr.Name)
+		for _, run := range pipelineRuns.Items {
+			names = append(names, run.Name)
 		}
 		return names, nil
 	}
 }
 
-func allPipelineRunNames(p cli.Params, cs *cli.Clients, keep int) ([]string, error) {
-	pipelineRuns, err := cs.Tekton.TektonV1alpha1().PipelineRuns(p.Namespace()).List(metav1.ListOptions{})
+func allPipelineRunNames(cs *cli.Clients, keep int, ns string) ([]string, error) {
+	pipelineRuns, err := pr.List(cs, metav1.ListOptions{}, ns)
 	if err != nil {
 		return nil, err
 	}
 	var names []string
 	var counter = 0
 	prsort.SortByStartTime(pipelineRuns.Items)
-	for _, pr := range pipelineRuns.Items {
+	for _, run := range pipelineRuns.Items {
 		if keep > 0 && counter != keep {
 			counter++
 			continue
 		}
-		names = append(names, pr.Name)
+		names = append(names, run.Name)
 	}
 	return names, nil
 }

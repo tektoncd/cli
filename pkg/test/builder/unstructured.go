@@ -29,6 +29,15 @@ func UnstructuredP(pipeline *v1alpha1.Pipeline, version string) *unstructured.Un
 	}
 }
 
+func UnstructuredPR(pipelinerun *v1alpha1.PipelineRun, version string) *unstructured.Unstructured {
+	pipelinerun.APIVersion = "tekton.dev/" + version
+	pipelinerun.Kind = "pipelinerun"
+	object, _ := runtime.DefaultUnstructuredConverter.ToUnstructured(pipelinerun)
+	return &unstructured.Unstructured{
+		Object: object,
+	}
+}
+
 func UnstructuredTR(taskrun *v1alpha1.TaskRun, version string) *unstructured.Unstructured {
 	taskrun.APIVersion = "tekton.dev/" + version
 	taskrun.Kind = "taskrun"

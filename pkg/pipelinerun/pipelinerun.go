@@ -15,11 +15,18 @@
 package pipelinerun
 
 import (
+	"fmt"
+	"os"
+
+	prlist "github.com/tektoncd/cli/pkg/actions/list"
 	"github.com/tektoncd/cli/pkg/cli"
 	"github.com/tektoncd/cli/pkg/formatted"
 	prsort "github.com/tektoncd/cli/pkg/pipelinerun/sort"
 	"github.com/tektoncd/pipeline/pkg/apis/pipeline/v1alpha1"
+	"github.com/tektoncd/pipeline/pkg/apis/pipeline/v1beta1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+	"k8s.io/apimachinery/pkg/runtime"
+	"k8s.io/apimachinery/pkg/runtime/schema"
 )
 
 // GetPipelineRun return a pipelinerun in a namespace from its name
@@ -43,7 +50,7 @@ func GetAllPipelineRuns(p cli.Params, opts metav1.ListOptions, limit int) ([]str
 		return nil, err
 	}
 
-	runs, err := cs.Tekton.TektonV1alpha1().PipelineRuns(p.Namespace()).List(opts)
+	runs, err := List(cs, opts, p.Namespace())
 	if err != nil {
 		return nil, err
 	}
@@ -64,4 +71,23 @@ func GetAllPipelineRuns(p cli.Params, opts metav1.ListOptions, limit int) ([]str
 		}
 	}
 	return ret, nil
+}
+
+func List(c *cli.Clients, opts metav1.ListOptions, ns string) (*v1beta1.PipelineRunList, error) {
+	prGroupResource := schema.GroupVersionResource{Group: "tekton.dev", Resource: "pipelineruns"}
+	unstructuredPR, err := prlist.AllObjecs(prGroupResource, c, ns, opts)
+	if err != nil {
+		return nil, err
+	}
+
+	var runs *v1beta1.PipelineRunList
+	if err := runtime.DefaultUnstructuredConverter.FromUnstructured(unstructuredPR.UnstructuredContent(), &runs); err != nil {
+		return nil, err
+	}
+	if err != nil {
+		fmt.Fprintf(os.Stderr, "Failed to list pipelineruns from %s namespace \n", ns)
+		return nil, err
+	}
+
+	return runs, nil
 }

@@ -27,6 +27,7 @@ import (
 	"github.com/tektoncd/cli/pkg/options"
 	"github.com/tektoncd/cli/pkg/test"
 	cb "github.com/tektoncd/cli/pkg/test/builder"
+	testDynamic "github.com/tektoncd/cli/pkg/test/dynamic"
 	"github.com/tektoncd/cli/test/prompt"
 	"github.com/tektoncd/pipeline/pkg/apis/pipeline/v1alpha1"
 	"github.com/tektoncd/pipeline/pkg/reconciler/pipelinerun/resources"
@@ -34,6 +35,7 @@ import (
 	tb "github.com/tektoncd/pipeline/test/builder"
 	corev1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+	"k8s.io/client-go/dynamic"
 	"knative.dev/pkg/apis"
 )
 
@@ -50,6 +52,7 @@ var (
 )
 
 func TestPipelineLog(t *testing.T) {
+	version := "v1alpha1"
 	clock := clockwork.NewFakeClock()
 
 	cs, _ := test.SeedTestData(t, pipelinetest.Data{
@@ -64,6 +67,11 @@ func TestPipelineLog(t *testing.T) {
 			},
 		},
 	})
+	cs.Pipeline.Resources = cb.APIResourceList(version, "pipelinerun")
+	dc, err := testDynamic.Client()
+	if err != nil {
+		t.Errorf("unable to create dynamic clinet: %v", err)
+	}
 
 	cs2, _ := test.SeedTestData(t, pipelinetest.Data{
 		Pipelines: []*v1alpha1.Pipeline{
@@ -77,7 +85,44 @@ func TestPipelineLog(t *testing.T) {
 			},
 		},
 	})
+	cs2.Pipeline.Resources = cb.APIResourceList(version, "pipelinerun")
+	dc2, err := testDynamic.Client()
+	if err != nil {
+		t.Errorf("unable to create dynamic clinet: %v", err)
+	}
 
+	prdata3 := []*v1alpha1.PipelineRun{
+		tb.PipelineRun(prName, ns,
+			cb.PipelineRunCreationTimestamp(clock.Now().Add(-10*time.Minute)),
+			tb.PipelineRunLabel("tekton.dev/pipeline", pipelineName),
+			tb.PipelineRunSpec(pipelineName),
+			tb.PipelineRunStatus(
+				tb.PipelineRunStatusCondition(apis.Condition{
+					Status: corev1.ConditionTrue,
+					Reason: resources.ReasonSucceeded,
+				}),
+				// pipeline run started 5 minutes ago
+				tb.PipelineRunStartTime(clock.Now().Add(-5*time.Minute)),
+				// takes 10 minutes to complete
+				cb.PipelineRunCompletionTime(clock.Now().Add(10*time.Minute)),
+			),
+		),
+		tb.PipelineRun(prName2, ns,
+			cb.PipelineRunCreationTimestamp(clock.Now().Add(-8*time.Minute)),
+			tb.PipelineRunLabel("tekton.dev/pipeline", pipelineName),
+			tb.PipelineRunSpec(pipelineName),
+			tb.PipelineRunStatus(
+				tb.PipelineRunStatusCondition(apis.Condition{
+					Status: corev1.ConditionTrue,
+					Reason: resources.ReasonSucceeded,
+				}),
+				// pipeline run started 3 minutes ago
+				tb.PipelineRunStartTime(clock.Now().Add(-3*time.Minute)),
+				// takes 10 minutes to complete
+				cb.PipelineRunCompletionTime(clock.Now().Add(10*time.Minute)),
+			),
+		),
+	}
 	cs3, _ := test.SeedTestData(t, pipelinetest.Data{
 		Pipelines: []*v1alpha1.Pipeline{
 			tb.Pipeline(pipelineName, ns,
@@ -85,38 +130,147 @@ func TestPipelineLog(t *testing.T) {
 				cb.PipelineCreationTimestamp(clock.Now().Add(-15*time.Minute)),
 			),
 		},
-		PipelineRuns: []*v1alpha1.PipelineRun{
+		PipelineRuns: prdata3,
+		Namespaces: []*corev1.Namespace{
+			{
+				ObjectMeta: metav1.ObjectMeta{
+					Name: ns,
+				},
+			},
+		},
+	})
+	cs.Pipeline.Resources = cb.APIResourceList(version, "pipelinerun")
+	dc3, err := testDynamic.Client(
+		cb.UnstructuredPR(prdata3[0], version),
+		cb.UnstructuredPR(prdata3[1], version),
+	)
+	if err != nil {
+		t.Errorf("unable to create dynamic clinet: %v", err)
+	}
 
-			tb.PipelineRun(prName, ns,
-				cb.PipelineRunCreationTimestamp(clock.Now().Add(-10*time.Minute)),
-				tb.PipelineRunLabel("tekton.dev/pipeline", pipelineName),
-				tb.PipelineRunSpec(pipelineName),
-				tb.PipelineRunStatus(
-					tb.PipelineRunStatusCondition(apis.Condition{
-						Status: corev1.ConditionTrue,
-						Reason: resources.ReasonSucceeded,
-					}),
-					// pipeline run started 5 minutes ago
-					tb.PipelineRunStartTime(clock.Now().Add(-5*time.Minute)),
-					// takes 10 minutes to complete
-					cb.PipelineRunCompletionTime(clock.Now().Add(10*time.Minute)),
-				),
-			),
-			tb.PipelineRun(prName2, ns,
-				cb.PipelineRunCreationTimestamp(clock.Now().Add(-8*time.Minute)),
-				tb.PipelineRunLabel("tekton.dev/pipeline", pipelineName),
-				tb.PipelineRunSpec(pipelineName),
-				tb.PipelineRunStatus(
-					tb.PipelineRunStatusCondition(apis.Condition{
-						Status: corev1.ConditionTrue,
-						Reason: resources.ReasonSucceeded,
-					}),
-					// pipeline run started 3 minutes ago
-					tb.PipelineRunStartTime(clock.Now().Add(-3*time.Minute)),
-					// takes 10 minutes to complete
-					cb.PipelineRunCompletionTime(clock.Now().Add(10*time.Minute)),
-				),
-			),
+	testParams := []struct {
+		name      string
+		command   []string
+		namespace string
+		dynamic   dynamic.Interface
+		input     pipelinetest.Clients
+		wantError bool
+		want      string
+	}{
+		{
+			name:      "Invalid namespace",
+			command:   []string{"logs", "-n", "invalid"},
+			namespace: "",
+			dynamic:   dc,
+			input:     cs,
+			wantError: true,
+			want:      "namespaces \"invalid\" not found",
+		},
+		{
+			name:      "Found no pipelines",
+			command:   []string{"logs", "-n", "ns"},
+			namespace: "",
+			dynamic:   dc,
+			input:     cs,
+			wantError: false,
+			want:      "No pipelines found in namespace: ns\n",
+		},
+		{
+			name:      "Found no pipelineruns",
+			command:   []string{"logs", pipelineName, "-n", ns},
+			namespace: "",
+			dynamic:   dc2,
+			input:     cs2,
+			wantError: false,
+			want:      "No pipelineruns found for pipeline: output-pipeline\n",
+		},
+		{
+			name:      "Pipeline does not exist",
+			command:   []string{"logs", "pipeline", "-n", ns},
+			namespace: "",
+			dynamic:   dc2,
+			input:     cs2,
+			wantError: true,
+			want:      "pipelines.tekton.dev \"pipeline\" not found",
+		},
+		{
+			name:      "Pipelinerun does not exist",
+			command:   []string{"logs", "pipeline", "pipelinerun", "-n", "ns"},
+			namespace: "ns",
+			dynamic:   dc,
+			input:     cs,
+			wantError: true,
+			want:      "pipelineruns.tekton.dev \"pipelinerun\" not found",
+		},
+		{
+			name:      "Invalid limit number",
+			command:   []string{"logs", pipelineName, "-n", ns, "--limit", "-1"},
+			namespace: "",
+			dynamic:   dc2,
+			input:     cs2,
+			wantError: true,
+			want:      "limit was -1 but must be a positive number",
+		},
+		{
+			name:      "Specify last flag",
+			command:   []string{"logs", pipelineName, "-n", ns, "-L"},
+			namespace: "default",
+			dynamic:   dc3,
+			input:     cs3,
+			wantError: false,
+			want:      "",
+		},
+	}
+
+	for _, tp := range testParams {
+		t.Run(tp.name, func(t *testing.T) {
+			p := &test.Params{Tekton: tp.input.Pipeline, Clock: clock, Kube: tp.input.Kube, Dynamic: tp.dynamic}
+			if tp.namespace != "" {
+				p.SetNamespace(tp.namespace)
+			}
+			c := Command(p)
+
+			out, err := test.ExecuteCommand(c, tp.command...)
+			if tp.wantError {
+				if err == nil {
+					t.Errorf("error expected here")
+				}
+				test.AssertOutput(t, tp.want, err.Error())
+			} else {
+				if err != nil {
+					t.Errorf("unexpected Error")
+				}
+				test.AssertOutput(t, tp.want, out)
+			}
+		})
+	}
+}
+
+func TestPipelineLog_v1beta1(t *testing.T) {
+	version := "v1beta1"
+	clock := clockwork.NewFakeClock()
+
+	cs, _ := test.SeedTestData(t, pipelinetest.Data{
+		Pipelines: []*v1alpha1.Pipeline{
+			tb.Pipeline(pipelineName, ns),
+		},
+		Namespaces: []*corev1.Namespace{
+			{
+				ObjectMeta: metav1.ObjectMeta{
+					Name: "ns",
+				},
+			},
+		},
+	})
+	cs.Pipeline.Resources = cb.APIResourceList(version, "pipelinerun")
+	dc, err := testDynamic.Client()
+	if err != nil {
+		t.Errorf("unable to create dynamic clinet: %v", err)
+	}
+
+	cs2, _ := test.SeedTestData(t, pipelinetest.Data{
+		Pipelines: []*v1alpha1.Pipeline{
+			tb.Pipeline(pipelineName, ns),
 		},
 		Namespaces: []*corev1.Namespace{
 			{
@@ -126,11 +280,74 @@ func TestPipelineLog(t *testing.T) {
 			},
 		},
 	})
+	cs2.Pipeline.Resources = cb.APIResourceList(version, "pipelinerun")
+	dc2, err := testDynamic.Client()
+	if err != nil {
+		t.Errorf("unable to create dynamic clinet: %v", err)
+	}
+
+	prdata3 := []*v1alpha1.PipelineRun{
+		tb.PipelineRun(prName, ns,
+			cb.PipelineRunCreationTimestamp(clock.Now().Add(-10*time.Minute)),
+			tb.PipelineRunLabel("tekton.dev/pipeline", pipelineName),
+			tb.PipelineRunSpec(pipelineName),
+			tb.PipelineRunStatus(
+				tb.PipelineRunStatusCondition(apis.Condition{
+					Status: corev1.ConditionTrue,
+					Reason: resources.ReasonSucceeded,
+				}),
+				// pipeline run started 5 minutes ago
+				tb.PipelineRunStartTime(clock.Now().Add(-5*time.Minute)),
+				// takes 10 minutes to complete
+				cb.PipelineRunCompletionTime(clock.Now().Add(10*time.Minute)),
+			),
+		),
+		tb.PipelineRun(prName2, ns,
+			cb.PipelineRunCreationTimestamp(clock.Now().Add(-8*time.Minute)),
+			tb.PipelineRunLabel("tekton.dev/pipeline", pipelineName),
+			tb.PipelineRunSpec(pipelineName),
+			tb.PipelineRunStatus(
+				tb.PipelineRunStatusCondition(apis.Condition{
+					Status: corev1.ConditionTrue,
+					Reason: resources.ReasonSucceeded,
+				}),
+				// pipeline run started 3 minutes ago
+				tb.PipelineRunStartTime(clock.Now().Add(-3*time.Minute)),
+				// takes 10 minutes to complete
+				cb.PipelineRunCompletionTime(clock.Now().Add(10*time.Minute)),
+			),
+		),
+	}
+	cs3, _ := test.SeedTestData(t, pipelinetest.Data{
+		Pipelines: []*v1alpha1.Pipeline{
+			tb.Pipeline(pipelineName, ns,
+				// created  15 minutes back
+				cb.PipelineCreationTimestamp(clock.Now().Add(-15*time.Minute)),
+			),
+		},
+		PipelineRuns: prdata3,
+		Namespaces: []*corev1.Namespace{
+			{
+				ObjectMeta: metav1.ObjectMeta{
+					Name: ns,
+				},
+			},
+		},
+	})
+	cs.Pipeline.Resources = cb.APIResourceList(version, "pipelinerun")
+	dc3, err := testDynamic.Client(
+		cb.UnstructuredPR(prdata3[0], version),
+		cb.UnstructuredPR(prdata3[1], version),
+	)
+	if err != nil {
+		t.Errorf("unable to create dynamic clinet: %v", err)
+	}
 
 	testParams := []struct {
 		name      string
 		command   []string
 		namespace string
+		dynamic   dynamic.Interface
 		input     pipelinetest.Clients
 		wantError bool
 		want      string
@@ -139,6 +356,7 @@ func TestPipelineLog(t *testing.T) {
 			name:      "Invalid namespace",
 			command:   []string{"logs", "-n", "invalid"},
 			namespace: "",
+			dynamic:   dc,
 			input:     cs,
 			wantError: true,
 			want:      "namespaces \"invalid\" not found",
@@ -147,6 +365,7 @@ func TestPipelineLog(t *testing.T) {
 			name:      "Found no pipelines",
 			command:   []string{"logs", "-n", "ns"},
 			namespace: "",
+			dynamic:   dc,
 			input:     cs,
 			wantError: false,
 			want:      "No pipelines found in namespace: ns\n",
@@ -155,6 +374,7 @@ func TestPipelineLog(t *testing.T) {
 			name:      "Found no pipelineruns",
 			command:   []string{"logs", pipelineName, "-n", ns},
 			namespace: "",
+			dynamic:   dc2,
 			input:     cs2,
 			wantError: false,
 			want:      "No pipelineruns found for pipeline: output-pipeline\n",
@@ -163,6 +383,7 @@ func TestPipelineLog(t *testing.T) {
 			name:      "Pipeline does not exist",
 			command:   []string{"logs", "pipeline", "-n", ns},
 			namespace: "",
+			dynamic:   dc2,
 			input:     cs2,
 			wantError: true,
 			want:      "pipelines.tekton.dev \"pipeline\" not found",
@@ -171,6 +392,7 @@ func TestPipelineLog(t *testing.T) {
 			name:      "Pipelinerun does not exist",
 			command:   []string{"logs", "pipeline", "pipelinerun", "-n", "ns"},
 			namespace: "ns",
+			dynamic:   dc,
 			input:     cs,
 			wantError: true,
 			want:      "pipelineruns.tekton.dev \"pipelinerun\" not found",
@@ -179,6 +401,7 @@ func TestPipelineLog(t *testing.T) {
 			name:      "Invalid limit number",
 			command:   []string{"logs", pipelineName, "-n", ns, "--limit", "-1"},
 			namespace: "",
+			dynamic:   dc2,
 			input:     cs2,
 			wantError: true,
 			want:      "limit was -1 but must be a positive number",
@@ -187,6 +410,7 @@ func TestPipelineLog(t *testing.T) {
 			name:      "Specify last flag",
 			command:   []string{"logs", pipelineName, "-n", ns, "-L"},
 			namespace: "default",
+			dynamic:   dc3,
 			input:     cs3,
 			wantError: false,
 			want:      "",
@@ -195,7 +419,7 @@ func TestPipelineLog(t *testing.T) {
 
 	for _, tp := range testParams {
 		t.Run(tp.name, func(t *testing.T) {
-			p := &test.Params{Tekton: tp.input.Pipeline, Clock: clock, Kube: tp.input.Kube}
+			p := &test.Params{Tekton: tp.input.Pipeline, Clock: clock, Kube: tp.input.Kube, Dynamic: tp.dynamic}
 			if tp.namespace != "" {
 				p.SetNamespace(tp.namespace)
 			}
@@ -572,31 +796,33 @@ func TestPipelineLog_Interactive(t *testing.T) {
 }
 
 func TestLogs_Auto_Select_FirstPipeline(t *testing.T) {
+	version := "v1alpha1"
 	pipelineName := "blahblah"
 	ns := "chouchou"
 	clock := clockwork.NewFakeClock()
 
+	prdata := []*v1alpha1.PipelineRun{
+		tb.PipelineRun(prName, ns,
+			cb.PipelineRunCreationTimestamp(clock.Now().Add(-10*time.Minute)),
+			tb.PipelineRunLabel("tekton.dev/pipeline", pipelineName),
+			tb.PipelineRunSpec(pipelineName),
+			tb.PipelineRunStatus(
+				tb.PipelineRunStatusCondition(apis.Condition{
+					Status: corev1.ConditionTrue,
+					Reason: resources.ReasonSucceeded,
+				}),
+				// pipeline run started 5 minutes ago
+				tb.PipelineRunStartTime(clock.Now().Add(-5*time.Minute)),
+				// takes 10 minutes to complete
+				cb.PipelineRunCompletionTime(clock.Now().Add(10*time.Minute)),
+			),
+		),
+	}
 	cs, _ := test.SeedTestData(t, pipelinetest.Data{
 		Pipelines: []*v1alpha1.Pipeline{
 			tb.Pipeline(pipelineName, ns),
 		},
-		PipelineRuns: []*v1alpha1.PipelineRun{
-			tb.PipelineRun(prName, ns,
-				cb.PipelineRunCreationTimestamp(clock.Now().Add(-10*time.Minute)),
-				tb.PipelineRunLabel("tekton.dev/pipeline", pipelineName),
-				tb.PipelineRunSpec(pipelineName),
-				tb.PipelineRunStatus(
-					tb.PipelineRunStatusCondition(apis.Condition{
-						Status: corev1.ConditionTrue,
-						Reason: resources.ReasonSucceeded,
-					}),
-					// pipeline run started 5 minutes ago
-					tb.PipelineRunStartTime(clock.Now().Add(-5*time.Minute)),
-					// takes 10 minutes to complete
-					cb.PipelineRunCompletionTime(clock.Now().Add(10*time.Minute)),
-				),
-			),
-		},
+		PipelineRuns: prdata,
 		Namespaces: []*corev1.Namespace{
 			{
 				ObjectMeta: metav1.ObjectMeta{
@@ -605,10 +831,17 @@ func TestLogs_Auto_Select_FirstPipeline(t *testing.T) {
 			},
 		},
 	})
-
+	cs.Pipeline.Resources = cb.APIResourceList(version, "pipelinerun")
+	dc, err := testDynamic.Client(
+		cb.UnstructuredPR(prdata[0], version),
+	)
+	if err != nil {
+		t.Errorf("unable to create dynamic clinet: %v", err)
+	}
 	p := test.Params{
-		Kube:   cs.Kube,
-		Tekton: cs.Pipeline,
+		Kube:    cs.Kube,
+		Tekton:  cs.Pipeline,
+		Dynamic: dc,
 	}
 	p.SetNamespace(ns)
 
@@ -617,7 +850,7 @@ func TestLogs_Auto_Select_FirstPipeline(t *testing.T) {
 		Limit:  5,
 		Params: &p,
 	}
-	err := getAllInputs(lopt)
+	err = getAllInputs(lopt)
 	if err != nil {
 		t.Errorf("Unexpected error: %v", err)
 	}
