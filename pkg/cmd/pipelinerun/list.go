@@ -24,12 +24,12 @@ import (
 	"github.com/spf13/cobra"
 	"github.com/tektoncd/cli/pkg/cli"
 	"github.com/tektoncd/cli/pkg/formatted"
+	praction "github.com/tektoncd/cli/pkg/pipelinerun"
 	prsort "github.com/tektoncd/cli/pkg/pipelinerun/sort"
 	"github.com/tektoncd/cli/pkg/printer"
 	"github.com/tektoncd/cli/pkg/validate"
-	"github.com/tektoncd/pipeline/pkg/apis/pipeline/v1alpha1"
+	"github.com/tektoncd/pipeline/pkg/apis/pipeline/v1beta1"
 	v1 "k8s.io/apimachinery/pkg/apis/meta/v1"
-	"k8s.io/apimachinery/pkg/runtime/schema"
 	cliopts "k8s.io/cli-runtime/pkg/genericclioptions"
 )
 
@@ -150,7 +150,7 @@ List all PipelineRuns in a namespace 'foo':
 	return c
 }
 
-func list(p cli.Params, pipeline string, limit int, labelselector string, allnamespaces bool) (*v1alpha1.PipelineRunList, error) {
+func list(p cli.Params, pipeline string, limit int, labelselector string, allnamespaces bool) (*v1beta1.PipelineRunList, error) {
 	var selector string
 	var options v1.ListOptions
 
@@ -179,8 +179,7 @@ func list(p cli.Params, pipeline string, limit int, labelselector string, allnam
 	if allnamespaces {
 		ns = ""
 	}
-	prc := cs.Tekton.TektonV1alpha1().PipelineRuns(ns)
-	prs, err := prc.List(options)
+	prs, err := praction.List(cs, options, ns)
 	if err != nil {
 		return nil, err
 	}
@@ -205,18 +204,10 @@ func list(p cli.Params, pipeline string, limit int, labelselector string, allnam
 		prs.Items = prs.Items[0:limit]
 	}
 
-	// NOTE: this is required for -o json|yaml to work properly since
-	// tektoncd go client fails to set these; probably a bug
-	prs.GetObjectKind().SetGroupVersionKind(
-		schema.GroupVersionKind{
-			Version: "tekton.dev/v1alpha1",
-			Kind:    "PipelineRunList",
-		})
-
 	return prs, nil
 }
 
-func reverse(prs *v1alpha1.PipelineRunList) {
+func reverse(prs *v1beta1.PipelineRunList) {
 	i := 0
 	j := len(prs.Items) - 1
 	prItems := prs.Items
@@ -228,10 +219,10 @@ func reverse(prs *v1alpha1.PipelineRunList) {
 	prs.Items = prItems
 }
 
-func printFormatted(s *cli.Stream, prs *v1alpha1.PipelineRunList, c clockwork.Clock, allnamespaces bool) error {
+func printFormatted(s *cli.Stream, prs *v1beta1.PipelineRunList, c clockwork.Clock, allnamespaces bool) error {
 
 	var data = struct {
-		PipelineRuns  *v1alpha1.PipelineRunList
+		PipelineRuns  *v1beta1.PipelineRunList
 		Time          clockwork.Clock
 		AllNamespaces bool
 	}{

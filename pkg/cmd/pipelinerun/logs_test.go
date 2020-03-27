@@ -27,6 +27,7 @@ import (
 	"github.com/tektoncd/cli/pkg/pods/stream"
 	"github.com/tektoncd/cli/pkg/test"
 	cb "github.com/tektoncd/cli/pkg/test/builder"
+	testDynamic "github.com/tektoncd/cli/pkg/test/dynamic"
 	"github.com/tektoncd/pipeline/pkg/apis/pipeline/v1alpha1"
 	"github.com/tektoncd/pipeline/pkg/reconciler/pipelinerun/resources"
 	pipelinetest "github.com/tektoncd/pipeline/test"
@@ -82,26 +83,27 @@ func TestLog_no_pipelinerun_argument(t *testing.T) {
 }
 
 func TestLog_run_found(t *testing.T) {
+	version := "v1alpha1"
 	clock := clockwork.NewFakeClock()
-
+	prdata := []*v1alpha1.PipelineRun{
+		tb.PipelineRun("pipelinerun-1", "ns",
+			tb.PipelineRunLabel("tekton.dev/pipeline", "pipeline"),
+			tb.PipelineRunSpec("pipeline"),
+			tb.PipelineRunStatus(
+				tb.PipelineRunStatusCondition(apis.Condition{
+					Status: corev1.ConditionTrue,
+					Reason: resources.ReasonSucceeded,
+				}),
+			),
+		),
+	}
 	cs, _ := test.SeedTestData(t, pipelinetest.Data{
 		Pipelines: []*v1alpha1.Pipeline{
 			tb.Pipeline("pipeline", "ns",
 				cb.PipelineCreationTimestamp(clock.Now().Add(-15*time.Minute)),
 			),
 		},
-		PipelineRuns: []*v1alpha1.PipelineRun{
-			tb.PipelineRun("pipelinerun-1", "ns",
-				tb.PipelineRunLabel("tekton.dev/pipeline", "pipeline"),
-				tb.PipelineRunSpec("pipeline"),
-				tb.PipelineRunStatus(
-					tb.PipelineRunStatusCondition(apis.Condition{
-						Status: corev1.ConditionTrue,
-						Reason: resources.ReasonSucceeded,
-					}),
-				),
-			),
-		},
+		PipelineRuns: prdata,
 		Namespaces: []*corev1.Namespace{
 			{
 				ObjectMeta: metav1.ObjectMeta{
@@ -110,10 +112,18 @@ func TestLog_run_found(t *testing.T) {
 			},
 		},
 	})
-	p := &test.Params{Tekton: cs.Pipeline, Kube: cs.Kube}
+	cs.Pipeline.Resources = cb.APIResourceList(version, "pipelinerun")
+	dc, err := testDynamic.Client(
+		cb.UnstructuredPR(prdata[0], version),
+	)
+	if err != nil {
+		t.Errorf("unable to create dynamic clinet: %v", err)
+	}
+
+	p := &test.Params{Tekton: cs.Pipeline, Kube: cs.Kube, Dynamic: dc}
 
 	c := Command(p)
-	_, err := test.ExecuteCommand(c, "logs", "-n", "ns")
+	_, err = test.ExecuteCommand(c, "logs", "-n", "ns")
 	if err != nil {
 		t.Errorf("Unexpected error %v", err)
 	}
@@ -999,6 +1009,7 @@ func fetchLogs(lo *options.LogOptions) (string, error) {
 }
 
 func TestLog_pipelinerun_last(t *testing.T) {
+	version := "v1alpha1"
 	var (
 		pipelineName = "pipeline1"
 		prName       = "pr1"
@@ -1049,9 +1060,18 @@ func TestLog_pipelinerun_last(t *testing.T) {
 	}
 
 	cs, _ := test.SeedTestData(t, pipelinetest.Data{PipelineRuns: pipelineruns, Pipelines: pipelines, Namespaces: namespaces})
+	cs.Pipeline.Resources = cb.APIResourceList(version, "pipelinerun")
+	dc, err := testDynamic.Client(
+		cb.UnstructuredPR(pipelineruns[0], version),
+		cb.UnstructuredPR(pipelineruns[1], version),
+	)
+	if err != nil {
+		t.Errorf("unable to create dynamic clinet: %v", err)
+	}
 	p := test.Params{
-		Kube:   cs.Kube,
-		Tekton: cs.Pipeline,
+		Kube:    cs.Kube,
+		Tekton:  cs.Pipeline,
+		Dynamic: dc,
 	}
 	p.SetNamespace(ns)
 	lopt := options.LogOptions{
@@ -1059,7 +1079,7 @@ func TestLog_pipelinerun_last(t *testing.T) {
 		Last:   true,
 		Limit:  len(pipelineruns),
 	}
-	err := askRunName(&lopt)
+	err = askRunName(&lopt)
 	if err != nil {
 		t.Errorf("Unexpected error: %v", err)
 	}
@@ -1067,6 +1087,7 @@ func TestLog_pipelinerun_last(t *testing.T) {
 }
 
 func TestLog_pipelinerun_only_one(t *testing.T) {
+	version := "v1alpha1"
 	var (
 		pipelineName = "pipeline1"
 		prName       = "pr1"
@@ -1105,9 +1126,18 @@ func TestLog_pipelinerun_only_one(t *testing.T) {
 	}
 
 	cs, _ := test.SeedTestData(t, pipelinetest.Data{PipelineRuns: pipelineruns, Pipelines: pipelines, Namespaces: namespaces})
+	cs.Pipeline.Resources = cb.APIResourceList(version, "pipelinerun")
+	dc, err := testDynamic.Client(
+		cb.UnstructuredPR(pipelineruns[0], version),
+	)
+	if err != nil {
+		t.Errorf("unable to create dynamic clinet: %v", err)
+	}
+
 	p := test.Params{
-		Kube:   cs.Kube,
-		Tekton: cs.Pipeline,
+		Kube:    cs.Kube,
+		Tekton:  cs.Pipeline,
+		Dynamic: dc,
 	}
 	p.SetNamespace(ns)
 	lopt := options.LogOptions{
@@ -1116,7 +1146,7 @@ func TestLog_pipelinerun_only_one(t *testing.T) {
 		// Limit.. but I guess that's another fight for another day.
 		Limit: len(pipelineruns),
 	}
-	err := askRunName(&lopt)
+	err = askRunName(&lopt)
 	if err != nil {
 		t.Errorf("Unexpected error: %v", err)
 	}
