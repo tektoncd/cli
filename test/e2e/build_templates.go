@@ -34,7 +34,7 @@ import (
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 )
 
-func GetTask(c *Clients, name string) *v1alpha1.Task {
+func GetTask(c *Clients, name string) *v1beta1.Task {
 
 	task, err := c.TaskClient.Get(name, metav1.GetOptions{})
 	if err != nil {
@@ -44,7 +44,7 @@ func GetTask(c *Clients, name string) *v1alpha1.Task {
 	return task
 }
 
-func GetTaskList(c *Clients) *v1alpha1.TaskList {
+func GetTaskList(c *Clients) *v1beta1.TaskList {
 
 	tasklist, err := c.TaskClient.List(metav1.ListOptions{})
 
@@ -98,7 +98,7 @@ func GetPipelineResourceList(c *Clients) *v1alpha1.PipelineResourceList {
 	return pipelineResourceList
 }
 
-func GetPipeline(c *Clients, name string) *v1alpha1.Pipeline {
+func GetPipeline(c *Clients, name string) *v1beta1.Pipeline {
 
 	pipeline, err := c.PipelineClient.Get(name, metav1.GetOptions{})
 
@@ -109,7 +109,7 @@ func GetPipeline(c *Clients, name string) *v1alpha1.Pipeline {
 	return pipeline
 }
 
-func GetPipelineList(c *Clients) *v1alpha1.PipelineList {
+func GetPipelineList(c *Clients) *v1beta1.PipelineList {
 
 	pipelineList, err := c.PipelineClient.List(metav1.ListOptions{})
 
@@ -120,7 +120,7 @@ func GetPipelineList(c *Clients) *v1alpha1.PipelineList {
 	return pipelineList
 }
 
-func GetPipelineRun(c *Clients, name string) *v1alpha1.PipelineRun {
+func GetPipelineRun(c *Clients, name string) *v1beta1.PipelineRun {
 
 	pipelineRun, err := c.PipelineRunClient.Get(name, metav1.GetOptions{})
 
@@ -131,7 +131,7 @@ func GetPipelineRun(c *Clients, name string) *v1alpha1.PipelineRun {
 	return pipelineRun
 }
 
-func GetPipelineRunListWithName(c *Clients, pname string) *v1alpha1.PipelineRunList {
+func GetPipelineRunListWithName(c *Clients, pname string) *v1beta1.PipelineRunList {
 	opts := metav1.ListOptions{
 		LabelSelector: fmt.Sprintf("tekton.dev/pipeline=%s", pname),
 	}
@@ -144,7 +144,7 @@ func GetPipelineRunListWithName(c *Clients, pname string) *v1alpha1.PipelineRunL
 	return pipelineRunList
 }
 
-func GetPipelineRunList(c *Clients) *v1alpha1.PipelineRunList {
+func GetPipelineRunList(c *Clients) *v1beta1.PipelineRunList {
 
 	pipelineRunList, err := c.PipelineRunClient.List(metav1.ListOptions{})
 
@@ -285,7 +285,7 @@ func ListAllTasksOutput(t *testing.T, cs *Clients, td map[int]interface{}) strin
 	return tmplBytes.String()
 }
 
-func GetTaskListWithTestData(t *testing.T, c *Clients, td map[int]interface{}) *v1alpha1.TaskList {
+func GetTaskListWithTestData(t *testing.T, c *Clients, td map[int]interface{}) *v1beta1.TaskList {
 	t.Helper()
 
 	tasklist := GetTaskList(c)
@@ -394,7 +394,7 @@ func GetTaskRunListWithTestData(t *testing.T, c *Clients, td map[int]interface{}
 	return taskRunlist
 }
 
-type pipelineruns map[string]v1alpha1.PipelineRun
+type pipelineruns map[string]v1beta1.PipelineRun
 
 type PipelinesListData struct {
 	Name   string
@@ -425,7 +425,7 @@ func ListAllPipelinesOutput(t *testing.T, cs *Clients, td map[int]interface{}) s
 		t.Error("Failed to list pipelines")
 	}
 	var data = struct {
-		Pipelines    *v1alpha1.PipelineList
+		Pipelines    *v1beta1.PipelineList
 		PipelineRuns pipelineruns
 		Params       clockwork.Clock
 	}{
@@ -435,7 +435,7 @@ func ListAllPipelinesOutput(t *testing.T, cs *Clients, td map[int]interface{}) s
 	}
 
 	funcMap := template.FuncMap{
-		"accessMap": func(prs pipelineruns, name string) *v1alpha1.PipelineRun {
+		"accessMap": func(prs pipelineruns, name string) *v1beta1.PipelineRun {
 			if pr, ok := prs[name]; ok {
 				return &pr
 			}
@@ -462,7 +462,7 @@ func ListAllPipelinesOutput(t *testing.T, cs *Clients, td map[int]interface{}) s
 	return tmplBytes.String()
 }
 
-func listPipelineDetailsWithTestData(t *testing.T, cs *Clients, td map[int]interface{}) (*v1alpha1.PipelineList, pipelineruns, error) {
+func listPipelineDetailsWithTestData(t *testing.T, cs *Clients, td map[int]interface{}) (*v1beta1.PipelineList, pipelineruns, error) {
 	t.Helper()
 	ps := GetPipelineListWithTestData(t, cs, td)
 	runs := GetPipelineRunList(cs)
@@ -488,7 +488,7 @@ func listPipelineDetailsWithTestData(t *testing.T, cs *Clients, td map[int]inter
 	return ps, latestRuns, nil
 }
 
-func GetPipelineListWithTestData(t *testing.T, c *Clients, td map[int]interface{}) *v1alpha1.PipelineList {
+func GetPipelineListWithTestData(t *testing.T, c *Clients, td map[int]interface{}) *v1beta1.PipelineList {
 	t.Helper()
 	ps := GetPipelineList(c)
 
@@ -596,8 +596,8 @@ func GetPipelineDescribeOutput(t *testing.T, cs *Clients, pname string, td map[i
 	pipelineRuns := GetPipelineRunListWithNameAndTestData(t, cs, pname, td)
 
 	var data = struct {
-		Pipeline     *v1alpha1.Pipeline
-		PipelineRuns *v1alpha1.PipelineRunList
+		Pipeline     *v1beta1.Pipeline
+		PipelineRuns *v1beta1.PipelineRunList
 		PipelineName string
 		Params       clockwork.Clock
 	}{
@@ -631,7 +631,7 @@ func GetPipelineDescribeOutput(t *testing.T, cs *Clients, pname string, td map[i
 
 }
 
-func GetPipelineWithTestData(t *testing.T, c *Clients, name string, td map[int]interface{}) *v1alpha1.Pipeline {
+func GetPipelineWithTestData(t *testing.T, c *Clients, name string, td map[int]interface{}) *v1beta1.Pipeline {
 	t.Helper()
 	pipeline := GetPipeline(c, name)
 
@@ -695,7 +695,7 @@ func GetPipelineWithTestData(t *testing.T, c *Clients, name string, td map[int]i
 	return pipeline
 }
 
-func GetPipelineRunListWithNameAndTestData(t *testing.T, c *Clients, pname string, td map[int]interface{}) *v1alpha1.PipelineRunList {
+func GetPipelineRunListWithNameAndTestData(t *testing.T, c *Clients, pname string, td map[int]interface{}) *v1beta1.PipelineRunList {
 	t.Helper()
 	opts := metav1.ListOptions{
 		LabelSelector: fmt.Sprintf("tekton.dev/pipeline=%s", pname),
