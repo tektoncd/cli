@@ -16,7 +16,7 @@ vendor:
 	@go mod vendor
 
 .PHONY: cross
-cross: amd64 386 arm arm64 ## build cross platform binaries
+cross: amd64 386 arm arm64 s390x ## build cross platform binaries
 
 .PHONY: amd64
 amd64:
@@ -37,6 +37,10 @@ arm:
 .PHONY: arm64
 arm64:
 	GOOS=linux GOARCH=arm64 go build -mod=vendor $(LDFLAGS) -o bin/tkn-linux-arm64 ./cmd/tkn
+
+.PHONY: s390x
+s390x:
+	GOOS=linux GOARCH=s390x go build -mod=vendor $(LDFLAGS) -o bin/tkn-linux-s390x ./cmd/tkn
 
 bin/%: cmd/% FORCE
 	go build -mod=vendor $(LDFLAGS) -v -o $@ ./$<

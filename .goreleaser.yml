@@ -12,6 +12,7 @@ builds:
   goarch:
   - amd64
   - arm64
+  - s390x
   ldflags:
   - -w -X github.com/tektoncd/cli/pkg/cmd/version.clientVersion={{.Version}}
 archives:
