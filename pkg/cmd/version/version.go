@@ -33,8 +33,10 @@ import (
 // NOTE: use go build -ldflags "-X github.com/tektoncd/cli/pkg/cmd/version.clientVersion=$(git describe)"
 var clientVersion = devVersion
 
-const devVersion = "dev"
-const latestReleaseURL = "https://api.github.com/repos/tektoncd/cli/releases/latest"
+const (
+	devVersion       = "dev"
+	latestReleaseURL = "https://api.github.com/repos/tektoncd/cli/releases/latest"
+)
 
 // Command returns version command
 func Command(p cli.Params) *cobra.Command {
