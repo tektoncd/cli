@@ -129,7 +129,7 @@ func taskRunLister(p cli.Params, cs *cli.Clients) func(string) ([]string, error)
 		lOpts := metav1.ListOptions{
 			LabelSelector: fmt.Sprintf("tekton.dev/task=%s", taskName),
 		}
-		taskRuns, err := cs.Tekton.TektonV1alpha1().TaskRuns(p.Namespace()).List(lOpts)
+		taskRuns, err := trlist.TaskRuns(cs, lOpts, p.Namespace())
 		if err != nil {
 			return nil, err
 		}

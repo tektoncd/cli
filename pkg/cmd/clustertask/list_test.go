@@ -31,7 +31,7 @@ import (
 
 func TestClusterTaskList_Empty(t *testing.T) {
 	cs, _ := test.SeedTestData(t, pipelinetest.Data{})
-	cs.Pipeline.Resources = cb.APIResourceList("v1alpha1", "clustertask")
+	cs.Pipeline.Resources = cb.APIResourceList("v1alpha1", []string{"clustertask"})
 
 	dynamic, err := testDynamic.Client()
 	if err != nil {
@@ -75,7 +75,7 @@ func TestClusterTaskListOnlyClusterTasksv1alpha1(t *testing.T) {
 
 	cs, _ := test.SeedTestData(t, pipelinetest.Data{ClusterTasks: clustertasks})
 	p := &test.Params{Tekton: cs.Pipeline, Kube: cs.Kube, Clock: clock, Dynamic: dynamic}
-	cs.Pipeline.Resources = cb.APIResourceList(version, "clustertask")
+	cs.Pipeline.Resources = cb.APIResourceList(version, []string{"clustertask"})
 
 	clustertask := Command(p)
 	output, err := test.ExecuteCommand(clustertask, "list")
@@ -111,7 +111,7 @@ func TestClusterTaskListOnlyClusterTasksv1beta1(t *testing.T) {
 
 	cs, _ := test.SeedTestData(t, pipelinetest.Data{ClusterTasks: clustertasks})
 	p := &test.Params{Tekton: cs.Pipeline, Kube: cs.Kube, Clock: clock, Dynamic: dynamic}
-	cs.Pipeline.Resources = cb.APIResourceList(version, "clustertask")
+	cs.Pipeline.Resources = cb.APIResourceList(version, []string{"clustertask"})
 
 	clustertask := Command(p)
 	output, err := test.ExecuteCommand(clustertask, "list")

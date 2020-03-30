@@ -566,7 +566,7 @@ func command(t *testing.T, trs []*v1alpha1.TaskRun, now time.Time, ns []*corev1.
 	clock.Advance(time.Duration(60) * time.Minute)
 
 	cs, _ := test.SeedTestData(t, pipelinetest.Data{TaskRuns: trs, Namespaces: ns})
-	cs.Pipeline.Resources = cb.APIResourceList(version, "taskrun")
+	cs.Pipeline.Resources = cb.APIResourceList(version, []string{"taskrun"})
 	p := &test.Params{Tekton: cs.Pipeline, Clock: clock, Kube: cs.Kube, Dynamic: dc}
 
 	return Command(p)

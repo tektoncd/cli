@@ -56,7 +56,7 @@ func TestTaskList_Empty(t *testing.T) {
 		},
 	}
 	cs, _ := test.SeedTestData(t, pipelinetest.Data{Namespaces: ns})
-	cs.Pipeline.Resources = cb.APIResourceList("v1alpha1", "task")
+	cs.Pipeline.Resources = cb.APIResourceList("v1alpha1", []string{"task"})
 
 	dynamic, err := testDynamic.Client()
 	if err != nil {
@@ -106,7 +106,7 @@ func TestTaskList_Only_Tasks_v1alpha1(t *testing.T) {
 
 	cs, _ := test.SeedTestData(t, pipelinetest.Data{Tasks: tasks, Namespaces: ns})
 	p := &test.Params{Tekton: cs.Pipeline, Clock: clock, Kube: cs.Kube, Dynamic: dynamic}
-	cs.Pipeline.Resources = cb.APIResourceList("v1alpha1", "task")
+	cs.Pipeline.Resources = cb.APIResourceList("v1alpha1", []string{"task"})
 	task := Command(p)
 
 	output, err := test.ExecuteCommand(task, "list", "-n", "namespace")
@@ -152,7 +152,7 @@ func TestTaskList_Only_Tasks_v1beta1(t *testing.T) {
 
 	cs, _ := test.SeedTestData(t, pipelinetest.Data{Tasks: tasks, Namespaces: ns})
 	p := &test.Params{Tekton: cs.Pipeline, Clock: clock, Kube: cs.Kube, Dynamic: dynamic}
-	cs.Pipeline.Resources = cb.APIResourceList("v1beta1", "task")
+	cs.Pipeline.Resources = cb.APIResourceList("v1beta1", []string{"task"})
 	task := Command(p)
 
 	output, err := test.ExecuteCommand(task, "list", "-n", "namespace")

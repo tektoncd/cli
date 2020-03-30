@@ -67,7 +67,7 @@ func TestPipelineLog(t *testing.T) {
 			},
 		},
 	})
-	cs.Pipeline.Resources = cb.APIResourceList(version, "pipelinerun")
+	cs.Pipeline.Resources = cb.APIResourceList(version, []string{"pipelinerun"})
 	dc, err := testDynamic.Client()
 	if err != nil {
 		t.Errorf("unable to create dynamic clinet: %v", err)
@@ -85,7 +85,7 @@ func TestPipelineLog(t *testing.T) {
 			},
 		},
 	})
-	cs2.Pipeline.Resources = cb.APIResourceList(version, "pipelinerun")
+	cs2.Pipeline.Resources = cb.APIResourceList(version, []string{"pipelinerun"})
 	dc2, err := testDynamic.Client()
 	if err != nil {
 		t.Errorf("unable to create dynamic clinet: %v", err)
@@ -139,7 +139,7 @@ func TestPipelineLog(t *testing.T) {
 			},
 		},
 	})
-	cs.Pipeline.Resources = cb.APIResourceList(version, "pipelinerun")
+	cs.Pipeline.Resources = cb.APIResourceList(version, []string{"pipelinerun"})
 	dc3, err := testDynamic.Client(
 		cb.UnstructuredPR(prdata3[0], version),
 		cb.UnstructuredPR(prdata3[1], version),
@@ -262,7 +262,7 @@ func TestPipelineLog_v1beta1(t *testing.T) {
 			},
 		},
 	})
-	cs.Pipeline.Resources = cb.APIResourceList(version, "pipelinerun")
+	cs.Pipeline.Resources = cb.APIResourceList(version, []string{"pipelinerun"})
 	dc, err := testDynamic.Client()
 	if err != nil {
 		t.Errorf("unable to create dynamic clinet: %v", err)
@@ -280,7 +280,7 @@ func TestPipelineLog_v1beta1(t *testing.T) {
 			},
 		},
 	})
-	cs2.Pipeline.Resources = cb.APIResourceList(version, "pipelinerun")
+	cs2.Pipeline.Resources = cb.APIResourceList(version, []string{"pipelinerun"})
 	dc2, err := testDynamic.Client()
 	if err != nil {
 		t.Errorf("unable to create dynamic clinet: %v", err)
@@ -334,7 +334,7 @@ func TestPipelineLog_v1beta1(t *testing.T) {
 			},
 		},
 	})
-	cs.Pipeline.Resources = cb.APIResourceList(version, "pipelinerun")
+	cs.Pipeline.Resources = cb.APIResourceList(version, []string{"pipelinerun"})
 	dc3, err := testDynamic.Client(
 		cb.UnstructuredPR(prdata3[0], version),
 		cb.UnstructuredPR(prdata3[1], version),
@@ -831,7 +831,7 @@ func TestLogs_Auto_Select_FirstPipeline(t *testing.T) {
 			},
 		},
 	})
-	cs.Pipeline.Resources = cb.APIResourceList(version, "pipelinerun")
+	cs.Pipeline.Resources = cb.APIResourceList(version, []string{"pipelinerun"})
 	dc, err := testDynamic.Client(
 		cb.UnstructuredPR(prdata[0], version),
 	)

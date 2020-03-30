@@ -68,7 +68,7 @@ func TestPipelinesList_with_single_run(t *testing.T) {
 	cs, _ := test.SeedTestData(t, pipelinetest.Data{
 		PipelineRuns: prdata,
 	})
-	cs.Pipeline.Resources = cb.APIResourceList(version, "pipelinerun")
+	cs.Pipeline.Resources = cb.APIResourceList(version, []string{"pipelinerun"})
 
 	dc, err := testDynamic.Client(
 		cb.UnstructuredPR(prdata[0], version),
@@ -165,7 +165,7 @@ func TestPipelinesList_with_single_run_v1beta1(t *testing.T) {
 	cs, _ := test.SeedTestData(t, pipelinetest.Data{
 		PipelineRuns: prdata,
 	})
-	cs.Pipeline.Resources = cb.APIResourceList(version, "pipelinerun")
+	cs.Pipeline.Resources = cb.APIResourceList(version, []string{"pipelinerun"})
 
 	dc, err := testDynamic.Client(
 		cb.UnstructuredPR(prdata[0], version),
