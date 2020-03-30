@@ -322,14 +322,6 @@ func TestListPipelineRuns_v1beta1(t *testing.T) {
 		t.Errorf("unable to create dynamic clinet: %v", err)
 	}
 
-	dc2, err := testDynamic.Client(
-		cb.UnstructuredPR(prsMultipleNs[0], version),
-		cb.UnstructuredPR(prsMultipleNs[1], version),
-	)
-	if err != nil {
-		t.Errorf("unable to create dynamic clinet: %v", err)
-	}
-
 	tests := []struct {
 		name      string
 		command   *cobra.Command
@@ -423,8 +415,20 @@ func TestListPipelineRuns_v1beta1(t *testing.T) {
 		},
 		{
 			name:      "print pipelineruns in all namespaces",
-			command:   command(t, prsMultipleNs, clock.Now(), ns, version, dc2),
+			command:   command(t, prsMultipleNs, clock.Now(), ns, version, dc1),
 			args:      []string{"list", "--all-namespaces"},
+			wantError: false,
+		},
+		{
+			name:      "print pipelineruns without headers",
+			command:   command(t, prsMultipleNs, clock.Now(), ns, version, dc1),
+			args:      []string{"list", "--no-headers"},
+			wantError: false,
+		},
+		{
+			name:      "print pipelineruns in all namespaces without headers",
+			command:   command(t, prsMultipleNs, clock.Now(), ns, version, dc1),
+			args:      []string{"list", "--all-namespaces", "--no-headers"},
 			wantError: false,
 		},
 	}
