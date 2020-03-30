@@ -76,7 +76,7 @@ func TestLog_no_taskrun_arg(t *testing.T) {
 			},
 		},
 	})
-	cs.Pipeline.Resources = cb.APIResourceList("v1alpha1", "taskrun")
+	cs.Pipeline.Resources = cb.APIResourceList("v1alpha1", []string{"taskrun"})
 
 	dc1, err := testDynamic.Client()
 	if err != nil {
@@ -124,7 +124,7 @@ func TestLog_no_taskrun_arg(t *testing.T) {
 			),
 		},
 	})
-	cs2.Pipeline.Resources = cb.APIResourceList("v1alpha1", "taskrun")
+	cs2.Pipeline.Resources = cb.APIResourceList("v1alpha1", []string{"taskrun"})
 	dc2, err := testDynamic.Client(cb.UnstructuredTR(taskrun2[0], "v1alpha1"))
 	if err != nil {
 		t.Errorf("unable to create dynamic clinet: %v", err)
@@ -185,7 +185,7 @@ func TestLog_missing_taskrun(t *testing.T) {
 		t.Errorf("unable to create dynamic clinet: %v", err)
 	}
 	cs, _ := test.SeedTestData(t, pipelinetest.Data{TaskRuns: tr, Namespaces: nsList})
-	cs.Pipeline.Resources = cb.APIResourceList("v1alpha1", "taskrun")
+	cs.Pipeline.Resources = cb.APIResourceList("v1alpha1", []string{"TaskRun"})
 	watcher := watch.NewFake()
 	cs.Kube.PrependWatchReactor("pods", k8stest.DefaultWatchReactor(watcher, nil))
 	p := &test.Params{Tekton: cs.Pipeline, Kube: cs.Kube, Dynamic: dc}
@@ -697,7 +697,7 @@ func TestLog_taskrun_last(t *testing.T) {
 	if err != nil {
 		t.Errorf("unable to create dynamic clinet: %v", err)
 	}
-	cs.Pipeline.Resources = cb.APIResourceList("v1alpha1", "taskrun")
+	cs.Pipeline.Resources = cb.APIResourceList("v1alpha1", []string{"taskrun"})
 	p := test.Params{
 		Kube:    cs.Kube,
 		Tekton:  cs.Pipeline,

@@ -451,7 +451,7 @@ func TestListPipeline_empty(t *testing.T) {
 	}
 
 	cs, _ := test.SeedTestData(t, pipelinetest.Data{Namespaces: ns})
-	cs.Pipeline.Resources = cb.APIResourceList("v1alpha1", "pipelinerun")
+	cs.Pipeline.Resources = cb.APIResourceList("v1alpha1", []string{"pipelinerun"})
 	dc, err := testDynamic.Client()
 	if err != nil {
 		t.Errorf("unable to create dynamic clinet: %v", err)
@@ -473,7 +473,7 @@ func command(t *testing.T, prs []*v1alpha1.PipelineRun, now time.Time, ns []*cor
 	clock.Advance(time.Duration(60) * time.Minute)
 
 	cs, _ := test.SeedTestData(t, pipelinetest.Data{PipelineRuns: prs, Namespaces: ns})
-	cs.Pipeline.Resources = cb.APIResourceList(version, "pipelinerun")
+	cs.Pipeline.Resources = cb.APIResourceList(version, []string{"pipelinerun"})
 
 	p := &test.Params{Tekton: cs.Pipeline, Clock: clock, Kube: cs.Kube, Dynamic: dc}
 

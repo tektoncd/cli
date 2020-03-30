@@ -83,7 +83,7 @@ func TestTaskRunDelete(t *testing.T) {
 	for i := 0; i < 5; i++ {
 		trs := trdata
 		cs, _ := test.SeedTestData(t, pipelinetest.Data{TaskRuns: trs, Namespaces: ns})
-		cs.Pipeline.Resources = cb.APIResourceList(version, "taskrun")
+		cs.Pipeline.Resources = cb.APIResourceList(version, []string{"taskrun"})
 		dc, err := testDynamic.Client(
 			cb.UnstructuredTR(trdata[0], version),
 			cb.UnstructuredTR(trdata[1], version),
@@ -309,7 +309,7 @@ func TestTaskRunDelete_v1beta1(t *testing.T) {
 	for i := 0; i < 5; i++ {
 		trs := trdata
 		cs, _ := test.SeedTestData(t, pipelinetest.Data{TaskRuns: trs, Namespaces: ns})
-		cs.Pipeline.Resources = cb.APIResourceList(version, "taskrun")
+		cs.Pipeline.Resources = cb.APIResourceList(version, []string{"taskrun"})
 		dc, err := testDynamic.Client(
 			cb.UnstructuredTR(trdata[0], version),
 			cb.UnstructuredTR(trdata[1], version),

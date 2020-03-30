@@ -112,7 +112,7 @@ func TestLog_run_found(t *testing.T) {
 			},
 		},
 	})
-	cs.Pipeline.Resources = cb.APIResourceList(version, "pipelinerun")
+	cs.Pipeline.Resources = cb.APIResourceList(version, []string{"pipelinerun"})
 	dc, err := testDynamic.Client(
 		cb.UnstructuredPR(prdata[0], version),
 	)
@@ -1060,7 +1060,7 @@ func TestLog_pipelinerun_last(t *testing.T) {
 	}
 
 	cs, _ := test.SeedTestData(t, pipelinetest.Data{PipelineRuns: pipelineruns, Pipelines: pipelines, Namespaces: namespaces})
-	cs.Pipeline.Resources = cb.APIResourceList(version, "pipelinerun")
+	cs.Pipeline.Resources = cb.APIResourceList(version, []string{"pipelinerun"})
 	dc, err := testDynamic.Client(
 		cb.UnstructuredPR(pipelineruns[0], version),
 		cb.UnstructuredPR(pipelineruns[1], version),
@@ -1126,7 +1126,7 @@ func TestLog_pipelinerun_only_one(t *testing.T) {
 	}
 
 	cs, _ := test.SeedTestData(t, pipelinetest.Data{PipelineRuns: pipelineruns, Pipelines: pipelines, Namespaces: namespaces})
-	cs.Pipeline.Resources = cb.APIResourceList(version, "pipelinerun")
+	cs.Pipeline.Resources = cb.APIResourceList(version, []string{"pipelinerun"})
 	dc, err := testDynamic.Client(
 		cb.UnstructuredPR(pipelineruns[0], version),
 	)

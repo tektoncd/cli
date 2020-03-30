@@ -67,7 +67,7 @@ func TestPipelinesList_empty(t *testing.T) {
 	}
 
 	cs, _ := test.SeedTestData(t, pipelinetest.Data{Namespaces: nsList})
-	cs.Pipeline.Resources = cb.APIResourceList("v1alpha1", "pipeline")
+	cs.Pipeline.Resources = cb.APIResourceList("v1alpha1", []string{"pipeline"})
 	dc, err := testDynamic.Client()
 	if err != nil {
 		t.Errorf("unable to create dynamic clinet: %v", err)
@@ -101,7 +101,7 @@ func TestPipelineList_only_pipelines(t *testing.T) {
 	version := "v1alpha1"
 	clock := clockwork.NewFakeClock()
 	cs, pdata := seedPipelines(t, clock, pipelines, "namespace", nsList)
-	cs.Pipeline.Resources = cb.APIResourceList(version, "pipeline")
+	cs.Pipeline.Resources = cb.APIResourceList(version, []string{"pipeline"})
 	dc, err := testDynamic.Client(
 		cb.UnstructuredP(pdata[0], version),
 		cb.UnstructuredP(pdata[1], version),
@@ -137,7 +137,7 @@ func TestPipelineList_only_pipelines_v1beta1(t *testing.T) {
 	version := "v1beta1"
 	clock := clockwork.NewFakeClock()
 	cs, pdata := seedPipelines(t, clock, pipelines, "namespace", nsList)
-	cs.Pipeline.Resources = cb.APIResourceList(version, "pipeline")
+	cs.Pipeline.Resources = cb.APIResourceList(version, []string{"pipeline"})
 	dc, err := testDynamic.Client(
 		cb.UnstructuredP(pdata[0], version),
 		cb.UnstructuredP(pdata[1], version),
@@ -194,7 +194,7 @@ func TestPipelinesList_with_single_run(t *testing.T) {
 			},
 		},
 	})
-	cs.Pipeline.Resources = cb.APIResourceList(version, "pipeline")
+	cs.Pipeline.Resources = cb.APIResourceList(version, []string{"pipeline"})
 
 	dc, err := testDynamic.Client(
 		cb.UnstructuredP(pdata[0], version),
@@ -287,7 +287,7 @@ func TestPipelinesList_latest_run(t *testing.T) {
 			},
 		},
 	})
-	cs.Pipeline.Resources = cb.APIResourceList(version, "pipeline")
+	cs.Pipeline.Resources = cb.APIResourceList(version, []string{"pipeline"})
 	dc, err := testDynamic.Client(
 		cb.UnstructuredP(pdata[0], version),
 	)

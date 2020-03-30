@@ -15,23 +15,38 @@
 package builder
 
 import (
+	"strings"
+
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 )
 
-func APIResourceList(version, kind string) []*metav1.APIResourceList {
-	group := "tekton.dev"
+const (
+	group string = "tekton.dev"
+)
+
+func APIResourceList(version string, kinds []string) []*metav1.APIResourceList {
 	return []*metav1.APIResourceList{
-		{TypeMeta: metav1.TypeMeta{
-			Kind:       kind,
-			APIVersion: group + "/" + version,
-		},
+		{
 			GroupVersion: group + "/" + version,
-			APIResources: []metav1.APIResource{
-				{
-					Name:  kind + "s",
-					Group: group,
-				},
-			},
+			APIResources: apiresources(version, kinds),
 		},
 	}
+}
+
+func apiresources(version string, kinds []string) []metav1.APIResource {
+	apires := make([]metav1.APIResource, 0)
+	for _, kind := range kinds {
+		namespaced := false
+		if strings.Contains(kind, "cluster") {
+			namespaced = true
+		}
+		apires = append(apires, metav1.APIResource{
+			Name:       kind + "s",
+			Group:      group,
+			Kind:       kind,
+			Version:    version,
+			Namespaced: namespaced,
+		})
+	}
+	return apires
 }

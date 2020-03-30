@@ -18,11 +18,15 @@ import (
 	"fmt"
 
 	"github.com/spf13/cobra"
+	taction "github.com/tektoncd/cli/pkg/actions/delete"
 	"github.com/tektoncd/cli/pkg/cli"
 	"github.com/tektoncd/cli/pkg/deleter"
 	"github.com/tektoncd/cli/pkg/options"
+	"github.com/tektoncd/cli/pkg/task"
+	trlist "github.com/tektoncd/cli/pkg/taskrun/list"
 	validate "github.com/tektoncd/cli/pkg/validate"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+	"k8s.io/apimachinery/pkg/runtime/schema"
 	cliopts "k8s.io/cli-runtime/pkg/genericclioptions"
 )
 
@@ -76,23 +80,26 @@ or
 }
 
 func deleteTask(opts *options.DeleteOptions, s *cli.Stream, p cli.Params, taskNames []string) error {
+	taskGroupResource := schema.GroupVersionResource{Group: "tekton.dev", Resource: "tasks"}
+	taskrunGroupResource := schema.GroupVersionResource{Group: "tekton.dev", Resource: "taskruns"}
+
 	cs, err := p.Clients()
 	if err != nil {
 		return fmt.Errorf("failed to create tekton client")
 	}
 	d := deleter.New("Task", func(taskName string) error {
-		return cs.Tekton.TektonV1alpha1().Tasks(p.Namespace()).Delete(taskName, &metav1.DeleteOptions{})
+		return taction.Delete(taskGroupResource, cs, taskName, p.Namespace(), &metav1.DeleteOptions{})
 	})
 	switch {
 	case opts.DeleteAllNs:
-		taskNames, err = allTaskNames(p, cs)
+		taskNames, err = allTaskNames(cs, p.Namespace())
 		if err != nil {
 			return err
 		}
 		d.Delete(s, taskNames)
 	case opts.DeleteRelated:
-		d.WithRelated("TaskRun", taskRunLister(p, cs), func(taskRunName string) error {
-			return cs.Tekton.TektonV1alpha1().TaskRuns(p.Namespace()).Delete(taskRunName, &metav1.DeleteOptions{})
+		d.WithRelated("TaskRun", taskRunLister(cs, p.Namespace()), func(taskRunName string) error {
+			return taction.Delete(taskrunGroupResource, cs, taskRunName, p.Namespace(), &metav1.DeleteOptions{})
 		})
 		deletedTaskNames := d.Delete(s, taskNames)
 		d.DeleteRelated(s, deletedTaskNames)
@@ -109,12 +116,12 @@ func deleteTask(opts *options.DeleteOptions, s *cli.Stream, p cli.Params, taskNa
 	return d.Errors()
 }
 
-func taskRunLister(p cli.Params, cs *cli.Clients) func(string) ([]string, error) {
+func taskRunLister(cs *cli.Clients, ns string) func(string) ([]string, error) {
 	return func(taskName string) ([]string, error) {
 		lOpts := metav1.ListOptions{
 			LabelSelector: fmt.Sprintf("tekton.dev/task=%s", taskName),
 		}
-		taskRuns, err := cs.Tekton.TektonV1alpha1().TaskRuns(p.Namespace()).List(lOpts)
+		taskRuns, err := trlist.TaskRuns(cs, lOpts, ns)
 		if err != nil {
 			return nil, err
 		}
@@ -126,8 +133,8 @@ func taskRunLister(p cli.Params, cs *cli.Clients) func(string) ([]string, error)
 	}
 }
 
-func allTaskNames(p cli.Params, cs *cli.Clients) ([]string, error) {
-	ts, err := cs.Tekton.TektonV1alpha1().Tasks(p.Namespace()).List(metav1.ListOptions{})
+func allTaskNames(cs *cli.Clients, ns string) ([]string, error) {
+	ts, err := task.List(cs, metav1.ListOptions{}, ns)
 	if err != nil {
 		return nil, err
 	}
