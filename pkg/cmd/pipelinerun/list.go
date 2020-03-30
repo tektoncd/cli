@@ -33,30 +33,29 @@ import (
 	cliopts "k8s.io/cli-runtime/pkg/genericclioptions"
 )
 
-const listTemplate = `{{- $prl := len .PipelineRuns.Items }}{{ if eq $prl 0 -}}
+const listTemplate = `{{- $prl := len .PipelineRuns.Items -}}{{- if eq $prl 0 -}}
 No PipelineRuns found
-{{- else -}}
-{{- if $.AllNamespaces }}NAMESPACE	NAME	STARTED	DURATION	STATUS	
-{{- else -}}
+{{ else -}}
+{{- if not $.NoHeaders -}}
+{{- if $.AllNamespaces -}}
+NAMESPACE	NAME	STARTED	DURATION	STATUS
+{{ else -}}
 NAME	STARTED	DURATION	STATUS
-{{- end }}	
-{{- range $_, $pr := .PipelineRuns.Items }}
-{{- if $pr }}
-{{- if $.AllNamespaces }}
+{{ end -}}
+{{- end -}}
+{{- range $_, $pr := .PipelineRuns.Items }}{{- if $pr }}{{- if $.AllNamespaces -}}
 {{ $pr.Namespace }}	{{ $pr.Name }}	{{ formatAge $pr.Status.StartTime $.Time }}	{{ formatDuration $pr.Status.StartTime $pr.Status.CompletionTime }}	{{ formatCondition $pr.Status.Conditions }}
-{{- else -}}
-{{ printf "\n" }}{{ $pr.Name }}	{{ formatAge $pr.Status.StartTime $.Time }}	{{ formatDuration $pr.Status.StartTime $pr.Status.CompletionTime }}	{{ formatCondition $pr.Status.Conditions }}
-{{- end }}
-{{- end }}
-{{- end }}
-{{- end }}
-`
+{{ else -}}
+{{ $pr.Name }}	{{ formatAge $pr.Status.StartTime $.Time }}	{{ formatDuration $pr.Status.StartTime $pr.Status.CompletionTime }}	{{ formatCondition $pr.Status.Conditions }}
+{{ end -}}{{- end -}}{{- end -}}
+{{- end -}}`
 
 type ListOptions struct {
 	Limit         int
 	LabelSelector string
 	Reverse       bool
 	AllNamespaces bool
+	NoHeaders     bool
 }
 
 func listCommand(p cli.Params) *cobra.Command {
@@ -130,7 +129,7 @@ List all PipelineRuns in a namespace 'foo':
 			}
 
 			if prs != nil {
-				err = printFormatted(stream, prs, p.Time(), opts.AllNamespaces)
+				err = printFormatted(stream, prs, p.Time(), opts.AllNamespaces, opts.NoHeaders)
 			}
 
 			if err != nil {
@@ -146,7 +145,7 @@ List all PipelineRuns in a namespace 'foo':
 	c.Flags().StringVarP(&opts.LabelSelector, "label", "", opts.LabelSelector, "A selector (label query) to filter on, supports '=', '==', and '!='")
 	c.Flags().BoolVarP(&opts.Reverse, "reverse", "", opts.Reverse, "list pipelineruns in reverse order")
 	c.Flags().BoolVarP(&opts.AllNamespaces, "all-namespaces", "A", opts.AllNamespaces, "list pipelineruns from all namespaces")
-
+	c.Flags().BoolVarP(&opts.NoHeaders, "no-headers", "", opts.NoHeaders, "do not print column headers with output (default print column headers with output)")
 	return c
 }
 
@@ -219,16 +218,18 @@ func reverse(prs *v1beta1.PipelineRunList) {
 	prs.Items = prItems
 }
 
-func printFormatted(s *cli.Stream, prs *v1beta1.PipelineRunList, c clockwork.Clock, allnamespaces bool) error {
+func printFormatted(s *cli.Stream, prs *v1beta1.PipelineRunList, c clockwork.Clock, allnamespaces bool, noheaders bool) error {
 
 	var data = struct {
 		PipelineRuns  *v1beta1.PipelineRunList
 		Time          clockwork.Clock
 		AllNamespaces bool
+		NoHeaders     bool
 	}{
 		PipelineRuns:  prs,
 		Time:          c,
 		AllNamespaces: allnamespaces,
+		NoHeaders:     noheaders,
 	}
 
 	funcMap := template.FuncMap{
