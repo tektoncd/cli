@@ -18,6 +18,7 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
+	"sort"
 	"strings"
 	"time"
 
@@ -332,6 +333,7 @@ func mergeRes(r []v1alpha1.TaskResourceBinding, optRes []string) ([]v1alpha1.Tas
 	for _, v := range res {
 		r = append(r, v)
 	}
+	sort.Slice(r, func(i, j int) bool { return r[i].Name < r[j].Name })
 	return r, nil
 }
 
