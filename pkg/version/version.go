@@ -24,12 +24,13 @@ func GetPipelineVersion(c *cli.Clients) (string, error) {
 	}
 
 	for _, deployment := range deployments.Items {
+		deploymentLabels := deployment.Spec.Template.GetLabels()
 		deploymentAnnotations := deployment.Spec.Template.GetAnnotations()
 
 		// For master of Tekton Pipelines
-		version = deploymentAnnotations["pipeline.tekton.dev/release"]
+		version = deploymentLabels["pipeline.tekton.dev/release"]
 
-		// For Tekton Pipelines 0.10.0 + 0.10.1
+		// For Tekton Pipelines 0.10.0 + 0.10.1 tekton.dev/release has been set as annotation
 		if version == "" {
 			version = deploymentAnnotations["tekton.dev/release"]
 		}
