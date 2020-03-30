@@ -1,4 +1,4 @@
-// Copyright © 2019 The Tekton Authors.
+// Copyright © 2019-2020 The Tekton Authors.
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -26,14 +26,14 @@ import (
 
 func TestMerge(t *testing.T) {
 	ws := []v1alpha1.WorkspaceBinding{
-		v1alpha1.WorkspaceBinding{
+		{
 			Name: "foo",
 			ConfigMap: &corev1.ConfigMapVolumeSource{
 				LocalObjectReference: corev1.LocalObjectReference{
 					Name: "bar"},
 			},
 		},
-		v1alpha1.WorkspaceBinding{
+		{
 			Name: "emptydir-data",
 			EmptyDir: &corev1.EmptyDirVolumeSource{
 				Medium: corev1.StorageMediumDefault,
@@ -117,13 +117,13 @@ func TestMerge(t *testing.T) {
 			Name: "password-vault",
 			Secret: &corev1.SecretVolumeSource{
 				SecretName: "secret-name",
-				Items:      []corev1.KeyToPath{corev1.KeyToPath{Key: "pass", Path: "/etc/passwd"}}},
+				Items:      []corev1.KeyToPath{{Key: "pass", Path: "/etc/passwd"}}},
 		},
 		{
 			Name: "recipe-store",
 			ConfigMap: &corev1.ConfigMapVolumeSource{
 				LocalObjectReference: corev1.LocalObjectReference{Name: "sensitive-recipe-storage"},
-				Items:                []corev1.KeyToPath{corev1.KeyToPath{Key: "brownies", Path: "recipe.txt"}}},
+				Items:                []corev1.KeyToPath{{Key: "brownies", Path: "recipe.txt"}}},
 		},
 		{
 			Name:     "emptydir-data-hp",
