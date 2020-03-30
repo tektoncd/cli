@@ -19,6 +19,7 @@ import (
 	"errors"
 	"fmt"
 	"os"
+	"sort"
 	"strings"
 	"time"
 
@@ -509,6 +510,7 @@ func mergeRes(pr *v1alpha1.PipelineRun, optRes []string) error {
 	for _, v := range res {
 		pr.Spec.Resources = append(pr.Spec.Resources, v)
 	}
+	sort.Slice(pr.Spec.Resources, func(i, j int) bool { return pr.Spec.Resources[i].Name < pr.Spec.Resources[j].Name })
 	return nil
 }
 
