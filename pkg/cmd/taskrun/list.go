@@ -33,21 +33,22 @@ import (
 	cliopts "k8s.io/cli-runtime/pkg/genericclioptions"
 )
 
-const listTemplate = `{{- $trl := len .TaskRuns.Items }}{{ if eq $trl 0 -}}
+const listTemplate = `{{- $trl := len .TaskRuns.Items -}}{{- if eq $trl 0 -}}
 No TaskRuns found
-{{- else -}}
-{{- if $.AllNamespaces }}NAMESPACE	NAME	STARTED	DURATION	STATUS
-{{- else -}}
+{{ else -}}
+{{- if not $.NoHeaders -}}
+{{- if $.AllNamespaces -}}
+NAMESPACE	NAME	STARTED	DURATION	STATUS
+{{ else -}}
 NAME	STARTED	DURATION	STATUS
-{{- end }}
-{{- range $_, $tr := .TaskRuns.Items }}{{- if $tr }}{{- if $.AllNamespaces }}
+{{ end -}}
+{{- end -}}
+{{- range $_, $tr := .TaskRuns.Items -}}{{- if $tr -}}{{- if $.AllNamespaces -}}
 {{ $tr.Namespace }}	{{ $tr.Name }}	{{ formatAge $tr.Status.StartTime $.Time }}	{{ formatDuration $tr.Status.StartTime $tr.Status.CompletionTime }}	{{ formatCondition $tr.Status.Conditions }}
-{{- else -}}
-{{ printf "\n" }}{{ $tr.Name }}	{{ formatAge $tr.Status.StartTime $.Time }}	{{ formatDuration $tr.Status.StartTime $tr.Status.CompletionTime }}	{{ formatCondition $tr.Status.Conditions }}
-{{- end }}
-{{- end }}
-{{- end }}
-{{- end }}
+{{ else -}}
+{{ $tr.Name }}	{{ formatAge $tr.Status.StartTime $.Time }}	{{ formatDuration $tr.Status.StartTime $tr.Status.CompletionTime }}	{{ formatCondition $tr.Status.Conditions }}
+{{ end -}}{{- end -}}{{- end -}}
+{{- end -}}
 `
 
 type ListOptions struct {
@@ -55,6 +56,7 @@ type ListOptions struct {
 	LabelSelector string
 	Reverse       bool
 	AllNamespaces bool
+	NoHeaders     bool
 }
 
 func listCommand(p cli.Params) *cobra.Command {
@@ -128,7 +130,7 @@ List all TaskRuns of Task 'foo' in namespace 'bar':
 			}
 
 			if trs != nil {
-				err = printFormatted(stream, trs, p.Time(), opts.AllNamespaces)
+				err = printFormatted(stream, trs, p.Time(), opts.AllNamespaces, opts.NoHeaders)
 			}
 
 			if err != nil {
@@ -145,6 +147,7 @@ List all TaskRuns of Task 'foo' in namespace 'bar':
 	c.Flags().StringVarP(&opts.LabelSelector, "label", "", opts.LabelSelector, "A selector (label query) to filter on, supports '=', '==', and '!='")
 	c.Flags().BoolVarP(&opts.Reverse, "reverse", "", opts.Reverse, "list taskruns in reverse order")
 	c.Flags().BoolVarP(&opts.AllNamespaces, "all-namespaces", "A", opts.AllNamespaces, "list taskruns from all namespaces")
+	c.Flags().BoolVarP(&opts.NoHeaders, "no-headers", "", opts.NoHeaders, "do not print column headers with output (default print column headers with output)")
 	return c
 }
 
@@ -218,16 +221,18 @@ func list(p cli.Params, task string, limit int, labelselector string, allnamespa
 	return trs, nil
 }
 
-func printFormatted(s *cli.Stream, trs *v1beta1.TaskRunList, c clockwork.Clock, allnamespaces bool) error {
+func printFormatted(s *cli.Stream, trs *v1beta1.TaskRunList, c clockwork.Clock, allnamespaces bool, noheaders bool) error {
 
 	var data = struct {
 		TaskRuns      *v1beta1.TaskRunList
 		Time          clockwork.Clock
 		AllNamespaces bool
+		NoHeaders     bool
 	}{
 		TaskRuns:      trs,
 		Time:          c,
 		AllNamespaces: allnamespaces,
+		NoHeaders:     noheaders,
 	}
 
 	funcMap := template.FuncMap{
