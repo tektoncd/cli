@@ -21,13 +21,13 @@ import (
 	"k8s.io/apimachinery/pkg/runtime/schema"
 )
 
-func Delete(gr schema.GroupVersionResource, clients *cli.Clients, trname, n string, op *metav1.DeleteOptions) error {
+func Delete(gr schema.GroupVersionResource, clients *cli.Clients, objname, ns string, op *metav1.DeleteOptions) error {
 	gvr, err := actions.GetGroupVersionResource(gr, clients.Tekton.Discovery())
 	if err != nil {
 		return err
 	}
 
-	err = clients.Dynamic.Resource(*gvr).Namespace(n).Delete(trname, op)
+	err = clients.Dynamic.Resource(*gvr).Namespace(ns).Delete(objname, op)
 	if err != nil {
 		return err
 	}
