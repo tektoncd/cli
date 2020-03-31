@@ -77,14 +77,7 @@ func printClusterTaskDetails(s *cli.Stream, p cli.Params) error {
 		return err
 	}
 
-	unstructuredCT, err := list.AllObjecs(schema.GroupVersionResource{Group: "tekton.dev", Resource: "clustertasks"}, cs, "", metav1.ListOptions{})
-	if err != nil {
-		return err
-	}
-	var clustertasks v1beta1.ClusterTaskList
-	if err := runtime.DefaultUnstructuredConverter.FromUnstructured(unstructuredCT.UnstructuredContent(), &clustertasks); err != nil {
-		return err
-	}
+	clustertasks, err := List(cs, metav1.ListOptions{})
 	if err != nil {
 		fmt.Fprintf(os.Stderr, "failed to list clustertasks\n")
 		return err
@@ -106,4 +99,24 @@ func printClusterTaskDetails(s *cli.Stream, p cli.Params) error {
 		)
 	}
 	return w.Flush()
+}
+
+func List(c *cli.Clients, opts metav1.ListOptions) (*v1beta1.ClusterTaskList, error) {
+
+	ctGroupResource := schema.GroupVersionResource{Group: "tekton.dev", Resource: "clustertasks"}
+	unstructuredCT, err := list.AllObjecs(ctGroupResource, c, "", opts)
+	if err != nil {
+		return nil, err
+	}
+
+	var cts *v1beta1.ClusterTaskList
+	if err := runtime.DefaultUnstructuredConverter.FromUnstructured(unstructuredCT.UnstructuredContent(), &cts); err != nil {
+		return nil, err
+	}
+	if err != nil {
+		fmt.Fprintln(os.Stderr, "failed to list clustertasks")
+		return nil, err
+	}
+
+	return cts, nil
 }
