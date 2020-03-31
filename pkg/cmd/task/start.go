@@ -33,6 +33,7 @@ import (
 	"github.com/tektoncd/cli/pkg/params"
 	"github.com/tektoncd/cli/pkg/task"
 	validate "github.com/tektoncd/cli/pkg/validate"
+	"github.com/tektoncd/cli/pkg/workspaces"
 	"github.com/tektoncd/pipeline/pkg/apis/pipeline/v1alpha1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 )
@@ -60,6 +61,7 @@ type startOptions struct {
 	Output             string
 	UseTaskRun         string
 	PrefixName         string
+	Workspaces         []string
 }
 
 // NameArg validates that the first argument is a valid task name
@@ -150,6 +152,7 @@ like cat,foo,bar
 	c.Flags().StringVarP(&opt.UseTaskRun, "use-taskrun", "", "", "specify a taskrun name to use its values to re-run the taskrun")
 	flags.AddShellCompletion(c.Flags().Lookup("use-taskrun"), "__tkn_get_taskrun")
 	c.Flags().StringSliceVarP(&opt.Labels, "labels", "l", []string{}, "pass labels as label=value.")
+	c.Flags().StringArrayVarP(&opt.Workspaces, "workspace", "w", []string{}, "pass the workspace.")
 	c.Flags().BoolVarP(&opt.ShowLog, "showlog", "", false, "show logs right after starting the task")
 	c.Flags().StringVarP(&opt.Filename, "filename", "f", "", "local or remote file name containing a task definition to start a taskrun")
 	c.Flags().StringVarP(&opt.TimeOut, "timeout", "", "1h", "timeout for taskrun")
@@ -278,6 +281,12 @@ func startTask(opt startOptions, args []string) error {
 	}
 	tr.ObjectMeta.Labels = labels
 
+	workspaces, err := workspaces.Merge(tr.Spec.Workspaces, opt.Workspaces)
+	if err != nil {
+		return err
+	}
+	tr.Spec.Workspaces = workspaces
+
 	param, err := params.MergeParam(tr.Spec.Inputs.Params, opt.Params)
 	if err != nil {
 		return err
@@ -333,6 +342,7 @@ func mergeRes(r []v1alpha1.TaskResourceBinding, optRes []string) ([]v1alpha1.Tas
 	for _, v := range res {
 		r = append(r, v)
 	}
+
 	sort.Slice(r, func(i, j int) bool { return r[i].Name < r[j].Name })
 	return r, nil
 }

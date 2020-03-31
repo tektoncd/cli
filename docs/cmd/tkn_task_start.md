@@ -42,6 +42,7 @@ like cat,foo,bar
       --showlog                  show logs right after starting the task
       --timeout string           timeout for taskrun (default "1h")
       --use-taskrun string       specify a taskrun name to use its values to re-run the taskrun
+  -w, --workspace stringArray    pass the workspace.
 ```
 
 ### Options inherited from parent commands
