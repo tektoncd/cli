@@ -18,10 +18,12 @@ import (
 	"fmt"
 
 	"github.com/spf13/cobra"
+	ctaction "github.com/tektoncd/cli/pkg/actions/delete"
 	"github.com/tektoncd/cli/pkg/cli"
 	"github.com/tektoncd/cli/pkg/deleter"
 	"github.com/tektoncd/cli/pkg/options"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+	"k8s.io/apimachinery/pkg/runtime/schema"
 	cliopts "k8s.io/cli-runtime/pkg/genericclioptions"
 )
 
@@ -69,12 +71,14 @@ or
 }
 
 func deleteClusterTasks(s *cli.Stream, p cli.Params, tNames []string, deleteAll bool) error {
+	ctGroupResource := schema.GroupVersionResource{Group: "tekton.dev", Resource: "clustertasks"}
+
 	cs, err := p.Clients()
 	if err != nil {
 		return fmt.Errorf("Failed to create tekton client")
 	}
 	d := deleter.New("ClusterTask", func(taskName string) error {
-		return cs.Tekton.TektonV1alpha1().ClusterTasks().Delete(taskName, &metav1.DeleteOptions{})
+		return ctaction.Delete(ctGroupResource, cs, taskName, "", &metav1.DeleteOptions{})
 	})
 	if deleteAll {
 		cts, err := allClusterTaskNames(cs)
@@ -97,7 +101,7 @@ func deleteClusterTasks(s *cli.Stream, p cli.Params, tNames []string, deleteAll 
 }
 
 func allClusterTaskNames(cs *cli.Clients) ([]string, error) {
-	clusterTasks, err := cs.Tekton.TektonV1alpha1().ClusterTasks().List(metav1.ListOptions{})
+	clusterTasks, err := List(cs, metav1.ListOptions{})
 	if err != nil {
 		return nil, err
 	}
