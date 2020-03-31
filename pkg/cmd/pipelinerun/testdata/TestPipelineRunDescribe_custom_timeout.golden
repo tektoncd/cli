@@ -2,6 +2,7 @@ Name:           pr-custom-timeout
 Namespace:      ns
 Pipeline Ref:   pr-custom-timeout
 Timeout:        1m0s
+Labels:
 
 Status
 

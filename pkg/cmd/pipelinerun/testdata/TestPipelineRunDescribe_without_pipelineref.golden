@@ -1,5 +1,7 @@
 Name:        pipeline-run
 Namespace:   ns
+Labels:
+ tekton.dev/pipeline=pipeline
 
 Status
 

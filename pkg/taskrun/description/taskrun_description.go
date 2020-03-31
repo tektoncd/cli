@@ -1,3 +1,17 @@
+// Copyright © 2019 The Tekton Authors.
+//
+// Licensed under the Apache License, Version 2.0 (the "License");
+// you may not use this file except in compliance with the License.
+// You may obtain a copy of the License at
+//
+//     http://www.apache.org/licenses/LICENSE-2.0
+//
+// Unless required by applicable law or agreed to in writing, software
+// distributed under the License is distributed on an "AS IS" BASIS,
+// WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+// See the License for the specific language governing permissions and
+// limitations under the License.
+
 package description
 
 import (
@@ -26,6 +40,10 @@ const templ = `{{decorate "bold" "Name"}}:	{{ .TaskRun.Name }}
 {{- $timeout := getTimeout .TaskRun -}}
 {{- if ne $timeout "" }}
 {{decorate "bold" "Timeout"}}:	{{ .TaskRun.Spec.Timeout.Duration.String }}
+{{- end }}
+{{decorate "bold" "Labels"}}:
+{{- range $k, $v := .TaskRun.Labels }}
+ {{ $k }}={{ $v }}
 {{- end }}
 
 {{decorate "status" ""}}{{decorate "underline bold" "Status"}}
@@ -155,7 +173,7 @@ func sortStepStatesByStartTime(steps []v1alpha1.StepState) []v1alpha1.StepState 
 func PrintTaskRunDescription(s *cli.Stream, trName string, p cli.Params) error {
 	cs, err := p.Clients()
 	if err != nil {
-		return fmt.Errorf("failed to create tekton client")
+		return fmt.Errorf("failed to create tekton client: %v", err)
 	}
 
 	tr, err := cs.Tekton.TektonV1alpha1().TaskRuns(p.Namespace()).Get(trName, metav1.GetOptions{})
@@ -190,7 +208,7 @@ func PrintTaskRunDescription(s *cli.Stream, trName string, p cli.Params) error {
 
 	err = t.Execute(w, data)
 	if err != nil {
-		fmt.Fprintf(s.Err, "Failed to execute template")
+		fmt.Fprintf(s.Err, "Failed to execute template: ")
 		return err
 	}
 	return w.Flush()

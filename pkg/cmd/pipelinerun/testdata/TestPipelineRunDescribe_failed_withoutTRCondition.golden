@@ -3,6 +3,8 @@ Namespace:         ns
 Pipeline Ref:      pipeline
 Service Account:   test-sa
 Timeout:           1h0m0s
+Labels:
+ tekton.dev/pipeline=pipeline
 
 Status
 

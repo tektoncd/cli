@@ -1,3 +1,17 @@
+// Copyright © 2019 The Tekton Authors.
+//
+// Licensed under the Apache License, Version 2.0 (the "License");
+// you may not use this file except in compliance with the License.
+// You may obtain a copy of the License at
+//
+//     http://www.apache.org/licenses/LICENSE-2.0
+//
+// Unless required by applicable law or agreed to in writing, software
+// distributed under the License is distributed on an "AS IS" BASIS,
+// WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+// See the License for the specific language governing permissions and
+// limitations under the License.
+
 package description
 
 import (
@@ -27,6 +41,10 @@ const templ = `{{decorate "bold" "Name"}}:	{{ .PipelineRun.Name }}
 {{- $timeout := getTimeout .PipelineRun -}}
 {{- if ne $timeout "" }}
 {{decorate "bold" "Timeout"}}:	{{ .PipelineRun.Spec.Timeout.Duration.String }}
+{{- end }}
+{{decorate "bold" "Labels"}}:
+{{- range $k, $v := .PipelineRun.Labels }}
+ {{ $k }}={{ $v }}
 {{- end }}
 
 {{decorate "status" ""}}{{decorate "underline bold" "Status\n"}}
@@ -116,7 +134,7 @@ func newTaskrunListFromMap(statusMap map[string]*v1alpha1.PipelineRunTaskRunStat
 func PrintPipelineRunDescription(s *cli.Stream, prName string, p cli.Params) error {
 	cs, err := p.Clients()
 	if err != nil {
-		return fmt.Errorf("failed to create tekton client")
+		return fmt.Errorf("failed to create tekton client: %v", err)
 	}
 
 	pr, err := cs.Tekton.TektonV1alpha1().PipelineRuns(p.Namespace()).Get(prName, metav1.GetOptions{})
@@ -156,7 +174,7 @@ func PrintPipelineRunDescription(s *cli.Stream, prName string, p cli.Params) err
 	t := template.Must(template.New("Describe Pipelinerun").Funcs(funcMap).Parse(templ))
 
 	if err = t.Execute(w, data); err != nil {
-		fmt.Fprintf(s.Err, "Failed to execute template")
+		fmt.Fprintf(s.Err, "Failed to execute template: ")
 		return err
 	}
 	return w.Flush()
