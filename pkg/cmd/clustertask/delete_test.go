@@ -116,7 +116,7 @@ func TestClusterTaskDelete(t *testing.T) {
 		},
 		{
 			name:        "Delete all with prompt",
-			command:     []string{"delete", "--all", "-n", "ns"},
+			command:     []string{"delete", "--all"},
 			input:       seeds[3],
 			inputStream: strings.NewReader("y"),
 			wantError:   false,
@@ -124,7 +124,7 @@ func TestClusterTaskDelete(t *testing.T) {
 		},
 		{
 			name:        "Delete all with -f",
-			command:     []string{"delete", "--all", "-f", "-n", "ns"},
+			command:     []string{"delete", "--all", "-f"},
 			input:       seeds[4],
 			inputStream: nil,
 			wantError:   false,
@@ -132,7 +132,7 @@ func TestClusterTaskDelete(t *testing.T) {
 		},
 		{
 			name:        "Error from using clustertask name with --all",
-			command:     []string{"delete", "ct", "--all", "-n", "ns"},
+			command:     []string{"delete", "ct", "--all"},
 			input:       seeds[4],
 			inputStream: nil,
 			wantError:   true,
