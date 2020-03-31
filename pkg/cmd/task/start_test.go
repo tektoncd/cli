@@ -214,6 +214,7 @@ func Test_start_task(t *testing.T) {
 		"-p=print=boom,boom",
 		"-l=key=value",
 		"-o=code-image=output-image",
+		"-w=name=pvc,claimName=pvc3",
 		"-s=svc1",
 		"-n=ns")
 
@@ -260,6 +261,9 @@ func Test_start_task(t *testing.T) {
 	if d := cmp.Equal(tr.Items[0].ObjectMeta.Labels, map[string]string{"key": "value"}); !d {
 		t.Errorf("Error labels generated is different Labels Got: %+v", tr.Items[0].ObjectMeta.Labels)
 	}
+
+	test.AssertOutput(t, "pvc", tr.Items[0].Spec.Workspaces[0].Name)
+	test.AssertOutput(t, "pvc3", tr.Items[0].Spec.Workspaces[0].PersistentVolumeClaim.ClaimName)
 
 	test.AssertOutput(t, "svc1", tr.Items[0].Spec.ServiceAccountName)
 }
@@ -888,6 +892,46 @@ func Test_start_task_invalid_input_res(t *testing.T) {
 		"-n", "ns",
 	)
 	expected := "Error: invalid input format for resource parameter: my-repo git-repo\n"
+	test.AssertOutput(t, expected, got)
+}
+
+func Test_start_task_invalid_workspace(t *testing.T) {
+	tasks := []*v1alpha1.Task{
+		tb.Task("task-1", "ns",
+			tb.TaskSpec(
+				tb.TaskInputs(
+					tb.InputsResource("my-repo", v1alpha1.PipelineResourceTypeGit),
+				),
+				tb.TaskOutputs(
+					tb.OutputsResource("code-image", v1alpha1.PipelineResourceTypeImage),
+				),
+				tb.Step("busybox",
+					tb.StepName("hello"),
+				),
+				tb.Step("busybox",
+					tb.StepName("exit"),
+				),
+			),
+		),
+	}
+
+	ns := []*corev1.Namespace{
+		{
+			ObjectMeta: metav1.ObjectMeta{
+				Name: "ns",
+			},
+		},
+	}
+
+	cs, _ := test.SeedTestData(t, pipelinetest.Data{Tasks: tasks, Namespaces: ns})
+	p := &test.Params{Tekton: cs.Pipeline, Kube: cs.Kube}
+
+	task := Command(p)
+	got, _ := test.ExecuteCommand(task, "start", "task-1",
+		"-w=claimName=pvc3",
+		"-n", "ns",
+	)
+	expected := "Error: Name not found for workspace\n"
 	test.AssertOutput(t, expected, got)
 }
 
