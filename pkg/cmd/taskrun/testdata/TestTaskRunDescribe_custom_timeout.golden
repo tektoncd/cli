@@ -1,6 +1,7 @@
 Name:        tr-custom-timeout
 Namespace:   ns
 Timeout:     1m0s
+Labels:
 
 Status
 
