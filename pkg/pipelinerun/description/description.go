@@ -1,4 +1,4 @@
-// Copyright © 2019 The Tekton Authors.
+// Copyright © 2020 The Tekton Authors.
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -42,9 +42,12 @@ const templ = `{{decorate "bold" "Name"}}:	{{ .PipelineRun.Name }}
 {{- if ne $timeout "" }}
 {{decorate "bold" "Timeout"}}:	{{ .PipelineRun.Spec.Timeout.Duration.String }}
 {{- end }}
+{{- $l := len .PipelineRun.Labels }}{{ if eq $l 0 }}
+{{- else }}
 {{decorate "bold" "Labels"}}:
 {{- range $k, $v := .PipelineRun.Labels }}
  {{ $k }}={{ $v }}
+{{- end }}
 {{- end }}
 
 {{decorate "status" ""}}{{decorate "underline bold" "Status\n"}}
@@ -174,7 +177,7 @@ func PrintPipelineRunDescription(s *cli.Stream, prName string, p cli.Params) err
 	t := template.Must(template.New("Describe Pipelinerun").Funcs(funcMap).Parse(templ))
 
 	if err = t.Execute(w, data); err != nil {
-		fmt.Fprintf(s.Err, "Failed to execute template: ")
+		fmt.Fprintf(s.Err, "failed to execute template: ")
 		return err
 	}
 	return w.Flush()

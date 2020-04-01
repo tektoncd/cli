@@ -1,4 +1,4 @@
-// Copyright © 2019 The Tekton Authors.
+// Copyright © 2020 The Tekton Authors.
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -41,9 +41,12 @@ const templ = `{{decorate "bold" "Name"}}:	{{ .TaskRun.Name }}
 {{- if ne $timeout "" }}
 {{decorate "bold" "Timeout"}}:	{{ .TaskRun.Spec.Timeout.Duration.String }}
 {{- end }}
+{{- $l := len .TaskRun.Labels }}{{ if eq $l 0 }}
+{{- else }}
 {{decorate "bold" "Labels"}}:
 {{- range $k, $v := .TaskRun.Labels }}
  {{ $k }}={{ $v }}
+{{- end }}
 {{- end }}
 
 {{decorate "status" ""}}{{decorate "underline bold" "Status"}}
@@ -208,7 +211,7 @@ func PrintTaskRunDescription(s *cli.Stream, trName string, p cli.Params) error {
 
 	err = t.Execute(w, data)
 	if err != nil {
-		fmt.Fprintf(s.Err, "Failed to execute template: ")
+		fmt.Fprintf(s.Err, "failed to execute template: ")
 		return err
 	}
 	return w.Flush()
