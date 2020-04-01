@@ -18,7 +18,7 @@ import (
 	"fmt"
 	"os"
 
-	plist "github.com/tektoncd/cli/pkg/actions/list"
+	paction "github.com/tektoncd/cli/pkg/actions/list"
 	"github.com/tektoncd/cli/pkg/cli"
 	"github.com/tektoncd/pipeline/pkg/apis/pipeline/v1beta1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
@@ -48,7 +48,7 @@ func GetAllPipelineNames(p cli.Params) ([]string, error) {
 func List(c *cli.Clients, opts metav1.ListOptions, ns string) (*v1beta1.PipelineList, error) {
 
 	pipelineGroupResource := schema.GroupVersionResource{Group: "tekton.dev", Resource: "pipelines"}
-	unstructuredP, err := plist.AllObjecs(pipelineGroupResource, c, ns, opts)
+	unstructuredP, err := paction.List(pipelineGroupResource, c, ns, opts)
 	if err != nil {
 		return nil, err
 	}

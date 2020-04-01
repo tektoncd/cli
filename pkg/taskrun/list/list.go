@@ -18,7 +18,7 @@ import (
 	"fmt"
 	"os"
 
-	trlist "github.com/tektoncd/cli/pkg/actions/list"
+	traction "github.com/tektoncd/cli/pkg/actions/list"
 	"github.com/tektoncd/cli/pkg/cli"
 	"github.com/tektoncd/cli/pkg/formatted"
 	trsort "github.com/tektoncd/cli/pkg/taskrun/sort"
@@ -57,7 +57,7 @@ func GetAllTaskRuns(p cli.Params, opts metav1.ListOptions, limit int) ([]string,
 func TaskRuns(c *cli.Clients, opts metav1.ListOptions, ns string) (*v1beta1.TaskRunList, error) {
 
 	trGroupResource := schema.GroupVersionResource{Group: "tekton.dev", Resource: "taskruns"}
-	unstructuredTR, err := trlist.AllObjecs(trGroupResource, c, ns, opts)
+	unstructuredTR, err := traction.List(trGroupResource, c, ns, opts)
 	if err != nil {
 		return nil, err
 	}

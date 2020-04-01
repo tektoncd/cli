@@ -18,7 +18,7 @@ import (
 	"fmt"
 	"os"
 
-	tlist "github.com/tektoncd/cli/pkg/actions/list"
+	taction "github.com/tektoncd/cli/pkg/actions/list"
 	"github.com/tektoncd/cli/pkg/cli"
 	"github.com/tektoncd/pipeline/pkg/apis/pipeline/v1beta1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
@@ -48,7 +48,7 @@ func GetAllTaskNames(p cli.Params) ([]string, error) {
 func List(c *cli.Clients, opts metav1.ListOptions, ns string) (*v1beta1.TaskList, error) {
 
 	taskGroupResource := schema.GroupVersionResource{Group: "tekton.dev", Resource: "tasks"}
-	unstructuredT, err := tlist.AllObjecs(taskGroupResource, c, ns, opts)
+	unstructuredT, err := taction.List(taskGroupResource, c, ns, opts)
 	if err != nil {
 		return nil, err
 	}
