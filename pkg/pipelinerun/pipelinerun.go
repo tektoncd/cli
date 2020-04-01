@@ -18,7 +18,7 @@ import (
 	"fmt"
 	"os"
 
-	prlist "github.com/tektoncd/cli/pkg/actions/list"
+	praction "github.com/tektoncd/cli/pkg/actions/list"
 	"github.com/tektoncd/cli/pkg/cli"
 	"github.com/tektoncd/cli/pkg/formatted"
 	prsort "github.com/tektoncd/cli/pkg/pipelinerun/sort"
@@ -75,7 +75,7 @@ func GetAllPipelineRuns(p cli.Params, opts metav1.ListOptions, limit int) ([]str
 
 func List(c *cli.Clients, opts metav1.ListOptions, ns string) (*v1beta1.PipelineRunList, error) {
 	prGroupResource := schema.GroupVersionResource{Group: "tekton.dev", Resource: "pipelineruns"}
-	unstructuredPR, err := prlist.AllObjecs(prGroupResource, c, ns, opts)
+	unstructuredPR, err := praction.List(prGroupResource, c, ns, opts)
 	if err != nil {
 		return nil, err
 	}
