@@ -100,7 +100,8 @@ func TestPipelineDelete(t *testing.T) {
 		})
 
 		cs.Pipeline.Resources = cb.APIResourceList(version, []string{"pipeline", "pipelinerun"})
-		dc, err := testDynamic.Client(
+		tdc := testDynamic.Options{}
+		dc, err := tdc.Client(
 			cb.UnstructuredP(pdata[0], version),
 			cb.UnstructuredP(pdata[1], version),
 			cb.UnstructuredPR(prdata[0], version),
@@ -350,7 +351,8 @@ func TestPipelineDelete_v1beta1(t *testing.T) {
 		})
 
 		cs.Pipeline.Resources = cb.APIResourceList(version, []string{"pipeline", "pipelinerun"})
-		dc, err := testDynamic.Client(
+		tdc := testDynamic.Options{}
+		dc, err := tdc.Client(
 			cb.UnstructuredP(pdata[0], version),
 			cb.UnstructuredP(pdata[1], version),
 			cb.UnstructuredPR(prdata[0], version),

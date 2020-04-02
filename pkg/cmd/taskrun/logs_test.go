@@ -76,8 +76,8 @@ func TestLog_no_taskrun_arg(t *testing.T) {
 		},
 	})
 	cs.Pipeline.Resources = cb.APIResourceList("v1alpha1", []string{"taskrun"})
-
-	dc1, err := testDynamic.Client()
+	tdc := testDynamic.Options{}
+	dc1, err := tdc.Client()
 	if err != nil {
 		t.Errorf("unable to create dynamic clinet: %v", err)
 	}
@@ -124,7 +124,10 @@ func TestLog_no_taskrun_arg(t *testing.T) {
 		},
 	})
 	cs2.Pipeline.Resources = cb.APIResourceList("v1alpha1", []string{"taskrun"})
-	dc2, err := testDynamic.Client(cb.UnstructuredTR(taskrun2[0], "v1alpha1"))
+	tdc2 := testDynamic.Options{}
+	dc2, err := tdc2.Client(
+		cb.UnstructuredTR(taskrun2[0], "v1alpha1"),
+	)
 	if err != nil {
 		t.Errorf("unable to create dynamic clinet: %v", err)
 	}
@@ -178,13 +181,15 @@ func TestLog_missing_taskrun(t *testing.T) {
 			},
 		},
 	}
-
-	dc, err := testDynamic.Client(cb.UnstructuredTR(tr[0], "v1alpha1"))
+	tdc := testDynamic.Options{}
+	dc, err := tdc.Client(
+		cb.UnstructuredTR(tr[0], "v1alpha1"),
+	)
 	if err != nil {
 		t.Errorf("unable to create dynamic clinet: %v", err)
 	}
 	cs, _ := test.SeedTestData(t, pipelinetest.Data{TaskRuns: tr, Namespaces: nsList})
-	cs.Pipeline.Resources = cb.APIResourceList("v1alpha1", []string{"TaskRun"})
+	cs.Pipeline.Resources = cb.APIResourceList("v1alpha1", []string{"taskrun"})
 	watcher := watch.NewFake()
 	cs.Kube.PrependWatchReactor("pods", k8stest.DefaultWatchReactor(watcher, nil))
 	p := &test.Params{Tekton: cs.Pipeline, Kube: cs.Kube, Dynamic: dc}
@@ -214,6 +219,7 @@ func TestLog_invalid_flags(t *testing.T) {
 }
 
 func TestLog_taskrun_logs(t *testing.T) {
+	version := "v1alpha1"
 	var (
 		ns          = "namespace"
 		taskName    = "output-task"
@@ -276,7 +282,11 @@ func TestLog_taskrun_logs(t *testing.T) {
 	)
 
 	cs, _ := test.SeedTestData(t, pipelinetest.Data{TaskRuns: trs, Pods: ps, Namespaces: nsList})
-	dc, err := testDynamic.Client()
+	cs.Pipeline.Resources = cb.APIResourceList(version, []string{"taskrun"})
+	tdc := testDynamic.Options{}
+	dc, err := tdc.Client(
+		cb.UnstructuredTR(trs[0], version),
+	)
 	if err != nil {
 		t.Errorf("unable to create dynamic clinet: %v", err)
 	}
@@ -293,6 +303,7 @@ func TestLog_taskrun_logs(t *testing.T) {
 }
 
 func TestLog_taskrun_logs_no_pod_name(t *testing.T) {
+	version := "v1alpha1"
 	var (
 		ns          = "namespace"
 		taskName    = "output-task"
@@ -338,7 +349,11 @@ func TestLog_taskrun_logs_no_pod_name(t *testing.T) {
 	logs := fake.Logs()
 
 	cs, _ := test.SeedTestData(t, pipelinetest.Data{TaskRuns: trs, Pods: ps, Namespaces: nsList})
-	dc, err := testDynamic.Client()
+	cs.Pipeline.Resources = cb.APIResourceList(version, []string{"taskrun"})
+	tdc := testDynamic.Options{}
+	dc, err := tdc.Client(
+		cb.UnstructuredTR(trs[0], version),
+	)
 	if err != nil {
 		t.Errorf("unable to create dynamic clinet: %v", err)
 	}
@@ -354,6 +369,7 @@ func TestLog_taskrun_logs_no_pod_name(t *testing.T) {
 }
 
 func TestLog_taskrun_all_steps(t *testing.T) {
+	version := "v1alpha1"
 	var (
 		prstart  = clockwork.NewFakeClock()
 		ns       = "namespace"
@@ -426,7 +442,11 @@ func TestLog_taskrun_all_steps(t *testing.T) {
 	)
 
 	cs, _ := test.SeedTestData(t, pipelinetest.Data{TaskRuns: trs, Pods: p, Namespaces: nsList})
-	dc, err := testDynamic.Client()
+	cs.Pipeline.Resources = cb.APIResourceList(version, []string{"taskrun"})
+	tdc := testDynamic.Options{}
+	dc, err := tdc.Client(
+		cb.UnstructuredTR(trs[0], version),
+	)
 	if err != nil {
 		t.Errorf("unable to create dynamic clinet: %v", err)
 	}
@@ -445,6 +465,7 @@ func TestLog_taskrun_all_steps(t *testing.T) {
 }
 
 func TestLog_taskrun_given_steps(t *testing.T) {
+	version := "v1alpha1"
 	var (
 		ns       = "namespace"
 		taskName = "output-task"
@@ -516,7 +537,10 @@ func TestLog_taskrun_given_steps(t *testing.T) {
 	)
 
 	cs, _ := test.SeedTestData(t, pipelinetest.Data{TaskRuns: trs, Pods: p, Namespaces: nsList})
-	dc, err := testDynamic.Client()
+	cs.Pipeline.Resources = cb.APIResourceList(version, []string{"taskrun"})
+	tdc := testDynamic.Options{}
+	dc, err := tdc.Client(
+		cb.UnstructuredTR(trs[0], version))
 	if err != nil {
 		t.Errorf("unable to create dynamic clinet: %v", err)
 	}
@@ -533,6 +557,7 @@ func TestLog_taskrun_given_steps(t *testing.T) {
 }
 
 func TestLog_taskrun_follow_mode(t *testing.T) {
+	version := "v1alpha1"
 	var (
 		prstart     = clockwork.NewFakeClock()
 		ns          = "namespace"
@@ -604,7 +629,11 @@ func TestLog_taskrun_follow_mode(t *testing.T) {
 	)
 
 	cs, _ := test.SeedTestData(t, pipelinetest.Data{TaskRuns: trs, Pods: p, Namespaces: nsList})
-	dc, err := testDynamic.Client()
+	cs.Pipeline.Resources = cb.APIResourceList(version, []string{"taskrun"})
+	tdc := testDynamic.Options{}
+	dc, err := tdc.Client(
+		cb.UnstructuredTR(trs[0], version),
+	)
 	if err != nil {
 		t.Errorf("unable to create dynamic clinet: %v", err)
 	}
@@ -689,7 +718,8 @@ func TestLog_taskrun_last(t *testing.T) {
 	}
 
 	cs, _ := test.SeedTestData(t, pipelinetest.Data{TaskRuns: taskruns, Namespaces: namespaces})
-	dc, err := testDynamic.Client(
+	tdc := testDynamic.Options{}
+	dc, err := tdc.Client(
 		cb.UnstructuredTR(taskruns[0], "v1alpha1"),
 		cb.UnstructuredTR(taskruns[1], "v1alpha1"),
 	)
@@ -716,6 +746,7 @@ func TestLog_taskrun_last(t *testing.T) {
 }
 
 func TestLog_taskrun_follow_mode_no_pod_name(t *testing.T) {
+	version := "v1alpha1"
 	var (
 		prstart     = clockwork.NewFakeClock()
 		ns          = "namespace"
@@ -786,7 +817,11 @@ func TestLog_taskrun_follow_mode_no_pod_name(t *testing.T) {
 	)
 
 	cs, _ := test.SeedTestData(t, pipelinetest.Data{TaskRuns: trs, Pods: p, Namespaces: nsList})
-	dc, err := testDynamic.Client()
+	cs.Pipeline.Resources = cb.APIResourceList(version, []string{"taskrun"})
+	tdc := testDynamic.Options{}
+	dc, err := tdc.Client(
+		cb.UnstructuredTR(trs[0], version),
+	)
 	if err != nil {
 		t.Errorf("unable to create dynamic clinet: %v", err)
 	}
@@ -803,6 +838,7 @@ func TestLog_taskrun_follow_mode_no_pod_name(t *testing.T) {
 }
 
 func TestLog_taskrun_follow_mode_update_pod_name(t *testing.T) {
+	version := "v1alpha1"
 	var (
 		prstart     = clockwork.NewFakeClock()
 		ns          = "namespace"
@@ -873,9 +909,12 @@ func TestLog_taskrun_follow_mode_update_pod_name(t *testing.T) {
 	)
 
 	cs, _ := test.SeedTestData(t, pipelinetest.Data{TaskRuns: trs, Pods: p, Namespaces: nsList})
+	cs.Pipeline.Resources = cb.APIResourceList(version, []string{"taskrun"})
 	watcher := watch.NewRaceFreeFake()
-	cs.Pipeline.PrependWatchReactor("taskruns", k8stest.DefaultWatchReactor(watcher, nil))
-	dc, err := testDynamic.Client()
+	tdc := testDynamic.Options{WatchResource: "taskruns", Watcher: watcher}
+	dc, err := tdc.Client(
+		cb.UnstructuredTR(trs[0], version),
+	)
 	if err != nil {
 		t.Errorf("unable to create dynamic clinet: %v", err)
 	}
@@ -887,7 +926,7 @@ func TestLog_taskrun_follow_mode_update_pod_name(t *testing.T) {
 		trs[0].Status.PodName = trPod
 		watcher.Modify(trs[0])
 	}()
-
+	//time.Sleep(time.Second * 2)
 	output, err := fetchLogs(trlo)
 	if err != nil {
 		t.Errorf("Unexpected error: %v", err)
@@ -902,6 +941,7 @@ func TestLog_taskrun_follow_mode_update_pod_name(t *testing.T) {
 }
 
 func TestLog_taskrun_follow_mode_update_timeout(t *testing.T) {
+	version := "v1alpha1"
 	var (
 		prstart     = clockwork.NewFakeClock()
 		ns          = "namespace"
@@ -972,9 +1012,12 @@ func TestLog_taskrun_follow_mode_update_timeout(t *testing.T) {
 	)
 
 	cs, _ := test.SeedTestData(t, pipelinetest.Data{TaskRuns: trs, Pods: p, Namespaces: nsList})
+	cs.Pipeline.Resources = cb.APIResourceList(version, []string{"taskrun"})
 	watcher := watch.NewRaceFreeFake()
-	cs.Pipeline.PrependWatchReactor("taskruns", k8stest.DefaultWatchReactor(watcher, nil))
-	dc, err := testDynamic.Client()
+	tdc := testDynamic.Options{WatchResource: "taskruns", Watcher: watcher}
+	dc, err := tdc.Client(
+		cb.UnstructuredTR(trs[0], version),
+	)
 	if err != nil {
 		t.Errorf("unable to create dynamic clinet: %v", err)
 	}
@@ -999,6 +1042,7 @@ func TestLog_taskrun_follow_mode_update_timeout(t *testing.T) {
 }
 
 func TestLog_taskrun_follow_mode_no_output_provided(t *testing.T) {
+	version := "v1alpha1"
 	var (
 		prstart     = clockwork.NewFakeClock()
 		ns          = "namespace"
@@ -1065,9 +1109,12 @@ func TestLog_taskrun_follow_mode_no_output_provided(t *testing.T) {
 	)
 
 	cs, _ := test.SeedTestData(t, pipelinetest.Data{TaskRuns: trs, Pods: p, Namespaces: nsList})
+	cs.Pipeline.Resources = cb.APIResourceList(version, []string{"taskrun"})
 	watcher := watch.NewRaceFreeFake()
-	cs.Pipeline.PrependWatchReactor("taskruns", k8stest.DefaultWatchReactor(watcher, nil))
-	dc, err := testDynamic.Client()
+	tdc := testDynamic.Options{WatchResource: "taskruns", Watcher: watcher}
+	dc, err := tdc.Client(
+		cb.UnstructuredTR(trs[0], version),
+	)
 	if err != nil {
 		t.Errorf("unable to create dynamic clinet: %v", err)
 	}

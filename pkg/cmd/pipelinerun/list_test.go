@@ -109,7 +109,8 @@ func TestListPipelineRuns(t *testing.T) {
 		},
 	}
 
-	dc1, err := testDynamic.Client(
+	tdc1 := testDynamic.Options{}
+	dc1, err := tdc1.Client(
 		cb.UnstructuredPR(prs[0], version),
 		cb.UnstructuredPR(prs[1], version),
 		cb.UnstructuredPR(prs[2], version),
@@ -119,7 +120,8 @@ func TestListPipelineRuns(t *testing.T) {
 	if err != nil {
 		t.Errorf("unable to create dynamic clinet: %v", err)
 	}
-	dc2, err := testDynamic.Client(
+	tdc2 := testDynamic.Options{}
+	dc2, err := tdc2.Client(
 		cb.UnstructuredPR(prsMultipleNs[0], version),
 		cb.UnstructuredPR(prsMultipleNs[1], version),
 	)
@@ -311,7 +313,8 @@ func TestListPipelineRuns_v1beta1(t *testing.T) {
 		},
 	}
 
-	dc1, err := testDynamic.Client(
+	tdc1 := testDynamic.Options{}
+	dc1, err := tdc1.Client(
 		cb.UnstructuredPR(prs[0], version),
 		cb.UnstructuredPR(prs[1], version),
 		cb.UnstructuredPR(prs[2], version),
@@ -456,7 +459,8 @@ func TestListPipeline_empty(t *testing.T) {
 
 	cs, _ := test.SeedTestData(t, pipelinetest.Data{Namespaces: ns})
 	cs.Pipeline.Resources = cb.APIResourceList("v1alpha1", []string{"pipelinerun"})
-	dc, err := testDynamic.Client()
+	tdc := testDynamic.Options{}
+	dc, err := tdc.Client()
 	if err != nil {
 		t.Errorf("unable to create dynamic clinet: %v", err)
 	}

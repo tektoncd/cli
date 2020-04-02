@@ -48,7 +48,8 @@ func TestClusterTaskDelete(t *testing.T) {
 		}
 		cs, _ := test.SeedTestData(t, pipelinetest.Data{ClusterTasks: clustertasks})
 		cs.Pipeline.Resources = cb.APIResourceList(version, []string{"clustertask"})
-		dc, err := testDynamic.Client(
+		tdc := testDynamic.Options{}
+		dc, err := tdc.Client(
 			cb.UnstructuredCT(clustertasks[0], version),
 			cb.UnstructuredCT(clustertasks[1], version),
 			cb.UnstructuredCT(clustertasks[2], version),
@@ -221,7 +222,8 @@ func TestClusterTaskDelete_v1beta1(t *testing.T) {
 		}
 		cs, _ := test.SeedTestData(t, pipelinetest.Data{ClusterTasks: clustertasks})
 		cs.Pipeline.Resources = cb.APIResourceList(version, []string{"clustertask"})
-		dc, err := testDynamic.Client(
+		tdc := testDynamic.Options{}
+		dc, err := tdc.Client(
 			cb.UnstructuredCT(clustertasks[0], version),
 			cb.UnstructuredCT(clustertasks[1], version),
 			cb.UnstructuredCT(clustertasks[2], version),

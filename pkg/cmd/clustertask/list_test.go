@@ -32,8 +32,8 @@ import (
 func TestClusterTaskList_Empty(t *testing.T) {
 	cs, _ := test.SeedTestData(t, pipelinetest.Data{})
 	cs.Pipeline.Resources = cb.APIResourceList("v1alpha1", []string{"clustertask"})
-
-	dynamic, err := testDynamic.Client()
+	tdc := testDynamic.Options{}
+	dynamic, err := tdc.Client()
 	if err != nil {
 		t.Errorf("unable to create dynamic clinet: %v", err)
 	}
@@ -61,8 +61,8 @@ func TestClusterTaskListOnlyClusterTasksv1alpha1(t *testing.T) {
 	}
 
 	version := "v1alpha1"
-
-	dynamic, err := testDynamic.Client(
+	tdc := testDynamic.Options{}
+	dynamic, err := tdc.Client(
 		cb.UnstructuredCT(clustertasks[0], version),
 		cb.UnstructuredCT(clustertasks[1], version),
 		cb.UnstructuredCT(clustertasks[2], version),
@@ -97,8 +97,8 @@ func TestClusterTaskListOnlyClusterTasksv1beta1(t *testing.T) {
 	}
 
 	version := "v1beta1"
-
-	dynamic, err := testDynamic.Client(
+	tdc := testDynamic.Options{}
+	dynamic, err := tdc.Client(
 		cb.UnstructuredCT(clustertasks[0], version),
 		cb.UnstructuredCT(clustertasks[1], version),
 		cb.UnstructuredCT(clustertasks[2], version),

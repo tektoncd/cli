@@ -137,8 +137,8 @@ func TestListTaskRuns(t *testing.T) {
 			},
 		},
 	}
-
-	dc1, err := testDynamic.Client(
+	tdc1 := testDynamic.Options{}
+	dc1, err := tdc1.Client(
 		cb.UnstructuredTR(trs[0], version),
 		cb.UnstructuredTR(trs[1], version),
 		cb.UnstructuredTR(trs[2], version),
@@ -150,7 +150,8 @@ func TestListTaskRuns(t *testing.T) {
 	if err != nil {
 		t.Errorf("unable to create dynamic clinet: %v", err)
 	}
-	dc2, err := testDynamic.Client(
+	tdc2 := testDynamic.Options{}
+	dc2, err := tdc2.Client(
 		cb.UnstructuredTR(trsMultipleNs[0], version),
 		cb.UnstructuredTR(trsMultipleNs[1], version),
 	)
@@ -386,8 +387,8 @@ func TestListTaskRuns_v1beta1(t *testing.T) {
 			},
 		},
 	}
-
-	dc1, err := testDynamic.Client(
+	tdc1 := testDynamic.Options{}
+	dc1, err := tdc1.Client(
 		cb.UnstructuredTR(trs[0], version),
 		cb.UnstructuredTR(trs[1], version),
 		cb.UnstructuredTR(trs[2], version),
@@ -399,7 +400,8 @@ func TestListTaskRuns_v1beta1(t *testing.T) {
 	if err != nil {
 		t.Errorf("unable to create dynamic clinet: %v", err)
 	}
-	dc2, err := testDynamic.Client(
+	tdc2 := testDynamic.Options{}
+	dc2, err := tdc2.Client(
 		cb.UnstructuredTR(trsMultipleNs[0], version),
 		cb.UnstructuredTR(trsMultipleNs[1], version),
 	)
@@ -545,7 +547,8 @@ func TestListTaskRuns_no_condition(t *testing.T) {
 			},
 		},
 	}
-	dc, err := testDynamic.Client(
+	tdc := testDynamic.Options{}
+	dc, err := tdc.Client(
 		cb.UnstructuredTR(trs[0], version),
 	)
 	if err != nil {

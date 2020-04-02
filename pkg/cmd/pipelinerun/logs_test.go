@@ -20,6 +20,8 @@ import (
 	"testing"
 	"time"
 
+	"k8s.io/client-go/dynamic"
+
 	"github.com/jonboulle/clockwork"
 	"github.com/tektoncd/cli/pkg/cli"
 	"github.com/tektoncd/cli/pkg/options"
@@ -113,7 +115,8 @@ func TestLog_run_found(t *testing.T) {
 		},
 	})
 	cs.Pipeline.Resources = cb.APIResourceList(version, []string{"pipelinerun"})
-	dc, err := testDynamic.Client(
+	tdc := testDynamic.Options{}
+	dc, err := tdc.Client(
 		cb.UnstructuredPR(prdata[0], version),
 	)
 	if err != nil {
@@ -160,6 +163,7 @@ func TestLog_run_not_found(t *testing.T) {
 }
 
 func TestPipelinerunLogs(t *testing.T) {
+	version := "v1alpha1"
 	var (
 		pipelineName = "output-pipeline"
 		prName       = "output-pipeline-1"
@@ -348,8 +352,16 @@ func TestPipelinerunLogs(t *testing.T) {
 	for _, s := range scenarios {
 		t.Run(s.name, func(t *testing.T) {
 			cs, _ := test.SeedTestData(t, pipelinetest.Data{PipelineRuns: prs, Pipelines: pps, TaskRuns: trs, Pods: p, Namespaces: nsList})
-
-			prlo := logOpts(prName, ns, cs, fake.Streamer(fakeLogs), s.allSteps, false, s.tasks...)
+			cs.Pipeline.Resources = cb.APIResourceList(version, []string{"taskrun"})
+			tdc := testDynamic.Options{}
+			dc, err := tdc.Client(
+				cb.UnstructuredTR(trs[0], version),
+				cb.UnstructuredTR(trs[1], version),
+			)
+			if err != nil {
+				t.Errorf("unable to create dynamic clinet: %v", err)
+			}
+			prlo := logOpts(prName, ns, cs, dc, fake.Streamer(fakeLogs), s.allSteps, false, s.tasks...)
 			output, _ := fetchLogs(prlo)
 
 			expected := strings.Join(s.expectedLogs, "\n") + "\n"
@@ -361,6 +373,7 @@ func TestPipelinerunLogs(t *testing.T) {
 
 // scenario, print logs for 1 completed taskruns out of 4 pipeline tasks
 func TestPipelinerunLog_completed_taskrun_only(t *testing.T) {
+	version := "v1alpha1"
 	var (
 		pipelineName = "output-pipeline"
 		prName       = "output-pipeline-1"
@@ -382,34 +395,35 @@ func TestPipelinerunLog_completed_taskrun_only(t *testing.T) {
 		task4Name = "teardown"
 	)
 
-	// define pipeline in pipelineRef
-	cs, _ := test.SeedTestData(t, pipelinetest.Data{
-		TaskRuns: []*v1alpha1.TaskRun{
-			tb.TaskRun(tr1Name, ns,
-				tb.TaskRunSpec(
-					tb.TaskRunTaskRef(task1Name),
+	trdata1 := []*v1alpha1.TaskRun{
+		tb.TaskRun(tr1Name, ns,
+			tb.TaskRunSpec(
+				tb.TaskRunTaskRef(task1Name),
+			),
+			tb.TaskRunStatus(
+				tb.PodName(tr1Pod),
+				tb.TaskRunStartTime(tr1StartTime),
+				tb.StatusCondition(apis.Condition{
+					Type:   apis.ConditionSucceeded,
+					Status: corev1.ConditionTrue,
+				}),
+				tb.StepState(
+					cb.StepName(tr1Step1Name),
+					tb.StateTerminated(0),
 				),
-				tb.TaskRunStatus(
-					tb.PodName(tr1Pod),
-					tb.TaskRunStartTime(tr1StartTime),
-					tb.StatusCondition(apis.Condition{
-						Type:   apis.ConditionSucceeded,
-						Status: corev1.ConditionTrue,
-					}),
-					tb.StepState(
-						cb.StepName(tr1Step1Name),
-						tb.StateTerminated(0),
-					),
-					tb.StepState(
-						cb.StepName("nop"),
-						tb.StateTerminated(0),
-					),
-				),
-				tb.TaskRunSpec(
-					tb.TaskRunTaskRef(task1Name),
+				tb.StepState(
+					cb.StepName("nop"),
+					tb.StateTerminated(0),
 				),
 			),
-		},
+			tb.TaskRunSpec(
+				tb.TaskRunTaskRef(task1Name),
+			),
+		),
+	}
+	// define pipeline in pipelineRef
+	cs, _ := test.SeedTestData(t, pipelinetest.Data{
+		TaskRuns: trdata1,
 		Pipelines: []*v1alpha1.Pipeline{
 			tb.Pipeline(pipelineName, ns,
 				tb.PipelineSpec(
@@ -452,31 +466,41 @@ func TestPipelinerunLog_completed_taskrun_only(t *testing.T) {
 			),
 		},
 	})
+	cs.Pipeline.Resources = cb.APIResourceList(version, []string{"taskrun"})
+	tdc := testDynamic.Options{}
+	dc, err := tdc.Client(
+		cb.UnstructuredTR(trdata1[0], version),
+	)
+	if err != nil {
+		t.Errorf("unable to create dynamic clinet: %v", err)
+	}
 
-	// define embedded pipeline
-	cs2, _ := test.SeedTestData(t, pipelinetest.Data{
-		Tasks: []*v1alpha1.Task{
-			tb.Task("output-task2", "ns", cb.TaskCreationTime(clockwork.NewFakeClock().Now())),
-		},
-		TaskRuns: []*v1alpha1.TaskRun{
-			tb.TaskRun("output-taskrun2", "ns",
-				tb.TaskRunLabel("tekton.dev/task", "task"),
-				tb.TaskRunSpec(tb.TaskRunTaskRef("output-task2")),
-				tb.TaskRunStatus(
-					tb.PodName("output-task-pod-embedded"),
-					tb.TaskRunStartTime(clockwork.NewFakeClock().Now()),
-					tb.StatusCondition(apis.Condition{
-						Type:   apis.ConditionSucceeded,
-						Status: corev1.ConditionTrue,
-						Reason: resources.ReasonSucceeded,
-					}),
-					tb.StepState(
-						cb.StepName("test-step"),
-						tb.StateTerminated(0),
-					),
+	tdata2 := []*v1alpha1.Task{
+		tb.Task("output-task2", "ns", cb.TaskCreationTime(clockwork.NewFakeClock().Now())),
+	}
+	trdata2 := []*v1alpha1.TaskRun{
+		tb.TaskRun("output-taskrun2", "ns",
+			tb.TaskRunLabel("tekton.dev/task", "task"),
+			tb.TaskRunSpec(tb.TaskRunTaskRef("output-task2")),
+			tb.TaskRunStatus(
+				tb.PodName("output-task-pod-embedded"),
+				tb.TaskRunStartTime(clockwork.NewFakeClock().Now()),
+				tb.StatusCondition(apis.Condition{
+					Type:   apis.ConditionSucceeded,
+					Status: corev1.ConditionTrue,
+					Reason: resources.ReasonSucceeded,
+				}),
+				tb.StepState(
+					cb.StepName("test-step"),
+					tb.StateTerminated(0),
 				),
 			),
-		},
+		),
+	}
+	// define embedded pipeline
+	cs2, _ := test.SeedTestData(t, pipelinetest.Data{
+		Tasks:    tdata2,
+		TaskRuns: trdata2,
 		PipelineRuns: []*v1alpha1.PipelineRun{
 			tb.PipelineRun("embedded-pipeline-1", "ns",
 				tb.PipelineRunLabel("tekton.dev/pipeline", "embedded-pipeline-1"),
@@ -513,11 +537,21 @@ func TestPipelinerunLog_completed_taskrun_only(t *testing.T) {
 			),
 		},
 	})
+	cs2.Pipeline.Resources = cb.APIResourceList(version, []string{"task", "taskrun"})
+	tdc2 := testDynamic.Options{}
+	dc2, err := tdc2.Client(
+		cb.UnstructuredT(tdata2[0], version),
+		cb.UnstructuredTR(trdata2[0], version),
+	)
+	if err != nil {
+		t.Errorf("unable to create dynamic clinet: %v", err)
+	}
 
 	for _, tt := range []struct {
 		name            string
 		pipelineRunName string
 		namespace       string
+		dynamic         dynamic.Interface
 		input           pipelinetest.Clients
 		logs            []fake.Log
 		want            []string
@@ -526,6 +560,7 @@ func TestPipelinerunLog_completed_taskrun_only(t *testing.T) {
 			name:            "Test PipelineRef",
 			pipelineRunName: prName,
 			namespace:       ns,
+			dynamic:         dc,
 			input:           cs,
 			logs: fake.Logs(
 				fake.Task(tr1Pod,
@@ -543,6 +578,7 @@ func TestPipelinerunLog_completed_taskrun_only(t *testing.T) {
 			name:            "Test embedded Pipeline",
 			pipelineRunName: "embedded-pipeline-1",
 			namespace:       "ns",
+			dynamic:         dc2,
 			input:           cs2,
 			logs: fake.Logs(
 				fake.Task("output-task-pod-embedded",
@@ -558,7 +594,7 @@ func TestPipelinerunLog_completed_taskrun_only(t *testing.T) {
 		},
 	} {
 		t.Run(tt.name, func(t *testing.T) {
-			prlo := logOpts(tt.pipelineRunName, tt.namespace, tt.input, fake.Streamer(tt.logs), false, false)
+			prlo := logOpts(tt.pipelineRunName, tt.namespace, tt.input, tt.dynamic, fake.Streamer(tt.logs), false, false)
 			output, _ := fetchLogs(prlo)
 			test.AssertOutput(t, strings.Join(tt.want, "\n"), output)
 		})
@@ -566,6 +602,7 @@ func TestPipelinerunLog_completed_taskrun_only(t *testing.T) {
 }
 
 func TestPipelinerunLog_follow_mode(t *testing.T) {
+	version := "v1alpha1"
 	var (
 		pipelineName = "output-pipeline"
 		prName       = "output-pipeline-1"
@@ -665,7 +702,15 @@ func TestPipelinerunLog_follow_mode(t *testing.T) {
 	)
 
 	cs, _ := test.SeedTestData(t, pipelinetest.Data{PipelineRuns: prs, Pipelines: pps, TaskRuns: trs, Pods: p, Namespaces: nsList})
-	prlo := logOpts(prName, ns, cs, fake.Streamer(fakeLogStream), false, true)
+	cs.Pipeline.Resources = cb.APIResourceList(version, []string{"taskrun"})
+	tdc := testDynamic.Options{}
+	dc, err := tdc.Client(
+		cb.UnstructuredTR(trs[0], version),
+	)
+	if err != nil {
+		t.Errorf("unable to create dynamic clinet: %v", err)
+	}
+	prlo := logOpts(prName, ns, cs, dc, fake.Streamer(fakeLogStream), false, true)
 	output, _ := fetchLogs(prlo)
 
 	expectedLogs := []string{
@@ -681,6 +726,7 @@ func TestPipelinerunLog_follow_mode(t *testing.T) {
 }
 
 func TestLogs_error_log(t *testing.T) {
+	version := "v1alpha1"
 	var (
 		pipelineName = "errlogs-pipeline"
 		prName       = "errlogs-run"
@@ -723,7 +769,15 @@ func TestLogs_error_log(t *testing.T) {
 		),
 	}
 	cs, _ := test.SeedTestData(t, pipelinetest.Data{PipelineRuns: prs, Pipelines: ps, Tasks: ts, Namespaces: nsList})
-	prlo := logOpts(prName, ns, cs, fake.Streamer([]fake.Log{}), false, false)
+	cs.Pipeline.Resources = cb.APIResourceList(version, []string{"task"})
+	tdc := testDynamic.Options{}
+	dc, err := tdc.Client(
+		cb.UnstructuredT(ts[0], version),
+	)
+	if err != nil {
+		t.Errorf("unable to create dynamic clinet: %v", err)
+	}
+	prlo := logOpts(prName, ns, cs, dc, fake.Streamer([]fake.Log{}), false, false)
 	output, err := fetchLogs(prlo)
 	if err != nil {
 		t.Errorf("Unexpected error: %v", err)
@@ -768,7 +822,7 @@ func TestLogs_nologs(t *testing.T) {
 		),
 	}
 	cs, _ := test.SeedTestData(t, pipelinetest.Data{PipelineRuns: prs, Pipelines: ps, Namespaces: nsList})
-	prlo := logOpts(prName, ns, cs, fake.Streamer([]fake.Log{}), false, false)
+	prlo := logOpts(prName, ns, cs, nil, fake.Streamer([]fake.Log{}), false, false)
 	output, err := fetchLogs(prlo)
 	if err != nil {
 		t.Errorf("Unexpected error: %v", err)
@@ -817,7 +871,7 @@ func TestLog_run_failed_with_and_without_follow(t *testing.T) {
 	cs, _ := test.SeedTestData(t, pipelinetest.Data{PipelineRuns: prs, Pipelines: ps, Namespaces: nsList})
 
 	// follow mode disabled
-	prlo := logOpts(prName, ns, cs, fake.Streamer([]fake.Log{}), false, false)
+	prlo := logOpts(prName, ns, cs, nil, fake.Streamer([]fake.Log{}), false, false)
 	output, err := fetchLogs(prlo)
 	if err != nil {
 		t.Errorf("Unexpected error: %v", err)
@@ -825,7 +879,7 @@ func TestLog_run_failed_with_and_without_follow(t *testing.T) {
 	test.AssertOutput(t, failMessage+"\n", output)
 
 	// follow mode enabled
-	prlo = logOpts(prName, ns, cs, fake.Streamer([]fake.Log{}), false, true)
+	prlo = logOpts(prName, ns, cs, nil, fake.Streamer([]fake.Log{}), false, true)
 	output, err = fetchLogs(prlo)
 	if err != nil {
 		t.Errorf("Unexpected error: %v", err)
@@ -834,6 +888,7 @@ func TestLog_run_failed_with_and_without_follow(t *testing.T) {
 }
 
 func TestLog_pipelinerun_still_running(t *testing.T) {
+	version := "v1alpha1"
 	var (
 		pipelineName = "inprogress-pipeline"
 		prName       = "inprogress-run"
@@ -895,7 +950,9 @@ func TestLog_pipelinerun_still_running(t *testing.T) {
 	cs, _ := test.SeedTestData(t, pipelinetest.Data{PipelineRuns: initialPRs, Pipelines: ps, Namespaces: nsList})
 	watcher := watch.NewFake()
 	cs.Pipeline.PrependWatchReactor("pipelineruns", k8stest.DefaultWatchReactor(watcher, nil))
-	prlo := logOpts(prName, ns, cs, fake.Streamer([]fake.Log{}), false, false)
+	cs.Pipeline.Resources = cb.APIResourceList(version, []string{"taskrun"})
+
+	prlo := logOpts(prName, ns, cs, nil, fake.Streamer([]fake.Log{}), false, false)
 
 	updatePR(finalPRs, watcher)
 
@@ -947,7 +1004,7 @@ func TestLog_pipelinerun_status_done(t *testing.T) {
 	cs, _ := test.SeedTestData(t, pipelinetest.Data{PipelineRuns: prs, Pipelines: ps, Namespaces: nsList})
 	watcher := watch.NewFake()
 	cs.Pipeline.PrependWatchReactor("pipelineruns", k8stest.DefaultWatchReactor(watcher, nil))
-	prlo := logOpts(prName, ns, cs, fake.Streamer([]fake.Log{}), false, false)
+	prlo := logOpts(prName, ns, cs, nil, fake.Streamer([]fake.Log{}), false, false)
 
 	go func() {
 		time.Sleep(time.Second * 1)
@@ -980,10 +1037,11 @@ func updatePR(finalRuns []*v1alpha1.PipelineRun, watcher *watch.FakeWatcher) {
 	}()
 }
 
-func logOpts(name string, ns string, cs pipelinetest.Clients, streamer stream.NewStreamerFunc, allSteps bool, follow bool, tasks ...string) *options.LogOptions {
+func logOpts(name string, ns string, cs pipelinetest.Clients, dc dynamic.Interface, streamer stream.NewStreamerFunc, allSteps bool, follow bool, tasks ...string) *options.LogOptions {
 	p := test.Params{
-		Kube:   cs.Kube,
-		Tekton: cs.Pipeline,
+		Kube:    cs.Kube,
+		Tekton:  cs.Pipeline,
+		Dynamic: dc,
 	}
 	p.SetNamespace(ns)
 
@@ -1061,7 +1119,8 @@ func TestLog_pipelinerun_last(t *testing.T) {
 
 	cs, _ := test.SeedTestData(t, pipelinetest.Data{PipelineRuns: pipelineruns, Pipelines: pipelines, Namespaces: namespaces})
 	cs.Pipeline.Resources = cb.APIResourceList(version, []string{"pipelinerun"})
-	dc, err := testDynamic.Client(
+	tdc := testDynamic.Options{}
+	dc, err := tdc.Client(
 		cb.UnstructuredPR(pipelineruns[0], version),
 		cb.UnstructuredPR(pipelineruns[1], version),
 	)
@@ -1127,7 +1186,8 @@ func TestLog_pipelinerun_only_one(t *testing.T) {
 
 	cs, _ := test.SeedTestData(t, pipelinetest.Data{PipelineRuns: pipelineruns, Pipelines: pipelines, Namespaces: namespaces})
 	cs.Pipeline.Resources = cb.APIResourceList(version, []string{"pipelinerun"})
-	dc, err := testDynamic.Client(
+	tdc := testDynamic.Options{}
+	dc, err := tdc.Client(
 		cb.UnstructuredPR(pipelineruns[0], version),
 	)
 	if err != nil {
