@@ -184,12 +184,18 @@ func startClusterTask(opt startOptions, args []string) error {
 		tr.Spec.Workspaces = trLast.Spec.Workspaces
 	}
 
+	if tr.Spec.Inputs == nil {
+		tr.Spec.Inputs = &v1alpha1.TaskRunInputs{}
+	}
 	inputRes, err := mergeRes(tr.Spec.Inputs.Resources, opt.InputResources)
 	if err != nil {
 		return err
 	}
 	tr.Spec.Inputs.Resources = inputRes
 
+	if tr.Spec.Outputs == nil {
+		tr.Spec.Outputs = &v1alpha1.TaskRunOutputs{}
+	}
 	outRes, err := mergeRes(tr.Spec.Outputs.Resources, opt.OutputResources)
 	if err != nil {
 		return err

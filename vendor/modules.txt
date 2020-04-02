@@ -242,7 +242,7 @@ github.com/russross/blackfriday
 github.com/spf13/cobra
 # github.com/spf13/pflag v1.0.5
 github.com/spf13/pflag
-# github.com/tektoncd/pipeline v0.11.0-rc2
+# github.com/tektoncd/pipeline v0.11.0
 github.com/tektoncd/pipeline/pkg/apis/config
 github.com/tektoncd/pipeline/pkg/apis/pipeline
 github.com/tektoncd/pipeline/pkg/apis/pipeline/pod
@@ -313,8 +313,8 @@ github.com/tektoncd/pipeline/pkg/reconciler/taskrun/resources
 github.com/tektoncd/pipeline/pkg/substitution
 github.com/tektoncd/pipeline/pkg/system
 github.com/tektoncd/pipeline/pkg/workspace
-github.com/tektoncd/pipeline/test
 github.com/tektoncd/pipeline/test/builder
+github.com/tektoncd/pipeline/test/v1alpha1
 # github.com/tektoncd/plumbing v0.0.0-20200217163359-cd0db6e567d2
 github.com/tektoncd/plumbing/scripts
 # github.com/tektoncd/triggers v0.3.2-0.20200309195848-700e5df278fb

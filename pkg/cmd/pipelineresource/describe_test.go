@@ -22,8 +22,8 @@ import (
 	"github.com/jonboulle/clockwork"
 	"github.com/tektoncd/cli/pkg/test"
 	"github.com/tektoncd/pipeline/pkg/apis/pipeline/v1alpha1"
-	pipelinetest "github.com/tektoncd/pipeline/test"
 	tb "github.com/tektoncd/pipeline/test/builder"
+	pipelinetest "github.com/tektoncd/pipeline/test/v1alpha1"
 	"gotest.tools/v3/golden"
 	corev1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
@@ -85,11 +85,11 @@ func TestPipelineResourceDescribe_WithParams(t *testing.T) {
 	pres := []*v1alpha1.PipelineResource{
 		tb.PipelineResource("test-1", "test-ns-1",
 			tb.PipelineResourceSpec("image",
+				tb.PipelineResourceDescription("a test description"),
 				tb.PipelineResourceSpecParam("URL", "quay.io/tekton/controller"),
 			),
 		),
 	}
-	pres[0].Spec.Description = "a test description"
 
 	cs, _ := test.SeedTestData(t, pipelinetest.Data{PipelineResources: pres, Namespaces: ns})
 	p := &test.Params{Tekton: cs.Pipeline, Kube: cs.Kube, Resource: cs.Resource}
@@ -110,13 +110,13 @@ func TestPipelineResourceDescribe_WithSecretParams(t *testing.T) {
 	pres := []*v1alpha1.PipelineResource{
 		tb.PipelineResource("test-1", "test-ns-1",
 			tb.PipelineResourceSpec("image",
+				tb.PipelineResourceDescription("a test description"),
 				tb.PipelineResourceSpecParam("URL", "quay.io/tekton/controller"),
 				tb.PipelineResourceSpecParam("TAG", "latest"),
 				tb.PipelineResourceSpecSecretParam("githubToken", "github-secrets", "token"),
 			),
 		),
 	}
-	pres[0].Spec.Description = "a test description"
 
 	cs, _ := test.SeedTestData(t, pipelinetest.Data{PipelineResources: pres, Namespaces: ns})
 	p := &test.Params{Tekton: cs.Pipeline, Kube: cs.Kube, Resource: cs.Resource}

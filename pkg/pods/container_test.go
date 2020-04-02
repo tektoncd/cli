@@ -19,8 +19,8 @@ import (
 
 	"github.com/tektoncd/cli/pkg/pods/fake"
 	"github.com/tektoncd/cli/pkg/test"
-	pipelinetest "github.com/tektoncd/pipeline/test"
 	tb "github.com/tektoncd/pipeline/test/builder"
+	pipelinetest "github.com/tektoncd/pipeline/test/v1alpha1"
 	corev1 "k8s.io/api/core/v1"
 )
 

@@ -19,7 +19,7 @@ import (
 	"testing"
 
 	"github.com/tektoncd/cli/pkg/test"
-	pipelinetest "github.com/tektoncd/pipeline/test"
+	pipelinetest "github.com/tektoncd/pipeline/test/v1alpha1"
 	corev1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 )
