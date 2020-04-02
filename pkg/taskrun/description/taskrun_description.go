@@ -63,6 +63,9 @@ STARTED 	DURATION 	STATUS
 
 {{decorate "inputresources" ""}}{{decorate "underline bold" "Input Resources\n"}}
 
+{{- if not .TaskRun.Spec.Inputs }}
+ No input resources
+{{- else }}
 {{- $l := len .TaskRun.Spec.Inputs.Resources }}{{ if eq $l 0 }}
 No resources
 {{- else }}
@@ -75,9 +78,13 @@ No resources
 {{- end }}
 {{- end }}
 {{- end }}
+{{- end }}
 
 {{decorate "outputresources" ""}}{{decorate "underline bold" "Output Resources\n"}}
 
+{{- if not .TaskRun.Spec.Outputs }}
+ No output resources
+{{- else }}
 {{- $l := len .TaskRun.Spec.Outputs.Resources }}{{ if eq $l 0 }}
 No resources
 {{- else }}
@@ -90,9 +97,13 @@ No resources
 {{- end }}
 {{- end }}
 {{- end }}
+{{- end }}
 
 {{decorate "params" ""}}{{decorate "underline bold" "Params\n"}}
 
+{{- if not .TaskRun.Spec.Inputs }}
+ No params
+{{- else }}
 {{- $l := len .TaskRun.Spec.Inputs.Params }}{{ if eq $l 0 }}
 No params
 {{- else }}
@@ -102,6 +113,7 @@ No params
  {{decorate "bullet" $p.Name }}	{{ $p.Value.StringVal }}
 {{- else }}
  {{decorate "bullet" $p.Name }}	{{ $p.Value.ArrayVal }}
+{{- end }}
 {{- end }}
 {{- end }}
 {{- end }}

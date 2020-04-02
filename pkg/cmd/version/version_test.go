@@ -26,7 +26,7 @@ import (
 	"time"
 
 	"github.com/tektoncd/cli/pkg/test"
-	pipelinetest "github.com/tektoncd/pipeline/test"
+	pipelinetest "github.com/tektoncd/pipeline/test/v1alpha1"
 	"gotest.tools/v3/assert"
 	"gotest.tools/v3/golden"
 )

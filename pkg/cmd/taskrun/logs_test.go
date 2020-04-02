@@ -31,9 +31,8 @@ import (
 	testDynamic "github.com/tektoncd/cli/pkg/test/dynamic"
 	"github.com/tektoncd/pipeline/pkg/apis/pipeline/v1alpha1"
 	"github.com/tektoncd/pipeline/pkg/reconciler/pipelinerun/resources"
-	pipelinetest "github.com/tektoncd/pipeline/test"
-	ptest "github.com/tektoncd/pipeline/test"
 	tb "github.com/tektoncd/pipeline/test/builder"
+	pipelinetest "github.com/tektoncd/pipeline/test/v1alpha1"
 	corev1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/watch"
@@ -132,8 +131,8 @@ func TestLog_no_taskrun_arg(t *testing.T) {
 
 	testParams := []struct {
 		name      string
-		input     ptest.Clients
 		dc        dynamic.Interface
+		input     pipelinetest.Clients
 		wantError bool
 	}{
 		{
