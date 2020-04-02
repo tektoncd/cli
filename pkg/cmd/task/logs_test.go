@@ -58,8 +58,8 @@ func TestTaskLog(t *testing.T) {
 		},
 	})
 	cs.Pipeline.Resources = cb.APIResourceList("v1alpha1", []string{"task", "taskrun"})
-
-	dc1, err := testDynamic.Client(
+	tdc1 := testDynamic.Options{}
+	dc1, err := tdc1.Client(
 		cb.UnstructuredT(task1[0], "v1alpha1"),
 	)
 	if err != nil {
@@ -79,8 +79,9 @@ func TestTaskLog(t *testing.T) {
 			},
 		},
 	})
-	cs2.Pipeline.Resources = cb.APIResourceList("v1alpha1", []string{"task"})
-	dc2, err := testDynamic.Client(
+	cs2.Pipeline.Resources = cb.APIResourceList("v1alpha1", []string{"task", "taskrun"})
+	tdc2 := testDynamic.Options{}
+	dc2, err := tdc2.Client(
 		cb.UnstructuredT(task2[0], "v1alpha1"),
 	)
 	if err != nil {

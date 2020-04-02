@@ -17,11 +17,21 @@ package dynamic
 import (
 	"github.com/tektoncd/cli/pkg/test/dynamic/clientset"
 	"k8s.io/apimachinery/pkg/runtime"
+	"k8s.io/apimachinery/pkg/watch"
 	"k8s.io/client-go/dynamic"
 	"k8s.io/client-go/dynamic/fake"
+	k8stest "k8s.io/client-go/testing"
 )
 
-func Client(objects ...runtime.Object) (dynamic.Interface, error) {
+type Options struct {
+	WatchResource string
+	Watcher       *watch.RaceFreeFakeWatcher
+}
+
+func (opt *Options) Client(objects ...runtime.Object) (dynamic.Interface, error) {
 	dynamicClient := fake.NewSimpleDynamicClient(runtime.NewScheme(), objects...)
+	if opt.Watcher != nil {
+		dynamicClient.PrependWatchReactor(opt.WatchResource, k8stest.DefaultWatchReactor(opt.Watcher, nil))
+	}
 	return clientset.New(clientset.WithClient(dynamicClient)), nil
 }

@@ -57,8 +57,8 @@ func TestTaskList_Empty(t *testing.T) {
 	}
 	cs, _ := test.SeedTestData(t, pipelinetest.Data{Namespaces: ns})
 	cs.Pipeline.Resources = cb.APIResourceList("v1alpha1", []string{"task"})
-
-	dynamic, err := testDynamic.Client()
+	tdc := testDynamic.Options{}
+	dynamic, err := tdc.Client()
 	if err != nil {
 		fmt.Println(err)
 	}
@@ -92,7 +92,8 @@ func TestTaskList_Only_Tasks_v1alpha1(t *testing.T) {
 	}
 
 	version := "v1alpha1"
-	dynamic, err := testDynamic.Client(
+	tdc := testDynamic.Options{}
+	dynamic, err := tdc.Client(
 		cb.UnstructuredT(tasks[0], version),
 		cb.UnstructuredT(tasks[1], version),
 		cb.UnstructuredT(tasks[2], version),
@@ -138,7 +139,8 @@ func TestTaskList_Only_Tasks_v1beta1(t *testing.T) {
 	}
 
 	version := "v1beta1"
-	dynamic, err := testDynamic.Client(
+	tdc := testDynamic.Options{}
+	dynamic, err := tdc.Client(
 		cb.UnstructuredT(tasks[0], version),
 		cb.UnstructuredT(tasks[1], version),
 		cb.UnstructuredT(tasks[2], version),

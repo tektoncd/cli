@@ -25,7 +25,7 @@ import (
 	"github.com/tektoncd/cli/pkg/options"
 	thelper "github.com/tektoncd/cli/pkg/task"
 	trlist "github.com/tektoncd/cli/pkg/taskrun/list"
-	validate "github.com/tektoncd/cli/pkg/validate"
+	"github.com/tektoncd/cli/pkg/validate"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 )
 
@@ -36,7 +36,7 @@ func nameArg(args []string, p cli.Params) error {
 			return err
 		}
 		name, ns := args[0], p.Namespace()
-		if _, err = c.Tekton.TektonV1alpha1().Tasks(ns).Get(name, metav1.GetOptions{}); err != nil {
+		if _, err = thelper.Get(c, name, metav1.GetOptions{}, ns); err != nil {
 			return err
 		}
 	}
@@ -189,7 +189,7 @@ func initLastRunName(opts *options.LogOptions) error {
 	if err != nil {
 		return err
 	}
-	lastrun, err := thelper.LastRun(cs.Tekton, opts.TaskName, opts.Params.Namespace(), "task")
+	lastrun, err := thelper.DynamicLastRun(cs, opts.TaskName, opts.Params.Namespace(), "task")
 	if err != nil {
 		return err
 	}
