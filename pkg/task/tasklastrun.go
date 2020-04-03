@@ -26,7 +26,7 @@ import (
 )
 
 //Todo
-// changing this LastRun to use dynamic clinet leads to multiple other change in start commands
+// changing this LastRun to use dynamic client leads to multiple other change in start commands
 // keeping this as it is, will change this while working on start commands
 //LastRun returns the last taskrun for a given task
 func LastRun(tekton versioned.Interface, task string, ns string, kind string) (*v1alpha1.TaskRun, error) {

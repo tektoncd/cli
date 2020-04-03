@@ -41,6 +41,11 @@ import (
 	"knative.dev/pkg/apis"
 )
 
+const (
+	versionA1 = "v1alpha1"
+	versionB1 = "v1beta1"
+)
+
 func TestLog_invalid_namespace(t *testing.T) {
 	tr := []*v1alpha1.TaskRun{
 		tb.TaskRun("output-taskrun-1", "ns"),
@@ -75,7 +80,7 @@ func TestLog_no_taskrun_arg(t *testing.T) {
 			},
 		},
 	})
-	cs.Pipeline.Resources = cb.APIResourceList("v1alpha1", []string{"taskrun"})
+	cs.Pipeline.Resources = cb.APIResourceList(versionA1, []string{"taskrun"})
 	tdc := testDynamic.Options{}
 	dc1, err := tdc.Client()
 	if err != nil {
@@ -219,7 +224,6 @@ func TestLog_invalid_flags(t *testing.T) {
 }
 
 func TestLog_taskrun_logs(t *testing.T) {
-	version := "v1alpha1"
 	var (
 		ns          = "namespace"
 		taskName    = "output-task"
@@ -282,10 +286,93 @@ func TestLog_taskrun_logs(t *testing.T) {
 	)
 
 	cs, _ := test.SeedTestData(t, pipelinetest.Data{TaskRuns: trs, Pods: ps, Namespaces: nsList})
-	cs.Pipeline.Resources = cb.APIResourceList(version, []string{"taskrun"})
+	cs.Pipeline.Resources = cb.APIResourceList(versionA1, []string{"taskrun"})
 	tdc := testDynamic.Options{}
 	dc, err := tdc.Client(
-		cb.UnstructuredTR(trs[0], version),
+		cb.UnstructuredTR(trs[0], versionA1),
+	)
+	if err != nil {
+		t.Errorf("unable to create dynamic clinet: %v", err)
+	}
+	trlo := logOpts(trName, ns, cs, fake.Streamer(logs), false, false, []string{}, dc)
+	output, _ := fetchLogs(trlo)
+
+	expectedLogs := []string{
+		"[writefile-step] wrote a file\n",
+		"[nop] Build successful\n",
+	}
+	expected := strings.Join(expectedLogs, "\n") + "\n"
+
+	test.AssertOutput(t, expected, output)
+}
+
+func TestLog_taskrun_logs_v1beta1(t *testing.T) {
+	var (
+		ns          = "namespace"
+		taskName    = "output-task"
+		trName      = "output-task-1"
+		trStartTime = clockwork.NewFakeClock().Now().Add(20 * time.Second)
+		trPod       = "output-task-pod-123456"
+		trStep1Name = "writefile-step"
+		nopStep     = "nop"
+	)
+
+	trs := []*v1alpha1.TaskRun{
+		tb.TaskRun(trName, ns,
+			tb.TaskRunStatus(
+				tb.PodName(trPod),
+				tb.TaskRunStartTime(trStartTime),
+				tb.StatusCondition(apis.Condition{
+					Type:   apis.ConditionSucceeded,
+					Status: corev1.ConditionTrue,
+				}),
+				tb.StepState(
+					cb.StepName(trStep1Name),
+					tb.StateTerminated(0),
+				),
+				tb.StepState(
+					cb.StepName(nopStep),
+					tb.StateTerminated(0),
+				),
+			),
+			tb.TaskRunSpec(
+				tb.TaskRunTaskRef(taskName),
+			),
+		),
+	}
+
+	nsList := []*corev1.Namespace{
+		{
+			ObjectMeta: metav1.ObjectMeta{
+				Name: "namespace",
+			},
+		},
+	}
+
+	ps := []*corev1.Pod{
+		tb.Pod(trPod, ns,
+			tb.PodSpec(
+				tb.PodContainer(trStep1Name, trStep1Name+":latest"),
+				tb.PodContainer(nopStep, "override-with-nop:latest"),
+			),
+			cb.PodStatus(
+				cb.PodPhase(corev1.PodSucceeded),
+			),
+		),
+	}
+
+	logs := fake.Logs(
+		fake.Task(trPod,
+			fake.Step(trStep1Name, "wrote a file"),
+			fake.Step(nopStep, "Build successful"),
+		),
+	)
+
+	cs, _ := test.SeedTestData(t, pipelinetest.Data{TaskRuns: trs, Pods: ps, Namespaces: nsList})
+	cs.Pipeline.Resources = cb.APIResourceList(versionB1, []string{"taskrun"})
+	tdc := testDynamic.Options{}
+	dc, err := tdc.Client(
+		cb.UnstructuredTR(trs[0], versionB1),
 	)
 	if err != nil {
 		t.Errorf("unable to create dynamic clinet: %v", err)
@@ -303,7 +390,6 @@ func TestLog_taskrun_logs(t *testing.T) {
 }
 
 func TestLog_taskrun_logs_no_pod_name(t *testing.T) {
-	version := "v1alpha1"
 	var (
 		ns          = "namespace"
 		taskName    = "output-task"
@@ -349,10 +435,75 @@ func TestLog_taskrun_logs_no_pod_name(t *testing.T) {
 	logs := fake.Logs()
 
 	cs, _ := test.SeedTestData(t, pipelinetest.Data{TaskRuns: trs, Pods: ps, Namespaces: nsList})
-	cs.Pipeline.Resources = cb.APIResourceList(version, []string{"taskrun"})
+	cs.Pipeline.Resources = cb.APIResourceList(versionA1, []string{"taskrun"})
 	tdc := testDynamic.Options{}
 	dc, err := tdc.Client(
-		cb.UnstructuredTR(trs[0], version),
+		cb.UnstructuredTR(trs[0], versionA1),
+	)
+	if err != nil {
+		t.Errorf("unable to create dynamic clinet: %v", err)
+	}
+	trlo := logOpts(trName, ns, cs, fake.Streamer(logs), false, false, []string{}, dc)
+	_, err = fetchLogs(trlo)
+
+	if err == nil {
+		t.Error("Expecting an error but it's empty")
+	}
+
+	expected := "pod for taskrun output-task-1 not available yet"
+	test.AssertOutput(t, expected, err.Error())
+}
+
+func TestLog_taskrun_logs_no_pod_name_v1beta1(t *testing.T) {
+	var (
+		ns          = "namespace"
+		taskName    = "output-task"
+		trName      = "output-task-1"
+		trStartTime = clockwork.NewFakeClock().Now().Add(20 * time.Second)
+		trStep1Name = "writefile-step"
+		nopStep     = "nop"
+	)
+
+	trs := []*v1alpha1.TaskRun{
+		tb.TaskRun(trName, ns,
+			tb.TaskRunStatus(
+				tb.TaskRunStartTime(trStartTime),
+				tb.StatusCondition(apis.Condition{
+					Type:   apis.ConditionSucceeded,
+					Status: corev1.ConditionTrue,
+				}),
+				tb.StepState(
+					cb.StepName(trStep1Name),
+					tb.StateTerminated(0),
+				),
+				tb.StepState(
+					cb.StepName(nopStep),
+					tb.StateTerminated(0),
+				),
+			),
+			tb.TaskRunSpec(
+				tb.TaskRunTaskRef(taskName),
+			),
+		),
+	}
+
+	nsList := []*corev1.Namespace{
+		{
+			ObjectMeta: metav1.ObjectMeta{
+				Name: "namespace",
+			},
+		},
+	}
+
+	ps := []*corev1.Pod{}
+
+	logs := fake.Logs()
+
+	cs, _ := test.SeedTestData(t, pipelinetest.Data{TaskRuns: trs, Pods: ps, Namespaces: nsList})
+	cs.Pipeline.Resources = cb.APIResourceList(versionB1, []string{"taskrun"})
+	tdc := testDynamic.Options{}
+	dc, err := tdc.Client(
+		cb.UnstructuredTR(trs[0], versionB1),
 	)
 	if err != nil {
 		t.Errorf("unable to create dynamic clinet: %v", err)
@@ -369,7 +520,6 @@ func TestLog_taskrun_logs_no_pod_name(t *testing.T) {
 }
 
 func TestLog_taskrun_all_steps(t *testing.T) {
-	version := "v1alpha1"
 	var (
 		prstart  = clockwork.NewFakeClock()
 		ns       = "namespace"
@@ -442,10 +592,105 @@ func TestLog_taskrun_all_steps(t *testing.T) {
 	)
 
 	cs, _ := test.SeedTestData(t, pipelinetest.Data{TaskRuns: trs, Pods: p, Namespaces: nsList})
-	cs.Pipeline.Resources = cb.APIResourceList(version, []string{"taskrun"})
+	cs.Pipeline.Resources = cb.APIResourceList(versionA1, []string{"taskrun"})
 	tdc := testDynamic.Options{}
 	dc, err := tdc.Client(
-		cb.UnstructuredTR(trs[0], version),
+		cb.UnstructuredTR(trs[0], versionA1),
+	)
+	if err != nil {
+		t.Errorf("unable to create dynamic clinet: %v", err)
+	}
+	trl := logOpts(trName, ns, cs, fake.Streamer(logs), true, false, []string{}, dc)
+	output, _ := fetchLogs(trl)
+
+	expectedLogs := []string{
+		"[credential-initializer-mdzbr] initialized the credentials\n",
+		"[place-tools] place tools log\n",
+		"[writefile-step] written a file\n",
+		"[nop] Build successful\n",
+	}
+	expected := strings.Join(expectedLogs, "\n") + "\n"
+
+	test.AssertOutput(t, expected, output)
+}
+
+func TestLog_taskrun_all_steps_v1beta1(t *testing.T) {
+	var (
+		prstart  = clockwork.NewFakeClock()
+		ns       = "namespace"
+		taskName = "output-task"
+
+		trName      = "output-task-run"
+		trStartTime = prstart.Now().Add(20 * time.Second)
+		trPod       = "output-task-pod-123456"
+		trInitStep1 = "credential-initializer-mdzbr"
+		trInitStep2 = "place-tools"
+		trStep1Name = "writefile-step"
+		nopStep     = "nop"
+	)
+
+	trs := []*v1alpha1.TaskRun{
+		tb.TaskRun(trName, ns,
+			tb.TaskRunStatus(
+				tb.PodName(trPod),
+				tb.TaskRunStartTime(trStartTime),
+				tb.StatusCondition(apis.Condition{
+					Type:   apis.ConditionSucceeded,
+					Status: corev1.ConditionTrue,
+				}),
+				tb.StepState(
+					cb.StepName(trStep1Name),
+					tb.StateTerminated(0),
+				),
+				tb.StepState(
+					cb.StepName(nopStep),
+					tb.StateTerminated(0),
+				),
+			),
+			tb.TaskRunSpec(
+				tb.TaskRunTaskRef(taskName),
+			),
+		),
+	}
+
+	nsList := []*corev1.Namespace{
+		{
+			ObjectMeta: metav1.ObjectMeta{
+				Name: "namespace",
+			},
+		},
+	}
+
+	p := []*corev1.Pod{
+		tb.Pod(trPod, ns,
+			tb.PodSpec(
+				tb.PodInitContainer(trInitStep1, "override-with-creds:latest"),
+				tb.PodInitContainer(trInitStep2, "override-with-tools:latest"),
+				tb.PodContainer(trStep1Name, trStep1Name+":latest"),
+				tb.PodContainer(nopStep, "override-with-nop:latest"),
+			),
+			cb.PodStatus(
+				cb.PodPhase(corev1.PodSucceeded),
+				cb.PodInitContainerStatus(trInitStep1, "override-with-creds:latest"),
+				cb.PodInitContainerStatus(trInitStep2, "override-with-tools:latest"),
+			),
+		),
+	}
+
+	logs := fake.Logs(
+		fake.Task(trPod,
+			fake.Step(trInitStep1, "initialized the credentials"),
+			fake.Step(trInitStep2, "place tools log"),
+			fake.Step(trStep1Name, "written a file"),
+			fake.Step(nopStep, "Build successful"),
+		),
+	)
+
+	cs, _ := test.SeedTestData(t, pipelinetest.Data{TaskRuns: trs, Pods: p, Namespaces: nsList})
+	cs.Pipeline.Resources = cb.APIResourceList(versionB1, []string{"taskrun"})
+	tdc := testDynamic.Options{}
+	dc, err := tdc.Client(
+		cb.UnstructuredTR(trs[0], versionB1),
 	)
 	if err != nil {
 		t.Errorf("unable to create dynamic clinet: %v", err)
@@ -465,7 +710,6 @@ func TestLog_taskrun_all_steps(t *testing.T) {
 }
 
 func TestLog_taskrun_given_steps(t *testing.T) {
-	version := "v1alpha1"
 	var (
 		ns       = "namespace"
 		taskName = "output-task"
@@ -537,10 +781,101 @@ func TestLog_taskrun_given_steps(t *testing.T) {
 	)
 
 	cs, _ := test.SeedTestData(t, pipelinetest.Data{TaskRuns: trs, Pods: p, Namespaces: nsList})
-	cs.Pipeline.Resources = cb.APIResourceList(version, []string{"taskrun"})
+	cs.Pipeline.Resources = cb.APIResourceList(versionA1, []string{"taskrun"})
 	tdc := testDynamic.Options{}
 	dc, err := tdc.Client(
-		cb.UnstructuredTR(trs[0], version))
+		cb.UnstructuredTR(trs[0], versionA1))
+	if err != nil {
+		t.Errorf("unable to create dynamic clinet: %v", err)
+	}
+
+	trl := logOpts(trName, ns, cs, fake.Streamer(logs), false, false, []string{trStep1Name}, dc)
+	output, _ := fetchLogs(trl)
+
+	expectedLogs := []string{
+		"[writefile-step] written a file\n",
+	}
+	expected := strings.Join(expectedLogs, "\n") + "\n"
+
+	test.AssertOutput(t, expected, output)
+}
+
+func TestLog_taskrun_given_steps_v1beta1(t *testing.T) {
+	var (
+		ns       = "namespace"
+		taskName = "output-task"
+
+		trName      = "output-task-run"
+		trStartTime = clockwork.NewFakeClock().Now().Add(20 * time.Second)
+		trPod       = "output-task-pod-123456"
+		trInitStep1 = "credential-initializer-mdzbr"
+		trInitStep2 = "place-tools"
+		trStep1Name = "writefile-step"
+		nopStep     = "nop"
+	)
+
+	trs := []*v1alpha1.TaskRun{
+		tb.TaskRun(trName, ns,
+			tb.TaskRunStatus(
+				tb.PodName(trPod),
+				tb.TaskRunStartTime(trStartTime),
+				tb.StatusCondition(apis.Condition{
+					Type:   apis.ConditionSucceeded,
+					Status: corev1.ConditionTrue,
+				}),
+				tb.StepState(
+					cb.StepName(trStep1Name),
+					tb.StateTerminated(0),
+				),
+				tb.StepState(
+					cb.StepName(nopStep),
+					tb.StateTerminated(0),
+				),
+			),
+			tb.TaskRunSpec(
+				tb.TaskRunTaskRef(taskName),
+			),
+		),
+	}
+
+	nsList := []*corev1.Namespace{
+		{
+			ObjectMeta: metav1.ObjectMeta{
+				Name: "namespace",
+			},
+		},
+	}
+
+	p := []*corev1.Pod{
+		tb.Pod(trPod, ns,
+			tb.PodSpec(
+				tb.PodInitContainer(trInitStep1, "override-with-creds:latest"),
+				tb.PodInitContainer(trInitStep2, "override-with-tools:latest"),
+				tb.PodContainer(trStep1Name, trStep1Name+":latest"),
+				tb.PodContainer(nopStep, "override-with-nop:latest"),
+			),
+			cb.PodStatus(
+				cb.PodPhase(corev1.PodSucceeded),
+				cb.PodInitContainerStatus(trInitStep1, "override-with-creds:latest"),
+				cb.PodInitContainerStatus(trInitStep2, "override-with-tools:latest"),
+			),
+		),
+	}
+
+	logs := fake.Logs(
+		fake.Task(trPod,
+			fake.Step(trInitStep1, "initialized the credentials"),
+			fake.Step(trInitStep2, "place tools log"),
+			fake.Step(trStep1Name, "written a file"),
+			fake.Step(nopStep, "Build successful"),
+		),
+	)
+
+	cs, _ := test.SeedTestData(t, pipelinetest.Data{TaskRuns: trs, Pods: p, Namespaces: nsList})
+	cs.Pipeline.Resources = cb.APIResourceList(versionB1, []string{"taskrun"})
+	tdc := testDynamic.Options{}
+	dc, err := tdc.Client(
+		cb.UnstructuredTR(trs[0], versionB1))
 	if err != nil {
 		t.Errorf("unable to create dynamic clinet: %v", err)
 	}
@@ -557,7 +892,6 @@ func TestLog_taskrun_given_steps(t *testing.T) {
 }
 
 func TestLog_taskrun_follow_mode(t *testing.T) {
-	version := "v1alpha1"
 	var (
 		prstart     = clockwork.NewFakeClock()
 		ns          = "namespace"
@@ -629,10 +963,103 @@ func TestLog_taskrun_follow_mode(t *testing.T) {
 	)
 
 	cs, _ := test.SeedTestData(t, pipelinetest.Data{TaskRuns: trs, Pods: p, Namespaces: nsList})
-	cs.Pipeline.Resources = cb.APIResourceList(version, []string{"taskrun"})
+	cs.Pipeline.Resources = cb.APIResourceList(versionA1, []string{"taskrun"})
 	tdc := testDynamic.Options{}
 	dc, err := tdc.Client(
-		cb.UnstructuredTR(trs[0], version),
+		cb.UnstructuredTR(trs[0], versionA1),
+	)
+	if err != nil {
+		t.Errorf("unable to create dynamic clinet: %v", err)
+	}
+
+	trlo := logOpts(trName, ns, cs, fake.Streamer(logs), false, true, []string{}, dc)
+	output, _ := fetchLogs(trlo)
+
+	expectedLogs := []string{
+		"[writefile-step] wrote a file\n",
+		"[nop] Build successful\n",
+	}
+	expected := strings.Join(expectedLogs, "\n") + "\n"
+
+	test.AssertOutput(t, expected, output)
+}
+
+func TestLog_taskrun_follow_mode_v1beta1(t *testing.T) {
+	var (
+		prstart     = clockwork.NewFakeClock()
+		ns          = "namespace"
+		taskName    = "output-task"
+		trName      = "output-task-run"
+		trStartTime = prstart.Now().Add(20 * time.Second)
+		trPod       = "output-task-pod-123456"
+		trStep1Name = "writefile-step"
+		trInitStep1 = "credential-initializer-mdzbr"
+		trInitStep2 = "place-tools"
+		nopStep     = "nop"
+	)
+
+	trs := []*v1alpha1.TaskRun{
+		tb.TaskRun(trName, ns,
+			tb.TaskRunStatus(
+				tb.PodName(trPod),
+				tb.TaskRunStartTime(trStartTime),
+				tb.StatusCondition(apis.Condition{
+					Type:   apis.ConditionSucceeded,
+					Status: corev1.ConditionTrue,
+				}),
+				tb.StepState(
+					cb.StepName(trStep1Name),
+					tb.StateTerminated(0),
+				),
+				tb.StepState(
+					cb.StepName(nopStep),
+					tb.StateTerminated(0),
+				),
+			),
+			tb.TaskRunSpec(
+				tb.TaskRunTaskRef(taskName),
+			),
+		),
+	}
+
+	nsList := []*corev1.Namespace{
+		{
+			ObjectMeta: metav1.ObjectMeta{
+				Name: "namespace",
+			},
+		},
+	}
+
+	p := []*corev1.Pod{
+		tb.Pod(trPod, ns,
+			tb.PodSpec(
+				tb.PodInitContainer(trInitStep1, "override-with-creds:latest"),
+				tb.PodInitContainer(trInitStep2, "override-with-tools:latest"),
+				tb.PodContainer(trStep1Name, trStep1Name+":latest"),
+				tb.PodContainer(nopStep, "override-with-nop:latest"),
+			),
+			cb.PodStatus(
+				cb.PodPhase(corev1.PodSucceeded),
+				cb.PodInitContainerStatus(trInitStep1, "override-with-creds:latest"),
+				cb.PodInitContainerStatus(trInitStep2, "override-with-tools:latest"),
+			),
+		),
+	}
+
+	logs := fake.Logs(
+		fake.Task(trPod,
+			fake.Step(trInitStep1, "initialized the credentials"),
+			fake.Step(trInitStep2, "place tools log"),
+			fake.Step(trStep1Name, "wrote a file"),
+			fake.Step(nopStep, "Build successful"),
+		),
+	)
+
+	cs, _ := test.SeedTestData(t, pipelinetest.Data{TaskRuns: trs, Pods: p, Namespaces: nsList})
+	cs.Pipeline.Resources = cb.APIResourceList(versionB1, []string{"taskrun"})
+	tdc := testDynamic.Options{}
+	dc, err := tdc.Client(
+		cb.UnstructuredTR(trs[0], versionB1),
 	)
 	if err != nil {
 		t.Errorf("unable to create dynamic clinet: %v", err)
@@ -720,13 +1147,109 @@ func TestLog_taskrun_last(t *testing.T) {
 	cs, _ := test.SeedTestData(t, pipelinetest.Data{TaskRuns: taskruns, Namespaces: namespaces})
 	tdc := testDynamic.Options{}
 	dc, err := tdc.Client(
-		cb.UnstructuredTR(taskruns[0], "v1alpha1"),
-		cb.UnstructuredTR(taskruns[1], "v1alpha1"),
+		cb.UnstructuredTR(taskruns[0], versionA1),
+		cb.UnstructuredTR(taskruns[1], versionA1),
 	)
 	if err != nil {
 		t.Errorf("unable to create dynamic clinet: %v", err)
 	}
-	cs.Pipeline.Resources = cb.APIResourceList("v1alpha1", []string{"taskrun"})
+	cs.Pipeline.Resources = cb.APIResourceList(versionA1, []string{"taskrun"})
+	p := test.Params{
+		Kube:    cs.Kube,
+		Tekton:  cs.Pipeline,
+		Dynamic: dc,
+	}
+	p.SetNamespace(ns)
+	lopt := options.LogOptions{
+		Params: &p,
+		Last:   true,
+		Limit:  len(taskruns),
+	}
+	err = askRunName(&lopt)
+	if err != nil {
+		t.Errorf("Unexpected error: %v", err)
+	}
+	test.AssertOutput(t, trName1, lopt.TaskrunName)
+}
+
+func TestLog_taskrun_last_v1beta1(t *testing.T) {
+	var (
+		ns           = "namespaces"
+		trPod        = "pod"
+		taskName     = "task"
+		trName1      = "taskrun1"
+		trName2      = "taskrun2"
+		prstart      = clockwork.NewFakeClock()
+		tr1StartTime = prstart.Now().Add(30 * time.Second)
+		tr2StartTime = prstart.Now().Add(20 * time.Second)
+		trStepName   = "writefile-step"
+		nopStep      = "nop"
+	)
+
+	taskruns := []*v1alpha1.TaskRun{
+		tb.TaskRun(trName1, ns,
+			tb.TaskRunStatus(
+				tb.PodName(trPod),
+				tb.TaskRunStartTime(tr1StartTime),
+				tb.StatusCondition(apis.Condition{
+					Type:   apis.ConditionSucceeded,
+					Status: corev1.ConditionTrue,
+				}),
+				tb.StepState(
+					cb.StepName(trStepName),
+					tb.StateTerminated(0),
+				),
+				tb.StepState(
+					cb.StepName(nopStep),
+					tb.StateTerminated(0),
+				),
+			),
+			tb.TaskRunSpec(
+				tb.TaskRunTaskRef(taskName),
+			),
+		),
+		tb.TaskRun(trName2, ns,
+			tb.TaskRunStatus(
+				tb.PodName(trPod),
+				tb.TaskRunStartTime(tr2StartTime),
+				tb.StatusCondition(apis.Condition{
+					Type:   apis.ConditionSucceeded,
+					Status: corev1.ConditionTrue,
+				}),
+				tb.StepState(
+					cb.StepName(trStepName),
+					tb.StateTerminated(0),
+				),
+				tb.StepState(
+					cb.StepName(nopStep),
+					tb.StateTerminated(0),
+				),
+			),
+			tb.TaskRunSpec(
+				tb.TaskRunTaskRef(taskName),
+			),
+		),
+	}
+
+	namespaces := []*corev1.Namespace{
+		{
+			ObjectMeta: metav1.ObjectMeta{
+				Name: ns,
+			},
+		},
+	}
+
+	cs, _ := test.SeedTestData(t, pipelinetest.Data{TaskRuns: taskruns, Namespaces: namespaces})
+	cs.Pipeline.Resources = cb.APIResourceList(versionB1, []string{"taskrun"})
+	tdc := testDynamic.Options{}
+	dc, err := tdc.Client(
+		cb.UnstructuredTR(taskruns[0], versionB1),
+		cb.UnstructuredTR(taskruns[1], versionB1),
+	)
+	if err != nil {
+		t.Errorf("unable to create dynamic clinet: %v", err)
+	}
+	//cs.Pipeline.Resources = cb.APIResourceList("v1alpha1", []string{"taskrun"})
 	p := test.Params{
 		Kube:    cs.Kube,
 		Tekton:  cs.Pipeline,
@@ -746,7 +1269,6 @@ func TestLog_taskrun_last(t *testing.T) {
 }
 
 func TestLog_taskrun_follow_mode_no_pod_name(t *testing.T) {
-	version := "v1alpha1"
 	var (
 		prstart     = clockwork.NewFakeClock()
 		ns          = "namespace"
@@ -817,10 +1339,101 @@ func TestLog_taskrun_follow_mode_no_pod_name(t *testing.T) {
 	)
 
 	cs, _ := test.SeedTestData(t, pipelinetest.Data{TaskRuns: trs, Pods: p, Namespaces: nsList})
-	cs.Pipeline.Resources = cb.APIResourceList(version, []string{"taskrun"})
+	cs.Pipeline.Resources = cb.APIResourceList(versionA1, []string{"taskrun"})
 	tdc := testDynamic.Options{}
 	dc, err := tdc.Client(
-		cb.UnstructuredTR(trs[0], version),
+		cb.UnstructuredTR(trs[0], versionA1),
+	)
+	if err != nil {
+		t.Errorf("unable to create dynamic clinet: %v", err)
+	}
+
+	trlo := logOpts(trName, ns, cs, fake.Streamer(logs), false, true, []string{}, dc)
+	_, err = fetchLogs(trlo)
+
+	if err == nil {
+		t.Error("Expecting an error but it's empty")
+	}
+
+	expected := "task output-task create has not started yet or pod for task not yet available"
+	test.AssertOutput(t, expected, err.Error())
+}
+
+func TestLog_taskrun_follow_mode_no_pod_name_v1beta1(t *testing.T) {
+	var (
+		prstart     = clockwork.NewFakeClock()
+		ns          = "namespace"
+		taskName    = "output-task"
+		trName      = "output-task-run"
+		trStartTime = prstart.Now().Add(20 * time.Second)
+		trPod       = "output-task-pod-123456"
+		trStep1Name = "writefile-step"
+		trInitStep1 = "credential-initializer-mdzbr"
+		trInitStep2 = "place-tools"
+		nopStep     = "nop"
+	)
+
+	trs := []*v1alpha1.TaskRun{
+		tb.TaskRun(trName, ns,
+			tb.TaskRunStatus(
+				tb.TaskRunStartTime(trStartTime),
+				tb.StatusCondition(apis.Condition{
+					Type:   apis.ConditionSucceeded,
+					Status: corev1.ConditionTrue,
+				}),
+				tb.StepState(
+					cb.StepName(trStep1Name),
+					tb.StateTerminated(0),
+				),
+				tb.StepState(
+					cb.StepName(nopStep),
+					tb.StateTerminated(0),
+				),
+			),
+			tb.TaskRunSpec(
+				tb.TaskRunTaskRef(taskName),
+			),
+		),
+	}
+
+	nsList := []*corev1.Namespace{
+		{
+			ObjectMeta: metav1.ObjectMeta{
+				Name: "namespace",
+			},
+		},
+	}
+
+	p := []*corev1.Pod{
+		tb.Pod(trPod, ns,
+			tb.PodSpec(
+				tb.PodInitContainer(trInitStep1, "override-with-creds:latest"),
+				tb.PodInitContainer(trInitStep2, "override-with-tools:latest"),
+				tb.PodContainer(trStep1Name, trStep1Name+":latest"),
+				tb.PodContainer(nopStep, "override-with-nop:latest"),
+			),
+			cb.PodStatus(
+				cb.PodPhase(corev1.PodSucceeded),
+				cb.PodInitContainerStatus(trInitStep1, "override-with-creds:latest"),
+				cb.PodInitContainerStatus(trInitStep2, "override-with-tools:latest"),
+			),
+		),
+	}
+
+	logs := fake.Logs(
+		fake.Task(trPod,
+			fake.Step(trInitStep1, "initialized the credentials"),
+			fake.Step(trInitStep2, "place tools log"),
+			fake.Step(trStep1Name, "wrote a file"),
+			fake.Step(nopStep, "Build successful"),
+		),
+	)
+
+	cs, _ := test.SeedTestData(t, pipelinetest.Data{TaskRuns: trs, Pods: p, Namespaces: nsList})
+	cs.Pipeline.Resources = cb.APIResourceList(versionB1, []string{"taskrun"})
+	tdc := testDynamic.Options{}
+	dc, err := tdc.Client(
+		cb.UnstructuredTR(trs[0], versionB1),
 	)
 	if err != nil {
 		t.Errorf("unable to create dynamic clinet: %v", err)
@@ -838,7 +1451,6 @@ func TestLog_taskrun_follow_mode_no_pod_name(t *testing.T) {
 }
 
 func TestLog_taskrun_follow_mode_update_pod_name(t *testing.T) {
-	version := "v1alpha1"
 	var (
 		prstart     = clockwork.NewFakeClock()
 		ns          = "namespace"
@@ -909,11 +1521,113 @@ func TestLog_taskrun_follow_mode_update_pod_name(t *testing.T) {
 	)
 
 	cs, _ := test.SeedTestData(t, pipelinetest.Data{TaskRuns: trs, Pods: p, Namespaces: nsList})
-	cs.Pipeline.Resources = cb.APIResourceList(version, []string{"taskrun"})
+	cs.Pipeline.Resources = cb.APIResourceList(versionA1, []string{"taskrun"})
 	watcher := watch.NewRaceFreeFake()
 	tdc := testDynamic.Options{WatchResource: "taskruns", Watcher: watcher}
 	dc, err := tdc.Client(
-		cb.UnstructuredTR(trs[0], version),
+		cb.UnstructuredTR(trs[0], versionA1),
+	)
+	if err != nil {
+		t.Errorf("unable to create dynamic clinet: %v", err)
+	}
+
+	trlo := logOpts(trName, ns, cs, fake.Streamer(logs), false, true, []string{}, dc)
+
+	go func() {
+		time.Sleep(time.Second * 1)
+		trs[0].Status.PodName = trPod
+		watcher.Modify(trs[0])
+	}()
+	//time.Sleep(time.Second * 2)
+	output, err := fetchLogs(trlo)
+	if err != nil {
+		t.Errorf("Unexpected error: %v", err)
+	}
+
+	expectedLogs := []string{
+		"[writefile-step] wrote a file\n",
+		"[nop] Build successful\n",
+	}
+	expected := strings.Join(expectedLogs, "\n") + "\n"
+	test.AssertOutput(t, expected, output)
+}
+
+func TestLog_taskrun_follow_mode_update_pod_name_v1beta1(t *testing.T) {
+	var (
+		prstart     = clockwork.NewFakeClock()
+		ns          = "namespace"
+		taskName    = "output-task"
+		trName      = "output-task-run"
+		trStartTime = prstart.Now().Add(20 * time.Second)
+		trPod       = "output-task-pod-123456"
+		trStep1Name = "writefile-step"
+		trInitStep1 = "credential-initializer-mdzbr"
+		trInitStep2 = "place-tools"
+		nopStep     = "nop"
+	)
+
+	trs := []*v1alpha1.TaskRun{
+		tb.TaskRun(trName, ns,
+			tb.TaskRunStatus(
+				tb.TaskRunStartTime(trStartTime),
+				tb.StatusCondition(apis.Condition{
+					Type:   apis.ConditionSucceeded,
+					Status: corev1.ConditionTrue,
+				}),
+				tb.StepState(
+					cb.StepName(trStep1Name),
+					tb.StateTerminated(0),
+				),
+				tb.StepState(
+					cb.StepName(nopStep),
+					tb.StateTerminated(0),
+				),
+			),
+			tb.TaskRunSpec(
+				tb.TaskRunTaskRef(taskName),
+			),
+		),
+	}
+
+	nsList := []*corev1.Namespace{
+		{
+			ObjectMeta: metav1.ObjectMeta{
+				Name: "namespace",
+			},
+		},
+	}
+
+	p := []*corev1.Pod{
+		tb.Pod(trPod, ns,
+			tb.PodSpec(
+				tb.PodInitContainer(trInitStep1, "override-with-creds:latest"),
+				tb.PodInitContainer(trInitStep2, "override-with-tools:latest"),
+				tb.PodContainer(trStep1Name, trStep1Name+":latest"),
+				tb.PodContainer(nopStep, "override-with-nop:latest"),
+			),
+			cb.PodStatus(
+				cb.PodPhase(corev1.PodSucceeded),
+				cb.PodInitContainerStatus(trInitStep1, "override-with-creds:latest"),
+				cb.PodInitContainerStatus(trInitStep2, "override-with-tools:latest"),
+			),
+		),
+	}
+
+	logs := fake.Logs(
+		fake.Task(trPod,
+			fake.Step(trInitStep1, "initialized the credentials"),
+			fake.Step(trInitStep2, "place tools log"),
+			fake.Step(trStep1Name, "wrote a file"),
+			fake.Step(nopStep, "Build successful"),
+		),
+	)
+
+	cs, _ := test.SeedTestData(t, pipelinetest.Data{TaskRuns: trs, Pods: p, Namespaces: nsList})
+	cs.Pipeline.Resources = cb.APIResourceList(versionB1, []string{"taskrun"})
+	watcher := watch.NewRaceFreeFake()
+	tdc := testDynamic.Options{WatchResource: "taskruns", Watcher: watcher}
+	dc, err := tdc.Client(
+		cb.UnstructuredTR(trs[0], versionB1),
 	)
 	if err != nil {
 		t.Errorf("unable to create dynamic clinet: %v", err)
@@ -941,7 +1655,6 @@ func TestLog_taskrun_follow_mode_update_pod_name(t *testing.T) {
 }
 
 func TestLog_taskrun_follow_mode_update_timeout(t *testing.T) {
-	version := "v1alpha1"
 	var (
 		prstart     = clockwork.NewFakeClock()
 		ns          = "namespace"
@@ -1012,11 +1725,111 @@ func TestLog_taskrun_follow_mode_update_timeout(t *testing.T) {
 	)
 
 	cs, _ := test.SeedTestData(t, pipelinetest.Data{TaskRuns: trs, Pods: p, Namespaces: nsList})
-	cs.Pipeline.Resources = cb.APIResourceList(version, []string{"taskrun"})
+	cs.Pipeline.Resources = cb.APIResourceList(versionA1, []string{"taskrun"})
 	watcher := watch.NewRaceFreeFake()
 	tdc := testDynamic.Options{WatchResource: "taskruns", Watcher: watcher}
 	dc, err := tdc.Client(
-		cb.UnstructuredTR(trs[0], version),
+		cb.UnstructuredTR(trs[0], versionA1),
+	)
+	if err != nil {
+		t.Errorf("unable to create dynamic clinet: %v", err)
+	}
+
+	trlo := logOpts(trName, ns, cs, fake.Streamer(logs), false, true, []string{}, dc)
+
+	go func() {
+		time.Sleep(time.Second * 1)
+		watcher.Action("MODIFIED", trs[0])
+	}()
+
+	output, err := fetchLogs(trlo)
+	if err == nil {
+		t.Error("Expecting an error but it's empty")
+	}
+
+	expectedOut := ""
+	test.AssertOutput(t, expectedOut, output)
+
+	expectedErr := "task output-task create has not started yet or pod for task not yet available"
+	test.AssertOutput(t, expectedErr, err.Error())
+}
+
+func TestLog_taskrun_follow_mode_update_timeout_v1beta1(t *testing.T) {
+	var (
+		prstart     = clockwork.NewFakeClock()
+		ns          = "namespace"
+		taskName    = "output-task"
+		trName      = "output-task-run"
+		trStartTime = prstart.Now().Add(20 * time.Second)
+		trPod       = "output-task-pod-123456"
+		trStep1Name = "writefile-step"
+		trInitStep1 = "credential-initializer-mdzbr"
+		trInitStep2 = "place-tools"
+		nopStep     = "nop"
+	)
+
+	trs := []*v1alpha1.TaskRun{
+		tb.TaskRun(trName, ns,
+			tb.TaskRunStatus(
+				tb.TaskRunStartTime(trStartTime),
+				tb.StatusCondition(apis.Condition{
+					Type:   apis.ConditionSucceeded,
+					Status: corev1.ConditionTrue,
+				}),
+				tb.StepState(
+					cb.StepName(trStep1Name),
+					tb.StateTerminated(0),
+				),
+				tb.StepState(
+					cb.StepName(nopStep),
+					tb.StateTerminated(0),
+				),
+			),
+			tb.TaskRunSpec(
+				tb.TaskRunTaskRef(taskName),
+			),
+		),
+	}
+
+	nsList := []*corev1.Namespace{
+		{
+			ObjectMeta: metav1.ObjectMeta{
+				Name: "namespace",
+			},
+		},
+	}
+
+	p := []*corev1.Pod{
+		tb.Pod(trPod, ns,
+			tb.PodSpec(
+				tb.PodInitContainer(trInitStep1, "override-with-creds:latest"),
+				tb.PodInitContainer(trInitStep2, "override-with-tools:latest"),
+				tb.PodContainer(trStep1Name, trStep1Name+":latest"),
+				tb.PodContainer(nopStep, "override-with-nop:latest"),
+			),
+			cb.PodStatus(
+				cb.PodPhase(corev1.PodSucceeded),
+				cb.PodInitContainerStatus(trInitStep1, "override-with-creds:latest"),
+				cb.PodInitContainerStatus(trInitStep2, "override-with-tools:latest"),
+			),
+		),
+	}
+
+	logs := fake.Logs(
+		fake.Task(trPod,
+			fake.Step(trInitStep1, "initialized the credentials"),
+			fake.Step(trInitStep2, "place tools log"),
+			fake.Step(trStep1Name, "wrote a file"),
+			fake.Step(nopStep, "Build successful"),
+		),
+	)
+
+	cs, _ := test.SeedTestData(t, pipelinetest.Data{TaskRuns: trs, Pods: p, Namespaces: nsList})
+	cs.Pipeline.Resources = cb.APIResourceList(versionB1, []string{"taskrun"})
+	watcher := watch.NewRaceFreeFake()
+	tdc := testDynamic.Options{WatchResource: "taskruns", Watcher: watcher}
+	dc, err := tdc.Client(
+		cb.UnstructuredTR(trs[0], versionB1),
 	)
 	if err != nil {
 		t.Errorf("unable to create dynamic clinet: %v", err)
@@ -1042,7 +1855,6 @@ func TestLog_taskrun_follow_mode_update_timeout(t *testing.T) {
 }
 
 func TestLog_taskrun_follow_mode_no_output_provided(t *testing.T) {
-	version := "v1alpha1"
 	var (
 		prstart     = clockwork.NewFakeClock()
 		ns          = "namespace"
@@ -1109,11 +1921,99 @@ func TestLog_taskrun_follow_mode_no_output_provided(t *testing.T) {
 	)
 
 	cs, _ := test.SeedTestData(t, pipelinetest.Data{TaskRuns: trs, Pods: p, Namespaces: nsList})
-	cs.Pipeline.Resources = cb.APIResourceList(version, []string{"taskrun"})
+	cs.Pipeline.Resources = cb.APIResourceList(versionA1, []string{"taskrun"})
 	watcher := watch.NewRaceFreeFake()
 	tdc := testDynamic.Options{WatchResource: "taskruns", Watcher: watcher}
 	dc, err := tdc.Client(
-		cb.UnstructuredTR(trs[0], version),
+		cb.UnstructuredTR(trs[0], versionA1),
+	)
+	if err != nil {
+		t.Errorf("unable to create dynamic clinet: %v", err)
+	}
+
+	trlo := logOpts(trName, ns, cs, fake.Streamer(logs), false, true, []string{}, dc)
+
+	_, err = fetchLogs(trlo)
+	if err == nil {
+		t.Errorf("Expected error but no error occurred ")
+	}
+
+	expected := "task output-task has failed: invalid output resources: TaskRun's declared resources didn't match usage in Task: Didn't provide required values: [builtImage]"
+	test.AssertOutput(t, expected, err.Error())
+}
+
+func TestLog_taskrun_follow_mode_no_output_provided_v1beta1(t *testing.T) {
+	var (
+		prstart     = clockwork.NewFakeClock()
+		ns          = "namespace"
+		taskName    = "output-task"
+		trName      = "output-task-run"
+		trStartTime = prstart.Now().Add(20 * time.Second)
+		trPod       = "output-task-pod-123456"
+		trStep1Name = "writefile-step"
+		trInitStep1 = "credential-initializer-mdzbr"
+		trInitStep2 = "place-tools"
+		nopStep     = "nop"
+	)
+
+	trs := []*v1alpha1.TaskRun{
+		tb.TaskRun(trName, ns,
+			tb.TaskRunStatus(
+				tb.TaskRunStartTime(trStartTime),
+				tb.StatusCondition(apis.Condition{
+					Type:    resources.ReasonFailed,
+					Status:  corev1.ConditionFalse,
+					Message: "invalid output resources: TaskRun's declared resources didn't match usage in Task: Didn't provide required values: [builtImage]",
+				}),
+				tb.StepState(
+					cb.StepName(trStep1Name),
+					tb.StateTerminated(0),
+				),
+				tb.StepState(
+					cb.StepName(nopStep),
+					tb.StateTerminated(0),
+				),
+			),
+			tb.TaskRunSpec(
+				tb.TaskRunTaskRef(taskName),
+			),
+		),
+	}
+
+	nsList := []*corev1.Namespace{
+		{
+			ObjectMeta: metav1.ObjectMeta{
+				Name: "namespace",
+			},
+		},
+	}
+
+	p := []*corev1.Pod{
+		tb.Pod(trPod, ns,
+			tb.PodSpec(
+				tb.PodInitContainer(trInitStep1, "override-with-creds:latest"),
+				tb.PodInitContainer(trInitStep2, "override-with-tools:latest"),
+				tb.PodContainer(trStep1Name, trStep1Name+":latest"),
+				tb.PodContainer(nopStep, "override-with-nop:latest"),
+			),
+			cb.PodStatus(
+				cb.PodPhase(corev1.PodSucceeded),
+				cb.PodInitContainerStatus(trInitStep1, "override-with-creds:latest"),
+				cb.PodInitContainerStatus(trInitStep2, "override-with-tools:latest"),
+			),
+		),
+	}
+
+	logs := fake.Logs(
+		fake.Task(trPod),
+	)
+
+	cs, _ := test.SeedTestData(t, pipelinetest.Data{TaskRuns: trs, Pods: p, Namespaces: nsList})
+	cs.Pipeline.Resources = cb.APIResourceList(versionB1, []string{"taskrun"})
+	watcher := watch.NewRaceFreeFake()
+	tdc := testDynamic.Options{WatchResource: "taskruns", Watcher: watcher}
+	dc, err := tdc.Client(
+		cb.UnstructuredTR(trs[0], versionB1),
 	)
 	if err != nil {
 		t.Errorf("unable to create dynamic clinet: %v", err)

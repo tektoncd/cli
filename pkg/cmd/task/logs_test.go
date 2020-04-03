@@ -44,7 +44,13 @@ func init() {
 	core.DisableColor = true
 }
 
+const (
+	versionA1 = "v1alpha1"
+	versionB1 = "v1beta1"
+)
+
 func TestTaskLog(t *testing.T) {
+
 	clock := clockwork.NewFakeClock()
 	task1 := []*v1alpha1.Task{tb.Task("task", "ns")}
 	cs, _ := test.SeedTestData(t, pipelinetest.Data{
@@ -57,10 +63,10 @@ func TestTaskLog(t *testing.T) {
 			},
 		},
 	})
-	cs.Pipeline.Resources = cb.APIResourceList("v1alpha1", []string{"task", "taskrun"})
+	cs.Pipeline.Resources = cb.APIResourceList(versionA1, []string{"task", "taskrun"})
 	tdc1 := testDynamic.Options{}
 	dc1, err := tdc1.Client(
-		cb.UnstructuredT(task1[0], "v1alpha1"),
+		cb.UnstructuredT(task1[0], versionA1),
 	)
 	if err != nil {
 		t.Errorf("unable to create dynamic clinet: %v", err)
@@ -79,10 +85,134 @@ func TestTaskLog(t *testing.T) {
 			},
 		},
 	})
-	cs2.Pipeline.Resources = cb.APIResourceList("v1alpha1", []string{"task", "taskrun"})
+	cs2.Pipeline.Resources = cb.APIResourceList(versionA1, []string{"task", "taskrun"})
 	tdc2 := testDynamic.Options{}
 	dc2, err := tdc2.Client(
-		cb.UnstructuredT(task2[0], "v1alpha1"),
+		cb.UnstructuredT(task2[0], versionA1),
+	)
+	if err != nil {
+		t.Errorf("unable to create dynamic clinet: %v", err)
+	}
+
+	testParams := []struct {
+		name      string
+		command   []string
+		input     pipelinetest.Clients
+		dc        dynamic.Interface
+		wantError bool
+		want      string
+	}{
+		{
+			name:      "Invalid namespace",
+			command:   []string{"logs", "-n", "invalid"},
+			input:     cs,
+			dc:        dc1,
+			wantError: true,
+			want:      "namespaces \"invalid\" not found",
+		},
+		{
+			name:      "Found no tasks",
+			command:   []string{"logs", "-n", "ns"},
+			input:     cs2,
+			dc:        dc2,
+			wantError: false,
+			want:      "No tasks found in namespace: ns\n",
+		},
+		{
+			name:      "Found no taskruns",
+			command:   []string{"logs", "task", "-n", "ns"},
+			input:     cs,
+			dc:        dc1,
+			wantError: false,
+			want:      "No taskruns found for task: task\n",
+		},
+		{
+			name:      "Specify notexist task name",
+			command:   []string{"logs", "notexist", "-n", "ns"},
+			input:     cs,
+			dc:        dc1,
+			wantError: true,
+			want:      "tasks.tekton.dev \"notexist\" not found",
+		},
+		{
+			name:      "Specify notexist taskrun name",
+			command:   []string{"logs", "task", "notexist", "-n", "ns"},
+			input:     cs,
+			dc:        dc1,
+			wantError: true,
+			want:      "Unable to get Taskrun: taskruns.tekton.dev \"notexist\" not found",
+		},
+		{
+			name:      "Specify negative number to limit",
+			command:   []string{"logs", "task", "-n", "ns", "--limit", "-1"},
+			input:     cs,
+			dc:        dc1,
+			wantError: true,
+			want:      "limit was -1 but must be a positive number",
+		},
+	}
+
+	for _, tp := range testParams {
+		t.Run(tp.name, func(t *testing.T) {
+			p := &test.Params{Tekton: tp.input.Pipeline, Clock: clock, Kube: tp.input.Kube, Dynamic: tp.dc}
+			c := Command(p)
+
+			out, err := test.ExecuteCommand(c, tp.command...)
+			if tp.wantError {
+				if err == nil {
+					t.Errorf("error expected here")
+				}
+				test.AssertOutput(t, tp.want, err.Error())
+			} else {
+				if err != nil {
+					t.Errorf("unexpected Error")
+				}
+				test.AssertOutput(t, tp.want, out)
+			}
+		})
+	}
+}
+
+func TestTaskLog_v1beta1(t *testing.T) {
+
+	clock := clockwork.NewFakeClock()
+	task1 := []*v1alpha1.Task{tb.Task("task", "ns")}
+	cs, _ := test.SeedTestData(t, pipelinetest.Data{
+		Tasks: task1,
+		Namespaces: []*corev1.Namespace{
+			{
+				ObjectMeta: metav1.ObjectMeta{
+					Name: "ns",
+				},
+			},
+		},
+	})
+	cs.Pipeline.Resources = cb.APIResourceList(versionB1, []string{"task", "taskrun"})
+	tdc1 := testDynamic.Options{}
+	dc1, err := tdc1.Client(
+		cb.UnstructuredT(task1[0], versionB1),
+	)
+	if err != nil {
+		t.Errorf("unable to create dynamic clinet: %v", err)
+	}
+
+	task2 := []*v1alpha1.Task{
+		tb.Task("task", "namespace"),
+	}
+	cs2, _ := test.SeedTestData(t, pipelinetest.Data{
+		Tasks: task2,
+		Namespaces: []*corev1.Namespace{
+			{
+				ObjectMeta: metav1.ObjectMeta{
+					Name: "ns",
+				},
+			},
+		},
+	})
+	cs2.Pipeline.Resources = cb.APIResourceList(versionB1, []string{"task", "taskrun"})
+	tdc2 := testDynamic.Options{}
+	dc2, err := tdc2.Client(
+		cb.UnstructuredT(task2[0], versionB1),
 	)
 	if err != nil {
 		t.Errorf("unable to create dynamic clinet: %v", err)
