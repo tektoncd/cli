@@ -13,7 +13,7 @@ require (
 	github.com/google/go-cmp v0.4.0
 	github.com/google/go-github v17.0.0+incompatible // indirect
 	github.com/google/go-querystring v1.0.0 // indirect
-	github.com/hako/durafmt v0.0.0-20180520121703-7b7ae1e72ead
+	github.com/hako/durafmt v0.0.0-20191009132224-3f39dc1ed9f4
 	github.com/hashicorp/golang-lru v0.5.4 // indirect
 	github.com/hinshun/vt10x v0.0.0-20180809195222-d55458df857c
 	github.com/jonboulle/clockwork v0.1.1-0.20190114141812-62fb9bc030d1
@@ -24,7 +24,7 @@ require (
 	github.com/spf13/pflag v1.0.5
 	github.com/tektoncd/pipeline v0.11.0
 	github.com/tektoncd/plumbing v0.0.0-20200217163359-cd0db6e567d2
-	github.com/tektoncd/triggers v0.3.2-0.20200309195848-700e5df278fb
+	github.com/tektoncd/triggers v0.4.0-rc1
 	github.com/tidwall/gjson v1.6.0 // indirect
 	github.com/tidwall/sjson v1.0.4 // indirect
 	go.opencensus.io v0.22.1

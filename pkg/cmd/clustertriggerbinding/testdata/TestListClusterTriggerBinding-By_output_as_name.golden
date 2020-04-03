@@ -1,4 +1,4 @@
-clustertriggerbinding.tekton.dev/ctb1
-clustertriggerbinding.tekton.dev/ctb2
-clustertriggerbinding.tekton.dev/ctb3
-clustertriggerbinding.tekton.dev/ctb4
+clustertriggerbinding.triggers.tekton.dev/ctb1
+clustertriggerbinding.triggers.tekton.dev/ctb2
+clustertriggerbinding.triggers.tekton.dev/ctb3
+clustertriggerbinding.triggers.tekton.dev/ctb4

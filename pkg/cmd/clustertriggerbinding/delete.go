@@ -75,7 +75,7 @@ func deleteClusterTriggerBindings(s *cli.Stream, p cli.Params, ctbNames []string
 		return fmt.Errorf("failed to create tekton client")
 	}
 	d := deleter.New("ClusterTriggerBinding", func(bindingName string) error {
-		return cs.Triggers.TektonV1alpha1().ClusterTriggerBindings().Delete(bindingName, &metav1.DeleteOptions{})
+		return cs.Triggers.TriggersV1alpha1().ClusterTriggerBindings().Delete(bindingName, &metav1.DeleteOptions{})
 	})
 
 	if deleteAll {
@@ -97,7 +97,7 @@ func deleteClusterTriggerBindings(s *cli.Stream, p cli.Params, ctbNames []string
 }
 
 func allClusterTriggerBindingNames(p cli.Params, cs *cli.Clients) ([]string, error) {
-	ctbs, err := cs.Triggers.TektonV1alpha1().ClusterTriggerBindings().List(metav1.ListOptions{})
+	ctbs, err := cs.Triggers.TriggersV1alpha1().ClusterTriggerBindings().List(metav1.ListOptions{})
 	if err != nil {
 		return nil, err
 	}

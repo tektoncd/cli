@@ -19,7 +19,7 @@ package v1alpha1
 import (
 	"fmt"
 
-	pipelinev1 "github.com/tektoncd/pipeline/pkg/apis/pipeline/v1alpha1"
+	pipelinev1 "github.com/tektoncd/pipeline/pkg/apis/pipeline/v1beta1"
 	appsv1 "k8s.io/api/apps/v1"
 	corev1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
@@ -67,6 +67,15 @@ type EventListenerTrigger struct {
 	// +optional
 	Name         string              `json:"name,omitempty"`
 	Interceptors []*EventInterceptor `json:"interceptors,omitempty"`
+	// ServiceAccount optionally associates credentials with each trigger;
+	// more granular authorization for
+	// who is allowed to utilize the associated pipeline
+	// vs. defaulting to whatever permissions are associated
+	// with the entire EventListener and associated sink facilitates
+	// multi-tenant model based scenarios
+	// TODO do we want to restrict this to the event listener namespace and just ask for the service account name here?
+	// +optional
+	ServiceAccount *corev1.ObjectReference `json:"serviceAccount,omitempty"`
 }
 
 // EventInterceptor provides a hook to intercept and pre-process events

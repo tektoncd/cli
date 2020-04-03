@@ -96,7 +96,7 @@ or
 }
 
 func list(client versioned.Interface, namespace string) (*v1alpha1.EventListenerList, error) {
-	els, err := client.TektonV1alpha1().EventListeners(namespace).List(metav1.ListOptions{})
+	els, err := client.TriggersV1alpha1().EventListeners(namespace).List(metav1.ListOptions{})
 	if err != nil {
 		return nil, err
 	}
@@ -105,7 +105,7 @@ func list(client versioned.Interface, namespace string) (*v1alpha1.EventListener
 	// tektoncd go client fails to set these; probably a bug
 	els.GetObjectKind().SetGroupVersionKind(
 		schema.GroupVersionKind{
-			Version: "tekton.dev/v1alpha1",
+			Version: "triggers.tekton.dev/v1alpha1",
 			Kind:    "EventListenerList",
 		})
 

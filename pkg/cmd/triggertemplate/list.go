@@ -98,7 +98,7 @@ or
 }
 
 func list(client versioned.Interface, namespace string) (*v1alpha1.TriggerTemplateList, error) {
-	tts, err := client.TektonV1alpha1().TriggerTemplates(namespace).List(metav1.ListOptions{})
+	tts, err := client.TriggersV1alpha1().TriggerTemplates(namespace).List(metav1.ListOptions{})
 	if err != nil {
 		return nil, err
 	}
@@ -107,7 +107,7 @@ func list(client versioned.Interface, namespace string) (*v1alpha1.TriggerTempla
 	// tektoncd go client fails to set these; probably a bug
 	tts.GetObjectKind().SetGroupVersionKind(
 		schema.GroupVersionKind{
-			Version: "tekton.dev/v1alpha1",
+			Version: "triggers.tekton.dev/v1alpha1",
 			Kind:    "TriggerTemplateList",
 		})
 

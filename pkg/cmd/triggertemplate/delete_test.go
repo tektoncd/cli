@@ -119,7 +119,7 @@ func TestTriggerTemplateDelete(t *testing.T) {
 			input:       seeds[2],
 			inputStream: nil,
 			wantError:   true,
-			want:        "failed to delete triggertemplate \"nonexistent\": triggertemplates.tekton.dev \"nonexistent\" not found",
+			want:        "failed to delete triggertemplate \"nonexistent\": triggertemplates.triggers.tekton.dev \"nonexistent\" not found",
 		},
 		{
 			name:        "Remove multiple non existent resources",
@@ -127,7 +127,7 @@ func TestTriggerTemplateDelete(t *testing.T) {
 			input:       seeds[2],
 			inputStream: nil,
 			wantError:   true,
-			want:        "failed to delete triggertemplate \"nonexistent\": triggertemplates.tekton.dev \"nonexistent\" not found; failed to delete triggertemplate \"nonexistent2\": triggertemplates.tekton.dev \"nonexistent2\" not found",
+			want:        "failed to delete triggertemplate \"nonexistent\": triggertemplates.triggers.tekton.dev \"nonexistent\" not found; failed to delete triggertemplate \"nonexistent2\": triggertemplates.triggers.tekton.dev \"nonexistent2\" not found",
 		},
 		{
 			name:        "Delete all with prompt",

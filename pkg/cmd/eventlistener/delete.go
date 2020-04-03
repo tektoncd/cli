@@ -80,7 +80,7 @@ func deleteEventListeners(s *cli.Stream, p cli.Params, elNames []string, deleteA
 		return fmt.Errorf("failed to create tekton client")
 	}
 	d := deleter.New("EventListener", func(listenerName string) error {
-		return cs.Triggers.TektonV1alpha1().EventListeners(p.Namespace()).Delete(listenerName, &metav1.DeleteOptions{})
+		return cs.Triggers.TriggersV1alpha1().EventListeners(p.Namespace()).Delete(listenerName, &metav1.DeleteOptions{})
 	})
 	if deleteAll {
 		elNames, err = allEventListenerNames(p, cs)
@@ -101,7 +101,7 @@ func deleteEventListeners(s *cli.Stream, p cli.Params, elNames []string, deleteA
 }
 
 func allEventListenerNames(p cli.Params, cs *cli.Clients) ([]string, error) {
-	els, err := cs.Triggers.TektonV1alpha1().EventListeners(p.Namespace()).List(metav1.ListOptions{})
+	els, err := cs.Triggers.TriggersV1alpha1().EventListeners(p.Namespace()).List(metav1.ListOptions{})
 	if err != nil {
 		return nil, err
 	}

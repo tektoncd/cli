@@ -80,7 +80,7 @@ func deleteTriggerBindings(s *cli.Stream, p cli.Params, tbNames []string, delete
 		return fmt.Errorf("failed to create tekton client")
 	}
 	d := deleter.New("TriggerBinding", func(bindingName string) error {
-		return cs.Triggers.TektonV1alpha1().TriggerBindings(p.Namespace()).Delete(bindingName, &metav1.DeleteOptions{})
+		return cs.Triggers.TriggersV1alpha1().TriggerBindings(p.Namespace()).Delete(bindingName, &metav1.DeleteOptions{})
 	})
 
 	if deleteAll {
@@ -102,7 +102,7 @@ func deleteTriggerBindings(s *cli.Stream, p cli.Params, tbNames []string, delete
 }
 
 func allTriggerBindingNames(p cli.Params, cs *cli.Clients) ([]string, error) {
-	tbs, err := cs.Triggers.TektonV1alpha1().TriggerBindings(p.Namespace()).List(metav1.ListOptions{})
+	tbs, err := cs.Triggers.TriggersV1alpha1().TriggerBindings(p.Namespace()).List(metav1.ListOptions{})
 	if err != nil {
 		return nil, err
 	}

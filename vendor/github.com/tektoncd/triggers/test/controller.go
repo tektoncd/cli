@@ -45,6 +45,7 @@ import (
 	fakeconfigmapinformer "knative.dev/pkg/client/injection/kube/informers/core/v1/configmap/fake"
 	fakesecretinformer "knative.dev/pkg/client/injection/kube/informers/core/v1/secret/fake"
 	fakeserviceinformer "knative.dev/pkg/client/injection/kube/informers/core/v1/service/fake"
+	fakeserviceaccountinformer "knative.dev/pkg/client/injection/kube/informers/core/v1/serviceaccount/fake"
 	"knative.dev/pkg/controller"
 )
 
@@ -60,6 +61,7 @@ type Resources struct {
 	Services               []*corev1.Service
 	ConfigMaps             []*corev1.ConfigMap
 	Secrets                []*corev1.Secret
+	ServiceAccounts        []*corev1.ServiceAccount
 }
 
 // Clients holds references to clients which are useful for reconciler tests.
@@ -99,6 +101,7 @@ func SeedResources(t *testing.T, ctx context.Context, r Resources) Clients {
 	serviceInformer := fakeserviceinformer.Get(ctx)
 	configMapInformer := fakeconfigmapinformer.Get(ctx)
 	secretInformer := fakesecretinformer.Get(ctx)
+	saInformer := fakeserviceaccountinformer.Get(ctx)
 
 	// Create Namespaces
 	for _, ns := range r.Namespaces {
@@ -111,7 +114,7 @@ func SeedResources(t *testing.T, ctx context.Context, r Resources) Clients {
 		if err := ctbInformer.Informer().GetIndexer().Add(ctb); err != nil {
 			t.Fatal(err)
 		}
-		if _, err := c.Triggers.TektonV1alpha1().ClusterTriggerBindings().Create(ctb); err != nil {
+		if _, err := c.Triggers.TriggersV1alpha1().ClusterTriggerBindings().Create(ctb); err != nil {
 			t.Fatal(err)
 		}
 	}
@@ -119,7 +122,7 @@ func SeedResources(t *testing.T, ctx context.Context, r Resources) Clients {
 		if err := elInformer.Informer().GetIndexer().Add(el); err != nil {
 			t.Fatal(err)
 		}
-		if _, err := c.Triggers.TektonV1alpha1().EventListeners(el.Namespace).Create(el); err != nil {
+		if _, err := c.Triggers.TriggersV1alpha1().EventListeners(el.Namespace).Create(el); err != nil {
 			t.Fatal(err)
 		}
 	}
@@ -127,7 +130,7 @@ func SeedResources(t *testing.T, ctx context.Context, r Resources) Clients {
 		if err := tbInformer.Informer().GetIndexer().Add(tb); err != nil {
 			t.Fatal(err)
 		}
-		if _, err := c.Triggers.TektonV1alpha1().TriggerBindings(tb.Namespace).Create(tb); err != nil {
+		if _, err := c.Triggers.TriggersV1alpha1().TriggerBindings(tb.Namespace).Create(tb); err != nil {
 			t.Fatal(err)
 		}
 	}
@@ -135,7 +138,7 @@ func SeedResources(t *testing.T, ctx context.Context, r Resources) Clients {
 		if err := ttInformer.Informer().GetIndexer().Add(tt); err != nil {
 			t.Fatal(err)
 		}
-		if _, err := c.Triggers.TektonV1alpha1().TriggerTemplates(tt.Namespace).Create(tt); err != nil {
+		if _, err := c.Triggers.TriggersV1alpha1().TriggerTemplates(tt.Namespace).Create(tt); err != nil {
 			t.Fatal(err)
 		}
 	}
@@ -173,6 +176,14 @@ func SeedResources(t *testing.T, ctx context.Context, r Resources) Clients {
 			t.Fatal(err)
 		}
 	}
+	for _, sa := range r.ServiceAccounts {
+		if err := saInformer.Informer().GetIndexer().Add(sa); err != nil {
+			t.Fatal(err)
+		}
+		if _, err := c.Kube.CoreV1().ServiceAccounts(sa.Namespace).Create(sa); err != nil {
+			t.Fatal(err)
+		}
+	}
 
 	c.Kube.ClearActions()
 	c.Triggers.ClearActions()
@@ -186,7 +197,7 @@ func SeedResources(t *testing.T, ctx context.Context, r Resources) Clients {
 func GetResourcesFromClients(c Clients) (*Resources, error) {
 	testResources := &Resources{}
 	// Add ClusterTriggerBindings
-	ctbList, err := c.Triggers.TektonV1alpha1().ClusterTriggerBindings().List(metav1.ListOptions{})
+	ctbList, err := c.Triggers.TriggersV1alpha1().ClusterTriggerBindings().List(metav1.ListOptions{})
 	if err != nil {
 		return nil, err
 	}
@@ -201,7 +212,7 @@ func GetResourcesFromClients(c Clients) (*Resources, error) {
 		// Add Namespace
 		testResources.Namespaces = append(testResources.Namespaces, ns.DeepCopy())
 		// Add EventListeners
-		elList, err := c.Triggers.TektonV1alpha1().EventListeners(ns.Name).List(metav1.ListOptions{})
+		elList, err := c.Triggers.TriggersV1alpha1().EventListeners(ns.Name).List(metav1.ListOptions{})
 		if err != nil {
 			return nil, err
 		}
@@ -209,7 +220,7 @@ func GetResourcesFromClients(c Clients) (*Resources, error) {
 			testResources.EventListeners = append(testResources.EventListeners, el.DeepCopy())
 		}
 		// Add TriggerBindings
-		tbList, err := c.Triggers.TektonV1alpha1().TriggerBindings(ns.Name).List(metav1.ListOptions{})
+		tbList, err := c.Triggers.TriggersV1alpha1().TriggerBindings(ns.Name).List(metav1.ListOptions{})
 		if err != nil {
 			return nil, err
 		}
@@ -217,7 +228,7 @@ func GetResourcesFromClients(c Clients) (*Resources, error) {
 			testResources.TriggerBindings = append(testResources.TriggerBindings, tb.DeepCopy())
 		}
 		// Add TriggerTemplates
-		ttList, err := c.Triggers.TektonV1alpha1().TriggerTemplates(ns.Name).List(metav1.ListOptions{})
+		ttList, err := c.Triggers.TriggersV1alpha1().TriggerTemplates(ns.Name).List(metav1.ListOptions{})
 		if err != nil {
 			return nil, err
 		}
