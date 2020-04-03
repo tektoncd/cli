@@ -17,11 +17,17 @@ package pipeline
 import (
 	"fmt"
 
+	"github.com/tektoncd/cli/pkg/cli"
+	run "github.com/tektoncd/cli/pkg/pipelinerun"
 	"github.com/tektoncd/pipeline/pkg/apis/pipeline/v1alpha1"
+	"github.com/tektoncd/pipeline/pkg/apis/pipeline/v1beta1"
 	"github.com/tektoncd/pipeline/pkg/client/clientset/versioned"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 )
 
+//Todo
+// changing this LastRun to use dynamic clinet leads to multiple other change in start commands
+// keeping this as it is, will change this while working on start commands
 //LastRun returns the last run for a given pipeline
 func LastRun(tekton versioned.Interface, pipeline string, ns string) (*v1alpha1.PipelineRun, error) {
 	options := metav1.ListOptions{}
@@ -32,6 +38,34 @@ func LastRun(tekton versioned.Interface, pipeline string, ns string) (*v1alpha1.
 	}
 
 	runs, err := tekton.TektonV1alpha1().PipelineRuns(ns).List(options)
+	if err != nil {
+		return nil, err
+	}
+
+	if len(runs.Items) == 0 {
+		return nil, fmt.Errorf("no pipelineruns related to pipeline %s found in namespace %s", pipeline, ns)
+	}
+
+	latest := runs.Items[0]
+	for _, run := range runs.Items {
+		if run.CreationTimestamp.Time.After(latest.CreationTimestamp.Time) {
+			latest = run
+		}
+	}
+
+	return &latest, nil
+}
+
+//DynamicLastRun returns the last run for a given pipeline
+func DynamicLastRun(cs *cli.Clients, pipeline string, ns string) (*v1beta1.PipelineRun, error) {
+	options := metav1.ListOptions{}
+	if pipeline != "" {
+		options = metav1.ListOptions{
+			LabelSelector: fmt.Sprintf("tekton.dev/pipeline=%s", pipeline),
+		}
+	}
+
+	runs, err := run.List(cs, options, ns)
 	if err != nil {
 		return nil, err
 	}

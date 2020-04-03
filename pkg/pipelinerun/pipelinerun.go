@@ -18,7 +18,9 @@ import (
 	"fmt"
 	"os"
 
+	prget "github.com/tektoncd/cli/pkg/actions/get"
 	praction "github.com/tektoncd/cli/pkg/actions/list"
+	prwatch "github.com/tektoncd/cli/pkg/actions/watch"
 	"github.com/tektoncd/cli/pkg/cli"
 	"github.com/tektoncd/cli/pkg/formatted"
 	prsort "github.com/tektoncd/cli/pkg/pipelinerun/sort"
@@ -27,8 +29,14 @@ import (
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/apimachinery/pkg/runtime/schema"
+	"k8s.io/apimachinery/pkg/watch"
 )
 
+var prGroupResource = schema.GroupVersionResource{Group: "tekton.dev", Resource: "pipelineruns"}
+
+//Todo
+// changing this GetPipelineRun to use dynamic client leads to multiple other change in start commands
+// keeping this as it is, will change this while working on start commands
 // GetPipelineRun return a pipelinerun in a namespace from its name
 func GetPipelineRun(p cli.Params, opts metav1.GetOptions, prname string) (*v1alpha1.PipelineRun, error) {
 	cs, err := p.Clients()
@@ -74,7 +82,6 @@ func GetAllPipelineRuns(p cli.Params, opts metav1.ListOptions, limit int) ([]str
 }
 
 func List(c *cli.Clients, opts metav1.ListOptions, ns string) (*v1beta1.PipelineRunList, error) {
-	prGroupResource := schema.GroupVersionResource{Group: "tekton.dev", Resource: "pipelineruns"}
 	unstructuredPR, err := praction.List(prGroupResource, c, ns, opts)
 	if err != nil {
 		return nil, err
@@ -90,4 +97,29 @@ func List(c *cli.Clients, opts metav1.ListOptions, ns string) (*v1beta1.Pipeline
 	}
 
 	return runs, nil
+}
+
+func Get(c *cli.Clients, prname string, opts metav1.GetOptions, ns string) (*v1beta1.PipelineRun, error) {
+	unstructuredPR, err := prget.Get(prGroupResource, c, prname, ns, opts)
+	if err != nil {
+		return nil, err
+	}
+
+	var run *v1beta1.PipelineRun
+	if err := runtime.DefaultUnstructuredConverter.FromUnstructured(unstructuredPR.UnstructuredContent(), &run); err != nil {
+		return nil, err
+	}
+	if err != nil {
+		fmt.Fprintf(os.Stderr, "Failed to get pipelinerun from %s namespace \n", ns)
+		return nil, err
+	}
+	return run, nil
+}
+
+func Watch(c *cli.Clients, opts metav1.ListOptions, ns string) (watch.Interface, error) {
+	watch, err := prwatch.Watch(prGroupResource, c, ns, opts)
+	if err != nil {
+		return nil, err
+	}
+	return watch, nil
 }
