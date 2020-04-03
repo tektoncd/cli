@@ -1,5 +1,5 @@
 /*
-Copyright 2019 The Tekton Authors
+Copyright 2020 The Knative Authors
 
 Licensed under the Apache License, Version 2.0 (the "License");
 you may not use this file except in compliance with the License.
@@ -21,13 +21,13 @@ package fake
 import (
 	"context"
 
-	fake "github.com/tektoncd/triggers/pkg/client/injection/informers/factory/fake"
-	triggerbinding "github.com/tektoncd/triggers/pkg/client/injection/informers/triggers/v1alpha1/triggerbinding"
+	serviceaccount "knative.dev/pkg/client/injection/kube/informers/core/v1/serviceaccount"
+	fake "knative.dev/pkg/client/injection/kube/informers/factory/fake"
 	controller "knative.dev/pkg/controller"
 	injection "knative.dev/pkg/injection"
 )
 
-var Get = triggerbinding.Get
+var Get = serviceaccount.Get
 
 func init() {
 	injection.Fake.RegisterInformer(withInformer)
@@ -35,6 +35,6 @@ func init() {
 
 func withInformer(ctx context.Context) (context.Context, controller.Informer) {
 	f := fake.Get(ctx)
-	inf := f.Triggers().V1alpha1().TriggerBindings()
-	return context.WithValue(ctx, triggerbinding.Key{}, inf), inf.Informer()
+	inf := f.Core().V1().ServiceAccounts()
+	return context.WithValue(ctx, serviceaccount.Key{}, inf), inf.Informer()
 }

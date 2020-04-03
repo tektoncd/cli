@@ -169,7 +169,7 @@ github.com/gregjones/httpcache/diskcache
 github.com/grpc-ecosystem/grpc-gateway/internal
 github.com/grpc-ecosystem/grpc-gateway/runtime
 github.com/grpc-ecosystem/grpc-gateway/utilities
-# github.com/hako/durafmt v0.0.0-20180520121703-7b7ae1e72ead
+# github.com/hako/durafmt v0.0.0-20191009132224-3f39dc1ed9f4
 github.com/hako/durafmt
 # github.com/hashicorp/golang-lru v0.5.4
 github.com/hashicorp/golang-lru
@@ -317,7 +317,7 @@ github.com/tektoncd/pipeline/test/builder
 github.com/tektoncd/pipeline/test/v1alpha1
 # github.com/tektoncd/plumbing v0.0.0-20200217163359-cd0db6e567d2
 github.com/tektoncd/plumbing/scripts
-# github.com/tektoncd/triggers v0.3.2-0.20200309195848-700e5df278fb
+# github.com/tektoncd/triggers v0.4.0-rc1
 github.com/tektoncd/triggers/pkg/apis/triggers/v1alpha1
 github.com/tektoncd/triggers/pkg/client/clientset/versioned
 github.com/tektoncd/triggers/pkg/client/clientset/versioned/fake
@@ -893,6 +893,8 @@ knative.dev/pkg/client/injection/kube/informers/core/v1/secret
 knative.dev/pkg/client/injection/kube/informers/core/v1/secret/fake
 knative.dev/pkg/client/injection/kube/informers/core/v1/service
 knative.dev/pkg/client/injection/kube/informers/core/v1/service/fake
+knative.dev/pkg/client/injection/kube/informers/core/v1/serviceaccount
+knative.dev/pkg/client/injection/kube/informers/core/v1/serviceaccount/fake
 knative.dev/pkg/client/injection/kube/informers/factory
 knative.dev/pkg/client/injection/kube/informers/factory/fake
 knative.dev/pkg/configmap

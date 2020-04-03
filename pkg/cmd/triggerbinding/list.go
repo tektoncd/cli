@@ -83,7 +83,7 @@ or
 			if output == "name" && tbs != nil {
 				w := cmd.OutOrStdout()
 				for _, pr := range tbs.Items {
-					_, err := fmt.Fprintf(w, "triggerbinding.tekton.dev/%s\n", pr.Name)
+					_, err := fmt.Fprintf(w, "triggerbinding.triggers.tekton.dev/%s\n", pr.Name)
 					if err != nil {
 						return err
 					}
@@ -107,7 +107,7 @@ or
 }
 
 func list(client versioned.Interface, namespace string) (*v1alpha1.TriggerBindingList, error) {
-	tbs, err := client.TektonV1alpha1().TriggerBindings(namespace).List(metav1.ListOptions{})
+	tbs, err := client.TriggersV1alpha1().TriggerBindings(namespace).List(metav1.ListOptions{})
 	if err != nil {
 		return nil, err
 	}
@@ -116,7 +116,7 @@ func list(client versioned.Interface, namespace string) (*v1alpha1.TriggerBindin
 	// tektoncd go client fails to set these; probably a bug
 	tbs.GetObjectKind().SetGroupVersionKind(
 		schema.GroupVersionKind{
-			Version: "tekton.dev/v1alpha1",
+			Version: "triggers.tekton.dev/v1alpha1",
 			Kind:    "TriggerBindingList",
 		})
 

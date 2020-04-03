@@ -1,4 +1,4 @@
-triggerbinding.tekton.dev/tb1
-triggerbinding.tekton.dev/tb2
-triggerbinding.tekton.dev/tb3
-triggerbinding.tekton.dev/tb4
+triggerbinding.triggers.tekton.dev/tb1
+triggerbinding.triggers.tekton.dev/tb2
+triggerbinding.triggers.tekton.dev/tb3
+triggerbinding.triggers.tekton.dev/tb4

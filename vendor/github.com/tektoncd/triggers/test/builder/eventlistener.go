@@ -1,7 +1,7 @@
 package builder
 
 import (
-	pipelinev1 "github.com/tektoncd/pipeline/pkg/apis/pipeline/v1alpha1"
+	pipelinev1 "github.com/tektoncd/pipeline/pkg/apis/pipeline/v1beta1"
 	"github.com/tektoncd/triggers/pkg/apis/triggers/v1alpha1"
 	corev1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
@@ -148,6 +148,16 @@ func Trigger(ttName, apiVersion string, ops ...EventListenerTriggerOp) v1alpha1.
 func EventListenerTriggerName(name string) EventListenerTriggerOp {
 	return func(trigger *v1alpha1.EventListenerTrigger) {
 		trigger.Name = name
+	}
+}
+
+// EventListenerTriggerServiceAccount set the specified ServiceAccount of the EventListenerTrigger.
+func EventListenerTriggerServiceAccount(saName, namespace string) EventListenerTriggerOp {
+	return func(trigger *v1alpha1.EventListenerTrigger) {
+		trigger.ServiceAccount = &corev1.ObjectReference{
+			Namespace: saName,
+			Name:      namespace,
+		}
 	}
 }
 
