@@ -16,6 +16,7 @@ package taskrun
 
 import (
 	"github.com/tektoncd/pipeline/pkg/apis/pipeline/v1alpha1"
+	"github.com/tektoncd/pipeline/pkg/apis/pipeline/v1beta1"
 )
 
 type Run struct {
@@ -55,9 +56,9 @@ func Filter(trs []Run, ts []string) []Run {
 	return filtered
 }
 
-type taskRunMap map[string]*v1alpha1.PipelineRunTaskRunStatus
+type taskRunMap map[string]*v1beta1.PipelineRunTaskRunStatus
 
-func SortTasksBySpecOrder(pipelineTasks []v1alpha1.PipelineTask, pipelinesTaskRuns taskRunMap) []Run {
+func SortTasksBySpecOrder(pipelineTasks []v1beta1.PipelineTask, pipelinesTaskRuns taskRunMap) []Run {
 	trNames := map[string]string{}
 
 	for name, t := range pipelinesTaskRuns {

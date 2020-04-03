@@ -25,7 +25,7 @@ import (
 
 type Options struct {
 	WatchResource string
-	Watcher       *watch.RaceFreeFakeWatcher
+	Watcher       watch.Interface
 }
 
 func (opt *Options) Client(objects ...runtime.Object) (dynamic.Interface, error) {

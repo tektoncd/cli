@@ -208,7 +208,7 @@ func (r *Reader) waitUntilTaskPodNameAvailable(timeout time.Duration) (*v1beta1.
 	for {
 		select {
 		case event := <-watchRun.ResultChan():
-			run, err := cast(event.Object)
+			run, err := cast2taskrun(event.Object)
 			if err != nil {
 				return nil, err
 			}
@@ -302,7 +302,7 @@ func hasTaskRunFailed(trConditions duckv1beta1.Conditions, taskName string) erro
 	return nil
 }
 
-func cast(obj runtime.Object) (*v1beta1.TaskRun, error) {
+func cast2taskrun(obj runtime.Object) (*v1beta1.TaskRun, error) {
 	var run *v1beta1.TaskRun
 	unstruct, err := runtime.DefaultUnstructuredConverter.ToUnstructured(obj)
 	if err != nil {

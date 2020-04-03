@@ -51,14 +51,18 @@ var (
 	ns           = "namespace"
 )
 
-func TestPipelineLog(t *testing.T) {
-	version := "v1alpha1"
-	clock := clockwork.NewFakeClock()
+const (
+	versionA1 = "v1alpha1"
+	versionB1 = "v1beta1"
+)
 
+func TestPipelineLog(t *testing.T) {
+	clock := clockwork.NewFakeClock()
+	pdata := []*v1alpha1.Pipeline{
+		tb.Pipeline(pipelineName, ns),
+	}
 	cs, _ := test.SeedTestData(t, pipelinetest.Data{
-		Pipelines: []*v1alpha1.Pipeline{
-			tb.Pipeline(pipelineName, ns),
-		},
+		Pipelines: pdata,
 		Namespaces: []*corev1.Namespace{
 			{
 				ObjectMeta: metav1.ObjectMeta{
@@ -67,17 +71,16 @@ func TestPipelineLog(t *testing.T) {
 			},
 		},
 	})
-	cs.Pipeline.Resources = cb.APIResourceList(version, []string{"pipelinerun"})
+	cs.Pipeline.Resources = cb.APIResourceList(versionA1, []string{"pipeline", "pipelinerun"})
 	tdc := testDynamic.Options{}
-	dc, err := tdc.Client()
+	dc, err := tdc.Client(
+		cb.UnstructuredP(pdata[0], versionA1))
 	if err != nil {
 		t.Errorf("unable to create dynamic clinet: %v", err)
 	}
 
 	cs2, _ := test.SeedTestData(t, pipelinetest.Data{
-		Pipelines: []*v1alpha1.Pipeline{
-			tb.Pipeline(pipelineName, ns),
-		},
+		Pipelines: pdata,
 		Namespaces: []*corev1.Namespace{
 			{
 				ObjectMeta: metav1.ObjectMeta{
@@ -86,11 +89,20 @@ func TestPipelineLog(t *testing.T) {
 			},
 		},
 	})
-	cs2.Pipeline.Resources = cb.APIResourceList(version, []string{"pipelinerun"})
+	cs2.Pipeline.Resources = cb.APIResourceList(versionA1, []string{"pipeline", "pipelinerun"})
 	tdc2 := testDynamic.Options{}
-	dc2, err := tdc2.Client()
+	dc2, err := tdc2.Client(
+		cb.UnstructuredP(pdata[0], versionA1),
+	)
 	if err != nil {
 		t.Errorf("unable to create dynamic clinet: %v", err)
+	}
+
+	pdata3 := []*v1alpha1.Pipeline{
+		tb.Pipeline(pipelineName, ns,
+			// created  15 minutes back
+			cb.PipelineCreationTimestamp(clock.Now().Add(-15*time.Minute)),
+		),
 	}
 
 	prdata3 := []*v1alpha1.PipelineRun{
@@ -125,13 +137,9 @@ func TestPipelineLog(t *testing.T) {
 			),
 		),
 	}
+
 	cs3, _ := test.SeedTestData(t, pipelinetest.Data{
-		Pipelines: []*v1alpha1.Pipeline{
-			tb.Pipeline(pipelineName, ns,
-				// created  15 minutes back
-				cb.PipelineCreationTimestamp(clock.Now().Add(-15*time.Minute)),
-			),
-		},
+		Pipelines:    pdata3,
 		PipelineRuns: prdata3,
 		Namespaces: []*corev1.Namespace{
 			{
@@ -141,11 +149,12 @@ func TestPipelineLog(t *testing.T) {
 			},
 		},
 	})
-	cs.Pipeline.Resources = cb.APIResourceList(version, []string{"pipelinerun"})
+	cs3.Pipeline.Resources = cb.APIResourceList(versionA1, []string{"pipeline", "pipelinerun"})
 	tdc3 := testDynamic.Options{}
 	dc3, err := tdc3.Client(
-		cb.UnstructuredPR(prdata3[0], version),
-		cb.UnstructuredPR(prdata3[1], version),
+		cb.UnstructuredP(pdata3[0], versionA1),
+		cb.UnstructuredPR(prdata3[0], versionA1),
+		cb.UnstructuredPR(prdata3[1], versionA1),
 	)
 	if err != nil {
 		t.Errorf("unable to create dynamic clinet: %v", err)
@@ -250,13 +259,12 @@ func TestPipelineLog(t *testing.T) {
 }
 
 func TestPipelineLog_v1beta1(t *testing.T) {
-	version := "v1beta1"
 	clock := clockwork.NewFakeClock()
-
+	pdata := []*v1alpha1.Pipeline{
+		tb.Pipeline(pipelineName, ns),
+	}
 	cs, _ := test.SeedTestData(t, pipelinetest.Data{
-		Pipelines: []*v1alpha1.Pipeline{
-			tb.Pipeline(pipelineName, ns),
-		},
+		Pipelines: pdata,
 		Namespaces: []*corev1.Namespace{
 			{
 				ObjectMeta: metav1.ObjectMeta{
@@ -265,17 +273,16 @@ func TestPipelineLog_v1beta1(t *testing.T) {
 			},
 		},
 	})
-	cs.Pipeline.Resources = cb.APIResourceList(version, []string{"pipelinerun"})
+	cs.Pipeline.Resources = cb.APIResourceList(versionB1, []string{"pipeline", "pipelinerun"})
 	tdc := testDynamic.Options{}
-	dc, err := tdc.Client()
+	dc, err := tdc.Client(
+		cb.UnstructuredP(pdata[0], versionB1))
 	if err != nil {
 		t.Errorf("unable to create dynamic clinet: %v", err)
 	}
 
 	cs2, _ := test.SeedTestData(t, pipelinetest.Data{
-		Pipelines: []*v1alpha1.Pipeline{
-			tb.Pipeline(pipelineName, ns),
-		},
+		Pipelines: pdata,
 		Namespaces: []*corev1.Namespace{
 			{
 				ObjectMeta: metav1.ObjectMeta{
@@ -284,11 +291,20 @@ func TestPipelineLog_v1beta1(t *testing.T) {
 			},
 		},
 	})
-	cs2.Pipeline.Resources = cb.APIResourceList(version, []string{"pipelinerun"})
+	cs2.Pipeline.Resources = cb.APIResourceList(versionB1, []string{"pipeline", "pipelinerun"})
 	tdc2 := testDynamic.Options{}
-	dc2, err := tdc2.Client()
+	dc2, err := tdc2.Client(
+		cb.UnstructuredP(pdata[0], versionB1),
+	)
 	if err != nil {
 		t.Errorf("unable to create dynamic clinet: %v", err)
+	}
+
+	pdata3 := []*v1alpha1.Pipeline{
+		tb.Pipeline(pipelineName, ns,
+			// created  15 minutes back
+			cb.PipelineCreationTimestamp(clock.Now().Add(-15*time.Minute)),
+		),
 	}
 
 	prdata3 := []*v1alpha1.PipelineRun{
@@ -323,13 +339,9 @@ func TestPipelineLog_v1beta1(t *testing.T) {
 			),
 		),
 	}
+
 	cs3, _ := test.SeedTestData(t, pipelinetest.Data{
-		Pipelines: []*v1alpha1.Pipeline{
-			tb.Pipeline(pipelineName, ns,
-				// created  15 minutes back
-				cb.PipelineCreationTimestamp(clock.Now().Add(-15*time.Minute)),
-			),
-		},
+		Pipelines:    pdata3,
 		PipelineRuns: prdata3,
 		Namespaces: []*corev1.Namespace{
 			{
@@ -339,11 +351,12 @@ func TestPipelineLog_v1beta1(t *testing.T) {
 			},
 		},
 	})
-	cs.Pipeline.Resources = cb.APIResourceList(version, []string{"pipelinerun"})
+	cs3.Pipeline.Resources = cb.APIResourceList(versionB1, []string{"pipeline", "pipelinerun"})
 	tdc3 := testDynamic.Options{}
 	dc3, err := tdc3.Client(
-		cb.UnstructuredPR(prdata3[0], version),
-		cb.UnstructuredPR(prdata3[1], version),
+		cb.UnstructuredP(pdata3[0], versionB1),
+		cb.UnstructuredPR(prdata3[0], versionB1),
+		cb.UnstructuredPR(prdata3[1], versionB1),
 	)
 	if err != nil {
 		t.Errorf("unable to create dynamic clinet: %v", err)
@@ -802,11 +815,13 @@ func TestPipelineLog_Interactive(t *testing.T) {
 }
 
 func TestLogs_Auto_Select_FirstPipeline(t *testing.T) {
-	version := "v1alpha1"
 	pipelineName := "blahblah"
 	ns := "chouchou"
 	clock := clockwork.NewFakeClock()
 
+	pdata := []*v1alpha1.Pipeline{
+		tb.Pipeline(pipelineName, ns),
+	}
 	prdata := []*v1alpha1.PipelineRun{
 		tb.PipelineRun(prName, ns,
 			cb.PipelineRunCreationTimestamp(clock.Now().Add(-10*time.Minute)),
@@ -825,9 +840,7 @@ func TestLogs_Auto_Select_FirstPipeline(t *testing.T) {
 		),
 	}
 	cs, _ := test.SeedTestData(t, pipelinetest.Data{
-		Pipelines: []*v1alpha1.Pipeline{
-			tb.Pipeline(pipelineName, ns),
-		},
+		Pipelines:    pdata,
 		PipelineRuns: prdata,
 		Namespaces: []*corev1.Namespace{
 			{
@@ -837,10 +850,78 @@ func TestLogs_Auto_Select_FirstPipeline(t *testing.T) {
 			},
 		},
 	})
-	cs.Pipeline.Resources = cb.APIResourceList(version, []string{"pipelinerun"})
+	cs.Pipeline.Resources = cb.APIResourceList(versionA1, []string{"pipeline", "pipelinerun"})
 	tdc := testDynamic.Options{}
 	dc, err := tdc.Client(
-		cb.UnstructuredPR(prdata[0], version),
+		cb.UnstructuredP(pdata[0], versionA1),
+		cb.UnstructuredPR(prdata[0], versionA1),
+	)
+	if err != nil {
+		t.Errorf("unable to create dynamic clinet: %v", err)
+	}
+	p := test.Params{
+		Kube:    cs.Kube,
+		Tekton:  cs.Pipeline,
+		Dynamic: dc,
+	}
+	p.SetNamespace(ns)
+
+	lopt := &options.LogOptions{
+		Follow: false,
+		Limit:  5,
+		Params: &p,
+	}
+	err = getAllInputs(lopt)
+	if err != nil {
+		t.Errorf("Unexpected error: %v", err)
+	}
+
+	if lopt.PipelineName != pipelineName {
+		t.Error("No auto selection of the first pipeline when we have only one")
+	}
+}
+
+func TestLogs_Auto_Select_FirstPipeline_v1beta1(t *testing.T) {
+	pipelineName := "blahblah"
+	ns := "chouchou"
+	clock := clockwork.NewFakeClock()
+
+	pdata := []*v1alpha1.Pipeline{
+		tb.Pipeline(pipelineName, ns),
+	}
+	prdata := []*v1alpha1.PipelineRun{
+		tb.PipelineRun(prName, ns,
+			cb.PipelineRunCreationTimestamp(clock.Now().Add(-10*time.Minute)),
+			tb.PipelineRunLabel("tekton.dev/pipeline", pipelineName),
+			tb.PipelineRunSpec(pipelineName),
+			tb.PipelineRunStatus(
+				tb.PipelineRunStatusCondition(apis.Condition{
+					Status: corev1.ConditionTrue,
+					Reason: resources.ReasonSucceeded,
+				}),
+				// pipeline run started 5 minutes ago
+				tb.PipelineRunStartTime(clock.Now().Add(-5*time.Minute)),
+				// takes 10 minutes to complete
+				cb.PipelineRunCompletionTime(clock.Now().Add(10*time.Minute)),
+			),
+		),
+	}
+	cs, _ := test.SeedTestData(t, pipelinetest.Data{
+		Pipelines:    pdata,
+		PipelineRuns: prdata,
+		Namespaces: []*corev1.Namespace{
+			{
+				ObjectMeta: metav1.ObjectMeta{
+					Name: ns,
+				},
+			},
+		},
+	})
+	cs.Pipeline.Resources = cb.APIResourceList(versionB1, []string{"pipeline", "pipelinerun"})
+	tdc := testDynamic.Options{}
+	dc, err := tdc.Client(
+		cb.UnstructuredP(pdata[0], versionB1),
+		cb.UnstructuredPR(prdata[0], versionB1),
 	)
 	if err != nil {
 		t.Errorf("unable to create dynamic clinet: %v", err)

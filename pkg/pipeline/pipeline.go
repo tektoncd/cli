@@ -18,6 +18,7 @@ import (
 	"fmt"
 	"os"
 
+	pget "github.com/tektoncd/cli/pkg/actions/get"
 	paction "github.com/tektoncd/cli/pkg/actions/list"
 	"github.com/tektoncd/cli/pkg/cli"
 	"github.com/tektoncd/pipeline/pkg/apis/pipeline/v1beta1"
@@ -26,14 +27,15 @@ import (
 	"k8s.io/apimachinery/pkg/runtime/schema"
 )
 
+var pipelineGroupResource = schema.GroupVersionResource{Group: "tekton.dev", Resource: "pipelines"}
+
 func GetAllPipelineNames(p cli.Params) ([]string, error) {
 	cs, err := p.Clients()
 	if err != nil {
 		return nil, err
 	}
 
-	tkn := cs.Tekton.TektonV1alpha1()
-	ps, err := tkn.Pipelines(p.Namespace()).List(metav1.ListOptions{})
+	ps, err := List(cs, metav1.ListOptions{}, p.Namespace())
 	if err != nil {
 		return nil, err
 	}
@@ -63,4 +65,21 @@ func List(c *cli.Clients, opts metav1.ListOptions, ns string) (*v1beta1.Pipeline
 	}
 
 	return pipelines, nil
+}
+
+func Get(c *cli.Clients, pname string, opts metav1.GetOptions, ns string) (*v1beta1.Pipeline, error) {
+	unstructuredP, err := pget.Get(pipelineGroupResource, c, pname, ns, opts)
+	if err != nil {
+		return nil, err
+	}
+
+	var pipeline *v1beta1.Pipeline
+	if err := runtime.DefaultUnstructuredConverter.FromUnstructured(unstructuredP.UnstructuredContent(), &pipeline); err != nil {
+		return nil, err
+	}
+	if err != nil {
+		fmt.Fprintf(os.Stderr, "Failed to get pipeline from %s namespace \n", ns)
+		return nil, err
+	}
+	return pipeline, nil
 }

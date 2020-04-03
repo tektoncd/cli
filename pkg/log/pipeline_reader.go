@@ -19,17 +19,18 @@ import (
 	"sync"
 	"time"
 
+	"github.com/tektoncd/cli/pkg/pipeline"
 	"github.com/tektoncd/cli/pkg/pipelinerun"
 	trh "github.com/tektoncd/cli/pkg/taskrun"
-	"github.com/tektoncd/pipeline/pkg/apis/pipeline/v1alpha1"
+	"github.com/tektoncd/pipeline/pkg/apis/pipeline/v1beta1"
 	corev1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/fields"
+	"k8s.io/apimachinery/pkg/runtime"
 )
 
 func (r *Reader) readPipelineLog() (<-chan Log, <-chan error, error) {
-	tkn := r.clients.Tekton
-	pr, err := tkn.TektonV1alpha1().PipelineRuns(r.ns).Get(r.run, metav1.GetOptions{})
+	pr, err := pipelinerun.Get(r.clients, r.run, metav1.GetOptions{}, r.ns)
 	if err != nil {
 		return nil, nil, err
 	}
@@ -40,7 +41,7 @@ func (r *Reader) readPipelineLog() (<-chan Log, <-chan error, error) {
 	return r.readAvailablePipelineLogs(pr)
 }
 
-func (r *Reader) readLivePipelineLogs(pr *v1alpha1.PipelineRun) (<-chan Log, <-chan error, error) {
+func (r *Reader) readLivePipelineLogs(pr *v1beta1.PipelineRun) (<-chan Log, <-chan error, error) {
 	logC := make(chan Log)
 	errC := make(chan error)
 
@@ -81,7 +82,7 @@ func (r *Reader) readLivePipelineLogs(pr *v1alpha1.PipelineRun) (<-chan Log, <-c
 	return logC, errC, nil
 }
 
-func (r *Reader) readAvailablePipelineLogs(pr *v1alpha1.PipelineRun) (<-chan Log, <-chan error, error) {
+func (r *Reader) readAvailablePipelineLogs(pr *v1beta1.PipelineRun) (<-chan Log, <-chan error, error) {
 	if err := r.waitUntilAvailable(10); err != nil {
 		return nil, nil, err
 	}
@@ -124,8 +125,7 @@ func (r *Reader) waitUntilAvailable(timeout time.Duration) error {
 	opts := metav1.ListOptions{
 		FieldSelector: fields.OneTermEqualSelector("metadata.name", r.run).String(),
 	}
-	tkn := r.clients.Tekton
-	run, err := tkn.TektonV1alpha1().PipelineRuns(r.ns).Get(r.run, metav1.GetOptions{})
+	run, err := pipelinerun.Get(r.clients, r.run, metav1.GetOptions{}, r.ns)
 	if err != nil {
 		return err
 	}
@@ -136,14 +136,18 @@ func (r *Reader) waitUntilAvailable(timeout time.Duration) error {
 		return nil
 	}
 
-	watchRun, err := tkn.TektonV1alpha1().PipelineRuns(r.ns).Watch(opts)
+	watchRun, err := pipelinerun.Watch(r.clients, opts, r.ns)
 	if err != nil {
 		return err
 	}
 	for {
 		select {
 		case event := <-watchRun.ResultChan():
-			if event.Object.(*v1alpha1.PipelineRun).IsDone() {
+			run, err := cast2pipelinerun(event.Object)
+			if err != nil {
+				return err
+			}
+			if run.IsDone() {
 				watchRun.Stop()
 				return nil
 			}
@@ -193,12 +197,12 @@ func (r *Reader) setUpTask(taskNumber int, tr trh.Run) {
 
 // getOrderedTasks get Tasks in order from Spec.PipelineRef or Spec.PipelineSpec
 // and return trh.Run after converted taskruns into trh.Run.
-func (r *Reader) getOrderedTasks(pr *v1alpha1.PipelineRun) ([]trh.Run, error) {
-	var tasks []v1alpha1.PipelineTask
+func (r *Reader) getOrderedTasks(pr *v1beta1.PipelineRun) ([]trh.Run, error) {
+	var tasks []v1beta1.PipelineTask
 
 	switch {
 	case pr.Spec.PipelineRef != nil:
-		pl, err := r.clients.Tekton.TektonV1alpha1().Pipelines(r.ns).Get(pr.Spec.PipelineRef.Name, metav1.GetOptions{})
+		pl, err := pipeline.Get(r.clients, pr.Spec.PipelineRef.Name, metav1.GetOptions{}, r.ns)
 		if err != nil {
 			return nil, err
 		}
@@ -213,9 +217,21 @@ func (r *Reader) getOrderedTasks(pr *v1alpha1.PipelineRun) ([]trh.Run, error) {
 	return trh.SortTasksBySpecOrder(tasks, pr.Status.TaskRuns), nil
 }
 
-func empty(status v1alpha1.PipelineRunStatus) bool {
+func empty(status v1beta1.PipelineRunStatus) bool {
 	if status.Conditions == nil {
 		return true
 	}
 	return len(status.Conditions) == 0
+}
+
+func cast2pipelinerun(obj runtime.Object) (*v1beta1.PipelineRun, error) {
+	var run *v1beta1.PipelineRun
+	unstruct, err := runtime.DefaultUnstructuredConverter.ToUnstructured(obj)
+	if err != nil {
+		return nil, err
+	}
+	if err := runtime.DefaultUnstructuredConverter.FromUnstructured(unstruct, &run); err != nil {
+		return nil, err
+	}
+	return run, nil
 }

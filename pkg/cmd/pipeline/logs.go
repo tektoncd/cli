@@ -37,7 +37,7 @@ func nameArg(args []string, p cli.Params) error {
 			return err
 		}
 		name, ns := args[0], p.Namespace()
-		if _, err = c.Tekton.TektonV1alpha1().Pipelines(ns).Get(name, metav1.GetOptions{}); err != nil {
+		if _, err = phelper.Get(c, name, metav1.GetOptions{}, ns); err != nil {
 			return err
 		}
 	}
@@ -197,7 +197,7 @@ func initLastRunName(opts *options.LogOptions) error {
 	if err != nil {
 		return err
 	}
-	lastrun, err := pipeline.LastRun(cs.Tekton, opts.PipelineName, opts.Params.Namespace())
+	lastrun, err := pipeline.DynamicLastRun(cs, opts.PipelineName, opts.Params.Namespace())
 	if err != nil {
 		return err
 	}
