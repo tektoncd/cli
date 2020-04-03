@@ -206,6 +206,7 @@ func useTaskRunFrom(opt startOptions, tr *v1alpha1.TaskRun, cs *cli.Clients, tna
 	tr.Spec.Outputs = trUsed.Spec.Outputs
 	tr.Spec.ServiceAccountName = trUsed.Spec.ServiceAccountName
 	tr.Spec.Workspaces = trUsed.Spec.Workspaces
+	tr.Spec.Timeout = trUsed.Spec.Timeout
 
 	return nil
 }
@@ -222,13 +223,6 @@ func startTask(opt startOptions, args []string) error {
 	}
 
 	var tname string
-
-	timeoutDuration, err := time.ParseDuration(opt.TimeOut)
-	if err != nil {
-		return err
-	}
-	tr.Spec.Timeout = &metav1.Duration{Duration: timeoutDuration}
-
 	if len(args) > 0 {
 		tname = args[0]
 		tr.Spec = v1alpha1.TaskRunSpec{
@@ -244,6 +238,12 @@ func startTask(opt startOptions, args []string) error {
 			TaskSpec: &task.Spec,
 		}
 	}
+
+	timeoutDuration, err := time.ParseDuration(opt.TimeOut)
+	if err != nil {
+		return err
+	}
+	tr.Spec.Timeout = &metav1.Duration{Duration: timeoutDuration}
 
 	if opt.PrefixName == "" {
 		tr.ObjectMeta.GenerateName = tname + "-run-"

@@ -492,6 +492,22 @@ func TestPipelineStart_ExecuteCommand(t *testing.T) {
 			wantError: true,
 			want:      "cannot use --last option with --filename option",
 		},
+		{
+			name: "Dry Run with --timeout specified",
+			command: []string{"start", "test-pipeline",
+				"-s=svc1",
+				"-r=source=scaffold-git",
+				"-p=pipeline-param=value1",
+				"-l=jemange=desfrites",
+				"-n", "ns",
+				"--dry-run",
+				"--timeout", "1s",
+			},
+			namespace:  "",
+			input:      cs2,
+			wantError:  false,
+			goldenFile: true,
+		},
 	}
 
 	for _, tp := range testParams {
@@ -1831,6 +1847,8 @@ func Test_start_pipeline_last(t *testing.T) {
 		), // pipeline
 	}
 
+	timeoutDuration, _ := time.ParseDuration("10s")
+
 	prs := []*v1alpha1.PipelineRun{
 		tb.PipelineRun("test-pipeline-run-123", "ns",
 			tb.PipelineRunLabel("tekton.dev/pipeline", pipelineName),
@@ -1841,6 +1859,7 @@ func Test_start_pipeline_last(t *testing.T) {
 				tb.PipelineRunParam("pipeline-param-1", "somethingmorefun"),
 				tb.PipelineRunParam("rev-param", "revision1"),
 				tb.PipelineRunWorkspaceBindingEmptyDir("test-new"),
+				tb.PipelineRunTimeout(timeoutDuration),
 			),
 		),
 	}
@@ -1869,12 +1888,8 @@ func Test_start_pipeline_last(t *testing.T) {
 	pipeline := Command(p)
 	got, _ := test.ExecuteCommand(pipeline, "start", pipelineName,
 		"--last",
-		"-r=git-repo=scaffold-git",
-		"-p=rev-param=revision2",
-		"-s=svc1",
-		"--task-serviceaccount=task3=task3svc3",
-		"--task-serviceaccount=task5=task3svc5",
-		"-n", "ns")
+		"-n", "ns",
+	)
 
 	expected := "Pipelinerun started: random\n\nIn order to track the pipelinerun progress run:\ntkn pipelinerun logs random -f -n ns\n"
 	test.AssertOutput(t, expected, got)
@@ -1886,19 +1901,20 @@ func Test_start_pipeline_last(t *testing.T) {
 
 	for _, v := range pr.Spec.Resources {
 		if v.Name == "git-repo" {
-			test.AssertOutput(t, "scaffold-git", v.ResourceRef.Name)
+			test.AssertOutput(t, "some-repo", v.ResourceRef.Name)
 		}
 	}
 
 	test.AssertOutput(t, 2, len(pr.Spec.Params))
 	for _, v := range pr.Spec.Params {
 		if v.Name == "rev-param" {
-			test.AssertOutput(t, v1alpha1.ArrayOrString{Type: v1alpha1.ParamTypeString, StringVal: "revision2"}, v.Value)
+			test.AssertOutput(t, v1alpha1.ArrayOrString{Type: v1alpha1.ParamTypeString, StringVal: "revision1"}, v.Value)
 		}
 	}
 
-	test.AssertOutput(t, "svc1", pr.Spec.ServiceAccountName)
+	test.AssertOutput(t, "test-sa", pr.Spec.ServiceAccountName)
 	test.AssertOutput(t, "test-new", pr.Spec.Workspaces[0].Name)
+	test.AssertOutput(t, timeoutDuration, pr.Spec.Timeout.Duration)
 }
 
 func Test_start_pipeline_last_without_res_param(t *testing.T) {
@@ -2101,6 +2117,7 @@ func Test_start_pipeline_use_pipelinerun(t *testing.T) {
 		), // pipeline
 	}
 
+	timeoutDuration, _ := time.ParseDuration("10s")
 	theonename := "test-pipeline-run-be-the-one"
 	prs := []*v1alpha1.PipelineRun{
 		tb.PipelineRun("dont-bother-me-trying", "ns",
@@ -2111,6 +2128,7 @@ func Test_start_pipeline_use_pipelinerun(t *testing.T) {
 			tb.PipelineRunLabel("tekton.dev/pipeline", pipelineName),
 			tb.PipelineRunSpec(pipelineName,
 				tb.PipelineRunParam("brush", "teeth"),
+				tb.PipelineRunTimeout(timeoutDuration),
 			),
 		),
 	}
@@ -2147,6 +2165,7 @@ func Test_start_pipeline_use_pipelinerun(t *testing.T) {
 	}
 	test.AssertOutput(t, pr.Spec.Params[0].Name, "brush")
 	test.AssertOutput(t, pr.Spec.Params[0].Value, v1alpha1.ArrayOrString{Type: "string", StringVal: "teeth"})
+	test.AssertOutput(t, timeoutDuration, pr.Spec.Timeout.Duration)
 }
 
 func Test_start_pipeline_allkindparam(t *testing.T) {
