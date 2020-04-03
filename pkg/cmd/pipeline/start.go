@@ -238,6 +238,7 @@ func (opt *startOptions) startPipeline(pipelineStart *v1alpha1.Pipeline) error {
 		pr.Spec.ServiceAccountName = usepr.Spec.ServiceAccountName
 		pr.Spec.ServiceAccountNames = usepr.Spec.ServiceAccountNames
 		pr.Spec.Workspaces = usepr.Spec.Workspaces
+		pr.Spec.Timeout = usepr.Spec.Timeout
 	}
 
 	if err := mergeRes(pr, opt.Resources); err != nil {

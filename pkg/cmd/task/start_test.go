@@ -19,6 +19,7 @@ import (
 	"reflect"
 	"strings"
 	"testing"
+	"time"
 
 	"github.com/google/go-cmp/cmp"
 	"github.com/tektoncd/cli/pkg/test"
@@ -291,6 +292,8 @@ func Test_start_task_last(t *testing.T) {
 		),
 	}
 
+	timeoutDuration, _ := time.ParseDuration("10s")
+
 	taskruns := []*v1alpha1.TaskRun{
 		tb.TaskRun("taskrun-123", "ns",
 			tb.TaskRunLabel("tekton.dev/task", "task"),
@@ -302,6 +305,7 @@ func Test_start_task_last(t *testing.T) {
 				tb.TaskRunInputs(tb.TaskRunInputsResource("my-repo", tb.TaskResourceBindingRef("git"))),
 				tb.TaskRunOutputs(tb.TaskRunOutputsResource("code-image", tb.TaskResourceBindingRef("image"))),
 				tb.TaskRunWorkspaceEmptyDir("test", ""),
+				tb.TaskRunTimeout(timeoutDuration),
 			),
 		),
 	}
@@ -366,6 +370,7 @@ func Test_start_task_last(t *testing.T) {
 	test.AssertOutput(t, "svc", tr.Spec.ServiceAccountName)
 	test.AssertOutput(t, "test", tr.Spec.Workspaces[0].Name)
 	test.AssertOutput(t, "", tr.Spec.Workspaces[0].SubPath)
+	test.AssertOutput(t, timeoutDuration, tr.Spec.Timeout.Duration)
 }
 
 func Test_start_use_taskrun(t *testing.T) {
@@ -391,6 +396,8 @@ func Test_start_use_taskrun(t *testing.T) {
 		),
 	}
 
+	timeoutDuration, _ := time.ParseDuration("10s")
+
 	taskruns := []*v1alpha1.TaskRun{
 		tb.TaskRun("happy", "ns",
 			tb.TaskRunLabel("tekton.dev/task", "task"),
@@ -403,6 +410,7 @@ func Test_start_use_taskrun(t *testing.T) {
 			tb.TaskRunSpec(
 				tb.TaskRunTaskRef("task"),
 				tb.TaskRunServiceAccountName("camper"),
+				tb.TaskRunTimeout(timeoutDuration),
 			),
 		),
 	}
@@ -441,6 +449,7 @@ func Test_start_use_taskrun(t *testing.T) {
 	}
 
 	test.AssertOutput(t, "camper", tr.Spec.ServiceAccountName)
+	test.AssertOutput(t, timeoutDuration, tr.Spec.Timeout.Duration)
 }
 
 func Test_start_task_last_generate_name(t *testing.T) {
@@ -1384,6 +1393,21 @@ func TestTaskStart_ExecuteCommand(t *testing.T) {
 				"-o=builtImage=image",
 				"--dry-run",
 				"--output=yaml"},
+			namespace:  "",
+			input:      cs,
+			wantError:  false,
+			goldenFile: true,
+		},
+		{
+			name: "Dry Run with --timeout specified",
+			command: []string{"start", "task-1",
+				"-i=my-repo=git-repo",
+				"-o=code-image=output-image",
+				"-s=svc1",
+				"-n", "ns",
+				"--dry-run",
+				"--timeout", "1s",
+			},
 			namespace:  "",
 			input:      cs,
 			wantError:  false,
