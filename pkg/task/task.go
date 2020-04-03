@@ -76,7 +76,7 @@ func Get(c *cli.Clients, taskname string, opts metav1.GetOptions, ns string) (*v
 		return nil, err
 	}
 	if err != nil {
-		fmt.Fprintf(os.Stderr, "Failed to list task from %s namespace \n", ns)
+		fmt.Fprintf(os.Stderr, "Failed to get task from %s namespace \n", ns)
 		return nil, err
 	}
 	return task, nil
