@@ -923,6 +923,19 @@ func TestPipelineStart_Interactive(t *testing.T) {
 		},
 	})
 
+	cs12, _ := test.SeedTestData(t, pipelinetest.Data{
+		Pipelines: []*v1alpha1.Pipeline{
+			tb.Pipeline("cloudpipeline", "ns",
+				tb.PipelineSpec(
+					tb.PipelineWorkspaceDeclaration("pvc", "config", "secret", "emtpyDir"),
+					tb.PipelineTask("unit-test-1", "unit-test-task",
+						tb.PipelineTaskInputResource("clusres", "clusterresource"),
+					),
+				),
+			),
+		},
+	})
+
 	testParams := []struct {
 		name               string
 		namespace          string
@@ -1709,6 +1722,173 @@ func TestPipelineStart_Interactive(t *testing.T) {
 
 					if runs.Items != nil && runs.Items[0].Spec.PipelineRef.Name != "cloudpipeline" {
 						return errors.New("pipelinerun not found")
+					}
+
+					c.Close()
+					return nil
+				},
+			},
+		},
+		{
+			name:               "Pipeline with workspace",
+			namespace:          "ns",
+			input:              cs12,
+			last:               false,
+			serviceAccountName: "svc1",
+			serviceAccounts:    []string{"task1=svc1"},
+			prompt: prompt.Prompt{
+				CmdArgs: []string{"cloudpipeline"},
+				Procedure: func(c *expect.Console) error {
+					if _, err := c.ExpectString("Name for the workspace :"); err != nil {
+						return err
+					}
+
+					if _, err := c.SendLine("pvc1"); err != nil {
+						return err
+					}
+
+					if _, err := c.ExpectString("Value of the Sub Path :"); err != nil {
+						return err
+					}
+
+					if _, err := c.Send(string(terminal.KeyEnter)); err != nil {
+						return err
+					}
+
+					if _, err := c.ExpectString("Type of the Workspace :"); err != nil {
+						return err
+					}
+
+					if _, err := c.SendLine("pvc"); err != nil {
+						return err
+					}
+
+					if _, err := c.ExpectString("Value of Claim :"); err != nil {
+						return err
+					}
+
+					if _, err := c.SendLine("pvc1"); err != nil {
+						return err
+					}
+
+					if _, err := c.ExpectString("Name for the workspace :"); err != nil {
+						return err
+					}
+
+					if _, err := c.SendLine("config"); err != nil {
+						return err
+					}
+
+					if _, err := c.ExpectString("Value of the Sub Path :"); err != nil {
+						return err
+					}
+
+					if _, err := c.Send(string(terminal.KeyEnter)); err != nil {
+						return err
+					}
+
+					if _, err := c.ExpectString("Type of the Workspace :"); err != nil {
+						return err
+					}
+
+					if _, err := c.SendLine("config"); err != nil {
+						return err
+					}
+
+					if _, err := c.ExpectString("Name of the configmap :"); err != nil {
+						return err
+					}
+
+					if _, err := c.SendLine("cmpap"); err != nil {
+						return err
+					}
+
+					if _, err := c.ExpectString("Item Value :"); err != nil {
+						return err
+					}
+
+					if _, err := c.SendLine("key=value"); err != nil {
+						return err
+					}
+
+					if _, err := c.ExpectString("Item Value :"); err != nil {
+						return err
+					}
+
+					if _, err := c.Send(string(terminal.KeyEnter)); err != nil {
+						return err
+					}
+
+					if _, err := c.ExpectString("Name for the workspace :"); err != nil {
+						return err
+					}
+
+					if _, err := c.SendLine("secret"); err != nil {
+						return err
+					}
+
+					if _, err := c.ExpectString("Value of the Sub Path :"); err != nil {
+						return err
+					}
+
+					if _, err := c.Send(string(terminal.KeyEnter)); err != nil {
+						return err
+					}
+
+					if _, err := c.ExpectString("Type of the Workspace :"); err != nil {
+						return err
+					}
+
+					if _, err := c.SendLine("secret"); err != nil {
+						return err
+					}
+
+					if _, err := c.ExpectString("Name of the secret :"); err != nil {
+						return err
+					}
+
+					if _, err := c.SendLine("secretname"); err != nil {
+						return err
+					}
+
+					if _, err := c.ExpectString("Item Value :"); err != nil {
+						return err
+					}
+
+					if _, err := c.Send(string(terminal.KeyEnter)); err != nil {
+						return err
+					}
+
+					if _, err := c.ExpectString("Name for the workspace :"); err != nil {
+						return err
+					}
+
+					if _, err := c.SendLine("emtpyDir"); err != nil {
+						return err
+					}
+
+					if _, err := c.ExpectString("Value of the Sub Path :"); err != nil {
+						return err
+					}
+
+					if _, err := c.Send(string(terminal.KeyEnter)); err != nil {
+						return err
+					}
+
+					if _, err := c.ExpectString("Type of the Workspace :"); err != nil {
+						return err
+					}
+
+					if _, err := c.SendLine("emptyDir"); err != nil {
+						return err
+					}
+
+					if _, err := c.ExpectString("Type of EmtpyDir :"); err != nil {
+						return err
+					}
+
+					if _, err := c.SendLine(""); err != nil {
+						return err
 					}
 
 					c.Close()

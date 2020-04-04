@@ -329,6 +329,12 @@ func (opt *startOptions) getInput(pipeline *v1alpha1.Pipeline) error {
 		}
 	}
 
+	if len(opt.Workspaces) == 0 && !opt.Last && opt.UsePipelineRun == "" {
+		if err = opt.getInputWorkspaces(pipeline); err != nil {
+			return err
+		}
+	}
+
 	return nil
 }
 
@@ -691,4 +697,114 @@ func parsePipeline(taskLocation string, p cli.Params) (*v1alpha1.Pipeline, error
 		return nil, err
 	}
 	return &pipeline, nil
+}
+
+func (opt *startOptions) getInputWorkspaces(pipeline *v1alpha1.Pipeline) error {
+	for _, ws := range pipeline.Spec.Workspaces {
+		fmt.Fprintf(opt.stream.Out, "Please give specifications for the workspace: %s \n", ws.Name)
+		name, err := askParam("Name for the workspace :", opt.askOpts)
+		if err != nil {
+			return err
+		}
+		workspace := "name=" + name
+		subPath, err := askParam("Value of the Sub Path :", opt.askOpts, " ")
+		if err != nil {
+			return err
+		}
+		if subPath != " " {
+			workspace = workspace + ",subPath=" + subPath
+		}
+
+		var kind string
+		var qs = []*survey.Question{
+			{
+				Name: "workspace param",
+				Prompt: &survey.Select{
+					Message: " Type of the Workspace :",
+					Options: []string{"config", "emptyDir", "secret", "pvc"},
+					Default: "emptyDir",
+				},
+			},
+		}
+		if err := survey.Ask(qs, &kind, opt.askOpts); err != nil {
+			return err
+		}
+		switch kind {
+		case "pvc":
+			claimName, err := askParam("Value of Claim Name :", opt.askOpts)
+			if err != nil {
+				return err
+			}
+			workspace = workspace + ",claimName=" + claimName
+		case "emptyDir":
+			kind, err := askParam("Type of EmtpyDir :", opt.askOpts, "")
+			if err != nil {
+				return err
+			}
+			workspace = workspace + ",emptyDir=" + kind
+		case "config":
+			config, err := askParam("Name of the configmap :", opt.askOpts)
+			if err != nil {
+				return err
+			}
+			workspace = workspace + ",config=" + config
+			items, err := getItems(opt.askOpts)
+			if err != nil {
+				return err
+			}
+			workspace = workspace + items
+		case "secret":
+			secret, err := askParam("Name of the secret :", opt.askOpts)
+			if err != nil {
+				return err
+			}
+			workspace = workspace + ",secret=" + secret
+			items, err := getItems(opt.askOpts)
+			if err != nil {
+				return err
+			}
+			workspace = workspace + items
+		}
+		opt.Workspaces = append(opt.Workspaces, workspace)
+
+	}
+	return nil
+}
+
+func getItems(askOpts survey.AskOpt) (string, error) {
+	var items string
+	for {
+		it, err := askParam("Item Value :", askOpts, " ")
+		if err != nil {
+			return "", err
+		}
+		if it != " " {
+			items = items + ",item=" + it
+		} else {
+			return items, nil
+		}
+	}
+}
+
+func askParam(ques string, askOpts survey.AskOpt, def ...string) (string, error) {
+	var ans string
+	input := &survey.Input{
+		Message: ques,
+	}
+	if len(def) != 0 {
+		input.Default = def[0]
+	}
+
+	var qs = []*survey.Question{
+		{
+			Name:   "workspace param",
+			Prompt: input,
+		},
+	}
+	if err := survey.Ask(qs, &ans, askOpts); err != nil {
+		return "", err
+	}
+
+	return ans, nil
+
 }
