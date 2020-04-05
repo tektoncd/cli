@@ -18,7 +18,6 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
-	"log"
 	"sort"
 	"strings"
 	"time"
@@ -27,6 +26,7 @@ import (
 	"github.com/spf13/cobra"
 	"github.com/tektoncd/cli/pkg/cli"
 	"github.com/tektoncd/cli/pkg/cmd/taskrun"
+	pipelineconfig "github.com/tektoncd/cli/pkg/config"
 	"github.com/tektoncd/cli/pkg/flags"
 	"github.com/tektoncd/cli/pkg/labels"
 	"github.com/tektoncd/cli/pkg/options"
@@ -53,7 +53,7 @@ type startOptions struct {
 	Last               bool
 	Labels             []string
 	ShowLog            bool
-	TimeOut            int64
+	TimeOut            string
 	DryRun             bool
 	Output             string
 }
@@ -108,10 +108,6 @@ like cat,foo,bar
 		Example:      eg,
 		SilenceUsage: true,
 		Args: func(cmd *cobra.Command, args []string) error {
-			if opt.TimeOut != 3600 {
-				log.Println("WARNING: The --timeout flag will no longer be specified in seconds in v1.0.0. Learn more here: https://github.com/tektoncd/cli/issues/784")
-				log.Println("WARNING: The -t shortand for --timeout will no longer be available in v1.0.0.")
-			}
 			if err := flags.InitParams(p, cmd); err != nil {
 				return err
 			}
@@ -136,7 +132,7 @@ like cat,foo,bar
 	c.Flags().BoolVarP(&opt.Last, "last", "L", false, "re-run the clustertask using last taskrun values")
 	c.Flags().StringSliceVarP(&opt.Labels, "labels", "l", []string{}, "pass labels as label=value.")
 	c.Flags().BoolVarP(&opt.ShowLog, "showlog", "", false, "show logs right after starting the clustertask")
-	c.Flags().Int64VarP(&opt.TimeOut, "timeout", "t", 3600, "timeout for taskrun in seconds")
+	c.Flags().StringVarP(&opt.TimeOut, "timeout", "t", "1h", "timeout for taskrun")
 	c.Flags().BoolVarP(&opt.DryRun, "dry-run", "", false, "preview taskrun without running it")
 	c.Flags().StringVarP(&opt.Output, "output", "", "", "format of taskrun dry-run (yaml or json)")
 
@@ -155,7 +151,25 @@ func startClusterTask(opt startOptions, args []string) error {
 	}
 
 	var ctname string
-	timeoutSeconds := time.Duration(opt.TimeOut) * time.Second
+
+	cs, err := opt.cliparams.Clients()
+	if err != nil {
+		return err
+	}
+
+	timeoutDefault := "1h"
+	var timeoutDuration time.Duration
+	// Check the default timeout given by tkn, if it exists,
+	// then check for the default timeout in config-defaults
+	// in another case, opt.TimeOut will be provided by the
+	// user and will take precedence over any default
+	if opt.TimeOut == timeoutDefault {
+		opt.TimeOut, _ = pipelineconfig.GetDefaultTimeout(cs)
+	}
+	timeoutDuration, err = time.ParseDuration(opt.TimeOut)
+	if err != nil {
+		return err
+	}
 
 	ctname = args[0]
 	tr.Spec = v1alpha1.TaskRunSpec{
@@ -163,14 +177,9 @@ func startClusterTask(opt startOptions, args []string) error {
 			Name: ctname,
 			Kind: v1alpha1.ClusterTaskKind, //Specify TaskRun is for a ClusterTask kind
 		},
-		Timeout: &metav1.Duration{Duration: timeoutSeconds},
+		Timeout: &metav1.Duration{Duration: timeoutDuration},
 	}
 	tr.ObjectMeta.GenerateName = ctname + "-run-"
-
-	cs, err := opt.cliparams.Clients()
-	if err != nil {
-		return err
-	}
 
 	//TaskRuns are namespaced so using same LastRun method as Task
 	if opt.Last {

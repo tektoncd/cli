@@ -26,6 +26,7 @@ import (
 	"github.com/spf13/cobra"
 	"github.com/tektoncd/cli/pkg/cli"
 	"github.com/tektoncd/cli/pkg/cmd/taskrun"
+	pipelineconfig "github.com/tektoncd/cli/pkg/config"
 	"github.com/tektoncd/cli/pkg/file"
 	"github.com/tektoncd/cli/pkg/flags"
 	"github.com/tektoncd/cli/pkg/labels"
@@ -223,11 +224,24 @@ func startTask(opt startOptions, args []string) error {
 
 	var tname string
 
-	timeoutDuration, err := time.ParseDuration(opt.TimeOut)
+	cs, err := opt.cliparams.Clients()
 	if err != nil {
 		return err
 	}
-	tr.Spec.Timeout = &metav1.Duration{Duration: timeoutDuration}
+
+	timeoutDefault := "1h"
+	var timeoutDuration time.Duration
+	// Check the default timeout given by tkn, if it exists,
+	// then check for the default timeout in config-defaults
+	// in another case, opt.TimeOut will be provided by the
+	// user and will take precedence over any default
+	if opt.TimeOut == timeoutDefault {
+		opt.TimeOut, _ = pipelineconfig.GetDefaultTimeout(cs)
+	}
+	timeoutDuration, err = time.ParseDuration(opt.TimeOut)
+	if err != nil {
+		return err
+	}
 
 	if len(args) > 0 {
 		tname = args[0]
@@ -251,10 +265,7 @@ func startTask(opt startOptions, args []string) error {
 		tr.ObjectMeta.GenerateName = opt.PrefixName + "-"
 	}
 
-	cs, err := opt.cliparams.Clients()
-	if err != nil {
-		return err
-	}
+	tr.Spec.Timeout = &metav1.Duration{Duration: timeoutDuration}
 
 	if opt.Last || opt.UseTaskRun != "" {
 		err := useTaskRunFrom(opt, tr, cs, tname)
