@@ -30,6 +30,7 @@ import (
 	"github.com/tektoncd/cli/pkg/cli"
 	"github.com/tektoncd/cli/pkg/cmd/pipelineresource"
 	"github.com/tektoncd/cli/pkg/cmd/pipelinerun"
+	pipelineconfig "github.com/tektoncd/cli/pkg/config"
 	"github.com/tektoncd/cli/pkg/file"
 	"github.com/tektoncd/cli/pkg/flags"
 	"github.com/tektoncd/cli/pkg/labels"
@@ -176,6 +177,25 @@ func (opt *startOptions) startPipeline(pipelineStart *v1alpha1.Pipeline) error {
 		objMeta.GenerateName = opt.PrefixName + "-"
 	}
 
+	cs, err := opt.cliparams.Clients()
+	if err != nil {
+		return err
+	}
+
+	timeoutDefault := "1h"
+	var timeoutDuration time.Duration
+	// Check the default timeout given by tkn, if it exists,
+	// then check for the default timeout in config-defaults
+	// in another case, opt.TimeOut will be provided by the
+	// user and will take precedence over any default
+	if opt.TimeOut == timeoutDefault {
+		opt.TimeOut, _ = pipelineconfig.GetDefaultTimeout(cs)
+	}
+	timeoutDuration, err = time.ParseDuration(opt.TimeOut)
+	if err != nil {
+		return err
+	}
+
 	var pr *v1alpha1.PipelineRun
 	if opt.Filename == "" {
 		pr = &v1alpha1.PipelineRun{
@@ -201,16 +221,7 @@ func (opt *startOptions) startPipeline(pipelineStart *v1alpha1.Pipeline) error {
 		}
 	}
 
-	timeoutDuration, err := time.ParseDuration(opt.TimeOut)
-	if err != nil {
-		return err
-	}
 	pr.Spec.Timeout = &metav1.Duration{Duration: timeoutDuration}
-
-	cs, err := opt.cliparams.Clients()
-	if err != nil {
-		return err
-	}
 
 	if opt.Last || opt.UsePipelineRun != "" {
 		var usepr *v1alpha1.PipelineRun
