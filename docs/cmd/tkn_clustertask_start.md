@@ -39,7 +39,7 @@ like cat,foo,bar
   -p, --param stringArray        pass the param as key=value or key=value1,value2
   -s, --serviceaccount string    pass the serviceaccount name
       --showlog                  show logs right after starting the clustertask
-  -t, --timeout int              timeout for taskrun in seconds (default 3600)
+  -t, --timeout string           timeout for taskrun (default "1h")
 ```
 
 ### Options inherited from parent commands
