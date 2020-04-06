@@ -1,4 +1,4 @@
-// Copyright © 2020 The Tekton Authors.
+// Copyright © 2019-2020 The Tekton Authors.
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -12,25 +12,25 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-package delete
+package actions
 
 import (
-	"github.com/tektoncd/cli/pkg/actions"
 	"github.com/tektoncd/cli/pkg/cli"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
 	"k8s.io/apimachinery/pkg/runtime/schema"
 )
 
-func Delete(gr schema.GroupVersionResource, clients *cli.Clients, objname, ns string, op *metav1.DeleteOptions) error {
-	gvr, err := actions.GetGroupVersionResource(gr, clients.Tekton.Discovery())
+func Update(gr schema.GroupVersionResource, clients *cli.Clients, obj *unstructured.Unstructured, opts metav1.UpdateOptions, ns string) (*unstructured.Unstructured, error) {
+	gvr, err := GetGroupVersionResource(gr, clients.Tekton.Discovery())
 	if err != nil {
-		return err
+		return nil, err
 	}
 
-	err = clients.Dynamic.Resource(*gvr).Namespace(ns).Delete(objname, op)
+	updatedObj, err := clients.Dynamic.Resource(*gvr).Namespace(ns).Update(obj, opts)
 	if err != nil {
-		return err
+		return nil, err
 	}
 
-	return nil
+	return updatedObj, nil
 }

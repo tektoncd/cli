@@ -20,7 +20,7 @@ import (
 	"text/tabwriter"
 
 	"github.com/spf13/cobra"
-	ctaction "github.com/tektoncd/cli/pkg/actions/list"
+	"github.com/tektoncd/cli/pkg/actions"
 	"github.com/tektoncd/cli/pkg/cli"
 	"github.com/tektoncd/cli/pkg/formatted"
 	"github.com/tektoncd/pipeline/pkg/apis/pipeline/v1beta1"
@@ -56,7 +56,7 @@ func listCommand(p cli.Params) *cobra.Command {
 
 			if output != "" {
 				ctGroupResource := schema.GroupVersionResource{Group: "tekton.dev", Resource: "clustertasks"}
-				return ctaction.PrintObject(ctGroupResource, cmd.OutOrStdout(), p, f, "")
+				return actions.PrintObjects(ctGroupResource, cmd.OutOrStdout(), p, f, "")
 			}
 			stream := &cli.Stream{
 				Out: cmd.OutOrStdout(),
@@ -104,7 +104,7 @@ func printClusterTaskDetails(s *cli.Stream, p cli.Params) error {
 func List(c *cli.Clients, opts metav1.ListOptions) (*v1beta1.ClusterTaskList, error) {
 
 	ctGroupResource := schema.GroupVersionResource{Group: "tekton.dev", Resource: "clustertasks"}
-	unstructuredCT, err := ctaction.List(ctGroupResource, c, "", opts)
+	unstructuredCT, err := actions.List(ctGroupResource, c, "", opts)
 	if err != nil {
 		return nil, err
 	}

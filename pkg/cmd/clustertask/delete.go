@@ -18,7 +18,7 @@ import (
 	"fmt"
 
 	"github.com/spf13/cobra"
-	ctaction "github.com/tektoncd/cli/pkg/actions/delete"
+	"github.com/tektoncd/cli/pkg/actions"
 	"github.com/tektoncd/cli/pkg/cli"
 	"github.com/tektoncd/cli/pkg/deleter"
 	"github.com/tektoncd/cli/pkg/options"
@@ -78,7 +78,7 @@ func deleteClusterTasks(s *cli.Stream, p cli.Params, tNames []string, deleteAll 
 		return fmt.Errorf("Failed to create tekton client")
 	}
 	d := deleter.New("ClusterTask", func(taskName string) error {
-		return ctaction.Delete(ctGroupResource, cs, taskName, "", &metav1.DeleteOptions{})
+		return actions.Delete(ctGroupResource, cs, taskName, "", &metav1.DeleteOptions{})
 	})
 	if deleteAll {
 		cts, err := allClusterTaskNames(cs)

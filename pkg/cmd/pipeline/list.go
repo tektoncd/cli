@@ -21,11 +21,11 @@ import (
 	"text/template"
 
 	"github.com/spf13/cobra"
-	"github.com/tektoncd/cli/pkg/actions/list"
+	"github.com/tektoncd/cli/pkg/actions"
 	"github.com/tektoncd/cli/pkg/cli"
 	"github.com/tektoncd/cli/pkg/formatted"
 	"github.com/tektoncd/cli/pkg/pipeline"
-	validate "github.com/tektoncd/cli/pkg/validate"
+	"github.com/tektoncd/cli/pkg/validate"
 	"github.com/tektoncd/pipeline/pkg/apis/pipeline/v1alpha1"
 	"github.com/tektoncd/pipeline/pkg/apis/pipeline/v1beta1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
@@ -73,7 +73,7 @@ func listCommand(p cli.Params) *cobra.Command {
 
 			if output != "" {
 				pipelineGroupResource := schema.GroupVersionResource{Group: "tekton.dev", Resource: "pipelines"}
-				return list.PrintObject(pipelineGroupResource, cmd.OutOrStdout(), p, f, p.Namespace())
+				return actions.PrintObjects(pipelineGroupResource, cmd.OutOrStdout(), p, f, p.Namespace())
 			}
 			stream := &cli.Stream{
 				Out: cmd.OutOrStdout(),

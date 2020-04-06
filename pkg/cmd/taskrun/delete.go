@@ -19,7 +19,7 @@ import (
 	"fmt"
 
 	"github.com/spf13/cobra"
-	traction "github.com/tektoncd/cli/pkg/actions/delete"
+	"github.com/tektoncd/cli/pkg/actions"
 	"github.com/tektoncd/cli/pkg/cli"
 	"github.com/tektoncd/cli/pkg/deleter"
 	"github.com/tektoncd/cli/pkg/options"
@@ -89,7 +89,7 @@ func deleteTaskRuns(s *cli.Stream, p cli.Params, trNames []string, opts *options
 	switch {
 	case opts.DeleteAllNs:
 		d = deleter.New("TaskRun", func(taskRunName string) error {
-			return traction.Delete(trGroupResource, cs, taskRunName, p.Namespace(), &metav1.DeleteOptions{})
+			return actions.Delete(trGroupResource, cs, taskRunName, p.Namespace(), &metav1.DeleteOptions{})
 		})
 		trs, err := allTaskRunNames(cs, opts.Keep, p.Namespace())
 		if err != nil {
@@ -98,7 +98,7 @@ func deleteTaskRuns(s *cli.Stream, p cli.Params, trNames []string, opts *options
 		d.Delete(s, trs)
 	case opts.ParentResourceName == "":
 		d = deleter.New("TaskRun", func(taskRunName string) error {
-			return traction.Delete(trGroupResource, cs, taskRunName, p.Namespace(), &metav1.DeleteOptions{})
+			return actions.Delete(trGroupResource, cs, taskRunName, p.Namespace(), &metav1.DeleteOptions{})
 		})
 		d.Delete(s, trNames)
 	default:
@@ -106,7 +106,7 @@ func deleteTaskRuns(s *cli.Stream, p cli.Params, trNames []string, opts *options
 			return errors.New("the task should not be deleted")
 		})
 		d.WithRelated("TaskRun", taskRunLister(p, cs), func(taskRunName string) error {
-			return traction.Delete(trGroupResource, cs, taskRunName, p.Namespace(), &metav1.DeleteOptions{})
+			return actions.Delete(trGroupResource, cs, taskRunName, p.Namespace(), &metav1.DeleteOptions{})
 		})
 		d.DeleteRelated(s, []string{opts.ParentResourceName})
 	}

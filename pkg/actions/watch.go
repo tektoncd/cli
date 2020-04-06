@@ -12,10 +12,9 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-package watch
+package actions
 
 import (
-	"github.com/tektoncd/cli/pkg/actions"
 	"github.com/tektoncd/cli/pkg/cli"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime/schema"
@@ -23,7 +22,7 @@ import (
 )
 
 func Watch(gr schema.GroupVersionResource, clients *cli.Clients, ns string, op metav1.ListOptions) (watch.Interface, error) {
-	gvr, err := actions.GetGroupVersionResource(gr, clients.Tekton.Discovery())
+	gvr, err := GetGroupVersionResource(gr, clients.Tekton.Discovery())
 	if err != nil {
 		return nil, err
 	}

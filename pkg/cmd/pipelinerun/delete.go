@@ -19,7 +19,7 @@ import (
 	"fmt"
 
 	"github.com/spf13/cobra"
-	praction "github.com/tektoncd/cli/pkg/actions/delete"
+	"github.com/tektoncd/cli/pkg/actions"
 	"github.com/tektoncd/cli/pkg/cli"
 	"github.com/tektoncd/cli/pkg/deleter"
 	"github.com/tektoncd/cli/pkg/options"
@@ -91,7 +91,7 @@ func deletePipelineRuns(s *cli.Stream, p cli.Params, prNames []string, opts *opt
 	switch {
 	case opts.DeleteAllNs:
 		d = deleter.New("PipelineRun", func(pipelineRunName string) error {
-			return praction.Delete(prGroupResource, cs, pipelineRunName, p.Namespace(), &metav1.DeleteOptions{})
+			return actions.Delete(prGroupResource, cs, pipelineRunName, p.Namespace(), &metav1.DeleteOptions{})
 		})
 		prs, err := allPipelineRunNames(cs, opts.Keep, p.Namespace())
 		if err != nil {
@@ -100,7 +100,7 @@ func deletePipelineRuns(s *cli.Stream, p cli.Params, prNames []string, opts *opt
 		d.Delete(s, prs)
 	case opts.ParentResourceName == "":
 		d = deleter.New("PipelineRun", func(pipelineRunName string) error {
-			return praction.Delete(prGroupResource, cs, pipelineRunName, p.Namespace(), &metav1.DeleteOptions{})
+			return actions.Delete(prGroupResource, cs, pipelineRunName, p.Namespace(), &metav1.DeleteOptions{})
 		})
 		d.Delete(s, prNames)
 	default:
@@ -108,7 +108,7 @@ func deletePipelineRuns(s *cli.Stream, p cli.Params, prNames []string, opts *opt
 			return errors.New("the pipeline should not be deleted")
 		})
 		d.WithRelated("PipelineRun", pipelineRunLister(cs, p.Namespace()), func(pipelineRunName string) error {
-			return praction.Delete(prGroupResource, cs, pipelineRunName, p.Namespace(), &metav1.DeleteOptions{})
+			return actions.Delete(prGroupResource, cs, pipelineRunName, p.Namespace(), &metav1.DeleteOptions{})
 		})
 		d.DeleteRelated(s, []string{opts.ParentResourceName})
 	}

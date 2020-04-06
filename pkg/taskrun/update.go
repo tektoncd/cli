@@ -18,7 +18,7 @@ import (
 	"fmt"
 	"os"
 
-	traction "github.com/tektoncd/cli/pkg/actions/update"
+	"github.com/tektoncd/cli/pkg/actions"
 	"github.com/tektoncd/cli/pkg/cli"
 	"github.com/tektoncd/pipeline/pkg/apis/pipeline/v1beta1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
@@ -36,7 +36,7 @@ func Update(c *cli.Clients, trobj *v1beta1.TaskRun, opts metav1.UpdateOptions, n
 	unsTRObj := &unstructured.Unstructured{
 		Object: unsMapTRObj,
 	}
-	unstructuredTR, err := traction.Update(trGroupResource, c, unsTRObj, opts, ns)
+	unstructuredTR, err := actions.Update(trGroupResource, c, unsTRObj, opts, ns)
 	if err != nil {
 		return nil, err
 	}

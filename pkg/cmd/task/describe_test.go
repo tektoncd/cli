@@ -24,8 +24,11 @@ import (
 	"github.com/jonboulle/clockwork"
 	"github.com/tektoncd/cli/pkg/test"
 	cb "github.com/tektoncd/cli/pkg/test/builder"
+	testDynamic "github.com/tektoncd/cli/pkg/test/dynamic"
 	"github.com/tektoncd/pipeline/pkg/apis/pipeline/v1alpha1"
+	"github.com/tektoncd/pipeline/pkg/apis/pipeline/v1beta1"
 	"github.com/tektoncd/pipeline/pkg/reconciler/pipelinerun/resources"
+	pipelinev1beta1test "github.com/tektoncd/pipeline/test"
 	tb "github.com/tektoncd/pipeline/test/builder"
 	pipelinetest "github.com/tektoncd/pipeline/test/v1alpha1"
 	"gotest.tools/v3/golden"
@@ -34,6 +37,7 @@ import (
 	"k8s.io/apimachinery/pkg/runtime"
 	k8stest "k8s.io/client-go/testing"
 	"knative.dev/pkg/apis"
+	duckv1beta1 "knative.dev/pkg/apis/duck/v1beta1"
 )
 
 func TestTaskDescribe_Invalid_Namespace(t *testing.T) {
@@ -59,10 +63,16 @@ func TestTaskDescribe_Empty(t *testing.T) {
 			},
 		},
 	})
-	p := &test.Params{Tekton: cs.Pipeline, Kube: cs.Kube}
+	cs.Pipeline.Resources = cb.APIResourceList("v1alpha1", []string{"task"})
+	tdc := testDynamic.Options{}
+	dynamic, err := tdc.Client()
+	if err != nil {
+		fmt.Println(err)
+	}
+	p := &test.Params{Tekton: cs.Pipeline, Kube: cs.Kube, Dynamic: dynamic}
 
 	task := Command(p)
-	_, err := test.ExecuteCommand(task, "desc", "bar", "-n", "ns")
+	_, err = test.ExecuteCommand(task, "desc", "bar", "-n", "ns")
 	if err == nil {
 		t.Errorf("Error expected here")
 	}
@@ -71,26 +81,37 @@ func TestTaskDescribe_Empty(t *testing.T) {
 }
 
 func TestTaskDescribe_OnlyName(t *testing.T) {
-	cs, _ := test.SeedTestData(t, pipelinetest.Data{
-		Tasks: []*v1alpha1.Task{
-			tb.Task("task-1", "ns"),
-			tb.Task("task", "ns-2"),
-		},
-		Namespaces: []*corev1.Namespace{
-			{
-				ObjectMeta: metav1.ObjectMeta{
-					Name: "ns",
-				},
-			},
-			{
-				ObjectMeta: metav1.ObjectMeta{
-					Name: "ns-2",
-				},
-			},
-		},
-	})
+	tasks := []*v1alpha1.Task{
+		tb.Task("task-1", "ns"),
+		tb.Task("task", "ns-2"),
+	}
 
-	p := &test.Params{Tekton: cs.Pipeline, Kube: cs.Kube}
+	namespaces := []*corev1.Namespace{
+		{
+			ObjectMeta: metav1.ObjectMeta{
+				Name: "ns",
+			},
+		},
+		{
+			ObjectMeta: metav1.ObjectMeta{
+				Name: "ns-2",
+			},
+		},
+	}
+
+	version := "v1alpha1"
+	tdc := testDynamic.Options{}
+	dynamic, err := tdc.Client(
+		cb.UnstructuredT(tasks[0], version),
+		cb.UnstructuredT(tasks[1], version),
+	)
+	if err != nil {
+		t.Errorf("unable to create dynamic client: %v", err)
+	}
+
+	cs, _ := test.SeedTestData(t, pipelinetest.Data{Tasks: tasks, Namespaces: namespaces})
+	cs.Pipeline.Resources = cb.APIResourceList(version, []string{"task", "taskrun"})
+	p := &test.Params{Tekton: cs.Pipeline, Kube: cs.Kube, Dynamic: dynamic}
 	p.SetNamespace("ns")
 	task := Command(p)
 	out, err := test.ExecuteCommand(task, "desc", "task-1")
@@ -101,26 +122,35 @@ func TestTaskDescribe_OnlyName(t *testing.T) {
 }
 
 func TestTaskDescribe_OnlyNameDiffNameSpace(t *testing.T) {
-	cs, _ := test.SeedTestData(t, pipelinetest.Data{
-		Tasks: []*v1alpha1.Task{
-			tb.Task("task-1", "ns"),
-			tb.Task("task", "ns-2"),
-		},
-		Namespaces: []*corev1.Namespace{
-			{
-				ObjectMeta: metav1.ObjectMeta{
-					Name: "ns",
-				},
-			},
-			{
-				ObjectMeta: metav1.ObjectMeta{
-					Name: "ns-2",
-				},
+	tasks := []*v1alpha1.Task{
+		tb.Task("task-1", "ns"),
+		tb.Task("task", "ns-2"),
+	}
+	namespaces := []*corev1.Namespace{
+		{
+			ObjectMeta: metav1.ObjectMeta{
+				Name: "ns",
 			},
 		},
-	})
+		{
+			ObjectMeta: metav1.ObjectMeta{
+				Name: "ns-2",
+			},
+		},
+	}
+	version := "v1alpha1"
+	tdc := testDynamic.Options{}
+	dynamic, err := tdc.Client(
+		cb.UnstructuredT(tasks[0], version),
+		cb.UnstructuredT(tasks[1], version),
+	)
+	if err != nil {
+		t.Errorf("unable to create dynamic client: %v", err)
+	}
 
-	p := &test.Params{Tekton: cs.Pipeline, Kube: cs.Kube}
+	cs, _ := test.SeedTestData(t, pipelinetest.Data{Tasks: tasks, Namespaces: namespaces})
+	cs.Pipeline.Resources = cb.APIResourceList(version, []string{"task", "taskrun"})
+	p := &test.Params{Tekton: cs.Pipeline, Kube: cs.Kube, Dynamic: dynamic}
 	p.SetNamespace("ns")
 	task := Command(p)
 	out, err := test.ExecuteCommand(task, "desc", "task", "-n", "ns-2")
@@ -131,34 +161,42 @@ func TestTaskDescribe_OnlyNameDiffNameSpace(t *testing.T) {
 }
 
 func TestTaskDescribe_OnlyNameParams(t *testing.T) {
-	cs, _ := test.SeedTestData(t, pipelinetest.Data{
-		Tasks: []*v1alpha1.Task{
-			tb.Task("task-1", "ns",
-				tb.TaskSpec(
-					tb.TaskInputs(
-						tb.InputsParamSpec("myarg", v1alpha1.ParamTypeString),
-						tb.InputsParamSpec("myprint", v1alpha1.ParamTypeString),
-						tb.InputsParamSpec("myarray", v1alpha1.ParamTypeArray),
-					),
-				),
+	tasks := []*v1alpha1.Task{
+		tb.Task("task-1", "ns",
+			tb.TaskSpec(
+				tb.TaskParam("myarg", v1alpha1.ParamTypeString),
+				tb.TaskParam("myprint", v1alpha1.ParamTypeString),
+				tb.TaskParam("myarray", v1alpha1.ParamTypeArray),
 			),
-			tb.Task("task", "ns-2"),
-		},
-		Namespaces: []*corev1.Namespace{
-			{
-				ObjectMeta: metav1.ObjectMeta{
-					Name: "ns",
-				},
-			},
-			{
-				ObjectMeta: metav1.ObjectMeta{
-					Name: "ns-2",
-				},
+		),
+		tb.Task("task", "ns-2"),
+	}
+	namespaces := []*corev1.Namespace{
+		{
+			ObjectMeta: metav1.ObjectMeta{
+				Name: "ns",
 			},
 		},
-	})
+		{
+			ObjectMeta: metav1.ObjectMeta{
+				Name: "ns-2",
+			},
+		},
+	}
 
-	p := &test.Params{Tekton: cs.Pipeline, Kube: cs.Kube}
+	version := "v1alpha1"
+	tdc := testDynamic.Options{}
+	dynamic, err := tdc.Client(
+		cb.UnstructuredT(tasks[0], version),
+		cb.UnstructuredT(tasks[1], version),
+	)
+	if err != nil {
+		t.Errorf("unable to create dynamic client: %v", err)
+	}
+
+	cs, _ := test.SeedTestData(t, pipelinetest.Data{Tasks: tasks, Namespaces: namespaces})
+	cs.Pipeline.Resources = cb.APIResourceList(version, []string{"task", "taskrun"})
+	p := &test.Params{Tekton: cs.Pipeline, Kube: cs.Kube, Dynamic: dynamic}
 	p.SetNamespace("ns")
 	task := Command(p)
 	out, err := test.ExecuteCommand(task, "desc", "task-1")
@@ -170,69 +208,78 @@ func TestTaskDescribe_OnlyNameParams(t *testing.T) {
 
 func TestTaskDescribe_Full(t *testing.T) {
 	clock := clockwork.NewFakeClock()
-	cs, _ := test.SeedTestData(t, pipelinetest.Data{
-		Tasks: []*v1alpha1.Task{
-			tb.Task("task-1", "ns",
-				tb.TaskSpec(
-					tb.TaskDescription("a test description"),
-					tb.TaskInputs(
-						tb.InputsResource("my-repo", v1alpha1.PipelineResourceTypeGit),
-						tb.InputsResource("my-image", v1alpha1.PipelineResourceTypeImage),
-						tb.InputsResource("source-repo", v1alpha1.PipelineResourceTypeGit),
-						tb.InputsParamSpec("myarg", v1alpha1.ParamTypeString),
-						tb.InputsParamSpec("myarray", v1alpha1.ParamTypeArray),
-						tb.InputsParamSpec("print", v1alpha1.ParamTypeString, tb.ParamSpecDefault("somethingdifferent")),
-						tb.InputsParamSpec("output", v1alpha1.ParamTypeArray, tb.ParamSpecDefault("booms", "booms", "booms")),
-					),
-					tb.TaskOutputs(
-						tb.OutputsResource("code-image", v1alpha1.PipelineResourceTypeImage),
-						tb.OutputsResource("artifact-image", v1alpha1.PipelineResourceTypeImage),
-					),
-					tb.Step("busybox",
-						tb.StepName("hello"),
-					),
-					tb.Step("busybox",
-						tb.StepName("exit"),
-					),
+	tasks := []*v1alpha1.Task{
+		tb.Task("task-1", "ns",
+			tb.TaskSpec(
+				tb.TaskDescription("a test description"),
+				tb.TaskResources(
+					tb.TaskResourcesInput("my-repo", v1alpha1.PipelineResourceTypeGit),
+					tb.TaskResourcesInput("my-image", v1alpha1.PipelineResourceTypeImage),
+					tb.TaskResourcesInput("source-repo", v1alpha1.PipelineResourceTypeGit),
+					tb.TaskResourcesOutput("code-image", v1alpha1.PipelineResourceTypeImage),
+					tb.TaskResourcesOutput("artifact-image", v1alpha1.PipelineResourceTypeImage),
+				),
+				tb.TaskParam("myarg", v1alpha1.ParamTypeString),
+				tb.TaskParam("myarray", v1alpha1.ParamTypeArray),
+				tb.TaskParam("print", v1alpha1.ParamTypeString, tb.ParamSpecDefault("somethingdifferent")),
+				tb.TaskParam("output", v1alpha1.ParamTypeArray, tb.ParamSpecDefault("booms", "booms", "booms")),
+				tb.Step("busybox",
+					tb.StepName("hello"),
+				),
+				tb.Step("busybox",
+					tb.StepName("exit"),
 				),
 			),
-		},
-		TaskRuns: []*v1alpha1.TaskRun{
-			tb.TaskRun("tr-1", "ns",
-				tb.TaskRunLabel("tekton.dev/task", "task-1"),
-				tb.TaskRunSpec(tb.TaskRunTaskRef("task-1")),
-				tb.TaskRunStatus(
-					tb.StatusCondition(apis.Condition{
-						Status: corev1.ConditionFalse,
-						Reason: resources.ReasonFailed,
-					}),
-					tb.TaskRunStartTime(clock.Now()),
-					cb.TaskRunCompletionTime(clock.Now().Add(5*time.Minute)),
-				),
+		),
+	}
+	taskRuns := []*v1alpha1.TaskRun{
+		tb.TaskRun("tr-1", "ns",
+			tb.TaskRunLabel("tekton.dev/task", "task-1"),
+			tb.TaskRunSpec(tb.TaskRunTaskRef("task-1")),
+			tb.TaskRunStatus(
+				tb.StatusCondition(apis.Condition{
+					Status: corev1.ConditionFalse,
+					Reason: resources.ReasonFailed,
+				}),
+				tb.TaskRunStartTime(clock.Now()),
+				cb.TaskRunCompletionTime(clock.Now().Add(5*time.Minute)),
 			),
-			tb.TaskRun("tr-2", "ns",
-				tb.TaskRunLabel("tekton.dev/task", "task-1"),
-				tb.TaskRunSpec(tb.TaskRunTaskRef("task-1")),
-				tb.TaskRunStatus(
-					tb.StatusCondition(apis.Condition{
-						Status: corev1.ConditionTrue,
-						Reason: resources.ReasonSucceeded,
-					}),
-					tb.TaskRunStartTime(clock.Now().Add(10*time.Minute)),
-					cb.TaskRunCompletionTime(clock.Now().Add(17*time.Minute)),
-				),
+		),
+		tb.TaskRun("tr-2", "ns",
+			tb.TaskRunLabel("tekton.dev/task", "task-1"),
+			tb.TaskRunSpec(tb.TaskRunTaskRef("task-1")),
+			tb.TaskRunStatus(
+				tb.StatusCondition(apis.Condition{
+					Status: corev1.ConditionTrue,
+					Reason: resources.ReasonSucceeded,
+				}),
+				tb.TaskRunStartTime(clock.Now().Add(10*time.Minute)),
+				cb.TaskRunCompletionTime(clock.Now().Add(17*time.Minute)),
 			),
-		},
-		Namespaces: []*corev1.Namespace{
-			{
-				ObjectMeta: metav1.ObjectMeta{
-					Name: "ns",
-				},
+		),
+	}
+	namespaces := []*corev1.Namespace{
+		{
+			ObjectMeta: metav1.ObjectMeta{
+				Name: "ns",
 			},
 		},
-	})
+	}
 
-	p := &test.Params{Tekton: cs.Pipeline, Clock: clock, Kube: cs.Kube}
+	version := "v1alpha1"
+	tdc := testDynamic.Options{}
+	dynamic, err := tdc.Client(
+		cb.UnstructuredT(tasks[0], version),
+		cb.UnstructuredTR(taskRuns[0], version),
+		cb.UnstructuredTR(taskRuns[1], version),
+	)
+	if err != nil {
+		t.Errorf("unable to create dynamic client: %v", err)
+	}
+
+	cs, _ := test.SeedTestData(t, pipelinetest.Data{Tasks: tasks, Namespaces: namespaces, TaskRuns: taskRuns})
+	cs.Pipeline.Resources = cb.APIResourceList(version, []string{"task", "taskrun"})
+	p := &test.Params{Tekton: cs.Pipeline, Kube: cs.Kube, Dynamic: dynamic, Clock: clock}
 	task := Command(p)
 	clock.Advance(20 * time.Minute)
 	out, err := test.ExecuteCommand(task, "desc", "task-1")
@@ -243,31 +290,39 @@ func TestTaskDescribe_Full(t *testing.T) {
 }
 
 func TestTaskDescribe_TaskRunError(t *testing.T) {
-	cs, _ := test.SeedTestData(t, pipelinetest.Data{
-		Tasks: []*v1alpha1.Task{
-			tb.Task("task-1", "ns"),
-			tb.Task("task", "ns-2"),
-		},
-		Namespaces: []*corev1.Namespace{
-			{
-				ObjectMeta: metav1.ObjectMeta{
-					Name: "ns",
-				},
-			},
-			{
-				ObjectMeta: metav1.ObjectMeta{
-					Name: "ns-2",
-				},
+	tasks := []*v1alpha1.Task{
+		tb.Task("task-1", "ns"),
+		tb.Task("task", "ns-2"),
+	}
+	namespaces := []*corev1.Namespace{
+		{
+			ObjectMeta: metav1.ObjectMeta{
+				Name: "ns",
 			},
 		},
-	})
+		{
+			ObjectMeta: metav1.ObjectMeta{
+				Name: "ns-2",
+			},
+		},
+	}
 
-	p := &test.Params{Tekton: cs.Pipeline, Kube: cs.Kube}
-	p.SetNamespace("ns")
-
-	cs.Pipeline.PrependReactor("list", "taskruns", func(action k8stest.Action) (bool, runtime.Object, error) {
+	version := "v1alpha1"
+	tdc := testDynamic.Options{Verb: "list", Resource: "taskruns", Action: func(action k8stest.Action) (bool, runtime.Object, error) {
 		return true, nil, errors.New("fake list taskrun error")
-	})
+	}}
+	dynamic, err := tdc.Client(
+		cb.UnstructuredT(tasks[0], version),
+		cb.UnstructuredT(tasks[1], version),
+	)
+	if err != nil {
+		t.Errorf("unable to create dynamic client: %v", err)
+	}
+
+	cs, _ := test.SeedTestData(t, pipelinetest.Data{Tasks: tasks, Namespaces: namespaces})
+	cs.Pipeline.Resources = cb.APIResourceList(version, []string{"task", "taskrun"})
+	p := &test.Params{Tekton: cs.Pipeline, Kube: cs.Kube, Dynamic: dynamic}
+	p.SetNamespace("ns")
 
 	task := Command(p)
 	out, err := test.ExecuteCommand(task, "desc", "task-1")
@@ -289,18 +344,26 @@ func TestTaskDescribe_custom_output(t *testing.T) {
 		tb.Task(name, "ns"),
 	}
 
-	cs, _ := test.SeedTestData(t, pipelinetest.Data{
-		Tasks: tasks,
-		Namespaces: []*corev1.Namespace{
-			{
-				ObjectMeta: metav1.ObjectMeta{
-					Name: "ns",
-				},
+	namespaces := []*corev1.Namespace{
+		{
+			ObjectMeta: metav1.ObjectMeta{
+				Name: "ns",
 			},
 		},
-	})
+	}
 
-	p := &test.Params{Tekton: cs.Pipeline, Clock: clock, Kube: cs.Kube}
+	version := "v1alpha1"
+	tdc := testDynamic.Options{}
+	dynamic, err := tdc.Client(
+		cb.UnstructuredT(tasks[0], version),
+	)
+	if err != nil {
+		t.Errorf("unable to create dynamic client: %v", err)
+	}
+
+	cs, _ := test.SeedTestData(t, pipelinetest.Data{Tasks: tasks, Namespaces: namespaces})
+	cs.Pipeline.Resources = cb.APIResourceList(version, []string{"task", "taskrun"})
+	p := &test.Params{Tekton: cs.Pipeline, Kube: cs.Kube, Dynamic: dynamic, Clock: clock}
 	task := Command(p)
 	got, err := test.ExecuteCommand(task, "desc", "-o", "name", "-n", "ns", name)
 	if err != nil {
@@ -311,4 +374,180 @@ func TestTaskDescribe_custom_output(t *testing.T) {
 	if got != expected {
 		t.Errorf("Result should be '%s' != '%s'", got, expected)
 	}
+}
+
+func TestTaskV1beta1Describe_Full(t *testing.T) {
+	clock := clockwork.NewFakeClock()
+	tasks := []*v1beta1.Task{
+		{
+			ObjectMeta: metav1.ObjectMeta{
+				Namespace: "ns",
+				Name:      "task-1",
+			},
+			Spec: v1beta1.TaskSpec{
+				Description: "a test description",
+				Resources: &v1beta1.TaskResources{
+					Inputs: []v1beta1.TaskResource{
+						{
+							ResourceDeclaration: v1alpha1.ResourceDeclaration{
+								Name: "my-repo",
+								Type: v1alpha1.PipelineResourceTypeGit,
+							},
+						},
+						{
+							ResourceDeclaration: v1alpha1.ResourceDeclaration{
+								Name: "my-image",
+								Type: v1alpha1.PipelineResourceTypeImage,
+							},
+						},
+						{
+							ResourceDeclaration: v1alpha1.ResourceDeclaration{
+								Name: "source-repo",
+								Type: v1alpha1.PipelineResourceTypeGit,
+							},
+						},
+					},
+					Outputs: []v1beta1.TaskResource{
+						{
+							ResourceDeclaration: v1alpha1.ResourceDeclaration{
+								Name: "code-image",
+								Type: v1alpha1.PipelineResourceTypeImage,
+							},
+						},
+						{
+							ResourceDeclaration: v1alpha1.ResourceDeclaration{
+								Name: "artifact-image",
+								Type: v1alpha1.PipelineResourceTypeImage,
+							},
+						},
+					},
+				},
+				Params: []v1beta1.ParamSpec{
+					{
+						Name: "myarg",
+						Type: v1beta1.ParamTypeString,
+					},
+					{
+						Name: "myarray",
+						Type: v1beta1.ParamTypeArray,
+					},
+					{
+						Name: "print",
+						Type: v1beta1.ParamTypeString,
+						Default: &v1beta1.ArrayOrString{
+							Type:      v1beta1.ParamTypeString,
+							StringVal: "somethingdifferent",
+						},
+					},
+					{
+						Name: "output",
+						Type: v1beta1.ParamTypeArray,
+						Default: &v1beta1.ArrayOrString{
+							Type:     v1beta1.ParamTypeArray,
+							ArrayVal: []string{"booms", "booms", "booms"},
+						},
+					},
+				},
+				Steps: []v1beta1.Step{
+					{
+						Container: corev1.Container{
+							Name:  "hello",
+							Image: "busybox",
+						},
+					},
+					{
+						Container: corev1.Container{
+							Name:  "exit",
+							Image: "busybox",
+						},
+					},
+				},
+			},
+		},
+	}
+
+	taskRuns := []*v1beta1.TaskRun{
+		{
+			ObjectMeta: metav1.ObjectMeta{
+				Namespace: "ns",
+				Name:      "tr-1",
+				Labels:    map[string]string{"tekton.dev/task": "task-1"},
+			},
+			Spec: v1beta1.TaskRunSpec{
+				TaskRef: &v1beta1.TaskRef{
+					Name: "task-1",
+				},
+			},
+			Status: v1beta1.TaskRunStatus{
+				Status: duckv1beta1.Status{
+					Conditions: duckv1beta1.Conditions{
+						{
+							Status: corev1.ConditionFalse,
+							Reason: resources.ReasonFailed,
+						},
+					},
+				},
+				TaskRunStatusFields: v1beta1.TaskRunStatusFields{
+					StartTime:      &metav1.Time{Time: clock.Now()},
+					CompletionTime: &metav1.Time{Time: clock.Now().Add(5 * time.Minute)},
+				},
+			},
+		},
+		{
+			ObjectMeta: metav1.ObjectMeta{
+				Namespace: "ns",
+				Name:      "tr-2",
+				Labels:    map[string]string{"tekton.dev/task": "task-1"},
+			},
+			Spec: v1beta1.TaskRunSpec{
+				TaskRef: &v1beta1.TaskRef{
+					Name: "task-1",
+				},
+			},
+			Status: v1beta1.TaskRunStatus{
+				Status: duckv1beta1.Status{
+					Conditions: duckv1beta1.Conditions{
+						{
+							Status: corev1.ConditionTrue,
+							Reason: resources.ReasonSucceeded,
+						},
+					},
+				},
+				TaskRunStatusFields: v1beta1.TaskRunStatusFields{
+					StartTime:      &metav1.Time{Time: clock.Now().Add(10 * time.Minute)},
+					CompletionTime: &metav1.Time{Time: clock.Now().Add(17 * time.Minute)},
+				},
+			},
+		},
+	}
+
+	namespaces := []*corev1.Namespace{
+		{
+			ObjectMeta: metav1.ObjectMeta{
+				Name: "ns",
+			},
+		},
+	}
+
+	version := "v1beta1"
+	tdc := testDynamic.Options{}
+	dynamic, err := tdc.Client(
+		cb.UnstructuredV1beta1T(tasks[0], version),
+		cb.UnstructuredV1beta1TR(taskRuns[0], version),
+		cb.UnstructuredV1beta1TR(taskRuns[1], version),
+	)
+	if err != nil {
+		t.Errorf("unable to create dynamic client: %v", err)
+	}
+
+	cs, _ := test.SeedV1beta1TestData(t, pipelinev1beta1test.Data{Tasks: tasks, Namespaces: namespaces, TaskRuns: taskRuns})
+	cs.Pipeline.Resources = cb.APIResourceList(version, []string{"task", "taskrun"})
+	p := &test.Params{Tekton: cs.Pipeline, Kube: cs.Kube, Dynamic: dynamic, Clock: clock}
+	task := Command(p)
+	clock.Advance(20 * time.Minute)
+	out, err := test.ExecuteCommand(task, "desc", "task-1")
+	if err != nil {
+		t.Errorf("Unexpected error: %v", err)
+	}
+	golden.Assert(t, out, fmt.Sprintf("%s.golden", t.Name()))
 }
