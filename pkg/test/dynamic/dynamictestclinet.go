@@ -26,12 +26,18 @@ import (
 type Options struct {
 	WatchResource string
 	Watcher       watch.Interface
+	Resource      string
+	Verb          string
+	Action        k8stest.ReactionFunc
 }
 
 func (opt *Options) Client(objects ...runtime.Object) (dynamic.Interface, error) {
 	dynamicClient := fake.NewSimpleDynamicClient(runtime.NewScheme(), objects...)
 	if opt.Watcher != nil {
 		dynamicClient.PrependWatchReactor(opt.WatchResource, k8stest.DefaultWatchReactor(opt.Watcher, nil))
+	}
+	if opt.Action != nil {
+		dynamicClient.PrependReactor(opt.Verb, opt.Resource, opt.Action)
 	}
 	return clientset.New(clientset.WithClient(dynamicClient)), nil
 }
