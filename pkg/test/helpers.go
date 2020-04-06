@@ -18,6 +18,7 @@ import (
 	"testing"
 
 	"github.com/google/go-cmp/cmp"
+	pipelinev1beta1test "github.com/tektoncd/pipeline/test"
 	pipelinetest "github.com/tektoncd/pipeline/test/v1alpha1"
 	triggerstest "github.com/tektoncd/triggers/test"
 	rtesting "knative.dev/pkg/reconciler/testing"
@@ -26,6 +27,11 @@ import (
 func SeedTestData(t *testing.T, d pipelinetest.Data) (pipelinetest.Clients, pipelinetest.Informers) {
 	ctx, _ := rtesting.SetupFakeContext(t)
 	return pipelinetest.SeedTestData(t, ctx, d)
+}
+
+func SeedV1beta1TestData(t *testing.T, d pipelinev1beta1test.Data) (pipelinev1beta1test.Clients, pipelinev1beta1test.Informers) {
+	ctx, _ := rtesting.SetupFakeContext(t)
+	return pipelinev1beta1test.SeedTestData(t, ctx, d)
 }
 
 func SeedTestResources(t *testing.T, d triggerstest.Resources) triggerstest.Clients {

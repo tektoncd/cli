@@ -15,16 +15,18 @@
 package task
 
 import (
+	"context"
 	"fmt"
 	"os"
 
-	tget "github.com/tektoncd/cli/pkg/actions/get"
-	tlist "github.com/tektoncd/cli/pkg/actions/list"
+	"github.com/tektoncd/cli/pkg/actions"
 	"github.com/tektoncd/cli/pkg/cli"
+	"github.com/tektoncd/pipeline/pkg/apis/pipeline/v1alpha1"
 	"github.com/tektoncd/pipeline/pkg/apis/pipeline/v1beta1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/apimachinery/pkg/runtime/schema"
+	"k8s.io/client-go/discovery"
 )
 
 var taskGroupResource = schema.GroupVersionResource{Group: "tekton.dev", Resource: "tasks"}
@@ -48,7 +50,7 @@ func GetAllTaskNames(p cli.Params) ([]string, error) {
 }
 
 func List(c *cli.Clients, opts metav1.ListOptions, ns string) (*v1beta1.TaskList, error) {
-	unstructuredT, err := tlist.List(taskGroupResource, c, ns, opts)
+	unstructuredT, err := actions.List(taskGroupResource, c, ns, opts)
 	if err != nil {
 		return nil, err
 	}
@@ -65,18 +67,53 @@ func List(c *cli.Clients, opts metav1.ListOptions, ns string) (*v1beta1.TaskList
 	return tasks, nil
 }
 
-func Get(c *cli.Clients, taskname string, opts metav1.GetOptions, ns string) (*v1beta1.Task, error) {
-	unstructuredT, err := tget.Get(taskGroupResource, c, taskname, ns, opts)
+// It will fetch the resource based on the api available and return v1beta1 form
+func Get(c *cli.Clients, taskname string, opts metav1.GetOptions, ns string, discovery discovery.DiscoveryInterface) (*v1beta1.Task, error) {
+	gvr, err := actions.GetGroupVersionResource(schema.GroupVersionResource{Group: "tekton.dev", Resource: "tasks"}, discovery)
+	if err != nil {
+		return nil, err
+	}
+
+	if gvr.Version == "v1alpha1" {
+		task, err := getV1alpha1(c, taskname, opts, ns)
+		if err != nil {
+			return nil, err
+		}
+		var taskConverted v1beta1.Task
+		err = task.ConvertUp(context.Background(), &taskConverted)
+		if err != nil {
+			return nil, err
+		}
+		return &taskConverted, nil
+	}
+	return GetV1beta1(c, taskname, opts, ns)
+}
+
+// It will fetch the resource in v1beta1 struct format
+func GetV1beta1(c *cli.Clients, taskname string, opts metav1.GetOptions, ns string) (*v1beta1.Task, error) {
+	unstructuredT, err := actions.Get(taskGroupResource, c, taskname, ns, opts)
 	if err != nil {
 		return nil, err
 	}
 
 	var task *v1beta1.Task
 	if err := runtime.DefaultUnstructuredConverter.FromUnstructured(unstructuredT.UnstructuredContent(), &task); err != nil {
+		fmt.Fprintf(os.Stderr, "failed to get task from %s namespace \n", ns)
 		return nil, err
 	}
+	return task, nil
+}
+
+// It will fetch the resource in v1alpha1 struct format
+func getV1alpha1(c *cli.Clients, taskname string, opts metav1.GetOptions, ns string) (*v1alpha1.Task, error) {
+	unstructuredT, err := actions.Get(taskGroupResource, c, taskname, ns, opts)
 	if err != nil {
-		fmt.Fprintf(os.Stderr, "Failed to get task from %s namespace \n", ns)
+		return nil, err
+	}
+
+	var task *v1alpha1.Task
+	if err := runtime.DefaultUnstructuredConverter.FromUnstructured(unstructuredT.UnstructuredContent(), &task); err != nil {
+		fmt.Fprintf(os.Stderr, "failed to get task from %s namespace \n", ns)
 		return nil, err
 	}
 	return task, nil

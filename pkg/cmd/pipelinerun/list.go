@@ -24,7 +24,7 @@ import (
 	"github.com/spf13/cobra"
 	"github.com/tektoncd/cli/pkg/cli"
 	"github.com/tektoncd/cli/pkg/formatted"
-	praction "github.com/tektoncd/cli/pkg/pipelinerun"
+	"github.com/tektoncd/cli/pkg/pipelinerun"
 	prsort "github.com/tektoncd/cli/pkg/pipelinerun/sort"
 	"github.com/tektoncd/cli/pkg/printer"
 	"github.com/tektoncd/cli/pkg/validate"
@@ -178,7 +178,7 @@ func list(p cli.Params, pipeline string, limit int, labelselector string, allnam
 	if allnamespaces {
 		ns = ""
 	}
-	prs, err := praction.List(cs, options, ns)
+	prs, err := pipelinerun.List(cs, options, ns)
 	if err != nil {
 		return nil, err
 	}

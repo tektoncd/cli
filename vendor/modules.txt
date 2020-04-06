@@ -286,6 +286,16 @@ github.com/tektoncd/pipeline/pkg/client/injection/informers/pipeline/v1alpha1/ta
 github.com/tektoncd/pipeline/pkg/client/injection/informers/pipeline/v1alpha1/task/fake
 github.com/tektoncd/pipeline/pkg/client/injection/informers/pipeline/v1alpha1/taskrun
 github.com/tektoncd/pipeline/pkg/client/injection/informers/pipeline/v1alpha1/taskrun/fake
+github.com/tektoncd/pipeline/pkg/client/injection/informers/pipeline/v1beta1/clustertask
+github.com/tektoncd/pipeline/pkg/client/injection/informers/pipeline/v1beta1/clustertask/fake
+github.com/tektoncd/pipeline/pkg/client/injection/informers/pipeline/v1beta1/pipeline
+github.com/tektoncd/pipeline/pkg/client/injection/informers/pipeline/v1beta1/pipeline/fake
+github.com/tektoncd/pipeline/pkg/client/injection/informers/pipeline/v1beta1/pipelinerun
+github.com/tektoncd/pipeline/pkg/client/injection/informers/pipeline/v1beta1/pipelinerun/fake
+github.com/tektoncd/pipeline/pkg/client/injection/informers/pipeline/v1beta1/task
+github.com/tektoncd/pipeline/pkg/client/injection/informers/pipeline/v1beta1/task/fake
+github.com/tektoncd/pipeline/pkg/client/injection/informers/pipeline/v1beta1/taskrun
+github.com/tektoncd/pipeline/pkg/client/injection/informers/pipeline/v1beta1/taskrun/fake
 github.com/tektoncd/pipeline/pkg/client/listers/pipeline/v1alpha1
 github.com/tektoncd/pipeline/pkg/client/listers/pipeline/v1beta1
 github.com/tektoncd/pipeline/pkg/client/resource/clientset/versioned
@@ -313,6 +323,7 @@ github.com/tektoncd/pipeline/pkg/reconciler/taskrun/resources
 github.com/tektoncd/pipeline/pkg/substitution
 github.com/tektoncd/pipeline/pkg/system
 github.com/tektoncd/pipeline/pkg/workspace
+github.com/tektoncd/pipeline/test
 github.com/tektoncd/pipeline/test/builder
 github.com/tektoncd/pipeline/test/v1alpha1
 # github.com/tektoncd/plumbing v0.0.0-20200217163359-cd0db6e567d2

@@ -18,9 +18,7 @@ import (
 	"fmt"
 	"os"
 
-	prget "github.com/tektoncd/cli/pkg/actions/get"
-	praction "github.com/tektoncd/cli/pkg/actions/list"
-	prwatch "github.com/tektoncd/cli/pkg/actions/watch"
+	"github.com/tektoncd/cli/pkg/actions"
 	"github.com/tektoncd/cli/pkg/cli"
 	"github.com/tektoncd/cli/pkg/formatted"
 	prsort "github.com/tektoncd/cli/pkg/pipelinerun/sort"
@@ -82,7 +80,7 @@ func GetAllPipelineRuns(p cli.Params, opts metav1.ListOptions, limit int) ([]str
 }
 
 func List(c *cli.Clients, opts metav1.ListOptions, ns string) (*v1beta1.PipelineRunList, error) {
-	unstructuredPR, err := praction.List(prGroupResource, c, ns, opts)
+	unstructuredPR, err := actions.List(prGroupResource, c, ns, opts)
 	if err != nil {
 		return nil, err
 	}
@@ -100,7 +98,7 @@ func List(c *cli.Clients, opts metav1.ListOptions, ns string) (*v1beta1.Pipeline
 }
 
 func Get(c *cli.Clients, prname string, opts metav1.GetOptions, ns string) (*v1beta1.PipelineRun, error) {
-	unstructuredPR, err := prget.Get(prGroupResource, c, prname, ns, opts)
+	unstructuredPR, err := actions.Get(prGroupResource, c, prname, ns, opts)
 	if err != nil {
 		return nil, err
 	}
@@ -117,7 +115,7 @@ func Get(c *cli.Clients, prname string, opts metav1.GetOptions, ns string) (*v1b
 }
 
 func Watch(c *cli.Clients, opts metav1.ListOptions, ns string) (watch.Interface, error) {
-	watch, err := prwatch.Watch(prGroupResource, c, ns, opts)
+	watch, err := actions.Watch(prGroupResource, c, ns, opts)
 	if err != nil {
 		return nil, err
 	}

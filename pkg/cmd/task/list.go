@@ -20,7 +20,7 @@ import (
 	"text/tabwriter"
 
 	"github.com/spf13/cobra"
-	taction "github.com/tektoncd/cli/pkg/actions/list"
+	"github.com/tektoncd/cli/pkg/actions"
 	"github.com/tektoncd/cli/pkg/cli"
 	"github.com/tektoncd/cli/pkg/formatted"
 	validate "github.com/tektoncd/cli/pkg/validate"
@@ -61,7 +61,7 @@ func listCommand(p cli.Params) *cobra.Command {
 
 			if output != "" {
 				taskGroupResource := schema.GroupVersionResource{Group: "tekton.dev", Resource: "tasks"}
-				return taction.PrintObject(taskGroupResource, cmd.OutOrStdout(), p, f, p.Namespace())
+				return actions.PrintObjects(taskGroupResource, cmd.OutOrStdout(), p, f, p.Namespace())
 			}
 			stream := &cli.Stream{
 				Out: cmd.OutOrStdout(),
@@ -81,7 +81,7 @@ func printTaskDetails(s *cli.Stream, p cli.Params) error {
 		return err
 	}
 
-	unstructuredTask, err := taction.List(schema.GroupVersionResource{Group: "tekton.dev", Resource: "tasks"}, cs, p.Namespace(), metav1.ListOptions{})
+	unstructuredTask, err := actions.List(schema.GroupVersionResource{Group: "tekton.dev", Resource: "tasks"}, cs, p.Namespace(), metav1.ListOptions{})
 	if err != nil {
 		return err
 	}

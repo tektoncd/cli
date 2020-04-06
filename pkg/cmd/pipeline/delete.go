@@ -18,7 +18,7 @@ import (
 	"fmt"
 
 	"github.com/spf13/cobra"
-	paction "github.com/tektoncd/cli/pkg/actions/delete"
+	"github.com/tektoncd/cli/pkg/actions"
 	"github.com/tektoncd/cli/pkg/cli"
 	"github.com/tektoncd/cli/pkg/deleter"
 	"github.com/tektoncd/cli/pkg/options"
@@ -88,7 +88,7 @@ func deletePipelines(opts *options.DeleteOptions, s *cli.Stream, p cli.Params, p
 		return fmt.Errorf("failed to create tekton client")
 	}
 	d := deleter.New("Pipeline", func(pipelineName string) error {
-		return paction.Delete(pipelineGroupResource, cs, pipelineName, p.Namespace(), &metav1.DeleteOptions{})
+		return actions.Delete(pipelineGroupResource, cs, pipelineName, p.Namespace(), &metav1.DeleteOptions{})
 	})
 	switch {
 	case opts.DeleteAllNs:
@@ -99,7 +99,7 @@ func deletePipelines(opts *options.DeleteOptions, s *cli.Stream, p cli.Params, p
 		d.Delete(s, pNames)
 	case opts.DeleteRelated:
 		d.WithRelated("PipelineRun", pipelineRunLister(cs, p.Namespace()), func(pipelineRunName string) error {
-			return paction.Delete(pipelinerunGroupResource, cs, pipelineRunName, p.Namespace(), &metav1.DeleteOptions{})
+			return actions.Delete(pipelinerunGroupResource, cs, pipelineRunName, p.Namespace(), &metav1.DeleteOptions{})
 		})
 		deletedPipelineNames := d.Delete(s, pNames)
 		d.DeleteRelated(s, deletedPipelineNames)

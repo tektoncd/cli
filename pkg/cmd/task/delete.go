@@ -18,7 +18,7 @@ import (
 	"fmt"
 
 	"github.com/spf13/cobra"
-	taction "github.com/tektoncd/cli/pkg/actions/delete"
+	"github.com/tektoncd/cli/pkg/actions"
 	"github.com/tektoncd/cli/pkg/cli"
 	"github.com/tektoncd/cli/pkg/deleter"
 	"github.com/tektoncd/cli/pkg/options"
@@ -88,7 +88,7 @@ func deleteTask(opts *options.DeleteOptions, s *cli.Stream, p cli.Params, taskNa
 		return fmt.Errorf("failed to create tekton client")
 	}
 	d := deleter.New("Task", func(taskName string) error {
-		return taction.Delete(taskGroupResource, cs, taskName, p.Namespace(), &metav1.DeleteOptions{})
+		return actions.Delete(taskGroupResource, cs, taskName, p.Namespace(), &metav1.DeleteOptions{})
 	})
 	switch {
 	case opts.DeleteAllNs:
@@ -99,7 +99,7 @@ func deleteTask(opts *options.DeleteOptions, s *cli.Stream, p cli.Params, taskNa
 		d.Delete(s, taskNames)
 	case opts.DeleteRelated:
 		d.WithRelated("TaskRun", taskRunLister(cs, p.Namespace()), func(taskRunName string) error {
-			return taction.Delete(taskrunGroupResource, cs, taskRunName, p.Namespace(), &metav1.DeleteOptions{})
+			return actions.Delete(taskrunGroupResource, cs, taskRunName, p.Namespace(), &metav1.DeleteOptions{})
 		})
 		deletedTaskNames := d.Delete(s, taskNames)
 		d.DeleteRelated(s, deletedTaskNames)

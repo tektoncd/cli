@@ -16,7 +16,6 @@ package task
 
 import (
 	"fmt"
-	"io"
 	"os"
 	"sort"
 	"text/tabwriter"
@@ -24,11 +23,13 @@ import (
 
 	"github.com/jonboulle/clockwork"
 	"github.com/spf13/cobra"
+	"github.com/tektoncd/cli/pkg/actions"
 	"github.com/tektoncd/cli/pkg/cli"
 	"github.com/tektoncd/cli/pkg/formatted"
-	"github.com/tektoncd/cli/pkg/printer"
-	validate "github.com/tektoncd/cli/pkg/validate"
-	"github.com/tektoncd/pipeline/pkg/apis/pipeline/v1alpha1"
+	"github.com/tektoncd/cli/pkg/task"
+	"github.com/tektoncd/cli/pkg/taskrun/list"
+	"github.com/tektoncd/cli/pkg/validate"
+	"github.com/tektoncd/pipeline/pkg/apis/pipeline/v1beta1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime/schema"
 	cliopts "k8s.io/cli-runtime/pkg/genericclioptions"
@@ -42,14 +43,14 @@ const describeTemplate = `{{decorate "bold" "Name"}}:	{{ .Task.Name }}
 
 {{decorate "inputresources" ""}}{{decorate "underline bold" "Input Resources\n"}}
 
-{{- if not .Task.Spec.Inputs }}
+{{- if not .Task.Spec.Resources }}
  No input resources
 {{- else }}
-{{- if eq (len .Task.Spec.Inputs.Resources) 0 }}
+{{- if eq (len .Task.Spec.Resources.Inputs) 0 }}
  No input resources
 {{- else }}
  NAME	TYPE
-{{- range $ir := .Task.Spec.Inputs.Resources }}
+{{- range $ir := .Task.Spec.Resources.Inputs }}
  {{decorate "bullet" $ir.Name }}	{{ $ir.Type }}
 {{- end }}
 {{- end }}
@@ -57,15 +58,15 @@ const describeTemplate = `{{decorate "bold" "Name"}}:	{{ .Task.Name }}
 
 {{decorate "outputresources" ""}}{{decorate "underline bold" "Output Resources\n"}}
 
-{{- if not .Task.Spec.Outputs }}
+{{- if not .Task.Spec.Resources }}
  No output resources
 {{- else }}
-{{- if eq (len .Task.Spec.Outputs.Resources) 0 }}
+{{- if eq (len .Task.Spec.Resources.Outputs) 0 }}
  No output resources
 {{- else }}
  NAME	  TYPE
  
-{{- range $or := .Task.Spec.Outputs.Resources }}
+{{- range $or := .Task.Spec.Resources.Outputs }}
  {{decorate "bullet" $or.Name }}	{{ $or.Type }}
 {{- end }}
 {{- end }}
@@ -73,14 +74,11 @@ const describeTemplate = `{{decorate "bold" "Name"}}:	{{ .Task.Name }}
 
 {{decorate "params" ""}}{{decorate "underline bold" "Params\n"}}
 
-{{- if not .Task.Spec.Inputs }}
+{{- if eq (len .Task.Spec.Params) 0 }}
  No params
 {{- else }}
-{{- if eq (len .Task.Spec.Inputs.Params) 0 }}
-No params
-{{- else }}
  NAME	TYPE	DEFAULT VALUE
-{{- range $p := .Task.Spec.Inputs.Params }}
+{{- range $p := .Task.Spec.Params }}
 {{- if not $p.Default }}
  {{decorate "bullet" $p.Name }}	{{ $p.Type }}	{{ "---" }}
 {{- else }}
@@ -88,7 +86,6 @@ No params
  {{decorate "bullet" $p.Name }}	{{ $p.Type }}	{{ $p.Default.StringVal }}
 {{- else }}
  {{decorate "bullet" $p.Name }}	{{ $p.Type }}	{{ $p.Default.ArrayVal }}
-{{- end }}
 {{- end }}
 {{- end }}
 {{- end }}
@@ -154,7 +151,8 @@ or
 			}
 
 			if output != "" {
-				return describeTaskOutput(cmd.OutOrStdout(), p, f, args[0])
+				taskGroupResource := schema.GroupVersionResource{Group: "tekton.dev", Resource: "tasks"}
+				return actions.PrintObject(taskGroupResource, args[0], cmd.OutOrStdout(), p, f, p.Namespace())
 			}
 
 			return printTaskDescription(s, p, args[0])
@@ -166,62 +164,35 @@ or
 	return c
 }
 
-func describeTaskOutput(w io.Writer, p cli.Params, f *cliopts.PrintFlags, name string) error {
-	cs, err := p.Clients()
-	if err != nil {
-		return err
-	}
-
-	c := cs.Tekton.TektonV1alpha1().Tasks(p.Namespace())
-
-	task, err := c.Get(name, metav1.GetOptions{})
-	if err != nil {
-		return err
-	}
-
-	// NOTE: this is required for -o json|yaml to work properly since
-	// tektoncd go client fails to set these; probably a bug
-	task.GetObjectKind().SetGroupVersionKind(
-		schema.GroupVersionKind{
-			Version: "tekton.dev/v1alpha1",
-			Kind:    "Task",
-		})
-
-	return printer.PrintObject(w, task, f)
-}
-
 func printTaskDescription(s *cli.Stream, p cli.Params, tname string) error {
 	cs, err := p.Clients()
 	if err != nil {
 		return fmt.Errorf("failed to create tekton client")
 	}
 
-	task, err := cs.Tekton.TektonV1alpha1().Tasks(p.Namespace()).Get(tname, metav1.GetOptions{})
+	task, err := task.Get(cs, tname, metav1.GetOptions{}, p.Namespace(), cs.Tekton.Discovery())
 	if err != nil {
 		fmt.Fprintf(s.Err, "failed to get task %s\n", tname)
 		return err
 	}
 
-	if task.Spec.Inputs != nil {
-		task.Spec.Inputs.Resources = sortResourcesByTypeAndName(task.Spec.Inputs.Resources)
-	}
-
-	if task.Spec.Outputs != nil {
-		task.Spec.Outputs.Resources = sortResourcesByTypeAndName(task.Spec.Outputs.Resources)
+	if task.Spec.Resources != nil {
+		task.Spec.Resources.Inputs = sortResourcesByTypeAndName(task.Spec.Resources.Inputs)
+		task.Spec.Resources.Outputs = sortResourcesByTypeAndName(task.Spec.Resources.Outputs)
 	}
 
 	opts := metav1.ListOptions{
 		LabelSelector: fmt.Sprintf("tekton.dev/task=%s", tname),
 	}
-	taskRuns, err := cs.Tekton.TektonV1alpha1().TaskRuns(p.Namespace()).List(opts)
+	taskRuns, err := list.TaskRuns(cs, opts, p.Namespace())
 	if err != nil {
 		fmt.Fprintf(s.Err, "failed to get taskruns for task %s \n", tname)
 		return err
 	}
 
 	var data = struct {
-		Task     *v1alpha1.Task
-		TaskRuns *v1alpha1.TaskRunList
+		Task     *v1beta1.Task
+		TaskRuns *v1beta1.TaskRunList
 		Time     clockwork.Clock
 	}{
 		Task:     task,
@@ -248,7 +219,7 @@ func printTaskDescription(s *cli.Stream, p cli.Params, tname string) error {
 }
 
 // this will sort the Task Resource by Type and then by Name
-func sortResourcesByTypeAndName(tres []v1alpha1.TaskResource) []v1alpha1.TaskResource {
+func sortResourcesByTypeAndName(tres []v1beta1.TaskResource) []v1beta1.TaskResource {
 	sort.Slice(tres, func(i, j int) bool {
 		if tres[j].Type < tres[i].Type {
 			return false

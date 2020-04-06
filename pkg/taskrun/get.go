@@ -18,7 +18,7 @@ import (
 	"fmt"
 	"os"
 
-	trget "github.com/tektoncd/cli/pkg/actions/get"
+	"github.com/tektoncd/cli/pkg/actions"
 	"github.com/tektoncd/cli/pkg/cli"
 	"github.com/tektoncd/pipeline/pkg/apis/pipeline/v1beta1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
@@ -28,7 +28,7 @@ import (
 
 func Get(c *cli.Clients, trname string, opts metav1.GetOptions, ns string) (*v1beta1.TaskRun, error) {
 	trGroupResource := schema.GroupVersionResource{Group: "tekton.dev", Resource: "taskruns"}
-	unstructuredTR, err := trget.Get(trGroupResource, c, trname, ns, opts)
+	unstructuredTR, err := actions.Get(trGroupResource, c, trname, ns, opts)
 	if err != nil {
 		return nil, err
 	}
