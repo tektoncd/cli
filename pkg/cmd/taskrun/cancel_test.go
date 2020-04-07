@@ -112,7 +112,7 @@ func TestTaskRunCancel(t *testing.T) {
 
 	cs2, _ := test.SeedTestData(t, pipelinetest.Data{TaskRuns: trs2, Namespaces: ns})
 	cs2.Pipeline.Resources = cb.APIResourceList(versionA1, []string{"task", "taskrun"})
-	tdc2 := testDynamic.Options{Verb: "update", Resource: "taskruns", Action: func(action k8stest.Action) (bool, runtime.Object, error) {
+	tdc2 := testDynamic.Options{Verb: "patch", Resource: "taskruns", Action: func(action k8stest.Action) (bool, runtime.Object, error) {
 		return true, nil, errors.New("test error")
 	}}
 	dc2, err := tdc2.Client(
@@ -131,10 +131,6 @@ func TestTaskRunCancel(t *testing.T) {
 	if err != nil {
 		t.Errorf("unable to create dynamic clinet: %v", err)
 	}
-
-	cs2.Pipeline.PrependReactor("update", "taskruns", func(action k8stest.Action) (bool, runtime.Object, error) {
-		return true, nil, errors.New("test error")
-	})
 
 	seeds = append(seeds, clients{pipelineClient: cs, dynamicClient: dc})
 	failures = append(failures, clients{pipelineClient: cs2, dynamicClient: dc2})
@@ -298,7 +294,7 @@ func TestTaskRunCancel_v1beta1(t *testing.T) {
 
 	cs2, _ := test.SeedTestData(t, pipelinetest.Data{TaskRuns: trs2, Namespaces: ns})
 	cs2.Pipeline.Resources = cb.APIResourceList(versionB1, []string{"task", "taskrun"})
-	tdc2 := testDynamic.Options{Verb: "update", Resource: "taskruns", Action: func(action k8stest.Action) (bool, runtime.Object, error) {
+	tdc2 := testDynamic.Options{Verb: "patch", Resource: "taskruns", Action: func(action k8stest.Action) (bool, runtime.Object, error) {
 		return true, nil, errors.New("test error")
 	}}
 	dc2, err := tdc2.Client(
@@ -317,10 +313,6 @@ func TestTaskRunCancel_v1beta1(t *testing.T) {
 	if err != nil {
 		t.Errorf("unable to create dynamic clinet: %v", err)
 	}
-
-	cs2.Pipeline.PrependReactor("update", "taskruns", func(action k8stest.Action) (bool, runtime.Object, error) {
-		return true, nil, errors.New("test error")
-	})
 
 	seeds = append(seeds, clients{pipelineClient: cs, dynamicClient: dc})
 	failures = append(failures, clients{pipelineClient: cs2, dynamicClient: dc2})
