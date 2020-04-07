@@ -15,28 +15,32 @@
 package taskrun
 
 import (
-	"fmt"
-	"os"
+	"encoding/json"
 
 	"github.com/tektoncd/cli/pkg/actions"
 	"github.com/tektoncd/cli/pkg/cli"
 	"github.com/tektoncd/pipeline/pkg/apis/pipeline/v1beta1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
-	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
 	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/apimachinery/pkg/runtime/schema"
 )
 
-func Update(c *cli.Clients, trobj *v1beta1.TaskRun, opts metav1.UpdateOptions, ns string) (*v1beta1.TaskRun, error) {
+type patchStringValue struct {
+	Op    string `json:"op"`
+	Path  string `json:"path"`
+	Value string `json:"value"`
+}
+
+func Patch(c *cli.Clients, trname string, opts metav1.PatchOptions, ns string) (*v1beta1.TaskRun, error) {
+	payload := []patchStringValue{{
+		Op:    "replace",
+		Path:  "/spec/status",
+		Value: v1beta1.TaskRunSpecStatusCancelled,
+	}}
+
+	data, _ := json.Marshal(payload)
 	trGroupResource := schema.GroupVersionResource{Group: "tekton.dev", Resource: "taskruns"}
-	unsMapTRObj, err := runtime.DefaultUnstructuredConverter.ToUnstructured(trobj)
-	if err != nil {
-		return nil, err
-	}
-	unsTRObj := &unstructured.Unstructured{
-		Object: unsMapTRObj,
-	}
-	unstructuredTR, err := actions.Update(trGroupResource, c, unsTRObj, opts, ns)
+	unstructuredTR, err := actions.Patch(trGroupResource, c, trname, data, opts, ns)
 	if err != nil {
 		return nil, err
 	}
@@ -45,9 +49,6 @@ func Update(c *cli.Clients, trobj *v1beta1.TaskRun, opts metav1.UpdateOptions, n
 	if err := runtime.DefaultUnstructuredConverter.FromUnstructured(unstructuredTR.UnstructuredContent(), &taskrun); err != nil {
 		return nil, err
 	}
-	if err != nil {
-		fmt.Fprintf(os.Stderr, "Failed to get taskrun from %s namespace \n", ns)
-		return nil, err
-	}
+
 	return taskrun, nil
 }

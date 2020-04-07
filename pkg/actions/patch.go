@@ -19,18 +19,18 @@ import (
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
 	"k8s.io/apimachinery/pkg/runtime/schema"
+	"k8s.io/apimachinery/pkg/types"
 )
 
-func Update(gr schema.GroupVersionResource, clients *cli.Clients, obj *unstructured.Unstructured, opts metav1.UpdateOptions, ns string) (*unstructured.Unstructured, error) {
+func Patch(gr schema.GroupVersionResource, clients *cli.Clients, objName string, data []byte, opt metav1.PatchOptions, ns string) (*unstructured.Unstructured, error) {
 	gvr, err := GetGroupVersionResource(gr, clients.Tekton.Discovery())
 	if err != nil {
 		return nil, err
 	}
-
-	updatedObj, err := clients.Dynamic.Resource(*gvr).Namespace(ns).Update(obj, opts)
+	patchedObj, err := clients.Dynamic.Resource(*gvr).Namespace(ns).Patch(objName, types.JSONPatchType, data, opt)
 	if err != nil {
 		return nil, err
 	}
 
-	return updatedObj, nil
+	return patchedObj, nil
 }

@@ -20,9 +20,8 @@ import (
 	"github.com/spf13/cobra"
 	"github.com/tektoncd/cli/pkg/cli"
 	"github.com/tektoncd/cli/pkg/formatted"
-	traction "github.com/tektoncd/cli/pkg/taskrun"
+	"github.com/tektoncd/cli/pkg/taskrun"
 	"github.com/tektoncd/cli/pkg/validate"
-	"github.com/tektoncd/pipeline/pkg/apis/pipeline/v1beta1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 )
 
@@ -71,7 +70,7 @@ func cancelTaskRun(p cli.Params, s *cli.Stream, trName string) error {
 		return fmt.Errorf("failed to create tekton client")
 	}
 
-	tr, err := traction.Get(cs, trName, metav1.GetOptions{}, p.Namespace())
+	tr, err := taskrun.Get(cs, trName, metav1.GetOptions{}, p.Namespace())
 	if err != nil {
 		return fmt.Errorf("failed to find taskrun: %s", trName)
 	}
@@ -81,8 +80,7 @@ func cancelTaskRun(p cli.Params, s *cli.Stream, trName string) error {
 		return fmt.Errorf("failed to cancel taskrun %s: taskrun has already finished execution", trName)
 	}
 
-	tr.Spec.Status = v1beta1.TaskRunSpecStatusCancelled
-	if _, err := traction.Update(cs, tr, metav1.UpdateOptions{}, p.Namespace()); err != nil {
+	if _, err := taskrun.Patch(cs, trName, metav1.PatchOptions{}, p.Namespace()); err != nil {
 		return fmt.Errorf("failed to cancel taskrun %q: %s", trName, err)
 	}
 

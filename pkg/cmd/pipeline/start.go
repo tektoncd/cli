@@ -753,7 +753,7 @@ func (opt *startOptions) getInputWorkspaces(pipeline *v1alpha1.Pipeline) error {
 			if err != nil {
 				return err
 			}
-			workspace = workspace + items
+			workspace += items
 		case "secret":
 			secret, err := askParam("Name of the secret :", opt.askOpts)
 			if err != nil {
@@ -764,7 +764,7 @@ func (opt *startOptions) getInputWorkspaces(pipeline *v1alpha1.Pipeline) error {
 			if err != nil {
 				return err
 			}
-			workspace = workspace + items
+			workspace += items
 		}
 		opt.Workspaces = append(opt.Workspaces, workspace)
 
