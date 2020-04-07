@@ -38,7 +38,7 @@ func Get(c *cli.Clients, trname string, opts metav1.GetOptions, ns string) (*v1b
 		return nil, err
 	}
 	if err != nil {
-		fmt.Fprintf(os.Stderr, "Failed to get taskrun from %s namespace \n", ns)
+		fmt.Fprintf(os.Stderr, "failed to get taskrun from %s namespace \n", ns)
 		return nil, err
 	}
 	return taskrun, nil
