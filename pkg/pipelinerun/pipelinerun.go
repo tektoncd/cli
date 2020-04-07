@@ -15,6 +15,7 @@
 package pipelinerun
 
 import (
+	"encoding/json"
 	"fmt"
 	"os"
 
@@ -120,4 +121,32 @@ func Watch(c *cli.Clients, opts metav1.ListOptions, ns string) (watch.Interface,
 		return nil, err
 	}
 	return watch, nil
+}
+
+type patchStringValue struct {
+	Op    string `json:"op"`
+	Path  string `json:"path"`
+	Value string `json:"value"`
+}
+
+func Patch(c *cli.Clients, prname string, opts metav1.PatchOptions, ns string) (*v1beta1.PipelineRun, error) {
+	payload := []patchStringValue{{
+		Op:    "replace",
+		Path:  "/spec/status",
+		Value: v1beta1.PipelineRunSpecStatusCancelled,
+	}}
+
+	data, _ := json.Marshal(payload)
+	prGroupResource := schema.GroupVersionResource{Group: "tekton.dev", Resource: "pipelineruns"}
+	unstructuredPR, err := actions.Patch(prGroupResource, c, prname, data, opts, ns)
+	if err != nil {
+		return nil, err
+	}
+
+	var pipelinerun *v1beta1.PipelineRun
+	if err := runtime.DefaultUnstructuredConverter.FromUnstructured(unstructuredPR.UnstructuredContent(), &pipelinerun); err != nil {
+		return nil, err
+	}
+
+	return pipelinerun, nil
 }

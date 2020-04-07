@@ -20,8 +20,8 @@ import (
 	"github.com/spf13/cobra"
 	"github.com/tektoncd/cli/pkg/cli"
 	"github.com/tektoncd/cli/pkg/formatted"
-	validate "github.com/tektoncd/cli/pkg/validate"
-	"github.com/tektoncd/pipeline/pkg/apis/pipeline/v1alpha1"
+	"github.com/tektoncd/cli/pkg/pipelinerun"
+	"github.com/tektoncd/cli/pkg/validate"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 )
 
@@ -72,7 +72,7 @@ func cancelPipelineRun(p cli.Params, s *cli.Stream, prName string) error {
 		return fmt.Errorf("failed to create tekton client")
 	}
 
-	pr, err := cs.Tekton.TektonV1alpha1().PipelineRuns(p.Namespace()).Get(prName, metav1.GetOptions{})
+	pr, err := pipelinerun.Get(cs, prName, metav1.GetOptions{}, p.Namespace())
 	if err != nil {
 		return fmt.Errorf("failed to find pipelinerun: %s", prName)
 	}
@@ -82,10 +82,9 @@ func cancelPipelineRun(p cli.Params, s *cli.Stream, prName string) error {
 		return fmt.Errorf("failed to cancel pipelinerun %s: pipelinerun has already finished execution", prName)
 	}
 
-	pr.Spec.Status = v1alpha1.PipelineRunSpecStatusCancelled
-	_, err = cs.Tekton.TektonV1alpha1().PipelineRuns(p.Namespace()).Update(pr)
-	if err != nil {
+	if _, err = pipelinerun.Patch(cs, prName, metav1.PatchOptions{}, p.Namespace()); err != nil {
 		return fmt.Errorf("failed to cancel pipelinerun: %s, err: %s", prName, err.Error())
+
 	}
 
 	fmt.Fprintf(s.Out, "Pipelinerun cancelled: %s\n", pr.Name)
