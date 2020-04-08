@@ -153,7 +153,7 @@ like cat,foo,bar
 	c.Flags().StringVarP(&opt.PrefixName, "prefix-name", "", "", "specify a prefix for the pipelinerun name (must be lowercase alphanumeric characters)")
 	c.Flags().StringVarP(&opt.TimeOut, "timeout", "", "1h", "timeout for pipelinerun")
 	c.Flags().StringVarP(&opt.Filename, "filename", "f", "", "local or remote file name containing a pipeline definition to start a pipelinerun")
-	c.Flags().BoolVarP(&opt.UseParamDefaults, "use-param-defaults", "", false, "use deafult parameter values without prompting for input")
+	c.Flags().BoolVarP(&opt.UseParamDefaults, "use-param-defaults", "", false, "use default parameter values without prompting for input")
 
 	_ = c.MarkZshCompPositionalArgumentCustom(1, "__tkn_get_pipeline")
 
@@ -325,13 +325,56 @@ func (opt *startOptions) getInput(pipeline *v1alpha1.Pipeline) error {
 	}
 
 	params.FilterParamsByType(pipeline.Spec.Params)
-	if len(opt.Params) == 0 && !opt.Last && opt.UsePipelineRun == "" {
+
+	if len(opt.Params) == 0 && !opt.Last && opt.UsePipelineRun == "" && !opt.UseParamDefaults {
 		if err = opt.getInputParams(pipeline); err != nil {
 			return err
 		}
 	}
 
+	if opt.UseParamDefaults && !opt.Last && opt.UsePipelineRun == "" {
+		if err = opt.includeDefaultParams(pipeline); err != nil {
+			return err
+		}
+	}
+
 	return nil
+}
+
+// Include the default
+func (opt *startOptions) includeDefaultParams(pipeline *v1alpha1.Pipeline) error {
+
+	//Creating a slice of string to contain the param.Name already included opt.Params through -p or --param option
+	var optParamNames = make([]string, 0)
+	for _, optParam := range opt.Params {
+		optParamNames = append(optParamNames, strings.Split(optParam, "=")[0])
+	}
+
+	for _, param := range pipeline.Spec.Params {
+
+		if contains(optParamNames, param.Name) {
+			continue
+		}
+		if param.Default != nil {
+			if param.Type == "string" {
+				opt.Params = append(opt.Params, param.Name+"="+param.Default.StringVal)
+				continue
+			} else {
+				opt.Params = append(opt.Params, param.Name+"="+strings.Join(param.Default.ArrayVal, ","))
+				continue
+			}
+		}
+	}
+	return nil
+}
+
+func contains(elements []string, str string) bool {
+	for _, element := range elements {
+		if str == element {
+			return true
+		}
+	}
+	return false
 }
 
 func (opt *startOptions) getInputResources(resources resourceOptionsFilter, pipeline *v1alpha1.Pipeline) error {
@@ -389,15 +432,6 @@ func (opt *startOptions) getInputParams(pipeline *v1alpha1.Pipeline) error {
 		ques = fmt.Sprintf("Value for param `%s` of type `%s`?", param.Name, param.Type)
 		input := &survey.Input{}
 		if param.Default != nil {
-			if opt.UseParamDefaults == true {
-				if param.Type == "string" {
-					opt.Params = append(opt.Params, param.Name+"="+param.Default.StringVal)
-					continue
-				} else {
-					opt.Params = append(opt.Params, param.Name+"="+strings.Join(param.Default.ArrayVal, ","))
-					continue
-				}
-			}
 			if param.Type == "string" {
 				defaultValue = param.Default.StringVal
 			} else {

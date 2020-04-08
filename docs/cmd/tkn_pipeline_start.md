@@ -46,13 +46,13 @@ my-secret and my-empty-dir)
   -L, --last                          re-run the pipeline using last pipelinerun values
       --output string                 format of pipelinerun dry-run (yaml or json)
   -p, --param stringArray             pass the param as key=value or key=value1,value2
-      --params-use-defaults           allow using deafult parameter values without prompting for input
       --prefix-name string            specify a prefix for the pipelinerun name (must be lowercase alphanumeric characters)
   -r, --resource strings              pass the resource name and ref as name=ref
   -s, --serviceaccount string         pass the serviceaccount name
       --showlog                       show logs right after starting the pipeline
       --task-serviceaccount strings   pass the service account corresponding to the task
       --timeout string                timeout for pipelinerun (default "1h")
+      --use-param-defaults            use default parameter values without prompting for input
       --use-pipelinerun string        use this pipelinerun values to re-run the pipeline. 
   -w, --workspace stringArray         pass the workspace.
 ```
