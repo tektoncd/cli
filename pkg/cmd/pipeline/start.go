@@ -73,7 +73,7 @@ type startOptions struct {
 	TimeOut            string
 	Filename           string
 	Workspaces         []string
-	ParamUseDefaults   bool
+	UseParamDefaults   bool
 }
 
 type resourceOptionsFilter struct {
@@ -153,7 +153,7 @@ like cat,foo,bar
 	c.Flags().StringVarP(&opt.PrefixName, "prefix-name", "", "", "specify a prefix for the pipelinerun name (must be lowercase alphanumeric characters)")
 	c.Flags().StringVarP(&opt.TimeOut, "timeout", "", "1h", "timeout for pipelinerun")
 	c.Flags().StringVarP(&opt.Filename, "filename", "f", "", "local or remote file name containing a pipeline definition to start a pipelinerun")
-	c.Flags().BoolVarP(&opt.ParamUseDefaults, "params-use-defaults", "", false, "allow using deafult parameter values without prompting for input")
+	c.Flags().BoolVarP(&opt.UseParamDefaults, "use-param-defaults", "", false, "use deafult parameter values without prompting for input")
 
 	_ = c.MarkZshCompPositionalArgumentCustom(1, "__tkn_get_pipeline")
 
@@ -389,7 +389,7 @@ func (opt *startOptions) getInputParams(pipeline *v1alpha1.Pipeline) error {
 		ques = fmt.Sprintf("Value for param `%s` of type `%s`?", param.Name, param.Type)
 		input := &survey.Input{}
 		if param.Default != nil {
-			if opt.ParamUseDefaults == true {
+			if opt.UseParamDefaults == true {
 				if param.Type == "string" {
 					opt.Params = append(opt.Params, param.Name+"="+param.Default.StringVal)
 					continue
