@@ -28,6 +28,7 @@ import (
 	"github.com/tektoncd/cli/pkg/formatted"
 	"github.com/tektoncd/cli/pkg/task"
 	"github.com/tektoncd/cli/pkg/taskrun/list"
+	trsort "github.com/tektoncd/cli/pkg/taskrun/sort"
 	"github.com/tektoncd/cli/pkg/validate"
 	"github.com/tektoncd/pipeline/pkg/apis/pipeline/v1beta1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
@@ -189,6 +190,7 @@ func printTaskDescription(s *cli.Stream, p cli.Params, tname string) error {
 		fmt.Fprintf(s.Err, "failed to get taskruns for task %s \n", tname)
 		return err
 	}
+	trsort.SortByStartTime(taskRuns.Items)
 
 	var data = struct {
 		Task     *v1beta1.Task
