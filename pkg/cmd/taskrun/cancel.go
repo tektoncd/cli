@@ -70,7 +70,7 @@ func cancelTaskRun(p cli.Params, s *cli.Stream, trName string) error {
 		return fmt.Errorf("failed to create tekton client")
 	}
 
-	tr, err := taskrun.Get(cs, trName, metav1.GetOptions{}, p.Namespace())
+	tr, err := taskrun.GetV1beta1(cs, trName, metav1.GetOptions{}, p.Namespace())
 	if err != nil {
 		return fmt.Errorf("failed to find taskrun: %s", trName)
 	}

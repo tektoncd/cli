@@ -18,13 +18,13 @@ import (
 	"testing"
 	"time"
 
-	"github.com/tektoncd/pipeline/pkg/apis/pipeline/v1alpha1"
+	"github.com/tektoncd/pipeline/pkg/apis/pipeline/v1beta1"
 	corev1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 )
 
 func Test_SortStepStatesByStartTime_Waiting_Not_Nil(t *testing.T) {
-	stepStates := []v1alpha1.StepState{
+	stepStates := []v1beta1.StepState{
 		{
 			Name: "step1",
 			ContainerState: corev1.ContainerState{
@@ -57,7 +57,7 @@ func Test_SortStepStatesByStartTime_Waiting_Not_Nil(t *testing.T) {
 }
 
 func Test_SortStepStatesByStartTime_Step1_Running(t *testing.T) {
-	stepStates := []v1alpha1.StepState{
+	stepStates := []v1beta1.StepState{
 		{
 			Name: "step1",
 			ContainerState: corev1.ContainerState{
@@ -90,7 +90,7 @@ func Test_SortStepStatesByStartTime_Step1_Running(t *testing.T) {
 }
 
 func Test_SortStepStatesByStartTime_Step2_Running(t *testing.T) {
-	stepStates := []v1alpha1.StepState{
+	stepStates := []v1beta1.StepState{
 		{
 			Name: "step1",
 			ContainerState: corev1.ContainerState{
@@ -123,7 +123,7 @@ func Test_SortStepStatesByStartTime_Step2_Running(t *testing.T) {
 }
 
 func Test_SortStepStatesByStartTime_Both_Steps_Running(t *testing.T) {
-	stepStates := []v1alpha1.StepState{
+	stepStates := []v1beta1.StepState{
 		{
 			Name: "step1",
 			ContainerState: corev1.ContainerState{
@@ -156,7 +156,7 @@ func Test_SortStepStatesByStartTime_Both_Steps_Running(t *testing.T) {
 }
 
 func Test_SortStepStatesByStartTime_Steps_Terminated_And_Running(t *testing.T) {
-	stepStates := []v1alpha1.StepState{
+	stepStates := []v1beta1.StepState{
 		{
 			Name: "step1",
 			ContainerState: corev1.ContainerState{

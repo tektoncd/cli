@@ -18,7 +18,6 @@ import (
 	"fmt"
 
 	"github.com/tektoncd/cli/pkg/formatted"
-	"github.com/tektoncd/pipeline/pkg/apis/pipeline/v1alpha1"
 	"github.com/tektoncd/pipeline/pkg/apis/pipeline/v1beta1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	k8s "k8s.io/client-go/kubernetes"
@@ -51,7 +50,7 @@ func NamespaceExists(p params) error {
 }
 
 // Check if TaskRef exists on a TaskRunSpec. Returns empty string if not present.
-func TaskRefExists(spec v1alpha1.TaskRunSpec) string {
+func TaskRefExists(spec v1beta1.TaskRunSpec) string {
 
 	if spec.TaskRef == nil {
 		return fieldNotPresent
@@ -81,7 +80,7 @@ func PipelineResourceRefExists(res v1beta1.PipelineResourceBinding) string {
 }
 
 // Check if TaskResourceRef exists on a TaskResourceBinding. Returns empty string if not present.
-func TaskResourceRefExists(res v1alpha1.TaskResourceBinding) string {
+func TaskResourceRefExists(res v1beta1.TaskResourceBinding) string {
 
 	if res.ResourceRef == nil {
 		return fieldNotPresent
@@ -91,7 +90,7 @@ func TaskResourceRefExists(res v1alpha1.TaskResourceBinding) string {
 }
 
 // Check if step is in waiting, running, or terminated state by checking StepState of the step.
-func StepReasonExists(state v1alpha1.StepState) string {
+func StepReasonExists(state v1beta1.StepState) string {
 
 	if state.Waiting == nil {
 
@@ -110,7 +109,7 @@ func StepReasonExists(state v1alpha1.StepState) string {
 }
 
 // Check if sidecar is in waiting, running, or terminated state by checking SidecarState of the sidecar.
-func SidecarReasonExists(state v1alpha1.SidecarState) string {
+func SidecarReasonExists(state v1beta1.SidecarState) string {
 
 	if state.Waiting == nil {
 

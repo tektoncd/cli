@@ -20,10 +20,12 @@ import (
 	"text/tabwriter"
 	"text/template"
 
+	"github.com/jonboulle/clockwork"
 	"github.com/tektoncd/cli/pkg/cli"
 	"github.com/tektoncd/cli/pkg/formatted"
+	"github.com/tektoncd/cli/pkg/taskrun"
 	"github.com/tektoncd/cli/pkg/validate"
-	"github.com/tektoncd/pipeline/pkg/apis/pipeline/v1alpha1"
+	"github.com/tektoncd/pipeline/pkg/apis/pipeline/v1beta1"
 	corev1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 )
@@ -52,7 +54,7 @@ const templ = `{{decorate "bold" "Name"}}:	{{ .TaskRun.Name }}
 {{decorate "status" ""}}{{decorate "underline bold" "Status"}}
 
 STARTED 	DURATION 	STATUS
-{{ formatAge .TaskRun.Status.StartTime  .Params.Time }}	{{ formatDuration .TaskRun.Status.StartTime .TaskRun.Status.CompletionTime }}	{{ formatCondition .TaskRun.Status.Conditions }}
+{{ formatAge .TaskRun.Status.StartTime  .Time }}	{{ formatDuration .TaskRun.Status.StartTime .TaskRun.Status.CompletionTime }}	{{ formatCondition .TaskRun.Status.Conditions }}
 {{- $msg := hasFailed .TaskRun -}}
 {{-  if ne $msg "" }}
 
@@ -63,18 +65,18 @@ STARTED 	DURATION 	STATUS
 
 {{decorate "inputresources" ""}}{{decorate "underline bold" "Input Resources\n"}}
 
-{{- if not .TaskRun.Spec.Inputs }}
+{{- if not .TaskRun.Spec.Resources }}
  No input resources
 {{- else }}
-{{- $l := len .TaskRun.Spec.Inputs.Resources }}{{ if eq $l 0 }}
-No resources
+{{- $l := len .TaskRun.Spec.Resources.Inputs }}{{ if eq $l 0 }}
+ No input resources
 {{- else }}
  NAME	RESOURCE REF
-{{- range $i, $r := .TaskRun.Spec.Inputs.Resources }}
-{{- $rRefName := taskResourceRefExists $r }}{{- if ne $rRefName "" }}
- {{decorate "bullet" $r.Name }}	{{ $r.ResourceRef.Name }}
+{{- range $ir := .TaskRun.Spec.Resources.Inputs }}
+{{- $rRefName := taskResourceRefExists $ir }}{{- if ne $rRefName "" }}
+ {{decorate "bullet" $ir.Name }}	{{ $ir.ResourceRef.Name }}
 {{- else }}
- {{decorate "bullet" $r.Name }}	{{ "" }}
+ {{decorate "bullet" $ir.Name }}	{{ "" }}
 {{- end }}
 {{- end }}
 {{- end }}
@@ -82,18 +84,18 @@ No resources
 
 {{decorate "outputresources" ""}}{{decorate "underline bold" "Output Resources\n"}}
 
-{{- if not .TaskRun.Spec.Outputs }}
+{{- if not .TaskRun.Spec.Resources }}
  No output resources
 {{- else }}
-{{- $l := len .TaskRun.Spec.Outputs.Resources }}{{ if eq $l 0 }}
-No resources
+{{- $l := len .TaskRun.Spec.Resources.Outputs }}{{ if eq $l 0 }}
+ No output resources
 {{- else }}
  NAME	RESOURCE REF
-{{- range $i, $r := .TaskRun.Spec.Outputs.Resources }}
-{{- $rRefName := taskResourceRefExists $r }}{{- if ne $rRefName "" }}
- {{decorate "bullet" $r.Name }}	{{ $r.ResourceRef.Name }}
+{{- range $or := .TaskRun.Spec.Resources.Outputs }}
+{{- $rRefName := taskResourceRefExists $or }}{{- if ne $rRefName "" }}
+ {{decorate "bullet" $or.Name }}	{{ $or.ResourceRef.Name }}
 {{- else }}
- {{decorate "bullet" $r.Name }}	{{ "" }}
+ {{decorate "bullet" $or.Name }}	{{ "" }}
 {{- end }}
 {{- end }}
 {{- end }}
@@ -101,19 +103,15 @@ No resources
 
 {{decorate "params" ""}}{{decorate "underline bold" "Params\n"}}
 
-{{- if not .TaskRun.Spec.Inputs }}
+{{- $l := len .TaskRun.Spec.Params }}{{ if eq $l 0 }}
  No params
 {{- else }}
-{{- $l := len .TaskRun.Spec.Inputs.Params }}{{ if eq $l 0 }}
-No params
-{{- else }}
  NAME	VALUE
-{{- range $i, $p := .TaskRun.Spec.Inputs.Params }}
+{{- range $i, $p := .TaskRun.Spec.Params }}
 {{- if eq $p.Value.Type "string" }}
  {{decorate "bullet" $p.Name }}	{{ $p.Value.StringVal }}
 {{- else }}
  {{decorate "bullet" $p.Name }}	{{ $p.Value.ArrayVal }}
-{{- end }}
 {{- end }}
 {{- end }}
 {{- end }}
@@ -143,7 +141,7 @@ No sidecars
 {{- end }}
 `
 
-func sortStepStatesByStartTime(steps []v1alpha1.StepState) []v1alpha1.StepState {
+func sortStepStatesByStartTime(steps []v1beta1.StepState) []v1beta1.StepState {
 	sort.Slice(steps, func(i, j int) bool {
 		if steps[j].Waiting != nil && steps[i].Waiting != nil {
 			return false
@@ -191,17 +189,18 @@ func PrintTaskRunDescription(s *cli.Stream, trName string, p cli.Params) error {
 		return fmt.Errorf("failed to create tekton client: %v", err)
 	}
 
-	tr, err := cs.Tekton.TektonV1alpha1().TaskRuns(p.Namespace()).Get(trName, metav1.GetOptions{})
+	tr, err := taskrun.Get(cs, trName, metav1.GetOptions{}, p.Namespace())
 	if err != nil {
-		return fmt.Errorf("failed to find taskrun %q", trName)
+		fmt.Fprintf(s.Err, "failed to get taskrun %s\n", trName)
+		return err
 	}
 
 	var data = struct {
-		TaskRun *v1alpha1.TaskRun
-		Params  cli.Params
+		TaskRun *v1beta1.TaskRun
+		Time    clockwork.Clock
 	}{
 		TaskRun: tr,
-		Params:  p,
+		Time:    p.Time(),
 	}
 
 	funcMap := template.FuncMap{
@@ -229,7 +228,7 @@ func PrintTaskRunDescription(s *cli.Stream, trName string, p cli.Params) error {
 	return w.Flush()
 }
 
-func hasFailed(tr *v1alpha1.TaskRun) string {
+func hasFailed(tr *v1beta1.TaskRun) string {
 	if len(tr.Status.Conditions) == 0 {
 		return ""
 	}
@@ -241,7 +240,7 @@ func hasFailed(tr *v1alpha1.TaskRun) string {
 	return ""
 }
 
-func getTimeoutValue(tr *v1alpha1.TaskRun) string {
+func getTimeoutValue(tr *v1beta1.TaskRun) string {
 	if tr.Spec.Timeout != nil {
 		return tr.Spec.Timeout.Duration.String()
 	}

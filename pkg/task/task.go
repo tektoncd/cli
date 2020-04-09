@@ -68,7 +68,7 @@ func List(c *cli.Clients, opts metav1.ListOptions, ns string) (*v1beta1.TaskList
 
 // It will fetch the resource based on the api available and return v1beta1 form
 func Get(c *cli.Clients, taskname string, opts metav1.GetOptions, ns string) (*v1beta1.Task, error) {
-	gvr, err := actions.GetGroupVersionResource(schema.GroupVersionResource{Group: "tekton.dev", Resource: "tasks"}, c.Tekton.Discovery())
+	gvr, err := actions.GetGroupVersionResource(taskGroupResource, c.Tekton.Discovery())
 	if err != nil {
 		return nil, err
 	}
