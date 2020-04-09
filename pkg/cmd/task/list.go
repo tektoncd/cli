@@ -23,10 +23,9 @@ import (
 	"github.com/tektoncd/cli/pkg/actions"
 	"github.com/tektoncd/cli/pkg/cli"
 	"github.com/tektoncd/cli/pkg/formatted"
-	validate "github.com/tektoncd/cli/pkg/validate"
-	"github.com/tektoncd/pipeline/pkg/apis/pipeline/v1beta1"
+	"github.com/tektoncd/cli/pkg/task"
+	"github.com/tektoncd/cli/pkg/validate"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
-	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/apimachinery/pkg/runtime/schema"
 	cliopts "k8s.io/cli-runtime/pkg/genericclioptions"
 )
@@ -81,14 +80,7 @@ func printTaskDetails(s *cli.Stream, p cli.Params) error {
 		return err
 	}
 
-	unstructuredTask, err := actions.List(schema.GroupVersionResource{Group: "tekton.dev", Resource: "tasks"}, cs, p.Namespace(), metav1.ListOptions{})
-	if err != nil {
-		return err
-	}
-	var tasks v1beta1.TaskList
-	if err := runtime.DefaultUnstructuredConverter.FromUnstructured(unstructuredTask.UnstructuredContent(), &tasks); err != nil {
-		return err
-	}
+	tasks, err := task.List(cs, metav1.ListOptions{}, p.Namespace())
 	if err != nil {
 		fmt.Fprintf(os.Stderr, "Failed to list tasks from %s namespace \n", p.Namespace())
 		return err
