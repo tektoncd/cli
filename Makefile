@@ -51,8 +51,11 @@ check: lint test
 test: test-unit ## run all tests
 
 .PHONY: lint
-lint: lint-yaml ## run linter(s)
-	@echo "Linting..."
+test: lint-go lint-yaml ## run all linters
+
+.PHONY: lint-go
+lint: ## runs go linter on all go files
+	@echo "Linting go files..."
 	@golangci-lint run ./... --modules-download-mode=vendor \
 							--max-issues-per-linter=0 \
 							--max-same-issues=0 \
@@ -60,6 +63,7 @@ lint: lint-yaml ## run linter(s)
 
 .PHONY: lint-yaml
 lint-yaml: ${YAML_FILES} ## runs yamllint on all yaml files
+	@echo "Linting yaml files..."
 	@yamllint -c .yamllint $(YAML_FILES)
 
 .PHONY: test-unit
@@ -67,9 +71,9 @@ test-unit: ./vendor ## run unit tests
 	@echo "Running unit tests..."
 	@go test -failfast -v -cover ./...
 
-.PHONY: test-unit-update-golden
-test-unit-update-golden: ./vendor ## run unit tests (updating golden files)
-	@echo "Running unit tests updating golden files..."
+.PHONY: update-golden
+update-golden: ./vendor ## run unit tests (updating golden files)
+	@echo "Running unit tests to update golden files..."
 	@./hack/update-golden.sh
 
 .PHONY: test-e2e
@@ -79,13 +83,13 @@ test-e2e: bin/tkn ## run e2e tests
 
 .PHONY: docs
 docs: bin/docs ## update docs
-	@echo "Update generated docs"
+	@echo "Generating docs"
 	@./bin/docs --target=./docs/cmd
 	@./bin/docs --target=./docs/man/man1 --kind=man
 	@rm -f ./bin/docs
 
 .PHONY: generated
-generated: test-unit-update-golden docs fmt ## generate all files that needs to be generated
+generated: update-golden docs fmt ## generate all files that needs to be generated
 
 .PHONY: clean
 clean: ## clean build artifacts
