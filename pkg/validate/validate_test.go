@@ -19,9 +19,8 @@ import (
 	"time"
 
 	"github.com/tektoncd/cli/pkg/test"
-	"github.com/tektoncd/pipeline/pkg/apis/pipeline/v1alpha1"
 	"github.com/tektoncd/pipeline/pkg/apis/pipeline/v1beta1"
-	pipelinetest "github.com/tektoncd/pipeline/test/v1alpha1"
+	pipelinev1beta1test "github.com/tektoncd/pipeline/test"
 	corev1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 )
@@ -34,7 +33,7 @@ func TestNamespaceExists_Invalid_Namespace(t *testing.T) {
 			},
 		},
 	}
-	cs, _ := test.SeedTestData(t, pipelinetest.Data{Namespaces: ns})
+	cs, _ := test.SeedV1beta1TestData(t, pipelinev1beta1test.Data{Namespaces: ns})
 	p := &test.Params{Kube: cs.Kube}
 	p.SetNamespace("foo")
 
@@ -50,7 +49,7 @@ func TestNamespaceExists_Valid_Namespace(t *testing.T) {
 			},
 		},
 	}
-	cs, _ := test.SeedTestData(t, pipelinetest.Data{Namespaces: ns})
+	cs, _ := test.SeedV1beta1TestData(t, pipelinev1beta1test.Data{Namespaces: ns})
 	p := &test.Params{Kube: cs.Kube}
 
 	err := NamespaceExists(p)
@@ -58,8 +57,8 @@ func TestNamespaceExists_Valid_Namespace(t *testing.T) {
 }
 
 func TestTaskRefExists_Present(t *testing.T) {
-	spec := v1alpha1.TaskRunSpec{
-		TaskRef: &v1alpha1.TaskRef{
+	spec := v1beta1.TaskRunSpec{
+		TaskRef: &v1beta1.TaskRef{
 			Name: "Task",
 		},
 	}
@@ -69,7 +68,7 @@ func TestTaskRefExists_Present(t *testing.T) {
 }
 
 func TestTaskRefExists_Not_Present(t *testing.T) {
-	spec := v1alpha1.TaskRunSpec{
+	spec := v1beta1.TaskRunSpec{
 		TaskRef: nil,
 	}
 
@@ -118,9 +117,9 @@ func TestPipelineResourceRefExists_Not_Present(t *testing.T) {
 }
 
 func TestTaskResourceRefExists_Present(t *testing.T) {
-	res := v1alpha1.TaskResourceBinding{
-		PipelineResourceBinding: v1alpha1.PipelineResourceBinding{
-			ResourceRef: &v1alpha1.PipelineResourceRef{
+	res := v1beta1.TaskResourceBinding{
+		PipelineResourceBinding: v1beta1.PipelineResourceBinding{
+			ResourceRef: &v1beta1.PipelineResourceRef{
 				Name: "Resource",
 			},
 		},
@@ -131,8 +130,8 @@ func TestTaskResourceRefExists_Present(t *testing.T) {
 }
 
 func TestTaskResourceRefExists_Not_Present(t *testing.T) {
-	res := v1alpha1.TaskResourceBinding{
-		PipelineResourceBinding: v1alpha1.PipelineResourceBinding{
+	res := v1beta1.TaskResourceBinding{
+		PipelineResourceBinding: v1beta1.PipelineResourceBinding{
 			ResourceRef: nil,
 		},
 	}
@@ -142,14 +141,14 @@ func TestTaskResourceRefExists_Not_Present(t *testing.T) {
 }
 
 func TestStepReasonExists_Terminated_Not_Present(t *testing.T) {
-	state := v1alpha1.StepState{}
+	state := v1beta1.StepState{}
 
 	output := StepReasonExists(state)
 	test.AssertOutput(t, "---", output)
 }
 
 func TestStepReasonExists_Terminated_Present(t *testing.T) {
-	state := v1alpha1.StepState{
+	state := v1beta1.StepState{
 		ContainerState: corev1.ContainerState{
 			Terminated: &corev1.ContainerStateTerminated{
 				Reason: "Completed",
@@ -162,7 +161,7 @@ func TestStepReasonExists_Terminated_Present(t *testing.T) {
 }
 
 func TestStepReasonExists_Running_Present(t *testing.T) {
-	state := v1alpha1.StepState{
+	state := v1beta1.StepState{
 		ContainerState: corev1.ContainerState{
 			Running: &corev1.ContainerStateRunning{
 				StartedAt: metav1.Time{
@@ -177,7 +176,7 @@ func TestStepReasonExists_Running_Present(t *testing.T) {
 }
 
 func TestStepReasonExists_Waiting_Present(t *testing.T) {
-	state := v1alpha1.StepState{
+	state := v1beta1.StepState{
 		ContainerState: corev1.ContainerState{
 			Waiting: &corev1.ContainerStateWaiting{
 				Reason: "PodInitializing",
@@ -190,14 +189,14 @@ func TestStepReasonExists_Waiting_Present(t *testing.T) {
 }
 
 func TestSidecarReasonExists_Terminated_Not_Present(t *testing.T) {
-	state := v1alpha1.SidecarState{}
+	state := v1beta1.SidecarState{}
 
 	output := SidecarReasonExists(state)
 	test.AssertOutput(t, "---", output)
 }
 
 func TestSidecarReasonExists_Terminated_Present(t *testing.T) {
-	state := v1alpha1.SidecarState{
+	state := v1beta1.SidecarState{
 		ContainerState: corev1.ContainerState{
 			Terminated: &corev1.ContainerStateTerminated{
 				Reason: "Completed",
@@ -210,7 +209,7 @@ func TestSidecarReasonExists_Terminated_Present(t *testing.T) {
 }
 
 func TestSidecarReasonExists_Running_Present(t *testing.T) {
-	state := v1alpha1.SidecarState{
+	state := v1beta1.SidecarState{
 		ContainerState: corev1.ContainerState{
 			Running: &corev1.ContainerStateRunning{
 				StartedAt: metav1.Time{
@@ -225,7 +224,7 @@ func TestSidecarReasonExists_Running_Present(t *testing.T) {
 }
 
 func TestSidecarReasonExists_Waiting_Present(t *testing.T) {
-	state := v1alpha1.SidecarState{
+	state := v1beta1.SidecarState{
 		ContainerState: corev1.ContainerState{
 			Waiting: &corev1.ContainerStateWaiting{
 				Reason: "PodInitializing",

@@ -23,6 +23,7 @@ import (
 	"github.com/jonboulle/clockwork"
 	"github.com/tektoncd/cli/pkg/test"
 	cb "github.com/tektoncd/cli/pkg/test/builder"
+	testDynamic "github.com/tektoncd/cli/pkg/test/dynamic"
 	"github.com/tektoncd/pipeline/pkg/apis/pipeline/v1alpha1"
 	"github.com/tektoncd/pipeline/pkg/reconciler/pipelinerun/resources"
 	tb "github.com/tektoncd/pipeline/test/builder"
@@ -71,14 +72,21 @@ func TestTaskRunDescribe_not_found(t *testing.T) {
 			},
 		},
 	})
-	p := &test.Params{Tekton: cs.Pipeline, Kube: cs.Kube}
+
+	cs.Pipeline.Resources = cb.APIResourceList("v1alpha1", []string{"taskrun"})
+	tdc := testDynamic.Options{}
+	dynamic, err := tdc.Client()
+	if err != nil {
+		fmt.Println(err)
+	}
+	p := &test.Params{Tekton: cs.Pipeline, Kube: cs.Kube, Dynamic: dynamic}
 
 	taskrun := Command(p)
-	_, err := test.ExecuteCommand(taskrun, "desc", "bar", "-n", "ns")
+	_, err = test.ExecuteCommand(taskrun, "desc", "bar", "-n", "ns")
 	if err == nil {
 		t.Errorf("Expected error but did not get one")
 	}
-	expected := "failed to find taskrun \"bar\""
+	expected := "taskruns.tekton.dev \"bar\" not found"
 	test.AssertOutput(t, expected, err.Error())
 }
 
@@ -109,8 +117,19 @@ func TestTaskRunDescribe_empty_taskrun(t *testing.T) {
 		},
 	})
 
-	p := &test.Params{Tekton: cs.Pipeline, Clock: clock, Kube: cs.Kube}
-
+	version := "v1alpha1"
+	tdc := testDynamic.Options{}
+	dynamic, err := tdc.Client(
+		cb.UnstructuredTR(trs[0], version),
+	)
+	if err != nil {
+		t.Errorf("unable to create dynamic client: %v", err)
+	}
+	cs.Pipeline.Resources = cb.APIResourceList(version, []string{"taskrun"})
+	if err != nil {
+		fmt.Println(err)
+	}
+	p := &test.Params{Tekton: cs.Pipeline, Kube: cs.Kube, Dynamic: dynamic, Clock: clock}
 	taskrun := Command(p)
 	clock.Advance(10 * time.Minute)
 	actual, err := test.ExecuteCommand(taskrun, "desc", "tr-1", "-n", "ns")
@@ -163,7 +182,19 @@ func TestTaskRunDescribe_only_taskrun(t *testing.T) {
 		},
 	})
 
-	p := &test.Params{Tekton: cs.Pipeline, Clock: clock, Kube: cs.Kube}
+	version := "v1alpha1"
+	tdc := testDynamic.Options{}
+	dynamic, err := tdc.Client(
+		cb.UnstructuredTR(trs[0], version),
+	)
+	if err != nil {
+		t.Errorf("unable to create dynamic client: %v", err)
+	}
+	cs.Pipeline.Resources = cb.APIResourceList(version, []string{"taskrun"})
+	if err != nil {
+		fmt.Println(err)
+	}
+	p := &test.Params{Tekton: cs.Pipeline, Kube: cs.Kube, Dynamic: dynamic, Clock: clock}
 
 	taskrun := Command(p)
 	clock.Advance(10 * time.Minute)
@@ -205,7 +236,19 @@ func TestTaskRunDescribe_failed(t *testing.T) {
 		},
 	})
 
-	p := &test.Params{Tekton: cs.Pipeline, Clock: clock, Kube: cs.Kube}
+	version := "v1alpha1"
+	tdc := testDynamic.Options{}
+	dynamic, err := tdc.Client(
+		cb.UnstructuredTR(trs[0], version),
+	)
+	if err != nil {
+		t.Errorf("unable to create dynamic client: %v", err)
+	}
+	cs.Pipeline.Resources = cb.APIResourceList(version, []string{"taskrun"})
+	if err != nil {
+		fmt.Println(err)
+	}
+	p := &test.Params{Tekton: cs.Pipeline, Kube: cs.Kube, Dynamic: dynamic, Clock: clock}
 
 	taskrun := Command(p)
 	clock.Advance(10 * time.Minute)
@@ -244,7 +287,19 @@ func TestTaskRunDescribe_no_taskref(t *testing.T) {
 		},
 	})
 
-	p := &test.Params{Tekton: cs.Pipeline, Clock: clock, Kube: cs.Kube}
+	version := "v1alpha1"
+	tdc := testDynamic.Options{}
+	dynamic, err := tdc.Client(
+		cb.UnstructuredTR(trs[0], version),
+	)
+	if err != nil {
+		t.Errorf("unable to create dynamic client: %v", err)
+	}
+	cs.Pipeline.Resources = cb.APIResourceList(version, []string{"taskrun"})
+	if err != nil {
+		fmt.Println(err)
+	}
+	p := &test.Params{Tekton: cs.Pipeline, Kube: cs.Kube, Dynamic: dynamic, Clock: clock}
 
 	taskrun := Command(p)
 	clock.Advance(10 * time.Minute)
@@ -298,7 +353,19 @@ func TestTaskRunDescribe_no_resourceref(t *testing.T) {
 		},
 	})
 
-	p := &test.Params{Tekton: cs.Pipeline, Clock: clock, Kube: cs.Kube}
+	version := "v1alpha1"
+	tdc := testDynamic.Options{}
+	dynamic, err := tdc.Client(
+		cb.UnstructuredTR(trs[0], version),
+	)
+	if err != nil {
+		t.Errorf("unable to create dynamic client: %v", err)
+	}
+	cs.Pipeline.Resources = cb.APIResourceList(version, []string{"taskrun"})
+	if err != nil {
+		fmt.Println(err)
+	}
+	p := &test.Params{Tekton: cs.Pipeline, Kube: cs.Kube, Dynamic: dynamic, Clock: clock}
 
 	taskrun := Command(p)
 	clock.Advance(10 * time.Minute)
@@ -358,7 +425,19 @@ func TestTaskRunDescribe_step_sidecar_status_defaults_and_failures(t *testing.T)
 		},
 	})
 
-	p := &test.Params{Tekton: cs.Pipeline, Clock: clock, Kube: cs.Kube}
+	version := "v1alpha1"
+	tdc := testDynamic.Options{}
+	dynamic, err := tdc.Client(
+		cb.UnstructuredTR(trs[0], version),
+	)
+	if err != nil {
+		t.Errorf("unable to create dynamic client: %v", err)
+	}
+	cs.Pipeline.Resources = cb.APIResourceList(version, []string{"taskrun"})
+	if err != nil {
+		fmt.Println(err)
+	}
+	p := &test.Params{Tekton: cs.Pipeline, Kube: cs.Kube, Dynamic: dynamic, Clock: clock}
 
 	taskrun := Command(p)
 	clock.Advance(10 * time.Minute)
@@ -417,7 +496,19 @@ func TestTaskRunDescribe_step_status_pending_one_sidecar(t *testing.T) {
 		},
 	})
 
-	p := &test.Params{Tekton: cs.Pipeline, Clock: clock, Kube: cs.Kube}
+	version := "v1alpha1"
+	tdc := testDynamic.Options{}
+	dynamic, err := tdc.Client(
+		cb.UnstructuredTR(trs[0], version),
+	)
+	if err != nil {
+		t.Errorf("unable to create dynamic client: %v", err)
+	}
+	cs.Pipeline.Resources = cb.APIResourceList(version, []string{"taskrun"})
+	if err != nil {
+		fmt.Println(err)
+	}
+	p := &test.Params{Tekton: cs.Pipeline, Kube: cs.Kube, Dynamic: dynamic, Clock: clock}
 
 	taskrun := Command(p)
 	clock.Advance(10 * time.Minute)
@@ -480,7 +571,19 @@ func TestTaskRunDescribe_step_status_running_multiple_sidecars(t *testing.T) {
 		},
 	})
 
-	p := &test.Params{Tekton: cs.Pipeline, Clock: clock, Kube: cs.Kube}
+	version := "v1alpha1"
+	tdc := testDynamic.Options{}
+	dynamic, err := tdc.Client(
+		cb.UnstructuredTR(trs[0], version),
+	)
+	if err != nil {
+		t.Errorf("unable to create dynamic client: %v", err)
+	}
+	cs.Pipeline.Resources = cb.APIResourceList(version, []string{"taskrun"})
+	if err != nil {
+		fmt.Println(err)
+	}
+	p := &test.Params{Tekton: cs.Pipeline, Kube: cs.Kube, Dynamic: dynamic, Clock: clock}
 
 	taskrun := Command(p)
 	clock.Advance(10 * time.Minute)
@@ -519,7 +622,19 @@ func TestTaskRunDescribe_cancel_taskrun(t *testing.T) {
 		},
 	})
 
-	p := &test.Params{Tekton: cs.Pipeline, Clock: clock, Kube: cs.Kube}
+	version := "v1alpha1"
+	tdc := testDynamic.Options{}
+	dynamic, err := tdc.Client(
+		cb.UnstructuredTR(trs[0], version),
+	)
+	if err != nil {
+		t.Errorf("unable to create dynamic client: %v", err)
+	}
+	cs.Pipeline.Resources = cb.APIResourceList(version, []string{"taskrun"})
+	if err != nil {
+		fmt.Println(err)
+	}
+	p := &test.Params{Tekton: cs.Pipeline, Kube: cs.Kube, Dynamic: dynamic, Clock: clock}
 
 	taskrun := Command(p)
 	clock.Advance(10 * time.Minute)
@@ -530,7 +645,7 @@ func TestTaskRunDescribe_cancel_taskrun(t *testing.T) {
 	golden.Assert(t, actual, fmt.Sprintf("%s.golden", t.Name()))
 }
 
-func TestPipelineRunsDescribe_custom_output(t *testing.T) {
+func TestTaskRunDescribe_custom_output(t *testing.T) {
 	name := "task-run"
 	expected := "taskrun.tekton.dev/" + name
 
@@ -551,10 +666,22 @@ func TestPipelineRunsDescribe_custom_output(t *testing.T) {
 		},
 	})
 
-	p := &test.Params{Tekton: cs.Pipeline, Clock: clock, Kube: cs.Kube}
-	pipelinerun := Command(p)
+	version := "v1alpha1"
+	tdc := testDynamic.Options{}
+	dynamic, err := tdc.Client(
+		cb.UnstructuredTR(trs[0], version),
+	)
+	if err != nil {
+		t.Errorf("unable to create dynamic client: %v", err)
+	}
+	cs.Pipeline.Resources = cb.APIResourceList(version, []string{"taskrun"})
+	if err != nil {
+		fmt.Println(err)
+	}
+	p := &test.Params{Tekton: cs.Pipeline, Kube: cs.Kube, Dynamic: dynamic, Clock: clock}
+	taskrun := Command(p)
 
-	got, err := test.ExecuteCommand(pipelinerun, "desc", "-o", "name", "-n", "ns", name)
+	got, err := test.ExecuteCommand(taskrun, "desc", "-o", "name", "-n", "ns", name)
 	if err != nil {
 		t.Errorf("Unexpected error: %v", err)
 	}
@@ -565,7 +692,7 @@ func TestPipelineRunsDescribe_custom_output(t *testing.T) {
 	}
 }
 
-func TestTaskRunDescribe_custom_timeout(t *testing.T) {
+func TestTaskRunWithSpecDescribe_custom_timeout(t *testing.T) {
 	trs := []*v1alpha1.TaskRun{
 		tb.TaskRun("tr-custom-timeout", "ns",
 			tb.TaskRunSpec(tb.TaskRunTimeout(time.Minute)),
@@ -583,7 +710,19 @@ func TestTaskRunDescribe_custom_timeout(t *testing.T) {
 		},
 	})
 
-	p := &test.Params{Tekton: cs.Pipeline, Kube: cs.Kube}
+	version := "v1alpha1"
+	tdc := testDynamic.Options{}
+	dynamic, err := tdc.Client(
+		cb.UnstructuredTR(trs[0], version),
+	)
+	if err != nil {
+		t.Errorf("unable to create dynamic client: %v", err)
+	}
+	cs.Pipeline.Resources = cb.APIResourceList(version, []string{"taskrun"})
+	if err != nil {
+		fmt.Println(err)
+	}
+	p := &test.Params{Tekton: cs.Pipeline, Kube: cs.Kube, Dynamic: dynamic}
 
 	taskrun := Command(p)
 	actual, err := test.ExecuteCommand(taskrun, "desc", "tr-custom-timeout", "-n", "ns")

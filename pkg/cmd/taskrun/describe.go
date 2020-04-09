@@ -16,15 +16,13 @@ package taskrun
 
 import (
 	"fmt"
-	"io"
 	"os"
 
 	"github.com/spf13/cobra"
+	"github.com/tektoncd/cli/pkg/actions"
 	"github.com/tektoncd/cli/pkg/cli"
-	"github.com/tektoncd/cli/pkg/printer"
 	trdesc "github.com/tektoncd/cli/pkg/taskrun/description"
-	validate "github.com/tektoncd/cli/pkg/validate"
-	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+	"github.com/tektoncd/cli/pkg/validate"
 	"k8s.io/apimachinery/pkg/runtime/schema"
 	cliopts "k8s.io/cli-runtime/pkg/genericclioptions"
 )
@@ -66,7 +64,8 @@ or
 			}
 
 			if output != "" {
-				return describeTaskRunOutput(cmd.OutOrStdout(), p, f, args[0])
+				taskRunGroupResource := schema.GroupVersionResource{Group: "tekton.dev", Resource: "taskruns"}
+				return actions.PrintObject(taskRunGroupResource, args[0], cmd.OutOrStdout(), p, f, p.Namespace())
 			}
 
 			return trdesc.PrintTaskRunDescription(s, args[0], p)
@@ -77,28 +76,4 @@ or
 	f.AddFlags(c)
 
 	return c
-}
-
-func describeTaskRunOutput(w io.Writer, p cli.Params, f *cliopts.PrintFlags, name string) error {
-	cs, err := p.Clients()
-	if err != nil {
-		return err
-	}
-
-	c := cs.Tekton.TektonV1alpha1().TaskRuns(p.Namespace())
-
-	taskrun, err := c.Get(name, metav1.GetOptions{})
-	if err != nil {
-		return err
-	}
-
-	// NOTE: this is required for -o json|yaml to work properly since
-	// tektoncd go client fails to set these; probably a bug
-	taskrun.GetObjectKind().SetGroupVersionKind(
-		schema.GroupVersionKind{
-			Version: "tekton.dev/v1alpha1",
-			Kind:    "TaskRun",
-		})
-
-	return printer.PrintObject(w, taskrun, f)
 }

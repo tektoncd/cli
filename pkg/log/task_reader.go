@@ -45,7 +45,7 @@ func (s *step) hasStarted() bool {
 }
 
 func (r *Reader) readTaskLog() (<-chan Log, <-chan error, error) {
-	tr, err := tr.Get(r.clients, r.run, metav1.GetOptions{}, r.ns)
+	tr, err := tr.GetV1beta1(r.clients, r.run, metav1.GetOptions{}, r.ns)
 	if err != nil {
 		return nil, nil, fmt.Errorf("%s: %s", MsgTRNotFoundErr, err)
 	}
@@ -191,7 +191,7 @@ func (r *Reader) waitUntilTaskPodNameAvailable(timeout time.Duration) (*v1beta1.
 	opts := metav1.ListOptions{
 		FieldSelector: fields.OneTermEqualSelector("metadata.name", r.run).String(),
 	}
-	run, err := tr.Get(r.clients, r.run, metav1.GetOptions{}, r.ns)
+	run, err := tr.GetV1beta1(r.clients, r.run, metav1.GetOptions{}, r.ns)
 	if err != nil {
 		return nil, err
 	}
