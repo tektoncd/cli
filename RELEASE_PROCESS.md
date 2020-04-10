@@ -53,11 +53,11 @@ dnf upgrade tektoncd-cli
 
   * Raise a PR to update like [this](https://github.com/Homebrew/homebrew-core/pull/46492) to Homebrew Core
 
-- Make an update to the `test-runner` and `tkn` image in the [plumbing](https://github.com/tektoncd/plumbing/) repo. The test-runner image is where we run the CI on pipeline which uses `tkn`:
+- Make a version update to the test-runner and `tkn` image in the [plumbing](https://github.com/tektoncd/plumbing/) repo. The test-runner image is used to run the CI on the pipeline project, which uses `tkn`. For both Dockerfiles listed below, search for `ARG TKN_VERSION` in the Dockerfile for where to update the release version. Update the version arg to match the version of `tkn` released (i.e. `ARG TKN_VERSION=<RELEASED_VERSION>`).
 
-  * [test-runner image](https://github.com/tektoncd/plumbing/blob/master/tekton/images/test-runner/Dockerfile#L51)
+  * [test-runner image](https://github.com/tektoncd/plumbing/blob/master/tekton/images/test-runner/Dockerfile) 
 
-  * [tkn image](https://github.com/tektoncd/plumbing/blob/master/tekton/images/tkn/Dockerfile#L17)
+  * [tkn image](https://github.com/tektoncd/plumbing/blob/master/tekton/images/tkn/Dockerfile)
 
 - Announce and spread the love on twitter. Make sure you tag
   [@tektoncd](https://twitter.com/tektoncd) account so you get retweeted and
