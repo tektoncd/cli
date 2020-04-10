@@ -179,9 +179,13 @@ func Test_ClusterTaskDescribe(t *testing.T) {
 	p := &test.Params{Tekton: cs.Pipeline, Kube: cs.Kube, Dynamic: dynamic, Clock: clock}
 	p.SetNamespace("ns")
 
-	tdc2 := testDynamic.Options{Verb: "list", Resource: "taskruns", Action: func(action k8stest.Action) (bool, runtime.Object, error) {
-		return true, nil, errors.New("fake list taskrun error")
-	}}
+	tdc2 := testDynamic.Options{
+		PrependReactors: []testDynamic.PrependOpt{{
+			Verb:     "list",
+			Resource: "taskruns",
+			Action: func(action k8stest.Action) (bool, runtime.Object, error) {
+				return true, nil, errors.New("fake list taskrun error")
+			}}}}
 	dynamic2, err := tdc2.Client(
 		cb.UnstructuredCT(clustertasks[0], version),
 		cb.UnstructuredCT(clustertasks[1], version),

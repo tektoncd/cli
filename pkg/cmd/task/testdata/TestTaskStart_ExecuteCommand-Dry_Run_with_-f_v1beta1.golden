@@ -5,13 +5,12 @@ metadata:
   generateName: test-task-run-
   namespace: ns
 spec:
-  inputs:
-    resources:
+  resources:
+    inputs:
     - name: docker-source
       resourceRef:
         name: git
-  outputs:
-    resources:
+    outputs:
     - name: builtImage
       resourceRef:
         name: image
