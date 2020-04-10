@@ -149,9 +149,14 @@ func Test_cancel_pipelinerun_client_err(t *testing.T) {
 
 	cs, _ := test.SeedTestData(t, pipelinetest.Data{PipelineRuns: prs, Namespaces: ns})
 	cs.Pipeline.Resources = cb.APIResourceList(versionA1, []string{"pipeline", "pipelinerun"})
-	tdc := testDynamic.Options{Verb: "patch", Resource: "pipelineruns", Action: func(action k8stest.Action) (bool, runtime.Object, error) {
-		return true, nil, errors.New(errStr)
-	}}
+	tdc := testDynamic.Options{
+		PrependReactors: []testDynamic.PrependOpt{
+			{
+				Verb:     "patch",
+				Resource: "pipelineruns",
+				Action: func(action k8stest.Action) (bool, runtime.Object, error) {
+					return true, nil, errors.New(errStr)
+				}}}}
 	dc, err := tdc.Client(
 		cb.UnstructuredPR(prs[0], versionA1),
 	)
@@ -371,9 +376,14 @@ func Test_cancel_pipelinerun_client_err_v1beta1(t *testing.T) {
 
 	cs, _ := test.SeedTestData(t, pipelinetest.Data{PipelineRuns: prs, Namespaces: ns})
 	cs.Pipeline.Resources = cb.APIResourceList(versionB1, []string{"pipeline", "pipelinerun"})
-	tdc := testDynamic.Options{Verb: "patch", Resource: "pipelineruns", Action: func(action k8stest.Action) (bool, runtime.Object, error) {
-		return true, nil, errors.New(errStr)
-	}}
+	tdc := testDynamic.Options{
+		PrependReactors: []testDynamic.PrependOpt{
+			{
+				Verb:     "patch",
+				Resource: "pipelineruns",
+				Action: func(action k8stest.Action) (bool, runtime.Object, error) {
+					return true, nil, errors.New(errStr)
+				}}}}
 	dc, err := tdc.Client(
 		cb.UnstructuredPR(prs[0], versionB1),
 	)

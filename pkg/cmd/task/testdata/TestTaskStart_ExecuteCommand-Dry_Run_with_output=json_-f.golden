@@ -7,8 +7,54 @@
 		"creationTimestamp": null
 	},
 	"spec": {
+		"resources": {
+			"inputs": [
+				{
+					"name": "docker-source",
+					"resourceRef": {
+						"name": "git"
+					}
+				}
+			],
+			"outputs": [
+				{
+					"name": "builtImage",
+					"resourceRef": {
+						"name": "image"
+					}
+				}
+			]
+		},
 		"serviceAccountName": "svc1",
 		"taskSpec": {
+			"resources": {
+				"inputs": [
+					{
+						"name": "docker-source",
+						"type": "git"
+					}
+				],
+				"outputs": [
+					{
+						"name": "builtImage",
+						"type": "image"
+					}
+				]
+			},
+			"params": [
+				{
+					"name": "pathToDockerFile",
+					"type": "string",
+					"description": "The path to the dockerfile to build",
+					"default": "/workspace/docker-source/Dockerfile"
+				},
+				{
+					"name": "pathToContext",
+					"type": "string",
+					"description": "The build context used by Kaniko (https://github.com/GoogleContainerTools/kaniko#kaniko-build-contexts)",
+					"default": "/workspace/docker-source"
+				}
+			],
 			"steps": [
 				{
 					"name": "build-and-push",
@@ -28,56 +74,6 @@
 						}
 					],
 					"resources": {}
-				}
-			],
-			"inputs": {
-				"resources": [
-					{
-						"name": "docker-source",
-						"type": "git"
-					}
-				],
-				"params": [
-					{
-						"name": "pathToDockerFile",
-						"type": "string",
-						"description": "The path to the dockerfile to build",
-						"default": "/workspace/docker-source/Dockerfile"
-					},
-					{
-						"name": "pathToContext",
-						"type": "string",
-						"description": "The build context used by Kaniko (https://github.com/GoogleContainerTools/kaniko#kaniko-build-contexts)",
-						"default": "/workspace/docker-source"
-					}
-				]
-			},
-			"outputs": {
-				"resources": [
-					{
-						"name": "builtImage",
-						"type": "image"
-					}
-				]
-			}
-		},
-		"inputs": {
-			"resources": [
-				{
-					"name": "docker-source",
-					"resourceRef": {
-						"name": "git"
-					}
-				}
-			]
-		},
-		"outputs": {
-			"resources": [
-				{
-					"name": "builtImage",
-					"resourceRef": {
-						"name": "image"
-					}
 				}
 			]
 		}

@@ -25,10 +25,8 @@ import (
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 )
 
-//Todo
-// changing this LastRun to use dynamic client leads to multiple other change in start commands
-// keeping this as it is, will change this while working on start commands
-//LastRun returns the last taskrun for a given task
+//ToDo LastRun will not be required ones all the start commands are done.
+// Will need to rename DynamicLastRun to LastRun
 func LastRun(tekton versioned.Interface, task string, ns string, kind string) (*v1alpha1.TaskRun, error) {
 	options := metav1.ListOptions{}
 	if task != "" {
@@ -60,7 +58,7 @@ func LastRun(tekton versioned.Interface, task string, ns string, kind string) (*
 }
 
 //DynamicLastRun returns the last taskrun for a given task
-func DynamicLastRun(cs *cli.Clients, task string, ns string, kind string) (*v1beta1.TaskRun, error) {
+func DynamicLastRun(cs *cli.Clients, task string, ns string) (*v1beta1.TaskRun, error) {
 	options := metav1.ListOptions{}
 	if task != "" {
 		options = metav1.ListOptions{
@@ -77,7 +75,7 @@ func DynamicLastRun(cs *cli.Clients, task string, ns string, kind string) (*v1be
 	runs.Items = FilterByRef(runs.Items, "Task")
 
 	if len(runs.Items) == 0 {
-		return nil, fmt.Errorf("no taskruns related to %s %s found in namespace %s", kind, task, ns)
+		return nil, fmt.Errorf("no taskruns related to %s %s found in namespace %s", "Task", task, ns)
 	}
 
 	latest := runs.Items[0]

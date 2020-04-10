@@ -24,11 +24,19 @@ import (
 )
 
 type Options struct {
-	WatchResource string
-	Watcher       watch.Interface
-	Resource      string
-	Verb          string
-	Action        k8stest.ReactionFunc
+	WatchResource    string
+	Watcher          watch.Interface
+	WatchReactionFun k8stest.WatchReactionFunc
+	PrependReactors  []PrependOpt
+	AddReactorRes    string
+	AddReactorVerb   string
+	AddReactorFun    k8stest.ReactionFunc
+}
+
+type PrependOpt struct {
+	Resource string
+	Verb     string
+	Action   k8stest.ReactionFunc
 }
 
 func (opt *Options) Client(objects ...runtime.Object) (dynamic.Interface, error) {
@@ -36,8 +44,16 @@ func (opt *Options) Client(objects ...runtime.Object) (dynamic.Interface, error)
 	if opt.Watcher != nil {
 		dynamicClient.PrependWatchReactor(opt.WatchResource, k8stest.DefaultWatchReactor(opt.Watcher, nil))
 	}
-	if opt.Action != nil {
-		dynamicClient.PrependReactor(opt.Verb, opt.Resource, opt.Action)
+	if opt.WatchReactionFun != nil {
+		dynamicClient.PrependWatchReactor(opt.WatchResource, opt.WatchReactionFun)
+	}
+	if len(opt.PrependReactors) != 0 {
+		for _, res := range opt.PrependReactors {
+			dynamicClient.PrependReactor(res.Verb, res.Resource, res.Action)
+		}
+	}
+	if opt.AddReactorFun != nil {
+		dynamicClient.AddReactor(opt.AddReactorVerb, opt.AddReactorRes, opt.AddReactorFun)
 	}
 	return clientset.New(clientset.WithClient(dynamicClient)), nil
 }

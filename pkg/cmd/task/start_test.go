@@ -15,6 +15,7 @@
 package task
 
 import (
+	"context"
 	"fmt"
 	"reflect"
 	"strings"
@@ -22,9 +23,13 @@ import (
 	"time"
 
 	"github.com/google/go-cmp/cmp"
+	traction "github.com/tektoncd/cli/pkg/taskrun"
+	trlist "github.com/tektoncd/cli/pkg/taskrun/list"
 	"github.com/tektoncd/cli/pkg/test"
 	cb "github.com/tektoncd/cli/pkg/test/builder"
+	testDynamic "github.com/tektoncd/cli/pkg/test/dynamic"
 	"github.com/tektoncd/pipeline/pkg/apis/pipeline/v1alpha1"
+	"github.com/tektoncd/pipeline/pkg/apis/pipeline/v1beta1"
 	fakepipelineclientset "github.com/tektoncd/pipeline/pkg/client/clientset/versioned/fake"
 	tb "github.com/tektoncd/pipeline/test/builder"
 	pipelinetest "github.com/tektoncd/pipeline/test/v1alpha1"
@@ -32,15 +37,17 @@ import (
 	corev1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	v1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
 	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/apimachinery/pkg/runtime/schema"
 	"k8s.io/apimachinery/pkg/runtime/serializer"
 	util_runtime "k8s.io/apimachinery/pkg/util/runtime"
 	"k8s.io/apimachinery/pkg/watch"
+	"k8s.io/client-go/dynamic"
 	k8stest "k8s.io/client-go/testing"
 )
 
-func newPipelineClient(objs ...runtime.Object) *fakepipelineclientset.Clientset {
+func newPipelineClient(objs ...runtime.Object) (*fakepipelineclientset.Clientset, testDynamic.Options) {
 	scheme := runtime.NewScheme()
 	codecs := serializer.NewCodecFactory(scheme)
 	localSchemeBuilder := runtime.SchemeBuilder{
@@ -48,7 +55,6 @@ func newPipelineClient(objs ...runtime.Object) *fakepipelineclientset.Clientset 
 	}
 	v1.AddToGroupVersion(scheme, schema.GroupVersion{Version: "v1"})
 	util_runtime.Must(localSchemeBuilder.AddToScheme(scheme))
-
 	o := k8stest.NewObjectTracker(scheme, codecs.UniversalDecoder())
 	for _, obj := range objs {
 		if err := o.Add(obj); err != nil {
@@ -56,28 +62,62 @@ func newPipelineClient(objs ...runtime.Object) *fakepipelineclientset.Clientset 
 		}
 	}
 
-	c := &fakepipelineclientset.Clientset{}
-	c.AddReactor("*", "*", k8stest.ObjectReaction(o))
-	c.AddWatchReactor("*", func(action k8stest.Action) (handled bool, ret watch.Interface, err error) {
-		gvr := action.GetResource()
-		ns := action.GetNamespace()
-		watch, err := o.Watch(gvr, ns)
-		if err != nil {
-			return false, nil, err
-		}
-		return true, watch, nil
-	})
+	dc := testDynamic.Options{
+		AddReactorRes:  "*",
+		AddReactorVerb: "*",
+		AddReactorFun:  k8stest.ObjectReaction(o),
+		WatchResource:  "*",
+		WatchReactionFun: func(action k8stest.Action) (handled bool, ret watch.Interface, err error) {
+			gvr := action.GetResource()
+			ns := action.GetNamespace()
+			watch, err := o.Watch(gvr, ns)
+			if err != nil {
+				return false, nil, err
+			}
+			return true, watch, nil
+		},
+		PrependReactors: []testDynamic.PrependOpt{
+			{
+				Resource: "taskruns",
+				Verb:     "create",
+				Action: func(action k8stest.Action) (bool, runtime.Object, error) {
+					create := action.(k8stest.CreateActionImpl)
+					unstructuredTR := create.GetObject().(*unstructured.Unstructured)
+					unstructuredTR.SetName("random")
+					rFunc := k8stest.ObjectReaction(o)
+					_, o, err := rFunc(action)
+					return true, o, err
+				},
+			},
+			{
+				Resource: "taskruns",
+				Verb:     "get",
+				Action: func(action k8stest.Action) (bool, runtime.Object, error) {
+					getAction, _ := action.(k8stest.GetActionImpl)
+					res := getAction.GetResource()
+					ns := getAction.GetNamespace()
+					name := getAction.GetName()
+					obj, err := o.Get(res, ns, name)
+					if err != nil {
+						return false, nil, err
+					}
+					if reflect.TypeOf(obj).String() == "*unstructured.Unstructured" {
+						return true, obj, nil
+					}
 
-	c.PrependReactor("create", "taskruns", func(action k8stest.Action) (bool, runtime.Object, error) {
-		create := action.(k8stest.CreateActionImpl)
-		obj := create.GetObject().(*v1alpha1.TaskRun)
-		obj.Name = "random"
-		rFunc := k8stest.ObjectReaction(o)
-		_, o, err := rFunc(action)
-		return true, o, err
-	})
-
-	return c
+					if res.Version == "v1alpha1" {
+						v1alpha1TR := obj.(*v1alpha1.TaskRun)
+						unstructuredTR := cb.UnstructuredTR(v1alpha1TR, versionA1)
+						return true, unstructuredTR, nil
+					}
+					v1beta1TR := obj.(*v1beta1.TaskRun)
+					unstructuredTR := cb.UnstructuredV1beta1TR(v1beta1TR, versionB1)
+					return true, unstructuredTR, nil
+				},
+			},
+		},
+	}
+	return nil, dc
 }
 
 func Test_start_invalid_namespace(t *testing.T) {
@@ -123,7 +163,13 @@ func Test_start_has_task_filename_v1alpha1(t *testing.T) {
 		},
 	}
 	cs, _ := test.SeedTestData(t, pipelinetest.Data{Namespaces: ns})
-	c := Command(&test.Params{Tekton: cs.Pipeline, Kube: cs.Kube})
+	cs.Pipeline.Resources = cb.APIResourceList(versionA1, []string{"task", "taskrun"})
+	tdc := testDynamic.Options{}
+	dc, err := tdc.Client()
+	if err != nil {
+		t.Errorf("unable to create dynamic clinet: %v", err)
+	}
+	c := Command(&test.Params{Tekton: cs.Pipeline, Kube: cs.Kube, Dynamic: dc})
 
 	got, err := test.ExecuteCommand(c, "start", "-n", "ns", "--filename=./testdata/task-v1alpha1.yaml")
 	if err != nil {
@@ -166,8 +212,13 @@ func Test_start_task_not_found(t *testing.T) {
 	}
 
 	cs, _ := test.SeedTestData(t, pipelinetest.Data{Tasks: tasks, Namespaces: ns})
-	p := &test.Params{Tekton: cs.Pipeline, Kube: cs.Kube}
-
+	tdc := testDynamic.Options{}
+	dc, err := tdc.Client(
+		cb.UnstructuredT(tasks[0], versionA1))
+	if err != nil {
+		t.Errorf("unable to create dynamic clinet: %v", err)
+	}
+	p := &test.Params{Tekton: cs.Pipeline, Kube: cs.Kube, Dynamic: dc}
 	task := Command(p)
 	got, _ := test.ExecuteCommand(task, "start", "task-2", "-n", "ns")
 	expected := "Error: task name task-2 does not exist in namespace ns\n"
@@ -206,7 +257,14 @@ func Test_start_task(t *testing.T) {
 	}
 
 	cs, _ := test.SeedTestData(t, pipelinetest.Data{Tasks: tasks, Namespaces: ns})
-	p := &test.Params{Tekton: cs.Pipeline, Kube: cs.Kube}
+	cs.Pipeline.Resources = cb.APIResourceList(versionA1, []string{"task", "taskrun"})
+	tdc := testDynamic.Options{}
+	dc, err := tdc.Client(
+		cb.UnstructuredT(tasks[0], versionA1))
+	if err != nil {
+		t.Errorf("unable to create dynamic clinet: %v", err)
+	}
+	p := &test.Params{Tekton: cs.Pipeline, Kube: cs.Kube, Dynamic: dc}
 
 	task := Command(p)
 	got, _ := test.ExecuteCommand(task, "start", "task-1",
@@ -222,8 +280,8 @@ func Test_start_task(t *testing.T) {
 
 	expected := "Taskrun started: \n\nIn order to track the taskrun progress run:\ntkn taskrun logs  -f -n ns\n"
 	test.AssertOutput(t, expected, got)
-
-	tr, err := cs.Pipeline.TektonV1alpha1().TaskRuns("ns").List(v1.ListOptions{})
+	clients, _ := p.Clients()
+	tr, err := trlist.TaskRuns(clients, v1.ListOptions{}, "ns")
 	if err != nil {
 		t.Errorf("Error listing taskruns %s", err.Error())
 	}
@@ -232,7 +290,7 @@ func Test_start_task(t *testing.T) {
 		t.Errorf("Error taskrun generated is different %+v", tr)
 	}
 
-	for _, v := range tr.Items[0].Spec.Inputs.Resources {
+	for _, v := range tr.Items[0].Spec.Resources.Inputs {
 		if v.Name == "my-repo" {
 			test.AssertOutput(t, "git", v.ResourceRef.Name)
 		}
@@ -242,9 +300,9 @@ func Test_start_task(t *testing.T) {
 		}
 	}
 
-	test.AssertOutput(t, 2, len(tr.Items[0].Spec.Inputs.Params))
+	test.AssertOutput(t, 2, len(tr.Items[0].Spec.Params))
 
-	for _, v := range tr.Items[0].Spec.Inputs.Params {
+	for _, v := range tr.Items[0].Spec.Params {
 		if v.Name == "my-arg" {
 			test.AssertOutput(t, v1alpha1.ArrayOrString{Type: v1alpha1.ParamTypeString, StringVal: "value1"}, v.Value)
 		}
@@ -254,7 +312,7 @@ func Test_start_task(t *testing.T) {
 		}
 	}
 
-	for _, v := range tr.Items[0].Spec.Outputs.Resources {
+	for _, v := range tr.Items[0].Spec.Resources.Outputs {
 		if v.Name == "code-image" {
 			test.AssertOutput(t, "output-image", v.ResourceRef.Name)
 		}
@@ -320,17 +378,21 @@ func Test_start_task_last(t *testing.T) {
 	}
 
 	//Add namespaces to kube client
-	seedData, _ := test.SeedTestData(t, pipelinetest.Data{Namespaces: ns})
-
+	seedData, _ := test.SeedTestData(t, pipelinetest.Data{Namespaces: ns, Tasks: tasks, TaskRuns: taskruns})
 	objs := []runtime.Object{tasks[0], taskruns[0]}
-	pClient := newPipelineClient(objs...)
+	_, tdc := newPipelineClient(objs...)
+	dc, _ := tdc.Client(
+		cb.UnstructuredT(tasks[0], versionA1),
+		cb.UnstructuredTR(taskruns[0], versionA1),
+	)
 
 	cs := pipelinetest.Clients{
-		Pipeline: pClient,
+		Pipeline: seedData.Pipeline,
 		Kube:     seedData.Kube,
 	}
-	p := &test.Params{Tekton: cs.Pipeline, Kube: cs.Kube}
-
+	cs.Pipeline.Resources = cb.APIResourceList(versionA1, []string{"task", "taskrun"})
+	p := &test.Params{Tekton: cs.Pipeline, Kube: cs.Kube, Dynamic: dc}
+	clients, _ := p.Clients()
 	task := Command(p)
 	got, _ := test.ExecuteCommand(task, "start", "task",
 		"--last",
@@ -338,21 +400,22 @@ func Test_start_task_last(t *testing.T) {
 
 	expected := "Taskrun started: random\n\nIn order to track the taskrun progress run:\ntkn taskrun logs random -f -n ns\n"
 	test.AssertOutput(t, expected, got)
-
-	tr, err := cs.Pipeline.TektonV1alpha1().TaskRuns("ns").Get("random", v1.GetOptions{})
+	gotTR, err := traction.Get(clients, "random", metav1.GetOptions{}, "ns")
 	if err != nil {
 		t.Errorf("Error listing taskruns %s", err.Error())
 	}
+	tr := v1alpha1.TaskRun{}
+	_ = tr.ConvertDown(context.Background(), gotTR)
 
-	for _, v := range tr.Spec.Inputs.Resources {
+	for _, v := range tr.Spec.Resources.Inputs {
 		if v.Name == "my-repo" {
 			test.AssertOutput(t, "git", v.ResourceRef.Name)
 		}
 	}
 
-	test.AssertOutput(t, 2, len(tr.Spec.Inputs.Params))
+	test.AssertOutput(t, 2, len(tr.Spec.Params))
 
-	for _, v := range tr.Spec.Inputs.Params {
+	for _, v := range tr.Spec.Params {
 		if v.Name == "my-arg" {
 			test.AssertOutput(t, v1alpha1.ArrayOrString{Type: v1alpha1.ParamTypeString, StringVal: "value"}, v.Value)
 		}
@@ -362,7 +425,7 @@ func Test_start_task_last(t *testing.T) {
 		}
 	}
 
-	for _, v := range tr.Spec.Outputs.Resources {
+	for _, v := range tr.Spec.Resources.Outputs {
 		if v.Name == "code-image" {
 			test.AssertOutput(t, "image", v.ResourceRef.Name)
 		}
@@ -425,16 +488,22 @@ func Test_start_use_taskrun(t *testing.T) {
 	}
 
 	//Add namespaces to kube client
-	seedData, _ := test.SeedTestData(t, pipelinetest.Data{Namespaces: ns})
+	seedData, _ := test.SeedTestData(t, pipelinetest.Data{Namespaces: ns, Tasks: tasks, TaskRuns: taskruns})
 
 	objs := []runtime.Object{tasks[0], taskruns[0], taskruns[1]}
-	pClient := newPipelineClient(objs...)
+	_, tdc := newPipelineClient(objs...)
 
 	cs := pipelinetest.Clients{
-		Pipeline: pClient,
+		Pipeline: seedData.Pipeline,
 		Kube:     seedData.Kube,
 	}
-	p := &test.Params{Tekton: cs.Pipeline, Kube: cs.Kube}
+	cs.Pipeline.Resources = cb.APIResourceList(versionA1, []string{"task", "taskrun"})
+	dc, _ := tdc.Client(
+		cb.UnstructuredT(tasks[0], versionA1),
+		cb.UnstructuredTR(taskruns[0], versionA1),
+		cb.UnstructuredTR(taskruns[1], versionA1),
+	)
+	p := &test.Params{Tekton: cs.Pipeline, Kube: cs.Kube, Dynamic: dc}
 
 	task := Command(p)
 	got, _ := test.ExecuteCommand(task, "start", "task",
@@ -443,8 +512,8 @@ func Test_start_use_taskrun(t *testing.T) {
 
 	expected := "Taskrun started: random\n\nIn order to track the taskrun progress run:\ntkn taskrun logs random -f -n ns\n"
 	test.AssertOutput(t, expected, got)
-
-	tr, err := cs.Pipeline.TektonV1alpha1().TaskRuns("ns").Get("random", v1.GetOptions{})
+	clients, _ := p.Clients()
+	tr, err := traction.Get(clients, "random", metav1.GetOptions{}, "ns")
 	if err != nil {
 		t.Errorf("Error listing taskruns %s", err.Error())
 	}
@@ -502,16 +571,20 @@ func Test_start_task_last_generate_name(t *testing.T) {
 	// Setting GenerateName for test
 	taskruns[0].ObjectMeta.GenerateName = "test-generatename-task-run-"
 
-	seedData, _ := test.SeedTestData(t, pipelinetest.Data{Namespaces: ns})
+	seedData, _ := test.SeedTestData(t, pipelinetest.Data{Namespaces: ns, Tasks: tasks, TaskRuns: taskruns})
 
 	objs := []runtime.Object{tasks[0], taskruns[0]}
-	pClient := newPipelineClient(objs...)
+	_, tdc := newPipelineClient(objs...)
 
 	cs := pipelinetest.Clients{
-		Pipeline: pClient,
+		Pipeline: seedData.Pipeline,
 		Kube:     seedData.Kube,
 	}
-	p := &test.Params{Tekton: cs.Pipeline, Kube: cs.Kube}
+	cs.Pipeline.Resources = cb.APIResourceList(versionA1, []string{"task", "taskrun"})
+	dc, _ := tdc.Client(
+		cb.UnstructuredT(tasks[0], versionA1),
+		cb.UnstructuredTR(taskruns[0], versionA1))
+	p := &test.Params{Tekton: cs.Pipeline, Kube: cs.Kube, Dynamic: dc}
 
 	task := Command(p)
 	got, _ := test.ExecuteCommand(task, "start", "task",
@@ -520,8 +593,8 @@ func Test_start_task_last_generate_name(t *testing.T) {
 
 	expected := "Taskrun started: random\n\nIn order to track the taskrun progress run:\ntkn taskrun logs random -f -n ns\n"
 	test.AssertOutput(t, expected, got)
-
-	tr, err := cs.Pipeline.TektonV1alpha1().TaskRuns("ns").Get("random", v1.GetOptions{})
+	clients, _ := p.Clients()
+	tr, err := traction.Get(clients, "random", metav1.GetOptions{}, "ns")
 	if err != nil {
 		t.Errorf("Error listing taskruns %s", err.Error())
 	}
@@ -575,16 +648,20 @@ func Test_start_task_last_with_prefix_name(t *testing.T) {
 		},
 	}
 
-	seedData, _ := test.SeedTestData(t, pipelinetest.Data{Namespaces: ns})
+	seedData, _ := test.SeedTestData(t, pipelinetest.Data{Namespaces: ns, Tasks: tasks, TaskRuns: taskruns})
 
 	objs := []runtime.Object{tasks[0], taskruns[0]}
-	pClient := newPipelineClient(objs...)
+	_, tdc := newPipelineClient(objs...)
 
 	cs := pipelinetest.Clients{
-		Pipeline: pClient,
+		Pipeline: seedData.Pipeline,
 		Kube:     seedData.Kube,
 	}
-	p := &test.Params{Tekton: cs.Pipeline, Kube: cs.Kube}
+	cs.Pipeline.Resources = cb.APIResourceList(versionA1, []string{"task", "taskrun"})
+	dc, _ := tdc.Client(
+		cb.UnstructuredT(tasks[0], versionA1),
+		cb.UnstructuredTR(taskruns[0], versionA1))
+	p := &test.Params{Tekton: cs.Pipeline, Kube: cs.Kube, Dynamic: dc}
 
 	task := Command(p)
 	got, _ := test.ExecuteCommand(task, "start", "task",
@@ -595,8 +672,8 @@ func Test_start_task_last_with_prefix_name(t *testing.T) {
 
 	expected := "Taskrun started: random\n\nIn order to track the taskrun progress run:\ntkn taskrun logs random -f -n ns\n"
 	test.AssertOutput(t, expected, got)
-
-	tr, err := cs.Pipeline.TektonV1alpha1().TaskRuns("ns").Get("random", v1.GetOptions{})
+	clients, _ := p.Clients()
+	tr, err := traction.Get(clients, "random", metav1.GetOptions{}, "ns")
 	if err != nil {
 		t.Errorf("Error listing taskruns %s", err.Error())
 	}
@@ -650,16 +727,18 @@ func Test_start_task_with_prefix_name(t *testing.T) {
 		},
 	}
 
-	seedData, _ := test.SeedTestData(t, pipelinetest.Data{Namespaces: ns})
-
+	seedData, _ := test.SeedTestData(t, pipelinetest.Data{Namespaces: ns, Tasks: tasks, TaskRuns: taskruns})
 	objs := []runtime.Object{tasks[0], taskruns[0]}
-	pClient := newPipelineClient(objs...)
-
+	_, tdc := newPipelineClient(objs...)
 	cs := pipelinetest.Clients{
-		Pipeline: pClient,
+		Pipeline: seedData.Pipeline,
 		Kube:     seedData.Kube,
 	}
-	p := &test.Params{Tekton: cs.Pipeline, Kube: cs.Kube}
+	cs.Pipeline.Resources = cb.APIResourceList(versionA1, []string{"task", "taskrun"})
+	dc, _ := tdc.Client(
+		cb.UnstructuredT(tasks[0], versionA1),
+		cb.UnstructuredTR(taskruns[0], versionA1))
+	p := &test.Params{Tekton: cs.Pipeline, Kube: cs.Kube, Dynamic: dc}
 
 	task := Command(p)
 	got, _ := test.ExecuteCommand(task, "start", "task",
@@ -670,7 +749,8 @@ func Test_start_task_with_prefix_name(t *testing.T) {
 	expected := "Taskrun started: random\n\nIn order to track the taskrun progress run:\ntkn taskrun logs random -f -n ns\n"
 	test.AssertOutput(t, expected, got)
 
-	tr, err := cs.Pipeline.TektonV1alpha1().TaskRuns("ns").Get("random", v1.GetOptions{})
+	clients, _ := p.Clients()
+	tr, err := traction.Get(clients, "random", metav1.GetOptions{}, "ns")
 	if err != nil {
 		t.Errorf("Error listing taskruns %s", err.Error())
 	}
@@ -722,17 +802,18 @@ func Test_start_task_last_with_inputs(t *testing.T) {
 		},
 	}
 
-	//Add namespaces to kube client
-	seedData, _ := test.SeedTestData(t, pipelinetest.Data{Namespaces: ns})
-
+	seedData, _ := test.SeedTestData(t, pipelinetest.Data{Namespaces: ns, Tasks: tasks, TaskRuns: taskruns})
 	objs := []runtime.Object{tasks[0], taskruns[0]}
-	pClient := newPipelineClient(objs...)
-
+	_, tdc := newPipelineClient(objs...)
 	cs := pipelinetest.Clients{
-		Pipeline: pClient,
+		Pipeline: seedData.Pipeline,
 		Kube:     seedData.Kube,
 	}
-	p := &test.Params{Tekton: cs.Pipeline, Kube: cs.Kube}
+	cs.Pipeline.Resources = cb.APIResourceList(versionA1, []string{"task", "taskrun"})
+	dc, _ := tdc.Client(
+		cb.UnstructuredT(tasks[0], versionA1),
+		cb.UnstructuredTR(taskruns[0], versionA1))
+	p := &test.Params{Tekton: cs.Pipeline, Kube: cs.Kube, Dynamic: dc}
 
 	task := Command(p)
 	got, _ := test.ExecuteCommand(task, "start", "task",
@@ -747,20 +828,23 @@ func Test_start_task_last_with_inputs(t *testing.T) {
 	expected := "Taskrun started: random\n\nIn order to track the taskrun progress run:\ntkn taskrun logs random -f -n ns\n"
 	test.AssertOutput(t, expected, got)
 
-	tr, err := cs.Pipeline.TektonV1alpha1().TaskRuns("ns").Get("random", v1.GetOptions{})
+	clients, _ := p.Clients()
+	gotTR, err := traction.Get(clients, "random", metav1.GetOptions{}, "ns")
 	if err != nil {
 		t.Errorf("Error listing taskruns %s", err.Error())
 	}
+	tr := v1alpha1.TaskRun{}
+	_ = tr.ConvertDown(context.Background(), gotTR)
 
-	for _, v := range tr.Spec.Inputs.Resources {
+	for _, v := range tr.Spec.Resources.Inputs {
 		if v.Name == "my-repo" {
 			test.AssertOutput(t, "git-new", v.ResourceRef.Name)
 		}
 	}
 
-	test.AssertOutput(t, 2, len(tr.Spec.Inputs.Params))
+	test.AssertOutput(t, 2, len(tr.Spec.Params))
 
-	for _, v := range tr.Spec.Inputs.Params {
+	for _, v := range tr.Spec.Params {
 		if v.Name == "my-arg" {
 			test.AssertOutput(t, v1alpha1.ArrayOrString{Type: v1alpha1.ParamTypeString, StringVal: "value1"}, v.Value)
 		}
@@ -770,7 +854,7 @@ func Test_start_task_last_with_inputs(t *testing.T) {
 		}
 	}
 
-	for _, v := range tr.Spec.Outputs.Resources {
+	for _, v := range tr.Spec.Resources.Outputs {
 		if v.Name == "code-image" {
 			test.AssertOutput(t, "output-image", v.ResourceRef.Name)
 		}
@@ -811,7 +895,14 @@ func Test_start_task_last_without_pipelinerun(t *testing.T) {
 	}
 
 	cs, _ := test.SeedTestData(t, pipelinetest.Data{Tasks: tasks, Namespaces: ns})
-	p := &test.Params{Tekton: cs.Pipeline, Kube: cs.Kube}
+	cs.Pipeline.Resources = cb.APIResourceList(versionA1, []string{"task", "taskrun"})
+	objs := []runtime.Object{tasks[0]}
+	_, tdc := newPipelineClient(objs...)
+	dc, _ := tdc.Client(
+		cb.UnstructuredT(tasks[0], versionA1),
+	)
+
+	p := &test.Params{Tekton: cs.Pipeline, Kube: cs.Kube, Dynamic: dc}
 
 	task := Command(p)
 	got, _ := test.ExecuteCommand(task, "start", "task-1", "--last", "-n", "ns")
@@ -851,10 +942,23 @@ func Test_start_task_client_error(t *testing.T) {
 	}
 
 	cs, _ := test.SeedTestData(t, pipelinetest.Data{Tasks: tasks, Namespaces: ns})
-	cs.Pipeline.PrependReactor("create", "*", func(_ k8stest.Action) (bool, runtime.Object, error) {
-		return true, nil, fmt.Errorf("cluster not accessible")
-	})
-	p := &test.Params{Tekton: cs.Pipeline, Kube: cs.Kube}
+	cs.Pipeline.Resources = cb.APIResourceList(versionA1, []string{"task", "taskrun"})
+	tdc := testDynamic.Options{
+		PrependReactors: []testDynamic.PrependOpt{
+			{
+				Resource: "*",
+				Verb:     "create",
+				Action: func(_ k8stest.Action) (bool, runtime.Object, error) {
+					return true, nil, fmt.Errorf("cluster not accessible")
+				},
+			},
+		},
+	}
+	dc, _ := tdc.Client(
+		cb.UnstructuredT(tasks[0], versionA1),
+	)
+
+	p := &test.Params{Tekton: cs.Pipeline, Kube: cs.Kube, Dynamic: dc}
 
 	task := Command(p)
 	got, _ := test.ExecuteCommand(task, "start", "task-1", "-n", "ns")
@@ -894,7 +998,13 @@ func Test_start_task_invalid_input_res(t *testing.T) {
 	}
 
 	cs, _ := test.SeedTestData(t, pipelinetest.Data{Tasks: tasks, Namespaces: ns})
-	p := &test.Params{Tekton: cs.Pipeline, Kube: cs.Kube}
+	cs.Pipeline.Resources = cb.APIResourceList(versionA1, []string{"task", "taskrun"})
+	tdc := testDynamic.Options{}
+	dc, _ := tdc.Client(
+		cb.UnstructuredT(tasks[0], versionA1),
+	)
+
+	p := &test.Params{Tekton: cs.Pipeline, Kube: cs.Kube, Dynamic: dc}
 
 	task := Command(p)
 	got, _ := test.ExecuteCommand(task, "start", "task-1",
@@ -933,8 +1043,13 @@ func Test_start_task_invalid_workspace(t *testing.T) {
 		},
 	}
 
-	cs, _ := test.SeedTestData(t, pipelinetest.Data{Tasks: tasks, Namespaces: ns})
-	p := &test.Params{Tekton: cs.Pipeline, Kube: cs.Kube}
+	cs, _ := test.SeedTestData(t, pipelinetest.Data{Namespaces: ns, Tasks: tasks})
+	cs.Pipeline.Resources = cb.APIResourceList(versionA1, []string{"task", "taskrun"})
+	tdc := testDynamic.Options{}
+	dc, _ := tdc.Client(
+		cb.UnstructuredT(tasks[0], versionA1),
+	)
+	p := &test.Params{Tekton: cs.Pipeline, Kube: cs.Kube, Dynamic: dc}
 
 	task := Command(p)
 	got, _ := test.ExecuteCommand(task, "start", "task-1",
@@ -977,7 +1092,12 @@ func Test_start_task_invalid_output_res(t *testing.T) {
 	}
 
 	cs, _ := test.SeedTestData(t, pipelinetest.Data{Tasks: tasks, Namespaces: ns})
-	p := &test.Params{Tekton: cs.Pipeline, Kube: cs.Kube}
+	cs.Pipeline.Resources = cb.APIResourceList(versionA1, []string{"task", "taskrun"})
+	tdc := testDynamic.Options{}
+	dc, _ := tdc.Client(
+		cb.UnstructuredT(tasks[0], versionA1),
+	)
+	p := &test.Params{Tekton: cs.Pipeline, Kube: cs.Kube, Dynamic: dc}
 
 	task := Command(p)
 	got, _ := test.ExecuteCommand(task, "start", "task-1",
@@ -1020,7 +1140,12 @@ func Test_start_task_invalid_param(t *testing.T) {
 	}
 
 	cs, _ := test.SeedTestData(t, pipelinetest.Data{Tasks: tasks, Namespaces: ns})
-	p := &test.Params{Tekton: cs.Pipeline, Kube: cs.Kube}
+	cs.Pipeline.Resources = cb.APIResourceList(versionA1, []string{"task", "taskrun"})
+	tdc := testDynamic.Options{}
+	dc, _ := tdc.Client(
+		cb.UnstructuredT(tasks[0], versionA1),
+	)
+	p := &test.Params{Tekton: cs.Pipeline, Kube: cs.Kube, Dynamic: dc}
 
 	task := Command(p)
 	got, _ := test.ExecuteCommand(task, "start", "task-1",
@@ -1063,7 +1188,12 @@ func Test_start_task_invalid_label(t *testing.T) {
 	}
 
 	cs, _ := test.SeedTestData(t, pipelinetest.Data{Tasks: tasks, Namespaces: ns})
-	p := &test.Params{Tekton: cs.Pipeline, Kube: cs.Kube}
+	cs.Pipeline.Resources = cb.APIResourceList(versionA1, []string{"task", "taskrun"})
+	tdc := testDynamic.Options{}
+	dc, _ := tdc.Client(
+		cb.UnstructuredT(tasks[0], versionA1),
+	)
+	p := &test.Params{Tekton: cs.Pipeline, Kube: cs.Kube, Dynamic: dc}
 
 	task := Command(p)
 	got, _ := test.ExecuteCommand(task, "start", "task-1",
@@ -1107,7 +1237,12 @@ func Test_start_task_allkindparam(t *testing.T) {
 	}
 
 	cs, _ := test.SeedTestData(t, pipelinetest.Data{Tasks: tasks, Namespaces: ns})
-	p := &test.Params{Tekton: cs.Pipeline, Kube: cs.Kube}
+	cs.Pipeline.Resources = cb.APIResourceList(versionA1, []string{"task", "taskrun"})
+	tdc := testDynamic.Options{}
+	dc, _ := tdc.Client(
+		cb.UnstructuredT(tasks[0], versionA1),
+	)
+	p := &test.Params{Tekton: cs.Pipeline, Kube: cs.Kube, Dynamic: dc}
 
 	task := Command(p)
 	got, _ := test.ExecuteCommand(task, "start", "task-1",
@@ -1123,8 +1258,8 @@ func Test_start_task_allkindparam(t *testing.T) {
 
 	expected := "Taskrun started: \n\nIn order to track the taskrun progress run:\ntkn taskrun logs  -f -n ns\n"
 	test.AssertOutput(t, expected, got)
-
-	tr, err := cs.Pipeline.TektonV1alpha1().TaskRuns("ns").List(v1.ListOptions{})
+	clients, _ := p.Clients()
+	tr, err := trlist.TaskRuns(clients, metav1.ListOptions{}, "ns")
 	if err != nil {
 		t.Errorf("Error listing taskruns %s", err.Error())
 	}
@@ -1133,7 +1268,7 @@ func Test_start_task_allkindparam(t *testing.T) {
 		t.Errorf("Error taskrun generated is different %+v", tr)
 	}
 
-	for _, v := range tr.Items[0].Spec.Inputs.Resources {
+	for _, v := range tr.Items[0].Spec.Resources.Inputs {
 		if v.Name == "my-repo" {
 			test.AssertOutput(t, "git", v.ResourceRef.Name)
 		}
@@ -1143,9 +1278,9 @@ func Test_start_task_allkindparam(t *testing.T) {
 		}
 	}
 
-	test.AssertOutput(t, 3, len(tr.Items[0].Spec.Inputs.Params))
+	test.AssertOutput(t, 3, len(tr.Items[0].Spec.Params))
 
-	for _, v := range tr.Items[0].Spec.Inputs.Params {
+	for _, v := range tr.Items[0].Spec.Params {
 		if v.Name == "my-arg" {
 			test.AssertOutput(t, v1alpha1.ArrayOrString{Type: v1alpha1.ParamTypeString, StringVal: "value1"}, v.Value)
 		}
@@ -1159,7 +1294,7 @@ func Test_start_task_allkindparam(t *testing.T) {
 		}
 	}
 
-	for _, v := range tr.Items[0].Spec.Outputs.Resources {
+	for _, v := range tr.Items[0].Spec.Resources.Outputs {
 		if v.Name == "code-image" {
 			test.AssertOutput(t, "output-image", v.ResourceRef.Name)
 		}
@@ -1204,7 +1339,12 @@ func Test_start_task_wrong_param(t *testing.T) {
 	}
 
 	cs, _ := test.SeedTestData(t, pipelinetest.Data{Tasks: tasks, Namespaces: ns})
-	p := &test.Params{Tekton: cs.Pipeline, Kube: cs.Kube}
+	cs.Pipeline.Resources = cb.APIResourceList(versionA1, []string{"task", "taskrun"})
+	tdc := testDynamic.Options{}
+	dc, _ := tdc.Client(
+		cb.UnstructuredT(tasks[0], versionA1),
+	)
+	p := &test.Params{Tekton: cs.Pipeline, Kube: cs.Kube, Dynamic: dc}
 
 	task := Command(p)
 	got, _ := test.ExecuteCommand(task, "start", "task-1",
@@ -1334,14 +1474,20 @@ func TestTaskStart_ExecuteCommand(t *testing.T) {
 
 	cs, _ := test.SeedTestData(t, pipelinetest.Data{Tasks: tasks, Namespaces: ns})
 	cs.Pipeline.Resources = cb.APIResourceList("v1alpha1", []string{"task"})
-
+	tdc := testDynamic.Options{}
+	dc1, _ := tdc.Client(
+		cb.UnstructuredT(tasks[0], versionA1),
+	)
 	cs2, _ := test.SeedTestData(t, pipelinetest.Data{Tasks: tasks, Namespaces: ns})
 	cs2.Pipeline.Resources = cb.APIResourceList("v1beta1", []string{"task"})
+	dc2, _ := tdc.Client(
+		cb.UnstructuredT(tasks[0], versionB1))
 
 	testParams := []struct {
 		name       string
 		command    []string
 		namespace  string
+		dynamic    dynamic.Interface
 		input      pipelinetest.Clients
 		wantError  bool
 		want       string
@@ -1357,6 +1503,7 @@ func TestTaskStart_ExecuteCommand(t *testing.T) {
 				"--dry-run",
 				"--output", "invalid"},
 			namespace: "",
+			//dynamic:   dc1,
 			input:     cs,
 			wantError: true,
 			want:      "output format specified is invalid but must be yaml or json",
@@ -1370,6 +1517,7 @@ func TestTaskStart_ExecuteCommand(t *testing.T) {
 				"-n", "ns",
 				"--dry-run"},
 			namespace:  "",
+			dynamic:    dc1,
 			input:      cs,
 			wantError:  false,
 			goldenFile: true,
@@ -1383,6 +1531,7 @@ func TestTaskStart_ExecuteCommand(t *testing.T) {
 				"-n", "ns",
 				"--dry-run"},
 			namespace:  "",
+			dynamic:    dc2,
 			input:      cs2,
 			wantError:  false,
 			goldenFile: true,
@@ -1397,6 +1546,7 @@ func TestTaskStart_ExecuteCommand(t *testing.T) {
 				"--dry-run",
 				"--output=json"},
 			namespace:  "",
+			dynamic:    dc1,
 			input:      cs,
 			wantError:  false,
 			goldenFile: true,
@@ -1412,6 +1562,7 @@ func TestTaskStart_ExecuteCommand(t *testing.T) {
 				"--dry-run",
 				"--output=yaml"},
 			namespace:  "",
+			dynamic:    dc1,
 			input:      cs,
 			wantError:  false,
 			goldenFile: true,
@@ -1427,6 +1578,7 @@ func TestTaskStart_ExecuteCommand(t *testing.T) {
 				"--dry-run",
 				"--output=yaml"},
 			namespace:  "",
+			dynamic:    dc1,
 			input:      cs,
 			wantError:  false,
 			goldenFile: true,
@@ -1441,6 +1593,7 @@ func TestTaskStart_ExecuteCommand(t *testing.T) {
 				"--dry-run",
 				"--timeout", "1s"},
 			namespace:  "",
+			dynamic:    dc1,
 			input:      cs,
 			wantError:  false,
 			goldenFile: true,
@@ -1456,6 +1609,7 @@ func TestTaskStart_ExecuteCommand(t *testing.T) {
 				"--dry-run",
 				"--output=json"},
 			namespace:  "",
+			dynamic:    dc1,
 			input:      cs,
 			wantError:  false,
 			goldenFile: true,
@@ -1464,7 +1618,7 @@ func TestTaskStart_ExecuteCommand(t *testing.T) {
 
 	for _, tp := range testParams {
 		t.Run(tp.name, func(t *testing.T) {
-			p := &test.Params{Tekton: tp.input.Pipeline, Kube: tp.input.Kube}
+			p := &test.Params{Tekton: tp.input.Pipeline, Kube: tp.input.Kube, Dynamic: tp.dynamic}
 			c := Command(p)
 
 			got, err := test.ExecuteCommand(c, tp.command...)

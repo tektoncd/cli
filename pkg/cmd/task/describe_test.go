@@ -321,9 +321,12 @@ func TestTaskDescribe_TaskRunError(t *testing.T) {
 	}
 
 	version := "v1alpha1"
-	tdc := testDynamic.Options{Verb: "list", Resource: "taskruns", Action: func(action k8stest.Action) (bool, runtime.Object, error) {
-		return true, nil, errors.New("fake list taskrun error")
-	}}
+	tdc := testDynamic.Options{
+		PrependReactors: []testDynamic.PrependOpt{
+			{Verb: "list", Resource: "taskruns",
+				Action: func(action k8stest.Action) (bool, runtime.Object, error) {
+					return true, nil, errors.New("fake list taskrun error")
+				}}}}
 	dynamic, err := tdc.Client(
 		cb.UnstructuredT(tasks[0], version),
 		cb.UnstructuredT(tasks[1], version),
