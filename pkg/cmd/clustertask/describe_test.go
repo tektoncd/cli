@@ -25,8 +25,11 @@ import (
 	"github.com/jonboulle/clockwork"
 	"github.com/tektoncd/cli/pkg/test"
 	cb "github.com/tektoncd/cli/pkg/test/builder"
+	testDynamic "github.com/tektoncd/cli/pkg/test/dynamic"
 	"github.com/tektoncd/pipeline/pkg/apis/pipeline/v1alpha1"
+	"github.com/tektoncd/pipeline/pkg/apis/pipeline/v1beta1"
 	"github.com/tektoncd/pipeline/pkg/reconciler/pipelinerun/resources"
+	pipelinev1beta1test "github.com/tektoncd/pipeline/test"
 	tb "github.com/tektoncd/pipeline/test/builder"
 	pipelinetest "github.com/tektoncd/pipeline/test/v1alpha1"
 	"gotest.tools/v3/golden"
@@ -39,20 +42,17 @@ import (
 
 func Test_ClusterTaskDescribe(t *testing.T) {
 	clock := clockwork.NewFakeClock()
-	seeds := make([]pipelinetest.Clients, 0)
 
 	clustertasks := []*v1alpha1.ClusterTask{
 		tb.ClusterTask("clustertask-full", cb.ClusterTaskCreationTime(clock.Now().Add(1*time.Minute)),
 			tb.ClusterTaskSpec(
-				tb.TaskInputs(
-					tb.InputsResource("my-repo", v1alpha1.PipelineResourceTypeGit),
-					tb.InputsResource("my-image", v1alpha1.PipelineResourceTypeImage),
-					tb.InputsParamSpec("myarg", v1alpha1.ParamTypeString, tb.ParamSpecDefault("default")),
-					tb.InputsParamSpec("print", v1alpha1.ParamTypeArray, tb.ParamSpecDefault("booms", "booms", "booms")),
+				tb.TaskResources(
+					tb.TaskResourcesInput("my-repo", v1alpha1.PipelineResourceTypeGit),
+					tb.TaskResourcesInput("my-image", v1alpha1.PipelineResourceTypeImage),
+					tb.TaskResourcesOutput("code-image", v1alpha1.PipelineResourceTypeImage),
 				),
-				tb.TaskOutputs(
-					tb.OutputsResource("code-image", v1alpha1.PipelineResourceTypeImage),
-				),
+				tb.TaskParam("myarg", v1alpha1.ParamTypeString, tb.ParamSpecDefault("default")),
+				tb.TaskParam("print", v1alpha1.ParamTypeArray, tb.ParamSpecDefault("booms", "booms", "booms")),
 				tb.Step("busybox",
 					tb.StepName("hello"),
 				),
@@ -64,13 +64,11 @@ func Test_ClusterTaskDescribe(t *testing.T) {
 		tb.ClusterTask("clustertask-one-everything", cb.ClusterTaskCreationTime(clock.Now().Add(1*time.Minute)),
 			tb.ClusterTaskSpec(
 				tb.TaskDescription("a test description"),
-				tb.TaskInputs(
-					tb.InputsResource("my-repo", v1alpha1.PipelineResourceTypeGit),
-					tb.InputsParamSpec("myarg", v1alpha1.ParamTypeString),
+				tb.TaskResources(
+					tb.TaskResourcesInput("my-repo", v1alpha1.PipelineResourceTypeGit),
+					tb.TaskResourcesOutput("code-image", v1alpha1.PipelineResourceTypeImage),
 				),
-				tb.TaskOutputs(
-					tb.OutputsResource("code-image", v1alpha1.PipelineResourceTypeImage),
-				),
+				tb.TaskParam("myarg", v1alpha1.ParamTypeString),
 				tb.Step("busybox",
 					tb.StepName("hello"),
 				),
@@ -85,10 +83,10 @@ func Test_ClusterTaskDescribe(t *testing.T) {
 			tb.TaskRunSpec(
 				tb.TaskRunTaskRef("clustertask-1", tb.TaskRefKind(v1alpha1.ClusterTaskKind)),
 				tb.TaskRunServiceAccountName("svc"),
-				tb.TaskRunInputs(tb.TaskRunInputsParam("myarg", "value")),
-				tb.TaskRunInputs(tb.TaskRunInputsParam("print", "booms", "booms", "booms")),
-				tb.TaskRunInputs(tb.TaskRunInputsResource("my-repo", tb.TaskResourceBindingRef("git"))),
-				tb.TaskRunOutputs(tb.TaskRunOutputsResource("my-image", tb.TaskResourceBindingRef("image"))),
+				tb.TaskRunParam("myarg", "value"),
+				tb.TaskRunParam("print", "booms", "booms", "booms"),
+				tb.TaskRunResources(tb.TaskRunResourcesInput("my-repo", tb.TaskResourceBindingRef("git"))),
+				tb.TaskRunResources(tb.TaskRunResourcesOutput("my-image", tb.TaskResourceBindingRef("image"))),
 			),
 			tb.TaskRunStatus(
 				tb.TaskRunStartTime(clock.Now().Add(-10*time.Minute)),
@@ -104,8 +102,8 @@ func Test_ClusterTaskDescribe(t *testing.T) {
 			tb.TaskRunSpec(
 				tb.TaskRunTaskRef("clustertask-1", tb.TaskRefKind(v1alpha1.ClusterTaskKind)),
 				tb.TaskRunServiceAccountName("svc"),
-				tb.TaskRunInputs(tb.TaskRunInputsParam("myarg", "value")),
-				tb.TaskRunInputs(tb.TaskRunInputsResource("my-repo", tb.TaskResourceBindingRef("git"))),
+				tb.TaskRunParam("myarg", "value"),
+				tb.TaskRunResources(tb.TaskRunResourcesInput("my-repo", tb.TaskResourceBindingRef("git"))),
 			),
 			tb.TaskRunStatus(
 				tb.TaskRunStartTime(clock.Now().Add(-10*time.Minute)),
@@ -121,10 +119,10 @@ func Test_ClusterTaskDescribe(t *testing.T) {
 			tb.TaskRunSpec(
 				tb.TaskRunTaskRef("clustertask-1", tb.TaskRefKind(v1alpha1.ClusterTaskKind)),
 				tb.TaskRunServiceAccountName("svc"),
-				tb.TaskRunInputs(tb.TaskRunInputsParam("myarg", "value")),
-				tb.TaskRunInputs(tb.TaskRunInputsParam("print", "booms", "booms", "booms")),
-				tb.TaskRunInputs(tb.TaskRunInputsResource("my-repo", tb.TaskResourceBindingRef("git"))),
-				tb.TaskRunOutputs(tb.TaskRunOutputsResource("my-image", tb.TaskResourceBindingRef("image"))),
+				tb.TaskRunParam("myarg", "value"),
+				tb.TaskRunParam("print", "booms", "booms", "booms"),
+				tb.TaskRunResources(tb.TaskRunResourcesInput("my-repo", tb.TaskResourceBindingRef("git"))),
+				tb.TaskRunResources(tb.TaskRunResourcesOutput("my-image", tb.TaskResourceBindingRef("image"))),
 			),
 			tb.TaskRunStatus(
 				tb.TaskRunStartTime(clock.Now().Add(-10*time.Minute)),
@@ -144,55 +142,79 @@ func Test_ClusterTaskDescribe(t *testing.T) {
 		},
 	}
 
+	version := "v1alpha1"
+	tdc := testDynamic.Options{}
+	dynamic, err := tdc.Client(
+		cb.UnstructuredCT(clustertasks[0], version),
+		cb.UnstructuredCT(clustertasks[1], version),
+		cb.UnstructuredCT(clustertasks[2], version),
+		cb.UnstructuredTR(taskruns[0], version),
+		cb.UnstructuredTR(taskruns[1], version),
+		cb.UnstructuredTR(taskruns[2], version),
+	)
+	if err != nil {
+		t.Errorf("unable to create dynamic client: %v", err)
+	}
 	cs, _ := test.SeedTestData(t, pipelinetest.Data{ClusterTasks: clustertasks, Namespaces: ns, TaskRuns: taskruns})
-	seeds = append(seeds, cs)
+	cs.Pipeline.Resources = cb.APIResourceList(version, []string{"clustertask", "taskrun"})
+	p := &test.Params{Tekton: cs.Pipeline, Kube: cs.Kube, Dynamic: dynamic, Clock: clock}
+	p.SetNamespace("ns")
 
-	cs2, _ := test.SeedTestData(t, pipelinetest.Data{ClusterTasks: clustertasks, Namespaces: ns})
-	cs2.Pipeline.PrependReactor("list", "taskruns", func(action k8stest.Action) (bool, runtime.Object, error) {
+	tdc2 := testDynamic.Options{Verb: "list", Resource: "taskruns", Action: func(action k8stest.Action) (bool, runtime.Object, error) {
 		return true, nil, errors.New("fake list taskrun error")
-	})
-
-	seeds = append(seeds, cs2)
+	}}
+	dynamic2, err := tdc2.Client(
+		cb.UnstructuredCT(clustertasks[0], version),
+		cb.UnstructuredCT(clustertasks[1], version),
+		cb.UnstructuredCT(clustertasks[2], version),
+	)
+	if err != nil {
+		t.Errorf("unable to create dynamic client: %v", err)
+	}
+	cs2, _ := test.SeedTestData(t, pipelinetest.Data{ClusterTasks: clustertasks, Namespaces: ns})
+	cs2.Pipeline.Resources = cb.APIResourceList(version, []string{"clustertask", "taskrun"})
+	p2 := &test.Params{Tekton: cs2.Pipeline, Kube: cs2.Kube, Dynamic: dynamic2, Clock: clock}
+	p2.SetNamespace("ns")
 
 	testParams := []struct {
 		name        string
 		command     []string
-		input       pipelinetest.Clients
+		param       *test.Params
 		inputStream io.Reader
 		wantError   bool
 	}{
 		{
 			name:        "Describe with no arguments",
 			command:     []string{"describe", "notexist"},
-			input:       seeds[0],
+			param:       p,
 			inputStream: nil,
 			wantError:   true,
 		},
 		{
 			name:        "Describe clustertask with name only",
 			command:     []string{"describe", "clustertask-justname"},
-			input:       seeds[0],
+			param:       p,
 			inputStream: nil,
 			wantError:   false,
 		},
 		{
 			name:        "Describe full clustertask multiple taskruns",
 			command:     []string{"describe", "clustertask-full"},
-			input:       seeds[0],
+			param:       p,
 			inputStream: nil,
 			wantError:   false,
 		},
 		{
 			name:        "Describe clustertask missing param default one of everything",
 			command:     []string{"describe", "clustertask-one-everything"},
-			input:       seeds[0],
+			param:       p,
 			inputStream: nil,
 			wantError:   false,
 		},
 		{
 			name:        "Failure from listing taskruns",
 			command:     []string{"describe", "clustertask-full"},
-			input:       seeds[1],
+			param:       p2,
 			inputStream: nil,
 			wantError:   true,
 		},
@@ -200,9 +222,7 @@ func Test_ClusterTaskDescribe(t *testing.T) {
 
 	for _, tp := range testParams {
 		t.Run(tp.name, func(t *testing.T) {
-			p := &test.Params{Tekton: tp.input.Pipeline, Kube: tp.input.Kube}
-			p.SetNamespace("ns")
-			clustertask := Command(p)
+			clustertask := Command(tp.param)
 
 			if tp.inputStream != nil {
 				clustertask.SetIn(tp.inputStream)
@@ -244,9 +264,64 @@ func TestClusterTask_custom_output(t *testing.T) {
 		},
 	})
 
-	p := &test.Params{Tekton: cs.Pipeline, Clock: clock, Kube: cs.Kube}
-	clustertask := Command(p)
+	version := "v1alpha1"
+	tdc := testDynamic.Options{}
+	dynamic, err := tdc.Client(
+		cb.UnstructuredCT(cstasks[0], version),
+	)
+	if err != nil {
+		t.Errorf("unable to create dynamic client: %v", err)
+	}
 
+	cs.Pipeline.Resources = cb.APIResourceList(version, []string{"clustertask", "taskrun"})
+	p := &test.Params{Tekton: cs.Pipeline, Kube: cs.Kube, Dynamic: dynamic, Clock: clock}
+	clustertask := Command(p)
+	got, err := test.ExecuteCommand(clustertask, "desc", "-o", "name", name)
+	if err != nil {
+		t.Errorf("Unexpected error: %v", err)
+	}
+
+	got = strings.TrimSpace(got)
+	if got != expected {
+		t.Errorf("Result should be '%s' != '%s'", got, expected)
+	}
+}
+
+func TestClusterTaskV1beta1_custom_output(t *testing.T) {
+	name := "clustertask"
+	expected := "clustertask.tekton.dev/" + name
+
+	clock := clockwork.NewFakeClock()
+
+	cstasks := []*v1beta1.ClusterTask{
+		{
+			ObjectMeta: metav1.ObjectMeta{Name: name},
+		},
+	}
+
+	cs, _ := test.SeedV1beta1TestData(t, pipelinev1beta1test.Data{
+		ClusterTasks: cstasks,
+		Namespaces: []*corev1.Namespace{
+			{
+				ObjectMeta: metav1.ObjectMeta{
+					Name: "",
+				},
+			},
+		},
+	})
+
+	version := "v1beta1"
+	tdc := testDynamic.Options{}
+	dynamic, err := tdc.Client(
+		cb.UnstructuredV1beta1CT(cstasks[0], version),
+	)
+	if err != nil {
+		t.Errorf("unable to create dynamic client: %v", err)
+	}
+
+	cs.Pipeline.Resources = cb.APIResourceList(version, []string{"clustertask", "taskrun"})
+	p := &test.Params{Tekton: cs.Pipeline, Kube: cs.Kube, Dynamic: dynamic, Clock: clock}
+	clustertask := Command(p)
 	got, err := test.ExecuteCommand(clustertask, "desc", "-o", "name", name)
 	if err != nil {
 		t.Errorf("Unexpected error: %v", err)

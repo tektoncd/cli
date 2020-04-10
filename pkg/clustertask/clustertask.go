@@ -1,0 +1,102 @@
+// Copyright © 2020 The Tekton Authors.
+//
+// Licensed under the Apache License, Version 2.0 (the "License");
+// you may not use this file except in compliance with the License.
+// You may obtain a copy of the License at
+//
+//     http://www.apache.org/licenses/LICENSE-2.0
+//
+// Unless required by applicable law or agreed to in writing, software
+// distributed under the License is distributed on an "AS IS" BASIS,
+// WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+// See the License for the specific language governing permissions and
+// limitations under the License.
+
+package clustertask
+
+import (
+	"context"
+	"fmt"
+	"os"
+
+	"github.com/tektoncd/cli/pkg/actions"
+	"github.com/tektoncd/cli/pkg/cli"
+	"github.com/tektoncd/pipeline/pkg/apis/pipeline/v1alpha1"
+	"github.com/tektoncd/pipeline/pkg/apis/pipeline/v1beta1"
+	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+	"k8s.io/apimachinery/pkg/runtime"
+	"k8s.io/apimachinery/pkg/runtime/schema"
+	"k8s.io/client-go/discovery"
+)
+
+var clustertaskGroupResource = schema.GroupVersionResource{Group: "tekton.dev", Resource: "clustertasks"}
+
+func List(c *cli.Clients, opts metav1.ListOptions) (*v1beta1.ClusterTaskList, error) {
+	unstructuredCT, err := actions.List(clustertaskGroupResource, c, "", opts)
+	if err != nil {
+		return nil, err
+	}
+
+	var clustertasks *v1beta1.ClusterTaskList
+	if err := runtime.DefaultUnstructuredConverter.FromUnstructured(unstructuredCT.UnstructuredContent(), &clustertasks); err != nil {
+		return nil, err
+	}
+	if err != nil {
+		fmt.Fprintf(os.Stderr, "Failed to list clustertasks\n")
+		return nil, err
+	}
+
+	return clustertasks, nil
+}
+
+// It will fetch the resource based on the api available and return v1beta1 form
+func Get(c *cli.Clients, clustertaskname string, opts metav1.GetOptions, discovery discovery.DiscoveryInterface) (*v1beta1.ClusterTask, error) {
+	gvr, err := actions.GetGroupVersionResource(clustertaskGroupResource, discovery)
+	if err != nil {
+		return nil, err
+	}
+
+	if gvr.Version == "v1alpha1" {
+		clustertask, err := getV1alpha1(c, clustertaskname, opts)
+		if err != nil {
+			return nil, err
+		}
+		var clustertaskConverted v1beta1.ClusterTask
+		err = clustertask.ConvertUp(context.Background(), &clustertaskConverted)
+		if err != nil {
+			return nil, err
+		}
+		return &clustertaskConverted, nil
+	}
+	return GetV1beta1(c, clustertaskname, opts)
+}
+
+// It will fetch the resource in v1beta1 struct format
+func GetV1beta1(c *cli.Clients, clustertaskname string, opts metav1.GetOptions) (*v1beta1.ClusterTask, error) {
+	unstructuredCT, err := actions.Get(clustertaskGroupResource, c, clustertaskname, "", opts)
+	if err != nil {
+		return nil, err
+	}
+
+	var clustertask *v1beta1.ClusterTask
+	if err := runtime.DefaultUnstructuredConverter.FromUnstructured(unstructuredCT.UnstructuredContent(), &clustertask); err != nil {
+		fmt.Fprintf(os.Stderr, "failed to get clustertask\n")
+		return nil, err
+	}
+	return clustertask, nil
+}
+
+// It will fetch the resource in v1alpha1 struct format
+func getV1alpha1(c *cli.Clients, clustertaskname string, opts metav1.GetOptions) (*v1alpha1.ClusterTask, error) {
+	unstructuredCT, err := actions.Get(clustertaskGroupResource, c, clustertaskname, "", opts)
+	if err != nil {
+		return nil, err
+	}
+
+	var clustertask *v1alpha1.ClusterTask
+	if err := runtime.DefaultUnstructuredConverter.FromUnstructured(unstructuredCT.UnstructuredContent(), &clustertask); err != nil {
+		fmt.Fprintf(os.Stderr, "failed to get clustertask")
+		return nil, err
+	}
+	return clustertask, nil
+}

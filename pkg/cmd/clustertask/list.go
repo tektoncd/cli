@@ -22,10 +22,9 @@ import (
 	"github.com/spf13/cobra"
 	"github.com/tektoncd/cli/pkg/actions"
 	"github.com/tektoncd/cli/pkg/cli"
+	"github.com/tektoncd/cli/pkg/clustertask"
 	"github.com/tektoncd/cli/pkg/formatted"
-	"github.com/tektoncd/pipeline/pkg/apis/pipeline/v1beta1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
-	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/apimachinery/pkg/runtime/schema"
 	cliopts "k8s.io/cli-runtime/pkg/genericclioptions"
 )
@@ -77,7 +76,7 @@ func printClusterTaskDetails(s *cli.Stream, p cli.Params) error {
 		return err
 	}
 
-	clustertasks, err := List(cs, metav1.ListOptions{})
+	clustertasks, err := clustertask.List(cs, metav1.ListOptions{})
 	if err != nil {
 		fmt.Fprintf(os.Stderr, "failed to list clustertasks\n")
 		return err
@@ -99,24 +98,4 @@ func printClusterTaskDetails(s *cli.Stream, p cli.Params) error {
 		)
 	}
 	return w.Flush()
-}
-
-func List(c *cli.Clients, opts metav1.ListOptions) (*v1beta1.ClusterTaskList, error) {
-
-	ctGroupResource := schema.GroupVersionResource{Group: "tekton.dev", Resource: "clustertasks"}
-	unstructuredCT, err := actions.List(ctGroupResource, c, "", opts)
-	if err != nil {
-		return nil, err
-	}
-
-	var cts *v1beta1.ClusterTaskList
-	if err := runtime.DefaultUnstructuredConverter.FromUnstructured(unstructuredCT.UnstructuredContent(), &cts); err != nil {
-		return nil, err
-	}
-	if err != nil {
-		fmt.Fprintln(os.Stderr, "failed to list clustertasks")
-		return nil, err
-	}
-
-	return cts, nil
 }

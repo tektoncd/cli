@@ -20,6 +20,7 @@ import (
 	"github.com/spf13/cobra"
 	"github.com/tektoncd/cli/pkg/actions"
 	"github.com/tektoncd/cli/pkg/cli"
+	"github.com/tektoncd/cli/pkg/clustertask"
 	"github.com/tektoncd/cli/pkg/deleter"
 	"github.com/tektoncd/cli/pkg/options"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
@@ -101,7 +102,7 @@ func deleteClusterTasks(s *cli.Stream, p cli.Params, tNames []string, deleteAll 
 }
 
 func allClusterTaskNames(cs *cli.Clients) ([]string, error) {
-	clusterTasks, err := List(cs, metav1.ListOptions{})
+	clusterTasks, err := clustertask.List(cs, metav1.ListOptions{})
 	if err != nil {
 		return nil, err
 	}
