@@ -51,10 +51,10 @@ check: lint test
 test: test-unit ## run all tests
 
 .PHONY: lint
-test: lint-go lint-yaml ## run all linters
+lint: lint-go lint-yaml ## run all linters
 
 .PHONY: lint-go
-lint: ## runs go linter on all go files
+lint-go: ## runs go linter on all go files
 	@echo "Linting go files..."
 	@golangci-lint run ./... --modules-download-mode=vendor \
 							--max-issues-per-linter=0 \
