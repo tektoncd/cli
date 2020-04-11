@@ -365,7 +365,6 @@ func (opt *startOptions) getInput(pipeline *v1alpha1.Pipeline) error {
 
 // Include the default
 func (opt *startOptions) includeDefaultParams(pipeline *v1alpha1.Pipeline) error {
-
 	//Creating a slice of string to contain the param.Name already included opt.Params through -p or --param option
 	var optParamNames = make([]string, 0)
 	for _, optParam := range opt.Params {
@@ -387,6 +386,8 @@ func (opt *startOptions) includeDefaultParams(pipeline *v1alpha1.Pipeline) error
 			}
 		}
 	}
+	sort.Slice(opt.Params, func(i, j int) bool { return opt.Params[i] < opt.Params[j] })
+	fmt.Println(opt.Params)
 	return nil
 }
 
