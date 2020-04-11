@@ -68,7 +68,7 @@ func TestTaskList_Empty(t *testing.T) {
 	if err != nil {
 		t.Errorf("Unexpected error: %v", err)
 	}
-	test.AssertOutput(t, emptyMsg+"\n", output)
+	test.AssertOutput(t, "No Tasks found\n", output)
 }
 
 func TestTaskList_Only_Tasks_v1alpha1(t *testing.T) {
@@ -80,7 +80,7 @@ func TestTaskList_Only_Tasks_v1alpha1(t *testing.T) {
 		tb.Task("bananas", "namespace", cb.TaskCreationTime(clock.Now().Add(-512*time.Hour))),
 		tb.Task("apples", "namespace", tb.TaskSpec(tb.TaskDescription("")), cb.TaskCreationTime(clock.Now().Add(-513*time.Hour))),
 		tb.Task("potatoes", "namespace", tb.TaskSpec(tb.TaskDescription("a test task")), cb.TaskCreationTime(clock.Now().Add(-514*time.Hour))),
-		tb.Task("onionss", "namespace", tb.TaskSpec(tb.TaskDescription("a test task to test description of task")), cb.TaskCreationTime(clock.Now().Add(-515*time.Hour))),
+		tb.Task("onions", "namespace", tb.TaskSpec(tb.TaskDescription("a test task to test description of task")), cb.TaskCreationTime(clock.Now().Add(-515*time.Hour))),
 	}
 
 	ns := []*corev1.Namespace{
@@ -154,10 +154,159 @@ func TestTaskList_Only_Tasks_v1beta1(t *testing.T) {
 
 	cs, _ := test.SeedTestData(t, pipelinetest.Data{Tasks: tasks, Namespaces: ns})
 	p := &test.Params{Tekton: cs.Pipeline, Clock: clock, Kube: cs.Kube, Dynamic: dynamic}
-	cs.Pipeline.Resources = cb.APIResourceList("v1beta1", []string{"task"})
+	cs.Pipeline.Resources = cb.APIResourceList(version, []string{"task"})
 	task := Command(p)
 
 	output, err := test.ExecuteCommand(task, "list", "-n", "namespace")
+	if err != nil {
+		t.Errorf("Unexpected error: %v", err)
+	}
+
+	golden.Assert(t, output, fmt.Sprintf("%s.golden", t.Name()))
+}
+
+func TestTaskList_Only_Tasks_no_headers_v1beta1(t *testing.T) {
+	clock := clockwork.NewFakeClock()
+
+	tasks := []*v1alpha1.Task{
+		tb.Task("tomatoes", "namespace", cb.TaskCreationTime(clock.Now().Add(-1*time.Minute))),
+		tb.Task("mangoes", "namespace", cb.TaskCreationTime(clock.Now().Add(-20*time.Second))),
+		tb.Task("bananas", "namespace", cb.TaskCreationTime(clock.Now().Add(-512*time.Hour))),
+		tb.Task("apples", "namespace", tb.TaskSpec(tb.TaskDescription("")), cb.TaskCreationTime(clock.Now().Add(-513*time.Hour))),
+		tb.Task("potatoes", "namespace", tb.TaskSpec(tb.TaskDescription("a test task")), cb.TaskCreationTime(clock.Now().Add(-514*time.Hour))),
+		tb.Task("onions", "namespace", tb.TaskSpec(tb.TaskDescription("a test task to test description of task")), cb.TaskCreationTime(clock.Now().Add(-515*time.Hour))),
+	}
+
+	ns := []*corev1.Namespace{
+		{
+			ObjectMeta: metav1.ObjectMeta{
+				Name: "namespace",
+			},
+		},
+	}
+
+	version := "v1beta1"
+	tdc := testDynamic.Options{}
+	dynamic, err := tdc.Client(
+		cb.UnstructuredT(tasks[0], version),
+		cb.UnstructuredT(tasks[1], version),
+		cb.UnstructuredT(tasks[2], version),
+		cb.UnstructuredT(tasks[3], version),
+		cb.UnstructuredT(tasks[4], version),
+		cb.UnstructuredT(tasks[5], version),
+	)
+	if err != nil {
+		t.Errorf("unable to create dynamic client: %v", err)
+	}
+
+	cs, _ := test.SeedTestData(t, pipelinetest.Data{Tasks: tasks, Namespaces: ns})
+	p := &test.Params{Tekton: cs.Pipeline, Clock: clock, Kube: cs.Kube, Dynamic: dynamic}
+	cs.Pipeline.Resources = cb.APIResourceList(version, []string{"task"})
+	task := Command(p)
+
+	output, err := test.ExecuteCommand(task, "list", "-n", "namespace", "--no-headers")
+	if err != nil {
+		t.Errorf("Unexpected error: %v", err)
+	}
+
+	golden.Assert(t, output, fmt.Sprintf("%s.golden", t.Name()))
+}
+
+func TestTaskList_Only_Tasks_all_namespaces_v1beta1(t *testing.T) {
+	clock := clockwork.NewFakeClock()
+
+	tasks := []*v1alpha1.Task{
+		tb.Task("tomatoes", "namespace", cb.TaskCreationTime(clock.Now().Add(-1*time.Minute))),
+		tb.Task("mangoes", "namespace", cb.TaskCreationTime(clock.Now().Add(-20*time.Second))),
+		tb.Task("bananas", "namespace", cb.TaskCreationTime(clock.Now().Add(-512*time.Hour))),
+		tb.Task("apples", "namespace", tb.TaskSpec(tb.TaskDescription("")), cb.TaskCreationTime(clock.Now().Add(-513*time.Hour))),
+		tb.Task("potatoes", "namespace", tb.TaskSpec(tb.TaskDescription("a test task")), cb.TaskCreationTime(clock.Now().Add(-514*time.Hour))),
+		tb.Task("onions", "namespace", tb.TaskSpec(tb.TaskDescription("a test task to test description of task")), cb.TaskCreationTime(clock.Now().Add(-515*time.Hour))),
+		tb.Task("tomates", "espace-de-nom", cb.TaskCreationTime(clock.Now().Add(-1*time.Minute))),
+		tb.Task("mangues", "espace-de-nom", cb.TaskCreationTime(clock.Now().Add(-20*time.Second))),
+		tb.Task("bananes", "espace-de-nom", cb.TaskCreationTime(clock.Now().Add(-512*time.Hour))),
+		tb.Task("pommes", "espace-de-nom", tb.TaskSpec(tb.TaskDescription("")), cb.TaskCreationTime(clock.Now().Add(-513*time.Hour))),
+		tb.Task("patates", "espace-de-nom", tb.TaskSpec(tb.TaskDescription("a test task")), cb.TaskCreationTime(clock.Now().Add(-514*time.Hour))),
+		tb.Task("oignons", "espace-de-nom", tb.TaskSpec(tb.TaskDescription("a test task to test description of task")), cb.TaskCreationTime(clock.Now().Add(-515*time.Hour))),
+	}
+
+	version := "v1beta1"
+	tdc := testDynamic.Options{}
+	dynamic, err := tdc.Client(
+		cb.UnstructuredT(tasks[0], version),
+		cb.UnstructuredT(tasks[1], version),
+		cb.UnstructuredT(tasks[2], version),
+		cb.UnstructuredT(tasks[3], version),
+		cb.UnstructuredT(tasks[4], version),
+		cb.UnstructuredT(tasks[5], version),
+		cb.UnstructuredT(tasks[6], version),
+		cb.UnstructuredT(tasks[7], version),
+		cb.UnstructuredT(tasks[8], version),
+		cb.UnstructuredT(tasks[9], version),
+		cb.UnstructuredT(tasks[10], version),
+		cb.UnstructuredT(tasks[11], version),
+	)
+	if err != nil {
+		t.Errorf("unable to create dynamic client: %v", err)
+	}
+
+	cs, _ := test.SeedTestData(t, pipelinetest.Data{Tasks: tasks})
+	p := &test.Params{Tekton: cs.Pipeline, Clock: clock, Kube: cs.Kube, Dynamic: dynamic}
+	cs.Pipeline.Resources = cb.APIResourceList(version, []string{"task"})
+	task := Command(p)
+
+	output, err := test.ExecuteCommand(task, "list", "--all-namespaces")
+	if err != nil {
+		t.Errorf("Unexpected error: %v", err)
+	}
+
+	golden.Assert(t, output, fmt.Sprintf("%s.golden", t.Name()))
+}
+
+func TestTaskList_Only_Tasks_all_namespaces_no_headers_v1beta1(t *testing.T) {
+	clock := clockwork.NewFakeClock()
+
+	tasks := []*v1alpha1.Task{
+		tb.Task("tomatoes", "namespace", cb.TaskCreationTime(clock.Now().Add(-1*time.Minute))),
+		tb.Task("mangoes", "namespace", cb.TaskCreationTime(clock.Now().Add(-20*time.Second))),
+		tb.Task("bananas", "namespace", cb.TaskCreationTime(clock.Now().Add(-512*time.Hour))),
+		tb.Task("apples", "namespace", tb.TaskSpec(tb.TaskDescription("")), cb.TaskCreationTime(clock.Now().Add(-513*time.Hour))),
+		tb.Task("potatoes", "namespace", tb.TaskSpec(tb.TaskDescription("a test task")), cb.TaskCreationTime(clock.Now().Add(-514*time.Hour))),
+		tb.Task("onions", "namespace", tb.TaskSpec(tb.TaskDescription("a test task to test description of task")), cb.TaskCreationTime(clock.Now().Add(-515*time.Hour))),
+		tb.Task("tomates", "espace-de-nom", cb.TaskCreationTime(clock.Now().Add(-1*time.Minute))),
+		tb.Task("mangues", "espace-de-nom", cb.TaskCreationTime(clock.Now().Add(-20*time.Second))),
+		tb.Task("bananes", "espace-de-nom", cb.TaskCreationTime(clock.Now().Add(-512*time.Hour))),
+		tb.Task("pommes", "espace-de-nom", tb.TaskSpec(tb.TaskDescription("")), cb.TaskCreationTime(clock.Now().Add(-513*time.Hour))),
+		tb.Task("patates", "espace-de-nom", tb.TaskSpec(tb.TaskDescription("a test task")), cb.TaskCreationTime(clock.Now().Add(-514*time.Hour))),
+		tb.Task("oignons", "espace-de-nom", tb.TaskSpec(tb.TaskDescription("a test task to test description of task")), cb.TaskCreationTime(clock.Now().Add(-515*time.Hour))),
+	}
+
+	version := "v1beta1"
+	tdc := testDynamic.Options{}
+	dynamic, err := tdc.Client(
+		cb.UnstructuredT(tasks[0], version),
+		cb.UnstructuredT(tasks[1], version),
+		cb.UnstructuredT(tasks[2], version),
+		cb.UnstructuredT(tasks[3], version),
+		cb.UnstructuredT(tasks[4], version),
+		cb.UnstructuredT(tasks[5], version),
+		cb.UnstructuredT(tasks[6], version),
+		cb.UnstructuredT(tasks[7], version),
+		cb.UnstructuredT(tasks[8], version),
+		cb.UnstructuredT(tasks[9], version),
+		cb.UnstructuredT(tasks[10], version),
+		cb.UnstructuredT(tasks[11], version),
+	)
+	if err != nil {
+		t.Errorf("unable to create dynamic client: %v", err)
+	}
+
+	cs, _ := test.SeedTestData(t, pipelinetest.Data{Tasks: tasks})
+	p := &test.Params{Tekton: cs.Pipeline, Clock: clock, Kube: cs.Kube, Dynamic: dynamic}
+	cs.Pipeline.Resources = cb.APIResourceList(version, []string{"task"})
+	task := Command(p)
+
+	output, err := test.ExecuteCommand(task, "list", "--all-namespaces", "--no-headers")
 	if err != nil {
 		t.Errorf("Unexpected error: %v", err)
 	}
