@@ -18,25 +18,48 @@ import (
 	"fmt"
 	"os"
 	"text/tabwriter"
+	"text/template"
+
+	"github.com/jonboulle/clockwork"
+	"github.com/tektoncd/cli/pkg/task"
 
 	"github.com/spf13/cobra"
 	"github.com/tektoncd/cli/pkg/actions"
 	"github.com/tektoncd/cli/pkg/cli"
 	"github.com/tektoncd/cli/pkg/formatted"
-	"github.com/tektoncd/cli/pkg/task"
 	"github.com/tektoncd/cli/pkg/validate"
+	"github.com/tektoncd/pipeline/pkg/apis/pipeline/v1beta1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime/schema"
 	cliopts "k8s.io/cli-runtime/pkg/genericclioptions"
 )
 
-const (
-	emptyMsg = "No tasks found"
-	header   = "NAME\tDESCRIPTION\tAGE"
-	body     = "%s\t%s\t%s\n"
-)
+const listTemplate = `{{- $tl := len .Tasks.Items }}{{ if eq $tl 0 -}}
+No Tasks found
+{{ else -}}
+{{- if not $.NoHeaders -}}
+{{- if $.AllNamespaces -}}
+NAMESPACE	NAME	DESCRIPTION	AGE
+{{ else -}}
+NAME	DESCRIPTION	AGE
+{{ end -}} 
+{{- end -}}
+{{- range $_, $t := .Tasks.Items }}{{- if $t }}
+{{- if $.AllNamespaces -}}
+{{ $t.Namespace }}	{{ $t.Name }}	{{ formatDesc $t.Spec.Description }}	{{ formatAge $t.CreationTimestamp $.Time }}
+{{ else -}} 
+{{ $t.Name }}	{{ formatDesc $t.Spec.Description }}	{{ formatAge $t.CreationTimestamp $.Time }}
+{{ end }}{{- end }}{{- end }}
+{{- end -}} 
+`
+
+type ListOptions struct {
+	AllNamespaces bool
+	NoHeaders     bool
+}
 
 func listCommand(p cli.Params) *cobra.Command {
+	opts := &ListOptions{}
 	f := cliopts.NewPrintFlags("list")
 
 	c := &cobra.Command{
@@ -48,13 +71,13 @@ func listCommand(p cli.Params) *cobra.Command {
 		},
 		RunE: func(cmd *cobra.Command, args []string) error {
 
-			if err := validate.NamespaceExists(p); err != nil {
+			if err := validate.NamespaceExists(p); err != nil && !opts.AllNamespaces {
 				return err
 			}
 
 			output, err := cmd.LocalFlags().GetString("output")
 			if err != nil {
-				fmt.Fprint(os.Stderr, "Error: output option not set properly \n")
+				fmt.Fprint(os.Stderr, "error: output option not set properly \n")
 				return err
 			}
 
@@ -66,40 +89,56 @@ func listCommand(p cli.Params) *cobra.Command {
 				Out: cmd.OutOrStdout(),
 				Err: cmd.OutOrStderr(),
 			}
-			return printTaskDetails(stream, p)
+			return printTaskDetails(stream, p, opts.AllNamespaces, opts.NoHeaders)
 		},
 	}
 	f.AddFlags(c)
+	c.Flags().BoolVarP(&opts.AllNamespaces, "all-namespaces", "A", opts.AllNamespaces, "list tasks from all namespaces")
+	c.Flags().BoolVarP(&opts.NoHeaders, "no-headers", "", opts.NoHeaders, "do not print column headers with output (default print column headers with output)")
 
 	return c
 }
 
-func printTaskDetails(s *cli.Stream, p cli.Params) error {
+func printTaskDetails(s *cli.Stream, p cli.Params, allnamespaces bool, noheaders bool) error {
 	cs, err := p.Clients()
 	if err != nil {
 		return err
 	}
 
-	tasks, err := task.List(cs, metav1.ListOptions{}, p.Namespace())
+	ns := p.Namespace()
+	if allnamespaces {
+		ns = ""
+	}
+	tasks, err := task.List(cs, metav1.ListOptions{}, ns)
 	if err != nil {
-		fmt.Fprintf(os.Stderr, "Failed to list tasks from %s namespace \n", p.Namespace())
+		fmt.Fprintf(os.Stderr, "failed to list tasks from %s namespace \n", ns)
 		return err
 	}
 
-	if len(tasks.Items) == 0 {
-		fmt.Fprintln(s.Err, emptyMsg)
-		return nil
+	var data = struct {
+		Tasks         *v1beta1.TaskList
+		Time          clockwork.Clock
+		AllNamespaces bool
+		NoHeaders     bool
+	}{
+		Tasks:         tasks,
+		Time:          p.Time(),
+		AllNamespaces: allnamespaces,
+		NoHeaders:     noheaders,
+	}
+
+	funcMap := template.FuncMap{
+		"formatAge":  formatted.Age,
+		"formatDesc": formatted.FormatDesc,
 	}
 
 	w := tabwriter.NewWriter(s.Out, 0, 5, 3, ' ', tabwriter.TabIndent)
-	fmt.Fprintln(w, header)
+	t := template.Must(template.New("List Tasks").Funcs(funcMap).Parse(listTemplate))
 
-	for _, task := range tasks.Items {
-		fmt.Fprintf(w, body,
-			task.Name,
-			formatted.FormatDesc(task.Spec.Description),
-			formatted.Age(&task.CreationTimestamp, p.Time()),
-		)
+	err = t.Execute(w, data)
+	if err != nil {
+		return err
 	}
+
 	return w.Flush()
 }
