@@ -17,6 +17,7 @@ package params
 import (
 	"errors"
 	"fmt"
+	"sort"
 	"strings"
 
 	"github.com/tektoncd/pipeline/pkg/apis/pipeline/v1alpha1"
@@ -46,7 +47,7 @@ func MergeParam(p []v1alpha1.Param, optPar []string) ([]v1alpha1.Param, error) {
 	for _, v := range params {
 		p = append(p, v)
 	}
-
+	sort.Slice(p, func(i, j int) bool { return p[i].Name < p[j].Name })
 	return p, nil
 }
 
