@@ -34,21 +34,41 @@ import (
 )
 
 const listTemplate = `{{- $pl := len .Pipelines.Items }}{{ if eq $pl 0 -}}
-No pipelines
-{{- else -}}
+No Pipelines found
+{{ else -}}
+{{- if not $.NoHeaders -}}
+{{- if $.AllNamespaces -}}
+NAMESPACE	NAME	AGE	LAST RUN	STARTED	DURATION	STATUS
+{{ else -}}
 NAME	AGE	LAST RUN	STARTED	DURATION	STATUS
+{{ end }}
+{{- end -}}
 {{- range $_, $p := .Pipelines.Items }}
 {{- $pr := accessMap $.PipelineRuns $p.Name }}
 {{- if $pr }}
+{{- if $.AllNamespaces -}}
+{{ $p.Namespace }}	{{ $p.Name }}	{{ formatAge $p.CreationTimestamp $.Params.Time }}	{{ $pr.Name }}	{{ formatAge $pr.Status.StartTime $.Params.Time }}	{{ formatDuration $pr.Status.StartTime $pr.Status.CompletionTime }}	{{ formatCondition $pr.Status.Conditions }}
+{{ else -}}
 {{ $p.Name }}	{{ formatAge $p.CreationTimestamp $.Params.Time }}	{{ $pr.Name }}	{{ formatAge $pr.Status.StartTime $.Params.Time }}	{{ formatDuration $pr.Status.StartTime $pr.Status.CompletionTime }}	{{ formatCondition $pr.Status.Conditions }}
+{{ end }}	
 {{- else }}
+{{- if $.AllNamespaces -}}
+{{ $p.Namespace }}	{{ $p.Name }}	{{ formatAge $p.CreationTimestamp $.Params.Time }}	---	---	---	---
+{{ else -}}
 {{ $p.Name }}	{{ formatAge $p.CreationTimestamp $.Params.Time }}	---	---	---	---
+{{ end }}
 {{- end }}
 {{- end }}
-{{- end }}
+{{- end -}}
 `
 
+type ListOptions struct {
+	AllNamespaces bool
+	NoHeaders     bool
+}
+
 func listCommand(p cli.Params) *cobra.Command {
+	opts := &ListOptions{}
 	f := cliopts.NewPrintFlags("list")
 
 	c := &cobra.Command{
@@ -61,7 +81,7 @@ func listCommand(p cli.Params) *cobra.Command {
 		SilenceUsage: true,
 		RunE: func(cmd *cobra.Command, args []string) error {
 
-			if err := validate.NamespaceExists(p); err != nil {
+			if err := validate.NamespaceExists(p); err != nil && !opts.AllNamespaces {
 				return err
 			}
 
@@ -79,36 +99,46 @@ func listCommand(p cli.Params) *cobra.Command {
 				Out: cmd.OutOrStdout(),
 				Err: cmd.OutOrStderr(),
 			}
-			return printPipelineDetails(stream, p)
+			return printPipelineDetails(stream, p, opts.AllNamespaces, opts.NoHeaders)
 		},
 	}
 	f.AddFlags(c)
+	c.Flags().BoolVarP(&opts.AllNamespaces, "all-namespaces", "A", opts.AllNamespaces, "list pipelines from all namespaces")
+	c.Flags().BoolVarP(&opts.NoHeaders, "no-headers", "", opts.NoHeaders, "do not print column headers with output (default print column headers with output)")
 
 	return c
 }
 
-func printPipelineDetails(s *cli.Stream, p cli.Params) error {
+func printPipelineDetails(s *cli.Stream, p cli.Params, allnamespaces bool, noheaders bool) error {
 
 	cs, err := p.Clients()
 	if err != nil {
 		return err
 	}
 
-	ps, prs, err := listPipelineDetails(cs, p.Namespace())
+	ns := p.Namespace()
+	if allnamespaces {
+		ns = ""
+	}
+	ps, prs, err := listPipelineDetails(cs, ns)
 
 	if err != nil {
-		fmt.Fprintf(s.Err, "Failed to list pipelines from %s namespace\n", p.Namespace())
+		fmt.Fprintf(s.Err, "Failed to list pipelines from %s namespace\n", ns)
 		return err
 	}
 
 	var data = struct {
-		Pipelines    *v1beta1.PipelineList
-		PipelineRuns pipelineruns
-		Params       cli.Params
+		Pipelines     *v1beta1.PipelineList
+		PipelineRuns  pipelineruns
+		Params        cli.Params
+		AllNamespaces bool
+		NoHeaders     bool
 	}{
-		Pipelines:    ps,
-		PipelineRuns: prs,
-		Params:       p,
+		Pipelines:     ps,
+		PipelineRuns:  prs,
+		Params:        p,
+		AllNamespaces: allnamespaces,
+		NoHeaders:     noheaders,
 	}
 
 	funcMap := template.FuncMap{
@@ -116,7 +146,6 @@ func printPipelineDetails(s *cli.Stream, p cli.Params) error {
 			if pr, ok := prs[name]; ok {
 				return &pr
 			}
-
 			return nil
 		},
 		"formatAge":       formatted.Age,
