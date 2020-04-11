@@ -24,8 +24,16 @@ Describe a taskrun in a namespace
     If true, ignore any errors in templates when a field or map key is missing in the template. Only applies to golang and jsonpath output formats.
 
 .PP
+\fB\-F\fP, \fB\-\-fzf\fP[=false]
+    use fzf to select a taskrun to describe
+
+.PP
 \fB\-h\fP, \fB\-\-help\fP[=false]
     help for describe
+
+.PP
+\fB\-\-limit\fP=5
+    lists number of taskruns when selecting a taskrun to describe
 
 .PP
 \fB\-o\fP, \fB\-\-output\fP=""

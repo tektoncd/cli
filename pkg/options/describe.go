@@ -26,30 +26,25 @@ import (
 	"github.com/ktr0731/go-fuzzyfinder"
 	"github.com/tektoncd/cli/pkg/cli"
 	prdesc "github.com/tektoncd/cli/pkg/pipelinerun/description"
-	"github.com/tektoncd/cli/pkg/pods/stream"
 	trdesc "github.com/tektoncd/cli/pkg/taskrun/description"
 )
 
-type LogOptions struct {
-	AllSteps        bool
-	Follow          bool
-	Params          cli.Params
-	PipelineName    string
-	PipelineRunName string
-	TaskName        string
-	TaskrunName     string
-	Stream          *cli.Stream
-	Streamer        stream.NewStreamerFunc
-	Tasks           []string
-	Steps           []string
-	Last            bool
-	Limit           int
-	AskOpts         survey.AskOpt
-	Fzf             bool
+type DescribeOptions struct {
+	Params               cli.Params
+	PipelineName         string
+	PipelineRunName      string
+	PipelineResourceName string
+	ClusterTaskName      string
+	TaskName             string
+	TaskrunName          string
+	Tasks                []string
+	Limit                int
+	AskOpts              survey.AskOpt
+	Fzf                  bool
 }
 
-func NewLogOptions(p cli.Params) *LogOptions {
-	return &LogOptions{Params: p,
+func NewDescribeOptions(p cli.Params) *DescribeOptions {
+	return &DescribeOptions{Params: p,
 		AskOpts: func(opt *survey.AskOptions) error {
 			opt.Stdio = terminal.Stdio{
 				In:  os.Stdin,
@@ -61,14 +56,14 @@ func NewLogOptions(p cli.Params) *LogOptions {
 	}
 }
 
-func (opts *LogOptions) ValidateOpts() error {
+func (opts *DescribeOptions) ValidateOpts() error {
 	if opts.Limit <= 0 {
 		return fmt.Errorf("limit was %d but must be a positive number", opts.Limit)
 	}
 	return nil
 }
 
-func (opts *LogOptions) Ask(resource string, options []string) error {
+func (opts *DescribeOptions) Ask(resource string, options []string) error {
 	var ans string
 	var qs = []*survey.Question{
 		{
@@ -84,11 +79,16 @@ func (opts *LogOptions) Ask(resource string, options []string) error {
 		return err
 	}
 
+	// The Resource constants are defined in resource_names.go
 	switch resource {
 	case ResourceNamePipeline:
 		opts.PipelineName = ans
 	case ResourceNamePipelineRun:
 		opts.PipelineRunName = strings.Fields(ans)[0]
+	case ResourceNamePipelineResource:
+		opts.PipelineResourceName = ans
+	case ResourceNameClusterTask:
+		opts.ClusterTaskName = ans
 	case ResourceNameTask:
 		opts.TaskName = ans
 	case ResourceNameTaskRun:
@@ -98,12 +98,12 @@ func (opts *LogOptions) Ask(resource string, options []string) error {
 	return nil
 }
 
-func (opts *LogOptions) FuzzyAsk(resource string, options []string) error {
+func (opts *DescribeOptions) FuzzyAsk(resource string, options []string) error {
 	chosencolouring := color.NoColor
 	defer func() {
 		color.NoColor = chosencolouring
 	}()
-	// Remove colors as fuzzyfinder doesn't support it!
+	// Remove colors as fuzzyfinder doesn't support it
 	color.NoColor = true
 
 	idx, err := fuzzyfinder.FindMulti(options,
@@ -139,6 +139,7 @@ func (opts *LogOptions) FuzzyAsk(resource string, options []string) error {
 		return err
 	}
 	ans := options[idx[0]]
+	fmt.Println(ans)
 	switch resource {
 	case ResourceNamePipeline:
 		opts.PipelineName = ans

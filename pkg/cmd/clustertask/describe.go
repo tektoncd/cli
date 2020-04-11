@@ -27,6 +27,7 @@ import (
 	"github.com/tektoncd/cli/pkg/cli"
 	"github.com/tektoncd/cli/pkg/clustertask"
 	"github.com/tektoncd/cli/pkg/formatted"
+	"github.com/tektoncd/cli/pkg/options"
 	"github.com/tektoncd/cli/pkg/task"
 	"github.com/tektoncd/cli/pkg/taskrun/list"
 	trsort "github.com/tektoncd/cli/pkg/taskrun/sort"
@@ -114,6 +115,7 @@ NAME	STARTED	DURATION	STATUS
 
 func describeCommand(p cli.Params) *cobra.Command {
 	f := cliopts.NewPrintFlags("describe")
+	opts := &options.DescribeOptions{Params: p}
 	eg := `Describe a ClusterTask of name 'foo':
 
     tkn clustertask describe foo
@@ -131,7 +133,6 @@ or
 		Annotations: map[string]string{
 			"commandType": "main",
 		},
-		Args:         cobra.MinimumNArgs(1),
 		SilenceUsage: true,
 		RunE: func(cmd *cobra.Command, args []string) error {
 			s := &cli.Stream{
@@ -145,12 +146,21 @@ or
 				return err
 			}
 
-			if output != "" {
-				clustertaskGroupResource := schema.GroupVersionResource{Group: "tekton.dev", Resource: "clustertasks"}
-				return actions.PrintObject(clustertaskGroupResource, args[0], cmd.OutOrStdout(), p, f, "")
+			if len(args) == 0 {
+				err = askClusterTaskName(opts, p)
+				if err != nil {
+					return err
+				}
+			} else {
+				opts.ClusterTaskName = args[0]
 			}
 
-			return printClusterTaskDescription(s, p, args[0])
+			if output != "" {
+				clustertaskGroupResource := schema.GroupVersionResource{Group: "tekton.dev", Resource: "clustertasks"}
+				return actions.PrintObject(clustertaskGroupResource, opts.ClusterTaskName, cmd.OutOrStdout(), p, f, "")
+			}
+
+			return printClusterTaskDescription(s, p, opts.ClusterTaskName)
 		},
 	}
 
@@ -234,4 +244,25 @@ func sortResourcesByTypeAndName(tres []v1beta1.TaskResource) []v1beta1.TaskResou
 	})
 
 	return tres
+}
+
+func askClusterTaskName(opts *options.DescribeOptions, p cli.Params) error {
+	cs, err := p.Clients()
+	if err != nil {
+		return err
+	}
+	clusterTaskNames, err := allClusterTaskNames(cs)
+	if err != nil {
+		return err
+	}
+	if len(clusterTaskNames) == 0 {
+		return fmt.Errorf("no clustertasks found")
+	}
+
+	err = opts.Ask(options.ResourceNameClusterTask, clusterTaskNames)
+	if err != nil {
+		return err
+	}
+
+	return nil
 }

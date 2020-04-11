@@ -26,6 +26,7 @@ import (
 	"github.com/tektoncd/cli/pkg/actions"
 	"github.com/tektoncd/cli/pkg/cli"
 	"github.com/tektoncd/cli/pkg/formatted"
+	"github.com/tektoncd/cli/pkg/options"
 	"github.com/tektoncd/cli/pkg/task"
 	"github.com/tektoncd/cli/pkg/taskrun/list"
 	trsort "github.com/tektoncd/cli/pkg/taskrun/sort"
@@ -116,6 +117,7 @@ NAME	STARTED	DURATION	STATUS
 
 func describeCommand(p cli.Params) *cobra.Command {
 	f := cliopts.NewPrintFlags("describe")
+	opts := &options.DescribeOptions{Params: p}
 	eg := `Describe a Task of name 'foo' in namespace 'bar':
 
     tkn task describe foo -n bar
@@ -133,7 +135,6 @@ or
 		Annotations: map[string]string{
 			"commandType": "main",
 		},
-		Args:         cobra.MinimumNArgs(1),
 		SilenceUsage: true,
 		RunE: func(cmd *cobra.Command, args []string) error {
 			s := &cli.Stream{
@@ -151,12 +152,21 @@ or
 				return err
 			}
 
-			if output != "" {
-				taskGroupResource := schema.GroupVersionResource{Group: "tekton.dev", Resource: "tasks"}
-				return actions.PrintObject(taskGroupResource, args[0], cmd.OutOrStdout(), p, f, p.Namespace())
+			if len(args) == 0 {
+				err = askTaskName(opts, p)
+				if err != nil {
+					return err
+				}
+			} else {
+				opts.TaskName = args[0]
 			}
 
-			return printTaskDescription(s, p, args[0])
+			if output != "" {
+				taskGroupResource := schema.GroupVersionResource{Group: "tekton.dev", Resource: "tasks"}
+				return actions.PrintObject(taskGroupResource, opts.TaskName, cmd.OutOrStdout(), p, f, p.Namespace())
+			}
+
+			return printTaskDescription(s, p, opts.TaskName)
 		},
 	}
 
@@ -240,4 +250,21 @@ func sortResourcesByTypeAndName(tres []v1beta1.TaskResource) []v1beta1.TaskResou
 	})
 
 	return tres
+}
+
+func askTaskName(opts *options.DescribeOptions, p cli.Params) error {
+	taskNames, err := task.GetAllTaskNames(p)
+	if err != nil {
+		return err
+	}
+	if len(taskNames) == 0 {
+		return fmt.Errorf("No tasks found")
+	}
+
+	err = opts.Ask(options.ResourceNameTask, taskNames)
+	if err != nil {
+		return err
+	}
+
+	return nil
 }

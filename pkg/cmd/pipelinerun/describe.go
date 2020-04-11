@@ -21,14 +21,22 @@ import (
 	"github.com/spf13/cobra"
 	"github.com/tektoncd/cli/pkg/actions"
 	"github.com/tektoncd/cli/pkg/cli"
+	"github.com/tektoncd/cli/pkg/options"
+	prhelper "github.com/tektoncd/cli/pkg/pipelinerun"
 	prdesc "github.com/tektoncd/cli/pkg/pipelinerun/description"
 	"github.com/tektoncd/cli/pkg/validate"
+	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime/schema"
 	cliopts "k8s.io/cli-runtime/pkg/genericclioptions"
 )
 
+const (
+	defaultDescribeLimit = 5
+)
+
 func describeCommand(p cli.Params) *cobra.Command {
 	f := cliopts.NewPrintFlags("describe")
+	opts := &options.DescribeOptions{Params: p}
 	eg := `Describe a PipelineRun of name 'foo' in namespace 'bar':
 
     tkn pipelinerun describe foo -n bar
@@ -43,7 +51,6 @@ or
 		Aliases:      []string{"desc"},
 		Short:        "Describe a pipelinerun in a namespace",
 		Example:      eg,
-		Args:         cobra.MinimumNArgs(1),
 		SilenceUsage: true,
 		Annotations: map[string]string{
 			"commandType": "main",
@@ -64,17 +71,63 @@ or
 				return err
 			}
 
-			if output != "" {
-				pipelineRunGroupResource := schema.GroupVersionResource{Group: "tekton.dev", Resource: "pipelineruns"}
-				return actions.PrintObject(pipelineRunGroupResource, args[0], cmd.OutOrStdout(), p, f, p.Namespace())
+			if !opts.Fzf {
+				if _, ok := os.LookupEnv("TKN_USE_FZF"); ok {
+					opts.Fzf = true
+				}
 			}
 
-			return prdesc.PrintPipelineRunDescription(s, args[0], p)
+			if len(args) == 0 {
+				err = askPipelineRunName(opts, p)
+				if err != nil {
+					return err
+				}
+			} else {
+				opts.PipelineRunName = args[0]
+			}
+
+			if output != "" {
+				pipelineRunGroupResource := schema.GroupVersionResource{Group: "tekton.dev", Resource: "pipelineruns"}
+				return actions.PrintObject(pipelineRunGroupResource, opts.PipelineRunName, cmd.OutOrStdout(), p, f, p.Namespace())
+			}
+
+			return prdesc.PrintPipelineRunDescription(s, opts.PipelineRunName, p)
 		},
 	}
+
+	c.Flags().IntVarP(&opts.Limit, "limit", "", defaultDescribeLimit, "lists number of pipelineruns when selecting a pipelinerun to describe")
+	c.Flags().BoolVarP(&opts.Fzf, "fzf", "F", false, "use fzf to select a pipelinerun to describe")
 
 	_ = c.MarkZshCompPositionalArgumentCustom(1, "__tkn_get_pipelinerun")
 	f.AddFlags(c)
 
 	return c
+}
+
+func askPipelineRunName(opts *options.DescribeOptions, p cli.Params) error {
+	lOpts := metav1.ListOptions{}
+
+	err := opts.ValidateOpts()
+	if err != nil {
+		return err
+	}
+	prs, err := prhelper.GetAllPipelineRuns(opts.Params, lOpts, opts.Limit)
+
+	if err != nil {
+		return err
+	}
+	if len(prs) == 0 {
+		return fmt.Errorf("no pipelineruns found")
+	}
+
+	if opts.Fzf {
+		err = opts.FuzzyAsk(options.ResourceNamePipelineRun, prs)
+	} else {
+		err = opts.Ask(options.ResourceNamePipelineRun, prs)
+	}
+	if err != nil {
+		return err
+	}
+
+	return nil
 }
