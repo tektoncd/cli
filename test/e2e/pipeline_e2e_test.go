@@ -114,7 +114,7 @@ func TestPipelinesE2E(t *testing.T) {
 
 		res.Assert(t, icmd.Expected{
 			ExitCode: 0,
-			Out:      "No pipelines\n",
+			Out:      "No Pipelines found\n",
 			Err:      icmd.None,
 		})
 	})
@@ -359,7 +359,7 @@ func TestPipelinesNegativeE2E(t *testing.T) {
 
 		res.Assert(t, icmd.Expected{
 			ExitCode: 0,
-			Out:      "No pipelines\n",
+			Out:      "No Pipelines found\n",
 			Err:      icmd.None,
 		})
 	})
@@ -575,7 +575,7 @@ func TestDeletePipelinesE2E(t *testing.T) {
 
 		res.Assert(t, icmd.Expected{
 			ExitCode: 0,
-			Out:      "No pipelines\n",
+			Out:      "No Pipelines found\n",
 			Err:      icmd.None,
 		})
 	})
