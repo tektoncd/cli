@@ -20,12 +20,20 @@ Lists pipelines in a namespace
 
 .SH OPTIONS
 .PP
+\fB\-A\fP, \fB\-\-all\-namespaces\fP[=false]
+    list pipelines from all namespaces
+
+.PP
 \fB\-\-allow\-missing\-template\-keys\fP[=true]
     If true, ignore any errors in templates when a field or map key is missing in the template. Only applies to golang and jsonpath output formats.
 
 .PP
 \fB\-h\fP, \fB\-\-help\fP[=false]
     help for list
+
+.PP
+\fB\-\-no\-headers\fP[=false]
+    do not print column headers with output (default print column headers with output)
 
 .PP
 \fB\-o\fP, \fB\-\-output\fP=""
