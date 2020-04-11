@@ -74,6 +74,7 @@ type startOptions struct {
 	TimeOut            string
 	Filename           string
 	Workspaces         []string
+	UseParamDefaults   bool
 }
 
 type resourceOptionsFilter struct {
@@ -119,6 +120,9 @@ like cat,foo,bar
 			if opt.Filename != "" && opt.Last {
 				return errors.New("cannot use --last option with --filename option")
 			}
+			if opt.UseParamDefaults && (opt.Last || opt.UsePipelineRun != "") {
+				return errors.New("cannot use --last or --use-pipelinerun options with --use-param-defaults option")
+			}
 			if opt.DryRun {
 				format := strings.ToLower(opt.Output)
 				if format != "" && format != "json" && format != "yaml" {
@@ -159,6 +163,7 @@ like cat,foo,bar
 	c.Flags().StringVarP(&opt.PrefixName, "prefix-name", "", "", "specify a prefix for the pipelinerun name (must be lowercase alphanumeric characters)")
 	c.Flags().StringVarP(&opt.TimeOut, "timeout", "", "1h", "timeout for pipelinerun")
 	c.Flags().StringVarP(&opt.Filename, "filename", "f", "", "local or remote file name containing a pipeline definition to start a pipelinerun")
+	c.Flags().BoolVarP(&opt.UseParamDefaults, "use-param-defaults", "", false, "use default parameter values without prompting for input")
 
 	_ = c.MarkZshCompPositionalArgumentCustom(1, "__tkn_get_pipeline")
 
@@ -340,7 +345,7 @@ func (opt *startOptions) getInput(pipeline *v1alpha1.Pipeline) error {
 	}
 
 	params.FilterParamsByType(pipeline.Spec.Params)
-	if len(opt.Params) == 0 && !opt.Last && opt.UsePipelineRun == "" {
+	if len(opt.Params) == 0 && !opt.Last && opt.UsePipelineRun == "" && !opt.UseParamDefaults {
 		if err = opt.getInputParams(pipeline); err != nil {
 			return err
 		}
@@ -349,6 +354,38 @@ func (opt *startOptions) getInput(pipeline *v1alpha1.Pipeline) error {
 	if len(opt.Workspaces) == 0 && !opt.Last && opt.UsePipelineRun == "" {
 		if err = opt.getInputWorkspaces(pipeline); err != nil {
 			return err
+		}
+	}
+
+	if opt.UseParamDefaults && !opt.Last && opt.UsePipelineRun == "" {
+		if err = opt.includeDefaultParams(pipeline); err != nil {
+			return err
+		}
+	}
+
+	return nil
+}
+
+// Include the default param values in opts.Params when `--use-param-defaults` is used
+func (opt *startOptions) includeDefaultParams(pipeline *v1alpha1.Pipeline) error {
+	//Creating a map have already included opt.Params through -p or --param option
+	var optParamNames = make(map[string]bool)
+
+	for _, optParam := range opt.Params {
+		optParamNames[strings.Split(optParam, "=")[0]] = true
+	}
+	for _, param := range pipeline.Spec.Params {
+		if optParamNames[param.Name] {
+			continue
+		}
+		if param.Default != nil {
+			if param.Type == "string" {
+				opt.Params = append(opt.Params, param.Name+"="+param.Default.StringVal)
+				continue
+			} else {
+				opt.Params = append(opt.Params, param.Name+"="+strings.Join(param.Default.ArrayVal, ","))
+				continue
+			}
 		}
 	}
 
