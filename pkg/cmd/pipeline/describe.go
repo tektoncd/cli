@@ -27,6 +27,7 @@ import (
 	"github.com/tektoncd/cli/pkg/actions"
 	"github.com/tektoncd/cli/pkg/cli"
 	"github.com/tektoncd/cli/pkg/formatted"
+	"github.com/tektoncd/cli/pkg/options"
 	"github.com/tektoncd/cli/pkg/pipeline"
 	"github.com/tektoncd/cli/pkg/pipelinerun"
 	prsort "github.com/tektoncd/cli/pkg/pipelinerun/sort"
@@ -94,6 +95,7 @@ const describeTemplate = `{{decorate "bold" "Name"}}:	{{ .PipelineName }}
 
 func describeCommand(p cli.Params) *cobra.Command {
 	f := cliopts.NewPrintFlags("describe")
+	opts := &options.DescribeOptions{Params: p}
 
 	c := &cobra.Command{
 		Use:     "describe",
@@ -102,7 +104,6 @@ func describeCommand(p cli.Params) *cobra.Command {
 		Annotations: map[string]string{
 			"commandType": "main",
 		},
-		Args:         cobra.MinimumNArgs(1),
 		SilenceUsage: true,
 		RunE: func(cmd *cobra.Command, args []string) error {
 
@@ -116,12 +117,21 @@ func describeCommand(p cli.Params) *cobra.Command {
 				return err
 			}
 
-			if output != "" {
-				pipelineGroupResource := schema.GroupVersionResource{Group: "tekton.dev", Resource: "pipelines"}
-				return actions.PrintObject(pipelineGroupResource, args[0], cmd.OutOrStdout(), p, f, p.Namespace())
+			if len(args) == 0 {
+				err = askPipelineName(opts, p)
+				if err != nil {
+					return err
+				}
+			} else {
+				opts.PipelineName = args[0]
 			}
 
-			return printPipelineDescription(cmd.OutOrStdout(), p, args[0])
+			if output != "" {
+				pipelineGroupResource := schema.GroupVersionResource{Group: "tekton.dev", Resource: "pipelines"}
+				return actions.PrintObject(pipelineGroupResource, opts.PipelineName, cmd.OutOrStdout(), p, f, p.Namespace())
+			}
+
+			return printPipelineDescription(cmd.OutOrStdout(), p, opts.PipelineName)
 		},
 	}
 
@@ -199,4 +209,21 @@ func sortResourcesByTypeAndName(pres []v1beta1.PipelineDeclaredResource) []v1bet
 	})
 
 	return pres
+}
+
+func askPipelineName(opts *options.DescribeOptions, p cli.Params) error {
+	pipelineNames, err := pipeline.GetAllPipelineNames(p)
+	if err != nil {
+		return err
+	}
+	if len(pipelineNames) == 0 {
+		return fmt.Errorf("no pipelines found")
+	}
+
+	err = opts.Ask(options.ResourceNamePipeline, pipelineNames)
+	if err != nil {
+		return err
+	}
+
+	return nil
 }

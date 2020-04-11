@@ -22,6 +22,7 @@ import (
 	"text/template"
 
 	"github.com/tektoncd/cli/pkg/formatted"
+	"github.com/tektoncd/cli/pkg/options"
 	"github.com/tektoncd/cli/pkg/printer"
 	validateinput "github.com/tektoncd/cli/pkg/validate"
 
@@ -62,6 +63,7 @@ const templ = `{{decorate "bold" "Name"}}:	{{ .PipelineResource.Name }}
 `
 
 func describeCommand(p cli.Params) *cobra.Command {
+	opts := &options.DescribeOptions{Params: p}
 	f := cliopts.NewPrintFlags("describe")
 	eg := `Describe a PipelineResource of name 'foo' in namespace 'bar':
 
@@ -77,7 +79,6 @@ or
 		Aliases:      []string{"desc"},
 		Short:        "Describes a pipeline resource in a namespace",
 		Example:      eg,
-		Args:         cobra.MinimumNArgs(1),
 		SilenceUsage: true,
 		Annotations: map[string]string{
 			"commandType": "main",
@@ -98,11 +99,20 @@ or
 				return err
 			}
 
-			if output != "" {
-				return describePipelineResourceOutput(cmd.OutOrStdout(), p, f, args[0])
+			if len(args) == 0 {
+				err = askPipelineResourceName(opts, p)
+				if err != nil {
+					return err
+				}
+			} else {
+				opts.PipelineResourceName = args[0]
 			}
 
-			return printPipelineResourceDescription(s, p, args[0])
+			if output != "" {
+				return describePipelineResourceOutput(cmd.OutOrStdout(), p, f, opts.PipelineResourceName)
+			}
+
+			return printPipelineResourceDescription(s, p, opts.PipelineResourceName)
 		},
 	}
 
@@ -166,4 +176,27 @@ func printPipelineResourceDescription(s *cli.Stream, p cli.Params, preName strin
 		return err
 	}
 	return w.Flush()
+}
+
+func askPipelineResourceName(opts *options.DescribeOptions, p cli.Params) error {
+	cliClients, err := p.Clients()
+	if err != nil {
+		return err
+	}
+
+	// the `allPipelineResourceNames( )` func is in delete.go, in the pipelineresource package.
+	pipelineResourceNames, err := allPipelineResourceNames(p, cliClients)
+	if err != nil {
+		return err
+	}
+	if len(pipelineResourceNames) == 0 {
+		return fmt.Errorf("no pipelineresources found")
+	}
+
+	err = opts.Ask(options.ResourceNamePipelineResource, pipelineResourceNames)
+	if err != nil {
+		return err
+	}
+
+	return nil
 }
