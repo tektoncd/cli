@@ -125,7 +125,7 @@ func Test_ClusterTaskDescribe(t *testing.T) {
 				tb.TaskRunResources(tb.TaskRunResourcesOutput("my-image", tb.TaskResourceBindingRef("image"))),
 			),
 			tb.TaskRunStatus(
-				tb.TaskRunStartTime(clock.Now().Add(-10*time.Minute)),
+				tb.TaskRunStartTime(clock.Now().Add(-12*time.Minute)),
 				tb.StatusCondition(apis.Condition{
 					Status: corev1.ConditionUnknown,
 					Reason: resources.ReasonRunning,

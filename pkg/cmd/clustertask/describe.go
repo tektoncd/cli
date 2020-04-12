@@ -28,6 +28,7 @@ import (
 	"github.com/tektoncd/cli/pkg/clustertask"
 	"github.com/tektoncd/cli/pkg/formatted"
 	"github.com/tektoncd/cli/pkg/taskrun/list"
+	trsort "github.com/tektoncd/cli/pkg/taskrun/sort"
 	"github.com/tektoncd/pipeline/pkg/apis/pipeline/v1beta1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime/schema"
@@ -182,6 +183,7 @@ func printClusterTaskDescription(s *cli.Stream, p cli.Params, tname string) erro
 		fmt.Fprintf(s.Err, "failed to get taskruns for clustertask %s \n", tname)
 		return err
 	}
+	trsort.SortByStartTime(taskRuns.Items)
 
 	var data = struct {
 		ClusterTask *v1beta1.ClusterTask
