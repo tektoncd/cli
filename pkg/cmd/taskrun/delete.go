@@ -18,13 +18,15 @@ import (
 	"errors"
 	"fmt"
 
+	trsort "github.com/tektoncd/cli/pkg/taskrun/sort"
+
 	"github.com/spf13/cobra"
 	"github.com/tektoncd/cli/pkg/actions"
 	"github.com/tektoncd/cli/pkg/cli"
 	"github.com/tektoncd/cli/pkg/deleter"
 	"github.com/tektoncd/cli/pkg/options"
 	trlist "github.com/tektoncd/cli/pkg/taskrun/list"
-	validate "github.com/tektoncd/cli/pkg/validate"
+	"github.com/tektoncd/cli/pkg/validate"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime/schema"
 	cliopts "k8s.io/cli-runtime/pkg/genericclioptions"
@@ -147,6 +149,7 @@ func allTaskRunNames(cs *cli.Clients, keep int, ns string) ([]string, error) {
 	if err != nil {
 		return nil, err
 	}
+	trsort.SortByStartTime(taskRuns.Items)
 	var names []string
 	var counter = 0
 	for _, tr := range taskRuns.Items {
