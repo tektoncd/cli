@@ -15,11 +15,13 @@
 package pipeline
 
 import (
+	"context"
 	"fmt"
 	"os"
 
 	"github.com/tektoncd/cli/pkg/actions"
 	"github.com/tektoncd/cli/pkg/cli"
+	"github.com/tektoncd/pipeline/pkg/apis/pipeline/v1alpha1"
 	"github.com/tektoncd/pipeline/pkg/apis/pipeline/v1beta1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime"
@@ -47,8 +49,6 @@ func GetAllPipelineNames(p cli.Params) ([]string, error) {
 }
 
 func List(c *cli.Clients, opts metav1.ListOptions, ns string) (*v1beta1.PipelineList, error) {
-
-	pipelineGroupResource := schema.GroupVersionResource{Group: "tekton.dev", Resource: "pipelines"}
 	unstructuredP, err := actions.List(pipelineGroupResource, c, ns, opts)
 	if err != nil {
 		return nil, err
@@ -66,18 +66,53 @@ func List(c *cli.Clients, opts metav1.ListOptions, ns string) (*v1beta1.Pipeline
 	return pipelines, nil
 }
 
-func Get(c *cli.Clients, pname string, opts metav1.GetOptions, ns string) (*v1beta1.Pipeline, error) {
-	unstructuredP, err := actions.Get(pipelineGroupResource, c, pname, ns, opts)
+// It will fetch the resource based on the api available and return v1beta1 form
+func Get(c *cli.Clients, pipelinename string, opts metav1.GetOptions, ns string) (*v1beta1.Pipeline, error) {
+	gvr, err := actions.GetGroupVersionResource(pipelineGroupResource, c.Tekton.Discovery())
+	if err != nil {
+		return nil, err
+	}
+
+	if gvr.Version == "v1alpha1" {
+		pipeline, err := getV1alpha1(c, pipelinename, opts, ns)
+		if err != nil {
+			return nil, err
+		}
+		var pipelineConverted v1beta1.Pipeline
+		err = pipeline.ConvertUp(context.Background(), &pipelineConverted)
+		if err != nil {
+			return nil, err
+		}
+		return &pipelineConverted, nil
+	}
+	return GetV1beta1(c, pipelinename, opts, ns)
+}
+
+// It will fetch the resource in v1beta1 struct format
+func GetV1beta1(c *cli.Clients, pipelinename string, opts metav1.GetOptions, ns string) (*v1beta1.Pipeline, error) {
+	unstructuredP, err := actions.Get(pipelineGroupResource, c, pipelinename, ns, opts)
 	if err != nil {
 		return nil, err
 	}
 
 	var pipeline *v1beta1.Pipeline
 	if err := runtime.DefaultUnstructuredConverter.FromUnstructured(unstructuredP.UnstructuredContent(), &pipeline); err != nil {
+		fmt.Fprintf(os.Stderr, "failed to get pipeline from %s namespace \n", ns)
 		return nil, err
 	}
+	return pipeline, nil
+}
+
+// It will fetch the resource in v1alpha1 struct format
+func getV1alpha1(c *cli.Clients, pipelinename string, opts metav1.GetOptions, ns string) (*v1alpha1.Pipeline, error) {
+	unstructuredP, err := actions.Get(pipelineGroupResource, c, pipelinename, ns, opts)
 	if err != nil {
-		fmt.Fprintf(os.Stderr, "Failed to get pipeline from %s namespace \n", ns)
+		return nil, err
+	}
+
+	var pipeline *v1alpha1.Pipeline
+	if err := runtime.DefaultUnstructuredConverter.FromUnstructured(unstructuredP.UnstructuredContent(), &pipeline); err != nil {
+		fmt.Fprintf(os.Stderr, "failed to get pipeline from %s namespace \n", ns)
 		return nil, err
 	}
 	return pipeline, nil

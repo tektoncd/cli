@@ -24,11 +24,13 @@ import (
 	"text/template"
 
 	"github.com/spf13/cobra"
+	"github.com/tektoncd/cli/pkg/actions"
 	"github.com/tektoncd/cli/pkg/cli"
 	"github.com/tektoncd/cli/pkg/formatted"
-	"github.com/tektoncd/cli/pkg/printer"
-	validate "github.com/tektoncd/cli/pkg/validate"
-	"github.com/tektoncd/pipeline/pkg/apis/pipeline/v1alpha1"
+	"github.com/tektoncd/cli/pkg/pipeline"
+	"github.com/tektoncd/cli/pkg/pipelinerun"
+	"github.com/tektoncd/cli/pkg/validate"
+	"github.com/tektoncd/pipeline/pkg/apis/pipeline/v1beta1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime/schema"
 	cliopts "k8s.io/cli-runtime/pkg/genericclioptions"
@@ -114,7 +116,8 @@ func describeCommand(p cli.Params) *cobra.Command {
 			}
 
 			if output != "" {
-				return describePipelineOutput(cmd.OutOrStdout(), p, f, args[0])
+				pipelineGroupResource := schema.GroupVersionResource{Group: "tekton.dev", Resource: "pipelines"}
+				return actions.PrintObject(pipelineGroupResource, args[0], cmd.OutOrStdout(), p, f, p.Namespace())
 			}
 
 			return printPipelineDescription(cmd.OutOrStdout(), p, args[0])
@@ -126,37 +129,13 @@ func describeCommand(p cli.Params) *cobra.Command {
 	return c
 }
 
-func describePipelineOutput(w io.Writer, p cli.Params, f *cliopts.PrintFlags, name string) error {
-	cs, err := p.Clients()
-	if err != nil {
-		return err
-	}
-
-	c := cs.Tekton.TektonV1alpha1().Pipelines(p.Namespace())
-
-	task, err := c.Get(name, metav1.GetOptions{})
-	if err != nil {
-		return err
-	}
-
-	// NOTE: this is required for -o json|yaml to work properly since
-	// tektoncd go client fails to set these; probably a bug
-	task.GetObjectKind().SetGroupVersionKind(
-		schema.GroupVersionKind{
-			Version: "tekton.dev/v1alpha1",
-			Kind:    "Pipeline",
-		})
-
-	return printer.PrintObject(w, task, f)
-}
-
 func printPipelineDescription(out io.Writer, p cli.Params, pname string) error {
 	cs, err := p.Clients()
 	if err != nil {
 		return err
 	}
 
-	pipeline, err := cs.Tekton.TektonV1alpha1().Pipelines(p.Namespace()).Get(pname, metav1.GetOptions{})
+	pipeline, err := pipeline.Get(cs, pname, metav1.GetOptions{}, p.Namespace())
 	if err != nil {
 		return err
 	}
@@ -168,14 +147,14 @@ func printPipelineDescription(out io.Writer, p cli.Params, pname string) error {
 	opts := metav1.ListOptions{
 		LabelSelector: fmt.Sprintf("tekton.dev/pipeline=%s", pname),
 	}
-	pipelineRuns, err := cs.Tekton.TektonV1alpha1().PipelineRuns(p.Namespace()).List(opts)
+	pipelineRuns, err := pipelinerun.List(cs, opts, p.Namespace())
 	if err != nil {
 		return err
 	}
 
 	var data = struct {
-		Pipeline     *v1alpha1.Pipeline
-		PipelineRuns *v1alpha1.PipelineRunList
+		Pipeline     *v1beta1.Pipeline
+		PipelineRuns *v1beta1.PipelineRunList
 		PipelineName string
 		Params       cli.Params
 	}{
@@ -204,7 +183,7 @@ func printPipelineDescription(out io.Writer, p cli.Params, pname string) error {
 }
 
 // this will sort the Resource by Type and then by Name
-func sortResourcesByTypeAndName(pres []v1alpha1.PipelineDeclaredResource) []v1alpha1.PipelineDeclaredResource {
+func sortResourcesByTypeAndName(pres []v1beta1.PipelineDeclaredResource) []v1beta1.PipelineDeclaredResource {
 	sort.Slice(pres, func(i, j int) bool {
 		if pres[j].Type < pres[i].Type {
 			return false

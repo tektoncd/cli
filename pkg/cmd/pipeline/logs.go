@@ -37,7 +37,7 @@ func nameArg(args []string, p cli.Params) error {
 			return err
 		}
 		name, ns := args[0], p.Namespace()
-		if _, err = phelper.Get(c, name, metav1.GetOptions{}, ns); err != nil {
+		if _, err = phelper.GetV1beta1(c, name, metav1.GetOptions{}, ns); err != nil {
 			return err
 		}
 	}

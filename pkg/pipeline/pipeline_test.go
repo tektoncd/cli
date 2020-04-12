@@ -23,8 +23,11 @@ import (
 	cb "github.com/tektoncd/cli/pkg/test/builder"
 	testDynamic "github.com/tektoncd/cli/pkg/test/dynamic"
 	"github.com/tektoncd/pipeline/pkg/apis/pipeline/v1alpha1"
+	"github.com/tektoncd/pipeline/pkg/apis/pipeline/v1beta1"
+	pipelinev1beta1test "github.com/tektoncd/pipeline/test"
 	tb "github.com/tektoncd/pipeline/test/builder"
 	pipelinetest "github.com/tektoncd/pipeline/test/v1alpha1"
+	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 )
 
 const (
@@ -32,7 +35,7 @@ const (
 	versionB1 = "v1beta1"
 )
 
-func TestPipelinesList_with_single_run(t *testing.T) {
+func TestPipelinesList(t *testing.T) {
 	clock := clockwork.NewFakeClock()
 
 	pdata := []*v1alpha1.Pipeline{
@@ -115,46 +118,51 @@ func TestPipelinesList_with_single_run(t *testing.T) {
 	}
 }
 
-func TestPipelinesList_with_single_run_vebeta1(t *testing.T) {
+func TestPipelinesList_v1beta1(t *testing.T) {
 	clock := clockwork.NewFakeClock()
 
-	pdata := []*v1alpha1.Pipeline{
-		tb.Pipeline("pipeline", "ns",
-			// created  5 minutes back
-			cb.PipelineCreationTimestamp(clock.Now().Add(-5*time.Minute)),
-		),
+	pdata := []*v1beta1.Pipeline{
+		{
+			ObjectMeta: metav1.ObjectMeta{
+				Name:      "pipeline",
+				Namespace: "ns",
+			},
+		},
 	}
-	cs, _ := test.SeedTestData(t, pipelinetest.Data{
+	cs, _ := test.SeedV1beta1TestData(t, pipelinev1beta1test.Data{
 		Pipelines: pdata,
 	})
 	cs.Pipeline.Resources = cb.APIResourceList(versionB1, []string{"pipeline"})
-
 	tdc := testDynamic.Options{}
 	dc, err := tdc.Client(
-		cb.UnstructuredP(pdata[0], versionB1),
+		cb.UnstructuredV1beta1P(pdata[0], versionB1),
 	)
 	if err != nil {
 		t.Errorf("unable to create dynamic clinet: %v", err)
 	}
 
-	pdata2 := []*v1alpha1.Pipeline{
-		tb.Pipeline("pipeline", "ns",
-			// created  5 minutes back
-			cb.PipelineCreationTimestamp(clock.Now().Add(-5*time.Minute)),
-		),
-		tb.Pipeline("pipeline2", "ns",
-			// created  5 minutes back
-			cb.PipelineCreationTimestamp(clock.Now().Add(-5*time.Minute)),
-		),
+	pdata2 := []*v1beta1.Pipeline{
+		{
+			ObjectMeta: metav1.ObjectMeta{
+				Name:      "pipeline",
+				Namespace: "ns",
+			},
+		},
+		{
+			ObjectMeta: metav1.ObjectMeta{
+				Name:      "pipeline2",
+				Namespace: "ns",
+			},
+		},
 	}
-	cs2, _ := test.SeedTestData(t, pipelinetest.Data{
+	cs2, _ := test.SeedV1beta1TestData(t, pipelinev1beta1test.Data{
 		Pipelines: pdata2,
 	})
 	cs2.Pipeline.Resources = cb.APIResourceList(versionB1, []string{"pipeline", "pipelinerun"})
 	tdc2 := testDynamic.Options{}
 	dc2, err := tdc2.Client(
-		cb.UnstructuredP(pdata2[0], versionB1),
-		cb.UnstructuredP(pdata2[1], versionB1),
+		cb.UnstructuredV1beta1P(pdata2[0], versionB1),
+		cb.UnstructuredV1beta1P(pdata2[1], versionB1),
 	)
 	if err != nil {
 		t.Errorf("unable to create dynamic clinet: %v", err)
@@ -196,4 +204,86 @@ func TestPipelinesList_with_single_run_vebeta1(t *testing.T) {
 			test.AssertOutput(t, tp.want, got)
 		})
 	}
+}
+
+func TestPipelineGet(t *testing.T) {
+	clock := clockwork.NewFakeClock()
+
+	pdata := []*v1alpha1.Pipeline{
+		tb.Pipeline("pipeline", "ns",
+			// created  5 minutes back
+			cb.PipelineCreationTimestamp(clock.Now().Add(-5*time.Minute)),
+		),
+		tb.Pipeline("pipeline2", "ns",
+			// created  5 minutes back
+			cb.PipelineCreationTimestamp(clock.Now().Add(-5*time.Minute)),
+		),
+	}
+	cs, _ := test.SeedTestData(t, pipelinetest.Data{
+		Pipelines: pdata,
+	})
+	cs.Pipeline.Resources = cb.APIResourceList(versionA1, []string{"pipeline", "pipelinerun"})
+	tdc := testDynamic.Options{}
+	dc, err := tdc.Client(
+		cb.UnstructuredP(pdata[0], versionA1),
+		cb.UnstructuredP(pdata[1], versionA1),
+	)
+	if err != nil {
+		t.Errorf("unable to create dynamic clinet: %v", err)
+	}
+
+	p := &test.Params{Tekton: cs.Pipeline, Clock: clock, Kube: cs.Kube, Dynamic: dc}
+	c, err := p.Clients()
+	if err != nil {
+		t.Errorf("unable to create client: %v", err)
+	}
+
+	got, err := Get(c, "pipeline", metav1.GetOptions{}, "ns")
+	if err != nil {
+		t.Errorf("unexpected Error")
+	}
+	test.AssertOutput(t, "pipeline", got.Name)
+}
+
+func TestPipelineGet_v1beta1(t *testing.T) {
+	clock := clockwork.NewFakeClock()
+
+	pdata := []*v1beta1.Pipeline{
+		{
+			ObjectMeta: metav1.ObjectMeta{
+				Name:      "pipeline",
+				Namespace: "ns",
+			},
+		},
+		{
+			ObjectMeta: metav1.ObjectMeta{
+				Name:      "pipeline2",
+				Namespace: "ns",
+			},
+		},
+	}
+	cs, _ := test.SeedV1beta1TestData(t, pipelinev1beta1test.Data{
+		Pipelines: pdata,
+	})
+	cs.Pipeline.Resources = cb.APIResourceList(versionB1, []string{"pipeline", "pipelinerun"})
+	tdc := testDynamic.Options{}
+	dc, err := tdc.Client(
+		cb.UnstructuredV1beta1P(pdata[0], versionB1),
+		cb.UnstructuredV1beta1P(pdata[1], versionB1),
+	)
+	if err != nil {
+		t.Errorf("unable to create dynamic clinet: %v", err)
+	}
+
+	p := &test.Params{Tekton: cs.Pipeline, Clock: clock, Kube: cs.Kube, Dynamic: dc}
+	c, err := p.Clients()
+	if err != nil {
+		t.Errorf("unable to create client: %v", err)
+	}
+
+	got, err := Get(c, "pipeline", metav1.GetOptions{}, "ns")
+	if err != nil {
+		t.Errorf("unexpected Error")
+	}
+	test.AssertOutput(t, "pipeline", got.Name)
 }
