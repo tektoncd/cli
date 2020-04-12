@@ -202,7 +202,7 @@ func (r *Reader) getOrderedTasks(pr *v1beta1.PipelineRun) ([]trh.Run, error) {
 
 	switch {
 	case pr.Spec.PipelineRef != nil:
-		pl, err := pipeline.Get(r.clients, pr.Spec.PipelineRef.Name, metav1.GetOptions{}, r.ns)
+		pl, err := pipeline.GetV1beta1(r.clients, pr.Spec.PipelineRef.Name, metav1.GetOptions{}, r.ns)
 		if err != nil {
 			return nil, err
 		}
