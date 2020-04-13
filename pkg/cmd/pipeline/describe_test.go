@@ -311,6 +311,101 @@ func TestPipelineDescribe_with_spec_resource_param_run(t *testing.T) {
 	golden.Assert(t, got, fmt.Sprintf("%s.golden", t.Name()))
 }
 
+func TestPipelineDescribe_with_multiple_v1alpha1_pipelineruns(t *testing.T) {
+	clock := clockwork.NewFakeClock()
+	pipelines := []*v1alpha1.Pipeline{
+		tb.Pipeline("pipeline", "ns",
+			// created  5 minutes back
+			cb.PipelineCreationTimestamp(clock.Now().Add(-5*time.Minute)),
+			tb.PipelineSpec(
+				tb.PipelineDescription("a test description"),
+				tb.PipelineTask("task", "taskref",
+					tb.RunAfter("one", "two"),
+				),
+				tb.PipelineDeclaredResource("name", v1alpha1.PipelineResourceTypeGit),
+				tb.PipelineParamSpec("pipeline-param", v1alpha1.ParamTypeString, tb.ParamSpecDefault("somethingdifferent")),
+			),
+		),
+	}
+	pipelineRuns := []*v1alpha1.PipelineRun{
+		tb.PipelineRun("pipeline-run-1", "ns",
+			cb.PipelineRunCreationTimestamp(clock.Now()),
+			tb.PipelineRunLabel("tekton.dev/pipeline", "pipeline"),
+			tb.PipelineRunSpec("pipeline"),
+			tb.PipelineRunStatus(
+				tb.PipelineRunStatusCondition(apis.Condition{
+					Status: corev1.ConditionTrue,
+					Reason: resources.ReasonSucceeded,
+				}),
+				// pipeline run starts now
+				tb.PipelineRunStartTime(clock.Now()),
+				// takes 10 minutes to complete
+				cb.PipelineRunCompletionTime(clock.Now().Add(10*time.Minute)),
+			),
+		),
+		tb.PipelineRun("pipeline-run-2", "ns",
+			cb.PipelineRunCreationTimestamp(clock.Now().Add(-15*time.Minute)),
+			tb.PipelineRunLabel("tekton.dev/pipeline", "pipeline"),
+			tb.PipelineRunSpec("pipeline"),
+			tb.PipelineRunStatus(
+				tb.PipelineRunStatusCondition(apis.Condition{
+					Status: corev1.ConditionTrue,
+					Reason: resources.ReasonSucceeded,
+				}),
+				// pipeline run started 15 minutes ago
+				tb.PipelineRunStartTime(clock.Now().Add(-15*time.Minute)),
+				// takes 10 minutes to complete
+				cb.PipelineRunCompletionTime(clock.Now().Add(10*time.Minute)),
+			),
+		),
+		tb.PipelineRun("pipeline-run-3", "ns",
+			cb.PipelineRunCreationTimestamp(clock.Now().Add(-10*time.Minute)),
+			tb.PipelineRunLabel("tekton.dev/pipeline", "pipeline"),
+			tb.PipelineRunSpec("pipeline"),
+			tb.PipelineRunStatus(
+				tb.PipelineRunStatusCondition(apis.Condition{
+					Status: corev1.ConditionTrue,
+					Reason: resources.ReasonSucceeded,
+				}),
+				// pipeline run started 10 minutes ago
+				tb.PipelineRunStartTime(clock.Now().Add(-10*time.Minute)),
+				// takes 10 minutes to complete
+				cb.PipelineRunCompletionTime(clock.Now().Add(10*time.Minute)),
+			),
+		),
+	}
+	namespaces := []*corev1.Namespace{
+		{
+			ObjectMeta: metav1.ObjectMeta{
+				Name: "ns",
+			},
+		},
+	}
+
+	version := "v1alpha1"
+	tdc := testDynamic.Options{}
+	dynamic, err := tdc.Client(
+		cb.UnstructuredP(pipelines[0], version),
+		cb.UnstructuredPR(pipelineRuns[0], version),
+		cb.UnstructuredPR(pipelineRuns[1], version),
+		cb.UnstructuredPR(pipelineRuns[2], version),
+	)
+	if err != nil {
+		t.Errorf("unable to create dynamic client: %v", err)
+	}
+	cs, _ := test.SeedTestData(t, pipelinetest.Data{Namespaces: namespaces, Pipelines: pipelines, PipelineRuns: pipelineRuns})
+	cs.Pipeline.Resources = cb.APIResourceList(version, []string{"pipeline", "pipelinerun"})
+	p := &test.Params{Tekton: cs.Pipeline, Clock: clock, Kube: cs.Kube, Dynamic: dynamic}
+	pipeline := Command(p)
+
+	clock.Advance(15 * time.Minute)
+	got, err := test.ExecuteCommand(pipeline, "desc", "-n", "ns", "pipeline")
+	if err != nil {
+		t.Errorf("Unexpected error: %v", err)
+	}
+	golden.Assert(t, got, fmt.Sprintf("%s.golden", t.Name()))
+}
+
 func TestPipelineDescribe_with_spec_multiple_resource_param_run(t *testing.T) {
 	clock := clockwork.NewFakeClock()
 	pipelines := []*v1alpha1.Pipeline{
