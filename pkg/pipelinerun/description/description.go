@@ -20,13 +20,13 @@ import (
 	"text/tabwriter"
 	"text/template"
 
-	corev1 "k8s.io/api/core/v1"
-	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
-
 	"github.com/tektoncd/cli/pkg/cli"
 	"github.com/tektoncd/cli/pkg/formatted"
+	"github.com/tektoncd/cli/pkg/pipelinerun"
 	"github.com/tektoncd/cli/pkg/validate"
-	"github.com/tektoncd/pipeline/pkg/apis/pipeline/v1alpha1"
+	"github.com/tektoncd/pipeline/pkg/apis/pipeline/v1beta1"
+	corev1 "k8s.io/api/core/v1"
+	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 )
 
 const templ = `{{decorate "bold" "Name"}}:	{{ .PipelineRun.Name }}
@@ -99,6 +99,11 @@ STARTED	DURATION	STATUS
 {{- end }}
 `
 
+type tkr struct {
+	TaskrunName string
+	*v1beta1.PipelineRunTaskRunStatus
+}
+
 type taskrunList []tkr
 
 func (trs taskrunList) Len() int      { return len(trs) }
@@ -115,22 +120,14 @@ func (trs taskrunList) Less(i, j int) bool {
 	return trs[j].Status.StartTime.Before(trs[i].Status.StartTime)
 }
 
-type tkr struct {
-	TaskrunName string
-	*v1alpha1.PipelineRunTaskRunStatus
-}
-
-func newTaskrunListFromMap(statusMap map[string]*v1alpha1.PipelineRunTaskRunStatus) taskrunList {
-
+func newTaskrunListFromMap(statusMap map[string]*v1beta1.PipelineRunTaskRunStatus) taskrunList {
 	var trl taskrunList
-
 	for taskrunName, taskrunStatus := range statusMap {
 		trl = append(trl, tkr{
 			taskrunName,
 			taskrunStatus,
 		})
 	}
-
 	return trl
 }
 
@@ -140,20 +137,19 @@ func PrintPipelineRunDescription(s *cli.Stream, prName string, p cli.Params) err
 		return fmt.Errorf("failed to create tekton client: %v", err)
 	}
 
-	pr, err := cs.Tekton.TektonV1alpha1().PipelineRuns(p.Namespace()).Get(prName, metav1.GetOptions{})
+	pr, err := pipelinerun.Get(cs, prName, metav1.GetOptions{}, p.Namespace())
 	if err != nil {
 		return fmt.Errorf("failed to find pipelinerun %q", prName)
 	}
 
 	var trl taskrunList
-
 	if len(pr.Status.TaskRuns) != 0 {
 		trl = newTaskrunListFromMap(pr.Status.TaskRuns)
 		sort.Sort(trl)
 	}
 
 	var data = struct {
-		PipelineRun *v1alpha1.PipelineRun
+		PipelineRun *v1beta1.PipelineRun
 		Params      cli.Params
 		TaskrunList taskrunList
 	}{
@@ -183,7 +179,7 @@ func PrintPipelineRunDescription(s *cli.Stream, prName string, p cli.Params) err
 	return w.Flush()
 }
 
-func hasFailed(pr *v1alpha1.PipelineRun) string {
+func hasFailed(pr *v1beta1.PipelineRun) string {
 	if len(pr.Status.Conditions) == 0 {
 		return ""
 	}
@@ -203,7 +199,7 @@ func hasFailed(pr *v1alpha1.PipelineRun) string {
 	return ""
 }
 
-func getTimeoutValue(pr *v1alpha1.PipelineRun) string {
+func getTimeoutValue(pr *v1beta1.PipelineRun) string {
 	if pr.Spec.Timeout != nil {
 		return pr.Spec.Timeout.Duration.String()
 	}

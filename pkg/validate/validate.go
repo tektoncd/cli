@@ -19,6 +19,7 @@ import (
 
 	"github.com/tektoncd/cli/pkg/formatted"
 	"github.com/tektoncd/pipeline/pkg/apis/pipeline/v1alpha1"
+	"github.com/tektoncd/pipeline/pkg/apis/pipeline/v1beta1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	k8s "k8s.io/client-go/kubernetes"
 )
@@ -60,7 +61,7 @@ func TaskRefExists(spec v1alpha1.TaskRunSpec) string {
 }
 
 // Check if PipelineRef exists on a PipelineRunSpec. Returns empty string if not present.
-func PipelineRefExists(spec v1alpha1.PipelineRunSpec) string {
+func PipelineRefExists(spec v1beta1.PipelineRunSpec) string {
 
 	if spec.PipelineRef == nil {
 		return fieldNotPresent
@@ -70,7 +71,7 @@ func PipelineRefExists(spec v1alpha1.PipelineRunSpec) string {
 }
 
 // Check if PipelineResourceRef exists on a PipelineResourceBinding. Returns empty string if not present.
-func PipelineResourceRefExists(res v1alpha1.PipelineResourceBinding) string {
+func PipelineResourceRefExists(res v1beta1.PipelineResourceBinding) string {
 
 	if res.ResourceRef == nil {
 		return fieldNotPresent

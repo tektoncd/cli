@@ -15,6 +15,7 @@
 package pipelinerun
 
 import (
+	"context"
 	"encoding/json"
 	"fmt"
 	"os"
@@ -98,21 +99,56 @@ func List(c *cli.Clients, opts metav1.ListOptions, ns string) (*v1beta1.Pipeline
 	return runs, nil
 }
 
+// It will fetch the resource based on the api available and return v1beta1 form
 func Get(c *cli.Clients, prname string, opts metav1.GetOptions, ns string) (*v1beta1.PipelineRun, error) {
+	gvr, err := actions.GetGroupVersionResource(prGroupResource, c.Tekton.Discovery())
+	if err != nil {
+		return nil, err
+	}
+
+	if gvr.Version == "v1alpha1" {
+		pipelinerun, err := getV1alpha1(c, prname, opts, ns)
+		if err != nil {
+			return nil, err
+		}
+		var pipelinerunConverted v1beta1.PipelineRun
+		err = pipelinerun.ConvertUp(context.Background(), &pipelinerunConverted)
+		if err != nil {
+			return nil, err
+		}
+		return &pipelinerunConverted, nil
+	}
+	return GetV1beta1(c, prname, opts, ns)
+}
+
+// It will fetch the resource in v1beta1 struct format
+func GetV1beta1(c *cli.Clients, prname string, opts metav1.GetOptions, ns string) (*v1beta1.PipelineRun, error) {
 	unstructuredPR, err := actions.Get(prGroupResource, c, prname, ns, opts)
 	if err != nil {
 		return nil, err
 	}
 
-	var run *v1beta1.PipelineRun
-	if err := runtime.DefaultUnstructuredConverter.FromUnstructured(unstructuredPR.UnstructuredContent(), &run); err != nil {
-		return nil, err
-	}
-	if err != nil {
+	var pipelinerun *v1beta1.PipelineRun
+	if err := runtime.DefaultUnstructuredConverter.FromUnstructured(unstructuredPR.UnstructuredContent(), &pipelinerun); err != nil {
 		fmt.Fprintf(os.Stderr, "Failed to get pipelinerun from %s namespace \n", ns)
 		return nil, err
 	}
-	return run, nil
+	return pipelinerun, nil
+}
+
+// It will fetch the resource in v1alpha1 struct format
+func getV1alpha1(c *cli.Clients, prname string, opts metav1.GetOptions, ns string) (*v1alpha1.PipelineRun, error) {
+	unstructuredPR, err := actions.Get(prGroupResource, c, prname, ns, opts)
+	if err != nil {
+		return nil, err
+	}
+
+	var pipelinerun *v1alpha1.PipelineRun
+	if err := runtime.DefaultUnstructuredConverter.FromUnstructured(unstructuredPR.UnstructuredContent(), &pipelinerun); err != nil {
+		fmt.Fprintf(os.Stderr, "Failed to get pipelinerun from %s namespace \n", ns)
+		return nil, err
+	}
+	return pipelinerun, nil
 }
 
 func Watch(c *cli.Clients, opts metav1.ListOptions, ns string) (watch.Interface, error) {
