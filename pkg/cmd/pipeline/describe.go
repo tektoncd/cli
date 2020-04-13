@@ -29,6 +29,7 @@ import (
 	"github.com/tektoncd/cli/pkg/formatted"
 	"github.com/tektoncd/cli/pkg/pipeline"
 	"github.com/tektoncd/cli/pkg/pipelinerun"
+	prsort "github.com/tektoncd/cli/pkg/pipelinerun/sort"
 	"github.com/tektoncd/cli/pkg/validate"
 	"github.com/tektoncd/pipeline/pkg/apis/pipeline/v1beta1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
@@ -151,6 +152,7 @@ func printPipelineDescription(out io.Writer, p cli.Params, pname string) error {
 	if err != nil {
 		return err
 	}
+	prsort.SortByStartTime(pipelineRuns.Items)
 
 	var data = struct {
 		Pipeline     *v1beta1.Pipeline

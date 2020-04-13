@@ -1,0 +1,25 @@
+Name:          pipeline
+Namespace:     ns
+Description:   a test description
+
+Resources
+
+ NAME   TYPE
+ name   git
+
+Params
+
+ NAME             TYPE     DEFAULT VALUE
+ pipeline-param   string   somethingdifferent
+
+Tasks
+
+ NAME   TASKREF   RUNAFTER
+ task   taskref   one, two
+
+PipelineRuns
+
+ NAME             STARTED          DURATION     STATUS
+ pipeline-run-1   15 minutes ago   10 minutes   Succeeded
+ pipeline-run-3   25 minutes ago   20 minutes   Succeeded
+ pipeline-run-2   30 minutes ago   25 minutes   Succeeded
