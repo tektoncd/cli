@@ -20,6 +20,7 @@ import (
 
 	"github.com/tektoncd/cli/pkg/test"
 	"github.com/tektoncd/pipeline/pkg/apis/pipeline/v1alpha1"
+	"github.com/tektoncd/pipeline/pkg/apis/pipeline/v1beta1"
 	pipelinetest "github.com/tektoncd/pipeline/test/v1alpha1"
 	corev1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
@@ -77,8 +78,8 @@ func TestTaskRefExists_Not_Present(t *testing.T) {
 }
 
 func TestPipelineRefExists_Present(t *testing.T) {
-	spec := v1alpha1.PipelineRunSpec{
-		PipelineRef: &v1alpha1.PipelineRef{
+	spec := v1beta1.PipelineRunSpec{
+		PipelineRef: &v1beta1.PipelineRef{
 			Name: "Pipeline",
 		},
 	}
@@ -88,7 +89,7 @@ func TestPipelineRefExists_Present(t *testing.T) {
 }
 
 func TestPipelineRefExists_Not_Present(t *testing.T) {
-	spec := v1alpha1.PipelineRunSpec{
+	spec := v1beta1.PipelineRunSpec{
 		PipelineRef: nil,
 	}
 
@@ -97,8 +98,8 @@ func TestPipelineRefExists_Not_Present(t *testing.T) {
 }
 
 func TestPipelineResourceRefExists_Present(t *testing.T) {
-	res := v1alpha1.PipelineResourceBinding{
-		ResourceRef: &v1alpha1.PipelineResourceRef{
+	res := v1beta1.PipelineResourceBinding{
+		ResourceRef: &v1beta1.PipelineResourceRef{
 			Name: "Resource",
 		},
 	}
@@ -108,7 +109,7 @@ func TestPipelineResourceRefExists_Present(t *testing.T) {
 }
 
 func TestPipelineResourceRefExists_Not_Present(t *testing.T) {
-	res := v1alpha1.PipelineResourceBinding{
+	res := v1beta1.PipelineResourceBinding{
 		ResourceRef: nil,
 	}
 

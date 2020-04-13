@@ -30,7 +30,7 @@ import (
 )
 
 func (r *Reader) readPipelineLog() (<-chan Log, <-chan error, error) {
-	pr, err := pipelinerun.Get(r.clients, r.run, metav1.GetOptions{}, r.ns)
+	pr, err := pipelinerun.GetV1beta1(r.clients, r.run, metav1.GetOptions{}, r.ns)
 	if err != nil {
 		return nil, nil, err
 	}
@@ -125,7 +125,7 @@ func (r *Reader) waitUntilAvailable(timeout time.Duration) error {
 	opts := metav1.ListOptions{
 		FieldSelector: fields.OneTermEqualSelector("metadata.name", r.run).String(),
 	}
-	run, err := pipelinerun.Get(r.clients, r.run, metav1.GetOptions{}, r.ns)
+	run, err := pipelinerun.GetV1beta1(r.clients, r.run, metav1.GetOptions{}, r.ns)
 	if err != nil {
 		return err
 	}
