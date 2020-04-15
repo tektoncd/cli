@@ -17,5 +17,4 @@ spec:
     resourceRef:
       name: scaffold-git
   serviceAccountName: svc1
-  timeout: 1h0m0s
 status: {}

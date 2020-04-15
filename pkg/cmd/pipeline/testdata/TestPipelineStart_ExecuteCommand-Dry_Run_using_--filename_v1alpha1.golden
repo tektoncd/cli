@@ -50,5 +50,4 @@ spec:
   - name: web-image
     resourceRef:
       name: imageres
-  timeout: 1h0m0s
 status: {}

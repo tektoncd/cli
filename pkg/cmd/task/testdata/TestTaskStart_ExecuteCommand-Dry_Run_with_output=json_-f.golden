@@ -61,7 +61,6 @@
 				]
 			}
 		},
-		"timeout": "1h0m0s",
 		"inputs": {
 			"resources": [
 				{

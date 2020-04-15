@@ -161,7 +161,7 @@ like cat,foo,bar
 	c.Flags().BoolVarP(&opt.DryRun, "dry-run", "", false, "preview pipelinerun without running it")
 	c.Flags().StringVarP(&opt.Output, "output", "", "", "format of pipelinerun dry-run (yaml or json)")
 	c.Flags().StringVarP(&opt.PrefixName, "prefix-name", "", "", "specify a prefix for the pipelinerun name (must be lowercase alphanumeric characters)")
-	c.Flags().StringVarP(&opt.TimeOut, "timeout", "", "1h", "timeout for pipelinerun")
+	c.Flags().StringVarP(&opt.TimeOut, "timeout", "", "", "timeout for pipelinerun")
 	c.Flags().StringVarP(&opt.Filename, "filename", "f", "", "local or remote file name containing a pipeline definition to start a pipelinerun")
 	c.Flags().BoolVarP(&opt.UseParamDefaults, "use-param-defaults", "", false, "use default parameter values without prompting for input")
 
@@ -227,11 +227,13 @@ func (opt *startOptions) startPipeline(pipelineStart *v1alpha1.Pipeline) error {
 		}
 	}
 
-	timeoutDuration, err := time.ParseDuration(opt.TimeOut)
-	if err != nil {
-		return err
+	if opt.TimeOut != "" {
+		timeoutDuration, err := time.ParseDuration(opt.TimeOut)
+		if err != nil {
+			return err
+		}
+		pr.Spec.Timeout = &metav1.Duration{Duration: timeoutDuration}
 	}
-	pr.Spec.Timeout = &metav1.Duration{Duration: timeoutDuration}
 
 	if opt.Last || opt.UsePipelineRun != "" {
 		var usepr *v1alpha1.PipelineRun

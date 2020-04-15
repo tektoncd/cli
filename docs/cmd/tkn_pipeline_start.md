@@ -51,7 +51,7 @@ my-secret and my-empty-dir)
   -s, --serviceaccount string         pass the serviceaccount name
       --showlog                       show logs right after starting the pipeline
       --task-serviceaccount strings   pass the service account corresponding to the task
-      --timeout string                timeout for pipelinerun (default "1h")
+      --timeout string                timeout for pipelinerun
       --use-param-defaults            use default parameter values without prompting for input
       --use-pipelinerun string        use this pipelinerun values to re-run the pipeline. 
   -w, --workspace stringArray         pass the workspace.

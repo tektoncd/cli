@@ -18,6 +18,5 @@ spec:
   serviceAccountName: svc1
   taskRef:
     name: task-1
-  timeout: 1h0m0s
 status:
   podName: ""
