@@ -244,7 +244,7 @@ func TestClusterTask_Get(t *testing.T) {
 		t.Errorf("unable to create client: %v", err)
 	}
 
-	got, err := Get(c, "clustertask", metav1.GetOptions{}, c.Tekton.Discovery())
+	got, err := Get(c, "clustertask", metav1.GetOptions{})
 	if err != nil {
 		t.Errorf("unexpected Error")
 	}
@@ -285,7 +285,7 @@ func TestClusterTaskV1beta1_Get(t *testing.T) {
 		t.Errorf("unable to create client: %v", err)
 	}
 
-	got, err := Get(c, "clustertask", metav1.GetOptions{}, c.Tekton.Discovery())
+	got, err := Get(c, "clustertask", metav1.GetOptions{})
 	if err != nil {
 		t.Errorf("unexpected Error")
 	}

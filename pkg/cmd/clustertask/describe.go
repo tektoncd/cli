@@ -164,7 +164,7 @@ func printClusterTaskDescription(s *cli.Stream, p cli.Params, tname string) erro
 		return fmt.Errorf("failed to create tekton client")
 	}
 
-	ct, err := clustertask.Get(cs, tname, metav1.GetOptions{}, cs.Tekton.Discovery())
+	ct, err := clustertask.Get(cs, tname, metav1.GetOptions{})
 	if err != nil {
 		fmt.Fprintf(s.Err, "failed to get clustertask %s\n", tname)
 		return err
