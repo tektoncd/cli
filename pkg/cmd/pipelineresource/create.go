@@ -538,7 +538,7 @@ func askPassword(askOpts survey.AskOpt) (v1alpha1.ResourceParam, error) {
 	var qs = []*survey.Question{{
 		Name: "value",
 		Prompt: &survey.Password{
-			Message: fmt.Sprintf("Enter a value for password :"),
+			Message: "Enter a value for password :",
 		},
 	}}
 

@@ -26,7 +26,6 @@ import (
 )
 
 type promptTest struct {
-	name      string
 	procedure func(*goexpect.Console) error
 }
 

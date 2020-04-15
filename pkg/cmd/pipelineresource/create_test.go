@@ -38,8 +38,6 @@ func init() {
 }
 
 func TestPipelineResource_resource_noName(t *testing.T) {
-	t.Skip("Skipping due of flakiness")
-
 	cs, _ := test.SeedTestData(t, pipelinetest.Data{
 		PipelineResources: []*v1alpha1.PipelineResource{
 			tb.PipelineResource("res", "namespace",
@@ -58,8 +56,6 @@ func TestPipelineResource_resource_noName(t *testing.T) {
 
 	tests := []promptTest{
 		{
-			name: "no input for name",
-
 			procedure: func(c *goexpect.Console) error {
 				if _, err := c.ExpectString("Enter a name for a pipeline resource :"); err != nil {
 					return err
@@ -100,7 +96,8 @@ func TestPipelineResource_resource_noName(t *testing.T) {
 
 	res := resOpts("namespace", cs)
 	for _, test := range tests {
-		t.Run(test.name, func(t *testing.T) {
+		t.Run("no input for name", func(t *testing.T) {
+			t.Skip("Skipping due of flakiness")
 			res.RunPromptTest(t, test)
 		})
 	}
@@ -127,8 +124,6 @@ func TestPipelineResource_resource_already_exist(t *testing.T) {
 
 	tests := []promptTest{
 		{
-			name: "pre-existing-resource",
-
 			procedure: func(c *goexpect.Console) error {
 				if _, err := c.ExpectString("Enter a name for a pipeline resource :"); err != nil {
 					return err
@@ -157,7 +152,7 @@ func TestPipelineResource_resource_already_exist(t *testing.T) {
 
 	res := resOpts("namespace", cs)
 	for _, test := range tests {
-		t.Run(test.name, func(t *testing.T) {
+		t.Run("pre-existing-resource", func(t *testing.T) {
 			res.RunPromptTest(t, test)
 		})
 	}
@@ -178,8 +173,6 @@ func TestPipelineResource_allResourceType(t *testing.T) {
 
 	tests := []promptTest{
 		{
-			name: "check all type of resource",
-
 			procedure: func(c *goexpect.Console) error {
 				if _, err := c.ExpectString("Enter a name for a pipeline resource :"); err != nil {
 					return err
@@ -267,7 +260,7 @@ func TestPipelineResource_allResourceType(t *testing.T) {
 
 	res := resOpts("namespace", cs)
 	for _, test := range tests {
-		t.Run(test.name, func(t *testing.T) {
+		t.Run("check all type of resource", func(t *testing.T) {
 			res.RunPromptTest(t, test)
 		})
 	}
@@ -288,8 +281,6 @@ func TestPipelineResource_create_cloudEventResource(t *testing.T) {
 
 	tests := []promptTest{
 		{
-			name: "create-cloudEventResource",
-
 			procedure: func(c *goexpect.Console) error {
 				if _, err := c.ExpectString("Enter a name for a pipeline resource :"); err != nil {
 					return err
@@ -339,7 +330,7 @@ func TestPipelineResource_create_cloudEventResource(t *testing.T) {
 	}
 	res := resOpts("namespace", cs)
 	for _, test := range tests {
-		t.Run(test.name, func(t *testing.T) {
+		t.Run("create-cloudEventResource", func(t *testing.T) {
 			res.RunPromptTest(t, test)
 		})
 	}
@@ -360,8 +351,6 @@ func TestPipelineResource_create_clusterResource_secure_password_text(t *testing
 
 	tests := []promptTest{
 		{
-			name: "clusterResource-securePasswordText",
-
 			procedure: func(c *goexpect.Console) error {
 				if _, err := c.ExpectString("Enter a name for a pipeline resource :"); err != nil {
 					return err
@@ -479,7 +468,7 @@ func TestPipelineResource_create_clusterResource_secure_password_text(t *testing
 	}
 	res := resOpts("namespace", cs)
 	for _, test := range tests {
-		t.Run(test.name, func(t *testing.T) {
+		t.Run("clusterResource-securePasswordText", func(t *testing.T) {
 			res.RunPromptTest(t, test)
 		})
 	}
@@ -500,8 +489,6 @@ func TestPipelineResource_create_clusterResource_secure_token_text(t *testing.T)
 
 	tests := []promptTest{
 		{
-			name: "clusterResource-secureTokenText",
-
 			procedure: func(c *goexpect.Console) error {
 				if _, err := c.ExpectString("Enter a name for a pipeline resource :"); err != nil {
 					return err
@@ -623,7 +610,7 @@ func TestPipelineResource_create_clusterResource_secure_token_text(t *testing.T)
 	}
 	res := resOpts("namespace", cs)
 	for _, test := range tests {
-		t.Run(test.name, func(t *testing.T) {
+		t.Run("clusterResource-secureTokenText", func(t *testing.T) {
 			res.RunPromptTest(t, test)
 		})
 	}
@@ -644,8 +631,6 @@ func TestPipelineResource_create_gitResource(t *testing.T) {
 
 	tests := []promptTest{
 		{
-			name: "gitResource",
-
 			procedure: func(c *goexpect.Console) error {
 				if _, err := c.ExpectString("Enter a name for a pipeline resource :"); err != nil {
 					return err
@@ -722,7 +707,7 @@ func TestPipelineResource_create_gitResource(t *testing.T) {
 	}
 	res := resOpts("namespace", cs)
 	for _, test := range tests {
-		t.Run(test.name, func(t *testing.T) {
+		t.Run("gitResource", func(t *testing.T) {
 			res.RunPromptTest(t, test)
 		})
 	}
@@ -743,8 +728,6 @@ func TestPipelineResource_create_imageResource(t *testing.T) {
 
 	tests := []promptTest{
 		{
-			name: "imageResource",
-
 			procedure: func(c *goexpect.Console) error {
 				if _, err := c.ExpectString("Enter a name for a pipeline resource :"); err != nil {
 					return err
@@ -826,7 +809,7 @@ func TestPipelineResource_create_imageResource(t *testing.T) {
 	}
 	res := resOpts("namespace", cs)
 	for _, test := range tests {
-		t.Run(test.name, func(t *testing.T) {
+		t.Run("imageResource", func(t *testing.T) {
 			res.RunPromptTest(t, test)
 		})
 	}
@@ -847,8 +830,6 @@ func TestPipelineResource_create_clusterResource_secure_password_secret(t *testi
 
 	tests := []promptTest{
 		{
-			name: "clusterResource-securePasswordSecrets",
-
 			procedure: func(c *goexpect.Console) error {
 				if _, err := c.ExpectString("Enter a name for a pipeline resource :"); err != nil {
 					return err
@@ -982,7 +963,7 @@ func TestPipelineResource_create_clusterResource_secure_password_secret(t *testi
 	}
 	res := resOpts("namespace", cs)
 	for _, test := range tests {
-		t.Run(test.name, func(t *testing.T) {
+		t.Run("clusterResource-securePasswordSecrets", func(t *testing.T) {
 			res.RunPromptTest(t, test)
 		})
 	}
@@ -1003,8 +984,6 @@ func TestPipelineResource_create_clusterResource_secure_token_secret(t *testing.
 
 	tests := []promptTest{
 		{
-			name: "clusterResource-secureTokenSecrets",
-
 			procedure: func(c *goexpect.Console) error {
 				if _, err := c.ExpectString("Enter a name for a pipeline resource :"); err != nil {
 					return err
@@ -1150,7 +1129,7 @@ func TestPipelineResource_create_clusterResource_secure_token_secret(t *testing.
 	}
 	res := resOpts("namespace", cs)
 	for _, test := range tests {
-		t.Run(test.name, func(t *testing.T) {
+		t.Run("clusterResource-secureTokenSecrets", func(t *testing.T) {
 			res.RunPromptTest(t, test)
 		})
 	}
@@ -1171,8 +1150,6 @@ func TestPipelineResource_create_pullRequestResource(t *testing.T) {
 
 	tests := []promptTest{
 		{
-			name: "pullRequestResource",
-
 			procedure: func(c *goexpect.Console) error {
 				if _, err := c.ExpectString("Enter a name for a pipeline resource :"); err != nil {
 					return err
@@ -1281,7 +1258,7 @@ func TestPipelineResource_create_pullRequestResource(t *testing.T) {
 	}
 	res := resOpts("namespace", cs)
 	for _, test := range tests {
-		t.Run(test.name, func(t *testing.T) {
+		t.Run("pullRequestResource", func(t *testing.T) {
 			res.RunPromptTest(t, test)
 		})
 	}
@@ -1302,8 +1279,6 @@ func TestPipelineResource_create_gcsStorageResource(t *testing.T) {
 
 	tests := []promptTest{
 		{
-			name: "gcsStorageResource",
-
 			procedure: func(c *goexpect.Console) error {
 				if _, err := c.ExpectString("Enter a name for a pipeline resource :"); err != nil {
 					return err
@@ -1425,7 +1400,7 @@ func TestPipelineResource_create_gcsStorageResource(t *testing.T) {
 	}
 	res := resOpts("namespace", cs)
 	for _, test := range tests {
-		t.Run(test.name, func(t *testing.T) {
+		t.Run("gcsStorageResource", func(t *testing.T) {
 			res.RunPromptTest(t, test)
 		})
 	}
@@ -1446,8 +1421,6 @@ func TestPipelineResource_create_buildGCSstorageResource(t *testing.T) {
 
 	tests := []promptTest{
 		{
-			name: "buildGCSstorageResource",
-
 			procedure: func(c *goexpect.Console) error {
 				if _, err := c.ExpectString("Enter a name for a pipeline resource :"); err != nil {
 					return err
@@ -1597,7 +1570,7 @@ func TestPipelineResource_create_buildGCSstorageResource(t *testing.T) {
 	}
 	res := resOpts("namespace", cs)
 	for _, test := range tests {
-		t.Run(test.name, func(t *testing.T) {
+		t.Run("buildGCSstorageResource", func(t *testing.T) {
 			res.RunPromptTest(t, test)
 		})
 	}

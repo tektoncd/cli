@@ -47,7 +47,7 @@ function test_documentation_has_been_generated() {
 function test_golden_has_been_generated() {
     header "Testing if golden files has been generated"
 
-    make test-unit-update-golden
+    make update-golden
 
     if [[ -n $(git status --porcelain pkg/) ]];then
         echo "-- FATAL: The golden files didn't seem to be generated, rerun 'make generated' :"
@@ -61,23 +61,39 @@ function test_golden_has_been_generated() {
 }
 
 
-function check_lint() {
-    header "Testing if golint/yamllint has been done"
+function check_go_lint() {
+    header "Testing if golint has been done"
 
-    make lint
+    make lint-go
 
-    if [[ "$?" = "1" ]]; then
-        results_banner "Lint" 1
+    if [[ $? != 0 ]]; then
+        results_banner "Go Lint" 1
         exit 1
     fi
 
-    results_banner "Lint" 0
+    results_banner "Go Lint" 0
+}
+
+function check_yaml_lint() {
+    header "Testing if yamllint has been done"
+
+    make lint-yaml
+
+    if [[ $? != 0 ]]; then
+        results_banner "YAML Lint" 1
+        exit 1
+    fi
+
+    results_banner "YAML Lint" 0
 }
 
 function post_build_tests() {
     test_golden_has_been_generated
     test_documentation_has_been_generated
-    check_lint
+    check_go_lint
+    # Skipping yaml lint because of some issue in CI
+    # https://github.com/tektoncd/plumbing/issues/307
+    # check_yaml_lint
 }
 
 # We use the default build, unit and integration test runners.
