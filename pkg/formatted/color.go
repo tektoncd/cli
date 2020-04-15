@@ -45,27 +45,27 @@ func DecorateAttr(attrString, message string) string {
 	case "bullet":
 		return fmt.Sprintf("∙ %s", message)
 	case "resources":
-		return fmt.Sprintf("📦 ")
+		return "📦 "
 	case "params":
-		return fmt.Sprintf("⚓ ")
+		return "⚓ "
 	case "tasks":
-		return fmt.Sprintf("🗒  ")
+		return "🗒  "
 	case "pipelineruns":
-		return fmt.Sprintf("⛩  ")
+		return "⛩  "
 	case "status":
-		return fmt.Sprintf("🌡️  ")
+		return "🌡️  "
 	case "inputresources":
-		return fmt.Sprintf("📨 ")
+		return "📨 "
 	case "outputresources":
-		return fmt.Sprintf("📡 ")
+		return "📡 "
 	case "steps":
-		return fmt.Sprintf("🦶 ")
+		return "🦶 "
 	case "message":
-		return fmt.Sprintf("💌 ")
+		return "💌 "
 	case "taskruns":
-		return fmt.Sprintf("🗂  ")
+		return "🗂  "
 	case "sidecars":
-		return fmt.Sprintf("🚗 ")
+		return "🚗 "
 	}
 
 	attr := color.Reset
