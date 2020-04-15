@@ -46,6 +46,5 @@ spec:
       image: gcr.io/kaniko-project/executor:v0.14.0
       name: build-and-push
       resources: {}
-  timeout: 1h0m0s
 status:
   podName: ""

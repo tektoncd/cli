@@ -162,7 +162,7 @@ like cat,foo,bar
 	c.Flags().StringArrayVarP(&opt.Workspaces, "workspace", "w", []string{}, "pass the workspace.")
 	c.Flags().BoolVarP(&opt.ShowLog, "showlog", "", false, "show logs right after starting the task")
 	c.Flags().StringVarP(&opt.Filename, "filename", "f", "", "local or remote file name containing a task definition to start a taskrun")
-	c.Flags().StringVarP(&opt.TimeOut, "timeout", "", "1h", "timeout for taskrun")
+	c.Flags().StringVarP(&opt.TimeOut, "timeout", "", "", "timeout for taskrun")
 	c.Flags().BoolVarP(&opt.DryRun, "dry-run", "", false, "preview taskrun without running it")
 	c.Flags().StringVarP(&opt.Output, "output", "", "", "format of taskrun dry-run (yaml or json)")
 	c.Flags().StringVarP(&opt.PrefixName, "prefix-name", "", "", "specify a prefix for the taskrun name (must be lowercase alphanumeric characters)")
@@ -260,11 +260,13 @@ func startTask(opt startOptions, args []string) error {
 		}
 	}
 
-	timeoutDuration, err := time.ParseDuration(opt.TimeOut)
-	if err != nil {
-		return err
+	if opt.TimeOut != "" {
+		timeoutDuration, err := time.ParseDuration(opt.TimeOut)
+		if err != nil {
+			return err
+		}
+		tr.Spec.Timeout = &metav1.Duration{Duration: timeoutDuration}
 	}
-	tr.Spec.Timeout = &metav1.Duration{Duration: timeoutDuration}
 
 	if opt.PrefixName == "" {
 		tr.ObjectMeta.GenerateName = tname + "-run-"
