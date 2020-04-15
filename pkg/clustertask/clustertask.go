@@ -26,7 +26,6 @@ import (
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/apimachinery/pkg/runtime/schema"
-	"k8s.io/client-go/discovery"
 )
 
 var clustertaskGroupResource = schema.GroupVersionResource{Group: "tekton.dev", Resource: "clustertasks"}
@@ -50,8 +49,8 @@ func List(c *cli.Clients, opts metav1.ListOptions) (*v1beta1.ClusterTaskList, er
 }
 
 // It will fetch the resource based on the api available and return v1beta1 form
-func Get(c *cli.Clients, clustertaskname string, opts metav1.GetOptions, discovery discovery.DiscoveryInterface) (*v1beta1.ClusterTask, error) {
-	gvr, err := actions.GetGroupVersionResource(clustertaskGroupResource, discovery)
+func Get(c *cli.Clients, clustertaskname string, opts metav1.GetOptions) (*v1beta1.ClusterTask, error) {
+	gvr, err := actions.GetGroupVersionResource(clustertaskGroupResource, c.Tekton.Discovery())
 	if err != nil {
 		return nil, err
 	}

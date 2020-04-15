@@ -171,7 +171,7 @@ func printTaskDescription(s *cli.Stream, p cli.Params, tname string) error {
 		return fmt.Errorf("failed to create tekton client")
 	}
 
-	task, err := task.Get(cs, tname, metav1.GetOptions{}, p.Namespace(), cs.Tekton.Discovery())
+	task, err := task.Get(cs, tname, metav1.GetOptions{}, p.Namespace())
 	if err != nil {
 		fmt.Fprintf(s.Err, "failed to get task %s\n", tname)
 		return err
