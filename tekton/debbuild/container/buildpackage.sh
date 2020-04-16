@@ -19,8 +19,8 @@ RELEASE=2
 TMPD=$(mktemp -d)
 mkdir -p ${TMPD}
 clean() { rm -rf ${TMPD} ;}
-# trap clean EXIT
-TMPD=/tmp/debug;mkdir -p ${TMPD}
+trap clean EXIT
+# TMPD=/tmp/debug;mkdir -p ${TMPD}
 
 curl -o ${TMPD}/output.json -s https://api.github.com/repos/tektoncd/cli/releases/latest
 version=$(python3 -c "import sys, json;x=json.load(sys.stdin);print(x['tag_name'])" < ${TMPD}/output.json)
