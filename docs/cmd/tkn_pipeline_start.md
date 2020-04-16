@@ -45,7 +45,7 @@ my-secret and my-empty-dir)
   -l, --labels strings                pass labels as label=value.
   -L, --last                          re-run the pipeline using last pipelinerun values
       --output string                 format of pipelinerun dry-run (yaml or json)
-  -p, --param stringArray             pass the param as key=value or key=value1,value2
+  -p, --param stringArray             pass the param as key=value for string type, or key=value1,value2,... for array type
       --prefix-name string            specify a prefix for the pipelinerun name (must be lowercase alphanumeric characters)
   -r, --resource strings              pass the resource name and ref as name=ref
   -s, --serviceaccount string         pass the serviceaccount name
