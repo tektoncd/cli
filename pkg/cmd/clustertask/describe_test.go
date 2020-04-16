@@ -81,7 +81,7 @@ func Test_ClusterTaskDescribe(t *testing.T) {
 		tb.TaskRun("taskrun-1", "ns",
 			tb.TaskRunLabel("tekton.dev/task", "clustertask-full"),
 			tb.TaskRunSpec(
-				tb.TaskRunTaskRef("clustertask-1", tb.TaskRefKind(v1alpha1.ClusterTaskKind)),
+				tb.TaskRunTaskRef("clustertask-full", tb.TaskRefKind(v1alpha1.ClusterTaskKind)),
 				tb.TaskRunServiceAccountName("svc"),
 				tb.TaskRunParam("myarg", "value"),
 				tb.TaskRunParam("print", "booms", "booms", "booms"),
@@ -100,7 +100,7 @@ func Test_ClusterTaskDescribe(t *testing.T) {
 		tb.TaskRun("taskrun-2", "ns",
 			tb.TaskRunLabel("tekton.dev/task", "clustertask-one-everything"),
 			tb.TaskRunSpec(
-				tb.TaskRunTaskRef("clustertask-1", tb.TaskRefKind(v1alpha1.ClusterTaskKind)),
+				tb.TaskRunTaskRef("clustertask-one-everything", tb.TaskRefKind(v1alpha1.ClusterTaskKind)),
 				tb.TaskRunServiceAccountName("svc"),
 				tb.TaskRunParam("myarg", "value"),
 				tb.TaskRunResources(tb.TaskRunResourcesInput("my-repo", tb.TaskResourceBindingRef("git"))),
@@ -117,7 +117,25 @@ func Test_ClusterTaskDescribe(t *testing.T) {
 		tb.TaskRun("taskrun-3", "ns",
 			tb.TaskRunLabel("tekton.dev/task", "clustertask-full"),
 			tb.TaskRunSpec(
-				tb.TaskRunTaskRef("clustertask-1", tb.TaskRefKind(v1alpha1.ClusterTaskKind)),
+				tb.TaskRunTaskRef("clustertask-full", tb.TaskRefKind(v1alpha1.ClusterTaskKind)),
+				tb.TaskRunServiceAccountName("svc"),
+				tb.TaskRunParam("myarg", "value"),
+				tb.TaskRunParam("print", "booms", "booms", "booms"),
+				tb.TaskRunResources(tb.TaskRunResourcesInput("my-repo", tb.TaskResourceBindingRef("git"))),
+				tb.TaskRunResources(tb.TaskRunResourcesOutput("my-image", tb.TaskResourceBindingRef("image"))),
+			),
+			tb.TaskRunStatus(
+				tb.TaskRunStartTime(clock.Now().Add(-12*time.Minute)),
+				tb.StatusCondition(apis.Condition{
+					Status: corev1.ConditionUnknown,
+					Reason: resources.ReasonRunning,
+				}),
+			),
+		),
+		tb.TaskRun("taskrun-4", "ns",
+			tb.TaskRunLabel("tekton.dev/task", "clustertask-full"),
+			tb.TaskRunSpec(
+				tb.TaskRunTaskRef("clustertask-full", tb.TaskRefKind(v1alpha1.NamespacedTaskKind)),
 				tb.TaskRunServiceAccountName("svc"),
 				tb.TaskRunParam("myarg", "value"),
 				tb.TaskRunParam("print", "booms", "booms", "booms"),
@@ -151,6 +169,7 @@ func Test_ClusterTaskDescribe(t *testing.T) {
 		cb.UnstructuredTR(taskruns[0], version),
 		cb.UnstructuredTR(taskruns[1], version),
 		cb.UnstructuredTR(taskruns[2], version),
+		cb.UnstructuredTR(taskruns[3], version),
 	)
 	if err != nil {
 		t.Errorf("unable to create dynamic client: %v", err)

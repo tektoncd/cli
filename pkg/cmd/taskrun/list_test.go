@@ -45,7 +45,7 @@ func TestListTaskRuns(t *testing.T) {
 	trs := []*v1alpha1.TaskRun{
 		tb.TaskRun("tr0-1", "foo",
 			tb.TaskRunLabel("tekton.dev/task", "random"),
-			tb.TaskRunSpec(tb.TaskRunTaskRef("random")),
+			tb.TaskRunSpec(tb.TaskRunTaskRef("random", tb.TaskRefKind(v1alpha1.NamespacedTaskKind))),
 			tb.TaskRunStatus(
 				tb.StatusCondition(apis.Condition{
 					Status: corev1.ConditionTrue,
@@ -55,7 +55,7 @@ func TestListTaskRuns(t *testing.T) {
 		),
 		tb.TaskRun("tr1-1", "foo",
 			tb.TaskRunLabel("tekton.dev/task", "bar"),
-			tb.TaskRunSpec(tb.TaskRunTaskRef("bar")),
+			tb.TaskRunSpec(tb.TaskRunTaskRef("bar", tb.TaskRefKind(v1alpha1.NamespacedTaskKind))),
 			tb.TaskRunStatus(
 				tb.StatusCondition(apis.Condition{
 					Status: corev1.ConditionTrue,
@@ -66,8 +66,8 @@ func TestListTaskRuns(t *testing.T) {
 			),
 		),
 		tb.TaskRun("tr2-1", "foo",
-			tb.TaskRunLabel("tekton.dev/Task", "random"),
-			tb.TaskRunSpec(tb.TaskRunTaskRef("random")),
+			tb.TaskRunLabel("tekton.dev/task", "random"),
+			tb.TaskRunSpec(tb.TaskRunTaskRef("random", tb.TaskRefKind(v1alpha1.NamespacedTaskKind))),
 			tb.TaskRunStatus(
 				tb.StatusCondition(apis.Condition{
 					Status: corev1.ConditionUnknown,
@@ -77,9 +77,9 @@ func TestListTaskRuns(t *testing.T) {
 			),
 		),
 		tb.TaskRun("tr2-2", "foo",
-			tb.TaskRunLabel("tekton.dev/Task", "random"),
+			tb.TaskRunLabel("tekton.dev/task", "random"),
 			tb.TaskRunLabel("pot", "nutella"),
-			tb.TaskRunSpec(tb.TaskRunTaskRef("random")),
+			tb.TaskRunSpec(tb.TaskRunTaskRef("random", tb.TaskRefKind(v1alpha1.NamespacedTaskKind))),
 			tb.TaskRunStatus(
 				tb.StatusCondition(apis.Condition{
 					Status: corev1.ConditionFalse,
@@ -90,9 +90,20 @@ func TestListTaskRuns(t *testing.T) {
 			),
 		),
 		tb.TaskRun("tr3-1", "foo",
-			tb.TaskRunLabel("tekton.dev/Task", "random"),
+			tb.TaskRunLabel("tekton.dev/task", "random"),
 			tb.TaskRunLabel("pot", "honey"),
-			tb.TaskRunSpec(tb.TaskRunTaskRef("random")),
+			tb.TaskRunSpec(tb.TaskRunTaskRef("random", tb.TaskRefKind(v1alpha1.NamespacedTaskKind))),
+			tb.TaskRunStatus(
+				tb.StatusCondition(apis.Condition{
+					Status: corev1.ConditionFalse,
+					Reason: resources.ReasonFailed,
+				}),
+			),
+		),
+		tb.TaskRun("tr4-1", "foo",
+			tb.TaskRunLabel("tekton.dev/task", "bar"),
+			tb.TaskRunLabel("pot", "honey"),
+			tb.TaskRunSpec(tb.TaskRunTaskRef("bar", tb.TaskRefKind(v1alpha1.ClusterTaskKind))),
 			tb.TaskRunStatus(
 				tb.StatusCondition(apis.Condition{
 					Status: corev1.ConditionFalse,
@@ -105,7 +116,7 @@ func TestListTaskRuns(t *testing.T) {
 	trsMultipleNs := []*v1alpha1.TaskRun{
 		tb.TaskRun("tr4-1", "tout",
 			tb.TaskRunLabel("tekton.dev/task", "random"),
-			tb.TaskRunSpec(tb.TaskRunTaskRef("random")),
+			tb.TaskRunSpec(tb.TaskRunTaskRef("random", tb.TaskRefKind(v1alpha1.NamespacedTaskKind))),
 			tb.TaskRunStatus(
 				tb.StatusCondition(apis.Condition{
 					Status: corev1.ConditionTrue,
@@ -115,7 +126,17 @@ func TestListTaskRuns(t *testing.T) {
 		),
 		tb.TaskRun("tr4-2", "lacher",
 			tb.TaskRunLabel("tekton.dev/task", "random"),
-			tb.TaskRunSpec(tb.TaskRunTaskRef("random")),
+			tb.TaskRunSpec(tb.TaskRunTaskRef("random", tb.TaskRefKind(v1alpha1.NamespacedTaskKind))),
+			tb.TaskRunStatus(
+				tb.StatusCondition(apis.Condition{
+					Status: corev1.ConditionTrue,
+					Reason: resources.ReasonSucceeded,
+				}),
+			),
+		),
+		tb.TaskRun("tr5-1", "lacher",
+			tb.TaskRunLabel("tekton.dev/task", "random"),
+			tb.TaskRunSpec(tb.TaskRunTaskRef("random", tb.TaskRefKind(v1alpha1.ClusterTaskKind))),
 			tb.TaskRunStatus(
 				tb.StatusCondition(apis.Condition{
 					Status: corev1.ConditionTrue,
@@ -144,19 +165,22 @@ func TestListTaskRuns(t *testing.T) {
 		cb.UnstructuredTR(trs[2], version),
 		cb.UnstructuredTR(trs[3], version),
 		cb.UnstructuredTR(trs[4], version),
+		cb.UnstructuredTR(trs[5], version),
 		cb.UnstructuredTR(trsMultipleNs[0], version),
 		cb.UnstructuredTR(trsMultipleNs[1], version),
+		cb.UnstructuredTR(trsMultipleNs[2], version),
 	)
 	if err != nil {
-		t.Errorf("unable to create dynamic clinet: %v", err)
+		t.Errorf("unable to create dynamic client: %v", err)
 	}
 	tdc2 := testDynamic.Options{}
 	dc2, err := tdc2.Client(
 		cb.UnstructuredTR(trsMultipleNs[0], version),
 		cb.UnstructuredTR(trsMultipleNs[1], version),
+		cb.UnstructuredTR(trsMultipleNs[2], version),
 	)
 	if err != nil {
-		t.Errorf("unable to create dynamic clinet: %v", err)
+		t.Errorf("unable to create dynamic client: %v", err)
 	}
 
 	tests := []struct {
@@ -295,7 +319,7 @@ func TestListTaskRuns_v1beta1(t *testing.T) {
 	trs := []*v1alpha1.TaskRun{
 		tb.TaskRun("tr0-1", "foo",
 			tb.TaskRunLabel("tekton.dev/task", "random"),
-			tb.TaskRunSpec(tb.TaskRunTaskRef("random")),
+			tb.TaskRunSpec(tb.TaskRunTaskRef("random", tb.TaskRefKind(v1alpha1.NamespacedTaskKind))),
 			tb.TaskRunStatus(
 				tb.StatusCondition(apis.Condition{
 					Status: corev1.ConditionTrue,
@@ -305,7 +329,7 @@ func TestListTaskRuns_v1beta1(t *testing.T) {
 		),
 		tb.TaskRun("tr1-1", "foo",
 			tb.TaskRunLabel("tekton.dev/task", "bar"),
-			tb.TaskRunSpec(tb.TaskRunTaskRef("bar")),
+			tb.TaskRunSpec(tb.TaskRunTaskRef("bar", tb.TaskRefKind(v1alpha1.NamespacedTaskKind))),
 			tb.TaskRunStatus(
 				tb.StatusCondition(apis.Condition{
 					Status: corev1.ConditionTrue,
@@ -316,8 +340,8 @@ func TestListTaskRuns_v1beta1(t *testing.T) {
 			),
 		),
 		tb.TaskRun("tr2-1", "foo",
-			tb.TaskRunLabel("tekton.dev/Task", "random"),
-			tb.TaskRunSpec(tb.TaskRunTaskRef("random")),
+			tb.TaskRunLabel("tekton.dev/task", "random"),
+			tb.TaskRunSpec(tb.TaskRunTaskRef("random", tb.TaskRefKind(v1alpha1.NamespacedTaskKind))),
 			tb.TaskRunStatus(
 				tb.StatusCondition(apis.Condition{
 					Status: corev1.ConditionUnknown,
@@ -327,9 +351,9 @@ func TestListTaskRuns_v1beta1(t *testing.T) {
 			),
 		),
 		tb.TaskRun("tr2-2", "foo",
-			tb.TaskRunLabel("tekton.dev/Task", "random"),
+			tb.TaskRunLabel("tekton.dev/task", "random"),
 			tb.TaskRunLabel("pot", "nutella"),
-			tb.TaskRunSpec(tb.TaskRunTaskRef("random")),
+			tb.TaskRunSpec(tb.TaskRunTaskRef("random", tb.TaskRefKind(v1alpha1.NamespacedTaskKind))),
 			tb.TaskRunStatus(
 				tb.StatusCondition(apis.Condition{
 					Status: corev1.ConditionFalse,
@@ -340,9 +364,20 @@ func TestListTaskRuns_v1beta1(t *testing.T) {
 			),
 		),
 		tb.TaskRun("tr3-1", "foo",
-			tb.TaskRunLabel("tekton.dev/Task", "random"),
+			tb.TaskRunLabel("tekton.dev/task", "random"),
 			tb.TaskRunLabel("pot", "honey"),
-			tb.TaskRunSpec(tb.TaskRunTaskRef("random")),
+			tb.TaskRunSpec(tb.TaskRunTaskRef("random", tb.TaskRefKind(v1alpha1.NamespacedTaskKind))),
+			tb.TaskRunStatus(
+				tb.StatusCondition(apis.Condition{
+					Status: corev1.ConditionFalse,
+					Reason: resources.ReasonFailed,
+				}),
+			),
+		),
+		tb.TaskRun("tr4-1", "foo",
+			tb.TaskRunLabel("tekton.dev/task", "bar"),
+			tb.TaskRunLabel("pot", "honey"),
+			tb.TaskRunSpec(tb.TaskRunTaskRef("bar", tb.TaskRefKind(v1alpha1.ClusterTaskKind))),
 			tb.TaskRunStatus(
 				tb.StatusCondition(apis.Condition{
 					Status: corev1.ConditionFalse,
@@ -355,7 +390,7 @@ func TestListTaskRuns_v1beta1(t *testing.T) {
 	trsMultipleNs := []*v1alpha1.TaskRun{
 		tb.TaskRun("tr4-1", "tout",
 			tb.TaskRunLabel("tekton.dev/task", "random"),
-			tb.TaskRunSpec(tb.TaskRunTaskRef("random")),
+			tb.TaskRunSpec(tb.TaskRunTaskRef("random", tb.TaskRefKind(v1alpha1.NamespacedTaskKind))),
 			tb.TaskRunStatus(
 				tb.StatusCondition(apis.Condition{
 					Status: corev1.ConditionTrue,
@@ -365,7 +400,17 @@ func TestListTaskRuns_v1beta1(t *testing.T) {
 		),
 		tb.TaskRun("tr4-2", "lacher",
 			tb.TaskRunLabel("tekton.dev/task", "random"),
-			tb.TaskRunSpec(tb.TaskRunTaskRef("random")),
+			tb.TaskRunSpec(tb.TaskRunTaskRef("random", tb.TaskRefKind(v1alpha1.NamespacedTaskKind))),
+			tb.TaskRunStatus(
+				tb.StatusCondition(apis.Condition{
+					Status: corev1.ConditionTrue,
+					Reason: resources.ReasonSucceeded,
+				}),
+			),
+		),
+		tb.TaskRun("tr5-1", "lacher",
+			tb.TaskRunLabel("tekton.dev/task", "random"),
+			tb.TaskRunSpec(tb.TaskRunTaskRef("random", tb.TaskRefKind(v1alpha1.ClusterTaskKind))),
 			tb.TaskRunStatus(
 				tb.StatusCondition(apis.Condition{
 					Status: corev1.ConditionTrue,
@@ -394,19 +439,22 @@ func TestListTaskRuns_v1beta1(t *testing.T) {
 		cb.UnstructuredTR(trs[2], version),
 		cb.UnstructuredTR(trs[3], version),
 		cb.UnstructuredTR(trs[4], version),
+		cb.UnstructuredTR(trs[5], version),
 		cb.UnstructuredTR(trsMultipleNs[0], version),
 		cb.UnstructuredTR(trsMultipleNs[1], version),
+		cb.UnstructuredTR(trsMultipleNs[2], version),
 	)
 	if err != nil {
-		t.Errorf("unable to create dynamic clinet: %v", err)
+		t.Errorf("unable to create dynamic client: %v", err)
 	}
 	tdc2 := testDynamic.Options{}
 	dc2, err := tdc2.Client(
 		cb.UnstructuredTR(trsMultipleNs[0], version),
 		cb.UnstructuredTR(trsMultipleNs[1], version),
+		cb.UnstructuredTR(trsMultipleNs[2], version),
 	)
 	if err != nil {
-		t.Errorf("unable to create dynamic clinet: %v", err)
+		t.Errorf("unable to create dynamic client: %v", err)
 	}
 
 	tests := []struct {
@@ -505,7 +553,7 @@ func TestListTaskRuns_v1beta1(t *testing.T) {
 			wantError: false,
 		},
 		{
-			name:      "print taskrunsruns in all namespaces",
+			name:      "print taskruns in all namespaces",
 			command:   command(t, trsMultipleNs, now, ns, version, dc2),
 			args:      []string{"list", "--all-namespaces", "-n", "foo"},
 			wantError: false,
@@ -532,7 +580,7 @@ func TestListTaskRuns_no_condition(t *testing.T) {
 	trs := []*v1alpha1.TaskRun{
 		tb.TaskRun("tr1-1", "foo",
 			tb.TaskRunLabel("tekton.dev/task", "bar"),
-			tb.TaskRunSpec(tb.TaskRunTaskRef("bar")),
+			tb.TaskRunSpec(tb.TaskRunTaskRef("bar", tb.TaskRefKind(v1alpha1.NamespacedTaskKind))),
 			tb.TaskRunStatus(
 				tb.TaskRunStartTime(now),
 				taskRunCompletionTime(now.Add(aMinute)),

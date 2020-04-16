@@ -25,6 +25,7 @@ import (
 	"github.com/tektoncd/cli/pkg/cli"
 	"github.com/tektoncd/cli/pkg/formatted"
 	"github.com/tektoncd/cli/pkg/printer"
+	taskpkg "github.com/tektoncd/cli/pkg/task"
 	trlist "github.com/tektoncd/cli/pkg/taskrun/list"
 	trsort "github.com/tektoncd/cli/pkg/taskrun/sort"
 	"github.com/tektoncd/cli/pkg/validate"
@@ -196,6 +197,11 @@ func list(p cli.Params, task string, limit int, labelselector string, allnamespa
 	trs, err := trlist.TaskRuns(cs, options, ns)
 	if err != nil {
 		return nil, err
+	}
+
+	// this is required as the same label is getting added for both task and ClusterTask
+	if task != "" {
+		trs.Items = taskpkg.FilterByRef(trs.Items, "Task")
 	}
 
 	trslen := len(trs.Items)

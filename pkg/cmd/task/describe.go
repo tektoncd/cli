@@ -171,15 +171,15 @@ func printTaskDescription(s *cli.Stream, p cli.Params, tname string) error {
 		return fmt.Errorf("failed to create tekton client")
 	}
 
-	task, err := task.Get(cs, tname, metav1.GetOptions{}, p.Namespace())
+	t, err := task.Get(cs, tname, metav1.GetOptions{}, p.Namespace())
 	if err != nil {
 		fmt.Fprintf(s.Err, "failed to get task %s\n", tname)
 		return err
 	}
 
-	if task.Spec.Resources != nil {
-		task.Spec.Resources.Inputs = sortResourcesByTypeAndName(task.Spec.Resources.Inputs)
-		task.Spec.Resources.Outputs = sortResourcesByTypeAndName(task.Spec.Resources.Outputs)
+	if t.Spec.Resources != nil {
+		t.Spec.Resources.Inputs = sortResourcesByTypeAndName(t.Spec.Resources.Inputs)
+		t.Spec.Resources.Outputs = sortResourcesByTypeAndName(t.Spec.Resources.Outputs)
 	}
 
 	opts := metav1.ListOptions{
@@ -190,6 +190,10 @@ func printTaskDescription(s *cli.Stream, p cli.Params, tname string) error {
 		fmt.Fprintf(s.Err, "failed to get taskruns for task %s \n", tname)
 		return err
 	}
+
+	// this is required as the same label is getting added for both task and ClusterTask
+	taskRuns.Items = task.FilterByRef(taskRuns.Items, "Task")
+
 	trsort.SortByStartTime(taskRuns.Items)
 
 	var data = struct {
@@ -197,7 +201,7 @@ func printTaskDescription(s *cli.Stream, p cli.Params, tname string) error {
 		TaskRuns *v1beta1.TaskRunList
 		Time     clockwork.Clock
 	}{
-		Task:     task,
+		Task:     t,
 		TaskRuns: taskRuns,
 		Time:     p.Time(),
 	}
@@ -211,8 +215,8 @@ func printTaskDescription(s *cli.Stream, p cli.Params, tname string) error {
 	}
 
 	w := tabwriter.NewWriter(s.Out, 0, 5, 3, ' ', tabwriter.TabIndent)
-	t := template.Must(template.New("Describe Task").Funcs(funcMap).Parse(describeTemplate))
-	err = t.Execute(w, data)
+	tparsed := template.Must(template.New("Describe Task").Funcs(funcMap).Parse(describeTemplate))
+	err = tparsed.Execute(w, data)
 	if err != nil {
 		fmt.Fprintf(s.Err, "Failed to execute template \n")
 		return err

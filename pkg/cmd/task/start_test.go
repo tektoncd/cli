@@ -299,7 +299,7 @@ func Test_start_task_last(t *testing.T) {
 		tb.TaskRun("taskrun-123", "ns",
 			tb.TaskRunLabel("tekton.dev/task", "task"),
 			tb.TaskRunSpec(
-				tb.TaskRunTaskRef("task"),
+				tb.TaskRunTaskRef("task", tb.TaskRefKind(v1alpha1.NamespacedTaskKind)),
 				tb.TaskRunServiceAccountName("svc"),
 				tb.TaskRunInputs(tb.TaskRunInputsParam("myarg", "value")),
 				tb.TaskRunInputs(tb.TaskRunInputsParam("print", "booms", "booms", "booms")),
@@ -403,13 +403,13 @@ func Test_start_use_taskrun(t *testing.T) {
 		tb.TaskRun("happy", "ns",
 			tb.TaskRunLabel("tekton.dev/task", "task"),
 			tb.TaskRunSpec(
-				tb.TaskRunTaskRef("task"),
+				tb.TaskRunTaskRef("task", tb.TaskRefKind(v1alpha1.NamespacedTaskKind)),
 			),
 		),
 		tb.TaskRun("camper", "ns",
 			tb.TaskRunLabel("tekton.dev/task", "task"),
 			tb.TaskRunSpec(
-				tb.TaskRunTaskRef("task"),
+				tb.TaskRunTaskRef("task", tb.TaskRefKind(v1alpha1.NamespacedTaskKind)),
 				tb.TaskRunServiceAccountName("camper"),
 				tb.TaskRunTimeout(timeoutDuration),
 			),
@@ -480,7 +480,7 @@ func Test_start_task_last_generate_name(t *testing.T) {
 		tb.TaskRun("taskrun-123", "ns",
 			tb.TaskRunLabel("tekton.dev/task", "task"),
 			tb.TaskRunSpec(
-				tb.TaskRunTaskRef("task"),
+				tb.TaskRunTaskRef("task", tb.TaskRefKind(v1alpha1.NamespacedTaskKind)),
 				tb.TaskRunServiceAccountName("svc"),
 				tb.TaskRunInputs(tb.TaskRunInputsParam("myarg", "value")),
 				tb.TaskRunInputs(tb.TaskRunInputsParam("print", "booms", "booms", "booms")),
@@ -556,7 +556,7 @@ func Test_start_task_last_with_prefix_name(t *testing.T) {
 		tb.TaskRun("taskrun-123", "ns",
 			tb.TaskRunLabel("tekton.dev/task", "task"),
 			tb.TaskRunSpec(
-				tb.TaskRunTaskRef("task"),
+				tb.TaskRunTaskRef("task", tb.TaskRefKind(v1alpha1.NamespacedTaskKind)),
 				tb.TaskRunServiceAccountName("svc"),
 				tb.TaskRunInputs(tb.TaskRunInputsParam("myarg", "value")),
 				tb.TaskRunInputs(tb.TaskRunInputsParam("print", "booms", "booms", "booms")),
@@ -631,7 +631,7 @@ func Test_start_task_with_prefix_name(t *testing.T) {
 		tb.TaskRun("taskrun-123", "ns",
 			tb.TaskRunLabel("tekton.dev/task", "task"),
 			tb.TaskRunSpec(
-				tb.TaskRunTaskRef("task"),
+				tb.TaskRunTaskRef("task", tb.TaskRefKind(v1alpha1.NamespacedTaskKind)),
 				tb.TaskRunServiceAccountName("svc"),
 				tb.TaskRunInputs(tb.TaskRunInputsParam("myarg", "value")),
 				tb.TaskRunInputs(tb.TaskRunInputsParam("print", "booms", "booms", "booms")),
@@ -704,7 +704,7 @@ func Test_start_task_last_with_inputs(t *testing.T) {
 		tb.TaskRun("taskrun-123", "ns",
 			tb.TaskRunLabel("tekton.dev/task", "task"),
 			tb.TaskRunSpec(
-				tb.TaskRunTaskRef("task"),
+				tb.TaskRunTaskRef("task", tb.TaskRefKind(v1alpha1.NamespacedTaskKind)),
 				tb.TaskRunServiceAccountName("svc"),
 				tb.TaskRunInputs(tb.TaskRunInputsParam("myarg", "value")),
 				tb.TaskRunInputs(tb.TaskRunInputsParam("print", "booms", "booms", "booms")),
@@ -815,7 +815,7 @@ func Test_start_task_last_without_pipelinerun(t *testing.T) {
 
 	task := Command(p)
 	got, _ := test.ExecuteCommand(task, "start", "task-1", "--last", "-n", "ns")
-	expected := "Error: no taskruns related to task task-1 found in namespace ns\n"
+	expected := "Error: no taskruns related to Task task-1 found in namespace ns\n"
 	test.AssertOutput(t, expected, got)
 }
 

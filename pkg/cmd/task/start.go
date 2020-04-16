@@ -190,7 +190,7 @@ func useTaskRunFrom(opt startOptions, tr *v1alpha1.TaskRun, cs *cli.Clients, tna
 		err    error
 	)
 	if opt.Last {
-		trUsed, err = task.LastRun(cs.Tekton, tname, opt.cliparams.Namespace(), "task")
+		trUsed, err = task.LastRun(cs.Tekton, tname, opt.cliparams.Namespace(), "Task")
 		if err != nil {
 			return err
 		}

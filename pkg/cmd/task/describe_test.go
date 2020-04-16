@@ -235,7 +235,7 @@ func TestTaskDescribe_Full(t *testing.T) {
 	taskRuns := []*v1alpha1.TaskRun{
 		tb.TaskRun("tr-1", "ns",
 			tb.TaskRunLabel("tekton.dev/task", "task-1"),
-			tb.TaskRunSpec(tb.TaskRunTaskRef("task-1")),
+			tb.TaskRunSpec(tb.TaskRunTaskRef("task-1", tb.TaskRefKind(v1alpha1.NamespacedTaskKind))),
 			tb.TaskRunStatus(
 				tb.StatusCondition(apis.Condition{
 					Status: corev1.ConditionFalse,
@@ -247,7 +247,19 @@ func TestTaskDescribe_Full(t *testing.T) {
 		),
 		tb.TaskRun("tr-2", "ns",
 			tb.TaskRunLabel("tekton.dev/task", "task-1"),
-			tb.TaskRunSpec(tb.TaskRunTaskRef("task-1")),
+			tb.TaskRunSpec(tb.TaskRunTaskRef("task-1", tb.TaskRefKind(v1alpha1.NamespacedTaskKind))),
+			tb.TaskRunStatus(
+				tb.StatusCondition(apis.Condition{
+					Status: corev1.ConditionTrue,
+					Reason: resources.ReasonSucceeded,
+				}),
+				tb.TaskRunStartTime(clock.Now().Add(10*time.Minute)),
+				cb.TaskRunCompletionTime(clock.Now().Add(17*time.Minute)),
+			),
+		),
+		tb.TaskRun("tr-3", "ns",
+			tb.TaskRunLabel("tekton.dev/task", "task-1"),
+			tb.TaskRunSpec(tb.TaskRunTaskRef("task-1", tb.TaskRefKind(v1alpha1.ClusterTaskKind))),
 			tb.TaskRunStatus(
 				tb.StatusCondition(apis.Condition{
 					Status: corev1.ConditionTrue,
@@ -272,6 +284,7 @@ func TestTaskDescribe_Full(t *testing.T) {
 		cb.UnstructuredT(tasks[0], version),
 		cb.UnstructuredTR(taskRuns[0], version),
 		cb.UnstructuredTR(taskRuns[1], version),
+		cb.UnstructuredTR(taskRuns[2], version),
 	)
 	if err != nil {
 		t.Errorf("unable to create dynamic client: %v", err)
@@ -476,6 +489,7 @@ func TestTaskV1beta1Describe_Full(t *testing.T) {
 			Spec: v1beta1.TaskRunSpec{
 				TaskRef: &v1beta1.TaskRef{
 					Name: "task-1",
+					Kind: v1beta1.NamespacedTaskKind,
 				},
 			},
 			Status: v1beta1.TaskRunStatus{
@@ -502,6 +516,7 @@ func TestTaskV1beta1Describe_Full(t *testing.T) {
 			Spec: v1beta1.TaskRunSpec{
 				TaskRef: &v1beta1.TaskRef{
 					Name: "task-1",
+					Kind: v1beta1.NamespacedTaskKind,
 				},
 			},
 			Status: v1beta1.TaskRunStatus{
@@ -516,6 +531,33 @@ func TestTaskV1beta1Describe_Full(t *testing.T) {
 				TaskRunStatusFields: v1beta1.TaskRunStatusFields{
 					StartTime:      &metav1.Time{Time: clock.Now().Add(10 * time.Minute)},
 					CompletionTime: &metav1.Time{Time: clock.Now().Add(17 * time.Minute)},
+				},
+			},
+		},
+		{
+			ObjectMeta: metav1.ObjectMeta{
+				Namespace: "ns",
+				Name:      "tr-3",
+				Labels:    map[string]string{"tekton.dev/task": "task-1"},
+			},
+			Spec: v1beta1.TaskRunSpec{
+				TaskRef: &v1beta1.TaskRef{
+					Name: "task-1",
+					Kind: v1beta1.ClusterTaskKind,
+				},
+			},
+			Status: v1beta1.TaskRunStatus{
+				Status: duckv1beta1.Status{
+					Conditions: duckv1beta1.Conditions{
+						{
+							Status: corev1.ConditionFalse,
+							Reason: resources.ReasonFailed,
+						},
+					},
+				},
+				TaskRunStatusFields: v1beta1.TaskRunStatusFields{
+					StartTime:      &metav1.Time{Time: clock.Now()},
+					CompletionTime: &metav1.Time{Time: clock.Now().Add(5 * time.Minute)},
 				},
 			},
 		},
@@ -535,6 +577,7 @@ func TestTaskV1beta1Describe_Full(t *testing.T) {
 		cb.UnstructuredV1beta1T(tasks[0], version),
 		cb.UnstructuredV1beta1TR(taskRuns[0], version),
 		cb.UnstructuredV1beta1TR(taskRuns[1], version),
+		cb.UnstructuredV1beta1TR(taskRuns[2], version),
 	)
 	if err != nil {
 		t.Errorf("unable to create dynamic client: %v", err)
