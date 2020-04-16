@@ -14,8 +14,9 @@ BUILD_DATE := $(BUILD_DATE:+0000=Z)
 	dh $@
 
 override_dh_auto_build:
-	export XDG_CACHE_HOME=/tmp/cache ; \
-	test -e ./VERSION && VERSION=`cat VERSION` || VERSION=$(BUILD_DATE) ; \
+	@set -x ; export XDG_CACHE_HOME=/tmp/cache ; \
+	RELEASED_VERSION=`curl -s  https://api.github.com/repos/tektoncd/cli/releases/latest|python3 -c "import sys, json;x=json.load(sys.stdin);print(x['tag_name'])"|sed 's/^v//'` ; test -n "$$RELEASED_VERSION" || RELEASED_VERSION=$(BUILD_DATE) ; \
+	test -e ./VERSION && VERSION=`cat VERSION` || VERSION=$$RELEASED_VERSION ; \
 		go build -mod=vendor -v -o ${TKN} -ldflags "-X github.com/tektoncd/cli/pkg/cmd/version.clientVersion=$$VERSION" ./cmd/tkn
 	$(TKN) version
 	$(TKN) completion zsh > debian/tkn.zsh-completion

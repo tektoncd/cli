@@ -36,6 +36,9 @@ cd cli-${version}
 # Make it easy for devs
 [[ -d /debian ]] && { rm -rf debian && cp -a /debian . ; }
 
+# Makefile will use it automatically to set the binary version
+echo ${version} > VERSION
+
 dch -M -v ${version}-${RELEASE} -D $(sed -n '/DISTRIB_CODENAME/ { s/.*=//;p;;}' /etc/lsb-release) "new update"
 
 pcscd
