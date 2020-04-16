@@ -222,7 +222,7 @@ func Test_ClusterTask_Start(t *testing.T) {
 			input:       seeds[2],
 			inputStream: nil,
 			wantError:   true,
-			want:        "no taskruns related to clustertask clustertask-1 found in namespace ns",
+			want:        "no taskruns related to ClusterTask clustertask-1 found in namespace ns",
 		},
 		{
 			name: "Start clustertask",

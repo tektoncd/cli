@@ -189,7 +189,7 @@ func startClusterTask(opt startOptions, args []string) error {
 
 	//TaskRuns are namespaced so using same LastRun method as Task
 	if opt.Last {
-		trLast, err := task.LastRun(cs.Tekton, ctname, opt.cliparams.Namespace(), "clustertask")
+		trLast, err := task.LastRun(cs.Tekton, ctname, opt.cliparams.Namespace(), "ClusterTask")
 		if err != nil {
 			return err
 		}

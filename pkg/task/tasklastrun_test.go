@@ -54,7 +54,7 @@ func TestTaskrunLatest_two_run(t *testing.T) {
 			tb.TaskRun("tr-1", "ns",
 				cb.TaskRunCreationTime(firstRunCreated),
 				tb.TaskRunLabel("tekton.dev/task", "task"),
-				tb.TaskRunSpec(tb.TaskRunTaskRef("task")),
+				tb.TaskRunSpec(tb.TaskRunTaskRef("task", tb.TaskRefKind(v1alpha1.NamespacedTaskKind))),
 				tb.TaskRunStatus(
 					tb.StatusCondition(apis.Condition{
 						Status: corev1.ConditionTrue,
@@ -67,7 +67,7 @@ func TestTaskrunLatest_two_run(t *testing.T) {
 			tb.TaskRun("tr-2", "ns",
 				cb.TaskRunCreationTime(secondRunCompleted),
 				tb.TaskRunLabel("tekton.dev/task", "task"),
-				tb.TaskRunSpec(tb.TaskRunTaskRef("task")),
+				tb.TaskRunSpec(tb.TaskRunTaskRef("task", tb.TaskRefKind(v1alpha1.NamespacedTaskKind))),
 				tb.TaskRunStatus(
 					tb.StatusCondition(apis.Condition{
 						Status: corev1.ConditionTrue,
@@ -86,7 +86,7 @@ func TestTaskrunLatest_two_run(t *testing.T) {
 		t.Errorf("Unexpected error: %v", err)
 	}
 
-	lastRun, err := LastRun(client.Tekton, "task", "ns", "task")
+	lastRun, err := LastRun(client.Tekton, "task", "ns", "Task")
 	if err != nil {
 		t.Errorf("Unexpected error: %v", err)
 	}
@@ -111,11 +111,11 @@ func TestTaskrunLatest_no_run(t *testing.T) {
 		t.Errorf("Unexpected error: %v", err)
 	}
 
-	_, err = LastRun(client.Tekton, "task", "ns", "task")
+	_, err = LastRun(client.Tekton, "task", "ns", "Task")
 	if err == nil {
 		t.Errorf("Expected error, got nil")
 	}
 
-	expected := "no taskruns related to task task found in namespace ns"
+	expected := "no taskruns related to Task task found in namespace ns"
 	test.AssertOutput(t, expected, err.Error())
 }

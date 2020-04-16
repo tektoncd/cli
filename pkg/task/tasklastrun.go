@@ -42,6 +42,9 @@ func LastRun(tekton versioned.Interface, task string, ns string, kind string) (*
 		return nil, err
 	}
 
+	// this is required as the same label is getting added for both task and ClusterTask
+	runs.Items = FilterByRefV1alpha1(runs.Items, kind)
+
 	if len(runs.Items) == 0 {
 		return nil, fmt.Errorf("no taskruns related to %s %s found in namespace %s", kind, task, ns)
 	}
@@ -70,6 +73,9 @@ func DynamicLastRun(cs *cli.Clients, task string, ns string, kind string) (*v1be
 		return nil, err
 	}
 
+	// this is required as the same label is getting added for both task and ClusterTask
+	runs.Items = FilterByRef(runs.Items, "Task")
+
 	if len(runs.Items) == 0 {
 		return nil, fmt.Errorf("no taskruns related to %s %s found in namespace %s", kind, task, ns)
 	}
@@ -82,4 +88,26 @@ func DynamicLastRun(cs *cli.Clients, task string, ns string, kind string) (*v1be
 	}
 
 	return &latest, nil
+}
+
+// this will filter the taskkrun which have reference to Task
+func FilterByRef(taskruns []v1beta1.TaskRun, kind string) []v1beta1.TaskRun {
+	var filtered []v1beta1.TaskRun
+	for _, taskrun := range taskruns {
+		if string(taskrun.Spec.TaskRef.Kind) == kind {
+			filtered = append(filtered, taskrun)
+		}
+	}
+	return filtered
+}
+
+// this will filter the taskkrun which have reference to Task
+func FilterByRefV1alpha1(taskruns []v1alpha1.TaskRun, kind string) []v1alpha1.TaskRun {
+	var filtered []v1alpha1.TaskRun
+	for _, taskrun := range taskruns {
+		if string(taskrun.Spec.TaskRef.Kind) == kind {
+			filtered = append(filtered, taskrun)
+		}
+	}
+	return filtered
 }
