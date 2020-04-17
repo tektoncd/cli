@@ -93,8 +93,9 @@ STARTED	DURATION	STATUS
  No taskruns
 {{- else }}
  NAME	TASK NAME	STARTED	DURATION	STATUS
-{{- range $taskrun := .TaskrunList }}
+{{- range $taskrun := .TaskrunList }}{{ if checkTRStatus $taskrun }}
  {{decorate "bullet" $taskrun.TaskrunName }}	{{ $taskrun.PipelineTaskName }}	{{ formatAge $taskrun.Status.StartTime $.Params.Time }}	{{ formatDuration $taskrun.Status.StartTime $taskrun.Status.CompletionTime }}	{{ formatCondition $taskrun.Status.Conditions }}
+{{- end }}
 {{- end }}
 {{- end }}
 `
@@ -109,11 +110,11 @@ type taskrunList []tkr
 func (trs taskrunList) Len() int      { return len(trs) }
 func (trs taskrunList) Swap(i, j int) { trs[i], trs[j] = trs[j], trs[i] }
 func (trs taskrunList) Less(i, j int) bool {
-	if trs[j].Status.StartTime == nil {
+	if trs[j].Status == nil || trs[j].Status.StartTime == nil {
 		return false
 	}
 
-	if trs[i].Status.StartTime == nil {
+	if trs[i].Status == nil || trs[i].Status.StartTime == nil {
 		return true
 	}
 
@@ -167,6 +168,7 @@ func PrintPipelineRunDescription(s *cli.Stream, prName string, p cli.Params) err
 		"pipelineResourceRefExists": validate.PipelineResourceRefExists,
 		"decorate":                  formatted.DecorateAttr,
 		"getTimeout":                getTimeoutValue,
+		"checkTRStatus":             checkTaskRunStatus,
 	}
 
 	w := tabwriter.NewWriter(s.Out, 0, 5, 3, ' ', tabwriter.TabIndent)
@@ -204,4 +206,8 @@ func getTimeoutValue(pr *v1beta1.PipelineRun) string {
 		return pr.Spec.Timeout.Duration.String()
 	}
 	return ""
+}
+
+func checkTaskRunStatus(taskRun tkr) bool {
+	return taskRun.PipelineRunTaskRunStatus.Status != nil
 }
