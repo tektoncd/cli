@@ -738,7 +738,7 @@ func NameArg(args []string, p cli.Params, file string) (*v1alpha1.Pipeline, erro
 }
 
 func parsePipeline(taskLocation string, p cli.Params) (*v1alpha1.Pipeline, error) {
-	b, err := file.LoadFileContent(p, taskLocation, file.IsYamlFile(), fmt.Errorf("inavlid file format for %s: .yaml or .yml file extension and format required", taskLocation))
+	b, err := file.LoadFileContent(p, taskLocation, file.IsYamlFile(), fmt.Errorf("invalid file format for %s: .yaml or .yml file extension and format required", taskLocation))
 	if err != nil {
 		return nil, err
 	}
