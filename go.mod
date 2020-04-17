@@ -22,7 +22,7 @@ require (
 	github.com/pkg/errors v0.8.1
 	github.com/spf13/cobra v0.0.5
 	github.com/spf13/pflag v1.0.5
-	github.com/tektoncd/pipeline v0.11.0
+	github.com/tektoncd/pipeline v0.11.2
 	github.com/tektoncd/plumbing v0.0.0-20200217163359-cd0db6e567d2
 	github.com/tektoncd/triggers v0.4.0
 	github.com/tidwall/gjson v1.6.0 // indirect
