@@ -92,6 +92,9 @@ Show the logs of PipelineRun named 'microservice-1' for all tasks and steps (inc
 
 func Run(opts *options.LogOptions) error {
 	if opts.PipelineRunName == "" {
+		if err := opts.ValidateOpts(); err != nil {
+			return err
+		}
 		if err := askRunName(opts); err != nil {
 			return err
 		}

@@ -95,6 +95,9 @@ Show the logs of TaskRun named 'microservice-1' for step 'build' only from names
 
 func Run(opts *options.LogOptions) error {
 	if opts.TaskrunName == "" {
+		if err := opts.ValidateOpts(); err != nil {
+			return err
+		}
 		if err := askRunName(opts); err != nil {
 			return err
 		}

@@ -67,6 +67,30 @@ func TestLog_invalid_namespace(t *testing.T) {
 	test.AssertOutput(t, expected, err.Error())
 }
 
+func TestLog_invalid_limit(t *testing.T) {
+	ns := []*corev1.Namespace{
+		{
+			ObjectMeta: metav1.ObjectMeta{
+				Name: "ns",
+			},
+		},
+	}
+
+	cs, _ := test.SeedTestData(t, pipelinetest.Data{Namespaces: ns})
+	p := &test.Params{Tekton: cs.Pipeline, Kube: cs.Kube}
+	c := Command(p)
+
+	limit := "0"
+	_, err := test.ExecuteCommand(c, "logs", "-n", "ns", "--limit", limit)
+
+	if err == nil {
+		t.Errorf("Expecting error for --limit option being <=0")
+	}
+
+	expected := "limit was " + limit + " but must be a positive number"
+	test.AssertOutput(t, expected, err.Error())
+}
+
 func TestLog_no_pipelinerun_argument(t *testing.T) {
 	ns := []*corev1.Namespace{
 		{
@@ -277,7 +301,6 @@ func TestPipelinerunLogs(t *testing.T) {
 			),
 		),
 	}
-
 	pps := []*v1alpha1.Pipeline{
 		tb.Pipeline(pipelineName, ns,
 			tb.PipelineSpec(
