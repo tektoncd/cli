@@ -31,6 +31,7 @@ import (
 	"github.com/tektoncd/pipeline/pkg/apis/pipeline/v1alpha1"
 	"github.com/tektoncd/pipeline/pkg/apis/pipeline/v1beta1"
 	fakepipelineclientset "github.com/tektoncd/pipeline/pkg/client/clientset/versioned/fake"
+	pipelinev1beta1test "github.com/tektoncd/pipeline/test"
 	tb "github.com/tektoncd/pipeline/test/builder"
 	pipelinetest "github.com/tektoncd/pipeline/test/v1alpha1"
 	"gotest.tools/v3/golden"
@@ -47,12 +48,16 @@ import (
 	k8stest "k8s.io/client-go/testing"
 )
 
-func newPipelineClient(objs ...runtime.Object) (*fakepipelineclientset.Clientset, testDynamic.Options) {
+func newPipelineClient(version string, objs ...runtime.Object) (*fakepipelineclientset.Clientset, testDynamic.Options) {
 	scheme := runtime.NewScheme()
 	codecs := serializer.NewCodecFactory(scheme)
-	localSchemeBuilder := runtime.SchemeBuilder{
-		v1alpha1.AddToScheme,
+	var localSchemeBuilder runtime.SchemeBuilder
+	if version == "v1alpha1" {
+		localSchemeBuilder = runtime.SchemeBuilder{v1alpha1.AddToScheme}
+	} else {
+		localSchemeBuilder = runtime.SchemeBuilder{v1beta1.AddToScheme}
 	}
+
 	v1.AddToGroupVersion(scheme, schema.GroupVersion{Version: "v1"})
 	util_runtime.Must(localSchemeBuilder.AddToScheme(scheme))
 	o := k8stest.NewObjectTracker(scheme, codecs.UniversalDecoder())
@@ -180,6 +185,32 @@ func Test_start_has_task_filename_v1alpha1(t *testing.T) {
 	test.AssertOutput(t, expected, got)
 }
 
+func Test_start_has_task_filename_v1beta1(t *testing.T) {
+	ns := []*corev1.Namespace{
+		{
+			ObjectMeta: metav1.ObjectMeta{
+				Name: "ns",
+			},
+		},
+	}
+	cs, _ := test.SeedTestData(t, pipelinetest.Data{Namespaces: ns})
+	cs.Pipeline.Resources = cb.APIResourceList(versionA1, []string{"task", "taskrun"})
+	tdc := testDynamic.Options{}
+	dc, err := tdc.Client()
+	if err != nil {
+		t.Errorf("unable to create dynamic clinet: %v", err)
+	}
+	c := Command(&test.Params{Tekton: cs.Pipeline, Kube: cs.Kube, Dynamic: dc})
+
+	got, err := test.ExecuteCommand(c, "start", "-n", "ns", "--filename=./testdata/task-v1beta1.yaml")
+	if err != nil {
+		t.Errorf("Not expecting an error, but got %s", err.Error())
+	}
+
+	expected := "Taskrun started: \n\nIn order to track the taskrun progress run:\ntkn taskrun logs  -f -n ns\n"
+	test.AssertOutput(t, expected, got)
+}
+
 func Test_start_task_not_found(t *testing.T) {
 	tasks := []*v1alpha1.Task{
 		tb.Task("task-1", "ns",
@@ -215,6 +246,88 @@ func Test_start_task_not_found(t *testing.T) {
 	tdc := testDynamic.Options{}
 	dc, err := tdc.Client(
 		cb.UnstructuredT(tasks[0], versionA1))
+	if err != nil {
+		t.Errorf("unable to create dynamic clinet: %v", err)
+	}
+	p := &test.Params{Tekton: cs.Pipeline, Kube: cs.Kube, Dynamic: dc}
+	task := Command(p)
+	got, _ := test.ExecuteCommand(task, "start", "task-2", "-n", "ns")
+	expected := "Error: task name task-2 does not exist in namespace ns\n"
+	test.AssertOutput(t, expected, got)
+}
+
+func Test_start_task_not_found_v1beta1(t *testing.T) {
+	tasks := []*v1beta1.Task{
+		{
+			ObjectMeta: v1.ObjectMeta{
+				Name:      "task-1",
+				Namespace: "ns",
+			},
+			Spec: v1beta1.TaskSpec{
+				Resources: &v1beta1.TaskResources{
+					Inputs: []v1beta1.TaskResource{
+						{
+							ResourceDeclaration: v1beta1.ResourceDeclaration{
+								Name: "my-repo",
+								Type: v1beta1.PipelineResourceTypeGit,
+							},
+						},
+						{
+							ResourceDeclaration: v1beta1.ResourceDeclaration{
+								Name: "my-image",
+								Type: v1beta1.PipelineResourceTypeImage,
+							},
+						},
+					},
+					Outputs: []v1beta1.TaskResource{
+						{
+							ResourceDeclaration: v1beta1.ResourceDeclaration{
+								Name: "code-image",
+								Type: v1beta1.PipelineResourceTypeImage,
+							},
+						},
+					},
+				},
+				Params: []v1beta1.ParamSpec{
+					{
+						Name: "myarg",
+						Type: v1beta1.ParamTypeString,
+					},
+					{
+						Name: "print",
+						Type: v1beta1.ParamTypeString,
+					},
+				},
+				Steps: []v1beta1.Step{
+					{
+						Container: corev1.Container{
+							Name:  "hello",
+							Image: "busybox",
+						},
+					},
+					{
+						Container: corev1.Container{
+							Name:  "exit",
+							Image: "busybox",
+						},
+					},
+				},
+			},
+		},
+	}
+
+	ns := []*corev1.Namespace{
+		{
+			ObjectMeta: metav1.ObjectMeta{
+				Name: "ns",
+			},
+		},
+	}
+
+	cs, _ := test.SeedV1beta1TestData(t, pipelinev1beta1test.Data{Tasks: tasks, Namespaces: ns})
+	tdc := testDynamic.Options{}
+	dc, err := tdc.Client(
+		cb.UnstructuredV1beta1T(tasks[0], versionB1))
 	if err != nil {
 		t.Errorf("unable to create dynamic clinet: %v", err)
 	}
@@ -328,6 +441,146 @@ func Test_start_task(t *testing.T) {
 	test.AssertOutput(t, "svc1", tr.Items[0].Spec.ServiceAccountName)
 }
 
+func Test_start_task_v1beta1(t *testing.T) {
+	tasks := []*v1beta1.Task{
+		{
+			ObjectMeta: v1.ObjectMeta{
+				Name:      "task-1",
+				Namespace: "ns",
+			},
+			Spec: v1beta1.TaskSpec{
+				Resources: &v1beta1.TaskResources{
+					Inputs: []v1beta1.TaskResource{
+						{
+							ResourceDeclaration: v1beta1.ResourceDeclaration{
+								Name: "my-repo",
+								Type: v1beta1.PipelineResourceTypeGit,
+							},
+						},
+						{
+							ResourceDeclaration: v1beta1.ResourceDeclaration{
+								Name: "my-image",
+								Type: v1beta1.PipelineResourceTypeImage,
+							},
+						},
+					},
+					Outputs: []v1beta1.TaskResource{
+						{
+							ResourceDeclaration: v1beta1.ResourceDeclaration{
+								Name: "code-image",
+								Type: v1beta1.PipelineResourceTypeImage,
+							},
+						},
+					},
+				},
+				Params: []v1beta1.ParamSpec{
+					{
+						Name: "myarg",
+						Type: v1beta1.ParamTypeString,
+					},
+					{
+						Name: "print",
+						Type: v1beta1.ParamTypeArray,
+					},
+				},
+				Steps: []v1beta1.Step{
+					{
+						Container: corev1.Container{
+							Name:  "hello",
+							Image: "busybox",
+						},
+					},
+					{
+						Container: corev1.Container{
+							Name:  "exit",
+							Image: "busybox",
+						},
+					},
+				},
+			},
+		},
+	}
+
+	ns := []*corev1.Namespace{
+		{
+			ObjectMeta: metav1.ObjectMeta{
+				Name: "ns",
+			},
+		},
+	}
+
+	cs, _ := test.SeedV1beta1TestData(t, pipelinev1beta1test.Data{Tasks: tasks, Namespaces: ns})
+	cs.Pipeline.Resources = cb.APIResourceList(versionB1, []string{"task", "taskrun"})
+	tdc := testDynamic.Options{}
+	dc, err := tdc.Client(
+		cb.UnstructuredV1beta1T(tasks[0], versionB1))
+	if err != nil {
+		t.Errorf("unable to create dynamic clinet: %v", err)
+	}
+	p := &test.Params{Tekton: cs.Pipeline, Kube: cs.Kube, Dynamic: dc}
+
+	task := Command(p)
+	got, _ := test.ExecuteCommand(task, "start", "task-1",
+		"-i=my-repo=git",
+		"-i=my-image=image",
+		"-p=myarg=value1",
+		"-p=print=boom,boom",
+		"-l=key=value",
+		"-o=code-image=output-image",
+		"-w=name=pvc,claimName=pvc3",
+		"-s=svc1",
+		"-n=ns")
+
+	expected := "Taskrun started: \n\nIn order to track the taskrun progress run:\ntkn taskrun logs  -f -n ns\n"
+	test.AssertOutput(t, expected, got)
+	clients, _ := p.Clients()
+	tr, err := trlist.TaskRuns(clients, v1.ListOptions{}, "ns")
+	if err != nil {
+		t.Errorf("Error listing taskruns %s", err.Error())
+	}
+
+	if tr.Items[0].ObjectMeta.GenerateName != "task-1-run-" {
+		t.Errorf("Error taskrun generated is different %+v", tr)
+	}
+
+	for _, v := range tr.Items[0].Spec.Resources.Inputs {
+		if v.Name == "my-repo" {
+			test.AssertOutput(t, "git", v.ResourceRef.Name)
+		}
+
+		if v.Name == "my-image" {
+			test.AssertOutput(t, "image", v.ResourceRef.Name)
+		}
+	}
+
+	test.AssertOutput(t, 2, len(tr.Items[0].Spec.Params))
+
+	for _, v := range tr.Items[0].Spec.Params {
+		if v.Name == "my-arg" {
+			test.AssertOutput(t, v1beta1.ArrayOrString{Type: v1beta1.ParamTypeString, StringVal: "value1"}, v.Value)
+		}
+
+		if v.Name == "print" {
+			test.AssertOutput(t, v1beta1.ArrayOrString{Type: v1beta1.ParamTypeArray, ArrayVal: []string{"boom", "boom"}}, v.Value)
+		}
+	}
+
+	for _, v := range tr.Items[0].Spec.Resources.Outputs {
+		if v.Name == "code-image" {
+			test.AssertOutput(t, "output-image", v.ResourceRef.Name)
+		}
+	}
+
+	if d := cmp.Equal(tr.Items[0].ObjectMeta.Labels, map[string]string{"key": "value"}); !d {
+		t.Errorf("Error labels generated is different Labels Got: %+v", tr.Items[0].ObjectMeta.Labels)
+	}
+
+	test.AssertOutput(t, "pvc", tr.Items[0].Spec.Workspaces[0].Name)
+	test.AssertOutput(t, "pvc3", tr.Items[0].Spec.Workspaces[0].PersistentVolumeClaim.ClaimName)
+
+	test.AssertOutput(t, "svc1", tr.Items[0].Spec.ServiceAccountName)
+}
+
 func Test_start_task_last(t *testing.T) {
 	tasks := []*v1alpha1.Task{
 		tb.Task("task", "ns",
@@ -380,7 +633,7 @@ func Test_start_task_last(t *testing.T) {
 	//Add namespaces to kube client
 	seedData, _ := test.SeedTestData(t, pipelinetest.Data{Namespaces: ns, Tasks: tasks, TaskRuns: taskruns})
 	objs := []runtime.Object{tasks[0], taskruns[0]}
-	_, tdc := newPipelineClient(objs...)
+	_, tdc := newPipelineClient(versionA1, objs...)
 	dc, _ := tdc.Client(
 		cb.UnstructuredT(tasks[0], versionA1),
 		cb.UnstructuredTR(taskruns[0], versionA1),
@@ -391,6 +644,200 @@ func Test_start_task_last(t *testing.T) {
 		Kube:     seedData.Kube,
 	}
 	cs.Pipeline.Resources = cb.APIResourceList(versionA1, []string{"task", "taskrun"})
+	p := &test.Params{Tekton: cs.Pipeline, Kube: cs.Kube, Dynamic: dc}
+	clients, _ := p.Clients()
+	task := Command(p)
+	got, _ := test.ExecuteCommand(task, "start", "task",
+		"--last",
+		"-n=ns")
+
+	expected := "Taskrun started: random\n\nIn order to track the taskrun progress run:\ntkn taskrun logs random -f -n ns\n"
+	test.AssertOutput(t, expected, got)
+	gotTR, err := traction.Get(clients, "random", metav1.GetOptions{}, "ns")
+	if err != nil {
+		t.Errorf("Error listing taskruns %s", err.Error())
+	}
+	tr := v1alpha1.TaskRun{}
+	_ = tr.ConvertDown(context.Background(), gotTR)
+
+	for _, v := range tr.Spec.Resources.Inputs {
+		if v.Name == "my-repo" {
+			test.AssertOutput(t, "git", v.ResourceRef.Name)
+		}
+	}
+
+	test.AssertOutput(t, 2, len(tr.Spec.Params))
+
+	for _, v := range tr.Spec.Params {
+		if v.Name == "my-arg" {
+			test.AssertOutput(t, v1alpha1.ArrayOrString{Type: v1alpha1.ParamTypeString, StringVal: "value"}, v.Value)
+		}
+
+		if v.Name == "print" {
+			test.AssertOutput(t, v1alpha1.ArrayOrString{Type: v1alpha1.ParamTypeArray, ArrayVal: []string{"booms", "booms", "booms"}}, v.Value)
+		}
+	}
+
+	for _, v := range tr.Spec.Resources.Outputs {
+		if v.Name == "code-image" {
+			test.AssertOutput(t, "image", v.ResourceRef.Name)
+		}
+	}
+
+	test.AssertOutput(t, "svc", tr.Spec.ServiceAccountName)
+	test.AssertOutput(t, "test", tr.Spec.Workspaces[0].Name)
+	test.AssertOutput(t, "", tr.Spec.Workspaces[0].SubPath)
+	test.AssertOutput(t, timeoutDuration, tr.Spec.Timeout.Duration)
+}
+
+func Test_start_task_last_v1beta1(t *testing.T) {
+	tasks := []*v1beta1.Task{
+		{
+			ObjectMeta: v1.ObjectMeta{
+				Name:      "task",
+				Namespace: "ns",
+			},
+			Spec: v1beta1.TaskSpec{
+				Resources: &v1beta1.TaskResources{
+					Inputs: []v1beta1.TaskResource{
+						{
+							ResourceDeclaration: v1beta1.ResourceDeclaration{
+								Name: "my-repo",
+								Type: v1beta1.PipelineResourceTypeGit,
+							},
+						},
+						{
+							ResourceDeclaration: v1beta1.ResourceDeclaration{
+								Name: "my-image",
+								Type: v1beta1.PipelineResourceTypeImage,
+							},
+						},
+					},
+					Outputs: []v1beta1.TaskResource{
+						{
+							ResourceDeclaration: v1beta1.ResourceDeclaration{
+								Name: "code-image",
+								Type: v1beta1.PipelineResourceTypeImage,
+							},
+						},
+					},
+				},
+				Params: []v1beta1.ParamSpec{
+					{
+						Name: "myarg",
+						Type: v1beta1.ParamTypeString,
+					},
+					{
+						Name: "print",
+						Type: v1beta1.ParamTypeArray,
+					},
+				},
+				Steps: []v1beta1.Step{
+					{
+						Container: corev1.Container{
+							Name:  "hello",
+							Image: "busybox",
+						},
+					},
+					{
+						Container: corev1.Container{
+							Name:  "exit",
+							Image: "busybox",
+						},
+					},
+				},
+				Workspaces: []v1beta1.WorkspaceDeclaration{
+					{
+						Name:        "test",
+						Description: "test workspace",
+						MountPath:   "/workspace/test/file",
+						ReadOnly:    true,
+					},
+				},
+			},
+		},
+	}
+
+	timeoutDuration, _ := time.ParseDuration("10s")
+
+	taskruns := []*v1beta1.TaskRun{
+		{
+			ObjectMeta: v1.ObjectMeta{
+				Name:      "taskrun-123",
+				Namespace: "ns",
+				Labels:    map[string]string{"tekton.dev/task": "task"},
+			},
+			Spec: v1beta1.TaskRunSpec{
+				Params: []v1beta1.Param{
+					{
+						Name:  "myarg",
+						Value: v1beta1.ArrayOrString{Type: v1beta1.ParamTypeString, StringVal: "value"},
+					},
+					{
+						Name:  "print",
+						Value: v1beta1.ArrayOrString{Type: v1beta1.ParamTypeArray, ArrayVal: []string{"booms", "booms", "booms"}},
+					},
+				},
+				Resources: &v1beta1.TaskRunResources{
+					Inputs: []v1beta1.TaskResourceBinding{
+						{
+							PipelineResourceBinding: v1beta1.PipelineResourceBinding{
+								Name: "my-repo",
+								ResourceRef: &v1beta1.PipelineResourceRef{
+									Name: "git",
+								},
+							},
+						},
+					},
+					Outputs: []v1beta1.TaskResourceBinding{
+						{
+							PipelineResourceBinding: v1beta1.PipelineResourceBinding{
+								Name: "code-image",
+								ResourceRef: &v1beta1.PipelineResourceRef{
+									Name: "image",
+								},
+							},
+						},
+					},
+				},
+				ServiceAccountName: "svc",
+				TaskRef: &v1beta1.TaskRef{
+					Name: "task",
+					Kind: v1beta1.NamespacedTaskKind,
+				},
+				Timeout: &metav1.Duration{Duration: timeoutDuration},
+				Workspaces: []v1beta1.WorkspaceBinding{
+					{
+						Name:     "test",
+						EmptyDir: &corev1.EmptyDirVolumeSource{},
+					},
+				},
+			},
+		},
+	}
+
+	ns := []*corev1.Namespace{
+		{
+			ObjectMeta: metav1.ObjectMeta{
+				Name: "ns",
+			},
+		},
+	}
+
+	//Add namespaces to kube client
+	seedData, _ := test.SeedV1beta1TestData(t, pipelinev1beta1test.Data{Namespaces: ns, Tasks: tasks, TaskRuns: taskruns})
+	objs := []runtime.Object{tasks[0], taskruns[0]}
+	_, tdc := newPipelineClient(versionB1, objs...)
+	dc, _ := tdc.Client(
+		cb.UnstructuredV1beta1T(tasks[0], versionB1),
+		cb.UnstructuredV1beta1TR(taskruns[0], versionB1),
+	)
+
+	cs := pipelinetest.Clients{
+		Pipeline: seedData.Pipeline,
+		Kube:     seedData.Kube,
+	}
+	cs.Pipeline.Resources = cb.APIResourceList(versionB1, []string{"task", "taskrun"})
 	p := &test.Params{Tekton: cs.Pipeline, Kube: cs.Kube, Dynamic: dc}
 	clients, _ := p.Clients()
 	task := Command(p)
@@ -491,7 +938,7 @@ func Test_start_use_taskrun(t *testing.T) {
 	seedData, _ := test.SeedTestData(t, pipelinetest.Data{Namespaces: ns, Tasks: tasks, TaskRuns: taskruns})
 
 	objs := []runtime.Object{tasks[0], taskruns[0], taskruns[1]}
-	_, tdc := newPipelineClient(objs...)
+	_, tdc := newPipelineClient(versionA1, objs...)
 
 	cs := pipelinetest.Clients{
 		Pipeline: seedData.Pipeline,
@@ -502,6 +949,145 @@ func Test_start_use_taskrun(t *testing.T) {
 		cb.UnstructuredT(tasks[0], versionA1),
 		cb.UnstructuredTR(taskruns[0], versionA1),
 		cb.UnstructuredTR(taskruns[1], versionA1),
+	)
+	p := &test.Params{Tekton: cs.Pipeline, Kube: cs.Kube, Dynamic: dc}
+
+	task := Command(p)
+	got, _ := test.ExecuteCommand(task, "start", "task",
+		"--use-taskrun", "camper",
+		"-n=ns")
+
+	expected := "Taskrun started: random\n\nIn order to track the taskrun progress run:\ntkn taskrun logs random -f -n ns\n"
+	test.AssertOutput(t, expected, got)
+	clients, _ := p.Clients()
+	tr, err := traction.Get(clients, "random", metav1.GetOptions{}, "ns")
+	if err != nil {
+		t.Errorf("Error listing taskruns %s", err.Error())
+	}
+
+	test.AssertOutput(t, "camper", tr.Spec.ServiceAccountName)
+	test.AssertOutput(t, timeoutDuration, tr.Spec.Timeout.Duration)
+}
+
+func Test_start_use_taskrun_v1beta1(t *testing.T) {
+	tasks := []*v1beta1.Task{
+		{
+			ObjectMeta: v1.ObjectMeta{
+				Name:      "task",
+				Namespace: "ns",
+			},
+			Spec: v1beta1.TaskSpec{
+				Resources: &v1beta1.TaskResources{
+					Inputs: []v1beta1.TaskResource{
+						{
+							ResourceDeclaration: v1beta1.ResourceDeclaration{
+								Name: "my-repo",
+								Type: v1beta1.PipelineResourceTypeGit,
+							},
+						},
+					},
+					Outputs: []v1beta1.TaskResource{
+						{
+							ResourceDeclaration: v1beta1.ResourceDeclaration{
+								Name: "code-image",
+								Type: v1beta1.PipelineResourceTypeImage,
+							},
+						},
+					},
+				},
+				Params: []v1beta1.ParamSpec{
+					{
+						Name: "myarg",
+						Type: v1beta1.ParamTypeString,
+					},
+					{
+						Name: "print",
+						Type: v1beta1.ParamTypeArray,
+					},
+				},
+				Steps: []v1beta1.Step{
+					{
+						Container: corev1.Container{
+							Name:  "hello",
+							Image: "busybox",
+						},
+					},
+					{
+						Container: corev1.Container{
+							Name:  "exit",
+							Image: "busybox",
+						},
+					},
+				},
+				Workspaces: []v1beta1.WorkspaceDeclaration{
+					{
+						Name:        "test",
+						Description: "test workspace",
+						MountPath:   "/workspace/test/file",
+						ReadOnly:    true,
+					},
+				},
+			},
+		},
+	}
+
+	timeoutDuration, _ := time.ParseDuration("10s")
+
+	taskruns := []*v1beta1.TaskRun{
+		{
+			ObjectMeta: v1.ObjectMeta{
+				Name:      "happy",
+				Namespace: "ns",
+				Labels:    map[string]string{"tekton.dev/task": "task"},
+			},
+			Spec: v1beta1.TaskRunSpec{
+				TaskRef: &v1beta1.TaskRef{
+					Name: "task",
+					Kind: v1beta1.NamespacedTaskKind,
+				},
+			},
+		},
+		{
+
+			ObjectMeta: v1.ObjectMeta{
+				Name:      "camper",
+				Namespace: "ns",
+				Labels:    map[string]string{"tekton.dev/task": "task"},
+			},
+			Spec: v1beta1.TaskRunSpec{
+				TaskRef: &v1beta1.TaskRef{
+					Name: "task",
+					Kind: v1beta1.NamespacedTaskKind,
+				},
+				ServiceAccountName: "camper",
+				Timeout:            &metav1.Duration{Duration: timeoutDuration},
+			},
+		},
+	}
+
+	ns := []*corev1.Namespace{
+		{
+			ObjectMeta: metav1.ObjectMeta{
+				Name: "ns",
+			},
+		},
+	}
+
+	//Add namespaces to kube client
+	seedData, _ := test.SeedV1beta1TestData(t, pipelinev1beta1test.Data{Namespaces: ns, Tasks: tasks, TaskRuns: taskruns})
+
+	objs := []runtime.Object{tasks[0], taskruns[0], taskruns[1]}
+	_, tdc := newPipelineClient(versionB1, objs...)
+
+	cs := pipelinetest.Clients{
+		Pipeline: seedData.Pipeline,
+		Kube:     seedData.Kube,
+	}
+	cs.Pipeline.Resources = cb.APIResourceList(versionB1, []string{"task", "taskrun"})
+	dc, _ := tdc.Client(
+		cb.UnstructuredV1beta1T(tasks[0], versionB1),
+		cb.UnstructuredV1beta1TR(taskruns[0], versionB1),
+		cb.UnstructuredV1beta1TR(taskruns[1], versionB1),
 	)
 	p := &test.Params{Tekton: cs.Pipeline, Kube: cs.Kube, Dynamic: dc}
 
@@ -574,7 +1160,7 @@ func Test_start_task_last_generate_name(t *testing.T) {
 	seedData, _ := test.SeedTestData(t, pipelinetest.Data{Namespaces: ns, Tasks: tasks, TaskRuns: taskruns})
 
 	objs := []runtime.Object{tasks[0], taskruns[0]}
-	_, tdc := newPipelineClient(objs...)
+	_, tdc := newPipelineClient(versionA1, objs...)
 
 	cs := pipelinetest.Clients{
 		Pipeline: seedData.Pipeline,
@@ -584,6 +1170,174 @@ func Test_start_task_last_generate_name(t *testing.T) {
 	dc, _ := tdc.Client(
 		cb.UnstructuredT(tasks[0], versionA1),
 		cb.UnstructuredTR(taskruns[0], versionA1))
+	p := &test.Params{Tekton: cs.Pipeline, Kube: cs.Kube, Dynamic: dc}
+
+	task := Command(p)
+	got, _ := test.ExecuteCommand(task, "start", "task",
+		"--last",
+		"-n=ns")
+
+	expected := "Taskrun started: random\n\nIn order to track the taskrun progress run:\ntkn taskrun logs random -f -n ns\n"
+	test.AssertOutput(t, expected, got)
+	clients, _ := p.Clients()
+	tr, err := traction.Get(clients, "random", metav1.GetOptions{}, "ns")
+	if err != nil {
+		t.Errorf("Error listing taskruns %s", err.Error())
+	}
+
+	test.AssertOutput(t, "test-generatename-task-run-", tr.ObjectMeta.GenerateName)
+}
+
+func Test_start_task_last_generate_name_v1beta1(t *testing.T) {
+	tasks := []*v1beta1.Task{
+		{
+			ObjectMeta: v1.ObjectMeta{
+				Name:      "task",
+				Namespace: "ns",
+			},
+			Spec: v1beta1.TaskSpec{
+				Resources: &v1beta1.TaskResources{
+					Inputs: []v1beta1.TaskResource{
+						{
+							ResourceDeclaration: v1beta1.ResourceDeclaration{
+								Name: "my-repo",
+								Type: v1beta1.PipelineResourceTypeGit,
+							},
+						},
+						{
+							ResourceDeclaration: v1beta1.ResourceDeclaration{
+								Name: "my-image",
+								Type: v1beta1.PipelineResourceTypeImage,
+							},
+						},
+					},
+					Outputs: []v1beta1.TaskResource{
+						{
+							ResourceDeclaration: v1beta1.ResourceDeclaration{
+								Name: "code-image",
+								Type: v1beta1.PipelineResourceTypeImage,
+							},
+						},
+					},
+				},
+				Params: []v1beta1.ParamSpec{
+					{
+						Name: "myarg",
+						Type: v1beta1.ParamTypeString,
+					},
+					{
+						Name: "print",
+						Type: v1beta1.ParamTypeArray,
+					},
+				},
+				Steps: []v1beta1.Step{
+					{
+						Container: corev1.Container{
+							Name:  "hello",
+							Image: "busybox",
+						},
+					},
+					{
+						Container: corev1.Container{
+							Name:  "exit",
+							Image: "busybox",
+						},
+					},
+				},
+				Workspaces: []v1beta1.WorkspaceDeclaration{
+					{
+						Name:        "test",
+						Description: "test workspace",
+						MountPath:   "/workspace/test/file",
+						ReadOnly:    true,
+					},
+				},
+			},
+		},
+	}
+
+	timeoutDuration, _ := time.ParseDuration("10s")
+
+	taskruns := []*v1beta1.TaskRun{
+		{
+			ObjectMeta: v1.ObjectMeta{
+				Name:      "taskrun-123",
+				Namespace: "ns",
+				Labels:    map[string]string{"tekton.dev/task": "task"},
+			},
+			Spec: v1beta1.TaskRunSpec{
+				Params: []v1beta1.Param{
+					{
+						Name:  "myarg",
+						Value: v1beta1.ArrayOrString{Type: v1beta1.ParamTypeString, StringVal: "value"},
+					},
+					{
+						Name:  "print",
+						Value: v1beta1.ArrayOrString{Type: v1beta1.ParamTypeArray, ArrayVal: []string{"booms", "booms", "booms"}},
+					},
+				},
+				Resources: &v1beta1.TaskRunResources{
+					Inputs: []v1beta1.TaskResourceBinding{
+						{
+							PipelineResourceBinding: v1beta1.PipelineResourceBinding{
+								Name: "my-repo",
+								ResourceRef: &v1beta1.PipelineResourceRef{
+									Name: "git",
+								},
+							},
+						},
+					},
+					Outputs: []v1beta1.TaskResourceBinding{
+						{
+							PipelineResourceBinding: v1beta1.PipelineResourceBinding{
+								Name: "code-image",
+								ResourceRef: &v1beta1.PipelineResourceRef{
+									Name: "image",
+								},
+							},
+						},
+					},
+				},
+				ServiceAccountName: "svc",
+				TaskRef: &v1beta1.TaskRef{
+					Name: "task",
+					Kind: v1beta1.NamespacedTaskKind,
+				},
+				Timeout: &metav1.Duration{Duration: timeoutDuration},
+				Workspaces: []v1beta1.WorkspaceBinding{
+					{
+						Name:     "test",
+						EmptyDir: &corev1.EmptyDirVolumeSource{},
+					},
+				},
+			},
+		},
+	}
+
+	ns := []*corev1.Namespace{
+		{
+			ObjectMeta: metav1.ObjectMeta{
+				Name: "ns",
+			},
+		},
+	}
+
+	// Setting GenerateName for test
+	taskruns[0].ObjectMeta.GenerateName = "test-generatename-task-run-"
+
+	seedData, _ := test.SeedV1beta1TestData(t, pipelinev1beta1test.Data{Namespaces: ns, Tasks: tasks, TaskRuns: taskruns})
+
+	objs := []runtime.Object{tasks[0], taskruns[0]}
+	_, tdc := newPipelineClient(versionB1, objs...)
+
+	cs := pipelinetest.Clients{
+		Pipeline: seedData.Pipeline,
+		Kube:     seedData.Kube,
+	}
+	cs.Pipeline.Resources = cb.APIResourceList(versionB1, []string{"task", "taskrun"})
+	dc, _ := tdc.Client(
+		cb.UnstructuredV1beta1T(tasks[0], versionB1),
+		cb.UnstructuredV1beta1TR(taskruns[0], versionB1))
 	p := &test.Params{Tekton: cs.Pipeline, Kube: cs.Kube, Dynamic: dc}
 
 	task := Command(p)
@@ -651,7 +1405,7 @@ func Test_start_task_last_with_prefix_name(t *testing.T) {
 	seedData, _ := test.SeedTestData(t, pipelinetest.Data{Namespaces: ns, Tasks: tasks, TaskRuns: taskruns})
 
 	objs := []runtime.Object{tasks[0], taskruns[0]}
-	_, tdc := newPipelineClient(objs...)
+	_, tdc := newPipelineClient(versionA1, objs...)
 
 	cs := pipelinetest.Clients{
 		Pipeline: seedData.Pipeline,
@@ -661,6 +1415,173 @@ func Test_start_task_last_with_prefix_name(t *testing.T) {
 	dc, _ := tdc.Client(
 		cb.UnstructuredT(tasks[0], versionA1),
 		cb.UnstructuredTR(taskruns[0], versionA1))
+	p := &test.Params{Tekton: cs.Pipeline, Kube: cs.Kube, Dynamic: dc}
+
+	task := Command(p)
+	got, _ := test.ExecuteCommand(task, "start", "task",
+		"--last",
+		"-n=ns",
+		"--prefix-name=mytrname",
+	)
+
+	expected := "Taskrun started: random\n\nIn order to track the taskrun progress run:\ntkn taskrun logs random -f -n ns\n"
+	test.AssertOutput(t, expected, got)
+	clients, _ := p.Clients()
+	tr, err := traction.Get(clients, "random", metav1.GetOptions{}, "ns")
+	if err != nil {
+		t.Errorf("Error listing taskruns %s", err.Error())
+	}
+
+	test.AssertOutput(t, "mytrname-", tr.ObjectMeta.GenerateName)
+}
+
+func Test_start_task_last_with_prefix_name_v1beta1(t *testing.T) {
+	tasks := []*v1beta1.Task{
+		{
+			ObjectMeta: v1.ObjectMeta{
+				Name:      "task",
+				Namespace: "ns",
+			},
+			Spec: v1beta1.TaskSpec{
+				Resources: &v1beta1.TaskResources{
+					Inputs: []v1beta1.TaskResource{
+						{
+							ResourceDeclaration: v1beta1.ResourceDeclaration{
+								Name: "my-repo",
+								Type: v1beta1.PipelineResourceTypeGit,
+							},
+						},
+						{
+							ResourceDeclaration: v1beta1.ResourceDeclaration{
+								Name: "my-image",
+								Type: v1beta1.PipelineResourceTypeImage,
+							},
+						},
+					},
+					Outputs: []v1beta1.TaskResource{
+						{
+							ResourceDeclaration: v1beta1.ResourceDeclaration{
+								Name: "code-image",
+								Type: v1beta1.PipelineResourceTypeImage,
+							},
+						},
+					},
+				},
+				Params: []v1beta1.ParamSpec{
+					{
+						Name: "myarg",
+						Type: v1beta1.ParamTypeString,
+					},
+					{
+						Name: "print",
+						Type: v1beta1.ParamTypeArray,
+					},
+				},
+				Steps: []v1beta1.Step{
+					{
+						Container: corev1.Container{
+							Name:  "hello",
+							Image: "busybox",
+						},
+					},
+					{
+						Container: corev1.Container{
+							Name:  "exit",
+							Image: "busybox",
+						},
+					},
+				},
+				Workspaces: []v1beta1.WorkspaceDeclaration{
+					{
+						Name:        "test",
+						Description: "test workspace",
+						MountPath:   "/workspace/test/file",
+						ReadOnly:    true,
+					},
+				},
+			},
+		},
+	}
+
+	timeoutDuration, _ := time.ParseDuration("10s")
+
+	taskruns := []*v1beta1.TaskRun{
+		{
+			ObjectMeta: v1.ObjectMeta{
+				Name:      "taskrun-123",
+				Namespace: "ns",
+				Labels:    map[string]string{"tekton.dev/task": "task"},
+			},
+			Spec: v1beta1.TaskRunSpec{
+				Params: []v1beta1.Param{
+					{
+						Name:  "myarg",
+						Value: v1beta1.ArrayOrString{Type: v1beta1.ParamTypeString, StringVal: "value"},
+					},
+					{
+						Name:  "print",
+						Value: v1beta1.ArrayOrString{Type: v1beta1.ParamTypeArray, ArrayVal: []string{"booms", "booms", "booms"}},
+					},
+				},
+				Resources: &v1beta1.TaskRunResources{
+					Inputs: []v1beta1.TaskResourceBinding{
+						{
+							PipelineResourceBinding: v1beta1.PipelineResourceBinding{
+								Name: "my-repo",
+								ResourceRef: &v1beta1.PipelineResourceRef{
+									Name: "git",
+								},
+							},
+						},
+					},
+					Outputs: []v1beta1.TaskResourceBinding{
+						{
+							PipelineResourceBinding: v1beta1.PipelineResourceBinding{
+								Name: "code-image",
+								ResourceRef: &v1beta1.PipelineResourceRef{
+									Name: "image",
+								},
+							},
+						},
+					},
+				},
+				ServiceAccountName: "svc",
+				TaskRef: &v1beta1.TaskRef{
+					Name: "task",
+					Kind: v1beta1.NamespacedTaskKind,
+				},
+				Timeout: &metav1.Duration{Duration: timeoutDuration},
+				Workspaces: []v1beta1.WorkspaceBinding{
+					{
+						Name:     "test",
+						EmptyDir: &corev1.EmptyDirVolumeSource{},
+					},
+				},
+			},
+		},
+	}
+
+	ns := []*corev1.Namespace{
+		{
+			ObjectMeta: metav1.ObjectMeta{
+				Name: "ns",
+			},
+		},
+	}
+
+	seedData, _ := test.SeedV1beta1TestData(t, pipelinev1beta1test.Data{Namespaces: ns, Tasks: tasks, TaskRuns: taskruns})
+
+	objs := []runtime.Object{tasks[0], taskruns[0]}
+	_, tdc := newPipelineClient(versionB1, objs...)
+
+	cs := pipelinetest.Clients{
+		Pipeline: seedData.Pipeline,
+		Kube:     seedData.Kube,
+	}
+	cs.Pipeline.Resources = cb.APIResourceList(versionB1, []string{"task", "taskrun"})
+	dc, _ := tdc.Client(
+		cb.UnstructuredV1beta1T(tasks[0], versionB1),
+		cb.UnstructuredV1beta1TR(taskruns[0], versionB1))
 	p := &test.Params{Tekton: cs.Pipeline, Kube: cs.Kube, Dynamic: dc}
 
 	task := Command(p)
@@ -729,7 +1650,7 @@ func Test_start_task_with_prefix_name(t *testing.T) {
 
 	seedData, _ := test.SeedTestData(t, pipelinetest.Data{Namespaces: ns, Tasks: tasks, TaskRuns: taskruns})
 	objs := []runtime.Object{tasks[0], taskruns[0]}
-	_, tdc := newPipelineClient(objs...)
+	_, tdc := newPipelineClient(versionA1, objs...)
 	cs := pipelinetest.Clients{
 		Pipeline: seedData.Pipeline,
 		Kube:     seedData.Kube,
@@ -738,6 +1659,171 @@ func Test_start_task_with_prefix_name(t *testing.T) {
 	dc, _ := tdc.Client(
 		cb.UnstructuredT(tasks[0], versionA1),
 		cb.UnstructuredTR(taskruns[0], versionA1))
+	p := &test.Params{Tekton: cs.Pipeline, Kube: cs.Kube, Dynamic: dc}
+
+	task := Command(p)
+	got, _ := test.ExecuteCommand(task, "start", "task",
+		"-n=ns",
+		"--prefix-name=mytrname",
+	)
+
+	expected := "Taskrun started: random\n\nIn order to track the taskrun progress run:\ntkn taskrun logs random -f -n ns\n"
+	test.AssertOutput(t, expected, got)
+
+	clients, _ := p.Clients()
+	tr, err := traction.Get(clients, "random", metav1.GetOptions{}, "ns")
+	if err != nil {
+		t.Errorf("Error listing taskruns %s", err.Error())
+	}
+
+	test.AssertOutput(t, "mytrname-", tr.ObjectMeta.GenerateName)
+}
+
+func Test_start_task_with_prefix_name_v1beta1(t *testing.T) {
+	tasks := []*v1beta1.Task{
+		{
+			ObjectMeta: v1.ObjectMeta{
+				Name:      "task",
+				Namespace: "ns",
+			},
+			Spec: v1beta1.TaskSpec{
+				Resources: &v1beta1.TaskResources{
+					Inputs: []v1beta1.TaskResource{
+						{
+							ResourceDeclaration: v1beta1.ResourceDeclaration{
+								Name: "my-repo",
+								Type: v1beta1.PipelineResourceTypeGit,
+							},
+						},
+						{
+							ResourceDeclaration: v1beta1.ResourceDeclaration{
+								Name: "my-image",
+								Type: v1beta1.PipelineResourceTypeImage,
+							},
+						},
+					},
+					Outputs: []v1beta1.TaskResource{
+						{
+							ResourceDeclaration: v1beta1.ResourceDeclaration{
+								Name: "code-image",
+								Type: v1beta1.PipelineResourceTypeImage,
+							},
+						},
+					},
+				},
+				Params: []v1beta1.ParamSpec{
+					{
+						Name: "myarg",
+						Type: v1beta1.ParamTypeString,
+					},
+					{
+						Name: "print",
+						Type: v1beta1.ParamTypeArray,
+					},
+				},
+				Steps: []v1beta1.Step{
+					{
+						Container: corev1.Container{
+							Name:  "hello",
+							Image: "busybox",
+						},
+					},
+					{
+						Container: corev1.Container{
+							Name:  "exit",
+							Image: "busybox",
+						},
+					},
+				},
+				Workspaces: []v1beta1.WorkspaceDeclaration{
+					{
+						Name:        "test",
+						Description: "test workspace",
+						MountPath:   "/workspace/test/file",
+						ReadOnly:    true,
+					},
+				},
+			},
+		},
+	}
+
+	timeoutDuration, _ := time.ParseDuration("10s")
+
+	taskruns := []*v1beta1.TaskRun{
+		{
+			ObjectMeta: v1.ObjectMeta{
+				Name:      "taskrun-123",
+				Namespace: "ns",
+				Labels:    map[string]string{"tekton.dev/task": "task"},
+			},
+			Spec: v1beta1.TaskRunSpec{
+				Params: []v1beta1.Param{
+					{
+						Name:  "myarg",
+						Value: v1beta1.ArrayOrString{Type: v1beta1.ParamTypeString, StringVal: "value"},
+					},
+					{
+						Name:  "print",
+						Value: v1beta1.ArrayOrString{Type: v1beta1.ParamTypeArray, ArrayVal: []string{"booms", "booms", "booms"}},
+					},
+				},
+				Resources: &v1beta1.TaskRunResources{
+					Inputs: []v1beta1.TaskResourceBinding{
+						{
+							PipelineResourceBinding: v1beta1.PipelineResourceBinding{
+								Name: "my-repo",
+								ResourceRef: &v1beta1.PipelineResourceRef{
+									Name: "git",
+								},
+							},
+						},
+					},
+					Outputs: []v1beta1.TaskResourceBinding{
+						{
+							PipelineResourceBinding: v1beta1.PipelineResourceBinding{
+								Name: "code-image",
+								ResourceRef: &v1beta1.PipelineResourceRef{
+									Name: "image",
+								},
+							},
+						},
+					},
+				},
+				ServiceAccountName: "svc",
+				TaskRef: &v1beta1.TaskRef{
+					Name: "task",
+					Kind: v1beta1.NamespacedTaskKind,
+				},
+				Timeout: &metav1.Duration{Duration: timeoutDuration},
+				Workspaces: []v1beta1.WorkspaceBinding{
+					{
+						Name:     "test",
+						EmptyDir: &corev1.EmptyDirVolumeSource{},
+					},
+				},
+			},
+		},
+	}
+
+	ns := []*corev1.Namespace{
+		{
+			ObjectMeta: metav1.ObjectMeta{
+				Name: "ns",
+			},
+		},
+	}
+
+	seedData, _ := test.SeedV1beta1TestData(t, pipelinev1beta1test.Data{Namespaces: ns, Tasks: tasks, TaskRuns: taskruns})
+	objs := []runtime.Object{tasks[0], taskruns[0]}
+	_, tdc := newPipelineClient(versionB1, objs...)
+	cs := pipelinetest.Clients{
+		Pipeline: seedData.Pipeline,
+		Kube:     seedData.Kube,
+	}
+	cs.Pipeline.Resources = cb.APIResourceList(versionB1, []string{"task", "taskrun"})
+	dc, _ := tdc.Client(
+		cb.UnstructuredV1beta1T(tasks[0], versionB1),
+		cb.UnstructuredV1beta1TR(taskruns[0], versionB1))
 	p := &test.Params{Tekton: cs.Pipeline, Kube: cs.Kube, Dynamic: dc}
 
 	task := Command(p)
@@ -804,7 +1890,7 @@ func Test_start_task_last_with_inputs(t *testing.T) {
 
 	seedData, _ := test.SeedTestData(t, pipelinetest.Data{Namespaces: ns, Tasks: tasks, TaskRuns: taskruns})
 	objs := []runtime.Object{tasks[0], taskruns[0]}
-	_, tdc := newPipelineClient(objs...)
+	_, tdc := newPipelineClient(versionA1, objs...)
 	cs := pipelinetest.Clients{
 		Pipeline: seedData.Pipeline,
 		Kube:     seedData.Kube,
@@ -813,6 +1899,201 @@ func Test_start_task_last_with_inputs(t *testing.T) {
 	dc, _ := tdc.Client(
 		cb.UnstructuredT(tasks[0], versionA1),
 		cb.UnstructuredTR(taskruns[0], versionA1))
+	p := &test.Params{Tekton: cs.Pipeline, Kube: cs.Kube, Dynamic: dc}
+
+	task := Command(p)
+	got, _ := test.ExecuteCommand(task, "start", "task",
+		"-i=my-repo=git-new",
+		"-p=myarg=value1",
+		"-p=print=boom,boom",
+		"-o=code-image=output-image",
+		"-s=svc1",
+		"-n=ns",
+		"--last")
+
+	expected := "Taskrun started: random\n\nIn order to track the taskrun progress run:\ntkn taskrun logs random -f -n ns\n"
+	test.AssertOutput(t, expected, got)
+
+	clients, _ := p.Clients()
+	gotTR, err := traction.Get(clients, "random", metav1.GetOptions{}, "ns")
+	if err != nil {
+		t.Errorf("Error listing taskruns %s", err.Error())
+	}
+	tr := v1alpha1.TaskRun{}
+	_ = tr.ConvertDown(context.Background(), gotTR)
+
+	for _, v := range tr.Spec.Resources.Inputs {
+		if v.Name == "my-repo" {
+			test.AssertOutput(t, "git-new", v.ResourceRef.Name)
+		}
+	}
+
+	test.AssertOutput(t, 2, len(tr.Spec.Params))
+
+	for _, v := range tr.Spec.Params {
+		if v.Name == "my-arg" {
+			test.AssertOutput(t, v1alpha1.ArrayOrString{Type: v1alpha1.ParamTypeString, StringVal: "value1"}, v.Value)
+		}
+
+		if v.Name == "print" {
+			test.AssertOutput(t, v1alpha1.ArrayOrString{Type: v1alpha1.ParamTypeArray, ArrayVal: []string{"boom", "boom"}}, v.Value)
+		}
+	}
+
+	for _, v := range tr.Spec.Resources.Outputs {
+		if v.Name == "code-image" {
+			test.AssertOutput(t, "output-image", v.ResourceRef.Name)
+		}
+	}
+
+	test.AssertOutput(t, "svc1", tr.Spec.ServiceAccountName)
+}
+
+func Test_start_task_last_with_inputs_v1beta1(t *testing.T) {
+	tasks := []*v1beta1.Task{
+		{
+			ObjectMeta: v1.ObjectMeta{
+				Name:      "task",
+				Namespace: "ns",
+			},
+			Spec: v1beta1.TaskSpec{
+				Resources: &v1beta1.TaskResources{
+					Inputs: []v1beta1.TaskResource{
+						{
+							ResourceDeclaration: v1beta1.ResourceDeclaration{
+								Name: "my-repo",
+								Type: v1beta1.PipelineResourceTypeGit,
+							},
+						},
+						{
+							ResourceDeclaration: v1beta1.ResourceDeclaration{
+								Name: "my-image",
+								Type: v1beta1.PipelineResourceTypeImage,
+							},
+						},
+					},
+					Outputs: []v1beta1.TaskResource{
+						{
+							ResourceDeclaration: v1beta1.ResourceDeclaration{
+								Name: "code-image",
+								Type: v1beta1.PipelineResourceTypeImage,
+							},
+						},
+					},
+				},
+				Params: []v1beta1.ParamSpec{
+					{
+						Name: "myarg",
+						Type: v1beta1.ParamTypeString,
+					},
+					{
+						Name: "print",
+						Type: v1beta1.ParamTypeArray,
+					},
+				},
+				Steps: []v1beta1.Step{
+					{
+						Container: corev1.Container{
+							Name:  "hello",
+							Image: "busybox",
+						},
+					},
+					{
+						Container: corev1.Container{
+							Name:  "exit",
+							Image: "busybox",
+						},
+					},
+				},
+				Workspaces: []v1beta1.WorkspaceDeclaration{
+					{
+						Name:        "test",
+						Description: "test workspace",
+						MountPath:   "/workspace/test/file",
+						ReadOnly:    true,
+					},
+				},
+			},
+		},
+	}
+
+	timeoutDuration, _ := time.ParseDuration("10s")
+
+	taskruns := []*v1beta1.TaskRun{
+		{
+			ObjectMeta: v1.ObjectMeta{
+				Name:      "taskrun-123",
+				Namespace: "ns",
+				Labels:    map[string]string{"tekton.dev/task": "task"},
+			},
+			Spec: v1beta1.TaskRunSpec{
+				Params: []v1beta1.Param{
+					{
+						Name:  "myarg",
+						Value: v1beta1.ArrayOrString{Type: v1beta1.ParamTypeString, StringVal: "value"},
+					},
+					{
+						Name:  "print",
+						Value: v1beta1.ArrayOrString{Type: v1beta1.ParamTypeArray, ArrayVal: []string{"booms", "booms", "booms"}},
+					},
+				},
+				Resources: &v1beta1.TaskRunResources{
+					Inputs: []v1beta1.TaskResourceBinding{
+						{
+							PipelineResourceBinding: v1beta1.PipelineResourceBinding{
+								Name: "my-repo",
+								ResourceRef: &v1beta1.PipelineResourceRef{
+									Name: "git",
+								},
+							},
+						},
+					},
+					Outputs: []v1beta1.TaskResourceBinding{
+						{
+							PipelineResourceBinding: v1beta1.PipelineResourceBinding{
+								Name: "code-image",
+								ResourceRef: &v1beta1.PipelineResourceRef{
+									Name: "image",
+								},
+							},
+						},
+					},
+				},
+				ServiceAccountName: "svc",
+				TaskRef: &v1beta1.TaskRef{
+					Name: "task",
+					Kind: v1beta1.NamespacedTaskKind,
+				},
+				Timeout: &metav1.Duration{Duration: timeoutDuration},
+				Workspaces: []v1beta1.WorkspaceBinding{
+					{
+						Name:     "test",
+						EmptyDir: &corev1.EmptyDirVolumeSource{},
+					},
+				},
+			},
+		},
+	}
+
+	ns := []*corev1.Namespace{
+		{
+			ObjectMeta: metav1.ObjectMeta{
+				Name: "ns",
+			},
+		},
+	}
+
+	seedData, _ := test.SeedV1beta1TestData(t, pipelinev1beta1test.Data{Namespaces: ns, Tasks: tasks, TaskRuns: taskruns})
+	objs := []runtime.Object{tasks[0], taskruns[0]}
+	_, tdc := newPipelineClient(versionB1, objs...)
+	cs := pipelinetest.Clients{
+		Pipeline: seedData.Pipeline,
+		Kube:     seedData.Kube,
+	}
+	cs.Pipeline.Resources = cb.APIResourceList(versionB1, []string{"task", "taskrun"})
+	dc, _ := tdc.Client(
+		cb.UnstructuredV1beta1T(tasks[0], versionB1),
+		cb.UnstructuredV1beta1TR(taskruns[0], versionB1))
 	p := &test.Params{Tekton: cs.Pipeline, Kube: cs.Kube, Dynamic: dc}
 
 	task := Command(p)
@@ -897,9 +2178,101 @@ func Test_start_task_last_without_pipelinerun(t *testing.T) {
 	cs, _ := test.SeedTestData(t, pipelinetest.Data{Tasks: tasks, Namespaces: ns})
 	cs.Pipeline.Resources = cb.APIResourceList(versionA1, []string{"task", "taskrun"})
 	objs := []runtime.Object{tasks[0]}
-	_, tdc := newPipelineClient(objs...)
+	_, tdc := newPipelineClient(versionA1, objs...)
 	dc, _ := tdc.Client(
 		cb.UnstructuredT(tasks[0], versionA1),
+	)
+
+	p := &test.Params{Tekton: cs.Pipeline, Kube: cs.Kube, Dynamic: dc}
+
+	task := Command(p)
+	got, _ := test.ExecuteCommand(task, "start", "task-1", "--last", "-n", "ns")
+	expected := "Error: no taskruns related to Task task-1 found in namespace ns\n"
+	test.AssertOutput(t, expected, got)
+}
+
+func Test_start_task_last_without_pipelinerun_v1beta1(t *testing.T) {
+	tasks := []*v1beta1.Task{
+		{
+			ObjectMeta: v1.ObjectMeta{
+				Name:      "task-1",
+				Namespace: "ns",
+			},
+			Spec: v1beta1.TaskSpec{
+				Resources: &v1beta1.TaskResources{
+					Inputs: []v1beta1.TaskResource{
+						{
+							ResourceDeclaration: v1beta1.ResourceDeclaration{
+								Name: "my-repo",
+								Type: v1beta1.PipelineResourceTypeGit,
+							},
+						},
+						{
+							ResourceDeclaration: v1beta1.ResourceDeclaration{
+								Name: "my-image",
+								Type: v1beta1.PipelineResourceTypeImage,
+							},
+						},
+					},
+					Outputs: []v1beta1.TaskResource{
+						{
+							ResourceDeclaration: v1beta1.ResourceDeclaration{
+								Name: "code-image",
+								Type: v1beta1.PipelineResourceTypeImage,
+							},
+						},
+					},
+				},
+				Params: []v1beta1.ParamSpec{
+					{
+						Name: "myarg",
+						Type: v1beta1.ParamTypeString,
+					},
+					{
+						Name: "print",
+						Type: v1beta1.ParamTypeArray,
+					},
+				},
+				Steps: []v1beta1.Step{
+					{
+						Container: corev1.Container{
+							Name:  "hello",
+							Image: "busybox",
+						},
+					},
+					{
+						Container: corev1.Container{
+							Name:  "exit",
+							Image: "busybox",
+						},
+					},
+				},
+				Workspaces: []v1beta1.WorkspaceDeclaration{
+					{
+						Name:        "test",
+						Description: "test workspace",
+						MountPath:   "/workspace/test/file",
+						ReadOnly:    true,
+					},
+				},
+			},
+		},
+	}
+
+	ns := []*corev1.Namespace{
+		{
+			ObjectMeta: metav1.ObjectMeta{
+				Name: "ns",
+			},
+		},
+	}
+
+	cs, _ := test.SeedV1beta1TestData(t, pipelinev1beta1test.Data{Tasks: tasks, Namespaces: ns})
+	cs.Pipeline.Resources = cb.APIResourceList(versionB1, []string{"task", "taskrun"})
+	objs := []runtime.Object{tasks[0]}
+	_, tdc := newPipelineClient(versionB1, objs...)
+	dc, _ := tdc.Client(
+		cb.UnstructuredV1beta1T(tasks[0], versionB1),
 	)
 
 	p := &test.Params{Tekton: cs.Pipeline, Kube: cs.Kube, Dynamic: dc}
@@ -966,6 +2339,107 @@ func Test_start_task_client_error(t *testing.T) {
 	test.AssertOutput(t, expected, got)
 }
 
+func Test_start_task_client_error_v1beta1(t *testing.T) {
+	tasks := []*v1beta1.Task{
+		{
+			ObjectMeta: v1.ObjectMeta{
+				Name:      "task-1",
+				Namespace: "ns",
+			},
+			Spec: v1beta1.TaskSpec{
+				Resources: &v1beta1.TaskResources{
+					Inputs: []v1beta1.TaskResource{
+						{
+							ResourceDeclaration: v1beta1.ResourceDeclaration{
+								Name: "my-repo",
+								Type: v1beta1.PipelineResourceTypeGit,
+							},
+						},
+						{
+							ResourceDeclaration: v1beta1.ResourceDeclaration{
+								Name: "my-image",
+								Type: v1beta1.PipelineResourceTypeImage,
+							},
+						},
+					},
+					Outputs: []v1beta1.TaskResource{
+						{
+							ResourceDeclaration: v1beta1.ResourceDeclaration{
+								Name: "code-image",
+								Type: v1beta1.PipelineResourceTypeImage,
+							},
+						},
+					},
+				},
+				Params: []v1beta1.ParamSpec{
+					{
+						Name: "myarg",
+						Type: v1beta1.ParamTypeString,
+					},
+					{
+						Name: "print",
+						Type: v1beta1.ParamTypeArray,
+					},
+				},
+				Steps: []v1beta1.Step{
+					{
+						Container: corev1.Container{
+							Name:  "hello",
+							Image: "busybox",
+						},
+					},
+					{
+						Container: corev1.Container{
+							Name:  "exit",
+							Image: "busybox",
+						},
+					},
+				},
+				Workspaces: []v1beta1.WorkspaceDeclaration{
+					{
+						Name:        "test",
+						Description: "test workspace",
+						MountPath:   "/workspace/test/file",
+						ReadOnly:    true,
+					},
+				},
+			},
+		},
+	}
+
+	ns := []*corev1.Namespace{
+		{
+			ObjectMeta: metav1.ObjectMeta{
+				Name: "ns",
+			},
+		},
+	}
+
+	cs, _ := test.SeedV1beta1TestData(t, pipelinev1beta1test.Data{Tasks: tasks, Namespaces: ns})
+	cs.Pipeline.Resources = cb.APIResourceList(versionB1, []string{"task", "taskrun"})
+	tdc := testDynamic.Options{
+		PrependReactors: []testDynamic.PrependOpt{
+			{
+				Resource: "*",
+				Verb:     "create",
+				Action: func(_ k8stest.Action) (bool, runtime.Object, error) {
+					return true, nil, fmt.Errorf("cluster not accessible")
+				},
+			},
+		},
+	}
+	dc, _ := tdc.Client(
+		cb.UnstructuredV1beta1T(tasks[0], versionB1),
+	)
+
+	p := &test.Params{Tekton: cs.Pipeline, Kube: cs.Kube, Dynamic: dc}
+
+	task := Command(p)
+	got, _ := test.ExecuteCommand(task, "start", "task-1", "-n", "ns")
+	expected := "Error: cluster not accessible\n"
+	test.AssertOutput(t, expected, got)
+}
+
 func Test_start_task_invalid_input_res(t *testing.T) {
 	tasks := []*v1alpha1.Task{
 		tb.Task("task-1", "ns",
@@ -1015,6 +2489,100 @@ func Test_start_task_invalid_input_res(t *testing.T) {
 	test.AssertOutput(t, expected, got)
 }
 
+func Test_start_task_invalid_input_res_v1beta1(t *testing.T) {
+	tasks := []*v1beta1.Task{
+		{
+			ObjectMeta: v1.ObjectMeta{
+				Name:      "task-1",
+				Namespace: "ns",
+			},
+			Spec: v1beta1.TaskSpec{
+				Resources: &v1beta1.TaskResources{
+					Inputs: []v1beta1.TaskResource{
+						{
+							ResourceDeclaration: v1beta1.ResourceDeclaration{
+								Name: "my-repo",
+								Type: v1beta1.PipelineResourceTypeGit,
+							},
+						},
+						{
+							ResourceDeclaration: v1beta1.ResourceDeclaration{
+								Name: "my-image",
+								Type: v1beta1.PipelineResourceTypeImage,
+							},
+						},
+					},
+					Outputs: []v1beta1.TaskResource{
+						{
+							ResourceDeclaration: v1beta1.ResourceDeclaration{
+								Name: "code-image",
+								Type: v1beta1.PipelineResourceTypeImage,
+							},
+						},
+					},
+				},
+				Params: []v1beta1.ParamSpec{
+					{
+						Name: "myarg",
+						Type: v1beta1.ParamTypeString,
+					},
+					{
+						Name: "print",
+						Type: v1beta1.ParamTypeArray,
+					},
+				},
+				Steps: []v1beta1.Step{
+					{
+						Container: corev1.Container{
+							Name:  "hello",
+							Image: "busybox",
+						},
+					},
+					{
+						Container: corev1.Container{
+							Name:  "exit",
+							Image: "busybox",
+						},
+					},
+				},
+				Workspaces: []v1beta1.WorkspaceDeclaration{
+					{
+						Name:        "test",
+						Description: "test workspace",
+						MountPath:   "/workspace/test/file",
+						ReadOnly:    true,
+					},
+				},
+			},
+		},
+	}
+
+	ns := []*corev1.Namespace{
+		{
+			ObjectMeta: metav1.ObjectMeta{
+				Name: "ns",
+			},
+		},
+	}
+
+	cs, _ := test.SeedV1beta1TestData(t, pipelinev1beta1test.Data{Tasks: tasks, Namespaces: ns})
+	cs.Pipeline.Resources = cb.APIResourceList(versionB1, []string{"task", "taskrun"})
+	tdc := testDynamic.Options{}
+	dc, _ := tdc.Client(
+		cb.UnstructuredV1beta1T(tasks[0], versionB1),
+	)
+
+	p := &test.Params{Tekton: cs.Pipeline, Kube: cs.Kube, Dynamic: dc}
+
+	task := Command(p)
+	got, _ := test.ExecuteCommand(task, "start", "task-1",
+		"-i=my-repo git-repo",
+		"-n", "ns",
+	)
+	expected := "Error: invalid input format for resource parameter: my-repo git-repo\n"
+	test.AssertOutput(t, expected, got)
+}
+
 func Test_start_task_invalid_workspace(t *testing.T) {
 	tasks := []*v1alpha1.Task{
 		tb.Task("task-1", "ns",
@@ -1048,6 +2616,88 @@ func Test_start_task_invalid_workspace(t *testing.T) {
 	tdc := testDynamic.Options{}
 	dc, _ := tdc.Client(
 		cb.UnstructuredT(tasks[0], versionA1),
+	)
+	p := &test.Params{Tekton: cs.Pipeline, Kube: cs.Kube, Dynamic: dc}
+
+	task := Command(p)
+	got, _ := test.ExecuteCommand(task, "start", "task-1",
+		"-w=claimName=pvc3",
+		"-n", "ns",
+	)
+	expected := "Error: Name not found for workspace\n"
+	test.AssertOutput(t, expected, got)
+}
+
+func Test_start_task_invalid_workspace_v1beta1(t *testing.T) {
+	tasks := []*v1beta1.Task{
+		{
+			ObjectMeta: v1.ObjectMeta{
+				Name:      "task-1",
+				Namespace: "ns",
+			},
+			Spec: v1beta1.TaskSpec{
+				Resources: &v1beta1.TaskResources{
+					Inputs: []v1beta1.TaskResource{
+						{
+							ResourceDeclaration: v1beta1.ResourceDeclaration{
+								Name: "my-repo",
+								Type: v1beta1.PipelineResourceTypeGit,
+							},
+						},
+						{
+							ResourceDeclaration: v1beta1.ResourceDeclaration{
+								Name: "my-image",
+								Type: v1beta1.PipelineResourceTypeImage,
+							},
+						},
+					},
+					Outputs: []v1beta1.TaskResource{
+						{
+							ResourceDeclaration: v1beta1.ResourceDeclaration{
+								Name: "code-image",
+								Type: v1beta1.PipelineResourceTypeImage,
+							},
+						},
+					},
+				},
+				Steps: []v1beta1.Step{
+					{
+						Container: corev1.Container{
+							Name:  "hello",
+							Image: "busybox",
+						},
+					},
+					{
+						Container: corev1.Container{
+							Name:  "exit",
+							Image: "busybox",
+						},
+					},
+				},
+				Workspaces: []v1beta1.WorkspaceDeclaration{
+					{
+						Name:        "test",
+						Description: "test workspace",
+						MountPath:   "/workspace/test/file",
+						ReadOnly:    true,
+					},
+				},
+			},
+		},
+	}
+	ns := []*corev1.Namespace{
+		{
+			ObjectMeta: metav1.ObjectMeta{
+				Name: "ns",
+			},
+		},
+	}
+
+	cs, _ := test.SeedV1beta1TestData(t, pipelinev1beta1test.Data{Namespaces: ns, Tasks: tasks})
+	cs.Pipeline.Resources = cb.APIResourceList(versionB1, []string{"task", "taskrun"})
+	tdc := testDynamic.Options{}
+	dc, _ := tdc.Client(
+		cb.UnstructuredV1beta1T(tasks[0], versionB1),
 	)
 	p := &test.Params{Tekton: cs.Pipeline, Kube: cs.Kube, Dynamic: dc}
 
@@ -1108,6 +2758,99 @@ func Test_start_task_invalid_output_res(t *testing.T) {
 	test.AssertOutput(t, expected, got)
 }
 
+func Test_start_task_invalid_output_res_v1beta1(t *testing.T) {
+	tasks := []*v1beta1.Task{
+		{
+			ObjectMeta: v1.ObjectMeta{
+				Name:      "task-1",
+				Namespace: "ns",
+			},
+			Spec: v1beta1.TaskSpec{
+				Resources: &v1beta1.TaskResources{
+					Inputs: []v1beta1.TaskResource{
+						{
+							ResourceDeclaration: v1beta1.ResourceDeclaration{
+								Name: "my-repo",
+								Type: v1beta1.PipelineResourceTypeGit,
+							},
+						},
+						{
+							ResourceDeclaration: v1beta1.ResourceDeclaration{
+								Name: "my-image",
+								Type: v1beta1.PipelineResourceTypeImage,
+							},
+						},
+					},
+					Outputs: []v1beta1.TaskResource{
+						{
+							ResourceDeclaration: v1beta1.ResourceDeclaration{
+								Name: "code-image",
+								Type: v1beta1.PipelineResourceTypeImage,
+							},
+						},
+					},
+				},
+				Params: []v1beta1.ParamSpec{
+					{
+						Name: "myarg",
+						Type: v1beta1.ParamTypeString,
+					},
+					{
+						Name: "print",
+						Type: v1beta1.ParamTypeArray,
+					},
+				},
+				Steps: []v1beta1.Step{
+					{
+						Container: corev1.Container{
+							Name:  "hello",
+							Image: "busybox",
+						},
+					},
+					{
+						Container: corev1.Container{
+							Name:  "exit",
+							Image: "busybox",
+						},
+					},
+				},
+				Workspaces: []v1beta1.WorkspaceDeclaration{
+					{
+						Name:        "test",
+						Description: "test workspace",
+						MountPath:   "/workspace/test/file",
+						ReadOnly:    true,
+					},
+				},
+			},
+		},
+	}
+
+	ns := []*corev1.Namespace{
+		{
+			ObjectMeta: metav1.ObjectMeta{
+				Name: "ns",
+			},
+		},
+	}
+
+	cs, _ := test.SeedV1beta1TestData(t, pipelinev1beta1test.Data{Tasks: tasks, Namespaces: ns})
+	cs.Pipeline.Resources = cb.APIResourceList(versionB1, []string{"task", "taskrun"})
+	tdc := testDynamic.Options{}
+	dc, _ := tdc.Client(
+		cb.UnstructuredV1beta1T(tasks[0], versionB1),
+	)
+	p := &test.Params{Tekton: cs.Pipeline, Kube: cs.Kube, Dynamic: dc}
+
+	task := Command(p)
+	got, _ := test.ExecuteCommand(task, "start", "task-1",
+		"-o", "code-image image-final",
+		"-n", "ns",
+	)
+	expected := "Error: invalid input format for resource parameter: code-image image-final\n"
+	test.AssertOutput(t, expected, got)
+}
+
 func Test_start_task_invalid_param(t *testing.T) {
 	tasks := []*v1alpha1.Task{
 		tb.Task("task-1", "ns",
@@ -1144,6 +2887,99 @@ func Test_start_task_invalid_param(t *testing.T) {
 	tdc := testDynamic.Options{}
 	dc, _ := tdc.Client(
 		cb.UnstructuredT(tasks[0], versionA1),
+	)
+	p := &test.Params{Tekton: cs.Pipeline, Kube: cs.Kube, Dynamic: dc}
+
+	task := Command(p)
+	got, _ := test.ExecuteCommand(task, "start", "task-1",
+		"-p", "myarg boom",
+		"-n", "ns",
+	)
+	expected := "Error: invalid input format for param parameter: myarg boom\n"
+	test.AssertOutput(t, expected, got)
+}
+
+func Test_start_task_invalid_param_v1beta1(t *testing.T) {
+	tasks := []*v1beta1.Task{
+		{
+			ObjectMeta: v1.ObjectMeta{
+				Name:      "task-1",
+				Namespace: "ns",
+			},
+			Spec: v1beta1.TaskSpec{
+				Resources: &v1beta1.TaskResources{
+					Inputs: []v1beta1.TaskResource{
+						{
+							ResourceDeclaration: v1beta1.ResourceDeclaration{
+								Name: "my-repo",
+								Type: v1beta1.PipelineResourceTypeGit,
+							},
+						},
+						{
+							ResourceDeclaration: v1beta1.ResourceDeclaration{
+								Name: "my-image",
+								Type: v1beta1.PipelineResourceTypeImage,
+							},
+						},
+					},
+					Outputs: []v1beta1.TaskResource{
+						{
+							ResourceDeclaration: v1beta1.ResourceDeclaration{
+								Name: "code-image",
+								Type: v1beta1.PipelineResourceTypeImage,
+							},
+						},
+					},
+				},
+				Params: []v1beta1.ParamSpec{
+					{
+						Name: "myarg",
+						Type: v1beta1.ParamTypeString,
+					},
+					{
+						Name: "print",
+						Type: v1beta1.ParamTypeArray,
+					},
+				},
+				Steps: []v1beta1.Step{
+					{
+						Container: corev1.Container{
+							Name:  "hello",
+							Image: "busybox",
+						},
+					},
+					{
+						Container: corev1.Container{
+							Name:  "exit",
+							Image: "busybox",
+						},
+					},
+				},
+				Workspaces: []v1beta1.WorkspaceDeclaration{
+					{
+						Name:        "test",
+						Description: "test workspace",
+						MountPath:   "/workspace/test/file",
+						ReadOnly:    true,
+					},
+				},
+			},
+		},
+	}
+
+	ns := []*corev1.Namespace{
+		{
+			ObjectMeta: metav1.ObjectMeta{
+				Name: "ns",
+			},
+		},
+	}
+
+	cs, _ := test.SeedV1beta1TestData(t, pipelinev1beta1test.Data{Tasks: tasks, Namespaces: ns})
+	cs.Pipeline.Resources = cb.APIResourceList(versionB1, []string{"task", "taskrun"})
+	tdc := testDynamic.Options{}
+	dc, _ := tdc.Client(
+		cb.UnstructuredV1beta1T(tasks[0], versionB1),
 	)
 	p := &test.Params{Tekton: cs.Pipeline, Kube: cs.Kube, Dynamic: dc}
 
@@ -1204,6 +3040,99 @@ func Test_start_task_invalid_label(t *testing.T) {
 	test.AssertOutput(t, expected, got)
 }
 
+func Test_start_task_invalid_label_v1beta1(t *testing.T) {
+	tasks := []*v1beta1.Task{
+		{
+			ObjectMeta: v1.ObjectMeta{
+				Name:      "task-1",
+				Namespace: "ns",
+			},
+			Spec: v1beta1.TaskSpec{
+				Resources: &v1beta1.TaskResources{
+					Inputs: []v1beta1.TaskResource{
+						{
+							ResourceDeclaration: v1beta1.ResourceDeclaration{
+								Name: "my-repo",
+								Type: v1beta1.PipelineResourceTypeGit,
+							},
+						},
+						{
+							ResourceDeclaration: v1beta1.ResourceDeclaration{
+								Name: "my-image",
+								Type: v1beta1.PipelineResourceTypeImage,
+							},
+						},
+					},
+					Outputs: []v1beta1.TaskResource{
+						{
+							ResourceDeclaration: v1beta1.ResourceDeclaration{
+								Name: "code-image",
+								Type: v1beta1.PipelineResourceTypeImage,
+							},
+						},
+					},
+				},
+				Params: []v1beta1.ParamSpec{
+					{
+						Name: "myarg",
+						Type: v1beta1.ParamTypeString,
+					},
+					{
+						Name: "print",
+						Type: v1beta1.ParamTypeArray,
+					},
+				},
+				Steps: []v1beta1.Step{
+					{
+						Container: corev1.Container{
+							Name:  "hello",
+							Image: "busybox",
+						},
+					},
+					{
+						Container: corev1.Container{
+							Name:  "exit",
+							Image: "busybox",
+						},
+					},
+				},
+				Workspaces: []v1beta1.WorkspaceDeclaration{
+					{
+						Name:        "test",
+						Description: "test workspace",
+						MountPath:   "/workspace/test/file",
+						ReadOnly:    true,
+					},
+				},
+			},
+		},
+	}
+
+	ns := []*corev1.Namespace{
+		{
+			ObjectMeta: metav1.ObjectMeta{
+				Name: "ns",
+			},
+		},
+	}
+
+	cs, _ := test.SeedV1beta1TestData(t, pipelinev1beta1test.Data{Tasks: tasks, Namespaces: ns})
+	cs.Pipeline.Resources = cb.APIResourceList(versionB1, []string{"task", "taskrun"})
+	tdc := testDynamic.Options{}
+	dc, _ := tdc.Client(
+		cb.UnstructuredV1beta1T(tasks[0], versionB1),
+	)
+	p := &test.Params{Tekton: cs.Pipeline, Kube: cs.Kube, Dynamic: dc}
+
+	task := Command(p)
+	got, _ := test.ExecuteCommand(task, "start", "task-1",
+		"-l", "myarg boom",
+		"-n", "ns",
+	)
+	expected := "Error: invalid input format for label parameter: myarg boom\n"
+	test.AssertOutput(t, expected, got)
+}
+
 func Test_start_task_allkindparam(t *testing.T) {
 	tasks := []*v1alpha1.Task{
 		tb.Task("task-1", "ns",
@@ -1241,6 +3170,157 @@ func Test_start_task_allkindparam(t *testing.T) {
 	tdc := testDynamic.Options{}
 	dc, _ := tdc.Client(
 		cb.UnstructuredT(tasks[0], versionA1),
+	)
+	p := &test.Params{Tekton: cs.Pipeline, Kube: cs.Kube, Dynamic: dc}
+
+	task := Command(p)
+	got, _ := test.ExecuteCommand(task, "start", "task-1",
+		"-i=my-repo=git",
+		"-i=my-image=image",
+		"-p=myarg=value1",
+		"-p=print=boom,boom",
+		"-p=printafter=booms",
+		"-l=key=value",
+		"-o=code-image=output-image",
+		"-s=svc1",
+		"-n=ns")
+
+	expected := "Taskrun started: \n\nIn order to track the taskrun progress run:\ntkn taskrun logs  -f -n ns\n"
+	test.AssertOutput(t, expected, got)
+	clients, _ := p.Clients()
+	tr, err := trlist.TaskRuns(clients, metav1.ListOptions{}, "ns")
+	if err != nil {
+		t.Errorf("Error listing taskruns %s", err.Error())
+	}
+
+	if tr.Items[0].ObjectMeta.GenerateName != "task-1-run-" {
+		t.Errorf("Error taskrun generated is different %+v", tr)
+	}
+
+	for _, v := range tr.Items[0].Spec.Resources.Inputs {
+		if v.Name == "my-repo" {
+			test.AssertOutput(t, "git", v.ResourceRef.Name)
+		}
+
+		if v.Name == "my-image" {
+			test.AssertOutput(t, "image", v.ResourceRef.Name)
+		}
+	}
+
+	test.AssertOutput(t, 3, len(tr.Items[0].Spec.Params))
+
+	for _, v := range tr.Items[0].Spec.Params {
+		if v.Name == "my-arg" {
+			test.AssertOutput(t, v1alpha1.ArrayOrString{Type: v1alpha1.ParamTypeString, StringVal: "value1"}, v.Value)
+		}
+
+		if v.Name == "print" {
+			test.AssertOutput(t, v1alpha1.ArrayOrString{Type: v1alpha1.ParamTypeArray, ArrayVal: []string{"boom", "boom"}}, v.Value)
+		}
+
+		if v.Name == "printafter" {
+			test.AssertOutput(t, v1alpha1.ArrayOrString{Type: v1alpha1.ParamTypeArray, ArrayVal: []string{"booms"}}, v.Value)
+		}
+	}
+
+	for _, v := range tr.Items[0].Spec.Resources.Outputs {
+		if v.Name == "code-image" {
+			test.AssertOutput(t, "output-image", v.ResourceRef.Name)
+		}
+	}
+
+	if d := cmp.Equal(tr.Items[0].ObjectMeta.Labels, map[string]string{"key": "value"}); !d {
+		t.Errorf("Error labels generated is different Labels Got: %+v", tr.Items[0].ObjectMeta.Labels)
+	}
+
+	test.AssertOutput(t, "svc1", tr.Items[0].Spec.ServiceAccountName)
+}
+
+func Test_start_task_allkindparam_v1beta1(t *testing.T) {
+	tasks := []*v1beta1.Task{
+		{
+			ObjectMeta: v1.ObjectMeta{
+				Name:      "task-1",
+				Namespace: "ns",
+			},
+			Spec: v1beta1.TaskSpec{
+				Resources: &v1beta1.TaskResources{
+					Inputs: []v1beta1.TaskResource{
+						{
+							ResourceDeclaration: v1beta1.ResourceDeclaration{
+								Name: "my-repo",
+								Type: v1beta1.PipelineResourceTypeGit,
+							},
+						},
+						{
+							ResourceDeclaration: v1beta1.ResourceDeclaration{
+								Name: "my-image",
+								Type: v1beta1.PipelineResourceTypeImage,
+							},
+						},
+					},
+					Outputs: []v1beta1.TaskResource{
+						{
+							ResourceDeclaration: v1beta1.ResourceDeclaration{
+								Name: "code-image",
+								Type: v1beta1.PipelineResourceTypeImage,
+							},
+						},
+					},
+				},
+				Params: []v1beta1.ParamSpec{
+					{
+						Name: "myarg",
+						Type: v1beta1.ParamTypeString,
+					},
+					{
+						Name: "print",
+						Type: v1beta1.ParamTypeArray,
+					},
+					{
+						Name: "printafter",
+						Type: v1beta1.ParamTypeArray,
+					},
+				},
+				Steps: []v1beta1.Step{
+					{
+						Container: corev1.Container{
+							Name:  "hello",
+							Image: "busybox",
+						},
+					},
+					{
+						Container: corev1.Container{
+							Name:  "exit",
+							Image: "busybox",
+						},
+					},
+				},
+				Workspaces: []v1beta1.WorkspaceDeclaration{
+					{
+						Name:        "test",
+						Description: "test workspace",
+						MountPath:   "/workspace/test/file",
+						ReadOnly:    true,
+					},
+				},
+			},
+		},
+	}
+
+	ns := []*corev1.Namespace{
+		{
+			ObjectMeta: metav1.ObjectMeta{
+				Name: "ns",
+			},
+		},
+	}
+
+	cs, _ := test.SeedV1beta1TestData(t, pipelinev1beta1test.Data{Tasks: tasks, Namespaces: ns})
+	cs.Pipeline.Resources = cb.APIResourceList(versionB1, []string{"task", "taskrun"})
+	tdc := testDynamic.Options{}
+	dc, _ := tdc.Client(
+		cb.UnstructuredV1beta1T(tasks[0], versionB1),
 	)
 	p := &test.Params{Tekton: cs.Pipeline, Kube: cs.Kube, Dynamic: dc}
 
@@ -1361,11 +3441,144 @@ func Test_start_task_wrong_param(t *testing.T) {
 	test.AssertOutput(t, expected, got)
 }
 
+func Test_start_task_wrong_param_v1beta1(t *testing.T) {
+	tasks := []*v1beta1.Task{
+		{
+			ObjectMeta: v1.ObjectMeta{
+				Name:      "task-1",
+				Namespace: "ns",
+			},
+			Spec: v1beta1.TaskSpec{
+				Resources: &v1beta1.TaskResources{
+					Inputs: []v1beta1.TaskResource{
+						{
+							ResourceDeclaration: v1beta1.ResourceDeclaration{
+								Name: "my-repo",
+								Type: v1beta1.PipelineResourceTypeGit,
+							},
+						},
+						{
+							ResourceDeclaration: v1beta1.ResourceDeclaration{
+								Name: "my-image",
+								Type: v1beta1.PipelineResourceTypeImage,
+							},
+						},
+					},
+					Outputs: []v1beta1.TaskResource{
+						{
+							ResourceDeclaration: v1beta1.ResourceDeclaration{
+								Name: "code-image",
+								Type: v1beta1.PipelineResourceTypeImage,
+							},
+						},
+					},
+				},
+				Params: []v1beta1.ParamSpec{
+					{
+						Name: "myarg",
+						Type: v1beta1.ParamTypeString,
+					},
+					{
+						Name: "print",
+						Type: v1beta1.ParamTypeArray,
+					},
+				},
+				Steps: []v1beta1.Step{
+					{
+						Container: corev1.Container{
+							Name:  "hello",
+							Image: "busybox",
+						},
+					},
+					{
+						Container: corev1.Container{
+							Name:  "exit",
+							Image: "busybox",
+						},
+					},
+				},
+				Workspaces: []v1beta1.WorkspaceDeclaration{
+					{
+						Name:        "test",
+						Description: "test workspace",
+						MountPath:   "/workspace/test/file",
+						ReadOnly:    true,
+					},
+				},
+			},
+		},
+	}
+
+	ns := []*corev1.Namespace{
+		{
+			ObjectMeta: metav1.ObjectMeta{
+				Name: "ns",
+			},
+		},
+	}
+
+	cs, _ := test.SeedV1beta1TestData(t, pipelinev1beta1test.Data{Tasks: tasks, Namespaces: ns})
+	cs.Pipeline.Resources = cb.APIResourceList(versionB1, []string{"task", "taskrun"})
+	tdc := testDynamic.Options{}
+	dc, _ := tdc.Client(
+		cb.UnstructuredV1beta1T(tasks[0], versionB1),
+	)
+	p := &test.Params{Tekton: cs.Pipeline, Kube: cs.Kube, Dynamic: dc}
+
+	task := Command(p)
+	got, _ := test.ExecuteCommand(task, "start", "task-1",
+		"-i=my-repo=git",
+		"-i=my-image=image",
+		"-p=myar=value1",
+		"-p=print=boom,boom",
+		"-l=key=value",
+		"-o=code-image=output-image",
+		"-s=svc1",
+		"-n=ns")
+
+	expected := "Error: param 'myar' not present in spec\n"
+	test.AssertOutput(t, expected, got)
+}
+
 func Test_mergeResource(t *testing.T) {
 	res := []v1alpha1.TaskResourceBinding{{
 		PipelineResourceBinding: v1alpha1.PipelineResourceBinding{
 			Name: "source",
 			ResourceRef: &v1alpha1.PipelineResourceRef{
+				Name: "git",
+			},
+		},
+	}}
+
+	_, err := mergeRes(res, []string{"test"})
+	if err == nil {
+		t.Errorf("Expected error")
+	}
+
+	res, err = mergeRes(res, []string{})
+	if err != nil {
+		t.Errorf("Did not expect error")
+	}
+	test.AssertOutput(t, 1, len(res))
+
+	res, err = mergeRes(res, []string{"image=test-1"})
+	if err != nil {
+		t.Errorf("Did not expect error")
+	}
+	test.AssertOutput(t, 2, len(res))
+
+	res, err = mergeRes(res, []string{"image=test-new", "image-2=test-2"})
+	if err != nil {
+		t.Errorf("Did not expect error")
+	}
+	test.AssertOutput(t, 3, len(res))
+}
+
+func Test_mergeResource_v1beta1(t *testing.T) {
+	res := []v1beta1.TaskResourceBinding{{
+		PipelineResourceBinding: v1beta1.PipelineResourceBinding{
+			Name: "source",
+			ResourceRef: &v1beta1.PipelineResourceRef{
 				Name: "git",
 			},
 		},
@@ -1413,6 +3626,58 @@ func Test_parseRes(t *testing.T) {
 			PipelineResourceBinding: v1alpha1.PipelineResourceBinding{
 				Name: "source",
 				ResourceRef: &v1alpha1.PipelineResourceRef{
+					Name: "git",
+				},
+			},
+		}, "image": {
+			PipelineResourceBinding: v1alpha1.PipelineResourceBinding{
+				Name: "image",
+				ResourceRef: &v1alpha1.PipelineResourceRef{
+					Name: "docker2",
+				},
+			},
+		}},
+		wantErr: false,
+	}, {
+		name: "Test_parseRes Err",
+		args: args{
+			res: []string{"value1", "value2"},
+		},
+		wantErr: true,
+	}}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			got, err := parseRes(tt.args.res)
+			if (err != nil) != tt.wantErr {
+				t.Errorf("parseRes() error = %v, wantErr %v", err, tt.wantErr)
+				return
+			}
+			if !reflect.DeepEqual(got, tt.want) {
+				t.Errorf("parseRes() = %v, want %v", got, tt.want)
+			}
+		})
+	}
+}
+
+func Test_parseRes_v1beta1(t *testing.T) {
+	type args struct {
+		res []string
+	}
+	tests := []struct {
+		name    string
+		args    args
+		want    map[string]v1beta1.TaskResourceBinding
+		wantErr bool
+	}{{
+		name: "Test_parseRes No Err",
+		args: args{
+			res: []string{"source=git", "image=docker2"},
+		},
+		want: map[string]v1beta1.TaskResourceBinding{"source": {
+			PipelineResourceBinding: v1beta1.PipelineResourceBinding{
+				Name: "source",
+				ResourceRef: &v1beta1.PipelineResourceRef{
 					Name: "git",
 				},
 			},
@@ -1503,7 +3768,6 @@ func TestTaskStart_ExecuteCommand(t *testing.T) {
 				"--dry-run",
 				"--output", "invalid"},
 			namespace: "",
-			//dynamic:   dc1,
 			input:     cs,
 			wantError: true,
 			want:      "output format specified is invalid but must be yaml or json",
@@ -1610,6 +3874,222 @@ func TestTaskStart_ExecuteCommand(t *testing.T) {
 				"--output=json"},
 			namespace:  "",
 			dynamic:    dc1,
+			input:      cs,
+			wantError:  false,
+			goldenFile: true,
+		},
+	}
+
+	for _, tp := range testParams {
+		t.Run(tp.name, func(t *testing.T) {
+			p := &test.Params{Tekton: tp.input.Pipeline, Kube: tp.input.Kube, Dynamic: tp.dynamic}
+			c := Command(p)
+
+			got, err := test.ExecuteCommand(c, tp.command...)
+			if tp.wantError {
+				if err == nil {
+					t.Errorf("error expected here")
+				}
+				test.AssertOutput(t, tp.want, err.Error())
+			} else {
+				if err != nil {
+					t.Errorf("unexpected Error")
+				}
+				if tp.goldenFile {
+					golden.Assert(t, got, strings.ReplaceAll(fmt.Sprintf("%s.golden", t.Name()), "/", "-"))
+				} else {
+					test.AssertOutput(t, tp.want, got)
+				}
+			}
+		})
+	}
+}
+
+func TestTaskStart_ExecuteCommand_v1beta1(t *testing.T) {
+	tasks := []*v1beta1.Task{
+		{
+			ObjectMeta: v1.ObjectMeta{
+				Name:      "task-1",
+				Namespace: "ns",
+			},
+			Spec: v1beta1.TaskSpec{
+				Resources: &v1beta1.TaskResources{
+					Inputs: []v1beta1.TaskResource{
+						{
+							ResourceDeclaration: v1beta1.ResourceDeclaration{
+								Name: "my-repo",
+								Type: v1beta1.PipelineResourceTypeGit,
+							},
+						},
+					},
+					Outputs: []v1beta1.TaskResource{
+						{
+							ResourceDeclaration: v1beta1.ResourceDeclaration{
+								Name: "code-image",
+								Type: v1beta1.PipelineResourceTypeImage,
+							},
+						},
+					},
+				},
+				Params: []v1beta1.ParamSpec{
+					{
+						Name: "myarg",
+						Type: v1beta1.ParamTypeString,
+					},
+				},
+				Steps: []v1beta1.Step{
+					{
+						Container: corev1.Container{
+							Name:  "hello",
+							Image: "busybox",
+						},
+					},
+					{
+						Container: corev1.Container{
+							Name:  "exit",
+							Image: "busybox",
+						},
+					},
+				},
+				Workspaces: []v1beta1.WorkspaceDeclaration{
+					{
+						Name:        "test",
+						Description: "test workspace",
+						MountPath:   "/workspace/test/file",
+						ReadOnly:    true,
+					},
+				},
+			},
+		},
+	}
+
+	ns := []*corev1.Namespace{
+		{
+			ObjectMeta: metav1.ObjectMeta{
+				Name: "ns",
+			},
+		},
+	}
+
+	cs, _ := test.SeedV1beta1TestData(t, pipelinev1beta1test.Data{Tasks: tasks, Namespaces: ns})
+	cs.Pipeline.Resources = cb.APIResourceList(versionB1, []string{"task"})
+	tdc := testDynamic.Options{}
+	dc, _ := tdc.Client(
+		cb.UnstructuredV1beta1T(tasks[0], versionB1),
+	)
+
+	testParams := []struct {
+		name       string
+		command    []string
+		namespace  string
+		dynamic    dynamic.Interface
+		input      pipelinev1beta1test.Clients
+		wantError  bool
+		want       string
+		goldenFile bool
+	}{
+		{
+			name: "Dry Run with invalid output",
+			command: []string{"start", "task-1",
+				"-i=my-repo=git-repo",
+				"-o=code-image=output-image",
+				"-s=svc1",
+				"-n", "ns",
+				"--dry-run",
+				"--output", "invalid"},
+			namespace: "",
+			input:     cs,
+			wantError: true,
+			want:      "output format specified is invalid but must be yaml or json",
+		},
+		{
+			name: "Dry Run with only --dry-run specified",
+			command: []string{"start", "task-1",
+				"-i=my-repo=git-repo",
+				"-o=code-image=output-image",
+				"-s=svc1",
+				"-n", "ns",
+				"--dry-run"},
+			namespace:  "",
+			dynamic:    dc,
+			input:      cs,
+			wantError:  false,
+			goldenFile: true,
+		},
+		{
+			name: "Dry Run with output=json",
+			command: []string{"start", "task-1",
+				"-i=my-repo=git-repo",
+				"-o=code-image=output-image",
+				"-s=svc1",
+				"-n", "ns",
+				"--dry-run",
+				"--output=json"},
+			namespace:  "",
+			dynamic:    dc,
+			input:      cs,
+			wantError:  false,
+			goldenFile: true,
+		},
+		{
+			name: "Dry Run with -f v1alpha1",
+			command: []string{"start",
+				"-f", "./testdata/task-v1alpha1.yaml",
+				"-n", "ns",
+				"-s=svc1",
+				"-i=docker-source=git",
+				"-o=builtImage=image",
+				"--dry-run",
+				"--output=yaml"},
+			namespace:  "",
+			dynamic:    dc,
+			input:      cs,
+			wantError:  false,
+			goldenFile: true,
+		},
+		{
+			name: "Dry Run with -f v1beta1",
+			command: []string{"start",
+				"-f", "./testdata/task-v1beta1.yaml",
+				"-n", "ns",
+				"-s=svc1",
+				"-i=docker-source=git",
+				"-o=builtImage=image",
+				"--dry-run",
+				"--output=yaml"},
+			namespace:  "",
+			dynamic:    dc,
+			input:      cs,
+			wantError:  false,
+			goldenFile: true,
+		},
+		{
+			name: "Dry Run with --timeout specified",
+			command: []string{"start", "task-1",
+				"-i=my-repo=git-repo",
+				"-o=code-image=output-image",
+				"-s=svc1",
+				"-n", "ns",
+				"--dry-run",
+				"--timeout", "1s"},
+			namespace:  "",
+			dynamic:    dc,
+			input:      cs,
+			wantError:  false,
+			goldenFile: true,
+		},
+		{
+			name: "Dry Run with output=json -f",
+			command: []string{"start",
+				"-f", "./testdata/task-v1alpha1.yaml",
+				"-n", "ns",
+				"-s=svc1",
+				"-i=docker-source=git",
+				"-o=builtImage=image",
+				"--dry-run",
+				"--output=json"},
+			namespace:  "",
+			dynamic:    dc,
 			input:      cs,
 			wantError:  false,
 			goldenFile: true,
