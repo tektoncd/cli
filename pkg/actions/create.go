@@ -21,8 +21,12 @@ import (
 	"k8s.io/apimachinery/pkg/runtime/schema"
 )
 
-func Create(gvr schema.GroupVersionResource, clients *cli.Clients, object *unstructured.Unstructured, ns string, op metav1.CreateOptions) (*unstructured.Unstructured, error) {
-	obj, err := clients.Dynamic.Resource(gvr).Namespace(ns).Create(object, op)
+func Create(gr schema.GroupVersionResource, clients *cli.Clients, object *unstructured.Unstructured, ns string, op metav1.CreateOptions) (*unstructured.Unstructured, error) {
+	gvr, err := GetGroupVersionResource(gr, clients.Tekton.Discovery())
+	if err != nil {
+		return nil, err
+	}
+	obj, err := clients.Dynamic.Resource(*gvr).Namespace(ns).Create(object, op)
 	if err != nil {
 		return nil, err
 	}

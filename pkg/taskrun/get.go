@@ -25,10 +25,7 @@ import (
 	"github.com/tektoncd/pipeline/pkg/apis/pipeline/v1beta1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime"
-	"k8s.io/apimachinery/pkg/runtime/schema"
 )
-
-var trGroupResource = schema.GroupVersionResource{Group: "tekton.dev", Resource: "taskruns"}
 
 // It will fetch the resource based on the api available and return v1beta1 form
 func Get(c *cli.Clients, trname string, opts metav1.GetOptions, ns string) (*v1beta1.TaskRun, error) {

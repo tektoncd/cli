@@ -17,7 +17,10 @@ package taskrun
 import (
 	"github.com/tektoncd/pipeline/pkg/apis/pipeline/v1alpha1"
 	"github.com/tektoncd/pipeline/pkg/apis/pipeline/v1beta1"
+	"k8s.io/apimachinery/pkg/runtime/schema"
 )
+
+var trGroupResource = schema.GroupVersionResource{Group: "tekton.dev", Resource: "taskruns"}
 
 type Run struct {
 	Name string

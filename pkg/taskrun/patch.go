@@ -22,7 +22,6 @@ import (
 	"github.com/tektoncd/pipeline/pkg/apis/pipeline/v1beta1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime"
-	"k8s.io/apimachinery/pkg/runtime/schema"
 )
 
 type patchStringValue struct {
@@ -39,7 +38,6 @@ func Patch(c *cli.Clients, trname string, opts metav1.PatchOptions, ns string) (
 	}}
 
 	data, _ := json.Marshal(payload)
-	trGroupResource := schema.GroupVersionResource{Group: "tekton.dev", Resource: "taskruns"}
 	unstructuredTR, err := actions.Patch(trGroupResource, c, trname, data, opts, ns)
 	if err != nil {
 		return nil, err
