@@ -89,7 +89,7 @@ func NameArg(args []string, p cli.Params) error {
 		return fmt.Errorf(errInvalidTask, name, ns)
 	}
 
-	if t.Spec.Resources != nil {
+	if t.Spec.Params != nil {
 		params.FilterParamsByType(t.Spec.Params)
 	}
 

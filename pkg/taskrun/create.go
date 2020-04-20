@@ -24,65 +24,38 @@ import (
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
 	"k8s.io/apimachinery/pkg/runtime"
-	"k8s.io/apimachinery/pkg/runtime/schema"
 )
 
 func Create(c *cli.Clients, tr *v1beta1.TaskRun, opts metav1.CreateOptions, ns string) (*v1beta1.TaskRun, error) {
-	trGroupResource := schema.GroupVersionResource{Group: "tekton.dev", Resource: "taskruns"}
 	trGVR, err := actions.GetGroupVersionResource(trGroupResource, c.Tekton.Discovery())
 	if err != nil {
 		return nil, err
 	}
 
-	var (
-		taskrun           *v1beta1.TaskRun
-		newUnstructuredTR *unstructured.Unstructured
-	)
-
 	if trGVR.Version == "v1alpha1" {
 		v1alpha1TaskRun := v1alpha1.TaskRun{}
-		v1alpha1TaskRun.Kind = "TaskRun"
-		v1alpha1TaskRun.APIVersion = "tekton.dev/v1alpha1"
-
 		err := v1alpha1TaskRun.ConvertDown(context.Background(), tr)
 		if err != nil {
 			return nil, err
 		}
-		unstructuredTR, err := convertToUnstructuredTaskRun(&v1alpha1TaskRun)
-		if err != nil {
-			return nil, err
-		}
-		newUnstructuredTR, err = actions.Create(*trGVR, c, unstructuredTR, ns, opts)
-		if err != nil {
-			return nil, err
-		}
-
-		if err := runtime.DefaultUnstructuredConverter.FromUnstructured(newUnstructuredTR.UnstructuredContent(), &taskrun); err != nil {
-			return nil, err
-		}
-
-		return taskrun, nil
+		return createUnstructured(&v1alpha1TaskRun, c, opts, ns)
 	}
 
-	unstructuredTR, err := convertToUnstructuredTaskRun(tr)
+	return createUnstructured(tr, c, opts, ns)
+}
+
+func createUnstructured(obj runtime.Object, c *cli.Clients, opts metav1.CreateOptions, ns string) (*v1beta1.TaskRun, error) {
+	object, _ := runtime.DefaultUnstructuredConverter.ToUnstructured(obj)
+	unstructuredTR := &unstructured.Unstructured{
+		Object: object,
+	}
+	newUnstructuredTR, err := actions.Create(trGroupResource, c, unstructuredTR, ns, opts)
 	if err != nil {
 		return nil, err
 	}
-	newUnstructuredTR, err = actions.Create(*trGVR, c, unstructuredTR, ns, opts)
-	if err != nil {
-		return nil, err
-	}
-
+	var taskrun *v1beta1.TaskRun
 	if err := runtime.DefaultUnstructuredConverter.FromUnstructured(newUnstructuredTR.UnstructuredContent(), &taskrun); err != nil {
 		return nil, err
 	}
-
 	return taskrun, nil
-}
-
-func convertToUnstructuredTaskRun(obj runtime.Object) (*unstructured.Unstructured, error) {
-	object, _ := runtime.DefaultUnstructuredConverter.ToUnstructured(obj)
-	return &unstructured.Unstructured{
-		Object: object,
-	}, nil
 }
