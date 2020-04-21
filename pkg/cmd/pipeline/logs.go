@@ -26,7 +26,7 @@ import (
 	"github.com/tektoncd/cli/pkg/pipeline"
 	phelper "github.com/tektoncd/cli/pkg/pipeline"
 	prhelper "github.com/tektoncd/cli/pkg/pipelinerun"
-	validate "github.com/tektoncd/cli/pkg/validate"
+	"github.com/tektoncd/cli/pkg/validate"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 )
 
@@ -197,7 +197,7 @@ func initLastRunName(opts *options.LogOptions) error {
 	if err != nil {
 		return err
 	}
-	lastrun, err := pipeline.DynamicLastRun(cs, opts.PipelineName, opts.Params.Namespace())
+	lastrun, err := pipeline.LastRun(cs, opts.PipelineName, opts.Params.Namespace())
 	if err != nil {
 		return err
 	}

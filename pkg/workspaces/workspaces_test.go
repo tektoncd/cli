@@ -18,14 +18,13 @@ import (
 	"testing"
 
 	"github.com/tektoncd/cli/pkg/test"
-	"github.com/tektoncd/pipeline/pkg/apis/pipeline/v1alpha1"
 	"github.com/tektoncd/pipeline/pkg/apis/pipeline/v1beta1"
 	corev1 "k8s.io/api/core/v1"
 	v1 "k8s.io/api/core/v1"
 )
 
 func TestMerge(t *testing.T) {
-	ws := []v1alpha1.WorkspaceBinding{
+	ws := []v1beta1.WorkspaceBinding{
 		{
 			Name: "foo",
 			ConfigMap: &corev1.ConfigMapVolumeSource{

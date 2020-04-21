@@ -49,7 +49,7 @@ func TestTask_GetAllTaskNames(t *testing.T) {
 		cb.UnstructuredT(tdata[0], version),
 	)
 	if err != nil {
-		t.Errorf("unable to create dynamic clinet: %v", err)
+		t.Errorf("unable to create dynamic client: %v", err)
 	}
 
 	tdata2 := []*v1alpha1.Task{
@@ -72,7 +72,7 @@ func TestTask_GetAllTaskNames(t *testing.T) {
 		cb.UnstructuredT(tdata2[1], version),
 	)
 	if err != nil {
-		t.Errorf("unable to create dynamic clinet: %v", err)
+		t.Errorf("unable to create dynamic client: %v", err)
 	}
 
 	p := &test.Params{Tekton: cs.Pipeline, Clock: clock, Kube: cs.Kube, Dynamic: dc}
@@ -131,7 +131,7 @@ func TestTask_List(t *testing.T) {
 		cb.UnstructuredT(tdata[0], version),
 	)
 	if err != nil {
-		t.Errorf("unable to create dynamic clinet: %v", err)
+		t.Errorf("unable to create dynamic client: %v", err)
 	}
 
 	tdata2 := []*v1alpha1.Task{
@@ -223,7 +223,7 @@ func TestTaskV1beta1_List(t *testing.T) {
 		cb.UnstructuredV1beta1T(tdata[0], version),
 	)
 	if err != nil {
-		t.Errorf("unable to create dynamic clinet: %v", err)
+		t.Errorf("unable to create dynamic client: %v", err)
 	}
 
 	tdata2 := []*v1beta1.Task{

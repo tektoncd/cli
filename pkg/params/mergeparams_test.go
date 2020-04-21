@@ -19,29 +19,29 @@ import (
 	"testing"
 
 	"github.com/tektoncd/cli/pkg/test"
-	"github.com/tektoncd/pipeline/pkg/apis/pipeline/v1alpha1"
+	"github.com/tektoncd/pipeline/pkg/apis/pipeline/v1beta1"
 )
 
 func Test_MergeParam_String(t *testing.T) {
-	params := []v1alpha1.Param{
+	params := []v1beta1.Param{
 		{
 			Name: "key1",
-			Value: v1alpha1.ArrayOrString{
-				Type:      v1alpha1.ParamTypeString,
+			Value: v1beta1.ArrayOrString{
+				Type:      v1beta1.ParamTypeString,
 				StringVal: "value1",
 			},
 		},
 		{
 			Name: "key2",
-			Value: v1alpha1.ArrayOrString{
-				Type:      v1alpha1.ParamTypeString,
+			Value: v1beta1.ArrayOrString{
+				Type:      v1beta1.ParamTypeString,
 				StringVal: "value2",
 			},
 		},
 	}
 
-	paramByType["key1"] = v1alpha1.ParamTypeString
-	paramByType["key2"] = v1alpha1.ParamTypeString
+	paramByType["key1"] = v1beta1.ParamTypeString
+	paramByType["key2"] = v1beta1.ParamTypeString
 	_, err := MergeParam(params, []string{"test"})
 	if err == nil {
 		t.Errorf("Expected error")
@@ -80,17 +80,17 @@ func Test_MergeParam_String(t *testing.T) {
 }
 
 func Test_MergeParam_Array(t *testing.T) {
-	params := []v1alpha1.Param{
+	params := []v1beta1.Param{
 		{
 			Name: "key1",
-			Value: v1alpha1.ArrayOrString{
-				Type:     v1alpha1.ParamTypeArray,
+			Value: v1beta1.ArrayOrString{
+				Type:     v1beta1.ParamTypeArray,
 				ArrayVal: []string{"value1", "value2"},
 			},
 		},
 	}
 
-	paramByType["key1"] = v1alpha1.ParamTypeArray
+	paramByType["key1"] = v1beta1.ParamTypeArray
 	_, err := MergeParam(params, []string{"test"})
 	if err == nil {
 		t.Errorf("Expected error")
@@ -128,18 +128,18 @@ func Test_MergeParam_Array(t *testing.T) {
 func Test_parseParam(t *testing.T) {
 	type args struct {
 		p  []string
-		pt []v1alpha1.ParamSpec
+		pt []v1beta1.ParamSpec
 	}
 	tests := []struct {
 		name    string
 		args    args
-		want    map[string]v1alpha1.Param
+		want    map[string]v1beta1.Param
 		wantErr bool
 	}{{
 		name: "Test_parseParam No Err",
 		args: args{
 			p: []string{"key1=value1", "key2=value2", "key3=value3,value4,value5", "key4=value4"},
-			pt: []v1alpha1.ParamSpec{
+			pt: []v1beta1.ParamSpec{
 				{
 					Name: "key1",
 					Type: "string",
@@ -158,24 +158,24 @@ func Test_parseParam(t *testing.T) {
 				},
 			},
 		},
-		want: map[string]v1alpha1.Param{
-			"key1": {Name: "key1", Value: v1alpha1.ArrayOrString{
-				Type:      v1alpha1.ParamTypeString,
+		want: map[string]v1beta1.Param{
+			"key1": {Name: "key1", Value: v1beta1.ArrayOrString{
+				Type:      v1beta1.ParamTypeString,
 				StringVal: "value1",
 			},
 			},
-			"key2": {Name: "key2", Value: v1alpha1.ArrayOrString{
-				Type:      v1alpha1.ParamTypeString,
+			"key2": {Name: "key2", Value: v1beta1.ArrayOrString{
+				Type:      v1beta1.ParamTypeString,
 				StringVal: "value2",
 			},
 			},
-			"key3": {Name: "key3", Value: v1alpha1.ArrayOrString{
-				Type:     v1alpha1.ParamTypeArray,
+			"key3": {Name: "key3", Value: v1beta1.ArrayOrString{
+				Type:     v1beta1.ParamTypeArray,
 				ArrayVal: []string{"value3", "value4", "value5"},
 			},
 			},
-			"key4": {Name: "key4", Value: v1alpha1.ArrayOrString{
-				Type:     v1alpha1.ParamTypeArray,
+			"key4": {Name: "key4", Value: v1beta1.ArrayOrString{
+				Type:     v1beta1.ParamTypeArray,
 				ArrayVal: []string{"value4"},
 			},
 			},

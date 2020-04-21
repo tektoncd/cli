@@ -35,7 +35,7 @@ func TestClusterTaskList_Empty(t *testing.T) {
 	tdc := testDynamic.Options{}
 	dynamic, err := tdc.Client()
 	if err != nil {
-		t.Errorf("unable to create dynamic clinet: %v", err)
+		t.Errorf("unable to create dynamic client: %v", err)
 	}
 
 	p := &test.Params{Tekton: cs.Pipeline, Dynamic: dynamic}
@@ -70,7 +70,7 @@ func TestClusterTaskListOnlyClusterTasksv1alpha1(t *testing.T) {
 		cb.UnstructuredCT(clustertasks[4], version),
 	)
 	if err != nil {
-		t.Errorf("unable to create dynamic clinet: %v", err)
+		t.Errorf("unable to create dynamic client: %v", err)
 	}
 
 	cs, _ := test.SeedTestData(t, pipelinetest.Data{ClusterTasks: clustertasks})
@@ -106,7 +106,7 @@ func TestClusterTaskListOnlyClusterTasksv1beta1(t *testing.T) {
 		cb.UnstructuredCT(clustertasks[4], version),
 	)
 	if err != nil {
-		t.Errorf("unable to create dynamic clinet: %v", err)
+		t.Errorf("unable to create dynamic client: %v", err)
 	}
 
 	cs, _ := test.SeedTestData(t, pipelinetest.Data{ClusterTasks: clustertasks})

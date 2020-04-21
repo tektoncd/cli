@@ -26,7 +26,6 @@ import (
 	"github.com/tektoncd/cli/pkg/formatted"
 	"github.com/tektoncd/cli/pkg/pipeline"
 	"github.com/tektoncd/cli/pkg/validate"
-	"github.com/tektoncd/pipeline/pkg/apis/pipeline/v1alpha1"
 	"github.com/tektoncd/pipeline/pkg/apis/pipeline/v1beta1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime/schema"
@@ -142,7 +141,7 @@ func printPipelineDetails(s *cli.Stream, p cli.Params, allnamespaces bool, nohea
 	}
 
 	funcMap := template.FuncMap{
-		"accessMap": func(prs pipelineruns, name string) *v1alpha1.PipelineRun {
+		"accessMap": func(prs pipelineruns, name string) *v1beta1.PipelineRun {
 			if pr, ok := prs[name]; ok {
 				return &pr
 			}
@@ -163,7 +162,7 @@ func printPipelineDetails(s *cli.Stream, p cli.Params, allnamespaces bool, nohea
 	return w.Flush()
 }
 
-type pipelineruns map[string]v1alpha1.PipelineRun
+type pipelineruns map[string]v1beta1.PipelineRun
 
 func listPipelineDetails(cs *cli.Clients, ns string) (*v1beta1.PipelineList, pipelineruns, error) {
 
@@ -179,7 +178,7 @@ func listPipelineDetails(cs *cli.Clients, ns string) (*v1beta1.PipelineList, pip
 
 	for _, p := range ps.Items {
 		// TODO: may be just the pipeline details can be print
-		lastRun, err := pipeline.LastRun(cs.Tekton, p.Name, ns)
+		lastRun, err := pipeline.LastRun(cs, p.Name, ns)
 		if err != nil {
 			continue
 		}

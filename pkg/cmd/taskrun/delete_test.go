@@ -91,7 +91,7 @@ func TestTaskRunDelete(t *testing.T) {
 			cb.UnstructuredTR(trdata[2], version),
 		)
 		if err != nil {
-			t.Errorf("unable to create dynamic clinet: %v", err)
+			t.Errorf("unable to create dynamic client: %v", err)
 		}
 		seeds = append(seeds, clients{cs, dc})
 	}
@@ -327,7 +327,7 @@ func TestTaskRunDelete_v1beta1(t *testing.T) {
 			cb.UnstructuredTR(trdata[2], version),
 		)
 		if err != nil {
-			t.Errorf("unable to create dynamic clinet: %v", err)
+			t.Errorf("unable to create dynamic client: %v", err)
 		}
 		seeds = append(seeds, clients{cs, dc})
 	}

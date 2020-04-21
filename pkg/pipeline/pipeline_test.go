@@ -54,7 +54,7 @@ func TestPipelinesList(t *testing.T) {
 		cb.UnstructuredP(pdata[0], versionA1),
 	)
 	if err != nil {
-		t.Errorf("unable to create dynamic clinet: %v", err)
+		t.Errorf("unable to create dynamic client: %v", err)
 	}
 
 	pdata2 := []*v1alpha1.Pipeline{
@@ -77,7 +77,7 @@ func TestPipelinesList(t *testing.T) {
 		cb.UnstructuredP(pdata2[1], versionA1),
 	)
 	if err != nil {
-		t.Errorf("unable to create dynamic clinet: %v", err)
+		t.Errorf("unable to create dynamic client: %v", err)
 	}
 
 	p := &test.Params{Tekton: cs.Pipeline, Clock: clock, Kube: cs.Kube, Dynamic: dc}
@@ -138,7 +138,7 @@ func TestPipelinesList_v1beta1(t *testing.T) {
 		cb.UnstructuredV1beta1P(pdata[0], versionB1),
 	)
 	if err != nil {
-		t.Errorf("unable to create dynamic clinet: %v", err)
+		t.Errorf("unable to create dynamic client: %v", err)
 	}
 
 	pdata2 := []*v1beta1.Pipeline{
@@ -165,7 +165,7 @@ func TestPipelinesList_v1beta1(t *testing.T) {
 		cb.UnstructuredV1beta1P(pdata2[1], versionB1),
 	)
 	if err != nil {
-		t.Errorf("unable to create dynamic clinet: %v", err)
+		t.Errorf("unable to create dynamic client: %v", err)
 	}
 
 	p := &test.Params{Tekton: cs.Pipeline, Clock: clock, Kube: cs.Kube, Dynamic: dc}
@@ -229,7 +229,7 @@ func TestPipelineGet(t *testing.T) {
 		cb.UnstructuredP(pdata[1], versionA1),
 	)
 	if err != nil {
-		t.Errorf("unable to create dynamic clinet: %v", err)
+		t.Errorf("unable to create dynamic client: %v", err)
 	}
 
 	p := &test.Params{Tekton: cs.Pipeline, Clock: clock, Kube: cs.Kube, Dynamic: dc}
@@ -272,7 +272,7 @@ func TestPipelineGet_v1beta1(t *testing.T) {
 		cb.UnstructuredV1beta1P(pdata[1], versionB1),
 	)
 	if err != nil {
-		t.Errorf("unable to create dynamic clinet: %v", err)
+		t.Errorf("unable to create dynamic client: %v", err)
 	}
 
 	p := &test.Params{Tekton: cs.Pipeline, Clock: clock, Kube: cs.Kube, Dynamic: dc}

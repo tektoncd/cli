@@ -148,7 +148,7 @@ func TestLog_run_found(t *testing.T) {
 		cb.UnstructuredPR(prdata[0], versionA1),
 	)
 	if err != nil {
-		t.Errorf("unable to create dynamic clinet: %v", err)
+		t.Errorf("unable to create dynamic client: %v", err)
 	}
 
 	p := &test.Params{Tekton: cs.Pipeline, Kube: cs.Kube, Dynamic: dc}
@@ -188,7 +188,7 @@ func TestLog_run_not_found(t *testing.T) {
 		cb.UnstructuredPR(pr[0], versionA1),
 	)
 	if err != nil {
-		t.Errorf("unable to create dynamic clinet: %v", err)
+		t.Errorf("unable to create dynamic client: %v", err)
 	}
 	p := &test.Params{Tekton: cs.Pipeline, Kube: cs.Kube, Dynamic: dc}
 
@@ -395,7 +395,7 @@ func TestPipelinerunLogs(t *testing.T) {
 				cb.UnstructuredTR(trs[1], versionA1),
 			)
 			if err != nil {
-				t.Errorf("unable to create dynamic clinet: %v", err)
+				t.Errorf("unable to create dynamic client: %v", err)
 			}
 			prlo := logOpts(prName, ns, cs, dc, fake.Streamer(fakeLogs), s.allSteps, false, s.tasks...)
 			output, _ := fetchLogs(prlo)
@@ -511,7 +511,7 @@ func TestPipelinerunLog_completed_taskrun_only(t *testing.T) {
 		cb.UnstructuredPR(prdata[0], versionA1),
 	)
 	if err != nil {
-		t.Errorf("unable to create dynamic clinet: %v", err)
+		t.Errorf("unable to create dynamic client: %v", err)
 	}
 
 	tdata2 := []*v1alpha1.Task{
@@ -585,7 +585,7 @@ func TestPipelinerunLog_completed_taskrun_only(t *testing.T) {
 		cb.UnstructuredPR(prdata2[0], versionA1),
 	)
 	if err != nil {
-		t.Errorf("unable to create dynamic clinet: %v", err)
+		t.Errorf("unable to create dynamic client: %v", err)
 	}
 
 	for _, tt := range []struct {
@@ -750,7 +750,7 @@ func TestPipelinerunLog_follow_mode(t *testing.T) {
 		cb.UnstructuredP(pps[0], versionA1),
 	)
 	if err != nil {
-		t.Errorf("unable to create dynamic clinet: %v", err)
+		t.Errorf("unable to create dynamic client: %v", err)
 	}
 	prlo := logOpts(prName, ns, cs, dc, fake.Streamer(fakeLogStream), false, true)
 	output, _ := fetchLogs(prlo)
@@ -818,7 +818,7 @@ func TestLogs_error_log(t *testing.T) {
 		cb.UnstructuredPR(prs[0], versionA1),
 	)
 	if err != nil {
-		t.Errorf("unable to create dynamic clinet: %v", err)
+		t.Errorf("unable to create dynamic client: %v", err)
 	}
 	prlo := logOpts(prName, ns, cs, dc, fake.Streamer([]fake.Log{}), false, false)
 	output, err := fetchLogs(prlo)
@@ -872,7 +872,7 @@ func TestLogs_nologs(t *testing.T) {
 		cb.UnstructuredPR(prs[0], versionA1),
 	)
 	if err != nil {
-		t.Errorf("unable to create dynamic clinet: %v", err)
+		t.Errorf("unable to create dynamic client: %v", err)
 	}
 	prlo := logOpts(prName, ns, cs, dc, fake.Streamer([]fake.Log{}), false, false)
 	output, err := fetchLogs(prlo)
@@ -928,7 +928,7 @@ func TestLog_run_failed_with_and_without_follow(t *testing.T) {
 		cb.UnstructuredPR(prs[0], versionA1),
 	)
 	if err != nil {
-		t.Errorf("unable to create dynamic clinet: %v", err)
+		t.Errorf("unable to create dynamic client: %v", err)
 	}
 	// follow mode disabled
 	prlo := logOpts(prName, ns, cs, dc, fake.Streamer([]fake.Log{}), false, false)
@@ -1015,7 +1015,7 @@ func TestLog_pipelinerun_still_running(t *testing.T) {
 		cb.UnstructuredPR(initialPRs[0], versionA1),
 	)
 	if err != nil {
-		t.Errorf("unable to create dynamic clinet: %v", err)
+		t.Errorf("unable to create dynamic client: %v", err)
 	}
 	prlo := logOpts(prName, ns, cs, dc, fake.Streamer([]fake.Log{}), false, false)
 
@@ -1075,7 +1075,7 @@ func TestLog_pipelinerun_status_done(t *testing.T) {
 		cb.UnstructuredPR(prs[0], versionA1),
 	)
 	if err != nil {
-		t.Errorf("unable to create dynamic clinet: %v", err)
+		t.Errorf("unable to create dynamic client: %v", err)
 	}
 	prlo := logOpts(prName, ns, cs, dc, fake.Streamer([]fake.Log{}), false, false)
 
@@ -1160,7 +1160,7 @@ func TestLog_pipelinerun_last(t *testing.T) {
 		cb.UnstructuredPR(pipelineruns[1], version),
 	)
 	if err != nil {
-		t.Errorf("unable to create dynamic clinet: %v", err)
+		t.Errorf("unable to create dynamic client: %v", err)
 	}
 	p := test.Params{
 		Kube:    cs.Kube,
@@ -1226,7 +1226,7 @@ func TestLog_pipelinerun_only_one(t *testing.T) {
 		cb.UnstructuredPR(pipelineruns[0], version),
 	)
 	if err != nil {
-		t.Errorf("unable to create dynamic clinet: %v", err)
+		t.Errorf("unable to create dynamic client: %v", err)
 	}
 
 	p := test.Params{
@@ -1362,7 +1362,7 @@ func TestPipelinerunLog_completed_taskrun_only_v1bea1(t *testing.T) {
 		cb.UnstructuredPR(prdata[0], versionB1),
 	)
 	if err != nil {
-		t.Errorf("unable to create dynamic clinet: %v", err)
+		t.Errorf("unable to create dynamic client: %v", err)
 	}
 
 	tdata2 := []*v1alpha1.Task{
@@ -1436,7 +1436,7 @@ func TestPipelinerunLog_completed_taskrun_only_v1bea1(t *testing.T) {
 		cb.UnstructuredPR(prdata2[0], versionB1),
 	)
 	if err != nil {
-		t.Errorf("unable to create dynamic clinet: %v", err)
+		t.Errorf("unable to create dynamic client: %v", err)
 	}
 
 	for _, tt := range []struct {
@@ -1601,7 +1601,7 @@ func TestPipelinerunLog_follow_mode_v1beta1(t *testing.T) {
 		cb.UnstructuredP(pps[0], versionB1),
 	)
 	if err != nil {
-		t.Errorf("unable to create dynamic clinet: %v", err)
+		t.Errorf("unable to create dynamic client: %v", err)
 	}
 	prlo := logOpts(prName, ns, cs, dc, fake.Streamer(fakeLogStream), false, true)
 	output, _ := fetchLogs(prlo)
@@ -1669,7 +1669,7 @@ func TestLogs_error_log_v1beta1(t *testing.T) {
 		cb.UnstructuredPR(prs[0], versionB1),
 	)
 	if err != nil {
-		t.Errorf("unable to create dynamic clinet: %v", err)
+		t.Errorf("unable to create dynamic client: %v", err)
 	}
 	prlo := logOpts(prName, ns, cs, dc, fake.Streamer([]fake.Log{}), false, false)
 	output, err := fetchLogs(prlo)
@@ -1723,7 +1723,7 @@ func TestLogs_nologs_v1beta1(t *testing.T) {
 		cb.UnstructuredPR(prs[0], versionB1),
 	)
 	if err != nil {
-		t.Errorf("unable to create dynamic clinet: %v", err)
+		t.Errorf("unable to create dynamic client: %v", err)
 	}
 	prlo := logOpts(prName, ns, cs, dc, fake.Streamer([]fake.Log{}), false, false)
 	output, err := fetchLogs(prlo)
@@ -1779,7 +1779,7 @@ func TestLog_run_failed_with_and_without_follow_v1beta1(t *testing.T) {
 		cb.UnstructuredPR(prs[0], versionB1),
 	)
 	if err != nil {
-		t.Errorf("unable to create dynamic clinet: %v", err)
+		t.Errorf("unable to create dynamic client: %v", err)
 	}
 	// follow mode disabled
 	prlo := logOpts(prName, ns, cs, dc, fake.Streamer([]fake.Log{}), false, false)
@@ -1866,7 +1866,7 @@ func TestLog_pipelinerun_still_running_v1beta1(t *testing.T) {
 		cb.UnstructuredPR(initialPRs[0], versionB1),
 	)
 	if err != nil {
-		t.Errorf("unable to create dynamic clinet: %v", err)
+		t.Errorf("unable to create dynamic client: %v", err)
 	}
 	prlo := logOpts(prName, ns, cs, dc, fake.Streamer([]fake.Log{}), false, false)
 
@@ -1926,7 +1926,7 @@ func TestLog_pipelinerun_status_done_v1beta1(t *testing.T) {
 		cb.UnstructuredPR(prs[0], versionB1),
 	)
 	if err != nil {
-		t.Errorf("unable to create dynamic clinet: %v", err)
+		t.Errorf("unable to create dynamic client: %v", err)
 	}
 	prlo := logOpts(prName, ns, cs, dc, fake.Streamer([]fake.Log{}), false, false)
 
@@ -2010,7 +2010,7 @@ func TestLog_pipelinerun_last_v1beta1(t *testing.T) {
 		cb.UnstructuredPR(pipelineruns[1], versionB1),
 	)
 	if err != nil {
-		t.Errorf("unable to create dynamic clinet: %v", err)
+		t.Errorf("unable to create dynamic client: %v", err)
 	}
 	p := test.Params{
 		Kube:    cs.Kube,
@@ -2075,7 +2075,7 @@ func TestLog_pipelinerun_only_one_v1beta1(t *testing.T) {
 		cb.UnstructuredPR(pipelineruns[0], versionB1),
 	)
 	if err != nil {
-		t.Errorf("unable to create dynamic clinet: %v", err)
+		t.Errorf("unable to create dynamic client: %v", err)
 	}
 
 	p := test.Params{

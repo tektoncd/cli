@@ -20,14 +20,14 @@ import (
 	"sort"
 	"strings"
 
-	"github.com/tektoncd/pipeline/pkg/apis/pipeline/v1alpha1"
+	"github.com/tektoncd/pipeline/pkg/apis/pipeline/v1beta1"
 )
 
 const invalidParam = "invalid input format for param parameter: "
 
-var paramByType = map[string]v1alpha1.ParamType{}
+var paramByType = map[string]v1beta1.ParamType{}
 
-func MergeParam(p []v1alpha1.Param, optPar []string) ([]v1alpha1.Param, error) {
+func MergeParam(p []v1beta1.Param, optPar []string) ([]v1beta1.Param, error) {
 	params, err := parseParam(optPar)
 	if err != nil {
 		return nil, err
@@ -51,8 +51,8 @@ func MergeParam(p []v1alpha1.Param, optPar []string) ([]v1alpha1.Param, error) {
 	return p, nil
 }
 
-func parseParam(p []string) (map[string]v1alpha1.Param, error) {
-	params := map[string]v1alpha1.Param{}
+func parseParam(p []string) (map[string]v1beta1.Param, error) {
+	params := map[string]v1beta1.Param{}
 	for _, v := range p {
 		r := strings.SplitN(v, "=", 2)
 		if len(r) != 2 {
@@ -63,9 +63,9 @@ func parseParam(p []string) (map[string]v1alpha1.Param, error) {
 			return nil, fmt.Errorf("param '%s' not present in spec", r[0])
 		}
 
-		param := v1alpha1.Param{
+		param := v1beta1.Param{
 			Name: r[0],
-			Value: v1alpha1.ArrayOrString{
+			Value: v1beta1.ArrayOrString{
 				Type: paramByType[r[0]],
 			},
 		}
@@ -82,12 +82,12 @@ func parseParam(p []string) (map[string]v1alpha1.Param, error) {
 	return params, nil
 }
 
-func FilterParamsByType(params []v1alpha1.ParamSpec) {
+func FilterParamsByType(params []v1beta1.ParamSpec) {
 	for _, p := range params {
 		if p.Type == "string" {
-			paramByType[p.Name] = v1alpha1.ParamTypeString
+			paramByType[p.Name] = v1beta1.ParamTypeString
 			continue
 		}
-		paramByType[p.Name] = v1alpha1.ParamTypeArray
+		paramByType[p.Name] = v1beta1.ParamTypeArray
 	}
 }

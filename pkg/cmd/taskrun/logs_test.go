@@ -84,7 +84,7 @@ func TestLog_no_taskrun_arg(t *testing.T) {
 	tdc := testDynamic.Options{}
 	dc1, err := tdc.Client()
 	if err != nil {
-		t.Errorf("unable to create dynamic clinet: %v", err)
+		t.Errorf("unable to create dynamic client: %v", err)
 	}
 	task2 := []*v1alpha1.Task{
 		tb.Task("task", "ns", cb.TaskCreationTime(clockwork.NewFakeClock().Now())),
@@ -134,7 +134,7 @@ func TestLog_no_taskrun_arg(t *testing.T) {
 		cb.UnstructuredTR(taskrun2[0], "v1alpha1"),
 	)
 	if err != nil {
-		t.Errorf("unable to create dynamic clinet: %v", err)
+		t.Errorf("unable to create dynamic client: %v", err)
 	}
 
 	testParams := []struct {
@@ -191,7 +191,7 @@ func TestLog_missing_taskrun(t *testing.T) {
 		cb.UnstructuredTR(tr[0], "v1alpha1"),
 	)
 	if err != nil {
-		t.Errorf("unable to create dynamic clinet: %v", err)
+		t.Errorf("unable to create dynamic client: %v", err)
 	}
 	cs, _ := test.SeedTestData(t, pipelinetest.Data{TaskRuns: tr, Namespaces: nsList})
 	cs.Pipeline.Resources = cb.APIResourceList("v1alpha1", []string{"taskrun"})
@@ -316,7 +316,7 @@ func TestLog_taskrun_logs(t *testing.T) {
 		cb.UnstructuredTR(trs[0], versionA1),
 	)
 	if err != nil {
-		t.Errorf("unable to create dynamic clinet: %v", err)
+		t.Errorf("unable to create dynamic client: %v", err)
 	}
 	trlo := logOpts(trName, ns, cs, fake.Streamer(logs), false, false, []string{}, dc)
 	output, _ := fetchLogs(trlo)
@@ -399,7 +399,7 @@ func TestLog_taskrun_logs_v1beta1(t *testing.T) {
 		cb.UnstructuredTR(trs[0], versionB1),
 	)
 	if err != nil {
-		t.Errorf("unable to create dynamic clinet: %v", err)
+		t.Errorf("unable to create dynamic client: %v", err)
 	}
 	trlo := logOpts(trName, ns, cs, fake.Streamer(logs), false, false, []string{}, dc)
 	output, _ := fetchLogs(trlo)
@@ -465,7 +465,7 @@ func TestLog_taskrun_logs_no_pod_name(t *testing.T) {
 		cb.UnstructuredTR(trs[0], versionA1),
 	)
 	if err != nil {
-		t.Errorf("unable to create dynamic clinet: %v", err)
+		t.Errorf("unable to create dynamic client: %v", err)
 	}
 	trlo := logOpts(trName, ns, cs, fake.Streamer(logs), false, false, []string{}, dc)
 	_, err = fetchLogs(trlo)
@@ -530,7 +530,7 @@ func TestLog_taskrun_logs_no_pod_name_v1beta1(t *testing.T) {
 		cb.UnstructuredTR(trs[0], versionB1),
 	)
 	if err != nil {
-		t.Errorf("unable to create dynamic clinet: %v", err)
+		t.Errorf("unable to create dynamic client: %v", err)
 	}
 	trlo := logOpts(trName, ns, cs, fake.Streamer(logs), false, false, []string{}, dc)
 	_, err = fetchLogs(trlo)
@@ -622,7 +622,7 @@ func TestLog_taskrun_all_steps(t *testing.T) {
 		cb.UnstructuredTR(trs[0], versionA1),
 	)
 	if err != nil {
-		t.Errorf("unable to create dynamic clinet: %v", err)
+		t.Errorf("unable to create dynamic client: %v", err)
 	}
 	trl := logOpts(trName, ns, cs, fake.Streamer(logs), true, false, []string{}, dc)
 	output, _ := fetchLogs(trl)
@@ -717,7 +717,7 @@ func TestLog_taskrun_all_steps_v1beta1(t *testing.T) {
 		cb.UnstructuredTR(trs[0], versionB1),
 	)
 	if err != nil {
-		t.Errorf("unable to create dynamic clinet: %v", err)
+		t.Errorf("unable to create dynamic client: %v", err)
 	}
 	trl := logOpts(trName, ns, cs, fake.Streamer(logs), true, false, []string{}, dc)
 	output, _ := fetchLogs(trl)
@@ -810,7 +810,7 @@ func TestLog_taskrun_given_steps(t *testing.T) {
 	dc, err := tdc.Client(
 		cb.UnstructuredTR(trs[0], versionA1))
 	if err != nil {
-		t.Errorf("unable to create dynamic clinet: %v", err)
+		t.Errorf("unable to create dynamic client: %v", err)
 	}
 
 	trl := logOpts(trName, ns, cs, fake.Streamer(logs), false, false, []string{trStep1Name}, dc)
@@ -901,7 +901,7 @@ func TestLog_taskrun_given_steps_v1beta1(t *testing.T) {
 	dc, err := tdc.Client(
 		cb.UnstructuredTR(trs[0], versionB1))
 	if err != nil {
-		t.Errorf("unable to create dynamic clinet: %v", err)
+		t.Errorf("unable to create dynamic client: %v", err)
 	}
 
 	trl := logOpts(trName, ns, cs, fake.Streamer(logs), false, false, []string{trStep1Name}, dc)
@@ -993,7 +993,7 @@ func TestLog_taskrun_follow_mode(t *testing.T) {
 		cb.UnstructuredTR(trs[0], versionA1),
 	)
 	if err != nil {
-		t.Errorf("unable to create dynamic clinet: %v", err)
+		t.Errorf("unable to create dynamic client: %v", err)
 	}
 
 	trlo := logOpts(trName, ns, cs, fake.Streamer(logs), false, true, []string{}, dc)
@@ -1086,7 +1086,7 @@ func TestLog_taskrun_follow_mode_v1beta1(t *testing.T) {
 		cb.UnstructuredTR(trs[0], versionB1),
 	)
 	if err != nil {
-		t.Errorf("unable to create dynamic clinet: %v", err)
+		t.Errorf("unable to create dynamic client: %v", err)
 	}
 
 	trlo := logOpts(trName, ns, cs, fake.Streamer(logs), false, true, []string{}, dc)
@@ -1175,7 +1175,7 @@ func TestLog_taskrun_last(t *testing.T) {
 		cb.UnstructuredTR(taskruns[1], versionA1),
 	)
 	if err != nil {
-		t.Errorf("unable to create dynamic clinet: %v", err)
+		t.Errorf("unable to create dynamic client: %v", err)
 	}
 	cs.Pipeline.Resources = cb.APIResourceList(versionA1, []string{"taskrun"})
 	p := test.Params{
@@ -1271,7 +1271,7 @@ func TestLog_taskrun_last_v1beta1(t *testing.T) {
 		cb.UnstructuredTR(taskruns[1], versionB1),
 	)
 	if err != nil {
-		t.Errorf("unable to create dynamic clinet: %v", err)
+		t.Errorf("unable to create dynamic client: %v", err)
 	}
 	//cs.Pipeline.Resources = cb.APIResourceList("v1alpha1", []string{"taskrun"})
 	p := test.Params{
@@ -1369,7 +1369,7 @@ func TestLog_taskrun_follow_mode_no_pod_name(t *testing.T) {
 		cb.UnstructuredTR(trs[0], versionA1),
 	)
 	if err != nil {
-		t.Errorf("unable to create dynamic clinet: %v", err)
+		t.Errorf("unable to create dynamic client: %v", err)
 	}
 
 	trlo := logOpts(trName, ns, cs, fake.Streamer(logs), false, true, []string{}, dc)
@@ -1460,7 +1460,7 @@ func TestLog_taskrun_follow_mode_no_pod_name_v1beta1(t *testing.T) {
 		cb.UnstructuredTR(trs[0], versionB1),
 	)
 	if err != nil {
-		t.Errorf("unable to create dynamic clinet: %v", err)
+		t.Errorf("unable to create dynamic client: %v", err)
 	}
 
 	trlo := logOpts(trName, ns, cs, fake.Streamer(logs), false, true, []string{}, dc)
@@ -1552,7 +1552,7 @@ func TestLog_taskrun_follow_mode_update_pod_name(t *testing.T) {
 		cb.UnstructuredTR(trs[0], versionA1),
 	)
 	if err != nil {
-		t.Errorf("unable to create dynamic clinet: %v", err)
+		t.Errorf("unable to create dynamic client: %v", err)
 	}
 
 	trlo := logOpts(trName, ns, cs, fake.Streamer(logs), false, true, []string{}, dc)
@@ -1654,7 +1654,7 @@ func TestLog_taskrun_follow_mode_update_pod_name_v1beta1(t *testing.T) {
 		cb.UnstructuredTR(trs[0], versionB1),
 	)
 	if err != nil {
-		t.Errorf("unable to create dynamic clinet: %v", err)
+		t.Errorf("unable to create dynamic client: %v", err)
 	}
 
 	trlo := logOpts(trName, ns, cs, fake.Streamer(logs), false, true, []string{}, dc)
@@ -1756,7 +1756,7 @@ func TestLog_taskrun_follow_mode_update_timeout(t *testing.T) {
 		cb.UnstructuredTR(trs[0], versionA1),
 	)
 	if err != nil {
-		t.Errorf("unable to create dynamic clinet: %v", err)
+		t.Errorf("unable to create dynamic client: %v", err)
 	}
 
 	trlo := logOpts(trName, ns, cs, fake.Streamer(logs), false, true, []string{}, dc)
@@ -1856,7 +1856,7 @@ func TestLog_taskrun_follow_mode_update_timeout_v1beta1(t *testing.T) {
 		cb.UnstructuredTR(trs[0], versionB1),
 	)
 	if err != nil {
-		t.Errorf("unable to create dynamic clinet: %v", err)
+		t.Errorf("unable to create dynamic client: %v", err)
 	}
 
 	trlo := logOpts(trName, ns, cs, fake.Streamer(logs), false, true, []string{}, dc)
@@ -1952,7 +1952,7 @@ func TestLog_taskrun_follow_mode_no_output_provided(t *testing.T) {
 		cb.UnstructuredTR(trs[0], versionA1),
 	)
 	if err != nil {
-		t.Errorf("unable to create dynamic clinet: %v", err)
+		t.Errorf("unable to create dynamic client: %v", err)
 	}
 
 	trlo := logOpts(trName, ns, cs, fake.Streamer(logs), false, true, []string{}, dc)
@@ -2040,7 +2040,7 @@ func TestLog_taskrun_follow_mode_no_output_provided_v1beta1(t *testing.T) {
 		cb.UnstructuredTR(trs[0], versionB1),
 	)
 	if err != nil {
-		t.Errorf("unable to create dynamic clinet: %v", err)
+		t.Errorf("unable to create dynamic client: %v", err)
 	}
 
 	trlo := logOpts(trName, ns, cs, fake.Streamer(logs), false, true, []string{}, dc)

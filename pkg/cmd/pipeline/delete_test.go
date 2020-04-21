@@ -108,7 +108,7 @@ func TestPipelineDelete(t *testing.T) {
 			cb.UnstructuredPR(prdata[1], version),
 		)
 		if err != nil {
-			t.Errorf("unable to create dynamic clinet: %v", err)
+			t.Errorf("unable to create dynamic client: %v", err)
 		}
 
 		seeds = append(seeds, clients{cs, dc})
@@ -359,7 +359,7 @@ func TestPipelineDelete_v1beta1(t *testing.T) {
 			cb.UnstructuredPR(prdata[1], version),
 		)
 		if err != nil {
-			t.Errorf("unable to create dynamic clinet: %v", err)
+			t.Errorf("unable to create dynamic client: %v", err)
 		}
 
 		seeds = append(seeds, clients{cs, dc})
