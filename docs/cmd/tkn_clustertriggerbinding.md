@@ -2,7 +2,7 @@
 
 Manage clustertriggerbindings
 
-***Aliases**: ctb,clustertriggerbinding*
+***Aliases**: ctb,clustertriggerbindings*
 
 ### Synopsis
 
