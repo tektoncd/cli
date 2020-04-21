@@ -145,20 +145,6 @@ func TestDeleteOptions(t *testing.T) {
 			wantError:      true,
 			want:           "must provide Condition name(s) or use --all flag with delete",
 		},
-		{
-			name:           "Error when using --keep without --all",
-			opt:            &DeleteOptions{Keep: 7, DeleteAllNs: false, DeleteAll: false},
-			resourcesNames: []string{},
-			wantError:      true,
-			want:           "must use --all flag with --keep",
-		},
-		{
-			name:           "Error --keep < 0",
-			opt:            &DeleteOptions{Keep: -1, DeleteAllNs: true},
-			resourcesNames: []string{},
-			wantError:      true,
-			want:           "keep option should not be lower than 0",
-		},
 	}
 
 	for _, tp := range testParams {

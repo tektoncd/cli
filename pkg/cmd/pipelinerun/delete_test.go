@@ -236,7 +236,7 @@ func TestPipelineRunDelete(t *testing.T) {
 		},
 		{
 			name:        "Delete all keeping 2",
-			command:     []string{"delete", "--all", "-f", "--keep", "2", "-n", "ns"},
+			command:     []string{"delete", "-f", "--keep", "2", "-n", "ns"},
 			dynamic:     seeds[4].dynamicClient,
 			input:       seeds[4].pipelineClient,
 			inputStream: nil,
@@ -245,12 +245,21 @@ func TestPipelineRunDelete(t *testing.T) {
 		},
 		{
 			name:        "Keep -1 is a no go",
-			command:     []string{"delete", "--all", "-f", "--keep", "-1", "-n", "ns"},
+			command:     []string{"delete", "-f", "--keep", "-1", "-n", "ns"},
 			dynamic:     seeds[4].dynamicClient,
 			input:       seeds[4].pipelineClient,
 			inputStream: nil,
 			wantError:   true,
 			want:        "keep option should not be lower than 0",
+		},
+		{
+			name:        "Delete all keeping 1 with --all flag",
+			command:     []string{"delete", "-f", "--all", "--keep", "1", "-n", "ns"},
+			dynamic:     seeds[4].dynamicClient,
+			input:       seeds[4].pipelineClient,
+			inputStream: nil,
+			wantError:   false,
+			want:        "All but 1 PipelineRuns deleted in namespace \"ns\"\n",
 		},
 		{
 			name:        "Error from using pipelinerun name with --all",
