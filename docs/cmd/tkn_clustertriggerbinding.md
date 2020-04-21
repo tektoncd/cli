@@ -22,5 +22,6 @@ Manage clustertriggerbindings
 
 * [tkn](tkn.md)	 - CLI for tekton pipelines
 * [tkn clustertriggerbinding delete](tkn_clustertriggerbinding_delete.md)	 - Delete clustertriggerbindings
+* [tkn clustertriggerbinding describe](tkn_clustertriggerbinding_describe.md)	 - Describes a clustertriggerbinding
 * [tkn clustertriggerbinding list](tkn_clustertriggerbinding_list.md)	 - Lists clustertriggerbindings in a namespace
 
