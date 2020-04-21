@@ -16,6 +16,7 @@ package flags
 
 import (
 	"os"
+	"runtime"
 
 	"github.com/spf13/cobra"
 	"github.com/spf13/pflag"
@@ -96,6 +97,10 @@ func InitParams(p cli.Params, cmd *cobra.Command) error {
 
 	// Make sure we set as Nocolour if we don't have a terminal (ie redirection)
 	if !terminal.IsTerminal(int(os.Stdout.Fd())) {
+		p.SetNoColour(true)
+	}
+
+	if runtime.GOOS == "windows" {
 		p.SetNoColour(true)
 	}
 
