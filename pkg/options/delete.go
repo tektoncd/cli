@@ -35,10 +35,6 @@ type DeleteOptions struct {
 }
 
 func (o *DeleteOptions) CheckOptions(s *cli.Stream, resourceNames []string, ns string) error {
-	if o.Keep > 0 && !(o.DeleteAllNs || o.DeleteAll) {
-		return fmt.Errorf("must use --all flag with --keep")
-	}
-
 	// make sure no resource names are provided when using --all flag
 	if len(resourceNames) > 0 && (o.DeleteAllNs || o.DeleteAll) || o.DeleteAllNs && o.DeleteRelated {
 		return fmt.Errorf("--all flag should not have any arguments or flags specified with it")
@@ -54,10 +50,6 @@ func (o *DeleteOptions) CheckOptions(s *cli.Stream, resourceNames []string, ns s
 	// in non PipelineRun or TaskRun deletions
 	if len(resourceNames) == 0 && o.ParentResource == "" && o.ParentResourceName == "" && !o.DeleteAllNs && !o.DeleteAll {
 		return fmt.Errorf("must provide %s name(s) or use --all flag with delete", o.Resource)
-	}
-
-	if o.Keep < 0 {
-		return fmt.Errorf("keep option should not be lower than 0")
 	}
 
 	if o.ForceDelete {
