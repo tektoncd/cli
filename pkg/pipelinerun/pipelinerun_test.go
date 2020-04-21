@@ -34,7 +34,7 @@ import (
 	duckv1beta1 "knative.dev/pkg/apis/duck/v1beta1"
 )
 
-func TestPipelinesList_with_single_run(t *testing.T) {
+func TestPipelineRunsList_with_single_run(t *testing.T) {
 	version := "v1alpha1"
 	clock := clockwork.NewFakeClock()
 	pr1Started := clock.Now().Add(10 * time.Second)
@@ -79,7 +79,7 @@ func TestPipelinesList_with_single_run(t *testing.T) {
 		cb.UnstructuredPR(prdata[2], version),
 	)
 	if err != nil {
-		t.Errorf("unable to create dynamic clinet: %v", err)
+		t.Errorf("unable to create dynamic client: %v", err)
 	}
 
 	p := &test.Params{Tekton: cs.Pipeline, Clock: clock, Kube: cs.Kube, Dynamic: dc}
@@ -130,7 +130,7 @@ func TestPipelinesList_with_single_run(t *testing.T) {
 	}
 }
 
-func TestPipelinesV1beta1List_with_single_run(t *testing.T) {
+func TestPipelineRunsV1beta1List_with_single_run(t *testing.T) {
 	version := "v1beta1"
 	clock := clockwork.NewFakeClock()
 	pr1Started := clock.Now().Add(10 * time.Second)
@@ -226,7 +226,7 @@ func TestPipelinesV1beta1List_with_single_run(t *testing.T) {
 		cb.UnstructuredV1beta1PR(prdata[2], version),
 	)
 	if err != nil {
-		t.Errorf("unable to create dynamic clinet: %v", err)
+		t.Errorf("unable to create dynamic client: %v", err)
 	}
 
 	p := &test.Params{Tekton: cs.Pipeline, Clock: clock, Kube: cs.Kube, Dynamic: dc}
@@ -319,7 +319,7 @@ func TestPipelineRunGet(t *testing.T) {
 		cb.UnstructuredPR(prdata[1], version),
 	)
 	if err != nil {
-		t.Errorf("unable to create dynamic clinet: %v", err)
+		t.Errorf("unable to create dynamic client: %v", err)
 	}
 
 	p := &test.Params{Tekton: cs.Pipeline, Clock: clock, Kube: cs.Kube, Dynamic: dc}
@@ -335,7 +335,7 @@ func TestPipelineRunGet(t *testing.T) {
 	test.AssertOutput(t, "pipelinerun1", got.Name)
 }
 
-func TestPipelineGet_v1beta1(t *testing.T) {
+func TestPipelineRunGet_v1beta1(t *testing.T) {
 	version := "v1beta1"
 	clock := clockwork.NewFakeClock()
 	pr1Started := clock.Now().Add(10 * time.Second)
@@ -405,7 +405,7 @@ func TestPipelineGet_v1beta1(t *testing.T) {
 		cb.UnstructuredV1beta1PR(prdata[1], version),
 	)
 	if err != nil {
-		t.Errorf("unable to create dynamic clinet: %v", err)
+		t.Errorf("unable to create dynamic client: %v", err)
 	}
 
 	p := &test.Params{Tekton: cs.Pipeline, Clock: clock, Kube: cs.Kube, Dynamic: dc}
@@ -415,6 +415,78 @@ func TestPipelineGet_v1beta1(t *testing.T) {
 	}
 
 	got, err := Get(c, "pipelinerun1", metav1.GetOptions{}, "ns")
+	if err != nil {
+		t.Errorf("unexpected Error")
+	}
+	test.AssertOutput(t, "pipelinerun1", got.Name)
+}
+
+func TestPipelineRunCreate(t *testing.T) {
+	version := "v1alpha1"
+	prdata := v1beta1.PipelineRun{
+		ObjectMeta: metav1.ObjectMeta{
+			Name:      "pipelinerun1",
+			Namespace: "ns",
+			Labels:    map[string]string{"tekton.dev/pipeline": "pipeline"},
+		},
+		Spec: v1beta1.PipelineRunSpec{
+			PipelineRef: &v1beta1.PipelineRef{
+				Name: "pipeline",
+			},
+		},
+	}
+
+	cs, _ := test.SeedTestData(t, pipelinetest.Data{})
+	cs.Pipeline.Resources = cb.APIResourceList(version, []string{"pipelinerun"})
+	tdc := testDynamic.Options{}
+	dc, err := tdc.Client()
+	if err != nil {
+		t.Errorf("unable to create dynamic client: %v", err)
+	}
+
+	p := &test.Params{Tekton: cs.Pipeline, Kube: cs.Kube, Dynamic: dc}
+	c, err := p.Clients()
+	if err != nil {
+		t.Errorf("unable to create client: %v", err)
+	}
+
+	got, err := Create(c, &prdata, metav1.CreateOptions{}, "ns")
+	if err != nil {
+		t.Errorf("unexpected Error")
+	}
+	test.AssertOutput(t, "pipelinerun1", got.Name)
+}
+
+func TestPipelineRunCreate_v1beta1(t *testing.T) {
+	version := "v1beta1"
+	prdata := v1beta1.PipelineRun{
+		ObjectMeta: metav1.ObjectMeta{
+			Name:      "pipelinerun1",
+			Namespace: "ns",
+			Labels:    map[string]string{"tekton.dev/pipeline": "pipeline"},
+		},
+		Spec: v1beta1.PipelineRunSpec{
+			PipelineRef: &v1beta1.PipelineRef{
+				Name: "pipeline",
+			},
+		},
+	}
+
+	cs, _ := test.SeedV1beta1TestData(t, pipelinev1beta1test.Data{})
+	cs.Pipeline.Resources = cb.APIResourceList(version, []string{"pipelinerun"})
+	tdc := testDynamic.Options{}
+	dc, err := tdc.Client()
+	if err != nil {
+		t.Errorf("unable to create dynamic client: %v", err)
+	}
+
+	p := &test.Params{Tekton: cs.Pipeline, Kube: cs.Kube, Dynamic: dc}
+	c, err := p.Clients()
+	if err != nil {
+		t.Errorf("unable to create client: %v", err)
+	}
+
+	got, err := Create(c, &prdata, metav1.CreateOptions{}, "ns")
 	if err != nil {
 		t.Errorf("unexpected Error")
 	}

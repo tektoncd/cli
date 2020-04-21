@@ -18,7 +18,7 @@ import (
 	"errors"
 	"strings"
 
-	"github.com/tektoncd/pipeline/pkg/apis/pipeline/v1alpha1"
+	"github.com/tektoncd/pipeline/pkg/apis/pipeline/v1beta1"
 	corev1 "k8s.io/api/core/v1"
 )
 
@@ -37,7 +37,7 @@ const invalidWorkspace = "invalid input format for workspace : "
 var errNotFoundParam = errors.New("param not found")
 
 // Merge merges workspacebinding already in pipelineruns with given options
-func Merge(ws []v1alpha1.WorkspaceBinding, optWS []string) ([]v1alpha1.WorkspaceBinding,
+func Merge(ws []v1beta1.WorkspaceBinding, optWS []string) ([]v1beta1.WorkspaceBinding,
 	error) {
 	workspaces, err := parseWorkspace(optWS)
 	if err != nil {
@@ -62,8 +62,8 @@ func Merge(ws []v1alpha1.WorkspaceBinding, optWS []string) ([]v1alpha1.Workspace
 	return ws, nil
 }
 
-func parseWorkspace(w []string) (map[string]v1alpha1.WorkspaceBinding, error) {
-	ws := map[string]v1alpha1.WorkspaceBinding{}
+func parseWorkspace(w []string) (map[string]v1beta1.WorkspaceBinding, error) {
+	ws := map[string]v1beta1.WorkspaceBinding{}
 	for _, v := range w {
 
 		r := strings.Split(v, ",")
@@ -72,7 +72,7 @@ func parseWorkspace(w []string) (map[string]v1alpha1.WorkspaceBinding, error) {
 			return nil, errors.New("Name not found for workspace")
 		}
 
-		wB := v1alpha1.WorkspaceBinding{
+		wB := v1beta1.WorkspaceBinding{
 			Name: name,
 		}
 		nWB := 0
@@ -117,7 +117,7 @@ func parseWorkspace(w []string) (map[string]v1alpha1.WorkspaceBinding, error) {
 	return ws, nil
 }
 
-func setWorkspaceSecret(r []string, wB *v1alpha1.WorkspaceBinding) error {
+func setWorkspaceSecret(r []string, wB *v1beta1.WorkspaceBinding) error {
 	secret, err := getPar(r, secretParam)
 	if err != nil {
 		return err
@@ -133,7 +133,7 @@ func setWorkspaceSecret(r []string, wB *v1alpha1.WorkspaceBinding) error {
 	return nil
 }
 
-func setWorkspaceConfig(r []string, wB *v1alpha1.WorkspaceBinding) error {
+func setWorkspaceConfig(r []string, wB *v1beta1.WorkspaceBinding) error {
 	config, err := getPar(r, configParam)
 	if err != nil {
 		return err
@@ -176,7 +176,7 @@ func getItems(r []string) ([]corev1.KeyToPath, error) {
 	return kp, nil
 }
 
-func setWorkspacePVC(r []string, wB *v1alpha1.WorkspaceBinding) error {
+func setWorkspacePVC(r []string, wB *v1beta1.WorkspaceBinding) error {
 	claimName, err := getPar(r, claimNameParam)
 	if err != nil {
 		return err
@@ -195,7 +195,7 @@ func getKeyValue(s string) (string, string, error) {
 	return r[0], r[1], nil
 }
 
-func setWorkspaceEmptyDir(r []string, wB *v1alpha1.WorkspaceBinding) error {
+func setWorkspaceEmptyDir(r []string, wB *v1beta1.WorkspaceBinding) error {
 	emptyDir, err := getPar(r, emptyDirParam)
 	if err != nil {
 		return err

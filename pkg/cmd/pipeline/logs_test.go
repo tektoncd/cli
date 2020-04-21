@@ -76,7 +76,7 @@ func TestPipelineLog(t *testing.T) {
 	dc, err := tdc.Client(
 		cb.UnstructuredP(pdata[0], versionA1))
 	if err != nil {
-		t.Errorf("unable to create dynamic clinet: %v", err)
+		t.Errorf("unable to create dynamic client: %v", err)
 	}
 
 	cs2, _ := test.SeedTestData(t, pipelinetest.Data{
@@ -95,7 +95,7 @@ func TestPipelineLog(t *testing.T) {
 		cb.UnstructuredP(pdata[0], versionA1),
 	)
 	if err != nil {
-		t.Errorf("unable to create dynamic clinet: %v", err)
+		t.Errorf("unable to create dynamic client: %v", err)
 	}
 
 	pdata3 := []*v1alpha1.Pipeline{
@@ -157,7 +157,7 @@ func TestPipelineLog(t *testing.T) {
 		cb.UnstructuredPR(prdata3[1], versionA1),
 	)
 	if err != nil {
-		t.Errorf("unable to create dynamic clinet: %v", err)
+		t.Errorf("unable to create dynamic client: %v", err)
 	}
 
 	testParams := []struct {
@@ -278,7 +278,7 @@ func TestPipelineLog_v1beta1(t *testing.T) {
 	dc, err := tdc.Client(
 		cb.UnstructuredP(pdata[0], versionB1))
 	if err != nil {
-		t.Errorf("unable to create dynamic clinet: %v", err)
+		t.Errorf("unable to create dynamic client: %v", err)
 	}
 
 	cs2, _ := test.SeedTestData(t, pipelinetest.Data{
@@ -297,7 +297,7 @@ func TestPipelineLog_v1beta1(t *testing.T) {
 		cb.UnstructuredP(pdata[0], versionB1),
 	)
 	if err != nil {
-		t.Errorf("unable to create dynamic clinet: %v", err)
+		t.Errorf("unable to create dynamic client: %v", err)
 	}
 
 	pdata3 := []*v1alpha1.Pipeline{
@@ -359,7 +359,7 @@ func TestPipelineLog_v1beta1(t *testing.T) {
 		cb.UnstructuredPR(prdata3[1], versionB1),
 	)
 	if err != nil {
-		t.Errorf("unable to create dynamic clinet: %v", err)
+		t.Errorf("unable to create dynamic client: %v", err)
 	}
 
 	testParams := []struct {
@@ -857,7 +857,7 @@ func TestLogs_Auto_Select_FirstPipeline(t *testing.T) {
 		cb.UnstructuredPR(prdata[0], versionA1),
 	)
 	if err != nil {
-		t.Errorf("unable to create dynamic clinet: %v", err)
+		t.Errorf("unable to create dynamic client: %v", err)
 	}
 	p := test.Params{
 		Kube:    cs.Kube,
@@ -924,7 +924,7 @@ func TestLogs_Auto_Select_FirstPipeline_v1beta1(t *testing.T) {
 		cb.UnstructuredPR(prdata[0], versionB1),
 	)
 	if err != nil {
-		t.Errorf("unable to create dynamic clinet: %v", err)
+		t.Errorf("unable to create dynamic client: %v", err)
 	}
 	p := test.Params{
 		Kube:    cs.Kube,

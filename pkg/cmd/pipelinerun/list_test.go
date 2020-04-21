@@ -118,7 +118,7 @@ func TestListPipelineRuns(t *testing.T) {
 		cb.UnstructuredPR(prs[4], version),
 	)
 	if err != nil {
-		t.Errorf("unable to create dynamic clinet: %v", err)
+		t.Errorf("unable to create dynamic client: %v", err)
 	}
 	tdc2 := testDynamic.Options{}
 	dc2, err := tdc2.Client(
@@ -126,7 +126,7 @@ func TestListPipelineRuns(t *testing.T) {
 		cb.UnstructuredPR(prsMultipleNs[1], version),
 	)
 	if err != nil {
-		t.Errorf("unable to create dynamic clinet: %v", err)
+		t.Errorf("unable to create dynamic client: %v", err)
 	}
 
 	tests := []struct {
@@ -322,7 +322,7 @@ func TestListPipelineRuns_v1beta1(t *testing.T) {
 		cb.UnstructuredPR(prs[4], version),
 	)
 	if err != nil {
-		t.Errorf("unable to create dynamic clinet: %v", err)
+		t.Errorf("unable to create dynamic client: %v", err)
 	}
 
 	tests := []struct {
@@ -462,7 +462,7 @@ func TestListPipeline_empty(t *testing.T) {
 	tdc := testDynamic.Options{}
 	dc, err := tdc.Client()
 	if err != nil {
-		t.Errorf("unable to create dynamic clinet: %v", err)
+		t.Errorf("unable to create dynamic client: %v", err)
 	}
 	p := &test.Params{Tekton: cs.Pipeline, Kube: cs.Kube, Dynamic: dc}
 

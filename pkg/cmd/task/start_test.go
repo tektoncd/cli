@@ -172,7 +172,7 @@ func Test_start_has_task_filename_v1alpha1(t *testing.T) {
 	tdc := testDynamic.Options{}
 	dc, err := tdc.Client()
 	if err != nil {
-		t.Errorf("unable to create dynamic clinet: %v", err)
+		t.Errorf("unable to create dynamic client: %v", err)
 	}
 	c := Command(&test.Params{Tekton: cs.Pipeline, Kube: cs.Kube, Dynamic: dc})
 
@@ -198,7 +198,7 @@ func Test_start_has_task_filename_v1beta1(t *testing.T) {
 	tdc := testDynamic.Options{}
 	dc, err := tdc.Client()
 	if err != nil {
-		t.Errorf("unable to create dynamic clinet: %v", err)
+		t.Errorf("unable to create dynamic client: %v", err)
 	}
 	c := Command(&test.Params{Tekton: cs.Pipeline, Kube: cs.Kube, Dynamic: dc})
 
@@ -247,7 +247,7 @@ func Test_start_task_not_found(t *testing.T) {
 	dc, err := tdc.Client(
 		cb.UnstructuredT(tasks[0], versionA1))
 	if err != nil {
-		t.Errorf("unable to create dynamic clinet: %v", err)
+		t.Errorf("unable to create dynamic client: %v", err)
 	}
 	p := &test.Params{Tekton: cs.Pipeline, Kube: cs.Kube, Dynamic: dc}
 	task := Command(p)
@@ -329,7 +329,7 @@ func Test_start_task_not_found_v1beta1(t *testing.T) {
 	dc, err := tdc.Client(
 		cb.UnstructuredV1beta1T(tasks[0], versionB1))
 	if err != nil {
-		t.Errorf("unable to create dynamic clinet: %v", err)
+		t.Errorf("unable to create dynamic client: %v", err)
 	}
 	p := &test.Params{Tekton: cs.Pipeline, Kube: cs.Kube, Dynamic: dc}
 	task := Command(p)
@@ -375,7 +375,7 @@ func Test_start_task(t *testing.T) {
 	dc, err := tdc.Client(
 		cb.UnstructuredT(tasks[0], versionA1))
 	if err != nil {
-		t.Errorf("unable to create dynamic clinet: %v", err)
+		t.Errorf("unable to create dynamic client: %v", err)
 	}
 	p := &test.Params{Tekton: cs.Pipeline, Kube: cs.Kube, Dynamic: dc}
 
@@ -515,7 +515,7 @@ func Test_start_task_v1beta1(t *testing.T) {
 	dc, err := tdc.Client(
 		cb.UnstructuredV1beta1T(tasks[0], versionB1))
 	if err != nil {
-		t.Errorf("unable to create dynamic clinet: %v", err)
+		t.Errorf("unable to create dynamic client: %v", err)
 	}
 	p := &test.Params{Tekton: cs.Pipeline, Kube: cs.Kube, Dynamic: dc}
 

@@ -69,7 +69,7 @@ func TestTaskLog(t *testing.T) {
 		cb.UnstructuredT(task1[0], versionA1),
 	)
 	if err != nil {
-		t.Errorf("unable to create dynamic clinet: %v", err)
+		t.Errorf("unable to create dynamic client: %v", err)
 	}
 
 	task2 := []*v1alpha1.Task{
@@ -91,7 +91,7 @@ func TestTaskLog(t *testing.T) {
 		cb.UnstructuredT(task2[0], versionA1),
 	)
 	if err != nil {
-		t.Errorf("unable to create dynamic clinet: %v", err)
+		t.Errorf("unable to create dynamic client: %v", err)
 	}
 
 	testParams := []struct {
@@ -193,7 +193,7 @@ func TestTaskLog_v1beta1(t *testing.T) {
 		cb.UnstructuredT(task1[0], versionB1),
 	)
 	if err != nil {
-		t.Errorf("unable to create dynamic clinet: %v", err)
+		t.Errorf("unable to create dynamic client: %v", err)
 	}
 
 	task2 := []*v1alpha1.Task{
@@ -215,7 +215,7 @@ func TestTaskLog_v1beta1(t *testing.T) {
 		cb.UnstructuredT(task2[0], versionB1),
 	)
 	if err != nil {
-		t.Errorf("unable to create dynamic clinet: %v", err)
+		t.Errorf("unable to create dynamic client: %v", err)
 	}
 
 	testParams := []struct {

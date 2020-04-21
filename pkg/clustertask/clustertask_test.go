@@ -49,7 +49,7 @@ func TestClusterTask_List(t *testing.T) {
 		cb.UnstructuredCT(ctdata[0], version),
 	)
 	if err != nil {
-		t.Errorf("unable to create dynamic clinet: %v", err)
+		t.Errorf("unable to create dynamic client: %v", err)
 	}
 
 	ctdata2 := []*v1alpha1.ClusterTask{
@@ -140,7 +140,7 @@ func TestClusterTaskV1beta1_List(t *testing.T) {
 		cb.UnstructuredV1beta1CT(ctdata[0], version),
 	)
 	if err != nil {
-		t.Errorf("unable to create dynamic clinet: %v", err)
+		t.Errorf("unable to create dynamic client: %v", err)
 	}
 
 	ctdata2 := []*v1beta1.ClusterTask{

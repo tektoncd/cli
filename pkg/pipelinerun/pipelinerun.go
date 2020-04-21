@@ -27,6 +27,7 @@ import (
 	"github.com/tektoncd/pipeline/pkg/apis/pipeline/v1alpha1"
 	"github.com/tektoncd/pipeline/pkg/apis/pipeline/v1beta1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
 	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/apimachinery/pkg/runtime/schema"
 	"k8s.io/apimachinery/pkg/watch"
@@ -181,6 +182,45 @@ func Patch(c *cli.Clients, prname string, opts metav1.PatchOptions, ns string) (
 
 	var pipelinerun *v1beta1.PipelineRun
 	if err := runtime.DefaultUnstructuredConverter.FromUnstructured(unstructuredPR.UnstructuredContent(), &pipelinerun); err != nil {
+		return nil, err
+	}
+
+	return pipelinerun, nil
+}
+
+// It will create the resource based on the api available.
+func Create(c *cli.Clients, pr *v1beta1.PipelineRun, opts metav1.CreateOptions, ns string) (*v1beta1.PipelineRun, error) {
+	gvr, err := actions.GetGroupVersionResource(prGroupResource, c.Tekton.Discovery())
+	if err != nil {
+		return nil, err
+	}
+
+	if gvr.Version == "v1alpha1" {
+		var pipelinerunConverted v1alpha1.PipelineRun
+		err = pipelinerunConverted.ConvertDown(context.Background(), pr)
+		if err != nil {
+			return nil, err
+		}
+		pipelinerunConverted.Kind = "PipelineRun"
+		pipelinerunConverted.APIVersion = "tekton.dev/v1alpha1"
+		return createUnstructured(&pipelinerunConverted, c, opts, ns, gvr)
+	}
+	return createUnstructured(pr, c, opts, ns, gvr)
+}
+
+func createUnstructured(obj runtime.Object, c *cli.Clients, opts metav1.CreateOptions, ns string, resource *schema.GroupVersionResource) (*v1beta1.PipelineRun, error) {
+	object, _ := runtime.DefaultUnstructuredConverter.ToUnstructured(obj)
+	unstructuredPR := &unstructured.Unstructured{
+		Object: object,
+	}
+
+	newUnstructuredPR, err := actions.Create(*resource, c, unstructuredPR, ns, opts)
+	if err != nil {
+		return nil, err
+	}
+
+	var pipelinerun *v1beta1.PipelineRun
+	if err := runtime.DefaultUnstructuredConverter.FromUnstructured(newUnstructuredPR.UnstructuredContent(), &pipelinerun); err != nil {
 		return nil, err
 	}
 

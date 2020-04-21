@@ -600,7 +600,7 @@ func TestListTaskRuns_no_condition(t *testing.T) {
 		cb.UnstructuredTR(trs[0], version),
 	)
 	if err != nil {
-		t.Errorf("unable to create dynamic clinet: %v", err)
+		t.Errorf("unable to create dynamic client: %v", err)
 	}
 
 	cmd := command(t, trs, now, ns, version, dc)

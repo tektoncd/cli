@@ -90,7 +90,7 @@ func Test_cancel_pipelinerun(t *testing.T) {
 		cb.UnstructuredPR(prs[0], versionA1),
 	)
 	if err != nil {
-		t.Errorf("unable to create dynamic clinet: %v", err)
+		t.Errorf("unable to create dynamic client: %v", err)
 	}
 	p := &tu.Params{Tekton: cs.Pipeline, Kube: cs.Kube, Dynamic: dc}
 
@@ -161,7 +161,7 @@ func Test_cancel_pipelinerun_client_err(t *testing.T) {
 		cb.UnstructuredPR(prs[0], versionA1),
 	)
 	if err != nil {
-		t.Errorf("unable to create dynamic clinet: %v", err)
+		t.Errorf("unable to create dynamic client: %v", err)
 	}
 	p := &tu.Params{Tekton: cs.Pipeline, Kube: cs.Kube, Dynamic: dc}
 
@@ -206,7 +206,7 @@ func Test_finished_pipelinerun_success(t *testing.T) {
 		cb.UnstructuredPR(prs[0], versionA1),
 	)
 	if err != nil {
-		t.Errorf("unable to create dynamic clinet: %v", err)
+		t.Errorf("unable to create dynamic client: %v", err)
 	}
 	p := &tu.Params{Tekton: cs.Pipeline, Kube: cs.Kube, Dynamic: dc}
 
@@ -251,7 +251,7 @@ func Test_finished_pipelinerun_failure(t *testing.T) {
 		cb.UnstructuredPR(prs[0], versionA1),
 	)
 	if err != nil {
-		t.Errorf("unable to create dynamic clinet: %v", err)
+		t.Errorf("unable to create dynamic client: %v", err)
 	}
 	p := &tu.Params{Tekton: cs.Pipeline, Kube: cs.Kube, Dynamic: dc}
 
@@ -296,7 +296,7 @@ func Test_finished_pipelinerun_cancel(t *testing.T) {
 		cb.UnstructuredPR(prs[0], versionA1),
 	)
 	if err != nil {
-		t.Errorf("unable to create dynamic clinet: %v", err)
+		t.Errorf("unable to create dynamic client: %v", err)
 	}
 	p := &tu.Params{Tekton: cs.Pipeline, Kube: cs.Kube, Dynamic: dc}
 
@@ -338,7 +338,7 @@ func Test_cancel_pipelinerun_v1beta1(t *testing.T) {
 		cb.UnstructuredPR(prs[0], versionB1),
 	)
 	if err != nil {
-		t.Errorf("unable to create dynamic clinet: %v", err)
+		t.Errorf("unable to create dynamic client: %v", err)
 	}
 	p := &tu.Params{Tekton: cs.Pipeline, Kube: cs.Kube, Dynamic: dc}
 
@@ -388,7 +388,7 @@ func Test_cancel_pipelinerun_client_err_v1beta1(t *testing.T) {
 		cb.UnstructuredPR(prs[0], versionB1),
 	)
 	if err != nil {
-		t.Errorf("unable to create dynamic clinet: %v", err)
+		t.Errorf("unable to create dynamic client: %v", err)
 	}
 	p := &tu.Params{Tekton: cs.Pipeline, Kube: cs.Kube, Dynamic: dc}
 
@@ -433,7 +433,7 @@ func Test_finished_pipelinerun_success_v1beta1(t *testing.T) {
 		cb.UnstructuredPR(prs[0], versionB1),
 	)
 	if err != nil {
-		t.Errorf("unable to create dynamic clinet: %v", err)
+		t.Errorf("unable to create dynamic client: %v", err)
 	}
 	p := &tu.Params{Tekton: cs.Pipeline, Kube: cs.Kube, Dynamic: dc}
 
@@ -478,7 +478,7 @@ func Test_finished_pipelinerun_failure_v1beta1(t *testing.T) {
 		cb.UnstructuredPR(prs[0], versionB1),
 	)
 	if err != nil {
-		t.Errorf("unable to create dynamic clinet: %v", err)
+		t.Errorf("unable to create dynamic client: %v", err)
 	}
 	p := &tu.Params{Tekton: cs.Pipeline, Kube: cs.Kube, Dynamic: dc}
 
@@ -523,7 +523,7 @@ func Test_finished_pipelinerun_cancel_v1beta1(t *testing.T) {
 		cb.UnstructuredPR(prs[0], versionB1),
 	)
 	if err != nil {
-		t.Errorf("unable to create dynamic clinet: %v", err)
+		t.Errorf("unable to create dynamic client: %v", err)
 	}
 	p := &tu.Params{Tekton: cs.Pipeline, Kube: cs.Kube, Dynamic: dc}
 

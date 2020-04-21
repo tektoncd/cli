@@ -15,6 +15,7 @@
 package pipeline
 
 import (
+	"context"
 	"encoding/json"
 	"errors"
 	"fmt"
@@ -29,17 +30,18 @@ import (
 	"github.com/spf13/cobra"
 	"github.com/tektoncd/cli/pkg/cli"
 	"github.com/tektoncd/cli/pkg/cmd/pipelineresource"
-	"github.com/tektoncd/cli/pkg/cmd/pipelinerun"
+	prcmd "github.com/tektoncd/cli/pkg/cmd/pipelinerun"
 	"github.com/tektoncd/cli/pkg/file"
 	"github.com/tektoncd/cli/pkg/flags"
 	"github.com/tektoncd/cli/pkg/labels"
 	"github.com/tektoncd/cli/pkg/options"
 	"github.com/tektoncd/cli/pkg/params"
 	"github.com/tektoncd/cli/pkg/pipeline"
-	hpipelinerun "github.com/tektoncd/cli/pkg/pipelinerun"
-	validate "github.com/tektoncd/cli/pkg/validate"
+	"github.com/tektoncd/cli/pkg/pipelinerun"
+	"github.com/tektoncd/cli/pkg/validate"
 	"github.com/tektoncd/cli/pkg/workspaces"
 	"github.com/tektoncd/pipeline/pkg/apis/pipeline/v1alpha1"
+	"github.com/tektoncd/pipeline/pkg/apis/pipeline/v1beta1"
 	versionedResource "github.com/tektoncd/pipeline/pkg/client/resource/clientset/versioned"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	v1 "k8s.io/apimachinery/pkg/apis/meta/v1"
@@ -170,7 +172,7 @@ like cat,foo,bar
 	return c
 }
 
-func (opt *startOptions) run(pipeline *v1alpha1.Pipeline) error {
+func (opt *startOptions) run(pipeline *v1beta1.Pipeline) error {
 	if err := opt.getInput(pipeline); err != nil {
 		return err
 	}
@@ -178,7 +180,7 @@ func (opt *startOptions) run(pipeline *v1alpha1.Pipeline) error {
 	return opt.startPipeline(pipeline)
 }
 
-func (opt *startOptions) startPipeline(pipelineStart *v1alpha1.Pipeline) error {
+func (opt *startOptions) startPipeline(pipelineStart *v1beta1.Pipeline) error {
 	objMeta := metav1.ObjectMeta{
 		Namespace: opt.cliparams.Namespace(),
 	}
@@ -193,35 +195,27 @@ func (opt *startOptions) startPipeline(pipelineStart *v1alpha1.Pipeline) error {
 		return err
 	}
 
-	var pr *v1alpha1.PipelineRun
+	var pr *v1beta1.PipelineRun
 	if opt.Filename == "" {
-		apiVersion := "tekton.dev/vlalpha1"
-		if opt.DryRun {
-			// Get most recent API version available on cluster for --dry-run
-			apiVersion, err = getAPIVersion(cs.Tekton.Discovery())
-			if err != nil {
-				return err
-			}
-		}
-
-		pr = &v1alpha1.PipelineRun{
+		apiVersion := "tekton.dev/v1beta1"
+		pr = &v1beta1.PipelineRun{
 			TypeMeta: metav1.TypeMeta{
 				APIVersion: apiVersion,
 				Kind:       "PipelineRun",
 			},
 			ObjectMeta: objMeta,
-			Spec: v1alpha1.PipelineRunSpec{
-				PipelineRef: &v1alpha1.PipelineRef{Name: pipelineStart.ObjectMeta.Name},
+			Spec: v1beta1.PipelineRunSpec{
+				PipelineRef: &v1beta1.PipelineRef{Name: pipelineStart.ObjectMeta.Name},
 			},
 		}
 	} else {
-		pr = &v1alpha1.PipelineRun{
+		pr = &v1beta1.PipelineRun{
 			TypeMeta: metav1.TypeMeta{
 				APIVersion: pipelineStart.TypeMeta.APIVersion,
 				Kind:       "PipelineRun",
 			},
 			ObjectMeta: objMeta,
-			Spec: v1alpha1.PipelineRunSpec{
+			Spec: v1beta1.PipelineRunSpec{
 				PipelineSpec: &pipelineStart.Spec,
 			},
 		}
@@ -236,14 +230,14 @@ func (opt *startOptions) startPipeline(pipelineStart *v1alpha1.Pipeline) error {
 	}
 
 	if opt.Last || opt.UsePipelineRun != "" {
-		var usepr *v1alpha1.PipelineRun
+		var usepr *v1beta1.PipelineRun
 		if opt.Last {
-			usepr, err = pipeline.LastRun(cs.Tekton, pipelineStart.ObjectMeta.Name, opt.cliparams.Namespace())
+			usepr, err = pipeline.LastRun(cs, pipelineStart.ObjectMeta.Name, opt.cliparams.Namespace())
 			if err != nil {
 				return err
 			}
 		} else {
-			usepr, err = hpipelinerun.GetPipelineRun(opt.cliparams, v1.GetOptions{}, opt.UsePipelineRun)
+			usepr, err = pipelinerun.Get(cs, opt.UsePipelineRun, v1.GetOptions{}, opt.cliparams.Namespace())
 			if err != nil {
 				return err
 			}
@@ -295,10 +289,10 @@ func (opt *startOptions) startPipeline(pipelineStart *v1alpha1.Pipeline) error {
 	}
 
 	if opt.DryRun {
-		return pipelineRunDryRun(opt.Output, opt.stream, pr)
+		return pipelineRunDryRun(cs, opt.Output, opt.stream, pr)
 	}
 
-	prCreated, err := cs.Tekton.TektonV1alpha1().PipelineRuns(opt.cliparams.Namespace()).Create(pr)
+	prCreated, err := pipelinerun.Create(cs, pr, metav1.CreateOptions{}, opt.cliparams.Namespace())
 	if err != nil {
 		return err
 	}
@@ -318,10 +312,10 @@ func (opt *startOptions) startPipeline(pipelineStart *v1alpha1.Pipeline) error {
 		Params:          opt.cliparams,
 		AllSteps:        false,
 	}
-	return pipelinerun.Run(runLogOpts)
+	return prcmd.Run(runLogOpts)
 }
 
-func (opt *startOptions) getInput(pipeline *v1alpha1.Pipeline) error {
+func (opt *startOptions) getInput(pipeline *v1beta1.Pipeline) error {
 	cs, err := opt.cliparams.Clients()
 	if err != nil {
 		return err
@@ -369,7 +363,7 @@ func (opt *startOptions) getInput(pipeline *v1alpha1.Pipeline) error {
 }
 
 // Include the default param values in opts.Params when `--use-param-defaults` is used
-func (opt *startOptions) includeDefaultParams(pipeline *v1alpha1.Pipeline) error {
+func (opt *startOptions) includeDefaultParams(pipeline *v1beta1.Pipeline) error {
 	//Creating a map have already included opt.Params through -p or --param option
 	var optParamNames = make(map[string]bool)
 
@@ -394,7 +388,7 @@ func (opt *startOptions) includeDefaultParams(pipeline *v1alpha1.Pipeline) error
 	return nil
 }
 
-func (opt *startOptions) getInputResources(resources resourceOptionsFilter, pipeline *v1alpha1.Pipeline) error {
+func (opt *startOptions) getInputResources(resources resourceOptionsFilter, pipeline *v1beta1.Pipeline) error {
 	for _, res := range pipeline.Spec.Resources {
 		options := getOptionsByType(resources, string(res.Type))
 		// directly create resource
@@ -443,7 +437,7 @@ func (opt *startOptions) getInputResources(resources resourceOptionsFilter, pipe
 	return nil
 }
 
-func (opt *startOptions) getInputParams(pipeline *v1alpha1.Pipeline) error {
+func (opt *startOptions) getInputParams(pipeline *v1beta1.Pipeline) error {
 	for _, param := range pipeline.Spec.Params {
 		var ans, ques, defaultValue string
 		ques = fmt.Sprintf("Value for param `%s` of type `%s`?", param.Name, param.Type)
@@ -562,7 +556,7 @@ func getOptionsByType(resources resourceOptionsFilter, restype string) []string 
 	return []string{}
 }
 
-func mergeRes(pr *v1alpha1.PipelineRun, optRes []string) error {
+func mergeRes(pr *v1beta1.PipelineRun, optRes []string) error {
 	res, err := parseRes(optRes)
 	if err != nil {
 		return err
@@ -585,7 +579,7 @@ func mergeRes(pr *v1alpha1.PipelineRun, optRes []string) error {
 	return nil
 }
 
-func mergeSvc(pr *v1alpha1.PipelineRun, optSvc []string) error {
+func mergeSvc(pr *v1beta1.PipelineRun, optSvc []string) error {
 	svcs, err := parseTaskSvc(optSvc)
 	if err != nil {
 		return err
@@ -609,16 +603,16 @@ func mergeSvc(pr *v1alpha1.PipelineRun, optSvc []string) error {
 	return nil
 }
 
-func parseRes(res []string) (map[string]v1alpha1.PipelineResourceBinding, error) {
-	resources := map[string]v1alpha1.PipelineResourceBinding{}
+func parseRes(res []string) (map[string]v1beta1.PipelineResourceBinding, error) {
+	resources := map[string]v1beta1.PipelineResourceBinding{}
 	for _, v := range res {
 		r := strings.SplitN(v, "=", 2)
 		if len(r) != 2 {
 			return nil, errors.New(invalidResource + v)
 		}
-		resources[r[0]] = v1alpha1.PipelineResourceBinding{
+		resources[r[0]] = v1beta1.PipelineResourceBinding{
 			Name: r[0],
-			ResourceRef: &v1alpha1.PipelineResourceRef{
+			ResourceRef: &v1beta1.PipelineResourceRef{
 				Name: r[1],
 			},
 		}
@@ -626,8 +620,8 @@ func parseRes(res []string) (map[string]v1alpha1.PipelineResourceBinding, error)
 	return resources, nil
 }
 
-func parseTaskSvc(s []string) (map[string]v1alpha1.PipelineRunSpecServiceAccountName, error) {
-	svcs := map[string]v1alpha1.PipelineRunSpecServiceAccountName{}
+func parseTaskSvc(s []string) (map[string]v1beta1.PipelineRunSpecServiceAccountName, error) {
+	svcs := map[string]v1beta1.PipelineRunSpecServiceAccountName{}
 	for _, v := range s {
 		r := strings.Split(v, "=")
 		if len(r) != 2 || len(r[0]) == 0 {
@@ -636,7 +630,7 @@ func parseTaskSvc(s []string) (map[string]v1alpha1.PipelineRunSpecServiceAccount
 				"--task-serviceaccount TaskName=ServiceAccount"
 			return nil, errors.New(errMsg)
 		}
-		svcs[r[0]] = v1alpha1.PipelineRunSpecServiceAccountName{
+		svcs[r[0]] = v1beta1.PipelineRunSpecServiceAccountName{
 			TaskName:           r[0],
 			ServiceAccountName: r[1],
 		}
@@ -682,10 +676,14 @@ func (opt *startOptions) createPipelineResource(resName string, resType v1alpha1
 	return newRes, nil
 }
 
-func pipelineRunDryRun(output string, s *cli.Stream, pr *v1alpha1.PipelineRun) error {
+func pipelineRunDryRun(c *cli.Clients, output string, s *cli.Stream, pr *v1beta1.PipelineRun) error {
+	prWithVersion, err := convertedPrVersion(c, pr)
+	if err != nil {
+		return err
+	}
 	format := strings.ToLower(output)
 	if format == "" || format == "yaml" {
-		prBytes, err := yaml.Marshal(pr)
+		prBytes, err := yaml.Marshal(prWithVersion)
 		if err != nil {
 			return err
 		}
@@ -693,7 +691,7 @@ func pipelineRunDryRun(output string, s *cli.Stream, pr *v1alpha1.PipelineRun) e
 	}
 
 	if format == "json" {
-		prBytes, err := json.MarshalIndent(pr, "", "\t")
+		prBytes, err := json.MarshalIndent(prWithVersion, "", "\t")
 		if err != nil {
 			return err
 		}
@@ -703,8 +701,8 @@ func pipelineRunDryRun(output string, s *cli.Stream, pr *v1alpha1.PipelineRun) e
 }
 
 // NameArg validates that the first argument is a valid pipeline name
-func NameArg(args []string, p cli.Params, file string) (*v1alpha1.Pipeline, error) {
-	pipelineErr := &v1alpha1.Pipeline{}
+func NameArg(args []string, p cli.Params, file string) (*v1beta1.Pipeline, error) {
+	pipelineErr := &v1beta1.Pipeline{}
 	if len(args) == 0 && file == "" {
 		return pipelineErr, errNoPipeline
 	}
@@ -721,7 +719,7 @@ func NameArg(args []string, p cli.Params, file string) (*v1alpha1.Pipeline, erro
 	if file == "" {
 		name, ns := args[0], p.Namespace()
 		// get pipeline by pipeline name passed as arg[0] from namespace
-		pipelineNs, err := c.Tekton.TektonV1alpha1().Pipelines(ns).Get(name, metav1.GetOptions{})
+		pipelineNs, err := pipeline.Get(c, name, metav1.GetOptions{}, ns)
 		if err != nil {
 			return pipelineErr, fmt.Errorf(errInvalidPipeline, name, ns)
 		}
@@ -737,19 +735,37 @@ func NameArg(args []string, p cli.Params, file string) (*v1alpha1.Pipeline, erro
 	return pipelineFile, nil
 }
 
-func parsePipeline(taskLocation string, p cli.Params) (*v1alpha1.Pipeline, error) {
+func parsePipeline(taskLocation string, p cli.Params) (*v1beta1.Pipeline, error) {
 	b, err := file.LoadFileContent(p, taskLocation, file.IsYamlFile(), fmt.Errorf("invalid file format for %s: .yaml or .yml file extension and format required", taskLocation))
 	if err != nil {
 		return nil, err
 	}
-	pipeline := v1alpha1.Pipeline{}
+	m := map[string]interface{}{}
+	err = yaml.Unmarshal(b, &m)
+	if err != nil {
+		return nil, err
+	}
+	if m["apiVersion"] == "tekton.dev/v1alpha1" {
+		pipeline := v1alpha1.Pipeline{}
+		if err := yaml.Unmarshal(b, &pipeline); err != nil {
+			return nil, err
+		}
+		var pipelineConverted v1beta1.Pipeline
+		err = pipeline.ConvertUp(context.Background(), &pipelineConverted)
+		if err != nil {
+			return nil, err
+		}
+		return &pipelineConverted, nil
+	}
+
+	pipeline := v1beta1.Pipeline{}
 	if err := yaml.Unmarshal(b, &pipeline); err != nil {
 		return nil, err
 	}
 	return &pipeline, nil
 }
 
-func (opt *startOptions) getInputWorkspaces(pipeline *v1alpha1.Pipeline) error {
+func (opt *startOptions) getInputWorkspaces(pipeline *v1beta1.Pipeline) error {
 	for _, ws := range pipeline.Spec.Workspaces {
 		fmt.Fprintf(opt.stream.Out, "Please give specifications for the workspace: %s \n", ws.Name)
 		name, err := askParam("Name for the workspace :", opt.askOpts)
@@ -868,4 +884,24 @@ func getAPIVersion(discovery discovery.DiscoveryInterface) (string, error) {
 		return "tekton.dev/v1alpha1", nil
 	}
 	return "tekton.dev/v1beta1", nil
+}
+
+func convertedPrVersion(c *cli.Clients, pr *v1beta1.PipelineRun) (interface{}, error) {
+	version, err := getAPIVersion(c.Tekton.Discovery())
+	if err != nil {
+		return nil, err
+	}
+
+	if version == "tekton.dev/v1alpha1" {
+		var prConverted v1alpha1.PipelineRun
+		err = prConverted.ConvertDown(context.Background(), pr)
+		prConverted.APIVersion = version
+		prConverted.Kind = "PipelineRun"
+		if err != nil {
+			return nil, err
+		}
+		return &prConverted, nil
+	}
+
+	return pr, nil
 }

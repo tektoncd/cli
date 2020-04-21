@@ -55,7 +55,7 @@ func TestClusterTaskDelete(t *testing.T) {
 			cb.UnstructuredCT(clustertasks[2], version),
 		)
 		if err != nil {
-			t.Errorf("unable to create dynamic clinet: %v", err)
+			t.Errorf("unable to create dynamic client: %v", err)
 		}
 		seeds = append(seeds, clients{cs, dc})
 	}
@@ -229,7 +229,7 @@ func TestClusterTaskDelete_v1beta1(t *testing.T) {
 			cb.UnstructuredCT(clustertasks[2], version),
 		)
 		if err != nil {
-			t.Errorf("unable to create dynamic clinet: %v", err)
+			t.Errorf("unable to create dynamic client: %v", err)
 		}
 		seeds = append(seeds, clients{cs, dc})
 	}

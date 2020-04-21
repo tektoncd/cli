@@ -107,7 +107,7 @@ func TestTaskRunCancel(t *testing.T) {
 		cb.UnstructuredTR(trs[1], versionA1),
 	)
 	if err != nil {
-		t.Errorf("unable to create dynamic clinet: %v", err)
+		t.Errorf("unable to create dynamic client: %v", err)
 	}
 
 	cs2, _ := test.SeedTestData(t, pipelinetest.Data{TaskRuns: trs2, Namespaces: ns})
@@ -123,7 +123,7 @@ func TestTaskRunCancel(t *testing.T) {
 		cb.UnstructuredTR(trs2[0], versionA1),
 	)
 	if err != nil {
-		t.Errorf("unable to create dynamic clinet: %v", err)
+		t.Errorf("unable to create dynamic client: %v", err)
 	}
 
 	cs3, _ := test.SeedTestData(t, pipelinetest.Data{TaskRuns: trs3, Namespaces: ns})
@@ -133,7 +133,7 @@ func TestTaskRunCancel(t *testing.T) {
 		cb.UnstructuredTR(trs3[0], versionA1),
 	)
 	if err != nil {
-		t.Errorf("unable to create dynamic clinet: %v", err)
+		t.Errorf("unable to create dynamic client: %v", err)
 	}
 
 	seeds = append(seeds, clients{pipelineClient: cs, dynamicClient: dc})
@@ -293,7 +293,7 @@ func TestTaskRunCancel_v1beta1(t *testing.T) {
 		cb.UnstructuredTR(trs[1], versionB1),
 	)
 	if err != nil {
-		t.Errorf("unable to create dynamic clinet: %v", err)
+		t.Errorf("unable to create dynamic client: %v", err)
 	}
 
 	cs2, _ := test.SeedTestData(t, pipelinetest.Data{TaskRuns: trs2, Namespaces: ns})
@@ -308,7 +308,7 @@ func TestTaskRunCancel_v1beta1(t *testing.T) {
 		cb.UnstructuredTR(trs2[0], versionB1),
 	)
 	if err != nil {
-		t.Errorf("unable to create dynamic clinet: %v", err)
+		t.Errorf("unable to create dynamic client: %v", err)
 	}
 
 	cs3, _ := test.SeedTestData(t, pipelinetest.Data{TaskRuns: trs3, Namespaces: ns})
@@ -318,7 +318,7 @@ func TestTaskRunCancel_v1beta1(t *testing.T) {
 		cb.UnstructuredTR(trs3[0], versionB1),
 	)
 	if err != nil {
-		t.Errorf("unable to create dynamic clinet: %v", err)
+		t.Errorf("unable to create dynamic client: %v", err)
 	}
 
 	seeds = append(seeds, clients{pipelineClient: cs, dynamicClient: dc})

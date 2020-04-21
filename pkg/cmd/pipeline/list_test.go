@@ -71,7 +71,7 @@ func TestPipelinesList_empty(t *testing.T) {
 	tdc := testDynamic.Options{}
 	dc, err := tdc.Client()
 	if err != nil {
-		t.Errorf("unable to create dynamic clinet: %v", err)
+		t.Errorf("unable to create dynamic client: %v", err)
 	}
 
 	p := &test.Params{Tekton: cs.Pipeline, Kube: cs.Kube, Dynamic: dc}
@@ -110,7 +110,7 @@ func TestPipelineList_only_pipelines(t *testing.T) {
 		cb.UnstructuredP(pdata[2], version),
 	)
 	if err != nil {
-		t.Errorf("unable to create dynamic clinet: %v", err)
+		t.Errorf("unable to create dynamic client: %v", err)
 	}
 	p := &test.Params{Tekton: cs.Pipeline, Clock: clock, Kube: cs.Kube, Dynamic: dc}
 
@@ -147,7 +147,7 @@ func TestPipelineList_only_pipelines_v1beta1(t *testing.T) {
 		cb.UnstructuredP(pdata[2], version),
 	)
 	if err != nil {
-		t.Errorf("unable to create dynamic clinet: %v", err)
+		t.Errorf("unable to create dynamic client: %v", err)
 	}
 	p := &test.Params{Tekton: cs.Pipeline, Clock: clock, Kube: cs.Kube, Dynamic: dc}
 
@@ -184,7 +184,7 @@ func TestPipelineList_only_pipelines_no_headers_v1beta1(t *testing.T) {
 		cb.UnstructuredP(pdata[2], version),
 	)
 	if err != nil {
-		t.Errorf("unable to create dynamic clinet: %v", err)
+		t.Errorf("unable to create dynamic client: %v", err)
 	}
 	p := &test.Params{Tekton: cs.Pipeline, Clock: clock, Kube: cs.Kube, Dynamic: dc}
 
@@ -220,7 +220,7 @@ func TestPipelineList_only_pipelines_all_namespaces_v1beta1(t *testing.T) {
 		cb.UnstructuredP(pdata[5], version),
 	)
 	if err != nil {
-		t.Errorf("unable to create dynamic clinet: %v", err)
+		t.Errorf("unable to create dynamic client: %v", err)
 	}
 	p := &test.Params{Tekton: cs.Pipeline, Clock: clock, Kube: cs.Kube, Dynamic: dc}
 
@@ -256,7 +256,7 @@ func TestPipelineList_only_pipelines_all_namespaces_no_headers_v1beta1(t *testin
 		cb.UnstructuredP(pdata[5], version),
 	)
 	if err != nil {
-		t.Errorf("unable to create dynamic clinet: %v", err)
+		t.Errorf("unable to create dynamic client: %v", err)
 	}
 	p := &test.Params{Tekton: cs.Pipeline, Clock: clock, Kube: cs.Kube, Dynamic: dc}
 
@@ -278,26 +278,27 @@ func TestPipelinesList_with_single_run(t *testing.T) {
 		),
 	}
 
-	cs, _ := test.SeedTestData(t, pipelinetest.Data{
-		Pipelines: pdata,
-		PipelineRuns: []*v1alpha1.PipelineRun{
-
-			tb.PipelineRun("pipeline-run-1", "ns",
-				cb.PipelineRunCreationTimestamp(clock.Now()),
-				tb.PipelineRunLabel("tekton.dev/pipeline", "pipeline"),
-				tb.PipelineRunSpec("pipeline"),
-				tb.PipelineRunStatus(
-					tb.PipelineRunStatusCondition(apis.Condition{
-						Status: corev1.ConditionTrue,
-						Reason: resources.ReasonSucceeded,
-					}),
-					// pipeline run starts now
-					tb.PipelineRunStartTime(clock.Now()),
-					// takes 10 minutes to complete
-					cb.PipelineRunCompletionTime(clock.Now().Add(10*time.Minute)),
-				),
+	prdata := []*v1alpha1.PipelineRun{
+		tb.PipelineRun("pipeline-run-1", "ns",
+			cb.PipelineRunCreationTimestamp(clock.Now()),
+			tb.PipelineRunLabel("tekton.dev/pipeline", "pipeline"),
+			tb.PipelineRunSpec("pipeline"),
+			tb.PipelineRunStatus(
+				tb.PipelineRunStatusCondition(apis.Condition{
+					Status: corev1.ConditionTrue,
+					Reason: resources.ReasonSucceeded,
+				}),
+				// pipeline run starts now
+				tb.PipelineRunStartTime(clock.Now()),
+				// takes 10 minutes to complete
+				cb.PipelineRunCompletionTime(clock.Now().Add(10*time.Minute)),
 			),
-		},
+		),
+	}
+
+	cs, _ := test.SeedTestData(t, pipelinetest.Data{
+		Pipelines:    pdata,
+		PipelineRuns: prdata,
 		Namespaces: []*corev1.Namespace{
 			{
 				ObjectMeta: metav1.ObjectMeta{
@@ -306,13 +307,14 @@ func TestPipelinesList_with_single_run(t *testing.T) {
 			},
 		},
 	})
-	cs.Pipeline.Resources = cb.APIResourceList(version, []string{"pipeline"})
+	cs.Pipeline.Resources = cb.APIResourceList(version, []string{"pipeline", "pipelinerun"})
 	tdc := testDynamic.Options{}
 	dc, err := tdc.Client(
 		cb.UnstructuredP(pdata[0], version),
+		cb.UnstructuredPR(prdata[0], version),
 	)
 	if err != nil {
-		t.Errorf("unable to create dynamic clinet: %v", err)
+		t.Errorf("unable to create dynamic client: %v", err)
 	}
 	p := &test.Params{Tekton: cs.Pipeline, Clock: clock, Kube: cs.Kube, Dynamic: dc}
 	pipeline := Command(p)
@@ -360,37 +362,40 @@ func TestPipelinesList_latest_run(t *testing.T) {
 			cb.PipelineCreationTimestamp(pipelineCreated),
 		),
 	}
-	cs, _ := test.SeedTestData(t, pipelinetest.Data{
-		Pipelines: pdata,
-		PipelineRuns: []*v1alpha1.PipelineRun{
 
-			tb.PipelineRun("pipeline-run-1", "ns",
-				cb.PipelineRunCreationTimestamp(firstRunCreated),
-				tb.PipelineRunLabel("tekton.dev/pipeline", "pipeline"),
-				tb.PipelineRunSpec("pipeline"),
-				tb.PipelineRunStatus(
-					tb.PipelineRunStatusCondition(apis.Condition{
-						Status: corev1.ConditionTrue,
-						Reason: resources.ReasonSucceeded,
-					}),
-					tb.PipelineRunStartTime(firstRunStarted),
-					cb.PipelineRunCompletionTime(firstRunCompleted),
-				),
+	prdata := []*v1alpha1.PipelineRun{
+
+		tb.PipelineRun("pipeline-run-1", "ns",
+			cb.PipelineRunCreationTimestamp(firstRunCreated),
+			tb.PipelineRunLabel("tekton.dev/pipeline", "pipeline"),
+			tb.PipelineRunSpec("pipeline"),
+			tb.PipelineRunStatus(
+				tb.PipelineRunStatusCondition(apis.Condition{
+					Status: corev1.ConditionTrue,
+					Reason: resources.ReasonSucceeded,
+				}),
+				tb.PipelineRunStartTime(firstRunStarted),
+				cb.PipelineRunCompletionTime(firstRunCompleted),
 			),
-			tb.PipelineRun("pipeline-run-2", "ns",
-				cb.PipelineRunCreationTimestamp(secondRunCreated),
-				tb.PipelineRunLabel("tekton.dev/pipeline", "pipeline"),
-				tb.PipelineRunSpec("pipeline"),
-				tb.PipelineRunStatus(
-					tb.PipelineRunStatusCondition(apis.Condition{
-						Status: corev1.ConditionTrue,
-						Reason: resources.ReasonSucceeded,
-					}),
-					tb.PipelineRunStartTime(secondRunStarted),
-					cb.PipelineRunCompletionTime(secondRunCompleted),
-				),
+		),
+		tb.PipelineRun("pipeline-run-2", "ns",
+			cb.PipelineRunCreationTimestamp(secondRunCreated),
+			tb.PipelineRunLabel("tekton.dev/pipeline", "pipeline"),
+			tb.PipelineRunSpec("pipeline"),
+			tb.PipelineRunStatus(
+				tb.PipelineRunStatusCondition(apis.Condition{
+					Status: corev1.ConditionTrue,
+					Reason: resources.ReasonSucceeded,
+				}),
+				tb.PipelineRunStartTime(secondRunStarted),
+				cb.PipelineRunCompletionTime(secondRunCompleted),
 			),
-		},
+		),
+	}
+
+	cs, _ := test.SeedTestData(t, pipelinetest.Data{
+		Pipelines:    pdata,
+		PipelineRuns: prdata,
 		Namespaces: []*corev1.Namespace{
 			{
 				ObjectMeta: metav1.ObjectMeta{
@@ -399,13 +404,15 @@ func TestPipelinesList_latest_run(t *testing.T) {
 			},
 		},
 	})
-	cs.Pipeline.Resources = cb.APIResourceList(version, []string{"pipeline"})
+	cs.Pipeline.Resources = cb.APIResourceList(version, []string{"pipeline", "pipelinerun"})
 	tdc := testDynamic.Options{}
 	dc, err := tdc.Client(
 		cb.UnstructuredP(pdata[0], version),
+		cb.UnstructuredPR(prdata[0], version),
+		cb.UnstructuredPR(prdata[1], version),
 	)
 	if err != nil {
-		t.Errorf("unable to create dynamic clinet: %v", err)
+		t.Errorf("unable to create dynamic client: %v", err)
 	}
 	p := &test.Params{Tekton: cs.Pipeline, Clock: clock, Kube: cs.Kube, Dynamic: dc}
 	pipeline := Command(p)

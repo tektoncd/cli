@@ -76,7 +76,7 @@ func TestTaskRunGet(t *testing.T) {
 		cb.UnstructuredTR(trdata[1], version),
 	)
 	if err != nil {
-		t.Errorf("unable to create dynamic clinet: %v", err)
+		t.Errorf("unable to create dynamic client: %v", err)
 	}
 
 	p := &test.Params{Tekton: cs.Pipeline, Clock: clock, Kube: cs.Kube, Dynamic: dc}
@@ -164,7 +164,7 @@ func TestTaskGet_v1beta1(t *testing.T) {
 		cb.UnstructuredV1beta1TR(trdata[1], version),
 	)
 	if err != nil {
-		t.Errorf("unable to create dynamic clinet: %v", err)
+		t.Errorf("unable to create dynamic client: %v", err)
 	}
 
 	p := &test.Params{Tekton: cs.Pipeline, Clock: clock, Kube: cs.Kube, Dynamic: dc}
