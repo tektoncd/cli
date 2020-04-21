@@ -26,13 +26,15 @@ import (
 	"github.com/ghodss/yaml"
 	"github.com/spf13/cobra"
 	"github.com/tektoncd/cli/pkg/cli"
+	ctactions "github.com/tektoncd/cli/pkg/clustertask"
 	"github.com/tektoncd/cli/pkg/cmd/taskrun"
 	"github.com/tektoncd/cli/pkg/flags"
 	"github.com/tektoncd/cli/pkg/labels"
 	"github.com/tektoncd/cli/pkg/options"
 	"github.com/tektoncd/cli/pkg/params"
 	"github.com/tektoncd/cli/pkg/task"
-	"github.com/tektoncd/pipeline/pkg/apis/pipeline/v1alpha1"
+	tractions "github.com/tektoncd/cli/pkg/taskrun"
+	"github.com/tektoncd/pipeline/pkg/apis/pipeline/v1beta1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/client-go/discovery"
 )
@@ -71,13 +73,13 @@ func NameArg(args []string, p cli.Params) error {
 	}
 
 	name := args[0]
-	ct, err := c.Tekton.TektonV1alpha1().ClusterTasks().Get(name, metav1.GetOptions{})
+	ct, err := ctactions.Get(c, name, metav1.GetOptions{})
 	if err != nil {
 		return fmt.Errorf(errInvalidClusterTask, name)
 	}
 
-	if ct.Spec.Inputs != nil {
-		params.FilterParamsByType(ct.Spec.Inputs.Params)
+	if ct.Spec.Params != nil {
+		params.FilterParamsByType(ct.Spec.Params)
 	}
 
 	return nil
@@ -152,9 +154,9 @@ like cat,foo,bar
 }
 
 func startClusterTask(opt startOptions, args []string) error {
-	tr := &v1alpha1.TaskRun{
+	tr := &v1beta1.TaskRun{
 		TypeMeta: metav1.TypeMeta{
-			APIVersion: "tekton.dev/v1alpha1",
+			APIVersion: "tekton.dev/v1beta1",
 			Kind:       "TaskRun",
 		},
 		ObjectMeta: metav1.ObjectMeta{},
@@ -165,23 +167,14 @@ func startClusterTask(opt startOptions, args []string) error {
 		return err
 	}
 
-	if opt.DryRun {
-		// Get most recent API version available on cluster for --dry-run
-		apiVersion, err := getAPIVersion(cs.Tekton.Discovery())
-		if err != nil {
-			return err
-		}
-		tr.TypeMeta.APIVersion = apiVersion
-	}
-
 	var ctname string
 	timeoutSeconds := time.Duration(opt.TimeOut) * time.Second
 
 	ctname = args[0]
-	tr.Spec = v1alpha1.TaskRunSpec{
-		TaskRef: &v1alpha1.TaskRef{
+	tr.Spec = v1beta1.TaskRunSpec{
+		TaskRef: &v1beta1.TaskRef{
 			Name: ctname,
-			Kind: v1alpha1.ClusterTaskKind, //Specify TaskRun is for a ClusterTask kind
+			Kind: v1beta1.ClusterTaskKind, //Specify TaskRun is for a ClusterTask kind
 		},
 		Timeout: &metav1.Duration{Duration: timeoutSeconds},
 	}
@@ -189,33 +182,30 @@ func startClusterTask(opt startOptions, args []string) error {
 
 	//TaskRuns are namespaced so using same LastRun method as Task
 	if opt.Last {
-		trLast, err := task.LastRun(cs.Tekton, ctname, opt.cliparams.Namespace(), "ClusterTask")
+		trLast, err := task.LastRun(cs, ctname, opt.cliparams.Namespace(), "ClusterTask")
 		if err != nil {
 			return err
 		}
-		tr.Spec.Inputs = trLast.Spec.Inputs
-		tr.Spec.Outputs = trLast.Spec.Outputs
+		tr.Spec.Resources = trLast.Spec.Resources
+		tr.Spec.Params = trLast.Spec.Params
 		tr.Spec.ServiceAccountName = trLast.Spec.ServiceAccountName
 		tr.Spec.Workspaces = trLast.Spec.Workspaces
 	}
 
-	if tr.Spec.Inputs == nil {
-		tr.Spec.Inputs = &v1alpha1.TaskRunInputs{}
+	if tr.Spec.Resources == nil {
+		tr.Spec.Resources = &v1beta1.TaskRunResources{}
 	}
-	inputRes, err := mergeRes(tr.Spec.Inputs.Resources, opt.InputResources)
+	inputRes, err := mergeRes(tr.Spec.Resources.Inputs, opt.InputResources)
 	if err != nil {
 		return err
 	}
-	tr.Spec.Inputs.Resources = inputRes
+	tr.Spec.Resources.Inputs = inputRes
 
-	if tr.Spec.Outputs == nil {
-		tr.Spec.Outputs = &v1alpha1.TaskRunOutputs{}
-	}
-	outRes, err := mergeRes(tr.Spec.Outputs.Resources, opt.OutputResources)
+	outRes, err := mergeRes(tr.Spec.Resources.Outputs, opt.OutputResources)
 	if err != nil {
 		return err
 	}
-	tr.Spec.Outputs.Resources = outRes
+	tr.Spec.Resources.Outputs = outRes
 
 	labels, err := labels.MergeLabels(tr.ObjectMeta.Labels, opt.Labels)
 	if err != nil {
@@ -223,21 +213,21 @@ func startClusterTask(opt startOptions, args []string) error {
 	}
 	tr.ObjectMeta.Labels = labels
 
-	param, err := params.MergeParam(tr.Spec.Inputs.Params, opt.Params)
+	param, err := params.MergeParam(tr.Spec.Params, opt.Params)
 	if err != nil {
 		return err
 	}
-	tr.Spec.Inputs.Params = param
+	tr.Spec.Params = param
 
 	if len(opt.ServiceAccountName) > 0 {
 		tr.Spec.ServiceAccountName = opt.ServiceAccountName
 	}
 
 	if opt.DryRun {
-		return taskRunDryRun(opt.Output, opt.stream, tr)
+		return taskRunDryRun(cs, opt.Output, opt.stream, tr)
 	}
 
-	trCreated, err := cs.Tekton.TektonV1alpha1().TaskRuns(opt.cliparams.Namespace()).Create(tr)
+	trCreated, err := tractions.Create(cs, tr, metav1.CreateOptions{}, opt.cliparams.Namespace())
 	if err != nil {
 		return err
 	}
@@ -259,7 +249,7 @@ func startClusterTask(opt startOptions, args []string) error {
 	return taskrun.Run(runLogOpts)
 }
 
-func mergeRes(r []v1alpha1.TaskResourceBinding, optRes []string) ([]v1alpha1.TaskResourceBinding, error) {
+func mergeRes(r []v1beta1.TaskResourceBinding, optRes []string) ([]v1beta1.TaskResourceBinding, error) {
 	res, err := parseRes(optRes)
 	if err != nil {
 		return nil, err
@@ -282,17 +272,17 @@ func mergeRes(r []v1alpha1.TaskResourceBinding, optRes []string) ([]v1alpha1.Tas
 	return r, nil
 }
 
-func parseRes(res []string) (map[string]v1alpha1.TaskResourceBinding, error) {
-	resources := map[string]v1alpha1.TaskResourceBinding{}
+func parseRes(res []string) (map[string]v1beta1.TaskResourceBinding, error) {
+	resources := map[string]v1beta1.TaskResourceBinding{}
 	for _, v := range res {
 		r := strings.SplitN(v, "=", 2)
 		if len(r) != 2 {
 			return nil, errors.New(invalidResource + v)
 		}
-		resources[r[0]] = v1alpha1.TaskResourceBinding{
-			PipelineResourceBinding: v1alpha1.PipelineResourceBinding{
+		resources[r[0]] = v1beta1.TaskResourceBinding{
+			PipelineResourceBinding: v1beta1.PipelineResourceBinding{
 				Name: r[0],
-				ResourceRef: &v1alpha1.PipelineResourceRef{
+				ResourceRef: &v1beta1.PipelineResourceRef{
 					Name: r[1],
 				},
 			},
@@ -301,11 +291,15 @@ func parseRes(res []string) (map[string]v1alpha1.TaskResourceBinding, error) {
 	return resources, nil
 }
 
-func taskRunDryRun(output string, s *cli.Stream, tr *v1alpha1.TaskRun) error {
+func taskRunDryRun(c *cli.Clients, output string, s *cli.Stream, tr *v1beta1.TaskRun) error {
+	trWithVersion, err := convertedTrVersion(c, tr)
+	if err != nil {
+		return err
+	}
 	format := strings.ToLower(output)
 
 	if format == "" || format == "yaml" {
-		trBytes, err := yaml.Marshal(tr)
+		trBytes, err := yaml.Marshal(trWithVersion)
 		if err != nil {
 			return err
 		}
@@ -313,7 +307,7 @@ func taskRunDryRun(output string, s *cli.Stream, tr *v1alpha1.TaskRun) error {
 	}
 
 	if format == "json" {
-		trBytes, err := json.MarshalIndent(tr, "", "\t")
+		trBytes, err := json.MarshalIndent(trWithVersion, "", "\t")
 		if err != nil {
 			return err
 		}
@@ -333,4 +327,23 @@ func getAPIVersion(discovery discovery.DiscoveryInterface) (string, error) {
 		return "tekton.dev/v1alpha1", nil
 	}
 	return "tekton.dev/v1beta1", nil
+}
+
+func convertedTrVersion(c *cli.Clients, tr *v1beta1.TaskRun) (interface{}, error) {
+	version, err := getAPIVersion(c.Tekton.Discovery())
+	if err != nil {
+		return nil, err
+	}
+
+	if version == "tekton.dev/v1alpha1" {
+		trConverted := tractions.ConvertDown(tr)
+		trConverted.APIVersion = version
+		trConverted.Kind = "TaskRun"
+		if err != nil {
+			return nil, err
+		}
+		return &trConverted, nil
+	}
+
+	return tr, nil
 }

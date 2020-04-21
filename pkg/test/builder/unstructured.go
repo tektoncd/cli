@@ -58,7 +58,6 @@ func UnstructuredT(task *v1alpha1.Task, version string) *unstructured.Unstructur
 }
 
 func UnstructuredCT(clustertask *v1alpha1.ClusterTask, version string) *unstructured.Unstructured {
-	clustertask.ClusterName = "demo"
 	clustertask.APIVersion = "tekton.dev/" + version
 	clustertask.Kind = "clustertask"
 	object, _ := runtime.DefaultUnstructuredConverter.ToUnstructured(clustertask)
@@ -104,7 +103,6 @@ func UnstructuredV1beta1T(task *v1beta1.Task, version string) *unstructured.Unst
 }
 
 func UnstructuredV1beta1CT(clustertask *v1beta1.ClusterTask, version string) *unstructured.Unstructured {
-	clustertask.ClusterName = "demo"
 	clustertask.APIVersion = "tekton.dev/" + version
 	clustertask.Kind = "clustertask"
 	object, _ := runtime.DefaultUnstructuredConverter.ToUnstructured(clustertask)

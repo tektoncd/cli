@@ -189,7 +189,7 @@ func initLastRunName(opts *options.LogOptions) error {
 	if err != nil {
 		return err
 	}
-	lastrun, err := thelper.DynamicLastRun(cs, opts.TaskName, opts.Params.Namespace())
+	lastrun, err := thelper.LastRun(cs, opts.TaskName, opts.Params.Namespace(), "Task")
 	if err != nil {
 		return err
 	}

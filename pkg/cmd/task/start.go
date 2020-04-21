@@ -212,7 +212,7 @@ func useTaskRunFrom(opt startOptions, tr *v1beta1.TaskRun, cs *cli.Clients, tnam
 		err    error
 	)
 	if opt.Last {
-		trUsed, err = task.DynamicLastRun(cs, tname, opt.cliparams.Namespace())
+		trUsed, err = task.LastRun(cs, tname, opt.cliparams.Namespace(), "Task")
 		if err != nil {
 			return err
 		}

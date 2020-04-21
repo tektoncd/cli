@@ -20,6 +20,11 @@ import (
 	"github.com/tektoncd/cli/pkg/test"
 )
 
+const (
+	versionA1 = "v1alpha1"
+	versionB1 = "v1beta1"
+)
+
 func TestClusterTask_invalid(t *testing.T) {
 
 	p := &test.Params{}
