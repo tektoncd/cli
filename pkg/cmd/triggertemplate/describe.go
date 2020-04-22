@@ -47,15 +47,15 @@ const describeTemplate = `{{decorate "bold" "Name"}}:	{{ .TriggerTemplate.Name }
 {{- range $p := .TriggerTemplate.Spec.Params }}
 {{- if not $p.Default }}
 {{- if eq $p.Type "" }}
- {{decorate "bullet" $p.Name }}	{{ "string" }}	{{ $p.Description }}	{{ "---" }}
+ {{decorate "bullet" $p.Name }}	{{ "string" }}	{{ formatDesc $p.Description }}	{{ "---" }}
 {{- else }}
- {{decorate "bullet" $p.Name }}	{{ $p.Type }}	{{ $p.Description }}	{{ "---" }} 
+ {{decorate "bullet" $p.Name }}	{{ $p.Type }}	{{ formatDesc $p.Description }}	{{ "---" }} 
 {{ end }}
 {{- else }}
 {{- if eq $p.Default.Type "string" }}
- {{decorate "bullet" $p.Name }}	{{ $p.Default.Type }}	{{ $p.Description }}	{{ $p.Default.StringVal }}
+ {{decorate "bullet" $p.Name }}	{{ $p.Default.Type }}	{{ formatDesc $p.Description }}	{{ $p.Default.StringVal }}
 {{- else }}
- {{decorate "bullet" $p.Name }}	{{ $p.Default.Type }}	{{ $p.Description }}	{{ $p.Default.ArrayVal }}
+ {{decorate "bullet" $p.Name }}	{{ $p.Default.Type }}	{{ formatDesc $p.Description }}	{{ $p.Default.ArrayVal }}
 {{- end }}
 {{- end }}
 {{- end }}
@@ -161,6 +161,7 @@ func printTriggerTemplateDescription(s *cli.Stream, p cli.Params, ttname string)
 
 	funcMap := template.FuncMap{
 		"decorate":            formatted.DecorateAttr,
+		"formatDesc":          formatted.FormatDesc,
 		"getResourceTemplate": getResourceTemplate,
 	}
 
