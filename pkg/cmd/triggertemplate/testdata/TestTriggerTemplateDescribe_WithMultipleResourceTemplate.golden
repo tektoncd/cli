@@ -1,0 +1,33 @@
+Name:        tt1
+Namespace:   ns
+
+Params
+
+ NAME   TYPE     DESCRIPTION                DEFAULT VALUE
+ key1   string   test with multiple param   value1
+ key2   string                              value2
+ key3   string                              value3
+ key4   string   test with multiple param   value4
+
+ResourceTemplates
+
+[
+    {
+        "kind": "PipelineRun",
+        "apiVersion": "tekton.dev/v1beta1",
+        "metadata": {
+            "creationTimestamp": null
+        },
+        "spec": {},
+        "status": {}
+    },
+    {
+        "kind": "PipelineResource",
+        "apiVersion": "tekton.dev/v1alpha1",
+        "metadata": {
+            "creationTimestamp": null
+        },
+        "spec": {},
+        "status": {}
+    }
+]

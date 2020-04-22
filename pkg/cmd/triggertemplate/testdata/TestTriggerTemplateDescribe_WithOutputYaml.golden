@@ -1,0 +1,19 @@
+apiVersion: triggers.tekton.dev
+kind: TriggerTemplate
+metadata:
+  creationTimestamp: null
+  name: tt1
+  namespace: ns
+spec:
+  params:
+  - default: value
+    description: test with one param
+    name: key
+  resourcetemplates:
+  - apiVersion: tekton.dev/v1alpha1
+    kind: PipelineRun
+    metadata:
+      creationTimestamp: null
+    spec: {}
+    status: {}
+status: {}

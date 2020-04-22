@@ -1,0 +1,21 @@
+Name:        tt1
+Namespace:   ns
+
+Params
+
+ NAME   TYPE     DESCRIPTION                         DEFAULT VALUE
+ foo    string   foo required in resource template   bar
+
+ResourceTemplates
+
+[
+    {
+        "kind": "PipelineRun",
+        "apiVersion": "tekton.dev/v1alpha1",
+        "metadata": {
+            "creationTimestamp": null
+        },
+        "spec": "$(params.foo)",
+        "status": {}
+    }
+]

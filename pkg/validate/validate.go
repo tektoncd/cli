@@ -41,8 +41,7 @@ func NamespaceExists(p params) error {
 		return fmt.Errorf("failed to create kube client")
 	}
 
-	_, err = cs.CoreV1().Namespaces().Get(p.Namespace(), metav1.GetOptions{})
-	if err != nil {
+	if _, err = cs.CoreV1().Namespaces().Get(p.Namespace(), metav1.GetOptions{}); err != nil {
 		return err
 	}
 
