@@ -255,7 +255,7 @@ func TestPipelineDescribe_with_spec_resource_param_run(t *testing.T) {
 					tb.RunAfter("one", "two"),
 				),
 				tb.PipelineDeclaredResource("name", v1alpha1.PipelineResourceTypeGit),
-				tb.PipelineParamSpec("pipeline-param", v1alpha1.ParamTypeString, tb.ParamSpecDefault("somethingdifferent")),
+				tb.PipelineParamSpec("pipeline-param", v1alpha1.ParamTypeString, tb.ParamSpecDescription("param of type string"), tb.ParamSpecDefault("somethingdifferent")),
 			),
 		),
 	}
@@ -424,7 +424,7 @@ func TestPipelineDescribe_with_spec_multiple_resource_param_run(t *testing.T) {
 				tb.PipelineDeclaredResource("repo", v1alpha1.PipelineResourceTypeGit),
 				tb.PipelineParamSpec("pipeline-param", v1alpha1.ParamTypeString, tb.ParamSpecDefault("somethingdifferent")),
 				tb.PipelineParamSpec("rev-param", v1alpha1.ParamTypeArray, tb.ParamSpecDefault("booms", "booms", "booms")),
-				tb.PipelineParamSpec("pipeline-param2", v1alpha1.ParamTypeString),
+				tb.PipelineParamSpec("pipeline-param2", v1alpha1.ParamTypeString, tb.ParamSpecDescription("params without the default value")),
 				tb.PipelineParamSpec("rev-param2", v1alpha1.ParamTypeArray),
 			),
 		),

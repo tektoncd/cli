@@ -13,9 +13,9 @@ Output Resources
 
 Params
 
- NAME    TYPE     DEFAULT VALUE
- myarg   string   default
- print   array    [booms booms booms]
+ NAME    TYPE     DESCRIPTION            DEFAULT VALUE
+ myarg   string   param type is string   default
+ print   array    param type is array    [booms booms booms]
 
 Steps
 

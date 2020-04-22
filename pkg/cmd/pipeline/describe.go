@@ -57,15 +57,15 @@ const describeTemplate = `{{decorate "bold" "Name"}}:	{{ .PipelineName }}
 {{- $l := len .Pipeline.Spec.Params }}{{ if eq $l 0 }}
  No params
 {{- else }}
- NAME	TYPE	DEFAULT VALUE
+ NAME	TYPE	DESCRIPTION	DEFAULT VALUE
 {{- range $i, $p := .Pipeline.Spec.Params }}
 {{- if not $p.Default }}
- {{decorate "bullet" $p.Name }}	{{ $p.Type }}	{{ "---" }}
+ {{decorate "bullet" $p.Name }}	{{ $p.Type }}	{{ formatDesc $p.Description }}	{{ "---" }}
 {{- else }}
 {{- if eq $p.Type "string" }}
- {{decorate "bullet" $p.Name }}	{{ $p.Type }}	{{ $p.Default.StringVal }}
+ {{decorate "bullet" $p.Name }}	{{ $p.Type }}	{{ formatDesc $p.Description }}	{{ $p.Default.StringVal }}
 {{- else }}
- {{decorate "bullet" $p.Name }}	{{ $p.Type }}	{{ $p.Default.ArrayVal }}
+ {{decorate "bullet" $p.Name }}	{{ $p.Type }}	{{ formatDesc $p.Description }}	{{ $p.Default.ArrayVal }}
 {{- end }}
 {{- end }}
 {{- end }}
@@ -171,6 +171,7 @@ func printPipelineDescription(out io.Writer, p cli.Params, pname string) error {
 		"formatDuration":  formatted.Duration,
 		"formatCondition": formatted.Condition,
 		"decorate":        formatted.DecorateAttr,
+		"formatDesc":      formatted.FormatDesc,
 		"join":            strings.Join,
 	}
 

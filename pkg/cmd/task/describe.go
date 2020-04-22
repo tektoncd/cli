@@ -78,15 +78,15 @@ const describeTemplate = `{{decorate "bold" "Name"}}:	{{ .Task.Name }}
 {{- if eq (len .Task.Spec.Params) 0 }}
  No params
 {{- else }}
- NAME	TYPE	DEFAULT VALUE
+ NAME	TYPE	DESCRIPTION	DEFAULT VALUE
 {{- range $p := .Task.Spec.Params }}
 {{- if not $p.Default }}
- {{decorate "bullet" $p.Name }}	{{ $p.Type }}	{{ "---" }}
+ {{decorate "bullet" $p.Name }}	{{ $p.Type }}	{{ formatDesc $p.Description }}	{{ "---" }}
 {{- else }}
 {{- if eq $p.Type "string" }}
- {{decorate "bullet" $p.Name }}	{{ $p.Type }}	{{ $p.Default.StringVal }}
+ {{decorate "bullet" $p.Name }}	{{ $p.Type }}	{{ formatDesc $p.Description }}	{{ $p.Default.StringVal }}
 {{- else }}
- {{decorate "bullet" $p.Name }}	{{ $p.Type }}	{{ $p.Default.ArrayVal }}
+ {{decorate "bullet" $p.Name }}	{{ $p.Type }}	{{ formatDesc $p.Description }}	{{ $p.Default.ArrayVal }}
 {{- end }}
 {{- end }}
 {{- end }}
@@ -212,6 +212,7 @@ func printTaskDescription(s *cli.Stream, p cli.Params, tname string) error {
 		"formatCondition": formatted.Condition,
 		"decorate":        formatted.DecorateAttr,
 		"autoStepName":    formatted.AutoStepName,
+		"formatDesc":      formatted.FormatDesc,
 	}
 
 	w := tabwriter.NewWriter(s.Out, 0, 5, 3, ' ', tabwriter.TabIndent)

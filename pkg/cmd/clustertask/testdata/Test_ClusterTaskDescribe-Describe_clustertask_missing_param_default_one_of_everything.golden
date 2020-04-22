@@ -13,8 +13,8 @@ Output Resources
 
 Params
 
- NAME    TYPE     DEFAULT VALUE
- myarg   string   ---
+ NAME    TYPE     DESCRIPTION   DEFAULT VALUE
+ myarg   string                 ---
 
 Steps
 

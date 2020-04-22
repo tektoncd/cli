@@ -9,8 +9,8 @@ Resources
 
 Params
 
- NAME             TYPE     DEFAULT VALUE
- pipeline-param   string   somethingdifferent
+ NAME             TYPE     DESCRIPTION            DEFAULT VALUE
+ pipeline-param   string   param of type string   somethingdifferent
 
 Tasks
 

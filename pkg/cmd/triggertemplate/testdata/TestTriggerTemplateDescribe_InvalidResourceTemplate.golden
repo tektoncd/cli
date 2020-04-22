@@ -3,8 +3,8 @@ Namespace:   ns
 
 Params
 
- NAME   TYPE     DESCRIPTION                         DEFAULT VALUE
- foo    string   foo required in resource template   bar
+ NAME   TYPE     DESCRIPTION              DEFAULT VALUE
+ foo    string   foo required in res...   bar
 
 ResourceTemplates
 

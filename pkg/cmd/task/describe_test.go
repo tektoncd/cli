@@ -164,8 +164,11 @@ func TestTaskDescribe_OnlyNameParams(t *testing.T) {
 	tasks := []*v1alpha1.Task{
 		tb.Task("task-1", "ns",
 			tb.TaskSpec(
-				tb.TaskParam("myarg", v1alpha1.ParamTypeString),
-				tb.TaskParam("myprint", v1alpha1.ParamTypeString),
+				tb.TaskParam("myarg", v1alpha1.ParamTypeString, tb.ParamSpecDescription("params without the default value")),
+				tb.TaskParam("myprint", v1alpha1.ParamTypeString, tb.ParamSpecDescription("testing very long "+
+					"description information in order to test FormatDesc funnction call longlonglonglonglonglonglonglong"+
+					"longlonglonglonglonglonglonglonglonglonglonglonglonglonglonglonglonglonglonglonglonglonglonglonglong"+
+					"longlonglonglonglonglonglonglonglonglonglonglonglonglonglonglonglonglonglonglonglonglonglonglonglong")),
 				tb.TaskParam("myarray", v1alpha1.ParamTypeArray),
 			),
 		),
@@ -221,7 +224,8 @@ func TestTaskDescribe_Full(t *testing.T) {
 				),
 				tb.TaskParam("myarg", v1alpha1.ParamTypeString),
 				tb.TaskParam("myarray", v1alpha1.ParamTypeArray),
-				tb.TaskParam("print", v1alpha1.ParamTypeString, tb.ParamSpecDefault("somethingdifferent")),
+				tb.TaskParam("print", v1alpha1.ParamTypeString, tb.ParamSpecDescription("params with sting type"),
+					tb.ParamSpecDefault("somethingdifferent")),
 				tb.TaskParam("output", v1alpha1.ParamTypeArray, tb.ParamSpecDefault("booms", "booms", "booms")),
 				tb.Step("busybox",
 					tb.StepName("hello"),
