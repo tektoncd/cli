@@ -1,0 +1,20 @@
+Name:        tt1
+Namespace:   ns
+
+Params
+
+ No params
+
+ResourceTemplates
+
+[
+    {
+        "kind": "PipelineRun",
+        "apiVersion": "tekton.dev/v1alpha1",
+        "metadata": {
+            "creationTimestamp": null
+        },
+        "spec": {},
+        "status": {}
+    }
+]

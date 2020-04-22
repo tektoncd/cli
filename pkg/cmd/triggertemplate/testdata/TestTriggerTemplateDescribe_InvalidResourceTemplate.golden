@@ -1,0 +1,10 @@
+Name:        tt1
+Namespace:   ns
+
+Params
+
+ NAME   TYPE     DESCRIPTION                         DEFAULT VALUE
+ foo    string   foo required in resource template   bar
+
+ResourceTemplates
+
