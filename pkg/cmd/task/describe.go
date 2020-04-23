@@ -65,7 +65,7 @@ const describeTemplate = `{{decorate "bold" "Name"}}:	{{ .Task.Name }}
 {{- if eq (len .Task.Spec.Resources.Outputs) 0 }}
  No output resources
 {{- else }}
- NAME	  TYPE
+ NAME	TYPE
  
 {{- range $or := .Task.Spec.Resources.Outputs }}
  {{decorate "bullet" $or.Name }}	{{ $or.Type }}

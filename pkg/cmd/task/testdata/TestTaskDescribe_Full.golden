@@ -11,7 +11,7 @@ Input Resources
 
 Output Resources
 
- NAME               TYPE
+ NAME             TYPE
  artifact-image   image
  code-image       image
 
