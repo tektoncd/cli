@@ -25,37 +25,46 @@ import (
 )
 
 func TestGetPipelineVersion(t *testing.T) {
-	cs, _ := test.SeedTestData(t, pipelinetest.Data{})
-	p := &test.Params{Kube: cs.Kube}
-	cls, err := p.Clients()
-	if err != nil {
-		t.Errorf("failed to get client: %v", err)
-	}
-
 	testParams := []struct {
 		name       string
+		namespace  string
 		deployment *v1.Deployment
 		want       string
 	}{{
-		name:       "emppty deployment items",
+		name:       "empty deployment items",
+		namespace:  "tekton-pipelines",
 		deployment: &v1.Deployment{},
 		want:       "",
 	}, {
+		name:       "controller in different namespace",
+		namespace:  "test",
+		deployment: getDeploymentData("dep", "", nil, map[string]string{"tekton.dev/release": "v0.10.0"}),
+		want:       "v0.10.0",
+	}, {
 		name:       "deployment spec does not have labels and annotations specific to version",
+		namespace:  "tekton-pipelines",
 		deployment: getDeploymentData("dep1", "pipeline/cmd/controller:v0.9.0@sha256:5d23", nil, nil),
 		want:       "v0.9.0",
 	}, {
 		name:       "deployment spec have annotation specific to version",
+		namespace:  "openshift-pipelines",
 		deployment: getDeploymentData("dep2", "", nil, map[string]string{"tekton.dev/release": "v0.10.0"}),
 		want:       "v0.10.0",
 	}, {
 		name:       "deployment spec have labels specific to master version",
-		deployment: getDeploymentData("dep4", "", map[string]string{"pipeline.tekton.dev/release": "master"}, nil),
+		namespace:  "tekton-pipelines",
+		deployment: getDeploymentData("dep3", "", map[string]string{"pipeline.tekton.dev/release": "master"}, nil),
 		want:       "master",
 	}}
 	for _, tp := range testParams {
 		t.Run(tp.name, func(t *testing.T) {
-			if _, err := cls.Kube.AppsV1().Deployments(pipelineNamespace).Create(tp.deployment); err != nil {
+			cs, _ := test.SeedTestData(t, pipelinetest.Data{})
+			p := &test.Params{Kube: cs.Kube}
+			cls, err := p.Clients()
+			if err != nil {
+				t.Errorf("failed to get client: %v", err)
+			}
+			if _, err := cls.Kube.AppsV1().Deployments(tp.namespace).Create(tp.deployment); err != nil {
 				t.Errorf("failed to create deployment: %v", err)
 			}
 			version, _ := GetPipelineVersion(cls)
