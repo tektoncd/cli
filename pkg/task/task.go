@@ -117,3 +117,68 @@ func getV1alpha1(c *cli.Clients, taskname string, opts metav1.GetOptions, ns str
 	}
 	return task, nil
 }
+
+// this will convert v1beta1 TaskSpec to v1alpha1 TaskSpec
+func SpecConvertDown(spec *v1beta1.TaskSpec) *v1alpha1.TaskSpec {
+	downTaskSpec := &v1alpha1.TaskSpec{}
+	if spec != nil {
+		downTaskSpec.Steps = spec.Steps
+		downTaskSpec.Volumes = spec.Volumes
+		downTaskSpec.StepTemplate = spec.StepTemplate
+		downTaskSpec.Sidecars = spec.Sidecars
+		downTaskSpec.Workspaces = spec.Workspaces
+		downTaskSpec.Results = spec.Results
+		downTaskSpec.Resources = spec.Resources
+		downTaskSpec.Params = spec.Params
+		downTaskSpec.Description = spec.Description
+		if spec.Resources != nil {
+			if len(spec.Resources.Inputs) > 0 {
+				if downTaskSpec.Inputs == nil {
+					downTaskSpec.Inputs = &v1alpha1.Inputs{}
+				}
+				downTaskSpec.Inputs.Resources = make([]v1alpha1.TaskResource, len(spec.Resources.Inputs))
+				for i, resource := range spec.Resources.Inputs {
+					downTaskSpec.Inputs.Resources[i] = v1alpha1.TaskResource{
+						ResourceDeclaration: v1alpha1.ResourceDeclaration{
+							Name:        resource.Name,
+							Type:        resource.Type,
+							Description: resource.Description,
+							TargetPath:  resource.TargetPath,
+							Optional:    resource.Optional,
+						},
+					}
+				}
+			}
+
+			if len(spec.Resources.Outputs) > 0 {
+				if downTaskSpec.Outputs == nil {
+					downTaskSpec.Outputs = &v1alpha1.Outputs{}
+				}
+				downTaskSpec.Outputs.Resources = make([]v1alpha1.TaskResource, len(spec.Resources.Outputs))
+				for i, resource := range spec.Resources.Outputs {
+					downTaskSpec.Outputs.Resources[i] = v1alpha1.TaskResource{
+						ResourceDeclaration: v1alpha1.ResourceDeclaration{
+							Name:        resource.Name,
+							Type:        resource.Type,
+							Description: resource.Description,
+							TargetPath:  resource.TargetPath,
+							Optional:    resource.Optional,
+						},
+					}
+				}
+			}
+		}
+
+		if spec.Params != nil && len(spec.Params) > 0 {
+			if downTaskSpec.Inputs == nil {
+				downTaskSpec.Inputs = &v1alpha1.Inputs{}
+			}
+			downTaskSpec.Inputs.Params = make([]v1alpha1.ParamSpec, len(spec.Params))
+			for i, param := range spec.Params {
+				downTaskSpec.Inputs.Params[i] = *param.DeepCopy()
+			}
+		}
+	}
+
+	return downTaskSpec
+}
