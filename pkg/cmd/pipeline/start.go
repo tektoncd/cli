@@ -197,10 +197,9 @@ func (opt *startOptions) startPipeline(pipelineStart *v1beta1.Pipeline) error {
 
 	var pr *v1beta1.PipelineRun
 	if opt.Filename == "" {
-		apiVersion := "tekton.dev/v1beta1"
 		pr = &v1beta1.PipelineRun{
 			TypeMeta: metav1.TypeMeta{
-				APIVersion: apiVersion,
+				APIVersion: "tekton.dev/v1beta1",
 				Kind:       "PipelineRun",
 			},
 			ObjectMeta: objMeta,
@@ -211,7 +210,7 @@ func (opt *startOptions) startPipeline(pipelineStart *v1beta1.Pipeline) error {
 	} else {
 		pr = &v1beta1.PipelineRun{
 			TypeMeta: metav1.TypeMeta{
-				APIVersion: pipelineStart.TypeMeta.APIVersion,
+				APIVersion: "tekton.dev/v1beta1",
 				Kind:       "PipelineRun",
 			},
 			ObjectMeta: objMeta,
@@ -755,6 +754,8 @@ func parsePipeline(taskLocation string, p cli.Params) (*v1beta1.Pipeline, error)
 		if err != nil {
 			return nil, err
 		}
+		pipelineConverted.TypeMeta.APIVersion = "tekton.dev/v1alpha1"
+		pipelineConverted.TypeMeta.APIVersion = "Pipeline"
 		return &pipelineConverted, nil
 	}
 

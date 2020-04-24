@@ -35,23 +35,6 @@ import (
 
 var prGroupResource = schema.GroupVersionResource{Group: "tekton.dev", Resource: "pipelineruns"}
 
-//Todo
-// changing this GetPipelineRun to use dynamic client leads to multiple other change in start commands
-// keeping this as it is, will change this while working on start commands
-// GetPipelineRun return a pipelinerun in a namespace from its name
-func GetPipelineRun(p cli.Params, opts metav1.GetOptions, prname string) (*v1alpha1.PipelineRun, error) {
-	cs, err := p.Clients()
-	if err != nil {
-		return nil, err
-	}
-
-	prun, err := cs.Tekton.TektonV1alpha1().PipelineRuns(p.Namespace()).Get(prname, opts)
-	if err != nil {
-		return nil, err
-	}
-	return prun, nil
-}
-
 // GetAllPipelineRuns returns all pipelinesruns running in a namespace
 func GetAllPipelineRuns(p cli.Params, opts metav1.ListOptions, limit int) ([]string, error) {
 	cs, err := p.Clients()

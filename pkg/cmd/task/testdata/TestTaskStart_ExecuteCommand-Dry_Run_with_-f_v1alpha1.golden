@@ -5,17 +5,35 @@ metadata:
   generateName: test-task-run-
   namespace: ns
 spec:
-  resources:
-    inputs:
+  inputs:
+    resources:
     - name: docker-source
       resourceRef:
         name: git
-    outputs:
+  outputs:
+    resources:
     - name: builtImage
       resourceRef:
         name: image
   serviceAccountName: svc1
   taskSpec:
+    inputs:
+      params:
+      - default: /workspace/docker-source/Dockerfile
+        description: The path to the dockerfile to build
+        name: pathToDockerFile
+        type: string
+      - default: /workspace/docker-source
+        description: The build context used by Kaniko (https://github.com/GoogleContainerTools/kaniko#kaniko-build-contexts)
+        name: pathToContext
+        type: string
+      resources:
+      - name: docker-source
+        type: git
+    outputs:
+      resources:
+      - name: builtImage
+        type: image
     params:
     - default: /workspace/docker-source/Dockerfile
       description: The path to the dockerfile to build

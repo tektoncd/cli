@@ -186,10 +186,8 @@ func parseTask(taskLocation string, p cli.Params) (*v1beta1.Task, error) {
 	if err != nil {
 		return nil, err
 	}
-	version := m["apiVersion"]
 	task := v1beta1.Task{}
-
-	if version == "tekton.dev/v1alpha1" {
+	if m["apiVersion"] == "tekton.dev/v1alpha1" {
 		v1alpha1Task := v1alpha1.Task{}
 		if err := yaml.Unmarshal(b, &v1alpha1Task); err != nil {
 			return nil, err
@@ -198,6 +196,7 @@ func parseTask(taskLocation string, p cli.Params) (*v1beta1.Task, error) {
 			return nil, err
 		}
 		task.TypeMeta.APIVersion = "tekton.dev/v1alpha1"
+		task.TypeMeta.APIVersion = "Task"
 		return &task, nil
 	}
 
@@ -258,14 +257,6 @@ func startTask(opt startOptions, args []string) error {
 
 	var tname string
 	if len(args) > 0 {
-		if opt.DryRun {
-			// Get most recent API version available on cluster for --dry-run
-			apiVersion, err := getAPIVersion(cs.Tekton.Discovery())
-			if err != nil {
-				return err
-			}
-			tr.TypeMeta.APIVersion = apiVersion
-		}
 		tname = args[0]
 		tr.Spec = v1beta1.TaskRunSpec{
 			TaskRef: &v1beta1.TaskRef{Name: tname},
@@ -276,7 +267,6 @@ func startTask(opt startOptions, args []string) error {
 			return err
 		}
 		tname = task.ObjectMeta.Name
-		tr.TypeMeta.APIVersion = task.TypeMeta.APIVersion
 		tr.Spec = v1beta1.TaskRunSpec{
 			TaskSpec: &task.Spec,
 		}
@@ -341,7 +331,7 @@ func startTask(opt startOptions, args []string) error {
 	}
 
 	if opt.DryRun {
-		return taskRunDryRun(opt.Output, opt.stream, tr)
+		return taskRunDryRun(cs, opt.Output, opt.stream, tr)
 	}
 
 	trCreated, err := traction.Create(cs, tr, metav1.CreateOptions{}, opt.cliparams.Namespace())
@@ -409,11 +399,15 @@ func parseRes(res []string) (map[string]v1beta1.TaskResourceBinding, error) {
 	return resources, nil
 }
 
-func taskRunDryRun(output string, s *cli.Stream, tr *v1beta1.TaskRun) error {
-	format := strings.ToLower(output)
+func taskRunDryRun(c *cli.Clients, output string, s *cli.Stream, tr *v1beta1.TaskRun) error {
+	trWithVersion, err := convertedTrVersion(c, tr)
+	if err != nil {
+		return err
+	}
 
+	format := strings.ToLower(output)
 	if format == "" || format == "yaml" {
-		trBytes, err := yaml.Marshal(tr)
+		trBytes, err := yaml.Marshal(trWithVersion)
 		if err != nil {
 			return err
 		}
@@ -421,7 +415,7 @@ func taskRunDryRun(output string, s *cli.Stream, tr *v1beta1.TaskRun) error {
 	}
 
 	if format == "json" {
-		trBytes, err := json.MarshalIndent(tr, "", "\t")
+		trBytes, err := json.MarshalIndent(trWithVersion, "", "\t")
 		if err != nil {
 			return err
 		}
@@ -441,4 +435,23 @@ func getAPIVersion(discovery discovery.DiscoveryInterface) (string, error) {
 		return "tekton.dev/v1alpha1", nil
 	}
 	return "tekton.dev/v1beta1", nil
+}
+
+func convertedTrVersion(c *cli.Clients, tr *v1beta1.TaskRun) (interface{}, error) {
+	version, err := getAPIVersion(c.Tekton.Discovery())
+	if err != nil {
+		return nil, err
+	}
+
+	if version == "tekton.dev/v1alpha1" {
+		trConverted := traction.ConvertDown(tr)
+		trConverted.APIVersion = version
+		trConverted.Kind = "TaskRun"
+		if err != nil {
+			return nil, err
+		}
+		return &trConverted, nil
+	}
+
+	return tr, nil
 }

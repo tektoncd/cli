@@ -7,16 +7,22 @@
 		"creationTimestamp": null
 	},
 	"spec": {
-		"resources": {
-			"inputs": [
+		"serviceAccountName": "svc1",
+		"taskRef": {
+			"name": "task-1"
+		},
+		"inputs": {
+			"resources": [
 				{
 					"name": "my-repo",
 					"resourceRef": {
 						"name": "git-repo"
 					}
 				}
-			],
-			"outputs": [
+			]
+		},
+		"outputs": {
+			"resources": [
 				{
 					"name": "code-image",
 					"resourceRef": {
@@ -24,10 +30,6 @@
 					}
 				}
 			]
-		},
-		"serviceAccountName": "svc1",
-		"taskRef": {
-			"name": "task-1"
 		}
 	},
 	"status": {

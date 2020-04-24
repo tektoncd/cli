@@ -5,12 +5,13 @@ metadata:
   generateName: task-1-run-
   namespace: ns
 spec:
-  resources:
-    inputs:
+  inputs:
+    resources:
     - name: my-repo
       resourceRef:
         name: git-repo
-    outputs:
+  outputs:
+    resources:
     - name: code-image
       resourceRef:
         name: output-image
