@@ -38,6 +38,7 @@ require (
 	k8s.io/cli-runtime v0.17.0
 	k8s.io/client-go v0.17.0
 	knative.dev/pkg v0.0.0-20200207155214-fef852970f43
+	sigs.k8s.io/yaml v1.1.0
 )
 
 replace (

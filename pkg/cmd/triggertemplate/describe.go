@@ -149,7 +149,7 @@ func printTriggerTemplateDescription(s *cli.Stream, p cli.Params, ttname string)
 
 	tt, err := cs.Triggers.TriggersV1alpha1().TriggerTemplates(p.Namespace()).Get(ttname, metav1.GetOptions{})
 	if err != nil {
-		fmt.Fprintf(s.Err, "failed to get task %s\n", ttname)
+		fmt.Fprintf(s.Err, "failed to get triggertemplate %s\n", ttname)
 		return err
 	}
 

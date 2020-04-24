@@ -1,0 +1,11 @@
+Name:                      el1
+Namespace:                 ns
+URL:                       http://el-listener.default.svc.cluster.local
+EventListnerServiceName:   el-listener
+ 
+EventListenerTriggers
+
+ BINDING NAME    KIND                    APIVERSION
+ tb1             ClusterTriggerBinding   v1alpha1
+ TEMPLATE NAME   APIVERSION
+ tt1             v1alpha1
