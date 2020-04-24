@@ -1,0 +1,25 @@
+Name:        el1
+Namespace:   ns
+ 
+EventListenerTriggers
+
+ NAME
+ foo-trig
+ BINDING NAME    KIND             APIVERSION
+ tb1             TriggerBinding   
+ tb2                              v1alpha1
+ tb3             TriggerBinding   v1alpha1
+ TEMPLATE NAME   APIVERSION
+ tt1             v1alpha1
+ INTERCEPTORS
+- webhook:
+    header:
+    - name: header
+      value:
+      - value
+    objectRef:
+      apiVersion: v1
+      kind: Service
+      name: foo
+      namespace: namespace
+

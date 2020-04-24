@@ -1,0 +1,20 @@
+Name:        el1
+Namespace:   ns
+ 
+EventListenerTriggers
+
+ NAME
+ foo-trig
+ BINDING NAME    KIND             APIVERSION
+ tb1             TriggerBinding   
+ tb2                              v1alpha1
+ tb3             TriggerBinding   v1alpha1
+ TEMPLATE NAME   APIVERSION
+ tt1             v1alpha1
+ INTERCEPTORS
+- cel:
+    filter: body.value == 'test'
+    overlays:
+    - expression: '''testing'''
+      key: value
+
