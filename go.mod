@@ -22,7 +22,7 @@ require (
 	github.com/pkg/errors v0.8.1
 	github.com/spf13/cobra v0.0.5
 	github.com/spf13/pflag v1.0.5
-	github.com/tektoncd/pipeline v0.11.2
+	github.com/tektoncd/pipeline v0.11.3
 	github.com/tektoncd/plumbing v0.0.0-20200217163359-cd0db6e567d2
 	github.com/tektoncd/triggers v0.4.0
 	github.com/tidwall/gjson v1.6.0 // indirect
@@ -42,11 +42,9 @@ require (
 
 replace (
 	contrib.go.opencensus.io/exporter/stackdriver => contrib.go.opencensus.io/exporter/stackdriver v0.12.9-0.20191108183826-59d068f8d8ff
-	git.apache.org/thrift.git => github.com/apache/thrift v0.0.0-20180902110319-2566ecd5d999
 	github.com/kr/pty => github.com/creack/pty v1.1.9
 	github.com/spf13/cobra => github.com/chmouel/cobra v0.0.0-20200107083527-379e7a80af0c
 	knative.dev/pkg => knative.dev/pkg v0.0.0-20200113182502-b8dc5fbc6d2f
-	knative.dev/pkg/vendor/github.com/spf13/pflag => github.com/spf13/pflag v1.0.5
 )
 
 // Pin k8s deps to 1.16.7
