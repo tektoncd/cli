@@ -44,6 +44,8 @@ func DecorateAttr(attrString, message string) string {
 	switch attrString {
 	case "bullet":
 		return fmt.Sprintf("∙ %s", message)
+	case "check":
+		return "✔ ️"
 	case "resources":
 		return "📦 "
 	case "params":
