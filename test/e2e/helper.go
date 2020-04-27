@@ -16,12 +16,14 @@ package e2e
 
 import (
 	"bytes"
+	"path"
+	"path/filepath"
+	"runtime"
 	"text/template"
 )
 
 func Process(t *template.Template, vars interface{}) string {
 	var tmplBytes bytes.Buffer
-
 	err := t.Execute(&tmplBytes, vars)
 	if err != nil {
 		panic(err)
@@ -35,4 +37,15 @@ func ProcessString(str string, vars interface{}) string {
 		panic(err)
 	}
 	return Process(tmpl, vars)
+}
+
+func dir() string {
+	_, b, _, _ := runtime.Caller(0)
+	return path.Join(path.Dir(b), "..", "resources")
+}
+
+func TestResourcePath(elem ...string) string {
+	tmp := dir()
+	path := append([]string{tmp}, elem...)
+	return filepath.Join(path...)
 }

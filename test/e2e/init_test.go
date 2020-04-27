@@ -18,22 +18,18 @@ import (
 	"log"
 	"os"
 	"testing"
-
-	"github.com/tektoncd/cli/test/environment"
 )
 
-var TestEnv = &environment.TknRunner{}
-
-func init() {
-	var err error
-	TestEnv, err = environment.NewTknRunner()
-	if err != nil {
-		log.Fatalf("Error while creating Env %+v", err)
-	}
-}
-
 func TestMain(m *testing.M) {
+	validate()
 	log.Println("Running main e2e Test suite ")
 	v := m.Run()
 	os.Exit(v)
+}
+
+func validate() {
+	if env := os.Getenv("TEST_CLIENT_BINARY"); env == "" {
+		log.Println("\"TEST_CLIENT_BINARY\" env variable is required, Cannot Procced E2E Tests")
+		os.Exit(0)
+	}
 }

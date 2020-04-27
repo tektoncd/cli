@@ -1,0 +1,15 @@
+apiVersion: tekton.dev/v1alpha1
+kind: Task
+metadata:
+  name: read-task
+spec:
+  inputs:
+    params:
+    - name: FILENAME
+    resources:
+    - name: source
+      type: git
+  steps:
+  - name: read-file-content
+    image: ubuntu
+    script: 'cat $(inputs.resources.source.path)/$(inputs.params.FILENAME)'

@@ -142,6 +142,21 @@ func GetPipelineRunListWithName(c *Clients, pname string) *v1alpha1.PipelineRunL
 	return pipelineRunList
 }
 
+func GetTaskRunListWithName(c *Clients, tname string) *v1alpha1.TaskRunList {
+	opts := metav1.ListOptions{
+		LabelSelector: fmt.Sprintf("tekton.dev/task=%s", tname),
+	}
+
+	time.Sleep(1 * time.Second)
+	taskRunList, err := c.TaskRunClient.List(opts)
+
+	if err != nil {
+		log.Fatalf("Couldn't get expected taskRunList  %s", err)
+	}
+
+	return taskRunList
+}
+
 func GetPipelineRunList(c *Clients) *v1alpha1.PipelineRunList {
 
 	pipelineRunList, err := c.PipelineRunClient.List(metav1.ListOptions{})
