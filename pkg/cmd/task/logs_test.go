@@ -670,3 +670,70 @@ func TestTaskLog2(t *testing.T) {
 		})
 	}
 }
+
+func TestLogs_Auto_Select_FirstTask(t *testing.T) {
+	taskName := "dummyTask"
+	ns := "dummyNamespaces"
+	clock := clockwork.NewFakeClock()
+
+	tdata := []*v1alpha1.Task{
+		tb.Task(taskName, ns),
+	}
+
+	trdata := []*v1alpha1.TaskRun{
+		tb.TaskRun("dummyTR", ns,
+			cb.TaskRunCreationTime(clock.Now().Add(-10*time.Minute)),
+			tb.TaskRunLabel("tekton.dev/task", taskName),
+			tb.TaskRunSelfLink(taskName),
+			tb.TaskRunStatus(
+				tb.StatusCondition(apis.Condition{
+					Status: corev1.ConditionTrue,
+					Reason: resources.ReasonSucceeded,
+				}),
+				tb.TaskRunStartTime(clock.Now().Add(-5*time.Minute)),
+				cb.TaskRunCompletionTime(clock.Now().Add(10*time.Minute)),
+			),
+		),
+	}
+	cs, _ := test.SeedTestData(t, pipelinetest.Data{
+		Tasks:    tdata,
+		TaskRuns: trdata,
+		Namespaces: []*corev1.Namespace{
+			{
+				ObjectMeta: metav1.ObjectMeta{
+					Name: ns,
+				},
+			},
+		},
+	})
+	cs.Pipeline.Resources = cb.APIResourceList(versionB1, []string{"task", "taskrun"})
+	tdc := testDynamic.Options{}
+	dc, err := tdc.Client(
+		cb.UnstructuredT(tdata[0], versionB1),
+		cb.UnstructuredTR(trdata[0], versionB1),
+	)
+	if err != nil {
+		t.Errorf("unable to create dynamic client: %v", err)
+	}
+
+	p := test.Params{
+		Kube:    cs.Kube,
+		Tekton:  cs.Pipeline,
+		Dynamic: dc,
+	}
+	p.SetNamespace(ns)
+
+	lopt := &options.LogOptions{
+		Params: &p,
+		Follow: false,
+		Limit:  5,
+	}
+	err = getAllInputs(lopt)
+	if err != nil {
+		t.Errorf("unexpected error: %v", err)
+	}
+
+	if lopt.TaskName != taskName {
+		t.Error("No auto selection of the first task when we have only one")
+	}
+}

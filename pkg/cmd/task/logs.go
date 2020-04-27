@@ -150,8 +150,10 @@ func getAllInputs(opts *options.LogOptions) error {
 		return nil
 	}
 
-	if err := opts.Ask(options.ResourceNameTask, ts); err != nil {
-		return nil
+	if len(ts) == 1 {
+		opts.TaskName = strings.Fields(ts[0])[0]
+	} else if err := opts.Ask(options.ResourceNameTask, ts); err != nil {
+		return err
 	}
 
 	return askRunName(opts)
