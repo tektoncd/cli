@@ -1,0 +1,19 @@
+Name:          cond-3
+Namespace:     ns
+Description:   test
+
+Check
+
+ Name:     test
+ Image:    busybox
+ Script:   echo hello
+
+Resources
+
+ NAME      TYPE
+ my-repo   git
+
+Params
+
+ NAME    TYPE     DESCRIPTION   DEFAULT VALUE
+ print   string                 ---
