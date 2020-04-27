@@ -1,41 +1,41 @@
-apiVersion: tekton.dev/v1alpha1
+apiVersion: tekton.dev/v1beta1
 kind: Task
 metadata:
   name: goreleaser
 spec:
-  inputs:
-    params:
-    - name: package
-      description: base package to build in
-    # FIXME(vdemeester): this is not yet used (see below)
-    - name: github-token-secret
-      description: name of the secret holding the github-token
-      default: github-token
-    - name: flags
-      description: flags to use for the test command
-      default: --timeout=30m
-    resources:
+  params:
+  - name: package
+    description: base package to build in
+  - name: github-token-secret
+    description: name of the secret holding the github-token
+    default: bot-token-github
+  - name: github-token-secret-key
+    description: name of the secret key holding the github-token
+    default: bot-token
+  - name: flags
+    description: flags to use for the test command
+    default: --timeout=30m
+  resources:
+    inputs:
     - name: source
       type: git
-      targetPath: src/$(inputs.params.package)
+      targetPath: src/$(params.package)
   steps:
   - name: pull
-    image: goreleaser/goreleaser
-    workingdir: /workspace/src/$(inputs.params.package)
+    image: goreleaser/goreleaser:v0.132
+    workingdir: /workspace/src/$(params.package)
     script: |
       git status; git fetch -p --all
   - name: release
     image: goreleaser/goreleaser
-    workingdir: /workspace/src/$(inputs.params.package)
+    workingdir: /workspace/src/$(params.package)
     script: |
-      goreleaser release $(inputs.params.flags)
+      goreleaser release $(params.flags)
     env:
     - name: GOPATH
       value: /workspace
     - name: GITHUB_TOKEN
       valueFrom:
         secretKeyRef:
-          # FIXME(vdemeester): this need to be fixed upstream, template should work there
-          # name: $(inputs.params.github-token-secret)
-          name: bot-token-github
-          key: bot-token
+          name: $(params.github-token-secret)
+          key: $(params.github-token-secret-key)

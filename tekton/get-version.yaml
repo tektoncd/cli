@@ -1,0 +1,26 @@
+apiVersion: tekton.dev/v1beta1
+kind: Task
+metadata:
+  name: get-versions
+spec:
+  resources:
+    inputs:
+    - name: source
+      type: git
+  steps:
+  - name: pull
+    image: goreleaser/goreleaser
+    workingDir: /workspace/source
+    script: |
+      git status && git fetch -p --all
+  - name: get-versions
+    image: goreleaser/goreleaser # because it has git
+    workingDir: /workspace/source
+    script: |
+      echo -n $(git tag --points-at HEAD) > /tekton/results/version
+      echo -n $(git tag --points-at HEAD | sed 's/^v\([^\.]*\)\.\([^\.]*\).*/\1/') > /tekton/results/major
+      echo -n $(git tag --points-at HEAD | sed 's/^v\([^\.]*\)\.\([^\.]*\).*/\2/') > /tekton/results/minor
+  results:
+  - name: version
+  - name: major
+  - name: minor
