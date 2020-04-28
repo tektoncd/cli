@@ -33,6 +33,9 @@ import (
 // NOTE: use go build -ldflags "-X github.com/tektoncd/cli/pkg/cmd/version.clientVersion=$(git describe)"
 var clientVersion = devVersion
 
+// flag to skip check flag in version cmd
+var skipCheckFlag = "false"
+
 const (
 	devVersion       = "dev"
 	latestReleaseURL = "https://api.github.com/repos/tektoncd/cli/releases/latest"
@@ -71,7 +74,9 @@ func Command(p cli.Params) *cobra.Command {
 		},
 	}
 
-	cmd.Flags().BoolVarP(&check, "check", "c", false, "check if a newer version is available")
+	if skipCheckFlag != "true" {
+		cmd.Flags().BoolVarP(&check, "check", "c", false, "check if a newer version is available")
+	}
 	return cmd
 }
 
