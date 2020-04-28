@@ -62,20 +62,26 @@ const describeTemplate = `{{decorate "bold" "Name"}}:	{{ .EventListener.Name }}
 {{- range $v := .EventListener.Spec.Triggers }}
 {{decorate "bold" "EventListenerTriggers\n"}}
 
-{{- if ne $v.Name "" }}
+{{- if eq $v.Name "" }}
+{{- else }}
  NAME
  {{decorate "bullet" $v.Name }}
+{{ " " }}
 {{- end }}
  BINDING NAME	KIND	APIVERSION
- {{- range $b := $v.Bindings }}
+{{- range $b := $v.Bindings }}
  {{ decorate "bullet" $b.Name }}	{{ $b.Kind }}	{{ $b.APIVersion }}
- {{- end }}
+{{- end }}
+
  TEMPLATE NAME	APIVERSION
  {{ decorate "bullet" $v.Template.Name }}	{{ $v.Template.APIVersion }}
-{{- if $v.ServiceAccount }}
+{{- if not $v.ServiceAccount }}
+{{- else }}
+{{ " " }}
  SERVICE ACCOUNT NAME	NAMESPACE
  {{ decorate "bullet" $v.ServiceAccount.Name }}	{{ $v.ServiceAccount.Namespace }}
 {{- end }}
+{{ " " }}
 {{- if ne (len $v.Interceptors) 0 }}
  INTERCEPTORS
 {{- $b := getInterceptors $v.Interceptors }}
