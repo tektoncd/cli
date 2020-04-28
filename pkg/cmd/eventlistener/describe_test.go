@@ -218,6 +218,40 @@ func TestEventListenerDescribe_WithMultipleBindingAndInterceptors(t *testing.T) 
 	executeEventListenerCommand(t, els)
 }
 
+func TestEventListenerDescribe_OutputYAMLWithMultipleBindingAndInterceptors(t *testing.T) {
+	els := []*v1alpha1.EventListener{
+		el.EventListener("el1", "ns",
+			el.EventListenerSpec(
+				el.EventListenerTrigger("tt1", "v1alpha1",
+					el.EventListenerTriggerBinding("tb1", "", ""),
+					el.EventListenerTriggerBinding("tb2", "ClusterTriggerBindingKind", "v1alpha1"),
+					el.EventListenerTriggerBinding("tb3", "", "v1alpha1"),
+					el.EventListenerTriggerName("foo-trig"),
+					el.EventListenerCELInterceptor("body.value == 'test'", el.EventListenerCELOverlay("value", "'testing'"))),
+				el.EventListenerTrigger("tt2", "v1alpha1",
+					el.EventListenerTriggerBinding("tb4", "", ""),
+					el.EventListenerTriggerBinding("tb5", "ClusterTriggerBindingKind", "v1alpha1"),
+					el.EventListenerTriggerServiceAccount("sa1", "ns1"),
+					el.EventListenerTriggerName("foo-trig"),
+					el.EventListenerTriggerInterceptor("webhookTest", "v1", "Service", "namespace"),
+					el.EventListenerCELInterceptor("body.value == 'test'", el.EventListenerCELOverlay("value", "'testing'"))))),
+	}
+
+	cs := test.SeedTestResources(t, triggertest.Resources{EventListeners: els, Namespaces: []*corev1.Namespace{{
+		ObjectMeta: metav1.ObjectMeta{
+			Name: "ns",
+		},
+	}}})
+	p := &test.Params{Triggers: cs.Triggers, Kube: cs.Kube}
+
+	eventListener := Command(p)
+	out, err := test.ExecuteCommand(eventListener, "desc", "el1", "-n", "ns", "-o", "json")
+	if err != nil {
+		t.Errorf("Error expected here")
+	}
+	golden.Assert(t, out, fmt.Sprintf("%s.golden", t.Name()))
+}
+
 func executeEventListenerCommand(t *testing.T, els []*v1alpha1.EventListener) {
 	cs := test.SeedTestResources(t, triggertest.Resources{EventListeners: els, Namespaces: []*corev1.Namespace{{
 		ObjectMeta: metav1.ObjectMeta{

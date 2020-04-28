@@ -1,0 +1,100 @@
+{
+    "kind": "EventListener",
+    "apiVersion": "triggers.tekton.dev",
+    "metadata": {
+        "name": "el1",
+        "namespace": "ns",
+        "creationTimestamp": null
+    },
+    "spec": {
+        "serviceAccountName": "",
+        "triggers": [
+            {
+                "bindings": [
+                    {
+                        "name": "tb1",
+                        "kind": "TriggerBinding"
+                    },
+                    {
+                        "name": "tb2",
+                        "kind": "",
+                        "apiversion": "v1alpha1"
+                    },
+                    {
+                        "name": "tb3",
+                        "kind": "TriggerBinding",
+                        "apiversion": "v1alpha1"
+                    }
+                ],
+                "template": {
+                    "name": "tt1",
+                    "apiversion": "v1alpha1"
+                },
+                "name": "foo-trig",
+                "interceptors": [
+                    {
+                        "cel": {
+                            "filter": "body.value == 'test'",
+                            "overlays": [
+                                {
+                                    "key": "value",
+                                    "expression": "'testing'"
+                                }
+                            ]
+                        }
+                    }
+                ]
+            },
+            {
+                "bindings": [
+                    {
+                        "name": "tb4",
+                        "kind": "TriggerBinding"
+                    },
+                    {
+                        "name": "tb5",
+                        "kind": "",
+                        "apiversion": "v1alpha1"
+                    }
+                ],
+                "template": {
+                    "name": "tt2",
+                    "apiversion": "v1alpha1"
+                },
+                "name": "foo-trig",
+                "interceptors": [
+                    {
+                        "webhook": {
+                            "objectRef": {
+                                "kind": "Service",
+                                "namespace": "namespace",
+                                "name": "webhookTest",
+                                "apiVersion": "v1"
+                            }
+                        }
+                    },
+                    {
+                        "cel": {
+                            "filter": "body.value == 'test'",
+                            "overlays": [
+                                {
+                                    "key": "value",
+                                    "expression": "'testing'"
+                                }
+                            ]
+                        }
+                    }
+                ],
+                "serviceAccount": {
+                    "namespace": "sa1",
+                    "name": "ns1"
+                }
+            }
+        ]
+    },
+    "status": {
+        "configuration": {
+            "generatedName": ""
+        }
+    }
+}
