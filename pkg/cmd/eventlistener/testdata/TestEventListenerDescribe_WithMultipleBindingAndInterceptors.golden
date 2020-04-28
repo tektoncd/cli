@@ -5,12 +5,15 @@ EventListenerTriggers
 
  NAME
  foo-trig
- BINDING NAME    KIND             APIVERSION
- tb1             TriggerBinding   
- tb2                              v1alpha1
- tb3             TriggerBinding   v1alpha1
+ 
+ BINDING NAME   KIND             APIVERSION
+ tb1            TriggerBinding   
+ tb2                             v1alpha1
+ tb3            TriggerBinding   v1alpha1
+
  TEMPLATE NAME   APIVERSION
  tt1             v1alpha1
+ 
  INTERCEPTORS
 - cel:
     filter: body.value == 'test'
@@ -22,13 +25,17 @@ EventListenerTriggers
 
  NAME
  foo-trig
- BINDING NAME           KIND             APIVERSION
- tb4                    TriggerBinding   
- tb5                                     v1alpha1
- TEMPLATE NAME          APIVERSION
- tt2                    v1alpha1
+ 
+ BINDING NAME   KIND             APIVERSION
+ tb4            TriggerBinding   
+ tb5                             v1alpha1
+
+ TEMPLATE NAME   APIVERSION
+ tt2             v1alpha1
+ 
  SERVICE ACCOUNT NAME   NAMESPACE
  ns1                    sa1
+ 
  INTERCEPTORS
 - webhook:
     objectRef:
