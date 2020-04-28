@@ -34,6 +34,7 @@ func Command(p cli.Params) *cobra.Command {
 	}
 
 	flags.AddTektonOptions(cmd)
+	_ = cmd.PersistentFlags().MarkHidden("namespace")
 	cmd.AddCommand(
 		deleteCommand(p),
 		describeCommand(p),
