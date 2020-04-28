@@ -1,6 +1,6 @@
 ## tkn eventlistener describe
 
-Describe EvenListener in a namespace
+Describe EventListener in a namespace
 
 ***Aliases**: desc*
 
@@ -12,7 +12,7 @@ tkn eventlistener describe
 
 ### Synopsis
 
-Describe EvenListener in a namespace
+Describe EventListener in a namespace
 
 ### Examples
 

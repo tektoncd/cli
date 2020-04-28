@@ -105,7 +105,7 @@ or
 	c := &cobra.Command{
 		Use:     "describe",
 		Aliases: []string{"desc"},
-		Short:   "Describe EvenListener in a namespace",
+		Short:   "Describe EventListener in a namespace",
 		Example: eg,
 		Annotations: map[string]string{
 			"commandType": "main",
