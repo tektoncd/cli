@@ -117,7 +117,9 @@ for task in ${CATALOG_TASKS};do
     kubectl -n ${TARGET_NAMESPACE} apply -f https://raw.githubusercontent.com/tektoncd/catalog/master/golang/${task}.yaml
 done
 
+kubectl -n ${TARGET_NAMESPACE} apply -f ./tekton/get-version.yaml
 kubectl -n ${TARGET_NAMESPACE} apply -f ./tekton/goreleaser.yml
+kubectl -n ${TARGET_NAMESPACE} apply -f ./tekton/publish.yaml
 
 if ! kubectl -n ${TARGET_NAMESPACE} get secret ${SECRET_NAME} -o name >/dev/null 2>/dev/null;then
     github_token=$(git config --get github.oauth-token || true)
@@ -159,7 +161,7 @@ spec:
   pipelineRef:
     name: cli-release-pipeline
   resources:
-    - name: source-repo
+    - name: source
       resourceRef:
         name: tektoncd-cli-git
 EOF

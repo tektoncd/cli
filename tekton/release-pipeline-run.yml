@@ -19,6 +19,6 @@ spec:
   pipelineRef:
     name: cli-release-pipeline
   resources:
-    - name: source-repo
+    - name: source
       resourceRef:
         name: tektoncd-cli-git
