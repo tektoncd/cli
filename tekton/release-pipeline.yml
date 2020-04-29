@@ -33,7 +33,9 @@ spec:
       - name: package
         value: $(params.package)
       - name: flags
-        value: -v
+        value: "-v --timeout 10m"
+      - name: version
+        value: v1.24.0
       resources:
         inputs:
         - name: source
