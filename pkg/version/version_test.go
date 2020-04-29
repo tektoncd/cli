@@ -25,6 +25,17 @@ import (
 )
 
 func TestGetPipelineVersion(t *testing.T) {
+	oldDeploymentLabels := map[string]string{
+		"app.kubernetes.io/component": "controller",
+		"app.kubernetes.io/name":      "tekton-pipelines",
+	}
+
+	newDeploymentLabels := map[string]string{
+		"app.kubernetes.io/part-of":   "tekton-pipelines",
+		"app.kubernetes.io/component": "controller",
+		"app.kubernetes.io/name":      "controller",
+	}
+
 	testParams := []struct {
 		name       string
 		namespace  string
@@ -36,25 +47,35 @@ func TestGetPipelineVersion(t *testing.T) {
 		deployment: &v1.Deployment{},
 		want:       "",
 	}, {
-		name:       "controller in different namespace",
+		name:       "controller in different namespace (old labels)",
 		namespace:  "test",
-		deployment: getDeploymentData("dep", "", nil, map[string]string{"tekton.dev/release": "v0.10.0"}),
+		deployment: getDeploymentData("dep", "", oldDeploymentLabels, nil, map[string]string{"tekton.dev/release": "v0.10.0"}),
 		want:       "v0.10.0",
 	}, {
-		name:       "deployment spec does not have labels and annotations specific to version",
+		name:       "deployment spec does not have labels and annotations specific to version (old labels)",
 		namespace:  "tekton-pipelines",
-		deployment: getDeploymentData("dep1", "pipeline/cmd/controller:v0.9.0@sha256:5d23", nil, nil),
+		deployment: getDeploymentData("dep1", "pipeline/cmd/controller:v0.9.0@sha256:5d23", oldDeploymentLabels, nil, nil),
 		want:       "v0.9.0",
 	}, {
-		name:       "deployment spec have annotation specific to version",
+		name:       "deployment spec have annotation specific to version (old labels)",
 		namespace:  "openshift-pipelines",
-		deployment: getDeploymentData("dep2", "", nil, map[string]string{"tekton.dev/release": "v0.10.0"}),
+		deployment: getDeploymentData("dep2", "", oldDeploymentLabels, nil, map[string]string{"tekton.dev/release": "v0.10.0"}),
 		want:       "v0.10.0",
 	}, {
-		name:       "deployment spec have labels specific to master version",
+		name:       "deployment spec have labels specific to version (old labels)",
 		namespace:  "tekton-pipelines",
-		deployment: getDeploymentData("dep3", "", map[string]string{"pipeline.tekton.dev/release": "master"}, nil),
-		want:       "master",
+		deployment: getDeploymentData("dep3", "", oldDeploymentLabels, map[string]string{"pipeline.tekton.dev/release": "v0.11.0"}, nil),
+		want:       "v0.11.0",
+	}, {
+		name:       "controller in different namespace (new labels)",
+		namespace:  "test",
+		deployment: getDeploymentData("dep4", "", newDeploymentLabels, map[string]string{"app.kubernetes.io/version": "master-test"}, nil),
+		want:       "master-test",
+	}, {
+		name:       "deployment spec have labels specific to master version (new labels)",
+		namespace:  "tekton-pipelines",
+		deployment: getDeploymentData("dep5", "", newDeploymentLabels, map[string]string{"app.kubernetes.io/version": "master-tekton-pipelines"}, nil),
+		want:       "master-tekton-pipelines",
 	}}
 	for _, tp := range testParams {
 		t.Run(tp.name, func(t *testing.T) {
@@ -73,20 +94,17 @@ func TestGetPipelineVersion(t *testing.T) {
 	}
 }
 
-func getDeploymentData(name, image string, labels, annotations map[string]string) *v1.Deployment {
+func getDeploymentData(name, image string, deploymentLabels, podTemplateLabels, annotations map[string]string) *v1.Deployment {
 	return &v1.Deployment{
 		TypeMeta: metav1.TypeMeta{},
 		ObjectMeta: metav1.ObjectMeta{
-			Name: name,
-			Labels: map[string]string{
-				"app.kubernetes.io/component": "controller",
-				"app.kubernetes.io/name":      "tekton-pipelines",
-			},
+			Name:   name,
+			Labels: deploymentLabels,
 		},
 		Spec: v1.DeploymentSpec{
 			Template: corev1.PodTemplateSpec{
 				ObjectMeta: metav1.ObjectMeta{
-					Labels:      labels,
+					Labels:      podTemplateLabels,
 					Annotations: annotations,
 				},
 				Spec: corev1.PodSpec{
