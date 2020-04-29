@@ -1,6 +1,8 @@
 # using rolling to get latest golang
 FROM ubuntu:rolling
 
+ENV DEBIAN_FRONTEND=noninteractive
+
 RUN set -ex \
     && sed -i -- 's/# deb-src/deb-src/g' /etc/apt/sources.list \
     && apt-get update \
