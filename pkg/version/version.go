@@ -23,36 +23,45 @@ import (
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 )
 
+const (
+	pipelinesControllerSelector    string = "app.kubernetes.io/part-of=tekton-pipelines,app.kubernetes.io/component=controller,app.kubernetes.io/name=controller"
+	oldpipelinesControllerSelector string = "app.kubernetes.io/component=controller,app.kubernetes.io/name=tekton-pipelines"
+)
+
 // GetPipelineVersion Get pipeline version, functions imported from Dashboard
 func GetPipelineVersion(c *cli.Clients) (string, error) {
-	version := ""
-	namespaces := []string{"tekton-pipelines", "openshift-pipelines"}
+	deploymentsList, err := getDeployments(c)
 
-	listOptions := metav1.ListOptions{
-		LabelSelector: "app.kubernetes.io/component=controller,app.kubernetes.io/name=tekton-pipelines",
+	if err != nil {
+		return "", err
 	}
 
-	var deployments []v1.Deployment
-	for _, namespace := range namespaces {
-		d, _ := c.Kube.AppsV1().Deployments(namespace).List(listOptions)
-		deployments = append(deployments, d.Items...)
-	}
-
-	if len(deployments) > 0 {
-		version = findVersion(deployments)
-	}
-
-	if version == "" {
-		d, _ := c.Kube.AppsV1().Deployments("").List(listOptions)
-		deployments = append(deployments, d.Items...)
-		version = findVersion(deployments)
-	}
+	version := findVersion(deploymentsList.Items)
 
 	if version == "" {
 		return "", fmt.Errorf("Error getting the tekton pipelines deployment version. Version is unknown")
 	}
 
 	return version, nil
+}
+
+// Get deployments for either Tekton Triggers, Tekton Dashboard or Tekton Pipelines
+func getDeployments(c *cli.Clients) (*v1.DeploymentList, error) {
+	deployments, err := c.Kube.AppsV1().Deployments("").List(metav1.ListOptions{LabelSelector: pipelinesControllerSelector})
+	if err != nil {
+		return nil, err
+	}
+
+	// NOTE: If the new labels selector returned nothing, try with old labels selector
+	// The old labels selectors are deprecated and should be removed at some point
+	if deployments == nil || len(deployments.Items) == 0 {
+		deployments, err = c.Kube.AppsV1().Deployments("").List(metav1.ListOptions{LabelSelector: oldpipelinesControllerSelector})
+		if err != nil {
+			return nil, err
+		}
+	}
+
+	return deployments, err
 }
 
 func findVersion(deployments []v1.Deployment) string {
@@ -62,7 +71,12 @@ func findVersion(deployments []v1.Deployment) string {
 		deploymentAnnotations := deployment.Spec.Template.GetAnnotations()
 
 		// For master of Tekton Pipelines
-		version = deploymentLabels["pipeline.tekton.dev/release"]
+		version = deploymentLabels["app.kubernetes.io/version"]
+
+		// For Tekton Pipelines 0.11.*
+		if version == "" {
+			version = deploymentLabels["pipeline.tekton.dev/release"]
+		}
 
 		// For Tekton Pipelines 0.10.0 + 0.10.1 tekton.dev/release has been set as annotation
 		if version == "" {
