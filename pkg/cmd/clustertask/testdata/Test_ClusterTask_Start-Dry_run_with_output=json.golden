@@ -14,7 +14,6 @@
 			"name": "clustertask-2",
 			"kind": "ClusterTask"
 		},
-		"timeout": "1h0m0s",
 		"inputs": {
 			"resources": [
 				{

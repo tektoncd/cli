@@ -1276,6 +1276,22 @@ func TestPipelineV1beta1Start_ExecuteCommand(t *testing.T) {
 			wantError:  false,
 			goldenFile: true,
 		},
+		{
+			name: "Dry Run with invalid --timeout specified",
+			command: []string{"start", "test-pipeline",
+				"-s=svc1",
+				"-r=source=scaffold-git",
+				"-p=pipeline-param=value1",
+				"-l=jemange=desfrites",
+				"-n", "ns",
+				"--dry-run",
+				"--timeout", "5d",
+			},
+			namespace: "",
+			input:     c2,
+			wantError: true,
+			want:      "time: unknown unit d in duration 5d",
+		},
 	}
 
 	for _, tp := range testParams {

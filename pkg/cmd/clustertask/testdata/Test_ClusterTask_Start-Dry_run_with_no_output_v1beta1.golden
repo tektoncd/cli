@@ -19,6 +19,5 @@ spec:
   taskRef:
     kind: ClusterTask
     name: clustertask-2
-  timeout: 1h0m0s
 status:
   podName: ""
