@@ -31,7 +31,6 @@ spec:
   taskRef:
     kind: ClusterTask
     name: clustertask-1
-  timeout: 1h0m0s
   workspaces:
   - emptyDir: {}
     name: test

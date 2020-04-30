@@ -1,4 +1,4 @@
-apiVersion: tekton.dev/v1alpha1
+apiVersion: tekton.dev/v1beta1
 kind: TaskRun
 metadata:
   creationTimestamp: null
@@ -6,13 +6,12 @@ metadata:
   labels:
     key: value
 spec:
-  inputs:
-    resources:
+  resources:
+    inputs:
     - name: my-repo
       resourceRef:
         name: git
-  outputs:
-    resources:
+    outputs:
     - name: code-image
       resourceRef:
         name: output-image
@@ -20,5 +19,6 @@ spec:
   taskRef:
     kind: ClusterTask
     name: clustertask-2
+  timeout: 5s
 status:
   podName: ""
