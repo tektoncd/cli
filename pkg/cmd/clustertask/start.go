@@ -18,7 +18,6 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
-	"log"
 	"sort"
 	"strings"
 	"time"
@@ -111,10 +110,6 @@ like cat,foo,bar
 		Example:      eg,
 		SilenceUsage: true,
 		Args: func(cmd *cobra.Command, args []string) error {
-			if opt.TimeOut != 3600 {
-				log.Println("WARNING: The --timeout flag will no longer be specified in seconds in v1.0.0. Learn more here: https://github.com/tektoncd/cli/issues/784")
-				log.Println("WARNING: The -t shortand for --timeout will no longer be available in v1.0.0.")
-			}
 			if opt.DryRun {
 				format := strings.ToLower(opt.Output)
 				if format != "" && format != "json" && format != "yaml" {
