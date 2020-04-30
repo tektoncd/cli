@@ -12,7 +12,6 @@ require (
 	github.com/google/cel-go v0.3.2 // indirect
 	github.com/google/go-cmp v0.4.0
 	github.com/google/go-github v17.0.0+incompatible // indirect
-	github.com/google/go-querystring v1.0.0 // indirect
 	github.com/hako/durafmt v0.0.0-20191009132224-3f39dc1ed9f4
 	github.com/hashicorp/golang-lru v0.5.4 // indirect
 	github.com/hinshun/vt10x v0.0.0-20180809195222-d55458df857c
@@ -23,7 +22,7 @@ require (
 	github.com/spf13/cobra v0.0.5
 	github.com/spf13/pflag v1.0.5
 	github.com/tektoncd/pipeline v0.11.3
-	github.com/tektoncd/plumbing v0.0.0-20200217163359-cd0db6e567d2
+	github.com/tektoncd/plumbing v0.0.0-20200430135134-e53521e1d887
 	github.com/tektoncd/triggers v0.4.0
 	github.com/tidwall/gjson v1.6.0 // indirect
 	github.com/tidwall/sjson v1.0.4 // indirect
