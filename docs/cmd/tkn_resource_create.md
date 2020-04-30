@@ -18,11 +18,6 @@ Creates new PipelineResource as per the given input:
 
     tkn resource create -n namespace
 
-Create a PipelineResource defined by foo.yaml in namespace 'bar':
-
-    tkn resource create -f foo.yaml -n bar
-
-
 ### Options
 
 ```
