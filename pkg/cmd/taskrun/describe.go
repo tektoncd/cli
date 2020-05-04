@@ -17,6 +17,7 @@ package taskrun
 import (
 	"fmt"
 	"os"
+	"strings"
 
 	"github.com/spf13/cobra"
 	"github.com/tektoncd/cli/pkg/actions"
@@ -77,9 +78,18 @@ or
 			}
 
 			if len(args) == 0 {
-				err = askTaskRunName(opts, p)
-				if err != nil {
-					return err
+				if !opts.Last {
+					err = askTaskRunName(opts, p)
+					if err != nil {
+						return err
+					}
+				} else {
+					lOpts := metav1.ListOptions{}
+					trs, err := trlist.GetAllTaskRuns(p, lOpts, 1)
+					if err != nil {
+						return err
+					}
+					opts.TaskrunName = strings.Fields(trs[0])[0]
 				}
 			} else {
 				opts.TaskrunName = args[0]
@@ -94,6 +104,7 @@ or
 		},
 	}
 
+	c.Flags().BoolVarP(&opts.Last, "last", "L", false, "show description for last taskrun")
 	c.Flags().IntVarP(&opts.Limit, "limit", "", defaultTaskRunLimit, "lists number of taskruns when selecting a taskrun to describe")
 	c.Flags().BoolVarP(&opts.Fzf, "fzf", "F", false, "use fzf to select a taskrun to describe")
 

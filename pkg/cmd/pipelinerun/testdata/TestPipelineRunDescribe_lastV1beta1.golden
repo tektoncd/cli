@@ -1,0 +1,26 @@
+Name:           pipeline-run2
+Namespace:      ns
+Pipeline Ref:   pipeline2
+
+Status
+
+STARTED         DURATION     STATUS
+0 seconds ago   20 minutes   Succeeded
+
+Resources
+
+ NAME     RESOURCE REF
+ res-1x   test-res
+ res-2x   test-res2
+
+Params
+
+ NAME   VALUE
+ p-1    somethingdifferent
+ p-2    [booms booms booms]
+
+Taskruns
+
+ NAME   TASK NAME   STARTED          DURATION    STATUS
+ tr-1   t-1         0 seconds ago    5 minutes   Failed
+ tr-2   t-2         10 minutes ago   7 minutes   Succeeded
