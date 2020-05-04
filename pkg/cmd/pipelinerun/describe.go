@@ -17,6 +17,7 @@ package pipelinerun
 import (
 	"fmt"
 	"os"
+	"strings"
 
 	"github.com/spf13/cobra"
 	"github.com/tektoncd/cli/pkg/actions"
@@ -78,9 +79,18 @@ or
 			}
 
 			if len(args) == 0 {
-				err = askPipelineRunName(opts, p)
-				if err != nil {
-					return err
+				if !opts.Last {
+					err = askPipelineRunName(opts, p)
+					if err != nil {
+						return err
+					}
+				} else {
+					lOpts := metav1.ListOptions{}
+					prs, err := prhelper.GetAllPipelineRuns(p, lOpts, 1)
+					if err != nil {
+						return err
+					}
+					opts.PipelineRunName = strings.Fields(prs[0])[0]
 				}
 			} else {
 				opts.PipelineRunName = args[0]
@@ -95,6 +105,7 @@ or
 		},
 	}
 
+	c.Flags().BoolVarP(&opts.Last, "last", "L", false, "show description for last pipelinerun")
 	c.Flags().IntVarP(&opts.Limit, "limit", "", defaultDescribeLimit, "lists number of pipelineruns when selecting a pipelinerun to describe")
 	c.Flags().BoolVarP(&opts.Fzf, "fzf", "F", false, "use fzf to select a pipelinerun to describe")
 
