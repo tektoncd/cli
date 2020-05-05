@@ -128,8 +128,6 @@ func SpecConvertDown(spec *v1beta1.TaskSpec) *v1alpha1.TaskSpec {
 		downTaskSpec.Sidecars = spec.Sidecars
 		downTaskSpec.Workspaces = spec.Workspaces
 		downTaskSpec.Results = spec.Results
-		downTaskSpec.Resources = spec.Resources
-		downTaskSpec.Params = spec.Params
 		downTaskSpec.Description = spec.Description
 		if spec.Resources != nil {
 			if len(spec.Resources.Inputs) > 0 {
