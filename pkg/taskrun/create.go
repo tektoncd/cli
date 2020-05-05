@@ -36,8 +36,6 @@ func Create(c *cli.Clients, tr *v1beta1.TaskRun, opts metav1.CreateOptions, ns s
 		if err != nil {
 			return nil, err
 		}
-		v1alpha1TaskRun.Kind = "TaskRun"
-		v1alpha1TaskRun.APIVersion = "tekton.dev/v1alpha1"
 		return createUnstructured(v1alpha1TaskRun, c, opts, ns)
 	}
 

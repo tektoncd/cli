@@ -266,7 +266,13 @@ func startTask(opt startOptions, args []string) error {
 		if err != nil {
 			return err
 		}
+
 		tname = task.ObjectMeta.Name
+
+		if task.Spec.Params != nil {
+			params.FilterParamsByType(task.Spec.Params)
+		}
+
 		tr.Spec = v1beta1.TaskRunSpec{
 			TaskSpec: &task.Spec,
 		}
