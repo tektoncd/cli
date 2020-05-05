@@ -1,11 +1,24 @@
 YAML_FILES := $(shell find . -type f -regex ".*y[a]ml" -print)
 
+ifneq ($(SKIP_CHECK_FLAG),)
+	SKIPLDFLAG := -X github.com/tektoncd/cli/pkg/cmd/version.skipCheckFlag=$(SKIP_CHECK_FLAG)
+endif
+
 ifneq (,$(wildcard ./VERSION))
-LDFLAGS := -ldflags "-X github.com/tektoncd/cli/pkg/cmd/version.clientVersion=`cat VERSION`"
+	VERSIONLDFLAG := -X github.com/tektoncd/cli/pkg/cmd/version.clientVersion=`cat VERSION`
 endif
 
 ifneq ($(RELEASE_VERSION),)
-LDFLAGS := -ldflags "-X github.com/tektoncd/cli/pkg/cmd/version.clientVersion=$(RELEASE_VERSION)"
+	VERSIONLDFLAG := -X github.com/tektoncd/cli/pkg/cmd/version.clientVersion=$(RELEASE_VERSION)
+endif
+
+FLAGS := $(VERSIONLDFLAG)$(SKIPLDFLAG)
+ifneq ($(SKIPLDFLAG),)
+	FLAGS := $(VERSIONLDFLAG) $(SKIPLDFLAG)
+endif
+
+ifneq ($(FLAGS),)
+	LDFLAGS := -ldflags "$(FLAGS)"
 endif
 
 all: bin/tkn test
