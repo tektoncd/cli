@@ -64,6 +64,15 @@ Download the latest binary executable for your operating system:
   sudo tar xvzf tkn_0.9.0_Linux_arm64.tar.gz -C /usr/local/bin/ tkn
   ```
 
+* [Linux IBM Z](https://github.com/tektoncd/cli/releases/download/v0.9.0/tkn_0.9.0_Linux_s390x.tar.gz)
+
+  ```shell
+  # Get the tar.gz
+  curl -LO https://github.com/tektoncd/cli/releases/download/v0.9.0/tkn_0.9.0_Linux_s390x.tar.gz
+  # Extract tkn to your PATH (e.g. /usr/local/bin)
+  sudo tar xvzf tkn_0.9.0_Linux_s390x.tar.gz -C /usr/local/bin/ tkn
+  ```
+
 #### Linux RPMs
 
   If you are running on any of the following rpm based distros:
