@@ -1,0 +1,5 @@
+test-5   cloudEvent   targetURI: http://sink
+test     git          url: git@github.com:tektoncd/cli-new.git
+test-2   git          url: git@github.com:tektoncd/cli.git
+test-1   image        URL: quey.io/tekton/controller
+test-3   image        ---

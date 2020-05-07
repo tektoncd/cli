@@ -17,12 +17,12 @@ package pipelineresource
 import (
 	"fmt"
 	"os"
-	"sort"
 	"strings"
 	"text/tabwriter"
 
 	"github.com/spf13/cobra"
 	"github.com/tektoncd/cli/pkg/cli"
+	pressort "github.com/tektoncd/cli/pkg/pipelineresource/sort"
 	"github.com/tektoncd/cli/pkg/printer"
 	validinput "github.com/tektoncd/cli/pkg/validate"
 	"github.com/tektoncd/pipeline/pkg/apis/pipeline/v1alpha1"
@@ -37,7 +37,9 @@ const (
 )
 
 type ListOptions struct {
-	Type string
+	Type          string
+	NoHeaders     bool
+	AllNamespaces bool
 }
 
 func listCommand(p cli.Params) *cobra.Command {
@@ -61,8 +63,10 @@ func listCommand(p cli.Params) *cobra.Command {
 		Args: cobra.MinimumNArgs(0),
 		RunE: func(cmd *cobra.Command, args []string) error {
 
-			if err := validinput.NamespaceExists(p); err != nil {
-				return err
+			if !opts.AllNamespaces {
+				if err := validinput.NamespaceExists(p); err != nil {
+					return err
+				}
 			}
 
 			cs, err := p.Clients()
@@ -81,13 +85,23 @@ func listCommand(p cli.Params) *cobra.Command {
 				return fmt.Errorf("failed to list pipelineresources. Invalid resource type %s", opts.Type)
 			}
 
-			pres, err := list(cs.Resource, p.Namespace(), opts.Type)
+			namespace := p.Namespace()
+			if opts.AllNamespaces {
+				namespace = ""
+			}
+
+			pres, err := list(cs.Resource, namespace, opts.Type)
 			stream := &cli.Stream{
 				Out: cmd.OutOrStdout(),
 				Err: cmd.OutOrStderr(),
 			}
+
 			if err != nil {
-				fmt.Fprintf(os.Stderr, "Failed to list pipelineresources from %s namespace \n", p.Namespace())
+				ns := namespace
+				if opts.AllNamespaces {
+					ns = "all"
+				}
+				fmt.Fprintf(os.Stderr, "Failed to list pipelineresources from %s namespace(s) \n", ns)
 				return err
 			}
 
@@ -101,7 +115,7 @@ func listCommand(p cli.Params) *cobra.Command {
 				return printer.PrintObject(stream.Out, pres, f)
 			}
 
-			err = printFormatted(stream, pres)
+			err = printFormatted(stream, pres, opts.NoHeaders, opts.AllNamespaces)
 			if err != nil {
 				fmt.Fprint(os.Stderr, "Failed to print Pipelineresources \n")
 				return err
@@ -112,6 +126,8 @@ func listCommand(p cli.Params) *cobra.Command {
 
 	f.AddFlags(cmd)
 	cmd.Flags().StringVarP(&opts.Type, "type", "t", "", "Pipeline resource type")
+	cmd.Flags().BoolVarP(&opts.NoHeaders, "no-headers", "", opts.NoHeaders, "do not print column headers with output (default print column headers with output)")
+	cmd.Flags().BoolVarP(&opts.AllNamespaces, "all-namespaces", "A", opts.AllNamespaces, "list pipeline resources from all namespaces")
 
 	return cmd
 }
@@ -129,7 +145,11 @@ func list(client versionedResource.Interface, namespace string, resourceType str
 	}
 
 	if len(pres.Items) > 0 {
-		pres.Items = sortResourcesByTypeAndName(pres.Items)
+		if namespace == "" {
+			pressort.SortByNamespace(pres.Items)
+		} else {
+			pressort.SortByTypeAndName(pres.Items)
+		}
 	}
 
 	// NOTE: this is required for -o json|yaml to work properly since
@@ -143,20 +163,35 @@ func list(client versionedResource.Interface, namespace string, resourceType str
 	return pres, nil
 }
 
-func printFormatted(s *cli.Stream, pres *v1alpha1.PipelineResourceList) error {
+func printFormatted(s *cli.Stream, pres *v1alpha1.PipelineResourceList, noheaders bool, allnamespaces bool) error {
 	if len(pres.Items) == 0 {
 		fmt.Fprintln(s.Err, msgNoPREsFound)
 		return nil
 	}
 
 	w := tabwriter.NewWriter(s.Out, 0, 5, 3, ' ', tabwriter.TabIndent)
-	fmt.Fprintln(w, "NAME\tTYPE\tDETAILS")
+	if !noheaders {
+		headers := "NAME\tTYPE\tDETAILS"
+		if allnamespaces {
+			headers = "NAMESPACE\t" + headers
+		}
+		fmt.Fprintln(w, headers)
+	}
 	for _, pre := range pres.Items {
-		fmt.Fprintf(w, "%s\t%s\t%s\n",
-			pre.Name,
-			pre.Spec.Type,
-			details(pre),
-		)
+		if allnamespaces {
+			fmt.Fprintf(w, "%s\t%s\t%s\t%s\n",
+				pre.Namespace,
+				pre.Name,
+				pre.Spec.Type,
+				details(pre),
+			)
+		} else {
+			fmt.Fprintf(w, "%s\t%s\t%s\n",
+				pre.Name,
+				pre.Spec.Type,
+				details(pre),
+			)
+		}
 	}
 
 	return w.Flush()
@@ -187,21 +222,4 @@ func filterByType(resources []v1alpha1.PipelineResource, resourceType string) (r
 		}
 	}
 	return
-}
-
-// this will sort the Pipeline Resource by Type and then by Name
-func sortResourcesByTypeAndName(pres []v1alpha1.PipelineResource) []v1alpha1.PipelineResource {
-	sort.Slice(pres, func(i, j int) bool {
-		if pres[j].Spec.Type < pres[i].Spec.Type {
-			return false
-		}
-
-		if pres[j].Spec.Type > pres[i].Spec.Type {
-			return true
-		}
-
-		return pres[j].Name > pres[i].Name
-	})
-
-	return pres
 }
