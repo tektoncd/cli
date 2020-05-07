@@ -123,6 +123,18 @@ func TestPipelineResourceList(t *testing.T) {
 			args:      []string{"list", "-n", "test-ns-1", "-o", "jsonpath={range .items[*]}{.metadata.name}{\"\\n\"}{end}"},
 			wantError: false,
 		},
+		{
+			name:      "No Headers",
+			command:   command(t, pres, ns),
+			args:      []string{"list", "-n", "test-ns-1", "--no-headers"},
+			wantError: false,
+		},
+		{
+			name:      "All Namespaces",
+			command:   command(t, pres, ns),
+			args:      []string{"list", "--all-namespaces"},
+			wantError: false,
+		},
 	}
 
 	for _, td := range tests {
