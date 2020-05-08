@@ -67,12 +67,12 @@ or
 
 			tbs, err := list(cs.Triggers, p.Namespace())
 			if err != nil {
-				return fmt.Errorf(`failed to list triggerbindings from %s namespace \n`, p.Namespace())
+				return fmt.Errorf("failed to list triggerbindings from %s namespace", p.Namespace())
 			}
 
 			output, err := cmd.LocalFlags().GetString("output")
 			if err != nil {
-				return errors.New(`output option not set properly \n`)
+				return errors.New("output option not set properly")
 			}
 
 			stream := &cli.Stream{
@@ -94,7 +94,7 @@ or
 			}
 
 			if err = printFormatted(stream, tbs, p); err != nil {
-				return errors.New(`failed to print triggerbindings \n`)
+				return errors.New("failed to print triggerbindings")
 			}
 			return nil
 
