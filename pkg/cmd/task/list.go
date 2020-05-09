@@ -21,12 +21,11 @@ import (
 	"text/template"
 
 	"github.com/jonboulle/clockwork"
-	"github.com/tektoncd/cli/pkg/task"
-
 	"github.com/spf13/cobra"
 	"github.com/tektoncd/cli/pkg/actions"
 	"github.com/tektoncd/cli/pkg/cli"
 	"github.com/tektoncd/cli/pkg/formatted"
+	"github.com/tektoncd/cli/pkg/task"
 	"github.com/tektoncd/cli/pkg/validate"
 	"github.com/tektoncd/pipeline/pkg/apis/pipeline/v1beta1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
@@ -71,8 +70,10 @@ func listCommand(p cli.Params) *cobra.Command {
 		},
 		RunE: func(cmd *cobra.Command, args []string) error {
 
-			if err := validate.NamespaceExists(p); err != nil && !opts.AllNamespaces {
-				return err
+			if !opts.AllNamespaces {
+				if err := validate.NamespaceExists(p); err != nil {
+					return err
+				}
 			}
 
 			output, err := cmd.LocalFlags().GetString("output")

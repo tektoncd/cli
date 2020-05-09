@@ -80,8 +80,10 @@ func listCommand(p cli.Params) *cobra.Command {
 		SilenceUsage: true,
 		RunE: func(cmd *cobra.Command, args []string) error {
 
-			if err := validate.NamespaceExists(p); err != nil && !opts.AllNamespaces {
-				return err
+			if !opts.AllNamespaces {
+				if err := validate.NamespaceExists(p); err != nil {
+					return err
+				}
 			}
 
 			output, err := cmd.LocalFlags().GetString("output")

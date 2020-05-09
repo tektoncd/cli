@@ -281,7 +281,7 @@ func TestListTaskRuns(t *testing.T) {
 		{
 			name:      "print taskruns in all namespaces",
 			command:   command(t, trsMultipleNs, now, ns, version, dc2),
-			args:      []string{"list", "--all-namespaces", "-n", "foo"},
+			args:      []string{"list", "--all-namespaces"},
 			wantError: false,
 		},
 		{
@@ -293,7 +293,7 @@ func TestListTaskRuns(t *testing.T) {
 		{
 			name:      "print taskruns in all namespaces without headers",
 			command:   command(t, trsMultipleNs, now, ns, version, dc2),
-			args:      []string{"list", "--all-namespaces", "--no-headers", "-n", "foo"},
+			args:      []string{"list", "--all-namespaces", "--no-headers"},
 			wantError: false,
 		},
 	}
@@ -555,7 +555,7 @@ func TestListTaskRuns_v1beta1(t *testing.T) {
 		{
 			name:      "print taskruns in all namespaces",
 			command:   command(t, trsMultipleNs, now, ns, version, dc2),
-			args:      []string{"list", "--all-namespaces", "-n", "foo"},
+			args:      []string{"list", "--all-namespaces"},
 			wantError: false,
 		},
 	}
