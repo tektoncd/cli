@@ -91,9 +91,7 @@ function post_build_tests() {
     test_golden_has_been_generated
     test_documentation_has_been_generated
     check_go_lint
-    # Skipping yaml lint because of some issue in CI
-    # https://github.com/tektoncd/plumbing/issues/307
-    # check_yaml_lint
+    check_yaml_lint
 }
 
 # We use the default build, unit and integration test runners.
