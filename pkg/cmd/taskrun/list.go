@@ -83,13 +83,14 @@ List all TaskRuns of Task 'foo' in namespace 'bar':
 		Example: eg,
 		RunE: func(cmd *cobra.Command, args []string) error {
 			var task string
-
 			if len(args) > 0 {
 				task = args[0]
 			}
 
-			if err := validate.NamespaceExists(p); err != nil {
-				return err
+			if !opts.AllNamespaces {
+				if err := validate.NamespaceExists(p); err != nil {
+					return err
+				}
 			}
 
 			if opts.Limit < 0 {

@@ -86,8 +86,10 @@ List all PipelineRuns in a namespace 'foo':
 				pipeline = args[0]
 			}
 
-			if err := validate.NamespaceExists(p); err != nil {
-				return err
+			if !opts.AllNamespaces {
+				if err := validate.NamespaceExists(p); err != nil {
+					return err
+				}
 			}
 
 			if opts.Limit < 0 {
