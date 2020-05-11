@@ -14,6 +14,7 @@ spec:
     kind: PipelineRun
     metadata:
       creationTimestamp: null
+      generateName: ex2
     spec: {}
     status: {}
 status: {}

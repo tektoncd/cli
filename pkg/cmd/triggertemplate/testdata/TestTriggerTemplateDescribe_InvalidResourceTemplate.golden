@@ -6,5 +6,4 @@ Params
  NAME   TYPE     DESCRIPTION              DEFAULT VALUE
  foo    string   foo required in res...   bar
 
-ResourceTemplates
-
+ error decoding number from json: invalid character '(' looking for beginning of value

@@ -15,11 +15,8 @@
 package triggertemplate
 
 import (
-	"bytes"
-	"encoding/json"
 	"fmt"
 	"io"
-	"log"
 	"os"
 	"text/tabwriter"
 	"text/template"
@@ -31,6 +28,8 @@ import (
 	"github.com/tektoncd/cli/pkg/validate"
 	"github.com/tektoncd/triggers/pkg/apis/triggers/v1alpha1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
+	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/apimachinery/pkg/runtime/schema"
 	cliopts "k8s.io/cli-runtime/pkg/genericclioptions"
 )
@@ -61,11 +60,18 @@ const describeTemplate = `{{decorate "bold" "Name"}}:	{{ .TriggerTemplate.Name }
 {{- end }}
 {{- end }}
 
-{{decorate "resources" ""}}{{decorate "underline bold" "ResourceTemplates\n"}}
+{{- $errValue := checkError .TriggerTemplate.Spec.ResourceTemplates }}
+{{- if ne $errValue "" }}
 
-{{- $value := getResourceTemplate .TriggerTemplate }}
-{{-  if ne $value "" }}
-{{ $value }}
+ {{ $errValue }}
+{{- else }}
+
+{{decorate "resources" ""}}{{decorate "underline bold" "ResourceTemplates\n"}}
+ NAME	GENERATENAME	KIND	APIVERSION
+{{- range $p := .TriggerTemplate.Spec.ResourceTemplates }}
+{{- $value := getResourceTemplate $p }}
+ {{ format $value.GetName | decorate "bullet" }}	{{ format $value.GetGenerateName }}	{{ $value.GetKind }}	{{ $value.GetAPIVersion }}
+{{- end }}
 {{- end }}
 `
 
@@ -162,7 +168,9 @@ func printTriggerTemplateDescription(s *cli.Stream, p cli.Params, ttname string)
 	funcMap := template.FuncMap{
 		"decorate":            formatted.DecorateAttr,
 		"formatDesc":          formatted.FormatDesc,
+		"checkError":          checkError,
 		"getResourceTemplate": getResourceTemplate,
+		"format":              format,
 	}
 
 	w := tabwriter.NewWriter(s.Out, 0, 5, 3, ' ', tabwriter.TabIndent)
@@ -174,13 +182,24 @@ func printTriggerTemplateDescription(s *cli.Stream, p cli.Params, ttname string)
 	return w.Flush()
 }
 
-func getResourceTemplate(triggerTemplate v1alpha1.TriggerTemplate) string {
-	var out bytes.Buffer
-	resourceTemplate, err := json.Marshal(triggerTemplate.Spec.ResourceTemplates)
-	if err != nil {
-		log.Printf("json marshal failed with error: %v", err)
-		return ""
+func checkError(resourceTemplate []v1alpha1.TriggerResourceTemplate) string {
+	errValue := ""
+	for i := range resourceTemplate {
+		if _, err := runtime.DefaultUnstructuredConverter.ToUnstructured(&resourceTemplate[i]); err != nil {
+			errValue = err.Error()
+		}
 	}
-	_ = json.Indent(&out, resourceTemplate, "", "    ")
-	return out.String()
+	return errValue
+}
+
+func getResourceTemplate(resourceTemplate v1alpha1.TriggerResourceTemplate) *unstructured.Unstructured {
+	d, _ := runtime.DefaultUnstructuredConverter.ToUnstructured(&resourceTemplate)
+	return &unstructured.Unstructured{Object: d}
+}
+
+func format(name string) string {
+	if name == "" {
+		return "---"
+	}
+	return name
 }

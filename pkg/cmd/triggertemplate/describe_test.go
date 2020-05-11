@@ -29,16 +29,16 @@ import (
 )
 
 var simpleResourceTemplate = runtime.RawExtension{
-	Raw: []byte(`{"kind":"PipelineRun","apiVersion":"tekton.dev/v1alpha1","metadata":{"creationTimestamp":null},"spec":{},"status":{}}`),
+	Raw: []byte(`{"kind":"PipelineRun","apiVersion":"tekton.dev/v1alpha1","metadata":{"generateName":"ex2", "creationTimestamp":null},"spec":{},"status":{}}`),
 }
 var pipelineResources = runtime.RawExtension{
-	Raw: []byte(`{"kind":"PipelineResource","apiVersion":"tekton.dev/v1alpha1","metadata":{"creationTimestamp":null},"spec":{},"status":{}}`),
+	Raw: []byte(`{"kind":"PipelineResource","apiVersion":"tekton.dev/v1alpha1","metadata":{"name":"ex1", "creationTimestamp":null},"spec":{},"status":{}}`),
 }
 var v1beta1ResourceTemplate = runtime.RawExtension{
-	Raw: []byte(`{"kind":"PipelineRun","apiVersion":"tekton.dev/v1beta1","metadata":{"creationTimestamp":null},"spec":{},"status":{}}`),
+	Raw: []byte(`{"kind":"PipelineRun","apiVersion":"tekton.dev/v1beta1","metadata":{"name":"ex1", "generateName":"ex2", "creationTimestamp":null},"spec":{},"status":{}}`),
 }
 var paramResourceTemplate = runtime.RawExtension{
-	Raw: []byte(`{"kind":"PipelineRun","apiVersion":"tekton.dev/v1alpha1","metadata":{"creationTimestamp":null},"spec": "$(params.foo)","status":{}}`),
+	Raw: []byte(`{"kind":"PipelineRun","apiVersion":"tekton.dev/v1alpha1","metadata":{"name":"ex1", "creationTimestamp":null},"spec": "$(params.foo)","status":{}}`),
 }
 var invalidTemplate = runtime.RawExtension{
 	Raw: []byte(`("kind":"InvalidKind")`),

@@ -11,23 +11,6 @@ Params
 
 ResourceTemplates
 
-[
-    {
-        "kind": "PipelineRun",
-        "apiVersion": "tekton.dev/v1beta1",
-        "metadata": {
-            "creationTimestamp": null
-        },
-        "spec": {},
-        "status": {}
-    },
-    {
-        "kind": "PipelineResource",
-        "apiVersion": "tekton.dev/v1alpha1",
-        "metadata": {
-            "creationTimestamp": null
-        },
-        "spec": {},
-        "status": {}
-    }
-]
+ NAME   GENERATENAME   KIND               APIVERSION
+ ex1    ex2            PipelineRun        tekton.dev/v1beta1
+ ex1    ---            PipelineResource   tekton.dev/v1alpha1
