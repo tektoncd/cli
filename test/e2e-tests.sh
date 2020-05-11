@@ -143,7 +143,7 @@ ci_run && {
         echo "Go Build successfull"
         export TEST_CLIENT_BINARY=$PWD/tkn
   fi
-  go_test_e2e ./test/e2e || failed=1
+  go_test_e2e ./test/e2e/... || failed=1
   (( failed )) && fail_test
 }
 
