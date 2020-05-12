@@ -5,6 +5,9 @@ metadata:
   generateName: test-task-run-
   namespace: ns
 spec:
+  params:
+  - name: myarg
+    value: arg
   resources:
     inputs:
     - name: docker-source

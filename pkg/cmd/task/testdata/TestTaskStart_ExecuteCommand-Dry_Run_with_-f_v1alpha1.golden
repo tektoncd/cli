@@ -6,6 +6,9 @@ metadata:
   namespace: ns
 spec:
   inputs:
+    params:
+    - name: myarg
+      value: arg
     resources:
     - name: docker-source
       resourceRef:

@@ -174,9 +174,9 @@ func Test_start_has_task_filename_v1alpha1(t *testing.T) {
 	if err != nil {
 		t.Errorf("unable to create dynamic client: %v", err)
 	}
-	c := Command(&test.Params{Tekton: cs.Pipeline, Kube: cs.Kube, Dynamic: dc})
+	c := Command(&test.Params{Tekton: cs.Pipeline, Kube: cs.Kube, Resource: cs.Resource, Dynamic: dc})
 
-	got, err := test.ExecuteCommand(c, "start", "-n", "ns", "--filename=./testdata/task-v1alpha1.yaml")
+	got, err := test.ExecuteCommand(c, "start", "-n", "ns", "--filename=./testdata/task-v1alpha1.yaml", "-i=docker-source=/path", "-o=build-image=image", "-p=pathToDockerFile=path")
 	if err != nil {
 		t.Errorf("Not expecting an error, but got %s", err.Error())
 	}
@@ -228,7 +228,7 @@ func Test_start_has_task_filename_v1beta1(t *testing.T) {
 	}
 	c := Command(&test.Params{Tekton: cs.Pipeline, Kube: cs.Kube, Dynamic: dc})
 
-	got, err := test.ExecuteCommand(c, "start", "-n", "ns", "--filename=./testdata/task-v1beta1.yaml")
+	got, err := test.ExecuteCommand(c, "start", "-n", "ns", "--filename=./testdata/task-v1beta1.yaml", "-i=docker-source=/path", "-o=build-image=image", "-p=pathToDockerFile=path")
 	if err != nil {
 		t.Errorf("Not expecting an error, but got %s", err.Error())
 	}
@@ -1706,17 +1706,19 @@ func Test_start_task_with_prefix_name(t *testing.T) {
 	cs := pipelinetest.Clients{
 		Pipeline: seedData.Pipeline,
 		Kube:     seedData.Kube,
+		Resource: seedData.Resource,
 	}
 	cs.Pipeline.Resources = cb.APIResourceList(versionA1, []string{"task", "taskrun"})
 	dc, _ := tdc.Client(
 		cb.UnstructuredT(tasks[0], versionA1),
 		cb.UnstructuredTR(taskruns[0], versionA1))
-	p := &test.Params{Tekton: cs.Pipeline, Kube: cs.Kube, Dynamic: dc}
+	p := &test.Params{Tekton: cs.Pipeline, Kube: cs.Kube, Resource: cs.Resource, Dynamic: dc}
 
 	task := Command(p)
 	got, _ := test.ExecuteCommand(task, "start", "task",
 		"-n=ns",
 		"--prefix-name=mytrname",
+		"--last",
 	)
 
 	expected := "Taskrun started: random\n\nIn order to track the taskrun progress run:\ntkn taskrun logs random -f -n ns\n"
@@ -1871,17 +1873,19 @@ func Test_start_task_with_prefix_name_v1beta1(t *testing.T) {
 	cs := pipelinetest.Clients{
 		Pipeline: seedData.Pipeline,
 		Kube:     seedData.Kube,
+		Resource: seedData.Resource,
 	}
 	cs.Pipeline.Resources = cb.APIResourceList(versionB1, []string{"task", "taskrun"})
 	dc, _ := tdc.Client(
 		cb.UnstructuredV1beta1T(tasks[0], versionB1),
 		cb.UnstructuredV1beta1TR(taskruns[0], versionB1))
-	p := &test.Params{Tekton: cs.Pipeline, Kube: cs.Kube, Dynamic: dc}
+	p := &test.Params{Tekton: cs.Pipeline, Kube: cs.Kube, Resource: cs.Resource, Dynamic: dc}
 
 	task := Command(p)
 	got, _ := test.ExecuteCommand(task, "start", "task",
 		"-n=ns",
 		"--prefix-name=mytrname",
+		"--last",
 	)
 
 	expected := "Taskrun started: random\n\nIn order to track the taskrun progress run:\ntkn taskrun logs random -f -n ns\n"
@@ -2383,10 +2387,17 @@ func Test_start_task_client_error(t *testing.T) {
 		cb.UnstructuredT(tasks[0], versionA1),
 	)
 
-	p := &test.Params{Tekton: cs.Pipeline, Kube: cs.Kube, Dynamic: dc}
+	p := &test.Params{Tekton: cs.Pipeline, Kube: cs.Kube, Resource: cs.Resource, Dynamic: dc}
 
 	task := Command(p)
-	got, _ := test.ExecuteCommand(task, "start", "task-1", "-n", "ns")
+	got, _ := test.ExecuteCommand(task,
+		"start", "task-1", "-n", "ns",
+		"-i=my-repo=git",
+		"-i=my-image=image",
+		"-p=myarg=value1",
+		"-p=print=boom,boom",
+		"-o=code-image=image",
+	)
 	expected := "Error: cluster not accessible\n"
 	test.AssertOutput(t, expected, got)
 }
@@ -2447,14 +2458,6 @@ func Test_start_task_client_error_v1beta1(t *testing.T) {
 						},
 					},
 				},
-				Workspaces: []v1beta1.WorkspaceDeclaration{
-					{
-						Name:        "test",
-						Description: "test workspace",
-						MountPath:   "/workspace/test/file",
-						ReadOnly:    true,
-					},
-				},
 			},
 		},
 	}
@@ -2484,10 +2487,17 @@ func Test_start_task_client_error_v1beta1(t *testing.T) {
 		cb.UnstructuredV1beta1T(tasks[0], versionB1),
 	)
 
-	p := &test.Params{Tekton: cs.Pipeline, Kube: cs.Kube, Dynamic: dc}
+	p := &test.Params{Tekton: cs.Pipeline, Kube: cs.Kube, Resource: cs.Resource, Dynamic: dc}
 
 	task := Command(p)
-	got, _ := test.ExecuteCommand(task, "start", "task-1", "-n", "ns")
+	got, _ := test.ExecuteCommand(task,
+		"start", "task-1", "-n", "ns",
+		"-i=my-repo=git",
+		"-i=my-image=image",
+		"-p=myarg=value1",
+		"-p=print=boom,boom",
+		"-o=code-image=image",
+	)
 	expected := "Error: cluster not accessible\n"
 	test.AssertOutput(t, expected, got)
 }
@@ -2530,11 +2540,14 @@ func Test_start_task_invalid_input_res(t *testing.T) {
 		cb.UnstructuredT(tasks[0], versionA1),
 	)
 
-	p := &test.Params{Tekton: cs.Pipeline, Kube: cs.Kube, Dynamic: dc}
+	p := &test.Params{Tekton: cs.Pipeline, Kube: cs.Kube, Resource: cs.Resource, Dynamic: dc}
 
 	task := Command(p)
 	got, _ := test.ExecuteCommand(task, "start", "task-1",
 		"-i=my-repo git-repo",
+		"-i=my-image=lkadjf",
+		"-o=some=some",
+		"-p=some=some",
 		"-n", "ns",
 	)
 	expected := "Error: invalid input format for resource parameter: my-repo git-repo\n"
@@ -2597,14 +2610,6 @@ func Test_start_task_invalid_input_res_v1beta1(t *testing.T) {
 						},
 					},
 				},
-				Workspaces: []v1beta1.WorkspaceDeclaration{
-					{
-						Name:        "test",
-						Description: "test workspace",
-						MountPath:   "/workspace/test/file",
-						ReadOnly:    true,
-					},
-				},
 			},
 		},
 	}
@@ -2624,11 +2629,14 @@ func Test_start_task_invalid_input_res_v1beta1(t *testing.T) {
 		cb.UnstructuredV1beta1T(tasks[0], versionB1),
 	)
 
-	p := &test.Params{Tekton: cs.Pipeline, Kube: cs.Kube, Dynamic: dc}
+	p := &test.Params{Tekton: cs.Pipeline, Kube: cs.Kube, Resource: cs.Resource, Dynamic: dc}
 
 	task := Command(p)
 	got, _ := test.ExecuteCommand(task, "start", "task-1",
 		"-i=my-repo git-repo",
+		"-i=my-image=lkadjf",
+		"-o=some=some",
+		"-p=some=some",
 		"-n", "ns",
 	)
 	expected := "Error: invalid input format for resource parameter: my-repo git-repo\n"
@@ -2669,11 +2677,14 @@ func Test_start_task_invalid_workspace(t *testing.T) {
 	dc, _ := tdc.Client(
 		cb.UnstructuredT(tasks[0], versionA1),
 	)
-	p := &test.Params{Tekton: cs.Pipeline, Kube: cs.Kube, Dynamic: dc}
+	p := &test.Params{Tekton: cs.Pipeline, Kube: cs.Kube, Resource: cs.Resource, Dynamic: dc}
 
 	task := Command(p)
 	got, _ := test.ExecuteCommand(task, "start", "task-1",
 		"-w=claimName=pvc3",
+		"-i=my-repo=git-repo",
+		"-i=my-image=lkadjf",
+		"-o=code-image=some",
 		"-n", "ns",
 	)
 	expected := "Error: Name not found for workspace\n"
@@ -2751,11 +2762,13 @@ func Test_start_task_invalid_workspace_v1beta1(t *testing.T) {
 	dc, _ := tdc.Client(
 		cb.UnstructuredV1beta1T(tasks[0], versionB1),
 	)
-	p := &test.Params{Tekton: cs.Pipeline, Kube: cs.Kube, Dynamic: dc}
+	p := &test.Params{Tekton: cs.Pipeline, Kube: cs.Kube, Resource: cs.Resource, Dynamic: dc}
 
 	task := Command(p)
 	got, _ := test.ExecuteCommand(task, "start", "task-1",
 		"-w=claimName=pvc3",
+		"-i=my-image=lkadjf",
+		"-o=code-image=some",
 		"-n", "ns",
 	)
 	expected := "Error: Name not found for workspace\n"
@@ -2804,6 +2817,8 @@ func Test_start_task_invalid_output_res(t *testing.T) {
 	task := Command(p)
 	got, _ := test.ExecuteCommand(task, "start", "task-1",
 		"-o", "code-image image-final",
+		"-i=my-repo=something",
+		"-p=print=cat",
 		"-n", "ns",
 	)
 	expected := "Error: invalid input format for resource parameter: code-image image-final\n"
@@ -2866,14 +2881,6 @@ func Test_start_task_invalid_output_res_v1beta1(t *testing.T) {
 						},
 					},
 				},
-				Workspaces: []v1beta1.WorkspaceDeclaration{
-					{
-						Name:        "test",
-						Description: "test workspace",
-						MountPath:   "/workspace/test/file",
-						ReadOnly:    true,
-					},
-				},
 			},
 		},
 	}
@@ -2892,11 +2899,13 @@ func Test_start_task_invalid_output_res_v1beta1(t *testing.T) {
 	dc, _ := tdc.Client(
 		cb.UnstructuredV1beta1T(tasks[0], versionB1),
 	)
-	p := &test.Params{Tekton: cs.Pipeline, Kube: cs.Kube, Dynamic: dc}
+	p := &test.Params{Tekton: cs.Pipeline, Kube: cs.Kube, Resource: cs.Resource, Dynamic: dc}
 
 	task := Command(p)
 	got, _ := test.ExecuteCommand(task, "start", "task-1",
 		"-o", "code-image image-final",
+		"-i=my-repo=something",
+		"-p=print=cat",
 		"-n", "ns",
 	)
 	expected := "Error: invalid input format for resource parameter: code-image image-final\n"
@@ -2945,6 +2954,8 @@ func Test_start_task_invalid_param(t *testing.T) {
 	task := Command(p)
 	got, _ := test.ExecuteCommand(task, "start", "task-1",
 		"-p", "myarg boom",
+		"-i=my-repo=repo",
+		"-o=out=out",
 		"-n", "ns",
 	)
 	expected := "Error: invalid input format for param parameter: myarg boom\n"
@@ -3007,14 +3018,6 @@ func Test_start_task_invalid_param_v1beta1(t *testing.T) {
 						},
 					},
 				},
-				Workspaces: []v1beta1.WorkspaceDeclaration{
-					{
-						Name:        "test",
-						Description: "test workspace",
-						MountPath:   "/workspace/test/file",
-						ReadOnly:    true,
-					},
-				},
 			},
 		},
 	}
@@ -3033,11 +3036,13 @@ func Test_start_task_invalid_param_v1beta1(t *testing.T) {
 	dc, _ := tdc.Client(
 		cb.UnstructuredV1beta1T(tasks[0], versionB1),
 	)
-	p := &test.Params{Tekton: cs.Pipeline, Kube: cs.Kube, Dynamic: dc}
+	p := &test.Params{Tekton: cs.Pipeline, Kube: cs.Kube, Resource: cs.Resource, Dynamic: dc}
 
 	task := Command(p)
 	got, _ := test.ExecuteCommand(task, "start", "task-1",
 		"-p", "myarg boom",
+		"-i=my-repo=repo",
+		"-o=out=out",
 		"-n", "ns",
 	)
 	expected := "Error: invalid input format for param parameter: myarg boom\n"
@@ -3081,11 +3086,14 @@ func Test_start_task_invalid_label(t *testing.T) {
 	dc, _ := tdc.Client(
 		cb.UnstructuredT(tasks[0], versionA1),
 	)
-	p := &test.Params{Tekton: cs.Pipeline, Kube: cs.Kube, Dynamic: dc}
+	p := &test.Params{Tekton: cs.Pipeline, Kube: cs.Kube, Resource: cs.Resource, Dynamic: dc}
 
 	task := Command(p)
 	got, _ := test.ExecuteCommand(task, "start", "task-1",
 		"-l", "myarg boom",
+		"-i=input=input",
+		"-o=out=out",
+		"-p=param=param",
 		"-n", "ns",
 	)
 	expected := "Error: invalid input format for label parameter: myarg boom\n"
@@ -3148,14 +3156,6 @@ func Test_start_task_invalid_label_v1beta1(t *testing.T) {
 						},
 					},
 				},
-				Workspaces: []v1beta1.WorkspaceDeclaration{
-					{
-						Name:        "test",
-						Description: "test workspace",
-						MountPath:   "/workspace/test/file",
-						ReadOnly:    true,
-					},
-				},
 			},
 		},
 	}
@@ -3174,11 +3174,14 @@ func Test_start_task_invalid_label_v1beta1(t *testing.T) {
 	dc, _ := tdc.Client(
 		cb.UnstructuredV1beta1T(tasks[0], versionB1),
 	)
-	p := &test.Params{Tekton: cs.Pipeline, Kube: cs.Kube, Dynamic: dc}
+	p := &test.Params{Tekton: cs.Pipeline, Kube: cs.Kube, Resource: cs.Resource, Dynamic: dc}
 
 	task := Command(p)
 	got, _ := test.ExecuteCommand(task, "start", "task-1",
 		"-l", "myarg boom",
+		"-i=input=input",
+		"-o=out=out",
+		"-p=param=param",
 		"-n", "ns",
 	)
 	expected := "Error: invalid input format for label parameter: myarg boom\n"
@@ -3346,14 +3349,6 @@ func Test_start_task_allkindparam_v1beta1(t *testing.T) {
 							Name:  "exit",
 							Image: "busybox",
 						},
-					},
-				},
-				Workspaces: []v1beta1.WorkspaceDeclaration{
-					{
-						Name:        "test",
-						Description: "test workspace",
-						MountPath:   "/workspace/test/file",
-						ReadOnly:    true,
 					},
 				},
 			},
@@ -3547,14 +3542,6 @@ func Test_start_task_wrong_param_v1beta1(t *testing.T) {
 							Name:  "exit",
 							Image: "busybox",
 						},
-					},
-				},
-				Workspaces: []v1beta1.WorkspaceDeclaration{
-					{
-						Name:        "test",
-						Description: "test workspace",
-						MountPath:   "/workspace/test/file",
-						ReadOnly:    true,
 					},
 				},
 			},
@@ -3829,6 +3816,7 @@ func TestTaskStart_ExecuteCommand(t *testing.T) {
 			command: []string{"start", "task-1",
 				"-i=my-repo=git-repo",
 				"-o=code-image=output-image",
+				"-p=myarg=arg",
 				"-s=svc1",
 				"-n", "ns",
 				"--dry-run"},
@@ -3857,6 +3845,7 @@ func TestTaskStart_ExecuteCommand(t *testing.T) {
 			command: []string{"start", "task-1",
 				"-i=my-repo=git-repo",
 				"-o=code-image=output-image",
+				"-p=myarg=arg",
 				"-s=svc1",
 				"-n", "ns",
 				"--dry-run",
@@ -3875,6 +3864,7 @@ func TestTaskStart_ExecuteCommand(t *testing.T) {
 				"-s=svc1",
 				"-i=docker-source=git",
 				"-o=builtImage=image",
+				"-p=myarg=arg",
 				"--dry-run",
 				"--output=yaml"},
 			namespace:  "",
@@ -3888,6 +3878,7 @@ func TestTaskStart_ExecuteCommand(t *testing.T) {
 			command: []string{"start", "task-1",
 				"-i=my-repo=git-repo",
 				"-o=code-image=output-image",
+				"-p=myarg=arg",
 				"-s=svc1",
 				"-n", "ns",
 				"--dry-run",
@@ -3904,6 +3895,7 @@ func TestTaskStart_ExecuteCommand(t *testing.T) {
 				"-f", "./testdata/task-v1alpha1.yaml",
 				"-n", "ns",
 				"-s=svc1",
+				"-p=myarg=arg",
 				"-i=docker-source=git",
 				"-o=builtImage=image",
 				"--dry-run",
@@ -4004,14 +3996,6 @@ func TestTaskStart_ExecuteCommand_v1beta1(t *testing.T) {
 						},
 					},
 				},
-				Workspaces: []v1beta1.WorkspaceDeclaration{
-					{
-						Name:        "test",
-						Description: "test workspace",
-						MountPath:   "/workspace/test/file",
-						ReadOnly:    true,
-					},
-				},
 			},
 		},
 	}
@@ -4046,6 +4030,7 @@ func TestTaskStart_ExecuteCommand_v1beta1(t *testing.T) {
 			command: []string{"start", "task-1",
 				"-i=my-repo=git-repo",
 				"-o=code-image=output-image",
+				"-p=myarg=arg",
 				"-s=svc1",
 				"-n", "ns",
 				"--dry-run",
@@ -4060,6 +4045,7 @@ func TestTaskStart_ExecuteCommand_v1beta1(t *testing.T) {
 			command: []string{"start", "task-1",
 				"-i=my-repo=git-repo",
 				"-o=code-image=output-image",
+				"-p=myarg=arg",
 				"-s=svc1",
 				"-n", "ns",
 				"--dry-run"},
@@ -4077,6 +4063,7 @@ func TestTaskStart_ExecuteCommand_v1beta1(t *testing.T) {
 				"-s=svc1",
 				"-i=docker-source=git",
 				"-o=builtImage=image",
+				"-p=myarg=arg",
 				"--dry-run",
 				"--output=yaml"},
 			namespace:  "",
@@ -4090,6 +4077,7 @@ func TestTaskStart_ExecuteCommand_v1beta1(t *testing.T) {
 			command: []string{"start", "task-1",
 				"-i=my-repo=git-repo",
 				"-o=code-image=output-image",
+				"-p=myarg=arg",
 				"-s=svc1",
 				"-n", "ns",
 				"--dry-run",
@@ -4105,6 +4093,7 @@ func TestTaskStart_ExecuteCommand_v1beta1(t *testing.T) {
 			command: []string{"start", "task-1",
 				"-i=my-repo=git-repo",
 				"-o=code-image=output-image",
+				"-p=myarg=arg",
 				"-s=svc1",
 				"-n", "ns",
 				"--dry-run",
@@ -4121,6 +4110,7 @@ func TestTaskStart_ExecuteCommand_v1beta1(t *testing.T) {
 				"-f", "./testdata/task-v1beta1.yaml",
 				"-n", "ns",
 				"-s=svc1",
+				"-p=myarg=arg",
 				"-i=docker-source=git",
 				"-o=builtImage=image",
 				"--dry-run",

@@ -19,12 +19,16 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
+	"os"
 	"sort"
 	"strings"
 	"time"
 
+	"github.com/AlecAivazis/survey/v2"
+	"github.com/AlecAivazis/survey/v2/terminal"
 	"github.com/spf13/cobra"
 	"github.com/tektoncd/cli/pkg/cli"
+	"github.com/tektoncd/cli/pkg/cmd/pipelineresource"
 	"github.com/tektoncd/cli/pkg/cmd/taskrun"
 	"github.com/tektoncd/cli/pkg/file"
 	"github.com/tektoncd/cli/pkg/flags"
@@ -66,10 +70,12 @@ type startOptions struct {
 	UseTaskRun         string
 	PrefixName         string
 	Workspaces         []string
+	task               *v1beta1.Task
+	askOpts            survey.AskOpt
 }
 
 // NameArg validates that the first argument is a valid task name
-func NameArg(args []string, p cli.Params) error {
+func NameArg(args []string, p cli.Params, opt *startOptions) error {
 	if len(args) == 0 {
 		return errNoTask
 	}
@@ -88,7 +94,7 @@ func NameArg(args []string, p cli.Params) error {
 	if err != nil {
 		return fmt.Errorf(errInvalidTask, name, ns)
 	}
-
+	opt.task = t
 	if t.Spec.Params != nil {
 		params.FilterParamsByType(t.Spec.Params)
 	}
@@ -99,6 +105,14 @@ func NameArg(args []string, p cli.Params) error {
 func startCommand(p cli.Params) *cobra.Command {
 	opt := startOptions{
 		cliparams: p,
+		askOpts: func(opt *survey.AskOptions) error {
+			opt.Stdio = terminal.Stdio{
+				In:  os.Stdin,
+				Out: os.Stdout,
+				Err: os.Stderr,
+			}
+			return nil
+		},
 	}
 
 	c := &cobra.Command{
@@ -129,7 +143,7 @@ like cat,foo,bar
 				}
 			}
 			if len(args) != 0 {
-				return NameArg(args, p)
+				return NameArg(args, p, &opt)
 			}
 			if opt.Filename == "" {
 				return errors.New("either a task name or a --filename parameter must be supplied")
@@ -266,7 +280,7 @@ func startTask(opt startOptions, args []string) error {
 		if err != nil {
 			return err
 		}
-
+		opt.task = task
 		tname = task.ObjectMeta.Name
 
 		if task.Spec.Params != nil {
@@ -276,6 +290,10 @@ func startTask(opt startOptions, args []string) error {
 		tr.Spec = v1beta1.TaskRunSpec{
 			TaskSpec: &task.Spec,
 		}
+	}
+
+	if err := opt.getInputs(); err != nil {
+		return err
 	}
 
 	if opt.TimeOut != "" {
@@ -460,4 +478,88 @@ func convertedTrVersion(c *cli.Clients, tr *v1beta1.TaskRun) (interface{}, error
 	}
 
 	return tr, nil
+}
+
+func (opt *startOptions) getInputs() error {
+	if opt.Last && opt.UseTaskRun != "" {
+		fmt.Fprintf(opt.stream.Err, "option --last and option --use-taskrun are not compatible \n")
+		return nil
+	}
+
+	intOpts := options.InteractiveOpts{
+		Stream:    opt.stream,
+		CliParams: opt.cliparams,
+		AskOpts:   opt.askOpts,
+		Ns:        opt.cliparams.Namespace(),
+	}
+
+	if opt.task.Spec.Resources != nil && !opt.Last && opt.UseTaskRun == "" {
+		if len(opt.InputResources) == 0 {
+			if err := intOpts.TaskInputResources(opt.task, createPipelineResource); err != nil {
+				return err
+			}
+			opt.InputResources = append(opt.InputResources, intOpts.InputResources...)
+		}
+		if len(opt.OutputResources) == 0 {
+			if err := intOpts.TaskOutputResources(opt.task, createPipelineResource); err != nil {
+				return err
+			}
+			opt.OutputResources = append(opt.OutputResources, intOpts.OutputResources...)
+		}
+	}
+
+	params.FilterParamsByType(opt.task.Spec.Params)
+	if len(opt.Params) == 0 && !opt.Last && opt.UseTaskRun == "" {
+		if err := intOpts.TaskParams(opt.task); err != nil {
+			return err
+		}
+		opt.Params = append(opt.Params, intOpts.Params...)
+	}
+
+	if len(opt.Workspaces) == 0 && !opt.Last && opt.UseTaskRun == "" {
+		if err := intOpts.TaskWorkspaces(opt.task); err != nil {
+			return err
+		}
+		opt.Workspaces = append(opt.Workspaces, intOpts.Workspaces...)
+	}
+
+	return nil
+}
+
+func createPipelineResource(resType v1alpha1.PipelineResourceType, askOpt survey.AskOpt, p cli.Params, s *cli.Stream) (*v1alpha1.PipelineResource, error) {
+	res := pipelineresource.Resource{
+		AskOpts: askOpt,
+		Params:  p,
+		PipelineResource: v1alpha1.PipelineResource{
+			ObjectMeta: metav1.ObjectMeta{Namespace: p.Namespace()},
+			Spec:       v1alpha1.PipelineResourceSpec{Type: resType},
+		}}
+
+	if err := res.AskMeta(); err != nil {
+		return nil, err
+	}
+
+	resourceTypeParams := map[v1alpha1.PipelineResourceType]func() error{
+		v1alpha1.PipelineResourceTypeGit:         res.AskGitParams,
+		v1alpha1.PipelineResourceTypeStorage:     res.AskStorageParams,
+		v1alpha1.PipelineResourceTypeImage:       res.AskImageParams,
+		v1alpha1.PipelineResourceTypeCluster:     res.AskClusterParams,
+		v1alpha1.PipelineResourceTypePullRequest: res.AskPullRequestParams,
+		v1alpha1.PipelineResourceTypeCloudEvent:  res.AskCloudEventParams,
+	}
+	if res.PipelineResource.Spec.Type != "" {
+		if err := resourceTypeParams[res.PipelineResource.Spec.Type](); err != nil {
+			return nil, err
+		}
+	}
+	cs, err := p.Clients()
+	if err != nil {
+		return nil, err
+	}
+	newRes, err := cs.Resource.TektonV1alpha1().PipelineResources(p.Namespace()).Create(&res.PipelineResource)
+	if err != nil {
+		return nil, err
+	}
+	fmt.Fprintf(s.Out, "New %s resource \"%s\" has been created\n", newRes.Spec.Type, newRes.Name)
+	return newRes, nil
 }

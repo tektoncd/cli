@@ -19,6 +19,12 @@
 						"name": "git-repo"
 					}
 				}
+			],
+			"params": [
+				{
+					"name": "myarg",
+					"value": "arg"
+				}
 			]
 		},
 		"outputs": {
