@@ -5,6 +5,9 @@ metadata:
   generateName: task-1-run-
   namespace: ns
 spec:
+  params:
+  - name: myarg
+    value: arg
   resources:
     inputs:
     - name: my-repo

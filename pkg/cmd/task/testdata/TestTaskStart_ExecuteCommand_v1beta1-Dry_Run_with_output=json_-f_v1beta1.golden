@@ -7,6 +7,12 @@
 		"creationTimestamp": null
 	},
 	"spec": {
+		"params": [
+			{
+				"name": "myarg",
+				"value": "arg"
+			}
+		],
 		"resources": {
 			"inputs": [
 				{
