@@ -116,3 +116,63 @@ func getDeploymentData(name, image string, deploymentLabels, podTemplateLabels, 
 		},
 	}
 }
+
+func TestGetTriggerVersion(t *testing.T) {
+	oldDeploymentLabels := map[string]string{
+		"app.kubernetes.io/component": "controller",
+		"app.kubernetes.io/name":      "tekton-triggers",
+	}
+
+	newDeploymentLabels := map[string]string{
+		"app.kubernetes.io/part-of":   "tekton-triggers",
+		"app.kubernetes.io/component": "controller",
+		"app.kubernetes.io/name":      "controller",
+	}
+
+	testParams := []struct {
+		name       string
+		namespace  string
+		deployment *v1.Deployment
+		want       string
+	}{{
+		name:       "empty deployment items",
+		namespace:  "tekton-pipelines",
+		deployment: &v1.Deployment{},
+		want:       "",
+	}, {
+		name:       "controller in different namespace (old labels)",
+		namespace:  "test",
+		deployment: getDeploymentData("dep", "", oldDeploymentLabels, nil, nil),
+		want:       "",
+	}, {
+		name:       "deployment spec have labels specific to version (old labels)",
+		namespace:  "tekton-pipelines",
+		deployment: getDeploymentData("dep1", "", oldDeploymentLabels, map[string]string{"triggers.tekton.dev/release": "v0.3.1"}, nil),
+		want:       "v0.3.1",
+	}, {
+		name:       "controller in different namespace (new labels)",
+		namespace:  "test",
+		deployment: getDeploymentData("dep2", "", newDeploymentLabels, map[string]string{"app.kubernetes.io/version": "v0.5.0"}, nil),
+		want:       "v0.5.0",
+	}, {
+		name:       "deployment spec have labels specific to master version (new labels)",
+		namespace:  "tekton-pipelines",
+		deployment: getDeploymentData("dep3", "", newDeploymentLabels, map[string]string{"app.kubernetes.io/version": "master-tekton-triggers"}, nil),
+		want:       "master-tekton-triggers",
+	}}
+	for _, tp := range testParams {
+		t.Run(tp.name, func(t *testing.T) {
+			cs, _ := test.SeedTestData(t, pipelinetest.Data{})
+			p := &test.Params{Kube: cs.Kube}
+			cls, err := p.Clients()
+			if err != nil {
+				t.Errorf("failed to get client: %v", err)
+			}
+			if _, err := cls.Kube.AppsV1().Deployments(tp.namespace).Create(tp.deployment); err != nil {
+				t.Errorf("failed to create deployment: %v", err)
+			}
+			version, _ := GetTriggerVersion(cls)
+			test.AssertOutput(t, tp.want, version)
+		})
+	}
+}

@@ -25,18 +25,20 @@ import (
 
 const (
 	pipelinesControllerSelector    string = "app.kubernetes.io/part-of=tekton-pipelines,app.kubernetes.io/component=controller,app.kubernetes.io/name=controller"
-	oldpipelinesControllerSelector string = "app.kubernetes.io/component=controller,app.kubernetes.io/name=tekton-pipelines"
+	oldPipelinesControllerSelector string = "app.kubernetes.io/component=controller,app.kubernetes.io/name=tekton-pipelines"
+	triggersControllerSelector     string = "app.kubernetes.io/part-of=tekton-triggers,app.kubernetes.io/component=controller,app.kubernetes.io/name=controller"
+	oldTriggersControllerSelector  string = "app.kubernetes.io/component=controller,app.kubernetes.io/name=tekton-triggers"
 )
 
 // GetPipelineVersion Get pipeline version, functions imported from Dashboard
 func GetPipelineVersion(c *cli.Clients) (string, error) {
-	deploymentsList, err := getDeployments(c)
+	deploymentsList, err := getDeployments(c, pipelinesControllerSelector, oldPipelinesControllerSelector)
 
 	if err != nil {
 		return "", err
 	}
 
-	version := findVersion(deploymentsList.Items)
+	version := findPipelineVersion(deploymentsList.Items)
 
 	if version == "" {
 		return "", fmt.Errorf("Error getting the tekton pipelines deployment version. Version is unknown")
@@ -46,8 +48,8 @@ func GetPipelineVersion(c *cli.Clients) (string, error) {
 }
 
 // Get deployments for either Tekton Triggers, Tekton Dashboard or Tekton Pipelines
-func getDeployments(c *cli.Clients) (*v1.DeploymentList, error) {
-	deployments, err := c.Kube.AppsV1().Deployments("").List(metav1.ListOptions{LabelSelector: pipelinesControllerSelector})
+func getDeployments(c *cli.Clients, newLabel, oldLabel string) (*v1.DeploymentList, error) {
+	deployments, err := c.Kube.AppsV1().Deployments("").List(metav1.ListOptions{LabelSelector: newLabel})
 	if err != nil {
 		return nil, err
 	}
@@ -55,7 +57,7 @@ func getDeployments(c *cli.Clients) (*v1.DeploymentList, error) {
 	// NOTE: If the new labels selector returned nothing, try with old labels selector
 	// The old labels selectors are deprecated and should be removed at some point
 	if deployments == nil || len(deployments.Items) == 0 {
-		deployments, err = c.Kube.AppsV1().Deployments("").List(metav1.ListOptions{LabelSelector: oldpipelinesControllerSelector})
+		deployments, err = c.Kube.AppsV1().Deployments("").List(metav1.ListOptions{LabelSelector: oldLabel})
 		if err != nil {
 			return nil, err
 		}
@@ -64,7 +66,7 @@ func getDeployments(c *cli.Clients) (*v1.DeploymentList, error) {
 	return deployments, err
 }
 
-func findVersion(deployments []v1.Deployment) string {
+func findPipelineVersion(deployments []v1.Deployment) string {
 	version := ""
 	for _, deployment := range deployments {
 		deploymentLabels := deployment.Spec.Template.GetLabels()
@@ -93,6 +95,37 @@ func findVersion(deployments []v1.Deployment) string {
 					version = t[0]
 				}
 			}
+		}
+	}
+	return version
+}
+
+// GetTriggerVersion Get triggers version.
+func GetTriggerVersion(c *cli.Clients) (string, error) {
+	deploymentsList, err := getDeployments(c, triggersControllerSelector, oldTriggersControllerSelector)
+
+	if err != nil {
+		return "", err
+	}
+
+	version := findTriggersVersion(deploymentsList.Items)
+
+	if version == "" {
+		return "", fmt.Errorf("Error getting the tekton triggers deployment version. Version is unknown")
+	}
+
+	return version, nil
+}
+
+func findTriggersVersion(deployments []v1.Deployment) string {
+	version := ""
+	for _, deployment := range deployments {
+		deploymentLabels := deployment.Spec.Template.GetLabels()
+
+		// For master of Tekton Triggers
+		if version = deploymentLabels["app.kubernetes.io/version"]; version == "" {
+			// For Tekton Triggers 0.3.*
+			version = deploymentLabels["triggers.tekton.dev/release"]
 		}
 	}
 	return version
