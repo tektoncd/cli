@@ -56,11 +56,16 @@ func Command(p cli.Params) *cobra.Command {
 
 			cs, err := p.Clients()
 			if err == nil {
-				version, _ := version.GetPipelineVersion(cs)
-				if version == "" {
-					version = "unknown"
+				pipelineVersion, _ := version.GetPipelineVersion(cs)
+				if pipelineVersion == "" {
+					pipelineVersion = "unknown"
 				}
-				fmt.Fprintf(cmd.OutOrStdout(), "Pipeline version: %s\n", version)
+				fmt.Fprintf(cmd.OutOrStdout(), "Pipeline version: %s\n", pipelineVersion)
+				triggersVersion, _ := version.GetTriggerVersion(cs)
+				if triggersVersion == "" {
+					triggersVersion = "unknown"
+				}
+				fmt.Fprintf(cmd.OutOrStdout(), "Triggers version: %s\n", triggersVersion)
 			}
 
 			if !check || clientVersion == devVersion {
