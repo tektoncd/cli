@@ -26,7 +26,6 @@ import (
 
 	"github.com/AlecAivazis/survey/v2"
 	"github.com/AlecAivazis/survey/v2/terminal"
-	"github.com/ghodss/yaml"
 	"github.com/spf13/cobra"
 	"github.com/tektoncd/cli/pkg/cli"
 	"github.com/tektoncd/cli/pkg/cmd/pipelineresource"
@@ -46,6 +45,7 @@ import (
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	v1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/client-go/discovery"
+	"sigs.k8s.io/yaml"
 )
 
 var (
@@ -740,13 +740,13 @@ func parsePipeline(taskLocation string, p cli.Params) (*v1beta1.Pipeline, error)
 		return nil, err
 	}
 	m := map[string]interface{}{}
-	err = yaml.Unmarshal(b, &m)
+	err = yaml.UnmarshalStrict(b, &m)
 	if err != nil {
 		return nil, err
 	}
 	if m["apiVersion"] == "tekton.dev/v1alpha1" {
 		pipeline := v1alpha1.Pipeline{}
-		if err := yaml.Unmarshal(b, &pipeline); err != nil {
+		if err := yaml.UnmarshalStrict(b, &pipeline); err != nil {
 			return nil, err
 		}
 		var pipelineConverted v1beta1.Pipeline
@@ -760,7 +760,7 @@ func parsePipeline(taskLocation string, p cli.Params) (*v1beta1.Pipeline, error)
 	}
 
 	pipeline := v1beta1.Pipeline{}
-	if err := yaml.Unmarshal(b, &pipeline); err != nil {
+	if err := yaml.UnmarshalStrict(b, &pipeline); err != nil {
 		return nil, err
 	}
 	return &pipeline, nil
