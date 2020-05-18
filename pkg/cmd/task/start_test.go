@@ -185,6 +185,32 @@ func Test_start_has_task_filename_v1alpha1(t *testing.T) {
 	test.AssertOutput(t, expected, got)
 }
 
+func Test_start_with_filename_invalid_v1alpha1(t *testing.T) {
+	ns := []*corev1.Namespace{
+		{
+			ObjectMeta: metav1.ObjectMeta{
+				Name: "ns",
+			},
+		},
+	}
+	cs, _ := test.SeedTestData(t, pipelinetest.Data{Namespaces: ns})
+	cs.Pipeline.Resources = cb.APIResourceList(versionA1, []string{"task", "taskrun"})
+	tdc := testDynamic.Options{}
+	dc, err := tdc.Client()
+	if err != nil {
+		t.Errorf("unable to create dynamic client: %v", err)
+	}
+	c := Command(&test.Params{Tekton: cs.Pipeline, Kube: cs.Kube, Dynamic: dc})
+
+	_, err = test.ExecuteCommand(c, "start", "-n", "ns", "--filename=./testdata/task-invalid-v1alpha1.yaml")
+	if err == nil {
+		t.Errorf("expected an error but didn't get one")
+	}
+
+	expected := `error unmarshaling JSON: while decoding JSON: json: unknown field "param"`
+	test.AssertOutput(t, expected, err.Error())
+}
+
 func Test_start_has_task_filename_v1beta1(t *testing.T) {
 	ns := []*corev1.Namespace{
 		{
@@ -209,6 +235,32 @@ func Test_start_has_task_filename_v1beta1(t *testing.T) {
 
 	expected := "Taskrun started: \n\nIn order to track the taskrun progress run:\ntkn taskrun logs  -f -n ns\n"
 	test.AssertOutput(t, expected, got)
+}
+
+func Test_start_with_filename_invalid_v1beta1(t *testing.T) {
+	ns := []*corev1.Namespace{
+		{
+			ObjectMeta: metav1.ObjectMeta{
+				Name: "ns",
+			},
+		},
+	}
+	cs, _ := test.SeedTestData(t, pipelinetest.Data{Namespaces: ns})
+	cs.Pipeline.Resources = cb.APIResourceList(versionA1, []string{"task", "taskrun"})
+	tdc := testDynamic.Options{}
+	dc, err := tdc.Client()
+	if err != nil {
+		t.Errorf("unable to create dynamic client: %v", err)
+	}
+	c := Command(&test.Params{Tekton: cs.Pipeline, Kube: cs.Kube, Dynamic: dc})
+
+	_, err = test.ExecuteCommand(c, "start", "-n", "ns", "--filename=./testdata/task-invalid-v1beta1.yaml")
+	if err == nil {
+		t.Errorf("expected an error but didn't get one")
+	}
+
+	expected := `error unmarshaling JSON: while decoding JSON: json: unknown field "param"`
+	test.AssertOutput(t, expected, err.Error())
 }
 
 func Test_start_task_not_found(t *testing.T) {

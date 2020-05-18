@@ -23,7 +23,6 @@ import (
 	"strings"
 	"time"
 
-	"github.com/ghodss/yaml"
 	"github.com/spf13/cobra"
 	"github.com/tektoncd/cli/pkg/cli"
 	"github.com/tektoncd/cli/pkg/cmd/taskrun"
@@ -40,6 +39,7 @@ import (
 	"github.com/tektoncd/pipeline/pkg/apis/pipeline/v1beta1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/client-go/discovery"
+	"sigs.k8s.io/yaml"
 )
 
 var (
@@ -182,14 +182,14 @@ func parseTask(taskLocation string, p cli.Params) (*v1beta1.Task, error) {
 	}
 
 	m := map[string]interface{}{}
-	err = yaml.Unmarshal(b, &m)
+	err = yaml.UnmarshalStrict(b, &m)
 	if err != nil {
 		return nil, err
 	}
 	task := v1beta1.Task{}
 	if m["apiVersion"] == "tekton.dev/v1alpha1" {
 		v1alpha1Task := v1alpha1.Task{}
-		if err := yaml.Unmarshal(b, &v1alpha1Task); err != nil {
+		if err := yaml.UnmarshalStrict(b, &v1alpha1Task); err != nil {
 			return nil, err
 		}
 		if err := v1alpha1Task.ConvertUp(context.Background(), &task); err != nil {
@@ -200,7 +200,7 @@ func parseTask(taskLocation string, p cli.Params) (*v1beta1.Task, error) {
 		return &task, nil
 	}
 
-	if err := yaml.Unmarshal(b, &task); err != nil {
+	if err := yaml.UnmarshalStrict(b, &task); err != nil {
 		return nil, err
 	}
 	return &task, nil
