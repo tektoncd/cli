@@ -20,8 +20,8 @@ Params
 
 Tasks
 
- NAME   TASKREF   RUNAFTER
- task   taskref   one, two
+ NAME   TASKREF   RUNAFTER   TIMEOUT     PARAMS
+ task   taskref   one, two   5 minutes   param: value
 
 PipelineRuns
 

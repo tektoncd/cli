@@ -1,4 +1,4 @@
-// Copyright © 2019 The Tekton Authors.
+// Copyright © 2020 The Tekton Authors.
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -15,33 +15,21 @@
 package formatted
 
 import (
-	"github.com/hako/durafmt"
-	"github.com/jonboulle/clockwork"
+	"testing"
+	"time"
+
+	"gotest.tools/v3/assert"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 )
 
-func Age(t *metav1.Time, c clockwork.Clock) string {
-	if t.IsZero() {
-		return "---"
+func TestTimeout(t *testing.T) {
+	t1 := metav1.Duration{
+		Duration: 5 * time.Minute,
 	}
 
-	dur := c.Since(t.Time)
-	return durafmt.ParseShort(dur).String() + " ago"
-}
+	str := Timeout(&t1) // Timeout is defined
+	assert.Equal(t, str, "5 minutes")
 
-func Duration(t1, t2 *metav1.Time) string {
-	if t1.IsZero() || t2.IsZero() {
-		return "---"
-	}
-
-	dur := t2.Time.Sub(t1.Time)
-	return durafmt.ParseShort(dur).String()
-}
-
-func Timeout(t *metav1.Duration) string {
-	if t == nil {
-		return "---"
-	}
-
-	return durafmt.Parse(t.Duration).String()
+	str = Timeout(nil) // Timeout is not defined
+	assert.Equal(t, str, "---")
 }

@@ -76,9 +76,9 @@ const describeTemplate = `{{decorate "bold" "Name"}}:	{{ .PipelineName }}
 {{- $tl := len .Pipeline.Spec.Tasks }}{{ if eq $tl 0 }}
  No tasks
 {{- else }}
- NAME	TASKREF	RUNAFTER
+ NAME	TASKREF	RUNAFTER	TIMEOUT	PARAMS
 {{- range $i, $t := .Pipeline.Spec.Tasks }}
- {{decorate "bullet" $t.Name }}	{{ $t.TaskRef.Name }}	{{ join $t.RunAfter ", " }}
+ {{decorate "bullet" $t.Name }}	{{ $t.TaskRef.Name }}	{{ join $t.RunAfter ", " }}	{{ formatTimeout $t.Timeout }}	{{ formatParam $t.Params $.Pipeline.Spec.Params }}
 {{- end }}
 {{- end }}
 
@@ -182,6 +182,8 @@ func printPipelineDescription(out io.Writer, p cli.Params, pname string) error {
 		"formatCondition": formatted.Condition,
 		"decorate":        formatted.DecorateAttr,
 		"formatDesc":      formatted.FormatDesc,
+		"formatTimeout":   formatted.Timeout,
+		"formatParam":     formatted.Param,
 		"join":            strings.Join,
 	}
 
