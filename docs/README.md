@@ -4,6 +4,8 @@ linkTitle: "CLI"
 weight: 5
 description: >
   Command-Line Interface
+cascade:
+  github_project_repo: https://github.com/tektoncd/cli
 ---
 
 {{% pageinfo %}}
