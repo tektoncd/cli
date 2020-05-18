@@ -186,7 +186,10 @@ func TestPipelineDescribe_with_spec_run(t *testing.T) {
 			tb.PipelineSpec(
 				tb.PipelineDescription("a test description"),
 				tb.PipelineTask("task", "taskref",
-					tb.RunAfter("one", "two")),
+					tb.RunAfter("one", "two"),
+					tb.PipelineTaskTimeout(5*time.Minute),
+					tb.PipelineTaskParam("task-param", "value"),
+				),
 			),
 		),
 	}
@@ -253,6 +256,8 @@ func TestPipelineDescribe_with_spec_resource_param_run(t *testing.T) {
 				tb.PipelineDescription("a test description"),
 				tb.PipelineTask("task", "taskref",
 					tb.RunAfter("one", "two"),
+					tb.PipelineTaskTimeout(5*time.Minute),
+					tb.PipelineTaskParam("task-param", "value"),
 				),
 				tb.PipelineDeclaredResource("name", v1alpha1.PipelineResourceTypeGit),
 				tb.PipelineParamSpec("pipeline-param", v1alpha1.ParamTypeString, tb.ParamSpecDescription("param of type string"), tb.ParamSpecDefault("somethingdifferent")),
@@ -321,6 +326,8 @@ func TestPipelineDescribe_with_multiple_v1alpha1_pipelineruns(t *testing.T) {
 				tb.PipelineDescription("a test description"),
 				tb.PipelineTask("task", "taskref",
 					tb.RunAfter("one", "two"),
+					tb.PipelineTaskTimeout(5*time.Minute),
+					tb.PipelineTaskParam("task-param", "value"),
 				),
 				tb.PipelineDeclaredResource("name", v1alpha1.PipelineResourceTypeGit),
 				tb.PipelineParamSpec("pipeline-param", v1alpha1.ParamTypeString, tb.ParamSpecDefault("somethingdifferent")),
@@ -416,6 +423,9 @@ func TestPipelineDescribe_with_spec_multiple_resource_param_run(t *testing.T) {
 				tb.PipelineDescription("a test description"),
 				tb.PipelineTask("task", "taskref",
 					tb.RunAfter("one", "two"),
+					tb.PipelineTaskTimeout(5*time.Minute),
+					tb.PipelineTaskParam("param-1", "value"),
+					tb.PipelineTaskParam("param-2", "v1", "v2"),
 				),
 				tb.PipelineDeclaredResource("name", v1alpha1.PipelineResourceTypeGit),
 				tb.PipelineDeclaredResource("code", v1alpha1.PipelineResourceTypeGit),
@@ -500,6 +510,12 @@ func TestPipelineDescribeV1beta1_with_spec_multiple_resource_param_run(t *testin
 						RunAfter: []string{
 							"one",
 							"two",
+						},
+						Params: []v1beta1.Param{{
+							Name: "param", Value: v1beta1.ArrayOrString{Type: v1beta1.ParamTypeString, StringVal: "value"},
+						}},
+						Timeout: &metav1.Duration{
+							Duration: 5 * time.Minute,
 						},
 					},
 				},
