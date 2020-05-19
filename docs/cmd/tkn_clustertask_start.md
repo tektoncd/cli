@@ -40,6 +40,7 @@ like cat,foo,bar
   -s, --serviceaccount string    pass the serviceaccount name
       --showlog                  show logs right after starting the clustertask
       --timeout string           timeout for taskrun
+  -w, --workspace stringArray    pass the workspace.
 ```
 
 ### Options inherited from parent commands

@@ -31,8 +31,5 @@ spec:
   taskRef:
     kind: ClusterTask
     name: clustertask-1
-  workspaces:
-  - emptyDir: {}
-    name: test
 status:
   podName: ""

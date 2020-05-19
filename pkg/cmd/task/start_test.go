@@ -1,4 +1,4 @@
-// Copyright © 2019 The Tekton Authors.
+// Copyright © 2020 The Tekton Authors.
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -2175,6 +2175,7 @@ func Test_start_task_last_with_inputs_v1beta1(t *testing.T) {
 		"-o=code-image=output-image",
 		"-s=svc1",
 		"-n=ns",
+		"-w=name=test,emptyDir=",
 		"--last")
 
 	expected := "Taskrun started: random\n\nIn order to track the taskrun progress run:\ntkn taskrun logs random -f -n ns\n"
@@ -2656,6 +2657,7 @@ func Test_start_task_invalid_input_res_v1beta1(t *testing.T) {
 		"-o=some=some",
 		"-p=some=some",
 		"-n", "ns",
+		"-w=name=test,emptyDir=",
 	)
 	expected := "Error: invalid input format for resource parameter: my-repo git-repo\n"
 	test.AssertOutput(t, expected, got)
@@ -2927,6 +2929,7 @@ func Test_start_task_invalid_output_res_v1beta1(t *testing.T) {
 		"-i=my-repo=something",
 		"-p=print=cat",
 		"-n", "ns",
+		"-w=name=test,emptyDir=",
 	)
 	expected := "Error: invalid input format for resource parameter: code-image image-final\n"
 	test.AssertOutput(t, expected, got)
@@ -3065,6 +3068,7 @@ func Test_start_task_invalid_param_v1beta1(t *testing.T) {
 		"-i=my-repo=repo",
 		"-o=out=out",
 		"-n", "ns",
+		"-w=name=test,emptyDir=",
 	)
 	expected := "Error: invalid input format for param parameter: myarg boom\n"
 	test.AssertOutput(t, expected, got)
@@ -3205,6 +3209,7 @@ func Test_start_task_invalid_label_v1beta1(t *testing.T) {
 		"-o=out=out",
 		"-p=param=param",
 		"-n", "ns",
+		"-w=name=test,emptyDir=",
 	)
 	expected := "Error: invalid input format for label parameter: myarg boom\n"
 	test.AssertOutput(t, expected, got)
@@ -3404,6 +3409,7 @@ func Test_start_task_allkindparam_v1beta1(t *testing.T) {
 		"-l=key=value",
 		"-o=code-image=output-image",
 		"-s=svc1",
+		"-w=name=test,emptyDir=",
 		"-n=ns")
 
 	expected := "Taskrun started: \n\nIn order to track the taskrun progress run:\ntkn taskrun logs  -f -n ns\n"
@@ -3596,6 +3602,7 @@ func Test_start_task_wrong_param_v1beta1(t *testing.T) {
 		"-p=print=boom,boom",
 		"-l=key=value",
 		"-o=code-image=output-image",
+		"-w=name=test,emptyDir=",
 		"-s=svc1",
 		"-n=ns")
 
@@ -4157,6 +4164,148 @@ func TestTaskStart_ExecuteCommand_v1beta1(t *testing.T) {
 				"--dry-run",
 				"--param=myarg=BomBom",
 			},
+			namespace:  "",
+			dynamic:    dc,
+			input:      cs,
+			wantError:  false,
+			goldenFile: true,
+		},
+	}
+
+	for _, tp := range testParams {
+		t.Run(tp.name, func(t *testing.T) {
+			p := &test.Params{Tekton: tp.input.Pipeline, Kube: tp.input.Kube, Dynamic: tp.dynamic}
+			c := Command(p)
+
+			got, err := test.ExecuteCommand(c, tp.command...)
+			if tp.wantError {
+				if err == nil {
+					t.Errorf("error expected here")
+				}
+				test.AssertOutput(t, tp.want, err.Error())
+			} else {
+				if err != nil {
+					t.Errorf("unexpected Error")
+				}
+				if tp.goldenFile {
+					golden.Assert(t, got, strings.ReplaceAll(fmt.Sprintf("%s.golden", t.Name()), "/", "-"))
+				} else {
+					test.AssertOutput(t, tp.want, got)
+				}
+			}
+		})
+	}
+}
+
+func TestTaskStart_ExecuteCommand_v1beta1_Workspace(t *testing.T) {
+	tasks := []*v1beta1.Task{
+		{
+			ObjectMeta: v1.ObjectMeta{
+				Name:      "task-1",
+				Namespace: "ns",
+			},
+			Spec: v1beta1.TaskSpec{
+				Resources: &v1beta1.TaskResources{
+					Inputs: []v1beta1.TaskResource{
+						{
+							ResourceDeclaration: v1beta1.ResourceDeclaration{
+								Name: "my-repo",
+								Type: v1beta1.PipelineResourceTypeGit,
+							},
+						},
+					},
+					Outputs: []v1beta1.TaskResource{
+						{
+							ResourceDeclaration: v1beta1.ResourceDeclaration{
+								Name: "code-image",
+								Type: v1beta1.PipelineResourceTypeImage,
+							},
+						},
+					},
+				},
+				Params: []v1beta1.ParamSpec{
+					{
+						Name: "myarg",
+						Type: v1beta1.ParamTypeString,
+					},
+				},
+				Steps: []v1beta1.Step{
+					{
+						Container: corev1.Container{
+							Name:  "hello",
+							Image: "busybox",
+						},
+					},
+					{
+						Container: corev1.Container{
+							Name:  "exit",
+							Image: "busybox",
+						},
+					},
+				},
+				Workspaces: []v1beta1.WorkspaceDeclaration{
+					{
+						Name:        "test",
+						Description: "test workspace",
+						MountPath:   "/workspace/test/file",
+						ReadOnly:    true,
+					},
+				},
+			},
+		},
+	}
+
+	ns := []*corev1.Namespace{
+		{
+			ObjectMeta: metav1.ObjectMeta{
+				Name: "ns",
+			},
+		},
+	}
+
+	cs, _ := test.SeedV1beta1TestData(t, pipelinev1beta1test.Data{Tasks: tasks, Namespaces: ns})
+	cs.Pipeline.Resources = cb.APIResourceList(versionB1, []string{"task"})
+	tdc := testDynamic.Options{}
+	dc, _ := tdc.Client(
+		cb.UnstructuredV1beta1T(tasks[0], versionB1),
+	)
+
+	testParams := []struct {
+		name       string
+		command    []string
+		namespace  string
+		dynamic    dynamic.Interface
+		input      pipelinev1beta1test.Clients
+		wantError  bool
+		want       string
+		goldenFile bool
+	}{
+		{
+			name: "Dry Run with invalid workspace",
+			command: []string{"start", "task-1",
+				"-i=my-repo=git-repo",
+				"-o=code-image=output-image",
+				"-s=svc1",
+				"-n", "ns",
+				"-p", "myarg=value",
+				"-w", "invalid",
+				"--dry-run"},
+			namespace: "",
+			dynamic:   dc,
+			input:     cs,
+			wantError: true,
+			want:      "Name not found for workspace",
+		},
+		{
+			name: "Dry Run with workspace",
+			command: []string{"start", "task-1",
+				"-i=my-repo=git-repo",
+				"-o=code-image=output-image",
+				"-s=svc1",
+				"-n", "ns",
+				"-p", "myarg=value",
+				"-w", "name=test,emptyDir=",
+				"--dry-run"},
 			namespace:  "",
 			dynamic:    dc,
 			input:      cs,

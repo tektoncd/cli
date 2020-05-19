@@ -2,18 +2,10 @@ apiVersion: tekton.dev/v1beta1
 kind: TaskRun
 metadata:
   creationTimestamp: null
-  generateName: clustertask-1-run-
+  generateName: clustertask-2-run-
   labels:
     key: value
 spec:
-  params:
-  - name: myarg
-    value: value
-  - name: print
-    value:
-    - booms
-    - booms
-    - booms
   resources:
     inputs:
     - name: my-repo
@@ -26,6 +18,9 @@ spec:
   serviceAccountName: svc1
   taskRef:
     kind: ClusterTask
-    name: clustertask-1
+    name: clustertask-2
+  workspaces:
+  - emptyDir: {}
+    name: test
 status:
   podName: ""

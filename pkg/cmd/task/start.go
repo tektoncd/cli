@@ -56,6 +56,7 @@ const invalidResource = "invalid input format for resource parameter: "
 type startOptions struct {
 	cliparams          cli.Params
 	stream             *cli.Stream
+	askOpts            survey.AskOpt
 	Params             []string
 	InputResources     []string
 	OutputResources    []string
@@ -71,7 +72,6 @@ type startOptions struct {
 	PrefixName         string
 	Workspaces         []string
 	task               *v1beta1.Task
-	askOpts            survey.AskOpt
 }
 
 // NameArg validates that the first argument is a valid task name
@@ -161,6 +161,21 @@ like cat,foo,bar
 
 			if opt.Last && opt.UseTaskRun != "" {
 				return fmt.Errorf("using --last and --use-taskrun are not compatible")
+			}
+
+			var err error
+			if opt.Filename != "" {
+				opt.task, err = parseTask(opt.Filename, p)
+			}
+			if err != nil {
+				return err
+			}
+
+			if len(opt.Workspaces) == 0 && !opt.Last && opt.UseTaskRun == "" {
+				err := opt.getInputWorkspaces(opt.task)
+				if err != nil {
+					return err
+				}
 			}
 
 			return startTask(opt, args)
@@ -562,4 +577,113 @@ func createPipelineResource(resType v1alpha1.PipelineResourceType, askOpt survey
 	}
 	fmt.Fprintf(s.Out, "New %s resource \"%s\" has been created\n", newRes.Spec.Type, newRes.Name)
 	return newRes, nil
+}
+
+func getItems(askOpts survey.AskOpt) (string, error) {
+	var items string
+	for {
+		it, err := askParam("Item Value :", askOpts, " ")
+		if err != nil {
+			return "", err
+		}
+		if it != " " {
+			items = items + ",item=" + it
+		} else {
+			return items, nil
+		}
+	}
+}
+
+func askParam(ques string, askOpts survey.AskOpt, def ...string) (string, error) {
+	var ans string
+	input := &survey.Input{
+		Message: ques,
+	}
+	if len(def) != 0 {
+		input.Default = def[0]
+	}
+
+	var qs = []*survey.Question{
+		{
+			Name:   "workspace param",
+			Prompt: input,
+		},
+	}
+	if err := survey.Ask(qs, &ans, askOpts); err != nil {
+		return "", err
+	}
+
+	return ans, nil
+}
+
+func (opt *startOptions) getInputWorkspaces(task *v1beta1.Task) error {
+	for _, ws := range task.Spec.Workspaces {
+		fmt.Fprintf(opt.stream.Out, "Please give specifications for the workspace: %s \n", ws.Name)
+		name, err := askParam("Name for the workspace :", opt.askOpts)
+		if err != nil {
+			return err
+		}
+		workspace := "name=" + name
+		subPath, err := askParam("Value of the Sub Path :", opt.askOpts, " ")
+		if err != nil {
+			return err
+		}
+		if subPath != " " {
+			workspace = workspace + ",subPath=" + subPath
+		}
+
+		var kind string
+		var qs = []*survey.Question{
+			{
+				Name: "workspace param",
+				Prompt: &survey.Select{
+					Message: " Type of the Workspace :",
+					Options: []string{"config", "emptyDir", "secret", "pvc"},
+					Default: "emptyDir",
+				},
+			},
+		}
+		if err := survey.Ask(qs, &kind, opt.askOpts); err != nil {
+			return err
+		}
+		switch kind {
+		case "pvc":
+			claimName, err := askParam("Value of Claim Name :", opt.askOpts)
+			if err != nil {
+				return err
+			}
+			workspace = workspace + ",claimName=" + claimName
+		case "emptyDir":
+			kind, err := askParam("Type of EmtpyDir :", opt.askOpts, "")
+			if err != nil {
+				return err
+			}
+			workspace = workspace + ",emptyDir=" + kind
+		case "config":
+			config, err := askParam("Name of the configmap :", opt.askOpts)
+			if err != nil {
+				return err
+			}
+			workspace = workspace + ",config=" + config
+			items, err := getItems(opt.askOpts)
+			if err != nil {
+				return err
+			}
+			workspace += items
+		case "secret":
+			secret, err := askParam("Name of the secret :", opt.askOpts)
+			if err != nil {
+				return err
+			}
+			workspace = workspace + ",secret=" + secret
+			items, err := getItems(opt.askOpts)
+			if err != nil {
+				return err
+			}
+			workspace += items
+		}
+		opt.Workspaces = append(opt.Workspaces, workspace)
+
+	}
+	return nil
 }

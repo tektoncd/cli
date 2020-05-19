@@ -22,6 +22,7 @@ import (
 	"strings"
 	"time"
 
+	"github.com/AlecAivazis/survey/v2"
 	"github.com/ghodss/yaml"
 	"github.com/spf13/cobra"
 	"github.com/tektoncd/cli/pkg/cli"
@@ -33,6 +34,7 @@ import (
 	"github.com/tektoncd/cli/pkg/params"
 	"github.com/tektoncd/cli/pkg/task"
 	tractions "github.com/tektoncd/cli/pkg/taskrun"
+	"github.com/tektoncd/cli/pkg/workspaces"
 	"github.com/tektoncd/pipeline/pkg/apis/pipeline/v1beta1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/client-go/discovery"
@@ -48,6 +50,7 @@ const invalidResource = "invalid input format for resource parameter: "
 type startOptions struct {
 	cliparams          cli.Params
 	stream             *cli.Stream
+	askOpts            survey.AskOpt
 	Params             []string
 	InputResources     []string
 	OutputResources    []string
@@ -58,30 +61,32 @@ type startOptions struct {
 	TimeOut            string
 	DryRun             bool
 	Output             string
+	Workspaces         []string
 }
 
 // NameArg validates that the first argument is a valid clustertask name
-func NameArg(args []string, p cli.Params) error {
+func NameArg(args []string, p cli.Params) (*v1beta1.ClusterTask, error) {
+	clusterTaskErr := &v1beta1.ClusterTask{}
 	if len(args) == 0 {
-		return errNoClusterTask
+		return clusterTaskErr, errNoClusterTask
 	}
 
 	c, err := p.Clients()
 	if err != nil {
-		return err
+		return clusterTaskErr, err
 	}
 
 	name := args[0]
 	ct, err := ctactions.Get(c, name, metav1.GetOptions{})
 	if err != nil {
-		return fmt.Errorf(errInvalidClusterTask, name)
+		return clusterTaskErr, fmt.Errorf(errInvalidClusterTask, name)
 	}
 
 	if ct.Spec.Params != nil {
 		params.FilterParamsByType(ct.Spec.Params)
 	}
 
-	return nil
+	return ct, nil
 }
 
 func startCommand(p cli.Params) *cobra.Command {
@@ -119,12 +124,23 @@ like cat,foo,bar
 			if err := flags.InitParams(p, cmd); err != nil {
 				return err
 			}
-			return NameArg(args, p)
+			return nil
 		},
 		RunE: func(cmd *cobra.Command, args []string) error {
 			opt.stream = &cli.Stream{
 				Out: cmd.OutOrStdout(),
 				Err: cmd.OutOrStderr(),
+			}
+
+			clusterTask, err := NameArg(args, p)
+			if err != nil {
+				return err
+			}
+			if len(opt.Workspaces) == 0 && !opt.Last {
+				err := opt.getInputWorkspaces(clusterTask)
+				if err != nil {
+					return err
+				}
 			}
 
 			return startClusterTask(opt, args)
@@ -138,6 +154,7 @@ like cat,foo,bar
 	flags.AddShellCompletion(c.Flags().Lookup("serviceaccount"), "__kubectl_get_serviceaccount")
 	c.Flags().BoolVarP(&opt.Last, "last", "L", false, "re-run the clustertask using last taskrun values")
 	c.Flags().StringSliceVarP(&opt.Labels, "labels", "l", []string{}, "pass labels as label=value.")
+	c.Flags().StringArrayVarP(&opt.Workspaces, "workspace", "w", []string{}, "pass the workspace.")
 	c.Flags().BoolVarP(&opt.ShowLog, "showlog", "", false, "show logs right after starting the clustertask")
 	c.Flags().StringVar(&opt.TimeOut, "timeout", "", "timeout for taskrun")
 	c.Flags().BoolVarP(&opt.DryRun, "dry-run", "", false, "preview taskrun without running it")
@@ -212,6 +229,12 @@ func startClusterTask(opt startOptions, args []string) error {
 		return err
 	}
 	tr.ObjectMeta.Labels = labels
+
+	workspaces, err := workspaces.Merge(tr.Spec.Workspaces, opt.Workspaces)
+	if err != nil {
+		return err
+	}
+	tr.Spec.Workspaces = workspaces
 
 	param, err := params.MergeParam(tr.Spec.Params, opt.Params)
 	if err != nil {
@@ -346,4 +369,113 @@ func convertedTrVersion(c *cli.Clients, tr *v1beta1.TaskRun) (interface{}, error
 	}
 
 	return tr, nil
+}
+
+func getItems(askOpts survey.AskOpt) (string, error) {
+	var items string
+	for {
+		it, err := askParam("Item Value :", askOpts, " ")
+		if err != nil {
+			return "", err
+		}
+		if it != " " {
+			items = items + ",item=" + it
+		} else {
+			return items, nil
+		}
+	}
+}
+
+func askParam(ques string, askOpts survey.AskOpt, def ...string) (string, error) {
+	var ans string
+	input := &survey.Input{
+		Message: ques,
+	}
+	if len(def) != 0 {
+		input.Default = def[0]
+	}
+
+	var qs = []*survey.Question{
+		{
+			Name:   "workspace param",
+			Prompt: input,
+		},
+	}
+	if err := survey.Ask(qs, &ans, askOpts); err != nil {
+		return "", err
+	}
+
+	return ans, nil
+}
+
+func (opt *startOptions) getInputWorkspaces(clustertask *v1beta1.ClusterTask) error {
+	for _, ws := range clustertask.Spec.Workspaces {
+		fmt.Fprintf(opt.stream.Out, "Please give specifications for the workspace: %s \n", ws.Name)
+		name, err := askParam("Name for the workspace :", opt.askOpts)
+		if err != nil {
+			return err
+		}
+		workspace := "name=" + name
+		subPath, err := askParam("Value of the Sub Path :", opt.askOpts, " ")
+		if err != nil {
+			return err
+		}
+		if subPath != " " {
+			workspace = workspace + ",subPath=" + subPath
+		}
+
+		var kind string
+		var qs = []*survey.Question{
+			{
+				Name: "workspace param",
+				Prompt: &survey.Select{
+					Message: " Type of the Workspace :",
+					Options: []string{"config", "emptyDir", "secret", "pvc"},
+					Default: "emptyDir",
+				},
+			},
+		}
+		if err := survey.Ask(qs, &kind, opt.askOpts); err != nil {
+			return err
+		}
+		switch kind {
+		case "pvc":
+			claimName, err := askParam("Value of Claim Name :", opt.askOpts)
+			if err != nil {
+				return err
+			}
+			workspace = workspace + ",claimName=" + claimName
+		case "emptyDir":
+			kind, err := askParam("Type of EmtpyDir :", opt.askOpts, "")
+			if err != nil {
+				return err
+			}
+			workspace = workspace + ",emptyDir=" + kind
+		case "config":
+			config, err := askParam("Name of the configmap :", opt.askOpts)
+			if err != nil {
+				return err
+			}
+			workspace = workspace + ",config=" + config
+			items, err := getItems(opt.askOpts)
+			if err != nil {
+				return err
+			}
+			workspace += items
+		case "secret":
+			secret, err := askParam("Name of the secret :", opt.askOpts)
+			if err != nil {
+				return err
+			}
+			workspace = workspace + ",secret=" + secret
+			items, err := getItems(opt.askOpts)
+			if err != nil {
+				return err
+			}
+			workspace += items
+		}
+		opt.Workspaces = append(opt.Workspaces, workspace)
+
+	}
+	return nil
 }
