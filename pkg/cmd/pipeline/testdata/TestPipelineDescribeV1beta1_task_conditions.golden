@@ -1,0 +1,21 @@
+Name:        pipeline
+Namespace:   ns
+
+Resources
+
+ NAME   TYPE
+ name   git
+
+Params
+
+ No params
+
+Tasks
+
+ NAME     TASKREF   RUNAFTER   TIMEOUT   CONDITIONS                              PARAMS
+ task-1   task-1               ---       condition-1, condition-2, condition-3   ---
+ task-2   task-2               ---       condition-1                             ---
+
+PipelineRuns
+
+ No pipelineruns
