@@ -111,7 +111,7 @@ func TestPipelineRunDelete(t *testing.T) {
 	}
 
 	seeds := make([]clients, 0)
-	for i := 0; i < 5; i++ {
+	for i := 0; i < 6; i++ {
 		cs, _ := test.SeedTestData(t, pipelinetest.Data{
 			Pipelines:    pdata,
 			PipelineRuns: prdata,
@@ -218,7 +218,7 @@ func TestPipelineRunDelete(t *testing.T) {
 			input:       seeds[0].pipelineClient,
 			inputStream: strings.NewReader("y"),
 			wantError:   false,
-			want:        "Are you sure you want to delete all pipelineruns related to pipeline \"pipeline\" (y/n): PipelineRuns deleted: \"pipeline-run-2\", \"pipeline-run-3\"\n",
+			want:        "Are you sure you want to delete all pipelineruns related to pipeline \"pipeline\" (y/n): All PipelineRuns associated with Pipeline \"pipeline\" deleted in namespace \"ns\"\n",
 		},
 		{
 			name:        "Delete all with prompt",
@@ -273,6 +273,24 @@ func TestPipelineRunDelete(t *testing.T) {
 			inputStream: nil,
 			wantError:   true,
 			want:        "--all flag should not have any arguments or flags specified with it",
+		},
+		{
+			name:        "Remove pipelineruns of a pipeline using --keep",
+			command:     []string{"rm", "--pipeline", "pipeline", "-n", "ns", "--keep", "2"},
+			dynamic:     seeds[5].dynamicClient,
+			input:       seeds[5].pipelineClient,
+			inputStream: nil,
+			wantError:   false,
+			want:        "Are you sure you want to delete all pipelineruns related to pipeline \"pipeline\" keeping 2 pipelineruns (y/n): All but 2 PipelineRuns associated with Pipeline \"pipeline\" deleted in namespace \"ns\"\n",
+		},
+		{
+			name:        "Error from using argument with --keep",
+			command:     []string{"rm", "pipelinerun", "--keep", "2"},
+			dynamic:     seeds[5].dynamicClient,
+			input:       seeds[5].pipelineClient,
+			inputStream: nil,
+			wantError:   true,
+			want:        "--keep flag should not have any arguments specified with it",
 		},
 	}
 
@@ -379,7 +397,7 @@ func TestPipelineRunDelete_v1beta1(t *testing.T) {
 	}
 
 	seeds := make([]clients, 0)
-	for i := 0; i < 5; i++ {
+	for i := 0; i < 6; i++ {
 		cs, _ := test.SeedTestData(t, pipelinetest.Data{
 			Pipelines:    pdata,
 			PipelineRuns: prdata,
@@ -486,7 +504,7 @@ func TestPipelineRunDelete_v1beta1(t *testing.T) {
 			input:       seeds[0].pipelineClient,
 			inputStream: strings.NewReader("y"),
 			wantError:   false,
-			want:        "Are you sure you want to delete all pipelineruns related to pipeline \"pipeline\" (y/n): PipelineRuns deleted: \"pipeline-run-2\", \"pipeline-run-3\"\n",
+			want:        "Are you sure you want to delete all pipelineruns related to pipeline \"pipeline\" (y/n): All PipelineRuns associated with Pipeline \"pipeline\" deleted in namespace \"ns\"\n",
 		},
 		{
 			name:        "Delete all with prompt",
@@ -532,6 +550,24 @@ func TestPipelineRunDelete_v1beta1(t *testing.T) {
 			inputStream: nil,
 			wantError:   true,
 			want:        "--all flag should not have any arguments or flags specified with it",
+		},
+		{
+			name:        "Remove pipelineruns of a pipeline using --keep",
+			command:     []string{"rm", "--pipeline", "pipeline", "-n", "ns", "--keep", "2"},
+			dynamic:     seeds[5].dynamicClient,
+			input:       seeds[5].pipelineClient,
+			inputStream: strings.NewReader("y"),
+			wantError:   false,
+			want:        "Are you sure you want to delete all pipelineruns related to pipeline \"pipeline\" keeping 2 pipelineruns (y/n): All but 2 PipelineRuns associated with Pipeline \"pipeline\" deleted in namespace \"ns\"\n",
+		},
+		{
+			name:        "Error from using argument with --keep",
+			command:     []string{"rm", "pipelinerun", "--keep", "2"},
+			dynamic:     seeds[5].dynamicClient,
+			input:       seeds[5].pipelineClient,
+			inputStream: strings.NewReader("y"),
+			wantError:   true,
+			want:        "--keep flag should not have any arguments specified with it",
 		},
 	}
 

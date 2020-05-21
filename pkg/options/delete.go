@@ -35,20 +35,27 @@ type DeleteOptions struct {
 }
 
 func (o *DeleteOptions) CheckOptions(s *cli.Stream, resourceNames []string, ns string) error {
+	namesLen := len(resourceNames)
+
+	// make sure no resource names are provided when using --keep flag
+	if namesLen > 0 && o.Keep > 0 {
+		return fmt.Errorf("--keep flag should not have any arguments specified with it")
+	}
+
 	// make sure no resource names are provided when using --all flag
-	if len(resourceNames) > 0 && (o.DeleteAllNs || o.DeleteAll) || o.DeleteAllNs && o.DeleteRelated {
+	if namesLen > 0 && (o.DeleteAllNs || o.DeleteAll) || (o.DeleteAllNs && o.DeleteRelated) {
 		return fmt.Errorf("--all flag should not have any arguments or flags specified with it")
 	}
 
 	// make sure either resource names are provided, name of related resource,
 	// or --all specified if deleting PipelineRuns or TaskRuns
-	if len(resourceNames) == 0 && o.ParentResource != "" && o.ParentResourceName == "" && !o.DeleteAllNs {
+	if namesLen == 0 && o.ParentResource != "" && o.ParentResourceName == "" && !o.DeleteAllNs {
 		return fmt.Errorf("must provide %s name(s) or use --%s flag or --all flag to use delete", o.Resource, o.ParentResource)
 	}
 
 	// make sure that resource name or --all flag is specified to use delete
 	// in non PipelineRun or TaskRun deletions
-	if len(resourceNames) == 0 && o.ParentResource == "" && o.ParentResourceName == "" && !o.DeleteAllNs && !o.DeleteAll {
+	if namesLen == 0 && o.ParentResource == "" && o.ParentResourceName == "" && !o.DeleteAllNs && !o.DeleteAll {
 		return fmt.Errorf("must provide %s name(s) or use --all flag with delete", o.Resource)
 	}
 
@@ -68,7 +75,7 @@ func (o *DeleteOptions) CheckOptions(s *cli.Stream, resourceNames []string, ns s
 	case o.DeleteAll:
 		fmt.Fprintf(s.Out, "Are you sure you want to delete all %ss%s (y/n): ", o.Resource, keepStr)
 	case o.ParentResource != "" && o.ParentResourceName != "":
-		fmt.Fprintf(s.Out, "Are you sure you want to delete all %ss related to %s %q (y/n): ", o.Resource, o.ParentResource, o.ParentResourceName)
+		fmt.Fprintf(s.Out, "Are you sure you want to delete all %ss related to %s %q%s (y/n): ", o.Resource, o.ParentResource, o.ParentResourceName, keepStr)
 	case o.DeleteRelated:
 		fmt.Fprintf(s.Out, "Are you sure you want to delete %s and related resources %s (y/n): ", o.Resource, formattedNames)
 	default:

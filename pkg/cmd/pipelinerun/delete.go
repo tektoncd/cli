@@ -26,6 +26,7 @@ import (
 	pr "github.com/tektoncd/cli/pkg/pipelinerun"
 	prsort "github.com/tektoncd/cli/pkg/pipelinerun/sort"
 	validate "github.com/tektoncd/cli/pkg/validate"
+	"github.com/tektoncd/pipeline/pkg/apis/pipeline/v1beta1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime/schema"
 	cliopts "k8s.io/cli-runtime/pkg/genericclioptions"
@@ -68,7 +69,7 @@ or
 				return fmt.Errorf("keep option should not be lower than 0")
 			}
 
-			if opts.Keep > 0 {
+			if opts.Keep > 0 && opts.ParentResourceName == "" {
 				opts.DeleteAllNs = true
 			}
 
@@ -115,13 +116,21 @@ func deletePipelineRuns(s *cli.Stream, p cli.Params, prNames []string, opts *opt
 		d = deleter.New("Pipeline", func(_ string) error {
 			return errors.New("the pipeline should not be deleted")
 		})
-		d.WithRelated("PipelineRun", pipelineRunLister(cs, p.Namespace()), func(pipelineRunName string) error {
+		d.WithRelated("PipelineRun", pipelineRunLister(cs, opts.Keep, p.Namespace()), func(pipelineRunName string) error {
 			return actions.Delete(prGroupResource, cs, pipelineRunName, p.Namespace(), &metav1.DeleteOptions{})
 		})
 		d.DeleteRelated(s, []string{opts.ParentResourceName})
 	}
 	if !opts.DeleteAllNs {
-		d.PrintSuccesses(s)
+		switch {
+		case opts.Keep > 0:
+			// Should only occur in case of --pipeline and --keep being used together
+			fmt.Fprintf(s.Out, "All but %d PipelineRuns associated with Pipeline %q deleted in namespace %q\n", opts.Keep, opts.ParentResourceName, p.Namespace())
+		case opts.ParentResourceName != "":
+			fmt.Fprintf(s.Out, "All PipelineRuns associated with Pipeline %q deleted in namespace %q\n", opts.ParentResourceName, p.Namespace())
+		default:
+			d.PrintSuccesses(s)
+		}
 	} else if opts.DeleteAllNs {
 		if d.Errors() == nil {
 			if opts.Keep > 0 {
@@ -134,7 +143,7 @@ func deletePipelineRuns(s *cli.Stream, p cli.Params, prNames []string, opts *opt
 	return d.Errors()
 }
 
-func pipelineRunLister(cs *cli.Clients, ns string) func(string) ([]string, error) {
+func pipelineRunLister(cs *cli.Clients, keep int, ns string) func(string) ([]string, error) {
 	return func(pipelineName string) ([]string, error) {
 		lOpts := metav1.ListOptions{
 			LabelSelector: fmt.Sprintf("tekton.dev/pipeline=%s", pipelineName),
@@ -143,11 +152,7 @@ func pipelineRunLister(cs *cli.Clients, ns string) func(string) ([]string, error
 		if err != nil {
 			return nil, err
 		}
-		var names []string
-		for _, run := range pipelineRuns.Items {
-			names = append(names, run.Name)
-		}
-		return names, nil
+		return keepPipelineRuns(pipelineRuns, keep), nil
 	}
 }
 
@@ -156,6 +161,10 @@ func allPipelineRunNames(cs *cli.Clients, keep int, ns string) ([]string, error)
 	if err != nil {
 		return nil, err
 	}
+	return keepPipelineRuns(pipelineRuns, keep), nil
+}
+
+func keepPipelineRuns(pipelineRuns *v1beta1.PipelineRunList, keep int) []string {
 	var names []string
 	var counter = 0
 	prsort.SortByStartTime(pipelineRuns.Items)
@@ -166,5 +175,5 @@ func allPipelineRunNames(cs *cli.Clients, keep int, ns string) ([]string, error)
 		}
 		names = append(names, run.Name)
 	}
-	return names, nil
+	return names
 }

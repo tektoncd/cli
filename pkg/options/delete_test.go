@@ -125,6 +125,13 @@ func TestDeleteOptions(t *testing.T) {
 			want:           "--all flag should not have any arguments or flags specified with it",
 		},
 		{
+			name:           "Error when resource name used with keep",
+			opt:            &DeleteOptions{Keep: 1},
+			resourcesNames: []string{"test1"},
+			wantError:      true,
+			want:           "--keep flag should not have any arguments specified with it",
+		},
+		{
 			name:           "Specify DeleteAll option",
 			opt:            &DeleteOptions{DeleteAll: true},
 			stream:         &cli.Stream{In: strings.NewReader("y"), Out: os.Stdout},
