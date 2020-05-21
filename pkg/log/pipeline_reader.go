@@ -27,6 +27,7 @@ import (
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/fields"
 	"k8s.io/apimachinery/pkg/runtime"
+	duckv1beta1 "knative.dev/pkg/apis/duck/v1beta1"
 )
 
 func (r *Reader) readPipelineLog() (<-chan Log, <-chan error, error) {
@@ -157,8 +158,10 @@ func (r *Reader) waitUntilAvailable(timeout time.Duration) error {
 			}
 		case <-time.After(timeout * time.Second):
 			watchRun.Stop()
-			fmt.Fprintln(r.stream.Err, "No logs found")
-			return nil
+			if err = hasPipelineRunFailed(run.Status.Conditions); err != nil {
+				return fmt.Errorf("pipelinerun %s has failed", run.Name)
+			}
+			return fmt.Errorf("pipelinerun has not started yet")
 		}
 	}
 }
@@ -222,6 +225,13 @@ func empty(status v1beta1.PipelineRunStatus) bool {
 		return true
 	}
 	return len(status.Conditions) == 0
+}
+
+func hasPipelineRunFailed(prConditions duckv1beta1.Conditions) error {
+	if len(prConditions) != 0 && prConditions[0].Status == corev1.ConditionFalse {
+		return fmt.Errorf("pipelinerun has failed: %s", prConditions[0].Message)
+	}
+	return nil
 }
 
 func cast2pipelinerun(obj runtime.Object) (*v1beta1.PipelineRun, error) {

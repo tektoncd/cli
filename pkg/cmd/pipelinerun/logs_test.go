@@ -876,10 +876,10 @@ func TestLogs_nologs(t *testing.T) {
 	}
 	prlo := logOpts(prName, ns, cs, dc, fake.Streamer([]fake.Log{}), false, false)
 	output, err := fetchLogs(prlo)
-	if err != nil {
-		t.Errorf("Unexpected error: %v", err)
+	if err == nil {
+		t.Errorf("Unexpected output: %v", output)
 	}
-	test.AssertOutput(t, "No logs found\n", output)
+	test.AssertOutput(t, "pipelinerun has not started yet", err.Error())
 }
 
 func TestLog_run_failed_with_and_without_follow(t *testing.T) {
@@ -1727,10 +1727,10 @@ func TestLogs_nologs_v1beta1(t *testing.T) {
 	}
 	prlo := logOpts(prName, ns, cs, dc, fake.Streamer([]fake.Log{}), false, false)
 	output, err := fetchLogs(prlo)
-	if err != nil {
-		t.Errorf("Unexpected error: %v", err)
+	if err == nil {
+		t.Errorf("Unexpected output: %v", output)
 	}
-	test.AssertOutput(t, "No logs found\n", output)
+	test.AssertOutput(t, "pipelinerun has not started yet", err.Error())
 }
 
 func TestLog_run_failed_with_and_without_follow_v1beta1(t *testing.T) {
