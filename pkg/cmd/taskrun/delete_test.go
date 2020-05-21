@@ -42,7 +42,13 @@ func TestTaskRunDelete(t *testing.T) {
 		},
 	}
 
-	trdata := []*v1alpha1.TaskRun{
+	tasks := []*v1alpha1.Task{
+		tb.Task("random",
+			tb.TaskNamespace("ns"),
+		),
+	}
+
+	trs := []*v1alpha1.TaskRun{
 		tb.TaskRun("tr0-1",
 			tb.TaskRunNamespace("ns"),
 			tb.TaskRunLabel("tekton.dev/task", "random"),
@@ -83,15 +89,15 @@ func TestTaskRunDelete(t *testing.T) {
 	}
 
 	seeds := make([]clients, 0)
-	for i := 0; i < 5; i++ {
-		trs := trdata
-		cs, _ := test.SeedTestData(t, pipelinetest.Data{TaskRuns: trs, Namespaces: ns})
+	for i := 0; i < 6; i++ {
+		cs, _ := test.SeedTestData(t, pipelinetest.Data{TaskRuns: trs, Tasks: tasks, Namespaces: ns})
 		cs.Pipeline.Resources = cb.APIResourceList(version, []string{"taskrun"})
 		tdc := testDynamic.Options{}
 		dc, err := tdc.Client(
-			cb.UnstructuredTR(trdata[0], version),
-			cb.UnstructuredTR(trdata[1], version),
-			cb.UnstructuredTR(trdata[2], version),
+			cb.UnstructuredT(tasks[0], version),
+			cb.UnstructuredTR(trs[0], version),
+			cb.UnstructuredTR(trs[1], version),
+			cb.UnstructuredTR(trs[2], version),
 		)
 		if err != nil {
 			t.Errorf("unable to create dynamic client: %v", err)
@@ -182,12 +188,12 @@ func TestTaskRunDelete(t *testing.T) {
 		},
 		{
 			name:        "Remove taskruns of a task",
-			command:     []string{"rm", "--task", "task", "-n", "ns"},
+			command:     []string{"rm", "--task", "random", "-n", "ns"},
 			dynamic:     seeds[0].dynamicClient,
 			input:       seeds[0].pipelineClient,
 			inputStream: strings.NewReader("y"),
 			wantError:   false,
-			want:        `Are you sure you want to delete all taskruns related to task "task" (y/n): `,
+			want:        "Are you sure you want to delete all taskruns related to task \"random\" (y/n): All TaskRuns associated with Task \"random\" deleted in namespace \"ns\"\n",
 		},
 		{
 			name:        "Delete all with prompt",
@@ -243,6 +249,24 @@ func TestTaskRunDelete(t *testing.T) {
 			wantError:   true,
 			want:        "--all flag should not have any arguments or flags specified with it",
 		},
+		{
+			name:        "Remove taskruns of a task with --keep",
+			command:     []string{"rm", "--task", "random", "-n", "ns", "--keep", "2"},
+			dynamic:     seeds[5].dynamicClient,
+			input:       seeds[5].pipelineClient,
+			inputStream: nil,
+			wantError:   false,
+			want:        "Are you sure you want to delete all taskruns related to task \"random\" keeping 2 taskruns (y/n): All but 2 TaskRuns associated with Task \"random\" deleted in namespace \"ns\"\n",
+		},
+		{
+			name:        "Error from using argument with --keep",
+			command:     []string{"rm", "taskrun", "--keep", "2"},
+			dynamic:     seeds[5].dynamicClient,
+			input:       seeds[5].pipelineClient,
+			inputStream: nil,
+			wantError:   true,
+			want:        "--keep flag should not have any arguments specified with it",
+		},
 	}
 
 	for _, tp := range testParams {
@@ -281,7 +305,13 @@ func TestTaskRunDelete_v1beta1(t *testing.T) {
 		},
 	}
 
-	trdata := []*v1alpha1.TaskRun{
+	tasks := []*v1alpha1.Task{
+		tb.Task("random",
+			tb.TaskNamespace("ns"),
+		),
+	}
+
+	trs := []*v1alpha1.TaskRun{
 		tb.TaskRun("tr0-1",
 			tb.TaskRunNamespace("ns"),
 			tb.TaskRunLabel("tekton.dev/task", "random"),
@@ -322,15 +352,15 @@ func TestTaskRunDelete_v1beta1(t *testing.T) {
 	}
 
 	seeds := make([]clients, 0)
-	for i := 0; i < 5; i++ {
-		trs := trdata
-		cs, _ := test.SeedTestData(t, pipelinetest.Data{TaskRuns: trs, Namespaces: ns})
+	for i := 0; i < 6; i++ {
+		cs, _ := test.SeedTestData(t, pipelinetest.Data{TaskRuns: trs, Tasks: tasks, Namespaces: ns})
 		cs.Pipeline.Resources = cb.APIResourceList(version, []string{"taskrun"})
 		tdc := testDynamic.Options{}
 		dc, err := tdc.Client(
-			cb.UnstructuredTR(trdata[0], version),
-			cb.UnstructuredTR(trdata[1], version),
-			cb.UnstructuredTR(trdata[2], version),
+			cb.UnstructuredT(tasks[0], version),
+			cb.UnstructuredTR(trs[0], version),
+			cb.UnstructuredTR(trs[1], version),
+			cb.UnstructuredTR(trs[2], version),
 		)
 		if err != nil {
 			t.Errorf("unable to create dynamic client: %v", err)
@@ -421,12 +451,12 @@ func TestTaskRunDelete_v1beta1(t *testing.T) {
 		},
 		{
 			name:        "Remove taskruns of a task",
-			command:     []string{"rm", "--task", "task", "-n", "ns"},
+			command:     []string{"rm", "--task", "random", "-n", "ns"},
 			dynamic:     seeds[0].dynamicClient,
 			input:       seeds[0].pipelineClient,
 			inputStream: strings.NewReader("y"),
 			wantError:   false,
-			want:        `Are you sure you want to delete all taskruns related to task "task" (y/n): `,
+			want:        "Are you sure you want to delete all taskruns related to task \"random\" (y/n): All TaskRuns associated with Task \"random\" deleted in namespace \"ns\"\n",
 		},
 		{
 			name:        "Delete all with prompt",
@@ -472,6 +502,24 @@ func TestTaskRunDelete_v1beta1(t *testing.T) {
 			inputStream: nil,
 			wantError:   true,
 			want:        "--all flag should not have any arguments or flags specified with it",
+		},
+		{
+			name:        "Remove taskruns of a task with --keep",
+			command:     []string{"rm", "--task", "random", "-n", "ns", "--keep", "2"},
+			dynamic:     seeds[5].dynamicClient,
+			input:       seeds[5].pipelineClient,
+			inputStream: nil,
+			wantError:   false,
+			want:        "Are you sure you want to delete all taskruns related to task \"random\" keeping 2 taskruns (y/n): All but 2 TaskRuns associated with Task \"random\" deleted in namespace \"ns\"\n",
+		},
+		{
+			name:        "Error from using argument with --keep",
+			command:     []string{"rm", "taskrun", "--keep", "2"},
+			dynamic:     seeds[5].dynamicClient,
+			input:       seeds[5].pipelineClient,
+			inputStream: nil,
+			wantError:   true,
+			want:        "--keep flag should not have any arguments specified with it",
 		},
 	}
 

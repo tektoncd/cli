@@ -19,6 +19,7 @@ import (
 	"fmt"
 
 	trsort "github.com/tektoncd/cli/pkg/taskrun/sort"
+	"github.com/tektoncd/pipeline/pkg/apis/pipeline/v1beta1"
 
 	"github.com/spf13/cobra"
 	"github.com/tektoncd/cli/pkg/actions"
@@ -69,7 +70,7 @@ or
 				return fmt.Errorf("keep option should not be lower than 0")
 			}
 
-			if opts.Keep > 0 {
+			if opts.Keep > 0 && opts.ParentResourceName == "" {
 				opts.DeleteAllNs = true
 			}
 
@@ -115,13 +116,22 @@ func deleteTaskRuns(s *cli.Stream, p cli.Params, trNames []string, opts *options
 		d = deleter.New("Task", func(_ string) error {
 			return errors.New("the task should not be deleted")
 		})
-		d.WithRelated("TaskRun", taskRunLister(p, cs), func(taskRunName string) error {
+		d.WithRelated("TaskRun", taskRunLister(p, opts.Keep, cs), func(taskRunName string) error {
 			return actions.Delete(trGroupResource, cs, taskRunName, p.Namespace(), &metav1.DeleteOptions{})
 		})
 		d.DeleteRelated(s, []string{opts.ParentResourceName})
 	}
+
 	if !opts.DeleteAllNs {
-		d.PrintSuccesses(s)
+		switch {
+		case opts.Keep > 0:
+			// Should only occur in case of --task flag and --keep being used together
+			fmt.Fprintf(s.Out, "All but %d TaskRuns associated with Task %q deleted in namespace %q\n", opts.Keep, opts.ParentResourceName, p.Namespace())
+		case opts.ParentResourceName != "":
+			fmt.Fprintf(s.Out, "All TaskRuns associated with Task %q deleted in namespace %q\n", opts.ParentResourceName, p.Namespace())
+		default:
+			d.PrintSuccesses(s)
+		}
 	} else if opts.DeleteAllNs {
 		if d.Errors() == nil {
 			if opts.Keep > 0 {
@@ -134,7 +144,7 @@ func deleteTaskRuns(s *cli.Stream, p cli.Params, trNames []string, opts *options
 	return d.Errors()
 }
 
-func taskRunLister(p cli.Params, cs *cli.Clients) func(string) ([]string, error) {
+func taskRunLister(p cli.Params, keep int, cs *cli.Clients) func(string) ([]string, error) {
 	return func(taskName string) ([]string, error) {
 		lOpts := metav1.ListOptions{
 			LabelSelector: fmt.Sprintf("tekton.dev/task=%s", taskName),
@@ -143,23 +153,22 @@ func taskRunLister(p cli.Params, cs *cli.Clients) func(string) ([]string, error)
 		if err != nil {
 			return nil, err
 		}
-		var names []string
-		for _, tr := range taskRuns.Items {
-			names = append(names, tr.Name)
-		}
-		return names, nil
+		return keepTaskRuns(taskRuns, keep), nil
 	}
 }
 
 func allTaskRunNames(cs *cli.Clients, keep int, ns string) ([]string, error) {
-
 	taskRuns, err := trlist.TaskRuns(cs, metav1.ListOptions{}, ns)
 	if err != nil {
 		return nil, err
 	}
-	trsort.SortByStartTime(taskRuns.Items)
+	return keepTaskRuns(taskRuns, keep), nil
+}
+
+func keepTaskRuns(taskRuns *v1beta1.TaskRunList, keep int) []string {
 	var names []string
 	var counter = 0
+	trsort.SortByStartTime(taskRuns.Items)
 	for _, tr := range taskRuns.Items {
 		if keep > 0 && counter != keep {
 			counter++
@@ -167,5 +176,5 @@ func allTaskRunNames(cs *cli.Clients, keep int, ns string) ([]string, error) {
 		}
 		names = append(names, tr.Name)
 	}
-	return names, nil
+	return names
 }
