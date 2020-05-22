@@ -14,7 +14,7 @@ Manage clustertasks
   -c, --context string      name of the kubeconfig context to use (default: kubectl config current-context)
   -h, --help                help for clustertask
   -k, --kubeconfig string   kubectl config file (default: $HOME/.kube/config)
-  -C, --nocolor            disable coloring (default: false)
+  -C, --nocolor             disable coloring (default: false)
 ```
 
 ### SEE ALSO

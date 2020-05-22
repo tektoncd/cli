@@ -29,7 +29,7 @@ const (
 	kubeConfig = "kubeconfig"
 	context    = "context"
 	namespace  = "namespace"
-	nocolor   = "nocolor"
+	nocolor    = "nocolor"
 )
 
 // AddTektonOptions amends command to add flags required to initialise a cli.Param
