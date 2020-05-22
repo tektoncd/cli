@@ -33,7 +33,7 @@ Creates new PipelineResource as per the given input:
   -c, --context string      name of the kubeconfig context to use (default: kubectl config current-context)
   -k, --kubeconfig string   kubectl config file (default: $HOME/.kube/config)
   -n, --namespace string    namespace to use (default: from $KUBECONFIG)
-  -C, --nocolour            disable colouring (default: false)
+  -C, --nocolor            disable coloring (default: false)
 ```
 
 ### SEE ALSO

@@ -100,9 +100,9 @@ func (opts *DescribeOptions) Ask(resource string, options []string) error {
 }
 
 func (opts *DescribeOptions) FuzzyAsk(resource string, options []string) error {
-	chosencolouring := color.NoColor
+	chosencoloring := color.NoColor
 	defer func() {
-		color.NoColor = chosencolouring
+		color.NoColor = chosencoloring
 	}()
 	// Remove colors as fuzzyfinder doesn't support it
 	color.NoColor = true

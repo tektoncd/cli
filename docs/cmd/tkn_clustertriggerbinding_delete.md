@@ -41,7 +41,7 @@ or
 ```
   -c, --context string      name of the kubeconfig context to use (default: kubectl config current-context)
   -k, --kubeconfig string   kubectl config file (default: $HOME/.kube/config)
-  -C, --nocolour            disable colouring (default: false)
+  -C, --nocolor            disable coloring (default: false)
 ```
 
 ### SEE ALSO

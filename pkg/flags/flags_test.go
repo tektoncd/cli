@@ -41,11 +41,11 @@ func TestFlags_add_shell_completion(t *testing.T) {
 	}
 }
 
-func TestFlags_colouring(t *testing.T) {
+func TestFlags_coloring(t *testing.T) {
 	// When running it on CI, our test don't have a tty so this gets disabled
 	// automatically, not really sure how can we workaround that :(
 	// cmd := &cobra.Command{}
-	// cmd.SetArgs([]string{"--nocolour"})
+	// cmd.SetArgs([]string{"--nocolor"})
 	// _ = InitParams(&cli.TektonParams{}, cmd)
 	// assert.False(t, color.NoColor)
 

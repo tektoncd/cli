@@ -44,7 +44,7 @@ func (p *Params) Namespace() string {
 	return p.ns
 }
 
-func (p *Params) SetNoColour(b bool) {
+func (p *Params) SetNoColor(b bool) {
 }
 
 func (p *Params) SetKubeConfigPath(path string) {

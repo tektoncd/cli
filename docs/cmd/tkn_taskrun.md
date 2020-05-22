@@ -15,7 +15,7 @@ Manage taskruns
   -h, --help                help for taskrun
   -k, --kubeconfig string   kubectl config file (default: $HOME/.kube/config)
   -n, --namespace string    namespace to use (default: from $KUBECONFIG)
-  -C, --nocolour            disable colouring (default: false)
+  -C, --nocolor            disable coloring (default: false)
 ```
 
 ### SEE ALSO

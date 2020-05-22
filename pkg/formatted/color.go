@@ -35,7 +35,7 @@ var (
 )
 
 // DecorateAttr decorate strings with a color or an emoji, respecting the user
-// preference if no colour needed.
+// preference if no color needed.
 func DecorateAttr(attrString, message string) string {
 	if color.NoColor {
 		return message
@@ -134,7 +134,7 @@ func (r *rainbow) get(x string) color.Attribute {
 }
 
 // Fprintf formats according to a format specifier and writes to w.
-// the first argument is a label to keep the same colour on.
+// the first argument is a label to keep the same color on.
 func (r *rainbow) Fprintf(label string, w io.Writer, format string, args ...interface{}) {
 	attribute := r.get(label)
 	crainbow := color.Set(attribute).Add(color.Bold)

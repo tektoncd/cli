@@ -34,7 +34,7 @@ var ConditionColor = map[string]color.Attribute{
 
 var stepCounter uint64
 
-// ColorStatus Get a status coloured
+// ColorStatus Get a status colored
 func ColorStatus(status string) string {
 	return color.New(ConditionColor[status]).Sprint(status)
 }

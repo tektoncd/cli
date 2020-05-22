@@ -178,7 +178,7 @@ func (p *TektonParams) config() (*rest.Config, error) {
 	return config, nil
 }
 
-func (p *TektonParams) SetNoColour(b bool) {
+func (p *TektonParams) SetNoColor(b bool) {
 	color.NoColor = b
 }
 

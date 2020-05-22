@@ -24,7 +24,7 @@ import (
 	"gotest.tools/v3/assert"
 )
 
-func TestRainbowsColours(t *testing.T) {
+func TestRainbowsColors(t *testing.T) {
 	rb := newRainbow()
 	assert.Equal(t, rb.counter.value, uint32(0)) // nothing
 
@@ -55,7 +55,7 @@ func TestNoDecoration(t *testing.T) {
 		want string
 	}{
 		{
-			name: "test that no colour get passed when running in tests",
+			name: "test that no color get passed when running in tests",
 			args: args{"foo", "message"},
 			want: "message",
 		},
@@ -70,7 +70,7 @@ func TestNoDecoration(t *testing.T) {
 }
 
 func TestDecoration(t *testing.T) {
-	// We disable emoji and other colourful stuff while testing,
+	// We disable emoji and other colorful stuff while testing,
 	// but here we want to explicitly enable it.
 	color.NoColor = false
 	defer func() {
