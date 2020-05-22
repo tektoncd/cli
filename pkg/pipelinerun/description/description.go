@@ -98,6 +98,17 @@ STARTED	DURATION	STATUS
 {{- end }}
 {{- end }}
 {{- end }}
+
+{{decorate "underline bold" "ConditionChecks\n"}}
+{{- $l := len .ConditionList }}{{ if eq $l 0 }}
+ No conditions
+{{- else }}
+ NAME	TASKRUN NAME	STARTED	DURATION	STATUS
+{{- range $condition := .ConditionList }}{{ if checkConditionStatus $condition }}
+ {{decorate "bullet" $condition.ConditionName }}	{{ $condition.TaskrunName }}	{{ formatAge $condition.Status.StartTime $.Params.Time }}	{{ formatDuration $condition.Status.StartTime $condition.Status.CompletionTime }}	{{ formatCondition $condition.Status.Conditions }}
+{{- end }}
+{{- end }}
+{{- end }}
 `
 
 type tkr struct {
@@ -132,6 +143,26 @@ func newTaskrunListFromMap(statusMap map[string]*v1beta1.PipelineRunTaskRunStatu
 	return trl
 }
 
+type condition struct {
+	TaskrunName string
+	*v1beta1.PipelineRunConditionCheckStatus
+}
+
+type conditionList []condition
+
+func newConditionListFromMap(statusMap map[string]*v1beta1.PipelineRunTaskRunStatus) conditionList {
+	var conditions conditionList
+	for _, taskrunStatus := range statusMap {
+		for conditionTr, conditionStatus := range taskrunStatus.ConditionChecks {
+			conditions = append(conditions, condition{
+				conditionTr,
+				conditionStatus,
+			})
+		}
+	}
+	return conditions
+}
+
 func PrintPipelineRunDescription(s *cli.Stream, prName string, p cli.Params) error {
 	cs, err := p.Clients()
 	if err != nil {
@@ -144,19 +175,23 @@ func PrintPipelineRunDescription(s *cli.Stream, prName string, p cli.Params) err
 	}
 
 	var trl taskrunList
+	var tcl conditionList
 	if len(pr.Status.TaskRuns) != 0 {
 		trl = newTaskrunListFromMap(pr.Status.TaskRuns)
 		sort.Sort(trl)
+		tcl = newConditionListFromMap(pr.Status.TaskRuns)
 	}
 
 	var data = struct {
-		PipelineRun *v1beta1.PipelineRun
-		Params      cli.Params
-		TaskrunList taskrunList
+		PipelineRun   *v1beta1.PipelineRun
+		Params        cli.Params
+		TaskrunList   taskrunList
+		ConditionList conditionList
 	}{
-		PipelineRun: pr,
-		Params:      p,
-		TaskrunList: trl,
+		PipelineRun:   pr,
+		Params:        p,
+		TaskrunList:   trl,
+		ConditionList: tcl,
 	}
 
 	funcMap := template.FuncMap{
@@ -169,6 +204,7 @@ func PrintPipelineRunDescription(s *cli.Stream, prName string, p cli.Params) err
 		"decorate":                  formatted.DecorateAttr,
 		"getTimeout":                getTimeoutValue,
 		"checkTRStatus":             checkTaskRunStatus,
+		"checkConditionStatus":      checkConditionStatus,
 	}
 
 	w := tabwriter.NewWriter(s.Out, 0, 5, 3, ' ', tabwriter.TabIndent)
@@ -210,4 +246,8 @@ func getTimeoutValue(pr *v1beta1.PipelineRun) string {
 
 func checkTaskRunStatus(taskRun tkr) bool {
 	return taskRun.PipelineRunTaskRunStatus.Status != nil
+}
+
+func checkConditionStatus(c condition) bool {
+	return c.PipelineRunConditionCheckStatus.Status != nil
 }
