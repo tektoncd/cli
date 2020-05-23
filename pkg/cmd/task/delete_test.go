@@ -51,7 +51,7 @@ func TestTaskDelete(t *testing.T) {
 	trdata := []*v1alpha1.TaskRun{
 		tb.TaskRun("task-run-1", "ns",
 			tb.TaskRunLabel("tekton.dev/task", "task"),
-			tb.TaskRunSpec(tb.TaskRunTaskRef("task")),
+			tb.TaskRunSpec(tb.TaskRunTaskRef("task", tb.TaskRefKind(v1alpha1.NamespacedTaskKind))),
 			tb.TaskRunStatus(
 				tb.StatusCondition(apis.Condition{
 					Status: corev1.ConditionTrue,
@@ -61,7 +61,20 @@ func TestTaskDelete(t *testing.T) {
 		),
 		tb.TaskRun("task-run-2", "ns",
 			tb.TaskRunLabel("tekton.dev/task", "task"),
-			tb.TaskRunSpec(tb.TaskRunTaskRef("task")),
+			tb.TaskRunSpec(tb.TaskRunTaskRef("task", tb.TaskRefKind(v1alpha1.NamespacedTaskKind))),
+			tb.TaskRunStatus(
+				tb.StatusCondition(apis.Condition{
+					Status: corev1.ConditionTrue,
+					Reason: resources.ReasonSucceeded,
+				}),
+			),
+		),
+		// ClusterTask is provided in the TaskRef of TaskRun, so as to verify
+		// TaskRun created by ClusterTask is not getting deleted while deleting
+		// Task with `--trs` flag and name of Task and ClusterTask is same.
+		tb.TaskRun("task-run-3", "ns",
+			tb.TaskRunLabel("tekton.dev/task", "task"),
+			tb.TaskRunSpec(tb.TaskRunTaskRef("task", tb.TaskRefKind(v1alpha1.ClusterTaskKind))),
 			tb.TaskRunStatus(
 				tb.StatusCondition(apis.Condition{
 					Status: corev1.ConditionTrue,
@@ -93,6 +106,7 @@ func TestTaskDelete(t *testing.T) {
 			cb.UnstructuredT(tdata[1], version),
 			cb.UnstructuredTR(trdata[0], version),
 			cb.UnstructuredTR(trdata[1], version),
+			cb.UnstructuredTR(trdata[2], version),
 		)
 		if err != nil {
 			t.Errorf("unable to create dynamic client: %v", err)
@@ -290,7 +304,7 @@ func TestTaskDelete_v1beta1(t *testing.T) {
 	trdata := []*v1alpha1.TaskRun{
 		tb.TaskRun("task-run-1", "ns",
 			tb.TaskRunLabel("tekton.dev/task", "task"),
-			tb.TaskRunSpec(tb.TaskRunTaskRef("task")),
+			tb.TaskRunSpec(tb.TaskRunTaskRef("task", tb.TaskRefKind(v1alpha1.NamespacedTaskKind))),
 			tb.TaskRunStatus(
 				tb.StatusCondition(apis.Condition{
 					Status: corev1.ConditionTrue,
@@ -300,7 +314,20 @@ func TestTaskDelete_v1beta1(t *testing.T) {
 		),
 		tb.TaskRun("task-run-2", "ns",
 			tb.TaskRunLabel("tekton.dev/task", "task"),
-			tb.TaskRunSpec(tb.TaskRunTaskRef("task")),
+			tb.TaskRunSpec(tb.TaskRunTaskRef("task", tb.TaskRefKind(v1alpha1.NamespacedTaskKind))),
+			tb.TaskRunStatus(
+				tb.StatusCondition(apis.Condition{
+					Status: corev1.ConditionTrue,
+					Reason: resources.ReasonSucceeded,
+				}),
+			),
+		),
+		// ClusterTask is provided in the TaskRef of TaskRun, so as to verify
+		// TaskRun created by ClusterTask is not getting deleted while deleting
+		// Task with `--trs` flag and name of Task and ClusterTask is same.
+		tb.TaskRun("task-run-3", "ns",
+			tb.TaskRunLabel("tekton.dev/task", "task"),
+			tb.TaskRunSpec(tb.TaskRunTaskRef("task", tb.TaskRefKind(v1alpha1.ClusterTaskKind))),
 			tb.TaskRunStatus(
 				tb.StatusCondition(apis.Condition{
 					Status: corev1.ConditionTrue,
@@ -332,6 +359,7 @@ func TestTaskDelete_v1beta1(t *testing.T) {
 			cb.UnstructuredT(tdata[1], version),
 			cb.UnstructuredTR(trdata[0], version),
 			cb.UnstructuredTR(trdata[1], version),
+			cb.UnstructuredTR(trdata[2], version),
 		)
 		if err != nil {
 			t.Errorf("unable to create dynamic client: %v", err)
