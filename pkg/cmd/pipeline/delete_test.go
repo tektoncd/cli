@@ -196,7 +196,7 @@ func TestPipelineDelete(t *testing.T) {
 			want:        "failed to delete pipeline \"nonexistent\": pipelines.tekton.dev \"nonexistent\" not found; failed to delete pipeline \"nonexistent2\": pipelines.tekton.dev \"nonexistent2\" not found",
 		},
 		{
-			name:        "With delete all flag, reply yes",
+			name:        "With --prs flag, reply yes",
 			command:     []string{"rm", "pipeline", "-n", "ns", "--prs"},
 			dynamic:     seeds[3].dynamicClient,
 			input:       seeds[3].pipelineClient,
@@ -205,7 +205,7 @@ func TestPipelineDelete(t *testing.T) {
 			want:        "Are you sure you want to delete pipeline and related resources \"pipeline\" (y/n): PipelineRuns deleted: \"pipeline-run-1\", \"pipeline-run-2\"\nPipelines deleted: \"pipeline\"\n",
 		},
 		{
-			name:        "With delete all and force delete flag",
+			name:        "With --prs and force delete flag",
 			command:     []string{"rm", "pipeline", "-n", "ns", "-f", "--prs"},
 			dynamic:     seeds[4].dynamicClient,
 			input:       seeds[4].pipelineClient,

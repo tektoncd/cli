@@ -183,7 +183,7 @@ func TestTaskDelete(t *testing.T) {
 			want:        "Are you sure you want to delete task and related resources \"task\" (y/n): TaskRuns deleted: \"task-run-1\", \"task-run-2\"\nTasks deleted: \"task\"\n",
 		},
 		{
-			name:        "With delete all and force delete flag",
+			name:        "With --trs and force delete flag",
 			command:     []string{"rm", "task", "-n", "ns", "-f", "--trs"},
 			dynamic:     seeds[4].dynamicClient,
 			input:       seeds[4].pipelineClient,
