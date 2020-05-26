@@ -25,9 +25,12 @@ import (
 	cb "github.com/tektoncd/cli/pkg/test/builder"
 	testDynamic "github.com/tektoncd/cli/pkg/test/dynamic"
 	"github.com/tektoncd/pipeline/pkg/apis/pipeline/v1alpha1"
+	"github.com/tektoncd/pipeline/pkg/reconciler/pipelinerun/resources"
 	tb "github.com/tektoncd/pipeline/test/builder"
 	pipelinetest "github.com/tektoncd/pipeline/test/v1alpha1"
+	corev1 "k8s.io/api/core/v1"
 	"k8s.io/client-go/dynamic"
+	"knative.dev/pkg/apis"
 )
 
 func TestClusterTaskDelete(t *testing.T) {
@@ -39,20 +42,72 @@ func TestClusterTaskDelete(t *testing.T) {
 		dynamicClient  dynamic.Interface
 	}
 
+	clusterTaskData := []*v1alpha1.ClusterTask{
+		tb.ClusterTask("tomatoes", cb.ClusterTaskCreationTime(clock.Now().Add(-1*time.Minute))),
+		tb.ClusterTask("tomatoes2", cb.ClusterTaskCreationTime(clock.Now().Add(-1*time.Minute))),
+		tb.ClusterTask("tomatoes3", cb.ClusterTaskCreationTime(clock.Now().Add(-1*time.Minute))),
+	}
+
+	taskRunData := []*v1alpha1.TaskRun{
+		tb.TaskRun("task-run-1",
+			tb.TaskRunNamespace("ns"),
+			tb.TaskRunLabel("tekton.dev/task", "tomatoes"),
+			tb.TaskRunSpec(
+				tb.TaskRunTaskRef("tomatoes", tb.TaskRefKind(v1alpha1.ClusterTaskKind)),
+			),
+			tb.TaskRunStatus(
+				tb.StatusCondition(apis.Condition{
+					Status: corev1.ConditionTrue,
+					Reason: resources.ReasonSucceeded,
+				}),
+			),
+		),
+		tb.TaskRun("task-run-2",
+			tb.TaskRunNamespace("ns"),
+			tb.TaskRunLabel("tekton.dev/task", "tomatoes"),
+			tb.TaskRunSpec(
+				tb.TaskRunTaskRef("tomatoes", tb.TaskRefKind(v1alpha1.ClusterTaskKind)),
+			),
+			tb.TaskRunStatus(
+				tb.StatusCondition(apis.Condition{
+					Status: corev1.ConditionTrue,
+					Reason: resources.ReasonSucceeded,
+				}),
+			),
+		),
+		// NamespacedTask (Task) is provided in the TaskRef of TaskRun, so as
+		// to verify TaskRun created by Task is not getting deleted while deleting
+		// ClusterTask with `--trs` flag and name of Task and ClusterTask is same.
+		tb.TaskRun("task-run-3",
+			tb.TaskRunNamespace("ns"),
+			tb.TaskRunLabel("tekton.dev/task", "tomatoes"),
+			tb.TaskRunSpec(
+				tb.TaskRunTaskRef("tomatoes", tb.TaskRefKind(v1alpha1.NamespacedTaskKind)),
+			),
+			tb.TaskRunStatus(
+				tb.StatusCondition(apis.Condition{
+					Status: corev1.ConditionTrue,
+					Reason: resources.ReasonSucceeded,
+				}),
+			),
+		),
+	}
+
 	seeds := make([]clients, 0)
 	for i := 0; i < 5; i++ {
-		clustertasks := []*v1alpha1.ClusterTask{
-			tb.ClusterTask("tomatoes", cb.ClusterTaskCreationTime(clock.Now().Add(-1*time.Minute))),
-			tb.ClusterTask("tomatoes2", cb.ClusterTaskCreationTime(clock.Now().Add(-1*time.Minute))),
-			tb.ClusterTask("tomatoes3", cb.ClusterTaskCreationTime(clock.Now().Add(-1*time.Minute))),
-		}
-		cs, _ := test.SeedTestData(t, pipelinetest.Data{ClusterTasks: clustertasks})
-		cs.Pipeline.Resources = cb.APIResourceList(version, []string{"clustertask"})
+		cs, _ := test.SeedTestData(t, pipelinetest.Data{
+			ClusterTasks: clusterTaskData,
+			TaskRuns:     taskRunData,
+		})
+		cs.Pipeline.Resources = cb.APIResourceList(version, []string{"clustertask", "taskrun"})
 		tdc := testDynamic.Options{}
 		dc, err := tdc.Client(
-			cb.UnstructuredCT(clustertasks[0], version),
-			cb.UnstructuredCT(clustertasks[1], version),
-			cb.UnstructuredCT(clustertasks[2], version),
+			cb.UnstructuredCT(clusterTaskData[0], version),
+			cb.UnstructuredCT(clusterTaskData[1], version),
+			cb.UnstructuredCT(clusterTaskData[2], version),
+			cb.UnstructuredTR(taskRunData[0], version),
+			cb.UnstructuredTR(taskRunData[1], version),
+			cb.UnstructuredTR(taskRunData[2], version),
 		)
 		if err != nil {
 			t.Errorf("unable to create dynamic client: %v", err)
@@ -122,6 +177,24 @@ func TestClusterTaskDelete(t *testing.T) {
 			inputStream: strings.NewReader("y"),
 			wantError:   true,
 			want:        "failed to delete clustertask \"nonexistent\": clustertasks.tekton.dev \"nonexistent\" not found; failed to delete clustertask \"nonexistent2\": clustertasks.tekton.dev \"nonexistent2\" not found",
+		},
+		{
+			name:        "Remove multiple non existent resources with --trs flag",
+			command:     []string{"rm", "nonexistent", "nonexistent2", "-n", "ns", "--trs"},
+			dynamic:     seeds[2].dynamicClient,
+			input:       seeds[2].pipelineClient,
+			inputStream: nil,
+			wantError:   true,
+			want:        "failed to delete clustertask \"nonexistent\": clustertasks.tekton.dev \"nonexistent\" not found; failed to delete clustertask \"nonexistent2\": clustertasks.tekton.dev \"nonexistent2\" not found",
+		},
+		{
+			name:        "With delete taskrun(s) flag, reply yes",
+			command:     []string{"rm", "tomatoes", "-n", "ns", "--trs"},
+			dynamic:     seeds[4].dynamicClient,
+			input:       seeds[4].pipelineClient,
+			inputStream: strings.NewReader("y"),
+			wantError:   false,
+			want:        "Are you sure you want to delete clustertask and related resources \"tomatoes\" (y/n): TaskRuns deleted: \"task-run-1\", \"task-run-2\"\nClusterTasks deleted: \"tomatoes\"\n",
 		},
 		{
 			name:        "With force delete flag, reply yes, multiple clustertasks",
@@ -213,6 +286,57 @@ func TestClusterTaskDelete_v1beta1(t *testing.T) {
 		dynamicClient  dynamic.Interface
 	}
 
+	clusterTaskData := []*v1alpha1.ClusterTask{
+		tb.ClusterTask("tomatoes", cb.ClusterTaskCreationTime(clock.Now().Add(-1*time.Minute))),
+		tb.ClusterTask("tomatoes2", cb.ClusterTaskCreationTime(clock.Now().Add(-1*time.Minute))),
+		tb.ClusterTask("tomatoes3", cb.ClusterTaskCreationTime(clock.Now().Add(-1*time.Minute))),
+	}
+
+	taskRunData := []*v1alpha1.TaskRun{
+		tb.TaskRun("task-run-1",
+			tb.TaskRunNamespace("ns"),
+			tb.TaskRunLabel("tekton.dev/task", "tomatoes"),
+			tb.TaskRunSpec(
+				tb.TaskRunTaskRef("tomatoes", tb.TaskRefKind(v1alpha1.ClusterTaskKind)),
+			),
+			tb.TaskRunStatus(
+				tb.StatusCondition(apis.Condition{
+					Status: corev1.ConditionTrue,
+					Reason: resources.ReasonSucceeded,
+				}),
+			),
+		),
+		tb.TaskRun("task-run-2",
+			tb.TaskRunNamespace("ns"),
+			tb.TaskRunLabel("tekton.dev/task", "tomatoes"),
+			tb.TaskRunSpec(
+				tb.TaskRunTaskRef("tomatoes", tb.TaskRefKind(v1alpha1.ClusterTaskKind)),
+			),
+			tb.TaskRunStatus(
+				tb.StatusCondition(apis.Condition{
+					Status: corev1.ConditionTrue,
+					Reason: resources.ReasonSucceeded,
+				}),
+			),
+		),
+		// NamespacedTask (Task) is provided in the TaskRef of TaskRun, so as to
+		// verify TaskRun created by Task is not getting deleted while deleting
+		// ClusterTask with `--trs` flag and name of Task and ClusterTask is same.
+		tb.TaskRun("task-run-3",
+			tb.TaskRunNamespace("ns"),
+			tb.TaskRunLabel("tekton.dev/task", "tomatoes"),
+			tb.TaskRunSpec(
+				tb.TaskRunTaskRef("tomatoes", tb.TaskRefKind(v1alpha1.NamespacedTaskKind)),
+			),
+			tb.TaskRunStatus(
+				tb.StatusCondition(apis.Condition{
+					Status: corev1.ConditionTrue,
+					Reason: resources.ReasonSucceeded,
+				}),
+			),
+		),
+	}
+
 	seeds := make([]clients, 0)
 	for i := 0; i < 5; i++ {
 		clustertasks := []*v1alpha1.ClusterTask{
@@ -220,13 +344,19 @@ func TestClusterTaskDelete_v1beta1(t *testing.T) {
 			tb.ClusterTask("tomatoes2", cb.ClusterTaskCreationTime(clock.Now().Add(-1*time.Minute))),
 			tb.ClusterTask("tomatoes3", cb.ClusterTaskCreationTime(clock.Now().Add(-1*time.Minute))),
 		}
-		cs, _ := test.SeedTestData(t, pipelinetest.Data{ClusterTasks: clustertasks})
-		cs.Pipeline.Resources = cb.APIResourceList(version, []string{"clustertask"})
+		cs, _ := test.SeedTestData(t, pipelinetest.Data{
+			ClusterTasks: clusterTaskData,
+			TaskRuns:     taskRunData,
+		})
+		cs.Pipeline.Resources = cb.APIResourceList(version, []string{"clustertask", "taskrun"})
 		tdc := testDynamic.Options{}
 		dc, err := tdc.Client(
 			cb.UnstructuredCT(clustertasks[0], version),
 			cb.UnstructuredCT(clustertasks[1], version),
 			cb.UnstructuredCT(clustertasks[2], version),
+			cb.UnstructuredTR(taskRunData[0], version),
+			cb.UnstructuredTR(taskRunData[1], version),
+			cb.UnstructuredTR(taskRunData[2], version),
 		)
 		if err != nil {
 			t.Errorf("unable to create dynamic client: %v", err)
@@ -296,6 +426,24 @@ func TestClusterTaskDelete_v1beta1(t *testing.T) {
 			inputStream: strings.NewReader("y"),
 			wantError:   true,
 			want:        "failed to delete clustertask \"nonexistent\": clustertasks.tekton.dev \"nonexistent\" not found; failed to delete clustertask \"nonexistent2\": clustertasks.tekton.dev \"nonexistent2\" not found",
+		},
+		{
+			name:        "Remove multiple non existent resources with --trs flag",
+			command:     []string{"rm", "nonexistent", "nonexistent2", "-n", "ns", "--trs"},
+			dynamic:     seeds[2].dynamicClient,
+			input:       seeds[2].pipelineClient,
+			inputStream: nil,
+			wantError:   true,
+			want:        "failed to delete clustertask \"nonexistent\": clustertasks.tekton.dev \"nonexistent\" not found; failed to delete clustertask \"nonexistent2\": clustertasks.tekton.dev \"nonexistent2\" not found",
+		},
+		{
+			name:        "With delete taskrun(s) flag, reply yes",
+			command:     []string{"rm", "tomatoes", "-n", "ns", "--trs"},
+			dynamic:     seeds[4].dynamicClient,
+			input:       seeds[4].pipelineClient,
+			inputStream: strings.NewReader("y"),
+			wantError:   false,
+			want:        "Are you sure you want to delete clustertask and related resources \"tomatoes\" (y/n): TaskRuns deleted: \"task-run-1\", \"task-run-2\"\nClusterTasks deleted: \"tomatoes\"\n",
 		},
 		{
 			name:        "With force delete flag, reply yes, multiple clustertasks",

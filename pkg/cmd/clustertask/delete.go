@@ -23,6 +23,8 @@ import (
 	"github.com/tektoncd/cli/pkg/clustertask"
 	"github.com/tektoncd/cli/pkg/deleter"
 	"github.com/tektoncd/cli/pkg/options"
+	"github.com/tektoncd/cli/pkg/task"
+	trlist "github.com/tektoncd/cli/pkg/taskrun/list"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime/schema"
 	cliopts "k8s.io/cli-runtime/pkg/genericclioptions"
@@ -61,18 +63,19 @@ or
 				return err
 			}
 
-			return deleteClusterTasks(s, p, args, opts.DeleteAll)
+			return deleteClusterTasks(opts, s, p, args)
 		},
 	}
 	f.AddFlags(c)
 	c.Flags().BoolVarP(&opts.ForceDelete, "force", "f", false, "Whether to force deletion (default: false)")
 	c.Flags().BoolVarP(&opts.DeleteAll, "all", "", false, "Delete all clustertasks (default: false)")
+	c.Flags().BoolVarP(&opts.DeleteRelated, "trs", "", false, "Whether to delete ClusterTask(s) and related resources (TaskRuns) (default: false)")
 	_ = c.MarkZshCompPositionalArgumentCustom(1, "__tkn_get_clustertasks")
 	return c
 }
-
-func deleteClusterTasks(s *cli.Stream, p cli.Params, tNames []string, deleteAll bool) error {
+func deleteClusterTasks(opts *options.DeleteOptions, s *cli.Stream, p cli.Params, ctNames []string) error {
 	ctGroupResource := schema.GroupVersionResource{Group: "tekton.dev", Resource: "clustertasks"}
+	trGroupResource := schema.GroupVersionResource{Group: "tekton.dev", Resource: "taskruns"}
 
 	cs, err := p.Clients()
 	if err != nil {
@@ -81,19 +84,27 @@ func deleteClusterTasks(s *cli.Stream, p cli.Params, tNames []string, deleteAll 
 	d := deleter.New("ClusterTask", func(taskName string) error {
 		return actions.Delete(ctGroupResource, cs, taskName, "", &metav1.DeleteOptions{})
 	})
-	if deleteAll {
+	switch {
+	case opts.DeleteAll:
 		cts, err := allClusterTaskNames(cs)
 		if err != nil {
 			return err
 		}
 		d.Delete(s, cts)
-	} else {
-		d.Delete(s, tNames)
+	case opts.DeleteRelated:
+		d.WithRelated("TaskRun", taskRunLister(cs, p), func(taskRunName string) error {
+			return actions.Delete(trGroupResource, cs, taskRunName, p.Namespace(), &metav1.DeleteOptions{})
+		})
+		deletedClusterTaskNames := d.Delete(s, ctNames)
+		d.DeleteRelated(s, deletedClusterTaskNames)
+	default:
+		d.Delete(s, ctNames)
+
 	}
 
-	if !deleteAll {
+	if !opts.DeleteAll {
 		d.PrintSuccesses(s)
-	} else if deleteAll {
+	} else if opts.DeleteAll {
 		if d.Errors() == nil {
 			fmt.Fprint(s.Out, "All ClusterTasks deleted\n")
 		}
@@ -111,4 +122,23 @@ func allClusterTaskNames(cs *cli.Clients) ([]string, error) {
 		names = append(names, ct.Name)
 	}
 	return names, nil
+}
+
+func taskRunLister(cs *cli.Clients, p cli.Params) func(string) ([]string, error) {
+	return func(taskName string) ([]string, error) {
+		lOpts := metav1.ListOptions{
+			LabelSelector: fmt.Sprintf("tekton.dev/task=%s", taskName),
+		}
+		taskRuns, err := trlist.TaskRuns(cs, lOpts, p.Namespace())
+		if err != nil {
+			return nil, err
+		}
+		// this is required as the same label is getting added for both task and ClusterTask
+		taskRuns.Items = task.FilterByRef(taskRuns.Items, "ClusterTask")
+		var names []string
+		for _, tr := range taskRuns.Items {
+			names = append(names, tr.Name)
+		}
+		return names, nil
+	}
 }
