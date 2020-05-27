@@ -33,12 +33,12 @@ func Test_wait_pod_initialized(t *testing.T) {
 	podname := "test"
 	ns := "ns"
 
-	initial := tb.Pod(podname, ns,
+	initial := tb.Pod(podname, tb.PodNamespace(ns),
 		cb.PodStatus(
 			cb.PodPhase(corev1.PodPending),
 		),
 	)
-	later := tb.Pod(podname, ns,
+	later := tb.Pod(podname, tb.PodNamespace(ns),
 		cb.PodStatus(
 			cb.PodPhase(corev1.PodRunning),
 		),
@@ -61,12 +61,12 @@ func Test_wait_pod_success(t *testing.T) {
 	podname := "test"
 	ns := "ns"
 
-	initial := tb.Pod(podname, ns,
+	initial := tb.Pod(podname, tb.PodNamespace(ns),
 		cb.PodStatus(
 			cb.PodPhase(corev1.PodPending),
 		),
 	)
-	later := tb.Pod(podname, ns,
+	later := tb.Pod(podname, tb.PodNamespace(ns),
 		cb.PodStatus(
 			cb.PodPhase(corev1.PodSucceeded),
 		),
@@ -89,12 +89,12 @@ func Test_wait_pod_fail(t *testing.T) {
 	podname := "test"
 	ns := "ns"
 
-	initial := tb.Pod(podname, ns,
+	initial := tb.Pod(podname, tb.PodNamespace(ns),
 		cb.PodStatus(
 			cb.PodPhase(corev1.PodPending),
 		),
 	)
-	later := tb.Pod(podname, ns,
+	later := tb.Pod(podname, tb.PodNamespace(ns),
 		cb.PodStatus(
 			cb.PodPhase(corev1.PodFailed),
 			cb.PodCondition(corev1.PodInitialized, corev1.ConditionTrue),
@@ -118,14 +118,14 @@ func Test_wait_pod_imagepull_error(t *testing.T) {
 	podname := "test"
 	ns := "ns"
 
-	initial := tb.Pod(podname, ns,
+	initial := tb.Pod(podname, tb.PodNamespace(ns),
 		cb.PodStatus(
 			cb.PodPhase(corev1.PodPending),
 		),
 	)
 
 	deletionTime := metav1.Now()
-	later := tb.Pod(podname, ns,
+	later := tb.Pod(podname, tb.PodNamespace(ns),
 		cb.PodDeletionTime(&deletionTime),
 		cb.PodStatus(
 			cb.PodPhase(corev1.PodFailed),

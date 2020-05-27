@@ -43,7 +43,8 @@ func TestTaskRunDelete(t *testing.T) {
 	}
 
 	trdata := []*v1alpha1.TaskRun{
-		tb.TaskRun("tr0-1", "ns",
+		tb.TaskRun("tr0-1",
+			tb.TaskRunNamespace("ns"),
 			tb.TaskRunLabel("tekton.dev/task", "random"),
 			tb.TaskRunSpec(tb.TaskRunTaskRef("random")),
 			tb.TaskRunStatus(
@@ -53,7 +54,8 @@ func TestTaskRunDelete(t *testing.T) {
 				}),
 			),
 		),
-		tb.TaskRun("tr0-2", "ns",
+		tb.TaskRun("tr0-2",
+			tb.TaskRunNamespace("ns"),
 			tb.TaskRunLabel("tekton.dev/task", "random"),
 			tb.TaskRunSpec(tb.TaskRunTaskRef("random")),
 			tb.TaskRunStatus(
@@ -63,7 +65,8 @@ func TestTaskRunDelete(t *testing.T) {
 				}),
 			),
 		),
-		tb.TaskRun("tr0-3", "ns",
+		tb.TaskRun("tr0-3",
+			tb.TaskRunNamespace("ns"),
 			tb.TaskRunLabel("tekton.dev/task", "random"),
 			tb.TaskRunSpec(tb.TaskRunTaskRef("random")),
 			tb.TaskRunStatus(
@@ -279,7 +282,8 @@ func TestTaskRunDelete_v1beta1(t *testing.T) {
 	}
 
 	trdata := []*v1alpha1.TaskRun{
-		tb.TaskRun("tr0-1", "ns",
+		tb.TaskRun("tr0-1",
+			tb.TaskRunNamespace("ns"),
 			tb.TaskRunLabel("tekton.dev/task", "random"),
 			tb.TaskRunSpec(tb.TaskRunTaskRef("random")),
 			tb.TaskRunStatus(
@@ -289,7 +293,8 @@ func TestTaskRunDelete_v1beta1(t *testing.T) {
 				}),
 			),
 		),
-		tb.TaskRun("tr0-2", "ns",
+		tb.TaskRun("tr0-2",
+			tb.TaskRunNamespace("ns"),
 			tb.TaskRunLabel("tekton.dev/task", "random"),
 			tb.TaskRunSpec(tb.TaskRunTaskRef("random")),
 			tb.TaskRunStatus(
@@ -299,7 +304,8 @@ func TestTaskRunDelete_v1beta1(t *testing.T) {
 				}),
 			),
 		),
-		tb.TaskRun("tr0-3", "ns",
+		tb.TaskRun("tr0-3",
+			tb.TaskRunNamespace("ns"),
 			tb.TaskRunLabel("tekton.dev/task", "random"),
 			tb.TaskRunSpec(tb.TaskRunTaskRef("random")),
 			tb.TaskRunStatus(

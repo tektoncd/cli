@@ -39,7 +39,8 @@ func init() {
 func TestPipelineResource_resource_noName(t *testing.T) {
 	cs, _ := test.SeedTestData(t, pipelinetest.Data{
 		PipelineResources: []*v1alpha1.PipelineResource{
-			tb.PipelineResource("res", "namespace",
+			tb.PipelineResource("res",
+				tb.PipelineResourceNamespace("namespace"),
 				tb.PipelineResourceSpec("git",
 					tb.PipelineResourceSpecParam("url", "git@github.com:tektoncd/cli.git"),
 				)),
@@ -106,7 +107,8 @@ func TestPipelineResource_resource_already_exist(t *testing.T) {
 	t.Skip("Skipping due of flakiness")
 	cs, _ := test.SeedTestData(t, pipelinetest.Data{
 		PipelineResources: []*v1alpha1.PipelineResource{
-			tb.PipelineResource("res", "namespace",
+			tb.PipelineResource("res",
+				tb.PipelineResourceNamespace("namespace"),
 				tb.PipelineResourceSpec("git",
 					tb.PipelineResourceSpecParam("url", "git@github.com:tektoncd/cli.git"),
 				),

@@ -82,8 +82,8 @@ func TestTaskDescribe_Empty(t *testing.T) {
 
 func TestTaskDescribe_OnlyName(t *testing.T) {
 	tasks := []*v1alpha1.Task{
-		tb.Task("task-1", "ns"),
-		tb.Task("task", "ns-2"),
+		tb.Task("task-1", tb.TaskNamespace("ns")),
+		tb.Task("task", tb.TaskNamespace("ns-2")),
 	}
 
 	namespaces := []*corev1.Namespace{
@@ -123,8 +123,8 @@ func TestTaskDescribe_OnlyName(t *testing.T) {
 
 func TestTaskDescribe_OnlyNameDiffNameSpace(t *testing.T) {
 	tasks := []*v1alpha1.Task{
-		tb.Task("task-1", "ns"),
-		tb.Task("task", "ns-2"),
+		tb.Task("task-1", tb.TaskNamespace("ns")),
+		tb.Task("task", tb.TaskNamespace("ns-2")),
 	}
 	namespaces := []*corev1.Namespace{
 		{
@@ -162,7 +162,8 @@ func TestTaskDescribe_OnlyNameDiffNameSpace(t *testing.T) {
 
 func TestTaskDescribe_OnlyNameParams(t *testing.T) {
 	tasks := []*v1alpha1.Task{
-		tb.Task("task-1", "ns",
+		tb.Task("task-1",
+			tb.TaskNamespace("ns"),
 			tb.TaskSpec(
 				tb.TaskParam("myarg", v1alpha1.ParamTypeString, tb.ParamSpecDescription("params without the default value")),
 				tb.TaskParam("myprint", v1alpha1.ParamTypeString, tb.ParamSpecDescription("testing very long "+
@@ -172,7 +173,7 @@ func TestTaskDescribe_OnlyNameParams(t *testing.T) {
 				tb.TaskParam("myarray", v1alpha1.ParamTypeArray),
 			),
 		),
-		tb.Task("task", "ns-2"),
+		tb.Task("task", tb.TaskNamespace("ns-2")),
 	}
 	namespaces := []*corev1.Namespace{
 		{
@@ -212,7 +213,8 @@ func TestTaskDescribe_OnlyNameParams(t *testing.T) {
 func TestTaskDescribe_Full(t *testing.T) {
 	clock := clockwork.NewFakeClock()
 	tasks := []*v1alpha1.Task{
-		tb.Task("task-1", "ns",
+		tb.Task("task-1",
+			tb.TaskNamespace("ns"),
 			tb.TaskSpec(
 				tb.TaskDescription("a test description"),
 				tb.TaskResources(
@@ -237,7 +239,8 @@ func TestTaskDescribe_Full(t *testing.T) {
 		),
 	}
 	taskRuns := []*v1alpha1.TaskRun{
-		tb.TaskRun("tr-1", "ns",
+		tb.TaskRun("tr-1",
+			tb.TaskRunNamespace("ns"),
 			tb.TaskRunLabel("tekton.dev/task", "task-1"),
 			tb.TaskRunSpec(tb.TaskRunTaskRef("task-1", tb.TaskRefKind(v1alpha1.NamespacedTaskKind))),
 			tb.TaskRunStatus(
@@ -249,7 +252,8 @@ func TestTaskDescribe_Full(t *testing.T) {
 				cb.TaskRunCompletionTime(clock.Now().Add(5*time.Minute)),
 			),
 		),
-		tb.TaskRun("tr-2", "ns",
+		tb.TaskRun("tr-2",
+			tb.TaskRunNamespace("ns"),
 			tb.TaskRunLabel("tekton.dev/task", "task-1"),
 			tb.TaskRunSpec(tb.TaskRunTaskRef("task-1", tb.TaskRefKind(v1alpha1.NamespacedTaskKind))),
 			tb.TaskRunStatus(
@@ -261,7 +265,8 @@ func TestTaskDescribe_Full(t *testing.T) {
 				cb.TaskRunCompletionTime(clock.Now().Add(17*time.Minute)),
 			),
 		),
-		tb.TaskRun("tr-3", "ns",
+		tb.TaskRun("tr-3",
+			tb.TaskRunNamespace("ns"),
 			tb.TaskRunLabel("tekton.dev/task", "task-1"),
 			tb.TaskRunSpec(tb.TaskRunTaskRef("task-1", tb.TaskRefKind(v1alpha1.ClusterTaskKind))),
 			tb.TaskRunStatus(
@@ -308,8 +313,8 @@ func TestTaskDescribe_Full(t *testing.T) {
 
 func TestTaskDescribe_TaskRunError(t *testing.T) {
 	tasks := []*v1alpha1.Task{
-		tb.Task("task-1", "ns"),
-		tb.Task("task", "ns-2"),
+		tb.Task("task-1", tb.TaskNamespace("ns")),
+		tb.Task("task", tb.TaskNamespace("ns-2")),
 	}
 	namespaces := []*corev1.Namespace{
 		{
@@ -361,7 +366,7 @@ func TestTaskDescribe_custom_output(t *testing.T) {
 	clock := clockwork.NewFakeClock()
 
 	tasks := []*v1alpha1.Task{
-		tb.Task(name, "ns"),
+		tb.Task(name, tb.TaskNamespace("ns")),
 	}
 
 	namespaces := []*corev1.Namespace{

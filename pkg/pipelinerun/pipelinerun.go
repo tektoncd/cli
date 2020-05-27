@@ -96,7 +96,7 @@ func Get(c *cli.Clients, prname string, opts metav1.GetOptions, ns string) (*v1b
 			return nil, err
 		}
 		var pipelinerunConverted v1beta1.PipelineRun
-		err = pipelinerun.ConvertUp(context.Background(), &pipelinerunConverted)
+		err = pipelinerun.ConvertTo(context.Background(), &pipelinerunConverted)
 		if err != nil {
 			return nil, err
 		}
@@ -180,7 +180,7 @@ func Create(c *cli.Clients, pr *v1beta1.PipelineRun, opts metav1.CreateOptions, 
 
 	if gvr.Version == "v1alpha1" {
 		var pipelinerunConverted v1alpha1.PipelineRun
-		err = pipelinerunConverted.ConvertDown(context.Background(), pr)
+		err = pipelinerunConverted.ConvertFrom(context.Background(), pr)
 		if err != nil {
 			return nil, err
 		}

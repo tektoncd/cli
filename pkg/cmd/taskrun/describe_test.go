@@ -97,7 +97,8 @@ func TestTaskRunDescribe_empty_taskrun(t *testing.T) {
 	clock := clockwork.NewFakeClock()
 
 	trs := []*v1alpha1.TaskRun{
-		tb.TaskRun("tr-1", "ns",
+		tb.TaskRun("tr-1",
+			tb.TaskRunNamespace("ns"),
 			tb.TaskRunLabel("tekton.dev/task", "t1"),
 			tb.TaskRunSpec(tb.TaskRunTaskRef("t1")),
 			tb.TaskRunStatus(
@@ -146,7 +147,8 @@ func TestTaskRunDescribe_only_taskrun(t *testing.T) {
 	clock := clockwork.NewFakeClock()
 
 	trs := []*v1alpha1.TaskRun{
-		tb.TaskRun("tr-1", "ns",
+		tb.TaskRun("tr-1",
+			tb.TaskRunNamespace("ns"),
 			tb.TaskRunStatus(
 				tb.TaskRunStartTime(clockwork.NewFakeClock().Now().Add(20*time.Second)),
 				tb.StatusCondition(apis.Condition{
@@ -212,7 +214,8 @@ func TestTaskRunDescribe_failed(t *testing.T) {
 	clock := clockwork.NewFakeClock()
 
 	trs := []*v1alpha1.TaskRun{
-		tb.TaskRun("tr-1", "ns",
+		tb.TaskRun("tr-1",
+			tb.TaskRunNamespace("ns"),
 			tb.TaskRunStatus(
 				tb.TaskRunStartTime(clock.Now().Add(2*time.Minute)),
 				cb.TaskRunCompletionTime(clock.Now().Add(5*time.Minute)),
@@ -266,7 +269,8 @@ func TestTaskRunDescribe_no_taskref(t *testing.T) {
 	clock := clockwork.NewFakeClock()
 
 	trs := []*v1alpha1.TaskRun{
-		tb.TaskRun("tr-1", "ns",
+		tb.TaskRun("tr-1",
+			tb.TaskRunNamespace("ns"),
 			tb.TaskRunStatus(
 				tb.TaskRunStartTime(clock.Now().Add(2*time.Minute)),
 				cb.TaskRunCompletionTime(clock.Now().Add(5*time.Minute)),
@@ -317,7 +321,8 @@ func TestTaskRunDescribe_no_resourceref(t *testing.T) {
 	clock := clockwork.NewFakeClock()
 
 	trs := []*v1alpha1.TaskRun{
-		tb.TaskRun("tr-1", "ns",
+		tb.TaskRun("tr-1",
+			tb.TaskRunNamespace("ns"),
 			tb.TaskRunStatus(
 				tb.TaskRunStartTime(clockwork.NewFakeClock().Now().Add(20*time.Second)),
 				tb.StatusCondition(apis.Condition{
@@ -383,7 +388,8 @@ func TestTaskRunDescribe_step_sidecar_status_defaults_and_failures(t *testing.T)
 	clock := clockwork.NewFakeClock()
 
 	trs := []*v1alpha1.TaskRun{
-		tb.TaskRun("tr-1", "ns",
+		tb.TaskRun("tr-1",
+			tb.TaskRunNamespace("ns"),
 			tb.TaskRunStatus(
 				tb.TaskRunStartTime(clockwork.NewFakeClock().Now().Add(20*time.Second)),
 				tb.StatusCondition(apis.Condition{
@@ -455,7 +461,8 @@ func TestTaskRunDescribe_step_status_pending_one_sidecar(t *testing.T) {
 	clock := clockwork.NewFakeClock()
 
 	trs := []*v1alpha1.TaskRun{
-		tb.TaskRun("tr-1", "ns",
+		tb.TaskRun("tr-1",
+			tb.TaskRunNamespace("ns"),
 			tb.TaskRunStatus(
 				tb.TaskRunStartTime(clockwork.NewFakeClock().Now().Add(20*time.Second)),
 				tb.StatusCondition(apis.Condition{
@@ -526,7 +533,8 @@ func TestTaskRunDescribe_step_status_running_multiple_sidecars(t *testing.T) {
 	clock := clockwork.NewFakeClock()
 
 	trs := []*v1alpha1.TaskRun{
-		tb.TaskRun("tr-1", "ns",
+		tb.TaskRun("tr-1",
+			tb.TaskRunNamespace("ns"),
 			tb.TaskRunStatus(
 				tb.TaskRunStartTime(clockwork.NewFakeClock().Now().Add(20*time.Second)),
 				tb.StatusCondition(apis.Condition{
@@ -601,7 +609,8 @@ func TestTaskRunDescribe_cancel_taskrun(t *testing.T) {
 	clock := clockwork.NewFakeClock()
 
 	trs := []*v1alpha1.TaskRun{
-		tb.TaskRun("tr-1", "ns",
+		tb.TaskRun("tr-1",
+			tb.TaskRunNamespace("ns"),
 			tb.TaskRunStatus(
 				tb.TaskRunStartTime(clock.Now().Add(2*time.Minute)),
 				cb.TaskRunCompletionTime(clock.Now().Add(5*time.Minute)),
@@ -655,7 +664,7 @@ func TestTaskRunDescribe_custom_output(t *testing.T) {
 	clock := clockwork.NewFakeClock()
 
 	trs := []*v1alpha1.TaskRun{
-		tb.TaskRun(name, "ns"),
+		tb.TaskRun(name, tb.TaskRunNamespace("ns")),
 	}
 
 	cs, _ := test.SeedTestData(t, pipelinetest.Data{
@@ -697,7 +706,7 @@ func TestTaskRunDescribe_custom_output(t *testing.T) {
 
 func TestTaskRunWithSpecDescribe_custom_timeout(t *testing.T) {
 	trs := []*v1alpha1.TaskRun{
-		tb.TaskRun("tr-custom-timeout", "ns",
+		tb.TaskRun("tr-custom-timeout", tb.TaskRunNamespace("ns"),
 			tb.TaskRunSpec(tb.TaskRunTimeout(time.Minute)),
 		),
 	}
@@ -824,7 +833,7 @@ func TestTaskRunDescribe_lastV1beta1(t *testing.T) {
 func TestTaskRunDescribe_last(t *testing.T) {
 	clock := clockwork.NewFakeClock()
 	trs := []*v1alpha1.TaskRun{
-		tb.TaskRun("tr-1", "ns",
+		tb.TaskRun("tr-1", tb.TaskRunNamespace("ns"),
 			tb.TaskRunStatus(
 				tb.TaskRunStartTime(clockwork.NewFakeClock().Now().Add(20*time.Second)),
 				tb.StatusCondition(apis.Condition{
@@ -850,7 +859,7 @@ func TestTaskRunDescribe_last(t *testing.T) {
 				tb.TaskRunOutputs(tb.TaskRunOutputsResource("image-output2", tb.TaskResourceBindingRef("image"))),
 			),
 		),
-		tb.TaskRun("tr-2", "ns",
+		tb.TaskRun("tr-2", tb.TaskRunNamespace("ns"),
 			tb.TaskRunStatus(
 				tb.TaskRunStartTime(clockwork.NewFakeClock().Now().Add(2*time.Minute)),
 				tb.StatusCondition(apis.Condition{

@@ -32,7 +32,7 @@ func Create(c *cli.Clients, tr *v1beta1.TaskRun, opts metav1.CreateOptions, ns s
 	}
 
 	if trGVR.Version == "v1alpha1" {
-		v1alpha1TaskRun := ConvertDown(tr)
+		v1alpha1TaskRun := ConvertFrom(tr)
 		if err != nil {
 			return nil, err
 		}
@@ -59,7 +59,7 @@ func createUnstructured(obj runtime.Object, c *cli.Clients, opts metav1.CreateOp
 }
 
 // convert v1beta1 Taskrun to v1alpha1 Taskrun to support backward compatibility
-func ConvertDown(tr *v1beta1.TaskRun) *v1alpha1.TaskRun {
+func ConvertFrom(tr *v1beta1.TaskRun) *v1alpha1.TaskRun {
 	downtr := &v1alpha1.TaskRun{}
 	downtr.Kind = "TaskRun"
 	downtr.APIVersion = "tekton.dev/v1alpha1"
@@ -113,7 +113,7 @@ func ConvertDown(tr *v1beta1.TaskRun) *v1alpha1.TaskRun {
 
 	if tr.Spec.TaskSpec != nil {
 		downtr.Spec.TaskSpec = &v1alpha1.TaskSpec{}
-		downtr.Spec.TaskSpec = task.SpecConvertDown(tr.Spec.TaskSpec)
+		downtr.Spec.TaskSpec = task.SpecConvertFrom(tr.Spec.TaskSpec)
 	}
 
 	downtr.Spec.TaskRef = tr.Spec.TaskRef

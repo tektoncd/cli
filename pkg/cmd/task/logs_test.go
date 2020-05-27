@@ -52,7 +52,7 @@ const (
 func TestTaskLog(t *testing.T) {
 
 	clock := clockwork.NewFakeClock()
-	task1 := []*v1alpha1.Task{tb.Task("task", "ns")}
+	task1 := []*v1alpha1.Task{tb.Task("task", tb.TaskNamespace("ns"))}
 	cs, _ := test.SeedTestData(t, pipelinetest.Data{
 		Tasks: task1,
 		Namespaces: []*corev1.Namespace{
@@ -73,7 +73,7 @@ func TestTaskLog(t *testing.T) {
 	}
 
 	task2 := []*v1alpha1.Task{
-		tb.Task("task", "namespace"),
+		tb.Task("task", tb.TaskNamespace("namespace")),
 	}
 	cs2, _ := test.SeedTestData(t, pipelinetest.Data{
 		Tasks: task2,
@@ -176,7 +176,7 @@ func TestTaskLog(t *testing.T) {
 func TestTaskLog_v1beta1(t *testing.T) {
 
 	clock := clockwork.NewFakeClock()
-	task1 := []*v1alpha1.Task{tb.Task("task", "ns")}
+	task1 := []*v1alpha1.Task{tb.Task("task", tb.TaskNamespace("ns"))}
 	cs, _ := test.SeedTestData(t, pipelinetest.Data{
 		Tasks: task1,
 		Namespaces: []*corev1.Namespace{
@@ -197,7 +197,7 @@ func TestTaskLog_v1beta1(t *testing.T) {
 	}
 
 	task2 := []*v1alpha1.Task{
-		tb.Task("task", "namespace"),
+		tb.Task("task", tb.TaskNamespace("namespace")),
 	}
 	cs2, _ := test.SeedTestData(t, pipelinetest.Data{
 		Tasks: task2,
@@ -304,10 +304,10 @@ func TestTaskLog2(t *testing.T) {
 
 	cs, _ := test.SeedTestData(t, pipelinetest.Data{
 		Tasks: []*v1alpha1.Task{
-			tb.Task("task", "ns", cb.TaskCreationTime(clock.Now())),
+			tb.Task("task", tb.TaskNamespace("ns"), cb.TaskCreationTime(clock.Now())),
 		},
 		TaskRuns: []*v1alpha1.TaskRun{
-			tb.TaskRun("taskrun1", "ns",
+			tb.TaskRun("taskrun1", tb.TaskRunNamespace("ns"),
 				tb.TaskRunLabel("tekton.dev/task", "task"),
 				tb.TaskRunSpec(tb.TaskRunTaskRef("task")),
 				tb.TaskRunStatus(
@@ -323,7 +323,7 @@ func TestTaskLog2(t *testing.T) {
 					),
 				),
 			),
-			tb.TaskRun("taskrun2", "ns",
+			tb.TaskRun("taskrun2", tb.TaskRunNamespace("ns"),
 				tb.TaskRunLabel("tekton.dev/task", "task"),
 				tb.TaskRunSpec(tb.TaskRunTaskRef("task")),
 				tb.TaskRunStatus(
@@ -348,7 +348,7 @@ func TestTaskLog2(t *testing.T) {
 			},
 		},
 		Pods: []*corev1.Pod{
-			tb.Pod("pod", "ns",
+			tb.Pod("pod", tb.PodNamespace("ns"),
 				tb.PodSpec(
 					tb.PodContainer("step1", "step1:latest"),
 					tb.PodContainer("step2", "step2:latest"),
@@ -362,10 +362,10 @@ func TestTaskLog2(t *testing.T) {
 
 	cs2, _ := test.SeedTestData(t, pipelinetest.Data{
 		Tasks: []*v1alpha1.Task{
-			tb.Task("task", "ns", cb.TaskCreationTime(clock.Now())),
+			tb.Task("task", tb.TaskNamespace("ns"), cb.TaskCreationTime(clock.Now())),
 		},
 		TaskRuns: []*v1alpha1.TaskRun{
-			tb.TaskRun("taskrun1", "ns",
+			tb.TaskRun("taskrun1", tb.TaskRunNamespace("ns"),
 				tb.TaskRunLabel("tekton.dev/task", "task"),
 				tb.TaskRunSpec(tb.TaskRunTaskRef("task")),
 				tb.TaskRunStatus(
@@ -390,7 +390,7 @@ func TestTaskLog2(t *testing.T) {
 			},
 		},
 		Pods: []*corev1.Pod{
-			tb.Pod("pod", "ns",
+			tb.Pod("pod", tb.PodNamespace("ns"),
 				tb.PodSpec(
 					tb.PodContainer("step1", "step1:latest"),
 					tb.PodContainer("step2", "step2:latest"),
@@ -677,11 +677,11 @@ func TestLogs_Auto_Select_FirstTask(t *testing.T) {
 	clock := clockwork.NewFakeClock()
 
 	tdata := []*v1alpha1.Task{
-		tb.Task(taskName, ns),
+		tb.Task(taskName, tb.TaskNamespace(ns)),
 	}
 
 	trdata := []*v1alpha1.TaskRun{
-		tb.TaskRun("dummyTR", ns,
+		tb.TaskRun("dummyTR", tb.TaskRunNamespace(ns),
 			cb.TaskRunCreationTime(clock.Now().Add(-10*time.Minute)),
 			tb.TaskRunLabel("tekton.dev/task", taskName),
 			tb.TaskRunSelfLink(taskName),

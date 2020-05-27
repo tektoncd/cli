@@ -45,9 +45,18 @@ func TestConditionDelete(t *testing.T) {
 
 	for i := 0; i < 5; i++ {
 		conditions := []*v1alpha1.Condition{
-			tb.Condition("condition1", "ns", cb.ConditionCreationTime(clock.Now().Add(-1*time.Minute))),
-			tb.Condition("condition2", "ns", cb.ConditionCreationTime(clock.Now().Add(-1*time.Minute))),
-			tb.Condition("condition3", "ns", cb.ConditionCreationTime(clock.Now().Add(-1*time.Minute))),
+			tb.Condition("condition1",
+				tb.ConditionNamespace("ns"),
+				cb.ConditionCreationTime(clock.Now().Add(-1*time.Minute)),
+			),
+			tb.Condition("condition2",
+				tb.ConditionNamespace("ns"),
+				cb.ConditionCreationTime(clock.Now().Add(-1*time.Minute)),
+			),
+			tb.Condition("condition3",
+				tb.ConditionNamespace("ns"),
+				cb.ConditionCreationTime(clock.Now().Add(-1*time.Minute)),
+			),
 		}
 		s, _ := test.SeedTestData(t, pipelinetest.Data{Conditions: conditions, Namespaces: ns})
 		seeds = append(seeds, s)

@@ -59,7 +59,7 @@ const (
 func TestPipelineLog(t *testing.T) {
 	clock := clockwork.NewFakeClock()
 	pdata := []*v1alpha1.Pipeline{
-		tb.Pipeline(pipelineName, ns),
+		tb.Pipeline(pipelineName, tb.PipelineNamespace(ns)),
 	}
 	cs, _ := test.SeedTestData(t, pipelinetest.Data{
 		Pipelines: pdata,
@@ -99,14 +99,16 @@ func TestPipelineLog(t *testing.T) {
 	}
 
 	pdata3 := []*v1alpha1.Pipeline{
-		tb.Pipeline(pipelineName, ns,
+		tb.Pipeline(pipelineName,
+			tb.PipelineNamespace(ns),
 			// created  15 minutes back
 			cb.PipelineCreationTimestamp(clock.Now().Add(-15*time.Minute)),
 		),
 	}
 
 	prdata3 := []*v1alpha1.PipelineRun{
-		tb.PipelineRun(prName, ns,
+		tb.PipelineRun(prName,
+			tb.PipelineRunNamespace(ns),
 			cb.PipelineRunCreationTimestamp(clock.Now().Add(-10*time.Minute)),
 			tb.PipelineRunLabel("tekton.dev/pipeline", pipelineName),
 			tb.PipelineRunSpec(pipelineName),
@@ -121,7 +123,8 @@ func TestPipelineLog(t *testing.T) {
 				cb.PipelineRunCompletionTime(clock.Now().Add(10*time.Minute)),
 			),
 		),
-		tb.PipelineRun(prName2, ns,
+		tb.PipelineRun(prName2,
+			tb.PipelineRunNamespace(ns),
 			cb.PipelineRunCreationTimestamp(clock.Now().Add(-8*time.Minute)),
 			tb.PipelineRunLabel("tekton.dev/pipeline", pipelineName),
 			tb.PipelineRunSpec(pipelineName),
@@ -261,7 +264,7 @@ func TestPipelineLog(t *testing.T) {
 func TestPipelineLog_v1beta1(t *testing.T) {
 	clock := clockwork.NewFakeClock()
 	pdata := []*v1alpha1.Pipeline{
-		tb.Pipeline(pipelineName, ns),
+		tb.Pipeline(pipelineName, tb.PipelineNamespace(ns)),
 	}
 	cs, _ := test.SeedTestData(t, pipelinetest.Data{
 		Pipelines: pdata,
@@ -301,14 +304,16 @@ func TestPipelineLog_v1beta1(t *testing.T) {
 	}
 
 	pdata3 := []*v1alpha1.Pipeline{
-		tb.Pipeline(pipelineName, ns,
+		tb.Pipeline(pipelineName,
+			tb.PipelineNamespace(ns),
 			// created  15 minutes back
 			cb.PipelineCreationTimestamp(clock.Now().Add(-15*time.Minute)),
 		),
 	}
 
 	prdata3 := []*v1alpha1.PipelineRun{
-		tb.PipelineRun(prName, ns,
+		tb.PipelineRun(prName,
+			tb.PipelineRunNamespace(ns),
 			cb.PipelineRunCreationTimestamp(clock.Now().Add(-10*time.Minute)),
 			tb.PipelineRunLabel("tekton.dev/pipeline", pipelineName),
 			tb.PipelineRunSpec(pipelineName),
@@ -323,7 +328,8 @@ func TestPipelineLog_v1beta1(t *testing.T) {
 				cb.PipelineRunCompletionTime(clock.Now().Add(10*time.Minute)),
 			),
 		),
-		tb.PipelineRun(prName2, ns,
+		tb.PipelineRun(prName2,
+			tb.PipelineRunNamespace(ns),
 			cb.PipelineRunCreationTimestamp(clock.Now().Add(-8*time.Minute)),
 			tb.PipelineRunLabel("tekton.dev/pipeline", pipelineName),
 			tb.PipelineRunSpec(pipelineName),
@@ -467,14 +473,16 @@ func TestPipelineLog_Interactive(t *testing.T) {
 
 	cs, _ := test.SeedTestData(t, pipelinetest.Data{
 		Pipelines: []*v1alpha1.Pipeline{
-			tb.Pipeline(pipelineName, ns,
+			tb.Pipeline(pipelineName,
+				tb.PipelineNamespace(ns),
 				// created  15 minutes back
 				cb.PipelineCreationTimestamp(clock.Now().Add(-15*time.Minute)),
 			),
 		},
 		PipelineRuns: []*v1alpha1.PipelineRun{
 
-			tb.PipelineRun(prName, ns,
+			tb.PipelineRun(prName,
+				tb.PipelineRunNamespace(ns),
 				cb.PipelineRunCreationTimestamp(clock.Now().Add(-10*time.Minute)),
 				tb.PipelineRunLabel("tekton.dev/pipeline", pipelineName),
 				tb.PipelineRunSpec(pipelineName),
@@ -489,7 +497,8 @@ func TestPipelineLog_Interactive(t *testing.T) {
 					cb.PipelineRunCompletionTime(clock.Now().Add(10*time.Minute)),
 				),
 			),
-			tb.PipelineRun(prName2, ns,
+			tb.PipelineRun(prName2,
+				tb.PipelineRunNamespace(ns),
 				cb.PipelineRunCreationTimestamp(clock.Now().Add(-8*time.Minute)),
 				tb.PipelineRunLabel("tekton.dev/pipeline", pipelineName),
 				tb.PipelineRunSpec(pipelineName),
@@ -516,14 +525,16 @@ func TestPipelineLog_Interactive(t *testing.T) {
 
 	cs2, _ := test.SeedTestData(t, pipelinetest.Data{
 		Pipelines: []*v1alpha1.Pipeline{
-			tb.Pipeline(pipelineName, ns,
+			tb.Pipeline(pipelineName,
+				tb.PipelineNamespace(ns),
 				// created  15 minutes back
 				cb.PipelineCreationTimestamp(clock.Now().Add(-15*time.Minute)),
 			),
 		},
 		PipelineRuns: []*v1alpha1.PipelineRun{
 
-			tb.PipelineRun(prName, ns,
+			tb.PipelineRun(prName,
+				tb.PipelineRunNamespace(ns),
 				cb.PipelineRunCreationTimestamp(clock.Now().Add(-10*time.Minute)),
 				tb.PipelineRunLabel("tekton.dev/pipeline", pipelineName),
 				tb.PipelineRunSpec(pipelineName),
@@ -820,10 +831,11 @@ func TestLogs_Auto_Select_FirstPipeline(t *testing.T) {
 	clock := clockwork.NewFakeClock()
 
 	pdata := []*v1alpha1.Pipeline{
-		tb.Pipeline(pipelineName, ns),
+		tb.Pipeline(pipelineName, tb.PipelineNamespace(ns)),
 	}
 	prdata := []*v1alpha1.PipelineRun{
-		tb.PipelineRun(prName, ns,
+		tb.PipelineRun(prName,
+			tb.PipelineRunNamespace(ns),
 			cb.PipelineRunCreationTimestamp(clock.Now().Add(-10*time.Minute)),
 			tb.PipelineRunLabel("tekton.dev/pipeline", pipelineName),
 			tb.PipelineRunSpec(pipelineName),
@@ -887,10 +899,11 @@ func TestLogs_Auto_Select_FirstPipeline_v1beta1(t *testing.T) {
 	clock := clockwork.NewFakeClock()
 
 	pdata := []*v1alpha1.Pipeline{
-		tb.Pipeline(pipelineName, ns),
+		tb.Pipeline(pipelineName, tb.PipelineNamespace(ns)),
 	}
 	prdata := []*v1alpha1.PipelineRun{
-		tb.PipelineRun(prName, ns,
+		tb.PipelineRun(prName,
+			tb.PipelineRunNamespace(ns),
 			cb.PipelineRunCreationTimestamp(clock.Now().Add(-10*time.Minute)),
 			tb.PipelineRunLabel("tekton.dev/pipeline", pipelineName),
 			tb.PipelineRunSpec(pipelineName),

@@ -39,7 +39,7 @@ func TestPipelinesList(t *testing.T) {
 	clock := clockwork.NewFakeClock()
 
 	pdata := []*v1alpha1.Pipeline{
-		tb.Pipeline("pipeline", "ns",
+		tb.Pipeline("pipeline", tb.PipelineNamespace("ns"),
 			// created  5 minutes back
 			cb.PipelineCreationTimestamp(clock.Now().Add(-5*time.Minute)),
 		),
@@ -58,11 +58,11 @@ func TestPipelinesList(t *testing.T) {
 	}
 
 	pdata2 := []*v1alpha1.Pipeline{
-		tb.Pipeline("pipeline", "ns",
+		tb.Pipeline("pipeline", tb.PipelineNamespace("ns"),
 			// created  5 minutes back
 			cb.PipelineCreationTimestamp(clock.Now().Add(-5*time.Minute)),
 		),
-		tb.Pipeline("pipeline2", "ns",
+		tb.Pipeline("pipeline2", tb.PipelineNamespace("ns"),
 			// created  5 minutes back
 			cb.PipelineCreationTimestamp(clock.Now().Add(-5*time.Minute)),
 		),
@@ -210,11 +210,11 @@ func TestPipelineGet(t *testing.T) {
 	clock := clockwork.NewFakeClock()
 
 	pdata := []*v1alpha1.Pipeline{
-		tb.Pipeline("pipeline", "ns",
+		tb.Pipeline("pipeline", tb.PipelineNamespace("ns"),
 			// created  5 minutes back
 			cb.PipelineCreationTimestamp(clock.Now().Add(-5*time.Minute)),
 		),
-		tb.Pipeline("pipeline2", "ns",
+		tb.Pipeline("pipeline2", tb.PipelineNamespace("ns"),
 			// created  5 minutes back
 			cb.PipelineCreationTimestamp(clock.Now().Add(-5*time.Minute)),
 		),

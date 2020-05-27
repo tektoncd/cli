@@ -142,7 +142,7 @@ func CreateResource(t *testing.T, resource, namespace string) {
 }
 
 func getGitResource(rname string, namespace string) *v1alpha1.PipelineResource {
-	return tb.PipelineResource(rname, namespace, tb.PipelineResourceSpec(
+	return tb.PipelineResource(rname, tb.PipelineResourceNamespace(namespace), tb.PipelineResourceSpec(
 		v1alpha1.PipelineResourceTypeGit,
 		tb.PipelineResourceSpecParam("url", "https://github.com/GoogleContainerTools/skaffold"),
 		tb.PipelineResourceSpecParam("revision", "master"),

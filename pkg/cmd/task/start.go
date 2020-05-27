@@ -206,7 +206,7 @@ func parseTask(taskLocation string, p cli.Params) (*v1beta1.Task, error) {
 		if err := yaml.UnmarshalStrict(b, &v1alpha1Task); err != nil {
 			return nil, err
 		}
-		if err := v1alpha1Task.ConvertUp(context.Background(), &task); err != nil {
+		if err := v1alpha1Task.ConvertTo(context.Background(), &task); err != nil {
 			return nil, err
 		}
 		task.TypeMeta.APIVersion = "tekton.dev/v1alpha1"
@@ -468,7 +468,7 @@ func convertedTrVersion(c *cli.Clients, tr *v1beta1.TaskRun) (interface{}, error
 	}
 
 	if version == "tekton.dev/v1alpha1" {
-		trConverted := traction.ConvertDown(tr)
+		trConverted := traction.ConvertFrom(tr)
 		trConverted.APIVersion = version
 		trConverted.Kind = "TaskRun"
 		if err != nil {

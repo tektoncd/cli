@@ -31,7 +31,7 @@ func TestContainer_fetch_logs(t *testing.T) {
 	container2 := "nop"
 
 	ps := []*corev1.Pod{
-		tb.Pod(podName, ns,
+		tb.Pod(podName, tb.PodNamespace(ns),
 			tb.PodSpec(
 				tb.PodContainer(container1, "step-build-app:latest"),
 				tb.PodContainer(container2, "override-with-nop:latest"),

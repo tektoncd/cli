@@ -71,7 +71,8 @@ func Test_cancel_pipelinerun(t *testing.T) {
 	prName := "test-pipeline-run-123"
 
 	prs := []*v1alpha1.PipelineRun{
-		tb.PipelineRun(prName, "ns",
+		tb.PipelineRun(prName,
+			tb.PipelineRunNamespace("ns"),
 			tb.PipelineRunLabel("tekton.dev/pipeline", "pipelineName"),
 			tb.PipelineRunSpec("pipelineName",
 				tb.PipelineRunServiceAccountName("test-sa"),
@@ -135,7 +136,8 @@ func Test_cancel_pipelinerun_client_err(t *testing.T) {
 	errStr := "test generated error"
 
 	prs := []*v1alpha1.PipelineRun{
-		tb.PipelineRun(prName, "ns",
+		tb.PipelineRun(prName,
+			tb.PipelineRunNamespace("ns"),
 			tb.PipelineRunLabel("tekton.dev/pipeline", "pipelineName"),
 			tb.PipelineRunSpec("pipelineName",
 				tb.PipelineRunServiceAccountName("test-sa"),
@@ -184,7 +186,8 @@ func Test_finished_pipelinerun_success(t *testing.T) {
 	prName := "test-pipeline-run-123"
 
 	prs := []*v1alpha1.PipelineRun{
-		tb.PipelineRun(prName, "ns",
+		tb.PipelineRun(prName,
+			tb.PipelineRunNamespace("ns"),
 			tb.PipelineRunLabel("tekton.dev/pipeline", "pipelineName"),
 			tb.PipelineRunSpec("pipelineName",
 				tb.PipelineRunServiceAccountName("test-sa"),
@@ -229,7 +232,8 @@ func Test_finished_pipelinerun_failure(t *testing.T) {
 	prName := "test-pipeline-run-123"
 
 	prs := []*v1alpha1.PipelineRun{
-		tb.PipelineRun(prName, "ns",
+		tb.PipelineRun(prName,
+			tb.PipelineRunNamespace("ns"),
 			tb.PipelineRunLabel("tekton.dev/pipeline", "pipelineName"),
 			tb.PipelineRunSpec("pipelineName",
 				tb.PipelineRunServiceAccountName("test-sa"),
@@ -274,7 +278,8 @@ func Test_finished_pipelinerun_cancel(t *testing.T) {
 	prName := "test-pipeline-run-123"
 
 	prs := []*v1alpha1.PipelineRun{
-		tb.PipelineRun(prName, "ns",
+		tb.PipelineRun(prName,
+			tb.PipelineRunNamespace("ns"),
 			tb.PipelineRunLabel("tekton.dev/pipeline", "pipelineName"),
 			tb.PipelineRunSpec("pipelineName",
 				tb.PipelineRunServiceAccountName("test-sa"),
@@ -319,7 +324,8 @@ func Test_cancel_pipelinerun_v1beta1(t *testing.T) {
 	prName := "test-pipeline-run-123"
 
 	prs := []*v1alpha1.PipelineRun{
-		tb.PipelineRun(prName, "ns",
+		tb.PipelineRun(prName,
+			tb.PipelineRunNamespace("ns"),
 			tb.PipelineRunLabel("tekton.dev/pipeline", "pipelineName"),
 			tb.PipelineRunSpec("pipelineName",
 				tb.PipelineRunServiceAccountName("test-sa"),
@@ -362,7 +368,8 @@ func Test_cancel_pipelinerun_client_err_v1beta1(t *testing.T) {
 	errStr := "test generated error"
 
 	prs := []*v1alpha1.PipelineRun{
-		tb.PipelineRun(prName, "ns",
+		tb.PipelineRun(prName,
+			tb.PipelineRunNamespace("ns"),
 			tb.PipelineRunLabel("tekton.dev/pipeline", "pipelineName"),
 			tb.PipelineRunSpec("pipelineName",
 				tb.PipelineRunServiceAccountName("test-sa"),
@@ -411,7 +418,8 @@ func Test_finished_pipelinerun_success_v1beta1(t *testing.T) {
 	prName := "test-pipeline-run-123"
 
 	prs := []*v1alpha1.PipelineRun{
-		tb.PipelineRun(prName, "ns",
+		tb.PipelineRun(prName,
+			tb.PipelineRunNamespace("ns"),
 			tb.PipelineRunLabel("tekton.dev/pipeline", "pipelineName"),
 			tb.PipelineRunSpec("pipelineName",
 				tb.PipelineRunServiceAccountName("test-sa"),
@@ -456,7 +464,8 @@ func Test_finished_pipelinerun_failure_v1beta1(t *testing.T) {
 	prName := "test-pipeline-run-123"
 
 	prs := []*v1alpha1.PipelineRun{
-		tb.PipelineRun(prName, "ns",
+		tb.PipelineRun(prName,
+			tb.PipelineRunNamespace("ns"),
 			tb.PipelineRunLabel("tekton.dev/pipeline", "pipelineName"),
 			tb.PipelineRunSpec("pipelineName",
 				tb.PipelineRunServiceAccountName("test-sa"),
@@ -501,7 +510,8 @@ func Test_finished_pipelinerun_cancel_v1beta1(t *testing.T) {
 	prName := "test-pipeline-run-123"
 
 	prs := []*v1alpha1.PipelineRun{
-		tb.PipelineRun(prName, "ns",
+		tb.PipelineRun(prName,
+			tb.PipelineRunNamespace("ns"),
 			tb.PipelineRunLabel("tekton.dev/pipeline", "pipelineName"),
 			tb.PipelineRunSpec("pipelineName",
 				tb.PipelineRunServiceAccountName("test-sa"),

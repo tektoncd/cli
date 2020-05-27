@@ -750,7 +750,7 @@ func parsePipeline(taskLocation string, p cli.Params) (*v1beta1.Pipeline, error)
 			return nil, err
 		}
 		var pipelineConverted v1beta1.Pipeline
-		err = pipeline.ConvertUp(context.Background(), &pipelineConverted)
+		err = pipeline.ConvertTo(context.Background(), &pipelineConverted)
 		if err != nil {
 			return nil, err
 		}
@@ -895,7 +895,7 @@ func convertedPrVersion(c *cli.Clients, pr *v1beta1.PipelineRun) (interface{}, e
 
 	if version == "tekton.dev/v1alpha1" {
 		var prConverted v1alpha1.PipelineRun
-		err = prConverted.ConvertDown(context.Background(), pr)
+		err = prConverted.ConvertFrom(context.Background(), pr)
 		prConverted.APIVersion = version
 		prConverted.Kind = "PipelineRun"
 		if err != nil {

@@ -80,7 +80,8 @@ func TestPipelineDescribe_empty(t *testing.T) {
 	clock := clockwork.NewFakeClock()
 
 	pipelines := []*v1alpha1.Pipeline{
-		tb.Pipeline("pipeline", "ns",
+		tb.Pipeline("pipeline",
+			tb.PipelineNamespace("ns"),
 			// created  5 minutes back
 			cb.PipelineCreationTimestamp(clock.Now().Add(-5*time.Minute)),
 		),
@@ -118,14 +119,16 @@ func TestPipelineDescribe_with_run(t *testing.T) {
 	clock := clockwork.NewFakeClock()
 
 	pipelines := []*v1alpha1.Pipeline{
-		tb.Pipeline("pipeline", "ns",
+		tb.Pipeline("pipeline",
+			tb.PipelineNamespace("ns"),
 			// created  5 minutes back
 			cb.PipelineCreationTimestamp(clock.Now().Add(-5*time.Minute)),
 		),
 	}
 	pipelineRuns := []*v1alpha1.PipelineRun{
 
-		tb.PipelineRun("pipeline-run-1", "ns",
+		tb.PipelineRun("pipeline-run-1",
+			tb.PipelineRunNamespace("ns"),
 			cb.PipelineRunCreationTimestamp(clock.Now()),
 			tb.PipelineRunLabel("tekton.dev/pipeline", "pipeline"),
 			tb.PipelineRunSpec("pipeline"),
@@ -180,7 +183,8 @@ func TestPipelineDescribe_with_spec_run(t *testing.T) {
 	clock := clockwork.NewFakeClock()
 
 	pipelines := []*v1alpha1.Pipeline{
-		tb.Pipeline("pipeline", "ns",
+		tb.Pipeline("pipeline",
+			tb.PipelineNamespace("ns"),
 			// created  5 minutes back
 			cb.PipelineCreationTimestamp(clock.Now().Add(-5*time.Minute)),
 			tb.PipelineSpec(
@@ -195,7 +199,8 @@ func TestPipelineDescribe_with_spec_run(t *testing.T) {
 	}
 	pipelineRuns := []*v1alpha1.PipelineRun{
 
-		tb.PipelineRun("pipeline-run-1", "ns",
+		tb.PipelineRun("pipeline-run-1",
+			tb.PipelineRunNamespace("ns"),
 			cb.PipelineRunCreationTimestamp(clock.Now()),
 			tb.PipelineRunLabel("tekton.dev/pipeline", "pipeline"),
 			tb.PipelineRunSpec("pipeline"),
@@ -249,7 +254,8 @@ func TestPipelineDescribe_with_spec_run(t *testing.T) {
 func TestPipelineDescribe_with_spec_resource_param_run(t *testing.T) {
 	clock := clockwork.NewFakeClock()
 	pipelines := []*v1alpha1.Pipeline{
-		tb.Pipeline("pipeline", "ns",
+		tb.Pipeline("pipeline",
+			tb.PipelineNamespace("ns"),
 			// created  5 minutes back
 			cb.PipelineCreationTimestamp(clock.Now().Add(-5*time.Minute)),
 			tb.PipelineSpec(
@@ -265,7 +271,8 @@ func TestPipelineDescribe_with_spec_resource_param_run(t *testing.T) {
 		),
 	}
 	pipelineRuns := []*v1alpha1.PipelineRun{
-		tb.PipelineRun("pipeline-run-1", "ns",
+		tb.PipelineRun("pipeline-run-1",
+			tb.PipelineRunNamespace("ns"),
 			cb.PipelineRunCreationTimestamp(clock.Now()),
 			tb.PipelineRunLabel("tekton.dev/pipeline", "pipeline"),
 			tb.PipelineRunSpec("pipeline"),
@@ -319,7 +326,8 @@ func TestPipelineDescribe_with_spec_resource_param_run(t *testing.T) {
 func TestPipelineDescribe_with_multiple_v1alpha1_pipelineruns(t *testing.T) {
 	clock := clockwork.NewFakeClock()
 	pipelines := []*v1alpha1.Pipeline{
-		tb.Pipeline("pipeline", "ns",
+		tb.Pipeline("pipeline",
+			tb.PipelineNamespace("ns"),
 			// created  5 minutes back
 			cb.PipelineCreationTimestamp(clock.Now().Add(-5*time.Minute)),
 			tb.PipelineSpec(
@@ -335,7 +343,8 @@ func TestPipelineDescribe_with_multiple_v1alpha1_pipelineruns(t *testing.T) {
 		),
 	}
 	pipelineRuns := []*v1alpha1.PipelineRun{
-		tb.PipelineRun("pipeline-run-1", "ns",
+		tb.PipelineRun("pipeline-run-1",
+			tb.PipelineRunNamespace("ns"),
 			cb.PipelineRunCreationTimestamp(clock.Now()),
 			tb.PipelineRunLabel("tekton.dev/pipeline", "pipeline"),
 			tb.PipelineRunSpec("pipeline"),
@@ -350,7 +359,8 @@ func TestPipelineDescribe_with_multiple_v1alpha1_pipelineruns(t *testing.T) {
 				cb.PipelineRunCompletionTime(clock.Now().Add(10*time.Minute)),
 			),
 		),
-		tb.PipelineRun("pipeline-run-2", "ns",
+		tb.PipelineRun("pipeline-run-2",
+			tb.PipelineRunNamespace("ns"),
 			cb.PipelineRunCreationTimestamp(clock.Now().Add(-15*time.Minute)),
 			tb.PipelineRunLabel("tekton.dev/pipeline", "pipeline"),
 			tb.PipelineRunSpec("pipeline"),
@@ -365,7 +375,8 @@ func TestPipelineDescribe_with_multiple_v1alpha1_pipelineruns(t *testing.T) {
 				cb.PipelineRunCompletionTime(clock.Now().Add(10*time.Minute)),
 			),
 		),
-		tb.PipelineRun("pipeline-run-3", "ns",
+		tb.PipelineRun("pipeline-run-3",
+			tb.PipelineRunNamespace("ns"),
 			cb.PipelineRunCreationTimestamp(clock.Now().Add(-10*time.Minute)),
 			tb.PipelineRunLabel("tekton.dev/pipeline", "pipeline"),
 			tb.PipelineRunSpec("pipeline"),
@@ -416,7 +427,8 @@ func TestPipelineDescribe_with_multiple_v1alpha1_pipelineruns(t *testing.T) {
 func TestPipelineDescribe_with_spec_multiple_resource_param_run(t *testing.T) {
 	clock := clockwork.NewFakeClock()
 	pipelines := []*v1alpha1.Pipeline{
-		tb.Pipeline("pipeline", "ns",
+		tb.Pipeline("pipeline",
+			tb.PipelineNamespace("ns"),
 			// created  5 minutes back
 			cb.PipelineCreationTimestamp(clock.Now().Add(-5*time.Minute)),
 			tb.PipelineSpec(
@@ -440,7 +452,8 @@ func TestPipelineDescribe_with_spec_multiple_resource_param_run(t *testing.T) {
 		),
 	}
 	pipelineRuns := []*v1alpha1.PipelineRun{
-		tb.PipelineRun("pipeline-run-1", "ns",
+		tb.PipelineRun("pipeline-run-1",
+			tb.PipelineRunNamespace("ns"),
 			cb.PipelineRunCreationTimestamp(clock.Now()),
 			tb.PipelineRunLabel("tekton.dev/pipeline", "pipeline"),
 			tb.PipelineRunSpec("pipeline"),
@@ -637,7 +650,8 @@ func TestPipelineDescribeV1beta1_with_spec_multiple_resource_param_run(t *testin
 func TestPipelineDescribe_custom_output(t *testing.T) {
 	clock := clockwork.NewFakeClock()
 	pipelines := []*v1alpha1.Pipeline{
-		tb.Pipeline("pipeline", "ns",
+		tb.Pipeline("pipeline",
+			tb.PipelineNamespace("ns"),
 			tb.PipelineSpec(
 				tb.PipelineDeclaredResource("name", v1alpha1.PipelineResourceTypeGit),
 			),

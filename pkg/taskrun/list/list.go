@@ -72,7 +72,7 @@ func TaskRuns(c *cli.Clients, opts metav1.ListOptions, ns string) (*v1beta1.Task
 				return nil, err
 			}
 			updatedTaskRun := v1beta1.TaskRun{}
-			err := v1alpha1TR.ConvertUp(context.Background(), &updatedTaskRun)
+			err := v1alpha1TR.ConvertTo(context.Background(), &updatedTaskRun)
 			if err != nil {
 				fmt.Fprintln(os.Stdout, err)
 			}

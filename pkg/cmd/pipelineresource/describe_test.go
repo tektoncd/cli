@@ -83,7 +83,8 @@ func TestPipelineResourceDescribe_WithParams(t *testing.T) {
 	}
 
 	pres := []*v1alpha1.PipelineResource{
-		tb.PipelineResource("test-1", "test-ns-1",
+		tb.PipelineResource("test-1",
+			tb.PipelineResourceNamespace("test-ns-1"),
 			tb.PipelineResourceSpec("image",
 				tb.PipelineResourceDescription("a test description"),
 				tb.PipelineResourceSpecParam("URL", "quay.io/tekton/controller"),
@@ -108,7 +109,8 @@ func TestPipelineResourceDescribe_WithSecretParams(t *testing.T) {
 	}
 
 	pres := []*v1alpha1.PipelineResource{
-		tb.PipelineResource("test-1", "test-ns-1",
+		tb.PipelineResource("test-1",
+			tb.PipelineResourceNamespace("test-ns-1"),
 			tb.PipelineResourceSpec("image",
 				tb.PipelineResourceDescription("a test description"),
 				tb.PipelineResourceSpecParam("URL", "quay.io/tekton/controller"),
@@ -132,7 +134,9 @@ func TestPipelineResourcesDescribe_custom_output(t *testing.T) {
 	clock := clockwork.NewFakeClock()
 
 	prs := []*v1alpha1.PipelineResource{
-		tb.PipelineResource(name, "ns"),
+		tb.PipelineResource(name,
+			tb.PipelineResourceNamespace("ns"),
+		),
 	}
 
 	cs, _ := test.SeedTestData(t, pipelinetest.Data{
@@ -140,7 +144,7 @@ func TestPipelineResourcesDescribe_custom_output(t *testing.T) {
 		Namespaces: []*corev1.Namespace{
 			{
 				ObjectMeta: metav1.ObjectMeta{
-					Name: "",
+					Name: "ns",
 				},
 			},
 		},

@@ -49,12 +49,12 @@ func TestTaskrunLatest_two_run(t *testing.T) {
 		secondRunCompleted = secondRunStarted.Add(5 * time.Minute)
 	)
 	tasks := []*v1alpha1.Task{
-		tb.Task("task", "ns",
+		tb.Task("task", tb.TaskNamespace("ns"),
 			cb.TaskCreationTime(taskCreated),
 		),
 	}
 	taskruns := []*v1alpha1.TaskRun{
-		tb.TaskRun("tr-1", "ns",
+		tb.TaskRun("tr-1", tb.TaskRunNamespace("ns"),
 			cb.TaskRunCreationTime(firstRunCreated),
 			tb.TaskRunLabel("tekton.dev/task", "task"),
 			tb.TaskRunSpec(tb.TaskRunTaskRef("task", tb.TaskRefKind(v1alpha1.NamespacedTaskKind))),
@@ -67,7 +67,7 @@ func TestTaskrunLatest_two_run(t *testing.T) {
 				cb.TaskRunCompletionTime(firstRunCompleted),
 			),
 		),
-		tb.TaskRun("tr-2", "ns",
+		tb.TaskRun("tr-2", tb.TaskRunNamespace("ns"),
 			cb.TaskRunCreationTime(secondRunCompleted),
 			tb.TaskRunLabel("tekton.dev/task", "task"),
 			tb.TaskRunSpec(tb.TaskRunTaskRef("task", tb.TaskRefKind(v1alpha1.NamespacedTaskKind))),
@@ -110,7 +110,7 @@ func TestTaskrunLatest_no_run(t *testing.T) {
 
 	clock := clockwork.NewFakeClock()
 	tasks := []*v1alpha1.Task{
-		tb.Task("task", "ns",
+		tb.Task("task", tb.TaskNamespace("ns"),
 			cb.TaskCreationTime(clock.Now().Add(5*time.Minute)),
 		),
 	}

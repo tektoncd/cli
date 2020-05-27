@@ -35,7 +35,7 @@ func TestTask_GetAllTaskNames(t *testing.T) {
 	version := "v1alpha1"
 	clock := clockwork.NewFakeClock()
 	tdata := []*v1alpha1.Task{
-		tb.Task("task", "ns",
+		tb.Task("task", tb.TaskNamespace("ns"),
 			// created  5 minutes back
 			cb.TaskCreationTime(clock.Now().Add(-5*time.Minute)),
 		),
@@ -53,11 +53,11 @@ func TestTask_GetAllTaskNames(t *testing.T) {
 	}
 
 	tdata2 := []*v1alpha1.Task{
-		tb.Task("task", "ns",
+		tb.Task("task", tb.TaskNamespace("ns"),
 			// created  5 minutes back
 			cb.TaskCreationTime(clock.Now().Add(-5*time.Minute)),
 		),
-		tb.Task("task2", "ns",
+		tb.Task("task2", tb.TaskNamespace("ns"),
 			// created  5 minutes back
 			cb.TaskCreationTime(clock.Now().Add(-5*time.Minute)),
 		),
@@ -117,7 +117,7 @@ func TestTask_List(t *testing.T) {
 	version := "v1alpha1"
 	clock := clockwork.NewFakeClock()
 	tdata := []*v1alpha1.Task{
-		tb.Task("task", "ns",
+		tb.Task("task", tb.TaskNamespace("ns"),
 			// created  5 minutes back
 			cb.TaskCreationTime(clock.Now().Add(-5*time.Minute)),
 		),
@@ -135,11 +135,11 @@ func TestTask_List(t *testing.T) {
 	}
 
 	tdata2 := []*v1alpha1.Task{
-		tb.Task("task", "ns",
+		tb.Task("task", tb.TaskNamespace("ns"),
 			// created  5 minutes back
 			cb.TaskCreationTime(clock.Now().Add(-5*time.Minute)),
 		),
-		tb.Task("task2", "ns",
+		tb.Task("task2", tb.TaskNamespace("ns"),
 			// created  5 minutes back
 			cb.TaskCreationTime(clock.Now().Add(-5*time.Minute)),
 		),
@@ -303,9 +303,9 @@ func TestTask_Get(t *testing.T) {
 	version := "v1alpha1"
 	clock := clockwork.NewFakeClock()
 	tdata := []*v1alpha1.Task{
-		tb.Task("task", "ns"), // created  5 minutes back
+		tb.Task("task", tb.TaskNamespace("ns")), // created  5 minutes back
 
-		tb.Task("task2", "ns",
+		tb.Task("task2", tb.TaskNamespace("ns"),
 			// created  5 minutes back
 			cb.TaskCreationTime(clock.Now().Add(-5*time.Minute)),
 		),

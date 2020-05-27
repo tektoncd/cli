@@ -79,7 +79,7 @@ func Get(c *cli.Clients, taskname string, opts metav1.GetOptions, ns string) (*v
 			return nil, err
 		}
 		var taskConverted v1beta1.Task
-		err = task.ConvertUp(context.Background(), &taskConverted)
+		err = task.ConvertTo(context.Background(), &taskConverted)
 		if err != nil {
 			return nil, err
 		}
@@ -119,7 +119,7 @@ func getV1alpha1(c *cli.Clients, taskname string, opts metav1.GetOptions, ns str
 }
 
 // this will convert v1beta1 TaskSpec to v1alpha1 TaskSpec
-func SpecConvertDown(spec *v1beta1.TaskSpec) *v1alpha1.TaskSpec {
+func SpecConvertFrom(spec *v1beta1.TaskSpec) *v1alpha1.TaskSpec {
 	downTaskSpec := &v1alpha1.TaskSpec{}
 	if spec != nil {
 		downTaskSpec.Steps = spec.Steps

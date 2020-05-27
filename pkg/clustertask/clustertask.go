@@ -61,7 +61,7 @@ func Get(c *cli.Clients, clustertaskname string, opts metav1.GetOptions) (*v1bet
 			return nil, err
 		}
 		var clustertaskConverted v1beta1.ClusterTask
-		err = clustertask.ConvertUp(context.Background(), &clustertaskConverted)
+		err = clustertask.ConvertTo(context.Background(), &clustertaskConverted)
 		if err != nil {
 			return nil, err
 		}

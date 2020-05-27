@@ -43,7 +43,8 @@ func TestListTaskRuns(t *testing.T) {
 	twoMinute, _ := time.ParseDuration("2m")
 
 	trs := []*v1alpha1.TaskRun{
-		tb.TaskRun("tr0-1", "foo",
+		tb.TaskRun("tr0-1",
+			tb.TaskRunNamespace("foo"),
 			tb.TaskRunLabel("tekton.dev/task", "random"),
 			tb.TaskRunSpec(tb.TaskRunTaskRef("random", tb.TaskRefKind(v1alpha1.NamespacedTaskKind))),
 			tb.TaskRunStatus(
@@ -53,7 +54,8 @@ func TestListTaskRuns(t *testing.T) {
 				}),
 			),
 		),
-		tb.TaskRun("tr1-1", "foo",
+		tb.TaskRun("tr1-1",
+			tb.TaskRunNamespace("foo"),
 			tb.TaskRunLabel("tekton.dev/task", "bar"),
 			tb.TaskRunSpec(tb.TaskRunTaskRef("bar", tb.TaskRefKind(v1alpha1.NamespacedTaskKind))),
 			tb.TaskRunStatus(
@@ -65,7 +67,8 @@ func TestListTaskRuns(t *testing.T) {
 				taskRunCompletionTime(now.Add(aMinute)),
 			),
 		),
-		tb.TaskRun("tr2-1", "foo",
+		tb.TaskRun("tr2-1",
+			tb.TaskRunNamespace("foo"),
 			tb.TaskRunLabel("tekton.dev/task", "random"),
 			tb.TaskRunSpec(tb.TaskRunTaskRef("random", tb.TaskRefKind(v1alpha1.NamespacedTaskKind))),
 			tb.TaskRunStatus(
@@ -76,7 +79,8 @@ func TestListTaskRuns(t *testing.T) {
 				tb.TaskRunStartTime(now),
 			),
 		),
-		tb.TaskRun("tr2-2", "foo",
+		tb.TaskRun("tr2-2",
+			tb.TaskRunNamespace("foo"),
 			tb.TaskRunLabel("tekton.dev/task", "random"),
 			tb.TaskRunLabel("pot", "nutella"),
 			tb.TaskRunSpec(tb.TaskRunTaskRef("random", tb.TaskRefKind(v1alpha1.NamespacedTaskKind))),
@@ -89,7 +93,8 @@ func TestListTaskRuns(t *testing.T) {
 				taskRunCompletionTime(now.Add(twoMinute)),
 			),
 		),
-		tb.TaskRun("tr3-1", "foo",
+		tb.TaskRun("tr3-1",
+			tb.TaskRunNamespace("foo"),
 			tb.TaskRunLabel("tekton.dev/task", "random"),
 			tb.TaskRunLabel("pot", "honey"),
 			tb.TaskRunSpec(tb.TaskRunTaskRef("random", tb.TaskRefKind(v1alpha1.NamespacedTaskKind))),
@@ -100,7 +105,8 @@ func TestListTaskRuns(t *testing.T) {
 				}),
 			),
 		),
-		tb.TaskRun("tr4-1", "foo",
+		tb.TaskRun("tr4-1",
+			tb.TaskRunNamespace("foo"),
 			tb.TaskRunLabel("tekton.dev/task", "bar"),
 			tb.TaskRunLabel("pot", "honey"),
 			tb.TaskRunSpec(tb.TaskRunTaskRef("bar", tb.TaskRefKind(v1alpha1.ClusterTaskKind))),
@@ -114,7 +120,8 @@ func TestListTaskRuns(t *testing.T) {
 	}
 
 	trsMultipleNs := []*v1alpha1.TaskRun{
-		tb.TaskRun("tr4-1", "tout",
+		tb.TaskRun("tr4-1",
+			tb.TaskRunNamespace("tout"),
 			tb.TaskRunLabel("tekton.dev/task", "random"),
 			tb.TaskRunSpec(tb.TaskRunTaskRef("random", tb.TaskRefKind(v1alpha1.NamespacedTaskKind))),
 			tb.TaskRunStatus(
@@ -124,7 +131,8 @@ func TestListTaskRuns(t *testing.T) {
 				}),
 			),
 		),
-		tb.TaskRun("tr4-2", "lacher",
+		tb.TaskRun("tr4-2",
+			tb.TaskRunNamespace("lacher"),
 			tb.TaskRunLabel("tekton.dev/task", "random"),
 			tb.TaskRunSpec(tb.TaskRunTaskRef("random", tb.TaskRefKind(v1alpha1.NamespacedTaskKind))),
 			tb.TaskRunStatus(
@@ -134,7 +142,8 @@ func TestListTaskRuns(t *testing.T) {
 				}),
 			),
 		),
-		tb.TaskRun("tr5-1", "lacher",
+		tb.TaskRun("tr5-1",
+			tb.TaskRunNamespace("lacher"),
 			tb.TaskRunLabel("tekton.dev/task", "random"),
 			tb.TaskRunSpec(tb.TaskRunTaskRef("random", tb.TaskRefKind(v1alpha1.ClusterTaskKind))),
 			tb.TaskRunStatus(
@@ -317,7 +326,7 @@ func TestListTaskRuns_v1beta1(t *testing.T) {
 	twoMinute, _ := time.ParseDuration("2m")
 
 	trs := []*v1alpha1.TaskRun{
-		tb.TaskRun("tr0-1", "foo",
+		tb.TaskRun("tr0-1", tb.TaskRunNamespace("foo"),
 			tb.TaskRunLabel("tekton.dev/task", "random"),
 			tb.TaskRunSpec(tb.TaskRunTaskRef("random", tb.TaskRefKind(v1alpha1.NamespacedTaskKind))),
 			tb.TaskRunStatus(
@@ -327,7 +336,7 @@ func TestListTaskRuns_v1beta1(t *testing.T) {
 				}),
 			),
 		),
-		tb.TaskRun("tr1-1", "foo",
+		tb.TaskRun("tr1-1", tb.TaskRunNamespace("foo"),
 			tb.TaskRunLabel("tekton.dev/task", "bar"),
 			tb.TaskRunSpec(tb.TaskRunTaskRef("bar", tb.TaskRefKind(v1alpha1.NamespacedTaskKind))),
 			tb.TaskRunStatus(
@@ -339,7 +348,7 @@ func TestListTaskRuns_v1beta1(t *testing.T) {
 				taskRunCompletionTime(now.Add(aMinute)),
 			),
 		),
-		tb.TaskRun("tr2-1", "foo",
+		tb.TaskRun("tr2-1", tb.TaskRunNamespace("foo"),
 			tb.TaskRunLabel("tekton.dev/task", "random"),
 			tb.TaskRunSpec(tb.TaskRunTaskRef("random", tb.TaskRefKind(v1alpha1.NamespacedTaskKind))),
 			tb.TaskRunStatus(
@@ -350,7 +359,7 @@ func TestListTaskRuns_v1beta1(t *testing.T) {
 				tb.TaskRunStartTime(now),
 			),
 		),
-		tb.TaskRun("tr2-2", "foo",
+		tb.TaskRun("tr2-2", tb.TaskRunNamespace("foo"),
 			tb.TaskRunLabel("tekton.dev/task", "random"),
 			tb.TaskRunLabel("pot", "nutella"),
 			tb.TaskRunSpec(tb.TaskRunTaskRef("random", tb.TaskRefKind(v1alpha1.NamespacedTaskKind))),
@@ -363,7 +372,7 @@ func TestListTaskRuns_v1beta1(t *testing.T) {
 				taskRunCompletionTime(now.Add(twoMinute)),
 			),
 		),
-		tb.TaskRun("tr3-1", "foo",
+		tb.TaskRun("tr3-1", tb.TaskRunNamespace("foo"),
 			tb.TaskRunLabel("tekton.dev/task", "random"),
 			tb.TaskRunLabel("pot", "honey"),
 			tb.TaskRunSpec(tb.TaskRunTaskRef("random", tb.TaskRefKind(v1alpha1.NamespacedTaskKind))),
@@ -374,7 +383,7 @@ func TestListTaskRuns_v1beta1(t *testing.T) {
 				}),
 			),
 		),
-		tb.TaskRun("tr4-1", "foo",
+		tb.TaskRun("tr4-1", tb.TaskRunNamespace("foo"),
 			tb.TaskRunLabel("tekton.dev/task", "bar"),
 			tb.TaskRunLabel("pot", "honey"),
 			tb.TaskRunSpec(tb.TaskRunTaskRef("bar", tb.TaskRefKind(v1alpha1.ClusterTaskKind))),
@@ -388,7 +397,7 @@ func TestListTaskRuns_v1beta1(t *testing.T) {
 	}
 
 	trsMultipleNs := []*v1alpha1.TaskRun{
-		tb.TaskRun("tr4-1", "tout",
+		tb.TaskRun("tr4-1", tb.TaskRunNamespace("tout"),
 			tb.TaskRunLabel("tekton.dev/task", "random"),
 			tb.TaskRunSpec(tb.TaskRunTaskRef("random", tb.TaskRefKind(v1alpha1.NamespacedTaskKind))),
 			tb.TaskRunStatus(
@@ -398,7 +407,7 @@ func TestListTaskRuns_v1beta1(t *testing.T) {
 				}),
 			),
 		),
-		tb.TaskRun("tr4-2", "lacher",
+		tb.TaskRun("tr4-2", tb.TaskRunNamespace("lacher"),
 			tb.TaskRunLabel("tekton.dev/task", "random"),
 			tb.TaskRunSpec(tb.TaskRunTaskRef("random", tb.TaskRefKind(v1alpha1.NamespacedTaskKind))),
 			tb.TaskRunStatus(
@@ -408,7 +417,7 @@ func TestListTaskRuns_v1beta1(t *testing.T) {
 				}),
 			),
 		),
-		tb.TaskRun("tr5-1", "lacher",
+		tb.TaskRun("tr5-1", tb.TaskRunNamespace("lacher"),
 			tb.TaskRunLabel("tekton.dev/task", "random"),
 			tb.TaskRunSpec(tb.TaskRunTaskRef("random", tb.TaskRefKind(v1alpha1.ClusterTaskKind))),
 			tb.TaskRunStatus(
@@ -578,7 +587,7 @@ func TestListTaskRuns_no_condition(t *testing.T) {
 	aMinute, _ := time.ParseDuration("1m")
 
 	trs := []*v1alpha1.TaskRun{
-		tb.TaskRun("tr1-1", "foo",
+		tb.TaskRun("tr1-1", tb.TaskRunNamespace("foo"),
 			tb.TaskRunLabel("tekton.dev/task", "bar"),
 			tb.TaskRunSpec(tb.TaskRunTaskRef("bar", tb.TaskRefKind(v1alpha1.NamespacedTaskKind))),
 			tb.TaskRunStatus(

@@ -336,7 +336,7 @@ func convertedTrVersion(c *cli.Clients, tr *v1beta1.TaskRun) (interface{}, error
 	}
 
 	if version == "tekton.dev/v1alpha1" {
-		trConverted := tractions.ConvertDown(tr)
+		trConverted := tractions.ConvertFrom(tr)
 		trConverted.APIVersion = version
 		trConverted.Kind = "TaskRun"
 		if err != nil {

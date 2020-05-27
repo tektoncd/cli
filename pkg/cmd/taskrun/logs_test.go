@@ -48,7 +48,7 @@ const (
 
 func TestLog_invalid_namespace(t *testing.T) {
 	tr := []*v1alpha1.TaskRun{
-		tb.TaskRun("output-taskrun-1", "ns"),
+		tb.TaskRun("output-taskrun-1", tb.TaskRunNamespace("ns")),
 	}
 
 	nsList := []*corev1.Namespace{
@@ -87,10 +87,11 @@ func TestLog_no_taskrun_arg(t *testing.T) {
 		t.Errorf("unable to create dynamic client: %v", err)
 	}
 	task2 := []*v1alpha1.Task{
-		tb.Task("task", "ns", cb.TaskCreationTime(clockwork.NewFakeClock().Now())),
+		tb.Task("task", tb.TaskNamespace("ns"), cb.TaskCreationTime(clockwork.NewFakeClock().Now())),
 	}
 	taskrun2 := []*v1alpha1.TaskRun{
-		tb.TaskRun("taskrun1", "ns",
+		tb.TaskRun("taskrun1",
+			tb.TaskRunNamespace("ns"),
 			tb.TaskRunLabel("tekton.dev/task", "task"),
 			tb.TaskRunSpec(tb.TaskRunTaskRef("task")),
 			tb.TaskRunStatus(
@@ -118,7 +119,7 @@ func TestLog_no_taskrun_arg(t *testing.T) {
 			},
 		},
 		Pods: []*corev1.Pod{
-			tb.Pod("pod", "ns",
+			tb.Pod("pod", tb.PodNamespace("ns"),
 				tb.PodSpec(
 					tb.PodContainer("step1", "step1:latest"),
 				),
@@ -176,7 +177,7 @@ func TestLog_no_taskrun_arg(t *testing.T) {
 
 func TestLog_missing_taskrun(t *testing.T) {
 	tr := []*v1alpha1.TaskRun{
-		tb.TaskRun("output-taskrun-1", "ns"),
+		tb.TaskRun("output-taskrun-1", tb.TaskRunNamespace("ns")),
 	}
 
 	nsList := []*corev1.Namespace{
@@ -259,7 +260,7 @@ func TestLog_taskrun_logs(t *testing.T) {
 	)
 
 	trs := []*v1alpha1.TaskRun{
-		tb.TaskRun(trName, ns,
+		tb.TaskRun(trName, tb.TaskRunNamespace(ns),
 			tb.TaskRunStatus(
 				tb.PodName(trPod),
 				tb.TaskRunStartTime(trStartTime),
@@ -291,7 +292,7 @@ func TestLog_taskrun_logs(t *testing.T) {
 	}
 
 	ps := []*corev1.Pod{
-		tb.Pod(trPod, ns,
+		tb.Pod(trPod, tb.PodNamespace(ns),
 			tb.PodSpec(
 				tb.PodContainer(trStep1Name, trStep1Name+":latest"),
 				tb.PodContainer(nopStep, "override-with-nop:latest"),
@@ -342,7 +343,7 @@ func TestLog_taskrun_logs_v1beta1(t *testing.T) {
 	)
 
 	trs := []*v1alpha1.TaskRun{
-		tb.TaskRun(trName, ns,
+		tb.TaskRun(trName, tb.TaskRunNamespace(ns),
 			tb.TaskRunStatus(
 				tb.PodName(trPod),
 				tb.TaskRunStartTime(trStartTime),
@@ -374,7 +375,7 @@ func TestLog_taskrun_logs_v1beta1(t *testing.T) {
 	}
 
 	ps := []*corev1.Pod{
-		tb.Pod(trPod, ns,
+		tb.Pod(trPod, tb.PodNamespace(ns),
 			tb.PodSpec(
 				tb.PodContainer(trStep1Name, trStep1Name+":latest"),
 				tb.PodContainer(nopStep, "override-with-nop:latest"),
@@ -424,7 +425,7 @@ func TestLog_taskrun_logs_no_pod_name(t *testing.T) {
 	)
 
 	trs := []*v1alpha1.TaskRun{
-		tb.TaskRun(trName, ns,
+		tb.TaskRun(trName, tb.TaskRunNamespace(ns),
 			tb.TaskRunStatus(
 				tb.TaskRunStartTime(trStartTime),
 				tb.StatusCondition(apis.Condition{
@@ -489,7 +490,7 @@ func TestLog_taskrun_logs_no_pod_name_v1beta1(t *testing.T) {
 	)
 
 	trs := []*v1alpha1.TaskRun{
-		tb.TaskRun(trName, ns,
+		tb.TaskRun(trName, tb.TaskRunNamespace(ns),
 			tb.TaskRunStatus(
 				tb.TaskRunStartTime(trStartTime),
 				tb.StatusCondition(apis.Condition{
@@ -559,7 +560,7 @@ func TestLog_taskrun_all_steps(t *testing.T) {
 	)
 
 	trs := []*v1alpha1.TaskRun{
-		tb.TaskRun(trName, ns,
+		tb.TaskRun(trName, tb.TaskRunNamespace(ns),
 			tb.TaskRunStatus(
 				tb.PodName(trPod),
 				tb.TaskRunStartTime(trStartTime),
@@ -591,7 +592,7 @@ func TestLog_taskrun_all_steps(t *testing.T) {
 	}
 
 	p := []*corev1.Pod{
-		tb.Pod(trPod, ns,
+		tb.Pod(trPod, tb.PodNamespace(ns),
 			tb.PodSpec(
 				tb.PodInitContainer(trInitStep1, "override-with-creds:latest"),
 				tb.PodInitContainer(trInitStep2, "override-with-tools:latest"),
@@ -654,7 +655,7 @@ func TestLog_taskrun_all_steps_v1beta1(t *testing.T) {
 	)
 
 	trs := []*v1alpha1.TaskRun{
-		tb.TaskRun(trName, ns,
+		tb.TaskRun(trName, tb.TaskRunNamespace(ns),
 			tb.TaskRunStatus(
 				tb.PodName(trPod),
 				tb.TaskRunStartTime(trStartTime),
@@ -686,7 +687,7 @@ func TestLog_taskrun_all_steps_v1beta1(t *testing.T) {
 	}
 
 	p := []*corev1.Pod{
-		tb.Pod(trPod, ns,
+		tb.Pod(trPod, tb.PodNamespace(ns),
 			tb.PodSpec(
 				tb.PodInitContainer(trInitStep1, "override-with-creds:latest"),
 				tb.PodInitContainer(trInitStep2, "override-with-tools:latest"),
@@ -748,7 +749,7 @@ func TestLog_taskrun_given_steps(t *testing.T) {
 	)
 
 	trs := []*v1alpha1.TaskRun{
-		tb.TaskRun(trName, ns,
+		tb.TaskRun(trName, tb.TaskRunNamespace(ns),
 			tb.TaskRunStatus(
 				tb.PodName(trPod),
 				tb.TaskRunStartTime(trStartTime),
@@ -780,7 +781,7 @@ func TestLog_taskrun_given_steps(t *testing.T) {
 	}
 
 	p := []*corev1.Pod{
-		tb.Pod(trPod, ns,
+		tb.Pod(trPod, tb.PodNamespace(ns),
 			tb.PodSpec(
 				tb.PodInitContainer(trInitStep1, "override-with-creds:latest"),
 				tb.PodInitContainer(trInitStep2, "override-with-tools:latest"),
@@ -839,7 +840,7 @@ func TestLog_taskrun_given_steps_v1beta1(t *testing.T) {
 	)
 
 	trs := []*v1alpha1.TaskRun{
-		tb.TaskRun(trName, ns,
+		tb.TaskRun(trName, tb.TaskRunNamespace(ns),
 			tb.TaskRunStatus(
 				tb.PodName(trPod),
 				tb.TaskRunStartTime(trStartTime),
@@ -871,7 +872,7 @@ func TestLog_taskrun_given_steps_v1beta1(t *testing.T) {
 	}
 
 	p := []*corev1.Pod{
-		tb.Pod(trPod, ns,
+		tb.Pod(trPod, tb.PodNamespace(ns),
 			tb.PodSpec(
 				tb.PodInitContainer(trInitStep1, "override-with-creds:latest"),
 				tb.PodInitContainer(trInitStep2, "override-with-tools:latest"),
@@ -930,7 +931,7 @@ func TestLog_taskrun_follow_mode(t *testing.T) {
 	)
 
 	trs := []*v1alpha1.TaskRun{
-		tb.TaskRun(trName, ns,
+		tb.TaskRun(trName, tb.TaskRunNamespace(ns),
 			tb.TaskRunStatus(
 				tb.PodName(trPod),
 				tb.TaskRunStartTime(trStartTime),
@@ -962,7 +963,7 @@ func TestLog_taskrun_follow_mode(t *testing.T) {
 	}
 
 	p := []*corev1.Pod{
-		tb.Pod(trPod, ns,
+		tb.Pod(trPod, tb.PodNamespace(ns),
 			tb.PodSpec(
 				tb.PodInitContainer(trInitStep1, "override-with-creds:latest"),
 				tb.PodInitContainer(trInitStep2, "override-with-tools:latest"),
@@ -1023,7 +1024,7 @@ func TestLog_taskrun_follow_mode_v1beta1(t *testing.T) {
 	)
 
 	trs := []*v1alpha1.TaskRun{
-		tb.TaskRun(trName, ns,
+		tb.TaskRun(trName, tb.TaskRunNamespace(ns),
 			tb.TaskRunStatus(
 				tb.PodName(trPod),
 				tb.TaskRunStartTime(trStartTime),
@@ -1055,7 +1056,7 @@ func TestLog_taskrun_follow_mode_v1beta1(t *testing.T) {
 	}
 
 	p := []*corev1.Pod{
-		tb.Pod(trPod, ns,
+		tb.Pod(trPod, tb.PodNamespace(ns),
 			tb.PodSpec(
 				tb.PodInitContainer(trInitStep1, "override-with-creds:latest"),
 				tb.PodInitContainer(trInitStep2, "override-with-tools:latest"),
@@ -1116,7 +1117,7 @@ func TestLog_taskrun_last(t *testing.T) {
 	)
 
 	taskruns := []*v1alpha1.TaskRun{
-		tb.TaskRun(trName1, ns,
+		tb.TaskRun(trName1, tb.TaskRunNamespace(ns),
 			tb.TaskRunStatus(
 				tb.PodName(trPod),
 				tb.TaskRunStartTime(tr1StartTime),
@@ -1137,7 +1138,7 @@ func TestLog_taskrun_last(t *testing.T) {
 				tb.TaskRunTaskRef(taskName),
 			),
 		),
-		tb.TaskRun(trName2, ns,
+		tb.TaskRun(trName2, tb.TaskRunNamespace(ns),
 			tb.TaskRunStatus(
 				tb.PodName(trPod),
 				tb.TaskRunStartTime(tr2StartTime),
@@ -1211,7 +1212,7 @@ func TestLog_taskrun_last_v1beta1(t *testing.T) {
 	)
 
 	taskruns := []*v1alpha1.TaskRun{
-		tb.TaskRun(trName1, ns,
+		tb.TaskRun(trName1, tb.TaskRunNamespace(ns),
 			tb.TaskRunStatus(
 				tb.PodName(trPod),
 				tb.TaskRunStartTime(tr1StartTime),
@@ -1232,7 +1233,7 @@ func TestLog_taskrun_last_v1beta1(t *testing.T) {
 				tb.TaskRunTaskRef(taskName),
 			),
 		),
-		tb.TaskRun(trName2, ns,
+		tb.TaskRun(trName2, tb.TaskRunNamespace(ns),
 			tb.TaskRunStatus(
 				tb.PodName(trPod),
 				tb.TaskRunStartTime(tr2StartTime),
@@ -1307,7 +1308,7 @@ func TestLog_taskrun_follow_mode_no_pod_name(t *testing.T) {
 	)
 
 	trs := []*v1alpha1.TaskRun{
-		tb.TaskRun(trName, ns,
+		tb.TaskRun(trName, tb.TaskRunNamespace(ns),
 			tb.TaskRunStatus(
 				tb.TaskRunStartTime(trStartTime),
 				tb.StatusCondition(apis.Condition{
@@ -1338,7 +1339,7 @@ func TestLog_taskrun_follow_mode_no_pod_name(t *testing.T) {
 	}
 
 	p := []*corev1.Pod{
-		tb.Pod(trPod, ns,
+		tb.Pod(trPod, tb.PodNamespace(ns),
 			tb.PodSpec(
 				tb.PodInitContainer(trInitStep1, "override-with-creds:latest"),
 				tb.PodInitContainer(trInitStep2, "override-with-tools:latest"),
@@ -1398,7 +1399,7 @@ func TestLog_taskrun_follow_mode_no_pod_name_v1beta1(t *testing.T) {
 	)
 
 	trs := []*v1alpha1.TaskRun{
-		tb.TaskRun(trName, ns,
+		tb.TaskRun(trName, tb.TaskRunNamespace(ns),
 			tb.TaskRunStatus(
 				tb.TaskRunStartTime(trStartTime),
 				tb.StatusCondition(apis.Condition{
@@ -1429,7 +1430,7 @@ func TestLog_taskrun_follow_mode_no_pod_name_v1beta1(t *testing.T) {
 	}
 
 	p := []*corev1.Pod{
-		tb.Pod(trPod, ns,
+		tb.Pod(trPod, tb.PodNamespace(ns),
 			tb.PodSpec(
 				tb.PodInitContainer(trInitStep1, "override-with-creds:latest"),
 				tb.PodInitContainer(trInitStep2, "override-with-tools:latest"),
@@ -1489,7 +1490,7 @@ func TestLog_taskrun_follow_mode_update_pod_name(t *testing.T) {
 	)
 
 	trs := []*v1alpha1.TaskRun{
-		tb.TaskRun(trName, ns,
+		tb.TaskRun(trName, tb.TaskRunNamespace(ns),
 			tb.TaskRunStatus(
 				tb.TaskRunStartTime(trStartTime),
 				tb.StatusCondition(apis.Condition{
@@ -1520,7 +1521,7 @@ func TestLog_taskrun_follow_mode_update_pod_name(t *testing.T) {
 	}
 
 	p := []*corev1.Pod{
-		tb.Pod(trPod, ns,
+		tb.Pod(trPod, tb.PodNamespace(ns),
 			tb.PodSpec(
 				tb.PodInitContainer(trInitStep1, "override-with-creds:latest"),
 				tb.PodInitContainer(trInitStep2, "override-with-tools:latest"),
@@ -1591,7 +1592,7 @@ func TestLog_taskrun_follow_mode_update_pod_name_v1beta1(t *testing.T) {
 	)
 
 	trs := []*v1alpha1.TaskRun{
-		tb.TaskRun(trName, ns,
+		tb.TaskRun(trName, tb.TaskRunNamespace(ns),
 			tb.TaskRunStatus(
 				tb.TaskRunStartTime(trStartTime),
 				tb.StatusCondition(apis.Condition{
@@ -1622,7 +1623,7 @@ func TestLog_taskrun_follow_mode_update_pod_name_v1beta1(t *testing.T) {
 	}
 
 	p := []*corev1.Pod{
-		tb.Pod(trPod, ns,
+		tb.Pod(trPod, tb.PodNamespace(ns),
 			tb.PodSpec(
 				tb.PodInitContainer(trInitStep1, "override-with-creds:latest"),
 				tb.PodInitContainer(trInitStep2, "override-with-tools:latest"),
@@ -1693,7 +1694,7 @@ func TestLog_taskrun_follow_mode_update_timeout(t *testing.T) {
 	)
 
 	trs := []*v1alpha1.TaskRun{
-		tb.TaskRun(trName, ns,
+		tb.TaskRun(trName, tb.TaskRunNamespace(ns),
 			tb.TaskRunStatus(
 				tb.TaskRunStartTime(trStartTime),
 				tb.StatusCondition(apis.Condition{
@@ -1724,7 +1725,7 @@ func TestLog_taskrun_follow_mode_update_timeout(t *testing.T) {
 	}
 
 	p := []*corev1.Pod{
-		tb.Pod(trPod, ns,
+		tb.Pod(trPod, tb.PodNamespace(ns),
 			tb.PodSpec(
 				tb.PodInitContainer(trInitStep1, "override-with-creds:latest"),
 				tb.PodInitContainer(trInitStep2, "override-with-tools:latest"),
@@ -1793,7 +1794,7 @@ func TestLog_taskrun_follow_mode_update_timeout_v1beta1(t *testing.T) {
 	)
 
 	trs := []*v1alpha1.TaskRun{
-		tb.TaskRun(trName, ns,
+		tb.TaskRun(trName, tb.TaskRunNamespace(ns),
 			tb.TaskRunStatus(
 				tb.TaskRunStartTime(trStartTime),
 				tb.StatusCondition(apis.Condition{
@@ -1824,7 +1825,7 @@ func TestLog_taskrun_follow_mode_update_timeout_v1beta1(t *testing.T) {
 	}
 
 	p := []*corev1.Pod{
-		tb.Pod(trPod, ns,
+		tb.Pod(trPod, tb.PodNamespace(ns),
 			tb.PodSpec(
 				tb.PodInitContainer(trInitStep1, "override-with-creds:latest"),
 				tb.PodInitContainer(trInitStep2, "override-with-tools:latest"),
@@ -1893,7 +1894,7 @@ func TestLog_taskrun_follow_mode_no_output_provided(t *testing.T) {
 	)
 
 	trs := []*v1alpha1.TaskRun{
-		tb.TaskRun(trName, ns,
+		tb.TaskRun(trName, tb.TaskRunNamespace(ns),
 			tb.TaskRunStatus(
 				tb.TaskRunStartTime(trStartTime),
 				tb.StatusCondition(apis.Condition{
@@ -1925,7 +1926,7 @@ func TestLog_taskrun_follow_mode_no_output_provided(t *testing.T) {
 	}
 
 	p := []*corev1.Pod{
-		tb.Pod(trPod, ns,
+		tb.Pod(trPod, tb.PodNamespace(ns),
 			tb.PodSpec(
 				tb.PodInitContainer(trInitStep1, "override-with-creds:latest"),
 				tb.PodInitContainer(trInitStep2, "override-with-tools:latest"),
@@ -1981,7 +1982,7 @@ func TestLog_taskrun_follow_mode_no_output_provided_v1beta1(t *testing.T) {
 	)
 
 	trs := []*v1alpha1.TaskRun{
-		tb.TaskRun(trName, ns,
+		tb.TaskRun(trName, tb.TaskRunNamespace(ns),
 			tb.TaskRunStatus(
 				tb.TaskRunStartTime(trStartTime),
 				tb.StatusCondition(apis.Condition{
@@ -2013,7 +2014,7 @@ func TestLog_taskrun_follow_mode_no_output_provided_v1beta1(t *testing.T) {
 	}
 
 	p := []*corev1.Pod{
-		tb.Pod(trPod, ns,
+		tb.Pod(trPod, tb.PodNamespace(ns),
 			tb.PodSpec(
 				tb.PodInitContainer(trInitStep1, "override-with-creds:latest"),
 				tb.PodInitContainer(trInitStep2, "override-with-tools:latest"),

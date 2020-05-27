@@ -46,11 +46,13 @@ func TestListPipelineRuns(t *testing.T) {
 	pr3Started := clock.Now().Add(-1 * time.Hour)
 
 	prs := []*v1alpha1.PipelineRun{
-		tb.PipelineRun("pr0-1", "namespace",
+		tb.PipelineRun("pr0-1",
+			tb.PipelineRunNamespace("namespace"),
 			tb.PipelineRunLabel("tekton.dev/pipeline", "random"),
 			tb.PipelineRunStatus(),
 		),
-		tb.PipelineRun("pr1-1", "namespace",
+		tb.PipelineRun("pr1-1",
+			tb.PipelineRunNamespace("namespace"),
 			tb.PipelineRunLabel("tekton.dev/pipeline", "pipeline"),
 			tb.PipelineRunStatus(
 				tb.PipelineRunStatusCondition(apis.Condition{
@@ -61,7 +63,8 @@ func TestListPipelineRuns(t *testing.T) {
 				cb.PipelineRunCompletionTime(pr1Started.Add(runDuration)),
 			),
 		),
-		tb.PipelineRun("pr2-1", "namespace",
+		tb.PipelineRun("pr2-1",
+			tb.PipelineRunNamespace("namespace"),
 			tb.PipelineRunLabel("tekton.dev/pipeline", "random"),
 			tb.PipelineRunStatus(
 				tb.PipelineRunStatusCondition(apis.Condition{
@@ -71,7 +74,8 @@ func TestListPipelineRuns(t *testing.T) {
 				tb.PipelineRunStartTime(pr2Started),
 			),
 		),
-		tb.PipelineRun("pr2-2", "namespace",
+		tb.PipelineRun("pr2-2",
+			tb.PipelineRunNamespace("namespace"),
 			tb.PipelineRunLabel("tekton.dev/pipeline", "random"),
 			tb.PipelineRunLabel("viva", "galapagos"),
 			tb.PipelineRunStatus(
@@ -83,7 +87,8 @@ func TestListPipelineRuns(t *testing.T) {
 				cb.PipelineRunCompletionTime(pr3Started.Add(runDuration)),
 			),
 		),
-		tb.PipelineRun("pr3-1", "namespace",
+		tb.PipelineRun("pr3-1",
+			tb.PipelineRunNamespace("namespace"),
 			tb.PipelineRunLabel("tekton.dev/pipeline", "random"),
 			tb.PipelineRunLabel("viva", "wakanda"),
 			tb.PipelineRunStatus(),
@@ -91,11 +96,13 @@ func TestListPipelineRuns(t *testing.T) {
 	}
 
 	prsMultipleNs := []*v1alpha1.PipelineRun{
-		tb.PipelineRun("pr4-1", "namespace-tout",
+		tb.PipelineRun("pr4-1",
+			tb.PipelineRunNamespace("namespace-tout"),
 			tb.PipelineRunLabel("tekton.dev/pipeline", "random"),
 			tb.PipelineRunStatus(),
 		),
-		tb.PipelineRun("pr4-2", "namespace-lacher",
+		tb.PipelineRun("pr4-2",
+			tb.PipelineRunNamespace("namespace-lacher"),
 			tb.PipelineRunLabel("tekton.dev/pipeline", "random"),
 			tb.PipelineRunStatus(),
 		),
@@ -250,11 +257,13 @@ func TestListPipelineRuns_v1beta1(t *testing.T) {
 	pr3Started := clock.Now().Add(-1 * time.Hour)
 
 	prs := []*v1alpha1.PipelineRun{
-		tb.PipelineRun("pr0-1", "namespace",
+		tb.PipelineRun("pr0-1",
+			tb.PipelineRunNamespace("namespace"),
 			tb.PipelineRunLabel("tekton.dev/pipeline", "random"),
 			tb.PipelineRunStatus(),
 		),
-		tb.PipelineRun("pr1-1", "namespace",
+		tb.PipelineRun("pr1-1",
+			tb.PipelineRunNamespace("namespace"),
 			tb.PipelineRunLabel("tekton.dev/pipeline", "pipeline"),
 			tb.PipelineRunStatus(
 				tb.PipelineRunStatusCondition(apis.Condition{
@@ -265,7 +274,8 @@ func TestListPipelineRuns_v1beta1(t *testing.T) {
 				cb.PipelineRunCompletionTime(pr1Started.Add(runDuration)),
 			),
 		),
-		tb.PipelineRun("pr2-1", "namespace",
+		tb.PipelineRun("pr2-1",
+			tb.PipelineRunNamespace("namespace"),
 			tb.PipelineRunLabel("tekton.dev/pipeline", "random"),
 			tb.PipelineRunStatus(
 				tb.PipelineRunStatusCondition(apis.Condition{
@@ -275,7 +285,8 @@ func TestListPipelineRuns_v1beta1(t *testing.T) {
 				tb.PipelineRunStartTime(pr2Started),
 			),
 		),
-		tb.PipelineRun("pr2-2", "namespace",
+		tb.PipelineRun("pr2-2",
+			tb.PipelineRunNamespace("namespace"),
 			tb.PipelineRunLabel("tekton.dev/pipeline", "random"),
 			tb.PipelineRunLabel("viva", "galapagos"),
 			tb.PipelineRunStatus(
@@ -287,7 +298,8 @@ func TestListPipelineRuns_v1beta1(t *testing.T) {
 				cb.PipelineRunCompletionTime(pr3Started.Add(runDuration)),
 			),
 		),
-		tb.PipelineRun("pr3-1", "namespace",
+		tb.PipelineRun("pr3-1",
+			tb.PipelineRunNamespace("namespace"),
 			tb.PipelineRunLabel("tekton.dev/pipeline", "random"),
 			tb.PipelineRunLabel("viva", "wakanda"),
 			tb.PipelineRunStatus(),
@@ -295,11 +307,13 @@ func TestListPipelineRuns_v1beta1(t *testing.T) {
 	}
 
 	prsMultipleNs := []*v1alpha1.PipelineRun{
-		tb.PipelineRun("pr4-1", "namespace-tout",
+		tb.PipelineRun("pr4-1",
+			tb.PipelineRunNamespace("namespace-tout"),
 			tb.PipelineRunLabel("tekton.dev/pipeline", "random"),
 			tb.PipelineRunStatus(),
 		),
-		tb.PipelineRun("pr4-2", "namespace-lacher",
+		tb.PipelineRun("pr4-2",
+			tb.PipelineRunNamespace("namespace-lacher"),
 			tb.PipelineRunLabel("tekton.dev/pipeline", "random"),
 			tb.PipelineRunStatus(),
 		),
