@@ -35,7 +35,8 @@ import (
 
 func TestTaskRunCancel(t *testing.T) {
 	trs := []*v1alpha1.TaskRun{
-		tb.TaskRun("taskrun-1", "ns",
+		tb.TaskRun("taskrun-1",
+			tb.TaskRunNamespace("ns"),
 			tb.TaskRunLabel("tekton.dev/task", "task"),
 			tb.TaskRunSpec(tb.TaskRunTaskRef("task")),
 			tb.TaskRunStatus(
@@ -45,7 +46,8 @@ func TestTaskRunCancel(t *testing.T) {
 				}),
 			),
 		),
-		tb.TaskRun("taskrun-2", "ns",
+		tb.TaskRun("taskrun-2",
+			tb.TaskRunNamespace("ns"),
 			tb.TaskRunLabel("tekton.dev/task", "failure-task"),
 			tb.TaskRunSpec(tb.TaskRunTaskRef("failure-task")),
 			tb.TaskRunStatus(
@@ -58,7 +60,8 @@ func TestTaskRunCancel(t *testing.T) {
 	}
 
 	trs2 := []*v1alpha1.TaskRun{
-		tb.TaskRun("failure-taskrun-1", "ns",
+		tb.TaskRun("failure-taskrun-1",
+			tb.TaskRunNamespace("ns"),
 			tb.TaskRunLabel("tekton.dev/task", "failure-task"),
 			tb.TaskRunSpec(tb.TaskRunTaskRef("failure-task")),
 			tb.TaskRunStatus(
@@ -71,7 +74,8 @@ func TestTaskRunCancel(t *testing.T) {
 	}
 
 	trs3 := []*v1alpha1.TaskRun{
-		tb.TaskRun("cancel-taskrun-1", "ns",
+		tb.TaskRun("cancel-taskrun-1",
+			tb.TaskRunNamespace("ns"),
 			tb.TaskRunLabel("tekton.dev/task", "cancel-task"),
 			tb.TaskRunSpec(tb.TaskRunTaskRef("cancel-task")),
 			tb.TaskRunStatus(
@@ -221,7 +225,8 @@ func TestTaskRunCancel(t *testing.T) {
 
 func TestTaskRunCancel_v1beta1(t *testing.T) {
 	trs := []*v1alpha1.TaskRun{
-		tb.TaskRun("taskrun-1", "ns",
+		tb.TaskRun("taskrun-1",
+			tb.TaskRunNamespace("ns"),
 			tb.TaskRunLabel("tekton.dev/task", "task"),
 			tb.TaskRunSpec(tb.TaskRunTaskRef("task")),
 			tb.TaskRunStatus(
@@ -231,7 +236,8 @@ func TestTaskRunCancel_v1beta1(t *testing.T) {
 				}),
 			),
 		),
-		tb.TaskRun("taskrun-2", "ns",
+		tb.TaskRun("taskrun-2",
+			tb.TaskRunNamespace("ns"),
 			tb.TaskRunLabel("tekton.dev/task", "failure-task"),
 			tb.TaskRunSpec(tb.TaskRunTaskRef("failure-task")),
 			tb.TaskRunStatus(
@@ -244,7 +250,8 @@ func TestTaskRunCancel_v1beta1(t *testing.T) {
 	}
 
 	trs2 := []*v1alpha1.TaskRun{
-		tb.TaskRun("failure-taskrun-1", "ns",
+		tb.TaskRun("failure-taskrun-1",
+			tb.TaskRunNamespace("ns"),
 			tb.TaskRunLabel("tekton.dev/task", "failure-task"),
 			tb.TaskRunSpec(tb.TaskRunTaskRef("failure-task")),
 			tb.TaskRunStatus(
@@ -257,7 +264,8 @@ func TestTaskRunCancel_v1beta1(t *testing.T) {
 	}
 
 	trs3 := []*v1alpha1.TaskRun{
-		tb.TaskRun("cancel-taskrun-1", "ns",
+		tb.TaskRun("cancel-taskrun-1",
+			tb.TaskRunNamespace("ns"),
 			tb.TaskRunLabel("tekton.dev/task", "cancel-task"),
 			tb.TaskRunSpec(tb.TaskRunTaskRef("cancel-task")),
 			tb.TaskRunStatus(

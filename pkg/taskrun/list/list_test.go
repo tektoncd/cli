@@ -38,7 +38,7 @@ func TestPipelinesList_GetAllTaskRuns(t *testing.T) {
 	runDuration2 := 1 * time.Minute
 
 	trs := []*v1alpha1.TaskRun{
-		tb.TaskRun("taskrun1", "ns",
+		tb.TaskRun("taskrun1", tb.TaskRunNamespace("ns"),
 			tb.TaskRunLabel("tekton.dev/task", "task"),
 			tb.TaskRunSpec(tb.TaskRunTaskRef("task")),
 			tb.TaskRunStatus(
@@ -50,7 +50,7 @@ func TestPipelinesList_GetAllTaskRuns(t *testing.T) {
 				taskRunCompletionTime(trStarted.Add(runDuration1)),
 			),
 		),
-		tb.TaskRun("taskrun2", "ns",
+		tb.TaskRun("taskrun2", tb.TaskRunNamespace("ns"),
 			tb.TaskRunLabel("tekton.dev/task", "task"),
 			tb.TaskRunSpec(tb.TaskRunTaskRef("task")),
 			tb.TaskRunStatus(
@@ -131,7 +131,7 @@ func TestPipelinesList_GetAllTaskRuns_v1beta1(t *testing.T) {
 	runDuration2 := 1 * time.Minute
 
 	trs := []*v1alpha1.TaskRun{
-		tb.TaskRun("taskrun1", "ns",
+		tb.TaskRun("taskrun1", tb.TaskRunNamespace("ns"),
 			tb.TaskRunLabel("tekton.dev/task", "task"),
 			tb.TaskRunSpec(tb.TaskRunTaskRef("task")),
 			tb.TaskRunStatus(
@@ -143,7 +143,7 @@ func TestPipelinesList_GetAllTaskRuns_v1beta1(t *testing.T) {
 				taskRunCompletionTime(trStarted.Add(runDuration1)),
 			),
 		),
-		tb.TaskRun("taskrun2", "ns",
+		tb.TaskRun("taskrun2", tb.TaskRunNamespace("ns"),
 			tb.TaskRunLabel("tekton.dev/task", "task"),
 			tb.TaskRunSpec(tb.TaskRunTaskRef("task")),
 			tb.TaskRunStatus(

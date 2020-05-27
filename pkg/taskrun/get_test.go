@@ -41,7 +41,7 @@ func TestTaskRunGet(t *testing.T) {
 	runDuration := 1 * time.Minute
 
 	trdata := []*v1alpha1.TaskRun{
-		tb.TaskRun("taskrun1", "ns",
+		tb.TaskRun("taskrun1", tb.TaskRunNamespace("ns"),
 			tb.TaskRunLabel("tekton.dev/task", "task"),
 			tb.TaskRunSpec(tb.TaskRunTaskRef("task", tb.TaskRefKind("Task"))),
 			tb.TaskRunStatus(
@@ -53,7 +53,7 @@ func TestTaskRunGet(t *testing.T) {
 				cb.TaskRunCompletionTime(tr1Started.Add(runDuration)),
 			),
 		),
-		tb.TaskRun("taskrun2", "ns",
+		tb.TaskRun("taskrun2", tb.TaskRunNamespace("ns"),
 			tb.TaskRunLabel("tekton.dev/task", "task"),
 			tb.TaskRunSpec(tb.TaskRunTaskRef("task", tb.TaskRefKind("Task"))),
 			tb.TaskRunStatus(

@@ -73,10 +73,8 @@ func (pr *PipelineRun) GetTaskRunRef() corev1.ObjectReference {
 }
 
 // GetOwnerReference gets the pipeline run as owner reference for any related objects
-func (pr *PipelineRun) GetOwnerReference() []metav1.OwnerReference {
-	return []metav1.OwnerReference{
-		*metav1.NewControllerRef(pr, groupVersionKind),
-	}
+func (pr *PipelineRun) GetOwnerReference() metav1.OwnerReference {
+	return *metav1.NewControllerRef(pr, groupVersionKind)
 }
 
 // IsDone returns true if the PipelineRun's status indicates that it is done.
@@ -128,6 +126,17 @@ func (pr *PipelineRun) GetServiceAccountName(pipelineTaskName string) string {
 		}
 	}
 	return serviceAccountName
+}
+
+// HasVolumeClaimTemplate returns true if PipelineRun contains volumeClaimTemplates that is
+// used for creating PersistentVolumeClaims with an OwnerReference for each run
+func (pr *PipelineRun) HasVolumeClaimTemplate() bool {
+	for _, ws := range pr.Spec.Workspaces {
+		if ws.VolumeClaimTemplate != nil {
+			return true
+		}
+	}
+	return false
 }
 
 // PipelineRunSpec defines the desired state of PipelineRun
@@ -242,6 +251,22 @@ type PipelineRunStatusFields struct {
 	// map of PipelineRunTaskRunStatus with the taskRun name as the key
 	// +optional
 	TaskRuns map[string]*PipelineRunTaskRunStatus `json:"taskRuns,omitempty"`
+
+	// PipelineResults are the list of results written out by the pipeline task's containers
+	// +optional
+	PipelineResults []PipelineRunResult `json:"pipelineResults,omitempty"`
+
+	// PipelineRunSpec contains the exact spec used to instantiate the run
+	PipelineSpec *PipelineSpec `json:"pipelineSpec,omitempty"`
+}
+
+// PipelineRunResult used to describe the results of a pipeline
+type PipelineRunResult struct {
+	// Name is the result's name as declared by the Pipeline
+	Name string `json:"name"`
+
+	// Value is the result returned from the execution of this PipelineRun
+	Value string `json:"value"`
 }
 
 // PipelineRunTaskRunStatus contains the name of the PipelineTask for this TaskRun and the TaskRun's Status
@@ -256,6 +281,7 @@ type PipelineRunTaskRunStatus struct {
 	ConditionChecks map[string]*PipelineRunConditionCheckStatus `json:"conditionChecks,omitempty"`
 }
 
+// PipelineRunConditionCheckStatus returns the condition check status
 type PipelineRunConditionCheckStatus struct {
 	// ConditionName is the name of the Condition
 	ConditionName string `json:"conditionName,omitempty"`

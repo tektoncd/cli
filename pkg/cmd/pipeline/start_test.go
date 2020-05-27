@@ -152,7 +152,8 @@ func TestPipelineStart_ExecuteCommand(t *testing.T) {
 	c1 := &test.Params{Tekton: cs.Pipeline, Kube: cs.Kube, Dynamic: dc, Clock: clock, Resource: cs.Resource}
 
 	pipeline := []*v1alpha1.Pipeline{
-		tb.Pipeline("test-pipeline", "ns",
+		tb.Pipeline("test-pipeline",
+			tb.PipelineNamespace("ns"),
 			tb.PipelineSpec(
 				tb.PipelineDeclaredResource("git-repo", "git"),
 				tb.PipelineDeclaredResource("build-image", "image"),
@@ -168,7 +169,8 @@ func TestPipelineStart_ExecuteCommand(t *testing.T) {
 	}
 
 	pipeline2 := []*v1alpha1.Pipeline{
-		tb.Pipeline("test-pipeline", "ns",
+		tb.Pipeline("test-pipeline",
+			tb.PipelineNamespace("ns"),
 			tb.PipelineSpec(
 				tb.PipelineTask("unit-test-1", "unit-test-task",
 					tb.PipelineTaskInputResource("workspace", "git-repo"),
@@ -258,12 +260,14 @@ func TestPipelineStart_ExecuteCommand(t *testing.T) {
 	// pipelineresources data for tests with --filename
 	objs2 := []runtime.Object{}
 	pres := []*v1alpha1.PipelineResource{
-		tb.PipelineResource("scaffold-git", "ns",
+		tb.PipelineResource("scaffold-git",
+			tb.PipelineResourceNamespace("ns"),
 			tb.PipelineResourceSpec("git",
 				tb.PipelineResourceSpecParam("url", "git@github.com:tektoncd/cli.git"),
 			),
 		),
-		tb.PipelineResource("imageres", "ns",
+		tb.PipelineResource("imageres",
+			tb.PipelineResourceNamespace("ns"),
 			tb.PipelineResourceSpec("image",
 				tb.PipelineResourceSpecParam("url", "gcr.io/christiewilson-catfactory/leeroy-web"),
 			),
@@ -902,12 +906,14 @@ func TestPipelineV1beta1Start_ExecuteCommand(t *testing.T) {
 	// pipelineresources data for tests with --filename
 	objs2 := []runtime.Object{}
 	pres := []*v1alpha1.PipelineResource{
-		tb.PipelineResource("scaffold-git", "ns",
+		tb.PipelineResource("scaffold-git",
+			tb.PipelineResourceNamespace("ns"),
 			tb.PipelineResourceSpec("git",
 				tb.PipelineResourceSpecParam("url", "git@github.com:tektoncd/cli.git"),
 			),
 		),
-		tb.PipelineResource("imageres", "ns",
+		tb.PipelineResource("imageres",
+			tb.PipelineResourceNamespace("ns"),
 			tb.PipelineResourceSpec("image",
 				tb.PipelineResourceSpecParam("url", "gcr.io/christiewilson-catfactory/leeroy-web"),
 			),
@@ -1350,7 +1356,8 @@ func TestPipelineStart_Interactive(t *testing.T) {
 
 	cs, _ := test.SeedTestData(t, pipelinetest.Data{
 		Pipelines: []*v1alpha1.Pipeline{
-			tb.Pipeline("test-pipeline", "ns",
+			tb.Pipeline("test-pipeline",
+				tb.PipelineNamespace("ns"),
 				tb.PipelineSpec(
 					tb.PipelineDeclaredResource("git-repo", "git"),
 					tb.PipelineParamSpec("pipeline-param", v1alpha1.ParamTypeString, tb.ParamSpecDefault("somethingdifferent")),
@@ -1365,7 +1372,8 @@ func TestPipelineStart_Interactive(t *testing.T) {
 			),
 		},
 		PipelineResources: []*v1alpha1.PipelineResource{
-			tb.PipelineResource("scaffold-git", "ns",
+			tb.PipelineResource("scaffold-git",
+				tb.PipelineResourceNamespace("ns"),
 				tb.PipelineResourceSpec("git",
 					tb.PipelineResourceSpecParam("url", "git@github.com:tektoncd/cli.git"),
 				),
@@ -1383,7 +1391,8 @@ func TestPipelineStart_Interactive(t *testing.T) {
 	// Declared single pipeline resource, but has no resource
 	cs2, _ := test.SeedTestData(t, pipelinetest.Data{
 		Pipelines: []*v1alpha1.Pipeline{
-			tb.Pipeline("test-pipeline", "ns",
+			tb.Pipeline("test-pipeline",
+				tb.PipelineNamespace("ns"),
 				tb.PipelineSpec(
 					tb.PipelineDeclaredResource("git-repo", "git"),
 					tb.PipelineTask("first-create-file", "create-file",
@@ -1398,7 +1407,8 @@ func TestPipelineStart_Interactive(t *testing.T) {
 		},
 
 		Tasks: []*v1alpha1.Task{
-			tb.Task("check-stuff-file-exists", "ns",
+			tb.Task("check-stuff-file-exists",
+				tb.TaskNamespace("ns"),
 				tb.TaskSpec(
 					tb.TaskInputs(
 						tb.InputsResource("workspace", "git",
@@ -1411,7 +1421,8 @@ func TestPipelineStart_Interactive(t *testing.T) {
 					),
 				),
 			),
-			tb.Task("create-file", "ns",
+			tb.Task("create-file",
+				tb.TaskNamespace("ns"),
 				tb.TaskSpec(
 					tb.TaskInputs(
 						tb.InputsResource("workspace", "git",
@@ -1438,7 +1449,8 @@ func TestPipelineStart_Interactive(t *testing.T) {
 	// Declared multiple pipeline resource, but has no resource
 	cs3, _ := test.SeedTestData(t, pipelinetest.Data{
 		Pipelines: []*v1alpha1.Pipeline{
-			tb.Pipeline("test-pipeline", "ns",
+			tb.Pipeline("test-pipeline",
+				tb.PipelineNamespace("ns"),
 				tb.PipelineSpec(
 					tb.PipelineDeclaredResource("git-repo", "git"),
 					tb.PipelineDeclaredResource("source-repo", "git"),
@@ -1454,7 +1466,8 @@ func TestPipelineStart_Interactive(t *testing.T) {
 		},
 
 		Tasks: []*v1alpha1.Task{
-			tb.Task("check-stuff-file-exists", "ns",
+			tb.Task("check-stuff-file-exists",
+				tb.TaskNamespace("ns"),
 				tb.TaskSpec(
 					tb.TaskInputs(
 						tb.InputsResource("workspace", "git",
@@ -1467,7 +1480,8 @@ func TestPipelineStart_Interactive(t *testing.T) {
 					),
 				),
 			),
-			tb.Task("create-file", "ns",
+			tb.Task("create-file",
+				tb.TaskNamespace("ns"),
 				tb.TaskSpec(
 					tb.TaskInputs(
 						tb.InputsResource("workspace", "git",
@@ -1494,7 +1508,8 @@ func TestPipelineStart_Interactive(t *testing.T) {
 	// With single pipeline resource
 	cs4, _ := test.SeedTestData(t, pipelinetest.Data{
 		Pipelines: []*v1alpha1.Pipeline{
-			tb.Pipeline("test-pipeline", "ns",
+			tb.Pipeline("test-pipeline",
+				tb.PipelineNamespace("ns"),
 				tb.PipelineSpec(
 					tb.PipelineDeclaredResource("git-repo", "git"),
 					tb.PipelineTask("first-create-file", "create-file",
@@ -1509,7 +1524,8 @@ func TestPipelineStart_Interactive(t *testing.T) {
 		},
 
 		PipelineResources: []*v1alpha1.PipelineResource{
-			tb.PipelineResource("gitres", "ns",
+			tb.PipelineResource("gitres",
+				tb.PipelineResourceNamespace("ns"),
 				tb.PipelineResourceSpec("git",
 					tb.PipelineResourceSpecParam("url", "https://github.com/GoogleContainerTools/skaffold"),
 					tb.PipelineResourceSpecParam("version", "master"),
@@ -1518,7 +1534,8 @@ func TestPipelineStart_Interactive(t *testing.T) {
 		},
 
 		Tasks: []*v1alpha1.Task{
-			tb.Task("check-stuff-file-exists", "ns",
+			tb.Task("check-stuff-file-exists",
+				tb.TaskNamespace("ns"),
 				tb.TaskSpec(
 					tb.TaskInputs(
 						tb.InputsResource("workspace", "git",
@@ -1531,7 +1548,8 @@ func TestPipelineStart_Interactive(t *testing.T) {
 					),
 				),
 			),
-			tb.Task("create-file", "ns",
+			tb.Task("create-file",
+				tb.TaskNamespace("ns"),
 				tb.TaskSpec(
 					tb.TaskInputs(
 						tb.InputsResource("workspace", "git",
@@ -1558,7 +1576,8 @@ func TestPipelineStart_Interactive(t *testing.T) {
 	// With single pipeline resource, another pipeline name
 	cs5, _ := test.SeedTestData(t, pipelinetest.Data{
 		Pipelines: []*v1alpha1.Pipeline{
-			tb.Pipeline("gitpipeline", "ns",
+			tb.Pipeline("gitpipeline",
+				tb.PipelineNamespace("ns"),
 				tb.PipelineSpec(
 					tb.PipelineDeclaredResource("git-repo", "git"),
 					tb.PipelineTask("first-create-file", "create-file",
@@ -1573,7 +1592,8 @@ func TestPipelineStart_Interactive(t *testing.T) {
 		},
 
 		PipelineResources: []*v1alpha1.PipelineResource{
-			tb.PipelineResource("gitres", "ns",
+			tb.PipelineResource("gitres",
+				tb.PipelineResourceNamespace("ns"),
 				tb.PipelineResourceSpec("git",
 					tb.PipelineResourceSpecParam("url", "https://github.com/GoogleContainerTools/skaffold"),
 					tb.PipelineResourceSpecParam("version", "master"),
@@ -1582,7 +1602,8 @@ func TestPipelineStart_Interactive(t *testing.T) {
 		},
 
 		Tasks: []*v1alpha1.Task{
-			tb.Task("check-stuff-file-exists", "ns",
+			tb.Task("check-stuff-file-exists",
+				tb.TaskNamespace("ns"),
 				tb.TaskSpec(
 					tb.TaskInputs(
 						tb.InputsResource("workspace", "git",
@@ -1595,7 +1616,8 @@ func TestPipelineStart_Interactive(t *testing.T) {
 					),
 				),
 			),
-			tb.Task("create-file", "ns",
+			tb.Task("create-file",
+				tb.TaskNamespace("ns"),
 				tb.TaskSpec(
 					tb.TaskInputs(
 						tb.InputsResource("workspace", "git",
@@ -1622,7 +1644,8 @@ func TestPipelineStart_Interactive(t *testing.T) {
 	// With image resource
 	cs6, _ := test.SeedTestData(t, pipelinetest.Data{
 		Pipelines: []*v1alpha1.Pipeline{
-			tb.Pipeline("imagepipeline", "ns",
+			tb.Pipeline("imagepipeline",
+				tb.PipelineNamespace("ns"),
 				tb.PipelineSpec(
 					tb.PipelineDeclaredResource("imageres", "image"),
 				),
@@ -1630,7 +1653,8 @@ func TestPipelineStart_Interactive(t *testing.T) {
 		},
 
 		PipelineResources: []*v1alpha1.PipelineResource{
-			tb.PipelineResource("imageres", "ns",
+			tb.PipelineResource("imageres",
+				tb.PipelineResourceNamespace("ns"),
 				tb.PipelineResourceSpec("image",
 					tb.PipelineResourceSpecParam("url", "gcr.io/christiewilson-catfactory/leeroy-web"),
 				),
@@ -1641,7 +1665,8 @@ func TestPipelineStart_Interactive(t *testing.T) {
 	// With image resource, another pipeline name
 	cs7, _ := test.SeedTestData(t, pipelinetest.Data{
 		Pipelines: []*v1alpha1.Pipeline{
-			tb.Pipeline("imagepipeline2", "ns",
+			tb.Pipeline("imagepipeline2",
+				tb.PipelineNamespace("ns"),
 				tb.PipelineSpec(
 					tb.PipelineDeclaredResource("imageres", "image"),
 				),
@@ -1649,7 +1674,8 @@ func TestPipelineStart_Interactive(t *testing.T) {
 		},
 
 		PipelineResources: []*v1alpha1.PipelineResource{
-			tb.PipelineResource("imageres", "ns",
+			tb.PipelineResource("imageres",
+				tb.PipelineResourceNamespace("ns"),
 				tb.PipelineResourceSpec("image",
 					tb.PipelineResourceSpecParam("url", "gcr.io/christiewilson-catfactory/leeroy-web"),
 				),
@@ -1660,7 +1686,8 @@ func TestPipelineStart_Interactive(t *testing.T) {
 	// With storage resource
 	cs8, _ := test.SeedTestData(t, pipelinetest.Data{
 		Pipelines: []*v1alpha1.Pipeline{
-			tb.Pipeline("storagepipeline", "ns",
+			tb.Pipeline("storagepipeline",
+				tb.PipelineNamespace("ns"),
 				tb.PipelineSpec(
 					tb.PipelineDeclaredResource("storageres", "storage"),
 				),
@@ -1668,7 +1695,8 @@ func TestPipelineStart_Interactive(t *testing.T) {
 		},
 
 		PipelineResources: []*v1alpha1.PipelineResource{
-			tb.PipelineResource("storageres", "ns",
+			tb.PipelineResource("storageres",
+				tb.PipelineResourceNamespace("ns"),
 				tb.PipelineResourceSpec("storage",
 					tb.PipelineResourceSpecParam("type", "gcs"),
 					tb.PipelineResourceSpecParam("location", "gs://some-bucket"),
@@ -1680,7 +1708,8 @@ func TestPipelineStart_Interactive(t *testing.T) {
 	// With pullRequest resource
 	cs9, _ := test.SeedTestData(t, pipelinetest.Data{
 		Pipelines: []*v1alpha1.Pipeline{
-			tb.Pipeline("pullrequestpipeline", "ns",
+			tb.Pipeline("pullrequestpipeline",
+				tb.PipelineNamespace("ns"),
 				tb.PipelineSpec(
 					tb.PipelineDeclaredResource("pullreqres", "pullRequest"),
 					tb.PipelineTask("unit-test-1", "unit-test-task",
@@ -1691,7 +1720,8 @@ func TestPipelineStart_Interactive(t *testing.T) {
 		},
 
 		PipelineResources: []*v1alpha1.PipelineResource{
-			tb.PipelineResource("pullreqres", "ns",
+			tb.PipelineResource("pullreqres",
+				tb.PipelineResourceNamespace("ns"),
 				tb.PipelineResourceSpec("pullRequest",
 					tb.PipelineResourceSpecParam("url", "https://github.com/tektoncd/cli/pull/1"),
 				),
@@ -1702,7 +1732,8 @@ func TestPipelineStart_Interactive(t *testing.T) {
 	// With cluster resource
 	cs10, _ := test.SeedTestData(t, pipelinetest.Data{
 		Pipelines: []*v1alpha1.Pipeline{
-			tb.Pipeline("clusterpipeline", "ns",
+			tb.Pipeline("clusterpipeline",
+				tb.PipelineNamespace("ns"),
 				tb.PipelineSpec(
 					tb.PipelineDeclaredResource("clusterres", "cluster"),
 					tb.PipelineTask("unit-test-1", "unit-test-task",
@@ -1713,7 +1744,8 @@ func TestPipelineStart_Interactive(t *testing.T) {
 		},
 
 		PipelineResources: []*v1alpha1.PipelineResource{
-			tb.PipelineResource("clusterresource", "ns",
+			tb.PipelineResource("clusterresource",
+				tb.PipelineResourceNamespace("ns"),
 				tb.PipelineResourceSpec("cluster",
 					tb.PipelineResourceSpecParam("name", "abcClus"),
 					tb.PipelineResourceSpecParam("url", "https://10.20.30.40/"),
@@ -1727,7 +1759,8 @@ func TestPipelineStart_Interactive(t *testing.T) {
 	// With cloud resource
 	cs11, _ := test.SeedTestData(t, pipelinetest.Data{
 		Pipelines: []*v1alpha1.Pipeline{
-			tb.Pipeline("cloudpipeline", "ns",
+			tb.Pipeline("cloudpipeline",
+				tb.PipelineNamespace("ns"),
 				tb.PipelineSpec(
 					tb.PipelineDeclaredResource("cloudres", "cloudEvent"),
 					tb.PipelineTask("unit-test-1", "unit-test-task",
@@ -1738,7 +1771,8 @@ func TestPipelineStart_Interactive(t *testing.T) {
 		},
 
 		PipelineResources: []*v1alpha1.PipelineResource{
-			tb.PipelineResource("cloudresource", "ns",
+			tb.PipelineResource("cloudresource",
+				tb.PipelineResourceNamespace("ns"),
 				tb.PipelineResourceSpec("cloudEvent",
 					tb.PipelineResourceSpecParam("targetURI", "https://10.20.30.40/"),
 				),
@@ -1748,7 +1782,8 @@ func TestPipelineStart_Interactive(t *testing.T) {
 
 	cs12, _ := test.SeedTestData(t, pipelinetest.Data{
 		Pipelines: []*v1alpha1.Pipeline{
-			tb.Pipeline("cloudpipeline", "ns",
+			tb.Pipeline("cloudpipeline",
+				tb.PipelineNamespace("ns"),
 				tb.PipelineSpec(
 					tb.PipelineWorkspaceDeclaration("pvc", "config", "secret", "emtpyDir"),
 					tb.PipelineTask("unit-test-1", "unit-test-task",
@@ -2752,7 +2787,8 @@ func Test_start_pipeline(t *testing.T) {
 	pipelineName := "test-pipeline"
 
 	pipeline := []*v1alpha1.Pipeline{
-		tb.Pipeline(pipelineName, "ns",
+		tb.Pipeline(pipelineName,
+			tb.PipelineNamespace("ns"),
 			tb.PipelineSpec(
 				tb.PipelineDeclaredResource("git-repo", "git"),
 				tb.PipelineParamSpec("pipeline-param", v1alpha1.ParamTypeString, tb.ParamSpecDefault("somethingdifferent")),
@@ -2945,7 +2981,8 @@ func Test_start_pipeline_last(t *testing.T) {
 	pipelineName := "test-pipeline"
 
 	ps := []*v1alpha1.Pipeline{
-		tb.Pipeline(pipelineName, "ns",
+		tb.Pipeline(pipelineName,
+			tb.PipelineNamespace("ns"),
 			tb.PipelineSpec(
 				tb.PipelineDeclaredResource("git-repo", "git"),
 				tb.PipelineDeclaredResource("build-image", "image"),
@@ -2956,7 +2993,7 @@ func Test_start_pipeline_last(t *testing.T) {
 					tb.PipelineTaskInputResource("workspace", "git-repo"),
 					tb.PipelineTaskOutputResource("image-to-use", "best-image"),
 					tb.PipelineTaskOutputResource("workspace", "git-repo"),
-					tb.PipelineTaskWorkspaceBinding("task-test-workspace", "test-workspace"),
+					tb.PipelineTaskWorkspaceBinding("task-test-workspace", "test-workspace", ""),
 				),
 			), // spec
 		), // pipeline
@@ -2965,7 +3002,8 @@ func Test_start_pipeline_last(t *testing.T) {
 	timeoutDuration, _ := time.ParseDuration("10s")
 
 	prs := []*v1alpha1.PipelineRun{
-		tb.PipelineRun("test-pipeline-run-123", "ns",
+		tb.PipelineRun("test-pipeline-run-123",
+			tb.PipelineRunNamespace("ns"),
 			tb.PipelineRunLabel("tekton.dev/pipeline", pipelineName),
 			tb.PipelineRunSpec(pipelineName,
 				tb.PipelineRunServiceAccountName("test-sa"),
@@ -3250,7 +3288,8 @@ func Test_start_pipeline_last_without_res_param(t *testing.T) {
 	pipelineName := "test-pipeline"
 
 	ps := []*v1alpha1.Pipeline{
-		tb.Pipeline(pipelineName, "ns",
+		tb.Pipeline(pipelineName,
+			tb.PipelineNamespace("ns"),
 			tb.PipelineSpec(
 				tb.PipelineDeclaredResource("git-repo", "git"),
 				tb.PipelineDeclaredResource("build-image", "image"),
@@ -3266,7 +3305,8 @@ func Test_start_pipeline_last_without_res_param(t *testing.T) {
 	}
 
 	prs := []*v1alpha1.PipelineRun{
-		tb.PipelineRun("test-pipeline-run-123", "ns",
+		tb.PipelineRun("test-pipeline-run-123",
+			tb.PipelineRunNamespace("ns"),
 			tb.PipelineRunLabel("tekton.dev/pipeline", pipelineName),
 			tb.PipelineRunSpec(pipelineName,
 				tb.PipelineRunServiceAccountName("test-sa"),
@@ -3526,7 +3566,8 @@ func Test_start_pipeline_last_merge(t *testing.T) {
 	pipelineName := "test-pipeline"
 
 	ps := []*v1alpha1.Pipeline{
-		tb.Pipeline(pipelineName, "ns",
+		tb.Pipeline(pipelineName,
+			tb.PipelineNamespace("ns"),
 			tb.PipelineSpec(
 				tb.PipelineDeclaredResource("git-repo", "git"),
 				tb.PipelineDeclaredResource("build-image", "image"),
@@ -3542,7 +3583,8 @@ func Test_start_pipeline_last_merge(t *testing.T) {
 	}
 
 	prs := []*v1alpha1.PipelineRun{
-		tb.PipelineRun("test-pipeline-run-123", "ns",
+		tb.PipelineRun("test-pipeline-run-123",
+			tb.PipelineRunNamespace("ns"),
 			tb.PipelineRunLabel("tekton.dev/pipeline", pipelineName),
 			tb.PipelineRunSpec(pipelineName,
 				tb.PipelineRunServiceAccountName("test-sa"),
@@ -3838,7 +3880,8 @@ func Test_start_pipeline_use_pipelinerun(t *testing.T) {
 	pipelineName := "test-pipeline"
 
 	ps := []*v1alpha1.Pipeline{
-		tb.Pipeline(pipelineName, "ns",
+		tb.Pipeline(pipelineName,
+			tb.PipelineNamespace("ns"),
 			tb.PipelineSpec(
 				tb.PipelineDeclaredResource("git-repo", "git"),
 				tb.PipelineDeclaredResource("build-image", "image"),
@@ -3856,11 +3899,13 @@ func Test_start_pipeline_use_pipelinerun(t *testing.T) {
 	timeoutDuration, _ := time.ParseDuration("10s")
 	theonename := "test-pipeline-run-be-the-one"
 	prs := []*v1alpha1.PipelineRun{
-		tb.PipelineRun("dont-bother-me-trying", "ns",
+		tb.PipelineRun("dont-bother-me-trying",
+			tb.PipelineRunNamespace("ns"),
 			tb.PipelineRunLabel("tekton.dev/pipeline", pipelineName),
 			tb.PipelineRunSpec(pipelineName),
 		),
-		tb.PipelineRun(theonename, "ns",
+		tb.PipelineRun(theonename,
+			tb.PipelineRunNamespace("ns"),
 			tb.PipelineRunLabel("tekton.dev/pipeline", pipelineName),
 			tb.PipelineRunSpec(pipelineName,
 				tb.PipelineRunParam("brush", "teeth"),
@@ -4091,7 +4136,8 @@ func Test_start_pipeline_allkindparam(t *testing.T) {
 	pipelineName := "test-pipeline"
 
 	ps := []*v1alpha1.Pipeline{
-		tb.Pipeline(pipelineName, "ns",
+		tb.Pipeline(pipelineName,
+			tb.PipelineNamespace("ns"),
 			tb.PipelineSpec(
 				tb.PipelineDeclaredResource("git-repo", "git"),
 				tb.PipelineParamSpec("pipeline-param", v1alpha1.ParamTypeString, tb.ParamSpecDefault("somethingdifferent")),
@@ -4300,7 +4346,8 @@ func Test_start_pipeline_last_generate_name(t *testing.T) {
 	pipelineName := "test-pipeline"
 
 	ps := []*v1alpha1.Pipeline{
-		tb.Pipeline(pipelineName, "ns",
+		tb.Pipeline(pipelineName,
+			tb.PipelineNamespace("ns"),
 			tb.PipelineSpec(
 				tb.PipelineDeclaredResource("git-repo", "git"),
 				tb.PipelineDeclaredResource("build-image", "image"),
@@ -4316,7 +4363,8 @@ func Test_start_pipeline_last_generate_name(t *testing.T) {
 	}
 
 	prs := []*v1alpha1.PipelineRun{
-		tb.PipelineRun("test-pipeline-run-123", "ns",
+		tb.PipelineRun("test-pipeline-run-123",
+			tb.PipelineRunNamespace("ns"),
 			tb.PipelineRunLabel("tekton.dev/pipeline", pipelineName),
 			tb.PipelineRunSpec(pipelineName,
 				tb.PipelineRunServiceAccountName("test-sa"),
@@ -4563,7 +4611,8 @@ func Test_start_pipeline_last_with_prefix_name(t *testing.T) {
 	pipelineName := "test-pipeline"
 
 	ps := []*v1alpha1.Pipeline{
-		tb.Pipeline(pipelineName, "ns",
+		tb.Pipeline(pipelineName,
+			tb.PipelineNamespace("ns"),
 			tb.PipelineSpec(
 				tb.PipelineDeclaredResource("git-repo", "git"),
 				tb.PipelineDeclaredResource("build-image", "image"),
@@ -4579,7 +4628,8 @@ func Test_start_pipeline_last_with_prefix_name(t *testing.T) {
 	}
 
 	prs := []*v1alpha1.PipelineRun{
-		tb.PipelineRun("test-pipeline-run-123", "ns",
+		tb.PipelineRun("test-pipeline-run-123",
+			tb.PipelineRunNamespace("ns"),
 			tb.PipelineRunLabel("tekton.dev/pipeline", pipelineName),
 			tb.PipelineRunSpec(pipelineName,
 				tb.PipelineRunServiceAccountName("test-sa"),
@@ -4823,7 +4873,8 @@ func Test_start_pipeline_with_prefix_name(t *testing.T) {
 	pipelineName := "test-pipeline"
 
 	ps := []*v1alpha1.Pipeline{
-		tb.Pipeline(pipelineName, "ns",
+		tb.Pipeline(pipelineName,
+			tb.PipelineNamespace("ns"),
 			tb.PipelineSpec(
 				tb.PipelineDeclaredResource("git-repo", "git"),
 				tb.PipelineDeclaredResource("build-image", "image"),
@@ -4839,7 +4890,8 @@ func Test_start_pipeline_with_prefix_name(t *testing.T) {
 	}
 
 	prs := []*v1alpha1.PipelineRun{
-		tb.PipelineRun("test-pipeline-run-123", "ns",
+		tb.PipelineRun("test-pipeline-run-123",
+			tb.PipelineRunNamespace("ns"),
 			tb.PipelineRunLabel("tekton.dev/pipeline", pipelineName),
 			tb.PipelineRunSpec(pipelineName,
 				tb.PipelineRunServiceAccountName("test-sa"),
@@ -5122,39 +5174,46 @@ func Test_mergeResource(t *testing.T) {
 
 func Test_getPipelineResourceByFormat(t *testing.T) {
 	pipelineResources := []*v1alpha1.PipelineResource{
-		tb.PipelineResource("scaffold-git", "ns",
+		tb.PipelineResource("scaffold-git",
+			tb.PipelineResourceNamespace("ns"),
 			tb.PipelineResourceSpec("git",
 				tb.PipelineResourceSpecParam("url", "git@github.com:tektoncd/cli.git"),
 			),
 		),
-		tb.PipelineResource("scaffold-git-fork", "ns",
+		tb.PipelineResource("scaffold-git-fork",
+			tb.PipelineResourceNamespace("ns"),
 			tb.PipelineResourceSpec("git",
 				tb.PipelineResourceSpecParam("url", "git@github.com:tektoncd-fork/cli.git"),
 				tb.PipelineResourceSpecParam("revision", "release"),
 			),
 		),
-		tb.PipelineResource("scaffold-image", "ns",
+		tb.PipelineResource("scaffold-image",
+			tb.PipelineResourceNamespace("ns"),
 			tb.PipelineResourceSpec("image",
 				tb.PipelineResourceSpecParam("url", "docker.io/tektoncd/cli"),
 			),
 		),
-		tb.PipelineResource("scaffold-pull", "ns",
+		tb.PipelineResource("scaffold-pull",
+			tb.PipelineResourceNamespace("ns"),
 			tb.PipelineResourceSpec("pullRequest",
 				tb.PipelineResourceSpecParam("url", "https://github.com/tektoncd/cli/pulls/9"),
 			),
 		),
-		tb.PipelineResource("scaffold-cluster", "ns",
+		tb.PipelineResource("scaffold-cluster",
+			tb.PipelineResourceNamespace("ns"),
 			tb.PipelineResourceSpec("cluster",
 				tb.PipelineResourceSpecParam("url", "https://opemshift.com"),
 				tb.PipelineResourceSpecParam("user", "tektoncd-developer"),
 			),
 		),
-		tb.PipelineResource("scaffold-storage", "ns",
+		tb.PipelineResource("scaffold-storage",
+			tb.PipelineResourceNamespace("ns"),
 			tb.PipelineResourceSpec("storage",
 				tb.PipelineResourceSpecParam("location", "/home/tektoncd"),
 			),
 		),
-		tb.PipelineResource("scaffold-cloud", "ns",
+		tb.PipelineResource("scaffold-cloud",
+			tb.PipelineResourceNamespace("ns"),
 			tb.PipelineResourceSpec("cloudEvent",
 				tb.PipelineResourceSpecParam("targetURI", "http://sink:8080"),
 			),
@@ -5313,7 +5372,8 @@ func Test_lastPipelineRun(t *testing.T) {
 	pr3Started := clock.Now().Add(-450 * time.Hour)
 
 	prs := []*v1alpha1.PipelineRun{
-		tb.PipelineRun("pr-2", "namespace",
+		tb.PipelineRun("pr-2",
+			tb.PipelineRunNamespace("namespace"),
 			tb.PipelineRunLabel("tekton.dev/pipeline", "test"),
 			cb.PipelineRunCreationTimestamp(pr2Started),
 			tb.PipelineRunStatus(
@@ -5323,7 +5383,8 @@ func Test_lastPipelineRun(t *testing.T) {
 				}),
 			),
 		),
-		tb.PipelineRun("pr-3", "namespace",
+		tb.PipelineRun("pr-3",
+			tb.PipelineRunNamespace("namespace"),
 			tb.PipelineRunLabel("tekton.dev/pipeline", "test"),
 			cb.PipelineRunCreationTimestamp(pr3Started),
 			tb.PipelineRunStatus(
@@ -5333,7 +5394,8 @@ func Test_lastPipelineRun(t *testing.T) {
 				}),
 			),
 		),
-		tb.PipelineRun("pr-1", "namespace",
+		tb.PipelineRun("pr-1",
+			tb.PipelineRunNamespace("namespace"),
 			tb.PipelineRunLabel("tekton.dev/pipeline", "test"),
 			cb.PipelineRunCreationTimestamp(pr1Started),
 			tb.PipelineRunStatus(

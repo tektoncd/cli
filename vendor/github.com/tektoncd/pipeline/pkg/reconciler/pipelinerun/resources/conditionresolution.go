@@ -41,6 +41,7 @@ type GetCondition func(string) (*v1alpha1.Condition, error)
 // exists. ConditionCheck can be nil to represent there being no ConditionCheck (i.e the condition
 // has not been evaluated).
 type ResolvedConditionCheck struct {
+	ConditionRegisterName string
 	PipelineTaskCondition *v1alpha1.PipelineTaskCondition
 	ConditionCheckName    string
 	Condition             *v1alpha1.Condition
@@ -79,7 +80,7 @@ func (state TaskConditionCheckState) IsDone() bool {
 	return isDone
 }
 
-// IsComplete returns true if the status for all conditionChecks for a task indicate they have
+// IsSuccess returns true if the status for all conditionChecks for a task indicate they have
 // completed successfully
 func (state TaskConditionCheckState) IsSuccess() bool {
 	if !state.IsDone() {

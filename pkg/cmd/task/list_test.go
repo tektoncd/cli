@@ -75,12 +75,12 @@ func TestTaskList_Only_Tasks_v1alpha1(t *testing.T) {
 	clock := clockwork.NewFakeClock()
 
 	tasks := []*v1alpha1.Task{
-		tb.Task("tomatoes", "namespace", cb.TaskCreationTime(clock.Now().Add(-1*time.Minute))),
-		tb.Task("mangoes", "namespace", cb.TaskCreationTime(clock.Now().Add(-20*time.Second))),
-		tb.Task("bananas", "namespace", cb.TaskCreationTime(clock.Now().Add(-512*time.Hour))),
-		tb.Task("apples", "namespace", tb.TaskSpec(tb.TaskDescription("")), cb.TaskCreationTime(clock.Now().Add(-513*time.Hour))),
-		tb.Task("potatoes", "namespace", tb.TaskSpec(tb.TaskDescription("a test task")), cb.TaskCreationTime(clock.Now().Add(-514*time.Hour))),
-		tb.Task("onions", "namespace", tb.TaskSpec(tb.TaskDescription("a test task to test description of task")), cb.TaskCreationTime(clock.Now().Add(-515*time.Hour))),
+		tb.Task("tomatoes", tb.TaskNamespace("namespace"), cb.TaskCreationTime(clock.Now().Add(-1*time.Minute))),
+		tb.Task("mangoes", tb.TaskNamespace("namespace"), cb.TaskCreationTime(clock.Now().Add(-20*time.Second))),
+		tb.Task("bananas", tb.TaskNamespace("namespace"), cb.TaskCreationTime(clock.Now().Add(-512*time.Hour))),
+		tb.Task("apples", tb.TaskNamespace("namespace"), tb.TaskSpec(tb.TaskDescription("")), cb.TaskCreationTime(clock.Now().Add(-513*time.Hour))),
+		tb.Task("potatoes", tb.TaskNamespace("namespace"), tb.TaskSpec(tb.TaskDescription("a test task")), cb.TaskCreationTime(clock.Now().Add(-514*time.Hour))),
+		tb.Task("onions", tb.TaskNamespace("namespace"), tb.TaskSpec(tb.TaskDescription("a test task to test description of task")), cb.TaskCreationTime(clock.Now().Add(-515*time.Hour))),
 	}
 
 	ns := []*corev1.Namespace{
@@ -122,12 +122,12 @@ func TestTaskList_Only_Tasks_v1beta1(t *testing.T) {
 	clock := clockwork.NewFakeClock()
 
 	tasks := []*v1alpha1.Task{
-		tb.Task("tomatoes", "namespace", cb.TaskCreationTime(clock.Now().Add(-1*time.Minute))),
-		tb.Task("mangoes", "namespace", cb.TaskCreationTime(clock.Now().Add(-20*time.Second))),
-		tb.Task("bananas", "namespace", cb.TaskCreationTime(clock.Now().Add(-512*time.Hour))),
-		tb.Task("apples", "namespace", tb.TaskSpec(tb.TaskDescription("")), cb.TaskCreationTime(clock.Now().Add(-513*time.Hour))),
-		tb.Task("potatoes", "namespace", tb.TaskSpec(tb.TaskDescription("a test task")), cb.TaskCreationTime(clock.Now().Add(-514*time.Hour))),
-		tb.Task("onionss", "namespace", tb.TaskSpec(tb.TaskDescription("a test task to test description of task")), cb.TaskCreationTime(clock.Now().Add(-515*time.Hour))),
+		tb.Task("tomatoes", tb.TaskNamespace("namespace"), cb.TaskCreationTime(clock.Now().Add(-1*time.Minute))),
+		tb.Task("mangoes", tb.TaskNamespace("namespace"), cb.TaskCreationTime(clock.Now().Add(-20*time.Second))),
+		tb.Task("bananas", tb.TaskNamespace("namespace"), cb.TaskCreationTime(clock.Now().Add(-512*time.Hour))),
+		tb.Task("apples", tb.TaskNamespace("namespace"), tb.TaskSpec(tb.TaskDescription("")), cb.TaskCreationTime(clock.Now().Add(-513*time.Hour))),
+		tb.Task("potatoes", tb.TaskNamespace("namespace"), tb.TaskSpec(tb.TaskDescription("a test task")), cb.TaskCreationTime(clock.Now().Add(-514*time.Hour))),
+		tb.Task("onionss", tb.TaskNamespace("namespace"), tb.TaskSpec(tb.TaskDescription("a test task to test description of task")), cb.TaskCreationTime(clock.Now().Add(-515*time.Hour))),
 	}
 
 	ns := []*corev1.Namespace{
@@ -169,12 +169,12 @@ func TestTaskList_Only_Tasks_no_headers_v1beta1(t *testing.T) {
 	clock := clockwork.NewFakeClock()
 
 	tasks := []*v1alpha1.Task{
-		tb.Task("tomatoes", "namespace", cb.TaskCreationTime(clock.Now().Add(-1*time.Minute))),
-		tb.Task("mangoes", "namespace", cb.TaskCreationTime(clock.Now().Add(-20*time.Second))),
-		tb.Task("bananas", "namespace", cb.TaskCreationTime(clock.Now().Add(-512*time.Hour))),
-		tb.Task("apples", "namespace", tb.TaskSpec(tb.TaskDescription("")), cb.TaskCreationTime(clock.Now().Add(-513*time.Hour))),
-		tb.Task("potatoes", "namespace", tb.TaskSpec(tb.TaskDescription("a test task")), cb.TaskCreationTime(clock.Now().Add(-514*time.Hour))),
-		tb.Task("onions", "namespace", tb.TaskSpec(tb.TaskDescription("a test task to test description of task")), cb.TaskCreationTime(clock.Now().Add(-515*time.Hour))),
+		tb.Task("tomatoes", tb.TaskNamespace("namespace"), cb.TaskCreationTime(clock.Now().Add(-1*time.Minute))),
+		tb.Task("mangoes", tb.TaskNamespace("namespace"), cb.TaskCreationTime(clock.Now().Add(-20*time.Second))),
+		tb.Task("bananas", tb.TaskNamespace("namespace"), cb.TaskCreationTime(clock.Now().Add(-512*time.Hour))),
+		tb.Task("apples", tb.TaskNamespace("namespace"), tb.TaskSpec(tb.TaskDescription("")), cb.TaskCreationTime(clock.Now().Add(-513*time.Hour))),
+		tb.Task("potatoes", tb.TaskNamespace("namespace"), tb.TaskSpec(tb.TaskDescription("a test task")), cb.TaskCreationTime(clock.Now().Add(-514*time.Hour))),
+		tb.Task("onions", tb.TaskNamespace("namespace"), tb.TaskSpec(tb.TaskDescription("a test task to test description of task")), cb.TaskCreationTime(clock.Now().Add(-515*time.Hour))),
 	}
 
 	ns := []*corev1.Namespace{
@@ -216,18 +216,18 @@ func TestTaskList_Only_Tasks_all_namespaces_v1beta1(t *testing.T) {
 	clock := clockwork.NewFakeClock()
 
 	tasks := []*v1alpha1.Task{
-		tb.Task("tomatoes", "namespace", cb.TaskCreationTime(clock.Now().Add(-1*time.Minute))),
-		tb.Task("mangoes", "namespace", cb.TaskCreationTime(clock.Now().Add(-20*time.Second))),
-		tb.Task("bananas", "namespace", cb.TaskCreationTime(clock.Now().Add(-512*time.Hour))),
-		tb.Task("apples", "namespace", tb.TaskSpec(tb.TaskDescription("")), cb.TaskCreationTime(clock.Now().Add(-513*time.Hour))),
-		tb.Task("potatoes", "namespace", tb.TaskSpec(tb.TaskDescription("a test task")), cb.TaskCreationTime(clock.Now().Add(-514*time.Hour))),
-		tb.Task("onions", "namespace", tb.TaskSpec(tb.TaskDescription("a test task to test description of task")), cb.TaskCreationTime(clock.Now().Add(-515*time.Hour))),
-		tb.Task("tomates", "espace-de-nom", cb.TaskCreationTime(clock.Now().Add(-1*time.Minute))),
-		tb.Task("mangues", "espace-de-nom", cb.TaskCreationTime(clock.Now().Add(-20*time.Second))),
-		tb.Task("bananes", "espace-de-nom", cb.TaskCreationTime(clock.Now().Add(-512*time.Hour))),
-		tb.Task("pommes", "espace-de-nom", tb.TaskSpec(tb.TaskDescription("")), cb.TaskCreationTime(clock.Now().Add(-513*time.Hour))),
-		tb.Task("patates", "espace-de-nom", tb.TaskSpec(tb.TaskDescription("a test task")), cb.TaskCreationTime(clock.Now().Add(-514*time.Hour))),
-		tb.Task("oignons", "espace-de-nom", tb.TaskSpec(tb.TaskDescription("a test task to test description of task")), cb.TaskCreationTime(clock.Now().Add(-515*time.Hour))),
+		tb.Task("tomatoes", tb.TaskNamespace("namespace"), cb.TaskCreationTime(clock.Now().Add(-1*time.Minute))),
+		tb.Task("mangoes", tb.TaskNamespace("namespace"), cb.TaskCreationTime(clock.Now().Add(-20*time.Second))),
+		tb.Task("bananas", tb.TaskNamespace("namespace"), cb.TaskCreationTime(clock.Now().Add(-512*time.Hour))),
+		tb.Task("apples", tb.TaskNamespace("namespace"), tb.TaskSpec(tb.TaskDescription("")), cb.TaskCreationTime(clock.Now().Add(-513*time.Hour))),
+		tb.Task("potatoes", tb.TaskNamespace("namespace"), tb.TaskSpec(tb.TaskDescription("a test task")), cb.TaskCreationTime(clock.Now().Add(-514*time.Hour))),
+		tb.Task("onions", tb.TaskNamespace("namespace"), tb.TaskSpec(tb.TaskDescription("a test task to test description of task")), cb.TaskCreationTime(clock.Now().Add(-515*time.Hour))),
+		tb.Task("tomates", tb.TaskNamespace("espace-de-nom"), cb.TaskCreationTime(clock.Now().Add(-1*time.Minute))),
+		tb.Task("mangues", tb.TaskNamespace("espace-de-nom"), cb.TaskCreationTime(clock.Now().Add(-20*time.Second))),
+		tb.Task("bananes", tb.TaskNamespace("espace-de-nom"), cb.TaskCreationTime(clock.Now().Add(-512*time.Hour))),
+		tb.Task("pommes", tb.TaskNamespace("espace-de-nom"), tb.TaskSpec(tb.TaskDescription("")), cb.TaskCreationTime(clock.Now().Add(-513*time.Hour))),
+		tb.Task("patates", tb.TaskNamespace("espace-de-nom"), tb.TaskSpec(tb.TaskDescription("a test task")), cb.TaskCreationTime(clock.Now().Add(-514*time.Hour))),
+		tb.Task("oignons", tb.TaskNamespace("espace-de-nom"), tb.TaskSpec(tb.TaskDescription("a test task to test description of task")), cb.TaskCreationTime(clock.Now().Add(-515*time.Hour))),
 	}
 
 	version := "v1beta1"
@@ -267,18 +267,18 @@ func TestTaskList_Only_Tasks_all_namespaces_no_headers_v1beta1(t *testing.T) {
 	clock := clockwork.NewFakeClock()
 
 	tasks := []*v1alpha1.Task{
-		tb.Task("tomatoes", "namespace", cb.TaskCreationTime(clock.Now().Add(-1*time.Minute))),
-		tb.Task("mangoes", "namespace", cb.TaskCreationTime(clock.Now().Add(-20*time.Second))),
-		tb.Task("bananas", "namespace", cb.TaskCreationTime(clock.Now().Add(-512*time.Hour))),
-		tb.Task("apples", "namespace", tb.TaskSpec(tb.TaskDescription("")), cb.TaskCreationTime(clock.Now().Add(-513*time.Hour))),
-		tb.Task("potatoes", "namespace", tb.TaskSpec(tb.TaskDescription("a test task")), cb.TaskCreationTime(clock.Now().Add(-514*time.Hour))),
-		tb.Task("onions", "namespace", tb.TaskSpec(tb.TaskDescription("a test task to test description of task")), cb.TaskCreationTime(clock.Now().Add(-515*time.Hour))),
-		tb.Task("tomates", "espace-de-nom", cb.TaskCreationTime(clock.Now().Add(-1*time.Minute))),
-		tb.Task("mangues", "espace-de-nom", cb.TaskCreationTime(clock.Now().Add(-20*time.Second))),
-		tb.Task("bananes", "espace-de-nom", cb.TaskCreationTime(clock.Now().Add(-512*time.Hour))),
-		tb.Task("pommes", "espace-de-nom", tb.TaskSpec(tb.TaskDescription("")), cb.TaskCreationTime(clock.Now().Add(-513*time.Hour))),
-		tb.Task("patates", "espace-de-nom", tb.TaskSpec(tb.TaskDescription("a test task")), cb.TaskCreationTime(clock.Now().Add(-514*time.Hour))),
-		tb.Task("oignons", "espace-de-nom", tb.TaskSpec(tb.TaskDescription("a test task to test description of task")), cb.TaskCreationTime(clock.Now().Add(-515*time.Hour))),
+		tb.Task("tomatoes", tb.TaskNamespace("namespace"), cb.TaskCreationTime(clock.Now().Add(-1*time.Minute))),
+		tb.Task("mangoes", tb.TaskNamespace("namespace"), cb.TaskCreationTime(clock.Now().Add(-20*time.Second))),
+		tb.Task("bananas", tb.TaskNamespace("namespace"), cb.TaskCreationTime(clock.Now().Add(-512*time.Hour))),
+		tb.Task("apples", tb.TaskNamespace("namespace"), tb.TaskSpec(tb.TaskDescription("")), cb.TaskCreationTime(clock.Now().Add(-513*time.Hour))),
+		tb.Task("potatoes", tb.TaskNamespace("namespace"), tb.TaskSpec(tb.TaskDescription("a test task")), cb.TaskCreationTime(clock.Now().Add(-514*time.Hour))),
+		tb.Task("onions", tb.TaskNamespace("namespace"), tb.TaskSpec(tb.TaskDescription("a test task to test description of task")), cb.TaskCreationTime(clock.Now().Add(-515*time.Hour))),
+		tb.Task("tomates", tb.TaskNamespace("espace-de-nom"), cb.TaskCreationTime(clock.Now().Add(-1*time.Minute))),
+		tb.Task("mangues", tb.TaskNamespace("espace-de-nom"), cb.TaskCreationTime(clock.Now().Add(-20*time.Second))),
+		tb.Task("bananes", tb.TaskNamespace("espace-de-nom"), cb.TaskCreationTime(clock.Now().Add(-512*time.Hour))),
+		tb.Task("pommes", tb.TaskNamespace("espace-de-nom"), tb.TaskSpec(tb.TaskDescription("")), cb.TaskCreationTime(clock.Now().Add(-513*time.Hour))),
+		tb.Task("patates", tb.TaskNamespace("espace-de-nom"), tb.TaskSpec(tb.TaskDescription("a test task")), cb.TaskCreationTime(clock.Now().Add(-514*time.Hour))),
+		tb.Task("oignons", tb.TaskNamespace("espace-de-nom"), tb.TaskSpec(tb.TaskDescription("a test task to test description of task")), cb.TaskCreationTime(clock.Now().Add(-515*time.Hour))),
 	}
 
 	version := "v1beta1"

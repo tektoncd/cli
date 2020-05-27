@@ -82,7 +82,7 @@ func TestTracker_pipelinerun_complete(t *testing.T) {
 
 	for _, s := range scenarios {
 		taskruns := []*v1alpha1.TaskRun{
-			tb.TaskRun(tr1Name, ns,
+			tb.TaskRun(tr1Name, tb.TaskRunNamespace(ns),
 				tb.TaskRunSpec(
 					tb.TaskRunTaskRef(task1Name),
 				),
@@ -90,7 +90,7 @@ func TestTracker_pipelinerun_complete(t *testing.T) {
 					tb.PodName(tr1Pod),
 				),
 			),
-			tb.TaskRun(tr2Name, ns,
+			tb.TaskRun(tr2Name, tb.TaskRunNamespace(ns),
 				tb.TaskRunSpec(
 					tb.TaskRunTaskRef(task2Name),
 				),
@@ -101,7 +101,7 @@ func TestTracker_pipelinerun_complete(t *testing.T) {
 		}
 
 		initialPR := []*v1alpha1.PipelineRun{
-			tb.PipelineRun(prName, ns,
+			tb.PipelineRun(prName, tb.PipelineRunNamespace(ns),
 				tb.PipelineRunLabel("tekton.dev/pipeline", prName),
 				tb.PipelineRunStatus(
 					tb.PipelineRunStatusCondition(apis.Condition{

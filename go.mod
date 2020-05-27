@@ -21,22 +21,22 @@ require (
 	github.com/pkg/errors v0.8.1
 	github.com/spf13/cobra v0.0.5
 	github.com/spf13/pflag v1.0.5
-	github.com/tektoncd/pipeline v0.11.3
+	github.com/tektoncd/pipeline v0.12.1
 	github.com/tektoncd/plumbing v0.0.0-20200430135134-e53521e1d887
 	github.com/tektoncd/triggers v0.4.0
 	github.com/tidwall/gjson v1.6.0 // indirect
 	github.com/tidwall/sjson v1.0.4 // indirect
 	go.opencensus.io v0.22.1
 	go.uber.org/multierr v1.4.0
-	golang.org/x/crypto v0.0.0-20191206172530-e9b2fee46413
+	golang.org/x/crypto v0.0.0-20200206161412-a0c6ece9d31a
 	golang.org/x/xerrors v0.0.0-20191204190536-9bdfabe68543
-	gopkg.in/yaml.v2 v2.2.5
+	gopkg.in/yaml.v2 v2.2.8
 	gotest.tools/v3 v3.0.1
-	k8s.io/api v0.17.2
-	k8s.io/apimachinery v0.17.2
+	k8s.io/api v0.17.3
+	k8s.io/apimachinery v0.17.3
 	k8s.io/cli-runtime v0.17.0
-	k8s.io/client-go v0.17.0
-	knative.dev/pkg v0.0.0-20200207155214-fef852970f43
+	k8s.io/client-go v0.17.3
+	knative.dev/pkg v0.0.0-20200306230727-a56a6ea3fa56
 	sigs.k8s.io/yaml v1.1.0
 )
 
@@ -44,11 +44,9 @@ replace (
 	contrib.go.opencensus.io/exporter/stackdriver => contrib.go.opencensus.io/exporter/stackdriver v0.12.9-0.20191108183826-59d068f8d8ff
 	github.com/kr/pty => github.com/creack/pty v1.1.9
 	github.com/spf13/cobra => github.com/chmouel/cobra v0.0.0-20200107083527-379e7a80af0c
-	knative.dev/pkg => knative.dev/pkg v0.0.0-20200113182502-b8dc5fbc6d2f
 )
 
-// Pin k8s deps to 1.16.7
-
+// Pin k8s deps to 1.16.5
 replace (
 	k8s.io/api => k8s.io/api v0.16.5
 	k8s.io/apimachinery => k8s.io/apimachinery v0.16.5

@@ -44,12 +44,13 @@ func TestTaskDelete(t *testing.T) {
 	}
 
 	tdata := []*v1alpha1.Task{
-		tb.Task("task", "ns", cb.TaskCreationTime(clock.Now().Add(-1*time.Minute))),
-		tb.Task("task2", "ns", cb.TaskCreationTime(clock.Now().Add(-1*time.Minute))),
+		tb.Task("task", tb.TaskNamespace("ns"), cb.TaskCreationTime(clock.Now().Add(-1*time.Minute))),
+		tb.Task("task2", tb.TaskNamespace("ns"), cb.TaskCreationTime(clock.Now().Add(-1*time.Minute))),
 	}
 
 	trdata := []*v1alpha1.TaskRun{
-		tb.TaskRun("task-run-1", "ns",
+		tb.TaskRun("task-run-1",
+			tb.TaskRunNamespace("ns"),
 			tb.TaskRunLabel("tekton.dev/task", "task"),
 			tb.TaskRunSpec(tb.TaskRunTaskRef("task", tb.TaskRefKind(v1alpha1.NamespacedTaskKind))),
 			tb.TaskRunStatus(
@@ -59,7 +60,8 @@ func TestTaskDelete(t *testing.T) {
 				}),
 			),
 		),
-		tb.TaskRun("task-run-2", "ns",
+		tb.TaskRun("task-run-2",
+			tb.TaskRunNamespace("ns"),
 			tb.TaskRunLabel("tekton.dev/task", "task"),
 			tb.TaskRunSpec(tb.TaskRunTaskRef("task", tb.TaskRefKind(v1alpha1.NamespacedTaskKind))),
 			tb.TaskRunStatus(
@@ -72,7 +74,8 @@ func TestTaskDelete(t *testing.T) {
 		// ClusterTask is provided in the TaskRef of TaskRun, so as to verify
 		// TaskRun created by ClusterTask is not getting deleted while deleting
 		// Task with `--trs` flag and name of Task and ClusterTask is same.
-		tb.TaskRun("task-run-3", "ns",
+		tb.TaskRun("task-run-3",
+			tb.TaskRunNamespace("ns"),
 			tb.TaskRunLabel("tekton.dev/task", "task"),
 			tb.TaskRunSpec(tb.TaskRunTaskRef("task", tb.TaskRefKind(v1alpha1.ClusterTaskKind))),
 			tb.TaskRunStatus(
@@ -297,12 +300,13 @@ func TestTaskDelete_v1beta1(t *testing.T) {
 	}
 
 	tdata := []*v1alpha1.Task{
-		tb.Task("task", "ns", cb.TaskCreationTime(clock.Now().Add(-1*time.Minute))),
-		tb.Task("task2", "ns", cb.TaskCreationTime(clock.Now().Add(-1*time.Minute))),
+		tb.Task("task", tb.TaskNamespace("ns"), cb.TaskCreationTime(clock.Now().Add(-1*time.Minute))),
+		tb.Task("task2", tb.TaskNamespace("ns"), cb.TaskCreationTime(clock.Now().Add(-1*time.Minute))),
 	}
 
 	trdata := []*v1alpha1.TaskRun{
-		tb.TaskRun("task-run-1", "ns",
+		tb.TaskRun("task-run-1",
+			tb.TaskRunNamespace("ns"),
 			tb.TaskRunLabel("tekton.dev/task", "task"),
 			tb.TaskRunSpec(tb.TaskRunTaskRef("task", tb.TaskRefKind(v1alpha1.NamespacedTaskKind))),
 			tb.TaskRunStatus(
@@ -312,7 +316,8 @@ func TestTaskDelete_v1beta1(t *testing.T) {
 				}),
 			),
 		),
-		tb.TaskRun("task-run-2", "ns",
+		tb.TaskRun("task-run-2",
+			tb.TaskRunNamespace("ns"),
 			tb.TaskRunLabel("tekton.dev/task", "task"),
 			tb.TaskRunSpec(tb.TaskRunTaskRef("task", tb.TaskRefKind(v1alpha1.NamespacedTaskKind))),
 			tb.TaskRunStatus(
@@ -325,7 +330,8 @@ func TestTaskDelete_v1beta1(t *testing.T) {
 		// ClusterTask is provided in the TaskRef of TaskRun, so as to verify
 		// TaskRun created by ClusterTask is not getting deleted while deleting
 		// Task with `--trs` flag and name of Task and ClusterTask is same.
-		tb.TaskRun("task-run-3", "ns",
+		tb.TaskRun("task-run-3",
+			tb.TaskRunNamespace("ns"),
 			tb.TaskRunLabel("tekton.dev/task", "task"),
 			tb.TaskRunSpec(tb.TaskRunTaskRef("task", tb.TaskRefKind(v1alpha1.ClusterTaskKind))),
 			tb.TaskRunStatus(

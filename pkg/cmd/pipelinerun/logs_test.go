@@ -114,12 +114,14 @@ func TestLog_no_pipelinerun_argument(t *testing.T) {
 func TestLog_run_found(t *testing.T) {
 	clock := clockwork.NewFakeClock()
 	pdata := []*v1alpha1.Pipeline{
-		tb.Pipeline("pipeline", "ns",
+		tb.Pipeline("pipeline",
+			tb.PipelineNamespace("ns"),
 			cb.PipelineCreationTimestamp(clock.Now().Add(-15*time.Minute)),
 		),
 	}
 	prdata := []*v1alpha1.PipelineRun{
-		tb.PipelineRun("pipelinerun-1", "ns",
+		tb.PipelineRun("pipelinerun-1",
+			tb.PipelineRunNamespace("ns"),
 			tb.PipelineRunLabel("tekton.dev/pipeline", "pipeline"),
 			tb.PipelineRunSpec("pipeline"),
 			tb.PipelineRunStatus(
@@ -162,7 +164,8 @@ func TestLog_run_found(t *testing.T) {
 
 func TestLog_run_not_found(t *testing.T) {
 	pr := []*v1alpha1.PipelineRun{
-		tb.PipelineRun("output-pipeline-1", "ns",
+		tb.PipelineRun("output-pipeline-1",
+			tb.PipelineRunNamespace("ns"),
 			tb.PipelineRunLabel("tekton.dev/pipeline", "output-pipeline-1"),
 			tb.PipelineRunStatus(
 				tb.PipelineRunStatusCondition(apis.Condition{
@@ -231,7 +234,8 @@ func TestPipelinerunLogs(t *testing.T) {
 	}
 
 	trs := []*v1alpha1.TaskRun{
-		tb.TaskRun(tr1Name, ns,
+		tb.TaskRun(tr1Name,
+			tb.TaskRunNamespace(ns),
 			tb.TaskRunSpec(
 				tb.TaskRunTaskRef(task1Name),
 			),
@@ -255,7 +259,8 @@ func TestPipelinerunLogs(t *testing.T) {
 				tb.TaskRunTaskRef(task1Name),
 			),
 		),
-		tb.TaskRun(tr2Name, ns,
+		tb.TaskRun(tr2Name,
+			tb.TaskRunNamespace(ns),
 			tb.TaskRunSpec(
 				tb.TaskRunTaskRef(task2Name),
 			),
@@ -282,7 +287,8 @@ func TestPipelinerunLogs(t *testing.T) {
 	}
 
 	prs := []*v1alpha1.PipelineRun{
-		tb.PipelineRun(prName, ns,
+		tb.PipelineRun(prName,
+			tb.PipelineRunNamespace(ns),
 			tb.PipelineRunLabel("tekton.dev/pipeline", prName),
 			tb.PipelineRunSpec(pipelineName),
 			tb.PipelineRunStatus(
@@ -302,7 +308,8 @@ func TestPipelinerunLogs(t *testing.T) {
 		),
 	}
 	pps := []*v1alpha1.Pipeline{
-		tb.Pipeline(pipelineName, ns,
+		tb.Pipeline(pipelineName,
+			tb.PipelineNamespace(ns),
 			tb.PipelineSpec(
 				tb.PipelineTask(task1Name, task1Name),
 				tb.PipelineTask(task2Name, task2Name),
@@ -311,7 +318,8 @@ func TestPipelinerunLogs(t *testing.T) {
 	}
 
 	p := []*corev1.Pod{
-		tb.Pod(tr1Pod, ns,
+		tb.Pod(tr1Pod,
+			tb.PodNamespace(ns),
 			tb.PodLabel("tekton.dev/task", pipelineName),
 			tb.PodSpec(
 				tb.PodInitContainer(tr1InitStep1, "override-with-creds:latest"),
@@ -324,7 +332,8 @@ func TestPipelinerunLogs(t *testing.T) {
 				cb.PodInitContainerStatus(tr1InitStep2, "override-with-tools:latest"),
 			),
 		),
-		tb.Pod(tr2Pod, ns,
+		tb.Pod(tr2Pod,
+			tb.PodNamespace(ns),
 			tb.PodLabel("tekton.dev/task", pipelineName),
 			tb.PodSpec(
 				tb.PodContainer(tr2Step1Name, tr1Step1Name+":latest"),
@@ -431,7 +440,8 @@ func TestPipelinerunLog_completed_taskrun_only(t *testing.T) {
 	)
 
 	trdata := []*v1alpha1.TaskRun{
-		tb.TaskRun(tr1Name, ns,
+		tb.TaskRun(tr1Name,
+			tb.TaskRunNamespace(ns),
 			tb.TaskRunSpec(
 				tb.TaskRunTaskRef(task1Name),
 			),
@@ -457,7 +467,8 @@ func TestPipelinerunLog_completed_taskrun_only(t *testing.T) {
 		),
 	}
 	pdata := []*v1alpha1.Pipeline{
-		tb.Pipeline(pipelineName, ns,
+		tb.Pipeline(pipelineName,
+			tb.PipelineNamespace(ns),
 			tb.PipelineSpec(
 				tb.PipelineTask(task1Name, task1Name),
 				tb.PipelineTask(task2Name, task2Name),
@@ -467,7 +478,8 @@ func TestPipelinerunLog_completed_taskrun_only(t *testing.T) {
 		),
 	}
 	prdata := []*v1alpha1.PipelineRun{
-		tb.PipelineRun(prName, ns,
+		tb.PipelineRun(prName,
+			tb.PipelineRunNamespace(ns),
 			tb.PipelineRunLabel("tekton.dev/pipeline", prName),
 			tb.PipelineRunSpec(pipelineName),
 			tb.PipelineRunStatus(
@@ -494,7 +506,8 @@ func TestPipelinerunLog_completed_taskrun_only(t *testing.T) {
 			},
 		},
 		Pods: []*corev1.Pod{
-			tb.Pod(tr1Pod, ns,
+			tb.Pod(tr1Pod,
+				tb.PodNamespace(ns),
 				tb.PodLabel("tekton.dev/task", pipelineName),
 				tb.PodSpec(
 					tb.PodContainer(tr1Step1Name, tr1Step1Name+":latest"),
@@ -515,10 +528,11 @@ func TestPipelinerunLog_completed_taskrun_only(t *testing.T) {
 	}
 
 	tdata2 := []*v1alpha1.Task{
-		tb.Task("output-task2", "ns", cb.TaskCreationTime(clockwork.NewFakeClock().Now())),
+		tb.Task("output-task2", tb.TaskNamespace("ns"), cb.TaskCreationTime(clockwork.NewFakeClock().Now())),
 	}
 	trdata2 := []*v1alpha1.TaskRun{
-		tb.TaskRun("output-taskrun2", "ns",
+		tb.TaskRun("output-taskrun2",
+			tb.TaskRunNamespace("ns"),
 			tb.TaskRunLabel("tekton.dev/task", "task"),
 			tb.TaskRunSpec(tb.TaskRunTaskRef("output-task2")),
 			tb.TaskRunStatus(
@@ -537,7 +551,8 @@ func TestPipelinerunLog_completed_taskrun_only(t *testing.T) {
 		),
 	}
 	prdata2 := []*v1alpha1.PipelineRun{
-		tb.PipelineRun("embedded-pipeline-1", "ns",
+		tb.PipelineRun("embedded-pipeline-1",
+			tb.PipelineRunNamespace("ns"),
 			tb.PipelineRunLabel("tekton.dev/pipeline", "embedded-pipeline-1"),
 			tb.PipelineRunSpec("", tb.PipelineRunPipelineSpec(
 				tb.PipelineTask("output-task2", "output-task2"),
@@ -566,7 +581,8 @@ func TestPipelinerunLog_completed_taskrun_only(t *testing.T) {
 			},
 		},
 		Pods: []*corev1.Pod{
-			tb.Pod("output-task-pod-embedded", "ns",
+			tb.Pod("output-task-pod-embedded",
+				tb.PodNamespace("ns"),
 				tb.PodSpec(
 					tb.PodContainer("test-step", "test-step1:latest"),
 					tb.PodContainer("nop2", "override-with-nop:latest"),
@@ -665,7 +681,8 @@ func TestPipelinerunLog_follow_mode(t *testing.T) {
 	}
 
 	trs := []*v1alpha1.TaskRun{
-		tb.TaskRun(tr1Name, ns,
+		tb.TaskRun(tr1Name,
+			tb.TaskRunNamespace(ns),
 			tb.TaskRunSpec(
 				tb.TaskRunTaskRef(task1Name),
 			),
@@ -692,7 +709,8 @@ func TestPipelinerunLog_follow_mode(t *testing.T) {
 	}
 
 	prs := []*v1alpha1.PipelineRun{
-		tb.PipelineRun(prName, ns,
+		tb.PipelineRun(prName,
+			tb.PipelineRunNamespace(ns),
 			tb.PipelineRunLabel("tekton.dev/pipeline", prName),
 			tb.PipelineRunSpec(pipelineName),
 			tb.PipelineRunStatus(
@@ -709,7 +727,8 @@ func TestPipelinerunLog_follow_mode(t *testing.T) {
 	}
 
 	pps := []*v1alpha1.Pipeline{
-		tb.Pipeline(pipelineName, ns,
+		tb.Pipeline(pipelineName,
+			tb.PipelineNamespace(ns),
 			tb.PipelineSpec(
 				tb.PipelineTask(task1Name, task1Name),
 			),
@@ -717,7 +736,8 @@ func TestPipelinerunLog_follow_mode(t *testing.T) {
 	}
 
 	p := []*corev1.Pod{
-		tb.Pod(tr1Pod, ns,
+		tb.Pod(tr1Pod,
+			tb.PodNamespace(ns),
 			tb.PodLabel("tekton.dev/task", pipelineName),
 			tb.PodSpec(
 				tb.PodContainer(tr1Step1Name, tr1Step1Name+":latest"),
@@ -785,12 +805,14 @@ func TestLogs_error_log(t *testing.T) {
 	}
 
 	ts := []*v1alpha1.Task{
-		tb.Task(taskName, ns,
+		tb.Task(taskName,
+			tb.TaskNamespace(ns),
 			tb.TaskSpec()),
 	}
 
 	prs := []*v1alpha1.PipelineRun{
-		tb.PipelineRun(prName, ns,
+		tb.PipelineRun(prName,
+			tb.PipelineRunNamespace(ns),
 			tb.PipelineRunLabel("tekton.dev/pipeline", prName),
 			tb.PipelineRunSpec(pipelineName),
 			tb.PipelineRunStatus(
@@ -803,7 +825,8 @@ func TestLogs_error_log(t *testing.T) {
 	}
 
 	ps := []*v1alpha1.Pipeline{
-		tb.Pipeline(pipelineName, ns,
+		tb.Pipeline(pipelineName,
+			tb.PipelineNamespace(ns),
 			tb.PipelineSpec(
 				tb.PipelineTask(taskName, taskName),
 			),
@@ -845,7 +868,8 @@ func TestLogs_nologs(t *testing.T) {
 	}
 
 	prs := []*v1alpha1.PipelineRun{
-		tb.PipelineRun(prName, ns,
+		tb.PipelineRun(prName,
+			tb.PipelineRunNamespace(ns),
 			tb.PipelineRunLabel("tekton.dev/pipeline", prName),
 			tb.PipelineRunSpec(pipelineName),
 			tb.PipelineRunStatus(
@@ -858,7 +882,8 @@ func TestLogs_nologs(t *testing.T) {
 	}
 
 	ps := []*v1alpha1.Pipeline{
-		tb.Pipeline(pipelineName, ns,
+		tb.Pipeline(pipelineName,
+			tb.PipelineNamespace(ns),
 			tb.PipelineSpec(
 				tb.PipelineTask(taskName, taskName),
 			),
@@ -900,7 +925,8 @@ func TestLog_run_failed_with_and_without_follow(t *testing.T) {
 	}
 
 	prs := []*v1alpha1.PipelineRun{
-		tb.PipelineRun(prName, ns,
+		tb.PipelineRun(prName,
+			tb.PipelineRunNamespace(ns),
 			tb.PipelineRunLabel("tekton.dev/pipeline", prName),
 			tb.PipelineRunSpec(pipelineName),
 			tb.PipelineRunStatus(
@@ -914,7 +940,8 @@ func TestLog_run_failed_with_and_without_follow(t *testing.T) {
 	}
 
 	ps := []*v1alpha1.Pipeline{
-		tb.Pipeline(pipelineName, ns,
+		tb.Pipeline(pipelineName,
+			tb.PipelineNamespace(ns),
 			tb.PipelineSpec(
 				tb.PipelineTask(taskName, taskName),
 			),
@@ -964,7 +991,8 @@ func TestLog_pipelinerun_still_running(t *testing.T) {
 	}
 
 	initialPRs := []*v1alpha1.PipelineRun{
-		tb.PipelineRun(prName, ns,
+		tb.PipelineRun(prName,
+			tb.PipelineRunNamespace(ns),
 			tb.PipelineRunLabel("tekton.dev/pipeline", prName),
 			tb.PipelineRunSpec(pipelineName),
 			tb.PipelineRunStatus(
@@ -978,7 +1006,8 @@ func TestLog_pipelinerun_still_running(t *testing.T) {
 	}
 
 	finalPRs := []*v1alpha1.PipelineRun{
-		tb.PipelineRun(prName, ns,
+		tb.PipelineRun(prName,
+			tb.PipelineRunNamespace(ns),
 			tb.PipelineRunStatus(
 				tb.PipelineRunStatusCondition(apis.Condition{
 					Type:    apis.ConditionSucceeded,
@@ -988,7 +1017,8 @@ func TestLog_pipelinerun_still_running(t *testing.T) {
 			),
 		),
 
-		tb.PipelineRun(prName, ns,
+		tb.PipelineRun(prName,
+			tb.PipelineRunNamespace(ns),
 			tb.PipelineRunStatus(
 				tb.PipelineRunStatusCondition(apis.Condition{
 					Type:    apis.ConditionSucceeded,
@@ -1000,7 +1030,8 @@ func TestLog_pipelinerun_still_running(t *testing.T) {
 	}
 
 	ps := []*v1alpha1.Pipeline{
-		tb.Pipeline(pipelineName, ns,
+		tb.Pipeline(pipelineName,
+			tb.PipelineNamespace(ns),
 			tb.PipelineSpec(
 				tb.PipelineTask(taskName, taskName),
 			),
@@ -1046,7 +1077,8 @@ func TestLog_pipelinerun_status_done(t *testing.T) {
 	}
 
 	prs := []*v1alpha1.PipelineRun{
-		tb.PipelineRun(prName, ns,
+		tb.PipelineRun(prName,
+			tb.PipelineRunNamespace(ns),
 			tb.PipelineRunLabel("tekton.dev/pipeline", prName),
 			tb.PipelineRunSpec(pipelineName),
 			tb.PipelineRunStatus(
@@ -1060,7 +1092,8 @@ func TestLog_pipelinerun_status_done(t *testing.T) {
 	}
 
 	ps := []*v1alpha1.Pipeline{
-		tb.Pipeline(pipelineName, ns,
+		tb.Pipeline(pipelineName,
+			tb.PipelineNamespace(ns),
 			tb.PipelineSpec(
 				tb.PipelineTask(taskName, taskName),
 			),
@@ -1120,7 +1153,8 @@ func TestLog_pipelinerun_last(t *testing.T) {
 	}
 
 	pipelines := []*v1alpha1.Pipeline{
-		tb.Pipeline(pipelineName, ns,
+		tb.Pipeline(pipelineName,
+			tb.PipelineNamespace(ns),
 			tb.PipelineSpec(
 				tb.PipelineTask(taskName, taskName),
 			),
@@ -1128,7 +1162,8 @@ func TestLog_pipelinerun_last(t *testing.T) {
 	}
 
 	pipelineruns := []*v1alpha1.PipelineRun{
-		tb.PipelineRun(prName2, ns,
+		tb.PipelineRun(prName2,
+			tb.PipelineRunNamespace(ns),
 			tb.PipelineRunLabel("tekton.dev/pipeline", pipelineName),
 			tb.PipelineRunSpec(pipelineName),
 			tb.PipelineRunStatus(
@@ -1139,7 +1174,8 @@ func TestLog_pipelinerun_last(t *testing.T) {
 				}),
 			),
 		),
-		tb.PipelineRun(prName, ns,
+		tb.PipelineRun(prName,
+			tb.PipelineRunNamespace(ns),
 			tb.PipelineRunLabel("tekton.dev/pipeline", pipelineName),
 			tb.PipelineRunSpec(pipelineName),
 			tb.PipelineRunStatus(
@@ -1198,7 +1234,8 @@ func TestLog_pipelinerun_only_one(t *testing.T) {
 	}
 
 	pipelines := []*v1alpha1.Pipeline{
-		tb.Pipeline(pipelineName, ns,
+		tb.Pipeline(pipelineName,
+			tb.PipelineNamespace(ns),
 			tb.PipelineSpec(
 				tb.PipelineTask(taskName, taskName),
 			),
@@ -1206,7 +1243,8 @@ func TestLog_pipelinerun_only_one(t *testing.T) {
 	}
 
 	pipelineruns := []*v1alpha1.PipelineRun{
-		tb.PipelineRun(prName, ns,
+		tb.PipelineRun(prName,
+			tb.PipelineRunNamespace(ns),
 			tb.PipelineRunLabel("tekton.dev/pipeline", pipelineName),
 			tb.PipelineRunSpec(pipelineName),
 			tb.PipelineRunStatus(
@@ -1282,7 +1320,8 @@ func TestPipelinerunLog_completed_taskrun_only_v1bea1(t *testing.T) {
 	)
 
 	trdata := []*v1alpha1.TaskRun{
-		tb.TaskRun(tr1Name, ns,
+		tb.TaskRun(tr1Name,
+			tb.TaskRunNamespace(ns),
 			tb.TaskRunSpec(
 				tb.TaskRunTaskRef(task1Name),
 			),
@@ -1308,7 +1347,8 @@ func TestPipelinerunLog_completed_taskrun_only_v1bea1(t *testing.T) {
 		),
 	}
 	pdata := []*v1alpha1.Pipeline{
-		tb.Pipeline(pipelineName, ns,
+		tb.Pipeline(pipelineName,
+			tb.PipelineNamespace(ns),
 			tb.PipelineSpec(
 				tb.PipelineTask(task1Name, task1Name),
 				tb.PipelineTask(task2Name, task2Name),
@@ -1318,7 +1358,8 @@ func TestPipelinerunLog_completed_taskrun_only_v1bea1(t *testing.T) {
 		),
 	}
 	prdata := []*v1alpha1.PipelineRun{
-		tb.PipelineRun(prName, ns,
+		tb.PipelineRun(prName,
+			tb.PipelineRunNamespace(ns),
 			tb.PipelineRunLabel("tekton.dev/pipeline", prName),
 			tb.PipelineRunSpec(pipelineName),
 			tb.PipelineRunStatus(
@@ -1345,7 +1386,8 @@ func TestPipelinerunLog_completed_taskrun_only_v1bea1(t *testing.T) {
 			},
 		},
 		Pods: []*corev1.Pod{
-			tb.Pod(tr1Pod, ns,
+			tb.Pod(tr1Pod,
+				tb.PodNamespace(ns),
 				tb.PodLabel("tekton.dev/task", pipelineName),
 				tb.PodSpec(
 					tb.PodContainer(tr1Step1Name, tr1Step1Name+":latest"),
@@ -1366,10 +1408,11 @@ func TestPipelinerunLog_completed_taskrun_only_v1bea1(t *testing.T) {
 	}
 
 	tdata2 := []*v1alpha1.Task{
-		tb.Task("output-task2", "ns", cb.TaskCreationTime(clockwork.NewFakeClock().Now())),
+		tb.Task("output-task2", tb.TaskNamespace("ns"), cb.TaskCreationTime(clockwork.NewFakeClock().Now())),
 	}
 	trdata2 := []*v1alpha1.TaskRun{
-		tb.TaskRun("output-taskrun2", "ns",
+		tb.TaskRun("output-taskrun2",
+			tb.TaskRunNamespace("ns"),
 			tb.TaskRunLabel("tekton.dev/task", "task"),
 			tb.TaskRunSpec(tb.TaskRunTaskRef("output-task2")),
 			tb.TaskRunStatus(
@@ -1388,7 +1431,8 @@ func TestPipelinerunLog_completed_taskrun_only_v1bea1(t *testing.T) {
 		),
 	}
 	prdata2 := []*v1alpha1.PipelineRun{
-		tb.PipelineRun("embedded-pipeline-1", "ns",
+		tb.PipelineRun("embedded-pipeline-1",
+			tb.PipelineRunNamespace("ns"),
 			tb.PipelineRunLabel("tekton.dev/pipeline", "embedded-pipeline-1"),
 			tb.PipelineRunSpec("", tb.PipelineRunPipelineSpec(
 				tb.PipelineTask("output-task2", "output-task2"),
@@ -1417,7 +1461,8 @@ func TestPipelinerunLog_completed_taskrun_only_v1bea1(t *testing.T) {
 			},
 		},
 		Pods: []*corev1.Pod{
-			tb.Pod("output-task-pod-embedded", "ns",
+			tb.Pod("output-task-pod-embedded",
+				tb.PodNamespace("ns"),
 				tb.PodSpec(
 					tb.PodContainer("test-step", "test-step1:latest"),
 					tb.PodContainer("nop2", "override-with-nop:latest"),
@@ -1516,7 +1561,8 @@ func TestPipelinerunLog_follow_mode_v1beta1(t *testing.T) {
 	}
 
 	trs := []*v1alpha1.TaskRun{
-		tb.TaskRun(tr1Name, ns,
+		tb.TaskRun(tr1Name,
+			tb.TaskRunNamespace(ns),
 			tb.TaskRunSpec(
 				tb.TaskRunTaskRef(task1Name),
 			),
@@ -1543,7 +1589,8 @@ func TestPipelinerunLog_follow_mode_v1beta1(t *testing.T) {
 	}
 
 	prs := []*v1alpha1.PipelineRun{
-		tb.PipelineRun(prName, ns,
+		tb.PipelineRun(prName,
+			tb.PipelineRunNamespace(ns),
 			tb.PipelineRunLabel("tekton.dev/pipeline", prName),
 			tb.PipelineRunSpec(pipelineName),
 			tb.PipelineRunStatus(
@@ -1560,7 +1607,8 @@ func TestPipelinerunLog_follow_mode_v1beta1(t *testing.T) {
 	}
 
 	pps := []*v1alpha1.Pipeline{
-		tb.Pipeline(pipelineName, ns,
+		tb.Pipeline(pipelineName,
+			tb.PipelineNamespace(ns),
 			tb.PipelineSpec(
 				tb.PipelineTask(task1Name, task1Name),
 			),
@@ -1568,7 +1616,8 @@ func TestPipelinerunLog_follow_mode_v1beta1(t *testing.T) {
 	}
 
 	p := []*corev1.Pod{
-		tb.Pod(tr1Pod, ns,
+		tb.Pod(tr1Pod,
+			tb.PodNamespace(ns),
 			tb.PodLabel("tekton.dev/task", pipelineName),
 			tb.PodSpec(
 				tb.PodContainer(tr1Step1Name, tr1Step1Name+":latest"),
@@ -1636,12 +1685,14 @@ func TestLogs_error_log_v1beta1(t *testing.T) {
 	}
 
 	ts := []*v1alpha1.Task{
-		tb.Task(taskName, ns,
+		tb.Task(taskName,
+			tb.TaskNamespace(ns),
 			tb.TaskSpec()),
 	}
 
 	prs := []*v1alpha1.PipelineRun{
-		tb.PipelineRun(prName, ns,
+		tb.PipelineRun(prName,
+			tb.PipelineRunNamespace(ns),
 			tb.PipelineRunLabel("tekton.dev/pipeline", prName),
 			tb.PipelineRunSpec(pipelineName),
 			tb.PipelineRunStatus(
@@ -1654,7 +1705,8 @@ func TestLogs_error_log_v1beta1(t *testing.T) {
 	}
 
 	ps := []*v1alpha1.Pipeline{
-		tb.Pipeline(pipelineName, ns,
+		tb.Pipeline(pipelineName,
+			tb.PipelineNamespace(ns),
 			tb.PipelineSpec(
 				tb.PipelineTask(taskName, taskName),
 			),
@@ -1696,7 +1748,8 @@ func TestLogs_nologs_v1beta1(t *testing.T) {
 	}
 
 	prs := []*v1alpha1.PipelineRun{
-		tb.PipelineRun(prName, ns,
+		tb.PipelineRun(prName,
+			tb.PipelineRunNamespace(ns),
 			tb.PipelineRunLabel("tekton.dev/pipeline", prName),
 			tb.PipelineRunSpec(pipelineName),
 			tb.PipelineRunStatus(
@@ -1709,7 +1762,8 @@ func TestLogs_nologs_v1beta1(t *testing.T) {
 	}
 
 	ps := []*v1alpha1.Pipeline{
-		tb.Pipeline(pipelineName, ns,
+		tb.Pipeline(pipelineName,
+			tb.PipelineNamespace(ns),
 			tb.PipelineSpec(
 				tb.PipelineTask(taskName, taskName),
 			),
@@ -1751,7 +1805,8 @@ func TestLog_run_failed_with_and_without_follow_v1beta1(t *testing.T) {
 	}
 
 	prs := []*v1alpha1.PipelineRun{
-		tb.PipelineRun(prName, ns,
+		tb.PipelineRun(prName,
+			tb.PipelineRunNamespace(ns),
 			tb.PipelineRunLabel("tekton.dev/pipeline", prName),
 			tb.PipelineRunSpec(pipelineName),
 			tb.PipelineRunStatus(
@@ -1765,7 +1820,8 @@ func TestLog_run_failed_with_and_without_follow_v1beta1(t *testing.T) {
 	}
 
 	ps := []*v1alpha1.Pipeline{
-		tb.Pipeline(pipelineName, ns,
+		tb.Pipeline(pipelineName,
+			tb.PipelineNamespace(ns),
 			tb.PipelineSpec(
 				tb.PipelineTask(taskName, taskName),
 			),
@@ -1815,7 +1871,8 @@ func TestLog_pipelinerun_still_running_v1beta1(t *testing.T) {
 	}
 
 	initialPRs := []*v1alpha1.PipelineRun{
-		tb.PipelineRun(prName, ns,
+		tb.PipelineRun(prName,
+			tb.PipelineRunNamespace(ns),
 			tb.PipelineRunLabel("tekton.dev/pipeline", prName),
 			tb.PipelineRunSpec(pipelineName),
 			tb.PipelineRunStatus(
@@ -1829,7 +1886,8 @@ func TestLog_pipelinerun_still_running_v1beta1(t *testing.T) {
 	}
 
 	finalPRs := []*v1alpha1.PipelineRun{
-		tb.PipelineRun(prName, ns,
+		tb.PipelineRun(prName,
+			tb.PipelineRunNamespace(ns),
 			tb.PipelineRunStatus(
 				tb.PipelineRunStatusCondition(apis.Condition{
 					Type:    apis.ConditionSucceeded,
@@ -1839,7 +1897,8 @@ func TestLog_pipelinerun_still_running_v1beta1(t *testing.T) {
 			),
 		),
 
-		tb.PipelineRun(prName, ns,
+		tb.PipelineRun(prName,
+			tb.PipelineRunNamespace(ns),
 			tb.PipelineRunStatus(
 				tb.PipelineRunStatusCondition(apis.Condition{
 					Type:    apis.ConditionSucceeded,
@@ -1851,7 +1910,8 @@ func TestLog_pipelinerun_still_running_v1beta1(t *testing.T) {
 	}
 
 	ps := []*v1alpha1.Pipeline{
-		tb.Pipeline(pipelineName, ns,
+		tb.Pipeline(pipelineName,
+			tb.PipelineNamespace(ns),
 			tb.PipelineSpec(
 				tb.PipelineTask(taskName, taskName),
 			),
@@ -1897,7 +1957,8 @@ func TestLog_pipelinerun_status_done_v1beta1(t *testing.T) {
 	}
 
 	prs := []*v1alpha1.PipelineRun{
-		tb.PipelineRun(prName, ns,
+		tb.PipelineRun(prName,
+			tb.PipelineRunNamespace(ns),
 			tb.PipelineRunLabel("tekton.dev/pipeline", prName),
 			tb.PipelineRunSpec(pipelineName),
 			tb.PipelineRunStatus(
@@ -1911,7 +1972,8 @@ func TestLog_pipelinerun_status_done_v1beta1(t *testing.T) {
 	}
 
 	ps := []*v1alpha1.Pipeline{
-		tb.Pipeline(pipelineName, ns,
+		tb.Pipeline(pipelineName,
+			tb.PipelineNamespace(ns),
 			tb.PipelineSpec(
 				tb.PipelineTask(taskName, taskName),
 			),
@@ -1970,7 +2032,8 @@ func TestLog_pipelinerun_last_v1beta1(t *testing.T) {
 	}
 
 	pipelines := []*v1alpha1.Pipeline{
-		tb.Pipeline(pipelineName, ns,
+		tb.Pipeline(pipelineName,
+			tb.PipelineNamespace(ns),
 			tb.PipelineSpec(
 				tb.PipelineTask(taskName, taskName),
 			),
@@ -1978,7 +2041,8 @@ func TestLog_pipelinerun_last_v1beta1(t *testing.T) {
 	}
 
 	pipelineruns := []*v1alpha1.PipelineRun{
-		tb.PipelineRun(prName2, ns,
+		tb.PipelineRun(prName2,
+			tb.PipelineRunNamespace(ns),
 			tb.PipelineRunLabel("tekton.dev/pipeline", pipelineName),
 			tb.PipelineRunSpec(pipelineName),
 			tb.PipelineRunStatus(
@@ -1989,7 +2053,8 @@ func TestLog_pipelinerun_last_v1beta1(t *testing.T) {
 				}),
 			),
 		),
-		tb.PipelineRun(prName, ns,
+		tb.PipelineRun(prName,
+			tb.PipelineRunNamespace(ns),
 			tb.PipelineRunLabel("tekton.dev/pipeline", pipelineName),
 			tb.PipelineRunSpec(pipelineName),
 			tb.PipelineRunStatus(
@@ -2047,7 +2112,8 @@ func TestLog_pipelinerun_only_one_v1beta1(t *testing.T) {
 	}
 
 	pipelines := []*v1alpha1.Pipeline{
-		tb.Pipeline(pipelineName, ns,
+		tb.Pipeline(pipelineName,
+			tb.PipelineNamespace(ns),
 			tb.PipelineSpec(
 				tb.PipelineTask(taskName, taskName),
 			),
@@ -2055,7 +2121,8 @@ func TestLog_pipelinerun_only_one_v1beta1(t *testing.T) {
 	}
 
 	pipelineruns := []*v1alpha1.PipelineRun{
-		tb.PipelineRun(prName, ns,
+		tb.PipelineRun(prName,
+			tb.PipelineRunNamespace(ns),
 			tb.PipelineRunLabel("tekton.dev/pipeline", pipelineName),
 			tb.PipelineRunSpec(pipelineName),
 			tb.PipelineRunStatus(

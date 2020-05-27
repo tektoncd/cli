@@ -47,14 +47,16 @@ func TestPipelineRunDelete(t *testing.T) {
 	}
 
 	pdata := []*v1alpha1.Pipeline{
-		tb.Pipeline("pipeline", "ns",
+		tb.Pipeline("pipeline",
+			tb.PipelineNamespace("ns"),
 			// created  5 minutes back
 			cb.PipelineCreationTimestamp(clock.Now().Add(-5*time.Minute)),
 		),
 	}
 
 	prdata := []*v1alpha1.PipelineRun{
-		tb.PipelineRun("pipeline-run-1", "ns",
+		tb.PipelineRun("pipeline-run-1",
+			tb.PipelineRunNamespace("ns"),
 			cb.PipelineRunCreationTimestamp(clock.Now()),
 			tb.PipelineRunLabel("tekton.dev/pipeline", "pipeline"),
 			tb.PipelineRunSpec("pipeline"),
@@ -69,7 +71,8 @@ func TestPipelineRunDelete(t *testing.T) {
 				cb.PipelineRunCompletionTime(clock.Now().Add(10*time.Minute)),
 			),
 		),
-		tb.PipelineRun("pipeline-run-2", "ns",
+		tb.PipelineRun("pipeline-run-2",
+			tb.PipelineRunNamespace("ns"),
 			cb.PipelineRunCreationTimestamp(clock.Now()),
 			tb.PipelineRunLabel("tekton.dev/pipeline", "pipeline"),
 			tb.PipelineRunSpec("pipeline"),
@@ -84,7 +87,8 @@ func TestPipelineRunDelete(t *testing.T) {
 				cb.PipelineRunCompletionTime(clock.Now().Add(10*time.Minute)),
 			),
 		),
-		tb.PipelineRun("pipeline-run-3", "ns",
+		tb.PipelineRun("pipeline-run-3",
+			tb.PipelineRunNamespace("ns"),
 			cb.PipelineRunCreationTimestamp(clock.Now()),
 			tb.PipelineRunLabel("tekton.dev/pipeline", "pipeline"),
 			tb.PipelineRunSpec("pipeline"),
@@ -311,14 +315,16 @@ func TestPipelineRunDelete_v1beta1(t *testing.T) {
 	}
 
 	pdata := []*v1alpha1.Pipeline{
-		tb.Pipeline("pipeline", "ns",
+		tb.Pipeline("pipeline",
+			tb.PipelineNamespace("ns"),
 			// created  5 minutes back
 			cb.PipelineCreationTimestamp(clock.Now().Add(-5*time.Minute)),
 		),
 	}
 
 	prdata := []*v1alpha1.PipelineRun{
-		tb.PipelineRun("pipeline-run-1", "ns",
+		tb.PipelineRun("pipeline-run-1",
+			tb.PipelineRunNamespace("ns"),
 			cb.PipelineRunCreationTimestamp(clock.Now()),
 			tb.PipelineRunLabel("tekton.dev/pipeline", "pipeline"),
 			tb.PipelineRunSpec("pipeline"),
@@ -333,7 +339,8 @@ func TestPipelineRunDelete_v1beta1(t *testing.T) {
 				cb.PipelineRunCompletionTime(clock.Now().Add(10*time.Minute)),
 			),
 		),
-		tb.PipelineRun("pipeline-run-2", "ns",
+		tb.PipelineRun("pipeline-run-2",
+			tb.PipelineRunNamespace("ns"),
 			cb.PipelineRunCreationTimestamp(clock.Now()),
 			tb.PipelineRunLabel("tekton.dev/pipeline", "pipeline"),
 			tb.PipelineRunSpec("pipeline"),
@@ -348,7 +355,8 @@ func TestPipelineRunDelete_v1beta1(t *testing.T) {
 				cb.PipelineRunCompletionTime(clock.Now().Add(10*time.Minute)),
 			),
 		),
-		tb.PipelineRun("pipeline-run-3", "ns",
+		tb.PipelineRun("pipeline-run-3",
+			tb.PipelineRunNamespace("ns"),
 			cb.PipelineRunCreationTimestamp(clock.Now()),
 			tb.PipelineRunLabel("tekton.dev/pipeline", "pipeline"),
 			tb.PipelineRunSpec("pipeline"),

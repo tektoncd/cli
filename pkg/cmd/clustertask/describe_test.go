@@ -80,7 +80,8 @@ func Test_ClusterTaskDescribe(t *testing.T) {
 	}
 
 	taskruns := []*v1alpha1.TaskRun{
-		tb.TaskRun("taskrun-1", "ns",
+		tb.TaskRun("taskrun-1",
+			tb.TaskRunNamespace("ns"),
 			tb.TaskRunLabel("tekton.dev/task", "clustertask-full"),
 			tb.TaskRunSpec(
 				tb.TaskRunTaskRef("clustertask-full", tb.TaskRefKind(v1alpha1.ClusterTaskKind)),
@@ -99,7 +100,8 @@ func Test_ClusterTaskDescribe(t *testing.T) {
 				}),
 			),
 		),
-		tb.TaskRun("taskrun-2", "ns",
+		tb.TaskRun("taskrun-2",
+			tb.TaskRunNamespace("ns"),
 			tb.TaskRunLabel("tekton.dev/task", "clustertask-one-everything"),
 			tb.TaskRunSpec(
 				tb.TaskRunTaskRef("clustertask-one-everything", tb.TaskRefKind(v1alpha1.ClusterTaskKind)),
@@ -116,7 +118,8 @@ func Test_ClusterTaskDescribe(t *testing.T) {
 				}),
 			),
 		),
-		tb.TaskRun("taskrun-3", "ns",
+		tb.TaskRun("taskrun-3",
+			tb.TaskRunNamespace("ns"),
 			tb.TaskRunLabel("tekton.dev/task", "clustertask-full"),
 			tb.TaskRunSpec(
 				tb.TaskRunTaskRef("clustertask-full", tb.TaskRefKind(v1alpha1.ClusterTaskKind)),
@@ -134,7 +137,8 @@ func Test_ClusterTaskDescribe(t *testing.T) {
 				}),
 			),
 		),
-		tb.TaskRun("taskrun-4", "ns",
+		tb.TaskRun("taskrun-4",
+			tb.TaskRunNamespace("ns"),
 			tb.TaskRunLabel("tekton.dev/task", "clustertask-full"),
 			tb.TaskRunSpec(
 				tb.TaskRunTaskRef("clustertask-full", tb.TaskRefKind(v1alpha1.NamespacedTaskKind)),

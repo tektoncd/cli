@@ -41,11 +41,11 @@ func TestPipelineRunsList_with_single_run(t *testing.T) {
 	runDuration := 1 * time.Minute
 
 	prdata := []*v1alpha1.PipelineRun{
-		tb.PipelineRun("pipelinerun", "ns",
+		tb.PipelineRun("pipelinerun", tb.PipelineRunNamespace("ns"),
 			tb.PipelineRunLabel("tekton.dev/pipeline", "random"),
 			tb.PipelineRunStatus(),
 		),
-		tb.PipelineRun("pipelinerun1", "ns",
+		tb.PipelineRun("pipelinerun1", tb.PipelineRunNamespace("ns"),
 			tb.PipelineRunLabel("tekton.dev/pipeline", "pipeline"),
 			tb.PipelineRunStatus(
 				tb.PipelineRunStatusCondition(apis.Condition{
@@ -56,7 +56,7 @@ func TestPipelineRunsList_with_single_run(t *testing.T) {
 				cb.PipelineRunCompletionTime(pr1Started.Add(runDuration)),
 			),
 		),
-		tb.PipelineRun("pipelinerun2", "ns",
+		tb.PipelineRun("pipelinerun2", tb.PipelineRunNamespace("ns"),
 			tb.PipelineRunLabel("tekton.dev/pipeline", "pipeline"),
 			tb.PipelineRunStatus(
 				tb.PipelineRunStatusCondition(apis.Condition{
@@ -284,7 +284,7 @@ func TestPipelineRunGet(t *testing.T) {
 	runDuration := 1 * time.Minute
 
 	prdata := []*v1alpha1.PipelineRun{
-		tb.PipelineRun("pipelinerun1", "ns",
+		tb.PipelineRun("pipelinerun1", tb.PipelineRunNamespace("ns"),
 			tb.PipelineRunLabel("tekton.dev/pipeline", "pipeline"),
 			tb.PipelineRunSpec("pipeline"),
 			tb.PipelineRunStatus(
@@ -296,7 +296,7 @@ func TestPipelineRunGet(t *testing.T) {
 				cb.PipelineRunCompletionTime(pr1Started.Add(runDuration)),
 			),
 		),
-		tb.PipelineRun("pipelinerun2", "ns",
+		tb.PipelineRun("pipelinerun2", tb.PipelineRunNamespace("ns"),
 			tb.PipelineRunLabel("tekton.dev/pipeline", "pipeline"),
 			tb.PipelineRunSpec("pipeline"),
 			tb.PipelineRunStatus(

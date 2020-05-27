@@ -212,6 +212,11 @@ func (ps *PipelineSpec) Validate(ctx context.Context) *apis.FieldError {
 		return err
 	}
 
+	// Validate the pipeline's results
+	if err := validatePipelineResults(ps.Results); err != nil {
+		return apis.ErrInvalidValue(err.Error(), "spec.tasks.params.value")
+	}
+
 	return nil
 }
 
@@ -345,4 +350,21 @@ func filter(arr []string, cond func(string) bool) []string {
 		}
 	}
 	return result
+}
+
+// validatePipelineResults ensure that task result variables are properly configured
+func validatePipelineResults(results []PipelineResult) error {
+	for _, result := range results {
+		expressions, ok := GetVarSubstitutionExpressionsForPipelineResult(result)
+		if ok {
+			if LooksLikeContainsResultRefs(expressions) {
+				expressions = filter(expressions, looksLikeResultRef)
+				resultRefs := NewResultRefs(expressions)
+				if len(expressions) != len(resultRefs) {
+					return fmt.Errorf("expected all of the expressions %v to be result expressions but only %v were", expressions, resultRefs)
+				}
+			}
+		}
+	}
+	return nil
 }

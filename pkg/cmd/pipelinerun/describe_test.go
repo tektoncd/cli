@@ -89,7 +89,8 @@ func TestPipelineRunDescribe_only_taskrun(t *testing.T) {
 	clock := clockwork.NewFakeClock()
 
 	trs := []*v1alpha1.TaskRun{
-		tb.TaskRun("tr-1", "ns",
+		tb.TaskRun("tr-1",
+			tb.TaskRunNamespace("ns"),
 			tb.TaskRunStatus(
 				tb.TaskRunStartTime(clock.Now().Add(2*time.Minute)),
 				cb.TaskRunCompletionTime(clock.Now().Add(5*time.Minute)),
@@ -102,7 +103,8 @@ func TestPipelineRunDescribe_only_taskrun(t *testing.T) {
 	}
 
 	pipelineRuns := []*v1alpha1.PipelineRun{
-		tb.PipelineRun("pipeline-run", "ns",
+		tb.PipelineRun("pipeline-run",
+			tb.PipelineRunNamespace("ns"),
 			cb.PipelineRunCreationTimestamp(clock.Now()),
 			tb.PipelineRunLabel("tekton.dev/pipeline", "pipeline"),
 			tb.PipelineRunSpec("pipeline"),
@@ -157,7 +159,8 @@ func TestPipelineRunDescribe_multiple_taskrun_ordering(t *testing.T) {
 	clock := clockwork.NewFakeClock()
 
 	trs := []*v1alpha1.TaskRun{
-		tb.TaskRun("tr-1", "ns",
+		tb.TaskRun("tr-1",
+			tb.TaskRunNamespace("ns"),
 			tb.TaskRunStatus(
 				tb.TaskRunStartTime(clock.Now().Add(2*time.Minute)),
 				cb.TaskRunCompletionTime(clock.Now().Add(5*time.Minute)),
@@ -167,7 +170,8 @@ func TestPipelineRunDescribe_multiple_taskrun_ordering(t *testing.T) {
 				}),
 			),
 		),
-		tb.TaskRun("tr-2", "ns",
+		tb.TaskRun("tr-2",
+			tb.TaskRunNamespace("ns"),
 			tb.TaskRunStatus(
 				tb.TaskRunStartTime(clock.Now().Add(5*time.Minute)),
 				cb.TaskRunCompletionTime(clock.Now().Add(9*time.Minute)),
@@ -180,7 +184,8 @@ func TestPipelineRunDescribe_multiple_taskrun_ordering(t *testing.T) {
 	}
 
 	pipelineRuns := []*v1alpha1.PipelineRun{
-		tb.PipelineRun("pipeline-run", "ns",
+		tb.PipelineRun("pipeline-run",
+			tb.PipelineRunNamespace("ns"),
 			cb.PipelineRunCreationTimestamp(clock.Now()),
 			tb.PipelineRunLabel("tekton.dev/pipeline", "pipeline"),
 			tb.PipelineRunSpec("pipeline"),
@@ -241,7 +246,8 @@ func TestPipelineRunDescribe_failed(t *testing.T) {
 	clock := clockwork.NewFakeClock()
 
 	trs := []*v1alpha1.TaskRun{
-		tb.TaskRun("tr-1", "ns",
+		tb.TaskRun("tr-1",
+			tb.TaskRunNamespace("ns"),
 			tb.TaskRunStatus(
 				tb.TaskRunStartTime(clock.Now().Add(2*time.Minute)),
 				cb.TaskRunCompletionTime(clock.Now().Add(5*time.Minute)),
@@ -255,7 +261,8 @@ func TestPipelineRunDescribe_failed(t *testing.T) {
 	}
 
 	pipelineRuns := []*v1alpha1.PipelineRun{
-		tb.PipelineRun("pipeline-run", "ns",
+		tb.PipelineRun("pipeline-run",
+			tb.PipelineRunNamespace("ns"),
 			cb.PipelineRunCreationTimestamp(clock.Now()),
 			tb.PipelineRunLabel("tekton.dev/pipeline", "pipeline"),
 			tb.PipelineRunSpec("pipeline",
@@ -313,7 +320,8 @@ func TestPipelineRunDescribe_failed_withoutTRCondition(t *testing.T) {
 	clock := clockwork.NewFakeClock()
 
 	trs := []*v1alpha1.TaskRun{
-		tb.TaskRun("tr-1", "ns",
+		tb.TaskRun("tr-1",
+			tb.TaskRunNamespace("ns"),
 			tb.TaskRunStatus(
 				tb.TaskRunStartTime(clock.Now().Add(2*time.Minute)),
 				cb.TaskRunCompletionTime(clock.Now().Add(5*time.Minute)),
@@ -322,7 +330,8 @@ func TestPipelineRunDescribe_failed_withoutTRCondition(t *testing.T) {
 	}
 
 	pipelineRuns := []*v1alpha1.PipelineRun{
-		tb.PipelineRun("pipeline-run", "ns",
+		tb.PipelineRun("pipeline-run",
+			tb.PipelineRunNamespace("ns"),
 			cb.PipelineRunCreationTimestamp(clock.Now()),
 			tb.PipelineRunLabel("tekton.dev/pipeline", "pipeline"),
 			tb.PipelineRunSpec("pipeline",
@@ -380,7 +389,8 @@ func TestPipelineRunDescribe_failed_withoutPRCondition(t *testing.T) {
 	clock := clockwork.NewFakeClock()
 
 	trs := []*v1alpha1.TaskRun{
-		tb.TaskRun("tr-1", "ns",
+		tb.TaskRun("tr-1",
+			tb.TaskRunNamespace("ns"),
 			tb.TaskRunStatus(
 				tb.TaskRunStartTime(clock.Now().Add(2*time.Minute)),
 				cb.TaskRunCompletionTime(clock.Now().Add(5*time.Minute)),
@@ -389,7 +399,8 @@ func TestPipelineRunDescribe_failed_withoutPRCondition(t *testing.T) {
 	}
 
 	pipelineRuns := []*v1alpha1.PipelineRun{
-		tb.PipelineRun("pipeline-run", "ns",
+		tb.PipelineRun("pipeline-run",
+			tb.PipelineRunNamespace("ns"),
 			cb.PipelineRunCreationTimestamp(clock.Now()),
 			tb.PipelineRunLabel("tekton.dev/pipeline", "pipeline"),
 			tb.PipelineRunSpec("pipeline",
@@ -442,7 +453,8 @@ func TestPipelineRunDescribe_with_resources_taskrun(t *testing.T) {
 	clock := clockwork.NewFakeClock()
 
 	trs := []*v1alpha1.TaskRun{
-		tb.TaskRun("tr-1", "ns",
+		tb.TaskRun("tr-1",
+			tb.TaskRunNamespace("ns"),
 			tb.TaskRunStatus(
 				tb.TaskRunStartTime(clock.Now().Add(2*time.Minute)),
 				cb.TaskRunCompletionTime(clock.Now().Add(5*time.Minute)),
@@ -455,7 +467,8 @@ func TestPipelineRunDescribe_with_resources_taskrun(t *testing.T) {
 	}
 
 	pipelineRuns := []*v1alpha1.PipelineRun{
-		tb.PipelineRun("pipeline-run", "ns",
+		tb.PipelineRun("pipeline-run",
+			tb.PipelineRunNamespace("ns"),
 			cb.PipelineRunCreationTimestamp(clock.Now()),
 			tb.PipelineRunLabel("tekton.dev/pipeline", "pipeline"),
 			tb.PipelineRunSpec("pipeline",
@@ -516,7 +529,8 @@ func TestPipelineRunDescribe_without_start_time(t *testing.T) {
 	clock := clockwork.NewFakeClock()
 
 	pipelineRuns := []*v1alpha1.PipelineRun{
-		tb.PipelineRun("pipeline-run", "ns",
+		tb.PipelineRun("pipeline-run",
+			tb.PipelineRunNamespace("ns"),
 			cb.PipelineRunCreationTimestamp(clock.Now()),
 			tb.PipelineRunLabel("tekton.dev/pipeline", "pipeline"),
 			tb.PipelineRunSpec("pipeline"),
@@ -557,7 +571,8 @@ func TestPipelineRunDescribe_without_pipelineref(t *testing.T) {
 	clock := clockwork.NewFakeClock()
 
 	pipelineRuns := []*v1alpha1.PipelineRun{
-		tb.PipelineRun("pipeline-run", "ns",
+		tb.PipelineRun("pipeline-run",
+			tb.PipelineRunNamespace("ns"),
 			cb.PipelineRunCreationTimestamp(clock.Now()),
 			tb.PipelineRunLabel("tekton.dev/pipeline", "pipeline"),
 			tb.PipelineRunStatus(),
@@ -597,7 +612,8 @@ func TestPipelineRunDescribe_no_resourceref(t *testing.T) {
 	clock := clockwork.NewFakeClock()
 
 	trs := []*v1alpha1.TaskRun{
-		tb.TaskRun("tr-1", "ns",
+		tb.TaskRun("tr-1",
+			tb.TaskRunNamespace("ns"),
 			tb.TaskRunStatus(
 				tb.TaskRunStartTime(clock.Now().Add(2*time.Minute)),
 				cb.TaskRunCompletionTime(clock.Now().Add(5*time.Minute)),
@@ -610,7 +626,8 @@ func TestPipelineRunDescribe_no_resourceref(t *testing.T) {
 	}
 
 	pipelineRuns := []*v1alpha1.PipelineRun{
-		tb.PipelineRun("pipeline-run", "ns",
+		tb.PipelineRun("pipeline-run",
+			tb.PipelineRunNamespace("ns"),
 			cb.PipelineRunCreationTimestamp(clock.Now()),
 			tb.PipelineRunLabel("tekton.dev/pipeline", "pipeline"),
 			tb.PipelineRunSpec("pipeline",
@@ -669,7 +686,8 @@ func TestPipelineRunDescribe_cancelled_pipelinerun(t *testing.T) {
 	clock := clockwork.NewFakeClock()
 
 	trs := []*v1alpha1.TaskRun{
-		tb.TaskRun("tr-1", "ns",
+		tb.TaskRun("tr-1",
+			tb.TaskRunNamespace("ns"),
 			tb.TaskRunStatus(
 				tb.TaskRunStartTime(clock.Now().Add(2*time.Minute)),
 				cb.TaskRunCompletionTime(clock.Now().Add(5*time.Minute)),
@@ -682,7 +700,8 @@ func TestPipelineRunDescribe_cancelled_pipelinerun(t *testing.T) {
 	}
 
 	pipelineRuns := []*v1alpha1.PipelineRun{
-		tb.PipelineRun("pipeline-run", "ns",
+		tb.PipelineRun("pipeline-run",
+			tb.PipelineRunNamespace("ns"),
 			cb.PipelineRunCreationTimestamp(clock.Now()),
 			tb.PipelineRunLabel("tekton.dev/pipeline", "pipeline"),
 			tb.PipelineRunSpec("pipeline"),
@@ -738,7 +757,8 @@ func TestPipelineRunDescribe_without_tr_start_time(t *testing.T) {
 	clock := clockwork.NewFakeClock()
 
 	trs := []*v1alpha1.TaskRun{
-		tb.TaskRun("tr-1", "ns",
+		tb.TaskRun("tr-1",
+			tb.TaskRunNamespace("ns"),
 			tb.TaskRunStatus(
 				tb.StatusCondition(apis.Condition{
 					Type:   apis.ConditionReady,
@@ -749,7 +769,8 @@ func TestPipelineRunDescribe_without_tr_start_time(t *testing.T) {
 	}
 
 	pipelineRuns := []*v1alpha1.PipelineRun{
-		tb.PipelineRun("pipeline-run", "ns",
+		tb.PipelineRun("pipeline-run",
+			tb.PipelineRunNamespace("ns"),
 			cb.PipelineRunCreationTimestamp(clock.Now()),
 			tb.PipelineRunLabel("tekton.dev/pipeline", "pipeline"),
 			tb.PipelineRunSpec("pipeline"),
@@ -801,7 +822,8 @@ func TestPipelineRunDescribe_without_tr_start_time(t *testing.T) {
 
 func TestPipelineRunDescribe_custom_timeout(t *testing.T) {
 	prun := []*v1alpha1.PipelineRun{
-		tb.PipelineRun("pr-custom-timeout", "ns",
+		tb.PipelineRun("pr-custom-timeout",
+			tb.PipelineRunNamespace("ns"),
 			tb.PipelineRunSpec("pr-custom-timeout", tb.PipelineRunTimeout(time.Minute)),
 		),
 	}
@@ -839,7 +861,9 @@ func TestPipelineRunsDescribe_custom_output(t *testing.T) {
 	expected := "pipelinerun.tekton.dev/" + pipelinerunname
 
 	prun := []*v1alpha1.PipelineRun{
-		tb.PipelineRun(pipelinerunname, "ns"),
+		tb.PipelineRun(pipelinerunname,
+			tb.PipelineRunNamespace("ns"),
+		),
 	}
 	namespaces := []*corev1.Namespace{
 		{
@@ -1442,7 +1466,8 @@ func TestPipelineRunDescribe_last(t *testing.T) {
 	clock := clockwork.NewFakeClock()
 
 	trs := []*v1alpha1.TaskRun{
-		tb.TaskRun("tr-1", "ns",
+		tb.TaskRun("tr-1",
+			tb.TaskRunNamespace("ns"),
 			tb.TaskRunStatus(
 				tb.TaskRunStartTime(clock.Now().Add(2*time.Minute)),
 				cb.TaskRunCompletionTime(clock.Now().Add(5*time.Minute)),
@@ -1452,7 +1477,8 @@ func TestPipelineRunDescribe_last(t *testing.T) {
 				}),
 			),
 		),
-		tb.TaskRun("tr-2", "ns",
+		tb.TaskRun("tr-2",
+			tb.TaskRunNamespace("ns"),
 			tb.TaskRunStatus(
 				tb.TaskRunStartTime(clock.Now().Add(5*time.Minute)),
 				cb.TaskRunCompletionTime(clock.Now().Add(9*time.Minute)),
@@ -1462,7 +1488,8 @@ func TestPipelineRunDescribe_last(t *testing.T) {
 				}),
 			),
 		),
-		tb.TaskRun("tr-3", "ns",
+		tb.TaskRun("tr-3",
+			tb.TaskRunNamespace("ns"),
 			tb.TaskRunStatus(
 				tb.TaskRunStartTime(clock.Now().Add(5*time.Minute)),
 				cb.TaskRunCompletionTime(clock.Now().Add(9*time.Minute)),
@@ -1475,7 +1502,8 @@ func TestPipelineRunDescribe_last(t *testing.T) {
 	}
 
 	pipelineRuns := []*v1alpha1.PipelineRun{
-		tb.PipelineRun("pipeline-run", "ns",
+		tb.PipelineRun("pipeline-run",
+			tb.PipelineRunNamespace("ns"),
 			cb.PipelineRunCreationTimestamp(clock.Now()),
 			tb.PipelineRunLabel("tekton.dev/pipeline", "pipeline"),
 			tb.PipelineRunSpec("pipeline"),
@@ -1496,7 +1524,8 @@ func TestPipelineRunDescribe_last(t *testing.T) {
 				cb.PipelineRunCompletionTime(clock.Now().Add(20*time.Minute)),
 			),
 		),
-		tb.PipelineRun("pipeline-run2", "ns",
+		tb.PipelineRun("pipeline-run2",
+			tb.PipelineRunNamespace("ns"),
 			cb.PipelineRunCreationTimestamp(clock.Now().Add(5*time.Minute)),
 			tb.PipelineRunLabel("tekton.dev/pipeline", "pipeline"),
 			tb.PipelineRunSpec("pipeline"),

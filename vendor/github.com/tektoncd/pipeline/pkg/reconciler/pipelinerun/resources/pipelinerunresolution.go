@@ -20,6 +20,7 @@ import (
 	"context"
 	"fmt"
 	"reflect"
+	"strconv"
 
 	"go.uber.org/zap"
 	corev1 "k8s.io/api/core/v1"
@@ -149,6 +150,16 @@ func (state PipelineRunState) IsDone() (isDone bool) {
 		}
 	}
 	return
+}
+
+// IsBeforeFirstTaskRun returns true if the PipelineRun has not yet started its first TaskRun
+func (state PipelineRunState) IsBeforeFirstTaskRun() bool {
+	for _, t := range state {
+		if t.TaskRun != nil {
+			return false
+		}
+	}
+	return true
 }
 
 // GetNextTasks will return the next ResolvedPipelineRunTasks to execute, which are the ones in the
@@ -322,7 +333,7 @@ func ResolvePipelineRun(
 			spec = *pt.TaskSpec
 		}
 		spec.SetDefaults(contexts.WithUpgradeViaDefaulting(ctx))
-		if err := spec.ConvertUp(ctx, &v1beta1.TaskSpec{}); err != nil {
+		if err := spec.ConvertTo(ctx, &v1beta1.TaskSpec{}); err != nil {
 			return nil, err
 		}
 		rtr, err := ResolvePipelineTaskResources(pt, &spec, taskName, kind, providedResources)
@@ -358,17 +369,17 @@ func ResolvePipelineRun(
 }
 
 // getConditionCheckName should return a unique name for a `ConditionCheck` if one has not already been defined, and the existing one otherwise.
-func getConditionCheckName(taskRunStatus map[string]*v1alpha1.PipelineRunTaskRunStatus, trName, conditionName string) string {
+func getConditionCheckName(taskRunStatus map[string]*v1alpha1.PipelineRunTaskRunStatus, trName, conditionRegisterName string) string {
 	trStatus, ok := taskRunStatus[trName]
 	if ok && trStatus.ConditionChecks != nil {
 		for k, v := range trStatus.ConditionChecks {
 			// TODO(1022): Should  we allow multiple conditions of the same type?
-			if conditionName == v.ConditionName {
+			if conditionRegisterName == v.ConditionName {
 				return k
 			}
 		}
 	}
-	return names.SimpleNameGenerator.RestrictLengthWithRandomSuffix(fmt.Sprintf("%s-%s", trName, conditionName))
+	return names.SimpleNameGenerator.RestrictLengthWithRandomSuffix(fmt.Sprintf("%s-%s", trName, conditionRegisterName))
 }
 
 // getTaskRunName should return a unique name for a `TaskRun` if one has not already been defined, and the existing one otherwise.
@@ -497,6 +508,7 @@ func resolveConditionChecks(pt *v1alpha1.PipelineTask, taskRunStatus map[string]
 	for i := range pt.Conditions {
 		ptc := pt.Conditions[i]
 		cName := ptc.ConditionRef
+		crName := fmt.Sprintf("%s-%s", cName, strconv.Itoa(i))
 		c, err := getCondition(cName)
 		if err != nil {
 			return nil, &ConditionNotFoundError{
@@ -504,7 +516,7 @@ func resolveConditionChecks(pt *v1alpha1.PipelineTask, taskRunStatus map[string]
 				Msg:  err.Error(),
 			}
 		}
-		conditionCheckName := getConditionCheckName(taskRunStatus, taskRunName, cName)
+		conditionCheckName := getConditionCheckName(taskRunStatus, taskRunName, crName)
 		cctr, err := getTaskRun(conditionCheckName)
 		if err != nil {
 			if !errors.IsNotFound(err) {
@@ -525,6 +537,7 @@ func resolveConditionChecks(pt *v1alpha1.PipelineTask, taskRunStatus map[string]
 		}
 
 		rcc := ResolvedConditionCheck{
+			ConditionRegisterName: crName,
 			Condition:             c,
 			ConditionCheckName:    conditionCheckName,
 			ConditionCheck:        v1alpha1.NewConditionCheck(cctr),

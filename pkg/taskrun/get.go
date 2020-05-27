@@ -40,7 +40,7 @@ func Get(c *cli.Clients, trname string, opts metav1.GetOptions, ns string) (*v1b
 			return nil, err
 		}
 		var taskrunConverted v1beta1.TaskRun
-		err = taskrun.ConvertUp(context.Background(), &taskrunConverted)
+		err = taskrun.ConvertTo(context.Background(), &taskrunConverted)
 		if err != nil {
 			return nil, err
 		}

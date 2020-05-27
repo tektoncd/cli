@@ -30,7 +30,8 @@ import (
 
 func TestConditionDescribe(t *testing.T) {
 	conditions := []*v1alpha1.Condition{
-		tb.Condition("cond-1", "ns",
+		tb.Condition("cond-1",
+			tb.ConditionNamespace("ns"),
 			tb.ConditionSpec(
 				tb.ConditionSpecCheck("test", "busybox"),
 				tb.ConditionSpecCheckScript("echo hello"),
@@ -45,13 +46,15 @@ func TestConditionDescribe(t *testing.T) {
 				tb.ConditionDescription("test"),
 			),
 		),
-		tb.Condition("cond-2", "ns",
+		tb.Condition("cond-2",
+			tb.ConditionNamespace("ns"),
 			tb.ConditionSpec(
 				tb.ConditionSpecCheck("test", "busybox"),
 				tb.ConditionSpecCheckScript("echo hello"),
 			),
 		),
-		tb.Condition("cond-3", "ns",
+		tb.Condition("cond-3",
+			tb.ConditionNamespace("ns"),
 			tb.ConditionSpec(
 				tb.ConditionSpecCheck("test", "busybox"),
 				tb.ConditionSpecCheckScript("echo hello"),
@@ -60,9 +63,13 @@ func TestConditionDescribe(t *testing.T) {
 				tb.ConditionDescription("test"),
 			),
 		),
-		tb.Condition("cond-4", "ns",
+		tb.Condition("cond-4",
+			tb.ConditionNamespace("ns"),
 			tb.ConditionSpec(
-				tb.ConditionSpecCheck("test", "busybox"),
+				tb.ConditionSpecCheck("test", "busybox",
+					tb.Args("echo", "hello"),
+					tb.Command("/bin/sh"),
+				),
 				tb.ConditionParamSpec("myarg", v1alpha1.ParamTypeString, tb.ParamSpecDescription("param type is string"),
 					tb.ParamSpecDefault("default")),
 				tb.ConditionParamSpec("print", v1alpha1.ParamTypeArray, tb.ParamSpecDescription("param type is array"),
@@ -75,8 +82,6 @@ func TestConditionDescribe(t *testing.T) {
 			),
 		),
 	}
-	conditions[3].Spec.Check.Command = []string{"/bin/sh"}
-	conditions[3].Spec.Check.Args = []string{"echo", "hello"}
 
 	ns := []*corev1.Namespace{
 		{

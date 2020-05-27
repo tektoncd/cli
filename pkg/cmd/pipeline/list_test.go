@@ -272,14 +272,16 @@ func TestPipelinesList_with_single_run(t *testing.T) {
 	clock := clockwork.NewFakeClock()
 	version := "v1alpha1"
 	pdata := []*v1alpha1.Pipeline{
-		tb.Pipeline("pipeline", "ns",
+		tb.Pipeline("pipeline",
+			tb.PipelineNamespace("ns"),
 			// created  5 minutes back
 			cb.PipelineCreationTimestamp(clock.Now().Add(-5*time.Minute)),
 		),
 	}
 
 	prdata := []*v1alpha1.PipelineRun{
-		tb.PipelineRun("pipeline-run-1", "ns",
+		tb.PipelineRun("pipeline-run-1",
+			tb.PipelineRunNamespace("ns"),
 			cb.PipelineRunCreationTimestamp(clock.Now()),
 			tb.PipelineRunLabel("tekton.dev/pipeline", "pipeline"),
 			tb.PipelineRunSpec("pipeline"),
@@ -357,7 +359,8 @@ func TestPipelinesList_latest_run(t *testing.T) {
 		secondRunCompleted = secondRunStarted.Add(runDuration) // takes less thus completes
 	)
 	pdata := []*v1alpha1.Pipeline{
-		tb.Pipeline("pipeline", "ns",
+		tb.Pipeline("pipeline",
+			tb.PipelineNamespace("ns"),
 			// created  5 minutes back
 			cb.PipelineCreationTimestamp(pipelineCreated),
 		),
@@ -365,7 +368,8 @@ func TestPipelinesList_latest_run(t *testing.T) {
 
 	prdata := []*v1alpha1.PipelineRun{
 
-		tb.PipelineRun("pipeline-run-1", "ns",
+		tb.PipelineRun("pipeline-run-1",
+			tb.PipelineRunNamespace("ns"),
 			cb.PipelineRunCreationTimestamp(firstRunCreated),
 			tb.PipelineRunLabel("tekton.dev/pipeline", "pipeline"),
 			tb.PipelineRunSpec("pipeline"),
@@ -378,7 +382,8 @@ func TestPipelinesList_latest_run(t *testing.T) {
 				cb.PipelineRunCompletionTime(firstRunCompleted),
 			),
 		),
-		tb.PipelineRun("pipeline-run-2", "ns",
+		tb.PipelineRun("pipeline-run-2",
+			tb.PipelineRunNamespace("ns"),
 			cb.PipelineRunCreationTimestamp(secondRunCreated),
 			tb.PipelineRunLabel("tekton.dev/pipeline", "pipeline"),
 			tb.PipelineRunSpec("pipeline"),
@@ -435,7 +440,8 @@ type pipelineDetails struct {
 func seedPipelines(t *testing.T, clock clockwork.Clock, ps []pipelineDetails, nsList []*corev1.Namespace) (pipelinetest.Clients, []*v1alpha1.Pipeline) {
 	pipelines := []*v1alpha1.Pipeline{}
 	for _, p := range ps {
-		pipelines = append(pipelines, tb.Pipeline(p.name, p.namespace,
+		pipelines = append(pipelines, tb.Pipeline(p.name,
+			tb.PipelineNamespace(p.namespace),
 			cb.PipelineCreationTimestamp(clock.Now().Add(p.age*-1))))
 	}
 	cs, _ := test.SeedTestData(t, pipelinetest.Data{Pipelines: pipelines, Namespaces: nsList})

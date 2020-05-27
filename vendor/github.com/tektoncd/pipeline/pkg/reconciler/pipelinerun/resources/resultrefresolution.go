@@ -18,6 +18,7 @@ package resources
 
 import (
 	"fmt"
+	"sort"
 
 	"github.com/tektoncd/pipeline/pkg/apis/pipeline/v1alpha1"
 	"github.com/tektoncd/pipeline/pkg/apis/pipeline/v1beta1"
@@ -36,7 +37,7 @@ type ResolvedResultRef struct {
 }
 
 // ResolveResultRefs resolves any ResultReference that are found in the target ResolvedPipelineRunTask
-func ResolveResultRefs(pipelineRunState PipelineRunState, targets PipelineRunState) (ResolvedResultRefs, error) {
+func ResolveResultRefs(pipelineRunState PipelineRunState, targets PipelineRunState, pipelineResults []v1beta1.PipelineResult) (ResolvedResultRefs, error) {
 	var allResolvedResultRefs ResolvedResultRefs
 	for _, target := range targets {
 		resolvedResultRefs, err := convertParamsToResultRefs(pipelineRunState, target)
@@ -45,13 +46,29 @@ func ResolveResultRefs(pipelineRunState PipelineRunState, targets PipelineRunSta
 		}
 		allResolvedResultRefs = append(allResolvedResultRefs, resolvedResultRefs...)
 	}
+	for _, result := range pipelineResults {
+		resolvedResultRefs := convertPipelineResultToResultRefs(pipelineRunState, result)
+		if resolvedResultRefs != nil {
+			allResolvedResultRefs = append(allResolvedResultRefs, resolvedResultRefs...)
+		}
+	}
 	return removeDup(allResolvedResultRefs), nil
 }
 
-// extractResultRefsForParam resolves any ResultReference that are found in param
+// extractResultRefs resolves any ResultReference that are found in param or pipeline result
 // Returns nil if none are found
 func extractResultRefsForParam(pipelineRunState PipelineRunState, param v1beta1.Param) (ResolvedResultRefs, error) {
 	expressions, ok := v1beta1.GetVarSubstitutionExpressionsForParam(param)
+	if ok {
+		return extractResultRefs(expressions, pipelineRunState)
+	}
+	return nil, nil
+}
+
+// extractResultRefs resolves any ResultReference that are found in param or pipeline result
+// Returns nil if none are found
+func extractResultRefsForPipelineResult(pipelineRunState PipelineRunState, result v1beta1.PipelineResult) (ResolvedResultRefs, error) {
+	expressions, ok := v1beta1.GetVarSubstitutionExpressionsForPipelineResult(result)
 	if ok {
 		return extractResultRefs(expressions, pipelineRunState)
 	}
@@ -75,14 +92,29 @@ func removeDup(refs ResolvedResultRefs) ResolvedResultRefs {
 	if refs == nil {
 		return nil
 	}
-	resolvedResultRefByRef := make(map[v1beta1.ResultRef]*ResolvedResultRef)
+	resolvedResultRefByRef := make(map[v1beta1.ResultRef]*ResolvedResultRef, len(refs))
 	for _, resolvedResultRef := range refs {
 		resolvedResultRefByRef[resolvedResultRef.ResultReference] = resolvedResultRef
 	}
 	deduped := make([]*ResolvedResultRef, 0, len(resolvedResultRefByRef))
 
-	for _, ressolvedResultRef := range resolvedResultRefByRef {
-		deduped = append(deduped, ressolvedResultRef)
+	// Sort the resulting keys to produce a deterministic ordering.
+	order := make([]v1beta1.ResultRef, 0, len(refs))
+	for key := range resolvedResultRefByRef {
+		order = append(order, key)
+	}
+	sort.Slice(order, func(i, j int) bool {
+		if order[i].PipelineTask > order[j].PipelineTask {
+			return false
+		}
+		if order[i].Result > order[j].Result {
+			return false
+		}
+		return true
+	})
+
+	for _, key := range order {
+		deduped = append(deduped, resolvedResultRefByRef[key])
 	}
 	return deduped
 }
@@ -119,6 +151,15 @@ func convertParams(params []v1beta1.Param, pipelineRunState PipelineRunState, na
 		}
 	}
 	return resolvedParams, nil
+}
+
+// convertPipelineResultToResultRefs converts all params of the resolved pipeline run task
+func convertPipelineResultToResultRefs(pipelineRunState PipelineRunState, pipelineResult v1beta1.PipelineResult) ResolvedResultRefs {
+	resolvedResultRefs, err := extractResultRefsForPipelineResult(pipelineRunState, pipelineResult)
+	if err != nil {
+		return nil
+	}
+	return resolvedResultRefs
 }
 
 func resolveResultRef(pipelineState PipelineRunState, resultRef *v1beta1.ResultRef) (*ResolvedResultRef, error) {

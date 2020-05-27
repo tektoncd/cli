@@ -62,16 +62,8 @@ const (
 	timeout  = 10 * time.Minute
 )
 
-// ConditionAccessor is used to access a condition through it's type
-// This is a backport of knative.dev/pkg v0.13.0
-type conditionAccessor interface {
-	// GetCondition finds and returns the Condition that matches the ConditionType
-	// It should return nil if the condition type is not present
-	GetCondition(t apis.ConditionType) *apis.Condition
-}
-
 // ConditionAccessorFn is a condition function used polling functions
-type ConditionAccessorFn func(ca conditionAccessor) (bool, error)
+type ConditionAccessorFn func(ca apis.ConditionAccessor) (bool, error)
 
 // WaitForTaskRunState polls the status of the TaskRun called name from client every
 // interval until inState returns `true` indicating it is done, returns an
@@ -164,9 +156,9 @@ func WaitForServiceExternalIPState(c *clients, namespace, name string, inState f
 }
 
 // Succeed provides a poll condition function that checks if the ConditionAccessor
-// resource has sucessfully completed or not.
+// resource has successfully completed or not.
 func Succeed(name string) ConditionAccessorFn {
-	return func(ca conditionAccessor) (bool, error) {
+	return func(ca apis.ConditionAccessor) (bool, error) {
 		c := ca.GetCondition(apis.ConditionSucceeded)
 		if c != nil {
 			if c.Status == corev1.ConditionTrue {
@@ -182,7 +174,7 @@ func Succeed(name string) ConditionAccessorFn {
 // Failed provides a poll condition function that checks if the ConditionAccessor
 // resource has failed or not.
 func Failed(name string) ConditionAccessorFn {
-	return func(ca conditionAccessor) (bool, error) {
+	return func(ca apis.ConditionAccessor) (bool, error) {
 		c := ca.GetCondition(apis.ConditionSucceeded)
 		if c != nil {
 			if c.Status == corev1.ConditionTrue {
@@ -198,7 +190,7 @@ func Failed(name string) ConditionAccessorFn {
 // FailedWithReason provides a poll function that checks if the ConditionAccessor
 // resource has failed with the TimeoudOut reason
 func FailedWithReason(reason, name string) ConditionAccessorFn {
-	return func(ca conditionAccessor) (bool, error) {
+	return func(ca apis.ConditionAccessor) (bool, error) {
 		c := ca.GetCondition(apis.ConditionSucceeded)
 		if c != nil {
 			if c.Status == corev1.ConditionFalse {
@@ -217,7 +209,7 @@ func FailedWithReason(reason, name string) ConditionAccessorFn {
 // FailedWithMessage provides a poll function that checks if the ConditionAccessor
 // resource has failed with the TimeoudOut reason
 func FailedWithMessage(message, name string) ConditionAccessorFn {
-	return func(ca conditionAccessor) (bool, error) {
+	return func(ca apis.ConditionAccessor) (bool, error) {
 		c := ca.GetCondition(apis.ConditionSucceeded)
 		if c != nil {
 			if c.Status == corev1.ConditionFalse {
@@ -236,7 +228,7 @@ func FailedWithMessage(message, name string) ConditionAccessorFn {
 // Running provides a poll condition function that checks if the ConditionAccessor
 // resource is currently running.
 func Running(name string) ConditionAccessorFn {
-	return func(ca conditionAccessor) (bool, error) {
+	return func(ca apis.ConditionAccessor) (bool, error) {
 		c := ca.GetCondition(apis.ConditionSucceeded)
 		if c != nil {
 			if c.Status == corev1.ConditionTrue || c.Status == corev1.ConditionFalse {

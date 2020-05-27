@@ -39,7 +39,8 @@ func TestPipelineResourceDelete(t *testing.T) {
 	seeds := make([]pipelinetest.Clients, 0)
 	for i := 0; i < 5; i++ {
 		pres := []*v1alpha1.PipelineResource{
-			tb.PipelineResource("pre-1", "ns",
+			tb.PipelineResource("pre-1",
+				tb.PipelineResourceNamespace("ns"),
 				tb.PipelineResourceSpec("image",
 					tb.PipelineResourceSpecParam("URL", "quay.io/tekton/controller"),
 				),

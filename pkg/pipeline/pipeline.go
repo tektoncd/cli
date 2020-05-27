@@ -79,7 +79,7 @@ func Get(c *cli.Clients, pipelinename string, opts metav1.GetOptions, ns string)
 			return nil, err
 		}
 		var pipelineConverted v1beta1.Pipeline
-		err = pipeline.ConvertUp(context.Background(), &pipelineConverted)
+		err = pipeline.ConvertTo(context.Background(), &pipelineConverted)
 		if err != nil {
 			return nil, err
 		}

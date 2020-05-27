@@ -167,7 +167,8 @@ func Test_ClusterTask_Start(t *testing.T) {
 		),
 	}
 	taskruns := []*v1alpha1.TaskRun{
-		tb.TaskRun("taskrun-123", "ns",
+		tb.TaskRun("taskrun-123",
+			tb.TaskRunNamespace("ns"),
 			tb.TaskRunLabel("tekton.dev/task", "clustertask-1"),
 			tb.TaskRunSpec(
 				tb.TaskRunTaskRef("clustertask-1", tb.TaskRefKind(v1alpha1.ClusterTaskKind)),

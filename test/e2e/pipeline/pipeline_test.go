@@ -580,7 +580,7 @@ func TestDeletePipelinesE2E(t *testing.T) {
 }
 
 func getGitResource(rname string, namespace string) *v1alpha1.PipelineResource {
-	return tb.PipelineResource(rname, namespace, tb.PipelineResourceSpec(
+	return tb.PipelineResource(rname, tb.PipelineResourceNamespace(namespace), tb.PipelineResourceSpec(
 		v1alpha1.PipelineResourceTypeGit,
 		tb.PipelineResourceSpecParam("url", "https://github.com/GoogleContainerTools/skaffold"),
 		tb.PipelineResourceSpecParam("revision", "master"),
@@ -588,7 +588,7 @@ func getGitResource(rname string, namespace string) *v1alpha1.PipelineResource {
 }
 
 func getFaultGitResource(rname string, namespace string) *v1alpha1.PipelineResource {
-	return tb.PipelineResource(rname, namespace, tb.PipelineResourceSpec(
+	return tb.PipelineResource(rname, tb.PipelineResourceNamespace(namespace), tb.PipelineResourceSpec(
 		v1alpha1.PipelineResourceTypeGit,
 		tb.PipelineResourceSpecParam("url", "https://github.com/GoogleContainerTools/skaffold-1"),
 		tb.PipelineResourceSpecParam("revision", "master"),
@@ -604,7 +604,7 @@ func getCreateFileTask(taskname string, namespace string) *v1alpha1.Task {
 		tb.Step("ubuntu", tb.StepName("write-new-stuff"), tb.StepCommand("bash"), tb.StepArgs("-c", "ln -s /workspace/damnworkspace /workspace/output/workspace && echo some stuff > /workspace/output/workspace/stuff")),
 	}
 
-	return tb.Task(taskname, namespace, tb.TaskSpec(taskSpecOps...))
+	return tb.Task(taskname, tb.TaskNamespace(namespace), tb.TaskSpec(taskSpecOps...))
 }
 
 func getReadFileTask(taskname string, namespace string) *v1alpha1.Task {
@@ -614,7 +614,7 @@ func getReadFileTask(taskname string, namespace string) *v1alpha1.Task {
 		tb.Step("ubuntu", tb.StepName("read"), tb.StepCommand("/bin/bash"), tb.StepArgs("-c", "cat /workspace/newworkspace/stuff")),
 	}
 
-	return tb.Task(taskname, namespace, tb.TaskSpec(taskSpecOps...))
+	return tb.Task(taskname, tb.TaskNamespace(namespace), tb.TaskSpec(taskSpecOps...))
 }
 
 func getPipeline(pipelineName string, namespace string, createFiletaskName string, readFileTaskName string) *v1alpha1.Pipeline {
@@ -630,5 +630,5 @@ func getPipeline(pipelineName string, namespace string, createFiletaskName strin
 		),
 	}
 
-	return tb.Pipeline(pipelineName, namespace, tb.PipelineSpec(pipelineSpec...))
+	return tb.Pipeline(pipelineName, tb.PipelineNamespace(namespace), tb.PipelineSpec(pipelineSpec...))
 }

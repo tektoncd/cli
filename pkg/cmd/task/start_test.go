@@ -265,7 +265,8 @@ func Test_start_with_filename_invalid_v1beta1(t *testing.T) {
 
 func Test_start_task_not_found(t *testing.T) {
 	tasks := []*v1alpha1.Task{
-		tb.Task("task-1", "ns",
+		tb.Task("task-1",
+			tb.TaskNamespace("ns"),
 			tb.TaskSpec(
 				tb.TaskInputs(
 					tb.InputsResource("my-repo", v1alpha1.PipelineResourceTypeGit),
@@ -392,7 +393,8 @@ func Test_start_task_not_found_v1beta1(t *testing.T) {
 
 func Test_start_task(t *testing.T) {
 	tasks := []*v1alpha1.Task{
-		tb.Task("task-1", "ns",
+		tb.Task("task-1",
+			tb.TaskNamespace("ns"),
 			tb.TaskSpec(
 				tb.TaskInputs(
 					tb.InputsResource("my-repo", v1alpha1.PipelineResourceTypeGit),
@@ -635,7 +637,8 @@ func Test_start_task_v1beta1(t *testing.T) {
 
 func Test_start_task_last(t *testing.T) {
 	tasks := []*v1alpha1.Task{
-		tb.Task("task", "ns",
+		tb.Task("task",
+			tb.TaskNamespace("ns"),
 			tb.TaskSpec(
 				tb.TaskInputs(
 					tb.InputsResource("my-repo", v1alpha1.PipelineResourceTypeGit),
@@ -659,7 +662,8 @@ func Test_start_task_last(t *testing.T) {
 	timeoutDuration, _ := time.ParseDuration("10s")
 
 	taskruns := []*v1alpha1.TaskRun{
-		tb.TaskRun("taskrun-123", "ns",
+		tb.TaskRun("taskrun-123",
+			tb.TaskRunNamespace("ns"),
 			tb.TaskRunLabel("tekton.dev/task", "task"),
 			tb.TaskRunSpec(
 				tb.TaskRunTaskRef("task", tb.TaskRefKind(v1alpha1.NamespacedTaskKind)),
@@ -710,7 +714,7 @@ func Test_start_task_last(t *testing.T) {
 		t.Errorf("Error listing taskruns %s", err.Error())
 	}
 	tr := v1alpha1.TaskRun{}
-	_ = tr.ConvertDown(context.Background(), gotTR)
+	_ = tr.ConvertFrom(context.Background(), gotTR)
 
 	for _, v := range tr.Spec.Resources.Inputs {
 		if v.Name == "my-repo" {
@@ -904,7 +908,7 @@ func Test_start_task_last_v1beta1(t *testing.T) {
 		t.Errorf("Error listing taskruns %s", err.Error())
 	}
 	tr := v1alpha1.TaskRun{}
-	_ = tr.ConvertDown(context.Background(), gotTR)
+	_ = tr.ConvertFrom(context.Background(), gotTR)
 
 	for _, v := range tr.Spec.Resources.Inputs {
 		if v.Name == "my-repo" {
@@ -938,7 +942,8 @@ func Test_start_task_last_v1beta1(t *testing.T) {
 
 func Test_start_use_taskrun(t *testing.T) {
 	tasks := []*v1alpha1.Task{
-		tb.Task("task", "ns",
+		tb.Task("task",
+			tb.TaskNamespace("ns"),
 			tb.TaskSpec(
 				tb.TaskInputs(
 					tb.InputsResource("my-repo", v1alpha1.PipelineResourceTypeGit),
@@ -962,13 +967,15 @@ func Test_start_use_taskrun(t *testing.T) {
 	timeoutDuration, _ := time.ParseDuration("10s")
 
 	taskruns := []*v1alpha1.TaskRun{
-		tb.TaskRun("happy", "ns",
+		tb.TaskRun("happy",
+			tb.TaskRunNamespace("ns"),
 			tb.TaskRunLabel("tekton.dev/task", "task"),
 			tb.TaskRunSpec(
 				tb.TaskRunTaskRef("task", tb.TaskRefKind(v1alpha1.NamespacedTaskKind)),
 			),
 		),
-		tb.TaskRun("camper", "ns",
+		tb.TaskRun("camper",
+			tb.TaskRunNamespace("ns"),
 			tb.TaskRunLabel("tekton.dev/task", "task"),
 			tb.TaskRunSpec(
 				tb.TaskRunTaskRef("task", tb.TaskRefKind(v1alpha1.NamespacedTaskKind)),
@@ -1162,7 +1169,8 @@ func Test_start_use_taskrun_v1beta1(t *testing.T) {
 
 func Test_start_task_last_generate_name(t *testing.T) {
 	tasks := []*v1alpha1.Task{
-		tb.Task("task", "ns",
+		tb.Task("task",
+			tb.TaskNamespace("ns"),
 			tb.TaskSpec(
 				tb.TaskInputs(
 					tb.InputsResource("my-repo", v1alpha1.PipelineResourceTypeGit),
@@ -1184,7 +1192,8 @@ func Test_start_task_last_generate_name(t *testing.T) {
 	}
 
 	taskruns := []*v1alpha1.TaskRun{
-		tb.TaskRun("taskrun-123", "ns",
+		tb.TaskRun("taskrun-123",
+			tb.TaskRunNamespace("ns"),
 			tb.TaskRunLabel("tekton.dev/task", "task"),
 			tb.TaskRunSpec(
 				tb.TaskRunTaskRef("task", tb.TaskRefKind(v1alpha1.NamespacedTaskKind)),
@@ -1410,7 +1419,8 @@ func Test_start_task_last_generate_name_v1beta1(t *testing.T) {
 
 func Test_start_task_last_with_prefix_name(t *testing.T) {
 	tasks := []*v1alpha1.Task{
-		tb.Task("task", "ns",
+		tb.Task("task",
+			tb.TaskNamespace("ns"),
 			tb.TaskSpec(
 				tb.TaskInputs(
 					tb.InputsResource("my-repo", v1alpha1.PipelineResourceTypeGit),
@@ -1432,7 +1442,8 @@ func Test_start_task_last_with_prefix_name(t *testing.T) {
 	}
 
 	taskruns := []*v1alpha1.TaskRun{
-		tb.TaskRun("taskrun-123", "ns",
+		tb.TaskRun("taskrun-123",
+			tb.TaskRunNamespace("ns"),
 			tb.TaskRunLabel("tekton.dev/task", "task"),
 			tb.TaskRunSpec(
 				tb.TaskRunTaskRef("task", tb.TaskRefKind(v1alpha1.NamespacedTaskKind)),
@@ -1656,7 +1667,8 @@ func Test_start_task_last_with_prefix_name_v1beta1(t *testing.T) {
 
 func Test_start_task_with_prefix_name(t *testing.T) {
 	tasks := []*v1alpha1.Task{
-		tb.Task("task", "ns",
+		tb.Task("task",
+			tb.TaskNamespace("ns"),
 			tb.TaskSpec(
 				tb.TaskInputs(
 					tb.InputsResource("my-repo", v1alpha1.PipelineResourceTypeGit),
@@ -1678,7 +1690,8 @@ func Test_start_task_with_prefix_name(t *testing.T) {
 	}
 
 	taskruns := []*v1alpha1.TaskRun{
-		tb.TaskRun("taskrun-123", "ns",
+		tb.TaskRun("taskrun-123",
+			tb.TaskRunNamespace("ns"),
 			tb.TaskRunLabel("tekton.dev/task", "task"),
 			tb.TaskRunSpec(
 				tb.TaskRunTaskRef("task", tb.TaskRefKind(v1alpha1.NamespacedTaskKind)),
@@ -1902,7 +1915,8 @@ func Test_start_task_with_prefix_name_v1beta1(t *testing.T) {
 
 func Test_start_task_last_with_inputs(t *testing.T) {
 	tasks := []*v1alpha1.Task{
-		tb.Task("task", "ns",
+		tb.Task("task",
+			tb.TaskNamespace("ns"),
 			tb.TaskSpec(
 				tb.TaskInputs(
 					tb.InputsResource("my-repo", v1alpha1.PipelineResourceTypeGit),
@@ -1923,7 +1937,8 @@ func Test_start_task_last_with_inputs(t *testing.T) {
 	}
 
 	taskruns := []*v1alpha1.TaskRun{
-		tb.TaskRun("taskrun-123", "ns",
+		tb.TaskRun("taskrun-123",
+			tb.TaskRunNamespace("ns"),
 			tb.TaskRunLabel("tekton.dev/task", "task"),
 			tb.TaskRunSpec(
 				tb.TaskRunTaskRef("task", tb.TaskRefKind(v1alpha1.NamespacedTaskKind)),
@@ -1976,7 +1991,7 @@ func Test_start_task_last_with_inputs(t *testing.T) {
 		t.Errorf("Error listing taskruns %s", err.Error())
 	}
 	tr := v1alpha1.TaskRun{}
-	_ = tr.ConvertDown(context.Background(), gotTR)
+	_ = tr.ConvertFrom(context.Background(), gotTR)
 
 	for _, v := range tr.Spec.Resources.Inputs {
 		if v.Name == "my-repo" {
@@ -2171,7 +2186,7 @@ func Test_start_task_last_with_inputs_v1beta1(t *testing.T) {
 		t.Errorf("Error listing taskruns %s", err.Error())
 	}
 	tr := v1alpha1.TaskRun{}
-	_ = tr.ConvertDown(context.Background(), gotTR)
+	_ = tr.ConvertFrom(context.Background(), gotTR)
 
 	for _, v := range tr.Spec.Resources.Inputs {
 		if v.Name == "my-repo" {
@@ -2202,7 +2217,8 @@ func Test_start_task_last_with_inputs_v1beta1(t *testing.T) {
 
 func Test_start_task_last_without_pipelinerun(t *testing.T) {
 	tasks := []*v1alpha1.Task{
-		tb.Task("task-1", "ns",
+		tb.Task("task-1",
+			tb.TaskNamespace("ns"),
 			tb.TaskSpec(
 				tb.TaskInputs(
 					tb.InputsResource("my-repo", v1alpha1.PipelineResourceTypeGit),
@@ -2341,7 +2357,8 @@ func Test_start_task_last_without_pipelinerun_v1beta1(t *testing.T) {
 
 func Test_start_task_client_error(t *testing.T) {
 	tasks := []*v1alpha1.Task{
-		tb.Task("task-1", "ns",
+		tb.Task("task-1",
+			tb.TaskNamespace("ns"),
 			tb.TaskSpec(
 				tb.TaskInputs(
 					tb.InputsResource("my-repo", v1alpha1.PipelineResourceTypeGit),
@@ -2504,7 +2521,8 @@ func Test_start_task_client_error_v1beta1(t *testing.T) {
 
 func Test_start_task_invalid_input_res(t *testing.T) {
 	tasks := []*v1alpha1.Task{
-		tb.Task("task-1", "ns",
+		tb.Task("task-1",
+			tb.TaskNamespace("ns"),
 			tb.TaskSpec(
 				tb.TaskInputs(
 					tb.InputsResource("my-repo", v1alpha1.PipelineResourceTypeGit),
@@ -2645,7 +2663,8 @@ func Test_start_task_invalid_input_res_v1beta1(t *testing.T) {
 
 func Test_start_task_invalid_workspace(t *testing.T) {
 	tasks := []*v1alpha1.Task{
-		tb.Task("task-1", "ns",
+		tb.Task("task-1",
+			tb.TaskNamespace("ns"),
 			tb.TaskSpec(
 				tb.TaskInputs(
 					tb.InputsResource("my-repo", v1alpha1.PipelineResourceTypeGit),
@@ -2777,7 +2796,8 @@ func Test_start_task_invalid_workspace_v1beta1(t *testing.T) {
 
 func Test_start_task_invalid_output_res(t *testing.T) {
 	tasks := []*v1alpha1.Task{
-		tb.Task("task-1", "ns",
+		tb.Task("task-1",
+			tb.TaskNamespace("ns"),
 			tb.TaskSpec(
 				tb.TaskInputs(
 					tb.InputsResource("my-repo", v1alpha1.PipelineResourceTypeGit),
@@ -2914,7 +2934,8 @@ func Test_start_task_invalid_output_res_v1beta1(t *testing.T) {
 
 func Test_start_task_invalid_param(t *testing.T) {
 	tasks := []*v1alpha1.Task{
-		tb.Task("task-1", "ns",
+		tb.Task("task-1",
+			tb.TaskNamespace("ns"),
 			tb.TaskSpec(
 				tb.TaskInputs(
 					tb.InputsResource("my-repo", v1alpha1.PipelineResourceTypeGit),
@@ -3051,7 +3072,8 @@ func Test_start_task_invalid_param_v1beta1(t *testing.T) {
 
 func Test_start_task_invalid_label(t *testing.T) {
 	tasks := []*v1alpha1.Task{
-		tb.Task("task-1", "ns",
+		tb.Task("task-1",
+			tb.TaskNamespace("ns"),
 			tb.TaskSpec(
 				tb.TaskInputs(
 					tb.InputsResource("my-repo", v1alpha1.PipelineResourceTypeGit),
@@ -3190,7 +3212,8 @@ func Test_start_task_invalid_label_v1beta1(t *testing.T) {
 
 func Test_start_task_allkindparam(t *testing.T) {
 	tasks := []*v1alpha1.Task{
-		tb.Task("task-1", "ns",
+		tb.Task("task-1",
+			tb.TaskNamespace("ns"),
 			tb.TaskSpec(
 				tb.TaskInputs(
 					tb.InputsResource("my-repo", v1alpha1.PipelineResourceTypeGit),
@@ -3436,7 +3459,8 @@ func Test_start_task_allkindparam_v1beta1(t *testing.T) {
 
 func Test_start_task_wrong_param(t *testing.T) {
 	tasks := []*v1alpha1.Task{
-		tb.Task("task-1", "ns",
+		tb.Task("task-1",
+			tb.TaskNamespace("ns"),
 			tb.TaskSpec(
 				tb.TaskInputs(
 					tb.InputsResource("my-repo", v1alpha1.PipelineResourceTypeGit),
@@ -3753,7 +3777,8 @@ func Test_parseRes_v1beta1(t *testing.T) {
 
 func TestTaskStart_ExecuteCommand(t *testing.T) {
 	tasks := []*v1alpha1.Task{
-		tb.Task("task-1", "ns",
+		tb.Task("task-1",
+			tb.TaskNamespace("ns"),
 			tb.TaskSpec(
 				tb.TaskInputs(
 					tb.InputsResource("my-repo", v1alpha1.PipelineResourceTypeGit),
