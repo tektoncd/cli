@@ -1,3 +1,19 @@
+/*
+Copyright 2019 The Tekton Authors
+
+Licensed under the Apache License, Version 2.0 (the "License");
+you may not use this file except in compliance with the License.
+You may obtain a copy of the License at
+
+    http://www.apache.org/licenses/LICENSE-2.0
+
+Unless required by applicable law or agreed to in writing, software
+distributed under the License is distributed on an "AS IS" BASIS,
+WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+See the License for the specific language governing permissions and
+limitations under the License.
+*/
+
 package builder
 
 import (
@@ -162,14 +178,15 @@ func EventListenerTriggerServiceAccount(saName, namespace string) EventListenerT
 }
 
 // EventListenerTriggerBinding adds a Binding to the Trigger in EventListenerSpec Triggers.
-func EventListenerTriggerBinding(name, kind, apiVersion string) EventListenerTriggerOp {
+func EventListenerTriggerBinding(ref, kind, name, apiVersion string, ops ...TriggerBindingSpecOp) EventListenerTriggerOp {
 	return func(trigger *v1alpha1.EventListenerTrigger) {
-		if len(name) != 0 {
-			binding := &v1alpha1.EventListenerBinding{
-				Name:       name,
-				APIVersion: apiVersion,
-			}
+		binding := &v1alpha1.EventListenerBinding{
+			Name:       name,
+			APIVersion: apiVersion,
+		}
 
+		if len(ref) != 0 {
+			binding.Ref = ref
 			if kind == "ClusterTriggerBinding" {
 				binding.Kind = v1alpha1.ClusterTriggerBindingKind
 			}
@@ -177,8 +194,14 @@ func EventListenerTriggerBinding(name, kind, apiVersion string) EventListenerTri
 			if kind == "TriggerBinding" || kind == "" {
 				binding.Kind = v1alpha1.NamespacedTriggerBindingKind
 			}
-			trigger.Bindings = append(trigger.Bindings, binding)
 		}
+		if len(ops) != 0 {
+			binding.Spec = &v1alpha1.TriggerBindingSpec{}
+			for _, op := range ops {
+				op(binding.Spec)
+			}
+		}
+		trigger.Bindings = append(trigger.Bindings, binding)
 	}
 }
 

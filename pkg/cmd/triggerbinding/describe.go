@@ -42,7 +42,7 @@ const describeTemplate = `{{decorate "bold" "Name"}}:	{{ .TriggerBinding.Name }}
 {{- else }}
  NAME	VALUE
 {{- range $p := .TriggerBinding.Spec.Params }}
- {{decorate "bullet" $p.Name }}	{{ $p.Value.StringVal }}
+ {{decorate "bullet" $p.Name }}	{{ $p.Value }}
 {{- end }}
 {{- end }}
 `

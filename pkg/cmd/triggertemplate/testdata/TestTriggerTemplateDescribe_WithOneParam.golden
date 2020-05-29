@@ -3,8 +3,8 @@ Namespace:   ns
 
 Params
 
- NAME   TYPE     DESCRIPTION           DEFAULT VALUE
- key    string   test with one param   value
+ NAME   DESCRIPTION           DEFAULT VALUE
+ key    test with one param   value
 
 ResourceTemplates
 

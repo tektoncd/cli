@@ -19,7 +19,8 @@ package v1alpha1
 import (
 	"fmt"
 
-	pipelinev1 "github.com/tektoncd/pipeline/pkg/apis/pipeline/v1beta1"
+	"github.com/tektoncd/pipeline/pkg/apis/pipeline/v1beta1"
+
 	appsv1 "k8s.io/api/apps/v1"
 	corev1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
@@ -95,7 +96,7 @@ type WebhookInterceptor struct {
 	// Header is a group of key-value pairs that can be appended to the
 	// interceptor request headers. This allows the interceptor to make
 	// decisions specific to an EventListenerTrigger.
-	Header []pipelinev1.Param `json:"header,omitempty"`
+	Header []v1beta1.Param `json:"header,omitempty"`
 }
 
 // GitHubInterceptor provides a webhook to intercept and pre-process events
@@ -133,9 +134,11 @@ type SecretRef struct {
 
 // EventListenerBinding refers to a particular TriggerBinding or ClusterTriggerBindingresource.
 type EventListenerBinding struct {
-	Name       string             `json:"name"`
-	Kind       TriggerBindingKind `json:"kind"`
-	APIVersion string             `json:"apiversion,omitempty"`
+	Name       string              `json:"name,omitempty"`
+	Kind       TriggerBindingKind  `json:"kind,omitempty"`
+	Ref        string              `json:"ref,omitempty"`
+	Spec       *TriggerBindingSpec `json:"spec,omitempty"`
+	APIVersion string              `json:"apiversion,omitempty"`
 }
 
 // EventListenerTemplate refers to a particular TriggerTemplate resource.

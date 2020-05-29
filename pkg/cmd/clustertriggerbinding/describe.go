@@ -40,7 +40,7 @@ const describeTemplate = `{{decorate "bold" "Name"}}:	{{ .ClusterTriggerBinding.
 {{- else }}
  NAME	VALUE
 {{- range $p := .ClusterTriggerBinding.Spec.Params }}
- {{decorate "bullet" $p.Name }}	{{ $p.Value.StringVal }}
+ {{decorate "bullet" $p.Name }}	{{ $p.Value }}
 {{- end }}
 {{- end }}
 `

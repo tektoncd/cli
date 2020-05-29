@@ -12,17 +12,17 @@
             {
                 "bindings": [
                     {
-                        "name": "tb1",
-                        "kind": "TriggerBinding"
+                        "kind": "TriggerBinding",
+                        "ref": "tb1"
                     },
                     {
-                        "name": "tb2",
-                        "kind": "",
+                        "kind": "ClusterTriggerBinding",
+                        "ref": "tb2",
                         "apiversion": "v1alpha1"
                     },
                     {
-                        "name": "tb3",
                         "kind": "TriggerBinding",
+                        "ref": "tb3",
                         "apiversion": "v1alpha1"
                     }
                 ],
@@ -48,12 +48,12 @@
             {
                 "bindings": [
                     {
-                        "name": "tb4",
-                        "kind": "TriggerBinding"
+                        "kind": "TriggerBinding",
+                        "ref": "tb4"
                     },
                     {
-                        "name": "tb5",
-                        "kind": "",
+                        "kind": "ClusterTriggerBinding",
+                        "ref": "tb5",
                         "apiversion": "v1alpha1"
                     }
                 ],

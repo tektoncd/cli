@@ -9,9 +9,7 @@ require (
 	github.com/cpuguy83/go-md2man v1.0.10
 	github.com/fatih/color v1.7.0
 	github.com/ghodss/yaml v1.0.0
-	github.com/google/cel-go v0.3.2 // indirect
 	github.com/google/go-cmp v0.4.0
-	github.com/google/go-github v17.0.0+incompatible // indirect
 	github.com/hako/durafmt v0.0.0-20191009132224-3f39dc1ed9f4
 	github.com/hashicorp/golang-lru v0.5.4 // indirect
 	github.com/hinshun/vt10x v0.0.0-20180809195222-d55458df857c
@@ -23,21 +21,20 @@ require (
 	github.com/spf13/pflag v1.0.5
 	github.com/tektoncd/pipeline v0.12.1
 	github.com/tektoncd/plumbing v0.0.0-20200430135134-e53521e1d887
-	github.com/tektoncd/triggers v0.4.0
+	github.com/tektoncd/triggers v0.5.0
 	github.com/tidwall/gjson v1.6.0 // indirect
-	github.com/tidwall/sjson v1.0.4 // indirect
 	go.opencensus.io v0.22.1
 	go.uber.org/multierr v1.4.0
-	golang.org/x/crypto v0.0.0-20200206161412-a0c6ece9d31a
+	golang.org/x/crypto v0.0.0-20200220183623-bac4c82f6975
 	golang.org/x/xerrors v0.0.0-20191204190536-9bdfabe68543
 	gopkg.in/yaml.v2 v2.2.8
 	gotest.tools/v3 v3.0.1
-	k8s.io/api v0.17.3
-	k8s.io/apimachinery v0.17.3
+	k8s.io/api v0.18.2
+	k8s.io/apimachinery v0.18.2
 	k8s.io/cli-runtime v0.17.0
-	k8s.io/client-go v0.17.3
+	k8s.io/client-go v0.18.2
 	knative.dev/pkg v0.0.0-20200306230727-a56a6ea3fa56
-	sigs.k8s.io/yaml v1.1.0
+	sigs.k8s.io/yaml v1.2.0
 )
 
 replace (

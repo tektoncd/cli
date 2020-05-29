@@ -84,7 +84,7 @@ func TestEventListenerDescribe_OneTriggerWithOneClusterTriggerBinding(t *testing
 		el.EventListener("el1", "ns",
 			el.EventListenerSpec(
 				el.EventListenerTrigger("tt1", "v1alpha1",
-					el.EventListenerTriggerBinding("tb1", "ClusterTriggerBinding", "v1alpha1")))),
+					el.EventListenerTriggerBinding("tb1", "ClusterTriggerBinding", "", "v1alpha1")))),
 	}
 
 	executeEventListenerCommand(t, els)
@@ -95,7 +95,7 @@ func TestEventListenerDescribe_WithOutputStatusURLAndName(t *testing.T) {
 		el.EventListener("el1", "ns",
 			el.EventListenerSpec(
 				el.EventListenerTrigger("tt1", "v1alpha1",
-					el.EventListenerTriggerBinding("tb1", "ClusterTriggerBinding", "v1alpha1"))),
+					el.EventListenerTriggerBinding("tb1", "ClusterTriggerBinding", "", "v1alpha1"))),
 			el.EventListenerStatus(
 				el.EventListenerAddress("el-listener.default.svc.cluster.local"),
 				el.EventListenerConfig("el-listener"))),
@@ -110,7 +110,7 @@ func TestEventListenerDescribe_OneTriggerWithOneTriggerBinding(t *testing.T) {
 			el.EventListenerSpec(
 				el.EventListenerServiceAccount("trigger-sa"),
 				el.EventListenerTrigger("tt1", "v1alpha1",
-					el.EventListenerTriggerBinding("tb1", "", "")))),
+					el.EventListenerTriggerBinding("tb1", "", "", "")))),
 	}
 
 	executeEventListenerCommand(t, els)
@@ -121,9 +121,9 @@ func TestEventListenerDescribe_OneTriggerWithMultipleTriggerBinding(t *testing.T
 		el.EventListener("el1", "ns",
 			el.EventListenerSpec(
 				el.EventListenerTrigger("tt1", "v1alpha1",
-					el.EventListenerTriggerBinding("tb1", "", ""),
-					el.EventListenerTriggerBinding("tb2", "ClusterTriggerBindingKind", "v1alpha1"),
-					el.EventListenerTriggerBinding("tb3", "", "v1alpha1")))),
+					el.EventListenerTriggerBinding("tb1", "", "", ""),
+					el.EventListenerTriggerBinding("tb2", "ClusterTriggerBinding", "", "v1alpha1"),
+					el.EventListenerTriggerBinding("tb3", "", "", "v1alpha1")))),
 	}
 
 	executeEventListenerCommand(t, els)
@@ -134,13 +134,13 @@ func TestEventListenerDescribe_TwoTriggers(t *testing.T) {
 		el.EventListener("el1", "ns",
 			el.EventListenerSpec(
 				el.EventListenerTrigger("tt1", "v1alpha1",
-					el.EventListenerTriggerBinding("tb1", "", ""),
-					el.EventListenerTriggerBinding("tb2", "ClusterTriggerBindingKind", "v1alpha1"),
-					el.EventListenerTriggerBinding("tb3", "", "v1alpha1")),
+					el.EventListenerTriggerBinding("tb1", "", "", ""),
+					el.EventListenerTriggerBinding("tb2", "ClusterTriggerBinding", "", "v1alpha1"),
+					el.EventListenerTriggerBinding("tb3", "", "", "v1alpha1")),
 				el.EventListenerTrigger("tt2", "v1alpha1",
-					el.EventListenerTriggerBinding("tb1", "", ""),
-					el.EventListenerTriggerBinding("tb2", "ClusterTriggerBindingKind", "v1alpha1"),
-					el.EventListenerTriggerBinding("tb3", "", "v1alpha1"),
+					el.EventListenerTriggerBinding("tb1", "", "", ""),
+					el.EventListenerTriggerBinding("tb2", "ClusterTriggerBinding", "", "v1alpha1"),
+					el.EventListenerTriggerBinding("tb3", "", "", "v1alpha1"),
 					el.EventListenerTriggerServiceAccount("sa1", "ns1")))),
 	}
 
@@ -152,9 +152,9 @@ func TestEventListenerDescribe_WithWebhookInterceptors(t *testing.T) {
 		el.EventListener("el1", "ns",
 			el.EventListenerSpec(
 				el.EventListenerTrigger("tt1", "v1alpha1",
-					el.EventListenerTriggerBinding("tb1", "", ""),
-					el.EventListenerTriggerBinding("tb2", "ClusterTriggerBindingKind", "v1alpha1"),
-					el.EventListenerTriggerBinding("tb3", "", "v1alpha1"),
+					el.EventListenerTriggerBinding("tb1", "", "", ""),
+					el.EventListenerTriggerBinding("tb2", "ClusterTriggerBinding", "", "v1alpha1"),
+					el.EventListenerTriggerBinding("tb3", "", "", "v1alpha1"),
 					el.EventListenerTriggerName("foo-trig"),
 					el.EventListenerTriggerInterceptor("webhookTest", "v1", "Service", "namespace"))),
 			el.EventListenerStatus(
@@ -170,9 +170,9 @@ func TestEventListenerDescribe_WithWebhookInterceptorsWithParams(t *testing.T) {
 		el.EventListener("el1", "ns",
 			el.EventListenerSpec(
 				el.EventListenerTrigger("tt1", "v1alpha1",
-					el.EventListenerTriggerBinding("tb1", "", ""),
-					el.EventListenerTriggerBinding("tb2", "ClusterTriggerBindingKind", "v1alpha1"),
-					el.EventListenerTriggerBinding("tb3", "", "v1alpha1"),
+					el.EventListenerTriggerBinding("tb1", "", "", ""),
+					el.EventListenerTriggerBinding("tb2", "ClusterTriggerBinding", "", "v1alpha1"),
+					el.EventListenerTriggerBinding("tb3", "", "", "v1alpha1"),
 					el.EventListenerTriggerName("foo-trig"),
 					el.EventListenerTriggerInterceptor("foo", "v1", "Service", "namespace",
 						el.EventInterceptorParam("header", "value"))))),
@@ -186,9 +186,9 @@ func TestEventListenerDescribe_WithCELInterceptors(t *testing.T) {
 		el.EventListener("el1", "ns",
 			el.EventListenerSpec(
 				el.EventListenerTrigger("tt1", "v1alpha1",
-					el.EventListenerTriggerBinding("tb1", "", ""),
-					el.EventListenerTriggerBinding("tb2", "ClusterTriggerBindingKind", "v1alpha1"),
-					el.EventListenerTriggerBinding("tb3", "", "v1alpha1"),
+					el.EventListenerTriggerBinding("tb1", "", "", ""),
+					el.EventListenerTriggerBinding("tb2", "ClusterTriggerBinding", "", "v1alpha1"),
+					el.EventListenerTriggerBinding("tb3", "", "", "v1alpha1"),
 					el.EventListenerTriggerName("foo-trig"),
 					el.EventListenerCELInterceptor("body.value == 'test'", el.EventListenerCELOverlay("value", "'testing'"))))),
 	}
@@ -201,14 +201,14 @@ func TestEventListenerDescribe_WithMultipleBindingAndInterceptors(t *testing.T) 
 		el.EventListener("el1", "ns",
 			el.EventListenerSpec(
 				el.EventListenerTrigger("tt1", "v1alpha1",
-					el.EventListenerTriggerBinding("tb1", "", ""),
-					el.EventListenerTriggerBinding("tb2", "ClusterTriggerBindingKind", "v1alpha1"),
-					el.EventListenerTriggerBinding("tb3", "", "v1alpha1"),
+					el.EventListenerTriggerBinding("tb1", "", "", ""),
+					el.EventListenerTriggerBinding("tb2", "ClusterTriggerBinding", "", "v1alpha1"),
+					el.EventListenerTriggerBinding("tb3", "", "", "v1alpha1"),
 					el.EventListenerTriggerName("foo-trig"),
 					el.EventListenerCELInterceptor("body.value == 'test'", el.EventListenerCELOverlay("value", "'testing'"))),
 				el.EventListenerTrigger("tt2", "v1alpha1",
-					el.EventListenerTriggerBinding("tb4", "", ""),
-					el.EventListenerTriggerBinding("tb5", "ClusterTriggerBindingKind", "v1alpha1"),
+					el.EventListenerTriggerBinding("tb4", "", "", ""),
+					el.EventListenerTriggerBinding("tb5", "ClusterTriggerBinding", "", "v1alpha1"),
 					el.EventListenerTriggerServiceAccount("sa1", "ns1"),
 					el.EventListenerTriggerName("foo-trig"),
 					el.EventListenerTriggerInterceptor("webhookTest", "v1", "Service", "namespace"),
@@ -223,14 +223,14 @@ func TestEventListenerDescribe_OutputYAMLWithMultipleBindingAndInterceptors(t *t
 		el.EventListener("el1", "ns",
 			el.EventListenerSpec(
 				el.EventListenerTrigger("tt1", "v1alpha1",
-					el.EventListenerTriggerBinding("tb1", "", ""),
-					el.EventListenerTriggerBinding("tb2", "ClusterTriggerBindingKind", "v1alpha1"),
-					el.EventListenerTriggerBinding("tb3", "", "v1alpha1"),
+					el.EventListenerTriggerBinding("tb1", "", "", ""),
+					el.EventListenerTriggerBinding("tb2", "ClusterTriggerBinding", "", "v1alpha1"),
+					el.EventListenerTriggerBinding("tb3", "", "", "v1alpha1"),
 					el.EventListenerTriggerName("foo-trig"),
 					el.EventListenerCELInterceptor("body.value == 'test'", el.EventListenerCELOverlay("value", "'testing'"))),
 				el.EventListenerTrigger("tt2", "v1alpha1",
-					el.EventListenerTriggerBinding("tb4", "", ""),
-					el.EventListenerTriggerBinding("tb5", "ClusterTriggerBindingKind", "v1alpha1"),
+					el.EventListenerTriggerBinding("tb4", "", "", ""),
+					el.EventListenerTriggerBinding("tb5", "ClusterTriggerBinding", "", "v1alpha1"),
 					el.EventListenerTriggerServiceAccount("sa1", "ns1"),
 					el.EventListenerTriggerName("foo-trig"),
 					el.EventListenerTriggerInterceptor("webhookTest", "v1", "Service", "namespace"),
