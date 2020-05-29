@@ -68,9 +68,9 @@ const describeTemplate = `{{decorate "bold" "Name"}}:	{{ .EventListener.Name }}
  {{decorate "bullet" $v.Name }}
 {{ " " }}
 {{- end }}
- BINDING NAME	KIND	APIVERSION
+ BINDING REF	KIND	APIVERSION
 {{- range $b := $v.Bindings }}
- {{ decorate "bullet" $b.Name }}	{{ $b.Kind }}	{{ $b.APIVersion }}
+ {{ decorate "bullet" $b.Ref }}	{{ $b.Kind }}	{{ $b.APIVersion }}
 {{- end }}
 
  TEMPLATE NAME	APIVERSION

@@ -3,11 +3,11 @@ Namespace:   ns
 
 Params
 
- NAME   TYPE     DESCRIPTION              DEFAULT VALUE
- key1   string   test with multiple ...   value1
- key2   string                            value2
- key3   string                            value3
- key4   string   test with multiple ...   value4
+ NAME   DESCRIPTION              DEFAULT VALUE
+ key1   test with multiple ...   value1
+ key2                            value2
+ key3                            value3
+ key4   test with multiple ...   value4
 
 ResourceTemplates
 

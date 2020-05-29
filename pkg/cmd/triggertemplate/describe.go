@@ -43,20 +43,12 @@ const describeTemplate = `{{decorate "bold" "Name"}}:	{{ .TriggerTemplate.Name }
 {{- if eq (len .TriggerTemplate.Spec.Params) 0 }}
  No params
 {{- else }}
- NAME	TYPE	DESCRIPTION	DEFAULT VALUE
+ NAME	DESCRIPTION	DEFAULT VALUE
 {{- range $p := .TriggerTemplate.Spec.Params }}
 {{- if not $p.Default }}
-{{- if eq $p.Type "" }}
- {{decorate "bullet" $p.Name }}	{{ "string" }}	{{ formatDesc $p.Description }}	{{ "---" }}
+ {{decorate "bullet" $p.Name }}	{{ formatDesc $p.Description }}	{{ "---" }}
 {{- else }}
- {{decorate "bullet" $p.Name }}	{{ $p.Type }}	{{ formatDesc $p.Description }}	{{ "---" }} 
-{{ end }}
-{{- else }}
-{{- if eq $p.Default.Type "string" }}
- {{decorate "bullet" $p.Name }}	{{ $p.Default.Type }}	{{ formatDesc $p.Description }}	{{ $p.Default.StringVal }}
-{{- else }}
- {{decorate "bullet" $p.Name }}	{{ $p.Default.Type }}	{{ formatDesc $p.Description }}	{{ $p.Default.ArrayVal }}
-{{- end }}
+ {{decorate "bullet" $p.Name }}	{{ formatDesc $p.Description }}	{{ $p.Default }}
 {{- end }}
 {{- end }}
 {{- end }}
