@@ -219,8 +219,8 @@ func Test_start_has_task_filename_v1beta1(t *testing.T) {
 			},
 		},
 	}
-	cs, _ := test.SeedTestData(t, pipelinetest.Data{Namespaces: ns})
-	cs.Pipeline.Resources = cb.APIResourceList(versionA1, []string{"task", "taskrun"})
+	cs, _ := test.SeedV1beta1TestData(t, pipelinev1beta1test.Data{Namespaces: ns})
+	cs.Pipeline.Resources = cb.APIResourceList(versionB1, []string{"task", "taskrun"})
 	tdc := testDynamic.Options{}
 	dc, err := tdc.Client()
 	if err != nil {
@@ -245,8 +245,8 @@ func Test_start_with_filename_invalid_v1beta1(t *testing.T) {
 			},
 		},
 	}
-	cs, _ := test.SeedTestData(t, pipelinetest.Data{Namespaces: ns})
-	cs.Pipeline.Resources = cb.APIResourceList(versionA1, []string{"task", "taskrun"})
+	cs, _ := test.SeedV1beta1TestData(t, pipelinev1beta1test.Data{Namespaces: ns})
+	cs.Pipeline.Resources = cb.APIResourceList(versionB1, []string{"task", "taskrun"})
 	tdc := testDynamic.Options{}
 	dc, err := tdc.Client()
 	if err != nil {

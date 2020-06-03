@@ -30,13 +30,16 @@ import (
 	testDynamic "github.com/tektoncd/cli/pkg/test/dynamic"
 	"github.com/tektoncd/cli/test/prompt"
 	"github.com/tektoncd/pipeline/pkg/apis/pipeline/v1alpha1"
+	"github.com/tektoncd/pipeline/pkg/apis/pipeline/v1beta1"
 	"github.com/tektoncd/pipeline/pkg/reconciler/pipelinerun/resources"
+	pipelinev1beta1test "github.com/tektoncd/pipeline/test"
 	tb "github.com/tektoncd/pipeline/test/builder"
 	pipelinetest "github.com/tektoncd/pipeline/test/v1alpha1"
 	corev1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/client-go/dynamic"
 	"knative.dev/pkg/apis"
+	duckv1beta1 "knative.dev/pkg/apis/duck/v1beta1"
 )
 
 func init() {
@@ -175,8 +178,16 @@ func TestTaskLog(t *testing.T) {
 
 func TestTaskLog_v1beta1(t *testing.T) {
 	clock := clockwork.NewFakeClock()
-	task1 := []*v1alpha1.Task{tb.Task("task", tb.TaskNamespace("ns"))}
-	cs, _ := test.SeedTestData(t, pipelinetest.Data{
+
+	task1 := []*v1beta1.Task{
+		{
+			ObjectMeta: metav1.ObjectMeta{
+				Name:      "task",
+				Namespace: "ns",
+			},
+		},
+	}
+	cs, _ := test.SeedV1beta1TestData(t, pipelinev1beta1test.Data{
 		Tasks: task1,
 		Namespaces: []*corev1.Namespace{
 			{
@@ -189,16 +200,21 @@ func TestTaskLog_v1beta1(t *testing.T) {
 	cs.Pipeline.Resources = cb.APIResourceList(versionB1, []string{"task", "taskrun"})
 	tdc1 := testDynamic.Options{}
 	dc1, err := tdc1.Client(
-		cb.UnstructuredT(task1[0], versionB1),
+		cb.UnstructuredV1beta1T(task1[0], versionB1),
 	)
 	if err != nil {
 		t.Errorf("unable to create dynamic client: %v", err)
 	}
 
-	task2 := []*v1alpha1.Task{
-		tb.Task("task", tb.TaskNamespace("namespace")),
+	task2 := []*v1beta1.Task{
+		{
+			ObjectMeta: metav1.ObjectMeta{
+				Name:      "task",
+				Namespace: "namespace",
+			},
+		},
 	}
-	cs2, _ := test.SeedTestData(t, pipelinetest.Data{
+	cs2, _ := test.SeedV1beta1TestData(t, pipelinev1beta1test.Data{
 		Tasks: task2,
 		Namespaces: []*corev1.Namespace{
 			{
@@ -211,7 +227,7 @@ func TestTaskLog_v1beta1(t *testing.T) {
 	cs2.Pipeline.Resources = cb.APIResourceList(versionB1, []string{"task", "taskrun"})
 	tdc2 := testDynamic.Options{}
 	dc2, err := tdc2.Client(
-		cb.UnstructuredT(task2[0], versionB1),
+		cb.UnstructuredV1beta1T(task2[0], versionB1),
 	)
 	if err != nil {
 		t.Errorf("unable to create dynamic client: %v", err)
@@ -220,7 +236,7 @@ func TestTaskLog_v1beta1(t *testing.T) {
 	testParams := []struct {
 		name      string
 		command   []string
-		input     pipelinetest.Clients
+		input     pipelinev1beta1test.Clients
 		dc        dynamic.Interface
 		wantError bool
 		want      string
@@ -675,26 +691,46 @@ func TestLogs_Auto_Select_FirstTask(t *testing.T) {
 	ns := "dummyNamespaces"
 	clock := clockwork.NewFakeClock()
 
-	tdata := []*v1alpha1.Task{
-		tb.Task(taskName, tb.TaskNamespace(ns)),
+	tdata := []*v1beta1.Task{
+		{
+			ObjectMeta: metav1.ObjectMeta{
+				Name:      taskName,
+				Namespace: ns,
+			},
+		},
 	}
 
-	trdata := []*v1alpha1.TaskRun{
-		tb.TaskRun("dummyTR", tb.TaskRunNamespace(ns),
-			cb.TaskRunCreationTime(clock.Now().Add(-10*time.Minute)),
-			tb.TaskRunLabel("tekton.dev/task", taskName),
-			tb.TaskRunSelfLink(taskName),
-			tb.TaskRunStatus(
-				tb.StatusCondition(apis.Condition{
-					Status: corev1.ConditionTrue,
-					Reason: resources.ReasonSucceeded,
-				}),
-				tb.TaskRunStartTime(clock.Now().Add(-5*time.Minute)),
-				cb.TaskRunCompletionTime(clock.Now().Add(10*time.Minute)),
-			),
-		),
+	trdata := []*v1beta1.TaskRun{
+		{
+			ObjectMeta: metav1.ObjectMeta{
+				Namespace: ns,
+				Name:      "dummyTR",
+				Labels:    map[string]string{"tekton.dev/task": taskName},
+			},
+			Spec: v1beta1.TaskRunSpec{
+				TaskRef: &v1beta1.TaskRef{
+					Name: "task",
+					Kind: v1beta1.NamespacedTaskKind,
+				},
+			},
+			Status: v1beta1.TaskRunStatus{
+				Status: duckv1beta1.Status{
+					Conditions: duckv1beta1.Conditions{
+						{
+							Status: corev1.ConditionTrue,
+							Reason: resources.ReasonSucceeded,
+						},
+					},
+				},
+				TaskRunStatusFields: v1beta1.TaskRunStatusFields{
+					StartTime:      &metav1.Time{Time: clock.Now().Add(-5 * time.Minute)},
+					CompletionTime: &metav1.Time{Time: clock.Now().Add(10 * time.Minute)},
+				},
+			},
+		},
 	}
-	cs, _ := test.SeedTestData(t, pipelinetest.Data{
+
+	cs, _ := test.SeedV1beta1TestData(t, pipelinev1beta1test.Data{
 		Tasks:    tdata,
 		TaskRuns: trdata,
 		Namespaces: []*corev1.Namespace{
@@ -708,8 +744,8 @@ func TestLogs_Auto_Select_FirstTask(t *testing.T) {
 	cs.Pipeline.Resources = cb.APIResourceList(versionB1, []string{"task", "taskrun"})
 	tdc := testDynamic.Options{}
 	dc, err := tdc.Client(
-		cb.UnstructuredT(tdata[0], versionB1),
-		cb.UnstructuredTR(trdata[0], versionB1),
+		cb.UnstructuredV1beta1T(tdata[0], versionB1),
+		cb.UnstructuredV1beta1TR(trdata[0], versionB1),
 	)
 	if err != nil {
 		t.Errorf("unable to create dynamic client: %v", err)

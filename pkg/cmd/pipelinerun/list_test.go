@@ -26,7 +26,9 @@ import (
 	cb "github.com/tektoncd/cli/pkg/test/builder"
 	testDynamic "github.com/tektoncd/cli/pkg/test/dynamic"
 	"github.com/tektoncd/pipeline/pkg/apis/pipeline/v1alpha1"
+	"github.com/tektoncd/pipeline/pkg/apis/pipeline/v1beta1"
 	"github.com/tektoncd/pipeline/pkg/reconciler/pipelinerun/resources"
+	pipelinev1beta1test "github.com/tektoncd/pipeline/test"
 	tb "github.com/tektoncd/pipeline/test/builder"
 	pipelinetest "github.com/tektoncd/pipeline/test/v1alpha1"
 	"gotest.tools/v3/golden"
@@ -34,6 +36,7 @@ import (
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/client-go/dynamic"
 	"knative.dev/pkg/apis"
+	duckv1beta1 "knative.dev/pkg/apis/duck/v1beta1"
 )
 
 func TestListPipelineRuns(t *testing.T) {
@@ -144,92 +147,92 @@ func TestListPipelineRuns(t *testing.T) {
 	}{
 		{
 			name:      "Invalid namespace",
-			command:   command(t, prs, clock.Now(), ns, version, dc1),
+			command:   commandV1alpha1(t, prs, clock.Now(), ns, version, dc1),
 			args:      []string{"list", "-n", "invalid"},
 			wantError: true,
 		},
 		{
 			name:      "by pipeline name",
-			command:   command(t, prs, clock.Now(), ns, version, dc1),
+			command:   commandV1alpha1(t, prs, clock.Now(), ns, version, dc1),
 			args:      []string{"list", "pipeline", "-n", "namespace"},
 			wantError: false,
 		},
 		{
 			name:      "by output as name",
-			command:   command(t, prs, clock.Now(), ns, version, dc1),
+			command:   commandV1alpha1(t, prs, clock.Now(), ns, version, dc1),
 			args:      []string{"list", "-n", "namespace", "-o", "name"},
 			wantError: false,
 		},
 		{
 			name:      "all in namespace",
-			command:   command(t, prs, clock.Now(), ns, version, dc1),
+			command:   commandV1alpha1(t, prs, clock.Now(), ns, version, dc1),
 			args:      []string{"list", "-n", "namespace"},
 			wantError: false,
 		},
 		{
 			name:      "by template",
-			command:   command(t, prs, clock.Now(), ns, version, dc1),
+			command:   commandV1alpha1(t, prs, clock.Now(), ns, version, dc1),
 			args:      []string{"list", "-n", "namespace", "-o", "jsonpath={range .items[*]}{.metadata.name}{\"\\n\"}{end}"},
 			wantError: false,
 		},
 		{
 			name:      "limit pipelineruns returned to 1",
-			command:   command(t, prs, clock.Now(), ns, version, dc1),
+			command:   commandV1alpha1(t, prs, clock.Now(), ns, version, dc1),
 			args:      []string{"list", "-n", "namespace", "--limit", fmt.Sprintf("%d", 1)},
 			wantError: false,
 		},
 		{
 			name:      "limit pipelineruns negative case",
-			command:   command(t, prs, clock.Now(), ns, version, dc1),
+			command:   commandV1alpha1(t, prs, clock.Now(), ns, version, dc1),
 			args:      []string{"list", "-n", "namespace", "--limit", fmt.Sprintf("%d", -1)},
 			wantError: false,
 		},
 		{
 			name:      "filter pipelineruns by label with in query",
-			command:   command(t, prs, clock.Now(), ns, version, dc1),
+			command:   commandV1alpha1(t, prs, clock.Now(), ns, version, dc1),
 			args:      []string{"list", "-n", "namespace", "--label", "viva in (wakanda,galapagos)"},
 			wantError: false,
 		},
 		{
 			name:      "filter pipelineruns by label",
-			command:   command(t, prs, clock.Now(), ns, version, dc1),
+			command:   commandV1alpha1(t, prs, clock.Now(), ns, version, dc1),
 			args:      []string{"list", "-n", "namespace", "--label", "viva=wakanda"},
 			wantError: false,
 		},
 		{
 			name:      "no mixing pipelinename and label",
-			command:   command(t, prs, clock.Now(), ns, version, dc1),
+			command:   commandV1alpha1(t, prs, clock.Now(), ns, version, dc1),
 			args:      []string{"list", "-n", "namespace", "--label", "viva=wakanda", "pr3-1"},
 			wantError: true,
 		},
 
 		{
 			name:      "limit pipelineruns greater than maximum case",
-			command:   command(t, prs, clock.Now(), ns, version, dc1),
+			command:   commandV1alpha1(t, prs, clock.Now(), ns, version, dc1),
 			args:      []string{"list", "-n", "namespace", "--limit", fmt.Sprintf("%d", 7)},
 			wantError: false,
 		},
 		{
 			name:      "limit pipelineruns with output flag set",
-			command:   command(t, prs, clock.Now(), ns, version, dc1),
+			command:   commandV1alpha1(t, prs, clock.Now(), ns, version, dc1),
 			args:      []string{"list", "-n", "namespace", "-o", "jsonpath={range .items[*]}{.metadata.name}{\"\\n\"}{end}", "--limit", fmt.Sprintf("%d", 2)},
 			wantError: false,
 		},
 		{
 			name:      "print in reverse",
-			command:   command(t, prs, clock.Now(), ns, version, dc1),
+			command:   commandV1alpha1(t, prs, clock.Now(), ns, version, dc1),
 			args:      []string{"list", "--reverse", "-n", "namespace"},
 			wantError: false,
 		},
 		{
 			name:      "print in reverse with output flag",
-			command:   command(t, prs, clock.Now(), ns, version, dc1),
+			command:   commandV1alpha1(t, prs, clock.Now(), ns, version, dc1),
 			args:      []string{"list", "--reverse", "-n", "namespace", "-o", "jsonpath={range .items[*]}{.metadata.name}{\"\\n\"}{end}"},
 			wantError: false,
 		},
 		{
 			name:      "print pipelineruns in all namespaces",
-			command:   command(t, prsMultipleNs, clock.Now(), ns, version, dc2),
+			command:   commandV1alpha1(t, prsMultipleNs, clock.Now(), ns, version, dc2),
 			args:      []string{"list", "--all-namespaces"},
 			wantError: false,
 		},
@@ -256,67 +259,100 @@ func TestListPipelineRuns_v1beta1(t *testing.T) {
 	pr2Started := clock.Now().Add(-2 * time.Hour)
 	pr3Started := clock.Now().Add(-1 * time.Hour)
 
-	prs := []*v1alpha1.PipelineRun{
-		tb.PipelineRun("pr0-1",
-			tb.PipelineRunNamespace("namespace"),
-			tb.PipelineRunLabel("tekton.dev/pipeline", "random"),
-			tb.PipelineRunStatus(),
-		),
-		tb.PipelineRun("pr1-1",
-			tb.PipelineRunNamespace("namespace"),
-			tb.PipelineRunLabel("tekton.dev/pipeline", "pipeline"),
-			tb.PipelineRunStatus(
-				tb.PipelineRunStatusCondition(apis.Condition{
-					Status: corev1.ConditionTrue,
-					Reason: resources.ReasonSucceeded,
-				}),
-				tb.PipelineRunStartTime(pr1Started),
-				cb.PipelineRunCompletionTime(pr1Started.Add(runDuration)),
-			),
-		),
-		tb.PipelineRun("pr2-1",
-			tb.PipelineRunNamespace("namespace"),
-			tb.PipelineRunLabel("tekton.dev/pipeline", "random"),
-			tb.PipelineRunStatus(
-				tb.PipelineRunStatusCondition(apis.Condition{
-					Status: corev1.ConditionTrue,
-					Reason: resources.ReasonRunning,
-				}),
-				tb.PipelineRunStartTime(pr2Started),
-			),
-		),
-		tb.PipelineRun("pr2-2",
-			tb.PipelineRunNamespace("namespace"),
-			tb.PipelineRunLabel("tekton.dev/pipeline", "random"),
-			tb.PipelineRunLabel("viva", "galapagos"),
-			tb.PipelineRunStatus(
-				tb.PipelineRunStatusCondition(apis.Condition{
-					Status: corev1.ConditionFalse,
-					Reason: resources.ReasonFailed,
-				}),
-				tb.PipelineRunStartTime(pr3Started),
-				cb.PipelineRunCompletionTime(pr3Started.Add(runDuration)),
-			),
-		),
-		tb.PipelineRun("pr3-1",
-			tb.PipelineRunNamespace("namespace"),
-			tb.PipelineRunLabel("tekton.dev/pipeline", "random"),
-			tb.PipelineRunLabel("viva", "wakanda"),
-			tb.PipelineRunStatus(),
-		),
+	prs := []*v1beta1.PipelineRun{
+		{
+			ObjectMeta: metav1.ObjectMeta{
+				Namespace: "namespace",
+				Name:      "pr0-1",
+				Labels:    map[string]string{"tekton.dev/pipeline": "random"},
+			},
+		},
+		{
+			ObjectMeta: metav1.ObjectMeta{
+				Namespace: "namespace",
+				Name:      "pr1-1",
+				Labels:    map[string]string{"tekton.dev/pipeline": "pipeline"},
+			},
+			Status: v1beta1.PipelineRunStatus{
+				Status: duckv1beta1.Status{
+					Conditions: duckv1beta1.Conditions{
+						{
+							Status: corev1.ConditionTrue,
+							Reason: resources.ReasonSucceeded,
+						},
+					},
+				},
+				PipelineRunStatusFields: v1beta1.PipelineRunStatusFields{
+					StartTime:      &metav1.Time{Time: pr1Started},
+					CompletionTime: &metav1.Time{Time: pr1Started.Add(runDuration)},
+				},
+			},
+		},
+		{
+			ObjectMeta: metav1.ObjectMeta{
+				Namespace: "namespace",
+				Name:      "pr2-1",
+				Labels:    map[string]string{"tekton.dev/pipeline": "random"},
+			},
+			Status: v1beta1.PipelineRunStatus{
+				Status: duckv1beta1.Status{
+					Conditions: duckv1beta1.Conditions{
+						{
+							Status: corev1.ConditionTrue,
+							Reason: resources.ReasonRunning,
+						},
+					},
+				},
+				PipelineRunStatusFields: v1beta1.PipelineRunStatusFields{
+					StartTime: &metav1.Time{Time: pr2Started},
+				},
+			},
+		},
+		{
+			ObjectMeta: metav1.ObjectMeta{
+				Namespace: "namespace",
+				Name:      "pr2-2",
+				Labels:    map[string]string{"tekton.dev/pipeline": "random", "viva": "galapagos"},
+			},
+			Status: v1beta1.PipelineRunStatus{
+				Status: duckv1beta1.Status{
+					Conditions: duckv1beta1.Conditions{
+						{
+							Status: corev1.ConditionFalse,
+							Reason: resources.ReasonFailed,
+						},
+					},
+				},
+				PipelineRunStatusFields: v1beta1.PipelineRunStatusFields{
+					StartTime:      &metav1.Time{Time: pr3Started},
+					CompletionTime: &metav1.Time{Time: pr3Started.Add(runDuration)},
+				},
+			},
+		},
+		{
+			ObjectMeta: metav1.ObjectMeta{
+				Namespace: "namespace",
+				Name:      "pr3-1",
+				Labels:    map[string]string{"tekton.dev/pipeline": "random", "viva": "wakanda"},
+			},
+		},
 	}
 
-	prsMultipleNs := []*v1alpha1.PipelineRun{
-		tb.PipelineRun("pr4-1",
-			tb.PipelineRunNamespace("namespace-tout"),
-			tb.PipelineRunLabel("tekton.dev/pipeline", "random"),
-			tb.PipelineRunStatus(),
-		),
-		tb.PipelineRun("pr4-2",
-			tb.PipelineRunNamespace("namespace-lacher"),
-			tb.PipelineRunLabel("tekton.dev/pipeline", "random"),
-			tb.PipelineRunStatus(),
-		),
+	prsMultipleNs := []*v1beta1.PipelineRun{
+		{
+			ObjectMeta: metav1.ObjectMeta{
+				Namespace: "namespace-tout",
+				Name:      "pr4-1",
+				Labels:    map[string]string{"tekton.dev/pipeline": "random"},
+			},
+		},
+		{
+			ObjectMeta: metav1.ObjectMeta{
+				Namespace: "namespace-lacher",
+				Name:      "pr4-2",
+				Labels:    map[string]string{"tekton.dev/pipeline": "random"},
+			},
+		},
 	}
 
 	ns := []*corev1.Namespace{
@@ -329,11 +365,11 @@ func TestListPipelineRuns_v1beta1(t *testing.T) {
 
 	tdc1 := testDynamic.Options{}
 	dc1, err := tdc1.Client(
-		cb.UnstructuredPR(prs[0], version),
-		cb.UnstructuredPR(prs[1], version),
-		cb.UnstructuredPR(prs[2], version),
-		cb.UnstructuredPR(prs[3], version),
-		cb.UnstructuredPR(prs[4], version),
+		cb.UnstructuredV1beta1PR(prs[0], version),
+		cb.UnstructuredV1beta1PR(prs[1], version),
+		cb.UnstructuredV1beta1PR(prs[2], version),
+		cb.UnstructuredV1beta1PR(prs[3], version),
+		cb.UnstructuredV1beta1PR(prs[4], version),
 	)
 	if err != nil {
 		t.Errorf("unable to create dynamic client: %v", err)
@@ -347,104 +383,104 @@ func TestListPipelineRuns_v1beta1(t *testing.T) {
 	}{
 		{
 			name:      "Invalid namespace",
-			command:   command(t, prs, clock.Now(), ns, version, dc1),
+			command:   commandV1beta1(t, prs, clock.Now(), ns, version, dc1),
 			args:      []string{"list", "-n", "invalid"},
 			wantError: true,
 		},
 		{
 			name:      "by pipeline name",
-			command:   command(t, prs, clock.Now(), ns, version, dc1),
+			command:   commandV1beta1(t, prs, clock.Now(), ns, version, dc1),
 			args:      []string{"list", "pipeline", "-n", "namespace"},
 			wantError: false,
 		},
 		{
 			name:      "by output as name",
-			command:   command(t, prs, clock.Now(), ns, version, dc1),
+			command:   commandV1beta1(t, prs, clock.Now(), ns, version, dc1),
 			args:      []string{"list", "-n", "namespace", "-o", "name"},
 			wantError: false,
 		},
 		{
 			name:      "all in namespace",
-			command:   command(t, prs, clock.Now(), ns, version, dc1),
+			command:   commandV1beta1(t, prs, clock.Now(), ns, version, dc1),
 			args:      []string{"list", "-n", "namespace"},
 			wantError: false,
 		},
 		{
 			name:      "by template",
-			command:   command(t, prs, clock.Now(), ns, version, dc1),
+			command:   commandV1beta1(t, prs, clock.Now(), ns, version, dc1),
 			args:      []string{"list", "-n", "namespace", "-o", "jsonpath={range .items[*]}{.metadata.name}{\"\\n\"}{end}"},
 			wantError: false,
 		},
 		{
 			name:      "limit pipelineruns returned to 1",
-			command:   command(t, prs, clock.Now(), ns, version, dc1),
+			command:   commandV1beta1(t, prs, clock.Now(), ns, version, dc1),
 			args:      []string{"list", "-n", "namespace", "--limit", fmt.Sprintf("%d", 1)},
 			wantError: false,
 		},
 		{
 			name:      "limit pipelineruns negative case",
-			command:   command(t, prs, clock.Now(), ns, version, dc1),
+			command:   commandV1beta1(t, prs, clock.Now(), ns, version, dc1),
 			args:      []string{"list", "-n", "namespace", "--limit", fmt.Sprintf("%d", -1)},
 			wantError: false,
 		},
 		{
 			name:      "filter pipelineruns by label with in query",
-			command:   command(t, prs, clock.Now(), ns, version, dc1),
+			command:   commandV1beta1(t, prs, clock.Now(), ns, version, dc1),
 			args:      []string{"list", "-n", "namespace", "--label", "viva in (wakanda,galapagos)"},
 			wantError: false,
 		},
 		{
 			name:      "filter pipelineruns by label",
-			command:   command(t, prs, clock.Now(), ns, version, dc1),
+			command:   commandV1beta1(t, prs, clock.Now(), ns, version, dc1),
 			args:      []string{"list", "-n", "namespace", "--label", "viva=wakanda"},
 			wantError: false,
 		},
 		{
 			name:      "no mixing pipelinename and label",
-			command:   command(t, prs, clock.Now(), ns, version, dc1),
+			command:   commandV1beta1(t, prs, clock.Now(), ns, version, dc1),
 			args:      []string{"list", "-n", "namespace", "--label", "viva=wakanda", "pr3-1"},
 			wantError: true,
 		},
 
 		{
 			name:      "limit pipelineruns greater than maximum case",
-			command:   command(t, prs, clock.Now(), ns, version, dc1),
+			command:   commandV1beta1(t, prs, clock.Now(), ns, version, dc1),
 			args:      []string{"list", "-n", "namespace", "--limit", fmt.Sprintf("%d", 7)},
 			wantError: false,
 		},
 		{
 			name:      "limit pipelineruns with output flag set",
-			command:   command(t, prs, clock.Now(), ns, version, dc1),
+			command:   commandV1beta1(t, prs, clock.Now(), ns, version, dc1),
 			args:      []string{"list", "-n", "namespace", "-o", "jsonpath={range .items[*]}{.metadata.name}{\"\\n\"}{end}", "--limit", fmt.Sprintf("%d", 2)},
 			wantError: false,
 		},
 		{
 			name:      "print in reverse",
-			command:   command(t, prs, clock.Now(), ns, version, dc1),
+			command:   commandV1beta1(t, prs, clock.Now(), ns, version, dc1),
 			args:      []string{"list", "--reverse", "-n", "namespace"},
 			wantError: false,
 		},
 		{
 			name:      "print in reverse with output flag",
-			command:   command(t, prs, clock.Now(), ns, version, dc1),
+			command:   commandV1beta1(t, prs, clock.Now(), ns, version, dc1),
 			args:      []string{"list", "--reverse", "-n", "namespace", "-o", "jsonpath={range .items[*]}{.metadata.name}{\"\\n\"}{end}"},
 			wantError: false,
 		},
 		{
 			name:      "print pipelineruns in all namespaces",
-			command:   command(t, prsMultipleNs, clock.Now(), ns, version, dc1),
+			command:   commandV1beta1(t, prsMultipleNs, clock.Now(), ns, version, dc1),
 			args:      []string{"list", "--all-namespaces"},
 			wantError: false,
 		},
 		{
 			name:      "print pipelineruns without headers",
-			command:   command(t, prsMultipleNs, clock.Now(), ns, version, dc1),
+			command:   commandV1beta1(t, prsMultipleNs, clock.Now(), ns, version, dc1),
 			args:      []string{"list", "--no-headers"},
 			wantError: false,
 		},
 		{
 			name:      "print pipelineruns in all namespaces without headers",
-			command:   command(t, prsMultipleNs, clock.Now(), ns, version, dc1),
+			command:   commandV1beta1(t, prsMultipleNs, clock.Now(), ns, version, dc1),
 			args:      []string{"list", "--all-namespaces", "--no-headers"},
 			wantError: false,
 		},
@@ -489,12 +525,25 @@ func TestListPipeline_empty(t *testing.T) {
 	test.AssertOutput(t, "No PipelineRuns found\n", output)
 }
 
-func command(t *testing.T, prs []*v1alpha1.PipelineRun, now time.Time, ns []*corev1.Namespace, version string, dc dynamic.Interface) *cobra.Command {
+func commandV1alpha1(t *testing.T, prs []*v1alpha1.PipelineRun, now time.Time, ns []*corev1.Namespace, version string, dc dynamic.Interface) *cobra.Command {
 	// fake clock advanced by 1 hour
 	clock := clockwork.NewFakeClockAt(now)
 	clock.Advance(time.Duration(60) * time.Minute)
 
 	cs, _ := test.SeedTestData(t, pipelinetest.Data{PipelineRuns: prs, Namespaces: ns})
+	cs.Pipeline.Resources = cb.APIResourceList(version, []string{"pipelinerun"})
+
+	p := &test.Params{Tekton: cs.Pipeline, Clock: clock, Kube: cs.Kube, Dynamic: dc}
+
+	return Command(p)
+}
+
+func commandV1beta1(t *testing.T, prs []*v1beta1.PipelineRun, now time.Time, ns []*corev1.Namespace, version string, dc dynamic.Interface) *cobra.Command {
+	// fake clock advanced by 1 hour
+	clock := clockwork.NewFakeClockAt(now)
+	clock.Advance(time.Duration(60) * time.Minute)
+
+	cs, _ := test.SeedV1beta1TestData(t, pipelinev1beta1test.Data{PipelineRuns: prs, Namespaces: ns})
 	cs.Pipeline.Resources = cb.APIResourceList(version, []string{"pipelinerun"})
 
 	p := &test.Params{Tekton: cs.Pipeline, Clock: clock, Kube: cs.Kube, Dynamic: dc}

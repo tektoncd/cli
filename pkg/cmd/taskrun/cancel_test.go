@@ -22,7 +22,9 @@ import (
 	cb "github.com/tektoncd/cli/pkg/test/builder"
 	testDynamic "github.com/tektoncd/cli/pkg/test/dynamic"
 	"github.com/tektoncd/pipeline/pkg/apis/pipeline/v1alpha1"
+	"github.com/tektoncd/pipeline/pkg/apis/pipeline/v1beta1"
 	"github.com/tektoncd/pipeline/pkg/reconciler/pipelinerun/resources"
+	pipelinev1beta1test "github.com/tektoncd/pipeline/test"
 	tb "github.com/tektoncd/pipeline/test/builder"
 	pipelinetest "github.com/tektoncd/pipeline/test/v1alpha1"
 	corev1 "k8s.io/api/core/v1"
@@ -31,6 +33,7 @@ import (
 	"k8s.io/client-go/dynamic"
 	k8stest "k8s.io/client-go/testing"
 	"knative.dev/pkg/apis"
+	duckv1beta1 "knative.dev/pkg/apis/duck/v1beta1"
 )
 
 func TestTaskRunCancel(t *testing.T) {
@@ -224,57 +227,101 @@ func TestTaskRunCancel(t *testing.T) {
 }
 
 func TestTaskRunCancel_v1beta1(t *testing.T) {
-	trs := []*v1alpha1.TaskRun{
-		tb.TaskRun("taskrun-1",
-			tb.TaskRunNamespace("ns"),
-			tb.TaskRunLabel("tekton.dev/task", "task"),
-			tb.TaskRunSpec(tb.TaskRunTaskRef("task")),
-			tb.TaskRunStatus(
-				tb.StatusCondition(apis.Condition{
-					Status: corev1.ConditionTrue,
-					Reason: resources.ReasonRunning,
-				}),
-			),
-		),
-		tb.TaskRun("taskrun-2",
-			tb.TaskRunNamespace("ns"),
-			tb.TaskRunLabel("tekton.dev/task", "failure-task"),
-			tb.TaskRunSpec(tb.TaskRunTaskRef("failure-task")),
-			tb.TaskRunStatus(
-				tb.StatusCondition(apis.Condition{
-					Status: corev1.ConditionTrue,
-					Reason: resources.ReasonSucceeded,
-				}),
-			),
-		),
+	trs := []*v1beta1.TaskRun{
+		{
+			ObjectMeta: metav1.ObjectMeta{
+				Namespace: "ns",
+				Name:      "taskrun-1",
+				Labels:    map[string]string{"tekton.dev/task": "task"},
+			},
+			Spec: v1beta1.TaskRunSpec{
+				TaskRef: &v1beta1.TaskRef{
+					Name: "task",
+				},
+			},
+			Status: v1beta1.TaskRunStatus{
+				Status: duckv1beta1.Status{
+					Conditions: duckv1beta1.Conditions{
+						{
+							Status: corev1.ConditionTrue,
+							Reason: resources.ReasonRunning,
+						},
+					},
+				},
+			},
+		},
+		{
+			ObjectMeta: metav1.ObjectMeta{
+				Namespace: "ns",
+				Name:      "taskrun-2",
+				Labels:    map[string]string{"tekton.dev/task": "failure-task"},
+			},
+			Spec: v1beta1.TaskRunSpec{
+				TaskRef: &v1beta1.TaskRef{
+					Name: "failure-task",
+				},
+			},
+			Status: v1beta1.TaskRunStatus{
+				Status: duckv1beta1.Status{
+					Conditions: duckv1beta1.Conditions{
+						{
+							Status: corev1.ConditionTrue,
+							Reason: resources.ReasonSucceeded,
+						},
+					},
+				},
+			},
+		},
 	}
 
-	trs2 := []*v1alpha1.TaskRun{
-		tb.TaskRun("failure-taskrun-1",
-			tb.TaskRunNamespace("ns"),
-			tb.TaskRunLabel("tekton.dev/task", "failure-task"),
-			tb.TaskRunSpec(tb.TaskRunTaskRef("failure-task")),
-			tb.TaskRunStatus(
-				tb.StatusCondition(apis.Condition{
-					Status: corev1.ConditionTrue,
-					Reason: resources.ReasonFailed,
-				}),
-			),
-		),
+	trs2 := []*v1beta1.TaskRun{
+		{
+			ObjectMeta: metav1.ObjectMeta{
+				Namespace: "ns",
+				Name:      "failure-taskrun-1",
+				Labels:    map[string]string{"tekton.dev/task": "failure-task"},
+			},
+			Spec: v1beta1.TaskRunSpec{
+				TaskRef: &v1beta1.TaskRef{
+					Name: "failure-task",
+				},
+			},
+			Status: v1beta1.TaskRunStatus{
+				Status: duckv1beta1.Status{
+					Conditions: duckv1beta1.Conditions{
+						{
+							Status: corev1.ConditionTrue,
+							Reason: resources.ReasonFailed,
+						},
+					},
+				},
+			},
+		},
 	}
 
-	trs3 := []*v1alpha1.TaskRun{
-		tb.TaskRun("cancel-taskrun-1",
-			tb.TaskRunNamespace("ns"),
-			tb.TaskRunLabel("tekton.dev/task", "cancel-task"),
-			tb.TaskRunSpec(tb.TaskRunTaskRef("cancel-task")),
-			tb.TaskRunStatus(
-				tb.StatusCondition(apis.Condition{
-					Status: corev1.ConditionFalse,
-					Reason: "TaskRunCancelled",
-				}),
-			),
-		),
+	trs3 := []*v1beta1.TaskRun{
+		{
+			ObjectMeta: metav1.ObjectMeta{
+				Namespace: "ns",
+				Name:      "cancel-taskrun-1",
+				Labels:    map[string]string{"tekton.dev/task": "cancel-task"},
+			},
+			Spec: v1beta1.TaskRunSpec{
+				TaskRef: &v1beta1.TaskRef{
+					Name: "cancel-task",
+				},
+			},
+			Status: v1beta1.TaskRunStatus{
+				Status: duckv1beta1.Status{
+					Conditions: duckv1beta1.Conditions{
+						{
+							Status: corev1.ConditionFalse,
+							Reason: "TaskRunCancelled",
+						},
+					},
+				},
+			},
+		},
 	}
 
 	ns := []*corev1.Namespace{
@@ -285,7 +332,7 @@ func TestTaskRunCancel_v1beta1(t *testing.T) {
 		},
 	}
 	type clients struct {
-		pipelineClient pipelinetest.Clients
+		pipelineClient pipelinev1beta1test.Clients
 		dynamicClient  dynamic.Interface
 	}
 
@@ -293,18 +340,18 @@ func TestTaskRunCancel_v1beta1(t *testing.T) {
 	failures := make([]clients, 0)
 	cancels := make([]clients, 0)
 
-	cs, _ := test.SeedTestData(t, pipelinetest.Data{TaskRuns: trs, Namespaces: ns})
+	cs, _ := test.SeedV1beta1TestData(t, pipelinev1beta1test.Data{TaskRuns: trs, Namespaces: ns})
 	cs.Pipeline.Resources = cb.APIResourceList(versionB1, []string{"task", "taskrun"})
 	tdc := testDynamic.Options{}
 	dc, err := tdc.Client(
-		cb.UnstructuredTR(trs[0], versionB1),
-		cb.UnstructuredTR(trs[1], versionB1),
+		cb.UnstructuredV1beta1TR(trs[0], versionB1),
+		cb.UnstructuredV1beta1TR(trs[1], versionB1),
 	)
 	if err != nil {
 		t.Errorf("unable to create dynamic client: %v", err)
 	}
 
-	cs2, _ := test.SeedTestData(t, pipelinetest.Data{TaskRuns: trs2, Namespaces: ns})
+	cs2, _ := test.SeedV1beta1TestData(t, pipelinev1beta1test.Data{TaskRuns: trs2, Namespaces: ns})
 	cs2.Pipeline.Resources = cb.APIResourceList(versionB1, []string{"task", "taskrun"})
 	tdc2 := testDynamic.Options{PrependReactors: []testDynamic.PrependOpt{
 		{Verb: "patch",
@@ -313,17 +360,17 @@ func TestTaskRunCancel_v1beta1(t *testing.T) {
 				return true, nil, errors.New("test error")
 			}}}}
 	dc2, err := tdc2.Client(
-		cb.UnstructuredTR(trs2[0], versionB1),
+		cb.UnstructuredV1beta1TR(trs2[0], versionB1),
 	)
 	if err != nil {
 		t.Errorf("unable to create dynamic client: %v", err)
 	}
 
-	cs3, _ := test.SeedTestData(t, pipelinetest.Data{TaskRuns: trs3, Namespaces: ns})
+	cs3, _ := test.SeedV1beta1TestData(t, pipelinev1beta1test.Data{TaskRuns: trs3, Namespaces: ns})
 	cs3.Pipeline.Resources = cb.APIResourceList(versionB1, []string{"task", "taskrun"})
 	tdc3 := testDynamic.Options{}
 	dc3, err := tdc3.Client(
-		cb.UnstructuredTR(trs3[0], versionB1),
+		cb.UnstructuredV1beta1TR(trs3[0], versionB1),
 	)
 	if err != nil {
 		t.Errorf("unable to create dynamic client: %v", err)
@@ -337,7 +384,7 @@ func TestTaskRunCancel_v1beta1(t *testing.T) {
 		name      string
 		command   []string
 		dynamic   dynamic.Interface
-		input     pipelinetest.Clients
+		input     pipelinev1beta1test.Clients
 		wantError bool
 		want      string
 	}{

@@ -25,13 +25,16 @@ import (
 	cb "github.com/tektoncd/cli/pkg/test/builder"
 	testDynamic "github.com/tektoncd/cli/pkg/test/dynamic"
 	"github.com/tektoncd/pipeline/pkg/apis/pipeline/v1alpha1"
+	"github.com/tektoncd/pipeline/pkg/apis/pipeline/v1beta1"
 	"github.com/tektoncd/pipeline/pkg/reconciler/pipelinerun/resources"
+	pipelinev1beta1test "github.com/tektoncd/pipeline/test"
 	tb "github.com/tektoncd/pipeline/test/builder"
 	pipelinetest "github.com/tektoncd/pipeline/test/v1alpha1"
 	corev1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/client-go/dynamic"
 	"knative.dev/pkg/apis"
+	duckv1beta1 "knative.dev/pkg/apis/duck/v1beta1"
 )
 
 func TestTaskDelete(t *testing.T) {
@@ -293,60 +296,109 @@ func TestTaskDelete(t *testing.T) {
 func TestTaskDelete_v1beta1(t *testing.T) {
 	version := "v1beta1"
 	clock := clockwork.NewFakeClock()
+	taskCreated := clock.Now().Add(-1 * time.Minute)
+
+	tdata := []*v1beta1.Task{
+		{
+			ObjectMeta: metav1.ObjectMeta{
+				Name:              "task",
+				Namespace:         "ns",
+				CreationTimestamp: metav1.Time{Time: taskCreated},
+			},
+		},
+		{
+			ObjectMeta: metav1.ObjectMeta{
+				Name:              "task2",
+				Namespace:         "ns",
+				CreationTimestamp: metav1.Time{Time: taskCreated},
+			},
+		},
+	}
 
 	type clients struct {
-		pipelineClient pipelinetest.Clients
+		pipelineClient pipelinev1beta1test.Clients
 		dynamicClient  dynamic.Interface
 	}
 
-	tdata := []*v1alpha1.Task{
-		tb.Task("task", tb.TaskNamespace("ns"), cb.TaskCreationTime(clock.Now().Add(-1*time.Minute))),
-		tb.Task("task2", tb.TaskNamespace("ns"), cb.TaskCreationTime(clock.Now().Add(-1*time.Minute))),
-	}
-
-	trdata := []*v1alpha1.TaskRun{
-		tb.TaskRun("task-run-1",
-			tb.TaskRunNamespace("ns"),
-			tb.TaskRunLabel("tekton.dev/task", "task"),
-			tb.TaskRunSpec(tb.TaskRunTaskRef("task", tb.TaskRefKind(v1alpha1.NamespacedTaskKind))),
-			tb.TaskRunStatus(
-				tb.StatusCondition(apis.Condition{
-					Status: corev1.ConditionTrue,
-					Reason: resources.ReasonSucceeded,
-				}),
-			),
-		),
-		tb.TaskRun("task-run-2",
-			tb.TaskRunNamespace("ns"),
-			tb.TaskRunLabel("tekton.dev/task", "task"),
-			tb.TaskRunSpec(tb.TaskRunTaskRef("task", tb.TaskRefKind(v1alpha1.NamespacedTaskKind))),
-			tb.TaskRunStatus(
-				tb.StatusCondition(apis.Condition{
-					Status: corev1.ConditionTrue,
-					Reason: resources.ReasonSucceeded,
-				}),
-			),
-		),
+	trdata := []*v1beta1.TaskRun{
+		{
+			ObjectMeta: metav1.ObjectMeta{
+				Namespace: "ns",
+				Name:      "task-run-1",
+				Labels:    map[string]string{"tekton.dev/task": "task"},
+			},
+			Spec: v1beta1.TaskRunSpec{
+				TaskRef: &v1beta1.TaskRef{
+					Name: "task",
+					Kind: v1beta1.NamespacedTaskKind,
+				},
+			},
+			Status: v1beta1.TaskRunStatus{
+				Status: duckv1beta1.Status{
+					Conditions: duckv1beta1.Conditions{
+						{
+							Status: corev1.ConditionTrue,
+							Reason: resources.ReasonSucceeded,
+						},
+					},
+				},
+			},
+		},
+		{
+			ObjectMeta: metav1.ObjectMeta{
+				Namespace: "ns",
+				Name:      "task-run-2",
+				Labels:    map[string]string{"tekton.dev/task": "task"},
+			},
+			Spec: v1beta1.TaskRunSpec{
+				TaskRef: &v1beta1.TaskRef{
+					Name: "task",
+					Kind: v1beta1.NamespacedTaskKind,
+				},
+			},
+			Status: v1beta1.TaskRunStatus{
+				Status: duckv1beta1.Status{
+					Conditions: duckv1beta1.Conditions{
+						{
+							Status: corev1.ConditionTrue,
+							Reason: resources.ReasonSucceeded,
+						},
+					},
+				},
+			},
+		},
 		// ClusterTask is provided in the TaskRef of TaskRun, so as to verify
 		// TaskRun created by ClusterTask is not getting deleted while deleting
 		// Task with `--trs` flag and name of Task and ClusterTask is same.
-		tb.TaskRun("task-run-3",
-			tb.TaskRunNamespace("ns"),
-			tb.TaskRunLabel("tekton.dev/task", "task"),
-			tb.TaskRunSpec(tb.TaskRunTaskRef("task", tb.TaskRefKind(v1alpha1.ClusterTaskKind))),
-			tb.TaskRunStatus(
-				tb.StatusCondition(apis.Condition{
-					Status: corev1.ConditionTrue,
-					Reason: resources.ReasonSucceeded,
-				}),
-			),
-		),
+		{
+			ObjectMeta: metav1.ObjectMeta{
+				Namespace: "ns",
+				Name:      "task-run-3",
+				Labels:    map[string]string{"tekton.dev/task": "task"},
+			},
+			Spec: v1beta1.TaskRunSpec{
+				TaskRef: &v1beta1.TaskRef{
+					Name: "task",
+					Kind: v1beta1.ClusterTaskKind,
+				},
+			},
+			Status: v1beta1.TaskRunStatus{
+				Status: duckv1beta1.Status{
+					Conditions: duckv1beta1.Conditions{
+						{
+							Status: corev1.ConditionTrue,
+							Reason: resources.ReasonSucceeded,
+						},
+					},
+				},
+			},
+		},
 	}
 
 	seeds := make([]clients, 0)
 	for i := 0; i < 8; i++ {
 
-		cs, _ := test.SeedTestData(t, pipelinetest.Data{
+		cs, _ := test.SeedV1beta1TestData(t, pipelinev1beta1test.Data{
 			Tasks:    tdata,
 			TaskRuns: trdata,
 			Namespaces: []*corev1.Namespace{
@@ -361,11 +413,11 @@ func TestTaskDelete_v1beta1(t *testing.T) {
 		cs.Pipeline.Resources = cb.APIResourceList(version, []string{"task", "taskrun"})
 		tdc := testDynamic.Options{}
 		dc, err := tdc.Client(
-			cb.UnstructuredT(tdata[0], version),
-			cb.UnstructuredT(tdata[1], version),
-			cb.UnstructuredTR(trdata[0], version),
-			cb.UnstructuredTR(trdata[1], version),
-			cb.UnstructuredTR(trdata[2], version),
+			cb.UnstructuredV1beta1T(tdata[0], version),
+			cb.UnstructuredV1beta1T(tdata[1], version),
+			cb.UnstructuredV1beta1TR(trdata[0], version),
+			cb.UnstructuredV1beta1TR(trdata[1], version),
+			cb.UnstructuredV1beta1TR(trdata[2], version),
 		)
 		if err != nil {
 			t.Errorf("unable to create dynamic client: %v", err)
@@ -378,7 +430,7 @@ func TestTaskDelete_v1beta1(t *testing.T) {
 		name        string
 		command     []string
 		dynamic     dynamic.Interface
-		input       pipelinetest.Clients
+		input       pipelinev1beta1test.Clients
 		inputStream io.Reader
 		wantError   bool
 		want        string
