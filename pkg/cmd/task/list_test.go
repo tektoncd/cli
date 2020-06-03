@@ -16,6 +16,7 @@ package task
 
 import (
 	"fmt"
+
 	"testing"
 	"time"
 
@@ -24,6 +25,8 @@ import (
 	cb "github.com/tektoncd/cli/pkg/test/builder"
 	testDynamic "github.com/tektoncd/cli/pkg/test/dynamic"
 	"github.com/tektoncd/pipeline/pkg/apis/pipeline/v1alpha1"
+	"github.com/tektoncd/pipeline/pkg/apis/pipeline/v1beta1"
+	pipelinev1beta1test "github.com/tektoncd/pipeline/test"
 	tb "github.com/tektoncd/pipeline/test/builder"
 	pipelinetest "github.com/tektoncd/pipeline/test/v1alpha1"
 	"gotest.tools/v3/golden"
@@ -121,13 +124,58 @@ func TestTaskList_Only_Tasks_v1alpha1(t *testing.T) {
 func TestTaskList_Only_Tasks_v1beta1(t *testing.T) {
 	clock := clockwork.NewFakeClock()
 
-	tasks := []*v1alpha1.Task{
-		tb.Task("tomatoes", tb.TaskNamespace("namespace"), cb.TaskCreationTime(clock.Now().Add(-1*time.Minute))),
-		tb.Task("mangoes", tb.TaskNamespace("namespace"), cb.TaskCreationTime(clock.Now().Add(-20*time.Second))),
-		tb.Task("bananas", tb.TaskNamespace("namespace"), cb.TaskCreationTime(clock.Now().Add(-512*time.Hour))),
-		tb.Task("apples", tb.TaskNamespace("namespace"), tb.TaskSpec(tb.TaskDescription("")), cb.TaskCreationTime(clock.Now().Add(-513*time.Hour))),
-		tb.Task("potatoes", tb.TaskNamespace("namespace"), tb.TaskSpec(tb.TaskDescription("a test task")), cb.TaskCreationTime(clock.Now().Add(-514*time.Hour))),
-		tb.Task("onionss", tb.TaskNamespace("namespace"), tb.TaskSpec(tb.TaskDescription("a test task to test description of task")), cb.TaskCreationTime(clock.Now().Add(-515*time.Hour))),
+	tasks := []*v1beta1.Task{
+		{
+			ObjectMeta: metav1.ObjectMeta{
+				Name:              "tomatoes",
+				Namespace:         "namespace",
+				CreationTimestamp: metav1.Time{Time: clock.Now().Add(-1 * time.Minute)},
+			},
+		},
+		{
+			ObjectMeta: metav1.ObjectMeta{
+				Name:              "mangoes",
+				Namespace:         "namespace",
+				CreationTimestamp: metav1.Time{Time: clock.Now().Add(-20 * time.Second)},
+			},
+		},
+		{
+			ObjectMeta: metav1.ObjectMeta{
+				Name:              "bananas",
+				Namespace:         "namespace",
+				CreationTimestamp: metav1.Time{Time: clock.Now().Add(-512 * time.Hour)},
+			},
+		},
+		{
+			ObjectMeta: metav1.ObjectMeta{
+				Name:              "apples",
+				Namespace:         "namespace",
+				CreationTimestamp: metav1.Time{Time: clock.Now().Add(-513 * time.Hour)},
+			},
+			Spec: v1beta1.TaskSpec{
+				Description: "",
+			},
+		},
+		{
+			ObjectMeta: metav1.ObjectMeta{
+				Name:              "potatoes",
+				Namespace:         "namespace",
+				CreationTimestamp: metav1.Time{Time: clock.Now().Add(-514 * time.Hour)},
+			},
+			Spec: v1beta1.TaskSpec{
+				Description: "a test task",
+			},
+		},
+		{
+			ObjectMeta: metav1.ObjectMeta{
+				Name:              "onionss",
+				Namespace:         "namespace",
+				CreationTimestamp: metav1.Time{Time: clock.Now().Add(-515 * time.Hour)},
+			},
+			Spec: v1beta1.TaskSpec{
+				Description: "a test task to test description of task",
+			},
+		},
 	}
 
 	ns := []*corev1.Namespace{
@@ -141,18 +189,18 @@ func TestTaskList_Only_Tasks_v1beta1(t *testing.T) {
 	version := "v1beta1"
 	tdc := testDynamic.Options{}
 	dynamic, err := tdc.Client(
-		cb.UnstructuredT(tasks[0], version),
-		cb.UnstructuredT(tasks[1], version),
-		cb.UnstructuredT(tasks[2], version),
-		cb.UnstructuredT(tasks[3], version),
-		cb.UnstructuredT(tasks[4], version),
-		cb.UnstructuredT(tasks[5], version),
+		cb.UnstructuredV1beta1T(tasks[0], version),
+		cb.UnstructuredV1beta1T(tasks[1], version),
+		cb.UnstructuredV1beta1T(tasks[2], version),
+		cb.UnstructuredV1beta1T(tasks[3], version),
+		cb.UnstructuredV1beta1T(tasks[4], version),
+		cb.UnstructuredV1beta1T(tasks[5], version),
 	)
 	if err != nil {
 		t.Errorf("unable to create dynamic client: %v", err)
 	}
 
-	cs, _ := test.SeedTestData(t, pipelinetest.Data{Tasks: tasks, Namespaces: ns})
+	cs, _ := test.SeedV1beta1TestData(t, pipelinev1beta1test.Data{Tasks: tasks, Namespaces: ns})
 	p := &test.Params{Tekton: cs.Pipeline, Clock: clock, Kube: cs.Kube, Dynamic: dynamic}
 	cs.Pipeline.Resources = cb.APIResourceList(version, []string{"task"})
 	task := Command(p)
@@ -168,13 +216,58 @@ func TestTaskList_Only_Tasks_v1beta1(t *testing.T) {
 func TestTaskList_Only_Tasks_no_headers_v1beta1(t *testing.T) {
 	clock := clockwork.NewFakeClock()
 
-	tasks := []*v1alpha1.Task{
-		tb.Task("tomatoes", tb.TaskNamespace("namespace"), cb.TaskCreationTime(clock.Now().Add(-1*time.Minute))),
-		tb.Task("mangoes", tb.TaskNamespace("namespace"), cb.TaskCreationTime(clock.Now().Add(-20*time.Second))),
-		tb.Task("bananas", tb.TaskNamespace("namespace"), cb.TaskCreationTime(clock.Now().Add(-512*time.Hour))),
-		tb.Task("apples", tb.TaskNamespace("namespace"), tb.TaskSpec(tb.TaskDescription("")), cb.TaskCreationTime(clock.Now().Add(-513*time.Hour))),
-		tb.Task("potatoes", tb.TaskNamespace("namespace"), tb.TaskSpec(tb.TaskDescription("a test task")), cb.TaskCreationTime(clock.Now().Add(-514*time.Hour))),
-		tb.Task("onions", tb.TaskNamespace("namespace"), tb.TaskSpec(tb.TaskDescription("a test task to test description of task")), cb.TaskCreationTime(clock.Now().Add(-515*time.Hour))),
+	tasks := []*v1beta1.Task{
+		{
+			ObjectMeta: metav1.ObjectMeta{
+				Name:              "tomatoes",
+				Namespace:         "namespace",
+				CreationTimestamp: metav1.Time{Time: clock.Now().Add(-1 * time.Minute)},
+			},
+		},
+		{
+			ObjectMeta: metav1.ObjectMeta{
+				Name:              "mangoes",
+				Namespace:         "namespace",
+				CreationTimestamp: metav1.Time{Time: clock.Now().Add(-20 * time.Second)},
+			},
+		},
+		{
+			ObjectMeta: metav1.ObjectMeta{
+				Name:              "bananas",
+				Namespace:         "namespace",
+				CreationTimestamp: metav1.Time{Time: clock.Now().Add(-512 * time.Hour)},
+			},
+		},
+		{
+			ObjectMeta: metav1.ObjectMeta{
+				Name:              "apples",
+				Namespace:         "namespace",
+				CreationTimestamp: metav1.Time{Time: clock.Now().Add(-513 * time.Hour)},
+			},
+			Spec: v1beta1.TaskSpec{
+				Description: "",
+			},
+		},
+		{
+			ObjectMeta: metav1.ObjectMeta{
+				Name:              "potatoes",
+				Namespace:         "namespace",
+				CreationTimestamp: metav1.Time{Time: clock.Now().Add(-514 * time.Hour)},
+			},
+			Spec: v1beta1.TaskSpec{
+				Description: "a test task",
+			},
+		},
+		{
+			ObjectMeta: metav1.ObjectMeta{
+				Name:              "onions",
+				Namespace:         "namespace",
+				CreationTimestamp: metav1.Time{Time: clock.Now().Add(-515 * time.Hour)},
+			},
+			Spec: v1beta1.TaskSpec{
+				Description: "a test task to test description of task",
+			},
+		},
 	}
 
 	ns := []*corev1.Namespace{
@@ -188,18 +281,18 @@ func TestTaskList_Only_Tasks_no_headers_v1beta1(t *testing.T) {
 	version := "v1beta1"
 	tdc := testDynamic.Options{}
 	dynamic, err := tdc.Client(
-		cb.UnstructuredT(tasks[0], version),
-		cb.UnstructuredT(tasks[1], version),
-		cb.UnstructuredT(tasks[2], version),
-		cb.UnstructuredT(tasks[3], version),
-		cb.UnstructuredT(tasks[4], version),
-		cb.UnstructuredT(tasks[5], version),
+		cb.UnstructuredV1beta1T(tasks[0], version),
+		cb.UnstructuredV1beta1T(tasks[1], version),
+		cb.UnstructuredV1beta1T(tasks[2], version),
+		cb.UnstructuredV1beta1T(tasks[3], version),
+		cb.UnstructuredV1beta1T(tasks[4], version),
+		cb.UnstructuredV1beta1T(tasks[5], version),
 	)
 	if err != nil {
 		t.Errorf("unable to create dynamic client: %v", err)
 	}
 
-	cs, _ := test.SeedTestData(t, pipelinetest.Data{Tasks: tasks, Namespaces: ns})
+	cs, _ := test.SeedV1beta1TestData(t, pipelinev1beta1test.Data{Tasks: tasks, Namespaces: ns})
 	p := &test.Params{Tekton: cs.Pipeline, Clock: clock, Kube: cs.Kube, Dynamic: dynamic}
 	cs.Pipeline.Resources = cb.APIResourceList(version, []string{"task"})
 	task := Command(p)
@@ -215,42 +308,132 @@ func TestTaskList_Only_Tasks_no_headers_v1beta1(t *testing.T) {
 func TestTaskList_Only_Tasks_all_namespaces_v1beta1(t *testing.T) {
 	clock := clockwork.NewFakeClock()
 
-	tasks := []*v1alpha1.Task{
-		tb.Task("tomatoes", tb.TaskNamespace("namespace"), cb.TaskCreationTime(clock.Now().Add(-1*time.Minute))),
-		tb.Task("mangoes", tb.TaskNamespace("namespace"), cb.TaskCreationTime(clock.Now().Add(-20*time.Second))),
-		tb.Task("bananas", tb.TaskNamespace("namespace"), cb.TaskCreationTime(clock.Now().Add(-512*time.Hour))),
-		tb.Task("apples", tb.TaskNamespace("namespace"), tb.TaskSpec(tb.TaskDescription("")), cb.TaskCreationTime(clock.Now().Add(-513*time.Hour))),
-		tb.Task("potatoes", tb.TaskNamespace("namespace"), tb.TaskSpec(tb.TaskDescription("a test task")), cb.TaskCreationTime(clock.Now().Add(-514*time.Hour))),
-		tb.Task("onions", tb.TaskNamespace("namespace"), tb.TaskSpec(tb.TaskDescription("a test task to test description of task")), cb.TaskCreationTime(clock.Now().Add(-515*time.Hour))),
-		tb.Task("tomates", tb.TaskNamespace("espace-de-nom"), cb.TaskCreationTime(clock.Now().Add(-1*time.Minute))),
-		tb.Task("mangues", tb.TaskNamespace("espace-de-nom"), cb.TaskCreationTime(clock.Now().Add(-20*time.Second))),
-		tb.Task("bananes", tb.TaskNamespace("espace-de-nom"), cb.TaskCreationTime(clock.Now().Add(-512*time.Hour))),
-		tb.Task("pommes", tb.TaskNamespace("espace-de-nom"), tb.TaskSpec(tb.TaskDescription("")), cb.TaskCreationTime(clock.Now().Add(-513*time.Hour))),
-		tb.Task("patates", tb.TaskNamespace("espace-de-nom"), tb.TaskSpec(tb.TaskDescription("a test task")), cb.TaskCreationTime(clock.Now().Add(-514*time.Hour))),
-		tb.Task("oignons", tb.TaskNamespace("espace-de-nom"), tb.TaskSpec(tb.TaskDescription("a test task to test description of task")), cb.TaskCreationTime(clock.Now().Add(-515*time.Hour))),
+	tasks := []*v1beta1.Task{
+		{
+			ObjectMeta: metav1.ObjectMeta{
+				Name:              "tomatoes",
+				Namespace:         "namespace",
+				CreationTimestamp: metav1.Time{Time: clock.Now().Add(-1 * time.Minute)},
+			},
+		},
+		{
+			ObjectMeta: metav1.ObjectMeta{
+				Name:              "mangoes",
+				Namespace:         "namespace",
+				CreationTimestamp: metav1.Time{Time: clock.Now().Add(-20 * time.Second)},
+			},
+		},
+		{
+			ObjectMeta: metav1.ObjectMeta{
+				Name:              "bananas",
+				Namespace:         "namespace",
+				CreationTimestamp: metav1.Time{Time: clock.Now().Add(-512 * time.Hour)},
+			},
+		},
+		{
+			ObjectMeta: metav1.ObjectMeta{
+				Name:              "apples",
+				Namespace:         "namespace",
+				CreationTimestamp: metav1.Time{Time: clock.Now().Add(-513 * time.Hour)},
+			},
+			Spec: v1beta1.TaskSpec{
+				Description: "",
+			},
+		},
+		{
+			ObjectMeta: metav1.ObjectMeta{
+				Name:              "potatoes",
+				Namespace:         "namespace",
+				CreationTimestamp: metav1.Time{Time: clock.Now().Add(-514 * time.Hour)},
+			},
+			Spec: v1beta1.TaskSpec{
+				Description: "a test task",
+			},
+		},
+		{
+			ObjectMeta: metav1.ObjectMeta{
+				Name:              "onions",
+				Namespace:         "namespace",
+				CreationTimestamp: metav1.Time{Time: clock.Now().Add(-515 * time.Hour)},
+			},
+			Spec: v1beta1.TaskSpec{
+				Description: "a test task to test description of task",
+			},
+		},
+		{
+			ObjectMeta: metav1.ObjectMeta{
+				Name:              "tomates",
+				Namespace:         "espace-de-nom",
+				CreationTimestamp: metav1.Time{Time: clock.Now().Add(-1 * time.Minute)},
+			},
+		},
+		{
+			ObjectMeta: metav1.ObjectMeta{
+				Name:              "mangues",
+				Namespace:         "espace-de-nom",
+				CreationTimestamp: metav1.Time{Time: clock.Now().Add(-20 * time.Second)},
+			},
+		},
+		{
+			ObjectMeta: metav1.ObjectMeta{
+				Name:              "bananes",
+				Namespace:         "espace-de-nom",
+				CreationTimestamp: metav1.Time{Time: clock.Now().Add(-512 * time.Hour)},
+			},
+		},
+		{
+			ObjectMeta: metav1.ObjectMeta{
+				Name:              "pommes",
+				Namespace:         "espace-de-nom",
+				CreationTimestamp: metav1.Time{Time: clock.Now().Add(-513 * time.Hour)},
+			},
+			Spec: v1beta1.TaskSpec{
+				Description: "",
+			},
+		},
+		{
+			ObjectMeta: metav1.ObjectMeta{
+				Name:              "patates",
+				Namespace:         "espace-de-nom",
+				CreationTimestamp: metav1.Time{Time: clock.Now().Add(-514 * time.Hour)},
+			},
+			Spec: v1beta1.TaskSpec{
+				Description: "a test task",
+			},
+		},
+		{
+			ObjectMeta: metav1.ObjectMeta{
+				Name:              "oignons",
+				Namespace:         "espace-de-nom",
+				CreationTimestamp: metav1.Time{Time: clock.Now().Add(-515 * time.Hour)},
+			},
+			Spec: v1beta1.TaskSpec{
+				Description: "a test task to test description of task",
+			},
+		},
 	}
 
 	version := "v1beta1"
 	tdc := testDynamic.Options{}
 	dynamic, err := tdc.Client(
-		cb.UnstructuredT(tasks[0], version),
-		cb.UnstructuredT(tasks[1], version),
-		cb.UnstructuredT(tasks[2], version),
-		cb.UnstructuredT(tasks[3], version),
-		cb.UnstructuredT(tasks[4], version),
-		cb.UnstructuredT(tasks[5], version),
-		cb.UnstructuredT(tasks[6], version),
-		cb.UnstructuredT(tasks[7], version),
-		cb.UnstructuredT(tasks[8], version),
-		cb.UnstructuredT(tasks[9], version),
-		cb.UnstructuredT(tasks[10], version),
-		cb.UnstructuredT(tasks[11], version),
+		cb.UnstructuredV1beta1T(tasks[0], version),
+		cb.UnstructuredV1beta1T(tasks[1], version),
+		cb.UnstructuredV1beta1T(tasks[2], version),
+		cb.UnstructuredV1beta1T(tasks[3], version),
+		cb.UnstructuredV1beta1T(tasks[4], version),
+		cb.UnstructuredV1beta1T(tasks[5], version),
+		cb.UnstructuredV1beta1T(tasks[6], version),
+		cb.UnstructuredV1beta1T(tasks[7], version),
+		cb.UnstructuredV1beta1T(tasks[8], version),
+		cb.UnstructuredV1beta1T(tasks[9], version),
+		cb.UnstructuredV1beta1T(tasks[10], version),
+		cb.UnstructuredV1beta1T(tasks[11], version),
 	)
 	if err != nil {
 		t.Errorf("unable to create dynamic client: %v", err)
 	}
 
-	cs, _ := test.SeedTestData(t, pipelinetest.Data{Tasks: tasks})
+	cs, _ := test.SeedV1beta1TestData(t, pipelinev1beta1test.Data{Tasks: tasks})
 	p := &test.Params{Tekton: cs.Pipeline, Clock: clock, Kube: cs.Kube, Dynamic: dynamic}
 	cs.Pipeline.Resources = cb.APIResourceList(version, []string{"task"})
 	task := Command(p)
@@ -265,43 +448,132 @@ func TestTaskList_Only_Tasks_all_namespaces_v1beta1(t *testing.T) {
 
 func TestTaskList_Only_Tasks_all_namespaces_no_headers_v1beta1(t *testing.T) {
 	clock := clockwork.NewFakeClock()
-
-	tasks := []*v1alpha1.Task{
-		tb.Task("tomatoes", tb.TaskNamespace("namespace"), cb.TaskCreationTime(clock.Now().Add(-1*time.Minute))),
-		tb.Task("mangoes", tb.TaskNamespace("namespace"), cb.TaskCreationTime(clock.Now().Add(-20*time.Second))),
-		tb.Task("bananas", tb.TaskNamespace("namespace"), cb.TaskCreationTime(clock.Now().Add(-512*time.Hour))),
-		tb.Task("apples", tb.TaskNamespace("namespace"), tb.TaskSpec(tb.TaskDescription("")), cb.TaskCreationTime(clock.Now().Add(-513*time.Hour))),
-		tb.Task("potatoes", tb.TaskNamespace("namespace"), tb.TaskSpec(tb.TaskDescription("a test task")), cb.TaskCreationTime(clock.Now().Add(-514*time.Hour))),
-		tb.Task("onions", tb.TaskNamespace("namespace"), tb.TaskSpec(tb.TaskDescription("a test task to test description of task")), cb.TaskCreationTime(clock.Now().Add(-515*time.Hour))),
-		tb.Task("tomates", tb.TaskNamespace("espace-de-nom"), cb.TaskCreationTime(clock.Now().Add(-1*time.Minute))),
-		tb.Task("mangues", tb.TaskNamespace("espace-de-nom"), cb.TaskCreationTime(clock.Now().Add(-20*time.Second))),
-		tb.Task("bananes", tb.TaskNamespace("espace-de-nom"), cb.TaskCreationTime(clock.Now().Add(-512*time.Hour))),
-		tb.Task("pommes", tb.TaskNamespace("espace-de-nom"), tb.TaskSpec(tb.TaskDescription("")), cb.TaskCreationTime(clock.Now().Add(-513*time.Hour))),
-		tb.Task("patates", tb.TaskNamespace("espace-de-nom"), tb.TaskSpec(tb.TaskDescription("a test task")), cb.TaskCreationTime(clock.Now().Add(-514*time.Hour))),
-		tb.Task("oignons", tb.TaskNamespace("espace-de-nom"), tb.TaskSpec(tb.TaskDescription("a test task to test description of task")), cb.TaskCreationTime(clock.Now().Add(-515*time.Hour))),
+	tasks := []*v1beta1.Task{
+		{
+			ObjectMeta: metav1.ObjectMeta{
+				Name:              "tomatoes",
+				Namespace:         "namespace",
+				CreationTimestamp: metav1.Time{Time: clock.Now().Add(-1 * time.Minute)},
+			},
+		},
+		{
+			ObjectMeta: metav1.ObjectMeta{
+				Name:              "mangoes",
+				Namespace:         "namespace",
+				CreationTimestamp: metav1.Time{Time: clock.Now().Add(-20 * time.Second)},
+			},
+		},
+		{
+			ObjectMeta: metav1.ObjectMeta{
+				Name:              "bananas",
+				Namespace:         "namespace",
+				CreationTimestamp: metav1.Time{Time: clock.Now().Add(-512 * time.Hour)},
+			},
+		},
+		{
+			ObjectMeta: metav1.ObjectMeta{
+				Name:              "apples",
+				Namespace:         "namespace",
+				CreationTimestamp: metav1.Time{Time: clock.Now().Add(-513 * time.Hour)},
+			},
+			Spec: v1beta1.TaskSpec{
+				Description: "",
+			},
+		},
+		{
+			ObjectMeta: metav1.ObjectMeta{
+				Name:              "potatoes",
+				Namespace:         "namespace",
+				CreationTimestamp: metav1.Time{Time: clock.Now().Add(-514 * time.Hour)},
+			},
+			Spec: v1beta1.TaskSpec{
+				Description: "a test task",
+			},
+		},
+		{
+			ObjectMeta: metav1.ObjectMeta{
+				Name:              "onions",
+				Namespace:         "namespace",
+				CreationTimestamp: metav1.Time{Time: clock.Now().Add(-515 * time.Hour)},
+			},
+			Spec: v1beta1.TaskSpec{
+				Description: "a test task to test description of task",
+			},
+		},
+		{
+			ObjectMeta: metav1.ObjectMeta{
+				Name:              "tomates",
+				Namespace:         "espace-de-nom",
+				CreationTimestamp: metav1.Time{Time: clock.Now().Add(-1 * time.Minute)},
+			},
+		},
+		{
+			ObjectMeta: metav1.ObjectMeta{
+				Name:              "mangues",
+				Namespace:         "espace-de-nom",
+				CreationTimestamp: metav1.Time{Time: clock.Now().Add(-20 * time.Second)},
+			},
+		},
+		{
+			ObjectMeta: metav1.ObjectMeta{
+				Name:              "bananes",
+				Namespace:         "espace-de-nom",
+				CreationTimestamp: metav1.Time{Time: clock.Now().Add(-512 * time.Hour)},
+			},
+		},
+		{
+			ObjectMeta: metav1.ObjectMeta{
+				Name:              "pommes",
+				Namespace:         "espace-de-nom",
+				CreationTimestamp: metav1.Time{Time: clock.Now().Add(-513 * time.Hour)},
+			},
+			Spec: v1beta1.TaskSpec{
+				Description: "",
+			},
+		},
+		{
+			ObjectMeta: metav1.ObjectMeta{
+				Name:              "patates",
+				Namespace:         "espace-de-nom",
+				CreationTimestamp: metav1.Time{Time: clock.Now().Add(-514 * time.Hour)},
+			},
+			Spec: v1beta1.TaskSpec{
+				Description: "a test task",
+			},
+		},
+		{
+			ObjectMeta: metav1.ObjectMeta{
+				Name:              "oignons",
+				Namespace:         "espace-de-nom",
+				CreationTimestamp: metav1.Time{Time: clock.Now().Add(-515 * time.Hour)},
+			},
+			Spec: v1beta1.TaskSpec{
+				Description: "a test task to test description of task",
+			},
+		},
 	}
 
 	version := "v1beta1"
 	tdc := testDynamic.Options{}
 	dynamic, err := tdc.Client(
-		cb.UnstructuredT(tasks[0], version),
-		cb.UnstructuredT(tasks[1], version),
-		cb.UnstructuredT(tasks[2], version),
-		cb.UnstructuredT(tasks[3], version),
-		cb.UnstructuredT(tasks[4], version),
-		cb.UnstructuredT(tasks[5], version),
-		cb.UnstructuredT(tasks[6], version),
-		cb.UnstructuredT(tasks[7], version),
-		cb.UnstructuredT(tasks[8], version),
-		cb.UnstructuredT(tasks[9], version),
-		cb.UnstructuredT(tasks[10], version),
-		cb.UnstructuredT(tasks[11], version),
+		cb.UnstructuredV1beta1T(tasks[0], version),
+		cb.UnstructuredV1beta1T(tasks[1], version),
+		cb.UnstructuredV1beta1T(tasks[2], version),
+		cb.UnstructuredV1beta1T(tasks[3], version),
+		cb.UnstructuredV1beta1T(tasks[4], version),
+		cb.UnstructuredV1beta1T(tasks[5], version),
+		cb.UnstructuredV1beta1T(tasks[6], version),
+		cb.UnstructuredV1beta1T(tasks[7], version),
+		cb.UnstructuredV1beta1T(tasks[8], version),
+		cb.UnstructuredV1beta1T(tasks[9], version),
+		cb.UnstructuredV1beta1T(tasks[10], version),
+		cb.UnstructuredV1beta1T(tasks[11], version),
 	)
 	if err != nil {
 		t.Errorf("unable to create dynamic client: %v", err)
 	}
 
-	cs, _ := test.SeedTestData(t, pipelinetest.Data{Tasks: tasks})
+	cs, _ := test.SeedV1beta1TestData(t, pipelinev1beta1test.Data{Tasks: tasks})
 	p := &test.Params{Tekton: cs.Pipeline, Clock: clock, Kube: cs.Kube, Dynamic: dynamic}
 	cs.Pipeline.Resources = cb.APIResourceList(version, []string{"task"})
 	task := Command(p)

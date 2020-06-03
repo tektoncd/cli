@@ -29,7 +29,9 @@ import (
 	cb "github.com/tektoncd/cli/pkg/test/builder"
 	testDynamic "github.com/tektoncd/cli/pkg/test/dynamic"
 	"github.com/tektoncd/pipeline/pkg/apis/pipeline/v1alpha1"
+	"github.com/tektoncd/pipeline/pkg/apis/pipeline/v1beta1"
 	"github.com/tektoncd/pipeline/pkg/reconciler/pipelinerun/resources"
+	pipelinev1beta1test "github.com/tektoncd/pipeline/test"
 	tb "github.com/tektoncd/pipeline/test/builder"
 	pipelinetest "github.com/tektoncd/pipeline/test/v1alpha1"
 	corev1 "k8s.io/api/core/v1"
@@ -37,6 +39,7 @@ import (
 	"k8s.io/apimachinery/pkg/watch"
 	"k8s.io/client-go/dynamic"
 	"knative.dev/pkg/apis"
+	duckv1beta1 "knative.dev/pkg/apis/duck/v1beta1"
 )
 
 const (
@@ -406,7 +409,7 @@ func TestPipelinerunLogs(t *testing.T) {
 			if err != nil {
 				t.Errorf("unable to create dynamic client: %v", err)
 			}
-			prlo := logOpts(prName, ns, cs, dc, fake.Streamer(fakeLogs), s.allSteps, false, s.tasks...)
+			prlo := logOptsv1aplha1(prName, ns, cs, dc, fake.Streamer(fakeLogs), s.allSteps, false, s.tasks...)
 			output, _ := fetchLogs(prlo)
 
 			expected := strings.Join(s.expectedLogs, "\n") + "\n"
@@ -651,7 +654,7 @@ func TestPipelinerunLog_completed_taskrun_only(t *testing.T) {
 		},
 	} {
 		t.Run(tt.name, func(t *testing.T) {
-			prlo := logOpts(tt.pipelineRunName, tt.namespace, tt.input, tt.dynamic, fake.Streamer(tt.logs), false, false)
+			prlo := logOptsv1aplha1(tt.pipelineRunName, tt.namespace, tt.input, tt.dynamic, fake.Streamer(tt.logs), false, false)
 			output, _ := fetchLogs(prlo)
 			test.AssertOutput(t, strings.Join(tt.want, "\n"), output)
 		})
@@ -772,7 +775,7 @@ func TestPipelinerunLog_follow_mode(t *testing.T) {
 	if err != nil {
 		t.Errorf("unable to create dynamic client: %v", err)
 	}
-	prlo := logOpts(prName, ns, cs, dc, fake.Streamer(fakeLogStream), false, true)
+	prlo := logOptsv1aplha1(prName, ns, cs, dc, fake.Streamer(fakeLogStream), false, true)
 	output, _ := fetchLogs(prlo)
 
 	expectedLogs := []string{
@@ -843,7 +846,7 @@ func TestLogs_error_log(t *testing.T) {
 	if err != nil {
 		t.Errorf("unable to create dynamic client: %v", err)
 	}
-	prlo := logOpts(prName, ns, cs, dc, fake.Streamer([]fake.Log{}), false, false)
+	prlo := logOptsv1aplha1(prName, ns, cs, dc, fake.Streamer([]fake.Log{}), false, false)
 	output, err := fetchLogs(prlo)
 	if err != nil {
 		t.Errorf("Unexpected error: %v", err)
@@ -899,7 +902,7 @@ func TestLogs_nologs(t *testing.T) {
 	if err != nil {
 		t.Errorf("unable to create dynamic client: %v", err)
 	}
-	prlo := logOpts(prName, ns, cs, dc, fake.Streamer([]fake.Log{}), false, false)
+	prlo := logOptsv1aplha1(prName, ns, cs, dc, fake.Streamer([]fake.Log{}), false, false)
 	output, err := fetchLogs(prlo)
 	if err == nil {
 		t.Errorf("Unexpected output: %v", output)
@@ -958,7 +961,7 @@ func TestLog_run_failed_with_and_without_follow(t *testing.T) {
 		t.Errorf("unable to create dynamic client: %v", err)
 	}
 	// follow mode disabled
-	prlo := logOpts(prName, ns, cs, dc, fake.Streamer([]fake.Log{}), false, false)
+	prlo := logOptsv1aplha1(prName, ns, cs, dc, fake.Streamer([]fake.Log{}), false, false)
 	output, err := fetchLogs(prlo)
 	if err != nil {
 		t.Errorf("Unexpected error: %v", err)
@@ -966,7 +969,7 @@ func TestLog_run_failed_with_and_without_follow(t *testing.T) {
 	test.AssertOutput(t, failMessage+"\n", output)
 
 	// follow mode enabled
-	prlo = logOpts(prName, ns, cs, dc, fake.Streamer([]fake.Log{}), false, true)
+	prlo = logOptsv1aplha1(prName, ns, cs, dc, fake.Streamer([]fake.Log{}), false, true)
 	output, err = fetchLogs(prlo)
 	if err != nil {
 		t.Errorf("Unexpected error: %v", err)
@@ -1048,9 +1051,9 @@ func TestLog_pipelinerun_still_running(t *testing.T) {
 	if err != nil {
 		t.Errorf("unable to create dynamic client: %v", err)
 	}
-	prlo := logOpts(prName, ns, cs, dc, fake.Streamer([]fake.Log{}), false, false)
+	prlo := logOptsv1aplha1(prName, ns, cs, dc, fake.Streamer([]fake.Log{}), false, false)
 
-	updatePR(finalPRs, watcher)
+	updatePRv1alpha1(finalPRs, watcher)
 
 	output, err := fetchLogs(prlo)
 
@@ -1110,7 +1113,7 @@ func TestLog_pipelinerun_status_done(t *testing.T) {
 	if err != nil {
 		t.Errorf("unable to create dynamic client: %v", err)
 	}
-	prlo := logOpts(prName, ns, cs, dc, fake.Streamer([]fake.Log{}), false, false)
+	prlo := logOptsv1aplha1(prName, ns, cs, dc, fake.Streamer([]fake.Log{}), false, false)
 
 	go func() {
 		time.Sleep(time.Second * 1)
@@ -1286,7 +1289,7 @@ func TestLog_pipelinerun_only_one(t *testing.T) {
 	test.AssertOutput(t, prName, lopt.PipelineRunName)
 }
 
-func updatePR(finalRuns []*v1alpha1.PipelineRun, watcher *watch.FakeWatcher) {
+func updatePRv1alpha1(finalRuns []*v1alpha1.PipelineRun, watcher *watch.FakeWatcher) {
 	go func() {
 		for _, pr := range finalRuns {
 			time.Sleep(time.Second * 1)
@@ -1295,7 +1298,14 @@ func updatePR(finalRuns []*v1alpha1.PipelineRun, watcher *watch.FakeWatcher) {
 	}()
 }
 
-//?beta
+func updatePRv1beta1(finalRuns []*v1beta1.PipelineRun, watcher *watch.FakeWatcher) {
+	go func() {
+		for _, pr := range finalRuns {
+			time.Sleep(time.Second * 1)
+			watcher.Modify(pr)
+		}
+	}()
+}
 
 func TestPipelinerunLog_completed_taskrun_only_v1bea1(t *testing.T) {
 	var (
@@ -1319,62 +1329,123 @@ func TestPipelinerunLog_completed_taskrun_only_v1bea1(t *testing.T) {
 		task4Name = "teardown"
 	)
 
-	trdata := []*v1alpha1.TaskRun{
-		tb.TaskRun(tr1Name,
-			tb.TaskRunNamespace(ns),
-			tb.TaskRunSpec(
-				tb.TaskRunTaskRef(task1Name),
-			),
-			tb.TaskRunStatus(
-				tb.PodName(tr1Pod),
-				tb.TaskRunStartTime(tr1StartTime),
-				tb.StatusCondition(apis.Condition{
-					Type:   apis.ConditionSucceeded,
-					Status: corev1.ConditionTrue,
-				}),
-				tb.StepState(
-					cb.StepName(tr1Step1Name),
-					tb.StateTerminated(0),
-				),
-				tb.StepState(
-					cb.StepName("nop"),
-					tb.StateTerminated(0),
-				),
-			),
-			tb.TaskRunSpec(
-				tb.TaskRunTaskRef(task1Name),
-			),
-		),
+	trdata := []*v1beta1.TaskRun{
+		{
+			ObjectMeta: metav1.ObjectMeta{
+				Namespace: ns,
+				Name:      tr1Name,
+			},
+			Spec: v1beta1.TaskRunSpec{
+				TaskRef: &v1beta1.TaskRef{
+					Name: task1Name,
+				},
+			},
+			Status: v1beta1.TaskRunStatus{
+				Status: duckv1beta1.Status{
+					Conditions: duckv1beta1.Conditions{
+						{
+							Status: corev1.ConditionTrue,
+							Type:   apis.ConditionSucceeded,
+						},
+					},
+				},
+				TaskRunStatusFields: v1beta1.TaskRunStatusFields{
+					StartTime: &metav1.Time{Time: tr1StartTime},
+					PodName:   tr1Pod,
+					Steps: []v1beta1.StepState{
+						{
+							Name: tr1Step1Name,
+							ContainerState: corev1.ContainerState{
+								Terminated: &corev1.ContainerStateTerminated{
+									Reason: "Completed",
+								},
+							},
+						},
+						{
+							Name: "nop",
+							ContainerState: corev1.ContainerState{
+								Terminated: &corev1.ContainerStateTerminated{
+									Reason: "Completed",
+								},
+							},
+						},
+					},
+				},
+			},
+		},
 	}
-	pdata := []*v1alpha1.Pipeline{
-		tb.Pipeline(pipelineName,
-			tb.PipelineNamespace(ns),
-			tb.PipelineSpec(
-				tb.PipelineTask(task1Name, task1Name),
-				tb.PipelineTask(task2Name, task2Name),
-				tb.PipelineTask(task3Name, task3Name),
-				tb.PipelineTask(task4Name, task4Name),
-			),
-		),
+
+	pdata := []*v1beta1.Pipeline{
+		{
+			ObjectMeta: metav1.ObjectMeta{
+				Name:      pipelineName,
+				Namespace: ns,
+			},
+			Spec: v1beta1.PipelineSpec{
+				Tasks: []v1beta1.PipelineTask{
+					{
+						Name: task1Name,
+						TaskRef: &v1beta1.TaskRef{
+							Name: task1Name,
+						},
+					},
+					{
+						Name: task2Name,
+						TaskRef: &v1beta1.TaskRef{
+							Name: task2Name,
+						},
+					},
+					{
+						Name: task3Name,
+						TaskRef: &v1beta1.TaskRef{
+							Name: task3Name,
+						},
+					},
+					{
+						Name: task4Name,
+						TaskRef: &v1beta1.TaskRef{
+							Name: task4Name,
+						},
+					},
+				},
+			},
+		},
 	}
-	prdata := []*v1alpha1.PipelineRun{
-		tb.PipelineRun(prName,
-			tb.PipelineRunNamespace(ns),
-			tb.PipelineRunLabel("tekton.dev/pipeline", prName),
-			tb.PipelineRunSpec(pipelineName),
-			tb.PipelineRunStatus(
-				tb.PipelineRunStatusCondition(apis.Condition{
-					Status: corev1.ConditionTrue,
-					Reason: resources.ReasonRunning,
-				}),
-				tb.PipelineRunTaskRunsStatus(tr1Name, &v1alpha1.PipelineRunTaskRunStatus{
-					PipelineTaskName: task1Name,
-				}),
-			),
-		),
+
+	prdata := []*v1beta1.PipelineRun{
+		{
+			ObjectMeta: metav1.ObjectMeta{
+				Name:      prName,
+				Namespace: ns,
+				Labels:    map[string]string{"tekton.dev/pipeline": prName},
+			},
+			Spec: v1beta1.PipelineRunSpec{
+				PipelineRef: &v1beta1.PipelineRef{
+					Name: pipelineName,
+				},
+			},
+			Status: v1beta1.PipelineRunStatus{
+				Status: duckv1beta1.Status{
+					Conditions: duckv1beta1.Conditions{
+						{
+							Status: corev1.ConditionTrue,
+							Reason: resources.ReasonRunning,
+						},
+					},
+				},
+				PipelineRunStatusFields: v1beta1.PipelineRunStatusFields{
+					TaskRuns: map[string]*v1beta1.PipelineRunTaskRunStatus{
+						tr1Name: {
+							PipelineTaskName: task1Name,
+						},
+					},
+				},
+			},
+		},
 	}
+
 	// define pipeline in pipelineRef
-	cs, _ := test.SeedTestData(t, pipelinetest.Data{
+	cs, _ := test.SeedV1beta1TestData(t, pipelinev1beta1test.Data{
 		TaskRuns:     trdata,
 		Pipelines:    pdata,
 		PipelineRuns: prdata,
@@ -1399,57 +1470,104 @@ func TestPipelinerunLog_completed_taskrun_only_v1bea1(t *testing.T) {
 	cs.Pipeline.Resources = cb.APIResourceList(versionB1, []string{"task", "taskrun", "pipeline", "pipelinerun"})
 	tdc := testDynamic.Options{}
 	dc, err := tdc.Client(
-		cb.UnstructuredTR(trdata[0], versionB1),
-		cb.UnstructuredP(pdata[0], versionB1),
-		cb.UnstructuredPR(prdata[0], versionB1),
+		cb.UnstructuredV1beta1TR(trdata[0], versionB1),
+		cb.UnstructuredV1beta1P(pdata[0], versionB1),
+		cb.UnstructuredV1beta1PR(prdata[0], versionB1),
 	)
 	if err != nil {
 		t.Errorf("unable to create dynamic client: %v", err)
 	}
 
-	tdata2 := []*v1alpha1.Task{
-		tb.Task("output-task2", tb.TaskNamespace("ns"), cb.TaskCreationTime(clockwork.NewFakeClock().Now())),
+	tdata2 := []*v1beta1.Task{
+		{
+			ObjectMeta: metav1.ObjectMeta{
+				Namespace:         "ns",
+				Name:              "output-task2",
+				CreationTimestamp: metav1.Time{Time: clockwork.NewFakeClock().Now()},
+			},
+		},
 	}
-	trdata2 := []*v1alpha1.TaskRun{
-		tb.TaskRun("output-taskrun2",
-			tb.TaskRunNamespace("ns"),
-			tb.TaskRunLabel("tekton.dev/task", "task"),
-			tb.TaskRunSpec(tb.TaskRunTaskRef("output-task2")),
-			tb.TaskRunStatus(
-				tb.PodName("output-task-pod-embedded"),
-				tb.TaskRunStartTime(clockwork.NewFakeClock().Now()),
-				tb.StatusCondition(apis.Condition{
-					Type:   apis.ConditionSucceeded,
-					Status: corev1.ConditionTrue,
-					Reason: resources.ReasonSucceeded,
-				}),
-				tb.StepState(
-					cb.StepName("test-step"),
-					tb.StateTerminated(0),
-				),
-			),
-		),
+
+	trdata2 := []*v1beta1.TaskRun{
+		{
+			ObjectMeta: metav1.ObjectMeta{
+				Namespace: "ns",
+				Name:      "output-taskrun2",
+				Labels:    map[string]string{"tekton.dev/task": "task"},
+			},
+			Spec: v1beta1.TaskRunSpec{
+				TaskRef: &v1beta1.TaskRef{
+					Name: "output-task2",
+				},
+			},
+			Status: v1beta1.TaskRunStatus{
+				Status: duckv1beta1.Status{
+					Conditions: duckv1beta1.Conditions{
+						{
+							Status: corev1.ConditionTrue,
+							Type:   apis.ConditionSucceeded,
+							Reason: resources.ReasonSucceeded,
+						},
+					},
+				},
+				TaskRunStatusFields: v1beta1.TaskRunStatusFields{
+					StartTime: &metav1.Time{Time: clockwork.NewFakeClock().Now()},
+					PodName:   "output-task-pod-embedded",
+					Steps: []v1beta1.StepState{
+						{
+							Name: "test-step",
+							ContainerState: corev1.ContainerState{
+								Terminated: &corev1.ContainerStateTerminated{
+									Reason: "Completed",
+								},
+							},
+						},
+					},
+				},
+			},
+		},
 	}
-	prdata2 := []*v1alpha1.PipelineRun{
-		tb.PipelineRun("embedded-pipeline-1",
-			tb.PipelineRunNamespace("ns"),
-			tb.PipelineRunLabel("tekton.dev/pipeline", "embedded-pipeline-1"),
-			tb.PipelineRunSpec("", tb.PipelineRunPipelineSpec(
-				tb.PipelineTask("output-task2", "output-task2"),
-			)),
-			tb.PipelineRunStatus(
-				tb.PipelineRunStatusCondition(apis.Condition{
-					Status: corev1.ConditionTrue,
-					Reason: resources.ReasonRunning,
-				}),
-				tb.PipelineRunTaskRunsStatus("output-taskrun2", &v1alpha1.PipelineRunTaskRunStatus{
-					PipelineTaskName: "output-task2",
-				}),
-			),
-		),
+
+	prdata2 := []*v1beta1.PipelineRun{
+		{
+			ObjectMeta: metav1.ObjectMeta{
+				Name:      "embedded-pipeline-1",
+				Namespace: "ns",
+				Labels:    map[string]string{"tekton.dev/pipeline": "embedded-pipeline-1"},
+			},
+			Spec: v1beta1.PipelineRunSpec{
+				PipelineSpec: &v1beta1.PipelineSpec{
+					Tasks: []v1beta1.PipelineTask{
+						{
+							Name: "output-task2",
+							TaskRef: &v1beta1.TaskRef{
+								Name: "output-task2",
+							},
+						},
+					},
+				},
+			},
+			Status: v1beta1.PipelineRunStatus{
+				Status: duckv1beta1.Status{
+					Conditions: duckv1beta1.Conditions{
+						{
+							Status: corev1.ConditionTrue,
+							Reason: resources.ReasonRunning,
+						},
+					},
+				},
+				PipelineRunStatusFields: v1beta1.PipelineRunStatusFields{
+					TaskRuns: map[string]*v1beta1.PipelineRunTaskRunStatus{
+						"output-taskrun2": {
+							PipelineTaskName: "output-task2",
+						},
+					},
+				},
+			},
+		},
 	}
 	// define embedded pipeline
-	cs2, _ := test.SeedTestData(t, pipelinetest.Data{
+	cs2, _ := test.SeedV1beta1TestData(t, pipelinev1beta1test.Data{
 		Tasks:        tdata2,
 		TaskRuns:     trdata2,
 		PipelineRuns: prdata2,
@@ -1476,9 +1594,9 @@ func TestPipelinerunLog_completed_taskrun_only_v1bea1(t *testing.T) {
 	cs2.Pipeline.Resources = cb.APIResourceList(versionB1, []string{"task", "taskrun", "pipeline", "pipelinerun"})
 	tdc2 := testDynamic.Options{}
 	dc2, err := tdc2.Client(
-		cb.UnstructuredT(tdata2[0], versionB1),
-		cb.UnstructuredTR(trdata2[0], versionB1),
-		cb.UnstructuredPR(prdata2[0], versionB1),
+		cb.UnstructuredV1beta1T(tdata2[0], versionB1),
+		cb.UnstructuredV1beta1TR(trdata2[0], versionB1),
+		cb.UnstructuredV1beta1PR(prdata2[0], versionB1),
 	)
 	if err != nil {
 		t.Errorf("unable to create dynamic client: %v", err)
@@ -1489,7 +1607,7 @@ func TestPipelinerunLog_completed_taskrun_only_v1bea1(t *testing.T) {
 		pipelineRunName string
 		namespace       string
 		dynamic         dynamic.Interface
-		input           pipelinetest.Clients
+		input           pipelinev1beta1test.Clients
 		logs            []fake.Log
 		want            []string
 	}{
@@ -1531,7 +1649,7 @@ func TestPipelinerunLog_completed_taskrun_only_v1bea1(t *testing.T) {
 		},
 	} {
 		t.Run(tt.name, func(t *testing.T) {
-			prlo := logOpts(tt.pipelineRunName, tt.namespace, tt.input, tt.dynamic, fake.Streamer(tt.logs), false, false)
+			prlo := logOptsv1beta1(tt.pipelineRunName, tt.namespace, tt.input, tt.dynamic, fake.Streamer(tt.logs), false, false)
 			output, _ := fetchLogs(prlo)
 			test.AssertOutput(t, strings.Join(tt.want, "\n"), output)
 		})
@@ -1649,10 +1767,12 @@ func TestPipelinerunLog_follow_mode_v1beta1(t *testing.T) {
 		cb.UnstructuredPR(prs[0], versionB1),
 		cb.UnstructuredP(pps[0], versionB1),
 	)
+
 	if err != nil {
 		t.Errorf("unable to create dynamic client: %v", err)
 	}
-	prlo := logOpts(prName, ns, cs, dc, fake.Streamer(fakeLogStream), false, true)
+
+	prlo := logOptsv1aplha1(prName, ns, cs, dc, fake.Streamer(fakeLogStream), false, true)
 	output, _ := fetchLogs(prlo)
 
 	expectedLogs := []string{
@@ -1663,7 +1783,6 @@ func TestPipelinerunLog_follow_mode_v1beta1(t *testing.T) {
 		"[output-task : nop] Build successful\n",
 	}
 	expected := strings.Join(expectedLogs, "\n") + "\n"
-
 	test.AssertOutput(t, expected, output)
 }
 
@@ -1684,46 +1803,71 @@ func TestLogs_error_log_v1beta1(t *testing.T) {
 		},
 	}
 
-	ts := []*v1alpha1.Task{
-		tb.Task(taskName,
-			tb.TaskNamespace(ns),
-			tb.TaskSpec()),
+	ts := []*v1beta1.Task{
+		{
+			ObjectMeta: metav1.ObjectMeta{
+				Namespace: ns,
+				Name:      taskName,
+			},
+		},
 	}
 
-	prs := []*v1alpha1.PipelineRun{
-		tb.PipelineRun(prName,
-			tb.PipelineRunNamespace(ns),
-			tb.PipelineRunLabel("tekton.dev/pipeline", prName),
-			tb.PipelineRunSpec(pipelineName),
-			tb.PipelineRunStatus(
-				tb.PipelineRunStatusCondition(apis.Condition{
-					Status:  corev1.ConditionFalse,
-					Message: errMsg,
-				}),
-			),
-		),
+	prs := []*v1beta1.PipelineRun{
+		{
+			ObjectMeta: metav1.ObjectMeta{
+				Name:      prName,
+				Namespace: ns,
+				Labels:    map[string]string{"tekton.dev/pipeline": prName},
+			},
+			Spec: v1beta1.PipelineRunSpec{
+				PipelineRef: &v1beta1.PipelineRef{
+					Name: pipelineName,
+				},
+			},
+			Status: v1beta1.PipelineRunStatus{
+				Status: duckv1beta1.Status{
+					Conditions: duckv1beta1.Conditions{
+						{
+							Status:  corev1.ConditionFalse,
+							Message: errMsg,
+						},
+					},
+				},
+			},
+		},
 	}
 
-	ps := []*v1alpha1.Pipeline{
-		tb.Pipeline(pipelineName,
-			tb.PipelineNamespace(ns),
-			tb.PipelineSpec(
-				tb.PipelineTask(taskName, taskName),
-			),
-		),
+	ps := []*v1beta1.Pipeline{
+		{
+			ObjectMeta: metav1.ObjectMeta{
+				Name:      pipelineName,
+				Namespace: ns,
+			},
+			Spec: v1beta1.PipelineSpec{
+				Tasks: []v1beta1.PipelineTask{
+					{
+						Name: taskName,
+						TaskRef: &v1beta1.TaskRef{
+							Name: taskName,
+						},
+					},
+				},
+			},
+		},
 	}
-	cs, _ := test.SeedTestData(t, pipelinetest.Data{PipelineRuns: prs, Pipelines: ps, Tasks: ts, Namespaces: nsList})
+
+	cs, _ := test.SeedV1beta1TestData(t, pipelinev1beta1test.Data{PipelineRuns: prs, Pipelines: ps, Tasks: ts, Namespaces: nsList})
 	cs.Pipeline.Resources = cb.APIResourceList(versionB1, []string{"task", "pipeline", "pipelinerun"})
 	tdc := testDynamic.Options{}
 	dc, err := tdc.Client(
-		cb.UnstructuredT(ts[0], versionB1),
-		cb.UnstructuredP(ps[0], versionB1),
-		cb.UnstructuredPR(prs[0], versionB1),
+		cb.UnstructuredV1beta1T(ts[0], versionB1),
+		cb.UnstructuredV1beta1P(ps[0], versionB1),
+		cb.UnstructuredV1beta1PR(prs[0], versionB1),
 	)
 	if err != nil {
 		t.Errorf("unable to create dynamic client: %v", err)
 	}
-	prlo := logOpts(prName, ns, cs, dc, fake.Streamer([]fake.Log{}), false, false)
+	prlo := logOptsv1beta1(prName, ns, cs, dc, fake.Streamer([]fake.Log{}), false, false)
 	output, err := fetchLogs(prlo)
 	if err != nil {
 		t.Errorf("Unexpected error: %v", err)
@@ -1747,39 +1891,61 @@ func TestLogs_nologs_v1beta1(t *testing.T) {
 		},
 	}
 
-	prs := []*v1alpha1.PipelineRun{
-		tb.PipelineRun(prName,
-			tb.PipelineRunNamespace(ns),
-			tb.PipelineRunLabel("tekton.dev/pipeline", prName),
-			tb.PipelineRunSpec(pipelineName),
-			tb.PipelineRunStatus(
-				tb.PipelineRunStatusCondition(apis.Condition{
-					Status:  corev1.ConditionUnknown,
-					Message: "Running",
-				}),
-			),
-		),
+	prs := []*v1beta1.PipelineRun{
+		{
+			ObjectMeta: metav1.ObjectMeta{
+				Name:      prName,
+				Namespace: ns,
+				Labels:    map[string]string{"tekton.dev/pipeline": prName},
+			},
+			Spec: v1beta1.PipelineRunSpec{
+				PipelineRef: &v1beta1.PipelineRef{
+					Name: pipelineName,
+				},
+			},
+			Status: v1beta1.PipelineRunStatus{
+				Status: duckv1beta1.Status{
+					Conditions: duckv1beta1.Conditions{
+						{
+							Status:  corev1.ConditionUnknown,
+							Message: "Running",
+						},
+					},
+				},
+			},
+		},
 	}
 
-	ps := []*v1alpha1.Pipeline{
-		tb.Pipeline(pipelineName,
-			tb.PipelineNamespace(ns),
-			tb.PipelineSpec(
-				tb.PipelineTask(taskName, taskName),
-			),
-		),
+	ps := []*v1beta1.Pipeline{
+		{
+			ObjectMeta: metav1.ObjectMeta{
+				Name:      pipelineName,
+				Namespace: ns,
+			},
+			Spec: v1beta1.PipelineSpec{
+				Tasks: []v1beta1.PipelineTask{
+					{
+						Name: taskName,
+						TaskRef: &v1beta1.TaskRef{
+							Name: taskName,
+						},
+					},
+				},
+			},
+		},
 	}
-	cs, _ := test.SeedTestData(t, pipelinetest.Data{PipelineRuns: prs, Pipelines: ps, Namespaces: nsList})
+
+	cs, _ := test.SeedV1beta1TestData(t, pipelinev1beta1test.Data{PipelineRuns: prs, Pipelines: ps, Namespaces: nsList})
 	cs.Pipeline.Resources = cb.APIResourceList(versionB1, []string{"pipeline", "pipelinerun"})
 	tdc := testDynamic.Options{}
 	dc, err := tdc.Client(
-		cb.UnstructuredP(ps[0], versionB1),
-		cb.UnstructuredPR(prs[0], versionB1),
+		cb.UnstructuredV1beta1P(ps[0], versionB1),
+		cb.UnstructuredV1beta1PR(prs[0], versionB1),
 	)
 	if err != nil {
 		t.Errorf("unable to create dynamic client: %v", err)
 	}
-	prlo := logOpts(prName, ns, cs, dc, fake.Streamer([]fake.Log{}), false, false)
+	prlo := logOptsv1beta1(prName, ns, cs, dc, fake.Streamer([]fake.Log{}), false, false)
 	output, err := fetchLogs(prlo)
 	if err == nil {
 		t.Errorf("Unexpected output: %v", output)
@@ -1838,7 +2004,7 @@ func TestLog_run_failed_with_and_without_follow_v1beta1(t *testing.T) {
 		t.Errorf("unable to create dynamic client: %v", err)
 	}
 	// follow mode disabled
-	prlo := logOpts(prName, ns, cs, dc, fake.Streamer([]fake.Log{}), false, false)
+	prlo := logOptsv1aplha1(prName, ns, cs, dc, fake.Streamer([]fake.Log{}), false, false)
 	output, err := fetchLogs(prlo)
 	if err != nil {
 		t.Errorf("Unexpected error: %v", err)
@@ -1846,7 +2012,7 @@ func TestLog_run_failed_with_and_without_follow_v1beta1(t *testing.T) {
 	test.AssertOutput(t, failMessage+"\n", output)
 
 	// follow mode enabled
-	prlo = logOpts(prName, ns, cs, dc, fake.Streamer([]fake.Log{}), false, true)
+	prlo = logOptsv1aplha1(prName, ns, cs, dc, fake.Streamer([]fake.Log{}), false, true)
 	output, err = fetchLogs(prlo)
 	if err != nil {
 		t.Errorf("Unexpected error: %v", err)
@@ -1870,67 +2036,112 @@ func TestLog_pipelinerun_still_running_v1beta1(t *testing.T) {
 		},
 	}
 
-	initialPRs := []*v1alpha1.PipelineRun{
-		tb.PipelineRun(prName,
-			tb.PipelineRunNamespace(ns),
-			tb.PipelineRunLabel("tekton.dev/pipeline", prName),
-			tb.PipelineRunSpec(pipelineName),
-			tb.PipelineRunStatus(
-				tb.PipelineRunStatusCondition(apis.Condition{
-					Type:    apis.ConditionSucceeded,
-					Status:  corev1.ConditionUnknown,
-					Message: "Running",
-				}),
-			),
-		),
+	initialPRs := []*v1beta1.PipelineRun{
+		{
+			ObjectMeta: metav1.ObjectMeta{
+				Name:      prName,
+				Namespace: ns,
+				Labels:    map[string]string{"tekton.dev/pipeline": prName},
+			},
+			Spec: v1beta1.PipelineRunSpec{
+				PipelineRef: &v1beta1.PipelineRef{
+					Name: pipelineName,
+				},
+			},
+			Status: v1beta1.PipelineRunStatus{
+				Status: duckv1beta1.Status{
+					Conditions: duckv1beta1.Conditions{
+						{
+							Status:  corev1.ConditionUnknown,
+							Type:    apis.ConditionSucceeded,
+							Message: "Running",
+						},
+					},
+				},
+			},
+		},
 	}
 
-	finalPRs := []*v1alpha1.PipelineRun{
-		tb.PipelineRun(prName,
-			tb.PipelineRunNamespace(ns),
-			tb.PipelineRunStatus(
-				tb.PipelineRunStatusCondition(apis.Condition{
-					Type:    apis.ConditionSucceeded,
-					Status:  corev1.ConditionUnknown,
-					Message: "Running",
-				}),
-			),
-		),
-
-		tb.PipelineRun(prName,
-			tb.PipelineRunNamespace(ns),
-			tb.PipelineRunStatus(
-				tb.PipelineRunStatusCondition(apis.Condition{
-					Type:    apis.ConditionSucceeded,
-					Status:  corev1.ConditionTrue,
-					Message: "Running",
-				}),
-			),
-		),
+	finalPRs := []*v1beta1.PipelineRun{
+		{
+			ObjectMeta: metav1.ObjectMeta{
+				Name:      prName,
+				Namespace: ns,
+			},
+			Spec: v1beta1.PipelineRunSpec{
+				PipelineRef: &v1beta1.PipelineRef{
+					Name: pipelineName,
+				},
+			},
+			Status: v1beta1.PipelineRunStatus{
+				Status: duckv1beta1.Status{
+					Conditions: duckv1beta1.Conditions{
+						{
+							Status:  corev1.ConditionUnknown,
+							Type:    apis.ConditionSucceeded,
+							Message: "Running",
+						},
+					},
+				},
+			},
+		},
+		{
+			ObjectMeta: metav1.ObjectMeta{
+				Name:      prName,
+				Namespace: ns,
+			},
+			Spec: v1beta1.PipelineRunSpec{
+				PipelineRef: &v1beta1.PipelineRef{
+					Name: pipelineName,
+				},
+			},
+			Status: v1beta1.PipelineRunStatus{
+				Status: duckv1beta1.Status{
+					Conditions: duckv1beta1.Conditions{
+						{
+							Status:  corev1.ConditionTrue,
+							Type:    apis.ConditionSucceeded,
+							Message: "Running",
+						},
+					},
+				},
+			},
+		},
 	}
 
-	ps := []*v1alpha1.Pipeline{
-		tb.Pipeline(pipelineName,
-			tb.PipelineNamespace(ns),
-			tb.PipelineSpec(
-				tb.PipelineTask(taskName, taskName),
-			),
-		),
+	ps := []*v1beta1.Pipeline{
+		{
+			ObjectMeta: metav1.ObjectMeta{
+				Name:      pipelineName,
+				Namespace: ns,
+			},
+			Spec: v1beta1.PipelineSpec{
+				Tasks: []v1beta1.PipelineTask{
+					{
+						Name: taskName,
+						TaskRef: &v1beta1.TaskRef{
+							Name: taskName,
+						},
+					},
+				},
+			},
+		},
 	}
-	cs, _ := test.SeedTestData(t, pipelinetest.Data{PipelineRuns: initialPRs, Pipelines: ps, Namespaces: nsList})
+
+	cs, _ := test.SeedV1beta1TestData(t, pipelinev1beta1test.Data{PipelineRuns: initialPRs, Pipelines: ps, Namespaces: nsList})
 	watcher := watch.NewFake()
 	cs.Pipeline.Resources = cb.APIResourceList(versionB1, []string{"taskrun", "pipeline", "pipelinerun"})
 	tdc := testDynamic.Options{WatchResource: "pipelineruns", Watcher: watcher}
 	dc, err := tdc.Client(
-		cb.UnstructuredP(ps[0], versionB1),
-		cb.UnstructuredPR(initialPRs[0], versionB1),
+		cb.UnstructuredV1beta1P(ps[0], versionB1),
+		cb.UnstructuredV1beta1PR(initialPRs[0], versionB1),
 	)
 	if err != nil {
 		t.Errorf("unable to create dynamic client: %v", err)
 	}
-	prlo := logOpts(prName, ns, cs, dc, fake.Streamer([]fake.Log{}), false, false)
+	prlo := logOptsv1beta1(prName, ns, cs, dc, fake.Streamer([]fake.Log{}), false, false)
 
-	updatePR(finalPRs, watcher)
+	updatePRv1beta1(finalPRs, watcher)
 
 	output, err := fetchLogs(prlo)
 
@@ -1956,41 +2167,63 @@ func TestLog_pipelinerun_status_done_v1beta1(t *testing.T) {
 		},
 	}
 
-	prs := []*v1alpha1.PipelineRun{
-		tb.PipelineRun(prName,
-			tb.PipelineRunNamespace(ns),
-			tb.PipelineRunLabel("tekton.dev/pipeline", prName),
-			tb.PipelineRunSpec(pipelineName),
-			tb.PipelineRunStatus(
-				tb.PipelineRunStatusCondition(apis.Condition{
-					Type:    apis.ConditionSucceeded,
-					Status:  corev1.ConditionUnknown,
-					Message: "Running",
-				}),
-			),
-		),
+	prs := []*v1beta1.PipelineRun{
+		{
+			ObjectMeta: metav1.ObjectMeta{
+				Name:      prName,
+				Namespace: ns,
+				Labels:    map[string]string{"tekton.dev/pipeline": prName},
+			},
+			Spec: v1beta1.PipelineRunSpec{
+				PipelineRef: &v1beta1.PipelineRef{
+					Name: pipelineName,
+				},
+			},
+			Status: v1beta1.PipelineRunStatus{
+				Status: duckv1beta1.Status{
+					Conditions: duckv1beta1.Conditions{
+						{
+							Type:    apis.ConditionSucceeded,
+							Status:  corev1.ConditionUnknown,
+							Message: "Running",
+						},
+					},
+				},
+			},
+		},
 	}
 
-	ps := []*v1alpha1.Pipeline{
-		tb.Pipeline(pipelineName,
-			tb.PipelineNamespace(ns),
-			tb.PipelineSpec(
-				tb.PipelineTask(taskName, taskName),
-			),
-		),
+	ps := []*v1beta1.Pipeline{
+		{
+			ObjectMeta: metav1.ObjectMeta{
+				Name:      pipelineName,
+				Namespace: ns,
+			},
+			Spec: v1beta1.PipelineSpec{
+				Tasks: []v1beta1.PipelineTask{
+					{
+						Name: taskName,
+						TaskRef: &v1beta1.TaskRef{
+							Name: taskName,
+						},
+					},
+				},
+			},
+		},
 	}
-	cs, _ := test.SeedTestData(t, pipelinetest.Data{PipelineRuns: prs, Pipelines: ps, Namespaces: nsList})
+
+	cs, _ := test.SeedV1beta1TestData(t, pipelinev1beta1test.Data{PipelineRuns: prs, Pipelines: ps, Namespaces: nsList})
 	cs.Pipeline.Resources = cb.APIResourceList(versionB1, []string{"pipeline", "pipelinerun"})
 	watcher := watch.NewFake()
 	tdc := testDynamic.Options{WatchResource: "pipelineruns", Watcher: watcher}
 	dc, err := tdc.Client(
-		cb.UnstructuredP(ps[0], versionB1),
-		cb.UnstructuredPR(prs[0], versionB1),
+		cb.UnstructuredV1beta1P(ps[0], versionB1),
+		cb.UnstructuredV1beta1PR(prs[0], versionB1),
 	)
 	if err != nil {
 		t.Errorf("unable to create dynamic client: %v", err)
 	}
-	prlo := logOpts(prName, ns, cs, dc, fake.Streamer([]fake.Log{}), false, false)
+	prlo := logOptsv1beta1(prName, ns, cs, dc, fake.Streamer([]fake.Log{}), false, false)
 
 	go func() {
 		time.Sleep(time.Second * 1)
@@ -2030,49 +2263,80 @@ func TestLog_pipelinerun_last_v1beta1(t *testing.T) {
 			},
 		},
 	}
-
-	pipelines := []*v1alpha1.Pipeline{
-		tb.Pipeline(pipelineName,
-			tb.PipelineNamespace(ns),
-			tb.PipelineSpec(
-				tb.PipelineTask(taskName, taskName),
-			),
-		),
+	pipelines := []*v1beta1.Pipeline{
+		{
+			ObjectMeta: metav1.ObjectMeta{
+				Name:      pipelineName,
+				Namespace: ns,
+			},
+			Spec: v1beta1.PipelineSpec{
+				Tasks: []v1beta1.PipelineTask{
+					{
+						Name: taskName,
+						TaskRef: &v1beta1.TaskRef{
+							Name: taskName,
+						},
+					},
+				},
+			},
+		},
 	}
 
-	pipelineruns := []*v1alpha1.PipelineRun{
-		tb.PipelineRun(prName2,
-			tb.PipelineRunNamespace(ns),
-			tb.PipelineRunLabel("tekton.dev/pipeline", pipelineName),
-			tb.PipelineRunSpec(pipelineName),
-			tb.PipelineRunStatus(
-				tb.PipelineRunStatusCondition(apis.Condition{
-					Type:    apis.ConditionSucceeded,
-					Status:  corev1.ConditionUnknown,
-					Message: "Running",
-				}),
-			),
-		),
-		tb.PipelineRun(prName,
-			tb.PipelineRunNamespace(ns),
-			tb.PipelineRunLabel("tekton.dev/pipeline", pipelineName),
-			tb.PipelineRunSpec(pipelineName),
-			tb.PipelineRunStatus(
-				tb.PipelineRunStatusCondition(apis.Condition{
-					Type:    apis.ConditionSucceeded,
-					Status:  corev1.ConditionUnknown,
-					Message: "Running",
-				}),
-			),
-		),
+	pipelineruns := []*v1beta1.PipelineRun{
+		{
+			ObjectMeta: metav1.ObjectMeta{
+				Name:      prName2,
+				Namespace: ns,
+				Labels:    map[string]string{"tekton.dev/pipeline": prName},
+			},
+			Spec: v1beta1.PipelineRunSpec{
+				PipelineRef: &v1beta1.PipelineRef{
+					Name: pipelineName,
+				},
+			},
+			Status: v1beta1.PipelineRunStatus{
+				Status: duckv1beta1.Status{
+					Conditions: duckv1beta1.Conditions{
+						{
+							Type:    apis.ConditionSucceeded,
+							Status:  corev1.ConditionUnknown,
+							Message: "Running",
+						},
+					},
+				},
+			},
+		},
+		{
+			ObjectMeta: metav1.ObjectMeta{
+				Name:      prName,
+				Namespace: ns,
+				Labels:    map[string]string{"tekton.dev/pipeline": pipelineName},
+			},
+			Spec: v1beta1.PipelineRunSpec{
+				PipelineRef: &v1beta1.PipelineRef{
+					Name: pipelineName,
+				},
+			},
+			Status: v1beta1.PipelineRunStatus{
+				Status: duckv1beta1.Status{
+					Conditions: duckv1beta1.Conditions{
+						{
+							Type:    apis.ConditionSucceeded,
+							Status:  corev1.ConditionUnknown,
+							Message: "Running",
+						},
+					},
+				},
+			},
+		},
 	}
 
-	cs, _ := test.SeedTestData(t, pipelinetest.Data{PipelineRuns: pipelineruns, Pipelines: pipelines, Namespaces: namespaces})
+	cs, _ := test.SeedV1beta1TestData(t, pipelinev1beta1test.Data{PipelineRuns: pipelineruns, Pipelines: pipelines, Namespaces: namespaces})
 	cs.Pipeline.Resources = cb.APIResourceList(versionB1, []string{"pipelinerun"})
 	tdc := testDynamic.Options{}
 	dc, err := tdc.Client(
-		cb.UnstructuredPR(pipelineruns[0], versionB1),
-		cb.UnstructuredPR(pipelineruns[1], versionB1),
+		cb.UnstructuredV1beta1PR(pipelineruns[0], versionB1),
+		cb.UnstructuredV1beta1PR(pipelineruns[1], versionB1),
 	)
 	if err != nil {
 		t.Errorf("unable to create dynamic client: %v", err)
@@ -2111,35 +2375,56 @@ func TestLog_pipelinerun_only_one_v1beta1(t *testing.T) {
 		},
 	}
 
-	pipelines := []*v1alpha1.Pipeline{
-		tb.Pipeline(pipelineName,
-			tb.PipelineNamespace(ns),
-			tb.PipelineSpec(
-				tb.PipelineTask(taskName, taskName),
-			),
-		),
+	pipelines := []*v1beta1.Pipeline{
+		{
+			ObjectMeta: metav1.ObjectMeta{
+				Name:      pipelineName,
+				Namespace: ns,
+			},
+			Spec: v1beta1.PipelineSpec{
+				Tasks: []v1beta1.PipelineTask{
+					{
+						Name: taskName,
+						TaskRef: &v1beta1.TaskRef{
+							Name: taskName,
+						},
+					},
+				},
+			},
+		},
 	}
 
-	pipelineruns := []*v1alpha1.PipelineRun{
-		tb.PipelineRun(prName,
-			tb.PipelineRunNamespace(ns),
-			tb.PipelineRunLabel("tekton.dev/pipeline", pipelineName),
-			tb.PipelineRunSpec(pipelineName),
-			tb.PipelineRunStatus(
-				tb.PipelineRunStatusCondition(apis.Condition{
-					Type:    apis.ConditionSucceeded,
-					Status:  corev1.ConditionUnknown,
-					Message: "Running",
-				}),
-			),
-		),
+	pipelineruns := []*v1beta1.PipelineRun{
+		{
+			ObjectMeta: metav1.ObjectMeta{
+				Name:      prName,
+				Namespace: ns,
+				Labels:    map[string]string{"tekton.dev/pipeline": pipelineName},
+			},
+			Spec: v1beta1.PipelineRunSpec{
+				PipelineRef: &v1beta1.PipelineRef{
+					Name: pipelineName,
+				},
+			},
+			Status: v1beta1.PipelineRunStatus{
+				Status: duckv1beta1.Status{
+					Conditions: duckv1beta1.Conditions{
+						{
+							Type:    apis.ConditionSucceeded,
+							Status:  corev1.ConditionUnknown,
+							Message: "Running",
+						},
+					},
+				},
+			},
+		},
 	}
 
-	cs, _ := test.SeedTestData(t, pipelinetest.Data{PipelineRuns: pipelineruns, Pipelines: pipelines, Namespaces: namespaces})
+	cs, _ := test.SeedV1beta1TestData(t, pipelinev1beta1test.Data{PipelineRuns: pipelineruns, Pipelines: pipelines, Namespaces: namespaces})
 	cs.Pipeline.Resources = cb.APIResourceList(versionB1, []string{"pipelinerun"})
 	tdc := testDynamic.Options{}
 	dc, err := tdc.Client(
-		cb.UnstructuredPR(pipelineruns[0], versionB1),
+		cb.UnstructuredV1beta1PR(pipelineruns[0], versionB1),
 	)
 	if err != nil {
 		t.Errorf("unable to create dynamic client: %v", err)
@@ -2164,7 +2449,26 @@ func TestLog_pipelinerun_only_one_v1beta1(t *testing.T) {
 	test.AssertOutput(t, prName, lopt.PipelineRunName)
 }
 
-func logOpts(name string, ns string, cs pipelinetest.Clients, dc dynamic.Interface, streamer stream.NewStreamerFunc, allSteps bool, follow bool, tasks ...string) *options.LogOptions {
+func logOptsv1aplha1(name string, ns string, cs pipelinetest.Clients, dc dynamic.Interface, streamer stream.NewStreamerFunc, allSteps bool, follow bool, tasks ...string) *options.LogOptions {
+	p := test.Params{
+		Kube:    cs.Kube,
+		Tekton:  cs.Pipeline,
+		Dynamic: dc,
+	}
+	p.SetNamespace(ns)
+
+	logOptions := options.LogOptions{
+		PipelineRunName: name,
+		Tasks:           tasks,
+		AllSteps:        allSteps,
+		Follow:          follow,
+		Params:          &p,
+		Streamer:        streamer,
+	}
+
+	return &logOptions
+}
+func logOptsv1beta1(name string, ns string, cs pipelinev1beta1test.Clients, dc dynamic.Interface, streamer stream.NewStreamerFunc, allSteps bool, follow bool, tasks ...string) *options.LogOptions {
 	p := test.Params{
 		Kube:    cs.Kube,
 		Tekton:  cs.Pipeline,
@@ -2187,8 +2491,6 @@ func logOpts(name string, ns string, cs pipelinetest.Clients, dc dynamic.Interfa
 func fetchLogs(lo *options.LogOptions) (string, error) {
 	out := new(bytes.Buffer)
 	lo.Stream = &cli.Stream{Out: out, Err: out}
-
 	err := Run(lo)
-
 	return out.String(), err
 }

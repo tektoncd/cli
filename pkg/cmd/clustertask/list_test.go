@@ -24,9 +24,12 @@ import (
 	cb "github.com/tektoncd/cli/pkg/test/builder"
 	testDynamic "github.com/tektoncd/cli/pkg/test/dynamic"
 	"github.com/tektoncd/pipeline/pkg/apis/pipeline/v1alpha1"
+	"github.com/tektoncd/pipeline/pkg/apis/pipeline/v1beta1"
+	pipelinev1beta1test "github.com/tektoncd/pipeline/test"
 	tb "github.com/tektoncd/pipeline/test/builder"
 	pipelinetest "github.com/tektoncd/pipeline/test/v1alpha1"
 	"gotest.tools/v3/golden"
+	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 )
 
 func TestClusterTaskList_Empty(t *testing.T) {
@@ -88,28 +91,62 @@ func TestClusterTaskListOnlyClusterTasksv1alpha1(t *testing.T) {
 func TestClusterTaskListOnlyClusterTasksv1beta1(t *testing.T) {
 	clock := clockwork.NewFakeClock()
 
-	clustertasks := []*v1alpha1.ClusterTask{
-		tb.ClusterTask("guavas", cb.ClusterTaskCreationTime(clock.Now().Add(-1*time.Minute))),
-		tb.ClusterTask("avocados", cb.ClusterTaskCreationTime(clock.Now().Add(-20*time.Second))),
-		tb.ClusterTask("pineapple", tb.ClusterTaskSpec(tb.TaskDescription("a test clustertask")), cb.ClusterTaskCreationTime(clock.Now().Add(-512*time.Hour))),
-		tb.ClusterTask("apple", tb.ClusterTaskSpec(tb.TaskDescription("a clustertask to test description")), cb.ClusterTaskCreationTime(clock.Now().Add(-513*time.Hour))),
-		tb.ClusterTask("mango", tb.ClusterTaskSpec(tb.TaskDescription("")), cb.ClusterTaskCreationTime(clock.Now().Add(-514*time.Hour))),
+	clustertasks := []*v1beta1.ClusterTask{
+		{
+			ObjectMeta: metav1.ObjectMeta{
+				Name:              "guavas",
+				CreationTimestamp: metav1.Time{Time: clock.Now().Add(-1 * time.Minute)},
+			},
+		},
+		{
+			ObjectMeta: metav1.ObjectMeta{
+				Name:              "avocados",
+				CreationTimestamp: metav1.Time{Time: clock.Now().Add(-20 * time.Second)},
+			},
+		},
+		{
+			ObjectMeta: metav1.ObjectMeta{
+				Name:              "pineapple",
+				CreationTimestamp: metav1.Time{Time: clock.Now().Add(-512 * time.Hour)},
+			},
+			Spec: v1beta1.TaskSpec{
+				Description: "a test clustertask",
+			},
+		},
+		{
+			ObjectMeta: metav1.ObjectMeta{
+				Name:              "apple",
+				CreationTimestamp: metav1.Time{Time: clock.Now().Add(-513 * time.Hour)},
+			},
+			Spec: v1beta1.TaskSpec{
+				Description: "a clustertask to test description",
+			},
+		},
+		{
+			ObjectMeta: metav1.ObjectMeta{
+				Name:              "mango",
+				CreationTimestamp: metav1.Time{Time: clock.Now().Add(-514 * time.Hour)},
+			},
+			Spec: v1beta1.TaskSpec{
+				Description: "",
+			},
+		},
 	}
 
 	version := "v1beta1"
 	tdc := testDynamic.Options{}
 	dynamic, err := tdc.Client(
-		cb.UnstructuredCT(clustertasks[0], version),
-		cb.UnstructuredCT(clustertasks[1], version),
-		cb.UnstructuredCT(clustertasks[2], version),
-		cb.UnstructuredCT(clustertasks[3], version),
-		cb.UnstructuredCT(clustertasks[4], version),
+		cb.UnstructuredV1beta1CT(clustertasks[0], version),
+		cb.UnstructuredV1beta1CT(clustertasks[1], version),
+		cb.UnstructuredV1beta1CT(clustertasks[2], version),
+		cb.UnstructuredV1beta1CT(clustertasks[3], version),
+		cb.UnstructuredV1beta1CT(clustertasks[4], version),
 	)
 	if err != nil {
 		t.Errorf("unable to create dynamic client: %v", err)
 	}
 
-	cs, _ := test.SeedTestData(t, pipelinetest.Data{ClusterTasks: clustertasks})
+	cs, _ := test.SeedV1beta1TestData(t, pipelinev1beta1test.Data{ClusterTasks: clustertasks})
 	p := &test.Params{Tekton: cs.Pipeline, Kube: cs.Kube, Clock: clock, Dynamic: dynamic}
 	cs.Pipeline.Resources = cb.APIResourceList(version, []string{"clustertask"})
 

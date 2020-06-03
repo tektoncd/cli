@@ -16,6 +16,7 @@ package pipeline
 
 import (
 	"fmt"
+
 	"testing"
 	"time"
 
@@ -24,9 +25,12 @@ import (
 	cb "github.com/tektoncd/cli/pkg/test/builder"
 	testDynamic "github.com/tektoncd/cli/pkg/test/dynamic"
 	"github.com/tektoncd/pipeline/pkg/apis/pipeline/v1alpha1"
+	"github.com/tektoncd/pipeline/pkg/apis/pipeline/v1beta1"
 	"github.com/tektoncd/pipeline/pkg/reconciler/pipelinerun/resources"
+	pipelinev1beta1test "github.com/tektoncd/pipeline/test"
 	tb "github.com/tektoncd/pipeline/test/builder"
 	pipelinetest "github.com/tektoncd/pipeline/test/v1alpha1"
+
 	"gotest.tools/v3/golden"
 	corev1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
@@ -123,10 +127,32 @@ func TestPipelineList_only_pipelines(t *testing.T) {
 }
 
 func TestPipelineList_only_pipelines_v1beta1(t *testing.T) {
-	pipelines := []pipelineDetails{
-		{"tomatoes", 1 * time.Minute, "namespace"},
-		{"mangoes", 20 * time.Second, "namespace"},
-		{"bananas", 512 * time.Hour, "namespace"}, // 3 weeks
+	clock := clockwork.NewFakeClock()
+	version := "v1beta1"
+
+	pdata := []*v1beta1.Pipeline{
+		{
+			ObjectMeta: metav1.ObjectMeta{
+				Name:              "tomatoes",
+				Namespace:         "namespace",
+				CreationTimestamp: metav1.Time{Time: clock.Now().Add(-1 * time.Minute)},
+			},
+		},
+		{
+			ObjectMeta: metav1.ObjectMeta{
+				Name:              "mangoes",
+				Namespace:         "namespace",
+				CreationTimestamp: metav1.Time{Time: clock.Now().Add(-20 * time.Second)},
+			},
+		},
+		{
+			ObjectMeta: metav1.ObjectMeta{
+				Name:      "bananas",
+				Namespace: "namespace",
+				// Created 3 weeks ago
+				CreationTimestamp: metav1.Time{Time: clock.Now().Add(-512 * time.Hour)},
+			},
+		},
 	}
 
 	nsList := []*corev1.Namespace{
@@ -136,22 +162,21 @@ func TestPipelineList_only_pipelines_v1beta1(t *testing.T) {
 			},
 		},
 	}
-	version := "v1beta1"
-	clock := clockwork.NewFakeClock()
-	cs, pdata := seedPipelines(t, clock, pipelines, nsList)
-	cs.Pipeline.Resources = cb.APIResourceList(version, []string{"pipeline"})
+
 	tdc := testDynamic.Options{}
-	dc, err := tdc.Client(
-		cb.UnstructuredP(pdata[0], version),
-		cb.UnstructuredP(pdata[1], version),
-		cb.UnstructuredP(pdata[2], version),
+	dynamic, err := tdc.Client(
+		cb.UnstructuredV1beta1P(pdata[0], version),
+		cb.UnstructuredV1beta1P(pdata[1], version),
+		cb.UnstructuredV1beta1P(pdata[2], version),
 	)
 	if err != nil {
 		t.Errorf("unable to create dynamic client: %v", err)
 	}
-	p := &test.Params{Tekton: cs.Pipeline, Clock: clock, Kube: cs.Kube, Dynamic: dc}
-
+	cs, _ := test.SeedV1beta1TestData(t, pipelinev1beta1test.Data{Pipelines: pdata, Namespaces: nsList})
+	p := &test.Params{Tekton: cs.Pipeline, Clock: clock, Kube: cs.Kube, Dynamic: dynamic}
+	cs.Pipeline.Resources = cb.APIResourceList(version, []string{"pipeline"})
 	pipeline := Command(p)
+
 	output, err := test.ExecuteCommand(pipeline, "list", "-n", "namespace")
 	if err != nil {
 		t.Errorf("Unexpected error: %v", err)
@@ -160,10 +185,32 @@ func TestPipelineList_only_pipelines_v1beta1(t *testing.T) {
 }
 
 func TestPipelineList_only_pipelines_no_headers_v1beta1(t *testing.T) {
-	pipelines := []pipelineDetails{
-		{"tomatoes", 1 * time.Minute, "namespace"},
-		{"mangoes", 20 * time.Second, "namespace"},
-		{"bananas", 512 * time.Hour, "namespace"}, // 3 weeks
+	clock := clockwork.NewFakeClock()
+	version := "v1beta1"
+
+	pdata := []*v1beta1.Pipeline{
+		{
+			ObjectMeta: metav1.ObjectMeta{
+				Name:              "tomatoes",
+				Namespace:         "namespace",
+				CreationTimestamp: metav1.Time{Time: clock.Now().Add(-1 * time.Minute)},
+			},
+		},
+		{
+			ObjectMeta: metav1.ObjectMeta{
+				Name:              "mangoes",
+				Namespace:         "namespace",
+				CreationTimestamp: metav1.Time{Time: clock.Now().Add(-20 * time.Second)},
+			},
+		},
+		{
+			ObjectMeta: metav1.ObjectMeta{
+				Name:      "bananas",
+				Namespace: "namespace",
+				// Created 3 weeks ago
+				CreationTimestamp: metav1.Time{Time: clock.Now().Add(-512 * time.Hour)},
+			},
+		},
 	}
 
 	nsList := []*corev1.Namespace{
@@ -173,22 +220,21 @@ func TestPipelineList_only_pipelines_no_headers_v1beta1(t *testing.T) {
 			},
 		},
 	}
-	version := "v1beta1"
-	clock := clockwork.NewFakeClock()
-	cs, pdata := seedPipelines(t, clock, pipelines, nsList)
-	cs.Pipeline.Resources = cb.APIResourceList(version, []string{"pipeline"})
+
 	tdc := testDynamic.Options{}
-	dc, err := tdc.Client(
-		cb.UnstructuredP(pdata[0], version),
-		cb.UnstructuredP(pdata[1], version),
-		cb.UnstructuredP(pdata[2], version),
+	dynamic, err := tdc.Client(
+		cb.UnstructuredV1beta1P(pdata[0], version),
+		cb.UnstructuredV1beta1P(pdata[1], version),
+		cb.UnstructuredV1beta1P(pdata[2], version),
 	)
 	if err != nil {
 		t.Errorf("unable to create dynamic client: %v", err)
 	}
-	p := &test.Params{Tekton: cs.Pipeline, Clock: clock, Kube: cs.Kube, Dynamic: dc}
-
+	cs, _ := test.SeedV1beta1TestData(t, pipelinev1beta1test.Data{Pipelines: pdata, Namespaces: nsList})
+	p := &test.Params{Tekton: cs.Pipeline, Clock: clock, Kube: cs.Kube, Dynamic: dynamic}
+	cs.Pipeline.Resources = cb.APIResourceList(version, []string{"pipeline"})
 	pipeline := Command(p)
+
 	output, err := test.ExecuteCommand(pipeline, "list", "-n", "namespace", "--no-headers")
 	if err != nil {
 		t.Errorf("Unexpected error: %v", err)
@@ -197,74 +243,156 @@ func TestPipelineList_only_pipelines_no_headers_v1beta1(t *testing.T) {
 }
 
 func TestPipelineList_only_pipelines_all_namespaces_v1beta1(t *testing.T) {
-	pipelines := []pipelineDetails{
-		{"tomatoes", 1 * time.Minute, "namespace"},
-		{"mangoes", 20 * time.Second, "namespace"},
-		{"bananas", 512 * time.Hour, "namespace"}, // 3 weeks
-		{"tomates", 1 * time.Minute, "espace-de-nom"},
-		{"mangues", 20 * time.Second, "espace-de-nom"},
-		{"bananes", 512 * time.Hour, "espace-de-nom"}, // 3 weeks
-	}
+	clock := clockwork.NewFakeClock()
 
 	version := "v1beta1"
-	clock := clockwork.NewFakeClock()
-	cs, pdata := seedPipelines(t, clock, pipelines, nil)
-	cs.Pipeline.Resources = cb.APIResourceList(version, []string{"pipeline"})
+
+	pdata := []*v1beta1.Pipeline{
+		{
+			ObjectMeta: metav1.ObjectMeta{
+				Name:              "tomatoes",
+				Namespace:         "namespace",
+				CreationTimestamp: metav1.Time{Time: clock.Now().Add(-1 * time.Minute)},
+			},
+		},
+		{
+			ObjectMeta: metav1.ObjectMeta{
+				Name:              "mangoes",
+				Namespace:         "namespace",
+				CreationTimestamp: metav1.Time{Time: clock.Now().Add(-20 * time.Second)},
+			},
+		},
+		{
+			ObjectMeta: metav1.ObjectMeta{
+				Name:      "bananas",
+				Namespace: "namespace",
+				// Created 3 weeks ago
+				CreationTimestamp: metav1.Time{Time: clock.Now().Add(-512 * time.Hour)},
+			},
+		},
+		{
+			ObjectMeta: metav1.ObjectMeta{
+				Name:              "tomates",
+				Namespace:         "espace-de-nom",
+				CreationTimestamp: metav1.Time{Time: clock.Now().Add(-1 * time.Minute)},
+			},
+		},
+		{
+			ObjectMeta: metav1.ObjectMeta{
+				Name:              "mangues",
+				Namespace:         "espace-de-nom",
+				CreationTimestamp: metav1.Time{Time: clock.Now().Add(-20 * time.Second)},
+			},
+		},
+		{
+			ObjectMeta: metav1.ObjectMeta{
+				Name:      "bananes",
+				Namespace: "espace-de-nom",
+				// Created 3 weeks ago
+				CreationTimestamp: metav1.Time{Time: clock.Now().Add(-512 * time.Hour)},
+			},
+		},
+	}
+
 	tdc := testDynamic.Options{}
-	dc, err := tdc.Client(
-		cb.UnstructuredP(pdata[0], version),
-		cb.UnstructuredP(pdata[1], version),
-		cb.UnstructuredP(pdata[2], version),
-		cb.UnstructuredP(pdata[3], version),
-		cb.UnstructuredP(pdata[4], version),
-		cb.UnstructuredP(pdata[5], version),
+	dynamic, err := tdc.Client(
+		cb.UnstructuredV1beta1P(pdata[0], version),
+		cb.UnstructuredV1beta1P(pdata[1], version),
+		cb.UnstructuredV1beta1P(pdata[2], version),
+		cb.UnstructuredV1beta1P(pdata[3], version),
+		cb.UnstructuredV1beta1P(pdata[4], version),
+		cb.UnstructuredV1beta1P(pdata[5], version),
 	)
 	if err != nil {
 		t.Errorf("unable to create dynamic client: %v", err)
 	}
-	p := &test.Params{Tekton: cs.Pipeline, Clock: clock, Kube: cs.Kube, Dynamic: dc}
-
+	cs, _ := test.SeedV1beta1TestData(t, pipelinev1beta1test.Data{Pipelines: pdata, Namespaces: nil})
+	p := &test.Params{Tekton: cs.Pipeline, Clock: clock, Kube: cs.Kube, Dynamic: dynamic}
+	cs.Pipeline.Resources = cb.APIResourceList(version, []string{"pipeline"})
 	pipeline := Command(p)
+
 	output, err := test.ExecuteCommand(pipeline, "list", "--all-namespaces")
 	if err != nil {
 		t.Errorf("Unexpected error: %v", err)
 	}
+
 	golden.Assert(t, output, fmt.Sprintf("%s.golden", t.Name()))
 }
 
 func TestPipelineList_only_pipelines_all_namespaces_no_headers_v1beta1(t *testing.T) {
-	pipelines := []pipelineDetails{
-		{"tomatoes", 1 * time.Minute, "namespace"},
-		{"mangoes", 20 * time.Second, "namespace"},
-		{"bananas", 512 * time.Hour, "namespace"}, // 3 weeks
-		{"tomates", 1 * time.Minute, "espace-de-nom"},
-		{"mangues", 20 * time.Second, "espace-de-nom"},
-		{"bananes", 512 * time.Hour, "espace-de-nom"}, // 3 weeks
+
+	clock := clockwork.NewFakeClock()
+	version := "v1beta1"
+
+	pdata := []*v1beta1.Pipeline{
+		{
+			ObjectMeta: metav1.ObjectMeta{
+				Name:              "tomatoes",
+				Namespace:         "namespace",
+				CreationTimestamp: metav1.Time{Time: clock.Now().Add(-1 * time.Minute)},
+			},
+		},
+		{
+			ObjectMeta: metav1.ObjectMeta{
+				Name:              "mangoes",
+				Namespace:         "namespace",
+				CreationTimestamp: metav1.Time{Time: clock.Now().Add(-20 * time.Second)},
+			},
+		},
+		{
+			ObjectMeta: metav1.ObjectMeta{
+				Name:      "bananas",
+				Namespace: "namespace",
+				// Created 3 weeks ago
+				CreationTimestamp: metav1.Time{Time: clock.Now().Add(-512 * time.Hour)},
+			},
+		},
+		{
+			ObjectMeta: metav1.ObjectMeta{
+				Name:              "tomates",
+				Namespace:         "espace-de-nom",
+				CreationTimestamp: metav1.Time{Time: clock.Now().Add(-1 * time.Minute)},
+			},
+		},
+		{
+			ObjectMeta: metav1.ObjectMeta{
+				Name:              "mangues",
+				Namespace:         "espace-de-nom",
+				CreationTimestamp: metav1.Time{Time: clock.Now().Add(-20 * time.Second)},
+			},
+		},
+		{
+			ObjectMeta: metav1.ObjectMeta{
+				Name:      "bananes",
+				Namespace: "espace-de-nom",
+				// Created 3 weeks ago
+				CreationTimestamp: metav1.Time{Time: clock.Now().Add(-512 * time.Hour)},
+			},
+		},
 	}
 
-	version := "v1beta1"
-	clock := clockwork.NewFakeClock()
-	cs, pdata := seedPipelines(t, clock, pipelines, nil)
-	cs.Pipeline.Resources = cb.APIResourceList(version, []string{"pipeline"})
 	tdc := testDynamic.Options{}
-	dc, err := tdc.Client(
-		cb.UnstructuredP(pdata[0], version),
-		cb.UnstructuredP(pdata[1], version),
-		cb.UnstructuredP(pdata[2], version),
-		cb.UnstructuredP(pdata[3], version),
-		cb.UnstructuredP(pdata[4], version),
-		cb.UnstructuredP(pdata[5], version),
+	dynamic, err := tdc.Client(
+		cb.UnstructuredV1beta1P(pdata[0], version),
+		cb.UnstructuredV1beta1P(pdata[1], version),
+		cb.UnstructuredV1beta1P(pdata[2], version),
+		cb.UnstructuredV1beta1P(pdata[3], version),
+		cb.UnstructuredV1beta1P(pdata[4], version),
+		cb.UnstructuredV1beta1P(pdata[5], version),
 	)
 	if err != nil {
 		t.Errorf("unable to create dynamic client: %v", err)
 	}
-	p := &test.Params{Tekton: cs.Pipeline, Clock: clock, Kube: cs.Kube, Dynamic: dc}
-
+	cs, _ := test.SeedV1beta1TestData(t, pipelinev1beta1test.Data{Pipelines: pdata, Namespaces: nil})
+	p := &test.Params{Tekton: cs.Pipeline, Clock: clock, Kube: cs.Kube, Dynamic: dynamic}
+	cs.Pipeline.Resources = cb.APIResourceList(version, []string{"pipeline"})
 	pipeline := Command(p)
+
 	output, err := test.ExecuteCommand(pipeline, "list", "--all-namespaces", "--no-headers")
 	if err != nil {
 		t.Errorf("Unexpected error: %v", err)
 	}
+
 	golden.Assert(t, output, fmt.Sprintf("%s.golden", t.Name()))
 }
 
