@@ -4,6 +4,12 @@ Manage pipelineruns
 
 ***Aliases**: pr,pipelineruns*
 
+### Usage
+
+```
+tkn pipelinerun
+```
+
 ### Synopsis
 
 Manage pipelineruns

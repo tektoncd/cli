@@ -4,6 +4,12 @@ Manage triggertemplates
 
 ***Aliases**: tt,triggertemplates*
 
+### Usage
+
+```
+tkn triggertemplate
+```
+
 ### Synopsis
 
 Manage triggertemplates

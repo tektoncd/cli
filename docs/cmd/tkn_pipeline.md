@@ -4,6 +4,12 @@ Manage pipelines
 
 ***Aliases**: p,pipelines*
 
+### Usage
+
+```
+tkn pipeline
+```
+
 ### Synopsis
 
 Manage pipelines

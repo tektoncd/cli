@@ -4,6 +4,12 @@ Manage eventlisteners
 
 ***Aliases**: el,eventlisteners*
 
+### Usage
+
+```
+tkn eventlistener
+```
+
 ### Synopsis
 
 Manage eventlisteners

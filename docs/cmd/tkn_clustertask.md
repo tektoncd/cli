@@ -4,6 +4,12 @@ Manage clustertasks
 
 ***Aliases**: ct,clustertasks*
 
+### Usage
+
+```
+tkn clustertask
+```
+
 ### Synopsis
 
 Manage clustertasks

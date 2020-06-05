@@ -2,6 +2,12 @@
 
 CLI for tekton pipelines
 
+### Usage
+
+```
+tkn
+```
+
 ### Synopsis
 
 CLI for tekton pipelines

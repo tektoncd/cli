@@ -4,6 +4,12 @@ Manage triggerbindings
 
 ***Aliases**: tb,triggerbindings*
 
+### Usage
+
+```
+tkn triggerbinding
+```
+
 ### Synopsis
 
 Manage triggerbindings

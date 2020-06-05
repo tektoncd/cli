@@ -4,6 +4,12 @@ Manage pipeline resources
 
 ***Aliases**: res,resources*
 
+### Usage
+
+```
+tkn resource
+```
+
 ### Synopsis
 
 Manage pipeline resources

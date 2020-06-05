@@ -4,6 +4,12 @@ Manage clustertriggerbindings
 
 ***Aliases**: ctb,clustertriggerbindings*
 
+### Usage
+
+```
+tkn clustertriggerbinding
+```
+
 ### Synopsis
 
 Manage clustertriggerbindings

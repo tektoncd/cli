@@ -33,6 +33,7 @@ import (
 	"github.com/tektoncd/cli/pkg/cmd/triggerbinding"
 	"github.com/tektoncd/cli/pkg/cmd/triggertemplate"
 	"github.com/tektoncd/cli/pkg/cmd/version"
+	"github.com/tektoncd/cli/pkg/suggestion"
 )
 
 const usageTemplate = `Usage:{{if .Runnable}}
@@ -94,6 +95,8 @@ func Root(p cli.Params) *cobra.Command {
 		version.Command(p),
 	)
 
+	visitCommands(cmd, reconfigureCmdWithSubcmd)
+
 	return cmd
 }
 
@@ -112,4 +115,25 @@ func subCommands(cmd *cobra.Command, annotation string) []*cobra.Command {
 		}
 	}
 	return cmds
+}
+
+func reconfigureCmdWithSubcmd(cmd *cobra.Command) {
+	if len(cmd.Commands()) == 0 {
+		return
+	}
+
+	if cmd.Args == nil {
+		cmd.Args = cobra.ArbitraryArgs
+	}
+
+	if cmd.RunE == nil {
+		cmd.RunE = suggestion.SubcommandsRequiredWithSuggestions
+	}
+}
+
+func visitCommands(cmd *cobra.Command, f func(*cobra.Command)) {
+	f(cmd)
+	for _, child := range cmd.Commands() {
+		visitCommands(child, f)
+	}
 }

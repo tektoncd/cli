@@ -4,6 +4,12 @@ Manage tasks
 
 ***Aliases**: t,tasks*
 
+### Usage
+
+```
+tkn task
+```
+
 ### Synopsis
 
 Manage tasks
