@@ -30,8 +30,8 @@ func TestCommand_no_global_flags(t *testing.T) {
 	p := &test.Params{}
 	pipelinerun := Root(p)
 	out, err := test.ExecuteCommand(pipelinerun)
-	if err == nil {
-		t.Errorf("test should have command with an error: `subcommand is required` Output: `%s`", out)
+	if err != nil {
+		t.Errorf("TestCommand_no_global_flags should not result in an error but did: %v", err)
 	}
 
 	if strings.Contains(out, unwantedflag) {
@@ -47,5 +47,16 @@ func TestCommand_suggest(t *testing.T) {
 		t.Errorf("No errors was defined. Output: %s", out)
 	}
 	expected := "unknown command \"pi\" for \"tkn\"\n\nDid you mean this?\n\tpipeline\n\tpipelinerun\n"
+	tu.AssertOutput(t, expected, err.Error())
+}
+
+func TestSubCommand_suggest(t *testing.T) {
+	p := &test.Params{}
+	pipelinedescriberun := Root(p)
+	out, err := test.ExecuteCommand(pipelinedescriberun, "pipeline", "des")
+	if err == nil {
+		t.Errorf("No errors was defined. Output: %s", out)
+	}
+	expected := "unknown command \"des\" for \"tkn pipeline\"\n\nDid you mean this?\n\tdescribe\n"
 	tu.AssertOutput(t, expected, err.Error())
 }

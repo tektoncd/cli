@@ -4,6 +4,12 @@ Manage conditions
 
 ***Aliases**: cond,conditions*
 
+### Usage
+
+```
+tkn condition
+```
+
 ### Synopsis
 
 Manage conditions

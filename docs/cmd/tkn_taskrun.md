@@ -4,6 +4,12 @@ Manage TaskRuns
 
 ***Aliases**: tr,taskruns*
 
+### Usage
+
+```
+tkn taskrun
+```
+
 ### Synopsis
 
 Manage TaskRuns
