@@ -33,29 +33,6 @@ import (
 	"knative.dev/pkg/apis"
 )
 
-func TestPipelinesList_invalid_namespace(t *testing.T) {
-
-	nsList := []*corev1.Namespace{
-		{
-			ObjectMeta: metav1.ObjectMeta{
-				Name: "foo",
-			},
-		},
-	}
-
-	cs, _ := test.SeedTestData(t, pipelinetest.Data{Namespaces: nsList})
-	p := &test.Params{Tekton: cs.Pipeline, Kube: cs.Kube}
-
-	pipeline := Command(p)
-	output, err := test.ExecuteCommand(pipeline, "list", "-n", "invalid")
-
-	if err == nil {
-		t.Errorf("Error expected for invalid namespace")
-	}
-
-	test.AssertOutput(t, "Error: namespaces \"invalid\" not found\n", output)
-}
-
 func TestPipelinesList_empty(t *testing.T) {
 
 	nsList := []*corev1.Namespace{
