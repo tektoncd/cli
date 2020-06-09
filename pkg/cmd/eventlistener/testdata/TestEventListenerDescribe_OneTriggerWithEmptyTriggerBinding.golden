@@ -3,11 +3,6 @@ Namespace:   ns
  
 EventListenerTriggers
 
- BINDINGS
-
-  REF   KIND                    APIVERSION
-  tb1   ClusterTriggerBinding   v1alpha1
- 
  TEMPLATE NAME   APIVERSION
  tt1             v1alpha1
  

@@ -6,11 +6,17 @@ EventListenerTriggers
  NAME
  foo-trig
  
- BINDING REF   KIND                    APIVERSION
- tb1           TriggerBinding          
- tb2           ClusterTriggerBinding   v1alpha1
- tb3           TriggerBinding          v1alpha1
+ BINDINGS
 
+  REF   KIND                    APIVERSION
+  tb1   TriggerBinding          
+  tb2   ClusterTriggerBinding   v1alpha1
+ 
+  SPEC
+  Params
+    key1   value1
+    key2   value2
+ 
  TEMPLATE NAME   APIVERSION
  tt1             v1alpha1
  
@@ -26,10 +32,12 @@ EventListenerTriggers
  NAME
  foo-trig
  
- BINDING REF   KIND                    APIVERSION
- tb4           TriggerBinding          
- tb5           ClusterTriggerBinding   v1alpha1
+ BINDINGS
 
+  REF   KIND                    APIVERSION
+  tb4   TriggerBinding          
+  tb5   ClusterTriggerBinding   v1alpha1
+ 
  TEMPLATE NAME   APIVERSION
  tt2             v1alpha1
  
