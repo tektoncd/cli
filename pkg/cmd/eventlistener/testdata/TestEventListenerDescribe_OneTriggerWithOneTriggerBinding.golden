@@ -4,9 +4,11 @@ Service Account:   trigger-sa
  
 EventListenerTriggers
 
- BINDING REF   KIND             APIVERSION
- tb1           TriggerBinding   
+ BINDINGS
 
+  REF   KIND             APIVERSION
+  tb1   TriggerBinding   
+ 
  TEMPLATE NAME   APIVERSION
  tt1             v1alpha1
  

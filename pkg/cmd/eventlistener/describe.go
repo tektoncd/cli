@@ -68,11 +68,32 @@ const describeTemplate = `{{decorate "bold" "Name"}}:	{{ .EventListener.Name }}
  {{decorate "bullet" $v.Name }}
 {{ " " }}
 {{- end }}
- BINDING REF	KIND	APIVERSION
+
+{{- if ne (len $v.Bindings) 0 }}
+ {{decorate "" "BINDINGS\n"}}
+{{- if isBindingRefExist $v.Bindings }}
+  REF	KIND	APIVERSION
 {{- range $b := $v.Bindings }}
- {{ decorate "bullet" $b.Ref }}	{{ $b.Kind }}	{{ $b.APIVersion }}
+{{- if ne $b.Ref "" }}
+  {{ decorate "bullet" $b.Ref }}	{{ $b.Kind }}	{{ $b.APIVersion }}
+{{- end }}
+{{- end }}
+{{ " " }}
 {{- end }}
 
+{{- if isBindingSpecExist $v.Bindings }}
+  SPEC
+{{- range $b := $v.Bindings }}
+{{- if eq $b.Ref "" }}
+  {{ decorate "bullet" "Params" }}
+{{- range $p := $b.Spec.Params }}
+    {{ $p.Name }}	{{ $p.Value }}
+{{- end }}
+{{- end }}
+{{- end }}
+{{ " " }}
+{{- end }}
+{{- end }}
  TEMPLATE NAME	APIVERSION
  {{ decorate "bullet" $v.Template.Name }}	{{ $v.Template.APIVersion }}
 {{- if not $v.ServiceAccount }}
@@ -183,10 +204,11 @@ func printEventListenerDescription(s *cli.Stream, p cli.Params, elName string) e
 
 	funcMap := template.FuncMap{
 		"decorate":             formatted.DecorateAttr,
-		"getBinding":           getBinding,
 		"getInterceptors":      getInterceptors,
 		"getURL":               getURL,
 		"getEventListenerName": getEventListenerName,
+		"isBindingRefExist":    isBindingRefExist,
+		"isBindingSpecExist":   isBindingSpecExist,
 	}
 
 	w := tabwriter.NewWriter(s.Out, 0, 5, 3, ' ', tabwriter.TabIndent)
@@ -196,10 +218,6 @@ func printEventListenerDescription(s *cli.Stream, p cli.Params, elName string) e
 		return err
 	}
 	return w.Flush()
-}
-
-func getBinding(binding []*v1alpha1.EventListenerBinding) []*v1alpha1.EventListenerBinding {
-	return binding
 }
 
 func getInterceptors(interceptors []*v1alpha1.EventInterceptor) string {
@@ -222,4 +240,24 @@ func getEventListenerName(listener v1alpha1.EventListener) string {
 		return ""
 	}
 	return listener.Status.Configuration.GeneratedResourceName
+}
+
+func isBindingRefExist(bindings []*v1alpha1.EventListenerBinding) bool {
+	refExist := false
+	for _, j := range bindings {
+		if j.Ref != "" {
+			refExist = true
+		}
+	}
+	return refExist
+}
+
+func isBindingSpecExist(bindings []*v1alpha1.EventListenerBinding) bool {
+	specExist := false
+	for _, j := range bindings {
+		if j.Spec != nil {
+			specExist = true
+		}
+	}
+	return specExist
 }
