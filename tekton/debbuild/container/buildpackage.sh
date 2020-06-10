@@ -3,7 +3,7 @@ set -eux
 # Increase this on minor *package* releases (ie fix on the packaging),
 # decrease it to 0 on major *package* release
 # (need ot find a better way to do that)
-RELEASE=2
+RELEASE=0
 
 [[ -z ${GPG_KEY} ]] && {
     echo "You need to setup your GPG_KEY."
