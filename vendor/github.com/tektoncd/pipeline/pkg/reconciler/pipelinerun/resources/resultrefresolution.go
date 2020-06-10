@@ -20,7 +20,6 @@ import (
 	"fmt"
 	"sort"
 
-	"github.com/tektoncd/pipeline/pkg/apis/pipeline/v1alpha1"
 	"github.com/tektoncd/pipeline/pkg/apis/pipeline/v1beta1"
 )
 
@@ -37,7 +36,7 @@ type ResolvedResultRef struct {
 }
 
 // ResolveResultRefs resolves any ResultReference that are found in the target ResolvedPipelineRunTask
-func ResolveResultRefs(pipelineRunState PipelineRunState, targets PipelineRunState, pipelineResults []v1beta1.PipelineResult) (ResolvedResultRefs, error) {
+func ResolveResultRefs(pipelineRunState PipelineRunState, targets PipelineRunState) (ResolvedResultRefs, error) {
 	var allResolvedResultRefs ResolvedResultRefs
 	for _, target := range targets {
 		resolvedResultRefs, err := convertParamsToResultRefs(pipelineRunState, target)
@@ -46,13 +45,20 @@ func ResolveResultRefs(pipelineRunState PipelineRunState, targets PipelineRunSta
 		}
 		allResolvedResultRefs = append(allResolvedResultRefs, resolvedResultRefs...)
 	}
+	return removeDup(allResolvedResultRefs), nil
+}
+
+// ResolvePipelineResultRefs takes a list of PipelineResults and resolves any references they
+// include to Task results in the given PipelineRunState
+func ResolvePipelineResultRefs(pipelineRunState PipelineRunState, pipelineResults []v1beta1.PipelineResult) ResolvedResultRefs {
+	var allResolvedResultRefs ResolvedResultRefs
 	for _, result := range pipelineResults {
 		resolvedResultRefs := convertPipelineResultToResultRefs(pipelineRunState, result)
 		if resolvedResultRefs != nil {
 			allResolvedResultRefs = append(allResolvedResultRefs, resolvedResultRefs...)
 		}
 	}
-	return removeDup(allResolvedResultRefs), nil
+	return removeDup(allResolvedResultRefs)
 }
 
 // extractResultRefs resolves any ResultReference that are found in param or pipeline result
@@ -181,7 +187,7 @@ func resolveResultRef(pipelineState PipelineRunState, resultRef *v1beta1.ResultR
 	}, nil
 }
 
-func getReferencedTaskRun(pipelineState PipelineRunState, reference *v1beta1.ResultRef) (*v1alpha1.TaskRun, error) {
+func getReferencedTaskRun(pipelineState PipelineRunState, reference *v1beta1.ResultRef) (*v1beta1.TaskRun, error) {
 	referencedPipelineTask := pipelineState.ToMap()[reference.PipelineTask]
 
 	if referencedPipelineTask == nil {
@@ -193,7 +199,7 @@ func getReferencedTaskRun(pipelineState PipelineRunState, reference *v1beta1.Res
 	return referencedPipelineTask.TaskRun, nil
 }
 
-func findTaskResultForParam(taskRun *v1alpha1.TaskRun, reference *v1beta1.ResultRef) (*v1alpha1.TaskRunResult, error) {
+func findTaskResultForParam(taskRun *v1beta1.TaskRun, reference *v1beta1.ResultRef) (*v1beta1.TaskRunResult, error) {
 	results := taskRun.Status.TaskRunStatusFields.TaskRunResults
 	for _, result := range results {
 		if result.Name == reference.Result {

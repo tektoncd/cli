@@ -168,6 +168,9 @@ type PipelineRunSpec struct {
 	// with those declared in the pipeline.
 	// +optional
 	Workspaces []WorkspaceBinding `json:"workspaces,omitempty"`
+	// TaskRunSpecs holds a set of runtime specs
+	// +optional
+	TaskRunSpecs []PipelineTaskRunSpec `json:"taskRunSpecs,omitempty"`
 }
 
 // PipelineRunSpecStatus defines the pipelinerun spec status the user can provide
@@ -222,6 +225,25 @@ func (pr *PipelineRunStatus) SetCondition(newCond *apis.Condition) {
 	if newCond != nil {
 		pipelineRunCondSet.Manage(pr).SetCondition(*newCond)
 	}
+}
+
+// MarkSucceeded changes the Succeeded condition to True with the provided reason and message.
+func (pr *PipelineRunStatus) MarkSucceeded(reason, messageFormat string, messageA ...interface{}) {
+	pipelineRunCondSet.Manage(pr).MarkTrueWithReason(apis.ConditionSucceeded, reason, messageFormat, messageA...)
+	succeeded := pr.GetCondition(apis.ConditionSucceeded)
+	pr.CompletionTime = &succeeded.LastTransitionTime.Inner
+}
+
+// MarkFailed changes the Succeeded condition to False with the provided reason and message.
+func (pr *PipelineRunStatus) MarkFailed(reason, messageFormat string, messageA ...interface{}) {
+	pipelineRunCondSet.Manage(pr).MarkFalse(apis.ConditionSucceeded, reason, messageFormat, messageA...)
+	succeeded := pr.GetCondition(apis.ConditionSucceeded)
+	pr.CompletionTime = &succeeded.LastTransitionTime.Inner
+}
+
+// MarkRunning changes the Succeeded condition to Unknown with the provided reason and message.
+func (pr *PipelineRunStatus) MarkRunning(reason, messageFormat string, messageA ...interface{}) {
+	pipelineRunCondSet.Manage(pr).MarkUnknown(apis.ConditionSucceeded, reason, messageFormat, messageA...)
 }
 
 // MarkResourceNotConvertible adds a Warning-severity condition to the resource noting
@@ -312,4 +334,26 @@ type PipelineRunList struct {
 // and produces logs.
 type PipelineTaskRun struct {
 	Name string `json:"name,omitempty"`
+}
+
+// PipelineTaskRunSpec  can be used to configure specific
+// specs for a concrete Task
+type PipelineTaskRunSpec struct {
+	PipelineTaskName       string       `json:"pipelineTaskName,omitempty"`
+	TaskServiceAccountName string       `json:"taskServiceAccountName,omitempty"`
+	TaskPodTemplate        *PodTemplate `json:"taskPodTemplate,omitempty"`
+}
+
+// GetTaskRunSpecs returns the task specific spec for a given
+// PipelineTask if configured, otherwise it returns the PipelineRun's default.
+func (pr *PipelineRun) GetTaskRunSpecs(pipelineTaskName string) (string, *PodTemplate) {
+	serviceAccountName := pr.GetServiceAccountName(pipelineTaskName)
+	taskPodTemplate := pr.Spec.PodTemplate
+	for _, task := range pr.Spec.TaskRunSpecs {
+		if task.PipelineTaskName == pipelineTaskName {
+			taskPodTemplate = task.TaskPodTemplate
+			serviceAccountName = task.TaskServiceAccountName
+		}
+	}
+	return serviceAccountName, taskPodTemplate
 }
