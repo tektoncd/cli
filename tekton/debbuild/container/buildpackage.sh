@@ -31,7 +31,8 @@ cd ${TMPD}
 curl -C- -L -# -o tektoncd-cli_${version}.orig.tar.gz -L https://github.com/tektoncd/cli/archive/v${version}.tar.gz
 tar xzf ${TMPD}/tektoncd-cli_${version}.orig.tar.gz
 
-cd cli-${version}
+mv cli-${version} tektoncd-cli-${version}
+cd tektoncd-cli-${version}
 
 # Make it easy for devs
 [[ -d /debian ]] && { rm -rf debian && cp -a /debian . ; }
