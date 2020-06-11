@@ -77,6 +77,7 @@ type startOptions struct {
 	Filename           string
 	Workspaces         []string
 	UseParamDefaults   bool
+	TektonOptions      flags.TektonOptions
 }
 
 type resourceOptionsFilter struct {
@@ -131,6 +132,7 @@ like cat,foo,bar
 					return fmt.Errorf("output format specified is %s but must be yaml or json", opt.Output)
 				}
 			}
+			opt.TektonOptions = flags.GetTektonOptions(cmd)
 			return nil
 		},
 		RunE: func(cmd *cobra.Command, args []string) error {
@@ -298,7 +300,13 @@ func (opt *startOptions) startPipeline(pipelineStart *v1beta1.Pipeline) error {
 
 	fmt.Fprintf(opt.stream.Out, "Pipelinerun started: %s\n", prCreated.Name)
 	if !opt.ShowLog {
-		fmt.Fprintf(opt.stream.Out, "\nIn order to track the pipelinerun progress run:\ntkn pipelinerun logs %s -f -n %s\n", prCreated.Name, prCreated.Namespace)
+		inOrderString := fmt.Sprint("\nIn order to track the pipelinerun progress run:\ntkn pipelinerun ")
+		if opt.TektonOptions.Context != "" {
+			inOrderString += fmt.Sprintf("--context=%s ", opt.TektonOptions.Context)
+		}
+		inOrderString += fmt.Sprintf("logs %s -f -n %s\n", prCreated.Name, prCreated.Namespace)
+
+		fmt.Fprint(opt.stream.Out, inOrderString)
 		return nil
 	}
 

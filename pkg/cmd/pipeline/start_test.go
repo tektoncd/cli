@@ -290,6 +290,17 @@ func TestPipelineStart_ExecuteCommand(t *testing.T) {
 	}
 	c6 := &test.Params{Tekton: cs6.Pipeline, Kube: cs6.Kube, Dynamic: dc6, Clock: clock, Resource: cs6.Resource}
 
+	cs7, _ := test.SeedTestData(t, pipelinetest.Data{Pipelines: pipeline, Namespaces: namespaces})
+	cs7.Pipeline.Resources = cb.APIResourceList("v1alpha1", []string{"pipeline", "pipelinerun"})
+	tdc7 := testDynamic.Options{}
+	dc7, err := tdc7.Client(
+		cb.UnstructuredP(pipeline[0], versionA1),
+	)
+	if err != nil {
+		t.Errorf("unable to create dynamic client: %v", err)
+	}
+	c7 := &test.Params{Tekton: cs7.Pipeline, Kube: cs7.Kube, Dynamic: dc7, Clock: clock, Resource: cs7.Resource}
+
 	testParams := []struct {
 		name       string
 		command    []string
@@ -337,6 +348,22 @@ func TestPipelineStart_ExecuteCommand(t *testing.T) {
 			input:     c2,
 			wantError: false,
 			want:      "Pipelinerun started: \n\nIn order to track the pipelinerun progress run:\ntkn pipelinerun logs  -f -n ns\n",
+		},
+		{
+			name: "Start pipeline with different context",
+			command: []string{"start", "test-pipeline",
+				"--context=GummyBear",
+				"-s=svc1",
+				"-r=source=scaffold-git",
+				"-p=pipeline-param=value1",
+				"-l=jemange=desfrites",
+				"-w=name=password-vault,secret=secret-name",
+				"-n", "ns",
+			},
+			namespace: "",
+			input:     c7,
+			wantError: false,
+			want:      "Pipelinerun started: \n\nIn order to track the pipelinerun progress run:\ntkn pipelinerun --context=GummyBear logs  -f -n ns\n",
 		},
 		{
 			name: "Start pipeline with showlog flag false",
