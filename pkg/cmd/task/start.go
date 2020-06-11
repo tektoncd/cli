@@ -72,6 +72,7 @@ type startOptions struct {
 	Workspaces         []string
 	task               *v1beta1.Task
 	askOpts            survey.AskOpt
+	TektonOptions      flags.TektonOptions
 }
 
 // NameArg validates that the first argument is a valid task name
@@ -163,6 +164,7 @@ like cat,foo,bar
 				return fmt.Errorf("using --last and --use-taskrun are not compatible")
 			}
 
+			opt.TektonOptions = flags.GetTektonOptions(cmd)
 			return startTask(opt, args)
 		},
 	}
@@ -365,7 +367,13 @@ func startTask(opt startOptions, args []string) error {
 
 	fmt.Fprintf(opt.stream.Out, "Taskrun started: %s\n", trCreated.Name)
 	if !opt.ShowLog {
-		fmt.Fprintf(opt.stream.Out, "\nIn order to track the taskrun progress run:\ntkn taskrun logs %s -f -n %s\n", trCreated.Name, trCreated.Namespace)
+		inOrderString := fmt.Sprint("\nIn order to track the taskrun progress run:\ntkn taskrun ")
+		if opt.TektonOptions.Context != "" {
+			inOrderString += fmt.Sprintf("--context=%s ", opt.TektonOptions.Context)
+		}
+		inOrderString += fmt.Sprintf("logs %s -f -n %s\n", trCreated.Name, trCreated.Namespace)
+
+		fmt.Fprint(opt.stream.Out, inOrderString)
 		return nil
 	}
 
