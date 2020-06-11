@@ -58,6 +58,7 @@ type startOptions struct {
 	TimeOut            string
 	DryRun             bool
 	Output             string
+	TektonOptions      flags.TektonOptions
 }
 
 // NameArg validates that the first argument is a valid clustertask name
@@ -127,6 +128,7 @@ like cat,foo,bar
 				Err: cmd.OutOrStderr(),
 			}
 
+			opt.TektonOptions = flags.GetTektonOptions(cmd)
 			return startClusterTask(opt, args)
 		},
 	}
@@ -234,7 +236,13 @@ func startClusterTask(opt startOptions, args []string) error {
 
 	fmt.Fprintf(opt.stream.Out, "Taskrun started: %s\n", trCreated.Name)
 	if !opt.ShowLog {
-		fmt.Fprintf(opt.stream.Out, "\nIn order to track the taskrun progress run:\ntkn taskrun logs %s -f -n %s\n", trCreated.Name, trCreated.Namespace)
+		inOrderString := fmt.Sprint("\nIn order to track the taskrun progress run:\ntkn taskrun ")
+		if opt.TektonOptions.Context != "" {
+			inOrderString += fmt.Sprintf("--context=%s ", opt.TektonOptions.Context)
+		}
+		inOrderString += fmt.Sprintf("logs %s -f -n %s\n", trCreated.Name, trCreated.Namespace)
+
+		fmt.Fprint(opt.stream.Out, inOrderString)
 		return nil
 	}
 

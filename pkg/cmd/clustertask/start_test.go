@@ -254,6 +254,19 @@ func Test_ClusterTask_Start(t *testing.T) {
 	//seeds[4]
 	seeds = append(seeds, clients{pipelineClient: cs4, dynamicClient: dc4})
 
+	//seeds[5] - Same data as seeds[0] but creates a new TaskRun
+	seedData5, _ := test.SeedTestData(t, pipelinetest.Data{Namespaces: ns, TaskRuns: taskruns, ClusterTasks: clustertasks})
+	objs5 := []runtime.Object{clustertasks[0], taskruns[0]}
+	tdc5 := newDynamicClientOpt(versionA1, "taskrun-5", objs5...)
+	dc5, _ := tdc5.Client(
+		cb.UnstructuredCT(clustertasks[0], versionA1),
+		cb.UnstructuredTR(taskruns[0], versionA1),
+	)
+	cs5 := pipelinetest.Clients{Pipeline: seedData5.Pipeline, Kube: seedData5.Kube}
+	cs5.Pipeline.Resources = cb.APIResourceList(versionA1, []string{"task", "taskrun", "clustertask"})
+	//seeds[5] - No TaskRun with ClusterTask
+	seeds = append(seeds, clients{pipelineClient: cs5, dynamicClient: dc5})
+
 	testParams := []struct {
 		name        string
 		command     []string
@@ -306,6 +319,23 @@ func Test_ClusterTask_Start(t *testing.T) {
 			inputStream: nil,
 			wantError:   false,
 			want:        "Taskrun started: taskrun-1\n\nIn order to track the taskrun progress run:\ntkn taskrun logs taskrun-1 -f -n ns\n",
+		},
+		{
+			name: "Start clustertask with different context",
+			command: []string{"start", "clustertask-1",
+				"--context", "ronaldinho",
+				"-i", "my-repo=git",
+				"-i", "my-image=image",
+				"-p", "myarg=value1",
+				"-p", "print=boom,boom",
+				"-l", "key=value",
+				"-o", "code-image=output-image",
+				"-s=svc1"},
+			dynamic:     seeds[3].dynamicClient,
+			input:       seeds[3].pipelineClient,
+			inputStream: nil,
+			wantError:   false,
+			want:        "Taskrun started: \n\nIn order to track the taskrun progress run:\ntkn taskrun --context=ronaldinho logs  -f -n ns\n",
 		},
 		{
 			name:        "Start with --last option",
