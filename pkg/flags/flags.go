@@ -32,6 +32,12 @@ const (
 	nocolour   = "nocolour"
 )
 
+// TektonOptions all global tekton options
+type TektonOptions struct {
+	KubeConfig, Context, Namespace string
+	Nocolour                       bool
+}
+
 // AddTektonOptions amends command to add flags required to initialise a cli.Param
 func AddTektonOptions(cmd *cobra.Command) {
 	cmd.PersistentFlags().StringP(
@@ -55,6 +61,20 @@ func AddTektonOptions(cmd *cobra.Command) {
 	for name, completion := range completion.ShellCompletionMap {
 		pflag := cmd.PersistentFlags().Lookup(name)
 		AddShellCompletion(pflag, completion)
+	}
+}
+
+// GetTektonOptions get the global tekton Options that are not passed to a subcommands
+func GetTektonOptions(cmd *cobra.Command) TektonOptions {
+	kcPath, _ := cmd.Flags().GetString(kubeConfig)
+	kContext, _ := cmd.Flags().GetString(context)
+	ns, _ := cmd.Flags().GetString(namespace)
+	nocolourFlag, _ := cmd.Flags().GetBool(nocolour)
+	return TektonOptions{
+		KubeConfig: kcPath,
+		Context:    kContext,
+		Namespace:  ns,
+		Nocolour:   nocolourFlag,
 	}
 }
 
