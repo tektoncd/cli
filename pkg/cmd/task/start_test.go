@@ -495,6 +495,103 @@ func Test_start_task(t *testing.T) {
 	test.AssertOutput(t, "svc1", tr.Items[0].Spec.ServiceAccountName)
 }
 
+func Test_start_task_v1beta1_context(t *testing.T) {
+	tasks := []*v1beta1.Task{
+		{
+			ObjectMeta: v1.ObjectMeta{
+				Name:      "task-1",
+				Namespace: "ns",
+			},
+			Spec: v1beta1.TaskSpec{
+				Resources: &v1beta1.TaskResources{
+					Inputs: []v1beta1.TaskResource{
+						{
+							ResourceDeclaration: v1beta1.ResourceDeclaration{
+								Name: "my-repo",
+								Type: v1beta1.PipelineResourceTypeGit,
+							},
+						},
+						{
+							ResourceDeclaration: v1beta1.ResourceDeclaration{
+								Name: "my-image",
+								Type: v1beta1.PipelineResourceTypeImage,
+							},
+						},
+					},
+					Outputs: []v1beta1.TaskResource{
+						{
+							ResourceDeclaration: v1beta1.ResourceDeclaration{
+								Name: "code-image",
+								Type: v1beta1.PipelineResourceTypeImage,
+							},
+						},
+					},
+				},
+				Params: []v1beta1.ParamSpec{
+					{
+						Name: "myarg",
+						Type: v1beta1.ParamTypeString,
+					},
+					{
+						Name: "print",
+						Type: v1beta1.ParamTypeArray,
+					},
+				},
+				Steps: []v1beta1.Step{
+					{
+						Container: corev1.Container{
+							Name:  "hello",
+							Image: "busybox",
+						},
+					},
+					{
+						Container: corev1.Container{
+							Name:  "exit",
+							Image: "busybox",
+						},
+					},
+				},
+			},
+		},
+	}
+
+	ns := []*corev1.Namespace{
+		{
+			ObjectMeta: metav1.ObjectMeta{
+				Name: "ns",
+			},
+		},
+	}
+
+	cs, _ := test.SeedV1beta1TestData(t, pipelinev1beta1test.Data{Tasks: tasks, Namespaces: ns})
+	cs.Pipeline.Resources = cb.APIResourceList(versionB1, []string{"task", "taskrun"})
+	tdc := testDynamic.Options{}
+	dc, err := tdc.Client(
+		cb.UnstructuredV1beta1T(tasks[0], versionB1))
+	if err != nil {
+		t.Errorf("unable to create dynamic client: %v", err)
+	}
+	p := &test.Params{Tekton: cs.Pipeline, Kube: cs.Kube, Dynamic: dc}
+
+	task := Command(p)
+
+	gotConfig, _ := test.ExecuteCommand(task, "start", "task-1",
+		"--context=NinjaRabbit",
+		"-i=my-repo=git",
+		"-i=my-image=image",
+		"-p=myarg=value1",
+		"-p=print=boom,boom",
+		"-l=key=value",
+		"-o=code-image=output-image",
+		"-w=name=pvc,claimName=pvc3",
+		"-s=svc1",
+		"-n=ns")
+
+	gcExpected := "Taskrun started: \n\nIn order to track the taskrun progress run:\ntkn taskrun --context=NinjaRabbit logs  -f -n ns\n"
+	test.AssertOutput(t, gcExpected, gotConfig)
+
+}
+
 func Test_start_task_v1beta1(t *testing.T) {
 	tasks := []*v1beta1.Task{
 		{
