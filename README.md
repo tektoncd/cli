@@ -157,6 +157,7 @@ The following commands help you understand and effectively use the Tekton CLI:
 
  * `tkn help:` Displays a list of the commands with helpful information.
  * [`tkn clustertask:`](docs/cmd/tkn_clustertask.md) Parent command of the ClusterTask command group.
+ * [`tkn clustertriggerbinding:`](docs/cmd/tkn_clustertriggerbinding.md) Parent command of the ClusterTriggerBinding command group.
  * [`tkn completion:`](docs/cmd/tkn_completion.md) Outputs a BASH or ZSH completion script for `tkn` to allow command completion with Tab.
  * [`tkn condition:`](docs/cmd/tkn_condition.md) Parent command of the Condition command group.
  * [`tkn eventlistener:`](docs/cmd/tkn_eventlistener.md) Parent command of the Eventlistener command group.
