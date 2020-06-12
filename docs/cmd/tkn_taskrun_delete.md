@@ -1,6 +1,6 @@
 ## tkn taskrun delete
 
-Delete taskruns in a namespace
+Delete TaskRuns in a namespace
 
 ***Aliases**: rm*
 
@@ -12,7 +12,7 @@ tkn taskrun delete
 
 ### Synopsis
 
-Delete taskruns in a namespace
+Delete TaskRuns in a namespace
 
 ### Examples
 
@@ -28,13 +28,13 @@ or
 ### Options
 
 ```
-      --all                           Delete all taskruns in a namespace (default: false)
+      --all                           Delete all TaskRuns in a namespace (default: false)
       --allow-missing-template-keys   If true, ignore any errors in templates when a field or map key is missing in the template. Only applies to golang and jsonpath output formats. (default true)
   -f, --force                         Whether to force deletion (default: false)
   -h, --help                          help for delete
-      --keep int                      Keep n most recent number of taskruns
+      --keep int                      Keep n most recent number of TaskRuns
   -o, --output string                 Output format. One of: json|yaml|name|go-template|go-template-file|template|templatefile|jsonpath|jsonpath-file.
-  -t, --task string                   The name of a task whose taskruns should be deleted (does not delete the task)
+  -t, --task string                   The name of a Task whose TaskRuns should be deleted (does not delete the task)
       --template string               Template string or path to template file to use when -o=go-template, -o=go-template-file. The template format is golang templates [http://golang.org/pkg/text/template/#pkg-overview].
 ```
 
@@ -49,5 +49,5 @@ or
 
 ### SEE ALSO
 
-* [tkn taskrun](tkn_taskrun.md)	 - Manage taskruns
+* [tkn taskrun](tkn_taskrun.md)	 - Manage TaskRuns
 

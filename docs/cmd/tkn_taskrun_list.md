@@ -28,14 +28,14 @@ List all TaskRuns of Task 'foo' in namespace 'bar':
 ### Options
 
 ```
-  -A, --all-namespaces                list taskruns from all namespaces
+  -A, --all-namespaces                list TaskRuns from all namespaces
       --allow-missing-template-keys   If true, ignore any errors in templates when a field or map key is missing in the template. Only applies to golang and jsonpath output formats. (default true)
   -h, --help                          help for list
       --label string                  A selector (label query) to filter on, supports '=', '==', and '!='
-      --limit int                     limit taskruns listed (default: return all taskruns)
+      --limit int                     limit TaskRuns listed (default: return all TaskRuns)
       --no-headers                    do not print column headers with output (default print column headers with output)
   -o, --output string                 Output format. One of: json|yaml|name|go-template|go-template-file|template|templatefile|jsonpath|jsonpath-file.
-      --reverse                       list taskruns in reverse order
+      --reverse                       list TaskRuns in reverse order
       --template string               Template string or path to template file to use when -o=go-template, -o=go-template-file. The template format is golang templates [http://golang.org/pkg/text/template/#pkg-overview].
 ```
 
@@ -50,5 +50,5 @@ List all TaskRuns of Task 'foo' in namespace 'bar':
 
 ### SEE ALSO
 
-* [tkn taskrun](tkn_taskrun.md)	 - Manage taskruns
+* [tkn taskrun](tkn_taskrun.md)	 - Manage TaskRuns
 

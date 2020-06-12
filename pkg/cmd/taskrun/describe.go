@@ -50,7 +50,7 @@ or
 	c := &cobra.Command{
 		Use:          "describe",
 		Aliases:      []string{"desc"},
-		Short:        "Describe a taskrun in a namespace",
+		Short:        "Describe a TaskRun in a namespace",
 		Example:      eg,
 		SilenceUsage: true,
 		Annotations: map[string]string{
@@ -67,8 +67,7 @@ or
 
 			output, err := cmd.LocalFlags().GetString("output")
 			if err != nil {
-				fmt.Fprint(os.Stderr, "Error: output option not set properly \n")
-				return err
+				return fmt.Errorf("output option not set properly: %v", err)
 			}
 
 			if !opts.Fzf {
@@ -104,8 +103,8 @@ or
 		},
 	}
 
-	c.Flags().BoolVarP(&opts.Last, "last", "L", false, "show description for last taskrun")
-	c.Flags().IntVarP(&opts.Limit, "limit", "", defaultTaskRunLimit, "lists number of taskruns when selecting a taskrun to describe")
+	c.Flags().BoolVarP(&opts.Last, "last", "L", false, "show description for last TaskRun")
+	c.Flags().IntVarP(&opts.Limit, "limit", "", defaultTaskRunLimit, "lists number of TaskRuns when selecting a TaskRun to describe")
 	c.Flags().BoolVarP(&opts.Fzf, "fzf", "F", false, "use fzf to select a taskrun to describe")
 
 	_ = c.MarkZshCompPositionalArgumentCustom(1, "__tkn_get_taskrun")
@@ -127,7 +126,7 @@ func askTaskRunName(opts *options.DescribeOptions, p cli.Params) error {
 		return err
 	}
 	if len(trs) == 0 {
-		return fmt.Errorf("no taskruns found")
+		return fmt.Errorf("no TaskRuns found")
 	}
 
 	if opts.Fzf {

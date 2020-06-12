@@ -72,16 +72,16 @@ func cancelTaskRun(p cli.Params, s *cli.Stream, trName string) error {
 
 	tr, err := taskrun.GetV1beta1(cs, trName, metav1.GetOptions{}, p.Namespace())
 	if err != nil {
-		return fmt.Errorf("failed to find taskrun: %s", trName)
+		return fmt.Errorf("failed to find TaskRun: %s", trName)
 	}
 
 	taskrunCond := formatted.Condition(tr.Status.Conditions)
 	if taskrunCond == succeeded || taskrunCond == failed || taskrunCond == taskrunCancelled {
-		return fmt.Errorf("failed to cancel taskrun %s: taskrun has already finished execution", trName)
+		return fmt.Errorf("failed to cancel TaskRun %s: TaskRun has already finished execution", trName)
 	}
 
 	if _, err := taskrun.Patch(cs, trName, metav1.PatchOptions{}, p.Namespace()); err != nil {
-		return fmt.Errorf("failed to cancel taskrun %q: %s", trName, err)
+		return fmt.Errorf("failed to cancel TaskRun %s: %v", trName, err)
 	}
 
 	fmt.Fprintf(s.Out, "TaskRun cancelled: %s\n", tr.Name)

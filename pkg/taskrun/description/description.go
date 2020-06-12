@@ -191,7 +191,7 @@ func PrintTaskRunDescription(s *cli.Stream, trName string, p cli.Params) error {
 
 	tr, err := taskrun.Get(cs, trName, metav1.GetOptions{}, p.Namespace())
 	if err != nil {
-		fmt.Fprintf(s.Err, "failed to get taskrun %s\n", trName)
+		fmt.Fprintf(s.Err, "failed to get TaskRun %s\n", trName)
 		return err
 	}
 
@@ -218,7 +218,7 @@ func PrintTaskRunDescription(s *cli.Stream, trName string, p cli.Params) error {
 	}
 
 	w := tabwriter.NewWriter(s.Out, 0, 5, 3, ' ', tabwriter.TabIndent)
-	t := template.Must(template.New("Describe taskrun").Funcs(funcMap).Parse(templ))
+	t := template.Must(template.New("Describe TaskRun").Funcs(funcMap).Parse(templ))
 
 	err = t.Execute(w, data)
 	if err != nil {

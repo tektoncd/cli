@@ -36,5 +36,5 @@ Cancel the TaskRun named 'foo' from namespace 'bar':
 
 ### SEE ALSO
 
-* [tkn taskrun](tkn_taskrun.md)	 - Manage taskruns
+* [tkn taskrun](tkn_taskrun.md)	 - Manage TaskRuns
 

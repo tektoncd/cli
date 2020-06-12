@@ -34,7 +34,7 @@ import (
 )
 
 func deleteCommand(p cli.Params) *cobra.Command {
-	opts := &options.DeleteOptions{Resource: "taskrun", ForceDelete: false, ParentResource: "task", DeleteAllNs: false}
+	opts := &options.DeleteOptions{Resource: "TaskRun", ForceDelete: false, ParentResource: "Task", DeleteAllNs: false}
 	f := cliopts.NewPrintFlags("delete")
 	eg := `Delete TaskRuns with names 'foo' and 'bar' in namespace 'quux':
 
@@ -48,7 +48,7 @@ or
 	c := &cobra.Command{
 		Use:          "delete",
 		Aliases:      []string{"rm"},
-		Short:        "Delete taskruns in a namespace",
+		Short:        "Delete TaskRuns in a namespace",
 		Example:      eg,
 		Args:         cobra.MinimumNArgs(0),
 		SilenceUsage: true,
@@ -83,9 +83,9 @@ or
 	}
 	f.AddFlags(c)
 	c.Flags().BoolVarP(&opts.ForceDelete, "force", "f", false, "Whether to force deletion (default: false)")
-	c.Flags().StringVarP(&opts.ParentResourceName, "task", "t", "", "The name of a task whose taskruns should be deleted (does not delete the task)")
-	c.Flags().BoolVarP(&opts.DeleteAllNs, "all", "", false, "Delete all taskruns in a namespace (default: false)")
-	c.Flags().IntVarP(&opts.Keep, "keep", "", 0, "Keep n most recent number of taskruns")
+	c.Flags().StringVarP(&opts.ParentResourceName, "task", "t", "", "The name of a Task whose TaskRuns should be deleted (does not delete the task)")
+	c.Flags().BoolVarP(&opts.DeleteAllNs, "all", "", false, "Delete all TaskRuns in a namespace (default: false)")
+	c.Flags().IntVarP(&opts.Keep, "keep", "", 0, "Keep n most recent number of TaskRuns")
 	_ = c.MarkZshCompPositionalArgumentCustom(1, "__tkn_get_taskrun")
 	return c
 }
@@ -114,7 +114,7 @@ func deleteTaskRuns(s *cli.Stream, p cli.Params, trNames []string, opts *options
 		d.Delete(s, trNames)
 	default:
 		d = deleter.New("Task", func(_ string) error {
-			return errors.New("the task should not be deleted")
+			return errors.New("the Task should not be deleted")
 		})
 		d.WithRelated("TaskRun", taskRunLister(p, opts.Keep, cs), func(taskRunName string) error {
 			return actions.Delete(trGroupResource, cs, taskRunName, p.Namespace(), &metav1.DeleteOptions{})
