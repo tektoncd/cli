@@ -1,1 +1,1 @@
-Error: specifying a task and labels are not compatible
+Error: failed to list TaskRuns from namespace foo: specifying a Task and labels are not compatible

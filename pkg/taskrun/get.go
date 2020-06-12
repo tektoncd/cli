@@ -17,7 +17,6 @@ package taskrun
 import (
 	"context"
 	"fmt"
-	"os"
 
 	"github.com/tektoncd/cli/pkg/actions"
 	"github.com/tektoncd/cli/pkg/cli"
@@ -58,8 +57,7 @@ func GetV1beta1(c *cli.Clients, trname string, opts metav1.GetOptions, ns string
 
 	var taskrun *v1beta1.TaskRun
 	if err := runtime.DefaultUnstructuredConverter.FromUnstructured(unstructuredTR.UnstructuredContent(), &taskrun); err != nil {
-		fmt.Fprintf(os.Stderr, "failed to get taskrun from %s namespace \n", ns)
-		return nil, err
+		return nil, fmt.Errorf("failed to get TaskRun from namespace %s", ns)
 	}
 	return taskrun, nil
 }
@@ -73,8 +71,7 @@ func getV1alpha1(c *cli.Clients, trname string, opts metav1.GetOptions, ns strin
 
 	var taskrun *v1alpha1.TaskRun
 	if err := runtime.DefaultUnstructuredConverter.FromUnstructured(unstructuredTR.UnstructuredContent(), &taskrun); err != nil {
-		fmt.Fprintf(os.Stderr, "failed to get taskrun from %s namespace \n", ns)
-		return nil, err
+		return nil, fmt.Errorf("failed to get TaskRun from namespace %s", ns)
 	}
 	return taskrun, nil
 }

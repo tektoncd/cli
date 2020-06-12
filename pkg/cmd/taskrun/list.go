@@ -94,14 +94,12 @@ List all TaskRuns of Task 'foo' in namespace 'bar':
 			}
 
 			if opts.Limit < 0 {
-				fmt.Fprintf(os.Stderr, "Limit was %d but must be a positive number\n", opts.Limit)
-				return nil
+				return fmt.Errorf("limit was %d but must be a positive number", opts.Limit)
 			}
 
 			trs, err := list(p, task, opts.Limit, opts.LabelSelector, opts.AllNamespaces)
 			if err != nil {
-				fmt.Fprintf(os.Stderr, "Failed to list taskruns from %s namespace \n", p.Namespace())
-				return err
+				return fmt.Errorf("failed to list TaskRuns from namespace %s: %v", p.Namespace(), err)
 			}
 
 			if trs != nil && opts.Reverse {
@@ -110,8 +108,7 @@ List all TaskRuns of Task 'foo' in namespace 'bar':
 
 			output, err := cmd.LocalFlags().GetString("output")
 			if err != nil {
-				fmt.Fprint(os.Stderr, "Error: output option not set properly \n")
-				return err
+				return fmt.Errorf("output option not set properly: %v", err)
 			}
 			if output == "name" && trs != nil {
 				w := cmd.OutOrStdout()
@@ -136,7 +133,7 @@ List all TaskRuns of Task 'foo' in namespace 'bar':
 			}
 
 			if err != nil {
-				fmt.Fprint(os.Stderr, "Failed to print taskruns \n")
+				fmt.Fprint(os.Stderr, "failed to print TaskRuns \n")
 				return err
 			}
 
@@ -145,10 +142,10 @@ List all TaskRuns of Task 'foo' in namespace 'bar':
 	}
 
 	f.AddFlags(c)
-	c.Flags().IntVarP(&opts.Limit, "limit", "", 0, "limit taskruns listed (default: return all taskruns)")
+	c.Flags().IntVarP(&opts.Limit, "limit", "", 0, "limit TaskRuns listed (default: return all TaskRuns)")
 	c.Flags().StringVarP(&opts.LabelSelector, "label", "", opts.LabelSelector, "A selector (label query) to filter on, supports '=', '==', and '!='")
-	c.Flags().BoolVarP(&opts.Reverse, "reverse", "", opts.Reverse, "list taskruns in reverse order")
-	c.Flags().BoolVarP(&opts.AllNamespaces, "all-namespaces", "A", opts.AllNamespaces, "list taskruns from all namespaces")
+	c.Flags().BoolVarP(&opts.Reverse, "reverse", "", opts.Reverse, "list TaskRuns in reverse order")
+	c.Flags().BoolVarP(&opts.AllNamespaces, "all-namespaces", "A", opts.AllNamespaces, "list TaskRuns from all namespaces")
 	c.Flags().BoolVarP(&opts.NoHeaders, "no-headers", "", opts.NoHeaders, "do not print column headers with output (default print column headers with output)")
 	return c
 }
@@ -170,7 +167,7 @@ func list(p cli.Params, task string, limit int, labelselector string, allnamespa
 	var options v1.ListOptions
 
 	if task != "" && labelselector != "" {
-		return nil, fmt.Errorf("specifying a task and labels are not compatible")
+		return nil, fmt.Errorf("specifying a Task and labels are not compatible")
 	}
 
 	if task != "" {
@@ -215,12 +212,12 @@ func list(p cli.Params, task string, limit int, labelselector string, allnamespa
 		}
 	}
 
-	// If greater than maximum amount of taskruns, return all taskruns by setting limit to default
+	// If greater than maximum amount of TaskRuns, return all TaskRuns by setting limit to default
 	if limit > trslen {
 		limit = 0
 	}
 
-	// Return all taskruns if limit is 0 or is same as trslen
+	// Return all TaskRuns if limit is 0 or is same as trslen
 	if limit != 0 && trslen > limit {
 		trs.Items = trs.Items[0:limit]
 	}

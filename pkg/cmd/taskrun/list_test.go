@@ -237,7 +237,7 @@ func TestListTaskRuns(t *testing.T) {
 			name:      "limit taskruns negative case",
 			command:   command(t, trs, now, ns, version, dc1),
 			args:      []string{"list", "-n", "foo", "--limit", fmt.Sprintf("%d", -1)},
-			wantError: false,
+			wantError: true,
 		},
 		{
 			name:      "limit taskruns greater than maximum case",
@@ -511,7 +511,7 @@ func TestListTaskRuns_v1beta1(t *testing.T) {
 			name:      "limit taskruns negative case",
 			command:   command(t, trs, now, ns, version, dc1),
 			args:      []string{"list", "-n", "foo", "--limit", fmt.Sprintf("%d", -1)},
-			wantError: false,
+			wantError: true,
 		},
 		{
 			name:      "limit taskruns greater than maximum case",

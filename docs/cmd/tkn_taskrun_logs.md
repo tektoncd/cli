@@ -1,6 +1,6 @@
 ## tkn taskrun logs
 
-Show taskruns logs
+Show TaskRuns logs
 
 ### Usage
 
@@ -10,7 +10,7 @@ tkn taskrun logs
 
 ### Synopsis
 
-Show taskruns logs
+Show TaskRuns logs
 
 ### Examples
 
@@ -32,10 +32,10 @@ Show the logs of TaskRun named 'microservice-1' for step 'build' only from names
 ```
   -a, --all            show all logs including init steps injected by tekton
   -f, --follow         stream live logs
-  -F, --fzf            use fzf to select a taskrun
+  -F, --fzf            use fzf to select a TaskRun
   -h, --help           help for logs
-  -L, --last           show logs for last taskrun
-      --limit int      lists number of taskruns (default 5)
+  -L, --last           show logs for last TaskRun
+      --limit int      lists number of TaskRuns (default 5)
   -s, --step strings   show logs for mentioned steps only
 ```
 
@@ -50,5 +50,5 @@ Show the logs of TaskRun named 'microservice-1' for step 'build' only from names
 
 ### SEE ALSO
 
-* [tkn taskrun](tkn_taskrun.md)	 - Manage taskruns
+* [tkn taskrun](tkn_taskrun.md)	 - Manage TaskRuns
 

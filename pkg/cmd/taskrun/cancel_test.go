@@ -174,7 +174,7 @@ func TestTaskRunCancel(t *testing.T) {
 			dynamic:   seeds[0].dynamicClient,
 			input:     seeds[0].pipelineClient,
 			wantError: true,
-			want:      "failed to find taskrun: nonexistent",
+			want:      "failed to find TaskRun: nonexistent",
 		},
 		{
 			name:      "Failed canceling taskrun",
@@ -182,7 +182,7 @@ func TestTaskRunCancel(t *testing.T) {
 			dynamic:   failures[0].dynamicClient,
 			input:     failures[0].pipelineClient,
 			wantError: true,
-			want:      "failed to cancel taskrun \"failure-taskrun-1\": test error",
+			want:      "failed to cancel TaskRun failure-taskrun-1: test error",
 		},
 		{
 			name:      "Failed canceling taskrun that succeeded",
@@ -190,7 +190,7 @@ func TestTaskRunCancel(t *testing.T) {
 			dynamic:   seeds[0].dynamicClient,
 			input:     seeds[0].pipelineClient,
 			wantError: true,
-			want:      "failed to cancel taskrun taskrun-2: taskrun has already finished execution",
+			want:      "failed to cancel TaskRun taskrun-2: TaskRun has already finished execution",
 		},
 		{
 			name:      "Failed canceling taskrun that was cancelled",
@@ -198,7 +198,7 @@ func TestTaskRunCancel(t *testing.T) {
 			dynamic:   cancels[0].dynamicClient,
 			input:     cancels[0].pipelineClient,
 			wantError: true,
-			want:      "failed to cancel taskrun cancel-taskrun-1: taskrun has already finished execution",
+			want:      "failed to cancel TaskRun cancel-taskrun-1: TaskRun has already finished execution",
 		},
 	}
 
@@ -363,7 +363,7 @@ func TestTaskRunCancel_v1beta1(t *testing.T) {
 			dynamic:   seeds[0].dynamicClient,
 			input:     seeds[0].pipelineClient,
 			wantError: true,
-			want:      "failed to find taskrun: nonexistent",
+			want:      "failed to find TaskRun: nonexistent",
 		},
 		{
 			name:      "Failed canceling taskrun",
@@ -371,7 +371,7 @@ func TestTaskRunCancel_v1beta1(t *testing.T) {
 			dynamic:   failures[0].dynamicClient,
 			input:     failures[0].pipelineClient,
 			wantError: true,
-			want:      "failed to cancel taskrun \"failure-taskrun-1\": test error",
+			want:      "failed to cancel TaskRun failure-taskrun-1: test error",
 		},
 		{
 			name:      "Failed canceling taskrun that succeeded",
@@ -379,7 +379,7 @@ func TestTaskRunCancel_v1beta1(t *testing.T) {
 			dynamic:   seeds[0].dynamicClient,
 			input:     seeds[0].pipelineClient,
 			wantError: true,
-			want:      "failed to cancel taskrun taskrun-2: taskrun has already finished execution",
+			want:      "failed to cancel TaskRun taskrun-2: TaskRun has already finished execution",
 		},
 		{
 			name:      "Failed canceling taskrun that was cancelled",
@@ -387,7 +387,7 @@ func TestTaskRunCancel_v1beta1(t *testing.T) {
 			dynamic:   cancels[0].dynamicClient,
 			input:     cancels[0].pipelineClient,
 			wantError: true,
-			want:      "failed to cancel taskrun cancel-taskrun-1: taskrun has already finished execution",
+			want:      "failed to cancel TaskRun cancel-taskrun-1: TaskRun has already finished execution",
 		},
 	}
 

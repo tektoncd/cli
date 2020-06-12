@@ -50,7 +50,7 @@ func (o *DeleteOptions) CheckOptions(s *cli.Stream, resourceNames []string, ns s
 	// make sure either resource names are provided, name of related resource,
 	// or --all specified if deleting PipelineRuns or TaskRuns
 	if namesLen == 0 && o.ParentResource != "" && o.ParentResourceName == "" && !o.DeleteAllNs {
-		return fmt.Errorf("must provide %s name(s) or use --%s flag or --all flag to use delete", o.Resource, o.ParentResource)
+		return fmt.Errorf("must provide %s name(s) or use --%s flag or --all flag to use delete", o.Resource, strings.ToLower(o.ParentResource))
 	}
 
 	// make sure that resource name or --all flag is specified to use delete
