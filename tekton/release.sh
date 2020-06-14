@@ -8,7 +8,7 @@ TARGET_NAMESPACE="release"
 SECRET_NAME=bot-token-github
 PUSH_REMOTE="${PUSH_REMOTE:-${UPSTREAM_REMOTE}}" # export PUSH_REMOTE to your own for testing
 
-CATALOG_TASKS="lint build tests"
+CATALOG_TASKS="build tests"
 
 BINARIES="kubectl jq tkn git"
 

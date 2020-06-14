@@ -44,22 +44,8 @@ spec:
           value: $(params.package)
       taskRef:
         name: get-versions
-    - name: lint
-      runAfter: [get-versions]
-      taskRef:
-        name: golangci-lint
-      params:
-        - name: package
-          value: $(params.package)
-        - name: flags
-          value: "-v --timeout 10m"
-        - name: version
-          value: v1.24.0
-      workspaces:
-        - name: source
-          workspace: shared-workspace
     - name: unit-tests
-      runAfter: [lint]
+      runAfter: [get-versions]
       taskRef:
         name: golang-test
       params:
@@ -73,7 +59,7 @@ spec:
         - name: source
           workspace: shared-workspace
     - name: build
-      runAfter: [lint]
+      runAfter: [unit-tests]
       taskRef:
         name: golang-build
       params:
