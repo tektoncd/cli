@@ -15,7 +15,11 @@
 package main
 
 import (
+	"fmt"
+	"log"
 	"os"
+	"os/exec"
+	"syscall"
 
 	"github.com/tektoncd/cli/pkg/cli"
 	"github.com/tektoncd/cli/pkg/cmd"
@@ -26,7 +30,43 @@ func main() {
 	tp := &cli.TektonParams{}
 	tkn := cmd.Root(tp)
 
-	if err := tkn.Execute(); err != nil {
-		os.Exit(1)
+	args := os.Args[1:]
+	_, _, err := tkn.Find(args)
+
+	if err == nil {
+		if err := tkn.Execute(); err != nil {
+			os.Exit(1)
+		}
+		return
 	}
+
+	pluginCmd := "tkn-" + os.Args[1]
+
+	exCmd, err := exec.LookPath(pluginCmd)
+
+	if err != nil {
+		fmt.Fprintf(os.Stderr, `
+		============================================
+		looked for: %s
+		error:
+		%s
+		_____________________________________________
+		`, pluginCmd, err)
+
+		if err := tkn.Execute(); err != nil {
+			os.Exit(1)
+		}
+	}
+
+	fmt.Fprintf(os.Stderr, `
+	============================================
+	external binary: %s
+	error:
+	%s
+	_____________________________________________
+	`, exCmd, err)
+
+	errX := syscall.Exec(exCmd, append([]string{exCmd}, os.Args[2:]...), os.Environ())
+	log.Printf("Command finished with error: %v", errX)
+
 }
