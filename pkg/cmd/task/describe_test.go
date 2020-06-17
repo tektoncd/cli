@@ -42,15 +42,18 @@ import (
 
 func TestTaskDescribe_Invalid_Namespace(t *testing.T) {
 	cs, _ := test.SeedTestData(t, pipelinetest.Data{})
-	p := &test.Params{Tekton: cs.Pipeline, Kube: cs.Kube}
+	tdc := testDynamic.Options{}
+	dc, _ := tdc.Client()
+	p := &test.Params{Tekton: cs.Pipeline, Kube: cs.Kube, Dynamic: dc}
+	cs.Pipeline.Resources = cb.APIResourceList("v1alpha1", []string{"task"})
 
 	task := Command(p)
-	_, err := test.ExecuteCommand(task, "desc", "bar", "-n", "invalid")
+	out, err := test.ExecuteCommand(task, "desc", "bar", "-n", "invalid")
 	if err == nil {
 		t.Errorf("Error expected here")
 	}
-	expected := "namespaces \"invalid\" not found"
-	test.AssertOutput(t, expected, err.Error())
+	expected := "Error: failed to get Task bar: tasks.tekton.dev \"bar\" not found\n"
+	test.AssertOutput(t, expected, out)
 }
 
 func TestTaskDescribe_Empty(t *testing.T) {

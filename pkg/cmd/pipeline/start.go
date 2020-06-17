@@ -37,7 +37,6 @@ import (
 	"github.com/tektoncd/cli/pkg/params"
 	"github.com/tektoncd/cli/pkg/pipeline"
 	"github.com/tektoncd/cli/pkg/pipelinerun"
-	"github.com/tektoncd/cli/pkg/validate"
 	"github.com/tektoncd/cli/pkg/workspaces"
 	"github.com/tektoncd/pipeline/pkg/apis/pipeline/v1alpha1"
 	"github.com/tektoncd/pipeline/pkg/apis/pipeline/v1beta1"
@@ -711,10 +710,6 @@ func NameArg(args []string, p cli.Params, file string) (*v1beta1.Pipeline, error
 	pipelineErr := &v1beta1.Pipeline{}
 	if len(args) == 0 && file == "" {
 		return pipelineErr, errNoPipeline
-	}
-
-	if err := validate.NamespaceExists(p); err != nil {
-		return pipelineErr, err
 	}
 
 	c, err := p.Clients()

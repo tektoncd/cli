@@ -24,7 +24,6 @@ import (
 	"github.com/tektoncd/cli/pkg/log"
 	"github.com/tektoncd/cli/pkg/options"
 	prhelper "github.com/tektoncd/cli/pkg/pipelinerun"
-	validate "github.com/tektoncd/cli/pkg/validate"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 )
 
@@ -69,10 +68,6 @@ Show the logs of PipelineRun named 'microservice-1' for all Tasks and steps (inc
 			opts.Stream = &cli.Stream{
 				Out: cmd.OutOrStdout(),
 				Err: cmd.OutOrStderr(),
-			}
-
-			if err := validate.NamespaceExists(p); err != nil {
-				return err
 			}
 
 			return Run(opts)

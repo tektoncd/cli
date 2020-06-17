@@ -76,7 +76,7 @@ func TestConditionDelete(t *testing.T) {
 			input:       seeds[0],
 			inputStream: nil,
 			wantError:   true,
-			want:        "namespaces \"invalid\" not found",
+			want:        "failed to delete Condition \"condition1\": conditions.tekton.dev \"condition1\" not found",
 		},
 		{
 			name:        "With force delete flag (shorthand)",

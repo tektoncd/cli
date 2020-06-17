@@ -26,7 +26,6 @@ import (
 	"github.com/tektoncd/cli/pkg/pipelinerun"
 	prsort "github.com/tektoncd/cli/pkg/pipelinerun/sort"
 	"github.com/tektoncd/cli/pkg/printer"
-	"github.com/tektoncd/cli/pkg/validate"
 	"github.com/tektoncd/pipeline/pkg/apis/pipeline/v1beta1"
 	v1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	cliopts "k8s.io/cli-runtime/pkg/genericclioptions"
@@ -83,12 +82,6 @@ List all PipelineRuns in a namespace 'foo':
 
 			if len(args) > 0 {
 				pipeline = args[0]
-			}
-
-			if !opts.AllNamespaces {
-				if err := validate.NamespaceExists(p); err != nil {
-					return err
-				}
 			}
 
 			if opts.Limit < 0 {

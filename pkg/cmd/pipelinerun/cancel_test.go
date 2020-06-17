@@ -58,7 +58,7 @@ func Test_cancel_invalid_namespace(t *testing.T) {
 	pRun := Command(p)
 	got, _ := tu.ExecuteCommand(pRun, "cancel", prName, "-n", "invalid")
 
-	expected := "Error: namespaces \"invalid\" not found\n"
+	expected := "Error: failed to find PipelineRun: test-pipeline-run-123\n"
 	tu.AssertOutput(t, expected, got)
 }
 

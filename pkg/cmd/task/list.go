@@ -25,7 +25,6 @@ import (
 	"github.com/tektoncd/cli/pkg/cli"
 	"github.com/tektoncd/cli/pkg/formatted"
 	"github.com/tektoncd/cli/pkg/task"
-	"github.com/tektoncd/cli/pkg/validate"
 	"github.com/tektoncd/pipeline/pkg/apis/pipeline/v1beta1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime/schema"
@@ -68,13 +67,6 @@ func listCommand(p cli.Params) *cobra.Command {
 			"commandType": "main",
 		},
 		RunE: func(cmd *cobra.Command, args []string) error {
-
-			if !opts.AllNamespaces {
-				if err := validate.NamespaceExists(p); err != nil {
-					return err
-				}
-			}
-
 			output, err := cmd.LocalFlags().GetString("output")
 			if err != nil {
 				return fmt.Errorf("error: output option not set properly: %v", err)

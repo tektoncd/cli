@@ -55,19 +55,21 @@ func TestLog_invalid_namespace(t *testing.T) {
 			},
 		},
 	}
-
+	tdc := testDynamic.Options{}
+	dc, _ := tdc.Client()
 	cs, _ := test.SeedTestData(t, pipelinetest.Data{Namespaces: ns})
-	p := &test.Params{Tekton: cs.Pipeline, Kube: cs.Kube}
+	p := &test.Params{Tekton: cs.Pipeline, Kube: cs.Kube, Dynamic: dc}
+	cs.Pipeline.Resources = cb.APIResourceList("v1alpha1", []string{"pipelinerun"})
 	c := Command(p)
 
-	_, err := test.ExecuteCommand(c, "logs", "pipelinerun", "-n", "invalid")
+	out, err := test.ExecuteCommand(c, "logs", "pipelinerun", "-n", "invalid")
 
 	if err == nil {
 		t.Errorf("Expecting error for invalid namespace")
 	}
 
-	expected := "namespaces \"invalid\" not found"
-	test.AssertOutput(t, expected, err.Error())
+	expected := "Error: pipelineruns.tekton.dev \"pipelinerun\" not found\n"
+	test.AssertOutput(t, expected, out)
 }
 
 func TestLog_invalid_limit(t *testing.T) {

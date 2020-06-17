@@ -161,7 +161,7 @@ func TestTaskRunCancel(t *testing.T) {
 			dynamic:   seeds[0].dynamicClient,
 			input:     seeds[0].pipelineClient,
 			wantError: true,
-			want:      "namespaces \"invalid\" not found",
+			want:      "failed to find TaskRun: taskrun-1",
 		},
 		{
 			name:      "Canceling taskrun successfully",
@@ -394,7 +394,7 @@ func TestTaskRunCancel_v1beta1(t *testing.T) {
 			dynamic:   seeds[0].dynamicClient,
 			input:     seeds[0].pipelineClient,
 			wantError: true,
-			want:      "namespaces \"invalid\" not found",
+			want:      "failed to find TaskRun: taskrun-1",
 		},
 		{
 			name:      "Canceling taskrun successfully",

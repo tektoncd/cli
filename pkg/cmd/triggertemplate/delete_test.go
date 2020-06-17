@@ -63,7 +63,7 @@ func TestTriggerTemplateDelete(t *testing.T) {
 			input:       seeds[0],
 			inputStream: nil,
 			wantError:   true,
-			want:        "namespaces \"invalid\" not found",
+			want:        "failed to delete TriggerTemplate \"tt-1\": triggertemplates.triggers.tekton.dev \"tt-1\" not found",
 		},
 		{
 			name:        "With force delete flag (shorthand)",

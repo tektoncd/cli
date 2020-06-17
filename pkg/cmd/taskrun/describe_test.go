@@ -54,15 +54,18 @@ func TestTaskRunDescribe_invalid_namespace(t *testing.T) {
 			},
 		},
 	})
-	p := &test.Params{Tekton: cs.Pipeline, Kube: cs.Kube}
+	tdc := testDynamic.Options{}
+	dc, _ := tdc.Client()
+	p := &test.Params{Tekton: cs.Pipeline, Kube: cs.Kube, Dynamic: dc}
+	cs.Pipeline.Resources = cb.APIResourceList("v1alpha1", []string{"taskrun"})
 
 	taskrun := Command(p)
-	_, err := test.ExecuteCommand(taskrun, "desc", "bar", "-n", "invalid")
+	out, err := test.ExecuteCommand(taskrun, "desc", "bar", "-n", "invalid")
 	if err == nil {
 		t.Errorf("Expected error but did not get one")
 	}
-	expected := "namespaces \"invalid\" not found"
-	test.AssertOutput(t, expected, err.Error())
+	expected := "Error: failed to get TaskRun bar: taskruns.tekton.dev \"bar\" not found\n"
+	test.AssertOutput(t, expected, out)
 }
 
 func TestTaskRunDescribe_not_found(t *testing.T) {
@@ -85,12 +88,12 @@ func TestTaskRunDescribe_not_found(t *testing.T) {
 	p := &test.Params{Tekton: cs.Pipeline, Kube: cs.Kube, Dynamic: dynamic}
 
 	taskrun := Command(p)
-	_, err = test.ExecuteCommand(taskrun, "desc", "bar", "-n", "ns")
+	out, err := test.ExecuteCommand(taskrun, "desc", "bar", "-n", "ns")
 	if err == nil {
 		t.Errorf("Expected error but did not get one")
 	}
-	expected := "taskruns.tekton.dev \"bar\" not found"
-	test.AssertOutput(t, expected, err.Error())
+	expected := "Error: failed to get TaskRun bar: taskruns.tekton.dev \"bar\" not found\n"
+	test.AssertOutput(t, expected, out)
 }
 
 func TestTaskRunDescribe_empty_taskrun(t *testing.T) {

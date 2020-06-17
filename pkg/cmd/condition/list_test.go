@@ -113,7 +113,7 @@ func TestConditionList(t *testing.T) {
 			name:      "Invalid Namespace",
 			command:   []string{"ls", "-n", "invalid"},
 			input:     seeds[0],
-			wantError: true,
+			wantError: false,
 		},
 		{
 			name:      "Found no conditions",

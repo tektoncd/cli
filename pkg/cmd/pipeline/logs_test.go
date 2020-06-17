@@ -181,8 +181,8 @@ func TestPipelineLog(t *testing.T) {
 			namespace: "",
 			dynamic:   dc,
 			input:     cs,
-			wantError: true,
-			want:      "namespaces \"invalid\" not found",
+			wantError: false,
+			want:      "No Pipelines found in namespace invalid",
 		},
 		{
 			name:      "Found no pipelines",
@@ -418,8 +418,8 @@ func TestPipelineLog_v1beta1(t *testing.T) {
 			namespace: "",
 			dynamic:   dc,
 			input:     cs,
-			wantError: true,
-			want:      "namespaces \"invalid\" not found",
+			wantError: false,
+			want:      "No Pipelines found in namespace invalid",
 		},
 		{
 			name:      "Found no pipelines",

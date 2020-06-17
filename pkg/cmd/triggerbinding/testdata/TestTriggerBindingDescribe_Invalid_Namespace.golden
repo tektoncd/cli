@@ -1,1 +1,2 @@
-Error: namespaces "invalid" not found
+failed to get triggerbinding bar
+Error: triggerbindings.triggers.tekton.dev "bar" not found

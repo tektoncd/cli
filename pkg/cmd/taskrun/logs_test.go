@@ -66,11 +66,14 @@ func TestLog_invalid_namespace(t *testing.T) {
 	cs, _ := test.SeedTestData(t, pipelinetest.Data{TaskRuns: tr, Namespaces: nsList})
 	watcher := watch.NewFake()
 	cs.Kube.PrependWatchReactor("pods", k8stest.DefaultWatchReactor(watcher, nil))
-	p := &test.Params{Tekton: cs.Pipeline, Kube: cs.Kube}
+	tdc := testDynamic.Options{}
+	dc, _ := tdc.Client()
+	cs.Pipeline.Resources = cb.APIResourceList("v1alpha1", []string{"taskrun"})
+	p := &test.Params{Tekton: cs.Pipeline, Kube: cs.Kube, Dynamic: dc}
 
 	c := Command(p)
 	got, _ := test.ExecuteCommand(c, "logs", "output-taskrun-2", "-n", "invalid")
-	expected := "Error: namespaces \"invalid\" not found\n"
+	expected := "Error: Unable to get Taskrun: taskruns.tekton.dev \"output-taskrun-2\" not found\n"
 	test.AssertOutput(t, expected, got)
 }
 

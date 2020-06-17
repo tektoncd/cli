@@ -53,7 +53,6 @@ const (
 )
 
 func TestTaskLog(t *testing.T) {
-
 	clock := clockwork.NewFakeClock()
 	task1 := []*v1alpha1.Task{tb.Task("task", tb.TaskNamespace("ns"))}
 	cs, _ := test.SeedTestData(t, pipelinetest.Data{
@@ -111,7 +110,7 @@ func TestTaskLog(t *testing.T) {
 			input:     cs,
 			dc:        dc1,
 			wantError: true,
-			want:      "Error: namespaces \"invalid\" not found\n",
+			want:      "Error: no Tasks found in namespace invalid\n",
 		},
 		{
 			name:      "Found no tasks",
@@ -247,7 +246,7 @@ func TestTaskLog_v1beta1(t *testing.T) {
 			input:     cs,
 			dc:        dc1,
 			wantError: true,
-			want:      "Error: namespaces \"invalid\" not found\n",
+			want:      "Error: no Tasks found in namespace invalid\n",
 		},
 		{
 			name:      "Found no tasks",

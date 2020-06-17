@@ -39,15 +39,18 @@ import (
 
 func TestPipelineDescribe_invalid_namespace(t *testing.T) {
 	cs, _ := test.SeedTestData(t, pipelinetest.Data{})
-	p := &test.Params{Tekton: cs.Pipeline, Kube: cs.Kube}
+	cs.Pipeline.Resources = cb.APIResourceList("v1alpha1", []string{"pipeline"})
+	tdc := testDynamic.Options{}
+	dc, _ := tdc.Client()
+	p := &test.Params{Tekton: cs.Pipeline, Kube: cs.Kube, Dynamic: dc}
 
 	pipeline := Command(p)
-	_, err := test.ExecuteCommand(pipeline, "desc", "bar", "-n", "invalid")
+	out, err := test.ExecuteCommand(pipeline, "desc", "bar", "-n", "invalid")
 	if err == nil {
 		t.Errorf("Error expected here for invalid namespace")
 	}
-	expected := "namespaces \"invalid\" not found"
-	test.AssertOutput(t, expected, err.Error())
+	expected := "Error: pipelines.tekton.dev \"bar\" not found\n"
+	test.AssertOutput(t, expected, out)
 }
 
 func TestPipelineDescribe_invalid_pipeline(t *testing.T) {

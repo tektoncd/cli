@@ -24,7 +24,6 @@ import (
 	"github.com/tektoncd/cli/pkg/cli"
 	"github.com/tektoncd/cli/pkg/formatted"
 	"github.com/tektoncd/cli/pkg/taskrun"
-	"github.com/tektoncd/cli/pkg/validate"
 	"github.com/tektoncd/pipeline/pkg/apis/pipeline/v1beta1"
 	corev1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
@@ -191,8 +190,7 @@ func PrintTaskRunDescription(s *cli.Stream, trName string, p cli.Params) error {
 
 	tr, err := taskrun.Get(cs, trName, metav1.GetOptions{}, p.Namespace())
 	if err != nil {
-		fmt.Fprintf(s.Err, "failed to get TaskRun %s\n", trName)
-		return err
+		return fmt.Errorf("failed to get TaskRun %s: %v", trName, err)
 	}
 
 	var data = struct {
@@ -208,10 +206,10 @@ func PrintTaskRunDescription(s *cli.Stream, trName string, p cli.Params) error {
 		"formatDuration":        formatted.Duration,
 		"formatCondition":       formatted.Condition,
 		"hasFailed":             hasFailed,
-		"taskRefExists":         validate.TaskRefExists,
-		"taskResourceRefExists": validate.TaskResourceRefExists,
-		"stepReasonExists":      validate.StepReasonExists,
-		"sidecarReasonExists":   validate.SidecarReasonExists,
+		"taskRefExists":         taskRefExists,
+		"taskResourceRefExists": taskResourceRefExists,
+		"stepReasonExists":      stepReasonExists,
+		"sidecarReasonExists":   sidecarReasonExists,
 		"decorate":              formatted.DecorateAttr,
 		"sortStepStates":        sortStepStatesByStartTime,
 		"getTimeout":            getTimeoutValue,
@@ -245,4 +243,57 @@ func getTimeoutValue(tr *v1beta1.TaskRun) string {
 		return tr.Spec.Timeout.Duration.String()
 	}
 	return ""
+}
+
+// Check if TaskRef exists on a TaskRunSpec. Returns empty string if not present.
+func taskRefExists(spec v1beta1.TaskRunSpec) string {
+	if spec.TaskRef == nil {
+		return ""
+	}
+
+	return spec.TaskRef.Name
+}
+
+// Check if TaskResourceRef exists on a TaskResourceBinding. Returns empty string if not present.
+func taskResourceRefExists(res v1beta1.TaskResourceBinding) string {
+	if res.ResourceRef == nil {
+		return ""
+	}
+
+	return res.ResourceRef.Name
+}
+
+// Check if step is in waiting, running, or terminated state by checking StepState of the step.
+func stepReasonExists(state v1beta1.StepState) string {
+	if state.Waiting == nil {
+		if state.Running != nil {
+			return formatted.ColorStatus("Running")
+		}
+
+		if state.Terminated != nil {
+			return formatted.ColorStatus(state.Terminated.Reason)
+		}
+
+		return formatted.ColorStatus("---")
+	}
+
+	return formatted.ColorStatus(state.Waiting.Reason)
+}
+
+// Check if sidecar is in waiting, running, or terminated state by checking SidecarState of the sidecar.
+func sidecarReasonExists(state v1beta1.SidecarState) string {
+	if state.Waiting == nil {
+
+		if state.Running != nil {
+			return formatted.ColorStatus("Running")
+		}
+
+		if state.Terminated != nil {
+			return formatted.ColorStatus(state.Terminated.Reason)
+		}
+
+		return formatted.ColorStatus("---")
+	}
+
+	return formatted.ColorStatus(state.Waiting.Reason)
 }

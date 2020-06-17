@@ -149,7 +149,7 @@ func TestPipelineRunDelete(t *testing.T) {
 			input:       seeds[0].pipelineClient,
 			inputStream: nil,
 			wantError:   true,
-			want:        "namespaces \"invalid\" not found",
+			want:        "failed to delete PipelineRun \"pipeline-run-1\": pipelineruns.tekton.dev \"pipeline-run-1\" not found",
 		},
 		{
 			name:        "With force delete flag (shorthand)",
@@ -476,7 +476,7 @@ func TestPipelineRunDelete_v1beta1(t *testing.T) {
 			input:       seeds[0].pipelineClient,
 			inputStream: nil,
 			wantError:   true,
-			want:        "namespaces \"invalid\" not found",
+			want:        "failed to delete PipelineRun \"pipeline-run-1\": pipelineruns.tekton.dev \"pipeline-run-1\" not found",
 		},
 		{
 			name:        "With force delete flag (shorthand)",

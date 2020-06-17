@@ -28,7 +28,6 @@ import (
 	taskpkg "github.com/tektoncd/cli/pkg/task"
 	trlist "github.com/tektoncd/cli/pkg/taskrun/list"
 	trsort "github.com/tektoncd/cli/pkg/taskrun/sort"
-	"github.com/tektoncd/cli/pkg/validate"
 	"github.com/tektoncd/pipeline/pkg/apis/pipeline/v1beta1"
 	v1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	cliopts "k8s.io/cli-runtime/pkg/genericclioptions"
@@ -85,12 +84,6 @@ List all TaskRuns of Task 'foo' in namespace 'bar':
 			var task string
 			if len(args) > 0 {
 				task = args[0]
-			}
-
-			if !opts.AllNamespaces {
-				if err := validate.NamespaceExists(p); err != nil {
-					return err
-				}
 			}
 
 			if opts.Limit < 0 {

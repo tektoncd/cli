@@ -23,7 +23,6 @@ import (
 	"github.com/tektoncd/cli/pkg/cli"
 	"github.com/tektoncd/cli/pkg/formatted"
 	"github.com/tektoncd/cli/pkg/printer"
-	"github.com/tektoncd/cli/pkg/validate"
 	"github.com/tektoncd/triggers/pkg/apis/triggers/v1alpha1"
 	"github.com/tektoncd/triggers/pkg/client/clientset/versioned"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
@@ -56,10 +55,6 @@ or
 		},
 		Example: eg,
 		RunE: func(cmd *cobra.Command, args []string) error {
-			if err := validate.NamespaceExists(p); err != nil {
-				return err
-			}
-
 			cs, err := p.Clients()
 			if err != nil {
 				return err

@@ -38,7 +38,6 @@ import (
 )
 
 func TestPipelinesList_invalid_namespace(t *testing.T) {
-
 	nsList := []*corev1.Namespace{
 		{
 			ObjectMeta: metav1.ObjectMeta{
@@ -47,21 +46,23 @@ func TestPipelinesList_invalid_namespace(t *testing.T) {
 		},
 	}
 
+	tdc := testDynamic.Options{}
+	dc, _ := tdc.Client()
 	cs, _ := test.SeedTestData(t, pipelinetest.Data{Namespaces: nsList})
-	p := &test.Params{Tekton: cs.Pipeline, Kube: cs.Kube}
+	cs.Pipeline.Resources = cb.APIResourceList("v1alpha1", []string{"pipeline"})
+	p := &test.Params{Tekton: cs.Pipeline, Kube: cs.Kube, Dynamic: dc}
 
 	pipeline := Command(p)
 	output, err := test.ExecuteCommand(pipeline, "list", "-n", "invalid")
 
-	if err == nil {
-		t.Errorf("Error expected for invalid namespace")
+	if err != nil {
+		t.Errorf("Unexpected error: %v", err)
 	}
 
-	test.AssertOutput(t, "Error: namespaces \"invalid\" not found\n", output)
+	test.AssertOutput(t, "No Pipelines found\n", output)
 }
 
 func TestPipelinesList_empty(t *testing.T) {
-
 	nsList := []*corev1.Namespace{
 		{
 			ObjectMeta: metav1.ObjectMeta{

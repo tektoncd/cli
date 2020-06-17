@@ -218,7 +218,7 @@ func TestTaskDelete(t *testing.T) {
 			input:       seeds[4].pipelineClient,
 			inputStream: nil,
 			wantError:   true,
-			want:        "namespaces \"invalid\" not found",
+			want:        "failed to delete Task \"task\": tasks.tekton.dev \"task\" not found",
 		},
 		{
 			name:        "Delete all with prompt",
@@ -523,7 +523,7 @@ func TestTaskDelete_v1beta1(t *testing.T) {
 			input:       seeds[4].pipelineClient,
 			inputStream: nil,
 			wantError:   true,
-			want:        "namespaces \"invalid\" not found",
+			want:        "failed to delete Task \"task\": tasks.tekton.dev \"task\" not found",
 		},
 		{
 			name:        "Delete all with prompt",

@@ -24,7 +24,6 @@ import (
 	"github.com/tektoncd/cli/pkg/formatted"
 	"github.com/tektoncd/cli/pkg/options"
 	"github.com/tektoncd/cli/pkg/printer"
-	validateinput "github.com/tektoncd/cli/pkg/validate"
 
 	"github.com/spf13/cobra"
 	"github.com/tektoncd/cli/pkg/cli"
@@ -87,10 +86,6 @@ or
 			s := &cli.Stream{
 				Out: cmd.OutOrStdout(),
 				Err: cmd.OutOrStderr(),
-			}
-
-			if err := validateinput.NamespaceExists(p); err != nil {
-				return err
 			}
 
 			output, err := cmd.LocalFlags().GetString("output")

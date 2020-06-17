@@ -37,7 +37,6 @@ import (
 	"github.com/tektoncd/cli/pkg/params"
 	"github.com/tektoncd/cli/pkg/task"
 	traction "github.com/tektoncd/cli/pkg/taskrun"
-	"github.com/tektoncd/cli/pkg/validate"
 	"github.com/tektoncd/cli/pkg/workspaces"
 	"github.com/tektoncd/pipeline/pkg/apis/pipeline/v1alpha1"
 	"github.com/tektoncd/pipeline/pkg/apis/pipeline/v1beta1"
@@ -79,10 +78,6 @@ type startOptions struct {
 func NameArg(args []string, p cli.Params, opt *startOptions) error {
 	if len(args) == 0 {
 		return errNoTask
-	}
-
-	if err := validate.NamespaceExists(p); err != nil {
-		return err
 	}
 
 	c, err := p.Clients()

@@ -124,7 +124,7 @@ func TestTaskRunDelete(t *testing.T) {
 			input:       seeds[0].pipelineClient,
 			inputStream: nil,
 			wantError:   true,
-			want:        "namespaces \"invalid\" not found",
+			want:        "failed to delete TaskRun \"tr0-1\": taskruns.tekton.dev \"tr0-1\" not found",
 		},
 		{
 			name:        "With force delete flag (shorthand)",
@@ -425,7 +425,7 @@ func TestTaskRunDelete_v1beta1(t *testing.T) {
 			input:       seeds[0].pipelineClient,
 			inputStream: nil,
 			wantError:   true,
-			want:        "namespaces \"invalid\" not found",
+			want:        "failed to delete TaskRun \"tr0-1\": taskruns.tekton.dev \"tr0-1\" not found",
 		},
 		{
 			name:        "With force delete flag (shorthand)",
