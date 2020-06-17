@@ -316,7 +316,7 @@ func TestPipelineStart_ExecuteCommand(t *testing.T) {
 			namespace: "",
 			input:     c1,
 			wantError: true,
-			want:      "namespaces \"invalid\" not found",
+			want:      "Pipeline name pipeline does not exist in namespace invalid",
 		},
 		{
 			name:      "Missing pipeline name",
@@ -978,7 +978,7 @@ func TestPipelineV1beta1Start_ExecuteCommand(t *testing.T) {
 			namespace: "",
 			input:     c1,
 			wantError: true,
-			want:      "namespaces \"invalid\" not found",
+			want:      "Pipeline name pipeline does not exist in namespace invalid",
 		},
 		{
 			name:      "Missing pipeline name",

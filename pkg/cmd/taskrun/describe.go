@@ -25,7 +25,6 @@ import (
 	"github.com/tektoncd/cli/pkg/options"
 	trdesc "github.com/tektoncd/cli/pkg/taskrun/description"
 	trlist "github.com/tektoncd/cli/pkg/taskrun/list"
-	"github.com/tektoncd/cli/pkg/validate"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime/schema"
 	cliopts "k8s.io/cli-runtime/pkg/genericclioptions"
@@ -60,9 +59,6 @@ or
 			s := &cli.Stream{
 				Out: cmd.OutOrStdout(),
 				Err: cmd.OutOrStderr(),
-			}
-			if err := validate.NamespaceExists(p); err != nil {
-				return err
 			}
 
 			output, err := cmd.LocalFlags().GetString("output")

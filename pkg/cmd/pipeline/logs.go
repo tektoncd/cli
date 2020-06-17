@@ -26,7 +26,6 @@ import (
 	"github.com/tektoncd/cli/pkg/pipeline"
 	phelper "github.com/tektoncd/cli/pkg/pipeline"
 	prhelper "github.com/tektoncd/cli/pkg/pipelinerun"
-	"github.com/tektoncd/cli/pkg/validate"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 )
 
@@ -83,10 +82,6 @@ Show logs for given Pipeline and PipelineRun:
 			opts.Stream = &cli.Stream{
 				Out: cmd.OutOrStdout(),
 				Err: cmd.OutOrStderr(),
-			}
-
-			if err := validate.NamespaceExists(p); err != nil {
-				return err
 			}
 
 			return run(opts, args)

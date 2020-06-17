@@ -42,13 +42,13 @@ func TestPipelineResourceDescribe_Invalid_Namespace(t *testing.T) {
 	p := &test.Params{Tekton: cs.Pipeline, Kube: cs.Kube, Resource: cs.Resource}
 
 	res := Command(p)
-	_, err := test.ExecuteCommand(res, "desc", "bar", "-n", "invalid")
+	out, err := test.ExecuteCommand(res, "desc", "bar", "-n", "invalid")
 	if err == nil {
 		t.Errorf("Error expected here")
 	}
 
-	expected := "namespaces \"invalid\" not found"
-	test.AssertOutput(t, expected, err.Error())
+	expected := "Error: failed to find pipelineresource \"bar\"\n"
+	test.AssertOutput(t, expected, out)
 }
 
 func TestPipelineResourceDescribe_Empty(t *testing.T) {

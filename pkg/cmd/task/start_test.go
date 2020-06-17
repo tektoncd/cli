@@ -126,17 +126,15 @@ func newPipelineClient(version string, objs ...runtime.Object) (*fakepipelinecli
 }
 
 func Test_start_invalid_namespace(t *testing.T) {
-
 	cs, _ := test.SeedTestData(t, pipelinetest.Data{})
 	c := Command(&test.Params{Tekton: cs.Pipeline, Kube: cs.Kube})
 
-	_, err := test.ExecuteCommand(c, "start", "task", "-n", "invalid")
-
+	out, err := test.ExecuteCommand(c, "start", "task", "-n", "invalid")
 	if err == nil {
 		t.Error("Expected an error for invalid namespace")
 	}
 
-	test.AssertOutput(t, "namespaces \"invalid\" not found", err.Error())
+	test.AssertOutput(t, "Error: Task name task does not exist in namespace invalid\n", out)
 }
 
 func Test_start_has_no_task_arg(t *testing.T) {

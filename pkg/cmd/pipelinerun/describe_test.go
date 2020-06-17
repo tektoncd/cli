@@ -50,12 +50,12 @@ func TestPipelineRunDescribe_invalid_namespace(t *testing.T) {
 	p := &test.Params{Tekton: cs.Pipeline, Kube: cs.Kube}
 
 	pipelinerun := Command(p)
-	_, err := test.ExecuteCommand(pipelinerun, "desc", "bar", "-n", "invalid")
+	out, err := test.ExecuteCommand(pipelinerun, "desc", "bar", "-n", "invalid")
 	if err == nil {
 		t.Errorf("Expected error for invalid namespace")
 	}
-	expected := "namespaces \"invalid\" not found"
-	test.AssertOutput(t, expected, err.Error())
+	expected := "Error: failed to find pipelinerun \"bar\"\n"
+	test.AssertOutput(t, expected, out)
 }
 
 func TestPipelineRunDescribe_not_found(t *testing.T) {

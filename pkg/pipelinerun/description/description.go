@@ -23,7 +23,6 @@ import (
 	"github.com/tektoncd/cli/pkg/cli"
 	"github.com/tektoncd/cli/pkg/formatted"
 	"github.com/tektoncd/cli/pkg/pipelinerun"
-	"github.com/tektoncd/cli/pkg/validate"
 	"github.com/tektoncd/pipeline/pkg/apis/pipeline/v1beta1"
 	corev1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
@@ -164,8 +163,8 @@ func PrintPipelineRunDescription(s *cli.Stream, prName string, p cli.Params) err
 		"formatDuration":            formatted.Duration,
 		"formatCondition":           formatted.Condition,
 		"hasFailed":                 hasFailed,
-		"pipelineRefExists":         validate.PipelineRefExists,
-		"pipelineResourceRefExists": validate.PipelineResourceRefExists,
+		"pipelineRefExists":         pipelineRefExists,
+		"pipelineResourceRefExists": pipelineResourceRefExists,
 		"decorate":                  formatted.DecorateAttr,
 		"getTimeout":                getTimeoutValue,
 		"checkTRStatus":             checkTaskRunStatus,
@@ -210,4 +209,22 @@ func getTimeoutValue(pr *v1beta1.PipelineRun) string {
 
 func checkTaskRunStatus(taskRun tkr) bool {
 	return taskRun.PipelineRunTaskRunStatus.Status != nil
+}
+
+// Check if PipelineRef exists on a PipelineRunSpec. Returns empty string if not present.
+func pipelineRefExists(spec v1beta1.PipelineRunSpec) string {
+	if spec.PipelineRef == nil {
+		return ""
+	}
+
+	return spec.PipelineRef.Name
+}
+
+// Check if PipelineResourceRef exists on a PipelineResourceBinding. Returns empty string if not present.
+func pipelineResourceRefExists(res v1beta1.PipelineResourceBinding) string {
+	if res.ResourceRef == nil {
+		return ""
+	}
+
+	return res.ResourceRef.Name
 }

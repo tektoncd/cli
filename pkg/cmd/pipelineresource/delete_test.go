@@ -64,7 +64,7 @@ func TestPipelineResourceDelete(t *testing.T) {
 			input:       seeds[0],
 			inputStream: nil,
 			wantError:   true,
-			want:        "namespaces \"invalid\" not found",
+			want:        "failed to delete PipelineResource \"pre-1\": pipelineresources.tekton.dev \"pre-1\" not found",
 		},
 		{
 			name:        "With force delete flag (shorthand)",

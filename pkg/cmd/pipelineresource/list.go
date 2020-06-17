@@ -24,7 +24,6 @@ import (
 	"github.com/tektoncd/cli/pkg/cli"
 	pressort "github.com/tektoncd/cli/pkg/pipelineresource/sort"
 	"github.com/tektoncd/cli/pkg/printer"
-	validinput "github.com/tektoncd/cli/pkg/validate"
 	"github.com/tektoncd/pipeline/pkg/apis/pipeline/v1alpha1"
 	versionedResource "github.com/tektoncd/pipeline/pkg/client/resource/clientset/versioned"
 	v1 "k8s.io/apimachinery/pkg/apis/meta/v1"
@@ -62,13 +61,6 @@ func listCommand(p cli.Params) *cobra.Command {
 		},
 		Args: cobra.MinimumNArgs(0),
 		RunE: func(cmd *cobra.Command, args []string) error {
-
-			if !opts.AllNamespaces {
-				if err := validinput.NamespaceExists(p); err != nil {
-					return err
-				}
-			}
-
 			cs, err := p.Clients()
 			if err != nil {
 				return err

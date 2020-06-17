@@ -43,11 +43,19 @@ func TestTaskList_Invalid_Namespace(t *testing.T) {
 		},
 	}
 	cs, _ := test.SeedTestData(t, pipelinetest.Data{Namespaces: ns})
-	p := &test.Params{Tekton: cs.Pipeline, Kube: cs.Kube}
+	tdc := testDynamic.Options{}
+	dc, _ := tdc.Client()
+
+	p := &test.Params{Tekton: cs.Pipeline, Kube: cs.Kube, Dynamic: dc}
+	cs.Pipeline.Resources = cb.APIResourceList("v1alpha1", []string{"task"})
 
 	task := Command(p)
-	output, _ := test.ExecuteCommand(task, "list", "-n", "foo")
-	test.AssertOutput(t, "Error: namespaces \"foo\" not found\n", output)
+	output, err := test.ExecuteCommand(task, "list", "-n", "foo")
+	if err != nil {
+		t.Errorf("Unexpected error: %v", err)
+	}
+
+	test.AssertOutput(t, "No Tasks found\n", output)
 }
 
 func TestTaskList_Empty(t *testing.T) {

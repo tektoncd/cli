@@ -1,1 +1,2 @@
-Error: namespaces "invalid" not found
+failed to get triggertemplate bar
+Error: triggertemplates.triggers.tekton.dev "bar" not found
