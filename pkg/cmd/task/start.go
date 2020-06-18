@@ -367,7 +367,7 @@ func startTask(opt startOptions, args []string) error {
 
 	fmt.Fprintf(opt.stream.Out, "Taskrun started: %s\n", trCreated.Name)
 	if !opt.ShowLog {
-		inOrderString := fmt.Sprint("\nIn order to track the taskrun progress run:\ntkn taskrun ")
+		inOrderString := "\nIn order to track the taskrun progress run:\ntkn taskrun "
 		if opt.TektonOptions.Context != "" {
 			inOrderString += fmt.Sprintf("--context=%s ", opt.TektonOptions.Context)
 		}
