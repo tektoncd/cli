@@ -300,7 +300,7 @@ func (opt *startOptions) startPipeline(pipelineStart *v1beta1.Pipeline) error {
 
 	fmt.Fprintf(opt.stream.Out, "Pipelinerun started: %s\n", prCreated.Name)
 	if !opt.ShowLog {
-		inOrderString := fmt.Sprint("\nIn order to track the pipelinerun progress run:\ntkn pipelinerun ")
+		inOrderString := "\nIn order to track the pipelinerun progress run:\ntkn pipelinerun "
 		if opt.TektonOptions.Context != "" {
 			inOrderString += fmt.Sprintf("--context=%s ", opt.TektonOptions.Context)
 		}
