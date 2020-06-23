@@ -16,7 +16,6 @@ package task
 
 import (
 	"fmt"
-	"os"
 	"sort"
 	"text/tabwriter"
 	"text/template"
@@ -130,7 +129,7 @@ or
 	c := &cobra.Command{
 		Use:     "describe",
 		Aliases: []string{"desc"},
-		Short:   "Describes a task in a namespace",
+		Short:   "Describe a Task in a namespace",
 		Example: eg,
 		Annotations: map[string]string{
 			"commandType": "main",
@@ -148,8 +147,7 @@ or
 
 			output, err := cmd.LocalFlags().GetString("output")
 			if err != nil {
-				fmt.Fprint(os.Stderr, "Error: output option not set properly \n")
-				return err
+				return fmt.Errorf("output option not set properly: %v", err)
 			}
 
 			if len(args) == 0 {
@@ -183,8 +181,7 @@ func printTaskDescription(s *cli.Stream, p cli.Params, tname string) error {
 
 	t, err := task.Get(cs, tname, metav1.GetOptions{}, p.Namespace())
 	if err != nil {
-		fmt.Fprintf(s.Err, "failed to get task %s\n", tname)
-		return err
+		return fmt.Errorf("failed to get Task %s: %v", tname, err)
 	}
 
 	if t.Spec.Resources != nil {
@@ -197,8 +194,7 @@ func printTaskDescription(s *cli.Stream, p cli.Params, tname string) error {
 	}
 	taskRuns, err := list.TaskRuns(cs, opts, p.Namespace())
 	if err != nil {
-		fmt.Fprintf(s.Err, "failed to get taskruns for task %s \n", tname)
-		return err
+		return fmt.Errorf("failed to get TaskRuns for Task %s: %v", tname, err)
 	}
 
 	// this is required as the same label is getting added for both task and ClusterTask
@@ -229,9 +225,9 @@ func printTaskDescription(s *cli.Stream, p cli.Params, tname string) error {
 	tparsed := template.Must(template.New("Describe Task").Funcs(funcMap).Parse(describeTemplate))
 	err = tparsed.Execute(w, data)
 	if err != nil {
-		fmt.Fprintf(s.Err, "Failed to execute template \n")
-		return err
+		return fmt.Errorf("failed to execute template: %v", err)
 	}
+
 	return nil
 }
 
@@ -258,7 +254,7 @@ func askTaskName(opts *options.DescribeOptions, p cli.Params) error {
 		return err
 	}
 	if len(taskNames) == 0 {
-		return fmt.Errorf("No tasks found")
+		return fmt.Errorf("no Tasks found")
 	}
 
 	err = opts.Ask(options.ResourceNameTask, taskNames)

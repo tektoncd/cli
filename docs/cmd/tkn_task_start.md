@@ -1,16 +1,16 @@
 ## tkn task start
 
-Start tasks
+Start Tasks
 
 ### Usage
 
 ```
-tkn task start task [RESOURCES...] [PARAMS...] [SERVICEACCOUNT]
+tkn task start [RESOURCES...] [PARAMS...] [SERVICEACCOUNT]
 ```
 
 ### Synopsis
 
-Start tasks
+Start Tasks
 
 ### Examples
 
@@ -18,30 +18,30 @@ Start Task foo by creating a TaskRun named "foo-run-xyz123" from namespace 'bar'
 
     tkn task start foo -s ServiceAccountName -n bar
 
-The task can either be specified by reference in a cluster using the positional argument
+The Task can either be specified by reference in a cluster using the positional argument
 or in a file using the --filename argument.
 
-For params value, if you want to provide multiple values, provide them comma separated
+For params values, if you want to provide multiple values, provide them comma separated
 like cat,foo,bar
 
 
 ### Options
 
 ```
-      --dry-run                  preview taskrun without running it
-  -f, --filename string          local or remote file name containing a task definition to start a taskrun
+      --dry-run                  preview TaskRun without running it
+  -f, --filename string          local or remote file name containing a Task definition to start a TaskRun
   -h, --help                     help for start
   -i, --inputresource strings    pass the input resource name and ref as name=ref
   -l, --labels strings           pass labels as label=value.
-  -L, --last                     re-run the task using last taskrun values
-      --output string            format of taskrun dry-run (yaml or json)
+  -L, --last                     re-run the Task using last TaskRun values
+      --output string            format of TaskRun dry-run (yaml or json)
   -o, --outputresource strings   pass the output resource name and ref as name=ref
   -p, --param stringArray        pass the param as key=value for string type, or key=value1,value2,... for array type
-      --prefix-name string       specify a prefix for the taskrun name (must be lowercase alphanumeric characters)
+      --prefix-name string       specify a prefix for the TaskRun name (must be lowercase alphanumeric characters)
   -s, --serviceaccount string    pass the serviceaccount name
-      --showlog                  show logs right after starting the task
-      --timeout string           timeout for taskrun
-      --use-taskrun string       specify a taskrun name to use its values to re-run the taskrun
+      --showlog                  show logs right after starting the Task
+      --timeout string           timeout for TaskRun
+      --use-taskrun string       specify a TaskRun name to use its values to re-run the TaskRun
   -w, --workspace stringArray    pass the workspace.
 ```
 
@@ -56,5 +56,5 @@ like cat,foo,bar
 
 ### SEE ALSO
 
-* [tkn task](tkn_task.md)	 - Manage tasks
+* [tkn task](tkn_task.md)	 - Manage Tasks
 

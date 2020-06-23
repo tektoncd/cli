@@ -47,8 +47,8 @@ import (
 )
 
 var (
-	errNoTask      = errors.New("missing task name")
-	errInvalidTask = "task name %s does not exist in namespace %s"
+	errNoTask      = errors.New("missing Task name")
+	errInvalidTask = "Task name %s does not exist in namespace %s"
 )
 
 const invalidResource = "invalid input format for resource parameter: "
@@ -117,8 +117,8 @@ func startCommand(p cli.Params) *cobra.Command {
 	}
 
 	c := &cobra.Command{
-		Use:   "start task [RESOURCES...] [PARAMS...] [SERVICEACCOUNT]",
-		Short: "Start tasks",
+		Use:   "start [RESOURCES...] [PARAMS...] [SERVICEACCOUNT]",
+		Short: "Start Tasks",
 		Annotations: map[string]string{
 			"commandType": "main",
 		},
@@ -126,10 +126,10 @@ func startCommand(p cli.Params) *cobra.Command {
 
     tkn task start foo -s ServiceAccountName -n bar
 
-The task can either be specified by reference in a cluster using the positional argument
+The Task can either be specified by reference in a cluster using the positional argument
 or in a file using the --filename argument.
 
-For params value, if you want to provide multiple values, provide them comma separated
+For params values, if you want to provide multiple values, provide them comma separated
 like cat,foo,bar
 `,
 		SilenceUsage: true,
@@ -147,7 +147,7 @@ like cat,foo,bar
 				return NameArg(args, p, &opt)
 			}
 			if opt.Filename == "" {
-				return errors.New("either a task name or a --filename parameter must be supplied")
+				return errors.New("either a Task name or a --filename argument must be supplied")
 			}
 			if opt.Filename != "" && opt.Last {
 				return errors.New("cannot use --last option with --filename option")
@@ -174,17 +174,17 @@ like cat,foo,bar
 	c.Flags().StringArrayVarP(&opt.Params, "param", "p", []string{}, "pass the param as key=value for string type, or key=value1,value2,... for array type")
 	c.Flags().StringVarP(&opt.ServiceAccountName, "serviceaccount", "s", "", "pass the serviceaccount name")
 	flags.AddShellCompletion(c.Flags().Lookup("serviceaccount"), "__kubectl_get_serviceaccount")
-	c.Flags().BoolVarP(&opt.Last, "last", "L", false, "re-run the task using last taskrun values")
-	c.Flags().StringVarP(&opt.UseTaskRun, "use-taskrun", "", "", "specify a taskrun name to use its values to re-run the taskrun")
+	c.Flags().BoolVarP(&opt.Last, "last", "L", false, "re-run the Task using last TaskRun values")
+	c.Flags().StringVarP(&opt.UseTaskRun, "use-taskrun", "", "", "specify a TaskRun name to use its values to re-run the TaskRun")
 	flags.AddShellCompletion(c.Flags().Lookup("use-taskrun"), "__tkn_get_taskrun")
 	c.Flags().StringSliceVarP(&opt.Labels, "labels", "l", []string{}, "pass labels as label=value.")
 	c.Flags().StringArrayVarP(&opt.Workspaces, "workspace", "w", []string{}, "pass the workspace.")
-	c.Flags().BoolVarP(&opt.ShowLog, "showlog", "", false, "show logs right after starting the task")
-	c.Flags().StringVarP(&opt.Filename, "filename", "f", "", "local or remote file name containing a task definition to start a taskrun")
-	c.Flags().StringVarP(&opt.TimeOut, "timeout", "", "", "timeout for taskrun")
-	c.Flags().BoolVarP(&opt.DryRun, "dry-run", "", false, "preview taskrun without running it")
-	c.Flags().StringVarP(&opt.Output, "output", "", "", "format of taskrun dry-run (yaml or json)")
-	c.Flags().StringVarP(&opt.PrefixName, "prefix-name", "", "", "specify a prefix for the taskrun name (must be lowercase alphanumeric characters)")
+	c.Flags().BoolVarP(&opt.ShowLog, "showlog", "", false, "show logs right after starting the Task")
+	c.Flags().StringVarP(&opt.Filename, "filename", "f", "", "local or remote file name containing a Task definition to start a TaskRun")
+	c.Flags().StringVarP(&opt.TimeOut, "timeout", "", "", "timeout for TaskRun")
+	c.Flags().BoolVarP(&opt.DryRun, "dry-run", "", false, "preview TaskRun without running it")
+	c.Flags().StringVarP(&opt.Output, "output", "", "", "format of TaskRun dry-run (yaml or json)")
+	c.Flags().StringVarP(&opt.PrefixName, "prefix-name", "", "", "specify a prefix for the TaskRun name (must be lowercase alphanumeric characters)")
 
 	_ = c.MarkZshCompPositionalArgumentCustom(1, "__tkn_get_task")
 
@@ -365,9 +365,9 @@ func startTask(opt startOptions, args []string) error {
 		return err
 	}
 
-	fmt.Fprintf(opt.stream.Out, "Taskrun started: %s\n", trCreated.Name)
+	fmt.Fprintf(opt.stream.Out, "TaskRun started: %s\n", trCreated.Name)
 	if !opt.ShowLog {
-		inOrderString := "\nIn order to track the taskrun progress run:\ntkn taskrun "
+		inOrderString := "\nIn order to track the TaskRun progress run:\ntkn taskrun "
 		if opt.TektonOptions.Context != "" {
 			inOrderString += fmt.Sprintf("--context=%s ", opt.TektonOptions.Context)
 		}

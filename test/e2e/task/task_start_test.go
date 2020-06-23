@@ -79,7 +79,7 @@ func TestTaskStartE2E(t *testing.T) {
 		vars := make(map[string]interface{})
 		taskRunGeneratedName := e2e.GetTaskRunListWithName(c, "read-task").Items[0].Name
 		vars["Taskrun"] = taskRunGeneratedName
-		expected := e2e.ProcessString(`(Taskrun started: {{.Taskrun}}
+		expected := e2e.ProcessString(`(TaskRun started: {{.Taskrun}}
 Waiting for logs to be available...
 .*)`, vars)
 

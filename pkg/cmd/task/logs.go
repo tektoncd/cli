@@ -58,14 +58,14 @@ Show logs of given Task for last TaskRun:
 
     tkn task logs task -n namespace --last
 
-Show logs for given task and taskrun:
+Show logs for given Task and associated TaskRun:
 
     tkn task logs task taskrun -n namespace
 `
 	c := &cobra.Command{
 		Use:                   "logs",
 		DisableFlagsInUseLine: true,
-		Short:                 "Show task logs",
+		Short:                 "Show Task logs",
 		Example:               eg,
 		SilenceUsage:          true,
 		Annotations: map[string]string{
@@ -90,10 +90,10 @@ Show logs for given task and taskrun:
 			return run(opts, args)
 		},
 	}
-	c.Flags().BoolVarP(&opts.Last, "last", "L", false, "show logs for last taskrun")
+	c.Flags().BoolVarP(&opts.Last, "last", "L", false, "show logs for last TaskRun")
 	c.Flags().BoolVarP(&opts.AllSteps, "all", "a", false, "show all logs including init steps injected by tekton")
 	c.Flags().BoolVarP(&opts.Follow, "follow", "f", false, "stream live logs")
-	c.Flags().IntVarP(&opts.Limit, "limit", "", 5, "lists number of taskruns")
+	c.Flags().IntVarP(&opts.Limit, "limit", "", 5, "lists number of TaskRuns")
 
 	_ = c.MarkZshCompPositionalArgumentCustom(1, "__tkn_get_task")
 	return c
@@ -146,8 +146,7 @@ func getAllInputs(opts *options.LogOptions) error {
 	}
 
 	if len(ts) == 0 {
-		fmt.Fprintln(opts.Stream.Err, "No tasks found in namespace:", opts.Params.Namespace())
-		return nil
+		return fmt.Errorf("no Tasks found in namespace %s", opts.Params.Namespace())
 	}
 
 	if len(ts) == 1 {
@@ -174,8 +173,7 @@ func askRunName(opts *options.LogOptions) error {
 	}
 
 	if len(trs) == 0 {
-		fmt.Fprintln(opts.Stream.Err, "No taskruns found for task:", opts.TaskName)
-		return nil
+		return fmt.Errorf("no TaskRuns found for Task %s", opts.TaskName)
 	}
 
 	if len(trs) == 1 {

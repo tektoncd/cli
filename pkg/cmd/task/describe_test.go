@@ -72,12 +72,12 @@ func TestTaskDescribe_Empty(t *testing.T) {
 	p := &test.Params{Tekton: cs.Pipeline, Kube: cs.Kube, Dynamic: dynamic}
 
 	task := Command(p)
-	_, err = test.ExecuteCommand(task, "desc", "bar", "-n", "ns")
+	out, err := test.ExecuteCommand(task, "desc", "bar", "-n", "ns")
 	if err == nil {
 		t.Errorf("Error expected here")
 	}
-	expected := "tasks.tekton.dev \"bar\" not found"
-	test.AssertOutput(t, expected, err.Error())
+	expected := "Error: failed to get Task bar: tasks.tekton.dev \"bar\" not found\n"
+	test.AssertOutput(t, expected, out)
 }
 
 func TestTaskDescribe_OnlyName(t *testing.T) {
@@ -354,9 +354,8 @@ func TestTaskDescribe_TaskRunError(t *testing.T) {
 	if err == nil {
 		t.Errorf("Expected error got nil")
 	}
-	expected := "failed to get taskruns for task task-1 \nError: fake list taskrun error\n"
+	expected := "Error: failed to get TaskRuns for Task task-1: fake list taskrun error\n"
 	test.AssertOutput(t, expected, out)
-	test.AssertOutput(t, "fake list taskrun error", err.Error())
 }
 
 func TestTaskDescribe_custom_output(t *testing.T) {

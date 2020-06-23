@@ -16,7 +16,6 @@ package task
 
 import (
 	"fmt"
-	"os"
 	"text/tabwriter"
 	"text/template"
 
@@ -64,7 +63,7 @@ func listCommand(p cli.Params) *cobra.Command {
 	c := &cobra.Command{
 		Use:     "list",
 		Aliases: []string{"ls"},
-		Short:   "Lists tasks in a namespace",
+		Short:   "Lists Tasks in a namespace",
 		Annotations: map[string]string{
 			"commandType": "main",
 		},
@@ -78,8 +77,7 @@ func listCommand(p cli.Params) *cobra.Command {
 
 			output, err := cmd.LocalFlags().GetString("output")
 			if err != nil {
-				fmt.Fprint(os.Stderr, "error: output option not set properly \n")
-				return err
+				return fmt.Errorf("error: output option not set properly: %v", err)
 			}
 
 			if output != "" {
@@ -94,7 +92,7 @@ func listCommand(p cli.Params) *cobra.Command {
 		},
 	}
 	f.AddFlags(c)
-	c.Flags().BoolVarP(&opts.AllNamespaces, "all-namespaces", "A", opts.AllNamespaces, "list tasks from all namespaces")
+	c.Flags().BoolVarP(&opts.AllNamespaces, "all-namespaces", "A", opts.AllNamespaces, "list Tasks from all namespaces")
 	c.Flags().BoolVarP(&opts.NoHeaders, "no-headers", "", opts.NoHeaders, "do not print column headers with output (default print column headers with output)")
 
 	return c
@@ -112,8 +110,7 @@ func printTaskDetails(s *cli.Stream, p cli.Params, allnamespaces bool, noheaders
 	}
 	tasks, err := task.List(cs, metav1.ListOptions{}, ns)
 	if err != nil {
-		fmt.Fprintf(os.Stderr, "failed to list tasks from %s namespace \n", ns)
-		return err
+		return fmt.Errorf("failed to list Tasks from namespace %s: %v", ns, err)
 	}
 
 	var data = struct {
