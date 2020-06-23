@@ -51,6 +51,7 @@ NAME	STARTED	DURATION	STATUS
 type ListOptions struct {
 	Limit         int
 	LabelSelector string
+	FieldSelector string
 	Reverse       bool
 	AllNamespaces bool
 	NoHeaders     bool
@@ -88,7 +89,7 @@ List all PipelineRuns in a namespace 'foo':
 				return fmt.Errorf("limit was %d but must be a positive number", opts.Limit)
 			}
 
-			prs, err := list(p, pipeline, opts.Limit, opts.LabelSelector, opts.AllNamespaces)
+			prs, err := list(p, pipeline, opts.Limit, opts.LabelSelector, opts.AllNamespaces, opts.FieldSelector)
 			if err != nil {
 				return fmt.Errorf("failed to list PipelineRuns from namespace %s: %v", p.Namespace(), err)
 			}
@@ -133,14 +134,15 @@ List all PipelineRuns in a namespace 'foo':
 	f.AddFlags(c)
 	c.Flags().IntVarP(&opts.Limit, "limit", "", 0, "limit PipelineRuns listed (default: return all PipelineRuns)")
 	c.Flags().StringVarP(&opts.LabelSelector, "label", "", opts.LabelSelector, "A selector (label query) to filter on, supports '=', '==', and '!='")
+	c.Flags().StringVar(&opts.FieldSelector, "field-selector", opts.FieldSelector, "Selector (field query) to filter on. Supports '=', '==', and '!=' (e.g. --field-selector key1=value1,key2=value2). The server only supports a limited number of field queries per type.")
 	c.Flags().BoolVarP(&opts.Reverse, "reverse", "", opts.Reverse, "list PipelineRuns in reverse order")
 	c.Flags().BoolVarP(&opts.AllNamespaces, "all-namespaces", "A", opts.AllNamespaces, "list PipelineRuns from all namespaces")
 	c.Flags().BoolVarP(&opts.NoHeaders, "no-headers", "", opts.NoHeaders, "do not print column headers with output (default print column headers with output)")
 	return c
 }
 
-func list(p cli.Params, pipeline string, limit int, labelselector string, allnamespaces bool) (*v1beta1.PipelineRunList, error) {
-	var selector string
+func list(p cli.Params, pipeline string, limit int, labelselector string, allnamespaces bool, fieldselector string) (*v1beta1.PipelineRunList, error) {
+	var labelSelector string
 	var options v1.ListOptions
 
 	cs, err := p.Clients()
@@ -153,15 +155,17 @@ func list(p cli.Params, pipeline string, limit int, labelselector string, allnam
 	}
 
 	if pipeline != "" {
-		selector = fmt.Sprintf("tekton.dev/pipeline=%s", pipeline)
+		labelSelector = fmt.Sprintf("tekton.dev/pipeline=%s", pipeline)
 	} else if labelselector != "" {
-		selector = labelselector
+		labelSelector = labelselector
 	}
 
-	if selector != "" {
-		options = v1.ListOptions{
-			LabelSelector: selector,
-		}
+	if labelSelector != "" {
+		options.LabelSelector = labelSelector
+	}
+
+	if fieldselector != "" {
+		options.FieldSelector = fieldselector
 	}
 
 	ns := p.Namespace()

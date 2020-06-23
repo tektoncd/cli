@@ -15,6 +15,7 @@
 package pipelinerun
 
 import (
+	"errors"
 	"fmt"
 	"strings"
 	"testing"
@@ -34,7 +35,10 @@ import (
 	"gotest.tools/v3/golden"
 	corev1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
+	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/client-go/dynamic"
+	k8stest "k8s.io/client-go/testing"
 	"knative.dev/pkg/apis"
 	duckv1beta1 "knative.dev/pkg/apis/duck/v1beta1"
 )
@@ -139,6 +143,34 @@ func TestListPipelineRuns(t *testing.T) {
 		t.Errorf("unable to create dynamic client: %v", err)
 	}
 
+	tdc3 := testDynamic.Options{
+		PrependReactors: []testDynamic.PrependOpt{
+			{
+				Verb:     "list",
+				Resource: "pipelineruns",
+				Action: func(action k8stest.Action) (bool, runtime.Object, error) {
+					fieldSelector := action.(k8stest.ListAction).GetListRestrictions().Fields.String()
+					if fieldSelector == "metadata.name=pr0-1" {
+						unstructuredPR := cb.UnstructuredPR(prs[0], version)
+						list := &unstructured.UnstructuredList{}
+						list.Items = append(list.Items, *unstructuredPR)
+						return true, list, nil
+					} else if fieldSelector == "a=b" {
+						return true, nil, errors.New("field label not supported: a")
+					}
+					return false, nil, nil
+				},
+			},
+		},
+	}
+	dc3, err := tdc3.Client(
+		cb.UnstructuredPR(prs[0], version),
+		cb.UnstructuredPR(prs[1], version),
+	)
+	if err != nil {
+		t.Errorf("unable to create dynamic client: %v", err)
+	}
+
 	tests := []struct {
 		name      string
 		command   *cobra.Command
@@ -235,6 +267,18 @@ func TestListPipelineRuns(t *testing.T) {
 			command:   commandV1alpha1(t, prsMultipleNs, clock.Now(), ns, version, dc2),
 			args:      []string{"list", "--all-namespaces"},
 			wantError: false,
+		},
+		{
+			name:      "list pipelinerun by field-selector",
+			command:   commandV1alpha1(t, prs, clock.Now(), ns, version, dc3),
+			args:      []string{"list", "-n", "namespace", "--field-selector", "metadata.name=pr0-1"},
+			wantError: false,
+		},
+		{
+			name:      "list pipelinerun by field-selector negative case",
+			command:   commandV1alpha1(t, prs, clock.Now(), ns, version, dc3),
+			args:      []string{"list", "-n", "namespace", "--field-selector", "a=b"},
+			wantError: true,
 		},
 	}
 
@@ -375,6 +419,34 @@ func TestListPipelineRuns_v1beta1(t *testing.T) {
 		t.Errorf("unable to create dynamic client: %v", err)
 	}
 
+	tdc2 := testDynamic.Options{
+		PrependReactors: []testDynamic.PrependOpt{
+			{
+				Verb:     "list",
+				Resource: "pipelineruns",
+				Action: func(action k8stest.Action) (bool, runtime.Object, error) {
+					fieldSelector := action.(k8stest.ListAction).GetListRestrictions().Fields.String()
+					if fieldSelector == "metadata.name!=pr0-1" {
+						unstructuredPR := cb.UnstructuredV1beta1PR(prs[1], version)
+						list := &unstructured.UnstructuredList{}
+						list.Items = append(list.Items, *unstructuredPR)
+						return true, list, nil
+					} else if fieldSelector == "a=b" {
+						return true, nil, errors.New("field label not supported: a")
+					}
+					return false, nil, nil
+				},
+			},
+		},
+	}
+	dc2, err := tdc2.Client(
+		cb.UnstructuredV1beta1PR(prs[0], version),
+		cb.UnstructuredV1beta1PR(prs[1], version),
+	)
+	if err != nil {
+		t.Errorf("unable to create dynamic client: %v", err)
+	}
+
 	tests := []struct {
 		name      string
 		command   *cobra.Command
@@ -483,6 +555,18 @@ func TestListPipelineRuns_v1beta1(t *testing.T) {
 			command:   commandV1beta1(t, prsMultipleNs, clock.Now(), ns, version, dc1),
 			args:      []string{"list", "--all-namespaces", "--no-headers"},
 			wantError: false,
+		},
+		{
+			name:      "list pipelinerun by field-selector",
+			command:   commandV1beta1(t, prs, clock.Now(), ns, version, dc2),
+			args:      []string{"list", "-n", "namespace", "--field-selector", "metadata.name!=pr0-1"},
+			wantError: false,
+		},
+		{
+			name:      "list pipelinerun by field-selector negative case",
+			command:   commandV1beta1(t, prs, clock.Now(), ns, version, dc2),
+			args:      []string{"list", "-n", "namespace", "--field-selector", "a=b"},
+			wantError: true,
 		},
 	}
 
