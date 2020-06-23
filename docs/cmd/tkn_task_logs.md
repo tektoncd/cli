@@ -1,6 +1,6 @@
 ## tkn task logs
 
-Show task logs
+Show Task logs
 
 ### Usage
 
@@ -10,7 +10,7 @@ tkn task logs
 
 ### Synopsis
 
-Show task logs
+Show Task logs
 
 ### Examples
 
@@ -26,7 +26,7 @@ Show logs of given Task for last TaskRun:
 
     tkn task logs task -n namespace --last
 
-Show logs for given task and taskrun:
+Show logs for given Task and associated TaskRun:
 
     tkn task logs task taskrun -n namespace
 
@@ -37,8 +37,8 @@ Show logs for given task and taskrun:
   -a, --all         show all logs including init steps injected by tekton
   -f, --follow      stream live logs
   -h, --help        help for logs
-  -L, --last        show logs for last taskrun
-      --limit int   lists number of taskruns (default 5)
+  -L, --last        show logs for last TaskRun
+      --limit int   lists number of TaskRuns (default 5)
 ```
 
 ### Options inherited from parent commands
@@ -52,5 +52,5 @@ Show logs for given task and taskrun:
 
 ### SEE ALSO
 
-* [tkn task](tkn_task.md)	 - Manage tasks
+* [tkn task](tkn_task.md)	 - Manage Tasks
 

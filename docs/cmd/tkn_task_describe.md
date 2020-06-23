@@ -1,6 +1,6 @@
 ## tkn task describe
 
-Describes a task in a namespace
+Describe a Task in a namespace
 
 ***Aliases**: desc*
 
@@ -12,7 +12,7 @@ tkn task describe
 
 ### Synopsis
 
-Describes a task in a namespace
+Describe a Task in a namespace
 
 ### Examples
 
@@ -45,5 +45,5 @@ or
 
 ### SEE ALSO
 
-* [tkn task](tkn_task.md)	 - Manage tasks
+* [tkn task](tkn_task.md)	 - Manage Tasks
 

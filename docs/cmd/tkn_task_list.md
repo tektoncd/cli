@@ -1,6 +1,6 @@
 ## tkn task list
 
-Lists tasks in a namespace
+Lists Tasks in a namespace
 
 ***Aliases**: ls*
 
@@ -12,12 +12,12 @@ tkn task list
 
 ### Synopsis
 
-Lists tasks in a namespace
+Lists Tasks in a namespace
 
 ### Options
 
 ```
-  -A, --all-namespaces                list tasks from all namespaces
+  -A, --all-namespaces                list Tasks from all namespaces
       --allow-missing-template-keys   If true, ignore any errors in templates when a field or map key is missing in the template. Only applies to golang and jsonpath output formats. (default true)
   -h, --help                          help for list
       --no-headers                    do not print column headers with output (default print column headers with output)
@@ -36,5 +36,5 @@ Lists tasks in a namespace
 
 ### SEE ALSO
 
-* [tkn task](tkn_task.md)	 - Manage tasks
+* [tkn task](tkn_task.md)	 - Manage Tasks
 

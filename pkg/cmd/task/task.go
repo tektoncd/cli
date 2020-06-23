@@ -24,7 +24,7 @@ func Command(p cli.Params) *cobra.Command {
 	cmd := &cobra.Command{
 		Use:     "task",
 		Aliases: []string{"t", "tasks"},
-		Short:   "Manage tasks",
+		Short:   "Manage Tasks",
 		Annotations: map[string]string{
 			"commandType": "main",
 		},

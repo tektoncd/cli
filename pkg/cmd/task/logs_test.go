@@ -108,23 +108,23 @@ func TestTaskLog(t *testing.T) {
 			input:     cs,
 			dc:        dc1,
 			wantError: true,
-			want:      "namespaces \"invalid\" not found",
+			want:      "Error: namespaces \"invalid\" not found\n",
 		},
 		{
 			name:      "Found no tasks",
 			command:   []string{"logs", "-n", "ns"},
 			input:     cs2,
 			dc:        dc2,
-			wantError: false,
-			want:      "No tasks found in namespace: ns\n",
+			wantError: true,
+			want:      "Error: no Tasks found in namespace ns\n",
 		},
 		{
 			name:      "Found no taskruns",
 			command:   []string{"logs", "task", "-n", "ns"},
 			input:     cs,
 			dc:        dc1,
-			wantError: false,
-			want:      "No taskruns found for task: task\n",
+			wantError: true,
+			want:      "Error: no TaskRuns found for Task task\n",
 		},
 		{
 			name:      "Specify notexist task name",
@@ -132,7 +132,7 @@ func TestTaskLog(t *testing.T) {
 			input:     cs,
 			dc:        dc1,
 			wantError: true,
-			want:      "tasks.tekton.dev \"notexist\" not found",
+			want:      "Error: tasks.tekton.dev \"notexist\" not found\n",
 		},
 		{
 			name:      "Specify notexist taskrun name",
@@ -140,7 +140,7 @@ func TestTaskLog(t *testing.T) {
 			input:     cs,
 			dc:        dc1,
 			wantError: true,
-			want:      "Unable to get Taskrun: taskruns.tekton.dev \"notexist\" not found",
+			want:      "Error: Unable to get Taskrun: taskruns.tekton.dev \"notexist\" not found\n",
 		},
 		{
 			name:      "Specify negative number to limit",
@@ -148,7 +148,7 @@ func TestTaskLog(t *testing.T) {
 			input:     cs,
 			dc:        dc1,
 			wantError: true,
-			want:      "limit was -1 but must be a positive number",
+			want:      "Error: limit was -1 but must be a positive number\n",
 		},
 	}
 
@@ -162,7 +162,7 @@ func TestTaskLog(t *testing.T) {
 				if err == nil {
 					t.Errorf("error expected here")
 				}
-				test.AssertOutput(t, tp.want, err.Error())
+				test.AssertOutput(t, tp.want, out)
 			} else {
 				if err != nil {
 					t.Errorf("unexpected Error")
@@ -174,7 +174,6 @@ func TestTaskLog(t *testing.T) {
 }
 
 func TestTaskLog_v1beta1(t *testing.T) {
-
 	clock := clockwork.NewFakeClock()
 	task1 := []*v1alpha1.Task{tb.Task("task", tb.TaskNamespace("ns"))}
 	cs, _ := test.SeedTestData(t, pipelinetest.Data{
@@ -232,23 +231,23 @@ func TestTaskLog_v1beta1(t *testing.T) {
 			input:     cs,
 			dc:        dc1,
 			wantError: true,
-			want:      "namespaces \"invalid\" not found",
+			want:      "Error: namespaces \"invalid\" not found\n",
 		},
 		{
 			name:      "Found no tasks",
 			command:   []string{"logs", "-n", "ns"},
 			input:     cs2,
 			dc:        dc2,
-			wantError: false,
-			want:      "No tasks found in namespace: ns\n",
+			wantError: true,
+			want:      "Error: no Tasks found in namespace ns\n",
 		},
 		{
 			name:      "Found no taskruns",
 			command:   []string{"logs", "task", "-n", "ns"},
 			input:     cs,
 			dc:        dc1,
-			wantError: false,
-			want:      "No taskruns found for task: task\n",
+			wantError: true,
+			want:      "Error: no TaskRuns found for Task task\n",
 		},
 		{
 			name:      "Specify notexist task name",
@@ -256,7 +255,7 @@ func TestTaskLog_v1beta1(t *testing.T) {
 			input:     cs,
 			dc:        dc1,
 			wantError: true,
-			want:      "tasks.tekton.dev \"notexist\" not found",
+			want:      "Error: tasks.tekton.dev \"notexist\" not found\n",
 		},
 		{
 			name:      "Specify notexist taskrun name",
@@ -264,7 +263,7 @@ func TestTaskLog_v1beta1(t *testing.T) {
 			input:     cs,
 			dc:        dc1,
 			wantError: true,
-			want:      "Unable to get Taskrun: taskruns.tekton.dev \"notexist\" not found",
+			want:      "Error: Unable to get Taskrun: taskruns.tekton.dev \"notexist\" not found\n",
 		},
 		{
 			name:      "Specify negative number to limit",
@@ -272,7 +271,7 @@ func TestTaskLog_v1beta1(t *testing.T) {
 			input:     cs,
 			dc:        dc1,
 			wantError: true,
-			want:      "limit was -1 but must be a positive number",
+			want:      "Error: limit was -1 but must be a positive number\n",
 		},
 	}
 
@@ -286,7 +285,7 @@ func TestTaskLog_v1beta1(t *testing.T) {
 				if err == nil {
 					t.Errorf("error expected here")
 				}
-				test.AssertOutput(t, tp.want, err.Error())
+				test.AssertOutput(t, tp.want, out)
 			} else {
 				if err != nil {
 					t.Errorf("unexpected Error")

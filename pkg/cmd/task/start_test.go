@@ -142,11 +142,11 @@ func Test_start_invalid_namespace(t *testing.T) {
 func Test_start_has_no_task_arg(t *testing.T) {
 	c := Command(&test.Params{})
 
-	_, err := test.ExecuteCommand(c, "start", "-n", "ns")
+	out, err := test.ExecuteCommand(c, "start", "-n", "ns")
 	if err == nil {
 		t.Error("Expecting an error but it's empty")
 	}
-	test.AssertOutput(t, "either a task name or a --filename parameter must be supplied", err.Error())
+	test.AssertOutput(t, "Error: either a Task name or a --filename argument must be supplied\n", out)
 }
 
 func Test_start_has_filename_arg_with_last(t *testing.T) {
@@ -181,7 +181,7 @@ func Test_start_has_task_filename_v1alpha1(t *testing.T) {
 		t.Errorf("Not expecting an error, but got %s", err.Error())
 	}
 
-	expected := "Taskrun started: \n\nIn order to track the taskrun progress run:\ntkn taskrun logs  -f -n ns\n"
+	expected := "TaskRun started: \n\nIn order to track the TaskRun progress run:\ntkn taskrun logs  -f -n ns\n"
 	test.AssertOutput(t, expected, got)
 }
 
@@ -233,7 +233,7 @@ func Test_start_has_task_filename_v1beta1(t *testing.T) {
 		t.Errorf("Not expecting an error, but got %s", err.Error())
 	}
 
-	expected := "Taskrun started: \n\nIn order to track the taskrun progress run:\ntkn taskrun logs  -f -n ns\n"
+	expected := "TaskRun started: \n\nIn order to track the TaskRun progress run:\ntkn taskrun logs  -f -n ns\n"
 	test.AssertOutput(t, expected, got)
 }
 
@@ -305,7 +305,7 @@ func Test_start_task_not_found(t *testing.T) {
 	p := &test.Params{Tekton: cs.Pipeline, Kube: cs.Kube, Dynamic: dc}
 	task := Command(p)
 	got, _ := test.ExecuteCommand(task, "start", "task-2", "-n", "ns")
-	expected := "Error: task name task-2 does not exist in namespace ns\n"
+	expected := "Error: Task name task-2 does not exist in namespace ns\n"
 	test.AssertOutput(t, expected, got)
 }
 
@@ -387,7 +387,7 @@ func Test_start_task_not_found_v1beta1(t *testing.T) {
 	p := &test.Params{Tekton: cs.Pipeline, Kube: cs.Kube, Dynamic: dc}
 	task := Command(p)
 	got, _ := test.ExecuteCommand(task, "start", "task-2", "-n", "ns")
-	expected := "Error: task name task-2 does not exist in namespace ns\n"
+	expected := "Error: Task name task-2 does not exist in namespace ns\n"
 	test.AssertOutput(t, expected, got)
 }
 
@@ -445,7 +445,7 @@ func Test_start_task(t *testing.T) {
 		"-s=svc1",
 		"-n=ns")
 
-	expected := "Taskrun started: \n\nIn order to track the taskrun progress run:\ntkn taskrun logs  -f -n ns\n"
+	expected := "TaskRun started: \n\nIn order to track the TaskRun progress run:\ntkn taskrun logs  -f -n ns\n"
 	test.AssertOutput(t, expected, got)
 	clients, _ := p.Clients()
 	tr, err := trlist.TaskRuns(clients, v1.ListOptions{}, "ns")
@@ -587,7 +587,7 @@ func Test_start_task_v1beta1_context(t *testing.T) {
 		"-s=svc1",
 		"-n=ns")
 
-	gcExpected := "Taskrun started: \n\nIn order to track the taskrun progress run:\ntkn taskrun --context=NinjaRabbit logs  -f -n ns\n"
+	gcExpected := "TaskRun started: \n\nIn order to track the TaskRun progress run:\ntkn taskrun --context=NinjaRabbit logs  -f -n ns\n"
 	test.AssertOutput(t, gcExpected, gotConfig)
 
 }
@@ -682,7 +682,7 @@ func Test_start_task_v1beta1(t *testing.T) {
 		"-s=svc1",
 		"-n=ns")
 
-	expected := "Taskrun started: \n\nIn order to track the taskrun progress run:\ntkn taskrun logs  -f -n ns\n"
+	expected := "TaskRun started: \n\nIn order to track the TaskRun progress run:\ntkn taskrun logs  -f -n ns\n"
 	test.AssertOutput(t, expected, got)
 	clients, _ := p.Clients()
 	tr, err := trlist.TaskRuns(clients, v1.ListOptions{}, "ns")
@@ -804,7 +804,7 @@ func Test_start_task_last(t *testing.T) {
 		"--last",
 		"-n=ns")
 
-	expected := "Taskrun started: random\n\nIn order to track the taskrun progress run:\ntkn taskrun logs random -f -n ns\n"
+	expected := "TaskRun started: random\n\nIn order to track the TaskRun progress run:\ntkn taskrun logs random -f -n ns\n"
 	test.AssertOutput(t, expected, got)
 	gotTR, err := traction.Get(clients, "random", metav1.GetOptions{}, "ns")
 	if err != nil {
@@ -998,7 +998,7 @@ func Test_start_task_last_v1beta1(t *testing.T) {
 		"--last",
 		"-n=ns")
 
-	expected := "Taskrun started: random\n\nIn order to track the taskrun progress run:\ntkn taskrun logs random -f -n ns\n"
+	expected := "TaskRun started: random\n\nIn order to track the TaskRun progress run:\ntkn taskrun logs random -f -n ns\n"
 	test.AssertOutput(t, expected, got)
 	gotTR, err := traction.Get(clients, "random", metav1.GetOptions{}, "ns")
 	if err != nil {
@@ -1113,7 +1113,7 @@ func Test_start_use_taskrun(t *testing.T) {
 		"--use-taskrun", "camper",
 		"-n=ns")
 
-	expected := "Taskrun started: random\n\nIn order to track the taskrun progress run:\ntkn taskrun logs random -f -n ns\n"
+	expected := "TaskRun started: random\n\nIn order to track the TaskRun progress run:\ntkn taskrun logs random -f -n ns\n"
 	test.AssertOutput(t, expected, got)
 	clients, _ := p.Clients()
 	tr, err := traction.Get(clients, "random", metav1.GetOptions{}, "ns")
@@ -1252,7 +1252,7 @@ func Test_start_use_taskrun_v1beta1(t *testing.T) {
 		"--use-taskrun", "camper",
 		"-n=ns")
 
-	expected := "Taskrun started: random\n\nIn order to track the taskrun progress run:\ntkn taskrun logs random -f -n ns\n"
+	expected := "TaskRun started: random\n\nIn order to track the TaskRun progress run:\ntkn taskrun logs random -f -n ns\n"
 	test.AssertOutput(t, expected, got)
 	clients, _ := p.Clients()
 	tr, err := traction.Get(clients, "random", metav1.GetOptions{}, "ns")
@@ -1335,7 +1335,7 @@ func Test_start_task_last_generate_name(t *testing.T) {
 		"--last",
 		"-n=ns")
 
-	expected := "Taskrun started: random\n\nIn order to track the taskrun progress run:\ntkn taskrun logs random -f -n ns\n"
+	expected := "TaskRun started: random\n\nIn order to track the TaskRun progress run:\ntkn taskrun logs random -f -n ns\n"
 	test.AssertOutput(t, expected, got)
 	clients, _ := p.Clients()
 	tr, err := traction.Get(clients, "random", metav1.GetOptions{}, "ns")
@@ -1503,7 +1503,7 @@ func Test_start_task_last_generate_name_v1beta1(t *testing.T) {
 		"--last",
 		"-n=ns")
 
-	expected := "Taskrun started: random\n\nIn order to track the taskrun progress run:\ntkn taskrun logs random -f -n ns\n"
+	expected := "TaskRun started: random\n\nIn order to track the TaskRun progress run:\ntkn taskrun logs random -f -n ns\n"
 	test.AssertOutput(t, expected, got)
 	clients, _ := p.Clients()
 	tr, err := traction.Get(clients, "random", metav1.GetOptions{}, "ns")
@@ -1584,7 +1584,7 @@ func Test_start_task_last_with_prefix_name(t *testing.T) {
 		"--prefix-name=mytrname",
 	)
 
-	expected := "Taskrun started: random\n\nIn order to track the taskrun progress run:\ntkn taskrun logs random -f -n ns\n"
+	expected := "TaskRun started: random\n\nIn order to track the TaskRun progress run:\ntkn taskrun logs random -f -n ns\n"
 	test.AssertOutput(t, expected, got)
 	clients, _ := p.Clients()
 	tr, err := traction.Get(clients, "random", metav1.GetOptions{}, "ns")
@@ -1751,7 +1751,7 @@ func Test_start_task_last_with_prefix_name_v1beta1(t *testing.T) {
 		"--prefix-name=mytrname",
 	)
 
-	expected := "Taskrun started: random\n\nIn order to track the taskrun progress run:\ntkn taskrun logs random -f -n ns\n"
+	expected := "TaskRun started: random\n\nIn order to track the TaskRun progress run:\ntkn taskrun logs random -f -n ns\n"
 	test.AssertOutput(t, expected, got)
 	clients, _ := p.Clients()
 	tr, err := traction.Get(clients, "random", metav1.GetOptions{}, "ns")
@@ -1831,7 +1831,7 @@ func Test_start_task_with_prefix_name(t *testing.T) {
 		"--last",
 	)
 
-	expected := "Taskrun started: random\n\nIn order to track the taskrun progress run:\ntkn taskrun logs random -f -n ns\n"
+	expected := "TaskRun started: random\n\nIn order to track the TaskRun progress run:\ntkn taskrun logs random -f -n ns\n"
 	test.AssertOutput(t, expected, got)
 
 	clients, _ := p.Clients()
@@ -1998,7 +1998,7 @@ func Test_start_task_with_prefix_name_v1beta1(t *testing.T) {
 		"--last",
 	)
 
-	expected := "Taskrun started: random\n\nIn order to track the taskrun progress run:\ntkn taskrun logs random -f -n ns\n"
+	expected := "TaskRun started: random\n\nIn order to track the TaskRun progress run:\ntkn taskrun logs random -f -n ns\n"
 	test.AssertOutput(t, expected, got)
 
 	clients, _ := p.Clients()
@@ -2079,7 +2079,7 @@ func Test_start_task_last_with_inputs(t *testing.T) {
 		"-n=ns",
 		"--last")
 
-	expected := "Taskrun started: random\n\nIn order to track the taskrun progress run:\ntkn taskrun logs random -f -n ns\n"
+	expected := "TaskRun started: random\n\nIn order to track the TaskRun progress run:\ntkn taskrun logs random -f -n ns\n"
 	test.AssertOutput(t, expected, got)
 
 	clients, _ := p.Clients()
@@ -2274,7 +2274,7 @@ func Test_start_task_last_with_inputs_v1beta1(t *testing.T) {
 		"-n=ns",
 		"--last")
 
-	expected := "Taskrun started: random\n\nIn order to track the taskrun progress run:\ntkn taskrun logs random -f -n ns\n"
+	expected := "TaskRun started: random\n\nIn order to track the TaskRun progress run:\ntkn taskrun logs random -f -n ns\n"
 	test.AssertOutput(t, expected, got)
 
 	clients, _ := p.Clients()
@@ -3360,7 +3360,7 @@ func Test_start_task_allkindparam(t *testing.T) {
 		"-s=svc1",
 		"-n=ns")
 
-	expected := "Taskrun started: \n\nIn order to track the taskrun progress run:\ntkn taskrun logs  -f -n ns\n"
+	expected := "TaskRun started: \n\nIn order to track the TaskRun progress run:\ntkn taskrun logs  -f -n ns\n"
 	test.AssertOutput(t, expected, got)
 	clients, _ := p.Clients()
 	tr, err := trlist.TaskRuns(clients, metav1.ListOptions{}, "ns")
@@ -3503,7 +3503,7 @@ func Test_start_task_allkindparam_v1beta1(t *testing.T) {
 		"-s=svc1",
 		"-n=ns")
 
-	expected := "Taskrun started: \n\nIn order to track the taskrun progress run:\ntkn taskrun logs  -f -n ns\n"
+	expected := "TaskRun started: \n\nIn order to track the TaskRun progress run:\ntkn taskrun logs  -f -n ns\n"
 	test.AssertOutput(t, expected, got)
 	clients, _ := p.Clients()
 	tr, err := trlist.TaskRuns(clients, metav1.ListOptions{}, "ns")

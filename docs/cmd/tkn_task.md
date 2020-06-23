@@ -1,12 +1,12 @@
 ## tkn task
 
-Manage tasks
+Manage Tasks
 
 ***Aliases**: t,tasks*
 
 ### Synopsis
 
-Manage tasks
+Manage Tasks
 
 ### Options
 
@@ -21,9 +21,9 @@ Manage tasks
 ### SEE ALSO
 
 * [tkn](tkn.md)	 - CLI for tekton pipelines
-* [tkn task delete](tkn_task_delete.md)	 - Delete task resources in a namespace
-* [tkn task describe](tkn_task_describe.md)	 - Describes a task in a namespace
-* [tkn task list](tkn_task_list.md)	 - Lists tasks in a namespace
-* [tkn task logs](tkn_task_logs.md)	 - Show task logs
-* [tkn task start](tkn_task_start.md)	 - Start tasks
+* [tkn task delete](tkn_task_delete.md)	 - Delete Tasks in a namespace
+* [tkn task describe](tkn_task_describe.md)	 - Describe a Task in a namespace
+* [tkn task list](tkn_task_list.md)	 - Lists Tasks in a namespace
+* [tkn task logs](tkn_task_logs.md)	 - Show Task logs
+* [tkn task start](tkn_task_start.md)	 - Start Tasks
 
