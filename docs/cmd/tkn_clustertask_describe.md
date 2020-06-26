@@ -1,6 +1,6 @@
 ## tkn clustertask describe
 
-Describes a clustertask
+Describe a ClusterTask
 
 ***Aliases**: desc*
 
@@ -12,7 +12,7 @@ tkn clustertask describe
 
 ### Synopsis
 
-Describes a clustertask
+Describe a ClusterTask
 
 ### Examples
 
@@ -44,5 +44,5 @@ or
 
 ### SEE ALSO
 
-* [tkn clustertask](tkn_clustertask.md)	 - Manage clustertasks
+* [tkn clustertask](tkn_clustertask.md)	 - Manage ClusterTasks
 

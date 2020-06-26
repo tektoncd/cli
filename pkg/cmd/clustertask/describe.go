@@ -16,7 +16,6 @@ package clustertask
 
 import (
 	"fmt"
-	"os"
 	"sort"
 	"text/tabwriter"
 	"text/template"
@@ -128,7 +127,7 @@ or
 	c := &cobra.Command{
 		Use:     "describe",
 		Aliases: []string{"desc"},
-		Short:   "Describes a clustertask",
+		Short:   "Describe a ClusterTask",
 		Example: eg,
 		Annotations: map[string]string{
 			"commandType": "main",
@@ -142,8 +141,7 @@ or
 
 			output, err := cmd.LocalFlags().GetString("output")
 			if err != nil {
-				fmt.Fprint(os.Stderr, "Error: output option not set properly \n")
-				return err
+				return fmt.Errorf("output option not set properly: %v", err)
 			}
 
 			if len(args) == 0 {
@@ -177,8 +175,7 @@ func printClusterTaskDescription(s *cli.Stream, p cli.Params, tname string) erro
 
 	ct, err := clustertask.Get(cs, tname, metav1.GetOptions{})
 	if err != nil {
-		fmt.Fprintf(s.Err, "failed to get clustertask %s\n", tname)
-		return err
+		return fmt.Errorf("failed to get ClusterTask %s", tname)
 	}
 
 	if ct.Spec.Resources != nil {
@@ -191,8 +188,7 @@ func printClusterTaskDescription(s *cli.Stream, p cli.Params, tname string) erro
 	}
 	taskRuns, err := list.TaskRuns(cs, opts, p.Namespace())
 	if err != nil {
-		fmt.Fprintf(s.Err, "failed to get taskruns for clustertask %s \n", tname)
-		return err
+		return fmt.Errorf("failed to get TaskRuns for ClusterTask %s", tname)
 	}
 
 	// this is required as the same label is getting added for both task and ClusterTask
@@ -223,8 +219,7 @@ func printClusterTaskDescription(s *cli.Stream, p cli.Params, tname string) erro
 	t := template.Must(template.New("Describe ClusterTask").Funcs(funcMap).Parse(describeTemplate))
 	err = t.Execute(w, data)
 	if err != nil {
-		fmt.Fprintf(s.Err, "Failed to execute template \n")
-		return err
+		return fmt.Errorf("failed to execute template")
 	}
 	return nil
 }
@@ -256,7 +251,7 @@ func askClusterTaskName(opts *options.DescribeOptions, p cli.Params) error {
 		return err
 	}
 	if len(clusterTaskNames) == 0 {
-		return fmt.Errorf("no clustertasks found")
+		return fmt.Errorf("no ClusterTasks found")
 	}
 
 	err = opts.Ask(options.ResourceNameClusterTask, clusterTaskNames)

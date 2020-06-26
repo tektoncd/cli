@@ -132,6 +132,6 @@ func TestTaskrunLatest_no_run(t *testing.T) {
 		t.Errorf("Expected error, got nil")
 	}
 
-	expected := "no taskruns related to Task task found in namespace ns"
+	expected := "no TaskRuns related to Task task found in namespace ns"
 	test.AssertOutput(t, expected, err.Error())
 }

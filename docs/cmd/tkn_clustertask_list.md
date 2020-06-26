@@ -1,6 +1,6 @@
 ## tkn clustertask list
 
-Lists clustertasks in a namespace
+Lists ClusterTasks
 
 ***Aliases**: ls*
 
@@ -12,7 +12,7 @@ tkn clustertask list
 
 ### Synopsis
 
-Lists clustertasks in a namespace
+Lists ClusterTasks
 
 ### Options
 
@@ -33,5 +33,5 @@ Lists clustertasks in a namespace
 
 ### SEE ALSO
 
-* [tkn clustertask](tkn_clustertask.md)	 - Manage clustertasks
+* [tkn clustertask](tkn_clustertask.md)	 - Manage ClusterTasks
 

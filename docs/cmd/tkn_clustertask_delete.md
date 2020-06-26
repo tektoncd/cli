@@ -1,6 +1,6 @@
 ## tkn clustertask delete
 
-Delete clustertask resources in a cluster
+Delete ClusterTasks in a cluster
 
 ***Aliases**: rm*
 
@@ -12,7 +12,7 @@ tkn clustertask delete
 
 ### Synopsis
 
-Delete clustertask resources in a cluster
+Delete ClusterTasks in a cluster
 
 ### Examples
 
@@ -28,7 +28,7 @@ or
 ### Options
 
 ```
-      --all                           Delete all clustertasks (default: false)
+      --all                           Delete all ClusterTasks (default: false)
       --allow-missing-template-keys   If true, ignore any errors in templates when a field or map key is missing in the template. Only applies to golang and jsonpath output formats. (default true)
   -f, --force                         Whether to force deletion (default: false)
   -h, --help                          help for delete
@@ -47,5 +47,5 @@ or
 
 ### SEE ALSO
 
-* [tkn clustertask](tkn_clustertask.md)	 - Manage clustertasks
+* [tkn clustertask](tkn_clustertask.md)	 - Manage ClusterTasks
 

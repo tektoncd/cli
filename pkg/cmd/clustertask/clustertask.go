@@ -24,7 +24,7 @@ func Command(p cli.Params) *cobra.Command {
 	cmd := &cobra.Command{
 		Use:     "clustertask",
 		Aliases: []string{"ct", "clustertasks"},
-		Short:   "Manage clustertasks",
+		Short:   "Manage ClusterTasks",
 		Annotations: map[string]string{
 			"commandType": "main",
 		},

@@ -2312,7 +2312,7 @@ func Test_start_task_last_with_inputs_v1beta1(t *testing.T) {
 	test.AssertOutput(t, "svc1", tr.Spec.ServiceAccountName)
 }
 
-func Test_start_task_last_without_pipelinerun(t *testing.T) {
+func Test_start_task_last_without_taskrun(t *testing.T) {
 	tasks := []*v1alpha1.Task{
 		tb.Task("task-1",
 			tb.TaskNamespace("ns"),
@@ -2356,11 +2356,11 @@ func Test_start_task_last_without_pipelinerun(t *testing.T) {
 
 	task := Command(p)
 	got, _ := test.ExecuteCommand(task, "start", "task-1", "--last", "-n", "ns")
-	expected := "Error: no taskruns related to Task task-1 found in namespace ns\n"
+	expected := "Error: no TaskRuns related to Task task-1 found in namespace ns\n"
 	test.AssertOutput(t, expected, got)
 }
 
-func Test_start_task_last_without_pipelinerun_v1beta1(t *testing.T) {
+func Test_start_task_last_without_taskrun_v1beta1(t *testing.T) {
 	tasks := []*v1beta1.Task{
 		{
 			ObjectMeta: v1.ObjectMeta{
@@ -2448,7 +2448,7 @@ func Test_start_task_last_without_pipelinerun_v1beta1(t *testing.T) {
 
 	task := Command(p)
 	got, _ := test.ExecuteCommand(task, "start", "task-1", "--last", "-n", "ns")
-	expected := "Error: no taskruns related to Task task-1 found in namespace ns\n"
+	expected := "Error: no TaskRuns related to Task task-1 found in namespace ns\n"
 	test.AssertOutput(t, expected, got)
 }
 

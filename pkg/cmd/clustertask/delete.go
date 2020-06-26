@@ -45,7 +45,7 @@ or
 	c := &cobra.Command{
 		Use:          "delete",
 		Aliases:      []string{"rm"},
-		Short:        "Delete clustertask resources in a cluster",
+		Short:        "Delete ClusterTasks in a cluster",
 		Example:      eg,
 		Args:         cobra.MinimumNArgs(0),
 		SilenceUsage: true,
@@ -68,7 +68,7 @@ or
 	}
 	f.AddFlags(c)
 	c.Flags().BoolVarP(&opts.ForceDelete, "force", "f", false, "Whether to force deletion (default: false)")
-	c.Flags().BoolVarP(&opts.DeleteAll, "all", "", false, "Delete all clustertasks (default: false)")
+	c.Flags().BoolVarP(&opts.DeleteAll, "all", "", false, "Delete all ClusterTasks (default: false)")
 	c.Flags().BoolVarP(&opts.DeleteRelated, "trs", "", false, "Whether to delete ClusterTask(s) and related resources (TaskRuns) (default: false)")
 	_ = c.MarkZshCompPositionalArgumentCustom(1, "__tkn_get_clustertasks")
 	return c
