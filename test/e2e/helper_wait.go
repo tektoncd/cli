@@ -67,7 +67,7 @@ func WaitForTaskRunToBeStarted(c *Clients, trname string, namespace string) {
 func WaitForPipelineRunToStart(c *Clients, prname string, namespace string) {
 
 	log.Printf("Waiting for Pipelinerun %s in namespace %s to be started", prname, namespace)
-	if err := WaitForPipelineRunState(c, prname, timeout, func(pr *v1alpha1.PipelineRun) (bool, error) {
+	if err := WaitForPipelineRunState(c, prname, Apitimeout, func(pr *v1alpha1.PipelineRun) (bool, error) {
 		c := pr.Status.GetCondition(apis.ConditionSucceeded)
 		if c != nil {
 			if c.Status == corev1.ConditionTrue || c.Status == corev1.ConditionFalse {
@@ -85,7 +85,7 @@ func WaitForPipelineRunToStart(c *Clients, prname string, namespace string) {
 //WaitForPipelineRunToComplete Wait for Pipeline Run to complete
 func WaitForPipelineRunToComplete(c *Clients, prname string, namespace string) {
 	log.Printf("Waiting for Pipelinerun %s in namespace %s to be started", prname, namespace)
-	if err := WaitForPipelineRunState(c, prname, timeout, func(pr *v1alpha1.PipelineRun) (bool, error) {
+	if err := WaitForPipelineRunState(c, prname, Apitimeout, func(pr *v1alpha1.PipelineRun) (bool, error) {
 		c := pr.Status.GetCondition(apis.ConditionSucceeded)
 		if c != nil {
 			if c.Status == corev1.ConditionTrue || c.Status == corev1.ConditionFalse {
@@ -137,7 +137,7 @@ func WaitForPipelineRunToComplete(c *Clients, prname string, namespace string) {
 	}
 
 	log.Printf("Waiting for PipelineRun %s in namespace %s to be Completed", prname, namespace)
-	if err := WaitForPipelineRunState(c, prname, timeout, func(pr *v1alpha1.PipelineRun) (bool, error) {
+	if err := WaitForPipelineRunState(c, prname, Apitimeout, func(pr *v1alpha1.PipelineRun) (bool, error) {
 		c := pr.Status.GetCondition(apis.ConditionSucceeded)
 		if c != nil {
 			if c.Status == corev1.ConditionTrue || c.Status == corev1.ConditionFalse {

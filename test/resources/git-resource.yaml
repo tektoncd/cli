@@ -13,17 +13,13 @@
 # limitations under the License.
 
 apiVersion: tekton.dev/v1alpha1
-kind: Task
+kind: PipelineResource
 metadata:
-  name: read-task
+  name: skaffold-git
 spec:
-  inputs:
-    params:
-    - name: FILENAME
-    resources:
-    - name: source
-      type: git
-  steps:
-  - name: read-file-content
-    image: ubuntu
-    script: 'cat $(inputs.resources.source.path)/$(inputs.params.FILENAME)'
+  type: git
+  params:
+  - name: revision
+    value: master
+  - name: url
+    value: https://github.com/GoogleContainerTools/skaffold
