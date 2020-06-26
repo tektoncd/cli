@@ -44,7 +44,7 @@ func dir() string {
 	return path.Join(path.Dir(b), "..", "resources")
 }
 
-func TestResourcePath(elem ...string) string {
+func ResourcePath(elem ...string) string {
 	tmp := dir()
 	path := append([]string{tmp}, elem...)
 	return filepath.Join(path...)

@@ -1,0 +1,2 @@
+NAME       TYPE         DETAILS
+my-cloud   cloudEvent   targetURI: http://localhost:8080

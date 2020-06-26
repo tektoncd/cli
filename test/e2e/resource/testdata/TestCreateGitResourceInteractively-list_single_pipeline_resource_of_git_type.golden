@@ -1,0 +1,2 @@
+NAME           TYPE   DETAILS
+skaffold-git   git    url: https://github.com/tektoncd/cli

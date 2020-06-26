@@ -51,7 +51,7 @@ func WaitForTaskRunState(c *Clients, name string, inState TaskRunStateFn, desc s
 	_, span := trace.StartSpan(context.Background(), metricName)
 	defer span.End()
 
-	return wait.PollImmediate(interval, timeout, func() (bool, error) {
+	return wait.PollImmediate(interval, Apitimeout, func() (bool, error) {
 		r, err := c.TaskRunClient.Get(name, metav1.GetOptions{})
 		if err != nil {
 			return true, err
@@ -69,7 +69,7 @@ func WaitForPodState(c *Clients, name string, namespace string, inState func(r *
 	_, span := trace.StartSpan(context.Background(), metricName)
 	defer span.End()
 
-	return wait.PollImmediate(interval, timeout, func() (bool, error) {
+	return wait.PollImmediate(interval, Apitimeout, func() (bool, error) {
 		r, err := c.KubeClient.Kube.CoreV1().Pods(namespace).Get(name, metav1.GetOptions{})
 		if err != nil {
 			return true, err
@@ -90,7 +90,7 @@ func WaitForPodStateKube(c *knativetest.KubeClient, namespace string, inState Po
 		_, span := trace.StartSpan(context.Background(), metricName)
 		defer span.End()
 
-		err1 := wait.PollImmediate(interval, timeout, func() (bool, error) {
+		err1 := wait.PollImmediate(interval, Apitimeout, func() (bool, error) {
 			fmt.Println("v.Name", v.Name)
 			r, err := c.Kube.CoreV1().Pods(namespace).Get(v.Name, metav1.GetOptions{})
 			if r.Status.Phase == "Running" || r.Status.Phase == "Succeeded" && err != nil {
@@ -177,7 +177,7 @@ func WaitForServiceExternalIPState(c *Clients, namespace, name string, inState f
 	_, span := trace.StartSpan(context.Background(), metricName)
 	defer span.End()
 
-	return wait.PollImmediate(interval, timeout, func() (bool, error) {
+	return wait.PollImmediate(interval, Apitimeout, func() (bool, error) {
 		r, err := c.KubeClient.Kube.CoreV1().Services(namespace).Get(name, metav1.GetOptions{})
 		if err != nil {
 			return true, err

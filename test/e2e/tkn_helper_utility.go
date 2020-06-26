@@ -45,8 +45,8 @@ import (
 var initMetrics sync.Once
 
 const (
-	interval = 1 * time.Second
-	timeout  = 10 * time.Minute
+	interval   = 1 * time.Second
+	Apitimeout = 10 * time.Minute
 )
 
 func Setup(t *testing.T) (*Clients, string) {
@@ -163,7 +163,7 @@ func VerifyServiceAccountExistence(namespace string, kubeClient *knativetest.Kub
 	defaultSA := "default"
 	log.Printf("Verify SA %q is created in namespace %q", defaultSA, namespace)
 
-	if err := wait.PollImmediate(interval, timeout, func() (bool, error) {
+	if err := wait.PollImmediate(interval, Apitimeout, func() (bool, error) {
 		_, err := kubeClient.Kube.CoreV1().ServiceAccounts(namespace).Get(defaultSA, metav1.GetOptions{})
 		if err != nil && errors.IsNotFound(err) {
 			return false, nil
@@ -178,7 +178,7 @@ func VerifyServiceAccountExistenceForSecrets(namespace string, kubeClient *knati
 	defaultSA := sa
 	log.Printf("Verify SA %q is created in namespace %q", defaultSA, namespace)
 
-	if err := wait.PollImmediate(interval, timeout, func() (bool, error) {
+	if err := wait.PollImmediate(interval, Apitimeout, func() (bool, error) {
 		_, err := kubeClient.Kube.CoreV1().ServiceAccounts(namespace).Get(defaultSA, metav1.GetOptions{})
 		if err != nil && errors.IsNotFound(err) {
 			return false, nil

@@ -17,13 +17,10 @@ package task
 
 import (
 	"testing"
-	"time"
 
 	"github.com/AlecAivazis/survey/v2/terminal"
 	"github.com/Netflix/go-expect"
 	"github.com/tektoncd/cli/test/e2e"
-	"github.com/tektoncd/pipeline/pkg/apis/pipeline/v1alpha1"
-	tb "github.com/tektoncd/pipeline/test/builder"
 	"gotest.tools/v3/assert"
 	is "gotest.tools/v3/assert/cmp"
 	"gotest.tools/v3/icmd"
@@ -40,28 +37,25 @@ func TestTaskStartE2E(t *testing.T) {
 	knativetest.CleanupOnInterrupt(func() { e2e.TearDown(t, c, namespace) }, t.Logf)
 	defer e2e.TearDown(t, c, namespace)
 
+	kubectl := e2e.NewKubectl(namespace)
 	tkn, err := e2e.NewTknRunner(namespace)
 	if err != nil {
 		t.Fatalf("Error creating tknRunner %+v", err)
 	}
 
-	t.Logf("Creating task in namespace " + namespace)
-	CreateResource(t, "read-file.yaml", namespace)
+	t.Logf("Creating task in namespace: %s ", namespace)
+	e2e.Assert(t, kubectl.Create(e2e.ResourcePath("read-file.yaml")), icmd.Success)
 
-	t.Logf("Creating Git PipelineResource")
-	if _, err := c.PipelineResourceClient.Create(getGitResource(tePipelineGitResourceName, namespace)); err != nil {
-		t.Fatalf("Failed to create Pipeline Resource `%s`: %s", tePipelineGitResourceName, err)
-	}
+	t.Logf("Creating git pipeline resource in namespace: %s", namespace)
+	e2e.Assert(t, kubectl.Create(e2e.ResourcePath("git-resource.yaml")), icmd.Success)
 
 	t.Run("Get list of Tasks from namespace  "+namespace, func(t *testing.T) {
 		res := tkn.Run("task", "list")
-
 		expected := e2e.ListAllTasksOutput(t, c, map[int]interface{}{
 			0: &e2e.TaskData{
 				Name: "read-task",
 			},
 		})
-
 		res.Assert(t, icmd.Expected{
 			ExitCode: 0,
 			Err:      icmd.None,
@@ -82,7 +76,6 @@ func TestTaskStartE2E(t *testing.T) {
 		expected := e2e.ProcessString(`(TaskRun started: {{.Taskrun}}
 Waiting for logs to be available...
 .*)`, vars)
-
 		res.Assert(t, icmd.Expected{
 			ExitCode: 0,
 			Err:      icmd.None,
@@ -92,14 +85,12 @@ Waiting for logs to be available...
 
 	t.Run("Get list of TaskRuns from namespace  "+namespace, func(t *testing.T) {
 		res := tkn.Run("taskrun", "list")
-
 		expected := e2e.ListAllTaskRunsOutput(t, c, false, map[int]interface{}{
 			0: &e2e.TaskRunData{
 				Name:   "read-task-run-",
 				Status: "Succeeded",
 			},
 		})
-
 		res.Assert(t, icmd.Expected{
 			ExitCode: 0,
 			Err:      icmd.None,
@@ -108,8 +99,8 @@ Waiting for logs to be available...
 	})
 
 	t.Run("Validate interactive task logs, with  follow mode (-f) ", func(t *testing.T) {
-		e2e.RunInteractiveTests(t, namespace, tkn.Path(), &e2e.Prompt{
-			CmdArgs: []string{"task", "logs", "-f", "-n", namespace},
+		tkn.RunInteractiveTests(t, &e2e.Prompt{
+			CmdArgs: []string{"task", "logs", "-f"},
 			Procedure: func(c *expect.Console) error {
 				if _, err := c.ExpectString("Select task:"); err != nil {
 					return err
@@ -131,20 +122,4 @@ Waiting for logs to be available...
 				return nil
 			}})
 	})
-}
-
-func CreateResource(t *testing.T, resource, namespace string) {
-	t.Helper()
-	kubectl := e2e.NewKubectl(namespace)
-	res := kubectl.Run("apply", "-f", e2e.TestResourcePath(resource))
-	time.Sleep(1 * time.Second)
-	e2e.Assert(t, res, icmd.Success)
-}
-
-func getGitResource(rname string, namespace string) *v1alpha1.PipelineResource {
-	return tb.PipelineResource(rname, tb.PipelineResourceNamespace(namespace), tb.PipelineResourceSpec(
-		v1alpha1.PipelineResourceTypeGit,
-		tb.PipelineResourceSpecParam("url", "https://github.com/GoogleContainerTools/skaffold"),
-		tb.PipelineResourceSpecParam("revision", "master"),
-	))
 }
