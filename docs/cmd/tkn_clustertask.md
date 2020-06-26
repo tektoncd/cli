@@ -1,12 +1,12 @@
 ## tkn clustertask
 
-Manage clustertasks
+Manage ClusterTasks
 
 ***Aliases**: ct,clustertasks*
 
 ### Synopsis
 
-Manage clustertasks
+Manage ClusterTasks
 
 ### Options
 
@@ -20,8 +20,8 @@ Manage clustertasks
 ### SEE ALSO
 
 * [tkn](tkn.md)	 - CLI for tekton pipelines
-* [tkn clustertask delete](tkn_clustertask_delete.md)	 - Delete clustertask resources in a cluster
-* [tkn clustertask describe](tkn_clustertask_describe.md)	 - Describes a clustertask
-* [tkn clustertask list](tkn_clustertask_list.md)	 - Lists clustertasks in a namespace
-* [tkn clustertask start](tkn_clustertask_start.md)	 - Start clustertasks
+* [tkn clustertask delete](tkn_clustertask_delete.md)	 - Delete ClusterTasks in a cluster
+* [tkn clustertask describe](tkn_clustertask_describe.md)	 - Describe a ClusterTask
+* [tkn clustertask list](tkn_clustertask_list.md)	 - Lists ClusterTasks
+* [tkn clustertask start](tkn_clustertask_start.md)	 - Start ClusterTasks
 

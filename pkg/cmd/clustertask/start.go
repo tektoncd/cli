@@ -39,8 +39,8 @@ import (
 )
 
 var (
-	errNoClusterTask      = errors.New("missing clustertask name")
-	errInvalidClusterTask = "clustertask name %s does not exist"
+	errNoClusterTask      = errors.New("missing ClusterTask name")
+	errInvalidClusterTask = "ClusterTask name %s does not exist"
 )
 
 const invalidResource = "invalid input format for resource parameter: "
@@ -103,8 +103,8 @@ like cat,foo,bar
 `
 
 	c := &cobra.Command{
-		Use:   "start clustertask [RESOURCES...] [PARAMS...] [SERVICEACCOUNT]",
-		Short: "Start clustertasks",
+		Use:   "start",
+		Short: "Start ClusterTasks",
 		Annotations: map[string]string{
 			"commandType": "main",
 		},
@@ -138,12 +138,12 @@ like cat,foo,bar
 	c.Flags().StringArrayVarP(&opt.Params, "param", "p", []string{}, "pass the param as key=value for string type, or key=value1,value2,... for array type")
 	c.Flags().StringVarP(&opt.ServiceAccountName, "serviceaccount", "s", "", "pass the serviceaccount name")
 	flags.AddShellCompletion(c.Flags().Lookup("serviceaccount"), "__kubectl_get_serviceaccount")
-	c.Flags().BoolVarP(&opt.Last, "last", "L", false, "re-run the clustertask using last taskrun values")
+	c.Flags().BoolVarP(&opt.Last, "last", "L", false, "re-run the ClusterTask using last TaskRun values")
 	c.Flags().StringSliceVarP(&opt.Labels, "labels", "l", []string{}, "pass labels as label=value.")
-	c.Flags().BoolVarP(&opt.ShowLog, "showlog", "", false, "show logs right after starting the clustertask")
-	c.Flags().StringVar(&opt.TimeOut, "timeout", "", "timeout for taskrun")
-	c.Flags().BoolVarP(&opt.DryRun, "dry-run", "", false, "preview taskrun without running it")
-	c.Flags().StringVarP(&opt.Output, "output", "", "", "format of taskrun dry-run (yaml or json)")
+	c.Flags().BoolVarP(&opt.ShowLog, "showlog", "", false, "show logs right after starting the ClusterTask")
+	c.Flags().StringVar(&opt.TimeOut, "timeout", "", "timeout for TaskRun")
+	c.Flags().BoolVarP(&opt.DryRun, "dry-run", "", false, "preview TaskRun without running it")
+	c.Flags().StringVarP(&opt.Output, "output", "", "", "format of TaskRun dry-run (yaml or json)")
 
 	_ = c.MarkZshCompPositionalArgumentCustom(1, "__tkn_get_clustertask")
 
@@ -234,9 +234,9 @@ func startClusterTask(opt startOptions, args []string) error {
 		return err
 	}
 
-	fmt.Fprintf(opt.stream.Out, "Taskrun started: %s\n", trCreated.Name)
+	fmt.Fprintf(opt.stream.Out, "TaskRun started: %s\n", trCreated.Name)
 	if !opt.ShowLog {
-		inOrderString := "\nIn order to track the taskrun progress run:\ntkn taskrun "
+		inOrderString := "\nIn order to track the TaskRun progress run:\ntkn taskrun "
 		if opt.TektonOptions.Context != "" {
 			inOrderString += fmt.Sprintf("--context=%s ", opt.TektonOptions.Context)
 		}

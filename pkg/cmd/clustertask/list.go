@@ -16,7 +16,6 @@ package clustertask
 
 import (
 	"fmt"
-	"os"
 	"text/tabwriter"
 
 	"github.com/spf13/cobra"
@@ -30,7 +29,7 @@ import (
 )
 
 const (
-	emptyMsg = "No clustertasks found"
+	emptyMsg = "No ClusterTasks found"
 	header   = "NAME\tDESCRIPTION\tAGE"
 	body     = "%s\t%s\t%s\n"
 )
@@ -41,7 +40,7 @@ func listCommand(p cli.Params) *cobra.Command {
 	c := &cobra.Command{
 		Use:     "list",
 		Aliases: []string{"ls"},
-		Short:   "Lists clustertasks in a namespace",
+		Short:   "Lists ClusterTasks",
 		Annotations: map[string]string{
 			"commandType": "main",
 		},
@@ -49,8 +48,7 @@ func listCommand(p cli.Params) *cobra.Command {
 
 			output, err := cmd.LocalFlags().GetString("output")
 			if err != nil {
-				fmt.Fprint(os.Stderr, "Error: output option not set properly \n")
-				return err
+				return fmt.Errorf("output option not set properly: %v", err)
 			}
 
 			if output != "" {
@@ -70,7 +68,6 @@ func listCommand(p cli.Params) *cobra.Command {
 }
 
 func printClusterTaskDetails(s *cli.Stream, p cli.Params) error {
-
 	cs, err := p.Clients()
 	if err != nil {
 		return err
@@ -78,12 +75,11 @@ func printClusterTaskDetails(s *cli.Stream, p cli.Params) error {
 
 	clustertasks, err := clustertask.List(cs, metav1.ListOptions{})
 	if err != nil {
-		fmt.Fprintf(os.Stderr, "failed to list clustertasks\n")
-		return err
+		return fmt.Errorf("failed to list ClusterTasks")
 	}
 
 	if len(clustertasks.Items) == 0 {
-		fmt.Fprintln(s.Err, emptyMsg)
+		fmt.Fprint(s.Out, emptyMsg)
 		return nil
 	}
 

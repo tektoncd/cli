@@ -49,7 +49,7 @@ func TestClusterTaskList_Empty(t *testing.T) {
 		t.Errorf("Unexpected error: %v", err)
 	}
 
-	test.AssertOutput(t, emptyMsg+"\n", output)
+	test.AssertOutput(t, emptyMsg, output)
 }
 
 func TestClusterTaskListOnlyClusterTasksv1alpha1(t *testing.T) {

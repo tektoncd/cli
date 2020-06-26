@@ -284,7 +284,7 @@ func Test_ClusterTask_Start(t *testing.T) {
 			input:       seeds[0].pipelineClient,
 			inputStream: nil,
 			wantError:   true,
-			want:        "missing clustertask name",
+			want:        "missing ClusterTask name",
 		},
 		{
 			name:        "ClusterTask doesn't exist",
@@ -293,7 +293,7 @@ func Test_ClusterTask_Start(t *testing.T) {
 			input:       seeds[0].pipelineClient,
 			inputStream: nil,
 			wantError:   true,
-			want:        "clustertask name notexist does not exist",
+			want:        "ClusterTask name notexist does not exist",
 		},
 		{
 			name:        "Use --last with no taskruns",
@@ -302,7 +302,7 @@ func Test_ClusterTask_Start(t *testing.T) {
 			input:       seeds[2].pipelineClient,
 			inputStream: nil,
 			wantError:   true,
-			want:        "no taskruns related to ClusterTask clustertask-1 found in namespace ns",
+			want:        "no TaskRuns related to ClusterTask clustertask-1 found in namespace ns",
 		},
 		{
 			name: "Start clustertask",
@@ -318,7 +318,7 @@ func Test_ClusterTask_Start(t *testing.T) {
 			input:       seeds[0].pipelineClient,
 			inputStream: nil,
 			wantError:   false,
-			want:        "Taskrun started: taskrun-1\n\nIn order to track the taskrun progress run:\ntkn taskrun logs taskrun-1 -f -n ns\n",
+			want:        "TaskRun started: taskrun-1\n\nIn order to track the TaskRun progress run:\ntkn taskrun logs taskrun-1 -f -n ns\n",
 		},
 		{
 			name: "Start clustertask with different context",
@@ -335,7 +335,7 @@ func Test_ClusterTask_Start(t *testing.T) {
 			input:       seeds[3].pipelineClient,
 			inputStream: nil,
 			wantError:   false,
-			want:        "Taskrun started: \n\nIn order to track the taskrun progress run:\ntkn taskrun --context=ronaldinho logs  -f -n ns\n",
+			want:        "TaskRun started: \n\nIn order to track the TaskRun progress run:\ntkn taskrun --context=ronaldinho logs  -f -n ns\n",
 		},
 		{
 			name:        "Start with --last option",
@@ -344,7 +344,7 @@ func Test_ClusterTask_Start(t *testing.T) {
 			input:       seeds[1].pipelineClient,
 			inputStream: nil,
 			wantError:   false,
-			want:        "Taskrun started: taskrun-2\n\nIn order to track the taskrun progress run:\ntkn taskrun logs taskrun-2 -f -n ns\n",
+			want:        "TaskRun started: taskrun-2\n\nIn order to track the TaskRun progress run:\ntkn taskrun logs taskrun-2 -f -n ns\n",
 		},
 		{
 			name: "Invalid input format",
@@ -799,7 +799,7 @@ func Test_ClusterTask_Start_v1beta1(t *testing.T) {
 			input:       seeds[0].pipelineClient,
 			inputStream: nil,
 			wantError:   true,
-			want:        "missing clustertask name",
+			want:        "missing ClusterTask name",
 		},
 		{
 			name:        "ClusterTask doesn't exist",
@@ -808,7 +808,7 @@ func Test_ClusterTask_Start_v1beta1(t *testing.T) {
 			input:       seeds[0].pipelineClient,
 			inputStream: nil,
 			wantError:   true,
-			want:        "clustertask name notexist does not exist",
+			want:        "ClusterTask name notexist does not exist",
 		},
 		{
 			name:        "Use --last with no taskruns",
@@ -817,7 +817,7 @@ func Test_ClusterTask_Start_v1beta1(t *testing.T) {
 			input:       seeds[2].pipelineClient,
 			inputStream: nil,
 			wantError:   true,
-			want:        "no taskruns related to ClusterTask clustertask-1 found in namespace ns",
+			want:        "no TaskRuns related to ClusterTask clustertask-1 found in namespace ns",
 		},
 		{
 			name: "Start clustertask",
@@ -833,7 +833,7 @@ func Test_ClusterTask_Start_v1beta1(t *testing.T) {
 			input:       seeds[0].pipelineClient,
 			inputStream: nil,
 			wantError:   false,
-			want:        "Taskrun started: taskrun-1\n\nIn order to track the taskrun progress run:\ntkn taskrun logs taskrun-1 -f -n ns\n",
+			want:        "TaskRun started: taskrun-1\n\nIn order to track the TaskRun progress run:\ntkn taskrun logs taskrun-1 -f -n ns\n",
 		},
 		{
 			name:        "Start with --last option",
@@ -842,7 +842,7 @@ func Test_ClusterTask_Start_v1beta1(t *testing.T) {
 			input:       seeds[1].pipelineClient,
 			inputStream: nil,
 			wantError:   false,
-			want:        "Taskrun started: taskrun-2\n\nIn order to track the taskrun progress run:\ntkn taskrun logs taskrun-2 -f -n ns\n",
+			want:        "TaskRun started: taskrun-2\n\nIn order to track the TaskRun progress run:\ntkn taskrun logs taskrun-2 -f -n ns\n",
 		},
 		{
 			name: "Invalid input format",

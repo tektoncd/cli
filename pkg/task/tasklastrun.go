@@ -42,7 +42,7 @@ func LastRun(cs *cli.Clients, task string, ns, kind string) (*v1beta1.TaskRun, e
 	runs.Items = FilterByRef(runs.Items, kind)
 
 	if len(runs.Items) == 0 {
-		return nil, fmt.Errorf("no taskruns related to %s %s found in namespace %s", kind, task, ns)
+		return nil, fmt.Errorf("no TaskRuns related to %s %s found in namespace %s", kind, task, ns)
 	}
 
 	latest := runs.Items[0]
