@@ -15,6 +15,7 @@
 package taskrun
 
 import (
+	"errors"
 	"fmt"
 	"strings"
 	"testing"
@@ -34,7 +35,10 @@ import (
 	"gotest.tools/v3/golden"
 	corev1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
+	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/client-go/dynamic"
+	k8stest "k8s.io/client-go/testing"
 	"knative.dev/pkg/apis"
 	duckv1beta1 "knative.dev/pkg/apis/duck/v1beta1"
 )
@@ -195,6 +199,34 @@ func TestListTaskRuns(t *testing.T) {
 		t.Errorf("unable to create dynamic client: %v", err)
 	}
 
+	tdc3 := testDynamic.Options{
+		PrependReactors: []testDynamic.PrependOpt{
+			{
+				Verb:     "list",
+				Resource: "taskruns",
+				Action: func(action k8stest.Action) (bool, runtime.Object, error) {
+					fieldSelector := action.(k8stest.ListAction).GetListRestrictions().Fields.String()
+					if fieldSelector == "metadata.name=tr0-1" {
+						unstructuredTR := cb.UnstructuredTR(trs[0], version)
+						list := &unstructured.UnstructuredList{}
+						list.Items = append(list.Items, *unstructuredTR)
+						return true, list, nil
+					} else if fieldSelector == "a=b" {
+						return true, nil, errors.New("field label not supported: a")
+					}
+					return false, nil, nil
+				},
+			},
+		},
+	}
+	dc3, err := tdc3.Client(
+		cb.UnstructuredTR(trs[0], version),
+		cb.UnstructuredTR(trs[1], version),
+	)
+	if err != nil {
+		t.Errorf("unable to create dynamic client: %v", err)
+	}
+
 	tests := []struct {
 		name      string
 		command   *cobra.Command
@@ -307,6 +339,18 @@ func TestListTaskRuns(t *testing.T) {
 			command:   commandV1alpha1(t, trsMultipleNs, now, ns, version, dc2),
 			args:      []string{"list", "--all-namespaces", "--no-headers"},
 			wantError: false,
+		},
+		{
+			name:      "list taskruns by field-selector",
+			command:   commandV1alpha1(t, trs, now, ns, version, dc3),
+			args:      []string{"list", "-n", "foo", "--field-selector", "metadata.name=tr0-1"},
+			wantError: false,
+		},
+		{
+			name:      "list taskruns by field-selector negative case",
+			command:   commandV1alpha1(t, trs, now, ns, version, dc3),
+			args:      []string{"list", "-n", "foo", "--field-selector", "a=b"},
+			wantError: true,
 		},
 	}
 
@@ -589,6 +633,35 @@ func TestListTaskRuns_v1beta1(t *testing.T) {
 		t.Errorf("unable to create dynamic client: %v", err)
 	}
 
+	tdc3 := testDynamic.Options{
+		PrependReactors: []testDynamic.PrependOpt{
+			{
+				Verb:     "list",
+				Resource: "taskruns",
+				Action: func(action k8stest.Action) (bool, runtime.Object, error) {
+					fieldSelector := action.(k8stest.ListAction).GetListRestrictions().Fields.String()
+					if fieldSelector == "metadata.name!=tr0-1" {
+						unstructuredTR := cb.UnstructuredV1beta1TR(trs[1], version)
+						list := &unstructured.UnstructuredList{}
+						list.Items = append(list.Items, *unstructuredTR)
+						return true, list, nil
+					} else if fieldSelector == "a=b" {
+						errStr := "field label not supported: a"
+						return true, nil, errors.New(errStr)
+					}
+					return false, nil, nil
+				},
+			},
+		},
+	}
+	dc3, err := tdc3.Client(
+		cb.UnstructuredV1beta1TR(trs[0], version),
+		cb.UnstructuredV1beta1TR(trs[1], version),
+	)
+	if err != nil {
+		t.Errorf("unable to create dynamic client: %v", err)
+	}
+
 	tests := []struct {
 		name      string
 		command   *cobra.Command
@@ -689,6 +762,18 @@ func TestListTaskRuns_v1beta1(t *testing.T) {
 			command:   commandV1beta1(t, trsMultipleNs, now, ns, version, dc2),
 			args:      []string{"list", "--all-namespaces"},
 			wantError: false,
+		},
+		{
+			name:      "list taskruns by field-selector",
+			command:   commandV1beta1(t, trs, now, ns, version, dc3),
+			args:      []string{"list", "-n", "foo", "--field-selector", "metadata.name!=tr0-1"},
+			wantError: false,
+		},
+		{
+			name:      "list taskruns by field-selector negative case",
+			command:   commandV1beta1(t, trs, now, ns, version, dc3),
+			args:      []string{"list", "-n", "foo", "--field-selector", "a=b"},
+			wantError: true,
 		},
 	}
 

@@ -54,6 +54,7 @@ NAME	STARTED	DURATION	STATUS
 type ListOptions struct {
 	Limit         int
 	LabelSelector string
+	FieldSelector string
 	Reverse       bool
 	AllNamespaces bool
 	NoHeaders     bool
@@ -90,7 +91,7 @@ List all TaskRuns of Task 'foo' in namespace 'bar':
 				return fmt.Errorf("limit was %d but must be a positive number", opts.Limit)
 			}
 
-			trs, err := list(p, task, opts.Limit, opts.LabelSelector, opts.AllNamespaces)
+			trs, err := list(p, task, opts.Limit, opts.LabelSelector, opts.AllNamespaces, opts.FieldSelector)
 			if err != nil {
 				return fmt.Errorf("failed to list TaskRuns from namespace %s: %v", p.Namespace(), err)
 			}
@@ -137,6 +138,7 @@ List all TaskRuns of Task 'foo' in namespace 'bar':
 	f.AddFlags(c)
 	c.Flags().IntVarP(&opts.Limit, "limit", "", 0, "limit TaskRuns listed (default: return all TaskRuns)")
 	c.Flags().StringVarP(&opts.LabelSelector, "label", "", opts.LabelSelector, "A selector (label query) to filter on, supports '=', '==', and '!='")
+	c.Flags().StringVar(&opts.FieldSelector, "field-selector", opts.FieldSelector, "Selector (field query) to filter on. Supports '=', '==', and '!=' (e.g. --field-selector key1=value1,key2=value2). The server only supports a limited number of field queries per type.")
 	c.Flags().BoolVarP(&opts.Reverse, "reverse", "", opts.Reverse, "list TaskRuns in reverse order")
 	c.Flags().BoolVarP(&opts.AllNamespaces, "all-namespaces", "A", opts.AllNamespaces, "list TaskRuns from all namespaces")
 	c.Flags().BoolVarP(&opts.NoHeaders, "no-headers", "", opts.NoHeaders, "do not print column headers with output (default print column headers with output)")
@@ -155,8 +157,8 @@ func reverse(trs *v1beta1.TaskRunList) {
 	trs.Items = trItems
 }
 
-func list(p cli.Params, task string, limit int, labelselector string, allnamespaces bool) (*v1beta1.TaskRunList, error) {
-	var selector string
+func list(p cli.Params, task string, limit int, labelselector string, allnamespaces bool, fieldselector string) (*v1beta1.TaskRunList, error) {
+	var labelSelector string
 	var options v1.ListOptions
 
 	if task != "" && labelselector != "" {
@@ -164,15 +166,17 @@ func list(p cli.Params, task string, limit int, labelselector string, allnamespa
 	}
 
 	if task != "" {
-		selector = fmt.Sprintf("tekton.dev/task=%s", task)
+		labelSelector = fmt.Sprintf("tekton.dev/task=%s", task)
 	} else if labelselector != "" {
-		selector = labelselector
+		labelSelector = labelselector
 	}
 
-	if selector != "" {
-		options = v1.ListOptions{
-			LabelSelector: selector,
-		}
+	if labelSelector != "" {
+		options.LabelSelector = labelSelector
+	}
+
+	if fieldselector != "" {
+		options.FieldSelector = fieldselector
 	}
 
 	ns := p.Namespace()

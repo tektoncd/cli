@@ -98,6 +98,41 @@ Waiting for logs to be available...
 		})
 	})
 
+	t.Run("Get a Taskrun using field-selector from namespace  "+namespace, func(t *testing.T) {
+		taskRunGeneratedName := e2e.GetTaskRunListWithName(c, "read-task").Items[0].Name
+		fs := "metadata.name=" + taskRunGeneratedName
+		res := tkn.Run("taskrun", "list", "--field-selector", fs)
+
+		expected := e2e.ListAllTaskRunsOutput(t, c, false, map[int]interface{}{
+			0: &e2e.TaskRunData{
+				Name:   taskRunGeneratedName,
+				Status: "Succeeded",
+			},
+		})
+		res.Assert(t, icmd.Expected{
+			ExitCode: 0,
+			Err:      icmd.None,
+			Out:      expected,
+		})
+	})
+
+	t.Run("Get list of Taskruns using field-selector from namespace  "+namespace, func(t *testing.T) {
+		fs := "metadata.namespace=" + namespace
+		res := tkn.Run("taskrun", "list", "--field-selector", fs)
+
+		expected := e2e.ListAllTaskRunsOutput(t, c, false, map[int]interface{}{
+			0: &e2e.TaskRunData{
+				Name:   "read-task-run-",
+				Status: "Succeeded",
+			},
+		})
+		res.Assert(t, icmd.Expected{
+			ExitCode: 0,
+			Err:      icmd.None,
+			Out:      expected,
+		})
+	})
+
 	t.Run("Validate interactive task logs, with  follow mode (-f) ", func(t *testing.T) {
 		tkn.RunInteractiveTests(t, &e2e.Prompt{
 			CmdArgs: []string{"task", "logs", "-f"},
