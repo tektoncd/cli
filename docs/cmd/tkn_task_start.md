@@ -41,6 +41,7 @@ like cat,foo,bar
   -s, --serviceaccount string    pass the serviceaccount name
       --showlog                  show logs right after starting the Task
       --timeout string           timeout for TaskRun
+      --use-param-defaults       use default parameter values without prompting for input
       --use-taskrun string       specify a TaskRun name to use its values to re-run the TaskRun
   -w, --workspace stringArray    pass the workspace.
 ```

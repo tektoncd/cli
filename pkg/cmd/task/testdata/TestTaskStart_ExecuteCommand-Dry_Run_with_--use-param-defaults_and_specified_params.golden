@@ -1,0 +1,25 @@
+apiVersion: tekton.dev/v1alpha1
+kind: TaskRun
+metadata:
+  creationTimestamp: null
+  generateName: task-1-run-
+  namespace: ns
+spec:
+  inputs:
+    params:
+    - name: myarg
+      value: arg
+    resources:
+    - name: my-repo
+      resourceRef:
+        name: git-repo
+  outputs:
+    resources:
+    - name: code-image
+      resourceRef:
+        name: output-image
+  serviceAccountName: svc1
+  taskRef:
+    name: task-1
+status:
+  podName: ""

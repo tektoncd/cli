@@ -244,34 +244,37 @@ func (intOpts *InteractiveOpts) TaskOutputResources(task *v1beta1.Task, f func(v
 	return nil
 }
 
-func (intOpts *InteractiveOpts) TaskParams(task *v1beta1.Task) error {
+func (intOpts *InteractiveOpts) TaskParams(task *v1beta1.Task, useParamDefaults bool) error {
 	for _, param := range task.Spec.Params {
-		var ans, ques, defaultValue string
-		ques = fmt.Sprintf("Value for param `%s` of type `%s`?", param.Name, param.Type)
-		input := &survey.Input{}
-		if param.Default != nil {
-			if param.Type == "string" {
-				defaultValue = param.Default.StringVal
-			} else {
-				defaultValue = strings.Join(param.Default.ArrayVal, ",")
+		if param.Default == nil && useParamDefaults || !useParamDefaults {
+			var ans, ques, defaultValue string
+			ques = fmt.Sprintf("Value for param `%s` of type `%s`?", param.Name, param.Type)
+			input := &survey.Input{}
+			if param.Default != nil {
+				if param.Type == "string" {
+					defaultValue = param.Default.StringVal
+				} else {
+					defaultValue = strings.Join(param.Default.ArrayVal, ",")
+				}
+				ques += fmt.Sprintf(" (Default is `%s`)", defaultValue)
+				input.Default = defaultValue
 			}
-			ques += fmt.Sprintf(" (Default is `%s`)", defaultValue)
-			input.Default = defaultValue
-		}
-		input.Message = ques
+			input.Message = ques
 
-		var qs = []*survey.Question{
-			{
-				Name:   "pipeline param",
-				Prompt: input,
-			},
+			var qs = []*survey.Question{
+				{
+					Name:   "pipeline param",
+					Prompt: input,
+				},
+			}
+
+			if err := survey.Ask(qs, &ans, intOpts.AskOpts); err != nil {
+				return err
+			}
+
+			intOpts.Params = append(intOpts.Params, param.Name+"="+ans)
 		}
 
-		if err := survey.Ask(qs, &ans, intOpts.AskOpts); err != nil {
-			return err
-		}
-
-		intOpts.Params = append(intOpts.Params, param.Name+"="+ans)
 	}
 	return nil
 }

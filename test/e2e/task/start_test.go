@@ -66,7 +66,8 @@ func TestTaskStartE2E(t *testing.T) {
 	t.Run("Start TaskRun using tkn start command with SA as 'pipeline' ", func(t *testing.T) {
 		res := tkn.Run("task", "start", "read-task",
 			"-i=source="+tePipelineGitResourceName,
-			"-p=FILENAME=docs/README.md",
+			"-p=FILEPATH=docs",
+			"-p=FILENAME=README.md",
 			"--showlog",
 			"true")
 
@@ -83,10 +84,80 @@ Waiting for logs to be available...
 		assert.Assert(t, is.Regexp(expected, res.Stdout()))
 	})
 
+	t.Run("Start TaskRun using tkn task start command with --use-param-defaults and all the params having default", func(t *testing.T) {
+		res := tkn.Run("task", "start", "read-task",
+			"-i=source="+tePipelineGitResourceName,
+			"--use-param-defaults",
+			"-p=FILENAME=README.md",
+			"--showlog",
+			"true")
+
+		res.Assert(t, icmd.Expected{
+			ExitCode: 0,
+			Err:      icmd.None,
+		})
+		assert.Assert(t, is.Regexp("TaskRun started:.*", res.Stdout()))
+	})
+
+	t.Run("Start TaskRun using tkn task start command with --use-param-defaults and some of the params not having default", func(t *testing.T) {
+		tkn.RunInteractiveTests(t, &e2e.Prompt{
+			CmdArgs: []string{"task", "start", "read-task",
+				"-i=source=" + tePipelineGitResourceName,
+				"--use-param-defaults",
+				"--showlog",
+				"true"},
+			Procedure: func(c *expect.Console) error {
+
+				if _, err := c.ExpectString("Value for param `FILENAME` of type `string`?"); err != nil {
+					return err
+				}
+
+				if _, err := c.SendLine("README.md"); err != nil {
+					return err
+				}
+
+				if _, err := c.Send(string(terminal.KeyEnter)); err != nil {
+					return err
+				}
+
+				if _, err := c.ExpectEOF(); err != nil {
+					return err
+				}
+
+				c.Close()
+				return nil
+			}})
+	})
+
 	t.Run("Get list of TaskRuns from namespace  "+namespace, func(t *testing.T) {
+
+		taskRun1GeneratedName := e2e.GetTaskRunListWithName(c, "read-task").Items[0].Name
+		taskRun2GeneratedName := e2e.GetTaskRunListWithName(c, "read-task").Items[1].Name
+		taskRun3GeneratedName := e2e.GetTaskRunListWithName(c, "read-task").Items[2].Name
+
+		if err := e2e.WaitForTaskRunState(c, taskRun1GeneratedName, e2e.TaskRunSucceed(taskRun1GeneratedName), "TaskRunSucceed"); err != nil {
+			t.Errorf("Error waiting for TaskRun to Succeed: %s", err)
+		}
+
+		if err := e2e.WaitForTaskRunState(c, taskRun2GeneratedName, e2e.TaskRunSucceed(taskRun2GeneratedName), "TaskRunSucceed"); err != nil {
+			t.Errorf("Error waiting for TaskRun to Succeed: %s", err)
+		}
+
+		if err := e2e.WaitForTaskRunState(c, taskRun3GeneratedName, e2e.TaskRunSucceed(taskRun3GeneratedName), "TaskRunSucceed"); err != nil {
+			t.Errorf("Error waiting for TaskRun to Succeed: %s", err)
+		}
+
 		res := tkn.Run("taskrun", "list")
 		expected := e2e.ListAllTaskRunsOutput(t, c, false, map[int]interface{}{
 			0: &e2e.TaskRunData{
+				Name:   "read-task-run-",
+				Status: "Succeeded",
+			},
+			1: &e2e.TaskRunData{
+				Name:   "read-task-run-",
+				Status: "Succeeded",
+			},
+			2: &e2e.TaskRunData{
 				Name:   "read-task-run-",
 				Status: "Succeeded",
 			},
@@ -102,11 +173,8 @@ Waiting for logs to be available...
 		tkn.RunInteractiveTests(t, &e2e.Prompt{
 			CmdArgs: []string{"task", "logs", "-f"},
 			Procedure: func(c *expect.Console) error {
-				if _, err := c.ExpectString("Select task:"); err != nil {
-					return err
-				}
 
-				if _, err := c.ExpectString("read-task"); err != nil {
+				if _, err := c.ExpectString("Select taskrun:"); err != nil {
 					return err
 				}
 
