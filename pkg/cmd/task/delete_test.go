@@ -155,7 +155,7 @@ func TestTaskDelete(t *testing.T) {
 			input:       seeds[2].pipelineClient,
 			inputStream: strings.NewReader("n"),
 			wantError:   true,
-			want:        "canceled deleting task \"task\"",
+			want:        "canceled deleting Task(s) \"task\"",
 		},
 		{
 			name:        "Without force delete flag, reply yes",
@@ -164,7 +164,7 @@ func TestTaskDelete(t *testing.T) {
 			input:       seeds[2].pipelineClient,
 			inputStream: strings.NewReader("y"),
 			wantError:   false,
-			want:        "Are you sure you want to delete task \"task\" (y/n): Tasks deleted: \"task\"\n",
+			want:        "Are you sure you want to delete Task(s) \"task\" (y/n): Tasks deleted: \"task\"\n",
 		},
 		{
 			name:        "Remove non existent resource",
@@ -200,7 +200,7 @@ func TestTaskDelete(t *testing.T) {
 			input:       seeds[3].pipelineClient,
 			inputStream: strings.NewReader("y"),
 			wantError:   false,
-			want:        "Are you sure you want to delete task and related resources \"task\" (y/n): TaskRuns deleted: \"task-run-1\", \"task-run-2\"\nTasks deleted: \"task\"\n",
+			want:        "Are you sure you want to delete Task(s) \"task\" and related resources (y/n): TaskRuns deleted: \"task-run-1\", \"task-run-2\"\nTasks deleted: \"task\"\n",
 		},
 		{
 			name:        "With --trs and force delete flag",
@@ -227,7 +227,7 @@ func TestTaskDelete(t *testing.T) {
 			input:       seeds[5].pipelineClient,
 			inputStream: strings.NewReader("y"),
 			wantError:   false,
-			want:        "Are you sure you want to delete all tasks in namespace \"ns\" (y/n): All Tasks deleted in namespace \"ns\"\n",
+			want:        "Are you sure you want to delete all Tasks in namespace \"ns\" (y/n): All Tasks deleted in namespace \"ns\"\n",
 		},
 		{
 			name:        "Delete all with -f",
@@ -460,7 +460,7 @@ func TestTaskDelete_v1beta1(t *testing.T) {
 			input:       seeds[2].pipelineClient,
 			inputStream: strings.NewReader("n"),
 			wantError:   true,
-			want:        "canceled deleting task \"task\"",
+			want:        "canceled deleting Task(s) \"task\"",
 		},
 		{
 			name:        "Without force delete flag, reply yes",
@@ -469,7 +469,7 @@ func TestTaskDelete_v1beta1(t *testing.T) {
 			input:       seeds[2].pipelineClient,
 			inputStream: strings.NewReader("y"),
 			wantError:   false,
-			want:        "Are you sure you want to delete task \"task\" (y/n): Tasks deleted: \"task\"\n",
+			want:        "Are you sure you want to delete Task(s) \"task\" (y/n): Tasks deleted: \"task\"\n",
 		},
 		{
 			name:        "Remove non existent resource",
@@ -505,7 +505,7 @@ func TestTaskDelete_v1beta1(t *testing.T) {
 			input:       seeds[3].pipelineClient,
 			inputStream: strings.NewReader("y"),
 			wantError:   false,
-			want:        "Are you sure you want to delete task and related resources \"task\" (y/n): TaskRuns deleted: \"task-run-1\", \"task-run-2\"\nTasks deleted: \"task\"\n",
+			want:        "Are you sure you want to delete Task(s) \"task\" and related resources (y/n): TaskRuns deleted: \"task-run-1\", \"task-run-2\"\nTasks deleted: \"task\"\n",
 		},
 		{
 			name:        "With delete all and force delete flag",
@@ -532,7 +532,7 @@ func TestTaskDelete_v1beta1(t *testing.T) {
 			input:       seeds[5].pipelineClient,
 			inputStream: strings.NewReader("y"),
 			wantError:   false,
-			want:        "Are you sure you want to delete all tasks in namespace \"ns\" (y/n): All Tasks deleted in namespace \"ns\"\n",
+			want:        "Are you sure you want to delete all Tasks in namespace \"ns\" (y/n): All Tasks deleted in namespace \"ns\"\n",
 		},
 		{
 			name:        "Delete all with -f",

@@ -16,7 +16,6 @@ package pipeline
 
 import (
 	"fmt"
-	"os"
 	"text/tabwriter"
 	"text/template"
 
@@ -73,7 +72,7 @@ func listCommand(p cli.Params) *cobra.Command {
 	c := &cobra.Command{
 		Use:     "list",
 		Aliases: []string{"ls"},
-		Short:   "Lists pipelines in a namespace",
+		Short:   "Lists Pipelines in a namespace",
 		Annotations: map[string]string{
 			"commandType": "main",
 		},
@@ -88,8 +87,7 @@ func listCommand(p cli.Params) *cobra.Command {
 
 			output, err := cmd.LocalFlags().GetString("output")
 			if err != nil {
-				fmt.Fprint(os.Stderr, "Error: output option not set properly \n")
-				return err
+				return fmt.Errorf("output option not set properly: %v", err)
 			}
 
 			if output != "" {
@@ -104,7 +102,7 @@ func listCommand(p cli.Params) *cobra.Command {
 		},
 	}
 	f.AddFlags(c)
-	c.Flags().BoolVarP(&opts.AllNamespaces, "all-namespaces", "A", opts.AllNamespaces, "list pipelines from all namespaces")
+	c.Flags().BoolVarP(&opts.AllNamespaces, "all-namespaces", "A", opts.AllNamespaces, "list Pipelines from all namespaces")
 	c.Flags().BoolVarP(&opts.NoHeaders, "no-headers", "", opts.NoHeaders, "do not print column headers with output (default print column headers with output)")
 
 	return c
@@ -122,10 +120,8 @@ func printPipelineDetails(s *cli.Stream, p cli.Params, allnamespaces bool, nohea
 		ns = ""
 	}
 	ps, prs, err := listPipelineDetails(cs, ns)
-
 	if err != nil {
-		fmt.Fprintf(s.Err, "Failed to list pipelines from %s namespace\n", ns)
-		return err
+		return fmt.Errorf("failed to list Pipelines from namespace %s: %v", ns, err)
 	}
 
 	var data = struct {
@@ -167,7 +163,6 @@ func printPipelineDetails(s *cli.Stream, p cli.Params, allnamespaces bool, nohea
 type pipelineruns map[string]v1beta1.PipelineRun
 
 func listPipelineDetails(cs *cli.Clients, ns string) (*v1beta1.PipelineList, pipelineruns, error) {
-
 	ps, err := pipeline.List(cs, metav1.ListOptions{}, ns)
 	if err != nil {
 		return nil, nil, err

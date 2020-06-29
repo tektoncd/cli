@@ -191,7 +191,7 @@ func TestPipelineLog(t *testing.T) {
 			dynamic:   dc,
 			input:     cs,
 			wantError: false,
-			want:      "No pipelines found in namespace: ns\n",
+			want:      "No Pipelines found in namespace ns",
 		},
 		{
 			name:      "Found no pipelineruns",
@@ -200,7 +200,7 @@ func TestPipelineLog(t *testing.T) {
 			dynamic:   dc2,
 			input:     cs2,
 			wantError: false,
-			want:      "No pipelineruns found for pipeline: output-pipeline\n",
+			want:      "No PipelineRuns found for Pipeline output-pipeline",
 		},
 		{
 			name:      "Pipeline does not exist",
@@ -428,7 +428,7 @@ func TestPipelineLog_v1beta1(t *testing.T) {
 			dynamic:   dc,
 			input:     cs,
 			wantError: false,
-			want:      "No pipelines found in namespace: ns\n",
+			want:      "No Pipelines found in namespace ns",
 		},
 		{
 			name:      "Found no pipelineruns",
@@ -437,7 +437,7 @@ func TestPipelineLog_v1beta1(t *testing.T) {
 			dynamic:   dc2,
 			input:     cs2,
 			wantError: false,
-			want:      "No pipelineruns found for pipeline: output-pipeline\n",
+			want:      "No PipelineRuns found for Pipeline output-pipeline",
 		},
 		{
 			name:      "Pipeline does not exist",

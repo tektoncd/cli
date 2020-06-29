@@ -151,7 +151,7 @@ func TestTaskRunDelete(t *testing.T) {
 			input:       seeds[2].pipelineClient,
 			inputStream: strings.NewReader("n"),
 			wantError:   true,
-			want:        "canceled deleting TaskRun \"tr0-1\"",
+			want:        "canceled deleting TaskRun(s) \"tr0-1\"",
 		},
 		{
 			name:        "Without force delete flag, reply yes",
@@ -160,7 +160,7 @@ func TestTaskRunDelete(t *testing.T) {
 			input:       seeds[2].pipelineClient,
 			inputStream: strings.NewReader("y"),
 			wantError:   false,
-			want:        "Are you sure you want to delete TaskRun \"tr0-1\" (y/n): TaskRuns deleted: \"tr0-1\"\n",
+			want:        "Are you sure you want to delete TaskRun(s) \"tr0-1\" (y/n): TaskRuns deleted: \"tr0-1\"\n",
 		},
 		{
 			name:        "Remove non existent resource",
@@ -452,7 +452,7 @@ func TestTaskRunDelete_v1beta1(t *testing.T) {
 			input:       seeds[2].pipelineClient,
 			inputStream: strings.NewReader("n"),
 			wantError:   true,
-			want:        "canceled deleting TaskRun \"tr0-1\"",
+			want:        "canceled deleting TaskRun(s) \"tr0-1\"",
 		},
 		{
 			name:        "Without force delete flag, reply yes",
@@ -461,7 +461,7 @@ func TestTaskRunDelete_v1beta1(t *testing.T) {
 			input:       seeds[2].pipelineClient,
 			inputStream: strings.NewReader("y"),
 			wantError:   false,
-			want:        "Are you sure you want to delete TaskRun \"tr0-1\" (y/n): TaskRuns deleted: \"tr0-1\"\n",
+			want:        "Are you sure you want to delete TaskRun(s) \"tr0-1\" (y/n): TaskRuns deleted: \"tr0-1\"\n",
 		},
 		{
 			name:        "Remove non existent resource",

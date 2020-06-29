@@ -1,6 +1,6 @@
 ## tkn pipeline describe
 
-Describes a pipeline in a namespace
+Describes a Pipeline in a namespace
 
 ***Aliases**: desc*
 
@@ -12,7 +12,7 @@ tkn pipeline describe
 
 ### Synopsis
 
-Describes a pipeline in a namespace
+Describes a Pipeline in a namespace
 
 ### Options
 

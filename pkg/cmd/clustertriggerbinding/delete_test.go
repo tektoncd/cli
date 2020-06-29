@@ -77,7 +77,7 @@ func TestClusterTriggerBindingDelete(t *testing.T) {
 			input:       seeds[2],
 			inputStream: strings.NewReader("n"),
 			wantError:   true,
-			want:        "canceled deleting clustertriggerbinding \"ctb-1\"",
+			want:        "canceled deleting clustertriggerbinding(s) \"ctb-1\"",
 		},
 		{
 			name:        "Without force delete flag, reply yes",
@@ -85,7 +85,7 @@ func TestClusterTriggerBindingDelete(t *testing.T) {
 			input:       seeds[2],
 			inputStream: strings.NewReader("y"),
 			wantError:   false,
-			want:        "Are you sure you want to delete clustertriggerbinding \"ctb-1\" (y/n): ClusterTriggerBindings deleted: \"ctb-1\"\n",
+			want:        "Are you sure you want to delete clustertriggerbinding(s) \"ctb-1\" (y/n): ClusterTriggerBindings deleted: \"ctb-1\"\n",
 		},
 		{
 			name:        "Without force delete flag, reply yes, multiple ClusterTriggerBindings",
@@ -93,7 +93,7 @@ func TestClusterTriggerBindingDelete(t *testing.T) {
 			input:       seeds[2],
 			inputStream: strings.NewReader("y"),
 			wantError:   false,
-			want:        "Are you sure you want to delete clustertriggerbinding \"ctb-2\", \"ctb-3\" (y/n): ClusterTriggerBindings deleted: \"ctb-2\", \"ctb-3\"\n",
+			want:        "Are you sure you want to delete clustertriggerbinding(s) \"ctb-2\", \"ctb-3\" (y/n): ClusterTriggerBindings deleted: \"ctb-2\", \"ctb-3\"\n",
 		},
 		{
 			name:        "Remove non existent resource",

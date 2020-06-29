@@ -31,7 +31,7 @@ import (
 )
 
 func deleteCommand(p cli.Params) *cobra.Command {
-	opts := &options.DeleteOptions{Resource: "clustertask", ForceDelete: false, DeleteAll: false}
+	opts := &options.DeleteOptions{Resource: "ClusterTask", ForceDelete: false, DeleteAll: false}
 	f := cliopts.NewPrintFlags("delete")
 	eg := `Delete ClusterTasks with names 'foo' and 'bar':
 

@@ -31,7 +31,7 @@ import (
 )
 
 func deleteCommand(p cli.Params) *cobra.Command {
-	opts := &options.DeleteOptions{Resource: "pipeline", ForceDelete: false, DeleteRelated: false, DeleteAllNs: false}
+	opts := &options.DeleteOptions{Resource: "Pipeline", ForceDelete: false, DeleteRelated: false, DeleteAllNs: false}
 	f := cliopts.NewPrintFlags("delete")
 	eg := `Delete Pipelines with names 'foo' and 'bar' in namespace 'quux'
 
@@ -45,7 +45,7 @@ or
 	c := &cobra.Command{
 		Use:          "delete",
 		Aliases:      []string{"rm"},
-		Short:        "Delete pipelines in a namespace",
+		Short:        "Delete Pipelines in a namespace",
 		Example:      eg,
 		Args:         cobra.MinimumNArgs(0),
 		SilenceUsage: true,
@@ -72,7 +72,7 @@ or
 	}
 	f.AddFlags(c)
 	c.Flags().BoolVarP(&opts.ForceDelete, "force", "f", false, "Whether to force deletion (default: false)")
-	c.Flags().BoolVarP(&opts.DeleteRelated, "prs", "", false, "Whether to delete pipeline(s) and related resources (pipelineruns) (default: false)")
+	c.Flags().BoolVarP(&opts.DeleteRelated, "prs", "", false, "Whether to delete Pipeline(s) and related resources (PipelineRuns) (default: false)")
 	c.Flags().BoolVarP(&opts.DeleteAllNs, "all", "", false, "Delete all Pipelines in a namespace (default: false)")
 
 	_ = c.MarkZshCompPositionalArgumentCustom(1, "__tkn_get_pipeline")
@@ -134,7 +134,6 @@ func pipelineRunLister(cs *cli.Clients, ns string) func(string) ([]string, error
 }
 
 func allPipelineNames(cs *cli.Clients, ns string) ([]string, error) {
-
 	ps, err := pipeline.List(cs, metav1.ListOptions{}, ns)
 	if err != nil {
 		return nil, err

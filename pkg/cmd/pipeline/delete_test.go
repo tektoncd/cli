@@ -164,7 +164,7 @@ func TestPipelineDelete(t *testing.T) {
 			input:       seeds[2].pipelineClient,
 			inputStream: strings.NewReader("n"),
 			wantError:   true,
-			want:        "canceled deleting pipeline \"pipeline\"",
+			want:        "canceled deleting Pipeline(s) \"pipeline\"",
 		},
 		{
 			name:        "Without force delete flag, reply yes",
@@ -173,7 +173,7 @@ func TestPipelineDelete(t *testing.T) {
 			input:       seeds[2].pipelineClient,
 			inputStream: strings.NewReader("y"),
 			wantError:   false,
-			want:        "Are you sure you want to delete pipeline \"pipeline\" (y/n): Pipelines deleted: \"pipeline\"\n",
+			want:        "Are you sure you want to delete Pipeline(s) \"pipeline\" (y/n): Pipelines deleted: \"pipeline\"\n",
 		},
 		{
 			name:        "Remove non existent resource",
@@ -209,7 +209,7 @@ func TestPipelineDelete(t *testing.T) {
 			input:       seeds[3].pipelineClient,
 			inputStream: strings.NewReader("y"),
 			wantError:   false,
-			want:        "Are you sure you want to delete pipeline and related resources \"pipeline\" (y/n): PipelineRuns deleted: \"pipeline-run-1\", \"pipeline-run-2\"\nPipelines deleted: \"pipeline\"\n",
+			want:        "Are you sure you want to delete Pipeline(s) \"pipeline\" and related resources (y/n): PipelineRuns deleted: \"pipeline-run-1\", \"pipeline-run-2\"\nPipelines deleted: \"pipeline\"\n",
 		},
 		{
 			name:        "With --prs and force delete flag",
@@ -227,7 +227,7 @@ func TestPipelineDelete(t *testing.T) {
 			input:       seeds[5].pipelineClient,
 			inputStream: strings.NewReader("y"),
 			wantError:   false,
-			want:        "Are you sure you want to delete all pipelines in namespace \"ns\" (y/n): All Pipelines deleted in namespace \"ns\"\n",
+			want:        "Are you sure you want to delete all Pipelines in namespace \"ns\" (y/n): All Pipelines deleted in namespace \"ns\"\n",
 		},
 		{
 			name:        "Delete all with -f",
@@ -453,7 +453,7 @@ func TestPipelineDelete_v1beta1(t *testing.T) {
 			input:       seeds[2].pipelineClient,
 			inputStream: strings.NewReader("n"),
 			wantError:   true,
-			want:        "canceled deleting pipeline \"pipeline\"",
+			want:        "canceled deleting Pipeline(s) \"pipeline\"",
 		},
 		{
 			name:        "Without force delete flag, reply yes",
@@ -462,7 +462,7 @@ func TestPipelineDelete_v1beta1(t *testing.T) {
 			input:       seeds[2].pipelineClient,
 			inputStream: strings.NewReader("y"),
 			wantError:   false,
-			want:        "Are you sure you want to delete pipeline \"pipeline\" (y/n): Pipelines deleted: \"pipeline\"\n",
+			want:        "Are you sure you want to delete Pipeline(s) \"pipeline\" (y/n): Pipelines deleted: \"pipeline\"\n",
 		},
 		{
 			name:        "Remove non existent resource",
@@ -498,7 +498,7 @@ func TestPipelineDelete_v1beta1(t *testing.T) {
 			input:       seeds[3].pipelineClient,
 			inputStream: strings.NewReader("y"),
 			wantError:   false,
-			want:        "Are you sure you want to delete pipeline and related resources \"pipeline\" (y/n): PipelineRuns deleted: \"pipeline-run-1\", \"pipeline-run-2\"\nPipelines deleted: \"pipeline\"\n",
+			want:        "Are you sure you want to delete Pipeline(s) \"pipeline\" and related resources (y/n): PipelineRuns deleted: \"pipeline-run-1\", \"pipeline-run-2\"\nPipelines deleted: \"pipeline\"\n",
 		},
 		{
 			name:        "With delete all and force delete flag",
@@ -516,7 +516,7 @@ func TestPipelineDelete_v1beta1(t *testing.T) {
 			input:       seeds[5].pipelineClient,
 			inputStream: strings.NewReader("y"),
 			wantError:   false,
-			want:        "Are you sure you want to delete all pipelines in namespace \"ns\" (y/n): All Pipelines deleted in namespace \"ns\"\n",
+			want:        "Are you sure you want to delete all Pipelines in namespace \"ns\" (y/n): All Pipelines deleted in namespace \"ns\"\n",
 		},
 		{
 			name:        "Delete all with -f",

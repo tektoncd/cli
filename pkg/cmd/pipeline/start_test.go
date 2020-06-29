@@ -324,7 +324,7 @@ func TestPipelineStart_ExecuteCommand(t *testing.T) {
 			namespace: "",
 			input:     c1,
 			wantError: true,
-			want:      "missing pipeline name",
+			want:      "missing Pipeline name",
 		},
 		{
 			name:      "Found no pipelines",
@@ -332,7 +332,7 @@ func TestPipelineStart_ExecuteCommand(t *testing.T) {
 			namespace: "",
 			input:     c2,
 			wantError: true,
-			want:      "pipeline name test-pipeline-2 does not exist in namespace ns",
+			want:      "Pipeline name test-pipeline-2 does not exist in namespace ns",
 		},
 		{
 			name: "Start pipeline with showlog flag false",
@@ -347,7 +347,7 @@ func TestPipelineStart_ExecuteCommand(t *testing.T) {
 			namespace: "",
 			input:     c2,
 			wantError: false,
-			want:      "Pipelinerun started: \n\nIn order to track the pipelinerun progress run:\ntkn pipelinerun logs  -f -n ns\n",
+			want:      "PipelineRun started: \n\nIn order to track the PipelineRun progress run:\ntkn pipelinerun logs  -f -n ns\n",
 		},
 		{
 			name: "Start pipeline with different context",
@@ -363,10 +363,10 @@ func TestPipelineStart_ExecuteCommand(t *testing.T) {
 			namespace: "",
 			input:     c7,
 			wantError: false,
-			want:      "Pipelinerun started: \n\nIn order to track the pipelinerun progress run:\ntkn pipelinerun --context=GummyBear logs  -f -n ns\n",
+			want:      "PipelineRun started: \n\nIn order to track the PipelineRun progress run:\ntkn pipelinerun --context=GummyBear logs  -f -n ns\n",
 		},
 		{
-			name: "Start pipeline with showlog flag false",
+			name: "Start pipeline with invalid workspace name",
 			command: []string{"start", "test-pipeline",
 				"-s=svc1",
 				"-r=source=scaffold-git",
@@ -452,7 +452,7 @@ func TestPipelineStart_ExecuteCommand(t *testing.T) {
 			namespace: "",
 			input:     c2,
 			wantError: true,
-			want:      "invalid service account parameter: task3svc3\nPlease pass task service accounts as --task-serviceaccount TaskName=ServiceAccount",
+			want:      "invalid service account parameter: task3svc3\nPlease pass Task service accounts as --task-serviceaccount TaskName=ServiceAccount",
 		},
 		{
 			name: "List error with last flag",
@@ -660,7 +660,7 @@ func TestPipelineStart_ExecuteCommand(t *testing.T) {
 			namespace: "",
 			input:     c6,
 			wantError: false,
-			want:      "Pipelinerun started: random\n\nIn order to track the pipelinerun progress run:\ntkn pipelinerun logs random -f -n ns\n",
+			want:      "PipelineRun started: random\n\nIn order to track the PipelineRun progress run:\ntkn pipelinerun logs random -f -n ns\n",
 		},
 		{
 			name: "Start pipeline using invalid --filename v1alpha1",
@@ -986,7 +986,7 @@ func TestPipelineV1beta1Start_ExecuteCommand(t *testing.T) {
 			namespace: "",
 			input:     c1,
 			wantError: true,
-			want:      "missing pipeline name",
+			want:      "missing Pipeline name",
 		},
 		{
 			name:      "Found no pipelines",
@@ -994,7 +994,7 @@ func TestPipelineV1beta1Start_ExecuteCommand(t *testing.T) {
 			namespace: "",
 			input:     c2,
 			wantError: true,
-			want:      "pipeline name test-pipeline-2 does not exist in namespace ns",
+			want:      "Pipeline name test-pipeline-2 does not exist in namespace ns",
 		},
 		{
 			name: "Start pipeline with showlog flag false",
@@ -1009,10 +1009,10 @@ func TestPipelineV1beta1Start_ExecuteCommand(t *testing.T) {
 			namespace: "",
 			input:     c2,
 			wantError: false,
-			want:      "Pipelinerun started: \n\nIn order to track the pipelinerun progress run:\ntkn pipelinerun logs  -f -n ns\n",
+			want:      "PipelineRun started: \n\nIn order to track the PipelineRun progress run:\ntkn pipelinerun logs  -f -n ns\n",
 		},
 		{
-			name: "Start pipeline with showlog flag false",
+			name: "Start pipeline with invalid workspace name",
 			command: []string{"start", "test-pipeline",
 				"-s=svc1",
 				"-r=source=scaffold-git",
@@ -1098,7 +1098,7 @@ func TestPipelineV1beta1Start_ExecuteCommand(t *testing.T) {
 			namespace: "",
 			input:     c2,
 			wantError: true,
-			want:      "invalid service account parameter: task3svc3\nPlease pass task service accounts as --task-serviceaccount TaskName=ServiceAccount",
+			want:      "invalid service account parameter: task3svc3\nPlease pass Task service accounts as --task-serviceaccount TaskName=ServiceAccount",
 		},
 		{
 			name: "List error with last flag",
@@ -1290,7 +1290,7 @@ func TestPipelineV1beta1Start_ExecuteCommand(t *testing.T) {
 			namespace: "",
 			input:     c6,
 			wantError: false,
-			want:      "Pipelinerun started: random\n\nIn order to track the pipelinerun progress run:\ntkn pipelinerun logs random -f -n ns\n",
+			want:      "PipelineRun started: random\n\nIn order to track the PipelineRun progress run:\ntkn pipelinerun logs random -f -n ns\n",
 		},
 		{
 			name: "Start pipeline using invalid --filename v1beta1",
@@ -2857,7 +2857,7 @@ func Test_start_pipeline(t *testing.T) {
 		"-s=svc1",
 		"-n", "ns")
 
-	expected := "Pipelinerun started: \n\nIn order to track the pipelinerun progress run:\ntkn pipelinerun logs  -f -n ns\n"
+	expected := "PipelineRun started: \n\nIn order to track the PipelineRun progress run:\ntkn pipelinerun logs  -f -n ns\n"
 	test.AssertOutput(t, expected, got)
 
 	cl, _ := p.Clients()
@@ -2976,7 +2976,7 @@ func Test_start_pipeline_v1beta1(t *testing.T) {
 		"-s=svc1",
 		"-n", "ns")
 
-	expected := "Pipelinerun started: \n\nIn order to track the pipelinerun progress run:\ntkn pipelinerun logs  -f -n ns\n"
+	expected := "PipelineRun started: \n\nIn order to track the PipelineRun progress run:\ntkn pipelinerun logs  -f -n ns\n"
 	test.AssertOutput(t, expected, got)
 
 	cl, _ := p.Clients()
@@ -3079,7 +3079,7 @@ func Test_start_pipeline_last(t *testing.T) {
 		"-n", "ns",
 	)
 
-	expected := "Pipelinerun started: random\n\nIn order to track the pipelinerun progress run:\ntkn pipelinerun logs random -f -n ns\n"
+	expected := "PipelineRun started: random\n\nIn order to track the PipelineRun progress run:\ntkn pipelinerun logs random -f -n ns\n"
 	test.AssertOutput(t, expected, got)
 
 	cl, _ := p.Clients()
@@ -3283,7 +3283,7 @@ func Test_start_pipeline_last_v1beta1(t *testing.T) {
 		"-n", "ns",
 	)
 
-	expected := "Pipelinerun started: random\n\nIn order to track the pipelinerun progress run:\ntkn pipelinerun logs random -f -n ns\n"
+	expected := "PipelineRun started: random\n\nIn order to track the PipelineRun progress run:\ntkn pipelinerun logs random -f -n ns\n"
 	test.AssertOutput(t, expected, got)
 
 	cl, _ := p.Clients()
@@ -3379,7 +3379,7 @@ func Test_start_pipeline_last_without_res_param(t *testing.T) {
 		"--last",
 		"-n", "ns")
 
-	expected := "Pipelinerun started: random\n\nIn order to track the pipelinerun progress run:\ntkn pipelinerun logs random -f -n ns\n"
+	expected := "PipelineRun started: random\n\nIn order to track the PipelineRun progress run:\ntkn pipelinerun logs random -f -n ns\n"
 	test.AssertOutput(t, expected, got)
 
 	cl, _ := p.Clients()
@@ -3563,7 +3563,7 @@ func Test_start_pipeline_last_without_res_param_v1beta1(t *testing.T) {
 		"--last",
 		"-n", "ns")
 
-	expected := "Pipelinerun started: random\n\nIn order to track the pipelinerun progress run:\ntkn pipelinerun logs random -f -n ns\n"
+	expected := "PipelineRun started: random\n\nIn order to track the PipelineRun progress run:\ntkn pipelinerun logs random -f -n ns\n"
 	test.AssertOutput(t, expected, got)
 
 	cl, _ := p.Clients()
@@ -3664,7 +3664,7 @@ func Test_start_pipeline_last_merge(t *testing.T) {
 		"--task-serviceaccount=task5=task3svc5",
 		"-n=ns")
 
-	expected := "Pipelinerun started: random\n\nIn order to track the pipelinerun progress run:\ntkn pipelinerun logs random -f -n ns\n"
+	expected := "PipelineRun started: random\n\nIn order to track the PipelineRun progress run:\ntkn pipelinerun logs random -f -n ns\n"
 	test.AssertOutput(t, expected, got)
 
 	cl, _ := p.Clients()
@@ -3870,7 +3870,7 @@ func Test_start_pipeline_last_merge_v1beta1(t *testing.T) {
 		"--task-serviceaccount=task5=task3svc5",
 		"-n=ns")
 
-	expected := "Pipelinerun started: random\n\nIn order to track the pipelinerun progress run:\ntkn pipelinerun logs random -f -n ns\n"
+	expected := "PipelineRun started: random\n\nIn order to track the PipelineRun progress run:\ntkn pipelinerun logs random -f -n ns\n"
 	test.AssertOutput(t, expected, got)
 
 	cl, _ := p.Clients()
@@ -4208,7 +4208,7 @@ func Test_start_pipeline_allkindparam(t *testing.T) {
 		"-s=svc1",
 		"-n", "ns")
 
-	expected := "Pipelinerun started: \n\nIn order to track the pipelinerun progress run:\ntkn pipelinerun logs  -f -n ns\n"
+	expected := "PipelineRun started: \n\nIn order to track the PipelineRun progress run:\ntkn pipelinerun logs  -f -n ns\n"
 	test.AssertOutput(t, expected, got)
 
 	cl, _ := p.Clients()
@@ -4338,7 +4338,7 @@ func Test_start_pipeline_allkindparam_v1beta1(t *testing.T) {
 		"-s=svc1",
 		"-n", "ns")
 
-	expected := "Pipelinerun started: \n\nIn order to track the pipelinerun progress run:\ntkn pipelinerun logs  -f -n ns\n"
+	expected := "PipelineRun started: \n\nIn order to track the PipelineRun progress run:\ntkn pipelinerun logs  -f -n ns\n"
 	test.AssertOutput(t, expected, got)
 
 	cl, _ := p.Clients()
@@ -4444,7 +4444,7 @@ func Test_start_pipeline_last_generate_name(t *testing.T) {
 		"--task-serviceaccount=task5=task3svc5",
 		"-n", "ns")
 
-	expected := "Pipelinerun started: random\n\nIn order to track the pipelinerun progress run:\ntkn pipelinerun logs random -f -n ns\n"
+	expected := "PipelineRun started: random\n\nIn order to track the PipelineRun progress run:\ntkn pipelinerun logs random -f -n ns\n"
 	test.AssertOutput(t, expected, got)
 
 	cl, _ := p.Clients()
@@ -4622,7 +4622,7 @@ func Test_start_pipeline_last_generate_name_v1beta1(t *testing.T) {
 		"--task-serviceaccount=task5=task3svc5",
 		"-n", "ns")
 
-	expected := "Pipelinerun started: random\n\nIn order to track the pipelinerun progress run:\ntkn pipelinerun logs random -f -n ns\n"
+	expected := "PipelineRun started: random\n\nIn order to track the PipelineRun progress run:\ntkn pipelinerun logs random -f -n ns\n"
 	test.AssertOutput(t, expected, got)
 
 	cl, _ := p.Clients()
@@ -4708,7 +4708,7 @@ func Test_start_pipeline_last_with_prefix_name(t *testing.T) {
 		"--prefix-name", "myprname",
 	)
 
-	expected := "Pipelinerun started: random\n\nIn order to track the pipelinerun progress run:\ntkn pipelinerun logs random -f -n ns\n"
+	expected := "PipelineRun started: random\n\nIn order to track the PipelineRun progress run:\ntkn pipelinerun logs random -f -n ns\n"
 	test.AssertOutput(t, expected, got)
 
 	cl, _ := p.Clients()
@@ -4884,7 +4884,7 @@ func Test_start_pipeline_last_with_prefix_name_v1beta1(t *testing.T) {
 		"--prefix-name", "myprname",
 	)
 
-	expected := "Pipelinerun started: random\n\nIn order to track the pipelinerun progress run:\ntkn pipelinerun logs random -f -n ns\n"
+	expected := "PipelineRun started: random\n\nIn order to track the PipelineRun progress run:\ntkn pipelinerun logs random -f -n ns\n"
 	test.AssertOutput(t, expected, got)
 
 	cl, _ := p.Clients()
@@ -4969,7 +4969,7 @@ func Test_start_pipeline_with_prefix_name(t *testing.T) {
 		"--prefix-name", "myprname",
 	)
 
-	expected := "Pipelinerun started: random\n\nIn order to track the pipelinerun progress run:\ntkn pipelinerun logs random -f -n ns\n"
+	expected := "PipelineRun started: random\n\nIn order to track the PipelineRun progress run:\ntkn pipelinerun logs random -f -n ns\n"
 	test.AssertOutput(t, expected, got)
 
 	cl, _ := p.Clients()
@@ -5144,7 +5144,7 @@ func Test_start_pipeline_with_prefix_name_v1beta1(t *testing.T) {
 		"--prefix-name", "myprname",
 	)
 
-	expected := "Pipelinerun started: random\n\nIn order to track the pipelinerun progress run:\ntkn pipelinerun logs random -f -n ns\n"
+	expected := "PipelineRun started: random\n\nIn order to track the PipelineRun progress run:\ntkn pipelinerun logs random -f -n ns\n"
 	test.AssertOutput(t, expected, got)
 
 	cl, _ := p.Clients()

@@ -176,7 +176,7 @@ func TestPipelineRunDelete(t *testing.T) {
 			input:       seeds[2].pipelineClient,
 			inputStream: strings.NewReader("n"),
 			wantError:   true,
-			want:        "canceled deleting pipelinerun \"pipeline-run-1\"",
+			want:        "canceled deleting pipelinerun(s) \"pipeline-run-1\"",
 		},
 		{
 			name:        "Without force delete flag, reply yes",
@@ -185,7 +185,7 @@ func TestPipelineRunDelete(t *testing.T) {
 			input:       seeds[2].pipelineClient,
 			inputStream: strings.NewReader("y"),
 			wantError:   false,
-			want:        "Are you sure you want to delete pipelinerun \"pipeline-run-1\" (y/n): PipelineRuns deleted: \"pipeline-run-1\"\n",
+			want:        "Are you sure you want to delete pipelinerun(s) \"pipeline-run-1\" (y/n): PipelineRuns deleted: \"pipeline-run-1\"\n",
 		},
 		{
 			name:        "Remove non existent resource",
@@ -503,7 +503,7 @@ func TestPipelineRunDelete_v1beta1(t *testing.T) {
 			input:       seeds[2].pipelineClient,
 			inputStream: strings.NewReader("n"),
 			wantError:   true,
-			want:        "canceled deleting pipelinerun \"pipeline-run-1\"",
+			want:        "canceled deleting pipelinerun(s) \"pipeline-run-1\"",
 		},
 		{
 			name:        "Without force delete flag, reply yes",
@@ -512,7 +512,7 @@ func TestPipelineRunDelete_v1beta1(t *testing.T) {
 			input:       seeds[2].pipelineClient,
 			inputStream: strings.NewReader("y"),
 			wantError:   false,
-			want:        "Are you sure you want to delete pipelinerun \"pipeline-run-1\" (y/n): PipelineRuns deleted: \"pipeline-run-1\"\n",
+			want:        "Are you sure you want to delete pipelinerun(s) \"pipeline-run-1\" (y/n): PipelineRuns deleted: \"pipeline-run-1\"\n",
 		},
 		{
 			name:        "Remove non existent resource",

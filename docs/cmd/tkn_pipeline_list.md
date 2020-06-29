@@ -1,6 +1,6 @@
 ## tkn pipeline list
 
-Lists pipelines in a namespace
+Lists Pipelines in a namespace
 
 ***Aliases**: ls*
 
@@ -12,12 +12,12 @@ tkn pipeline list
 
 ### Synopsis
 
-Lists pipelines in a namespace
+Lists Pipelines in a namespace
 
 ### Options
 
 ```
-  -A, --all-namespaces                list pipelines from all namespaces
+  -A, --all-namespaces                list Pipelines from all namespaces
       --allow-missing-template-keys   If true, ignore any errors in templates when a field or map key is missing in the template. Only applies to golang and jsonpath output formats. (default true)
   -h, --help                          help for list
       --no-headers                    do not print column headers with output (default print column headers with output)

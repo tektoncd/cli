@@ -100,7 +100,7 @@ func describeCommand(p cli.Params) *cobra.Command {
 	c := &cobra.Command{
 		Use:     "describe",
 		Aliases: []string{"desc"},
-		Short:   "Describes a pipeline in a namespace",
+		Short:   "Describes a Pipeline in a namespace",
 		Annotations: map[string]string{
 			"commandType": "main",
 		},
@@ -113,8 +113,7 @@ func describeCommand(p cli.Params) *cobra.Command {
 
 			output, err := cmd.LocalFlags().GetString("output")
 			if err != nil {
-				fmt.Fprint(os.Stderr, "Error: output option not set properly \n")
-				return err
+				return fmt.Errorf("output option not set properly: %v", err)
 			}
 
 			if len(args) == 0 {
@@ -220,8 +219,10 @@ func askPipelineName(opts *options.DescribeOptions, p cli.Params) error {
 	if err != nil {
 		return err
 	}
+
 	if len(pipelineNames) == 0 {
-		return fmt.Errorf("no pipelines found")
+		fmt.Fprint(os.Stdout, "no Pipelines found")
+		return nil
 	}
 
 	err = opts.Ask(options.ResourceNamePipeline, pipelineNames)
