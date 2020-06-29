@@ -180,7 +180,7 @@ func TestPipelinesE2E(t *testing.T) {
 
 		pipelineGeneratedName = e2e.GetPipelineRunListWithName(c, tePipelineName).Items[0].Name
 		vars["Element"] = pipelineGeneratedName
-		expected := e2e.ProcessString(`(Pipelinerun started: {{.Element}}
+		expected := e2e.ProcessString(`(PipelineRun started: {{.Element}}
 Waiting for logs to be available...
 .*)`, vars)
 		res.Assert(t, icmd.Expected{
@@ -389,7 +389,7 @@ func TestPipelinesNegativeE2E(t *testing.T) {
 
 		pipelineGeneratedName = e2e.GetPipelineRunListWithName(c, tePipelineName).Items[0].Name
 		vars["Element"] = pipelineGeneratedName
-		expected := e2e.ProcessString(`(Pipelinerun started: {{.Element}}
+		expected := e2e.ProcessString(`(PipelineRun started: {{.Element}}
 Waiting for logs to be available...
 .*)`, vars)
 		res.Assert(t, icmd.Expected{
@@ -495,7 +495,7 @@ func TestDeletePipelinesE2E(t *testing.T) {
 			"pipeline", "rm", tePipelineName+"-3")
 		res.Assert(t, icmd.Expected{
 			ExitCode: 1,
-			Err:      "Error: canceled deleting pipeline \"" + tePipelineName + "-3" + "\"\n",
+			Err:      "Error: canceled deleting Pipeline(s) \"" + tePipelineName + "-3" + "\"\n",
 		})
 	})
 
@@ -505,7 +505,7 @@ func TestDeletePipelinesE2E(t *testing.T) {
 		res.Assert(t, icmd.Expected{
 			ExitCode: 0,
 			Err:      icmd.None,
-			Out:      "Are you sure you want to delete pipeline \"" + tePipelineName + "-3" + "\" (y/n): Pipelines deleted: \"" + tePipelineName + "-3" + "\"\n",
+			Out:      "Are you sure you want to delete Pipeline(s) \"" + tePipelineName + "-3" + "\" (y/n): Pipelines deleted: \"" + tePipelineName + "-3" + "\"\n",
 		})
 	})
 

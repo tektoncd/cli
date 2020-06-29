@@ -113,7 +113,7 @@ func TestPipelineInteractiveStartWithNewResourceE2E(t *testing.T) {
 		tkn.RunInteractiveTests(t, &e2e.Prompt{
 			CmdArgs: []string{"pipeline", "start", "output-pipeline", "-s", "pipeline"},
 			Procedure: func(c *expect.Console) error {
-				if _, err := c.ExpectString("Please create a new \"git\" resource for pipeline resource \"source-repo\""); err != nil {
+				if _, err := c.ExpectString("Please create a new \"git\" resource for PipelineResource \"source-repo\""); err != nil {
 					return err
 				}
 

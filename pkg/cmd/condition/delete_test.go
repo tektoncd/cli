@@ -108,7 +108,7 @@ func TestConditionDelete(t *testing.T) {
 			input:       seeds[2],
 			inputStream: strings.NewReader("n"),
 			wantError:   true,
-			want:        "canceled deleting condition \"condition1\"",
+			want:        "canceled deleting condition(s) \"condition1\"",
 		},
 		{
 			name:        "Without force delete flag, reply yes",
@@ -116,7 +116,7 @@ func TestConditionDelete(t *testing.T) {
 			input:       seeds[2],
 			inputStream: strings.NewReader("y"),
 			wantError:   false,
-			want:        "Are you sure you want to delete condition \"condition1\" (y/n): Conditions deleted: \"condition1\"\n",
+			want:        "Are you sure you want to delete condition(s) \"condition1\" (y/n): Conditions deleted: \"condition1\"\n",
 		},
 		{
 			name:        "Without force delete flag, reply yes, multiple conditions",
@@ -124,7 +124,7 @@ func TestConditionDelete(t *testing.T) {
 			input:       seeds[2],
 			inputStream: strings.NewReader("y"),
 			wantError:   false,
-			want:        "Are you sure you want to delete condition \"condition2\", \"condition3\" (y/n): Conditions deleted: \"condition2\", \"condition3\"\n",
+			want:        "Are you sure you want to delete condition(s) \"condition2\", \"condition3\" (y/n): Conditions deleted: \"condition2\", \"condition3\"\n",
 		},
 		{
 			name:        "Remove non existent resource",

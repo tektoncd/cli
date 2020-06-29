@@ -49,8 +49,8 @@ import (
 )
 
 var (
-	errNoPipeline      = errors.New("missing pipeline name")
-	errInvalidPipeline = "pipeline name %s does not exist in namespace %s"
+	errNoPipeline      = errors.New("missing Pipeline name")
+	errInvalidPipeline = "Pipeline name %s does not exist in namespace %s"
 )
 
 const (
@@ -103,8 +103,8 @@ func startCommand(p cli.Params) *cobra.Command {
 	}
 
 	c := &cobra.Command{
-		Use:   "start pipeline [RESOURCES...] [PARAMS...] [SERVICEACCOUNT]",
-		Short: "Start pipelines",
+		Use:   "start",
+		Short: "Start Pipelines",
 		Annotations: map[string]string{
 			"commandType": "main",
 		},
@@ -150,23 +150,23 @@ like cat,foo,bar
 		},
 	}
 
-	c.Flags().BoolVarP(&opt.ShowLog, "showlog", "", false, "show logs right after starting the pipeline")
+	c.Flags().BoolVarP(&opt.ShowLog, "showlog", "", false, "show logs right after starting the Pipeline")
 	c.Flags().StringSliceVarP(&opt.Resources, "resource", "r", []string{}, "pass the resource name and ref as name=ref")
 	c.Flags().StringArrayVarP(&opt.Params, "param", "p", []string{}, "pass the param as key=value for string type, or key=value1,value2,... for array type")
 	c.Flags().StringVarP(&opt.ServiceAccountName, "serviceaccount", "s", "", "pass the serviceaccount name")
 	flags.AddShellCompletion(c.Flags().Lookup("serviceaccount"), "__kubectl_get_serviceaccount")
 	c.Flags().StringSliceVar(&opt.ServiceAccounts, "task-serviceaccount", []string{}, "pass the service account corresponding to the task")
 	flags.AddShellCompletion(c.Flags().Lookup("task-serviceaccount"), "__kubectl_get_serviceaccount")
-	c.Flags().BoolVarP(&opt.Last, "last", "L", false, "re-run the pipeline using last pipelinerun values")
+	c.Flags().BoolVarP(&opt.Last, "last", "L", false, "re-run the Pipeline using last PipelineRun values")
 	c.Flags().StringVarP(&opt.UsePipelineRun, "use-pipelinerun", "", "", "use this pipelinerun values to re-run the pipeline. ")
 	flags.AddShellCompletion(c.Flags().Lookup("use-pipelinerun"), "__tkn_get_pipelinerun")
 	c.Flags().StringSliceVarP(&opt.Labels, "labels", "l", []string{}, "pass labels as label=value.")
 	c.Flags().StringArrayVarP(&opt.Workspaces, "workspace", "w", []string{}, "pass the workspace.")
-	c.Flags().BoolVarP(&opt.DryRun, "dry-run", "", false, "preview pipelinerun without running it")
-	c.Flags().StringVarP(&opt.Output, "output", "", "", "format of pipelinerun dry-run (yaml or json)")
-	c.Flags().StringVarP(&opt.PrefixName, "prefix-name", "", "", "specify a prefix for the pipelinerun name (must be lowercase alphanumeric characters)")
-	c.Flags().StringVarP(&opt.TimeOut, "timeout", "", "", "timeout for pipelinerun")
-	c.Flags().StringVarP(&opt.Filename, "filename", "f", "", "local or remote file name containing a pipeline definition to start a pipelinerun")
+	c.Flags().BoolVarP(&opt.DryRun, "dry-run", "", false, "preview PipelineRun without running it")
+	c.Flags().StringVarP(&opt.Output, "output", "", "", "format of PipelineRun dry-run (yaml or json)")
+	c.Flags().StringVarP(&opt.PrefixName, "prefix-name", "", "", "specify a prefix for the PipelineRun name (must be lowercase alphanumeric characters)")
+	c.Flags().StringVarP(&opt.TimeOut, "timeout", "", "", "timeout for PipelineRun")
+	c.Flags().StringVarP(&opt.Filename, "filename", "f", "", "local or remote file name containing a Pipeline definition to start a PipelineRun")
 	c.Flags().BoolVarP(&opt.UseParamDefaults, "use-param-defaults", "", false, "use default parameter values without prompting for input")
 
 	_ = c.MarkZshCompPositionalArgumentCustom(1, "__tkn_get_pipeline")
@@ -298,9 +298,9 @@ func (opt *startOptions) startPipeline(pipelineStart *v1beta1.Pipeline) error {
 		return err
 	}
 
-	fmt.Fprintf(opt.stream.Out, "Pipelinerun started: %s\n", prCreated.Name)
+	fmt.Fprintf(opt.stream.Out, "PipelineRun started: %s\n", prCreated.Name)
 	if !opt.ShowLog {
-		inOrderString := "\nIn order to track the pipelinerun progress run:\ntkn pipelinerun "
+		inOrderString := "\nIn order to track the PipelineRun progress run:\ntkn pipelinerun "
 		if opt.TektonOptions.Context != "" {
 			inOrderString += fmt.Sprintf("--context=%s ", opt.TektonOptions.Context)
 		}
@@ -336,8 +336,7 @@ func (opt *startOptions) getInput(pipeline *v1beta1.Pipeline) error {
 	if len(opt.Resources) == 0 && !opt.Last && opt.UsePipelineRun == "" {
 		pres, err := getPipelineResources(cs.Resource, opt.cliparams.Namespace())
 		if err != nil {
-			fmt.Fprintf(opt.stream.Err, "failed to list pipelineresources from %s namespace \n", opt.cliparams.Namespace())
-			return err
+			return fmt.Errorf("failed to list PipelineResources from namespace %s: %v", opt.cliparams.Namespace(), err)
 		}
 
 		resources := getPipelineResourcesByFormat(pres.Items)
@@ -401,8 +400,8 @@ func (opt *startOptions) getInputResources(resources resourceOptionsFilter, pipe
 		// directly create resource
 		if len(options) == 0 {
 			ns := opt.cliparams.Namespace()
-			fmt.Fprintf(opt.stream.Out, "no pipeline resource of type \"%s\" found in namespace: %s\n", string(res.Type), ns)
-			fmt.Fprintf(opt.stream.Out, "Please create a new \"%s\" resource for pipeline resource \"%s\"\n", string(res.Type), res.Name)
+			fmt.Fprintf(opt.stream.Out, "no PipelineResource of type \"%s\" found in namespace: %s\n", string(res.Type), ns)
+			fmt.Fprintf(opt.stream.Out, "Please create a new \"%s\" resource for PipelineResource \"%s\"\n", string(res.Type), res.Name)
 			newres, err := opt.createPipelineResource(res.Name, res.Type)
 			if err != nil {
 				return err
@@ -633,7 +632,7 @@ func parseTaskSvc(s []string) (map[string]v1beta1.PipelineRunSpecServiceAccountN
 		r := strings.Split(v, "=")
 		if len(r) != 2 || len(r[0]) == 0 {
 			errMsg := invalidSvc + v +
-				"\nPlease pass task service accounts as " +
+				"\nPlease pass Task service accounts as " +
 				"--task-serviceaccount TaskName=ServiceAccount"
 			return nil, errors.New(errMsg)
 		}

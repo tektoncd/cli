@@ -1,11 +1,11 @@
 ## tkn pipeline start
 
-Start pipelines
+Start Pipelines
 
 ### Usage
 
 ```
-tkn pipeline start pipeline [RESOURCES...] [PARAMS...] [SERVICEACCOUNT]
+tkn pipeline start
 ```
 
 ### Synopsis
@@ -39,19 +39,19 @@ my-secret and my-empty-dir)
 ### Options
 
 ```
-      --dry-run                       preview pipelinerun without running it
-  -f, --filename string               local or remote file name containing a pipeline definition to start a pipelinerun
+      --dry-run                       preview PipelineRun without running it
+  -f, --filename string               local or remote file name containing a Pipeline definition to start a PipelineRun
   -h, --help                          help for start
   -l, --labels strings                pass labels as label=value.
-  -L, --last                          re-run the pipeline using last pipelinerun values
-      --output string                 format of pipelinerun dry-run (yaml or json)
+  -L, --last                          re-run the Pipeline using last PipelineRun values
+      --output string                 format of PipelineRun dry-run (yaml or json)
   -p, --param stringArray             pass the param as key=value for string type, or key=value1,value2,... for array type
-      --prefix-name string            specify a prefix for the pipelinerun name (must be lowercase alphanumeric characters)
+      --prefix-name string            specify a prefix for the PipelineRun name (must be lowercase alphanumeric characters)
   -r, --resource strings              pass the resource name and ref as name=ref
   -s, --serviceaccount string         pass the serviceaccount name
-      --showlog                       show logs right after starting the pipeline
+      --showlog                       show logs right after starting the Pipeline
       --task-serviceaccount strings   pass the service account corresponding to the task
-      --timeout string                timeout for pipelinerun
+      --timeout string                timeout for PipelineRun
       --use-param-defaults            use default parameter values without prompting for input
       --use-pipelinerun string        use this pipelinerun values to re-run the pipeline. 
   -w, --workspace stringArray         pass the workspace.

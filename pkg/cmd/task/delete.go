@@ -31,7 +31,7 @@ import (
 )
 
 func deleteCommand(p cli.Params) *cobra.Command {
-	opts := &options.DeleteOptions{Resource: "task", ForceDelete: false, DeleteRelated: false}
+	opts := &options.DeleteOptions{Resource: "Task", ForceDelete: false, DeleteRelated: false}
 	f := cliopts.NewPrintFlags("delete")
 	eg := `Delete Tasks with names 'foo' and 'bar' in namespace 'quux':
 

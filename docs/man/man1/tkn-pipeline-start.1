@@ -5,12 +5,12 @@
 
 .SH NAME
 .PP
-tkn\-pipeline\-start \- Start pipelines
+tkn\-pipeline\-start \- Start Pipelines
 
 
 .SH SYNOPSIS
 .PP
-\fBtkn pipeline start pipeline [RESOURCES...] [PARAMS...] [SERVICEACCOUNT]\fP
+\fBtkn pipeline start\fP
 
 
 .SH DESCRIPTION
@@ -29,11 +29,11 @@ Parameters, at least those that have no default value
 .SH OPTIONS
 .PP
 \fB\-\-dry\-run\fP[=false]
-    preview pipelinerun without running it
+    preview PipelineRun without running it
 
 .PP
 \fB\-f\fP, \fB\-\-filename\fP=""
-    local or remote file name containing a pipeline definition to start a pipelinerun
+    local or remote file name containing a Pipeline definition to start a PipelineRun
 
 .PP
 \fB\-h\fP, \fB\-\-help\fP[=false]
@@ -45,11 +45,11 @@ Parameters, at least those that have no default value
 
 .PP
 \fB\-L\fP, \fB\-\-last\fP[=false]
-    re\-run the pipeline using last pipelinerun values
+    re\-run the Pipeline using last PipelineRun values
 
 .PP
 \fB\-\-output\fP=""
-    format of pipelinerun dry\-run (yaml or json)
+    format of PipelineRun dry\-run (yaml or json)
 
 .PP
 \fB\-p\fP, \fB\-\-param\fP=[]
@@ -57,7 +57,7 @@ Parameters, at least those that have no default value
 
 .PP
 \fB\-\-prefix\-name\fP=""
-    specify a prefix for the pipelinerun name (must be lowercase alphanumeric characters)
+    specify a prefix for the PipelineRun name (must be lowercase alphanumeric characters)
 
 .PP
 \fB\-r\fP, \fB\-\-resource\fP=[]
@@ -69,7 +69,7 @@ Parameters, at least those that have no default value
 
 .PP
 \fB\-\-showlog\fP[=false]
-    show logs right after starting the pipeline
+    show logs right after starting the Pipeline
 
 .PP
 \fB\-\-task\-serviceaccount\fP=[]
@@ -77,7 +77,7 @@ Parameters, at least those that have no default value
 
 .PP
 \fB\-\-timeout\fP=""
-    timeout for pipelinerun
+    timeout for PipelineRun
 
 .PP
 \fB\-\-use\-param\-defaults\fP[=false]

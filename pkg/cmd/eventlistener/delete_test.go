@@ -95,7 +95,7 @@ func TestEventListenerDelete(t *testing.T) {
 			input:       seeds[2],
 			inputStream: strings.NewReader("n"),
 			wantError:   true,
-			want:        "canceled deleting eventlistener \"el-1\"",
+			want:        "canceled deleting eventlistener(s) \"el-1\"",
 		},
 		{
 			name:        "Without force delete flag, reply yes",
@@ -103,7 +103,7 @@ func TestEventListenerDelete(t *testing.T) {
 			input:       seeds[2],
 			inputStream: strings.NewReader("y"),
 			wantError:   false,
-			want:        "Are you sure you want to delete eventlistener \"el-1\" (y/n): EventListeners deleted: \"el-1\"\n",
+			want:        "Are you sure you want to delete eventlistener(s) \"el-1\" (y/n): EventListeners deleted: \"el-1\"\n",
 		},
 		{
 			name:        "Without force delete flag, reply yes, multiple eventlisteners",
@@ -111,7 +111,7 @@ func TestEventListenerDelete(t *testing.T) {
 			input:       seeds[2],
 			inputStream: strings.NewReader("y"),
 			wantError:   false,
-			want:        "Are you sure you want to delete eventlistener \"el-2\", \"el-3\" (y/n): EventListeners deleted: \"el-2\", \"el-3\"\n",
+			want:        "Are you sure you want to delete eventlistener(s) \"el-2\", \"el-3\" (y/n): EventListeners deleted: \"el-2\", \"el-3\"\n",
 		},
 		{
 			name:        "Remove non existent resource",

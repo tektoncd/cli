@@ -88,7 +88,7 @@ func TestPipelineResourceDelete(t *testing.T) {
 			input:       seeds[2],
 			inputStream: strings.NewReader("n"),
 			wantError:   true,
-			want:        "canceled deleting pipelineresource \"pre-1\"",
+			want:        "canceled deleting pipelineresource(s) \"pre-1\"",
 		},
 		{
 			name:        "Without force delete flag, reply yes",
@@ -96,7 +96,7 @@ func TestPipelineResourceDelete(t *testing.T) {
 			input:       seeds[2],
 			inputStream: strings.NewReader("y"),
 			wantError:   false,
-			want:        "Are you sure you want to delete pipelineresource \"pre-1\" (y/n): PipelineResources deleted: \"pre-1\"\n",
+			want:        "Are you sure you want to delete pipelineresource(s) \"pre-1\" (y/n): PipelineResources deleted: \"pre-1\"\n",
 		},
 		{
 			name:        "Remove non existent resource",

@@ -153,7 +153,7 @@ func TestClusterTaskDelete(t *testing.T) {
 			input:       seeds[2].pipelineClient,
 			inputStream: strings.NewReader("n"),
 			wantError:   true,
-			want:        "canceled deleting clustertask \"tomatoes\"",
+			want:        "canceled deleting ClusterTask(s) \"tomatoes\"",
 		},
 		{
 			name:        "Without force delete flag, reply yes",
@@ -162,7 +162,7 @@ func TestClusterTaskDelete(t *testing.T) {
 			input:       seeds[3].pipelineClient,
 			inputStream: strings.NewReader("y"),
 			wantError:   false,
-			want:        "Are you sure you want to delete clustertask \"tomatoes\" (y/n): ClusterTasks deleted: \"tomatoes\"\n",
+			want:        "Are you sure you want to delete ClusterTask(s) \"tomatoes\" (y/n): ClusterTasks deleted: \"tomatoes\"\n",
 		},
 		{
 			name:        "Remove non existent resource",
@@ -198,7 +198,7 @@ func TestClusterTaskDelete(t *testing.T) {
 			input:       seeds[4].pipelineClient,
 			inputStream: strings.NewReader("y"),
 			wantError:   false,
-			want:        "Are you sure you want to delete clustertask and related resources \"tomatoes\" (y/n): TaskRuns deleted: \"task-run-1\", \"task-run-2\"\nClusterTasks deleted: \"tomatoes\"\n",
+			want:        "Are you sure you want to delete ClusterTask(s) \"tomatoes\" and related resources (y/n): TaskRuns deleted: \"task-run-1\", \"task-run-2\"\nClusterTasks deleted: \"tomatoes\"\n",
 		},
 		{
 			name:        "With force delete flag, reply yes, multiple clustertasks",
@@ -216,7 +216,7 @@ func TestClusterTaskDelete(t *testing.T) {
 			input:       seeds[2].pipelineClient,
 			inputStream: strings.NewReader("y"),
 			wantError:   false,
-			want:        "Are you sure you want to delete clustertask \"tomatoes2\", \"tomatoes3\" (y/n): ClusterTasks deleted: \"tomatoes2\", \"tomatoes3\"\n",
+			want:        "Are you sure you want to delete ClusterTask(s) \"tomatoes2\", \"tomatoes3\" (y/n): ClusterTasks deleted: \"tomatoes2\", \"tomatoes3\"\n",
 		},
 		{
 			name:        "Delete all with prompt",
@@ -225,7 +225,7 @@ func TestClusterTaskDelete(t *testing.T) {
 			input:       seeds[3].pipelineClient,
 			inputStream: strings.NewReader("y"),
 			wantError:   false,
-			want:        "Are you sure you want to delete all clustertasks (y/n): All ClusterTasks deleted\n",
+			want:        "Are you sure you want to delete all ClusterTasks (y/n): All ClusterTasks deleted\n",
 		},
 		{
 			name:        "Delete all with -f",
@@ -252,7 +252,7 @@ func TestClusterTaskDelete(t *testing.T) {
 			input:       seeds[4].pipelineClient,
 			inputStream: nil,
 			wantError:   true,
-			want:        "must provide clustertask name(s) or use --all flag with delete",
+			want:        "must provide ClusterTask name(s) or use --all flag with delete",
 		},
 	}
 
@@ -442,7 +442,7 @@ func TestClusterTaskDelete_v1beta1(t *testing.T) {
 			input:       seeds[2].pipelineClient,
 			inputStream: strings.NewReader("n"),
 			wantError:   true,
-			want:        "canceled deleting clustertask \"tomatoes\"",
+			want:        "canceled deleting ClusterTask(s) \"tomatoes\"",
 		},
 		{
 			name:        "Without force delete flag, reply yes",
@@ -451,7 +451,7 @@ func TestClusterTaskDelete_v1beta1(t *testing.T) {
 			input:       seeds[3].pipelineClient,
 			inputStream: strings.NewReader("y"),
 			wantError:   false,
-			want:        "Are you sure you want to delete clustertask \"tomatoes\" (y/n): ClusterTasks deleted: \"tomatoes\"\n",
+			want:        "Are you sure you want to delete ClusterTask(s) \"tomatoes\" (y/n): ClusterTasks deleted: \"tomatoes\"\n",
 		},
 		{
 			name:        "Remove non existent resource",
@@ -487,7 +487,7 @@ func TestClusterTaskDelete_v1beta1(t *testing.T) {
 			input:       seeds[4].pipelineClient,
 			inputStream: strings.NewReader("y"),
 			wantError:   false,
-			want:        "Are you sure you want to delete clustertask and related resources \"tomatoes\" (y/n): TaskRuns deleted: \"task-run-1\", \"task-run-2\"\nClusterTasks deleted: \"tomatoes\"\n",
+			want:        "Are you sure you want to delete ClusterTask(s) \"tomatoes\" and related resources (y/n): TaskRuns deleted: \"task-run-1\", \"task-run-2\"\nClusterTasks deleted: \"tomatoes\"\n",
 		},
 		{
 			name:        "With force delete flag, reply yes, multiple clustertasks",
@@ -505,7 +505,7 @@ func TestClusterTaskDelete_v1beta1(t *testing.T) {
 			input:       seeds[2].pipelineClient,
 			inputStream: strings.NewReader("y"),
 			wantError:   false,
-			want:        "Are you sure you want to delete clustertask \"tomatoes2\", \"tomatoes3\" (y/n): ClusterTasks deleted: \"tomatoes2\", \"tomatoes3\"\n",
+			want:        "Are you sure you want to delete ClusterTask(s) \"tomatoes2\", \"tomatoes3\" (y/n): ClusterTasks deleted: \"tomatoes2\", \"tomatoes3\"\n",
 		},
 		{
 			name:        "Delete all with prompt",
@@ -514,7 +514,7 @@ func TestClusterTaskDelete_v1beta1(t *testing.T) {
 			input:       seeds[3].pipelineClient,
 			inputStream: strings.NewReader("y"),
 			wantError:   false,
-			want:        "Are you sure you want to delete all clustertasks (y/n): All ClusterTasks deleted\n",
+			want:        "Are you sure you want to delete all ClusterTasks (y/n): All ClusterTasks deleted\n",
 		},
 		{
 			name:        "Delete all with -f",
@@ -541,7 +541,7 @@ func TestClusterTaskDelete_v1beta1(t *testing.T) {
 			input:       seeds[4].pipelineClient,
 			inputStream: nil,
 			wantError:   true,
-			want:        "must provide clustertask name(s) or use --all flag with delete",
+			want:        "must provide ClusterTask name(s) or use --all flag with delete",
 		},
 	}
 

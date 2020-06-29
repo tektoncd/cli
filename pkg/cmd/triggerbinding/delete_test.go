@@ -95,7 +95,7 @@ func TestTriggerBindingDelete(t *testing.T) {
 			input:       seeds[2],
 			inputStream: strings.NewReader("n"),
 			wantError:   true,
-			want:        "canceled deleting triggerbinding \"tb-1\"",
+			want:        "canceled deleting triggerbinding(s) \"tb-1\"",
 		},
 		{
 			name:        "Without force delete flag, reply yes",
@@ -103,7 +103,7 @@ func TestTriggerBindingDelete(t *testing.T) {
 			input:       seeds[2],
 			inputStream: strings.NewReader("y"),
 			wantError:   false,
-			want:        "Are you sure you want to delete triggerbinding \"tb-1\" (y/n): TriggerBindings deleted: \"tb-1\"\n",
+			want:        "Are you sure you want to delete triggerbinding(s) \"tb-1\" (y/n): TriggerBindings deleted: \"tb-1\"\n",
 		},
 		{
 			name:        "Without force delete flag, reply yes, multiple TriggerBindings",
@@ -111,7 +111,7 @@ func TestTriggerBindingDelete(t *testing.T) {
 			input:       seeds[2],
 			inputStream: strings.NewReader("y"),
 			wantError:   false,
-			want:        "Are you sure you want to delete triggerbinding \"tb-2\", \"tb-3\" (y/n): TriggerBindings deleted: \"tb-2\", \"tb-3\"\n",
+			want:        "Are you sure you want to delete triggerbinding(s) \"tb-2\", \"tb-3\" (y/n): TriggerBindings deleted: \"tb-2\", \"tb-3\"\n",
 		},
 		{
 			name:        "Remove non existent resource",

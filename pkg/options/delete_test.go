@@ -24,7 +24,6 @@ import (
 )
 
 func TestDeleteOptions(t *testing.T) {
-
 	testParams := []struct {
 		name           string
 		opt            *DeleteOptions
@@ -71,7 +70,7 @@ func TestDeleteOptions(t *testing.T) {
 			stream:         &cli.Stream{In: strings.NewReader("n"), Out: os.Stdout},
 			resourcesNames: []string{"test"},
 			wantError:      true,
-			want:           "canceled deleting testRes \"test\"",
+			want:           "canceled deleting testRes(s) \"test\"",
 		},
 		{
 			name:           "Specify multiple resources, answer yes",
@@ -87,7 +86,7 @@ func TestDeleteOptions(t *testing.T) {
 			stream:         &cli.Stream{In: strings.NewReader("n"), Out: os.Stdout},
 			resourcesNames: []string{"test1", "test2"},
 			wantError:      true,
-			want:           "canceled deleting testRes \"test1\", \"test2\"",
+			want:           "canceled deleting testRes(s) \"test1\", \"test2\"",
 		},
 		{
 			name:           "Specify parent resource, answer y",

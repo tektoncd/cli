@@ -1,6 +1,6 @@
 ## tkn pipeline logs
 
-Show pipeline logs
+Show Pipeline logs
 
 ### Usage
 
@@ -10,24 +10,24 @@ tkn pipeline logs
 
 ### Synopsis
 
-Show pipeline logs
+Show Pipeline logs
 
 ### Examples
 
 
-Interactive mode: shows logs of the selected pipelinerun:
+Interactive mode: shows logs of the selected PipelineRun:
 
     tkn pipeline logs -n namespace
 
-Interactive mode: shows logs of the selected pipelinerun of the given pipeline:
+Interactive mode: shows logs of the selected PipelineRun of the given Pipeline:
 
     tkn pipeline logs pipeline -n namespace
 
-Show logs of given pipeline for last run:
+Show logs of given Pipeline for last run:
 
     tkn pipeline logs pipeline -n namespace --last
 
-Show logs for given pipeline and pipelinerun:
+Show logs for given Pipeline and PipelineRun:
 
     tkn pipeline logs pipeline run -n namespace
 
@@ -38,8 +38,8 @@ Show logs for given pipeline and pipelinerun:
   -a, --all         show all logs including init steps injected by tekton
   -f, --follow      stream live logs
   -h, --help        help for logs
-  -L, --last        show logs for last run
-      --limit int   lists number of pipelineruns (default 5)
+  -L, --last        show logs for last PipelineRun
+      --limit int   lists number of PipelineRuns (default 5)
 ```
 
 ### Options inherited from parent commands

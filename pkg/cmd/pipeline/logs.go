@@ -48,26 +48,26 @@ func logCommand(p cli.Params) *cobra.Command {
 	opts := options.NewLogOptions(p)
 
 	eg := `
-Interactive mode: shows logs of the selected pipelinerun:
+Interactive mode: shows logs of the selected PipelineRun:
 
     tkn pipeline logs -n namespace
 
-Interactive mode: shows logs of the selected pipelinerun of the given pipeline:
+Interactive mode: shows logs of the selected PipelineRun of the given Pipeline:
 
     tkn pipeline logs pipeline -n namespace
 
-Show logs of given pipeline for last run:
+Show logs of given Pipeline for last run:
 
     tkn pipeline logs pipeline -n namespace --last
 
-Show logs for given pipeline and pipelinerun:
+Show logs for given Pipeline and PipelineRun:
 
     tkn pipeline logs pipeline run -n namespace
 `
 	c := &cobra.Command{
 		Use:                   "logs",
 		DisableFlagsInUseLine: true,
-		Short:                 "Show pipeline logs",
+		Short:                 "Show Pipeline logs",
 		Example:               eg,
 		SilenceUsage:          true,
 		Annotations: map[string]string{
@@ -92,10 +92,10 @@ Show logs for given pipeline and pipelinerun:
 			return run(opts, args)
 		},
 	}
-	c.Flags().BoolVarP(&opts.Last, "last", "L", false, "show logs for last run")
+	c.Flags().BoolVarP(&opts.Last, "last", "L", false, "show logs for last PipelineRun")
 	c.Flags().BoolVarP(&opts.AllSteps, "all", "a", false, "show all logs including init steps injected by tekton")
 	c.Flags().BoolVarP(&opts.Follow, "follow", "f", false, "stream live logs")
-	c.Flags().IntVarP(&opts.Limit, "limit", "", 5, "lists number of pipelineruns")
+	c.Flags().IntVarP(&opts.Limit, "limit", "", 5, "lists number of PipelineRuns")
 
 	_ = c.MarkZshCompPositionalArgumentCustom(1, "__tkn_get_pipeline")
 	return c
@@ -148,7 +148,7 @@ func getAllInputs(opts *options.LogOptions) error {
 	}
 
 	if len(ps) == 0 {
-		fmt.Fprintln(opts.Stream.Err, "No pipelines found in namespace:", opts.Params.Namespace())
+		fmt.Fprintf(opts.Stream.Out, "No Pipelines found in namespace %s", opts.Params.Namespace())
 		return nil
 	}
 
@@ -180,7 +180,7 @@ func askRunName(opts *options.LogOptions) error {
 	}
 
 	if len(prs) == 0 {
-		fmt.Fprintln(opts.Stream.Err, "No pipelineruns found for pipeline:", opts.PipelineName)
+		fmt.Fprintf(opts.Stream.Out, "No PipelineRuns found for Pipeline %s", opts.PipelineName)
 		return nil
 	}
 

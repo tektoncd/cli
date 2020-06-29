@@ -77,9 +77,9 @@ func (o *DeleteOptions) CheckOptions(s *cli.Stream, resourceNames []string, ns s
 	case o.ParentResource != "" && o.ParentResourceName != "":
 		fmt.Fprintf(s.Out, "Are you sure you want to delete all %ss related to %s %q%s (y/n): ", o.Resource, o.ParentResource, o.ParentResourceName, keepStr)
 	case o.DeleteRelated:
-		fmt.Fprintf(s.Out, "Are you sure you want to delete %s and related resources %s (y/n): ", o.Resource, formattedNames)
+		fmt.Fprintf(s.Out, "Are you sure you want to delete %s(s) %s and related resources (y/n): ", o.Resource, formattedNames)
 	default:
-		fmt.Fprintf(s.Out, "Are you sure you want to delete %s %s (y/n): ", o.Resource, formattedNames)
+		fmt.Fprintf(s.Out, "Are you sure you want to delete %s(s) %s (y/n): ", o.Resource, formattedNames)
 	}
 
 	scanner := bufio.NewScanner(s.In)
@@ -88,7 +88,7 @@ func (o *DeleteOptions) CheckOptions(s *cli.Stream, resourceNames []string, ns s
 		if t == "y" {
 			break
 		} else if t == "n" {
-			return fmt.Errorf("canceled deleting %s %s", o.Resource, formattedNames)
+			return fmt.Errorf("canceled deleting %s(s) %s", o.Resource, formattedNames)
 		}
 		fmt.Fprint(s.Out, "Please enter (y/n): ")
 	}
