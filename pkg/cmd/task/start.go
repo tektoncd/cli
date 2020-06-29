@@ -72,6 +72,7 @@ type startOptions struct {
 	task               *v1beta1.Task
 	askOpts            survey.AskOpt
 	TektonOptions      flags.TektonOptions
+	UseParamDefaults   bool
 }
 
 // NameArg validates that the first argument is a valid task name
@@ -132,6 +133,9 @@ like cat,foo,bar
 			if err := flags.InitParams(p, cmd); err != nil {
 				return err
 			}
+			if opt.UseParamDefaults && (opt.Last || opt.UseTaskRun != "") {
+				return errors.New("cannot use --last or --use-taskrun options with --use-param-defaults option")
+			}
 			if opt.DryRun {
 				format := strings.ToLower(opt.Output)
 				if format != "" && format != "json" && format != "yaml" {
@@ -147,6 +151,7 @@ like cat,foo,bar
 			if opt.Filename != "" && opt.Last {
 				return errors.New("cannot use --last option with --filename option")
 			}
+
 			return nil
 		},
 		RunE: func(cmd *cobra.Command, args []string) error {
@@ -180,6 +185,7 @@ like cat,foo,bar
 	c.Flags().BoolVarP(&opt.DryRun, "dry-run", "", false, "preview TaskRun without running it")
 	c.Flags().StringVarP(&opt.Output, "output", "", "", "format of TaskRun dry-run (yaml or json)")
 	c.Flags().StringVarP(&opt.PrefixName, "prefix-name", "", "", "specify a prefix for the TaskRun name (must be lowercase alphanumeric characters)")
+	c.Flags().BoolVarP(&opt.UseParamDefaults, "use-param-defaults", "", false, "use default parameter values without prompting for input")
 
 	_ = c.MarkZshCompPositionalArgumentCustom(1, "__tkn_get_task")
 
@@ -513,7 +519,7 @@ func (opt *startOptions) getInputs() error {
 
 	params.FilterParamsByType(opt.task.Spec.Params)
 	if len(opt.Params) == 0 && !opt.Last && opt.UseTaskRun == "" {
-		if err := intOpts.TaskParams(opt.task); err != nil {
+		if err := intOpts.TaskParams(opt.task, opt.UseParamDefaults); err != nil {
 			return err
 		}
 		opt.Params = append(opt.Params, intOpts.Params...)
