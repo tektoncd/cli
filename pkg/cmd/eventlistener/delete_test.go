@@ -119,7 +119,7 @@ func TestEventListenerDelete(t *testing.T) {
 			input:       seeds[2],
 			inputStream: nil,
 			wantError:   true,
-			want:        "failed to delete eventlistener \"nonexistent\": eventlisteners.triggers.tekton.dev \"nonexistent\" not found",
+			want:        "failed to delete EventListener \"nonexistent\": eventlisteners.triggers.tekton.dev \"nonexistent\" not found",
 		},
 		{
 			name:        "Remove multiple non existent resources",
@@ -127,7 +127,7 @@ func TestEventListenerDelete(t *testing.T) {
 			input:       seeds[2],
 			inputStream: nil,
 			wantError:   true,
-			want:        "failed to delete eventlistener \"nonexistent\": eventlisteners.triggers.tekton.dev \"nonexistent\" not found; failed to delete eventlistener \"nonexistent2\": eventlisteners.triggers.tekton.dev \"nonexistent2\" not found",
+			want:        "failed to delete EventListener \"nonexistent\": eventlisteners.triggers.tekton.dev \"nonexistent\" not found; failed to delete EventListener \"nonexistent2\": eventlisteners.triggers.tekton.dev \"nonexistent2\" not found",
 		},
 		{
 			name:        "Delete all with prompt",

@@ -74,19 +74,19 @@ func cancelPipelineRun(p cli.Params, s *cli.Stream, prName string) error {
 
 	pr, err := pipelinerun.GetV1beta1(cs, prName, metav1.GetOptions{}, p.Namespace())
 	if err != nil {
-		return fmt.Errorf("failed to find pipelinerun: %s", prName)
+		return fmt.Errorf("failed to find PipelineRun: %s", prName)
 	}
 
 	prCond := formatted.Condition(pr.Status.Conditions)
 	if prCond == succeeded || prCond == failed || prCond == prCancelled {
-		return fmt.Errorf("failed to cancel pipelinerun %s: pipelinerun has already finished execution", prName)
+		return fmt.Errorf("failed to cancel PipelineRun %s: PipelineRun has already finished execution", prName)
 	}
 
 	if _, err = pipelinerun.Patch(cs, prName, metav1.PatchOptions{}, p.Namespace()); err != nil {
-		return fmt.Errorf("failed to cancel pipelinerun: %s, err: %s", prName, err.Error())
+		return fmt.Errorf("failed to cancel PipelineRun: %s: %v", prName, err)
 
 	}
 
-	fmt.Fprintf(s.Out, "Pipelinerun cancelled: %s\n", pr.Name)
+	fmt.Fprintf(s.Out, "PipelineRun cancelled: %s\n", pr.Name)
 	return nil
 }

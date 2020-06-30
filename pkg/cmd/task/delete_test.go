@@ -173,7 +173,7 @@ func TestTaskDelete(t *testing.T) {
 			input:       seeds[2].pipelineClient,
 			inputStream: nil,
 			wantError:   true,
-			want:        "failed to delete task \"nonexistent\": tasks.tekton.dev \"nonexistent\" not found",
+			want:        "failed to delete Task \"nonexistent\": tasks.tekton.dev \"nonexistent\" not found",
 		},
 		{
 			name:        "Remove multiple non existent resources",
@@ -182,7 +182,7 @@ func TestTaskDelete(t *testing.T) {
 			input:       seeds[2].pipelineClient,
 			inputStream: nil,
 			wantError:   true,
-			want:        "failed to delete task \"nonexistent\": tasks.tekton.dev \"nonexistent\" not found; failed to delete task \"nonexistent2\": tasks.tekton.dev \"nonexistent2\" not found",
+			want:        "failed to delete Task \"nonexistent\": tasks.tekton.dev \"nonexistent\" not found; failed to delete Task \"nonexistent2\": tasks.tekton.dev \"nonexistent2\" not found",
 		},
 		{
 			name:        "Remove multiple non existent resources with --trs flag",
@@ -191,7 +191,7 @@ func TestTaskDelete(t *testing.T) {
 			input:       seeds[2].pipelineClient,
 			inputStream: nil,
 			wantError:   true,
-			want:        "failed to delete task \"nonexistent\": tasks.tekton.dev \"nonexistent\" not found; failed to delete task \"nonexistent2\": tasks.tekton.dev \"nonexistent2\" not found",
+			want:        "failed to delete Task \"nonexistent\": tasks.tekton.dev \"nonexistent\" not found; failed to delete Task \"nonexistent2\": tasks.tekton.dev \"nonexistent2\" not found",
 		},
 		{
 			name:        "With delete taskruns flag, reply yes",
@@ -478,7 +478,7 @@ func TestTaskDelete_v1beta1(t *testing.T) {
 			input:       seeds[2].pipelineClient,
 			inputStream: nil,
 			wantError:   true,
-			want:        "failed to delete task \"nonexistent\": tasks.tekton.dev \"nonexistent\" not found",
+			want:        "failed to delete Task \"nonexistent\": tasks.tekton.dev \"nonexistent\" not found",
 		},
 		{
 			name:        "Remove multiple non existent resources",
@@ -487,7 +487,7 @@ func TestTaskDelete_v1beta1(t *testing.T) {
 			input:       seeds[2].pipelineClient,
 			inputStream: nil,
 			wantError:   true,
-			want:        "failed to delete task \"nonexistent\": tasks.tekton.dev \"nonexistent\" not found; failed to delete task \"nonexistent2\": tasks.tekton.dev \"nonexistent2\" not found",
+			want:        "failed to delete Task \"nonexistent\": tasks.tekton.dev \"nonexistent\" not found; failed to delete Task \"nonexistent2\": tasks.tekton.dev \"nonexistent2\" not found",
 		},
 		{
 			name:        "Remove multiple non existent resources with --trs flag",
@@ -496,7 +496,7 @@ func TestTaskDelete_v1beta1(t *testing.T) {
 			input:       seeds[2].pipelineClient,
 			inputStream: nil,
 			wantError:   true,
-			want:        "failed to delete task \"nonexistent\": tasks.tekton.dev \"nonexistent\" not found; failed to delete task \"nonexistent2\": tasks.tekton.dev \"nonexistent2\" not found",
+			want:        "failed to delete Task \"nonexistent\": tasks.tekton.dev \"nonexistent\" not found; failed to delete Task \"nonexistent2\": tasks.tekton.dev \"nonexistent2\" not found",
 		},
 		{
 			name:        "With delete taskruns flag, reply yes",

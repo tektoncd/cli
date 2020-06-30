@@ -50,7 +50,7 @@ or
 	c := &cobra.Command{
 		Use:          "describe",
 		Aliases:      []string{"desc"},
-		Short:        "Describe a pipelinerun in a namespace",
+		Short:        "Describe a PipelineRun in a namespace",
 		Example:      eg,
 		SilenceUsage: true,
 		Annotations: map[string]string{
@@ -68,8 +68,7 @@ or
 
 			output, err := cmd.LocalFlags().GetString("output")
 			if err != nil {
-				fmt.Fprint(os.Stderr, "Error: output option not set properly \n")
-				return err
+				return fmt.Errorf("output option not set properly: %v", err)
 			}
 
 			if !opts.Fzf {
@@ -105,9 +104,9 @@ or
 		},
 	}
 
-	c.Flags().BoolVarP(&opts.Last, "last", "L", false, "show description for last pipelinerun")
-	c.Flags().IntVarP(&opts.Limit, "limit", "", defaultDescribeLimit, "lists number of pipelineruns when selecting a pipelinerun to describe")
-	c.Flags().BoolVarP(&opts.Fzf, "fzf", "F", false, "use fzf to select a pipelinerun to describe")
+	c.Flags().BoolVarP(&opts.Last, "last", "L", false, "show description for last PipelineRun")
+	c.Flags().IntVarP(&opts.Limit, "limit", "", defaultDescribeLimit, "lists number of PipelineRuns when selecting a PipelineRun to describe")
+	c.Flags().BoolVarP(&opts.Fzf, "fzf", "F", false, "use fzf to select a PipelineRun to describe")
 
 	_ = c.MarkZshCompPositionalArgumentCustom(1, "__tkn_get_pipelinerun")
 	f.AddFlags(c)
@@ -128,7 +127,8 @@ func askPipelineRunName(opts *options.DescribeOptions, p cli.Params) error {
 		return err
 	}
 	if len(prs) == 0 {
-		return fmt.Errorf("no pipelineruns found")
+		fmt.Fprint(os.Stdout, "No PipelineRuns found")
+		return nil
 	}
 
 	if opts.Fzf {

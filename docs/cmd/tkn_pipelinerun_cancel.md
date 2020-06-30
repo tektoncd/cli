@@ -36,5 +36,5 @@ Cancel the PipelineRun named 'foo' from namespace 'bar':
 
 ### SEE ALSO
 
-* [tkn pipelinerun](tkn_pipelinerun.md)	 - Manage pipelineruns
+* [tkn pipelinerun](tkn_pipelinerun.md)	 - Manage PipelineRuns
 

@@ -176,7 +176,7 @@ func TestPipelineRunDelete(t *testing.T) {
 			input:       seeds[2].pipelineClient,
 			inputStream: strings.NewReader("n"),
 			wantError:   true,
-			want:        "canceled deleting pipelinerun(s) \"pipeline-run-1\"",
+			want:        "canceled deleting PipelineRun(s) \"pipeline-run-1\"",
 		},
 		{
 			name:        "Without force delete flag, reply yes",
@@ -185,7 +185,7 @@ func TestPipelineRunDelete(t *testing.T) {
 			input:       seeds[2].pipelineClient,
 			inputStream: strings.NewReader("y"),
 			wantError:   false,
-			want:        "Are you sure you want to delete pipelinerun(s) \"pipeline-run-1\" (y/n): PipelineRuns deleted: \"pipeline-run-1\"\n",
+			want:        "Are you sure you want to delete PipelineRun(s) \"pipeline-run-1\" (y/n): PipelineRuns deleted: \"pipeline-run-1\"\n",
 		},
 		{
 			name:        "Remove non existent resource",
@@ -194,7 +194,7 @@ func TestPipelineRunDelete(t *testing.T) {
 			input:       seeds[2].pipelineClient,
 			inputStream: nil,
 			wantError:   true,
-			want:        "failed to delete pipelinerun \"nonexistent\": pipelineruns.tekton.dev \"nonexistent\" not found",
+			want:        "failed to delete PipelineRun \"nonexistent\": pipelineruns.tekton.dev \"nonexistent\" not found",
 		},
 		{
 			name:        "Remove multiple non existent resources",
@@ -203,7 +203,7 @@ func TestPipelineRunDelete(t *testing.T) {
 			input:       seeds[2].pipelineClient,
 			inputStream: nil,
 			wantError:   true,
-			want:        "failed to delete pipelinerun \"nonexistent\": pipelineruns.tekton.dev \"nonexistent\" not found; failed to delete pipelinerun \"nonexistent2\": pipelineruns.tekton.dev \"nonexistent2\" not found",
+			want:        "failed to delete PipelineRun \"nonexistent\": pipelineruns.tekton.dev \"nonexistent\" not found; failed to delete PipelineRun \"nonexistent2\": pipelineruns.tekton.dev \"nonexistent2\" not found",
 		},
 		{
 			name:        "Attempt remove forgetting to include pipelinerun names",
@@ -212,7 +212,7 @@ func TestPipelineRunDelete(t *testing.T) {
 			input:       seeds[2].pipelineClient,
 			inputStream: nil,
 			wantError:   true,
-			want:        "must provide pipelinerun name(s) or use --pipeline flag or --all flag to use delete",
+			want:        "must provide PipelineRun name(s) or use --pipeline flag or --all flag to use delete",
 		},
 		{
 			name:        "Remove pipelineruns of a pipeline",
@@ -221,7 +221,7 @@ func TestPipelineRunDelete(t *testing.T) {
 			input:       seeds[0].pipelineClient,
 			inputStream: strings.NewReader("y"),
 			wantError:   false,
-			want:        "Are you sure you want to delete all pipelineruns related to pipeline \"pipeline\" (y/n): All PipelineRuns associated with Pipeline \"pipeline\" deleted in namespace \"ns\"\n",
+			want:        "Are you sure you want to delete all PipelineRuns related to Pipeline \"pipeline\" (y/n): All PipelineRuns associated with Pipeline \"pipeline\" deleted in namespace \"ns\"\n",
 		},
 		{
 			name:        "Delete all with prompt",
@@ -230,7 +230,7 @@ func TestPipelineRunDelete(t *testing.T) {
 			input:       seeds[3].pipelineClient,
 			inputStream: strings.NewReader("y"),
 			wantError:   false,
-			want:        "Are you sure you want to delete all pipelineruns in namespace \"ns\" (y/n): All PipelineRuns deleted in namespace \"ns\"\n",
+			want:        "Are you sure you want to delete all PipelineRuns in namespace \"ns\" (y/n): All PipelineRuns deleted in namespace \"ns\"\n",
 		},
 		{
 			name:        "Delete all with -f",
@@ -284,7 +284,7 @@ func TestPipelineRunDelete(t *testing.T) {
 			input:       seeds[5].pipelineClient,
 			inputStream: nil,
 			wantError:   false,
-			want:        "Are you sure you want to delete all pipelineruns related to pipeline \"pipeline\" keeping 2 pipelineruns (y/n): All but 2 PipelineRuns associated with Pipeline \"pipeline\" deleted in namespace \"ns\"\n",
+			want:        "Are you sure you want to delete all PipelineRuns related to Pipeline \"pipeline\" keeping 2 PipelineRuns (y/n): All but 2 PipelineRuns associated with Pipeline \"pipeline\" deleted in namespace \"ns\"\n",
 		},
 		{
 			name:        "Error from using argument with --keep",
@@ -503,7 +503,7 @@ func TestPipelineRunDelete_v1beta1(t *testing.T) {
 			input:       seeds[2].pipelineClient,
 			inputStream: strings.NewReader("n"),
 			wantError:   true,
-			want:        "canceled deleting pipelinerun(s) \"pipeline-run-1\"",
+			want:        "canceled deleting PipelineRun(s) \"pipeline-run-1\"",
 		},
 		{
 			name:        "Without force delete flag, reply yes",
@@ -512,7 +512,7 @@ func TestPipelineRunDelete_v1beta1(t *testing.T) {
 			input:       seeds[2].pipelineClient,
 			inputStream: strings.NewReader("y"),
 			wantError:   false,
-			want:        "Are you sure you want to delete pipelinerun(s) \"pipeline-run-1\" (y/n): PipelineRuns deleted: \"pipeline-run-1\"\n",
+			want:        "Are you sure you want to delete PipelineRun(s) \"pipeline-run-1\" (y/n): PipelineRuns deleted: \"pipeline-run-1\"\n",
 		},
 		{
 			name:        "Remove non existent resource",
@@ -521,7 +521,7 @@ func TestPipelineRunDelete_v1beta1(t *testing.T) {
 			input:       seeds[2].pipelineClient,
 			inputStream: nil,
 			wantError:   true,
-			want:        "failed to delete pipelinerun \"nonexistent\": pipelineruns.tekton.dev \"nonexistent\" not found",
+			want:        "failed to delete PipelineRun \"nonexistent\": pipelineruns.tekton.dev \"nonexistent\" not found",
 		},
 		{
 			name:        "Remove multiple non existent resources",
@@ -530,7 +530,7 @@ func TestPipelineRunDelete_v1beta1(t *testing.T) {
 			input:       seeds[2].pipelineClient,
 			inputStream: nil,
 			wantError:   true,
-			want:        "failed to delete pipelinerun \"nonexistent\": pipelineruns.tekton.dev \"nonexistent\" not found; failed to delete pipelinerun \"nonexistent2\": pipelineruns.tekton.dev \"nonexistent2\" not found",
+			want:        "failed to delete PipelineRun \"nonexistent\": pipelineruns.tekton.dev \"nonexistent\" not found; failed to delete PipelineRun \"nonexistent2\": pipelineruns.tekton.dev \"nonexistent2\" not found",
 		},
 		{
 			name:        "Attempt remove forgetting to include pipelinerun names",
@@ -539,7 +539,7 @@ func TestPipelineRunDelete_v1beta1(t *testing.T) {
 			input:       seeds[2].pipelineClient,
 			inputStream: nil,
 			wantError:   true,
-			want:        "must provide pipelinerun name(s) or use --pipeline flag or --all flag to use delete",
+			want:        "must provide PipelineRun name(s) or use --pipeline flag or --all flag to use delete",
 		},
 		{
 			name:        "Remove pipelineruns of a pipeline",
@@ -548,7 +548,7 @@ func TestPipelineRunDelete_v1beta1(t *testing.T) {
 			input:       seeds[0].pipelineClient,
 			inputStream: strings.NewReader("y"),
 			wantError:   false,
-			want:        "Are you sure you want to delete all pipelineruns related to pipeline \"pipeline\" (y/n): All PipelineRuns associated with Pipeline \"pipeline\" deleted in namespace \"ns\"\n",
+			want:        "Are you sure you want to delete all PipelineRuns related to Pipeline \"pipeline\" (y/n): All PipelineRuns associated with Pipeline \"pipeline\" deleted in namespace \"ns\"\n",
 		},
 		{
 			name:        "Delete all with prompt",
@@ -557,7 +557,7 @@ func TestPipelineRunDelete_v1beta1(t *testing.T) {
 			input:       seeds[3].pipelineClient,
 			inputStream: strings.NewReader("y"),
 			wantError:   false,
-			want:        "Are you sure you want to delete all pipelineruns in namespace \"ns\" (y/n): All PipelineRuns deleted in namespace \"ns\"\n",
+			want:        "Are you sure you want to delete all PipelineRuns in namespace \"ns\" (y/n): All PipelineRuns deleted in namespace \"ns\"\n",
 		},
 		{
 			name:        "Delete all with -f",
@@ -602,7 +602,7 @@ func TestPipelineRunDelete_v1beta1(t *testing.T) {
 			input:       seeds[5].pipelineClient,
 			inputStream: strings.NewReader("y"),
 			wantError:   false,
-			want:        "Are you sure you want to delete all pipelineruns related to pipeline \"pipeline\" keeping 2 pipelineruns (y/n): All but 2 PipelineRuns associated with Pipeline \"pipeline\" deleted in namespace \"ns\"\n",
+			want:        "Are you sure you want to delete all PipelineRuns related to Pipeline \"pipeline\" keeping 2 PipelineRuns (y/n): All but 2 PipelineRuns associated with Pipeline \"pipeline\" deleted in namespace \"ns\"\n",
 		},
 		{
 			name:        "Error from using argument with --keep",

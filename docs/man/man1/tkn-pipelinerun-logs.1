@@ -5,7 +5,7 @@
 
 .SH NAME
 .PP
-tkn\-pipelinerun\-logs \- Show the logs of PipelineRun
+tkn\-pipelinerun\-logs \- Show the logs of a PipelineRun
 
 
 .SH SYNOPSIS
@@ -15,7 +15,7 @@ tkn\-pipelinerun\-logs \- Show the logs of PipelineRun
 
 .SH DESCRIPTION
 .PP
-Show the logs of PipelineRun
+Show the logs of a PipelineRun
 
 
 .SH OPTIONS
@@ -29,7 +29,7 @@ Show the logs of PipelineRun
 
 .PP
 \fB\-F\fP, \fB\-\-fzf\fP[=false]
-    use fzf to select a pipelinerun
+    use fzf to select a PipelineRun
 
 .PP
 \fB\-h\fP, \fB\-\-help\fP[=false]
@@ -37,15 +37,15 @@ Show the logs of PipelineRun
 
 .PP
 \fB\-L\fP, \fB\-\-last\fP[=false]
-    show logs for last pipelinerun
+    show logs for last PipelineRun
 
 .PP
 \fB\-\-limit\fP=5
-    lists number of pipelineruns
+    lists number of PipelineRuns
 
 .PP
 \fB\-t\fP, \fB\-\-task\fP=[]
-    show logs for mentioned tasks only
+    show logs for mentioned Tasks only
 
 
 .SH OPTIONS INHERITED FROM PARENT COMMANDS
@@ -80,7 +80,7 @@ tkn pipelinerun logs foo \-n bar
 .RE
 
 .PP
-Show the logs of PipelineRun named 'microservice\-1' for task 'build' only from namespace 'bar':
+Show the logs of PipelineRun named 'microservice\-1' for Task 'build' only from namespace 'bar':
 
 .PP
 .RS
@@ -92,7 +92,7 @@ tkn pr logs microservice\-1 \-t build \-n bar
 .RE
 
 .PP
-Show the logs of PipelineRun named 'microservice\-1' for all tasks and steps (including init steps) from namespace 'foo':
+Show the logs of PipelineRun named 'microservice\-1' for all Tasks and steps (including init steps) from namespace 'foo':
 
 .PP
 .RS

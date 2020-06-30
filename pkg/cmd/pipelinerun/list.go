@@ -16,7 +16,6 @@ package pipelinerun
 
 import (
 	"fmt"
-	"os"
 	"text/tabwriter"
 	"text/template"
 
@@ -74,7 +73,7 @@ List all PipelineRuns in a namespace 'foo':
 	c := &cobra.Command{
 		Use:     "list",
 		Aliases: []string{"ls"},
-		Short:   "Lists pipelineruns in a namespace",
+		Short:   "Lists PipelineRuns in a namespace",
 		Annotations: map[string]string{
 			"commandType": "main",
 		},
@@ -93,14 +92,12 @@ List all PipelineRuns in a namespace 'foo':
 			}
 
 			if opts.Limit < 0 {
-				fmt.Fprintf(os.Stderr, "Limit was %d but must be a positive number\n", opts.Limit)
-				return nil
+				return fmt.Errorf("limit was %d but must be a positive number", opts.Limit)
 			}
 
 			prs, err := list(p, pipeline, opts.Limit, opts.LabelSelector, opts.AllNamespaces)
 			if err != nil {
-				fmt.Fprintf(os.Stderr, "Failed to list pipelineruns from %s namespace \n", p.Namespace())
-				return err
+				return fmt.Errorf("failed to list PipelineRuns from namespace %s: %v", p.Namespace(), err)
 			}
 
 			if prs != nil && opts.Reverse {
@@ -109,8 +106,7 @@ List all PipelineRuns in a namespace 'foo':
 
 			output, err := cmd.LocalFlags().GetString("output")
 			if err != nil {
-				fmt.Fprint(os.Stderr, "Error: output option not set properly \n")
-				return err
+				return fmt.Errorf("output option not set properly: %v", err)
 			}
 
 			if output == "name" && prs != nil {
@@ -133,20 +129,19 @@ List all PipelineRuns in a namespace 'foo':
 			if prs != nil {
 				err = printFormatted(stream, prs, p.Time(), opts.AllNamespaces, opts.NoHeaders)
 			}
-
 			if err != nil {
-				fmt.Fprint(os.Stderr, "Failed to print Pipelineruns \n")
-				return err
+				return fmt.Errorf("failed to print PipelineRuns: %v", err)
 			}
+
 			return nil
 		},
 	}
 
 	f.AddFlags(c)
-	c.Flags().IntVarP(&opts.Limit, "limit", "", 0, "limit pipelineruns listed (default: return all pipelineruns)")
+	c.Flags().IntVarP(&opts.Limit, "limit", "", 0, "limit PipelineRuns listed (default: return all PipelineRuns)")
 	c.Flags().StringVarP(&opts.LabelSelector, "label", "", opts.LabelSelector, "A selector (label query) to filter on, supports '=', '==', and '!='")
-	c.Flags().BoolVarP(&opts.Reverse, "reverse", "", opts.Reverse, "list pipelineruns in reverse order")
-	c.Flags().BoolVarP(&opts.AllNamespaces, "all-namespaces", "A", opts.AllNamespaces, "list pipelineruns from all namespaces")
+	c.Flags().BoolVarP(&opts.Reverse, "reverse", "", opts.Reverse, "list PipelineRuns in reverse order")
+	c.Flags().BoolVarP(&opts.AllNamespaces, "all-namespaces", "A", opts.AllNamespaces, "list PipelineRuns from all namespaces")
 	c.Flags().BoolVarP(&opts.NoHeaders, "no-headers", "", opts.NoHeaders, "do not print column headers with output (default print column headers with output)")
 	return c
 }
@@ -161,7 +156,7 @@ func list(p cli.Params, pipeline string, limit int, labelselector string, allnam
 	}
 
 	if pipeline != "" && labelselector != "" {
-		return nil, fmt.Errorf("specifying a pipeline and labels are not compatible")
+		return nil, fmt.Errorf("specifying a Pipeline and labels are not compatible")
 	}
 
 	if pipeline != "" {
@@ -221,7 +216,6 @@ func reverse(prs *v1beta1.PipelineRunList) {
 }
 
 func printFormatted(s *cli.Stream, prs *v1beta1.PipelineRunList, c clockwork.Clock, allnamespaces bool, noheaders bool) error {
-
 	var data = struct {
 		PipelineRuns  *v1beta1.PipelineRunList
 		Time          clockwork.Clock

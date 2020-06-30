@@ -38,11 +38,11 @@ func logCommand(p cli.Params) *cobra.Command {
 
     tkn pipelinerun logs foo -n bar
 
-Show the logs of PipelineRun named 'microservice-1' for task 'build' only from namespace 'bar':
+Show the logs of PipelineRun named 'microservice-1' for Task 'build' only from namespace 'bar':
 
     tkn pr logs microservice-1 -t build -n bar
 
-Show the logs of PipelineRun named 'microservice-1' for all tasks and steps (including init steps) from namespace 'foo':
+Show the logs of PipelineRun named 'microservice-1' for all Tasks and steps (including init steps) from namespace 'foo':
 
     tkn pr logs microservice-1 -a -n foo
    `
@@ -50,7 +50,7 @@ Show the logs of PipelineRun named 'microservice-1' for all tasks and steps (inc
 	c := &cobra.Command{
 		Use:                   "logs",
 		DisableFlagsInUseLine: true,
-		Short:                 "Show the logs of PipelineRun",
+		Short:                 "Show the logs of a PipelineRun",
 		Annotations: map[string]string{
 			"commandType": "main",
 		},
@@ -80,11 +80,11 @@ Show the logs of PipelineRun named 'microservice-1' for all tasks and steps (inc
 	}
 
 	c.Flags().BoolVarP(&opts.AllSteps, "all", "a", false, "show all logs including init steps injected by tekton")
-	c.Flags().BoolVarP(&opts.Last, "last", "L", false, "show logs for last pipelinerun")
-	c.Flags().BoolVarP(&opts.Fzf, "fzf", "F", false, "use fzf to select a pipelinerun")
+	c.Flags().BoolVarP(&opts.Last, "last", "L", false, "show logs for last PipelineRun")
+	c.Flags().BoolVarP(&opts.Fzf, "fzf", "F", false, "use fzf to select a PipelineRun")
 	c.Flags().BoolVarP(&opts.Follow, "follow", "f", false, "stream live logs")
-	c.Flags().StringSliceVarP(&opts.Tasks, "task", "t", []string{}, "show logs for mentioned tasks only")
-	c.Flags().IntVarP(&opts.Limit, "limit", "", defaultLimit, "lists number of pipelineruns")
+	c.Flags().StringSliceVarP(&opts.Tasks, "task", "t", []string{}, "show logs for mentioned Tasks only")
+	c.Flags().IntVarP(&opts.Limit, "limit", "", defaultLimit, "lists number of PipelineRuns")
 
 	_ = c.MarkZshCompPositionalArgumentCustom(1, "__tkn_get_pipelinerun")
 	return c
@@ -130,7 +130,8 @@ func askRunName(opts *options.LogOptions) error {
 	}
 
 	if len(prs) == 0 {
-		return fmt.Errorf("No pipelineruns found")
+		fmt.Fprint(os.Stdout, "No PipelineRuns found")
+		return nil
 	}
 
 	if len(prs) == 1 || opts.Last {

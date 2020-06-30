@@ -1,6 +1,6 @@
 ## tkn pipelinerun
 
-Manage pipelineruns
+Manage PipelineRuns
 
 ***Aliases**: pr,pipelineruns*
 
@@ -12,7 +12,7 @@ tkn pipelinerun
 
 ### Synopsis
 
-Manage pipelineruns
+Manage PipelineRuns
 
 ### Options
 
@@ -28,8 +28,8 @@ Manage pipelineruns
 
 * [tkn](tkn.md)	 - CLI for tekton pipelines
 * [tkn pipelinerun cancel](tkn_pipelinerun_cancel.md)	 - Cancel a PipelineRun in a namespace
-* [tkn pipelinerun delete](tkn_pipelinerun_delete.md)	 - Delete pipelineruns in a namespace
-* [tkn pipelinerun describe](tkn_pipelinerun_describe.md)	 - Describe a pipelinerun in a namespace
-* [tkn pipelinerun list](tkn_pipelinerun_list.md)	 - Lists pipelineruns in a namespace
-* [tkn pipelinerun logs](tkn_pipelinerun_logs.md)	 - Show the logs of PipelineRun
+* [tkn pipelinerun delete](tkn_pipelinerun_delete.md)	 - Delete PipelineRuns in a namespace
+* [tkn pipelinerun describe](tkn_pipelinerun_describe.md)	 - Describe a PipelineRun in a namespace
+* [tkn pipelinerun list](tkn_pipelinerun_list.md)	 - Lists PipelineRuns in a namespace
+* [tkn pipelinerun logs](tkn_pipelinerun_logs.md)	 - Show the logs of a PipelineRun
 
