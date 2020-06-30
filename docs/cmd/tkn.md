@@ -26,7 +26,7 @@ CLI for tekton pipelines
 * [tkn condition](tkn_condition.md)	 - Manage conditions
 * [tkn eventlistener](tkn_eventlistener.md)	 - Manage eventlisteners
 * [tkn pipeline](tkn_pipeline.md)	 - Manage pipelines
-* [tkn pipelinerun](tkn_pipelinerun.md)	 - Manage pipelineruns
+* [tkn pipelinerun](tkn_pipelinerun.md)	 - Manage PipelineRuns
 * [tkn resource](tkn_resource.md)	 - Manage pipeline resources
 * [tkn task](tkn_task.md)	 - Manage Tasks
 * [tkn taskrun](tkn_taskrun.md)	 - Manage TaskRuns

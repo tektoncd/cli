@@ -169,7 +169,7 @@ func TestTaskRunDelete(t *testing.T) {
 			input:       seeds[2].pipelineClient,
 			inputStream: nil,
 			wantError:   true,
-			want:        "failed to delete taskrun \"nonexistent\": taskruns.tekton.dev \"nonexistent\" not found",
+			want:        "failed to delete TaskRun \"nonexistent\": taskruns.tekton.dev \"nonexistent\" not found",
 		},
 		{
 			name:        "Remove multiple non existent resources",
@@ -178,7 +178,7 @@ func TestTaskRunDelete(t *testing.T) {
 			input:       seeds[2].pipelineClient,
 			inputStream: nil,
 			wantError:   true,
-			want:        "failed to delete taskrun \"nonexistent\": taskruns.tekton.dev \"nonexistent\" not found; failed to delete taskrun \"nonexistent2\": taskruns.tekton.dev \"nonexistent2\" not found",
+			want:        "failed to delete TaskRun \"nonexistent\": taskruns.tekton.dev \"nonexistent\" not found; failed to delete TaskRun \"nonexistent2\": taskruns.tekton.dev \"nonexistent2\" not found",
 		},
 		{
 			name:        "Attempt remove forgetting to include taskrun names",
@@ -470,7 +470,7 @@ func TestTaskRunDelete_v1beta1(t *testing.T) {
 			input:       seeds[2].pipelineClient,
 			inputStream: nil,
 			wantError:   true,
-			want:        "failed to delete taskrun \"nonexistent\": taskruns.tekton.dev \"nonexistent\" not found",
+			want:        "failed to delete TaskRun \"nonexistent\": taskruns.tekton.dev \"nonexistent\" not found",
 		},
 		{
 			name:        "Remove multiple non existent resources",
@@ -479,7 +479,7 @@ func TestTaskRunDelete_v1beta1(t *testing.T) {
 			input:       seeds[2].pipelineClient,
 			inputStream: nil,
 			wantError:   true,
-			want:        "failed to delete taskrun \"nonexistent\": taskruns.tekton.dev \"nonexistent\" not found; failed to delete taskrun \"nonexistent2\": taskruns.tekton.dev \"nonexistent2\" not found",
+			want:        "failed to delete TaskRun \"nonexistent\": taskruns.tekton.dev \"nonexistent\" not found; failed to delete TaskRun \"nonexistent2\": taskruns.tekton.dev \"nonexistent2\" not found",
 		},
 		{
 			name:        "Attempt remove forgetting to include taskrun names",

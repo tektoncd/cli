@@ -185,7 +185,7 @@ func TestListPipelineRuns(t *testing.T) {
 			name:      "limit pipelineruns negative case",
 			command:   commandV1alpha1(t, prs, clock.Now(), ns, version, dc1),
 			args:      []string{"list", "-n", "namespace", "--limit", fmt.Sprintf("%d", -1)},
-			wantError: false,
+			wantError: true,
 		},
 		{
 			name:      "filter pipelineruns by label with in query",
@@ -421,7 +421,7 @@ func TestListPipelineRuns_v1beta1(t *testing.T) {
 			name:      "limit pipelineruns negative case",
 			command:   commandV1beta1(t, prs, clock.Now(), ns, version, dc1),
 			args:      []string{"list", "-n", "namespace", "--limit", fmt.Sprintf("%d", -1)},
-			wantError: false,
+			wantError: true,
 		},
 		{
 			name:      "filter pipelineruns by label with in query",

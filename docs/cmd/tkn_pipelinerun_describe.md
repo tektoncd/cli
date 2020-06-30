@@ -1,6 +1,6 @@
 ## tkn pipelinerun describe
 
-Describe a pipelinerun in a namespace
+Describe a PipelineRun in a namespace
 
 ***Aliases**: desc*
 
@@ -12,7 +12,7 @@ tkn pipelinerun describe
 
 ### Synopsis
 
-Describe a pipelinerun in a namespace
+Describe a PipelineRun in a namespace
 
 ### Examples
 
@@ -29,10 +29,10 @@ or
 
 ```
       --allow-missing-template-keys   If true, ignore any errors in templates when a field or map key is missing in the template. Only applies to golang and jsonpath output formats. (default true)
-  -F, --fzf                           use fzf to select a pipelinerun to describe
+  -F, --fzf                           use fzf to select a PipelineRun to describe
   -h, --help                          help for describe
-  -L, --last                          show description for last pipelinerun
-      --limit int                     lists number of pipelineruns when selecting a pipelinerun to describe (default 5)
+  -L, --last                          show description for last PipelineRun
+      --limit int                     lists number of PipelineRuns when selecting a PipelineRun to describe (default 5)
   -o, --output string                 Output format. One of: json|yaml|name|go-template|go-template-file|template|templatefile|jsonpath|jsonpath-file.
       --template string               Template string or path to template file to use when -o=go-template, -o=go-template-file. The template format is golang templates [http://golang.org/pkg/text/template/#pkg-overview].
 ```
@@ -48,5 +48,5 @@ or
 
 ### SEE ALSO
 
-* [tkn pipelinerun](tkn_pipelinerun.md)	 - Manage pipelineruns
+* [tkn pipelinerun](tkn_pipelinerun.md)	 - Manage PipelineRuns
 

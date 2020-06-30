@@ -171,7 +171,7 @@ func TestClusterTaskDelete(t *testing.T) {
 			input:       seeds[2].pipelineClient,
 			inputStream: strings.NewReader("y"),
 			wantError:   true,
-			want:        "failed to delete clustertask \"nonexistent\": clustertasks.tekton.dev \"nonexistent\" not found",
+			want:        "failed to delete ClusterTask \"nonexistent\": clustertasks.tekton.dev \"nonexistent\" not found",
 		},
 		{
 			name:        "Remove multiple non existent resources",
@@ -180,7 +180,7 @@ func TestClusterTaskDelete(t *testing.T) {
 			input:       seeds[2].pipelineClient,
 			inputStream: strings.NewReader("y"),
 			wantError:   true,
-			want:        "failed to delete clustertask \"nonexistent\": clustertasks.tekton.dev \"nonexistent\" not found; failed to delete clustertask \"nonexistent2\": clustertasks.tekton.dev \"nonexistent2\" not found",
+			want:        "failed to delete ClusterTask \"nonexistent\": clustertasks.tekton.dev \"nonexistent\" not found; failed to delete ClusterTask \"nonexistent2\": clustertasks.tekton.dev \"nonexistent2\" not found",
 		},
 		{
 			name:        "Remove multiple non existent resources with --trs flag",
@@ -189,7 +189,7 @@ func TestClusterTaskDelete(t *testing.T) {
 			input:       seeds[2].pipelineClient,
 			inputStream: nil,
 			wantError:   true,
-			want:        "failed to delete clustertask \"nonexistent\": clustertasks.tekton.dev \"nonexistent\" not found; failed to delete clustertask \"nonexistent2\": clustertasks.tekton.dev \"nonexistent2\" not found",
+			want:        "failed to delete ClusterTask \"nonexistent\": clustertasks.tekton.dev \"nonexistent\" not found; failed to delete ClusterTask \"nonexistent2\": clustertasks.tekton.dev \"nonexistent2\" not found",
 		},
 		{
 			name:        "With delete taskrun(s) flag, reply yes",
@@ -460,7 +460,7 @@ func TestClusterTaskDelete_v1beta1(t *testing.T) {
 			input:       seeds[2].pipelineClient,
 			inputStream: strings.NewReader("y"),
 			wantError:   true,
-			want:        "failed to delete clustertask \"nonexistent\": clustertasks.tekton.dev \"nonexistent\" not found",
+			want:        "failed to delete ClusterTask \"nonexistent\": clustertasks.tekton.dev \"nonexistent\" not found",
 		},
 		{
 			name:        "Remove multiple non existent resources",
@@ -469,7 +469,7 @@ func TestClusterTaskDelete_v1beta1(t *testing.T) {
 			input:       seeds[2].pipelineClient,
 			inputStream: strings.NewReader("y"),
 			wantError:   true,
-			want:        "failed to delete clustertask \"nonexistent\": clustertasks.tekton.dev \"nonexistent\" not found; failed to delete clustertask \"nonexistent2\": clustertasks.tekton.dev \"nonexistent2\" not found",
+			want:        "failed to delete ClusterTask \"nonexistent\": clustertasks.tekton.dev \"nonexistent\" not found; failed to delete ClusterTask \"nonexistent2\": clustertasks.tekton.dev \"nonexistent2\" not found",
 		},
 		{
 			name:        "Remove multiple non existent resources with --trs flag",
@@ -478,7 +478,7 @@ func TestClusterTaskDelete_v1beta1(t *testing.T) {
 			input:       seeds[2].pipelineClient,
 			inputStream: nil,
 			wantError:   true,
-			want:        "failed to delete clustertask \"nonexistent\": clustertasks.tekton.dev \"nonexistent\" not found; failed to delete clustertask \"nonexistent2\": clustertasks.tekton.dev \"nonexistent2\" not found",
+			want:        "failed to delete ClusterTask \"nonexistent\": clustertasks.tekton.dev \"nonexistent\" not found; failed to delete ClusterTask \"nonexistent2\": clustertasks.tekton.dev \"nonexistent2\" not found",
 		},
 		{
 			name:        "With delete taskrun(s) flag, reply yes",

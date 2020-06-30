@@ -1,6 +1,6 @@
 ## tkn pipelinerun delete
 
-Delete pipelineruns in a namespace
+Delete PipelineRuns in a namespace
 
 ***Aliases**: rm*
 
@@ -12,7 +12,7 @@ tkn pipelinerun delete
 
 ### Synopsis
 
-Delete pipelineruns in a namespace
+Delete PipelineRuns in a namespace
 
 ### Examples
 
@@ -28,13 +28,13 @@ or
 ### Options
 
 ```
-      --all                           Delete all pipelineruns in a namespace (default: false)
+      --all                           Delete all PipelineRuns in a namespace (default: false)
       --allow-missing-template-keys   If true, ignore any errors in templates when a field or map key is missing in the template. Only applies to golang and jsonpath output formats. (default true)
   -f, --force                         Whether to force deletion (default: false)
   -h, --help                          help for delete
-      --keep int                      Keep n most recent number of pipelineruns
+      --keep int                      Keep n most recent number of PipelineRuns
   -o, --output string                 Output format. One of: json|yaml|name|go-template|go-template-file|template|templatefile|jsonpath|jsonpath-file.
-  -p, --pipeline string               The name of a pipeline whose pipelineruns should be deleted (does not delete the pipeline)
+  -p, --pipeline string               The name of a Pipeline whose PipelineRuns should be deleted (does not delete the Pipeline)
       --template string               Template string or path to template file to use when -o=go-template, -o=go-template-file. The template format is golang templates [http://golang.org/pkg/text/template/#pkg-overview].
 ```
 
@@ -49,5 +49,5 @@ or
 
 ### SEE ALSO
 
-* [tkn pipelinerun](tkn_pipelinerun.md)	 - Manage pipelineruns
+* [tkn pipelinerun](tkn_pipelinerun.md)	 - Manage PipelineRuns
 

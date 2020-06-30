@@ -1,6 +1,6 @@
 ## tkn pipelinerun logs
 
-Show the logs of PipelineRun
+Show the logs of a PipelineRun
 
 ### Usage
 
@@ -10,7 +10,7 @@ tkn pipelinerun logs
 
 ### Synopsis
 
-Show the logs of PipelineRun
+Show the logs of a PipelineRun
 
 ### Examples
 
@@ -18,11 +18,11 @@ Show the logs of PipelineRun named 'foo' from namespace 'bar':
 
     tkn pipelinerun logs foo -n bar
 
-Show the logs of PipelineRun named 'microservice-1' for task 'build' only from namespace 'bar':
+Show the logs of PipelineRun named 'microservice-1' for Task 'build' only from namespace 'bar':
 
     tkn pr logs microservice-1 -t build -n bar
 
-Show the logs of PipelineRun named 'microservice-1' for all tasks and steps (including init steps) from namespace 'foo':
+Show the logs of PipelineRun named 'microservice-1' for all Tasks and steps (including init steps) from namespace 'foo':
 
     tkn pr logs microservice-1 -a -n foo
    
@@ -32,11 +32,11 @@ Show the logs of PipelineRun named 'microservice-1' for all tasks and steps (inc
 ```
   -a, --all            show all logs including init steps injected by tekton
   -f, --follow         stream live logs
-  -F, --fzf            use fzf to select a pipelinerun
+  -F, --fzf            use fzf to select a PipelineRun
   -h, --help           help for logs
-  -L, --last           show logs for last pipelinerun
-      --limit int      lists number of pipelineruns (default 5)
-  -t, --task strings   show logs for mentioned tasks only
+  -L, --last           show logs for last PipelineRun
+      --limit int      lists number of PipelineRuns (default 5)
+  -t, --task strings   show logs for mentioned Tasks only
 ```
 
 ### Options inherited from parent commands
@@ -50,5 +50,5 @@ Show the logs of PipelineRun named 'microservice-1' for all tasks and steps (inc
 
 ### SEE ALSO
 
-* [tkn pipelinerun](tkn_pipelinerun.md)	 - Manage pipelineruns
+* [tkn pipelinerun](tkn_pipelinerun.md)	 - Manage PipelineRuns
 

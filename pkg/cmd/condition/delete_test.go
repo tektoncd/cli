@@ -132,7 +132,7 @@ func TestConditionDelete(t *testing.T) {
 			input:       seeds[2],
 			inputStream: strings.NewReader("y"),
 			wantError:   true,
-			want:        "failed to delete condition \"nonexistent\": conditions.tekton.dev \"nonexistent\" not found",
+			want:        "failed to delete Condition \"nonexistent\": conditions.tekton.dev \"nonexistent\" not found",
 		},
 		{
 			name:        "Remove multiple non existent resources",
@@ -140,7 +140,7 @@ func TestConditionDelete(t *testing.T) {
 			input:       seeds[2],
 			inputStream: nil,
 			wantError:   true,
-			want:        "failed to delete condition \"nonexistent\": conditions.tekton.dev \"nonexistent\" not found; failed to delete condition \"nonexistent2\": conditions.tekton.dev \"nonexistent2\" not found",
+			want:        "failed to delete Condition \"nonexistent\": conditions.tekton.dev \"nonexistent\" not found; failed to delete Condition \"nonexistent2\": conditions.tekton.dev \"nonexistent2\" not found",
 		},
 		{
 			name:        "Delete all with prompt",

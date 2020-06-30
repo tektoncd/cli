@@ -101,7 +101,7 @@ func TestClusterTriggerBindingDelete(t *testing.T) {
 			input:       seeds[2],
 			inputStream: nil,
 			wantError:   true,
-			want:        "failed to delete clustertriggerbinding \"nonexistent\": clustertriggerbindings.triggers.tekton.dev \"nonexistent\" not found",
+			want:        "failed to delete ClusterTriggerBinding \"nonexistent\": clustertriggerbindings.triggers.tekton.dev \"nonexistent\" not found",
 		},
 		{
 			name:        "Remove multiple non existent resources",
@@ -109,7 +109,7 @@ func TestClusterTriggerBindingDelete(t *testing.T) {
 			input:       seeds[2],
 			inputStream: nil,
 			wantError:   true,
-			want:        "failed to delete clustertriggerbinding \"nonexistent\": clustertriggerbindings.triggers.tekton.dev \"nonexistent\" not found; failed to delete clustertriggerbinding \"nonexistent2\": clustertriggerbindings.triggers.tekton.dev \"nonexistent2\" not found",
+			want:        "failed to delete ClusterTriggerBinding \"nonexistent\": clustertriggerbindings.triggers.tekton.dev \"nonexistent\" not found; failed to delete ClusterTriggerBinding \"nonexistent2\": clustertriggerbindings.triggers.tekton.dev \"nonexistent2\" not found",
 		},
 		{
 			name:        "Delete all with prompt",

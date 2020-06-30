@@ -25,7 +25,7 @@ func Command(p cli.Params) *cobra.Command {
 	c := &cobra.Command{
 		Use:     "pipelinerun",
 		Aliases: []string{"pr", "pipelineruns"},
-		Short:   "Manage pipelineruns",
+		Short:   "Manage PipelineRuns",
 		Annotations: map[string]string{
 			"commandType": "main",
 		},

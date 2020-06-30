@@ -101,7 +101,7 @@ func Test_cancel_pipelinerun(t *testing.T) {
 	pRun := Command(p)
 	got, _ := tu.ExecuteCommand(pRun, "cancel", prName, "-n", "ns")
 
-	expected := "Pipelinerun cancelled: " + prName + "\n"
+	expected := "PipelineRun cancelled: " + prName + "\n"
 	tu.AssertOutput(t, expected, got)
 }
 
@@ -122,7 +122,7 @@ func Test_cancel_pipelinerun_not_found(t *testing.T) {
 	pRun := Command(p)
 	got, _ := tu.ExecuteCommand(pRun, "cancel", prName, "-n", "ns")
 
-	expected := "Error: failed to find pipelinerun: " + prName + "\n"
+	expected := "Error: failed to find PipelineRun: " + prName + "\n"
 	tu.AssertOutput(t, expected, got)
 }
 
@@ -173,7 +173,7 @@ func Test_cancel_pipelinerun_client_err(t *testing.T) {
 	pRun := Command(p)
 	got, _ := tu.ExecuteCommand(pRun, "cancel", prName, "-n", "ns")
 
-	expected := "Error: failed to cancel pipelinerun: " + prName + ", err: " + errStr + "\n"
+	expected := "Error: failed to cancel PipelineRun: " + prName + ": " + errStr + "\n"
 	tu.AssertOutput(t, expected, got)
 }
 
@@ -219,7 +219,7 @@ func Test_finished_pipelinerun_success(t *testing.T) {
 	pRun := Command(p)
 	got, _ := tu.ExecuteCommand(pRun, "cancel", prName, "-n", "ns")
 
-	expected := "Error: failed to cancel pipelinerun " + prName + ": pipelinerun has already finished execution\n"
+	expected := "Error: failed to cancel PipelineRun " + prName + ": PipelineRun has already finished execution\n"
 	tu.AssertOutput(t, expected, got)
 }
 
@@ -265,7 +265,7 @@ func Test_finished_pipelinerun_failure(t *testing.T) {
 	pRun := Command(p)
 	got, _ := tu.ExecuteCommand(pRun, "cancel", prName, "-n", "ns")
 
-	expected := "Error: failed to cancel pipelinerun " + prName + ": pipelinerun has already finished execution\n"
+	expected := "Error: failed to cancel PipelineRun " + prName + ": PipelineRun has already finished execution\n"
 	tu.AssertOutput(t, expected, got)
 }
 
@@ -311,7 +311,7 @@ func Test_finished_pipelinerun_cancel(t *testing.T) {
 	pRun := Command(p)
 	got, _ := tu.ExecuteCommand(pRun, "cancel", prName, "-n", "ns")
 
-	expected := "Error: failed to cancel pipelinerun " + prName + ": pipelinerun has already finished execution\n"
+	expected := "Error: failed to cancel PipelineRun " + prName + ": PipelineRun has already finished execution\n"
 	tu.AssertOutput(t, expected, got)
 }
 
@@ -386,7 +386,7 @@ func Test_cancel_pipelinerun_v1beta1(t *testing.T) {
 	pRun := Command(p)
 	got, _ := tu.ExecuteCommand(pRun, "cancel", prName, "-n", "ns")
 
-	expected := "Pipelinerun cancelled: " + prName + "\n"
+	expected := "PipelineRun cancelled: " + prName + "\n"
 	tu.AssertOutput(t, expected, got)
 }
 
@@ -469,7 +469,7 @@ func Test_cancel_pipelinerun_client_err_v1beta1(t *testing.T) {
 	pRun := Command(p)
 	got, _ := tu.ExecuteCommand(pRun, "cancel", prName, "-n", "ns")
 
-	expected := "Error: failed to cancel pipelinerun: " + prName + ", err: " + errStr + "\n"
+	expected := "Error: failed to cancel PipelineRun: " + prName + ": " + errStr + "\n"
 	tu.AssertOutput(t, expected, got)
 }
 
@@ -554,7 +554,7 @@ func Test_finished_pipelinerun_success_v1beta1(t *testing.T) {
 	pRun := Command(p)
 	got, _ := tu.ExecuteCommand(pRun, "cancel", prName, "-n", "ns")
 
-	expected := "Error: failed to cancel pipelinerun " + prName + ": pipelinerun has already finished execution\n"
+	expected := "Error: failed to cancel PipelineRun " + prName + ": PipelineRun has already finished execution\n"
 	tu.AssertOutput(t, expected, got)
 }
 
@@ -639,7 +639,7 @@ func Test_finished_pipelinerun_failure_v1beta1(t *testing.T) {
 	pRun := Command(p)
 	got, _ := tu.ExecuteCommand(pRun, "cancel", prName, "-n", "ns")
 
-	expected := "Error: failed to cancel pipelinerun " + prName + ": pipelinerun has already finished execution\n"
+	expected := "Error: failed to cancel PipelineRun " + prName + ": PipelineRun has already finished execution\n"
 	tu.AssertOutput(t, expected, got)
 }
 
@@ -724,6 +724,6 @@ func Test_finished_pipelinerun_cancel_v1beta1(t *testing.T) {
 	pRun := Command(p)
 	got, _ := tu.ExecuteCommand(pRun, "cancel", prName, "-n", "ns")
 
-	expected := "Error: failed to cancel pipelinerun " + prName + ": pipelinerun has already finished execution\n"
+	expected := "Error: failed to cancel PipelineRun " + prName + ": PipelineRun has already finished execution\n"
 	tu.AssertOutput(t, expected, got)
 }

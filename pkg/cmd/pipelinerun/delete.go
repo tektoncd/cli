@@ -33,7 +33,7 @@ import (
 )
 
 func deleteCommand(p cli.Params) *cobra.Command {
-	opts := &options.DeleteOptions{Resource: "pipelinerun", ForceDelete: false, ParentResource: "pipeline", DeleteAllNs: false}
+	opts := &options.DeleteOptions{Resource: "PipelineRun", ForceDelete: false, ParentResource: "Pipeline", DeleteAllNs: false}
 	f := cliopts.NewPrintFlags("delete")
 	eg := `Delete PipelineRuns with names 'foo' and 'bar' in namespace 'quux':
 
@@ -47,7 +47,7 @@ or
 	c := &cobra.Command{
 		Use:          "delete",
 		Aliases:      []string{"rm"},
-		Short:        "Delete pipelineruns in a namespace",
+		Short:        "Delete PipelineRuns in a namespace",
 		Example:      eg,
 		Args:         cobra.MinimumNArgs(0),
 		SilenceUsage: true,
@@ -82,9 +82,9 @@ or
 	}
 	f.AddFlags(c)
 	c.Flags().BoolVarP(&opts.ForceDelete, "force", "f", false, "Whether to force deletion (default: false)")
-	c.Flags().StringVarP(&opts.ParentResourceName, "pipeline", "p", "", "The name of a pipeline whose pipelineruns should be deleted (does not delete the pipeline)")
-	c.Flags().IntVarP(&opts.Keep, "keep", "", 0, "Keep n most recent number of pipelineruns")
-	c.Flags().BoolVarP(&opts.DeleteAllNs, "all", "", false, "Delete all pipelineruns in a namespace (default: false)")
+	c.Flags().StringVarP(&opts.ParentResourceName, "pipeline", "p", "", "The name of a Pipeline whose PipelineRuns should be deleted (does not delete the Pipeline)")
+	c.Flags().IntVarP(&opts.Keep, "keep", "", 0, "Keep n most recent number of PipelineRuns")
+	c.Flags().BoolVarP(&opts.DeleteAllNs, "all", "", false, "Delete all PipelineRuns in a namespace (default: false)")
 	_ = c.MarkZshCompPositionalArgumentCustom(1, "__tkn_get_pipelinerun")
 	return c
 }
@@ -114,7 +114,7 @@ func deletePipelineRuns(s *cli.Stream, p cli.Params, prNames []string, opts *opt
 		d.Delete(s, prNames)
 	default:
 		d = deleter.New("Pipeline", func(_ string) error {
-			return errors.New("the pipeline should not be deleted")
+			return errors.New("the Pipeline should not be deleted")
 		})
 		d.WithRelated("PipelineRun", pipelineRunLister(cs, opts.Keep, p.Namespace()), func(pipelineRunName string) error {
 			return actions.Delete(prGroupResource, cs, pipelineRunName, p.Namespace(), &metav1.DeleteOptions{})

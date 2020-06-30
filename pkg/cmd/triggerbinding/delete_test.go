@@ -119,7 +119,7 @@ func TestTriggerBindingDelete(t *testing.T) {
 			input:       seeds[2],
 			inputStream: nil,
 			wantError:   true,
-			want:        "failed to delete triggerbinding \"nonexistent\": triggerbindings.triggers.tekton.dev \"nonexistent\" not found",
+			want:        "failed to delete TriggerBinding \"nonexistent\": triggerbindings.triggers.tekton.dev \"nonexistent\" not found",
 		},
 		{
 			name:        "Remove multiple non existent resources",
@@ -127,7 +127,7 @@ func TestTriggerBindingDelete(t *testing.T) {
 			input:       seeds[2],
 			inputStream: nil,
 			wantError:   true,
-			want:        "failed to delete triggerbinding \"nonexistent\": triggerbindings.triggers.tekton.dev \"nonexistent\" not found; failed to delete triggerbinding \"nonexistent2\": triggerbindings.triggers.tekton.dev \"nonexistent2\" not found",
+			want:        "failed to delete TriggerBinding \"nonexistent\": triggerbindings.triggers.tekton.dev \"nonexistent\" not found; failed to delete TriggerBinding \"nonexistent2\": triggerbindings.triggers.tekton.dev \"nonexistent2\" not found",
 		},
 		{
 			name:        "Delete all with prompt",
