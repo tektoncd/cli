@@ -14,4 +14,4 @@ labels: kind/feature
 
 ### UI Example
 
-<!-- If this is about a new command or command line options, please let us know how you would add it to the "kn" UI (in the code block below). If this is not applicable for your feature, delete this section. -->
+<!-- If this is about a new command or command line options, please let us know how you would add it to the "tkn" UI (in the code block below). If this is not applicable for your feature, delete this section. -->
