@@ -43,6 +43,14 @@ func GetTask(c *framework.Clients, name string) *v1alpha1.Task {
 	return task
 }
 
+func GetClusterTask(c *framework.Clients, name string) *v1alpha1.ClusterTask {
+	clustertask, err := c.ClusterTaskClient.Get(name, metav1.GetOptions{})
+	if err != nil {
+		log.Fatalf("Couldn't get expected clustertask  %s", err)
+	}
+	return clustertask
+}
+
 func GetTaskList(c *framework.Clients) *v1alpha1.TaskList {
 
 	tasklist, err := c.TaskClient.List(metav1.ListOptions{})
@@ -52,6 +60,14 @@ func GetTaskList(c *framework.Clients) *v1alpha1.TaskList {
 	}
 
 	return tasklist
+}
+
+func GetClusterTaskList(c *framework.Clients) *v1alpha1.ClusterTaskList {
+	clustertasklist, err := c.ClusterTaskClient.List(metav1.ListOptions{})
+	if err != nil {
+		log.Fatalf("Couldn't get expected clustertasklist  %s", err)
+	}
+	return clustertasklist
 }
 
 func GetTaskRun(c *framework.Clients, name string) *v1alpha1.TaskRun {
@@ -299,6 +315,39 @@ func ListAllTasksOutput(t *testing.T, cs *framework.Clients, td map[int]interfac
 	return tmplBytes.String()
 }
 
+func ListAllClusterTasksOutput(t *testing.T, cs *framework.Clients, td map[int]interface{}) string {
+	t.Helper()
+	const (
+		emptyMsg = "No clustertasks found"
+		header   = "NAME\tDESCRIPTION\tAGE"
+		body     = "%s\t%s\t%s\n"
+	)
+
+	clock := clockwork.NewFakeClockAt(time.Now())
+
+	clustertask := GetClusterTaskListWithTestData(t, cs, td)
+
+	var tmplBytes bytes.Buffer
+	w := tabwriter.NewWriter(&tmplBytes, 0, 5, 3, ' ', tabwriter.TabIndent)
+
+	if len(clustertask.Items) == 0 {
+		fmt.Fprintln(w, emptyMsg)
+		w.Flush()
+		return tmplBytes.String()
+	}
+	fmt.Fprintln(w, header)
+
+	for _, clustertask := range clustertask.Items {
+		fmt.Fprintf(w, body,
+			clustertask.Name,
+			formatted.FormatDesc(clustertask.Spec.Description),
+			formatted.Age(&clustertask.CreationTimestamp, clock),
+		)
+	}
+	w.Flush()
+	return tmplBytes.String()
+}
+
 func GetTaskListWithTestData(t *testing.T, c *framework.Clients, td map[int]interface{}) *v1alpha1.TaskList {
 	t.Helper()
 
@@ -323,6 +372,32 @@ func GetTaskListWithTestData(t *testing.T, c *framework.Clients, td map[int]inte
 		t.Logf("Changes occurred while performing diff operation %+v", changelog)
 	}
 	return tasklist
+}
+
+func GetClusterTaskListWithTestData(t *testing.T, c *framework.Clients, td map[int]interface{}) *v1alpha1.ClusterTaskList {
+	t.Helper()
+
+	clustertasklist := GetClusterTaskList(c)
+
+	if len(clustertasklist.Items) != len(td) {
+		t.Errorf("Length of task list and Testdata provided not matching")
+	}
+	if len(clustertasklist.Items) == 0 {
+		return clustertasklist
+	}
+	for i, clustertask := range td {
+		switch clustertask := clustertask.(type) {
+		case *TaskData:
+			clustertasklist.Items[i].Name = clustertask.Name
+		default:
+			t.Error("Test Data Format Didn't Match please do check Test Data which you passing")
+		}
+	}
+
+	if changelog := cmp.Diff(clustertasklist, GetClusterTaskList(c)); changelog != "" {
+		t.Logf("Changes occurred while performing diff operation %+v", changelog)
+	}
+	return clustertasklist
 }
 
 type TaskRunData struct {

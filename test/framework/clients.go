@@ -30,6 +30,7 @@ type Clients struct {
 
 	PipelineClient         v1alpha1.PipelineInterface
 	TaskClient             v1alpha1.TaskInterface
+	ClusterTaskClient      v1alpha1.ClusterTaskInterface
 	TaskRunClient          v1alpha1.TaskRunInterface
 	PipelineRunClient      v1alpha1.PipelineRunInterface
 	PipelineResourceClient resourcev1alpha1.PipelineResourceInterface
@@ -65,6 +66,7 @@ func NewClients(configPath, clusterName, namespace string) *Clients {
 	}
 	c.PipelineClient = cs.TektonV1alpha1().Pipelines(namespace)
 	c.TaskClient = cs.TektonV1alpha1().Tasks(namespace)
+	c.ClusterTaskClient = cs.TektonV1alpha1().ClusterTasks()
 	c.TaskRunClient = cs.TektonV1alpha1().TaskRuns(namespace)
 	c.PipelineRunClient = cs.TektonV1alpha1().PipelineRuns(namespace)
 	c.PipelineResourceClient = rcs.TektonV1alpha1().PipelineResources(namespace)

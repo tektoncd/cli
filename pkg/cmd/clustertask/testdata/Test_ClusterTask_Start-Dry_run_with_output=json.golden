@@ -22,6 +22,12 @@
 						"name": "git"
 					}
 				}
+			],
+			"params": [
+				{
+					"name": "myarg",
+					"value": "value1"
+				}
 			]
 		},
 		"outputs": {

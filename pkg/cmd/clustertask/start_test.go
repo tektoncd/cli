@@ -165,6 +165,24 @@ func Test_ClusterTask_Start(t *testing.T) {
 					tb.StepName("exit")),
 			),
 		),
+		tb.ClusterTask("clustertask-3", cb.ClusterTaskCreationTime(clock.Now().Add(-1*time.Minute)),
+			tb.ClusterTaskSpec(
+				tb.TaskInputs(
+					tb.InputsResource("my-repo", v1alpha1.PipelineResourceTypeGit),
+					tb.InputsResource("my-image", v1alpha1.PipelineResourceTypeImage),
+					tb.InputsParamSpec("myarg", v1alpha1.ParamTypeString),
+					tb.InputsParamSpec("print", v1alpha1.ParamTypeArray),
+				),
+				tb.TaskOutputs(
+					tb.OutputsResource("code-image", v1alpha1.PipelineResourceTypeImage),
+				),
+				tb.Step("busybox",
+					tb.StepName("hello")),
+				tb.Step("busybox",
+					tb.StepName("exit")),
+				tb.TaskWorkspace("test", "test workspace", "/workspace/test/file", true),
+			),
+		),
 	}
 	taskruns := []*v1alpha1.TaskRun{
 		tb.TaskRun("taskrun-123",
@@ -267,6 +285,18 @@ func Test_ClusterTask_Start(t *testing.T) {
 	//seeds[5] - No TaskRun with ClusterTask
 	seeds = append(seeds, clients{pipelineClient: cs5, dynamicClient: dc5})
 
+	seedData6, _ := test.SeedTestData(t, pipelinetest.Data{Namespaces: ns, TaskRuns: taskruns, ClusterTasks: clustertasks})
+	objs6 := []runtime.Object{clustertasks[2], taskruns[0]}
+	tdc6 := newDynamicClientOpt(versionA1, "taskrun-6", objs6...)
+	dc6, _ := tdc6.Client(
+		cb.UnstructuredCT(clustertasks[2], versionA1),
+		cb.UnstructuredTR(taskruns[0], versionA1),
+	)
+	cs6 := pipelinetest.Clients{Pipeline: seedData6.Pipeline, Kube: seedData6.Kube}
+	cs6.Pipeline.Resources = cb.APIResourceList(versionA1, []string{"taskrun", "clustertask", "task"})
+	//seeds[6] - For Workspaces Tests
+	seeds = append(seeds, clients{pipelineClient: cs6, dynamicClient: dc6})
+
 	testParams := []struct {
 		name        string
 		command     []string
@@ -313,6 +343,7 @@ func Test_ClusterTask_Start(t *testing.T) {
 				"-p", "print=boom,boom",
 				"-l", "key=value",
 				"-o", "code-image=output-image",
+				"-w", "name=test,claimName=pvc3",
 				"-s=svc1"},
 			dynamic:     seeds[0].dynamicClient,
 			input:       seeds[0].pipelineClient,
@@ -330,6 +361,7 @@ func Test_ClusterTask_Start(t *testing.T) {
 				"-p", "print=boom,boom",
 				"-l", "key=value",
 				"-o", "code-image=output-image",
+				"-w", "name=test,claimName=pvc3",
 				"-s=svc1"},
 			dynamic:     seeds[3].dynamicClient,
 			input:       seeds[3].pipelineClient,
@@ -355,6 +387,7 @@ func Test_ClusterTask_Start(t *testing.T) {
 				"-p", "print=boom,boom",
 				"-l", "key=value",
 				"-o", "code-image=output-image",
+				"-w", "name=test,claimName=pvc3",
 				"-s=svc1"},
 			dynamic:     seeds[0].dynamicClient,
 			input:       seeds[0].pipelineClient,
@@ -371,6 +404,7 @@ func Test_ClusterTask_Start(t *testing.T) {
 				"-p", "print=boom,boom",
 				"-l", "key=value",
 				"-o", "code-image output-image",
+				"-w", "name=test,claimName=pvc3",
 				"-s=svc1"},
 			dynamic:     seeds[0].dynamicClient,
 			input:       seeds[0].pipelineClient,
@@ -387,6 +421,7 @@ func Test_ClusterTask_Start(t *testing.T) {
 				"-p", "print=boom,boom",
 				"-l", "key=value",
 				"-o", "code-image=output-image",
+				"-w", "name=test,claimName=pvc3",
 				"-s=svc1"},
 			dynamic:     seeds[0].dynamicClient,
 			input:       seeds[0].pipelineClient,
@@ -403,6 +438,7 @@ func Test_ClusterTask_Start(t *testing.T) {
 				"-p", "print=boom,boom",
 				"-l", "key value",
 				"-o", "code-image=output-image",
+				"-w", "name=test,claimName=pvc3",
 				"-s=svc1"},
 			dynamic:     seeds[0].dynamicClient,
 			input:       seeds[0].pipelineClient,
@@ -419,6 +455,7 @@ func Test_ClusterTask_Start(t *testing.T) {
 				"-p", "print=boom,boom",
 				"-l", "key=value",
 				"-o", "code-image=output-image",
+				"-w", "name=test,claimName=pvc3",
 				"-s=svc1"},
 			dynamic:     seeds[0].dynamicClient,
 			input:       seeds[0].pipelineClient,
@@ -449,6 +486,7 @@ func Test_ClusterTask_Start(t *testing.T) {
 				"-i", "my-repo=git",
 				"-o", "code-image=output-image",
 				"-l", "key=value",
+				"-p", "myarg=value1",
 				"-s=svc1",
 				"--dry-run",
 			},
@@ -464,6 +502,7 @@ func Test_ClusterTask_Start(t *testing.T) {
 				"-i", "my-repo=git",
 				"-o", "code-image=output-image",
 				"-l", "key=value",
+				"-p", "myarg=value1",
 				"-s=svc1",
 				"--dry-run",
 				"--output=json",
@@ -504,6 +543,40 @@ func Test_ClusterTask_Start(t *testing.T) {
 			inputStream: nil,
 			wantError:   false,
 			goldenFile:  true,
+		},
+		{
+			name: "Invalid workspace",
+			command: []string{"start", "clustertask-3",
+				"-i", "my-repo=git",
+				"-i", "my-image=image",
+				"-p", "myar=value1",
+				"-p", "print=boom,boom",
+				"-l", "key=value",
+				"-o", "code-image=output-image",
+				"-w", "claimName=pvc3",
+				"-s=svc1"},
+			dynamic:     seeds[6].dynamicClient,
+			input:       seeds[6].pipelineClient,
+			inputStream: nil,
+			wantError:   true,
+			want:        "Name not found for workspace",
+		},
+		{
+			name: "Task Start with workspace with emptyDir",
+			command: []string{"start", "clustertask-3",
+				"-i", "my-repo=git",
+				"-i", "my-image=image",
+				"-p", "myarg=value1",
+				"-p", "print=boom,boom",
+				"-l", "key=value",
+				"-o", "code-image=output-image",
+				"-w", "name=test,emptyDir=",
+				"-s=svc1"},
+			dynamic:     seeds[6].dynamicClient,
+			input:       seeds[6].pipelineClient,
+			inputStream: nil,
+			wantError:   false,
+			want:        "TaskRun started: taskrun-6\n\nIn order to track the TaskRun progress run:\ntkn taskrun logs taskrun-6 -f -n ns\n",
 		},
 	}
 
@@ -654,6 +727,70 @@ func Test_ClusterTask_Start_v1beta1(t *testing.T) {
 				},
 			},
 		},
+		{
+			ObjectMeta: v1.ObjectMeta{
+				Name:              "clustertask-3",
+				CreationTimestamp: metav1.Time{Time: clock.Now().Add(-1 * time.Minute)},
+			},
+			Spec: v1beta1.TaskSpec{
+				Resources: &v1beta1.TaskResources{
+					Inputs: []v1beta1.TaskResource{
+						{
+							ResourceDeclaration: v1beta1.ResourceDeclaration{
+								Name: "my-repo",
+								Type: v1beta1.PipelineResourceTypeGit,
+							},
+						},
+						{
+							ResourceDeclaration: v1beta1.ResourceDeclaration{
+								Name: "my-image",
+								Type: v1beta1.PipelineResourceTypeImage,
+							},
+						},
+					},
+					Outputs: []v1beta1.TaskResource{
+						{
+							ResourceDeclaration: v1beta1.ResourceDeclaration{
+								Name: "code-image",
+								Type: v1beta1.PipelineResourceTypeImage,
+							},
+						},
+					},
+				},
+				Params: []v1beta1.ParamSpec{
+					{
+						Name: "myarg",
+						Type: v1beta1.ParamTypeString,
+					},
+					{
+						Name: "print",
+						Type: v1beta1.ParamTypeArray,
+					},
+				},
+				Steps: []v1beta1.Step{
+					{
+						Container: corev1.Container{
+							Name:  "hello",
+							Image: "busybox",
+						},
+					},
+					{
+						Container: corev1.Container{
+							Name:  "exit",
+							Image: "busybox",
+						},
+					},
+				},
+				Workspaces: []v1beta1.WorkspaceDeclaration{
+					{
+						Name:        "test",
+						Description: "test workspace",
+						MountPath:   "/workspace/test/file",
+						ReadOnly:    true,
+					},
+				},
+			},
+		},
 	}
 
 	taskruns := []*v1beta1.TaskRun{
@@ -782,6 +919,18 @@ func Test_ClusterTask_Start_v1beta1(t *testing.T) {
 	//seeds[4]
 	seeds = append(seeds, clients{pipelineClient: cs4, dynamicClient: dc4})
 
+	seedData5, _ := test.SeedV1beta1TestData(t, pipelinev1beta1test.Data{Namespaces: ns, TaskRuns: taskruns, ClusterTasks: clustertasks})
+	objs5 := []runtime.Object{clustertasks[2], taskruns[0]}
+	tdc5 := newDynamicClientOpt(versionB1, "taskrun-3", objs5...)
+	dc5, _ := tdc5.Client(
+		cb.UnstructuredV1beta1CT(clustertasks[2], versionB1),
+		cb.UnstructuredV1beta1TR(taskruns[0], versionB1),
+	)
+	cs5 := pipelinev1beta1test.Clients{Pipeline: seedData5.Pipeline, Kube: seedData5.Kube}
+	cs5.Pipeline.Resources = cb.APIResourceList(versionB1, []string{"taskrun", "clustertask", "task"})
+	//seeds[5]
+	seeds = append(seeds, clients{pipelineClient: cs, dynamicClient: dc5})
+
 	testParams := []struct {
 		name        string
 		command     []string
@@ -828,6 +977,7 @@ func Test_ClusterTask_Start_v1beta1(t *testing.T) {
 				"-p", "print=boom,boom",
 				"-l", "key=value",
 				"-o", "code-image=output-image",
+				"-w", "name=test,claimName=pvc3",
 				"-s=svc1"},
 			dynamic:     seeds[0].dynamicClient,
 			input:       seeds[0].pipelineClient,
@@ -853,6 +1003,7 @@ func Test_ClusterTask_Start_v1beta1(t *testing.T) {
 				"-p", "print=boom,boom",
 				"-l", "key=value",
 				"-o", "code-image=output-image",
+				"-w", "name=test,claimName=pvc3",
 				"-s=svc1"},
 			dynamic:     seeds[0].dynamicClient,
 			input:       seeds[0].pipelineClient,
@@ -869,6 +1020,7 @@ func Test_ClusterTask_Start_v1beta1(t *testing.T) {
 				"-p", "print=boom,boom",
 				"-l", "key=value",
 				"-o", "code-image output-image",
+				"-w", "name=test,claimName=pvc3",
 				"-s=svc1"},
 			dynamic:     seeds[0].dynamicClient,
 			input:       seeds[0].pipelineClient,
@@ -885,6 +1037,7 @@ func Test_ClusterTask_Start_v1beta1(t *testing.T) {
 				"-p", "print=boom,boom",
 				"-l", "key=value",
 				"-o", "code-image=output-image",
+				"-w", "name=test,claimName=pvc3",
 				"-s=svc1"},
 			dynamic:     seeds[0].dynamicClient,
 			input:       seeds[0].pipelineClient,
@@ -901,6 +1054,7 @@ func Test_ClusterTask_Start_v1beta1(t *testing.T) {
 				"-p", "print=boom,boom",
 				"-l", "key value",
 				"-o", "code-image=output-image",
+				"-w", "name=test,claimName=pvc3",
 				"-s=svc1"},
 			dynamic:     seeds[0].dynamicClient,
 			input:       seeds[0].pipelineClient,
@@ -917,6 +1071,7 @@ func Test_ClusterTask_Start_v1beta1(t *testing.T) {
 				"-p", "print=boom,boom",
 				"-l", "key=value",
 				"-o", "code-image=output-image",
+				"-w", "name=test,claimName=pvc3",
 				"-s=svc1"},
 			dynamic:     seeds[0].dynamicClient,
 			input:       seeds[0].pipelineClient,
@@ -945,6 +1100,7 @@ func Test_ClusterTask_Start_v1beta1(t *testing.T) {
 			name: "Dry run with no output",
 			command: []string{"start", "clustertask-2",
 				"-i", "my-repo=git",
+				"-p", "myarg=value1",
 				"-o", "code-image=output-image",
 				"-l", "key=value",
 				"-s=svc1",
@@ -960,6 +1116,7 @@ func Test_ClusterTask_Start_v1beta1(t *testing.T) {
 			name: "Dry run with no output v1beta1",
 			command: []string{"start", "clustertask-2",
 				"-i", "my-repo=git",
+				"-p", "myarg=value1",
 				"-o", "code-image=output-image",
 				"-l", "key=value",
 				"-s=svc1",
@@ -991,6 +1148,7 @@ func Test_ClusterTask_Start_v1beta1(t *testing.T) {
 			name: "Dry run with --timeout v1beta1",
 			command: []string{"start", "clustertask-2",
 				"-i", "my-repo=git",
+				"-p", "myarg=value1",
 				"-o", "code-image=output-image",
 				"-l", "key=value",
 				"-s=svc1",
@@ -1004,9 +1162,10 @@ func Test_ClusterTask_Start_v1beta1(t *testing.T) {
 			goldenFile:  true,
 		},
 		{
-			name: "Dry run with invalide --timeout v1beta1",
+			name: "Dry run with invalid --timeout v1beta1",
 			command: []string{"start", "clustertask-2",
 				"-i", "my-repo=git",
+				"-p", "myarg=value1",
 				"-o", "code-image=output-image",
 				"-l", "key=value",
 				"-s=svc1",
@@ -1018,6 +1177,40 @@ func Test_ClusterTask_Start_v1beta1(t *testing.T) {
 			inputStream: nil,
 			wantError:   true,
 			want:        "time: unknown unit d in duration 5d",
+		},
+		{
+			name: "Invalid workspace v1beta1",
+			command: []string{"start", "clustertask-1",
+				"-i", "my-repo=git",
+				"-i", "my-image=image",
+				"-p", "myar=value1",
+				"-p", "print=boom,boom",
+				"-l", "key=value",
+				"-o", "code-image=output-image",
+				"-w", "claimName=pvc3",
+				"-s=svc1"},
+			dynamic:     seeds[0].dynamicClient,
+			input:       seeds[0].pipelineClient,
+			inputStream: nil,
+			wantError:   true,
+			want:        "Name not found for workspace",
+		},
+		{
+			name: "Start clustertask with Workspace emptyDir",
+			command: []string{"start", "clustertask-3",
+				"-i", "my-repo=git",
+				"-i", "my-image=image",
+				"-p", "myarg=value1",
+				"-p", "print=boom,boom",
+				"-l", "key=value",
+				"-o", "code-image=output-image",
+				"-w", "name=test,emptyDir=",
+				"-s=svc1"},
+			dynamic:     seeds[5].dynamicClient,
+			input:       seeds[5].pipelineClient,
+			inputStream: nil,
+			wantError:   false,
+			want:        "TaskRun started: taskrun-3\n\nIn order to track the TaskRun progress run:\ntkn taskrun logs taskrun-3 -f -n ns\n",
 		},
 	}
 
