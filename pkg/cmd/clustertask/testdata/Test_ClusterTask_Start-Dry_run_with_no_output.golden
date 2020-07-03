@@ -7,6 +7,9 @@ metadata:
     key: value
 spec:
   inputs:
+    params:
+    - name: myarg
+      value: value1
     resources:
     - name: my-repo
       resourceRef:
