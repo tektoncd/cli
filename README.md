@@ -75,7 +75,7 @@ Download the latest binary executable for your operating system:
 
 * Linux IBM P
 
-  *To complete on 0.11.0 release*
+  *Will be available with tkn v0.11.0 release*
 
   ```shell
   # Get the tar.gz
