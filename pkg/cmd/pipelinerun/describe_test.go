@@ -26,7 +26,6 @@ import (
 	testDynamic "github.com/tektoncd/cli/pkg/test/dynamic"
 	"github.com/tektoncd/pipeline/pkg/apis/pipeline/v1alpha1"
 	"github.com/tektoncd/pipeline/pkg/apis/pipeline/v1beta1"
-	"github.com/tektoncd/pipeline/pkg/reconciler/pipelinerun/resources"
 	pipelinev1beta1test "github.com/tektoncd/pipeline/test"
 	tb "github.com/tektoncd/pipeline/test/builder"
 	pipelinetest "github.com/tektoncd/pipeline/test/v1alpha1"
@@ -115,7 +114,7 @@ func TestPipelineRunDescribe_only_taskrun(t *testing.T) {
 				}),
 				tb.PipelineRunStatusCondition(apis.Condition{
 					Status: corev1.ConditionTrue,
-					Reason: resources.ReasonSucceeded,
+					Reason: v1beta1.PipelineRunReasonSuccessful.String(),
 				}),
 				tb.PipelineRunStartTime(clock.Now()),
 				cb.PipelineRunCompletionTime(clock.Now().Add(5*time.Minute)),
@@ -200,7 +199,7 @@ func TestPipelineRunDescribe_multiple_taskrun_ordering(t *testing.T) {
 				}),
 				tb.PipelineRunStatusCondition(apis.Condition{
 					Status: corev1.ConditionTrue,
-					Reason: resources.ReasonSucceeded,
+					Reason: v1beta1.PipelineRunReasonSuccessful.String(),
 				}),
 				tb.PipelineRunStartTime(clock.Now()),
 				cb.PipelineRunCompletionTime(clock.Now().Add(15*time.Minute)),
@@ -253,7 +252,7 @@ func TestPipelineRunDescribe_failed(t *testing.T) {
 				cb.TaskRunCompletionTime(clock.Now().Add(5*time.Minute)),
 				tb.StatusCondition(apis.Condition{
 					Status:  corev1.ConditionFalse,
-					Reason:  resources.ReasonFailed,
+					Reason:  v1beta1.PipelineRunReasonFailed.String(),
 					Message: "Testing tr failed",
 				}),
 			),
@@ -485,7 +484,7 @@ func TestPipelineRunDescribe_with_resources_taskrun(t *testing.T) {
 				}),
 				tb.PipelineRunStatusCondition(apis.Condition{
 					Status: corev1.ConditionTrue,
-					Reason: resources.ReasonSucceeded,
+					Reason: v1beta1.PipelineRunReasonSuccessful.String(),
 				}),
 				tb.PipelineRunStartTime(clock.Now()),
 				cb.PipelineRunCompletionTime(clock.Now().Add(5*time.Minute)),
@@ -642,7 +641,7 @@ func TestPipelineRunDescribe_no_resourceref(t *testing.T) {
 				}),
 				tb.PipelineRunStatusCondition(apis.Condition{
 					Status: corev1.ConditionTrue,
-					Reason: resources.ReasonSucceeded,
+					Reason: v1beta1.PipelineRunReasonSuccessful.String(),
 				}),
 				tb.PipelineRunStartTime(clock.Now()),
 				cb.PipelineRunCompletionTime(clock.Now().Add(5*time.Minute)),
@@ -777,7 +776,7 @@ func TestPipelineRunDescribe_without_tr_start_time(t *testing.T) {
 			tb.PipelineRunStatus(
 				tb.PipelineRunStatusCondition(apis.Condition{
 					Status: corev1.ConditionUnknown,
-					Reason: resources.ReasonRunning,
+					Reason: v1beta1.PipelineRunReasonRunning.String(),
 				}),
 				tb.PipelineRunTaskRunsStatus("tr-1", &v1alpha1.PipelineRunTaskRunStatus{
 					PipelineTaskName: "t-1",
@@ -958,7 +957,7 @@ func TestPipelineRunDescribeV1beta1(t *testing.T) {
 					Conditions: duckv1beta1.Conditions{
 						{
 							Status: corev1.ConditionFalse,
-							Reason: resources.ReasonFailed,
+							Reason: v1beta1.PipelineRunReasonFailed.String(),
 						},
 					},
 				},
@@ -984,7 +983,7 @@ func TestPipelineRunDescribeV1beta1(t *testing.T) {
 					Conditions: duckv1beta1.Conditions{
 						{
 							Status: corev1.ConditionTrue,
-							Reason: resources.ReasonSucceeded,
+							Reason: v1beta1.PipelineRunReasonSuccessful.String(),
 						},
 					},
 				},
@@ -1042,7 +1041,7 @@ func TestPipelineRunDescribeV1beta1(t *testing.T) {
 					Conditions: duckv1beta1.Conditions{
 						{
 							Status:  corev1.ConditionTrue,
-							Reason:  resources.ReasonSucceeded,
+							Reason:  v1beta1.PipelineRunReasonSuccessful.String(),
 							Message: "Completed",
 						},
 					},
@@ -1115,7 +1114,7 @@ func TestPipelineRunDescribeV1beta1_taskrun_with_no_status(t *testing.T) {
 					Conditions: duckv1beta1.Conditions{
 						{
 							Status: corev1.ConditionFalse,
-							Reason: resources.ReasonFailed,
+							Reason: v1beta1.PipelineRunReasonFailed.String(),
 						},
 					},
 				},
@@ -1185,7 +1184,7 @@ func TestPipelineRunDescribeV1beta1_taskrun_with_no_status(t *testing.T) {
 					Conditions: duckv1beta1.Conditions{
 						{
 							Status:  corev1.ConditionTrue,
-							Reason:  resources.ReasonSucceeded,
+							Reason:  v1beta1.PipelineRunReasonSuccessful.String(),
 							Message: "Completed",
 						},
 					},
@@ -1258,7 +1257,7 @@ func TestPipelineRunDescribe_lastV1beta1(t *testing.T) {
 					Conditions: duckv1beta1.Conditions{
 						{
 							Status: corev1.ConditionFalse,
-							Reason: resources.ReasonFailed,
+							Reason: v1beta1.PipelineRunReasonFailed.String(),
 						},
 					},
 				},
@@ -1284,7 +1283,7 @@ func TestPipelineRunDescribe_lastV1beta1(t *testing.T) {
 					Conditions: duckv1beta1.Conditions{
 						{
 							Status: corev1.ConditionTrue,
-							Reason: resources.ReasonSucceeded,
+							Reason: v1beta1.PipelineRunReasonSuccessful.String(),
 						},
 					},
 				},
@@ -1342,7 +1341,7 @@ func TestPipelineRunDescribe_lastV1beta1(t *testing.T) {
 					Conditions: duckv1beta1.Conditions{
 						{
 							Status:  corev1.ConditionTrue,
-							Reason:  resources.ReasonSucceeded,
+							Reason:  v1beta1.PipelineRunReasonSuccessful.String(),
 							Message: "Completed",
 						},
 					},
@@ -1408,7 +1407,7 @@ func TestPipelineRunDescribe_lastV1beta1(t *testing.T) {
 					Conditions: duckv1beta1.Conditions{
 						{
 							Status:  corev1.ConditionTrue,
-							Reason:  resources.ReasonSucceeded,
+							Reason:  v1beta1.PipelineRunReasonSuccessful.String(),
 							Message: "Completed",
 						},
 					},
@@ -1518,7 +1517,7 @@ func TestPipelineRunDescribe_last(t *testing.T) {
 				}),
 				tb.PipelineRunStatusCondition(apis.Condition{
 					Status: corev1.ConditionTrue,
-					Reason: resources.ReasonSucceeded,
+					Reason: v1beta1.PipelineRunReasonSuccessful.String(),
 				}),
 				tb.PipelineRunStartTime(clock.Now().Add(5*time.Minute)),
 				cb.PipelineRunCompletionTime(clock.Now().Add(20*time.Minute)),
@@ -1540,7 +1539,7 @@ func TestPipelineRunDescribe_last(t *testing.T) {
 				}),
 				tb.PipelineRunStatusCondition(apis.Condition{
 					Status: corev1.ConditionTrue,
-					Reason: resources.ReasonSucceeded,
+					Reason: v1beta1.PipelineRunReasonSuccessful.String(),
 				}),
 				tb.PipelineRunStartTime(clock.Now()),
 				cb.PipelineRunCompletionTime(clock.Now().Add(15*time.Minute)),

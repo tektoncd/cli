@@ -30,7 +30,6 @@ import (
 	testDynamic "github.com/tektoncd/cli/pkg/test/dynamic"
 	"github.com/tektoncd/pipeline/pkg/apis/pipeline/v1alpha1"
 	"github.com/tektoncd/pipeline/pkg/apis/pipeline/v1beta1"
-	"github.com/tektoncd/pipeline/pkg/reconciler/pipelinerun/resources"
 	pipelinev1beta1test "github.com/tektoncd/pipeline/test"
 	tb "github.com/tektoncd/pipeline/test/builder"
 	pipelinetest "github.com/tektoncd/pipeline/test/v1alpha1"
@@ -132,7 +131,7 @@ func TestLog_run_found(t *testing.T) {
 			tb.PipelineRunStatus(
 				tb.PipelineRunStatusCondition(apis.Condition{
 					Status: corev1.ConditionTrue,
-					Reason: resources.ReasonSucceeded,
+					Reason: v1beta1.PipelineRunReasonSuccessful.String(),
 				}),
 			),
 		),
@@ -175,7 +174,7 @@ func TestLog_run_not_found(t *testing.T) {
 			tb.PipelineRunStatus(
 				tb.PipelineRunStatusCondition(apis.Condition{
 					Status: corev1.ConditionFalse,
-					Reason: resources.ReasonFailed,
+					Reason: v1beta1.PipelineRunReasonFailed.String(),
 				}),
 			),
 		),
@@ -299,7 +298,7 @@ func TestPipelinerunLogs(t *testing.T) {
 			tb.PipelineRunStatus(
 				tb.PipelineRunStatusCondition(apis.Condition{
 					Status: corev1.ConditionTrue,
-					Reason: resources.ReasonSucceeded,
+					Reason: v1beta1.PipelineRunReasonSuccessful.String(),
 				}),
 				tb.PipelineRunTaskRunsStatus(tr1Name, &v1alpha1.PipelineRunTaskRunStatus{
 					PipelineTaskName: task1Name,
@@ -490,7 +489,7 @@ func TestPipelinerunLog_completed_taskrun_only(t *testing.T) {
 			tb.PipelineRunStatus(
 				tb.PipelineRunStatusCondition(apis.Condition{
 					Status: corev1.ConditionTrue,
-					Reason: resources.ReasonRunning,
+					Reason: v1beta1.PipelineRunReasonRunning.String(),
 				}),
 				tb.PipelineRunTaskRunsStatus(tr1Name, &v1alpha1.PipelineRunTaskRunStatus{
 					PipelineTaskName: task1Name,
@@ -546,7 +545,7 @@ func TestPipelinerunLog_completed_taskrun_only(t *testing.T) {
 				tb.StatusCondition(apis.Condition{
 					Type:   apis.ConditionSucceeded,
 					Status: corev1.ConditionTrue,
-					Reason: resources.ReasonSucceeded,
+					Reason: v1beta1.PipelineRunReasonSuccessful.String(),
 				}),
 				tb.StepState(
 					cb.StepName("test-step"),
@@ -565,7 +564,7 @@ func TestPipelinerunLog_completed_taskrun_only(t *testing.T) {
 			tb.PipelineRunStatus(
 				tb.PipelineRunStatusCondition(apis.Condition{
 					Status: corev1.ConditionTrue,
-					Reason: resources.ReasonRunning,
+					Reason: v1beta1.PipelineRunReasonRunning.String(),
 				}),
 				tb.PipelineRunTaskRunsStatus("output-taskrun2", &v1alpha1.PipelineRunTaskRunStatus{
 					PipelineTaskName: "output-task2",
@@ -721,7 +720,7 @@ func TestPipelinerunLog_follow_mode(t *testing.T) {
 			tb.PipelineRunStatus(
 				tb.PipelineRunStatusCondition(apis.Condition{
 					Status: corev1.ConditionTrue,
-					Reason: resources.ReasonRunning,
+					Reason: v1beta1.PipelineRunReasonRunning.String(),
 				}),
 				tb.PipelineRunTaskRunsStatus(tr1Name, &v1alpha1.PipelineRunTaskRunStatus{
 					PipelineTaskName: task1Name,
@@ -1431,7 +1430,7 @@ func TestPipelinerunLog_completed_taskrun_only_v1bea1(t *testing.T) {
 					Conditions: duckv1beta1.Conditions{
 						{
 							Status: corev1.ConditionTrue,
-							Reason: resources.ReasonRunning,
+							Reason: v1beta1.PipelineRunReasonRunning.String(),
 						},
 					},
 				},
@@ -1508,7 +1507,7 @@ func TestPipelinerunLog_completed_taskrun_only_v1bea1(t *testing.T) {
 						{
 							Status: corev1.ConditionTrue,
 							Type:   apis.ConditionSucceeded,
-							Reason: resources.ReasonSucceeded,
+							Reason: v1beta1.PipelineRunReasonSuccessful.String(),
 						},
 					},
 				},
@@ -1554,7 +1553,7 @@ func TestPipelinerunLog_completed_taskrun_only_v1bea1(t *testing.T) {
 					Conditions: duckv1beta1.Conditions{
 						{
 							Status: corev1.ConditionTrue,
-							Reason: resources.ReasonRunning,
+							Reason: v1beta1.PipelineRunReasonRunning.String(),
 						},
 					},
 				},
@@ -1716,7 +1715,7 @@ func TestPipelinerunLog_follow_mode_v1beta1(t *testing.T) {
 			tb.PipelineRunStatus(
 				tb.PipelineRunStatusCondition(apis.Condition{
 					Status: corev1.ConditionTrue,
-					Reason: resources.ReasonRunning,
+					Reason: v1beta1.PipelineRunReasonRunning.String(),
 				}),
 				tb.PipelineRunTaskRunsStatus(tr1Name, &v1alpha1.PipelineRunTaskRunStatus{
 					PipelineTaskName: task1Name,

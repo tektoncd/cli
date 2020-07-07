@@ -31,7 +31,6 @@ import (
 	"github.com/tektoncd/cli/test/prompt"
 	"github.com/tektoncd/pipeline/pkg/apis/pipeline/v1alpha1"
 	"github.com/tektoncd/pipeline/pkg/apis/pipeline/v1beta1"
-	"github.com/tektoncd/pipeline/pkg/reconciler/pipelinerun/resources"
 	pipelinev1beta1test "github.com/tektoncd/pipeline/test"
 	tb "github.com/tektoncd/pipeline/test/builder"
 	pipelinetest "github.com/tektoncd/pipeline/test/v1alpha1"
@@ -118,7 +117,7 @@ func TestPipelineLog(t *testing.T) {
 			tb.PipelineRunStatus(
 				tb.PipelineRunStatusCondition(apis.Condition{
 					Status: corev1.ConditionTrue,
-					Reason: resources.ReasonSucceeded,
+					Reason: v1beta1.PipelineRunReasonSuccessful.String(),
 				}),
 				// pipeline run started 5 minutes ago
 				tb.PipelineRunStartTime(clock.Now().Add(-5*time.Minute)),
@@ -134,7 +133,7 @@ func TestPipelineLog(t *testing.T) {
 			tb.PipelineRunStatus(
 				tb.PipelineRunStatusCondition(apis.Condition{
 					Status: corev1.ConditionTrue,
-					Reason: resources.ReasonSucceeded,
+					Reason: v1beta1.PipelineRunReasonSuccessful.String(),
 				}),
 				// pipeline run started 3 minutes ago
 				tb.PipelineRunStartTime(clock.Now().Add(-3*time.Minute)),
@@ -338,7 +337,7 @@ func TestPipelineLog_v1beta1(t *testing.T) {
 					Conditions: duckv1beta1.Conditions{
 						{
 							Status: corev1.ConditionTrue,
-							Reason: resources.ReasonSucceeded,
+							Reason: v1beta1.PipelineRunReasonSuccessful.String(),
 						},
 					},
 				},
@@ -367,7 +366,7 @@ func TestPipelineLog_v1beta1(t *testing.T) {
 					Conditions: duckv1beta1.Conditions{
 						{
 							Status: corev1.ConditionTrue,
-							Reason: resources.ReasonSucceeded,
+							Reason: v1beta1.PipelineRunReasonSuccessful.String(),
 						},
 					},
 				},
@@ -524,7 +523,7 @@ func TestPipelineLog_Interactive(t *testing.T) {
 				tb.PipelineRunStatus(
 					tb.PipelineRunStatusCondition(apis.Condition{
 						Status: corev1.ConditionTrue,
-						Reason: resources.ReasonSucceeded,
+						Reason: v1beta1.PipelineRunReasonSuccessful.String(),
 					}),
 					// pipeline run started 5 minutes ago
 					tb.PipelineRunStartTime(clock.Now().Add(-5*time.Minute)),
@@ -540,7 +539,7 @@ func TestPipelineLog_Interactive(t *testing.T) {
 				tb.PipelineRunStatus(
 					tb.PipelineRunStatusCondition(apis.Condition{
 						Status: corev1.ConditionTrue,
-						Reason: resources.ReasonSucceeded,
+						Reason: v1beta1.PipelineRunReasonSuccessful.String(),
 					}),
 					// pipeline run started 3 minutes ago
 					tb.PipelineRunStartTime(clock.Now().Add(-3*time.Minute)),
@@ -576,7 +575,7 @@ func TestPipelineLog_Interactive(t *testing.T) {
 				tb.PipelineRunStatus(
 					tb.PipelineRunStatusCondition(apis.Condition{
 						Status: corev1.ConditionTrue,
-						Reason: resources.ReasonSucceeded,
+						Reason: v1beta1.PipelineRunReasonSuccessful.String(),
 					}),
 					// pipeline run started 5 minutes ago
 					tb.PipelineRunStartTime(clock.Now().Add(-5*time.Minute)),
@@ -877,7 +876,7 @@ func TestLogs_Auto_Select_FirstPipeline(t *testing.T) {
 			tb.PipelineRunStatus(
 				tb.PipelineRunStatusCondition(apis.Condition{
 					Status: corev1.ConditionTrue,
-					Reason: resources.ReasonSucceeded,
+					Reason: v1beta1.PipelineRunReasonSuccessful.String(),
 				}),
 				// pipeline run started 5 minutes ago
 				tb.PipelineRunStartTime(clock.Now().Add(-5*time.Minute)),
@@ -960,7 +959,7 @@ func TestLogs_Auto_Select_FirstPipeline_v1beta1(t *testing.T) {
 					Conditions: duckv1beta1.Conditions{
 						{
 							Status: corev1.ConditionTrue,
-							Reason: resources.ReasonSucceeded,
+							Reason: v1beta1.PipelineRunReasonSuccessful.String(),
 						},
 					},
 				},

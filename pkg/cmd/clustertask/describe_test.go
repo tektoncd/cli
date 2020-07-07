@@ -28,7 +28,6 @@ import (
 	testDynamic "github.com/tektoncd/cli/pkg/test/dynamic"
 	"github.com/tektoncd/pipeline/pkg/apis/pipeline/v1alpha1"
 	"github.com/tektoncd/pipeline/pkg/apis/pipeline/v1beta1"
-	"github.com/tektoncd/pipeline/pkg/reconciler/pipelinerun/resources"
 	pipelinev1beta1test "github.com/tektoncd/pipeline/test"
 	tb "github.com/tektoncd/pipeline/test/builder"
 	pipelinetest "github.com/tektoncd/pipeline/test/v1alpha1"
@@ -96,7 +95,7 @@ func Test_ClusterTaskDescribe(t *testing.T) {
 				cb.TaskRunCompletionTime(clock.Now().Add(17*time.Minute)),
 				tb.StatusCondition(apis.Condition{
 					Status: corev1.ConditionTrue,
-					Reason: resources.ReasonSucceeded,
+					Reason: v1beta1.TaskRunReasonSuccessful.String(),
 				}),
 			),
 		),
@@ -114,7 +113,7 @@ func Test_ClusterTaskDescribe(t *testing.T) {
 				cb.TaskRunCompletionTime(clock.Now().Add(17*time.Minute)),
 				tb.StatusCondition(apis.Condition{
 					Status: corev1.ConditionTrue,
-					Reason: resources.ReasonSucceeded,
+					Reason: v1beta1.TaskRunReasonSuccessful.String(),
 				}),
 			),
 		),
@@ -133,7 +132,7 @@ func Test_ClusterTaskDescribe(t *testing.T) {
 				tb.TaskRunStartTime(clock.Now().Add(-12*time.Minute)),
 				tb.StatusCondition(apis.Condition{
 					Status: corev1.ConditionUnknown,
-					Reason: resources.ReasonRunning,
+					Reason: v1beta1.TaskRunReasonRunning.String(),
 				}),
 			),
 		),
@@ -152,7 +151,7 @@ func Test_ClusterTaskDescribe(t *testing.T) {
 				tb.TaskRunStartTime(clock.Now().Add(-12*time.Minute)),
 				tb.StatusCondition(apis.Condition{
 					Status: corev1.ConditionUnknown,
-					Reason: resources.ReasonRunning,
+					Reason: v1beta1.TaskRunReasonRunning.String(),
 				}),
 			),
 		),

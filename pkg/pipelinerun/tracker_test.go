@@ -22,8 +22,8 @@ import (
 	"github.com/tektoncd/cli/pkg/test"
 	clitest "github.com/tektoncd/cli/pkg/test"
 	"github.com/tektoncd/pipeline/pkg/apis/pipeline/v1alpha1"
+	"github.com/tektoncd/pipeline/pkg/apis/pipeline/v1beta1"
 	"github.com/tektoncd/pipeline/pkg/client/clientset/versioned"
-	"github.com/tektoncd/pipeline/pkg/reconciler/pipelinerun/resources"
 	tb "github.com/tektoncd/pipeline/test/builder"
 	pipelinetest "github.com/tektoncd/pipeline/test/v1alpha1"
 	corev1 "k8s.io/api/core/v1"
@@ -106,7 +106,7 @@ func TestTracker_pipelinerun_complete(t *testing.T) {
 				tb.PipelineRunStatus(
 					tb.PipelineRunStatusCondition(apis.Condition{
 						Status: corev1.ConditionUnknown,
-						Reason: resources.ReasonRunning,
+						Reason: v1beta1.PipelineRunReasonRunning.String(),
 					}),
 					tb.PipelineRunTaskRunsStatus(tr1Name, &v1alpha1.PipelineRunTaskRunStatus{
 						PipelineTaskName: task1Name,
@@ -119,7 +119,7 @@ func TestTracker_pipelinerun_complete(t *testing.T) {
 		prStatusFn := tb.PipelineRunStatus(
 			tb.PipelineRunStatusCondition(apis.Condition{
 				Status: corev1.ConditionTrue,
-				Reason: resources.ReasonSucceeded,
+				Reason: v1beta1.PipelineRunReasonSuccessful.String(),
 			}),
 			tb.PipelineRunTaskRunsStatus(tr1Name, &v1alpha1.PipelineRunTaskRunStatus{
 				PipelineTaskName: task1Name,

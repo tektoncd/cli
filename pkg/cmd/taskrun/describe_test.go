@@ -26,7 +26,6 @@ import (
 	testDynamic "github.com/tektoncd/cli/pkg/test/dynamic"
 	"github.com/tektoncd/pipeline/pkg/apis/pipeline/v1alpha1"
 	"github.com/tektoncd/pipeline/pkg/apis/pipeline/v1beta1"
-	"github.com/tektoncd/pipeline/pkg/reconciler/pipelinerun/resources"
 	pipelinev1beta1test "github.com/tektoncd/pipeline/test"
 	tb "github.com/tektoncd/pipeline/test/builder"
 	pipelinetest "github.com/tektoncd/pipeline/test/v1alpha1"
@@ -107,7 +106,7 @@ func TestTaskRunDescribe_empty_taskrun(t *testing.T) {
 			tb.TaskRunStatus(
 				tb.StatusCondition(apis.Condition{
 					Status: corev1.ConditionTrue,
-					Reason: resources.ReasonSucceeded,
+					Reason: v1beta1.TaskRunReasonSuccessful.String(),
 				}),
 			),
 		),
@@ -224,7 +223,7 @@ func TestTaskRunDescribe_failed(t *testing.T) {
 				cb.TaskRunCompletionTime(clock.Now().Add(5*time.Minute)),
 				tb.StatusCondition(apis.Condition{
 					Status:  corev1.ConditionFalse,
-					Reason:  resources.ReasonFailed,
+					Reason:  v1beta1.TaskRunReasonFailed.String(),
 					Message: "Testing tr failed",
 				}),
 			),
@@ -279,7 +278,7 @@ func TestTaskRunDescribe_no_taskref(t *testing.T) {
 				cb.TaskRunCompletionTime(clock.Now().Add(5*time.Minute)),
 				tb.StatusCondition(apis.Condition{
 					Status:  corev1.ConditionFalse,
-					Reason:  resources.ReasonFailed,
+					Reason:  v1beta1.TaskRunReasonFailed.String(),
 					Message: "Testing tr failed",
 				}),
 			),
@@ -397,7 +396,7 @@ func TestTaskRunDescribe_step_sidecar_status_defaults_and_failures(t *testing.T)
 				tb.TaskRunStartTime(clockwork.NewFakeClock().Now().Add(20*time.Second)),
 				tb.StatusCondition(apis.Condition{
 					Status: corev1.ConditionFalse,
-					Reason: resources.ReasonFailed,
+					Reason: v1beta1.TaskRunReasonFailed.String(),
 				}),
 				tb.StepState(
 					cb.StepName("step1"),
@@ -766,7 +765,7 @@ func TestTaskRunDescribe_lastV1beta1(t *testing.T) {
 					Conditions: duckv1beta1.Conditions{
 						{
 							Status: corev1.ConditionFalse,
-							Reason: resources.ReasonFailed,
+							Reason: v1beta1.TaskRunReasonFailed.String(),
 						},
 					},
 				},
@@ -792,7 +791,7 @@ func TestTaskRunDescribe_lastV1beta1(t *testing.T) {
 					Conditions: duckv1beta1.Conditions{
 						{
 							Status: corev1.ConditionTrue,
-							Reason: resources.ReasonSucceeded,
+							Reason: v1beta1.TaskRunReasonSuccessful.String(),
 						},
 					},
 				},
