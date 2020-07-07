@@ -80,6 +80,23 @@ github.com/census-instrumentation/opencensus-proto/gen-go/resource/v1
 github.com/census-instrumentation/opencensus-proto/gen-go/trace/v1
 # github.com/cespare/xxhash/v2 v2.1.1
 github.com/cespare/xxhash/v2
+# github.com/cloudevents/sdk-go/v2 v2.1.0
+github.com/cloudevents/sdk-go/v2
+github.com/cloudevents/sdk-go/v2/binding
+github.com/cloudevents/sdk-go/v2/binding/format
+github.com/cloudevents/sdk-go/v2/binding/spec
+github.com/cloudevents/sdk-go/v2/client
+github.com/cloudevents/sdk-go/v2/context
+github.com/cloudevents/sdk-go/v2/event
+github.com/cloudevents/sdk-go/v2/event/datacodec
+github.com/cloudevents/sdk-go/v2/event/datacodec/json
+github.com/cloudevents/sdk-go/v2/event/datacodec/text
+github.com/cloudevents/sdk-go/v2/event/datacodec/xml
+github.com/cloudevents/sdk-go/v2/extensions
+github.com/cloudevents/sdk-go/v2/observability
+github.com/cloudevents/sdk-go/v2/protocol
+github.com/cloudevents/sdk-go/v2/protocol/http
+github.com/cloudevents/sdk-go/v2/types
 # github.com/cpuguy83/go-md2man v1.0.10
 github.com/cpuguy83/go-md2man/md2man
 # github.com/davecgh/go-spew v1.1.1
@@ -197,6 +214,10 @@ github.com/grpc-ecosystem/grpc-gateway/runtime
 github.com/grpc-ecosystem/grpc-gateway/utilities
 # github.com/hako/durafmt v0.0.0-20191009132224-3f39dc1ed9f4
 github.com/hako/durafmt
+# github.com/hashicorp/errwrap v1.0.0
+github.com/hashicorp/errwrap
+# github.com/hashicorp/go-multierror v1.1.0
+github.com/hashicorp/go-multierror
 # github.com/hashicorp/golang-lru v0.5.4
 github.com/hashicorp/golang-lru
 github.com/hashicorp/golang-lru/simplelru
@@ -220,6 +241,9 @@ github.com/kr/pty
 github.com/ktr0731/go-fuzzyfinder
 github.com/ktr0731/go-fuzzyfinder/matching
 github.com/ktr0731/go-fuzzyfinder/scoring
+# github.com/lightstep/tracecontext.go v0.0.0-20181129014701-1757c391b1ac
+github.com/lightstep/tracecontext.go/traceparent
+github.com/lightstep/tracecontext.go/tracestate
 # github.com/lucasb-eyer/go-colorful v1.0.2
 github.com/lucasb-eyer/go-colorful
 # github.com/mailru/easyjson v0.7.1-0.20191009090205-6c0755d89d1e
@@ -266,7 +290,7 @@ github.com/russross/blackfriday
 github.com/spf13/cobra
 # github.com/spf13/pflag v1.0.5
 github.com/spf13/pflag
-# github.com/tektoncd/pipeline v0.13.0
+# github.com/tektoncd/pipeline v0.14.0
 github.com/tektoncd/pipeline/internal/builder/v1alpha1
 github.com/tektoncd/pipeline/internal/builder/v1beta1
 github.com/tektoncd/pipeline/pkg/apis/config
@@ -274,16 +298,9 @@ github.com/tektoncd/pipeline/pkg/apis/pipeline
 github.com/tektoncd/pipeline/pkg/apis/pipeline/pod
 github.com/tektoncd/pipeline/pkg/apis/pipeline/v1alpha1
 github.com/tektoncd/pipeline/pkg/apis/pipeline/v1beta1
-github.com/tektoncd/pipeline/pkg/apis/resource
 github.com/tektoncd/pipeline/pkg/apis/resource/v1alpha1
 github.com/tektoncd/pipeline/pkg/apis/resource/v1alpha1/cloudevent
-github.com/tektoncd/pipeline/pkg/apis/resource/v1alpha1/cluster
-github.com/tektoncd/pipeline/pkg/apis/resource/v1alpha1/git
-github.com/tektoncd/pipeline/pkg/apis/resource/v1alpha1/image
-github.com/tektoncd/pipeline/pkg/apis/resource/v1alpha1/pullrequest
-github.com/tektoncd/pipeline/pkg/apis/resource/v1alpha1/storage
 github.com/tektoncd/pipeline/pkg/apis/validate
-github.com/tektoncd/pipeline/pkg/artifacts
 github.com/tektoncd/pipeline/pkg/client/clientset/versioned
 github.com/tektoncd/pipeline/pkg/client/clientset/versioned/fake
 github.com/tektoncd/pipeline/pkg/client/clientset/versioned/scheme
@@ -343,12 +360,9 @@ github.com/tektoncd/pipeline/pkg/client/resource/listers/resource/v1alpha1
 github.com/tektoncd/pipeline/pkg/contexts
 github.com/tektoncd/pipeline/pkg/list
 github.com/tektoncd/pipeline/pkg/names
+github.com/tektoncd/pipeline/pkg/reconciler/events/cloudevent
 github.com/tektoncd/pipeline/pkg/reconciler/pipeline/dag
-github.com/tektoncd/pipeline/pkg/reconciler/pipelinerun/resources
-github.com/tektoncd/pipeline/pkg/reconciler/taskrun/resources
 github.com/tektoncd/pipeline/pkg/substitution
-github.com/tektoncd/pipeline/pkg/system
-github.com/tektoncd/pipeline/pkg/workspace
 github.com/tektoncd/pipeline/test
 github.com/tektoncd/pipeline/test/builder
 github.com/tektoncd/pipeline/test/v1alpha1
@@ -392,6 +406,7 @@ go.opencensus.io/metric/metricproducer
 go.opencensus.io/plugin/ocgrpc
 go.opencensus.io/plugin/ochttp
 go.opencensus.io/plugin/ochttp/propagation/b3
+go.opencensus.io/plugin/ochttp/propagation/tracecontext
 go.opencensus.io/resource
 go.opencensus.io/resource/resourcekeys
 go.opencensus.io/stats

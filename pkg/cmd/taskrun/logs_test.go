@@ -32,7 +32,6 @@ import (
 	testDynamic "github.com/tektoncd/cli/pkg/test/dynamic"
 	"github.com/tektoncd/pipeline/pkg/apis/pipeline/v1alpha1"
 	"github.com/tektoncd/pipeline/pkg/apis/pipeline/v1beta1"
-	"github.com/tektoncd/pipeline/pkg/reconciler/pipelinerun/resources"
 	pipelinev1beta1test "github.com/tektoncd/pipeline/test"
 	tb "github.com/tektoncd/pipeline/test/builder"
 	pipelinetest "github.com/tektoncd/pipeline/test/v1alpha1"
@@ -106,7 +105,7 @@ func TestLog_no_taskrun_arg(t *testing.T) {
 				tb.TaskRunStartTime(clockwork.NewFakeClock().Now()),
 				tb.StatusCondition(apis.Condition{
 					Status: corev1.ConditionTrue,
-					Reason: resources.ReasonSucceeded,
+					Reason: v1beta1.TaskRunReasonSuccessful.String(),
 				}),
 				tb.StepState(
 					cb.StepName("step1"),
@@ -2169,8 +2168,8 @@ func TestLog_taskrun_follow_mode_no_output_provided(t *testing.T) {
 			tb.TaskRunStatus(
 				tb.TaskRunStartTime(trStartTime),
 				tb.StatusCondition(apis.Condition{
-					Type:    resources.ReasonFailed,
 					Status:  corev1.ConditionFalse,
+					Reason:  v1beta1.TaskRunReasonFailed.String(),
 					Message: "invalid output resources: TaskRun's declared resources didn't match usage in Task: Didn't provide required values: [builtImage]",
 				}),
 				tb.StepState(
@@ -2267,8 +2266,8 @@ func TestLog_taskrun_follow_mode_no_output_provided_v1beta1(t *testing.T) {
 				Status: duckv1beta1.Status{
 					Conditions: duckv1beta1.Conditions{
 						{
-							Type:    resources.ReasonFailed,
 							Status:  corev1.ConditionFalse,
+							Reason:  v1beta1.TaskRunReasonFailed.String(),
 							Message: "invalid output resources: TaskRun's declared resources didn't match usage in Task: Didn't provide required values: [builtImage]",
 						},
 					},

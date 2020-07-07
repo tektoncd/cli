@@ -23,7 +23,6 @@ import (
 	cb "github.com/tektoncd/cli/pkg/test/builder"
 	testDynamic "github.com/tektoncd/cli/pkg/test/dynamic"
 	"github.com/tektoncd/pipeline/pkg/apis/pipeline/v1beta1"
-	"github.com/tektoncd/pipeline/pkg/reconciler/pipelinerun/resources"
 	pipelinev1beta1test "github.com/tektoncd/pipeline/test"
 	corev1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
@@ -83,7 +82,7 @@ func TestPipelineRunLast_two_run(t *testing.T) {
 					Conditions: duckv1beta1.Conditions{
 						{
 							Status: corev1.ConditionTrue,
-							Reason: resources.ReasonSucceeded,
+							Reason: v1beta1.PipelineRunReasonSuccessful.String(),
 						},
 					},
 				},
@@ -110,7 +109,7 @@ func TestPipelineRunLast_two_run(t *testing.T) {
 					Conditions: duckv1beta1.Conditions{
 						{
 							Status: corev1.ConditionTrue,
-							Reason: resources.ReasonSucceeded,
+							Reason: v1beta1.PipelineRunReasonSuccessful.String(),
 						},
 					},
 				},

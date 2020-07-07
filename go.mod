@@ -17,7 +17,7 @@ require (
 	github.com/pkg/errors v0.9.1
 	github.com/spf13/cobra v0.0.6
 	github.com/spf13/pflag v1.0.5
-	github.com/tektoncd/pipeline v0.13.0
+	github.com/tektoncd/pipeline v0.14.0
 	github.com/tektoncd/plumbing v0.0.0-20200430135134-e53521e1d887
 	github.com/tektoncd/triggers v0.5.0
 	github.com/tidwall/gjson v1.6.0 // indirect
@@ -55,5 +55,4 @@ replace (
 	k8s.io/cli-runtime => k8s.io/cli-runtime v0.16.5
 	k8s.io/client-go => k8s.io/client-go v0.16.5
 	k8s.io/code-generator => k8s.io/code-generator v0.16.5
-	k8s.io/gengo => k8s.io/gengo v0.0.0-20190327210449-e17681d19d3a
 )

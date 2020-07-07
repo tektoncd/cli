@@ -23,7 +23,7 @@ import (
 	cb "github.com/tektoncd/cli/pkg/test/builder"
 	testDynamic "github.com/tektoncd/cli/pkg/test/dynamic"
 	"github.com/tektoncd/pipeline/pkg/apis/pipeline/v1alpha1"
-	"github.com/tektoncd/pipeline/pkg/reconciler/pipelinerun/resources"
+	"github.com/tektoncd/pipeline/pkg/apis/pipeline/v1beta1"
 	tb "github.com/tektoncd/pipeline/test/builder"
 	pipelinetest "github.com/tektoncd/pipeline/test/v1alpha1"
 	corev1 "k8s.io/api/core/v1"
@@ -61,7 +61,7 @@ func TestTaskrunLatest_two_run(t *testing.T) {
 			tb.TaskRunStatus(
 				tb.StatusCondition(apis.Condition{
 					Status: corev1.ConditionTrue,
-					Reason: resources.ReasonSucceeded,
+					Reason: v1beta1.TaskRunReasonSuccessful.String(),
 				}),
 				tb.TaskRunStartTime(firstRunStarted),
 				cb.TaskRunCompletionTime(firstRunCompleted),
@@ -74,7 +74,7 @@ func TestTaskrunLatest_two_run(t *testing.T) {
 			tb.TaskRunStatus(
 				tb.StatusCondition(apis.Condition{
 					Status: corev1.ConditionTrue,
-					Reason: resources.ReasonSucceeded,
+					Reason: v1beta1.TaskRunReasonSuccessful.String(),
 				}),
 				tb.TaskRunStartTime(secondRunStarted),
 				cb.TaskRunCompletionTime(secondRunCompleted),
