@@ -57,6 +57,11 @@ type EventListenerSpec struct {
 	ServiceAccountName string                 `json:"serviceAccountName"`
 	Triggers           []EventListenerTrigger `json:"triggers"`
 	ServiceType        corev1.ServiceType     `json:"serviceType,omitempty"`
+	PodTemplate        PodTemplate            `json:"podTemplate,omitempty"`
+}
+
+type PodTemplate struct {
+	Tolerations []corev1.Toleration `json:"tolerations,omitempty"`
 }
 
 // EventListenerTrigger represents a connection between TriggerBinding, Params,
@@ -67,6 +72,7 @@ type EventListenerTrigger struct {
 	Template EventListenerTemplate   `json:"template"`
 	// +optional
 	Name         string              `json:"name,omitempty"`
+	Ref          string              `json:"ref,omitempty"`
 	Interceptors []*EventInterceptor `json:"interceptors,omitempty"`
 	// ServiceAccount optionally associates credentials with each trigger;
 	// more granular authorization for
@@ -81,10 +87,11 @@ type EventListenerTrigger struct {
 
 // EventInterceptor provides a hook to intercept and pre-process events
 type EventInterceptor struct {
-	Webhook *WebhookInterceptor `json:"webhook,omitempty"`
-	GitHub  *GitHubInterceptor  `json:"github,omitempty"`
-	GitLab  *GitLabInterceptor  `json:"gitlab,omitempty"`
-	CEL     *CELInterceptor     `json:"cel,omitempty"`
+	Webhook   *WebhookInterceptor   `json:"webhook,omitempty"`
+	GitHub    *GitHubInterceptor    `json:"github,omitempty"`
+	GitLab    *GitLabInterceptor    `json:"gitlab,omitempty"`
+	CEL       *CELInterceptor       `json:"cel,omitempty"`
+	Bitbucket *BitbucketInterceptor `json:"bitbucket,omitempty"`
 }
 
 // WebhookInterceptor provides a webhook to intercept and pre-process events
@@ -97,6 +104,12 @@ type WebhookInterceptor struct {
 	// interceptor request headers. This allows the interceptor to make
 	// decisions specific to an EventListenerTrigger.
 	Header []v1beta1.Param `json:"header,omitempty"`
+}
+
+// BitbucketInterceptor provides a webhook to intercept and pre-process events
+type BitbucketInterceptor struct {
+	SecretRef  *SecretRef `json:"secretRef,omitempty"`
+	EventTypes []string   `json:"eventTypes,omitempty"`
 }
 
 // GitHubInterceptor provides a webhook to intercept and pre-process events

@@ -90,7 +90,8 @@
                     "name": "ns1"
                 }
             }
-        ]
+        ],
+        "podTemplate": {}
     },
     "status": {
         "configuration": {
