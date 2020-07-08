@@ -65,7 +65,7 @@ const describeTemplate = `{{decorate "bold" "Name"}}:	{{ .Task.Name }}
  No output resources
 {{- else }}
  NAME	TYPE
- 
+
 {{- range $or := .Task.Spec.Resources.Outputs }}
  {{decorate "bullet" $or.Name }}	{{ $or.Type }}
 {{- end }}
@@ -97,7 +97,7 @@ const describeTemplate = `{{decorate "bold" "Name"}}:	{{ .Task.Name }}
  No steps
 {{- else }}
 {{- range $step := .Task.Spec.Steps }}
- {{ autoStepName $step.Name | decorate "bullet" }} 
+ {{ autoStepName $step.Name | decorate "bullet" }}
 {{- end }}
 {{- end }}
 
@@ -146,9 +146,17 @@ or
 			}
 
 			if len(args) == 0 {
-				err = askTaskName(opts, p)
+				taskNames, err := task.GetAllTaskNames(p)
 				if err != nil {
 					return err
+				}
+				if len(taskNames) == 1 {
+					opts.TaskName = taskNames[0]
+				} else {
+					err = askTaskName(opts, p)
+					if err != nil {
+						return err
+					}
 				}
 			} else {
 				opts.TaskName = args[0]
