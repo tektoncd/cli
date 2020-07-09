@@ -16,20 +16,25 @@ package workspaces
 
 import (
 	"errors"
+	"fmt"
 	"strings"
 
+	"github.com/tektoncd/cli/pkg/cli"
+	"github.com/tektoncd/cli/pkg/file"
 	"github.com/tektoncd/pipeline/pkg/apis/pipeline/v1beta1"
 	corev1 "k8s.io/api/core/v1"
+	"sigs.k8s.io/yaml"
 )
 
 var (
-	nameParam       = "name"
-	claimNameParam  = "claimName"
-	subPathParam    = "subPath"
-	emptyDirParam   = "emptyDir"
-	configParam     = "config"
-	secretParam     = "secret"
-	configItemParam = "item"
+	nameParam               = "name"
+	claimNameParam          = "claimName"
+	subPathParam            = "subPath"
+	emptyDirParam           = "emptyDir"
+	configParam             = "config"
+	secretParam             = "secret"
+	configItemParam         = "item"
+	volumeClaimTemplateFile = "volumeClaimTemplateFile"
 )
 
 const invalidWorkspace = "invalid input format for workspace : "
@@ -37,9 +42,9 @@ const invalidWorkspace = "invalid input format for workspace : "
 var errNotFoundParam = errors.New("param not found")
 
 // Merge merges workspacebinding already in pipelineruns with given options
-func Merge(ws []v1beta1.WorkspaceBinding, optWS []string) ([]v1beta1.WorkspaceBinding,
+func Merge(ws []v1beta1.WorkspaceBinding, optWS []string, p cli.Params) ([]v1beta1.WorkspaceBinding,
 	error) {
-	workspaces, err := parseWorkspace(optWS)
+	workspaces, err := parseWorkspace(optWS, p)
 	if err != nil {
 		return nil, err
 	}
@@ -62,7 +67,7 @@ func Merge(ws []v1beta1.WorkspaceBinding, optWS []string) ([]v1beta1.WorkspaceBi
 	return ws, nil
 }
 
-func parseWorkspace(w []string) (map[string]v1beta1.WorkspaceBinding, error) {
+func parseWorkspace(w []string, p cli.Params) (map[string]v1beta1.WorkspaceBinding, error) {
 	ws := map[string]v1beta1.WorkspaceBinding{}
 	for _, v := range w {
 
@@ -83,37 +88,49 @@ func parseWorkspace(w []string) (map[string]v1beta1.WorkspaceBinding, error) {
 			return nil, err
 		}
 
-		err = setWorkspaceConfig(r, &wB)
-		if err == nil {
-			ws[name] = wB
-			nWB++
-		} else if err != errNotFoundParam {
-			return nil, err
-		}
+		// check for volumeClaimTemplate
+		vctFile, err := getPar(r, volumeClaimTemplateFile)
+		if err != nil {
+			err = setWorkspaceConfig(r, &wB)
+			if err == nil {
+				ws[name] = wB
+				nWB++
+			} else if err != errNotFoundParam {
+				return nil, err
+			}
 
-		err = setWorkspaceSecret(r, &wB)
-		if err == nil {
-			ws[name] = wB
-			nWB++
-		} else if err != errNotFoundParam {
-			return nil, err
-		}
+			err = setWorkspaceSecret(r, &wB)
+			if err == nil {
+				ws[name] = wB
+				nWB++
+			} else if err != errNotFoundParam {
+				return nil, err
+			}
 
-		err = setWorkspaceEmptyDir(r, &wB)
-		if err == nil {
-			ws[name] = wB
-			nWB++
-		}
+			err = setWorkspaceEmptyDir(r, &wB)
+			if err == nil {
+				ws[name] = wB
+				nWB++
+			}
 
-		err = setWorkspacePVC(r, &wB)
-		if err == nil {
+			err = setWorkspacePVC(r, &wB)
+			if err == nil {
+				ws[name] = wB
+				nWB++
+			}
+
+			if nWB != 1 {
+				return nil, errors.New(invalidWorkspace + v)
+			}
+		} else {
+			err = setWorkspaceVCTemplate(r, &wB, vctFile, p)
+			if err != nil {
+				return nil, err
+			}
 			ws[name] = wB
-			nWB++
-		}
-		if nWB != 1 {
-			return nil, errors.New(invalidWorkspace + v)
 		}
 	}
+
 	return ws, nil
 }
 
@@ -217,6 +234,34 @@ func setWorkspaceEmptyDir(r []string, wB *v1beta1.WorkspaceBinding) error {
 		Medium: sM,
 	}
 	return nil
+}
+
+func setWorkspaceVCTemplate(r []string, wB *v1beta1.WorkspaceBinding, vctFile string, p cli.Params) error {
+	pvc, err := parseVolumeClaimTemplate(vctFile, p)
+	if err != nil {
+		return err
+	}
+
+	wB.VolumeClaimTemplate = pvc
+	return nil
+}
+
+func parseVolumeClaimTemplate(filePath string, p cli.Params) (*corev1.PersistentVolumeClaim, error) {
+	b, err := file.LoadFileContent(p, filePath, file.IsYamlFile(), fmt.Errorf("invalid file format for %s: .yaml or .yml file extension and format required", filePath))
+	if err != nil {
+		return nil, err
+	}
+	m := map[string]interface{}{}
+	err = yaml.UnmarshalStrict(b, &m)
+	if err != nil {
+		return nil, err
+	}
+
+	pvc := corev1.PersistentVolumeClaim{}
+	if err := yaml.UnmarshalStrict(b, &pvc); err != nil {
+		return nil, err
+	}
+	return &pvc, nil
 }
 
 func getPar(r []string, par string) (string, error) {

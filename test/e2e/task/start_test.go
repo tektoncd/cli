@@ -43,7 +43,7 @@ func TestTaskStartE2E(t *testing.T) {
 		t.Fatalf("Error creating tknRunner %+v", err)
 	}
 
-	t.Logf("Creating task in namespace: %s ", namespace)
+	t.Logf("Creating Task read-task in namespace: %s ", namespace)
 	e2e.Assert(t, kubectl.Create(e2e.ResourcePath("read-file.yaml")), icmd.Success)
 
 	t.Logf("Creating git pipeline resource in namespace: %s", namespace)
@@ -121,5 +121,34 @@ Waiting for logs to be available...
 				c.Close()
 				return nil
 			}})
+	})
+
+	t.Logf("Creating Task task-with-workspace in namespace: %s ", namespace)
+	e2e.Assert(t, kubectl.Create(e2e.ResourcePath("task-with-workspace.yaml")), icmd.Success)
+
+	t.Run("Start TaskRun with --workspace and volumeClaimTemplate", func(t *testing.T) {
+		if tkn.CheckVersion("Pipeline", "v0.10.2") {
+			t.Skip("Skip test as pipeline v0.10.2 doesn't support volumeClaimTemplates")
+		}
+
+		res := tkn.Run("task", "start", "task-with-workspace",
+			"--showlog",
+			"--workspace=name=read-allowed,volumeClaimTemplateFile="+e2e.ResourcePath("pvc.yaml"))
+
+		vars := make(map[string]interface{})
+		taskRunGeneratedName := e2e.GetTaskRunListWithName(c, "task-with-workspace").Items[0].Name
+		vars["Taskrun"] = taskRunGeneratedName
+		expected := e2e.ProcessString(`(TaskRun started: {{.Taskrun}}
+Waiting for logs to be available...
+.*)`, vars)
+		res.Assert(t, icmd.Expected{
+			ExitCode: 0,
+			Err:      icmd.None,
+		})
+		assert.Assert(t, is.Regexp(expected, res.Stdout()))
+
+		if err := e2e.WaitForTaskRunState(c, taskRunGeneratedName, e2e.TaskRunSucceed(taskRunGeneratedName), "TaskRunSucceeded"); err != nil {
+			t.Errorf("Error waiting for TaskRun to Succeed: %s", err)
+		}
 	})
 }

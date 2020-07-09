@@ -18,6 +18,7 @@ import (
 	"bytes"
 	"os"
 	"os/exec"
+	"strings"
 	"testing"
 	"time"
 
@@ -210,4 +211,13 @@ func (e TknRunner) RunInteractiveTestsDummy(t *testing.T, ops *Prompt) *expect.C
 	assert.NilError(t, cmd.Wait())
 
 	return c
+}
+
+// TODO: Re-write this to just get the version of Tekton components through tkn version
+// as described in https://github.com/tektoncd/cli/issues/1067
+func (e TknRunner) CheckVersion(component string, version string) bool {
+	cmd := append([]string{e.path}, "version")
+	result := icmd.RunCmd(icmd.Cmd{Command: cmd, Timeout: timeout})
+
+	return strings.Contains(result.Stdout(), component+" version: "+version)
 }

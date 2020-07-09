@@ -274,7 +274,7 @@ func (opt *startOptions) startPipeline(pipelineStart *v1beta1.Pipeline) error {
 	}
 	pr.Spec.Params = param
 
-	workspaces, err := workspaces.Merge(pr.Spec.Workspaces, opt.Workspaces)
+	workspaces, err := workspaces.Merge(pr.Spec.Workspaces, opt.Workspaces, opt.cliparams)
 	if err != nil {
 		return err
 	}
@@ -736,8 +736,8 @@ func NameArg(args []string, p cli.Params, file string) (*v1beta1.Pipeline, error
 	return pipelineFile, nil
 }
 
-func parsePipeline(taskLocation string, p cli.Params) (*v1beta1.Pipeline, error) {
-	b, err := file.LoadFileContent(p, taskLocation, file.IsYamlFile(), fmt.Errorf("invalid file format for %s: .yaml or .yml file extension and format required", taskLocation))
+func parsePipeline(pipelineLocation string, p cli.Params) (*v1beta1.Pipeline, error) {
+	b, err := file.LoadFileContent(p, pipelineLocation, file.IsYamlFile(), fmt.Errorf("invalid file format for %s: .yaml or .yml file extension and format required", pipelineLocation))
 	if err != nil {
 		return nil, err
 	}
