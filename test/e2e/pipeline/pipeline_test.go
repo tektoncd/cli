@@ -173,8 +173,7 @@ func TestPipelinesE2E(t *testing.T) {
 	t.Run("Start PipelineRun using pipeline start command with SA as 'pipeline' ", func(t *testing.T) {
 		res := tkn.Run("pipeline", "start", tePipelineName,
 			"-r=source-repo="+tePipelineGitResourceName,
-			"--showlog",
-			"true")
+			"--showlog")
 
 		time.Sleep(1 * time.Second)
 
@@ -268,6 +267,37 @@ Waiting for logs to be available...
 				c.Close()
 				return nil
 			}})
+	})
+
+	t.Logf("Creating Pipeline volume-from-template in namespace: %s", namespace)
+	e2e.Assert(t, kubectl.Create(e2e.ResourcePath("pipeline-with-workspace.yaml")), icmd.Success)
+
+	t.Run("Start PipelineRun with --workspace and volumeClaimTemplate", func(t *testing.T) {
+		if tkn.CheckVersion("Pipeline", "v0.10.2") {
+			t.Skip("Skip test as pipeline v0.10.2 doesn't support volumeClaimTemplates")
+		}
+
+		res := tkn.Run("pipeline", "start", "pipeline-with-workspace",
+			"--workspace=name=ws,volumeClaimTemplateFile="+e2e.ResourcePath("pvc.yaml"),
+			"--showlog")
+
+		time.Sleep(1 * time.Second)
+
+		pipelineRunGeneratedName := e2e.GetPipelineRunListWithName(c, "pipeline-with-workspace").Items[0].Name
+		vars["Element"] = pipelineRunGeneratedName
+		expected := e2e.ProcessString(`(PipelineRun started: {{.Element}}
+Waiting for logs to be available...
+.*)`, vars)
+		res.Assert(t, icmd.Expected{
+			ExitCode: 0,
+			Err:      icmd.None,
+		})
+		assert.Assert(t, is.Regexp(expected, res.Stdout()))
+
+		timeout := 5 * time.Minute
+		if err := e2e.WaitForPipelineRunState(c, pipelineRunGeneratedName, timeout, e2e.PipelineRunSucceed(pipelineRunGeneratedName), "PipelineRunSucceeded"); err != nil {
+			t.Errorf("Error waiting for PipelineRun to Succeed: %s", err)
+		}
 	})
 }
 

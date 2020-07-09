@@ -341,7 +341,7 @@ func startTask(opt startOptions, args []string) error {
 	}
 	tr.ObjectMeta.Labels = labels
 
-	workspaces, err := workspaces.Merge(tr.Spec.Workspaces, opt.Workspaces)
+	workspaces, err := workspaces.Merge(tr.Spec.Workspaces, opt.Workspaces, opt.cliparams)
 	if err != nil {
 		return err
 	}

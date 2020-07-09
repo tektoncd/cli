@@ -41,12 +41,16 @@ func LoadFileContent(p cli.Params, target string, validate TypeValidator, errorM
 	}
 
 	var content []byte
-	cs, err := p.Clients()
-	if err != nil {
-		return nil, fmt.Errorf("failed to create tekton client")
+	var cs *cli.Clients
+	var err error
+	if p != nil {
+		cs, err = p.Clients()
+		if err != nil {
+			return nil, fmt.Errorf("failed to create tekton client")
+		}
 	}
 
-	if strings.HasPrefix(target, "http") {
+	if strings.HasPrefix(target, "http") && cs != nil {
 		content, err = getRemoteContent(cs, target)
 	} else {
 		content, err = ioutil.ReadFile(target)
