@@ -9,7 +9,7 @@ require (
 	github.com/cpuguy83/go-md2man v1.0.10
 	github.com/fatih/color v1.9.0
 	github.com/ghodss/yaml v1.0.0
-	github.com/google/go-cmp v0.4.1
+	github.com/google/go-cmp v0.5.0
 	github.com/hako/durafmt v0.0.0-20191009132224-3f39dc1ed9f4
 	github.com/hinshun/vt10x v0.0.0-20180809195222-d55458df857c
 	github.com/jonboulle/clockwork v0.1.1-0.20190114141812-62fb9bc030d1
@@ -19,7 +19,7 @@ require (
 	github.com/spf13/pflag v1.0.5
 	github.com/tektoncd/pipeline v0.14.0
 	github.com/tektoncd/plumbing v0.0.0-20200430135134-e53521e1d887
-	github.com/tektoncd/triggers v0.6.0
+	github.com/tektoncd/triggers v0.6.1
 	github.com/tidwall/gjson v1.6.0 // indirect
 	go.opencensus.io v0.22.3
 	go.uber.org/multierr v1.5.0
