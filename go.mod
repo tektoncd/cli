@@ -24,6 +24,7 @@ require (
 	go.opencensus.io v0.22.3
 	go.uber.org/multierr v1.5.0
 	golang.org/x/crypto v0.0.0-20200323165209-0ec3e9974c59
+	golang.org/x/text v0.3.3 // indirect
 	golang.org/x/xerrors v0.0.0-20191204190536-9bdfabe68543
 	gopkg.in/yaml.v2 v2.3.0
 	gotest.tools/v3 v3.0.1
