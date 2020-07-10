@@ -114,9 +114,10 @@ git push --force ${PUSH_REMOTE} release-${RELEASE_VERSION}
 kubectl create namespace ${TARGET_NAMESPACE} 2>/dev/null || true
 
 for task in ${CATALOG_TASKS};do
-    kubectl -n ${TARGET_NAMESPACE} apply -f https://raw.githubusercontent.com/tektoncd/catalog/master/golang/${task}.yaml
+    kubectl -n ${TARGET_NAMESPACE} apply -f https://raw.githubusercontent.com/tektoncd/catalog/master/task/golang-${task}/0.1/golang-${task}.yaml
 done
 
+kubectl -n ${TARGET_NAMESPACE} apply -f https://raw.githubusercontent.com/tektoncd/catalog/master/task/git-clone/0.1/git-clone.yaml
 kubectl -n ${TARGET_NAMESPACE} apply -f ./tekton/get-version.yaml
 kubectl -n ${TARGET_NAMESPACE} apply -f ./tekton/goreleaser.yml
 kubectl -n ${TARGET_NAMESPACE} apply -f ./tekton/publish.yaml
@@ -138,32 +139,36 @@ sleep 2
 
 # Until tkn supports tkn create with parameters we do like this,
 cat <<EOF | kubectl -n ${TARGET_NAMESPACE} apply -f-
-apiVersion: tekton.dev/v1alpha1
-kind: PipelineResource
+apiVersion: v1
+kind: PersistentVolumeClaim
 metadata:
-  name: tektoncd-cli-git
+  name: tektoncd-cli-pvc
 spec:
-  type: git
-  params:
-  - name: revision
-    value: ${RELEASE_VERSION}
-  - name: url
-    value: $(git remote get-url ${PUSH_REMOTE}|sed 's,git@github.com:,https://github.com/,')
+  accessModes:
+    - ReadWriteOnce
+  resources:
+    requests:
+      storage: 500Mi
 EOF
 
 # Start the pipeline, We can't use tkn start because until #272 and #262 are imp/fixed
 cat <<EOF | kubectl -n ${TARGET_NAMESPACE} create -f-
-apiVersion: tekton.dev/v1alpha1
+apiVersion: tekton.dev/v1beta1
 kind: PipelineRun
 metadata:
-  generateName: cli-release-pipeline-run
+  generateName: cli-release-pipeline-run-
 spec:
   pipelineRef:
     name: cli-release-pipeline
-  resources:
-    - name: source
-      resourceRef:
-        name: tektoncd-cli-git
+  workspaces:
+    - name: shared-workspace
+      persistentvolumeclaim:
+        claimName: tektoncd-cli-pvc
+  params:
+    - name: revision
+      value: ${RELEASE_VERSION}
+    - name: url
+      value: $(git remote get-url ${PUSH_REMOTE}|sed 's,git@github.com:,https://github.com/,')
 EOF
 
 tkn -n ${TARGET_NAMESPACE} pipeline logs cli-release-pipeline -f --last

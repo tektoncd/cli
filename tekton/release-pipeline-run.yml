@@ -1,24 +1,28 @@
 ---
-apiVersion: tekton.dev/v1alpha1
-kind: PipelineResource
+apiVersion: v1
+kind: PersistentVolumeClaim
 metadata:
-  name: tektoncd-cli-git
+  name: tektoncd-cli-pvc
 spec:
-  type: git
-  params:
-  - name: revision
-    value: v0.2.2
-  - name: url
-    value: https://github.com/tektoncd/cli
+  accessModes:
+    - ReadWriteOnce
+  resources:
+    requests:
+      storage: 500Mi
 ---
-apiVersion: tekton.dev/v1alpha1
+apiVersion: tekton.dev/v1beta1
 kind: PipelineRun
 metadata:
-  generateName: cli-release-pipeline-run
+  generateName: cli-release-pipeline-run-
 spec:
   pipelineRef:
     name: cli-release-pipeline
-  resources:
-    - name: source
-      resourceRef:
-        name: tektoncd-cli-git
+  workspaces:
+    - name: shared-workspace
+      persistentvolumeclaim:
+        claimName: tektoncd-cli-pvc
+  params:
+    - name: revision
+      value: v0.2.2
+    - name: url
+      value: https://github.com/tektoncd/cli
