@@ -905,10 +905,10 @@ func TestLogs_nologs(t *testing.T) {
 	}
 	prlo := logOptsv1aplha1(prName, ns, cs, dc, fake.Streamer([]fake.Log{}), false, false)
 	output, err := fetchLogs(prlo)
-	if err == nil {
-		t.Errorf("Unexpected output: %v", output)
+	if err != nil {
+		t.Errorf("Unexpected error: %v", err)
 	}
-	test.AssertOutput(t, "pipelinerun has not started yet", err.Error())
+	test.AssertOutput(t, "PipelineRun is still running: Running\n", output)
 }
 
 func TestLog_run_failed_with_and_without_follow(t *testing.T) {
@@ -1027,7 +1027,7 @@ func TestLog_pipelinerun_still_running(t *testing.T) {
 				tb.PipelineRunStatusCondition(apis.Condition{
 					Type:    apis.ConditionSucceeded,
 					Status:  corev1.ConditionTrue,
-					Message: "Running",
+					Message: "Completed",
 				}),
 			),
 		),
@@ -1948,10 +1948,10 @@ func TestLogs_nologs_v1beta1(t *testing.T) {
 	}
 	prlo := logOptsv1beta1(prName, ns, cs, dc, fake.Streamer([]fake.Log{}), false, false)
 	output, err := fetchLogs(prlo)
-	if err == nil {
-		t.Errorf("Unexpected output: %v", output)
+	if err != nil {
+		t.Errorf("Unexpected error: %v", err)
 	}
-	test.AssertOutput(t, "pipelinerun has not started yet", err.Error())
+	test.AssertOutput(t, "PipelineRun is still running: Running\n", output)
 }
 
 func TestLog_run_failed_with_and_without_follow_v1beta1(t *testing.T) {
