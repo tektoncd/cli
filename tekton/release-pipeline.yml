@@ -4,25 +4,44 @@ kind: Pipeline
 metadata:
   name: cli-release-pipeline
 spec:
+  workspaces:
+    - name: shared-workspace
   params:
-  - name: package
-    description: package to release
-    default: github.com/tektoncd/cli
-  - name: github-token-secret
-    description: name of the secret holding the github-token
-    default: bot-token-github
-  - name: github-token-secret-key
-    description: name of the key for the secret holding the github-token
-    default: bot-token
-  resources:
-  - name: source
-    type: git
+    - name: url
+      description: git url to clone
+    - name: revision
+      description: revision branch to checkout
+    - name: package
+      description: package to release
+      default: github.com/tektoncd/cli
+    - name: github-token-secret
+      description: name of the secret holding the github-token
+      default: bot-token-github
+    - name: github-token-secret-key
+      description: name of the key for the secret holding the github-token
+      default: bot-token
   tasks:
+    - name: fetch-repository
+      taskRef:
+        name: git-clone
+      workspaces:
+        - name: output
+          workspace: shared-workspace
+      params:
+        - name: url
+          value: $(params.url)
+        - name: revision
+          value: $(params.revision)
+        - name: deleteExisting
+          value: "true"
     - name: get-versions
-      resources:
-        inputs:
+      runAfter: [fetch-repository]
+      workspaces:
         - name: source
-          resource: source
+          workspace: shared-workspace
+      params:
+        - name: package
+          value: $(params.package)
       taskRef:
         name: get-versions
     - name: lint
@@ -30,16 +49,15 @@ spec:
       taskRef:
         name: golangci-lint
       params:
-      - name: package
-        value: $(params.package)
-      - name: flags
-        value: "-v --timeout 10m"
-      - name: version
-        value: v1.24.0
-      resources:
-        inputs:
+        - name: package
+          value: $(params.package)
+        - name: flags
+          value: "-v --timeout 10m"
+        - name: version
+          value: v1.24.0
+      workspaces:
         - name: source
-          resource: source
+          workspace: shared-workspace
     - name: unit-tests
       runAfter: [lint]
       taskRef:
@@ -51,10 +69,9 @@ spec:
           value: 1.13.8
         - name: flags
           value: -v -mod=vendor
-      resources:
-        inputs:
-          - name: source
-            resource: source
+      workspaces:
+        - name: source
+          workspace: shared-workspace
     - name: build
       runAfter: [lint]
       taskRef:
@@ -66,43 +83,42 @@ spec:
           value: 1.13.8
         - name: flags
           value: -v -mod=vendor
-      resources:
-        inputs:
-          - name: source
-            resource: source
+      workspaces:
+        - name: source
+          workspace: shared-workspace
     - name: publish
       runAfter: [build, unit-tests]
       taskRef:
         name: kaniko-build-and-push
       params:
-      - name: DOCKERFILE
-        value: contrib/tkn-image/Dockerfile
-      - name: EXTRA_ARGS
-        value:
-        - --destination=gcr.io/tekton-releases/github.com/tektoncd/cli/cmd/tkn:latest
-        - --destination=gcr.io/tekton-releases/github.com/tektoncd/cli/cmd/tkn:$(tasks.get-versions.results.version)
-        - --destination=gcr.io/tekton-releases/github.com/tektoncd/cli/cmd/tkn:v$(tasks.get-versions.results.major)
-        - --destination=gcr.io/tekton-releases/github.com/tektoncd/cli/cmd/tkn:v$(tasks.get-versions.results.major).$(tasks.get-versions.results.minor)
-        - --destination=gcr.io/tekton-releases/tkn:latest
-        - --destination=gcr.io/tekton-releases/tkn:$(tasks.get-versions.results.version)
-        - --destination=gcr.io/tekton-releases/tkn:v$(tasks.get-versions.results.major)
-        - --destination=gcr.io/tekton-releases/tkn:v$(tasks.get-versions.results.major).$(tasks.get-versions.results.minor)
-      resources:
-        inputs:
+        - name: DOCKERFILE
+          value: contrib/tkn-image/Dockerfile
+        - name: package
+          value: $(params.package)
+        - name: EXTRA_ARGS
+          value:
+            - --destination=gcr.io/tekton-releases/github.com/tektoncd/cli/cmd/tkn:latest
+            - --destination=gcr.io/tekton-releases/github.com/tektoncd/cli/cmd/tkn:$(tasks.get-versions.results.version)
+            - --destination=gcr.io/tekton-releases/github.com/tektoncd/cli/cmd/tkn:v$(tasks.get-versions.results.major)
+            - --destination=gcr.io/tekton-releases/github.com/tektoncd/cli/cmd/tkn:v$(tasks.get-versions.results.major).$(tasks.get-versions.results.minor)
+            - --destination=gcr.io/tekton-releases/tkn:latest
+            - --destination=gcr.io/tekton-releases/tkn:$(tasks.get-versions.results.version)
+            - --destination=gcr.io/tekton-releases/tkn:v$(tasks.get-versions.results.major)
+            - --destination=gcr.io/tekton-releases/tkn:v$(tasks.get-versions.results.major).$(tasks.get-versions.results.minor)
+      workspaces:
         - name: source
-          resource: source
+          workspace: shared-workspace
     - name: release
       runAfter: [build, unit-tests]
       taskRef:
         name: goreleaser
       params:
-      - name: package
-        value: $(params.package)
-      - name: github-token-secret
-        value: $(params.github-token-secret)
-      - name: github-token-secret-key
-        value: $(params.github-token-secret-key)
-      resources:
-        inputs:
+        - name: package
+          value: $(params.package)
+        - name: github-token-secret
+          value: $(params.github-token-secret)
+        - name: github-token-secret-key
+          value: $(params.github-token-secret-key)
+      workspaces:
         - name: source
-          resource: source
+          workspace: shared-workspace

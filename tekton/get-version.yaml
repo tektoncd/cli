@@ -3,25 +3,27 @@ kind: Task
 metadata:
   name: get-versions
 spec:
-  resources:
-    inputs:
+  workspaces:
     - name: source
-      type: git
+      mountPath: /workspace/src/$(params.package)
+  params:
+    - name: package
+      description: base package where the source code lies
   steps:
-  - name: pull
-    image: goreleaser/goreleaser
-    workingDir: /workspace/source
-    script: |
-      git status && git fetch -p --all
-  - name: get-versions
-    # because it has git
-    image: goreleaser/goreleaser
-    workingDir: /workspace/source
-    script: |
-      echo -n $(git tag --points-at HEAD) > /tekton/results/version
-      echo -n $(git tag --points-at HEAD | sed 's/^v\([^\.]*\)\.\([^\.]*\).*/\1/') > /tekton/results/major
-      echo -n $(git tag --points-at HEAD | sed 's/^v\([^\.]*\)\.\([^\.]*\).*/\2/') > /tekton/results/minor
+    - name: pull
+      image: goreleaser/goreleaser
+      workingDir: $(workspaces.source.path)
+      script: |
+        git status && git fetch -p --all
+    - name: get-versions
+      # because it has git
+      image: goreleaser/goreleaser
+      workingDir: $(workspaces.source.path)
+      script: |
+        echo -n $(git tag --points-at HEAD) > /tekton/results/version
+        echo -n $(git tag --points-at HEAD | sed 's/^v\([^\.]*\)\.\([^\.]*\).*/\1/') > /tekton/results/major
+        echo -n $(git tag --points-at HEAD | sed 's/^v\([^\.]*\)\.\([^\.]*\).*/\2/') > /tekton/results/minor
   results:
-  - name: version
-  - name: major
-  - name: minor
+    - name: version
+    - name: major
+    - name: minor
