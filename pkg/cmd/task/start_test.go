@@ -236,6 +236,32 @@ func Test_start_has_task_filename_v1beta1(t *testing.T) {
 	test.AssertOutput(t, expected, got)
 }
 
+func Test_start_task_filename_v1beta1_param_with_invalid_type(t *testing.T) {
+	ns := []*corev1.Namespace{
+		{
+			ObjectMeta: metav1.ObjectMeta{
+				Name: "ns",
+			},
+		},
+	}
+	cs, _ := test.SeedV1beta1TestData(t, pipelinev1beta1test.Data{Namespaces: ns})
+	cs.Pipeline.Resources = cb.APIResourceList(versionB1, []string{"task", "taskrun"})
+	tdc := testDynamic.Options{}
+	dc, err := tdc.Client()
+	if err != nil {
+		t.Errorf("unable to create dynamic client: %v", err)
+	}
+	c := Command(&test.Params{Tekton: cs.Pipeline, Kube: cs.Kube, Dynamic: dc})
+
+	got, err := test.ExecuteCommand(c, "start", "-n", "ns", "--filename=./testdata/task-v1beta1-param-with-invalid-type.yaml", "-i=docker-source=/path", "-o=build-image=image", "-p=pathToDockerFile=path")
+	if err == nil {
+		t.Errorf("expected an error but didn't get one")
+	}
+
+	expected := "Error: params does not have a valid type - 'pathToDockerFile'\n"
+	test.AssertOutput(t, expected, got)
+}
+
 func Test_start_with_filename_invalid_v1beta1(t *testing.T) {
 	ns := []*corev1.Namespace{
 		{
