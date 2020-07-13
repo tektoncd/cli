@@ -761,6 +761,12 @@ func parsePipeline(pipelineLocation string, httpClient http.Client) (*v1beta1.Pi
 	if err := yaml.UnmarshalStrict(b, &pipeline); err != nil {
 		return nil, err
 	}
+
+	err = params.ValidateParamType(pipeline.Spec.Params)
+	if err != nil {
+		return nil, err
+	}
+
 	return &pipeline, nil
 }
 

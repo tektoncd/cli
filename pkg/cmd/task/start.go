@@ -233,6 +233,12 @@ func parseTask(taskLocation string, httpClient http.Client) (*v1beta1.Task, erro
 	if err := yaml.UnmarshalStrict(b, &task); err != nil {
 		return nil, err
 	}
+
+	err = params.ValidateParamType(task.Spec.Params)
+	if err != nil {
+		return nil, err
+	}
+
 	return &task, nil
 }
 
