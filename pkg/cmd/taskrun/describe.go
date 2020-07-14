@@ -84,6 +84,10 @@ or
 					if err != nil {
 						return err
 					}
+					if len(trs) == 0 {
+						fmt.Fprintf(s.Out, "No TaskRuns present in namespace %s\n", opts.Params.Namespace())
+						return nil
+					}
 					opts.TaskrunName = strings.Fields(trs[0])[0]
 				}
 			} else {
