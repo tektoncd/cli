@@ -315,6 +315,36 @@ func TestPipelineRunDescribe_failed(t *testing.T) {
 	golden.Assert(t, actual, fmt.Sprintf("%s.golden", t.Name()))
 }
 
+func TestPipelineRunDescribe_last_no_PipelineRun_present(t *testing.T) {
+	pipelineRuns := []*v1beta1.PipelineRun{}
+	namespaces := []*corev1.Namespace{
+		{
+			ObjectMeta: metav1.ObjectMeta{
+				Name: "ns",
+			},
+		},
+	}
+
+	version := "v1beta1"
+	tdc := testDynamic.Options{}
+	dynamic, err := tdc.Client()
+	if err != nil {
+		t.Errorf("unable to create dynamic client: %v", err)
+	}
+	cs, _ := test.SeedV1beta1TestData(t, pipelinev1beta1test.Data{Namespaces: namespaces, PipelineRuns: pipelineRuns})
+
+	cs.Pipeline.Resources = cb.APIResourceList(version, []string{"pipelinerun"})
+	p := &test.Params{Tekton: cs.Pipeline, Kube: cs.Kube, Dynamic: dynamic}
+
+	pipelinerun := Command(p)
+	out, err := test.ExecuteCommand(pipelinerun, "desc", "--last", "-n", "ns")
+	if err != nil {
+		t.Errorf("Unexpected error: %v", err)
+	}
+	expected := "No PipelineRuns present in namespace ns\n"
+	test.AssertOutput(t, expected, out)
+}
+
 func TestPipelineRunDescribe_failed_withoutTRCondition(t *testing.T) {
 	clock := clockwork.NewFakeClock()
 

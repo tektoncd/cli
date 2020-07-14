@@ -84,6 +84,10 @@ or
 					if err != nil {
 						return err
 					}
+					if len(prs) == 0 {
+						fmt.Fprintf(s.Out, "No PipelineRuns present in namespace %s\n", opts.Params.Namespace())
+						return nil
+					}
 					opts.PipelineRunName = strings.Fields(prs[0])[0]
 				}
 			} else {

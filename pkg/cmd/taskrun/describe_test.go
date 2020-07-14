@@ -319,6 +319,40 @@ func TestTaskRunDescribe_no_taskref(t *testing.T) {
 	golden.Assert(t, actual, fmt.Sprintf("%s.golden", t.Name()))
 }
 
+func TestTaskRunDescribe_last_no_taskrun_present(t *testing.T) {
+	trs := []*v1beta1.TaskRun{}
+	cs, _ := test.SeedV1beta1TestData(t, pipelinev1beta1test.Data{
+		TaskRuns: trs,
+		Namespaces: []*corev1.Namespace{
+			{
+				ObjectMeta: metav1.ObjectMeta{
+					Name: "ns",
+				},
+			},
+		},
+	})
+
+	version := "v1beta1"
+	tdc := testDynamic.Options{}
+	dynamic, err := tdc.Client()
+	if err != nil {
+		t.Errorf("unable to create dynamic client: %v", err)
+	}
+	cs.Pipeline.Resources = cb.APIResourceList(version, []string{"taskrun"})
+	if err != nil {
+		fmt.Println(err)
+	}
+	p := &test.Params{Tekton: cs.Pipeline, Kube: cs.Kube, Dynamic: dynamic}
+
+	taskrun := Command(p)
+	out, err := test.ExecuteCommand(taskrun, "desc", "--last", "-n", "ns")
+	if err != nil {
+		t.Errorf("Unexpected error: %v", err)
+	}
+	expected := "No TaskRuns present in namespace ns\n"
+	test.AssertOutput(t, expected, out)
+}
+
 func TestTaskRunDescribe_no_resourceref(t *testing.T) {
 	clock := clockwork.NewFakeClock()
 
