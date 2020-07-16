@@ -19,29 +19,29 @@ import (
 	"strings"
 	"testing"
 
-	"github.com/tektoncd/cli/test/e2e"
-	"gotest.tools/v3/icmd"
+	"github.com/tektoncd/cli/test/cli"
+	"github.com/tektoncd/cli/test/framework"
+	"github.com/tektoncd/cli/test/helper"
+	"gotest.tools/v3/assert"
 	knativetest "knative.dev/pkg/test"
 )
 
 func TestPipelineRunLogE2E(t *testing.T) {
 	t.Parallel()
-	c, namespace := e2e.Setup(t)
-	knativetest.CleanupOnInterrupt(func() { e2e.TearDown(t, c, namespace) }, t.Logf)
-	defer e2e.TearDown(t, c, namespace)
+	c, namespace := framework.Setup(t)
+	knativetest.CleanupOnInterrupt(func() { framework.TearDown(t, c, namespace) }, t.Logf)
+	defer framework.TearDown(t, c, namespace)
 
-	kubectl := e2e.NewKubectl(namespace)
-	tkn, err := e2e.NewTknRunner(namespace)
-	if err != nil {
-		t.Fatalf("Error creating tknRunner %+v", err)
-	}
+	kubectl := cli.NewKubectl(namespace)
+	tkn, err := cli.NewTknRunner(namespace)
+	assert.NilError(t, err)
 
 	if tkn.CheckVersion("Pipeline", "v0.10.2") {
 		t.Skip("Skip test as pipeline v0.10.2 doesn't support finally")
 	}
 
 	t.Logf("Creating pipelinerun in namespace: %s", namespace)
-	e2e.Assert(t, kubectl.Create(e2e.ResourcePath("pipelinerun-with-finally.yaml")), icmd.Success)
+	kubectl.MustSucceed(t, "create", "-f", helper.GetResourcePath("pipelinerun-with-finally.yaml"))
 
 	t.Run("Pipelinerun logs with finally  "+namespace, func(t *testing.T) {
 		res := tkn.Run("pipelinerun", "logs", "exit-handler", "-f")
@@ -50,6 +50,6 @@ func TestPipelineRunLogE2E(t *testing.T) {
 			"[echo-on-exit : main] finally\n",
 		}
 		expected := strings.Join(s, "\n") + "\n"
-		e2e.AssertOutput(t, expected, res.Stdout())
+		helper.AssertOutput(t, expected, res.Stdout())
 	})
 }

@@ -12,7 +12,7 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-package e2e
+package framework
 
 import (
 	"flag"
@@ -26,8 +26,6 @@ import (
 
 	knativetest "knative.dev/pkg/test"
 
-	"knative.dev/pkg/test/logging"
-
 	"github.com/tektoncd/pipeline/pkg/names"
 	"golang.org/x/xerrors"
 	"gopkg.in/yaml.v2"
@@ -35,6 +33,7 @@ import (
 	"k8s.io/apimachinery/pkg/api/errors"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/util/wait"
+	"knative.dev/pkg/test/logging"
 
 	// Mysteriously by k8s libs, or they fail to create `KubeClient`s from config. Apparently just importing it is enough. @_@ side effects @_@. https://github.com/kubernetes/client-go/issues/242
 	_ "k8s.io/client-go/plugin/pkg/client/auth/gcp"
@@ -45,7 +44,7 @@ import (
 var initMetrics sync.Once
 
 const (
-	interval   = 1 * time.Second
+	Interval   = 1 * time.Second
 	Apitimeout = 10 * time.Minute
 )
 
@@ -163,7 +162,7 @@ func VerifyServiceAccountExistence(namespace string, kubeClient *knativetest.Kub
 	defaultSA := "default"
 	log.Printf("Verify SA %q is created in namespace %q", defaultSA, namespace)
 
-	if err := wait.PollImmediate(interval, Apitimeout, func() (bool, error) {
+	if err := wait.PollImmediate(Interval, Apitimeout, func() (bool, error) {
 		_, err := kubeClient.Kube.CoreV1().ServiceAccounts(namespace).Get(defaultSA, metav1.GetOptions{})
 		if err != nil && errors.IsNotFound(err) {
 			return false, nil
@@ -178,7 +177,7 @@ func VerifyServiceAccountExistenceForSecrets(namespace string, kubeClient *knati
 	defaultSA := sa
 	log.Printf("Verify SA %q is created in namespace %q", defaultSA, namespace)
 
-	if err := wait.PollImmediate(interval, Apitimeout, func() (bool, error) {
+	if err := wait.PollImmediate(Interval, Apitimeout, func() (bool, error) {
 		_, err := kubeClient.Kube.CoreV1().ServiceAccounts(namespace).Get(defaultSA, metav1.GetOptions{})
 		if err != nil && errors.IsNotFound(err) {
 			return false, nil
