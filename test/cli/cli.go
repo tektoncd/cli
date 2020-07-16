@@ -12,10 +12,11 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-package e2e
+package cli
 
 import (
 	"bytes"
+	"fmt"
 	"os"
 	"os/exec"
 	"strings"
@@ -58,10 +59,16 @@ func (e TknRunner) TknNamespace() string {
 
 // NewTknRunner returns details about the tkn on particular namespace
 func NewTknRunner(namespace string) (TknRunner, error) {
+	if os.Getenv("TEST_CLIENT_BINARY") != "" {
+		return TknRunner{
+			path:      os.Getenv("TEST_CLIENT_BINARY"),
+			namespace: namespace,
+		}, nil
+	}
 	return TknRunner{
 		path:      os.Getenv("TEST_CLIENT_BINARY"),
 		namespace: namespace,
-	}, nil
+	}, fmt.Errorf("Error: couldn't Create tknRunner, please do check tkn binary path: (%+v)", os.Getenv("TEST_CLIENT_BINARY"))
 }
 
 // Run will help you execute tkn command on a specific namespace, with a timeout
@@ -71,6 +78,18 @@ func (e TknRunner) Run(args ...string) *icmd.Result {
 	}
 	cmd := append([]string{e.path}, args...)
 	return icmd.RunCmd(icmd.Cmd{Command: cmd, Timeout: timeout})
+}
+
+// MustSucceed asserts that the command ran with 0 exit code
+func (e TknRunner) MustSucceed(t *testing.T, args ...string) *icmd.Result {
+	return e.Assert(t, icmd.Success, args...)
+}
+
+// Assert runs a command and verifies exit code (0)
+func (e TknRunner) Assert(t *testing.T, exp icmd.Expected, args ...string) *icmd.Result {
+	res := e.Run(args...)
+	res.Assert(t, exp)
+	return res
 }
 
 // RunNoNamespace will help you execute tkn command without namespace, with a timeout
@@ -141,17 +160,6 @@ func NewKubectl(namespace string) Kubectl {
 	}
 }
 
-//Create will help you to create a resource in any namespace
-func (k Kubectl) Create(args ...string) *icmd.Result {
-	if k.namespace != "" {
-		args = append(args, "--namespace", k.namespace)
-	}
-	cmd := append([]string{"kubectl", "create", "-f"}, args...)
-	res := icmd.RunCmd(icmd.Cmd{Command: cmd, Timeout: timeout})
-	time.Sleep(1 * time.Second)
-	return res
-}
-
 // Run will help you execute kubectl command on a specific namespace, with a timeout
 func (k Kubectl) Run(args ...string) *icmd.Result {
 	if k.namespace != "" {
@@ -167,50 +175,17 @@ func (k Kubectl) RunNoNamespace(args ...string) *icmd.Result {
 	return icmd.RunCmd(icmd.Cmd{Command: cmd, Timeout: timeout})
 }
 
-// Assert verifies result against expected(exit code)
-func Assert(t *testing.T, result *icmd.Result, expected icmd.Expected) {
-	result.Assert(t, expected)
+// MustSucceed asserts that the command ran with 0 exit code
+func (k Kubectl) MustSucceed(t *testing.T, args ...string) *icmd.Result {
+	return k.Assert(t, icmd.Success, args...)
 }
 
-// RunInteractiveTests helps to run interactive tests.
-func (e TknRunner) RunInteractiveTestsDummy(t *testing.T, ops *Prompt) *expect.Console {
-	t.Helper()
-
-	// Multiplex output to a buffer as well for the raw bytes.
-	buf := new(bytes.Buffer)
-	c, state, err := vt10x.NewVT10XConsole(goexpect.WithStdout(buf))
-	assert.NilError(t, err)
-	defer c.Close()
-
-	if e.namespace != "" {
-		ops.CmdArgs = append(ops.CmdArgs, "--namespace", e.namespace)
-	}
-
-	cmd := exec.Command(e.path, ops.CmdArgs[0:len(ops.CmdArgs)]...) //nolint:gosec
-	cmd.Stdin = c.Tty()
-	cmd.Stdout = c.Tty()
-	cmd.Stderr = c.Tty()
-
-	assert.NilError(t, cmd.Start())
-
-	donec := make(chan struct{})
-	go func() {
-		defer close(donec)
-		if err := ops.Procedure(c); err != nil {
-			t.Logf("procedure failed: %v", err)
-		}
-	}()
-
-	// Close the slave end of the pty, and read the remaining bytes from the master end.
-	c.Tty().Close()
-	<-donec
-
-	// Dump the terminal's screen.
-	t.Logf("\n%s", goexpect.StripTrailingEmptyLines(state.String()))
-
-	assert.NilError(t, cmd.Wait())
-
-	return c
+// Assert runs a command and verifies against expected
+func (k Kubectl) Assert(t *testing.T, exp icmd.Expected, args ...string) *icmd.Result {
+	res := k.Run(args...)
+	res.Assert(t, exp)
+	time.Sleep(1 * time.Second)
+	return res
 }
 
 // TODO: Re-write this to just get the version of Tekton components through tkn version

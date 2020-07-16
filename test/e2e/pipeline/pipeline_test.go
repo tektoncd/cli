@@ -17,7 +17,6 @@ package pipeline
 
 import (
 	"encoding/json"
-	"log"
 	"strconv"
 	"strings"
 	"testing"
@@ -25,7 +24,11 @@ import (
 
 	"github.com/AlecAivazis/survey/v2/terminal"
 	"github.com/Netflix/go-expect"
-	"github.com/tektoncd/cli/test/e2e"
+	"github.com/tektoncd/cli/test/builder"
+	"github.com/tektoncd/cli/test/cli"
+	"github.com/tektoncd/cli/test/framework"
+	"github.com/tektoncd/cli/test/helper"
+	"github.com/tektoncd/cli/test/wait"
 	"github.com/tektoncd/pipeline/pkg/apis/pipeline/v1alpha1"
 	tb "github.com/tektoncd/pipeline/test/builder"
 	"gotest.tools/v3/assert"
@@ -44,29 +47,27 @@ const (
 
 func TestPipelinesE2E(t *testing.T) {
 	t.Parallel()
-	c, namespace := e2e.Setup(t)
-	knativetest.CleanupOnInterrupt(func() { e2e.TearDown(t, c, namespace) }, t.Logf)
-	defer e2e.TearDown(t, c, namespace)
+	c, namespace := framework.Setup(t)
+	knativetest.CleanupOnInterrupt(func() { framework.TearDown(t, c, namespace) }, t.Logf)
+	defer framework.TearDown(t, c, namespace)
 
-	kubectl := e2e.NewKubectl(namespace)
-	tkn, err := e2e.NewTknRunner(namespace)
-	if err != nil {
-		t.Fatalf("Error creating tknRunner %+v", err)
-	}
+	kubectl := cli.NewKubectl(namespace)
+	tkn, err := cli.NewTknRunner(namespace)
+	assert.NilError(t, err)
 
 	t.Logf("Creating pipeline in namespace: %s", namespace)
-	e2e.Assert(t, kubectl.Create(e2e.ResourcePath("pipeline.yaml")), icmd.Success)
+	kubectl.MustSucceed(t, "create", "-f", helper.GetResourcePath("pipeline.yaml"))
 
 	t.Logf("Creating git pipeline resource in namespace: %s", namespace)
-	e2e.Assert(t, kubectl.Create(e2e.ResourcePath("git-resource.yaml")), icmd.Success)
+	kubectl.MustSucceed(t, "create", "-f", helper.GetResourcePath("git-resource.yaml"))
 
 	t.Run("Get list of Tasks from namespace  "+namespace, func(t *testing.T) {
 		res := tkn.Run("task", "list")
-		expected := e2e.ListAllTasksOutput(t, c, map[int]interface{}{
-			0: &e2e.TaskData{
+		expected := builder.ListAllTasksOutput(t, c, map[int]interface{}{
+			0: &builder.TaskData{
 				Name: TaskName2,
 			},
-			1: &e2e.TaskData{
+			1: &builder.TaskData{
 				Name: TaskName1,
 			},
 		})
@@ -79,9 +80,8 @@ func TestPipelinesE2E(t *testing.T) {
 
 	t.Run("Get list of Pipelines from namespace  "+namespace, func(t *testing.T) {
 		res := tkn.Run("pipelines", "list")
-
-		expected := e2e.ListAllPipelinesOutput(t, c, map[int]interface{}{
-			0: &e2e.PipelinesListData{
+		expected := builder.ListAllPipelinesOutput(t, c, map[int]interface{}{
+			0: &builder.PipelinesListData{
 				Name:   tePipelineName,
 				Status: "---",
 			},
@@ -95,7 +95,6 @@ func TestPipelinesE2E(t *testing.T) {
 
 	t.Run("Get list of pipelines from other namespace [default] should throw Error", func(t *testing.T) {
 		res := tkn.RunNoNamespace("pipelines", "list", "-n", "default")
-
 		res.Assert(t, icmd.Expected{
 			ExitCode: 0,
 			Out:      "No Pipelines found\n",
@@ -104,13 +103,11 @@ func TestPipelinesE2E(t *testing.T) {
 	})
 
 	t.Run("Validate pipelines format for -o (output) flag, as Json Path", func(t *testing.T) {
-		res := tkn.Run("pipelines", "list",
-			`-o=jsonpath={range.items[*]}{.metadata.name}{"\n"}{end}`)
-
-		expected := e2e.ListResourceNamesForJSONPath(
-			e2e.GetPipelineListWithTestData(t, c,
+		res := tkn.Run("pipelines", "list", `-o=jsonpath={range.items[*]}{.metadata.name}{"\n"}{end}`)
+		expected := builder.ListResourceNamesForJSONPath(
+			builder.GetPipelineListWithTestData(t, c,
 				map[int]interface{}{
-					0: &e2e.PipelinesListData{
+					0: &builder.PipelinesListData{
 						Name:   tePipelineName,
 						Status: "---",
 					},
@@ -123,35 +120,26 @@ func TestPipelinesE2E(t *testing.T) {
 	})
 
 	t.Run("Pipeline json Schema validation with -o (output) flag, as Json ", func(t *testing.T) {
-		res := tkn.Run("pipelines", "list", "-o", "json")
-
-		res.Assert(t, icmd.Expected{
-			ExitCode: 0,
-			Err:      icmd.None,
-		})
-		err := json.Unmarshal([]byte(res.Stdout()), &v1alpha1.PipelineList{})
-		if err != nil {
-			log.Fatalf("error: %v", err)
-		}
+		res := tkn.MustSucceed(t, "pipelines", "list", "-o", "json")
+		assert.NilError(t, json.Unmarshal([]byte(res.Stdout()), &v1alpha1.PipelineList{}))
 	})
 
 	t.Run("Validate Pipeline describe command in namespace "+namespace, func(t *testing.T) {
 		res := tkn.Run("pipeline", "describe", tePipelineName)
-
-		expected := e2e.GetPipelineDescribeOutput(t, c, tePipelineName,
+		expected := builder.GetPipelineDescribeOutput(t, c, tePipelineName,
 			map[int]interface{}{
-				0: &e2e.PipelineDescribeData{
+				0: &builder.PipelineDescribeData{
 					Name: tePipelineName,
 					Resources: map[string]string{
 						"source-repo": "git",
 					},
 					Task: map[int]interface{}{
-						0: &e2e.TaskRefData{
+						0: &builder.TaskRefData{
 							TaskName: "first-create-file",
 							TaskRef:  TaskName1,
 							RunAfter: nil,
 						},
-						1: &e2e.TaskRefData{
+						1: &builder.TaskRefData{
 							TaskName: "then-check",
 							TaskRef:  TaskName2,
 							RunAfter: nil,
@@ -171,21 +159,17 @@ func TestPipelinesE2E(t *testing.T) {
 	var pipelineGeneratedName string
 
 	t.Run("Start PipelineRun using pipeline start command with SA as 'pipeline' ", func(t *testing.T) {
-		res := tkn.Run("pipeline", "start", tePipelineName,
+		res := tkn.MustSucceed(t, "pipeline", "start", tePipelineName,
 			"-r=source-repo="+tePipelineGitResourceName,
 			"--showlog")
 
 		time.Sleep(1 * time.Second)
 
-		pipelineGeneratedName = e2e.GetPipelineRunListWithName(c, tePipelineName).Items[0].Name
+		pipelineGeneratedName = builder.GetPipelineRunListWithName(c, tePipelineName).Items[0].Name
 		vars["Element"] = pipelineGeneratedName
-		expected := e2e.ProcessString(`(PipelineRun started: {{.Element}}
+		expected := helper.ProcessString(`(PipelineRun started: {{.Element}}
 Waiting for logs to be available...
 .*)`, vars)
-		res.Assert(t, icmd.Expected{
-			ExitCode: 0,
-			Err:      icmd.None,
-		})
 		assert.Assert(t, is.Regexp(expected, res.Stdout()))
 	})
 
@@ -193,13 +177,12 @@ Waiting for logs to be available...
 
 	t.Run("Get list of Taskruns from namespace  "+namespace, func(t *testing.T) {
 		res := tkn.Run("taskrun", "list")
-
-		expected := e2e.ListAllTaskRunsOutput(t, c, false, map[int]interface{}{
-			0: &e2e.TaskRunData{
+		expected := builder.ListAllTaskRunsOutput(t, c, false, map[int]interface{}{
+			0: &builder.TaskRunData{
 				Name:   "output-pipeline-run-",
 				Status: "Succeeded",
 			},
-			1: &e2e.TaskRunData{
+			1: &builder.TaskRunData{
 				Name:   "output-pipeline-run-",
 				Status: "Succeeded",
 			},
@@ -213,20 +196,20 @@ Waiting for logs to be available...
 
 	t.Run("Validate Pipeline describe command in namespace "+namespace+" after PipelineRun completed successfully", func(t *testing.T) {
 		res := tkn.Run("pipeline", "describe", tePipelineName)
-		expected := e2e.GetPipelineDescribeOutput(t, c, tePipelineName,
+		expected := builder.GetPipelineDescribeOutput(t, c, tePipelineName,
 			map[int]interface{}{
-				0: &e2e.PipelineDescribeData{
+				0: &builder.PipelineDescribeData{
 					Name: tePipelineName,
 					Resources: map[string]string{
 						"source-repo": "git",
 					},
 					Task: map[int]interface{}{
-						0: &e2e.TaskRefData{
+						0: &builder.TaskRefData{
 							TaskName: "first-create-file",
 							TaskRef:  TaskName1,
 							RunAfter: nil,
 						},
-						1: &e2e.TaskRefData{
+						1: &builder.TaskRefData{
 							TaskName: "then-check",
 							TaskRef:  TaskName2,
 							RunAfter: nil,
@@ -245,7 +228,7 @@ Waiting for logs to be available...
 	})
 
 	t.Run("Validate interactive pipeline logs, with  follow mode (-f) ", func(t *testing.T) {
-		tkn.RunInteractiveTests(t, &e2e.Prompt{
+		tkn.RunInteractiveTests(t, &cli.Prompt{
 			CmdArgs: []string{"pipeline", "logs", "-f"},
 			Procedure: func(c *expect.Console) error {
 				if _, err := c.ExpectString("Select pipeline:"); err != nil {
@@ -270,7 +253,7 @@ Waiting for logs to be available...
 	})
 
 	t.Logf("Creating Pipeline volume-from-template in namespace: %s", namespace)
-	e2e.Assert(t, kubectl.Create(e2e.ResourcePath("pipeline-with-workspace.yaml")), icmd.Success)
+	kubectl.MustSucceed(t, "create", "-f", helper.GetResourcePath("pipeline-with-workspace.yaml"))
 
 	t.Run("Start PipelineRun with --workspace and volumeClaimTemplate", func(t *testing.T) {
 		if tkn.CheckVersion("Pipeline", "v0.10.2") {
@@ -278,14 +261,14 @@ Waiting for logs to be available...
 		}
 
 		res := tkn.Run("pipeline", "start", "pipeline-with-workspace",
-			"--workspace=name=ws,volumeClaimTemplateFile="+e2e.ResourcePath("pvc.yaml"),
+			"--workspace=name=ws,volumeClaimTemplateFile="+helper.GetResourcePath("pvc.yaml"),
 			"--showlog")
 
 		time.Sleep(1 * time.Second)
 
-		pipelineRunGeneratedName := e2e.GetPipelineRunListWithName(c, "pipeline-with-workspace").Items[0].Name
+		pipelineRunGeneratedName := builder.GetPipelineRunListWithName(c, "pipeline-with-workspace").Items[0].Name
 		vars["Element"] = pipelineRunGeneratedName
-		expected := e2e.ProcessString(`(PipelineRun started: {{.Element}}
+		expected := helper.ProcessString(`(PipelineRun started: {{.Element}}
 Waiting for logs to be available...
 .*)`, vars)
 		res.Assert(t, icmd.Expected{
@@ -295,7 +278,7 @@ Waiting for logs to be available...
 		assert.Assert(t, is.Regexp(expected, res.Stdout()))
 
 		timeout := 5 * time.Minute
-		if err := e2e.WaitForPipelineRunState(c, pipelineRunGeneratedName, timeout, e2e.PipelineRunSucceed(pipelineRunGeneratedName), "PipelineRunSucceeded"); err != nil {
+		if err := wait.ForPipelineRunState(c, pipelineRunGeneratedName, timeout, wait.PipelineRunSucceed(pipelineRunGeneratedName), "PipelineRunSucceeded"); err != nil {
 			t.Errorf("Error waiting for PipelineRun to Succeed: %s", err)
 		}
 	})
@@ -303,18 +286,16 @@ Waiting for logs to be available...
 
 func TestPipelinesNegativeE2E(t *testing.T) {
 	t.Parallel()
-	c, namespace := e2e.Setup(t)
-	knativetest.CleanupOnInterrupt(func() { e2e.TearDown(t, c, namespace) }, t.Logf)
-	defer e2e.TearDown(t, c, namespace)
+	c, namespace := framework.Setup(t)
+	knativetest.CleanupOnInterrupt(func() { framework.TearDown(t, c, namespace) }, t.Logf)
+	defer framework.TearDown(t, c, namespace)
 
-	kubectl := e2e.NewKubectl(namespace)
-	tkn, err := e2e.NewTknRunner(namespace)
-	if err != nil {
-		t.Fatalf("Error creating tknRunner %+v", err)
-	}
+	kubectl := cli.NewKubectl(namespace)
+	tkn, err := cli.NewTknRunner(namespace)
+	assert.NilError(t, err)
 
 	t.Logf("Creating pipeline in namespace: %s", namespace)
-	e2e.Assert(t, kubectl.Create(e2e.ResourcePath("pipeline.yaml")), icmd.Success)
+	kubectl.MustSucceed(t, "create", "-f", helper.GetResourcePath("pipeline.yaml"))
 
 	t.Logf("Creating (Fault) Git PipelineResource %s", tePipelineFaultGitResourceName)
 	if _, err := c.PipelineResourceClient.Create(getFaultGitResource(tePipelineFaultGitResourceName, namespace)); err != nil {
@@ -323,8 +304,8 @@ func TestPipelinesNegativeE2E(t *testing.T) {
 
 	t.Run("Get list of Pipelines from namespace  "+namespace, func(t *testing.T) {
 		res := tkn.Run("pipelines", "list")
-		expected := e2e.ListAllPipelinesOutput(t, c, map[int]interface{}{
-			0: &e2e.PipelinesListData{
+		expected := builder.ListAllPipelinesOutput(t, c, map[int]interface{}{
+			0: &builder.PipelinesListData{
 				Name:   tePipelineName,
 				Status: "---",
 			},
@@ -346,13 +327,11 @@ func TestPipelinesNegativeE2E(t *testing.T) {
 	})
 
 	t.Run("Validate pipelines format for -o (output) flag, as Json Path", func(t *testing.T) {
-		res := tkn.Run("pipelines", "list",
-			`-o=jsonpath={range.items[*]}{.metadata.name}{"\n"}{end}`)
-
-		expected := e2e.ListResourceNamesForJSONPath(
-			e2e.GetPipelineListWithTestData(t, c,
+		res := tkn.Run("pipelines", "list", `-o=jsonpath={range.items[*]}{.metadata.name}{"\n"}{end}`)
+		expected := builder.ListResourceNamesForJSONPath(
+			builder.GetPipelineListWithTestData(t, c,
 				map[int]interface{}{
-					0: &e2e.PipelinesListData{
+					0: &builder.PipelinesListData{
 						Name:   tePipelineName,
 						Status: "---",
 					},
@@ -365,34 +344,26 @@ func TestPipelinesNegativeE2E(t *testing.T) {
 	})
 
 	t.Run("Pipeline json Schema validation with -o (output) flag, as Json ", func(t *testing.T) {
-		res := tkn.Run("pipelines", "list", "-o", "json")
-		res.Assert(t, icmd.Expected{
-			ExitCode: 0,
-			Err:      icmd.None,
-		})
-		err := json.Unmarshal([]byte(res.Stdout()), &v1alpha1.PipelineList{})
-		if err != nil {
-			log.Fatalf("error: %v", err)
-		}
+		res := tkn.MustSucceed(t, "pipelines", "list", "-o", "json")
+		assert.NilError(t, json.Unmarshal([]byte(res.Stdout()), &v1alpha1.PipelineList{}))
 	})
 
 	t.Run("Validate Pipeline describe command in namespace "+namespace, func(t *testing.T) {
 		res := tkn.Run("pipeline", "describe", tePipelineName)
-
-		expected := e2e.GetPipelineDescribeOutput(t, c, tePipelineName,
+		expected := builder.GetPipelineDescribeOutput(t, c, tePipelineName,
 			map[int]interface{}{
-				0: &e2e.PipelineDescribeData{
+				0: &builder.PipelineDescribeData{
 					Name: tePipelineName,
 					Resources: map[string]string{
 						"source-repo": "git",
 					},
 					Task: map[int]interface{}{
-						0: &e2e.TaskRefData{
+						0: &builder.TaskRefData{
 							TaskName: "first-create-file",
 							TaskRef:  TaskName1,
 							RunAfter: nil,
 						},
-						1: &e2e.TaskRefData{
+						1: &builder.TaskRefData{
 							TaskName: "then-check",
 							TaskRef:  TaskName2,
 							RunAfter: nil,
@@ -412,19 +383,16 @@ func TestPipelinesNegativeE2E(t *testing.T) {
 	var pipelineGeneratedName string
 
 	t.Run("Start Pipeline Run using pipeline start command with SA as 'pipelines' ", func(t *testing.T) {
-		res := tkn.Run("pipeline", "start", tePipelineName,
+		res := tkn.MustSucceed(t, "pipeline", "start", tePipelineName,
 			"-r=source-repo="+tePipelineFaultGitResourceName,
 			"--showlog",
 			"true")
 
-		pipelineGeneratedName = e2e.GetPipelineRunListWithName(c, tePipelineName).Items[0].Name
+		pipelineGeneratedName = builder.GetPipelineRunListWithName(c, tePipelineName).Items[0].Name
 		vars["Element"] = pipelineGeneratedName
-		expected := e2e.ProcessString(`(PipelineRun started: {{.Element}}
+		expected := helper.ProcessString(`(PipelineRun started: {{.Element}}
 Waiting for logs to be available...
 .*)`, vars)
-		res.Assert(t, icmd.Expected{
-			ExitCode: 0,
-		})
 		assert.Assert(t, is.Regexp(expected, res.Stdout()))
 	})
 
@@ -432,21 +400,20 @@ Waiting for logs to be available...
 
 	t.Run("Validate Pipeline describe command in namespace "+namespace+" after PipelineRun completed successfully", func(t *testing.T) {
 		res := tkn.Run("pipeline", "describe", tePipelineName)
-
-		expected := e2e.GetPipelineDescribeOutput(t, c, tePipelineName,
+		expected := builder.GetPipelineDescribeOutput(t, c, tePipelineName,
 			map[int]interface{}{
-				0: &e2e.PipelineDescribeData{
+				0: &builder.PipelineDescribeData{
 					Name: tePipelineName,
 					Resources: map[string]string{
 						"source-repo": "git",
 					},
 					Task: map[int]interface{}{
-						0: &e2e.TaskRefData{
+						0: &builder.TaskRefData{
 							TaskName: "first-create-file",
 							TaskRef:  TaskName1,
 							RunAfter: nil,
 						},
-						1: &e2e.TaskRefData{
+						1: &builder.TaskRefData{
 							TaskName: "then-check",
 							TaskRef:  TaskName2,
 							RunAfter: nil,
@@ -467,14 +434,12 @@ Waiting for logs to be available...
 
 func TestDeletePipelinesE2E(t *testing.T) {
 	t.Parallel()
-	c, namespace := e2e.Setup(t)
-	knativetest.CleanupOnInterrupt(func() { e2e.TearDown(t, c, namespace) }, t.Logf)
-	defer e2e.TearDown(t, c, namespace)
+	c, namespace := framework.Setup(t)
+	knativetest.CleanupOnInterrupt(func() { framework.TearDown(t, c, namespace) }, t.Logf)
+	defer framework.TearDown(t, c, namespace)
 
-	tkn, err := e2e.NewTknRunner(namespace)
-	if err != nil {
-		t.Fatalf("Error creating tknRunner %+v", err)
-	}
+	tkn, err := cli.NewTknRunner(namespace)
+	assert.NilError(t, err)
 
 	t.Logf("Creating Git PipelineResource %s", tePipelineGitResourceName)
 	if _, err := c.PipelineResourceClient.Create(getGitResource(tePipelineGitResourceName, namespace)); err != nil {

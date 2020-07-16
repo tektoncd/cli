@@ -12,7 +12,7 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-package e2e
+package helper
 
 import (
 	"bytes"
@@ -47,7 +47,7 @@ func dir() string {
 	return path.Join(path.Dir(b), "..", "resources")
 }
 
-func ResourcePath(elem ...string) string {
+func GetResourcePath(elem ...string) string {
 	tmp := dir()
 	path := append([]string{tmp}, elem...)
 	return filepath.Join(path...)

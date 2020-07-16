@@ -22,9 +22,10 @@ import (
 
 	"github.com/AlecAivazis/survey/v2/terminal"
 	"github.com/Netflix/go-expect"
-	"github.com/tektoncd/cli/test/e2e"
+	"github.com/tektoncd/cli/test/cli"
+	"github.com/tektoncd/cli/test/framework"
+	"gotest.tools/v3/assert"
 	"gotest.tools/v3/golden"
-	"gotest.tools/v3/icmd"
 	corev1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	knativetest "knative.dev/pkg/test"
@@ -32,17 +33,15 @@ import (
 
 func TestCreateGitResourceInteractively(t *testing.T) {
 	t.Parallel()
-	c, namespace := e2e.Setup(t)
-	knativetest.CleanupOnInterrupt(func() { e2e.TearDown(t, c, namespace) }, t.Logf)
-	defer e2e.TearDown(t, c, namespace)
+	c, namespace := framework.Setup(t)
+	knativetest.CleanupOnInterrupt(func() { framework.TearDown(t, c, namespace) }, t.Logf)
+	defer framework.TearDown(t, c, namespace)
 
-	tkn, err := e2e.NewTknRunner(namespace)
-	if err != nil {
-		t.Fatalf("Error creating tknRunner %+v", err)
-	}
+	tkn, err := cli.NewTknRunner(namespace)
+	assert.NilError(t, err)
 
 	t.Run("Create pipeline resource of git type, interactively in namespace "+namespace, func(t *testing.T) {
-		tkn.RunInteractiveTests(t, &e2e.Prompt{
+		tkn.RunInteractiveTests(t, &cli.Prompt{
 			CmdArgs: []string{"resource", "create"},
 			Procedure: func(c *expect.Console) error {
 				if _, err := c.ExpectString("Enter a name for a pipeline resource :"); err != nil {
@@ -119,25 +118,22 @@ func TestCreateGitResourceInteractively(t *testing.T) {
 	})
 
 	t.Run("list single pipeline resource of git type", func(t *testing.T) {
-		res := tkn.Run("resource", "list")
-		e2e.Assert(t, res, icmd.Success)
+		res := tkn.MustSucceed(t, "resource", "list")
 		golden.Assert(t, res.Stdout(), strings.ReplaceAll(fmt.Sprintf("%s.golden", t.Name()), "/", "-"))
 	})
 }
 
 func TestCreateImageResourceInteractively(t *testing.T) {
 	t.Parallel()
-	c, namespace := e2e.Setup(t)
-	knativetest.CleanupOnInterrupt(func() { e2e.TearDown(t, c, namespace) }, t.Logf)
-	defer e2e.TearDown(t, c, namespace)
+	c, namespace := framework.Setup(t)
+	knativetest.CleanupOnInterrupt(func() { framework.TearDown(t, c, namespace) }, t.Logf)
+	defer framework.TearDown(t, c, namespace)
 
-	tkn, err := e2e.NewTknRunner(namespace)
-	if err != nil {
-		t.Fatalf("Error creating tknRunner %+v", err)
-	}
+	tkn, err := cli.NewTknRunner(namespace)
+	assert.NilError(t, err)
 
 	t.Run("Create pipeline resource of image type, interactively in namespace "+namespace, func(t *testing.T) {
-		tkn.RunInteractiveTests(t, &e2e.Prompt{
+		tkn.RunInteractiveTests(t, &cli.Prompt{
 			CmdArgs: []string{"resource", "create"},
 			Procedure: func(c *expect.Console) error {
 				if _, err := c.ExpectString("Enter a name for a pipeline resource :"); err != nil {
@@ -222,25 +218,22 @@ func TestCreateImageResourceInteractively(t *testing.T) {
 	})
 
 	t.Run("list single pipeline resource of image type", func(t *testing.T) {
-		res := tkn.Run("resource", "list")
-		e2e.Assert(t, res, icmd.Success)
+		res := tkn.MustSucceed(t, "resource", "list")
 		golden.Assert(t, res.Stdout(), strings.ReplaceAll(fmt.Sprintf("%s.golden", t.Name()), "/", "-"))
 	})
 }
 
 func TestCreateCloudEventResourceInteractively(t *testing.T) {
 	t.Parallel()
-	c, namespace := e2e.Setup(t)
-	knativetest.CleanupOnInterrupt(func() { e2e.TearDown(t, c, namespace) }, t.Logf)
-	defer e2e.TearDown(t, c, namespace)
+	c, namespace := framework.Setup(t)
+	knativetest.CleanupOnInterrupt(func() { framework.TearDown(t, c, namespace) }, t.Logf)
+	defer framework.TearDown(t, c, namespace)
 
-	tkn, err := e2e.NewTknRunner(namespace)
-	if err != nil {
-		t.Fatalf("Error creating tknRunner %+v", err)
-	}
+	tkn, err := cli.NewTknRunner(namespace)
+	assert.NilError(t, err)
 
 	t.Run("Create pipeline resource of cloud event type, interactively in namespace "+namespace, func(t *testing.T) {
-		tkn.RunInteractiveTests(t, &e2e.Prompt{
+		tkn.RunInteractiveTests(t, &cli.Prompt{
 			CmdArgs: []string{"resource", "create"},
 			Procedure: func(c *expect.Console) error {
 				if _, err := c.ExpectString("Enter a name for a pipeline resource :"); err != nil {
@@ -289,8 +282,7 @@ func TestCreateCloudEventResourceInteractively(t *testing.T) {
 	})
 
 	t.Run("list single pipeline resource of cloud event type", func(t *testing.T) {
-		res := tkn.Run("resource", "list")
-		e2e.Assert(t, res, icmd.Success)
+		res := tkn.MustSucceed(t, "resource", "list")
 		golden.Assert(t, res.Stdout(), strings.ReplaceAll(fmt.Sprintf("%s.golden", t.Name()), "/", "-"))
 	})
 }
@@ -298,14 +290,12 @@ func TestCreateCloudEventResourceInteractively(t *testing.T) {
 func TestCreateClusterResourceInteractively(t *testing.T) {
 	t.Parallel()
 	secretName := "hw-secret"
-	c, namespace := e2e.Setup(t)
-	knativetest.CleanupOnInterrupt(func() { e2e.TearDown(t, c, namespace) }, t.Logf)
-	defer e2e.TearDown(t, c, namespace)
+	c, namespace := framework.Setup(t)
+	knativetest.CleanupOnInterrupt(func() { framework.TearDown(t, c, namespace) }, t.Logf)
+	defer framework.TearDown(t, c, namespace)
 
-	tkn, err := e2e.NewTknRunner(namespace)
-	if err != nil {
-		t.Fatalf("Error creating tknRunner %+v", err)
-	}
+	tkn, err := cli.NewTknRunner(namespace)
+	assert.NilError(t, err)
 
 	t.Logf("Creating secret %s", secretName)
 	if _, err := c.KubeClient.Kube.CoreV1().Secrets(namespace).Create(getClusterResourceTaskSecret(namespace, secretName)); err != nil {
@@ -313,7 +303,7 @@ func TestCreateClusterResourceInteractively(t *testing.T) {
 	}
 
 	t.Run("Create pipeline resource of cluster type, interactively in namespace "+namespace, func(t *testing.T) {
-		tkn.RunInteractiveTests(t, &e2e.Prompt{
+		tkn.RunInteractiveTests(t, &cli.Prompt{
 			CmdArgs: []string{"resource", "create"},
 			Procedure: func(c *expect.Console) error {
 				if _, err := c.ExpectString("Enter a name for a pipeline resource :"); err != nil {
@@ -458,25 +448,22 @@ func TestCreateClusterResourceInteractively(t *testing.T) {
 	})
 
 	t.Run("list single pipeline resource of cluster type", func(t *testing.T) {
-		res := tkn.Run("resource", "list")
-		e2e.Assert(t, res, icmd.Success)
+		res := tkn.MustSucceed(t, "resource", "list")
 		golden.Assert(t, res.Stdout(), strings.ReplaceAll(fmt.Sprintf("%s.golden", t.Name()), "/", "-"))
 	})
 }
 
 func TestCreatePullRequestResourceInteractively(t *testing.T) {
 	t.Parallel()
-	c, namespace := e2e.Setup(t)
-	knativetest.CleanupOnInterrupt(func() { e2e.TearDown(t, c, namespace) }, t.Logf)
-	defer e2e.TearDown(t, c, namespace)
+	c, namespace := framework.Setup(t)
+	knativetest.CleanupOnInterrupt(func() { framework.TearDown(t, c, namespace) }, t.Logf)
+	defer framework.TearDown(t, c, namespace)
 
-	tkn, err := e2e.NewTknRunner(namespace)
-	if err != nil {
-		t.Fatalf("Error creating tknRunner %+v", err)
-	}
+	tkn, err := cli.NewTknRunner(namespace)
+	assert.NilError(t, err)
 
 	t.Run("Create pipeline resource of Pull Request type, interactively in namespace "+namespace, func(t *testing.T) {
-		tkn.RunInteractiveTests(t, &e2e.Prompt{
+		tkn.RunInteractiveTests(t, &cli.Prompt{
 			CmdArgs: []string{"resource", "create"},
 			Procedure: func(c *expect.Console) error {
 				if _, err := c.ExpectString("Enter a name for a pipeline resource :"); err != nil {
@@ -573,25 +560,22 @@ func TestCreatePullRequestResourceInteractively(t *testing.T) {
 	})
 
 	t.Run("list single pipeline resource of pullrequest type", func(t *testing.T) {
-		res := tkn.Run("resource", "list")
-		e2e.Assert(t, res, icmd.Success)
+		res := tkn.MustSucceed(t, "resource", "list")
 		golden.Assert(t, res.Stdout(), strings.ReplaceAll(fmt.Sprintf("%s.golden", t.Name()), "/", "-"))
 	})
 }
 
 func TestCreateStroageResourceInteractively(t *testing.T) {
 	t.Parallel()
-	c, namespace := e2e.Setup(t)
-	knativetest.CleanupOnInterrupt(func() { e2e.TearDown(t, c, namespace) }, t.Logf)
-	defer e2e.TearDown(t, c, namespace)
+	c, namespace := framework.Setup(t)
+	knativetest.CleanupOnInterrupt(func() { framework.TearDown(t, c, namespace) }, t.Logf)
+	defer framework.TearDown(t, c, namespace)
 
-	tkn, err := e2e.NewTknRunner(namespace)
-	if err != nil {
-		t.Fatalf("Error creating tknRunner %+v", err)
-	}
+	tkn, err := cli.NewTknRunner(namespace)
+	assert.NilError(t, err)
 
 	t.Run("Create pipeline resource of storage type, interactively in namespace "+namespace, func(t *testing.T) {
-		tkn.RunInteractiveTests(t, &e2e.Prompt{
+		tkn.RunInteractiveTests(t, &cli.Prompt{
 			CmdArgs: []string{"resource", "create"},
 			Procedure: func(c *expect.Console) error {
 				if _, err := c.ExpectString("Enter a name for a pipeline resource :"); err != nil {
@@ -684,8 +668,7 @@ func TestCreateStroageResourceInteractively(t *testing.T) {
 	})
 
 	t.Run("list single pipeline resource of storage type", func(t *testing.T) {
-		res := tkn.Run("resource", "list")
-		e2e.Assert(t, res, icmd.Success)
+		res := tkn.MustSucceed(t, "resource", "list")
 		golden.Assert(t, res.Stdout(), strings.ReplaceAll(fmt.Sprintf("%s.golden", t.Name()), "/", "-"))
 	})
 }

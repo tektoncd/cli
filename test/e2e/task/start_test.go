@@ -20,7 +20,12 @@ import (
 
 	"github.com/AlecAivazis/survey/v2/terminal"
 	"github.com/Netflix/go-expect"
-	"github.com/tektoncd/cli/test/e2e"
+	"github.com/tektoncd/cli/test/builder"
+	"github.com/tektoncd/cli/test/cli"
+	"github.com/tektoncd/cli/test/framework"
+	"github.com/tektoncd/cli/test/helper"
+	"github.com/tektoncd/cli/test/wait"
+
 	"gotest.tools/v3/assert"
 	is "gotest.tools/v3/assert/cmp"
 	"gotest.tools/v3/icmd"
@@ -33,26 +38,24 @@ const (
 
 func TestTaskStartE2E(t *testing.T) {
 	t.Parallel()
-	c, namespace := e2e.Setup(t)
-	knativetest.CleanupOnInterrupt(func() { e2e.TearDown(t, c, namespace) }, t.Logf)
-	defer e2e.TearDown(t, c, namespace)
+	c, namespace := framework.Setup(t)
+	knativetest.CleanupOnInterrupt(func() { framework.TearDown(t, c, namespace) }, t.Logf)
+	defer framework.TearDown(t, c, namespace)
 
-	kubectl := e2e.NewKubectl(namespace)
-	tkn, err := e2e.NewTknRunner(namespace)
-	if err != nil {
-		t.Fatalf("Error creating tknRunner %+v", err)
-	}
+	kubectl := cli.NewKubectl(namespace)
+	tkn, err := cli.NewTknRunner(namespace)
+	assert.NilError(t, err)
 
 	t.Logf("Creating Task read-task in namespace: %s ", namespace)
-	e2e.Assert(t, kubectl.Create(e2e.ResourcePath("read-file.yaml")), icmd.Success)
+	kubectl.MustSucceed(t, "create", "-f", helper.GetResourcePath("read-file.yaml"))
 
 	t.Logf("Creating git pipeline resource in namespace: %s", namespace)
-	e2e.Assert(t, kubectl.Create(e2e.ResourcePath("git-resource.yaml")), icmd.Success)
+	kubectl.MustSucceed(t, "create", "-f", helper.GetResourcePath("git-resource.yaml"))
 
 	t.Run("Get list of Tasks from namespace  "+namespace, func(t *testing.T) {
 		res := tkn.Run("task", "list")
-		expected := e2e.ListAllTasksOutput(t, c, map[int]interface{}{
-			0: &e2e.TaskData{
+		expected := builder.ListAllTasksOutput(t, c, map[int]interface{}{
+			0: &builder.TaskData{
 				Name: "read-task",
 			},
 		})
@@ -64,7 +67,7 @@ func TestTaskStartE2E(t *testing.T) {
 	})
 
 	t.Run("Start TaskRun using tkn start command with SA as 'pipeline' ", func(t *testing.T) {
-		res := tkn.Run("task", "start", "read-task",
+		res := tkn.MustSucceed(t, "task", "start", "read-task",
 			"-i=source="+tePipelineGitResourceName,
 			"-p=FILEPATH=docs",
 			"-p=FILENAME=README.md",
@@ -72,35 +75,26 @@ func TestTaskStartE2E(t *testing.T) {
 			"true")
 
 		vars := make(map[string]interface{})
-		taskRunGeneratedName := e2e.GetTaskRunListWithName(c, "read-task").Items[0].Name
+		taskRunGeneratedName := builder.GetTaskRunListWithName(c, "read-task").Items[0].Name
 		vars["Taskrun"] = taskRunGeneratedName
-		expected := e2e.ProcessString(`(TaskRun started: {{.Taskrun}}
+		expected := helper.ProcessString(`(TaskRun started: {{.Taskrun}}
 Waiting for logs to be available...
 .*)`, vars)
-		res.Assert(t, icmd.Expected{
-			ExitCode: 0,
-			Err:      icmd.None,
-		})
 		assert.Assert(t, is.Regexp(expected, res.Stdout()))
 	})
 
 	t.Run("Start TaskRun using tkn task start command with --use-param-defaults and all the params having default", func(t *testing.T) {
-		res := tkn.Run("task", "start", "read-task",
+		res := tkn.MustSucceed(t, "task", "start", "read-task",
 			"-i=source="+tePipelineGitResourceName,
 			"--use-param-defaults",
 			"-p=FILENAME=README.md",
 			"--showlog",
 			"true")
-
-		res.Assert(t, icmd.Expected{
-			ExitCode: 0,
-			Err:      icmd.None,
-		})
 		assert.Assert(t, is.Regexp("TaskRun started:.*", res.Stdout()))
 	})
 
 	t.Run("Start TaskRun using tkn task start command with --use-param-defaults and some of the params not having default", func(t *testing.T) {
-		tkn.RunInteractiveTests(t, &e2e.Prompt{
+		tkn.RunInteractiveTests(t, &cli.Prompt{
 			CmdArgs: []string{"task", "start", "read-task",
 				"-i=source=" + tePipelineGitResourceName,
 				"--use-param-defaults",
@@ -131,33 +125,33 @@ Waiting for logs to be available...
 
 	t.Run("Get list of TaskRuns from namespace  "+namespace, func(t *testing.T) {
 
-		taskRun1GeneratedName := e2e.GetTaskRunListWithName(c, "read-task").Items[0].Name
-		taskRun2GeneratedName := e2e.GetTaskRunListWithName(c, "read-task").Items[1].Name
-		taskRun3GeneratedName := e2e.GetTaskRunListWithName(c, "read-task").Items[2].Name
+		taskRun1GeneratedName := builder.GetTaskRunListWithName(c, "read-task").Items[0].Name
+		taskRun2GeneratedName := builder.GetTaskRunListWithName(c, "read-task").Items[1].Name
+		taskRun3GeneratedName := builder.GetTaskRunListWithName(c, "read-task").Items[2].Name
 
-		if err := e2e.WaitForTaskRunState(c, taskRun1GeneratedName, e2e.TaskRunSucceed(taskRun1GeneratedName), "TaskRunSucceed"); err != nil {
+		if err := wait.ForTaskRunState(c, taskRun1GeneratedName, wait.TaskRunSucceed(taskRun1GeneratedName), "TaskRunSucceed"); err != nil {
 			t.Errorf("Error waiting for TaskRun to Succeed: %s", err)
 		}
 
-		if err := e2e.WaitForTaskRunState(c, taskRun2GeneratedName, e2e.TaskRunSucceed(taskRun2GeneratedName), "TaskRunSucceed"); err != nil {
+		if err := wait.ForTaskRunState(c, taskRun2GeneratedName, wait.TaskRunSucceed(taskRun2GeneratedName), "TaskRunSucceed"); err != nil {
 			t.Errorf("Error waiting for TaskRun to Succeed: %s", err)
 		}
 
-		if err := e2e.WaitForTaskRunState(c, taskRun3GeneratedName, e2e.TaskRunSucceed(taskRun3GeneratedName), "TaskRunSucceed"); err != nil {
+		if err := wait.ForTaskRunState(c, taskRun3GeneratedName, wait.TaskRunSucceed(taskRun3GeneratedName), "TaskRunSucceed"); err != nil {
 			t.Errorf("Error waiting for TaskRun to Succeed: %s", err)
 		}
 
 		res := tkn.Run("taskrun", "list")
-		expected := e2e.ListAllTaskRunsOutput(t, c, false, map[int]interface{}{
-			0: &e2e.TaskRunData{
+		expected := builder.ListAllTaskRunsOutput(t, c, false, map[int]interface{}{
+			0: &builder.TaskRunData{
 				Name:   "read-task-run-",
 				Status: "Succeeded",
 			},
-			1: &e2e.TaskRunData{
+			1: &builder.TaskRunData{
 				Name:   "read-task-run-",
 				Status: "Succeeded",
 			},
-			2: &e2e.TaskRunData{
+			2: &builder.TaskRunData{
 				Name:   "read-task-run-",
 				Status: "Succeeded",
 			},
@@ -170,7 +164,7 @@ Waiting for logs to be available...
 	})
 
 	t.Run("Validate interactive task logs, with  follow mode (-f) ", func(t *testing.T) {
-		tkn.RunInteractiveTests(t, &e2e.Prompt{
+		tkn.RunInteractiveTests(t, &cli.Prompt{
 			CmdArgs: []string{"task", "logs", "-f"},
 			Procedure: func(c *expect.Console) error {
 
@@ -192,7 +186,7 @@ Waiting for logs to be available...
 	})
 
 	t.Logf("Creating Task task-with-workspace in namespace: %s ", namespace)
-	e2e.Assert(t, kubectl.Create(e2e.ResourcePath("task-with-workspace.yaml")), icmd.Success)
+	kubectl.MustSucceed(t, "create", "-f", helper.GetResourcePath("task-with-workspace.yaml"))
 
 	t.Run("Start TaskRun with --workspace and volumeClaimTemplate", func(t *testing.T) {
 		if tkn.CheckVersion("Pipeline", "v0.10.2") {
@@ -201,12 +195,12 @@ Waiting for logs to be available...
 
 		res := tkn.Run("task", "start", "task-with-workspace",
 			"--showlog",
-			"--workspace=name=read-allowed,volumeClaimTemplateFile="+e2e.ResourcePath("pvc.yaml"))
+			"--workspace=name=read-allowed,volumeClaimTemplateFile="+helper.GetResourcePath("pvc.yaml"))
 
 		vars := make(map[string]interface{})
-		taskRunGeneratedName := e2e.GetTaskRunListWithName(c, "task-with-workspace").Items[0].Name
+		taskRunGeneratedName := builder.GetTaskRunListWithName(c, "task-with-workspace").Items[0].Name
 		vars["Taskrun"] = taskRunGeneratedName
-		expected := e2e.ProcessString(`(TaskRun started: {{.Taskrun}}
+		expected := helper.ProcessString(`(TaskRun started: {{.Taskrun}}
 Waiting for logs to be available...
 .*)`, vars)
 		res.Assert(t, icmd.Expected{
@@ -215,7 +209,7 @@ Waiting for logs to be available...
 		})
 		assert.Assert(t, is.Regexp(expected, res.Stdout()))
 
-		if err := e2e.WaitForTaskRunState(c, taskRunGeneratedName, e2e.TaskRunSucceed(taskRunGeneratedName), "TaskRunSucceeded"); err != nil {
+		if err := wait.ForTaskRunState(c, taskRunGeneratedName, wait.TaskRunSucceed(taskRunGeneratedName), "TaskRunSucceeded"); err != nil {
 			t.Errorf("Error waiting for TaskRun to Succeed: %s", err)
 		}
 	})

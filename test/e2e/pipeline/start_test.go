@@ -20,32 +20,32 @@ import (
 
 	"github.com/AlecAivazis/survey/v2/terminal"
 	"github.com/Netflix/go-expect"
-	"github.com/tektoncd/cli/test/e2e"
-	"gotest.tools/v3/icmd"
+	"github.com/tektoncd/cli/test/cli"
+	"github.com/tektoncd/cli/test/framework"
+	"github.com/tektoncd/cli/test/helper"
+	"gotest.tools/v3/assert"
 	knativetest "knative.dev/pkg/test"
 )
 
 func TestPipelineInteractiveStartE2E(t *testing.T) {
 	t.Parallel()
-	c, namespace := e2e.Setup(t)
-	knativetest.CleanupOnInterrupt(func() { e2e.TearDown(t, c, namespace) }, t.Logf)
-	defer e2e.TearDown(t, c, namespace)
+	c, namespace := framework.Setup(t)
+	knativetest.CleanupOnInterrupt(func() { framework.TearDown(t, c, namespace) }, t.Logf)
+	defer framework.TearDown(t, c, namespace)
 
-	kubectl := e2e.NewKubectl(namespace)
-	tkn, err := e2e.NewTknRunner(namespace)
-	if err != nil {
-		t.Fatalf("Error creating tknRunner %+v", err)
-	}
+	kubectl := cli.NewKubectl(namespace)
+	tkn, err := cli.NewTknRunner(namespace)
+	assert.NilError(t, err)
 
 	t.Logf("Creating pipeline in namespace: %s", namespace)
-	e2e.Assert(t, kubectl.Create(e2e.ResourcePath("pipeline.yaml")), icmd.Success)
+	kubectl.MustSucceed(t, "create", "-f", helper.GetResourcePath("pipeline.yaml"))
 
 	t.Logf("Creating git pipeline resource in namespace: %s", namespace)
-	e2e.Assert(t, kubectl.Create(e2e.ResourcePath("git-resource.yaml")), icmd.Success)
+	kubectl.MustSucceed(t, "create", "-f", helper.GetResourcePath("git-resource.yaml"))
 
 	t.Run("Start PipelineRun using pipeline start interactively with SA as 'pipeline' ", func(t *testing.T) {
-		tkn.RunInteractiveTests(t, &e2e.Prompt{
-			CmdArgs: []string{"pipeline", "start", "output-pipeline", "-s", "pipeline"},
+		tkn.RunInteractiveTests(t, &cli.Prompt{
+			CmdArgs: []string{"pipeline", "start", "output-pipeline"},
 			Procedure: func(c *expect.Console) error {
 				if _, err := c.ExpectString("Choose the git resource to use for source-repo:"); err != nil {
 					return err
@@ -69,7 +69,7 @@ func TestPipelineInteractiveStartE2E(t *testing.T) {
 	})
 
 	t.Run("Validate interactive pipeline logs, with  follow mode (-f) ", func(t *testing.T) {
-		tkn.RunInteractiveTests(t, &e2e.Prompt{
+		tkn.RunInteractiveTests(t, &cli.Prompt{
 			CmdArgs: []string{"pipeline", "logs", "-f"},
 			Procedure: func(c *expect.Console) error {
 				if _, err := c.ExpectString("Select pipeline:"); err != nil {
@@ -96,22 +96,20 @@ func TestPipelineInteractiveStartE2E(t *testing.T) {
 
 func TestPipelineInteractiveStartWithNewResourceE2E(t *testing.T) {
 	t.Parallel()
-	c, namespace := e2e.Setup(t)
-	knativetest.CleanupOnInterrupt(func() { e2e.TearDown(t, c, namespace) }, t.Logf)
-	defer e2e.TearDown(t, c, namespace)
+	c, namespace := framework.Setup(t)
+	knativetest.CleanupOnInterrupt(func() { framework.TearDown(t, c, namespace) }, t.Logf)
+	defer framework.TearDown(t, c, namespace)
 
-	kubectl := e2e.NewKubectl(namespace)
-	tkn, err := e2e.NewTknRunner(namespace)
-	if err != nil {
-		t.Fatalf("Error creating tknRunner %+v", err)
-	}
+	kubectl := cli.NewKubectl(namespace)
+	tkn, err := cli.NewTknRunner(namespace)
+	assert.NilError(t, err)
 
 	t.Logf("Creating pipeline in namespace: %s", namespace)
-	e2e.Assert(t, kubectl.Create(e2e.ResourcePath("pipeline.yaml")), icmd.Success)
+	kubectl.MustSucceed(t, "create", "-f", helper.GetResourcePath("pipeline.yaml"))
 
 	t.Run("Start PipelineRun using pipeline start interactively with SA as 'pipeline' ", func(t *testing.T) {
-		tkn.RunInteractiveTests(t, &e2e.Prompt{
-			CmdArgs: []string{"pipeline", "start", "output-pipeline", "-s", "pipeline"},
+		tkn.RunInteractiveTests(t, &cli.Prompt{
+			CmdArgs: []string{"pipeline", "start", "output-pipeline"},
 			Procedure: func(c *expect.Console) error {
 				if _, err := c.ExpectString("Please create a new \"git\" resource for PipelineResource \"source-repo\""); err != nil {
 					return err
@@ -155,7 +153,7 @@ func TestPipelineInteractiveStartWithNewResourceE2E(t *testing.T) {
 	})
 
 	t.Run("Validate interactive pipeline logs, with  follow mode (-f) ", func(t *testing.T) {
-		tkn.RunInteractiveTests(t, &e2e.Prompt{
+		tkn.RunInteractiveTests(t, &cli.Prompt{
 			CmdArgs: []string{"pipeline", "logs", "-f"},
 			Procedure: func(c *expect.Console) error {
 				if _, err := c.ExpectString("Select pipeline:"); err != nil {
