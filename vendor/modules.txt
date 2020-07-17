@@ -290,7 +290,7 @@ github.com/russross/blackfriday
 github.com/spf13/cobra
 # github.com/spf13/pflag v1.0.5
 github.com/spf13/pflag
-# github.com/tektoncd/pipeline v0.14.0
+# github.com/tektoncd/pipeline v0.14.2
 github.com/tektoncd/pipeline/internal/builder/v1alpha1
 github.com/tektoncd/pipeline/internal/builder/v1beta1
 github.com/tektoncd/pipeline/pkg/apis/config
