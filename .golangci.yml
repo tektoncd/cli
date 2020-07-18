@@ -14,3 +14,4 @@ linters:
   - gosec
   - gocritic
   - golint
+  - misspell

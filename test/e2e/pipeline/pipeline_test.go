@@ -509,7 +509,7 @@ func TestDeletePipelinesE2E(t *testing.T) {
 		})
 	})
 
-	t.Run("Check for list of pipelines, After Successfull Deletion of pipeline in namespace "+namespace+" should throw an error", func(t *testing.T) {
+	t.Run("Check for list of pipelines, After Successful Deletion of pipeline in namespace "+namespace+" should throw an error", func(t *testing.T) {
 		res := tkn.Run("pipelines", "list")
 		res.Assert(t, icmd.Expected{
 			ExitCode: 0,
