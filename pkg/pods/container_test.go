@@ -82,7 +82,7 @@ func TestContainer_fetch_logs(t *testing.T) {
 		output, err := containerLogs(lr)
 
 		if err != nil {
-			t.Errorf("error occured %v", err)
+			t.Errorf("error occurred %v", err)
 		}
 
 		test.AssertOutput(t, d.expected, output)

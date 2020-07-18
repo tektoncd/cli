@@ -22,7 +22,7 @@ import (
 )
 
 // Param returns params with their values. If user value is not defined then returns default value,
-// if deafult value is not defined then returns param's type
+// if default value is not defined then returns param's type
 func Param(params []v1beta1.Param, paramSpec []v1beta1.ParamSpec) string {
 	if len(params) == 0 {
 		return "---"

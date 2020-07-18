@@ -319,7 +319,7 @@ func GetTaskListWithTestData(t *testing.T, c *Clients, td map[int]interface{}) *
 	}
 
 	if changelog := cmp.Diff(tasklist, GetTaskList(c)); changelog != "" {
-		t.Logf("Changes occured while performing diff operation %+v", changelog)
+		t.Logf("Changes occurred while performing diff operation %+v", changelog)
 	}
 	return tasklist
 }
@@ -402,7 +402,7 @@ func GetTaskRunListWithTestData(t *testing.T, c *Clients, td map[int]interface{}
 	}
 
 	if changelog := cmp.Diff(taskRunlist, GetTaskRunList(c)); changelog != "" {
-		t.Logf("Changes occured while performing diff operation %+v", changelog)
+		t.Logf("Changes occurred while performing diff operation %+v", changelog)
 	}
 	return taskRunlist
 }
@@ -510,7 +510,7 @@ func GetPipelineListWithTestData(t *testing.T, c *Clients, td map[int]interface{
 	}
 
 	if len(ps.Items) != len(td) {
-		t.Error("Lenght of pipeline list and Testdata provided not matching")
+		t.Error("Length of pipeline list and Testdata provided not matching")
 	}
 
 	for i, p := range td {
@@ -523,7 +523,7 @@ func GetPipelineListWithTestData(t *testing.T, c *Clients, td map[int]interface{
 	}
 
 	if changelog := cmp.Diff(ps, GetPipelineList(c)); changelog != "" {
-		t.Logf("Changes occured while performing diff operation %+v", changelog)
+		t.Logf("Changes occurred while performing diff operation %+v", changelog)
 	}
 
 	return ps
@@ -705,7 +705,7 @@ func GetPipelineWithTestData(t *testing.T, c *Clients, name string, td map[int]i
 	}
 
 	if changelog := cmp.Diff(pipeline, GetPipeline(c, name)); changelog != "" {
-		t.Logf("Changes occured while performing diff operation %+v", changelog)
+		t.Logf("Changes occurred while performing diff operation %+v", changelog)
 	}
 
 	return pipeline
@@ -745,7 +745,7 @@ func GetPipelineRunListWithNameAndTestData(t *testing.T, c *Clients, pname strin
 	}
 
 	if changelog := cmp.Diff(pipelineRunList, GetPipelineRunListWithName(c, pname)); changelog != "" {
-		t.Logf("Changes occured while performing diff operation %+v", changelog)
+		t.Logf("Changes occurred while performing diff operation %+v", changelog)
 	}
 
 	return pipelineRunList
