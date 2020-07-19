@@ -1,14 +1,13 @@
 Name:        tr-1
 Namespace:   ns
+Task Ref:    task-1
+Labels:
+ tekton.dev/task=task-1
 
 Status
 
-STARTED         DURATION    STATUS
-8 minutes ago   3 minutes   Failed
-
-Message
-
-Testing tr failed
+STARTED          DURATION    STATUS
+10 minutes ago   5 minutes   Failed
 
 Input Resources
 
@@ -24,7 +23,9 @@ Params
 
 Results
 
- No results
+ NAME       VALUE
+ result-1   value-1
+ result-2   value-2
 
 Steps
 

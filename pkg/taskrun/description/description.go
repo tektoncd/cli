@@ -115,6 +115,17 @@ STARTED 	DURATION 	STATUS
 {{- end }}
 {{- end }}
 
+{{decorate "results" ""}}{{decorate "underline bold" "Results\n"}}
+
+{{- if eq (len .TaskRun.Status.TaskRunResults) 0 }}
+ No results
+{{- else }}
+ NAME	VALUE
+{{- range $result := .TaskRun.Status.TaskRunResults }}
+ {{decorate "bullet" $result.Name }}	{{ formatResult $result.Value }}
+{{- end }}
+{{- end }}
+
 {{decorate "steps" ""}}{{decorate "underline bold" "Steps"}}
 {{$sortedSteps := sortStepStates .TaskRun.Status.Steps }}
 {{- $l := len $sortedSteps }}{{ if eq $l 0 }}
@@ -205,6 +216,7 @@ func PrintTaskRunDescription(s *cli.Stream, trName string, p cli.Params) error {
 		"formatAge":             formatted.Age,
 		"formatDuration":        formatted.Duration,
 		"formatCondition":       formatted.Condition,
+		"formatResult":          formatted.Result,
 		"hasFailed":             hasFailed,
 		"taskRefExists":         taskRefExists,
 		"taskResourceRefExists": taskResourceRefExists,
