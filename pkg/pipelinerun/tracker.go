@@ -15,15 +15,19 @@
 package pipelinerun
 
 import (
+	"context"
 	"time"
 
+	"github.com/tektoncd/cli/pkg/actions"
 	trh "github.com/tektoncd/cli/pkg/taskrun"
 	"github.com/tektoncd/pipeline/pkg/apis/pipeline/v1alpha1"
+	"github.com/tektoncd/pipeline/pkg/apis/pipeline/v1beta1"
 	"github.com/tektoncd/pipeline/pkg/client/clientset/versioned"
 	informers "github.com/tektoncd/pipeline/pkg/client/informers/externalversions"
 	corev1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/fields"
+	"k8s.io/apimachinery/pkg/runtime/schema"
 	"k8s.io/client-go/tools/cache"
 )
 
@@ -57,7 +61,13 @@ func (t *Tracker) Monitor(allowed []string) <-chan []trh.Run {
 		informers.WithNamespace(t.Ns),
 		informers.WithTweakListOptions(pipelinerunOpts(t.Name)))
 
-	informer := factory.Tekton().V1alpha1().PipelineRuns().Informer()
+	gvr, _ := actions.GetGroupVersionResource(
+		schema.GroupVersionResource{Group: "tekton.dev", Resource: "pipelineruns"},
+		t.Tekton.Discovery(),
+	)
+
+	genericInformer, _ := factory.ForResource(*gvr)
+	informer := genericInformer.Informer()
 
 	stopC := make(chan struct{})
 	trC := make(chan []trh.Run)
@@ -68,14 +78,27 @@ func (t *Tracker) Monitor(allowed []string) <-chan []trh.Run {
 	}()
 
 	eventHandler := func(obj interface{}) {
-		pr, ok := obj.(*v1alpha1.PipelineRun)
-		if !ok || pr == nil {
-			return
+		var pipelinerunConverted v1beta1.PipelineRun
+		switch gvr.Version {
+		case "v1alpha1":
+			pr, ok := obj.(*v1alpha1.PipelineRun)
+			if !ok || pr == nil {
+				return
+			}
+			if err := pr.ConvertTo(context.Background(), &pipelinerunConverted); err != nil {
+				return
+			}
+		case "v1beta1":
+			pr, ok := obj.(*v1beta1.PipelineRun)
+			if !ok || pr == nil {
+				return
+			}
+			pr.DeepCopyInto(&pipelinerunConverted)
 		}
 
-		trC <- t.findNewTaskruns(pr, allowed)
+		trC <- t.findNewTaskruns(&pipelinerunConverted, allowed)
 
-		if hasCompleted(pr) {
+		if hasCompleted(&pipelinerunConverted) {
 			close(stopC) // should close trC
 		}
 	}
@@ -103,7 +126,7 @@ func pipelinerunOpts(name string) func(opts *metav1.ListOptions) {
 // handles changes to pipelinerun and pushes the Run information to the
 // channel if the task is new and is in the allowed list of tasks
 // returns true if the pipelinerun has finished
-func (t *Tracker) findNewTaskruns(pr *v1alpha1.PipelineRun, allowed []string) []trh.Run {
+func (t *Tracker) findNewTaskruns(pr *v1beta1.PipelineRun, allowed []string) []trh.Run {
 	ret := []trh.Run{}
 	for tr, trs := range pr.Status.TaskRuns {
 		run := trh.Run{Name: tr, Task: trs.PipelineTaskName}
@@ -121,7 +144,7 @@ func (t *Tracker) findNewTaskruns(pr *v1alpha1.PipelineRun, allowed []string) []
 	return ret
 }
 
-func hasCompleted(pr *v1alpha1.PipelineRun) bool {
+func hasCompleted(pr *v1beta1.PipelineRun) bool {
 	if len(pr.Status.Conditions) == 0 {
 		return false
 	}

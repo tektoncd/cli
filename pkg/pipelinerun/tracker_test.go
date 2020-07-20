@@ -21,6 +21,7 @@ import (
 	trh "github.com/tektoncd/cli/pkg/taskrun"
 	"github.com/tektoncd/cli/pkg/test"
 	clitest "github.com/tektoncd/cli/pkg/test"
+	cb "github.com/tektoncd/cli/pkg/test/builder"
 	"github.com/tektoncd/pipeline/pkg/apis/pipeline/v1alpha1"
 	"github.com/tektoncd/pipeline/pkg/apis/pipeline/v1beta1"
 	"github.com/tektoncd/pipeline/pkg/client/clientset/versioned"
@@ -155,7 +156,7 @@ func startPipelineRun(t *testing.T, data pipelinetest.Data, prStatus ...v1alpha1
 	// to keep pushing the taskrun over the period(simulate watch)
 	watcher := watch.NewFake()
 	cs.Pipeline.PrependWatchReactor("pipelineruns", k8stest.DefaultWatchReactor(watcher, nil))
-
+	cs.Pipeline.Resources = cb.APIResourceList("v1alpha1", []string{"task", "taskrun", "pipeline", "pipelinerun"})
 	go func() {
 		for _, status := range prStatus {
 			time.Sleep(time.Second * 2)
