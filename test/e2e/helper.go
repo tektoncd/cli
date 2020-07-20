@@ -19,7 +19,10 @@ import (
 	"path"
 	"path/filepath"
 	"runtime"
+	"testing"
 	"text/template"
+
+	"github.com/google/go-cmp/cmp"
 )
 
 func Process(t *template.Template, vars interface{}) string {
@@ -48,4 +51,23 @@ func ResourcePath(elem ...string) string {
 	tmp := dir()
 	path := append([]string{tmp}, elem...)
 	return filepath.Join(path...)
+}
+
+func AssertOutput(t *testing.T, expected, actual interface{}) {
+	t.Helper()
+	diff := cmp.Diff(actual, expected)
+	if diff == "" {
+		return
+	}
+
+	t.Errorf(`
+Unexpected output:
+%s
+
+Expected
+%s
+
+Actual
+%s
+`, diff, expected, actual)
 }

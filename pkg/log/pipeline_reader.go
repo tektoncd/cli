@@ -214,8 +214,10 @@ func (r *Reader) getOrderedTasks(pr *v1beta1.PipelineRun) ([]trh.Run, error) {
 			return nil, err
 		}
 		tasks = pl.Spec.Tasks
+		tasks = append(tasks, pl.Spec.Finally...)
 	case pr.Spec.PipelineSpec != nil:
 		tasks = pr.Spec.PipelineSpec.Tasks
+		tasks = append(tasks, pr.Spec.PipelineSpec.Finally...)
 	default:
 		return nil, fmt.Errorf("pipelinerun %s did not provide PipelineRef or PipelineSpec", pr.Name)
 	}
