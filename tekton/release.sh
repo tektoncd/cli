@@ -137,20 +137,6 @@ kubectl -n ${TARGET_NAMESPACE} apply -f ./tekton/release-pipeline.yml
 
 sleep 2
 
-# Until tkn supports tkn create with parameters we do like this,
-cat <<EOF | kubectl -n ${TARGET_NAMESPACE} apply -f-
-apiVersion: v1
-kind: PersistentVolumeClaim
-metadata:
-  name: tektoncd-cli-pvc
-spec:
-  accessModes:
-    - ReadWriteOnce
-  resources:
-    requests:
-      storage: 500Mi
-EOF
-
 # Start the pipeline, We can't use tkn start because until #272 and #262 are imp/fixed
 cat <<EOF | kubectl -n ${TARGET_NAMESPACE} create -f-
 apiVersion: tekton.dev/v1beta1
@@ -162,8 +148,13 @@ spec:
     name: cli-release-pipeline
   workspaces:
     - name: shared-workspace
-      persistentvolumeclaim:
-        claimName: tektoncd-cli-pvc
+      volumeClaimTemplate:
+        spec:
+          accessModes:
+            - ReadWriteOnce
+          resources:
+            requests:
+              storage: 500Mi
   params:
     - name: revision
       value: ${RELEASE_VERSION}
