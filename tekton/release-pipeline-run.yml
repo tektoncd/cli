@@ -1,15 +1,4 @@
 ---
-apiVersion: v1
-kind: PersistentVolumeClaim
-metadata:
-  name: tektoncd-cli-pvc
-spec:
-  accessModes:
-    - ReadWriteOnce
-  resources:
-    requests:
-      storage: 500Mi
----
 apiVersion: tekton.dev/v1beta1
 kind: PipelineRun
 metadata:
@@ -19,8 +8,13 @@ spec:
     name: cli-release-pipeline
   workspaces:
     - name: shared-workspace
-      persistentvolumeclaim:
-        claimName: tektoncd-cli-pvc
+      volumeClaimTemplate:
+        spec:
+          accessModes:
+            - ReadWriteOnce
+          resources:
+            requests:
+              storage: 500Mi
   params:
     - name: revision
       value: v0.2.2
