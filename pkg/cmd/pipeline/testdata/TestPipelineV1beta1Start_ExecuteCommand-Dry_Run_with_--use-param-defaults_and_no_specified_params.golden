@@ -7,11 +7,6 @@ metadata:
     jemange: desfrites
   namespace: ns
 spec:
-  params:
-  - name: pipeline-param
-    value: somethingdifferent
-  - name: rev-param
-    value: revision
   pipelineRef:
     name: test-pipeline
   resources:

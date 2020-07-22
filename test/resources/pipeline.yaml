@@ -24,6 +24,9 @@ spec:
     - name: workspace
       type: git
       targetPath: damnworkspace
+    params:
+      - name: FILEPATH
+      - name: FILENAME
   outputs:
     resources:
     - name: workspace
@@ -32,7 +35,7 @@ spec:
   - name: read-docs-old
     image: ubuntu
     command: ["/bin/bash"]
-    args: ['-c', 'ls -la /workspace/damnworkspace/docs/README.md']  # tests that targetpath works
+    args: ['-c', 'ls -la /workspace/damnworkspace/$(inputs.params.FILEPATH)/$(inputs.params.FILENAME)']  # tests that targetpath works
   - name: write-new-stuff
     image: ubuntu
     command: ['bash']
@@ -66,10 +69,19 @@ spec:
   resources:
   - name: source-repo
     type: git
+  params:
+    - name: FILEPATH
+      default: "docs"
+    - name: FILENAME
   tasks:
   - name: first-create-file          # 1. create file
     taskRef:
       name: create-file
+    params:
+      - name: FILEPATH
+        value: $(params.FILEPATH)
+      - name: FILENAME
+        value: $(params.FILENAME)
     resources:
       inputs:
       - name: workspace

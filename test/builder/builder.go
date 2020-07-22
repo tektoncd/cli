@@ -649,7 +649,7 @@ const describeTemplate = `{{decorate "bold" "Name"}}:	{{ .PipelineName }}
  NAME	TYPE	DESCRIPTION	DEFAULT VALUE
 {{- range $i, $p := .Pipeline.Spec.Params }}
 {{- if not $p.Default }}
- {{decorate "bullet" $p.Name }}	{{ $p.Type }}	{{ $p.Description }}	{{ "" }}
+ {{decorate "bullet" $p.Name }}	{{ $p.Type }}	{{ $p.Description }}	{{ "---" }}
 {{- else }}
 {{- if eq $p.Type "string" }}
  {{decorate "bullet" $p.Name }}	{{ $p.Type }}	{{ $p.Description }}	{{ $p.Default.StringVal }}

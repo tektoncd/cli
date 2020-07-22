@@ -10,8 +10,6 @@ spec:
   params:
   - name: pipeline-param
     value: value1
-  - name: rev-param
-    value: revision
   pipelineRef:
     name: test-pipeline
   resources:
