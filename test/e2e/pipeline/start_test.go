@@ -59,6 +59,86 @@ func TestPipelineInteractiveStartE2E(t *testing.T) {
 					return err
 				}
 
+				if _, err := c.ExpectString("Value for param `FILEPATH` of type `string`? (Default is `docs`)"); err != nil {
+					return err
+				}
+
+				if _, err := c.ExpectString("(docs)"); err != nil {
+					return err
+				}
+
+				if _, err := c.SendLine(string(terminal.KeyEnter)); err != nil {
+					return err
+				}
+
+				if _, err := c.ExpectString("Value for param `FILENAME` of type `string`?"); err != nil {
+					return err
+				}
+
+				if _, err := c.SendLine("README.md"); err != nil {
+					return err
+				}
+
+				if _, err := c.ExpectEOF(); err != nil {
+					return err
+				}
+
+				c.Close()
+				return nil
+			}})
+	})
+
+	t.Run("Start PipelineRun using pipeline start interactively using --use-param-defaults and some of the params not having default ", func(t *testing.T) {
+		tkn.RunInteractiveTests(t, &cli.Prompt{
+			CmdArgs: []string{"pipeline", "start", "output-pipeline",
+				"--use-param-defaults"},
+			Procedure: func(c *expect.Console) error {
+				if _, err := c.ExpectString("Choose the git resource to use for source-repo:"); err != nil {
+					return err
+				}
+
+				if _, err := c.ExpectString("skaffold-git (https://github.com/GoogleContainerTools/skaffold)"); err != nil {
+					return err
+				}
+
+				if _, err := c.SendLine(string(terminal.KeyEnter)); err != nil {
+					return err
+				}
+
+				if _, err := c.ExpectString("Value for param `FILENAME` of type `string`?"); err != nil {
+					return err
+				}
+
+				if _, err := c.SendLine("README.md"); err != nil {
+					return err
+				}
+
+				if _, err := c.ExpectEOF(); err != nil {
+					return err
+				}
+
+				c.Close()
+				return nil
+			}})
+	})
+
+	t.Run("Start PipelineRun using pipeline start interactively using --use-param-defaults and params provided with -p", func(t *testing.T) {
+		tkn.RunInteractiveTests(t, &cli.Prompt{
+			CmdArgs: []string{"pipeline", "start", "output-pipeline",
+				"--use-param-defaults",
+				"-p=FILENAME=README.md"},
+			Procedure: func(c *expect.Console) error {
+				if _, err := c.ExpectString("Choose the git resource to use for source-repo:"); err != nil {
+					return err
+				}
+
+				if _, err := c.ExpectString("skaffold-git (https://github.com/GoogleContainerTools/skaffold)"); err != nil {
+					return err
+				}
+
+				if _, err := c.SendLine(string(terminal.KeyEnter)); err != nil {
+					return err
+				}
 				if _, err := c.ExpectEOF(); err != nil {
 					return err
 				}
@@ -72,11 +152,8 @@ func TestPipelineInteractiveStartE2E(t *testing.T) {
 		tkn.RunInteractiveTests(t, &cli.Prompt{
 			CmdArgs: []string{"pipeline", "logs", "-f"},
 			Procedure: func(c *expect.Console) error {
-				if _, err := c.ExpectString("Select pipeline:"); err != nil {
-					return err
-				}
 
-				if _, err := c.ExpectString("output-pipeline"); err != nil {
+				if _, err := c.ExpectString("Select pipelinerun:"); err != nil {
 					return err
 				}
 
@@ -143,6 +220,26 @@ func TestPipelineInteractiveStartWithNewResourceE2E(t *testing.T) {
 					return err
 				}
 
+				if _, err := c.ExpectString("Value for param `FILEPATH` of type `string`? (Default is `docs`)"); err != nil {
+					return err
+				}
+
+				if _, err := c.ExpectString("(docs)"); err != nil {
+					return err
+				}
+
+				if _, err := c.SendLine(string(terminal.KeyEnter)); err != nil {
+					return err
+				}
+
+				if _, err := c.ExpectString("Value for param `FILENAME` of type `string`?"); err != nil {
+					return err
+				}
+
+				if _, err := c.SendLine("README.md"); err != nil {
+					return err
+				}
+
 				if _, err := c.ExpectEOF(); err != nil {
 					return err
 				}
@@ -150,6 +247,7 @@ func TestPipelineInteractiveStartWithNewResourceE2E(t *testing.T) {
 				c.Close()
 				return nil
 			}})
+
 	})
 
 	t.Run("Validate interactive pipeline logs, with  follow mode (-f) ", func(t *testing.T) {

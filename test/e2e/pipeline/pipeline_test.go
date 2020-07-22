@@ -138,12 +138,10 @@ func TestPipelinesE2E(t *testing.T) {
 						0: &builder.TaskRefData{
 							TaskName: "first-create-file",
 							TaskRef:  TaskName1,
-							RunAfter: nil,
 						},
 						1: &builder.TaskRefData{
 							TaskName: "then-check",
 							TaskRef:  TaskName2,
-							RunAfter: nil,
 						},
 					},
 					Runs: map[string]string{},
@@ -162,6 +160,8 @@ func TestPipelinesE2E(t *testing.T) {
 	t.Run("Start PipelineRun using pipeline start command with SA as 'pipeline' ", func(t *testing.T) {
 		res := tkn.MustSucceed(t, "pipeline", "start", tePipelineName,
 			"-r=source-repo="+tePipelineGitResourceName,
+			"-p=FILEPATH=docs",
+			"-p=FILENAME=README.md",
 			"--showlog")
 
 		time.Sleep(1 * time.Second)
@@ -319,6 +319,8 @@ Waiting for logs to be available...
 		tkn.MustSucceed(t, "pipeline", "start", tePipelineName,
 			"-r=source-repo="+tePipelineGitResourceName,
 			"--pod-template="+helper.GetResourcePath("/podtemplate/podtemplate.yaml"),
+			"--use-param-defaults",
+			"-p=FILENAME=README.md",
 			"--showlog")
 
 		time.Sleep(1 * time.Second)
@@ -433,6 +435,8 @@ func TestPipelinesNegativeE2E(t *testing.T) {
 	t.Run("Start Pipeline Run using pipeline start command with SA as 'pipelines' ", func(t *testing.T) {
 		res := tkn.MustSucceed(t, "pipeline", "start", tePipelineName,
 			"-r=source-repo="+tePipelineFaultGitResourceName,
+			"-p=FILEPATH=docs",
+			"-p=FILENAME=README.md",
 			"--showlog",
 			"true")
 

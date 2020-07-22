@@ -354,8 +354,8 @@ func (opt *startOptions) getInput(pipeline *v1beta1.Pipeline) error {
 	}
 
 	params.FilterParamsByType(pipeline.Spec.Params)
-	if len(opt.Params) == 0 && !opt.Last && opt.UsePipelineRun == "" && !opt.UseParamDefaults {
-		if err = opt.getInputParams(pipeline); err != nil {
+	if len(opt.Params) == 0 && !opt.Last && opt.UsePipelineRun == "" {
+		if err = opt.getInputParams(pipeline, opt.UseParamDefaults); err != nil {
 			return err
 		}
 	}
@@ -363,38 +363,6 @@ func (opt *startOptions) getInput(pipeline *v1beta1.Pipeline) error {
 	if len(opt.Workspaces) == 0 && !opt.Last && opt.UsePipelineRun == "" {
 		if err = opt.getInputWorkspaces(pipeline); err != nil {
 			return err
-		}
-	}
-
-	if opt.UseParamDefaults && !opt.Last && opt.UsePipelineRun == "" {
-		if err = opt.includeDefaultParams(pipeline); err != nil {
-			return err
-		}
-	}
-
-	return nil
-}
-
-// Include the default param values in opts.Params when `--use-param-defaults` is used
-func (opt *startOptions) includeDefaultParams(pipeline *v1beta1.Pipeline) error {
-	//Creating a map have already included opt.Params through -p or --param option
-	var optParamNames = make(map[string]bool)
-
-	for _, optParam := range opt.Params {
-		optParamNames[strings.Split(optParam, "=")[0]] = true
-	}
-	for _, param := range pipeline.Spec.Params {
-		if optParamNames[param.Name] {
-			continue
-		}
-		if param.Default != nil {
-			if param.Type == "string" {
-				opt.Params = append(opt.Params, param.Name+"="+param.Default.StringVal)
-				continue
-			} else {
-				opt.Params = append(opt.Params, param.Name+"="+strings.Join(param.Default.ArrayVal, ","))
-				continue
-			}
 		}
 	}
 
@@ -450,34 +418,37 @@ func (opt *startOptions) getInputResources(resources resourceOptionsFilter, pipe
 	return nil
 }
 
-func (opt *startOptions) getInputParams(pipeline *v1beta1.Pipeline) error {
+func (opt *startOptions) getInputParams(pipeline *v1beta1.Pipeline, useParamDefaults bool) error {
 	for _, param := range pipeline.Spec.Params {
-		var ans, ques, defaultValue string
-		ques = fmt.Sprintf("Value for param `%s` of type `%s`?", param.Name, param.Type)
-		input := &survey.Input{}
-		if param.Default != nil {
-			if param.Type == "string" {
-				defaultValue = param.Default.StringVal
-			} else {
-				defaultValue = strings.Join(param.Default.ArrayVal, ",")
+		if param.Default == nil && useParamDefaults || !useParamDefaults {
+			var ans, ques, defaultValue string
+			ques = fmt.Sprintf("Value for param `%s` of type `%s`?", param.Name, param.Type)
+			input := &survey.Input{}
+			if param.Default != nil {
+				if param.Type == "string" {
+					defaultValue = param.Default.StringVal
+				} else {
+					defaultValue = strings.Join(param.Default.ArrayVal, ",")
+				}
+				ques += fmt.Sprintf(" (Default is `%s`)", defaultValue)
+				input.Default = defaultValue
 			}
-			ques += fmt.Sprintf(" (Default is `%s`)", defaultValue)
-			input.Default = defaultValue
-		}
-		input.Message = ques
+			input.Message = ques
 
-		var qs = []*survey.Question{
-			{
-				Name:   "pipeline param",
-				Prompt: input,
-			},
+			var qs = []*survey.Question{
+				{
+					Name:   "pipeline param",
+					Prompt: input,
+				},
+			}
+
+			if err := survey.Ask(qs, &ans, opt.askOpts); err != nil {
+				return err
+			}
+
+			opt.Params = append(opt.Params, param.Name+"="+ans)
 		}
 
-		if err := survey.Ask(qs, &ans, opt.askOpts); err != nil {
-			return err
-		}
-
-		opt.Params = append(opt.Params, param.Name+"="+ans)
 	}
 	return nil
 }
