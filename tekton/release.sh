@@ -8,7 +8,7 @@ TARGET_NAMESPACE="release"
 SECRET_NAME=bot-token-github
 PUSH_REMOTE="${PUSH_REMOTE:-${UPSTREAM_REMOTE}}" # export PUSH_REMOTE to your own for testing
 
-CATALOG_TASKS="lint build tests"
+CATALOG_TASKS="lint build test"
 
 BINARIES="kubectl jq tkn git"
 
@@ -114,7 +114,11 @@ git push --force ${PUSH_REMOTE} release-${RELEASE_VERSION}
 kubectl create namespace ${TARGET_NAMESPACE} 2>/dev/null || true
 
 for task in ${CATALOG_TASKS};do
+  if [ ${task} == "lint" ]; then
+    kubectl -n ${TARGET_NAMESPACE} apply -f https://raw.githubusercontent.com/tektoncd/catalog/master/task/golangci-${task}/0.1/golangci-${task}.yaml
+  else
     kubectl -n ${TARGET_NAMESPACE} apply -f https://raw.githubusercontent.com/tektoncd/catalog/master/task/golang-${task}/0.1/golang-${task}.yaml
+  fi
 done
 
 kubectl -n ${TARGET_NAMESPACE} apply -f https://raw.githubusercontent.com/tektoncd/catalog/master/task/git-clone/0.1/git-clone.yaml
