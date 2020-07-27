@@ -1,5 +1,6 @@
-NAME   AGE
-tb1    2 minutes ago
-tb2    30 seconds ago
-tb3    1 week ago
-tb4    ---
+NAME   AGE              AVAILABLE
+tb1    2 minutes ago    True
+tb2    30 seconds ago   True
+tb3    1 week ago       True
+tb4    ---              ---
+tb5    10 seconds ago   False

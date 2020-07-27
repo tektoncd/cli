@@ -25,6 +25,7 @@ import (
 	"github.com/tektoncd/cli/pkg/printer"
 	"github.com/tektoncd/triggers/pkg/apis/triggers/v1alpha1"
 	"github.com/tektoncd/triggers/pkg/client/clientset/versioned"
+	corev1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime/schema"
 	cliopts "k8s.io/cli-runtime/pkg/genericclioptions"
@@ -114,13 +115,17 @@ func printFormatted(s *cli.Stream, els *v1alpha1.EventListenerList, p cli.Params
 	}
 
 	w := tabwriter.NewWriter(s.Out, 0, 5, 3, ' ', tabwriter.TabIndent)
-	fmt.Fprintln(w, "NAME\tAGE")
+	fmt.Fprintln(w, "NAME\tAGE\tAVAILABLE")
 	for _, el := range els.Items {
-		fmt.Fprintf(w, "%s\t%s\n",
+		status := corev1.ConditionStatus("---")
+		if len(el.Status.Conditions) > 0 && len(el.Status.Conditions[0].Status) > 0 {
+			status = el.Status.Conditions[0].Status
+		}
+		fmt.Fprintf(w, "%s\t%s\t%s\n",
 			el.Name,
 			formatted.Age(&el.CreationTimestamp, p.Time()),
+			status,
 		)
 	}
-
 	return w.Flush()
 }
