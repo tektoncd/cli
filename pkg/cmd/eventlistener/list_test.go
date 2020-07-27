@@ -48,11 +48,14 @@ func TestListEventListener(t *testing.T) {
 		},
 	}
 
+	elStatusTrue := tb.EventListenerStatus(tb.EventListenerCondition("", "True", "", ""))
+	elStatusFalse := tb.EventListenerStatus(tb.EventListenerCondition("", "False", "", ""))
 	els := []*v1alpha1.EventListener{
-		tb.EventListener("tb1", "foo", cb.EventListenerCreationTime(now.Add(-2*time.Minute))),
-		tb.EventListener("tb2", "foo", cb.EventListenerCreationTime(now.Add(-30*time.Second))),
-		tb.EventListener("tb3", "foo", cb.EventListenerCreationTime(now.Add(-200*time.Hour))),
+		tb.EventListener("tb1", "foo", cb.EventListenerCreationTime(now.Add(-2*time.Minute)), elStatusTrue),
+		tb.EventListener("tb2", "foo", cb.EventListenerCreationTime(now.Add(-30*time.Second)), elStatusTrue),
+		tb.EventListener("tb3", "foo", cb.EventListenerCreationTime(now.Add(-200*time.Hour)), elStatusTrue),
 		tb.EventListener("tb4", "foo"),
+		tb.EventListener("tb5", "foo", cb.EventListenerCreationTime(now.Add(-10*time.Second)), elStatusFalse),
 	}
 
 	tests := []struct {
