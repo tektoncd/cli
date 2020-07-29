@@ -17,9 +17,9 @@ package workspaces
 import (
 	"errors"
 	"fmt"
+	"net/http"
 	"strings"
 
-	"github.com/tektoncd/cli/pkg/cli"
 	"github.com/tektoncd/cli/pkg/file"
 	"github.com/tektoncd/pipeline/pkg/apis/pipeline/v1beta1"
 	corev1 "k8s.io/api/core/v1"
@@ -42,9 +42,9 @@ const invalidWorkspace = "invalid input format for workspace : "
 var errNotFoundParam = errors.New("param not found")
 
 // Merge merges workspacebinding already in pipelineruns with given options
-func Merge(ws []v1beta1.WorkspaceBinding, optWS []string, p cli.Params) ([]v1beta1.WorkspaceBinding,
+func Merge(ws []v1beta1.WorkspaceBinding, optWS []string, httpClient http.Client) ([]v1beta1.WorkspaceBinding,
 	error) {
-	workspaces, err := parseWorkspace(optWS, p)
+	workspaces, err := parseWorkspace(optWS, httpClient)
 	if err != nil {
 		return nil, err
 	}
@@ -67,7 +67,7 @@ func Merge(ws []v1beta1.WorkspaceBinding, optWS []string, p cli.Params) ([]v1bet
 	return ws, nil
 }
 
-func parseWorkspace(w []string, p cli.Params) (map[string]v1beta1.WorkspaceBinding, error) {
+func parseWorkspace(w []string, httpClient http.Client) (map[string]v1beta1.WorkspaceBinding, error) {
 	ws := map[string]v1beta1.WorkspaceBinding{}
 	for _, v := range w {
 
@@ -123,7 +123,7 @@ func parseWorkspace(w []string, p cli.Params) (map[string]v1beta1.WorkspaceBindi
 				return nil, errors.New(invalidWorkspace + v)
 			}
 		} else {
-			err = setWorkspaceVCTemplate(r, &wB, vctFile, p)
+			err = setWorkspaceVCTemplate(r, &wB, vctFile, httpClient)
 			if err != nil {
 				return nil, err
 			}
@@ -236,8 +236,8 @@ func setWorkspaceEmptyDir(r []string, wB *v1beta1.WorkspaceBinding) error {
 	return nil
 }
 
-func setWorkspaceVCTemplate(r []string, wB *v1beta1.WorkspaceBinding, vctFile string, p cli.Params) error {
-	pvc, err := parseVolumeClaimTemplate(vctFile, p)
+func setWorkspaceVCTemplate(r []string, wB *v1beta1.WorkspaceBinding, vctFile string, httpClient http.Client) error {
+	pvc, err := parseVolumeClaimTemplate(vctFile, httpClient)
 	if err != nil {
 		return err
 	}
@@ -246,8 +246,8 @@ func setWorkspaceVCTemplate(r []string, wB *v1beta1.WorkspaceBinding, vctFile st
 	return nil
 }
 
-func parseVolumeClaimTemplate(filePath string, p cli.Params) (*corev1.PersistentVolumeClaim, error) {
-	b, err := file.LoadFileContent(p, filePath, file.IsYamlFile(), fmt.Errorf("invalid file format for %s: .yaml or .yml file extension and format required", filePath))
+func parseVolumeClaimTemplate(filePath string, httpClient http.Client) (*corev1.PersistentVolumeClaim, error) {
+	b, err := file.LoadFileContent(httpClient, filePath, file.IsYamlFile(), fmt.Errorf("invalid file format for %s: .yaml or .yml file extension and format required", filePath))
 	if err != nil {
 		return nil, err
 	}

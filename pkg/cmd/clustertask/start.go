@@ -31,10 +31,12 @@ import (
 	ctactions "github.com/tektoncd/cli/pkg/clustertask"
 	"github.com/tektoncd/cli/pkg/cmd/pipelineresource"
 	"github.com/tektoncd/cli/pkg/cmd/taskrun"
+	"github.com/tektoncd/cli/pkg/file"
 	"github.com/tektoncd/cli/pkg/flags"
 	"github.com/tektoncd/cli/pkg/labels"
 	"github.com/tektoncd/cli/pkg/options"
 	"github.com/tektoncd/cli/pkg/params"
+	"github.com/tektoncd/cli/pkg/pods"
 	"github.com/tektoncd/cli/pkg/task"
 	tractions "github.com/tektoncd/cli/pkg/taskrun"
 	"github.com/tektoncd/cli/pkg/workspaces"
@@ -68,6 +70,7 @@ type startOptions struct {
 	clustertask        *v1beta1.ClusterTask
 	askOpts            survey.AskOpt
 	TektonOptions      flags.TektonOptions
+	PodTemplate        string
 }
 
 // NameArg validates that the first argument is a valid clustertask name
@@ -162,6 +165,7 @@ like cat,foo,bar
 	c.Flags().StringVar(&opt.TimeOut, "timeout", "", "timeout for TaskRun")
 	c.Flags().BoolVarP(&opt.DryRun, "dry-run", "", false, "preview TaskRun without running it")
 	c.Flags().StringVarP(&opt.Output, "output", "", "", "format of TaskRun dry-run (yaml or json)")
+	c.Flags().StringVar(&opt.PodTemplate, "pod-template", "", "local or remote file containing a PodTemplate definition")
 
 	_ = c.MarkZshCompPositionalArgumentCustom(1, "__tkn_get_clustertask")
 
@@ -237,7 +241,7 @@ func startClusterTask(opt startOptions, args []string) error {
 	}
 	tr.ObjectMeta.Labels = labels
 
-	workspaces, err := workspaces.Merge(tr.Spec.Workspaces, opt.Workspaces, opt.cliparams)
+	workspaces, err := workspaces.Merge(tr.Spec.Workspaces, opt.Workspaces, cs.HTTPClient)
 	if err != nil {
 		return err
 	}
@@ -251,6 +255,15 @@ func startClusterTask(opt startOptions, args []string) error {
 
 	if len(opt.ServiceAccountName) > 0 {
 		tr.Spec.ServiceAccountName = opt.ServiceAccountName
+	}
+
+	podTemplateLocation := opt.PodTemplate
+	if podTemplateLocation != "" {
+		podTemplate, err := pods.ParsePodTemplate(cs.HTTPClient, podTemplateLocation, file.IsYamlFile(), fmt.Errorf("invalid file format for %s: .yaml or .yml file extension and format required", podTemplateLocation))
+		if err != nil {
+			return err
+		}
+		tr.Spec.PodTemplate = &podTemplate
 	}
 
 	if opt.DryRun {

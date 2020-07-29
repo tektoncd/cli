@@ -19,6 +19,7 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
+	"net/http"
 	"os"
 	"sort"
 	"strings"
@@ -35,6 +36,7 @@ import (
 	"github.com/tektoncd/cli/pkg/labels"
 	"github.com/tektoncd/cli/pkg/options"
 	"github.com/tektoncd/cli/pkg/params"
+	"github.com/tektoncd/cli/pkg/pods"
 	"github.com/tektoncd/cli/pkg/task"
 	traction "github.com/tektoncd/cli/pkg/taskrun"
 	"github.com/tektoncd/cli/pkg/workspaces"
@@ -73,6 +75,7 @@ type startOptions struct {
 	askOpts            survey.AskOpt
 	TektonOptions      flags.TektonOptions
 	UseParamDefaults   bool
+	PodTemplate        string
 }
 
 // NameArg validates that the first argument is a valid task name
@@ -186,14 +189,15 @@ like cat,foo,bar
 	c.Flags().StringVarP(&opt.Output, "output", "", "", "format of TaskRun dry-run (yaml or json)")
 	c.Flags().StringVarP(&opt.PrefixName, "prefix-name", "", "", "specify a prefix for the TaskRun name (must be lowercase alphanumeric characters)")
 	c.Flags().BoolVarP(&opt.UseParamDefaults, "use-param-defaults", "", false, "use default parameter values without prompting for input")
+	c.Flags().StringVar(&opt.PodTemplate, "pod-template", "", "local or remote file containing a PodTemplate definition")
 
 	_ = c.MarkZshCompPositionalArgumentCustom(1, "__tkn_get_task")
 
 	return c
 }
 
-func parseTask(taskLocation string, p cli.Params) (*v1beta1.Task, error) {
-	b, err := file.LoadFileContent(p, taskLocation, file.IsYamlFile(), fmt.Errorf("invalid file format for %s: .yaml or .yml file extension and format required", taskLocation))
+func parseTask(taskLocation string, httpClient http.Client) (*v1beta1.Task, error) {
+	b, err := file.LoadFileContent(httpClient, taskLocation, file.IsYamlFile(), fmt.Errorf("invalid file format for %s: .yaml or .yml file extension and format required", taskLocation))
 	if err != nil {
 		return nil, err
 	}
@@ -279,7 +283,7 @@ func startTask(opt startOptions, args []string) error {
 			TaskRef: &v1beta1.TaskRef{Name: tname},
 		}
 	} else {
-		task, err := parseTask(opt.Filename, opt.cliparams)
+		task, err := parseTask(opt.Filename, cs.HTTPClient)
 		if err != nil {
 			return err
 		}
@@ -341,7 +345,7 @@ func startTask(opt startOptions, args []string) error {
 	}
 	tr.ObjectMeta.Labels = labels
 
-	workspaces, err := workspaces.Merge(tr.Spec.Workspaces, opt.Workspaces, opt.cliparams)
+	workspaces, err := workspaces.Merge(tr.Spec.Workspaces, opt.Workspaces, cs.HTTPClient)
 	if err != nil {
 		return err
 	}
@@ -355,6 +359,15 @@ func startTask(opt startOptions, args []string) error {
 
 	if len(opt.ServiceAccountName) > 0 {
 		tr.Spec.ServiceAccountName = opt.ServiceAccountName
+	}
+
+	podTemplateLocation := opt.PodTemplate
+	if podTemplateLocation != "" {
+		podTemplate, err := pods.ParsePodTemplate(cs.HTTPClient, podTemplateLocation, file.IsYamlFile(), fmt.Errorf("invalid file format for %s: .yaml or .yml file extension and format required", podTemplateLocation))
+		if err != nil {
+			return err
+		}
+		tr.Spec.PodTemplate = &podTemplate
 	}
 
 	if opt.DryRun {

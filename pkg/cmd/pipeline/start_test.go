@@ -1348,6 +1348,22 @@ func TestPipelineV1beta1Start_ExecuteCommand(t *testing.T) {
 			wantError: true,
 			want:      "time: unknown unit d in duration 5d",
 		},
+		{
+			name: "Dry Run with PodTemplate",
+			command: []string{"start", "test-pipeline",
+				"-s=svc1",
+				"-r=source=scaffold-git",
+				"-p=pipeline-param=value1",
+				"-l=jemange=desfrites",
+				"-n", "ns",
+				"--dry-run",
+				"--pod-template", "./testdata/podtemplate.yaml",
+			},
+			namespace:  "",
+			input:      c2,
+			wantError:  false,
+			goldenFile: true,
+		},
 	}
 
 	for _, tp := range testParams {

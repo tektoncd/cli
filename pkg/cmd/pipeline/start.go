@@ -19,6 +19,7 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
+	"net/http"
 	"os"
 	"sort"
 	"strings"
@@ -37,6 +38,7 @@ import (
 	"github.com/tektoncd/cli/pkg/params"
 	"github.com/tektoncd/cli/pkg/pipeline"
 	"github.com/tektoncd/cli/pkg/pipelinerun"
+	"github.com/tektoncd/cli/pkg/pods"
 	"github.com/tektoncd/cli/pkg/workspaces"
 	"github.com/tektoncd/pipeline/pkg/apis/pipeline/v1alpha1"
 	"github.com/tektoncd/pipeline/pkg/apis/pipeline/v1beta1"
@@ -77,6 +79,7 @@ type startOptions struct {
 	Workspaces         []string
 	UseParamDefaults   bool
 	TektonOptions      flags.TektonOptions
+	PodTemplate        string
 }
 
 type resourceOptionsFilter struct {
@@ -167,6 +170,7 @@ like cat,foo,bar
 	c.Flags().StringVarP(&opt.TimeOut, "timeout", "", "", "timeout for PipelineRun")
 	c.Flags().StringVarP(&opt.Filename, "filename", "f", "", "local or remote file name containing a Pipeline definition to start a PipelineRun")
 	c.Flags().BoolVarP(&opt.UseParamDefaults, "use-param-defaults", "", false, "use default parameter values without prompting for input")
+	c.Flags().StringVar(&opt.PodTemplate, "pod-template", "", "local or remote file containing a PodTemplate definition")
 
 	_ = c.MarkZshCompPositionalArgumentCustom(1, "__tkn_get_pipeline")
 
@@ -274,7 +278,7 @@ func (opt *startOptions) startPipeline(pipelineStart *v1beta1.Pipeline) error {
 	}
 	pr.Spec.Params = param
 
-	workspaces, err := workspaces.Merge(pr.Spec.Workspaces, opt.Workspaces, opt.cliparams)
+	workspaces, err := workspaces.Merge(pr.Spec.Workspaces, opt.Workspaces, cs.HTTPClient)
 	if err != nil {
 		return err
 	}
@@ -286,6 +290,15 @@ func (opt *startOptions) startPipeline(pipelineStart *v1beta1.Pipeline) error {
 
 	if len(opt.ServiceAccountName) > 0 {
 		pr.Spec.ServiceAccountName = opt.ServiceAccountName
+	}
+
+	podTemplateLocation := opt.PodTemplate
+	if podTemplateLocation != "" {
+		podTemplate, err := pods.ParsePodTemplate(cs.HTTPClient, podTemplateLocation, file.IsYamlFile(), fmt.Errorf("invalid file format for %s: .yaml or .yml file extension and format required", podTemplateLocation))
+		if err != nil {
+			return err
+		}
+		pr.Spec.PodTemplate = &podTemplate
 	}
 
 	if opt.DryRun {
@@ -728,7 +741,7 @@ func NameArg(args []string, p cli.Params, file string) (*v1beta1.Pipeline, error
 	}
 
 	// file does not equal "" so the pipeline is parsed from local or remote file
-	pipelineFile, err := parsePipeline(file, p)
+	pipelineFile, err := parsePipeline(file, c.HTTPClient)
 	if err != nil {
 		return pipelineErr, err
 	}
@@ -736,8 +749,8 @@ func NameArg(args []string, p cli.Params, file string) (*v1beta1.Pipeline, error
 	return pipelineFile, nil
 }
 
-func parsePipeline(pipelineLocation string, p cli.Params) (*v1beta1.Pipeline, error) {
-	b, err := file.LoadFileContent(p, pipelineLocation, file.IsYamlFile(), fmt.Errorf("invalid file format for %s: .yaml or .yml file extension and format required", pipelineLocation))
+func parsePipeline(pipelineLocation string, httpClient http.Client) (*v1beta1.Pipeline, error) {
+	b, err := file.LoadFileContent(httpClient, pipelineLocation, file.IsYamlFile(), fmt.Errorf("invalid file format for %s: .yaml or .yml file extension and format required", pipelineLocation))
 	if err != nil {
 		return nil, err
 	}
