@@ -24,6 +24,7 @@ import (
 	"github.com/tektoncd/cli/test/cli"
 	"github.com/tektoncd/cli/test/framework"
 	"github.com/tektoncd/cli/test/helper"
+	"github.com/tektoncd/cli/test/wait"
 
 	"gotest.tools/v3/assert"
 	is "gotest.tools/v3/assert/cmp"
@@ -80,6 +81,9 @@ func TestClusterTaskInteractiveStartE2E(t *testing.T) {
 Waiting for logs to be available...
 .*)`, vars)
 		assert.Assert(t, is.Regexp(expected, res.Stdout()))
+		if err := wait.ForTaskRunState(c, taskRunGeneratedName, wait.TaskRunSucceed(taskRunGeneratedName), "TaskRunSucceeded"); err != nil {
+			t.Errorf("Error waiting for TaskRun to Succeed: %s", err)
+		}
 	})
 
 	t.Run("Start ClusterTask interactively", func(t *testing.T) {
@@ -110,5 +114,23 @@ Waiting for logs to be available...
 				c.Close()
 				return nil
 			}})
+	})
+
+	t.Run("Start ClusterTask with --pod-template", func(t *testing.T) {
+		if tkn.CheckVersion("Pipeline", "v0.10.2") {
+			t.Skip("Skip test as pipeline v0.10.2 doesn't support certain PodTemplate properties")
+		}
+
+		tkn.MustSucceed(t, "clustertask", "start", "read-task",
+			"-i=source="+tePipelineGitResourceName,
+			"-p=FILENAME=docs/README.md",
+			"-w=name=shared-workspace,emptyDir=",
+			"--showlog",
+			"--pod-template="+helper.GetResourcePath("/podtemplate/podtemplate.yaml"))
+
+		taskRunGeneratedName := builder.GetTaskRunListWithName(c, "read-task").Items[0].Name
+		if err := wait.ForTaskRunState(c, taskRunGeneratedName, wait.TaskRunSucceed(taskRunGeneratedName), "TaskRunSucceeded"); err != nil {
+			t.Errorf("Error waiting for TaskRun to Succeed: %s", err)
+		}
 	})
 }

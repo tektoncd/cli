@@ -252,7 +252,7 @@ Waiting for logs to be available...
 			}})
 	})
 
-	t.Logf("Creating Pipeline volume-from-template in namespace: %s", namespace)
+	t.Logf("Creating Pipeline pipeline-with-workspace in namespace: %s", namespace)
 	kubectl.MustSucceed(t, "create", "-f", helper.GetResourcePath("pipeline-with-workspace.yaml"))
 
 	t.Run("Start PipelineRun with --workspace and volumeClaimTemplate", func(t *testing.T) {
@@ -260,7 +260,7 @@ Waiting for logs to be available...
 			t.Skip("Skip test as pipeline v0.10.2 doesn't support volumeClaimTemplates")
 		}
 
-		res := tkn.Run("pipeline", "start", "pipeline-with-workspace",
+		res := tkn.MustSucceed(t, "pipeline", "start", "pipeline-with-workspace",
 			"--workspace=name=ws,volumeClaimTemplateFile="+helper.GetResourcePath("pvc.yaml"),
 			"--showlog")
 
@@ -280,6 +280,26 @@ Waiting for logs to be available...
 		timeout := 5 * time.Minute
 		if err := wait.ForPipelineRunState(c, pipelineRunGeneratedName, timeout, wait.PipelineRunSucceed(pipelineRunGeneratedName), "PipelineRunSucceeded"); err != nil {
 			t.Errorf("Error waiting for PipelineRun to Succeed: %s", err)
+		}
+	})
+
+	t.Run("Start PipelineRun with --pod-template", func(t *testing.T) {
+		if tkn.CheckVersion("Pipeline", "v0.10.2") {
+			t.Skip("Skip test as pipeline v0.10.2 doesn't support certain PodTemplate properties")
+		}
+
+		tkn.MustSucceed(t, "pipeline", "start", tePipelineName,
+			"-r=source-repo="+tePipelineGitResourceName,
+			"--pod-template="+helper.GetResourcePath("/podtemplate/podtemplate.yaml"),
+			"--showlog")
+
+		time.Sleep(1 * time.Second)
+
+		pipelineRunGeneratedName := builder.GetPipelineRunListWithName(c, tePipelineName).Items[0].Name
+		timeout := 5 * time.Minute
+		// Should fail since runAsNonRoot=true
+		if err := wait.ForPipelineRunState(c, pipelineRunGeneratedName, timeout, wait.PipelineRunFailed(pipelineRunGeneratedName), "PipelineRunFailed"); err != nil {
+			t.Errorf("Error waiting for PipelineRun to fail: %s", err)
 		}
 	})
 }

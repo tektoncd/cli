@@ -4431,6 +4431,23 @@ func TestTaskStart_ExecuteCommand_v1beta1(t *testing.T) {
 			wantError:  false,
 			goldenFile: true,
 		},
+		{
+			name: "Dry Run with PodTemplate",
+			command: []string{"start", "task-1",
+				"-i=my-repo=git-repo",
+				"-o=code-image=output-image",
+				"-p=myarg=arg",
+				"-s=svc1",
+				"-n", "ns",
+				"--pod-template", "./testdata/podtemplate.yaml",
+				"--dry-run",
+			},
+			namespace:  "",
+			dynamic:    dc,
+			input:      cs,
+			wantError:  false,
+			goldenFile: true,
+		},
 	}
 
 	for _, tp := range testParams {

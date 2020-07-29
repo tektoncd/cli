@@ -37,6 +37,7 @@ like cat,foo,bar
       --output string            format of TaskRun dry-run (yaml or json)
   -o, --outputresource strings   pass the output resource name and ref as name=ref
   -p, --param stringArray        pass the param as key=value for string type, or key=value1,value2,... for array type
+      --pod-template string      local or remote file containing a PodTemplate definition
   -s, --serviceaccount string    pass the serviceaccount name
       --showlog                  show logs right after starting the ClusterTask
       --timeout string           timeout for TaskRun

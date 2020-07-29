@@ -71,8 +71,7 @@ func TestTaskStartE2E(t *testing.T) {
 			"-i=source="+tePipelineGitResourceName,
 			"-p=FILEPATH=docs",
 			"-p=FILENAME=README.md",
-			"--showlog",
-			"true")
+			"--showlog")
 
 		vars := make(map[string]interface{})
 		taskRunGeneratedName := builder.GetTaskRunListWithName(c, "read-task").Items[0].Name
@@ -88,8 +87,7 @@ Waiting for logs to be available...
 			"-i=source="+tePipelineGitResourceName,
 			"--use-param-defaults",
 			"-p=FILENAME=README.md",
-			"--showlog",
-			"true")
+			"--showlog")
 		assert.Assert(t, is.Regexp("TaskRun started:.*", res.Stdout()))
 	})
 
@@ -98,8 +96,7 @@ Waiting for logs to be available...
 			CmdArgs: []string{"task", "start", "read-task",
 				"-i=source=" + tePipelineGitResourceName,
 				"--use-param-defaults",
-				"--showlog",
-				"true"},
+				"--showlog"},
 			Procedure: func(c *expect.Console) error {
 
 				if _, err := c.ExpectString("Value for param `FILENAME` of type `string`?"); err != nil {
@@ -193,7 +190,7 @@ Waiting for logs to be available...
 			t.Skip("Skip test as pipeline v0.10.2 doesn't support volumeClaimTemplates")
 		}
 
-		res := tkn.Run("task", "start", "task-with-workspace",
+		res := tkn.MustSucceed(t, "task", "start", "task-with-workspace",
 			"--showlog",
 			"--workspace=name=read-allowed,volumeClaimTemplateFile="+helper.GetResourcePath("pvc.yaml"))
 
@@ -209,6 +206,24 @@ Waiting for logs to be available...
 		})
 		assert.Assert(t, is.Regexp(expected, res.Stdout()))
 
+		if err := wait.ForTaskRunState(c, taskRunGeneratedName, wait.TaskRunSucceed(taskRunGeneratedName), "TaskRunSucceeded"); err != nil {
+			t.Errorf("Error waiting for TaskRun to Succeed: %s", err)
+		}
+	})
+
+	t.Run("Start TaskRun with --pod-template", func(t *testing.T) {
+		if tkn.CheckVersion("Pipeline", "v0.10.2") {
+			t.Skip("Skip test as pipeline v0.10.2 doesn't support certain PodTemplate properties")
+		}
+
+		tkn.MustSucceed(t, "task", "start", "read-task",
+			"-i=source="+tePipelineGitResourceName,
+			"-p=FILEPATH=docs",
+			"-p=FILENAME=README.md",
+			"--showlog",
+			"--pod-template="+helper.GetResourcePath("/podtemplate/podtemplate.yaml"))
+
+		taskRunGeneratedName := builder.GetTaskRunListWithName(c, "read-task").Items[0].Name
 		if err := wait.ForTaskRunState(c, taskRunGeneratedName, wait.TaskRunSucceed(taskRunGeneratedName), "TaskRunSucceeded"); err != nil {
 			t.Errorf("Error waiting for TaskRun to Succeed: %s", err)
 		}

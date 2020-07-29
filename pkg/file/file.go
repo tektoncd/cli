@@ -19,9 +19,8 @@ import (
 	"fmt"
 	"io/ioutil"
 	"log"
+	"net/http"
 	"strings"
-
-	"github.com/tektoncd/cli/pkg/cli"
 )
 
 type TypeValidator func(target string) bool
@@ -35,23 +34,15 @@ func IsYamlFile() TypeValidator {
 	}
 }
 
-func LoadFileContent(p cli.Params, target string, validate TypeValidator, errorMsg error) ([]byte, error) {
+func LoadFileContent(httpClient http.Client, target string, validate TypeValidator, errorMsg error) ([]byte, error) {
 	if !validate(target) {
 		return nil, errorMsg
 	}
 
 	var content []byte
-	var cs *cli.Clients
 	var err error
-	if p != nil {
-		cs, err = p.Clients()
-		if err != nil {
-			return nil, fmt.Errorf("failed to create tekton client")
-		}
-	}
-
-	if strings.HasPrefix(target, "http") && cs != nil {
-		content, err = getRemoteContent(cs, target)
+	if strings.HasPrefix(target, "http") {
+		content, err = getRemoteContent(httpClient, target)
 	} else {
 		content, err = ioutil.ReadFile(target)
 	}
@@ -63,8 +54,8 @@ func LoadFileContent(p cli.Params, target string, validate TypeValidator, errorM
 	return content, nil
 }
 
-func getRemoteContent(cs *cli.Clients, url string) ([]byte, error) {
-	resp, err := cs.HTTPClient.Get(url)
+func getRemoteContent(httpClient http.Client, url string) ([]byte, error) {
+	resp, err := httpClient.Get(url)
 	if err != nil {
 		return nil, err
 	}

@@ -17,12 +17,12 @@ package file
 import (
 	"fmt"
 	"io/ioutil"
+	"net/http"
 	"strings"
 	"testing"
 
 	"github.com/ghodss/yaml"
 	"github.com/google/go-cmp/cmp"
-	"github.com/tektoncd/cli/pkg/test"
 	"github.com/tektoncd/pipeline/pkg/apis/pipeline/v1alpha1"
 	"gotest.tools/v3/assert"
 )
@@ -40,8 +40,8 @@ func TestLoadLocalFile(t *testing.T) {
 		t.Errorf("Error from unmarshal of local file")
 	}
 
-	p := &test.Params{}
-	localContentLoad, err := LoadFileContent(p, localTarget, IsYamlFile(), fmt.Errorf("invalid file format for %s: .yaml or .yml file extension and format required", localTarget))
+	httpClient := http.DefaultClient
+	localContentLoad, err := LoadFileContent(*httpClient, localTarget, IsYamlFile(), fmt.Errorf("invalid file format for %s: .yaml or .yml file extension and format required", localTarget))
 	if err != nil {
 		t.Errorf("Error from running localContentLoad")
 	}
@@ -58,10 +58,10 @@ func TestLoadLocalFile(t *testing.T) {
 }
 
 func TestGetError(t *testing.T) {
-	p := &test.Params{}
+	httpClient := http.DefaultClient
 	target := "httpz://foo.com/task.yaml"
 
-	_, err := LoadFileContent(p, target, IsYamlFile(), fmt.Errorf("invalid file format for %s: .yaml or .yml file extension and format required", target))
+	_, err := LoadFileContent(*httpClient, target, IsYamlFile(), fmt.Errorf("invalid file format for %s: .yaml or .yml file extension and format required", target))
 
 	if strings.Contains(err.Error(), `"httpz://foo.com/task.yaml"`) {
 		assert.Error(t, err, `Get "httpz://foo.com/task.yaml": unsupported protocol scheme "httpz"`)

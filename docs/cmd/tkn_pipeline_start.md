@@ -46,6 +46,7 @@ my-secret and my-empty-dir)
   -L, --last                          re-run the Pipeline using last PipelineRun values
       --output string                 format of PipelineRun dry-run (yaml or json)
   -p, --param stringArray             pass the param as key=value for string type, or key=value1,value2,... for array type
+      --pod-template string           local or remote file containing a PodTemplate definition
       --prefix-name string            specify a prefix for the PipelineRun name (must be lowercase alphanumeric characters)
   -r, --resource strings              pass the resource name and ref as name=ref
   -s, --serviceaccount string         pass the serviceaccount name

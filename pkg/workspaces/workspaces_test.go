@@ -15,9 +15,9 @@
 package workspaces
 
 import (
+	"net/http"
 	"testing"
 
-	"github.com/tektoncd/cli/pkg/cli"
 	"github.com/tektoncd/cli/pkg/test"
 	"github.com/tektoncd/pipeline/pkg/apis/pipeline/v1beta1"
 	corev1 "k8s.io/api/core/v1"
@@ -43,50 +43,52 @@ func TestMerge(t *testing.T) {
 		},
 	}
 
+	httpClient := *http.DefaultClient
+
 	optWS := []string{}
-	outWS, err := Merge(ws, optWS, nil)
+	outWS, err := Merge(ws, optWS, httpClient)
 	if err != nil {
 		t.Errorf("Not expected error: " + err.Error())
 	}
 	test.AssertOutput(t, ws, outWS)
 
 	optWS = []string{"test"}
-	_, err = Merge(ws, optWS, nil)
+	_, err = Merge(ws, optWS, httpClient)
 	if err == nil {
 		t.Errorf("Expected error")
 	}
 	test.AssertOutput(t, "Name not found for workspace", err.Error())
 
 	optWS = []string{"name"}
-	_, err = Merge(ws, optWS, nil)
+	_, err = Merge(ws, optWS, httpClient)
 	if err == nil {
 		t.Errorf("Expected error")
 	}
 	test.AssertOutput(t, "Name not found for workspace", err.Error())
 
 	optWS = []string{"name=test,configsecret=wrong"}
-	_, err = Merge(ws, optWS, nil)
+	_, err = Merge(ws, optWS, httpClient)
 	if err == nil {
 		t.Errorf("Expected error")
 	}
 	test.AssertOutput(t, invalidWorkspace+optWS[0], err.Error())
 
 	optWS = []string{"name=emptydir-data-hp,emptyDir=s3"}
-	_, err = Merge(ws, optWS, nil)
+	_, err = Merge(ws, optWS, httpClient)
 	if err == nil {
 		t.Errorf("Expected error")
 	}
 	test.AssertOutput(t, invalidWorkspace+optWS[0], err.Error())
 
 	optWS = []string{"name=recipe-store,config=sensitive-recipe-storage,item=brownies"}
-	_, err = Merge(ws, optWS, nil)
+	_, err = Merge(ws, optWS, httpClient)
 	if err == nil {
 		t.Errorf("Expected error")
 	}
 	test.AssertOutput(t, "invalid key value", err.Error())
 
 	optWS = []string{"name=recipe-store,secret=secret-name,item=brownies"}
-	_, err = Merge(ws, optWS, nil)
+	_, err = Merge(ws, optWS, httpClient)
 	if err == nil {
 		t.Errorf("Expected error")
 	}
@@ -94,7 +96,7 @@ func TestMerge(t *testing.T) {
 
 	optWS = []string{"name=recipe-store,config=sensitive-recipe-storage," +
 		"secret=secret-name,item=brownies=recipe.txt"}
-	_, err = Merge(ws, optWS, nil)
+	_, err = Merge(ws, optWS, httpClient)
 	if err == nil {
 		t.Errorf("Expected error")
 	}
@@ -107,21 +109,20 @@ func TestMerge(t *testing.T) {
 		"name=emptydir-data,emptyDir=",
 		"name=shared-data-path,claimName=pvc3,subPath=dir",
 	}
-	outWS, err = Merge(ws, optWS, nil)
+	outWS, err = Merge(ws, optWS, httpClient)
 	if err != nil {
 		t.Errorf("Not expected error: " + err.Error())
 	}
 	test.AssertOutput(t, 7, len(outWS))
 
-	var p cli.Params
 	optWS = []string{"name=volumeclaimtemplatews,volumeClaimTemplateFile=./testdata/pvc.yaml"}
-	outWS, err = Merge(ws, optWS, p)
+	outWS, err = Merge(ws, optWS, httpClient)
 	if err != nil {
 		t.Errorf("Not expected error: " + err.Error())
 	}
 
 	optWS = []string{"name=volumeclaimtemplatews,volumeClaimTemplateFile=./testdata/pvc-typo.yaml"}
-	_, err = Merge(ws, optWS, p)
+	_, err = Merge(ws, optWS, httpClient)
 	if err == nil {
 		t.Errorf("Expected error")
 	}
