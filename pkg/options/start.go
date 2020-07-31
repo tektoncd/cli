@@ -470,34 +470,37 @@ func (intOpts *InteractiveOpts) ClusterTaskOutputResources(clustertask *v1beta1.
 	return nil
 }
 
-func (intOpts *InteractiveOpts) ClusterTaskParams(clustertask *v1beta1.ClusterTask) error {
+func (intOpts *InteractiveOpts) ClusterTaskParams(clustertask *v1beta1.ClusterTask, useParamDefaults bool) error {
 	for _, param := range clustertask.Spec.Params {
-		var ans, ques, defaultValue string
-		ques = fmt.Sprintf("Value for param `%s` of type `%s`?", param.Name, param.Type)
-		input := &survey.Input{}
-		if param.Default != nil {
-			if param.Type == "string" {
-				defaultValue = param.Default.StringVal
-			} else {
-				defaultValue = strings.Join(param.Default.ArrayVal, ",")
+		if param.Default == nil && useParamDefaults || !useParamDefaults {
+			var ans, ques, defaultValue string
+			ques = fmt.Sprintf("Value for param `%s` of type `%s`?", param.Name, param.Type)
+			input := &survey.Input{}
+			if param.Default != nil {
+				if param.Type == "string" {
+					defaultValue = param.Default.StringVal
+				} else {
+					defaultValue = strings.Join(param.Default.ArrayVal, ",")
+				}
+				ques += fmt.Sprintf(" (Default is `%s`)", defaultValue)
+				input.Default = defaultValue
 			}
-			ques += fmt.Sprintf(" (Default is `%s`)", defaultValue)
-			input.Default = defaultValue
-		}
-		input.Message = ques
+			input.Message = ques
 
-		var qs = []*survey.Question{
-			{
-				Name:   "pipeline param",
-				Prompt: input,
-			},
+			var qs = []*survey.Question{
+				{
+					Name:   "clustertask param",
+					Prompt: input,
+				},
+			}
+
+			if err := survey.Ask(qs, &ans, intOpts.AskOpts); err != nil {
+				return err
+			}
+
+			intOpts.Params = append(intOpts.Params, param.Name+"="+ans)
 		}
 
-		if err := survey.Ask(qs, &ans, intOpts.AskOpts); err != nil {
-			return err
-		}
-
-		intOpts.Params = append(intOpts.Params, param.Name+"="+ans)
 	}
 	return nil
 }

@@ -41,6 +41,7 @@ like cat,foo,bar
   -s, --serviceaccount string    pass the serviceaccount name
       --showlog                  show logs right after starting the ClusterTask
       --timeout string           timeout for TaskRun
+      --use-param-defaults       use default parameter values without prompting for input
   -w, --workspace stringArray    pass one or more workspaces to map to the corresponding physical volumes as name=name,claimName=pvcName or name=name,emptyDir=
 ```
 

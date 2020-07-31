@@ -2,7 +2,7 @@ apiVersion: tekton.dev/v1beta1
 kind: TaskRun
 metadata:
   creationTimestamp: null
-  generateName: clustertask-2-run-
+  generateName: clustertask-3-run-
   labels:
     key: value
 spec:
@@ -10,17 +10,12 @@ spec:
   - name: myarg
     value: value1
   - name: print
-    value:
-    - boom
-  podTemplate:
-    ImagePullSecrets: null
-    hostNetwork: false
-    schedulerName: SchedulerName
-    securityContext:
-      runAsNonRoot: true
-      runAsUser: 1001
+    value: boom
   resources:
     inputs:
+    - name: my-image
+      resourceRef:
+        name: image
     - name: my-repo
       resourceRef:
         name: git
@@ -31,6 +26,9 @@ spec:
   serviceAccountName: svc1
   taskRef:
     kind: ClusterTask
-    name: clustertask-2
+    name: clustertask-3
+  workspaces:
+  - emptyDir: {}
+    name: test
 status:
   podName: ""

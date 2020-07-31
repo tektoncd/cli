@@ -67,6 +67,7 @@ type startOptions struct {
 	DryRun             bool
 	Output             string
 	Workspaces         []string
+	UseParamDefaults   bool
 	clustertask        *v1beta1.ClusterTask
 	askOpts            survey.AskOpt
 	TektonOptions      flags.TektonOptions
@@ -131,6 +132,9 @@ like cat,foo,bar
 		Example:      eg,
 		SilenceUsage: true,
 		Args: func(cmd *cobra.Command, args []string) error {
+			if opt.UseParamDefaults && opt.Last {
+				return errors.New("cannot use --last with --use-param-defaults option")
+			}
 			if opt.DryRun {
 				format := strings.ToLower(opt.Output)
 				if format != "" && format != "json" && format != "yaml" {
@@ -166,6 +170,7 @@ like cat,foo,bar
 	c.Flags().BoolVarP(&opt.DryRun, "dry-run", "", false, "preview TaskRun without running it")
 	c.Flags().StringVarP(&opt.Output, "output", "", "", "format of TaskRun dry-run (yaml or json)")
 	c.Flags().StringVar(&opt.PodTemplate, "pod-template", "", "local or remote file containing a PodTemplate definition")
+	c.Flags().BoolVar(&opt.UseParamDefaults, "use-param-defaults", false, "use default parameter values without prompting for input")
 
 	_ = c.MarkZshCompPositionalArgumentCustom(1, "__tkn_get_clustertask")
 
@@ -422,7 +427,7 @@ func (opt *startOptions) getInputs() error {
 
 	params.FilterParamsByType(opt.clustertask.Spec.Params)
 	if len(opt.Params) == 0 && !opt.Last {
-		if err := intOpts.ClusterTaskParams(opt.clustertask); err != nil {
+		if err := intOpts.ClusterTaskParams(opt.clustertask, opt.UseParamDefaults); err != nil {
 			return err
 		}
 		opt.Params = append(opt.Params, intOpts.Params...)
