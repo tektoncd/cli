@@ -1,4 +1,4 @@
 Client version: v1.2.3
-Pipeline version: unknown
-Triggers version: unknown
-Dashboard version: unknown
+Pipeline version: unknown, pipeline controller may be installed in another namespace please use tkn version -n {namespace}
+Triggers version: unknown, triggers controller may be installed in another namespace please use tkn version -n {namespace}
+Dashboard version: unknown, dashboard controller may be installed in another namespace please use tkn version -n {namespace}

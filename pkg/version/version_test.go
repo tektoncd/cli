@@ -37,20 +37,22 @@ func TestGetPipelineVersion(t *testing.T) {
 	}
 
 	testParams := []struct {
-		name       string
-		namespace  string
-		deployment *v1.Deployment
-		want       string
+		name                  string
+		namespace             string
+		userProvidedNamespace string
+		deployment            *v1.Deployment
+		want                  string
 	}{{
 		name:       "empty deployment items",
 		namespace:  "tekton-pipelines",
 		deployment: &v1.Deployment{},
 		want:       "",
 	}, {
-		name:       "controller in different namespace (old labels)",
-		namespace:  "test",
-		deployment: getDeploymentData("dep", "", oldDeploymentLabels, nil, map[string]string{"tekton.dev/release": "v0.10.0"}),
-		want:       "v0.10.0",
+		name:                  "controller in different namespace (old labels)",
+		namespace:             "test",
+		userProvidedNamespace: "test",
+		deployment:            getDeploymentData("dep", "", oldDeploymentLabels, nil, map[string]string{"tekton.dev/release": "v0.10.0"}),
+		want:                  "v0.10.0",
 	}, {
 		name:       "deployment spec does not have labels and annotations specific to version (old labels)",
 		namespace:  "tekton-pipelines",
@@ -67,10 +69,11 @@ func TestGetPipelineVersion(t *testing.T) {
 		deployment: getDeploymentData("dep3", "", oldDeploymentLabels, map[string]string{"pipeline.tekton.dev/release": "v0.11.0"}, nil),
 		want:       "v0.11.0",
 	}, {
-		name:       "controller in different namespace (new labels)",
-		namespace:  "test",
-		deployment: getDeploymentData("dep4", "", newDeploymentLabels, map[string]string{"app.kubernetes.io/version": "master-test"}, nil),
-		want:       "master-test",
+		name:                  "controller in different namespace (new labels)",
+		namespace:             "test",
+		userProvidedNamespace: "test",
+		deployment:            getDeploymentData("dep4", "", newDeploymentLabels, map[string]string{"app.kubernetes.io/version": "master-test"}, nil),
+		want:                  "master-test",
 	}, {
 		name:       "deployment spec have labels specific to master version (new labels)",
 		namespace:  "tekton-pipelines",
@@ -88,7 +91,7 @@ func TestGetPipelineVersion(t *testing.T) {
 			if _, err := cls.Kube.AppsV1().Deployments(tp.namespace).Create(tp.deployment); err != nil {
 				t.Errorf("failed to create deployment: %v", err)
 			}
-			version, _ := GetPipelineVersion(cls)
+			version, _ := GetPipelineVersion(cls, tp.userProvidedNamespace)
 			test.AssertOutput(t, tp.want, version)
 		})
 	}
@@ -130,30 +133,33 @@ func TestGetTriggerVersion(t *testing.T) {
 	}
 
 	testParams := []struct {
-		name       string
-		namespace  string
-		deployment *v1.Deployment
-		want       string
+		name                  string
+		namespace             string
+		userProvidedNamespace string
+		deployment            *v1.Deployment
+		want                  string
 	}{{
 		name:       "empty deployment items",
 		namespace:  "tekton-pipelines",
 		deployment: &v1.Deployment{},
 		want:       "",
 	}, {
-		name:       "controller in different namespace (old labels)",
-		namespace:  "test",
-		deployment: getDeploymentData("dep", "", oldDeploymentLabels, nil, nil),
-		want:       "",
+		name:                  "controller in different namespace (old labels)",
+		namespace:             "test",
+		userProvidedNamespace: "test",
+		deployment:            getDeploymentData("dep", "", oldDeploymentLabels, nil, nil),
+		want:                  "",
 	}, {
 		name:       "deployment spec have labels specific to version (old labels)",
 		namespace:  "tekton-pipelines",
 		deployment: getDeploymentData("dep1", "", oldDeploymentLabels, map[string]string{"triggers.tekton.dev/release": "v0.3.1"}, nil),
 		want:       "v0.3.1",
 	}, {
-		name:       "controller in different namespace (new labels)",
-		namespace:  "test",
-		deployment: getDeploymentData("dep2", "", newDeploymentLabels, map[string]string{"app.kubernetes.io/version": "v0.5.0"}, nil),
-		want:       "v0.5.0",
+		name:                  "controller in different namespace (new labels)",
+		namespace:             "test",
+		userProvidedNamespace: "test",
+		deployment:            getDeploymentData("dep2", "", newDeploymentLabels, map[string]string{"app.kubernetes.io/version": "v0.5.0"}, nil),
+		want:                  "v0.5.0",
 	}, {
 		name:       "deployment spec have labels specific to master version (new labels)",
 		namespace:  "tekton-pipelines",
@@ -171,7 +177,7 @@ func TestGetTriggerVersion(t *testing.T) {
 			if _, err := cls.Kube.AppsV1().Deployments(tp.namespace).Create(tp.deployment); err != nil {
 				t.Errorf("failed to create deployment: %v", err)
 			}
-			version, _ := GetTriggerVersion(cls)
+			version, _ := GetTriggerVersion(cls, tp.userProvidedNamespace)
 			test.AssertOutput(t, tp.want, version)
 		})
 	}
@@ -189,30 +195,33 @@ func TestGetDashboardVersion(t *testing.T) {
 	}
 
 	testParams := []struct {
-		name       string
-		namespace  string
-		deployment *v1.Deployment
-		want       string
+		name                  string
+		namespace             string
+		userProvidedNamespace string
+		deployment            *v1.Deployment
+		want                  string
 	}{{
 		name:       "empty deployment items",
 		namespace:  "tekton-pipelines",
 		deployment: &v1.Deployment{},
 		want:       "",
 	}, {
-		name:       "dashboard in different namespace (old labels)",
-		namespace:  "test",
-		deployment: getDeploymentData("dep", "", oldDeploymentLabels, nil, nil),
-		want:       "",
+		name:                  "dashboard in different namespace (old labels)",
+		namespace:             "test",
+		userProvidedNamespace: "test",
+		deployment:            getDeploymentData("dep", "", oldDeploymentLabels, nil, nil),
+		want:                  "",
 	}, {
 		name:       "deployment spec have labels specific to version (old labels)",
 		namespace:  "tekton-pipelines",
 		deployment: getDeploymentData("dep1", "", map[string]string{"app": "tekton-dashboard", "version": "v0.6.0"}, oldDeploymentLabels, nil),
 		want:       "v0.6.0",
 	}, {
-		name:       "dashboard in different namespace (new labels)",
-		namespace:  "test",
-		deployment: getDeploymentData("dep2", "", newDeploymentLabels, map[string]string{"app.kubernetes.io/version": "v0.7.0"}, nil),
-		want:       "v0.7.0",
+		name:                  "dashboard in different namespace (new labels)",
+		namespace:             "test",
+		userProvidedNamespace: "test",
+		deployment:            getDeploymentData("dep2", "", newDeploymentLabels, map[string]string{"app.kubernetes.io/version": "v0.7.0"}, nil),
+		want:                  "v0.7.0",
 	}, {
 		name:       "deployment spec have labels specific to master version (new labels)",
 		namespace:  "tekton-pipelines",
@@ -231,7 +240,7 @@ func TestGetDashboardVersion(t *testing.T) {
 			if _, err := cls.Kube.AppsV1().Deployments(tp.namespace).Create(tp.deployment); err != nil {
 				t.Errorf("failed to create deployment: %v", err)
 			}
-			version, _ := GetDashboardVersion(cls)
+			version, _ := GetDashboardVersion(cls, tp.userProvidedNamespace)
 			test.AssertOutput(t, tp.want, version)
 		})
 	}
