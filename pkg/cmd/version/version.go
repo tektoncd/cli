@@ -43,6 +43,8 @@ var (
 	skipCheckFlag = "false"
 	// NOTE: use go build -ldflags "-X github.com/tektoncd/cli/pkg/cmd/version.namespace=tekton-pipelines"
 	namespace string
+
+	component = ""
 )
 
 // Command returns version command
@@ -68,24 +70,48 @@ func Command(p cli.Params) *cobra.Command {
 			return nil
 		},
 		RunE: func(cmd *cobra.Command, args []string) error {
-			fmt.Fprintf(cmd.OutOrStdout(), "Client version: %s\n", clientVersion)
-
 			cs, err := p.Clients()
 			if err == nil {
-				pipelineVersion, _ := version.GetPipelineVersion(cs, namespace)
-				if pipelineVersion == "" {
-					pipelineVersion = "unknown, " +
-						"pipeline controller may be installed in another namespace please use tkn version -n {namespace}"
-				}
+				switch component {
+				case "":
+					fmt.Fprintf(cmd.OutOrStdout(), "Client version: %s\n", clientVersion)
+					pipelineVersion, _ := version.GetPipelineVersion(cs, namespace)
+					if pipelineVersion == "" {
+						pipelineVersion = "unknown, " +
+							"pipeline controller may be installed in another namespace please use tkn version -n {namespace}"
+					}
 
-				fmt.Fprintf(cmd.OutOrStdout(), "Pipeline version: %s\n", pipelineVersion)
-				triggersVersion, _ := version.GetTriggerVersion(cs, namespace)
-				if triggersVersion != "" {
-					fmt.Fprintf(cmd.OutOrStdout(), "Triggers version: %s\n", triggersVersion)
-				}
-				dashboardVersion, _ := version.GetDashboardVersion(cs, namespace)
-				if dashboardVersion != "" {
-					fmt.Fprintf(cmd.OutOrStdout(), "Dashboard version: %s\n", dashboardVersion)
+					fmt.Fprintf(cmd.OutOrStdout(), "Pipeline version: %s\n", pipelineVersion)
+					triggersVersion, _ := version.GetTriggerVersion(cs, namespace)
+					if triggersVersion != "" {
+						fmt.Fprintf(cmd.OutOrStdout(), "Triggers version: %s\n", triggersVersion)
+					}
+					dashboardVersion, _ := version.GetDashboardVersion(cs, namespace)
+					if dashboardVersion != "" {
+						fmt.Fprintf(cmd.OutOrStdout(), "Dashboard version: %s\n", dashboardVersion)
+					}
+				case "client":
+					fmt.Fprintf(cmd.OutOrStdout(), "%s\n", clientVersion)
+				case "pipeline":
+					pipelineVersion, _ := version.GetPipelineVersion(cs, namespace)
+					if pipelineVersion == "" {
+						pipelineVersion = "unknown"
+					}
+					fmt.Fprintf(cmd.OutOrStdout(), "%s\n", pipelineVersion)
+				case "triggers":
+					triggersVersion, _ := version.GetTriggerVersion(cs, namespace)
+					if triggersVersion == "" {
+						triggersVersion = "unknown"
+					}
+					fmt.Fprintf(cmd.OutOrStdout(), "%s\n", triggersVersion)
+				case "dashboard":
+					dashboardVersion, _ := version.GetDashboardVersion(cs, namespace)
+					if dashboardVersion == "" {
+						dashboardVersion = "unknown"
+					}
+					fmt.Fprintf(cmd.OutOrStdout(), "%s\n", dashboardVersion)
+				default:
+					fmt.Fprintf(cmd.OutOrStdout(), "Invalid component value\n")
 				}
 			}
 
@@ -103,6 +129,8 @@ func Command(p cli.Params) *cobra.Command {
 	cmd.Flags().StringVarP(&namespace, "namespace", "n", namespace,
 		"namespace to check installed controller version")
 	flags.AddTektonOptions(cmd)
+
+	cmd.Flags().StringVarP(&component, "component", "", "", "provide a particular component name for its version (client|pipeline|triggers|dashboard)")
 
 	if skipCheckFlag != "true" {
 		cmd.Flags().BoolVar(&check, "check", false, "check if a newer version is available")

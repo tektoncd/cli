@@ -91,6 +91,23 @@ func TestVersionGood(t *testing.T) {
 	golden.Assert(t, got, fmt.Sprintf("%s.golden", t.Name()))
 }
 
+func TestComponentVersion(t *testing.T) {
+	v := clientVersion
+	defer func() { clientVersion = v }()
+
+	t.Run("test_client", func(t *testing.T) {})
+	clientVersion = "v1.2.3"
+
+	seedData, _ := test.SeedTestData(t, pipelinetest.Data{})
+
+	cs := pipelinetest.Clients{Kube: seedData.Kube}
+	p := &test.Params{Kube: cs.Kube}
+	version := Command(p)
+	got, _ := test.ExecuteCommand(version, "version", "--component", "client")
+	expected := "v1.2.3\n"
+	test.AssertOutput(t, expected, got)
+}
+
 func TestVersionBad(t *testing.T) {
 	v := clientVersion
 	defer func() { clientVersion = v }()
