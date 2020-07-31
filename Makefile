@@ -1,5 +1,9 @@
 YAML_FILES := $(shell find . -type f -regex ".*y[a]ml" -print)
 
+ifneq ($(NAMESPACE),)
+	NAMESPACELDFLAG := -X github.com/tektoncd/cli/pkg/cmd/version.namespace=$(NAMESPACE)
+endif
+
 ifneq ($(SKIP_CHECK_FLAG),)
 	SKIPLDFLAG := -X github.com/tektoncd/cli/pkg/cmd/version.skipCheckFlag=$(SKIP_CHECK_FLAG)
 endif
@@ -12,9 +16,13 @@ ifneq ($(RELEASE_VERSION),)
 	VERSIONLDFLAG := -X github.com/tektoncd/cli/pkg/cmd/version.clientVersion=$(RELEASE_VERSION)
 endif
 
-FLAGS := $(VERSIONLDFLAG)$(SKIPLDFLAG)
+FLAGS := $(VERSIONLDFLAG)
 ifneq ($(SKIPLDFLAG),)
-	FLAGS := $(VERSIONLDFLAG) $(SKIPLDFLAG)
+	FLAGS := $(FLAGS) $(SKIPLDFLAG)
+endif
+
+ifneq ($(NAMESPACELDFLAG),)
+	FLAGS := $(FLAGS) $(NAMESPACELDFLAG)
 endif
 
 ifneq ($(FLAGS),)
