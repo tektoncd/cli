@@ -252,31 +252,21 @@ Waiting for logs to be available...
 			}})
 	})
 
-	t.Logf("Creating Pipeline volume-from-template in namespace: %s", namespace)
-	kubectl.MustSucceed(t, "create", "-f", helper.GetResourcePath("pipeline-with-workspace.yaml"))
+	t.Logf("Creating Pipeline pipeline-with-workspace in namespace: %s", namespace)
+	kubectl.MustSucceed(t, "create", "-f", helper.GetResourcePath("/workspace/pipeline-with-workspace.yaml"))
 
 	t.Run("Start PipelineRun with --workspace and volumeClaimTemplate", func(t *testing.T) {
 		if tkn.CheckVersion("Pipeline", "v0.10.2") {
 			t.Skip("Skip test as pipeline v0.10.2 doesn't support volumeClaimTemplates")
 		}
 
-		res := tkn.Run("pipeline", "start", "pipeline-with-workspace",
-			"--workspace=name=ws,volumeClaimTemplateFile="+helper.GetResourcePath("pvc.yaml"),
+		tkn.MustSucceed(t, "pipeline", "start", "pipeline-with-workspace",
+			"--workspace=name=ws,volumeClaimTemplateFile="+helper.GetResourcePath("/workspace/pvc.yaml"),
 			"--showlog")
 
 		time.Sleep(1 * time.Second)
 
 		pipelineRunGeneratedName := builder.GetPipelineRunListWithName(c, "pipeline-with-workspace").Items[0].Name
-		vars["Element"] = pipelineRunGeneratedName
-		expected := helper.ProcessString(`(PipelineRun started: {{.Element}}
-Waiting for logs to be available...
-.*)`, vars)
-		res.Assert(t, icmd.Expected{
-			ExitCode: 0,
-			Err:      icmd.None,
-		})
-		assert.Assert(t, is.Regexp(expected, res.Stdout()))
-
 		timeout := 5 * time.Minute
 		if err := wait.ForPipelineRunState(c, pipelineRunGeneratedName, timeout, wait.PipelineRunSucceed(pipelineRunGeneratedName), "PipelineRunSucceeded"); err != nil {
 			t.Errorf("Error waiting for PipelineRun to Succeed: %s", err)

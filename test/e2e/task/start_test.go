@@ -186,29 +186,18 @@ Waiting for logs to be available...
 	})
 
 	t.Logf("Creating Task task-with-workspace in namespace: %s ", namespace)
-	kubectl.MustSucceed(t, "create", "-f", helper.GetResourcePath("task-with-workspace.yaml"))
+	kubectl.MustSucceed(t, "create", "-f", helper.GetResourcePath("/workspace/task-with-workspace.yaml"))
 
 	t.Run("Start TaskRun with --workspace and volumeClaimTemplate", func(t *testing.T) {
 		if tkn.CheckVersion("Pipeline", "v0.10.2") {
 			t.Skip("Skip test as pipeline v0.10.2 doesn't support volumeClaimTemplates")
 		}
 
-		res := tkn.Run("task", "start", "task-with-workspace",
+		tkn.MustSucceed(t, "task", "start", "task-with-workspace",
 			"--showlog",
-			"--workspace=name=read-allowed,volumeClaimTemplateFile="+helper.GetResourcePath("pvc.yaml"))
+			"--workspace=name=read-allowed,volumeClaimTemplateFile="+helper.GetResourcePath("/workspace/pvc.yaml"))
 
-		vars := make(map[string]interface{})
 		taskRunGeneratedName := builder.GetTaskRunListWithName(c, "task-with-workspace").Items[0].Name
-		vars["Taskrun"] = taskRunGeneratedName
-		expected := helper.ProcessString(`(TaskRun started: {{.Taskrun}}
-Waiting for logs to be available...
-.*)`, vars)
-		res.Assert(t, icmd.Expected{
-			ExitCode: 0,
-			Err:      icmd.None,
-		})
-		assert.Assert(t, is.Regexp(expected, res.Stdout()))
-
 		if err := wait.ForTaskRunState(c, taskRunGeneratedName, wait.TaskRunSucceed(taskRunGeneratedName), "TaskRunSucceeded"); err != nil {
 			t.Errorf("Error waiting for TaskRun to Succeed: %s", err)
 		}

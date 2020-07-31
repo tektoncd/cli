@@ -20,6 +20,6 @@ spec:
   steps:
   - name: list-files
     image: ubuntu
-    script: ls $(workspaces.write-allowed.path)
+    script: ls $(workspaces.read-allowed.path)
   workspaces:
   - name: read-allowed

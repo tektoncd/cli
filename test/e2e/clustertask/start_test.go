@@ -24,6 +24,7 @@ import (
 	"github.com/tektoncd/cli/test/cli"
 	"github.com/tektoncd/cli/test/framework"
 	"github.com/tektoncd/cli/test/helper"
+	"github.com/tektoncd/cli/test/wait"
 
 	"gotest.tools/v3/assert"
 	is "gotest.tools/v3/assert/cmp"
@@ -110,5 +111,23 @@ Waiting for logs to be available...
 				c.Close()
 				return nil
 			}})
+	})
+
+	t.Logf("Creating ClusterTask ct-with-workspace in namespace: %s ", namespace)
+	kubectl.MustSucceed(t, "create", "-f", helper.GetResourcePath("/workspace/ct-with-workspace.yaml"))
+
+	t.Run("Start ClusterTask with --workspace and volumeClaimTemplate", func(t *testing.T) {
+		if tkn.CheckVersion("Pipeline", "v0.10.2") {
+			t.Skip("Skip test as pipeline v0.10.2 doesn't support volumeClaimTemplates")
+		}
+
+		tkn.MustSucceed(t, "ct", "start", "ct-with-workspace",
+			"--showlog",
+			"--workspace=name=read-allowed,volumeClaimTemplateFile="+helper.GetResourcePath("/workspace/pvc.yaml"))
+
+		taskRunGeneratedName := builder.GetTaskRunListWithName(c, "ct-with-workspace").Items[0].Name
+		if err := wait.ForTaskRunState(c, taskRunGeneratedName, wait.TaskRunSucceed(taskRunGeneratedName), "TaskRunSucceeded"); err != nil {
+			t.Errorf("Error waiting for TaskRun to Succeed: %s", err)
+		}
 	})
 }
