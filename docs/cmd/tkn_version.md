@@ -16,6 +16,7 @@ Prints version information
 
 ```
       --check               check if a newer version is available
+      --component string    provide a particular component name for its version (client|pipeline|triggers|dashboard)
   -c, --context string      name of the kubeconfig context to use (default: kubectl config current-context)
   -h, --help                help for version
   -k, --kubeconfig string   kubectl config file (default: $HOME/.kube/config)
