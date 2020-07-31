@@ -15,12 +15,14 @@
 apiVersion: tekton.dev/v1alpha1
 kind: ClusterTask
 metadata:
-  name: read-task
+  name: read-clustertask
 spec:
   workspaces:
     - name: shared-workspace
   inputs:
     params:
+      - name: FILEPATH
+        default: "docs"
       - name: FILENAME
     resources:
       - name: source
@@ -28,4 +30,4 @@ spec:
   steps:
     - name: read-file-content
       image: ubuntu
-      script: "cat $(inputs.resources.source.path)/$(inputs.params.FILENAME)"
+      script: "cat $(inputs.resources.source.path)/$(inputs.params.FILEPATH)/$(inputs.params.FILENAME)"

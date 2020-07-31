@@ -56,7 +56,7 @@ func TestClusterTaskInteractiveStartE2E(t *testing.T) {
 		})
 	})
 
-	t.Logf("Creating clustertask read-task")
+	t.Logf("Creating clustertask read-clustertask")
 	kubectl.MustSucceed(t, "create", "-f", helper.GetResourcePath("read-file-clustertask.yaml"))
 
 	t.Logf("Creating git pipeline resource in namespace: %s", namespace)
@@ -66,7 +66,7 @@ func TestClusterTaskInteractiveStartE2E(t *testing.T) {
 		res := tkn.Run("clustertask", "list")
 		expected := builder.ListAllClusterTasksOutput(t, c, map[int]interface{}{
 			0: &builder.TaskData{
-				Name: "read-task",
+				Name: "read-clustertask",
 			},
 		})
 		res.Assert(t, icmd.Expected{
@@ -77,15 +77,15 @@ func TestClusterTaskInteractiveStartE2E(t *testing.T) {
 	})
 
 	t.Run("Start ClusterTask with flags", func(t *testing.T) {
-		res := tkn.MustSucceed(t, "clustertask", "start", "read-task",
+		res := tkn.MustSucceed(t, "clustertask", "start", "read-clustertask",
 			"-i=source="+tePipelineGitResourceName,
-			"-p=FILENAME=docs/README.md",
+			"-p=FILEPATH=docs",
+			"-p=FILENAME=README.md",
 			"-w=name=shared-workspace,emptyDir=",
-			"--showlog",
-			"true")
+			"--showlog")
 
 		vars := make(map[string]interface{})
-		taskRunGeneratedName := builder.GetTaskRunListWithName(c, "read-task", true).Items[0].Name
+		taskRunGeneratedName := builder.GetTaskRunListWithName(c, "read-clustertask", true).Items[0].Name
 		vars["Taskrun"] = taskRunGeneratedName
 		expected := helper.ProcessString(`(TaskRun started: {{.Taskrun}}
 Waiting for logs to be available...
@@ -98,23 +98,32 @@ Waiting for logs to be available...
 
 	t.Run("Start ClusterTask interactively", func(t *testing.T) {
 		tkn.RunInteractiveTests(t, &cli.Prompt{
-			CmdArgs: []string{"clustertask", "start", "read-task", "-w=name=shared-workspace,emptyDir="},
+			CmdArgs: []string{"clustertask", "start", "read-clustertask", "-w=name=shared-workspace,emptyDir="},
 			Procedure: func(c *expect.Console) error {
 				if _, err := c.ExpectString("Choose the git resource to use for source:"); err != nil {
 					return err
 				}
-
 				if _, err := c.ExpectString("skaffold-git (https://github.com/GoogleContainerTools/skaffold)"); err != nil {
 					return err
 				}
+				if _, err := c.SendLine(string(terminal.KeyEnter)); err != nil {
+					return err
+				}
+				if _, err := c.ExpectString("Value for param `FILEPATH` of type `string`? (Default is `docs`)"); err != nil {
+					return err
+				}
 
+				if _, err := c.ExpectString("(docs)"); err != nil {
+					return err
+				}
 				if _, err := c.SendLine(string(terminal.KeyEnter)); err != nil {
 					return err
 				}
 				if _, err := c.ExpectString("Value for param `FILENAME` of type `string`?"); err != nil {
 					return err
 				}
-				if _, err := c.SendLine("docs/README.md"); err != nil {
+
+				if _, err := c.SendLine("README.md"); err != nil {
 					return err
 				}
 				if _, err := c.ExpectEOF(); err != nil {
@@ -124,6 +133,57 @@ Waiting for logs to be available...
 				c.Close()
 				return nil
 			}})
+		taskRunGeneratedName := builder.GetTaskRunListWithName(c, "read-clustertask", true).Items[0].Name
+		if err := wait.ForTaskRunState(c, taskRunGeneratedName, wait.TaskRunSucceed(taskRunGeneratedName), "TaskRunSucceed"); err != nil {
+			t.Errorf("Error waiting for TaskRun to Succeed: %s", err)
+		}
+	})
+
+	t.Run("Start ClusterTask with --use-param-defaults and all the params having default", func(t *testing.T) {
+		tkn.MustSucceed(t, "clustertask", "start", "read-clustertask",
+			"-i=source="+tePipelineGitResourceName,
+			"-p=FILENAME=README.md",
+			"-w=name=shared-workspace,emptyDir=",
+			"--use-param-defaults",
+			"--showlog")
+		taskRunGeneratedName := builder.GetTaskRunListWithName(c, "read-clustertask", true).Items[0].Name
+		if err := wait.ForTaskRunState(c, taskRunGeneratedName, wait.TaskRunSucceed(taskRunGeneratedName), "TaskRunSucceed"); err != nil {
+			t.Errorf("Error waiting for TaskRun to Succeed: %s", err)
+		}
+	})
+
+	t.Run("Start ClusterTask with --use-param-defaults and some of the params not having default", func(t *testing.T) {
+		tkn.RunInteractiveTests(t, &cli.Prompt{
+			CmdArgs: []string{"clustertask", "start", "read-clustertask",
+				"-i=source=" + tePipelineGitResourceName,
+				"--use-param-defaults",
+				"-w=name=shared-workspace,emptyDir=",
+				"--showlog"},
+			Procedure: func(c *expect.Console) error {
+
+				if _, err := c.ExpectString("Value for param `FILENAME` of type `string`?"); err != nil {
+					return err
+				}
+
+				if _, err := c.SendLine("README.md"); err != nil {
+					return err
+				}
+
+				if _, err := c.Send(string(terminal.KeyEnter)); err != nil {
+					return err
+				}
+
+				if _, err := c.ExpectEOF(); err != nil {
+					return err
+				}
+
+				c.Close()
+				return nil
+			}})
+		taskRunGeneratedName := builder.GetTaskRunListWithName(c, "read-clustertask", true).Items[0].Name
+		if err := wait.ForTaskRunState(c, taskRunGeneratedName, wait.TaskRunSucceed(taskRunGeneratedName), "TaskRunSucceed"); err != nil {
+			t.Errorf("Error waiting for TaskRun to Succeed: %s", err)
+		}
 	})
 
 	t.Run("Start ClusterTask with --pod-template", func(t *testing.T) {
@@ -131,14 +191,15 @@ Waiting for logs to be available...
 			t.Skip("Skip test as pipeline v0.10 doesn't support certain PodTemplate properties")
 		}
 
-		tkn.MustSucceed(t, "clustertask", "start", "read-task",
+		tkn.MustSucceed(t, "clustertask", "start", "read-clustertask",
 			"-i=source="+tePipelineGitResourceName,
-			"-p=FILENAME=docs/README.md",
+			"-p=FILEPATH=docs",
+			"-p=FILENAME=README.md",
 			"-w=name=shared-workspace,emptyDir=",
 			"--showlog",
 			"--pod-template="+helper.GetResourcePath("/podtemplate/podtemplate.yaml"))
 
-		taskRunGeneratedName := builder.GetTaskRunListWithName(c, "read-task", true).Items[0].Name
+		taskRunGeneratedName := builder.GetTaskRunListWithName(c, "read-clustertask", true).Items[0].Name
 		if err := wait.ForTaskRunState(c, taskRunGeneratedName, wait.TaskRunSucceed(taskRunGeneratedName), "TaskRunSucceeded"); err != nil {
 			t.Errorf("Error waiting for TaskRun to Succeed: %s", err)
 		}
