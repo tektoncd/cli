@@ -45,6 +45,16 @@ func TestClusterTaskInteractiveStartE2E(t *testing.T) {
 	tkn, err := cli.NewTknRunner(namespace)
 	assert.NilError(t, err)
 
+	t.Run("Get list of ClusterTasks when none present", func(t *testing.T) {
+		res := tkn.Run("clustertask", "list")
+		expected := "No ClusterTasks found\n"
+		res.Assert(t, icmd.Expected{
+			ExitCode: 0,
+			Err:      icmd.None,
+			Out:      expected,
+		})
+	})
+
 	t.Logf("Creating clustertask read-task")
 	kubectl.MustSucceed(t, "create", "-f", helper.GetResourcePath("read-file-clustertask.yaml"))
 

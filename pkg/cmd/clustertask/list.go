@@ -29,7 +29,7 @@ import (
 )
 
 const (
-	emptyMsg = "No ClusterTasks found"
+	emptyMsg = "No ClusterTasks found\n"
 	header   = "NAME\tDESCRIPTION\tAGE"
 	body     = "%s\t%s\t%s\n"
 )
