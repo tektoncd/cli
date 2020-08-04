@@ -16,6 +16,10 @@ Params
  NAME    TYPE     DESCRIPTION   DEFAULT VALUE
  myarg   string                 ---
 
+Results
+
+ No results
+
 Steps
 
  hello

@@ -90,6 +90,16 @@ const describeTemplate = `{{decorate "bold" "Name"}}:	{{ .ClusterTask.Name }}
 {{- end }}
 {{- end }}
 
+{{decorate "results" ""}}{{decorate "underline bold" "Results\n"}}
+{{- if eq (len .ClusterTask.Spec.Results) 0 }}
+ No results
+{{- else }}
+ NAME	DESCRIPTION
+{{- range $result := .ClusterTask.Spec.Results }}
+ {{ decorate "bullet" $result.Name }}	{{ formatDesc $result.Description }}
+{{- end }}
+{{- end }}
+
 {{decorate "steps" ""}}{{decorate "underline bold" "Steps\n"}}
 
 {{- if eq (len .ClusterTask.Spec.Steps) 0 }}

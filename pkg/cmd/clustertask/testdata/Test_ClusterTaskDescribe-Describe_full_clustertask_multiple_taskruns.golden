@@ -17,6 +17,10 @@ Params
  myarg   string   param type is string   default
  print   array    param type is array    [booms booms booms]
 
+Results
+
+ No results
+
 Steps
 
  hello
