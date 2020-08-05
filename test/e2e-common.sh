@@ -18,7 +18,8 @@
 
 # Check if we have a specific RELEASE_YAML global environment variable to use
 # instead of detecting the latest released one from tektoncd/pipeline releases
-RELEASE_YAML=${RELEASE_YAML:-}
+RELEASE_YAML_PIPELINES=${RELEASE_YAML_PIPELINE:-}
+RELEASE_YAML_TRIGGERS=${RELEASE_YAML_TRIGGERS:-}
 
 source $(dirname $0)/../vendor/github.com/tektoncd/plumbing/scripts/e2e-tests.sh
 
@@ -129,14 +130,14 @@ function run_yaml_tests() {
 function install_pipeline_crd() {
   local latestreleaseyaml
   echo ">> Deploying Tekton Pipelines"
-  if [[ -n ${RELEASE_YAML} ]];then
-	latestreleaseyaml=${RELEASE_YAML}
+  if [[ -n ${RELEASE_YAML_PIPELINE} ]];then
+	latestreleaseyaml=${RELEASE_YAML_PIPELINE}
   else
     # First try to install latestreleaseyaml from nightly
     curl -o/dev/null -s -LI -f https://storage.googleapis.com/tekton-releases-nightly/pipeline/latest/release.yaml &&
         latestreleaseyaml=https://storage.googleapis.com/tekton-releases-nightly/pipeline/latest/release.yaml
 
-    # If for whatever reason the nightly release wasnt there (nightly ci failure?) les try the released version
+    # If for whatever reason the nightly release wasnt there (nightly ci failure?), try the released version
     [[ -z ${latestreleaseyaml} ]] && \
         latestreleaseyaml=$(curl -s https://api.github.com/repos/tektoncd/pipeline/releases|python -c "import sys, json;x=json.load(sys.stdin);ass=x[0]['assets'];print([ x['browser_download_url'] for x in ass if x['name'] == 'release.yaml'][0])")
 
@@ -145,7 +146,7 @@ function install_pipeline_crd() {
   kubectl apply -f ${latestreleaseyaml} ||
     fail_test "Build pipeline installation failed"
 
-  # Make sure thateveything is cleaned up in the current namespace.
+  # Make sure that eveything is cleaned up in the current namespace.
   for res in pipelineresources tasks pipelines taskruns pipelineruns; do
     kubectl delete --ignore-not-found=true ${res}.tekton.dev --all
   done
@@ -154,6 +155,33 @@ function install_pipeline_crd() {
   wait_until_pods_running tekton-pipelines || fail_test "Tekton Pipeline did not come up"
 }
 
+function install_triggers_crd() {
+  local latestreleaseyaml
+  echo ">> Deploying Tekton Triggers"
+  if [[ -n ${RELEASE_YAML_TRIGGERS} ]];then
+	latestreleaseyaml=${RELEASE_YAML_TRIGGERS}
+  else
+    # First try to install latestreleaseyaml from nightly
+    curl -o/dev/null -s -LI -f https://storage.googleapis.com/tekton-releases-nightly/triggers/latest/release.yaml &&
+        latestreleaseyaml=https://storage.googleapis.com/tekton-releases-nightly/triggers/latest/release.yaml
+
+    # If for whatever reason the nightly release wasnt there (nightly ci failure?), try the released version
+    [[ -z ${latestreleaseyaml} ]] && \
+        latestreleaseyaml=$(curl -s https://api.github.com/repos/tektoncd/triggers/releases|python -c "import sys, json;x=json.load(sys.stdin);ass=x[0]['assets'];print([ x['browser_download_url'] for x in ass if x['name'] == 'release.yaml'][0])")
+
+  fi
+  [[ -z ${latestreleaseyaml} ]] && fail_test "Could not get latest released release.yaml"
+  kubectl apply -f ${latestreleaseyaml} ||
+    fail_test "Build triggers installation failed"
+
+  # Make sure that eveything is cleaned up in the current namespace.
+  for res in eventlistener triggertemplate triggerbinding clustertriggerbinding; do
+    kubectl delete --ignore-not-found=true ${res}.triggers.tekton.dev --all
+  done
+
+  # Wait for pods to be running in the namespaces we are deploying to
+  wait_until_pods_running tekton-pipelines || fail_test "Tekton Triggers did not come up"
+}
 
 wait_until_ready(){
   local timeout="$1"; shift

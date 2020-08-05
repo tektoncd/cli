@@ -63,7 +63,13 @@ must_fail  "list taskrun for task foo before installing crd" tkn taskrun list fo
 must_fail  "logs of pipelinerun before installing crd" tkn pipelinerun logs foo
 must_fail  "logs of taskrun before installing crd" tkn taskrun logs foo
 
+must_fail  "list eventlisteners before installing crd" tkn eventlistener ls
+must_fail  "list triggertemplates before installing crd" tkn triggertemplate ls
+must_fail  "list triggerbindings before installing crd" tkn triggerbinding ls
+must_fail  "list clustertriggerbindings before installing crd" tkn clustertriggerbinding ls
+
 install_pipeline_crd
+install_triggers_crd
 
 # listing objects after CRD is created should not fail
 kubectl config set-context $(kubectl config current-context) --namespace=default
@@ -74,6 +80,11 @@ run_test  "list task" tkn task list
 run_test  "list taskrun for task foo" tkn taskrun list foo
 run_test  "list taskrun" tkn taskrun list
 
+run_test  "list eventlisteners" tkn eventlistener ls
+run_test  "list triggertemplates" tkn triggertemplate ls
+run_test  "list triggerbindings" tkn triggerbinding ls
+run_test  "list clustertriggerbindings" tkn clustertriggerbinding ls
+
 echo "..............................."
 
 # fetching objects that do not exist must fail
@@ -81,6 +92,10 @@ must_fail  "describe pipeline that does not exist" tkn pipeline describe foo
 must_fail  "describe pipelinerun that does not exist" tkn pipelinerun describe foo
 must_fail  "logs of pipelinerun that does not exist" tkn pipelinerun logs foo
 must_fail  "logs of taskrun that does not exist" tkn taskrun logs foo
+
+must_fail  "describe eventlistener that does not exist" tkn eventlistener describe foo
+must_fail  "describe triggertemplate that does not exist" tkn triggertemplate describe foo
+
 echo "....................."
 
 # change default namespace to tektoncd
@@ -90,6 +105,7 @@ kubectl config set-context $(kubectl config current-context) --namespace=tektonc
 # create pipeline, pipelinerun, task, and taskrun
 kubectl apply -f ./test/resources/output-pipelinerun.yaml
 kubectl apply -f ./test/resources/task-volume.yaml
+kubectl apply -f ./test/resources/eventlistener.yaml
 echo Waiting for resources to be ready
 echo ---------------------------------
 wait_until_ready 600 pipelinerun/output-pipeline-run || exit 1
@@ -105,9 +121,11 @@ run_test  "list pipelines" tkn pipeline list
 run_test  "list task" tkn task list
 run_test  "list taskrun for pipeline task-volume" tkn taskrun list task-volume
 run_test  "list taskrun" tkn taskrun list
+run_test  "list eventlistener" tkn eventlistener list
 
 run_test  "describe pipeline" tkn pipeline describe output-pipeline
 run_test  "describe pipelinerun" tkn pipelinerun describe output-pipeline-run
+run_test  "describe eventlistener" tkn eventlistener describe listener
 
 run_test  "show logs" tkn pipelinerun logs output-pipeline-run
 run_test  "show logs" tkn taskrun logs test-template-volume
@@ -120,16 +138,23 @@ run_test  "delete pipelinerun" tkn pipelinerun delete output-pipeline-run -f
 run_test  "delete resource" tkn resource delete skaffold-git -f
 run_test  "delete task" tkn task delete create-file -f
 run_test  "delete taskrun" tkn taskrun delete test-template-volume -f
+run_test  "delete eventlistener" tkn eventlistener delete listener -f
 
 # confirm deletion (TODO: Add task test when added desc or logs to task command)
 must_fail  "describe deleted pipeline" tkn pipeline describe output-pipeline
 must_fail  "describe deleted pipelinerun" tkn pipelinerun describe output-pipeline-run
 must_fail  "describe deleted resource" tkn resource describe skaffold-git
 must_fail  "show logs deleted taskrun" tkn taskrun logs test-template-volume
+must_fail  "describe deleted eventlistener" tkn eventlistener describe listener
 
 # Make sure that eveything is cleaned up in the current namespace.
 for res in pipelineresources tasks pipelines taskruns pipelineruns; do
   kubectl delete --ignore-not-found=true ${res}.tekton.dev --all
+done
+
+# Make sure that eveything is cleaned up in the current namespace.
+for res in eventlistener triggertemplate triggerbinding clustertriggerbinding; do
+  kubectl delete --ignore-not-found=true ${res}.triggers.tekton.dev --all
 done
 
 # Run the e2e tests
