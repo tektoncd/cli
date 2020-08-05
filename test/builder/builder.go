@@ -146,7 +146,7 @@ func GetPipelineRun(c *framework.Clients, name string) *v1alpha1.PipelineRun {
 	return pipelineRun
 }
 
-func GetPipelineRunListWithName(c *framework.Clients, pname string) *v1alpha1.PipelineRunList {
+func GetPipelineRunListWithName(c *framework.Clients, pname string, sortByStartTime bool) *v1alpha1.PipelineRunList {
 	opts := metav1.ListOptions{
 		LabelSelector: fmt.Sprintf("tekton.dev/pipeline=%s", pname),
 	}
@@ -156,10 +156,14 @@ func GetPipelineRunListWithName(c *framework.Clients, pname string) *v1alpha1.Pi
 		log.Fatalf("Couldn't get expected pipelineRunList  %s", err)
 	}
 
+	if err == nil && sortByStartTime {
+		SortByStartTimePipelineRun(pipelineRunList.Items)
+	}
+
 	return pipelineRunList
 }
 
-func GetTaskRunListWithName(c *framework.Clients, tname string) *v1alpha1.TaskRunList {
+func GetTaskRunListWithName(c *framework.Clients, tname string, sortByStartTime bool) *v1alpha1.TaskRunList {
 	opts := metav1.ListOptions{
 		LabelSelector: fmt.Sprintf("tekton.dev/task=%s", tname),
 	}
@@ -169,6 +173,10 @@ func GetTaskRunListWithName(c *framework.Clients, tname string) *v1alpha1.TaskRu
 
 	if err != nil {
 		log.Fatalf("Couldn't get expected taskRunList  %s", err)
+	}
+
+	if err == nil && sortByStartTime {
+		SortByStartTimeTaskRun(taskRunList.Items)
 	}
 
 	return taskRunList
@@ -214,7 +222,7 @@ func ListResourceNamesForJSONPath(obj interface{}) string {
 			return emptyMsg
 		}
 		//sort by start Time
-		SortByStartTime(obj.Items)
+		SortByStartTimeTaskRun(obj.Items)
 
 		for _, r := range obj.Items {
 			fmt.Fprintf(w, body,
@@ -423,7 +431,7 @@ NAME	STARTED	DURATION	STATUS{{- if $.AllNamespaces }}	NAMESPACE{{- end }}
 	trslen := len(taskrun.Items)
 
 	if trslen != 0 {
-		SortByStartTime(taskrun.Items)
+		SortByStartTimeTaskRun(taskrun.Items)
 	}
 	var data = struct {
 		TaskRuns      *v1alpha1.TaskRunList
@@ -820,7 +828,7 @@ func GetPipelineRunListWithNameAndTestData(t *testing.T, c *framework.Clients, p
 		}
 	}
 
-	if changelog := cmp.Diff(pipelineRunList, GetPipelineRunListWithName(c, pname)); changelog != "" {
+	if changelog := cmp.Diff(pipelineRunList, GetPipelineRunListWithName(c, pname, false)); changelog != "" {
 		t.Logf("Changes occurred while performing diff operation %+v", changelog)
 	}
 

@@ -20,15 +20,19 @@ import (
 	"github.com/tektoncd/pipeline/pkg/apis/pipeline/v1alpha1"
 )
 
-func SortByStartTime(trs []v1alpha1.TaskRun) {
-	sort.Sort(byStartTime(trs))
+func SortByStartTimeTaskRun(trs []v1alpha1.TaskRun) {
+	sort.Sort(byStartTimeTR(trs))
 }
 
-type byStartTime []v1alpha1.TaskRun
+func SortByStartTimePipelineRun(prs []v1alpha1.PipelineRun) {
+	sort.Sort(byStartTimePR(prs))
+}
 
-func (trs byStartTime) Len() int      { return len(trs) }
-func (trs byStartTime) Swap(i, j int) { trs[i], trs[j] = trs[j], trs[i] }
-func (trs byStartTime) Less(i, j int) bool {
+type byStartTimeTR []v1alpha1.TaskRun
+
+func (trs byStartTimeTR) Len() int      { return len(trs) }
+func (trs byStartTimeTR) Swap(i, j int) { trs[i], trs[j] = trs[j], trs[i] }
+func (trs byStartTimeTR) Less(i, j int) bool {
 	if trs[j].Status.StartTime == nil {
 		return false
 	}
@@ -36,4 +40,18 @@ func (trs byStartTime) Less(i, j int) bool {
 		return true
 	}
 	return trs[j].Status.StartTime.Before(trs[i].Status.StartTime)
+}
+
+type byStartTimePR []v1alpha1.PipelineRun
+
+func (prs byStartTimePR) Len() int      { return len(prs) }
+func (prs byStartTimePR) Swap(i, j int) { prs[i], prs[j] = prs[j], prs[i] }
+func (prs byStartTimePR) Less(i, j int) bool {
+	if prs[j].Status.StartTime == nil {
+		return false
+	}
+	if prs[i].Status.StartTime == nil {
+		return true
+	}
+	return prs[j].Status.StartTime.Before(prs[i].Status.StartTime)
 }

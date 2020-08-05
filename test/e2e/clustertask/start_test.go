@@ -85,7 +85,7 @@ func TestClusterTaskInteractiveStartE2E(t *testing.T) {
 			"true")
 
 		vars := make(map[string]interface{})
-		taskRunGeneratedName := builder.GetTaskRunListWithName(c, "read-task").Items[0].Name
+		taskRunGeneratedName := builder.GetTaskRunListWithName(c, "read-task", true).Items[0].Name
 		vars["Taskrun"] = taskRunGeneratedName
 		expected := helper.ProcessString(`(TaskRun started: {{.Taskrun}}
 Waiting for logs to be available...
@@ -128,7 +128,7 @@ Waiting for logs to be available...
 
 	t.Run("Start ClusterTask with --pod-template", func(t *testing.T) {
 		if tkn.CheckVersion("Pipeline", "v0.10.2") {
-			t.Skip("Skip test as pipeline v0.10.2 doesn't support certain PodTemplate properties")
+			t.Skip("Skip test as pipeline v0.10 doesn't support certain PodTemplate properties")
 		}
 
 		tkn.MustSucceed(t, "clustertask", "start", "read-task",
@@ -138,7 +138,7 @@ Waiting for logs to be available...
 			"--showlog",
 			"--pod-template="+helper.GetResourcePath("/podtemplate/podtemplate.yaml"))
 
-		taskRunGeneratedName := builder.GetTaskRunListWithName(c, "read-task").Items[0].Name
+		taskRunGeneratedName := builder.GetTaskRunListWithName(c, "read-task", true).Items[0].Name
 		if err := wait.ForTaskRunState(c, taskRunGeneratedName, wait.TaskRunSucceed(taskRunGeneratedName), "TaskRunSucceeded"); err != nil {
 			t.Errorf("Error waiting for TaskRun to Succeed: %s", err)
 		}

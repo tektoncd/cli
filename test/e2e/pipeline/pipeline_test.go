@@ -165,7 +165,7 @@ func TestPipelinesE2E(t *testing.T) {
 
 		time.Sleep(1 * time.Second)
 
-		pipelineGeneratedName = builder.GetPipelineRunListWithName(c, tePipelineName).Items[0].Name
+		pipelineGeneratedName = builder.GetPipelineRunListWithName(c, tePipelineName, true).Items[0].Name
 		vars["Element"] = pipelineGeneratedName
 		expected := helper.ProcessString(`(PipelineRun started: {{.Element}}
 Waiting for logs to be available...
@@ -266,7 +266,7 @@ Waiting for logs to be available...
 
 		time.Sleep(1 * time.Second)
 
-		pipelineRunGeneratedName := builder.GetPipelineRunListWithName(c, "pipeline-with-workspace").Items[0].Name
+		pipelineRunGeneratedName := builder.GetPipelineRunListWithName(c, "pipeline-with-workspace", true).Items[0].Name
 		vars["Element"] = pipelineRunGeneratedName
 		expected := helper.ProcessString(`(PipelineRun started: {{.Element}}
 Waiting for logs to be available...
@@ -285,7 +285,7 @@ Waiting for logs to be available...
 
 	t.Run("Start PipelineRun with --pod-template", func(t *testing.T) {
 		if tkn.CheckVersion("Pipeline", "v0.10.2") {
-			t.Skip("Skip test as pipeline v0.10.2 doesn't support certain PodTemplate properties")
+			t.Skip("Skip test as pipeline v0.10 doesn't support certain PodTemplate properties")
 		}
 
 		tkn.MustSucceed(t, "pipeline", "start", tePipelineName,
@@ -295,7 +295,7 @@ Waiting for logs to be available...
 
 		time.Sleep(1 * time.Second)
 
-		pipelineRunGeneratedName := builder.GetPipelineRunListWithName(c, tePipelineName).Items[0].Name
+		pipelineRunGeneratedName := builder.GetPipelineRunListWithName(c, tePipelineName, true).Items[0].Name
 		timeout := 5 * time.Minute
 		// Should fail since runAsNonRoot=true
 		if err := wait.ForPipelineRunState(c, pipelineRunGeneratedName, timeout, wait.PipelineRunFailed(pipelineRunGeneratedName), "PipelineRunFailed"); err != nil {
@@ -408,7 +408,7 @@ func TestPipelinesNegativeE2E(t *testing.T) {
 			"--showlog",
 			"true")
 
-		pipelineGeneratedName = builder.GetPipelineRunListWithName(c, tePipelineName).Items[0].Name
+		pipelineGeneratedName = builder.GetPipelineRunListWithName(c, tePipelineName, true).Items[0].Name
 		vars["Element"] = pipelineGeneratedName
 		expected := helper.ProcessString(`(PipelineRun started: {{.Element}}
 Waiting for logs to be available...
