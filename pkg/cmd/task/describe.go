@@ -102,6 +102,17 @@ const describeTemplate = `{{decorate "bold" "Name"}}:	{{ .Task.Name }}
 {{- end }}
 {{- end }}
 
+{{decorate "workspaces" ""}}{{decorate "underline bold" "Workspaces\n"}}
+
+{{- if eq (len .Task.Spec.Workspaces) 0 }}
+ No workspaces
+{{- else }}
+ NAME	DESCRIPTION
+{{- range $workspace := .Task.Spec.Workspaces }}
+ {{ decorate "bullet" $workspace.Name }}	{{ formatDesc $workspace.Description }}
+{{- end }}
+{{- end }}
+
 {{decorate "steps" ""}}{{decorate "underline bold" "Steps\n"}}
 
 {{- if eq (len .Task.Spec.Steps) 0 }}
