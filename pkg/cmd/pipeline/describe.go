@@ -71,6 +71,16 @@ const describeTemplate = `{{decorate "bold" "Name"}}:	{{ .PipelineName }}
 {{- end }}
 {{- end }}
 
+{{decorate "results" ""}}{{decorate "underline bold" "Results\n"}}
+{{- if eq (len .Pipeline.Spec.Results) 0 }}
+ No results
+{{- else }}
+ NAME	DESCRIPTION
+{{- range $result := .Pipeline.Spec.Results }}
+ {{ decorate "bullet" $result.Name }}	{{ formatDesc $result.Description }}
+{{- end }}
+{{- end }}
+
 {{decorate "tasks" ""}}{{decorate "underline bold" "Tasks\n"}}
 {{- $tl := len .Pipeline.Spec.Tasks }}{{ if eq $tl 0 }}
  No tasks

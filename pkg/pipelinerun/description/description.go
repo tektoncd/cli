@@ -87,6 +87,16 @@ STARTED	DURATION	STATUS
 {{- end }}
 {{- end }}
 
+{{decorate "results" ""}}{{decorate "underline bold" "Results\n"}}
+{{- if eq (len .PipelineRun.Status.PipelineResults) 0 }}
+ No results
+{{- else }}
+ NAME	VALUE
+{{- range $result := .PipelineRun.Status.PipelineResults }}
+ {{decorate "bullet" $result.Name }}	{{ formatResult $result.Value }}
+{{- end }}
+{{- end }}
+
 {{decorate "taskruns" ""}}{{decorate "underline bold" "Taskruns\n"}}
 {{- $l := len .TaskrunList }}{{ if eq $l 0 }}
  No taskruns
@@ -162,6 +172,7 @@ func PrintPipelineRunDescription(s *cli.Stream, prName string, p cli.Params) err
 		"formatAge":                 formatted.Age,
 		"formatDuration":            formatted.Duration,
 		"formatCondition":           formatted.Condition,
+		"formatResult":              formatted.Result,
 		"hasFailed":                 hasFailed,
 		"pipelineRefExists":         pipelineRefExists,
 		"pipelineResourceRefExists": pipelineResourceRefExists,

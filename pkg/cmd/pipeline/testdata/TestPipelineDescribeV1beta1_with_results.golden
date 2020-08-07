@@ -1,0 +1,28 @@
+Name:        pipeline
+Namespace:   ns
+
+Resources
+
+ NAME   TYPE
+ name   git
+
+Params
+
+ No params
+
+Results
+
+ NAME       DESCRIPTION
+ result-1   This is a descripti...
+ result-2   This is a descripti...
+ result-3   
+
+Tasks
+
+ NAME     TASKREF   RUNAFTER   TIMEOUT   CONDITIONS   PARAMS
+ task-1   task-1               ---       ---          ---
+ task-2   task-2               ---       ---          ---
+
+PipelineRuns
+
+ No pipelineruns
