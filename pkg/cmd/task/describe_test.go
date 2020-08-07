@@ -745,3 +745,61 @@ func TestTaskDescribe_With_Results(t *testing.T) {
 	}
 	golden.Assert(t, out, fmt.Sprintf("%s.golden", t.Name()))
 }
+
+func TestTaskDescribe_With_Workspaces(t *testing.T) {
+	tasks := []*v1beta1.Task{
+		{
+			ObjectMeta: metav1.ObjectMeta{
+				Namespace: "ns",
+				Name:      "task-1",
+			},
+			Spec: v1beta1.TaskSpec{
+				Description: "a test description",
+				Steps: []v1beta1.Step{
+					{
+						Container: corev1.Container{
+							Name:  "hello",
+							Image: "busybox",
+						},
+					},
+				},
+				Workspaces: []v1beta1.WorkspaceDeclaration{
+					{
+						Name:        "test",
+						Description: "test workspace",
+						MountPath:   "/workspace/test/file",
+						ReadOnly:    true,
+					},
+				},
+			},
+		},
+	}
+
+	namespaces := []*corev1.Namespace{
+		{
+			ObjectMeta: metav1.ObjectMeta{
+				Name: "ns",
+			},
+		},
+	}
+
+	version := "v1beta1"
+	tdc := testDynamic.Options{}
+	dynamic, err := tdc.Client(
+		cb.UnstructuredV1beta1T(tasks[0], version),
+	)
+	if err != nil {
+		t.Errorf("unable to create dynamic client: %v", err)
+	}
+
+	cs, _ := test.SeedV1beta1TestData(t, pipelinev1beta1test.Data{Tasks: tasks, Namespaces: namespaces})
+	cs.Pipeline.Resources = cb.APIResourceList(version, []string{"task", "taskrun"})
+	p := &test.Params{Tekton: cs.Pipeline, Kube: cs.Kube, Dynamic: dynamic}
+	p.SetNamespace("ns")
+	task := Command(p)
+	out, err := test.ExecuteCommand(task, "desc", "task-1")
+	if err != nil {
+		t.Errorf("Unexpected error: %v", err)
+	}
+	golden.Assert(t, out, fmt.Sprintf("%s.golden", t.Name()))
+}
