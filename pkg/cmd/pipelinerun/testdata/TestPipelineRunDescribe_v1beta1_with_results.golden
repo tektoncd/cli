@@ -4,24 +4,24 @@ Pipeline Ref:   pipeline
 
 Status
 
-STARTED         DURATION     STATUS
-0 seconds ago   20 minutes   Succeeded
+STARTED          DURATION     STATUS
+10 minutes ago   20 minutes   Succeeded
 
 Resources
 
  NAME    RESOURCE REF
  res-1   test-res
- res-2   test-res2
 
 Params
 
  NAME   VALUE
  p-1    somethingdifferent
- p-2    [booms booms booms]
 
 Results
 
- No results
+ NAME       VALUE
+ result-1   value-1
+ result-2   value-2
 
 Taskruns
 

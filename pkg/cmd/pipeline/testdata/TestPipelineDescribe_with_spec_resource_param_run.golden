@@ -12,6 +12,10 @@ Params
  NAME             TYPE     DESCRIPTION            DEFAULT VALUE
  pipeline-param   string   param of type string   somethingdifferent
 
+Results
+
+ No results
+
 Tasks
 
  NAME   TASKREF   RUNAFTER   TIMEOUT     CONDITIONS   PARAMS
