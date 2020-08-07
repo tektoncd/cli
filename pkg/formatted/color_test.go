@@ -80,13 +80,13 @@ func TestDecoration(t *testing.T) {
 	funcMap := template.FuncMap{
 		"decorate": DecorateAttr,
 	}
-	aTemplate := `{{decorate "bullet" "Foo"}} {{decorate "check" ""}}{{decorate "resources" ""}}{{decorate "params" ""}}{{decorate "results" ""}}{{decorate "tasks" ""}}{{decorate "pipelineruns" ""}}{{decorate "status" ""}}{{decorate "inputresources" ""}}{{decorate "outputresources" ""}}{{decorate "steps" ""}}{{decorate "message" ""}}{{decorate "taskruns" ""}}{{decorate "sidecars" ""}}{{decorate "red" "Red"}} {{decorate "underline" "Foo"}}`
+	aTemplate := `{{decorate "bullet" "Foo"}} {{decorate "check" ""}}{{decorate "resources" ""}}{{decorate "params" ""}}{{decorate "results" ""}}{{decorate "workspaces" ""}}{{decorate "tasks" ""}}{{decorate "pipelineruns" ""}}{{decorate "status" ""}}{{decorate "inputresources" ""}}{{decorate "outputresources" ""}}{{decorate "steps" ""}}{{decorate "message" ""}}{{decorate "taskruns" ""}}{{decorate "sidecars" ""}}{{decorate "red" "Red"}} {{decorate "underline" "Foo"}}`
 	processed := template.Must(template.New("Describe Pipeline").Funcs(funcMap).Parse(aTemplate))
 	buf := new(bytes.Buffer)
 
 	if err := processed.Execute(buf, nil); err != nil {
 		t.Error("Could not process the template.")
 	}
-	test.AssertOutput(t, "∙ Foo ✔ ️📦 ⚓ 📝 🗒  ⛩  🌡️  📨 📡 🦶 💌 🗂  🚗 \x1b[91mRed\x1b[0m \x1b[4mFoo\x1b[0m", buf.String())
+	test.AssertOutput(t, "∙ Foo ✔ ️📦 ⚓ 📝 📂 🗒  ⛩  🌡️  📨 📡 🦶 💌 🗂  🚗 \x1b[91mRed\x1b[0m \x1b[4mFoo\x1b[0m", buf.String())
 
 }

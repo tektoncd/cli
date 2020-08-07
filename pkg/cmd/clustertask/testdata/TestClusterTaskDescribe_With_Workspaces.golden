@@ -1,4 +1,5 @@
-Name:   clustertask-justname
+Name:          clustertask-1
+Description:   a clustertest description
 
 Input Resources
 
@@ -18,11 +19,12 @@ Results
 
 Workspaces
 
- No workspaces
+ NAME   DESCRIPTION
+ test   test workspace
 
 Steps
 
- No steps
+ hello
 
 Taskruns
 

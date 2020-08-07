@@ -70,6 +70,8 @@ func DecorateAttr(attrString, message string) string {
 		return "🚗 "
 	case "results":
 		return "📝 "
+	case "workspaces":
+		return "📂 "
 	}
 
 	attr := color.Reset

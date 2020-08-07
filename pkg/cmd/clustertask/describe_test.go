@@ -416,3 +416,54 @@ func TestClusterTaskDescribe_With_Results(t *testing.T) {
 	}
 	golden.Assert(t, out, fmt.Sprintf("%s.golden", t.Name()))
 }
+
+func TestClusterTaskDescribe_With_Workspaces(t *testing.T) {
+	clock := clockwork.NewFakeClock()
+
+	clustertasks := []*v1beta1.ClusterTask{
+		{
+			ObjectMeta: metav1.ObjectMeta{
+				Name:              "clustertask-1",
+				CreationTimestamp: metav1.Time{Time: clock.Now().Add(-1 * time.Minute)},
+			},
+			Spec: v1beta1.TaskSpec{
+				Description: "a clustertest description",
+				Steps: []v1beta1.Step{
+					{
+						Container: corev1.Container{
+							Name:  "hello",
+							Image: "busybox",
+						},
+					},
+				},
+				Workspaces: []v1beta1.WorkspaceDeclaration{
+					{
+						Name:        "test",
+						Description: "test workspace",
+						MountPath:   "/workspace/test/file",
+						ReadOnly:    true,
+					},
+				},
+			},
+		},
+	}
+
+	version := "v1beta1"
+	tdc := testDynamic.Options{}
+	dynamic, err := tdc.Client(
+		cb.UnstructuredV1beta1CT(clustertasks[0], version),
+	)
+	if err != nil {
+		t.Errorf("unable to create dynamic client: %v", err)
+	}
+
+	cs, _ := test.SeedV1beta1TestData(t, pipelinev1beta1test.Data{ClusterTasks: clustertasks})
+	cs.Pipeline.Resources = cb.APIResourceList(version, []string{"clustertask", "taskrun"})
+	p := &test.Params{Tekton: cs.Pipeline, Dynamic: dynamic}
+	clustertask := Command(p)
+	out, err := test.ExecuteCommand(clustertask, "desc", "clustertask-1")
+	if err != nil {
+		t.Errorf("Unexpected error: %v", err)
+	}
+	golden.Assert(t, out, fmt.Sprintf("%s.golden", t.Name()))
+}
