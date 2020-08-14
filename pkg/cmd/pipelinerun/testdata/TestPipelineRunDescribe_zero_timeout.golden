@@ -1,0 +1,24 @@
+Name:           pipeline-run-zero-timeout
+Namespace:      ns
+Pipeline Ref:   pipeline-zero-timeout
+
+Status
+
+STARTED   DURATION   STATUS
+---       ---        ---
+
+Resources
+
+ No resources
+
+Params
+
+ No params
+
+Results
+
+ No results
+
+Taskruns
+
+ No taskruns

@@ -38,7 +38,7 @@ const templ = `{{decorate "bold" "Name"}}:	{{ .PipelineRun.Name }}
 {{- end }}
 
 {{- $timeout := getTimeout .PipelineRun -}}
-{{- if ne $timeout "" }}
+{{- if and (ne $timeout "") (ne $timeout "0s") }}
 {{decorate "bold" "Timeout"}}:	{{ .PipelineRun.Spec.Timeout.Duration.String }}
 {{- end }}
 {{- $l := len .PipelineRun.Labels }}{{ if eq $l 0 }}

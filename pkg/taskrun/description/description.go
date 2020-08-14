@@ -39,7 +39,7 @@ const templ = `{{decorate "bold" "Name"}}:	{{ .TaskRun.Name }}
 {{- end }}
 
 {{- $timeout := getTimeout .TaskRun -}}
-{{- if ne $timeout "" }}
+{{- if and (ne $timeout "") (ne $timeout "0s") }}
 {{decorate "bold" "Timeout"}}:	{{ .TaskRun.Spec.Timeout.Duration.String }}
 {{- end }}
 {{- $l := len .TaskRun.Labels }}{{ if eq $l 0 }}
