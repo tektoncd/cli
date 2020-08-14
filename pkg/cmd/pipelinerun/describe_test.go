@@ -1735,3 +1735,41 @@ func TestPipelineRunDescribe_v1beta1_with_results(t *testing.T) {
 	}
 	golden.Assert(t, got, fmt.Sprintf("%s.golden", t.Name()))
 }
+
+func TestPipelineRunDescribe_zero_timeout(t *testing.T) {
+	prun := []*v1alpha1.PipelineRun{
+		tb.PipelineRun("pipeline-run-zero-timeout",
+			tb.PipelineRunNamespace("ns"),
+			tb.PipelineRunSpec("pipeline-zero-timeout", tb.PipelineRunTimeout(0)),
+		),
+	}
+
+	namespaces := []*corev1.Namespace{
+		{
+			ObjectMeta: metav1.ObjectMeta{
+				Name: "ns",
+			},
+		},
+	}
+
+	version := "v1beta1"
+	tdc := testDynamic.Options{}
+	dynamic, err := tdc.Client(
+		cb.UnstructuredPR(prun[0], version),
+	)
+	if err != nil {
+		t.Errorf("unable to create dynamic client: %v", err)
+	}
+
+	cs, _ := test.SeedTestData(t, pipelinetest.Data{Namespaces: namespaces, PipelineRuns: prun})
+	cs.Pipeline.Resources = cb.APIResourceList(version, []string{"pipelinerun", "taskrun"})
+	p := &test.Params{Tekton: cs.Pipeline, Kube: cs.Kube, Dynamic: dynamic}
+
+	pipelinerun := Command(p)
+	actual, err := test.ExecuteCommand(pipelinerun, "desc", "pipeline-run-zero-timeout", "-n", "ns")
+	if err != nil {
+		t.Errorf("Unexpected error: %v", err)
+	}
+
+	golden.Assert(t, actual, fmt.Sprintf("%s.golden", t.Name()))
+}
