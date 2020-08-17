@@ -253,11 +253,11 @@ func TestTaskRunCancel_v1beta1(t *testing.T) {
 			ObjectMeta: metav1.ObjectMeta{
 				Namespace: "ns",
 				Name:      "taskrun-2",
-				Labels:    map[string]string{"tekton.dev/task": "failure-task"},
+				Labels:    map[string]string{"tekton.dev/task": "success-task"},
 			},
 			Spec: v1beta1.TaskRunSpec{
 				TaskRef: &v1beta1.TaskRef{
-					Name: "failure-task",
+					Name: "success-task",
 				},
 			},
 			Status: v1beta1.TaskRunStatus{
@@ -266,6 +266,28 @@ func TestTaskRunCancel_v1beta1(t *testing.T) {
 						{
 							Status: corev1.ConditionTrue,
 							Reason: v1beta1.TaskRunReasonSuccessful.String(),
+						},
+					},
+				},
+			},
+		},
+		{
+			ObjectMeta: metav1.ObjectMeta{
+				Namespace: "ns",
+				Name:      "taskrun-3",
+				Labels:    map[string]string{"tekton.dev/task": "timeout-task"},
+			},
+			Spec: v1beta1.TaskRunSpec{
+				TaskRef: &v1beta1.TaskRef{
+					Name: "timeout-task",
+				},
+			},
+			Status: v1beta1.TaskRunStatus{
+				Status: duckv1beta1.Status{
+					Conditions: duckv1beta1.Conditions{
+						{
+							Status: corev1.ConditionFalse,
+							Reason: v1beta1.TaskRunReasonTimedOut.String(),
 						},
 					},
 				},
@@ -345,6 +367,7 @@ func TestTaskRunCancel_v1beta1(t *testing.T) {
 	dc, err := tdc.Client(
 		cb.UnstructuredV1beta1TR(trs[0], versionB1),
 		cb.UnstructuredV1beta1TR(trs[1], versionB1),
+		cb.UnstructuredV1beta1TR(trs[2], versionB1),
 	)
 	if err != nil {
 		t.Errorf("unable to create dynamic client: %v", err)
@@ -434,6 +457,14 @@ func TestTaskRunCancel_v1beta1(t *testing.T) {
 			input:     cancels[0].pipelineClient,
 			wantError: true,
 			want:      "failed to cancel TaskRun cancel-taskrun-1: TaskRun has already finished execution",
+		},
+		{
+			name:      "Failed canceling taskrun that timed out",
+			command:   []string{"cancel", "taskrun-3", "-n", "ns"},
+			dynamic:   seeds[0].dynamicClient,
+			input:     seeds[0].pipelineClient,
+			wantError: true,
+			want:      "failed to cancel TaskRun taskrun-3: TaskRun has already finished execution",
 		},
 	}
 

@@ -21,6 +21,7 @@ import (
 	"github.com/tektoncd/cli/pkg/cli"
 	"github.com/tektoncd/cli/pkg/formatted"
 	"github.com/tektoncd/cli/pkg/taskrun"
+	"github.com/tektoncd/pipeline/pkg/apis/pipeline/v1beta1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 )
 
@@ -28,6 +29,7 @@ var (
 	succeeded        = formatted.ColorStatus("Succeeded")
 	failed           = formatted.ColorStatus("Failed")
 	taskrunCancelled = formatted.ColorStatus("Cancelled") + "(TaskRunCancelled)"
+	taskrunTimeout   = formatted.ColorStatus("Failed") + "(" + v1beta1.TaskRunReasonTimedOut.String() + ")"
 )
 
 func cancelCommand(p cli.Params) *cobra.Command {
@@ -71,7 +73,7 @@ func cancelTaskRun(p cli.Params, s *cli.Stream, trName string) error {
 	}
 
 	taskrunCond := formatted.Condition(tr.Status.Conditions)
-	if taskrunCond == succeeded || taskrunCond == failed || taskrunCond == taskrunCancelled {
+	if taskrunCond == succeeded || taskrunCond == failed || taskrunCond == taskrunCancelled || taskrunCond == taskrunTimeout {
 		return fmt.Errorf("failed to cancel TaskRun %s: TaskRun has already finished execution", trName)
 	}
 
