@@ -277,6 +277,15 @@ func TestPipelineRunDelete(t *testing.T) {
 			want:        "--all flag should not have any arguments or flags specified with it",
 		},
 		{
+			name:        "Error from deleting PipelineRun with non-existing Pipeline",
+			command:     []string{"delete", "pipelinerun", "-p", "non-existing-pipeline"},
+			dynamic:     seeds[4].dynamicClient,
+			input:       seeds[4].pipelineClient,
+			inputStream: nil,
+			wantError:   true,
+			want:        "no PipelineRuns associated with Pipeline \"non-existing-pipeline\"",
+		},
+		{
 			name:        "Remove pipelineruns of a pipeline using --keep",
 			command:     []string{"rm", "--pipeline", "pipeline", "-n", "ns", "--keep", "2"},
 			dynamic:     seeds[5].dynamicClient,
@@ -593,6 +602,15 @@ func TestPipelineRunDelete_v1beta1(t *testing.T) {
 			inputStream: nil,
 			wantError:   true,
 			want:        "--all flag should not have any arguments or flags specified with it",
+		},
+		{
+			name:        "Error from deleting PipelineRun with non-existing Pipeline",
+			command:     []string{"delete", "pipelinerun", "-p", "non-existing-pipeline"},
+			dynamic:     seeds[4].dynamicClient,
+			input:       seeds[4].pipelineClient,
+			inputStream: nil,
+			wantError:   true,
+			want:        "no PipelineRuns associated with Pipeline \"non-existing-pipeline\"",
 		},
 		{
 			name:        "Remove pipelineruns of a pipeline using --keep",

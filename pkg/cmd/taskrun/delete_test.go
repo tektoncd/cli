@@ -252,6 +252,15 @@ func TestTaskRunDelete(t *testing.T) {
 			want:        "--all flag should not have any arguments or flags specified with it",
 		},
 		{
+			name:        "Error from deleting TaskRun with non-existing Task",
+			command:     []string{"delete", "taskrun", "-t", "non-existing-task"},
+			dynamic:     seeds[4].dynamicClient,
+			input:       seeds[4].pipelineClient,
+			inputStream: nil,
+			wantError:   true,
+			want:        "no TaskRuns associated with Task \"non-existing-task\"",
+		},
+		{
 			name:        "Remove taskruns of a task with --keep",
 			command:     []string{"rm", "--task", "random", "-n", "ns", "--keep", "2"},
 			dynamic:     seeds[5].dynamicClient,
@@ -542,6 +551,15 @@ func TestTaskRunDelete_v1beta1(t *testing.T) {
 			inputStream: nil,
 			wantError:   true,
 			want:        "--all flag should not have any arguments or flags specified with it",
+		},
+		{
+			name:        "Error from deleting TaskRun with non-existing Task",
+			command:     []string{"delete", "taskrun", "-t", "non-existing-task"},
+			dynamic:     seeds[4].dynamicClient,
+			input:       seeds[4].pipelineClient,
+			inputStream: nil,
+			wantError:   true,
+			want:        "no TaskRuns associated with Task \"non-existing-task\"",
 		},
 		{
 			name:        "Remove taskruns of a task with --keep",

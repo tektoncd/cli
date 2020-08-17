@@ -78,13 +78,18 @@ func (d *Deleter) deleteRelatedList(streams *cli.Stream, resourceName string) {
 		err = fmt.Errorf("failed to list %ss: %s", strings.ToLower(d.relatedKind), err)
 		d.appendError(streams, err)
 	} else {
-		for _, subresource := range related {
-			if err := d.deleteRelated(subresource); err != nil {
-				err = fmt.Errorf("failed to delete %s %q: %s", d.relatedKind, subresource, err)
-				d.appendError(streams, err)
-			} else {
-				d.successfulRelatedDeletes = append(d.successfulRelatedDeletes, subresource)
+		if len(related) > 0 {
+			for _, subresource := range related {
+				if err := d.deleteRelated(subresource); err != nil {
+					err = fmt.Errorf("failed to delete %s %q: %s", d.relatedKind, subresource, err)
+					d.appendError(streams, err)
+				} else {
+					d.successfulRelatedDeletes = append(d.successfulRelatedDeletes, subresource)
+				}
 			}
+		} else {
+			err = fmt.Errorf("no %ss associated with %s %q", d.relatedKind, d.kind, resourceName)
+			d.appendError(streams, err)
 		}
 	}
 }
