@@ -117,14 +117,16 @@ func deletePipelineRuns(s *cli.Stream, p cli.Params, prNames []string, opts *opt
 		d.DeleteRelated(s, []string{opts.ParentResourceName})
 	}
 	if !opts.DeleteAllNs {
-		switch {
-		case opts.Keep > 0:
-			// Should only occur in case of --pipeline and --keep being used together
-			fmt.Fprintf(s.Out, "All but %d PipelineRuns associated with Pipeline %q deleted in namespace %q\n", opts.Keep, opts.ParentResourceName, p.Namespace())
-		case opts.ParentResourceName != "":
-			fmt.Fprintf(s.Out, "All PipelineRuns associated with Pipeline %q deleted in namespace %q\n", opts.ParentResourceName, p.Namespace())
-		default:
-			d.PrintSuccesses(s)
+		if d.Errors() == nil {
+			switch {
+			case opts.Keep > 0:
+				// Should only occur in case of --pipeline and --keep being used together
+				fmt.Fprintf(s.Out, "All but %d PipelineRuns associated with Pipeline %q deleted in namespace %q\n", opts.Keep, opts.ParentResourceName, p.Namespace())
+			case opts.ParentResourceName != "":
+				fmt.Fprintf(s.Out, "All PipelineRuns associated with Pipeline %q deleted in namespace %q\n", opts.ParentResourceName, p.Namespace())
+			default:
+				d.PrintSuccesses(s)
+			}
 		}
 	} else if opts.DeleteAllNs {
 		if d.Errors() == nil {
