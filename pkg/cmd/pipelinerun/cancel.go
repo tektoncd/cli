@@ -21,6 +21,7 @@ import (
 	"github.com/tektoncd/cli/pkg/cli"
 	"github.com/tektoncd/cli/pkg/formatted"
 	"github.com/tektoncd/cli/pkg/pipelinerun"
+	"github.com/tektoncd/pipeline/pkg/apis/pipeline/v1beta1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 )
 
@@ -28,6 +29,7 @@ var (
 	succeeded   = formatted.ColorStatus("Succeeded")
 	failed      = formatted.ColorStatus("Failed")
 	prCancelled = formatted.ColorStatus("Cancelled") + "(PipelineRunCancelled)"
+	prTimeout   = formatted.ColorStatus("Failed") + "(" + v1beta1.PipelineRunReasonTimedOut.String() + ")"
 )
 
 func cancelCommand(p cli.Params) *cobra.Command {
@@ -73,7 +75,7 @@ func cancelPipelineRun(p cli.Params, s *cli.Stream, prName string) error {
 	}
 
 	prCond := formatted.Condition(pr.Status.Conditions)
-	if prCond == succeeded || prCond == failed || prCond == prCancelled {
+	if prCond == succeeded || prCond == failed || prCond == prCancelled || prCond == prTimeout {
 		return fmt.Errorf("failed to cancel PipelineRun %s: PipelineRun has already finished execution", prName)
 	}
 
