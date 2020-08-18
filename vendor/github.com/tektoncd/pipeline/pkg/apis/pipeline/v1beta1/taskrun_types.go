@@ -306,7 +306,7 @@ type CloudEventDeliveryState struct {
 }
 
 // +genclient
-// +genreconciler
+// +genreconciler:krshapedlogic=false
 // +k8s:deepcopy-gen:interfaces=k8s.io/apimachinery/pkg/runtime.Object
 
 // TaskRun represents a single execution of a Task. TaskRuns are how the steps
@@ -414,7 +414,7 @@ func (tr *TaskRun) GetTimeout() time.Duration {
 // GetRunKey return the taskrun key for timeout handler map
 func (tr *TaskRun) GetRunKey() string {
 	// The address of the pointer is a threadsafe unique identifier for the taskrun
-	return fmt.Sprintf("%s/%p", "TaskRun", tr)
+	return fmt.Sprintf("%s/%p", pipeline.TaskRunControllerName, tr)
 }
 
 // IsPartOfPipeline return true if TaskRun is a part of a Pipeline.

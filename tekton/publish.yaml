@@ -32,7 +32,8 @@ spec:
       command:
         - /kaniko/executor
         - --dockerfile=$(params.DOCKERFILE)
-        - --context=$(params.CONTEXT) # The user does not need to care the workspace and the source.
+        # The user does not need to care the workspace and the source.
+        - --context=$(params.CONTEXT)
         - $(params.EXTRA_ARGS)
       securityContext:
         runAsUser: 0

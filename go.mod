@@ -15,45 +15,37 @@ require (
 	github.com/jonboulle/clockwork v0.1.1-0.20190114141812-62fb9bc030d1
 	github.com/ktr0731/go-fuzzyfinder v0.2.0
 	github.com/pkg/errors v0.9.1
-	github.com/spf13/cobra v0.0.6
+	github.com/spf13/cobra v1.0.0
 	github.com/spf13/pflag v1.0.5
-	github.com/tektoncd/pipeline v0.14.2
+	github.com/tektoncd/pipeline v0.15.2
 	github.com/tektoncd/plumbing v0.0.0-20200430135134-e53521e1d887
 	github.com/tektoncd/triggers v0.6.1
 	github.com/tidwall/gjson v1.6.0 // indirect
-	go.opencensus.io v0.22.3
+	go.opencensus.io v0.22.4
 	go.uber.org/multierr v1.5.0
-	golang.org/x/crypto v0.0.0-20200323165209-0ec3e9974c59
-	golang.org/x/text v0.3.3 // indirect
+	golang.org/x/crypto v0.0.0-20200510223506-06a226fb4e37
 	golang.org/x/xerrors v0.0.0-20191204190536-9bdfabe68543
 	gopkg.in/yaml.v2 v2.3.0
 	gotest.tools/v3 v3.0.1
 	k8s.io/api v0.18.2
 	k8s.io/apimachinery v0.18.2
-	k8s.io/cli-runtime v0.17.3
+	k8s.io/cli-runtime v0.17.6
 	k8s.io/client-go v11.0.1-0.20190805182717-6502b5e7b1b5+incompatible
-	knative.dev/pkg v0.0.0-20200528142800-1c6815d7e4c9
+	knative.dev/pkg v0.0.0-20200702222342-ea4d6e985ba0
 	sigs.k8s.io/yaml v1.2.0
 )
 
 replace (
+	contrib.go.opencensus.io/exporter/stackdriver => contrib.go.opencensus.io/exporter/stackdriver v0.12.9-0.20191108183826-59d068f8d8ff
+	github.com/Azure/go-autorest => github.com/Azure/go-autorest v13.4.0+incompatible
 	github.com/kr/pty => github.com/creack/pty v1.1.10
 	github.com/spf13/cobra => github.com/chmouel/cobra v0.0.0-20200107083527-379e7a80af0c
 )
 
-// Knative deps (release-0.15)
+// Pin k8s deps to 1.17.6
 replace (
-	contrib.go.opencensus.io/exporter/stackdriver => contrib.go.opencensus.io/exporter/stackdriver v0.12.9-0.20191108183826-59d068f8d8ff
-	github.com/Azure/go-autorest => github.com/Azure/go-autorest v13.4.0+incompatible
-	knative.dev/caching => knative.dev/caching v0.0.0-20200521155757-e78d17bc250e
-	knative.dev/pkg => knative.dev/pkg v0.0.0-20200528142800-1c6815d7e4c9
-)
-
-// Pin k8s deps to 1.16.5
-replace (
-	k8s.io/api => k8s.io/api v0.16.5
-	k8s.io/apimachinery => k8s.io/apimachinery v0.16.5
-	k8s.io/cli-runtime => k8s.io/cli-runtime v0.16.5
-	k8s.io/client-go => k8s.io/client-go v0.16.5
-	k8s.io/code-generator => k8s.io/code-generator v0.16.5
+	k8s.io/api => k8s.io/api v0.17.6
+	k8s.io/apimachinery => k8s.io/apimachinery v0.17.6
+	k8s.io/cli-runtime => k8s.io/cli-runtime v0.17.6
+	k8s.io/client-go => k8s.io/client-go v0.17.6
 )

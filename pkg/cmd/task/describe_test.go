@@ -338,6 +338,7 @@ func TestTaskDescribe_Full(t *testing.T) {
 	cs, _ := test.SeedTestData(t, pipelinetest.Data{Tasks: tasks, Namespaces: namespaces, TaskRuns: taskRuns})
 	cs.Pipeline.Resources = cb.APIResourceList(version, []string{"task", "taskrun"})
 	p := &test.Params{Tekton: cs.Pipeline, Kube: cs.Kube, Dynamic: dynamic, Clock: clock}
+	p.SetNamespace("ns")
 	task := Command(p)
 	clock.Advance(20 * time.Minute)
 	out, err := test.ExecuteCommand(task, "desc", "task-1")
@@ -466,6 +467,7 @@ func TestTaskDescribe_WithoutNameIfOnlyOneV1beta1TaskPresent(t *testing.T) {
 	cs, _ := test.SeedV1beta1TestData(t, pipelinev1beta1test.Data{Tasks: tasks, Namespaces: namespaces})
 	cs.Pipeline.Resources = cb.APIResourceList(version, []string{"task", "taskrun"})
 	p := &test.Params{Tekton: cs.Pipeline, Kube: cs.Kube, Dynamic: dynamic}
+	p.SetNamespace("ns")
 	task := Command(p)
 	out, err := test.ExecuteCommand(task, "desc")
 	if err != nil {
@@ -671,6 +673,7 @@ func TestTaskV1beta1Describe_Full(t *testing.T) {
 	cs, _ := test.SeedV1beta1TestData(t, pipelinev1beta1test.Data{Tasks: tasks, Namespaces: namespaces, TaskRuns: taskRuns})
 	cs.Pipeline.Resources = cb.APIResourceList(version, []string{"task", "taskrun"})
 	p := &test.Params{Tekton: cs.Pipeline, Kube: cs.Kube, Dynamic: dynamic, Clock: clock}
+	p.SetNamespace("ns")
 	task := Command(p)
 	clock.Advance(20 * time.Minute)
 	out, err := test.ExecuteCommand(task, "desc", "task-1")
@@ -734,6 +737,7 @@ func TestTaskDescribe_With_Results(t *testing.T) {
 	cs, _ := test.SeedV1beta1TestData(t, pipelinev1beta1test.Data{Tasks: tasks, Namespaces: namespaces})
 	cs.Pipeline.Resources = cb.APIResourceList(version, []string{"task", "taskrun"})
 	p := &test.Params{Tekton: cs.Pipeline, Kube: cs.Kube, Dynamic: dynamic}
+	p.SetNamespace("ns")
 	task := Command(p)
 	out, err := test.ExecuteCommand(task, "desc", "task-1")
 	if err != nil {

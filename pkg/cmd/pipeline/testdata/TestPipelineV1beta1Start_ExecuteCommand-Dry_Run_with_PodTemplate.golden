@@ -13,8 +13,6 @@ spec:
   pipelineRef:
     name: test-pipeline
   podTemplate:
-    ImagePullSecrets: null
-    hostNetwork: false
     schedulerName: SchedulerName
     securityContext:
       runAsNonRoot: true
