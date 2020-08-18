@@ -204,6 +204,12 @@ func PrintTaskRunDescription(s *cli.Stream, trName string, p cli.Params) error {
 		return fmt.Errorf("failed to get TaskRun %s: %v", trName, err)
 	}
 
+	if tr.Status.TaskSpec != nil {
+		if err := SetDefault(&tr.Spec.Params, tr.Status.TaskSpec.Params); err != nil {
+			return err
+		}
+	}
+
 	var data = struct {
 		TaskRun *v1beta1.TaskRun
 		Time    clockwork.Clock
@@ -308,4 +314,31 @@ func sidecarReasonExists(state v1beta1.SidecarState) string {
 	}
 
 	return formatted.ColorStatus(state.Waiting.Reason)
+}
+
+// Set default parameter value if there is no user-defined value
+func SetDefault(trParams *[]v1beta1.Param, taskParams []v1beta1.ParamSpec) error {
+	for _, tp := range taskParams {
+		if hasUserDefinedParam(tp.Name, *trParams) {
+			continue
+		}
+
+		*trParams = append(*trParams, v1beta1.Param{
+			Name:  tp.Name,
+			Value: *tp.Default,
+		})
+	}
+
+	return nil
+}
+
+// Check if a target parameter is defined by user or not
+func hasUserDefinedParam(target string, params []v1beta1.Param) bool {
+	for _, param := range params {
+		if target == param.Name {
+			return true
+		}
+	}
+
+	return false
 }

@@ -142,7 +142,7 @@ func TestPipelineRunDescribe_only_taskrun(t *testing.T) {
 	cs, _ := test.SeedTestData(t, pipelinetest.Data{Namespaces: namespaces, PipelineRuns: pipelineRuns,
 		TaskRuns: trs,
 	})
-	cs.Pipeline.Resources = cb.APIResourceList(version, []string{"pipelinerun", "taskrun"})
+	cs.Pipeline.Resources = cb.APIResourceList(version, []string{"pipelinerun", "pipeline", "taskrun"})
 	p := &test.Params{Tekton: cs.Pipeline, Kube: cs.Kube, Dynamic: dynamic, Clock: clock}
 
 	pipelinerun := Command(p)

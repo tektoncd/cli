@@ -9,6 +9,7 @@ require (
 	github.com/cpuguy83/go-md2man v1.0.10
 	github.com/fatih/color v1.9.0
 	github.com/ghodss/yaml v1.0.0
+	github.com/go-test/deep v1.0.4
 	github.com/google/go-cmp v0.5.0
 	github.com/hako/durafmt v0.0.0-20191009132224-3f39dc1ed9f4
 	github.com/hinshun/vt10x v0.0.0-20180809195222-d55458df857c

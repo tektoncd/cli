@@ -18,6 +18,7 @@ import (
 	"testing"
 	"time"
 
+	"github.com/go-test/deep"
 	"github.com/tektoncd/cli/pkg/test"
 	"github.com/tektoncd/pipeline/pkg/apis/pipeline/v1beta1"
 	corev1 "k8s.io/api/core/v1"
@@ -353,4 +354,131 @@ func TestSidecarReasonExists_Waiting_Present(t *testing.T) {
 
 	output := sidecarReasonExists(state)
 	test.AssertOutput(t, "PodInitializing", output)
+}
+
+func TestTaskRunDefaultSetting(t *testing.T) {
+	testData := []struct {
+		input  *v1beta1.TaskRun
+		expect []v1beta1.Param
+	}{
+		{
+			input: &v1beta1.TaskRun{
+				Spec: v1beta1.TaskRunSpec{
+					Params: []v1beta1.Param{
+						{
+							Name: "param1",
+							Value: v1beta1.ArrayOrString{
+								Type:      v1beta1.ParamTypeString,
+								StringVal: "real1",
+							},
+						},
+					},
+				},
+				Status: v1beta1.TaskRunStatus{
+					TaskRunStatusFields: v1beta1.TaskRunStatusFields{
+						TaskSpec: &v1beta1.TaskSpec{
+							Params: []v1beta1.ParamSpec{
+								{
+									Name: "param1",
+									Type: v1beta1.ParamTypeString,
+									Default: &v1beta1.ArrayOrString{
+										Type:      v1beta1.ParamTypeString,
+										StringVal: "test1",
+									},
+								},
+								{
+									Name: "param2",
+									Type: v1beta1.ParamTypeString,
+									Default: &v1beta1.ArrayOrString{
+										Type:      v1beta1.ParamTypeString,
+										StringVal: "test2",
+									},
+								},
+							},
+						},
+					},
+				},
+			},
+			expect: []v1beta1.Param{
+				{
+					Name: "param1",
+					Value: v1beta1.ArrayOrString{
+						Type:      v1beta1.ParamTypeString,
+						StringVal: "real1",
+					},
+				},
+				{
+					Name: "param2",
+					Value: v1beta1.ArrayOrString{
+						Type:      v1beta1.ParamTypeString,
+						StringVal: "test2",
+					},
+				},
+			},
+		},
+		{
+			input: &v1beta1.TaskRun{
+				Spec: v1beta1.TaskRunSpec{
+					Params: []v1beta1.Param{
+						{
+							Name: "param1",
+							Value: v1beta1.ArrayOrString{
+								Type:     v1beta1.ParamTypeArray,
+								ArrayVal: []string{"real1"},
+							},
+						},
+					},
+				},
+				Status: v1beta1.TaskRunStatus{
+					TaskRunStatusFields: v1beta1.TaskRunStatusFields{
+						TaskSpec: &v1beta1.TaskSpec{
+							Params: []v1beta1.ParamSpec{
+								{
+									Name: "param1",
+									Type: v1beta1.ParamTypeArray,
+									Default: &v1beta1.ArrayOrString{
+										Type:     v1beta1.ParamTypeArray,
+										ArrayVal: []string{"test1", "test11", "test111"},
+									},
+								},
+								{
+									Name: "param2",
+									Type: v1beta1.ParamTypeArray,
+									Default: &v1beta1.ArrayOrString{
+										Type:     v1beta1.ParamTypeArray,
+										ArrayVal: []string{"test2", "test22", "test222"},
+									},
+								},
+							},
+						},
+					},
+				},
+			},
+			expect: []v1beta1.Param{
+				{
+					Name: "param1",
+					Value: v1beta1.ArrayOrString{
+						Type:     v1beta1.ParamTypeArray,
+						ArrayVal: []string{"real1"},
+					},
+				},
+				{
+					Name: "param2",
+					Value: v1beta1.ArrayOrString{
+						Type:     v1beta1.ParamTypeArray,
+						ArrayVal: []string{"test2", "test22", "test222"},
+					},
+				},
+			},
+		},
+	}
+
+	for _, td := range testData {
+		err := SetDefault(&td.input.Spec.Params, td.input.Status.TaskSpec.Params)
+		if err != nil {
+			t.Errorf(err.Error())
+		} else if deep.Equal(td.input.Spec.Params, td.expect) != nil {
+			t.Errorf("setDefault should be %v but returned: %v", td.expect, td.input.Spec.Params)
+		}
+	}
 }

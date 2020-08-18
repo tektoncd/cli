@@ -74,7 +74,7 @@ or
 
 			if len(args) == 0 {
 				if !opts.Last {
-					err = askTaskRunName(opts, p)
+					err = askTaskRunName(opts)
 					if err != nil {
 						return err
 					}
@@ -113,7 +113,7 @@ or
 	return c
 }
 
-func askTaskRunName(opts *options.DescribeOptions, p cli.Params) error {
+func askTaskRunName(opts *options.DescribeOptions) error {
 	lOpts := metav1.ListOptions{}
 
 	err := opts.ValidateOpts()

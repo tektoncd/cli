@@ -22,7 +22,9 @@ import (
 
 	"github.com/tektoncd/cli/pkg/cli"
 	"github.com/tektoncd/cli/pkg/formatted"
+	"github.com/tektoncd/cli/pkg/pipeline"
 	"github.com/tektoncd/cli/pkg/pipelinerun"
+	"github.com/tektoncd/cli/pkg/taskrun/description"
 	"github.com/tektoncd/pipeline/pkg/apis/pipeline/v1beta1"
 	corev1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
@@ -150,6 +152,19 @@ func PrintPipelineRunDescription(s *cli.Stream, prName string, p cli.Params) err
 	pr, err := pipelinerun.Get(cs, prName, metav1.GetOptions{}, p.Namespace())
 	if err != nil {
 		return fmt.Errorf("failed to find pipelinerun %q", prName)
+	}
+
+	if pr.Spec.PipelineRef != nil {
+		pl, _ := pipeline.Get(cs, pr.Spec.PipelineRef.Name, metav1.GetOptions{}, p.Namespace())
+		//if err != nil {
+		//	return err
+		//}
+
+		if pl != nil && len(pl.Spec.Params) > 0 {
+			if err := description.SetDefault(&pr.Spec.Params, pl.Spec.Params); err != nil {
+				return err
+			}
+		}
 	}
 
 	var trl taskrunList
