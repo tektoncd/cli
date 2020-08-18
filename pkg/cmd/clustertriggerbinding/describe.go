@@ -121,8 +121,7 @@ func printClusterTriggerBindingDescription(s *cli.Stream, p cli.Params, ctbName 
 
 	ctb, err := cs.Triggers.TriggersV1alpha1().ClusterTriggerBindings().Get(ctbName, metav1.GetOptions{})
 	if err != nil {
-		fmt.Fprintf(s.Err, "failed to get clustertriggerbinding %s\n", ctbName)
-		return err
+		return fmt.Errorf("failed to get clustertriggerbinding %s: %v", ctbName, err)
 	}
 
 	var data = struct {

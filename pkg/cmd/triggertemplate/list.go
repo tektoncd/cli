@@ -62,7 +62,7 @@ or
 
 			tts, err := list(cs.Triggers, p.Namespace())
 			if err != nil {
-				return fmt.Errorf("failed to list triggertemplates from %s namespace", p.Namespace())
+				return fmt.Errorf("failed to list triggertemplates from %s namespace: %v", p.Namespace(), err)
 			}
 
 			output, err := cmd.LocalFlags().GetString("output")

@@ -1,2 +1,1 @@
-failed to get triggerbinding bar
-Error: triggerbindings.triggers.tekton.dev "bar" not found
+Error: failed to get triggerbinding bar from ns namespace: triggerbindings.triggers.tekton.dev "bar" not found

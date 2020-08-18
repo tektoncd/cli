@@ -62,12 +62,12 @@ or
 
 			tbs, err := list(cs.Triggers, "")
 			if err != nil {
-				return fmt.Errorf(`failed to list clustertriggerbindings`)
+				return fmt.Errorf("failed to list clustertriggerbindings: %v", err)
 			}
 
 			output, err := cmd.LocalFlags().GetString("output")
 			if err != nil {
-				return errors.New(`output option not set properly \n`)
+				return errors.New("output option not set properly")
 			}
 
 			stream := &cli.Stream{
@@ -89,7 +89,7 @@ or
 			}
 
 			if err = printFormatted(stream, tbs, p); err != nil {
-				return errors.New(`failed to print clustertriggerbindings \n`)
+				return fmt.Errorf("failed to print clustertriggerbindings: %v", err)
 			}
 			return nil
 
