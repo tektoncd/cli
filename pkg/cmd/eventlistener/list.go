@@ -115,15 +115,17 @@ func printFormatted(s *cli.Stream, els *v1alpha1.EventListenerList, p cli.Params
 	}
 
 	w := tabwriter.NewWriter(s.Out, 0, 5, 3, ' ', tabwriter.TabIndent)
-	fmt.Fprintln(w, "NAME\tAGE\tAVAILABLE")
+	fmt.Fprintln(w, "NAME\tAGE\tURL\tAVAILABLE")
 	for _, el := range els.Items {
+
 		status := corev1.ConditionStatus("---")
 		if len(el.Status.Conditions) > 0 && len(el.Status.Conditions[0].Status) > 0 {
 			status = el.Status.Conditions[0].Status
 		}
-		fmt.Fprintf(w, "%s\t%s\t%s\n",
+		fmt.Fprintf(w, "%s\t%s\t%s\t%s\n",
 			el.Name,
 			formatted.Age(&el.CreationTimestamp, p.Time()),
+			formatted.FormatAddress(getURL(el)),
 			status,
 		)
 	}
