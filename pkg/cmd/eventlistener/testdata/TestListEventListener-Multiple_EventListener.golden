@@ -1,6 +1,6 @@
-NAME   AGE              AVAILABLE
-tb1    2 minutes ago    True
-tb2    30 seconds ago   True
-tb3    1 week ago       True
-tb4    ---              ---
-tb5    10 seconds ago   False
+NAME   AGE              URL                                             AVAILABLE
+tb1    2 minutes ago    http://tb1-listener.default.svc.cluster.local   True
+tb2    30 seconds ago   http://tb2-listener.default.svc.cluster.local   True
+tb3    1 week ago       http://tb3-listener.default.svc.cluster.local   True
+tb4    ---              ---                                             ---
+tb5    10 seconds ago   ---                                             False

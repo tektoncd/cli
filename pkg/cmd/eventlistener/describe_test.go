@@ -274,6 +274,44 @@ func TestEventListenerDescribe_OutputYAMLWithMultipleBindingAndInterceptors(t *t
 	golden.Assert(t, out, fmt.Sprintf("%s.golden", t.Name()))
 }
 
+func TestEventListenerDescribe_WithOutputStatusURL(t *testing.T) {
+
+	els := []*v1alpha1.EventListener{
+		el.EventListener("el1", "ns",
+			el.EventListenerStatus(
+				el.EventListenerAddress("el-listener.default.svc.cluster.local"))),
+	}
+
+	cs := test.SeedTestResources(t, triggertest.Resources{EventListeners: els})
+
+	p := &test.Params{Triggers: cs.Triggers, Kube: cs.Kube}
+
+	eventListener := Command(p)
+	out, err := test.ExecuteCommand(eventListener, "desc", "el1", "-o", "url", "-n", "ns")
+	if err != nil {
+		t.Errorf("Error")
+	}
+	test.AssertOutput(t, "http://el-listener.default.svc.cluster.local\n", out)
+}
+
+func TestEventListenerDescribe_OutputStatusURL_WithNoURL(t *testing.T) {
+	els := []*v1alpha1.EventListener{
+		el.EventListener("el1", "ns"),
+	}
+
+	cs := test.SeedTestResources(t, triggertest.Resources{EventListeners: els})
+
+	p := &test.Params{Triggers: cs.Triggers, Kube: cs.Kube}
+
+	eventListener := Command(p)
+	out, err := test.ExecuteCommand(eventListener, "desc", "el1", "-o", "url", "-n", "ns")
+	if err == nil {
+		t.Errorf("Error")
+	}
+
+	test.AssertOutput(t, "Error: "+err.Error()+"\n", out)
+}
+
 func executeEventListenerCommand(t *testing.T, els []*v1alpha1.EventListener) {
 	cs := test.SeedTestResources(t, triggertest.Resources{EventListeners: els, Namespaces: []*corev1.Namespace{{
 		ObjectMeta: metav1.ObjectMeta{

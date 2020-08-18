@@ -18,6 +18,7 @@ import (
 	"fmt"
 	"io"
 	"os"
+	"strings"
 	"text/tabwriter"
 	"text/template"
 
@@ -145,9 +146,11 @@ or
 			}
 
 			if output != "" {
+				if strings.ToLower(output) == "url" {
+					return describeEventListenerOutputURL(cmd.OutOrStdout(), p, args[0])
+				}
 				return describeEventListenerOutput(cmd.OutOrStdout(), p, f, args[0])
 			}
-
 			return printEventListenerDescription(s, p, args[0])
 		},
 	}
@@ -177,6 +180,24 @@ func describeEventListenerOutput(w io.Writer, p cli.Params, f *cliopts.PrintFlag
 		})
 
 	return printer.PrintObject(w, el, f)
+}
+
+func describeEventListenerOutputURL(w io.Writer, p cli.Params, name string) error {
+	cs, err := p.Clients()
+	if err != nil {
+		return err
+	}
+
+	el, err := cs.Triggers.TriggersV1alpha1().EventListeners(p.Namespace()).Get(name, metav1.GetOptions{})
+	if err != nil {
+		return err
+	}
+
+	if getURL(*el) == "" {
+		return fmt.Errorf("url of EventListener %s not available yet", el.Name)
+	}
+	fmt.Fprintf(w, "%s\n", getURL(*el))
+	return nil
 }
 
 func printEventListenerDescription(s *cli.Stream, p cli.Params, elName string) error {
