@@ -74,7 +74,11 @@ func SubcommandsRequiredWithSuggestions(cmd *cobra.Command, args []string) error
 		return fmt.Errorf(requireMsg, typedName, cmd.CommandPath())
 	}
 
-	return cmd.Help()
+	if typedName == "" {
+		return cmd.Help()
+	}
+	fmt.Fprintf(cmd.ErrOrStderr(), "%s %s doesn't exists\n", cmd.Name(), typedName)
+	return cobra.ErrSubCommandRequired
 }
 
 // suggestsByPrefixOrLd suggests a command by levenshtein distance or by prefix.
