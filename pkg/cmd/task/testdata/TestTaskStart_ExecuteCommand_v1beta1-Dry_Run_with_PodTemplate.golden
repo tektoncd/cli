@@ -9,8 +9,6 @@ spec:
   - name: myarg
     value: arg
   podTemplate:
-    ImagePullSecrets: null
-    hostNetwork: false
     schedulerName: SchedulerName
     securityContext:
       runAsNonRoot: true

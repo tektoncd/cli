@@ -151,6 +151,7 @@ func TestPipelineResourcesDescribe_custom_output(t *testing.T) {
 	})
 
 	p := &test.Params{Tekton: cs.Pipeline, Clock: clock, Kube: cs.Kube, Resource: cs.Resource}
+	p.SetNamespace("ns")
 	run := Command(p)
 
 	got, err := test.ExecuteCommand(run, "desc", "-o", "name", name)

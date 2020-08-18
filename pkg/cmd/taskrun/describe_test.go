@@ -1017,6 +1017,7 @@ func TestTaskRunDescribe_With_Results(t *testing.T) {
 	cs, _ := test.SeedV1beta1TestData(t, pipelinev1beta1test.Data{Namespaces: namespaces, TaskRuns: taskRuns})
 	cs.Pipeline.Resources = cb.APIResourceList(version, []string{"taskrun"})
 	p := &test.Params{Tekton: cs.Pipeline, Kube: cs.Kube, Dynamic: dynamic}
+	p.SetNamespace("ns")
 	taskrun := Command(p)
 	got, err := test.ExecuteCommand(taskrun, "desc", "tr-1")
 

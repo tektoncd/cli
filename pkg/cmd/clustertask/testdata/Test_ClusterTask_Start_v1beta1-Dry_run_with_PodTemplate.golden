@@ -13,8 +13,6 @@ spec:
     value:
     - boom
   podTemplate:
-    ImagePullSecrets: null
-    hostNetwork: false
     schedulerName: SchedulerName
     securityContext:
       runAsNonRoot: true
