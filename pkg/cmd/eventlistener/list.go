@@ -62,7 +62,7 @@ or
 
 			els, err := list(cs.Triggers, p.Namespace())
 			if err != nil {
-				return fmt.Errorf(`failed to list eventlisteners from %s namespace \n`, p.Namespace())
+				return fmt.Errorf("failed to list eventlisteners from %s namespace: %v", p.Namespace(), err)
 			}
 
 			output, err := cmd.LocalFlags().GetString("output")

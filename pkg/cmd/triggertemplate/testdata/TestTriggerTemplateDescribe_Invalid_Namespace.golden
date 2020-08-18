@@ -1,2 +1,1 @@
-failed to get triggertemplate bar
-Error: triggertemplates.triggers.tekton.dev "bar" not found
+Error: failed to get triggertemplate bar from invalid namespace: triggertemplates.triggers.tekton.dev "bar" not found
