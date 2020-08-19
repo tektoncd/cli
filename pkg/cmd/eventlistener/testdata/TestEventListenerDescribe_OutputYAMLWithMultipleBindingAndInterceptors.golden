@@ -91,6 +91,7 @@
                 }
             }
         ],
+        "replicas": 0,
         "podTemplate": {}
     },
     "status": {
