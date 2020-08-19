@@ -219,10 +219,8 @@ func startClusterTask(opt startOptions, args []string) error {
 		if err != nil {
 			return err
 		}
-		tr.Spec.Resources = trLast.Spec.Resources
-		tr.Spec.Params = trLast.Spec.Params
-		tr.Spec.ServiceAccountName = trLast.Spec.ServiceAccountName
-		tr.Spec.Workspaces = trLast.Spec.Workspaces
+		// Copy over spec from last TaskRun to use same values for this TaskRun
+		tr.Spec = trLast.Spec
 	}
 
 	if tr.Spec.Resources == nil {

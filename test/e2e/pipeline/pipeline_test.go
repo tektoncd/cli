@@ -24,6 +24,7 @@ import (
 
 	"github.com/AlecAivazis/survey/v2/terminal"
 	"github.com/Netflix/go-expect"
+	"github.com/google/go-cmp/cmp"
 	"github.com/tektoncd/cli/test/builder"
 	"github.com/tektoncd/cli/test/cli"
 	"github.com/tektoncd/cli/test/framework"
@@ -250,6 +251,33 @@ Waiting for logs to be available...
 				c.Close()
 				return nil
 			}})
+	})
+
+	t.Run("Start PipelineRun with tkn pipeline start --last", func(t *testing.T) {
+		// Get last PipelineRun for output-pipeline
+		pipelineRunLast := builder.GetPipelineRunListWithName(c, tePipelineName, true).Items[0]
+
+		// Start PipelineRun using --last
+		tkn.MustSucceed(t, "pipeline", "start", tePipelineName,
+			"--last",
+			"--showlog")
+
+		// Sleep to make make sure PipelineRun is created/running
+		time.Sleep(1 * time.Second)
+
+		// Get name of most recent PipelineRun and wait for it to succeed
+		pipelineRunUsingLast := builder.GetPipelineRunListWithName(c, tePipelineName, true).Items[0]
+		timeout := 5 * time.Minute
+		if err := wait.ForPipelineRunState(c, pipelineRunUsingLast.Name, timeout, wait.PipelineRunSucceed(pipelineRunUsingLast.Name), "PipelineRunSucceeded"); err != nil {
+			t.Errorf("Error waiting for PipelineRun to fail: %s", err)
+		}
+
+		// Expect that previous PipelineRun spec will match most recent PipelineRun spec
+		expected := pipelineRunLast.Spec
+		got := pipelineRunUsingLast.Spec
+		if d := cmp.Diff(got, expected); d != "" {
+			t.Fatalf("-got, +want: %v", d)
+		}
 	})
 
 	t.Logf("Creating Pipeline pipeline-with-workspace in namespace: %s", namespace)
