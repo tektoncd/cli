@@ -374,7 +374,7 @@ github.com/tektoncd/pipeline/test/builder
 github.com/tektoncd/pipeline/test/v1alpha1
 # github.com/tektoncd/plumbing v0.0.0-20200430135134-e53521e1d887
 github.com/tektoncd/plumbing/scripts
-# github.com/tektoncd/triggers v0.6.1
+# github.com/tektoncd/triggers v0.7.0
 github.com/tektoncd/triggers/pkg/apis/triggers/v1alpha1
 github.com/tektoncd/triggers/pkg/client/clientset/versioned
 github.com/tektoncd/triggers/pkg/client/clientset/versioned/fake

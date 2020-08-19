@@ -25,11 +25,12 @@ import (
 	"github.com/tektoncd/pipeline/pkg/apis/validate"
 	"k8s.io/apimachinery/pkg/api/equality"
 	"k8s.io/apimachinery/pkg/runtime"
+	"k8s.io/apimachinery/pkg/util/sets"
 	"knative.dev/pkg/apis"
 )
 
-// paramsRegexp captures TriggerTemplate parameter names $(tt.params.NAME) or $(params.NAME)
-var paramsRegexp = regexp.MustCompile(`\$\((params|tt.params).([_a-zA-Z][_a-zA-Z0-9.-]*)\)`)
+// paramsRegexp captures TriggerTemplate parameter names $(tt.params.NAME)
+var paramsRegexp = regexp.MustCompile(`\$\(tt.params.(?P<var>[_a-zA-Z][_a-zA-Z0-9.-]*)\)`)
 
 // Validate validates a TriggerTemplate.
 func (t *TriggerTemplate) Validate(ctx context.Context) *apis.FieldError {
@@ -41,7 +42,7 @@ func (t *TriggerTemplate) Validate(ctx context.Context) *apis.FieldError {
 
 // Validate validates a TriggerTemplateSpec.
 func (s *TriggerTemplateSpec) validate(ctx context.Context) *apis.FieldError {
-	if equality.Semantic.DeepEqual(s, TriggerTemplateSpec{}) {
+	if equality.Semantic.DeepEqual(s, &TriggerTemplateSpec{}) {
 		return apis.ErrMissingField(apis.CurrentField)
 	}
 	if len(s.ResourceTemplates) == 0 {
@@ -86,29 +87,21 @@ func validateResourceTemplates(templates []TriggerResourceTemplate) *apis.FieldE
 
 // Verify every param in the ResourceTemplates is declared with a ParamSpec
 func verifyParamDeclarations(params []ParamSpec, templates []TriggerResourceTemplate) *apis.FieldError {
-	declaredParamNames := map[string]struct{}{}
+	declaredParamNames := sets.NewString()
 	for _, param := range params {
-		declaredParamNames[param.Name] = struct{}{}
+		declaredParamNames.Insert(param.Name)
 	}
 	for i, template := range templates {
-		// Get all params in the template $(tt.params.NAME) or $(params.NAME)
+		// Get all params in the template $(tt.params.NAME)
 		templateParams := paramsRegexp.FindAllSubmatch(template.RawExtension.Raw, -1)
 		for _, templateParam := range templateParams {
-			templateParamName := string(templateParam[2])
-			if _, ok := declaredParamNames[templateParamName]; !ok {
-				// This logic is to get the tag and display error dynamically for both tt.params and params.
-				// TODO(#606)
-				var tag string
-				if string(templateParam[1]) == "params" {
-					tag = "params"
-				} else {
-					tag = "tt.params"
-				}
+			templateParamName := string(templateParam[1])
+			if !declaredParamNames.Has(templateParamName) {
 				fieldErr := apis.ErrInvalidValue(
-					fmt.Sprintf("undeclared param '$(%s.%s)'", tag, templateParamName),
+					fmt.Sprintf("undeclared param '$(tt.params.%s)'", templateParamName),
 					fmt.Sprintf("[%d]", i),
 				)
-				fieldErr.Details = fmt.Sprintf("'$(%s.%s)' must be declared in spec.params", tag, templateParamName)
+				fieldErr.Details = fmt.Sprintf("'$(tt.params.%s)' must be declared in spec.params", templateParamName)
 				return fieldErr
 			}
 		}
