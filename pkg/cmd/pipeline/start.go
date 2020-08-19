@@ -253,13 +253,8 @@ func (opt *startOptions) startPipeline(pipelineStart *v1beta1.Pipeline) error {
 		} else if opt.PrefixName == "" {
 			pr.ObjectMeta.GenerateName = usepr.ObjectMeta.Name + "-"
 		}
-		pr.Spec.Resources = usepr.Spec.Resources
-		pr.Spec.Params = usepr.Spec.Params
-		// If the usepr is a "new" PR, let's populate those fields too
-		pr.Spec.ServiceAccountName = usepr.Spec.ServiceAccountName
-		pr.Spec.ServiceAccountNames = usepr.Spec.ServiceAccountNames
-		pr.Spec.Workspaces = usepr.Spec.Workspaces
-		pr.Spec.Timeout = usepr.Spec.Timeout
+		// Copy over spec from last or previous PipelineRun to use same values for this PipelineRun
+		pr.Spec = usepr.Spec
 	}
 
 	if err := mergeRes(pr, opt.Resources); err != nil {

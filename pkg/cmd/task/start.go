@@ -250,13 +250,8 @@ func useTaskRunFrom(opt startOptions, tr *v1beta1.TaskRun, cs *cli.Clients, tnam
 	} else if opt.PrefixName == "" {
 		tr.ObjectMeta.GenerateName = trUsed.ObjectMeta.Name + "-"
 	}
-
-	tr.Spec.Resources = trUsed.Spec.Resources
-	tr.Spec.Params = trUsed.Spec.Params
-	tr.Spec.ServiceAccountName = trUsed.Spec.ServiceAccountName
-	tr.Spec.Workspaces = trUsed.Spec.Workspaces
-	tr.Spec.Timeout = trUsed.Spec.Timeout
-
+	// Copy over spec from last or previous TaskRun to use same values for this TaskRun
+	tr.Spec = trUsed.Spec
 	return nil
 }
 

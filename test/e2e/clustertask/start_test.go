@@ -17,9 +17,11 @@ package clustertask
 
 import (
 	"testing"
+	"time"
 
 	"github.com/AlecAivazis/survey/v2/terminal"
 	"github.com/Netflix/go-expect"
+	"github.com/google/go-cmp/cmp"
 	"github.com/tektoncd/cli/test/builder"
 	"github.com/tektoncd/cli/test/cli"
 	"github.com/tektoncd/cli/test/framework"
@@ -202,6 +204,32 @@ Waiting for logs to be available...
 		taskRunGeneratedName := builder.GetTaskRunListWithName(c, "read-clustertask", true).Items[0].Name
 		if err := wait.ForTaskRunState(c, taskRunGeneratedName, wait.TaskRunSucceed(taskRunGeneratedName), "TaskRunSucceeded"); err != nil {
 			t.Errorf("Error waiting for TaskRun to Succeed: %s", err)
+		}
+	})
+
+	t.Run("Start TaskRun using tkn ct start with --last option", func(t *testing.T) {
+		// Get last TaskRun for read-clustertask
+		lastTaskRun := builder.GetTaskRunListWithName(c, "read-clustertask", true).Items[0]
+
+		// Start TaskRun using --last
+		tkn.MustSucceed(t, "ct", "start", "read-clustertask",
+			"--last",
+			"--showlog")
+
+		// Sleep to make make sure TaskRun is created/running
+		time.Sleep(1 * time.Second)
+
+		// Get name of most recent TaskRun and wait for it to succeed
+		taskRunUsingLast := builder.GetTaskRunListWithName(c, "read-clustertask", true).Items[0]
+		if err := wait.ForTaskRunState(c, taskRunUsingLast.Name, wait.TaskRunSucceed(taskRunUsingLast.Name), "TaskRunSucceeded"); err != nil {
+			t.Errorf("Error waiting for TaskRun to Succeed: %s", err)
+		}
+
+		// Expect that previous TaskRun spec will match most recent TaskRun spec
+		expected := lastTaskRun.Spec
+		got := taskRunUsingLast.Spec
+		if d := cmp.Diff(got, expected); d != "" {
+			t.Fatalf("-got, +want: %v", d)
 		}
 	})
 }
