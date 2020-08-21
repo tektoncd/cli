@@ -176,3 +176,63 @@ func TestGetTriggerVersion(t *testing.T) {
 		})
 	}
 }
+
+func TestGetDashboardVersion(t *testing.T) {
+	oldDeploymentLabels := map[string]string{
+		"app": "tekton-dashboard",
+	}
+
+	newDeploymentLabels := map[string]string{
+		"app.kubernetes.io/part-of":   "tekton-dashboard",
+		"app.kubernetes.io/component": "dashboard",
+		"app.kubernetes.io/name":      "dashboard",
+	}
+
+	testParams := []struct {
+		name       string
+		namespace  string
+		deployment *v1.Deployment
+		want       string
+	}{{
+		name:       "empty deployment items",
+		namespace:  "tekton-pipelines",
+		deployment: &v1.Deployment{},
+		want:       "",
+	}, {
+		name:       "dashboard in different namespace (old labels)",
+		namespace:  "test",
+		deployment: getDeploymentData("dep", "", oldDeploymentLabels, nil, nil),
+		want:       "",
+	}, {
+		name:       "deployment spec have labels specific to version (old labels)",
+		namespace:  "tekton-pipelines",
+		deployment: getDeploymentData("dep1", "", map[string]string{"app": "tekton-dashboard", "version": "v0.6.0"}, oldDeploymentLabels, nil),
+		want:       "v0.6.0",
+	}, {
+		name:       "dashboard in different namespace (new labels)",
+		namespace:  "test",
+		deployment: getDeploymentData("dep2", "", newDeploymentLabels, map[string]string{"app.kubernetes.io/version": "v0.7.0"}, nil),
+		want:       "v0.7.0",
+	}, {
+		name:       "deployment spec have labels specific to master version (new labels)",
+		namespace:  "tekton-pipelines",
+		deployment: getDeploymentData("dep3", "", newDeploymentLabels, map[string]string{"app.kubernetes.io/version": "master-tekton-dashboard"}, nil),
+		want:       "master-tekton-dashboard",
+	}}
+
+	for _, tp := range testParams {
+		t.Run(tp.name, func(t *testing.T) {
+			cs, _ := test.SeedTestData(t, pipelinetest.Data{})
+			p := &test.Params{Kube: cs.Kube}
+			cls, err := p.Clients()
+			if err != nil {
+				t.Errorf("failed to get client: %v", err)
+			}
+			if _, err := cls.Kube.AppsV1().Deployments(tp.namespace).Create(tp.deployment); err != nil {
+				t.Errorf("failed to create deployment: %v", err)
+			}
+			version, _ := GetDashboardVersion(cls)
+			test.AssertOutput(t, tp.want, version)
+		})
+	}
+}
