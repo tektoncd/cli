@@ -66,6 +66,11 @@ func Command(p cli.Params) *cobra.Command {
 					triggersVersion = "unknown"
 				}
 				fmt.Fprintf(cmd.OutOrStdout(), "Triggers version: %s\n", triggersVersion)
+				dashboardVersion, _ := version.GetDashboardVersion(cs)
+				if dashboardVersion == "" {
+					dashboardVersion = "unknown"
+				}
+				fmt.Fprintf(cmd.OutOrStdout(), "Dashboard version: %s\n", dashboardVersion)
 			}
 
 			if !check || clientVersion == devVersion {

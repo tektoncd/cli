@@ -28,6 +28,8 @@ const (
 	oldPipelinesControllerSelector string = "app.kubernetes.io/component=controller,app.kubernetes.io/name=tekton-pipelines"
 	triggersControllerSelector     string = "app.kubernetes.io/part-of=tekton-triggers,app.kubernetes.io/component=controller,app.kubernetes.io/name=controller"
 	oldTriggersControllerSelector  string = "app.kubernetes.io/component=controller,app.kubernetes.io/name=tekton-triggers"
+	dashboardControllerSelector    string = "app.kubernetes.io/part-of=tekton-dashboard,app.kubernetes.io/component=dashboard,app.kubernetes.io/name=dashboard"
+	oldDashboardControllerSelector string = "app=tekton-dashboard"
 )
 
 // GetPipelineVersion Get pipeline version, functions imported from Dashboard
@@ -41,7 +43,7 @@ func GetPipelineVersion(c *cli.Clients) (string, error) {
 	version := findPipelineVersion(deploymentsList.Items)
 
 	if version == "" {
-		return "", fmt.Errorf("Error getting the tekton pipelines deployment version. Version is unknown")
+		return "", fmt.Errorf("error getting the tekton pipelines deployment version. Version is unknown")
 	}
 
 	return version, nil
@@ -111,7 +113,7 @@ func GetTriggerVersion(c *cli.Clients) (string, error) {
 	version := findTriggersVersion(deploymentsList.Items)
 
 	if version == "" {
-		return "", fmt.Errorf("Error getting the tekton triggers deployment version. Version is unknown")
+		return "", fmt.Errorf("error getting the tekton triggers deployment version. Version is unknown")
 	}
 
 	return version, nil
@@ -126,6 +128,37 @@ func findTriggersVersion(deployments []v1.Deployment) string {
 		if version = deploymentLabels["app.kubernetes.io/version"]; version == "" {
 			// For Tekton Triggers 0.3.*
 			version = deploymentLabels["triggers.tekton.dev/release"]
+		}
+	}
+	return version
+}
+
+// GetDashboardVersion Get dashboard version.
+func GetDashboardVersion(c *cli.Clients) (string, error) {
+	deploymentsList, err := getDeployments(c, dashboardControllerSelector, oldDashboardControllerSelector)
+
+	if err != nil {
+		return "", err
+	}
+
+	version := findDashboardVersion(deploymentsList.Items)
+	if version == "" {
+		return "", fmt.Errorf("error getting the tekton dashboard deployment version. Version is unknown")
+	}
+
+	return version, nil
+}
+
+func findDashboardVersion(deployments []v1.Deployment) string {
+	version := ""
+	for _, deployment := range deployments {
+		deploymentLabels := deployment.Spec.Template.GetLabels()
+
+		// For master of Tekton Dashboard
+		if version = deploymentLabels["app.kubernetes.io/version"]; version == "" {
+			// For Tekton Dashboard 0.6.*
+			deploymentMetaLabels := deployment.GetObjectMeta().GetLabels()
+			version = deploymentMetaLabels["version"]
 		}
 	}
 	return version
