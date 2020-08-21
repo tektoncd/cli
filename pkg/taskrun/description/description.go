@@ -126,6 +126,21 @@ STARTED 	DURATION 	STATUS
 {{- end }}
 {{- end }}
 
+{{decorate "workspaces" ""}}{{decorate "underline bold" "Workspaces\n"}}
+
+{{- if eq (len .TaskRun.Spec.Workspaces) 0 }}
+ No workspaces
+{{- else }}
+ NAME	SUB PATH		WORKSPACE BINDING
+{{- range $workspace := .TaskRun.Spec.Workspaces }}
+{{- if not $workspace.SubPath }}
+ {{ decorate "bullet" $workspace.Name }}	{{ "---" }}		{{ formatWorkspace $workspace }}
+{{- else }}
+ {{ decorate "bullet" $workspace.Name }}	{{ $workspace.SubPath }} 		{{ formatWorkspace $workspace }}
+{{- end }}
+{{- end }}
+{{- end }}
+
 {{decorate "steps" ""}}{{decorate "underline bold" "Steps"}}
 {{$sortedSteps := sortStepStates .TaskRun.Status.Steps }}
 {{- $l := len $sortedSteps }}{{ if eq $l 0 }}
@@ -217,6 +232,7 @@ func PrintTaskRunDescription(s *cli.Stream, trName string, p cli.Params) error {
 		"formatDuration":        formatted.Duration,
 		"formatCondition":       formatted.Condition,
 		"formatResult":          formatted.Result,
+		"formatWorkspace":       formatted.Workspace,
 		"hasFailed":             hasFailed,
 		"taskRefExists":         taskRefExists,
 		"taskResourceRefExists": taskResourceRefExists,

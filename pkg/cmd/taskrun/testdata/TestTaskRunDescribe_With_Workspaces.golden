@@ -29,7 +29,10 @@ Results
 
 Workspaces
 
- No workspaces
+ NAME        SUB PATH      WORKSPACE BINDING
+ test        test          EmptyDir (emptyDir=)
+ configmap   ---           ConfigMap (config=bar)
+ secret      ---           Secret (secret=foobar)
 
 Steps
 
