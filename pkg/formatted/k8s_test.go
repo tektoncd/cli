@@ -78,6 +78,42 @@ func TestCondition(t *testing.T) {
 			want: "Cancelled(TaskRunCancelled)",
 		},
 		{
+			name: "PipelineRunTimeout status reason",
+			condition: []apis.Condition{{
+				Type:   apis.ConditionSucceeded,
+				Status: corev1.ConditionFalse,
+				Reason: "PipelineRunTimeout",
+			}},
+			want: "Failed(PipelineRunTimeout)",
+		},
+		{
+			name: "TaskRunTimeout status reason",
+			condition: []apis.Condition{{
+				Type:   apis.ConditionSucceeded,
+				Status: corev1.ConditionFalse,
+				Reason: "TaskRunTimeout",
+			}},
+			want: "Failed(TaskRunTimeout)",
+		},
+		{
+			name: "PipelineRunStopping status reason",
+			condition: []apis.Condition{{
+				Type:   apis.ConditionSucceeded,
+				Status: corev1.ConditionUnknown,
+				Reason: "PipelineRunStopping",
+			}},
+			want: "Failed(PipelineRunStopping)",
+		},
+		{
+			name: "ConfigError status reason",
+			condition: []apis.Condition{{
+				Type:   apis.ConditionSucceeded,
+				Status: corev1.ConditionUnknown,
+				Reason: "CreateContainerConfigError",
+			}},
+			want: "Pending(CreateContainerConfigError)",
+		},
+		{
 			name: "Reason equal Status",
 			condition: []apis.Condition{{
 				Type:   apis.ConditionSucceeded,

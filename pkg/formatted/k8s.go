@@ -29,7 +29,8 @@ var ConditionColor = map[string]color.Attribute{
 	"Running":   color.FgHiBlue,
 	"Cancelled": color.FgHiYellow,
 	"Completed": color.FgHiMagenta,
-	"Pending":   color.FgHiWhite,
+	"Pending":   color.FgHiBlue,
+	"Started":   color.FgHiCyan,
 }
 
 var stepCounter uint64
@@ -65,17 +66,18 @@ func Condition(c v1beta1.Conditions) string {
 	case corev1.ConditionUnknown:
 		status = "Running"
 	}
-	cstatus := ColorStatus(status)
 
 	if c[0].Reason != "" && c[0].Reason != status {
-		if c[0].Reason == "PipelineRunCancelled" || c[0].Reason == "TaskRunCancelled" {
-			status = ColorStatus("Cancelled") + "(" + c[0].Reason + ")"
-		} else if c[0].Reason != status {
-			status = cstatus + "(" + c[0].Reason + ")"
+		switch c[0].Reason {
+		case "PipelineRunCancelled", "TaskRunCancelled":
+			return ColorStatus("Cancelled") + "(" + c[0].Reason + ")"
+		case "PipelineRunStopping", "TaskRunStopping":
+			return ColorStatus("Failed") + "(" + c[0].Reason + ")"
+		case "CreateContainerConfigError", "ExceededNodeResources", "ExceededResourceQuota":
+			return ColorStatus("Pending") + "(" + c[0].Reason + ")"
+		default:
+			return ColorStatus(status) + "(" + c[0].Reason + ")"
 		}
-	} else {
-		status = cstatus
 	}
-
-	return status
+	return ColorStatus(status)
 }
