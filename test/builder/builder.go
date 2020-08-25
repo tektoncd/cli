@@ -670,6 +670,16 @@ const describeTemplate = `{{decorate "bold" "Name"}}:	{{ .PipelineName }}
 {{- end }}
 {{- end }}
 
+{{decorate "workspaces" ""}}{{decorate "underline bold" "Workspaces\n"}}
+{{- if eq (len .Pipeline.Spec.Workspaces) 0 }}
+ No workspaces
+{{- else }}
+ NAME	DESCRIPTION
+{{- range $workspace := .Pipeline.Spec.Workspaces }}
+ {{ decorate "bullet" $workspace.Name }}	{{ formatDesc $workspace.Description }}
+{{- end }}
+{{- end }}
+
 {{decorate "tasks" ""}}{{decorate "underline bold" "Tasks\n"}}
 {{- $tl := len .Pipeline.Spec.Tasks }}{{ if eq $tl 0 }}
  No tasks
@@ -719,6 +729,7 @@ func GetPipelineDescribeOutput(t *testing.T, cs *framework.Clients, pname string
 		"formatDuration":       formatted.Duration,
 		"formatCondition":      formatted.Condition,
 		"formatTimeout":        formatted.Timeout,
+		"formatDesc":           formatted.FormatDesc,
 		"formatParam":          formatted.Param,
 		"decorate":             formatted.DecorateAttr,
 		"join":                 strings.Join,
