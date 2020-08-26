@@ -97,6 +97,21 @@ STARTED	DURATION	STATUS
 {{- end }}
 {{- end }}
 
+{{decorate "workspaces" ""}}{{decorate "underline bold" "Workspaces\n"}}
+
+{{- if eq (len .PipelineRun.Spec.Workspaces) 0 }}
+ No workspaces
+{{- else }}
+ NAME	SUB PATH	WORKSPACE BINDING
+{{- range $workspace := .PipelineRun.Spec.Workspaces }}
+{{- if not $workspace.SubPath }}
+ {{ decorate "bullet" $workspace.Name }}	{{ "---" }}	{{ formatWorkspace $workspace }}
+{{- else }}
+ {{ decorate "bullet" $workspace.Name }}	{{ $workspace.SubPath }}	{{ formatWorkspace $workspace }}
+{{- end }}
+{{- end }}
+{{- end }}
+
 {{decorate "taskruns" ""}}{{decorate "underline bold" "Taskruns\n"}}
 {{- $l := len .TaskrunList }}{{ if eq $l 0 }}
  No taskruns
@@ -173,6 +188,7 @@ func PrintPipelineRunDescription(s *cli.Stream, prName string, p cli.Params) err
 		"formatDuration":            formatted.Duration,
 		"formatCondition":           formatted.Condition,
 		"formatResult":              formatted.Result,
+		"formatWorkspace":           formatted.Workspace,
 		"hasFailed":                 hasFailed,
 		"pipelineRefExists":         pipelineRefExists,
 		"pipelineResourceRefExists": pipelineResourceRefExists,
