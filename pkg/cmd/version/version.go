@@ -67,17 +67,13 @@ func Command(p cli.Params) *cobra.Command {
 
 				fmt.Fprintf(cmd.OutOrStdout(), "Pipeline version: %s\n", pipelineVersion)
 				triggersVersion, _ := version.GetTriggerVersion(cs, namespace)
-				if triggersVersion == "" {
-					triggersVersion = "unknown, " +
-						"triggers controller may be installed in another namespace please use tkn version -n {namespace}"
+				if triggersVersion != "" {
+					fmt.Fprintf(cmd.OutOrStdout(), "Triggers version: %s\n", triggersVersion)
 				}
-				fmt.Fprintf(cmd.OutOrStdout(), "Triggers version: %s\n", triggersVersion)
 				dashboardVersion, _ := version.GetDashboardVersion(cs, namespace)
-				if dashboardVersion == "" {
-					dashboardVersion = "unknown, " +
-						"dashboard controller may be installed in another namespace please use tkn version -n {namespace}"
+				if dashboardVersion != "" {
+					fmt.Fprintf(cmd.OutOrStdout(), "Dashboard version: %s\n", dashboardVersion)
 				}
-				fmt.Fprintf(cmd.OutOrStdout(), "Dashboard version: %s\n", dashboardVersion)
 			}
 
 			if !check || clientVersion == devVersion {
