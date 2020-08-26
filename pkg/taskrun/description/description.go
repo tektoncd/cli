@@ -131,12 +131,12 @@ STARTED 	DURATION 	STATUS
 {{- if eq (len .TaskRun.Spec.Workspaces) 0 }}
  No workspaces
 {{- else }}
- NAME	SUB PATH		WORKSPACE BINDING
+ NAME	SUB PATH	WORKSPACE BINDING
 {{- range $workspace := .TaskRun.Spec.Workspaces }}
 {{- if not $workspace.SubPath }}
- {{ decorate "bullet" $workspace.Name }}	{{ "---" }}		{{ formatWorkspace $workspace }}
+ {{ decorate "bullet" $workspace.Name }}	{{ "---" }}	{{ formatWorkspace $workspace }}
 {{- else }}
- {{ decorate "bullet" $workspace.Name }}	{{ $workspace.SubPath }} 		{{ formatWorkspace $workspace }}
+ {{ decorate "bullet" $workspace.Name }}	{{ $workspace.SubPath }}	{{ formatWorkspace $workspace }}
 {{- end }}
 {{- end }}
 {{- end }}
