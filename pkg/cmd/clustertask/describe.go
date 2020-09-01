@@ -165,9 +165,17 @@ or
 			}
 
 			if len(args) == 0 {
-				err = askClusterTaskName(opts, p)
+				clusterTaskNames, err := clustertask.GetAllClusterTaskNames(p)
 				if err != nil {
 					return err
+				}
+				if len(clusterTaskNames) == 1 {
+					opts.ClusterTaskName = clusterTaskNames[0]
+				} else {
+					err = askClusterTaskName(opts, clusterTaskNames)
+					if err != nil {
+						return err
+					}
 				}
 			} else {
 				opts.ClusterTaskName = args[0]
@@ -261,20 +269,11 @@ func sortResourcesByTypeAndName(tres []v1beta1.TaskResource) []v1beta1.TaskResou
 	return tres
 }
 
-func askClusterTaskName(opts *options.DescribeOptions, p cli.Params) error {
-	cs, err := p.Clients()
-	if err != nil {
-		return err
-	}
-	clusterTaskNames, err := allClusterTaskNames(cs)
-	if err != nil {
-		return err
-	}
+func askClusterTaskName(opts *options.DescribeOptions, clusterTaskNames []string) error {
 	if len(clusterTaskNames) == 0 {
 		return fmt.Errorf("no ClusterTasks found")
 	}
-
-	err = opts.Ask(options.ResourceNameClusterTask, clusterTaskNames)
+	err := opts.Ask(options.ResourceNameClusterTask, clusterTaskNames)
 	if err != nil {
 		return err
 	}

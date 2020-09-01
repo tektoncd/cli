@@ -271,6 +271,34 @@ func Test_ClusterTaskDescribe(t *testing.T) {
 	}
 }
 
+func TestClusterTaskDescribe_WithoutNameIfOnlyOneClusterTaskPresent(t *testing.T) {
+	cstasks := []*v1alpha1.ClusterTask{
+		{
+			ObjectMeta: metav1.ObjectMeta{
+				Name: "task-1",
+			},
+		},
+	}
+	version := "v1alpha1"
+	tdc := testDynamic.Options{}
+	dynamic, err := tdc.Client(
+		cb.UnstructuredCT(cstasks[0], version),
+	)
+	if err != nil {
+		t.Errorf("unable to create dynamic client: %v", err)
+	}
+
+	cs, _ := test.SeedTestData(t, pipelinetest.Data{ClusterTasks: cstasks})
+	cs.Pipeline.Resources = cb.APIResourceList(version, []string{"clustertask", "taskrun"})
+	p := &test.Params{Tekton: cs.Pipeline, Kube: cs.Kube, Dynamic: dynamic}
+	clusterTask := Command(p)
+	out, err := test.ExecuteCommand(clusterTask, "desc")
+	if err != nil {
+		t.Errorf("Unexpected error: %v", err)
+	}
+	golden.Assert(t, out, fmt.Sprintf("%s.golden", t.Name()))
+}
+
 func TestClusterTask_custom_output(t *testing.T) {
 	name := "clustertask"
 	expected := "clustertask.tekton.dev/" + name
@@ -462,6 +490,35 @@ func TestClusterTaskDescribe_With_Workspaces(t *testing.T) {
 	p := &test.Params{Tekton: cs.Pipeline, Dynamic: dynamic}
 	clustertask := Command(p)
 	out, err := test.ExecuteCommand(clustertask, "desc", "clustertask-1")
+	if err != nil {
+		t.Errorf("Unexpected error: %v", err)
+	}
+	golden.Assert(t, out, fmt.Sprintf("%s.golden", t.Name()))
+}
+
+func TestClusterTaskDescribe_WithoutNameIfOnlyOneV1beta1ClusterTaskPresent(t *testing.T) {
+	cttasks := []*v1beta1.ClusterTask{
+		{
+			ObjectMeta: metav1.ObjectMeta{
+				Name: "task-1",
+			},
+		},
+	}
+
+	version := "v1beta1"
+	tdc := testDynamic.Options{}
+	dynamic, err := tdc.Client(
+		cb.UnstructuredV1beta1CT(cttasks[0], version),
+	)
+	if err != nil {
+		t.Errorf("unable to create dynamic client: %v", err)
+	}
+
+	cs, _ := test.SeedV1beta1TestData(t, pipelinev1beta1test.Data{ClusterTasks: cttasks})
+	cs.Pipeline.Resources = cb.APIResourceList(version, []string{"clustertask", "taskrun"})
+	p := &test.Params{Tekton: cs.Pipeline, Kube: cs.Kube, Dynamic: dynamic}
+	cttask := Command(p)
+	out, err := test.ExecuteCommand(cttask, "desc")
 	if err != nil {
 		t.Errorf("Unexpected error: %v", err)
 	}

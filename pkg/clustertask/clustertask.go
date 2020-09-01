@@ -30,6 +30,24 @@ import (
 
 var clustertaskGroupResource = schema.GroupVersionResource{Group: "tekton.dev", Resource: "clustertasks"}
 
+func GetAllClusterTaskNames(p cli.Params) ([]string, error) {
+	cs, err := p.Clients()
+	if err != nil {
+		return nil, err
+	}
+
+	clustertasks, err := List(cs, metav1.ListOptions{})
+	if err != nil {
+		return nil, err
+	}
+
+	ret := []string{}
+	for _, item := range clustertasks.Items {
+		ret = append(ret, item.ObjectMeta.Name)
+	}
+	return ret, nil
+}
+
 func List(c *cli.Clients, opts metav1.ListOptions) (*v1beta1.ClusterTaskList, error) {
 	unstructuredCT, err := actions.List(clustertaskGroupResource, c, "", opts)
 	if err != nil {

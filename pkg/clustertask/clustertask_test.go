@@ -31,6 +31,90 @@ import (
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 )
 
+func TestClusterTask_GetAllTaskNames(t *testing.T) {
+	version := "v1alpha1"
+	clock := clockwork.NewFakeClock()
+	ctdata := []*v1alpha1.ClusterTask{
+		{
+			ObjectMeta: metav1.ObjectMeta{
+				Name: "clustertask",
+				// created  5 minutes back
+				CreationTimestamp: metav1.Time{Time: clock.Now().Add(-5 * time.Minute)},
+			},
+		},
+	}
+	cs, _ := test.SeedTestData(t, pipelinetest.Data{
+		ClusterTasks: ctdata,
+	})
+	cs.Pipeline.Resources = cb.APIResourceList(version, []string{"clustertask"})
+	tdc := testDynamic.Options{}
+	dc, err := tdc.Client(
+		cb.UnstructuredCT(ctdata[0], version),
+	)
+	if err != nil {
+		t.Errorf("unable to create dynamic client: %v", err)
+	}
+
+	ctdata2 := []*v1alpha1.ClusterTask{
+		{
+			ObjectMeta: metav1.ObjectMeta{
+				Name: "clustertask",
+				// created  5 minutes back
+				CreationTimestamp: metav1.Time{Time: clock.Now().Add(-5 * time.Minute)},
+			},
+		},
+		{
+			ObjectMeta: metav1.ObjectMeta{
+				Name: "clustertask2",
+				// created  5 minutes back
+				CreationTimestamp: metav1.Time{Time: clock.Now().Add(-5 * time.Minute)},
+			},
+		},
+	}
+	cs2, _ := test.SeedTestData(t, pipelinetest.Data{
+		ClusterTasks: ctdata2,
+	})
+	cs2.Pipeline.Resources = cb.APIResourceList(version, []string{"clustertask"})
+	tdc2 := testDynamic.Options{}
+	dc2, err := tdc2.Client(
+		cb.UnstructuredCT(ctdata2[0], version),
+		cb.UnstructuredCT(ctdata2[1], version),
+	)
+	if err != nil {
+		t.Errorf("unable to create dynamic client: %v", err)
+	}
+
+	p := &test.Params{Tekton: cs.Pipeline, Clock: clock, Kube: cs.Kube, Dynamic: dc}
+	p2 := &test.Params{Tekton: cs2.Pipeline, Clock: clock, Kube: cs2.Kube, Dynamic: dc2}
+
+	testParams := []struct {
+		name   string
+		params *test.Params
+		want   []string
+	}{
+		{
+			name:   "Single ClusterTask",
+			params: p,
+			want:   []string{"clustertask"},
+		},
+		{
+			name:   "Multi ClusterTasks",
+			params: p2,
+			want:   []string{"clustertask", "clustertask2"},
+		},
+	}
+
+	for _, tp := range testParams {
+		t.Run(tp.name, func(t *testing.T) {
+			got, err := GetAllClusterTaskNames(tp.params)
+			if err != nil {
+				t.Errorf("unexpected Error")
+			}
+			test.AssertOutput(t, tp.want, got)
+		})
+	}
+}
+
 func TestClusterTask_List(t *testing.T) {
 	version := "v1alpha1"
 	clock := clockwork.NewFakeClock()

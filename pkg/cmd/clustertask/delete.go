@@ -86,7 +86,7 @@ func deleteClusterTasks(opts *options.DeleteOptions, s *cli.Stream, p cli.Params
 	})
 	switch {
 	case opts.DeleteAll:
-		cts, err := allClusterTaskNames(cs)
+		cts, err := clustertask.GetAllClusterTaskNames(p)
 		if err != nil {
 			return err
 		}
@@ -110,18 +110,6 @@ func deleteClusterTasks(opts *options.DeleteOptions, s *cli.Stream, p cli.Params
 		}
 	}
 	return d.Errors()
-}
-
-func allClusterTaskNames(cs *cli.Clients) ([]string, error) {
-	clusterTasks, err := clustertask.List(cs, metav1.ListOptions{})
-	if err != nil {
-		return nil, err
-	}
-	var names []string
-	for _, ct := range clusterTasks.Items {
-		names = append(names, ct.Name)
-	}
-	return names, nil
 }
 
 func taskRunLister(cs *cli.Clients, p cli.Params) func(string) ([]string, error) {
