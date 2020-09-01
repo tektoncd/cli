@@ -138,8 +138,7 @@ function install_pipeline_crd() {
         latestreleaseyaml=https://storage.googleapis.com/tekton-releases-nightly/pipeline/latest/release.yaml
 
     # If for whatever reason the nightly release wasnt there (nightly ci failure?), try the released version
-    [[ -z ${latestreleaseyaml} ]] && \
-        latestreleaseyaml=$(curl -s https://api.github.com/repos/tektoncd/pipeline/releases|python -c "import sys, json;x=json.load(sys.stdin);ass=x[0]['assets'];print([ x['browser_download_url'] for x in ass if x['name'] == 'release.yaml'][0])")
+    [[ -n ${latestreleaseyaml} ]] || latestreleaseyaml=https://storage.googleapis.com/tekton-releases/pipeline/latest/release.yaml
 
   fi
   [[ -z ${latestreleaseyaml} ]] && fail_test "Could not get latest released release.yaml"
@@ -166,9 +165,7 @@ function install_triggers_crd() {
         latestreleaseyaml=https://storage.googleapis.com/tekton-releases-nightly/triggers/latest/release.yaml
 
     # If for whatever reason the nightly release wasnt there (nightly ci failure?), try the released version
-    [[ -z ${latestreleaseyaml} ]] && \
-        latestreleaseyaml=$(curl -s https://api.github.com/repos/tektoncd/triggers/releases|python -c "import sys, json;x=json.load(sys.stdin);ass=x[0]['assets'];print([ x['browser_download_url'] for x in ass if x['name'] == 'release.yaml'][0])")
-
+    [[ -z ${latestreleaseyaml} ]] && latestreleaseyaml="https://storage.googleapis.com/tekton-releases/triggers/latest/release.yaml"
   fi
   [[ -z ${latestreleaseyaml} ]] && fail_test "Could not get latest released release.yaml"
   kubectl apply -f ${latestreleaseyaml} ||
@@ -260,4 +257,3 @@ must_fail() {
   (( failed )) || fail_test "failed to $desc"
   echo
 }
-
