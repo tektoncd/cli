@@ -16,6 +16,10 @@
 package clustertask
 
 import (
+	"fmt"
+	"os"
+	"regexp"
+	"strings"
 	"testing"
 	"time"
 
@@ -47,39 +51,47 @@ func TestClusterTaskInteractiveStartE2E(t *testing.T) {
 	kubectl := cli.NewKubectl(namespace)
 	tkn, err := cli.NewTknRunner(namespace)
 	assert.NilError(t, err)
+	// Set environment variable NO_CLUSTERTASK_FOUND_TEST to any value to skip "No ClusterTasks found" test
+	if os.Getenv("NO_CLUSTERTASK_FOUND_TEST") == "" {
+		t.Run("Get list of ClusterTasks when none present", func(t *testing.T) {
+			res := tkn.Run("clustertask", "list")
+			expected := "No ClusterTasks found\n"
+			res.Assert(t, icmd.Expected{
+				ExitCode: 0,
+				Err:      icmd.None,
+				Out:      expected,
+			})
 
-	t.Run("Get list of ClusterTasks when none present", func(t *testing.T) {
-		res := tkn.Run("clustertask", "list")
-		expected := "No ClusterTasks found\n"
-		res.Assert(t, icmd.Expected{
-			ExitCode: 0,
-			Err:      icmd.None,
-			Out:      expected,
 		})
-	})
-
+	}
 	t.Logf("Creating clustertask read-clustertask")
-	kubectl.MustSucceed(t, "create", "-f", helper.GetResourcePath("read-file-clustertask.yaml"))
+	res := kubectl.MustSucceed(t, "create", "-f", helper.GetResourcePath("read-file-clustertask.yaml"))
+	regex := regexp.MustCompile(`read-clustertask-[a-z0-9]+`)
+	clusterTaskName := regex.FindString(res.Stdout())
 
 	t.Logf("Creating git pipeline resource in namespace: %s", namespace)
 	kubectl.MustSucceed(t, "create", "-f", helper.GetResourcePath("git-resource.yaml"))
 
 	t.Run("Get list of ClusterTasks", func(t *testing.T) {
 		res := tkn.Run("clustertask", "list")
-		expected := builder.ListAllClusterTasksOutput(t, c, map[int]interface{}{
-			0: &builder.TaskData{
-				Name: "read-clustertask",
-			},
-		})
-		res.Assert(t, icmd.Expected{
-			ExitCode: 0,
-			Err:      icmd.None,
-			Out:      expected,
-		})
+		if os.Getenv("NO_CLUSTERTASK_FOUND_TEST") == "" {
+			expected := builder.ListAllClusterTasksOutput(t, c, map[int]interface{}{
+				0: &builder.TaskData{
+					Name: clusterTaskName,
+				},
+			})
+			res.Assert(t, icmd.Expected{
+				ExitCode: 0,
+				Err:      icmd.None,
+				Out:      expected,
+			})
+		} else {
+			assert.Assert(t, strings.Contains(res.Stdout(), clusterTaskName))
+		}
 	})
 
 	t.Run("Start ClusterTask with flags", func(t *testing.T) {
-		res := tkn.MustSucceed(t, "clustertask", "start", "read-clustertask",
+		res := tkn.MustSucceed(t, "clustertask", "start", clusterTaskName,
 			"-i=source="+tePipelineGitResourceName,
 			"-p=FILEPATH=docs",
 			"-p=FILENAME=README.md",
@@ -87,7 +99,7 @@ func TestClusterTaskInteractiveStartE2E(t *testing.T) {
 			"--showlog")
 
 		vars := make(map[string]interface{})
-		taskRunGeneratedName := builder.GetTaskRunListWithName(c, "read-clustertask", true).Items[0].Name
+		taskRunGeneratedName := builder.GetTaskRunListWithName(c, clusterTaskName, true).Items[0].Name
 		vars["Taskrun"] = taskRunGeneratedName
 		expected := helper.ProcessString(`(TaskRun started: {{.Taskrun}}
 Waiting for logs to be available...
@@ -100,7 +112,7 @@ Waiting for logs to be available...
 
 	t.Run("Start ClusterTask interactively", func(t *testing.T) {
 		tkn.RunInteractiveTests(t, &cli.Prompt{
-			CmdArgs: []string{"clustertask", "start", "read-clustertask", "-w=name=shared-workspace,emptyDir="},
+			CmdArgs: []string{"clustertask", "start", clusterTaskName, "-w=name=shared-workspace,emptyDir="},
 			Procedure: func(c *expect.Console) error {
 				if _, err := c.ExpectString("Choose the git resource to use for source:"); err != nil {
 					return err
@@ -135,20 +147,20 @@ Waiting for logs to be available...
 				c.Close()
 				return nil
 			}})
-		taskRunGeneratedName := builder.GetTaskRunListWithName(c, "read-clustertask", true).Items[0].Name
+		taskRunGeneratedName := builder.GetTaskRunListWithName(c, clusterTaskName, true).Items[0].Name
 		if err := wait.ForTaskRunState(c, taskRunGeneratedName, wait.TaskRunSucceed(taskRunGeneratedName), "TaskRunSucceed"); err != nil {
 			t.Errorf("Error waiting for TaskRun to Succeed: %s", err)
 		}
 	})
 
 	t.Run("Start ClusterTask with --use-param-defaults and all the params having default", func(t *testing.T) {
-		tkn.MustSucceed(t, "clustertask", "start", "read-clustertask",
+		tkn.MustSucceed(t, "clustertask", "start", clusterTaskName,
 			"-i=source="+tePipelineGitResourceName,
 			"-p=FILENAME=README.md",
 			"-w=name=shared-workspace,emptyDir=",
 			"--use-param-defaults",
 			"--showlog")
-		taskRunGeneratedName := builder.GetTaskRunListWithName(c, "read-clustertask", true).Items[0].Name
+		taskRunGeneratedName := builder.GetTaskRunListWithName(c, clusterTaskName, true).Items[0].Name
 		if err := wait.ForTaskRunState(c, taskRunGeneratedName, wait.TaskRunSucceed(taskRunGeneratedName), "TaskRunSucceed"); err != nil {
 			t.Errorf("Error waiting for TaskRun to Succeed: %s", err)
 		}
@@ -156,7 +168,7 @@ Waiting for logs to be available...
 
 	t.Run("Start ClusterTask with --use-param-defaults and some of the params not having default", func(t *testing.T) {
 		tkn.RunInteractiveTests(t, &cli.Prompt{
-			CmdArgs: []string{"clustertask", "start", "read-clustertask",
+			CmdArgs: []string{"clustertask", "start", clusterTaskName,
 				"-i=source=" + tePipelineGitResourceName,
 				"--use-param-defaults",
 				"-w=name=shared-workspace,emptyDir=",
@@ -182,7 +194,7 @@ Waiting for logs to be available...
 				c.Close()
 				return nil
 			}})
-		taskRunGeneratedName := builder.GetTaskRunListWithName(c, "read-clustertask", true).Items[0].Name
+		taskRunGeneratedName := builder.GetTaskRunListWithName(c, clusterTaskName, true).Items[0].Name
 		if err := wait.ForTaskRunState(c, taskRunGeneratedName, wait.TaskRunSucceed(taskRunGeneratedName), "TaskRunSucceed"); err != nil {
 			t.Errorf("Error waiting for TaskRun to Succeed: %s", err)
 		}
@@ -193,7 +205,7 @@ Waiting for logs to be available...
 			t.Skip("Skip test as pipeline v0.10 doesn't support certain PodTemplate properties")
 		}
 
-		tkn.MustSucceed(t, "clustertask", "start", "read-clustertask",
+		tkn.MustSucceed(t, "clustertask", "start", clusterTaskName,
 			"-i=source="+tePipelineGitResourceName,
 			"-p=FILEPATH=docs",
 			"-p=FILENAME=README.md",
@@ -201,7 +213,7 @@ Waiting for logs to be available...
 			"--showlog",
 			"--pod-template="+helper.GetResourcePath("/podtemplate/podtemplate.yaml"))
 
-		taskRunGeneratedName := builder.GetTaskRunListWithName(c, "read-clustertask", true).Items[0].Name
+		taskRunGeneratedName := builder.GetTaskRunListWithName(c, clusterTaskName, true).Items[0].Name
 		if err := wait.ForTaskRunState(c, taskRunGeneratedName, wait.TaskRunSucceed(taskRunGeneratedName), "TaskRunSucceeded"); err != nil {
 			t.Errorf("Error waiting for TaskRun to Succeed: %s", err)
 		}
@@ -209,10 +221,10 @@ Waiting for logs to be available...
 
 	t.Run("Start TaskRun using tkn ct start with --last option", func(t *testing.T) {
 		// Get last TaskRun for read-clustertask
-		lastTaskRun := builder.GetTaskRunListWithName(c, "read-clustertask", true).Items[0]
+		lastTaskRun := builder.GetTaskRunListWithName(c, clusterTaskName, true).Items[0]
 
 		// Start TaskRun using --last
-		tkn.MustSucceed(t, "ct", "start", "read-clustertask",
+		tkn.MustSucceed(t, "ct", "start", clusterTaskName,
 			"--last",
 			"--showlog")
 
@@ -220,7 +232,7 @@ Waiting for logs to be available...
 		time.Sleep(1 * time.Second)
 
 		// Get name of most recent TaskRun and wait for it to succeed
-		taskRunUsingLast := builder.GetTaskRunListWithName(c, "read-clustertask", true).Items[0]
+		taskRunUsingLast := builder.GetTaskRunListWithName(c, clusterTaskName, true).Items[0]
 		if err := wait.ForTaskRunState(c, taskRunUsingLast.Name, wait.TaskRunSucceed(taskRunUsingLast.Name), "TaskRunSucceeded"); err != nil {
 			t.Errorf("Error waiting for TaskRun to Succeed: %s", err)
 		}
@@ -259,4 +271,19 @@ Waiting for logs to be available...
 			t.Fatalf("-got, +want: %v", d)
 		}
 	})
+
+	t.Logf("Deleting clustertask %s", clusterTaskName)
+	t.Run(fmt.Sprintf("Delete clustertask %s", clusterTaskName), func(t *testing.T) {
+		res := tkn.MustSucceed(t, "clustertask", "delete", clusterTaskName, "-f")
+		expected := fmt.Sprintf("ClusterTasks deleted: \"%s\"", clusterTaskName)
+		res.Assert(t, icmd.Expected{
+			Err: icmd.None,
+			Out: expected,
+		})
+
+		// Check if clustertask %s got deleted
+		res = tkn.Run("clustertask", "list")
+		assert.Assert(t, !strings.Contains(res.Stdout(), clusterTaskName))
+	})
+
 }
