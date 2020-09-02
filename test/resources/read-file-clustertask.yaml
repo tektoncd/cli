@@ -15,7 +15,7 @@
 apiVersion: tekton.dev/v1alpha1
 kind: ClusterTask
 metadata:
-  name: read-clustertask
+  generateName: read-clustertask-
 spec:
   workspaces:
     - name: shared-workspace
