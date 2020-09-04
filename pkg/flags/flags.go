@@ -124,6 +124,10 @@ func InitParams(p cli.Params, cmd *cobra.Command) error {
 		p.SetNoColour(true)
 	}
 
+	if _, ok := os.LookupEnv("NO_COLOR"); ok {
+		p.SetNoColour(true)
+	}
+
 	return nil
 }
 
