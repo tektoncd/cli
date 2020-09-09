@@ -73,13 +73,21 @@ or
 			}
 
 			if len(args) == 0 {
+				lOpts := metav1.ListOptions{}
 				if !opts.Last {
-					err = askTaskRunName(opts, p)
+					trs, err := trlist.GetAllTaskRuns(p, lOpts, opts.Limit)
 					if err != nil {
 						return err
 					}
+					if len(trs) == 1 {
+						opts.TaskrunName = strings.Fields(trs[0])[0]
+					} else {
+						err = askTaskRunName(opts, trs)
+						if err != nil {
+							return err
+						}
+					}
 				} else {
-					lOpts := metav1.ListOptions{}
 					trs, err := trlist.GetAllTaskRuns(p, lOpts, 1)
 					if err != nil {
 						return err
@@ -113,18 +121,12 @@ or
 	return c
 }
 
-func askTaskRunName(opts *options.DescribeOptions, p cli.Params) error {
-	lOpts := metav1.ListOptions{}
-
+func askTaskRunName(opts *options.DescribeOptions, trs []string) error {
 	err := opts.ValidateOpts()
 	if err != nil {
 		return err
 	}
 
-	trs, err := trlist.GetAllTaskRuns(opts.Params, lOpts, opts.Limit)
-	if err != nil {
-		return err
-	}
 	if len(trs) == 0 {
 		return fmt.Errorf("no TaskRuns found")
 	}

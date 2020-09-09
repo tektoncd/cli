@@ -1,0 +1,38 @@
+Name:        tr-1
+Namespace:   ns
+Task Ref:    task-1
+Labels:
+ tekton.dev/task=task-1
+
+Status
+
+STARTED          DURATION    STATUS
+10 minutes ago   5 minutes   Failed
+
+Input Resources
+
+ No input resources
+
+Output Resources
+
+ No output resources
+
+Params
+
+ No params
+
+Results
+
+ No results
+
+Workspaces
+
+ No workspaces
+
+Steps
+
+No steps
+
+Sidecars
+
+No sidecars
