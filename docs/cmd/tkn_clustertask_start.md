@@ -43,6 +43,7 @@ like cat,foo,bar
       --showlog                  show logs right after starting the ClusterTask
       --timeout string           timeout for TaskRun
       --use-param-defaults       use default parameter values without prompting for input
+      --use-taskrun string       specify a TaskRun name to use its values to re-run the TaskRun
   -w, --workspace stringArray    pass one or more workspaces to map to the corresponding physical volumes as name=name,claimName=pvcName or name=name,emptyDir=
 ```
 

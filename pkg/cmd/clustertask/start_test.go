@@ -471,6 +471,19 @@ func Test_ClusterTask_Start(t *testing.T) {
 	// seeds[6] - For Workspaces Tests
 	seeds = append(seeds, clients{pipelineClient: cs6, dynamicClient: dc6})
 
+	// seeds[7] - Same data as seeds[0] but creates a new TaskRun
+	seedData7, _ := test.SeedTestData(t, pipelinetest.Data{Namespaces: ns, TaskRuns: taskruns, ClusterTasks: clustertasks})
+	objs7 := []runtime.Object{clustertasks[0], taskruns[0]}
+	tdc7 := newDynamicClientOpt(versionA1, "taskrun-7", objs7...)
+	dc7, _ := tdc7.Client(
+		cb.UnstructuredCT(clustertasks[0], versionA1),
+		cb.UnstructuredTR(taskruns[0], versionA1),
+	)
+	cs7 := pipelinetest.Clients{Pipeline: seedData7.Pipeline, Kube: seedData7.Kube}
+	cs7.Pipeline.Resources = cb.APIResourceList(versionA1, []string{"task", "taskrun", "clustertask"})
+	// seeds[7] - For starting ClusterTask with use-taskrun flag
+	seeds = append(seeds, clients{pipelineClient: cs7, dynamicClient: dc7})
+
 	testParams := []struct {
 		name        string
 		command     []string
@@ -551,6 +564,15 @@ func Test_ClusterTask_Start(t *testing.T) {
 			inputStream: nil,
 			wantError:   false,
 			want:        "TaskRun started: taskrun-2\n\nIn order to track the TaskRun progress run:\ntkn taskrun logs taskrun-2 -f -n ns\n",
+		},
+		{
+			name:        "Start with --use-taskrun option",
+			command:     []string{"start", "clustertask-1", "--use-taskrun", "taskrun-123"},
+			dynamic:     seeds[7].dynamicClient,
+			input:       seeds[7].pipelineClient,
+			inputStream: nil,
+			wantError:   false,
+			want:        "TaskRun started: taskrun-7\n\nIn order to track the TaskRun progress run:\ntkn taskrun logs taskrun-7 -f -n ns\n",
 		},
 		{
 			name: "Invalid input format",
@@ -789,7 +811,25 @@ func Test_ClusterTask_Start(t *testing.T) {
 			input:       seeds[6].pipelineClient,
 			inputStream: nil,
 			wantError:   true,
-			want:        "cannot use --last with --use-param-defaults option",
+			want:        "cannot use --last or --use-taskrun options with --use-param-defaults option",
+		},
+		{
+			name: "Dry Run with --use-param-defaults and --use-taskrun",
+			command: []string{"start", "clustertask-3",
+				"-i", "my-repo=git",
+				"-i", "my-image=image",
+				"-l", "key=value",
+				"-o", "code-image=output-image",
+				"-w", "name=test,emptyDir=",
+				"-s=svc1",
+				"--dry-run",
+				"--use-param-defaults",
+				"--use-taskrun", "dummy-taskrun"},
+			dynamic:     seeds[6].dynamicClient,
+			input:       seeds[6].pipelineClient,
+			inputStream: nil,
+			wantError:   true,
+			want:        "cannot use --last or --use-taskrun options with --use-param-defaults option",
 		},
 		{
 			name: "Dry Run with --prefix-name",
@@ -1187,6 +1227,19 @@ func Test_ClusterTask_Start_v1beta1(t *testing.T) {
 	// seeds[5]
 	seeds = append(seeds, clients{pipelineClient: cs, dynamicClient: dc5})
 
+	// seeds[6] - Same data as seeds[0] but creates a new TaskRun
+	seedData6, _ := test.SeedV1beta1TestData(t, pipelinev1beta1test.Data{Namespaces: ns, TaskRuns: taskruns, ClusterTasks: clustertasks})
+	objs6 := []runtime.Object{clustertasks[0], taskruns[0]}
+	tdc6 := newDynamicClientOpt(versionB1, "taskrun-4", objs6...)
+	dc6, _ := tdc6.Client(
+		cb.UnstructuredV1beta1CT(clustertasks[0], versionB1),
+		cb.UnstructuredV1beta1TR(taskruns[0], versionB1),
+	)
+	cs6 := pipelinev1beta1test.Clients{Pipeline: seedData6.Pipeline, Kube: seedData6.Kube}
+	cs6.Pipeline.Resources = cb.APIResourceList(versionB1, []string{"task", "taskrun", "clustertask"})
+	// seeds[6] - For starting ClusterTask with use-taskrun flag
+	seeds = append(seeds, clients{pipelineClient: cs6, dynamicClient: dc6})
+
 	testParams := []struct {
 		name        string
 		command     []string
@@ -1249,6 +1302,15 @@ func Test_ClusterTask_Start_v1beta1(t *testing.T) {
 			inputStream: nil,
 			wantError:   false,
 			want:        "TaskRun started: taskrun-2\n\nIn order to track the TaskRun progress run:\ntkn taskrun logs taskrun-2 -f -n ns\n",
+		},
+		{
+			name:        "Start with --use-taskrun option",
+			command:     []string{"start", "clustertask-1", "--use-taskrun", "taskrun-123"},
+			dynamic:     seeds[6].dynamicClient,
+			input:       seeds[6].pipelineClient,
+			inputStream: nil,
+			wantError:   false,
+			want:        "TaskRun started: taskrun-4\n\nIn order to track the TaskRun progress run:\ntkn taskrun logs taskrun-4 -f -n ns\n",
 		},
 		{
 			name: "Invalid input format",
@@ -1489,7 +1551,25 @@ func Test_ClusterTask_Start_v1beta1(t *testing.T) {
 			input:       seeds[5].pipelineClient,
 			inputStream: nil,
 			wantError:   true,
-			want:        "cannot use --last with --use-param-defaults option",
+			want:        "cannot use --last or --use-taskrun options with --use-param-defaults option",
+		},
+		{
+			name: "Dry Run with --use-param-defaults and --use-taskrun",
+			command: []string{"start", "clustertask-3",
+				"-i", "my-repo=git",
+				"-i", "my-image=image",
+				"-l", "key=value",
+				"-o", "code-image=output-image",
+				"-w", "name=test,emptyDir=",
+				"-s=svc1",
+				"--dry-run",
+				"--use-param-defaults",
+				"--use-taskrun", "dummy-taskrun"},
+			dynamic:     seeds[5].dynamicClient,
+			input:       seeds[5].pipelineClient,
+			inputStream: nil,
+			wantError:   true,
+			want:        "cannot use --last or --use-taskrun options with --use-param-defaults option",
 		},
 		{
 			name: "Dry Run with --prefix-name v1beta1",

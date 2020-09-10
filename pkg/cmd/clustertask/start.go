@@ -37,7 +37,6 @@ import (
 	"github.com/tektoncd/cli/pkg/options"
 	"github.com/tektoncd/cli/pkg/params"
 	"github.com/tektoncd/cli/pkg/pods"
-	"github.com/tektoncd/cli/pkg/task"
 	tractions "github.com/tektoncd/cli/pkg/taskrun"
 	"github.com/tektoncd/cli/pkg/workspaces"
 	"github.com/tektoncd/pipeline/pkg/apis/pipeline/v1alpha1"
@@ -73,6 +72,7 @@ type startOptions struct {
 	askOpts            survey.AskOpt
 	TektonOptions      flags.TektonOptions
 	PodTemplate        string
+	UseTaskRun         string
 }
 
 // NameArg validates that the first argument is a valid clustertask name
@@ -133,8 +133,8 @@ like cat,foo,bar
 		Example:      eg,
 		SilenceUsage: true,
 		Args: func(cmd *cobra.Command, args []string) error {
-			if opt.UseParamDefaults && opt.Last {
-				return errors.New("cannot use --last with --use-param-defaults option")
+			if opt.UseParamDefaults && (opt.Last || opt.UseTaskRun != "") {
+				return errors.New("cannot use --last or --use-taskrun options with --use-param-defaults option")
 			}
 			if opt.DryRun {
 				format := strings.ToLower(opt.Output)
@@ -152,7 +152,9 @@ like cat,foo,bar
 				Out: cmd.OutOrStdout(),
 				Err: cmd.OutOrStderr(),
 			}
-
+			if opt.Last && opt.UseTaskRun != "" {
+				return fmt.Errorf("using --last and --use-taskrun are not compatible")
+			}
 			opt.TektonOptions = flags.GetTektonOptions(cmd)
 			return startClusterTask(opt, args)
 		},
@@ -164,6 +166,8 @@ like cat,foo,bar
 	c.Flags().StringVarP(&opt.ServiceAccountName, "serviceaccount", "s", "", "pass the serviceaccount name")
 	flags.AddShellCompletion(c.Flags().Lookup("serviceaccount"), "__kubectl_get_serviceaccount")
 	c.Flags().BoolVarP(&opt.Last, "last", "L", false, "re-run the ClusterTask using last TaskRun values")
+	c.Flags().StringVarP(&opt.UseTaskRun, "use-taskrun", "", "", "specify a TaskRun name to use its values to re-run the TaskRun")
+	flags.AddShellCompletion(c.Flags().Lookup("use-taskrun"), "__tkn_get_taskrun")
 	c.Flags().StringSliceVarP(&opt.Labels, "labels", "l", []string{}, "pass labels as label=value.")
 	c.Flags().StringArrayVarP(&opt.Workspaces, "workspace", "w", []string{}, "pass one or more workspaces to map to the corresponding physical volumes as name=name,claimName=pvcName or name=name,emptyDir=")
 	c.Flags().BoolVarP(&opt.ShowLog, "showlog", "", false, "show logs right after starting the ClusterTask")
@@ -219,14 +223,17 @@ func startClusterTask(opt startOptions, args []string) error {
 		tr.ObjectMeta.GenerateName = opt.PrefixName + "-"
 	}
 
-	// TaskRuns are namespaced so using same LastRun method as Task
-	if opt.Last {
-		trLast, err := task.LastRun(cs, ctname, opt.cliparams.Namespace(), "ClusterTask")
+	if opt.Last || opt.UseTaskRun != "" {
+		taskRunOpts := options.TaskRunOpts{
+			CliParams:  opt.cliparams,
+			Last:       opt.Last,
+			UseTaskRun: opt.UseTaskRun,
+			PrefixName: opt.PrefixName,
+		}
+		err := taskRunOpts.UseTaskRunFrom(tr, cs, ctname, "ClusterTask")
 		if err != nil {
 			return err
 		}
-		// Copy over spec from last TaskRun to use same values for this TaskRun
-		tr.Spec = trLast.Spec
 	}
 
 	if tr.Spec.Resources == nil {
@@ -414,7 +421,7 @@ func (opt *startOptions) getInputs() error {
 		Ns:        opt.cliparams.Namespace(),
 	}
 
-	if opt.clustertask.Spec.Resources != nil && !opt.Last {
+	if opt.clustertask.Spec.Resources != nil && !opt.Last && opt.UseTaskRun == "" {
 		if len(opt.InputResources) == 0 {
 			if err := intOpts.ClusterTaskInputResources(opt.clustertask, createPipelineResource); err != nil {
 				return err
@@ -430,14 +437,14 @@ func (opt *startOptions) getInputs() error {
 	}
 
 	params.FilterParamsByType(opt.clustertask.Spec.Params)
-	if len(opt.Params) == 0 && !opt.Last {
+	if len(opt.Params) == 0 && !opt.Last && opt.UseTaskRun == "" {
 		if err := intOpts.ClusterTaskParams(opt.clustertask, opt.UseParamDefaults); err != nil {
 			return err
 		}
 		opt.Params = append(opt.Params, intOpts.Params...)
 	}
 
-	if len(opt.Workspaces) == 0 && !opt.Last {
+	if len(opt.Workspaces) == 0 && !opt.Last && opt.UseTaskRun == "" {
 		if err := intOpts.ClusterTaskWorkspaces(opt.clustertask); err != nil {
 			return err
 		}

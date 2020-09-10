@@ -6,6 +6,8 @@ import (
 
 	"github.com/AlecAivazis/survey/v2"
 	"github.com/tektoncd/cli/pkg/cli"
+	"github.com/tektoncd/cli/pkg/task"
+	tractions "github.com/tektoncd/cli/pkg/taskrun"
 	"github.com/tektoncd/pipeline/pkg/apis/pipeline/v1alpha1"
 	"github.com/tektoncd/pipeline/pkg/apis/pipeline/v1beta1"
 	versionedResource "github.com/tektoncd/pipeline/pkg/client/resource/clientset/versioned"
@@ -21,6 +23,13 @@ type InteractiveOpts struct {
 	Workspaces      []string
 	AskOpts         survey.AskOpt
 	Ns              string
+}
+
+type TaskRunOpts struct {
+	CliParams  cli.Params
+	Last       bool
+	UseTaskRun string
+	PrefixName string
 }
 
 type pipelineResources struct {
@@ -52,6 +61,37 @@ func resourceByType(resources pipelineResources, restype string) []string {
 		return resources.cloudEvent
 	}
 	return []string{}
+}
+
+func (taskRunOpts *TaskRunOpts) UseTaskRunFrom(tr *v1beta1.TaskRun, cs *cli.Clients, tname string, taskKind string) error {
+	var (
+		trUsed *v1beta1.TaskRun
+		err    error
+	)
+	if taskRunOpts.Last {
+		trUsed, err = task.LastRun(cs, tname, taskRunOpts.CliParams.Namespace(), taskKind)
+		if err != nil {
+			return err
+		}
+	} else if taskRunOpts.UseTaskRun != "" {
+		trUsed, err = tractions.Get(cs, taskRunOpts.UseTaskRun, metav1.GetOptions{}, taskRunOpts.CliParams.Namespace())
+		if err != nil {
+			return err
+		}
+	}
+
+	if trUsed.Spec.TaskRef.Kind != v1beta1.TaskKind(taskKind) {
+		return fmt.Errorf("%s doesn't belong to %s of kind %s", trUsed.ObjectMeta.Name, tname, taskKind)
+	}
+
+	if len(trUsed.ObjectMeta.GenerateName) > 0 && taskRunOpts.PrefixName == "" {
+		tr.ObjectMeta.GenerateName = trUsed.ObjectMeta.GenerateName
+	} else if taskRunOpts.PrefixName == "" {
+		tr.ObjectMeta.GenerateName = trUsed.ObjectMeta.Name + "-"
+	}
+	// Copy over spec from last or previous TaskRun to use same values for this TaskRun
+	tr.Spec = trUsed.Spec
+	return nil
 }
 
 func (intOpts *InteractiveOpts) allPipelineResources(client versionedResource.Interface) (*v1alpha1.PipelineResourceList, error) {

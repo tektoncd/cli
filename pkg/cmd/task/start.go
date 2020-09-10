@@ -227,34 +227,6 @@ func parseTask(taskLocation string, httpClient http.Client) (*v1beta1.Task, erro
 	return &task, nil
 }
 
-func useTaskRunFrom(opt startOptions, tr *v1beta1.TaskRun, cs *cli.Clients, tname string) error {
-	var (
-		trUsed *v1beta1.TaskRun
-		err    error
-	)
-	if opt.Last {
-		trUsed, err = task.LastRun(cs, tname, opt.cliparams.Namespace(), "Task")
-		if err != nil {
-			return err
-		}
-	} else if opt.UseTaskRun != "" {
-		trUsed, err = traction.Get(cs, opt.UseTaskRun, metav1.GetOptions{}, opt.cliparams.Namespace())
-		if err != nil {
-			return err
-		}
-	}
-
-	// if --prefix-name is specified by user, allow name to be used for taskrun
-	if len(trUsed.ObjectMeta.GenerateName) > 0 && opt.PrefixName == "" {
-		tr.ObjectMeta.GenerateName = trUsed.ObjectMeta.GenerateName
-	} else if opt.PrefixName == "" {
-		tr.ObjectMeta.GenerateName = trUsed.ObjectMeta.Name + "-"
-	}
-	// Copy over spec from last or previous TaskRun to use same values for this TaskRun
-	tr.Spec = trUsed.Spec
-	return nil
-}
-
 func startTask(opt startOptions, args []string) error {
 	cs, err := opt.cliparams.Clients()
 	if err != nil {
@@ -313,7 +285,13 @@ func startTask(opt startOptions, args []string) error {
 	}
 
 	if opt.Last || opt.UseTaskRun != "" {
-		err := useTaskRunFrom(opt, tr, cs, tname)
+		taskRunOpts := options.TaskRunOpts{
+			CliParams:  opt.cliparams,
+			Last:       opt.Last,
+			UseTaskRun: opt.UseTaskRun,
+			PrefixName: opt.PrefixName,
+		}
+		err := taskRunOpts.UseTaskRunFrom(tr, cs, tname, "Task")
 		if err != nil {
 			return err
 		}
