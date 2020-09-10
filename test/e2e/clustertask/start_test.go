@@ -232,4 +232,31 @@ Waiting for logs to be available...
 			t.Fatalf("-got, +want: %v", d)
 		}
 	})
+
+	t.Run("Start TaskRun using tkn ct start with --use-taskrun option", func(t *testing.T) {
+		// Get last TaskRun for read-clustertask
+		lastTaskRun := builder.GetTaskRunListWithName(c, "read-clustertask", true).Items[0]
+
+		// Start TaskRun using --use-taskrun
+		tkn.MustSucceed(t, "ct", "start", "read-clustertask",
+			"--use-taskrun",
+			lastTaskRun.Name,
+			"--showlog")
+
+		// Sleep to make make sure TaskRun is created/running
+		time.Sleep(1 * time.Second)
+
+		// Get name of most recent TaskRun and wait for it to succeed
+		taskRunUsingParticularTaskRun := builder.GetTaskRunListWithName(c, "read-clustertask", true).Items[0]
+		if err := wait.ForTaskRunState(c, taskRunUsingParticularTaskRun.Name, wait.TaskRunSucceed(taskRunUsingParticularTaskRun.Name), "TaskRunSucceeded"); err != nil {
+			t.Errorf("Error waiting for TaskRun to Succeed: %s", err)
+		}
+
+		// Expect that selected TaskRun spec will match most recent TaskRun spec
+		expected := lastTaskRun.Spec
+		got := taskRunUsingParticularTaskRun.Spec
+		if d := cmp.Diff(got, expected); d != "" {
+			t.Fatalf("-got, +want: %v", d)
+		}
+	})
 }

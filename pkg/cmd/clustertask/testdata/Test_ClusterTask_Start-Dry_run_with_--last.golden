@@ -2,7 +2,7 @@ apiVersion: tekton.dev/v1alpha1
 kind: TaskRun
 metadata:
   creationTimestamp: null
-  generateName: clustertask-1-run-
+  generateName: taskrun-123-
   labels:
     key: value
 spec:
