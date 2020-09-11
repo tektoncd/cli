@@ -1478,7 +1478,7 @@ func TestLog_taskrun_last_v1beta1(t *testing.T) {
 	if err != nil {
 		t.Errorf("unable to create dynamic client: %v", err)
 	}
-	//cs.Pipeline.Resources = cb.APIResourceList("v1alpha1", []string{"taskrun"})
+
 	p := test.Params{
 		Kube:    cs.Kube,
 		Tekton:  cs.Pipeline,
@@ -1789,7 +1789,7 @@ func TestLog_taskrun_follow_mode_update_pod_name(t *testing.T) {
 		trs[0].Status.PodName = trPod
 		watcher.Modify(trs[0])
 	}()
-	//time.Sleep(time.Second * 2)
+
 	output, err := fetchLogs(trlo)
 	if err != nil {
 		t.Errorf("Unexpected error: %v", err)
@@ -1913,7 +1913,7 @@ func TestLog_taskrun_follow_mode_update_pod_name_v1beta1(t *testing.T) {
 		trs[0].Status.PodName = trPod
 		watcher.Modify(trs[0])
 	}()
-	//time.Sleep(time.Second * 2)
+
 	output, err := fetchLogs(trlo)
 	if err != nil {
 		t.Errorf("Unexpected error: %v", err)

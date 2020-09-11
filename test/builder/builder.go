@@ -221,7 +221,7 @@ func ListResourceNamesForJSONPath(obj interface{}) string {
 
 			return emptyMsg
 		}
-		//sort by start Time
+		// sort by start Time
 		SortByStartTimeTaskRun(obj.Items)
 
 		for _, r := range obj.Items {

@@ -20,7 +20,7 @@ import (
 	"github.com/tektoncd/cli/pkg/flags"
 )
 
-//Command instantiates the pipelinerun command
+// Command instantiates the pipelinerun command
 func Command(p cli.Params) *cobra.Command {
 	c := &cobra.Command{
 		Use:     "pipelinerun",

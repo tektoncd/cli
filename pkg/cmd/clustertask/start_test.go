@@ -220,10 +220,10 @@ func Test_ClusterTask_Start(t *testing.T) {
 	)
 	cs := pipelinetest.Clients{Pipeline: seedData0.Pipeline, Kube: seedData0.Kube}
 	cs.Pipeline.Resources = cb.APIResourceList(versionA1, []string{"taskrun", "clustertask", "task"})
-	//seeds[0]
+	// seeds[0]
 	seeds = append(seeds, clients{pipelineClient: cs, dynamicClient: dc0})
 
-	//seeds[1] - Same data as seeds[0] but creates a new TaskRun
+	// seeds[1] - Same data as seeds[0] but creates a new TaskRun
 	seedData1, _ := test.SeedTestData(t, pipelinetest.Data{Namespaces: ns, TaskRuns: taskruns, ClusterTasks: clustertasks})
 	objs1 := []runtime.Object{clustertasks[0], taskruns[0]}
 	tdc1 := newDynamicClientOpt(versionA1, "taskrun-2", objs1...)
@@ -233,7 +233,7 @@ func Test_ClusterTask_Start(t *testing.T) {
 	)
 	cs1 := pipelinetest.Clients{Pipeline: seedData1.Pipeline, Kube: seedData1.Kube}
 	cs1.Pipeline.Resources = cb.APIResourceList(versionA1, []string{"task", "taskrun", "clustertask"})
-	//seeds[1] - No TaskRun with ClusterTask
+	// seeds[1] - No TaskRun with ClusterTask
 	seeds = append(seeds, clients{pipelineClient: cs1, dynamicClient: dc1})
 
 	objs2 := []runtime.Object{clustertasks[0]}
@@ -247,10 +247,10 @@ func Test_ClusterTask_Start(t *testing.T) {
 		Kube:     seedData2.Kube,
 	}
 	cs2.Pipeline.Resources = cb.APIResourceList(versionA1, []string{"task", "taskrun", "clustertask"})
-	//seeds[2]
+	// seeds[2]
 	seeds = append(seeds, clients{pipelineClient: cs2, dynamicClient: dc2})
 
-	//seeds[3] - For Dry Run tests with v1alpha1
+	// seeds[3] - For Dry Run tests with v1alpha1
 	tdc3 := testDynamic.Options{}
 	dc3, _ := tdc3.Client(
 		cb.UnstructuredCT(clustertasks[0], versionA1),
@@ -258,10 +258,10 @@ func Test_ClusterTask_Start(t *testing.T) {
 	)
 	cs3, _ := test.SeedTestData(t, pipelinetest.Data{ClusterTasks: clustertasks, Namespaces: ns})
 	cs3.Pipeline.Resources = cb.APIResourceList(versionA1, []string{"task", "taskrun", "clustertask"})
-	//seeds[3]
+	// seeds[3]
 	seeds = append(seeds, clients{pipelineClient: cs3, dynamicClient: dc3})
 
-	//seeds[4] - For Dry Run tests with v1beta1
+	// seeds[4] - For Dry Run tests with v1beta1
 	tdc4 := testDynamic.Options{}
 	dc4, _ := tdc4.Client(
 		cb.UnstructuredCT(clustertasks[0], versionB1),
@@ -269,10 +269,10 @@ func Test_ClusterTask_Start(t *testing.T) {
 	)
 	cs4, _ := test.SeedTestData(t, pipelinetest.Data{ClusterTasks: clustertasks, Namespaces: ns})
 	cs4.Pipeline.Resources = cb.APIResourceList(versionB1, []string{"task", "taskrun", "clustertask"})
-	//seeds[4]
+	// seeds[4]
 	seeds = append(seeds, clients{pipelineClient: cs4, dynamicClient: dc4})
 
-	//seeds[5] - Same data as seeds[0] but creates a new TaskRun
+	// seeds[5] - Same data as seeds[0] but creates a new TaskRun
 	seedData5, _ := test.SeedTestData(t, pipelinetest.Data{Namespaces: ns, TaskRuns: taskruns, ClusterTasks: clustertasks})
 	objs5 := []runtime.Object{clustertasks[0], taskruns[0]}
 	tdc5 := newDynamicClientOpt(versionA1, "taskrun-5", objs5...)
@@ -282,7 +282,7 @@ func Test_ClusterTask_Start(t *testing.T) {
 	)
 	cs5 := pipelinetest.Clients{Pipeline: seedData5.Pipeline, Kube: seedData5.Kube}
 	cs5.Pipeline.Resources = cb.APIResourceList(versionA1, []string{"task", "taskrun", "clustertask"})
-	//seeds[5] - No TaskRun with ClusterTask
+	// seeds[5] - No TaskRun with ClusterTask
 	seeds = append(seeds, clients{pipelineClient: cs5, dynamicClient: dc5})
 
 	seedData6, _ := test.SeedTestData(t, pipelinetest.Data{Namespaces: ns, TaskRuns: taskruns, ClusterTasks: clustertasks})
@@ -294,7 +294,7 @@ func Test_ClusterTask_Start(t *testing.T) {
 	)
 	cs6 := pipelinetest.Clients{Pipeline: seedData6.Pipeline, Kube: seedData6.Kube}
 	cs6.Pipeline.Resources = cb.APIResourceList(versionA1, []string{"taskrun", "clustertask", "task"})
-	//seeds[6] - For Workspaces Tests
+	// seeds[6] - For Workspaces Tests
 	seeds = append(seeds, clients{pipelineClient: cs6, dynamicClient: dc6})
 
 	testParams := []struct {
@@ -932,10 +932,10 @@ func Test_ClusterTask_Start_v1beta1(t *testing.T) {
 	)
 	cs := pipelinev1beta1test.Clients{Pipeline: seedData0.Pipeline, Kube: seedData0.Kube}
 	cs.Pipeline.Resources = cb.APIResourceList(versionB1, []string{"taskrun", "clustertask", "task"})
-	//seeds[0]
+	// seeds[0]
 	seeds = append(seeds, clients{pipelineClient: cs, dynamicClient: dc0})
 
-	//seeds[1] - Same data as seeds[0] but creates a new TaskRun
+	// seeds[1] - Same data as seeds[0] but creates a new TaskRun
 	seedData1, _ := test.SeedV1beta1TestData(t, pipelinev1beta1test.Data{Namespaces: ns, TaskRuns: taskruns, ClusterTasks: clustertasks})
 	objs1 := []runtime.Object{clustertasks[0], taskruns[0]}
 	tdc1 := newDynamicClientOpt(versionB1, "taskrun-2", objs1...)
@@ -945,7 +945,7 @@ func Test_ClusterTask_Start_v1beta1(t *testing.T) {
 	)
 	cs1 := pipelinev1beta1test.Clients{Pipeline: seedData1.Pipeline, Kube: seedData1.Kube}
 	cs1.Pipeline.Resources = cb.APIResourceList(versionB1, []string{"task", "taskrun", "clustertask"})
-	//seeds[1] - No TaskRun with ClusterTask
+	// seeds[1] - No TaskRun with ClusterTask
 	seeds = append(seeds, clients{pipelineClient: cs1, dynamicClient: dc1})
 
 	objs2 := []runtime.Object{clustertasks[0]}
@@ -956,10 +956,10 @@ func Test_ClusterTask_Start_v1beta1(t *testing.T) {
 	)
 	cs2 := pipelinev1beta1test.Clients{Pipeline: seedData2.Pipeline, Kube: seedData2.Kube}
 	cs2.Pipeline.Resources = cb.APIResourceList(versionB1, []string{"task", "taskrun", "clustertask"})
-	//seeds[2]
+	// seeds[2]
 	seeds = append(seeds, clients{pipelineClient: cs2, dynamicClient: dc2})
 
-	//seeds[3] - For Dry Run tests with v1alpha1
+	// seeds[3] - For Dry Run tests with v1alpha1
 	tdc3 := testDynamic.Options{}
 	dc3, _ := tdc3.Client(
 		cb.UnstructuredV1beta1CT(clustertasks[0], versionB1),
@@ -967,10 +967,10 @@ func Test_ClusterTask_Start_v1beta1(t *testing.T) {
 	)
 	cs3, _ := test.SeedV1beta1TestData(t, pipelinev1beta1test.Data{ClusterTasks: clustertasks, Namespaces: ns})
 	cs3.Pipeline.Resources = cb.APIResourceList(versionB1, []string{"task", "taskrun", "clustertask"})
-	//seeds[3]
+	// seeds[3]
 	seeds = append(seeds, clients{pipelineClient: cs3, dynamicClient: dc3})
 
-	//seeds[4] - For Dry Run tests with v1beta1
+	// seeds[4] - For Dry Run tests with v1beta1
 	tdc4 := testDynamic.Options{}
 	dc4, _ := tdc4.Client(
 		cb.UnstructuredV1beta1CT(clustertasks[0], versionB1),
@@ -978,7 +978,7 @@ func Test_ClusterTask_Start_v1beta1(t *testing.T) {
 	)
 	cs4, _ := test.SeedV1beta1TestData(t, pipelinev1beta1test.Data{ClusterTasks: clustertasks, Namespaces: ns})
 	cs4.Pipeline.Resources = cb.APIResourceList(versionB1, []string{"task", "taskrun", "clustertask"})
-	//seeds[4]
+	// seeds[4]
 	seeds = append(seeds, clients{pipelineClient: cs4, dynamicClient: dc4})
 
 	seedData5, _ := test.SeedV1beta1TestData(t, pipelinev1beta1test.Data{Namespaces: ns, TaskRuns: taskruns, ClusterTasks: clustertasks})
@@ -990,7 +990,7 @@ func Test_ClusterTask_Start_v1beta1(t *testing.T) {
 	)
 	cs5 := pipelinev1beta1test.Clients{Pipeline: seedData5.Pipeline, Kube: seedData5.Kube}
 	cs5.Pipeline.Resources = cb.APIResourceList(versionB1, []string{"taskrun", "clustertask", "task"})
-	//seeds[5]
+	// seeds[5]
 	seeds = append(seeds, clients{pipelineClient: cs, dynamicClient: dc5})
 
 	testParams := []struct {

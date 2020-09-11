@@ -100,7 +100,7 @@ func ForPodStateKube(c *knativetest.KubeClient, namespace string, inState PodRun
 			return inState(r)
 		})
 		if err1 != nil {
-			log.Fatal(err1.Error())
+			log.Panic(err1.Error())
 		}
 	}
 
@@ -123,7 +123,7 @@ func ForPodStatus(kubeClient *knativetest.KubeClient, namespace string) {
 			log.Println("Status of resources are up and running ")
 		}
 	case <-time.After(30 * time.Second):
-		log.Fatalln("Status of resources are not up and running ")
+		log.Panicln("Status of resources are not up and running ")
 	}
 
 }

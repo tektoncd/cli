@@ -3067,7 +3067,6 @@ func Test_start_pipeline_last(t *testing.T) {
 		},
 	}
 
-	//Add namespaces to kube client
 	seedData, _ := test.SeedTestData(t, pipelinetest.Data{
 		Namespaces: ns,
 	})
@@ -3271,7 +3270,6 @@ func Test_start_pipeline_last_v1beta1(t *testing.T) {
 		},
 	}
 
-	//Add namespaces to kube client
 	seedData, _ := test.SeedV1beta1TestData(t, pipelinev1beta1test.Data{
 		Namespaces: ns,
 	})
@@ -3368,7 +3366,6 @@ func Test_start_pipeline_last_without_res_param(t *testing.T) {
 		},
 	}
 
-	//Add namespaces to kube client
 	seedData, _ := test.SeedTestData(t, pipelinetest.Data{
 		Namespaces: ns,
 	})
@@ -3552,7 +3549,6 @@ func Test_start_pipeline_last_without_res_param_v1beta1(t *testing.T) {
 		},
 	}
 
-	//Add namespaces to kube client
 	seedData, _ := test.SeedV1beta1TestData(t, pipelinev1beta1test.Data{
 		Namespaces: ns,
 	})
@@ -3648,7 +3644,6 @@ func Test_start_pipeline_last_merge(t *testing.T) {
 		},
 	}
 
-	//Add namespaces to kube client
 	seedData, _ := test.SeedTestData(t, pipelinetest.Data{
 		Namespaces: ns,
 	})
@@ -3854,7 +3849,6 @@ func Test_start_pipeline_last_merge_v1beta1(t *testing.T) {
 		},
 	}
 
-	//Add namespaces to kube client
 	seedData, _ := test.SeedV1beta1TestData(t, pipelinev1beta1test.Data{
 		Namespaces: ns,
 	})
@@ -3964,7 +3958,6 @@ func Test_start_pipeline_use_pipelinerun(t *testing.T) {
 		},
 	}
 
-	//Add namespaces to kube client
 	seedData, _ := test.SeedTestData(t, pipelinetest.Data{
 		Namespaces: ns,
 	})
@@ -4137,7 +4130,6 @@ func Test_start_pipeline_use_pipelinerun_v1beta1(t *testing.T) {
 		},
 	}
 
-	//Add namespaces to kube client
 	seedData, _ := test.SeedV1beta1TestData(t, pipelinev1beta1test.Data{
 		Namespaces: ns,
 	})

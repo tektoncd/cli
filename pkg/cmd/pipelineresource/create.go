@@ -411,7 +411,7 @@ func (res *Resource) AskPullRequestParams() error {
 		res.PipelineResource.Spec.Params = append(res.PipelineResource.Spec.Params, urlParam)
 	}
 
-	//ask for the secrets
+	// ask for the secrets
 	qsOpts := []string{"Yes", "No"}
 	qs := "Do you want to set secrets ?"
 
