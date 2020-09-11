@@ -69,7 +69,7 @@ func Header(logf logging.FormatLogger, text string) {
 	logf(bar)
 }
 
-//Create Service Account
+// Create Service Account
 func CreateServiceAccountSecret(c *knativetest.KubeClient, namespace string, secretName string) (bool, error) {
 
 	file := os.Getenv("SERVICE_ACCOUNT_KEY_PATH")

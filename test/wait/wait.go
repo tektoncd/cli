@@ -83,7 +83,7 @@ func ForPipelineRunToStart(c *framework.Clients, prname string, namespace string
 	}
 }
 
-//WaitForPipelineRunToComplete Wait for Pipeline Run to complete
+// WaitForPipelineRunToComplete Wait for Pipeline Run to complete
 func ForPipelineRunToComplete(c *framework.Clients, prname string, namespace string) {
 	log.Printf("Waiting for Pipelinerun %s in namespace %s to be started", prname, namespace)
 	if err := ForPipelineRunState(c, prname, framework.Apitimeout, func(pr *v1alpha1.PipelineRun) (bool, error) {
@@ -129,12 +129,12 @@ func ForPipelineRunToComplete(c *framework.Clients, prname string, namespace str
 
 	for i := 1; i <= len(taskrunList.Items); i++ {
 		if <-errChan != nil {
-			log.Fatalf("Error waiting for TaskRun %s to be running: %s", taskrunList.Items[i-1].Name, err)
+			log.Panicf("Error waiting for TaskRun %s to be running: %s", taskrunList.Items[i-1].Name, err)
 		}
 	}
 
 	if _, err := c.PipelineRunClient.Get(prname, metav1.GetOptions{}); err != nil {
-		log.Fatalf("Failed to get PipelineRun `%s`: %s", prname, err)
+		log.Panicf("Failed to get PipelineRun `%s`: %s", prname, err)
 	}
 
 	log.Printf("Waiting for PipelineRun %s in namespace %s to be Completed", prname, namespace)
@@ -149,7 +149,7 @@ func ForPipelineRunToComplete(c *framework.Clients, prname string, namespace str
 		}
 		return false, nil
 	}, "PipelineRunSuccess"); err != nil {
-		log.Fatalf("Error waiting for PipelineRun %s to finish: %s", prname, err)
+		log.Panicf("Error waiting for PipelineRun %s to finish: %s", prname, err)
 	}
 
 	log.Printf("Waiting for TaskRuns from PipelineRun %s in namespace %s to be completed", prname, namespace)
@@ -177,6 +177,6 @@ func ForPipelineRunToComplete(c *framework.Clients, prname string, namespace str
 	wg.Wait()
 
 	if _, err := c.PipelineRunClient.Get(prname, metav1.GetOptions{}); err != nil {
-		log.Fatalf("Failed to get PipelineRun `%s`: %s", prname, err)
+		log.Panicf("Failed to get PipelineRun `%s`: %s", prname, err)
 	}
 }

@@ -40,7 +40,7 @@ func NewStream(pods typedv1.PodInterface, name string, opts *corev1.PodLogOption
 	return &Stream{name, pods, opts}
 }
 
-//Stream Creates a stream object which allows reading the logs
+// Stream Creates a stream object which allows reading the logs
 func (s *Stream) Stream() (io.ReadCloser, error) {
 	return s.pods.GetLogs(s.name, s.opts).Stream()
 }
@@ -68,7 +68,7 @@ func NewWithDefaults(name, ns string, client k8s.Interface) *Pod {
 	}
 }
 
-//Wait wait for the pod to get up and running
+// Wait wait for the pod to get up and running
 func (p *Pod) Wait() (*corev1.Pod, error) {
 	// ensure pod exists before we actually check for it
 	if _, err := p.Get(); err != nil {
@@ -145,12 +145,12 @@ func checkPodStatus(obj interface{}) (*corev1.Pod, error) {
 	return nil, nil
 }
 
-//Get gets the pod
+// Get gets the pod
 func (p *Pod) Get() (*corev1.Pod, error) {
 	return p.Kc.CoreV1().Pods(p.Ns).Get(p.Name, metav1.GetOptions{})
 }
 
-//Container returns the an instance of Container
+// Container returns the an instance of Container
 func (p *Pod) Container(c string) *Container {
 	return &Container{
 		name:        c,
@@ -159,7 +159,7 @@ func (p *Pod) Container(c string) *Container {
 	}
 }
 
-//Stream returns the stream object for given container and mode
+// Stream returns the stream object for given container and mode
 // in order to fetch the logs
 func (p *Pod) Stream(opt *corev1.PodLogOptions) (io.ReadCloser, error) {
 	pods := p.Kc.CoreV1().Pods(p.Ns)

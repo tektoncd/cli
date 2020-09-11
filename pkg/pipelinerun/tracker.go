@@ -31,7 +31,7 @@ import (
 	"k8s.io/client-go/tools/cache"
 )
 
-//Tracker tracks the progress of a PipelineRun
+// Tracker tracks the progress of a PipelineRun
 type Tracker struct {
 	Name         string
 	Ns           string
@@ -39,7 +39,7 @@ type Tracker struct {
 	ongoingTasks map[string]bool
 }
 
-//NewTracker returns a new instance of Tracker
+// NewTracker returns a new instance of Tracker
 func NewTracker(name string, ns string, tekton versioned.Interface) *Tracker {
 	return &Tracker{
 		Name:         name,
@@ -49,10 +49,10 @@ func NewTracker(name string, ns string, tekton versioned.Interface) *Tracker {
 	}
 }
 
-//Monitor to observe the progress of PipelineRun. It emits
-//an event upon starting of a new Pipeline's Task.
-//allowed containers the name of the Pipeline tasks, which used as filter
-//limit the events to only those tasks
+// Monitor to observe the progress of PipelineRun. It emits
+// an event upon starting of a new Pipeline's Task.
+// allowed containers the name of the Pipeline tasks, which used as filter
+// limit the events to only those tasks
 func (t *Tracker) Monitor(allowed []string) <-chan []trh.Run {
 
 	factory := informers.NewSharedInformerFactoryWithOptions(

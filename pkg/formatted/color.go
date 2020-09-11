@@ -145,7 +145,7 @@ func (r *rainbow) Fprintf(label string, w io.Writer, format string, args ...inte
 	crainbow.Fprintf(w, format, args...)
 }
 
-//Color formatter to print the colored output on streams
+// Color formatter to print the colored output on streams
 type Color struct {
 	Rainbow *rainbow
 
@@ -153,7 +153,7 @@ type Color struct {
 	blue *color.Color
 }
 
-//NewColor returns a new instance color formatter
+// NewColor returns a new instance color formatter
 func NewColor() *Color {
 	return &Color{
 		Rainbow: newRainbow(),
@@ -163,12 +163,12 @@ func NewColor() *Color {
 	}
 }
 
-//PrintRed prints the formatted content to given destination in red color
+// PrintRed prints the formatted content to given destination in red color
 func (c *Color) PrintRed(w io.Writer, format string, args ...interface{}) {
 	c.red.Fprintf(w, format, args...)
 }
 
-//Error prints the formatted content to given destination in red color
+// Error prints the formatted content to given destination in red color
 func (c *Color) Error(w io.Writer, format string, args ...interface{}) {
 	c.PrintRed(w, format, args...)
 }

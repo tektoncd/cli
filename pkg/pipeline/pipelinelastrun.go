@@ -23,7 +23,7 @@ import (
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 )
 
-//DynamicLastRun returns the last run for a given pipeline
+// DynamicLastRun returns the last run for a given pipeline
 func LastRun(cs *cli.Clients, pipeline string, ns string) (*v1beta1.PipelineRun, error) {
 	options := metav1.ListOptions{}
 	if pipeline != "" {

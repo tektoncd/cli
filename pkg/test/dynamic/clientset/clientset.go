@@ -46,8 +46,8 @@ func (r *Clientset) Add(resource schema.GroupVersionResource, client dynamic.Int
 	r.config[resource] = client
 }
 
-//Resource returns the dynamic Resource for the given GVR. If not configured,
-//an error resource is returned.
+// Resource returns the dynamic Resource for the given GVR. If not configured,
+// an error resource is returned.
 func (r *Clientset) Resource(resource schema.GroupVersionResource) dynamic.NamespaceableResourceInterface {
 	i, ok := r.config[resource]
 	if !ok {

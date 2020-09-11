@@ -195,7 +195,7 @@ func startClusterTask(opt startOptions, args []string) error {
 	tr.Spec = v1beta1.TaskRunSpec{
 		TaskRef: &v1beta1.TaskRef{
 			Name: ctname,
-			Kind: v1beta1.ClusterTaskKind, //Specify TaskRun is for a ClusterTask kind
+			Kind: v1beta1.ClusterTaskKind, // Specify TaskRun is for a ClusterTask kind
 		},
 	}
 
@@ -213,7 +213,7 @@ func startClusterTask(opt startOptions, args []string) error {
 
 	tr.ObjectMeta.GenerateName = ctname + "-run-"
 
-	//TaskRuns are namespaced so using same LastRun method as Task
+	// TaskRuns are namespaced so using same LastRun method as Task
 	if opt.Last {
 		trLast, err := task.LastRun(cs, ctname, opt.cliparams.Namespace(), "ClusterTask")
 		if err != nil {

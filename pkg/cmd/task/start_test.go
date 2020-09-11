@@ -781,7 +781,6 @@ func Test_start_task_last(t *testing.T) {
 		},
 	}
 
-	//Add namespaces to kube client
 	seedData, _ := test.SeedTestData(t, pipelinetest.Data{Namespaces: ns, Tasks: tasks, TaskRuns: taskruns})
 	objs := []runtime.Object{tasks[0], taskruns[0]}
 	_, tdc := newPipelineClient(versionA1, objs...)
@@ -975,7 +974,6 @@ func Test_start_task_last_v1beta1(t *testing.T) {
 		},
 	}
 
-	//Add namespaces to kube client
 	seedData, _ := test.SeedV1beta1TestData(t, pipelinev1beta1test.Data{Namespaces: ns, Tasks: tasks, TaskRuns: taskruns})
 	objs := []runtime.Object{tasks[0], taskruns[0]}
 	_, tdc := newPipelineClient(versionB1, objs...)
@@ -1088,7 +1086,6 @@ func Test_start_use_taskrun(t *testing.T) {
 		},
 	}
 
-	//Add namespaces to kube client
 	seedData, _ := test.SeedTestData(t, pipelinetest.Data{Namespaces: ns, Tasks: tasks, TaskRuns: taskruns})
 
 	objs := []runtime.Object{tasks[0], taskruns[0], taskruns[1]}
@@ -1227,7 +1224,6 @@ func Test_start_use_taskrun_v1beta1(t *testing.T) {
 		},
 	}
 
-	//Add namespaces to kube client
 	seedData, _ := test.SeedV1beta1TestData(t, pipelinev1beta1test.Data{Namespaces: ns, Tasks: tasks, TaskRuns: taskruns})
 
 	objs := []runtime.Object{tasks[0], taskruns[0], taskruns[1]}
