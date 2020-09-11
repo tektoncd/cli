@@ -165,7 +165,12 @@ func allTaskRunNames(cs *cli.Clients, keep int, ns string) ([]string, error) {
 func keepTaskRuns(taskRuns *v1beta1.TaskRunList, keep int) []string {
 	var names []string
 	var counter = 0
-	trsort.SortByStartTime(taskRuns.Items)
+
+	// Do not sort TaskRuns if keep=0 since ordering won't matter
+	if keep > 0 {
+		trsort.SortByStartTime(taskRuns.Items)
+	}
+
 	for _, tr := range taskRuns.Items {
 		if keep > 0 && counter != keep {
 			counter++
