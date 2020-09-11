@@ -164,7 +164,12 @@ func allPipelineRunNames(cs *cli.Clients, keep int, ns string) ([]string, error)
 func keepPipelineRuns(pipelineRuns *v1beta1.PipelineRunList, keep int) []string {
 	var names []string
 	var counter = 0
-	prsort.SortByStartTime(pipelineRuns.Items)
+
+	// Do not sort PipelineRuns if keep=0 since ordering won't matter
+	if keep > 0 {
+		prsort.SortByStartTime(pipelineRuns.Items)
+	}
+
 	for _, run := range pipelineRuns.Items {
 		if keep > 0 && counter != keep {
 			counter++
