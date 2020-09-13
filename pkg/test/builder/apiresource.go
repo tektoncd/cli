@@ -36,9 +36,9 @@ func APIResourceList(version string, kinds []string) []*metav1.APIResourceList {
 func apiresources(version string, kinds []string) []metav1.APIResource {
 	apires := make([]metav1.APIResource, 0)
 	for _, kind := range kinds {
-		namespaced := false
+		namespaced := true
 		if strings.Contains(kind, "cluster") {
-			namespaced = true
+			namespaced = false
 		}
 		apires = append(apires, metav1.APIResource{
 			Name:       kind + "s",
