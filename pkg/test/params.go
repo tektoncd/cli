@@ -16,7 +16,6 @@ package test
 
 import (
 	"github.com/jonboulle/clockwork"
-	"github.com/tektoncd/cli/pkg/actions"
 	"github.com/tektoncd/cli/pkg/cli"
 	"github.com/tektoncd/pipeline/pkg/client/clientset/versioned"
 	versionedResource "github.com/tektoncd/pipeline/pkg/client/resource/clientset/versioned"
@@ -108,12 +107,6 @@ func (p *Params) Clients() (*cli.Clients, error) {
 	dynamic, err := p.dynamicClient()
 	if err != nil {
 		return nil, err
-	}
-
-	if tekton != nil {
-		if err = actions.InitializeAPIGroupRes(tekton.Discovery()); err != nil {
-			return nil, err
-		}
 	}
 
 	p.Cls = &cli.Clients{

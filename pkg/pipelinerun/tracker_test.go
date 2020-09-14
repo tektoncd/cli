@@ -18,7 +18,6 @@ import (
 	"testing"
 	"time"
 
-	"github.com/tektoncd/cli/pkg/actions"
 	trh "github.com/tektoncd/cli/pkg/taskrun"
 	"github.com/tektoncd/cli/pkg/test"
 	clitest "github.com/tektoncd/cli/pkg/test"
@@ -137,9 +136,6 @@ func TestTracker_pipelinerun_complete(t *testing.T) {
 
 		tc := startPipelineRun(t, pipelinetest.Data{PipelineRuns: initialPR, TaskRuns: taskruns}, pr.Status)
 		tracker := NewTracker(pipelineName, ns, tc)
-		if err := actions.InitializeAPIGroupRes(tracker.Tekton.Discovery()); err != nil {
-			t.Errorf("failed to initialize APIGroup Resource")
-		}
 		output := taskRunsFor(s.tasks, tracker)
 
 		clitest.AssertOutput(t, s.expected, output)
