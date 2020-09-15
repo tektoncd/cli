@@ -89,9 +89,14 @@ test-unit: ./vendor ## run unit tests
 	@go test -failfast -v -cover ./...
 
 .PHONY: update-golden
-update-golden: ./vendor ## run unit tests (updating golden files)
+update-golden: clean-golden ./vendor ## run unit tests (updating golden files)
 	@echo "Running unit tests to update golden files..."
 	@./hack/update-golden.sh
+
+.PHONY: clean-golden
+clean-golden:
+	@echo "Clean golden files..."
+	-find -iname "*.golden" -not -path "./vendor/*" -delete
 
 .PHONY: test-e2e
 test-e2e: bin/tkn ## run e2e tests
