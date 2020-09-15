@@ -23,9 +23,7 @@ import (
 
 	"github.com/jonboulle/clockwork"
 	"github.com/tektoncd/cli/pkg/test"
-	cb "github.com/tektoncd/cli/pkg/test/builder"
 	"github.com/tektoncd/pipeline/pkg/apis/pipeline/v1alpha1"
-	tb "github.com/tektoncd/pipeline/test/builder"
 	pipelinetest "github.com/tektoncd/pipeline/test/v1alpha1"
 	"gotest.tools/v3/golden"
 	corev1 "k8s.io/api/core/v1"
@@ -54,46 +52,69 @@ func TestConditionList(t *testing.T) {
 
 	// Testdata pattern1.
 	conditions := []*v1alpha1.Condition{
-		tb.Condition("condition1",
-			tb.ConditionNamespace("ns"),
-			cb.ConditionCreationTime(clock.Now().Add(-1*time.Minute)),
-		),
-		tb.Condition("condition2",
-			tb.ConditionNamespace("ns"),
-			cb.ConditionCreationTime(clock.Now().Add(-20*time.Second)),
-		),
-		tb.Condition("condition3",
-			tb.ConditionNamespace("ns"),
-			cb.ConditionCreationTime(clock.Now().Add(-512*time.Hour)),
-		),
-		tb.Condition("condition4",
-			tb.ConditionNamespace("ns"),
-			tb.ConditionSpec(tb.ConditionDescription("a test condition")),
-			cb.ConditionCreationTime(clock.Now().Add(-513*time.Hour)),
-		),
-		tb.Condition("condition5",
-			tb.ConditionNamespace("ns"),
-			tb.ConditionSpec(
-				tb.ConditionDescription("a test condition to check the trimming is working"),
-			),
-			cb.ConditionCreationTime(clock.Now().Add(-514*time.Hour)),
-		),
-		tb.Condition("condition6",
-			tb.ConditionNamespace("ns"),
-			tb.ConditionSpec(
-				tb.ConditionDescription(""),
-			),
-			cb.ConditionCreationTime(clock.Now().Add(-516*time.Hour)),
-		),
+		{
+			ObjectMeta: metav1.ObjectMeta{
+				Name:              "condition1",
+				Namespace:         "ns",
+				CreationTimestamp: metav1.Time{Time: clock.Now().Add(-1 * time.Minute)},
+			},
+		},
+		{
+			ObjectMeta: metav1.ObjectMeta{
+				Name:              "condition2",
+				Namespace:         "ns",
+				CreationTimestamp: metav1.Time{Time: clock.Now().Add(-20 * time.Second)},
+			},
+		},
+		{
+			ObjectMeta: metav1.ObjectMeta{
+				Name:              "condition3",
+				Namespace:         "ns",
+				CreationTimestamp: metav1.Time{Time: clock.Now().Add(-512 * time.Hour)},
+			},
+		},
+		{
+			ObjectMeta: metav1.ObjectMeta{
+				Name:              "condition4",
+				Namespace:         "ns",
+				CreationTimestamp: metav1.Time{Time: clock.Now().Add(-513 * time.Hour)},
+			},
+			Spec: v1alpha1.ConditionSpec{
+				Description: "a test condition",
+			},
+		},
+		{
+			ObjectMeta: metav1.ObjectMeta{
+				Name:              "condition5",
+				Namespace:         "ns",
+				CreationTimestamp: metav1.Time{Time: clock.Now().Add(-514 * time.Hour)},
+			},
+			Spec: v1alpha1.ConditionSpec{
+				Description: "a test condition to check the trimming is working",
+			},
+		},
+		{
+			ObjectMeta: metav1.ObjectMeta{
+				Name:              "condition6",
+				Namespace:         "ns",
+				CreationTimestamp: metav1.Time{Time: clock.Now().Add(-516 * time.Hour)},
+			},
+			Spec: v1alpha1.ConditionSpec{
+				Description: "",
+			},
+		},
 	}
 	s, _ := test.SeedTestData(t, pipelinetest.Data{Conditions: conditions, Namespaces: ns})
 
 	// Testdata pattern2.
 	conditions2 := []*v1alpha1.Condition{
-		tb.Condition("condition1",
-			tb.ConditionNamespace("ns"),
-			cb.ConditionCreationTime(clock.Now().Add(-1*time.Minute)),
-		),
+		{
+			ObjectMeta: metav1.ObjectMeta{
+				Name:              "condition1",
+				Namespace:         "ns",
+				CreationTimestamp: metav1.Time{Time: clock.Now().Add(-1 * time.Minute)},
+			},
+		},
 	}
 	s2, _ := test.SeedTestData(t, pipelinetest.Data{Conditions: conditions2, Namespaces: ns})
 	s2.Pipeline.PrependReactor("list", "conditions", func(action k8stest.Action) (bool, runtime.Object, error) {
