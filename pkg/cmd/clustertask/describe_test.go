@@ -29,132 +29,325 @@ import (
 	"github.com/tektoncd/pipeline/pkg/apis/pipeline/v1alpha1"
 	"github.com/tektoncd/pipeline/pkg/apis/pipeline/v1beta1"
 	pipelinev1beta1test "github.com/tektoncd/pipeline/test"
-	tb "github.com/tektoncd/pipeline/test/builder"
 	pipelinetest "github.com/tektoncd/pipeline/test/v1alpha1"
 	"gotest.tools/v3/golden"
 	corev1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime"
 	k8stest "k8s.io/client-go/testing"
-	"knative.dev/pkg/apis"
+	duckv1beta1 "knative.dev/pkg/apis/duck/v1beta1"
 )
 
 func Test_ClusterTaskDescribe(t *testing.T) {
 	clock := clockwork.NewFakeClock()
 
 	clustertasks := []*v1alpha1.ClusterTask{
-		tb.ClusterTask("clustertask-full", cb.ClusterTaskCreationTime(clock.Now().Add(1*time.Minute)),
-			tb.ClusterTaskSpec(
-				tb.TaskResources(
-					tb.TaskResourcesInput("my-repo", v1alpha1.PipelineResourceTypeGit),
-					tb.TaskResourcesInput("my-image", v1alpha1.PipelineResourceTypeImage),
-					tb.TaskResourcesOutput("code-image", v1alpha1.PipelineResourceTypeImage),
-				),
-				tb.TaskParam("myarg", v1alpha1.ParamTypeString, tb.ParamSpecDescription("param type is string"),
-					tb.ParamSpecDefault("default")),
-				tb.TaskParam("print", v1alpha1.ParamTypeArray, tb.ParamSpecDescription("param type is array"),
-					tb.ParamSpecDefault("booms", "booms", "booms")),
-				tb.Step("busybox",
-					tb.StepName("hello"),
-				),
-				tb.Step("busybox",
-					tb.StepName("exit"),
-				),
-			),
-		),
-		tb.ClusterTask("clustertask-one-everything", cb.ClusterTaskCreationTime(clock.Now().Add(1*time.Minute)),
-			tb.ClusterTaskSpec(
-				tb.TaskDescription("a test description"),
-				tb.TaskResources(
-					tb.TaskResourcesInput("my-repo", v1alpha1.PipelineResourceTypeGit),
-					tb.TaskResourcesOutput("code-image", v1alpha1.PipelineResourceTypeImage),
-				),
-				tb.TaskParam("myarg", v1alpha1.ParamTypeString),
-				tb.Step("busybox",
-					tb.StepName("hello"),
-				),
-			),
-		),
-		tb.ClusterTask("clustertask-justname", cb.ClusterTaskCreationTime(clock.Now().Add(-1*time.Minute))),
+		{
+			ObjectMeta: metav1.ObjectMeta{
+				Name:              "clustertask-full",
+				CreationTimestamp: metav1.Time{Time: clock.Now().Add(1 * time.Minute)},
+			},
+			Spec: v1alpha1.TaskSpec{
+				TaskSpec: v1beta1.TaskSpec{
+					Resources: &v1beta1.TaskResources{
+						Inputs: []v1beta1.TaskResource{
+							{
+								ResourceDeclaration: v1alpha1.ResourceDeclaration{
+									Name: "my-repo",
+									Type: v1alpha1.PipelineResourceTypeGit,
+								},
+							},
+							{
+								ResourceDeclaration: v1alpha1.ResourceDeclaration{
+									Name: "my-image",
+									Type: v1alpha1.PipelineResourceTypeImage,
+								},
+							},
+						},
+						Outputs: []v1beta1.TaskResource{
+							{
+								ResourceDeclaration: v1alpha1.ResourceDeclaration{
+									Name: "code-image",
+									Type: v1alpha1.PipelineResourceTypeImage,
+								},
+							},
+						},
+					},
+					Params: []v1alpha1.ParamSpec{
+						{
+							Name:        "myarg",
+							Type:        v1beta1.ParamTypeString,
+							Description: "param type is string",
+							Default: &v1beta1.ArrayOrString{
+								Type:      v1beta1.ParamTypeString,
+								StringVal: "default",
+							},
+						},
+						{
+							Name:        "print",
+							Type:        v1beta1.ParamTypeArray,
+							Description: "param type is array",
+							Default: &v1beta1.ArrayOrString{
+								Type:     v1beta1.ParamTypeArray,
+								ArrayVal: []string{"booms", "booms", "booms"},
+							},
+						},
+					},
+					Steps: []v1alpha1.Step{
+						{
+							Container: corev1.Container{
+								Name:  "hello",
+								Image: "busybox",
+							},
+						},
+						{
+							Container: corev1.Container{
+								Name:  "exit",
+								Image: "busybox",
+							},
+						},
+					},
+				},
+			},
+		},
+		{
+			ObjectMeta: metav1.ObjectMeta{
+				Name:              "clustertask-one-everything",
+				CreationTimestamp: metav1.Time{Time: clock.Now().Add(1 * time.Minute)},
+			},
+			Spec: v1alpha1.TaskSpec{
+				TaskSpec: v1beta1.TaskSpec{
+					Description: "a test description",
+					Resources: &v1beta1.TaskResources{
+						Inputs: []v1beta1.TaskResource{
+							{
+								ResourceDeclaration: v1alpha1.ResourceDeclaration{
+									Name: "my-repo",
+									Type: v1alpha1.PipelineResourceTypeGit,
+								},
+							},
+						},
+						Outputs: []v1beta1.TaskResource{
+							{
+								ResourceDeclaration: v1alpha1.ResourceDeclaration{
+									Name: "code-image",
+									Type: v1alpha1.PipelineResourceTypeImage,
+								},
+							},
+						},
+					},
+					Params: []v1alpha1.ParamSpec{
+						{
+							Name: "myarg",
+							Type: v1beta1.ParamTypeString,
+						},
+					},
+					Steps: []v1alpha1.Step{
+						{
+							Container: corev1.Container{
+								Name:  "hello",
+								Image: "busybox",
+							},
+						},
+					},
+				},
+			},
+		},
+		{
+			ObjectMeta: metav1.ObjectMeta{
+				Name:              "clustertask-justname",
+				CreationTimestamp: metav1.Time{Time: clock.Now().Add(-1 * time.Minute)},
+			},
+		},
 	}
 
 	taskruns := []*v1alpha1.TaskRun{
-		tb.TaskRun("taskrun-1",
-			tb.TaskRunNamespace("ns"),
-			tb.TaskRunLabel("tekton.dev/task", "clustertask-full"),
-			tb.TaskRunSpec(
-				tb.TaskRunTaskRef("clustertask-full", tb.TaskRefKind(v1alpha1.ClusterTaskKind)),
-				tb.TaskRunServiceAccountName("svc"),
-				tb.TaskRunParam("myarg", "value"),
-				tb.TaskRunParam("print", "booms", "booms", "booms"),
-				tb.TaskRunResources(tb.TaskRunResourcesInput("my-repo", tb.TaskResourceBindingRef("git"))),
-				tb.TaskRunResources(tb.TaskRunResourcesOutput("my-image", tb.TaskResourceBindingRef("image"))),
-			),
-			tb.TaskRunStatus(
-				tb.TaskRunStartTime(clock.Now().Add(-10*time.Minute)),
-				cb.TaskRunCompletionTime(clock.Now().Add(17*time.Minute)),
-				tb.StatusCondition(apis.Condition{
-					Status: corev1.ConditionTrue,
-					Reason: v1beta1.TaskRunReasonSuccessful.String(),
-				}),
-			),
-		),
-		tb.TaskRun("taskrun-2",
-			tb.TaskRunNamespace("ns"),
-			tb.TaskRunLabel("tekton.dev/task", "clustertask-one-everything"),
-			tb.TaskRunSpec(
-				tb.TaskRunTaskRef("clustertask-one-everything", tb.TaskRefKind(v1alpha1.ClusterTaskKind)),
-				tb.TaskRunServiceAccountName("svc"),
-				tb.TaskRunParam("myarg", "value"),
-				tb.TaskRunResources(tb.TaskRunResourcesInput("my-repo", tb.TaskResourceBindingRef("git"))),
-			),
-			tb.TaskRunStatus(
-				tb.TaskRunStartTime(clock.Now().Add(-10*time.Minute)),
-				cb.TaskRunCompletionTime(clock.Now().Add(17*time.Minute)),
-				tb.StatusCondition(apis.Condition{
-					Status: corev1.ConditionTrue,
-					Reason: v1beta1.TaskRunReasonSuccessful.String(),
-				}),
-			),
-		),
-		tb.TaskRun("taskrun-3",
-			tb.TaskRunNamespace("ns"),
-			tb.TaskRunLabel("tekton.dev/task", "clustertask-full"),
-			tb.TaskRunSpec(
-				tb.TaskRunTaskRef("clustertask-full", tb.TaskRefKind(v1alpha1.ClusterTaskKind)),
-				tb.TaskRunServiceAccountName("svc"),
-				tb.TaskRunParam("myarg", "value"),
-				tb.TaskRunParam("print", "booms", "booms", "booms"),
-				tb.TaskRunResources(tb.TaskRunResourcesInput("my-repo", tb.TaskResourceBindingRef("git"))),
-				tb.TaskRunResources(tb.TaskRunResourcesOutput("my-image", tb.TaskResourceBindingRef("image"))),
-			),
-			tb.TaskRunStatus(
-				tb.TaskRunStartTime(clock.Now().Add(-12*time.Minute)),
-				tb.StatusCondition(apis.Condition{
-					Status: corev1.ConditionUnknown,
-					Reason: v1beta1.TaskRunReasonRunning.String(),
-				}),
-			),
-		),
-		tb.TaskRun("taskrun-4",
-			tb.TaskRunNamespace("ns"),
-			tb.TaskRunLabel("tekton.dev/task", "clustertask-full"),
-			tb.TaskRunSpec(
-				tb.TaskRunTaskRef("clustertask-full", tb.TaskRefKind(v1alpha1.NamespacedTaskKind)),
-				tb.TaskRunServiceAccountName("svc"),
-				tb.TaskRunParam("myarg", "value"),
-				tb.TaskRunParam("print", "booms", "booms", "booms"),
-				tb.TaskRunResources(tb.TaskRunResourcesInput("my-repo", tb.TaskResourceBindingRef("git"))),
-				tb.TaskRunResources(tb.TaskRunResourcesOutput("my-image", tb.TaskResourceBindingRef("image"))),
-			),
-			tb.TaskRunStatus(
-				tb.TaskRunStartTime(clock.Now().Add(-12*time.Minute)),
-				tb.StatusCondition(apis.Condition{
-					Status: corev1.ConditionUnknown,
-					Reason: v1beta1.TaskRunReasonRunning.String(),
-				}),
-			),
-		),
+		{
+			ObjectMeta: metav1.ObjectMeta{
+				Name:      "taskrun-1",
+				Namespace: "ns",
+				Labels: map[string]string{
+					"tekton.dev/task": "clustertask-full",
+				},
+			},
+			Spec: v1alpha1.TaskRunSpec{
+				TaskRef: &v1alpha1.TaskRef{
+					Name: "clustertask-full",
+					Kind: v1alpha1.ClusterTaskKind,
+				},
+				ServiceAccountName: "svc",
+				Params: []v1alpha1.Param{
+					{
+						Name: "myarg",
+						Value: v1alpha1.ArrayOrString{
+							Type:      v1alpha1.ParamTypeString,
+							StringVal: "value",
+						},
+					},
+					{
+						Name: "print",
+						Value: v1alpha1.ArrayOrString{
+							Type:     v1alpha1.ParamTypeArray,
+							ArrayVal: []string{"booms", "booms", "booms"},
+						},
+					},
+				},
+				Resources: &v1beta1.TaskRunResources{
+					Inputs: []v1alpha1.TaskResourceBinding{
+						{
+							PipelineResourceBinding: v1alpha1.PipelineResourceBinding{
+								Name: "my-repo",
+								ResourceRef: &v1alpha1.PipelineResourceRef{
+									Name: "git",
+								},
+							},
+						},
+					},
+					Outputs: []v1alpha1.TaskResourceBinding{
+						{
+							PipelineResourceBinding: v1alpha1.PipelineResourceBinding{
+								Name: "my-image",
+								ResourceRef: &v1alpha1.PipelineResourceRef{
+									Name: "image",
+								},
+							},
+						},
+					},
+				},
+			},
+			Status: v1alpha1.TaskRunStatus{
+				Status: duckv1beta1.Status{
+					Conditions: duckv1beta1.Conditions{
+						{
+							Status: corev1.ConditionTrue,
+							Reason: v1beta1.TaskRunReasonSuccessful.String(),
+						},
+					},
+				},
+				TaskRunStatusFields: v1beta1.TaskRunStatusFields{
+					StartTime:      &metav1.Time{Time: clock.Now().Add(-10 * time.Minute)},
+					CompletionTime: &metav1.Time{Time: clock.Now().Add(17 * time.Minute)},
+				},
+			},
+		},
+		{
+			ObjectMeta: metav1.ObjectMeta{
+				Name:      "taskrun-2",
+				Namespace: "ns",
+				Labels: map[string]string{
+					"tekton.dev/task": "clustertask-one-everything",
+				},
+			},
+			Spec: v1alpha1.TaskRunSpec{
+				TaskRef: &v1alpha1.TaskRef{
+					Name: "clustertask-one-everything",
+					Kind: v1alpha1.ClusterTaskKind,
+				},
+				ServiceAccountName: "svc",
+				Params: []v1alpha1.Param{
+					{
+						Name: "myarg",
+						Value: v1alpha1.ArrayOrString{
+							Type:      v1alpha1.ParamTypeString,
+							StringVal: "value",
+						},
+					},
+				},
+				Resources: &v1beta1.TaskRunResources{
+					Inputs: []v1alpha1.TaskResourceBinding{
+						{
+							PipelineResourceBinding: v1alpha1.PipelineResourceBinding{
+								Name: "my-repo",
+								ResourceRef: &v1alpha1.PipelineResourceRef{
+									Name: "git",
+								},
+							},
+						},
+					},
+				},
+			},
+			Status: v1alpha1.TaskRunStatus{
+				Status: duckv1beta1.Status{
+					Conditions: duckv1beta1.Conditions{
+						{
+							Status: corev1.ConditionTrue,
+							Reason: v1beta1.TaskRunReasonSuccessful.String(),
+						},
+					},
+				},
+				TaskRunStatusFields: v1beta1.TaskRunStatusFields{
+					StartTime:      &metav1.Time{Time: clock.Now().Add(-10 * time.Minute)},
+					CompletionTime: &metav1.Time{Time: clock.Now().Add(17 * time.Minute)},
+				},
+			},
+		},
+		{
+			ObjectMeta: metav1.ObjectMeta{
+				Name:      "taskrun-3",
+				Namespace: "ns",
+				Labels: map[string]string{
+					"tekton.dev/task": "clustertask-full",
+				},
+			},
+			Spec: v1alpha1.TaskRunSpec{
+				TaskRef: &v1alpha1.TaskRef{
+					Name: "clustertask-full",
+					Kind: v1alpha1.ClusterTaskKind,
+				},
+				ServiceAccountName: "svc",
+				Params: []v1alpha1.Param{
+					{
+						Name: "myarg",
+						Value: v1alpha1.ArrayOrString{
+							Type:      v1alpha1.ParamTypeString,
+							StringVal: "value",
+						},
+					},
+					{
+						Name: "print",
+						Value: v1alpha1.ArrayOrString{
+							Type:     v1alpha1.ParamTypeArray,
+							ArrayVal: []string{"booms", "booms", "booms"},
+						},
+					},
+				},
+				Resources: &v1beta1.TaskRunResources{
+					Inputs: []v1alpha1.TaskResourceBinding{
+						{
+							PipelineResourceBinding: v1alpha1.PipelineResourceBinding{
+								Name: "my-repo",
+								ResourceRef: &v1alpha1.PipelineResourceRef{
+									Name: "git",
+								},
+							},
+						},
+					},
+					Outputs: []v1alpha1.TaskResourceBinding{
+						{
+							PipelineResourceBinding: v1alpha1.PipelineResourceBinding{
+								Name: "my-image",
+								ResourceRef: &v1alpha1.PipelineResourceRef{
+									Name: "image",
+								},
+							},
+						},
+					},
+				},
+			},
+			Status: v1alpha1.TaskRunStatus{
+				Status: duckv1beta1.Status{
+					Conditions: duckv1beta1.Conditions{
+						{
+							Status: corev1.ConditionUnknown,
+							Reason: v1beta1.TaskRunReasonRunning.String(),
+						},
+					},
+				},
+				TaskRunStatusFields: v1beta1.TaskRunStatusFields{
+					StartTime: &metav1.Time{Time: clock.Now().Add(-12 * time.Minute)},
+				},
+			},
+		},
 	}
 
 	ns := []*corev1.Namespace{
@@ -174,7 +367,6 @@ func Test_ClusterTaskDescribe(t *testing.T) {
 		cb.UnstructuredTR(taskruns[0], version),
 		cb.UnstructuredTR(taskruns[1], version),
 		cb.UnstructuredTR(taskruns[2], version),
-		cb.UnstructuredTR(taskruns[3], version),
 	)
 	if err != nil {
 		t.Errorf("unable to create dynamic client: %v", err)
@@ -306,7 +498,11 @@ func TestClusterTask_custom_output(t *testing.T) {
 	clock := clockwork.NewFakeClock()
 
 	cstasks := []*v1alpha1.ClusterTask{
-		tb.ClusterTask(name),
+		{
+			ObjectMeta: metav1.ObjectMeta{
+				Name: name,
+			},
+		},
 	}
 
 	cs, _ := test.SeedTestData(t, pipelinetest.Data{

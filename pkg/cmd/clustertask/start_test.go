@@ -29,7 +29,6 @@ import (
 	"github.com/tektoncd/pipeline/pkg/apis/pipeline/v1alpha1"
 	"github.com/tektoncd/pipeline/pkg/apis/pipeline/v1beta1"
 	pipelinev1beta1test "github.com/tektoncd/pipeline/test"
-	tb "github.com/tektoncd/pipeline/test/builder"
 	pipelinetest "github.com/tektoncd/pipeline/test/v1alpha1"
 	"gotest.tools/v3/golden"
 	corev1 "k8s.io/api/core/v1"
@@ -132,75 +131,250 @@ func Test_ClusterTask_Start(t *testing.T) {
 	seeds := make([]clients, 0)
 
 	clustertasks := []*v1alpha1.ClusterTask{
-		tb.ClusterTask("clustertask-1", cb.ClusterTaskCreationTime(clock.Now().Add(-1*time.Minute)),
-			tb.ClusterTaskSpec(
-				tb.TaskInputs(
-					tb.InputsResource("my-repo", v1alpha1.PipelineResourceTypeGit),
-					tb.InputsResource("my-image", v1alpha1.PipelineResourceTypeImage),
-					tb.InputsParamSpec("myarg", v1alpha1.ParamTypeString),
-					tb.InputsParamSpec("print", v1alpha1.ParamTypeArray),
-				),
-				tb.TaskOutputs(
-					tb.OutputsResource("code-image", v1alpha1.PipelineResourceTypeImage),
-				),
-				tb.Step("busybox",
-					tb.StepName("hello")),
-				tb.Step("busybox",
-					tb.StepName("exit")),
-				tb.TaskWorkspace("test", "test workspace", "/workspace/test/file", true),
-			),
-		),
-		tb.ClusterTask("clustertask-2", cb.ClusterTaskCreationTime(clock.Now().Add(-1*time.Minute)),
-			tb.ClusterTaskSpec(
-				tb.TaskInputs(
-					tb.InputsResource("my-repo", v1alpha1.PipelineResourceTypeGit),
-					tb.InputsParamSpec("myarg", v1alpha1.ParamTypeString),
-				),
-				tb.TaskOutputs(
-					tb.OutputsResource("code-image", v1alpha1.PipelineResourceTypeImage),
-				),
-				tb.Step("busybox",
-					tb.StepName("hello")),
-				tb.Step("busybox",
-					tb.StepName("exit")),
-			),
-		),
-		tb.ClusterTask("clustertask-3", cb.ClusterTaskCreationTime(clock.Now().Add(-1*time.Minute)),
-			tb.ClusterTaskSpec(
-				tb.TaskInputs(
-					tb.InputsResource("my-repo", v1alpha1.PipelineResourceTypeGit),
-					tb.InputsResource("my-image", v1alpha1.PipelineResourceTypeImage),
-					tb.InputsParamSpec("myarg", v1alpha1.ParamTypeString, tb.ParamSpecDefault("arg1")),
-					tb.InputsParamSpec("print", v1alpha1.ParamTypeArray, tb.ParamSpecDefault("my-param")),
-				),
-				tb.TaskOutputs(
-					tb.OutputsResource("code-image", v1alpha1.PipelineResourceTypeImage),
-				),
-				tb.Step("busybox",
-					tb.StepName("hello")),
-				tb.Step("busybox",
-					tb.StepName("exit")),
-				tb.TaskWorkspace("test", "test workspace", "/workspace/test/file", true),
-			),
-		),
+		{
+			ObjectMeta: v1.ObjectMeta{
+				Name:              "clustertask-1",
+				CreationTimestamp: metav1.Time{Time: clock.Now().Add(-1 * time.Minute)},
+			},
+			Spec: v1alpha1.TaskSpec{
+				TaskSpec: v1beta1.TaskSpec{
+					Resources: &v1beta1.TaskResources{
+						Inputs: []v1alpha1.TaskResource{
+							{
+								ResourceDeclaration: v1alpha1.ResourceDeclaration{
+									Name: "my-repo",
+									Type: v1alpha1.PipelineResourceTypeGit,
+								},
+							},
+							{
+								ResourceDeclaration: v1alpha1.ResourceDeclaration{
+									Name: "my-image",
+									Type: v1alpha1.PipelineResourceTypeImage,
+								},
+							},
+						},
+						Outputs: []v1alpha1.TaskResource{
+							{
+								ResourceDeclaration: v1alpha1.ResourceDeclaration{
+									Name: "code-image",
+									Type: v1alpha1.PipelineResourceTypeImage,
+								},
+							},
+						},
+					},
+					Params: []v1alpha1.ParamSpec{
+						{
+							Name: "myarg",
+							Type: v1alpha1.ParamTypeString,
+						},
+						{
+							Name: "print",
+							Type: v1alpha1.ParamTypeArray,
+						},
+					},
+					Steps: []v1alpha1.Step{
+						{
+							Container: corev1.Container{
+								Name:  "hello",
+								Image: "busybox",
+							},
+						},
+						{
+							Container: corev1.Container{
+								Name:  "exit",
+								Image: "busybox",
+							},
+						},
+					},
+					Workspaces: []v1alpha1.WorkspaceDeclaration{
+						{
+							Name:        "test",
+							Description: "test workspace",
+							MountPath:   "/workspace/test/file",
+							ReadOnly:    true,
+						},
+					},
+				},
+			},
+		},
+		{
+			ObjectMeta: v1.ObjectMeta{
+				Name:              "clustertask-2",
+				CreationTimestamp: metav1.Time{Time: clock.Now().Add(-1 * time.Minute)},
+			},
+			Spec: v1alpha1.TaskSpec{
+				TaskSpec: v1beta1.TaskSpec{
+					Resources: &v1beta1.TaskResources{
+						Inputs: []v1alpha1.TaskResource{
+							{
+								ResourceDeclaration: v1beta1.ResourceDeclaration{
+									Name: "my-repo",
+									Type: v1alpha1.PipelineResourceTypeGit,
+								},
+							},
+						},
+						Outputs: []v1alpha1.TaskResource{
+							{
+								ResourceDeclaration: v1alpha1.ResourceDeclaration{
+									Name: "code-image",
+									Type: v1beta1.PipelineResourceTypeImage,
+								},
+							},
+						},
+					},
+					Steps: []v1alpha1.Step{
+						{
+							Container: corev1.Container{
+								Name:  "hello",
+								Image: "busybox",
+							},
+						},
+						{
+							Container: corev1.Container{
+								Name:  "exit",
+								Image: "busybox",
+							},
+						},
+					},
+				},
+			},
+		},
+		{
+			ObjectMeta: v1.ObjectMeta{
+				Name:              "clustertask-3",
+				CreationTimestamp: metav1.Time{Time: clock.Now().Add(-1 * time.Minute)},
+			},
+			Spec: v1alpha1.TaskSpec{
+				TaskSpec: v1beta1.TaskSpec{
+					Resources: &v1beta1.TaskResources{
+						Inputs: []v1alpha1.TaskResource{
+							{
+								ResourceDeclaration: v1alpha1.ResourceDeclaration{
+									Name: "my-repo",
+									Type: v1alpha1.PipelineResourceTypeGit,
+								},
+							},
+							{
+								ResourceDeclaration: v1alpha1.ResourceDeclaration{
+									Name: "my-image",
+									Type: v1alpha1.PipelineResourceTypeImage,
+								},
+							},
+						},
+						Outputs: []v1beta1.TaskResource{
+							{
+								ResourceDeclaration: v1alpha1.ResourceDeclaration{
+									Name: "code-image",
+									Type: v1alpha1.PipelineResourceTypeImage,
+								},
+							},
+						},
+					},
+					Params: []v1alpha1.ParamSpec{
+						{
+							Name: "myarg",
+							Type: v1alpha1.ParamTypeString,
+							Default: &v1beta1.ArrayOrString{
+								Type:      v1alpha1.ParamTypeString,
+								StringVal: "arg1",
+							},
+						},
+						{
+							Name: "print",
+							Type: v1alpha1.ParamTypeArray,
+							Default: &v1alpha1.ArrayOrString{
+								Type:     v1alpha1.ParamTypeArray,
+								ArrayVal: []string{"boom", "boom"},
+							},
+						},
+					},
+					Steps: []v1beta1.Step{
+						{
+							Container: corev1.Container{
+								Name:  "hello",
+								Image: "busybox",
+							},
+						},
+						{
+							Container: corev1.Container{
+								Name:  "exit",
+								Image: "busybox",
+							},
+						},
+					},
+					Workspaces: []v1alpha1.WorkspaceDeclaration{
+						{
+							Name:        "test",
+							Description: "test workspace",
+							MountPath:   "/workspace/test/file",
+							ReadOnly:    true,
+						},
+					},
+				},
+			},
+		},
 	}
+
+	timeoutDuration, _ := time.ParseDuration("1h")
 	taskruns := []*v1alpha1.TaskRun{
-		tb.TaskRun("taskrun-123",
-			tb.TaskRunNamespace("ns"),
-			tb.TaskRunLabel("tekton.dev/task", "clustertask-1"),
-			tb.TaskRunSpec(
-				tb.TaskRunTaskRef("clustertask-1", tb.TaskRefKind(v1alpha1.ClusterTaskKind)),
-				tb.TaskRunServiceAccountName("svc"),
-				tb.TaskRunInputs(tb.TaskRunInputsParam("myarg", "value")),
-				tb.TaskRunInputs(tb.TaskRunInputsParam("print", "booms", "booms", "booms")),
-				tb.TaskRunInputs(tb.TaskRunInputsResource("my-repo", tb.TaskResourceBindingRef("git"))),
-				tb.TaskRunOutputs(tb.TaskRunOutputsResource("my-image", tb.TaskResourceBindingRef("image"))),
-				tb.TaskRunWorkspaceEmptyDir("test", ""),
-			),
-			tb.TaskRunStatus(
-				tb.TaskRunStartTime(time.Now()),
-			),
-		),
+		{
+			ObjectMeta: v1.ObjectMeta{
+				Name:      "taskrun-123",
+				Namespace: "ns",
+				Labels:    map[string]string{"tekton.dev/task": "clustertask-1"},
+			},
+			Spec: v1alpha1.TaskRunSpec{
+				Params: []v1alpha1.Param{
+					{
+						Name:  "myarg",
+						Value: v1alpha1.ArrayOrString{Type: v1alpha1.ParamTypeString, StringVal: "value"},
+					},
+					{
+						Name:  "print",
+						Value: v1alpha1.ArrayOrString{Type: v1alpha1.ParamTypeArray, ArrayVal: []string{"booms", "booms", "booms"}},
+					},
+				},
+				Resources: &v1beta1.TaskRunResources{
+					Inputs: []v1alpha1.TaskResourceBinding{
+						{
+							PipelineResourceBinding: v1alpha1.PipelineResourceBinding{
+								Name: "my-repo",
+								ResourceRef: &v1alpha1.PipelineResourceRef{
+									Name: "git",
+								},
+							},
+						},
+					},
+					Outputs: []v1alpha1.TaskResourceBinding{
+						{
+							PipelineResourceBinding: v1alpha1.PipelineResourceBinding{
+								Name: "my-image",
+								ResourceRef: &v1alpha1.PipelineResourceRef{
+									Name: "image",
+								},
+							},
+						},
+					},
+				},
+				ServiceAccountName: "svc",
+				TaskRef: &v1alpha1.TaskRef{
+					Name: "clustertask-1",
+					Kind: v1alpha1.ClusterTaskKind,
+				},
+				Workspaces: []v1alpha1.WorkspaceBinding{
+					{
+						Name:     "test",
+						EmptyDir: &corev1.EmptyDirVolumeSource{},
+					},
+				},
+				Timeout: &metav1.Duration{Duration: timeoutDuration},
+			},
+			Status: v1alpha1.TaskRunStatus{
+				TaskRunStatusFields: v1alpha1.TaskRunStatusFields{
+					StartTime: &metav1.Time{Time: clock.Now()},
+				},
+			},
+		},
 	}
 
 	ns := []*corev1.Namespace{
@@ -514,21 +688,6 @@ func Test_ClusterTask_Start(t *testing.T) {
 			goldenFile:  true,
 		},
 		{
-			name: "Dry run with no output v1beta1",
-			command: []string{"start", "clustertask-2",
-				"-i", "my-repo=git",
-				"-o", "code-image=output-image",
-				"-l", "key=value",
-				"-s=svc1",
-				"--dry-run",
-			},
-			dynamic:     seeds[4].dynamicClient,
-			input:       seeds[4].pipelineClient,
-			inputStream: nil,
-			wantError:   false,
-			goldenFile:  true,
-		},
-		{
 			name: "Dry run with --last",
 			command: []string{"start", "clustertask-1",
 				"-i", "my-repo=git",
@@ -822,10 +981,10 @@ func Test_ClusterTask_Start_v1beta1(t *testing.T) {
 					},
 					{
 						Name: "print",
-						Type: v1beta1.ParamTypeString,
+						Type: v1beta1.ParamTypeArray,
 						Default: &v1beta1.ArrayOrString{
-							Type:      v1beta1.ParamTypeString,
-							StringVal: "my-param",
+							Type:     v1beta1.ParamTypeArray,
+							ArrayVal: []string{"boom", "boom"},
 						},
 					},
 				},
@@ -1159,7 +1318,7 @@ func Test_ClusterTask_Start_v1beta1(t *testing.T) {
 			want:        "output format specified is invalid but must be yaml or json",
 		},
 		{
-			name: "Dry run with no output",
+			name: "Dry run with no output v1beta1",
 			command: []string{"start", "clustertask-2",
 				"-i", "my-repo=git",
 				"-p", "myarg=value1",
@@ -1170,22 +1329,6 @@ func Test_ClusterTask_Start_v1beta1(t *testing.T) {
 			},
 			dynamic:     seeds[3].dynamicClient,
 			input:       seeds[3].pipelineClient,
-			inputStream: nil,
-			wantError:   false,
-			goldenFile:  true,
-		},
-		{
-			name: "Dry run with no output v1beta1",
-			command: []string{"start", "clustertask-2",
-				"-i", "my-repo=git",
-				"-p", "myarg=value1",
-				"-o", "code-image=output-image",
-				"-l", "key=value",
-				"-s=svc1",
-				"--dry-run",
-			},
-			dynamic:     seeds[4].dynamicClient,
-			input:       seeds[4].pipelineClient,
 			inputStream: nil,
 			wantError:   false,
 			goldenFile:  true,

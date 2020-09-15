@@ -10,7 +10,8 @@ spec:
   - name: myarg
     value: value1
   - name: print
-    value: boom
+    value:
+    - boom
   resources:
     inputs:
     - name: my-image
