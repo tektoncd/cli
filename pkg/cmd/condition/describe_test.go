@@ -21,7 +21,7 @@ import (
 
 	"github.com/tektoncd/cli/pkg/test"
 	"github.com/tektoncd/pipeline/pkg/apis/pipeline/v1alpha1"
-	tb "github.com/tektoncd/pipeline/test/builder"
+	"github.com/tektoncd/pipeline/pkg/apis/pipeline/v1beta1"
 	pipelinetest "github.com/tektoncd/pipeline/test/v1alpha1"
 	"gotest.tools/v3/golden"
 	corev1 "k8s.io/api/core/v1"
@@ -30,57 +30,158 @@ import (
 
 func TestConditionDescribe(t *testing.T) {
 	conditions := []*v1alpha1.Condition{
-		tb.Condition("cond-1",
-			tb.ConditionNamespace("ns"),
-			tb.ConditionSpec(
-				tb.ConditionSpecCheck("test", "busybox"),
-				tb.ConditionSpecCheckScript("echo hello"),
-				tb.ConditionParamSpec("myarg", v1alpha1.ParamTypeString, tb.ParamSpecDescription("param type is string"),
-					tb.ParamSpecDefault("default")),
-				tb.ConditionParamSpec("print", v1alpha1.ParamTypeArray, tb.ParamSpecDescription("param type is array"),
-					tb.ParamSpecDefault("booms", "booms", "booms")),
-				tb.ConditionParamSpec("print", v1alpha1.ParamTypeString),
-				tb.ConditionResource("my-repo", v1alpha1.PipelineResourceTypeGit),
-				tb.ConditionResource("my-image", v1alpha1.PipelineResourceTypeImage),
-				tb.ConditionResource("code-image", v1alpha1.PipelineResourceTypeImage),
-				tb.ConditionDescription("test"),
-			),
-		),
-		tb.Condition("cond-2",
-			tb.ConditionNamespace("ns"),
-			tb.ConditionSpec(
-				tb.ConditionSpecCheck("test", "busybox"),
-				tb.ConditionSpecCheckScript("echo hello"),
-			),
-		),
-		tb.Condition("cond-3",
-			tb.ConditionNamespace("ns"),
-			tb.ConditionSpec(
-				tb.ConditionSpecCheck("test", "busybox"),
-				tb.ConditionSpecCheckScript("echo hello"),
-				tb.ConditionParamSpec("print", v1alpha1.ParamTypeString),
-				tb.ConditionResource("my-repo", v1alpha1.PipelineResourceTypeGit),
-				tb.ConditionDescription("test"),
-			),
-		),
-		tb.Condition("cond-4",
-			tb.ConditionNamespace("ns"),
-			tb.ConditionSpec(
-				tb.ConditionSpecCheck("test", "busybox",
-					tb.Args("echo", "hello"),
-					tb.Command("/bin/sh"),
-				),
-				tb.ConditionParamSpec("myarg", v1alpha1.ParamTypeString, tb.ParamSpecDescription("param type is string"),
-					tb.ParamSpecDefault("default")),
-				tb.ConditionParamSpec("print", v1alpha1.ParamTypeArray, tb.ParamSpecDescription("param type is array"),
-					tb.ParamSpecDefault("booms", "booms", "booms")),
-				tb.ConditionParamSpec("print", v1alpha1.ParamTypeString),
-				tb.ConditionResource("my-repo", v1alpha1.PipelineResourceTypeGit),
-				tb.ConditionResource("my-image", v1alpha1.PipelineResourceTypeImage),
-				tb.ConditionResource("code-image", v1alpha1.PipelineResourceTypeImage),
-				tb.ConditionDescription("test"),
-			),
-		),
+		{
+			ObjectMeta: metav1.ObjectMeta{
+				Name:      "cond-1",
+				Namespace: "ns",
+			},
+			Spec: v1alpha1.ConditionSpec{
+				Check: v1beta1.Step{
+					Container: corev1.Container{
+						Name:  "test",
+						Image: "busybox",
+					},
+					Script: "echo hello",
+				},
+				Params: []v1beta1.ParamSpec{
+					{
+						Name:        "myarg",
+						Type:        v1beta1.ParamTypeString,
+						Description: "param type is string",
+						Default: &v1beta1.ArrayOrString{
+							Type:      v1beta1.ParamTypeString,
+							StringVal: "default",
+						},
+					},
+					{
+						Name:        "print",
+						Type:        v1beta1.ParamTypeArray,
+						Description: "param type is array",
+						Default: &v1beta1.ArrayOrString{
+							Type:     v1beta1.ParamTypeArray,
+							ArrayVal: []string{"booms", "booms", "booms"},
+						},
+					},
+					{
+						Name: "print",
+						Type: v1beta1.ParamTypeString,
+					},
+				},
+				Resources: []v1beta1.ResourceDeclaration{
+					{
+						Name: "my-repo",
+						Type: v1alpha1.PipelineResourceTypeGit,
+					},
+					{
+						Name: "my-image",
+						Type: v1alpha1.PipelineResourceTypeImage,
+					},
+					{
+						Name: "code-image",
+						Type: v1alpha1.PipelineResourceTypeImage,
+					},
+				},
+				Description: "test",
+			},
+		},
+		{
+			ObjectMeta: metav1.ObjectMeta{
+				Name:      "cond-2",
+				Namespace: "ns",
+			},
+			Spec: v1alpha1.ConditionSpec{
+				Check: v1beta1.Step{
+					Container: corev1.Container{
+						Name:  "test",
+						Image: "busybox",
+					},
+					Script: "echo hello",
+				},
+			},
+		},
+		{
+			ObjectMeta: metav1.ObjectMeta{
+				Name:      "cond-3",
+				Namespace: "ns",
+			},
+			Spec: v1alpha1.ConditionSpec{
+				Check: v1beta1.Step{
+					Container: corev1.Container{
+						Name:  "test",
+						Image: "busybox",
+					},
+					Script: "echo hello",
+				},
+				Params: []v1beta1.ParamSpec{
+					{
+						Name: "print",
+						Type: v1beta1.ParamTypeString,
+					},
+				},
+				Resources: []v1beta1.ResourceDeclaration{
+					{
+						Name: "my-repo",
+						Type: v1alpha1.PipelineResourceTypeGit,
+					},
+				},
+				Description: "test",
+			},
+		},
+		{
+			ObjectMeta: metav1.ObjectMeta{
+				Name:      "cond-4",
+				Namespace: "ns",
+			},
+			Spec: v1alpha1.ConditionSpec{
+				Check: v1beta1.Step{
+					Container: corev1.Container{
+						Name:    "test",
+						Image:   "busybox",
+						Args:    []string{"echo", "hello"},
+						Command: []string{"/bin/sh"},
+					},
+				},
+				Params: []v1beta1.ParamSpec{
+					{
+						Name:        "myarg",
+						Type:        v1beta1.ParamTypeString,
+						Description: "param type is string",
+						Default: &v1beta1.ArrayOrString{
+							Type:      v1beta1.ParamTypeString,
+							StringVal: "default",
+						},
+					},
+					{
+						Name:        "print",
+						Type:        v1beta1.ParamTypeArray,
+						Description: "param type is array",
+						Default: &v1beta1.ArrayOrString{
+							Type:     v1beta1.ParamTypeArray,
+							ArrayVal: []string{"booms", "booms", "booms"},
+						},
+					},
+					{
+						Name: "print",
+						Type: v1beta1.ParamTypeString,
+					},
+				},
+				Resources: []v1beta1.ResourceDeclaration{
+					{
+						Name: "my-repo",
+						Type: v1alpha1.PipelineResourceTypeGit,
+					},
+					{
+						Name: "my-image",
+						Type: v1alpha1.PipelineResourceTypeImage,
+					},
+					{
+						Name: "code-image",
+						Type: v1alpha1.PipelineResourceTypeImage,
+					},
+				},
+				Description: "test",
+			},
+		},
 	}
 
 	ns := []*corev1.Namespace{

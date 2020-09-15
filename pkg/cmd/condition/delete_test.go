@@ -22,9 +22,7 @@ import (
 
 	"github.com/jonboulle/clockwork"
 	"github.com/tektoncd/cli/pkg/test"
-	cb "github.com/tektoncd/cli/pkg/test/builder"
 	"github.com/tektoncd/pipeline/pkg/apis/pipeline/v1alpha1"
-	tb "github.com/tektoncd/pipeline/test/builder"
 	pipelinetest "github.com/tektoncd/pipeline/test/v1alpha1"
 	corev1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
@@ -45,18 +43,27 @@ func TestConditionDelete(t *testing.T) {
 
 	for i := 0; i < 5; i++ {
 		conditions := []*v1alpha1.Condition{
-			tb.Condition("condition1",
-				tb.ConditionNamespace("ns"),
-				cb.ConditionCreationTime(clock.Now().Add(-1*time.Minute)),
-			),
-			tb.Condition("condition2",
-				tb.ConditionNamespace("ns"),
-				cb.ConditionCreationTime(clock.Now().Add(-1*time.Minute)),
-			),
-			tb.Condition("condition3",
-				tb.ConditionNamespace("ns"),
-				cb.ConditionCreationTime(clock.Now().Add(-1*time.Minute)),
-			),
+			{
+				ObjectMeta: metav1.ObjectMeta{
+					Name:              "condition1",
+					Namespace:         "ns",
+					CreationTimestamp: metav1.Time{Time: clock.Now().Add(-1 * time.Minute)},
+				},
+			},
+			{
+				ObjectMeta: metav1.ObjectMeta{
+					Name:              "condition2",
+					Namespace:         "ns",
+					CreationTimestamp: metav1.Time{Time: clock.Now().Add(-1 * time.Minute)},
+				},
+			},
+			{
+				ObjectMeta: metav1.ObjectMeta{
+					Name:              "condition3",
+					Namespace:         "ns",
+					CreationTimestamp: metav1.Time{Time: clock.Now().Add(-1 * time.Minute)},
+				},
+			},
 		}
 		s, _ := test.SeedTestData(t, pipelinetest.Data{Conditions: conditions, Namespaces: ns})
 		seeds = append(seeds, s)
