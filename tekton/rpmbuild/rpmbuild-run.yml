@@ -1,16 +1,19 @@
 ---
-apiVersion: tekton.dev/v1alpha1
+apiVersion: tekton.dev/v1beta1
 kind: TaskRun
 metadata:
   name: rpmbuild-taskrun
 spec:
   taskRef:
+    kind: Task
     name: rpmbuild
-  inputs:
-    resources:
+  resources:
+    inputs:
       - name: source
-        resourceRef:
-          name: tektoncd-cli-git
-    params:
-    - name: copr-cli-secret
-      value: copr-cli-config
+        resourceSpec:
+          type: git
+          params:
+            - name: revision
+              value: master
+            - name: url
+              value: https://github.com/tektoncd/cli

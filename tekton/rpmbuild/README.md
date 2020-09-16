@@ -42,6 +42,8 @@ need to have a PipelineResource for your git repository. See
 kubectl create secret generic copr-cli-config --from-file=copr=${HOME}/.config/copr
 ```
 
+* Make sure you have the GitHUB token set as documented in [RELEASE_PROCESS.md](../../RELEASE_PROCESS.md)
+
 * You should be able create the task with:
 
 ```
