@@ -2,6 +2,10 @@
 
 [![Go Report Card](https://goreportcard.com/badge/tektoncd/cli)](https://goreportcard.com/report/tektoncd/cli)
 
+<p align="center">
+<img width="250" height="175" src="https://github.com/cdfoundation/artwork/blob/main/tekton/additional-artwork/tekton-cli/color/tektoncli_color.svg" alt="Tekton logo"></img>
+</p>
+
 The Tekton Pipelines cli project provides a CLI for interacting with Tekton!
 
 ## Getting Started
