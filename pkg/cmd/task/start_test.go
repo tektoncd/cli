@@ -23,6 +23,7 @@ import (
 	"time"
 
 	"github.com/google/go-cmp/cmp"
+	tb "github.com/tektoncd/cli/internal/builder/v1alpha1"
 	traction "github.com/tektoncd/cli/pkg/taskrun"
 	trlist "github.com/tektoncd/cli/pkg/taskrun/list"
 	"github.com/tektoncd/cli/pkg/test"
@@ -32,7 +33,6 @@ import (
 	"github.com/tektoncd/pipeline/pkg/apis/pipeline/v1beta1"
 	fakepipelineclientset "github.com/tektoncd/pipeline/pkg/client/clientset/versioned/fake"
 	pipelinev1beta1test "github.com/tektoncd/pipeline/test"
-	tb "github.com/tektoncd/pipeline/test/builder"
 	pipelinetest "github.com/tektoncd/pipeline/test/v1alpha1"
 	"gotest.tools/v3/golden"
 	corev1 "k8s.io/api/core/v1"
