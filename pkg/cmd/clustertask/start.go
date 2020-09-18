@@ -66,6 +66,7 @@ type startOptions struct {
 	TimeOut            string
 	DryRun             bool
 	Output             string
+	PrefixName         string
 	Workspaces         []string
 	UseParamDefaults   bool
 	clustertask        *v1beta1.ClusterTask
@@ -169,6 +170,7 @@ like cat,foo,bar
 	c.Flags().StringVar(&opt.TimeOut, "timeout", "", "timeout for TaskRun")
 	c.Flags().BoolVarP(&opt.DryRun, "dry-run", "", false, "preview TaskRun without running it")
 	c.Flags().StringVarP(&opt.Output, "output", "", "", "format of TaskRun dry-run (yaml or json)")
+	c.Flags().StringVarP(&opt.PrefixName, "prefix-name", "", "", "specify a prefix for the TaskRun name (must be lowercase alphanumeric characters)")
 	c.Flags().StringVar(&opt.PodTemplate, "pod-template", "", "local or remote file containing a PodTemplate definition")
 	c.Flags().BoolVar(&opt.UseParamDefaults, "use-param-defaults", false, "use default parameter values without prompting for input")
 
@@ -211,7 +213,11 @@ func startClusterTask(opt startOptions, args []string) error {
 		tr.Spec.Timeout = &metav1.Duration{Duration: timeoutDuration}
 	}
 
-	tr.ObjectMeta.GenerateName = ctname + "-run-"
+	if opt.PrefixName == "" {
+		tr.ObjectMeta.GenerateName = ctname + "-run-"
+	} else {
+		tr.ObjectMeta.GenerateName = opt.PrefixName + "-"
+	}
 
 	// TaskRuns are namespaced so using same LastRun method as Task
 	if opt.Last {
