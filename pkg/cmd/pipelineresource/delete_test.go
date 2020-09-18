@@ -19,7 +19,6 @@ import (
 	"strings"
 	"testing"
 
-	tb "github.com/tektoncd/cli/internal/builder/v1alpha1"
 	"github.com/tektoncd/cli/pkg/test"
 	"github.com/tektoncd/pipeline/pkg/apis/pipeline/v1alpha1"
 	pipelinetest "github.com/tektoncd/pipeline/test/v1alpha1"
@@ -39,12 +38,21 @@ func TestPipelineResourceDelete(t *testing.T) {
 	seeds := make([]pipelinetest.Clients, 0)
 	for i := 0; i < 5; i++ {
 		pres := []*v1alpha1.PipelineResource{
-			tb.PipelineResource("pre-1",
-				tb.PipelineResourceNamespace("ns"),
-				tb.PipelineResourceSpec("image",
-					tb.PipelineResourceSpecParam("URL", "quay.io/tekton/controller"),
-				),
-			),
+			{
+				ObjectMeta: metav1.ObjectMeta{
+					Name:      "pre-1",
+					Namespace: "ns",
+				},
+				Spec: v1alpha1.PipelineResourceSpec{
+					Type: v1alpha1.PipelineResourceTypeImage,
+					Params: []v1alpha1.ResourceParam{
+						{
+							Name:  "URL",
+							Value: "quay.io/tekton/controller",
+						},
+					},
+				},
+			},
 		}
 		cs, _ := test.SeedTestData(t, pipelinetest.Data{PipelineResources: pres, Namespaces: ns})
 		seeds = append(seeds, cs)
