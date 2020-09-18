@@ -17,8 +17,8 @@ package builder
 import (
 	"time"
 
+	tb "github.com/tektoncd/cli/internal/builder/v1alpha1"
 	"github.com/tektoncd/pipeline/pkg/apis/pipeline/v1alpha1"
-	tb "github.com/tektoncd/pipeline/test/builder"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 )
 

@@ -17,7 +17,7 @@ limitations under the License.
 package builder
 
 import (
-	v1beta1 "github.com/tektoncd/pipeline/internal/builder/v1beta1"
+	v1beta1 "github.com/tektoncd/cli/internal/builder/v1beta1"
 )
 
 // ContainerOp is an operation which modifies a Container struct.

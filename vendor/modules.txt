@@ -297,8 +297,6 @@ github.com/spf13/cobra
 # github.com/spf13/pflag v1.0.5
 github.com/spf13/pflag
 # github.com/tektoncd/pipeline v0.15.2
-github.com/tektoncd/pipeline/internal/builder/v1alpha1
-github.com/tektoncd/pipeline/internal/builder/v1beta1
 github.com/tektoncd/pipeline/pkg/apis/config
 github.com/tektoncd/pipeline/pkg/apis/pipeline
 github.com/tektoncd/pipeline/pkg/apis/pipeline/pod
@@ -370,7 +368,6 @@ github.com/tektoncd/pipeline/pkg/reconciler/events/cloudevent
 github.com/tektoncd/pipeline/pkg/reconciler/pipeline/dag
 github.com/tektoncd/pipeline/pkg/substitution
 github.com/tektoncd/pipeline/test
-github.com/tektoncd/pipeline/test/builder
 github.com/tektoncd/pipeline/test/v1alpha1
 # github.com/tektoncd/plumbing v0.0.0-20200430135134-e53521e1d887
 github.com/tektoncd/plumbing/scripts
