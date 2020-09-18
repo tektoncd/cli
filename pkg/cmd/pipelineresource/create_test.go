@@ -22,7 +22,6 @@ import (
 	"github.com/AlecAivazis/survey/v2/core"
 	"github.com/AlecAivazis/survey/v2/terminal"
 	goexpect "github.com/Netflix/go-expect"
-	tb "github.com/tektoncd/cli/internal/builder/v1alpha1"
 	"github.com/tektoncd/cli/pkg/cli"
 	"github.com/tektoncd/cli/pkg/test"
 	"github.com/tektoncd/pipeline/pkg/apis/pipeline/v1alpha1"
@@ -36,14 +35,29 @@ func init() {
 	core.DisableColor = true
 }
 
+func getPipelineResource() *v1alpha1.PipelineResource {
+	return &v1alpha1.PipelineResource{
+		ObjectMeta: metav1.ObjectMeta{
+			Name:      "res",
+			Namespace: "namespace",
+		},
+		Spec: v1alpha1.PipelineResourceSpec{
+			Type: v1alpha1.PipelineResourceTypeImage,
+			Params: []v1alpha1.ResourceParam{
+				{
+					Name:  "url",
+					Value: "git@github.com:tektoncd/cli.git",
+				},
+			},
+		},
+	}
+}
+
 func TestPipelineResource_resource_noName(t *testing.T) {
+	pres := getPipelineResource()
 	cs, _ := test.SeedTestData(t, pipelinetest.Data{
 		PipelineResources: []*v1alpha1.PipelineResource{
-			tb.PipelineResource("res",
-				tb.PipelineResourceNamespace("namespace"),
-				tb.PipelineResourceSpec("git",
-					tb.PipelineResourceSpecParam("url", "git@github.com:tektoncd/cli.git"),
-				)),
+			pres,
 		},
 		Namespaces: []*corev1.Namespace{
 			{
@@ -105,14 +119,10 @@ func TestPipelineResource_resource_noName(t *testing.T) {
 
 func TestPipelineResource_resource_already_exist(t *testing.T) {
 	t.Skip("Skipping due of flakiness")
+	pres := getPipelineResource()
 	cs, _ := test.SeedTestData(t, pipelinetest.Data{
 		PipelineResources: []*v1alpha1.PipelineResource{
-			tb.PipelineResource("res",
-				tb.PipelineResourceNamespace("namespace"),
-				tb.PipelineResourceSpec("git",
-					tb.PipelineResourceSpecParam("url", "git@github.com:tektoncd/cli.git"),
-				),
-			),
+			pres,
 		},
 		Namespaces: []*corev1.Namespace{
 			{

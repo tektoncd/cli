@@ -20,7 +20,6 @@ import (
 	"testing"
 
 	"github.com/spf13/cobra"
-	tb "github.com/tektoncd/cli/internal/builder/v1alpha1"
 	"github.com/tektoncd/cli/pkg/test"
 	"github.com/tektoncd/pipeline/pkg/apis/pipeline/v1alpha1"
 	pipelinetest "github.com/tektoncd/pipeline/test/v1alpha1"
@@ -32,40 +31,90 @@ import (
 func TestPipelineResourceList(t *testing.T) {
 
 	pres := []*v1alpha1.PipelineResource{
-		tb.PipelineResource("test",
-			tb.PipelineResourceNamespace("test-ns-1"),
-			tb.PipelineResourceSpec("git",
-				tb.PipelineResourceSpecParam("url", "git@github.com:tektoncd/cli-new.git"),
-			),
-		),
-		tb.PipelineResource("test-1",
-			tb.PipelineResourceNamespace("test-ns-1"),
-			tb.PipelineResourceSpec("image",
-				tb.PipelineResourceSpecParam("URL", "quey.io/tekton/controller"),
-			),
-		),
-		tb.PipelineResource("test-2",
-			tb.PipelineResourceNamespace("test-ns-1"),
-			tb.PipelineResourceSpec("git",
-				tb.PipelineResourceSpecParam("url", "git@github.com:tektoncd/cli.git"),
-			),
-		),
-		tb.PipelineResource("test-3",
-			tb.PipelineResourceNamespace("test-ns-1"),
-			tb.PipelineResourceSpec("image"),
-		),
-		tb.PipelineResource("test-4",
-			tb.PipelineResourceNamespace("test-ns-2"),
-			tb.PipelineResourceSpec("image",
-				tb.PipelineResourceSpecParam("URL", "quey.io/tekton/webhook"),
-			),
-		),
-		tb.PipelineResource("test-5",
-			tb.PipelineResourceNamespace("test-ns-1"),
-			tb.PipelineResourceSpec("cloudEvent",
-				tb.PipelineResourceSpecParam("targetURI", "http://sink"),
-			),
-		),
+		{
+			ObjectMeta: metav1.ObjectMeta{
+				Name:      "test",
+				Namespace: "test-ns-1",
+			},
+			Spec: v1alpha1.PipelineResourceSpec{
+				Type: v1alpha1.PipelineResourceTypeGit,
+				Params: []v1alpha1.ResourceParam{
+					{
+						Name:  "url",
+						Value: "git@github.com:tektoncd/cli-new.git",
+					},
+				},
+			},
+		},
+		{
+			ObjectMeta: metav1.ObjectMeta{
+				Name:      "test-1",
+				Namespace: "test-ns-1",
+			},
+			Spec: v1alpha1.PipelineResourceSpec{
+				Type: v1alpha1.PipelineResourceTypeImage,
+				Params: []v1alpha1.ResourceParam{
+					{
+						Name:  "URL",
+						Value: "quey.io/tekton/controller",
+					},
+				},
+			},
+		},
+		{
+			ObjectMeta: metav1.ObjectMeta{
+				Name:      "test-2",
+				Namespace: "test-ns-1",
+			},
+			Spec: v1alpha1.PipelineResourceSpec{
+				Type: v1alpha1.PipelineResourceTypeGit,
+				Params: []v1alpha1.ResourceParam{
+					{
+						Name:  "url",
+						Value: "git@github.com:tektoncd/cli.git",
+					},
+				},
+			},
+		},
+		{
+			ObjectMeta: metav1.ObjectMeta{
+				Name:      "test-3",
+				Namespace: "test-ns-1",
+			},
+			Spec: v1alpha1.PipelineResourceSpec{
+				Type: v1alpha1.PipelineResourceTypeImage,
+			},
+		},
+		{
+			ObjectMeta: metav1.ObjectMeta{
+				Name:      "test-4",
+				Namespace: "test-ns-2",
+			},
+			Spec: v1alpha1.PipelineResourceSpec{
+				Type: v1alpha1.PipelineResourceTypeImage,
+				Params: []v1alpha1.ResourceParam{
+					{
+						Name:  "URL",
+						Value: "quey.io/tekton/webhook",
+					},
+				},
+			},
+		},
+		{
+			ObjectMeta: metav1.ObjectMeta{
+				Name:      "test-5",
+				Namespace: "test-ns-1",
+			},
+			Spec: v1alpha1.PipelineResourceSpec{
+				Type: v1alpha1.PipelineResourceTypeCloudEvent,
+				Params: []v1alpha1.ResourceParam{
+					{
+						Name:  "targetURI",
+						Value: "http://sink",
+					},
+				},
+			},
+		},
 	}
 
 	ns := []*corev1.Namespace{

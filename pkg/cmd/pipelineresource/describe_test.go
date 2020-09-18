@@ -20,7 +20,6 @@ import (
 	"testing"
 
 	"github.com/jonboulle/clockwork"
-	tb "github.com/tektoncd/cli/internal/builder/v1alpha1"
 	"github.com/tektoncd/cli/pkg/test"
 	"github.com/tektoncd/pipeline/pkg/apis/pipeline/v1alpha1"
 	pipelinetest "github.com/tektoncd/pipeline/test/v1alpha1"
@@ -83,13 +82,22 @@ func TestPipelineResourceDescribe_WithParams(t *testing.T) {
 	}
 
 	pres := []*v1alpha1.PipelineResource{
-		tb.PipelineResource("test-1",
-			tb.PipelineResourceNamespace("test-ns-1"),
-			tb.PipelineResourceSpec("image",
-				tb.PipelineResourceDescription("a test description"),
-				tb.PipelineResourceSpecParam("URL", "quay.io/tekton/controller"),
-			),
-		),
+		{
+			ObjectMeta: metav1.ObjectMeta{
+				Name:      "test-1",
+				Namespace: "test-ns-1",
+			},
+			Spec: v1alpha1.PipelineResourceSpec{
+				Type:        v1alpha1.PipelineResourceTypeImage,
+				Description: "a test description",
+				Params: []v1alpha1.ResourceParam{
+					{
+						Name:  "URL",
+						Value: "quay.io/tekton/controller",
+					},
+				},
+			},
+		},
 	}
 
 	cs, _ := test.SeedTestData(t, pipelinetest.Data{PipelineResources: pres, Namespaces: ns})
@@ -109,15 +117,33 @@ func TestPipelineResourceDescribe_WithSecretParams(t *testing.T) {
 	}
 
 	pres := []*v1alpha1.PipelineResource{
-		tb.PipelineResource("test-1",
-			tb.PipelineResourceNamespace("test-ns-1"),
-			tb.PipelineResourceSpec("image",
-				tb.PipelineResourceDescription("a test description"),
-				tb.PipelineResourceSpecParam("URL", "quay.io/tekton/controller"),
-				tb.PipelineResourceSpecParam("TAG", "latest"),
-				tb.PipelineResourceSpecSecretParam("githubToken", "github-secrets", "token"),
-			),
-		),
+		{
+			ObjectMeta: metav1.ObjectMeta{
+				Name:      "test-1",
+				Namespace: "test-ns-1",
+			},
+			Spec: v1alpha1.PipelineResourceSpec{
+				Type:        v1alpha1.PipelineResourceTypeImage,
+				Description: "a test description",
+				Params: []v1alpha1.ResourceParam{
+					{
+						Name:  "URL",
+						Value: "quay.io/tekton/controller",
+					},
+					{
+						Name:  "TAG",
+						Value: "latest",
+					},
+				},
+				SecretParams: []v1alpha1.SecretParam{
+					{
+						FieldName:  "githubToken",
+						SecretKey:  "token",
+						SecretName: "github-secrets",
+					},
+				},
+			},
+		},
 	}
 
 	cs, _ := test.SeedTestData(t, pipelinetest.Data{PipelineResources: pres, Namespaces: ns})
@@ -134,9 +160,12 @@ func TestPipelineResourcesDescribe_custom_output(t *testing.T) {
 	clock := clockwork.NewFakeClock()
 
 	prs := []*v1alpha1.PipelineResource{
-		tb.PipelineResource(name,
-			tb.PipelineResourceNamespace("ns"),
-		),
+		{
+			ObjectMeta: metav1.ObjectMeta{
+				Name:      name,
+				Namespace: "ns",
+			},
+		},
 	}
 
 	cs, _ := test.SeedTestData(t, pipelinetest.Data{
