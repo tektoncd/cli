@@ -28,6 +28,7 @@ which need `-tags=e2e` to be enabled.
 go build -o tkn github.com/tektoncd/cli/cmd/tkn
 export TEST_CLIENT_BINARY=<path-to-tkn-binary-directory>/tkn ( eg: export TEST_CLIENT_BINARY=$PWD/tkn ) 
 ```
+Set environment variable `TEST_CLUSTERTASK_LIST_EMPTY` to any value if tests are run in an environment which contains `clustertasks`
 ### Running
 
 To run end to end tests, you will need to have a running Tekton
