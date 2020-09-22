@@ -51,8 +51,8 @@ func TestClusterTaskInteractiveStartE2E(t *testing.T) {
 	kubectl := cli.NewKubectl(namespace)
 	tkn, err := cli.NewTknRunner(namespace)
 	assert.NilError(t, err)
-	// Set environment variable NO_CLUSTERTASK_FOUND_TEST to any value to skip "No ClusterTasks found" test
-	if os.Getenv("NO_CLUSTERTASK_FOUND_TEST") == "" {
+	// Set environment variable TEST_CLUSTERTASK_LIST_EMPTY to any value to skip "No ClusterTasks found" test
+	if os.Getenv("TEST_CLUSTERTASK_LIST_EMPTY") == "" {
 		t.Run("Get list of ClusterTasks when none present", func(t *testing.T) {
 			res := tkn.Run("clustertask", "list")
 			expected := "No ClusterTasks found\n"
@@ -74,7 +74,7 @@ func TestClusterTaskInteractiveStartE2E(t *testing.T) {
 
 	t.Run("Get list of ClusterTasks", func(t *testing.T) {
 		res := tkn.Run("clustertask", "list")
-		if os.Getenv("NO_CLUSTERTASK_FOUND_TEST") == "" {
+		if os.Getenv("TEST_CLUSTERTASK_LIST_EMPTY") == "" {
 			expected := builder.ListAllClusterTasksOutput(t, c, map[int]interface{}{
 				0: &builder.TaskData{
 					Name: clusterTaskName,
