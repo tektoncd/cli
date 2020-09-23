@@ -17,9 +17,9 @@ require (
 	github.com/pkg/errors v0.9.1
 	github.com/spf13/cobra v1.0.0
 	github.com/spf13/pflag v1.0.5
-	github.com/tektoncd/pipeline v0.15.2
+	github.com/tektoncd/pipeline v0.16.3
 	github.com/tektoncd/plumbing v0.0.0-20200430135134-e53521e1d887
-	github.com/tektoncd/triggers v0.7.0
+	github.com/tektoncd/triggers v0.8.1
 	github.com/tidwall/gjson v1.6.0 // indirect
 	go.opencensus.io v0.22.4
 	go.uber.org/multierr v1.5.0
@@ -31,6 +31,7 @@ require (
 	k8s.io/apimachinery v0.18.2
 	k8s.io/cli-runtime v0.17.6
 	k8s.io/client-go v11.0.1-0.20190805182717-6502b5e7b1b5+incompatible
+	knative.dev/caching v0.0.0-20200521155757-e78d17bc250e // indirect
 	knative.dev/pkg v0.0.0-20200702222342-ea4d6e985ba0
 	sigs.k8s.io/yaml v1.2.0
 )

@@ -85,7 +85,7 @@ func EventListenerSpec(ops ...EventListenerSpecOp) EventListenerOp {
 	}
 }
 
-// EventListenerServiceAccount sets the specified ServiceAccount of the EventListener.
+// EventListenerServiceAccount sets the specified ServiceAccountName of the EventListener.
 func EventListenerServiceAccount(saName string) EventListenerSpecOp {
 	return func(spec *v1alpha1.EventListenerSpec) {
 		spec.ServiceAccountName = saName
@@ -95,7 +95,7 @@ func EventListenerServiceAccount(saName string) EventListenerSpecOp {
 // EventListenerReplicas sets the specified Replicas of the EventListener.
 func EventListenerReplicas(replicas int32) EventListenerSpecOp {
 	return func(spec *v1alpha1.EventListenerSpec) {
-		spec.Replicas = replicas
+		spec.Replicas = &replicas
 	}
 }
 
@@ -135,7 +135,27 @@ func EventListenerPodTemplateNodeSelector(nodeSelector map[string]string) EventL
 // Any number of EventListenerTriggerOp modifiers can be passed to create/modify it.
 func EventListenerTrigger(ttName, apiVersion string, ops ...EventListenerTriggerOp) EventListenerSpecOp {
 	return func(spec *v1alpha1.EventListenerSpec) {
-		spec.Triggers = append(spec.Triggers, Trigger(ttName, apiVersion, ops...))
+		t := v1alpha1.EventListenerTrigger{
+			Template: &v1alpha1.EventListenerTemplate{
+				Name:       ttName,
+				APIVersion: apiVersion,
+			},
+		}
+
+		for _, op := range ops {
+			op(&t)
+		}
+
+		spec.Triggers = append(spec.Triggers, t)
+	}
+}
+
+// EventListenerTriggerRef adds an EventListenerTrigger with TriggerRef
+// to the EventListenerSpec Triggers.
+func EventListenerTriggerRef(trName string) EventListenerSpecOp {
+	return func(spec *v1alpha1.EventListenerSpec) {
+		spec.Triggers = append(spec.Triggers,
+			v1alpha1.EventListenerTrigger{TriggerRef: trName})
 	}
 }
 
@@ -184,24 +204,6 @@ func NewAddressable(hostname string) *duckv1alpha1.Addressable {
 	return addressable
 }
 
-// Trigger creates an EventListenerTrigger. Any number of EventListenerTriggerOp
-// modifiers can be passed to create/modify it. For creating an EventListenerBinding
-// you have to pass a EventListenerTriggerOp
-func Trigger(ttName, apiVersion string, ops ...EventListenerTriggerOp) v1alpha1.EventListenerTrigger {
-	t := v1alpha1.EventListenerTrigger{
-		Template: v1alpha1.EventListenerTemplate{
-			Name:       ttName,
-			APIVersion: apiVersion,
-		},
-	}
-
-	for _, op := range ops {
-		op(&t)
-	}
-
-	return t
-}
-
 // EventListenerTriggerName adds a Name to the Trigger in EventListenerSpec Triggers.
 func EventListenerTriggerName(name string) EventListenerTriggerOp {
 	return func(trigger *v1alpha1.EventListenerTrigger) {
@@ -209,13 +211,10 @@ func EventListenerTriggerName(name string) EventListenerTriggerOp {
 	}
 }
 
-// EventListenerTriggerServiceAccount set the specified ServiceAccount of the EventListenerTrigger.
+// EventListenerTriggerServiceAccount set the specified ServiceAccountName of the EventListenerTrigger.
 func EventListenerTriggerServiceAccount(saName, namespace string) EventListenerTriggerOp {
 	return func(trigger *v1alpha1.EventListenerTrigger) {
-		trigger.ServiceAccount = &corev1.ObjectReference{
-			Namespace: saName,
-			Name:      namespace,
-		}
+		trigger.ServiceAccountName = saName
 	}
 }
 

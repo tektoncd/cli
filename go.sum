@@ -1125,6 +1125,8 @@ github.com/tektoncd/pipeline v0.11.0/go.mod h1:hlkH32S92+/UODROH0dmxzyuMxfRFp/Nc
 github.com/tektoncd/pipeline v0.14.2/go.mod h1:AAEx5IFwl7+2xHMaEqVZkzs0eTwZqCm97mYFseDMG4Y=
 github.com/tektoncd/pipeline v0.15.2 h1:+dZyH87KKoAUIs6HAsGVT+AP4M/eV8PX2uCj9wOhGZg=
 github.com/tektoncd/pipeline v0.15.2/go.mod h1:SaAxUpYbcFik2hKGOTX7NnvOa1VXTzXRGNZsY2TSwTs=
+github.com/tektoncd/pipeline v0.16.3 h1:h5bJGOxbzYpa+5OwWGdlWphCEh9nmxnfVH+nhwaOFCQ=
+github.com/tektoncd/pipeline v0.16.3/go.mod h1:5vn2IJH46ntWTKLkwNbtZNd38FYkNP0cBtu5sgqm5xA=
 github.com/tektoncd/plumbing v0.0.0-20191216083742-847dcf196de9/go.mod h1:QZHgU07PRBTRF6N57w4+ApRu8OgfYLFNqCDlfEZaD9Y=
 github.com/tektoncd/plumbing v0.0.0-20200217163359-cd0db6e567d2/go.mod h1:QZHgU07PRBTRF6N57w4+ApRu8OgfYLFNqCDlfEZaD9Y=
 github.com/tektoncd/plumbing v0.0.0-20200430135134-e53521e1d887 h1:crv70CBAJ2gZFSbf13aRVwdbjR2GYwTms/ZEok/SnFM=
@@ -1132,6 +1134,8 @@ github.com/tektoncd/plumbing v0.0.0-20200430135134-e53521e1d887/go.mod h1:cZPJIe
 github.com/tektoncd/plumbing/pipelinerun-logs v0.0.0-20191206114338-712d544c2c21/go.mod h1:S62EUWtqmejjJgUMOGB1CCCHRp6C706laH06BoALkzU=
 github.com/tektoncd/triggers v0.7.0 h1:/5jAvXNRx8pGzzHoZdNc0exVVHVSBn9pM7zH2ZgoGJQ=
 github.com/tektoncd/triggers v0.7.0/go.mod h1:X3s5x89wMyE6/Q8o8d+9Wb77Fl8VwHnnPoXekytlZjE=
+github.com/tektoncd/triggers v0.8.1 h1:2nwTC/bPEatk3+YDWVYfgN+oUTAcHjtXdCPWJT8wkhg=
+github.com/tektoncd/triggers v0.8.1/go.mod h1:haXEFvSZhYUPP7WKb0LIq8+GtcgebzZMxp1ybCME3sc=
 github.com/tetafro/godot v0.3.7/go.mod h1:/7NLHhv08H1+8DNj0MElpAACw1ajsCuf3TKNQxA5S+0=
 github.com/tetafro/godot v0.4.2/go.mod h1:/7NLHhv08H1+8DNj0MElpAACw1ajsCuf3TKNQxA5S+0=
 github.com/tidwall/gjson v1.3.5/go.mod h1:P256ACg0Mn+j1RXIDXoss50DeIABTYK1PULOJHhxOls=
