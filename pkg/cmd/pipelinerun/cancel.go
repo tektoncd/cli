@@ -29,6 +29,7 @@ var (
 	succeeded   = formatted.ColorStatus("Succeeded")
 	failed      = formatted.ColorStatus("Failed")
 	prCancelled = formatted.ColorStatus("Cancelled") + "(PipelineRunCancelled)"
+	cancelled   = formatted.ColorStatus("Cancelled") + "(Cancelled)"
 	prTimeout   = formatted.ColorStatus("Failed") + "(" + v1beta1.PipelineRunReasonTimedOut.String() + ")"
 )
 
@@ -75,7 +76,7 @@ func cancelPipelineRun(p cli.Params, s *cli.Stream, prName string) error {
 	}
 
 	prCond := formatted.Condition(pr.Status.Conditions)
-	if prCond == succeeded || prCond == failed || prCond == prCancelled || prCond == prTimeout {
+	if prCond == succeeded || prCond == failed || prCond == prCancelled || prCond == prTimeout || prCond == cancelled {
 		return fmt.Errorf("failed to cancel PipelineRun %s: PipelineRun has already finished execution", prName)
 	}
 

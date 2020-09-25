@@ -69,7 +69,7 @@ func Condition(c v1beta1.Conditions) string {
 
 	if c[0].Reason != "" && c[0].Reason != status {
 		switch c[0].Reason {
-		case "PipelineRunCancelled", "TaskRunCancelled":
+		case "PipelineRunCancelled", "TaskRunCancelled", "Cancelled":
 			return ColorStatus("Cancelled") + "(" + c[0].Reason + ")"
 		case "PipelineRunStopping", "TaskRunStopping":
 			return ColorStatus("Failed") + "(" + c[0].Reason + ")"
