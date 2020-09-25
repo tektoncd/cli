@@ -78,6 +78,15 @@ func TestCondition(t *testing.T) {
 			want: "Cancelled(TaskRunCancelled)",
 		},
 		{
+			name: "Cancelled status reason",
+			condition: []apis.Condition{{
+				Type:   apis.ConditionSucceeded,
+				Status: corev1.ConditionFalse,
+				Reason: "Cancelled",
+			}},
+			want: "Cancelled(Cancelled)",
+		},
+		{
 			name: "PipelineRunTimeout status reason",
 			condition: []apis.Condition{{
 				Type:   apis.ConditionSucceeded,
