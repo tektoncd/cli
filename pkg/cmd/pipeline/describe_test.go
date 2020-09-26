@@ -117,6 +117,46 @@ func TestPipelineDescribe_empty(t *testing.T) {
 	golden.Assert(t, got, fmt.Sprintf("%s.golden", t.Name()))
 }
 
+func TestPipelineDescribe_WithoutNameOfOnlyOnePipelinePresent(t *testing.T) {
+	clock := clockwork.NewFakeClock()
+	pipelines := []*v1alpha1.Pipeline{
+		{
+			ObjectMeta: metav1.ObjectMeta{
+				Name:      "pipeline",
+				Namespace: "ns",
+			},
+		},
+	}
+	namespaces := []*corev1.Namespace{
+		{
+			ObjectMeta: metav1.ObjectMeta{
+				Name: "ns",
+			},
+		},
+	}
+
+	version := "v1alpha1"
+	tdc := testDynamic.Options{}
+	dynamic, err := tdc.Client(
+		cb.UnstructuredP(pipelines[0], version),
+	)
+	if err != nil {
+		t.Errorf("unable to create dynamic client: %v", err)
+	}
+	cs, _ := test.SeedTestData(t, pipelinetest.Data{Namespaces: namespaces, Pipelines: pipelines})
+	cs.Pipeline.Resources = cb.APIResourceList(version, []string{"pipeline", "pipelinerun"})
+	p := &test.Params{Tekton: cs.Pipeline, Clock: clock, Kube: cs.Kube, Dynamic: dynamic}
+	p.SetNamespace("ns")
+	pipeline := Command(p)
+
+	got, err := test.ExecuteCommand(pipeline, "desc")
+	if err != nil {
+		t.Errorf("Unexpected error: %v", err)
+	}
+	golden.Assert(t, got, fmt.Sprintf("%s.golden", t.Name()))
+
+}
+
 func TestPipelineDescribe_with_run(t *testing.T) {
 	clock := clockwork.NewFakeClock()
 
@@ -739,6 +779,67 @@ func TestPipelineDescribeV1beta1_custom_output(t *testing.T) {
 	if got != "pipeline.tekton.dev/pipeline" {
 		t.Errorf("Result should be 'pipeline.tekton.dev/pipeline' != '%s'", got)
 	}
+}
+
+func TestPipelineDescribeV1beta1_WithoutNameIfOnlyOnePipelinePresent(t *testing.T) {
+	clock := clockwork.NewFakeClock()
+	pipelines := []*v1beta1.Pipeline{
+		{
+			ObjectMeta: metav1.ObjectMeta{
+				Name:      "pipeline",
+				Namespace: "ns",
+			},
+			Spec: v1beta1.PipelineSpec{
+				Resources: []v1beta1.PipelineDeclaredResource{
+					{
+						Name: "name",
+						Type: v1alpha1.PipelineResourceTypeGit,
+					},
+				},
+				Tasks: []v1beta1.PipelineTask{
+					{
+						Name: "task-1",
+						TaskRef: &v1beta1.TaskRef{
+							Name: "task-1",
+						},
+					},
+					{
+						Name: "task-2",
+						TaskRef: &v1beta1.TaskRef{
+							Name: "task-2",
+						},
+					},
+				},
+			},
+		},
+	}
+	namespaces := []*corev1.Namespace{
+		{
+			ObjectMeta: metav1.ObjectMeta{
+				Name: "ns",
+			},
+		},
+	}
+
+	version := "v1beta1"
+	tdc := testDynamic.Options{}
+	dynamic, err := tdc.Client(
+		cb.UnstructuredV1beta1P(pipelines[0], version),
+	)
+	if err != nil {
+		t.Errorf("unable to create dynamic client: %v", err)
+	}
+	cs, _ := test.SeedV1beta1TestData(t, pipelinev1beta1test.Data{Namespaces: namespaces, Pipelines: pipelines})
+	cs.Pipeline.Resources = cb.APIResourceList(version, []string{"pipeline", "pipelinerun"})
+	p := &test.Params{Tekton: cs.Pipeline, Clock: clock, Kube: cs.Kube, Dynamic: dynamic}
+	p.SetNamespace("ns")
+	pipeline := Command(p)
+
+	got, err := test.ExecuteCommand(pipeline, "desc")
+	if err != nil {
+		t.Errorf("Unexpected error: %v", err)
+	}
+	golden.Assert(t, got, fmt.Sprintf("%s.golden", t.Name()))
 }
 
 func TestPipelineDescribeV1beta1_task_conditions(t *testing.T) {

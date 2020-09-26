@@ -17,7 +17,6 @@ package pipeline
 import (
 	"fmt"
 	"io"
-	"os"
 	"sort"
 	"strings"
 	"text/tabwriter"
@@ -131,9 +130,17 @@ func describeCommand(p cli.Params) *cobra.Command {
 			}
 
 			if len(args) == 0 {
-				err = askPipelineName(opts, p)
+				pipelineNames, err := pipeline.GetAllPipelineNames(p)
 				if err != nil {
 					return err
+				}
+				if len(pipelineNames) == 1 {
+					opts.PipelineName = pipelineNames[0]
+				} else {
+					err = askPipelineName(opts, pipelineNames)
+					if err != nil {
+						return err
+					}
 				}
 			} else {
 				opts.PipelineName = args[0]
@@ -228,18 +235,13 @@ func sortResourcesByTypeAndName(pres []v1beta1.PipelineDeclaredResource) []v1bet
 	return pres
 }
 
-func askPipelineName(opts *options.DescribeOptions, p cli.Params) error {
-	pipelineNames, err := pipeline.GetAllPipelineNames(p)
-	if err != nil {
-		return err
-	}
+func askPipelineName(opts *options.DescribeOptions, pipelineNames []string) error {
 
 	if len(pipelineNames) == 0 {
-		fmt.Fprint(os.Stdout, "no Pipelines found")
-		return nil
+		return fmt.Errorf("no Pipelines found")
 	}
 
-	err = opts.Ask(options.ResourceNamePipeline, pipelineNames)
+	err := opts.Ask(options.ResourceNamePipeline, pipelineNames)
 	if err != nil {
 		return err
 	}
