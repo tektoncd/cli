@@ -19,17 +19,9 @@ import (
 
 	"github.com/spf13/cobra"
 	"github.com/tektoncd/cli/pkg/cli"
-	"github.com/tektoncd/cli/pkg/formatted"
 	"github.com/tektoncd/cli/pkg/taskrun"
-	"github.com/tektoncd/pipeline/pkg/apis/pipeline/v1beta1"
+	corev1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
-)
-
-var (
-	succeeded        = formatted.ColorStatus("Succeeded")
-	failed           = formatted.ColorStatus("Failed")
-	taskrunCancelled = formatted.ColorStatus("Cancelled") + "(TaskRunCancelled)"
-	taskrunTimeout   = formatted.ColorStatus("Failed") + "(" + v1beta1.TaskRunReasonTimedOut.String() + ")"
 )
 
 func cancelCommand(p cli.Params) *cobra.Command {
@@ -72,9 +64,10 @@ func cancelTaskRun(p cli.Params, s *cli.Stream, trName string) error {
 		return fmt.Errorf("failed to find TaskRun: %s", trName)
 	}
 
-	taskrunCond := formatted.Condition(tr.Status.Conditions)
-	if taskrunCond == succeeded || taskrunCond == failed || taskrunCond == taskrunCancelled || taskrunCond == taskrunTimeout {
-		return fmt.Errorf("failed to cancel TaskRun %s: TaskRun has already finished execution", trName)
+	if len(tr.Status.Conditions) > 0 {
+		if tr.Status.Conditions[0].Status != corev1.ConditionUnknown {
+			return fmt.Errorf("failed to cancel TaskRun %s: TaskRun has already finished execution", trName)
+		}
 	}
 
 	if _, err := taskrun.Patch(cs, trName, metav1.PatchOptions{}, p.Namespace()); err != nil {

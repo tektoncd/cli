@@ -74,17 +74,59 @@ func Test_cancel_pipelinerun(t *testing.T) {
 	prName := "test-pipeline-run-123"
 
 	prs := []*v1alpha1.PipelineRun{
-		tb.PipelineRun(prName,
-			tb.PipelineRunNamespace("ns"),
-			tb.PipelineRunLabel("tekton.dev/pipeline", "pipelineName"),
-			tb.PipelineRunSpec("pipelineName",
-				tb.PipelineRunServiceAccountName("test-sa"),
-				tb.PipelineRunResourceBinding("git-repo", tb.PipelineResourceBindingRef("some-repo")),
-				tb.PipelineRunResourceBinding("build-image", tb.PipelineResourceBindingRef("some-image")),
-				tb.PipelineRunParam("pipeline-param-1", "somethingmorefun"),
-				tb.PipelineRunParam("rev-param", "revision1"),
-			),
-		),
+		{
+			ObjectMeta: metav1.ObjectMeta{
+				Name:      prName,
+				Namespace: "ns",
+				Labels:    map[string]string{"tekton.dev/pipeline": "pipelineName"},
+			},
+			Spec: v1alpha1.PipelineRunSpec{
+				PipelineRef: &v1alpha1.PipelineRef{
+					Name: "pipelineName",
+				},
+				ServiceAccountName: "test-sa",
+				Resources: []v1alpha1.PipelineResourceBinding{
+					{
+						Name: "git-repo",
+						ResourceRef: &v1alpha1.PipelineResourceRef{
+							Name: "some-repo",
+						},
+					},
+					{
+						Name: "build-image",
+						ResourceRef: &v1alpha1.PipelineResourceRef{
+							Name: "some-image",
+						},
+					},
+				},
+				Params: []v1alpha1.Param{
+					{
+						Name: "pipeline-param-1",
+						Value: v1alpha1.ArrayOrString{
+							Type:      v1alpha1.ParamTypeString,
+							StringVal: "somethingmorefun",
+						},
+					},
+					{
+						Name: "somethingmorefun",
+						Value: v1alpha1.ArrayOrString{
+							Type:      v1alpha1.ParamTypeString,
+							StringVal: "revision1",
+						},
+					},
+				},
+			},
+			Status: v1alpha1.PipelineRunStatus{
+				Status: duckv1beta1.Status{
+					Conditions: duckv1beta1.Conditions{
+						{
+							Status: corev1.ConditionUnknown,
+							Type:   apis.ConditionReady,
+						},
+					},
+				},
+			},
+		},
 	}
 
 	cs, _ := test.SeedTestData(t, pipelinetest.Data{PipelineRuns: prs, Namespaces: ns})
@@ -365,6 +407,16 @@ func Test_cancel_pipelinerun_v1beta1(t *testing.T) {
 						Value: v1beta1.ArrayOrString{
 							Type:      v1beta1.ParamTypeString,
 							StringVal: "revision1",
+						},
+					},
+				},
+			},
+			Status: v1alpha1.PipelineRunStatus{
+				Status: duckv1beta1.Status{
+					Conditions: duckv1beta1.Conditions{
+						{
+							Status: corev1.ConditionUnknown,
+							Type:   apis.ConditionReady,
 						},
 					},
 				},

@@ -43,7 +43,7 @@ func TestTaskRunCancel(t *testing.T) {
 			tb.TaskRunSpec(tb.TaskRunTaskRef("task")),
 			tb.TaskRunStatus(
 				tb.StatusCondition(apis.Condition{
-					Status: corev1.ConditionTrue,
+					Status: corev1.ConditionUnknown,
 					Reason: v1beta1.TaskRunReasonRunning.String(),
 				}),
 			),
@@ -62,17 +62,28 @@ func TestTaskRunCancel(t *testing.T) {
 	}
 
 	trs2 := []*v1alpha1.TaskRun{
-		tb.TaskRun("failure-taskrun-1",
-			tb.TaskRunNamespace("ns"),
-			tb.TaskRunLabel("tekton.dev/task", "failure-task"),
-			tb.TaskRunSpec(tb.TaskRunTaskRef("failure-task")),
-			tb.TaskRunStatus(
-				tb.StatusCondition(apis.Condition{
-					Status: corev1.ConditionTrue,
-					Reason: v1beta1.TaskRunReasonFailed.String(),
-				}),
-			),
-		),
+		{
+			ObjectMeta: metav1.ObjectMeta{
+				Name:      "failure-taskrun-1",
+				Namespace: "ns",
+				Labels:    map[string]string{"tekton.dev/task": "failure-task"},
+			},
+			Spec: v1alpha1.TaskRunSpec{
+				TaskRef: &v1alpha1.TaskRef{
+					Name: "failure-task",
+				},
+			},
+			Status: v1alpha1.TaskRunStatus{
+				Status: duckv1beta1.Status{
+					Conditions: duckv1beta1.Conditions{
+						{
+							Status: corev1.ConditionUnknown,
+							Type:   apis.ConditionReady,
+						},
+					},
+				},
+			},
+		},
 	}
 
 	trs3 := []*v1alpha1.TaskRun{
@@ -242,7 +253,7 @@ func TestTaskRunCancel_v1beta1(t *testing.T) {
 				Status: duckv1beta1.Status{
 					Conditions: duckv1beta1.Conditions{
 						{
-							Status: corev1.ConditionTrue,
+							Status: corev1.ConditionUnknown,
 							Reason: v1beta1.TaskRunReasonRunning.String(),
 						},
 					},
@@ -311,7 +322,7 @@ func TestTaskRunCancel_v1beta1(t *testing.T) {
 				Status: duckv1beta1.Status{
 					Conditions: duckv1beta1.Conditions{
 						{
-							Status: corev1.ConditionTrue,
+							Status: corev1.ConditionUnknown,
 							Reason: v1beta1.TaskRunReasonFailed.String(),
 						},
 					},
