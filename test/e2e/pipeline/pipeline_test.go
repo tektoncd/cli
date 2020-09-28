@@ -314,10 +314,6 @@ Waiting for logs to be available...
 	})
 
 	t.Run("Start PipelineRun with --pod-template", func(t *testing.T) {
-		if tkn.CheckVersion("Pipeline", "v0.10.2") {
-			t.Skip("Skip test as pipeline v0.10 doesn't support certain PodTemplate properties")
-		}
-
 		tkn.MustSucceed(t, "pipeline", "start", tePipelineName,
 			"-r=source-repo="+tePipelineGitResourceName,
 			"--pod-template="+helper.GetResourcePath("/podtemplate/podtemplate.yaml"),
@@ -333,6 +329,48 @@ Waiting for logs to be available...
 		if err := wait.ForPipelineRunState(c, pipelineRunGeneratedName, timeout, wait.PipelineRunFailed(pipelineRunGeneratedName), "PipelineRunFailed"); err != nil {
 			t.Errorf("Error waiting for PipelineRun to fail: %s", err)
 		}
+	})
+
+	t.Run("Cancel finished PipelineRun with tkn pipelinerun cancel", func(t *testing.T) {
+		// Get last PipelineRun for pipeline-with-workspace
+		pipelineRunLast := builder.GetPipelineRunListWithName(c, tePipelineName, true).Items[0]
+
+		// Cancel PipelineRun
+		res := tkn.Run("pipelinerun", "cancel", pipelineRunLast.Name)
+
+		// Expect error from PipelineRun cancel for already completed PipelineRun
+		expected := "Error: failed to cancel PipelineRun " + pipelineRunLast.Name + ": PipelineRun has already finished execution\n"
+		assert.Assert(t, res.Stderr() == expected)
+	})
+
+	t.Logf("Creating Task sleep in namespace: %s", namespace)
+	kubectl.MustSucceed(t, "create", "-f", helper.GetResourcePath("cancel/task-cancel.yaml"))
+	t.Logf("Creating Pipeline sleep-pipeline in namespace: %s", namespace)
+	kubectl.MustSucceed(t, "create", "-f", helper.GetResourcePath("cancel/pipeline-cancel.yaml"))
+	t.Run("Cancel PipelineRun with tkn pipelinerun cancel", func(t *testing.T) {
+		pipeline := "sleep-pipeline"
+		// Start PipelineRun
+		tkn.MustSucceed(t, "pipeline", "start", pipeline, "-p", "seconds=30s")
+
+		time.Sleep(1 * time.Second)
+
+		// Get name of most recent PipelineRun
+		pipelineRunName := builder.GetPipelineRunListWithName(c, pipeline, true).Items[0].Name
+
+		// Cancel PipelineRun
+		res := tkn.MustSucceed(t, "pipelinerun", "cancel", pipelineRunName)
+
+		// Verify successful cancel
+		timeout := 2 * time.Minute
+		if err := wait.ForPipelineRunState(c, pipelineRunName, timeout, wait.PipelineRunFailed(pipelineRunName), "PipelineRunCancelled"); err != nil {
+			t.Errorf("Error waiting for PipelineRun %q to finished: %s", pipelineRunName, err)
+		}
+
+		cancelledRun := builder.GetPipelineRun(c, pipelineRunName)
+		// Expect successfully cancelled PipelineRun
+		expected := "PipelineRun cancelled: " + pipelineRunName + "\n"
+		assert.Assert(t, res.Stdout() == expected)
+		assert.Assert(t, "PipelineRunCancelled" == cancelledRun.Status.Conditions[0].Reason)
 	})
 }
 

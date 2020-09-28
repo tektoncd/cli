@@ -27,6 +27,7 @@ import (
 	"github.com/tektoncd/cli/test/framework"
 	"github.com/tektoncd/cli/test/helper"
 	"github.com/tektoncd/cli/test/wait"
+	"github.com/tektoncd/pipeline/pkg/apis/pipeline/v1beta1"
 
 	"gotest.tools/v3/assert"
 	is "gotest.tools/v3/assert/cmp"
@@ -82,6 +83,10 @@ func TestTaskStartE2E(t *testing.T) {
 Waiting for logs to be available...
 .*)`, vars)
 		assert.Assert(t, is.Regexp(expected, res.Stdout()))
+
+		if err := wait.ForTaskRunState(c, taskRunGeneratedName, wait.TaskRunSucceed(taskRunGeneratedName), "TaskRunSucceed"); err != nil {
+			t.Errorf("Error waiting for TaskRun %q to finished: %s", taskRunGeneratedName, err)
+		}
 	})
 
 	t.Run("Start TaskRun using tkn task start command with --use-param-defaults and all the params having default", func(t *testing.T) {
@@ -214,10 +219,6 @@ Waiting for logs to be available...
 	})
 
 	t.Run("Start TaskRun with --pod-template", func(t *testing.T) {
-		if tkn.CheckVersion("Pipeline", "v0.10.2") {
-			t.Skip("Skip test as pipeline v0.10 doesn't support certain PodTemplate properties")
-		}
-
 		tkn.MustSucceed(t, "task", "start", "read-task",
 			"-i=source="+tePipelineGitResourceName,
 			"-p=FILEPATH=docs",
@@ -229,6 +230,44 @@ Waiting for logs to be available...
 		if err := wait.ForTaskRunState(c, taskRunGeneratedName, wait.TaskRunSucceed(taskRunGeneratedName), "TaskRunSucceeded"); err != nil {
 			t.Errorf("Error waiting for TaskRun to Succeed: %s", err)
 		}
+	})
+
+	t.Run("Cancel finished TaskRun with tkn taskrun cancel", func(t *testing.T) {
+		// Get last TaskRun for read-task
+		taskRunLast := builder.GetTaskRunListWithName(c, "read-task", true).Items[0]
+
+		// Cancel TaskRun
+		res := tkn.Run("taskrun", "cancel", taskRunLast.Name)
+
+		// Expect error from TaskRun cancel for already completed TaskRun
+		expected := "Error: failed to cancel TaskRun " + taskRunLast.Name + ": TaskRun has already finished execution\n"
+		assert.Assert(t, res.Stderr() == expected)
+	})
+
+	t.Logf("Creating Task sleep in namespace: %s", namespace)
+	kubectl.MustSucceed(t, "create", "-f", helper.GetResourcePath("cancel/task-cancel.yaml"))
+	t.Run("Cancel TaskRun with tkn taskrun cancel", func(t *testing.T) {
+		task := "sleep"
+		// Start TaskRun
+		tkn.MustSucceed(t, "task", "start", task, "-p", "seconds=30s")
+
+		// Get name of most recent TaskRun
+		taskRunName := builder.GetTaskRunListWithName(c, task, true).Items[0].Name
+
+		// Cancel TaskRun
+		res := tkn.MustSucceed(t, "taskrun", "cancel", taskRunName)
+
+		// Verify successful cancel
+		if err := wait.ForTaskRunState(c, taskRunName, wait.TaskRunFailed(taskRunName), "Cancelled"); err != nil {
+			t.Errorf("Error waiting for TaskRun %q to finished: %s", taskRunName, err)
+		}
+
+		// Expect successfully cancelled TaskRun
+		expected := "TaskRun cancelled: " + taskRunName + "\n"
+		assert.Assert(t, res.Stdout() == expected)
+
+		cancelledRun := builder.GetTaskRun(c, taskRunName)
+		assert.Assert(t, v1beta1.TaskRunReasonCancelled.String() == cancelledRun.Status.Conditions[0].Reason)
 	})
 
 	t.Run("Start TaskRun using tkn task start with --last option", func(t *testing.T) {

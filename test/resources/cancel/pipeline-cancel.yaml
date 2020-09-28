@@ -12,26 +12,20 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
----
-apiVersion: triggers.tekton.dev/v1alpha1
-kind: EventListener
+apiVersion: tekton.dev/v1alpha1
+kind: Pipeline
 metadata:
-  name: github-listener-interceptor
+  name: sleep-pipeline
 spec:
-  serviceAccountName: tekton-triggers-github-sa
-  replicas: 3
-  triggers:
-    - name: github-listener
-      interceptors:
-        - github:
-            secretRef:
-              secretName: github-secret
-              secretKey: secretToken
-            eventTypes:
-              - pull_request
-        - cel:
-            filter: "body.action in ['opened', 'synchronize', 'reopened']"
-      bindings:
-        - ref: github-pr-binding
-      template:
-        name: github-template
+  params:
+  - name: seconds
+    default: 10s
+    type: string
+  tasks:
+  - name: pipelinetask1
+    taskRef:
+      kind: Task
+      name: sleep
+    params:
+    - name: seconds
+      value: $(params.seconds)
