@@ -19,18 +19,9 @@ import (
 
 	"github.com/spf13/cobra"
 	"github.com/tektoncd/cli/pkg/cli"
-	"github.com/tektoncd/cli/pkg/formatted"
 	"github.com/tektoncd/cli/pkg/pipelinerun"
-	"github.com/tektoncd/pipeline/pkg/apis/pipeline/v1beta1"
+	corev1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
-)
-
-var (
-	succeeded   = formatted.ColorStatus("Succeeded")
-	failed      = formatted.ColorStatus("Failed")
-	prCancelled = formatted.ColorStatus("Cancelled") + "(PipelineRunCancelled)"
-	cancelled   = formatted.ColorStatus("Cancelled") + "(Cancelled)"
-	prTimeout   = formatted.ColorStatus("Failed") + "(" + v1beta1.PipelineRunReasonTimedOut.String() + ")"
 )
 
 func cancelCommand(p cli.Params) *cobra.Command {
@@ -75,9 +66,10 @@ func cancelPipelineRun(p cli.Params, s *cli.Stream, prName string) error {
 		return fmt.Errorf("failed to find PipelineRun: %s", prName)
 	}
 
-	prCond := formatted.Condition(pr.Status.Conditions)
-	if prCond == succeeded || prCond == failed || prCond == prCancelled || prCond == prTimeout || prCond == cancelled {
-		return fmt.Errorf("failed to cancel PipelineRun %s: PipelineRun has already finished execution", prName)
+	if len(pr.Status.Conditions) > 0 {
+		if pr.Status.Conditions[0].Status != corev1.ConditionUnknown {
+			return fmt.Errorf("failed to cancel PipelineRun %s: PipelineRun has already finished execution", prName)
+		}
 	}
 
 	if _, err = pipelinerun.Patch(cs, prName, metav1.PatchOptions{}, p.Namespace()); err != nil {
