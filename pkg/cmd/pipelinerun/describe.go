@@ -73,13 +73,21 @@ or
 			}
 
 			if len(args) == 0 {
+				lOpts := metav1.ListOptions{}
 				if !opts.Last {
-					err = askPipelineRunName(opts, p)
+					prs, err := prhelper.GetAllPipelineRuns(p, lOpts, opts.Limit)
 					if err != nil {
 						return err
 					}
+					if len(prs) == 1 {
+						opts.PipelineRunName = strings.Fields(prs[0])[0]
+					} else {
+						err = askPipelineRunName(opts, prs)
+						if err != nil {
+							return err
+						}
+					}
 				} else {
-					lOpts := metav1.ListOptions{}
 					prs, err := prhelper.GetAllPipelineRuns(p, lOpts, 1)
 					if err != nil {
 						return err
@@ -113,21 +121,14 @@ or
 	return c
 }
 
-func askPipelineRunName(opts *options.DescribeOptions, p cli.Params) error {
-	lOpts := metav1.ListOptions{}
-
+func askPipelineRunName(opts *options.DescribeOptions, prs []string) error {
 	err := opts.ValidateOpts()
 	if err != nil {
 		return err
 	}
-	prs, err := prhelper.GetAllPipelineRuns(opts.Params, lOpts, opts.Limit)
 
-	if err != nil {
-		return err
-	}
 	if len(prs) == 0 {
-		fmt.Fprint(os.Stdout, "No PipelineRuns found")
-		return nil
+		return fmt.Errorf("no PipelineRuns found")
 	}
 
 	if opts.Fzf {
