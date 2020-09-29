@@ -96,11 +96,11 @@ const describeTemplate = `{{decorate "bold" "Name"}}:	{{ .EventListener.Name }}
 {{- end }}
  TEMPLATE NAME	APIVERSION
  {{ decorate "bullet" $v.Template.Name }}	{{ $v.Template.APIVersion }}
-{{- if not $v.ServiceAccount }}
+{{- if eq $v.ServiceAccountName "" }}
 {{- else }}
 {{ " " }}
- SERVICE ACCOUNT NAME	NAMESPACE
- {{ decorate "bullet" $v.ServiceAccount.Name }}	{{ $v.ServiceAccount.Namespace }}
+ SERVICE ACCOUNT NAME
+ {{ decorate "bullet" $v.ServiceAccountName }}
 {{- end }}
 {{ " " }}
 {{- if ne (len $v.Interceptors) 0 }}

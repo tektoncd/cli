@@ -18,7 +18,7 @@ import (
 	"testing"
 	"time"
 
-	tb "github.com/tektoncd/cli/internal/builder/v1alpha1"
+	tb "github.com/tektoncd/cli/internal/builder/v1beta1"
 	"github.com/tektoncd/cli/pkg/test"
 	cb "github.com/tektoncd/cli/pkg/test/builder"
 	pipelinetest "github.com/tektoncd/pipeline/test/v1alpha1"

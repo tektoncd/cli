@@ -17,7 +17,7 @@ package pods
 import (
 	"testing"
 
-	tb "github.com/tektoncd/cli/internal/builder/v1alpha1"
+	tb "github.com/tektoncd/cli/internal/builder/v1beta1"
 	"github.com/tektoncd/cli/pkg/pods/fake"
 	"github.com/tektoncd/cli/pkg/test"
 	pipelinetest "github.com/tektoncd/pipeline/test/v1alpha1"

@@ -31,6 +31,8 @@ github.com/Netflix/go-expect
 github.com/PuerkitoBio/purell
 # github.com/PuerkitoBio/urlesc v0.0.0-20170810143723-de5bf2ad4578
 github.com/PuerkitoBio/urlesc
+# github.com/antlr/antlr4 v0.0.0-20200503195918-621b933c7a7f
+github.com/antlr/antlr4/runtime/Go/antlr
 # github.com/aws/aws-sdk-go v1.31.6
 github.com/aws/aws-sdk-go/aws
 github.com/aws/aws-sdk-go/aws/awserr
@@ -164,6 +166,23 @@ github.com/golang/protobuf/ptypes/timestamp
 github.com/golang/protobuf/ptypes/wrappers
 # github.com/google/btree v1.0.0
 github.com/google/btree
+# github.com/google/cel-go v0.5.1
+github.com/google/cel-go/cel
+github.com/google/cel-go/checker
+github.com/google/cel-go/checker/decls
+github.com/google/cel-go/common
+github.com/google/cel-go/common/debug
+github.com/google/cel-go/common/operators
+github.com/google/cel-go/common/overloads
+github.com/google/cel-go/common/packages
+github.com/google/cel-go/common/types
+github.com/google/cel-go/common/types/pb
+github.com/google/cel-go/common/types/ref
+github.com/google/cel-go/common/types/traits
+github.com/google/cel-go/interpreter
+github.com/google/cel-go/interpreter/functions
+github.com/google/cel-go/parser
+github.com/google/cel-go/parser/gen
 # github.com/google/go-cmp v0.5.0
 github.com/google/go-cmp/cmp
 github.com/google/go-cmp/cmp/cmpopts
@@ -296,7 +315,7 @@ github.com/russross/blackfriday
 github.com/spf13/cobra
 # github.com/spf13/pflag v1.0.5
 github.com/spf13/pflag
-# github.com/tektoncd/pipeline v0.15.2
+# github.com/tektoncd/pipeline v0.16.3
 github.com/tektoncd/pipeline/pkg/apis/config
 github.com/tektoncd/pipeline/pkg/apis/pipeline
 github.com/tektoncd/pipeline/pkg/apis/pipeline/pod
@@ -371,7 +390,7 @@ github.com/tektoncd/pipeline/test
 github.com/tektoncd/pipeline/test/v1alpha1
 # github.com/tektoncd/plumbing v0.0.0-20200430135134-e53521e1d887
 github.com/tektoncd/plumbing/scripts
-# github.com/tektoncd/triggers v0.7.0
+# github.com/tektoncd/triggers v0.8.2-0.20200918191024-8cef2e8b8c64
 github.com/tektoncd/triggers/pkg/apis/triggers/v1alpha1
 github.com/tektoncd/triggers/pkg/client/clientset/versioned
 github.com/tektoncd/triggers/pkg/client/clientset/versioned/fake
@@ -392,6 +411,8 @@ github.com/tektoncd/triggers/pkg/client/injection/informers/triggers/v1alpha1/cl
 github.com/tektoncd/triggers/pkg/client/injection/informers/triggers/v1alpha1/clustertriggerbinding/fake
 github.com/tektoncd/triggers/pkg/client/injection/informers/triggers/v1alpha1/eventlistener
 github.com/tektoncd/triggers/pkg/client/injection/informers/triggers/v1alpha1/eventlistener/fake
+github.com/tektoncd/triggers/pkg/client/injection/informers/triggers/v1alpha1/trigger
+github.com/tektoncd/triggers/pkg/client/injection/informers/triggers/v1alpha1/trigger/fake
 github.com/tektoncd/triggers/pkg/client/injection/informers/triggers/v1alpha1/triggerbinding
 github.com/tektoncd/triggers/pkg/client/injection/informers/triggers/v1alpha1/triggerbinding/fake
 github.com/tektoncd/triggers/pkg/client/injection/informers/triggers/v1alpha1/triggertemplate
@@ -500,6 +521,7 @@ google.golang.org/appengine/urlfetch
 google.golang.org/genproto/googleapis/api
 google.golang.org/genproto/googleapis/api/annotations
 google.golang.org/genproto/googleapis/api/distribution
+google.golang.org/genproto/googleapis/api/expr/v1alpha1
 google.golang.org/genproto/googleapis/api/httpbody
 google.golang.org/genproto/googleapis/api/label
 google.golang.org/genproto/googleapis/api/metric

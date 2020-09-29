@@ -85,13 +85,9 @@
                         }
                     }
                 ],
-                "serviceAccount": {
-                    "namespace": "sa1",
-                    "name": "ns1"
-                }
+                "serviceAccountName": "sa1"
             }
         ],
-        "replicas": 0,
         "podTemplate": {}
     },
     "status": {

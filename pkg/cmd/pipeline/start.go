@@ -573,15 +573,15 @@ func mergeSvc(pr *v1beta1.PipelineRun, optSvc []string) error {
 		return nil
 	}
 
-	for i := range pr.Spec.ServiceAccountNames {
-		if v, ok := svcs[pr.Spec.ServiceAccountNames[i].TaskName]; ok {
-			pr.Spec.ServiceAccountNames[i] = v
-			delete(svcs, v.TaskName)
+	for i := range pr.Spec.TaskRunSpecs {
+		if v, ok := svcs[pr.Spec.TaskRunSpecs[i].PipelineTaskName]; ok {
+			pr.Spec.TaskRunSpecs[i].TaskServiceAccountName = v.TaskServiceAccountName
+			delete(svcs, v.PipelineTaskName)
 		}
 	}
 
 	for _, v := range svcs {
-		pr.Spec.ServiceAccountNames = append(pr.Spec.ServiceAccountNames, v)
+		pr.Spec.TaskRunSpecs = append(pr.Spec.TaskRunSpecs, v)
 	}
 
 	return nil
@@ -604,8 +604,8 @@ func parseRes(res []string) (map[string]v1beta1.PipelineResourceBinding, error) 
 	return resources, nil
 }
 
-func parseTaskSvc(s []string) (map[string]v1beta1.PipelineRunSpecServiceAccountName, error) {
-	svcs := map[string]v1beta1.PipelineRunSpecServiceAccountName{}
+func parseTaskSvc(s []string) (map[string]v1beta1.PipelineTaskRunSpec, error) {
+	svcs := map[string]v1beta1.PipelineTaskRunSpec{}
 	for _, v := range s {
 		r := strings.Split(v, "=")
 		if len(r) != 2 || len(r[0]) == 0 {
@@ -614,9 +614,9 @@ func parseTaskSvc(s []string) (map[string]v1beta1.PipelineRunSpecServiceAccountN
 				"--task-serviceaccount TaskName=ServiceAccount"
 			return nil, errors.New(errMsg)
 		}
-		svcs[r[0]] = v1beta1.PipelineRunSpecServiceAccountName{
-			TaskName:           r[0],
-			ServiceAccountName: r[1],
+		svcs[r[0]] = v1beta1.PipelineTaskRunSpec{
+			PipelineTaskName:       r[0],
+			TaskServiceAccountName: r[1],
 		}
 	}
 	return svcs, nil

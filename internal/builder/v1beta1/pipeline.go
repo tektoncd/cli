@@ -24,6 +24,7 @@ import (
 	resource "github.com/tektoncd/pipeline/pkg/apis/resource/v1alpha1"
 	corev1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+	"k8s.io/apimachinery/pkg/selection"
 	"knative.dev/pkg/apis"
 )
 
@@ -198,7 +199,20 @@ func PipelineRunResult(name, value string) PipelineRunStatusOp {
 // PipelineTaskSpec sets the TaskSpec on a PipelineTask.
 func PipelineTaskSpec(spec *v1beta1.TaskSpec) PipelineTaskOp {
 	return func(pt *v1beta1.PipelineTask) {
-		pt.TaskSpec = spec
+		if pt.TaskSpec == nil {
+			pt.TaskSpec = &v1beta1.EmbeddedTask{}
+		}
+		pt.TaskSpec.TaskSpec = spec
+	}
+}
+
+// TaskSpecMetadata sets the Metadata on a TaskSpec within PipelineTask.
+func TaskSpecMetadata(metadata v1beta1.PipelineTaskMetadata) PipelineTaskOp {
+	return func(pt *v1beta1.PipelineTask) {
+		if pt.TaskSpec == nil {
+			pt.TaskSpec = &v1beta1.EmbeddedTask{}
+		}
+		pt.TaskSpec.Metadata = metadata
 	}
 }
 
@@ -315,6 +329,18 @@ func PipelineTaskConditionResource(name, resource string, from ...string) Pipeli
 			Name:     name,
 			Resource: resource,
 			From:     from,
+		})
+	}
+}
+
+// PipelineTaskWhenExpression adds a WhenExpression with the specified input, operator and values
+// which are used to determine whether the PipelineTask should be executed or skipped.
+func PipelineTaskWhenExpression(input string, operator selection.Operator, values []string) PipelineTaskOp {
+	return func(pt *v1beta1.PipelineTask) {
+		pt.WhenExpressions = append(pt.WhenExpressions, v1beta1.WhenExpression{
+			Input:    input,
+			Operator: operator,
+			Values:   values,
 		})
 	}
 }
@@ -447,9 +473,9 @@ func PipelineRunServiceAccountName(sa string) PipelineRunSpecOp {
 // PipelineRunServiceAccountNameTask configures the service account for given Task in PipelineRun.
 func PipelineRunServiceAccountNameTask(taskName, sa string) PipelineRunSpecOp {
 	return func(prs *v1beta1.PipelineRunSpec) {
-		prs.ServiceAccountNames = append(prs.ServiceAccountNames, v1beta1.PipelineRunSpecServiceAccountName{
-			TaskName:           taskName,
-			ServiceAccountName: sa,
+		prs.TaskRunSpecs = append(prs.TaskRunSpecs, v1beta1.PipelineTaskRunSpec{
+			PipelineTaskName:       taskName,
+			TaskServiceAccountName: sa,
 		})
 	}
 }

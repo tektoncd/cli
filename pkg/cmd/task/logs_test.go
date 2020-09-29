@@ -23,6 +23,7 @@ import (
 	goexpect "github.com/Netflix/go-expect"
 	"github.com/jonboulle/clockwork"
 	tb "github.com/tektoncd/cli/internal/builder/v1alpha1"
+	tbv1beta1 "github.com/tektoncd/cli/internal/builder/v1beta1"
 	"github.com/tektoncd/cli/pkg/cli"
 	"github.com/tektoncd/cli/pkg/options"
 	"github.com/tektoncd/cli/pkg/pods/fake"
@@ -361,10 +362,10 @@ func TestTaskLog2(t *testing.T) {
 			},
 		},
 		Pods: []*corev1.Pod{
-			tb.Pod("pod", tb.PodNamespace("ns"),
-				tb.PodSpec(
-					tb.PodContainer("step1", "step1:latest"),
-					tb.PodContainer("step2", "step2:latest"),
+			tbv1beta1.Pod("pod", tbv1beta1.PodNamespace("ns"),
+				tbv1beta1.PodSpec(
+					tbv1beta1.PodContainer("step1", "step1:latest"),
+					tbv1beta1.PodContainer("step2", "step2:latest"),
 				),
 				cb.PodStatus(
 					cb.PodPhase(corev1.PodSucceeded),
@@ -403,10 +404,10 @@ func TestTaskLog2(t *testing.T) {
 			},
 		},
 		Pods: []*corev1.Pod{
-			tb.Pod("pod", tb.PodNamespace("ns"),
-				tb.PodSpec(
-					tb.PodContainer("step1", "step1:latest"),
-					tb.PodContainer("step2", "step2:latest"),
+			tbv1beta1.Pod("pod", tbv1beta1.PodNamespace("ns"),
+				tbv1beta1.PodSpec(
+					tbv1beta1.PodContainer("step1", "step1:latest"),
+					tbv1beta1.PodContainer("step2", "step2:latest"),
 				),
 				cb.PodStatus(
 					cb.PodPhase(corev1.PodSucceeded),

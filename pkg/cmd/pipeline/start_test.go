@@ -3621,19 +3621,58 @@ func Test_start_pipeline_last_merge(t *testing.T) {
 	}
 
 	prs := []*v1alpha1.PipelineRun{
-		tb.PipelineRun("test-pipeline-run-123",
-			tb.PipelineRunNamespace("ns"),
-			tb.PipelineRunLabel("tekton.dev/pipeline", pipelineName),
-			tb.PipelineRunSpec(pipelineName,
-				tb.PipelineRunServiceAccountName("test-sa"),
-				tb.PipelineRunServiceAccountNameTask("task1", "task1svc"),
-				tb.PipelineRunServiceAccountNameTask("task3", "task3svc"),
-				tb.PipelineRunResourceBinding("git-repo", tb.PipelineResourceBindingRef("some-repo")),
-				tb.PipelineRunResourceBinding("build-image", tb.PipelineResourceBindingRef("some-image")),
-				tb.PipelineRunParam("pipeline-param-1", "somethingmorefun"),
-				tb.PipelineRunParam("rev-param", "revision1"),
-			),
-		),
+		{
+			ObjectMeta: metav1.ObjectMeta{
+				Name:      "test-pipeline-run-123",
+				Namespace: "ns",
+				Labels: map[string]string{
+					"tekton.dev/pipeline": pipelineName,
+				},
+			},
+			Spec: v1alpha1.PipelineRunSpec{
+				ServiceAccountName: "test-sa",
+				Resources: []v1alpha1.PipelineResourceBinding{
+					{
+						Name: "git-repo",
+						ResourceRef: &v1alpha1.PipelineResourceRef{
+							Name: "some-repo",
+						},
+					},
+					{
+						Name: "build-image",
+						ResourceRef: &v1alpha1.PipelineResourceRef{
+							Name: "some-image",
+						},
+					},
+				},
+				Params: []v1alpha1.Param{
+					{
+						Name: "pipeline-param-1",
+						Value: v1alpha1.ArrayOrString{
+							Type:      v1alpha1.ParamTypeString,
+							StringVal: "somethingmorefun",
+						},
+					},
+					{
+						Name: "rev-param",
+						Value: v1alpha1.ArrayOrString{
+							Type:      v1alpha1.ParamTypeString,
+							StringVal: "revision1",
+						},
+					},
+				},
+				TaskRunSpecs: []v1alpha1.PipelineTaskRunSpec{
+					{
+						PipelineTaskName:       "task1",
+						TaskServiceAccountName: "task1svc",
+					},
+					{
+						PipelineTaskName:       "task3",
+						TaskServiceAccountName: "task3svc",
+					},
+				},
+			},
+		},
 	}
 
 	ns := []*corev1.Namespace{
@@ -3697,9 +3736,9 @@ func Test_start_pipeline_last_merge(t *testing.T) {
 		}
 	}
 
-	for _, v := range pr.Spec.ServiceAccountNames {
-		if v.TaskName == "task3" {
-			test.AssertOutput(t, "task3svc3", v.ServiceAccountName)
+	for _, v := range pr.Spec.TaskRunSpecs {
+		if v.PipelineTaskName == "task3" {
+			test.AssertOutput(t, "task3svc3", v.TaskServiceAccountName)
 		}
 	}
 
@@ -3787,14 +3826,14 @@ func Test_start_pipeline_last_merge_v1beta1(t *testing.T) {
 					Name: pipelineName,
 				},
 				ServiceAccountName: "test-sa",
-				ServiceAccountNames: []v1beta1.PipelineRunSpecServiceAccountName{
+				TaskRunSpecs: []v1beta1.PipelineTaskRunSpec{
 					{
-						TaskName:           "task1",
-						ServiceAccountName: "task1svc",
+						PipelineTaskName:       "task1",
+						TaskServiceAccountName: "task1svc",
 					},
 					{
-						TaskName:           "task3",
-						ServiceAccountName: "task3svc",
+						PipelineTaskName:       "task3",
+						TaskServiceAccountName: "task3svc",
 					},
 				},
 				Resources: []v1beta1.PipelineResourceBinding{
@@ -3902,9 +3941,9 @@ func Test_start_pipeline_last_merge_v1beta1(t *testing.T) {
 		}
 	}
 
-	for _, v := range pr.Spec.ServiceAccountNames {
-		if v.TaskName == "task3" {
-			test.AssertOutput(t, "task3svc3", v.ServiceAccountName)
+	for _, v := range pr.Spec.TaskRunSpecs {
+		if v.PipelineTaskName == "task3" {
+			test.AssertOutput(t, "task3svc3", v.TaskServiceAccountName)
 		}
 	}
 
@@ -5364,16 +5403,16 @@ func Test_parseTaskSvc(t *testing.T) {
 	tests := []struct {
 		name    string
 		args    args
-		want    map[string]v1beta1.PipelineRunSpecServiceAccountName
+		want    map[string]v1beta1.PipelineTaskRunSpec
 		wantErr bool
 	}{{
 		name: "Test_parseParam No Err",
 		args: args{
 			p: []string{"key1=value1", "key2=value2"},
 		},
-		want: map[string]v1beta1.PipelineRunSpecServiceAccountName{
-			"key1": {TaskName: "key1", ServiceAccountName: "value1"},
-			"key2": {TaskName: "key2", ServiceAccountName: "value2"},
+		want: map[string]v1beta1.PipelineTaskRunSpec{
+			"key1": {PipelineTaskName: "key1", TaskServiceAccountName: "value1"},
+			"key2": {PipelineTaskName: "key2", TaskServiceAccountName: "value2"},
 		},
 		wantErr: false,
 	}, {

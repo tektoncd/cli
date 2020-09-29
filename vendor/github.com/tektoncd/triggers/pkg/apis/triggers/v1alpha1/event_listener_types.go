@@ -33,6 +33,7 @@ var _ apis.Validatable = (*EventListener)(nil)
 var _ apis.Defaultable = (*EventListener)(nil)
 
 // +genclient
+// +genreconciler
 // +k8s:deepcopy-gen:interfaces=k8s.io/apimachinery/pkg/runtime.Object
 
 // EventListener exposes a service to accept HTTP event payloads.
@@ -55,7 +56,7 @@ type EventListenerSpec struct {
 	ServiceAccountName string                 `json:"serviceAccountName"`
 	Triggers           []EventListenerTrigger `json:"triggers"`
 	ServiceType        corev1.ServiceType     `json:"serviceType,omitempty"`
-	Replicas           int32                  `json:"replicas"`
+	Replicas           *int32                 `json:"replicas,omitempty"`
 	PodTemplate        PodTemplate            `json:"podTemplate,omitempty"`
 }
 
@@ -73,22 +74,23 @@ type PodTemplate struct {
 
 // EventListenerTrigger represents a connection between TriggerBinding, Params,
 // and TriggerTemplate; TriggerBinding provides extracted values for
-// TriggerTemplate to then create resources from.
+// TriggerTemplate to then create resources from. TriggerRef can also be
+// provided instead of TriggerBinding, Interceptors and TriggerTemplate
 type EventListenerTrigger struct {
-	Bindings []*EventListenerBinding `json:"bindings"`
-	Template EventListenerTemplate   `json:"template"`
+	Bindings   []*EventListenerBinding `json:"bindings,omitempty"`
+	Template   *EventListenerTemplate  `json:"template,omitempty"`
+	TriggerRef string                  `json:"triggerRef,omitempty"`
 	// +optional
 	Name         string              `json:"name,omitempty"`
 	Interceptors []*EventInterceptor `json:"interceptors,omitempty"`
-	// ServiceAccount optionally associates credentials with each trigger;
+	// ServiceAccountName optionally associates credentials with each trigger;
 	// more granular authorization for
 	// who is allowed to utilize the associated pipeline
 	// vs. defaulting to whatever permissions are associated
 	// with the entire EventListener and associated sink facilitates
 	// multi-tenant model based scenarios
-	// TODO do we want to restrict this to the event listener namespace and just ask for the service account name here?
 	// +optional
-	ServiceAccount *corev1.ObjectReference `json:"serviceAccount,omitempty"`
+	ServiceAccountName string `json:"serviceAccountName,omitempty"`
 }
 
 // EventInterceptor provides a hook to intercept and pre-process events
@@ -104,19 +106,10 @@ type SecretRef struct {
 }
 
 // EventListenerBinding refers to a particular TriggerBinding or ClusterTriggerBindingresource.
-type EventListenerBinding struct {
-	Name       string              `json:"name,omitempty"`
-	Kind       TriggerBindingKind  `json:"kind,omitempty"`
-	Ref        string              `json:"ref,omitempty"`
-	Spec       *TriggerBindingSpec `json:"spec,omitempty"`
-	APIVersion string              `json:"apiversion,omitempty"`
-}
+type EventListenerBinding = TriggerSpecBinding
 
 // EventListenerTemplate refers to a particular TriggerTemplate resource.
-type EventListenerTemplate struct {
-	Name       string `json:"name"`
-	APIVersion string `json:"apiversion,omitempty"`
-}
+type EventListenerTemplate = TriggerSpecTemplate
 
 // EventListenerList contains a list of TriggerBinding
 //
