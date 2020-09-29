@@ -23,6 +23,7 @@ import (
 	"github.com/google/go-cmp/cmp"
 	corev1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+	"k8s.io/apimachinery/pkg/selection"
 	"knative.dev/pkg/apis"
 	duckv1beta1 "knative.dev/pkg/apis/duck/v1beta1"
 
@@ -54,15 +55,18 @@ func TestPipeline(t *testing.T) {
 			tb.PipelineTaskOutputResource("some-image", "my-only-image-resource"),
 		),
 		tb.PipelineTask("never-gonna", "give-you-up",
+			tb.PipelineTaskWhenExpression("foo", selection.In, []string{"foo", "bar"}),
 			tb.RunAfter("foo"),
 			tb.PipelineTaskTimeout(5*time.Second),
 		),
-		tb.PipelineTask("foo", "", tb.PipelineTaskSpec(&v1beta1.TaskSpec{
-			Steps: []v1beta1.Step{{Container: corev1.Container{
-				Name:  "step",
-				Image: "myimage",
-			}}},
-		})),
+		tb.PipelineTask("foo", "", tb.PipelineTaskSpec(getTaskSpec())),
+		tb.PipelineTask("task-with-taskSpec", "",
+			tb.TaskSpecMetadata(v1beta1.PipelineTaskMetadata{
+				Labels:      map[string]string{"label": "labelvalue"},
+				Annotations: map[string]string{"annotation": "annotationvalue"}},
+			),
+			tb.PipelineTaskSpec(getTaskSpec()),
+		),
 		tb.PipelineWorkspaceDeclaration("workspace1"),
 	),
 		tb.PipelineCreationTimestamp(creationTime),
@@ -131,19 +135,26 @@ func TestPipeline(t *testing.T) {
 					}},
 				},
 			}, {
-				Name:     "never-gonna",
-				TaskRef:  &v1beta1.TaskRef{Name: "give-you-up"},
-				RunAfter: []string{"foo"},
-				Timeout:  &metav1.Duration{Duration: 5 * time.Second},
+				Name:            "never-gonna",
+				TaskRef:         &v1beta1.TaskRef{Name: "give-you-up"},
+				WhenExpressions: []v1beta1.WhenExpression{{Input: "foo", Operator: selection.In, Values: []string{"foo", "bar"}}},
+				RunAfter:        []string{"foo"},
+				Timeout:         &metav1.Duration{Duration: 5 * time.Second},
 			}, {
 				Name: "foo",
-				TaskSpec: &v1beta1.TaskSpec{
-					Steps: []v1beta1.Step{{Container: corev1.Container{
-						Name:  "step",
-						Image: "myimage",
-					}}},
+				TaskSpec: &v1beta1.EmbeddedTask{
+					TaskSpec: getTaskSpec()},
+			}, {
+				Name: "task-with-taskSpec",
+				TaskSpec: &v1beta1.EmbeddedTask{
+					Metadata: v1beta1.PipelineTaskMetadata{
+						Labels:      map[string]string{"label": "labelvalue"},
+						Annotations: map[string]string{"annotation": "annotationvalue"},
+					},
+					TaskSpec: getTaskSpec(),
 				},
-			}},
+			},
+			},
 			Workspaces: []v1beta1.PipelineWorkspaceDeclaration{{
 				Name: "workspace1",
 			}},
@@ -182,9 +193,8 @@ func TestPipelineRun(t *testing.T) {
 			},
 		},
 		Spec: v1beta1.PipelineRunSpec{
-			PipelineRef:         &v1beta1.PipelineRef{Name: "tomatoes"},
-			ServiceAccountName:  "sa",
-			ServiceAccountNames: []v1beta1.PipelineRunSpecServiceAccountName{{TaskName: "foo", ServiceAccountName: "sa-2"}},
+			PipelineRef:        &v1beta1.PipelineRef{Name: "tomatoes"},
+			ServiceAccountName: "sa",
 			Params: []v1beta1.Param{{
 				Name:  "first-param-string",
 				Value: *tb.ArrayOrString("first-value"),
@@ -199,6 +209,12 @@ func TestPipelineRun(t *testing.T) {
 					Name: "my-special-resource",
 				},
 			}},
+			TaskRunSpecs: []v1beta1.PipelineTaskRunSpec{
+				{
+					PipelineTaskName:       "foo",
+					TaskServiceAccountName: "sa-2",
+				},
+			},
 		},
 		Status: v1beta1.PipelineRunStatus{
 			Status: duckv1beta1.Status{
@@ -249,9 +265,8 @@ func TestPipelineRunWithPodTemplate(t *testing.T) {
 			},
 		},
 		Spec: v1beta1.PipelineRunSpec{
-			PipelineRef:         &v1beta1.PipelineRef{Name: "tomatoes"},
-			ServiceAccountName:  "sa",
-			ServiceAccountNames: []v1beta1.PipelineRunSpecServiceAccountName{{TaskName: "foo", ServiceAccountName: "sa-2"}},
+			PipelineRef:        &v1beta1.PipelineRef{Name: "tomatoes"},
+			ServiceAccountName: "sa",
 			Params: []v1beta1.Param{{
 				Name:  "first-param-string",
 				Value: *tb.ArrayOrString("first-value"),
@@ -269,6 +284,12 @@ func TestPipelineRunWithPodTemplate(t *testing.T) {
 			PodTemplate: &v1beta1.PodTemplate{
 				NodeSelector: map[string]string{
 					"label": "value",
+				},
+			},
+			TaskRunSpecs: []v1beta1.PipelineTaskRunSpec{
+				{
+					PipelineTaskName:       "foo",
+					TaskServiceAccountName: "sa-2",
 				},
 			},
 		},
@@ -324,9 +345,8 @@ func TestPipelineRunWithResourceSpec(t *testing.T) {
 			},
 		},
 		Spec: v1beta1.PipelineRunSpec{
-			PipelineRef:         &v1beta1.PipelineRef{Name: "tomatoes"},
-			ServiceAccountName:  "sa",
-			ServiceAccountNames: []v1beta1.PipelineRunSpecServiceAccountName{{TaskName: "foo", ServiceAccountName: "sa-2"}},
+			PipelineRef:        &v1beta1.PipelineRef{Name: "tomatoes"},
+			ServiceAccountName: "sa",
 			Params: []v1beta1.Param{{
 				Name:  "first-param-string",
 				Value: *tb.ArrayOrString("first-value"),
@@ -346,6 +366,12 @@ func TestPipelineRunWithResourceSpec(t *testing.T) {
 					SecretParams: nil,
 				},
 			}},
+			TaskRunSpecs: []v1beta1.PipelineTaskRunSpec{
+				{
+					PipelineTaskName:       "foo",
+					TaskServiceAccountName: "sa-2",
+				},
+			},
 		},
 		Status: v1beta1.PipelineRunStatus{
 			Status: duckv1beta1.Status{
@@ -426,5 +452,13 @@ func TestPipelineRunWithFinalTask(t *testing.T) {
 	if diff := cmp.Diff(expectedPipelineRun, pipelineRun); diff != "" {
 		t.Fatalf("PipelineRun diff -want, +got: %s", diff)
 	}
+}
 
+func getTaskSpec() *v1beta1.TaskSpec {
+	return &v1beta1.TaskSpec{
+		Steps: []v1beta1.Step{{Container: corev1.Container{
+			Name:  "step",
+			Image: "myimage",
+		}}},
+	}
 }

@@ -38,6 +38,6 @@ EventListenerTriggers
  TEMPLATE NAME   APIVERSION
  tt2             v1alpha1
  
- SERVICE ACCOUNT NAME   NAMESPACE
- ns1                    sa1
+ SERVICE ACCOUNT NAME
+ sa1
  

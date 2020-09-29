@@ -17,9 +17,9 @@ require (
 	github.com/pkg/errors v0.9.1
 	github.com/spf13/cobra v1.0.0
 	github.com/spf13/pflag v1.0.5
-	github.com/tektoncd/pipeline v0.15.2
+	github.com/tektoncd/pipeline v0.16.3
 	github.com/tektoncd/plumbing v0.0.0-20200430135134-e53521e1d887
-	github.com/tektoncd/triggers v0.7.0
+	github.com/tektoncd/triggers v0.8.2-0.20200918191024-8cef2e8b8c64
 	github.com/tidwall/gjson v1.6.0 // indirect
 	go.opencensus.io v0.22.4
 	go.uber.org/multierr v1.5.0
@@ -42,7 +42,7 @@ replace (
 	github.com/spf13/cobra => github.com/chmouel/cobra v0.0.0-20200107083527-379e7a80af0c
 )
 
-// Pin k8s deps to 1.17.6
+// Pin k8s deps to 0.17.6
 replace (
 	k8s.io/api => k8s.io/api v0.17.6
 	k8s.io/apimachinery => k8s.io/apimachinery v0.17.6

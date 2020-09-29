@@ -16,13 +16,13 @@ package taskrun
 
 import (
 	"bytes"
-
 	"strings"
 	"testing"
 	"time"
 
 	"github.com/jonboulle/clockwork"
 	tb "github.com/tektoncd/cli/internal/builder/v1alpha1"
+	tbv1beta1 "github.com/tektoncd/cli/internal/builder/v1beta1"
 	"github.com/tektoncd/cli/pkg/cli"
 	"github.com/tektoncd/cli/pkg/log"
 	"github.com/tektoncd/cli/pkg/options"
@@ -125,9 +125,9 @@ func TestLog_no_taskrun_arg(t *testing.T) {
 			},
 		},
 		Pods: []*corev1.Pod{
-			tb.Pod("pod", tb.PodNamespace("ns"),
-				tb.PodSpec(
-					tb.PodContainer("step1", "step1:latest"),
+			tbv1beta1.Pod("pod", tbv1beta1.PodNamespace("ns"),
+				tbv1beta1.PodSpec(
+					tbv1beta1.PodContainer("step1", "step1:latest"),
 				),
 				cb.PodStatus(
 					cb.PodPhase(corev1.PodSucceeded),
@@ -298,10 +298,10 @@ func TestLog_taskrun_logs(t *testing.T) {
 	}
 
 	ps := []*corev1.Pod{
-		tb.Pod(trPod, tb.PodNamespace(ns),
-			tb.PodSpec(
-				tb.PodContainer(trStep1Name, trStep1Name+":latest"),
-				tb.PodContainer(nopStep, "override-with-nop:latest"),
+		tbv1beta1.Pod(trPod, tbv1beta1.PodNamespace(ns),
+			tbv1beta1.PodSpec(
+				tbv1beta1.PodContainer(trStep1Name, trStep1Name+":latest"),
+				tbv1beta1.PodContainer(nopStep, "override-with-nop:latest"),
 			),
 			cb.PodStatus(
 				cb.PodPhase(corev1.PodSucceeded),
@@ -403,10 +403,10 @@ func TestLog_taskrun_logs_v1beta1(t *testing.T) {
 	}
 
 	ps := []*corev1.Pod{
-		tb.Pod(trPod, tb.PodNamespace(ns),
-			tb.PodSpec(
-				tb.PodContainer(trStep1Name, trStep1Name+":latest"),
-				tb.PodContainer(nopStep, "override-with-nop:latest"),
+		tbv1beta1.Pod(trPod, tbv1beta1.PodNamespace(ns),
+			tbv1beta1.PodSpec(
+				tbv1beta1.PodContainer(trStep1Name, trStep1Name+":latest"),
+				tbv1beta1.PodContainer(nopStep, "override-with-nop:latest"),
 			),
 			cb.PodStatus(
 				cb.PodPhase(corev1.PodSucceeded),
@@ -686,12 +686,12 @@ func TestLog_taskrun_all_steps(t *testing.T) {
 	}
 
 	p := []*corev1.Pod{
-		tb.Pod(trPod, tb.PodNamespace(ns),
-			tb.PodSpec(
-				tb.PodInitContainer(trInitStep1, "override-with-creds:latest"),
-				tb.PodInitContainer(trInitStep2, "override-with-tools:latest"),
-				tb.PodContainer(trStep1Name, trStep1Name+":latest"),
-				tb.PodContainer(nopStep, "override-with-nop:latest"),
+		tbv1beta1.Pod(trPod, tbv1beta1.PodNamespace(ns),
+			tbv1beta1.PodSpec(
+				tbv1beta1.PodInitContainer(trInitStep1, "override-with-creds:latest"),
+				tbv1beta1.PodInitContainer(trInitStep2, "override-with-tools:latest"),
+				tbv1beta1.PodContainer(trStep1Name, trStep1Name+":latest"),
+				tbv1beta1.PodContainer(nopStep, "override-with-nop:latest"),
 			),
 			cb.PodStatus(
 				cb.PodPhase(corev1.PodSucceeded),
@@ -803,12 +803,12 @@ func TestLog_taskrun_all_steps_v1beta1(t *testing.T) {
 	}
 
 	p := []*corev1.Pod{
-		tb.Pod(trPod, tb.PodNamespace(ns),
-			tb.PodSpec(
-				tb.PodInitContainer(trInitStep1, "override-with-creds:latest"),
-				tb.PodInitContainer(trInitStep2, "override-with-tools:latest"),
-				tb.PodContainer(trStep1Name, trStep1Name+":latest"),
-				tb.PodContainer(nopStep, "override-with-nop:latest"),
+		tbv1beta1.Pod(trPod, tbv1beta1.PodNamespace(ns),
+			tbv1beta1.PodSpec(
+				tbv1beta1.PodInitContainer(trInitStep1, "override-with-creds:latest"),
+				tbv1beta1.PodInitContainer(trInitStep2, "override-with-tools:latest"),
+				tbv1beta1.PodContainer(trStep1Name, trStep1Name+":latest"),
+				tbv1beta1.PodContainer(nopStep, "override-with-nop:latest"),
 			),
 			cb.PodStatus(
 				cb.PodPhase(corev1.PodSucceeded),
@@ -897,12 +897,12 @@ func TestLog_taskrun_given_steps(t *testing.T) {
 	}
 
 	p := []*corev1.Pod{
-		tb.Pod(trPod, tb.PodNamespace(ns),
-			tb.PodSpec(
-				tb.PodInitContainer(trInitStep1, "override-with-creds:latest"),
-				tb.PodInitContainer(trInitStep2, "override-with-tools:latest"),
-				tb.PodContainer(trStep1Name, trStep1Name+":latest"),
-				tb.PodContainer(nopStep, "override-with-nop:latest"),
+		tbv1beta1.Pod(trPod, tbv1beta1.PodNamespace(ns),
+			tbv1beta1.PodSpec(
+				tbv1beta1.PodInitContainer(trInitStep1, "override-with-creds:latest"),
+				tbv1beta1.PodInitContainer(trInitStep2, "override-with-tools:latest"),
+				tbv1beta1.PodContainer(trStep1Name, trStep1Name+":latest"),
+				tbv1beta1.PodContainer(nopStep, "override-with-nop:latest"),
 			),
 			cb.PodStatus(
 				cb.PodPhase(corev1.PodSucceeded),
@@ -1010,12 +1010,12 @@ func TestLog_taskrun_given_steps_v1beta1(t *testing.T) {
 	}
 
 	p := []*corev1.Pod{
-		tb.Pod(trPod, tb.PodNamespace(ns),
-			tb.PodSpec(
-				tb.PodInitContainer(trInitStep1, "override-with-creds:latest"),
-				tb.PodInitContainer(trInitStep2, "override-with-tools:latest"),
-				tb.PodContainer(trStep1Name, trStep1Name+":latest"),
-				tb.PodContainer(nopStep, "override-with-nop:latest"),
+		tbv1beta1.Pod(trPod, tbv1beta1.PodNamespace(ns),
+			tbv1beta1.PodSpec(
+				tbv1beta1.PodInitContainer(trInitStep1, "override-with-creds:latest"),
+				tbv1beta1.PodInitContainer(trInitStep2, "override-with-tools:latest"),
+				tbv1beta1.PodContainer(trStep1Name, trStep1Name+":latest"),
+				tbv1beta1.PodContainer(nopStep, "override-with-nop:latest"),
 			),
 			cb.PodStatus(
 				cb.PodPhase(corev1.PodSucceeded),
@@ -1101,12 +1101,12 @@ func TestLog_taskrun_follow_mode(t *testing.T) {
 	}
 
 	p := []*corev1.Pod{
-		tb.Pod(trPod, tb.PodNamespace(ns),
-			tb.PodSpec(
-				tb.PodInitContainer(trInitStep1, "override-with-creds:latest"),
-				tb.PodInitContainer(trInitStep2, "override-with-tools:latest"),
-				tb.PodContainer(trStep1Name, trStep1Name+":latest"),
-				tb.PodContainer(nopStep, "override-with-nop:latest"),
+		tbv1beta1.Pod(trPod, tbv1beta1.PodNamespace(ns),
+			tbv1beta1.PodSpec(
+				tbv1beta1.PodInitContainer(trInitStep1, "override-with-creds:latest"),
+				tbv1beta1.PodInitContainer(trInitStep2, "override-with-tools:latest"),
+				tbv1beta1.PodContainer(trStep1Name, trStep1Name+":latest"),
+				tbv1beta1.PodContainer(nopStep, "override-with-nop:latest"),
 			),
 			cb.PodStatus(
 				cb.PodPhase(corev1.PodSucceeded),
@@ -1216,12 +1216,12 @@ func TestLog_taskrun_follow_mode_v1beta1(t *testing.T) {
 	}
 
 	p := []*corev1.Pod{
-		tb.Pod(trPod, tb.PodNamespace(ns),
-			tb.PodSpec(
-				tb.PodInitContainer(trInitStep1, "override-with-creds:latest"),
-				tb.PodInitContainer(trInitStep2, "override-with-tools:latest"),
-				tb.PodContainer(trStep1Name, trStep1Name+":latest"),
-				tb.PodContainer(nopStep, "override-with-nop:latest"),
+		tbv1beta1.Pod(trPod, tbv1beta1.PodNamespace(ns),
+			tbv1beta1.PodSpec(
+				tbv1beta1.PodInitContainer(trInitStep1, "override-with-creds:latest"),
+				tbv1beta1.PodInitContainer(trInitStep2, "override-with-tools:latest"),
+				tbv1beta1.PodContainer(trStep1Name, trStep1Name+":latest"),
+				tbv1beta1.PodContainer(nopStep, "override-with-nop:latest"),
 			),
 			cb.PodStatus(
 				cb.PodPhase(corev1.PodSucceeded),
@@ -1543,12 +1543,12 @@ func TestLog_taskrun_follow_mode_no_pod_name(t *testing.T) {
 	}
 
 	p := []*corev1.Pod{
-		tb.Pod(trPod, tb.PodNamespace(ns),
-			tb.PodSpec(
-				tb.PodInitContainer(trInitStep1, "override-with-creds:latest"),
-				tb.PodInitContainer(trInitStep2, "override-with-tools:latest"),
-				tb.PodContainer(trStep1Name, trStep1Name+":latest"),
-				tb.PodContainer(nopStep, "override-with-nop:latest"),
+		tbv1beta1.Pod(trPod, tbv1beta1.PodNamespace(ns),
+			tbv1beta1.PodSpec(
+				tbv1beta1.PodInitContainer(trInitStep1, "override-with-creds:latest"),
+				tbv1beta1.PodInitContainer(trInitStep2, "override-with-tools:latest"),
+				tbv1beta1.PodContainer(trStep1Name, trStep1Name+":latest"),
+				tbv1beta1.PodContainer(nopStep, "override-with-nop:latest"),
 			),
 			cb.PodStatus(
 				cb.PodPhase(corev1.PodSucceeded),
@@ -1656,12 +1656,12 @@ func TestLog_taskrun_follow_mode_no_pod_name_v1beta1(t *testing.T) {
 	}
 
 	p := []*corev1.Pod{
-		tb.Pod(trPod, tb.PodNamespace(ns),
-			tb.PodSpec(
-				tb.PodInitContainer(trInitStep1, "override-with-creds:latest"),
-				tb.PodInitContainer(trInitStep2, "override-with-tools:latest"),
-				tb.PodContainer(trStep1Name, trStep1Name+":latest"),
-				tb.PodContainer(nopStep, "override-with-nop:latest"),
+		tbv1beta1.Pod(trPod, tbv1beta1.PodNamespace(ns),
+			tbv1beta1.PodSpec(
+				tbv1beta1.PodInitContainer(trInitStep1, "override-with-creds:latest"),
+				tbv1beta1.PodInitContainer(trInitStep2, "override-with-tools:latest"),
+				tbv1beta1.PodContainer(trStep1Name, trStep1Name+":latest"),
+				tbv1beta1.PodContainer(nopStep, "override-with-nop:latest"),
 			),
 			cb.PodStatus(
 				cb.PodPhase(corev1.PodSucceeded),
@@ -1747,12 +1747,12 @@ func TestLog_taskrun_follow_mode_update_pod_name(t *testing.T) {
 	}
 
 	p := []*corev1.Pod{
-		tb.Pod(trPod, tb.PodNamespace(ns),
-			tb.PodSpec(
-				tb.PodInitContainer(trInitStep1, "override-with-creds:latest"),
-				tb.PodInitContainer(trInitStep2, "override-with-tools:latest"),
-				tb.PodContainer(trStep1Name, trStep1Name+":latest"),
-				tb.PodContainer(nopStep, "override-with-nop:latest"),
+		tbv1beta1.Pod(trPod, tbv1beta1.PodNamespace(ns),
+			tbv1beta1.PodSpec(
+				tbv1beta1.PodInitContainer(trInitStep1, "override-with-creds:latest"),
+				tbv1beta1.PodInitContainer(trInitStep2, "override-with-tools:latest"),
+				tbv1beta1.PodContainer(trStep1Name, trStep1Name+":latest"),
+				tbv1beta1.PodContainer(nopStep, "override-with-nop:latest"),
 			),
 			cb.PodStatus(
 				cb.PodPhase(corev1.PodSucceeded),
@@ -1871,12 +1871,12 @@ func TestLog_taskrun_follow_mode_update_pod_name_v1beta1(t *testing.T) {
 	}
 
 	p := []*corev1.Pod{
-		tb.Pod(trPod, tb.PodNamespace(ns),
-			tb.PodSpec(
-				tb.PodInitContainer(trInitStep1, "override-with-creds:latest"),
-				tb.PodInitContainer(trInitStep2, "override-with-tools:latest"),
-				tb.PodContainer(trStep1Name, trStep1Name+":latest"),
-				tb.PodContainer(nopStep, "override-with-nop:latest"),
+		tbv1beta1.Pod(trPod, tbv1beta1.PodNamespace(ns),
+			tbv1beta1.PodSpec(
+				tbv1beta1.PodInitContainer(trInitStep1, "override-with-creds:latest"),
+				tbv1beta1.PodInitContainer(trInitStep2, "override-with-tools:latest"),
+				tbv1beta1.PodContainer(trStep1Name, trStep1Name+":latest"),
+				tbv1beta1.PodContainer(nopStep, "override-with-nop:latest"),
 			),
 			cb.PodStatus(
 				cb.PodPhase(corev1.PodSucceeded),
@@ -1973,12 +1973,12 @@ func TestLog_taskrun_follow_mode_update_timeout(t *testing.T) {
 	}
 
 	p := []*corev1.Pod{
-		tb.Pod(trPod, tb.PodNamespace(ns),
-			tb.PodSpec(
-				tb.PodInitContainer(trInitStep1, "override-with-creds:latest"),
-				tb.PodInitContainer(trInitStep2, "override-with-tools:latest"),
-				tb.PodContainer(trStep1Name, trStep1Name+":latest"),
-				tb.PodContainer(nopStep, "override-with-nop:latest"),
+		tbv1beta1.Pod(trPod, tbv1beta1.PodNamespace(ns),
+			tbv1beta1.PodSpec(
+				tbv1beta1.PodInitContainer(trInitStep1, "override-with-creds:latest"),
+				tbv1beta1.PodInitContainer(trInitStep2, "override-with-tools:latest"),
+				tbv1beta1.PodContainer(trStep1Name, trStep1Name+":latest"),
+				tbv1beta1.PodContainer(nopStep, "override-with-nop:latest"),
 			),
 			cb.PodStatus(
 				cb.PodPhase(corev1.PodSucceeded),
@@ -2095,12 +2095,12 @@ func TestLog_taskrun_follow_mode_update_timeout_v1beta1(t *testing.T) {
 	}
 
 	p := []*corev1.Pod{
-		tb.Pod(trPod, tb.PodNamespace(ns),
-			tb.PodSpec(
-				tb.PodInitContainer(trInitStep1, "override-with-creds:latest"),
-				tb.PodInitContainer(trInitStep2, "override-with-tools:latest"),
-				tb.PodContainer(trStep1Name, trStep1Name+":latest"),
-				tb.PodContainer(nopStep, "override-with-nop:latest"),
+		tbv1beta1.Pod(trPod, tbv1beta1.PodNamespace(ns),
+			tbv1beta1.PodSpec(
+				tbv1beta1.PodInitContainer(trInitStep1, "override-with-creds:latest"),
+				tbv1beta1.PodInitContainer(trInitStep2, "override-with-tools:latest"),
+				tbv1beta1.PodContainer(trStep1Name, trStep1Name+":latest"),
+				tbv1beta1.PodContainer(nopStep, "override-with-nop:latest"),
 			),
 			cb.PodStatus(
 				cb.PodPhase(corev1.PodSucceeded),
@@ -2196,12 +2196,12 @@ func TestLog_taskrun_follow_mode_no_output_provided(t *testing.T) {
 	}
 
 	p := []*corev1.Pod{
-		tb.Pod(trPod, tb.PodNamespace(ns),
-			tb.PodSpec(
-				tb.PodInitContainer(trInitStep1, "override-with-creds:latest"),
-				tb.PodInitContainer(trInitStep2, "override-with-tools:latest"),
-				tb.PodContainer(trStep1Name, trStep1Name+":latest"),
-				tb.PodContainer(nopStep, "override-with-nop:latest"),
+		tbv1beta1.Pod(trPod, tbv1beta1.PodNamespace(ns),
+			tbv1beta1.PodSpec(
+				tbv1beta1.PodInitContainer(trInitStep1, "override-with-creds:latest"),
+				tbv1beta1.PodInitContainer(trInitStep2, "override-with-tools:latest"),
+				tbv1beta1.PodContainer(trStep1Name, trStep1Name+":latest"),
+				tbv1beta1.PodContainer(nopStep, "override-with-nop:latest"),
 			),
 			cb.PodStatus(
 				cb.PodPhase(corev1.PodSucceeded),
@@ -2306,12 +2306,12 @@ func TestLog_taskrun_follow_mode_no_output_provided_v1beta1(t *testing.T) {
 	}
 
 	p := []*corev1.Pod{
-		tb.Pod(trPod, tb.PodNamespace(ns),
-			tb.PodSpec(
-				tb.PodInitContainer(trInitStep1, "override-with-creds:latest"),
-				tb.PodInitContainer(trInitStep2, "override-with-tools:latest"),
-				tb.PodContainer(trStep1Name, trStep1Name+":latest"),
-				tb.PodContainer(nopStep, "override-with-nop:latest"),
+		tbv1beta1.Pod(trPod, tbv1beta1.PodNamespace(ns),
+			tbv1beta1.PodSpec(
+				tbv1beta1.PodInitContainer(trInitStep1, "override-with-creds:latest"),
+				tbv1beta1.PodInitContainer(trInitStep2, "override-with-tools:latest"),
+				tbv1beta1.PodContainer(trStep1Name, trStep1Name+":latest"),
+				tbv1beta1.PodContainer(nopStep, "override-with-nop:latest"),
 			),
 			cb.PodStatus(
 				cb.PodPhase(corev1.PodSucceeded),

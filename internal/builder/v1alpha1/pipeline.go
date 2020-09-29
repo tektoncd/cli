@@ -213,7 +213,7 @@ func PipelineTaskRefKind(kind v1alpha1.TaskKind) PipelineTaskOp {
 
 // PipelineTaskParam adds a ResourceParam, with specified name and value, to the PipelineTask.
 func PipelineTaskParam(name string, value string, additionalValues ...string) PipelineTaskOp {
-	arrayOrString := ArrayOrString(value, additionalValues...)
+	arrayOrString := arrayOrString(value, additionalValues...)
 	return func(pt *v1alpha1.PipelineTask) {
 		pt.Params = append(pt.Params, v1alpha1.Param{
 			Name:  name,
@@ -287,7 +287,7 @@ func PipelineTaskConditionParam(name, val string) PipelineTaskConditionOp {
 		}
 		condition.Params = append(condition.Params, v1alpha1.Param{
 			Name:  name,
-			Value: *ArrayOrString(val),
+			Value: *arrayOrString(val),
 		})
 	}
 }
@@ -427,16 +427,16 @@ func PipelineRunServiceAccountName(sa string) PipelineRunSpecOp {
 // PipelineRunServiceAccountNameTask configures the service account for given Task in PipelineRun.
 func PipelineRunServiceAccountNameTask(taskName, sa string) PipelineRunSpecOp {
 	return func(prs *v1alpha1.PipelineRunSpec) {
-		prs.ServiceAccountNames = append(prs.ServiceAccountNames, v1alpha1.PipelineRunSpecServiceAccountName{
-			TaskName:           taskName,
-			ServiceAccountName: sa,
+		prs.TaskRunSpecs = append(prs.TaskRunSpecs, v1alpha1.PipelineTaskRunSpec{
+			PipelineTaskName:       taskName,
+			TaskServiceAccountName: sa,
 		})
 	}
 }
 
 // PipelineRunParam add a param, with specified name and value, to the PipelineRunSpec.
 func PipelineRunParam(name string, value string, additionalValues ...string) PipelineRunSpecOp {
-	arrayOrString := ArrayOrString(value, additionalValues...)
+	arrayOrString := arrayOrString(value, additionalValues...)
 	return func(prs *v1alpha1.PipelineRunSpec) {
 		prs.Params = append(prs.Params, v1alpha1.Param{
 			Name:  name,

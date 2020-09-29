@@ -22,6 +22,7 @@ import (
 
 	"github.com/jonboulle/clockwork"
 	tb "github.com/tektoncd/cli/internal/builder/v1alpha1"
+	tbv1beta1 "github.com/tektoncd/cli/internal/builder/v1beta1"
 	"github.com/tektoncd/cli/pkg/cli"
 	"github.com/tektoncd/cli/pkg/options"
 	"github.com/tektoncd/cli/pkg/pods/fake"
@@ -322,26 +323,26 @@ func TestPipelinerunLogs(t *testing.T) {
 	}
 
 	p := []*corev1.Pod{
-		tb.Pod(tr1Pod,
-			tb.PodNamespace(ns),
-			tb.PodLabel("tekton.dev/task", pipelineName),
-			tb.PodSpec(
-				tb.PodInitContainer(tr1InitStep1, "override-with-creds:latest"),
-				tb.PodInitContainer(tr1InitStep2, "override-with-tools:latest"),
-				tb.PodContainer(tr1Step1Name, tr1Step1Name+":latest"),
-				tb.PodContainer(nopStep, "override-with-nop:latest"),
+		tbv1beta1.Pod(tr1Pod,
+			tbv1beta1.PodNamespace(ns),
+			tbv1beta1.PodLabel("tekton.dev/task", pipelineName),
+			tbv1beta1.PodSpec(
+				tbv1beta1.PodInitContainer(tr1InitStep1, "override-with-creds:latest"),
+				tbv1beta1.PodInitContainer(tr1InitStep2, "override-with-tools:latest"),
+				tbv1beta1.PodContainer(tr1Step1Name, tr1Step1Name+":latest"),
+				tbv1beta1.PodContainer(nopStep, "override-with-nop:latest"),
 			),
 			cb.PodStatus(
 				cb.PodInitContainerStatus(tr1InitStep1, "override-with-creds:latest"),
 				cb.PodInitContainerStatus(tr1InitStep2, "override-with-tools:latest"),
 			),
 		),
-		tb.Pod(tr2Pod,
-			tb.PodNamespace(ns),
-			tb.PodLabel("tekton.dev/task", pipelineName),
-			tb.PodSpec(
-				tb.PodContainer(tr2Step1Name, tr1Step1Name+":latest"),
-				tb.PodContainer(nopStep, "override-with-nop:latest"),
+		tbv1beta1.Pod(tr2Pod,
+			tbv1beta1.PodNamespace(ns),
+			tbv1beta1.PodLabel("tekton.dev/task", pipelineName),
+			tbv1beta1.PodSpec(
+				tbv1beta1.PodContainer(tr2Step1Name, tr1Step1Name+":latest"),
+				tbv1beta1.PodContainer(nopStep, "override-with-nop:latest"),
 			),
 		),
 	}
@@ -510,12 +511,12 @@ func TestPipelinerunLog_completed_taskrun_only(t *testing.T) {
 			},
 		},
 		Pods: []*corev1.Pod{
-			tb.Pod(tr1Pod,
-				tb.PodNamespace(ns),
-				tb.PodLabel("tekton.dev/task", pipelineName),
-				tb.PodSpec(
-					tb.PodContainer(tr1Step1Name, tr1Step1Name+":latest"),
-					tb.PodContainer("nop", "override-with-nop:latest"),
+			tbv1beta1.Pod(tr1Pod,
+				tbv1beta1.PodNamespace(ns),
+				tbv1beta1.PodLabel("tekton.dev/task", pipelineName),
+				tbv1beta1.PodSpec(
+					tbv1beta1.PodContainer(tr1Step1Name, tr1Step1Name+":latest"),
+					tbv1beta1.PodContainer("nop", "override-with-nop:latest"),
 				),
 			),
 		},
@@ -585,11 +586,11 @@ func TestPipelinerunLog_completed_taskrun_only(t *testing.T) {
 			},
 		},
 		Pods: []*corev1.Pod{
-			tb.Pod("output-task-pod-embedded",
-				tb.PodNamespace("ns"),
-				tb.PodSpec(
-					tb.PodContainer("test-step", "test-step1:latest"),
-					tb.PodContainer("nop2", "override-with-nop:latest"),
+			tbv1beta1.Pod("output-task-pod-embedded",
+				tbv1beta1.PodNamespace("ns"),
+				tbv1beta1.PodSpec(
+					tbv1beta1.PodContainer("test-step", "test-step1:latest"),
+					tbv1beta1.PodContainer("nop2", "override-with-nop:latest"),
 				),
 				cb.PodStatus(
 					cb.PodPhase(corev1.PodSucceeded),
@@ -740,12 +741,12 @@ func TestPipelinerunLog_follow_mode(t *testing.T) {
 	}
 
 	p := []*corev1.Pod{
-		tb.Pod(tr1Pod,
-			tb.PodNamespace(ns),
-			tb.PodLabel("tekton.dev/task", pipelineName),
-			tb.PodSpec(
-				tb.PodContainer(tr1Step1Name, tr1Step1Name+":latest"),
-				tb.PodContainer("nop", "override-with-nop:latest"),
+		tbv1beta1.Pod(tr1Pod,
+			tbv1beta1.PodNamespace(ns),
+			tbv1beta1.PodLabel("tekton.dev/task", pipelineName),
+			tbv1beta1.PodSpec(
+				tbv1beta1.PodContainer(tr1Step1Name, tr1Step1Name+":latest"),
+				tbv1beta1.PodContainer("nop", "override-with-nop:latest"),
 			),
 			cb.PodStatus(
 				cb.PodPhase(corev1.PodSucceeded),
@@ -1458,12 +1459,12 @@ func TestPipelinerunLog_completed_taskrun_only_v1beta1(t *testing.T) {
 			},
 		},
 		Pods: []*corev1.Pod{
-			tb.Pod(tr1Pod,
-				tb.PodNamespace(ns),
-				tb.PodLabel("tekton.dev/task", pipelineName),
-				tb.PodSpec(
-					tb.PodContainer(tr1Step1Name, tr1Step1Name+":latest"),
-					tb.PodContainer("nop", "override-with-nop:latest"),
+			tbv1beta1.Pod(tr1Pod,
+				tbv1beta1.PodNamespace(ns),
+				tbv1beta1.PodLabel("tekton.dev/task", pipelineName),
+				tbv1beta1.PodSpec(
+					tbv1beta1.PodContainer(tr1Step1Name, tr1Step1Name+":latest"),
+					tbv1beta1.PodContainer("nop", "override-with-nop:latest"),
 				),
 			),
 		},
@@ -1580,11 +1581,11 @@ func TestPipelinerunLog_completed_taskrun_only_v1beta1(t *testing.T) {
 			},
 		},
 		Pods: []*corev1.Pod{
-			tb.Pod("output-task-pod-embedded",
-				tb.PodNamespace("ns"),
-				tb.PodSpec(
-					tb.PodContainer("test-step", "test-step1:latest"),
-					tb.PodContainer("nop2", "override-with-nop:latest"),
+			tbv1beta1.Pod("output-task-pod-embedded",
+				tbv1beta1.PodNamespace("ns"),
+				tbv1beta1.PodSpec(
+					tbv1beta1.PodContainer("test-step", "test-step1:latest"),
+					tbv1beta1.PodContainer("nop2", "override-with-nop:latest"),
 				),
 				cb.PodStatus(
 					cb.PodPhase(corev1.PodSucceeded),
@@ -1779,12 +1780,12 @@ func TestPipelinerunLog_follow_mode_v1beta1(t *testing.T) {
 	}
 
 	p := []*corev1.Pod{
-		tb.Pod(tr1Pod,
-			tb.PodNamespace(ns),
-			tb.PodLabel("tekton.dev/task", pipelineName),
-			tb.PodSpec(
-				tb.PodContainer(tr1Step1Name, tr1Step1Name+":latest"),
-				tb.PodContainer("nop", "override-with-nop:latest"),
+		tbv1beta1.Pod(tr1Pod,
+			tbv1beta1.PodNamespace(ns),
+			tbv1beta1.PodLabel("tekton.dev/task", pipelineName),
+			tbv1beta1.PodSpec(
+				tbv1beta1.PodContainer(tr1Step1Name, tr1Step1Name+":latest"),
+				tbv1beta1.PodContainer("nop", "override-with-nop:latest"),
 			),
 			cb.PodStatus(
 				cb.PodPhase(corev1.PodSucceeded),
@@ -2684,21 +2685,21 @@ func TestPipelinerunLog_finally_v1beta1(t *testing.T) {
 	}
 
 	p := []*corev1.Pod{
-		tb.Pod(tr1Pod,
-			tb.PodNamespace(ns),
-			tb.PodLabel("tekton.dev/task", pipelineName),
-			tb.PodSpec(
-				tb.PodContainer(tr1Step1Name, tr1Step1Name+":latest"),
+		tbv1beta1.Pod(tr1Pod,
+			tbv1beta1.PodNamespace(ns),
+			tbv1beta1.PodLabel("tekton.dev/task", pipelineName),
+			tbv1beta1.PodSpec(
+				tbv1beta1.PodContainer(tr1Step1Name, tr1Step1Name+":latest"),
 			),
 			cb.PodStatus(
 				cb.PodPhase(corev1.PodSucceeded),
 			),
 		),
-		tb.Pod(finallyTrPod,
-			tb.PodNamespace(ns),
-			tb.PodLabel("tekton.dev/task", pipelineName),
-			tb.PodSpec(
-				tb.PodContainer(finallyTrStep1Name, finallyTrStep1Name+":latest"),
+		tbv1beta1.Pod(finallyTrPod,
+			tbv1beta1.PodNamespace(ns),
+			tbv1beta1.PodLabel("tekton.dev/task", pipelineName),
+			tbv1beta1.PodSpec(
+				tbv1beta1.PodContainer(finallyTrStep1Name, finallyTrStep1Name+":latest"),
 			),
 			cb.PodStatus(
 				cb.PodPhase(corev1.PodSucceeded),
