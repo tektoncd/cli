@@ -23,6 +23,7 @@ import (
 	"github.com/tektoncd/cli/test/framework"
 	"github.com/tektoncd/cli/test/helper"
 	"gotest.tools/v3/assert"
+	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	knativetest "knative.dev/pkg/test"
 )
 
@@ -35,12 +36,47 @@ func TestEventListenerE2E(t *testing.T) {
 	kubectl := cli.NewKubectl(namespace)
 	tkn, err := cli.NewTknRunner(namespace)
 	assert.NilError(t, err)
+	elName := "github-listener-interceptor"
 
-	t.Logf("Creating eventlistener in namespace: %s", namespace)
-	kubectl.MustSucceed(t, "create", "-f", helper.GetResourcePath("eventlistener.yaml"))
+	t.Logf("Creating EventListener %s in namespace %s", elName, namespace)
+	kubectl.MustSucceed(t, "create", "-f", helper.GetResourcePath("eventlistener/eventlistener.yaml"))
+	// Wait for pods to become available for next test
+	kubectl.MustSucceed(t, "wait", "--for=condition=Ready", "pod", "-n", namespace, "--timeout=2m", "--all")
 
-	t.Run("Assert if EventListener AVAILABLE status is false", func(t *testing.T) {
-		res := tkn.Run("eventlistener", "list")
-		assert.Assert(t, strings.Contains(res.Stdout(), "AVAILABLE") && strings.Contains(res.Stdout(), "False"))
+	t.Run("Assert if EventListener AVAILABLE status is true", func(t *testing.T) {
+		res := tkn.MustSucceed(t, "eventlistener", "list")
+		stdout := res.Stdout()
+		assert.Assert(t, strings.Contains(stdout, elName) &&
+			strings.Contains(stdout, "AVAILABLE") &&
+			strings.Contains(stdout, "True"))
+	})
+
+	t.Run("Get logs of EventListener", func(t *testing.T) {
+		res := tkn.MustSucceed(t, "eventlistener", "logs", elName, "-t", "1")
+		expected := `{"level":"info","logger":"eventlistener","caller":"eventlistenersink/main.go:98","msg":"Listen and serve on port 8080","knative.dev/controller":"eventlistener"}`
+		assert.Assert(t, strings.Contains(res.Stdout(), expected))
+	})
+
+	t.Logf("Scaling EventListener %s to 3 replicas in namespace %s", elName, namespace)
+	kubectl.MustSucceed(t, "apply", "-f", helper.GetResourcePath("eventlistener/eventlistener-multi-replica.yaml"))
+	// Wait for pods to become available for next test
+	kubectl.MustSucceed(t, "wait", "--for=condition=Ready", "pod", "-n", namespace, "--timeout=2m", "--all")
+
+	t.Run("Get logs of EventListener with multiple pods", func(t *testing.T) {
+		elPods, err := c.KubeClient.Kube.CoreV1().Pods(namespace).List(metav1.ListOptions{LabelSelector: "eventlistener=" + elName})
+		if err != nil {
+			t.Fatalf("Error getting pods for EventListener %s: %v", elName, err)
+		}
+
+		assert.Assert(t, len(elPods.Items) == 3)
+
+		res := tkn.MustSucceed(t, "eventlistener", "logs", elName, "-t", "1")
+		stdout := res.Stdout()
+		for _, pod := range elPods.Items {
+			assert.Assert(t, strings.Contains(stdout, pod.Name))
+		}
+
+		expected := `{"level":"info","logger":"eventlistener","caller":"eventlistenersink/main.go:98","msg":"Listen and serve on port 8080","knative.dev/controller":"eventlistener"}`
+		assert.Assert(t, strings.Contains(stdout, expected))
 	})
 }

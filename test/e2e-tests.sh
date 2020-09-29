@@ -105,7 +105,7 @@ kubectl config set-context $(kubectl config current-context) --namespace=tektonc
 # create pipeline, pipelinerun, task, and taskrun
 kubectl apply -f ./test/resources/output-pipelinerun.yaml
 kubectl apply -f ./test/resources/task-volume.yaml
-kubectl apply -f ./test/resources/eventlistener.yaml
+kubectl apply -f ./test/resources/eventlistener/eventlistener-multi-replica.yaml
 echo Waiting for resources to be ready
 echo ---------------------------------
 wait_until_ready 600 pipelinerun/output-pipeline-run || exit 1
@@ -125,7 +125,7 @@ run_test  "list eventlistener" tkn eventlistener list
 
 run_test  "describe pipeline" tkn pipeline describe output-pipeline
 run_test  "describe pipelinerun" tkn pipelinerun describe output-pipeline-run
-run_test  "describe eventlistener" tkn eventlistener describe listener
+run_test  "describe eventlistener" tkn eventlistener describe github-listener-interceptor
 
 run_test  "show logs" tkn pipelinerun logs output-pipeline-run
 run_test  "show logs" tkn taskrun logs test-template-volume
@@ -138,14 +138,14 @@ run_test  "delete pipelinerun" tkn pipelinerun delete output-pipeline-run -f
 run_test  "delete resource" tkn resource delete skaffold-git -f
 run_test  "delete task" tkn task delete create-file -f
 run_test  "delete taskrun" tkn taskrun delete test-template-volume -f
-run_test  "delete eventlistener" tkn eventlistener delete listener -f
+run_test  "delete eventlistener" tkn eventlistener delete github-listener-interceptor -f
 
 # confirm deletion (TODO: Add task test when added desc or logs to task command)
 must_fail  "describe deleted pipeline" tkn pipeline describe output-pipeline
 must_fail  "describe deleted pipelinerun" tkn pipelinerun describe output-pipeline-run
 must_fail  "describe deleted resource" tkn resource describe skaffold-git
 must_fail  "show logs deleted taskrun" tkn taskrun logs test-template-volume
-must_fail  "describe deleted eventlistener" tkn eventlistener describe listener
+must_fail  "describe deleted eventlistener" tkn eventlistener describe github-listener-interceptor
 
 # Make sure that eveything is cleaned up in the current namespace.
 for res in pipelineresources tasks pipelines taskruns pipelineruns; do
