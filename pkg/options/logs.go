@@ -46,6 +46,7 @@ type LogOptions struct {
 	Limit           int
 	AskOpts         survey.AskOpt
 	Fzf             bool
+	Tail            int64
 }
 
 func NewLogOptions(p cli.Params) *LogOptions {

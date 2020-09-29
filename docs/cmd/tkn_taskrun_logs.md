@@ -14,6 +14,7 @@ Show TaskRuns logs
 
 ### Examples
 
+
 Show the logs of TaskRun named 'foo' from the namespace 'bar':
 
     tkn taskrun logs foo -n bar

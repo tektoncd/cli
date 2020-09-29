@@ -30,4 +30,5 @@ Manage eventlisteners
 * [tkn eventlistener delete](tkn_eventlistener_delete.md)	 - Delete EventListeners in a namespace
 * [tkn eventlistener describe](tkn_eventlistener_describe.md)	 - Describe EventListener in a namespace
 * [tkn eventlistener list](tkn_eventlistener_list.md)	 - Lists eventlisteners in a namespace
+* [tkn eventlistener logs](tkn_eventlistener_logs.md)	 - Show EventListener logs
 
