@@ -1,0 +1,29 @@
+Name:        pipeline-run
+Namespace:   ns
+Labels:
+ tekton.dev/pipeline=pipeline
+
+Status
+
+STARTED   DURATION   STATUS
+---       ---        ---
+
+Resources
+
+ No resources
+
+Params
+
+ No params
+
+Results
+
+ No results
+
+Workspaces
+
+ No workspaces
+
+Taskruns
+
+ No taskruns

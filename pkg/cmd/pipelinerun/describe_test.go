@@ -637,6 +637,47 @@ func TestPipelineRunDescribe_without_pipelineref(t *testing.T) {
 	golden.Assert(t, actual, fmt.Sprintf("%s.golden", t.Name()))
 }
 
+func TestPipelineRunDescribe_withoutNameOfOnlyOnePipelineRunPresent(t *testing.T) {
+	clock := clockwork.NewFakeClock()
+
+	pipelineRuns := []*v1alpha1.PipelineRun{
+		tb.PipelineRun("pipeline-run",
+			tb.PipelineRunNamespace("ns"),
+			cb.PipelineRunCreationTimestamp(clock.Now()),
+			tb.PipelineRunLabel("tekton.dev/pipeline", "pipeline"),
+			tb.PipelineRunStatus(),
+		),
+	}
+
+	namespaces := []*corev1.Namespace{
+		{
+			ObjectMeta: metav1.ObjectMeta{
+				Name: "ns",
+			},
+		},
+	}
+
+	version := "v1alpha1"
+	tdc := testDynamic.Options{}
+	dynamic, err := tdc.Client(
+		cb.UnstructuredPR(pipelineRuns[0], version),
+	)
+	if err != nil {
+		t.Errorf("unable to create dynamic client: %v", err)
+	}
+	cs, _ := test.SeedTestData(t, pipelinetest.Data{Namespaces: namespaces, PipelineRuns: pipelineRuns})
+	cs.Pipeline.Resources = cb.APIResourceList(version, []string{"pipelinerun", "taskrun"})
+	p := &test.Params{Tekton: cs.Pipeline, Kube: cs.Kube, Dynamic: dynamic, Clock: clock}
+	p.SetNamespace("ns")
+	pipelinerun := Command(p)
+	clock.Advance(10 * time.Minute)
+	actual, err := test.ExecuteCommand(pipelinerun, "desc")
+	if err != nil {
+		t.Errorf("Unexpected error: %v", err)
+	}
+	golden.Assert(t, actual, fmt.Sprintf("%s.golden", t.Name()))
+}
+
 func TestPipelineRunDescribe_no_resourceref(t *testing.T) {
 	clock := clockwork.NewFakeClock()
 
@@ -1911,6 +1952,45 @@ func TestPipelineRunDescribe_v1beta1_with_workspaces(t *testing.T) {
 
 	pipelinerun := Command(p)
 	got, err := test.ExecuteCommand(pipelinerun, "desc", "-n", "ns", "--last")
+	if err != nil {
+		t.Errorf("Unexpected error: %v", err)
+	}
+	golden.Assert(t, got, fmt.Sprintf("%s.golden", t.Name()))
+}
+
+func TestPipelineRunDescribeV1beta1_withoutNameOfOnlyOnePipelineRunPresent(t *testing.T) {
+	pipelinerunname := "pipeline-run"
+	prun := []*v1beta1.PipelineRun{
+		{
+			ObjectMeta: metav1.ObjectMeta{
+				Name:      pipelinerunname,
+				Namespace: "ns",
+			},
+		},
+	}
+	namespaces := []*corev1.Namespace{
+		{
+			ObjectMeta: metav1.ObjectMeta{
+				Name: "ns",
+			},
+		},
+	}
+
+	version := "v1beta1"
+	tdc := testDynamic.Options{}
+	dynamic, err := tdc.Client(
+		cb.UnstructuredV1beta1PR(prun[0], version),
+	)
+	if err != nil {
+		t.Errorf("unable to create dynamic client: %v", err)
+	}
+	cs, _ := test.SeedV1beta1TestData(t, pipelinev1beta1test.Data{Namespaces: namespaces, PipelineRuns: prun})
+	cs.Pipeline.Resources = cb.APIResourceList(version, []string{"pipelinerun", "taskrun"})
+	p := &test.Params{Tekton: cs.Pipeline, Kube: cs.Kube, Dynamic: dynamic}
+	p.SetNamespace("ns")
+
+	pipelinerun := Command(p)
+	got, err := test.ExecuteCommand(pipelinerun, "desc")
 	if err != nil {
 		t.Errorf("Unexpected error: %v", err)
 	}
