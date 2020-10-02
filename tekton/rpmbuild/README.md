@@ -36,13 +36,13 @@ need to have a PipelineResource for your git repository. See
 * You need to get your API file from https://copr.fedorainfracloud.org/api/ and have it saved to `~/.config/copr`. You will need to change the 
 `username` field to `chmouel` since the copr repo is currently `/chmouel/tektoncd-cli/`.
 
+* Make sure you have the GitHub token set as documented in [RELEASE_PROCESS.md](../../RELEASE_PROCESS.md). You can also just add the `--namespace` option to all `kubectl` commands below and specify the namespace where you ran the release (by default, the namespace used in `release.sh` is `release`).
+
 * You create the secret from that copr config file:
 
 ```
 kubectl create secret generic copr-cli-config --from-file=copr=${HOME}/.config/copr
 ```
-
-* Make sure you have the GitHUB token set as documented in [RELEASE_PROCESS.md](../../RELEASE_PROCESS.md)
 
 * You should be able create the task with:
 

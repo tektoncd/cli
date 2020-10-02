@@ -6,7 +6,7 @@ release the Tekton Pipelines cli!
 This directory contains the
 [`Tasks`](https://github.com/tektoncd/pipeline/blob/master/docs/tasks.md) and
 [`Pipelines`](https://github.com/tektoncd/pipeline/blob/master/docs/pipelines.md)
-that we use for releases and pull requests.
+that we use for releasing the cli.
 
 TODO(tektoncd/pipeline#538): In tektoncd/pipeline#538 or tektoncd/pipeline#537 we will update
 [Prow](https://github.com/tektoncd/pipeline/blob/master/CONTRIBUTING.md#pull-request-process)
@@ -15,8 +15,7 @@ to invoke these `Pipelines` automatically, but, for now, we invoke them manually
 ## Release Pipeline
 
 You can use the script [`./release.sh`](release.sh) that will do everything
-that needs to be done for the release. In order to run `release.sh`, you will 
-need [these tools](https://github.com/tektoncd/cli/blob/master/tekton/release.sh#L13y) installed locally.
+that needs to be done for the release. 
 
 The first argument to `release.sh` is the release version. It
 needs to be in a format like `v1.2.3`, which is basically SEMVER.
@@ -29,18 +28,13 @@ make sure to provide them in order from the oldest to the newest.
 If you give the `*` argument for the commits to pick up, it would apply all the new
 commits.
 
-It will them use your Kubernetes cluster with Tekton and apply what needs to be done for
+The release script will ask you to provide a GitHub token with appropriate priviledges as 
+documented under the [release process prerequisites](../RELEASE_PROCESS.md#Prerequisites).
+
+It will then use your Kubernetes cluster with Tekton and apply what needs to be done for
 running the release.
 
-For running the release pipeline, you will require a github token, which script will ask
-to provide. You can generate a GitHub token using the following 
-[instructions](https://help.github.com/en/github/authenticating-to-github/creating-a-personal-access-token-for-the-command-line). 
-Your token needs following access `admin:org, read:packages, repo, write:packages`
-
 Finally it will launch the `tkn` cli that you have installed locally to show the logs.
-
-Make sure we have a nice ChangeLog before doing the release, listing `features`
-and `bugs` and be thankful to the contributors by listing them. An example is shown [here](https://github.com/tektoncd/cli/releases/tag/v0.6.0).
 
 ## Debugging
 
