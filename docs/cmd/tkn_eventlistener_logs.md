@@ -15,8 +15,8 @@ Show EventListener logs
 ### Examples
 
 
-Show logs of EventListener pods: 
-	
+Show logs of EventListener pods:
+
     tkn eventlistener logs eventlistenerName
 
 Show 2 lines of most recent logs from all EventListener pods:

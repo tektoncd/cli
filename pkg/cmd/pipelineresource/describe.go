@@ -15,6 +15,7 @@
 package pipelineresource
 
 import (
+	"context"
 	"fmt"
 	"io"
 	"os"
@@ -124,7 +125,7 @@ func describePipelineResourceOutput(w io.Writer, p cli.Params, f *cliopts.PrintF
 
 	c := cs.Resource.TektonV1alpha1().PipelineResources(p.Namespace())
 
-	pipelineresource, err := c.Get(name, metav1.GetOptions{})
+	pipelineresource, err := c.Get(context.Background(), name, metav1.GetOptions{})
 	if err != nil {
 		return err
 	}
@@ -146,7 +147,7 @@ func printPipelineResourceDescription(s *cli.Stream, p cli.Params, preName strin
 		return fmt.Errorf("failed to create tekton client")
 	}
 
-	pre, err := cs.Resource.TektonV1alpha1().PipelineResources(p.Namespace()).Get(preName, metav1.GetOptions{})
+	pre, err := cs.Resource.TektonV1alpha1().PipelineResources(p.Namespace()).Get(context.Background(), preName, metav1.GetOptions{})
 	if err != nil {
 		return fmt.Errorf("failed to find pipelineresource %q", preName)
 	}

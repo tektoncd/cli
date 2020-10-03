@@ -15,6 +15,7 @@
 package triggertemplate
 
 import (
+	"context"
 	"errors"
 	"fmt"
 	"text/tabwriter"
@@ -93,7 +94,7 @@ or
 }
 
 func list(client versioned.Interface, namespace string) (*v1alpha1.TriggerTemplateList, error) {
-	tts, err := client.TriggersV1alpha1().TriggerTemplates(namespace).List(metav1.ListOptions{})
+	tts, err := client.TriggersV1alpha1().TriggerTemplates(namespace).List(context.Background(), metav1.ListOptions{})
 	if err != nil {
 		return nil, err
 	}

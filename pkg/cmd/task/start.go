@@ -551,7 +551,7 @@ func createPipelineResource(resType v1alpha1.PipelineResourceType, askOpt survey
 	if err != nil {
 		return nil, err
 	}
-	newRes, err := cs.Resource.TektonV1alpha1().PipelineResources(p.Namespace()).Create(&res.PipelineResource)
+	newRes, err := cs.Resource.TektonV1alpha1().PipelineResources(p.Namespace()).Create(context.Background(), &res.PipelineResource, metav1.CreateOptions{})
 	if err != nil {
 		return nil, err
 	}

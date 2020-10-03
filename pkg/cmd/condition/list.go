@@ -15,6 +15,7 @@
 package condition
 
 import (
+	"context"
 	"fmt"
 	"text/tabwriter"
 
@@ -116,7 +117,7 @@ func printConditionListObj(s *cli.Stream, p cli.Params, f *cliopts.PrintFlags) e
 func listAllConditions(cs versioned.Interface, ns string) (*v1alpha1.ConditionList, error) {
 	c := cs.TektonV1alpha1().Conditions(ns)
 
-	conditions, err := c.List(metav1.ListOptions{})
+	conditions, err := c.List(context.Background(), metav1.ListOptions{})
 	if err != nil {
 		return nil, err
 	}

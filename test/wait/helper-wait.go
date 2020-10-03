@@ -52,7 +52,7 @@ func ForTaskRunState(c *framework.Clients, name string, inState TaskRunStateFn, 
 	defer span.End()
 
 	return wait.PollImmediate(framework.Interval, framework.Apitimeout, func() (bool, error) {
-		r, err := c.TaskRunClient.Get(name, metav1.GetOptions{})
+		r, err := c.TaskRunClient.Get(context.Background(), name, metav1.GetOptions{})
 		if err != nil {
 			return true, err
 		}
@@ -70,7 +70,7 @@ func ForPodState(c *framework.Clients, name string, namespace string, inState fu
 	defer span.End()
 
 	return wait.PollImmediate(framework.Interval, framework.Apitimeout, func() (bool, error) {
-		r, err := c.KubeClient.Kube.CoreV1().Pods(namespace).Get(name, metav1.GetOptions{})
+		r, err := c.KubeClient.Kube.CoreV1().Pods(namespace).Get(context.Background(), name, metav1.GetOptions{})
 		if err != nil {
 			return true, err
 		}
@@ -80,7 +80,7 @@ func ForPodState(c *framework.Clients, name string, namespace string, inState fu
 }
 
 func ForPodStateKube(c *knativetest.KubeClient, namespace string, inState PodRunStateFn, desc string) error {
-	podlist, err := c.Kube.CoreV1().Pods(namespace).List(metav1.ListOptions{})
+	podlist, err := c.Kube.CoreV1().Pods(namespace).List(context.Background(), metav1.ListOptions{})
 	if err != nil {
 		return err
 	}
@@ -92,7 +92,7 @@ func ForPodStateKube(c *knativetest.KubeClient, namespace string, inState PodRun
 
 		err1 := wait.PollImmediate(framework.Interval, framework.Apitimeout, func() (bool, error) {
 			fmt.Println("v.Name", v.Name)
-			r, err := c.Kube.CoreV1().Pods(namespace).Get(v.Name, metav1.GetOptions{})
+			r, err := c.Kube.CoreV1().Pods(namespace).Get(context.Background(), v.Name, metav1.GetOptions{})
 			if r.Status.Phase == "Running" || r.Status.Phase == "Succeeded" && err != nil {
 				fmt.Printf("Pods are Running !! in namespace %s podName %s \n", namespace, v.Name)
 				return true, err
@@ -109,7 +109,7 @@ func ForPodStateKube(c *knativetest.KubeClient, namespace string, inState PodRun
 }
 
 func ForPodStatus(kubeClient *knativetest.KubeClient, namespace string) {
-	watch, err := kubeClient.Kube.CoreV1().Pods(namespace).Watch(metav1.ListOptions{})
+	watch, err := kubeClient.Kube.CoreV1().Pods(namespace).Watch(context.Background(), metav1.ListOptions{})
 	if err != nil {
 		log.Fatal(err.Error())
 	}
@@ -159,7 +159,7 @@ func ForPipelineRunState(c *framework.Clients, name string, polltimeout time.Dur
 	defer span.End()
 
 	return wait.PollImmediate(framework.Interval, polltimeout, func() (bool, error) {
-		r, err := c.PipelineRunClient.Get(name, metav1.GetOptions{})
+		r, err := c.PipelineRunClient.Get(context.Background(), name, metav1.GetOptions{})
 		if err != nil {
 			return true, err
 		}
@@ -177,7 +177,7 @@ func ForServiceExternalIPState(c *framework.Clients, namespace, name string, inS
 	defer span.End()
 
 	return wait.PollImmediate(framework.Interval, framework.Apitimeout, func() (bool, error) {
-		r, err := c.KubeClient.Kube.CoreV1().Services(namespace).Get(name, metav1.GetOptions{})
+		r, err := c.KubeClient.Kube.CoreV1().Services(namespace).Get(context.Background(), name, metav1.GetOptions{})
 		if err != nil {
 			return true, err
 		}

@@ -15,6 +15,7 @@
 package condition
 
 import (
+	"context"
 	"fmt"
 
 	"github.com/spf13/cobra"
@@ -74,7 +75,7 @@ func deleteConditions(s *cli.Stream, p cli.Params, condNames []string, deleteAll
 		return fmt.Errorf("failed to create tekton client")
 	}
 	d := deleter.New("Condition", func(conditionName string) error {
-		return cs.Tekton.TektonV1alpha1().Conditions(p.Namespace()).Delete(conditionName, &metav1.DeleteOptions{})
+		return cs.Tekton.TektonV1alpha1().Conditions(p.Namespace()).Delete(context.Background(), conditionName, metav1.DeleteOptions{})
 	})
 	if deleteAll {
 		condNames, err = allConditionNames(p, cs)
@@ -96,7 +97,7 @@ func deleteConditions(s *cli.Stream, p cli.Params, condNames []string, deleteAll
 }
 
 func allConditionNames(p cli.Params, cs *cli.Clients) ([]string, error) {
-	conds, err := cs.Tekton.TektonV1alpha1().Conditions(p.Namespace()).List(metav1.ListOptions{})
+	conds, err := cs.Tekton.TektonV1alpha1().Conditions(p.Namespace()).List(context.Background(), metav1.ListOptions{})
 	if err != nil {
 		return nil, err
 	}

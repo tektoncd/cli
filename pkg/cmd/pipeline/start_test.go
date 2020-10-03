@@ -15,6 +15,7 @@
 package pipeline
 
 import (
+	"context"
 	"errors"
 	"fmt"
 	"reflect"
@@ -1943,7 +1944,7 @@ func TestPipelineStart_Interactive(t *testing.T) {
 					}
 
 					tekton := cs2.Pipeline.TektonV1alpha1()
-					runs, err := tekton.PipelineRuns("ns").List(v1.ListOptions{})
+					runs, err := tekton.PipelineRuns("ns").List(context.Background(), v1.ListOptions{})
 					if err != nil {
 						return err
 					}
@@ -2020,7 +2021,7 @@ func TestPipelineStart_Interactive(t *testing.T) {
 					}
 
 					tekton := cs3.Pipeline.TektonV1alpha1()
-					runs, err := tekton.PipelineRuns("ns").List(v1.ListOptions{})
+					runs, err := tekton.PipelineRuns("ns").List(context.Background(), v1.ListOptions{})
 					if err != nil {
 						return err
 					}
@@ -2057,7 +2058,7 @@ func TestPipelineStart_Interactive(t *testing.T) {
 					}
 
 					tekton := cs4.Pipeline.TektonV1alpha1()
-					runs, err := tekton.PipelineRuns("ns").List(v1.ListOptions{})
+					runs, err := tekton.PipelineRuns("ns").List(context.Background(), v1.ListOptions{})
 					if err != nil {
 						return err
 					}
@@ -2129,7 +2130,7 @@ func TestPipelineStart_Interactive(t *testing.T) {
 					}
 
 					tekton := cs5.Pipeline.TektonV1alpha1()
-					runs, err := tekton.PipelineRuns("ns").List(v1.ListOptions{})
+					runs, err := tekton.PipelineRuns("ns").List(context.Background(), v1.ListOptions{})
 					if err != nil {
 						return err
 					}
@@ -2170,7 +2171,7 @@ func TestPipelineStart_Interactive(t *testing.T) {
 					}
 
 					tekton := cs6.Pipeline.TektonV1alpha1()
-					runs, err := tekton.PipelineRuns("ns").List(v1.ListOptions{})
+					runs, err := tekton.PipelineRuns("ns").List(context.Background(), v1.ListOptions{})
 					if err != nil {
 						return err
 					}
@@ -2239,7 +2240,7 @@ func TestPipelineStart_Interactive(t *testing.T) {
 					}
 
 					tekton := cs7.Pipeline.TektonV1alpha1()
-					runs, err := tekton.PipelineRuns("ns").List(v1.ListOptions{})
+					runs, err := tekton.PipelineRuns("ns").List(context.Background(), v1.ListOptions{})
 					if err != nil {
 						return err
 					}
@@ -2336,7 +2337,7 @@ func TestPipelineStart_Interactive(t *testing.T) {
 					}
 
 					tekton := cs8.Pipeline.TektonV1alpha1()
-					runs, err := tekton.PipelineRuns("ns").List(v1.ListOptions{})
+					runs, err := tekton.PipelineRuns("ns").List(context.Background(), v1.ListOptions{})
 					if err != nil {
 						return err
 					}
@@ -2429,7 +2430,7 @@ func TestPipelineStart_Interactive(t *testing.T) {
 					}
 
 					tekton := cs9.Pipeline.TektonV1alpha1()
-					runs, err := tekton.PipelineRuns("ns").List(v1.ListOptions{})
+					runs, err := tekton.PipelineRuns("ns").List(context.Background(), v1.ListOptions{})
 					if err != nil {
 						return err
 					}
@@ -2550,7 +2551,7 @@ func TestPipelineStart_Interactive(t *testing.T) {
 					}
 
 					tekton := cs10.Pipeline.TektonV1alpha1()
-					runs, err := tekton.PipelineRuns("ns").List(v1.ListOptions{})
+					runs, err := tekton.PipelineRuns("ns").List(context.Background(), v1.ListOptions{})
 					if err != nil {
 						return err
 					}
@@ -2615,7 +2616,7 @@ func TestPipelineStart_Interactive(t *testing.T) {
 					}
 
 					tekton := cs11.Pipeline.TektonV1alpha1()
-					runs, err := tekton.PipelineRuns("ns").List(v1.ListOptions{})
+					runs, err := tekton.PipelineRuns("ns").List(context.Background(), v1.ListOptions{})
 					if err != nil {
 						return err
 					}

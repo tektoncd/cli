@@ -16,6 +16,7 @@
 package pipeline
 
 import (
+	"context"
 	"encoding/json"
 	"strconv"
 	"strings"
@@ -35,6 +36,7 @@ import (
 	"gotest.tools/v3/assert"
 	is "gotest.tools/v3/assert/cmp"
 	"gotest.tools/v3/icmd"
+	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	knativetest "knative.dev/pkg/test"
 )
 
@@ -348,7 +350,7 @@ func TestPipelinesNegativeE2E(t *testing.T) {
 	kubectl.MustSucceed(t, "create", "-f", helper.GetResourcePath("pipeline.yaml"))
 
 	t.Logf("Creating (Fault) Git PipelineResource %s", tePipelineFaultGitResourceName)
-	if _, err := c.PipelineResourceClient.Create(getFaultGitResource(tePipelineFaultGitResourceName, namespace)); err != nil {
+	if _, err := c.PipelineResourceClient.Create(context.Background(), getFaultGitResource(tePipelineFaultGitResourceName, namespace), metav1.CreateOptions{}); err != nil {
 		t.Fatalf("Failed to create fault Pipeline Resource `%s`: %s", tePipelineFaultGitResourceName, err)
 	}
 
@@ -494,27 +496,27 @@ func TestDeletePipelinesE2E(t *testing.T) {
 	assert.NilError(t, err)
 
 	t.Logf("Creating Git PipelineResource %s", tePipelineGitResourceName)
-	if _, err := c.PipelineResourceClient.Create(getGitResource(tePipelineGitResourceName, namespace)); err != nil {
+	if _, err := c.PipelineResourceClient.Create(context.Background(), getGitResource(tePipelineGitResourceName, namespace), metav1.CreateOptions{}); err != nil {
 		t.Fatalf("Failed to create Pipeline Resource `%s`: %s", tePipelineGitResourceName, err)
 	}
 
 	t.Logf("Creating (Fault) Git PipelineResource %s", tePipelineFaultGitResourceName)
-	if _, err := c.PipelineResourceClient.Create(getFaultGitResource(tePipelineFaultGitResourceName, namespace)); err != nil {
+	if _, err := c.PipelineResourceClient.Create(context.Background(), getFaultGitResource(tePipelineFaultGitResourceName, namespace), metav1.CreateOptions{}); err != nil {
 		t.Fatalf("Failed to create fault Pipeline Resource `%s`: %s", tePipelineFaultGitResourceName, err)
 	}
 
 	t.Logf("Creating Task  %s", TaskName1)
-	if _, err := c.TaskClient.Create(getCreateFileTask(TaskName1, namespace)); err != nil {
+	if _, err := c.TaskClient.Create(context.Background(), getCreateFileTask(TaskName1, namespace), metav1.CreateOptions{}); err != nil {
 		t.Fatalf("Failed to create Task Resource `%s`: %s", TaskName1, err)
 	}
 
 	t.Logf("Creating Task  %s", TaskName2)
-	if _, err := c.TaskClient.Create(getReadFileTask(TaskName2, namespace)); err != nil {
+	if _, err := c.TaskClient.Create(context.Background(), getReadFileTask(TaskName2, namespace), metav1.CreateOptions{}); err != nil {
 		t.Fatalf("Failed to create Task Resource `%s`: %s", TaskName2, err)
 	}
 	for i := 1; i <= 3; i++ {
 		t.Logf("Create Pipeline %s", tePipelineName+"-"+strconv.Itoa(i))
-		if _, err := c.PipelineClient.Create(getPipeline(tePipelineName+"-"+strconv.Itoa(i), namespace, TaskName1, TaskName2)); err != nil {
+		if _, err := c.PipelineClient.Create(context.Background(), getPipeline(tePipelineName+"-"+strconv.Itoa(i), namespace, TaskName1, TaskName2), metav1.CreateOptions{}); err != nil {
 			t.Fatalf("Failed to create pipeline `%s`: %s", tePipelineName+"-"+strconv.Itoa(i), err)
 		}
 	}

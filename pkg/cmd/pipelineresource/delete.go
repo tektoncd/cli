@@ -15,6 +15,7 @@
 package pipelineresource
 
 import (
+	"context"
 	"fmt"
 
 	"github.com/spf13/cobra"
@@ -76,7 +77,7 @@ func deleteResources(s *cli.Stream, p cli.Params, preNames []string, deleteAll b
 	}
 
 	d := deleter.New("PipelineResource", func(resourceName string) error {
-		return cs.Resource.TektonV1alpha1().PipelineResources(p.Namespace()).Delete(resourceName, &metav1.DeleteOptions{})
+		return cs.Resource.TektonV1alpha1().PipelineResources(p.Namespace()).Delete(context.Background(), resourceName, metav1.DeleteOptions{})
 	})
 	if deleteAll {
 		preNames, err = allPipelineResourceNames(p, cs)
@@ -97,7 +98,7 @@ func deleteResources(s *cli.Stream, p cli.Params, preNames []string, deleteAll b
 }
 
 func allPipelineResourceNames(p cli.Params, cs *cli.Clients) ([]string, error) {
-	resources, err := cs.Resource.TektonV1alpha1().PipelineResources(p.Namespace()).List(metav1.ListOptions{})
+	resources, err := cs.Resource.TektonV1alpha1().PipelineResources(p.Namespace()).List(context.Background(), metav1.ListOptions{})
 	if err != nil {
 		return nil, err
 	}

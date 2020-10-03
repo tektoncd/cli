@@ -15,6 +15,7 @@
 package clustertriggerbinding
 
 import (
+	"context"
 	"errors"
 	"fmt"
 	"text/tabwriter"
@@ -102,7 +103,7 @@ or
 }
 
 func list(client versioned.Interface, namespace string) (*v1alpha1.ClusterTriggerBindingList, error) {
-	tbs, err := client.TriggersV1alpha1().ClusterTriggerBindings().List(metav1.ListOptions{})
+	tbs, err := client.TriggersV1alpha1().ClusterTriggerBindings().List(context.Background(), metav1.ListOptions{})
 	if err != nil {
 		return nil, err
 	}

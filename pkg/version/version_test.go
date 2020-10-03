@@ -15,6 +15,7 @@
 package version
 
 import (
+	"context"
 	"testing"
 
 	"github.com/tektoncd/cli/pkg/test"
@@ -88,7 +89,7 @@ func TestGetPipelineVersion(t *testing.T) {
 			if err != nil {
 				t.Errorf("failed to get client: %v", err)
 			}
-			if _, err := cls.Kube.AppsV1().Deployments(tp.namespace).Create(tp.deployment); err != nil {
+			if _, err := cls.Kube.AppsV1().Deployments(tp.namespace).Create(context.Background(), tp.deployment, metav1.CreateOptions{}); err != nil {
 				t.Errorf("failed to create deployment: %v", err)
 			}
 			version, _ := GetPipelineVersion(cls, tp.userProvidedNamespace)
@@ -174,7 +175,7 @@ func TestGetTriggerVersion(t *testing.T) {
 			if err != nil {
 				t.Errorf("failed to get client: %v", err)
 			}
-			if _, err := cls.Kube.AppsV1().Deployments(tp.namespace).Create(tp.deployment); err != nil {
+			if _, err := cls.Kube.AppsV1().Deployments(tp.namespace).Create(context.Background(), tp.deployment, metav1.CreateOptions{}); err != nil {
 				t.Errorf("failed to create deployment: %v", err)
 			}
 			version, _ := GetTriggerVersion(cls, tp.userProvidedNamespace)
@@ -237,7 +238,7 @@ func TestGetDashboardVersion(t *testing.T) {
 			if err != nil {
 				t.Errorf("failed to get client: %v", err)
 			}
-			if _, err := cls.Kube.AppsV1().Deployments(tp.namespace).Create(tp.deployment); err != nil {
+			if _, err := cls.Kube.AppsV1().Deployments(tp.namespace).Create(context.Background(), tp.deployment, metav1.CreateOptions{}); err != nil {
 				t.Errorf("failed to create deployment: %v", err)
 			}
 			version, _ := GetDashboardVersion(cls, tp.userProvidedNamespace)

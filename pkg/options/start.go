@@ -1,6 +1,7 @@
 package options
 
 import (
+	"context"
 	"fmt"
 	"strings"
 
@@ -95,7 +96,7 @@ func (taskRunOpts *TaskRunOpts) UseTaskRunFrom(tr *v1beta1.TaskRun, cs *cli.Clie
 }
 
 func (intOpts *InteractiveOpts) allPipelineResources(client versionedResource.Interface) (*v1alpha1.PipelineResourceList, error) {
-	pres, err := client.TektonV1alpha1().PipelineResources(intOpts.CliParams.Namespace()).List(metav1.ListOptions{})
+	pres, err := client.TektonV1alpha1().PipelineResources(intOpts.CliParams.Namespace()).List(context.Background(), metav1.ListOptions{})
 	if err != nil {
 		fmt.Fprintf(intOpts.Stream.Err, "failed to list pipelineresources from %s namespace \n", intOpts.Ns)
 		return nil, err

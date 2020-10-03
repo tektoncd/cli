@@ -15,6 +15,8 @@
 package actions
 
 import (
+	"context"
+
 	"github.com/tektoncd/cli/pkg/cli"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
@@ -27,7 +29,7 @@ func Patch(gr schema.GroupVersionResource, clients *cli.Clients, objName string,
 	if err != nil {
 		return nil, err
 	}
-	patchedObj, err := clients.Dynamic.Resource(*gvr).Namespace(ns).Patch(objName, types.JSONPatchType, data, opt)
+	patchedObj, err := clients.Dynamic.Resource(*gvr).Namespace(ns).Patch(context.Background(), objName, types.JSONPatchType, data, opt)
 	if err != nil {
 		return nil, err
 	}

@@ -16,6 +16,7 @@ package builder
 
 import (
 	"bytes"
+	"context"
 	"fmt"
 	"log"
 	"regexp"
@@ -35,7 +36,7 @@ import (
 
 func GetTask(c *framework.Clients, name string) *v1alpha1.Task {
 
-	task, err := c.TaskClient.Get(name, metav1.GetOptions{})
+	task, err := c.TaskClient.Get(context.Background(), name, metav1.GetOptions{})
 	if err != nil {
 		log.Fatalf("Couldn't get expected task  %s", err)
 	}
@@ -44,7 +45,7 @@ func GetTask(c *framework.Clients, name string) *v1alpha1.Task {
 }
 
 func GetClusterTask(c *framework.Clients, name string) *v1alpha1.ClusterTask {
-	clustertask, err := c.ClusterTaskClient.Get(name, metav1.GetOptions{})
+	clustertask, err := c.ClusterTaskClient.Get(context.Background(), name, metav1.GetOptions{})
 	if err != nil {
 		log.Fatalf("Couldn't get expected clustertask  %s", err)
 	}
@@ -53,7 +54,7 @@ func GetClusterTask(c *framework.Clients, name string) *v1alpha1.ClusterTask {
 
 func GetTaskList(c *framework.Clients) *v1alpha1.TaskList {
 
-	tasklist, err := c.TaskClient.List(metav1.ListOptions{})
+	tasklist, err := c.TaskClient.List(context.Background(), metav1.ListOptions{})
 
 	if err != nil {
 		log.Fatalf("Couldn't get expected tasklist  %s", err)
@@ -63,7 +64,7 @@ func GetTaskList(c *framework.Clients) *v1alpha1.TaskList {
 }
 
 func GetClusterTaskList(c *framework.Clients) *v1alpha1.ClusterTaskList {
-	clustertasklist, err := c.ClusterTaskClient.List(metav1.ListOptions{})
+	clustertasklist, err := c.ClusterTaskClient.List(context.Background(), metav1.ListOptions{})
 	if err != nil {
 		log.Fatalf("Couldn't get expected clustertasklist  %s", err)
 	}
@@ -72,7 +73,7 @@ func GetClusterTaskList(c *framework.Clients) *v1alpha1.ClusterTaskList {
 
 func GetTaskRun(c *framework.Clients, name string) *v1alpha1.TaskRun {
 
-	taskRun, err := c.TaskRunClient.Get(name, metav1.GetOptions{})
+	taskRun, err := c.TaskRunClient.Get(context.Background(), name, metav1.GetOptions{})
 
 	if err != nil {
 		log.Fatalf("Couldn't get expected taskRun  %s", err)
@@ -82,7 +83,7 @@ func GetTaskRun(c *framework.Clients, name string) *v1alpha1.TaskRun {
 }
 
 func GetTaskRunList(c *framework.Clients) *v1alpha1.TaskRunList {
-	taskRunlist, err := c.TaskRunClient.List(metav1.ListOptions{})
+	taskRunlist, err := c.TaskRunClient.List(context.Background(), metav1.ListOptions{})
 
 	if err != nil {
 		log.Fatalf("Couldn't get expected taskRunlist  %s", err)
@@ -93,7 +94,7 @@ func GetTaskRunList(c *framework.Clients) *v1alpha1.TaskRunList {
 
 func GetPipelineResource(c *framework.Clients, name string) *v1alpha1.PipelineResource {
 
-	pipelineResource, err := c.PipelineResourceClient.Get(name, metav1.GetOptions{})
+	pipelineResource, err := c.PipelineResourceClient.Get(context.Background(), name, metav1.GetOptions{})
 
 	if err != nil {
 		log.Fatalf("Couldn't get expected pipelineResource  %s", err)
@@ -104,7 +105,7 @@ func GetPipelineResource(c *framework.Clients, name string) *v1alpha1.PipelineRe
 
 func GetPipelineResourceList(c *framework.Clients) *v1alpha1.PipelineResourceList {
 
-	pipelineResourceList, err := c.PipelineResourceClient.List(metav1.ListOptions{})
+	pipelineResourceList, err := c.PipelineResourceClient.List(context.Background(), metav1.ListOptions{})
 
 	if err != nil {
 		log.Fatalf("Couldn't get expected pipelineResourceList  %s", err)
@@ -115,7 +116,7 @@ func GetPipelineResourceList(c *framework.Clients) *v1alpha1.PipelineResourceLis
 
 func GetPipeline(c *framework.Clients, name string) *v1alpha1.Pipeline {
 
-	pipeline, err := c.PipelineClient.Get(name, metav1.GetOptions{})
+	pipeline, err := c.PipelineClient.Get(context.Background(), name, metav1.GetOptions{})
 
 	if err != nil {
 		log.Fatalf("Couldn't get expected pipeline  %s", err)
@@ -126,7 +127,7 @@ func GetPipeline(c *framework.Clients, name string) *v1alpha1.Pipeline {
 
 func GetPipelineList(c *framework.Clients) *v1alpha1.PipelineList {
 
-	pipelineList, err := c.PipelineClient.List(metav1.ListOptions{})
+	pipelineList, err := c.PipelineClient.List(context.Background(), metav1.ListOptions{})
 
 	if err != nil {
 		log.Fatalf("Couldn't get expected pipelineList  %s", err)
@@ -137,7 +138,7 @@ func GetPipelineList(c *framework.Clients) *v1alpha1.PipelineList {
 
 func GetPipelineRun(c *framework.Clients, name string) *v1alpha1.PipelineRun {
 
-	pipelineRun, err := c.PipelineRunClient.Get(name, metav1.GetOptions{})
+	pipelineRun, err := c.PipelineRunClient.Get(context.Background(), name, metav1.GetOptions{})
 
 	if err != nil {
 		log.Fatalf("Couldn't get expected pipelineRun  %s", err)
@@ -150,7 +151,7 @@ func GetPipelineRunListWithName(c *framework.Clients, pname string, sortByStartT
 	opts := metav1.ListOptions{
 		LabelSelector: fmt.Sprintf("tekton.dev/pipeline=%s", pname),
 	}
-	pipelineRunList, err := c.PipelineRunClient.List(opts)
+	pipelineRunList, err := c.PipelineRunClient.List(context.Background(), opts)
 
 	if err != nil {
 		log.Fatalf("Couldn't get expected pipelineRunList  %s", err)
@@ -169,7 +170,7 @@ func GetTaskRunListWithName(c *framework.Clients, tname string, sortByStartTime 
 	}
 
 	time.Sleep(1 * time.Second)
-	taskRunList, err := c.TaskRunClient.List(opts)
+	taskRunList, err := c.TaskRunClient.List(context.Background(), opts)
 
 	if err != nil {
 		log.Fatalf("Couldn't get expected taskRunList  %s", err)
@@ -184,7 +185,7 @@ func GetTaskRunListWithName(c *framework.Clients, tname string, sortByStartTime 
 
 func GetPipelineRunList(c *framework.Clients) *v1alpha1.PipelineRunList {
 
-	pipelineRunList, err := c.PipelineRunClient.List(metav1.ListOptions{})
+	pipelineRunList, err := c.PipelineRunClient.List(context.Background(), metav1.ListOptions{})
 
 	if err != nil {
 		log.Fatalf("Couldn't get expected pipelineRunList  %s", err)
@@ -821,7 +822,7 @@ func GetPipelineRunListWithNameAndTestData(t *testing.T, c *framework.Clients, p
 	opts := metav1.ListOptions{
 		LabelSelector: fmt.Sprintf("tekton.dev/pipeline=%s", pname),
 	}
-	pipelineRunList, err := c.PipelineRunClient.List(opts)
+	pipelineRunList, err := c.PipelineRunClient.List(context.Background(), opts)
 	if err != nil {
 		t.Errorf("Couldn't get expected pipelineRunList  %s", err)
 	}

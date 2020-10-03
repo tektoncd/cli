@@ -15,6 +15,7 @@
 package pipelineresource
 
 import (
+	"context"
 	"errors"
 	"fmt"
 	"os"
@@ -109,7 +110,7 @@ func (res *Resource) createInteractive() error {
 		return err
 	}
 
-	newRes, err := cls.Resource.TektonV1alpha1().PipelineResources(res.Params.Namespace()).Create(&res.PipelineResource)
+	newRes, err := cls.Resource.TektonV1alpha1().PipelineResources(res.Params.Namespace()).Create(context.Background(), &res.PipelineResource, metav1.CreateOptions{})
 	if err != nil {
 		return err
 	}
@@ -557,7 +558,7 @@ func validate(name string, p cli.Params) error {
 		return err
 	}
 
-	if _, err := c.Resource.TektonV1alpha1().PipelineResources(p.Namespace()).Get(name, metav1.GetOptions{}); err == nil {
+	if _, err := c.Resource.TektonV1alpha1().PipelineResources(p.Namespace()).Get(context.Background(), name, metav1.GetOptions{}); err == nil {
 		return errors.New("resource already exist")
 	}
 
