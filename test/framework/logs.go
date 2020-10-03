@@ -15,6 +15,7 @@
 package framework
 
 import (
+	"context"
 	"fmt"
 	"io/ioutil"
 	"strings"
@@ -35,7 +36,7 @@ func CollectPodLogs(c *Clients, podName, namespace string, logf logging.FormatLo
 }
 
 func getContainerLogsFromPod(c kubernetes.Interface, pod, namespace string) (string, error) {
-	p, err := c.CoreV1().Pods(namespace).Get(pod, metav1.GetOptions{})
+	p, err := c.CoreV1().Pods(namespace).Get(context.Background(), pod, metav1.GetOptions{})
 	if err != nil {
 		return "", err
 	}
@@ -44,7 +45,7 @@ func getContainerLogsFromPod(c kubernetes.Interface, pod, namespace string) (str
 	for _, container := range p.Spec.Containers {
 		sb.WriteString(fmt.Sprintf("\n>>> Container %s:\n", container.Name))
 		req := c.CoreV1().Pods(namespace).GetLogs(pod, &corev1.PodLogOptions{Follow: true, Container: container.Name})
-		rc, err := req.Stream()
+		rc, err := req.Stream(context.Background())
 		if err != nil {
 			return "", err
 		}

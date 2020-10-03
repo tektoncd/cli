@@ -15,6 +15,7 @@
 package wait
 
 import (
+	"context"
 	"fmt"
 	"log"
 	"sync"
@@ -100,7 +101,7 @@ func ForPipelineRunToComplete(c *framework.Clients, prname string, namespace str
 		log.Fatalf("Error waiting for PipelineRun %s to be running: %s", prname, err)
 	}
 
-	taskrunList, err := c.TaskRunClient.List(metav1.ListOptions{LabelSelector: fmt.Sprintf("tekton.dev/pipelineRun=%s", prname)})
+	taskrunList, err := c.TaskRunClient.List(context.Background(), metav1.ListOptions{LabelSelector: fmt.Sprintf("tekton.dev/pipelineRun=%s", prname)})
 
 	if err != nil {
 		log.Fatalf("Error listing TaskRuns for PipelineRun %s: %s", prname, err)
@@ -133,7 +134,7 @@ func ForPipelineRunToComplete(c *framework.Clients, prname string, namespace str
 		}
 	}
 
-	if _, err := c.PipelineRunClient.Get(prname, metav1.GetOptions{}); err != nil {
+	if _, err := c.PipelineRunClient.Get(context.Background(), prname, metav1.GetOptions{}); err != nil {
 		log.Panicf("Failed to get PipelineRun `%s`: %s", prname, err)
 	}
 
@@ -176,7 +177,7 @@ func ForPipelineRunToComplete(c *framework.Clients, prname string, namespace str
 	}
 	wg.Wait()
 
-	if _, err := c.PipelineRunClient.Get(prname, metav1.GetOptions{}); err != nil {
+	if _, err := c.PipelineRunClient.Get(context.Background(), prname, metav1.GetOptions{}); err != nil {
 		log.Panicf("Failed to get PipelineRun `%s`: %s", prname, err)
 	}
 }

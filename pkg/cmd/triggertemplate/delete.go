@@ -15,6 +15,7 @@
 package triggertemplate
 
 import (
+	"context"
 	"fmt"
 
 	"github.com/spf13/cobra"
@@ -75,7 +76,7 @@ func deleteTriggerTemplates(s *cli.Stream, p cli.Params, ttNames []string, delet
 		return fmt.Errorf("failed to create tekton client")
 	}
 	d := deleter.New("TriggerTemplate", func(templateName string) error {
-		return cs.Triggers.TriggersV1alpha1().TriggerTemplates(p.Namespace()).Delete(templateName, &metav1.DeleteOptions{})
+		return cs.Triggers.TriggersV1alpha1().TriggerTemplates(p.Namespace()).Delete(context.Background(), templateName, metav1.DeleteOptions{})
 	})
 
 	if deleteAll {
@@ -97,7 +98,7 @@ func deleteTriggerTemplates(s *cli.Stream, p cli.Params, ttNames []string, delet
 }
 
 func allTriggerTemplateNames(p cli.Params, cs *cli.Clients) ([]string, error) {
-	tts, err := cs.Triggers.TriggersV1alpha1().TriggerTemplates(p.Namespace()).List(metav1.ListOptions{})
+	tts, err := cs.Triggers.TriggersV1alpha1().TriggerTemplates(p.Namespace()).List(context.Background(), metav1.ListOptions{})
 	if err != nil {
 		return nil, err
 	}

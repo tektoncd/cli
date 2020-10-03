@@ -17,6 +17,7 @@ package eventlistener
 import (
 	"bufio"
 	"bytes"
+	"context"
 	"fmt"
 	"io"
 
@@ -31,8 +32,8 @@ func logCommand(p cli.Params) *cobra.Command {
 	opts := options.NewLogOptions(p)
 
 	eg := `
-Show logs of EventListener pods: 
-	
+Show logs of EventListener pods:
+
     tkn eventlistener logs eventlistenerName
 
 Show 2 lines of most recent logs from all EventListener pods:
@@ -77,7 +78,7 @@ func getEventListener(elName string, p cli.Params) error {
 		return fmt.Errorf("failed to create tekton client")
 	}
 
-	_, err = cs.Triggers.TriggersV1alpha1().EventListeners(p.Namespace()).Get(elName, metav1.GetOptions{})
+	_, err = cs.Triggers.TriggersV1alpha1().EventListeners(p.Namespace()).Get(context.Background(), elName, metav1.GetOptions{})
 	if err != nil {
 		return fmt.Errorf("failed to get EventListener %s: %v", elName, err)
 	}
@@ -91,7 +92,7 @@ func logs(elName string, p cli.Params, s *cli.Stream, opts *options.LogOptions) 
 		return fmt.Errorf("failed to create tekton client")
 	}
 
-	elPods, err := cs.Kube.CoreV1().Pods(p.Namespace()).List(metav1.ListOptions{LabelSelector: "eventlistener=" + elName})
+	elPods, err := cs.Kube.CoreV1().Pods(p.Namespace()).List(context.Background(), metav1.ListOptions{LabelSelector: "eventlistener=" + elName})
 	if err != nil {
 		return fmt.Errorf("failed to get pods for EventListener %s", elName)
 	}
@@ -109,7 +110,7 @@ func logs(elName string, p cli.Params, s *cli.Stream, opts *options.LogOptions) 
 			podLopOpts.TailLines = &opts.Tail
 		}
 		podLogReq := cs.Kube.CoreV1().Pods(p.Namespace()).GetLogs(podName, podLopOpts)
-		podLogs, err := podLogReq.Stream()
+		podLogs, err := podLogReq.Stream(context.Background())
 		if err != nil {
 			return err
 		}

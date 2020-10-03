@@ -15,6 +15,7 @@
 package condition
 
 import (
+	"context"
 	"fmt"
 	"os"
 	"text/tabwriter"
@@ -138,7 +139,7 @@ func getCondition(p cli.Params, name string) (*v1alpha1.Condition, error) {
 		return nil, fmt.Errorf("failed to create tekton client")
 	}
 
-	condition, err := cs.Tekton.TektonV1alpha1().Conditions(p.Namespace()).Get(name, metav1.GetOptions{})
+	condition, err := cs.Tekton.TektonV1alpha1().Conditions(p.Namespace()).Get(context.Background(), name, metav1.GetOptions{})
 	if err != nil {
 		return nil, fmt.Errorf("failed to find condition %q", name)
 	}

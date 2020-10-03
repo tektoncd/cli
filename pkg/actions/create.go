@@ -15,6 +15,8 @@
 package actions
 
 import (
+	"context"
+
 	"github.com/tektoncd/cli/pkg/cli"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
@@ -26,7 +28,7 @@ func Create(gr schema.GroupVersionResource, clients *cli.Clients, object *unstru
 	if err != nil {
 		return nil, err
 	}
-	obj, err := clients.Dynamic.Resource(*gvr).Namespace(ns).Create(object, op)
+	obj, err := clients.Dynamic.Resource(*gvr).Namespace(ns).Create(context.Background(), object, op)
 	if err != nil {
 		return nil, err
 	}

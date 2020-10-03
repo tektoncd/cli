@@ -15,6 +15,7 @@
 package eventlistener
 
 import (
+	"context"
 	"fmt"
 	"io"
 	"os"
@@ -166,7 +167,7 @@ func describeEventListenerOutput(w io.Writer, p cli.Params, f *cliopts.PrintFlag
 		return err
 	}
 
-	el, err := cs.Triggers.TriggersV1alpha1().EventListeners(p.Namespace()).Get(name, metav1.GetOptions{})
+	el, err := cs.Triggers.TriggersV1alpha1().EventListeners(p.Namespace()).Get(context.Background(), name, metav1.GetOptions{})
 	if err != nil {
 		return err
 	}
@@ -188,7 +189,7 @@ func describeEventListenerOutputURL(w io.Writer, p cli.Params, name string) erro
 		return err
 	}
 
-	el, err := cs.Triggers.TriggersV1alpha1().EventListeners(p.Namespace()).Get(name, metav1.GetOptions{})
+	el, err := cs.Triggers.TriggersV1alpha1().EventListeners(p.Namespace()).Get(context.Background(), name, metav1.GetOptions{})
 	if err != nil {
 		return err
 	}
@@ -206,7 +207,7 @@ func printEventListenerDescription(s *cli.Stream, p cli.Params, elName string) e
 		return fmt.Errorf("failed to create tekton client")
 	}
 
-	el, err := cs.Triggers.TriggersV1alpha1().EventListeners(p.Namespace()).Get(elName, metav1.GetOptions{})
+	el, err := cs.Triggers.TriggersV1alpha1().EventListeners(p.Namespace()).Get(context.Background(), elName, metav1.GetOptions{})
 	if err != nil {
 		return fmt.Errorf("failed to get eventlistener %s: %v", elName, err)
 	}

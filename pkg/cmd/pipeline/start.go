@@ -454,7 +454,7 @@ func (opt *startOptions) getInputParams(pipeline *v1beta1.Pipeline, useParamDefa
 }
 
 func getPipelineResources(client versionedResource.Interface, namespace string) (*v1alpha1.PipelineResourceList, error) {
-	pres, err := client.TektonV1alpha1().PipelineResources(namespace).List(v1.ListOptions{})
+	pres, err := client.TektonV1alpha1().PipelineResources(namespace).List(context.Background(), v1.ListOptions{})
 	if err != nil {
 		return nil, err
 	}
@@ -652,7 +652,7 @@ func (opt *startOptions) createPipelineResource(resName string, resType v1alpha1
 	if err != nil {
 		return nil, err
 	}
-	newRes, err := cs.Resource.TektonV1alpha1().PipelineResources(opt.cliparams.Namespace()).Create(&res.PipelineResource)
+	newRes, err := cs.Resource.TektonV1alpha1().PipelineResources(opt.cliparams.Namespace()).Create(context.Background(), &res.PipelineResource, metav1.CreateOptions{})
 	if err != nil {
 		return nil, err
 	}

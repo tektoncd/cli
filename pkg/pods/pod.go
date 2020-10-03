@@ -15,6 +15,7 @@
 package pods
 
 import (
+	"context"
 	"fmt"
 	"io"
 	"time"
@@ -42,7 +43,7 @@ func NewStream(pods typedv1.PodInterface, name string, opts *corev1.PodLogOption
 
 // Stream Creates a stream object which allows reading the logs
 func (s *Stream) Stream() (io.ReadCloser, error) {
-	return s.pods.GetLogs(s.name, s.opts).Stream()
+	return s.pods.GetLogs(s.name, s.opts).Stream(context.Background())
 }
 
 type Pod struct {
@@ -147,7 +148,7 @@ func checkPodStatus(obj interface{}) (*corev1.Pod, error) {
 
 // Get gets the pod
 func (p *Pod) Get() (*corev1.Pod, error) {
-	return p.Kc.CoreV1().Pods(p.Ns).Get(p.Name, metav1.GetOptions{})
+	return p.Kc.CoreV1().Pods(p.Ns).Get(context.Background(), p.Name, metav1.GetOptions{})
 }
 
 // Container returns the an instance of Container

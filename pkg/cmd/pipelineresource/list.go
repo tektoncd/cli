@@ -15,6 +15,7 @@
 package pipelineresource
 
 import (
+	"context"
 	"fmt"
 	"os"
 	"strings"
@@ -127,7 +128,7 @@ func listCommand(p cli.Params) *cobra.Command {
 func list(client versionedResource.Interface, namespace string, resourceType string) (*v1alpha1.PipelineResourceList, error) {
 
 	prec := client.TektonV1alpha1().PipelineResources(namespace)
-	pres, err := prec.List(v1.ListOptions{})
+	pres, err := prec.List(context.Background(), v1.ListOptions{})
 	if err != nil {
 		return nil, err
 	}

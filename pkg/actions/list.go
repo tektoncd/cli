@@ -15,6 +15,7 @@
 package actions
 
 import (
+	"context"
 	"io"
 
 	"github.com/tektoncd/cli/pkg/cli"
@@ -45,7 +46,7 @@ func List(gr schema.GroupVersionResource, clients *cli.Clients, ns string, op me
 		return nil, err
 	}
 
-	allRes, err := clients.Dynamic.Resource(*gvr).Namespace(ns).List(op)
+	allRes, err := clients.Dynamic.Resource(*gvr).Namespace(ns).List(context.Background(), op)
 	if err != nil {
 		return nil, err
 	}

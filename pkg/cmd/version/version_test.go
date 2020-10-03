@@ -223,7 +223,7 @@ func TestGetVersions(t *testing.T) {
 			}
 			// To add multiple deployments in a particular namespace
 			for _, v := range tp.deployment {
-				if _, err := cls.Kube.AppsV1().Deployments(tp.namespace).Create(v); err != nil {
+				if _, err := cls.Kube.AppsV1().Deployments(tp.namespace).Create(context.Background(), v, metav1.CreateOptions{}); err != nil {
 					t.Errorf("failed to create deployment: %v", err)
 				}
 			}

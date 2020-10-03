@@ -15,6 +15,7 @@
 package eventlistener
 
 import (
+	"context"
 	"errors"
 	"fmt"
 	"text/tabwriter"
@@ -92,7 +93,7 @@ or
 }
 
 func list(client versioned.Interface, namespace string) (*v1alpha1.EventListenerList, error) {
-	els, err := client.TriggersV1alpha1().EventListeners(namespace).List(metav1.ListOptions{})
+	els, err := client.TriggersV1alpha1().EventListeners(namespace).List(context.Background(), metav1.ListOptions{})
 	if err != nil {
 		return nil, err
 	}

@@ -88,7 +88,8 @@
                 "serviceAccountName": "sa1"
             }
         ],
-        "podTemplate": {}
+        "podTemplate": {},
+        "resources": {}
     },
     "status": {
         "configuration": {

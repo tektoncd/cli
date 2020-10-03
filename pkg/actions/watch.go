@@ -15,6 +15,8 @@
 package actions
 
 import (
+	"context"
+
 	"github.com/tektoncd/cli/pkg/cli"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime/schema"
@@ -27,7 +29,7 @@ func Watch(gr schema.GroupVersionResource, clients *cli.Clients, ns string, op m
 		return nil, err
 	}
 
-	watch, err := clients.Dynamic.Resource(*gvr).Namespace(ns).Watch(op)
+	watch, err := clients.Dynamic.Resource(*gvr).Namespace(ns).Watch(context.Background(), op)
 	if err != nil {
 		return nil, err
 	}

@@ -15,6 +15,7 @@
 package version
 
 import (
+	"context"
 	"fmt"
 	"strings"
 
@@ -78,7 +79,7 @@ func getDeployments(c *cli.Clients, newLabel, oldLabel, ns string) (*v1.Deployme
 }
 
 func getDeploy(c *cli.Clients, newLabel, oldLabel, ns string) (*v1.DeploymentList, error) {
-	deployments, err := c.Kube.AppsV1().Deployments(ns).List(metav1.ListOptions{LabelSelector: newLabel})
+	deployments, err := c.Kube.AppsV1().Deployments(ns).List(context.Background(), metav1.ListOptions{LabelSelector: newLabel})
 	if err != nil {
 		return nil, err
 	}
@@ -86,7 +87,7 @@ func getDeploy(c *cli.Clients, newLabel, oldLabel, ns string) (*v1.DeploymentLis
 	// NOTE: If the new labels selector returned nothing, try with old labels selector
 	// The old labels selectors are deprecated and should be removed at some point
 	if deployments == nil || len(deployments.Items) == 0 {
-		deployments, err = c.Kube.AppsV1().Deployments(ns).List(metav1.ListOptions{LabelSelector: oldLabel})
+		deployments, err = c.Kube.AppsV1().Deployments(ns).List(context.Background(), metav1.ListOptions{LabelSelector: oldLabel})
 		if err != nil {
 			return nil, err
 		}

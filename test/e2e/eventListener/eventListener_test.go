@@ -16,6 +16,7 @@
 package pipeline
 
 import (
+	"context"
 	"strings"
 	"testing"
 
@@ -63,7 +64,7 @@ func TestEventListenerE2E(t *testing.T) {
 	kubectl.MustSucceed(t, "wait", "--for=condition=Ready", "pod", "-n", namespace, "--timeout=2m", "--all")
 
 	t.Run("Get logs of EventListener with multiple pods", func(t *testing.T) {
-		elPods, err := c.KubeClient.Kube.CoreV1().Pods(namespace).List(metav1.ListOptions{LabelSelector: "eventlistener=" + elName})
+		elPods, err := c.KubeClient.Kube.CoreV1().Pods(namespace).List(context.Background(), metav1.ListOptions{LabelSelector: "eventlistener=" + elName})
 		if err != nil {
 			t.Fatalf("Error getting pods for EventListener %s: %v", elName, err)
 		}

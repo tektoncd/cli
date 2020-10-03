@@ -15,6 +15,7 @@
 package clustertriggerbinding
 
 import (
+	"context"
 	"fmt"
 	"io"
 	"os"
@@ -97,7 +98,7 @@ func describeClusterTriggerBindingOutput(w io.Writer, p cli.Params, f *cliopts.P
 		return err
 	}
 
-	ctb, err := cs.Triggers.TriggersV1alpha1().ClusterTriggerBindings().Get(name, metav1.GetOptions{})
+	ctb, err := cs.Triggers.TriggersV1alpha1().ClusterTriggerBindings().Get(context.Background(), name, metav1.GetOptions{})
 	if err != nil {
 		return err
 	}
@@ -119,7 +120,7 @@ func printClusterTriggerBindingDescription(s *cli.Stream, p cli.Params, ctbName 
 		return fmt.Errorf("failed to create tekton client")
 	}
 
-	ctb, err := cs.Triggers.TriggersV1alpha1().ClusterTriggerBindings().Get(ctbName, metav1.GetOptions{})
+	ctb, err := cs.Triggers.TriggersV1alpha1().ClusterTriggerBindings().Get(context.Background(), ctbName, metav1.GetOptions{})
 	if err != nil {
 		return fmt.Errorf("failed to get clustertriggerbinding %s: %v", ctbName, err)
 	}

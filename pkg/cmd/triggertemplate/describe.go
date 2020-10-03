@@ -15,6 +15,7 @@
 package triggertemplate
 
 import (
+	"context"
 	"fmt"
 	"io"
 	"os"
@@ -118,7 +119,7 @@ func describeTriggerTemplateOutput(w io.Writer, p cli.Params, f *cliopts.PrintFl
 		return err
 	}
 
-	tt, err := cs.Triggers.TriggersV1alpha1().TriggerTemplates(p.Namespace()).Get(name, metav1.GetOptions{})
+	tt, err := cs.Triggers.TriggersV1alpha1().TriggerTemplates(p.Namespace()).Get(context.Background(), name, metav1.GetOptions{})
 	if err != nil {
 		return err
 	}
@@ -140,7 +141,7 @@ func printTriggerTemplateDescription(s *cli.Stream, p cli.Params, ttname string)
 		return fmt.Errorf("failed to create tekton client")
 	}
 
-	tt, err := cs.Triggers.TriggersV1alpha1().TriggerTemplates(p.Namespace()).Get(ttname, metav1.GetOptions{})
+	tt, err := cs.Triggers.TriggersV1alpha1().TriggerTemplates(p.Namespace()).Get(context.Background(), ttname, metav1.GetOptions{})
 	if err != nil {
 		return fmt.Errorf("failed to get triggertemplate %s from %s namespace: %v", ttname, p.Namespace(), err)
 	}

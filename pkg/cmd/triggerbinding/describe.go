@@ -15,6 +15,7 @@
 package triggerbinding
 
 import (
+	"context"
 	"fmt"
 	"io"
 	"os"
@@ -98,7 +99,7 @@ func describeTriggerBindingOutput(w io.Writer, p cli.Params, f *cliopts.PrintFla
 		return err
 	}
 
-	tb, err := cs.Triggers.TriggersV1alpha1().TriggerBindings(p.Namespace()).Get(name, metav1.GetOptions{})
+	tb, err := cs.Triggers.TriggersV1alpha1().TriggerBindings(p.Namespace()).Get(context.Background(), name, metav1.GetOptions{})
 	if err != nil {
 		return err
 	}
@@ -120,7 +121,7 @@ func printTriggerBindingDescription(s *cli.Stream, p cli.Params, tbName string) 
 		return fmt.Errorf("failed to create tekton client")
 	}
 
-	tb, err := cs.Triggers.TriggersV1alpha1().TriggerBindings(p.Namespace()).Get(tbName, metav1.GetOptions{})
+	tb, err := cs.Triggers.TriggersV1alpha1().TriggerBindings(p.Namespace()).Get(context.Background(), tbName, metav1.GetOptions{})
 	if err != nil {
 		return fmt.Errorf("failed to get triggerbinding %s from %s namespace: %v", tbName, p.Namespace(), err)
 	}
