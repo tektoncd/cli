@@ -247,10 +247,10 @@ Waiting for logs to be available...
 
 	t.Run("Start TaskRun using tkn ct start with --use-taskrun option", func(t *testing.T) {
 		// Get last TaskRun for read-clustertask
-		lastTaskRun := builder.GetTaskRunListWithName(c, "read-clustertask", true).Items[0]
+		lastTaskRun := builder.GetTaskRunListWithName(c, clusterTaskName, true).Items[0]
 
 		// Start TaskRun using --use-taskrun
-		tkn.MustSucceed(t, "ct", "start", "read-clustertask",
+		tkn.MustSucceed(t, "ct", "start", clusterTaskName,
 			"--use-taskrun",
 			lastTaskRun.Name,
 			"--showlog")
@@ -259,7 +259,7 @@ Waiting for logs to be available...
 		time.Sleep(1 * time.Second)
 
 		// Get name of most recent TaskRun and wait for it to succeed
-		taskRunUsingParticularTaskRun := builder.GetTaskRunListWithName(c, "read-clustertask", true).Items[0]
+		taskRunUsingParticularTaskRun := builder.GetTaskRunListWithName(c, clusterTaskName, true).Items[0]
 		if err := wait.ForTaskRunState(c, taskRunUsingParticularTaskRun.Name, wait.TaskRunSucceed(taskRunUsingParticularTaskRun.Name), "TaskRunSucceeded"); err != nil {
 			t.Errorf("Error waiting for TaskRun to Succeed: %s", err)
 		}
