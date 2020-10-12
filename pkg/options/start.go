@@ -92,6 +92,8 @@ func (taskRunOpts *TaskRunOpts) UseTaskRunFrom(tr *v1beta1.TaskRun, cs *cli.Clie
 	}
 	// Copy over spec from last or previous TaskRun to use same values for this TaskRun
 	tr.Spec = trUsed.Spec
+	// Reapply blank status in case TaskRun used was cancelled
+	tr.Spec.Status = ""
 	return nil
 }
 

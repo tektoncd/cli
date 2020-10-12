@@ -1258,6 +1258,133 @@ func Test_start_use_taskrun_v1beta1(t *testing.T) {
 	test.AssertOutput(t, timeoutDuration, tr.Spec.Timeout.Duration)
 }
 
+func Test_start_use_taskrun_cancelled_status_v1beta1(t *testing.T) {
+	tasks := []*v1beta1.Task{
+		{
+			ObjectMeta: v1.ObjectMeta{
+				Name:      "task",
+				Namespace: "ns",
+			},
+			Spec: v1beta1.TaskSpec{
+				Resources: &v1beta1.TaskResources{
+					Inputs: []v1beta1.TaskResource{
+						{
+							ResourceDeclaration: v1beta1.ResourceDeclaration{
+								Name: "my-repo",
+								Type: v1beta1.PipelineResourceTypeGit,
+							},
+						},
+					},
+					Outputs: []v1beta1.TaskResource{
+						{
+							ResourceDeclaration: v1beta1.ResourceDeclaration{
+								Name: "code-image",
+								Type: v1beta1.PipelineResourceTypeImage,
+							},
+						},
+					},
+				},
+				Params: []v1beta1.ParamSpec{
+					{
+						Name: "myarg",
+						Type: v1beta1.ParamTypeString,
+					},
+					{
+						Name: "print",
+						Type: v1beta1.ParamTypeArray,
+					},
+				},
+				Steps: []v1beta1.Step{
+					{
+						Container: corev1.Container{
+							Name:  "hello",
+							Image: "busybox",
+						},
+					},
+					{
+						Container: corev1.Container{
+							Name:  "exit",
+							Image: "busybox",
+						},
+					},
+				},
+				Workspaces: []v1beta1.WorkspaceDeclaration{
+					{
+						Name:        "test",
+						Description: "test workspace",
+						MountPath:   "/workspace/test/file",
+						ReadOnly:    true,
+					},
+				},
+			},
+		},
+	}
+
+	timeoutDuration, _ := time.ParseDuration("10s")
+
+	taskruns := []*v1beta1.TaskRun{
+		{
+
+			ObjectMeta: v1.ObjectMeta{
+				Name:      "camper",
+				Namespace: "ns",
+				Labels:    map[string]string{"tekton.dev/task": "task"},
+			},
+			Spec: v1beta1.TaskRunSpec{
+				TaskRef: &v1beta1.TaskRef{
+					Name: "task",
+					Kind: v1beta1.NamespacedTaskKind,
+				},
+				ServiceAccountName: "camper",
+				Timeout:            &metav1.Duration{Duration: timeoutDuration},
+				Status:             v1beta1.TaskRunSpecStatus(v1beta1.TaskRunSpecStatusCancelled),
+			},
+		},
+	}
+
+	ns := []*corev1.Namespace{
+		{
+			ObjectMeta: metav1.ObjectMeta{
+				Name: "ns",
+			},
+		},
+	}
+
+	seedData, _ := test.SeedV1beta1TestData(t, pipelinev1beta1test.Data{Namespaces: ns, Tasks: tasks, TaskRuns: taskruns})
+
+	objs := []runtime.Object{tasks[0], taskruns[0]}
+	_, tdc := newPipelineClient(versionB1, objs...)
+
+	cs := pipelinetest.Clients{
+		Pipeline: seedData.Pipeline,
+		Kube:     seedData.Kube,
+	}
+	cs.Pipeline.Resources = cb.APIResourceList(versionB1, []string{"task", "taskrun"})
+	dc, _ := tdc.Client(
+		cb.UnstructuredV1beta1T(tasks[0], versionB1),
+		cb.UnstructuredV1beta1TR(taskruns[0], versionB1),
+	)
+	p := &test.Params{Tekton: cs.Pipeline, Kube: cs.Kube, Dynamic: dc}
+
+	task := Command(p)
+	got, _ := test.ExecuteCommand(task, "start", "task",
+		"--use-taskrun", "camper",
+		"-n=ns")
+
+	expected := "TaskRun started: random\n\nIn order to track the TaskRun progress run:\ntkn taskrun logs random -f -n ns\n"
+	test.AssertOutput(t, expected, got)
+	clients, _ := p.Clients()
+	tr, err := traction.Get(clients, "random", metav1.GetOptions{}, "ns")
+	if err != nil {
+		t.Errorf("Error listing taskruns %s", err.Error())
+	}
+
+	test.AssertOutput(t, "camper", tr.Spec.ServiceAccountName)
+	test.AssertOutput(t, timeoutDuration, tr.Spec.Timeout.Duration)
+	// Assert that new TaskRun does not contain cancelled status of previous run
+	test.AssertOutput(t, v1beta1.TaskRunSpecStatus(""), tr.Spec.Status)
+}
+
 func Test_start_task_last_generate_name(t *testing.T) {
 	tasks := []*v1alpha1.Task{
 		tb.Task("task",
