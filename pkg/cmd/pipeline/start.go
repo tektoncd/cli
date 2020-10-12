@@ -255,6 +255,8 @@ func (opt *startOptions) startPipeline(pipelineStart *v1beta1.Pipeline) error {
 		}
 		// Copy over spec from last or previous PipelineRun to use same values for this PipelineRun
 		pr.Spec = usepr.Spec
+		// Reapply blank status in case PipelineRun used was cancelled
+		pr.Spec.Status = ""
 	}
 
 	if err := mergeRes(pr, opt.Resources); err != nil {
