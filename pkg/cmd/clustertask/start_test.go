@@ -23,6 +23,7 @@ import (
 	"time"
 
 	"github.com/jonboulle/clockwork"
+	traction "github.com/tektoncd/cli/pkg/taskrun"
 	"github.com/tektoncd/cli/pkg/test"
 	cb "github.com/tektoncd/cli/pkg/test/builder"
 	testDynamic "github.com/tektoncd/cli/pkg/test/dynamic"
@@ -1807,4 +1808,120 @@ func Test_parseRes_v1beta1(t *testing.T) {
 			}
 		})
 	}
+}
+
+func Test_start_use_taskrun_cancelled_status_v1beta1(t *testing.T) {
+	ctasks := []*v1beta1.ClusterTask{
+		{
+			ObjectMeta: v1.ObjectMeta{
+				Name: "clustertask",
+			},
+			Spec: v1beta1.TaskSpec{
+				Resources: &v1beta1.TaskResources{
+					Inputs: []v1beta1.TaskResource{
+						{
+							ResourceDeclaration: v1beta1.ResourceDeclaration{
+								Name: "my-repo",
+								Type: v1beta1.PipelineResourceTypeGit,
+							},
+						},
+					},
+					Outputs: []v1beta1.TaskResource{
+						{
+							ResourceDeclaration: v1beta1.ResourceDeclaration{
+								Name: "code-image",
+								Type: v1beta1.PipelineResourceTypeImage,
+							},
+						},
+					},
+				},
+				Params: []v1beta1.ParamSpec{
+					{
+						Name: "myarg",
+						Type: v1beta1.ParamTypeString,
+					},
+					{
+						Name: "print",
+						Type: v1beta1.ParamTypeArray,
+					},
+				},
+				Steps: []v1beta1.Step{
+					{
+						Container: corev1.Container{
+							Name:  "hello",
+							Image: "busybox",
+						},
+					},
+					{
+						Container: corev1.Container{
+							Name:  "exit",
+							Image: "busybox",
+						},
+					},
+				},
+			},
+		},
+	}
+
+	timeoutDuration, _ := time.ParseDuration("10s")
+	trName := "ct-run"
+	taskruns := []*v1beta1.TaskRun{
+		{
+
+			ObjectMeta: v1.ObjectMeta{
+				Name:      trName,
+				Labels:    map[string]string{"tekton.dev/clustertask": "clustertask"},
+				Namespace: "ns",
+			},
+			Spec: v1beta1.TaskRunSpec{
+				TaskRef: &v1beta1.TaskRef{
+					Name: "clustertask",
+					Kind: v1beta1.ClusterTaskKind,
+				},
+				ServiceAccountName: "serviceaccount",
+				Timeout:            &metav1.Duration{Duration: timeoutDuration},
+				Status:             v1beta1.TaskRunSpecStatus(v1beta1.TaskRunSpecStatusCancelled),
+			},
+		},
+	}
+
+	ns := []*corev1.Namespace{
+		{
+			ObjectMeta: metav1.ObjectMeta{
+				Name: "ns",
+			},
+		},
+	}
+
+	seedData, _ := test.SeedV1beta1TestData(t, pipelinev1beta1test.Data{Namespaces: ns, ClusterTasks: ctasks, TaskRuns: taskruns})
+	objs := []runtime.Object{ctasks[0], taskruns[0]}
+	trName2 := trName + "-2"
+	tdc := newDynamicClientOpt(versionB1, trName2, objs...)
+
+	cs := pipelinetest.Clients{
+		Pipeline: seedData.Pipeline,
+		Kube:     seedData.Kube,
+	}
+	cs.Pipeline.Resources = cb.APIResourceList(versionB1, []string{"clustertask", "taskrun"})
+	dc, _ := tdc.Client(
+		cb.UnstructuredV1beta1CT(ctasks[0], versionB1),
+		cb.UnstructuredV1beta1TR(taskruns[0], versionB1),
+	)
+	p := &test.Params{Tekton: cs.Pipeline, Kube: cs.Kube, Dynamic: dc}
+
+	clustertask := Command(p)
+	got, _ := test.ExecuteCommand(clustertask, "start", "clustertask", "--use-taskrun", trName, "-n", "ns")
+
+	expected := "TaskRun started: ct-run-2\n\nIn order to track the TaskRun progress run:\ntkn taskrun logs ct-run-2 -f -n ns\n"
+	test.AssertOutput(t, expected, got)
+	clients, _ := p.Clients()
+	tr, err := traction.Get(clients, trName2, metav1.GetOptions{}, "ns")
+	if err != nil {
+		t.Errorf("Error listing taskruns %s", err.Error())
+	}
+
+	test.AssertOutput(t, "serviceaccount", tr.Spec.ServiceAccountName)
+	test.AssertOutput(t, timeoutDuration, tr.Spec.Timeout.Duration)
+	// Assert that new TaskRun does not contain cancelled status of previous run
+	test.AssertOutput(t, v1beta1.TaskRunSpecStatus(""), tr.Spec.Status)
 }
