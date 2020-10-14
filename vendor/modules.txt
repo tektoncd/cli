@@ -110,6 +110,8 @@ github.com/cpuguy83/go-md2man/md2man
 github.com/davecgh/go-spew/spew
 # github.com/dgrijalva/jwt-go v3.2.0+incompatible
 github.com/dgrijalva/jwt-go
+# github.com/dimfeld/httptreemux/v5 v5.2.2
+github.com/dimfeld/httptreemux/v5
 # github.com/docker/cli v0.0.0-20200210162036-a4bedce16568
 github.com/docker/cli/cli/config
 github.com/docker/cli/cli/config/configfile
@@ -229,6 +231,8 @@ github.com/gophercloud/gophercloud/openstack/identity/v2/tokens
 github.com/gophercloud/gophercloud/openstack/identity/v3/tokens
 github.com/gophercloud/gophercloud/openstack/utils
 github.com/gophercloud/gophercloud/pagination
+# github.com/gorilla/websocket v1.4.2
+github.com/gorilla/websocket
 # github.com/gregjones/httpcache v0.0.0-20190212212710-3befbb6ad0cc
 github.com/gregjones/httpcache
 github.com/gregjones/httpcache/diskcache
@@ -276,7 +280,7 @@ github.com/lightstep/tracecontext.go/traceparent
 github.com/lightstep/tracecontext.go/tracestate
 # github.com/lucasb-eyer/go-colorful v1.0.2
 github.com/lucasb-eyer/go-colorful
-# github.com/mailru/easyjson v0.7.1-0.20191009090205-6c0755d89d1e
+# github.com/mailru/easyjson v0.7.1
 github.com/mailru/easyjson/buffer
 github.com/mailru/easyjson/jlexer
 github.com/mailru/easyjson/jwriter
@@ -290,6 +294,8 @@ github.com/mattn/go-runewidth
 github.com/matttproud/golang_protobuf_extensions/pbutil
 # github.com/mgutz/ansi v0.0.0-20170206155736-9520e82c474b
 github.com/mgutz/ansi
+# github.com/mitchellh/go-homedir v1.1.0
+github.com/mitchellh/go-homedir
 # github.com/modern-go/concurrent v0.0.0-20180306012644-bacd9c7ef1dd
 github.com/modern-go/concurrent
 # github.com/modern-go/reflect2 v1.0.1
@@ -328,6 +334,20 @@ github.com/sirupsen/logrus
 github.com/spf13/cobra
 # github.com/spf13/pflag v1.0.5
 github.com/spf13/pflag
+# github.com/tektoncd/hub/api v0.0.0-20201021041518-f3b44fba7d18
+github.com/tektoncd/hub/api/gen/http/resource/client
+github.com/tektoncd/hub/api/gen/resource
+github.com/tektoncd/hub/api/gen/resource/views
+github.com/tektoncd/hub/api/pkg/cli/app
+github.com/tektoncd/hub/api/pkg/cli/cmd
+github.com/tektoncd/hub/api/pkg/cli/cmd/get
+github.com/tektoncd/hub/api/pkg/cli/cmd/search
+github.com/tektoncd/hub/api/pkg/cli/flag
+github.com/tektoncd/hub/api/pkg/cli/formatter
+github.com/tektoncd/hub/api/pkg/cli/hub
+github.com/tektoncd/hub/api/pkg/cli/printer
+github.com/tektoncd/hub/api/pkg/git
+github.com/tektoncd/hub/api/pkg/parser
 # github.com/tektoncd/pipeline v0.17.1-0.20201007165454-9611f3e4509e
 github.com/tektoncd/pipeline/pkg/apis/config
 github.com/tektoncd/pipeline/pkg/apis/pipeline
@@ -467,6 +487,9 @@ go.uber.org/zap/internal/exit
 go.uber.org/zap/internal/ztest
 go.uber.org/zap/zapcore
 go.uber.org/zap/zaptest
+# goa.design/goa/v3 v3.2.2
+goa.design/goa/v3/http
+goa.design/goa/v3/pkg
 # golang.org/x/crypto v0.0.0-20200820211705-5c72a883971a
 golang.org/x/crypto/ssh/terminal
 # golang.org/x/net v0.0.0-20200904194848-62affa334b73
@@ -650,7 +673,7 @@ gotest.tools/assert/cmp
 gotest.tools/internal/difflib
 gotest.tools/internal/format
 gotest.tools/internal/source
-# gotest.tools/v3 v3.0.1
+# gotest.tools/v3 v3.0.2
 gotest.tools/v3/assert
 gotest.tools/v3/assert/cmp
 gotest.tools/v3/golden

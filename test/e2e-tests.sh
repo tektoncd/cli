@@ -147,6 +147,15 @@ must_fail  "describe deleted resource" tkn resource describe skaffold-git
 must_fail  "show logs deleted taskrun" tkn taskrun logs test-template-volume
 must_fail  "describe deleted eventlistener" tkn eventlistener describe github-listener-interceptor
 
+# Hub tests
+echo "Hub"
+echo "....................."
+run_test "hub command exists" tkn hub --help
+run_test "hub search exists" tkn hub search --help
+run_test "hub get exists" tkn hub get --help
+must_fail "hub search cli" tkn hub --api-server=api.nonexistent.server search cli
+must_fail "hub get task cli" tkn hub --api-server=api.nonexistent.server get task cli
+
 # Make sure that eveything is cleaned up in the current namespace.
 for res in pipelineresources tasks pipelines taskruns pipelineruns; do
   kubectl delete --ignore-not-found=true ${res}.tekton.dev --all
