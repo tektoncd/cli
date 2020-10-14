@@ -17,6 +17,7 @@ require (
 	github.com/pkg/errors v0.9.1
 	github.com/spf13/cobra v1.0.0
 	github.com/spf13/pflag v1.0.5
+	github.com/tektoncd/hub/api v0.0.0-20201021041518-f3b44fba7d18
 	github.com/tektoncd/pipeline v0.17.1-0.20201007165454-9611f3e4509e
 	github.com/tektoncd/plumbing v0.0.0-20200430135134-e53521e1d887
 	github.com/tektoncd/triggers v0.8.2-0.20201007153255-cb1879311818
@@ -27,7 +28,7 @@ require (
 	golang.org/x/xerrors v0.0.0-20200804184101-5ec99f83aff1
 	gopkg.in/yaml.v2 v2.3.0
 	gotest.tools v2.2.0+incompatible
-	gotest.tools/v3 v3.0.1
+	gotest.tools/v3 v3.0.2
 	k8s.io/api v0.18.9
 	k8s.io/apimachinery v0.19.0
 	k8s.io/cli-runtime v0.17.6

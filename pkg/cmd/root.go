@@ -34,6 +34,8 @@ import (
 	"github.com/tektoncd/cli/pkg/cmd/triggertemplate"
 	"github.com/tektoncd/cli/pkg/cmd/version"
 	"github.com/tektoncd/cli/pkg/suggestion"
+	hubApp "github.com/tektoncd/hub/api/pkg/cli/app"
+	hub "github.com/tektoncd/hub/api/pkg/cli/cmd"
 )
 
 const usageTemplate = `Usage:{{if .Runnable}}
@@ -93,6 +95,7 @@ func Root(p cli.Params) *cobra.Command {
 		triggerbinding.Command(p),
 		triggertemplate.Command(p),
 		version.Command(p),
+		hub.Root(hubApp.New()),
 	)
 
 	visitCommands(cmd, reconfigureCmdWithSubcmd)

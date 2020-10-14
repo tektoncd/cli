@@ -174,6 +174,7 @@ The following commands help you understand and effectively use the Tekton CLI:
  * [`tkn completion:`](docs/cmd/tkn_completion.md) Outputs a BASH or ZSH completion script for `tkn` to allow command completion with Tab.
  * [`tkn condition:`](docs/cmd/tkn_condition.md) Parent command of the Condition command group.
  * [`tkn eventlistener:`](docs/cmd/tkn_eventlistener.md) Parent command of the Eventlistener command group.
+ * [`tkn hub:`](docs/cmd/tkn_hub.md) Search and install Tekton Resources from [Hub](https://hub-preview.tekton.dev)
  * [`tkn pipeline:`](docs/cmd/tkn_pipeline.md) Parent command of the Pipeline command group.
  * [`tkn pipelinerun:`](docs/cmd/tkn_pipelinerun.md) Parent command of the Pipelinerun command group.
  * [`tkn resource:`](docs/cmd/tkn_resource.md) Parent command of the Resource command group.
