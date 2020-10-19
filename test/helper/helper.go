@@ -16,13 +16,16 @@ package helper
 
 import (
 	"bytes"
+	"fmt"
 	"path"
 	"path/filepath"
 	"runtime"
+	"strings"
 	"testing"
 	"text/template"
 
 	"github.com/google/go-cmp/cmp"
+	gotestcmp "gotest.tools/assert/cmp"
 )
 
 func Process(t *template.Template, vars interface{}) string {
@@ -70,4 +73,22 @@ Expected
 Actual
 %s
 `, diff, expected, actual)
+}
+
+// ContainsAll is a comparison utility, compares given substrings against
+// target string and returns the gotest.tools/assert/cmp.Comparison function.
+// Provide target string as first arg, followed by any number of substring as args
+func ContainsAll(target string, substrings ...string) gotestcmp.Comparison {
+	return func() gotestcmp.Result {
+		var missing []string
+		for _, sub := range substrings {
+			if !strings.Contains(target, sub) {
+				missing = append(missing, sub)
+			}
+		}
+		if len(missing) > 0 {
+			return gotestcmp.ResultFailure(fmt.Sprintf("\nActual output: %s\nMissing strings: %s", target, strings.Join(missing, ", ")))
+		}
+		return gotestcmp.ResultSuccess
+	}
 }
