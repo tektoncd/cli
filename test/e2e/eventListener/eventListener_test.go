@@ -17,13 +17,12 @@ package pipeline
 
 import (
 	"context"
-	"strings"
 	"testing"
 
 	"github.com/tektoncd/cli/test/cli"
 	"github.com/tektoncd/cli/test/framework"
 	"github.com/tektoncd/cli/test/helper"
-	"gotest.tools/v3/assert"
+	"gotest.tools/assert"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	knativetest "knative.dev/pkg/test"
 )
@@ -47,15 +46,14 @@ func TestEventListenerE2E(t *testing.T) {
 	t.Run("Assert if EventListener AVAILABLE status is true", func(t *testing.T) {
 		res := tkn.MustSucceed(t, "eventlistener", "list")
 		stdout := res.Stdout()
-		assert.Assert(t, strings.Contains(stdout, elName) &&
-			strings.Contains(stdout, "AVAILABLE") &&
-			strings.Contains(stdout, "True"))
+		assert.Check(t, helper.ContainsAll(stdout, elName, "AVAILABLE", "True"))
 	})
 
 	t.Run("Get logs of EventListener", func(t *testing.T) {
 		res := tkn.MustSucceed(t, "eventlistener", "logs", elName, "-t", "1")
-		expected := `{"level":"info","logger":"eventlistener","caller":"eventlistenersink/main.go:98","msg":"Listen and serve on port 8080","knative.dev/controller":"eventlistener"}`
-		assert.Assert(t, strings.Contains(res.Stdout(), expected))
+
+		stdout := res.Stdout()
+		assert.Check(t, helper.ContainsAll(stdout, "github-listener-interceptor-el-github-listener-interceptor-", "Listen and serve on port 8080"))
 	})
 
 	t.Logf("Scaling EventListener %s to 3 replicas in namespace %s", elName, namespace)
@@ -69,15 +67,14 @@ func TestEventListenerE2E(t *testing.T) {
 			t.Fatalf("Error getting pods for EventListener %s: %v", elName, err)
 		}
 
-		assert.Assert(t, len(elPods.Items) == 3)
+		podNum := len(elPods.Items)
+		if podNum != 3 {
+			t.Fatalf("Should be three replicas for EventListener but had %d replicas", podNum)
+		}
 
 		res := tkn.MustSucceed(t, "eventlistener", "logs", elName, "-t", "1")
 		stdout := res.Stdout()
-		for _, pod := range elPods.Items {
-			assert.Assert(t, strings.Contains(stdout, pod.Name))
-		}
 
-		expected := `{"level":"info","logger":"eventlistener","caller":"eventlistenersink/main.go:98","msg":"Listen and serve on port 8080","knative.dev/controller":"eventlistener"}`
-		assert.Assert(t, strings.Contains(stdout, expected))
+		assert.Check(t, helper.ContainsAll(stdout, "github-listener-interceptor-el-github-listener-interceptor-", "Listen and serve on port 8080", elPods.Items[0].Name, elPods.Items[1].Name, elPods.Items[2].Name))
 	})
 }
