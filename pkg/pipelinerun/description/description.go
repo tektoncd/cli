@@ -214,6 +214,9 @@ func hasFailed(pr *v1beta1.PipelineRun) string {
 
 	if pr.Status.Conditions[0].Status == corev1.ConditionFalse {
 		for _, tr := range pr.Status.TaskRuns {
+			if tr.Status == nil {
+				continue
+			}
 			if len(tr.Status.Conditions) == 0 {
 				continue
 			}
