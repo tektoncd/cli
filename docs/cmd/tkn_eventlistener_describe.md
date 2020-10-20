@@ -45,5 +45,5 @@ or
 
 ### SEE ALSO
 
-* [tkn eventlistener](tkn_eventlistener.md)	 - Manage eventlisteners
+* [tkn eventlistener](tkn_eventlistener.md)	 - Manage EventListeners
 

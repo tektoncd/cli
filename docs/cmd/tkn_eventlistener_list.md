@@ -1,6 +1,6 @@
 ## tkn eventlistener list
 
-Lists eventlisteners in a namespace
+Lists EventListeners in a namespace
 
 ***Aliases**: ls*
 
@@ -12,11 +12,11 @@ tkn eventlistener list
 
 ### Synopsis
 
-Lists eventlisteners in a namespace
+Lists EventListeners in a namespace
 
 ### Examples
 
-List all eventlisteners in namespace 'bar':
+List all EventListeners in namespace 'bar':
 
 	tkn eventlistener list -n bar
 
@@ -45,5 +45,5 @@ or
 
 ### SEE ALSO
 
-* [tkn eventlistener](tkn_eventlistener.md)	 - Manage eventlisteners
+* [tkn eventlistener](tkn_eventlistener.md)	 - Manage EventListeners
 

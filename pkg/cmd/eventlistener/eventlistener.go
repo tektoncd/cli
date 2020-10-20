@@ -24,7 +24,7 @@ func Command(p cli.Params) *cobra.Command {
 	cmd := &cobra.Command{
 		Use:     "eventlistener",
 		Aliases: []string{"el", "eventlisteners"},
-		Short:   "Manage eventlisteners",
+		Short:   "Manage EventListeners",
 		Annotations: map[string]string{
 			"commandType": "main",
 		},

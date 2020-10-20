@@ -39,7 +39,7 @@ const (
 func listCommand(p cli.Params) *cobra.Command {
 	f := cliopts.NewPrintFlags("list")
 
-	eg := `List all eventlisteners in namespace 'bar':
+	eg := `List all EventListeners in namespace 'bar':
 
 	tkn eventlistener list -n bar
 
@@ -51,7 +51,7 @@ or
 	c := &cobra.Command{
 		Use:     "list",
 		Aliases: []string{"ls"},
-		Short:   "Lists eventlisteners in a namespace",
+		Short:   "Lists EventListeners in a namespace",
 		Annotations: map[string]string{
 			"commandType": "main",
 		},
@@ -64,7 +64,7 @@ or
 
 			els, err := list(cs.Triggers, p.Namespace())
 			if err != nil {
-				return fmt.Errorf("failed to list eventlisteners from %s namespace: %v", p.Namespace(), err)
+				return fmt.Errorf("failed to list EventListeners from %s namespace: %v", p.Namespace(), err)
 			}
 
 			output, err := cmd.LocalFlags().GetString("output")
@@ -82,7 +82,7 @@ or
 			}
 
 			if err = printFormatted(stream, els, p); err != nil {
-				return errors.New(`failed to print eventlisteners \n`)
+				return errors.New(`failed to print EventListeners`)
 			}
 			return nil
 		},

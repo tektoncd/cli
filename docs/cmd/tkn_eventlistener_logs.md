@@ -41,5 +41,5 @@ Show 2 lines of most recent logs from all EventListener pods:
 
 ### SEE ALSO
 
-* [tkn eventlistener](tkn_eventlistener.md)	 - Manage eventlisteners
+* [tkn eventlistener](tkn_eventlistener.md)	 - Manage EventListeners
 

@@ -1,1 +1,1 @@
-Error: failed to get eventlistener bar: eventlisteners.triggers.tekton.dev "bar" not found
+Error: failed to get EventListener bar: eventlisteners.triggers.tekton.dev "bar" not found
