@@ -42,7 +42,7 @@ func listCommand(p cli.Params) *cobra.Command {
 	c := &cobra.Command{
 		Use:     "list",
 		Aliases: []string{"ls"},
-		Short:   "Lists conditions in a namespace",
+		Short:   "Lists Conditions in a namespace",
 		Annotations: map[string]string{
 			"commandType": "main",
 		},
@@ -54,8 +54,7 @@ func listCommand(p cli.Params) *cobra.Command {
 
 			output, err := cmd.LocalFlags().GetString("output")
 			if err != nil {
-				fmt.Fprint(stream.Err, "Error: output option not set properly \n")
-				return err
+				return fmt.Errorf("output option not set properly: %v", err)
 			}
 
 			if output != "" {
@@ -78,8 +77,7 @@ func printConditionDetails(s *cli.Stream, p cli.Params) error {
 
 	conditions, err := listAllConditions(cs.Tekton, p.Namespace())
 	if err != nil {
-		fmt.Fprintf(s.Err, "Failed to list conditions from %s namespace \n", p.Namespace())
-		return err
+		return fmt.Errorf("failed to list Conditions from %s namespace: %v", p.Namespace(), err)
 	}
 
 	if len(conditions.Items) == 0 {
@@ -108,8 +106,7 @@ func printConditionListObj(s *cli.Stream, p cli.Params, f *cliopts.PrintFlags) e
 
 	conditions, err := listAllConditions(cs.Tekton, p.Namespace())
 	if err != nil {
-		fmt.Fprintf(s.Err, "Failed to list conditions from %s namespace \n", p.Namespace())
-		return err
+		return fmt.Errorf("failed to list Conditions from %s namespace: %v", p.Namespace(), err)
 	}
 	return printer.PrintObject(s.Out, conditions, f)
 }

@@ -1,6 +1,6 @@
 ## tkn condition delete
 
-Delete a condition in a namespace
+Delete Conditions in a namespace
 
 ***Aliases**: rm*
 
@@ -12,7 +12,7 @@ tkn condition delete
 
 ### Synopsis
 
-Delete a condition in a namespace
+Delete Conditions in a namespace
 
 ### Examples
 
@@ -47,5 +47,5 @@ or
 
 ### SEE ALSO
 
-* [tkn condition](tkn_condition.md)	 - Manage conditions
+* [tkn condition](tkn_condition.md)	 - Manage Conditions
 

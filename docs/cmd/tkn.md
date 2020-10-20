@@ -23,7 +23,7 @@ CLI for tekton pipelines
 * [tkn clustertask](tkn_clustertask.md)	 - Manage ClusterTasks
 * [tkn clustertriggerbinding](tkn_clustertriggerbinding.md)	 - Manage clustertriggerbindings
 * [tkn completion](tkn_completion.md)	 - Prints shell completion scripts
-* [tkn condition](tkn_condition.md)	 - Manage conditions
+* [tkn condition](tkn_condition.md)	 - Manage Conditions
 * [tkn eventlistener](tkn_eventlistener.md)	 - Manage EventListeners
 * [tkn pipeline](tkn_pipeline.md)	 - Manage pipelines
 * [tkn pipelinerun](tkn_pipelinerun.md)	 - Manage PipelineRuns

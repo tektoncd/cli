@@ -24,7 +24,7 @@ func Command(p cli.Params) *cobra.Command {
 	cmd := &cobra.Command{
 		Use:     "condition",
 		Aliases: []string{"cond", "conditions"},
-		Short:   "Manage conditions",
+		Short:   "Manage Conditions",
 		Annotations: map[string]string{
 			"commandType": "main",
 		},
