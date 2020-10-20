@@ -1,6 +1,6 @@
 ## tkn triggerbinding delete
 
-Delete triggerbindings in a namespace
+Delete TriggerBindings in a namespace
 
 ***Aliases**: rm*
 
@@ -12,7 +12,7 @@ tkn triggerbinding delete
 
 ### Synopsis
 
-Delete triggerbindings in a namespace
+Delete TriggerBindings in a namespace
 
 ### Examples
 
@@ -47,5 +47,5 @@ or
 
 ### SEE ALSO
 
-* [tkn triggerbinding](tkn_triggerbinding.md)	 - Manage triggerbindings
+* [tkn triggerbinding](tkn_triggerbinding.md)	 - Manage TriggerBindings
 

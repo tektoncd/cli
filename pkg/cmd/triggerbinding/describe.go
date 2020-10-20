@@ -18,7 +18,6 @@ import (
 	"context"
 	"fmt"
 	"io"
-	"os"
 	"text/tabwriter"
 	"text/template"
 
@@ -61,7 +60,7 @@ or
 	c := &cobra.Command{
 		Use:     "describe",
 		Aliases: []string{"desc"},
-		Short:   "Describes a triggerbinding in a namespace",
+		Short:   "Describes a TriggerBinding in a namespace",
 		Example: eg,
 		Annotations: map[string]string{
 			"commandType": "main",
@@ -76,8 +75,7 @@ or
 
 			output, err := cmd.LocalFlags().GetString("output")
 			if err != nil {
-				fmt.Fprint(os.Stderr, "Error: output option not set properly \n")
-				return err
+				return fmt.Errorf("output option not set properly: %v", err)
 			}
 
 			if output != "" {
@@ -123,7 +121,7 @@ func printTriggerBindingDescription(s *cli.Stream, p cli.Params, tbName string) 
 
 	tb, err := cs.Triggers.TriggersV1alpha1().TriggerBindings(p.Namespace()).Get(context.Background(), tbName, metav1.GetOptions{})
 	if err != nil {
-		return fmt.Errorf("failed to get triggerbinding %s from %s namespace: %v", tbName, p.Namespace(), err)
+		return fmt.Errorf("failed to get TriggerBinding %s from %s namespace: %v", tbName, p.Namespace(), err)
 	}
 
 	var data = struct {
@@ -139,8 +137,7 @@ func printTriggerBindingDescription(s *cli.Stream, p cli.Params, tbName string) 
 	w := tabwriter.NewWriter(s.Out, 0, 5, 3, ' ', tabwriter.TabIndent)
 	tparsed := template.Must(template.New("Describe Triggerbinding").Funcs(funcMap).Parse(describeTemplate))
 	if err = tparsed.Execute(w, data); err != nil {
-		fmt.Fprintf(s.Err, "Failed to execute template \n")
-		return err
+		return fmt.Errorf("failed to execute template: %v", err)
 	}
 	return w.Flush()
 }

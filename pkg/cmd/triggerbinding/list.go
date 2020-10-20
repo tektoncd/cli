@@ -32,13 +32,13 @@ import (
 )
 
 const (
-	emptyMsg = "No triggerbindings found"
+	emptyMsg = "No TriggerBindings found"
 )
 
 func listCommand(p cli.Params) *cobra.Command {
 	f := cliopts.NewPrintFlags("list")
 
-	eg := `List all triggerbindings in namespace 'bar':
+	eg := `List all TriggerBindings in namespace 'bar':
 
 	tkn triggerbinding list -n bar
 
@@ -50,7 +50,7 @@ or
 	c := &cobra.Command{
 		Use:     "list",
 		Aliases: []string{"ls"},
-		Short:   "Lists triggerbindings in a namespace",
+		Short:   "Lists TriggerBindings in a namespace",
 		Annotations: map[string]string{
 			"commandType": "main",
 		},
@@ -63,7 +63,7 @@ or
 
 			tbs, err := list(cs.Triggers, p.Namespace())
 			if err != nil {
-				return fmt.Errorf("failed to list triggerbindings from %s namespace: %v", p.Namespace(), err)
+				return fmt.Errorf("failed to list TriggerBindings from %s namespace: %v", p.Namespace(), err)
 			}
 
 			output, err := cmd.LocalFlags().GetString("output")
@@ -90,7 +90,7 @@ or
 			}
 
 			if err = printFormatted(stream, tbs, p); err != nil {
-				return errors.New("failed to print triggerbindings")
+				return errors.New("failed to print TriggerBindings")
 			}
 			return nil
 

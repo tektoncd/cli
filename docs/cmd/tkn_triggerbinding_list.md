@@ -1,6 +1,6 @@
 ## tkn triggerbinding list
 
-Lists triggerbindings in a namespace
+Lists TriggerBindings in a namespace
 
 ***Aliases**: ls*
 
@@ -12,11 +12,11 @@ tkn triggerbinding list
 
 ### Synopsis
 
-Lists triggerbindings in a namespace
+Lists TriggerBindings in a namespace
 
 ### Examples
 
-List all triggerbindings in namespace 'bar':
+List all TriggerBindings in namespace 'bar':
 
 	tkn triggerbinding list -n bar
 
@@ -45,5 +45,5 @@ or
 
 ### SEE ALSO
 
-* [tkn triggerbinding](tkn_triggerbinding.md)	 - Manage triggerbindings
+* [tkn triggerbinding](tkn_triggerbinding.md)	 - Manage TriggerBindings
 

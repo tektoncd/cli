@@ -1,6 +1,6 @@
 ## tkn triggerbinding describe
 
-Describes a triggerbinding in a namespace
+Describes a TriggerBinding in a namespace
 
 ***Aliases**: desc*
 
@@ -12,7 +12,7 @@ tkn triggerbinding describe
 
 ### Synopsis
 
-Describes a triggerbinding in a namespace
+Describes a TriggerBinding in a namespace
 
 ### Examples
 
@@ -45,5 +45,5 @@ or
 
 ### SEE ALSO
 
-* [tkn triggerbinding](tkn_triggerbinding.md)	 - Manage triggerbindings
+* [tkn triggerbinding](tkn_triggerbinding.md)	 - Manage TriggerBindings
 

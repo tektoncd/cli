@@ -41,7 +41,7 @@ or
 	c := &cobra.Command{
 		Use:          "delete",
 		Aliases:      []string{"rm"},
-		Short:        "Delete triggerbindings in a namespace",
+		Short:        "Delete TriggerBindings in a namespace",
 		Example:      eg,
 		Args:         cobra.MinimumNArgs(0),
 		SilenceUsage: true,
