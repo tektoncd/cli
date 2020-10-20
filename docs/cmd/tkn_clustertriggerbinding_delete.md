@@ -1,6 +1,6 @@
 ## tkn clustertriggerbinding delete
 
-Delete clustertriggerbindings
+Delete ClusterTriggerBindings
 
 ***Aliases**: rm*
 
@@ -12,7 +12,7 @@ tkn clustertriggerbinding delete
 
 ### Synopsis
 
-Delete clustertriggerbindings
+Delete ClusterTriggerBindings
 
 ### Examples
 
@@ -46,5 +46,5 @@ or
 
 ### SEE ALSO
 
-* [tkn clustertriggerbinding](tkn_clustertriggerbinding.md)	 - Manage clustertriggerbindings
+* [tkn clustertriggerbinding](tkn_clustertriggerbinding.md)	 - Manage ClusterTriggerBindings
 

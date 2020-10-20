@@ -1,6 +1,6 @@
 ## tkn clustertriggerbinding describe
 
-Describes a clustertriggerbinding
+Describes a ClusterTriggerBinding
 
 ***Aliases**: desc*
 
@@ -12,7 +12,7 @@ tkn clustertriggerbinding describe
 
 ### Synopsis
 
-Describes a clustertriggerbinding
+Describes a ClusterTriggerBinding
 
 ### Examples
 
@@ -44,5 +44,5 @@ or
 
 ### SEE ALSO
 
-* [tkn clustertriggerbinding](tkn_clustertriggerbinding.md)	 - Manage clustertriggerbindings
+* [tkn clustertriggerbinding](tkn_clustertriggerbinding.md)	 - Manage ClusterTriggerBindings
 

@@ -24,7 +24,7 @@ func Command(p cli.Params) *cobra.Command {
 	cmd := &cobra.Command{
 		Use:     "clustertriggerbinding",
 		Aliases: []string{"ctb", "clustertriggerbindings"},
-		Short:   "Manage clustertriggerbindings",
+		Short:   "Manage ClusterTriggerBindings",
 		Annotations: map[string]string{
 			"commandType": "main",
 		},

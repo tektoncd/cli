@@ -41,7 +41,7 @@ or
 	c := &cobra.Command{
 		Use:          "delete",
 		Aliases:      []string{"rm"},
-		Short:        "Delete clustertriggerbindings",
+		Short:        "Delete ClusterTriggerBindings",
 		Example:      eg,
 		Args:         cobra.MinimumNArgs(0),
 		SilenceUsage: true,
