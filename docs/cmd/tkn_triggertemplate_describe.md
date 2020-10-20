@@ -1,6 +1,6 @@
 ## tkn triggertemplate describe
 
-Describes a triggertemplate in a namespace
+Describes a TriggerTemplate in a namespace
 
 ***Aliases**: desc*
 
@@ -12,7 +12,7 @@ tkn triggertemplate describe
 
 ### Synopsis
 
-Describes a triggertemplate in a namespace
+Describes a TriggerTemplate in a namespace
 
 ### Examples
 
@@ -45,5 +45,5 @@ or
 
 ### SEE ALSO
 
-* [tkn triggertemplate](tkn_triggertemplate.md)	 - Manage triggertemplates
+* [tkn triggertemplate](tkn_triggertemplate.md)	 - Manage TriggerTemplates
 
