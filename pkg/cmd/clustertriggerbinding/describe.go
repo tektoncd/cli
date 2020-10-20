@@ -18,7 +18,6 @@ import (
 	"context"
 	"fmt"
 	"io"
-	"os"
 	"text/tabwriter"
 	"text/template"
 
@@ -60,7 +59,7 @@ or
 	c := &cobra.Command{
 		Use:     "describe",
 		Aliases: []string{"desc"},
-		Short:   "Describes a clustertriggerbinding",
+		Short:   "Describes a ClusterTriggerBinding",
 		Example: eg,
 		Annotations: map[string]string{
 			"commandType": "main",
@@ -75,8 +74,7 @@ or
 
 			output, err := cmd.LocalFlags().GetString("output")
 			if err != nil {
-				fmt.Fprint(os.Stderr, "Error: output option not set properly \n")
-				return err
+				return fmt.Errorf("output option not set properly: %v", err)
 			}
 
 			if output != "" {
@@ -122,7 +120,7 @@ func printClusterTriggerBindingDescription(s *cli.Stream, p cli.Params, ctbName 
 
 	ctb, err := cs.Triggers.TriggersV1alpha1().ClusterTriggerBindings().Get(context.Background(), ctbName, metav1.GetOptions{})
 	if err != nil {
-		return fmt.Errorf("failed to get clustertriggerbinding %s: %v", ctbName, err)
+		return fmt.Errorf("failed to get ClusterTriggerBinding %s: %v", ctbName, err)
 	}
 
 	var data = struct {
@@ -138,8 +136,7 @@ func printClusterTriggerBindingDescription(s *cli.Stream, p cli.Params, ctbName 
 	w := tabwriter.NewWriter(s.Out, 0, 5, 3, ' ', tabwriter.TabIndent)
 	tparsed := template.Must(template.New("Describe ClusterTriggerbinding").Funcs(funcMap).Parse(describeTemplate))
 	if err = tparsed.Execute(w, data); err != nil {
-		fmt.Fprintf(s.Err, "Failed to execute template \n")
-		return err
+		return fmt.Errorf("failed to execute template: %v", err)
 	}
 	return w.Flush()
 }

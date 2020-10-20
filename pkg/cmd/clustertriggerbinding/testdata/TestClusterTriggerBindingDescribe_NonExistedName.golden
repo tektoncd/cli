@@ -1,1 +1,1 @@
-Error: failed to get clustertriggerbinding bar: clustertriggerbindings.triggers.tekton.dev "bar" not found
+Error: failed to get ClusterTriggerBinding bar: clustertriggerbindings.triggers.tekton.dev "bar" not found

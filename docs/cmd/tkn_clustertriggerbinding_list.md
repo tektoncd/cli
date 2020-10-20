@@ -1,6 +1,6 @@
 ## tkn clustertriggerbinding list
 
-Lists clustertriggerbindings in a namespace
+Lists ClusterTriggerBindings in a namespace
 
 ***Aliases**: ls*
 
@@ -12,11 +12,11 @@ tkn clustertriggerbinding list
 
 ### Synopsis
 
-Lists clustertriggerbindings in a namespace
+Lists ClusterTriggerBindings in a namespace
 
 ### Examples
 
-List all clustertriggerbindings:
+List all ClusterTriggerBindings:
 
 	tkn clustertriggerbinding list
 
@@ -44,5 +44,5 @@ or
 
 ### SEE ALSO
 
-* [tkn clustertriggerbinding](tkn_clustertriggerbinding.md)	 - Manage clustertriggerbindings
+* [tkn clustertriggerbinding](tkn_clustertriggerbinding.md)	 - Manage ClusterTriggerBindings
 

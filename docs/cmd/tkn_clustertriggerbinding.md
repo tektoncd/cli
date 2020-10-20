@@ -1,6 +1,6 @@
 ## tkn clustertriggerbinding
 
-Manage clustertriggerbindings
+Manage ClusterTriggerBindings
 
 ***Aliases**: ctb,clustertriggerbindings*
 
@@ -12,7 +12,7 @@ tkn clustertriggerbinding
 
 ### Synopsis
 
-Manage clustertriggerbindings
+Manage ClusterTriggerBindings
 
 ### Options
 
@@ -26,7 +26,7 @@ Manage clustertriggerbindings
 ### SEE ALSO
 
 * [tkn](tkn.md)	 - CLI for tekton pipelines
-* [tkn clustertriggerbinding delete](tkn_clustertriggerbinding_delete.md)	 - Delete clustertriggerbindings
-* [tkn clustertriggerbinding describe](tkn_clustertriggerbinding_describe.md)	 - Describes a clustertriggerbinding
-* [tkn clustertriggerbinding list](tkn_clustertriggerbinding_list.md)	 - Lists clustertriggerbindings in a namespace
+* [tkn clustertriggerbinding delete](tkn_clustertriggerbinding_delete.md)	 - Delete ClusterTriggerBindings
+* [tkn clustertriggerbinding describe](tkn_clustertriggerbinding_describe.md)	 - Describes a ClusterTriggerBinding
+* [tkn clustertriggerbinding list](tkn_clustertriggerbinding_list.md)	 - Lists ClusterTriggerBindings in a namespace
 

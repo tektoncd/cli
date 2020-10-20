@@ -32,13 +32,13 @@ import (
 )
 
 const (
-	emptyMsg = "No clustertriggerbindings found"
+	emptyMsg = "No ClusterTriggerBindings found"
 )
 
 func listCommand(p cli.Params) *cobra.Command {
 	f := cliopts.NewPrintFlags("list")
 
-	eg := `List all clustertriggerbindings:
+	eg := `List all ClusterTriggerBindings:
 
 	tkn clustertriggerbinding list
 
@@ -50,7 +50,7 @@ or
 	c := &cobra.Command{
 		Use:     "list",
 		Aliases: []string{"ls"},
-		Short:   "Lists clustertriggerbindings in a namespace",
+		Short:   "Lists ClusterTriggerBindings in a namespace",
 		Annotations: map[string]string{
 			"commandType": "main",
 		},
@@ -63,7 +63,7 @@ or
 
 			tbs, err := list(cs.Triggers, "")
 			if err != nil {
-				return fmt.Errorf("failed to list clustertriggerbindings: %v", err)
+				return fmt.Errorf("failed to list ClusterTriggerBindings: %v", err)
 			}
 
 			output, err := cmd.LocalFlags().GetString("output")
@@ -90,7 +90,7 @@ or
 			}
 
 			if err = printFormatted(stream, tbs, p); err != nil {
-				return fmt.Errorf("failed to print clustertriggerbindings: %v", err)
+				return fmt.Errorf("failed to print ClusterTriggerBindings: %v", err)
 			}
 			return nil
 
