@@ -45,5 +45,5 @@ or
 
 ### SEE ALSO
 
-* [tkn condition](tkn_condition.md)	 - Manage conditions
+* [tkn condition](tkn_condition.md)	 - Manage Conditions
 

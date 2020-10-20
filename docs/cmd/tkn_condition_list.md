@@ -1,6 +1,6 @@
 ## tkn condition list
 
-Lists conditions in a namespace
+Lists Conditions in a namespace
 
 ***Aliases**: ls*
 
@@ -12,7 +12,7 @@ tkn condition list
 
 ### Synopsis
 
-Lists conditions in a namespace
+Lists Conditions in a namespace
 
 ### Options
 
@@ -34,5 +34,5 @@ Lists conditions in a namespace
 
 ### SEE ALSO
 
-* [tkn condition](tkn_condition.md)	 - Manage conditions
+* [tkn condition](tkn_condition.md)	 - Manage Conditions
 

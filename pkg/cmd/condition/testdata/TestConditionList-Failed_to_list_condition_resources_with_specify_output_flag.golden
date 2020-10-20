@@ -1,2 +1,1 @@
-Failed to list conditions from ns namespace 
-Error: test error
+Error: failed to list Conditions from ns namespace: test error

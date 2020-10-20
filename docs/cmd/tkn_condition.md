@@ -1,6 +1,6 @@
 ## tkn condition
 
-Manage conditions
+Manage Conditions
 
 ***Aliases**: cond,conditions*
 
@@ -12,7 +12,7 @@ tkn condition
 
 ### Synopsis
 
-Manage conditions
+Manage Conditions
 
 ### Options
 
@@ -27,7 +27,7 @@ Manage conditions
 ### SEE ALSO
 
 * [tkn](tkn.md)	 - CLI for tekton pipelines
-* [tkn condition delete](tkn_condition_delete.md)	 - Delete a condition in a namespace
+* [tkn condition delete](tkn_condition_delete.md)	 - Delete Conditions in a namespace
 * [tkn condition describe](tkn_condition_describe.md)	 - Describe Conditions in a namespace
-* [tkn condition list](tkn_condition_list.md)	 - Lists conditions in a namespace
+* [tkn condition list](tkn_condition_list.md)	 - Lists Conditions in a namespace
 

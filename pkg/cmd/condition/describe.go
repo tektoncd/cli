@@ -17,7 +17,6 @@ package condition
 import (
 	"context"
 	"fmt"
-	"os"
 	"text/tabwriter"
 	"text/template"
 
@@ -108,8 +107,7 @@ or
 
 			output, err := cmd.LocalFlags().GetString("output")
 			if err != nil {
-				fmt.Fprint(os.Stderr, "Error: output option not set properly \n")
-				return err
+				return fmt.Errorf("output option not set properly: %v", err)
 			}
 
 			condition, err := getCondition(p, args[0])
@@ -141,7 +139,7 @@ func getCondition(p cli.Params, name string) (*v1alpha1.Condition, error) {
 
 	condition, err := cs.Tekton.TektonV1alpha1().Conditions(p.Namespace()).Get(context.Background(), name, metav1.GetOptions{})
 	if err != nil {
-		return nil, fmt.Errorf("failed to find condition %q", name)
+		return nil, fmt.Errorf("failed to find Condition %q", name)
 	}
 
 	// NOTE: this is required for -o json|yaml to work properly since
