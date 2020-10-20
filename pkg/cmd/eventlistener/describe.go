@@ -209,7 +209,7 @@ func printEventListenerDescription(s *cli.Stream, p cli.Params, elName string) e
 
 	el, err := cs.Triggers.TriggersV1alpha1().EventListeners(p.Namespace()).Get(context.Background(), elName, metav1.GetOptions{})
 	if err != nil {
-		return fmt.Errorf("failed to get eventlistener %s: %v", elName, err)
+		return fmt.Errorf("failed to get EventListener %s: %v", elName, err)
 	}
 
 	var data = struct {
