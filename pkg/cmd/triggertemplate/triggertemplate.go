@@ -24,7 +24,7 @@ func Command(p cli.Params) *cobra.Command {
 	cmd := &cobra.Command{
 		Use:     "triggertemplate",
 		Aliases: []string{"tt", "triggertemplates"},
-		Short:   "Manage triggertemplates",
+		Short:   "Manage TriggerTemplates",
 		Annotations: map[string]string{
 			"commandType": "main",
 		},

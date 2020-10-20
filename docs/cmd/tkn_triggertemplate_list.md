@@ -1,6 +1,6 @@
 ## tkn triggertemplate list
 
-Lists triggertemplates in a namespace
+Lists TriggerTemplates in a namespace
 
 ***Aliases**: ls*
 
@@ -12,11 +12,11 @@ tkn triggertemplate list
 
 ### Synopsis
 
-Lists triggertemplates in a namespace
+Lists TriggerTemplates in a namespace
 
 ### Examples
 
-List all triggertemplates in namespace 'bar':
+List all TriggerTemplates in namespace 'bar':
 
 	tkn triggertemplate list -n bar
 
@@ -45,5 +45,5 @@ or
 
 ### SEE ALSO
 
-* [tkn triggertemplate](tkn_triggertemplate.md)	 - Manage triggertemplates
+* [tkn triggertemplate](tkn_triggertemplate.md)	 - Manage TriggerTemplates
 

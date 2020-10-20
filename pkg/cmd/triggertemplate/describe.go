@@ -18,7 +18,6 @@ import (
 	"context"
 	"fmt"
 	"io"
-	"os"
 	"text/tabwriter"
 	"text/template"
 
@@ -81,7 +80,7 @@ or
 	c := &cobra.Command{
 		Use:     "describe",
 		Aliases: []string{"desc"},
-		Short:   "Describes a triggertemplate in a namespace",
+		Short:   "Describes a TriggerTemplate in a namespace",
 		Example: eg,
 		Annotations: map[string]string{
 			"commandType": "main",
@@ -96,8 +95,7 @@ or
 
 			output, err := cmd.LocalFlags().GetString("output")
 			if err != nil {
-				fmt.Fprint(os.Stderr, "Error: output option not set properly \n")
-				return err
+				return fmt.Errorf("output option not set properly: %v", err)
 			}
 
 			if output != "" {
@@ -143,7 +141,7 @@ func printTriggerTemplateDescription(s *cli.Stream, p cli.Params, ttname string)
 
 	tt, err := cs.Triggers.TriggersV1alpha1().TriggerTemplates(p.Namespace()).Get(context.Background(), ttname, metav1.GetOptions{})
 	if err != nil {
-		return fmt.Errorf("failed to get triggertemplate %s from %s namespace: %v", ttname, p.Namespace(), err)
+		return fmt.Errorf("failed to get TriggerTemplate %s from %s namespace: %v", ttname, p.Namespace(), err)
 	}
 
 	var data = struct {

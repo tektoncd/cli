@@ -16,7 +16,6 @@ package triggertemplate
 
 import (
 	"context"
-	"errors"
 	"fmt"
 	"text/tabwriter"
 
@@ -32,13 +31,13 @@ import (
 )
 
 const (
-	emptyMsg = "No triggertemplates found"
+	emptyMsg = "No TriggerTemplates found"
 )
 
 func listCommand(p cli.Params) *cobra.Command {
 	f := cliopts.NewPrintFlags("list")
 
-	eg := `List all triggertemplates in namespace 'bar':
+	eg := `List all TriggerTemplates in namespace 'bar':
 
 	tkn triggertemplate list -n bar
 
@@ -50,7 +49,7 @@ or
 	c := &cobra.Command{
 		Use:     "list",
 		Aliases: []string{"ls"},
-		Short:   "Lists triggertemplates in a namespace",
+		Short:   "Lists TriggerTemplates in a namespace",
 		Annotations: map[string]string{
 			"commandType": "main",
 		},
@@ -63,12 +62,12 @@ or
 
 			tts, err := list(cs.Triggers, p.Namespace())
 			if err != nil {
-				return fmt.Errorf("failed to list triggertemplates from %s namespace: %v", p.Namespace(), err)
+				return fmt.Errorf("failed to list TriggerTemplates from %s namespace: %v", p.Namespace(), err)
 			}
 
 			output, err := cmd.LocalFlags().GetString("output")
 			if err != nil {
-				return errors.New("output option not set properly")
+				return fmt.Errorf("output option not set properly: %v", err)
 			}
 
 			stream := &cli.Stream{
@@ -81,7 +80,7 @@ or
 			}
 
 			if err = printFormatted(stream, tts, p); err != nil {
-				return errors.New("failed to print triggertemplates")
+				return fmt.Errorf("failed to print TriggerTemplates: %v", err)
 			}
 			return nil
 
