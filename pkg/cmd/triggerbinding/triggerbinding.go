@@ -24,7 +24,7 @@ func Command(p cli.Params) *cobra.Command {
 	cmd := &cobra.Command{
 		Use:     "triggerbinding",
 		Aliases: []string{"tb", "triggerbindings"},
-		Short:   "Manage triggerbindings",
+		Short:   "Manage TriggerBindings",
 		Annotations: map[string]string{
 			"commandType": "main",
 		},

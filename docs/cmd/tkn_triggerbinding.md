@@ -1,6 +1,6 @@
 ## tkn triggerbinding
 
-Manage triggerbindings
+Manage TriggerBindings
 
 ***Aliases**: tb,triggerbindings*
 
@@ -12,7 +12,7 @@ tkn triggerbinding
 
 ### Synopsis
 
-Manage triggerbindings
+Manage TriggerBindings
 
 ### Options
 
@@ -27,7 +27,7 @@ Manage triggerbindings
 ### SEE ALSO
 
 * [tkn](tkn.md)	 - CLI for tekton pipelines
-* [tkn triggerbinding delete](tkn_triggerbinding_delete.md)	 - Delete triggerbindings in a namespace
-* [tkn triggerbinding describe](tkn_triggerbinding_describe.md)	 - Describes a triggerbinding in a namespace
-* [tkn triggerbinding list](tkn_triggerbinding_list.md)	 - Lists triggerbindings in a namespace
+* [tkn triggerbinding delete](tkn_triggerbinding_delete.md)	 - Delete TriggerBindings in a namespace
+* [tkn triggerbinding describe](tkn_triggerbinding_describe.md)	 - Describes a TriggerBinding in a namespace
+* [tkn triggerbinding list](tkn_triggerbinding_list.md)	 - Lists TriggerBindings in a namespace
 

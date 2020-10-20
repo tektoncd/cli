@@ -1,1 +1,1 @@
-Error: failed to get triggerbinding bar from invalid namespace: triggerbindings.triggers.tekton.dev "bar" not found
+Error: failed to get TriggerBinding bar from invalid namespace: triggerbindings.triggers.tekton.dev "bar" not found
