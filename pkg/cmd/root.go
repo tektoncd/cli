@@ -40,7 +40,7 @@ import (
 
 const usageTemplate = `Usage:{{if .Runnable}}
 {{.UseLine}}{{end}}{{if .HasAvailableSubCommands}}
-  {{.CommandPath}} [command]{{end}}{{if gt (len .Aliases) 0}}
+{{.CommandPath}} [command]{{end}}{{if gt (len .Aliases) 0}}
 
 Aliases:
   {{.NameAndAliases}}{{end}}{{if .HasExample}}
