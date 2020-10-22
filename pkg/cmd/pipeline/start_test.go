@@ -969,6 +969,7 @@ func TestPipelineV1beta1Start_ExecuteCommand(t *testing.T) {
 		namespace  string
 		input      *test.Params
 		wantError  bool
+		hasPrefix  bool
 		want       string
 		goldenFile bool
 	}{
@@ -1347,7 +1348,8 @@ func TestPipelineV1beta1Start_ExecuteCommand(t *testing.T) {
 			namespace: "",
 			input:     c2,
 			wantError: true,
-			want:      "time: unknown unit d in duration 5d",
+			hasPrefix: true,
+			want:      `time: unknown unit`,
 		},
 		{
 			name: "Dry Run with PodTemplate",
@@ -1379,7 +1381,12 @@ func TestPipelineV1beta1Start_ExecuteCommand(t *testing.T) {
 				if err == nil {
 					t.Errorf("error expected here")
 				}
-				test.AssertOutput(t, tp.want, err.Error())
+
+				if tp.hasPrefix {
+					test.AssertOutputPrefix(t, tp.want, err.Error())
+				} else {
+					test.AssertOutput(t, tp.want, err.Error())
+				}
 			} else {
 				if err != nil {
 					t.Errorf("unexpected Error")

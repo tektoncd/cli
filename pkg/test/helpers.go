@@ -15,6 +15,7 @@
 package test
 
 import (
+	"strings"
 	"testing"
 
 	"github.com/google/go-cmp/cmp"
@@ -56,4 +57,20 @@ Expected
 Actual
 %s
 `, diff, expected, actual)
+}
+
+func AssertOutputPrefix(t *testing.T, expected, actual string) {
+	t.Helper()
+
+	if !strings.HasPrefix(actual, expected) {
+		t.Errorf(`
+Unexpected output:
+
+Expected prefix
+%s
+
+Actual
+%s
+`, expected, actual)
+	}
 }

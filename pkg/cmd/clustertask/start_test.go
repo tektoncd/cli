@@ -1248,6 +1248,7 @@ func Test_ClusterTask_Start_v1beta1(t *testing.T) {
 		input       pipelinev1beta1test.Clients
 		inputStream io.Reader
 		wantError   bool
+		hasPrefix   bool
 		want        string
 		goldenFile  bool
 	}{
@@ -1479,7 +1480,8 @@ func Test_ClusterTask_Start_v1beta1(t *testing.T) {
 			input:       seeds[4].pipelineClient,
 			inputStream: nil,
 			wantError:   true,
-			want:        "time: unknown unit d in duration 5d",
+			hasPrefix:   true,
+			want:        `time: unknown unit`,
 		},
 		{
 			name: "Dry run with PodTemplate",
@@ -1623,7 +1625,12 @@ func Test_ClusterTask_Start_v1beta1(t *testing.T) {
 				if err == nil {
 					t.Errorf("Error expected here")
 				}
-				test.AssertOutput(t, tp.want, err.Error())
+
+				if tp.hasPrefix {
+					test.AssertOutputPrefix(t, tp.want, err.Error())
+				} else {
+					test.AssertOutput(t, tp.want, err.Error())
+				}
 			} else {
 				if err != nil {
 					t.Errorf("Unexpected error")
