@@ -4358,6 +4358,7 @@ func TestTaskStart_ExecuteCommand_v1beta1(t *testing.T) {
 		dynamic    dynamic.Interface
 		input      pipelinev1beta1test.Clients
 		wantError  bool
+		hasPrefix  bool
 		want       string
 		goldenFile bool
 	}{
@@ -4518,7 +4519,8 @@ func TestTaskStart_ExecuteCommand_v1beta1(t *testing.T) {
 			dynamic:   dc,
 			input:     cs,
 			wantError: true,
-			want:      "time: unknown unit d in duration 5d",
+			hasPrefix: true,
+			want:      `time: unknown unit`,
 		},
 		{
 			name: "Dry Run with output=json -f v1beta1",
@@ -4583,7 +4585,12 @@ func TestTaskStart_ExecuteCommand_v1beta1(t *testing.T) {
 				if err == nil {
 					t.Errorf("error expected here")
 				}
-				test.AssertOutput(t, tp.want, err.Error())
+
+				if tp.hasPrefix {
+					test.AssertOutputPrefix(t, tp.want, err.Error())
+				} else {
+					test.AssertOutput(t, tp.want, err.Error())
+				}
 			} else {
 				if err != nil {
 					t.Errorf("unexpected Error")

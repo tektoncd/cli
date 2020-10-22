@@ -16,6 +16,7 @@ package formatted
 import (
 	"bytes"
 	"html/template"
+	"strconv"
 
 	"testing"
 
@@ -39,7 +40,8 @@ func TestRainbowsColours(t *testing.T) {
 
 	rb = newRainbow()
 	for c := range palette {
-		rb.get(string(c))
+		a := strconv.Itoa(c)
+		rb.get(a)
 	}
 	assert.Equal(t, rb.counter.value, uint32(0)) // Looped back to 0
 }
