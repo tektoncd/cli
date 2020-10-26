@@ -8,9 +8,7 @@
 
 The Tekton Pipelines cli project provides a CLI for interacting with Tekton!
 
-## Getting Started
-
-### Installing `tkn`
+## Installing `tkn`
 
 Download the latest binary executable for your operating system:
 
@@ -47,7 +45,7 @@ Download the latest binary executable for your operating system:
   - Click `New` and add the location of the uncompressed zip to the `Path`
   - Finish by clicking `Ok`
 
-#### Linux tarballs
+### Linux tarballs
 
 * [Linux AMD 64](https://github.com/tektoncd/cli/releases/download/v0.13.1/tkn_0.13.1_Linux_x86_64.tar.gz)
 
@@ -85,8 +83,7 @@ Download the latest binary executable for your operating system:
   sudo tar xvzf tkn_0.13.1_Linux_ppc64le.tar.gz -C /usr/local/bin/ tkn
   ```
 
-
-#### Linux RPMs
+### Linux RPMs
 
   If you are running on any of the following rpm based distros:
 
@@ -113,7 +110,7 @@ Download the latest binary executable for your operating system:
     rpm -Uvh https://github.com/tektoncd/cli/releases/download/v0.13.1/tektoncd-cli-0.13.1_Linux-64bit.rpm
    ```
 
-#### Linux Debs
+### Linux Debs
 
   * [Ubuntu PPA](https://launchpad.net/~tektoncd/+archive/ubuntu/cli/+packages)
 
@@ -137,7 +134,7 @@ Download the latest binary executable for your operating system:
   dpkg -i tektoncd-cli-0.13.1_Linux-64bit.deb
   ```
 
-# Source install
+### Source install
 
   If you have [go](https://golang.org/) installed and you want to compile the CLI from source, you can checkout the [Git repository](https://github.com/tektoncd/cli) and run the following commands:
 
@@ -145,6 +142,7 @@ Download the latest binary executable for your operating system:
   export GO111MODULE=on
   make bin/tkn
   ```
+
   This will output the `tkn` binary in `bin/tkn`
 
 ### `tkn` as a `kubectl` plugin
@@ -164,7 +162,7 @@ You should see the following after running kubectl plugin list if tkn is availab
 ```
 If the output above is shown, run kubectl-tkn to see the list of available tkn commands to run.
 
-### Useful Commands
+## Useful Commands
 
 The following commands help you understand and effectively use the Tekton CLI:
 
@@ -185,6 +183,26 @@ The following commands help you understand and effectively use the Tekton CLI:
  * [`tkn version:`](docs/cmd/tkn_version.md) Outputs the cli version.
 
 For every `tkn` command, you can use `-h` or `--help` flags to display specific help for that command.
+
+## Disable Color and Emojis in Output 
+
+For many `tkn` commands, color and emojis by default will appear in command output. `tkn` offers two approaches for disabling 
+color and emojis from command output.
+
+To remove the color and emojis from all `tkn` command output, set the environment variable `NO_COLOR`, such as shown below:
+
+```shell
+export NO_COLOR=""
+```
+
+More information on `NO_COLOR` can be found in the [`NO_COLOR` documentation](https://no-color.org/).
+
+To remove color and emojis from the output of a single command execution, the `--nocolour` option can be used with any command, 
+such as in the example below:
+
+```
+tkn taskrun describe --nocolour
+```
 
 ## Want to contribute
 
