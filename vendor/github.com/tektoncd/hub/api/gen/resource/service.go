@@ -17,15 +17,15 @@ import (
 // The resource service provides details about all kind of resources
 type Service interface {
 	// Find resources by a combination of name, kind and tags
-	Query(context.Context, *QueryPayload) (res ResourceCollection, err error)
+	Query(context.Context, *QueryPayload) (res *Resources, err error)
 	// List all resources sorted by rating and name
-	List(context.Context, *ListPayload) (res ResourceCollection, err error)
+	List(context.Context, *ListPayload) (res *Resources, err error)
 	// Find all versions of a resource by its id
-	VersionsByID(context.Context, *VersionsByIDPayload) (res *Versions, err error)
+	VersionsByID(context.Context, *VersionsByIDPayload) (res *ResourceVersions, err error)
 	// Find resource using name of catalog & name, kind and version of resource
-	ByCatalogKindNameVersion(context.Context, *ByCatalogKindNameVersionPayload) (res *Version, err error)
+	ByCatalogKindNameVersion(context.Context, *ByCatalogKindNameVersionPayload) (res *ResourceVersion, err error)
 	// Find a resource using its version's id
-	ByVersionID(context.Context, *ByVersionIDPayload) (res *Version, err error)
+	ByVersionID(context.Context, *ByVersionIDPayload) (res *ResourceVersion, err error)
 	// Find resources using name of catalog, resource name and kind of resource
 	ByCatalogKindName(context.Context, *ByCatalogKindNamePayload) (res *Resource, err error)
 	// Find a resource using it's id
@@ -56,8 +56,10 @@ type QueryPayload struct {
 	Match string
 }
 
-// ResourceCollection is the result type of the resource service Query method.
-type ResourceCollection []*Resource
+// Resources is the result type of the resource service Query method.
+type Resources struct {
+	Data ResourceDataCollection
+}
 
 // ListPayload is the payload type of the resource service List method.
 type ListPayload struct {
@@ -72,12 +74,10 @@ type VersionsByIDPayload struct {
 	ID uint
 }
 
-// Versions is the result type of the resource service VersionsByID method.
-type Versions struct {
-	// Latest Version of resource
-	Latest *Version
-	// List of all versions of resource
-	Versions []*Version
+// ResourceVersions is the result type of the resource service VersionsByID
+// method.
+type ResourceVersions struct {
+	Data *Versions
 }
 
 // ByCatalogKindNameVersionPayload is the payload type of the resource service
@@ -93,27 +93,10 @@ type ByCatalogKindNameVersionPayload struct {
 	Version string
 }
 
-// Version is the result type of the resource service ByCatalogKindNameVersion
-// method.
-type Version struct {
-	// ID is the unique id of resource's version
-	ID uint
-	// Version of resource
-	Version string
-	// Display name of version
-	DisplayName string
-	// Description of version
-	Description string
-	// Minimum pipelines version the resource's version is compatible with
-	MinPipelinesVersion string
-	// Raw URL of resource's yaml file of the version
-	RawURL string
-	// Web URL of resource's yaml file of the version
-	WebURL string
-	// Timestamp when version was last updated
-	UpdatedAt string
-	// Resource to which the version belongs
-	Resource *Resource
+// ResourceVersion is the result type of the resource service
+// ByCatalogKindNameVersion method.
+type ResourceVersion struct {
+	Data *ResourceVersionData
 }
 
 // ByVersionIDPayload is the payload type of the resource service ByVersionId
@@ -136,6 +119,19 @@ type ByCatalogKindNamePayload struct {
 
 // Resource is the result type of the resource service ByCatalogKindName method.
 type Resource struct {
+	Data *ResourceData
+}
+
+// ByIDPayload is the payload type of the resource service ById method.
+type ByIDPayload struct {
+	// ID of a resource
+	ID uint
+}
+
+type ResourceDataCollection []*ResourceData
+
+// The resource type describes resource information.
+type ResourceData struct {
 	// ID is the unique id of the resource
 	ID uint
 	// Name of resource
@@ -145,19 +141,13 @@ type Resource struct {
 	// Kind of resource
 	Kind string
 	// Latest version of resource
-	LatestVersion *Version
+	LatestVersion *ResourceVersionData
 	// Tags related to resource
 	Tags []*Tag
 	// Rating of resource
 	Rating float64
 	// List of all versions of a resource
-	Versions []*Version
-}
-
-// ByIDPayload is the payload type of the resource service ById method.
-type ByIDPayload struct {
-	// ID of a resource
-	ID uint
+	Versions []*ResourceVersionData
 }
 
 type Catalog struct {
@@ -169,11 +159,41 @@ type Catalog struct {
 	Type string
 }
 
+// The Version result type describes resource's version information.
+type ResourceVersionData struct {
+	// ID is the unique id of resource's version
+	ID uint
+	// Version of resource
+	Version string
+	// Display name of version
+	DisplayName string
+	// Description of version
+	Description string
+	// Minimum pipelines version the resource's version is compatible with
+	MinPipelinesVersion string
+	// Raw URL of resource's yaml file of the version
+	RawURL string
+	// Web URL of resource's yaml file of the version
+	WebURL string
+	// Timestamp when version was last updated
+	UpdatedAt string
+	// Resource to which the version belongs
+	Resource *ResourceData
+}
+
 type Tag struct {
 	// ID is the unique id of tag
 	ID uint
 	// Name of tag
 	Name string
+}
+
+// The Versions type describes response for versions by resource id API.
+type Versions struct {
+	// Latest Version of resource
+	Latest *ResourceVersionData
+	// List of all versions of resource
+	Versions []*ResourceVersionData
 }
 
 // MakeInternalError builds a goa.ServiceError from an error.
@@ -203,186 +223,143 @@ func MakeInvalidKind(err error) *goa.ServiceError {
 	}
 }
 
-// NewResourceCollection initializes result type ResourceCollection from viewed
-// result type ResourceCollection.
-func NewResourceCollection(vres resourceviews.ResourceCollection) ResourceCollection {
-	var res ResourceCollection
-	switch vres.View {
-	case "info":
-		res = newResourceCollectionInfo(vres.Projected)
-	case "withoutVersion":
-		res = newResourceCollectionWithoutVersion(vres.Projected)
-	case "default", "":
-		res = newResourceCollection(vres.Projected)
-	}
-	return res
+// NewResources initializes result type Resources from viewed result type
+// Resources.
+func NewResources(vres *resourceviews.Resources) *Resources {
+	return newResources(vres.Projected)
 }
 
-// NewViewedResourceCollection initializes viewed result type
-// ResourceCollection from result type ResourceCollection using the given view.
-func NewViewedResourceCollection(res ResourceCollection, view string) resourceviews.ResourceCollection {
-	var vres resourceviews.ResourceCollection
-	switch view {
-	case "info":
-		p := newResourceCollectionViewInfo(res)
-		vres = resourceviews.ResourceCollection{Projected: p, View: "info"}
-	case "withoutVersion":
-		p := newResourceCollectionViewWithoutVersion(res)
-		vres = resourceviews.ResourceCollection{Projected: p, View: "withoutVersion"}
-	case "default", "":
-		p := newResourceCollectionView(res)
-		vres = resourceviews.ResourceCollection{Projected: p, View: "default"}
-	}
-	return vres
+// NewViewedResources initializes viewed result type Resources from result type
+// Resources using the given view.
+func NewViewedResources(res *Resources, view string) *resourceviews.Resources {
+	p := newResourcesView(res)
+	return &resourceviews.Resources{Projected: p, View: "default"}
 }
 
-// NewVersions initializes result type Versions from viewed result type
-// Versions.
-func NewVersions(vres *resourceviews.Versions) *Versions {
-	return newVersions(vres.Projected)
+// NewResourceVersions initializes result type ResourceVersions from viewed
+// result type ResourceVersions.
+func NewResourceVersions(vres *resourceviews.ResourceVersions) *ResourceVersions {
+	return newResourceVersions(vres.Projected)
 }
 
-// NewViewedVersions initializes viewed result type Versions from result type
-// Versions using the given view.
-func NewViewedVersions(res *Versions, view string) *resourceviews.Versions {
-	p := newVersionsView(res)
-	return &resourceviews.Versions{Projected: p, View: "default"}
+// NewViewedResourceVersions initializes viewed result type ResourceVersions
+// from result type ResourceVersions using the given view.
+func NewViewedResourceVersions(res *ResourceVersions, view string) *resourceviews.ResourceVersions {
+	p := newResourceVersionsView(res)
+	return &resourceviews.ResourceVersions{Projected: p, View: "default"}
 }
 
-// NewVersion initializes result type Version from viewed result type Version.
-func NewVersion(vres *resourceviews.Version) *Version {
-	var res *Version
-	switch vres.View {
-	case "tiny":
-		res = newVersionTiny(vres.Projected)
-	case "min":
-		res = newVersionMin(vres.Projected)
-	case "withoutResource":
-		res = newVersionWithoutResource(vres.Projected)
-	case "default", "":
-		res = newVersion(vres.Projected)
-	}
-	return res
+// NewResourceVersion initializes result type ResourceVersion from viewed
+// result type ResourceVersion.
+func NewResourceVersion(vres *resourceviews.ResourceVersion) *ResourceVersion {
+	return newResourceVersion(vres.Projected)
 }
 
-// NewViewedVersion initializes viewed result type Version from result type
-// Version using the given view.
-func NewViewedVersion(res *Version, view string) *resourceviews.Version {
-	var vres *resourceviews.Version
-	switch view {
-	case "tiny":
-		p := newVersionViewTiny(res)
-		vres = &resourceviews.Version{Projected: p, View: "tiny"}
-	case "min":
-		p := newVersionViewMin(res)
-		vres = &resourceviews.Version{Projected: p, View: "min"}
-	case "withoutResource":
-		p := newVersionViewWithoutResource(res)
-		vres = &resourceviews.Version{Projected: p, View: "withoutResource"}
-	case "default", "":
-		p := newVersionView(res)
-		vres = &resourceviews.Version{Projected: p, View: "default"}
-	}
-	return vres
+// NewViewedResourceVersion initializes viewed result type ResourceVersion from
+// result type ResourceVersion using the given view.
+func NewViewedResourceVersion(res *ResourceVersion, view string) *resourceviews.ResourceVersion {
+	p := newResourceVersionView(res)
+	return &resourceviews.ResourceVersion{Projected: p, View: "default"}
 }
 
 // NewResource initializes result type Resource from viewed result type
 // Resource.
 func NewResource(vres *resourceviews.Resource) *Resource {
-	var res *Resource
-	switch vres.View {
-	case "info":
-		res = newResourceInfo(vres.Projected)
-	case "withoutVersion":
-		res = newResourceWithoutVersion(vres.Projected)
-	case "default", "":
-		res = newResource(vres.Projected)
-	}
-	return res
+	return newResource(vres.Projected)
 }
 
 // NewViewedResource initializes viewed result type Resource from result type
 // Resource using the given view.
 func NewViewedResource(res *Resource, view string) *resourceviews.Resource {
-	var vres *resourceviews.Resource
-	switch view {
-	case "info":
-		p := newResourceViewInfo(res)
-		vres = &resourceviews.Resource{Projected: p, View: "info"}
-	case "withoutVersion":
-		p := newResourceViewWithoutVersion(res)
-		vres = &resourceviews.Resource{Projected: p, View: "withoutVersion"}
-	case "default", "":
-		p := newResourceView(res)
-		vres = &resourceviews.Resource{Projected: p, View: "default"}
-	}
-	return vres
+	p := newResourceView(res)
+	return &resourceviews.Resource{Projected: p, View: "default"}
 }
 
-// newResourceCollectionInfo converts projected type ResourceCollection to
-// service type ResourceCollection.
-func newResourceCollectionInfo(vres resourceviews.ResourceCollectionView) ResourceCollection {
-	res := make(ResourceCollection, len(vres))
-	for i, n := range vres {
-		res[i] = newResourceInfo(n)
+// newResources converts projected type Resources to service type Resources.
+func newResources(vres *resourceviews.ResourcesView) *Resources {
+	res := &Resources{}
+	if vres.Data != nil {
+		res.Data = newResourceDataCollectionWithoutVersion(vres.Data)
 	}
 	return res
 }
 
-// newResourceCollectionWithoutVersion converts projected type
-// ResourceCollection to service type ResourceCollection.
-func newResourceCollectionWithoutVersion(vres resourceviews.ResourceCollectionView) ResourceCollection {
-	res := make(ResourceCollection, len(vres))
+// newResourcesView projects result type Resources to projected type
+// ResourcesView using the "default" view.
+func newResourcesView(res *Resources) *resourceviews.ResourcesView {
+	vres := &resourceviews.ResourcesView{}
+	if res.Data != nil {
+		vres.Data = newResourceDataCollectionViewWithoutVersion(res.Data)
+	}
+	return vres
+}
+
+// newResourceDataCollectionInfo converts projected type ResourceDataCollection
+// to service type ResourceDataCollection.
+func newResourceDataCollectionInfo(vres resourceviews.ResourceDataCollectionView) ResourceDataCollection {
+	res := make(ResourceDataCollection, len(vres))
 	for i, n := range vres {
-		res[i] = newResourceWithoutVersion(n)
+		res[i] = newResourceDataInfo(n)
 	}
 	return res
 }
 
-// newResourceCollection converts projected type ResourceCollection to service
-// type ResourceCollection.
-func newResourceCollection(vres resourceviews.ResourceCollectionView) ResourceCollection {
-	res := make(ResourceCollection, len(vres))
+// newResourceDataCollectionWithoutVersion converts projected type
+// ResourceDataCollection to service type ResourceDataCollection.
+func newResourceDataCollectionWithoutVersion(vres resourceviews.ResourceDataCollectionView) ResourceDataCollection {
+	res := make(ResourceDataCollection, len(vres))
 	for i, n := range vres {
-		res[i] = newResource(n)
+		res[i] = newResourceDataWithoutVersion(n)
 	}
 	return res
 }
 
-// newResourceCollectionViewInfo projects result type ResourceCollection to
-// projected type ResourceCollectionView using the "info" view.
-func newResourceCollectionViewInfo(res ResourceCollection) resourceviews.ResourceCollectionView {
-	vres := make(resourceviews.ResourceCollectionView, len(res))
+// newResourceDataCollection converts projected type ResourceDataCollection to
+// service type ResourceDataCollection.
+func newResourceDataCollection(vres resourceviews.ResourceDataCollectionView) ResourceDataCollection {
+	res := make(ResourceDataCollection, len(vres))
+	for i, n := range vres {
+		res[i] = newResourceData(n)
+	}
+	return res
+}
+
+// newResourceDataCollectionViewInfo projects result type
+// ResourceDataCollection to projected type ResourceDataCollectionView using
+// the "info" view.
+func newResourceDataCollectionViewInfo(res ResourceDataCollection) resourceviews.ResourceDataCollectionView {
+	vres := make(resourceviews.ResourceDataCollectionView, len(res))
 	for i, n := range res {
-		vres[i] = newResourceViewInfo(n)
+		vres[i] = newResourceDataViewInfo(n)
 	}
 	return vres
 }
 
-// newResourceCollectionViewWithoutVersion projects result type
-// ResourceCollection to projected type ResourceCollectionView using the
-// "withoutVersion" view.
-func newResourceCollectionViewWithoutVersion(res ResourceCollection) resourceviews.ResourceCollectionView {
-	vres := make(resourceviews.ResourceCollectionView, len(res))
+// newResourceDataCollectionViewWithoutVersion projects result type
+// ResourceDataCollection to projected type ResourceDataCollectionView using
+// the "withoutVersion" view.
+func newResourceDataCollectionViewWithoutVersion(res ResourceDataCollection) resourceviews.ResourceDataCollectionView {
+	vres := make(resourceviews.ResourceDataCollectionView, len(res))
 	for i, n := range res {
-		vres[i] = newResourceViewWithoutVersion(n)
+		vres[i] = newResourceDataViewWithoutVersion(n)
 	}
 	return vres
 }
 
-// newResourceCollectionView projects result type ResourceCollection to
-// projected type ResourceCollectionView using the "default" view.
-func newResourceCollectionView(res ResourceCollection) resourceviews.ResourceCollectionView {
-	vres := make(resourceviews.ResourceCollectionView, len(res))
+// newResourceDataCollectionView projects result type ResourceDataCollection to
+// projected type ResourceDataCollectionView using the "default" view.
+func newResourceDataCollectionView(res ResourceDataCollection) resourceviews.ResourceDataCollectionView {
+	vres := make(resourceviews.ResourceDataCollectionView, len(res))
 	for i, n := range res {
-		vres[i] = newResourceView(n)
+		vres[i] = newResourceDataView(n)
 	}
 	return vres
 }
 
-// newResourceInfo converts projected type Resource to service type Resource.
-func newResourceInfo(vres *resourceviews.ResourceView) *Resource {
-	res := &Resource{}
+// newResourceDataInfo converts projected type ResourceData to service type
+// ResourceData.
+func newResourceDataInfo(vres *resourceviews.ResourceDataView) *ResourceData {
+	res := &ResourceData{}
 	if vres.ID != nil {
 		res.ID = *vres.ID
 	}
@@ -405,15 +382,15 @@ func newResourceInfo(vres *resourceviews.ResourceView) *Resource {
 		}
 	}
 	if vres.LatestVersion != nil {
-		res.LatestVersion = newVersion(vres.LatestVersion)
+		res.LatestVersion = newResourceVersionData(vres.LatestVersion)
 	}
 	return res
 }
 
-// newResourceWithoutVersion converts projected type Resource to service type
-// Resource.
-func newResourceWithoutVersion(vres *resourceviews.ResourceView) *Resource {
-	res := &Resource{}
+// newResourceDataWithoutVersion converts projected type ResourceData to
+// service type ResourceData.
+func newResourceDataWithoutVersion(vres *resourceviews.ResourceDataView) *ResourceData {
+	res := &ResourceData{}
 	if vres.ID != nil {
 		res.ID = *vres.ID
 	}
@@ -436,14 +413,15 @@ func newResourceWithoutVersion(vres *resourceviews.ResourceView) *Resource {
 		}
 	}
 	if vres.LatestVersion != nil {
-		res.LatestVersion = newVersionWithoutResource(vres.LatestVersion)
+		res.LatestVersion = newResourceVersionDataWithoutResource(vres.LatestVersion)
 	}
 	return res
 }
 
-// newResource converts projected type Resource to service type Resource.
-func newResource(vres *resourceviews.ResourceView) *Resource {
-	res := &Resource{}
+// newResourceData converts projected type ResourceData to service type
+// ResourceData.
+func newResourceData(vres *resourceviews.ResourceDataView) *ResourceData {
+	res := &ResourceData{}
 	if vres.ID != nil {
 		res.ID = *vres.ID
 	}
@@ -466,21 +444,21 @@ func newResource(vres *resourceviews.ResourceView) *Resource {
 		}
 	}
 	if vres.Versions != nil {
-		res.Versions = make([]*Version, len(vres.Versions))
+		res.Versions = make([]*ResourceVersionData, len(vres.Versions))
 		for i, val := range vres.Versions {
-			res.Versions[i] = transformResourceviewsVersionViewToVersion(val)
+			res.Versions[i] = transformResourceviewsResourceVersionDataViewToResourceVersionData(val)
 		}
 	}
 	if vres.LatestVersion != nil {
-		res.LatestVersion = newVersionWithoutResource(vres.LatestVersion)
+		res.LatestVersion = newResourceVersionDataWithoutResource(vres.LatestVersion)
 	}
 	return res
 }
 
-// newResourceViewInfo projects result type Resource to projected type
-// ResourceView using the "info" view.
-func newResourceViewInfo(res *Resource) *resourceviews.ResourceView {
-	vres := &resourceviews.ResourceView{
+// newResourceDataViewInfo projects result type ResourceData to projected type
+// ResourceDataView using the "info" view.
+func newResourceDataViewInfo(res *ResourceData) *resourceviews.ResourceDataView {
+	vres := &resourceviews.ResourceDataView{
 		ID:     &res.ID,
 		Name:   &res.Name,
 		Kind:   &res.Kind,
@@ -498,10 +476,10 @@ func newResourceViewInfo(res *Resource) *resourceviews.ResourceView {
 	return vres
 }
 
-// newResourceViewWithoutVersion projects result type Resource to projected
-// type ResourceView using the "withoutVersion" view.
-func newResourceViewWithoutVersion(res *Resource) *resourceviews.ResourceView {
-	vres := &resourceviews.ResourceView{
+// newResourceDataViewWithoutVersion projects result type ResourceData to
+// projected type ResourceDataView using the "withoutVersion" view.
+func newResourceDataViewWithoutVersion(res *ResourceData) *resourceviews.ResourceDataView {
+	vres := &resourceviews.ResourceDataView{
 		ID:     &res.ID,
 		Name:   &res.Name,
 		Kind:   &res.Kind,
@@ -517,15 +495,15 @@ func newResourceViewWithoutVersion(res *Resource) *resourceviews.ResourceView {
 		}
 	}
 	if res.LatestVersion != nil {
-		vres.LatestVersion = newVersionViewWithoutResource(res.LatestVersion)
+		vres.LatestVersion = newResourceVersionDataViewWithoutResource(res.LatestVersion)
 	}
 	return vres
 }
 
-// newResourceView projects result type Resource to projected type ResourceView
-// using the "default" view.
-func newResourceView(res *Resource) *resourceviews.ResourceView {
-	vres := &resourceviews.ResourceView{
+// newResourceDataView projects result type ResourceData to projected type
+// ResourceDataView using the "default" view.
+func newResourceDataView(res *ResourceData) *resourceviews.ResourceDataView {
+	vres := &resourceviews.ResourceDataView{
 		ID:     &res.ID,
 		Name:   &res.Name,
 		Kind:   &res.Kind,
@@ -541,20 +519,21 @@ func newResourceView(res *Resource) *resourceviews.ResourceView {
 		}
 	}
 	if res.Versions != nil {
-		vres.Versions = make([]*resourceviews.VersionView, len(res.Versions))
+		vres.Versions = make([]*resourceviews.ResourceVersionDataView, len(res.Versions))
 		for i, val := range res.Versions {
-			vres.Versions[i] = transformVersionToResourceviewsVersionView(val)
+			vres.Versions[i] = transformResourceVersionDataToResourceviewsResourceVersionDataView(val)
 		}
 	}
 	if res.LatestVersion != nil {
-		vres.LatestVersion = newVersionViewWithoutResource(res.LatestVersion)
+		vres.LatestVersion = newResourceVersionDataViewWithoutResource(res.LatestVersion)
 	}
 	return vres
 }
 
-// newVersionTiny converts projected type Version to service type Version.
-func newVersionTiny(vres *resourceviews.VersionView) *Version {
-	res := &Version{}
+// newResourceVersionDataTiny converts projected type ResourceVersionData to
+// service type ResourceVersionData.
+func newResourceVersionDataTiny(vres *resourceviews.ResourceVersionDataView) *ResourceVersionData {
+	res := &ResourceVersionData{}
 	if vres.ID != nil {
 		res.ID = *vres.ID
 	}
@@ -562,14 +541,15 @@ func newVersionTiny(vres *resourceviews.VersionView) *Version {
 		res.Version = *vres.Version
 	}
 	if vres.Resource != nil {
-		res.Resource = newResource(vres.Resource)
+		res.Resource = newResourceData(vres.Resource)
 	}
 	return res
 }
 
-// newVersionMin converts projected type Version to service type Version.
-func newVersionMin(vres *resourceviews.VersionView) *Version {
-	res := &Version{}
+// newResourceVersionDataMin converts projected type ResourceVersionData to
+// service type ResourceVersionData.
+func newResourceVersionDataMin(vres *resourceviews.ResourceVersionDataView) *ResourceVersionData {
+	res := &ResourceVersionData{}
 	if vres.ID != nil {
 		res.ID = *vres.ID
 	}
@@ -583,15 +563,15 @@ func newVersionMin(vres *resourceviews.VersionView) *Version {
 		res.WebURL = *vres.WebURL
 	}
 	if vres.Resource != nil {
-		res.Resource = newResource(vres.Resource)
+		res.Resource = newResourceData(vres.Resource)
 	}
 	return res
 }
 
-// newVersionWithoutResource converts projected type Version to service type
-// Version.
-func newVersionWithoutResource(vres *resourceviews.VersionView) *Version {
-	res := &Version{}
+// newResourceVersionDataWithoutResource converts projected type
+// ResourceVersionData to service type ResourceVersionData.
+func newResourceVersionDataWithoutResource(vres *resourceviews.ResourceVersionDataView) *ResourceVersionData {
+	res := &ResourceVersionData{}
 	if vres.ID != nil {
 		res.ID = *vres.ID
 	}
@@ -617,14 +597,15 @@ func newVersionWithoutResource(vres *resourceviews.VersionView) *Version {
 		res.UpdatedAt = *vres.UpdatedAt
 	}
 	if vres.Resource != nil {
-		res.Resource = newResource(vres.Resource)
+		res.Resource = newResourceData(vres.Resource)
 	}
 	return res
 }
 
-// newVersion converts projected type Version to service type Version.
-func newVersion(vres *resourceviews.VersionView) *Version {
-	res := &Version{}
+// newResourceVersionData converts projected type ResourceVersionData to
+// service type ResourceVersionData.
+func newResourceVersionData(vres *resourceviews.ResourceVersionDataView) *ResourceVersionData {
+	res := &ResourceVersionData{}
 	if vres.ID != nil {
 		res.ID = *vres.ID
 	}
@@ -650,25 +631,25 @@ func newVersion(vres *resourceviews.VersionView) *Version {
 		res.UpdatedAt = *vres.UpdatedAt
 	}
 	if vres.Resource != nil {
-		res.Resource = newResourceInfo(vres.Resource)
+		res.Resource = newResourceDataInfo(vres.Resource)
 	}
 	return res
 }
 
-// newVersionViewTiny projects result type Version to projected type
-// VersionView using the "tiny" view.
-func newVersionViewTiny(res *Version) *resourceviews.VersionView {
-	vres := &resourceviews.VersionView{
+// newResourceVersionDataViewTiny projects result type ResourceVersionData to
+// projected type ResourceVersionDataView using the "tiny" view.
+func newResourceVersionDataViewTiny(res *ResourceVersionData) *resourceviews.ResourceVersionDataView {
+	vres := &resourceviews.ResourceVersionDataView{
 		ID:      &res.ID,
 		Version: &res.Version,
 	}
 	return vres
 }
 
-// newVersionViewMin projects result type Version to projected type VersionView
-// using the "min" view.
-func newVersionViewMin(res *Version) *resourceviews.VersionView {
-	vres := &resourceviews.VersionView{
+// newResourceVersionDataViewMin projects result type ResourceVersionData to
+// projected type ResourceVersionDataView using the "min" view.
+func newResourceVersionDataViewMin(res *ResourceVersionData) *resourceviews.ResourceVersionDataView {
+	vres := &resourceviews.ResourceVersionDataView{
 		ID:      &res.ID,
 		Version: &res.Version,
 		RawURL:  &res.RawURL,
@@ -677,10 +658,11 @@ func newVersionViewMin(res *Version) *resourceviews.VersionView {
 	return vres
 }
 
-// newVersionViewWithoutResource projects result type Version to projected type
-// VersionView using the "withoutResource" view.
-func newVersionViewWithoutResource(res *Version) *resourceviews.VersionView {
-	vres := &resourceviews.VersionView{
+// newResourceVersionDataViewWithoutResource projects result type
+// ResourceVersionData to projected type ResourceVersionDataView using the
+// "withoutResource" view.
+func newResourceVersionDataViewWithoutResource(res *ResourceVersionData) *resourceviews.ResourceVersionDataView {
+	vres := &resourceviews.ResourceVersionDataView{
 		ID:                  &res.ID,
 		Version:             &res.Version,
 		DisplayName:         &res.DisplayName,
@@ -693,10 +675,10 @@ func newVersionViewWithoutResource(res *Version) *resourceviews.VersionView {
 	return vres
 }
 
-// newVersionView projects result type Version to projected type VersionView
-// using the "default" view.
-func newVersionView(res *Version) *resourceviews.VersionView {
-	vres := &resourceviews.VersionView{
+// newResourceVersionDataView projects result type ResourceVersionData to
+// projected type ResourceVersionDataView using the "default" view.
+func newResourceVersionDataView(res *ResourceVersionData) *resourceviews.ResourceVersionDataView {
+	vres := &resourceviews.ResourceVersionDataView{
 		ID:                  &res.ID,
 		Version:             &res.Version,
 		DisplayName:         &res.DisplayName,
@@ -707,7 +689,27 @@ func newVersionView(res *Version) *resourceviews.VersionView {
 		UpdatedAt:           &res.UpdatedAt,
 	}
 	if res.Resource != nil {
-		vres.Resource = newResourceViewInfo(res.Resource)
+		vres.Resource = newResourceDataViewInfo(res.Resource)
+	}
+	return vres
+}
+
+// newResourceVersions converts projected type ResourceVersions to service type
+// ResourceVersions.
+func newResourceVersions(vres *resourceviews.ResourceVersionsView) *ResourceVersions {
+	res := &ResourceVersions{}
+	if vres.Data != nil {
+		res.Data = newVersions(vres.Data)
+	}
+	return res
+}
+
+// newResourceVersionsView projects result type ResourceVersions to projected
+// type ResourceVersionsView using the "default" view.
+func newResourceVersionsView(res *ResourceVersions) *resourceviews.ResourceVersionsView {
+	vres := &resourceviews.ResourceVersionsView{}
+	if res.Data != nil {
+		vres.Data = newVersionsView(res.Data)
 	}
 	return vres
 }
@@ -716,13 +718,13 @@ func newVersionView(res *Version) *resourceviews.VersionView {
 func newVersions(vres *resourceviews.VersionsView) *Versions {
 	res := &Versions{}
 	if vres.Versions != nil {
-		res.Versions = make([]*Version, len(vres.Versions))
+		res.Versions = make([]*ResourceVersionData, len(vres.Versions))
 		for i, val := range vres.Versions {
-			res.Versions[i] = transformResourceviewsVersionViewToVersion(val)
+			res.Versions[i] = transformResourceviewsResourceVersionDataViewToResourceVersionData(val)
 		}
 	}
 	if vres.Latest != nil {
-		res.Latest = newVersionMin(vres.Latest)
+		res.Latest = newResourceVersionDataMin(vres.Latest)
 	}
 	return res
 }
@@ -732,13 +734,52 @@ func newVersions(vres *resourceviews.VersionsView) *Versions {
 func newVersionsView(res *Versions) *resourceviews.VersionsView {
 	vres := &resourceviews.VersionsView{}
 	if res.Versions != nil {
-		vres.Versions = make([]*resourceviews.VersionView, len(res.Versions))
+		vres.Versions = make([]*resourceviews.ResourceVersionDataView, len(res.Versions))
 		for i, val := range res.Versions {
-			vres.Versions[i] = transformVersionToResourceviewsVersionView(val)
+			vres.Versions[i] = transformResourceVersionDataToResourceviewsResourceVersionDataView(val)
 		}
 	}
 	if res.Latest != nil {
-		vres.Latest = newVersionViewMin(res.Latest)
+		vres.Latest = newResourceVersionDataViewMin(res.Latest)
+	}
+	return vres
+}
+
+// newResourceVersion converts projected type ResourceVersion to service type
+// ResourceVersion.
+func newResourceVersion(vres *resourceviews.ResourceVersionView) *ResourceVersion {
+	res := &ResourceVersion{}
+	if vres.Data != nil {
+		res.Data = newResourceVersionData(vres.Data)
+	}
+	return res
+}
+
+// newResourceVersionView projects result type ResourceVersion to projected
+// type ResourceVersionView using the "default" view.
+func newResourceVersionView(res *ResourceVersion) *resourceviews.ResourceVersionView {
+	vres := &resourceviews.ResourceVersionView{}
+	if res.Data != nil {
+		vres.Data = newResourceVersionDataView(res.Data)
+	}
+	return vres
+}
+
+// newResource converts projected type Resource to service type Resource.
+func newResource(vres *resourceviews.ResourceView) *Resource {
+	res := &Resource{}
+	if vres.Data != nil {
+		res.Data = newResourceData(vres.Data)
+	}
+	return res
+}
+
+// newResourceView projects result type Resource to projected type ResourceView
+// using the "default" view.
+func newResourceView(res *Resource) *resourceviews.ResourceView {
+	vres := &resourceviews.ResourceView{}
+	if res.Data != nil {
+		vres.Data = newResourceDataView(res.Data)
 	}
 	return vres
 }
@@ -772,13 +813,14 @@ func transformResourceviewsTagViewToTag(v *resourceviews.TagView) *Tag {
 	return res
 }
 
-// transformResourceviewsVersionViewToVersion builds a value of type *Version
-// from a value of type *resourceviews.VersionView.
-func transformResourceviewsVersionViewToVersion(v *resourceviews.VersionView) *Version {
+// transformResourceviewsResourceVersionDataViewToResourceVersionData builds a
+// value of type *ResourceVersionData from a value of type
+// *resourceviews.ResourceVersionDataView.
+func transformResourceviewsResourceVersionDataViewToResourceVersionData(v *resourceviews.ResourceVersionDataView) *ResourceVersionData {
 	if v == nil {
 		return nil
 	}
-	res := &Version{
+	res := &ResourceVersionData{
 		ID:                  *v.ID,
 		Version:             *v.Version,
 		DisplayName:         *v.DisplayName,
@@ -789,16 +831,16 @@ func transformResourceviewsVersionViewToVersion(v *resourceviews.VersionView) *V
 		UpdatedAt:           *v.UpdatedAt,
 	}
 	if v.Resource != nil {
-		res.Resource = transformResourceviewsResourceViewToResource(v.Resource)
+		res.Resource = transformResourceviewsResourceDataViewToResourceData(v.Resource)
 	}
 
 	return res
 }
 
-// transformResourceviewsResourceViewToResource builds a value of type
-// *Resource from a value of type *resourceviews.ResourceView.
-func transformResourceviewsResourceViewToResource(v *resourceviews.ResourceView) *Resource {
-	res := &Resource{}
+// transformResourceviewsResourceDataViewToResourceData builds a value of type
+// *ResourceData from a value of type *resourceviews.ResourceDataView.
+func transformResourceviewsResourceDataViewToResourceData(v *resourceviews.ResourceDataView) *ResourceData {
+	res := &ResourceData{}
 	if v.ID != nil {
 		res.ID = *v.ID
 	}
@@ -821,9 +863,9 @@ func transformResourceviewsResourceViewToResource(v *resourceviews.ResourceView)
 		}
 	}
 	if v.Versions != nil {
-		res.Versions = make([]*Version, len(v.Versions))
+		res.Versions = make([]*ResourceVersionData, len(v.Versions))
 		for i, val := range v.Versions {
-			res.Versions[i] = transformResourceviewsVersionViewToVersion(val)
+			res.Versions[i] = transformResourceviewsResourceVersionDataViewToResourceVersionData(val)
 		}
 	}
 
@@ -853,10 +895,11 @@ func transformTagToResourceviewsTagView(v *Tag) *resourceviews.TagView {
 	return res
 }
 
-// transformVersionToResourceviewsVersionView builds a value of type
-// *resourceviews.VersionView from a value of type *Version.
-func transformVersionToResourceviewsVersionView(v *Version) *resourceviews.VersionView {
-	res := &resourceviews.VersionView{
+// transformResourceVersionDataToResourceviewsResourceVersionDataView builds a
+// value of type *resourceviews.ResourceVersionDataView from a value of type
+// *ResourceVersionData.
+func transformResourceVersionDataToResourceviewsResourceVersionDataView(v *ResourceVersionData) *resourceviews.ResourceVersionDataView {
+	res := &resourceviews.ResourceVersionDataView{
 		ID:                  &v.ID,
 		Version:             &v.Version,
 		DisplayName:         &v.DisplayName,
@@ -867,16 +910,16 @@ func transformVersionToResourceviewsVersionView(v *Version) *resourceviews.Versi
 		UpdatedAt:           &v.UpdatedAt,
 	}
 	if v.Resource != nil {
-		res.Resource = transformResourceToResourceviewsResourceView(v.Resource)
+		res.Resource = transformResourceDataToResourceviewsResourceDataView(v.Resource)
 	}
 
 	return res
 }
 
-// transformResourceToResourceviewsResourceView builds a value of type
-// *resourceviews.ResourceView from a value of type *Resource.
-func transformResourceToResourceviewsResourceView(v *Resource) *resourceviews.ResourceView {
-	res := &resourceviews.ResourceView{
+// transformResourceDataToResourceviewsResourceDataView builds a value of type
+// *resourceviews.ResourceDataView from a value of type *ResourceData.
+func transformResourceDataToResourceviewsResourceDataView(v *ResourceData) *resourceviews.ResourceDataView {
+	res := &resourceviews.ResourceDataView{
 		ID:     &v.ID,
 		Name:   &v.Name,
 		Kind:   &v.Kind,
@@ -892,9 +935,9 @@ func transformResourceToResourceviewsResourceView(v *Resource) *resourceviews.Re
 		}
 	}
 	if v.Versions != nil {
-		res.Versions = make([]*resourceviews.VersionView, len(v.Versions))
+		res.Versions = make([]*resourceviews.ResourceVersionDataView, len(v.Versions))
 		for i, val := range v.Versions {
-			res.Versions[i] = transformVersionToResourceviewsVersionView(val)
+			res.Versions[i] = transformResourceVersionDataToResourceviewsResourceVersionDataView(val)
 		}
 	}
 

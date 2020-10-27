@@ -1,6 +1,6 @@
 ## tkn hub get task
 
-Get task by name, catalog and version
+Get Task by name, catalog and version
 
 ### Usage
 
@@ -10,18 +10,18 @@ tkn hub get task
 
 ### Synopsis
 
-Get task by name, catalog and version
+Get Task by name, catalog and version
 
 ### Examples
 
 
-Get a task of name 'foo':
+Get a Task of name 'foo':
 
     tkn hub get task foo
 
 or
 
-Get a task of name 'foo' of version '0.3':
+Get a Task of name 'foo' of version '0.3':
 
     tkn hub get task foo --version 0.3
 

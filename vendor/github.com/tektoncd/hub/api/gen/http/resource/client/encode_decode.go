@@ -90,13 +90,13 @@ func DecodeQueryResponse(decoder func(*http.Response) goahttp.Decoder, restoreBo
 			if err != nil {
 				return nil, goahttp.ErrDecodingError("resource", "Query", err)
 			}
-			p := NewQueryResourceCollectionOK(body)
-			view := "withoutVersion"
-			vres := resourceviews.ResourceCollection{Projected: p, View: view}
-			if err = resourceviews.ValidateResourceCollection(vres); err != nil {
+			p := NewQueryResourcesOK(&body)
+			view := "default"
+			vres := &resourceviews.Resources{Projected: p, View: view}
+			if err = resourceviews.ValidateResources(vres); err != nil {
 				return nil, goahttp.ErrValidationError("resource", "Query", err)
 			}
-			res := resource.NewResourceCollection(vres)
+			res := resource.NewResources(vres)
 			return res, nil
 		case http.StatusInternalServerError:
 			var (
@@ -207,13 +207,13 @@ func DecodeListResponse(decoder func(*http.Response) goahttp.Decoder, restoreBod
 			if err != nil {
 				return nil, goahttp.ErrDecodingError("resource", "List", err)
 			}
-			p := NewListResourceCollectionOK(body)
-			view := "withoutVersion"
-			vres := resourceviews.ResourceCollection{Projected: p, View: view}
-			if err = resourceviews.ValidateResourceCollection(vres); err != nil {
+			p := NewListResourcesOK(&body)
+			view := "default"
+			vres := &resourceviews.Resources{Projected: p, View: view}
+			if err = resourceviews.ValidateResources(vres); err != nil {
 				return nil, goahttp.ErrValidationError("resource", "List", err)
 			}
-			res := resource.NewResourceCollection(vres)
+			res := resource.NewResources(vres)
 			return res, nil
 		case http.StatusInternalServerError:
 			var (
@@ -292,13 +292,13 @@ func DecodeVersionsByIDResponse(decoder func(*http.Response) goahttp.Decoder, re
 			if err != nil {
 				return nil, goahttp.ErrDecodingError("resource", "VersionsByID", err)
 			}
-			p := NewVersionsByIDVersionsOK(&body)
+			p := NewVersionsByIDResourceVersionsOK(&body)
 			view := "default"
-			vres := &resourceviews.Versions{Projected: p, View: view}
-			if err = resourceviews.ValidateVersions(vres); err != nil {
+			vres := &resourceviews.ResourceVersions{Projected: p, View: view}
+			if err = resourceviews.ValidateResourceVersions(vres); err != nil {
 				return nil, goahttp.ErrValidationError("resource", "VersionsByID", err)
 			}
-			res := resource.NewVersions(vres)
+			res := resource.NewResourceVersions(vres)
 			return res, nil
 		case http.StatusInternalServerError:
 			var (
@@ -398,13 +398,13 @@ func DecodeByCatalogKindNameVersionResponse(decoder func(*http.Response) goahttp
 			if err != nil {
 				return nil, goahttp.ErrDecodingError("resource", "ByCatalogKindNameVersion", err)
 			}
-			p := NewByCatalogKindNameVersionVersionOK(&body)
+			p := NewByCatalogKindNameVersionResourceVersionOK(&body)
 			view := "default"
-			vres := &resourceviews.Version{Projected: p, View: view}
-			if err = resourceviews.ValidateVersion(vres); err != nil {
+			vres := &resourceviews.ResourceVersion{Projected: p, View: view}
+			if err = resourceviews.ValidateResourceVersion(vres); err != nil {
 				return nil, goahttp.ErrValidationError("resource", "ByCatalogKindNameVersion", err)
 			}
-			res := resource.NewVersion(vres)
+			res := resource.NewResourceVersion(vres)
 			return res, nil
 		case http.StatusInternalServerError:
 			var (
@@ -497,13 +497,13 @@ func DecodeByVersionIDResponse(decoder func(*http.Response) goahttp.Decoder, res
 			if err != nil {
 				return nil, goahttp.ErrDecodingError("resource", "ByVersionId", err)
 			}
-			p := NewByVersionIDVersionOK(&body)
+			p := NewByVersionIDResourceVersionOK(&body)
 			view := "default"
-			vres := &resourceviews.Version{Projected: p, View: view}
-			if err = resourceviews.ValidateVersion(vres); err != nil {
+			vres := &resourceviews.ResourceVersion{Projected: p, View: view}
+			if err = resourceviews.ValidateResourceVersion(vres); err != nil {
 				return nil, goahttp.ErrValidationError("resource", "ByVersionId", err)
 			}
-			res := resource.NewVersion(vres)
+			res := resource.NewResourceVersion(vres)
 			return res, nil
 		case http.StatusInternalServerError:
 			var (
@@ -742,106 +742,25 @@ func DecodeByIDResponse(decoder func(*http.Response) goahttp.Decoder, restoreBod
 	}
 }
 
-// unmarshalResourceResponseToResourceviewsResourceView builds a value of type
-// *resourceviews.ResourceView from a value of type *ResourceResponse.
-func unmarshalResourceResponseToResourceviewsResourceView(v *ResourceResponse) *resourceviews.ResourceView {
-	res := &resourceviews.ResourceView{
-		ID:     v.ID,
-		Name:   v.Name,
-		Kind:   v.Kind,
-		Rating: v.Rating,
-	}
-	res.Catalog = unmarshalCatalogResponseToResourceviewsCatalogView(v.Catalog)
-	res.LatestVersion = unmarshalVersionResponseToResourceviewsVersionView(v.LatestVersion)
-	res.Tags = make([]*resourceviews.TagView, len(v.Tags))
-	for i, val := range v.Tags {
-		res.Tags[i] = unmarshalTagResponseToResourceviewsTagView(val)
-	}
-	res.Versions = make([]*resourceviews.VersionView, len(v.Versions))
-	for i, val := range v.Versions {
-		res.Versions[i] = unmarshalVersionResponseToResourceviewsVersionView(val)
-	}
-
-	return res
-}
-
-// unmarshalCatalogResponseToResourceviewsCatalogView builds a value of type
-// *resourceviews.CatalogView from a value of type *CatalogResponse.
-func unmarshalCatalogResponseToResourceviewsCatalogView(v *CatalogResponse) *resourceviews.CatalogView {
-	res := &resourceviews.CatalogView{
-		ID:   v.ID,
-		Name: v.Name,
-		Type: v.Type,
-	}
-
-	return res
-}
-
-// unmarshalVersionResponseToResourceviewsVersionView builds a value of type
-// *resourceviews.VersionView from a value of type *VersionResponse.
-func unmarshalVersionResponseToResourceviewsVersionView(v *VersionResponse) *resourceviews.VersionView {
-	res := &resourceviews.VersionView{
-		ID:                  v.ID,
-		Version:             v.Version,
-		DisplayName:         v.DisplayName,
-		Description:         v.Description,
-		MinPipelinesVersion: v.MinPipelinesVersion,
-		RawURL:              v.RawURL,
-		WebURL:              v.WebURL,
-		UpdatedAt:           v.UpdatedAt,
-	}
-	res.Resource = unmarshalResourceResponseToResourceviewsResourceView(v.Resource)
-
-	return res
-}
-
-// unmarshalTagResponseToResourceviewsTagView builds a value of type
-// *resourceviews.TagView from a value of type *TagResponse.
-func unmarshalTagResponseToResourceviewsTagView(v *TagResponse) *resourceviews.TagView {
-	res := &resourceviews.TagView{
-		ID:   v.ID,
-		Name: v.Name,
-	}
-
-	return res
-}
-
-// unmarshalVersionResponseBodyToResourceviewsVersionView builds a value of
-// type *resourceviews.VersionView from a value of type *VersionResponseBody.
-func unmarshalVersionResponseBodyToResourceviewsVersionView(v *VersionResponseBody) *resourceviews.VersionView {
-	res := &resourceviews.VersionView{
-		ID:                  v.ID,
-		Version:             v.Version,
-		DisplayName:         v.DisplayName,
-		Description:         v.Description,
-		MinPipelinesVersion: v.MinPipelinesVersion,
-		RawURL:              v.RawURL,
-		WebURL:              v.WebURL,
-		UpdatedAt:           v.UpdatedAt,
-	}
-	res.Resource = unmarshalResourceResponseBodyToResourceviewsResourceView(v.Resource)
-
-	return res
-}
-
-// unmarshalResourceResponseBodyToResourceviewsResourceView builds a value of
-// type *resourceviews.ResourceView from a value of type *ResourceResponseBody.
-func unmarshalResourceResponseBodyToResourceviewsResourceView(v *ResourceResponseBody) *resourceviews.ResourceView {
-	res := &resourceviews.ResourceView{
+// unmarshalResourceDataResponseBodyToResourceviewsResourceDataView builds a
+// value of type *resourceviews.ResourceDataView from a value of type
+// *ResourceDataResponseBody.
+func unmarshalResourceDataResponseBodyToResourceviewsResourceDataView(v *ResourceDataResponseBody) *resourceviews.ResourceDataView {
+	res := &resourceviews.ResourceDataView{
 		ID:     v.ID,
 		Name:   v.Name,
 		Kind:   v.Kind,
 		Rating: v.Rating,
 	}
 	res.Catalog = unmarshalCatalogResponseBodyToResourceviewsCatalogView(v.Catalog)
-	res.LatestVersion = unmarshalVersionResponseBodyToResourceviewsVersionView(v.LatestVersion)
+	res.LatestVersion = unmarshalResourceVersionDataResponseBodyToResourceviewsResourceVersionDataView(v.LatestVersion)
 	res.Tags = make([]*resourceviews.TagView, len(v.Tags))
 	for i, val := range v.Tags {
 		res.Tags[i] = unmarshalTagResponseBodyToResourceviewsTagView(val)
 	}
-	res.Versions = make([]*resourceviews.VersionView, len(v.Versions))
+	res.Versions = make([]*resourceviews.ResourceVersionDataView, len(v.Versions))
 	for i, val := range v.Versions {
-		res.Versions[i] = unmarshalVersionResponseBodyToResourceviewsVersionView(val)
+		res.Versions[i] = unmarshalResourceVersionDataResponseBodyToResourceviewsResourceVersionDataView(val)
 	}
 
 	return res
@@ -859,6 +778,25 @@ func unmarshalCatalogResponseBodyToResourceviewsCatalogView(v *CatalogResponseBo
 	return res
 }
 
+// unmarshalResourceVersionDataResponseBodyToResourceviewsResourceVersionDataView
+// builds a value of type *resourceviews.ResourceVersionDataView from a value
+// of type *ResourceVersionDataResponseBody.
+func unmarshalResourceVersionDataResponseBodyToResourceviewsResourceVersionDataView(v *ResourceVersionDataResponseBody) *resourceviews.ResourceVersionDataView {
+	res := &resourceviews.ResourceVersionDataView{
+		ID:                  v.ID,
+		Version:             v.Version,
+		DisplayName:         v.DisplayName,
+		Description:         v.Description,
+		MinPipelinesVersion: v.MinPipelinesVersion,
+		RawURL:              v.RawURL,
+		WebURL:              v.WebURL,
+		UpdatedAt:           v.UpdatedAt,
+	}
+	res.Resource = unmarshalResourceDataResponseBodyToResourceviewsResourceDataView(v.Resource)
+
+	return res
+}
+
 // unmarshalTagResponseBodyToResourceviewsTagView builds a value of type
 // *resourceviews.TagView from a value of type *TagResponseBody.
 func unmarshalTagResponseBodyToResourceviewsTagView(v *TagResponseBody) *resourceviews.TagView {
@@ -870,86 +808,14 @@ func unmarshalTagResponseBodyToResourceviewsTagView(v *TagResponseBody) *resourc
 	return res
 }
 
-// unmarshalByCatalogKindNameVersionResponseBodyToResourceviewsVersionView
-// builds a value of type *resourceviews.VersionView from a value of type
-// *ByCatalogKindNameVersionResponseBody.
-func unmarshalByCatalogKindNameVersionResponseBodyToResourceviewsVersionView(v *ByCatalogKindNameVersionResponseBody) *resourceviews.VersionView {
-	res := &resourceviews.VersionView{
-		ID:                  v.ID,
-		Version:             v.Version,
-		DisplayName:         v.DisplayName,
-		Description:         v.Description,
-		MinPipelinesVersion: v.MinPipelinesVersion,
-		RawURL:              v.RawURL,
-		WebURL:              v.WebURL,
-		UpdatedAt:           v.UpdatedAt,
-	}
-	res.Resource = unmarshalResourceResponseBodyToResourceviewsResourceView(v.Resource)
-
-	return res
-}
-
-// unmarshalByVersionIDResponseBodyToResourceviewsVersionView builds a value of
-// type *resourceviews.VersionView from a value of type
-// *ByVersionIDResponseBody.
-func unmarshalByVersionIDResponseBodyToResourceviewsVersionView(v *ByVersionIDResponseBody) *resourceviews.VersionView {
-	res := &resourceviews.VersionView{
-		ID:                  v.ID,
-		Version:             v.Version,
-		DisplayName:         v.DisplayName,
-		Description:         v.Description,
-		MinPipelinesVersion: v.MinPipelinesVersion,
-		RawURL:              v.RawURL,
-		WebURL:              v.WebURL,
-		UpdatedAt:           v.UpdatedAt,
-	}
-	res.Resource = unmarshalResourceResponseBodyToResourceviewsResourceView(v.Resource)
-
-	return res
-}
-
-// unmarshalByCatalogKindNameResponseBodyToResourceviewsResourceView builds a
-// value of type *resourceviews.ResourceView from a value of type
-// *ByCatalogKindNameResponseBody.
-func unmarshalByCatalogKindNameResponseBodyToResourceviewsResourceView(v *ByCatalogKindNameResponseBody) *resourceviews.ResourceView {
-	res := &resourceviews.ResourceView{
-		ID:     v.ID,
-		Name:   v.Name,
-		Kind:   v.Kind,
-		Rating: v.Rating,
-	}
-	res.Catalog = unmarshalCatalogResponseBodyToResourceviewsCatalogView(v.Catalog)
-	res.LatestVersion = unmarshalVersionResponseBodyToResourceviewsVersionView(v.LatestVersion)
-	res.Tags = make([]*resourceviews.TagView, len(v.Tags))
-	for i, val := range v.Tags {
-		res.Tags[i] = unmarshalTagResponseBodyToResourceviewsTagView(val)
-	}
-	res.Versions = make([]*resourceviews.VersionView, len(v.Versions))
+// unmarshalVersionsResponseBodyToResourceviewsVersionsView builds a value of
+// type *resourceviews.VersionsView from a value of type *VersionsResponseBody.
+func unmarshalVersionsResponseBodyToResourceviewsVersionsView(v *VersionsResponseBody) *resourceviews.VersionsView {
+	res := &resourceviews.VersionsView{}
+	res.Latest = unmarshalResourceVersionDataResponseBodyToResourceviewsResourceVersionDataView(v.Latest)
+	res.Versions = make([]*resourceviews.ResourceVersionDataView, len(v.Versions))
 	for i, val := range v.Versions {
-		res.Versions[i] = unmarshalVersionResponseBodyToResourceviewsVersionView(val)
-	}
-
-	return res
-}
-
-// unmarshalByIDResponseBodyToResourceviewsResourceView builds a value of type
-// *resourceviews.ResourceView from a value of type *ByIDResponseBody.
-func unmarshalByIDResponseBodyToResourceviewsResourceView(v *ByIDResponseBody) *resourceviews.ResourceView {
-	res := &resourceviews.ResourceView{
-		ID:     v.ID,
-		Name:   v.Name,
-		Kind:   v.Kind,
-		Rating: v.Rating,
-	}
-	res.Catalog = unmarshalCatalogResponseBodyToResourceviewsCatalogView(v.Catalog)
-	res.LatestVersion = unmarshalVersionResponseBodyToResourceviewsVersionView(v.LatestVersion)
-	res.Tags = make([]*resourceviews.TagView, len(v.Tags))
-	for i, val := range v.Tags {
-		res.Tags[i] = unmarshalTagResponseBodyToResourceviewsTagView(val)
-	}
-	res.Versions = make([]*resourceviews.VersionView, len(v.Versions))
-	for i, val := range v.Versions {
-		res.Versions[i] = unmarshalVersionResponseBodyToResourceviewsVersionView(val)
+		res.Versions[i] = unmarshalResourceVersionDataResponseBodyToResourceviewsResourceVersionDataView(val)
 	}
 
 	return res

@@ -57,7 +57,7 @@ func NewQueryEndpoint(s Service) goa.Endpoint {
 		if err != nil {
 			return nil, err
 		}
-		vres := NewViewedResourceCollection(res, "withoutVersion")
+		vres := NewViewedResources(res, "default")
 		return vres, nil
 	}
 }
@@ -71,7 +71,7 @@ func NewListEndpoint(s Service) goa.Endpoint {
 		if err != nil {
 			return nil, err
 		}
-		vres := NewViewedResourceCollection(res, "withoutVersion")
+		vres := NewViewedResources(res, "default")
 		return vres, nil
 	}
 }
@@ -85,7 +85,7 @@ func NewVersionsByIDEndpoint(s Service) goa.Endpoint {
 		if err != nil {
 			return nil, err
 		}
-		vres := NewViewedVersions(res, "default")
+		vres := NewViewedResourceVersions(res, "default")
 		return vres, nil
 	}
 }
@@ -99,7 +99,7 @@ func NewByCatalogKindNameVersionEndpoint(s Service) goa.Endpoint {
 		if err != nil {
 			return nil, err
 		}
-		vres := NewViewedVersion(res, "default")
+		vres := NewViewedResourceVersion(res, "default")
 		return vres, nil
 	}
 }
@@ -113,7 +113,7 @@ func NewByVersionIDEndpoint(s Service) goa.Endpoint {
 		if err != nil {
 			return nil, err
 		}
-		vres := NewViewedVersion(res, "default")
+		vres := NewViewedResourceVersion(res, "default")
 		return vres, nil
 	}
 }

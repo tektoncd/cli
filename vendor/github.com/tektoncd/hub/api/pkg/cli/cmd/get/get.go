@@ -33,13 +33,13 @@ type options struct {
 }
 
 var cmdExamples string = `
-Get a %s of name 'foo':
+Get a %S of name 'foo':
 
     tkn hub get %s foo
 
 or
 
-Get a %s of name 'foo' of version '0.3':
+Get a %S of name 'foo' of version '0.3':
 
     tkn hub get %s foo --version 0.3
 `
@@ -75,7 +75,7 @@ func commandForKind(kind string, opts *options) *cobra.Command {
 
 	return &cobra.Command{
 		Use:          kind,
-		Short:        "Get " + kind + " by name, catalog and version",
+		Short:        "Get " + strings.Title(kind) + " by name, catalog and version",
 		Long:         ``,
 		SilenceUsage: true,
 		Example:      examples(kind),
@@ -119,5 +119,6 @@ func (opts *options) name() string {
 }
 
 func examples(kind string) string {
-	return strings.ReplaceAll(cmdExamples, "%s", kind)
+	replacer := strings.NewReplacer("%s", kind, "%S", strings.Title(kind))
+	return replacer.Replace(cmdExamples)
 }

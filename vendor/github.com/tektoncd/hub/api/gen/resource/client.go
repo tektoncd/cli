@@ -38,54 +38,54 @@ func NewClient(query, list, versionsByID, byCatalogKindNameVersion, byVersionID,
 }
 
 // Query calls the "Query" endpoint of the "resource" service.
-func (c *Client) Query(ctx context.Context, p *QueryPayload) (res ResourceCollection, err error) {
+func (c *Client) Query(ctx context.Context, p *QueryPayload) (res *Resources, err error) {
 	var ires interface{}
 	ires, err = c.QueryEndpoint(ctx, p)
 	if err != nil {
 		return
 	}
-	return ires.(ResourceCollection), nil
+	return ires.(*Resources), nil
 }
 
 // List calls the "List" endpoint of the "resource" service.
-func (c *Client) List(ctx context.Context, p *ListPayload) (res ResourceCollection, err error) {
+func (c *Client) List(ctx context.Context, p *ListPayload) (res *Resources, err error) {
 	var ires interface{}
 	ires, err = c.ListEndpoint(ctx, p)
 	if err != nil {
 		return
 	}
-	return ires.(ResourceCollection), nil
+	return ires.(*Resources), nil
 }
 
 // VersionsByID calls the "VersionsByID" endpoint of the "resource" service.
-func (c *Client) VersionsByID(ctx context.Context, p *VersionsByIDPayload) (res *Versions, err error) {
+func (c *Client) VersionsByID(ctx context.Context, p *VersionsByIDPayload) (res *ResourceVersions, err error) {
 	var ires interface{}
 	ires, err = c.VersionsByIDEndpoint(ctx, p)
 	if err != nil {
 		return
 	}
-	return ires.(*Versions), nil
+	return ires.(*ResourceVersions), nil
 }
 
 // ByCatalogKindNameVersion calls the "ByCatalogKindNameVersion" endpoint of
 // the "resource" service.
-func (c *Client) ByCatalogKindNameVersion(ctx context.Context, p *ByCatalogKindNameVersionPayload) (res *Version, err error) {
+func (c *Client) ByCatalogKindNameVersion(ctx context.Context, p *ByCatalogKindNameVersionPayload) (res *ResourceVersion, err error) {
 	var ires interface{}
 	ires, err = c.ByCatalogKindNameVersionEndpoint(ctx, p)
 	if err != nil {
 		return
 	}
-	return ires.(*Version), nil
+	return ires.(*ResourceVersion), nil
 }
 
 // ByVersionID calls the "ByVersionId" endpoint of the "resource" service.
-func (c *Client) ByVersionID(ctx context.Context, p *ByVersionIDPayload) (res *Version, err error) {
+func (c *Client) ByVersionID(ctx context.Context, p *ByVersionIDPayload) (res *ResourceVersion, err error) {
 	var ires interface{}
 	ires, err = c.ByVersionIDEndpoint(ctx, p)
 	if err != nil {
 		return
 	}
-	return ires.(*Version), nil
+	return ires.(*ResourceVersion), nil
 }
 
 // ByCatalogKindName calls the "ByCatalogKindName" endpoint of the "resource"

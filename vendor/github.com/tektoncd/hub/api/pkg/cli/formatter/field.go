@@ -38,7 +38,7 @@ func FormatDesc(desc string) string {
 }
 
 // FormatTags returns list of tags seperated by comma
-func FormatTags(tags []*client.TagResponse) string {
+func FormatTags(tags []*client.TagResponseBody) string {
 	var sb strings.Builder
 	if len(tags) == 0 {
 		return "---"
