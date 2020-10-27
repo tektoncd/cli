@@ -21,7 +21,7 @@ Manage PipelineRuns
   -h, --help                help for pipelinerun
   -k, --kubeconfig string   kubectl config file (default: $HOME/.kube/config)
   -n, --namespace string    namespace to use (default: from $KUBECONFIG)
-  -C, --nocolour            disable colouring (default: false)
+  -C, --no-color            disable coloring (default: false)
 ```
 
 ### SEE ALSO

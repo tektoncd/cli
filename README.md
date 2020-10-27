@@ -197,11 +197,11 @@ export NO_COLOR=""
 
 More information on `NO_COLOR` can be found in the [`NO_COLOR` documentation](https://no-color.org/).
 
-To remove color and emojis from the output of a single command execution, the `--nocolour` option can be used with any command, 
+To remove color and emojis from the output of a single command execution, the `--no-color` option can be used with any command, 
 such as in the example below:
 
 ```
-tkn taskrun describe --nocolour
+tkn taskrun describe --no-color
 ```
 
 ## Want to contribute
