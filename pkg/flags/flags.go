@@ -30,6 +30,7 @@ const (
 	context    = "context"
 	namespace  = "namespace"
 	nocolour   = "nocolour"
+	nocolor    = "no-color"
 )
 
 // TektonOptions all global tekton options
@@ -53,8 +54,17 @@ func AddTektonOptions(cmd *cobra.Command) {
 		"namespace to use (default: from $KUBECONFIG)")
 
 	cmd.PersistentFlags().BoolP(
-		nocolour, "C", false,
+		nocolour, "", false,
 		"disable colouring (default: false)")
+
+	// Since nocolour was the old name for the --no-color flag, mark
+	// the flag as hidden to make the option backwards compatible while
+	// only showing --no-color option in help output.
+	_ = cmd.PersistentFlags().MarkHidden("nocolour")
+
+	cmd.PersistentFlags().BoolP(
+		"no-color", "C", false,
+		"disable coloring (default: false)")
 
 	// Add custom completion for that command as specified in
 	// bashCompletionFlags map
@@ -69,7 +79,7 @@ func GetTektonOptions(cmd *cobra.Command) TektonOptions {
 	kcPath, _ := cmd.Flags().GetString(kubeConfig)
 	kContext, _ := cmd.Flags().GetString(context)
 	ns, _ := cmd.Flags().GetString(namespace)
-	nocolourFlag, _ := cmd.Flags().GetBool(nocolour)
+	nocolourFlag, _ := cmd.Flags().GetBool(nocolor)
 	return TektonOptions{
 		KubeConfig: kcPath,
 		Context:    kContext,
@@ -109,9 +119,16 @@ func InitParams(p cli.Params, cmd *cobra.Command) error {
 		p.SetNamespace(ns)
 	}
 
-	nocolourFlag, err := cmd.Flags().GetBool(nocolour)
+	nocolourFlag, err := cmd.Flags().GetBool(nocolor)
 	if err != nil {
 		return err
+	}
+	if !nocolourFlag {
+		// Check to see if --nocolour option was passed instead of --no-color or -C
+		nocolourFlag, err = cmd.Flags().GetBool(nocolour)
+		if err != nil {
+			return err
+		}
 	}
 	p.SetNoColour(nocolourFlag)
 
