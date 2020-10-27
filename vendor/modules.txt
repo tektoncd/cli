@@ -334,7 +334,7 @@ github.com/sirupsen/logrus
 github.com/spf13/cobra
 # github.com/spf13/pflag v1.0.5
 github.com/spf13/pflag
-# github.com/tektoncd/hub/api v0.0.0-20201021041518-f3b44fba7d18
+# github.com/tektoncd/hub/api v0.0.0-20201027094520-f56d79d14d70
 github.com/tektoncd/hub/api/gen/http/resource/client
 github.com/tektoncd/hub/api/gen/resource
 github.com/tektoncd/hub/api/gen/resource/views

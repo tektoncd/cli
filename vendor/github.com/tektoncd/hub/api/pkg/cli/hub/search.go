@@ -32,8 +32,11 @@ type SearchOption struct {
 	Limit uint
 }
 
-// SearchResponse is the array of ResourceResponse
-type SearchResponse = []rclient.ResourceResponse
+// SearchResponse is the data object which is the search result
+type SearchResponse = rclient.ResourceDataCollectionResponseBody
+
+// queryAPIResponse is the response from the API
+type queryAPIResponse = rclient.QueryResponseBody
 
 // SearchResult defines API raw response, unmarshalled reponse, and error
 type SearchResult struct {
@@ -62,12 +65,14 @@ func (sr *SearchResult) Typed() (SearchResponse, error) {
 	if sr.resources != nil || sr.err != nil {
 		return sr.resources, sr.err
 	}
-	sr.resources = SearchResponse{}
+	res := &queryAPIResponse{}
 	if sr.status == http.StatusNotFound {
 		return sr.resources, sr.err
 	}
 
-	sr.err = json.Unmarshal(sr.data, &sr.resources)
+	sr.err = json.Unmarshal(sr.data, res)
+	sr.resources = res.Data
+
 	return sr.resources, sr.err
 }
 

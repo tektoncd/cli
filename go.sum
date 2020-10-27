@@ -1249,10 +1249,8 @@ github.com/subosito/gotenv v1.2.0/go.mod h1:N0PQaV/YGNqwC0u51sEeR/aUtSLEXKX9iv69
 github.com/syndtr/gocapability v0.0.0-20170704070218-db04d3cc01c8/go.mod h1:hkRG7XYTFWNJGYcbNJQlaLq0fg1yr4J4t/NcTQtrfww=
 github.com/tdakkota/asciicheck v0.0.0-20200416190851-d7f85be797a2/go.mod h1:yHp0ai0Z9gUljN3o0xMhYJnH/IcvkdTBOX2fmJ93JEM=
 github.com/tdakkota/asciicheck v0.0.0-20200416200610-e657995f937b/go.mod h1:yHp0ai0Z9gUljN3o0xMhYJnH/IcvkdTBOX2fmJ93JEM=
-github.com/tektoncd/hub/api v0.0.0-20201019045143-d9a32160df56 h1:W0UJpnGH1O2aPZzgbxEOwSO6+mDUA0RpgipDFMy+IwA=
-github.com/tektoncd/hub/api v0.0.0-20201019045143-d9a32160df56/go.mod h1:wwlAvyj5lS0efH9FjduQFy/Po2sDtLG+46ok8YOBBtM=
-github.com/tektoncd/hub/api v0.0.0-20201021041518-f3b44fba7d18 h1:cbm1BWN2w+FERrrhynZEANibQyPhDty4nMr1CG0q13I=
-github.com/tektoncd/hub/api v0.0.0-20201021041518-f3b44fba7d18/go.mod h1:wwlAvyj5lS0efH9FjduQFy/Po2sDtLG+46ok8YOBBtM=
+github.com/tektoncd/hub/api v0.0.0-20201027094520-f56d79d14d70 h1:R2bdW6G8mzLgRWSGXholVoVtYr7ng0vGQMtTa6o/mpE=
+github.com/tektoncd/hub/api v0.0.0-20201027094520-f56d79d14d70/go.mod h1:wwlAvyj5lS0efH9FjduQFy/Po2sDtLG+46ok8YOBBtM=
 github.com/tektoncd/pipeline v0.8.0/go.mod h1:IZzJdiX9EqEMuUcgdnElozdYYRh0/ZRC+NKMLj1K3Yw=
 github.com/tektoncd/pipeline v0.10.1/go.mod h1:D2X0exT46zYx95BU7ByM8+erpjoN7thmUBvlKThOszU=
 github.com/tektoncd/pipeline v0.11.0/go.mod h1:hlkH32S92+/UODROH0dmxzyuMxfRFp/Nc3e29MewLn8=

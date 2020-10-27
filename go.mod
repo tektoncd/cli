@@ -17,7 +17,7 @@ require (
 	github.com/pkg/errors v0.9.1
 	github.com/spf13/cobra v1.0.0
 	github.com/spf13/pflag v1.0.5
-	github.com/tektoncd/hub/api v0.0.0-20201021041518-f3b44fba7d18
+	github.com/tektoncd/hub/api v0.0.0-20201027094520-f56d79d14d70
 	github.com/tektoncd/pipeline v0.17.1-0.20201007165454-9611f3e4509e
 	github.com/tektoncd/plumbing v0.0.0-20200430135134-e53521e1d887
 	github.com/tektoncd/triggers v0.8.2-0.20201007153255-cb1879311818

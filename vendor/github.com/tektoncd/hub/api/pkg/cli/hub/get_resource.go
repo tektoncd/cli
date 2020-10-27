@@ -39,6 +39,13 @@ type ResourceResult struct {
 	version string
 }
 
+// resourceResponse is the response of API when finding a resource
+type resourceResponse = rclient.ByCatalogKindNameResponseBody
+
+// resourceWithVersionResponse is the response of API when finding a resource
+// with a specific version
+type resourceWithVersionResponse = rclient.ByCatalogKindNameVersionResponseBody
+
 // GetResource queries the data using Hub Endpoint
 func (h *client) GetResource(opt ResourceOption) ResourceResult {
 	data, status, err := h.Get(opt.Endpoint())
@@ -62,33 +69,33 @@ func (opt ResourceOption) Endpoint() string {
 }
 
 // RawURL returns the raw url of the resource yaml file
-func (gr *ResourceResult) RawURL() (string, error) {
-	if gr.err != nil {
-		return "", gr.err
+func (rr *ResourceResult) RawURL() (string, error) {
+	if rr.err != nil {
+		return "", rr.err
 	}
 
-	if gr.status == http.StatusNotFound {
+	if rr.status == http.StatusNotFound {
 		return "", fmt.Errorf("No Resource Found")
 	}
 
-	if gr.version != "" {
-		resVersion := rclient.VersionResponse{}
-		if err := json.Unmarshal(gr.data, &resVersion); err != nil {
+	if rr.version != "" {
+		res := resourceWithVersionResponse{}
+		if err := json.Unmarshal(rr.data, &res); err != nil {
 			return "", err
 		}
-		return *resVersion.RawURL, nil
+		return *res.Data.RawURL, nil
 	}
 
-	res := rclient.ResourceResponse{}
-	if err := json.Unmarshal(gr.data, &res); err != nil {
+	res := resourceResponse{}
+	if err := json.Unmarshal(rr.data, &res); err != nil {
 		return "", err
 	}
-	return *res.LatestVersion.RawURL, nil
+	return *res.Data.LatestVersion.RawURL, nil
 }
 
 // Manifest gets the resource from catalog
-func (gr *ResourceResult) Manifest() ([]byte, error) {
-	rawURL, err := gr.RawURL()
+func (rr *ResourceResult) Manifest() ([]byte, error) {
+	rawURL, err := rr.RawURL()
 	if err != nil {
 		return nil, err
 	}

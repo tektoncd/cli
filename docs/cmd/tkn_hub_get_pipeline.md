@@ -1,6 +1,6 @@
 ## tkn hub get pipeline
 
-Get pipeline by name, catalog and version
+Get Pipeline by name, catalog and version
 
 ### Usage
 
@@ -10,18 +10,18 @@ tkn hub get pipeline
 
 ### Synopsis
 
-Get pipeline by name, catalog and version
+Get Pipeline by name, catalog and version
 
 ### Examples
 
 
-Get a pipeline of name 'foo':
+Get a Pipeline of name 'foo':
 
     tkn hub get pipeline foo
 
 or
 
-Get a pipeline of name 'foo' of version '0.3':
+Get a Pipeline of name 'foo' of version '0.3':
 
     tkn hub get pipeline foo --version 0.3
 

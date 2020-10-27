@@ -29,6 +29,6 @@ Get resource manifest by its name, kind, catalog, and version
 ### SEE ALSO
 
 * [tkn hub](tkn_hub.md)	 - Interact with tekton hub
-* [tkn hub get pipeline](tkn_hub_get_pipeline.md)	 - Get pipeline by name, catalog and version
-* [tkn hub get task](tkn_hub_get_task.md)	 - Get task by name, catalog and version
+* [tkn hub get pipeline](tkn_hub_get_pipeline.md)	 - Get Pipeline by name, catalog and version
+* [tkn hub get task](tkn_hub_get_task.md)	 - Get Task by name, catalog and version
 
