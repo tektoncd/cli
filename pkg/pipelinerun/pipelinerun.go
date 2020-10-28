@@ -26,11 +26,13 @@ import (
 	prsort "github.com/tektoncd/cli/pkg/pipelinerun/sort"
 	"github.com/tektoncd/pipeline/pkg/apis/pipeline/v1alpha1"
 	"github.com/tektoncd/pipeline/pkg/apis/pipeline/v1beta1"
+	corev1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
 	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/apimachinery/pkg/runtime/schema"
 	"k8s.io/apimachinery/pkg/watch"
+	duckv1beta1 "knative.dev/pkg/apis/duck/v1beta1"
 )
 
 var prGroupResource = schema.GroupVersionResource{Group: "tekton.dev", Resource: "pipelineruns"}
@@ -59,10 +61,31 @@ func GetAllPipelineRuns(p cli.Params, opts metav1.ListOptions, limit int) ([]str
 	ret := []string{}
 	for i, run := range runs.Items {
 		if i < limit {
-			ret = append(ret, run.ObjectMeta.Name+" started "+formatted.Age(run.Status.StartTime, p.Time()))
+			label := "succeeded"
+			if hasPipelineRunFailed(run.Status.Conditions) {
+				label = "failed"
+			} else if isPipelineRunRunning(run.Status.Conditions) {
+				label = "running"
+			}
+
+			ret = append(ret, run.ObjectMeta.Name+" "+label+"  "+formatted.Age(run.Status.StartTime, p.Time()))
 		}
 	}
 	return ret, nil
+}
+
+func hasPipelineRunFailed(prConditions duckv1beta1.Conditions) bool {
+	if len(prConditions) != 0 && prConditions[0].Status == corev1.ConditionFalse {
+		return true
+	}
+	return false
+}
+
+func isPipelineRunRunning(prConditions duckv1beta1.Conditions) bool {
+	if len(prConditions) != 0 && prConditions[0].Status == corev1.ConditionUnknown {
+		return true
+	}
+	return false
 }
 
 func List(c *cli.Clients, opts metav1.ListOptions, ns string) (*v1beta1.PipelineRunList, error) {
