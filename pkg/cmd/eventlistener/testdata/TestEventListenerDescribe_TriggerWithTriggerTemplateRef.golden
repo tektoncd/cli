@@ -1,0 +1,16 @@
+Name:        el1
+Namespace:   ns
+ 
+EventListenerTriggers
+
+ NAME
+ tt1
+ 
+ BINDINGS
+
+  NAME      VALUE
+  binding   somevalue
+ 
+ TEMPLATE REF   APIVERSION
+ someref        v1alpha1
+ 

@@ -81,6 +81,15 @@ const describeTemplate = `{{decorate "bold" "Name"}}:	{{ .EventListener.Name }}
 {{- end }}
 {{ " " }}
 {{- end }}
+{{- if isBindingNameExist $v.Bindings }}
+  NAME	VALUE
+{{- range $b := $v.Bindings }}
+{{- if ne $b.Name "" }}
+  {{ decorate "bullet" $b.Name }}	{{ $b.Value }}
+{{- end }}
+{{- end }}
+{{ " " }}
+{{- end }}
 
 {{- if isBindingSpecExist $v.Bindings }}
   SPEC
@@ -95,8 +104,13 @@ const describeTemplate = `{{decorate "bold" "Name"}}:	{{ .EventListener.Name }}
 {{ " " }}
 {{- end }}
 {{- end }}
+{{- if isTemplateRefExist $v.Template }}
+ TEMPLATE REF	APIVERSION
+ {{ decorate "bullet" $v.Template.Ref }}	{{ $v.Template.APIVersion }}
+{{- else }}
  TEMPLATE NAME	APIVERSION
  {{ decorate "bullet" $v.Template.Name }}	{{ $v.Template.APIVersion }}
+{{- end }}
 {{- if eq $v.ServiceAccountName "" }}
 {{- else }}
 {{ " " }}
@@ -225,6 +239,8 @@ func printEventListenerDescription(s *cli.Stream, p cli.Params, elName string) e
 		"getEventListenerName": getEventListenerName,
 		"isBindingRefExist":    isBindingRefExist,
 		"isBindingSpecExist":   isBindingSpecExist,
+		"isBindingNameExist":   isBindingNameExist,
+		"isTemplateRefExist":   isTemplateRefExist,
 	}
 
 	w := tabwriter.NewWriter(s.Out, 0, 5, 3, ' ', tabwriter.TabIndent)
@@ -276,4 +292,18 @@ func isBindingSpecExist(bindings []*v1alpha1.EventListenerBinding) bool {
 		}
 	}
 	return specExist
+}
+
+func isBindingNameExist(bindings []*v1alpha1.EventListenerBinding) bool {
+	nameExist := false
+	for _, j := range bindings {
+		if j.Name != "" {
+			return true
+		}
+	}
+	return nameExist
+}
+
+func isTemplateRefExist(templates *v1alpha1.EventListenerTemplate) bool {
+	return templates.Ref != nil
 }
