@@ -1264,8 +1264,8 @@ github.com/tektoncd/plumbing v0.0.0-20200217163359-cd0db6e567d2/go.mod h1:QZHgU0
 github.com/tektoncd/plumbing v0.0.0-20200430135134-e53521e1d887 h1:crv70CBAJ2gZFSbf13aRVwdbjR2GYwTms/ZEok/SnFM=
 github.com/tektoncd/plumbing v0.0.0-20200430135134-e53521e1d887/go.mod h1:cZPJIeTIoP7UPTxQyTQLs7VE1TiXJSNj0te+If4Q+jI=
 github.com/tektoncd/plumbing/pipelinerun-logs v0.0.0-20191206114338-712d544c2c21/go.mod h1:S62EUWtqmejjJgUMOGB1CCCHRp6C706laH06BoALkzU=
-github.com/tektoncd/triggers v0.8.2-0.20201007153255-cb1879311818 h1:KWEoOYU9ht2G5iW/BbGEqGRZwrWVUuTdEeDsuEXR4go=
-github.com/tektoncd/triggers v0.8.2-0.20201007153255-cb1879311818/go.mod h1:BccgHGtBbJp6gpKCxU/X2j6it4lLFE6HIT7zn7BKX94=
+github.com/tektoncd/triggers v0.9.1 h1:KR4/mIfcCv2MdhQWvH/4ZkEzJvsQm72mL8ZtcKA71Kc=
+github.com/tektoncd/triggers v0.9.1/go.mod h1:BccgHGtBbJp6gpKCxU/X2j6it4lLFE6HIT7zn7BKX94=
 github.com/tetafro/godot v0.3.7/go.mod h1:/7NLHhv08H1+8DNj0MElpAACw1ajsCuf3TKNQxA5S+0=
 github.com/tetafro/godot v0.4.2/go.mod h1:/7NLHhv08H1+8DNj0MElpAACw1ajsCuf3TKNQxA5S+0=
 github.com/tidwall/gjson v1.3.5/go.mod h1:P256ACg0Mn+j1RXIDXoss50DeIABTYK1PULOJHhxOls=

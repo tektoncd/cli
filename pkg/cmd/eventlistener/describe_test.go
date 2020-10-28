@@ -135,6 +135,73 @@ func TestEventListenerDescribe_OneTriggerWithMultipleTriggerBinding(t *testing.T
 	executeEventListenerCommand(t, els)
 }
 
+func TestEventListenerDescribe_OneTriggerWithTriggerBindingName(t *testing.T) {
+	bindingval := "somevalue"
+
+	els := []*v1alpha1.EventListener{
+		{
+			ObjectMeta: metav1.ObjectMeta{
+				Name:      "el1",
+				Namespace: "ns",
+			},
+			Spec: v1alpha1.EventListenerSpec{
+				Triggers: []v1alpha1.EventListenerTrigger{
+					{
+						Bindings: []*v1alpha1.EventListenerBinding{
+							{
+								Name:  "binding",
+								Value: &bindingval,
+							},
+						},
+						Template: &v1alpha1.EventListenerTemplate{
+							Name:       "tt1",
+							Ref:        nil,
+							APIVersion: "v1alpha1",
+							Spec:       nil,
+						},
+						Name: "tt1",
+					},
+				},
+			},
+		},
+	}
+
+	executeEventListenerCommand(t, els)
+}
+
+func TestEventListenerDescribe_TriggerWithTriggerTemplateRef(t *testing.T) {
+	bindingval := "somevalue"
+	tempRef := "someref"
+
+	els := []*v1alpha1.EventListener{
+		{
+			ObjectMeta: metav1.ObjectMeta{
+				Name:      "el1",
+				Namespace: "ns",
+			},
+			Spec: v1alpha1.EventListenerSpec{
+				Triggers: []v1alpha1.EventListenerTrigger{
+					{
+						Bindings: []*v1alpha1.EventListenerBinding{
+							{
+								Name:  "binding",
+								Value: &bindingval,
+							},
+						},
+						Template: &v1alpha1.EventListenerTemplate{
+							Ref:        &tempRef,
+							APIVersion: "v1alpha1",
+						},
+						Name: "tt1",
+					},
+				},
+			},
+		},
+	}
+
+	executeEventListenerCommand(t, els)
+}
+
 func TestEventListenerDescribe_OneTriggerWithEmptyTriggerBinding(t *testing.T) {
 	els := []*v1alpha1.EventListener{
 		el.EventListener("el1", "ns",
