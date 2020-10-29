@@ -54,7 +54,9 @@ func TestTaskRunDelete(t *testing.T) {
 		tb.TaskRun("tr0-1",
 			tb.TaskRunNamespace("ns"),
 			tb.TaskRunLabel("tekton.dev/task", "random"),
-			tb.TaskRunSpec(tb.TaskRunTaskRef("random")),
+			tb.TaskRunSpec(
+				tb.TaskRunTaskRef("random", tb.TaskRefKind(v1alpha1.NamespacedTaskKind)),
+			),
 			tb.TaskRunStatus(
 				tb.StatusCondition(apis.Condition{
 					Status: corev1.ConditionTrue,
@@ -65,7 +67,9 @@ func TestTaskRunDelete(t *testing.T) {
 		tb.TaskRun("tr0-2",
 			tb.TaskRunNamespace("ns"),
 			tb.TaskRunLabel("tekton.dev/task", "random"),
-			tb.TaskRunSpec(tb.TaskRunTaskRef("random")),
+			tb.TaskRunSpec(
+				tb.TaskRunTaskRef("random", tb.TaskRefKind(v1alpha1.NamespacedTaskKind)),
+			),
 			tb.TaskRunStatus(
 				tb.StatusCondition(apis.Condition{
 					Status: corev1.ConditionTrue,
@@ -76,7 +80,9 @@ func TestTaskRunDelete(t *testing.T) {
 		tb.TaskRun("tr0-3",
 			tb.TaskRunNamespace("ns"),
 			tb.TaskRunLabel("tekton.dev/task", "random"),
-			tb.TaskRunSpec(tb.TaskRunTaskRef("random")),
+			tb.TaskRunSpec(
+				tb.TaskRunTaskRef("random", tb.TaskRefKind(v1alpha1.NamespacedTaskKind)),
+			),
 			tb.TaskRunStatus(
 				tb.StatusCondition(apis.Condition{
 					Status: corev1.ConditionTrue,
@@ -335,6 +341,7 @@ func TestTaskRunDelete_v1beta1(t *testing.T) {
 			Spec: v1beta1.TaskRunSpec{
 				TaskRef: &v1beta1.TaskRef{
 					Name: "random",
+					Kind: v1beta1.NamespacedTaskKind,
 				},
 			},
 			Status: v1beta1.TaskRunStatus{
@@ -357,6 +364,7 @@ func TestTaskRunDelete_v1beta1(t *testing.T) {
 			Spec: v1beta1.TaskRunSpec{
 				TaskRef: &v1beta1.TaskRef{
 					Name: "random",
+					Kind: v1beta1.NamespacedTaskKind,
 				},
 			},
 			Status: v1beta1.TaskRunStatus{
@@ -379,6 +387,7 @@ func TestTaskRunDelete_v1beta1(t *testing.T) {
 			Spec: v1beta1.TaskRunSpec{
 				TaskRef: &v1beta1.TaskRef{
 					Name: "random",
+					Kind: v1beta1.NamespacedTaskKind,
 				},
 			},
 			Status: v1beta1.TaskRunStatus{
@@ -605,4 +614,120 @@ func TestTaskRunDelete_v1beta1(t *testing.T) {
 			}
 		})
 	}
+}
+
+func Test_ClusterTask_TaskRuns_Not_Deleted_With_Task_Option(t *testing.T) {
+	version := "v1beta1"
+	ns := []*corev1.Namespace{
+		{
+			ObjectMeta: metav1.ObjectMeta{
+				Name: "ns",
+			},
+		},
+	}
+
+	tasks := []*v1beta1.Task{
+		{
+			ObjectMeta: metav1.ObjectMeta{
+				Name:      "random",
+				Namespace: "ns",
+			},
+		},
+	}
+
+	clustertasks := []*v1beta1.ClusterTask{
+		{
+			ObjectMeta: metav1.ObjectMeta{
+				Name: "random",
+			},
+		},
+	}
+
+	trdata := []*v1beta1.TaskRun{
+		{
+			ObjectMeta: metav1.ObjectMeta{
+				Namespace: "ns",
+				Name:      "tr0-1",
+				Labels:    map[string]string{"tekton.dev/task": "random"},
+			},
+			Spec: v1beta1.TaskRunSpec{
+				TaskRef: &v1beta1.TaskRef{
+					Name: "random",
+					Kind: v1beta1.NamespacedTaskKind,
+				},
+			},
+			Status: v1beta1.TaskRunStatus{
+				Status: duckv1beta1.Status{
+					Conditions: duckv1beta1.Conditions{
+						{
+							Status: corev1.ConditionTrue,
+							Reason: v1beta1.TaskRunReasonSuccessful.String(),
+						},
+					},
+				},
+			},
+		},
+		{
+			ObjectMeta: metav1.ObjectMeta{
+				Namespace: "ns",
+				Name:      "tr0-2",
+				Labels: map[string]string{
+					// TaskRun associated with ClusterTask will
+					// have both task and clusterTask labels:
+					// https://github.com/tektoncd/pipeline/issues/2533
+					"tekton.dev/clusterTask": "random",
+					"tekton.dev/task":        "random",
+				},
+			},
+			Spec: v1beta1.TaskRunSpec{
+				TaskRef: &v1beta1.TaskRef{
+					Name: "random",
+					Kind: v1beta1.ClusterTaskKind,
+				},
+			},
+			Status: v1beta1.TaskRunStatus{
+				Status: duckv1beta1.Status{
+					Conditions: duckv1beta1.Conditions{
+						{
+							Status: corev1.ConditionTrue,
+							Reason: v1beta1.TaskRunReasonSuccessful.String(),
+						},
+					},
+				},
+			},
+		},
+	}
+
+	trs := trdata
+	cs, _ := test.SeedV1beta1TestData(t, pipelinev1beta1test.Data{TaskRuns: trs, Namespaces: ns})
+	cs.Pipeline.Resources = cb.APIResourceList(version, []string{"taskrun"})
+	tdc := testDynamic.Options{}
+	dc, err := tdc.Client(
+		cb.UnstructuredV1beta1T(tasks[0], version),
+		cb.UnstructuredV1beta1CT(clustertasks[0], version),
+		cb.UnstructuredV1beta1TR(trdata[0], version),
+		cb.UnstructuredV1beta1TR(trdata[1], version),
+	)
+	if err != nil {
+		t.Errorf("unable to create dynamic client: %v", err)
+	}
+
+	p := &test.Params{Tekton: cs.Pipeline, Dynamic: dc}
+	taskrun := Command(p)
+	// Run tkn taskrun delete --task random to delete on kind Task random's TaskRuns
+	_, err = test.ExecuteCommand(taskrun, "delete", "--task", "random", "-n", "ns")
+	if err != nil {
+		t.Errorf("no error expected but received error: %v", err)
+	}
+
+	// Expect TaskRun from kind ClusterTask random remains after deletion
+	expected := `NAME    STARTED   DURATION   STATUS
+tr0-2   ---       ---        Succeeded
+`
+	// Run list command to confirm TaskRun still present
+	out, err := test.ExecuteCommand(taskrun, "list", "-n", "ns")
+	if err != nil {
+		t.Errorf("no error expected but received error: %v", err)
+	}
+	test.AssertOutput(t, expected, out)
 }

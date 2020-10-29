@@ -19,7 +19,6 @@ import (
 
 	"github.com/tektoncd/cli/pkg/cli"
 	trlist "github.com/tektoncd/cli/pkg/taskrun/list"
-	"github.com/tektoncd/pipeline/pkg/apis/pipeline/v1alpha1"
 	"github.com/tektoncd/pipeline/pkg/apis/pipeline/v1beta1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 )
@@ -55,20 +54,9 @@ func LastRun(cs *cli.Clients, task string, ns, kind string) (*v1beta1.TaskRun, e
 	return &latest, nil
 }
 
-// this will filter the taskkrun which have reference to Task
+// this will filter the taskrun which have reference to Task
 func FilterByRef(taskruns []v1beta1.TaskRun, kind string) []v1beta1.TaskRun {
 	var filtered []v1beta1.TaskRun
-	for _, taskrun := range taskruns {
-		if string(taskrun.Spec.TaskRef.Kind) == kind {
-			filtered = append(filtered, taskrun)
-		}
-	}
-	return filtered
-}
-
-// this will filter the taskkrun which have reference to Task
-func FilterByRefV1alpha1(taskruns []v1alpha1.TaskRun, kind string) []v1alpha1.TaskRun {
-	var filtered []v1alpha1.TaskRun
 	for _, taskrun := range taskruns {
 		if string(taskrun.Spec.TaskRef.Kind) == kind {
 			filtered = append(filtered, taskrun)
