@@ -18,6 +18,7 @@ import (
 	"errors"
 	"fmt"
 
+	taskpkg "github.com/tektoncd/cli/pkg/task"
 	trsort "github.com/tektoncd/cli/pkg/taskrun/sort"
 	"github.com/tektoncd/pipeline/pkg/apis/pipeline/v1beta1"
 
@@ -146,11 +147,12 @@ func taskRunLister(p cli.Params, keep int, cs *cli.Clients) func(string) ([]stri
 		lOpts := metav1.ListOptions{
 			LabelSelector: fmt.Sprintf("tekton.dev/task=%s", taskName),
 		}
-		taskRuns, err := trlist.TaskRuns(cs, lOpts, p.Namespace())
+		trs, err := trlist.TaskRuns(cs, lOpts, p.Namespace())
 		if err != nil {
 			return nil, err
 		}
-		return keepTaskRuns(taskRuns, keep), nil
+		trs.Items = taskpkg.FilterByRef(trs.Items, string(v1beta1.NamespacedTaskKind))
+		return keepTaskRuns(trs, keep), nil
 	}
 }
 

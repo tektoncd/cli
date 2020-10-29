@@ -192,7 +192,7 @@ func list(p cli.Params, task string, limit int, labelselector string, allnamespa
 
 	// this is required as the same label is getting added for both task and ClusterTask
 	if task != "" {
-		trs.Items = taskpkg.FilterByRef(trs.Items, "Task")
+		trs.Items = taskpkg.FilterByRef(trs.Items, string(v1beta1.NamespacedTaskKind))
 	}
 
 	trslen := len(trs.Items)
