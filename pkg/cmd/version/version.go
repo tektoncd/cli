@@ -92,6 +92,8 @@ func Command(p cli.Params) *cobra.Command {
 
 	if skipCheckFlag != "true" {
 		cmd.Flags().BoolVarP(&check, "check", "c", false, "check if a newer version is available")
+		_ = cmd.Flags().MarkShorthandDeprecated("check",
+			"the -c shorthand for tkn version --check will be removed in v0.15.0. See https://github.com/tektoncd/cli/issues/1231.")
 	}
 	return cmd
 }

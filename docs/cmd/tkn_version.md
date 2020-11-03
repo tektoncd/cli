@@ -15,7 +15,7 @@ Prints version information
 ### Options
 
 ```
-  -c, --check              check if a newer version is available
+      --check              check if a newer version is available
   -h, --help               help for version
   -n, --namespace string   namespace to check installed controller version
 ```
