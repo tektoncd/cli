@@ -46,6 +46,11 @@ func TestListTriggerTemplate(t *testing.T) {
 				Name: "random",
 			},
 		},
+		{
+			ObjectMeta: metav1.ObjectMeta{
+				Name: "bar",
+			},
+		},
 	}
 
 	tts := []*v1alpha1.TriggerTemplate{
@@ -53,6 +58,7 @@ func TestListTriggerTemplate(t *testing.T) {
 		tb.TriggerTemplate("tt2", "foo", cb.TriggerTemplateCreationTime(now.Add(-30*time.Second))),
 		tb.TriggerTemplate("tt3", "foo", cb.TriggerTemplateCreationTime(now.Add(-200*time.Hour))),
 		tb.TriggerTemplate("tt4", "foo"),
+		tb.TriggerTemplate("tt5", "bar"),
 	}
 
 	tests := []struct {
@@ -85,6 +91,12 @@ func TestListTriggerTemplate(t *testing.T) {
 			args:      []string{"list", "-n", "foo", "-o", "jsonpath={range .items[*]}{.metadata.name}{\"\\n\"}{end}"},
 			wantError: false,
 		},
+		{
+			name:      "TriggerTemplates from all namespaces",
+			command:   command(t, tts, now, ns),
+			args:      []string{"list", "--all-namespaces"},
+			wantError: false,
+		},
 	}
 
 	for _, td := range tests {
@@ -97,6 +109,29 @@ func TestListTriggerTemplate(t *testing.T) {
 			golden.Assert(t, got, strings.ReplaceAll(fmt.Sprintf("%s.golden", t.Name()), "/", "-"))
 		})
 	}
+}
+
+func TestTriggerTemplateList_empty(t *testing.T) {
+	now := time.Now()
+
+	ns := []*corev1.Namespace{
+		{
+			ObjectMeta: metav1.ObjectMeta{
+				Name: "foo",
+			},
+		},
+		{
+			ObjectMeta: metav1.ObjectMeta{
+				Name: "bar",
+			},
+		},
+	}
+
+	tt := []*v1alpha1.TriggerTemplate{}
+	listtt := command(t, tt, now, ns)
+
+	out, _ := test.ExecuteCommand(listtt, "list", "--all-namespaces")
+	test.AssertOutput(t, emptyMsg+"\n", out)
 }
 
 func command(t *testing.T, tts []*v1alpha1.TriggerTemplate, now time.Time, ns []*corev1.Namespace) *cobra.Command {
