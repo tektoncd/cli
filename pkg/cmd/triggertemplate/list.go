@@ -34,7 +34,12 @@ const (
 	emptyMsg = "No TriggerTemplates found"
 )
 
+type ListOptions struct {
+	AllNamespaces bool
+}
+
 func listCommand(p cli.Params) *cobra.Command {
+	opts := &ListOptions{}
 	f := cliopts.NewPrintFlags("list")
 
 	eg := `List all TriggerTemplates in namespace 'bar':
@@ -60,9 +65,16 @@ or
 				return err
 			}
 
-			tts, err := list(cs.Triggers, p.Namespace())
+			namespace := p.Namespace()
+			if opts.AllNamespaces {
+				namespace = ""
+			}
+			tts, err := list(cs.Triggers, namespace)
 			if err != nil {
-				return fmt.Errorf("failed to list TriggerTemplates from %s namespace: %v", p.Namespace(), err)
+				if opts.AllNamespaces {
+					return fmt.Errorf("failed to list TriggerTemplates from all namespaces: %v", err)
+				}
+				return fmt.Errorf("failed to list TriggerTemplates from %s namespace: %v", namespace, err)
 			}
 
 			output, err := cmd.LocalFlags().GetString("output")
@@ -79,7 +91,7 @@ or
 				return printer.PrintObject(stream.Out, tts, f)
 			}
 
-			if err = printFormatted(stream, tts, p); err != nil {
+			if err = printFormatted(stream, tts, p, opts.AllNamespaces); err != nil {
 				return fmt.Errorf("failed to print TriggerTemplates: %v", err)
 			}
 			return nil
@@ -89,6 +101,7 @@ or
 
 	f.AddFlags(c)
 
+	c.Flags().BoolVarP(&opts.AllNamespaces, "all-namespaces", "A", opts.AllNamespaces, "list TriggerTemplates from all namespaces")
 	return c
 }
 
@@ -109,19 +122,32 @@ func list(client versioned.Interface, namespace string) (*v1alpha1.TriggerTempla
 	return tts, nil
 }
 
-func printFormatted(s *cli.Stream, tts *v1alpha1.TriggerTemplateList, p cli.Params) error {
+func printFormatted(s *cli.Stream, tts *v1alpha1.TriggerTemplateList, p cli.Params, allNamespaces bool) error {
 	if len(tts.Items) == 0 {
 		fmt.Fprintln(s.Err, emptyMsg)
 		return nil
 	}
 
+	headers := "NAME\tAGE"
+	if allNamespaces {
+		headers = "NAMESPACE\t" + headers
+	}
+
 	w := tabwriter.NewWriter(s.Out, 0, 5, 3, ' ', tabwriter.TabIndent)
-	fmt.Fprintln(w, "NAME\tAGE")
+	fmt.Fprintln(w, headers)
 	for _, tt := range tts.Items {
-		fmt.Fprintf(w, "%s\t%s\n",
-			tt.Name,
-			formatted.Age(&tt.CreationTimestamp, p.Time()),
-		)
+		if allNamespaces {
+			fmt.Fprintf(w, "%s\t%s\t%s\n",
+				tt.Namespace,
+				tt.Name,
+				formatted.Age(&tt.CreationTimestamp, p.Time()),
+			)
+		} else {
+			fmt.Fprintf(w, "%s\t%s\n",
+				tt.Name,
+				formatted.Age(&tt.CreationTimestamp, p.Time()),
+			)
+		}
 	}
 
 	return w.Flush()
