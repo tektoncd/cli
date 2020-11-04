@@ -43,12 +43,18 @@ func TestListTriggerBinding(t *testing.T) {
 		},
 		{
 			ObjectMeta: metav1.ObjectMeta{
+				Name: "bar",
+			},
+		},
+		{
+			ObjectMeta: metav1.ObjectMeta{
 				Name: "random",
 			},
 		},
 	}
 
 	tbs := []*v1alpha1.TriggerBinding{
+		tb.TriggerBinding("tb0", "bar", cb.TriggerBindingCreationTime(now.Add(-2*time.Minute))),
 		tb.TriggerBinding("tb1", "foo", cb.TriggerBindingCreationTime(now.Add(-2*time.Minute))),
 		tb.TriggerBinding("tb2", "foo", cb.TriggerBindingCreationTime(now.Add(-30*time.Second))),
 		tb.TriggerBinding("tb3", "foo", cb.TriggerBindingCreationTime(now.Add(-200*time.Hour))),
@@ -91,6 +97,12 @@ func TestListTriggerBinding(t *testing.T) {
 			args:      []string{"list", "-n", "foo", "-o", "jsonpath={range .items[*]}{.metadata.name}{\"\\n\"}{end}"},
 			wantError: false,
 		},
+		{
+			name:      "TriggerBindings from all namespaces",
+			command:   command(t, tbs, now, ns),
+			args:      []string{"list", "--all-namespaces"},
+			wantError: false,
+		},
 	}
 
 	for _, td := range tests {
@@ -114,4 +126,27 @@ func command(t *testing.T, tbs []*v1alpha1.TriggerBinding, now time.Time, ns []*
 	p := &test.Params{Tekton: cs.Pipeline, Clock: clock, Kube: cs.Kube, Triggers: cs.Triggers}
 
 	return Command(p)
+}
+
+func TestTriggerBindingList_empty(t *testing.T) {
+	now := time.Now()
+
+	ns := []*corev1.Namespace{
+		{
+			ObjectMeta: metav1.ObjectMeta{
+				Name: "foo",
+			},
+		},
+		{
+			ObjectMeta: metav1.ObjectMeta{
+				Name: "bar",
+			},
+		},
+	}
+
+	tb := []*v1alpha1.TriggerBinding{}
+	listtb := command(t, tb, now, ns)
+
+	out, _ := test.ExecuteCommand(listtb, "list", "--all-namespaces")
+	test.AssertOutput(t, emptyMsg+"\n", out)
 }
