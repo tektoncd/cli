@@ -43,6 +43,11 @@ func TestListEventListener(t *testing.T) {
 		},
 		{
 			ObjectMeta: metav1.ObjectMeta{
+				Name: "bar",
+			},
+		},
+		{
+			ObjectMeta: metav1.ObjectMeta{
 				Name: "random",
 			},
 		},
@@ -51,6 +56,8 @@ func TestListEventListener(t *testing.T) {
 	elStatusTrue := tb.EventListenerStatus(tb.EventListenerCondition("", "True", "", ""))
 	elStatusFalse := tb.EventListenerStatus(tb.EventListenerCondition("", "False", "", ""))
 	els := []*v1alpha1.EventListener{
+		tb.EventListener("tb0", "bar", cb.EventListenerCreationTime(now.Add(-2*time.Minute)), tb.EventListenerStatus(
+			tb.EventListenerAddress("tb0-listener.default.svc.cluster.local")), elStatusTrue),
 		tb.EventListener("tb1", "foo", cb.EventListenerCreationTime(now.Add(-2*time.Minute)), tb.EventListenerStatus(
 			tb.EventListenerAddress("tb1-listener.default.svc.cluster.local")), elStatusTrue),
 		tb.EventListener("tb2", "foo", cb.EventListenerCreationTime(now.Add(-30*time.Second)), tb.EventListenerStatus(
@@ -91,6 +98,12 @@ func TestListEventListener(t *testing.T) {
 			args:      []string{"list", "-n", "foo", "-o", "jsonpath={range .items[*]}{.metadata.name}{\"\\n\"}{end}"},
 			wantError: false,
 		},
+		{
+			name:      "EventListeners from all-namespaces",
+			command:   command(t, els, now, ns),
+			args:      []string{"list", "--all-namespaces"},
+			wantError: false,
+		},
 	}
 
 	for _, td := range tests {
@@ -111,4 +124,27 @@ func command(t *testing.T, els []*v1alpha1.EventListener, now time.Time, ns []*c
 	cs := test.SeedTestResources(t, triggertest.Resources{EventListeners: els, Namespaces: ns})
 	p := &test.Params{Tekton: cs.Pipeline, Clock: clock, Kube: cs.Kube, Triggers: cs.Triggers}
 	return Command(p)
+}
+
+func TestEventListenersList_empty(t *testing.T) {
+	now := time.Now()
+
+	ns := []*corev1.Namespace{
+		{
+			ObjectMeta: metav1.ObjectMeta{
+				Name: "foo",
+			},
+		},
+		{
+			ObjectMeta: metav1.ObjectMeta{
+				Name: "bar",
+			},
+		},
+	}
+
+	els := []*v1alpha1.EventListener{}
+	listEls := command(t, els, now, ns)
+
+	out, _ := test.ExecuteCommand(listEls, "list", "--all-namespaces")
+	test.AssertOutput(t, emptyMsg+"\n", out)
 }
