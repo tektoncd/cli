@@ -106,7 +106,7 @@ func describeTriggerBindingOutput(w io.Writer, p cli.Params, f *cliopts.PrintFla
 	// tektoncd go client fails to set these; probably a bug
 	tb.GetObjectKind().SetGroupVersionKind(
 		schema.GroupVersionKind{
-			Version: "triggers.tekton.dev",
+			Version: "triggers.tekton.dev/v1alpha1",
 			Kind:    "TriggerBinding",
 		})
 
