@@ -1,6 +1,6 @@
 {
     "kind": "EventListener",
-    "apiVersion": "triggers.tekton.dev",
+    "apiVersion": "triggers.tekton.dev/v1alpha1",
     "metadata": {
         "name": "el1",
         "namespace": "ns",

@@ -1,4 +1,4 @@
-apiVersion: triggers.tekton.dev
+apiVersion: triggers.tekton.dev/v1alpha1
 kind: TriggerTemplate
 metadata:
   creationTimestamp: null
