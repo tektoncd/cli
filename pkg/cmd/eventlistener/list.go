@@ -36,7 +36,12 @@ const (
 	emptyMsg = "No eventlisteners found"
 )
 
+type listOptions struct {
+	AllNamespaces bool
+}
+
 func listCommand(p cli.Params) *cobra.Command {
+	opts := &listOptions{}
 	f := cliopts.NewPrintFlags("list")
 
 	eg := `List all EventListeners in namespace 'bar':
@@ -62,9 +67,17 @@ or
 				return err
 			}
 
-			els, err := list(cs.Triggers, p.Namespace())
+			namespace := p.Namespace()
+			if opts.AllNamespaces {
+				namespace = ""
+			}
+
+			els, err := list(cs.Triggers, namespace)
 			if err != nil {
-				return fmt.Errorf("failed to list EventListeners from %s namespace: %v", p.Namespace(), err)
+				if opts.AllNamespaces {
+					return fmt.Errorf("failed to list EventListeners from all namespaces: %v", err)
+				}
+				return fmt.Errorf("failed to list EventListeners from %s namespace: %v", namespace, err)
 			}
 
 			output, err := cmd.LocalFlags().GetString("output")
@@ -81,7 +94,7 @@ or
 				return printer.PrintObject(stream.Out, els, f)
 			}
 
-			if err = printFormatted(stream, els, p); err != nil {
+			if err = printFormatted(stream, els, p, opts.AllNamespaces); err != nil {
 				return errors.New(`failed to print EventListeners`)
 			}
 			return nil
@@ -89,6 +102,7 @@ or
 	}
 
 	f.AddFlags(c)
+	c.Flags().BoolVarP(&opts.AllNamespaces, "all-namespaces", "A", opts.AllNamespaces, "list EventListeners from all namespaces")
 	return c
 }
 
@@ -109,26 +123,42 @@ func list(client versioned.Interface, namespace string) (*v1alpha1.EventListener
 	return els, nil
 }
 
-func printFormatted(s *cli.Stream, els *v1alpha1.EventListenerList, p cli.Params) error {
+func printFormatted(s *cli.Stream, els *v1alpha1.EventListenerList, p cli.Params, allNamespaces bool) error {
 	if len(els.Items) == 0 {
 		fmt.Fprintln(s.Err, emptyMsg)
 		return nil
 	}
 
+	headers := "NAME\tAGE\tURL\tAVAILABLE"
+	if allNamespaces {
+		headers = "NAMESPACE\t" + headers
+	}
+
 	w := tabwriter.NewWriter(s.Out, 0, 5, 3, ' ', tabwriter.TabIndent)
-	fmt.Fprintln(w, "NAME\tAGE\tURL\tAVAILABLE")
+	fmt.Fprintln(w, headers)
 	for _, el := range els.Items {
 
 		status := corev1.ConditionStatus("---")
 		if len(el.Status.Conditions) > 0 && len(el.Status.Conditions[0].Status) > 0 {
 			status = el.Status.Conditions[0].Status
 		}
-		fmt.Fprintf(w, "%s\t%s\t%s\t%s\n",
-			el.Name,
-			formatted.Age(&el.CreationTimestamp, p.Time()),
-			formatted.FormatAddress(getURL(el)),
-			status,
-		)
+
+		if allNamespaces {
+			fmt.Fprintf(w, "%s\t%s\t%s\t%s\t%s\n",
+				el.Namespace,
+				el.Name,
+				formatted.Age(&el.CreationTimestamp, p.Time()),
+				formatted.FormatAddress(getURL(el)),
+				status,
+			)
+		} else {
+			fmt.Fprintf(w, "%s\t%s\t%s\t%s\n",
+				el.Name,
+				formatted.Age(&el.CreationTimestamp, p.Time()),
+				formatted.FormatAddress(getURL(el)),
+				status,
+			)
+		}
 	}
 	return w.Flush()
 }
