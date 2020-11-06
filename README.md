@@ -114,12 +114,12 @@ Download the latest binary executable for your operating system:
 
   * [Ubuntu PPA](https://launchpad.net/~tektoncd/+archive/ubuntu/cli/+packages)
 
-  If you are running on the latest Ubuntu or Debian, you would be able to use our TektonCD CLI PPA:
+  If you are running on the latest LTS Ubuntu or Debian, you can use the TektonCD CLI PPA:
 
   ```shell
   sudo apt update;sudo apt install -y gnupg
   sudo apt-key adv --keyserver keyserver.ubuntu.com --recv-keys 3EFE0E0A2F2F60AA
-  echo "deb http://ppa.launchpad.net/tektoncd/cli/ubuntu eoan main"|sudo tee /etc/apt/sources.list.d/tektoncd-ubuntu-cli.list
+  echo "deb http://ppa.launchpad.net/tektoncd/cli/ubuntu focal main"|sudo tee /etc/apt/sources.list.d/tektoncd-ubuntu-cli.list
   sudo apt update && sudo apt install -y tektoncd-cli
   ```
 
@@ -184,9 +184,9 @@ The following commands help you understand and effectively use the Tekton CLI:
 
 For every `tkn` command, you can use `-h` or `--help` flags to display specific help for that command.
 
-## Disable Color and Emojis in Output 
+## Disable Color and Emojis in Output
 
-For many `tkn` commands, color and emojis by default will appear in command output. `tkn` offers two approaches for disabling 
+For many `tkn` commands, color and emojis by default will appear in command output. `tkn` offers two approaches for disabling
 color and emojis from command output.
 
 To remove the color and emojis from all `tkn` command output, set the environment variable `NO_COLOR`, such as shown below:
@@ -197,7 +197,7 @@ export NO_COLOR=""
 
 More information on `NO_COLOR` can be found in the [`NO_COLOR` documentation](https://no-color.org/).
 
-To remove color and emojis from the output of a single command execution, the `--no-color` option can be used with any command, 
+To remove color and emojis from the output of a single command execution, the `--no-color` option can be used with any command,
 such as in the example below:
 
 ```
