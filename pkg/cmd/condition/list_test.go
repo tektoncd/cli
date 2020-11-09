@@ -48,6 +48,16 @@ func TestConditionList(t *testing.T) {
 				Name: "empty",
 			},
 		},
+		{
+			ObjectMeta: metav1.ObjectMeta{
+				Name: "test-ns-1",
+			},
+		},
+		{
+			ObjectMeta: metav1.ObjectMeta{
+				Name: "test-ns-2",
+			},
+		},
 	}
 
 	// Testdata pattern1.
@@ -121,8 +131,33 @@ func TestConditionList(t *testing.T) {
 		return true, nil, errors.New("test error")
 	})
 
+	// Testdata patterne
+	conditions3 := []*v1alpha1.Condition{
+		{
+			ObjectMeta: metav1.ObjectMeta{
+				Name:              "test-condition-1",
+				Namespace:         "test-ns-1",
+				CreationTimestamp: metav1.Time{Time: clock.Now()},
+			},
+		},
+		{
+			ObjectMeta: metav1.ObjectMeta{
+				Name:              "test-condition-2",
+				Namespace:         "test-ns-2",
+				CreationTimestamp: metav1.Time{Time: clock.Now()},
+			},
+		},
+	}
+	s3, _ := test.SeedTestData(t, pipelinetest.Data{Conditions: conditions3, Namespaces: ns})
+
+	// Testdata pattern4.
+	conditions4 := []*v1alpha1.Condition{}
+	s4, _ := test.SeedTestData(t, pipelinetest.Data{Conditions: conditions4, Namespaces: ns})
+
 	seeds = append(seeds, s)
 	seeds = append(seeds, s2)
+	seeds = append(seeds, s3)
+	seeds = append(seeds, s4)
 
 	testParams := []struct {
 		name      string
@@ -165,6 +200,18 @@ func TestConditionList(t *testing.T) {
 			command:   []string{"ls", "-n", "ns", "--output", "yaml"},
 			input:     seeds[1],
 			wantError: true,
+		},
+		{
+			name:      "Conditions from all namespaces",
+			command:   []string{"list", "--all-namespaces"},
+			input:     seeds[2],
+			wantError: false,
+		},
+		{
+			name:      "No conditions found in all namespaces",
+			command:   []string{"list", "--all-namespaces"},
+			input:     seeds[3],
+			wantError: false,
 		},
 	}
 

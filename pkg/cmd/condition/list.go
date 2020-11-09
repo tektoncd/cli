@@ -32,11 +32,14 @@ import (
 
 const (
 	emptyMsg = "No conditions found"
-	header   = "NAME\tDESCRIPTION\tAGE"
-	body     = "%s\t%s\t%s\n"
 )
 
+type listOptions struct {
+	AllNamespaces bool
+}
+
 func listCommand(p cli.Params) *cobra.Command {
+	opts := &listOptions{}
 	f := cliopts.NewPrintFlags("list")
 
 	c := &cobra.Command{
@@ -58,25 +61,34 @@ func listCommand(p cli.Params) *cobra.Command {
 			}
 
 			if output != "" {
-				return printConditionListObj(stream, p, f)
+				return printConditionListObj(stream, p, f, opts.AllNamespaces)
 			}
-			return printConditionDetails(stream, p)
+			return printConditionDetails(stream, p, opts.AllNamespaces)
 		},
 	}
 	f.AddFlags(c)
-
+	c.Flags().BoolVarP(&opts.AllNamespaces, "all-namespaces", "A", opts.AllNamespaces, "list Conditions from all namespaces")
 	return c
 }
 
-func printConditionDetails(s *cli.Stream, p cli.Params) error {
+func printConditionDetails(s *cli.Stream, p cli.Params, allNamespaces bool) error {
 
 	cs, err := p.Clients()
 	if err != nil {
 		return err
 	}
 
-	conditions, err := listAllConditions(cs.Tekton, p.Namespace())
+	namespace := p.Namespace()
+
+	if allNamespaces {
+		namespace = ""
+	}
+
+	conditions, err := listAllConditions(cs.Tekton, namespace)
 	if err != nil {
+		if allNamespaces {
+			return fmt.Errorf("failed to list Conditions from all namespaces: %v", err)
+		}
 		return fmt.Errorf("failed to list Conditions from %s namespace: %v", p.Namespace(), err)
 	}
 
@@ -86,26 +98,49 @@ func printConditionDetails(s *cli.Stream, p cli.Params) error {
 	}
 
 	w := tabwriter.NewWriter(s.Out, 0, 5, 3, ' ', tabwriter.TabIndent)
-	fmt.Fprintln(w, header)
+	headers := "NAME\tDESCRIPTION\tAGE"
+	body := "%s\t%s\t%s\n"
+	if allNamespaces {
+		headers = "NAMESPACE\t" + headers
+		body = "%s\t" + body
+	}
+	fmt.Fprintln(w, headers)
 
 	for _, condition := range conditions.Items {
-		fmt.Fprintf(w, body,
-			condition.Name,
-			formatted.FormatDesc(condition.Spec.Description),
-			formatted.Age(&condition.CreationTimestamp, p.Time()),
-		)
+		if allNamespaces {
+			fmt.Fprintf(w, body,
+				condition.Namespace,
+				condition.Name,
+				formatted.FormatDesc(condition.Spec.Description),
+				formatted.Age(&condition.CreationTimestamp, p.Time()),
+			)
+		} else {
+			fmt.Fprintf(w, body,
+				condition.Name,
+				formatted.FormatDesc(condition.Spec.Description),
+				formatted.Age(&condition.CreationTimestamp, p.Time()),
+			)
+		}
 	}
 	return w.Flush()
 }
 
-func printConditionListObj(s *cli.Stream, p cli.Params, f *cliopts.PrintFlags) error {
+func printConditionListObj(s *cli.Stream, p cli.Params, f *cliopts.PrintFlags, allNamespaces bool) error {
 	cs, err := p.Clients()
 	if err != nil {
 		return err
 	}
 
-	conditions, err := listAllConditions(cs.Tekton, p.Namespace())
+	namespace := p.Namespace()
+	if allNamespaces {
+		namespace = ""
+	}
+
+	conditions, err := listAllConditions(cs.Tekton, namespace)
 	if err != nil {
+		if allNamespaces {
+			return fmt.Errorf("failed to list Conditions from all namespaces: %v", err)
+		}
 		return fmt.Errorf("failed to list Conditions from %s namespace: %v", p.Namespace(), err)
 	}
 	return printer.PrintObject(s.Out, conditions, f)
