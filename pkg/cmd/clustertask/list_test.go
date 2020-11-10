@@ -196,3 +196,83 @@ func TestClusterTaskListOnlyClusterTasksv1beta1(t *testing.T) {
 	}
 	golden.Assert(t, output, fmt.Sprintf("%s.golden", t.Name()))
 }
+
+func TestClusterTaskListNoHeadersv1alpha1(t *testing.T) {
+	clock := clockwork.NewFakeClock()
+
+	clustertasks := []*v1alpha1.ClusterTask{
+		{
+			ObjectMeta: metav1.ObjectMeta{
+				Name:              "guavas",
+				CreationTimestamp: metav1.Time{Time: clock.Now().Add(-1 * time.Minute)},
+			},
+		},
+		{
+			ObjectMeta: metav1.ObjectMeta{
+				Name:              "avocados",
+				CreationTimestamp: metav1.Time{Time: clock.Now().Add(-20 * time.Second)},
+			},
+		},
+	}
+
+	version := "v1alpha1"
+	tdc := testDynamic.Options{}
+	dynamic, err := tdc.Client(
+		cb.UnstructuredCT(clustertasks[0], version),
+		cb.UnstructuredCT(clustertasks[1], version),
+	)
+	if err != nil {
+		t.Errorf("unable to create dynamic client: %v", err)
+	}
+
+	cs, _ := test.SeedTestData(t, pipelinetest.Data{ClusterTasks: clustertasks})
+	p := &test.Params{Tekton: cs.Pipeline, Kube: cs.Kube, Clock: clock, Dynamic: dynamic}
+	cs.Pipeline.Resources = cb.APIResourceList(version, []string{"clustertask"})
+
+	clustertask := Command(p)
+	output, err := test.ExecuteCommand(clustertask, "list", "--no-headers")
+	if err != nil {
+		t.Errorf("Unexpected error: %v", err)
+	}
+	golden.Assert(t, output, fmt.Sprintf("%s.golden", t.Name()))
+}
+
+func TestClusterTaskListNoHeadersv1beta1(t *testing.T) {
+	clock := clockwork.NewFakeClock()
+
+	clustertasks := []*v1beta1.ClusterTask{
+		{
+			ObjectMeta: metav1.ObjectMeta{
+				Name:              "guavas",
+				CreationTimestamp: metav1.Time{Time: clock.Now().Add(-1 * time.Minute)},
+			},
+		},
+		{
+			ObjectMeta: metav1.ObjectMeta{
+				Name:              "avocados",
+				CreationTimestamp: metav1.Time{Time: clock.Now().Add(-20 * time.Second)},
+			},
+		},
+	}
+
+	version := "v1beta1"
+	tdc := testDynamic.Options{}
+	dynamic, err := tdc.Client(
+		cb.UnstructuredV1beta1CT(clustertasks[0], version),
+		cb.UnstructuredV1beta1CT(clustertasks[1], version),
+	)
+	if err != nil {
+		t.Errorf("unable to create dynamic client: %v", err)
+	}
+
+	cs, _ := test.SeedV1beta1TestData(t, pipelinev1beta1test.Data{ClusterTasks: clustertasks})
+	p := &test.Params{Tekton: cs.Pipeline, Kube: cs.Kube, Clock: clock, Dynamic: dynamic}
+	cs.Pipeline.Resources = cb.APIResourceList(version, []string{"clustertask"})
+
+	clustertask := Command(p)
+	output, err := test.ExecuteCommand(clustertask, "list", "--no-headers")
+	if err != nil {
+		t.Errorf("Unexpected error: %v", err)
+	}
+	golden.Assert(t, output, fmt.Sprintf("%s.golden", t.Name()))
+}
