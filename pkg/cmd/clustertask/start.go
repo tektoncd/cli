@@ -179,7 +179,7 @@ like cat,foo,bar
 	c.Flags().StringVar(&opt.PodTemplate, "pod-template", "", "local or remote file containing a PodTemplate definition")
 	c.Flags().BoolVar(&opt.UseParamDefaults, "use-param-defaults", false, "use default parameter values without prompting for input")
 
-	_ = c.MarkZshCompPositionalArgumentCustom(1, "__tkn_get_clustertask")
+	_ = c.MarkZshCompPositionalArgumentCustom(1, "__tkn_get_clustertasks")
 
 	return c
 }
