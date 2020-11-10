@@ -909,7 +909,6 @@ func Test_start_task_last_v1beta1(t *testing.T) {
 	}
 
 	timeoutDuration, _ := time.ParseDuration("10s")
-
 	taskruns := []*v1beta1.TaskRun{
 		{
 			ObjectMeta: v1.ObjectMeta{
@@ -1031,6 +1030,93 @@ func Test_start_task_last_v1beta1(t *testing.T) {
 	test.AssertOutput(t, "test", tr.Spec.Workspaces[0].Name)
 	test.AssertOutput(t, "", tr.Spec.Workspaces[0].SubPath)
 	test.AssertOutput(t, timeoutDuration, tr.Spec.Timeout.Duration)
+}
+
+func Test_start_task_last_with_override_timeout_v1beta1(t *testing.T) {
+	tasks := []*v1beta1.Task{
+		{
+			ObjectMeta: v1.ObjectMeta{
+				Name:      "task",
+				Namespace: "ns",
+			},
+			Spec: v1beta1.TaskSpec{
+				Steps: []v1beta1.Step{
+					{
+						Container: corev1.Container{
+							Name:  "hello",
+							Image: "busybox",
+						},
+					},
+					{
+						Container: corev1.Container{
+							Name:  "exit",
+							Image: "busybox",
+						},
+					},
+				},
+			},
+		},
+	}
+
+	// Add timeout to last TaskRun for Task
+	timeoutDuration, _ := time.ParseDuration("10s")
+	taskruns := []*v1beta1.TaskRun{
+		{
+			ObjectMeta: v1.ObjectMeta{
+				Name:      "taskrun-123",
+				Namespace: "ns",
+				Labels:    map[string]string{"tekton.dev/task": "task"},
+			},
+			Spec: v1beta1.TaskRunSpec{
+				Timeout: &metav1.Duration{Duration: timeoutDuration},
+				TaskRef: &v1beta1.TaskRef{
+					Name: "task",
+					Kind: v1beta1.NamespacedTaskKind,
+				},
+			},
+		},
+	}
+
+	ns := []*corev1.Namespace{
+		{
+			ObjectMeta: metav1.ObjectMeta{
+				Name: "ns",
+			},
+		},
+	}
+
+	seedData, _ := test.SeedV1beta1TestData(t, pipelinev1beta1test.Data{Namespaces: ns, Tasks: tasks, TaskRuns: taskruns})
+	objs := []runtime.Object{tasks[0], taskruns[0]}
+	_, tdc := newPipelineClient(versionB1, objs...)
+	dc, _ := tdc.Client(
+		cb.UnstructuredV1beta1T(tasks[0], versionB1),
+		cb.UnstructuredV1beta1TR(taskruns[0], versionB1),
+	)
+
+	cs := pipelinetest.Clients{
+		Pipeline: seedData.Pipeline,
+		Kube:     seedData.Kube,
+	}
+	cs.Pipeline.Resources = cb.APIResourceList(versionB1, []string{"task", "taskrun"})
+	p := &test.Params{Tekton: cs.Pipeline, Kube: cs.Kube, Dynamic: dc}
+	clients, _ := p.Clients()
+	task := Command(p)
+	// Specify new timeout value to override previous value
+	got, err := test.ExecuteCommand(task, "start", "task", "--last", "--timeout", "1s", "-n=ns")
+	if err != nil {
+		t.Errorf("Error running task start: %v", err)
+	}
+
+	expected := "TaskRun started: random\n\nIn order to track the TaskRun progress run:\ntkn taskrun logs random -f -n ns\n"
+	test.AssertOutput(t, expected, got)
+	gotTR, err := traction.Get(clients, "random", metav1.GetOptions{}, "ns")
+	if err != nil {
+		t.Errorf("Error listing taskruns %s", err.Error())
+	}
+
+	// Assert newly started TaskRun has new timeout value
+	timeoutDuration, _ = time.ParseDuration("1s")
+	test.AssertOutput(t, timeoutDuration, gotTR.Spec.Timeout.Duration)
 }
 
 func Test_start_use_taskrun(t *testing.T) {

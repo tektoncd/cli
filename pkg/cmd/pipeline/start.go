@@ -186,20 +186,14 @@ func (opt *startOptions) run(pipeline *v1beta1.Pipeline) error {
 }
 
 func (opt *startOptions) startPipeline(pipelineStart *v1beta1.Pipeline) error {
-	objMeta := metav1.ObjectMeta{
-		Namespace: opt.cliparams.Namespace(),
-	}
-	if opt.PrefixName == "" {
-		objMeta.GenerateName = pipelineStart.ObjectMeta.Name + "-run-"
-	} else {
-		objMeta.GenerateName = opt.PrefixName + "-"
-	}
-
 	cs, err := opt.cliparams.Clients()
 	if err != nil {
 		return err
 	}
 
+	objMeta := metav1.ObjectMeta{
+		Namespace: opt.cliparams.Namespace(),
+	}
 	var pr *v1beta1.PipelineRun
 	if opt.Filename == "" {
 		pr = &v1beta1.PipelineRun{
@@ -225,14 +219,6 @@ func (opt *startOptions) startPipeline(pipelineStart *v1beta1.Pipeline) error {
 		}
 	}
 
-	if opt.TimeOut != "" {
-		timeoutDuration, err := time.ParseDuration(opt.TimeOut)
-		if err != nil {
-			return err
-		}
-		pr.Spec.Timeout = &metav1.Duration{Duration: timeoutDuration}
-	}
-
 	if opt.Last || opt.UsePipelineRun != "" {
 		var usepr *v1beta1.PipelineRun
 		if opt.Last {
@@ -247,16 +233,30 @@ func (opt *startOptions) startPipeline(pipelineStart *v1beta1.Pipeline) error {
 			}
 		}
 
-		// if --prefix-name is specified by user, allow name to be used for pipelinerun
 		if len(usepr.ObjectMeta.GenerateName) > 0 && opt.PrefixName == "" {
 			pr.ObjectMeta.GenerateName = usepr.ObjectMeta.GenerateName
 		} else if opt.PrefixName == "" {
 			pr.ObjectMeta.GenerateName = usepr.ObjectMeta.Name + "-"
 		}
+
 		// Copy over spec from last or previous PipelineRun to use same values for this PipelineRun
 		pr.Spec = usepr.Spec
 		// Reapply blank status in case PipelineRun used was cancelled
 		pr.Spec.Status = ""
+	}
+
+	if opt.PrefixName == "" && !opt.Last && opt.UsePipelineRun == "" {
+		pr.ObjectMeta.GenerateName = pipelineStart.ObjectMeta.Name + "-run-"
+	} else if opt.PrefixName != "" {
+		pr.ObjectMeta.GenerateName = opt.PrefixName + "-"
+	}
+
+	if opt.TimeOut != "" {
+		timeoutDuration, err := time.ParseDuration(opt.TimeOut)
+		if err != nil {
+			return err
+		}
+		pr.Spec.Timeout = &metav1.Duration{Duration: timeoutDuration}
 	}
 
 	if err := mergeRes(pr, opt.Resources); err != nil {
