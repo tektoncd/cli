@@ -30,11 +30,16 @@ import (
 
 const (
 	emptyMsg = "No ClusterTasks found\n"
-	header   = "NAME\tDESCRIPTION\tAGE"
 	body     = "%s\t%s\t%s\n"
+	header   = "NAME\tDESCRIPTION\tAGE"
 )
 
+type listOptions struct {
+	NoHeaders bool
+}
+
 func listCommand(p cli.Params) *cobra.Command {
+	opts := &listOptions{}
 	f := cliopts.NewPrintFlags("list")
 
 	c := &cobra.Command{
@@ -59,15 +64,15 @@ func listCommand(p cli.Params) *cobra.Command {
 				Out: cmd.OutOrStdout(),
 				Err: cmd.OutOrStderr(),
 			}
-			return printClusterTaskDetails(stream, p)
+			return printClusterTaskDetails(stream, p, opts.NoHeaders)
 		},
 	}
 	f.AddFlags(c)
-
+	c.Flags().BoolVar(&opts.NoHeaders, "no-headers", opts.NoHeaders, "do not print column headers with output (default print column headers with output)")
 	return c
 }
 
-func printClusterTaskDetails(s *cli.Stream, p cli.Params) error {
+func printClusterTaskDetails(s *cli.Stream, p cli.Params, noHeaders bool) error {
 	cs, err := p.Clients()
 	if err != nil {
 		return err
@@ -84,7 +89,10 @@ func printClusterTaskDetails(s *cli.Stream, p cli.Params) error {
 	}
 
 	w := tabwriter.NewWriter(s.Out, 0, 5, 3, ' ', tabwriter.TabIndent)
-	fmt.Fprintln(w, header)
+
+	if !noHeaders {
+		fmt.Fprintln(w, header)
+	}
 
 	for _, clustertask := range clustertasks.Items {
 		fmt.Fprintf(w, body,
