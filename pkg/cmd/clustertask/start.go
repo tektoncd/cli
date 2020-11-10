@@ -210,20 +210,6 @@ func startClusterTask(opt startOptions, args []string) error {
 		return err
 	}
 
-	if opt.TimeOut != "" {
-		timeoutDuration, err := time.ParseDuration(opt.TimeOut)
-		if err != nil {
-			return err
-		}
-		tr.Spec.Timeout = &metav1.Duration{Duration: timeoutDuration}
-	}
-
-	if opt.PrefixName == "" {
-		tr.ObjectMeta.GenerateName = ctname + "-run-"
-	} else {
-		tr.ObjectMeta.GenerateName = opt.PrefixName + "-"
-	}
-
 	if opt.Last || opt.UseTaskRun != "" {
 		taskRunOpts := options.TaskRunOpts{
 			CliParams:  opt.cliparams,
@@ -235,6 +221,20 @@ func startClusterTask(opt startOptions, args []string) error {
 		if err != nil {
 			return err
 		}
+	}
+
+	if opt.PrefixName == "" && !opt.Last && opt.UseTaskRun == "" {
+		tr.ObjectMeta.GenerateName = ctname + "-run-"
+	} else if opt.PrefixName != "" {
+		tr.ObjectMeta.GenerateName = opt.PrefixName + "-"
+	}
+
+	if opt.TimeOut != "" {
+		timeoutDuration, err := time.ParseDuration(opt.TimeOut)
+		if err != nil {
+			return err
+		}
+		tr.Spec.Timeout = &metav1.Duration{Duration: timeoutDuration}
 	}
 
 	if tr.Spec.Resources == nil {

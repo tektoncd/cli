@@ -3331,6 +3331,199 @@ func Test_start_pipeline_last_v1beta1(t *testing.T) {
 	test.AssertOutput(t, timeoutDuration, pr.Spec.Timeout.Duration)
 }
 
+func Test_start_pipeline_last_override_timeout_v1beta1(t *testing.T) {
+
+	pipelineName := "test-pipeline"
+	ps := []*v1beta1.Pipeline{
+		{
+			ObjectMeta: metav1.ObjectMeta{
+				Name:      pipelineName,
+				Namespace: "ns",
+			},
+			Spec: v1beta1.PipelineSpec{
+				Tasks: []v1beta1.PipelineTask{
+					{
+						Name: "unit-test-1",
+						TaskRef: &v1beta1.TaskRef{
+							Name: "unit-test-task",
+						},
+						Resources: &v1beta1.PipelineTaskResources{
+							Inputs: []v1beta1.PipelineTaskInputResource{
+								{
+									Name:     "workspace",
+									Resource: "git-repo",
+								},
+							},
+							Outputs: []v1beta1.PipelineTaskOutputResource{
+								{
+									Name:     "image-to-use",
+									Resource: "best-image",
+								},
+								{
+									Name:     "workspace",
+									Resource: "git-repo",
+								},
+							},
+						},
+						Workspaces: []v1beta1.WorkspacePipelineTaskBinding{
+							{
+								Name:      "task-test-workspace",
+								Workspace: "test-workspace",
+							},
+						},
+					},
+				},
+				Resources: []v1beta1.PipelineDeclaredResource{
+					{
+						Name: "git-repo",
+						Type: v1alpha1.PipelineResourceTypeGit,
+					},
+					{
+						Name: "build-image",
+						Type: v1alpha1.PipelineResourceTypeImage,
+					},
+				},
+				Params: []v1beta1.ParamSpec{
+					{
+						Name: "pipeline-param-1",
+						Type: v1beta1.ParamTypeString,
+						Default: &v1beta1.ArrayOrString{
+							Type:      v1beta1.ParamTypeString,
+							StringVal: "somethingdifferent-1",
+						},
+					},
+					{
+						Name: "rev-param",
+						Type: v1beta1.ParamTypeString,
+						Default: &v1beta1.ArrayOrString{
+							Type:      v1beta1.ParamTypeString,
+							StringVal: "revision",
+						},
+					},
+				},
+				Workspaces: []v1beta1.WorkspacePipelineDeclaration{
+					{
+						Name: "test-workspace",
+					},
+				},
+			},
+		},
+	}
+
+	// Add timeout to last PipelineRun for Pipeline
+	timeoutDuration, _ := time.ParseDuration("10s")
+	prs := []*v1beta1.PipelineRun{
+		{
+			ObjectMeta: metav1.ObjectMeta{
+				Name:      "test-pipeline-run-123",
+				Namespace: "ns",
+				Labels:    map[string]string{"tekton.dev/pipeline": pipelineName},
+			},
+			Spec: v1beta1.PipelineRunSpec{
+				PipelineRef: &v1beta1.PipelineRef{
+					Name: pipelineName,
+				},
+				ServiceAccountName: "test-sa",
+				Resources: []v1beta1.PipelineResourceBinding{
+					{
+						Name: "git-repo",
+						ResourceRef: &v1beta1.PipelineResourceRef{
+							Name: "some-repo",
+						},
+					},
+					{
+						Name: "build-image",
+						ResourceRef: &v1beta1.PipelineResourceRef{
+							Name: "some-image",
+						},
+					},
+				},
+				Params: []v1beta1.Param{
+					{
+						Name: "pipeline-param-1",
+						Value: v1beta1.ArrayOrString{
+							Type:      v1beta1.ParamTypeString,
+							StringVal: "somethingmorefun",
+						},
+					},
+					{
+						Name: "rev-param",
+						Value: v1beta1.ArrayOrString{
+							Type:      v1beta1.ParamTypeString,
+							StringVal: "revision1",
+						},
+					},
+				},
+				Workspaces: []v1beta1.WorkspaceBinding{
+					{
+						Name: "test-new",
+					},
+				},
+				Timeout: &metav1.Duration{Duration: timeoutDuration},
+			},
+			Status: v1beta1.PipelineRunStatus{
+				Status: duckv1beta1.Status{
+					Conditions: duckv1beta1.Conditions{
+						{
+							Status: corev1.ConditionTrue,
+							Reason: v1beta1.PipelineRunReasonSuccessful.String(),
+						},
+					},
+				},
+			},
+		},
+	}
+
+	ns := []*corev1.Namespace{
+		{
+			ObjectMeta: metav1.ObjectMeta{
+				Name: "ns",
+			},
+		},
+	}
+
+	seedData, _ := test.SeedV1beta1TestData(t, pipelinev1beta1test.Data{
+		Namespaces: ns,
+	})
+	cs := pipelinetest.Clients{
+		Pipeline: seedData.Pipeline,
+		Kube:     seedData.Kube,
+		Resource: seedData.Resource,
+	}
+	cs.Pipeline.Resources = cb.APIResourceList("v1beta1", []string{"pipeline", "pipelinerun"})
+	objs := []runtime.Object{ps[0], prs[0]}
+	_, tdc := newPipelineClient("v1beta1", objs...)
+	dc, err := tdc.Client(
+		cb.UnstructuredV1beta1P(ps[0], "v1beta1"),
+		cb.UnstructuredV1beta1PR(prs[0], "v1beta1"),
+	)
+	if err != nil {
+		t.Errorf("unable to create dynamic client: %v", err)
+	}
+	p := &test.Params{Tekton: cs.Pipeline, Kube: cs.Kube, Dynamic: dc, Resource: cs.Resource}
+
+	pipeline := Command(p)
+	// Specify new timeout value to override previous value
+	got, _ := test.ExecuteCommand(pipeline, "start", pipelineName,
+		"--last",
+		"--timeout", "1s",
+		"-n", "ns",
+	)
+
+	expected := "PipelineRun started: random\n\nIn order to track the PipelineRun progress run:\ntkn pipelinerun logs random -f -n ns\n"
+	test.AssertOutput(t, expected, got)
+
+	cl, _ := p.Clients()
+	pr, err := pipelinerun.Get(cl, "random", v1.GetOptions{}, "ns")
+	if err != nil {
+		t.Errorf("Error getting pipelineruns %s", err.Error())
+	}
+
+	// Assert newly started PipelineRun has new timeout value
+	timeoutDuration, _ = time.ParseDuration("1s")
+	test.AssertOutput(t, timeoutDuration, pr.Spec.Timeout.Duration)
+}
+
 func Test_start_pipeline_last_without_res_param(t *testing.T) {
 
 	pipelineName := "test-pipeline"
