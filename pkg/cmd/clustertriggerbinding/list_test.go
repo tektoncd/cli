@@ -70,6 +70,12 @@ func TestListClusterTriggerBinding(t *testing.T) {
 			args:      []string{"list", "-o", "jsonpath={range .items[*]}{.metadata.name}{\"\\n\"}{end}"},
 			wantError: false,
 		},
+		{
+			name:      "List ClusterTriggerBindings without headers",
+			command:   command(t, ctbs, now),
+			args:      []string{"list", "--no-headers"},
+			wantError: false,
+		},
 	}
 
 	for _, td := range tests {

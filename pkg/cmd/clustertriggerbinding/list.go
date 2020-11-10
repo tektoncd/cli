@@ -35,7 +35,12 @@ const (
 	emptyMsg = "No ClusterTriggerBindings found"
 )
 
+type listOptions struct {
+	NoHeaders bool
+}
+
 func listCommand(p cli.Params) *cobra.Command {
+	opts := &listOptions{}
 	f := cliopts.NewPrintFlags("list")
 
 	eg := `List all ClusterTriggerBindings:
@@ -89,7 +94,7 @@ or
 				return printer.PrintObject(stream.Out, tbs, f)
 			}
 
-			if err = printFormatted(stream, tbs, p); err != nil {
+			if err = printFormatted(stream, tbs, p, opts.NoHeaders); err != nil {
 				return fmt.Errorf("failed to print ClusterTriggerBindings: %v", err)
 			}
 			return nil
@@ -98,7 +103,7 @@ or
 	}
 
 	f.AddFlags(c)
-
+	c.Flags().BoolVar(&opts.NoHeaders, "no-headers", opts.NoHeaders, "do not print column headers with output (default print column headers with output)")
 	return c
 }
 
@@ -119,14 +124,16 @@ func list(client versioned.Interface, namespace string) (*v1alpha1.ClusterTrigge
 	return tbs, nil
 }
 
-func printFormatted(s *cli.Stream, tbs *v1alpha1.ClusterTriggerBindingList, p cli.Params) error {
+func printFormatted(s *cli.Stream, tbs *v1alpha1.ClusterTriggerBindingList, p cli.Params, noHeaders bool) error {
 	if len(tbs.Items) == 0 {
 		fmt.Fprintln(s.Err, emptyMsg)
 		return nil
 	}
 
 	w := tabwriter.NewWriter(s.Out, 0, 5, 3, ' ', tabwriter.TabIndent)
-	fmt.Fprintln(w, "NAME\tAGE")
+	if !noHeaders {
+		fmt.Fprintln(w, "NAME\tAGE")
+	}
 	for _, tb := range tbs.Items {
 		fmt.Fprintf(w, "%s\t%s\n",
 			tb.Name,
