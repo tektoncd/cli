@@ -52,8 +52,18 @@ func TestEventListenerE2E(t *testing.T) {
 	t.Run("Get logs of EventListener", func(t *testing.T) {
 		res := tkn.MustSucceed(t, "eventlistener", "logs", elName, "-t", "1")
 
+		elPods, err := c.KubeClient.Kube.CoreV1().Pods(namespace).List(context.Background(), metav1.ListOptions{LabelSelector: "eventlistener=" + elName})
+		if err != nil {
+			t.Fatalf("Error getting pods for EventListener %s: %v", elName, err)
+		}
+
+		podNum := len(elPods.Items)
+		if podNum != 1 {
+			t.Fatalf("Should be one replica for EventListener but had %d replicas", podNum)
+		}
+
 		stdout := res.Stdout()
-		assert.Check(t, helper.ContainsAll(stdout, "github-listener-interceptor-el-github-listener-interceptor-", "Listen and serve on port 8080"))
+		assert.Check(t, helper.ContainsAll(stdout, "github-listener-interceptor-el-github-listener-interceptor-", elPods.Items[0].Name))
 	})
 
 	t.Logf("Scaling EventListener %s to 3 replicas in namespace %s", elName, namespace)
@@ -75,6 +85,6 @@ func TestEventListenerE2E(t *testing.T) {
 		res := tkn.MustSucceed(t, "eventlistener", "logs", elName, "-t", "1")
 		stdout := res.Stdout()
 
-		assert.Check(t, helper.ContainsAll(stdout, "github-listener-interceptor-el-github-listener-interceptor-", "Listen and serve on port 8080", elPods.Items[0].Name, elPods.Items[1].Name, elPods.Items[2].Name))
+		assert.Check(t, helper.ContainsAll(stdout, "github-listener-interceptor-el-github-listener-interceptor-", elPods.Items[0].Name, elPods.Items[1].Name, elPods.Items[2].Name))
 	})
 }
