@@ -348,7 +348,7 @@ github.com/tektoncd/hub/api/pkg/cli/hub
 github.com/tektoncd/hub/api/pkg/cli/printer
 github.com/tektoncd/hub/api/pkg/git
 github.com/tektoncd/hub/api/pkg/parser
-# github.com/tektoncd/pipeline v0.17.1-0.20201007165454-9611f3e4509e
+# github.com/tektoncd/pipeline v0.18.0
 github.com/tektoncd/pipeline/pkg/apis/config
 github.com/tektoncd/pipeline/pkg/apis/pipeline
 github.com/tektoncd/pipeline/pkg/apis/pipeline/pod
@@ -418,6 +418,8 @@ github.com/tektoncd/pipeline/pkg/list
 github.com/tektoncd/pipeline/pkg/names
 github.com/tektoncd/pipeline/pkg/reconciler/events/cloudevent
 github.com/tektoncd/pipeline/pkg/reconciler/pipeline/dag
+github.com/tektoncd/pipeline/pkg/remote
+github.com/tektoncd/pipeline/pkg/remote/oci
 github.com/tektoncd/pipeline/pkg/substitution
 github.com/tektoncd/pipeline/test
 github.com/tektoncd/pipeline/test/v1alpha1
