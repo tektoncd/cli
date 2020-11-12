@@ -1584,7 +1584,7 @@ func TestLog_taskrun_follow_mode_no_pod_name(t *testing.T) {
 		t.Error("Expecting an error but it's empty")
 	}
 
-	expected := "task output-task create has not started yet or pod for task not yet available"
+	expected := "pod for taskrun output-task-run not available yet"
 	test.AssertOutput(t, expected, err.Error())
 }
 
@@ -1697,7 +1697,7 @@ func TestLog_taskrun_follow_mode_no_pod_name_v1beta1(t *testing.T) {
 		t.Error("Expecting an error but it's empty")
 	}
 
-	expected := "task output-task create has not started yet or pod for task not yet available"
+	expected := "pod for taskrun output-task-run not available yet"
 	test.AssertOutput(t, expected, err.Error())
 }
 
@@ -1720,8 +1720,9 @@ func TestLog_taskrun_follow_mode_update_pod_name(t *testing.T) {
 			tb.TaskRunStatus(
 				tb.TaskRunStartTime(trStartTime),
 				tb.StatusCondition(apis.Condition{
-					Type:   apis.ConditionSucceeded,
-					Status: corev1.ConditionTrue,
+					Type:    apis.ConditionSucceeded,
+					Status:  corev1.ConditionUnknown,
+					Message: "Running",
 				}),
 				tb.StepState(
 					cb.StepName(trStep1Name),
@@ -1832,8 +1833,9 @@ func TestLog_taskrun_follow_mode_update_pod_name_v1beta1(t *testing.T) {
 				Status: duckv1beta1.Status{
 					Conditions: duckv1beta1.Conditions{
 						{
-							Type:   apis.ConditionSucceeded,
-							Status: corev1.ConditionTrue,
+							Type:    apis.ConditionSucceeded,
+							Status:  corev1.ConditionUnknown,
+							Message: v1beta1.TaskRunReasonRunning.String(),
 						},
 					},
 				},
@@ -1946,8 +1948,9 @@ func TestLog_taskrun_follow_mode_update_timeout(t *testing.T) {
 			tb.TaskRunStatus(
 				tb.TaskRunStartTime(trStartTime),
 				tb.StatusCondition(apis.Condition{
-					Type:   apis.ConditionSucceeded,
-					Status: corev1.ConditionTrue,
+					Type:    apis.ConditionSucceeded,
+					Status:  corev1.ConditionUnknown,
+					Message: "Running",
 				}),
 				tb.StepState(
 					cb.StepName(trStep1Name),
@@ -2056,8 +2059,9 @@ func TestLog_taskrun_follow_mode_update_timeout_v1beta1(t *testing.T) {
 				Status: duckv1beta1.Status{
 					Conditions: duckv1beta1.Conditions{
 						{
-							Type:   apis.ConditionSucceeded,
-							Status: corev1.ConditionTrue,
+							Type:    apis.ConditionSucceeded,
+							Status:  corev1.ConditionUnknown,
+							Message: v1beta1.TaskRunReasonRunning.String(),
 						},
 					},
 				},

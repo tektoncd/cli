@@ -36,7 +36,7 @@ func (r *Reader) readPipelineLog() (<-chan Log, <-chan error, error) {
 		return nil, nil, err
 	}
 
-	if r.follow {
+	if !pr.IsDone() && r.follow {
 		return r.readLivePipelineLogs(pr)
 	}
 	return r.readAvailablePipelineLogs(pr)

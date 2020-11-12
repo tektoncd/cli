@@ -52,7 +52,7 @@ func (r *Reader) readTaskLog() (<-chan Log, <-chan error, error) {
 
 	r.formTaskName(tr)
 
-	if r.follow {
+	if !tr.IsDone() && r.follow {
 		return r.readLiveTaskLogs()
 	}
 	return r.readAvailableTaskLogs(tr)
