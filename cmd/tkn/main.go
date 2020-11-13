@@ -15,18 +15,77 @@
 package main
 
 import (
+	"fmt"
 	"os"
+	"path/filepath"
+	"syscall"
 
+	homedir "github.com/mitchellh/go-homedir"
+	"github.com/pkg/errors"
 	"github.com/tektoncd/cli/pkg/cli"
 	"github.com/tektoncd/cli/pkg/cmd"
 	_ "k8s.io/client-go/plugin/pkg/client/auth"
+)
+
+const (
+	pluginDirEnv = "TKN_PLUGINS_DIR"
+	pluginDir    = "~/.config/tkn/plugins"
 )
 
 func main() {
 	tp := &cli.TektonParams{}
 	tkn := cmd.Root(tp)
 
+	args := os.Args[1:]
+	cmd, _, _ := tkn.Find(args)
+	if cmd != nil && cmd == tkn && len(args) > 0 {
+		pluginCmd := "tkn-" + os.Args[1]
+		pluginDir, err := getPluginDir()
+		if err != nil {
+			fmt.Fprintf(os.Stderr, "Error getting plugin folder: %v", err)
+		}
+		exCmd, err := findPlugin(pluginDir, pluginCmd)
+		if err != nil {
+			// Can't find the binary in PATH, bailing to usual execution
+			goto CoreTkn
+		}
+
+		if err := syscall.Exec(exCmd, append([]string{exCmd}, os.Args[2:]...), os.Environ()); err != nil {
+			fmt.Fprintf(os.Stderr, "Command finished with error: %v", err)
+			os.Exit(127)
+		}
+		return
+	}
+
+CoreTkn:
 	if err := tkn.Execute(); err != nil {
 		os.Exit(1)
 	}
+}
+
+func getPluginDir() (string, error) {
+	dir := os.Getenv(pluginDirEnv)
+	// if TKN_PLUGINS_DIR is set, follow it
+	if dir != "" {
+		return dir, nil
+	}
+	// Respect XDG_CONFIG_HOME if set
+	if xdgHome := os.Getenv("XDG_CONFIG_HOME"); xdgHome != "" {
+		return filepath.Join(xdgHome, "tkn", "plugins"), nil
+	}
+	// Fallback to default pluginDir (~/.config/tkn/plugins)
+	return homedir.Expand(pluginDir)
+}
+
+func findPlugin(dir, cmd string) (string, error) {
+	path := filepath.Join(dir, cmd)
+	_, err := os.Stat(path)
+	if err == nil {
+		// Found in dir
+		return path, nil
+	}
+	if !os.IsNotExist(err) {
+		return "", errors.Wrap(err, fmt.Sprintf("i/o error while reading %s", path))
+	}
+	return "", err
 }

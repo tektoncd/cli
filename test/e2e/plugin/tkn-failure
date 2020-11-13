@@ -1,0 +1,6 @@
+#!/usr/bin/env bash
+echo "This is a failure"
+if [[ "$1" == "exit20" ]]; then
+   exit 20
+fi
+exit 12
