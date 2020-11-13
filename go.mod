@@ -14,6 +14,7 @@ require (
 	github.com/hinshun/vt10x v0.0.0-20180809195222-d55458df857c
 	github.com/jonboulle/clockwork v0.1.1-0.20190114141812-62fb9bc030d1
 	github.com/ktr0731/go-fuzzyfinder v0.2.0
+	github.com/mitchellh/go-homedir v1.1.0
 	github.com/pkg/errors v0.9.1
 	github.com/spf13/cobra v1.0.0
 	github.com/spf13/pflag v1.0.5

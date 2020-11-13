@@ -1,0 +1,3 @@
+#!/usr/bin/env bash
+echo "This is a success"
+exit 0

@@ -678,11 +678,14 @@ gotest.tools/internal/source
 # gotest.tools/v3 v3.0.2
 gotest.tools/v3/assert
 gotest.tools/v3/assert/cmp
+gotest.tools/v3/env
 gotest.tools/v3/golden
 gotest.tools/v3/icmd
+gotest.tools/v3/internal/cleanup
 gotest.tools/v3/internal/difflib
 gotest.tools/v3/internal/format
 gotest.tools/v3/internal/source
+gotest.tools/v3/x/subtest
 # k8s.io/api v0.18.9 => k8s.io/api v0.18.9
 k8s.io/api/admissionregistration/v1
 k8s.io/api/admissionregistration/v1beta1
