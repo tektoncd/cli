@@ -49,7 +49,6 @@ amd64:
 386:
 	GOOS=linux GOARCH=386 go build -mod=vendor $(LDFLAGS) -o bin/tkn-linux-386 ./cmd/tkn
 	GOOS=windows GOARCH=386 go build -mod=vendor $(LDFLAGS) -o bin/tkn-windows-386 ./cmd/tkn
-	GOOS=darwin GOARCH=386 go build -mod=vendor $(LDFLAGS) -o bin/tkn-darwin-386 ./cmd/tkn
 
 .PHONY: arm
 arm:
