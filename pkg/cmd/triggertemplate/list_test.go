@@ -97,6 +97,18 @@ func TestListTriggerTemplate(t *testing.T) {
 			args:      []string{"list", "--all-namespaces"},
 			wantError: false,
 		},
+		{
+			name:      "List TriggerTemplates without headers",
+			command:   command(t, tts, now, ns),
+			args:      []string{"list", "--no-headers"},
+			wantError: false,
+		},
+		{
+			name:      "List TriggerTemplates from all namespaces without headers",
+			command:   command(t, tts, now, ns),
+			args:      []string{"list", "--no-headers", "--all-namespaces"},
+			wantError: false,
+		},
 	}
 
 	for _, td := range tests {

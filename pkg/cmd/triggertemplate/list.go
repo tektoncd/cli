@@ -36,6 +36,7 @@ const (
 
 type ListOptions struct {
 	AllNamespaces bool
+	NoHeaders     bool
 }
 
 func listCommand(p cli.Params) *cobra.Command {
@@ -91,7 +92,7 @@ or
 				return printer.PrintObject(stream.Out, tts, f)
 			}
 
-			if err = printFormatted(stream, tts, p, opts.AllNamespaces); err != nil {
+			if err = printFormatted(stream, tts, p, opts.AllNamespaces, opts.NoHeaders); err != nil {
 				return fmt.Errorf("failed to print TriggerTemplates: %v", err)
 			}
 			return nil
@@ -102,6 +103,7 @@ or
 	f.AddFlags(c)
 
 	c.Flags().BoolVarP(&opts.AllNamespaces, "all-namespaces", "A", opts.AllNamespaces, "list TriggerTemplates from all namespaces")
+	c.Flags().BoolVar(&opts.NoHeaders, "no-headers", opts.NoHeaders, "do not print column headers with output (default print column headers with output)")
 	return c
 }
 
@@ -122,7 +124,7 @@ func list(client versioned.Interface, namespace string) (*v1alpha1.TriggerTempla
 	return tts, nil
 }
 
-func printFormatted(s *cli.Stream, tts *v1alpha1.TriggerTemplateList, p cli.Params, allNamespaces bool) error {
+func printFormatted(s *cli.Stream, tts *v1alpha1.TriggerTemplateList, p cli.Params, allNamespaces bool, noHeaders bool) error {
 	if len(tts.Items) == 0 {
 		fmt.Fprintln(s.Err, emptyMsg)
 		return nil
@@ -134,7 +136,9 @@ func printFormatted(s *cli.Stream, tts *v1alpha1.TriggerTemplateList, p cli.Para
 	}
 
 	w := tabwriter.NewWriter(s.Out, 0, 5, 3, ' ', tabwriter.TabIndent)
-	fmt.Fprintln(w, headers)
+	if !noHeaders {
+		fmt.Fprintln(w, headers)
+	}
 	for _, tt := range tts.Items {
 		if allNamespaces {
 			fmt.Fprintf(w, "%s\t%s\t%s\n",
