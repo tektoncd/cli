@@ -103,6 +103,18 @@ func TestListTriggerBinding(t *testing.T) {
 			args:      []string{"list", "--all-namespaces"},
 			wantError: false,
 		},
+		{
+			name:      "List TriggerBindings without headers",
+			command:   command(t, tbs, now, ns),
+			args:      []string{"list", "--no-headers"},
+			wantError: false,
+		},
+		{
+			name:      "List TriggerBindings from all namespaces without headers",
+			command:   command(t, tbs, now, ns),
+			args:      []string{"list", "--no-headers", "--all-namespaces"},
+			wantError: false,
+		},
 	}
 
 	for _, td := range tests {
