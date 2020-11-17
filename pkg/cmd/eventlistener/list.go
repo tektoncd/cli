@@ -38,6 +38,7 @@ const (
 
 type listOptions struct {
 	AllNamespaces bool
+	NoHeaders     bool
 }
 
 func listCommand(p cli.Params) *cobra.Command {
@@ -94,7 +95,7 @@ or
 				return printer.PrintObject(stream.Out, els, f)
 			}
 
-			if err = printFormatted(stream, els, p, opts.AllNamespaces); err != nil {
+			if err = printFormatted(stream, els, p, opts.AllNamespaces, opts.NoHeaders); err != nil {
 				return errors.New(`failed to print EventListeners`)
 			}
 			return nil
@@ -103,6 +104,7 @@ or
 
 	f.AddFlags(c)
 	c.Flags().BoolVarP(&opts.AllNamespaces, "all-namespaces", "A", opts.AllNamespaces, "list EventListeners from all namespaces")
+	c.Flags().BoolVar(&opts.NoHeaders, "no-headers", opts.NoHeaders, "do not print column headers with output (default print column headers with output)")
 	return c
 }
 
@@ -123,7 +125,7 @@ func list(client versioned.Interface, namespace string) (*v1alpha1.EventListener
 	return els, nil
 }
 
-func printFormatted(s *cli.Stream, els *v1alpha1.EventListenerList, p cli.Params, allNamespaces bool) error {
+func printFormatted(s *cli.Stream, els *v1alpha1.EventListenerList, p cli.Params, allNamespaces bool, noHeaders bool) error {
 	if len(els.Items) == 0 {
 		fmt.Fprintln(s.Err, emptyMsg)
 		return nil
@@ -135,7 +137,9 @@ func printFormatted(s *cli.Stream, els *v1alpha1.EventListenerList, p cli.Params
 	}
 
 	w := tabwriter.NewWriter(s.Out, 0, 5, 3, ' ', tabwriter.TabIndent)
-	fmt.Fprintln(w, headers)
+	if !noHeaders {
+		fmt.Fprintln(w, headers)
+	}
 	for _, el := range els.Items {
 
 		status := corev1.ConditionStatus("---")
