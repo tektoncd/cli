@@ -213,6 +213,18 @@ func TestConditionList(t *testing.T) {
 			input:     seeds[3],
 			wantError: false,
 		},
+		{
+			name:      "List conditions without headers",
+			command:   []string{"list", "--no-headers"},
+			input:     seeds[0],
+			wantError: false,
+		},
+		{
+			name:      "List conditions from all namespaces without headers",
+			command:   []string{"list", "--no-headers", "--all-namespaces"},
+			input:     seeds[2],
+			wantError: false,
+		},
 	}
 
 	for _, tp := range testParams {

@@ -36,6 +36,7 @@ const (
 
 type listOptions struct {
 	AllNamespaces bool
+	NoHeaders     bool
 }
 
 func listCommand(p cli.Params) *cobra.Command {
@@ -63,15 +64,16 @@ func listCommand(p cli.Params) *cobra.Command {
 			if output != "" {
 				return printConditionListObj(stream, p, f, opts.AllNamespaces)
 			}
-			return printConditionDetails(stream, p, opts.AllNamespaces)
+			return printConditionDetails(stream, p, opts.AllNamespaces, opts.NoHeaders)
 		},
 	}
 	f.AddFlags(c)
 	c.Flags().BoolVarP(&opts.AllNamespaces, "all-namespaces", "A", opts.AllNamespaces, "list Conditions from all namespaces")
+	c.Flags().BoolVar(&opts.NoHeaders, "no-headers", opts.NoHeaders, "do not print column headers with output (default print column headers with output)")
 	return c
 }
 
-func printConditionDetails(s *cli.Stream, p cli.Params, allNamespaces bool) error {
+func printConditionDetails(s *cli.Stream, p cli.Params, allNamespaces bool, noHeaders bool) error {
 
 	cs, err := p.Clients()
 	if err != nil {
@@ -104,7 +106,9 @@ func printConditionDetails(s *cli.Stream, p cli.Params, allNamespaces bool) erro
 		headers = "NAMESPACE\t" + headers
 		body = "%s\t" + body
 	}
-	fmt.Fprintln(w, headers)
+	if !noHeaders {
+		fmt.Fprintln(w, headers)
+	}
 
 	for _, condition := range conditions.Items {
 		if allNamespaces {
