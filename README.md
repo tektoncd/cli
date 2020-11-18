@@ -20,13 +20,13 @@ Download the latest binary executable for your operating system:
   brew install tektoncd-cli
   ```
 
-  - Or by the [released tarball](https://github.com/tektoncd/cli/releases/download/v0.13.1/tkn_0.13.1_Darwin_x86_64.tar.gz):
+  - Or by the [released tarball](https://github.com/tektoncd/cli/releases/download/v0.14.0/tkn_0.14.0_Darwin_x86_64.tar.gz):
 
   ```shell
   # Get the tar.xz
-  curl -LO https://github.com/tektoncd/cli/releases/download/v0.13.1/tkn_0.13.1_Darwin_x86_64.tar.gz
+  curl -LO https://github.com/tektoncd/cli/releases/download/v0.14.0/tkn_0.14.0_Darwin_x86_64.tar.gz
   # Extract tkn to your PATH (e.g. /usr/local/bin)
-  sudo tar xvzf tkn_0.13.1_Darwin_x86_64.tar.gz -C /usr/local/bin tkn
+  sudo tar xvzf tkn_0.14.0_Darwin_x86_64.tar.gz -C /usr/local/bin tkn
   ```
 
 * Windows
@@ -39,7 +39,7 @@ Download the latest binary executable for your operating system:
 
   - Or by the released zip file in the instructions below:
 
-  - Uncompress the [zip file](https://github.com/tektoncd/cli/releases/download/v0.13.1/tkn_0.13.1_Windows_x86_64.zip)
+  - Uncompress the [zip file](https://github.com/tektoncd/cli/releases/download/v0.14.0/tkn_0.14.0_Windows_x86_64.zip)
   - Add the location of where the executable is to your `Path` by opening `Control Panel>System and Security>System>Advanced System Settings`
   - Click on `Environment Variables`, select the `Path` variable, and click `Edit`
   - Click `New` and add the location of the uncompressed zip to the `Path`
@@ -47,40 +47,40 @@ Download the latest binary executable for your operating system:
 
 ### Linux tarballs
 
-* [Linux AMD 64](https://github.com/tektoncd/cli/releases/download/v0.13.1/tkn_0.13.1_Linux_x86_64.tar.gz)
+* [Linux AMD 64](https://github.com/tektoncd/cli/releases/download/v0.14.0/tkn_0.14.0_Linux_x86_64.tar.gz)
 
   ```shell
   # Get the tar.xz
-  curl -LO https://github.com/tektoncd/cli/releases/download/v0.13.1/tkn_0.13.1_Linux_x86_64.tar.gz
+  curl -LO https://github.com/tektoncd/cli/releases/download/v0.14.0/tkn_0.14.0_Linux_x86_64.tar.gz
   # Extract tkn to your PATH (e.g. /usr/local/bin)
-  sudo tar xvzf tkn_0.13.1_Linux_x86_64.tar.gz -C /usr/local/bin/ tkn
+  sudo tar xvzf tkn_0.14.0_Linux_x86_64.tar.gz -C /usr/local/bin/ tkn
   ```
 
-* [Linux ARM 64](https://github.com/tektoncd/cli/releases/download/v0.13.1/tkn_0.13.1_Linux_arm64.tar.gz)
+* [Linux ARM 64](https://github.com/tektoncd/cli/releases/download/v0.14.0/tkn_0.14.0_Linux_arm64.tar.gz)
 
   ```shell
   # Get the tar.xz
-  curl -LO https://github.com/tektoncd/cli/releases/download/v0.13.1/tkn_0.13.1_Linux_arm64.tar.gz
+  curl -LO https://github.com/tektoncd/cli/releases/download/v0.14.0/tkn_0.14.0_Linux_arm64.tar.gz
   # Extract tkn to your PATH (e.g. /usr/local/bin)
-  sudo tar xvzf tkn_0.13.1_Linux_arm64.tar.gz -C /usr/local/bin/ tkn
+  sudo tar xvzf tkn_0.14.0_Linux_arm64.tar.gz -C /usr/local/bin/ tkn
   ```
 
-* [Linux IBM Z](https://github.com/tektoncd/cli/releases/download/v0.13.1/tkn_0.13.1_Linux_s390x.tar.gz)
+* [Linux IBM Z](https://github.com/tektoncd/cli/releases/download/v0.14.0/tkn_0.14.0_Linux_s390x.tar.gz)
 
   ```shell
   # Get the tar.gz
-  curl -LO https://github.com/tektoncd/cli/releases/download/v0.13.1/tkn_0.13.1_Linux_s390x.tar.gz
+  curl -LO https://github.com/tektoncd/cli/releases/download/v0.14.0/tkn_0.14.0_Linux_s390x.tar.gz
   # Extract tkn to your PATH (e.g. /usr/local/bin)
-  sudo tar xvzf tkn_0.13.1_Linux_s390x.tar.gz -C /usr/local/bin/ tkn
+  sudo tar xvzf tkn_0.14.0_Linux_s390x.tar.gz -C /usr/local/bin/ tkn
   ```
 
-* [Linux IBM P](https://github.com/tektoncd/cli/releases/download/v0.13.1/tkn_0.13.1_Linux_ppc64le.tar.gz)
+* [Linux IBM P](https://github.com/tektoncd/cli/releases/download/v0.14.0/tkn_0.14.0_Linux_ppc64le.tar.gz)
 
   ```shell
   # Get the tar.gz
-  curl -LO https://github.com/tektoncd/cli/releases/download/v0.13.1/tkn_0.13.1_Linux_ppc64le.tar.gz
+  curl -LO https://github.com/tektoncd/cli/releases/download/v0.14.0/tkn_0.14.0_Linux_ppc64le.tar.gz
   # Extract tkn to your PATH (e.g. /usr/local/bin)
-  sudo tar xvzf tkn_0.13.1_Linux_ppc64le.tar.gz -C /usr/local/bin/ tkn
+  sudo tar xvzf tkn_0.14.0_Linux_ppc64le.tar.gz -C /usr/local/bin/ tkn
   ```
 
 ### Linux RPMs
@@ -102,12 +102,12 @@ Download the latest binary executable for your operating system:
   dnf install tektoncd-cli
   ```
 
-  * [Binary RPM package](https://github.com/tektoncd/cli/releases/download/v0.13.1/tektoncd-cli-0.13.1_Linux-64bit.rpm)
+  * [Binary RPM package](https://github.com/tektoncd/cli/releases/download/v0.14.0/tektoncd-cli-0.14.0_Linux-64bit.rpm)
 
   On any other RPM based distros, you can install the rpm directly:
 
    ```shell
-    rpm -Uvh https://github.com/tektoncd/cli/releases/download/v0.13.1/tektoncd-cli-0.13.1_Linux-64bit.rpm
+    rpm -Uvh https://github.com/tektoncd/cli/releases/download/v0.14.0/tektoncd-cli-0.14.0_Linux-64bit.rpm
    ```
 
 ### Linux Debs
@@ -125,13 +125,13 @@ Download the latest binary executable for your operating system:
 
   The PPA may work with older releases, but that hasn't been tested.
 
-  * [Binary DEB package](https://github.com/tektoncd/cli/releases/download/v0.13.1/tektoncd-cli-0.13.1_Linux-64bit.deb)
+  * [Binary DEB package](https://github.com/tektoncd/cli/releases/download/v0.14.0/tektoncd-cli-0.14.0_Linux-64bit.deb)
 
   On any other Debian or Ubuntu based distro, you can simply install the binary package directly with `dpkg`:
 
   ```shell
-  curl -LO https://github.com/tektoncd/cli/releases/download/v0.13.1/tektoncd-cli-0.13.1_Linux-64bit.deb
-  dpkg -i tektoncd-cli-0.13.1_Linux-64bit.deb
+  curl -LO https://github.com/tektoncd/cli/releases/download/v0.14qqq.0/tektoncd-cli-0.14.0_Linux-64bit.deb
+  dpkg -i tektoncd-cli-0.14.0_Linux-64bit.deb
   ```
 
 ### Source install
