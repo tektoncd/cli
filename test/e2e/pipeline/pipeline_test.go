@@ -326,7 +326,7 @@ Waiting for logs to be available...
 		pipelineRunGeneratedName := builder.GetPipelineRunListWithName(c, tePipelineName, true).Items[0].Name
 		timeout := 5 * time.Minute
 		// Should fail since runAsNonRoot=true
-		if err := wait.ForPipelineRunState(c, pipelineRunGeneratedName, timeout, wait.PipelineRunFailed(pipelineRunGeneratedName), "PipelineRunFailed"); err != nil {
+		if err := wait.ForPipelineRunState(c, pipelineRunGeneratedName, timeout, wait.PipelineRunSucceed(pipelineRunGeneratedName), "PipelineRunFailed"); err != nil {
 			t.Errorf("Error waiting for PipelineRun to fail: %s", err)
 		}
 	})
