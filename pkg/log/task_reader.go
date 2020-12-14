@@ -77,7 +77,7 @@ func (r *Reader) formTaskName(tr *v1beta1.TaskRun) {
 }
 
 func (r *Reader) readLiveTaskLogs() (<-chan Log, <-chan error, error) {
-	tr, err := r.waitUntilTaskPodNameAvailable(10)
+	tr, err := r.waitUntilTaskPodNameAvailable()
 	if err != nil {
 		return nil, nil, err
 	}
@@ -186,7 +186,7 @@ func (r *Reader) readStepsLogs(steps []*step, pod *pods.Pod, follow bool) (<-cha
 // updated in the status. Open a watch channel on the task run
 // and keep checking the status until the pod name updates
 // or the timeout is reached.
-func (r *Reader) waitUntilTaskPodNameAvailable(timeout time.Duration) (*v1beta1.TaskRun, error) {
+func (r *Reader) waitUntilTaskPodNameAvailable() (*v1beta1.TaskRun, error) {
 	var first = true
 	opts := metav1.ListOptions{
 		FieldSelector: fields.OneTermEqualSelector("metadata.name", r.run).String(),
@@ -219,7 +219,7 @@ func (r *Reader) waitUntilTaskPodNameAvailable(timeout time.Duration) (*v1beta1.
 			if first {
 				first = false
 			}
-		case <-time.After(timeout * time.Second):
+		case <-time.After(r.activityTimeout):
 			watchRun.Stop()
 
 			// Check if taskrun failed on start up

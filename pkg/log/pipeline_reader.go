@@ -84,7 +84,7 @@ func (r *Reader) readLivePipelineLogs(pr *v1beta1.PipelineRun) (<-chan Log, <-ch
 }
 
 func (r *Reader) readAvailablePipelineLogs(pr *v1beta1.PipelineRun) (<-chan Log, <-chan error, error) {
-	if err := r.waitUntilAvailable(10); err != nil {
+	if err := r.waitUntilAvailable(); err != nil {
 		return nil, nil, err
 	}
 
@@ -121,7 +121,7 @@ func (r *Reader) readAvailablePipelineLogs(pr *v1beta1.PipelineRun) (<-chan Log,
 // only if run status is unknown, open a watch channel on run
 // and keep checking the status until it changes to true|false
 // or the reach timeout
-func (r *Reader) waitUntilAvailable(timeout time.Duration) error {
+func (r *Reader) waitUntilAvailable() error {
 	var first = true
 	opts := metav1.ListOptions{
 		FieldSelector: fields.OneTermEqualSelector("metadata.name", r.run).String(),
@@ -156,7 +156,7 @@ func (r *Reader) waitUntilAvailable(timeout time.Duration) error {
 				first = false
 				fmt.Fprintln(r.stream.Out, "Pipeline still running ...")
 			}
-		case <-time.After(timeout * time.Second):
+		case <-time.After(r.activityTimeout):
 			watchRun.Stop()
 			if isPipelineRunRunning(run.Status.Conditions) {
 				fmt.Fprintln(r.stream.Out, "PipelineRun is still running:", run.Status.Conditions[0].Message)

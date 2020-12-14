@@ -19,6 +19,7 @@ import (
 	"fmt"
 	"os"
 	"strings"
+	"time"
 
 	"github.com/AlecAivazis/survey/v2"
 	"github.com/AlecAivazis/survey/v2/terminal"
@@ -47,6 +48,10 @@ type LogOptions struct {
 	AskOpts         survey.AskOpt
 	Fzf             bool
 	Tail            int64
+
+	// ActivityTimeout is the amount of time to wait for some activity
+	// (e.g. Pod ready) before giving up.
+	ActivityTimeout time.Duration
 }
 
 func NewLogOptions(p cli.Params) *LogOptions {
