@@ -16,6 +16,7 @@ package log
 
 import (
 	"fmt"
+	"time"
 
 	"github.com/tektoncd/cli/pkg/cli"
 	"github.com/tektoncd/cli/pkg/options"
@@ -24,18 +25,19 @@ import (
 )
 
 type Reader struct {
-	run      string
-	ns       string
-	clients  *cli.Clients
-	streamer stream.NewStreamerFunc
-	stream   *cli.Stream
-	allSteps bool
-	follow   bool
-	tasks    []string
-	steps    []string
-	logType  string
-	task     string
-	number   int
+	run             string
+	ns              string
+	clients         *cli.Clients
+	streamer        stream.NewStreamerFunc
+	stream          *cli.Stream
+	allSteps        bool
+	follow          bool
+	tasks           []string
+	steps           []string
+	logType         string
+	task            string
+	number          int
+	activityTimeout time.Duration
 }
 
 func NewReader(logType string, opts *options.LogOptions) (*Reader, error) {
@@ -57,17 +59,23 @@ func NewReader(logType string, opts *options.LogOptions) (*Reader, error) {
 		run = opts.TaskrunName
 	}
 
+	at := 10 * time.Second
+	if opts.ActivityTimeout != 0 {
+		at = opts.ActivityTimeout
+	}
+
 	return &Reader{
-		run:      run,
-		ns:       opts.Params.Namespace(),
-		clients:  cs,
-		streamer: streamer,
-		stream:   opts.Stream,
-		follow:   opts.Follow,
-		allSteps: opts.AllSteps,
-		tasks:    opts.Tasks,
-		steps:    opts.Steps,
-		logType:  logType,
+		run:             run,
+		ns:              opts.Params.Namespace(),
+		clients:         cs,
+		streamer:        streamer,
+		stream:          opts.Stream,
+		follow:          opts.Follow,
+		allSteps:        opts.AllSteps,
+		tasks:           opts.Tasks,
+		steps:           opts.Steps,
+		logType:         logType,
+		activityTimeout: at,
 	}, nil
 }
 
