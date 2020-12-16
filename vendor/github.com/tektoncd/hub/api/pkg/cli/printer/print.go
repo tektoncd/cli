@@ -64,3 +64,9 @@ func (p *Printer) Raw(data []byte, err error) error {
 	fmt.Fprintln(p.out, string(data))
 	return nil
 }
+
+// String prints the string to printer's output stream
+func (p *Printer) String(str string) error {
+	fmt.Fprintln(p.out, string(str))
+	return nil
+}

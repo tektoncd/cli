@@ -246,6 +246,8 @@ github.com/hako/durafmt
 github.com/hashicorp/errwrap
 # github.com/hashicorp/go-multierror v1.1.0
 github.com/hashicorp/go-multierror
+# github.com/hashicorp/go-version v1.2.0
+github.com/hashicorp/go-version
 # github.com/hashicorp/golang-lru v0.5.4
 github.com/hashicorp/golang-lru
 github.com/hashicorp/golang-lru/simplelru
@@ -334,17 +336,24 @@ github.com/sirupsen/logrus
 github.com/spf13/cobra
 # github.com/spf13/pflag v1.0.5
 github.com/spf13/pflag
-# github.com/tektoncd/hub/api v0.0.0-20201027094520-f56d79d14d70
+# github.com/tektoncd/hub/api v0.0.0-20201216093904-377b464ed407
 github.com/tektoncd/hub/api/gen/http/resource/client
 github.com/tektoncd/hub/api/gen/resource
 github.com/tektoncd/hub/api/gen/resource/views
 github.com/tektoncd/hub/api/pkg/cli/app
 github.com/tektoncd/hub/api/pkg/cli/cmd
+github.com/tektoncd/hub/api/pkg/cli/cmd/downgrade
 github.com/tektoncd/hub/api/pkg/cli/cmd/get
+github.com/tektoncd/hub/api/pkg/cli/cmd/info
+github.com/tektoncd/hub/api/pkg/cli/cmd/install
+github.com/tektoncd/hub/api/pkg/cli/cmd/reinstall
 github.com/tektoncd/hub/api/pkg/cli/cmd/search
+github.com/tektoncd/hub/api/pkg/cli/cmd/upgrade
 github.com/tektoncd/hub/api/pkg/cli/flag
 github.com/tektoncd/hub/api/pkg/cli/formatter
 github.com/tektoncd/hub/api/pkg/cli/hub
+github.com/tektoncd/hub/api/pkg/cli/installer
+github.com/tektoncd/hub/api/pkg/cli/kube
 github.com/tektoncd/hub/api/pkg/cli/printer
 github.com/tektoncd/hub/api/pkg/git
 github.com/tektoncd/hub/api/pkg/parser

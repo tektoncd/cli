@@ -33,7 +33,7 @@ No Resources found
 {{ else -}}
 NAME	KIND	DESCRIPTION	TAGS
 {{ range $_, $r := .Resources -}}
-{{ formatName $r.Name $r.LatestVersion.Version }}	{{ $r.Kind }}	{{ formatDesc $r.LatestVersion.Description }}	{{ formatTags $r.Tags }}	
+{{ formatName $r.Name $r.LatestVersion.Version }}	{{ $r.Kind }}	{{ formatDesc $r.LatestVersion.Description 40 }}	{{ formatTags $r.Tags }}	
 {{ end }}
 {{- end -}}
 `
