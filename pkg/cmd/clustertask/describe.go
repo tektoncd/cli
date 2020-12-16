@@ -116,7 +116,7 @@ const describeTemplate = `{{decorate "bold" "Name"}}:	{{ .ClusterTask.Name }}
  No steps
 {{- else }}
 {{- range $step := .ClusterTask.Spec.Steps }}
- {{ autoStepName $step.Name | decorate "bullet" }} 
+ {{ autoStepName $step.Name | decorate "bullet" }}
 {{- end }}
 {{- end }}
 
@@ -152,7 +152,8 @@ or
 		Annotations: map[string]string{
 			"commandType": "main",
 		},
-		SilenceUsage: true,
+		SilenceUsage:      true,
+		ValidArgsFunction: formatted.ParentCompletion,
 		RunE: func(cmd *cobra.Command, args []string) error {
 			s := &cli.Stream{
 				Out: cmd.OutOrStdout(),
@@ -190,7 +191,6 @@ or
 		},
 	}
 
-	_ = c.MarkZshCompPositionalArgumentCustom(1, "__tkn_get_clustertasks")
 	f.AddFlags(c)
 	return c
 }

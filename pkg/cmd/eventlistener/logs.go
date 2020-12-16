@@ -23,6 +23,7 @@ import (
 
 	"github.com/spf13/cobra"
 	"github.com/tektoncd/cli/pkg/cli"
+	"github.com/tektoncd/cli/pkg/formatted"
 	"github.com/tektoncd/cli/pkg/options"
 	corev1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
@@ -48,7 +49,8 @@ Show 2 lines of most recent logs from all EventListener pods:
 		Annotations: map[string]string{
 			"commandType": "main",
 		},
-		Args: cobra.ExactValidArgs(1),
+		Args:              cobra.ExactValidArgs(1),
+		ValidArgsFunction: formatted.ParentCompletion,
 		RunE: func(cmd *cobra.Command, args []string) error {
 			if opts.Tail <= 0 && opts.Tail != -1 {
 				return fmt.Errorf("tail cannot be 0 or less than 0 unless -1 for all pods")
@@ -68,7 +70,6 @@ Show 2 lines of most recent logs from all EventListener pods:
 		},
 	}
 	c.Flags().Int64VarP(&opts.Tail, "tail", "t", 10, "Number of most recent log lines to show. Specify -1 for all logs from each pod.")
-	_ = c.MarkZshCompPositionalArgumentCustom(1, "__tkn_get_eventlistener")
 	return c
 }
 

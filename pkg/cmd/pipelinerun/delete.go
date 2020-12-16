@@ -22,6 +22,7 @@ import (
 	"github.com/tektoncd/cli/pkg/actions"
 	"github.com/tektoncd/cli/pkg/cli"
 	"github.com/tektoncd/cli/pkg/deleter"
+	"github.com/tektoncd/cli/pkg/formatted"
 	"github.com/tektoncd/cli/pkg/options"
 	pr "github.com/tektoncd/cli/pkg/pipelinerun"
 	prsort "github.com/tektoncd/cli/pkg/pipelinerun/sort"
@@ -44,12 +45,14 @@ or
 `
 
 	c := &cobra.Command{
-		Use:          "delete",
-		Aliases:      []string{"rm"},
-		Short:        "Delete PipelineRuns in a namespace",
-		Example:      eg,
-		Args:         cobra.MinimumNArgs(0),
-		SilenceUsage: true,
+		Use:               "delete",
+		Aliases:           []string{"rm"},
+		Short:             "Delete PipelineRuns in a namespace",
+		Example:           eg,
+		ValidArgsFunction: formatted.ParentCompletion,
+		Args:              cobra.MinimumNArgs(0),
+		SilenceUsage:      true,
+
 		Annotations: map[string]string{
 			"commandType": "main",
 		},
@@ -80,7 +83,6 @@ or
 	c.Flags().StringVarP(&opts.ParentResourceName, "pipeline", "p", "", "The name of a Pipeline whose PipelineRuns should be deleted (does not delete the Pipeline)")
 	c.Flags().IntVarP(&opts.Keep, "keep", "", 0, "Keep n most recent number of PipelineRuns")
 	c.Flags().BoolVarP(&opts.DeleteAllNs, "all", "", false, "Delete all PipelineRuns in a namespace (default: false)")
-	_ = c.MarkZshCompPositionalArgumentCustom(1, "__tkn_get_pipelinerun")
 	return c
 }
 

@@ -18,6 +18,7 @@ import (
 	"errors"
 	"fmt"
 
+	"github.com/tektoncd/cli/pkg/formatted"
 	taskpkg "github.com/tektoncd/cli/pkg/task"
 	trsort "github.com/tektoncd/cli/pkg/taskrun/sort"
 	"github.com/tektoncd/pipeline/pkg/apis/pipeline/v1beta1"
@@ -46,12 +47,13 @@ or
 `
 
 	c := &cobra.Command{
-		Use:          "delete",
-		Aliases:      []string{"rm"},
-		Short:        "Delete TaskRuns in a namespace",
-		Example:      eg,
-		Args:         cobra.MinimumNArgs(0),
-		SilenceUsage: true,
+		Use:               "delete",
+		Aliases:           []string{"rm"},
+		Short:             "Delete TaskRuns in a namespace",
+		Example:           eg,
+		ValidArgsFunction: formatted.ParentCompletion,
+		Args:              cobra.MinimumNArgs(0),
+		SilenceUsage:      true,
 		Annotations: map[string]string{
 			"commandType": "main",
 		},
@@ -82,7 +84,6 @@ or
 	c.Flags().StringVarP(&opts.ParentResourceName, "task", "t", "", "The name of a Task whose TaskRuns should be deleted (does not delete the task)")
 	c.Flags().BoolVarP(&opts.DeleteAllNs, "all", "", false, "Delete all TaskRuns in a namespace (default: false)")
 	c.Flags().IntVarP(&opts.Keep, "keep", "", 0, "Keep n most recent number of TaskRuns")
-	_ = c.MarkZshCompPositionalArgumentCustom(1, "__tkn_get_taskrun")
 	return c
 }
 

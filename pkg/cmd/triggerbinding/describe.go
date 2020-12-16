@@ -65,8 +65,9 @@ or
 		Annotations: map[string]string{
 			"commandType": "main",
 		},
-		Args:         cobra.MinimumNArgs(1),
-		SilenceUsage: true,
+		Args:              cobra.MinimumNArgs(1),
+		SilenceUsage:      true,
+		ValidArgsFunction: formatted.ParentCompletion,
 		RunE: func(cmd *cobra.Command, args []string) error {
 			s := &cli.Stream{
 				Out: cmd.OutOrStdout(),
@@ -86,7 +87,6 @@ or
 		},
 	}
 
-	_ = c.MarkZshCompPositionalArgumentCustom(1, "__tkn_get_triggerbindings")
 	f.AddFlags(c)
 	return c
 }

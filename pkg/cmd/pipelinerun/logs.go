@@ -21,6 +21,7 @@ import (
 
 	"github.com/spf13/cobra"
 	"github.com/tektoncd/cli/pkg/cli"
+	"github.com/tektoncd/cli/pkg/formatted"
 	"github.com/tektoncd/cli/pkg/log"
 	"github.com/tektoncd/cli/pkg/options"
 	prhelper "github.com/tektoncd/cli/pkg/pipelinerun"
@@ -53,7 +54,8 @@ Show the logs of PipelineRun named 'microservice-1' for all Tasks and steps (inc
 		Annotations: map[string]string{
 			"commandType": "main",
 		},
-		Example: eg,
+		Example:           eg,
+		ValidArgsFunction: formatted.ParentCompletion,
 		RunE: func(cmd *cobra.Command, args []string) error {
 			if len(args) != 0 {
 				opts.PipelineRunName = args[0]
@@ -81,7 +83,6 @@ Show the logs of PipelineRun named 'microservice-1' for all Tasks and steps (inc
 	c.Flags().StringSliceVarP(&opts.Tasks, "task", "t", []string{}, "show logs for mentioned Tasks only")
 	c.Flags().IntVarP(&opts.Limit, "limit", "", defaultLimit, "lists number of PipelineRuns")
 
-	_ = c.MarkZshCompPositionalArgumentCustom(1, "__tkn_get_pipelinerun")
 	return c
 }
 

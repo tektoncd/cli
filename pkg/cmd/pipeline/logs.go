@@ -22,6 +22,7 @@ import (
 	"github.com/tektoncd/cli/pkg/cli"
 	"github.com/tektoncd/cli/pkg/cmd/pipelinerun"
 	"github.com/tektoncd/cli/pkg/flags"
+	"github.com/tektoncd/cli/pkg/formatted"
 	"github.com/tektoncd/cli/pkg/options"
 	"github.com/tektoncd/cli/pkg/pipeline"
 	phelper "github.com/tektoncd/cli/pkg/pipeline"
@@ -69,9 +70,11 @@ Show logs for given Pipeline and PipelineRun:
 		Short:                 "Show Pipeline logs",
 		Example:               eg,
 		SilenceUsage:          true,
+
 		Annotations: map[string]string{
 			"commandType": "main",
 		},
+		ValidArgsFunction: formatted.ParentCompletion,
 		Args: func(cmd *cobra.Command, args []string) error {
 			if err := flags.InitParams(p, cmd); err != nil {
 				return err
@@ -92,7 +95,6 @@ Show logs for given Pipeline and PipelineRun:
 	c.Flags().BoolVarP(&opts.Follow, "follow", "f", false, "stream live logs")
 	c.Flags().IntVarP(&opts.Limit, "limit", "", 5, "lists number of PipelineRuns")
 
-	_ = c.MarkZshCompPositionalArgumentCustom(1, "__tkn_get_pipeline")
 	return c
 }
 

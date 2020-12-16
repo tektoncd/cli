@@ -57,10 +57,11 @@ or
 `
 
 	c := &cobra.Command{
-		Use:     "describe",
-		Aliases: []string{"desc"},
-		Short:   "Describes a ClusterTriggerBinding",
-		Example: eg,
+		Use:               "describe",
+		Aliases:           []string{"desc"},
+		Short:             "Describes a ClusterTriggerBinding",
+		Example:           eg,
+		ValidArgsFunction: formatted.ParentCompletion,
 		Annotations: map[string]string{
 			"commandType": "main",
 		},
@@ -85,7 +86,6 @@ or
 		},
 	}
 
-	_ = c.MarkZshCompPositionalArgumentCustom(1, "__tkn_get_clustertriggerbindings")
 	f.AddFlags(c)
 	return c
 }

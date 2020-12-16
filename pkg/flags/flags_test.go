@@ -23,24 +23,6 @@ import (
 	"gotest.tools/v3/assert"
 )
 
-func TestFlags_add_shell_completion(t *testing.T) {
-	newflag := "newflag"
-	shellfunc := "__test_function"
-	cmd := cobra.Command{}
-	cmd.PersistentFlags().String(newflag, "", "Completion pinpon pinpon 🎤")
-
-	pflag := cmd.PersistentFlags().Lookup(newflag)
-	AddShellCompletion(pflag, shellfunc)
-
-	if pflag.Annotations[cobra.BashCompCustom] == nil {
-		t.Errorf("annotation should be have been added to the flag")
-	}
-
-	if pflag.Annotations[cobra.BashCompCustom][0] != shellfunc {
-		t.Errorf("annotation should have been added to the flag")
-	}
-}
-
 func TestFlags_colouring(t *testing.T) {
 	// When running it on CI, our test don't have a tty so this gets disabled
 	// automatically, not really sure how can we workaround that :(

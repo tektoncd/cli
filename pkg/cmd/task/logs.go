@@ -22,6 +22,7 @@ import (
 	"github.com/tektoncd/cli/pkg/cli"
 	"github.com/tektoncd/cli/pkg/cmd/taskrun"
 	"github.com/tektoncd/cli/pkg/flags"
+	"github.com/tektoncd/cli/pkg/formatted"
 	"github.com/tektoncd/cli/pkg/options"
 	thelper "github.com/tektoncd/cli/pkg/task"
 	trlist "github.com/tektoncd/cli/pkg/taskrun/list"
@@ -67,9 +68,11 @@ Show logs for given Task and associated TaskRun:
 		Short:                 "Show Task logs",
 		Example:               eg,
 		SilenceUsage:          true,
+		ValidArgsFunction:     formatted.ParentCompletion,
 		Annotations: map[string]string{
 			"commandType": "main",
 		},
+
 		Args: func(cmd *cobra.Command, args []string) error {
 			if err := flags.InitParams(p, cmd); err != nil {
 				return err
@@ -90,7 +93,6 @@ Show logs for given Task and associated TaskRun:
 	c.Flags().BoolVarP(&opts.Follow, "follow", "f", false, "stream live logs")
 	c.Flags().IntVarP(&opts.Limit, "limit", "", 5, "lists number of TaskRuns")
 
-	_ = c.MarkZshCompPositionalArgumentCustom(1, "__tkn_get_task")
 	return c
 }
 
