@@ -22,6 +22,7 @@ import (
 	"github.com/spf13/cobra"
 	"github.com/tektoncd/cli/pkg/actions"
 	"github.com/tektoncd/cli/pkg/cli"
+	"github.com/tektoncd/cli/pkg/formatted"
 	"github.com/tektoncd/cli/pkg/options"
 	prhelper "github.com/tektoncd/cli/pkg/pipelinerun"
 	prdesc "github.com/tektoncd/cli/pkg/pipelinerun/description"
@@ -55,6 +56,7 @@ or
 		Annotations: map[string]string{
 			"commandType": "main",
 		},
+		ValidArgsFunction: formatted.ParentCompletion,
 		RunE: func(cmd *cobra.Command, args []string) error {
 			s := &cli.Stream{
 				Out: cmd.OutOrStdout(),
@@ -115,7 +117,6 @@ or
 	c.Flags().IntVarP(&opts.Limit, "limit", "", defaultDescribeLimit, "lists number of PipelineRuns when selecting a PipelineRun to describe")
 	c.Flags().BoolVarP(&opts.Fzf, "fzf", "F", false, "use fzf to select a PipelineRun to describe")
 
-	_ = c.MarkZshCompPositionalArgumentCustom(1, "__tkn_get_pipelinerun")
 	f.AddFlags(c)
 
 	return c

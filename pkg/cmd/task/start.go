@@ -33,6 +33,7 @@ import (
 	"github.com/tektoncd/cli/pkg/cmd/taskrun"
 	"github.com/tektoncd/cli/pkg/file"
 	"github.com/tektoncd/cli/pkg/flags"
+	"github.com/tektoncd/cli/pkg/formatted"
 	"github.com/tektoncd/cli/pkg/labels"
 	"github.com/tektoncd/cli/pkg/options"
 	"github.com/tektoncd/cli/pkg/params"
@@ -118,6 +119,7 @@ func startCommand(p cli.Params) *cobra.Command {
 	c := &cobra.Command{
 		Use:   "start [RESOURCES...] [PARAMS...] [SERVICEACCOUNT]",
 		Short: "Start Tasks",
+
 		Annotations: map[string]string{
 			"commandType": "main",
 		},
@@ -131,7 +133,8 @@ or in a file using the --filename argument.
 For params values, if you want to provide multiple values, provide them comma separated
 like cat,foo,bar
 `,
-		SilenceUsage: true,
+		SilenceUsage:      true,
+		ValidArgsFunction: formatted.ParentCompletion,
 		Args: func(cmd *cobra.Command, args []string) error {
 			if err := flags.InitParams(p, cmd); err != nil {
 				return err
@@ -176,10 +179,18 @@ like cat,foo,bar
 	c.Flags().StringSliceVarP(&opt.OutputResources, "outputresource", "o", []string{}, "pass the output resource name and ref as name=ref")
 	c.Flags().StringArrayVarP(&opt.Params, "param", "p", []string{}, "pass the param as key=value for string type, or key=value1,value2,... for array type")
 	c.Flags().StringVarP(&opt.ServiceAccountName, "serviceaccount", "s", "", "pass the serviceaccount name")
-	flags.AddShellCompletion(c.Flags().Lookup("serviceaccount"), "__kubectl_get_serviceaccount")
+	_ = c.RegisterFlagCompletionFunc("serviceaccount",
+		func(cmd *cobra.Command, args []string, toComplete string) ([]string, cobra.ShellCompDirective) {
+			return formatted.BaseCompletion("serviceaccount", args)
+		},
+	)
 	c.Flags().BoolVarP(&opt.Last, "last", "L", false, "re-run the Task using last TaskRun values")
 	c.Flags().StringVarP(&opt.UseTaskRun, "use-taskrun", "", "", "specify a TaskRun name to use its values to re-run the TaskRun")
-	flags.AddShellCompletion(c.Flags().Lookup("use-taskrun"), "__tkn_get_taskrun")
+	_ = c.RegisterFlagCompletionFunc("use-taskrun",
+		func(cmd *cobra.Command, args []string, toComplete string) ([]string, cobra.ShellCompDirective) {
+			return formatted.BaseCompletion("taskrun", args)
+		},
+	)
 	c.Flags().StringSliceVarP(&opt.Labels, "labels", "l", []string{}, "pass labels as label=value.")
 	c.Flags().StringArrayVarP(&opt.Workspaces, "workspace", "w", []string{}, "pass the workspace.")
 	c.Flags().BoolVarP(&opt.ShowLog, "showlog", "", false, "show logs right after starting the Task")
@@ -190,8 +201,6 @@ like cat,foo,bar
 	c.Flags().StringVarP(&opt.PrefixName, "prefix-name", "", "", "specify a prefix for the TaskRun name (must be lowercase alphanumeric characters)")
 	c.Flags().BoolVarP(&opt.UseParamDefaults, "use-param-defaults", "", false, "use default parameter values without prompting for input")
 	c.Flags().StringVar(&opt.PodTemplate, "pod-template", "", "local or remote file containing a PodTemplate definition")
-
-	_ = c.MarkZshCompPositionalArgumentCustom(1, "__tkn_get_task")
 
 	return c
 }

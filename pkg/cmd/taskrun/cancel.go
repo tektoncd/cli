@@ -19,6 +19,7 @@ import (
 
 	"github.com/spf13/cobra"
 	"github.com/tektoncd/cli/pkg/cli"
+	"github.com/tektoncd/cli/pkg/formatted"
 	"github.com/tektoncd/cli/pkg/taskrun"
 	corev1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
@@ -31,11 +32,12 @@ func cancelCommand(p cli.Params) *cobra.Command {
 `
 
 	c := &cobra.Command{
-		Use:          "cancel",
-		Short:        "Cancel a TaskRun in a namespace",
-		Example:      eg,
-		Args:         cobra.ExactArgs(1),
-		SilenceUsage: true,
+		Use:               "cancel",
+		Short:             "Cancel a TaskRun in a namespace",
+		Example:           eg,
+		ValidArgsFunction: formatted.ParentCompletion,
+		Args:              cobra.ExactArgs(1),
+		SilenceUsage:      true,
 		Annotations: map[string]string{
 			"commandType": "main",
 		},
@@ -49,7 +51,6 @@ func cancelCommand(p cli.Params) *cobra.Command {
 		},
 	}
 
-	_ = c.MarkZshCompPositionalArgumentCustom(1, "__tkn_get_taskrun")
 	return c
 }
 

@@ -90,12 +90,13 @@ or
 `
 
 	c := &cobra.Command{
-		Use:          "describe",
-		Aliases:      []string{"desc"},
-		Short:        "Describe Conditions in a namespace",
-		Example:      eg,
-		Args:         cobra.MinimumNArgs(1),
-		SilenceUsage: true,
+		Use:               "describe",
+		Aliases:           []string{"desc"},
+		Short:             "Describe Conditions in a namespace",
+		Example:           eg,
+		ValidArgsFunction: formatted.ParentCompletion,
+		Args:              cobra.MinimumNArgs(1),
+		SilenceUsage:      true,
 		Annotations: map[string]string{
 			"commandType": "main",
 		},
@@ -126,7 +127,6 @@ or
 		},
 	}
 
-	_ = c.MarkZshCompPositionalArgumentCustom(1, "__tkn_get_condition")
 	f.AddFlags(c)
 	return c
 }

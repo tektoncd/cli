@@ -19,9 +19,8 @@ import (
 	"runtime"
 
 	"github.com/spf13/cobra"
-	"github.com/spf13/pflag"
 	"github.com/tektoncd/cli/pkg/cli"
-	"github.com/tektoncd/cli/pkg/cmd/completion"
+	"github.com/tektoncd/cli/pkg/formatted"
 	"golang.org/x/crypto/ssh/terminal"
 )
 
@@ -52,6 +51,11 @@ func AddTektonOptions(cmd *cobra.Command) {
 	cmd.PersistentFlags().StringP(
 		namespace, "n", "",
 		"namespace to use (default: from $KUBECONFIG)")
+	_ = cmd.RegisterFlagCompletionFunc(namespace,
+		func(cmd *cobra.Command, args []string, toComplete string) ([]string, cobra.ShellCompDirective) {
+			return formatted.BaseCompletion("namespace", args)
+		},
+	)
 
 	cmd.PersistentFlags().BoolP(
 		nocolour, "", false,
@@ -65,13 +69,6 @@ func AddTektonOptions(cmd *cobra.Command) {
 	cmd.PersistentFlags().BoolP(
 		"no-color", "C", false,
 		"disable coloring (default: false)")
-
-	// Add custom completion for that command as specified in
-	// bashCompletionFlags map
-	for name, completion := range completion.ShellCompletionMap {
-		pflag := cmd.PersistentFlags().Lookup(name)
-		AddShellCompletion(pflag, completion)
-	}
 }
 
 // GetTektonOptions get the global tekton Options that are not passed to a subcommands
@@ -146,12 +143,4 @@ func InitParams(p cli.Params, cmd *cobra.Command) error {
 	}
 
 	return nil
-}
-
-// AddShellCompletion add a hint to the cobra flag annotation for how to do a completion
-func AddShellCompletion(pflag *pflag.Flag, shellfunction string) {
-	if pflag.Annotations == nil {
-		pflag.Annotations = map[string][]string{}
-	}
-	pflag.Annotations[cobra.BashCompCustom] = append(pflag.Annotations[cobra.BashCompCustom], shellfunction)
 }

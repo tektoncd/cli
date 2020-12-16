@@ -21,6 +21,7 @@ import (
 	"github.com/tektoncd/cli/pkg/actions"
 	"github.com/tektoncd/cli/pkg/cli"
 	"github.com/tektoncd/cli/pkg/deleter"
+	"github.com/tektoncd/cli/pkg/formatted"
 	"github.com/tektoncd/cli/pkg/options"
 	"github.com/tektoncd/cli/pkg/pipeline"
 	"github.com/tektoncd/cli/pkg/pipelinerun"
@@ -42,12 +43,13 @@ or
 `
 
 	c := &cobra.Command{
-		Use:          "delete",
-		Aliases:      []string{"rm"},
-		Short:        "Delete Pipelines in a namespace",
-		Example:      eg,
-		Args:         cobra.MinimumNArgs(0),
-		SilenceUsage: true,
+		Use:               "delete",
+		Aliases:           []string{"rm"},
+		Short:             "Delete Pipelines in a namespace",
+		Example:           eg,
+		Args:              cobra.MinimumNArgs(0),
+		ValidArgsFunction: formatted.ParentCompletion,
+		SilenceUsage:      true,
 		Annotations: map[string]string{
 			"commandType": "main",
 		},
@@ -70,7 +72,6 @@ or
 	c.Flags().BoolVarP(&opts.DeleteRelated, "prs", "", false, "Whether to delete Pipeline(s) and related resources (PipelineRuns) (default: false)")
 	c.Flags().BoolVarP(&opts.DeleteAllNs, "all", "", false, "Delete all Pipelines in a namespace (default: false)")
 
-	_ = c.MarkZshCompPositionalArgumentCustom(1, "__tkn_get_pipeline")
 	return c
 }
 

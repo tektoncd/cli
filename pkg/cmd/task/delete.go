@@ -21,6 +21,7 @@ import (
 	"github.com/tektoncd/cli/pkg/actions"
 	"github.com/tektoncd/cli/pkg/cli"
 	"github.com/tektoncd/cli/pkg/deleter"
+	"github.com/tektoncd/cli/pkg/formatted"
 	"github.com/tektoncd/cli/pkg/options"
 	"github.com/tektoncd/cli/pkg/task"
 	trlist "github.com/tektoncd/cli/pkg/taskrun/list"
@@ -42,15 +43,17 @@ or
 `
 
 	c := &cobra.Command{
-		Use:          "delete",
-		Aliases:      []string{"rm"},
-		Short:        "Delete Tasks in a namespace",
-		Example:      eg,
-		Args:         cobra.MinimumNArgs(0),
+		Use:     "delete",
+		Aliases: []string{"rm"},
+		Short:   "Delete Tasks in a namespace",
+		Example: eg,
+		Args:    cobra.MinimumNArgs(0),
+
 		SilenceUsage: true,
 		Annotations: map[string]string{
 			"commandType": "main",
 		},
+		ValidArgsFunction: formatted.ParentCompletion,
 		RunE: func(cmd *cobra.Command, args []string) error {
 			s := &cli.Stream{
 				In:  cmd.InOrStdin(),
@@ -70,7 +73,6 @@ or
 	c.Flags().BoolVarP(&opts.DeleteRelated, "trs", "", false, "Whether to delete Task(s) and related resources (TaskRuns) (default: false)")
 	c.Flags().BoolVarP(&opts.DeleteAllNs, "all", "", false, "Delete all Tasks in a namespace (default: false)")
 
-	_ = c.MarkZshCompPositionalArgumentCustom(1, "__tkn_get_task")
 	return c
 }
 

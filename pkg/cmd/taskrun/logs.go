@@ -21,6 +21,7 @@ import (
 
 	"github.com/spf13/cobra"
 	"github.com/tektoncd/cli/pkg/cli"
+	"github.com/tektoncd/cli/pkg/formatted"
 	"github.com/tektoncd/cli/pkg/log"
 	"github.com/tektoncd/cli/pkg/options"
 	trlist "github.com/tektoncd/cli/pkg/taskrun/list"
@@ -54,6 +55,7 @@ Show the logs of TaskRun named 'microservice-1' for step 'build' only from names
 		Annotations: map[string]string{
 			"commandType": "main",
 		},
+		ValidArgsFunction: formatted.ParentCompletion,
 		RunE: func(cmd *cobra.Command, args []string) error {
 			if len(args) != 0 {
 				opts.TaskrunName = args[0]
@@ -85,7 +87,6 @@ Show the logs of TaskRun named 'microservice-1' for step 'build' only from names
 	c.Flags().BoolVarP(&opts.Fzf, "fzf", "F", false, "use fzf to select a TaskRun")
 	c.Flags().StringSliceVarP(&opts.Steps, "step", "s", []string{}, "show logs for mentioned steps only")
 
-	_ = c.MarkZshCompPositionalArgumentCustom(1, "__tkn_get_taskrun")
 	return c
 }
 

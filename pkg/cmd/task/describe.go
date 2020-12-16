@@ -148,10 +148,11 @@ or
 `
 
 	c := &cobra.Command{
-		Use:     "describe",
-		Aliases: []string{"desc"},
-		Short:   "Describe a Task in a namespace",
-		Example: eg,
+		Use:               "describe",
+		Aliases:           []string{"desc"},
+		ValidArgsFunction: formatted.ParentCompletion,
+		Short:             "Describe a Task in a namespace",
+		Example:           eg,
 		Annotations: map[string]string{
 			"commandType": "main",
 		},
@@ -193,7 +194,6 @@ or
 		},
 	}
 
-	_ = c.MarkZshCompPositionalArgumentCustom(1, "__tkn_get_task")
 	f.AddFlags(c)
 	return c
 }

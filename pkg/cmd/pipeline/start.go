@@ -33,6 +33,7 @@ import (
 	prcmd "github.com/tektoncd/cli/pkg/cmd/pipelinerun"
 	"github.com/tektoncd/cli/pkg/file"
 	"github.com/tektoncd/cli/pkg/flags"
+	"github.com/tektoncd/cli/pkg/formatted"
 	"github.com/tektoncd/cli/pkg/labels"
 	"github.com/tektoncd/cli/pkg/options"
 	"github.com/tektoncd/cli/pkg/params"
@@ -118,6 +119,8 @@ For params value, if you want to provide multiple values, provide them comma sep
 like cat,foo,bar
 `,
 		SilenceUsage: true,
+
+		ValidArgsFunction: formatted.ParentCompletion,
 		Args: func(cmd *cobra.Command, args []string) error {
 			if err := flags.InitParams(p, cmd); err != nil {
 				return err
@@ -155,13 +158,14 @@ like cat,foo,bar
 	c.Flags().BoolVarP(&opt.ShowLog, "showlog", "", false, "show logs right after starting the Pipeline")
 	c.Flags().StringSliceVarP(&opt.Resources, "resource", "r", []string{}, "pass the resource name and ref as name=ref")
 	c.Flags().StringArrayVarP(&opt.Params, "param", "p", []string{}, "pass the param as key=value for string type, or key=value1,value2,... for array type")
-	c.Flags().StringVarP(&opt.ServiceAccountName, "serviceaccount", "s", "", "pass the serviceaccount name")
-	flags.AddShellCompletion(c.Flags().Lookup("serviceaccount"), "__kubectl_get_serviceaccount")
-	c.Flags().StringSliceVar(&opt.ServiceAccounts, "task-serviceaccount", []string{}, "pass the service account corresponding to the task")
-	flags.AddShellCompletion(c.Flags().Lookup("task-serviceaccount"), "__kubectl_get_serviceaccount")
 	c.Flags().BoolVarP(&opt.Last, "last", "L", false, "re-run the Pipeline using last PipelineRun values")
 	c.Flags().StringVarP(&opt.UsePipelineRun, "use-pipelinerun", "", "", "use this pipelinerun values to re-run the pipeline. ")
-	flags.AddShellCompletion(c.Flags().Lookup("use-pipelinerun"), "__tkn_get_pipelinerun")
+	_ = c.RegisterFlagCompletionFunc("use-pipelinerun",
+		func(cmd *cobra.Command, args []string, toComplete string) ([]string, cobra.ShellCompDirective) {
+			return formatted.BaseCompletion("pipelinerun", args)
+		},
+	)
+
 	c.Flags().StringSliceVarP(&opt.Labels, "labels", "l", []string{}, "pass labels as label=value.")
 	c.Flags().StringArrayVarP(&opt.Workspaces, "workspace", "w", []string{}, "pass the workspace.")
 	c.Flags().BoolVarP(&opt.DryRun, "dry-run", "", false, "preview PipelineRun without running it")
@@ -172,8 +176,19 @@ like cat,foo,bar
 	c.Flags().BoolVarP(&opt.UseParamDefaults, "use-param-defaults", "", false, "use default parameter values without prompting for input")
 	c.Flags().StringVar(&opt.PodTemplate, "pod-template", "", "local or remote file containing a PodTemplate definition")
 
-	_ = c.MarkZshCompPositionalArgumentCustom(1, "__tkn_get_pipeline")
+	c.Flags().StringVarP(&opt.ServiceAccountName, "serviceaccount", "s", "", "pass the serviceaccount name")
+	_ = c.RegisterFlagCompletionFunc("serviceaccount",
+		func(cmd *cobra.Command, args []string, toComplete string) ([]string, cobra.ShellCompDirective) {
+			return formatted.BaseCompletion("serviceaccount", args)
+		},
+	)
 
+	c.Flags().StringSliceVar(&opt.ServiceAccounts, "task-serviceaccount", []string{}, "pass the service account corresponding to the task")
+	_ = c.RegisterFlagCompletionFunc("task-serviceaccount",
+		func(cmd *cobra.Command, args []string, toComplete string) ([]string, cobra.ShellCompDirective) {
+			return formatted.BaseCompletion("serviceaccount", args)
+		},
+	)
 	return c
 }
 

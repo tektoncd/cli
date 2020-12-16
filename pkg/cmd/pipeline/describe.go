@@ -122,7 +122,8 @@ func describeCommand(p cli.Params) *cobra.Command {
 		Annotations: map[string]string{
 			"commandType": "main",
 		},
-		SilenceUsage: true,
+		SilenceUsage:      true,
+		ValidArgsFunction: formatted.ParentCompletion,
 		RunE: func(cmd *cobra.Command, args []string) error {
 			output, err := cmd.LocalFlags().GetString("output")
 			if err != nil {
@@ -155,7 +156,6 @@ func describeCommand(p cli.Params) *cobra.Command {
 		},
 	}
 
-	_ = c.MarkZshCompPositionalArgumentCustom(1, "__tkn_get_pipeline")
 	f.AddFlags(c)
 	return c
 }

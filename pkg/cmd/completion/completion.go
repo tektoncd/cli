@@ -15,82 +15,50 @@
 package completion
 
 import (
-	"io"
 	"os"
 
 	"github.com/spf13/cobra"
 )
 
-var (
-	// ShellCompletionMap define a map between a flag to a custom shell
-	// completion which should be in commonCompletion variable
-	ShellCompletionMap = map[string]string{
-		"namespace":  "__kubectl_get_namespace",
-		"kubeconfig": "_filedir",
-	}
-)
-
 const (
-	desc = `
-This command prints shell completion code which must be evaluated to provide
+	desc = `This command prints shell completion code which must be evaluated to provide
 interactive completion
 
 Supported Shells:
 	- bash
 	- zsh
 `
-	eg = `
-  # generate completion code for bash
-  source <(tkn completion bash)
+	eg = `To load completions:
 
-  # generate completion code for zsh
-  source <(tkn completion zsh)
-`
+Bash:
 
-	commonCompletion = `
-# Custom function for Completions
-function __tkn_get_object() {
-    local type=$1
-    local util=$2
-    local template begin tkn_out
-    template="{{ range .items  }}{{ .metadata.name }} {{ end }}"
+$ source <(tkn completion bash)
 
-    if [[ ${util} == "kubectl" ]];then
-        tkn_out=($(kubectl get ${type} -o template --template="${template}" 2>/dev/null))
-    elif [[ ${util} == "tkn" ]];then
-        tkn_out=($(tkn ${type} ls -o template --template="${template}" 2>/dev/null))
-    fi
+# To load completions for each session, execute once:
+Linux:
+  $ tkn completion bash > /etc/bash_completion.d/tkn
 
-    if [[ -n ${tkn_out} ]]; then
-        [[ -n ${BASH_VERSION} ]] && COMPREPLY=( $( compgen -W "${tkn_out}" -- "$cur" ) )
-        [[ -n ${ZSH_VERSION} ]] && compadd ${tkn_out}
-    fi
-}
+MacOS:
+  $ tkn completion bash > /usr/local/etc/bash_completion.d/tkn
 
-function __kubectl_get_namespace() { __tkn_get_object namespace kubectl ;}
-function __kubectl_get_serviceaccount() { __tkn_get_object serviceaccount kubectl ;}
-function __tkn_get_pipeline() { __tkn_get_object pipeline tkn ;}
-function __tkn_get_pipelinerun() { __tkn_get_object pipelinerun tkn ;}
-function __tkn_get_task() { __tkn_get_object task tkn ;}
-function __tkn_get_taskrun() { __tkn_get_object taskrun tkn ;}
-function __tkn_get_pipelineresource() { __tkn_get_object resource tkn ;}
-function __tkn_get_clustertasks() { __tkn_get_object clustertasks tkn ;}
-`
-	bashCompletion = `
-function __custom_func() {
-	case ${last_command} in
-		*_delete|*_start|*_describe|*_logs)
-			obj=${last_command/tkn_/};
-			# really need to find something better for this
-			obj=${obj/_describe/}; obj=${obj/_logs/};obj=${obj/_start/};
-			obj=${obj/_delete/};
-			__tkn_get_object ${obj} tkn
-			return
-			;;
-		*)
-			;;
-	esac
-}
+Zsh:
+
+# If shell completion is not already enabled in your environment you will need
+# to enable it.  You can execute the following once:
+
+$ echo "autoload -U compinit; compinit" >> ~/.zshrc
+
+# To load completions for each session, execute once:
+$ tkn completion zsh > "${fpath[1]}/_tkn"
+
+# You will need to start a new shell for this setup to take effect.
+
+Fish:
+
+$ tkn completion fish | source
+
+# To load completions for each session, execute once:
+$ tkn completion fish > ~/.config/fish/completions/tkn.fish
 `
 )
 
@@ -99,7 +67,7 @@ func Command() *cobra.Command {
 		Use:       "completion [SHELL]",
 		Short:     "Prints shell completion scripts",
 		Long:      desc,
-		ValidArgs: []string{"bash", "zsh"},
+		ValidArgs: []string{"bash", "zsh", "fish", "powershell"},
 		Example:   eg,
 		Annotations: map[string]string{
 			"commandType": "utility",
@@ -109,42 +77,17 @@ func Command() *cobra.Command {
 			if len(args) == 1 {
 				switch args[0] {
 				case "bash":
-					return runCompletionBash(os.Stdout, cmd.Parent())
+					_ = cmd.Root().GenBashCompletion(os.Stdout)
 				case "zsh":
-					return runCompletionZsh(os.Stdout, cmd.Parent())
+					_ = cmd.Root().GenZshCompletion(os.Stdout)
+				case "fish":
+					_ = cmd.Root().GenFishCompletion(os.Stdout, true)
+				case "powershell":
+					_ = cmd.Root().GenPowerShellCompletion(os.Stdout)
 				}
 			}
 			return nil
 		},
 	}
 	return cmd
-}
-
-// runCompletionBash generate completion with custom functions for bash
-func runCompletionBash(out io.Writer, tkn *cobra.Command) error {
-	if err := tkn.Root().GenBashCompletion(out); err != nil {
-		return err
-	}
-
-	if _, err := out.Write([]byte(commonCompletion)); err != nil {
-		return err
-	}
-
-	if _, err := out.Write([]byte(bashCompletion)); err != nil {
-		return err
-	}
-
-	return nil
-}
-
-// runCompletionZsh generate completion with custom functions for bash
-func runCompletionZsh(out io.Writer, tkn *cobra.Command) error {
-	if err := tkn.Root().GenZshCompletion(out); err != nil {
-		return err
-	}
-
-	if _, err := out.Write([]byte(commonCompletion)); err != nil {
-		return err
-	}
-	return nil
 }

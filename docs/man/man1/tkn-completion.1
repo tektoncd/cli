@@ -32,12 +32,51 @@ Supported Shells:
 
 .SH EXAMPLE
 .PP
-# generate completion code for bash
-  source <(tkn completion bash)
+To load completions:
 
 .PP
-# generate completion code for zsh
-  source <(tkn completion zsh)
+Bash:
+
+.PP
+$ source <(tkn completion bash)
+
+
+.SH To load completions for each session, execute once:
+.PP
+Linux:
+  $ tkn completion bash > /etc/bash\_completion.d/tkn
+
+.PP
+MacOS:
+  $ tkn completion bash > /usr/local/etc/bash\_completion.d/tkn
+
+.PP
+Zsh:
+
+
+.SH If shell completion is not already enabled in your environment you will need
+
+.SH to enable it.  You can execute the following once:
+.PP
+$ echo "autoload \-U compinit; compinit" >> \~/.zshrc
+
+
+.SH To load completions for each session, execute once:
+.PP
+$ tkn completion zsh > "${fpath[1]}/\_tkn"
+
+
+.SH You will need to start a new shell for this setup to take effect.
+.PP
+Fish:
+
+.PP
+$ tkn completion fish | source
+
+
+.SH To load completions for each session, execute once:
+.PP
+$ tkn completion fish > \~/.config/fish/completions/tkn.fish
 
 
 .SH SEE ALSO

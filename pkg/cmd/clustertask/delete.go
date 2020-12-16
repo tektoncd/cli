@@ -22,6 +22,7 @@ import (
 	"github.com/tektoncd/cli/pkg/cli"
 	"github.com/tektoncd/cli/pkg/clustertask"
 	"github.com/tektoncd/cli/pkg/deleter"
+	"github.com/tektoncd/cli/pkg/formatted"
 	"github.com/tektoncd/cli/pkg/options"
 	"github.com/tektoncd/cli/pkg/task"
 	trlist "github.com/tektoncd/cli/pkg/taskrun/list"
@@ -52,6 +53,7 @@ or
 		Annotations: map[string]string{
 			"commandType": "main",
 		},
+		ValidArgsFunction: formatted.ParentCompletion,
 		RunE: func(cmd *cobra.Command, args []string) error {
 			s := &cli.Stream{
 				In:  cmd.InOrStdin(),
@@ -70,7 +72,6 @@ or
 	c.Flags().BoolVarP(&opts.ForceDelete, "force", "f", false, "Whether to force deletion (default: false)")
 	c.Flags().BoolVarP(&opts.DeleteAll, "all", "", false, "Delete all ClusterTasks (default: false)")
 	c.Flags().BoolVarP(&opts.DeleteRelated, "trs", "", false, "Whether to delete ClusterTask(s) and related resources (TaskRuns) (default: false)")
-	_ = c.MarkZshCompPositionalArgumentCustom(1, "__tkn_get_clustertasks")
 	return c
 }
 func deleteClusterTasks(opts *options.DeleteOptions, s *cli.Stream, p cli.Params, ctNames []string) error {

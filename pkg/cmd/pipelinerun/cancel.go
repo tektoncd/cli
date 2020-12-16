@@ -19,6 +19,7 @@ import (
 
 	"github.com/spf13/cobra"
 	"github.com/tektoncd/cli/pkg/cli"
+	"github.com/tektoncd/cli/pkg/formatted"
 	"github.com/tektoncd/cli/pkg/pipelinerun"
 	corev1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
@@ -31,14 +32,16 @@ func cancelCommand(p cli.Params) *cobra.Command {
 `
 
 	c := &cobra.Command{
-		Use:          "cancel",
-		Short:        "Cancel a PipelineRun in a namespace",
-		Example:      eg,
+		Use:     "cancel",
+		Short:   "Cancel a PipelineRun in a namespace",
+		Example: eg,
+
 		SilenceUsage: true,
 		Annotations: map[string]string{
 			"commandType": "main",
 		},
-		Args: cobra.ExactArgs(1),
+		ValidArgsFunction: formatted.ParentCompletion,
+		Args:              cobra.ExactArgs(1),
 		RunE: func(cmd *cobra.Command, args []string) error {
 			pr := args[0]
 
@@ -51,7 +54,6 @@ func cancelCommand(p cli.Params) *cobra.Command {
 		},
 	}
 
-	_ = c.MarkZshCompPositionalArgumentCustom(1, "__tkn_get_pipelinerun")
 	return c
 }
 
