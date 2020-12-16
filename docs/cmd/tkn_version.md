@@ -15,9 +15,12 @@ Prints version information
 ### Options
 
 ```
-      --check              check if a newer version is available
-  -h, --help               help for version
-  -n, --namespace string   namespace to check installed controller version
+      --check               check if a newer version is available
+  -c, --context string      name of the kubeconfig context to use (default: kubectl config current-context)
+  -h, --help                help for version
+  -k, --kubeconfig string   kubectl config file (default: $HOME/.kube/config)
+  -n, --namespace string    namespace to check installed controller version
+  -C, --no-color            disable coloring (default: false)
 ```
 
 ### SEE ALSO

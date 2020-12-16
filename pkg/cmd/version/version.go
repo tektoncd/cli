@@ -27,6 +27,7 @@ import (
 	"github.com/pkg/errors"
 	"github.com/spf13/cobra"
 	"github.com/tektoncd/cli/pkg/cli"
+	"github.com/tektoncd/cli/pkg/flags"
 	"github.com/tektoncd/cli/pkg/version"
 )
 
@@ -53,6 +54,9 @@ func Command(p cli.Params) *cobra.Command {
 		Short: "Prints version information",
 		Annotations: map[string]string{
 			"commandType": "utility",
+		},
+		PersistentPreRunE: func(cmd *cobra.Command, args []string) error {
+			return flags.InitParams(p, cmd)
 		},
 		RunE: func(cmd *cobra.Command, args []string) error {
 			fmt.Fprintf(cmd.OutOrStdout(), "Client version: %s\n", clientVersion)
@@ -89,12 +93,12 @@ func Command(p cli.Params) *cobra.Command {
 
 	cmd.Flags().StringVarP(&namespace, "namespace", "n", namespace,
 		"namespace to check installed controller version")
+	flags.AddTektonOptions(cmd)
 
 	if skipCheckFlag != "true" {
-		cmd.Flags().BoolVarP(&check, "check", "c", false, "check if a newer version is available")
-		_ = cmd.Flags().MarkShorthandDeprecated("check",
-			"the -c shorthand for tkn version --check will be removed in v0.15.0. See https://github.com/tektoncd/cli/issues/1231.")
+		cmd.Flags().BoolVar(&check, "check", false, "check if a newer version is available")
 	}
+
 	return cmd
 }
 

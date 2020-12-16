@@ -24,12 +24,24 @@ Prints version information
     check if a newer version is available
 
 .PP
+\fB\-c\fP, \fB\-\-context\fP=""
+    name of the kubeconfig context to use (default: kubectl config current\-context)
+
+.PP
 \fB\-h\fP, \fB\-\-help\fP[=false]
     help for version
 
 .PP
+\fB\-k\fP, \fB\-\-kubeconfig\fP=""
+    kubectl config file (default: $HOME/.kube/config)
+
+.PP
 \fB\-n\fP, \fB\-\-namespace\fP=""
     namespace to check installed controller version
+
+.PP
+\fB\-C\fP, \fB\-\-no\-color\fP[=false]
+    disable coloring (default: false)
 
 
 .SH SEE ALSO
