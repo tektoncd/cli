@@ -17,12 +17,11 @@ package parser
 import (
 	"sync"
 
+	"github.com/tektoncd/hub/api/pkg/git"
+	"github.com/tektoncd/pipeline/pkg/apis/pipeline/v1beta1"
 	"go.uber.org/zap"
 	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/client-go/kubernetes/scheme"
-
-	"github.com/tektoncd/hub/api/pkg/git"
-	"github.com/tektoncd/pipeline/pkg/apis/pipeline/v1beta1"
 )
 
 type Parser interface {

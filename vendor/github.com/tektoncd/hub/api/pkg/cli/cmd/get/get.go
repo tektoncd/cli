@@ -59,7 +59,7 @@ func Command(cli app.CLI) *cobra.Command {
 	}
 
 	cmd.AddCommand(
-		commandForKind("task", opts),
+		taskCommand(opts),
 		commandForKind("pipeline", opts),
 	)
 

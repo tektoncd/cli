@@ -31,6 +31,7 @@ type Client interface {
 	Get(endpoint string) ([]byte, int, error)
 	Search(opt SearchOption) SearchResult
 	GetResource(opt ResourceOption) ResourceResult
+	GetResourceVersions(opt ResourceOption) ResourceVersionResult
 }
 
 type client struct {

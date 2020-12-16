@@ -33,28 +33,39 @@ type ResourceOption struct {
 
 // ResourceResult defines API response
 type ResourceResult struct {
-	data    []byte
-	status  int
-	err     error
-	version string
+	data                    []byte
+	status                  int
+	err                     error
+	version                 string
+	set                     bool
+	resourceData            *ResourceData
+	resourceWithVersionData *ResourceWithVersionData
 }
 
-// resourceResponse is the response of API when finding a resource
-type resourceResponse = rclient.ByCatalogKindNameResponseBody
+// resResponse is the response of API when finding a resource
+type resResponse = rclient.ByCatalogKindNameResponseBody
 
-// resourceWithVersionResponse is the response of API when finding a resource
+// resVersionResponse is the response of API when finding a resource
 // with a specific version
-type resourceWithVersionResponse = rclient.ByCatalogKindNameVersionResponseBody
+type resVersionResponse = rclient.ByCatalogKindNameVersionResponseBody
+
+// ResourceData is the response of API when finding a resource
+type ResourceData = rclient.ResourceDataResponseBody
+
+// ResourceWithVersionData is the response of API when finding a resource
+// with a specific version
+type ResourceWithVersionData = rclient.ResourceVersionDataResponseBody
 
 // GetResource queries the data using Hub Endpoint
-func (h *client) GetResource(opt ResourceOption) ResourceResult {
-	data, status, err := h.Get(opt.Endpoint())
+func (c *client) GetResource(opt ResourceOption) ResourceResult {
+	data, status, err := c.Get(opt.Endpoint())
 
 	return ResourceResult{
 		data:    data,
 		version: opt.Version,
 		status:  status,
 		err:     err,
+		set:     false,
 	}
 }
 
@@ -68,29 +79,49 @@ func (opt ResourceOption) Endpoint() string {
 	return fmt.Sprintf("/resource/%s/%s/%s", opt.Catalog, opt.Kind, opt.Name)
 }
 
-// RawURL returns the raw url of the resource yaml file
-func (rr *ResourceResult) RawURL() (string, error) {
+func (rr *ResourceResult) unmarshalData() error {
 	if rr.err != nil {
-		return "", rr.err
+		return rr.err
+	}
+	if rr.set {
+		return nil
 	}
 
 	if rr.status == http.StatusNotFound {
-		return "", fmt.Errorf("No Resource Found")
+		return fmt.Errorf("No Resource Found")
+	}
+
+	// API Response when version is not mentioned, will fetch latest by default
+	if rr.version == "" {
+		res := resResponse{}
+		if err := json.Unmarshal(rr.data, &res); err != nil {
+			return err
+		}
+		rr.resourceData = res.Data
+		rr.set = true
+		return nil
+	}
+
+	// API Response when a specific version is mentioned
+	res := resVersionResponse{}
+	if err := json.Unmarshal(rr.data, &res); err != nil {
+		return err
+	}
+	rr.resourceWithVersionData = res.Data
+	rr.set = true
+	return nil
+}
+
+// RawURL returns the raw url of the resource yaml file
+func (rr *ResourceResult) RawURL() (string, error) {
+	if err := rr.unmarshalData(); err != nil {
+		return "", err
 	}
 
 	if rr.version != "" {
-		res := resourceWithVersionResponse{}
-		if err := json.Unmarshal(rr.data, &res); err != nil {
-			return "", err
-		}
-		return *res.Data.RawURL, nil
+		return *rr.resourceWithVersionData.RawURL, nil
 	}
-
-	res := resourceResponse{}
-	if err := json.Unmarshal(rr.data, &res); err != nil {
-		return "", err
-	}
-	return *res.Data.LatestVersion.RawURL, nil
+	return *rr.resourceData.LatestVersion.RawURL, nil
 }
 
 // Manifest gets the resource from catalog
@@ -111,4 +142,40 @@ func (rr *ResourceResult) Manifest() ([]byte, error) {
 	}
 
 	return data, nil
+}
+
+// Resource returns the resource found
+func (rr *ResourceResult) Resource() (interface{}, error) {
+	if err := rr.unmarshalData(); err != nil {
+		return "", err
+	}
+
+	if rr.version != "" {
+		return *rr.resourceWithVersionData, nil
+	}
+	return *rr.resourceData, nil
+}
+
+// ResourceVersion returns the resource version found
+func (rr *ResourceResult) ResourceVersion() (string, error) {
+	if err := rr.unmarshalData(); err != nil {
+		return "", err
+	}
+
+	if rr.version != "" {
+		return *rr.resourceWithVersionData.Version, nil
+	}
+	return *rr.resourceData.LatestVersion.Version, nil
+}
+
+// MinPipelinesVersion returns the minimum pipeline version the resource is compatible
+func (rr *ResourceResult) MinPipelinesVersion() (string, error) {
+	if err := rr.unmarshalData(); err != nil {
+		return "", err
+	}
+
+	if rr.version != "" {
+		return *rr.resourceWithVersionData.MinPipelinesVersion, nil
+	}
+	return *rr.resourceData.LatestVersion.MinPipelinesVersion, nil
 }
