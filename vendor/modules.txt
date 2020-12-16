@@ -332,7 +332,7 @@ github.com/prometheus/statsd_exporter/pkg/mapper/fsm
 github.com/russross/blackfriday
 # github.com/sirupsen/logrus v1.6.0
 github.com/sirupsen/logrus
-# github.com/spf13/cobra v1.0.0 => github.com/chmouel/cobra v0.0.0-20200107083527-379e7a80af0c
+# github.com/spf13/cobra v1.1.1
 github.com/spf13/cobra
 # github.com/spf13/pflag v1.0.5
 github.com/spf13/pflag
