@@ -7,6 +7,7 @@ require (
 	github.com/Netflix/go-expect v0.0.0-20200312175327-da48e75238e2
 	github.com/blang/semver v3.5.1+incompatible
 	github.com/cpuguy83/go-md2man v1.0.10
+	github.com/davecgh/go-spew v1.1.1
 	github.com/fatih/color v1.9.0
 	github.com/ghodss/yaml v1.0.0
 	github.com/google/go-cmp v0.5.2
@@ -16,7 +17,7 @@ require (
 	github.com/ktr0731/go-fuzzyfinder v0.2.0
 	github.com/mitchellh/go-homedir v1.1.0
 	github.com/pkg/errors v0.9.1
-	github.com/spf13/cobra v1.0.0
+	github.com/spf13/cobra v1.1.1
 	github.com/spf13/pflag v1.0.5
 	github.com/tektoncd/hub/api v0.0.0-20201027094520-f56d79d14d70
 	github.com/tektoncd/pipeline v0.18.0
@@ -42,7 +43,6 @@ replace (
 	contrib.go.opencensus.io/exporter/stackdriver => contrib.go.opencensus.io/exporter/stackdriver v0.12.9-0.20191108183826-59d068f8d8ff
 	github.com/Azure/go-autorest => github.com/Azure/go-autorest v13.4.0+incompatible
 	github.com/kr/pty => github.com/creack/pty v1.1.10
-	github.com/spf13/cobra => github.com/chmouel/cobra v0.0.0-20200107083527-379e7a80af0c
 )
 
 // Pin k8s deps to 0.18.9
