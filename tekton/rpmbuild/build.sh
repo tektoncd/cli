@@ -19,7 +19,7 @@ sed "s/_VERSION_/${version}/" ${repospecfile} > ${TMPD}/tekton.spec
 
 sed -i '/bundled(golang/d' ${TMPD}/tekton.spec
 
-mapfile -t bundle < <(python -c "ver = None;
+mapfile -t bundle < <(python3 -c "ver = None;
 def version(line): global ver; ver = line.split()[2]; return '';
 
 print '\n'.join(filter(None,[line for line in ['Provides: bundled(golang({})) = {}'.format(line.rstrip('\n'), ver) if line[0] != '#' else version(line.rstrip('\n').replace('+incompatible','')) for line in open('../../vendor/modules.txt')]][::-1]))")
