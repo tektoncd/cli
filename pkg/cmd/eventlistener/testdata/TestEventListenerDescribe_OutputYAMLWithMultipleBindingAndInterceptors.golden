@@ -89,6 +89,7 @@
             }
         ],
         "podTemplate": {},
+        "namespaceSelector": {},
         "resources": {}
     },
     "status": {
