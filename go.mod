@@ -19,9 +19,9 @@ require (
 	github.com/spf13/cobra v1.0.0
 	github.com/spf13/pflag v1.0.5
 	github.com/tektoncd/hub/api v0.0.0-20201216093904-377b464ed407
-	github.com/tektoncd/pipeline v0.18.0
-	github.com/tektoncd/plumbing v0.0.0-20200430135134-e53521e1d887
-	github.com/tektoncd/triggers v0.9.1
+	github.com/tektoncd/pipeline v0.19.0
+	github.com/tektoncd/plumbing v0.0.0-20201021153918-6b7e894737b5
+	github.com/tektoncd/triggers v0.10.2
 	github.com/tidwall/gjson v1.6.0 // indirect
 	go.opencensus.io v0.22.4
 	go.uber.org/multierr v1.5.0

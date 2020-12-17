@@ -357,7 +357,7 @@ github.com/tektoncd/hub/api/pkg/cli/kube
 github.com/tektoncd/hub/api/pkg/cli/printer
 github.com/tektoncd/hub/api/pkg/git
 github.com/tektoncd/hub/api/pkg/parser
-# github.com/tektoncd/pipeline v0.18.0
+# github.com/tektoncd/pipeline v0.19.0
 github.com/tektoncd/pipeline/pkg/apis/config
 github.com/tektoncd/pipeline/pkg/apis/pipeline
 github.com/tektoncd/pipeline/pkg/apis/pipeline/pod
@@ -365,6 +365,7 @@ github.com/tektoncd/pipeline/pkg/apis/pipeline/v1alpha1
 github.com/tektoncd/pipeline/pkg/apis/pipeline/v1beta1
 github.com/tektoncd/pipeline/pkg/apis/resource/v1alpha1
 github.com/tektoncd/pipeline/pkg/apis/resource/v1alpha1/cloudevent
+github.com/tektoncd/pipeline/pkg/apis/run/v1alpha1
 github.com/tektoncd/pipeline/pkg/apis/validate
 github.com/tektoncd/pipeline/pkg/client/clientset/versioned
 github.com/tektoncd/pipeline/pkg/client/clientset/versioned/fake
@@ -390,6 +391,8 @@ github.com/tektoncd/pipeline/pkg/client/injection/informers/pipeline/v1alpha1/pi
 github.com/tektoncd/pipeline/pkg/client/injection/informers/pipeline/v1alpha1/pipeline/fake
 github.com/tektoncd/pipeline/pkg/client/injection/informers/pipeline/v1alpha1/pipelinerun
 github.com/tektoncd/pipeline/pkg/client/injection/informers/pipeline/v1alpha1/pipelinerun/fake
+github.com/tektoncd/pipeline/pkg/client/injection/informers/pipeline/v1alpha1/run
+github.com/tektoncd/pipeline/pkg/client/injection/informers/pipeline/v1alpha1/run/fake
 github.com/tektoncd/pipeline/pkg/client/injection/informers/pipeline/v1alpha1/task
 github.com/tektoncd/pipeline/pkg/client/injection/informers/pipeline/v1alpha1/task/fake
 github.com/tektoncd/pipeline/pkg/client/injection/informers/pipeline/v1alpha1/taskrun
@@ -432,9 +435,9 @@ github.com/tektoncd/pipeline/pkg/remote/oci
 github.com/tektoncd/pipeline/pkg/substitution
 github.com/tektoncd/pipeline/test
 github.com/tektoncd/pipeline/test/v1alpha1
-# github.com/tektoncd/plumbing v0.0.0-20200430135134-e53521e1d887
+# github.com/tektoncd/plumbing v0.0.0-20201021153918-6b7e894737b5
 github.com/tektoncd/plumbing/scripts
-# github.com/tektoncd/triggers v0.9.1
+# github.com/tektoncd/triggers v0.10.2
 github.com/tektoncd/triggers/pkg/apis/triggers/v1alpha1
 github.com/tektoncd/triggers/pkg/client/clientset/versioned
 github.com/tektoncd/triggers/pkg/client/clientset/versioned/fake
@@ -489,7 +492,7 @@ go.opencensus.io/trace/tracestate
 go.uber.org/atomic
 # go.uber.org/multierr v1.5.0
 go.uber.org/multierr
-# go.uber.org/zap v1.15.0
+# go.uber.org/zap v1.16.0
 go.uber.org/zap
 go.uber.org/zap/buffer
 go.uber.org/zap/internal/bufferpool
