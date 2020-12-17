@@ -29,14 +29,6 @@ ci_run && {
   initialize $@
 }
 
-# Run the integration tests
-ci_run && {
-  header "Running Go integration tests"
-  failed=0
-  go_test_e2e ./test || failed=1
-  (( failed )) && fail_test
-}
-
 tkn() {
     if [[ -e ./bin/tkn ]];then
         ./bin/tkn $@
@@ -167,18 +159,16 @@ for res in eventlistener triggertemplate triggerbinding clustertriggerbinding; d
 done
 
 # Run the e2e tests
-ci_run && {
-  header "Running Go e2e tests"
-  failed=0
-  if [[ -e ./bin/tkn ]];then
-        export TEST_CLIENT_BINARY='./bin/tkn'
-  else
-        go build -o tkn github.com/tektoncd/cli/cmd/tkn
-        echo "Go Build successfull"
-        export TEST_CLIENT_BINARY=$PWD/tkn
-  fi
-  go_test_e2e ./test/e2e/... || failed=1
-  (( failed )) && fail_test
-}
+header "Running Go e2e tests"
+failed=0
+if [[ -e ./bin/tkn ]];then
+    export TEST_CLIENT_BINARY="${PWD}/bin/tkn"
+else
+    go build -o tkn github.com/tektoncd/cli/cmd/tkn
+    echo "Go Build successfull"
+    export TEST_CLIENT_BINARY="${PWD}/tkn"
+fi
+go_test_e2e ./test/e2e/... || failed=1
+(( failed )) && fail_test
 
 success
