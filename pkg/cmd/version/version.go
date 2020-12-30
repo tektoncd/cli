@@ -56,7 +56,16 @@ func Command(p cli.Params) *cobra.Command {
 			"commandType": "utility",
 		},
 		PersistentPreRunE: func(cmd *cobra.Command, args []string) error {
-			return flags.InitParams(p, cmd)
+			if err := flags.InitParams(p, cmd); err != nil {
+				// this check allows tkn version to be run without
+				// a kubeconfig so users can verify the tkn version
+				noConfigErr := strings.Contains(err.Error(), "no configuration has been provided")
+				if noConfigErr {
+					return nil
+				}
+				return err
+			}
+			return nil
 		},
 		RunE: func(cmd *cobra.Command, args []string) error {
 			fmt.Fprintf(cmd.OutOrStdout(), "Client version: %s\n", clientVersion)
