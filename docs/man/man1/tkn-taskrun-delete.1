@@ -28,6 +28,10 @@ Delete TaskRuns in a namespace
     If true, ignore any errors in templates when a field or map key is missing in the template. Only applies to golang and jsonpath output formats.
 
 .PP
+\fB\-\-clustertask\fP=""
+    The name of a ClusterTask whose TaskRuns should be deleted (does not delete the ClusterTask)
+
+.PP
 \fB\-f\fP, \fB\-\-force\fP[=false]
     Whether to force deletion (default: false)
 
