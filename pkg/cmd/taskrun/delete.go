@@ -34,8 +34,14 @@ import (
 	cliopts "k8s.io/cli-runtime/pkg/genericclioptions"
 )
 
+type deleteOptions struct {
+	ClusterTaskName string
+	TaskName        string
+}
+
 func deleteCommand(p cli.Params) *cobra.Command {
-	opts := &options.DeleteOptions{Resource: "TaskRun", ForceDelete: false, ParentResource: "Task", DeleteAllNs: false}
+	opts := &options.DeleteOptions{Resource: "TaskRun", ForceDelete: false, DeleteAllNs: false}
+	deleteOpts := &deleteOptions{}
 	f := cliopts.NewPrintFlags("delete")
 	eg := `Delete TaskRuns with names 'foo' and 'bar' in namespace 'quux':
 
@@ -64,6 +70,18 @@ or
 				Err: cmd.OutOrStderr(),
 			}
 
+			if deleteOpts.TaskName != "" && deleteOpts.ClusterTaskName != "" {
+				return fmt.Errorf("cannot use --task and --clustertask option together")
+			}
+
+			if deleteOpts.ClusterTaskName != "" {
+				opts.ParentResource = "ClusterTask"
+				opts.ParentResourceName = deleteOpts.ClusterTaskName
+			} else {
+				opts.ParentResource = "Task"
+				opts.ParentResourceName = deleteOpts.TaskName
+			}
+
 			if opts.Keep < 0 {
 				return fmt.Errorf("keep option should not be lower than 0")
 			}
@@ -81,7 +99,8 @@ or
 	}
 	f.AddFlags(c)
 	c.Flags().BoolVarP(&opts.ForceDelete, "force", "f", false, "Whether to force deletion (default: false)")
-	c.Flags().StringVarP(&opts.ParentResourceName, "task", "t", "", "The name of a Task whose TaskRuns should be deleted (does not delete the task)")
+	c.Flags().StringVarP(&deleteOpts.TaskName, "task", "t", "", "The name of a Task whose TaskRuns should be deleted (does not delete the task)")
+	c.Flags().StringVarP(&deleteOpts.ClusterTaskName, "clustertask", "", "", "The name of a ClusterTask whose TaskRuns should be deleted (does not delete the ClusterTask)")
 	c.Flags().BoolVarP(&opts.DeleteAllNs, "all", "", false, "Delete all TaskRuns in a namespace (default: false)")
 	c.Flags().IntVarP(&opts.Keep, "keep", "", 0, "Keep n most recent number of TaskRuns")
 	return c
@@ -110,10 +129,11 @@ func deleteTaskRuns(s *cli.Stream, p cli.Params, trNames []string, opts *options
 		})
 		d.Delete(s, trNames)
 	default:
-		d = deleter.New("Task", func(_ string) error {
-			return errors.New("the Task should not be deleted")
+		d = deleter.New(opts.ParentResource, func(_ string) error {
+			err := fmt.Sprintf("the %s should not be deleted", opts.ParentResource)
+			return errors.New(err)
 		})
-		d.WithRelated("TaskRun", taskRunLister(p, opts.Keep, cs), func(taskRunName string) error {
+		d.WithRelated("TaskRun", taskRunLister(p, opts.Keep, opts.ParentResource, cs), func(taskRunName string) error {
 			return actions.Delete(trGroupResource, cs, taskRunName, p.Namespace(), metav1.DeleteOptions{})
 		})
 		d.DeleteRelated(s, []string{opts.ParentResourceName})
@@ -124,9 +144,9 @@ func deleteTaskRuns(s *cli.Stream, p cli.Params, trNames []string, opts *options
 			switch {
 			case opts.Keep > 0:
 				// Should only occur in case of --task flag and --keep being used together
-				fmt.Fprintf(s.Out, "All but %d TaskRuns associated with Task %q deleted in namespace %q\n", opts.Keep, opts.ParentResourceName, p.Namespace())
+				fmt.Fprintf(s.Out, "All but %d TaskRuns associated with %s %q deleted in namespace %q\n", opts.Keep, opts.ParentResource, opts.ParentResourceName, p.Namespace())
 			case opts.ParentResourceName != "":
-				fmt.Fprintf(s.Out, "All TaskRuns associated with Task %q deleted in namespace %q\n", opts.ParentResourceName, p.Namespace())
+				fmt.Fprintf(s.Out, "All TaskRuns associated with %s %q deleted in namespace %q\n", opts.ParentResource, opts.ParentResourceName, p.Namespace())
 			default:
 				d.PrintSuccesses(s)
 			}
@@ -143,16 +163,23 @@ func deleteTaskRuns(s *cli.Stream, p cli.Params, trNames []string, opts *options
 	return d.Errors()
 }
 
-func taskRunLister(p cli.Params, keep int, cs *cli.Clients) func(string) ([]string, error) {
+func taskRunLister(p cli.Params, keep int, kind string, cs *cli.Clients) func(string) ([]string, error) {
 	return func(taskName string) ([]string, error) {
+		label := "task"
+		if kind == "ClusterTask" {
+			label = "clusterTask"
+		}
+
 		lOpts := metav1.ListOptions{
-			LabelSelector: fmt.Sprintf("tekton.dev/task=%s", taskName),
+			LabelSelector: fmt.Sprintf("tekton.dev/%s=%s", label, taskName),
 		}
 		trs, err := trlist.TaskRuns(cs, lOpts, p.Namespace())
 		if err != nil {
 			return nil, err
 		}
-		trs.Items = taskpkg.FilterByRef(trs.Items, string(v1beta1.NamespacedTaskKind))
+		if kind == "Task" {
+			trs.Items = taskpkg.FilterByRef(trs.Items, string(v1beta1.NamespacedTaskKind))
+		}
 		return keepTaskRuns(trs, keep), nil
 	}
 }
