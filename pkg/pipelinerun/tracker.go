@@ -129,7 +129,15 @@ func pipelinerunOpts(name string) func(opts *metav1.ListOptions) {
 func (t *Tracker) findNewTaskruns(pr *v1beta1.PipelineRun, allowed []string) []trh.Run {
 	ret := []trh.Run{}
 	for tr, trs := range pr.Status.TaskRuns {
-		run := trh.Run{Name: tr, Task: trs.PipelineTaskName}
+		retries := 0
+		if pr.Status.PipelineSpec != nil {
+			for _, pipelineTask := range pr.Status.PipelineSpec.Tasks {
+				if trs.PipelineTaskName == pipelineTask.Name {
+					retries = pipelineTask.Retries
+				}
+			}
+		}
+		run := trh.Run{Name: tr, Task: trs.PipelineTaskName, Retries: retries}
 
 		if t.loggingInProgress(tr) ||
 			!trh.HasScheduled(trs) ||

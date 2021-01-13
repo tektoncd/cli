@@ -23,8 +23,9 @@ import (
 var trGroupResource = schema.GroupVersionResource{Group: "tekton.dev", Resource: "taskruns"}
 
 type Run struct {
-	Name string
-	Task string
+	Name    string
+	Task    string
+	Retries int
 }
 
 func IsFiltered(tr Run, allowed []string) bool {
@@ -72,8 +73,9 @@ func SortTasksBySpecOrder(pipelineTasks []v1beta1.PipelineTask, pipelinesTaskRun
 	for _, ts := range pipelineTasks {
 		if n, ok := trNames[ts.Name]; ok {
 			trs = append(trs, Run{
-				Task: ts.Name,
-				Name: n,
+				Task:    ts.Name,
+				Name:    n,
+				Retries: ts.Retries,
 			})
 		}
 	}

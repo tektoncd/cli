@@ -7,7 +7,7 @@ To run tests:
 go test ./...
 
 # Integration tests (against your current kube cluster)
-go test -v -count=1 -tags=e2e ./test
+go test -v -count=1 -tags=e2e ./test/...
 ```
 
 ## Unit tests
@@ -39,8 +39,8 @@ End to end tests live in this directory. To run these tests, you must provide
 context, but you can change that and other settings with [the flags](#flags):
 
 ```shell
-go test -v -count=1 -tags=e2e -timeout=20m ./test/e2e
-go test -v -count=1 -tags=e2e -timeout=20m ./test/e2e --kubeconfig ~/special/kubeconfig --cluster myspecialcluster
+go test -v -count=1 -tags=e2e -timeout=20m ./test/e2e/...
+go test -v -count=1 -tags=e2e -timeout=20m ./test/e2e/... --kubeconfig ~/special/kubeconfig --cluster myspecialcluster
 ```
 
 You can also use
@@ -65,7 +65,7 @@ against, i.e. override
 [your environment variables](/DEVELOPMENT.md#environment-setup):
 
 ```bash
-go test -v -count=1 ./test/e2e --kubeconfig ~/special/kubeconfig --cluster myspecialcluster
+go test -v -count=1 ./test/e2e/... --kubeconfig ~/special/kubeconfig --cluster myspecialcluster
 ```
 
 ### One test case
@@ -74,6 +74,6 @@ To run one e2e test case, e.g. TestTaskRun, use
 the `-run` flag with `go test`
 
 ```bash
-go test -v -count=1 ./test/e2e -run ^TestPipelinesE2E$
+go test -v -count=1 ./test/e2e/... -run ^TestPipelinesE2E$
 ```
 
