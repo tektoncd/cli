@@ -200,6 +200,7 @@ func (r *Reader) setUpTask(taskNumber int, tr trh.Run) {
 	r.setNumber(taskNumber)
 	r.setRun(tr.Name)
 	r.setTask(tr.Task)
+	r.setRetries(tr.Retries)
 }
 
 // getOrderedTasks get Tasks in order from Spec.PipelineRef or Spec.PipelineSpec

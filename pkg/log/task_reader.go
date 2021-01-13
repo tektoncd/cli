@@ -17,6 +17,7 @@ package log
 import (
 	"fmt"
 	"strings"
+	"sync"
 	"time"
 
 	"github.com/pkg/errors"
@@ -27,7 +28,6 @@ import (
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/fields"
 	"k8s.io/apimachinery/pkg/runtime"
-	duckv1beta1 "knative.dev/pkg/apis/duck/v1beta1"
 )
 
 const (
@@ -52,8 +52,8 @@ func (r *Reader) readTaskLog() (<-chan Log, <-chan error, error) {
 
 	r.formTaskName(tr)
 
-	if !tr.IsDone() && r.follow {
-		return r.readLiveTaskLogs()
+	if !isDone(tr, r.retries) && r.follow {
+		return r.readLiveTaskLogs(tr)
 	}
 	return r.readAvailableTaskLogs(tr)
 }
@@ -76,26 +76,13 @@ func (r *Reader) formTaskName(tr *v1beta1.TaskRun) {
 	r.task = fmt.Sprintf("Task %d", r.number)
 }
 
-func (r *Reader) readLiveTaskLogs() (<-chan Log, <-chan error, error) {
-	tr, err := r.waitUntilTaskPodNameAvailable()
+func (r *Reader) readLiveTaskLogs(tr *v1beta1.TaskRun) (<-chan Log, <-chan error, error) {
+	podC, podErrC, err := r.getTaskRunPodNames(tr)
 	if err != nil {
 		return nil, nil, err
 	}
-
-	var (
-		podName = tr.Status.PodName
-		kube    = r.clients.Kube
-	)
-
-	p := pods.New(podName, r.ns, kube, r.streamer)
-	pod, err := p.Wait()
-	if err != nil {
-		return nil, nil, errors.New(fmt.Sprintf("task %s failed: %s. Run tkn tr desc %s for more details.", r.task, strings.TrimSpace(err.Error()), tr.Name))
-	}
-
-	steps := filterSteps(pod, r.allSteps, r.steps)
-	logC, errC := r.readStepsLogs(steps, p, r.follow)
-	return logC, errC, err
+	logC, errC := r.readPodLogs(podC, podErrC, r.follow)
+	return logC, errC, nil
 }
 
 func (r *Reader) readAvailableTaskLogs(tr *v1beta1.TaskRun) (<-chan Log, <-chan error, error) {
@@ -104,7 +91,7 @@ func (r *Reader) readAvailableTaskLogs(tr *v1beta1.TaskRun) (<-chan Log, <-chan 
 	}
 
 	// Check if taskrun failed on start up
-	if err := hasTaskRunFailed(tr.Status.Conditions, r.task); err != nil {
+	if err := hasTaskRunFailed(tr, r.task, r.retries); err != nil {
 		if r.stream != nil {
 			fmt.Fprintf(r.stream.Err, "%s\n", err.Error())
 		} else {
@@ -116,66 +103,105 @@ func (r *Reader) readAvailableTaskLogs(tr *v1beta1.TaskRun) (<-chan Log, <-chan 
 		return nil, nil, fmt.Errorf("pod for taskrun %s not available yet", tr.Name)
 	}
 
-	var (
-		kube    = r.clients.Kube
-		podName = tr.Status.PodName
-	)
+	podC := make(chan string)
+	go func() {
+		defer close(podC)
+		if tr.Status.PodName != "" {
+			if len(tr.Status.RetriesStatus) != 0 {
+				for _, retryStatus := range tr.Status.RetriesStatus {
+					podC <- retryStatus.PodName
+				}
+			}
+			podC <- tr.Status.PodName
+		}
+	}()
 
-	p := pods.New(podName, r.ns, kube, r.streamer)
-	pod, err := p.Get()
-	if err != nil {
-		return nil, nil, errors.New(fmt.Sprintf("task %s failed: %s. Run tkn tr desc %s for more details.", r.task, strings.TrimSpace(err.Error()), tr.Name))
-	}
-
-	steps := filterSteps(pod, r.allSteps, r.steps)
-	logC, errC := r.readStepsLogs(steps, p, r.follow)
+	logC, errC := r.readPodLogs(podC, nil, false)
 	return logC, errC, nil
 }
 
-func (r *Reader) readStepsLogs(steps []*step, pod *pods.Pod, follow bool) (<-chan Log, <-chan error) {
+func (r *Reader) readStepsLogs(logC chan<- Log, errC chan<- error, steps []*step, pod *pods.Pod, follow bool) {
+	for _, step := range steps {
+		if !follow && !step.hasStarted() {
+			continue
+		}
+
+		container := pod.Container(step.container)
+		containerLogC, containerLogErrC, err := container.LogReader(follow).Read()
+		if err != nil {
+			errC <- fmt.Errorf("error in getting logs for step %s: %s", step.name, err)
+			continue
+		}
+
+		for containerLogC != nil || containerLogErrC != nil {
+			select {
+			case l, ok := <-containerLogC:
+				if !ok {
+					containerLogC = nil
+					logC <- Log{Task: r.task, Step: step.name, Log: "EOFLOG"}
+					continue
+				}
+				logC <- Log{Task: r.task, Step: step.name, Log: l.Log}
+
+			case e, ok := <-containerLogErrC:
+				if !ok {
+					containerLogErrC = nil
+					continue
+				}
+
+				errC <- fmt.Errorf("failed to get logs for %s: %s", step.name, e)
+			}
+		}
+
+		if err := container.Status(); err != nil {
+			errC <- err
+			return
+		}
+	}
+}
+
+func (r *Reader) readPodLogs(podC <-chan string, podErrC <-chan error, follow bool) (<-chan Log, <-chan error) {
 	logC := make(chan Log)
 	errC := make(chan error)
+	var wg sync.WaitGroup
 
+	wg.Add(1)
 	go func() {
-		defer close(logC)
-		defer close(errC)
-
-		for _, step := range steps {
-			if !follow && !step.hasStarted() {
-				continue
+		// forward pod error to error stream
+		if podErrC != nil {
+			for podErr := range podErrC {
+				errC <- podErr
 			}
+		}
+		wg.Done()
 
-			container := pod.Container(step.container)
-			podC, perrC, err := container.LogReader(follow).Read()
+		// wait for all goroutines to close before closing errC channel
+		wg.Wait()
+		close(errC)
+	}()
+
+	wg.Add(1)
+	go func() {
+		defer func() {
+			close(logC)
+			wg.Done()
+		}()
+
+		for podName := range podC {
+			p := pods.New(podName, r.ns, r.clients.Kube, r.streamer)
+			var pod *corev1.Pod
+			var err error
+
+			if follow {
+				pod, err = p.Wait()
+			} else {
+				pod, err = p.Get()
+			}
 			if err != nil {
-				errC <- fmt.Errorf("error in getting logs for step %s: %s", step.name, err)
-				continue
+				errC <- errors.New(fmt.Sprintf("task %s failed: %s. Run tkn tr desc %s for more details.", r.task, strings.TrimSpace(err.Error()), r.run))
 			}
-
-			for podC != nil || perrC != nil {
-				select {
-				case l, ok := <-podC:
-					if !ok {
-						podC = nil
-						logC <- Log{Task: r.task, Step: step.name, Log: "EOFLOG"}
-						continue
-					}
-					logC <- Log{Task: r.task, Step: step.name, Log: l.Log}
-
-				case e, ok := <-perrC:
-					if !ok {
-						perrC = nil
-						continue
-					}
-
-					errC <- fmt.Errorf("failed to get logs for %s: %s", step.name, e)
-				}
-			}
-
-			if err := container.Status(); err != nil {
-				errC <- err
-				return
-			}
+			steps := filterSteps(pod, r.allSteps, r.steps)
+			r.readStepsLogs(logC, errC, steps, p, follow)
 		}
 	}()
 
@@ -184,52 +210,82 @@ func (r *Reader) readStepsLogs(steps []*step, pod *pods.Pod, follow bool) (<-cha
 
 // Reading of logs should wait until the name of the pod is
 // updated in the status. Open a watch channel on the task run
-// and keep checking the status until the pod name updates
+// and keep checking the status until the taskrun completes
 // or the timeout is reached.
-func (r *Reader) waitUntilTaskPodNameAvailable() (*v1beta1.TaskRun, error) {
-	var first = true
+func (r *Reader) getTaskRunPodNames(run *v1beta1.TaskRun) (<-chan string, <-chan error, error) {
 	opts := metav1.ListOptions{
 		FieldSelector: fields.OneTermEqualSelector("metadata.name", r.run).String(),
 	}
-	run, err := tr.GetV1beta1(r.clients, r.run, metav1.GetOptions{}, r.ns)
-	if err != nil {
-		return nil, err
-	}
-
-	if run.Status.PodName != "" {
-		return run, nil
-	}
 
 	watchRun, err := tr.Watch(r.clients, opts, r.ns)
-
 	if err != nil {
-		return nil, err
+		return nil, nil, err
 	}
-	for {
-		select {
-		case event := <-watchRun.ResultChan():
-			run, err := cast2taskrun(event.Object)
-			if err != nil {
-				return nil, err
-			}
-			if run.Status.PodName != "" {
-				watchRun.Stop()
-				return run, nil
-			}
-			if first {
-				first = false
-			}
-		case <-time.After(r.activityTimeout):
+
+	podC := make(chan string)
+	errC := make(chan error)
+
+	go func() {
+		defer func() {
+			close(podC)
+			close(errC)
 			watchRun.Stop()
+		}()
 
-			// Check if taskrun failed on start up
-			if err = hasTaskRunFailed(run.Status.Conditions, r.task); err != nil {
-				return nil, err
+		podMap := make(map[string]bool)
+		addPod := func(name string) {
+			if _, ok := podMap[name]; !ok {
+				podMap[name] = true
+				podC <- name
 			}
-
-			return nil, fmt.Errorf("task %s create has not started yet or pod for task not yet available", r.task)
 		}
-	}
+
+		if len(run.Status.RetriesStatus) != 0 {
+			for _, retryStatus := range run.Status.RetriesStatus {
+				addPod(retryStatus.PodName)
+			}
+		}
+		if run.Status.PodName != "" {
+			addPod(run.Status.PodName)
+		}
+
+		timeout := time.After(r.activityTimeout)
+
+		for {
+			select {
+			case event := <-watchRun.ResultChan():
+				var err error
+				run, err = cast2taskrun(event.Object)
+				if err != nil {
+					errC <- err
+					return
+				}
+				if run.Status.PodName != "" {
+					addPod(run.Status.PodName)
+					if areRetriesScheduled(run, r.retries) {
+						return
+					}
+				}
+			case <-timeout:
+				// Check if taskrun failed on start up
+				if err := hasTaskRunFailed(run, r.task, r.retries); err != nil {
+					errC <- err
+					return
+				}
+				// check if pod has been started and has a name
+				if run.HasStarted() && run.Status.PodName != "" {
+					if !areRetriesScheduled(run, r.retries) {
+						continue
+					}
+					return
+				}
+				errC <- fmt.Errorf("task %s create has not started yet or pod for task not yet available", r.task)
+				return
+			}
+		}
+	}()
+
+	return podC, errC, nil
 }
 
 func filterSteps(pod *corev1.Pod, allSteps bool, stepsGiven []string) []*step {
@@ -295,9 +351,9 @@ func getSteps(pod *corev1.Pod) []*step {
 	return steps
 }
 
-func hasTaskRunFailed(trConditions duckv1beta1.Conditions, taskName string) error {
-	if len(trConditions) != 0 && trConditions[0].Status == corev1.ConditionFalse {
-		return fmt.Errorf("task %s has failed: %s", taskName, trConditions[0].Message)
+func hasTaskRunFailed(tr *v1beta1.TaskRun, taskName string, retries int) error {
+	if isFailure(tr, retries) {
+		return fmt.Errorf("task %s has failed: %s", taskName, tr.Status.Conditions[0].Message)
 	}
 	return nil
 }
@@ -312,4 +368,18 @@ func cast2taskrun(obj runtime.Object) (*v1beta1.TaskRun, error) {
 		return nil, err
 	}
 	return run, nil
+}
+
+func isDone(tr *v1beta1.TaskRun, retries int) bool {
+	return tr.IsDone() && areRetriesScheduled(tr, retries)
+}
+
+func isFailure(tr *v1beta1.TaskRun, retries int) bool {
+	conditions := tr.Status.Conditions
+	return len(conditions) != 0 && conditions[0].Status == corev1.ConditionFalse && areRetriesScheduled(tr, retries)
+}
+
+func areRetriesScheduled(tr *v1beta1.TaskRun, retries int) bool {
+	retriesDone := len(tr.Status.RetriesStatus)
+	return retriesDone >= retries
 }

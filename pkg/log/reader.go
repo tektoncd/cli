@@ -38,6 +38,7 @@ type Reader struct {
 	task            string
 	number          int
 	activityTimeout time.Duration
+	retries         int
 }
 
 func NewReader(logType string, opts *options.LogOptions) (*Reader, error) {
@@ -91,6 +92,10 @@ func (r *Reader) Read() (<-chan Log, <-chan error, error) {
 
 func (r *Reader) setNumber(number int) {
 	r.number = number
+}
+
+func (r *Reader) setRetries(retries int) {
+	r.retries = retries
 }
 
 func (r *Reader) setRun(run string) {

@@ -1579,7 +1579,6 @@ func TestLog_taskrun_follow_mode_no_pod_name(t *testing.T) {
 
 	trlo := logoptsV1alpha1(trName, ns, cs, fake.Streamer(logs), false, true, []string{}, dc)
 	_, err = fetchLogs(trlo)
-
 	if err == nil {
 		t.Error("Expecting an error but it's empty")
 	}
@@ -1692,7 +1691,6 @@ func TestLog_taskrun_follow_mode_no_pod_name_v1beta1(t *testing.T) {
 
 	trlo := logoptsV1beta1(trName, ns, cs, fake.Streamer(logs), false, true, []string{}, dc)
 	_, err = fetchLogs(trlo)
-
 	if err == nil {
 		t.Error("Expecting an error but it's empty")
 	}
@@ -2019,15 +2017,12 @@ func TestLog_taskrun_follow_mode_update_timeout(t *testing.T) {
 	}()
 
 	output, err := fetchLogs(trlo)
-	if err == nil {
-		t.Error("Expecting an error but it's empty")
+	if err != nil {
+		t.Errorf("Unexpected error: %v", err)
 	}
 
-	expectedOut := ""
+	expectedOut := "task output-task create has not started yet or pod for task not yet available\n"
 	test.AssertOutput(t, expectedOut, output)
-
-	expectedErr := "task output-task create has not started yet or pod for task not yet available"
-	test.AssertOutput(t, expectedErr, err.Error())
 }
 
 func TestLog_taskrun_follow_mode_update_timeout_v1beta1(t *testing.T) {
@@ -2142,15 +2137,12 @@ func TestLog_taskrun_follow_mode_update_timeout_v1beta1(t *testing.T) {
 	}()
 
 	output, err := fetchLogs(trlo)
-	if err == nil {
-		t.Error("Expecting an error but it's empty")
+	if err != nil {
+		t.Errorf("Unexpected error: %v", err)
 	}
 
-	expectedOut := ""
+	expectedOut := "task output-task create has not started yet or pod for task not yet available\n"
 	test.AssertOutput(t, expectedOut, output)
-
-	expectedErr := "task output-task create has not started yet or pod for task not yet available"
-	test.AssertOutput(t, expectedErr, err.Error())
 }
 
 func TestLog_taskrun_follow_mode_no_output_provided(t *testing.T) {
@@ -2232,13 +2224,13 @@ func TestLog_taskrun_follow_mode_no_output_provided(t *testing.T) {
 
 	trlo := logoptsV1alpha1(trName, ns, cs, fake.Streamer(logs), false, true, []string{}, dc)
 
-	_, err = fetchLogs(trlo)
-	if err == nil {
-		t.Errorf("Expected error but no error occurred ")
+	output, err := fetchLogs(trlo)
+	if err != nil {
+		t.Errorf("Unexpected error: %v", err)
 	}
 
-	expected := "task output-task has failed: invalid output resources: TaskRun's declared resources didn't match usage in Task: Didn't provide required values: [builtImage]"
-	test.AssertOutput(t, expected, err.Error())
+	expected := "task output-task has failed: invalid output resources: TaskRun's declared resources didn't match usage in Task: Didn't provide required values: [builtImage]\n"
+	test.AssertOutput(t, expected, output)
 }
 
 func TestLog_taskrun_follow_mode_no_output_provided_v1beta1(t *testing.T) {
@@ -2342,13 +2334,14 @@ func TestLog_taskrun_follow_mode_no_output_provided_v1beta1(t *testing.T) {
 
 	trlo := logoptsV1beta1(trName, ns, cs, fake.Streamer(logs), false, true, []string{}, dc)
 
-	_, err = fetchLogs(trlo)
-	if err == nil {
-		t.Errorf("Expected error but no error occurred ")
+	output, err := fetchLogs(trlo)
+
+	if err != nil {
+		t.Errorf("Unexpected error: %v", err)
 	}
 
-	expected := "task output-task has failed: invalid output resources: TaskRun's declared resources didn't match usage in Task: Didn't provide required values: [builtImage]"
-	test.AssertOutput(t, expected, err.Error())
+	expected := "task output-task has failed: invalid output resources: TaskRun's declared resources didn't match usage in Task: Didn't provide required values: [builtImage]\n"
+	test.AssertOutput(t, expected, output)
 }
 
 func logoptsV1alpha1(run, ns string, cs pipelinetest.Clients, streamer stream.NewStreamerFunc,
