@@ -47,3 +47,26 @@ func TestTknPlugin(t *testing.T) {
 		})
 	})
 }
+
+func TestTknPluginPath(t *testing.T) {
+	tkn, err := cli.NewTknRunner("any-namespace")
+	assert.NilError(t, err)
+	currentpath, err := os.Getwd()
+	assert.NilError(t, err)
+	defer env.Patch(t, "PATH", os.Getenv("PATH")+":"+currentpath)()
+	t.Run("Success", func(t *testing.T) {
+		tkn.MustSucceed(t, "success")
+		tkn.MustSucceed(t, "success", "with", "args")
+	})
+	t.Run("Failure", func(t *testing.T) {
+		tkn.Run("failure").Assert(t, icmd.Expected{
+			ExitCode: 12,
+		})
+		tkn.Run("failure", "with", "args").Assert(t, icmd.Expected{
+			ExitCode: 12,
+		})
+		tkn.Run("failure", "exit20").Assert(t, icmd.Expected{
+			ExitCode: 20,
+		})
+	})
+}

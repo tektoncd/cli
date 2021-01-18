@@ -17,6 +17,7 @@ package main
 import (
 	"fmt"
 	"os"
+	"os/exec"
 	"path/filepath"
 	"syscall"
 
@@ -46,8 +47,12 @@ func main() {
 		}
 		exCmd, err := findPlugin(pluginDir, pluginCmd)
 		if err != nil {
-			// Can't find the binary in PATH, bailing to usual execution
-			goto CoreTkn
+			// If we can't find the binary in plugin dir, try in the $PATH and
+			// if not then bail out
+			exCmd, err = exec.LookPath(pluginCmd)
+			if err != nil {
+				goto CoreTkn
+			}
 		}
 
 		if err := syscall.Exec(exCmd, append([]string{exCmd}, os.Args[2:]...), os.Environ()); err != nil {
