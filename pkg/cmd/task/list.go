@@ -36,18 +36,18 @@ No Tasks found
 {{ else -}}
 {{- if not $.NoHeaders -}}
 {{- if $.AllNamespaces -}}
-NAMESPACE	NAME	DESCRIPTION	AGE
+NAMESPACE	NAME	DESCRIPTION	VERSION	AGE
 {{ else -}}
-NAME	DESCRIPTION	AGE
-{{ end -}} 
+NAME	DESCRIPTION	VERSION	AGE
+{{ end -}}
 {{- end -}}
 {{- range $_, $t := .Tasks.Items }}{{- if $t }}
 {{- if $.AllNamespaces -}}
-{{ $t.Namespace }}	{{ $t.Name }}	{{ formatDesc $t.Spec.Description }}	{{ formatAge $t.CreationTimestamp $.Time }}
-{{ else -}} 
-{{ $t.Name }}	{{ formatDesc $t.Spec.Description }}	{{ formatAge $t.CreationTimestamp $.Time }}
+{{ $t.Namespace }}	{{ $t.Name }}	{{ formatDesc $t.Spec.Description }}	{{ formatVersion $t.Labels }}	{{ formatAge $t.CreationTimestamp $.Time }}
+{{ else -}}
+{{ $t.Name }}	{{ formatDesc $t.Spec.Description }}	{{ formatVersion $t.Labels }}	{{ formatAge $t.CreationTimestamp $.Time }}
 {{ end }}{{- end }}{{- end }}
-{{- end -}} 
+{{- end -}}
 `
 
 type ListOptions struct {
@@ -118,8 +118,9 @@ func printTaskDetails(s *cli.Stream, p cli.Params, allnamespaces bool, noheaders
 	}
 
 	funcMap := template.FuncMap{
-		"formatAge":  formatted.Age,
-		"formatDesc": formatted.FormatDesc,
+		"formatAge":     formatted.Age,
+		"formatDesc":    formatted.FormatDesc,
+		"formatVersion": formatted.FormatVersion,
 	}
 
 	w := tabwriter.NewWriter(s.Out, 0, 5, 3, ' ', tabwriter.TabIndent)

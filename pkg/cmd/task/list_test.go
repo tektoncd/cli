@@ -142,6 +142,14 @@ func TestTaskList_Only_Tasks_v1alpha1(t *testing.T) {
 				},
 			},
 		},
+		{
+			ObjectMeta: metav1.ObjectMeta{
+				Name:              "kiwis",
+				Namespace:         "namespace",
+				CreationTimestamp: metav1.Time{Time: clock.Now().Add(-1 * time.Minute)},
+				Labels:            map[string]string{"app.kubernetes.io/version": "0.1"},
+			},
+		},
 	}
 
 	ns := []*corev1.Namespace{
@@ -161,6 +169,7 @@ func TestTaskList_Only_Tasks_v1alpha1(t *testing.T) {
 		cb.UnstructuredT(tasks[3], version),
 		cb.UnstructuredT(tasks[4], version),
 		cb.UnstructuredT(tasks[5], version),
+		cb.UnstructuredT(tasks[6], version),
 	)
 	if err != nil {
 		t.Errorf("unable to create dynamic client: %v", err)
@@ -234,6 +243,14 @@ func TestTaskList_Only_Tasks_v1beta1(t *testing.T) {
 				Description: "a test task to test description of task",
 			},
 		},
+		{
+			ObjectMeta: metav1.ObjectMeta{
+				Name:              "kiwis",
+				Namespace:         "namespace",
+				CreationTimestamp: metav1.Time{Time: clock.Now().Add(-1 * time.Minute)},
+				Labels:            map[string]string{"app.kubernetes.io/version": "0.1"},
+			},
+		},
 	}
 
 	ns := []*corev1.Namespace{
@@ -253,6 +270,7 @@ func TestTaskList_Only_Tasks_v1beta1(t *testing.T) {
 		cb.UnstructuredV1beta1T(tasks[3], version),
 		cb.UnstructuredV1beta1T(tasks[4], version),
 		cb.UnstructuredV1beta1T(tasks[5], version),
+		cb.UnstructuredV1beta1T(tasks[6], version),
 	)
 	if err != nil {
 		t.Errorf("unable to create dynamic client: %v", err)
@@ -326,6 +344,14 @@ func TestTaskList_Only_Tasks_no_headers_v1beta1(t *testing.T) {
 				Description: "a test task to test description of task",
 			},
 		},
+		{
+			ObjectMeta: metav1.ObjectMeta{
+				Name:              "kiwis",
+				Namespace:         "namespace",
+				CreationTimestamp: metav1.Time{Time: clock.Now().Add(-1 * time.Minute)},
+				Labels:            map[string]string{"app.kubernetes.io/version": "0.1"},
+			},
+		},
 	}
 
 	ns := []*corev1.Namespace{
@@ -345,6 +371,7 @@ func TestTaskList_Only_Tasks_no_headers_v1beta1(t *testing.T) {
 		cb.UnstructuredV1beta1T(tasks[3], version),
 		cb.UnstructuredV1beta1T(tasks[4], version),
 		cb.UnstructuredV1beta1T(tasks[5], version),
+		cb.UnstructuredV1beta1T(tasks[6], version),
 	)
 	if err != nil {
 		t.Errorf("unable to create dynamic client: %v", err)
@@ -469,6 +496,14 @@ func TestTaskList_Only_Tasks_all_namespaces_v1beta1(t *testing.T) {
 				Description: "a test task to test description of task",
 			},
 		},
+		{
+			ObjectMeta: metav1.ObjectMeta{
+				Name:              "kiwis",
+				Namespace:         "namespace",
+				CreationTimestamp: metav1.Time{Time: clock.Now().Add(-1 * time.Minute)},
+				Labels:            map[string]string{"app.kubernetes.io/version": "0.1"},
+			},
+		},
 	}
 
 	version := "v1beta1"
@@ -486,6 +521,7 @@ func TestTaskList_Only_Tasks_all_namespaces_v1beta1(t *testing.T) {
 		cb.UnstructuredV1beta1T(tasks[9], version),
 		cb.UnstructuredV1beta1T(tasks[10], version),
 		cb.UnstructuredV1beta1T(tasks[11], version),
+		cb.UnstructuredV1beta1T(tasks[12], version),
 	)
 	if err != nil {
 		t.Errorf("unable to create dynamic client: %v", err)
@@ -609,6 +645,14 @@ func TestTaskList_Only_Tasks_all_namespaces_no_headers_v1beta1(t *testing.T) {
 				Description: "a test task to test description of task",
 			},
 		},
+		{
+			ObjectMeta: metav1.ObjectMeta{
+				Name:              "kiwis",
+				Namespace:         "namespace",
+				CreationTimestamp: metav1.Time{Time: clock.Now().Add(-1 * time.Minute)},
+				Labels:            map[string]string{"app.kubernetes.io/version": "0.1"},
+			},
+		},
 	}
 
 	version := "v1beta1"
@@ -626,6 +670,7 @@ func TestTaskList_Only_Tasks_all_namespaces_no_headers_v1beta1(t *testing.T) {
 		cb.UnstructuredV1beta1T(tasks[9], version),
 		cb.UnstructuredV1beta1T(tasks[10], version),
 		cb.UnstructuredV1beta1T(tasks[11], version),
+		cb.UnstructuredV1beta1T(tasks[12], version),
 	)
 	if err != nil {
 		t.Errorf("unable to create dynamic client: %v", err)

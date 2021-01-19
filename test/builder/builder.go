@@ -295,8 +295,8 @@ func ListAllTasksOutput(t *testing.T, cs *framework.Clients, td map[int]interfac
 	t.Helper()
 	const (
 		emptyMsg = "No tasks found"
-		header   = "NAME\tDESCRIPTION\tAGE"
-		body     = "%s\t%s\t%s\n"
+		header   = "NAME\tDESCRIPTION\tVERSION\tAGE"
+		body     = "%s\t%s\t%s\t%s\n"
 	)
 
 	clock := clockwork.NewFakeClockAt(time.Now())
@@ -317,6 +317,7 @@ func ListAllTasksOutput(t *testing.T, cs *framework.Clients, td map[int]interfac
 		fmt.Fprintf(w, body,
 			task.Name,
 			formatted.FormatDesc(task.Spec.Description),
+			formatted.FormatVersion(task.Labels),
 			formatted.Age(&task.CreationTimestamp, clock),
 		)
 	}
