@@ -16,6 +16,8 @@ interactive completion
 Supported Shells:
 	- bash
 	- zsh
+	- fish
+	- powershell
 
 
 ### Examples

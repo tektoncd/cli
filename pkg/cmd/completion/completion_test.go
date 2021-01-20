@@ -27,6 +27,6 @@ func TestCompletion_Empty(t *testing.T) {
 	if err == nil {
 		t.Errorf("No errors was defined. Output: %s", out)
 	}
-	expected := "requires at least 1 arg(s), only received 0"
+	expected := "accepts 1 arg(s), received 0"
 	test.AssertOutput(t, expected, err.Error())
 }

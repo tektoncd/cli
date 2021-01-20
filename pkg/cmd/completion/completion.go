@@ -27,6 +27,8 @@ interactive completion
 Supported Shells:
 	- bash
 	- zsh
+	- fish
+	- powershell
 `
 	eg = `To load completions:
 
@@ -72,20 +74,19 @@ func Command() *cobra.Command {
 		Annotations: map[string]string{
 			"commandType": "utility",
 		},
-		Args: cobra.MinimumNArgs(1),
+		Args: cobra.ExactValidArgs(1),
 		RunE: func(cmd *cobra.Command, args []string) error {
-			if len(args) == 1 {
-				switch args[0] {
-				case "bash":
-					_ = cmd.Root().GenBashCompletion(os.Stdout)
-				case "zsh":
-					_ = cmd.Root().GenZshCompletion(os.Stdout)
-				case "fish":
-					_ = cmd.Root().GenFishCompletion(os.Stdout, true)
-				case "powershell":
-					_ = cmd.Root().GenPowerShellCompletion(os.Stdout)
-				}
+			switch args[0] {
+			case "bash":
+				_ = cmd.Root().GenBashCompletion(os.Stdout)
+			case "zsh":
+				_ = cmd.Root().GenZshCompletion(os.Stdout)
+			case "fish":
+				_ = cmd.Root().GenFishCompletion(os.Stdout, true)
+			case "powershell":
+				_ = cmd.Root().GenPowerShellCompletion(os.Stdout)
 			}
+
 			return nil
 		},
 	}
