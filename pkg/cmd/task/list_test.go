@@ -21,7 +21,6 @@ import (
 	"time"
 
 	"github.com/jonboulle/clockwork"
-	tb "github.com/tektoncd/cli/internal/builder/v1alpha1"
 	"github.com/tektoncd/cli/pkg/test"
 	cb "github.com/tektoncd/cli/pkg/test/builder"
 	testDynamic "github.com/tektoncd/cli/pkg/test/dynamic"
@@ -86,12 +85,63 @@ func TestTaskList_Only_Tasks_v1alpha1(t *testing.T) {
 	clock := clockwork.NewFakeClock()
 
 	tasks := []*v1alpha1.Task{
-		tb.Task("tomatoes", tb.TaskNamespace("namespace"), cb.TaskCreationTime(clock.Now().Add(-1*time.Minute))),
-		tb.Task("mangoes", tb.TaskNamespace("namespace"), cb.TaskCreationTime(clock.Now().Add(-20*time.Second))),
-		tb.Task("bananas", tb.TaskNamespace("namespace"), cb.TaskCreationTime(clock.Now().Add(-512*time.Hour))),
-		tb.Task("apples", tb.TaskNamespace("namespace"), tb.TaskSpec(tb.TaskDescription("")), cb.TaskCreationTime(clock.Now().Add(-513*time.Hour))),
-		tb.Task("potatoes", tb.TaskNamespace("namespace"), tb.TaskSpec(tb.TaskDescription("a test task")), cb.TaskCreationTime(clock.Now().Add(-514*time.Hour))),
-		tb.Task("onions", tb.TaskNamespace("namespace"), tb.TaskSpec(tb.TaskDescription("a test task to test description of task")), cb.TaskCreationTime(clock.Now().Add(-515*time.Hour))),
+		{
+			ObjectMeta: metav1.ObjectMeta{
+				Name:              "tomatoes",
+				Namespace:         "namespace",
+				CreationTimestamp: metav1.Time{Time: clock.Now().Add(-1 * time.Minute)},
+			},
+		},
+		{
+			ObjectMeta: metav1.ObjectMeta{
+				Name:              "mangoes",
+				Namespace:         "namespace",
+				CreationTimestamp: metav1.Time{Time: clock.Now().Add(-20 * time.Second)},
+			},
+		},
+		{
+			ObjectMeta: metav1.ObjectMeta{
+				Name:              "bananas",
+				Namespace:         "namespace",
+				CreationTimestamp: metav1.Time{Time: clock.Now().Add(-512 * time.Hour)},
+			},
+		},
+		{
+			ObjectMeta: metav1.ObjectMeta{
+				Name:              "apples",
+				Namespace:         "namespace",
+				CreationTimestamp: metav1.Time{Time: clock.Now().Add(-513 * time.Hour)},
+			},
+			Spec: v1alpha1.TaskSpec{
+				TaskSpec: v1beta1.TaskSpec{
+					Description: "",
+				},
+			},
+		},
+		{
+			ObjectMeta: metav1.ObjectMeta{
+				Name:              "potatoes",
+				Namespace:         "namespace",
+				CreationTimestamp: metav1.Time{Time: clock.Now().Add(-514 * time.Hour)},
+			},
+			Spec: v1alpha1.TaskSpec{
+				TaskSpec: v1beta1.TaskSpec{
+					Description: "a test task",
+				},
+			},
+		},
+		{
+			ObjectMeta: metav1.ObjectMeta{
+				Name:              "onions",
+				Namespace:         "namespace",
+				CreationTimestamp: metav1.Time{Time: clock.Now().Add(-515 * time.Hour)},
+			},
+			Spec: v1alpha1.TaskSpec{
+				TaskSpec: v1beta1.TaskSpec{
+					Description: "a test task to test description of task",
+				},
+			},
+		},
 	}
 
 	ns := []*corev1.Namespace{

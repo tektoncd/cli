@@ -22,7 +22,6 @@ import (
 	"time"
 
 	"github.com/jonboulle/clockwork"
-	tb "github.com/tektoncd/cli/internal/builder/v1alpha1"
 	"github.com/tektoncd/cli/pkg/test"
 	cb "github.com/tektoncd/cli/pkg/test/builder"
 	testDynamic "github.com/tektoncd/cli/pkg/test/dynamic"
@@ -35,7 +34,6 @@ import (
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime"
 	k8stest "k8s.io/client-go/testing"
-	"knative.dev/pkg/apis"
 	duckv1beta1 "knative.dev/pkg/apis/duck/v1beta1"
 )
 
@@ -84,7 +82,12 @@ func TestTaskDescribe_Empty(t *testing.T) {
 
 func TestTaskDescribe_WithoutNameIfOnlyOneTaskPresent(t *testing.T) {
 	tasks := []*v1alpha1.Task{
-		tb.Task("task-1", tb.TaskNamespace("ns")),
+		{
+			ObjectMeta: metav1.ObjectMeta{
+				Name:      "task-1",
+				Namespace: "ns",
+			},
+		},
 	}
 
 	namespaces := []*corev1.Namespace{
@@ -118,8 +121,18 @@ func TestTaskDescribe_WithoutNameIfOnlyOneTaskPresent(t *testing.T) {
 
 func TestTaskDescribe_OnlyName(t *testing.T) {
 	tasks := []*v1alpha1.Task{
-		tb.Task("task-1", tb.TaskNamespace("ns")),
-		tb.Task("task", tb.TaskNamespace("ns-2")),
+		{
+			ObjectMeta: metav1.ObjectMeta{
+				Name:      "task-1",
+				Namespace: "ns",
+			},
+		},
+		{
+			ObjectMeta: metav1.ObjectMeta{
+				Name:      "task",
+				Namespace: "ns-2",
+			},
+		},
 	}
 
 	namespaces := []*corev1.Namespace{
@@ -159,8 +172,18 @@ func TestTaskDescribe_OnlyName(t *testing.T) {
 
 func TestTaskDescribe_OnlyNameDiffNameSpace(t *testing.T) {
 	tasks := []*v1alpha1.Task{
-		tb.Task("task-1", tb.TaskNamespace("ns")),
-		tb.Task("task", tb.TaskNamespace("ns-2")),
+		{
+			ObjectMeta: metav1.ObjectMeta{
+				Name:      "task-1",
+				Namespace: "ns",
+			},
+		},
+		{
+			ObjectMeta: metav1.ObjectMeta{
+				Name:      "task",
+				Namespace: "ns-2",
+			},
+		},
 	}
 	namespaces := []*corev1.Namespace{
 		{
@@ -198,18 +221,41 @@ func TestTaskDescribe_OnlyNameDiffNameSpace(t *testing.T) {
 
 func TestTaskDescribe_OnlyNameParams(t *testing.T) {
 	tasks := []*v1alpha1.Task{
-		tb.Task("task-1",
-			tb.TaskNamespace("ns"),
-			tb.TaskSpec(
-				tb.TaskParam("myarg", v1alpha1.ParamTypeString, tb.ParamSpecDescription("params without the default value")),
-				tb.TaskParam("myprint", v1alpha1.ParamTypeString, tb.ParamSpecDescription("testing very long "+
-					"description information in order to test FormatDesc funnction call longlonglonglonglonglonglonglong"+
-					"longlonglonglonglonglonglonglonglonglonglonglonglonglonglonglonglonglonglonglonglonglonglonglonglong"+
-					"longlonglonglonglonglonglonglonglonglonglonglonglonglonglonglonglonglonglonglonglonglonglonglonglong")),
-				tb.TaskParam("myarray", v1alpha1.ParamTypeArray),
-			),
-		),
-		tb.Task("task", tb.TaskNamespace("ns-2")),
+		{
+			ObjectMeta: metav1.ObjectMeta{
+				Name:      "task",
+				Namespace: "ns-2",
+			},
+		},
+		{
+			ObjectMeta: metav1.ObjectMeta{
+				Name:      "task-1",
+				Namespace: "ns",
+			},
+			Spec: v1alpha1.TaskSpec{
+				TaskSpec: v1beta1.TaskSpec{
+					Params: []v1alpha1.ParamSpec{
+						{
+							Name:        "myarg",
+							Type:        v1alpha1.ParamTypeString,
+							Description: "params without the default value",
+						},
+						{
+							Name: "myprint",
+							Type: v1alpha1.ParamTypeString,
+							Description: "testing very long " +
+								"description information in order to test FormatDesc funnction call longlonglonglonglonglonglonglong" +
+								"longlonglonglonglonglonglonglonglonglonglonglonglonglonglonglonglonglonglonglonglonglonglonglonglong" +
+								"longlonglonglonglonglonglonglonglonglonglonglonglonglonglonglonglonglonglonglonglonglonglonglonglong",
+						},
+						{
+							Name: "myarray",
+							Type: v1alpha1.ParamTypeArray,
+						},
+					},
+				},
+			},
+		},
 	}
 	namespaces := []*corev1.Namespace{
 		{
@@ -249,71 +295,179 @@ func TestTaskDescribe_OnlyNameParams(t *testing.T) {
 func TestTaskDescribe_Full(t *testing.T) {
 	clock := clockwork.NewFakeClock()
 	tasks := []*v1alpha1.Task{
-		tb.Task("task-1",
-			tb.TaskNamespace("ns"),
-			tb.TaskSpec(
-				tb.TaskDescription("a test description"),
-				tb.TaskResources(
-					tb.TaskResourcesInput("my-repo", v1alpha1.PipelineResourceTypeGit),
-					tb.TaskResourcesInput("my-image", v1alpha1.PipelineResourceTypeImage),
-					tb.TaskResourcesInput("source-repo", v1alpha1.PipelineResourceTypeGit),
-					tb.TaskResourcesOutput("code-image", v1alpha1.PipelineResourceTypeImage),
-					tb.TaskResourcesOutput("artifact-image", v1alpha1.PipelineResourceTypeImage),
-				),
-				tb.TaskParam("myarg", v1alpha1.ParamTypeString),
-				tb.TaskParam("myarray", v1alpha1.ParamTypeArray),
-				tb.TaskParam("print", v1alpha1.ParamTypeString, tb.ParamSpecDescription("params with sting type"),
-					tb.ParamSpecDefault("somethingdifferent")),
-				tb.TaskParam("output", v1alpha1.ParamTypeArray, tb.ParamSpecDefault("booms", "booms", "booms")),
-				tb.Step("busybox",
-					tb.StepName("hello"),
-				),
-				tb.Step("busybox",
-					tb.StepName("exit"),
-				),
-			),
-		),
+		{
+			ObjectMeta: metav1.ObjectMeta{
+				Name:      "task-1",
+				Namespace: "ns",
+			},
+			Spec: v1alpha1.TaskSpec{
+				TaskSpec: v1beta1.TaskSpec{
+					Description: "a test description",
+					Steps: []v1alpha1.Step{
+						{
+							Container: corev1.Container{
+								Name:  "hello",
+								Image: "busybox",
+							},
+						},
+						{
+							Container: corev1.Container{
+								Name:  "exit",
+								Image: "busybox",
+							},
+						},
+					},
+				},
+				Inputs: &v1alpha1.Inputs{
+					Resources: []v1alpha1.TaskResource{
+						{
+							ResourceDeclaration: v1alpha1.ResourceDeclaration{
+								Name: "my-repo",
+								Type: v1alpha1.PipelineResourceTypeGit,
+							},
+						},
+						{
+							ResourceDeclaration: v1alpha1.ResourceDeclaration{
+								Name: "my-image",
+								Type: v1alpha1.PipelineResourceTypeImage,
+							},
+						},
+						{
+							ResourceDeclaration: v1alpha1.ResourceDeclaration{
+								Name: "source-repo",
+								Type: v1alpha1.PipelineResourceTypeGit,
+							},
+						},
+					},
+					Params: []v1alpha1.ParamSpec{
+						{
+							Name: "myarg",
+							Type: v1alpha1.ParamTypeString,
+						},
+						{
+							Name: "myarray",
+							Type: v1alpha1.ParamTypeArray,
+						},
+						{
+							Name:        "print",
+							Type:        v1alpha1.ParamTypeString,
+							Description: "params with sting type",
+							Default: &v1alpha1.ArrayOrString{
+								Type:      v1alpha1.ParamTypeString,
+								StringVal: "somethingdifferent",
+							},
+						},
+						{
+							Name: "output",
+							Type: v1alpha1.ParamTypeArray,
+							Default: &v1alpha1.ArrayOrString{
+								Type:     v1alpha1.ParamTypeArray,
+								ArrayVal: []string{"booms", "booms", "booms"},
+							},
+						},
+					},
+				},
+				Outputs: &v1alpha1.Outputs{
+					Resources: []v1beta1.TaskResource{
+						{
+							ResourceDeclaration: v1alpha1.ResourceDeclaration{
+								Name: "code-image",
+								Type: v1alpha1.PipelineResourceTypeImage,
+							},
+						},
+						{
+							ResourceDeclaration: v1alpha1.ResourceDeclaration{
+								Name: "artifact-image",
+								Type: v1alpha1.PipelineResourceTypeImage,
+							},
+						},
+					},
+				},
+			},
+		},
 	}
 	taskRuns := []*v1alpha1.TaskRun{
-		tb.TaskRun("tr-1",
-			tb.TaskRunNamespace("ns"),
-			tb.TaskRunLabel("tekton.dev/task", "task-1"),
-			tb.TaskRunSpec(tb.TaskRunTaskRef("task-1", tb.TaskRefKind(v1alpha1.NamespacedTaskKind))),
-			tb.TaskRunStatus(
-				tb.StatusCondition(apis.Condition{
-					Status: corev1.ConditionFalse,
-					Reason: v1beta1.TaskRunReasonFailed.String(),
-				}),
-				tb.TaskRunStartTime(clock.Now()),
-				cb.TaskRunCompletionTime(clock.Now().Add(5*time.Minute)),
-			),
-		),
-		tb.TaskRun("tr-2",
-			tb.TaskRunNamespace("ns"),
-			tb.TaskRunLabel("tekton.dev/task", "task-1"),
-			tb.TaskRunSpec(tb.TaskRunTaskRef("task-1", tb.TaskRefKind(v1alpha1.NamespacedTaskKind))),
-			tb.TaskRunStatus(
-				tb.StatusCondition(apis.Condition{
-					Status: corev1.ConditionTrue,
-					Reason: v1beta1.TaskRunReasonSuccessful.String(),
-				}),
-				tb.TaskRunStartTime(clock.Now().Add(10*time.Minute)),
-				cb.TaskRunCompletionTime(clock.Now().Add(17*time.Minute)),
-			),
-		),
-		tb.TaskRun("tr-3",
-			tb.TaskRunNamespace("ns"),
-			tb.TaskRunLabel("tekton.dev/task", "task-1"),
-			tb.TaskRunSpec(tb.TaskRunTaskRef("task-1", tb.TaskRefKind(v1alpha1.ClusterTaskKind))),
-			tb.TaskRunStatus(
-				tb.StatusCondition(apis.Condition{
-					Status: corev1.ConditionTrue,
-					Reason: v1beta1.TaskRunReasonSuccessful.String(),
-				}),
-				tb.TaskRunStartTime(clock.Now().Add(10*time.Minute)),
-				cb.TaskRunCompletionTime(clock.Now().Add(17*time.Minute)),
-			),
-		),
+		{
+			ObjectMeta: metav1.ObjectMeta{
+				Name:      "tr-1",
+				Namespace: "ns",
+				Labels:    map[string]string{"tekton.dev/task": "task-1"},
+			},
+			Spec: v1alpha1.TaskRunSpec{
+				TaskRef: &v1alpha1.TaskRef{
+					Name: "task-1",
+					Kind: v1alpha1.NamespacedTaskKind,
+				},
+			},
+			Status: v1beta1.TaskRunStatus{
+				Status: duckv1beta1.Status{
+					Conditions: duckv1beta1.Conditions{
+						{
+							Status: corev1.ConditionFalse,
+							Reason: v1beta1.TaskRunReasonFailed.String(),
+						},
+					},
+				},
+				TaskRunStatusFields: v1alpha1.TaskRunStatusFields{
+					StartTime:      &metav1.Time{Time: clock.Now()},
+					CompletionTime: &metav1.Time{Time: clock.Now().Add(5 * time.Minute)},
+				},
+			},
+		},
+		{
+			ObjectMeta: metav1.ObjectMeta{
+				Name:      "tr-2",
+				Namespace: "ns",
+				Labels:    map[string]string{"tekton.dev/task": "task-1"},
+			},
+			Spec: v1alpha1.TaskRunSpec{
+				TaskRef: &v1alpha1.TaskRef{
+					Name: "task-1",
+					Kind: v1alpha1.NamespacedTaskKind,
+				},
+			},
+			Status: v1beta1.TaskRunStatus{
+				Status: duckv1beta1.Status{
+					Conditions: duckv1beta1.Conditions{
+						{
+							Status: corev1.ConditionTrue,
+							Reason: v1beta1.TaskRunReasonSuccessful.String(),
+						},
+					},
+				},
+				TaskRunStatusFields: v1alpha1.TaskRunStatusFields{
+					StartTime:      &metav1.Time{Time: clock.Now().Add(10 * time.Minute)},
+					CompletionTime: &metav1.Time{Time: clock.Now().Add(17 * time.Minute)},
+				},
+			},
+		},
+		{
+			ObjectMeta: metav1.ObjectMeta{
+				Name:      "tr-3",
+				Namespace: "ns",
+				Labels:    map[string]string{"tekton.dev/task": "task-1"},
+			},
+			Spec: v1alpha1.TaskRunSpec{
+				TaskRef: &v1alpha1.TaskRef{
+					Name: "task-1",
+					Kind: v1alpha1.ClusterTaskKind,
+				},
+			},
+			Status: v1beta1.TaskRunStatus{
+				Status: duckv1beta1.Status{
+					Conditions: duckv1beta1.Conditions{
+						{
+							Status: corev1.ConditionTrue,
+							Reason: v1beta1.TaskRunReasonSuccessful.String(),
+						},
+					},
+				},
+				TaskRunStatusFields: v1alpha1.TaskRunStatusFields{
+					StartTime:      &metav1.Time{Time: clock.Now().Add(10 * time.Minute)},
+					CompletionTime: &metav1.Time{Time: clock.Now().Add(17 * time.Minute)},
+				},
+			},
+		},
 	}
 	namespaces := []*corev1.Namespace{
 		{
@@ -350,8 +504,18 @@ func TestTaskDescribe_Full(t *testing.T) {
 
 func TestTaskDescribe_TaskRunError(t *testing.T) {
 	tasks := []*v1alpha1.Task{
-		tb.Task("task-1", tb.TaskNamespace("ns")),
-		tb.Task("task", tb.TaskNamespace("ns-2")),
+		{
+			ObjectMeta: metav1.ObjectMeta{
+				Name:      "task-1",
+				Namespace: "ns",
+			},
+		},
+		{
+			ObjectMeta: metav1.ObjectMeta{
+				Name:      "task",
+				Namespace: "ns-2",
+			},
+		},
 	}
 	namespaces := []*corev1.Namespace{
 		{
@@ -402,7 +566,12 @@ func TestTaskDescribe_custom_output(t *testing.T) {
 	clock := clockwork.NewFakeClock()
 
 	tasks := []*v1alpha1.Task{
-		tb.Task(name, tb.TaskNamespace("ns")),
+		{
+			ObjectMeta: metav1.ObjectMeta{
+				Name:      name,
+				Namespace: "ns",
+			},
+		},
 	}
 
 	namespaces := []*corev1.Namespace{
