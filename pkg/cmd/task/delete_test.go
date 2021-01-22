@@ -21,7 +21,6 @@ import (
 	"time"
 
 	"github.com/jonboulle/clockwork"
-	tb "github.com/tektoncd/cli/internal/builder/v1alpha1"
 	"github.com/tektoncd/cli/pkg/test"
 	cb "github.com/tektoncd/cli/pkg/test/builder"
 	testDynamic "github.com/tektoncd/cli/pkg/test/dynamic"
@@ -32,61 +31,109 @@ import (
 	corev1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/client-go/dynamic"
-	"knative.dev/pkg/apis"
 	duckv1beta1 "knative.dev/pkg/apis/duck/v1beta1"
 )
 
 func TestTaskDelete(t *testing.T) {
 	version := "v1alpha1"
 	clock := clockwork.NewFakeClock()
+	taskCreated := clock.Now().Add(-1 * time.Minute)
+
+	tdata := []*v1alpha1.Task{
+		{
+			ObjectMeta: metav1.ObjectMeta{
+				Name:              "task",
+				Namespace:         "ns",
+				CreationTimestamp: metav1.Time{Time: taskCreated},
+			},
+		},
+		{
+			ObjectMeta: metav1.ObjectMeta{
+				Name:              "task2",
+				Namespace:         "ns",
+				CreationTimestamp: metav1.Time{Time: taskCreated},
+			},
+		},
+	}
 
 	type clients struct {
 		pipelineClient pipelinetest.Clients
 		dynamicClient  dynamic.Interface
 	}
 
-	tdata := []*v1alpha1.Task{
-		tb.Task("task", tb.TaskNamespace("ns"), cb.TaskCreationTime(clock.Now().Add(-1*time.Minute))),
-		tb.Task("task2", tb.TaskNamespace("ns"), cb.TaskCreationTime(clock.Now().Add(-1*time.Minute))),
-	}
-
 	trdata := []*v1alpha1.TaskRun{
-		tb.TaskRun("task-run-1",
-			tb.TaskRunNamespace("ns"),
-			tb.TaskRunLabel("tekton.dev/task", "task"),
-			tb.TaskRunSpec(tb.TaskRunTaskRef("task", tb.TaskRefKind(v1alpha1.NamespacedTaskKind))),
-			tb.TaskRunStatus(
-				tb.StatusCondition(apis.Condition{
-					Status: corev1.ConditionTrue,
-					Reason: v1beta1.TaskRunReasonSuccessful.String(),
-				}),
-			),
-		),
-		tb.TaskRun("task-run-2",
-			tb.TaskRunNamespace("ns"),
-			tb.TaskRunLabel("tekton.dev/task", "task"),
-			tb.TaskRunSpec(tb.TaskRunTaskRef("task", tb.TaskRefKind(v1alpha1.NamespacedTaskKind))),
-			tb.TaskRunStatus(
-				tb.StatusCondition(apis.Condition{
-					Status: corev1.ConditionTrue,
-					Reason: v1beta1.TaskRunReasonSuccessful.String(),
-				}),
-			),
-		),
+		{
+			ObjectMeta: metav1.ObjectMeta{
+				Name:      "task-run-1",
+				Namespace: "ns",
+				Labels:    map[string]string{"tekton.dev/task": "task"},
+			},
+			Spec: v1alpha1.TaskRunSpec{
+				TaskRef: &v1alpha1.TaskRef{
+					Name: "task",
+					Kind: v1alpha1.NamespacedTaskKind,
+				},
+			},
+			Status: v1beta1.TaskRunStatus{
+				Status: duckv1beta1.Status{
+					Conditions: duckv1beta1.Conditions{
+						{
+							Status: corev1.ConditionTrue,
+							Reason: v1beta1.TaskRunReasonSuccessful.String(),
+						},
+					},
+				},
+			},
+		},
+		{
+			ObjectMeta: metav1.ObjectMeta{
+				Name:      "task-run-2",
+				Namespace: "ns",
+				Labels:    map[string]string{"tekton.dev/task": "task"},
+			},
+			Spec: v1alpha1.TaskRunSpec{
+				TaskRef: &v1alpha1.TaskRef{
+					Name: "task",
+					Kind: v1alpha1.NamespacedTaskKind,
+				},
+			},
+			Status: v1beta1.TaskRunStatus{
+				Status: duckv1beta1.Status{
+					Conditions: duckv1beta1.Conditions{
+						{
+							Status: corev1.ConditionTrue,
+							Reason: v1beta1.TaskRunReasonSuccessful.String(),
+						},
+					},
+				},
+			},
+		},
 		// ClusterTask is provided in the TaskRef of TaskRun, so as to verify
 		// TaskRun created by ClusterTask is not getting deleted while deleting
 		// Task with `--trs` flag and name of Task and ClusterTask is same.
-		tb.TaskRun("task-run-3",
-			tb.TaskRunNamespace("ns"),
-			tb.TaskRunLabel("tekton.dev/task", "task"),
-			tb.TaskRunSpec(tb.TaskRunTaskRef("task", tb.TaskRefKind(v1alpha1.ClusterTaskKind))),
-			tb.TaskRunStatus(
-				tb.StatusCondition(apis.Condition{
-					Status: corev1.ConditionTrue,
-					Reason: v1beta1.TaskRunReasonSuccessful.String(),
-				}),
-			),
-		),
+		{
+			ObjectMeta: metav1.ObjectMeta{
+				Name:      "task-run-3",
+				Namespace: "ns",
+				Labels:    map[string]string{"tekton.dev/task": "task", "tekton.dev/clusterTask": "task"},
+			},
+			Spec: v1alpha1.TaskRunSpec{
+				TaskRef: &v1alpha1.TaskRef{
+					Name: "task",
+					Kind: v1alpha1.ClusterTaskKind,
+				},
+			},
+			Status: v1beta1.TaskRunStatus{
+				Status: duckv1beta1.Status{
+					Conditions: duckv1beta1.Conditions{
+						{
+							Status: corev1.ConditionTrue,
+							Reason: v1beta1.TaskRunReasonSuccessful.String(),
+						},
+					},
+				},
+			},
+		},
 	}
 
 	seeds := make([]clients, 0)

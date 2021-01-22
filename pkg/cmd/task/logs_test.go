@@ -22,8 +22,6 @@ import (
 	"github.com/AlecAivazis/survey/v2/terminal"
 	goexpect "github.com/Netflix/go-expect"
 	"github.com/jonboulle/clockwork"
-	tb "github.com/tektoncd/cli/internal/builder/v1alpha1"
-	tbv1beta1 "github.com/tektoncd/cli/internal/builder/v1beta1"
 	"github.com/tektoncd/cli/pkg/cli"
 	"github.com/tektoncd/cli/pkg/options"
 	"github.com/tektoncd/cli/pkg/pods/fake"
@@ -38,7 +36,6 @@ import (
 	corev1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/client-go/dynamic"
-	"knative.dev/pkg/apis"
 	duckv1beta1 "knative.dev/pkg/apis/duck/v1beta1"
 )
 
@@ -54,7 +51,14 @@ const (
 
 func TestTaskLog(t *testing.T) {
 	clock := clockwork.NewFakeClock()
-	task1 := []*v1alpha1.Task{tb.Task("task", tb.TaskNamespace("ns"))}
+	task1 := []*v1alpha1.Task{
+		{
+			ObjectMeta: metav1.ObjectMeta{
+				Name:      "task",
+				Namespace: "ns",
+			},
+		},
+	}
 	cs, _ := test.SeedTestData(t, pipelinetest.Data{
 		Tasks: task1,
 		Namespaces: []*corev1.Namespace{
@@ -75,7 +79,12 @@ func TestTaskLog(t *testing.T) {
 	}
 
 	task2 := []*v1alpha1.Task{
-		tb.Task("task", tb.TaskNamespace("namespace")),
+		{
+			ObjectMeta: metav1.ObjectMeta{
+				Name:      "task",
+				Namespace: "namespace",
+			},
+		},
 	}
 	cs2, _ := test.SeedTestData(t, pipelinetest.Data{
 		Tasks: task2,
@@ -315,44 +324,92 @@ func TestTaskLog2(t *testing.T) {
 	t.Skip("Skipping due of flakiness")
 
 	clock := clockwork.NewFakeClock()
+	taskCreated := clock.Now()
 
 	cs, _ := test.SeedTestData(t, pipelinetest.Data{
 		Tasks: []*v1alpha1.Task{
-			tb.Task("task", tb.TaskNamespace("ns"), cb.TaskCreationTime(clock.Now())),
+			{
+				ObjectMeta: metav1.ObjectMeta{
+					Name:              "task",
+					Namespace:         "ns",
+					CreationTimestamp: metav1.Time{Time: taskCreated},
+				},
+			},
 		},
 		TaskRuns: []*v1alpha1.TaskRun{
-			tb.TaskRun("taskrun1", tb.TaskRunNamespace("ns"),
-				tb.TaskRunLabel("tekton.dev/task", "task"),
-				tb.TaskRunSpec(tb.TaskRunTaskRef("task")),
-				tb.TaskRunStatus(
-					tb.PodName("pod"),
-					tb.TaskRunStartTime(clock.Now().Add(-5*time.Minute)),
-					tb.StatusCondition(apis.Condition{
-						Status: corev1.ConditionTrue,
-						Reason: v1beta1.TaskRunReasonSuccessful.String(),
-					}),
-					tb.StepState(
-						cb.StepName("step1"),
-						tb.StateTerminated(0),
-					),
-				),
-			),
-			tb.TaskRun("taskrun2", tb.TaskRunNamespace("ns"),
-				tb.TaskRunLabel("tekton.dev/task", "task"),
-				tb.TaskRunSpec(tb.TaskRunTaskRef("task")),
-				tb.TaskRunStatus(
-					tb.PodName("pod"),
-					tb.TaskRunStartTime(clock.Now().Add(-3*time.Minute)),
-					tb.StatusCondition(apis.Condition{
-						Status: corev1.ConditionTrue,
-						Reason: v1beta1.TaskRunReasonSuccessful.String(),
-					}),
-					tb.StepState(
-						cb.StepName("step2"),
-						tb.StateTerminated(0),
-					),
-				),
-			),
+			{
+				ObjectMeta: metav1.ObjectMeta{
+					Name:      "taskrun1",
+					Namespace: "ns",
+					Labels:    map[string]string{"tekton.dev/task": "task"},
+				},
+				Spec: v1alpha1.TaskRunSpec{
+					TaskRef: &v1alpha1.TaskRef{
+						Name: "task",
+						Kind: v1alpha1.NamespacedTaskKind,
+					},
+				},
+				Status: v1beta1.TaskRunStatus{
+					Status: duckv1beta1.Status{
+						Conditions: duckv1beta1.Conditions{
+							{
+								Status: corev1.ConditionTrue,
+								Reason: v1beta1.TaskRunReasonSuccessful.String(),
+							},
+						},
+					},
+					TaskRunStatusFields: v1beta1.TaskRunStatusFields{
+						StartTime: &metav1.Time{Time: clock.Now().Add(-5 * time.Minute)},
+						PodName:   "pod",
+						Steps: []v1alpha1.StepState{
+							{
+								Name: "step1",
+								ContainerState: corev1.ContainerState{
+									Terminated: &corev1.ContainerStateTerminated{
+										ExitCode: 0,
+									},
+								},
+							},
+						},
+					},
+				},
+			},
+			{
+				ObjectMeta: metav1.ObjectMeta{
+					Name:      "taskrun2",
+					Namespace: "ns",
+					Labels:    map[string]string{"tekton.dev/task": "task"},
+				},
+				Spec: v1alpha1.TaskRunSpec{
+					TaskRef: &v1alpha1.TaskRef{
+						Name: "task",
+					},
+				},
+				Status: v1beta1.TaskRunStatus{
+					Status: duckv1beta1.Status{
+						Conditions: duckv1beta1.Conditions{
+							{
+								Status: corev1.ConditionTrue,
+								Reason: v1beta1.TaskRunReasonSuccessful.String(),
+							},
+						},
+					},
+					TaskRunStatusFields: v1beta1.TaskRunStatusFields{
+						StartTime: &metav1.Time{Time: clock.Now().Add(-3 * time.Minute)},
+						PodName:   "pod",
+						Steps: []v1alpha1.StepState{
+							{
+								Name: "step2",
+								ContainerState: corev1.ContainerState{
+									Terminated: &corev1.ContainerStateTerminated{
+										ExitCode: 0,
+									},
+								},
+							},
+						},
+					},
+				},
+			},
 		},
 		Namespaces: []*corev1.Namespace{
 			{
@@ -362,39 +419,77 @@ func TestTaskLog2(t *testing.T) {
 			},
 		},
 		Pods: []*corev1.Pod{
-			tbv1beta1.Pod("pod", tbv1beta1.PodNamespace("ns"),
-				tbv1beta1.PodSpec(
-					tbv1beta1.PodContainer("step1", "step1:latest"),
-					tbv1beta1.PodContainer("step2", "step2:latest"),
-				),
-				cb.PodStatus(
-					cb.PodPhase(corev1.PodSucceeded),
-				),
-			),
+			{
+				ObjectMeta: metav1.ObjectMeta{
+					Name:      "pod",
+					Namespace: "ns",
+				},
+				Spec: corev1.PodSpec{
+					Containers: []corev1.Container{
+						{
+							Name:  "step1",
+							Image: "step1:latest",
+						},
+						{
+							Name:  "step2",
+							Image: "step2:latest",
+						},
+					},
+				},
+				Status: corev1.PodStatus{
+					Phase: corev1.PodSucceeded,
+				},
+			},
 		},
 	})
 
 	cs2, _ := test.SeedTestData(t, pipelinetest.Data{
 		Tasks: []*v1alpha1.Task{
-			tb.Task("task", tb.TaskNamespace("ns"), cb.TaskCreationTime(clock.Now())),
+			{
+				ObjectMeta: metav1.ObjectMeta{
+					Name:              "task",
+					Namespace:         "ns",
+					CreationTimestamp: metav1.Time{Time: taskCreated},
+				},
+			},
 		},
 		TaskRuns: []*v1alpha1.TaskRun{
-			tb.TaskRun("taskrun1", tb.TaskRunNamespace("ns"),
-				tb.TaskRunLabel("tekton.dev/task", "task"),
-				tb.TaskRunSpec(tb.TaskRunTaskRef("task")),
-				tb.TaskRunStatus(
-					tb.PodName("pod"),
-					tb.TaskRunStartTime(clock.Now().Add(-5*time.Minute)),
-					tb.StatusCondition(apis.Condition{
-						Status: corev1.ConditionTrue,
-						Reason: v1beta1.TaskRunReasonSuccessful.String(),
-					}),
-					tb.StepState(
-						cb.StepName("step1"),
-						tb.StateTerminated(0),
-					),
-				),
-			),
+			{
+				ObjectMeta: metav1.ObjectMeta{
+					Name:      "taskrun1",
+					Namespace: "ns",
+					Labels:    map[string]string{"tekton.dev/task": "task"},
+				},
+				Spec: v1alpha1.TaskRunSpec{
+					TaskRef: &v1alpha1.TaskRef{
+						Name: "task",
+					},
+				},
+				Status: v1beta1.TaskRunStatus{
+					Status: duckv1beta1.Status{
+						Conditions: duckv1beta1.Conditions{
+							{
+								Status: corev1.ConditionTrue,
+								Reason: v1beta1.TaskRunReasonSuccessful.String(),
+							},
+						},
+					},
+					TaskRunStatusFields: v1beta1.TaskRunStatusFields{
+						StartTime: &metav1.Time{Time: clock.Now().Add(-5 * time.Minute)},
+						PodName:   "pod",
+						Steps: []v1alpha1.StepState{
+							{
+								Name: "step1",
+								ContainerState: corev1.ContainerState{
+									Terminated: &corev1.ContainerStateTerminated{
+										ExitCode: 0,
+									},
+								},
+							},
+						},
+					},
+				},
+			},
 		},
 		Namespaces: []*corev1.Namespace{
 			{
@@ -404,15 +499,27 @@ func TestTaskLog2(t *testing.T) {
 			},
 		},
 		Pods: []*corev1.Pod{
-			tbv1beta1.Pod("pod", tbv1beta1.PodNamespace("ns"),
-				tbv1beta1.PodSpec(
-					tbv1beta1.PodContainer("step1", "step1:latest"),
-					tbv1beta1.PodContainer("step2", "step2:latest"),
-				),
-				cb.PodStatus(
-					cb.PodPhase(corev1.PodSucceeded),
-				),
-			),
+			{
+				ObjectMeta: metav1.ObjectMeta{
+					Name:      "pod",
+					Namespace: "ns",
+				},
+				Spec: corev1.PodSpec{
+					Containers: []corev1.Container{
+						{
+							Name:  "step1",
+							Image: "step1:latest",
+						},
+						{
+							Name:  "step2",
+							Image: "step2:latest",
+						},
+					},
+				},
+				Status: corev1.PodStatus{
+					Phase: corev1.PodSucceeded,
+				},
+			},
 		},
 	})
 
