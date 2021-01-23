@@ -34,6 +34,8 @@ or
   -L, --last                          show description for last PipelineRun
       --limit int                     lists number of PipelineRuns when selecting a PipelineRun to describe (default 5)
   -o, --output string                 Output format. One of: json|yaml|name|go-template|go-template-file|template|templatefile|jsonpath|jsonpath-as-json|jsonpath-file.
+      --status                        use status to get the status of a PipelineRun
+      --taskruns                      show the status of taskruns, must be specified with --status
       --template string               Template string or path to template file to use when -o=go-template, -o=go-template-file. The template format is golang templates [http://golang.org/pkg/text/template/#pkg-overview].
 ```
 

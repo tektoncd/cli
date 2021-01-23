@@ -35,9 +35,14 @@ const (
 	defaultDescribeLimit = 5
 )
 
+type describeOptions struct {
+	TaskRuns bool
+}
+
 func describeCommand(p cli.Params) *cobra.Command {
 	f := cliopts.NewPrintFlags("describe")
 	opts := &options.DescribeOptions{Params: p}
+	describeOpts := &describeOptions{TaskRuns: false}
 	eg := `Describe a PipelineRun of name 'foo' in namespace 'bar':
 
     tkn pipelinerun describe foo -n bar
@@ -104,6 +109,17 @@ or
 				opts.PipelineRunName = args[0]
 			}
 
+			if describeOpts.TaskRuns && !opts.Status {
+				return fmt.Errorf("--taskruns must be specified with --status")
+			}
+
+			if opts.Status {
+				if describeOpts.TaskRuns {
+					return prdesc.PrintPipelineRunStatusWithTaskRuns(s, opts.PipelineRunName, p)
+				}
+				return prdesc.PrintPipelineRunStatus(cmd.OutOrStdout(), opts.PipelineRunName, p)
+			}
+
 			if output != "" {
 				pipelineRunGroupResource := schema.GroupVersionResource{Group: "tekton.dev", Resource: "pipelineruns"}
 				return actions.PrintObject(pipelineRunGroupResource, opts.PipelineRunName, cmd.OutOrStdout(), p, f, p.Namespace())
@@ -116,7 +132,8 @@ or
 	c.Flags().BoolVarP(&opts.Last, "last", "L", false, "show description for last PipelineRun")
 	c.Flags().IntVarP(&opts.Limit, "limit", "", defaultDescribeLimit, "lists number of PipelineRuns when selecting a PipelineRun to describe")
 	c.Flags().BoolVarP(&opts.Fzf, "fzf", "F", false, "use fzf to select a PipelineRun to describe")
-
+	c.Flags().BoolVarP(&opts.Status, "status", "", false, "use status to get the status of a PipelineRun")
+	c.Flags().BoolVarP(&describeOpts.TaskRuns, "taskruns", "", false, "show the status of taskruns, must be specified with --status")
 	f.AddFlags(c)
 
 	return c

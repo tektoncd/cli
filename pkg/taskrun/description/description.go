@@ -16,6 +16,7 @@ package description
 
 import (
 	"fmt"
+	"io"
 	"sort"
 	"text/tabwriter"
 	"text/template"
@@ -245,6 +246,79 @@ func PrintTaskRunDescription(s *cli.Stream, trName string, p cli.Params) error {
 
 	w := tabwriter.NewWriter(s.Out, 0, 5, 3, ' ', tabwriter.TabIndent)
 	t := template.Must(template.New("Describe TaskRun").Funcs(funcMap).Parse(templ))
+
+	err = t.Execute(w, data)
+	if err != nil {
+		fmt.Fprintf(s.Err, "failed to execute template: ")
+		return err
+	}
+	return w.Flush()
+}
+
+// PrintTaskRunStatus prints the status of the specific TaskRun
+func PrintTaskRunStatus(w io.Writer, trName string, p cli.Params) error {
+	cs, err := p.Clients()
+	if err != nil {
+		return fmt.Errorf("failed to create tekton client: %v", err)
+	}
+
+	tr, err := taskrun.Get(cs, trName, metav1.GetOptions{}, p.Namespace())
+	if err != nil {
+		return fmt.Errorf("failed to get TaskRun %s: %v", trName, err)
+	}
+
+	condition := formatted.Condition(tr.Status.Conditions)
+	_, err = fmt.Fprint(w, condition)
+	return err
+}
+
+// PrintTaskRunStatusWithSteps prints the status of the specific TaskRun with associated steps
+func PrintTaskRunStatusWithSteps(s *cli.Stream, trName string, p cli.Params) error {
+	statusTempl := `{{decorate "status" ""}}{{decorate "underline bold" "Status"}}
+
+STATUS
+{{ formatCondition .TaskRun.Status.Conditions }}
+
+{{decorate "steps" ""}}{{decorate "underline bold" "Steps"}}
+{{$sortedSteps := sortStepStates .TaskRun.Status.Steps }}
+{{- $l := len $sortedSteps }}{{ if eq $l 0 }}
+No steps
+{{- else }}
+ NAME	STATUS
+{{- range $step := $sortedSteps }}
+{{- $reason := stepReasonExists $step }}
+ {{decorate "bullet" $step.Name }}	{{ $reason }}
+{{- end }}
+{{- end }}
+`
+
+	cs, err := p.Clients()
+	if err != nil {
+		return fmt.Errorf("failed to create tekton client: %v", err)
+	}
+
+	tr, err := taskrun.Get(cs, trName, metav1.GetOptions{}, p.Namespace())
+	if err != nil {
+		return fmt.Errorf("failed to get TaskRun %s: %v", trName, err)
+	}
+
+	var data = struct {
+		TaskRun *v1beta1.TaskRun
+		Time    clockwork.Clock
+	}{
+		TaskRun: tr,
+		Time:    p.Time(),
+	}
+
+	funcMap := template.FuncMap{
+		"formatCondition":  formatted.Condition,
+		"stepReasonExists": stepReasonExists,
+		"decorate":         formatted.DecorateAttr,
+		"sortStepStates":   sortStepStatesByStartTime,
+	}
+
+	w := tabwriter.NewWriter(s.Out, 0, 5, 3, ' ', tabwriter.TabIndent)
+	t := template.Must(template.New("Describe TaskRun Status").Funcs(funcMap).Parse(statusTempl))
 
 	err = t.Execute(w, data)
 	if err != nil {

@@ -16,6 +16,7 @@ package description
 
 import (
 	"fmt"
+	"io"
 	"sort"
 	"text/tabwriter"
 	"text/template"
@@ -199,6 +200,84 @@ func PrintPipelineRunDescription(s *cli.Stream, prName string, p cli.Params) err
 
 	w := tabwriter.NewWriter(s.Out, 0, 5, 3, ' ', tabwriter.TabIndent)
 	t := template.Must(template.New("Describe Pipelinerun").Funcs(funcMap).Parse(templ))
+
+	if err = t.Execute(w, data); err != nil {
+		fmt.Fprintf(s.Err, "failed to execute template: ")
+		return err
+	}
+	return w.Flush()
+}
+
+// PrintPipelineRunStatus prints the status of the specific PilelineRun
+func PrintPipelineRunStatus(w io.Writer, prName string, p cli.Params) error {
+	cs, err := p.Clients()
+	if err != nil {
+		return fmt.Errorf("failed to create tekton client: %v", err)
+	}
+
+	pr, err := pipelinerun.Get(cs, prName, metav1.GetOptions{}, p.Namespace())
+	if err != nil {
+		return fmt.Errorf("failed to find pipelinerun %q", prName)
+	}
+
+	condition := formatted.Condition(pr.Status.Conditions)
+	_, err = fmt.Fprint(w, condition)
+	return err
+}
+
+// PrintPipelineRunStatusWithTaskRuns prints the status of the specific PilelineRun with associated taskruns
+func PrintPipelineRunStatusWithTaskRuns(s *cli.Stream, prName string, p cli.Params) error {
+	statusTempl := `{{decorate "status" ""}}{{decorate "underline bold" "Status"}}
+
+STATUS
+{{ formatCondition .PipelineRun.Status.Conditions }}
+
+{{decorate "taskruns" ""}}{{decorate "underline bold" "Taskruns\n"}}
+{{- $l := len .TaskrunList }}{{ if eq $l 0 }}
+No taskruns
+{{- else }}
+ NAME	TASK NAME	STATUS
+{{- range $taskrun := .TaskrunList }}{{ if checkTRStatus $taskrun }}
+ {{decorate "bullet" $taskrun.TaskrunName }}	{{ $taskrun.PipelineTaskName }}	{{ formatCondition $taskrun.Status.Conditions }}
+{{- end }}
+{{- end }}
+{{- end }}
+	`
+
+	cs, err := p.Clients()
+	if err != nil {
+		return fmt.Errorf("failed to create tekton client: %v", err)
+	}
+
+	pr, err := pipelinerun.Get(cs, prName, metav1.GetOptions{}, p.Namespace())
+	if err != nil {
+		return fmt.Errorf("failed to find pipelinerun %q", prName)
+	}
+
+	var trl taskrunList
+	if len(pr.Status.TaskRuns) != 0 {
+		trl = newTaskrunListFromMap(pr.Status.TaskRuns)
+		sort.Sort(trl)
+	}
+
+	var data = struct {
+		PipelineRun *v1beta1.PipelineRun
+		Params      cli.Params
+		TaskrunList taskrunList
+	}{
+		PipelineRun: pr,
+		Params:      p,
+		TaskrunList: trl,
+	}
+
+	funcMap := template.FuncMap{
+		"formatCondition": formatted.Condition,
+		"decorate":        formatted.DecorateAttr,
+		"checkTRStatus":   checkTaskRunStatus,
+	}
+
+	w := tabwriter.NewWriter(s.Out, 0, 5, 3, ' ', tabwriter.TabIndent)
+	t := template.Must(template.New("Describe Pipelinerun Status").Funcs(funcMap).Parse(statusTempl))
 
 	if err = t.Execute(w, data); err != nil {
 		fmt.Fprintf(s.Err, "failed to execute template: ")

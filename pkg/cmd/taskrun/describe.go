@@ -35,9 +35,14 @@ const (
 	defaultTaskRunLimit = 5
 )
 
+type describeOptions struct {
+	Steps bool
+}
+
 func describeCommand(p cli.Params) *cobra.Command {
-	opts := &options.DescribeOptions{Params: p}
 	f := cliopts.NewPrintFlags("describe")
+	opts := &options.DescribeOptions{Params: p}
+	describeOpts := &describeOptions{Steps: false}
 	eg := `Describe a TaskRun of name 'foo' in namespace 'bar':
 
     tkn taskrun describe foo -n bar
@@ -104,6 +109,17 @@ or
 				opts.TaskrunName = args[0]
 			}
 
+			if describeOpts.Steps && !opts.Status {
+				return fmt.Errorf("--steps must be specified with --status")
+			}
+
+			if opts.Status {
+				if describeOpts.Steps {
+					return trdesc.PrintTaskRunStatusWithSteps(s, opts.TaskrunName, p)
+				}
+				return trdesc.PrintTaskRunStatus(cmd.OutOrStdout(), opts.TaskrunName, p)
+			}
+
 			if output != "" {
 				taskRunGroupResource := schema.GroupVersionResource{Group: "tekton.dev", Resource: "taskruns"}
 				return actions.PrintObject(taskRunGroupResource, opts.TaskrunName, cmd.OutOrStdout(), p, f, p.Namespace())
@@ -116,7 +132,8 @@ or
 	c.Flags().BoolVarP(&opts.Last, "last", "L", false, "show description for last TaskRun")
 	c.Flags().IntVarP(&opts.Limit, "limit", "", defaultTaskRunLimit, "lists number of TaskRuns when selecting a TaskRun to describe")
 	c.Flags().BoolVarP(&opts.Fzf, "fzf", "F", false, "use fzf to select a taskrun to describe")
-
+	c.Flags().BoolVarP(&opts.Status, "status", "", false, "use status to get the status of a TaskRun")
+	c.Flags().BoolVarP(&describeOpts.Steps, "steps", "", false, "show the status of steps, must be specified with --status")
 	f.AddFlags(c)
 
 	return c
