@@ -21,7 +21,6 @@ import (
 	"time"
 
 	"github.com/jonboulle/clockwork"
-	tb "github.com/tektoncd/cli/internal/builder/v1alpha1"
 	"github.com/tektoncd/cli/pkg/test"
 	cb "github.com/tektoncd/cli/pkg/test/builder"
 	testDynamic "github.com/tektoncd/cli/pkg/test/dynamic"
@@ -99,17 +98,29 @@ func TestTaskRunDescribe_empty_taskrun(t *testing.T) {
 	clock := clockwork.NewFakeClock()
 
 	trs := []*v1alpha1.TaskRun{
-		tb.TaskRun("tr-1",
-			tb.TaskRunNamespace("ns"),
-			tb.TaskRunLabel("tekton.dev/task", "t1"),
-			tb.TaskRunSpec(tb.TaskRunTaskRef("t1")),
-			tb.TaskRunStatus(
-				tb.StatusCondition(apis.Condition{
-					Status: corev1.ConditionTrue,
-					Reason: v1beta1.TaskRunReasonSuccessful.String(),
-				}),
-			),
-		),
+		{
+			ObjectMeta: metav1.ObjectMeta{
+				Name:      "tr-1",
+				Namespace: "ns",
+				Labels:    map[string]string{"tekton.dev/task": "t1"},
+			},
+			Spec: v1alpha1.TaskRunSpec{
+				TaskRef: &v1alpha1.TaskRef{
+					Name: "t1",
+				},
+				Timeout: &metav1.Duration{Duration: 1 * time.Hour},
+			},
+			Status: v1alpha1.TaskRunStatus{
+				Status: duckv1beta1.Status{
+					Conditions: duckv1beta1.Conditions{
+						{
+							Status: corev1.ConditionTrue,
+							Reason: v1beta1.TaskRunReasonSuccessful.String(),
+						},
+					},
+				},
+			},
+		},
 	}
 
 	cs, _ := test.SeedTestData(t, pipelinetest.Data{
@@ -149,33 +160,99 @@ func TestTaskRunDescribe_only_taskrun(t *testing.T) {
 	clock := clockwork.NewFakeClock()
 
 	trs := []*v1alpha1.TaskRun{
-		tb.TaskRun("tr-1",
-			tb.TaskRunNamespace("ns"),
-			tb.TaskRunStatus(
-				tb.TaskRunStartTime(clockwork.NewFakeClock().Now().Add(20*time.Second)),
-				tb.StatusCondition(apis.Condition{
-					Type:   apis.ConditionSucceeded,
-					Status: corev1.ConditionTrue,
-				}),
-				tb.StepState(
-					cb.StepName("step1"),
-					tb.SetStepStateTerminated(reasonCompleted),
-				),
-				tb.StepState(
-					cb.StepName("step2"),
-					tb.SetStepStateTerminated(reasonCompleted),
-				),
-			),
-			tb.TaskRunSpec(
-				tb.TaskRunTaskRef("t1"),
-				tb.TaskRunInputs(tb.TaskRunInputsParam("input", "param")),
-				tb.TaskRunInputs(tb.TaskRunInputsParam("input2", "param2")),
-				tb.TaskRunInputs(tb.TaskRunInputsResource("git", tb.TaskResourceBindingRef("git"))),
-				tb.TaskRunInputs(tb.TaskRunInputsResource("image-input", tb.TaskResourceBindingRef("image"))),
-				tb.TaskRunOutputs(tb.TaskRunOutputsResource("image-output", tb.TaskResourceBindingRef("image"))),
-				tb.TaskRunOutputs(tb.TaskRunOutputsResource("image-output2", tb.TaskResourceBindingRef("image"))),
-			),
-		),
+		{
+			ObjectMeta: metav1.ObjectMeta{
+				Name:      "tr-1",
+				Namespace: "ns",
+			},
+			Status: v1alpha1.TaskRunStatus{
+				TaskRunStatusFields: v1alpha1.TaskRunStatusFields{
+					StartTime: &metav1.Time{Time: clockwork.NewFakeClock().Now().Add(20 * time.Second)},
+					Steps: []v1alpha1.StepState{
+						{
+							Name: "step1",
+							ContainerState: corev1.ContainerState{
+								Terminated: &corev1.ContainerStateTerminated{
+									Reason: reasonCompleted.Reason,
+								},
+							},
+						},
+						{
+							Name: "step2",
+							ContainerState: corev1.ContainerState{
+								Terminated: &corev1.ContainerStateTerminated{
+									Reason: reasonCompleted.Reason,
+								},
+							},
+						},
+					},
+				},
+				Status: duckv1beta1.Status{
+					Conditions: duckv1beta1.Conditions{
+						{
+							Status: corev1.ConditionTrue,
+							Type:   apis.ConditionSucceeded,
+						},
+					},
+				},
+			},
+			Spec: v1alpha1.TaskRunSpec{
+				TaskRef: &v1alpha1.TaskRef{
+					Name: "t1",
+				},
+				Timeout: &metav1.Duration{Duration: 1 * time.Hour},
+				Inputs: &v1alpha1.TaskRunInputs{
+					Params: []v1alpha1.Param{
+						{
+							Name:  "input",
+							Value: v1alpha1.ArrayOrString{Type: v1alpha1.ParamTypeString, StringVal: "param"},
+						},
+						{
+							Name:  "input2",
+							Value: v1alpha1.ArrayOrString{Type: v1alpha1.ParamTypeString, StringVal: "param2"},
+						},
+					},
+					Resources: []v1alpha1.TaskResourceBinding{
+						{
+							PipelineResourceBinding: v1alpha1.PipelineResourceBinding{
+								Name: "git",
+								ResourceRef: &v1alpha1.PipelineResourceRef{
+									Name: "git",
+								},
+							},
+						},
+						{
+							PipelineResourceBinding: v1alpha1.PipelineResourceBinding{
+								Name: "image-input",
+								ResourceRef: &v1alpha1.PipelineResourceRef{
+									Name: "image",
+								},
+							},
+						},
+					},
+				},
+				Outputs: &v1alpha1.TaskRunOutputs{
+					Resources: []v1alpha1.TaskResourceBinding{
+						{
+							PipelineResourceBinding: v1alpha1.PipelineResourceBinding{
+								Name: "image-output",
+								ResourceRef: &v1alpha1.PipelineResourceRef{
+									Name: "image",
+								},
+							},
+						},
+						{
+							PipelineResourceBinding: v1alpha1.PipelineResourceBinding{
+								Name: "image-output2",
+								ResourceRef: &v1alpha1.PipelineResourceRef{
+									Name: "image",
+								},
+							},
+						},
+					},
+				},
+			},
+		},
 	}
 
 	cs, _ := test.SeedTestData(t, pipelinetest.Data{
@@ -216,21 +293,33 @@ func TestTaskRunDescribe_failed(t *testing.T) {
 	clock := clockwork.NewFakeClock()
 
 	trs := []*v1alpha1.TaskRun{
-		tb.TaskRun("tr-1",
-			tb.TaskRunNamespace("ns"),
-			tb.TaskRunStatus(
-				tb.TaskRunStartTime(clock.Now().Add(2*time.Minute)),
-				cb.TaskRunCompletionTime(clock.Now().Add(5*time.Minute)),
-				tb.StatusCondition(apis.Condition{
-					Status:  corev1.ConditionFalse,
-					Reason:  v1beta1.TaskRunReasonFailed.String(),
-					Message: "Testing tr failed",
-				}),
-			),
-			tb.TaskRunSpec(
-				tb.TaskRunTaskRef("t1"),
-			),
-		),
+		{
+			ObjectMeta: metav1.ObjectMeta{
+				Name:      "tr-1",
+				Namespace: "ns",
+			},
+			Status: v1alpha1.TaskRunStatus{
+				Status: duckv1beta1.Status{
+					Conditions: duckv1beta1.Conditions{
+						{
+							Status:  corev1.ConditionFalse,
+							Reason:  v1beta1.TaskRunReasonFailed.String(),
+							Message: "Testing tr failed",
+						},
+					},
+				},
+				TaskRunStatusFields: v1alpha1.TaskRunStatusFields{
+					StartTime:      &metav1.Time{Time: clock.Now().Add(2 * time.Minute)},
+					CompletionTime: &metav1.Time{Time: clock.Now().Add(5 * time.Minute)},
+				},
+			},
+			Spec: v1alpha1.TaskRunSpec{
+				TaskRef: &v1alpha1.TaskRef{
+					Name: "t1",
+				},
+				Timeout: &metav1.Duration{Duration: 1 * time.Hour},
+			},
+		},
 	}
 
 	cs, _ := test.SeedTestData(t, pipelinetest.Data{
@@ -271,18 +360,27 @@ func TestTaskRunDescribe_no_taskref(t *testing.T) {
 	clock := clockwork.NewFakeClock()
 
 	trs := []*v1alpha1.TaskRun{
-		tb.TaskRun("tr-1",
-			tb.TaskRunNamespace("ns"),
-			tb.TaskRunStatus(
-				tb.TaskRunStartTime(clock.Now().Add(2*time.Minute)),
-				cb.TaskRunCompletionTime(clock.Now().Add(5*time.Minute)),
-				tb.StatusCondition(apis.Condition{
-					Status:  corev1.ConditionFalse,
-					Reason:  v1beta1.TaskRunReasonFailed.String(),
-					Message: "Testing tr failed",
-				}),
-			),
-		),
+		{
+			ObjectMeta: metav1.ObjectMeta{
+				Name:      "tr-1",
+				Namespace: "ns",
+			},
+			Status: v1alpha1.TaskRunStatus{
+				TaskRunStatusFields: v1alpha1.TaskRunStatusFields{
+					StartTime:      &metav1.Time{Time: clock.Now().Add(2 * time.Minute)},
+					CompletionTime: &metav1.Time{Time: clock.Now().Add(5 * time.Minute)},
+				},
+				Status: duckv1beta1.Status{
+					Conditions: duckv1beta1.Conditions{
+						{
+							Status:  corev1.ConditionFalse,
+							Reason:  v1beta1.TaskRunReasonFailed.String(),
+							Message: "Testing tr failed",
+						},
+					},
+				},
+			},
+		},
 	}
 
 	cs, _ := test.SeedTestData(t, pipelinetest.Data{
@@ -357,33 +455,90 @@ func TestTaskRunDescribe_no_resourceref(t *testing.T) {
 	clock := clockwork.NewFakeClock()
 
 	trs := []*v1alpha1.TaskRun{
-		tb.TaskRun("tr-1",
-			tb.TaskRunNamespace("ns"),
-			tb.TaskRunStatus(
-				tb.TaskRunStartTime(clockwork.NewFakeClock().Now().Add(20*time.Second)),
-				tb.StatusCondition(apis.Condition{
-					Type:   apis.ConditionSucceeded,
-					Status: corev1.ConditionTrue,
-				}),
-				tb.StepState(
-					cb.StepName("step1"),
-					tb.SetStepStateTerminated(reasonCompleted),
-				),
-				tb.StepState(
-					cb.StepName("step2"),
-					tb.SetStepStateTerminated(reasonCompleted),
-				),
-			),
-			tb.TaskRunSpec(
-				tb.TaskRunTaskRef("t1"),
-				tb.TaskRunInputs(tb.TaskRunInputsParam("input", "param")),
-				tb.TaskRunInputs(tb.TaskRunInputsParam("input2", "param2")),
-				tb.TaskRunInputs(tb.TaskRunInputsResource("git")),
-				tb.TaskRunInputs(tb.TaskRunInputsResource("image-input", tb.TaskResourceBindingRef("image"))),
-				tb.TaskRunOutputs(tb.TaskRunOutputsResource("image-output")),
-				tb.TaskRunOutputs(tb.TaskRunOutputsResource("image-output2")),
-			),
-		),
+		{
+			ObjectMeta: metav1.ObjectMeta{
+				Name:      "tr-1",
+				Namespace: "ns",
+			},
+			Status: v1alpha1.TaskRunStatus{
+				TaskRunStatusFields: v1alpha1.TaskRunStatusFields{
+					StartTime: &metav1.Time{Time: clockwork.NewFakeClock().Now().Add(20 * time.Second)},
+					Steps: []v1beta1.StepState{
+						{
+							Name: "step1",
+							ContainerState: corev1.ContainerState{
+								Terminated: &corev1.ContainerStateTerminated{
+									Reason: reasonCompleted.Reason,
+								},
+							},
+						},
+						{
+							Name: "step2",
+							ContainerState: corev1.ContainerState{
+								Terminated: &corev1.ContainerStateTerminated{
+									Reason: reasonCompleted.Reason,
+								},
+							},
+						},
+					},
+				},
+				Status: duckv1beta1.Status{
+					Conditions: duckv1beta1.Conditions{
+						{
+							Status: corev1.ConditionTrue,
+							Type:   apis.ConditionSucceeded,
+						},
+					},
+				},
+			},
+			Spec: v1alpha1.TaskRunSpec{
+				TaskRef: &v1alpha1.TaskRef{
+					Name: "t1",
+				},
+				Timeout: &metav1.Duration{Duration: 1 * time.Hour},
+				Inputs: &v1alpha1.TaskRunInputs{
+					Params: []v1alpha1.Param{
+						{
+							Name:  "input",
+							Value: v1alpha1.ArrayOrString{Type: v1alpha1.ParamTypeString, StringVal: "param"},
+						},
+						{
+							Name:  "input2",
+							Value: v1alpha1.ArrayOrString{Type: v1alpha1.ParamTypeString, StringVal: "param2"},
+						},
+					},
+					Resources: []v1alpha1.TaskResourceBinding{
+						{
+							PipelineResourceBinding: v1alpha1.PipelineResourceBinding{
+								Name: "git",
+							},
+						},
+						{
+							PipelineResourceBinding: v1alpha1.PipelineResourceBinding{
+								Name: "image-input",
+								ResourceRef: &v1alpha1.PipelineResourceRef{
+									Name: "image",
+								},
+							},
+						},
+					},
+				},
+				Outputs: &v1alpha1.TaskRunOutputs{
+					Resources: []v1alpha1.TaskResourceBinding{
+						{
+							PipelineResourceBinding: v1alpha1.PipelineResourceBinding{
+								Name: "image-output",
+							},
+						},
+						{
+							PipelineResourceBinding: v1alpha1.PipelineResourceBinding{
+								Name: "image-output2",
+							},
+						},
+					},
+				},
+			},
+		},
 	}
 
 	cs, _ := test.SeedTestData(t, pipelinetest.Data{
@@ -424,39 +579,98 @@ func TestTaskRunDescribe_step_sidecar_status_defaults_and_failures(t *testing.T)
 	clock := clockwork.NewFakeClock()
 
 	trs := []*v1alpha1.TaskRun{
-		tb.TaskRun("tr-1",
-			tb.TaskRunNamespace("ns"),
-			tb.TaskRunStatus(
-				tb.TaskRunStartTime(clockwork.NewFakeClock().Now().Add(20*time.Second)),
-				tb.StatusCondition(apis.Condition{
-					Status: corev1.ConditionFalse,
-					Reason: v1beta1.TaskRunReasonFailed.String(),
-				}),
-				tb.StepState(
-					cb.StepName("step1"),
-					tb.SetStepStateTerminated(reasonFailed),
-				),
-				tb.StepState(
-					cb.StepName("step2"),
-				),
-				tb.SidecarState(
-					tb.SidecarStateName("sidecar1"),
-					tb.SetSidecarStateTerminated(reasonFailed),
-				),
-				tb.SidecarState(
-					tb.SidecarStateName("sidecar2"),
-				),
-			),
-			tb.TaskRunSpec(
-				tb.TaskRunTaskRef("t1"),
-				tb.TaskRunInputs(tb.TaskRunInputsParam("input", "param")),
-				tb.TaskRunInputs(tb.TaskRunInputsParam("input2", "param2")),
-				tb.TaskRunInputs(tb.TaskRunInputsResource("git")),
-				tb.TaskRunInputs(tb.TaskRunInputsResource("image-input", tb.TaskResourceBindingRef("image"))),
-				tb.TaskRunOutputs(tb.TaskRunOutputsResource("image-output")),
-				tb.TaskRunOutputs(tb.TaskRunOutputsResource("image-output2")),
-			),
-		),
+		{
+			ObjectMeta: metav1.ObjectMeta{
+				Name:      "tr-1",
+				Namespace: "ns",
+			},
+			Status: v1alpha1.TaskRunStatus{
+				TaskRunStatusFields: v1alpha1.TaskRunStatusFields{
+					StartTime: &metav1.Time{Time: clockwork.NewFakeClock().Now().Add(20 * time.Second)},
+					Steps: []v1alpha1.StepState{
+						{
+							Name: "step1",
+							ContainerState: corev1.ContainerState{
+								Terminated: &corev1.ContainerStateTerminated{
+									Reason: reasonFailed.Reason,
+								},
+							},
+						},
+						{
+							Name: "step2",
+						},
+					},
+					Sidecars: []v1alpha1.SidecarState{
+						{
+							Name: "sidecar1",
+							ContainerState: corev1.ContainerState{
+								Terminated: &corev1.ContainerStateTerminated{
+									Reason: reasonFailed.Reason,
+								},
+							},
+						},
+						{
+							Name: "sidecar2",
+						},
+					},
+				},
+				Status: duckv1beta1.Status{
+					Conditions: duckv1beta1.Conditions{
+						{
+							Status: corev1.ConditionFalse,
+							Reason: v1beta1.TaskRunReasonFailed.String(),
+						},
+					},
+				},
+			},
+			Spec: v1alpha1.TaskRunSpec{
+				TaskRef: &v1alpha1.TaskRef{
+					Name: "t1",
+				},
+				Timeout: &metav1.Duration{Duration: 1 * time.Hour},
+				Inputs: &v1alpha1.TaskRunInputs{
+					Params: []v1alpha1.Param{
+						{
+							Name:  "input",
+							Value: v1alpha1.ArrayOrString{Type: v1alpha1.ParamTypeString, StringVal: "param"},
+						},
+						{
+							Name:  "input2",
+							Value: v1alpha1.ArrayOrString{Type: v1alpha1.ParamTypeString, StringVal: "param2"},
+						},
+					},
+					Resources: []v1alpha1.TaskResourceBinding{
+						{
+							PipelineResourceBinding: v1alpha1.PipelineResourceBinding{
+								Name: "git",
+							},
+						},
+						{
+							PipelineResourceBinding: v1alpha1.PipelineResourceBinding{
+								Name: "image-input",
+								ResourceRef: &v1alpha1.PipelineResourceRef{
+									Name: "image",
+								},
+							},
+						},
+					},
+				},
+				Outputs: &v1alpha1.TaskRunOutputs{
+					Resources: []v1alpha1.TaskResourceBinding{
+						{
+							PipelineResourceBinding: v1alpha1.PipelineResourceBinding{
+								Name: "image-output",
+							},
+						},
+						{
+							PipelineResourceBinding: v1alpha1.PipelineResourceBinding{
+								Name: "image-output2",
+							},
+						},
+					},
+				},
+			},
+		},
 	}
 
 	cs, _ := test.SeedTestData(t, pipelinetest.Data{
@@ -497,38 +711,101 @@ func TestTaskRunDescribe_step_status_pending_one_sidecar(t *testing.T) {
 	clock := clockwork.NewFakeClock()
 
 	trs := []*v1alpha1.TaskRun{
-		tb.TaskRun("tr-1",
-			tb.TaskRunNamespace("ns"),
-			tb.TaskRunStatus(
-				tb.TaskRunStartTime(clockwork.NewFakeClock().Now().Add(20*time.Second)),
-				tb.StatusCondition(apis.Condition{
-					Type:   apis.ConditionSucceeded,
-					Status: corev1.ConditionUnknown,
-					Reason: "Running",
-				}),
-				tb.StepState(
-					cb.StepName("step1"),
-					tb.SetStepStateWaiting(reasonWaiting),
-				),
-				tb.StepState(
-					cb.StepName("step2"),
-					tb.SetStepStateWaiting(reasonWaiting),
-				),
-				tb.SidecarState(
-					tb.SidecarStateName("sidecar1"),
-					tb.SetSidecarStateWaiting(reasonWaiting),
-				),
-			),
-			tb.TaskRunSpec(
-				tb.TaskRunTaskRef("t1"),
-				tb.TaskRunInputs(tb.TaskRunInputsParam("input", "param")),
-				tb.TaskRunInputs(tb.TaskRunInputsParam("input2", "param2")),
-				tb.TaskRunInputs(tb.TaskRunInputsResource("git")),
-				tb.TaskRunInputs(tb.TaskRunInputsResource("image-input", tb.TaskResourceBindingRef("image"))),
-				tb.TaskRunOutputs(tb.TaskRunOutputsResource("image-output")),
-				tb.TaskRunOutputs(tb.TaskRunOutputsResource("image-output2")),
-			),
-		),
+		{
+			ObjectMeta: metav1.ObjectMeta{
+				Name:      "tr-1",
+				Namespace: "ns",
+			},
+			Status: v1alpha1.TaskRunStatus{
+				TaskRunStatusFields: v1alpha1.TaskRunStatusFields{
+					StartTime: &metav1.Time{Time: clockwork.NewFakeClock().Now().Add(20 * time.Second)},
+					Steps: []v1alpha1.StepState{
+						{
+							Name: "step1",
+							ContainerState: corev1.ContainerState{
+								Waiting: &corev1.ContainerStateWaiting{
+									Reason: reasonWaiting.Reason,
+								},
+							},
+						},
+						{
+							Name: "step2",
+							ContainerState: corev1.ContainerState{
+								Waiting: &corev1.ContainerStateWaiting{
+									Reason: reasonWaiting.Reason,
+								},
+							},
+						},
+					},
+					Sidecars: []v1beta1.SidecarState{
+						{
+							Name: "sidecar1",
+							ContainerState: corev1.ContainerState{
+								Waiting: &corev1.ContainerStateWaiting{
+									Reason: reasonWaiting.Reason,
+								},
+							},
+						},
+					},
+				},
+				Status: duckv1beta1.Status{
+					Conditions: duckv1beta1.Conditions{
+						{
+							Status: corev1.ConditionUnknown,
+							Type:   apis.ConditionSucceeded,
+							Reason: "Running",
+						},
+					},
+				},
+			},
+			Spec: v1alpha1.TaskRunSpec{
+				TaskRef: &v1alpha1.TaskRef{
+					Name: "t1",
+				},
+				Timeout: &metav1.Duration{Duration: 1 * time.Hour},
+				Inputs: &v1alpha1.TaskRunInputs{
+					Params: []v1alpha1.Param{
+						{
+							Name:  "input",
+							Value: v1alpha1.ArrayOrString{Type: v1alpha1.ParamTypeString, StringVal: "param"},
+						},
+						{
+							Name:  "input2",
+							Value: v1alpha1.ArrayOrString{Type: v1alpha1.ParamTypeString, StringVal: "param2"},
+						},
+					},
+					Resources: []v1alpha1.TaskResourceBinding{
+						{
+							PipelineResourceBinding: v1alpha1.PipelineResourceBinding{
+								Name: "git",
+							},
+						},
+						{
+							PipelineResourceBinding: v1alpha1.PipelineResourceBinding{
+								Name: "image-input",
+								ResourceRef: &v1alpha1.PipelineResourceRef{
+									Name: "image",
+								},
+							},
+						},
+					},
+				},
+				Outputs: &v1alpha1.TaskRunOutputs{
+					Resources: []v1alpha1.TaskResourceBinding{
+						{
+							PipelineResourceBinding: v1alpha1.PipelineResourceBinding{
+								Name: "image-output",
+							},
+						},
+						{
+							PipelineResourceBinding: v1alpha1.PipelineResourceBinding{
+								Name: "image-output2",
+							},
+						},
+					},
+				},
+			},
+		},
 	}
 
 	cs, _ := test.SeedTestData(t, pipelinetest.Data{
@@ -569,42 +846,109 @@ func TestTaskRunDescribe_step_status_running_multiple_sidecars(t *testing.T) {
 	clock := clockwork.NewFakeClock()
 
 	trs := []*v1alpha1.TaskRun{
-		tb.TaskRun("tr-1",
-			tb.TaskRunNamespace("ns"),
-			tb.TaskRunStatus(
-				tb.TaskRunStartTime(clockwork.NewFakeClock().Now().Add(20*time.Second)),
-				tb.StatusCondition(apis.Condition{
-					Type:   apis.ConditionSucceeded,
-					Status: corev1.ConditionUnknown,
-					Reason: "Running",
-				}),
-				tb.StepState(
-					cb.StepName("step1"),
-					tb.SetStepStateRunning(reasonRunning),
-				),
-				tb.StepState(
-					cb.StepName("step2"),
-					tb.SetStepStateRunning(reasonRunning),
-				),
-				tb.SidecarState(
-					tb.SidecarStateName("sidecar1"),
-					tb.SetSidecarStateRunning(reasonRunning),
-				),
-				tb.SidecarState(
-					tb.SidecarStateName("sidecar2"),
-					tb.SetSidecarStateRunning(reasonRunning),
-				),
-			),
-			tb.TaskRunSpec(
-				tb.TaskRunTaskRef("t1"),
-				tb.TaskRunInputs(tb.TaskRunInputsParam("input", "param")),
-				tb.TaskRunInputs(tb.TaskRunInputsParam("input2", "param2")),
-				tb.TaskRunInputs(tb.TaskRunInputsResource("git")),
-				tb.TaskRunInputs(tb.TaskRunInputsResource("image-input", tb.TaskResourceBindingRef("image"))),
-				tb.TaskRunOutputs(tb.TaskRunOutputsResource("image-output")),
-				tb.TaskRunOutputs(tb.TaskRunOutputsResource("image-output2")),
-			),
-		),
+		{
+			ObjectMeta: metav1.ObjectMeta{
+				Name:      "tr-1",
+				Namespace: "ns",
+			},
+			Status: v1alpha1.TaskRunStatus{
+				TaskRunStatusFields: v1alpha1.TaskRunStatusFields{
+					StartTime: &metav1.Time{Time: clockwork.NewFakeClock().Now().Add(20 * time.Second)},
+					Steps: []v1alpha1.StepState{
+						{
+							Name: "step1",
+							ContainerState: corev1.ContainerState{
+								Running: &corev1.ContainerStateRunning{
+									StartedAt: reasonRunning.StartedAt,
+								},
+							},
+						},
+						{
+							Name: "step2",
+							ContainerState: corev1.ContainerState{
+								Running: &corev1.ContainerStateRunning{
+									StartedAt: reasonRunning.StartedAt,
+								},
+							},
+						},
+					},
+					Sidecars: []v1alpha1.SidecarState{
+						{
+							Name: "sidecar1",
+							ContainerState: corev1.ContainerState{
+								Running: &corev1.ContainerStateRunning{
+									StartedAt: reasonRunning.StartedAt,
+								},
+							},
+						},
+						{
+							Name: "sidecar2",
+							ContainerState: corev1.ContainerState{
+								Running: &corev1.ContainerStateRunning{
+									StartedAt: reasonRunning.StartedAt,
+								},
+							},
+						},
+					},
+				},
+				Status: duckv1beta1.Status{
+					Conditions: duckv1beta1.Conditions{
+						{
+							Status: corev1.ConditionUnknown,
+							Type:   apis.ConditionSucceeded,
+							Reason: "Running",
+						},
+					},
+				},
+			},
+			Spec: v1alpha1.TaskRunSpec{
+				TaskRef: &v1alpha1.TaskRef{
+					Name: "t1",
+				},
+				Timeout: &metav1.Duration{Duration: 1 * time.Hour},
+				Inputs: &v1alpha1.TaskRunInputs{
+					Params: []v1alpha1.Param{
+						{
+							Name:  "input",
+							Value: v1alpha1.ArrayOrString{Type: v1alpha1.ParamTypeString, StringVal: "param"},
+						},
+						{
+							Name:  "input2",
+							Value: v1alpha1.ArrayOrString{Type: v1alpha1.ParamTypeString, StringVal: "param2"},
+						},
+					},
+					Resources: []v1alpha1.TaskResourceBinding{
+						{
+							PipelineResourceBinding: v1alpha1.PipelineResourceBinding{
+								Name: "git",
+							},
+						},
+						{
+							PipelineResourceBinding: v1alpha1.PipelineResourceBinding{
+								Name: "image-input",
+								ResourceRef: &v1alpha1.PipelineResourceRef{
+									Name: "image",
+								},
+							},
+						},
+					},
+				},
+				Outputs: &v1alpha1.TaskRunOutputs{
+					Resources: []v1alpha1.TaskResourceBinding{
+						{
+							PipelineResourceBinding: v1alpha1.PipelineResourceBinding{
+								Name: "image-output",
+							},
+						},
+						{
+							PipelineResourceBinding: v1alpha1.PipelineResourceBinding{
+								Name: "image-output2",
+							},
+						},
+					},
+				},
+			},
+		},
 	}
 
 	cs, _ := test.SeedTestData(t, pipelinetest.Data{
@@ -645,18 +989,27 @@ func TestTaskRunDescribe_cancel_taskrun(t *testing.T) {
 	clock := clockwork.NewFakeClock()
 
 	trs := []*v1alpha1.TaskRun{
-		tb.TaskRun("tr-1",
-			tb.TaskRunNamespace("ns"),
-			tb.TaskRunStatus(
-				tb.TaskRunStartTime(clock.Now().Add(2*time.Minute)),
-				cb.TaskRunCompletionTime(clock.Now().Add(5*time.Minute)),
-				tb.StatusCondition(apis.Condition{
-					Status:  corev1.ConditionFalse,
-					Reason:  "TaskRunCancelled",
-					Message: "TaskRun \"tr-1\" was cancelled",
-				}),
-			),
-		),
+		{
+			ObjectMeta: metav1.ObjectMeta{
+				Name:      "tr-1",
+				Namespace: "ns",
+			},
+			Status: v1alpha1.TaskRunStatus{
+				TaskRunStatusFields: v1beta1.TaskRunStatusFields{
+					StartTime:      &metav1.Time{Time: clock.Now().Add(2 * time.Minute)},
+					CompletionTime: &metav1.Time{Time: clock.Now().Add(5 * time.Minute)},
+				},
+				Status: duckv1beta1.Status{
+					Conditions: duckv1beta1.Conditions{
+						{
+							Status:  corev1.ConditionFalse,
+							Reason:  "TaskRunCancelled",
+							Message: "TaskRun \"tr-1\" was cancelled",
+						},
+					},
+				},
+			},
+		},
 	}
 
 	cs, _ := test.SeedTestData(t, pipelinetest.Data{
@@ -700,7 +1053,12 @@ func TestTaskRunDescribe_custom_output(t *testing.T) {
 	clock := clockwork.NewFakeClock()
 
 	trs := []*v1alpha1.TaskRun{
-		tb.TaskRun(name, tb.TaskRunNamespace("ns")),
+		{
+			ObjectMeta: metav1.ObjectMeta{
+				Name:      name,
+				Namespace: "ns",
+			},
+		},
 	}
 
 	cs, _ := test.SeedTestData(t, pipelinetest.Data{
@@ -742,9 +1100,15 @@ func TestTaskRunDescribe_custom_output(t *testing.T) {
 
 func TestTaskRunWithSpecDescribe_custom_timeout(t *testing.T) {
 	trs := []*v1alpha1.TaskRun{
-		tb.TaskRun("tr-custom-timeout", tb.TaskRunNamespace("ns"),
-			tb.TaskRunSpec(tb.TaskRunTimeout(time.Minute)),
-		),
+		{
+			ObjectMeta: metav1.ObjectMeta{
+				Name:      "tr-custom-timeout",
+				Namespace: "ns",
+			},
+			Spec: v1alpha1.TaskRunSpec{
+				Timeout: &metav1.Duration{Duration: time.Minute},
+			},
+		},
 	}
 
 	cs, _ := test.SeedTestData(t, pipelinetest.Data{
@@ -934,58 +1298,192 @@ func TestTaskRunDescribe_lastV1beta1(t *testing.T) {
 func TestTaskRunDescribe_last(t *testing.T) {
 	clock := clockwork.NewFakeClock()
 	trs := []*v1alpha1.TaskRun{
-		tb.TaskRun("tr-1", tb.TaskRunNamespace("ns"),
-			tb.TaskRunStatus(
-				tb.TaskRunStartTime(clockwork.NewFakeClock().Now().Add(20*time.Second)),
-				tb.StatusCondition(apis.Condition{
-					Type:   apis.ConditionSucceeded,
-					Status: corev1.ConditionTrue,
-				}),
-				tb.StepState(
-					cb.StepName("step1"),
-					tb.SetStepStateTerminated(reasonCompleted),
-				),
-				tb.StepState(
-					cb.StepName("step2"),
-					tb.SetStepStateTerminated(reasonCompleted),
-				),
-			),
-			tb.TaskRunSpec(
-				tb.TaskRunTaskRef("t1"),
-				tb.TaskRunInputs(tb.TaskRunInputsParam("input", "param")),
-				tb.TaskRunInputs(tb.TaskRunInputsParam("input2", "param2")),
-				tb.TaskRunInputs(tb.TaskRunInputsResource("git", tb.TaskResourceBindingRef("git"))),
-				tb.TaskRunInputs(tb.TaskRunInputsResource("image-input", tb.TaskResourceBindingRef("image"))),
-				tb.TaskRunOutputs(tb.TaskRunOutputsResource("image-output", tb.TaskResourceBindingRef("image"))),
-				tb.TaskRunOutputs(tb.TaskRunOutputsResource("image-output2", tb.TaskResourceBindingRef("image"))),
-			),
-		),
-		tb.TaskRun("tr-2", tb.TaskRunNamespace("ns"),
-			tb.TaskRunStatus(
-				tb.TaskRunStartTime(clockwork.NewFakeClock().Now().Add(2*time.Minute)),
-				tb.StatusCondition(apis.Condition{
-					Type:   apis.ConditionSucceeded,
-					Status: corev1.ConditionTrue,
-				}),
-				tb.StepState(
-					cb.StepName("step3"),
-					tb.SetStepStateTerminated(reasonCompleted),
-				),
-				tb.StepState(
-					cb.StepName("step4"),
-					tb.SetStepStateTerminated(reasonCompleted),
-				),
-			),
-			tb.TaskRunSpec(
-				tb.TaskRunTaskRef("t1"),
-				tb.TaskRunInputs(tb.TaskRunInputsParam("input", "param")),
-				tb.TaskRunInputs(tb.TaskRunInputsParam("input2", "param2")),
-				tb.TaskRunInputs(tb.TaskRunInputsResource("git", tb.TaskResourceBindingRef("git"))),
-				tb.TaskRunInputs(tb.TaskRunInputsResource("image-input", tb.TaskResourceBindingRef("image"))),
-				tb.TaskRunOutputs(tb.TaskRunOutputsResource("image-output", tb.TaskResourceBindingRef("image"))),
-				tb.TaskRunOutputs(tb.TaskRunOutputsResource("image-output2", tb.TaskResourceBindingRef("image"))),
-			),
-		),
+		{
+			ObjectMeta: metav1.ObjectMeta{
+				Name:      "tr-1",
+				Namespace: "ns",
+			},
+			Status: v1alpha1.TaskRunStatus{
+				TaskRunStatusFields: v1alpha1.TaskRunStatusFields{
+					StartTime: &metav1.Time{Time: clockwork.NewFakeClock().Now().Add(20 * time.Second)},
+					Steps: []v1alpha1.StepState{
+						{
+							Name: "step1",
+							ContainerState: corev1.ContainerState{
+								Terminated: &corev1.ContainerStateTerminated{
+									Reason: reasonCompleted.Reason,
+								},
+							},
+						},
+						{
+							Name: "step2",
+							ContainerState: corev1.ContainerState{
+								Terminated: &corev1.ContainerStateTerminated{
+									Reason: reasonCompleted.Reason,
+								},
+							},
+						},
+					},
+				},
+				Status: duckv1beta1.Status{
+					Conditions: duckv1beta1.Conditions{
+						{
+							Status: corev1.ConditionTrue,
+							Type:   apis.ConditionSucceeded,
+						},
+					},
+				},
+			},
+			Spec: v1alpha1.TaskRunSpec{
+				TaskRef: &v1alpha1.TaskRef{
+					Name: "t1",
+				},
+				Timeout: &metav1.Duration{Duration: 1 * time.Hour},
+				Inputs: &v1alpha1.TaskRunInputs{
+					Params: []v1alpha1.Param{
+						{
+							Name:  "input",
+							Value: v1alpha1.ArrayOrString{Type: v1alpha1.ParamTypeString, StringVal: "param"},
+						},
+						{
+							Name:  "input2",
+							Value: v1alpha1.ArrayOrString{Type: v1alpha1.ParamTypeString, StringVal: "param2"},
+						},
+					},
+					Resources: []v1alpha1.TaskResourceBinding{
+						{
+							PipelineResourceBinding: v1alpha1.PipelineResourceBinding{
+								Name: "git",
+								ResourceRef: &v1alpha1.PipelineResourceRef{
+									Name: "git",
+								},
+							},
+						},
+						{
+							PipelineResourceBinding: v1alpha1.PipelineResourceBinding{
+								Name: "image-input",
+								ResourceRef: &v1alpha1.PipelineResourceRef{
+									Name: "image",
+								},
+							},
+						},
+					},
+				},
+				Outputs: &v1alpha1.TaskRunOutputs{
+					Resources: []v1alpha1.TaskResourceBinding{
+						{
+							PipelineResourceBinding: v1alpha1.PipelineResourceBinding{
+								Name: "image-output",
+								ResourceRef: &v1alpha1.PipelineResourceRef{
+									Name: "image",
+								},
+							},
+						},
+						{
+							PipelineResourceBinding: v1alpha1.PipelineResourceBinding{
+								Name: "image-output2",
+								ResourceRef: &v1alpha1.PipelineResourceRef{
+									Name: "image",
+								},
+							},
+						},
+					},
+				},
+			},
+		},
+		{
+			ObjectMeta: metav1.ObjectMeta{
+				Name:      "tr-2",
+				Namespace: "ns",
+			},
+			Status: v1alpha1.TaskRunStatus{
+				TaskRunStatusFields: v1alpha1.TaskRunStatusFields{
+					StartTime: &metav1.Time{Time: clockwork.NewFakeClock().Now().Add(2 * time.Minute)},
+					Steps: []v1alpha1.StepState{
+						{
+							Name: "step3",
+							ContainerState: corev1.ContainerState{
+								Terminated: &corev1.ContainerStateTerminated{
+									Reason: reasonCompleted.Reason,
+								},
+							},
+						},
+						{
+							Name: "step4",
+							ContainerState: corev1.ContainerState{
+								Terminated: &corev1.ContainerStateTerminated{
+									Reason: reasonCompleted.Reason,
+								},
+							},
+						},
+					},
+				},
+				Status: duckv1beta1.Status{
+					Conditions: duckv1beta1.Conditions{
+						{
+							Status: corev1.ConditionTrue,
+							Type:   apis.ConditionSucceeded,
+						},
+					},
+				},
+			},
+			Spec: v1alpha1.TaskRunSpec{
+				TaskRef: &v1alpha1.TaskRef{
+					Name: "t1",
+				},
+				Timeout: &metav1.Duration{Duration: 1 * time.Hour},
+				Inputs: &v1alpha1.TaskRunInputs{
+					Params: []v1alpha1.Param{
+						{
+							Name:  "input",
+							Value: v1alpha1.ArrayOrString{Type: v1alpha1.ParamTypeString, StringVal: "param"},
+						},
+						{
+							Name:  "input2",
+							Value: v1alpha1.ArrayOrString{Type: v1alpha1.ParamTypeString, StringVal: "param2"},
+						},
+					},
+					Resources: []v1alpha1.TaskResourceBinding{
+						{
+							PipelineResourceBinding: v1alpha1.PipelineResourceBinding{
+								Name: "git",
+								ResourceRef: &v1alpha1.PipelineResourceRef{
+									Name: "git",
+								},
+							},
+						},
+						{
+							PipelineResourceBinding: v1alpha1.PipelineResourceBinding{
+								Name: "image-input",
+								ResourceRef: &v1alpha1.PipelineResourceRef{
+									Name: "image",
+								},
+							},
+						},
+					},
+				},
+				Outputs: &v1alpha1.TaskRunOutputs{
+					Resources: []v1alpha1.TaskResourceBinding{
+						{
+							PipelineResourceBinding: v1alpha1.PipelineResourceBinding{
+								Name: "image-output",
+								ResourceRef: &v1alpha1.PipelineResourceRef{
+									Name: "image",
+								},
+							},
+						},
+						{
+							PipelineResourceBinding: v1alpha1.PipelineResourceBinding{
+								Name: "image-output2",
+								ResourceRef: &v1alpha1.PipelineResourceRef{
+									Name: "image",
+								},
+							},
+						},
+					},
+				},
+			},
+		},
 	}
 
 	cs, _ := test.SeedTestData(t, pipelinetest.Data{
@@ -1094,10 +1592,15 @@ func TestTaskRunDescribe_With_Results(t *testing.T) {
 
 func TestTaskRunDescribe_zero_timeout(t *testing.T) {
 	trs := []*v1alpha1.TaskRun{
-		tb.TaskRun("tr-zero-timeout",
-			tb.TaskRunNamespace("ns"),
-			tb.TaskRunSpec(tb.TaskRunTimeout(0)),
-		),
+		{
+			ObjectMeta: metav1.ObjectMeta{
+				Name:      "tr-zero-timeout",
+				Namespace: "ns",
+			},
+			Spec: v1alpha1.TaskRunSpec{
+				Timeout: &metav1.Duration{Duration: 0},
+			},
+		},
 	}
 
 	cs, _ := test.SeedTestData(t, pipelinetest.Data{

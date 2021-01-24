@@ -21,8 +21,6 @@ import (
 	"time"
 
 	"github.com/jonboulle/clockwork"
-	tb "github.com/tektoncd/cli/internal/builder/v1alpha1"
-	tbv1beta1 "github.com/tektoncd/cli/internal/builder/v1beta1"
 	"github.com/tektoncd/cli/pkg/cli"
 	"github.com/tektoncd/cli/pkg/log"
 	"github.com/tektoncd/cli/pkg/options"
@@ -51,7 +49,12 @@ const (
 
 func TestLog_invalid_namespace(t *testing.T) {
 	tr := []*v1alpha1.TaskRun{
-		tb.TaskRun("output-taskrun-1", tb.TaskRunNamespace("ns")),
+		{
+			ObjectMeta: metav1.ObjectMeta{
+				Name:      "output-taskrun-1",
+				Namespace: "ns",
+			},
+		},
 	}
 
 	nsList := []*corev1.Namespace{
@@ -93,26 +96,52 @@ func TestLog_no_taskrun_arg(t *testing.T) {
 		t.Errorf("unable to create dynamic client: %v", err)
 	}
 	task2 := []*v1alpha1.Task{
-		tb.Task("task", tb.TaskNamespace("ns"), cb.TaskCreationTime(clockwork.NewFakeClock().Now())),
+		{
+			ObjectMeta: metav1.ObjectMeta{
+				Name:              "task",
+				Namespace:         "ns",
+				CreationTimestamp: metav1.Time{Time: clockwork.NewFakeClock().Now()},
+			},
+		},
 	}
 	taskrun2 := []*v1alpha1.TaskRun{
-		tb.TaskRun("taskrun1",
-			tb.TaskRunNamespace("ns"),
-			tb.TaskRunLabel("tekton.dev/task", "task"),
-			tb.TaskRunSpec(tb.TaskRunTaskRef("task")),
-			tb.TaskRunStatus(
-				tb.PodName("pod"),
-				tb.TaskRunStartTime(clockwork.NewFakeClock().Now()),
-				tb.StatusCondition(apis.Condition{
-					Status: corev1.ConditionTrue,
-					Reason: v1beta1.TaskRunReasonSuccessful.String(),
-				}),
-				tb.StepState(
-					cb.StepName("step1"),
-					tb.StateTerminated(0),
-				),
-			),
-		),
+		{
+			ObjectMeta: metav1.ObjectMeta{
+				Name:      "taskrun1",
+				Namespace: "ns",
+				Labels:    map[string]string{"tekton.dev/task": "task"},
+			},
+			Spec: v1alpha1.TaskRunSpec{
+				TaskRef: &v1alpha1.TaskRef{
+					Name: "task",
+					Kind: v1alpha1.NamespacedTaskKind,
+				},
+			},
+			Status: v1alpha1.TaskRunStatus{
+				Status: duckv1beta1.Status{
+					Conditions: duckv1beta1.Conditions{
+						{
+							Status: corev1.ConditionTrue,
+							Reason: v1beta1.TaskRunReasonSuccessful.String(),
+						},
+					},
+				},
+				TaskRunStatusFields: v1alpha1.TaskRunStatusFields{
+					StartTime: &metav1.Time{Time: clockwork.NewRealClock().Now()},
+					Steps: []v1alpha1.StepState{
+						{
+							Name: "step1",
+							ContainerState: corev1.ContainerState{
+								Terminated: &corev1.ContainerStateTerminated{
+									ExitCode: 0,
+								},
+							},
+						},
+					},
+					PodName: "pod",
+				},
+			},
+		},
 	}
 	cs2, _ := test.SeedTestData(t, pipelinetest.Data{
 		Tasks:    task2,
@@ -125,14 +154,23 @@ func TestLog_no_taskrun_arg(t *testing.T) {
 			},
 		},
 		Pods: []*corev1.Pod{
-			tbv1beta1.Pod("pod", tbv1beta1.PodNamespace("ns"),
-				tbv1beta1.PodSpec(
-					tbv1beta1.PodContainer("step1", "step1:latest"),
-				),
-				cb.PodStatus(
-					cb.PodPhase(corev1.PodSucceeded),
-				),
-			),
+			{
+				ObjectMeta: metav1.ObjectMeta{
+					Name:      "pod",
+					Namespace: "ns",
+				},
+				Spec: corev1.PodSpec{
+					Containers: []corev1.Container{
+						{
+							Name:  "step1",
+							Image: "step1:latest",
+						},
+					},
+				},
+				Status: corev1.PodStatus{
+					Phase: corev1.PodPhase(corev1.PodSucceeded),
+				},
+			},
 		},
 	})
 	cs2.Pipeline.Resources = cb.APIResourceList("v1alpha1", []string{"taskrun"})
@@ -183,7 +221,12 @@ func TestLog_no_taskrun_arg(t *testing.T) {
 
 func TestLog_missing_taskrun(t *testing.T) {
 	tr := []*v1alpha1.TaskRun{
-		tb.TaskRun("output-taskrun-1", tb.TaskRunNamespace("ns")),
+		{
+			ObjectMeta: metav1.ObjectMeta{
+				Name:      "output-taskrun-1",
+				Namespace: "ns",
+			},
+		},
 	}
 
 	nsList := []*corev1.Namespace{
@@ -266,27 +309,49 @@ func TestLog_taskrun_logs(t *testing.T) {
 	)
 
 	trs := []*v1alpha1.TaskRun{
-		tb.TaskRun(trName, tb.TaskRunNamespace(ns),
-			tb.TaskRunStatus(
-				tb.PodName(trPod),
-				tb.TaskRunStartTime(trStartTime),
-				tb.StatusCondition(apis.Condition{
-					Type:   apis.ConditionSucceeded,
-					Status: corev1.ConditionTrue,
-				}),
-				tb.StepState(
-					cb.StepName(trStep1Name),
-					tb.StateTerminated(0),
-				),
-				tb.StepState(
-					cb.StepName(nopStep),
-					tb.StateTerminated(0),
-				),
-			),
-			tb.TaskRunSpec(
-				tb.TaskRunTaskRef(taskName),
-			),
-		),
+		{
+			ObjectMeta: metav1.ObjectMeta{
+				Name:      trName,
+				Namespace: ns,
+			},
+			Spec: v1alpha1.TaskRunSpec{
+				TaskRef: &v1alpha1.TaskRef{
+					Name: taskName,
+				},
+			},
+			Status: v1alpha1.TaskRunStatus{
+				Status: duckv1beta1.Status{
+					Conditions: duckv1beta1.Conditions{
+						{
+							Type:   apis.ConditionSucceeded,
+							Status: corev1.ConditionTrue,
+						},
+					},
+				},
+				TaskRunStatusFields: v1alpha1.TaskRunStatusFields{
+					StartTime: &metav1.Time{Time: trStartTime},
+					Steps: []v1alpha1.StepState{
+						{
+							Name: trStep1Name,
+							ContainerState: corev1.ContainerState{
+								Terminated: &corev1.ContainerStateTerminated{
+									ExitCode: 0,
+								},
+							},
+						},
+						{
+							Name: nopStep,
+							ContainerState: corev1.ContainerState{
+								Terminated: &corev1.ContainerStateTerminated{
+									ExitCode: 0,
+								},
+							},
+						},
+					},
+					PodName: trPod,
+				},
+			},
+		},
 	}
 
 	nsList := []*corev1.Namespace{
@@ -298,15 +363,27 @@ func TestLog_taskrun_logs(t *testing.T) {
 	}
 
 	ps := []*corev1.Pod{
-		tbv1beta1.Pod(trPod, tbv1beta1.PodNamespace(ns),
-			tbv1beta1.PodSpec(
-				tbv1beta1.PodContainer(trStep1Name, trStep1Name+":latest"),
-				tbv1beta1.PodContainer(nopStep, "override-with-nop:latest"),
-			),
-			cb.PodStatus(
-				cb.PodPhase(corev1.PodSucceeded),
-			),
-		),
+		{
+			ObjectMeta: metav1.ObjectMeta{
+				Name:      trPod,
+				Namespace: ns,
+			},
+			Spec: corev1.PodSpec{
+				Containers: []corev1.Container{
+					{
+						Name:  trStep1Name,
+						Image: trStep1Name + ":latest",
+					},
+					{
+						Name:  nopStep,
+						Image: "override-with-nop:latest",
+					},
+				},
+			},
+			Status: corev1.PodStatus{
+				Phase: corev1.PodPhase(corev1.PodSucceeded),
+			},
+		},
 	}
 
 	logs := fake.Logs(
@@ -403,15 +480,27 @@ func TestLog_taskrun_logs_v1beta1(t *testing.T) {
 	}
 
 	ps := []*corev1.Pod{
-		tbv1beta1.Pod(trPod, tbv1beta1.PodNamespace(ns),
-			tbv1beta1.PodSpec(
-				tbv1beta1.PodContainer(trStep1Name, trStep1Name+":latest"),
-				tbv1beta1.PodContainer(nopStep, "override-with-nop:latest"),
-			),
-			cb.PodStatus(
-				cb.PodPhase(corev1.PodSucceeded),
-			),
-		),
+		{
+			ObjectMeta: metav1.ObjectMeta{
+				Name:      trPod,
+				Namespace: ns,
+			},
+			Spec: corev1.PodSpec{
+				Containers: []corev1.Container{
+					{
+						Name:  trStep1Name,
+						Image: trStep1Name + ":latest",
+					},
+					{
+						Name:  nopStep,
+						Image: "override-with-nop:latest",
+					},
+				},
+			},
+			Status: corev1.PodStatus{
+				Phase: corev1.PodPhase(corev1.PodSucceeded),
+			},
+		},
 	}
 
 	logs := fake.Logs(
@@ -686,19 +775,47 @@ func TestLog_taskrun_all_steps(t *testing.T) {
 	}
 
 	p := []*corev1.Pod{
-		tbv1beta1.Pod(trPod, tbv1beta1.PodNamespace(ns),
-			tbv1beta1.PodSpec(
-				tbv1beta1.PodInitContainer(trInitStep1, "override-with-creds:latest"),
-				tbv1beta1.PodInitContainer(trInitStep2, "override-with-tools:latest"),
-				tbv1beta1.PodContainer(trStep1Name, trStep1Name+":latest"),
-				tbv1beta1.PodContainer(nopStep, "override-with-nop:latest"),
-			),
-			cb.PodStatus(
-				cb.PodPhase(corev1.PodSucceeded),
-				cb.PodInitContainerStatus(trInitStep1, "override-with-creds:latest"),
-				cb.PodInitContainerStatus(trInitStep2, "override-with-tools:latest"),
-			),
-		),
+		{
+			ObjectMeta: metav1.ObjectMeta{
+				Name:      trPod,
+				Namespace: ns,
+			},
+			Spec: corev1.PodSpec{
+				InitContainers: []corev1.Container{
+					{
+						Name:  trInitStep1,
+						Image: "override-with-creds:latest",
+					},
+					{
+						Name:  trInitStep2,
+						Image: "override-with-tools:latest",
+					},
+				},
+				Containers: []corev1.Container{
+					{
+						Name:  trStep1Name,
+						Image: trStep1Name + ":latest",
+					},
+					{
+						Name:  nopStep,
+						Image: "override-with-nop:latest",
+					},
+				},
+			},
+			Status: corev1.PodStatus{
+				Phase: corev1.PodPhase(corev1.PodSucceeded),
+				InitContainerStatuses: []corev1.ContainerStatus{
+					{
+						Name:  trInitStep1,
+						Image: "override-with-creds:latest",
+					},
+					{
+						Name:  trInitStep2,
+						Image: "override-with-tools:latest",
+					},
+				},
+			},
+		},
 	}
 
 	logs := fake.Logs(
@@ -803,19 +920,47 @@ func TestLog_taskrun_all_steps_v1beta1(t *testing.T) {
 	}
 
 	p := []*corev1.Pod{
-		tbv1beta1.Pod(trPod, tbv1beta1.PodNamespace(ns),
-			tbv1beta1.PodSpec(
-				tbv1beta1.PodInitContainer(trInitStep1, "override-with-creds:latest"),
-				tbv1beta1.PodInitContainer(trInitStep2, "override-with-tools:latest"),
-				tbv1beta1.PodContainer(trStep1Name, trStep1Name+":latest"),
-				tbv1beta1.PodContainer(nopStep, "override-with-nop:latest"),
-			),
-			cb.PodStatus(
-				cb.PodPhase(corev1.PodSucceeded),
-				cb.PodInitContainerStatus(trInitStep1, "override-with-creds:latest"),
-				cb.PodInitContainerStatus(trInitStep2, "override-with-tools:latest"),
-			),
-		),
+		{
+			ObjectMeta: metav1.ObjectMeta{
+				Name:      trPod,
+				Namespace: ns,
+			},
+			Spec: corev1.PodSpec{
+				InitContainers: []corev1.Container{
+					{
+						Name:  trInitStep1,
+						Image: "override-with-creds:latest",
+					},
+					{
+						Name:  trInitStep2,
+						Image: "override-with-tools:latest",
+					},
+				},
+				Containers: []corev1.Container{
+					{
+						Name:  trStep1Name,
+						Image: trStep1Name + ":latest",
+					},
+					{
+						Name:  nopStep,
+						Image: "override-with-nop:latest",
+					},
+				},
+			},
+			Status: corev1.PodStatus{
+				Phase: corev1.PodPhase(corev1.PodSucceeded),
+				InitContainerStatuses: []corev1.ContainerStatus{
+					{
+						Name:  trInitStep1,
+						Image: "override-with-creds:latest",
+					},
+					{
+						Name:  trInitStep2,
+						Image: "override-with-tools:latest",
+					},
+				},
+			},
+		},
 	}
 
 	logs := fake.Logs(
@@ -865,27 +1010,49 @@ func TestLog_taskrun_given_steps(t *testing.T) {
 	)
 
 	trs := []*v1alpha1.TaskRun{
-		tb.TaskRun(trName, tb.TaskRunNamespace(ns),
-			tb.TaskRunStatus(
-				tb.PodName(trPod),
-				tb.TaskRunStartTime(trStartTime),
-				tb.StatusCondition(apis.Condition{
-					Type:   apis.ConditionSucceeded,
-					Status: corev1.ConditionTrue,
-				}),
-				tb.StepState(
-					cb.StepName(trStep1Name),
-					tb.StateTerminated(0),
-				),
-				tb.StepState(
-					cb.StepName(nopStep),
-					tb.StateTerminated(0),
-				),
-			),
-			tb.TaskRunSpec(
-				tb.TaskRunTaskRef(taskName),
-			),
-		),
+		{
+			ObjectMeta: metav1.ObjectMeta{
+				Name:      trName,
+				Namespace: ns,
+			},
+			Spec: v1alpha1.TaskRunSpec{
+				TaskRef: &v1alpha1.TaskRef{
+					Name: taskName,
+				},
+			},
+			Status: v1alpha1.TaskRunStatus{
+				Status: duckv1beta1.Status{
+					Conditions: duckv1beta1.Conditions{
+						{
+							Type:   apis.ConditionSucceeded,
+							Status: corev1.ConditionTrue,
+						},
+					},
+				},
+				TaskRunStatusFields: v1alpha1.TaskRunStatusFields{
+					StartTime: &metav1.Time{Time: trStartTime},
+					Steps: []v1alpha1.StepState{
+						{
+							Name: trStep1Name,
+							ContainerState: corev1.ContainerState{
+								Terminated: &corev1.ContainerStateTerminated{
+									ExitCode: 0,
+								},
+							},
+						},
+						{
+							Name: nopStep,
+							ContainerState: corev1.ContainerState{
+								Terminated: &corev1.ContainerStateTerminated{
+									ExitCode: 0,
+								},
+							},
+						},
+					},
+					PodName: trPod,
+				},
+			},
+		},
 	}
 
 	nsList := []*corev1.Namespace{
@@ -897,19 +1064,47 @@ func TestLog_taskrun_given_steps(t *testing.T) {
 	}
 
 	p := []*corev1.Pod{
-		tbv1beta1.Pod(trPod, tbv1beta1.PodNamespace(ns),
-			tbv1beta1.PodSpec(
-				tbv1beta1.PodInitContainer(trInitStep1, "override-with-creds:latest"),
-				tbv1beta1.PodInitContainer(trInitStep2, "override-with-tools:latest"),
-				tbv1beta1.PodContainer(trStep1Name, trStep1Name+":latest"),
-				tbv1beta1.PodContainer(nopStep, "override-with-nop:latest"),
-			),
-			cb.PodStatus(
-				cb.PodPhase(corev1.PodSucceeded),
-				cb.PodInitContainerStatus(trInitStep1, "override-with-creds:latest"),
-				cb.PodInitContainerStatus(trInitStep2, "override-with-tools:latest"),
-			),
-		),
+		{
+			ObjectMeta: metav1.ObjectMeta{
+				Name:      trPod,
+				Namespace: ns,
+			},
+			Spec: corev1.PodSpec{
+				InitContainers: []corev1.Container{
+					{
+						Name:  trInitStep1,
+						Image: "override-with-creds:latest",
+					},
+					{
+						Name:  trInitStep2,
+						Image: "override-with-tools:latest",
+					},
+				},
+				Containers: []corev1.Container{
+					{
+						Name:  trStep1Name,
+						Image: trStep1Name + ":latest",
+					},
+					{
+						Name:  nopStep,
+						Image: "override-with-nop:latest",
+					},
+				},
+			},
+			Status: corev1.PodStatus{
+				Phase: corev1.PodPhase(corev1.PodSucceeded),
+				InitContainerStatuses: []corev1.ContainerStatus{
+					{
+						Name:  trInitStep1,
+						Image: "override-with-creds:latest",
+					},
+					{
+						Name:  trInitStep2,
+						Image: "override-with-tools:latest",
+					},
+				},
+			},
+		},
 	}
 
 	logs := fake.Logs(
@@ -1010,19 +1205,47 @@ func TestLog_taskrun_given_steps_v1beta1(t *testing.T) {
 	}
 
 	p := []*corev1.Pod{
-		tbv1beta1.Pod(trPod, tbv1beta1.PodNamespace(ns),
-			tbv1beta1.PodSpec(
-				tbv1beta1.PodInitContainer(trInitStep1, "override-with-creds:latest"),
-				tbv1beta1.PodInitContainer(trInitStep2, "override-with-tools:latest"),
-				tbv1beta1.PodContainer(trStep1Name, trStep1Name+":latest"),
-				tbv1beta1.PodContainer(nopStep, "override-with-nop:latest"),
-			),
-			cb.PodStatus(
-				cb.PodPhase(corev1.PodSucceeded),
-				cb.PodInitContainerStatus(trInitStep1, "override-with-creds:latest"),
-				cb.PodInitContainerStatus(trInitStep2, "override-with-tools:latest"),
-			),
-		),
+		{
+			ObjectMeta: metav1.ObjectMeta{
+				Name:      trPod,
+				Namespace: ns,
+			},
+			Spec: corev1.PodSpec{
+				InitContainers: []corev1.Container{
+					{
+						Name:  trInitStep1,
+						Image: "override-with-creds:latest",
+					},
+					{
+						Name:  trInitStep2,
+						Image: "override-with-tools:latest",
+					},
+				},
+				Containers: []corev1.Container{
+					{
+						Name:  trStep1Name,
+						Image: trStep1Name + ":latest",
+					},
+					{
+						Name:  nopStep,
+						Image: "override-with-nop:latest",
+					},
+				},
+			},
+			Status: corev1.PodStatus{
+				Phase: corev1.PodPhase(corev1.PodSucceeded),
+				InitContainerStatuses: []corev1.ContainerStatus{
+					{
+						Name:  trInitStep1,
+						Image: "override-with-creds:latest",
+					},
+					{
+						Name:  trInitStep2,
+						Image: "override-with-tools:latest",
+					},
+				},
+			},
+		},
 	}
 
 	logs := fake.Logs(
@@ -1069,27 +1292,49 @@ func TestLog_taskrun_follow_mode(t *testing.T) {
 	)
 
 	trs := []*v1alpha1.TaskRun{
-		tb.TaskRun(trName, tb.TaskRunNamespace(ns),
-			tb.TaskRunStatus(
-				tb.PodName(trPod),
-				tb.TaskRunStartTime(trStartTime),
-				tb.StatusCondition(apis.Condition{
-					Type:   apis.ConditionSucceeded,
-					Status: corev1.ConditionTrue,
-				}),
-				tb.StepState(
-					cb.StepName(trStep1Name),
-					tb.StateTerminated(0),
-				),
-				tb.StepState(
-					cb.StepName(nopStep),
-					tb.StateTerminated(0),
-				),
-			),
-			tb.TaskRunSpec(
-				tb.TaskRunTaskRef(taskName),
-			),
-		),
+		{
+			ObjectMeta: metav1.ObjectMeta{
+				Name:      trName,
+				Namespace: ns,
+			},
+			Spec: v1alpha1.TaskRunSpec{
+				TaskRef: &v1alpha1.TaskRef{
+					Name: taskName,
+				},
+			},
+			Status: v1alpha1.TaskRunStatus{
+				Status: duckv1beta1.Status{
+					Conditions: duckv1beta1.Conditions{
+						{
+							Type:   apis.ConditionSucceeded,
+							Status: corev1.ConditionTrue,
+						},
+					},
+				},
+				TaskRunStatusFields: v1alpha1.TaskRunStatusFields{
+					StartTime: &metav1.Time{Time: trStartTime},
+					Steps: []v1alpha1.StepState{
+						{
+							Name: trStep1Name,
+							ContainerState: corev1.ContainerState{
+								Terminated: &corev1.ContainerStateTerminated{
+									ExitCode: 0,
+								},
+							},
+						},
+						{
+							Name: nopStep,
+							ContainerState: corev1.ContainerState{
+								Terminated: &corev1.ContainerStateTerminated{
+									ExitCode: 0,
+								},
+							},
+						},
+					},
+					PodName: trPod,
+				},
+			},
+		},
 	}
 
 	nsList := []*corev1.Namespace{
@@ -1101,19 +1346,47 @@ func TestLog_taskrun_follow_mode(t *testing.T) {
 	}
 
 	p := []*corev1.Pod{
-		tbv1beta1.Pod(trPod, tbv1beta1.PodNamespace(ns),
-			tbv1beta1.PodSpec(
-				tbv1beta1.PodInitContainer(trInitStep1, "override-with-creds:latest"),
-				tbv1beta1.PodInitContainer(trInitStep2, "override-with-tools:latest"),
-				tbv1beta1.PodContainer(trStep1Name, trStep1Name+":latest"),
-				tbv1beta1.PodContainer(nopStep, "override-with-nop:latest"),
-			),
-			cb.PodStatus(
-				cb.PodPhase(corev1.PodSucceeded),
-				cb.PodInitContainerStatus(trInitStep1, "override-with-creds:latest"),
-				cb.PodInitContainerStatus(trInitStep2, "override-with-tools:latest"),
-			),
-		),
+		{
+			ObjectMeta: metav1.ObjectMeta{
+				Name:      trPod,
+				Namespace: ns,
+			},
+			Spec: corev1.PodSpec{
+				InitContainers: []corev1.Container{
+					{
+						Name:  trInitStep1,
+						Image: "override-with-creds:latest",
+					},
+					{
+						Name:  trInitStep2,
+						Image: "override-with-tools:latest",
+					},
+				},
+				Containers: []corev1.Container{
+					{
+						Name:  trStep1Name,
+						Image: trStep1Name + ":latest",
+					},
+					{
+						Name:  nopStep,
+						Image: "override-with-nop:latest",
+					},
+				},
+			},
+			Status: corev1.PodStatus{
+				Phase: corev1.PodPhase(corev1.PodSucceeded),
+				InitContainerStatuses: []corev1.ContainerStatus{
+					{
+						Name:  trInitStep1,
+						Image: "override-with-creds:latest",
+					},
+					{
+						Name:  trInitStep2,
+						Image: "override-with-tools:latest",
+					},
+				},
+			},
+		},
 	}
 
 	logs := fake.Logs(
@@ -1216,19 +1489,47 @@ func TestLog_taskrun_follow_mode_v1beta1(t *testing.T) {
 	}
 
 	p := []*corev1.Pod{
-		tbv1beta1.Pod(trPod, tbv1beta1.PodNamespace(ns),
-			tbv1beta1.PodSpec(
-				tbv1beta1.PodInitContainer(trInitStep1, "override-with-creds:latest"),
-				tbv1beta1.PodInitContainer(trInitStep2, "override-with-tools:latest"),
-				tbv1beta1.PodContainer(trStep1Name, trStep1Name+":latest"),
-				tbv1beta1.PodContainer(nopStep, "override-with-nop:latest"),
-			),
-			cb.PodStatus(
-				cb.PodPhase(corev1.PodSucceeded),
-				cb.PodInitContainerStatus(trInitStep1, "override-with-creds:latest"),
-				cb.PodInitContainerStatus(trInitStep2, "override-with-tools:latest"),
-			),
-		),
+		{
+			ObjectMeta: metav1.ObjectMeta{
+				Name:      trPod,
+				Namespace: ns,
+			},
+			Spec: corev1.PodSpec{
+				InitContainers: []corev1.Container{
+					{
+						Name:  trInitStep1,
+						Image: "override-with-creds:latest",
+					},
+					{
+						Name:  trInitStep2,
+						Image: "override-with-tools:latest",
+					},
+				},
+				Containers: []corev1.Container{
+					{
+						Name:  trStep1Name,
+						Image: trStep1Name + ":latest",
+					},
+					{
+						Name:  nopStep,
+						Image: "override-with-nop:latest",
+					},
+				},
+			},
+			Status: corev1.PodStatus{
+				Phase: corev1.PodPhase(corev1.PodSucceeded),
+				InitContainerStatuses: []corev1.ContainerStatus{
+					{
+						Name:  trInitStep1,
+						Image: "override-with-creds:latest",
+					},
+					{
+						Name:  trInitStep2,
+						Image: "override-with-tools:latest",
+					},
+				},
+			},
+		},
 	}
 
 	logs := fake.Logs(
@@ -1277,48 +1578,93 @@ func TestLog_taskrun_last(t *testing.T) {
 	)
 
 	taskruns := []*v1alpha1.TaskRun{
-		tb.TaskRun(trName1, tb.TaskRunNamespace(ns),
-			tb.TaskRunStatus(
-				tb.PodName(trPod),
-				tb.TaskRunStartTime(tr1StartTime),
-				tb.StatusCondition(apis.Condition{
-					Type:   apis.ConditionSucceeded,
-					Status: corev1.ConditionTrue,
-				}),
-				tb.StepState(
-					cb.StepName(trStepName),
-					tb.StateTerminated(0),
-				),
-				tb.StepState(
-					cb.StepName(nopStep),
-					tb.StateTerminated(0),
-				),
-			),
-			tb.TaskRunSpec(
-				tb.TaskRunTaskRef(taskName),
-			),
-		),
-		tb.TaskRun(trName2, tb.TaskRunNamespace(ns),
-			tb.TaskRunStatus(
-				tb.PodName(trPod),
-				tb.TaskRunStartTime(tr2StartTime),
-				tb.StatusCondition(apis.Condition{
-					Type:   apis.ConditionSucceeded,
-					Status: corev1.ConditionTrue,
-				}),
-				tb.StepState(
-					cb.StepName(trStepName),
-					tb.StateTerminated(0),
-				),
-				tb.StepState(
-					cb.StepName(nopStep),
-					tb.StateTerminated(0),
-				),
-			),
-			tb.TaskRunSpec(
-				tb.TaskRunTaskRef(taskName),
-			),
-		),
+		{
+			ObjectMeta: metav1.ObjectMeta{
+				Name:      trName1,
+				Namespace: ns,
+			},
+			Spec: v1alpha1.TaskRunSpec{
+				TaskRef: &v1alpha1.TaskRef{
+					Name: taskName,
+				},
+			},
+			Status: v1alpha1.TaskRunStatus{
+				Status: duckv1beta1.Status{
+					Conditions: duckv1beta1.Conditions{
+						{
+							Type:   apis.ConditionSucceeded,
+							Status: corev1.ConditionTrue,
+						},
+					},
+				},
+				TaskRunStatusFields: v1alpha1.TaskRunStatusFields{
+					StartTime: &metav1.Time{Time: tr1StartTime},
+					Steps: []v1alpha1.StepState{
+						{
+							Name: trStepName,
+							ContainerState: corev1.ContainerState{
+								Terminated: &corev1.ContainerStateTerminated{
+									ExitCode: 0,
+								},
+							},
+						},
+						{
+							Name: nopStep,
+							ContainerState: corev1.ContainerState{
+								Terminated: &corev1.ContainerStateTerminated{
+									ExitCode: 0,
+								},
+							},
+						},
+					},
+					PodName: trPod,
+				},
+			},
+		},
+		{
+			ObjectMeta: metav1.ObjectMeta{
+				Name:      trName2,
+				Namespace: ns,
+			},
+			Spec: v1alpha1.TaskRunSpec{
+				TaskRef: &v1alpha1.TaskRef{
+					Name: taskName,
+				},
+			},
+			Status: v1alpha1.TaskRunStatus{
+				Status: duckv1beta1.Status{
+					Conditions: duckv1beta1.Conditions{
+						{
+							Type:    apis.ConditionSucceeded,
+							Status:  corev1.ConditionUnknown,
+							Message: "Running",
+						},
+					},
+				},
+				TaskRunStatusFields: v1alpha1.TaskRunStatusFields{
+					StartTime: &metav1.Time{Time: tr2StartTime},
+					Steps: []v1alpha1.StepState{
+						{
+							Name: trStepName,
+							ContainerState: corev1.ContainerState{
+								Terminated: &corev1.ContainerStateTerminated{
+									ExitCode: 0,
+								},
+							},
+						},
+						{
+							Name: nopStep,
+							ContainerState: corev1.ContainerState{
+								Terminated: &corev1.ContainerStateTerminated{
+									ExitCode: 0,
+								},
+							},
+						},
+					},
+					PodName: trPod,
+				},
+			},
+		},
 	}
 
 	namespaces := []*corev1.Namespace{
@@ -1512,26 +1858,48 @@ func TestLog_taskrun_follow_mode_no_pod_name(t *testing.T) {
 	)
 
 	trs := []*v1alpha1.TaskRun{
-		tb.TaskRun(trName, tb.TaskRunNamespace(ns),
-			tb.TaskRunStatus(
-				tb.TaskRunStartTime(trStartTime),
-				tb.StatusCondition(apis.Condition{
-					Type:   apis.ConditionSucceeded,
-					Status: corev1.ConditionTrue,
-				}),
-				tb.StepState(
-					cb.StepName(trStep1Name),
-					tb.StateTerminated(0),
-				),
-				tb.StepState(
-					cb.StepName(nopStep),
-					tb.StateTerminated(0),
-				),
-			),
-			tb.TaskRunSpec(
-				tb.TaskRunTaskRef(taskName),
-			),
-		),
+		{
+			ObjectMeta: metav1.ObjectMeta{
+				Name:      trName,
+				Namespace: ns,
+			},
+			Spec: v1alpha1.TaskRunSpec{
+				TaskRef: &v1alpha1.TaskRef{
+					Name: taskName,
+				},
+			},
+			Status: v1alpha1.TaskRunStatus{
+				Status: duckv1beta1.Status{
+					Conditions: duckv1beta1.Conditions{
+						{
+							Type:   apis.ConditionSucceeded,
+							Status: corev1.ConditionTrue,
+						},
+					},
+				},
+				TaskRunStatusFields: v1alpha1.TaskRunStatusFields{
+					StartTime: &metav1.Time{Time: trStartTime},
+					Steps: []v1alpha1.StepState{
+						{
+							Name: trStep1Name,
+							ContainerState: corev1.ContainerState{
+								Terminated: &corev1.ContainerStateTerminated{
+									ExitCode: 0,
+								},
+							},
+						},
+						{
+							Name: nopStep,
+							ContainerState: corev1.ContainerState{
+								Terminated: &corev1.ContainerStateTerminated{
+									ExitCode: 0,
+								},
+							},
+						},
+					},
+				},
+			},
+		},
 	}
 
 	nsList := []*corev1.Namespace{
@@ -1543,19 +1911,47 @@ func TestLog_taskrun_follow_mode_no_pod_name(t *testing.T) {
 	}
 
 	p := []*corev1.Pod{
-		tbv1beta1.Pod(trPod, tbv1beta1.PodNamespace(ns),
-			tbv1beta1.PodSpec(
-				tbv1beta1.PodInitContainer(trInitStep1, "override-with-creds:latest"),
-				tbv1beta1.PodInitContainer(trInitStep2, "override-with-tools:latest"),
-				tbv1beta1.PodContainer(trStep1Name, trStep1Name+":latest"),
-				tbv1beta1.PodContainer(nopStep, "override-with-nop:latest"),
-			),
-			cb.PodStatus(
-				cb.PodPhase(corev1.PodSucceeded),
-				cb.PodInitContainerStatus(trInitStep1, "override-with-creds:latest"),
-				cb.PodInitContainerStatus(trInitStep2, "override-with-tools:latest"),
-			),
-		),
+		{
+			ObjectMeta: metav1.ObjectMeta{
+				Name:      trPod,
+				Namespace: ns,
+			},
+			Spec: corev1.PodSpec{
+				InitContainers: []corev1.Container{
+					{
+						Name:  trInitStep1,
+						Image: "override-with-creds:latest",
+					},
+					{
+						Name:  trInitStep2,
+						Image: "override-with-tools:latest",
+					},
+				},
+				Containers: []corev1.Container{
+					{
+						Name:  trStep1Name,
+						Image: trStep1Name + ":latest",
+					},
+					{
+						Name:  nopStep,
+						Image: "override-with-nop:latest",
+					},
+				},
+			},
+			Status: corev1.PodStatus{
+				Phase: corev1.PodPhase(corev1.PodSucceeded),
+				InitContainerStatuses: []corev1.ContainerStatus{
+					{
+						Name:  trInitStep1,
+						Image: "override-with-creds:latest",
+					},
+					{
+						Name:  trInitStep2,
+						Image: "override-with-tools:latest",
+					},
+				},
+			},
+		},
 	}
 
 	logs := fake.Logs(
@@ -1655,19 +2051,47 @@ func TestLog_taskrun_follow_mode_no_pod_name_v1beta1(t *testing.T) {
 	}
 
 	p := []*corev1.Pod{
-		tbv1beta1.Pod(trPod, tbv1beta1.PodNamespace(ns),
-			tbv1beta1.PodSpec(
-				tbv1beta1.PodInitContainer(trInitStep1, "override-with-creds:latest"),
-				tbv1beta1.PodInitContainer(trInitStep2, "override-with-tools:latest"),
-				tbv1beta1.PodContainer(trStep1Name, trStep1Name+":latest"),
-				tbv1beta1.PodContainer(nopStep, "override-with-nop:latest"),
-			),
-			cb.PodStatus(
-				cb.PodPhase(corev1.PodSucceeded),
-				cb.PodInitContainerStatus(trInitStep1, "override-with-creds:latest"),
-				cb.PodInitContainerStatus(trInitStep2, "override-with-tools:latest"),
-			),
-		),
+		{
+			ObjectMeta: metav1.ObjectMeta{
+				Name:      trPod,
+				Namespace: ns,
+			},
+			Spec: corev1.PodSpec{
+				InitContainers: []corev1.Container{
+					{
+						Name:  trInitStep1,
+						Image: "override-with-creds:latest",
+					},
+					{
+						Name:  trInitStep2,
+						Image: "override-with-tools:latest",
+					},
+				},
+				Containers: []corev1.Container{
+					{
+						Name:  trStep1Name,
+						Image: trStep1Name + ":latest",
+					},
+					{
+						Name:  nopStep,
+						Image: "override-with-nop:latest",
+					},
+				},
+			},
+			Status: corev1.PodStatus{
+				Phase: corev1.PodPhase(corev1.PodSucceeded),
+				InitContainerStatuses: []corev1.ContainerStatus{
+					{
+						Name:  trInitStep1,
+						Image: "override-with-creds:latest",
+					},
+					{
+						Name:  trInitStep2,
+						Image: "override-with-tools:latest",
+					},
+				},
+			},
+		},
 	}
 
 	logs := fake.Logs(
@@ -1714,27 +2138,49 @@ func TestLog_taskrun_follow_mode_update_pod_name(t *testing.T) {
 	)
 
 	trs := []*v1alpha1.TaskRun{
-		tb.TaskRun(trName, tb.TaskRunNamespace(ns),
-			tb.TaskRunStatus(
-				tb.TaskRunStartTime(trStartTime),
-				tb.StatusCondition(apis.Condition{
-					Type:    apis.ConditionSucceeded,
-					Status:  corev1.ConditionUnknown,
-					Message: "Running",
-				}),
-				tb.StepState(
-					cb.StepName(trStep1Name),
-					tb.StateTerminated(0),
-				),
-				tb.StepState(
-					cb.StepName(nopStep),
-					tb.StateTerminated(0),
-				),
-			),
-			tb.TaskRunSpec(
-				tb.TaskRunTaskRef(taskName),
-			),
-		),
+		{
+			ObjectMeta: metav1.ObjectMeta{
+				Name:      trName,
+				Namespace: ns,
+			},
+			Spec: v1alpha1.TaskRunSpec{
+				TaskRef: &v1alpha1.TaskRef{
+					Name: taskName,
+				},
+			},
+			Status: v1alpha1.TaskRunStatus{
+				Status: duckv1beta1.Status{
+					Conditions: duckv1beta1.Conditions{
+						{
+							Type:    apis.ConditionSucceeded,
+							Status:  corev1.ConditionUnknown,
+							Message: "Running",
+						},
+					},
+				},
+				TaskRunStatusFields: v1alpha1.TaskRunStatusFields{
+					StartTime: &metav1.Time{Time: trStartTime},
+					Steps: []v1alpha1.StepState{
+						{
+							Name: trStep1Name,
+							ContainerState: corev1.ContainerState{
+								Terminated: &corev1.ContainerStateTerminated{
+									ExitCode: 0,
+								},
+							},
+						},
+						{
+							Name: nopStep,
+							ContainerState: corev1.ContainerState{
+								Terminated: &corev1.ContainerStateTerminated{
+									ExitCode: 0,
+								},
+							},
+						},
+					},
+				},
+			},
+		},
 	}
 
 	nsList := []*corev1.Namespace{
@@ -1746,19 +2192,47 @@ func TestLog_taskrun_follow_mode_update_pod_name(t *testing.T) {
 	}
 
 	p := []*corev1.Pod{
-		tbv1beta1.Pod(trPod, tbv1beta1.PodNamespace(ns),
-			tbv1beta1.PodSpec(
-				tbv1beta1.PodInitContainer(trInitStep1, "override-with-creds:latest"),
-				tbv1beta1.PodInitContainer(trInitStep2, "override-with-tools:latest"),
-				tbv1beta1.PodContainer(trStep1Name, trStep1Name+":latest"),
-				tbv1beta1.PodContainer(nopStep, "override-with-nop:latest"),
-			),
-			cb.PodStatus(
-				cb.PodPhase(corev1.PodSucceeded),
-				cb.PodInitContainerStatus(trInitStep1, "override-with-creds:latest"),
-				cb.PodInitContainerStatus(trInitStep2, "override-with-tools:latest"),
-			),
-		),
+		{
+			ObjectMeta: metav1.ObjectMeta{
+				Name:      trPod,
+				Namespace: ns,
+			},
+			Spec: corev1.PodSpec{
+				InitContainers: []corev1.Container{
+					{
+						Name:  trInitStep1,
+						Image: "override-with-creds:latest",
+					},
+					{
+						Name:  trInitStep2,
+						Image: "override-with-tools:latest",
+					},
+				},
+				Containers: []corev1.Container{
+					{
+						Name:  trStep1Name,
+						Image: trStep1Name + ":latest",
+					},
+					{
+						Name:  nopStep,
+						Image: "override-with-nop:latest",
+					},
+				},
+			},
+			Status: corev1.PodStatus{
+				Phase: corev1.PodPhase(corev1.PodSucceeded),
+				InitContainerStatuses: []corev1.ContainerStatus{
+					{
+						Name:  trInitStep1,
+						Image: "override-with-creds:latest",
+					},
+					{
+						Name:  trInitStep2,
+						Image: "override-with-tools:latest",
+					},
+				},
+			},
+		},
 	}
 
 	logs := fake.Logs(
@@ -1871,19 +2345,47 @@ func TestLog_taskrun_follow_mode_update_pod_name_v1beta1(t *testing.T) {
 	}
 
 	p := []*corev1.Pod{
-		tbv1beta1.Pod(trPod, tbv1beta1.PodNamespace(ns),
-			tbv1beta1.PodSpec(
-				tbv1beta1.PodInitContainer(trInitStep1, "override-with-creds:latest"),
-				tbv1beta1.PodInitContainer(trInitStep2, "override-with-tools:latest"),
-				tbv1beta1.PodContainer(trStep1Name, trStep1Name+":latest"),
-				tbv1beta1.PodContainer(nopStep, "override-with-nop:latest"),
-			),
-			cb.PodStatus(
-				cb.PodPhase(corev1.PodSucceeded),
-				cb.PodInitContainerStatus(trInitStep1, "override-with-creds:latest"),
-				cb.PodInitContainerStatus(trInitStep2, "override-with-tools:latest"),
-			),
-		),
+		{
+			ObjectMeta: metav1.ObjectMeta{
+				Name:      trPod,
+				Namespace: ns,
+			},
+			Spec: corev1.PodSpec{
+				InitContainers: []corev1.Container{
+					{
+						Name:  trInitStep1,
+						Image: "override-with-creds:latest",
+					},
+					{
+						Name:  trInitStep2,
+						Image: "override-with-tools:latest",
+					},
+				},
+				Containers: []corev1.Container{
+					{
+						Name:  trStep1Name,
+						Image: trStep1Name + ":latest",
+					},
+					{
+						Name:  nopStep,
+						Image: "override-with-nop:latest",
+					},
+				},
+			},
+			Status: corev1.PodStatus{
+				Phase: corev1.PodPhase(corev1.PodSucceeded),
+				InitContainerStatuses: []corev1.ContainerStatus{
+					{
+						Name:  trInitStep1,
+						Image: "override-with-creds:latest",
+					},
+					{
+						Name:  trInitStep2,
+						Image: "override-with-tools:latest",
+					},
+				},
+			},
+		},
 	}
 
 	logs := fake.Logs(
@@ -1942,27 +2444,49 @@ func TestLog_taskrun_follow_mode_update_timeout(t *testing.T) {
 	)
 
 	trs := []*v1alpha1.TaskRun{
-		tb.TaskRun(trName, tb.TaskRunNamespace(ns),
-			tb.TaskRunStatus(
-				tb.TaskRunStartTime(trStartTime),
-				tb.StatusCondition(apis.Condition{
-					Type:    apis.ConditionSucceeded,
-					Status:  corev1.ConditionUnknown,
-					Message: "Running",
-				}),
-				tb.StepState(
-					cb.StepName(trStep1Name),
-					tb.StateTerminated(0),
-				),
-				tb.StepState(
-					cb.StepName(nopStep),
-					tb.StateTerminated(0),
-				),
-			),
-			tb.TaskRunSpec(
-				tb.TaskRunTaskRef(taskName),
-			),
-		),
+		{
+			ObjectMeta: metav1.ObjectMeta{
+				Name:      trName,
+				Namespace: ns,
+			},
+			Spec: v1alpha1.TaskRunSpec{
+				TaskRef: &v1alpha1.TaskRef{
+					Name: taskName,
+				},
+			},
+			Status: v1alpha1.TaskRunStatus{
+				Status: duckv1beta1.Status{
+					Conditions: duckv1beta1.Conditions{
+						{
+							Type:    apis.ConditionSucceeded,
+							Status:  corev1.ConditionUnknown,
+							Message: "Running",
+						},
+					},
+				},
+				TaskRunStatusFields: v1alpha1.TaskRunStatusFields{
+					StartTime: &metav1.Time{Time: trStartTime},
+					Steps: []v1alpha1.StepState{
+						{
+							Name: trStep1Name,
+							ContainerState: corev1.ContainerState{
+								Terminated: &corev1.ContainerStateTerminated{
+									ExitCode: 0,
+								},
+							},
+						},
+						{
+							Name: nopStep,
+							ContainerState: corev1.ContainerState{
+								Terminated: &corev1.ContainerStateTerminated{
+									ExitCode: 0,
+								},
+							},
+						},
+					},
+				},
+			},
+		},
 	}
 
 	nsList := []*corev1.Namespace{
@@ -1974,19 +2498,47 @@ func TestLog_taskrun_follow_mode_update_timeout(t *testing.T) {
 	}
 
 	p := []*corev1.Pod{
-		tbv1beta1.Pod(trPod, tbv1beta1.PodNamespace(ns),
-			tbv1beta1.PodSpec(
-				tbv1beta1.PodInitContainer(trInitStep1, "override-with-creds:latest"),
-				tbv1beta1.PodInitContainer(trInitStep2, "override-with-tools:latest"),
-				tbv1beta1.PodContainer(trStep1Name, trStep1Name+":latest"),
-				tbv1beta1.PodContainer(nopStep, "override-with-nop:latest"),
-			),
-			cb.PodStatus(
-				cb.PodPhase(corev1.PodSucceeded),
-				cb.PodInitContainerStatus(trInitStep1, "override-with-creds:latest"),
-				cb.PodInitContainerStatus(trInitStep2, "override-with-tools:latest"),
-			),
-		),
+		{
+			ObjectMeta: metav1.ObjectMeta{
+				Name:      trPod,
+				Namespace: ns,
+			},
+			Spec: corev1.PodSpec{
+				InitContainers: []corev1.Container{
+					{
+						Name:  trInitStep1,
+						Image: "override-with-creds:latest",
+					},
+					{
+						Name:  trInitStep2,
+						Image: "override-with-tools:latest",
+					},
+				},
+				Containers: []corev1.Container{
+					{
+						Name:  trStep1Name,
+						Image: trStep1Name + ":latest",
+					},
+					{
+						Name:  nopStep,
+						Image: "override-with-nop:latest",
+					},
+				},
+			},
+			Status: corev1.PodStatus{
+				Phase: corev1.PodPhase(corev1.PodSucceeded),
+				InitContainerStatuses: []corev1.ContainerStatus{
+					{
+						Name:  trInitStep1,
+						Image: "override-with-creds:latest",
+					},
+					{
+						Name:  trInitStep2,
+						Image: "override-with-tools:latest",
+					},
+				},
+			},
+		},
 	}
 
 	logs := fake.Logs(
@@ -2094,19 +2646,47 @@ func TestLog_taskrun_follow_mode_update_timeout_v1beta1(t *testing.T) {
 	}
 
 	p := []*corev1.Pod{
-		tbv1beta1.Pod(trPod, tbv1beta1.PodNamespace(ns),
-			tbv1beta1.PodSpec(
-				tbv1beta1.PodInitContainer(trInitStep1, "override-with-creds:latest"),
-				tbv1beta1.PodInitContainer(trInitStep2, "override-with-tools:latest"),
-				tbv1beta1.PodContainer(trStep1Name, trStep1Name+":latest"),
-				tbv1beta1.PodContainer(nopStep, "override-with-nop:latest"),
-			),
-			cb.PodStatus(
-				cb.PodPhase(corev1.PodSucceeded),
-				cb.PodInitContainerStatus(trInitStep1, "override-with-creds:latest"),
-				cb.PodInitContainerStatus(trInitStep2, "override-with-tools:latest"),
-			),
-		),
+		{
+			ObjectMeta: metav1.ObjectMeta{
+				Name:      trPod,
+				Namespace: ns,
+			},
+			Spec: corev1.PodSpec{
+				InitContainers: []corev1.Container{
+					{
+						Name:  trInitStep1,
+						Image: "override-with-creds:latest",
+					},
+					{
+						Name:  trInitStep2,
+						Image: "override-with-tools:latest",
+					},
+				},
+				Containers: []corev1.Container{
+					{
+						Name:  trStep1Name,
+						Image: trStep1Name + ":latest",
+					},
+					{
+						Name:  nopStep,
+						Image: "override-with-nop:latest",
+					},
+				},
+			},
+			Status: corev1.PodStatus{
+				Phase: corev1.PodPhase(corev1.PodSucceeded),
+				InitContainerStatuses: []corev1.ContainerStatus{
+					{
+						Name:  trInitStep1,
+						Image: "override-with-creds:latest",
+					},
+					{
+						Name:  trInitStep2,
+						Image: "override-with-tools:latest",
+					},
+				},
+			},
+		},
 	}
 
 	logs := fake.Logs(
@@ -2160,27 +2740,49 @@ func TestLog_taskrun_follow_mode_no_output_provided(t *testing.T) {
 	)
 
 	trs := []*v1alpha1.TaskRun{
-		tb.TaskRun(trName, tb.TaskRunNamespace(ns),
-			tb.TaskRunStatus(
-				tb.TaskRunStartTime(trStartTime),
-				tb.StatusCondition(apis.Condition{
-					Status:  corev1.ConditionFalse,
-					Reason:  v1beta1.TaskRunReasonFailed.String(),
-					Message: "invalid output resources: TaskRun's declared resources didn't match usage in Task: Didn't provide required values: [builtImage]",
-				}),
-				tb.StepState(
-					cb.StepName(trStep1Name),
-					tb.StateTerminated(0),
-				),
-				tb.StepState(
-					cb.StepName(nopStep),
-					tb.StateTerminated(0),
-				),
-			),
-			tb.TaskRunSpec(
-				tb.TaskRunTaskRef(taskName),
-			),
-		),
+		{
+			ObjectMeta: metav1.ObjectMeta{
+				Name:      trName,
+				Namespace: ns,
+			},
+			Spec: v1alpha1.TaskRunSpec{
+				TaskRef: &v1alpha1.TaskRef{
+					Name: taskName,
+				},
+			},
+			Status: v1alpha1.TaskRunStatus{
+				Status: duckv1beta1.Status{
+					Conditions: duckv1beta1.Conditions{
+						{
+							Status:  corev1.ConditionFalse,
+							Reason:  v1beta1.TaskRunReasonFailed.String(),
+							Message: "invalid output resources: TaskRun's declared resources didn't match usage in Task: Didn't provide required values: [builtImage]",
+						},
+					},
+				},
+				TaskRunStatusFields: v1alpha1.TaskRunStatusFields{
+					StartTime: &metav1.Time{Time: trStartTime},
+					Steps: []v1alpha1.StepState{
+						{
+							Name: trStep1Name,
+							ContainerState: corev1.ContainerState{
+								Terminated: &corev1.ContainerStateTerminated{
+									ExitCode: 0,
+								},
+							},
+						},
+						{
+							Name: nopStep,
+							ContainerState: corev1.ContainerState{
+								Terminated: &corev1.ContainerStateTerminated{
+									ExitCode: 0,
+								},
+							},
+						},
+					},
+				},
+			},
+		},
 	}
 
 	nsList := []*corev1.Namespace{
@@ -2192,19 +2794,47 @@ func TestLog_taskrun_follow_mode_no_output_provided(t *testing.T) {
 	}
 
 	p := []*corev1.Pod{
-		tbv1beta1.Pod(trPod, tbv1beta1.PodNamespace(ns),
-			tbv1beta1.PodSpec(
-				tbv1beta1.PodInitContainer(trInitStep1, "override-with-creds:latest"),
-				tbv1beta1.PodInitContainer(trInitStep2, "override-with-tools:latest"),
-				tbv1beta1.PodContainer(trStep1Name, trStep1Name+":latest"),
-				tbv1beta1.PodContainer(nopStep, "override-with-nop:latest"),
-			),
-			cb.PodStatus(
-				cb.PodPhase(corev1.PodSucceeded),
-				cb.PodInitContainerStatus(trInitStep1, "override-with-creds:latest"),
-				cb.PodInitContainerStatus(trInitStep2, "override-with-tools:latest"),
-			),
-		),
+		{
+			ObjectMeta: metav1.ObjectMeta{
+				Name:      trPod,
+				Namespace: ns,
+			},
+			Spec: corev1.PodSpec{
+				InitContainers: []corev1.Container{
+					{
+						Name:  trInitStep1,
+						Image: "override-with-creds:latest",
+					},
+					{
+						Name:  trInitStep2,
+						Image: "override-with-tools:latest",
+					},
+				},
+				Containers: []corev1.Container{
+					{
+						Name:  trStep1Name,
+						Image: trStep1Name + ":latest",
+					},
+					{
+						Name:  nopStep,
+						Image: "override-with-nop:latest",
+					},
+				},
+			},
+			Status: corev1.PodStatus{
+				Phase: corev1.PodPhase(corev1.PodSucceeded),
+				InitContainerStatuses: []corev1.ContainerStatus{
+					{
+						Name:  trInitStep1,
+						Image: "override-with-creds:latest",
+					},
+					{
+						Name:  trInitStep2,
+						Image: "override-with-tools:latest",
+					},
+				},
+			},
+		},
 	}
 
 	logs := fake.Logs(
@@ -2302,19 +2932,47 @@ func TestLog_taskrun_follow_mode_no_output_provided_v1beta1(t *testing.T) {
 	}
 
 	p := []*corev1.Pod{
-		tbv1beta1.Pod(trPod, tbv1beta1.PodNamespace(ns),
-			tbv1beta1.PodSpec(
-				tbv1beta1.PodInitContainer(trInitStep1, "override-with-creds:latest"),
-				tbv1beta1.PodInitContainer(trInitStep2, "override-with-tools:latest"),
-				tbv1beta1.PodContainer(trStep1Name, trStep1Name+":latest"),
-				tbv1beta1.PodContainer(nopStep, "override-with-nop:latest"),
-			),
-			cb.PodStatus(
-				cb.PodPhase(corev1.PodSucceeded),
-				cb.PodInitContainerStatus(trInitStep1, "override-with-creds:latest"),
-				cb.PodInitContainerStatus(trInitStep2, "override-with-tools:latest"),
-			),
-		),
+		{
+			ObjectMeta: metav1.ObjectMeta{
+				Name:      trPod,
+				Namespace: ns,
+			},
+			Spec: corev1.PodSpec{
+				InitContainers: []corev1.Container{
+					{
+						Name:  trInitStep1,
+						Image: "override-with-creds:latest",
+					},
+					{
+						Name:  trInitStep2,
+						Image: "override-with-tools:latest",
+					},
+				},
+				Containers: []corev1.Container{
+					{
+						Name:  trStep1Name,
+						Image: trStep1Name + ":latest",
+					},
+					{
+						Name:  nopStep,
+						Image: "override-with-nop:latest",
+					},
+				},
+			},
+			Status: corev1.PodStatus{
+				Phase: corev1.PodPhase(corev1.PodSucceeded),
+				InitContainerStatuses: []corev1.ContainerStatus{
+					{
+						Name:  trInitStep1,
+						Image: "override-with-creds:latest",
+					},
+					{
+						Name:  trInitStep2,
+						Image: "override-with-tools:latest",
+					},
+				},
+			},
+		},
 	}
 
 	logs := fake.Logs(

@@ -18,7 +18,6 @@ import (
 	"errors"
 	"testing"
 
-	tb "github.com/tektoncd/cli/internal/builder/v1alpha1"
 	"github.com/tektoncd/cli/pkg/test"
 	cb "github.com/tektoncd/cli/pkg/test/builder"
 	testDynamic "github.com/tektoncd/cli/pkg/test/dynamic"
@@ -37,28 +36,50 @@ import (
 
 func TestTaskRunCancel(t *testing.T) {
 	trs := []*v1alpha1.TaskRun{
-		tb.TaskRun("taskrun-1",
-			tb.TaskRunNamespace("ns"),
-			tb.TaskRunLabel("tekton.dev/task", "task"),
-			tb.TaskRunSpec(tb.TaskRunTaskRef("task")),
-			tb.TaskRunStatus(
-				tb.StatusCondition(apis.Condition{
-					Status: corev1.ConditionUnknown,
-					Reason: v1beta1.TaskRunReasonRunning.String(),
-				}),
-			),
-		),
-		tb.TaskRun("taskrun-2",
-			tb.TaskRunNamespace("ns"),
-			tb.TaskRunLabel("tekton.dev/task", "failure-task"),
-			tb.TaskRunSpec(tb.TaskRunTaskRef("failure-task")),
-			tb.TaskRunStatus(
-				tb.StatusCondition(apis.Condition{
-					Status: corev1.ConditionTrue,
-					Reason: v1beta1.TaskRunReasonSuccessful.String(),
-				}),
-			),
-		),
+		{
+			ObjectMeta: metav1.ObjectMeta{
+				Name:      "taskrun-1",
+				Namespace: "ns",
+				Labels:    map[string]string{"tekton.dev/task": "task"},
+			},
+			Spec: v1alpha1.TaskRunSpec{
+				TaskRef: &v1alpha1.TaskRef{
+					Name: "task",
+				},
+			},
+			Status: v1alpha1.TaskRunStatus{
+				Status: duckv1beta1.Status{
+					Conditions: duckv1beta1.Conditions{
+						{
+							Status: corev1.ConditionUnknown,
+							Reason: v1beta1.TaskRunReasonRunning.String(),
+						},
+					},
+				},
+			},
+		},
+		{
+			ObjectMeta: metav1.ObjectMeta{
+				Name:      "taskrun-2",
+				Namespace: "ns",
+				Labels:    map[string]string{"tekton.dev/task": "failure-task"},
+			},
+			Spec: v1alpha1.TaskRunSpec{
+				TaskRef: &v1alpha1.TaskRef{
+					Name: "failure-task",
+				},
+			},
+			Status: v1alpha1.TaskRunStatus{
+				Status: duckv1beta1.Status{
+					Conditions: duckv1beta1.Conditions{
+						{
+							Status: corev1.ConditionTrue,
+							Reason: v1beta1.TaskRunReasonSuccessful.String(),
+						},
+					},
+				},
+			},
+		},
 	}
 
 	trs2 := []*v1alpha1.TaskRun{
@@ -87,17 +108,28 @@ func TestTaskRunCancel(t *testing.T) {
 	}
 
 	trs3 := []*v1alpha1.TaskRun{
-		tb.TaskRun("cancel-taskrun-1",
-			tb.TaskRunNamespace("ns"),
-			tb.TaskRunLabel("tekton.dev/task", "cancel-task"),
-			tb.TaskRunSpec(tb.TaskRunTaskRef("cancel-task")),
-			tb.TaskRunStatus(
-				tb.StatusCondition(apis.Condition{
-					Status: corev1.ConditionFalse,
-					Reason: v1beta1.TaskRunReasonCancelled.String(),
-				}),
-			),
-		),
+		{
+			ObjectMeta: metav1.ObjectMeta{
+				Name:      "cancel-taskrun-1",
+				Namespace: "ns",
+				Labels:    map[string]string{"tekton.dev/task": "cancel-task"},
+			},
+			Spec: v1alpha1.TaskRunSpec{
+				TaskRef: &v1alpha1.TaskRef{
+					Name: "cancel-task",
+				},
+			},
+			Status: v1alpha1.TaskRunStatus{
+				Status: duckv1beta1.Status{
+					Conditions: duckv1beta1.Conditions{
+						{
+							Status: corev1.ConditionFalse,
+							Reason: v1beta1.TaskRunReasonCancelled.String(),
+						},
+					},
+				},
+			},
+		},
 	}
 
 	ns := []*corev1.Namespace{

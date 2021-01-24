@@ -19,7 +19,6 @@ import (
 	"strings"
 	"testing"
 
-	tb "github.com/tektoncd/cli/internal/builder/v1alpha1"
 	"github.com/tektoncd/cli/pkg/test"
 	cb "github.com/tektoncd/cli/pkg/test/builder"
 	testDynamic "github.com/tektoncd/cli/pkg/test/dynamic"
@@ -30,7 +29,6 @@ import (
 	corev1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/client-go/dynamic"
-	"knative.dev/pkg/apis"
 	duckv1beta1 "knative.dev/pkg/apis/duck/v1beta1"
 )
 
@@ -45,94 +43,161 @@ func TestTaskRunDelete(t *testing.T) {
 	}
 
 	tasks := []*v1alpha1.Task{
-		tb.Task("random",
-			tb.TaskNamespace("ns"),
-		),
+		{
+			ObjectMeta: metav1.ObjectMeta{
+				Name:      "random",
+				Namespace: "ns",
+			},
+		},
 	}
 
 	clustertasks := []*v1alpha1.ClusterTask{
-		tb.ClusterTask("random"),
+		{
+			ObjectMeta: metav1.ObjectMeta{
+				Name: "random",
+			},
+		},
 	}
 
 	trs := []*v1alpha1.TaskRun{
-		tb.TaskRun("tr0-1",
-			tb.TaskRunNamespace("ns"),
-			tb.TaskRunLabel("tekton.dev/task", "random"),
-			tb.TaskRunSpec(
-				tb.TaskRunTaskRef("random", tb.TaskRefKind(v1alpha1.NamespacedTaskKind)),
-			),
-			tb.TaskRunStatus(
-				tb.StatusCondition(apis.Condition{
-					Status: corev1.ConditionTrue,
-					Reason: v1beta1.TaskRunReasonSuccessful.String(),
-				}),
-			),
-		),
-		tb.TaskRun("tr0-2",
-			tb.TaskRunNamespace("ns"),
-			tb.TaskRunLabel("tekton.dev/task", "random"),
-			tb.TaskRunSpec(
-				tb.TaskRunTaskRef("random", tb.TaskRefKind(v1alpha1.NamespacedTaskKind)),
-			),
-			tb.TaskRunStatus(
-				tb.StatusCondition(apis.Condition{
-					Status: corev1.ConditionTrue,
-					Reason: v1beta1.TaskRunReasonSuccessful.String(),
-				}),
-			),
-		),
-		tb.TaskRun("tr0-3",
-			tb.TaskRunNamespace("ns"),
-			tb.TaskRunLabel("tekton.dev/task", "random"),
-			tb.TaskRunSpec(
-				tb.TaskRunTaskRef("random", tb.TaskRefKind(v1alpha1.NamespacedTaskKind)),
-			),
-			tb.TaskRunStatus(
-				tb.StatusCondition(apis.Condition{
-					Status: corev1.ConditionTrue,
-					Reason: v1beta1.TaskRunReasonSuccessful.String(),
-				}),
-			),
-		),
-		tb.TaskRun("tr0-4",
-			tb.TaskRunNamespace("ns"),
-			tb.TaskRunLabel("tekton.dev/clusterTask", "random"),
-			tb.TaskRunSpec(
-				tb.TaskRunTaskRef("random", tb.TaskRefKind(v1alpha1.ClusterTaskKind)),
-			),
-			tb.TaskRunStatus(
-				tb.StatusCondition(apis.Condition{
-					Status: corev1.ConditionTrue,
-					Reason: v1beta1.TaskRunReasonSuccessful.String(),
-				}),
-			),
-		),
-		tb.TaskRun("tr0-5",
-			tb.TaskRunNamespace("ns"),
-			tb.TaskRunLabel("tekton.dev/clusterTask", "random"),
-			tb.TaskRunSpec(
-				tb.TaskRunTaskRef("random", tb.TaskRefKind(v1alpha1.ClusterTaskKind)),
-			),
-			tb.TaskRunStatus(
-				tb.StatusCondition(apis.Condition{
-					Status: corev1.ConditionTrue,
-					Reason: v1beta1.TaskRunReasonSuccessful.String(),
-				}),
-			),
-		),
-		tb.TaskRun("tr0-6",
-			tb.TaskRunNamespace("ns"),
-			tb.TaskRunLabel("tekton.dev/clusterTask", "random"),
-			tb.TaskRunSpec(
-				tb.TaskRunTaskRef("random", tb.TaskRefKind(v1alpha1.ClusterTaskKind)),
-			),
-			tb.TaskRunStatus(
-				tb.StatusCondition(apis.Condition{
-					Status: corev1.ConditionTrue,
-					Reason: v1beta1.TaskRunReasonSuccessful.String(),
-				}),
-			),
-		),
+		{
+			ObjectMeta: metav1.ObjectMeta{
+				Name:      "tr0-1",
+				Namespace: "ns",
+				Labels:    map[string]string{"tekton.dev/task": "random"},
+			},
+			Spec: v1alpha1.TaskRunSpec{
+				TaskRef: &v1alpha1.TaskRef{
+					Name: "random",
+					Kind: v1alpha1.NamespacedTaskKind,
+				},
+			},
+			Status: v1alpha1.TaskRunStatus{
+				Status: duckv1beta1.Status{
+					Conditions: duckv1beta1.Conditions{
+						{
+							Status: corev1.ConditionTrue,
+							Reason: v1beta1.TaskRunReasonSuccessful.String(),
+						},
+					},
+				},
+			},
+		},
+		{
+			ObjectMeta: metav1.ObjectMeta{
+				Name:      "tr0-2",
+				Namespace: "ns",
+				Labels:    map[string]string{"tekton.dev/task": "random"},
+			},
+			Spec: v1alpha1.TaskRunSpec{
+				TaskRef: &v1alpha1.TaskRef{
+					Name: "random",
+					Kind: v1alpha1.NamespacedTaskKind,
+				},
+			},
+			Status: v1alpha1.TaskRunStatus{
+				Status: duckv1beta1.Status{
+					Conditions: duckv1beta1.Conditions{
+						{
+							Status: corev1.ConditionTrue,
+							Reason: v1beta1.TaskRunReasonSuccessful.String(),
+						},
+					},
+				},
+			},
+		},
+		{
+			ObjectMeta: metav1.ObjectMeta{
+				Name:      "tr0-3",
+				Namespace: "ns",
+				Labels:    map[string]string{"tekton.dev/task": "random"},
+			},
+			Spec: v1alpha1.TaskRunSpec{
+				TaskRef: &v1alpha1.TaskRef{
+					Name: "random",
+					Kind: v1alpha1.NamespacedTaskKind,
+				},
+			},
+			Status: v1alpha1.TaskRunStatus{
+				Status: duckv1beta1.Status{
+					Conditions: duckv1beta1.Conditions{
+						{
+							Status: corev1.ConditionTrue,
+							Reason: v1beta1.TaskRunReasonSuccessful.String(),
+						},
+					},
+				},
+			},
+		},
+		{
+			ObjectMeta: metav1.ObjectMeta{
+				Name:      "tr0-4",
+				Namespace: "ns",
+				Labels:    map[string]string{"tekton.dev/clusterTask": "random"},
+			},
+			Spec: v1alpha1.TaskRunSpec{
+				TaskRef: &v1alpha1.TaskRef{
+					Name: "random",
+					Kind: v1alpha1.ClusterTaskKind,
+				},
+			},
+			Status: v1alpha1.TaskRunStatus{
+				Status: duckv1beta1.Status{
+					Conditions: duckv1beta1.Conditions{
+						{
+							Status: corev1.ConditionTrue,
+							Reason: v1beta1.TaskRunReasonSuccessful.String(),
+						},
+					},
+				},
+			},
+		},
+		{
+			ObjectMeta: metav1.ObjectMeta{
+				Name:      "tr0-5",
+				Namespace: "ns",
+				Labels:    map[string]string{"tekton.dev/clusterTask": "random"},
+			},
+			Spec: v1alpha1.TaskRunSpec{
+				TaskRef: &v1alpha1.TaskRef{
+					Name: "random",
+					Kind: v1alpha1.ClusterTaskKind,
+				},
+			},
+			Status: v1alpha1.TaskRunStatus{
+				Status: duckv1beta1.Status{
+					Conditions: duckv1beta1.Conditions{
+						{
+							Status: corev1.ConditionTrue,
+							Reason: v1beta1.TaskRunReasonSuccessful.String(),
+						},
+					},
+				},
+			},
+		},
+		{
+			ObjectMeta: metav1.ObjectMeta{
+				Name:      "tr0-6",
+				Namespace: "ns",
+				Labels:    map[string]string{"tekton.dev/clusterTask": "random"},
+			},
+			Spec: v1alpha1.TaskRunSpec{
+				TaskRef: &v1alpha1.TaskRef{
+					Name: "random",
+					Kind: v1alpha1.ClusterTaskKind,
+				},
+			},
+			Status: v1alpha1.TaskRunStatus{
+				Status: duckv1beta1.Status{
+					Conditions: duckv1beta1.Conditions{
+						{
+							Status: corev1.ConditionTrue,
+							Reason: v1beta1.TaskRunReasonSuccessful.String(),
+						},
+					},
+				},
+			},
+		},
 	}
 	type clients struct {
 		pipelineClient pipelinetest.Clients
