@@ -134,6 +134,16 @@ Download the latest binary executable for your operating system:
   dpkg -i tektoncd-cli-0.15.0_Linux-64bit.deb
   ```
 
+### Homebrew on Linux
+
+You can install the latest tektoncd-cli if you are using [Homebrew on
+Linux](https://docs.brew.sh/Homebrew-on-Linux) as for the osx version you need
+to simply do :
+
+```
+brew install tektoncd-cli
+```
+
 ### Source install
 
   If you have [go](https://golang.org/) installed and you want to compile the CLI from source, you can checkout the [Git repository](https://github.com/tektoncd/cli) and run the following commands:
