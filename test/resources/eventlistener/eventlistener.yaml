@@ -33,7 +33,7 @@ spec:
       bindings:
         - ref: github-pr-binding
       template:
-        name: github-template
+        ref: github-template
 ---
 apiVersion: triggers.tekton.dev/v1alpha1
 kind: TriggerBinding
