@@ -28,7 +28,7 @@ import (
 
 // CollectPodLogs will get the logs for all containers in a Pod
 func CollectPodLogs(c *Clients, podName, namespace string, logf logging.FormatLogger) {
-	logs, err := getContainerLogsFromPod(c.KubeClient.Kube, podName, namespace)
+	logs, err := getContainerLogsFromPod(c.KubeClient, podName, namespace)
 	if err != nil {
 		logf("Could not get logs for pod %s: %s", podName, err)
 	}
