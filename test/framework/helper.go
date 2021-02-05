@@ -90,7 +90,7 @@ func CreateServiceAccountSecret(c *knativetest.KubeClient, namespace string, sec
 		},
 	}
 
-	_, err := c.Kube.CoreV1().Secrets(namespace).Create(context.Background(), sec, metav1.CreateOptions{})
+	_, err := c.CoreV1().Secrets(namespace).Create(context.Background(), sec, metav1.CreateOptions{})
 	if err != nil {
 		log.Fatalf("Error in creating Secrets into namespace "+namespace+" err: %s", err)
 	}
@@ -125,7 +125,7 @@ func TearDown(t *testing.T, cs *Clients, namespace string) {
 	}
 
 	t.Logf("Deleting namespace %s", namespace)
-	if err := cs.KubeClient.Kube.CoreV1().Namespaces().Delete(context.Background(), namespace, metav1.DeleteOptions{}); err != nil {
+	if err := cs.KubeClient.CoreV1().Namespaces().Delete(context.Background(), namespace, metav1.DeleteOptions{}); err != nil {
 		t.Errorf("Failed to delete namespace %s: %s", namespace, err)
 	}
 
@@ -143,7 +143,7 @@ func initializeLogsAndMetrics(t *testing.T) {
 
 func CreateNamespace(namespace string, kubeClient *knativetest.KubeClient) {
 	log.Printf("Create namespace %s to deploy to", namespace)
-	if _, err := kubeClient.Kube.CoreV1().Namespaces().Create(context.Background(), &corev1.Namespace{
+	if _, err := kubeClient.CoreV1().Namespaces().Create(context.Background(), &corev1.Namespace{
 		ObjectMeta: metav1.ObjectMeta{
 			Name: namespace,
 		},
@@ -154,7 +154,7 @@ func CreateNamespace(namespace string, kubeClient *knativetest.KubeClient) {
 
 func DeleteNamespace(namespace string, cs *Clients) {
 	log.Printf("Deleting namespace %s", namespace)
-	if err := cs.KubeClient.Kube.CoreV1().Namespaces().Delete(context.Background(), namespace, metav1.DeleteOptions{}); err != nil {
+	if err := cs.KubeClient.CoreV1().Namespaces().Delete(context.Background(), namespace, metav1.DeleteOptions{}); err != nil {
 		log.Printf("Failed to delete namespace %s: %s", namespace, err)
 	}
 }
@@ -164,7 +164,7 @@ func VerifyServiceAccountExistence(namespace string, kubeClient *knativetest.Kub
 	log.Printf("Verify SA %q is created in namespace %q", defaultSA, namespace)
 
 	if err := wait.PollImmediate(Interval, Apitimeout, func() (bool, error) {
-		_, err := kubeClient.Kube.CoreV1().ServiceAccounts(namespace).Get(context.Background(), defaultSA, metav1.GetOptions{})
+		_, err := kubeClient.CoreV1().ServiceAccounts(namespace).Get(context.Background(), defaultSA, metav1.GetOptions{})
 		if err != nil && errors.IsNotFound(err) {
 			return false, nil
 		}
@@ -179,7 +179,7 @@ func VerifyServiceAccountExistenceForSecrets(namespace string, kubeClient *knati
 	log.Printf("Verify SA %q is created in namespace %q", defaultSA, namespace)
 
 	if err := wait.PollImmediate(Interval, Apitimeout, func() (bool, error) {
-		_, err := kubeClient.Kube.CoreV1().ServiceAccounts(namespace).Get(context.Background(), defaultSA, metav1.GetOptions{})
+		_, err := kubeClient.CoreV1().ServiceAccounts(namespace).Get(context.Background(), defaultSA, metav1.GetOptions{})
 		if err != nil && errors.IsNotFound(err) {
 			return false, nil
 		}
@@ -239,7 +239,7 @@ func getCRDYaml(cs *Clients, ns string) ([]byte, error) {
 		printOrAdd("TaskRun", i.Name, i)
 	}
 
-	pods, err := cs.KubeClient.Kube.CoreV1().Pods(ns).List(context.Background(), metav1.ListOptions{})
+	pods, err := cs.KubeClient.CoreV1().Pods(ns).List(context.Background(), metav1.ListOptions{})
 	if err != nil {
 		return nil, xerrors.Errorf("could not get pods: %w", err)
 	}

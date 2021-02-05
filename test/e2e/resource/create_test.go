@@ -299,7 +299,7 @@ func TestCreateClusterResourceInteractively(t *testing.T) {
 	assert.NilError(t, err)
 
 	t.Logf("Creating secret %s", secretName)
-	if _, err := c.KubeClient.Kube.CoreV1().Secrets(namespace).Create(context.Background(), getClusterResourceTaskSecret(namespace, secretName), metav1.CreateOptions{}); err != nil {
+	if _, err := c.KubeClient.CoreV1().Secrets(namespace).Create(context.Background(), getClusterResourceTaskSecret(namespace, secretName), metav1.CreateOptions{}); err != nil {
 		t.Fatalf("Failed to create Secret `%s`: %s", secretName, err)
 	}
 

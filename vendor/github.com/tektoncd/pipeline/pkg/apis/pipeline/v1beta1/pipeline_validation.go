@@ -62,6 +62,7 @@ func (ps *PipelineSpec) Validate(ctx context.Context) (errs *apis.FieldError) {
 	errs = errs.Also(validatePipelineParameterVariables(ps.Tasks, ps.Params).ViaField("tasks"))
 	errs = errs.Also(validatePipelineParameterVariables(ps.Finally, ps.Params).ViaField("finally"))
 	errs = errs.Also(validatePipelineContextVariables(ps.Tasks))
+	errs = errs.Also(validateExecutionStatusVariables(ps.Tasks, ps.Finally))
 	// Validate the pipeline's workspaces.
 	errs = errs.Also(validatePipelineWorkspaces(ps.Workspaces, ps.Tasks, ps.Finally))
 	// Validate the pipeline's results
@@ -155,9 +156,6 @@ func validatePipelineTask(ctx context.Context, t PipelineTask, taskNames sets.St
 		}
 		if t.Resources != nil {
 			errs = errs.Also(apis.ErrInvalidValue("custom tasks do not support PipelineResources", "resources"))
-		}
-		if len(t.Workspaces) > 0 {
-			errs = errs.Also(apis.ErrInvalidValue("custom tasks do not support Workspaces", "workspaces"))
 		}
 		if t.Timeout != nil {
 			errs = errs.Also(apis.ErrInvalidValue("custom tasks do not support timeout", "timeout"))
@@ -291,6 +289,72 @@ func validatePipelineContextVariables(tasks []PipelineTask) *apis.FieldError {
 	}
 	errs := validatePipelineContextVariablesInParamValues(paramValues, "context\\.pipelineRun", pipelineRunContextNames)
 	return errs.Also(validatePipelineContextVariablesInParamValues(paramValues, "context\\.pipeline", pipelineContextNames))
+}
+
+func containsExecutionStatusRef(p string) bool {
+	if strings.HasPrefix(p, "tasks.") && strings.HasSuffix(p, ".status") {
+		return true
+	}
+	return false
+}
+
+// validate dag pipeline tasks, task params can not access execution status of any other task
+// dag tasks cannot have param value as $(tasks.pipelineTask.status)
+func validateExecutionStatusVariablesInTasks(tasks []PipelineTask) (errs *apis.FieldError) {
+	for idx, t := range tasks {
+		for _, param := range t.Params {
+			// retrieve a list of substitution expression from a param
+			if ps, ok := GetVarSubstitutionExpressionsForParam(param); ok {
+				// validate tasks.pipelineTask.status if this expression is not a result reference
+				if !LooksLikeContainsResultRefs(ps) {
+					for _, p := range ps {
+						// check if it contains context variable accessing execution status - $(tasks.taskname.status)
+						if containsExecutionStatusRef(p) {
+							errs = errs.Also(apis.ErrInvalidValue(fmt.Sprintf("pipeline tasks can not refer to execution status of any other pipeline task"),
+								"value").ViaFieldKey("params", param.Name).ViaFieldIndex("tasks", idx))
+						}
+					}
+				}
+			}
+		}
+	}
+	return errs
+}
+
+// validate finally tasks accessing execution status of a dag task specified in the pipeline
+// $(tasks.pipelineTask.status) is invalid if pipelineTask is not defined as a dag task
+func validateExecutionStatusVariablesInFinally(tasks []PipelineTask, finally []PipelineTask) (errs *apis.FieldError) {
+	// creating a list of pipelineTask names to validate tasks.<name>.status
+	ptNames := PipelineTaskList(tasks).Names()
+	for idx, t := range finally {
+		for _, param := range t.Params {
+			// retrieve a list of substitution expression from a param
+			if ps, ok := GetVarSubstitutionExpressionsForParam(param); ok {
+				// validate tasks.pipelineTask.status if this expression is not a result reference
+				if !LooksLikeContainsResultRefs(ps) {
+					for _, p := range ps {
+						// check if it contains context variable accessing execution status - $(tasks.taskname.status)
+						if containsExecutionStatusRef(p) {
+							// strip tasks. and .status from tasks.taskname.status to further verify task name
+							pt := strings.TrimSuffix(strings.TrimPrefix(p, "tasks."), ".status")
+							// report an error if the task name does not exist in the list of dag tasks
+							if !ptNames.Has(pt) {
+								errs = errs.Also(apis.ErrInvalidValue(fmt.Sprintf("pipeline task %s is not defined in the pipeline", pt),
+									"value").ViaFieldKey("params", param.Name).ViaFieldIndex("finally", idx))
+							}
+						}
+					}
+				}
+			}
+		}
+	}
+	return errs
+}
+
+func validateExecutionStatusVariables(tasks []PipelineTask, finallyTasks []PipelineTask) (errs *apis.FieldError) {
+	errs = errs.Also(validateExecutionStatusVariablesInTasks(tasks))
+	errs = errs.Also(validateExecutionStatusVariablesInFinally(tasks, finallyTasks))
+	return errs
 }
 
 func validatePipelineContextVariablesInParamValues(paramValues []string, prefix string, contextNames sets.String) (errs *apis.FieldError) {

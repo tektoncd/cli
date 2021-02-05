@@ -52,7 +52,7 @@ func TestEventListenerE2E(t *testing.T) {
 	t.Run("Get logs of EventListener", func(t *testing.T) {
 		res := tkn.MustSucceed(t, "eventlistener", "logs", elName, "-t", "1")
 
-		elPods, err := c.KubeClient.Kube.CoreV1().Pods(namespace).List(context.Background(), metav1.ListOptions{LabelSelector: "eventlistener=" + elName})
+		elPods, err := c.KubeClient.CoreV1().Pods(namespace).List(context.Background(), metav1.ListOptions{LabelSelector: "eventlistener=" + elName})
 		if err != nil {
 			t.Fatalf("Error getting pods for EventListener %s: %v", elName, err)
 		}
@@ -72,7 +72,7 @@ func TestEventListenerE2E(t *testing.T) {
 	kubectl.MustSucceed(t, "wait", "--for=condition=Ready", "pod", "-n", namespace, "--timeout=2m", "--all")
 
 	t.Run("Get logs of EventListener with multiple pods", func(t *testing.T) {
-		elPods, err := c.KubeClient.Kube.CoreV1().Pods(namespace).List(context.Background(), metav1.ListOptions{LabelSelector: "eventlistener=" + elName})
+		elPods, err := c.KubeClient.CoreV1().Pods(namespace).List(context.Background(), metav1.ListOptions{LabelSelector: "eventlistener=" + elName})
 		if err != nil {
 			t.Fatalf("Error getting pods for EventListener %s: %v", elName, err)
 		}
