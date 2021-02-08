@@ -12,11 +12,6 @@ EventListenerTriggers
   tb1   TriggerBinding          
   tb2   ClusterTriggerBinding   v1alpha1
  
-  SPEC
-  Params
-    key1   value1
-    key2   value2
- 
  TEMPLATE NAME   APIVERSION
  tt1             v1alpha1
  

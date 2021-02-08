@@ -41,8 +41,8 @@ const describeTemplate = `{{decorate "bold" "Name"}}:	{{ .EventListener.Name }}
 {{decorate "bold" "Service Account"}}:	{{ .EventListener.Spec.ServiceAccountName }}
 {{- end }}
 
-{{- if ne .EventListener.Spec.ServiceType "" }}
-{{decorate "bold" "Service Type"}}:	{{ .EventListener.Spec.ServiceType }}
+{{- if ne .EventListener.Spec.DeprecatedServiceType "" }}
+{{decorate "bold" "Service Type"}}:	{{ .EventListener.Spec.DeprecatedServiceType }}
 {{- end }}
 
 {{- $value := getURL .EventListener }}
@@ -91,25 +91,13 @@ const describeTemplate = `{{decorate "bold" "Name"}}:	{{ .EventListener.Name }}
 {{ " " }}
 {{- end }}
 
-{{- if isBindingSpecExist $v.Bindings }}
-  SPEC
-{{- range $b := $v.Bindings }}
-{{- if eq $b.Ref "" }}
-  {{ decorate "bullet" "Params" }}
-{{- range $p := $b.Spec.Params }}
-    {{ $p.Name }}	{{ $p.Value }}
-{{- end }}
-{{- end }}
-{{- end }}
-{{ " " }}
-{{- end }}
 {{- end }}
 {{- if isTemplateRefExist $v.Template }}
  TEMPLATE REF	APIVERSION
  {{ decorate "bullet" $v.Template.Ref }}	{{ $v.Template.APIVersion }}
 {{- else }}
  TEMPLATE NAME	APIVERSION
- {{ decorate "bullet" $v.Template.Name }}	{{ $v.Template.APIVersion }}
+ {{ decorate "bullet" $v.Template.DeprecatedName }}	{{ $v.Template.APIVersion }}
 {{- end }}
 {{- if eq $v.ServiceAccountName "" }}
 {{- else }}
@@ -238,7 +226,6 @@ func printEventListenerDescription(s *cli.Stream, p cli.Params, elName string) e
 		"getURL":               getURL,
 		"getEventListenerName": getEventListenerName,
 		"isBindingRefExist":    isBindingRefExist,
-		"isBindingSpecExist":   isBindingSpecExist,
 		"isBindingNameExist":   isBindingNameExist,
 		"isTemplateRefExist":   isTemplateRefExist,
 	}
@@ -282,16 +269,6 @@ func isBindingRefExist(bindings []*v1alpha1.EventListenerBinding) bool {
 		}
 	}
 	return refExist
-}
-
-func isBindingSpecExist(bindings []*v1alpha1.EventListenerBinding) bool {
-	specExist := false
-	for _, j := range bindings {
-		if j.Spec != nil {
-			specExist = true
-		}
-	}
-	return specExist
 }
 
 func isBindingNameExist(bindings []*v1alpha1.EventListenerBinding) bool {

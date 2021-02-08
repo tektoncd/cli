@@ -1429,8 +1429,7 @@ github.com/tektoncd/pipeline v0.10.1/go.mod h1:D2X0exT46zYx95BU7ByM8+erpjoN7thmU
 github.com/tektoncd/pipeline v0.11.0/go.mod h1:hlkH32S92+/UODROH0dmxzyuMxfRFp/Nc3e29MewLn8=
 github.com/tektoncd/pipeline v0.13.1-0.20200625065359-44f22a067b75/go.mod h1:R5AlT46x/F8n/pFJFjZ1U1q71GWtVXgG7RZkkoRL554=
 github.com/tektoncd/pipeline v0.17.1-0.20201007165454-9611f3e4509e/go.mod h1:FoQiX9l6e/B3wGGAR4zgMHU849OYa6as3HG4xhRaFiE=
-github.com/tektoncd/pipeline v0.18.0 h1:92ePjxCMJ0Lj/O2UUp6uoq9oUlkyPOKx858L8MKY6pg=
-github.com/tektoncd/pipeline v0.18.0/go.mod h1:PxRWs4faBD15pG0EGQs3f/65hX97sMjjqtiKG3JY2rk=
+github.com/tektoncd/pipeline v0.20.0/go.mod h1:xF5WxMLvp/05oGZ+Fvqcbglmf4HVU9u1keXHaM+rR14=
 github.com/tektoncd/pipeline v0.20.1 h1:hNJa7B2xOPsg4S1a961kyDk6hnDaEAHUll9GKHCMdMg=
 github.com/tektoncd/pipeline v0.20.1/go.mod h1:xF5WxMLvp/05oGZ+Fvqcbglmf4HVU9u1keXHaM+rR14=
 github.com/tektoncd/plumbing v0.0.0-20191216083742-847dcf196de9/go.mod h1:QZHgU07PRBTRF6N57w4+ApRu8OgfYLFNqCDlfEZaD9Y=
@@ -1440,8 +1439,8 @@ github.com/tektoncd/plumbing v0.0.0-20200430135134-e53521e1d887/go.mod h1:cZPJIe
 github.com/tektoncd/plumbing v0.0.0-20201021153918-6b7e894737b5 h1:Y2Gd3X79zqvCd6AdiWyi/pnSewSkLxKygpvXNFXwscg=
 github.com/tektoncd/plumbing v0.0.0-20201021153918-6b7e894737b5/go.mod h1:WTWwsg91xgm+jPOKoyKVK/yRYxnVDlUYeDlypB1lDdQ=
 github.com/tektoncd/plumbing/pipelinerun-logs v0.0.0-20191206114338-712d544c2c21/go.mod h1:S62EUWtqmejjJgUMOGB1CCCHRp6C706laH06BoALkzU=
-github.com/tektoncd/triggers v0.10.2 h1:WNXWbo0SodGlkmmRaSQmmi+UAjGDbcsIlvurIllEQwU=
-github.com/tektoncd/triggers v0.10.2/go.mod h1:KXxQTLWnItncpk7fx/TTajJXWUhFqPbt6UlJUYr6lzw=
+github.com/tektoncd/triggers v0.11.2 h1:UFUZqwx7UnJbN3BvJQRqEtNkrkHd2RTgtmLvH0o1c/E=
+github.com/tektoncd/triggers v0.11.2/go.mod h1:2mPBmydzgFEu2cvgWkWMoj43NlgNB0mVuqdUwEXi7Co=
 github.com/tetafro/godot v0.3.7/go.mod h1:/7NLHhv08H1+8DNj0MElpAACw1ajsCuf3TKNQxA5S+0=
 github.com/tetafro/godot v0.4.2/go.mod h1:/7NLHhv08H1+8DNj0MElpAACw1ajsCuf3TKNQxA5S+0=
 github.com/tidwall/gjson v1.3.5/go.mod h1:P256ACg0Mn+j1RXIDXoss50DeIABTYK1PULOJHhxOls=

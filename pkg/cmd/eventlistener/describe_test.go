@@ -122,13 +122,7 @@ func TestEventListenerDescribe_OneTriggerWithMultipleTriggerBinding(t *testing.T
 			el.EventListenerSpec(
 				el.EventListenerTrigger("tt1", "v1alpha1",
 					el.EventListenerTriggerBinding("tb1", "", ""),
-					el.EventListenerTriggerBinding("", "", "", el.TriggerBindingParam("key11", "value11"),
-						el.TriggerBindingParam("key21", "value21"),
-						el.TriggerBindingParam("key22", "value22")),
 					el.EventListenerTriggerBinding("tb2", "ClusterTriggerBinding", "v1alpha1"),
-					el.EventListenerTriggerBinding("", "", "v1alpha1", el.TriggerBindingParam("key", "value"),
-						el.TriggerBindingParam("key1", "value1"),
-						el.TriggerBindingParam("key2", "value2")),
 					el.EventListenerTriggerBinding("tb3", "", "v1alpha1")))),
 	}
 
@@ -154,7 +148,6 @@ func TestEventListenerDescribe_OneTriggerWithTriggerBindingName(t *testing.T) {
 							},
 						},
 						Template: &v1alpha1.EventListenerTemplate{
-							Name:       "tt1",
 							Ref:        nil,
 							APIVersion: "v1alpha1",
 							Spec:       nil,
@@ -220,10 +213,6 @@ func TestEventListenerDescribe_MultipleTriggers(t *testing.T) {
 					el.EventListenerTriggerBinding("tb1", "", ""),
 					el.EventListenerTriggerBinding("tb2", "ClusterTriggerBinding", "v1alpha1"),
 					el.EventListenerTriggerBinding("tb3", "", "v1alpha1")),
-				el.EventListenerTrigger("tt3", "v1alpha1",
-					el.EventListenerTriggerBinding("", "", "", el.TriggerBindingParam("key11", "value11"),
-						el.TriggerBindingParam("key21", "value21"),
-						el.TriggerBindingParam("key22", "value22"))),
 				el.EventListenerTrigger("tt2", "v1alpha1",
 					el.EventListenerTriggerBinding("tb1", "", ""),
 					el.EventListenerTriggerBinding("tb2", "ClusterTriggerBinding", "v1alpha1"),
@@ -290,9 +279,7 @@ func TestEventListenerDescribe_WithMultipleBindingAndInterceptors(t *testing.T) 
 				el.EventListenerTrigger("tt1", "v1alpha1",
 					el.EventListenerTriggerBinding("tb1", "", ""),
 					el.EventListenerTriggerBinding("tb2", "ClusterTriggerBinding", "v1alpha1"),
-					el.EventListenerTriggerBinding("", "", "v1alpha1",
-						el.TriggerBindingParam("key1", "value1"),
-						el.TriggerBindingParam("key2", "value2")),
+					el.EventListenerTriggerBinding("", "", "v1alpha1"),
 					el.EventListenerTriggerName("foo-trig"),
 					el.EventListenerCELInterceptor("body.value == 'test'", el.EventListenerCELOverlay("value", "'testing'"))),
 				el.EventListenerTrigger("tt2", "v1alpha1",
