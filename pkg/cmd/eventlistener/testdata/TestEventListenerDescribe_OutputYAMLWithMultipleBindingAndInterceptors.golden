@@ -27,7 +27,7 @@
                     }
                 ],
                 "template": {
-                    "name": "tt1",
+                    "ref": "tt1",
                     "apiversion": "v1alpha1"
                 },
                 "name": "foo-trig",
@@ -58,7 +58,7 @@
                     }
                 ],
                 "template": {
-                    "name": "tt2",
+                    "ref": "tt2",
                     "apiversion": "v1alpha1"
                 },
                 "name": "foo-trig",

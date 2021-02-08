@@ -1172,6 +1172,7 @@ func TestLog_pipelinerun_last(t *testing.T) {
 			tb.PipelineRunLabel("tekton.dev/pipeline", pipelineName),
 			tb.PipelineRunSpec(pipelineName),
 			tb.PipelineRunStatus(
+				tb.PipelineRunStartTime(time.Now().Add(time.Second)),
 				tb.PipelineRunStatusCondition(apis.Condition{
 					Type:    apis.ConditionSucceeded,
 					Status:  corev1.ConditionUnknown,
@@ -1184,6 +1185,7 @@ func TestLog_pipelinerun_last(t *testing.T) {
 			tb.PipelineRunLabel("tekton.dev/pipeline", pipelineName),
 			tb.PipelineRunSpec(pipelineName),
 			tb.PipelineRunStatus(
+				tb.PipelineRunStartTime(time.Now()),
 				tb.PipelineRunStatusCondition(apis.Condition{
 					Type:    apis.ConditionSucceeded,
 					Status:  corev1.ConditionUnknown,
@@ -2350,6 +2352,9 @@ func TestLog_pipelinerun_last_v1beta1(t *testing.T) {
 		},
 	}
 
+	pr1StartTime := metav1.NewTime(time.Now())
+	pr2StartTime := metav1.NewTime(time.Now().Add(time.Second))
+
 	pipelineruns := []*v1beta1.PipelineRun{
 		{
 			ObjectMeta: metav1.ObjectMeta{
@@ -2363,6 +2368,9 @@ func TestLog_pipelinerun_last_v1beta1(t *testing.T) {
 				},
 			},
 			Status: v1beta1.PipelineRunStatus{
+				PipelineRunStatusFields: v1beta1.PipelineRunStatusFields{
+					StartTime: &pr2StartTime,
+				},
 				Status: duckv1beta1.Status{
 					Conditions: duckv1beta1.Conditions{
 						{
@@ -2386,6 +2394,9 @@ func TestLog_pipelinerun_last_v1beta1(t *testing.T) {
 				},
 			},
 			Status: v1beta1.PipelineRunStatus{
+				PipelineRunStatusFields: v1beta1.PipelineRunStatusFields{
+					StartTime: &pr1StartTime,
+				},
 				Status: duckv1beta1.Status{
 					Conditions: duckv1beta1.Conditions{
 						{

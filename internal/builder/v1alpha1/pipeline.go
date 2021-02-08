@@ -348,6 +348,12 @@ func PipelineRunNamespace(namespace string) PipelineRunOp {
 	}
 }
 
+func PipelineRunCreationTimestamp(time time.Time) PipelineRunOp {
+	return func(t *v1alpha1.PipelineRun) {
+		t.CreationTimestamp = metav1.NewTime(time)
+	}
+}
+
 // PipelineRunSpec sets the PipelineRunSpec, references Pipeline with specified name, to the PipelineRun.
 // Any number of PipelineRunSpec modifier can be passed to transform it.
 func PipelineRunSpec(name string, ops ...PipelineRunSpecOp) PipelineRunOp {

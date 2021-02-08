@@ -18,35 +18,29 @@ require (
 	github.com/pkg/errors v0.9.1
 	github.com/spf13/cobra v1.1.1
 	github.com/spf13/pflag v1.0.5
-	github.com/tektoncd/hub/api v0.0.0-20201216093904-377b464ed407
-	github.com/tektoncd/pipeline v0.20.1
-	github.com/tektoncd/plumbing v0.0.0-20201021153918-6b7e894737b5
-	github.com/tektoncd/triggers v0.11.2
+	github.com/tektoncd/hub/api v0.0.0-20210208113044-f2a63f81502c
+	github.com/tektoncd/pipeline v0.20.1-0.20210205200043-7827cd8bd343
+	github.com/tektoncd/plumbing v0.0.0-20210202164343-2c1808d75b38
+	github.com/tektoncd/triggers v0.11.1-0.20210203192543-6654c3d410fe
 	github.com/tidwall/gjson v1.6.0 // indirect
 	go.opencensus.io v0.22.5
 	go.uber.org/multierr v1.5.0
-	golang.org/x/crypto v0.0.0-20201002170205-7f63de1d35b0
+	golang.org/x/term v0.0.0-20201210144234-2321bbc49cbf
 	golang.org/x/xerrors v0.0.0-20200804184101-5ec99f83aff1
-	gopkg.in/yaml.v2 v2.3.0
+	gopkg.in/yaml.v2 v2.4.0
 	gotest.tools v2.2.0+incompatible
 	gotest.tools/v3 v3.0.2
-	k8s.io/api v0.18.12
-	k8s.io/apimachinery v0.19.0
-	k8s.io/cli-runtime v0.17.6
-	k8s.io/client-go v11.0.1-0.20190805182717-6502b5e7b1b5+incompatible
-	knative.dev/pkg v0.0.0-20210107022335-51c72e24c179
+	k8s.io/api v0.19.7
+	k8s.io/apimachinery v0.19.7
+	k8s.io/cli-runtime v0.19.7
+	k8s.io/client-go v0.19.7
+	knative.dev/pkg v0.0.0-20210208131226-4b2ae073fa06
 	sigs.k8s.io/yaml v1.2.0
 )
 
 replace (
-	contrib.go.opencensus.io/exporter/stackdriver => contrib.go.opencensus.io/exporter/stackdriver v0.13.4
+	// Needed until kustomize is updated in the k8s repos:
+	// https://github.com/kubernetes-sigs/kustomize/issues/1500
+	github.com/go-openapi/spec => github.com/go-openapi/spec v0.19.3
 	github.com/kr/pty => github.com/creack/pty v1.1.10
-)
-
-// Pin k8s deps to 0.18.12
-replace (
-	k8s.io/api => k8s.io/api v0.18.12
-	k8s.io/apimachinery => k8s.io/apimachinery v0.18.12
-	k8s.io/cli-runtime => k8s.io/cli-runtime v0.18.12
-	k8s.io/client-go => k8s.io/client-go v0.18.12
 )

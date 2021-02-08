@@ -95,9 +95,6 @@ const describeTemplate = `{{decorate "bold" "Name"}}:	{{ .EventListener.Name }}
 {{- if isTemplateRefExist $v.Template }}
  TEMPLATE REF	APIVERSION
  {{ decorate "bullet" $v.Template.Ref }}	{{ $v.Template.APIVersion }}
-{{- else }}
- TEMPLATE NAME	APIVERSION
- {{ decorate "bullet" $v.Template.DeprecatedName }}	{{ $v.Template.APIVersion }}
 {{- end }}
 {{- if eq $v.ServiceAccountName "" }}
 {{- else }}

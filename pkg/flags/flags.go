@@ -21,7 +21,7 @@ import (
 	"github.com/spf13/cobra"
 	"github.com/tektoncd/cli/pkg/cli"
 	"github.com/tektoncd/cli/pkg/formatted"
-	"golang.org/x/crypto/ssh/terminal"
+	"golang.org/x/term"
 )
 
 const (
@@ -130,7 +130,7 @@ func InitParams(p cli.Params, cmd *cobra.Command) error {
 	p.SetNoColour(nocolourFlag)
 
 	// Make sure we set as Nocolour if we don't have a terminal (ie redirection)
-	if !terminal.IsTerminal(int(os.Stdout.Fd())) {
+	if !term.IsTerminal(int(os.Stdout.Fd())) {
 		p.SetNoColour(true)
 	}
 

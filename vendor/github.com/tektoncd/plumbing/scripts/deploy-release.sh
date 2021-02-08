@@ -13,7 +13,7 @@ declare TEKTON_PROJECT TEKTON_VERSION RELEASE_BUCKET_OPT RELEASE_EXTRA_PATH RELE
 # - cluster gke_tekton-nightly_europe-north1-a_robocat defined in the local kubeconfig
 
 # Read command line options
-while getopts ":p:v:" opt; do
+while getopts ":p:v:b:e:f:" opt; do
   case ${opt} in
     p )
       TEKTON_PROJECT=$OPTARG
