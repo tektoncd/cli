@@ -18,8 +18,6 @@ package v1alpha1
 
 import (
 	"context"
-
-	"knative.dev/pkg/ptr"
 )
 
 type triggerSpecBindingArray []*TriggerSpecBinding
@@ -30,22 +28,6 @@ func (t *Trigger) SetDefaults(ctx context.Context) {
 		return
 	}
 	triggerSpecBindingArray(t.Spec.Bindings).defaultBindings()
-
-	// Upgrade old style embedded bindings to new concise syntax
-	bindings := []*TriggerSpecBinding{}
-	for _, b := range t.Spec.Bindings {
-		if b.Spec == nil {
-			bindings = append(bindings, b)
-		} else {
-			for _, p := range b.Spec.Params {
-				bindings = append(bindings, &TriggerSpecBinding{
-					Name:  p.Name,
-					Value: ptr.String(p.Value),
-				})
-			}
-		}
-	}
-	t.Spec.Bindings = bindings
 	templateNameToRef(&t.Spec.Template)
 }
 
@@ -60,10 +42,11 @@ func (t triggerSpecBindingArray) defaultBindings() {
 	}
 }
 
+// To be Removed in a later release #911
 func templateNameToRef(template *TriggerSpecTemplate) {
-	name := template.Name
+	name := template.DeprecatedName
 	if name != "" && template.Ref == nil {
 		template.Ref = &name
-		template.Name = ""
+		template.DeprecatedName = ""
 	}
 }

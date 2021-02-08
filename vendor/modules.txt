@@ -452,7 +452,7 @@ github.com/tektoncd/pipeline/test
 github.com/tektoncd/pipeline/test/v1alpha1
 # github.com/tektoncd/plumbing v0.0.0-20201021153918-6b7e894737b5
 github.com/tektoncd/plumbing/scripts
-# github.com/tektoncd/triggers v0.10.2
+# github.com/tektoncd/triggers v0.11.2
 github.com/tektoncd/triggers/pkg/apis/triggers/v1alpha1
 github.com/tektoncd/triggers/pkg/client/clientset/versioned
 github.com/tektoncd/triggers/pkg/client/clientset/versioned/fake
@@ -1094,7 +1094,6 @@ knative.dev/pkg/logging/testing
 knative.dev/pkg/metrics
 knative.dev/pkg/metrics/metricskey
 knative.dev/pkg/network
-knative.dev/pkg/ptr
 knative.dev/pkg/reconciler
 knative.dev/pkg/reconciler/testing
 knative.dev/pkg/signals

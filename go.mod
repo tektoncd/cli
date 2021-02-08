@@ -21,7 +21,7 @@ require (
 	github.com/tektoncd/hub/api v0.0.0-20201216093904-377b464ed407
 	github.com/tektoncd/pipeline v0.20.1
 	github.com/tektoncd/plumbing v0.0.0-20201021153918-6b7e894737b5
-	github.com/tektoncd/triggers v0.10.2
+	github.com/tektoncd/triggers v0.11.2
 	github.com/tidwall/gjson v1.6.0 // indirect
 	go.opencensus.io v0.22.5
 	go.uber.org/multierr v1.5.0

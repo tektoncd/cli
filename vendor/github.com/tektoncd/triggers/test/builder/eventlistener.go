@@ -109,7 +109,7 @@ func EventListenerReplicas(replicas int32) EventListenerSpecOp {
 // EventListenerPodTemplate sets the specified pod template of the EventListener.
 func EventListenerPodTemplate(podTemplate v1alpha1.PodTemplate) EventListenerSpecOp {
 	return func(spec *v1alpha1.EventListenerSpec) {
-		spec.PodTemplate = podTemplate
+		spec.DeprecatedPodTemplate = podTemplate
 	}
 }
 
@@ -144,8 +144,8 @@ func EventListenerTrigger(ttName, apiVersion string, ops ...EventListenerTrigger
 	return func(spec *v1alpha1.EventListenerSpec) {
 		t := v1alpha1.EventListenerTrigger{
 			Template: &v1alpha1.EventListenerTemplate{
-				Name:       ttName,
-				APIVersion: apiVersion,
+				DeprecatedName: ttName,
+				APIVersion:     apiVersion,
 			},
 		}
 
@@ -226,7 +226,7 @@ func EventListenerTriggerServiceAccount(saName, namespace string) EventListenerT
 }
 
 // EventListenerTriggerBinding adds a Binding to the Trigger in EventListenerSpec Triggers.
-func EventListenerTriggerBinding(ref, kind, apiVersion string, ops ...TriggerBindingSpecOp) EventListenerTriggerOp {
+func EventListenerTriggerBinding(ref, kind, apiVersion string) EventListenerTriggerOp {
 	return func(trigger *v1alpha1.EventListenerTrigger) {
 		binding := &v1alpha1.EventListenerBinding{
 			APIVersion: apiVersion,
@@ -240,12 +240,6 @@ func EventListenerTriggerBinding(ref, kind, apiVersion string, ops ...TriggerBin
 
 			if kind == "TriggerBinding" || kind == "" {
 				binding.Kind = v1alpha1.NamespacedTriggerBindingKind
-			}
-		}
-		if len(ops) != 0 {
-			binding.Spec = &v1alpha1.TriggerBindingSpec{}
-			for _, op := range ops {
-				op(binding.Spec)
 			}
 		}
 		trigger.Bindings = append(trigger.Bindings, binding)
