@@ -13,8 +13,8 @@ EventListenerTriggers
   tb2   ClusterTriggerBinding   v1alpha1
   tb3   TriggerBinding          v1alpha1
  
- TEMPLATE NAME   APIVERSION
- tt1             v1alpha1
+ TEMPLATE REF   APIVERSION
+ tt1            v1alpha1
  
  INTERCEPTORS
 - cel:

@@ -11,6 +11,4 @@ EventListenerTriggers
   NAME      VALUE
   binding   somevalue
  
- TEMPLATE NAME   APIVERSION
-                 v1alpha1
  

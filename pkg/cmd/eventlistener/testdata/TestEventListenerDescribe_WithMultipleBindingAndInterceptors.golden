@@ -12,8 +12,8 @@ EventListenerTriggers
   tb1   TriggerBinding          
   tb2   ClusterTriggerBinding   v1alpha1
  
- TEMPLATE NAME   APIVERSION
- tt1             v1alpha1
+ TEMPLATE REF   APIVERSION
+ tt1            v1alpha1
  
  INTERCEPTORS
 - cel:
@@ -33,8 +33,8 @@ EventListenerTriggers
   tb4   TriggerBinding          
   tb5   ClusterTriggerBinding   v1alpha1
  
- TEMPLATE NAME   APIVERSION
- tt2             v1alpha1
+ TEMPLATE REF   APIVERSION
+ tt2            v1alpha1
  
  SERVICE ACCOUNT NAME
  sa1

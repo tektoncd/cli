@@ -19,24 +19,27 @@ import (
 	"testing"
 
 	"github.com/google/go-cmp/cmp"
+	ttesting "github.com/tektoncd/pipeline/pkg/reconciler/testing"
 	pipelinev1beta1test "github.com/tektoncd/pipeline/test"
 	pipelinetest "github.com/tektoncd/pipeline/test/v1alpha1"
 	triggerstest "github.com/tektoncd/triggers/test"
-	rtesting "knative.dev/pkg/reconciler/testing"
 )
 
+// SetupFakeContext aliases tektoncd/pipeline so we don't need to import ttesting everywhere
+var SetupFakeContext = ttesting.SetupFakeContext
+
 func SeedTestData(t *testing.T, d pipelinetest.Data) (pipelinetest.Clients, pipelinetest.Informers) {
-	ctx, _ := rtesting.SetupFakeContext(t)
+	ctx, _ := ttesting.SetupFakeContext(t)
 	return pipelinetest.SeedTestData(t, ctx, d)
 }
 
 func SeedV1beta1TestData(t *testing.T, d pipelinev1beta1test.Data) (pipelinev1beta1test.Clients, pipelinev1beta1test.Informers) {
-	ctx, _ := rtesting.SetupFakeContext(t)
+	ctx, _ := ttesting.SetupFakeContext(t)
 	return pipelinev1beta1test.SeedTestData(t, ctx, d)
 }
 
 func SeedTestResources(t *testing.T, d triggerstest.Resources) triggerstest.Clients {
-	ctx, _ := rtesting.SetupFakeContext(t)
+	ctx, _ := ttesting.SetupFakeContext(t)
 	return triggerstest.SeedResources(t, ctx, d)
 }
 

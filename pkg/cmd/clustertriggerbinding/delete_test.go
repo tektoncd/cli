@@ -23,7 +23,6 @@ import (
 	"github.com/tektoncd/triggers/pkg/apis/triggers/v1alpha1"
 	triggertest "github.com/tektoncd/triggers/test"
 	tb "github.com/tektoncd/triggers/test/builder"
-	rtesting "knative.dev/pkg/reconciler/testing"
 )
 
 func TestClusterTriggerBindingDelete(t *testing.T) {
@@ -34,7 +33,7 @@ func TestClusterTriggerBindingDelete(t *testing.T) {
 			tb.ClusterTriggerBinding("ctb-2"),
 			tb.ClusterTriggerBinding("ctb-3"),
 		}
-		ctx, _ := rtesting.SetupFakeContext(t)
+		ctx, _ := test.SetupFakeContext(t)
 		cs := triggertest.SeedResources(t, ctx, triggertest.Resources{ClusterTriggerBindings: ctbs})
 		seeds = append(seeds, cs)
 	}

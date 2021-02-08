@@ -3,6 +3,6 @@ Namespace:   ns
  
 EventListenerTriggers
 
- TEMPLATE NAME   APIVERSION
- tt1             v1alpha1
+ TEMPLATE REF   APIVERSION
+ tt1            v1alpha1
  
