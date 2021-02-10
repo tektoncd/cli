@@ -96,7 +96,7 @@ const describeTemplate = `{{decorate "bold" "Name"}}:	{{ .PipelineName }}
 {{- else }}
  NAME	TASKREF	RUNAFTER	TIMEOUT	CONDITIONS	PARAMS
 {{- range $i, $t := .Pipeline.Spec.Tasks }}
- {{decorate "bullet" $t.Name }}	{{ $t.TaskRef.Name }}	{{ join $t.RunAfter ", " }}	{{ formatTimeout $t.Timeout }}	{{ formatTaskConditions $t.Conditions }}	{{ formatParam $t.Params $.Pipeline.Spec.Params }}
+ {{decorate "bullet" $t.Name }}	{{ getTaskRefName $t }}	{{ join $t.RunAfter ", " }}	{{ formatTimeout $t.Timeout }}	{{ formatTaskConditions $t.Conditions }}	{{ formatParam $t.Params $.Pipeline.Spec.Params }}
 {{- end }}
 {{- end }}
 
@@ -206,6 +206,7 @@ func printPipelineDescription(out io.Writer, p cli.Params, pname string) error {
 		"formatParam":          formatted.Param,
 		"join":                 strings.Join,
 		"formatTaskConditions": formatted.TaskConditions,
+		"getTaskRefName":       formatted.GetTaskRefName,
 	}
 
 	w := tabwriter.NewWriter(out, 0, 5, 3, ' ', tabwriter.TabIndent)
