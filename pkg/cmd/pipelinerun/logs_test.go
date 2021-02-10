@@ -365,10 +365,12 @@ func TestPipelinerunLogs(t *testing.T) {
 		allSteps     bool
 		tasks        []string
 		expectedLogs []string
+		prefixing    bool
 	}{
 		{
-			name:     "for all tasks",
-			allSteps: false,
+			name:      "for all tasks",
+			allSteps:  false,
+			prefixing: true,
 			expectedLogs: []string{
 				"[output-task : writefile-step] written a file\n",
 				"[output-task : nop] Build successful\n",
@@ -376,16 +378,28 @@ func TestPipelinerunLogs(t *testing.T) {
 				"[read-task : nop] Build successful\n",
 			},
 		}, {
-			name:     "for task1 only",
-			allSteps: false,
-			tasks:    []string{task1Name},
+			name:      "for all tasks",
+			allSteps:  false,
+			prefixing: false,
+			expectedLogs: []string{
+				"written a file\n",
+				"Build successful\n",
+				"able to read a file\n",
+				"Build successful\n",
+			},
+		}, {
+			name:      "for task1 only",
+			allSteps:  false,
+			prefixing: true,
+			tasks:     []string{task1Name},
 			expectedLogs: []string{
 				"[output-task : writefile-step] written a file\n",
 				"[output-task : nop] Build successful\n",
 			},
 		}, {
-			name:     "including init steps",
-			allSteps: true,
+			name:      "including init steps",
+			allSteps:  true,
+			prefixing: true,
 			expectedLogs: []string{
 				"[output-task : credential-initializer-mdzbr] initialized the credentials\n",
 				"[output-task : place-tools] place tools log\n",
@@ -411,7 +425,7 @@ func TestPipelinerunLogs(t *testing.T) {
 			if err != nil {
 				t.Errorf("unable to create dynamic client: %v", err)
 			}
-			prlo := logOptsv1aplha1(prName, ns, cs, dc, fake.Streamer(fakeLogs), s.allSteps, false, s.tasks...)
+			prlo := logOptsv1aplha1(prName, ns, cs, dc, fake.Streamer(fakeLogs), s.allSteps, false, s.prefixing, s.tasks...)
 			output, _ := fetchLogs(prlo)
 
 			expected := strings.Join(s.expectedLogs, "\n") + "\n"
@@ -656,7 +670,7 @@ func TestPipelinerunLog_completed_taskrun_only(t *testing.T) {
 		},
 	} {
 		t.Run(tt.name, func(t *testing.T) {
-			prlo := logOptsv1aplha1(tt.pipelineRunName, tt.namespace, tt.input, tt.dynamic, fake.Streamer(tt.logs), false, false)
+			prlo := logOptsv1aplha1(tt.pipelineRunName, tt.namespace, tt.input, tt.dynamic, fake.Streamer(tt.logs), false, false, true)
 			output, _ := fetchLogs(prlo)
 			test.AssertOutput(t, strings.Join(tt.want, "\n"), output)
 		})
@@ -777,7 +791,7 @@ func TestPipelinerunLog_follow_mode(t *testing.T) {
 	if err != nil {
 		t.Errorf("unable to create dynamic client: %v", err)
 	}
-	prlo := logOptsv1aplha1(prName, ns, cs, dc, fake.Streamer(fakeLogStream), false, true)
+	prlo := logOptsv1aplha1(prName, ns, cs, dc, fake.Streamer(fakeLogStream), false, true, true)
 	output, _ := fetchLogs(prlo)
 
 	expectedLogs := []string{
@@ -848,7 +862,7 @@ func TestLogs_error_log(t *testing.T) {
 	if err != nil {
 		t.Errorf("unable to create dynamic client: %v", err)
 	}
-	prlo := logOptsv1aplha1(prName, ns, cs, dc, fake.Streamer([]fake.Log{}), false, false)
+	prlo := logOptsv1aplha1(prName, ns, cs, dc, fake.Streamer([]fake.Log{}), false, false, true)
 	output, err := fetchLogs(prlo)
 	if err != nil {
 		t.Errorf("Unexpected error: %v", err)
@@ -904,7 +918,7 @@ func TestLogs_nologs(t *testing.T) {
 	if err != nil {
 		t.Errorf("unable to create dynamic client: %v", err)
 	}
-	prlo := logOptsv1aplha1(prName, ns, cs, dc, fake.Streamer([]fake.Log{}), false, false)
+	prlo := logOptsv1aplha1(prName, ns, cs, dc, fake.Streamer([]fake.Log{}), false, false, true)
 	output, err := fetchLogs(prlo)
 	if err != nil {
 		t.Errorf("Unexpected error: %v", err)
@@ -963,7 +977,7 @@ func TestLog_run_failed_with_and_without_follow(t *testing.T) {
 		t.Errorf("unable to create dynamic client: %v", err)
 	}
 	// follow mode disabled
-	prlo := logOptsv1aplha1(prName, ns, cs, dc, fake.Streamer([]fake.Log{}), false, false)
+	prlo := logOptsv1aplha1(prName, ns, cs, dc, fake.Streamer([]fake.Log{}), false, false, true)
 	output, err := fetchLogs(prlo)
 	if err != nil {
 		t.Errorf("Unexpected error: %v", err)
@@ -971,7 +985,7 @@ func TestLog_run_failed_with_and_without_follow(t *testing.T) {
 	test.AssertOutput(t, failMessage+"\n", output)
 
 	// follow mode enabled
-	prlo = logOptsv1aplha1(prName, ns, cs, dc, fake.Streamer([]fake.Log{}), false, true)
+	prlo = logOptsv1aplha1(prName, ns, cs, dc, fake.Streamer([]fake.Log{}), false, true, true)
 	output, err = fetchLogs(prlo)
 	if err != nil {
 		t.Errorf("Unexpected error: %v", err)
@@ -1053,7 +1067,7 @@ func TestLog_pipelinerun_still_running(t *testing.T) {
 	if err != nil {
 		t.Errorf("unable to create dynamic client: %v", err)
 	}
-	prlo := logOptsv1aplha1(prName, ns, cs, dc, fake.Streamer([]fake.Log{}), false, false)
+	prlo := logOptsv1aplha1(prName, ns, cs, dc, fake.Streamer([]fake.Log{}), false, false, true)
 
 	updatePRv1alpha1(finalPRs, watcher)
 
@@ -1115,7 +1129,7 @@ func TestLog_pipelinerun_status_done(t *testing.T) {
 	if err != nil {
 		t.Errorf("unable to create dynamic client: %v", err)
 	}
-	prlo := logOptsv1aplha1(prName, ns, cs, dc, fake.Streamer([]fake.Log{}), false, false)
+	prlo := logOptsv1aplha1(prName, ns, cs, dc, fake.Streamer([]fake.Log{}), false, false, true)
 
 	go func() {
 		time.Sleep(time.Second * 1)
@@ -1614,6 +1628,7 @@ func TestPipelinerunLog_completed_taskrun_only_v1beta1(t *testing.T) {
 		input           pipelinev1beta1test.Clients
 		logs            []fake.Log
 		want            []string
+		prefixing       bool
 	}{
 		{
 			name:            "Test PipelineRef",
@@ -1621,6 +1636,7 @@ func TestPipelinerunLog_completed_taskrun_only_v1beta1(t *testing.T) {
 			namespace:       ns,
 			dynamic:         dc,
 			input:           cs,
+			prefixing:       true,
 			logs: fake.Logs(
 				fake.Task(tr1Pod,
 					fake.Step(tr1Step1Name, "wrote a file"),
@@ -1634,11 +1650,31 @@ func TestPipelinerunLog_completed_taskrun_only_v1beta1(t *testing.T) {
 			},
 		},
 		{
+			name:            "Test PipelineRef no prefixing",
+			pipelineRunName: prName,
+			namespace:       ns,
+			dynamic:         dc,
+			input:           cs,
+			prefixing:       false,
+			logs: fake.Logs(
+				fake.Task(tr1Pod,
+					fake.Step(tr1Step1Name, "wrote a file"),
+					fake.Step("nop", "Build successful"),
+				),
+			),
+			want: []string{
+				"wrote a file\n",
+				"Build successful\n",
+				"",
+			},
+		},
+		{
 			name:            "Test embedded Pipeline",
 			pipelineRunName: "embedded-pipeline-1",
 			namespace:       "ns",
 			dynamic:         dc2,
 			input:           cs2,
+			prefixing:       true,
 			logs: fake.Logs(
 				fake.Task("output-task-pod-embedded",
 					fake.Step("test-step", "test embedded"),
@@ -1653,7 +1689,7 @@ func TestPipelinerunLog_completed_taskrun_only_v1beta1(t *testing.T) {
 		},
 	} {
 		t.Run(tt.name, func(t *testing.T) {
-			prlo := logOptsv1beta1(tt.pipelineRunName, tt.namespace, tt.input, tt.dynamic, fake.Streamer(tt.logs), false, false)
+			prlo := logOptsv1beta1(tt.pipelineRunName, tt.namespace, tt.input, tt.dynamic, fake.Streamer(tt.logs), false, false, tt.prefixing)
 			output, _ := fetchLogs(prlo)
 			test.AssertOutput(t, strings.Join(tt.want, "\n"), output)
 		})
@@ -1820,7 +1856,7 @@ func TestPipelinerunLog_follow_mode_v1beta1(t *testing.T) {
 		t.Errorf("unable to create dynamic client: %v", err)
 	}
 
-	prlo := logOptsv1beta1(prName, ns, cs, dc, fake.Streamer(fakeLogStream), false, true)
+	prlo := logOptsv1beta1(prName, ns, cs, dc, fake.Streamer(fakeLogStream), false, true, true)
 	output, _ := fetchLogs(prlo)
 
 	expectedLogs := []string{
@@ -1915,7 +1951,7 @@ func TestLogs_error_log_v1beta1(t *testing.T) {
 	if err != nil {
 		t.Errorf("unable to create dynamic client: %v", err)
 	}
-	prlo := logOptsv1beta1(prName, ns, cs, dc, fake.Streamer([]fake.Log{}), false, false)
+	prlo := logOptsv1beta1(prName, ns, cs, dc, fake.Streamer([]fake.Log{}), false, false, true)
 	output, err := fetchLogs(prlo)
 	if err != nil {
 		t.Errorf("Unexpected error: %v", err)
@@ -1993,7 +2029,7 @@ func TestLogs_nologs_v1beta1(t *testing.T) {
 	if err != nil {
 		t.Errorf("unable to create dynamic client: %v", err)
 	}
-	prlo := logOptsv1beta1(prName, ns, cs, dc, fake.Streamer([]fake.Log{}), false, false)
+	prlo := logOptsv1beta1(prName, ns, cs, dc, fake.Streamer([]fake.Log{}), false, false, true)
 	output, err := fetchLogs(prlo)
 	if err != nil {
 		t.Errorf("Unexpected error: %v", err)
@@ -2074,7 +2110,7 @@ func TestLog_run_failed_with_and_without_follow_v1beta1(t *testing.T) {
 		t.Errorf("unable to create dynamic client: %v", err)
 	}
 	// follow mode disabled
-	prlo := logOptsv1beta1(prName, ns, cs, dc, fake.Streamer([]fake.Log{}), false, false)
+	prlo := logOptsv1beta1(prName, ns, cs, dc, fake.Streamer([]fake.Log{}), false, false, true)
 	output, err := fetchLogs(prlo)
 	if err != nil {
 		t.Errorf("Unexpected error: %v", err)
@@ -2082,7 +2118,7 @@ func TestLog_run_failed_with_and_without_follow_v1beta1(t *testing.T) {
 	test.AssertOutput(t, failMessage+"\n", output)
 
 	// follow mode enabled
-	prlo = logOptsv1beta1(prName, ns, cs, dc, fake.Streamer([]fake.Log{}), false, true)
+	prlo = logOptsv1beta1(prName, ns, cs, dc, fake.Streamer([]fake.Log{}), false, true, true)
 	output, err = fetchLogs(prlo)
 	if err != nil {
 		t.Errorf("Unexpected error: %v", err)
@@ -2209,7 +2245,7 @@ func TestLog_pipelinerun_still_running_v1beta1(t *testing.T) {
 	if err != nil {
 		t.Errorf("unable to create dynamic client: %v", err)
 	}
-	prlo := logOptsv1beta1(prName, ns, cs, dc, fake.Streamer([]fake.Log{}), false, false)
+	prlo := logOptsv1beta1(prName, ns, cs, dc, fake.Streamer([]fake.Log{}), false, false, true)
 
 	updatePRv1beta1(finalPRs, watcher)
 
@@ -2293,7 +2329,7 @@ func TestLog_pipelinerun_status_done_v1beta1(t *testing.T) {
 	if err != nil {
 		t.Errorf("unable to create dynamic client: %v", err)
 	}
-	prlo := logOptsv1beta1(prName, ns, cs, dc, fake.Streamer([]fake.Log{}), false, false)
+	prlo := logOptsv1beta1(prName, ns, cs, dc, fake.Streamer([]fake.Log{}), false, false, true)
 
 	go func() {
 		time.Sleep(time.Second * 1)
@@ -2742,7 +2778,7 @@ func TestPipelinerunLog_finally_v1beta1(t *testing.T) {
 		t.Errorf("unable to create dynamic client: %v", err)
 	}
 
-	prlo := logOptsv1beta1(prName, ns, cs, dc, fake.Streamer(fakeLogStream), false, false)
+	prlo := logOptsv1beta1(prName, ns, cs, dc, fake.Streamer(fakeLogStream), false, false, true)
 	output, _ := fetchLogs(prlo)
 
 	expectedLogs := []string{
@@ -2753,7 +2789,7 @@ func TestPipelinerunLog_finally_v1beta1(t *testing.T) {
 	test.AssertOutput(t, expected, output)
 }
 
-func logOptsv1aplha1(name string, ns string, cs pipelinetest.Clients, dc dynamic.Interface, streamer stream.NewStreamerFunc, allSteps bool, follow bool, tasks ...string) *options.LogOptions {
+func logOptsv1aplha1(name string, ns string, cs pipelinetest.Clients, dc dynamic.Interface, streamer stream.NewStreamerFunc, allSteps bool, follow bool, prefixing bool, tasks ...string) *options.LogOptions {
 	p := test.Params{
 		Kube:    cs.Kube,
 		Tekton:  cs.Pipeline,
@@ -2768,11 +2804,12 @@ func logOptsv1aplha1(name string, ns string, cs pipelinetest.Clients, dc dynamic
 		Follow:          follow,
 		Params:          &p,
 		Streamer:        streamer,
+		Prefixing:       prefixing,
 	}
 
 	return &logOptions
 }
-func logOptsv1beta1(name string, ns string, cs pipelinev1beta1test.Clients, dc dynamic.Interface, streamer stream.NewStreamerFunc, allSteps bool, follow bool, tasks ...string) *options.LogOptions {
+func logOptsv1beta1(name string, ns string, cs pipelinev1beta1test.Clients, dc dynamic.Interface, streamer stream.NewStreamerFunc, allSteps bool, follow bool, prefixing bool, tasks ...string) *options.LogOptions {
 	p := test.Params{
 		Kube:    cs.Kube,
 		Tekton:  cs.Pipeline,
@@ -2787,6 +2824,7 @@ func logOptsv1beta1(name string, ns string, cs pipelinev1beta1test.Clients, dc d
 		Follow:          follow,
 		Params:          &p,
 		Streamer:        streamer,
+		Prefixing:       prefixing,
 	}
 
 	return &logOptions

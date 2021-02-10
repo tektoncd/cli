@@ -83,6 +83,7 @@ Show the logs of TaskRun named 'microservice-1' for step 'build' only from names
 	c.Flags().BoolVarP(&opts.Last, "last", "L", false, "show logs for last TaskRun")
 	c.Flags().BoolVarP(&opts.AllSteps, "all", "a", false, "show all logs including init steps injected by tekton")
 	c.Flags().BoolVarP(&opts.Follow, "follow", "f", false, "stream live logs")
+	c.Flags().BoolVarP(&opts.Prefixing, "prefix", "", true, "prefix each log line with the log source (step name)")
 	c.Flags().IntVarP(&opts.Limit, "limit", "", defaultLimit, "lists number of TaskRuns")
 	c.Flags().BoolVarP(&opts.Fzf, "fzf", "F", false, "use fzf to select a TaskRun")
 	c.Flags().StringSliceVarP(&opts.Steps, "step", "s", []string{}, "show logs for mentioned steps only")
@@ -110,7 +111,7 @@ func Run(opts *options.LogOptions) error {
 		return err
 	}
 
-	log.NewWriter(log.LogTypeTask).Write(opts.Stream, logC, errC)
+	log.NewWriter(log.LogTypeTask, opts.Prefixing).Write(opts.Stream, logC, errC)
 	return nil
 }
 

@@ -23,15 +23,17 @@ import (
 
 // Writer helps logging pod"s log
 type Writer struct {
-	fmt     *formatted.Color
-	logType string
+	fmt       *formatted.Color
+	logType   string
+	prefixing bool
 }
 
 // NewWriter returns the new instance of LogWriter
-func NewWriter(logType string) *Writer {
+func NewWriter(logType string, prefixing bool) *Writer {
 	return &Writer{
-		fmt:     formatted.NewColor(),
-		logType: logType,
+		fmt:       formatted.NewColor(),
+		logType:   logType,
+		prefixing: prefixing,
 	}
 }
 
@@ -50,11 +52,13 @@ func (lw *Writer) Write(s *cli.Stream, logC <-chan Log, errC <-chan error) {
 				continue
 			}
 
-			switch lw.logType {
-			case LogTypePipeline:
-				lw.fmt.Rainbow.Fprintf(l.Step, s.Out, "[%s : %s] ", l.Task, l.Step)
-			case LogTypeTask:
-				lw.fmt.Rainbow.Fprintf(l.Step, s.Out, "[%s] ", l.Step)
+			if lw.prefixing {
+				switch lw.logType {
+				case LogTypePipeline:
+					lw.fmt.Rainbow.Fprintf(l.Step, s.Out, "[%s : %s] ", l.Task, l.Step)
+				case LogTypeTask:
+					lw.fmt.Rainbow.Fprintf(l.Step, s.Out, "[%s] ", l.Step)
+				}
 			}
 
 			fmt.Fprintf(s.Out, "%s\n", l.Log)

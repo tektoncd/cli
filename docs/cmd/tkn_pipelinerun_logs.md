@@ -36,6 +36,7 @@ Show the logs of PipelineRun named 'microservice-1' for all Tasks and steps (inc
   -h, --help           help for logs
   -L, --last           show logs for last PipelineRun
       --limit int      lists number of PipelineRuns (default 5)
+      --prefix         prefix each log line with the log source (task name and step name) (default true)
   -t, --task strings   show logs for mentioned Tasks only
 ```
 
