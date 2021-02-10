@@ -134,6 +134,14 @@ Download the latest binary executable for your operating system:
   dpkg -i tektoncd-cli-0.16.0_Linux-64bit.deb
   ```
 
+### NixOS/Nix
+
+You can install `tektoncd-cli` from [nixpkgs](https://github.com/NixOS/nixpkgs) on any system that supports the `nix` package manager.
+
+```shell
+nix-env --install tektoncd-cli
+```
+
 ### Homebrew on Linux
 
 You can install the latest tektoncd-cli if you are using [Homebrew on
