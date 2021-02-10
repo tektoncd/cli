@@ -37,6 +37,7 @@ Show the logs of TaskRun named 'microservice-1' for step 'build' only from names
   -h, --help           help for logs
   -L, --last           show logs for last TaskRun
       --limit int      lists number of TaskRuns (default 5)
+      --prefix         prefix each log line with the log source (step name) (default true)
   -s, --step strings   show logs for mentioned steps only
 ```
 

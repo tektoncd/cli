@@ -80,6 +80,7 @@ Show the logs of PipelineRun named 'microservice-1' for all Tasks and steps (inc
 	c.Flags().BoolVarP(&opts.Last, "last", "L", false, "show logs for last PipelineRun")
 	c.Flags().BoolVarP(&opts.Fzf, "fzf", "F", false, "use fzf to select a PipelineRun")
 	c.Flags().BoolVarP(&opts.Follow, "follow", "f", false, "stream live logs")
+	c.Flags().BoolVarP(&opts.Prefixing, "prefix", "", true, "prefix each log line with the log source (task name and step name)")
 	c.Flags().StringSliceVarP(&opts.Tasks, "task", "t", []string{}, "show logs for mentioned Tasks only")
 	c.Flags().IntVarP(&opts.Limit, "limit", "", defaultLimit, "lists number of PipelineRuns")
 
@@ -106,7 +107,7 @@ func Run(opts *options.LogOptions) error {
 		return err
 	}
 
-	log.NewWriter(log.LogTypePipeline).Write(opts.Stream, logC, errC)
+	log.NewWriter(log.LogTypePipeline, opts.Prefixing).Write(opts.Stream, logC, errC)
 
 	return nil
 }

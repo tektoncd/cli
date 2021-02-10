@@ -48,7 +48,7 @@ type LogOptions struct {
 	AskOpts         survey.AskOpt
 	Fzf             bool
 	Tail            int64
-
+	Prefixing       bool
 	// ActivityTimeout is the amount of time to wait for some activity
 	// (e.g. Pod ready) before giving up.
 	ActivityTimeout time.Duration

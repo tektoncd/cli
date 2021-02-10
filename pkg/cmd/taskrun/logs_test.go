@@ -204,7 +204,7 @@ func TestLog_no_taskrun_arg(t *testing.T) {
 
 	for _, tp := range testParams {
 		t.Run(tp.name, func(t *testing.T) {
-			trlo := logoptsV1alpha1("", "ns", tp.input, fake.Streamer(fake.Logs()), false, false, []string{}, tp.dc)
+			trlo := logoptsV1alpha1("", "ns", tp.input, fake.Streamer(fake.Logs()), false, false, false, []string{}, tp.dc)
 			_, err := fetchLogs(trlo)
 			if tp.wantError {
 				if err == nil {
@@ -402,7 +402,7 @@ func TestLog_taskrun_logs(t *testing.T) {
 	if err != nil {
 		t.Errorf("unable to create dynamic client: %v", err)
 	}
-	trlo := logoptsV1alpha1(trName, ns, cs, fake.Streamer(logs), false, false, []string{}, dc)
+	trlo := logoptsV1alpha1(trName, ns, cs, fake.Streamer(logs), false, false, true, []string{}, dc)
 	output, _ := fetchLogs(trlo)
 
 	expectedLogs := []string{
@@ -412,6 +412,18 @@ func TestLog_taskrun_logs(t *testing.T) {
 	expected := strings.Join(expectedLogs, "\n") + "\n"
 
 	test.AssertOutput(t, expected, output)
+
+	trlo = logoptsV1alpha1(trName, ns, cs, fake.Streamer(logs), false, false, false, []string{}, dc)
+	output, _ = fetchLogs(trlo)
+
+	expectedLogs = []string{
+		"wrote a file\n",
+		"Build successful\n",
+	}
+	expected = strings.Join(expectedLogs, "\n") + "\n"
+
+	test.AssertOutput(t, expected, output)
+
 }
 
 func TestLog_taskrun_logs_v1beta1(t *testing.T) {
@@ -519,7 +531,7 @@ func TestLog_taskrun_logs_v1beta1(t *testing.T) {
 	if err != nil {
 		t.Errorf("unable to create dynamic client: %v", err)
 	}
-	trlo := logoptsV1beta1(trName, ns, cs, fake.Streamer(logs), false, false, []string{}, dc)
+	trlo := logoptsV1beta1(trName, ns, cs, fake.Streamer(logs), false, false, true, []string{}, dc)
 	output, _ := fetchLogs(trlo)
 
 	expectedLogs := []string{
@@ -527,6 +539,17 @@ func TestLog_taskrun_logs_v1beta1(t *testing.T) {
 		"[nop] Build successful\n",
 	}
 	expected := strings.Join(expectedLogs, "\n") + "\n"
+
+	test.AssertOutput(t, expected, output)
+
+	trlo = logoptsV1beta1(trName, ns, cs, fake.Streamer(logs), false, false, false, []string{}, dc)
+	output, _ = fetchLogs(trlo)
+
+	expectedLogs = []string{
+		"wrote a file\n",
+		"Build successful\n",
+	}
+	expected = strings.Join(expectedLogs, "\n") + "\n"
 
 	test.AssertOutput(t, expected, output)
 }
@@ -607,7 +630,7 @@ func TestLog_taskrun_logs_no_pod_name(t *testing.T) {
 	if err != nil {
 		t.Errorf("unable to create dynamic client: %v", err)
 	}
-	trlo := logoptsV1beta1(trName, ns, cs, fake.Streamer(logs), false, false, []string{}, dc)
+	trlo := logoptsV1beta1(trName, ns, cs, fake.Streamer(logs), false, false, true, []string{}, dc)
 	_, err = fetchLogs(trlo)
 
 	if err == nil {
@@ -694,7 +717,7 @@ func TestLog_taskrun_logs_no_pod_name_v1beta1(t *testing.T) {
 	if err != nil {
 		t.Errorf("unable to create dynamic client: %v", err)
 	}
-	trlo := logoptsV1beta1(trName, ns, cs, fake.Streamer(logs), false, false, []string{}, dc)
+	trlo := logoptsV1beta1(trName, ns, cs, fake.Streamer(logs), false, false, true, []string{}, dc)
 	_, err = fetchLogs(trlo)
 
 	if err == nil {
@@ -836,7 +859,7 @@ func TestLog_taskrun_all_steps(t *testing.T) {
 	if err != nil {
 		t.Errorf("unable to create dynamic client: %v", err)
 	}
-	trl := logoptsV1beta1(trName, ns, cs, fake.Streamer(logs), true, false, []string{}, dc)
+	trl := logoptsV1beta1(trName, ns, cs, fake.Streamer(logs), true, false, true, []string{}, dc)
 	output, _ := fetchLogs(trl)
 
 	expectedLogs := []string{
@@ -981,7 +1004,7 @@ func TestLog_taskrun_all_steps_v1beta1(t *testing.T) {
 	if err != nil {
 		t.Errorf("unable to create dynamic client: %v", err)
 	}
-	trl := logoptsV1beta1(trName, ns, cs, fake.Streamer(logs), true, false, []string{}, dc)
+	trl := logoptsV1beta1(trName, ns, cs, fake.Streamer(logs), true, false, true, []string{}, dc)
 	output, _ := fetchLogs(trl)
 
 	expectedLogs := []string{
@@ -1125,7 +1148,7 @@ func TestLog_taskrun_given_steps(t *testing.T) {
 		t.Errorf("unable to create dynamic client: %v", err)
 	}
 
-	trl := logoptsV1alpha1(trName, ns, cs, fake.Streamer(logs), false, false, []string{trStep1Name}, dc)
+	trl := logoptsV1alpha1(trName, ns, cs, fake.Streamer(logs), false, false, true, []string{trStep1Name}, dc)
 	output, _ := fetchLogs(trl)
 
 	expectedLogs := []string{
@@ -1266,7 +1289,7 @@ func TestLog_taskrun_given_steps_v1beta1(t *testing.T) {
 		t.Errorf("unable to create dynamic client: %v", err)
 	}
 
-	trl := logoptsV1beta1(trName, ns, cs, fake.Streamer(logs), false, false, []string{trStep1Name}, dc)
+	trl := logoptsV1beta1(trName, ns, cs, fake.Streamer(logs), false, false, true, []string{trStep1Name}, dc)
 	output, _ := fetchLogs(trl)
 
 	expectedLogs := []string{
@@ -1408,7 +1431,7 @@ func TestLog_taskrun_follow_mode(t *testing.T) {
 		t.Errorf("unable to create dynamic client: %v", err)
 	}
 
-	trlo := logoptsV1alpha1(trName, ns, cs, fake.Streamer(logs), false, true, []string{}, dc)
+	trlo := logoptsV1alpha1(trName, ns, cs, fake.Streamer(logs), false, true, true, []string{}, dc)
 	output, _ := fetchLogs(trlo)
 
 	expectedLogs := []string{
@@ -1551,7 +1574,7 @@ func TestLog_taskrun_follow_mode_v1beta1(t *testing.T) {
 		t.Errorf("unable to create dynamic client: %v", err)
 	}
 
-	trlo := logoptsV1beta1(trName, ns, cs, fake.Streamer(logs), false, true, []string{}, dc)
+	trlo := logoptsV1beta1(trName, ns, cs, fake.Streamer(logs), false, true, true, []string{}, dc)
 	output, _ := fetchLogs(trlo)
 
 	expectedLogs := []string{
@@ -1973,7 +1996,7 @@ func TestLog_taskrun_follow_mode_no_pod_name(t *testing.T) {
 		t.Errorf("unable to create dynamic client: %v", err)
 	}
 
-	trlo := logoptsV1alpha1(trName, ns, cs, fake.Streamer(logs), false, true, []string{}, dc)
+	trlo := logoptsV1alpha1(trName, ns, cs, fake.Streamer(logs), false, true, true, []string{}, dc)
 	_, err = fetchLogs(trlo)
 	if err == nil {
 		t.Error("Expecting an error but it's empty")
@@ -2113,7 +2136,7 @@ func TestLog_taskrun_follow_mode_no_pod_name_v1beta1(t *testing.T) {
 		t.Errorf("unable to create dynamic client: %v", err)
 	}
 
-	trlo := logoptsV1beta1(trName, ns, cs, fake.Streamer(logs), false, true, []string{}, dc)
+	trlo := logoptsV1beta1(trName, ns, cs, fake.Streamer(logs), false, true, true, []string{}, dc)
 	_, err = fetchLogs(trlo)
 	if err == nil {
 		t.Error("Expecting an error but it's empty")
@@ -2255,7 +2278,7 @@ func TestLog_taskrun_follow_mode_update_pod_name(t *testing.T) {
 		t.Errorf("unable to create dynamic client: %v", err)
 	}
 
-	trlo := logoptsV1alpha1(trName, ns, cs, fake.Streamer(logs), false, true, []string{}, dc)
+	trlo := logoptsV1alpha1(trName, ns, cs, fake.Streamer(logs), false, true, true, []string{}, dc)
 
 	go func() {
 		time.Sleep(time.Second * 1)
@@ -2408,7 +2431,7 @@ func TestLog_taskrun_follow_mode_update_pod_name_v1beta1(t *testing.T) {
 		t.Errorf("unable to create dynamic client: %v", err)
 	}
 
-	trlo := logoptsV1beta1(trName, ns, cs, fake.Streamer(logs), false, true, []string{}, dc)
+	trlo := logoptsV1beta1(trName, ns, cs, fake.Streamer(logs), false, true, true, []string{}, dc)
 
 	go func() {
 		time.Sleep(time.Second * 1)
@@ -2561,7 +2584,7 @@ func TestLog_taskrun_follow_mode_update_timeout(t *testing.T) {
 		t.Errorf("unable to create dynamic client: %v", err)
 	}
 
-	trlo := logoptsV1alpha1(trName, ns, cs, fake.Streamer(logs), false, true, []string{}, dc)
+	trlo := logoptsV1alpha1(trName, ns, cs, fake.Streamer(logs), false, true, true, []string{}, dc)
 
 	go func() {
 		time.Sleep(time.Second * 1)
@@ -2709,7 +2732,7 @@ func TestLog_taskrun_follow_mode_update_timeout_v1beta1(t *testing.T) {
 		t.Errorf("unable to create dynamic client: %v", err)
 	}
 
-	trlo := logoptsV1beta1(trName, ns, cs, fake.Streamer(logs), false, true, []string{}, dc)
+	trlo := logoptsV1beta1(trName, ns, cs, fake.Streamer(logs), false, true, true, []string{}, dc)
 
 	go func() {
 		time.Sleep(time.Second * 1)
@@ -2852,7 +2875,7 @@ func TestLog_taskrun_follow_mode_no_output_provided(t *testing.T) {
 		t.Errorf("unable to create dynamic client: %v", err)
 	}
 
-	trlo := logoptsV1alpha1(trName, ns, cs, fake.Streamer(logs), false, true, []string{}, dc)
+	trlo := logoptsV1alpha1(trName, ns, cs, fake.Streamer(logs), false, true, true, []string{}, dc)
 
 	output, err := fetchLogs(trlo)
 	if err != nil {
@@ -2990,7 +3013,7 @@ func TestLog_taskrun_follow_mode_no_output_provided_v1beta1(t *testing.T) {
 		t.Errorf("unable to create dynamic client: %v", err)
 	}
 
-	trlo := logoptsV1beta1(trName, ns, cs, fake.Streamer(logs), false, true, []string{}, dc)
+	trlo := logoptsV1beta1(trName, ns, cs, fake.Streamer(logs), false, true, true, []string{}, dc)
 
 	output, err := fetchLogs(trlo)
 
@@ -3003,7 +3026,7 @@ func TestLog_taskrun_follow_mode_no_output_provided_v1beta1(t *testing.T) {
 }
 
 func logoptsV1alpha1(run, ns string, cs pipelinetest.Clients, streamer stream.NewStreamerFunc,
-	allSteps bool, follow bool, steps []string, dc dynamic.Interface) *options.LogOptions {
+	allSteps bool, follow bool, prefixing bool, steps []string, dc dynamic.Interface) *options.LogOptions {
 	p := test.Params{
 		Kube:    cs.Kube,
 		Tekton:  cs.Pipeline,
@@ -3019,11 +3042,12 @@ func logoptsV1alpha1(run, ns string, cs pipelinetest.Clients, streamer stream.Ne
 		Streamer:    streamer,
 		Limit:       5,
 		Steps:       steps,
+		Prefixing:   prefixing,
 	}
 }
 
 func logoptsV1beta1(run, ns string, cs pipelinev1beta1test.Clients, streamer stream.NewStreamerFunc,
-	allSteps bool, follow bool, steps []string, dc dynamic.Interface) *options.LogOptions {
+	allSteps bool, follow bool, prefixing bool, steps []string, dc dynamic.Interface) *options.LogOptions {
 	p := test.Params{
 		Kube:    cs.Kube,
 		Tekton:  cs.Pipeline,
@@ -3039,6 +3063,7 @@ func logoptsV1beta1(run, ns string, cs pipelinev1beta1test.Clients, streamer str
 		Streamer:    streamer,
 		Limit:       5,
 		Steps:       steps,
+		Prefixing:   prefixing,
 	}
 }
 
