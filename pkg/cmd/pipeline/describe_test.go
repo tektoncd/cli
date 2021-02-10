@@ -546,6 +546,57 @@ func TestPipelineDescribe_with_spec_multiple_resource_param_run(t *testing.T) {
 	golden.Assert(t, got, fmt.Sprintf("%s.golden", t.Name()))
 }
 
+func TestPipelineDescribeV1beta1_with_taskSpec(t *testing.T) {
+	clock := clockwork.NewFakeClock()
+	pipelines := []*v1beta1.Pipeline{
+		{
+			ObjectMeta: metav1.ObjectMeta{
+				Name:      "pipeline",
+				Namespace: "ns",
+			},
+			Spec: v1beta1.PipelineSpec{
+				Description: "",
+				Tasks: []v1beta1.PipelineTask{
+					{
+						Name: "task",
+						TaskSpec: &v1beta1.EmbeddedTask{TaskSpec: v1beta1.TaskSpec{
+							Steps: []v1beta1.Step{{Container: corev1.Container{
+								Name:  "step",
+								Image: "myimage",
+							}}},
+						}},
+					},
+				},
+			},
+		},
+	}
+	namespaces := []*corev1.Namespace{
+		{
+			ObjectMeta: metav1.ObjectMeta{
+				Name: "ns",
+			},
+		},
+	}
+
+	version := "v1beta1"
+	tdc := testDynamic.Options{}
+	dynamic, err := tdc.Client(
+		cb.UnstructuredV1beta1P(pipelines[0], version),
+	)
+	if err != nil {
+		t.Errorf("unable to create dynamic client: %v", err)
+	}
+	cs, _ := test.SeedV1beta1TestData(t, pipelinev1beta1test.Data{Namespaces: namespaces, Pipelines: pipelines})
+	cs.Pipeline.Resources = cb.APIResourceList(version, []string{"pipeline", "pipelinerun"})
+	p := &test.Params{Tekton: cs.Pipeline, Clock: clock, Kube: cs.Kube, Dynamic: dynamic}
+	pipeline := Command(p)
+	got, err := test.ExecuteCommand(pipeline, "desc", "-n", "ns", "pipeline")
+	if err != nil {
+		t.Errorf("Unexpected error: %v", err)
+	}
+	golden.Assert(t, got, fmt.Sprintf("%s.golden", t.Name()))
+}
+
 func TestPipelineDescribeV1beta1_with_spec_multiple_resource_param_run(t *testing.T) {
 	clock := clockwork.NewFakeClock()
 	pipelines := []*v1beta1.Pipeline{
