@@ -141,29 +141,11 @@ kubectl -n ${TARGET_NAMESPACE} apply -f ./tekton/release-pipeline.yml
 
 sleep 2
 
-# Start the pipeline, We can't use tkn start because until #272 and #262 are imp/fixed
-cat <<EOF | kubectl -n ${TARGET_NAMESPACE} create -f-
-apiVersion: tekton.dev/v1beta1
-kind: PipelineRun
-metadata:
-  generateName: cli-release-pipeline-run-
-spec:
-  pipelineRef:
-    name: cli-release-pipeline
-  workspaces:
-    - name: shared-workspace
-      volumeClaimTemplate:
-        spec:
-          accessModes:
-            - ReadWriteOnce
-          resources:
-            requests:
-              storage: 500Mi
-  params:
-    - name: revision
-      value: ${RELEASE_VERSION}
-    - name: url
-      value: $(git remote get-url ${PUSH_REMOTE}|sed 's,git@github.com:,https://github.com/,')
-EOF
+URL=$(git remote get-url "${PUSH_REMOTE}" | sed 's,git@github.com:,https://github.com/,')
+# Start the pipeline
+tkn -n ${TARGET_NAMESPACE} pipeline start cli-release-pipeline \
+  -p revision="${RELEASE_VERSION}" \
+  -p url="${URL}" \
+  -w name=shared-workspace,volumeClaimTemplateFile=./volumeclaimtemplate.yaml
 
 tkn -n ${TARGET_NAMESPACE} pipeline logs cli-release-pipeline -f --last
