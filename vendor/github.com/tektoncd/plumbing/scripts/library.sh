@@ -336,7 +336,8 @@ function update_licenses() {
   # Hack to make sure directories retain write permissions after save. This
   # can happen if the directory being copied is a Go module.
   # See https://github.com/google/go-licenses/issues/11
-   chmod +w $(find ${dst} -type d)
+  chmod +w $(find ${dst} -type d)
+  find "${dst}" -type f -name "*.go" -exec rm {} \;
 }
 
 # Check for forbidden liceses.
