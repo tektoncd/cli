@@ -182,6 +182,38 @@ func Test_parseParam(t *testing.T) {
 		},
 		wantErr: false,
 	}, {
+		name: "Test_parseParam with empty array",
+		args: args{
+			p: []string{"key1=value1", "key2="},
+			pt: []v1beta1.ParamSpec{
+				{
+					Name: "key1",
+					Type: "string",
+				},
+				{
+					Name: "key2",
+					Type: "array",
+				},
+			},
+		},
+		want: map[string]v1beta1.Param{
+			"key1": {
+				Name: "key1",
+				Value: v1beta1.ArrayOrString{
+					Type:      v1beta1.ParamTypeString,
+					StringVal: "value1",
+				},
+			},
+			"key2": {
+				Name: "key2",
+				Value: v1beta1.ArrayOrString{
+					Type:     v1beta1.ParamTypeArray,
+					ArrayVal: make([]string, 0),
+				},
+			},
+		},
+		wantErr: false,
+	}, {
 		name: "Test_parseParam Err",
 		args: args{
 			p: []string{"value1", "value2"},

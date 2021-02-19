@@ -75,7 +75,11 @@ func parseParam(p []string) (map[string]v1beta1.Param, error) {
 		}
 
 		if paramByType[r[0]] == "array" {
-			param.Value.ArrayVal = strings.Split(r[1], ",")
+			if len(r[1]) == 0 {
+				param.Value.ArrayVal = make([]string, 0)
+			} else {
+				param.Value.ArrayVal = strings.Split(r[1], ",")
+			}
 		}
 		params[r[0]] = param
 	}
