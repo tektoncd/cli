@@ -20,13 +20,20 @@ import (
 	"testing"
 
 	"github.com/tektoncd/cli/test/cli"
+	"github.com/tektoncd/cli/test/framework"
 	"gotest.tools/v3/assert"
 	"gotest.tools/v3/env"
 	"gotest.tools/v3/icmd"
+	knativetest "knative.dev/pkg/test"
 )
 
 func TestTknPlugin(t *testing.T) {
-	tkn, err := cli.NewTknRunner("any-namespace")
+	t.Parallel()
+	c, namespace := framework.Setup(t)
+	knativetest.CleanupOnInterrupt(func() { framework.TearDown(t, c, namespace) }, t.Logf)
+	defer framework.TearDown(t, c, namespace)
+
+	tkn, err := cli.NewTknRunner(namespace)
 	assert.NilError(t, err)
 	currentpath, err := os.Getwd()
 	assert.NilError(t, err)
