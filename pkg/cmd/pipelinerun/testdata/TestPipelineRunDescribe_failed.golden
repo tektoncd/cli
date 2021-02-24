@@ -35,3 +35,7 @@ Taskruns
 
  NAME   TASK NAME   STARTED         DURATION    STATUS
  tr-1   t-1         8 minutes ago   3 minutes   Failed
+
+Skipped Tasks
+
+ No Skipped Tasks

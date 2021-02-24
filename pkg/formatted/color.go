@@ -72,6 +72,8 @@ func DecorateAttr(attrString, message string) string {
 		return "📝 "
 	case "workspaces":
 		return "📂 "
+	case "skippedtasks":
+		return "⏭️  "
 	}
 
 	attr := color.Reset

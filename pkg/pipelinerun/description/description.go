@@ -122,6 +122,17 @@ STARTED	DURATION	STATUS
 {{- end }}
 {{- end }}
 {{- end }}
+
+{{decorate "skippedtasks" ""}}{{decorate "underline bold" "Skipped Tasks\n"}}
+
+{{- $l := len .PipelineRun.Status.SkippedTasks }}{{ if eq $l 0 }}
+ No Skipped Tasks
+{{- else }}
+ NAME
+{{- range $skippedTask := .PipelineRun.Status.SkippedTasks }}
+ {{decorate "bullet" $skippedTask.Name }}
+{{- end }}
+{{- end }}
 `
 
 type tkr struct {
