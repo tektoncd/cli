@@ -29,9 +29,13 @@ Workspaces
 
 Taskruns
 
- NAME   TASK NAME   STARTED         DURATION    STATUS
- tr-1   t-1         0 seconds ago   5 minutes   Failed
+ NAME   TASK NAME   STARTED           DURATION    STATUS
+ tr-2   t-2         -10 minutes ago   7 minutes   Succeeded
+ tr-1   t-1         0 seconds ago     5 minutes   Failed
 
 Skipped Tasks
 
- No Skipped Tasks
+ NAME
+ task-should-be-skipped-1
+ task-should-be-skipped-2
+ task-should-be-skipped-3
