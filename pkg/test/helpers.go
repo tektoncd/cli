@@ -15,6 +15,7 @@
 package test
 
 import (
+	"reflect"
 	"strings"
 	"testing"
 
@@ -76,4 +77,22 @@ Actual
 %s
 `, expected, actual)
 	}
+}
+
+// Contains is a test utility to check if obj is in the contents of the container.
+func Contains(t *testing.T, container interface{}, obj interface{}) {
+	if reflect.TypeOf(container).Kind() != reflect.Slice {
+		t.Errorf("obj cannot exist in non-slice %s", reflect.TypeOf(container).Kind().String())
+	}
+
+	diffs := []string{}
+	val := reflect.ValueOf(container)
+	for i := 0; i < val.Len(); i++ {
+		diff := cmp.Diff(val.Index(i).Interface(), obj)
+		if diff == "" {
+			return
+		}
+		diffs = append(diffs, diff)
+	}
+	t.Errorf("no matches found in: %s", strings.Join(diffs, "\n"))
 }
