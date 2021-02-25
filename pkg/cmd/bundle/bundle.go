@@ -15,9 +15,15 @@
 package bundle
 
 import (
+	"errors"
+
 	"github.com/spf13/cobra"
 	"github.com/tektoncd/cli/pkg/cli"
 	"github.com/tektoncd/cli/pkg/flags"
+)
+
+var (
+	errInvalidRef = errors.New("first argument must be a valid docker-like Tekton bundle reference")
 )
 
 func Command(p cli.Params) *cobra.Command {
@@ -38,6 +44,7 @@ func Command(p cli.Params) *cobra.Command {
 	_ = cmd.PersistentFlags().MarkHidden("kubeconfig")
 	_ = cmd.PersistentFlags().MarkHidden("namespace")
 	cmd.AddCommand(
+		pullCommand(p),
 		pushCommand(p),
 	)
 	return cmd

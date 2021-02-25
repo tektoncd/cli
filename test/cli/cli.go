@@ -137,7 +137,7 @@ func (e TknRunner) RunInteractiveTests(t *testing.T, ops *Prompt) *expect.Consol
 	}()
 
 	// Close the slave end of the pty, and read the remaining bytes from the master end.
-	c.Tty().Close()
+	_ = c.Tty().Close()
 	<-donec
 
 	// Dump the terminal's screen.

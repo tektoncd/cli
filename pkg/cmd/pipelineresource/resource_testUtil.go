@@ -68,7 +68,7 @@ func (pt *promptTest) runTest(t *testing.T, procedure func(*goexpect.Console) er
 	assert.NilError(t, test(stdio(c)))
 
 	// Close the slave end of the pty, and read the remaining bytes from the master end.
-	c.Tty().Close()
+	_ = c.Tty().Close()
 	<-donec
 
 	t.Logf("Raw output: %q", buf.String())
