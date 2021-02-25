@@ -10,6 +10,7 @@ require (
 	github.com/fatih/color v1.9.0
 	github.com/ghodss/yaml v1.0.0
 	github.com/google/go-cmp v0.5.4
+	github.com/google/go-containerregistry v0.4.1-0.20210128200529-19c2b639fab1
 	github.com/hako/durafmt v0.0.0-20191009132224-3f39dc1ed9f4
 	github.com/hinshun/vt10x v0.0.0-20180809195222-d55458df857c
 	github.com/jonboulle/clockwork v0.1.1-0.20190114141812-62fb9bc030d1
