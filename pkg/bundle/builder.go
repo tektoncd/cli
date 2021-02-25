@@ -17,7 +17,7 @@ import (
 	"k8s.io/apimachinery/pkg/runtime/schema"
 )
 
-// BuildTektonBundle will return a complete OCI Image usable as a Tekton Bundle built by parseing, decoding, and
+// BuildTektonBundle will return a complete OCI Image usable as a Tekton Bundle built by parsing, decoding, and
 // compressing the provided contents as Tekton objects.
 func BuildTektonBundle(contents []string, log io.Writer) (v1.Image, error) {
 	img := empty.Image

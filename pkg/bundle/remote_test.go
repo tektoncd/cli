@@ -12,11 +12,10 @@ import (
 	"github.com/google/go-containerregistry/pkg/registry"
 	"github.com/google/go-containerregistry/pkg/v1/empty"
 	"github.com/google/go-containerregistry/pkg/v1/mutate"
-	"github.com/google/go-containerregistry/pkg/v1/remote"
 	"github.com/google/go-containerregistry/pkg/v1/tarball"
 )
 
-func TestWrite(t *testing.T) {
+func TestWriteAndRead(t *testing.T) {
 	s := httptest.NewServer(registry.New())
 	defer s.Close()
 	u, err := url.Parse(s.URL)
@@ -50,9 +49,18 @@ func TestWrite(t *testing.T) {
 		t.Fatal(err)
 	}
 
-	actualImg, err := remote.Image(actualRef)
+	actualImg, err := Read(actualRef)
 	if err != nil {
 		t.Fatal(err)
+	}
+
+	manifest, err := actualImg.Manifest()
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	if len(manifest.Layers) != 1 {
+		t.Error("Image does not contain expected number of layers")
 	}
 
 	layers, err := actualImg.Layers()
@@ -60,17 +68,24 @@ func TestWrite(t *testing.T) {
 		t.Fatal(err)
 	}
 
-	if len(layers) != 1 {
-		t.Error("Image does not contain expected number of layers")
-	}
-
+	// There should be a remote and cached version of this layer. Ensure the contents match.
 	reader, _ := layers[0].Uncompressed()
-	contents, err := ioutil.ReadAll(reader)
+	remoteContents, err := ioutil.ReadAll(reader)
 	if err != nil {
 		t.Fatal(err)
 	}
 
-	if string(contents) != "some-contents" {
-		t.Errorf("Expected image contents to be \"some-contents\" but found %s", string(contents))
+	if string(remoteContents) != "some-contents" {
+		t.Errorf("Expected image contents to be \"some-contents\" but found %s", string(remoteContents))
+	}
+
+	reader, _ = layers[1].Uncompressed()
+	cachedContents, err := ioutil.ReadAll(reader)
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	if string(cachedContents) != "some-contents" {
+		t.Errorf("Expected image contents to be \"some-contents\" but found %s", string(cachedContents))
 	}
 }

@@ -1,0 +1,138 @@
+// Copyright © 2021 The Tekton Authors.
+//
+// Licensed under the Apache License, Version 2.0 (the "License");
+// you may not use this file except in compliance with the License.
+// You may obtain a copy of the License at
+//
+//     http://www.apache.org/licenses/LICENSE-2.0
+//
+// Unless required by applicable law or agreed to in writing, software
+// distributed under the License is distributed on an "AS IS" BASIS,
+// WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+// See the License for the specific language governing permissions and
+// limitations under the License.
+package bundle
+
+import (
+	"fmt"
+
+	"github.com/google/go-containerregistry/pkg/name"
+	"github.com/spf13/cobra"
+	"github.com/tektoncd/cli/pkg/bundle"
+	"github.com/tektoncd/cli/pkg/cli"
+	"github.com/tektoncd/cli/pkg/printer"
+	"k8s.io/apimachinery/pkg/runtime"
+	"k8s.io/apimachinery/pkg/runtime/schema"
+	cliopts "k8s.io/cli-runtime/pkg/genericclioptions"
+)
+
+// TODO: Find a more generic way to do this
+var (
+	allowedKinds = []string{"Task", "Pipeline", "ClusterTask"}
+)
+
+type pullOptions struct {
+	cliparams     cli.Params
+	stream        *cli.Stream
+	ref           name.Reference
+	remoteOptions bundle.RemoteOptions
+}
+
+func pullCommand(p cli.Params) *cobra.Command {
+	opts := &pullOptions{
+		cliparams: p,
+	}
+	f := cliopts.NewPrintFlags("")
+
+	longHelp := `Fetch a new Tekton Bundle from a registry and list the object(s) in the bundle. You can further narrow
+down the results by optionally specifying the kind, and then the name:
+
+	tkn bundle pull docker.io/myorg/mybundle:latest // fetches all objects
+	tkn bundle push docker.io/myorg/mybundle:1.0 tasks // fetches all Tekton tasks
+	tkn bundle push docker.io/myorg/mybundle:1.0 tasks foo // fetches the Tekton task "foo"
+
+As with other "list" commands, you can specify the desired output format using the "-o" flag.
+
+Authentication:
+	There are three ways to authenticate against your registry.
+	1. By default, your docker.config in your home directory is used.
+	2. Additionally, you can supply a Bearer Token via --remote-bearer
+	3. Additionally, you can use Basic auth via --remote-username and --remote-password
+`
+
+	c := &cobra.Command{
+		Use:   "pull",
+		Short: "Push a new Tekton bundle",
+		Long:  longHelp,
+		Annotations: map[string]string{
+			"commandType": "main",
+		},
+		Args: cobra.RangeArgs(1, 3),
+		PreRunE: func(cmd *cobra.Command, args []string) error {
+			if len(args) < 1 {
+				return errInvalidRef
+			}
+
+			ref, err := name.ParseReference(args[0], name.StrictValidation, name.Insecure)
+			if err != nil {
+				return err
+			}
+			opts.ref = ref
+
+			if len(args) > 1 {
+				allowedKind := false
+				for _, op := range allowedKinds {
+					if args[1] == op {
+						allowedKind = true
+					}
+				}
+
+				if !allowedKind {
+					return fmt.Errorf("second argument %s is not a valid kind: %q", args[1], allowedKinds)
+				}
+			}
+
+			return err
+		},
+		RunE: func(cmd *cobra.Command, args []string) error {
+			opts.stream = &cli.Stream{
+				In:  cmd.InOrStdin(),
+				Out: cmd.OutOrStdout(),
+				Err: cmd.OutOrStderr(),
+			}
+
+			return opts.Run(args, func(_ schema.GroupVersionKind, _ string, element runtime.Object, _ []byte) {
+				_ = printer.PrintObject(opts.stream.Out, element, f)
+			})
+		},
+	}
+
+	f.AddFlags(c)
+	bundle.AddRemoteFlags(c.Flags(), &opts.remoteOptions)
+
+	return c
+}
+
+// Run performs the principal logic of reading and parsing the input, creating the bundle, and publishing it.
+func (p *pullOptions) Run(args []string, formatter bundle.ObjectVisitor) error {
+	img, err := bundle.Read(p.ref, p.remoteOptions.ToOptions()...)
+	if err != nil {
+		return err
+	}
+
+	switch len(args) {
+	case 1:
+		if err := bundle.List(img, formatter); err != nil {
+			return err
+		}
+	case 2:
+		if err := bundle.ListKind(img, args[1], formatter); err != nil {
+			return err
+		}
+	case 3:
+		if err := bundle.Get(img, args[1], args[2], formatter); err != nil {
+			return err
+		}
+	}
+	return nil
+}

@@ -17,7 +17,6 @@ import (
 // Note, that for this test we are only using one object type to precisely test the image contents. The
 // #TestDecodeFromRaw tests the general parsing logic.
 func TestBuildTektonBundle(t *testing.T) {
-
 	task := v1beta1.Task{
 		TypeMeta: metav1.TypeMeta{
 			APIVersion: "tekton.dev/v1beta1",
@@ -80,7 +79,6 @@ func TestBuildTektonBundle(t *testing.T) {
 	header, err := treader.Next()
 	if err != nil {
 		t.Errorf("layer is not a tarball")
-
 	}
 
 	contents := make([]byte, header.Size)

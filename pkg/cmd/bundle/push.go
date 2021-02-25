@@ -14,7 +14,6 @@
 package bundle
 
 import (
-	"errors"
 	"fmt"
 	"io/ioutil"
 
@@ -22,10 +21,6 @@ import (
 	"github.com/spf13/cobra"
 	"github.com/tektoncd/cli/pkg/bundle"
 	"github.com/tektoncd/cli/pkg/cli"
-)
-
-var (
-	errInvalidRef = errors.New("first argument must be a valid docker-like Tekton bundle reference")
 )
 
 type pushOptions struct {
@@ -57,10 +52,9 @@ Input:
 `
 
 	c := &cobra.Command{
-		Use:     "push",
-		Aliases: []string{"p"},
-		Short:   "Push a new Tekton bundle",
-		Long:    longHelp,
+		Use:   "push",
+		Short: "Push a new Tekton bundle",
+		Long:  longHelp,
 		Annotations: map[string]string{
 			"commandType": "main",
 		},
