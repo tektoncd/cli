@@ -3,15 +3,16 @@ package bundle
 import (
 	"archive/tar"
 	"bytes"
+	"errors"
 	"fmt"
 	"io"
-	"reflect"
 
 	v1 "github.com/google/go-containerregistry/pkg/v1"
 	"github.com/google/go-containerregistry/pkg/v1/empty"
 	"github.com/google/go-containerregistry/pkg/v1/mutate"
 	"github.com/google/go-containerregistry/pkg/v1/tarball"
 	tkremote "github.com/tektoncd/pipeline/pkg/remote/oci"
+	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/apimachinery/pkg/runtime/schema"
 )
@@ -27,7 +28,10 @@ func BuildTektonBundle(contents []string, log io.Writer) (v1.Image, error) {
 	// the OCI image as a tar layer.
 	for _, content := range contents {
 		if err := decodeObjects(content, func(gvr *schema.GroupVersionKind, element runtime.Object, raw []byte) error {
-			name := getObjectName(element)
+			name, err := getObjectName(element)
+			if err != nil {
+				return err
+			}
 
 			// Tar up this object before writing it to the layer.
 			var tarbundle bytes.Buffer
@@ -76,6 +80,10 @@ func BuildTektonBundle(contents []string, log io.Writer) (v1.Image, error) {
 }
 
 // Return the ObjectMetadata.Name field which every resource should have.
-func getObjectName(obj runtime.Object) string {
-	return reflect.Indirect(reflect.ValueOf(obj)).FieldByName("ObjectMeta").FieldByName("Name").String()
+func getObjectName(obj runtime.Object) (string, error) {
+	metaObj, ok := obj.(metav1.Object)
+	if !ok {
+		return "", errors.New("object is not a registered kubernetes resource")
+	}
+	return metaObj.GetName(), nil
 }
