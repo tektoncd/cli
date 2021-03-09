@@ -40,6 +40,9 @@ const describeTemplate = `{{decorate "bold" "Name"}}:	{{ .Task.Name }}
 {{- if ne .Task.Spec.Description "" }}
 {{decorate "bold" "Description"}}:	{{ .Task.Spec.Description }}
 {{- end }}
+{{- $v := findVersion .Task.Labels }} {{- if ne $v ""}}
+{{decorate "bold" "Version"}}:    	{{ $v }}
+{{- end }}
 
 {{decorate "inputresources" ""}}{{decorate "underline bold" "Input Resources\n"}}
 
@@ -244,6 +247,7 @@ func printTaskDescription(s *cli.Stream, p cli.Params, tname string) error {
 		"decorate":        formatted.DecorateAttr,
 		"autoStepName":    formatted.AutoStepName,
 		"formatDesc":      formatted.FormatDesc,
+		"findVersion":     formatted.FindVersion,
 	}
 
 	w := tabwriter.NewWriter(s.Out, 0, 5, 3, ' ', tabwriter.TabIndent)
