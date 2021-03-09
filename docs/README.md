@@ -152,4 +152,4 @@ Run `tkn help` to see the list of available commands.
 
 ## What's next
 
-[A manual for using Tekton CLI is available on GitHub](https://github.com/tektoncd/cli/tree/master/docs).
+[A manual for using Tekton CLI is available on GitHub](https://github.com/tektoncd/cli/tree/main/docs).
