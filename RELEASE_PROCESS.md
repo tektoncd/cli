@@ -69,9 +69,9 @@ dnf upgrade tektoncd-cli
 
 - Make a version update to the test-runner and `tkn` image in the [plumbing](https://github.com/tektoncd/plumbing/) repo. The test-runner image is used to run the CI on the pipeline project, which uses `tkn`. For both Dockerfiles listed below, search for `ARG TKN_VERSION` in the Dockerfile for where to update the release version. Update the version arg to match the version of `tkn` released (i.e. `ARG TKN_VERSION=<RELEASED_VERSION>`).
 
-  * [test-runner image](https://github.com/tektoncd/plumbing/blob/cli/tekton/images/test-runner/Dockerfile)
+  * [test-runner image](https://github.com/tektoncd/plumbing/blob/main/tekton/images/test-runner/Dockerfile)
 
-  * [tkn image](https://github.com/tektoncd/plumbing/blob/cli/tekton/images/tkn/Dockerfile)
+  * [tkn image](https://github.com/tektoncd/plumbing/blob/main/tekton/images/tkn/Dockerfile)
 
 - Update the version numbers in the main [README.md](README.md) to the version you are releasing by opening a pull request to the main branch of this repository. Do not worry about updating the README for the release branch.
 
