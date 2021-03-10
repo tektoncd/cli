@@ -43,6 +43,7 @@ const (
 )
 
 func TestClusterTaskInteractiveStartE2E(t *testing.T) {
+	t.Skip("TEMPORARY DISABLING THIS, SEE https://github.com/tektoncd/cli/issues/1319.")
 	t.Parallel()
 	c, namespace := framework.Setup(t)
 	knativetest.CleanupOnInterrupt(func() { framework.TearDown(t, c, namespace) }, t.Logf)
@@ -95,7 +96,7 @@ func TestClusterTaskInteractiveStartE2E(t *testing.T) {
 			"-i=source="+tePipelineGitResourceName,
 			"-p=FILEPATH=docs",
 			"-p=FILENAME=README.md",
-			"-w=name=shared-workspace,emptyDir=",
+			"-w=name=shared-workspace,emptyDir=''",
 			"--showlog")
 
 		vars := make(map[string]interface{})
