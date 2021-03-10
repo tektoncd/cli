@@ -785,7 +785,7 @@ func (opt *startOptions) getInputWorkspaces(pipeline *v1beta1.Pipeline) error {
 			{
 				Name: "workspace param",
 				Prompt: &survey.Select{
-					Message: " Type of the Workspace :",
+					Message: "Type of the Workspace :",
 					Options: []string{"config", "emptyDir", "secret", "pvc"},
 					Default: "emptyDir",
 				},
@@ -802,7 +802,7 @@ func (opt *startOptions) getInputWorkspaces(pipeline *v1beta1.Pipeline) error {
 			}
 			workspace = workspace + ",claimName=" + claimName
 		case "emptyDir":
-			kind, err := askParam("Type of EmtpyDir :", opt.askOpts, "")
+			kind, err := askParam("Type of EmptyDir :", opt.askOpts, "")
 			if err != nil {
 				return err
 			}
