@@ -360,7 +360,7 @@ func (intOpts *InteractiveOpts) TaskWorkspaces(task *v1beta1.Task) error {
 			}
 			workspace = workspace + ",claimName=" + claimName
 		case "emptyDir":
-			kind, err := askParam("Type of EmtpyDir :", intOpts.AskOpts, "")
+			kind, err := askParam("Type of EmptyDir :", intOpts.AskOpts, "")
 			if err != nil {
 				return err
 			}
@@ -586,7 +586,7 @@ func (intOpts *InteractiveOpts) ClusterTaskWorkspaces(clustertask *v1beta1.Clust
 			}
 			workspace = workspace + ",claimName=" + claimName
 		case "emptyDir":
-			kind, err := askParam("Type of EmtpyDir:", intOpts.AskOpts, "")
+			kind, err := askParam("Type of EmptyDir:", intOpts.AskOpts, "")
 			if err != nil {
 				return err
 			}

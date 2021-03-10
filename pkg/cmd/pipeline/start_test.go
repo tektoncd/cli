@@ -1835,7 +1835,7 @@ func TestPipelineStart_Interactive(t *testing.T) {
 			tb.Pipeline("cloudpipeline",
 				tb.PipelineNamespace("ns"),
 				tb.PipelineSpec(
-					tb.PipelineWorkspaceDeclaration("pvc", "config", "secret", "emtpyDir"),
+					tb.PipelineWorkspaceDeclaration("pvc", "config", "secret", "emptyDir"),
 					tb.PipelineTask("unit-test-1", "unit-test-task",
 						tb.PipelineTaskInputResource("clusres", "clusterresource"),
 					),
@@ -2771,7 +2771,7 @@ func TestPipelineStart_Interactive(t *testing.T) {
 						return err
 					}
 
-					if _, err := c.SendLine("emtpyDir"); err != nil {
+					if _, err := c.SendLine("emptyDir"); err != nil {
 						return err
 					}
 
@@ -2791,7 +2791,7 @@ func TestPipelineStart_Interactive(t *testing.T) {
 						return err
 					}
 
-					if _, err := c.ExpectString("Type of EmtpyDir :"); err != nil {
+					if _, err := c.ExpectString("Type of EmptyDir :"); err != nil {
 						return err
 					}
 
