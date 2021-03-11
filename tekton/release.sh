@@ -146,6 +146,6 @@ URL=$(git remote get-url "${PUSH_REMOTE}" | sed 's,git@github.com:,https://githu
 tkn -n ${TARGET_NAMESPACE} pipeline start cli-release-pipeline \
   -p revision="${RELEASE_VERSION}" \
   -p url="${URL}" \
-  -w name=shared-workspace,volumeClaimTemplateFile=./volumeclaimtemplate.yaml
+  -w name=shared-workspace,volumeClaimTemplateFile=./volume-claim-template.yml
 
 tkn -n ${TARGET_NAMESPACE} pipeline logs cli-release-pipeline -f --last
