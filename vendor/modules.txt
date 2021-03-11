@@ -373,7 +373,7 @@ github.com/tektoncd/hub/api/pkg/cli/kube
 github.com/tektoncd/hub/api/pkg/cli/printer
 github.com/tektoncd/hub/api/pkg/git
 github.com/tektoncd/hub/api/pkg/parser
-# github.com/tektoncd/pipeline v0.20.1-0.20210205200043-7827cd8bd343
+# github.com/tektoncd/pipeline v0.22.0
 github.com/tektoncd/pipeline/pkg/apis/config
 github.com/tektoncd/pipeline/pkg/apis/pipeline
 github.com/tektoncd/pipeline/pkg/apis/pipeline/pod
@@ -454,7 +454,7 @@ github.com/tektoncd/pipeline/test
 github.com/tektoncd/pipeline/test/v1alpha1
 # github.com/tektoncd/plumbing v0.0.0-20210202164343-2c1808d75b38
 github.com/tektoncd/plumbing/scripts
-# github.com/tektoncd/triggers v0.11.1-0.20210203192543-6654c3d410fe
+# github.com/tektoncd/triggers v0.12.0
 github.com/tektoncd/triggers/pkg/apis/triggers/v1alpha1
 github.com/tektoncd/triggers/pkg/client/clientset/versioned
 github.com/tektoncd/triggers/pkg/client/clientset/versioned/fake
@@ -1078,6 +1078,8 @@ knative.dev/pkg/apis/duck/v1
 knative.dev/pkg/apis/duck/v1alpha1
 knative.dev/pkg/apis/duck/v1beta1
 knative.dev/pkg/changeset
+knative.dev/pkg/client/injection/ducks/duck/v1/podspecable
+knative.dev/pkg/client/injection/ducks/duck/v1/podspecable/fake
 knative.dev/pkg/client/injection/kube/client
 knative.dev/pkg/client/injection/kube/client/fake
 knative.dev/pkg/client/injection/kube/informers/apps/v1/deployment
@@ -1102,6 +1104,8 @@ knative.dev/pkg/configmap
 knative.dev/pkg/controller
 knative.dev/pkg/hash
 knative.dev/pkg/injection
+knative.dev/pkg/injection/clients/dynamicclient
+knative.dev/pkg/injection/clients/dynamicclient/fake
 knative.dev/pkg/kmeta
 knative.dev/pkg/kmp
 knative.dev/pkg/leaderelection
