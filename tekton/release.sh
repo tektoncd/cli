@@ -3,7 +3,7 @@ RELEASE_VERSION="${1}"
 COMMITS="${2}"
 
 UPSTREAM_REMOTE=upstream
-MASTER_BRANCH="master"
+DEFAULT_BRANCH="main"
 TARGET_NAMESPACE="release"
 SECRET_NAME=bot-token-github
 PUSH_REMOTE="${PUSH_REMOTE:-${UPSTREAM_REMOTE}}" # export PUSH_REMOTE to your own for testing
@@ -51,23 +51,23 @@ cd ${GOPATH}/src/github.com/tektoncd/cli
     exit 1
 }
 
-git checkout ${MASTER_BRANCH}
-git reset --hard ${UPSTREAM_REMOTE}/${MASTER_BRANCH}
-git checkout -B release-${RELEASE_VERSION}  ${MASTER_BRANCH} >/dev/null
+git checkout ${DEFAULT_BRANCH}
+git reset --hard ${UPSTREAM_REMOTE}/${DEFAULT_BRANCH}
+git checkout -B release-${RELEASE_VERSION}  ${DEFAULT_BRANCH} >/dev/null
 
 if [[ -n ${minor_version} ]];then
     git reset --hard ${lasttag} >/dev/null
 
     if [[ -z ${COMMITS} ]];then
-        echo "Showing commit between last minor tag '${lasttag} to '${MASTER_BRANCH}'"
+        echo "Showing commit between last minor tag '${lasttag} to '${DEFAULT_BRANCH}'"
         echo
-        git log --reverse --no-merges --pretty=format:"%C(bold cyan)%h%Creset | %cd | %s | %ae" ${MASTER_BRANCH} --since "$(git log --pretty=format:%cd -1 ${lasttag})"
+        git log --reverse --no-merges --pretty=format:"%C(bold cyan)%h%Creset | %cd | %s | %ae" ${DEFAULT_BRANCH} --since "$(git log --pretty=format:%cd -1 ${lasttag})"
         echo
         read -e -p "Pick a list of ordered commits to cherry-pick space separated (* mean all of them): " COMMITS
     fi
     [[ -z ${COMMITS} ]] && { echo "no commits picked"; exit 1;}
     if [[ ${COMMITS} == "*" ]];then
-        COMMITS=$(git log --reverse --no-merges --pretty=format:"%h" ${MASTER_BRANCH} \
+        COMMITS=$(git log --reverse --no-merges --pretty=format:"%h" ${DEFAULT_BRANCH} \
                       --since "$(git log --pretty=format:%cd -1 ${lasttag})")
     fi
     for commit in ${COMMITS};do
@@ -76,8 +76,8 @@ if [[ -n ${minor_version} ]];then
         git cherry-pick ${commit} >/dev/null
     done
 else
-    echo "Major release ${RELEASE_VERSION%.*} detected: picking up ${UPSTREAM_REMOTE}/${MASTER_BRANCH}"
-    git reset --hard ${UPSTREAM_REMOTE}/${MASTER_BRANCH}
+    echo "Major release ${RELEASE_VERSION%.*} detected: picking up ${UPSTREAM_REMOTE}/${DEFAULT_BRANCH}"
+    git reset --hard ${UPSTREAM_REMOTE}/${DEFAULT_BRANCH}
 fi
 
 # HACK:! this is temporary to disable the upload to homebrew when we do our testing
@@ -89,7 +89,7 @@ fi
 }
 
 COMMITS=$(git log --reverse --no-merges \
-              --pretty=format:'%H' ${MASTER_BRANCH} \
+              --pretty=format:'%H' ${DEFAULT_BRANCH} \
               --since "$(git log --pretty=format:%cd -1 ${lasttag})")
 
 changelog=""
