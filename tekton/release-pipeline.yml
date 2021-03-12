@@ -52,7 +52,7 @@ spec:
         - name: package
           value: $(params.package)
         - name: flags
-          value: "-v --timeout 10m"
+          value: "-v --timeout 20m"
         - name: version
           value: v1.31.0
       workspaces:
