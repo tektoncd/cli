@@ -1,4 +1,4 @@
-# Tekton Pipelines cli
+# Tekton Pipelines CLI (`tkn`)
 
 [![Go Report Card](https://goreportcard.com/badge/tektoncd/cli)](https://goreportcard.com/report/tektoncd/cli)
 
@@ -6,21 +6,21 @@
 <img width="250" height="175" src="https://github.com/cdfoundation/artwork/blob/main/tekton/additional-artwork/tekton-cli/color/tektoncli_color.svg" alt="Tekton logo"></img>
 </p>
 
-The Tekton Pipelines cli project provides a CLI for interacting with Tekton!
+The _Tekton Pipelines CLI_ project provides a command-line interface (CLI) for interacting with [Tekton](https://tekton.dev/), an open-source framework for Continuous Integration and Delivery (CI/CD) systems.
 
 ## Installing `tkn`
 
-Download the latest binary executable for your operating system:
+Download the latest binary executable for your operating system.
 
-* Mac OS X
+### Mac OS X
 
-  - `tektoncd-cli` is available from [brew](https://brew.sh):
+- Use [Homebrew](https://brew.sh)
 
-  ```shell
+```shell
   brew install tektoncd-cli
-  ```
+```
 
-  - Or by the [released tarball](https://github.com/tektoncd/cli/releases/download/v0.17.2/tkn_0.17.2_Darwin_x86_64.tar.gz):
+- Use [released tarball](https://github.com/tektoncd/cli/releases/download/v0.17.0/tkn_0.17.0_Darwin_x86_64.tar.gz)
 
   ```shell
   # Get the tar.xz
@@ -28,22 +28,32 @@ Download the latest binary executable for your operating system:
   # Extract tkn to your PATH (e.g. /usr/local/bin)
   sudo tar xvzf tkn_0.17.2_Darwin_x86_64.tar.gz -C /usr/local/bin tkn
   ```
+  
+### Windows
 
-* Windows
+- Use [Chocolatey](https://chocolatey.org/packages/tektoncd-cli)
 
-  - `tektoncd-cli` can be installed as a [Chocolatey package](https://chocolatey.org/packages/tektoncd-cli/):
+```shell
+choco install tektoncd-cli --confirm
+```
 
-  ```shell
-  choco install tektoncd-cli --confirm
-  ```
+- Use [Scoop](https://scoop.sh)
+```powershell
+scoop install tektoncd-cli
+```
 
-  - Or by the released zip file in the instructions below:
+- Use [Powershell](https://docs.microsoft.com/en-us/powershell) [released zip](https://github.com/tektoncd/cli/releases/download/v0.17.0/tkn_0.17.0_Windows_x86_64.zip)
 
-  - Uncompress the [zip file](https://github.com/tektoncd/cli/releases/download/v0.17.2/tkn_0.17.2_Windows_x86_64.zip)
-  - Add the location of where the executable is to your `Path` by opening `Control Panel>System and Security>System>Advanced System Settings`
-  - Click on `Environment Variables`, select the `Path` variable, and click `Edit`
-  - Click `New` and add the location of the uncompressed zip to the `Path`
-  - Finish by clicking `Ok`
+```powershell
+#Create directory
+New-Item -Path "$HOME/tektoncd/cli" -Type Directory
+# Download file
+Start-BitsTransfer -Source https://github.com/tektoncd/cli/releases/download/v0.17.0/tkn_0.17.0_Windows_x86_64.zip -Destination "$HOME/tektoncd/cli/."
+# Uncompress zip file
+Expand-Archive $HOME/tektoncd/cli/*.zip -DestinationPath C:\Users\Developer\tektoncd\cli\.
+#Add to Windows `Environment Variables`
+[Environment]::SetEnvironmentVariable("Path",$($env:Path + ";$Home\tektoncd\cli"),'User')
+```
 
 ### Linux tarballs
 
@@ -139,14 +149,11 @@ You can install `tektoncd-cli` from [nixpkgs](https://github.com/NixOS/nixpkgs) 
 ```shell
 nix-env --install tektoncd-cli
 ```
-
 ### Homebrew on Linux
 
-You can install the latest tektoncd-cli if you are using [Homebrew on
-Linux](https://docs.brew.sh/Homebrew-on-Linux) as for the osx version you need
-to simply do :
+You can install the latest tektoncd-cli if you are using [Homebrew on Linux](https://docs.brew.sh/Homebrew-on-Linux) as for the osx version you need to simply do :
 
-```
+```shell
 brew install tektoncd-cli
 ```
 
@@ -216,7 +223,7 @@ More information on `NO_COLOR` can be found in the [`NO_COLOR` documentation](ht
 To remove color and emojis from the output of a single command execution, the `--no-color` option can be used with any command,
 such as in the example below:
 
-```
+```bash
 tkn taskrun describe --no-color
 ```
 
