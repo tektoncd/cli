@@ -13,6 +13,7 @@ import (
 	"github.com/google/go-containerregistry/pkg/v1/empty"
 	"github.com/google/go-containerregistry/pkg/v1/mutate"
 	"github.com/google/go-containerregistry/pkg/v1/tarball"
+	"k8s.io/apimachinery/pkg/util/rand"
 )
 
 func TestWriteAndRead(t *testing.T) {
@@ -34,7 +35,8 @@ func TestWriteAndRead(t *testing.T) {
 		t.Fatal(err)
 	}
 
-	imgRef, err := name.ParseReference(fmt.Sprintf("%s/testimg/myimg:1.0", u.Host))
+	imgName := rand.String(6)
+	imgRef, err := name.ParseReference(fmt.Sprintf("%s/testimg/%s:1.0", u.Host, imgName))
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -68,7 +70,6 @@ func TestWriteAndRead(t *testing.T) {
 		t.Fatal(err)
 	}
 
-	// There should be a remote and cached version of this layer. Ensure the contents match.
 	reader, _ := layers[0].Uncompressed()
 	remoteContents, err := ioutil.ReadAll(reader)
 	if err != nil {
@@ -79,13 +80,19 @@ func TestWriteAndRead(t *testing.T) {
 		t.Errorf("Expected image contents to be \"some-contents\" but found %s", string(remoteContents))
 	}
 
-	reader, _ = layers[1].Uncompressed()
-	cachedContents, err := ioutil.ReadAll(reader)
+	// Now fetch this image again and ensure it is read from the cache (there will be a second cache layer).
+	cachedImg, err := Read(actualRef)
 	if err != nil {
 		t.Fatal(err)
 	}
 
-	if string(cachedContents) != "some-contents" {
-		t.Errorf("Expected image contents to be \"some-contents\" but found %s", string(cachedContents))
+	layers, err = cachedImg.Layers()
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	// There should now be two layers because one is the cache layer.
+	if len(layers) != 2 {
+		t.Errorf("Found unexpected number of layers in cached image: %d", len(layers))
 	}
 }
