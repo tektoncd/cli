@@ -2,8 +2,6 @@
 
 Push a new Tekton bundle
 
-***Aliases**: p*
-
 ### Usage
 
 ```
