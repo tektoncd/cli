@@ -24,6 +24,6 @@ Manage Tekton Bundles
 ### SEE ALSO
 
 * [tkn](tkn.md)	 - CLI for tekton pipelines
-* [tkn bundle pull](tkn_bundle_pull.md)	 - Push a new Tekton bundle
+* [tkn bundle pull](tkn_bundle_pull.md)	 - Pull a Tekton bundle and list its contents
 * [tkn bundle push](tkn_bundle_push.md)	 - Push a new Tekton bundle
 

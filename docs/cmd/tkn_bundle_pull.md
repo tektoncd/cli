@@ -1,6 +1,6 @@
 ## tkn bundle pull
 
-Push a new Tekton bundle
+Pull a Tekton bundle and list its contents
 
 ### Usage
 
@@ -14,8 +14,8 @@ Fetch a new Tekton Bundle from a registry and list the object(s) in the bundle. 
 down the results by optionally specifying the kind, and then the name:
 
 	tkn bundle pull docker.io/myorg/mybundle:latest // fetches all objects
-	tkn bundle push docker.io/myorg/mybundle:1.0 tasks // fetches all Tekton tasks
-	tkn bundle push docker.io/myorg/mybundle:1.0 tasks foo // fetches the Tekton task "foo"
+	tkn bundle pull docker.io/myorg/mybundle:1.0 Task // fetches all Tekton tasks
+	tkn bundle pull docker.io/myorg/mybundle:1.0 Task foo // fetches the Tekton task "foo"
 
 As with other "list" commands, you can specify the desired output format using the "-o" flag.
 

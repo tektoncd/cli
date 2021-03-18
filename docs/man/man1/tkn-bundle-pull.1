@@ -5,7 +5,7 @@
 
 .SH NAME
 .PP
-tkn\-bundle\-pull \- Push a new Tekton bundle
+tkn\-bundle\-pull \- Pull a Tekton bundle and list its contents
 
 
 .SH SYNOPSIS
@@ -23,8 +23,8 @@ down the results by optionally specifying the kind, and then the name:
 
 .nf
 tkn bundle pull docker.io/myorg/mybundle:latest // fetches all objects
-tkn bundle push docker.io/myorg/mybundle:1.0 tasks // fetches all Tekton tasks
-tkn bundle push docker.io/myorg/mybundle:1.0 tasks foo // fetches the Tekton task "foo"
+tkn bundle pull docker.io/myorg/mybundle:1.0 Task // fetches all Tekton tasks
+tkn bundle pull docker.io/myorg/mybundle:1.0 Task foo // fetches the Tekton task "foo"
 
 .fi
 .RE
