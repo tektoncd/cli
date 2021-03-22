@@ -23,12 +23,19 @@ import (
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 )
 
-// LastRun returns the last taskrun for a given task
-func LastRun(cs *cli.Clients, task string, ns, kind string) (*v1beta1.TaskRun, error) {
+// LastRun returns the last taskrun for a given task/clustertask
+func LastRun(cs *cli.Clients, resourceName, ns, kind string) (*v1beta1.TaskRun, error) {
 	options := metav1.ListOptions{}
-	if task != "" {
+
+	// change the label value to clusterTask if the resource is ClusterTask
+	label := "task"
+	if kind == "ClusterTask" {
+		label = "clusterTask"
+	}
+
+	if resourceName != "" {
 		options = metav1.ListOptions{
-			LabelSelector: fmt.Sprintf("tekton.dev/task=%s", task),
+			LabelSelector: fmt.Sprintf("tekton.dev/%s=%s", label, resourceName),
 		}
 	}
 
@@ -37,11 +44,8 @@ func LastRun(cs *cli.Clients, task string, ns, kind string) (*v1beta1.TaskRun, e
 		return nil, err
 	}
 
-	// this is required as the same label is getting added for both task and ClusterTask
-	runs.Items = FilterByRef(runs.Items, kind)
-
 	if len(runs.Items) == 0 {
-		return nil, fmt.Errorf("no TaskRuns related to %s %s found in namespace %s", kind, task, ns)
+		return nil, fmt.Errorf("no TaskRuns related to %s %s found in namespace %s", kind, resourceName, ns)
 	}
 
 	latest := runs.Items[0]
@@ -54,7 +58,7 @@ func LastRun(cs *cli.Clients, task string, ns, kind string) (*v1beta1.TaskRun, e
 	return &latest, nil
 }
 
-// this will filter the taskrun which have reference to Task
+// this will filter the taskrun which have reference to Task or ClusterTask
 func FilterByRef(taskruns []v1beta1.TaskRun, kind string) []v1beta1.TaskRun {
 	var filtered []v1beta1.TaskRun
 	for _, taskrun := range taskruns {
