@@ -44,6 +44,7 @@ import (
 	"github.com/tektoncd/pipeline/pkg/apis/pipeline/v1alpha1"
 	"github.com/tektoncd/pipeline/pkg/apis/pipeline/v1beta1"
 	versionedResource "github.com/tektoncd/pipeline/pkg/client/resource/clientset/versioned"
+	kErr "k8s.io/apimachinery/pkg/api/errors"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	v1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/client-go/discovery"
@@ -81,6 +82,12 @@ type startOptions struct {
 	UseParamDefaults   bool
 	TektonOptions      flags.TektonOptions
 	PodTemplate        string
+	LocalToWorkspace   []LocalToWorkspace
+}
+
+type LocalToWorkspace struct {
+	Name    string
+	DirPath string
 }
 
 type resourceOptionsFilter struct {
@@ -142,6 +149,7 @@ like cat,foo,bar
 		},
 		RunE: func(cmd *cobra.Command, args []string) error {
 			opt.stream = &cli.Stream{
+				In:  cmd.InOrStdin(),
 				Out: cmd.OutOrStdout(),
 				Err: cmd.OutOrStderr(),
 			}
@@ -197,7 +205,59 @@ func (opt *startOptions) run(pipeline *v1beta1.Pipeline) error {
 		return err
 	}
 
+	if err := opt.createWs(); err != nil {
+		return err
+	}
+
 	return opt.startPipeline(pipeline)
+}
+
+func (opt *startOptions) createWs() error {
+
+	cs, err := opt.cliparams.Clients()
+	if err != nil {
+		return err
+	}
+
+	for _, w := range opt.LocalToWorkspace {
+		ws := workspaces.LocalToWorkspace{
+			Kube:      cs.Kube,
+			Config:    cs.Config,
+			Stream:    opt.stream,
+			Name:      w.Name,
+			DirPath:   w.DirPath,
+			Namespace: opt.cliparams.Namespace(),
+			Overwrite: false,
+		}
+
+		err := ws.Create()
+		if err != nil && !kErr.IsAlreadyExists(err) {
+			return err
+		}
+
+		if kErr.IsAlreadyExists(err) {
+			fmt.Fprintf(opt.stream.Out, "%s pvc already exists\n", w.Name)
+
+			overwrite, err := askParam("Do you want to overwrite existing pvc (Y/n) ?", opt.askOpts)
+			if err != nil {
+				return err
+			}
+
+			switch overwrite {
+			case "Y", "y":
+				ws.Overwrite = true
+				err := ws.Create()
+				if err != nil {
+					return err
+				}
+			case "N", "n":
+				return fmt.Errorf("cancelling overwriting pvc, skips starting pipelinerun")
+			default:
+				return fmt.Errorf("invalid input")
+			}
+		}
+	}
+	return nil
 }
 
 func (opt *startOptions) startPipeline(pipelineStart *v1beta1.Pipeline) error {
@@ -788,7 +848,7 @@ func (opt *startOptions) getInputWorkspaces(pipeline *v1beta1.Pipeline) error {
 				Name: "workspace param",
 				Prompt: &survey.Select{
 					Message: "Type of the Workspace :",
-					Options: []string{"config", "emptyDir", "secret", "pvc"},
+					Options: []string{"config", "emptyDir", "secret", "pvc", "local"},
 					Default: "emptyDir",
 				},
 			},
@@ -831,9 +891,15 @@ func (opt *startOptions) getInputWorkspaces(pipeline *v1beta1.Pipeline) error {
 				return err
 			}
 			workspace += items
+		case "local":
+			path, err := askParam("Path to local directory :", opt.askOpts)
+			if err != nil {
+				return err
+			}
+			workspace = workspace + ",claimName=" + name
+			opt.LocalToWorkspace = append(opt.LocalToWorkspace, LocalToWorkspace{Name: name, DirPath: path})
 		}
 		opt.Workspaces = append(opt.Workspaces, workspace)
-
 	}
 	return nil
 }
