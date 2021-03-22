@@ -322,7 +322,7 @@ func Test_ClusterTask_Start(t *testing.T) {
 			ObjectMeta: v1.ObjectMeta{
 				Name:      "taskrun-123",
 				Namespace: "ns",
-				Labels:    map[string]string{"tekton.dev/task": "clustertask-1"},
+				Labels:    map[string]string{"tekton.dev/clusterTask": "clustertask-1"},
 			},
 			Spec: v1alpha1.TaskRunSpec{
 				Params: []v1alpha1.Param{
@@ -1095,7 +1095,7 @@ func Test_ClusterTask_Start_v1beta1(t *testing.T) {
 			ObjectMeta: v1.ObjectMeta{
 				Name:      "taskrun-123",
 				Namespace: "ns",
-				Labels:    map[string]string{"tekton.dev/task": "clustertask-1"},
+				Labels:    map[string]string{"tekton.dev/clusterTask": "clustertask-1"},
 			},
 			Spec: v1beta1.TaskRunSpec{
 				Params: []v1beta1.Param{
@@ -1966,7 +1966,7 @@ func Test_start_clustertask_last_override_timeout(t *testing.T) {
 
 			ObjectMeta: v1.ObjectMeta{
 				Name:      trName,
-				Labels:    map[string]string{"tekton.dev/clustertask": "clustertask"},
+				Labels:    map[string]string{"tekton.dev/clusterTask": "clustertask"},
 				Namespace: "ns",
 			},
 			Spec: v1beta1.TaskRunSpec{
