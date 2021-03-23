@@ -6,6 +6,7 @@ import (
 	"io/ioutil"
 	"net/http/httptest"
 	"net/url"
+	"os"
 	"testing"
 
 	"github.com/google/go-containerregistry/pkg/name"
@@ -17,6 +18,11 @@ import (
 )
 
 func TestWriteAndRead(t *testing.T) {
+	tempDir, err := ioutil.TempDir(os.TempDir(), "write-and-read-test")
+	if err != nil {
+		t.Fatal(err)
+	}
+
 	s := httptest.NewServer(registry.New())
 	defer s.Close()
 	u, err := url.Parse(s.URL)
@@ -51,7 +57,11 @@ func TestWriteAndRead(t *testing.T) {
 		t.Fatal(err)
 	}
 
-	actualImg, err := Read(actualRef)
+	cacheOptions := CacheOptions{
+		cacheDir: tempDir,
+		noCache:  false,
+	}
+	actualImg, err := Read(actualRef, &cacheOptions)
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -81,7 +91,7 @@ func TestWriteAndRead(t *testing.T) {
 	}
 
 	// Now fetch this image again and ensure it is read from the cache (there will be a second cache layer).
-	cachedImg, err := Read(actualRef)
+	cachedImg, err := Read(actualRef, &cacheOptions)
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -94,5 +104,15 @@ func TestWriteAndRead(t *testing.T) {
 	// There should now be two layers because one is the cache layer.
 	if len(layers) != 2 {
 		t.Errorf("Found unexpected number of layers in cached image: %d", len(layers))
+	}
+
+	// Check the cache dir and ensure there is something in there.
+	infos, err := ioutil.ReadDir(tempDir)
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	if len(infos) < 1 {
+		t.Error("expected at least 1 cache file but found none")
 	}
 }

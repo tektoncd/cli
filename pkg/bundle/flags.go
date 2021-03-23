@@ -52,3 +52,15 @@ func AddRemoteFlags(flags *pflag.FlagSet, opts *RemoteOptions) {
 	// TLS related flags.
 	flags.BoolVar(&opts.skipTLS, "remote-skip-tls", false, "If set to true, skips TLS check when connecting to the registry")
 }
+
+// PullOptions configure how an image is cached once it is fetched from the remote.
+type CacheOptions struct {
+	cacheDir string
+	noCache  bool
+}
+
+// AddCacheFlags will define a set of flags to control how Tekton Bundle caching is done.
+func AddCacheFlags(flags *pflag.FlagSet, opts *CacheOptions) {
+	flags.StringVar(&opts.cacheDir, "cache-dir", "~/.tekton/bundles", "A directory to cache Tekton bundles in.")
+	flags.BoolVar(&opts.noCache, "no-cache", false, "If set to true, pulls a Tekton bundle from the remote even its exact digest is available in the cache.")
+}

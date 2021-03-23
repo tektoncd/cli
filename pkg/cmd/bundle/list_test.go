@@ -37,7 +37,7 @@ spec:
 `
 )
 
-func TestPullCommand(t *testing.T) {
+func TestListCommand(t *testing.T) {
 	testcases := []struct {
 		name           string
 		additionalArgs []string
@@ -110,7 +110,7 @@ func TestPullCommand(t *testing.T) {
 			p := &test.Params{Tekton: cs.Pipeline, Kube: cs.Kube, Dynamic: dc}
 			task := Command(p)
 
-			args := []string{"pull", ref}
+			args := []string{"list", ref}
 			args = append(args, tc.additionalArgs...)
 			if tc.format != "" {
 				args = append(args, "-o", tc.format)

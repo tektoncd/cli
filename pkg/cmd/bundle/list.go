@@ -31,25 +31,26 @@ var (
 	allowedKinds = []string{"Task", "Pipeline", "ClusterTask"}
 )
 
-type pullOptions struct {
+type listOptions struct {
 	cliparams     cli.Params
 	stream        *cli.Stream
 	ref           name.Reference
 	remoteOptions bundle.RemoteOptions
+	cacheOptions  bundle.CacheOptions
 }
 
-func pullCommand(p cli.Params) *cobra.Command {
-	opts := &pullOptions{
+func listCommand(p cli.Params) *cobra.Command {
+	opts := &listOptions{
 		cliparams: p,
 	}
 	f := cliopts.NewPrintFlags("")
 
-	longHelp := `Fetch a new Tekton Bundle from a registry and list the object(s) in the bundle. You can further narrow
-down the results by optionally specifying the kind, and then the name:
+	longHelp := `List the contents of a Tekton Bundle from a registry. You can further narrow down the results by 
+optionally specifying the kind, and then the name:
 
-	tkn bundle pull docker.io/myorg/mybundle:latest // fetches all objects
-	tkn bundle pull docker.io/myorg/mybundle:1.0 Task // fetches all Tekton tasks
-	tkn bundle pull docker.io/myorg/mybundle:1.0 Task foo // fetches the Tekton task "foo"
+	tkn bundle list docker.io/myorg/mybundle:latest // fetches all objects
+	tkn bundle list docker.io/myorg/mybundle:1.0 Task // fetches all Tekton tasks
+	tkn bundle list docker.io/myorg/mybundle:1.0 Task foo // fetches the Tekton task "foo"
 
 As with other "list" commands, you can specify the desired output format using the "-o" flag.
 
@@ -58,11 +59,15 @@ Authentication:
 	1. By default, your docker.config in your home directory is used.
 	2. Additionally, you can supply a Bearer Token via --remote-bearer
 	3. Additionally, you can use Basic auth via --remote-username and --remote-password
+
+Caching:
+    By default, bundles will be cached in ~/.tekton/bundles. If you would like to use a different location, set 
+"--cache-dir" and if you would like to skip the cache altogether, set "--no-cache".
 `
 
 	c := &cobra.Command{
-		Use:   "pull",
-		Short: "Pull a Tekton bundle and list its contents",
+		Use:   "list",
+		Short: "List a Tekton bundle's contents",
 		Long:  longHelp,
 		Annotations: map[string]string{
 			"commandType": "main",
@@ -109,13 +114,14 @@ Authentication:
 
 	f.AddFlags(c)
 	bundle.AddRemoteFlags(c.Flags(), &opts.remoteOptions)
+	bundle.AddCacheFlags(c.Flags(), &opts.cacheOptions)
 
 	return c
 }
 
 // Run performs the principal logic of reading and parsing the input, creating the bundle, and publishing it.
-func (p *pullOptions) Run(args []string, formatter bundle.ObjectVisitor) error {
-	img, err := bundle.Read(p.ref, p.remoteOptions.ToOptions()...)
+func (l *listOptions) Run(args []string, formatter bundle.ObjectVisitor) error {
+	img, err := bundle.Read(l.ref, &l.cacheOptions, l.remoteOptions.ToOptions()...)
 	if err != nil {
 		return err
 	}
