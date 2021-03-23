@@ -44,7 +44,7 @@ func Command(p cli.Params) *cobra.Command {
 	_ = cmd.PersistentFlags().MarkHidden("kubeconfig")
 	_ = cmd.PersistentFlags().MarkHidden("namespace")
 	cmd.AddCommand(
-		pullCommand(p),
+		listCommand(p),
 		pushCommand(p),
 	)
 	return cmd
