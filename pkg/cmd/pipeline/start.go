@@ -398,7 +398,9 @@ func (opt *startOptions) getInputResources(resources resourceOptionsFilter, pipe
 			if err != nil {
 				return err
 			}
-			fmt.Printf("resource status %s\n\n", newres.Status)
+			if newres.Status != nil {
+				fmt.Printf("resource status %s\n\n", newres.Status)
+			}
 			opt.Resources = append(opt.Resources, res.Name+"="+newres.Name)
 			continue
 		}
