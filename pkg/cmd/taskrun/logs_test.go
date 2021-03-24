@@ -75,7 +75,7 @@ func TestLog_invalid_namespace(t *testing.T) {
 
 	c := Command(p)
 	got, _ := test.ExecuteCommand(c, "logs", "output-taskrun-2", "-n", "invalid")
-	expected := "Error: Unable to get Taskrun: taskruns.tekton.dev \"output-taskrun-2\" not found\n"
+	expected := "Error: Unable to get TaskRun: taskruns.tekton.dev \"output-taskrun-2\" not found\n"
 	test.AssertOutput(t, expected, got)
 }
 

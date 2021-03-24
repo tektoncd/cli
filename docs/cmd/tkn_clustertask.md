@@ -29,5 +29,6 @@ Manage ClusterTasks
 * [tkn clustertask delete](tkn_clustertask_delete.md)	 - Delete ClusterTasks in a cluster
 * [tkn clustertask describe](tkn_clustertask_describe.md)	 - Describe a ClusterTask
 * [tkn clustertask list](tkn_clustertask_list.md)	 - Lists ClusterTasks
+* [tkn clustertask logs](tkn_clustertask_logs.md)	 - Show ClusterTask logs
 * [tkn clustertask start](tkn_clustertask_start.md)	 - Start ClusterTasks
 
