@@ -151,7 +151,7 @@ func TestTaskLog(t *testing.T) {
 			input:     cs,
 			dc:        dc1,
 			wantError: true,
-			want:      "Error: Unable to get Taskrun: taskruns.tekton.dev \"notexist\" not found\n",
+			want:      "Error: Unable to get TaskRun: taskruns.tekton.dev \"notexist\" not found\n",
 		},
 		{
 			name:      "Specify negative number to limit",
@@ -287,7 +287,7 @@ func TestTaskLog_v1beta1(t *testing.T) {
 			input:     cs,
 			dc:        dc1,
 			wantError: true,
-			want:      "Error: Unable to get Taskrun: taskruns.tekton.dev \"notexist\" not found\n",
+			want:      "Error: Unable to get TaskRun: taskruns.tekton.dev \"notexist\" not found\n",
 		},
 		{
 			name:      "Specify negative number to limit",

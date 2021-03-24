@@ -31,7 +31,7 @@ import (
 )
 
 const (
-	MsgTRNotFoundErr = "Unable to get Taskrun"
+	MsgTRNotFoundErr = "Unable to get TaskRun"
 )
 
 type step struct {
