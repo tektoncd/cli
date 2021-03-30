@@ -24,7 +24,6 @@ import (
 	"github.com/tektoncd/cli/pkg/deleter"
 	"github.com/tektoncd/cli/pkg/formatted"
 	"github.com/tektoncd/cli/pkg/options"
-	"github.com/tektoncd/cli/pkg/task"
 	trlist "github.com/tektoncd/cli/pkg/taskrun/list"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime/schema"
@@ -116,14 +115,12 @@ func deleteClusterTasks(opts *options.DeleteOptions, s *cli.Stream, p cli.Params
 func taskRunLister(cs *cli.Clients, p cli.Params) func(string) ([]string, error) {
 	return func(taskName string) ([]string, error) {
 		lOpts := metav1.ListOptions{
-			LabelSelector: fmt.Sprintf("tekton.dev/task=%s", taskName),
+			LabelSelector: fmt.Sprintf("tekton.dev/clusterTask=%s", taskName),
 		}
 		taskRuns, err := trlist.TaskRuns(cs, lOpts, p.Namespace())
 		if err != nil {
 			return nil, err
 		}
-		// this is required as the same label is getting added for both task and ClusterTask
-		taskRuns.Items = task.FilterByRef(taskRuns.Items, "ClusterTask")
 		var names []string
 		for _, tr := range taskRuns.Items {
 			names = append(names, tr.Name)

@@ -27,7 +27,6 @@ import (
 	"github.com/tektoncd/cli/pkg/clustertask"
 	"github.com/tektoncd/cli/pkg/formatted"
 	"github.com/tektoncd/cli/pkg/options"
-	"github.com/tektoncd/cli/pkg/task"
 	"github.com/tektoncd/cli/pkg/taskrun/list"
 	trsort "github.com/tektoncd/cli/pkg/taskrun/sort"
 	"github.com/tektoncd/pipeline/pkg/apis/pipeline/v1beta1"
@@ -212,15 +211,12 @@ func printClusterTaskDescription(s *cli.Stream, p cli.Params, tname string) erro
 	}
 
 	opts := metav1.ListOptions{
-		LabelSelector: fmt.Sprintf("tekton.dev/task=%s", tname),
+		LabelSelector: fmt.Sprintf("tekton.dev/clusterTask=%s", tname),
 	}
 	taskRuns, err := list.TaskRuns(cs, opts, p.Namespace())
 	if err != nil {
 		return fmt.Errorf("failed to get TaskRuns for ClusterTask %s", tname)
 	}
-
-	// this is required as the same label is getting added for both task and ClusterTask
-	taskRuns.Items = task.FilterByRef(taskRuns.Items, "ClusterTask")
 
 	trsort.SortByStartTime(taskRuns.Items)
 
