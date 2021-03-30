@@ -167,7 +167,7 @@ func Test_ClusterTaskDescribe(t *testing.T) {
 				Name:      "taskrun-1",
 				Namespace: "ns",
 				Labels: map[string]string{
-					"tekton.dev/task": "clustertask-full",
+					"tekton.dev/clusterTask": "clustertask-full",
 				},
 			},
 			Spec: v1alpha1.TaskRunSpec{
@@ -235,7 +235,7 @@ func Test_ClusterTaskDescribe(t *testing.T) {
 				Name:      "taskrun-2",
 				Namespace: "ns",
 				Labels: map[string]string{
-					"tekton.dev/task": "clustertask-one-everything",
+					"tekton.dev/clusterTask": "clustertask-one-everything",
 				},
 			},
 			Spec: v1alpha1.TaskRunSpec{
@@ -286,7 +286,7 @@ func Test_ClusterTaskDescribe(t *testing.T) {
 				Name:      "taskrun-3",
 				Namespace: "ns",
 				Labels: map[string]string{
-					"tekton.dev/task": "clustertask-full",
+					"tekton.dev/clusterTask": "clustertask-full",
 				},
 			},
 			Spec: v1alpha1.TaskRunSpec{

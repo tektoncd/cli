@@ -69,7 +69,7 @@ func TestClusterTaskDelete(t *testing.T) {
 			ObjectMeta: metav1.ObjectMeta{
 				Namespace: "ns",
 				Name:      "task-run-1",
-				Labels:    map[string]string{"tekton.dev/task": "tomatoes"},
+				Labels:    map[string]string{"tekton.dev/clusterTask": "tomatoes"},
 			},
 			Spec: v1alpha1.TaskRunSpec{
 				TaskRef: &v1alpha1.TaskRef{
@@ -92,7 +92,7 @@ func TestClusterTaskDelete(t *testing.T) {
 			ObjectMeta: metav1.ObjectMeta{
 				Namespace: "ns",
 				Name:      "task-run-2",
-				Labels:    map[string]string{"tekton.dev/task": "tomatoes"},
+				Labels:    map[string]string{"tekton.dev/clusterTask": "tomatoes"},
 			},
 			Spec: v1alpha1.TaskRunSpec{
 				TaskRef: &v1alpha1.TaskRef{
@@ -358,7 +358,7 @@ func TestClusterTaskDelete_v1beta1(t *testing.T) {
 			ObjectMeta: metav1.ObjectMeta{
 				Namespace: "ns",
 				Name:      "task-run-1",
-				Labels:    map[string]string{"tekton.dev/task": "tomatoes"},
+				Labels:    map[string]string{"tekton.dev/clusterTask": "tomatoes"},
 			},
 			Spec: v1beta1.TaskRunSpec{
 				TaskRef: &v1beta1.TaskRef{
@@ -381,7 +381,7 @@ func TestClusterTaskDelete_v1beta1(t *testing.T) {
 			ObjectMeta: metav1.ObjectMeta{
 				Namespace: "ns",
 				Name:      "task-run-2",
-				Labels:    map[string]string{"tekton.dev/task": "tomatoes"},
+				Labels:    map[string]string{"tekton.dev/clusterTask": "tomatoes"},
 			},
 			Spec: v1beta1.TaskRunSpec{
 				TaskRef: &v1beta1.TaskRef{
