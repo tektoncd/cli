@@ -82,6 +82,20 @@ func TestTaskrunLatest_two_run(t *testing.T) {
 				cb.TaskRunCompletionTime(secondRunCompleted),
 			),
 		),
+		tb.TaskRun("tr-3", tb.TaskRunNamespace("ns"),
+			cb.TaskRunCreationTime(secondRunCompleted),
+			tb.TaskRunLabel("tekton.dev/clusterTask", "task"),
+			tb.TaskRunLabel("tekton.dev/task", "task"),
+			tb.TaskRunSpec(tb.TaskRunTaskRef("task", tb.TaskRefKind(v1alpha1.ClusterTaskKind))),
+			tb.TaskRunStatus(
+				tb.StatusCondition(apis.Condition{
+					Status: corev1.ConditionTrue,
+					Reason: v1beta1.TaskRunReasonSuccessful.String(),
+				}),
+				tb.TaskRunStartTime(secondRunStarted),
+				cb.TaskRunCompletionTime(secondRunCompleted),
+			),
+		),
 	}
 	cs, _ := test.SeedTestData(t, pipelinetest.Data{
 		Tasks:    tasks,
@@ -93,6 +107,7 @@ func TestTaskrunLatest_two_run(t *testing.T) {
 		cb.UnstructuredT(tasks[0], versionA1),
 		cb.UnstructuredTR(taskruns[0], versionA1),
 		cb.UnstructuredTR(taskruns[1], versionA1),
+		cb.UnstructuredTR(taskruns[2], versionA1),
 	)
 	p := &test.Params{Tekton: cs.Pipeline, Clock: clock, Dynamic: dc}
 	client, err := p.Clients()
@@ -194,12 +209,40 @@ func TestTaskrunLatestForClusterTask_two_run(t *testing.T) {
 				Name:              "tr-2",
 				Namespace:         "ns",
 				CreationTimestamp: v1.Time{Time: secondRunCompleted},
-				Labels:            map[string]string{"tekton.dev/clusterTask": "task"},
+				Labels:            map[string]string{"tekton.dev/clusterTask": "task", "tekton.dev/task": "task"},
 			},
 			Spec: v1alpha1.TaskRunSpec{
 				TaskRef: &v1alpha1.TaskRef{
 					Name: "task",
 					Kind: v1alpha1.ClusterTaskKind,
+				},
+			},
+			Status: v1beta1.TaskRunStatus{
+				Status: duckv1beta1.Status{
+					Conditions: duckv1beta1.Conditions{
+						{
+							Status: corev1.ConditionTrue,
+							Reason: v1beta1.TaskRunReasonSuccessful.String(),
+						},
+					},
+				},
+				TaskRunStatusFields: v1beta1.TaskRunStatusFields{
+					StartTime:      &v1.Time{Time: secondRunStarted},
+					CompletionTime: &v1.Time{Time: secondRunCompleted},
+				},
+			},
+		},
+		{
+			ObjectMeta: v1.ObjectMeta{
+				Name:              "tr-3",
+				Namespace:         "ns",
+				CreationTimestamp: v1.Time{Time: secondRunCompleted},
+				Labels:            map[string]string{"tekton.dev/task": "task"},
+			},
+			Spec: v1alpha1.TaskRunSpec{
+				TaskRef: &v1alpha1.TaskRef{
+					Name: "task",
+					Kind: v1alpha1.NamespacedTaskKind,
 				},
 			},
 			Status: v1beta1.TaskRunStatus{
@@ -228,6 +271,7 @@ func TestTaskrunLatestForClusterTask_two_run(t *testing.T) {
 		cb.UnstructuredCT(clustertasks[0], versionA1),
 		cb.UnstructuredTR(taskruns[0], versionA1),
 		cb.UnstructuredTR(taskruns[1], versionA1),
+		cb.UnstructuredTR(taskruns[2], versionA1),
 	)
 	p := &test.Params{Tekton: cs.Pipeline, Clock: clock, Dynamic: dc}
 	client, err := p.Clients()

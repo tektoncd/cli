@@ -48,6 +48,10 @@ func LastRun(cs *cli.Clients, resourceName, ns, kind string) (*v1beta1.TaskRun, 
 		return nil, fmt.Errorf("no TaskRuns related to %s %s found in namespace %s", kind, resourceName, ns)
 	}
 
+	if kind == "Task" {
+		runs.Items = FilterByRef(runs.Items, kind)
+	}
+
 	latest := runs.Items[0]
 	for _, run := range runs.Items {
 		if run.CreationTimestamp.Time.After(latest.CreationTimestamp.Time) {
