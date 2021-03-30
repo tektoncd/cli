@@ -99,7 +99,7 @@ func createResources(t *testing.T, c *framework.Clients, namespace string) {
 			ObjectMeta: metav1.ObjectMeta{Name: "sa-clusterrole"},
 			Rules: []rbacv1.PolicyRule{{
 				APIGroups: []string{"triggers.tekton.dev"},
-				Resources: []string{"clustertriggerbindings"},
+				Resources: []string{"clustertriggerbindings", "clusterinterceptors"},
 				Verbs:     []string{"get", "list", "watch"},
 			}},
 		}, metav1.CreateOptions{},
