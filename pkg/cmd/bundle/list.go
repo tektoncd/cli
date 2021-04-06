@@ -15,6 +15,7 @@ package bundle
 
 import (
 	"fmt"
+	"strings"
 
 	"github.com/google/go-containerregistry/pkg/name"
 	"github.com/spf13/cobra"
@@ -22,14 +23,17 @@ import (
 	"github.com/tektoncd/cli/pkg/cli"
 	"github.com/tektoncd/cli/pkg/printer"
 	"k8s.io/apimachinery/pkg/runtime"
-	"k8s.io/apimachinery/pkg/runtime/schema"
 	cliopts "k8s.io/cli-runtime/pkg/genericclioptions"
 )
 
 // TODO: Find a more generic way to do this
 var (
-	allowedKinds = []string{"Task", "Pipeline", "ClusterTask"}
+	allowedKinds = []string{"task", "pipeline", "clustertask"}
 )
+
+func normalizeKind(kind string) string {
+	return strings.TrimSuffix(strings.ToLower(kind), "s")
+}
 
 type listOptions struct {
 	cliparams     cli.Params
@@ -49,10 +53,12 @@ func listCommand(p cli.Params) *cobra.Command {
 optionally specifying the kind, and then the name:
 
 	tkn bundle list docker.io/myorg/mybundle:latest // fetches all objects
-	tkn bundle list docker.io/myorg/mybundle:1.0 Task // fetches all Tekton tasks
-	tkn bundle list docker.io/myorg/mybundle:1.0 Task foo // fetches the Tekton task "foo"
+	tkn bundle list docker.io/myorg/mybundle:1.0 task // fetches all Tekton tasks
+	tkn bundle list docker.io/myorg/mybundle:1.0 task foo // fetches the Tekton task "foo"
 
-As with other "list" commands, you can specify the desired output format using the "-o" flag.
+As with other "list" commands, you can specify the desired output format using the "-o" flag. You may specify the kind
+in its "Kind" form (eg Task), its "Resource" form (eg tasks), or in the form specified by the Tekton Bundle contract (
+eg task).
 
 Authentication:
 	There are three ways to authenticate against your registry.
@@ -67,7 +73,7 @@ Caching:
 
 	c := &cobra.Command{
 		Use:   "list",
-		Short: "List a Tekton bundle's contents",
+		Short: "List and print a Tekton bundle's contents",
 		Long:  longHelp,
 		Annotations: map[string]string{
 			"commandType": "main",
@@ -87,7 +93,7 @@ Caching:
 			if len(args) > 1 {
 				allowedKind := false
 				for _, op := range allowedKinds {
-					if args[1] == op {
+					if normalizeKind(args[1]) == op {
 						allowedKind = true
 					}
 				}
@@ -106,7 +112,7 @@ Caching:
 				Err: cmd.OutOrStderr(),
 			}
 
-			return opts.Run(args, func(_ schema.GroupVersionKind, _ string, element runtime.Object, _ []byte) {
+			return opts.Run(args, func(_, _, _ string, element runtime.Object, _ []byte) {
 				_ = printer.PrintObject(opts.stream.Out, element, f)
 			})
 		},
@@ -132,11 +138,11 @@ func (l *listOptions) Run(args []string, formatter bundle.ObjectVisitor) error {
 			return err
 		}
 	case 2:
-		if err := bundle.ListKind(img, args[1], formatter); err != nil {
+		if err := bundle.ListKind(img, normalizeKind(args[1]), formatter); err != nil {
 			return err
 		}
 	case 3:
-		if err := bundle.Get(img, args[1], args[2], formatter); err != nil {
+		if err := bundle.Get(img, normalizeKind(args[1]), args[2], formatter); err != nil {
 			return err
 		}
 	}

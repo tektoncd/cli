@@ -6,6 +6,7 @@ import (
 	"errors"
 	"fmt"
 	"io"
+	"strings"
 
 	v1 "github.com/google/go-containerregistry/pkg/v1"
 	"github.com/google/go-containerregistry/pkg/v1/empty"
@@ -61,7 +62,7 @@ func BuildTektonBundle(contents []string, log io.Writer) (v1.Image, error) {
 				Layer: l,
 				Annotations: map[string]string{
 					tkremote.APIVersionAnnotation: gvr.Version,
-					tkremote.KindAnnotation:       gvr.Kind,
+					tkremote.KindAnnotation:       strings.ToLower(gvr.Kind),
 					tkremote.TitleAnnotation:      name,
 				},
 			})

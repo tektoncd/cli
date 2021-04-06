@@ -9,12 +9,11 @@ import (
 	"github.com/tektoncd/pipeline/pkg/client/clientset/versioned/scheme"
 	tkremote "github.com/tektoncd/pipeline/pkg/remote/oci"
 	"k8s.io/apimachinery/pkg/runtime"
-	"k8s.io/apimachinery/pkg/runtime/schema"
 )
 
 // ObjectVisitor is an input function that callers of this file's methods can implement to act on the read contents of a
-// Tekton bundle.
-type ObjectVisitor func(gvk schema.GroupVersionKind, name string, element runtime.Object, raw []byte)
+// Tekton bundle. The `version`, `kind`, and `name` fields map 1:1 with the same named fields in the Tekton Bundle spec.
+type ObjectVisitor func(version, kind, name string, element runtime.Object, raw []byte)
 
 // List will call visitor for every single layer in the img.
 func List(img v1.Image, visitor ObjectVisitor) error {
@@ -48,48 +47,55 @@ func List(img v1.Image, visitor ObjectVisitor) error {
 			return fmt.Errorf("failed to read layer %s: %w", l.Digest, err)
 		}
 
-		obj, gvk, err := scheme.Codecs.UniversalDeserializer().Decode(contents, nil, nil)
+		obj, _, err := scheme.Codecs.UniversalDeserializer().Decode(contents, nil, nil)
 		if err != nil {
 			return fmt.Errorf("failed to decode layer %s to a Tekton object: %w", l.Digest, err)
 		}
-		visitor(*gvk, l.Annotations[tkremote.TitleAnnotation], obj, contents)
+		visitor(
+			l.Annotations[tkremote.APIVersionAnnotation],
+			l.Annotations[tkremote.KindAnnotation],
+			l.Annotations[tkremote.TitleAnnotation],
+			obj,
+			contents,
+		)
 	}
 
 	return nil
 }
 
-// ListKind is like #List but only returns elements of a single kind.
-func ListKind(img v1.Image, kind string, visitor ObjectVisitor) error {
+// ListKind is like #List but only returns elements of a single kind. Kind will be lowercased to conform to the Tekton
+// Bundle spec.
+func ListKind(img v1.Image, pkind string, visitor ObjectVisitor) error {
 	listedItems := 0
-	if err := List(img, func(gvk schema.GroupVersionKind, name string, element runtime.Object, raw []byte) {
-		if gvk.Kind == kind {
+	if err := List(img, func(version, kind string, name string, element runtime.Object, raw []byte) {
+		if kind == pkind {
 			listedItems++
-			visitor(gvk, name, element, raw)
+			visitor(version, kind, name, element, raw)
 		}
 	}); err != nil {
 		return err
 	}
 
 	if listedItems == 0 {
-		return fmt.Errorf("no objects of kind %s found in img", kind)
+		return fmt.Errorf("no objects of kind %q found in img", pkind)
 	}
 	return nil
 }
 
 // Get returns a single named element of a specific kind from the Tekton Bundle.
-func Get(img v1.Image, kind, name string, visitor ObjectVisitor) error {
+func Get(img v1.Image, pkind, name string, visitor ObjectVisitor) error {
 	objectFound := false
-	if err := ListKind(img, kind, func(gvk schema.GroupVersionKind, foundName string, element runtime.Object, raw []byte) {
+	if err := ListKind(img, pkind, func(version, kind, foundName string, element runtime.Object, raw []byte) {
 		if foundName == name {
 			objectFound = true
-			visitor(gvk, foundName, element, raw)
+			visitor(version, kind, foundName, element, raw)
 		}
 	}); err != nil {
 		return err
 	}
 
 	if !objectFound {
-		return fmt.Errorf("no objects of kind %s named %s found in img", kind, name)
+		return fmt.Errorf("no objects of kind %q named %q found in img", pkind, name)
 	}
 	return nil
 }

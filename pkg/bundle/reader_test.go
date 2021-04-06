@@ -17,7 +17,6 @@ import (
 	tkremote "github.com/tektoncd/pipeline/pkg/remote/oci"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime"
-	"k8s.io/apimachinery/pkg/runtime/schema"
 )
 
 func writeTarLayer(t *testing.T, img v1.Image, obj runtime.Object) (v1.Image, error) {
@@ -61,7 +60,7 @@ func writeTarLayer(t *testing.T, img v1.Image, obj runtime.Object) (v1.Image, er
 		Annotations: map[string]string{
 			tkremote.TitleAnnotation:      name,
 			tkremote.KindAnnotation:       strings.ToLower(obj.GetObjectKind().GroupVersionKind().Kind),
-			tkremote.APIVersionAnnotation: strings.ToLower(obj.GetObjectKind().GroupVersionKind().Version),
+			tkremote.APIVersionAnnotation: obj.GetObjectKind().GroupVersionKind().Version,
 		},
 	})
 }
@@ -105,21 +104,21 @@ func TestReader(t *testing.T) {
 	}
 
 	// Expect list to return all the elements.
-	if err := List(img, func(_ schema.GroupVersionKind, _ string, element runtime.Object, _ []byte) {
+	if err := List(img, func(_, _, _ string, element runtime.Object, _ []byte) {
 		test.Contains(t, []runtime.Object{&task1, &task2, &pipeline}, element)
 	}); err != nil {
 		t.Error(err)
 	}
 
 	// Expect ListKind to return the two tasks.
-	if err := ListKind(img, task1.GroupVersionKind().Kind, func(_ schema.GroupVersionKind, _ string, element runtime.Object, _ []byte) {
+	if err := ListKind(img, strings.ToLower(task1.GroupVersionKind().Kind), func(_, _, _ string, element runtime.Object, _ []byte) {
 		test.Contains(t, []runtime.Object{&task1, &task2}, element)
 	}); err != nil {
 		t.Error(err)
 	}
 
 	// Expect Get to return a single object.
-	if err := Get(img, task1.GroupVersionKind().Kind, task1.GetName(), func(_ schema.GroupVersionKind, _ string, element runtime.Object, _ []byte) {
+	if err := Get(img, strings.ToLower(task1.GroupVersionKind().Kind), task1.GetName(), func(_, _, _ string, element runtime.Object, _ []byte) {
 		test.Contains(t, []runtime.Object{&task1}, element)
 	}); err != nil {
 		t.Error(err)

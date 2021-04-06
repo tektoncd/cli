@@ -150,9 +150,10 @@ func TestPushCommand(t *testing.T) {
 					t.Errorf("layer %d with title %s does not match an expected layer", i, title)
 				}
 
-				if l.Annotations[tkremote.KindAnnotation] != layer.kind ||
+				kind := normalizeKind(layer.kind)
+				if l.Annotations[tkremote.KindAnnotation] != kind ||
 					l.Annotations[tkremote.APIVersionAnnotation] != layer.apiVersion {
-					t.Errorf("layer annotations (%s, %s) do not match expected (%s, %s)", l.Annotations[tkremote.KindAnnotation], l.Annotations[tkremote.APIVersionAnnotation], layer.kind, layer.apiVersion)
+					t.Errorf("layer annotations (%s, %s) do not match expected (%s, %s)", l.Annotations[tkremote.KindAnnotation], l.Annotations[tkremote.APIVersionAnnotation], kind, layer.apiVersion)
 				}
 
 				actual := readTarLayer(t, layers[i])
