@@ -53,7 +53,7 @@ Input:
 
 	c := &cobra.Command{
 		Use:   "push",
-		Short: "Push a new Tekton bundle",
+		Short: "Create or replace a Tekton bundle",
 		Long:  longHelp,
 		Annotations: map[string]string{
 			"commandType": "main",

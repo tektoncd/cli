@@ -5,7 +5,7 @@
 
 .SH NAME
 .PP
-tkn\-bundle\-list \- List a Tekton bundle's contents
+tkn\-bundle\-list \- List and print a Tekton bundle's contents
 
 
 .SH SYNOPSIS
@@ -23,14 +23,16 @@ optionally specifying the kind, and then the name:
 
 .nf
 tkn bundle list docker.io/myorg/mybundle:latest // fetches all objects
-tkn bundle list docker.io/myorg/mybundle:1.0 Task // fetches all Tekton tasks
-tkn bundle list docker.io/myorg/mybundle:1.0 Task foo // fetches the Tekton task "foo"
+tkn bundle list docker.io/myorg/mybundle:1.0 task // fetches all Tekton tasks
+tkn bundle list docker.io/myorg/mybundle:1.0 task foo // fetches the Tekton task "foo"
 
 .fi
 .RE
 
 .PP
-As with other "list" commands, you can specify the desired output format using the "\-o" flag.
+As with other "list" commands, you can specify the desired output format using the "\-o" flag. You may specify the kind
+in its "Kind" form (eg Task), its "Resource" form (eg tasks), or in the form specified by the Tekton Bundle contract (
+eg task).
 
 .PP
 Authentication:

@@ -1,6 +1,6 @@
 ## tkn bundle push
 
-Push a new Tekton bundle
+Create or replace a Tekton bundle
 
 ### Usage
 

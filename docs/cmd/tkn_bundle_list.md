@@ -1,6 +1,6 @@
 ## tkn bundle list
 
-List a Tekton bundle's contents
+List and print a Tekton bundle's contents
 
 ### Usage
 
@@ -14,10 +14,12 @@ List the contents of a Tekton Bundle from a registry. You can further narrow dow
 optionally specifying the kind, and then the name:
 
 	tkn bundle list docker.io/myorg/mybundle:latest // fetches all objects
-	tkn bundle list docker.io/myorg/mybundle:1.0 Task // fetches all Tekton tasks
-	tkn bundle list docker.io/myorg/mybundle:1.0 Task foo // fetches the Tekton task "foo"
+	tkn bundle list docker.io/myorg/mybundle:1.0 task // fetches all Tekton tasks
+	tkn bundle list docker.io/myorg/mybundle:1.0 task foo // fetches the Tekton task "foo"
 
-As with other "list" commands, you can specify the desired output format using the "-o" flag.
+As with other "list" commands, you can specify the desired output format using the "-o" flag. You may specify the kind
+in its "Kind" form (eg Task), its "Resource" form (eg tasks), or in the form specified by the Tekton Bundle contract (
+eg task).
 
 Authentication:
 	There are three ways to authenticate against your registry.

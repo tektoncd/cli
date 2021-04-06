@@ -51,7 +51,7 @@ func TestBuildTektonBundle(t *testing.T) {
 	if apiVersion, ok := l.Annotations[tkremote.APIVersionAnnotation]; !ok || apiVersion != "v1beta1" {
 		t.Errorf("Did not receive expected APIVersion v1beta1. Found %s", apiVersion)
 	}
-	if kind, ok := l.Annotations[tkremote.KindAnnotation]; !ok || kind != "Task" {
+	if kind, ok := l.Annotations[tkremote.KindAnnotation]; !ok || kind != "task" {
 		t.Errorf("Did not receive expected Kind Task. Found %s", kind)
 	}
 	if name, ok := l.Annotations[tkremote.TitleAnnotation]; !ok || name != "foo" {

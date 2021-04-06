@@ -63,6 +63,16 @@ func TestListCommand(t *testing.T) {
 			expectedStdout: "task.tekton.dev/foobar\n",
 			additionalArgs: []string{"Task"},
 		}, {
+			name:           "specify-kind-task-lowercase-plural",
+			format:         "name",
+			expectedStdout: "task.tekton.dev/foobar\n",
+			additionalArgs: []string{"tasks"},
+		}, {
+			name:           "specify-kind-task-lowercase-singular",
+			format:         "name",
+			expectedStdout: "task.tekton.dev/foobar\n",
+			additionalArgs: []string{"task"},
+		}, {
 			name:           "specify-kind-pipeline",
 			format:         "name",
 			expectedStdout: "pipeline.tekton.dev/foobar\n",
@@ -71,7 +81,7 @@ func TestListCommand(t *testing.T) {
 			name:           "specify-kind-name-dne",
 			format:         "name",
 			additionalArgs: []string{"Pipeline", "does-not-exist"},
-			expectedErr:    "no objects of kind Pipeline named does-not-exist found in img",
+			expectedErr:    `no objects of kind "pipeline" named "does-not-exist" found in img`,
 		}, {
 			name:           "specify-kind-name",
 			format:         "name",
