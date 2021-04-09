@@ -1,14 +1,14 @@
 Name:              el1
 Namespace:         ns
 Service Account:   trigger-sa
- 
+
 EventListenerTriggers
 
  BINDINGS
 
   REF   KIND             APIVERSION
   tb1   TriggerBinding   
- 
+
  TEMPLATE REF   APIVERSION
  tt1            v1alpha1
  

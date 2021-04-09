@@ -2,14 +2,14 @@ Name:                      el1
 Namespace:                 ns
 URL:                       http://el-listener.default.svc.cluster.local
 EventListnerServiceName:   el-listener
- 
+
 EventListenerTriggers
 
  BINDINGS
 
   REF   KIND                    APIVERSION
   tb1   ClusterTriggerBinding   v1alpha1
- 
+
  TEMPLATE REF   APIVERSION
  tt1            v1alpha1
  
