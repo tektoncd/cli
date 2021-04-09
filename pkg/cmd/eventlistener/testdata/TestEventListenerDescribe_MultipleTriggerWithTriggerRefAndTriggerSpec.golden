@@ -3,6 +3,11 @@ Namespace:   ns
 
 EventListenerTriggers
 
+ TRIGGER REF
+ test-ref
+ 
+EventListenerTriggers
+
  NAME
  foo-trig
 
