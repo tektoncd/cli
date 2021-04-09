@@ -87,12 +87,10 @@ Download the latest binary executable for your operating system:
 
   If you are running on any of the following rpm based distros:
 
-  * Fedora30
-  * Fedora31
-  * Centos7
-  * Centos8
+  * Latest Fedora and the two versions behind.
+  * Centos Stream
   * EPEL
-  * RHEL8
+  * Latest RHEL
 
   you would be able to use [@chmouel](https://github.com/chmouel)'s unofficial copr package
   repository by running the following commands:
