@@ -1,14 +1,13 @@
 Name:        el1
 Namespace:   ns
- 
+
 EventListenerTriggers
 
  NAME
  tt1
- 
+
  BINDINGS
 
   NAME      VALUE
   binding   somevalue
- 
- 
+

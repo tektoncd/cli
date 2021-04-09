@@ -195,6 +195,53 @@ func TestEventListenerDescribe_TriggerWithTriggerTemplateRef(t *testing.T) {
 	executeEventListenerCommand(t, els)
 }
 
+func TestEventListenerDescribe_TriggerWithTriggerTemplateRefTriggerRef(t *testing.T) {
+	bindingval := "somevalue"
+	tempRef := "someref"
+
+	els := []*v1alpha1.EventListener{
+		{
+			ObjectMeta: metav1.ObjectMeta{
+				Name:      "el1",
+				Namespace: "ns",
+			},
+			Spec: v1alpha1.EventListenerSpec{
+				Triggers: []v1alpha1.EventListenerTrigger{
+					{
+						Bindings: []*v1alpha1.EventListenerBinding{
+							{
+								Name:  "binding",
+								Value: &bindingval,
+							},
+						},
+						Template: &v1alpha1.EventListenerTemplate{
+							Ref:        &tempRef,
+							APIVersion: "v1alpha1",
+						},
+						Name:               "tt1",
+						TriggerRef:         "triggeref",
+						ServiceAccountName: "test-sa",
+						Interceptors: []*v1alpha1.EventInterceptor{
+							{
+								Webhook: &v1alpha1.WebhookInterceptor{
+									ObjectRef: &corev1.ObjectReference{
+										Kind:       "Service",
+										Name:       "testwebhook",
+										APIVersion: "v1",
+										Namespace:  "ns",
+									},
+								},
+							},
+						},
+					},
+				},
+			},
+		},
+	}
+
+	executeEventListenerCommand(t, els)
+}
+
 func TestEventListenerDescribe_OneTriggerWithEmptyTriggerBinding(t *testing.T) {
 	els := []*v1alpha1.EventListener{
 		el.EventListener("el1", "ns",
@@ -245,6 +292,23 @@ func TestEventListenerDescribe_WithWebhookInterceptorsWithParams(t *testing.T) {
 	els := []*v1alpha1.EventListener{
 		el.EventListener("el1", "ns",
 			el.EventListenerSpec(
+				el.EventListenerTrigger("tt1", "v1alpha1",
+					el.EventListenerTriggerBinding("tb1", "", ""),
+					el.EventListenerTriggerBinding("tb2", "ClusterTriggerBinding", "v1alpha1"),
+					el.EventListenerTriggerBinding("tb3", "", "v1alpha1"),
+					el.EventListenerTriggerName("foo-trig"),
+					el.EventListenerTriggerInterceptor("foo", "v1", "Service", "namespace",
+						el.EventInterceptorParam("header", "value"))))),
+	}
+
+	executeEventListenerCommand(t, els)
+}
+
+func TestEventListenerDescribe_MultipleTriggerWithTriggerRefAndTriggerSpec(t *testing.T) {
+	els := []*v1alpha1.EventListener{
+		el.EventListener("el1", "ns",
+			el.EventListenerSpec(
+				el.EventListenerTriggerRef("test-ref"),
 				el.EventListenerTrigger("tt1", "v1alpha1",
 					el.EventListenerTriggerBinding("tb1", "", ""),
 					el.EventListenerTriggerBinding("tb2", "ClusterTriggerBinding", "v1alpha1"),

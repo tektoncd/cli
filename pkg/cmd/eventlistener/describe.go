@@ -59,7 +59,7 @@ const describeTemplate = `{{decorate "bold" "Name"}}:	{{ .EventListener.Name }}
 
  No EventListenerTriggers
 {{- else }}
-{{ " " }}
+{{ "" }}
 {{- range $v := .EventListener.Spec.Triggers }}
 {{decorate "bold" "EventListenerTriggers\n"}}
 
@@ -67,9 +67,11 @@ const describeTemplate = `{{decorate "bold" "Name"}}:	{{ .EventListener.Name }}
 {{- else }}
  NAME
  {{decorate "bullet" $v.Name }}
-{{ " " }}
+{{ "" }}
 {{- end }}
 
+{{- if not $v.Bindings }}
+{{- else }}
 {{- if ne (len $v.Bindings) 0 }}
  {{decorate "" "BINDINGS\n"}}
 {{- if isBindingRefExist $v.Bindings }}
@@ -79,7 +81,7 @@ const describeTemplate = `{{decorate "bold" "Name"}}:	{{ .EventListener.Name }}
   {{ decorate "bullet" $b.Ref }}	{{ $b.Kind }}	{{ $b.APIVersion }}
 {{- end }}
 {{- end }}
-{{ " " }}
+{{ "" }}
 {{- end }}
 {{- if isBindingNameExist $v.Bindings }}
   NAME	VALUE
@@ -88,25 +90,38 @@ const describeTemplate = `{{decorate "bold" "Name"}}:	{{ .EventListener.Name }}
   {{ decorate "bullet" $b.Name }}	{{ $b.Value }}
 {{- end }}
 {{- end }}
-{{ " " }}
+{{ "" }}
 {{- end }}
 
 {{- end }}
+{{- end }}
+{{- if not $v.Template }}
+{{- else }}
 {{- if isTemplateRefExist $v.Template }}
  TEMPLATE REF	APIVERSION
  {{ decorate "bullet" $v.Template.Ref }}	{{ $v.Template.APIVersion }}
+ {{ "" }}
+{{- end }}
+{{- end }}
+{{- if eq $v.TriggerRef "" }}
+{{- else }}
+ TRIGGER REF
+ {{ decorate "bullet" $v.TriggerRef }}
+ {{ "" }}
 {{- end }}
 {{- if eq $v.ServiceAccountName "" }}
 {{- else }}
-{{ " " }}
  SERVICE ACCOUNT NAME
  {{ decorate "bullet" $v.ServiceAccountName }}
+ {{ "" }}
 {{- end }}
-{{ " " }}
+{{- if not $v.Interceptors }}
+{{- else }}
 {{- if ne (len $v.Interceptors) 0 }}
  INTERCEPTORS
 {{- $b := getInterceptors $v.Interceptors }}
 {{ $b }}
+{{- end }}
 {{- end }}
 {{- end }}
 {{- end }}

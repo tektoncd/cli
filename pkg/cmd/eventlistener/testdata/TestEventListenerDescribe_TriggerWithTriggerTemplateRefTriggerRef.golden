@@ -1,0 +1,30 @@
+Name:        el1
+Namespace:   ns
+
+EventListenerTriggers
+
+ NAME
+ tt1
+
+ BINDINGS
+
+  NAME      VALUE
+  binding   somevalue
+
+ TEMPLATE REF   APIVERSION
+ someref        v1alpha1
+ 
+ TRIGGER REF
+ triggeref
+ 
+ SERVICE ACCOUNT NAME
+ test-sa
+ 
+ INTERCEPTORS
+- webhook:
+    objectRef:
+      apiVersion: v1
+      kind: Service
+      name: testwebhook
+      namespace: ns
+
