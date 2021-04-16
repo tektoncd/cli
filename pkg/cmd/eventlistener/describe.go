@@ -25,7 +25,9 @@ import (
 
 	"github.com/spf13/cobra"
 	"github.com/tektoncd/cli/pkg/cli"
+	"github.com/tektoncd/cli/pkg/eventlistener"
 	"github.com/tektoncd/cli/pkg/formatted"
+	"github.com/tektoncd/cli/pkg/options"
 	"github.com/tektoncd/cli/pkg/printer"
 	"github.com/tektoncd/triggers/pkg/apis/triggers/v1alpha1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
@@ -129,6 +131,7 @@ const describeTemplate = `{{decorate "bold" "Name"}}:	{{ .EventListener.Name }}
 
 func describeCommand(p cli.Params) *cobra.Command {
 	f := cliopts.NewPrintFlags("describe")
+	opts := &options.DescribeOptions{Params: p}
 	eg := `Describe an EventListener of name 'foo' in namespace 'bar':
 
     tkn eventlistener describe foo -n bar
@@ -146,7 +149,6 @@ or
 		Annotations: map[string]string{
 			"commandType": "main",
 		},
-		Args:              cobra.MinimumNArgs(1),
 		SilenceUsage:      true,
 		ValidArgsFunction: formatted.ParentCompletion,
 		RunE: func(cmd *cobra.Command, args []string) error {
@@ -155,10 +157,32 @@ or
 				Err: cmd.OutOrStderr(),
 			}
 
+			cs, err := p.Clients()
+			if err != nil {
+				return err
+			}
+
 			output, err := cmd.LocalFlags().GetString("output")
 			if err != nil {
 				fmt.Fprint(os.Stderr, "Error: output option not set properly \n")
 				return err
+			}
+
+			if len(args) == 0 {
+				eventListenerNames, err := eventlistener.GetAllEventListenerNames(cs.Triggers, p.Namespace())
+				if err != nil {
+					return err
+				}
+				if len(eventListenerNames) == 1 {
+					opts.EventListenerName = eventListenerNames[0]
+				} else {
+					err = askEventListenerName(opts, eventListenerNames)
+					if err != nil {
+						return err
+					}
+				}
+			} else {
+				opts.EventListenerName = args[0]
 			}
 
 			if output != "" {
@@ -167,7 +191,7 @@ or
 				}
 				return describeEventListenerOutput(cmd.OutOrStdout(), p, f, args[0])
 			}
-			return printEventListenerDescription(s, p, args[0])
+			return printEventListenerDescription(s, p, opts.EventListenerName)
 		},
 	}
 
@@ -295,4 +319,16 @@ func isBindingNameExist(bindings []*v1alpha1.EventListenerBinding) bool {
 
 func isTemplateRefExist(templates *v1alpha1.EventListenerTemplate) bool {
 	return templates.Ref != nil
+}
+
+func askEventListenerName(opts *options.DescribeOptions, eventListenerNames []string) error {
+	if len(eventListenerNames) == 0 {
+		return fmt.Errorf("no EventListeners found")
+	}
+	err := opts.Ask(options.ResourceNameEventListener, eventListenerNames)
+	if err != nil {
+		return err
+	}
+
+	return nil
 }

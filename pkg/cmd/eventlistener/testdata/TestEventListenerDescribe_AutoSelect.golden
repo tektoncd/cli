@@ -1,0 +1,8 @@
+Name:        el1
+Namespace:   ns
+
+EventListenerTriggers
+
+ TEMPLATE REF   APIVERSION
+ tt1            v1alpha1
+ 
