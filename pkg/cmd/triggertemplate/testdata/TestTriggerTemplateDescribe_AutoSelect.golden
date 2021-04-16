@@ -1,0 +1,12 @@
+Name:        tt1
+Namespace:   ns
+
+Params
+
+ NAME   DESCRIPTION              DEFAULT VALUE
+ foo    foo is required in ...   ---
+
+ResourceTemplates
+
+ NAME   GENERATENAME   KIND          APIVERSION
+ ex1    ---            PipelineRun   tekton.dev/v1alpha1

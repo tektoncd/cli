@@ -15,7 +15,6 @@
 package triggertemplate
 
 import (
-	"context"
 	"fmt"
 	"text/tabwriter"
 
@@ -23,10 +22,8 @@ import (
 	"github.com/tektoncd/cli/pkg/cli"
 	"github.com/tektoncd/cli/pkg/formatted"
 	"github.com/tektoncd/cli/pkg/printer"
+	"github.com/tektoncd/cli/pkg/triggertemplate"
 	"github.com/tektoncd/triggers/pkg/apis/triggers/v1alpha1"
-	"github.com/tektoncd/triggers/pkg/client/clientset/versioned"
-	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
-	"k8s.io/apimachinery/pkg/runtime/schema"
 	cliopts "k8s.io/cli-runtime/pkg/genericclioptions"
 )
 
@@ -70,7 +67,7 @@ or
 			if opts.AllNamespaces {
 				namespace = ""
 			}
-			tts, err := list(cs.Triggers, namespace)
+			tts, err := triggertemplate.List(cs.Triggers, namespace)
 			if err != nil {
 				if opts.AllNamespaces {
 					return fmt.Errorf("failed to list TriggerTemplates from all namespaces: %v", err)
@@ -105,23 +102,6 @@ or
 	c.Flags().BoolVarP(&opts.AllNamespaces, "all-namespaces", "A", opts.AllNamespaces, "list TriggerTemplates from all namespaces")
 	c.Flags().BoolVar(&opts.NoHeaders, "no-headers", opts.NoHeaders, "do not print column headers with output (default print column headers with output)")
 	return c
-}
-
-func list(client versioned.Interface, namespace string) (*v1alpha1.TriggerTemplateList, error) {
-	tts, err := client.TriggersV1alpha1().TriggerTemplates(namespace).List(context.Background(), metav1.ListOptions{})
-	if err != nil {
-		return nil, err
-	}
-
-	// NOTE: this is required for -o json|yaml to work properly since
-	// tektoncd go client fails to set these; probably a bug
-	tts.GetObjectKind().SetGroupVersionKind(
-		schema.GroupVersionKind{
-			Version: "triggers.tekton.dev/v1alpha1",
-			Kind:    "TriggerTemplateList",
-		})
-
-	return tts, nil
 }
 
 func printFormatted(s *cli.Stream, tts *v1alpha1.TriggerTemplateList, p cli.Params, allNamespaces bool, noHeaders bool) error {

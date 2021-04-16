@@ -198,6 +198,45 @@ func TestTriggerTemplateDescribe_InvalidResourceTemplate(t *testing.T) {
 	executeTriggerTemplateCommand(t, tts)
 }
 
+func TestTriggerTemplateDescribe_AutoSelect(t *testing.T) {
+
+	tts := []*v1alpha1.TriggerTemplate{
+		{
+			ObjectMeta: metav1.ObjectMeta{
+				Name:      "tt1",
+				Namespace: "ns",
+			},
+			Spec: v1alpha1.TriggerTemplateSpec{
+				Params: []v1alpha1.ParamSpec{
+					{
+						Name:        "foo",
+						Description: "foo is required in resource template",
+					},
+				},
+				ResourceTemplates: []v1alpha1.TriggerResourceTemplate{
+					{
+						RawExtension: paramResourceTemplate,
+					},
+				},
+			},
+		},
+	}
+
+	cs := test.SeedTestResources(t, triggertest.Resources{TriggerTemplates: tts, Namespaces: []*corev1.Namespace{{
+		ObjectMeta: metav1.ObjectMeta{
+			Name: "ns",
+		},
+	}}})
+	p := &test.Params{Triggers: cs.Triggers, Kube: cs.Kube}
+
+	triggertemplate := Command(p)
+	out, err := test.ExecuteCommand(triggertemplate, "desc", "-n", "ns")
+	if err != nil {
+		t.Errorf("Error expected here")
+	}
+	golden.Assert(t, out, fmt.Sprintf("%s.golden", t.Name()))
+}
+
 func executeTriggerTemplateCommand(t *testing.T, tts []*v1alpha1.TriggerTemplate) {
 	cs := test.SeedTestResources(t, triggertest.Resources{TriggerTemplates: tts, Namespaces: []*corev1.Namespace{{
 		ObjectMeta: metav1.ObjectMeta{
