@@ -24,7 +24,9 @@ import (
 	"github.com/spf13/cobra"
 	"github.com/tektoncd/cli/pkg/cli"
 	"github.com/tektoncd/cli/pkg/formatted"
+	"github.com/tektoncd/cli/pkg/options"
 	"github.com/tektoncd/cli/pkg/printer"
+	"github.com/tektoncd/cli/pkg/triggertemplate"
 	"github.com/tektoncd/triggers/pkg/apis/triggers/v1alpha1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
@@ -68,6 +70,7 @@ const describeTemplate = `{{decorate "bold" "Name"}}:	{{ .TriggerTemplate.Name }
 
 func describeCommand(p cli.Params) *cobra.Command {
 	f := cliopts.NewPrintFlags("describe")
+	opts := &options.DescribeOptions{Params: p}
 	eg := `Describe a TriggerTemplate of name 'foo' in namespace 'bar':
 
     tkn triggertemplate describe foo -n bar
@@ -86,7 +89,6 @@ or
 			"commandType": "main",
 		},
 		ValidArgsFunction: formatted.ParentCompletion,
-		Args:              cobra.MinimumNArgs(1),
 		SilenceUsage:      true,
 		RunE: func(cmd *cobra.Command, args []string) error {
 			s := &cli.Stream{
@@ -94,16 +96,38 @@ or
 				Err: cmd.OutOrStderr(),
 			}
 
+			cs, err := p.Clients()
+			if err != nil {
+				return err
+			}
+
 			output, err := cmd.LocalFlags().GetString("output")
 			if err != nil {
 				return fmt.Errorf("output option not set properly: %v", err)
+			}
+
+			if len(args) == 0 {
+				tt, err := triggertemplate.GetAllTriggerTemplateNames(cs.Triggers, p.Namespace())
+				if err != nil {
+					return err
+				}
+				if len(tt) == 1 {
+					opts.TriggerTemplateName = tt[0]
+				} else {
+					err = askTriggerTemplateName(opts, tt)
+					if err != nil {
+						return err
+					}
+				}
+			} else {
+				opts.TriggerTemplateName = args[0]
 			}
 
 			if output != "" {
 				return describeTriggerTemplateOutput(cmd.OutOrStdout(), p, f, args[0])
 			}
 
-			return printTriggerTemplateDescription(s, p, args[0])
+			return printTriggerTemplateDescription(s, p, opts.TriggerTemplateName)
 		},
 	}
 
@@ -187,4 +211,17 @@ func format(name string) string {
 		return "---"
 	}
 	return name
+}
+
+func askTriggerTemplateName(opts *options.DescribeOptions, tt []string) error {
+	if len(tt) == 0 {
+		return fmt.Errorf("no TriggerTemplate found")
+	}
+
+	err := opts.Ask(options.ResourceNameTriggerTemplate, tt)
+	if err != nil {
+		return err
+	}
+
+	return nil
 }
