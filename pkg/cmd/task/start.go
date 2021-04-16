@@ -132,6 +132,21 @@ or in a file using the --filename argument.
 
 For params values, if you want to provide multiple values, provide them comma separated
 like cat,foo,bar
+
+For passing the workspaces via flags:
+
+- In case of emptyDir, you can pass it like -w name=my-empty-dir,emptyDir=
+- In case of configMap, you can pass it like -w name=my-config,config=rpg,item=ultimav=1
+- In case of secrets, you can pass it like -w name=my-secret,secret=secret-name
+- In case of pvc, you can pass it like -w name=my-pvc,claimName=pvc1
+- In case of volumeClaimTemplate, you can pass it like -w name=my-volume-claim-template,volumeClaimTemplateFile=workspace-template.yaml
+  but before you need to create a workspace-template.yaml file. Sample contents of the file are as follows:
+  spec:
+   accessModes:
+     - ReadWriteOnce
+   resources:
+     requests:
+       storage: 1Gi
 `,
 		SilenceUsage:      true,
 		ValidArgsFunction: formatted.ParentCompletion,
@@ -192,7 +207,7 @@ like cat,foo,bar
 		},
 	)
 	c.Flags().StringSliceVarP(&opt.Labels, "labels", "l", []string{}, "pass labels as label=value.")
-	c.Flags().StringArrayVarP(&opt.Workspaces, "workspace", "w", []string{}, "pass the workspace.")
+	c.Flags().StringArrayVarP(&opt.Workspaces, "workspace", "w", []string{}, "pass one or more workspaces to map to the corresponding physical volumes")
 	c.Flags().BoolVarP(&opt.ShowLog, "showlog", "", false, "show logs right after starting the Task")
 	c.Flags().StringVarP(&opt.Filename, "filename", "f", "", "local or remote file name containing a Task definition to start a TaskRun")
 	c.Flags().StringVarP(&opt.TimeOut, "timeout", "", "", "timeout for TaskRun")
