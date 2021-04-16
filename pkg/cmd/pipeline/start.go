@@ -117,6 +117,21 @@ func startCommand(p cli.Params) *cobra.Command {
 
 For params value, if you want to provide multiple values, provide them comma separated
 like cat,foo,bar
+
+For passing the workspaces via flags:
+
+- In case of emptyDir, you can pass it like -w name=my-empty-dir,emptyDir=
+- In case of configMap, you can pass it like -w name=my-config,config=rpg,item=ultimav=1
+- In case of secrets, you can pass it like -w name=my-secret,secret=secret-name
+- In case of pvc, you can pass it like -w name=my-pvc,claimName=pvc1
+- In case of volumeClaimTemplate, you can pass it like -w name=my-volume-claim-template,volumeClaimTemplateFile=workspace-template.yaml
+  but before you need to create a workspace-template.yaml file. Sample contents of the file are as follows:
+  spec:
+   accessModes:
+     - ReadWriteOnce
+   resources:
+     requests:
+       storage: 1Gi
 `,
 		SilenceUsage: true,
 
@@ -167,7 +182,7 @@ like cat,foo,bar
 	)
 
 	c.Flags().StringSliceVarP(&opt.Labels, "labels", "l", []string{}, "pass labels as label=value.")
-	c.Flags().StringArrayVarP(&opt.Workspaces, "workspace", "w", []string{}, "pass the workspace.")
+	c.Flags().StringArrayVarP(&opt.Workspaces, "workspace", "w", []string{}, "pass one or more workspaces to map to the corresponding physical volumes")
 	c.Flags().BoolVarP(&opt.DryRun, "dry-run", "", false, "preview PipelineRun without running it")
 	c.Flags().StringVarP(&opt.Output, "output", "", "", "format of PipelineRun dry-run (yaml or json)")
 	c.Flags().StringVarP(&opt.PrefixName, "prefix-name", "", "", "specify a prefix for the PipelineRun name (must be lowercase alphanumeric characters)")

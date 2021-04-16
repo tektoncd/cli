@@ -14,9 +14,20 @@ To run a Pipeline that has one git resource and no parameter.
 	$ tkn pipeline start --resource source=samples-git
 
 
+To create a workspace-template.yaml
+
+	$ cat <<EOF > workspace-template.yaml
+	spec:
+  		accessModes:
+  			- ReadWriteOnce
+  		resources:
+    		requests:
+      			storage: 1Gi
+	EOF
+
 To run a Pipeline that has one git resource, one image resource,
 two parameters (foo and bar) and four workspaces (my-config, my-pvc,
-my-secret and my-empty-dir)
+my-secret, my-empty-dir and my-volume-claim-template)
 
 
 	$ tkn pipeline start --resource source=samples-git \
@@ -27,3 +38,4 @@ my-secret and my-empty-dir)
 		--workspace name=my-config,config=rpg,item=ultimav=1 \
 		--workspace name=my-empty-dir,emptyDir="" \
 		--workspace name=my-pvc,claimName=pvc1,subPath=dir
+		--workspace name=my-volume-claim-template,volumeClaimTemplateFile=workspace-template.yaml

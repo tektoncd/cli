@@ -124,6 +124,21 @@ or
 
 For params value, if you want to provide multiple values, provide them comma separated
 like cat,foo,bar
+
+For passing the workspaces via flags:
+
+- In case of emptyDir, you can pass it like -w name=my-empty-dir,emptyDir=
+- In case of configMap, you can pass it like -w name=my-config,config=rpg,item=ultimav=1
+- In case of secrets, you can pass it like -w name=my-secret,secret=secret-name
+- In case of pvc, you can pass it like -w name=my-pvc,claimName=pvc1
+- In case of volumeClaimTemplate, you can pass it like -w name=my-volume-claim-template,volumeClaimTemplateFile=workspace-template.yaml
+  but before you need to create a workspace-template.yaml file. Sample contents of the file are as follows:
+  spec:
+   accessModes:
+     - ReadWriteOnce
+   resources:
+     requests:
+       storage: 1Gi
 `
 
 	c := &cobra.Command{
@@ -170,7 +185,7 @@ like cat,foo,bar
 	c.Flags().BoolVarP(&opt.Last, "last", "L", false, "re-run the ClusterTask using last TaskRun values")
 	c.Flags().StringVarP(&opt.UseTaskRun, "use-taskrun", "", "", "specify a TaskRun name to use its values to re-run the TaskRun")
 	c.Flags().StringSliceVarP(&opt.Labels, "labels", "l", []string{}, "pass labels as label=value.")
-	c.Flags().StringArrayVarP(&opt.Workspaces, "workspace", "w", []string{}, "pass one or more workspaces to map to the corresponding physical volumes as name=name,claimName=pvcName or name=name,emptyDir=")
+	c.Flags().StringArrayVarP(&opt.Workspaces, "workspace", "w", []string{}, "pass one or more workspaces to map to the corresponding physical volumes")
 	c.Flags().BoolVarP(&opt.ShowLog, "showlog", "", false, "show logs right after starting the ClusterTask")
 	c.Flags().StringVar(&opt.TimeOut, "timeout", "", "timeout for TaskRun")
 	c.Flags().BoolVarP(&opt.DryRun, "dry-run", "", false, "preview TaskRun without running it")

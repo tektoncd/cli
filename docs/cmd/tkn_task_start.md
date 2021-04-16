@@ -24,6 +24,21 @@ or in a file using the --filename argument.
 For params values, if you want to provide multiple values, provide them comma separated
 like cat,foo,bar
 
+For passing the workspaces via flags:
+
+- In case of emptyDir, you can pass it like -w name=my-empty-dir,emptyDir=
+- In case of configMap, you can pass it like -w name=my-config,config=rpg,item=ultimav=1
+- In case of secrets, you can pass it like -w name=my-secret,secret=secret-name
+- In case of pvc, you can pass it like -w name=my-pvc,claimName=pvc1
+- In case of volumeClaimTemplate, you can pass it like -w name=my-volume-claim-template,volumeClaimTemplateFile=workspace-template.yaml
+  but before you need to create a workspace-template.yaml file. Sample contents of the file are as follows:
+  spec:
+   accessModes:
+     - ReadWriteOnce
+   resources:
+     requests:
+       storage: 1Gi
+
 
 ### Options
 
@@ -44,7 +59,7 @@ like cat,foo,bar
       --timeout string           timeout for TaskRun
       --use-param-defaults       use default parameter values without prompting for input
       --use-taskrun string       specify a TaskRun name to use its values to re-run the TaskRun
-  -w, --workspace stringArray    pass the workspace.
+  -w, --workspace stringArray    pass one or more workspaces to map to the corresponding physical volumes
 ```
 
 ### Options inherited from parent commands
