@@ -10,4 +10,5 @@ const (
 	ResourceNameTriggerTemplate       = "triggertemplate"
 	ResourceNameTriggerBinding        = "triggerbinding"
 	ResourceNameClusterTriggerBinding = "clustertriggerbinding"
+	ResourceNameEventListener         = "eventlistener"
 )

@@ -430,6 +430,42 @@ func TestEventListenerDescribe_OutputStatusURL_WithNoURL(t *testing.T) {
 	test.AssertOutput(t, "Error: "+err.Error()+"\n", out)
 }
 
+func TestEventListenerDescribe_AutoSelect(t *testing.T) {
+	triggerTemplateRef := "tt1"
+	els := []*v1alpha1.EventListener{
+		{
+			ObjectMeta: metav1.ObjectMeta{
+				Name:      "el1",
+				Namespace: "ns",
+			},
+			Spec: v1alpha1.EventListenerSpec{
+				Triggers: []v1alpha1.EventListenerTrigger{
+					{
+						Template: &v1alpha1.TriggerSpecTemplate{
+							Ref:        &triggerTemplateRef,
+							APIVersion: "v1alpha1",
+						},
+					},
+				},
+			},
+		},
+	}
+
+	cs := test.SeedTestResources(t, triggertest.Resources{EventListeners: els, Namespaces: []*corev1.Namespace{{
+		ObjectMeta: metav1.ObjectMeta{
+			Name: "ns",
+		},
+	}}})
+	p := &test.Params{Triggers: cs.Triggers, Kube: cs.Kube}
+
+	eventListener := Command(p)
+	out, err := test.ExecuteCommand(eventListener, "desc", "-n", "ns")
+	if err != nil {
+		t.Errorf("Error expected here")
+	}
+	golden.Assert(t, out, fmt.Sprintf("%s.golden", t.Name()))
+}
+
 func executeEventListenerCommand(t *testing.T, els []*v1alpha1.EventListener) {
 	cs := test.SeedTestResources(t, triggertest.Resources{EventListeners: els, Namespaces: []*corev1.Namespace{{
 		ObjectMeta: metav1.ObjectMeta{

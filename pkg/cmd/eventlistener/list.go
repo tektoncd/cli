@@ -15,20 +15,17 @@
 package eventlistener
 
 import (
-	"context"
 	"errors"
 	"fmt"
 	"text/tabwriter"
 
 	"github.com/spf13/cobra"
 	"github.com/tektoncd/cli/pkg/cli"
+	"github.com/tektoncd/cli/pkg/eventlistener"
 	"github.com/tektoncd/cli/pkg/formatted"
 	"github.com/tektoncd/cli/pkg/printer"
 	"github.com/tektoncd/triggers/pkg/apis/triggers/v1alpha1"
-	"github.com/tektoncd/triggers/pkg/client/clientset/versioned"
 	corev1 "k8s.io/api/core/v1"
-	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
-	"k8s.io/apimachinery/pkg/runtime/schema"
 	cliopts "k8s.io/cli-runtime/pkg/genericclioptions"
 )
 
@@ -73,7 +70,7 @@ or
 				namespace = ""
 			}
 
-			els, err := list(cs.Triggers, namespace)
+			els, err := eventlistener.List(cs.Triggers, namespace)
 			if err != nil {
 				if opts.AllNamespaces {
 					return fmt.Errorf("failed to list EventListeners from all namespaces: %v", err)
@@ -106,23 +103,6 @@ or
 	c.Flags().BoolVarP(&opts.AllNamespaces, "all-namespaces", "A", opts.AllNamespaces, "list EventListeners from all namespaces")
 	c.Flags().BoolVar(&opts.NoHeaders, "no-headers", opts.NoHeaders, "do not print column headers with output (default print column headers with output)")
 	return c
-}
-
-func list(client versioned.Interface, namespace string) (*v1alpha1.EventListenerList, error) {
-	els, err := client.TriggersV1alpha1().EventListeners(namespace).List(context.Background(), metav1.ListOptions{})
-	if err != nil {
-		return nil, err
-	}
-
-	// NOTE: this is required for -o json|yaml to work properly since
-	// tektoncd go client fails to set these; probably a bug
-	els.GetObjectKind().SetGroupVersionKind(
-		schema.GroupVersionKind{
-			Version: "triggers.tekton.dev/v1alpha1",
-			Kind:    "EventListenerList",
-		})
-
-	return els, nil
 }
 
 func printFormatted(s *cli.Stream, els *v1alpha1.EventListenerList, p cli.Params, allNamespaces bool, noHeaders bool) error {
