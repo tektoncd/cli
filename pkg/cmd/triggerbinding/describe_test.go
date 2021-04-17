@@ -176,3 +176,36 @@ func TestTriggerBindingDescribe_WithMultipleParams(t *testing.T) {
 	}
 	golden.Assert(t, out, fmt.Sprintf("%s.golden", t.Name()))
 }
+
+func TestTriggerBindingDescribe_AutoSelect(t *testing.T) {
+	tbs := []*v1alpha1.TriggerBinding{
+		{
+			ObjectMeta: metav1.ObjectMeta{
+				Name:      "tb1",
+				Namespace: "ns",
+			},
+			Spec: v1alpha1.TriggerBindingSpec{
+				Params: []v1alpha1.Param{
+					{
+						Name:  "key",
+						Value: "value",
+					},
+				},
+			},
+		},
+	}
+
+	cs := test.SeedTestResources(t, triggertest.Resources{TriggerBindings: tbs, Namespaces: []*corev1.Namespace{{
+		ObjectMeta: metav1.ObjectMeta{
+			Name: "ns",
+		},
+	}}})
+	p := &test.Params{Triggers: cs.Triggers, Kube: cs.Kube}
+
+	triggerBinding := Command(p)
+	out, err := test.ExecuteCommand(triggerBinding, "desc", "-n", "ns")
+	if err != nil {
+		t.Errorf("Error expected here")
+	}
+	golden.Assert(t, out, fmt.Sprintf("%s.golden", t.Name()))
+}

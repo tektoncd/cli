@@ -24,7 +24,9 @@ import (
 	"github.com/spf13/cobra"
 	"github.com/tektoncd/cli/pkg/cli"
 	"github.com/tektoncd/cli/pkg/formatted"
+	"github.com/tektoncd/cli/pkg/options"
 	"github.com/tektoncd/cli/pkg/printer"
+	"github.com/tektoncd/cli/pkg/triggerbinding"
 	"github.com/tektoncd/triggers/pkg/apis/triggers/v1alpha1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime/schema"
@@ -48,6 +50,7 @@ const describeTemplate = `{{decorate "bold" "Name"}}:	{{ .TriggerBinding.Name }}
 
 func describeCommand(p cli.Params) *cobra.Command {
 	f := cliopts.NewPrintFlags("describe")
+	opts := &options.DescribeOptions{Params: p}
 	eg := `Describe a TriggerBinding of name 'foo' in namespace 'bar':
 
     tkn triggerbinding describe foo -n bar
@@ -65,7 +68,6 @@ or
 		Annotations: map[string]string{
 			"commandType": "main",
 		},
-		Args:              cobra.MinimumNArgs(1),
 		SilenceUsage:      true,
 		ValidArgsFunction: formatted.ParentCompletion,
 		RunE: func(cmd *cobra.Command, args []string) error {
@@ -74,16 +76,38 @@ or
 				Err: cmd.OutOrStderr(),
 			}
 
+			cs, err := p.Clients()
+			if err != nil {
+				return err
+			}
+
 			output, err := cmd.LocalFlags().GetString("output")
 			if err != nil {
 				return fmt.Errorf("output option not set properly: %v", err)
+			}
+
+			if len(args) == 0 {
+				tb, err := triggerbinding.GetAllTriggerBindingNames(cs.Triggers, p.Namespace())
+				if err != nil {
+					return err
+				}
+				if len(tb) == 1 {
+					opts.TriggerBindingName = tb[0]
+				} else {
+					err = askTriggerBindingName(opts, tb)
+					if err != nil {
+						return err
+					}
+				}
+			} else {
+				opts.TriggerBindingName = args[0]
 			}
 
 			if output != "" {
 				return describeTriggerBindingOutput(cmd.OutOrStdout(), p, f, args[0])
 			}
 
-			return printTriggerBindingDescription(s, p, args[0])
+			return printTriggerBindingDescription(s, p, opts.TriggerBindingName)
 		},
 	}
 
@@ -140,4 +164,16 @@ func printTriggerBindingDescription(s *cli.Stream, p cli.Params, tbName string) 
 		return fmt.Errorf("failed to execute template: %v", err)
 	}
 	return w.Flush()
+}
+
+func askTriggerBindingName(opts *options.DescribeOptions, tb []string) error {
+	if len(tb) == 0 {
+		return fmt.Errorf("no TriggerBindings found")
+	}
+	err := opts.Ask(options.ResourceNameTriggerBinding, tb)
+	if err != nil {
+		return err
+	}
+
+	return nil
 }
