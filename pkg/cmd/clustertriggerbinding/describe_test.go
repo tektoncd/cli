@@ -23,6 +23,7 @@ import (
 	triggertest "github.com/tektoncd/triggers/test"
 	ctb "github.com/tektoncd/triggers/test/builder"
 	"gotest.tools/v3/golden"
+	v1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 )
 
 func TestClusterTriggerBindingDescribe_NonExistedName(t *testing.T) {
@@ -131,6 +132,26 @@ func TestClusterTriggerBindingDescribe_WithMultipleParams(t *testing.T) {
 	out, err := test.ExecuteCommand(clusterTriggerBinding, "desc", "ctb1")
 	if err != nil {
 		t.Errorf("Unexpected error: %v", err)
+	}
+	golden.Assert(t, out, fmt.Sprintf("%s.golden", t.Name()))
+}
+
+func TestClusterTriggerBindingDescribe_AutoSelect(t *testing.T) {
+	ctbs := []*v1alpha1.ClusterTriggerBinding{
+		{
+			ObjectMeta: v1.ObjectMeta{
+				Name: "ctb1",
+			},
+		},
+	}
+
+	cs := test.SeedTestResources(t, triggertest.Resources{ClusterTriggerBindings: ctbs})
+	p := &test.Params{Triggers: cs.Triggers, Kube: cs.Kube}
+
+	clusterTriggerBinding := Command(p)
+	out, err := test.ExecuteCommand(clusterTriggerBinding, "desc", "-n", "ns")
+	if err != nil {
+		t.Errorf("Error expected here")
 	}
 	golden.Assert(t, out, fmt.Sprintf("%s.golden", t.Name()))
 }

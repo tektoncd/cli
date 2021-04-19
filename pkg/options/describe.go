@@ -30,20 +30,21 @@ import (
 )
 
 type DescribeOptions struct {
-	Params               cli.Params
-	PipelineName         string
-	PipelineRunName      string
-	PipelineResourceName string
-	ClusterTaskName      string
-	TaskName             string
-	TaskrunName          string
-	Tasks                []string
-	TriggerTemplateName  string
-	TriggerBindingName   string
-	Limit                int
-	AskOpts              survey.AskOpt
-	Fzf                  bool
-	Last                 bool
+	Params                    cli.Params
+	PipelineName              string
+	PipelineRunName           string
+	PipelineResourceName      string
+	ClusterTaskName           string
+	TaskName                  string
+	TaskrunName               string
+	Tasks                     []string
+	TriggerTemplateName       string
+	TriggerBindingName        string
+	ClusterTriggerBindingName string
+	Limit                     int
+	AskOpts                   survey.AskOpt
+	Fzf                       bool
+	Last                      bool
 }
 
 func NewDescribeOptions(p cli.Params) *DescribeOptions {
@@ -100,6 +101,8 @@ func (opts *DescribeOptions) Ask(resource string, options []string) error {
 		opts.TriggerTemplateName = ans
 	case ResourceNameTriggerBinding:
 		opts.TriggerBindingName = ans
+	case ResourceNameClusterTriggerBinding:
+		opts.ClusterTriggerBindingName = ans
 	}
 
 	return nil
@@ -160,6 +163,8 @@ func (opts *DescribeOptions) FuzzyAsk(resource string, options []string) error {
 		opts.TriggerTemplateName = ans
 	case ResourceNameTriggerBinding:
 		opts.TriggerBindingName = ans
+	case ResourceNameClusterTriggerBinding:
+		opts.ClusterTriggerBindingName = ans
 	}
 
 	return nil

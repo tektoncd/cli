@@ -23,7 +23,9 @@ import (
 
 	"github.com/spf13/cobra"
 	"github.com/tektoncd/cli/pkg/cli"
+	"github.com/tektoncd/cli/pkg/clustertriggerbinding"
 	"github.com/tektoncd/cli/pkg/formatted"
+	"github.com/tektoncd/cli/pkg/options"
 	"github.com/tektoncd/cli/pkg/printer"
 	"github.com/tektoncd/triggers/pkg/apis/triggers/v1alpha1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
@@ -47,6 +49,7 @@ const describeTemplate = `{{decorate "bold" "Name"}}:	{{ .ClusterTriggerBinding.
 
 func describeCommand(p cli.Params) *cobra.Command {
 	f := cliopts.NewPrintFlags("describe")
+	opts := &options.DescribeOptions{Params: p}
 	eg := `Describe a ClusterTriggerBinding of name 'foo':
 
     tkn clustertriggerbinding describe foo
@@ -65,7 +68,6 @@ or
 		Annotations: map[string]string{
 			"commandType": "main",
 		},
-		Args:         cobra.MinimumNArgs(1),
 		SilenceUsage: true,
 		RunE: func(cmd *cobra.Command, args []string) error {
 			s := &cli.Stream{
@@ -73,16 +75,38 @@ or
 				Err: cmd.OutOrStderr(),
 			}
 
+			cs, err := p.Clients()
+			if err != nil {
+				return err
+			}
+
 			output, err := cmd.LocalFlags().GetString("output")
 			if err != nil {
 				return fmt.Errorf("output option not set properly: %v", err)
+			}
+
+			if len(args) == 0 {
+				ctb, err := clustertriggerbinding.GetAllClusterTriggerBindingNames(cs.Triggers, p.Namespace())
+				if err != nil {
+					return err
+				}
+				if len(ctb) == 1 {
+					opts.ClusterTriggerBindingName = ctb[0]
+				} else {
+					err = askClusterTriggerBindingName(opts, ctb)
+					if err != nil {
+						return err
+					}
+				}
+			} else {
+				opts.ClusterTriggerBindingName = args[0]
 			}
 
 			if output != "" {
 				return describeClusterTriggerBindingOutput(cmd.OutOrStdout(), p, f, args[0])
 			}
 
-			return printClusterTriggerBindingDescription(s, p, args[0])
+			return printClusterTriggerBindingDescription(s, p, opts.ClusterTriggerBindingName)
 		},
 	}
 
@@ -139,4 +163,16 @@ func printClusterTriggerBindingDescription(s *cli.Stream, p cli.Params, ctbName 
 		return fmt.Errorf("failed to execute template: %v", err)
 	}
 	return w.Flush()
+}
+
+func askClusterTriggerBindingName(opts *options.DescribeOptions, ctb []string) error {
+	if len(ctb) == 0 {
+		return fmt.Errorf("no ClusterTriggerBindings found")
+	}
+	err := opts.Ask(options.ResourceNameClusterTriggerBinding, ctb)
+	if err != nil {
+		return err
+	}
+
+	return nil
 }

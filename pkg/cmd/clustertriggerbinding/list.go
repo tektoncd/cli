@@ -15,19 +15,16 @@
 package clustertriggerbinding
 
 import (
-	"context"
 	"errors"
 	"fmt"
 	"text/tabwriter"
 
 	"github.com/spf13/cobra"
 	"github.com/tektoncd/cli/pkg/cli"
+	"github.com/tektoncd/cli/pkg/clustertriggerbinding"
 	"github.com/tektoncd/cli/pkg/formatted"
 	"github.com/tektoncd/cli/pkg/printer"
 	"github.com/tektoncd/triggers/pkg/apis/triggers/v1alpha1"
-	"github.com/tektoncd/triggers/pkg/client/clientset/versioned"
-	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
-	"k8s.io/apimachinery/pkg/runtime/schema"
 	cliopts "k8s.io/cli-runtime/pkg/genericclioptions"
 )
 
@@ -66,7 +63,7 @@ or
 				return err
 			}
 
-			tbs, err := list(cs.Triggers, "")
+			tbs, err := clustertriggerbinding.List(cs.Triggers, "")
 			if err != nil {
 				return fmt.Errorf("failed to list ClusterTriggerBindings: %v", err)
 			}
@@ -105,23 +102,6 @@ or
 	f.AddFlags(c)
 	c.Flags().BoolVar(&opts.NoHeaders, "no-headers", opts.NoHeaders, "do not print column headers with output (default print column headers with output)")
 	return c
-}
-
-func list(client versioned.Interface, namespace string) (*v1alpha1.ClusterTriggerBindingList, error) {
-	tbs, err := client.TriggersV1alpha1().ClusterTriggerBindings().List(context.Background(), metav1.ListOptions{})
-	if err != nil {
-		return nil, err
-	}
-
-	// NOTE: this is required for -o json|yaml to work properly since
-	// tektoncd go client fails to set these; probably a bug
-	tbs.GetObjectKind().SetGroupVersionKind(
-		schema.GroupVersionKind{
-			Version: "triggers.tekton.dev/v1alpha1",
-			Kind:    "ClusterTriggerBindingList",
-		})
-
-	return tbs, nil
 }
 
 func printFormatted(s *cli.Stream, tbs *v1alpha1.ClusterTriggerBindingList, p cli.Params, noHeaders bool) error {
