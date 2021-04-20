@@ -20,7 +20,7 @@ Download the latest binary executable for your operating system.
   brew install tektoncd-cli
 ```
 
-- Use [released tarball](https://github.com/tektoncd/cli/releases/download/v0.17.0/tkn_0.17.0_Darwin_x86_64.tar.gz)
+- Use [released tarball](https://github.com/tektoncd/cli/releases/download/v0.17.2/tkn_0.17.2_Darwin_x86_64.tar.gz)
 
   ```shell
   # Get the tar.xz
@@ -42,13 +42,13 @@ choco install tektoncd-cli --confirm
 scoop install tektoncd-cli
 ```
 
-- Use [Powershell](https://docs.microsoft.com/en-us/powershell) [released zip](https://github.com/tektoncd/cli/releases/download/v0.17.0/tkn_0.17.0_Windows_x86_64.zip)
+- Use [Powershell](https://docs.microsoft.com/en-us/powershell) [released zip](https://github.com/tektoncd/cli/releases/download/v0.17.2/tkn_0.17.2_Windows_x86_64.zip)
 
 ```powershell
 #Create directory
 New-Item -Path "$HOME/tektoncd/cli" -Type Directory
 # Download file
-Start-BitsTransfer -Source https://github.com/tektoncd/cli/releases/download/v0.17.0/tkn_0.17.0_Windows_x86_64.zip -Destination "$HOME/tektoncd/cli/."
+Start-BitsTransfer -Source https://github.com/tektoncd/cli/releases/download/v0.17.2/tkn_0.17.2_Windows_x86_64.zip -Destination "$HOME/tektoncd/cli/."
 # Uncompress zip file
 Expand-Archive $HOME/tektoncd/cli/*.zip -DestinationPath C:\Users\Developer\tektoncd\cli\.
 #Add to Windows `Environment Variables`
