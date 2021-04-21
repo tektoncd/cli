@@ -21,7 +21,8 @@ EventListenerTriggers
  test-sa
  
  INTERCEPTORS
-- webhook:
+- ref: {}
+  webhook:
     objectRef:
       apiVersion: v1
       kind: Service

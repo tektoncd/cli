@@ -21,6 +21,7 @@ EventListenerTriggers
     overlays:
     - expression: '''testing'''
       key: value
+  ref: {}
 
 EventListenerTriggers
 
@@ -40,7 +41,8 @@ EventListenerTriggers
  sa1
  
  INTERCEPTORS
-- webhook:
+- ref: {}
+  webhook:
     objectRef:
       apiVersion: v1
       kind: Service
@@ -51,4 +53,5 @@ EventListenerTriggers
     overlays:
     - expression: '''testing'''
       key: value
+  ref: {}
 

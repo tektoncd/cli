@@ -457,7 +457,7 @@ github.com/tektoncd/pipeline/test
 github.com/tektoncd/pipeline/test/v1alpha1
 # github.com/tektoncd/plumbing v0.0.0-20210420200944-17170d5e7bc9
 github.com/tektoncd/plumbing/scripts
-# github.com/tektoncd/triggers v0.12.0
+# github.com/tektoncd/triggers v0.13.0
 github.com/tektoncd/triggers/pkg/apis/triggers/v1alpha1
 github.com/tektoncd/triggers/pkg/client/clientset/versioned
 github.com/tektoncd/triggers/pkg/client/clientset/versioned/fake
@@ -474,6 +474,8 @@ github.com/tektoncd/triggers/pkg/client/injection/client
 github.com/tektoncd/triggers/pkg/client/injection/client/fake
 github.com/tektoncd/triggers/pkg/client/injection/informers/factory
 github.com/tektoncd/triggers/pkg/client/injection/informers/factory/fake
+github.com/tektoncd/triggers/pkg/client/injection/informers/triggers/v1alpha1/clusterinterceptor
+github.com/tektoncd/triggers/pkg/client/injection/informers/triggers/v1alpha1/clusterinterceptor/fake
 github.com/tektoncd/triggers/pkg/client/injection/informers/triggers/v1alpha1/clustertriggerbinding
 github.com/tektoncd/triggers/pkg/client/injection/informers/triggers/v1alpha1/clustertriggerbinding/fake
 github.com/tektoncd/triggers/pkg/client/injection/informers/triggers/v1alpha1/eventlistener
@@ -776,6 +778,9 @@ k8s.io/api/settings/v1alpha1
 k8s.io/api/storage/v1
 k8s.io/api/storage/v1alpha1
 k8s.io/api/storage/v1beta1
+# k8s.io/apiextensions-apiserver v0.19.7
+k8s.io/apiextensions-apiserver/pkg/apis/apiextensions
+k8s.io/apiextensions-apiserver/pkg/apis/apiextensions/v1
 # k8s.io/apimachinery v0.19.7
 k8s.io/apimachinery/pkg/api/equality
 k8s.io/apimachinery/pkg/api/errors
@@ -1072,6 +1077,7 @@ k8s.io/kube-openapi/pkg/util/proto
 # k8s.io/utils v0.0.0-20210111153108-fddb29f9d009
 k8s.io/utils/buffer
 k8s.io/utils/integer
+k8s.io/utils/pointer
 k8s.io/utils/trace
 # knative.dev/pkg v0.0.0-20210208131226-4b2ae073fa06
 knative.dev/pkg/apis
@@ -1118,6 +1124,7 @@ knative.dev/pkg/logging/testing
 knative.dev/pkg/metrics
 knative.dev/pkg/metrics/metricskey
 knative.dev/pkg/network
+knative.dev/pkg/ptr
 knative.dev/pkg/reconciler
 knative.dev/pkg/signals
 knative.dev/pkg/system

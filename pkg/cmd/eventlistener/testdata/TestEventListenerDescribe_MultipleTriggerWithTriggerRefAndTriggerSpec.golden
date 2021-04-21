@@ -22,7 +22,8 @@ EventListenerTriggers
  tt1            v1alpha1
  
  INTERCEPTORS
-- webhook:
+- ref: {}
+  webhook:
     header:
     - name: header
       value:
