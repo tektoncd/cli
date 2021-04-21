@@ -376,7 +376,7 @@ github.com/tektoncd/hub/api/pkg/cli/kube
 github.com/tektoncd/hub/api/pkg/cli/printer
 github.com/tektoncd/hub/api/pkg/git
 github.com/tektoncd/hub/api/pkg/parser
-# github.com/tektoncd/pipeline v0.22.0
+# github.com/tektoncd/pipeline v0.23.0
 github.com/tektoncd/pipeline/pkg/apis/config
 github.com/tektoncd/pipeline/pkg/apis/pipeline
 github.com/tektoncd/pipeline/pkg/apis/pipeline/pod
