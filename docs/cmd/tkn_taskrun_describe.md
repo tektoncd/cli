@@ -34,6 +34,8 @@ or
   -L, --last                          show description for last TaskRun
       --limit int                     lists number of TaskRuns when selecting a TaskRun to describe (default 5)
   -o, --output string                 Output format. One of: json|yaml|name|go-template|go-template-file|template|templatefile|jsonpath|jsonpath-as-json|jsonpath-file.
+      --status                        use status to get the status of a TaskRun
+      --steps                         show the status of steps, must be specified with --status
       --template string               Template string or path to template file to use when -o=go-template, -o=go-template-file. The template format is golang templates [http://golang.org/pkg/text/template/#pkg-overview].
 ```
 

@@ -42,6 +42,7 @@ type DescribeOptions struct {
 	AskOpts              survey.AskOpt
 	Fzf                  bool
 	Last                 bool
+	Status               bool
 }
 
 func NewDescribeOptions(p cli.Params) *DescribeOptions {

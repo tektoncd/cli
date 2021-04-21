@@ -1783,3 +1783,258 @@ func TestTaskRunDescribe_WithoutNameIfOnlyOneV1beta1TaskRunPresent(t *testing.T)
 	}
 	golden.Assert(t, out, fmt.Sprintf("%s.golden", t.Name()))
 }
+
+func TestTaskRunDescribe_status_succeeded(t *testing.T) {
+	clock := clockwork.NewFakeClock()
+
+	taskRuns := []*v1beta1.TaskRun{
+		{
+			ObjectMeta: metav1.ObjectMeta{
+				Namespace: "ns",
+				Name:      "tr-status-succeeded",
+				Labels:    map[string]string{"tekton.dev/task": "task-1"},
+			},
+			Spec: v1beta1.TaskRunSpec{
+				TaskRef: &v1beta1.TaskRef{
+					Name: "task-1",
+				},
+			},
+			Status: v1beta1.TaskRunStatus{
+				Status: duckv1beta1.Status{
+					Conditions: duckv1beta1.Conditions{
+						{
+							Status: corev1.ConditionTrue,
+							Reason: v1beta1.TaskRunReasonSuccessful.String(),
+						},
+					},
+				},
+				TaskRunStatusFields: v1beta1.TaskRunStatusFields{
+					StartTime:      &metav1.Time{Time: clock.Now().Add(-10 * time.Minute)},
+					CompletionTime: &metav1.Time{Time: clock.Now().Add(-5 * time.Minute)},
+				},
+			},
+		},
+	}
+
+	namespaces := []*corev1.Namespace{
+		{
+			ObjectMeta: metav1.ObjectMeta{
+				Name: "ns",
+			},
+		},
+	}
+
+	cs, _ := test.SeedV1beta1TestData(t, pipelinev1beta1test.Data{
+		TaskRuns:   taskRuns,
+		Namespaces: namespaces,
+	})
+
+	version := "v1beta1"
+	tdc := testDynamic.Options{}
+	dynamic, err := tdc.Client(
+		cb.UnstructuredV1beta1TR(taskRuns[0], version),
+	)
+	if err != nil {
+		t.Errorf("unable to create dynamic client: %v", err)
+	}
+
+	cs.Pipeline.Resources = cb.APIResourceList(version, []string{"taskrun"})
+	p := &test.Params{Tekton: cs.Pipeline, Kube: cs.Kube, Dynamic: dynamic, Clock: clock}
+	taskrun := Command(p)
+	actual, err := test.ExecuteCommand(taskrun, "desc", "tr-status-succeeded", "-n", "ns", "--status")
+	if err != nil {
+		t.Errorf("Unexpected error: %v", err)
+	}
+
+	test.AssertOutput(t, "Succeeded", actual)
+}
+
+func TestTaskRunDescribe_status_failed(t *testing.T) {
+	clock := clockwork.NewFakeClock()
+
+	taskRuns := []*v1beta1.TaskRun{
+		{
+			ObjectMeta: metav1.ObjectMeta{
+				Namespace: "ns",
+				Name:      "tr-status-failed",
+				Labels:    map[string]string{"tekton.dev/task": "task-1"},
+			},
+			Spec: v1beta1.TaskRunSpec{
+				TaskRef: &v1beta1.TaskRef{
+					Name: "task-1",
+				},
+			},
+			Status: v1beta1.TaskRunStatus{
+				Status: duckv1beta1.Status{
+					Conditions: duckv1beta1.Conditions{
+						{
+							Status:  corev1.ConditionFalse,
+							Reason:  v1beta1.TaskRunReasonFailed.String(),
+							Message: "Testing tr failed",
+						},
+					},
+				},
+				TaskRunStatusFields: v1beta1.TaskRunStatusFields{
+					StartTime:      &metav1.Time{Time: clock.Now().Add(-10 * time.Minute)},
+					CompletionTime: &metav1.Time{Time: clock.Now().Add(-5 * time.Minute)},
+				},
+			},
+		},
+	}
+
+	namespaces := []*corev1.Namespace{
+		{
+			ObjectMeta: metav1.ObjectMeta{
+				Name: "ns",
+			},
+		},
+	}
+
+	cs, _ := test.SeedV1beta1TestData(t, pipelinev1beta1test.Data{
+		TaskRuns:   taskRuns,
+		Namespaces: namespaces,
+	})
+
+	version := "v1beta1"
+	tdc := testDynamic.Options{}
+	dynamic, err := tdc.Client(
+		cb.UnstructuredV1beta1TR(taskRuns[0], version),
+	)
+	if err != nil {
+		t.Errorf("unable to create dynamic client: %v", err)
+	}
+
+	cs.Pipeline.Resources = cb.APIResourceList(version, []string{"taskrun"})
+	p := &test.Params{Tekton: cs.Pipeline, Kube: cs.Kube, Dynamic: dynamic, Clock: clock}
+	taskrun := Command(p)
+	actual, err := test.ExecuteCommand(taskrun, "desc", "tr-status-failed", "-n", "ns", "--status")
+	if err != nil {
+		t.Errorf("Unexpected error: %v", err)
+	}
+
+	test.AssertOutput(t, "Failed", actual)
+}
+
+func TestTaskRunDescribe_status_with_steps(t *testing.T) {
+	clock := clockwork.NewFakeClock()
+
+	taskRuns := []*v1beta1.TaskRun{
+		{
+			ObjectMeta: metav1.ObjectMeta{
+				Namespace: "ns",
+				Name:      "tr-status-succeeded-steps",
+				Labels:    map[string]string{"tekton.dev/task": "task-1"},
+			},
+			Spec: v1beta1.TaskRunSpec{
+				TaskRef: &v1beta1.TaskRef{
+					Name: "task-1",
+				},
+			},
+			Status: v1beta1.TaskRunStatus{
+				Status: duckv1beta1.Status{
+					Conditions: duckv1beta1.Conditions{
+						{
+							Status: corev1.ConditionTrue,
+							Reason: v1beta1.TaskRunReasonSuccessful.String(),
+						},
+					},
+				},
+				TaskRunStatusFields: v1beta1.TaskRunStatusFields{
+					StartTime:      &metav1.Time{Time: clock.Now().Add(-10 * time.Minute)},
+					CompletionTime: &metav1.Time{Time: clock.Now().Add(-5 * time.Minute)},
+					Steps: []v1beta1.StepState{
+						{
+							Name: "step-1",
+							ContainerState: corev1.ContainerState{
+								Terminated: &corev1.ContainerStateTerminated{
+									Reason: "Completed",
+								},
+							},
+						},
+						{
+							Name: "step-2",
+							ContainerState: corev1.ContainerState{
+								Terminated: &corev1.ContainerStateTerminated{
+									Reason: "Completed",
+								},
+							},
+						},
+					},
+				},
+			},
+		},
+	}
+
+	namespaces := []*corev1.Namespace{
+		{
+			ObjectMeta: metav1.ObjectMeta{
+				Name: "ns",
+			},
+		},
+	}
+
+	cs, _ := test.SeedV1beta1TestData(t, pipelinev1beta1test.Data{
+		TaskRuns:   taskRuns,
+		Namespaces: namespaces,
+	})
+
+	version := "v1beta1"
+	tdc := testDynamic.Options{}
+	dynamic, err := tdc.Client(
+		cb.UnstructuredV1beta1TR(taskRuns[0], version),
+	)
+	if err != nil {
+		t.Errorf("unable to create dynamic client: %v", err)
+	}
+
+	cs.Pipeline.Resources = cb.APIResourceList(version, []string{"taskrun"})
+	p := &test.Params{Tekton: cs.Pipeline, Kube: cs.Kube, Dynamic: dynamic, Clock: clock}
+	taskrun := Command(p)
+	out, err := test.ExecuteCommand(taskrun, "desc", "tr-status-succeeded-steps", "-n", "ns", "--status", "--steps")
+	if err != nil {
+		t.Errorf("Unexpected error: %v", err)
+	}
+
+	golden.Assert(t, out, fmt.Sprintf("%s.golden", t.Name()))
+}
+
+func TestTaskRunDescribe_steps_without_status(t *testing.T) {
+	taskRuns := []*v1beta1.TaskRun{
+		{
+			ObjectMeta: metav1.ObjectMeta{
+				Namespace: "ns",
+				Name:      "tr-steps-without-status",
+				Labels:    map[string]string{"tekton.dev/task": "task-1"},
+			},
+		},
+	}
+
+	namespaces := []*corev1.Namespace{
+		{
+			ObjectMeta: metav1.ObjectMeta{
+				Name: "ns",
+			},
+		},
+	}
+
+	cs, _ := test.SeedV1beta1TestData(t, pipelinev1beta1test.Data{
+		TaskRuns:   taskRuns,
+		Namespaces: namespaces,
+	})
+
+	version := "v1beta1"
+	tdc := testDynamic.Options{}
+	dynamic, err := tdc.Client(
+		cb.UnstructuredV1beta1TR(taskRuns[0], version),
+	)
+	if err != nil {
+		t.Errorf("unable to create dynamic client: %v", err)
+	}
+
+	cs.Pipeline.Resources = cb.APIResourceList(version, []string{"taskrun"})
+	p := &test.Params{Tekton: cs.Pipeline, Kube: cs.Kube, Dynamic: dynamic}
+	taskrun := Command(p)
+	out, _ := test.ExecuteCommand(taskrun, "desc", "tr-steps-without-status", "-n", "ns", "--steps")
+	expected := "Error: --steps must be specified with --status\n"
+	test.AssertOutput(t, expected, out)
+}

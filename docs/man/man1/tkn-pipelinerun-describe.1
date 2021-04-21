@@ -44,6 +44,14 @@ Describe a PipelineRun in a namespace
     Output format. One of: json|yaml|name|go\-template|go\-template\-file|template|templatefile|jsonpath|jsonpath\-as\-json|jsonpath\-file.
 
 .PP
+\fB\-\-status\fP[=false]
+    use status to get the status of a PipelineRun
+
+.PP
+\fB\-\-taskruns\fP[=false]
+    show the status of taskruns, must be specified with \-\-status
+
+.PP
 \fB\-\-template\fP=""
     Template string or path to template file to use when \-o=go\-template, \-o=go\-template\-file. The template format is golang templates [
 \[la]http://golang.org/pkg/text/template/#pkg-overview\[ra]].
