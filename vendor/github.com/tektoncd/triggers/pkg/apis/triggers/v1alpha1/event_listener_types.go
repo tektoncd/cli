@@ -57,13 +57,15 @@ type EventListener struct {
 type EventListenerSpec struct {
 	ServiceAccountName string                 `json:"serviceAccountName"`
 	Triggers           []EventListenerTrigger `json:"triggers"`
+	// To be removed in a later release #1020
+	DeprecatedReplicas *int32 `json:"replicas,omitempty"`
 	// To be removed in a later release #904
 	DeprecatedServiceType corev1.ServiceType `json:"serviceType,omitempty"`
-	Replicas              *int32             `json:"replicas,omitempty"`
 	// To be removed in a later release #904
-	DeprecatedPodTemplate PodTemplate       `json:"podTemplate,omitempty"`
-	NamespaceSelector     NamespaceSelector `json:"namespaceSelector,omitempty"`
-	Resources             Resources         `json:"resources,omitempty"`
+	DeprecatedPodTemplate PodTemplate           `json:"podTemplate,omitempty"`
+	NamespaceSelector     NamespaceSelector     `json:"namespaceSelector,omitempty"`
+	LabelSelector         *metav1.LabelSelector `json:"labelSelector,omitempty"`
+	Resources             Resources             `json:"resources,omitempty"`
 }
 
 type Resources struct {
@@ -76,6 +78,7 @@ type CustomResource struct {
 }
 
 type KubernetesResource struct {
+	Replicas           *int32             `json:"replicas,omitempty"`
 	ServiceType        corev1.ServiceType `json:"serviceType,omitempty"`
 	duckv1.WithPodSpec `json:"spec,omitempty"`
 }

@@ -33,6 +33,7 @@
                 "name": "foo-trig",
                 "interceptors": [
                     {
+                        "ref": {},
                         "cel": {
                             "filter": "body.value == 'test'",
                             "overlays": [
@@ -64,6 +65,7 @@
                 "name": "foo-trig",
                 "interceptors": [
                     {
+                        "ref": {},
                         "webhook": {
                             "objectRef": {
                                 "kind": "Service",
@@ -74,6 +76,7 @@
                         }
                     },
                     {
+                        "ref": {},
                         "cel": {
                             "filter": "body.value == 'test'",
                             "overlays": [

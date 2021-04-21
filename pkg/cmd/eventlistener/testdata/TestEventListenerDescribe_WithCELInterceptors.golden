@@ -22,4 +22,5 @@ EventListenerTriggers
     overlays:
     - expression: '''testing'''
       key: value
+  ref: {}
 
