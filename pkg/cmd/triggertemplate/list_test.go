@@ -23,10 +23,8 @@ import (
 	"github.com/jonboulle/clockwork"
 	"github.com/spf13/cobra"
 	"github.com/tektoncd/cli/pkg/test"
-	cb "github.com/tektoncd/cli/pkg/test/builder"
 	"github.com/tektoncd/triggers/pkg/apis/triggers/v1alpha1"
 	triggertest "github.com/tektoncd/triggers/test"
-	tb "github.com/tektoncd/triggers/test/builder"
 	"gotest.tools/v3/golden"
 	corev1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
@@ -54,11 +52,39 @@ func TestListTriggerTemplate(t *testing.T) {
 	}
 
 	tts := []*v1alpha1.TriggerTemplate{
-		tb.TriggerTemplate("tt1", "foo", cb.TriggerTemplateCreationTime(now.Add(-2*time.Minute))),
-		tb.TriggerTemplate("tt2", "foo", cb.TriggerTemplateCreationTime(now.Add(-30*time.Second))),
-		tb.TriggerTemplate("tt3", "foo", cb.TriggerTemplateCreationTime(now.Add(-200*time.Hour))),
-		tb.TriggerTemplate("tt4", "foo"),
-		tb.TriggerTemplate("tt5", "bar"),
+		{
+			ObjectMeta: metav1.ObjectMeta{
+				Name:              "tt1",
+				Namespace:         "foo",
+				CreationTimestamp: metav1.Time{Time: now.Add(-2 * time.Minute)},
+			},
+		},
+		{
+			ObjectMeta: metav1.ObjectMeta{
+				Name:              "tt2",
+				Namespace:         "foo",
+				CreationTimestamp: metav1.Time{Time: now.Add(-30 * time.Second)},
+			},
+		},
+		{
+			ObjectMeta: metav1.ObjectMeta{
+				Name:              "tt3",
+				Namespace:         "foo",
+				CreationTimestamp: metav1.Time{Time: now.Add(-200 * time.Hour)},
+			},
+		},
+		{
+			ObjectMeta: metav1.ObjectMeta{
+				Name:      "tt4",
+				Namespace: "foo",
+			},
+		},
+		{
+			ObjectMeta: metav1.ObjectMeta{
+				Name:      "tt5",
+				Namespace: "bar",
+			},
+		},
 	}
 
 	tests := []struct {

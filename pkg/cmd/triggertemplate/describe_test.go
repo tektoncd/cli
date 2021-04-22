@@ -21,7 +21,6 @@ import (
 	"github.com/tektoncd/cli/pkg/test"
 	"github.com/tektoncd/triggers/pkg/apis/triggers/v1alpha1"
 	triggertest "github.com/tektoncd/triggers/test"
-	tt "github.com/tektoncd/triggers/test/builder"
 	"gotest.tools/v3/golden"
 	corev1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
@@ -90,29 +89,75 @@ func TestTriggerTemplateDescribe_Empty(t *testing.T) {
 
 func TestTriggerTemplateDescribe_NoParams(t *testing.T) {
 	tts := []*v1alpha1.TriggerTemplate{
-		tt.TriggerTemplate("tt1", "ns",
-			tt.TriggerTemplateSpec(
-				tt.TriggerResourceTemplate(simpleResourceTemplate))),
+		{
+			ObjectMeta: metav1.ObjectMeta{
+				Name:      "tt1",
+				Namespace: "ns",
+			},
+			Spec: v1alpha1.TriggerTemplateSpec{
+				ResourceTemplates: []v1alpha1.TriggerResourceTemplate{
+					{
+						RawExtension: simpleResourceTemplate,
+					},
+				},
+			},
+		},
 	}
 	executeTriggerTemplateCommand(t, tts)
 }
 
 func TestTriggerTemplateDescribe_WithOneParam(t *testing.T) {
+	var defaultValue = "value"
+
 	tts := []*v1alpha1.TriggerTemplate{
-		tt.TriggerTemplate("tt1", "ns",
-			tt.TriggerTemplateSpec(
-				tt.TriggerTemplateParam("key", "test with one param", "value"),
-				tt.TriggerResourceTemplate(simpleResourceTemplate))),
+		{
+			ObjectMeta: metav1.ObjectMeta{
+				Name:      "tt1",
+				Namespace: "ns",
+			},
+			Spec: v1alpha1.TriggerTemplateSpec{
+				Params: []v1alpha1.ParamSpec{
+					{
+						Name:        "key",
+						Description: "test with one param",
+						Default:     &defaultValue,
+					},
+				},
+				ResourceTemplates: []v1alpha1.TriggerResourceTemplate{
+					{
+						RawExtension: simpleResourceTemplate,
+					},
+				},
+			},
+		},
 	}
 	executeTriggerTemplateCommand(t, tts)
 }
 
 func TestTriggerTemplateDescribe_WithOutputName(t *testing.T) {
+	var defaultValue = "value"
+
 	tts := []*v1alpha1.TriggerTemplate{
-		tt.TriggerTemplate("tt1", "ns",
-			tt.TriggerTemplateSpec(
-				tt.TriggerTemplateParam("key", "test with one param", "value"),
-				tt.TriggerResourceTemplate(simpleResourceTemplate))),
+		{
+			ObjectMeta: metav1.ObjectMeta{
+				Name:      "tt1",
+				Namespace: "ns",
+			},
+			Spec: v1alpha1.TriggerTemplateSpec{
+				Params: []v1alpha1.ParamSpec{
+					{
+						Name:        "key",
+						Description: "test with one param",
+						Default:     &defaultValue,
+					},
+				},
+				ResourceTemplates: []v1alpha1.TriggerResourceTemplate{
+					{
+						RawExtension: simpleResourceTemplate,
+					},
+				},
+			},
+		},
 	}
 	cs := test.SeedTestResources(t, triggertest.Resources{TriggerTemplates: tts, Namespaces: []*corev1.Namespace{{
 		ObjectMeta: metav1.ObjectMeta{
@@ -130,12 +175,31 @@ func TestTriggerTemplateDescribe_WithOutputName(t *testing.T) {
 }
 
 func TestTriggerTemplateDescribe_WithOutputYaml(t *testing.T) {
+	var defaultValue = "value"
+
 	tts := []*v1alpha1.TriggerTemplate{
-		tt.TriggerTemplate("tt1", "ns",
-			tt.TriggerTemplateSpec(
-				tt.TriggerTemplateParam("key", "test with one param", "value"),
-				tt.TriggerResourceTemplate(simpleResourceTemplate))),
+		{
+			ObjectMeta: metav1.ObjectMeta{
+				Name:      "tt1",
+				Namespace: "ns",
+			},
+			Spec: v1alpha1.TriggerTemplateSpec{
+				Params: []v1alpha1.ParamSpec{
+					{
+						Name:        "key",
+						Description: "test with one param",
+						Default:     &defaultValue,
+					},
+				},
+				ResourceTemplates: []v1alpha1.TriggerResourceTemplate{
+					{
+						RawExtension: simpleResourceTemplate,
+					},
+				},
+			},
+		},
 	}
+
 	cs := test.SeedTestResources(t, triggertest.Resources{TriggerTemplates: tts, Namespaces: []*corev1.Namespace{{
 		ObjectMeta: metav1.ObjectMeta{
 			Name: "ns",
@@ -152,48 +216,146 @@ func TestTriggerTemplateDescribe_WithOutputYaml(t *testing.T) {
 }
 
 func TestTriggerTemplateDescribe_WithMultipleParams(t *testing.T) {
+	var defaultValue = []string{"value1", "value2", "value3", "value4"}
+
 	tts := []*v1alpha1.TriggerTemplate{
-		tt.TriggerTemplate("tt1", "ns",
-			tt.TriggerTemplateSpec(
-				tt.TriggerTemplateParam("key1", "test with multiple param", "value1"),
-				tt.TriggerTemplateParam("key2", "", "value2"),
-				tt.TriggerTemplateParam("key3", "", "value3"),
-				tt.TriggerTemplateParam("key4", "test with multiple param", "value4"),
-				tt.TriggerResourceTemplate(v1beta1ResourceTemplate))),
+		{
+			ObjectMeta: metav1.ObjectMeta{
+				Name:      "tt1",
+				Namespace: "ns",
+			},
+			Spec: v1alpha1.TriggerTemplateSpec{
+				Params: []v1alpha1.ParamSpec{
+					{
+						Name:        "key1",
+						Description: "test with multiple param",
+						Default:     &defaultValue[0],
+					},
+					{
+						Name:        "key2",
+						Description: "",
+						Default:     &defaultValue[1],
+					},
+					{
+						Name:        "key3",
+						Description: "",
+						Default:     &defaultValue[2],
+					},
+					{
+						Name:        "key4",
+						Description: "test with multiple param",
+						Default:     &defaultValue[3],
+					},
+				},
+				ResourceTemplates: []v1alpha1.TriggerResourceTemplate{
+					{
+						RawExtension: v1beta1ResourceTemplate,
+					},
+				},
+			},
+		},
 	}
 	executeTriggerTemplateCommand(t, tts)
 }
 
 func TestTriggerTemplateDescribe_WithMultipleResourceTemplate(t *testing.T) {
+	var defaultValue = []string{"value1", "value2", "value3", "value4"}
+
 	tts := []*v1alpha1.TriggerTemplate{
-		tt.TriggerTemplate("tt1", "ns",
-			tt.TriggerTemplateSpec(
-				tt.TriggerTemplateParam("key1", "test with multiple param", "value1"),
-				tt.TriggerTemplateParam("key2", "", "value2"),
-				tt.TriggerTemplateParam("key3", "", "value3"),
-				tt.TriggerTemplateParam("key4", "test with multiple param", "value4"),
-				tt.TriggerResourceTemplate(v1beta1ResourceTemplate),
-				tt.TriggerResourceTemplate(pipelineResources))),
+		{
+			ObjectMeta: metav1.ObjectMeta{
+				Name:      "tt1",
+				Namespace: "ns",
+			},
+			Spec: v1alpha1.TriggerTemplateSpec{
+				Params: []v1alpha1.ParamSpec{
+					{
+						Name:        "key1",
+						Description: "test with multiple param",
+						Default:     &defaultValue[0],
+					},
+					{
+						Name:        "key2",
+						Description: "",
+						Default:     &defaultValue[1],
+					},
+					{
+						Name:        "key3",
+						Description: "",
+						Default:     &defaultValue[2],
+					},
+					{
+						Name:        "key4",
+						Description: "test with multiple param",
+						Default:     &defaultValue[3],
+					},
+				},
+				ResourceTemplates: []v1alpha1.TriggerResourceTemplate{
+					{
+						RawExtension: v1beta1ResourceTemplate,
+					},
+					{
+						RawExtension: pipelineResources,
+					},
+				},
+			},
+		},
 	}
 	executeTriggerTemplateCommand(t, tts)
 }
 
 func TestTriggerTemplateDescribe_ParamsToResourceTemplate(t *testing.T) {
+	var defaultValue = "bar"
+
 	tts := []*v1alpha1.TriggerTemplate{
-		tt.TriggerTemplate("tt1", "ns",
-			tt.TriggerTemplateSpec(
-				tt.TriggerTemplateParam("foo", "foo required in resource template", "bar"),
-				tt.TriggerResourceTemplate(paramResourceTemplate))),
+		{
+			ObjectMeta: metav1.ObjectMeta{
+				Name:      "tt1",
+				Namespace: "ns",
+			},
+			Spec: v1alpha1.TriggerTemplateSpec{
+				Params: []v1alpha1.ParamSpec{
+					{
+						Name:        "foo",
+						Description: "foo required in resource template",
+						Default:     &defaultValue,
+					},
+				},
+				ResourceTemplates: []v1alpha1.TriggerResourceTemplate{
+					{
+						RawExtension: paramResourceTemplate,
+					},
+				},
+			},
+		},
 	}
 	executeTriggerTemplateCommand(t, tts)
 }
 
 func TestTriggerTemplateDescribe_InvalidResourceTemplate(t *testing.T) {
+	var defaultValue = "bar"
+
 	tts := []*v1alpha1.TriggerTemplate{
-		tt.TriggerTemplate("tt1", "ns",
-			tt.TriggerTemplateSpec(
-				tt.TriggerTemplateParam("foo", "foo required in resource template", "bar"),
-				tt.TriggerResourceTemplate(invalidTemplate))),
+		{
+			ObjectMeta: metav1.ObjectMeta{
+				Name:      "tt1",
+				Namespace: "ns",
+			},
+			Spec: v1alpha1.TriggerTemplateSpec{
+				Params: []v1alpha1.ParamSpec{
+					{
+						Name:        "foo",
+						Description: "foo required in resource template",
+						Default:     &defaultValue,
+					},
+				},
+				ResourceTemplates: []v1alpha1.TriggerResourceTemplate{
+					{
+						RawExtension: invalidTemplate,
+					},
+				},
+			},
+		},
 	}
 	executeTriggerTemplateCommand(t, tts)
 }

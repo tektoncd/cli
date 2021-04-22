@@ -22,7 +22,6 @@ import (
 	"github.com/tektoncd/cli/pkg/test"
 	"github.com/tektoncd/triggers/pkg/apis/triggers/v1alpha1"
 	triggertest "github.com/tektoncd/triggers/test"
-	tb "github.com/tektoncd/triggers/test/builder"
 	corev1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 )
@@ -39,9 +38,24 @@ func TestTriggerTemplateDelete(t *testing.T) {
 	seeds := make([]triggertest.Clients, 0)
 	for i := 0; i < 5; i++ {
 		tts := []*v1alpha1.TriggerTemplate{
-			tb.TriggerTemplate("tt-1", "ns"),
-			tb.TriggerTemplate("tt-2", "ns"),
-			tb.TriggerTemplate("tt-3", "ns"),
+			{
+				ObjectMeta: metav1.ObjectMeta{
+					Name:      "tt-1",
+					Namespace: "ns",
+				},
+			},
+			{
+				ObjectMeta: metav1.ObjectMeta{
+					Name:      "tt-2",
+					Namespace: "ns",
+				},
+			},
+			{
+				ObjectMeta: metav1.ObjectMeta{
+					Name:      "tt-3",
+					Namespace: "ns",
+				},
+			},
 		}
 		ctx, _ := test.SetupFakeContext(t)
 		cs := triggertest.SeedResources(t, ctx, triggertest.Resources{TriggerTemplates: tts, Namespaces: ns})
