@@ -21,7 +21,6 @@ import (
 	"github.com/tektoncd/cli/pkg/test"
 	"github.com/tektoncd/triggers/pkg/apis/triggers/v1alpha1"
 	triggertest "github.com/tektoncd/triggers/test"
-	tb "github.com/tektoncd/triggers/test/builder"
 	"gotest.tools/v3/golden"
 	corev1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
@@ -73,7 +72,12 @@ func TestTriggerBindingDescribe_Empty(t *testing.T) {
 
 func TestTriggerBindingDescribe_NoParams(t *testing.T) {
 	tbs := []*v1alpha1.TriggerBinding{
-		tb.TriggerBinding("tb1", "ns"),
+		{
+			ObjectMeta: metav1.ObjectMeta{
+				Name:      "tb1",
+				Namespace: "ns",
+			},
+		},
 	}
 	cs := test.SeedTestResources(t, triggertest.Resources{TriggerBindings: tbs, Namespaces: []*corev1.Namespace{{
 		ObjectMeta: metav1.ObjectMeta{
@@ -92,9 +96,20 @@ func TestTriggerBindingDescribe_NoParams(t *testing.T) {
 
 func TestTriggerBindingDescribe_WithParams(t *testing.T) {
 	tbs := []*v1alpha1.TriggerBinding{
-		tb.TriggerBinding("tb1", "ns",
-			tb.TriggerBindingSpec(
-				tb.TriggerBindingParam("key", "value"))),
+		{
+			ObjectMeta: metav1.ObjectMeta{
+				Name:      "tb1",
+				Namespace: "ns",
+			},
+			Spec: v1alpha1.TriggerBindingSpec{
+				Params: []v1alpha1.Param{
+					{
+						Name:  "key",
+						Value: "value",
+					},
+				},
+			},
+		},
 	}
 	cs := test.SeedTestResources(t, triggertest.Resources{TriggerBindings: tbs, Namespaces: []*corev1.Namespace{{
 		ObjectMeta: metav1.ObjectMeta{
@@ -113,9 +128,20 @@ func TestTriggerBindingDescribe_WithParams(t *testing.T) {
 
 func TestTriggerBindingDescribe_WithOutputName(t *testing.T) {
 	tbs := []*v1alpha1.TriggerBinding{
-		tb.TriggerBinding("tb1", "ns",
-			tb.TriggerBindingSpec(
-				tb.TriggerBindingParam("key", "value"))),
+		{
+			ObjectMeta: metav1.ObjectMeta{
+				Name:      "tb1",
+				Namespace: "ns",
+			},
+			Spec: v1alpha1.TriggerBindingSpec{
+				Params: []v1alpha1.Param{
+					{
+						Name:  "key",
+						Value: "value",
+					},
+				},
+			},
+		},
 	}
 	cs := test.SeedTestResources(t, triggertest.Resources{TriggerBindings: tbs, Namespaces: []*corev1.Namespace{{
 		ObjectMeta: metav1.ObjectMeta{
@@ -134,9 +160,20 @@ func TestTriggerBindingDescribe_WithOutputName(t *testing.T) {
 
 func TestTriggerBindingDescribe_WithOutputYaml(t *testing.T) {
 	tbs := []*v1alpha1.TriggerBinding{
-		tb.TriggerBinding("tb1", "ns",
-			tb.TriggerBindingSpec(
-				tb.TriggerBindingParam("key", "value"))),
+		{
+			ObjectMeta: metav1.ObjectMeta{
+				Name:      "tb1",
+				Namespace: "ns",
+			},
+			Spec: v1alpha1.TriggerBindingSpec{
+				Params: []v1alpha1.Param{
+					{
+						Name:  "key",
+						Value: "value",
+					},
+				},
+			},
+		},
 	}
 	cs := test.SeedTestResources(t, triggertest.Resources{TriggerBindings: tbs, Namespaces: []*corev1.Namespace{{
 		ObjectMeta: metav1.ObjectMeta{
@@ -155,12 +192,32 @@ func TestTriggerBindingDescribe_WithOutputYaml(t *testing.T) {
 
 func TestTriggerBindingDescribe_WithMultipleParams(t *testing.T) {
 	tbs := []*v1alpha1.TriggerBinding{
-		tb.TriggerBinding("tb1", "ns",
-			tb.TriggerBindingSpec(
-				tb.TriggerBindingParam("key1", "value1"),
-				tb.TriggerBindingParam("key2", "value2"),
-				tb.TriggerBindingParam("key3", "value3"),
-				tb.TriggerBindingParam("key4", "value4"))),
+		{
+			ObjectMeta: metav1.ObjectMeta{
+				Name:      "tb1",
+				Namespace: "ns",
+			},
+			Spec: v1alpha1.TriggerBindingSpec{
+				Params: []v1alpha1.Param{
+					{
+						Name:  "key1",
+						Value: "value1",
+					},
+					{
+						Name:  "key2",
+						Value: "value2",
+					},
+					{
+						Name:  "key3",
+						Value: "value3",
+					},
+					{
+						Name:  "key4",
+						Value: "value4",
+					},
+				},
+			},
+		},
 	}
 	cs := test.SeedTestResources(t, triggertest.Resources{TriggerBindings: tbs, Namespaces: []*corev1.Namespace{{
 		ObjectMeta: metav1.ObjectMeta{

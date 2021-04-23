@@ -23,10 +23,8 @@ import (
 	"github.com/jonboulle/clockwork"
 	"github.com/spf13/cobra"
 	"github.com/tektoncd/cli/pkg/test"
-	cb "github.com/tektoncd/cli/pkg/test/builder"
 	"github.com/tektoncd/triggers/pkg/apis/triggers/v1alpha1"
 	triggertest "github.com/tektoncd/triggers/test"
-	tb "github.com/tektoncd/triggers/test/builder"
 	"gotest.tools/v3/golden"
 	corev1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
@@ -54,11 +52,40 @@ func TestListTriggerBinding(t *testing.T) {
 	}
 
 	tbs := []*v1alpha1.TriggerBinding{
-		tb.TriggerBinding("tb0", "bar", cb.TriggerBindingCreationTime(now.Add(-2*time.Minute))),
-		tb.TriggerBinding("tb1", "foo", cb.TriggerBindingCreationTime(now.Add(-2*time.Minute))),
-		tb.TriggerBinding("tb2", "foo", cb.TriggerBindingCreationTime(now.Add(-30*time.Second))),
-		tb.TriggerBinding("tb3", "foo", cb.TriggerBindingCreationTime(now.Add(-200*time.Hour))),
-		tb.TriggerBinding("tb4", "foo"),
+		{
+			ObjectMeta: metav1.ObjectMeta{
+				Name:              "tb0",
+				Namespace:         "bar",
+				CreationTimestamp: metav1.Time{Time: now.Add(-2 * time.Minute)},
+			},
+		},
+		{
+			ObjectMeta: metav1.ObjectMeta{
+				Name:              "tb1",
+				Namespace:         "foo",
+				CreationTimestamp: metav1.Time{Time: now.Add(-2 * time.Minute)},
+			},
+		},
+		{
+			ObjectMeta: metav1.ObjectMeta{
+				Name:              "tb2",
+				Namespace:         "foo",
+				CreationTimestamp: metav1.Time{Time: now.Add(-30 * time.Second)},
+			},
+		},
+		{
+			ObjectMeta: metav1.ObjectMeta{
+				Name:              "tb3",
+				Namespace:         "foo",
+				CreationTimestamp: metav1.Time{Time: now.Add(-200 * time.Hour)},
+			},
+		},
+		{
+			ObjectMeta: metav1.ObjectMeta{
+				Name:      "tb4",
+				Namespace: "foo",
+			},
+		},
 	}
 
 	tests := []struct {
