@@ -21,9 +21,8 @@ import (
 	"github.com/tektoncd/cli/pkg/test"
 	"github.com/tektoncd/triggers/pkg/apis/triggers/v1alpha1"
 	triggertest "github.com/tektoncd/triggers/test"
-	ctb "github.com/tektoncd/triggers/test/builder"
 	"gotest.tools/v3/golden"
-	v1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 )
 
 func TestClusterTriggerBindingDescribe_NonExistedName(t *testing.T) {
@@ -52,7 +51,11 @@ func TestClusterTriggerBindingDescribe_Empty(t *testing.T) {
 
 func TestClusterTriggerBindingDescribe_NoParams(t *testing.T) {
 	ctbs := []*v1alpha1.ClusterTriggerBinding{
-		ctb.ClusterTriggerBinding("ctb1"),
+		{
+			ObjectMeta: metav1.ObjectMeta{
+				Name: "ctb1",
+			},
+		},
 	}
 	cs := test.SeedTestResources(t, triggertest.Resources{ClusterTriggerBindings: ctbs})
 	p := &test.Params{Triggers: cs.Triggers, Kube: cs.Kube}
@@ -67,9 +70,19 @@ func TestClusterTriggerBindingDescribe_NoParams(t *testing.T) {
 
 func TestTriggerBindingDescribe_WithParams(t *testing.T) {
 	ctbs := []*v1alpha1.ClusterTriggerBinding{
-		ctb.ClusterTriggerBinding("ctb1",
-			ctb.ClusterTriggerBindingSpec(
-				ctb.TriggerBindingParam("key", "value"))),
+		{
+			ObjectMeta: metav1.ObjectMeta{
+				Name: "ctb1",
+			},
+			Spec: v1alpha1.TriggerBindingSpec{
+				Params: []v1alpha1.Param{
+					{
+						Name:  "key",
+						Value: "value",
+					},
+				},
+			},
+		},
 	}
 	cs := test.SeedTestResources(t, triggertest.Resources{ClusterTriggerBindings: ctbs})
 	p := &test.Params{Triggers: cs.Triggers, Kube: cs.Kube}
@@ -84,9 +97,19 @@ func TestTriggerBindingDescribe_WithParams(t *testing.T) {
 
 func TestClusterTriggerBindingDescribe_WithOutputName(t *testing.T) {
 	ctbs := []*v1alpha1.ClusterTriggerBinding{
-		ctb.ClusterTriggerBinding("ctb1",
-			ctb.ClusterTriggerBindingSpec(
-				ctb.TriggerBindingParam("key", "value"))),
+		{
+			ObjectMeta: metav1.ObjectMeta{
+				Name: "ctb1",
+			},
+			Spec: v1alpha1.TriggerBindingSpec{
+				Params: []v1alpha1.Param{
+					{
+						Name:  "key",
+						Value: "value",
+					},
+				},
+			},
+		},
 	}
 	cs := test.SeedTestResources(t, triggertest.Resources{ClusterTriggerBindings: ctbs})
 	p := &test.Params{Triggers: cs.Triggers, Kube: cs.Kube}
@@ -101,9 +124,19 @@ func TestClusterTriggerBindingDescribe_WithOutputName(t *testing.T) {
 
 func TestClusterTriggerBindingDescribe_WithOutputYaml(t *testing.T) {
 	ctbs := []*v1alpha1.ClusterTriggerBinding{
-		ctb.ClusterTriggerBinding("ctb1",
-			ctb.ClusterTriggerBindingSpec(
-				ctb.TriggerBindingParam("key", "value"))),
+		{
+			ObjectMeta: metav1.ObjectMeta{
+				Name: "ctb1",
+			},
+			Spec: v1alpha1.TriggerBindingSpec{
+				Params: []v1alpha1.Param{
+					{
+						Name:  "key",
+						Value: "value",
+					},
+				},
+			},
+		},
 	}
 	cs := test.SeedTestResources(t, triggertest.Resources{ClusterTriggerBindings: ctbs})
 	p := &test.Params{Triggers: cs.Triggers, Kube: cs.Kube}
@@ -118,12 +151,31 @@ func TestClusterTriggerBindingDescribe_WithOutputYaml(t *testing.T) {
 
 func TestClusterTriggerBindingDescribe_WithMultipleParams(t *testing.T) {
 	ctbs := []*v1alpha1.ClusterTriggerBinding{
-		ctb.ClusterTriggerBinding("ctb1",
-			ctb.ClusterTriggerBindingSpec(
-				ctb.TriggerBindingParam("key1", "value1"),
-				ctb.TriggerBindingParam("key2", "value2"),
-				ctb.TriggerBindingParam("key3", "value3"),
-				ctb.TriggerBindingParam("key4", "value4"))),
+		{
+			ObjectMeta: metav1.ObjectMeta{
+				Name: "ctb1",
+			},
+			Spec: v1alpha1.TriggerBindingSpec{
+				Params: []v1alpha1.Param{
+					{
+						Name:  "key1",
+						Value: "value1",
+					},
+					{
+						Name:  "key2",
+						Value: "value2",
+					},
+					{
+						Name:  "key3",
+						Value: "value3",
+					},
+					{
+						Name:  "key4",
+						Value: "value4",
+					},
+				},
+			},
+		},
 	}
 	cs := test.SeedTestResources(t, triggertest.Resources{ClusterTriggerBindings: ctbs})
 	p := &test.Params{Triggers: cs.Triggers, Kube: cs.Kube}
@@ -139,7 +191,7 @@ func TestClusterTriggerBindingDescribe_WithMultipleParams(t *testing.T) {
 func TestClusterTriggerBindingDescribe_AutoSelect(t *testing.T) {
 	ctbs := []*v1alpha1.ClusterTriggerBinding{
 		{
-			ObjectMeta: v1.ObjectMeta{
+			ObjectMeta: metav1.ObjectMeta{
 				Name: "ctb1",
 			},
 		},

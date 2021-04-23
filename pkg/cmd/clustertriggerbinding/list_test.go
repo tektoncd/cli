@@ -23,21 +23,39 @@ import (
 	"github.com/jonboulle/clockwork"
 	"github.com/spf13/cobra"
 	"github.com/tektoncd/cli/pkg/test"
-	cb "github.com/tektoncd/cli/pkg/test/builder"
 	"github.com/tektoncd/triggers/pkg/apis/triggers/v1alpha1"
 	triggertest "github.com/tektoncd/triggers/test"
-	tb "github.com/tektoncd/triggers/test/builder"
 	"gotest.tools/v3/golden"
+	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 )
 
 func TestListClusterTriggerBinding(t *testing.T) {
 	now := time.Now()
 
 	ctbs := []*v1alpha1.ClusterTriggerBinding{
-		tb.ClusterTriggerBinding("ctb1", cb.ClusterTriggerBindingCreationTime(now.Add(-2*time.Minute))),
-		tb.ClusterTriggerBinding("ctb2", cb.ClusterTriggerBindingCreationTime(now.Add(-30*time.Second))),
-		tb.ClusterTriggerBinding("ctb3", cb.ClusterTriggerBindingCreationTime(now.Add(-200*time.Hour))),
-		tb.ClusterTriggerBinding("ctb4"),
+		{
+			ObjectMeta: metav1.ObjectMeta{
+				Name:              "ctb1",
+				CreationTimestamp: metav1.Time{Time: now.Add(-2 * time.Minute)},
+			},
+		},
+		{
+			ObjectMeta: metav1.ObjectMeta{
+				Name:              "ctb2",
+				CreationTimestamp: metav1.Time{Time: now.Add(-30 * time.Second)},
+			},
+		},
+		{
+			ObjectMeta: metav1.ObjectMeta{
+				Name:              "ctb3",
+				CreationTimestamp: metav1.Time{Time: now.Add(-200 * time.Hour)},
+			},
+		},
+		{
+			ObjectMeta: metav1.ObjectMeta{
+				Name: "ctb4",
+			},
+		},
 	}
 
 	tests := []struct {

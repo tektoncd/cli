@@ -22,16 +22,29 @@ import (
 	"github.com/tektoncd/cli/pkg/test"
 	"github.com/tektoncd/triggers/pkg/apis/triggers/v1alpha1"
 	triggertest "github.com/tektoncd/triggers/test"
-	tb "github.com/tektoncd/triggers/test/builder"
+	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 )
 
 func TestClusterTriggerBindingDelete(t *testing.T) {
 	seeds := make([]triggertest.Clients, 0)
 	for i := 0; i < 5; i++ {
+
 		ctbs := []*v1alpha1.ClusterTriggerBinding{
-			tb.ClusterTriggerBinding("ctb-1"),
-			tb.ClusterTriggerBinding("ctb-2"),
-			tb.ClusterTriggerBinding("ctb-3"),
+			{
+				ObjectMeta: metav1.ObjectMeta{
+					Name: "ctb-1",
+				},
+			},
+			{
+				ObjectMeta: metav1.ObjectMeta{
+					Name: "ctb-2",
+				},
+			},
+			{
+				ObjectMeta: metav1.ObjectMeta{
+					Name: "ctb-3",
+				},
+			},
 		}
 		ctx, _ := test.SetupFakeContext(t)
 		cs := triggertest.SeedResources(t, ctx, triggertest.Resources{ClusterTriggerBindings: ctbs})
