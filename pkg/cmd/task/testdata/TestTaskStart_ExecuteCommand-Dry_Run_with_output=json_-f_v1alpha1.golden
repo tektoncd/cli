@@ -72,8 +72,12 @@
 			],
 			"params": [
 				{
-					"name": "myarg",
-					"value": "arg"
+					"name": "pathToContext",
+					"value": "/context"
+				},
+				{
+					"name": "pathToDockerFile",
+					"value": "/path"
 				}
 			]
 		},

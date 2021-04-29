@@ -173,7 +173,8 @@ func Test_start_has_task_filename_v1alpha1(t *testing.T) {
 	}
 	c := Command(&test.Params{Tekton: cs.Pipeline, Kube: cs.Kube, Resource: cs.Resource, Dynamic: dc})
 
-	got, err := test.ExecuteCommand(c, "start", "-n", "ns", "--filename=./testdata/task-v1alpha1.yaml", "-i=docker-source=/path", "-o=build-image=image", "-p=pathToDockerFile=path")
+	got, err := test.ExecuteCommand(c, "start", "-n", "ns", "--filename=./testdata/task-v1alpha1.yaml",
+		"-i=docker-source=/path", "-o=build-image=image", "-p=pathToDockerFile=path", "--use-param-defaults")
 	if err != nil {
 		t.Errorf("Not expecting an error, but got %s", err.Error())
 	}
@@ -225,7 +226,8 @@ func Test_start_has_task_filename_v1beta1(t *testing.T) {
 	}
 	c := Command(&test.Params{Tekton: cs.Pipeline, Kube: cs.Kube, Dynamic: dc})
 
-	got, err := test.ExecuteCommand(c, "start", "-n", "ns", "--filename=./testdata/task-v1beta1.yaml", "-i=docker-source=/path", "-o=build-image=image", "-p=pathToDockerFile=path")
+	got, err := test.ExecuteCommand(c, "start", "-n", "ns", "--filename=./testdata/task-v1beta1.yaml",
+		"-i=docker-source=/path", "-o=build-image=image", "-p=pathToDockerFile=path", "--use-param-defaults")
 	if err != nil {
 		t.Errorf("Not expecting an error, but got %s", err.Error())
 	}
@@ -3528,6 +3530,8 @@ func Test_start_task_invalid_input_res(t *testing.T) {
 		"-o=some=some",
 		"-p=some=some",
 		"-n", "ns",
+		"-p=myarg=abc",
+		"-p=print=xyz",
 	)
 	expected := "Error: invalid input format for resource parameter: my-repo git-repo\n"
 	test.AssertOutput(t, expected, got)
@@ -3617,6 +3621,8 @@ func Test_start_task_invalid_input_res_v1beta1(t *testing.T) {
 		"-o=some=some",
 		"-p=some=some",
 		"-n", "ns",
+		"-p=myarg=abc",
+		"-p=print=xyz",
 	)
 	expected := "Error: invalid input format for resource parameter: my-repo git-repo\n"
 	test.AssertOutput(t, expected, got)
@@ -3868,6 +3874,8 @@ func Test_start_task_invalid_output_res(t *testing.T) {
 		"-i=my-repo=something",
 		"-p=print=cat",
 		"-n", "ns",
+		"-p=myarg=abc",
+		"-p=print=xyz",
 	)
 	expected := "Error: invalid input format for resource parameter: code-image image-final\n"
 	test.AssertOutput(t, expected, got)
@@ -3955,6 +3963,8 @@ func Test_start_task_invalid_output_res_v1beta1(t *testing.T) {
 		"-i=my-repo=something",
 		"-p=print=cat",
 		"-n", "ns",
+		"-p=myarg=abc",
+		"-p=print=xyz",
 	)
 	expected := "Error: invalid input format for resource parameter: code-image image-final\n"
 	test.AssertOutput(t, expected, got)
@@ -4225,6 +4235,8 @@ func Test_start_task_invalid_label(t *testing.T) {
 		"-o=out=out",
 		"-p=param=param",
 		"-n", "ns",
+		"-p=myarg=abc",
+		"-p=print=xyz",
 	)
 	expected := "Error: invalid input format for label parameter: myarg boom\n"
 	test.AssertOutput(t, expected, got)
@@ -4313,6 +4325,8 @@ func Test_start_task_invalid_label_v1beta1(t *testing.T) {
 		"-o=out=out",
 		"-p=param=param",
 		"-n", "ns",
+		"-p=myarg=abc",
+		"-p=print=xyz",
 	)
 	expected := "Error: invalid input format for label parameter: myarg boom\n"
 	test.AssertOutput(t, expected, got)
@@ -4693,6 +4707,7 @@ func Test_start_task_wrong_param(t *testing.T) {
 		"-i=my-repo=git",
 		"-i=my-image=image",
 		"-p=myar=value1",
+		"-p=myarg=value1",
 		"-p=print=boom,boom",
 		"-l=key=value",
 		"-o=code-image=output-image",
@@ -4784,6 +4799,7 @@ func Test_start_task_wrong_param_v1beta1(t *testing.T) {
 		"-i=my-repo=git",
 		"-i=my-image=image",
 		"-p=myar=value1",
+		"-p=myarg=value1",
 		"-p=print=boom,boom",
 		"-l=key=value",
 		"-o=code-image=output-image",
@@ -5067,6 +5083,8 @@ func TestTaskStart_ExecuteCommand(t *testing.T) {
 				"-i=my-repo=git-repo",
 				"-o=code-image=output-image",
 				"-s=svc1",
+				"-p=myarg=arg",
+				"-p=task-param=arg",
 				"-n", "ns",
 				"--dry-run",
 				"--output", "invalid"},
@@ -5081,6 +5099,7 @@ func TestTaskStart_ExecuteCommand(t *testing.T) {
 				"-i=my-repo=git-repo",
 				"-o=code-image=output-image",
 				"-p=myarg=arg",
+				"-p=task-param=arg",
 				"-s=svc1",
 				"-n", "ns",
 				"--dry-run"},
@@ -5096,6 +5115,8 @@ func TestTaskStart_ExecuteCommand(t *testing.T) {
 				"-i=my-repo=git-repo",
 				"-o=code-image=output-image",
 				"-s=svc1",
+				"-p=myarg=arg",
+				"-p=task-param=arg",
 				"-n", "ns",
 				"--dry-run"},
 			namespace:  "",
@@ -5190,6 +5211,7 @@ func TestTaskStart_ExecuteCommand(t *testing.T) {
 				"-i=my-repo=git-repo",
 				"-o=code-image=output-image",
 				"-p=myarg=arg",
+				"-p=task-param=arg",
 				"-s=svc1",
 				"-n", "ns",
 				"--dry-run",
@@ -5208,7 +5230,8 @@ func TestTaskStart_ExecuteCommand(t *testing.T) {
 				"-s=svc1",
 				"-i=docker-source=git",
 				"-o=builtImage=image",
-				"-p=myarg=arg",
+				"-p=pathToContext=/context",
+				"-p=pathToDockerFile=/path",
 				"--dry-run",
 				"--output=yaml"},
 			namespace:  "",
@@ -5223,6 +5246,7 @@ func TestTaskStart_ExecuteCommand(t *testing.T) {
 				"-i=my-repo=git-repo",
 				"-o=code-image=output-image",
 				"-p=myarg=arg",
+				"-p=task-param=arg",
 				"-s=svc1",
 				"-n", "ns",
 				"--dry-run",
@@ -5239,7 +5263,8 @@ func TestTaskStart_ExecuteCommand(t *testing.T) {
 				"-f", "./testdata/task-v1alpha1.yaml",
 				"-n", "ns",
 				"-s=svc1",
-				"-p=myarg=arg",
+				"-p=pathToContext=/context",
+				"-p=pathToDockerFile=/path",
 				"-i=docker-source=git",
 				"-o=builtImage=image",
 				"--dry-run",
@@ -5259,7 +5284,8 @@ func TestTaskStart_ExecuteCommand(t *testing.T) {
 				"-i=docker-source=git",
 				"-o=builtImage=image",
 				"--dry-run",
-				"--param=myarg=BomBom",
+				"-p=pathToContext=/context",
+				"-p=pathToDockerFile=/path",
 			},
 			namespace:  "",
 			dynamic:    dc1,
@@ -5388,6 +5414,7 @@ func TestTaskStart_ExecuteCommand_v1beta1(t *testing.T) {
 				"-i=my-repo=git-repo",
 				"-o=code-image=output-image",
 				"-p=myarg=arg",
+				"-p=task-param=arg",
 				"-s=svc1",
 				"-n", "ns",
 				"--dry-run",
@@ -5403,6 +5430,7 @@ func TestTaskStart_ExecuteCommand_v1beta1(t *testing.T) {
 				"-i=my-repo=git-repo",
 				"-o=code-image=output-image",
 				"-p=myarg=arg",
+				"-p=task-param=arg",
 				"-s=svc1",
 				"-n", "ns",
 				"--dry-run"},
@@ -5500,7 +5528,8 @@ func TestTaskStart_ExecuteCommand_v1beta1(t *testing.T) {
 				"-s=svc1",
 				"-i=docker-source=git",
 				"-o=builtImage=image",
-				"-p=myarg=arg",
+				"-p=pathToContext=/context",
+				"-p=pathToDockerFile=/path",
 				"--dry-run",
 				"--output=yaml"},
 			namespace:  "",
@@ -5515,6 +5544,7 @@ func TestTaskStart_ExecuteCommand_v1beta1(t *testing.T) {
 				"-i=my-repo=git-repo",
 				"-o=code-image=output-image",
 				"-p=myarg=arg",
+				"-p=task-param=arg",
 				"-s=svc1",
 				"-n", "ns",
 				"--dry-run",
@@ -5531,6 +5561,7 @@ func TestTaskStart_ExecuteCommand_v1beta1(t *testing.T) {
 				"-i=my-repo=git-repo",
 				"-o=code-image=output-image",
 				"-p=myarg=arg",
+				"-p=task-param=arg",
 				"-s=svc1",
 				"-n", "ns",
 				"--dry-run",
@@ -5548,7 +5579,8 @@ func TestTaskStart_ExecuteCommand_v1beta1(t *testing.T) {
 				"-f", "./testdata/task-v1beta1.yaml",
 				"-n", "ns",
 				"-s=svc1",
-				"-p=myarg=arg",
+				"-p=pathToContext=/context",
+				"-p=pathToDockerFile=/path",
 				"-i=docker-source=git",
 				"-o=builtImage=image",
 				"--dry-run",
@@ -5568,7 +5600,8 @@ func TestTaskStart_ExecuteCommand_v1beta1(t *testing.T) {
 				"-i=docker-source=git",
 				"-o=builtImage=image",
 				"--dry-run",
-				"--param=myarg=BomBom",
+				"-p=pathToContext=/context",
+				"-p=pathToDockerFile=/path",
 			},
 			namespace:  "",
 			dynamic:    dc,
@@ -5582,6 +5615,7 @@ func TestTaskStart_ExecuteCommand_v1beta1(t *testing.T) {
 				"-i=my-repo=git-repo",
 				"-o=code-image=output-image",
 				"-p=myarg=arg",
+				"-p=task-param=arg",
 				"-s=svc1",
 				"-n", "ns",
 				"--pod-template", "./testdata/podtemplate.yaml",

@@ -9,6 +9,8 @@ spec:
     params:
     - name: myarg
       value: arg
+    - name: task-param
+      value: arg
     resources:
     - name: my-repo
       resourceRef:

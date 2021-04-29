@@ -8,6 +8,8 @@ spec:
   params:
   - name: myarg
     value: arg
+  - name: task-param
+    value: arg
   resources:
     inputs:
     - name: my-repo

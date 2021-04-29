@@ -95,3 +95,16 @@ func FilterParamsByType(params []v1beta1.ParamSpec) {
 		paramByType[p.Name] = v1beta1.ParamTypeArray
 	}
 }
+
+// ParseParams parse the params and return as map
+func ParseParams(params []string) (map[string]string, error) {
+	parsedParams := make(map[string]string)
+	for _, p := range params {
+		r := strings.SplitN(p, "=", 2)
+		if len(r) != 2 {
+			return nil, errors.New(invalidParam + p)
+		}
+		parsedParams[r[0]] = r[1]
+	}
+	return parsedParams, nil
+}
