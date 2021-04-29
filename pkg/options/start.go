@@ -287,9 +287,12 @@ func (intOpts *InteractiveOpts) TaskOutputResources(task *v1beta1.Task, f func(v
 	return nil
 }
 
-func (intOpts *InteractiveOpts) TaskParams(task *v1beta1.Task, useParamDefaults bool) error {
+func (intOpts *InteractiveOpts) TaskParams(task *v1beta1.Task, skipParams map[string]string, useParamDefaults bool) error {
 	for _, param := range task.Spec.Params {
 		if param.Default == nil && useParamDefaults || !useParamDefaults {
+			if _, toSkip := skipParams[param.Name]; toSkip {
+				continue
+			}
 			var ans, ques, defaultValue string
 			ques = fmt.Sprintf("Value for param `%s` of type `%s`?", param.Name, param.Type)
 			input := &survey.Input{}

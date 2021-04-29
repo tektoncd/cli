@@ -167,6 +167,35 @@ Waiting for logs to be available...
 		})
 	})
 
+	t.Run("Start TaskRun using tkn task start command with passing one param and tkn will ask for other", func(t *testing.T) {
+		tkn.RunInteractiveTests(t, &cli.Prompt{
+			CmdArgs: []string{"task", "start", "read-task",
+				"-i=source=" + tePipelineGitResourceName,
+				"-p=FILEPATH=docs",
+				"--showlog"},
+			Procedure: func(c *expect.Console) error {
+
+				if _, err := c.ExpectString("Value for param `FILENAME` of type `string`?"); err != nil {
+					return err
+				}
+
+				if _, err := c.SendLine("README.md"); err != nil {
+					return err
+				}
+
+				if _, err := c.Send(string(terminal.KeyEnter)); err != nil {
+					return err
+				}
+
+				if _, err := c.ExpectEOF(); err != nil {
+					return err
+				}
+
+				c.Close()
+				return nil
+			}})
+	})
+
 	t.Run("Validate interactive task logs, with  follow mode (-f) ", func(t *testing.T) {
 		tkn.RunInteractiveTests(t, &cli.Prompt{
 			CmdArgs: []string{"task", "logs", "-f"},

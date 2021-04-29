@@ -235,3 +235,17 @@ func Test_parseParam(t *testing.T) {
 		})
 	}
 }
+
+func Test_ParseParams(t *testing.T) {
+
+	pass := []string{"abc=bcd", "one=two"}
+	got, _ := ParseParams(pass)
+	test.AssertOutput(t, "bcd", got["abc"])
+
+	pass = []string{"abc"}
+	_, err := ParseParams(pass)
+	if err == nil {
+		t.Errorf("Expected error")
+	}
+	test.AssertOutput(t, "invalid input format for param parameter: abc", err.Error())
+}

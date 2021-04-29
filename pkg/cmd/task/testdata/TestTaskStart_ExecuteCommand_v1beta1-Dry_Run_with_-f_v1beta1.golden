@@ -6,8 +6,10 @@ metadata:
   namespace: ns
 spec:
   params:
-  - name: myarg
-    value: arg
+  - name: pathToContext
+    value: /context
+  - name: pathToDockerFile
+    value: /path
   resources:
     inputs:
     - name: docker-source

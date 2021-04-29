@@ -7,8 +7,10 @@ metadata:
 spec:
   inputs:
     params:
-    - name: myarg
-      value: arg
+    - name: pathToContext
+      value: /context
+    - name: pathToDockerFile
+      value: /path
     resources:
     - name: docker-source
       resourceRef:

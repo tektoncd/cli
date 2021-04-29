@@ -24,6 +24,10 @@
 				{
 					"name": "myarg",
 					"value": "arg"
+				},
+				{
+					"name": "task-param",
+					"value": "arg"
 				}
 			]
 		},
