@@ -17,6 +17,7 @@ package main
 import (
 	"fmt"
 	"os"
+	"os/exec"
 	"path/filepath"
 	"syscall"
 
@@ -44,10 +45,14 @@ func main() {
 		if err != nil {
 			fmt.Fprintf(os.Stderr, "Error getting plugin folder: %v", err)
 		}
-		exCmd, err := findPlugin(pluginDir, pluginCmd)
+		exCmd, err := findBinaryPluginDir(pluginDir, pluginCmd)
 		if err != nil {
-			// Can't find the binary in PATH, bailing to usual execution
-			goto CoreTkn
+			// If we can't find the plugin in the plugin dir, try in the user
+			// PATH
+			exCmd, err = exec.LookPath(pluginCmd)
+			if err != nil {
+				goto CoreTkn
+			}
 		}
 
 		if err := syscall.Exec(exCmd, append([]string{exCmd}, os.Args[2:]...), os.Environ()); err != nil {
@@ -77,7 +82,8 @@ func getPluginDir() (string, error) {
 	return homedir.Expand(pluginDir)
 }
 
-func findPlugin(dir, cmd string) (string, error) {
+// Find a binary in Plugin Directory
+func findBinaryPluginDir(dir, cmd string) (string, error) {
 	path := filepath.Join(dir, cmd)
 	_, err := os.Stat(path)
 	if err == nil {
