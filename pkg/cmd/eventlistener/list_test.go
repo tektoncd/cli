@@ -23,13 +23,15 @@ import (
 	"github.com/jonboulle/clockwork"
 	"github.com/spf13/cobra"
 	"github.com/tektoncd/cli/pkg/test"
-	cb "github.com/tektoncd/cli/pkg/test/builder"
 	"github.com/tektoncd/triggers/pkg/apis/triggers/v1alpha1"
 	triggertest "github.com/tektoncd/triggers/test"
-	tb "github.com/tektoncd/triggers/test/builder"
 	"gotest.tools/v3/golden"
 	corev1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+	"knative.dev/pkg/apis"
+	duckv1 "knative.dev/pkg/apis/duck/v1"
+	duckv1alpha1 "knative.dev/pkg/apis/duck/v1alpha1"
+	beta1 "knative.dev/pkg/apis/duck/v1beta1"
 )
 
 func TestListEventListener(t *testing.T) {
@@ -53,19 +55,148 @@ func TestListEventListener(t *testing.T) {
 		},
 	}
 
-	elStatusTrue := tb.EventListenerStatus(tb.EventListenerCondition("", "True", "", ""))
-	elStatusFalse := tb.EventListenerStatus(tb.EventListenerCondition("", "False", "", ""))
 	els := []*v1alpha1.EventListener{
-		tb.EventListener("tb0", "bar", cb.EventListenerCreationTime(now.Add(-2*time.Minute)), tb.EventListenerStatus(
-			tb.EventListenerAddress("tb0-listener.default.svc.cluster.local")), elStatusTrue),
-		tb.EventListener("tb1", "foo", cb.EventListenerCreationTime(now.Add(-2*time.Minute)), tb.EventListenerStatus(
-			tb.EventListenerAddress("tb1-listener.default.svc.cluster.local")), elStatusTrue),
-		tb.EventListener("tb2", "foo", cb.EventListenerCreationTime(now.Add(-30*time.Second)), tb.EventListenerStatus(
-			tb.EventListenerAddress("tb2-listener.default.svc.cluster.local")), elStatusTrue),
-		tb.EventListener("tb3", "foo", cb.EventListenerCreationTime(now.Add(-200*time.Hour)), tb.EventListenerStatus(
-			tb.EventListenerAddress("tb3-listener.default.svc.cluster.local")), elStatusTrue),
-		tb.EventListener("tb4", "foo"),
-		tb.EventListener("tb5", "foo", cb.EventListenerCreationTime(now.Add(-10*time.Second)), elStatusFalse),
+		{
+			ObjectMeta: metav1.ObjectMeta{
+				Name:              "tb0",
+				Namespace:         "bar",
+				CreationTimestamp: metav1.Time{Time: now.Add(-2 * time.Minute)},
+			},
+			Status: v1alpha1.EventListenerStatus{
+				Status: duckv1.Status{
+					Conditions: duckv1.Conditions{
+						apis.Condition{
+							Type:    "",
+							Status:  "True",
+							Message: "",
+							Reason:  "",
+						},
+					},
+				},
+				AddressStatus: duckv1alpha1.AddressStatus{
+					Address: &duckv1alpha1.Addressable{
+						Addressable: beta1.Addressable{
+							URL: &apis.URL{
+								Scheme: "http",
+								Host:   "tb0-listener.default.svc.cluster.local",
+							},
+						},
+					},
+				},
+			},
+		},
+		{
+			ObjectMeta: metav1.ObjectMeta{
+				Name:              "tb1",
+				Namespace:         "foo",
+				CreationTimestamp: metav1.Time{Time: now.Add(-2 * time.Minute)},
+			},
+			Status: v1alpha1.EventListenerStatus{
+				Status: duckv1.Status{
+					Conditions: duckv1.Conditions{
+						apis.Condition{
+							Type:    "",
+							Status:  "True",
+							Message: "",
+							Reason:  "",
+						},
+					},
+				},
+				AddressStatus: duckv1alpha1.AddressStatus{
+					Address: &duckv1alpha1.Addressable{
+						Addressable: beta1.Addressable{
+							URL: &apis.URL{
+								Scheme: "http",
+								Host:   "tb1-listener.default.svc.cluster.local",
+							},
+						},
+					},
+				},
+			},
+		},
+		{
+			ObjectMeta: metav1.ObjectMeta{
+				Name:              "tb2",
+				Namespace:         "foo",
+				CreationTimestamp: metav1.Time{Time: now.Add(-30 * time.Second)},
+			},
+			Status: v1alpha1.EventListenerStatus{
+				Status: duckv1.Status{
+					Conditions: duckv1.Conditions{
+						apis.Condition{
+							Type:    "",
+							Status:  "True",
+							Message: "",
+							Reason:  "",
+						},
+					},
+				},
+				AddressStatus: duckv1alpha1.AddressStatus{
+					Address: &duckv1alpha1.Addressable{
+						Addressable: beta1.Addressable{
+							URL: &apis.URL{
+								Scheme: "http",
+								Host:   "tb2-listener.default.svc.cluster.local",
+							},
+						},
+					},
+				},
+			},
+		},
+		{
+			ObjectMeta: metav1.ObjectMeta{
+				Name:              "tb3",
+				Namespace:         "foo",
+				CreationTimestamp: metav1.Time{Time: now.Add(-200 * time.Hour)},
+			},
+			Status: v1alpha1.EventListenerStatus{
+				Status: duckv1.Status{
+					Conditions: duckv1.Conditions{
+						apis.Condition{
+							Type:    "",
+							Status:  "True",
+							Message: "",
+							Reason:  "",
+						},
+					},
+				},
+				AddressStatus: duckv1alpha1.AddressStatus{
+					Address: &duckv1alpha1.Addressable{
+						Addressable: beta1.Addressable{
+							URL: &apis.URL{
+								Scheme: "http",
+								Host:   "tb3-listener.default.svc.cluster.local",
+							},
+						},
+					},
+				},
+			},
+		},
+		{
+			ObjectMeta: metav1.ObjectMeta{
+				Name:      "tb4",
+				Namespace: "foo",
+			},
+		},
+		{
+			ObjectMeta: metav1.ObjectMeta{
+				Name:              "tb5",
+				Namespace:         "foo",
+				CreationTimestamp: metav1.Time{Time: now.Add(-10 * time.Second)},
+			},
+			Status: v1alpha1.EventListenerStatus{
+				Status: duckv1.Status{
+					Conditions: duckv1.Conditions{
+						apis.Condition{
+							Type:    "",
+							Status:  "False",
+							Message: "",
+							Reason:  "",
+						},
+					},
+				},
+			},
+		},
 	}
 
 	tests := []struct {

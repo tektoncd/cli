@@ -22,7 +22,6 @@ import (
 	"github.com/tektoncd/cli/pkg/test"
 	"github.com/tektoncd/triggers/pkg/apis/triggers/v1alpha1"
 	triggertest "github.com/tektoncd/triggers/test"
-	tb "github.com/tektoncd/triggers/test/builder"
 	corev1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 )
@@ -39,10 +38,26 @@ func TestEventListenerDelete(t *testing.T) {
 	seeds := make([]triggertest.Clients, 0)
 	for i := 0; i < 5; i++ {
 		els := []*v1alpha1.EventListener{
-			tb.EventListener("el-1", "ns"),
-			tb.EventListener("el-2", "ns"),
-			tb.EventListener("el-3", "ns"),
+			{
+				ObjectMeta: metav1.ObjectMeta{
+					Name:      "el-1",
+					Namespace: "ns",
+				},
+			},
+			{
+				ObjectMeta: metav1.ObjectMeta{
+					Name:      "el-2",
+					Namespace: "ns",
+				},
+			},
+			{
+				ObjectMeta: metav1.ObjectMeta{
+					Name:      "el-3",
+					Namespace: "ns",
+				},
+			},
 		}
+
 		ctx, _ := test.SetupFakeContext(t)
 		cs := triggertest.SeedResources(t, ctx, triggertest.Resources{EventListeners: els, Namespaces: ns})
 		seeds = append(seeds, cs)
