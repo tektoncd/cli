@@ -29,7 +29,6 @@ import (
 
 const (
 	pluginDirEnv = "TKN_PLUGINS_DIR"
-	pluginDir    = "~/.config/tkn/plugins"
 )
 
 func main() {
@@ -67,13 +66,13 @@ func getPluginDir() (string, error) {
 	dir := os.Getenv(pluginDirEnv)
 	// if TKN_PLUGINS_DIR is set, follow it
 	if dir != "" {
-		return dir, nil
+		return homedir.Expand(dir)
 	}
-	// Respect XDG_CONFIG_HOME if set
-	if xdgHome := os.Getenv("XDG_CONFIG_HOME"); xdgHome != "" {
-		return filepath.Join(xdgHome, "tkn", "plugins"), nil
+	configDir, err := cli.ConfigDir()
+	if err != nil {
+		return "", err
 	}
-	// Fallback to default pluginDir (~/.config/tkn/plugins)
+	pluginDir := filepath.Join(configDir, "plugins")
 	return homedir.Expand(pluginDir)
 }
 

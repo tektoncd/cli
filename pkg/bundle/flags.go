@@ -2,10 +2,12 @@ package bundle
 
 import (
 	"net/http"
+	"path/filepath"
 
 	"github.com/google/go-containerregistry/pkg/authn"
 	remoteimg "github.com/google/go-containerregistry/pkg/v1/remote"
 	"github.com/spf13/pflag"
+	"github.com/tektoncd/cli/pkg/cli"
 )
 
 // RemoteOptions is a set of flags that are used configure the connection options to a registry.
@@ -61,6 +63,7 @@ type CacheOptions struct {
 
 // AddCacheFlags will define a set of flags to control how Tekton Bundle caching is done.
 func AddCacheFlags(flags *pflag.FlagSet, opts *CacheOptions) {
-	flags.StringVar(&opts.cacheDir, "cache-dir", "~/.tekton/bundles", "A directory to cache Tekton bundles in.")
+	bundleCacheDir := filepath.Join(cli.CacheDir(), "bundles")
+	flags.StringVar(&opts.cacheDir, "cache-dir", bundleCacheDir, "A directory to cache Tekton bundles in.")
 	flags.BoolVar(&opts.noCache, "no-cache", false, "If set to true, pulls a Tekton bundle from the remote even its exact digest is available in the cache.")
 }
