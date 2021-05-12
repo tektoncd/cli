@@ -286,13 +286,6 @@ func (c CatalogParser) appendVersion(res *Resource, filePath string) Result {
 	return result
 }
 
-func ignoreEOF(err error) error {
-	if err == io.EOF {
-		return nil
-	}
-	return err
-}
-
 // decode consumes the given reader and parses its contents as YAML.
 func decodeResource(reader io.Reader, kind string) (*TektonResource, error) {
 

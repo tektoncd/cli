@@ -26,10 +26,11 @@ type ClientSet interface {
 }
 
 type Installer struct {
-	cs          ClientSet
-	existingRes *unstructured.Unstructured
+	cs              ClientSet
+	existingRes     *unstructured.Unstructured
+	pipelineVersion string
 }
 
 func New(cs ClientSet) *Installer {
-	return &Installer{cs, nil}
+	return &Installer{cs, nil, ""}
 }

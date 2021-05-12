@@ -22,6 +22,7 @@ Interact with tekton hub
 ### SEE ALSO
 
 * [tkn](tkn.md)	 - CLI for tekton pipelines
+* [tkn hub check-upgrade](tkn_hub_check-upgrade.md)	 - Check for upgrades of resources if present
 * [tkn hub downgrade](tkn_hub_downgrade.md)	 - Downgrade an installed resource
 * [tkn hub get](tkn_hub_get.md)	 - Get resource manifest by its name, kind, catalog, and version
 * [tkn hub info](tkn_hub_info.md)	 - Display info of resource by its name, kind, catalog, and version
