@@ -42,7 +42,7 @@ func (p *Printer) JSON(data []byte, err error) error {
 	if err != nil {
 		fmt.Fprintf(p.out, "ERROR: %s\n", err)
 	}
-	fmt.Fprintf(p.out, string(res))
+	fmt.Fprint(p.out, string(res))
 	return nil
 }
 

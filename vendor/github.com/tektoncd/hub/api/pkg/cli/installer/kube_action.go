@@ -16,6 +16,7 @@ package installer
 
 import (
 	"context"
+	"strings"
 
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
@@ -61,6 +62,20 @@ func (i *Installer) update(object *unstructured.Unstructured, namespace string, 
 		return nil, err
 	}
 	obj, err := i.cs.Dynamic().Resource(*gvr).Namespace(namespace).Update(context.Background(), object, op)
+	if err != nil {
+		return nil, err
+	}
+	return obj, nil
+}
+
+func (i *Installer) list(kind, namespace string, op metav1.ListOptions) (*unstructured.UnstructuredList, error) {
+
+	gvrObj := schema.GroupVersionResource{Group: tektonGroup, Resource: strings.ToLower(kind) + "s"}
+	gvr, err := getGroupVersionResource(gvrObj, i.cs.Tekton().Discovery())
+	if err != nil {
+		return nil, err
+	}
+	obj, err := i.cs.Dynamic().Resource(*gvr).Namespace(namespace).List(context.Background(), op)
 	if err != nil {
 		return nil, err
 	}

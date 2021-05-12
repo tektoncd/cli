@@ -15,6 +15,7 @@
 package parser
 
 import (
+	"fmt"
 	"sync"
 
 	"github.com/tektoncd/hub/api/pkg/git"
@@ -30,7 +31,9 @@ type Parser interface {
 
 func registerSchema() {
 	beta1 := runtime.NewSchemeBuilder(v1beta1.AddToScheme)
-	beta1.AddToScheme(scheme.Scheme)
+	if err := beta1.AddToScheme(scheme.Scheme); err != nil {
+		fmt.Printf("Failed to apply all stored functions to the scheme %v", err)
+	}
 }
 
 var once sync.Once

@@ -18,9 +18,10 @@ import (
 	"fmt"
 	"strings"
 
+	"github.com/fatih/color"
 	"github.com/tektoncd/hub/api/gen/http/resource/client"
 	"github.com/tektoncd/hub/api/pkg/cli/hub"
-	"golang.org/x/crypto/ssh/terminal"
+	"golang.org/x/term"
 )
 
 var icons = map[string]string{
@@ -38,6 +39,11 @@ var icons = map[string]string{
 // FormatName returns name of resource with its latest version
 func FormatName(name, latestVersion string) string {
 	return fmt.Sprintf("%s (%s)", name, latestVersion)
+}
+
+// FormatCatalogName returns name of catalog from which the resource is
+func FormatCatalogName(catalogName string) string {
+	return strings.Title(catalogName)
 }
 
 // FormatDesc returns first 40 char of resource description
@@ -77,7 +83,7 @@ func WrapText(desc string, maxWidth, titleLength int) string {
 	}
 	desc = strings.ReplaceAll(desc, "\n", " ")
 
-	width, _, err := terminal.GetSize(0)
+	width, _, err := term.GetSize(0)
 	if err != nil {
 		return breakString(desc, maxWidth, titleLength)
 	}
@@ -103,6 +109,7 @@ func breakString(desc string, width, titleLength int) string {
 	for i := firstLineEnd; i < descLength; i = i + spaceIndex {
 		if descLength < i+width {
 			sb.WriteString(desc[i:])
+			break
 		} else {
 			spaceIndex = findSpaceIndexFromLast(desc[i : i+width])
 			sb.WriteString(desc[i:i+spaceIndex] + "\n")
@@ -141,6 +148,7 @@ func DefaultValue(val, def string) string {
 	return val
 }
 
+// FormatInstallCMD returns install command to be executed to install the resource
 func FormatInstallCMD(res hub.ResourceData, resVer hub.ResourceWithVersionData, latest bool) string {
 	var sb strings.Builder
 	sb.WriteString("tkn hub install")
@@ -157,4 +165,16 @@ func FormatInstallCMD(res hub.ResourceData, resVer hub.ResourceWithVersionData, 
 		sb.WriteString(" --from " + *res.Catalog.Name)
 	}
 	return sb.String()
+}
+
+func DecorateAttr(attrString, message string) string {
+	attr := color.Reset
+	switch attrString {
+	case "underline bold":
+		return color.New(color.Underline).Add(color.Bold).Sprintf(message)
+	case "bold":
+		attr = color.Bold
+	}
+
+	return color.New(attr).Sprintf(message)
 }

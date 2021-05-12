@@ -122,8 +122,8 @@ func (opts *options) run() error {
 		}
 	}
 
-	installer := installer.New(opts.cs)
-	opts.resource, err = installer.LookupInstalled(opts.name(), opts.kind, opts.cs.Namespace())
+	resInstaller := installer.New(opts.cs)
+	opts.resource, err = resInstaller.LookupInstalled(opts.name(), opts.kind, opts.cs.Namespace())
 	if err != nil {
 		if err = opts.lookupError(err); err != nil {
 			return err
@@ -143,12 +143,22 @@ func (opts *options) run() error {
 		return opts.isResourceNotFoundError(err)
 	}
 
-	opts.resource, err = installer.Update(manifest, opts.from, opts.cs.Namespace())
-	if err != nil {
-		return opts.errors(err)
+	out := opts.cli.Stream().Out
+
+	var errors []error
+	opts.resource, errors = resInstaller.Update(manifest, opts.from, opts.cs.Namespace())
+	if len(errors) != 0 {
+		resourcePipelineMinVersion, vErr := opts.hubRes.MinPipelinesVersion()
+		if vErr != nil {
+			return vErr
+		}
+		if errors[0] == installer.ErrWarnVersionNotFound && len(errors) == 1 {
+			_ = printer.New(out).String("WARN: tekton pipelines version unknown, this resource is compatible with pipelines min version v" + resourcePipelineMinVersion)
+		} else {
+			return opts.errors(resourcePipelineMinVersion, resInstaller.GetPipelineVersion(), errors)
+		}
 	}
 
-	out := opts.cli.Stream().Out
 	return printer.New(out).String(msg(opts.resource))
 }
 
@@ -207,22 +217,29 @@ func (opts *options) lookupError(err error) error {
 	}
 }
 
-func (opts *options) errors(err error) error {
+func (opts *options) errors(resourcePipelineMinVersion, pipelinesVersion string, errors []error) error {
 
-	if err == installer.ErrNotFound {
-		return fmt.Errorf("%s %s doesn't exists in %s namespace. Use install command to install the resource",
-			strings.Title(opts.kind), opts.name(), opts.cs.Namespace())
+	resourceVersion, hubErr := opts.hubRes.ResourceVersion()
+	if hubErr != nil {
+		return opts.isResourceNotFoundError(hubErr)
 	}
 
-	if strings.Contains(err.Error(), "mutation failed: cannot decode incoming new object") {
-		version, vErr := opts.hubRes.MinPipelinesVersion()
-		if vErr != nil {
-			return vErr
+	for _, err := range errors {
+		if err == installer.ErrNotFound {
+			return fmt.Errorf("%s %s doesn't exists in %s namespace. Use install command to install the resource",
+				strings.Title(opts.kind), opts.name(), opts.cs.Namespace())
 		}
-		return fmt.Errorf("%v \nMake sure the pipeline version you are running is not lesser than %s and %s have correct spec fields",
-			err, version, opts.kind)
+
+		if err == installer.ErrVersionIncompatible {
+			return fmt.Errorf("%s %s(%s) can't be reinstalled as it requires Pipelines min version v%s but found %s", strings.Title(opts.kind), opts.name(), resourceVersion, resourcePipelineMinVersion, pipelinesVersion)
+		}
+
+		if strings.Contains(err.Error(), "mutation failed: cannot decode incoming new object") {
+			return fmt.Errorf("%v \nMake sure the pipeline version you are running is not lesser than %s and %s have correct spec fields",
+				err, resourcePipelineMinVersion, opts.kind)
+		}
 	}
-	return err
+	return errors[0]
 }
 
 func (opts *options) resCatalog() string {

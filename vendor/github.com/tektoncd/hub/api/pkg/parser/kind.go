@@ -33,7 +33,7 @@ func SupportedKinds() []string {
 func IsSupportedKind(kind string) bool {
 
 	for _, k := range kinds {
-		if strings.ToLower(k) == strings.ToLower(kind) {
+		if strings.EqualFold(k, kind) {
 			return true
 		}
 	}

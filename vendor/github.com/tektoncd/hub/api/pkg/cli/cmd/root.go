@@ -17,6 +17,7 @@ package cmd
 import (
 	"github.com/spf13/cobra"
 	"github.com/tektoncd/hub/api/pkg/cli/app"
+	"github.com/tektoncd/hub/api/pkg/cli/cmd/check_upgrade"
 	"github.com/tektoncd/hub/api/pkg/cli/cmd/downgrade"
 	"github.com/tektoncd/hub/api/pkg/cli/cmd/get"
 	"github.com/tektoncd/hub/api/pkg/cli/cmd/info"
@@ -55,6 +56,7 @@ func Root(cli app.CLI) *cobra.Command {
 		reinstall.Command(cli),
 		search.Command(cli),
 		upgrade.Command(cli),
+		check_upgrade.Command(cli),
 	)
 
 	cmd.PersistentFlags().StringVar(&apiURL, "api-server", hub.URL(), "Hub API Server URL")

@@ -18,6 +18,7 @@ import (
 	"encoding/json"
 	"fmt"
 	"net/http"
+	"strings"
 
 	rclient "github.com/tektoncd/hub/api/gen/http/resource/client"
 )
@@ -25,10 +26,11 @@ import (
 // ResourceOption defines option associated with API to fetch a
 // particular resource
 type ResourceOption struct {
-	Name    string
-	Catalog string
-	Version string
-	Kind    string
+	Name            string
+	Catalog         string
+	Version         string
+	Kind            string
+	PipelineVersion string
 }
 
 // ResourceResult defines API response
@@ -74,6 +76,11 @@ func (opt ResourceOption) Endpoint() string {
 	if opt.Version != "" {
 		// API: /resource/<catalog>/<kind>/<name>/<version>
 		return fmt.Sprintf("/resource/%s/%s/%s/%s", opt.Catalog, opt.Kind, opt.Name, opt.Version)
+	}
+	if opt.PipelineVersion != "" {
+		opt.PipelineVersion = strings.TrimLeft(opt.PipelineVersion, "v")
+		// API: /resource/<catalog>/<kind>/<name>?pipelinesversion=<version>
+		return fmt.Sprintf("/resource/%s/%s/%s?pipelinesversion=%s", opt.Catalog, opt.Kind, opt.Name, opt.PipelineVersion)
 	}
 	// API: /resource/<catalog>/<kind>/<name>
 	return fmt.Sprintf("/resource/%s/%s/%s", opt.Catalog, opt.Kind, opt.Name)
