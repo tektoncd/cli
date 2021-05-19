@@ -20,6 +20,7 @@
 # instead of detecting the latest released one from tektoncd/pipeline releases
 RELEASE_YAML_PIPELINES=${RELEASE_YAML_PIPELINE:-}
 RELEASE_YAML_TRIGGERS=${RELEASE_YAML_TRIGGERS:-}
+RELEASE_YAML_TRIGGERS_INTERCEPTORS=${RELEASE_YAML_TRIGGERS_INTERCEPTORS:-}
 
 source $(dirname $0)/../vendor/github.com/tektoncd/plumbing/scripts/e2e-tests.sh
 
@@ -156,6 +157,7 @@ function install_pipeline_crd() {
 
 function install_triggers_crd() {
   local latestreleaseyaml
+  local interceptorreleaseyaml
   echo ">> Deploying Tekton Triggers"
   if [[ -n ${RELEASE_YAML_TRIGGERS} ]];then
 	latestreleaseyaml=${RELEASE_YAML_TRIGGERS}
@@ -167,9 +169,23 @@ function install_triggers_crd() {
     # If for whatever reason the nightly release wasnt there (nightly ci failure?), try the released version
     [[ -z ${latestreleaseyaml} ]] && latestreleaseyaml="https://storage.googleapis.com/tekton-releases/triggers/latest/release.yaml"
   fi
+  if [[ -n ${RELEASE_YAML_TRIGGERS_INTERCEPTORS} ]];then
+	interceptorreleaseyaml=${RELEASE_YAML_TRIGGERS_INTERCEPTORS}
+  else
+    # First try to install latestinterceptoryaml from nightly
+    curl -o/dev/null -s -LI -f https://storage.googleapis.com/tekton-releases-nightly/triggers/latest/interceptors.yaml &&
+        interceptorreleaseyaml=https://storage.googleapis.com/tekton-releases-nightly/triggers/latest/interceptors.yaml
+
+    # If for whatever reason the nightly release wasnt there (nightly ci failure?), try the released version
+    [[ -z ${interceptorreleaseyaml} ]] && interceptorreleaseyaml="https://storage.googleapis.com/tekton-releases/triggers/latest/interceptors.yaml"
+  fi
   [[ -z ${latestreleaseyaml} ]] && fail_test "Could not get latest released release.yaml"
   kubectl apply -f ${latestreleaseyaml} ||
     fail_test "Build triggers installation failed"
+
+  [[ -z ${interceptorreleaseyaml} ]] && fail_test "Could not get latest released interceptors.yaml"
+  kubectl apply -f ${interceptorreleaseyaml} ||
+    fail_test "Build interceptors installation failed"
 
   # Make sure that eveything is cleaned up in the current namespace.
   for res in eventlistener triggertemplate triggerbinding clustertriggerbinding; do
