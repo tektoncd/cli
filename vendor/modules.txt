@@ -455,7 +455,7 @@ github.com/tektoncd/pipeline/pkg/remote/oci
 github.com/tektoncd/pipeline/pkg/substitution
 github.com/tektoncd/pipeline/test
 github.com/tektoncd/pipeline/test/v1alpha1
-# github.com/tektoncd/plumbing v0.0.0-20210420200944-17170d5e7bc9
+# github.com/tektoncd/plumbing v0.0.0-20210514044347-f8a9689d5bd5
 github.com/tektoncd/plumbing/scripts
 # github.com/tektoncd/triggers v0.13.0
 github.com/tektoncd/triggers/pkg/apis/triggers/v1alpha1

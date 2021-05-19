@@ -21,7 +21,7 @@ require (
 	github.com/spf13/pflag v1.0.5
 	github.com/tektoncd/hub/api v0.0.0-20210208113044-f2a63f81502c
 	github.com/tektoncd/pipeline v0.23.0
-	github.com/tektoncd/plumbing v0.0.0-20210420200944-17170d5e7bc9
+	github.com/tektoncd/plumbing v0.0.0-20210514044347-f8a9689d5bd5
 	github.com/tektoncd/triggers v0.13.0
 	github.com/tidwall/gjson v1.6.0 // indirect
 	go.opencensus.io v0.22.5
