@@ -43,7 +43,6 @@ const (
 )
 
 func TestClusterTaskInteractiveStartE2E(t *testing.T) {
-	t.Skip("TEMPORARY DISABLING THIS, SEE https://github.com/tektoncd/cli/issues/1319.")
 	t.Parallel()
 	c, namespace := framework.Setup(t)
 	knativetest.CleanupOnInterrupt(func() { framework.TearDown(t, c, namespace) }, t.Logf)
@@ -96,11 +95,11 @@ func TestClusterTaskInteractiveStartE2E(t *testing.T) {
 			"-i=source="+tePipelineGitResourceName,
 			"-p=FILEPATH=docs",
 			"-p=FILENAME=README.md",
-			"-w=name=shared-workspace,emptyDir=''",
+			"-w=name=shared-workspace,emptyDir=",
 			"--showlog")
 
 		vars := make(map[string]interface{})
-		taskRunGeneratedName := builder.GetTaskRunListWithName(c, clusterTaskName, true).Items[0].Name
+		taskRunGeneratedName := builder.GetTaskRunListWithClusterTaskName(c, clusterTaskName, true).Items[0].Name
 		vars["Taskrun"] = taskRunGeneratedName
 		expected := helper.ProcessString(`(TaskRun started: {{.Taskrun}}
 Waiting for logs to be available...
@@ -148,7 +147,7 @@ Waiting for logs to be available...
 				c.Close()
 				return nil
 			}})
-		taskRunGeneratedName := builder.GetTaskRunListWithName(c, clusterTaskName, true).Items[0].Name
+		taskRunGeneratedName := builder.GetTaskRunListWithClusterTaskName(c, clusterTaskName, true).Items[0].Name
 		if err := wait.ForTaskRunState(c, taskRunGeneratedName, wait.TaskRunSucceed(taskRunGeneratedName), "TaskRunSucceed"); err != nil {
 			t.Errorf("Error waiting for TaskRun to Succeed: %s", err)
 		}
@@ -161,7 +160,7 @@ Waiting for logs to be available...
 			"-w=name=shared-workspace,emptyDir=",
 			"--use-param-defaults",
 			"--showlog")
-		taskRunGeneratedName := builder.GetTaskRunListWithName(c, clusterTaskName, true).Items[0].Name
+		taskRunGeneratedName := builder.GetTaskRunListWithClusterTaskName(c, clusterTaskName, true).Items[0].Name
 		if err := wait.ForTaskRunState(c, taskRunGeneratedName, wait.TaskRunSucceed(taskRunGeneratedName), "TaskRunSucceed"); err != nil {
 			t.Errorf("Error waiting for TaskRun to Succeed: %s", err)
 		}
@@ -195,7 +194,7 @@ Waiting for logs to be available...
 				c.Close()
 				return nil
 			}})
-		taskRunGeneratedName := builder.GetTaskRunListWithName(c, clusterTaskName, true).Items[0].Name
+		taskRunGeneratedName := builder.GetTaskRunListWithClusterTaskName(c, clusterTaskName, true).Items[0].Name
 		if err := wait.ForTaskRunState(c, taskRunGeneratedName, wait.TaskRunSucceed(taskRunGeneratedName), "TaskRunSucceed"); err != nil {
 			t.Errorf("Error waiting for TaskRun to Succeed: %s", err)
 		}
@@ -214,7 +213,7 @@ Waiting for logs to be available...
 			"--showlog",
 			"--pod-template="+helper.GetResourcePath("/podtemplate/podtemplate.yaml"))
 
-		taskRunGeneratedName := builder.GetTaskRunListWithName(c, clusterTaskName, true).Items[0].Name
+		taskRunGeneratedName := builder.GetTaskRunListWithClusterTaskName(c, clusterTaskName, true).Items[0].Name
 		if err := wait.ForTaskRunState(c, taskRunGeneratedName, wait.TaskRunSucceed(taskRunGeneratedName), "TaskRunSucceeded"); err != nil {
 			t.Errorf("Error waiting for TaskRun to Succeed: %s", err)
 		}
@@ -222,7 +221,7 @@ Waiting for logs to be available...
 
 	t.Run("Start TaskRun using tkn ct start with --last option", func(t *testing.T) {
 		// Get last TaskRun for read-clustertask
-		lastTaskRun := builder.GetTaskRunListWithName(c, clusterTaskName, true).Items[0]
+		lastTaskRun := builder.GetTaskRunListWithClusterTaskName(c, clusterTaskName, true).Items[0]
 
 		// Start TaskRun using --last
 		tkn.MustSucceed(t, "ct", "start", clusterTaskName,
@@ -233,7 +232,7 @@ Waiting for logs to be available...
 		time.Sleep(1 * time.Second)
 
 		// Get name of most recent TaskRun and wait for it to succeed
-		taskRunUsingLast := builder.GetTaskRunListWithName(c, clusterTaskName, true).Items[0]
+		taskRunUsingLast := builder.GetTaskRunListWithClusterTaskName(c, clusterTaskName, true).Items[0]
 		if err := wait.ForTaskRunState(c, taskRunUsingLast.Name, wait.TaskRunSucceed(taskRunUsingLast.Name), "TaskRunSucceeded"); err != nil {
 			t.Errorf("Error waiting for TaskRun to Succeed: %s", err)
 		}
@@ -248,7 +247,7 @@ Waiting for logs to be available...
 
 	t.Run("Start TaskRun using tkn ct start with --use-taskrun option", func(t *testing.T) {
 		// Get last TaskRun for read-clustertask
-		lastTaskRun := builder.GetTaskRunListWithName(c, clusterTaskName, true).Items[0]
+		lastTaskRun := builder.GetTaskRunListWithClusterTaskName(c, clusterTaskName, true).Items[0]
 
 		// Start TaskRun using --use-taskrun
 		tkn.MustSucceed(t, "ct", "start", clusterTaskName,
@@ -260,7 +259,7 @@ Waiting for logs to be available...
 		time.Sleep(1 * time.Second)
 
 		// Get name of most recent TaskRun and wait for it to succeed
-		taskRunUsingParticularTaskRun := builder.GetTaskRunListWithName(c, clusterTaskName, true).Items[0]
+		taskRunUsingParticularTaskRun := builder.GetTaskRunListWithClusterTaskName(c, clusterTaskName, true).Items[0]
 		if err := wait.ForTaskRunState(c, taskRunUsingParticularTaskRun.Name, wait.TaskRunSucceed(taskRunUsingParticularTaskRun.Name), "TaskRunSucceeded"); err != nil {
 			t.Errorf("Error waiting for TaskRun to Succeed: %s", err)
 		}
