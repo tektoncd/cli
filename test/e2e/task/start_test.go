@@ -77,7 +77,7 @@ func TestTaskStartE2E(t *testing.T) {
 			"--showlog")
 
 		vars := make(map[string]interface{})
-		taskRunGeneratedName := builder.GetTaskRunListWithName(c, "read-task", true).Items[0].Name
+		taskRunGeneratedName := builder.GetTaskRunListWithTaskName(c, "read-task", true).Items[0].Name
 		vars["Taskrun"] = taskRunGeneratedName
 		expected := helper.ProcessString(`(TaskRun started: {{.Taskrun}}
 Waiting for logs to be available...
@@ -128,7 +128,7 @@ Waiting for logs to be available...
 	})
 
 	t.Run("Get list of TaskRuns from namespace  "+namespace, func(t *testing.T) {
-		taskRuns := builder.GetTaskRunListWithName(c, "read-task", false)
+		taskRuns := builder.GetTaskRunListWithTaskName(c, "read-task", false)
 		taskRun1GeneratedName := taskRuns.Items[0].Name
 		taskRun2GeneratedName := taskRuns.Items[1].Name
 		taskRun3GeneratedName := taskRuns.Items[2].Name
@@ -231,7 +231,7 @@ Waiting for logs to be available...
 			"--workspace=name=read-allowed,volumeClaimTemplateFile="+helper.GetResourcePath("pvc.yaml"))
 
 		vars := make(map[string]interface{})
-		taskRunGeneratedName := builder.GetTaskRunListWithName(c, "task-with-workspace", true).Items[0].Name
+		taskRunGeneratedName := builder.GetTaskRunListWithTaskName(c, "task-with-workspace", true).Items[0].Name
 		vars["Taskrun"] = taskRunGeneratedName
 		expected := helper.ProcessString(`(TaskRun started: {{.Taskrun}}
 Waiting for logs to be available...
@@ -255,7 +255,7 @@ Waiting for logs to be available...
 			"--showlog",
 			"--pod-template="+helper.GetResourcePath("/podtemplate/podtemplate.yaml"))
 
-		taskRunGeneratedName := builder.GetTaskRunListWithName(c, "read-task", true).Items[0].Name
+		taskRunGeneratedName := builder.GetTaskRunListWithTaskName(c, "read-task", true).Items[0].Name
 		if err := wait.ForTaskRunState(c, taskRunGeneratedName, wait.TaskRunSucceed(taskRunGeneratedName), "TaskRunSucceeded"); err != nil {
 			t.Errorf("Error waiting for TaskRun to Succeed: %s", err)
 		}
@@ -263,7 +263,7 @@ Waiting for logs to be available...
 
 	t.Run("Cancel finished TaskRun with tkn taskrun cancel", func(t *testing.T) {
 		// Get last TaskRun for read-task
-		taskRunLast := builder.GetTaskRunListWithName(c, "read-task", true).Items[0]
+		taskRunLast := builder.GetTaskRunListWithTaskName(c, "read-task", true).Items[0]
 
 		// Cancel TaskRun
 		res := tkn.Run("taskrun", "cancel", taskRunLast.Name)
@@ -281,7 +281,7 @@ Waiting for logs to be available...
 		tkn.MustSucceed(t, "task", "start", task, "-p", "seconds=30s")
 
 		// Get name of most recent TaskRun
-		taskRunName := builder.GetTaskRunListWithName(c, task, true).Items[0].Name
+		taskRunName := builder.GetTaskRunListWithTaskName(c, task, true).Items[0].Name
 
 		// Cancel TaskRun
 		res := tkn.MustSucceed(t, "taskrun", "cancel", taskRunName)
@@ -301,7 +301,7 @@ Waiting for logs to be available...
 
 	t.Run("Start TaskRun using tkn task start with --last option", func(t *testing.T) {
 		// Get last TaskRun for read-task
-		lastTaskRun := builder.GetTaskRunListWithName(c, "read-task", true).Items[0]
+		lastTaskRun := builder.GetTaskRunListWithTaskName(c, "read-task", true).Items[0]
 
 		// Start TaskRun using --last
 		tkn.MustSucceed(t, "task", "start", "read-task",
@@ -312,7 +312,7 @@ Waiting for logs to be available...
 		time.Sleep(1 * time.Second)
 
 		// Get name of most recent TaskRun and wait for it to succeed
-		taskRunUsingLast := builder.GetTaskRunListWithName(c, "read-task", true).Items[0]
+		taskRunUsingLast := builder.GetTaskRunListWithTaskName(c, "read-task", true).Items[0]
 		if err := wait.ForTaskRunState(c, taskRunUsingLast.Name, wait.TaskRunSucceed(taskRunUsingLast.Name), "TaskRunSucceeded"); err != nil {
 			t.Errorf("Error waiting for TaskRun to Succeed: %s", err)
 		}
