@@ -166,6 +166,40 @@ Waiting for logs to be available...
 		}
 	})
 
+	t.Run("Start ClusterTask passing --param for some params and some params are not passed", func(t *testing.T) {
+		tkn.RunInteractiveTests(t, &cli.Prompt{
+			CmdArgs: []string{"clustertask", "start", clusterTaskName,
+				"-i=source=" + tePipelineGitResourceName,
+				"--param=FILEPATH=docs",
+				"-w=name=shared-workspace,emptyDir=",
+				"--showlog"},
+			Procedure: func(c *expect.Console) error {
+
+				if _, err := c.ExpectString("Value for param `FILENAME` of type `string`?"); err != nil {
+					return err
+				}
+
+				if _, err := c.SendLine("README.md"); err != nil {
+					return err
+				}
+
+				if _, err := c.Send(string(terminal.KeyEnter)); err != nil {
+					return err
+				}
+
+				if _, err := c.ExpectEOF(); err != nil {
+					return err
+				}
+
+				c.Close()
+				return nil
+			}})
+		taskRunGeneratedName := builder.GetTaskRunListWithClusterTaskName(c, clusterTaskName, true).Items[0].Name
+		if err := wait.ForTaskRunState(c, taskRunGeneratedName, wait.TaskRunSucceed(taskRunGeneratedName), "TaskRunSucceed"); err != nil {
+			t.Errorf("Error waiting for TaskRun to Succeed: %s", err)
+		}
+	})
+
 	t.Run("Start ClusterTask with --use-param-defaults and some of the params not having default", func(t *testing.T) {
 		tkn.RunInteractiveTests(t, &cli.Prompt{
 			CmdArgs: []string{"clustertask", "start", clusterTaskName,
