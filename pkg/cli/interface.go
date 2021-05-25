@@ -24,6 +24,7 @@ import (
 	versionedTriggers "github.com/tektoncd/triggers/pkg/client/clientset/versioned"
 	"k8s.io/client-go/dynamic"
 	k8s "k8s.io/client-go/kubernetes"
+	"k8s.io/client-go/rest"
 )
 
 type Stream struct {
@@ -33,6 +34,7 @@ type Stream struct {
 }
 
 type Clients struct {
+	Config     *rest.Config
 	Tekton     versioned.Interface
 	Kube       k8s.Interface
 	Triggers   versionedTriggers.Interface

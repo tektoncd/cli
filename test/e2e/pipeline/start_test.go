@@ -275,3 +275,125 @@ func TestPipelineInteractiveStartWithNewResourceE2E(t *testing.T) {
 			}})
 	})
 }
+
+func TestPipelineInteractiveCopyFilesFromLocal(t *testing.T) {
+	t.Parallel()
+	c, namespace := framework.Setup(t)
+	knativetest.CleanupOnInterrupt(func() { framework.TearDown(t, c, namespace) }, t.Logf)
+	defer framework.TearDown(t, c, namespace)
+
+	kubectl := cli.NewKubectl(namespace)
+	tkn, err := cli.NewTknRunner(namespace)
+	assert.NilError(t, err)
+
+	t.Logf("Creating pipeline in namespace: %s", namespace)
+	kubectl.MustSucceed(t, "create", "-f", helper.GetResourcePath("pipeline-with-workspace.yaml"))
+
+	t.Run("Start PipelineRun using pipeline start interactively with type of workspace as local", func(t *testing.T) {
+		tkn.RunInteractiveTests(t, &cli.Prompt{
+			CmdArgs: []string{"pipeline", "start", "pipeline-with-workspace"},
+			Procedure: func(c *expect.Console) error {
+				if _, err := c.ExpectString("Please give specifications for the workspace: ws"); err != nil {
+					return err
+				}
+
+				if _, err := c.ExpectString("Name for the workspace :"); err != nil {
+					return err
+				}
+
+				if _, err := c.SendLine("ws"); err != nil {
+					return err
+				}
+
+				if _, err := c.ExpectString("Value of the Sub Path :"); err != nil {
+					return err
+				}
+
+				if _, err := c.SendLine(""); err != nil {
+					return err
+				}
+
+				if _, err := c.ExpectString("Type of the Workspace :"); err != nil {
+					return err
+				}
+
+				if _, err := c.SendLine("local"); err != nil {
+					return err
+				}
+
+				if _, err := c.ExpectString("Path to local directory :"); err != nil {
+					return err
+				}
+
+				if _, err := c.SendLine(string(terminal.KeyEnter)); err != nil {
+					return err
+				}
+
+				if _, err := c.ExpectEOF(); err != nil {
+					return err
+				}
+
+				c.Close()
+				return nil
+			}})
+	})
+
+	t.Run("Start PipelineRun using pipeline start interactively, workspace already exist", func(t *testing.T) {
+		tkn.RunInteractiveTests(t, &cli.Prompt{
+			CmdArgs: []string{"pipeline", "start", "pipeline-with-workspace"},
+			Procedure: func(c *expect.Console) error {
+				if _, err := c.ExpectString("Please give specifications for the workspace: ws"); err != nil {
+					return err
+				}
+
+				if _, err := c.ExpectString("Name for the workspace :"); err != nil {
+					return err
+				}
+
+				if _, err := c.SendLine("ws"); err != nil {
+					return err
+				}
+
+				if _, err := c.ExpectString("Value of the Sub Path :"); err != nil {
+					return err
+				}
+
+				if _, err := c.SendLine(""); err != nil {
+					return err
+				}
+
+				if _, err := c.ExpectString("Type of the Workspace :"); err != nil {
+					return err
+				}
+
+				if _, err := c.SendLine("local"); err != nil {
+					return err
+				}
+
+				if _, err := c.ExpectString("Path to local directory :"); err != nil {
+					return err
+				}
+
+				if _, err := c.SendLine(string(terminal.KeyEnter)); err != nil {
+					return err
+				}
+
+				if _, err := c.ExpectString("Do you want to overwrite existing pvc (Y/n) ?"); err != nil {
+					return err
+				}
+
+				if _, err := c.SendLine("y"); err != nil {
+					return err
+				}
+
+				if _, err := c.ExpectEOF(); err != nil {
+					return err
+				}
+
+				c.Close()
+				return nil
+			}})
+
+	})
+
+}

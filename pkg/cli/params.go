@@ -144,6 +144,7 @@ func (p *TektonParams) Clients() (*Clients, error) {
 	}
 
 	p.clients = &Clients{
+		Config:   config,
 		Tekton:   tekton,
 		Kube:     kube,
 		Resource: resource,
