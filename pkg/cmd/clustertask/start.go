@@ -436,8 +436,12 @@ func (opt *startOptions) getInputs() error {
 	}
 
 	params.FilterParamsByType(opt.clustertask.Spec.Params)
-	if len(opt.Params) == 0 && !opt.Last && opt.UseTaskRun == "" {
-		if err := intOpts.ClusterTaskParams(opt.clustertask, opt.UseParamDefaults); err != nil {
+	if !opt.Last && opt.UseTaskRun == "" {
+		skipParams, err := params.ParseParams(opt.Params)
+		if err != nil {
+			return err
+		}
+		if err := intOpts.ClusterTaskParams(opt.clustertask, skipParams, opt.UseParamDefaults); err != nil {
 			return err
 		}
 		opt.Params = append(opt.Params, intOpts.Params...)

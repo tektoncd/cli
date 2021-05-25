@@ -516,9 +516,12 @@ func (intOpts *InteractiveOpts) ClusterTaskOutputResources(clustertask *v1beta1.
 	return nil
 }
 
-func (intOpts *InteractiveOpts) ClusterTaskParams(clustertask *v1beta1.ClusterTask, useParamDefaults bool) error {
+func (intOpts *InteractiveOpts) ClusterTaskParams(clustertask *v1beta1.ClusterTask, skipParams map[string]string, useParamDefaults bool) error {
 	for _, param := range clustertask.Spec.Params {
 		if param.Default == nil && useParamDefaults || !useParamDefaults {
+			if _, toSkip := skipParams[param.Name]; toSkip {
+				continue
+			}
 			var ans, ques, defaultValue string
 			ques = fmt.Sprintf("Value for param `%s` of type `%s`?", param.Name, param.Type)
 			input := &survey.Input{}
