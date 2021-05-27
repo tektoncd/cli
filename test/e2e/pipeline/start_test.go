@@ -309,3 +309,100 @@ func TestPipelineInteractiveStartWithNewResourceE2E(t *testing.T) {
 			}})
 	})
 }
+
+func TestPipelineInteractiveStartWithOptionalWorkspaceE2E(t *testing.T) {
+	t.Parallel()
+	c, namespace := framework.Setup(t)
+	knativetest.CleanupOnInterrupt(func() { framework.TearDown(t, c, namespace) }, t.Logf)
+	defer framework.TearDown(t, c, namespace)
+
+	kubectl := cli.NewKubectl(namespace)
+	tkn, err := cli.NewTknRunner(namespace)
+	assert.NilError(t, err)
+
+	t.Logf("Creating pipeline in namespace: %s", namespace)
+	kubectl.MustSucceed(t, "create", "-f", helper.GetResourcePath("pipeline-with-optional-workspace.yaml"))
+
+	t.Run("Start PipelineRun using pipeline start interactively with SA as 'pipeline' ", func(t *testing.T) {
+		tkn.RunInteractiveTests(t, &cli.Prompt{
+			CmdArgs: []string{"pipeline", "start", "pipeline-optional-ws"},
+			Procedure: func(c *expect.Console) error {
+				if _, err := c.ExpectString("Do you want to give specifications for the optional workspace `ws`: (y/N)"); err != nil {
+					return err
+				}
+
+				if _, err := c.SendLine("y"); err != nil {
+					return err
+				}
+
+				if _, err := c.ExpectString("Please give specifications for the workspace: ws"); err != nil {
+					return err
+				}
+
+				if _, err := c.ExpectString("Name for the workspace :"); err != nil {
+					return err
+				}
+
+				if _, err := c.SendLine("ws"); err != nil {
+					return err
+				}
+
+				if _, err := c.ExpectString("Value of the Sub Path :"); err != nil {
+					return err
+				}
+
+				if _, err := c.Send(string(terminal.KeyEnter)); err != nil {
+					return err
+				}
+
+				if _, err := c.ExpectString("Type of the Workspace :"); err != nil {
+					return err
+				}
+
+				if _, err := c.SendLine("emptyDir"); err != nil {
+					return err
+				}
+
+				if _, err := c.ExpectString("Type of EmptyDir :"); err != nil {
+					return err
+				}
+
+				if _, err := c.SendLine(""); err != nil {
+					return err
+				}
+
+				if _, err := c.ExpectEOF(); err != nil {
+					return err
+				}
+
+				c.Close()
+				return nil
+			}})
+	})
+
+	t.Run("Validate interactive pipeline logs, with  follow mode (-f) ", func(t *testing.T) {
+		tkn.RunInteractiveTests(t, &cli.Prompt{
+			CmdArgs: []string{"pipeline", "logs", "-f"},
+			Procedure: func(c *expect.Console) error {
+				if _, err := c.ExpectString("Select pipeline:"); err != nil {
+					return err
+				}
+
+				if _, err := c.ExpectString("pipeline-optional-ws"); err != nil {
+					return err
+				}
+
+				if _, err := c.Send(string(terminal.KeyEnter)); err != nil {
+					return err
+				}
+
+				if _, err := c.ExpectEOF(); err != nil {
+					return err
+				}
+
+				c.Close()
+				return nil
+			}})
+	})
+
+}

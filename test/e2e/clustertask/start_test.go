@@ -306,6 +306,72 @@ Waiting for logs to be available...
 		}
 	})
 
+	t.Logf("Creating clustertask clustertask-optional-ws")
+	res = kubectl.MustSucceed(t, "create", "-f", helper.GetResourcePath("clustertask-with-optional-workspace.yaml"))
+	regex = regexp.MustCompile(`clustertask-optional-ws-[a-z0-9]+`)
+	clusterTaskName2 := regex.FindString(res.Stdout())
+
+	t.Run("Start ClusterTask interactively with optional workspace (yes)", func(t *testing.T) {
+		tkn.RunInteractiveTests(t, &cli.Prompt{
+			CmdArgs: []string{"clustertask", "start", clusterTaskName2},
+			Procedure: func(c *expect.Console) error {
+				if _, err := c.ExpectString("Do you want to give specifications for the optional workspace `read-allowed`: (y/N)"); err != nil {
+					return err
+				}
+
+				if _, err := c.SendLine("y"); err != nil {
+					return err
+				}
+
+				if _, err := c.ExpectString("Please give specifications for the workspace: read-allowed"); err != nil {
+					return err
+				}
+
+				if _, err := c.ExpectString("Name for the workspace: "); err != nil {
+					return err
+				}
+
+				if _, err := c.SendLine("read-allowed"); err != nil {
+					return err
+				}
+
+				if _, err := c.ExpectString("Value of the Sub Path: "); err != nil {
+					return err
+				}
+
+				if _, err := c.Send(string(terminal.KeyEnter)); err != nil {
+					return err
+				}
+
+				if _, err := c.ExpectString("Type of the Workspace:"); err != nil {
+					return err
+				}
+
+				if _, err := c.SendLine("emptyDir"); err != nil {
+					return err
+				}
+
+				if _, err := c.ExpectString("Type of EmptyDir: "); err != nil {
+					return err
+				}
+
+				if _, err := c.SendLine(""); err != nil {
+					return err
+				}
+
+				if _, err := c.ExpectEOF(); err != nil {
+					return err
+				}
+
+				c.Close()
+				return nil
+			}})
+		taskRunGeneratedName := builder.GetTaskRunListWithClusterTaskName(c, clusterTaskName2, true).Items[0].Name
+		if err := wait.ForTaskRunState(c, taskRunGeneratedName, wait.TaskRunSucceed(taskRunGeneratedName), "TaskRunSucceed"); err != nil {
+			t.Errorf("Error waiting for TaskRun to Succeed: %s", err)
+		}
+	})
+
 	t.Logf("Deleting clustertask %s", clusterTaskName)
 	t.Run(fmt.Sprintf("Delete clustertask %s", clusterTaskName), func(t *testing.T) {
 		res := tkn.MustSucceed(t, "clustertask", "delete", clusterTaskName, "-f")
@@ -318,6 +384,20 @@ Waiting for logs to be available...
 		// Check if clustertask %s got deleted
 		res = tkn.Run("clustertask", "list")
 		assert.Assert(t, !strings.Contains(res.Stdout(), clusterTaskName))
+	})
+
+	t.Logf("Deleting clustertask %s", clusterTaskName2)
+	t.Run(fmt.Sprintf("Delete clustertask %s", clusterTaskName2), func(t *testing.T) {
+		res := tkn.MustSucceed(t, "clustertask", "delete", clusterTaskName2, "-f")
+		expected := fmt.Sprintf("ClusterTasks deleted: \"%s\"", clusterTaskName2)
+		res.Assert(t, icmd.Expected{
+			Err: icmd.None,
+			Out: expected,
+		})
+
+		// Check if clustertask %s got deleted
+		res = tkn.Run("clustertask", "list")
+		assert.Assert(t, !strings.Contains(res.Stdout(), clusterTaskName2))
 	})
 
 }
