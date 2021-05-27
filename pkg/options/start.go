@@ -327,6 +327,15 @@ func (intOpts *InteractiveOpts) TaskParams(task *v1beta1.Task, skipParams map[st
 
 func (intOpts *InteractiveOpts) TaskWorkspaces(task *v1beta1.Task) error {
 	for _, ws := range task.Spec.Workspaces {
+		if ws.Optional {
+			isOptional, err := askParam(fmt.Sprintf("Do you want to give specifications for the optional workspace `%s`: (y/N)", ws.Name), intOpts.AskOpts)
+			if err != nil {
+				return err
+			}
+			if strings.ToLower(isOptional) == "n" {
+				continue
+			}
+		}
 		fmt.Fprintf(intOpts.Stream.Out, "Please give specifications for the workspace: %s \n", ws.Name)
 		name, err := askParam("Name for the workspace :", intOpts.AskOpts)
 		if err != nil {
@@ -346,7 +355,7 @@ func (intOpts *InteractiveOpts) TaskWorkspaces(task *v1beta1.Task) error {
 			{
 				Name: "workspace param",
 				Prompt: &survey.Select{
-					Message: " Type of the Workspace :",
+					Message: "Type of the Workspace :",
 					Options: []string{"config", "emptyDir", "secret", "pvc"},
 					Default: "emptyDir",
 				},
@@ -553,6 +562,15 @@ func (intOpts *InteractiveOpts) ClusterTaskParams(clustertask *v1beta1.ClusterTa
 
 func (intOpts *InteractiveOpts) ClusterTaskWorkspaces(clustertask *v1beta1.ClusterTask) error {
 	for _, ws := range clustertask.Spec.Workspaces {
+		if ws.Optional {
+			isOptional, err := askParam(fmt.Sprintf("Do you want to give specifications for the optional workspace `%s`: (y/N)", ws.Name), intOpts.AskOpts)
+			if err != nil {
+				return err
+			}
+			if strings.ToLower(isOptional) == "n" {
+				continue
+			}
+		}
 		fmt.Fprintf(intOpts.Stream.Out, "Please give specifications for the workspace: %s \n", ws.Name)
 		name, err := askParam("Name for the workspace:", intOpts.AskOpts)
 		if err != nil {
@@ -572,7 +590,7 @@ func (intOpts *InteractiveOpts) ClusterTaskWorkspaces(clustertask *v1beta1.Clust
 			{
 				Name: "workspace param",
 				Prompt: &survey.Select{
-					Message: " Type of the Workspace:",
+					Message: "Type of the Workspace:",
 					Options: []string{"config", "emptyDir", "secret", "pvc"},
 					Default: "emptyDir",
 				},

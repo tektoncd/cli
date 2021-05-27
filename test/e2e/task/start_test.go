@@ -324,4 +324,68 @@ Waiting for logs to be available...
 			t.Fatalf("-got, +want: %v", d)
 		}
 	})
+
+	t.Logf("Creating Task task-optional-ws in namespace: %s ", namespace)
+	kubectl.MustSucceed(t, "create", "-f", helper.GetResourcePath("task-with-optional-workspace.yaml"))
+
+	t.Run("Start Task interactively with optional workspace (yes)", func(t *testing.T) {
+		tkn.RunInteractiveTests(t, &cli.Prompt{
+			CmdArgs: []string{"task", "start", "task-optional-ws"},
+			Procedure: func(c *expect.Console) error {
+				if _, err := c.ExpectString("Do you want to give specifications for the optional workspace `read-allowed`: (y/N)"); err != nil {
+					return err
+				}
+
+				if _, err := c.SendLine("y"); err != nil {
+					return err
+				}
+
+				if _, err := c.ExpectString("Please give specifications for the workspace: read-allowed"); err != nil {
+					return err
+				}
+
+				if _, err := c.ExpectString("Name for the workspace :"); err != nil {
+					return err
+				}
+
+				if _, err := c.SendLine("read-allowed"); err != nil {
+					return err
+				}
+
+				if _, err := c.ExpectString("Value of the Sub Path :"); err != nil {
+					return err
+				}
+
+				if _, err := c.Send(string(terminal.KeyEnter)); err != nil {
+					return err
+				}
+
+				if _, err := c.ExpectString("Type of the Workspace :"); err != nil {
+					return err
+				}
+
+				if _, err := c.SendLine("emptyDir"); err != nil {
+					return err
+				}
+
+				if _, err := c.ExpectString("Type of EmptyDir :"); err != nil {
+					return err
+				}
+
+				if _, err := c.SendLine(""); err != nil {
+					return err
+				}
+
+				if _, err := c.ExpectEOF(); err != nil {
+					return err
+				}
+
+				c.Close()
+				return nil
+			}})
+		taskRunGeneratedName := builder.GetTaskRunListWithTaskName(c, "task-optional-ws", true).Items[0].Name
+		if err := wait.ForTaskRunState(c, taskRunGeneratedName, wait.TaskRunSucceed(taskRunGeneratedName), "TaskRunSucceed"); err != nil {
+			t.Errorf("Error waiting for TaskRun to Succeed: %s", err)
+		}
+	})
 }
