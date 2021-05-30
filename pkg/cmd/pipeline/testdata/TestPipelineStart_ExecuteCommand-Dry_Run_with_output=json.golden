@@ -25,6 +25,10 @@
 			{
 				"name": "pipeline-param",
 				"value": "value1"
+			},
+			{
+				"name": "rev-param",
+				"value": "value2"
 			}
 		],
 		"serviceAccountName": "svc1"
