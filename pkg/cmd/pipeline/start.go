@@ -371,8 +371,12 @@ func (opt *startOptions) getInput(pipeline *v1beta1.Pipeline) error {
 	}
 
 	params.FilterParamsByType(pipeline.Spec.Params)
-	if len(opt.Params) == 0 && !opt.Last && opt.UsePipelineRun == "" {
-		if err = opt.getInputParams(pipeline, opt.UseParamDefaults); err != nil {
+	if !opt.Last && opt.UsePipelineRun == "" {
+		skipParams, err := params.ParseParams(opt.Params)
+		if err != nil {
+			return err
+		}
+		if err = opt.getInputParams(pipeline, skipParams, opt.UseParamDefaults); err != nil {
 			return err
 		}
 	}
@@ -437,9 +441,12 @@ func (opt *startOptions) getInputResources(resources resourceOptionsFilter, pipe
 	return nil
 }
 
-func (opt *startOptions) getInputParams(pipeline *v1beta1.Pipeline, useParamDefaults bool) error {
+func (opt *startOptions) getInputParams(pipeline *v1beta1.Pipeline, skipParams map[string]string, useParamDefaults bool) error {
 	for _, param := range pipeline.Spec.Params {
 		if param.Default == nil && useParamDefaults || !useParamDefaults {
+			if _, toSkip := skipParams[param.Name]; toSkip {
+				continue
+			}
 			var ans, ques, defaultValue string
 			ques = fmt.Sprintf("Value for param `%s` of type `%s`?", param.Name, param.Type)
 			input := &survey.Input{}
