@@ -638,6 +638,9 @@ ln -s $PWD/cli-%{version} _build/src/%{import_path}
 export GOPATH="$PWD/_build:%{gopath}"
 export LDFLAGS="${LDFLAGS:-} -X %{import_path}/pkg/cmd/version.clientVersion=%{version}"
 export PATH=$PATH:"%{_builddir}"/bin
+go env -w GO111MODULE=off
+go get -u github.com/golang/dep/cmd/dep
+GO111MODULE=on go install
 
 %gobuild -o _bin/tkn %{import_path}/cmd/tkn
 
