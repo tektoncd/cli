@@ -20,11 +20,11 @@ require (
 	github.com/spf13/cobra v1.1.3
 	github.com/spf13/pflag v1.0.5
 	github.com/tektoncd/hub/api v0.0.0-20210517094448-c032b766a83c
-	github.com/tektoncd/pipeline v0.23.0
+	github.com/tektoncd/pipeline v0.24.1
 	github.com/tektoncd/plumbing v0.0.0-20210514044347-f8a9689d5bd5
 	github.com/tektoncd/triggers v0.13.0
 	github.com/tidwall/gjson v1.6.0 // indirect
-	go.opencensus.io v0.22.5
+	go.opencensus.io v0.23.0
 	go.uber.org/multierr v1.5.0
 	golang.org/x/term v0.0.0-20201210144234-2321bbc49cbf
 	golang.org/x/xerrors v0.0.0-20200804184101-5ec99f83aff1
@@ -35,7 +35,7 @@ require (
 	k8s.io/apimachinery v0.19.7
 	k8s.io/cli-runtime v0.19.7
 	k8s.io/client-go v0.19.7
-	knative.dev/pkg v0.0.0-20210208131226-4b2ae073fa06
+	knative.dev/pkg v0.0.0-20210331065221-952fdd90dbb0
 	sigs.k8s.io/yaml v1.2.0
 )
 
