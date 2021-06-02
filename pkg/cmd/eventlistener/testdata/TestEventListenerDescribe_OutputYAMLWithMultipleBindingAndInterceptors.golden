@@ -7,7 +7,6 @@
         "creationTimestamp": null
     },
     "spec": {
-        "serviceAccountName": "",
         "triggers": [
             {
                 "bindings": [
@@ -91,7 +90,6 @@
                 "serviceAccountName": "sa1"
             }
         ],
-        "podTemplate": {},
         "namespaceSelector": {},
         "resources": {}
     },

@@ -183,13 +183,11 @@ github.com/golang/protobuf/protoc-gen-go/descriptor
 github.com/golang/protobuf/ptypes
 github.com/golang/protobuf/ptypes/any
 github.com/golang/protobuf/ptypes/duration
-github.com/golang/protobuf/ptypes/empty
-github.com/golang/protobuf/ptypes/struct
 github.com/golang/protobuf/ptypes/timestamp
 github.com/golang/protobuf/ptypes/wrappers
 # github.com/google/btree v1.0.0
 github.com/google/btree
-# github.com/google/cel-go v0.6.0
+# github.com/google/cel-go v0.7.3
 github.com/google/cel-go/cel
 github.com/google/cel-go/checker
 github.com/google/cel-go/checker/decls
@@ -355,6 +353,8 @@ github.com/sirupsen/logrus
 github.com/spf13/cobra
 # github.com/spf13/pflag v1.0.5
 github.com/spf13/pflag
+# github.com/stoewer/go-strcase v1.2.0
+github.com/stoewer/go-strcase
 # github.com/tektoncd/hub/api v0.0.0-20210517094448-c032b766a83c
 github.com/tektoncd/hub/api/gen/http/resource/client
 github.com/tektoncd/hub/api/gen/resource
@@ -459,7 +459,8 @@ github.com/tektoncd/pipeline/test
 github.com/tektoncd/pipeline/test/v1alpha1
 # github.com/tektoncd/plumbing v0.0.0-20210514044347-f8a9689d5bd5
 github.com/tektoncd/plumbing/scripts
-# github.com/tektoncd/triggers v0.13.0
+# github.com/tektoncd/triggers v0.14.1
+github.com/tektoncd/triggers/pkg/apis/triggers/config
 github.com/tektoncd/triggers/pkg/apis/triggers/v1alpha1
 github.com/tektoncd/triggers/pkg/client/clientset/versioned
 github.com/tektoncd/triggers/pkg/client/clientset/versioned/fake
@@ -704,6 +705,7 @@ google.golang.org/protobuf/reflect/protoregistry
 google.golang.org/protobuf/runtime/protoiface
 google.golang.org/protobuf/runtime/protoimpl
 google.golang.org/protobuf/types/descriptorpb
+google.golang.org/protobuf/types/dynamicpb
 google.golang.org/protobuf/types/known/anypb
 google.golang.org/protobuf/types/known/durationpb
 google.golang.org/protobuf/types/known/emptypb
