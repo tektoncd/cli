@@ -710,6 +710,11 @@ func TestEventListenerDescribe_WithMultipleBindingAndInterceptors(t *testing.T) 
 				Namespace: "ns",
 			},
 			Spec: v1alpha1.EventListenerSpec{
+				Resources: v1alpha1.Resources{
+					KubernetesResource: &v1alpha1.KubernetesResource{
+						ServiceType: "ClusterIP",
+					},
+				},
 				Triggers: []v1alpha1.EventListenerTrigger{
 
 					{

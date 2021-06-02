@@ -1,5 +1,6 @@
-Name:        el1
-Namespace:   ns
+Name:           el1
+Namespace:      ns
+Service Type:   ClusterIP
 
 EventListenerTriggers
 

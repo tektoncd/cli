@@ -43,8 +43,11 @@ const describeTemplate = `{{decorate "bold" "Name"}}:	{{ .EventListener.Name }}
 {{decorate "bold" "Service Account"}}:	{{ .EventListener.Spec.ServiceAccountName }}
 {{- end }}
 
-{{- if ne .EventListener.Spec.DeprecatedServiceType "" }}
-{{decorate "bold" "Service Type"}}:	{{ .EventListener.Spec.DeprecatedServiceType }}
+{{- if not .EventListener.Spec.Resources.KubernetesResource }}
+{{- else }}
+{{- if ne .EventListener.Spec.Resources.KubernetesResource.ServiceType "" }}
+{{decorate "bold" "Service Type"}}:	{{ .EventListener.Spec.Resources.KubernetesResource.ServiceType }}
+{{- end }}
 {{- end }}
 
 {{- $value := getURL .EventListener }}
