@@ -48,6 +48,8 @@ contrib.go.opencensus.io/exporter/stackdriver v0.13.5/go.mod h1:aXENhDJ1Y4lIg4EU
 contrib.go.opencensus.io/exporter/zipkin v0.1.2/go.mod h1:mP5xM3rrgOjpn79MM8fZbj3gsxcuytSqtH0dxSWW1RE=
 dmitri.shuralyov.com/gpu/mtl v0.0.0-20190408044501-666a987793e9/go.mod h1:H6x//7gZCb22OMCxBHrMx7a5I7Hp++hsVxbQ4BYO7hU=
 git.apache.org/thrift.git v0.12.0/go.mod h1:fPE2ZNJGynbRyZ4dJvy6G277gSllfV2HJqblrnkyeyg=
+git.maze.io/go/duration v0.0.0-20160924141736-faac084b6075 h1:jESjOpk7mUiOhCInw+wg7MHW4gl+LE2jfQHhWFMNK0E=
+git.maze.io/go/duration v0.0.0-20160924141736-faac084b6075/go.mod h1:y9MVD7vG8A7scVb2MvTVxN0z+DHTzxnWgOisOnFe5kc=
 github.com/AlecAivazis/survey/v2 v2.0.4 h1:qzXnJSzXEvmUllWqMBWpZndvT2YfoAUzAMvZUax3L2M=
 github.com/AlecAivazis/survey/v2 v2.0.4/go.mod h1:WYBhg6f0y/fNYUuesWQc0PKbJcEliGcYHB9sNT3Bg74=
 github.com/Azure/azure-sdk-for-go v43.0.0+incompatible/go.mod h1:9XXNKU+eRnpl9moKnB4QOLf1HestfXbmab5FXxiDBjc=
