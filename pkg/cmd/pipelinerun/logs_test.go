@@ -443,11 +443,12 @@ func TestPipelinerunLog_completed_taskrun_only(t *testing.T) {
 		prstart      = clockwork.NewFakeClock()
 		ns           = "namespace"
 
-		task1Name    = "output-task"
-		tr1Name      = "output-task-1"
-		tr1StartTime = prstart.Now().Add(20 * time.Second)
-		tr1Pod       = "output-task-pod-123456"
-		tr1Step1Name = "writefile-step"
+		task1Name         = "output-task"
+		tr1Name           = "output-task-1"
+		tr1StartTime      = prstart.Now().Add(20 * time.Second)
+		tr1CompletionTime = prstart.Now().Add(30 * time.Second)
+		tr1Pod            = "output-task-pod-123456"
+		tr1Step1Name      = "writefile-step"
 
 		// these are pipeline tasks for which pipeline has not
 		// scheduled any taskrun
@@ -501,6 +502,7 @@ func TestPipelinerunLog_completed_taskrun_only(t *testing.T) {
 			tb.PipelineRunNamespace(ns),
 			tb.PipelineRunLabel("tekton.dev/pipeline", prName),
 			tb.PipelineRunSpec(pipelineName),
+
 			tb.PipelineRunStatus(
 				tb.PipelineRunStatusCondition(apis.Condition{
 					Status: corev1.ConditionTrue,
@@ -508,6 +510,13 @@ func TestPipelinerunLog_completed_taskrun_only(t *testing.T) {
 				}),
 				tb.PipelineRunTaskRunsStatus(tr1Name, &v1alpha1.PipelineRunTaskRunStatus{
 					PipelineTaskName: task1Name,
+					Status: &v1alpha1.TaskRunStatus{
+						Status: duckv1beta1.Status{},
+						TaskRunStatusFields: v1beta1.TaskRunStatusFields{
+							StartTime:      &metav1.Time{Time: tr1StartTime},
+							CompletionTime: &metav1.Time{Time: tr1CompletionTime},
+						},
+					},
 				}),
 			),
 		),
@@ -583,6 +592,13 @@ func TestPipelinerunLog_completed_taskrun_only(t *testing.T) {
 				}),
 				tb.PipelineRunTaskRunsStatus("output-taskrun2", &v1alpha1.PipelineRunTaskRunStatus{
 					PipelineTaskName: "output-task2",
+					Status: &v1alpha1.TaskRunStatus{
+						Status: duckv1beta1.Status{},
+						TaskRunStatusFields: v1beta1.TaskRunStatusFields{
+							StartTime:      &metav1.Time{Time: tr1StartTime},
+							CompletionTime: &metav1.Time{Time: tr1CompletionTime},
+						},
+					},
 				}),
 			),
 		),
@@ -1332,11 +1348,12 @@ func TestPipelinerunLog_completed_taskrun_only_v1beta1(t *testing.T) {
 		prstart      = clockwork.NewFakeClock()
 		ns           = "namespace"
 
-		task1Name    = "output-task"
-		tr1Name      = "output-task-1"
-		tr1StartTime = prstart.Now().Add(20 * time.Second)
-		tr1Pod       = "output-task-pod-123456"
-		tr1Step1Name = "writefile-step"
+		task1Name         = "output-task"
+		tr1Name           = "output-task-1"
+		tr1StartTime      = prstart.Now().Add(20 * time.Second)
+		tr1CompletionTime = prstart.Now().Add(30 * time.Second)
+		tr1Pod            = "output-task-pod-123456"
+		tr1Step1Name      = "writefile-step"
 
 		// these are pipeline tasks for which pipeline has not
 		// scheduled any taskrun
@@ -1455,6 +1472,15 @@ func TestPipelinerunLog_completed_taskrun_only_v1beta1(t *testing.T) {
 					TaskRuns: map[string]*v1beta1.PipelineRunTaskRunStatus{
 						tr1Name: {
 							PipelineTaskName: task1Name,
+							Status: &v1beta1.TaskRunStatus{
+								Status: duckv1beta1.Status{},
+								TaskRunStatusFields: v1beta1.TaskRunStatusFields{
+									StartTime:      &metav1.Time{Time: tr1StartTime},
+									CompletionTime: &metav1.Time{Time: tr1CompletionTime},
+								},
+							},
+							ConditionChecks: nil,
+							WhenExpressions: nil,
 						},
 					},
 				},
@@ -1578,6 +1604,15 @@ func TestPipelinerunLog_completed_taskrun_only_v1beta1(t *testing.T) {
 					TaskRuns: map[string]*v1beta1.PipelineRunTaskRunStatus{
 						"output-taskrun2": {
 							PipelineTaskName: "output-task2",
+							Status: &v1beta1.TaskRunStatus{
+								Status: duckv1beta1.Status{},
+								TaskRunStatusFields: v1beta1.TaskRunStatusFields{
+									StartTime:      &metav1.Time{Time: tr1StartTime},
+									CompletionTime: &metav1.Time{Time: tr1CompletionTime},
+								},
+							},
+							ConditionChecks: nil,
+							WhenExpressions: nil,
 						},
 					},
 				},
