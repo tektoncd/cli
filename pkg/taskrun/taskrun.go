@@ -15,17 +15,39 @@
 package taskrun
 
 import (
+	"sort"
+
 	"github.com/tektoncd/pipeline/pkg/apis/pipeline/v1alpha1"
 	"github.com/tektoncd/pipeline/pkg/apis/pipeline/v1beta1"
+	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime/schema"
 )
 
 var trGroupResource = schema.GroupVersionResource{Group: "tekton.dev", Resource: "taskruns"}
 
 type Run struct {
-	Name    string
-	Task    string
-	Retries int
+	Name           string
+	Task           string
+	Retries        int
+	StartTime      *metav1.Time
+	CompletionTime *metav1.Time
+}
+
+type Runs []Run
+
+func (r Runs) Len() int {
+	return len(r)
+}
+
+func (r Runs) Less(i, j int) bool {
+	if r[i].CompletionTime != nil && r[j].CompletionTime != nil {
+		return r[i].CompletionTime.Before(r[j].CompletionTime)
+	}
+	return r[i].StartTime.Before(r[j].StartTime)
+}
+
+func (r Runs) Swap(i, j int) {
+	r[i], r[j] = r[j], r[i]
 }
 
 func IsFiltered(tr Run, allowed []string) bool {
@@ -68,17 +90,20 @@ func SortTasksBySpecOrder(pipelineTasks []v1beta1.PipelineTask, pipelinesTaskRun
 	for name, t := range pipelinesTaskRuns {
 		trNames[t.PipelineTaskName] = name
 	}
+	trs := Runs{}
 
-	trs := []Run{}
 	for _, ts := range pipelineTasks {
 		if n, ok := trNames[ts.Name]; ok {
+			trStatusFields := pipelinesTaskRuns[n].Status.TaskRunStatusFields
 			trs = append(trs, Run{
-				Task:    ts.Name,
-				Name:    n,
-				Retries: ts.Retries,
+				Task:           ts.Name,
+				Name:           n,
+				Retries:        ts.Retries,
+				StartTime:      trStatusFields.StartTime,
+				CompletionTime: trStatusFields.CompletionTime,
 			})
 		}
 	}
-
+	sort.Sort(trs)
 	return trs
 }
