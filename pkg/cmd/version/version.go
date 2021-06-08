@@ -113,6 +113,8 @@ func Command(p cli.Params) *cobra.Command {
 				default:
 					fmt.Fprintf(cmd.OutOrStdout(), "Invalid component value\n")
 				}
+			} else {
+				fmt.Fprintf(cmd.OutOrStdout(), "Client version: %s\n", clientVersion)
 			}
 
 			if !check || clientVersion == devVersion {
