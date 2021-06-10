@@ -32,6 +32,7 @@ type DeleteOptions struct {
 	DeleteAllNs        bool
 	DeleteAll          bool
 	Keep               int
+	KeepSince          int
 }
 
 func (o *DeleteOptions) CheckOptions(s *cli.Stream, resourceNames []string, ns string) error {

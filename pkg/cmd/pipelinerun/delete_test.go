@@ -105,6 +105,22 @@ func TestPipelineRunDelete(t *testing.T) {
 				cb.PipelineRunCompletionTime(clock.Now().Add(10*time.Minute)),
 			),
 		),
+		tb.PipelineRun("pipeline-run-realnow",
+			tb.PipelineRunNamespace("ns"),
+			cb.PipelineRunCreationTimestamp(clock.Now()),
+			tb.PipelineRunLabel("tekton.dev/pipeline", "pipeline"),
+			tb.PipelineRunSpec("pipeline"),
+			tb.PipelineRunStatus(
+				tb.PipelineRunStatusCondition(apis.Condition{
+					Status: corev1.ConditionTrue,
+					Reason: v1beta1.PipelineRunReasonSuccessful.String(),
+				}),
+				// pipeline run starts now
+				tb.PipelineRunStartTime(time.Now()),
+				// takes 10 minutes to complete
+				cb.PipelineRunCompletionTime(time.Now().Add(60*time.Minute)),
+			),
+		),
 	}
 
 	type clients struct {
@@ -113,7 +129,7 @@ func TestPipelineRunDelete(t *testing.T) {
 	}
 
 	seeds := make([]clients, 0)
-	for i := 0; i < 6; i++ {
+	for i := 0; i < 8; i++ {
 		cs, _ := test.SeedTestData(t, pipelinetest.Data{
 			Pipelines:    pdata,
 			PipelineRuns: prdata,
@@ -125,6 +141,7 @@ func TestPipelineRunDelete(t *testing.T) {
 			cb.UnstructuredPR(prdata[0], version),
 			cb.UnstructuredPR(prdata[1], version),
 			cb.UnstructuredPR(prdata[2], version),
+			cb.UnstructuredPR(prdata[3], version),
 		)
 		if err != nil {
 			t.Errorf("unable to create dynamic client: %v", err)
@@ -297,11 +314,38 @@ func TestPipelineRunDelete(t *testing.T) {
 		{
 			name:        "Error from using argument with --keep",
 			command:     []string{"rm", "pipelinerun", "--keep", "2"},
-			dynamic:     seeds[5].dynamicClient,
-			input:       seeds[5].pipelineClient,
+			dynamic:     seeds[6].dynamicClient,
+			input:       seeds[6].pipelineClient,
 			inputStream: nil,
 			wantError:   true,
 			want:        "--keep flag should not have any arguments specified with it",
+		},
+		{
+			name:        "Delete all PipelineRuns older than 60mn",
+			command:     []string{"delete", "-f", "--all", "--keep-since", "60", "-n", "ns"},
+			dynamic:     seeds[7].dynamicClient,
+			input:       seeds[7].pipelineClient,
+			inputStream: nil,
+			wantError:   false,
+			want:        "3 expired PipelineRuns has been deleted in namespace \"ns\", kept 1\n",
+		},
+		{
+			name:        "Only use since with --all",
+			command:     []string{"delete", "-f", "--keep-since", "60", "-n", "ns"},
+			dynamic:     seeds[7].dynamicClient,
+			input:       seeds[7].pipelineClient,
+			inputStream: nil,
+			wantError:   true,
+			want:        "--keep-since option can only be used with --all",
+		},
+		{
+			name:        "No mixing --keep-since and --keep",
+			command:     []string{"delete", "-f", "--keep-since", "60", "--keep", "5", "-n", "ns"},
+			dynamic:     seeds[7].dynamicClient,
+			input:       seeds[7].pipelineClient,
+			inputStream: nil,
+			wantError:   true,
+			want:        "cannot mix --keep and --keep-since options",
 		},
 	}
 
