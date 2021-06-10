@@ -98,6 +98,59 @@ func TestGetPipelineVersion(t *testing.T) {
 	}
 }
 
+func TestGetPipelinesVersionViaConfigMap(t *testing.T) {
+
+	testParams := []struct {
+		name                  string
+		namespace             string
+		userProvidedNamespace string
+		configMap             *corev1.ConfigMap
+		want                  string
+	}{
+		{
+			name:      "get pipelines version from configmap in tekton-pipelines namespace",
+			namespace: "tekton-pipelines",
+			configMap: getConfigMapData("pipelines-info", "main", map[string]string{"app.kubernetes.io/part-of": "tekton-pipelines"}),
+			want:      "main",
+		},
+		{
+			name:                  "get pipelines version from configmap present in different namespace other than default namespaces",
+			namespace:             "test",
+			userProvidedNamespace: "test",
+			configMap:             getConfigMapData("pipelines-info", "test", map[string]string{"app.kubernetes.io/part-of": "tekton-pipelines"}),
+			want:                  "test",
+		},
+	}
+	for _, tp := range testParams {
+		t.Run(tp.name, func(t *testing.T) {
+			cs, _ := test.SeedTestData(t, pipelinetest.Data{})
+			p := &test.Params{Kube: cs.Kube}
+			cls, err := p.Clients()
+			if err != nil {
+				t.Errorf("failed to get client: %v", err)
+			}
+			if _, err := cls.Kube.CoreV1().ConfigMaps(tp.namespace).Create(context.Background(), tp.configMap, metav1.CreateOptions{}); err != nil {
+				t.Errorf("failed to create configmap: %v", err)
+			}
+			version, _ := GetPipelineVersion(cls, tp.userProvidedNamespace)
+			test.AssertOutput(t, tp.want, version)
+		})
+	}
+}
+
+func getConfigMapData(name, version string, labels map[string]string) *corev1.ConfigMap {
+	return &corev1.ConfigMap{
+		TypeMeta: metav1.TypeMeta{},
+		ObjectMeta: metav1.ObjectMeta{
+			Name:   name,
+			Labels: labels,
+		},
+		Data: map[string]string{
+			"version": version,
+		},
+	}
+}
+
 func getDeploymentData(name, image string, deploymentLabels, podTemplateLabels, annotations map[string]string) *v1.Deployment {
 	return &v1.Deployment{
 		TypeMeta: metav1.TypeMeta{},
@@ -184,6 +237,45 @@ func TestGetTriggerVersion(t *testing.T) {
 	}
 }
 
+func TestGetTriggersVersionViaConfigMap(t *testing.T) {
+
+	testParams := []struct {
+		name                  string
+		namespace             string
+		userProvidedNamespace string
+		configMap             *corev1.ConfigMap
+		want                  string
+	}{
+		{
+			name:                  "get triggers version from configmap present in different namespace other than default namespaces",
+			namespace:             "test",
+			userProvidedNamespace: "test",
+			configMap:             getConfigMapData("triggers-info", "test", map[string]string{"app.kubernetes.io/part-of": "tekton-triggers"}),
+			want:                  "test",
+		}, {
+			name:      "get triggers version from configmap in tekton-pipelines namespace",
+			namespace: "tekton-pipelines",
+			configMap: getConfigMapData("triggers-info", "main", map[string]string{"app.kubernetes.io/part-of": "tekton-triggers"}),
+			want:      "main",
+		},
+	}
+	for _, tp := range testParams {
+		t.Run(tp.name, func(t *testing.T) {
+			cs, _ := test.SeedTestData(t, pipelinetest.Data{})
+			p := &test.Params{Kube: cs.Kube}
+			cls, err := p.Clients()
+			if err != nil {
+				t.Errorf("failed to get client: %v", err)
+			}
+			if _, err := cls.Kube.CoreV1().ConfigMaps(tp.namespace).Create(context.Background(), tp.configMap, metav1.CreateOptions{}); err != nil {
+				t.Errorf("failed to create configmap: %v", err)
+			}
+			version, _ := GetTriggerVersion(cls, tp.userProvidedNamespace)
+			test.AssertOutput(t, tp.want, version)
+		})
+	}
+}
+
 func TestGetDashboardVersion(t *testing.T) {
 	oldDeploymentLabels := map[string]string{
 		"app": "tekton-dashboard",
@@ -240,6 +332,46 @@ func TestGetDashboardVersion(t *testing.T) {
 			}
 			if _, err := cls.Kube.AppsV1().Deployments(tp.namespace).Create(context.Background(), tp.deployment, metav1.CreateOptions{}); err != nil {
 				t.Errorf("failed to create deployment: %v", err)
+			}
+			version, _ := GetDashboardVersion(cls, tp.userProvidedNamespace)
+			test.AssertOutput(t, tp.want, version)
+		})
+	}
+}
+
+func TestGetDashboardVersionViaConfigMap(t *testing.T) {
+
+	testParams := []struct {
+		name                  string
+		namespace             string
+		userProvidedNamespace string
+		configMap             *corev1.ConfigMap
+		want                  string
+	}{
+		{
+			name:      "get dashboard version from configmap in tekton-pipelines namespace",
+			namespace: "tekton-pipelines",
+			configMap: getConfigMapData("dashboard-info", "main", map[string]string{"app.kubernetes.io/part-of": "tekton-dashboard"}),
+			want:      "main",
+		},
+		{
+			name:                  "get dashboard version from configmap present in different namespace other than default namespaces",
+			namespace:             "test",
+			userProvidedNamespace: "test",
+			configMap:             getConfigMapData("dashboard-info", "test", map[string]string{"app.kubernetes.io/part-of": "tekton-dashboard"}),
+			want:                  "test",
+		},
+	}
+	for _, tp := range testParams {
+		t.Run(tp.name, func(t *testing.T) {
+			cs, _ := test.SeedTestData(t, pipelinetest.Data{})
+			p := &test.Params{Kube: cs.Kube}
+			cls, err := p.Clients()
+			if err != nil {
+				t.Errorf("failed to get client: %v", err)
+			}
+			if _, err := cls.Kube.CoreV1().ConfigMaps(tp.namespace).Create(context.Background(), tp.configMap, metav1.CreateOptions{}); err != nil {
+				t.Errorf("failed to create configmap: %v", err)
 			}
 			version, _ := GetDashboardVersion(cls, tp.userProvidedNamespace)
 			test.AssertOutput(t, tp.want, version)
