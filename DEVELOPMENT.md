@@ -53,17 +53,48 @@ developing and running Pipelines. Your Kubernetes version must be 1.11 or later.
 
 To setup a cluster with GKE:
 
-1. [Install required tools and setup GCP project](https://github.com/knative/docs/blob/master/docs/install/Knative-with-GKE.md#before-you-begin)
-   (You may find it useful to save the ID of the project in an environment
-   variable (e.g. `PROJECT_ID`).
-1. [Create a GKE cluster](https://github.com/knative/docs/blob/master/docs/install/Knative-with-GKE.md#creating-a-kubernetes-cluster)
+1. [Install required tools and setup GCP project](https://knative.dev/v0.12-docs/install/knative-with-gke/)
+    (You may find it useful to save the ID of the project in an environment
+    variable (e.g. `PROJECT_ID`).
+<!-- TODO: Someone needs to validate the cluster-version-->
+2. Create a GKE cluster (with `--cluster-version=latest` but you can use any
+    version 1.18 or later):
 
-Note that
-[the `--scopes` argument to `gcloud container cluster create`](https://cloud.google.com/sdk/gcloud/reference/container/clusters/create#--scopes)
-controls what GCP resources the cluster's default service account has access to;
-for example to give the default service account full access to your GCR
-registry, you can add `storage-full` to your `--scopes` arg.
+    ```bash
+    export PROJECT_ID=my-gcp-project
+    export CLUSTER_NAME=mycoolcluster
 
+    gcloud container clusters create $CLUSTER_NAME \
+     --enable-autoscaling \
+     --min-nodes=1 \
+     --max-nodes=3 \
+     --scopes=cloud-platform \
+     --enable-basic-auth \
+     --no-issue-client-certificate \
+     --project=$PROJECT_ID \
+     --region=us-central1 \
+     --machine-type=n1-standard-4 \
+     --image-type=cos \
+     --num-nodes=1 \
+     --cluster-version=1.18
+    ```
+
+    > **Note** The recommended [GCE machine type](https://cloud.google.com/compute/docs/machine-types) is `n1-standard-4`
+    > **Note** that
+    [the `--scopes` argument to `gcloud container cluster create`](https://cloud.google.com/sdk/gcloud/reference/container/clusters/create#--scopes)
+    controls what GCP resources the cluster's default service account has access
+    to; for example to give the default service account full access to your GCR
+    registry, you can add `storage-full` to your `--scopes` arg. See [Authenticating to GCP](https://cloud.google.com/kubernetes-engine/docs/tutorials/authenticating-to-cloud-platform) for more details.
+
+3. Grant cluster-admin permissions to the current user:
+
+   ```bash
+   kubectl create clusterrolebinding cluster-admin-binding \
+   --clusterrole=cluster-admin \
+   --user=$(gcloud config get-value core/account)
+   ```
+
+---
 ## Environment Setup
 
 To build the Tekton pipelines cli, you'll need to set `GO111MODULE=on`
