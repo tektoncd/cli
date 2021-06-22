@@ -24,6 +24,7 @@ import (
 	"github.com/tektoncd/pipeline/pkg/apis/pipeline/v1alpha1"
 	"github.com/tektoncd/pipeline/pkg/apis/pipeline/v1beta1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
 	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/apimachinery/pkg/runtime/schema"
 )
@@ -179,4 +180,32 @@ func SpecConvertFrom(spec *v1beta1.TaskSpec) *v1alpha1.TaskSpec {
 	}
 
 	return downTaskSpec
+}
+
+func Create(c *cli.Clients, t *v1beta1.Task, opts metav1.CreateOptions, ns string) (*v1beta1.Task, error) {
+	_, err := actions.GetGroupVersionResource(taskGroupResource, c.Tekton.Discovery())
+	if err != nil {
+		return nil, err
+	}
+
+	return createUnstructured(t, c, opts, ns)
+}
+
+func createUnstructured(obj runtime.Object, c *cli.Clients, opts metav1.CreateOptions, ns string) (*v1beta1.Task, error) {
+	object, err := runtime.DefaultUnstructuredConverter.ToUnstructured(obj)
+	if err != nil {
+		return nil, err
+	}
+	unstructuredT := &unstructured.Unstructured{
+		Object: object,
+	}
+	newUnstructuredT, err := actions.Create(taskGroupResource, c, unstructuredT, ns, opts)
+	if err != nil {
+		return nil, err
+	}
+	var task *v1beta1.Task
+	if err := runtime.DefaultUnstructuredConverter.FromUnstructured(newUnstructuredT.UnstructuredContent(), &task); err != nil {
+		return nil, err
+	}
+	return task, nil
 }
