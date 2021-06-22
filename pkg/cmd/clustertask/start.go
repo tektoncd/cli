@@ -48,8 +48,9 @@ import (
 )
 
 var (
-	errNoClusterTask      = errors.New("missing ClusterTask name")
-	errInvalidClusterTask = "ClusterTask name %s does not exist"
+	errNoClusterTask             = errors.New("missing ClusterTask name")
+	errInvalidClusterTask        = "ClusterTask name %s does not exist"
+	errClusterTaskAlreadyPresent = "ClusterTask with name %s already exists"
 )
 
 const invalidResource = "invalid input format for resource parameter: "
