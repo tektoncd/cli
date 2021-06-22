@@ -378,3 +378,35 @@ func TestTaskV1beta1_Get(t *testing.T) {
 	}
 	test.AssertOutput(t, "task", got.Name)
 }
+
+func TestTask_Create(t *testing.T) {
+	version := "v1beta1"
+	clock := clockwork.NewFakeClock()
+	tdata := []*v1beta1.Task{
+		{
+			ObjectMeta: metav1.ObjectMeta{
+				Name:      "task",
+				Namespace: "ns",
+			},
+		},
+	}
+	cs, _ := test.SeedV1beta1TestData(t, pipelinev1beta1test.Data{})
+	cs.Pipeline.Resources = cb.APIResourceList(version, []string{"task"})
+	tdc := testDynamic.Options{}
+	dc, err := tdc.Client()
+	if err != nil {
+		t.Errorf("unable to create dynamic client: %v", err)
+	}
+
+	p := &test.Params{Tekton: cs.Pipeline, Clock: clock, Kube: cs.Kube, Dynamic: dc}
+	c, err := p.Clients()
+	if err != nil {
+		t.Errorf("unable to create client: %v", err)
+	}
+
+	got, err := Create(c, tdata[0], metav1.CreateOptions{}, "ns")
+	if err != nil {
+		t.Errorf("unexpected Error")
+	}
+	test.AssertOutput(t, "task", got.Name)
+}
