@@ -375,3 +375,51 @@ func TestClusterTaskV1beta1_Get(t *testing.T) {
 	}
 	test.AssertOutput(t, "clustertask", got.Name)
 }
+
+func TestV1beta1ToV1alpha1Convert(t *testing.T) {
+	ctdata := []*v1beta1.ClusterTask{
+		{
+			ObjectMeta: metav1.ObjectMeta{
+				Name: "clustertask",
+			},
+		},
+		{
+			ObjectMeta: metav1.ObjectMeta{
+				Name: "clustertask2",
+			},
+		},
+	}
+	ctV1lapha1 := convertToV1Alpha1(ctdata[0])
+	test.AssertOutput(t, "v1alpha1", ctV1lapha1.APIVersion)
+}
+
+func TestClusterTask_Create(t *testing.T) {
+	version := "v1beta1"
+	clock := clockwork.NewFakeClock()
+	ctdata := []*v1beta1.ClusterTask{
+		{
+			ObjectMeta: metav1.ObjectMeta{
+				Name: "clustertask",
+			},
+		},
+	}
+	cs, _ := test.SeedV1beta1TestData(t, pipelinev1beta1test.Data{})
+	cs.Pipeline.Resources = cb.APIResourceList(version, []string{"clustertask"})
+	tdc := testDynamic.Options{}
+	dc, err := tdc.Client()
+	if err != nil {
+		t.Errorf("unable to create dynamic client: %v", err)
+	}
+
+	p := &test.Params{Tekton: cs.Pipeline, Clock: clock, Kube: cs.Kube, Dynamic: dc}
+	c, err := p.Clients()
+	if err != nil {
+		t.Errorf("unable to create client: %v", err)
+	}
+
+	got, err := Create(c, ctdata[0], metav1.CreateOptions{})
+	if err != nil {
+		t.Errorf("unexpected Error")
+	}
+	test.AssertOutput(t, "clustertask", got.Name)
+}
