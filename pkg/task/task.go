@@ -24,6 +24,7 @@ import (
 	"github.com/tektoncd/pipeline/pkg/apis/pipeline/v1alpha1"
 	"github.com/tektoncd/pipeline/pkg/apis/pipeline/v1beta1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
 	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/apimachinery/pkg/runtime/schema"
 )
@@ -179,4 +180,45 @@ func SpecConvertFrom(spec *v1beta1.TaskSpec) *v1alpha1.TaskSpec {
 	}
 
 	return downTaskSpec
+}
+
+func Create(c *cli.Clients, t *v1beta1.Task, opts metav1.CreateOptions, ns string) (*v1beta1.Task, error) {
+	gvr, err := actions.GetGroupVersionResource(taskGroupResource, c.Tekton.Discovery())
+	if err != nil {
+		return nil, err
+	}
+
+	if gvr.Version == "v1alpha1" {
+		v1alpha1Task := convertToV1Alpha1(t)
+		return createUnstructured(v1alpha1Task, c, opts, ns)
+	}
+
+	return createUnstructured(t, c, opts, ns)
+}
+
+func createUnstructured(obj runtime.Object, c *cli.Clients, opts metav1.CreateOptions, ns string) (*v1beta1.Task, error) {
+	object, _ := runtime.DefaultUnstructuredConverter.ToUnstructured(obj)
+	unstructuredT := &unstructured.Unstructured{
+		Object: object,
+	}
+	newUnstructuredT, err := actions.Create(taskGroupResource, c, unstructuredT, ns, opts)
+	if err != nil {
+		return nil, err
+	}
+	var task *v1beta1.Task
+	if err := runtime.DefaultUnstructuredConverter.FromUnstructured(newUnstructuredT.UnstructuredContent(), &task); err != nil {
+		return nil, err
+	}
+	return task, nil
+}
+
+// convert v1beta1 ClusterTask to v1alpha1 ClusterTask to support backward compatibility
+func convertToV1Alpha1(t *v1beta1.Task) *v1alpha1.Task {
+	downT := &v1alpha1.Task{}
+	downT.APIVersion = "v1alpha1"
+	downT.Kind = "Task"
+	downT.ObjectMeta = t.ObjectMeta
+	downT.Spec = v1alpha1.TaskSpec{}
+	downT.Spec = *SpecConvertFrom(&t.Spec)
+	return downT
 }
