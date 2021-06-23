@@ -29,6 +29,7 @@ import (
 	prsort "github.com/tektoncd/cli/pkg/pipelinerun/sort"
 	"github.com/tektoncd/pipeline/pkg/apis/pipeline/v1beta1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+	v1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime/schema"
 	cliopts "k8s.io/cli-runtime/pkg/genericclioptions"
 )
@@ -93,6 +94,7 @@ or
 	c.Flags().IntVarP(&opts.Keep, "keep", "", 0, "Keep n most recent number of PipelineRuns")
 	c.Flags().IntVarP(&opts.KeepSince, "keep-since", "", 0, "When deleting all PipelineRuns keep the ones that has been completed since n minutes")
 	c.Flags().BoolVarP(&opts.DeleteAllNs, "all", "", false, "Delete all PipelineRuns in a namespace (default: false)")
+	c.Flags().StringVarP(&opts.LabelSelector, "label", "", opts.LabelSelector, "A selector (label query) to filter on when running with --all, supports '=', '==', and '!='")
 	return c
 }
 
@@ -110,7 +112,7 @@ func deletePipelineRuns(s *cli.Stream, p cli.Params, prNames []string, opts *opt
 		d = deleter.New("PipelineRun", func(pipelineRunName string) error {
 			return actions.Delete(prGroupResource, cs, pipelineRunName, p.Namespace(), metav1.DeleteOptions{})
 		})
-		prtodelete, prtokeep, err := allPipelineRunNames(cs, opts.Keep, opts.KeepSince, p.Namespace())
+		prtodelete, prtokeep, err := allPipelineRunNames(cs, opts.Keep, opts.KeepSince, opts.LabelSelector, p.Namespace())
 		if err != nil {
 			return err
 		}
@@ -172,10 +174,14 @@ func pipelineRunLister(cs *cli.Clients, keep int, ns string) func(string) ([]str
 	}
 }
 
-func allPipelineRunNames(cs *cli.Clients, keep, since int, ns string) ([]string, []string, error) {
+func allPipelineRunNames(cs *cli.Clients, keep, since int, labelselector, ns string) ([]string, []string, error) {
 	var todelete, tokeep []string
 
-	pipelineRuns, err := pr.List(cs, metav1.ListOptions{}, ns)
+	options := v1.ListOptions{
+		LabelSelector: labelselector,
+	}
+
+	pipelineRuns, err := pr.List(cs, options, ns)
 	if err != nil {
 		return todelete, tokeep, err
 	}

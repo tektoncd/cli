@@ -34,6 +34,7 @@ or
   -h, --help                          help for delete
       --keep int                      Keep n most recent number of PipelineRuns
       --keep-since int                When deleting all PipelineRuns keep the ones that has been completed since n minutes
+      --label string                  A selector (label query) to filter on when running with --all, supports '=', '==', and '!='
   -o, --output string                 Output format. One of: json|yaml|name|go-template|go-template-file|template|templatefile|jsonpath|jsonpath-as-json|jsonpath-file.
   -p, --pipeline string               The name of a Pipeline whose PipelineRuns should be deleted (does not delete the Pipeline)
       --template string               Template string or path to template file to use when -o=go-template, -o=go-template-file. The template format is golang templates [http://golang.org/pkg/text/template/#pkg-overview].

@@ -62,6 +62,7 @@ func TestPipelineRunDelete(t *testing.T) {
 			cb.PipelineRunCreationTimestamp(clock.Now()),
 			tb.PipelineRunLabel("tekton.dev/pipeline", "pipeline"),
 			tb.PipelineRunSpec("pipeline"),
+			tb.PipelineRunLabel("iam", "tobedeleted"),
 			tb.PipelineRunStatus(
 				tb.PipelineRunStatusCondition(apis.Condition{
 					Status: corev1.ConditionTrue,
@@ -77,6 +78,7 @@ func TestPipelineRunDelete(t *testing.T) {
 			tb.PipelineRunNamespace("ns"),
 			cb.PipelineRunCreationTimestamp(clock.Now()),
 			tb.PipelineRunLabel("tekton.dev/pipeline", "pipeline"),
+			tb.PipelineRunLabel("iam", "tobedeleted"),
 			tb.PipelineRunSpec("pipeline"),
 			tb.PipelineRunStatus(
 				tb.PipelineRunStatusCondition(apis.Condition{
@@ -346,6 +348,15 @@ func TestPipelineRunDelete(t *testing.T) {
 			inputStream: nil,
 			wantError:   true,
 			want:        "cannot mix --keep and --keep-since options",
+		},
+		{
+			name:        "Delete all by labels",
+			command:     []string{"rm", "--all", "-n", "ns", "--label", "iam=tobedeleted"},
+			dynamic:     seeds[5].dynamicClient,
+			input:       seeds[5].pipelineClient,
+			inputStream: nil,
+			wantError:   false,
+			want:        "Are you sure you want to delete all PipelineRuns in namespace \"ns\" (y/n): All PipelineRuns deleted in namespace \"ns\"\n",
 		},
 	}
 
