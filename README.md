@@ -28,7 +28,7 @@ Download the latest binary executable for your operating system.
   # Extract tkn to your PATH (e.g. /usr/local/bin)
   sudo tar xvzf tkn_0.19.0_Darwin_x86_64.tar.gz -C /usr/local/bin tkn
   ```
-  
+
 ### Windows
 
 - Use [Chocolatey](https://chocolatey.org/packages/tektoncd-cli)
@@ -210,8 +210,15 @@ For every `tkn` command, you can use `-h` or `--help` flags to display specific 
 
 ## Disable Color and Emojis in Output
 
-For many `tkn` commands, color and emojis by default will appear in command output. `tkn` offers two approaches for disabling
-color and emojis from command output.
+For many `tkn` commands, color and emojis by default will appear in command
+output.
+
+It will only shows if you are in interactive shell with a [standard
+input](https://en.wikipedia.org/wiki/Standard_streams#Standard_input_(stdin))
+attached. If you pipe the tkn command or run it in a non interactive way (ie:
+from tekton itself in a Task) the coloring and emojis will *always* be disabled.
+
+`tkn` offers two approaches for disabling color and emojis from command output.
 
 To remove the color and emojis from all `tkn` command output, set the environment variable `NO_COLOR`, such as shown below:
 
@@ -227,6 +234,7 @@ such as in the example below:
 ```bash
 tkn taskrun describe --no-color
 ```
+
 
 ## Want to contribute
 
