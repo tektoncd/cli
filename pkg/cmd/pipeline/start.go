@@ -355,6 +355,7 @@ func (opt *startOptions) startPipeline(pipelineStart *v1beta1.Pipeline) error {
 		PipelineRunName: prCreated.Name,
 		Stream:          opt.stream,
 		Follow:          true,
+		Prefixing:       true,
 		Params:          opt.cliparams,
 		AllSteps:        false,
 	}
