@@ -322,6 +322,7 @@ func startClusterTask(opt startOptions, args []string) error {
 		TaskrunName: trCreated.Name,
 		Stream:      opt.stream,
 		Follow:      true,
+		Prefixing:   true,
 		Params:      opt.cliparams,
 		AllSteps:    false,
 	}
