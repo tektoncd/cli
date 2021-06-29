@@ -91,21 +91,84 @@ func TestVersionGood(t *testing.T) {
 	golden.Assert(t, got, fmt.Sprintf("%s.golden", t.Name()))
 }
 
-func TestComponentVersion(t *testing.T) {
-	v := clientVersion
-	defer func() { clientVersion = v }()
+func TestGetComponentVersions(t *testing.T) {
+	pipelineDeploymentLabels := map[string]string{
+		"app.kubernetes.io/part-of":   "tekton-pipelines",
+		"app.kubernetes.io/component": "controller",
+		"app.kubernetes.io/name":      "controller",
+	}
+	triggersDeploymentLabels := map[string]string{
+		"app.kubernetes.io/part-of":   "tekton-triggers",
+		"app.kubernetes.io/component": "controller",
+		"app.kubernetes.io/name":      "controller",
+	}
+	dashboardDeploymentLabels := map[string]string{
+		"app.kubernetes.io/part-of":   "tekton-dashboard",
+		"app.kubernetes.io/component": "dashboard",
+		"app.kubernetes.io/name":      "dashboard",
+	}
+	pipelineDeployment := getDeploymentData("pipeline-dep", "", pipelineDeploymentLabels, map[string]string{"app.kubernetes.io/version": "v0.10.0"}, nil)
+	triggersDeployment := getDeploymentData("triggers-dep", "", triggersDeploymentLabels, map[string]string{"app.kubernetes.io/version": "v0.5.0"}, nil)
+	dashboardDeployment := getDeploymentData("dashboard-dep", "", dashboardDeploymentLabels, map[string]string{"app.kubernetes.io/version": "v0.7.0"}, nil)
 
-	t.Run("test_client", func(t *testing.T) {})
-	clientVersion = "v1.2.3"
+	testParams := []struct {
+		name                  string
+		namespace             string
+		userProvidedNamespace string
+		deployment            []*v1.Deployment
+		goldenFile            bool
+	}{{
+		name:                  "deployment only with pipeline installed",
+		namespace:             "test",
+		userProvidedNamespace: "test",
+		deployment:            []*v1.Deployment{pipelineDeployment},
+		goldenFile:            true,
+	}, {
+		name:                  "deployment with pipeline and triggers installed",
+		namespace:             "test",
+		userProvidedNamespace: "test",
+		deployment:            []*v1.Deployment{pipelineDeployment, triggersDeployment},
+		goldenFile:            true,
+	}, {
+		name:                  "deployment with pipeline and dashboard installed",
+		namespace:             "test",
+		userProvidedNamespace: "test",
+		deployment:            []*v1.Deployment{pipelineDeployment, dashboardDeployment},
+		goldenFile:            true,
+	}, {
+		name:                  "deployment with pipeline, triggers and dashboard installed",
+		namespace:             "test",
+		userProvidedNamespace: "test",
+		deployment:            []*v1.Deployment{pipelineDeployment, triggersDeployment, dashboardDeployment},
+		goldenFile:            true,
+	},
+	}
+	components := []string{"client", "pipeline", "dashboard", "triggers"}
 
-	seedData, _ := test.SeedTestData(t, pipelinetest.Data{})
+	for _, tp := range testParams {
+		t.Run(tp.name, func(t *testing.T) {
+			for _, c := range components {
+				seedData, _ := test.SeedTestData(t, pipelinetest.Data{})
+				cs := pipelinetest.Clients{Kube: seedData.Kube}
+				p := &test.Params{Kube: cs.Kube}
+				version := Command(p)
+				cls, err := p.Clients()
+				if err != nil {
+					t.Errorf("failed to get client: %v", err)
+				}
+				// To add multiple deployments in a particular namespace
+				for _, v := range tp.deployment {
+					if _, err := cls.Kube.AppsV1().Deployments(tp.namespace).Create(context.Background(), v, metav1.CreateOptions{}); err != nil {
+						t.Errorf("failed to create deployment: %v", err)
+					}
+				}
+				got, _ := test.ExecuteCommand(version, "version", "-n", "test", "--component", c)
+				fmt.Println(t.Name())
+				golden.Assert(t, got, fmt.Sprintf("%s-%s.golden", t.Name(), c))
+			}
+		})
+	}
 
-	cs := pipelinetest.Clients{Kube: seedData.Kube}
-	p := &test.Params{Kube: cs.Kube}
-	version := Command(p)
-	got, _ := test.ExecuteCommand(version, "version", "--component", "client")
-	expected := "v1.2.3\n"
-	test.AssertOutput(t, expected, got)
 }
 
 func TestVersionBad(t *testing.T) {

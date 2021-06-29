@@ -114,7 +114,16 @@ func Command(p cli.Params) *cobra.Command {
 					fmt.Fprintf(cmd.OutOrStdout(), "Invalid component value\n")
 				}
 			} else {
-				fmt.Fprintf(cmd.OutOrStdout(), "Client version: %s\n", clientVersion)
+				switch component {
+				case "":
+					fmt.Fprintf(cmd.OutOrStdout(), "Client version: %s\n", clientVersion)
+				case "client":
+					fmt.Fprintf(cmd.OutOrStdout(), "%s\n", clientVersion)
+				case "pipeline", "triggers", "dashboard":
+					fmt.Fprintf(cmd.OutOrStdout(), "unknown\n")
+				default:
+					fmt.Fprintf(cmd.OutOrStdout(), "Invalid component value\n")
+				}
 			}
 
 			if !check || clientVersion == devVersion {
