@@ -15,7 +15,8 @@ Interact with tekton hub
 ### Options
 
 ```
-      --api-server string   Hub API Server URL (default "https://api.hub.tekton.dev")
+      --api-server string   Hub API Server URL (default 'https://api.hub.tekton.dev').
+                            URL can also be defined in a file '$HOME/.tekton/hub-config' with a variable 'HUB_API_SERVER'.
   -h, --help                help for hub
 ```
 

@@ -35,7 +35,8 @@ Downgrade a Task of name 'foo' to version '0.3':
 ### Options inherited from parent commands
 
 ```
-      --api-server string   Hub API Server URL (default "https://api.hub.tekton.dev")
+      --api-server string   Hub API Server URL (default 'https://api.hub.tekton.dev').
+                            URL can also be defined in a file '$HOME/.tekton/hub-config' with a variable 'HUB_API_SERVER'.
   -c, --context string      Name of the kubeconfig context to use (default: kubectl config current-context)
   -k, --kubeconfig string   Kubectl config file (default: $HOME/.kube/config)
   -n, --namespace string    Namespace to use (default: from $KUBECONFIG)

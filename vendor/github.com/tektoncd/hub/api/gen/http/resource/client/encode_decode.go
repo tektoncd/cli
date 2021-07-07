@@ -48,6 +48,9 @@ func EncodeQueryRequest(encoder func(*http.Request) goahttp.Encoder) func(*http.
 		for _, value := range p.Catalogs {
 			values.Add("catalogs", value)
 		}
+		for _, value := range p.Categories {
+			values.Add("categories", value)
+		}
 		for _, value := range p.Kinds {
 			values.Add("kinds", value)
 		}
@@ -773,6 +776,10 @@ func unmarshalResourceDataResponseBodyToResourceviewsResourceDataView(v *Resourc
 		Rating: v.Rating,
 	}
 	res.Catalog = unmarshalCatalogResponseBodyToResourceviewsCatalogView(v.Catalog)
+	res.Categories = make([]*resourceviews.CategoryView, len(v.Categories))
+	for i, val := range v.Categories {
+		res.Categories[i] = unmarshalCategoryResponseBodyToResourceviewsCategoryView(val)
+	}
 	res.LatestVersion = unmarshalResourceVersionDataResponseBodyToResourceviewsResourceVersionDataView(v.LatestVersion)
 	res.Tags = make([]*resourceviews.TagView, len(v.Tags))
 	for i, val := range v.Tags {
@@ -794,6 +801,17 @@ func unmarshalCatalogResponseBodyToResourceviewsCatalogView(v *CatalogResponseBo
 		Name: v.Name,
 		Type: v.Type,
 		URL:  v.URL,
+	}
+
+	return res
+}
+
+// unmarshalCategoryResponseBodyToResourceviewsCategoryView builds a value of
+// type *resourceviews.CategoryView from a value of type *CategoryResponseBody.
+func unmarshalCategoryResponseBodyToResourceviewsCategoryView(v *CategoryResponseBody) *resourceviews.CategoryView {
+	res := &resourceviews.CategoryView{
+		ID:   v.ID,
+		Name: v.Name,
 	}
 
 	return res

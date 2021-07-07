@@ -78,7 +78,7 @@ func (s *Select) OnChange(key rune, config *PromptConfig) bool {
 		return false
 
 		// if the user pressed the up arrow or 'k' to emulate vim
-	} else if key == terminal.KeyArrowUp || (s.VimMode && key == 'k') && len(options) > 0 {
+	} else if (key == terminal.KeyArrowUp || (s.VimMode && key == 'k')) && len(options) > 0 {
 		s.useDefault = false
 
 		// if we are at the top of the list
@@ -91,7 +91,7 @@ func (s *Select) OnChange(key rune, config *PromptConfig) bool {
 		}
 
 		// if the user pressed down or 'j' to emulate vim
-	} else if key == terminal.KeyArrowDown || (s.VimMode && key == 'j') && len(options) > 0 {
+	} else if (key == terminal.KeyTab || key == terminal.KeyArrowDown || (s.VimMode && key == 'j')) && len(options) > 0 {
 		s.useDefault = false
 		// if we are at the bottom of the list
 		if s.selectedIndex == len(options)-1 {
@@ -114,8 +114,9 @@ func (s *Select) OnChange(key rune, config *PromptConfig) bool {
 	} else if key == terminal.KeyDelete || key == terminal.KeyBackspace {
 		// if there is content in the filter to delete
 		if s.filter != "" {
+			runeFilter := []rune(s.filter)
 			// subtract a line from the current filter
-			s.filter = s.filter[0 : len(s.filter)-1]
+			s.filter = string(runeFilter[0 : len(runeFilter)-1])
 			// we removed the last value in the filter
 		}
 	} else if key >= terminal.KeySpace {

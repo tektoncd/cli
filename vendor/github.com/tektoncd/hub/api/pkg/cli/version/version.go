@@ -27,16 +27,31 @@ import (
 
 const (
 	pipelinesControllerSelector string = "app.kubernetes.io/part-of=tekton-pipelines,app.kubernetes.io/component=controller,app.kubernetes.io/name=controller"
+	pipelinesConfigMapName      string = "pipelines-info"
 )
 
+var defaultNamespaces = []string{"tekton-pipelines", "openshift-pipelines"}
+
 func GetPipelineVersion(dynamic dynamic.Interface) (string, error) {
+
+	var version string
+
+	configMap, err := getConfigMap(dynamic, pipelinesConfigMapName)
+	if err == nil {
+		dataObj, _, _ := unstructured.NestedStringMap(configMap.Object, "data")
+		version = dataObj["version"]
+		if version != "" {
+			return version, nil
+		}
+	}
+
 	deploymentsList, err := getDeployments(dynamic, pipelinesControllerSelector)
 
 	if err != nil {
 		return "", err
 	}
 
-	version := findPipelineVersion(deploymentsList.Items)
+	version = findPipelineVersion(deploymentsList.Items)
 
 	if version == "" {
 		return "", fmt.Errorf("error getting the tekton pipelines deployment version. Version is unknown")
@@ -47,9 +62,8 @@ func GetPipelineVersion(dynamic dynamic.Interface) (string, error) {
 
 func getDeployments(dynamic dynamic.Interface, newLabel string) (*unstructured.UnstructuredList, error) {
 	var (
-		err               error
-		deployments       *unstructured.UnstructuredList
-		defaultNamespaces = []string{"tekton-pipelines", "openshift-pipelines"}
+		err         error
+		deployments *unstructured.UnstructuredList
 	)
 
 	for _, n := range defaultNamespaces {
@@ -75,6 +89,28 @@ func getDeploy(dynamic dynamic.Interface, newLabel, ns string) (*unstructured.Un
 		return nil, err
 	}
 	return deployments, nil
+}
+
+func getConfigMap(dynamic dynamic.Interface, name string) (*unstructured.Unstructured, error) {
+
+	var (
+		err       error
+		configMap *unstructured.Unstructured
+	)
+
+	gvrObj := schema.GroupVersionResource{Group: "", Version: "v1", Resource: "configmaps"}
+
+	for _, ns := range defaultNamespaces {
+		configMap, err = dynamic.Resource(gvrObj).Namespace(ns).Get(context.Background(), name, metav1.GetOptions{})
+		if err != nil {
+			return nil, err
+		}
+		if configMap != nil {
+			break
+		}
+	}
+
+	return configMap, nil
 }
 
 func findPipelineVersion(deployments []unstructured.Unstructured) string {

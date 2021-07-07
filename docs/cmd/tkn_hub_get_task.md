@@ -36,8 +36,9 @@ Get a Task of name 'foo' of version '0.3':
 ### Options inherited from parent commands
 
 ```
-      --api-server string   Hub API Server URL (default "https://api.hub.tekton.dev")
-      --from string         Name of Catalog to which resource belongs to. (default "tekton")
+      --api-server string   Hub API Server URL (default 'https://api.hub.tekton.dev').
+                            URL can also be defined in a file '$HOME/.tekton/hub-config' with a variable 'HUB_API_SERVER'.
+      --from string         Name of Catalog to which resource belongs to.
       --version string      Version of Resource
 ```
 

@@ -3,7 +3,7 @@ module github.com/tektoncd/cli
 go 1.13
 
 require (
-	github.com/AlecAivazis/survey/v2 v2.0.4
+	github.com/AlecAivazis/survey/v2 v2.2.12
 	github.com/Netflix/go-expect v0.0.0-20200312175327-da48e75238e2
 	github.com/blang/semver v3.5.1+incompatible
 	github.com/cpuguy83/go-md2man v1.0.10
@@ -19,10 +19,10 @@ require (
 	github.com/pkg/errors v0.9.1
 	github.com/spf13/cobra v1.1.3
 	github.com/spf13/pflag v1.0.5
-	github.com/tektoncd/hub/api v0.0.0-20210517094448-c032b766a83c
-	github.com/tektoncd/pipeline v0.24.1
+	github.com/tektoncd/hub/api v0.0.0-20210707072808-0ae1afc58dd8
+	github.com/tektoncd/pipeline v0.25.0
 	github.com/tektoncd/plumbing v0.0.0-20210514044347-f8a9689d5bd5
-	github.com/tektoncd/triggers v0.14.1
+	github.com/tektoncd/triggers v0.14.2
 	github.com/tidwall/gjson v1.6.0 // indirect
 	go.opencensus.io v0.23.0
 	go.uber.org/multierr v1.5.0
