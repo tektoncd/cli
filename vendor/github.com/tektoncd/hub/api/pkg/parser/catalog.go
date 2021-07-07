@@ -41,14 +41,16 @@ const (
 	DisplayNameAnnotation         = "tekton.dev/displayName"
 	MinPipelinesVersionAnnotation = "tekton.dev/pipelines.minVersion"
 	TagsAnnotation                = "tekton.dev/tags"
+	CategoryAnnotation            = "tekton.dev/categories"
 )
 
 type (
 	Resource struct {
-		Name     string
-		Kind     string
-		Tags     []string
-		Versions []VersionInfo
+		Name       string
+		Kind       string
+		Tags       []string
+		Versions   []VersionInfo
+		Categories []string
 	}
 
 	VersionInfo struct {
@@ -272,6 +274,11 @@ func (c CatalogParser) appendVersion(res *Resource, filePath string) Result {
 	tags := annotations[TagsAnnotation]
 	tagList := strings.FieldsFunc(tags, func(c rune) bool { return c == ',' || c == ' ' })
 	res.Tags = append(res.Tags, tagList...)
+
+	categories := annotations[CategoryAnnotation]
+	categoryList := strings.FieldsFunc(categories, func(c rune) bool { return c == ',' })
+	res.Categories = append(res.Categories, categoryList...)
+
 	res.Versions = append(res.Versions,
 		VersionInfo{
 			Version:             version,

@@ -20,7 +20,7 @@ Display info of resource by its name, kind, catalog, and version
 
 .SH OPTIONS
 .PP
-\fB\-\-from\fP="tekton"
+\fB\-\-from\fP=""
     Name of Catalog to which resource belongs.
 
 .PP
@@ -34,9 +34,10 @@ Display info of resource by its name, kind, catalog, and version
 
 .SH OPTIONS INHERITED FROM PARENT COMMANDS
 .PP
-\fB\-\-api\-server\fP="
-\[la]https://api.hub.tekton.dev"\[ra]
-    Hub API Server URL
+\fB\-\-api\-server\fP=""
+    Hub API Server URL (default '
+\[la]https://api.hub.tekton.dev'\[ra]).
+URL can also be defined in a file '$HOME/.tekton/hub\-config' with a variable 'HUB\_API\_SERVER'.
 
 
 .SH SEE ALSO

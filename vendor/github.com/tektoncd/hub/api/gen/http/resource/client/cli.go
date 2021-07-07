@@ -18,7 +18,7 @@ import (
 
 // BuildQueryPayload builds the payload for the resource Query endpoint from
 // CLI flags.
-func BuildQueryPayload(resourceQueryName string, resourceQueryCatalogs string, resourceQueryKinds string, resourceQueryTags string, resourceQueryLimit string, resourceQueryMatch string) (*resource.QueryPayload, error) {
+func BuildQueryPayload(resourceQueryName string, resourceQueryCatalogs string, resourceQueryCategories string, resourceQueryKinds string, resourceQueryTags string, resourceQueryLimit string, resourceQueryMatch string) (*resource.QueryPayload, error) {
 	var err error
 	var name string
 	{
@@ -32,6 +32,15 @@ func BuildQueryPayload(resourceQueryName string, resourceQueryCatalogs string, r
 			err = json.Unmarshal([]byte(resourceQueryCatalogs), &catalogs)
 			if err != nil {
 				return nil, fmt.Errorf("invalid JSON for catalogs, \nerror: %s, \nexample of valid JSON:\n%s", err, "'[\n      \"tekton\",\n      \"openshift\"\n   ]'")
+			}
+		}
+	}
+	var categories []string
+	{
+		if resourceQueryCategories != "" {
+			err = json.Unmarshal([]byte(resourceQueryCategories), &categories)
+			if err != nil {
+				return nil, fmt.Errorf("invalid JSON for categories, \nerror: %s, \nexample of valid JSON:\n%s", err, "'[\n      \"build\",\n      \"tools\"\n   ]'")
 			}
 		}
 	}
@@ -79,6 +88,7 @@ func BuildQueryPayload(resourceQueryName string, resourceQueryCatalogs string, r
 	v := &resource.QueryPayload{}
 	v.Name = name
 	v.Catalogs = catalogs
+	v.Categories = categories
 	v.Kinds = kinds
 	v.Tags = tags
 	v.Limit = limit

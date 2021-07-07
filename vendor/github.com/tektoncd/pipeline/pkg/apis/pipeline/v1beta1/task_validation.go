@@ -36,6 +36,9 @@ var _ apis.Validatable = (*Task)(nil)
 
 func (t *Task) Validate(ctx context.Context) *apis.FieldError {
 	errs := validate.ObjectMetadata(t.GetObjectMeta()).ViaField("metadata")
+	if apis.IsInDelete(ctx) {
+		return nil
+	}
 	return errs.Also(t.Spec.Validate(apis.WithinSpec(ctx)).ViaField("spec"))
 }
 
@@ -276,6 +279,7 @@ func validateTaskContextVariables(steps []Step) *apis.FieldError {
 	)
 	taskContextNames := sets.NewString().Insert(
 		"name",
+		"retry-count",
 	)
 	errs := validateVariables(steps, "context\\.taskRun", taskRunContextNames)
 	return errs.Also(validateVariables(steps, "context\\.task", taskContextNames))

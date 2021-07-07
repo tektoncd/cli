@@ -19,19 +19,27 @@ import (
 	"io/ioutil"
 	"net/http"
 	"net/url"
+	"os/user"
+
+	"github.com/joho/godotenv"
+	"github.com/spf13/viper"
 )
 
 const (
 	// hubURL - Hub API Server URL
 	hubURL = "https://api.hub.tekton.dev"
+	hubConfigPath = ".tekton/hub-config"
 )
 
 type Client interface {
 	SetURL(u string) error
 	Get(endpoint string) ([]byte, int, error)
+	GetCatalogsList() ([]string, error)
 	Search(opt SearchOption) SearchResult
 	GetResource(opt ResourceOption) ResourceResult
+	GetResourcesList(opt SearchOption) ([]string, error)
 	GetResourceVersions(opt ResourceOption) ResourceVersionResult
+	GetResourceVersionslist(opt ResourceOption) ([]string, error)
 }
 
 type client struct {
@@ -50,14 +58,32 @@ func URL() string {
 }
 
 // SetURL validates and sets the hub apiURL server URL
+// URL passed through flag will take precedence over the hub API URL
+// in config file and default URL
 func (h *client) SetURL(apiURL string) error {
 
-	_, err := url.ParseRequestURI(apiURL)
-	if err != nil {
+	if apiURL != "" {
+		_, err := url.ParseRequestURI(apiURL)
+		if err != nil {
+			return err
+		}
+		h.apiURL = apiURL
+		return nil
+	}
+
+	if err := loadConfigFile(); err != nil {
 		return err
 	}
 
-	h.apiURL = apiURL
+	viper.AutomaticEnv()
+	if apiURL := viper.GetString("HUB_API_SERVER"); apiURL != "" {
+		_, err := url.ParseRequestURI(apiURL)
+		if err != nil {
+			return fmt.Errorf("invalid url set for HUB_API_SERVER: %s : %v", apiURL, err)
+		}
+		h.apiURL = apiURL
+	}
+
 	return nil
 }
 
@@ -84,6 +110,12 @@ func (h *client) Get(endpoint string) ([]byte, int, error) {
 
 // httpGet gets raw data given the url
 func httpGet(url string) ([]byte, int, error) {
+
+	err := loadConfigFile()
+	if err != nil {
+		return nil, 0, err
+	}
+
 	resp, err := http.Get(url)
 	if err != nil {
 		return nil, 0, err
@@ -96,4 +128,22 @@ func httpGet(url string) ([]byte, int, error) {
 	}
 
 	return data, resp.StatusCode, err
+}
+
+// Looks for config file at $HOME/.tekton/hub-config and loads into
+// in the environment
+func loadConfigFile() error {
+
+	user, err := user.Current()
+	if err != nil {
+		return err
+	}
+
+	// if hub-config file not found, then returns
+	path := fmt.Sprintf("%s/%s", user.HomeDir, hubConfigPath)
+	if err := godotenv.Load(path); err != nil {
+		return nil
+	}
+
+	return nil
 }

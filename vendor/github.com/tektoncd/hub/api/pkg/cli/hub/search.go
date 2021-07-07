@@ -25,11 +25,12 @@ import (
 
 // SearchOption defines option associated with query API
 type SearchOption struct {
-	Name  string
-	Kinds []string
-	Tags  []string
-	Match string
-	Limit uint
+	Name    string
+	Kinds   []string
+	Tags    []string
+	Match   string
+	Limit   uint
+	Catalog string
 }
 
 // SearchResponse is the data object which is the search result
@@ -92,6 +93,9 @@ func (so SearchOption) Endpoint() string {
 	}
 	if so.Limit != 0 {
 		v.Set("limit", strconv.FormatUint(uint64(so.Limit), 10))
+	}
+	if so.Catalog != "" {
+		v.Set("catalogs", so.Catalog)
 	}
 
 	v.Set("match", so.Match)

@@ -53,7 +53,7 @@ var MultiSelectQuestionTemplate = `
 {{- color "default+hb"}}{{ .Message }}{{ .FilterMessage }}{{color "reset"}}
 {{- if .ShowAnswer}}{{color "cyan"}} {{.Answer}}{{color "reset"}}{{"\n"}}
 {{- else }}
-	{{- "  "}}{{- color "cyan"}}[Use arrows to move, space to select, type to filter{{- if and .Help (not .ShowHelp)}}, {{ .Config.HelpInput }} for more help{{end}}]{{color "reset"}}
+	{{- "  "}}{{- color "cyan"}}[Use arrows to move, space to select, <right> to all, <left> to none, type to filter{{- if and .Help (not .ShowHelp)}}, {{ .Config.HelpInput }} for more help{{end}}]{{color "reset"}}
   {{- "\n"}}
   {{- range $ix, $option := .PageEntries}}
     {{- if eq $ix $.SelectedIndex }}{{color $.Config.Icons.SelectFocus.Format }}{{ $.Config.Icons.SelectFocus.Text }}{{color "reset"}}{{else}} {{end}}
@@ -77,7 +77,7 @@ func (m *MultiSelect) OnChange(key rune, config *PromptConfig) {
 			// decrement the selected index
 			m.selectedIndex--
 		}
-	} else if key == terminal.KeyArrowDown || (m.VimMode && key == 'j') {
+	} else if key == terminal.KeyTab || key == terminal.KeyArrowDown || (m.VimMode && key == 'j') {
 		// if we are at the bottom of the list
 		if m.selectedIndex == len(options)-1 {
 			// start at the top
@@ -100,7 +100,9 @@ func (m *MultiSelect) OnChange(key rune, config *PromptConfig) {
 				// otherwise just invert the current value
 				m.checked[selectedOpt.Index] = !old
 			}
-			m.filter = ""
+			if !config.KeepFilter {
+				m.filter = ""
+			}
 		}
 		// only show the help message if we have one to show
 	} else if string(key) == config.HelpInput && m.Help != "" {
@@ -111,11 +113,26 @@ func (m *MultiSelect) OnChange(key rune, config *PromptConfig) {
 		m.filter = ""
 	} else if key == terminal.KeyDelete || key == terminal.KeyBackspace {
 		if m.filter != "" {
-			m.filter = m.filter[0 : len(m.filter)-1]
+			runeFilter := []rune(m.filter)
+			m.filter = string(runeFilter[0 : len(runeFilter)-1])
 		}
 	} else if key >= terminal.KeySpace {
 		m.filter += string(key)
 		m.VimMode = false
+	} else if key == terminal.KeyArrowRight {
+		for _, v := range options {
+			m.checked[v.Index] = true
+		}
+		if !config.KeepFilter {
+			m.filter = ""
+		}
+	} else if key == terminal.KeyArrowLeft {
+		for _, v := range options {
+			m.checked[v.Index] = false
+		}
+		if !config.KeepFilter {
+			m.filter = ""
+		}
 	}
 
 	m.FilterMessage = ""
@@ -257,7 +274,10 @@ func (m *MultiSelect) Prompt(config *PromptConfig) (interface{}, error) {
 
 	// start waiting for input
 	for {
-		r, _, _ := rr.ReadRune()
+		r, _, err := rr.ReadRune()
+		if err != nil {
+			return "", err
+		}
 		if r == '\r' || r == '\n' {
 			break
 		}

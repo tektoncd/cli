@@ -12,7 +12,7 @@ import (
 // the tag used to denote the name of the question
 const tagName = "survey"
 
-// Settables allow for configuration when assigning answers
+// Settable allow for configuration when assigning answers
 type Settable interface {
 	WriteAnswer(field string, value interface{}) error
 }
@@ -86,7 +86,25 @@ func WriteAnswer(t interface{}, name string, v interface{}) (err error) {
 		return copy(field, value)
 	case reflect.Map:
 		mapType := reflect.TypeOf(t).Elem()
-		if mapType.Key().Kind() != reflect.String || mapType.Elem().Kind() != reflect.Interface {
+		if mapType.Key().Kind() != reflect.String {
+			return errors.New("answer maps key must be of type string")
+		}
+
+		// copy only string value/index value to map if,
+		// map is not of type interface and is 'OptionAnswer'
+		if value.Type().Name() == "OptionAnswer" {
+			if kval := mapType.Elem().Kind(); kval == reflect.String {
+				mt := *t.(*map[string]string)
+				mt[name] = value.FieldByName("Value").String()
+				return nil
+			} else if kval == reflect.Int {
+				mt := *t.(*map[string]int)
+				mt[name] = int(value.FieldByName("Index").Int())
+				return nil
+			}
+		}
+
+		if mapType.Elem().Kind() != reflect.Interface {
 			return errors.New("answer maps must be of type map[string]interface")
 		}
 		mt := *t.(*map[string]interface{})
@@ -95,6 +113,45 @@ func WriteAnswer(t interface{}, name string, v interface{}) (err error) {
 	}
 	// otherwise just copy the value to the target
 	return copy(elem, value)
+}
+
+type errFieldNotMatch struct {
+	questionName string
+}
+
+func (err errFieldNotMatch) Error() string {
+	return fmt.Sprintf("could not find field matching %v", err.questionName)
+}
+
+func (err errFieldNotMatch) Is(target error) bool { // implements the dynamic errors.Is interface.
+	if target != nil {
+		if name, ok := IsFieldNotMatch(target); ok {
+			// if have a filled questionName then perform "deeper" comparison.
+			return name == "" || err.questionName == "" || name == err.questionName
+		}
+	}
+
+	return false
+}
+
+// IsFieldNotMatch reports whether an "err" is caused by a non matching field.
+// It returns the Question.Name that couldn't be matched with a destination field.
+//
+// Usage:
+// err := survey.Ask(qs, &v);
+// if err != nil {
+// 	if name, ok := core.IsFieldNotMatch(err); ok {
+//		[...name is the not matched question name]
+// 	}
+// }
+func IsFieldNotMatch(err error) (string, bool) {
+	if err != nil {
+		if v, ok := err.(errFieldNotMatch); ok {
+			return v.questionName, true
+		}
+	}
+
+	return "", false
 }
 
 // BUG(AlecAivazis): the current implementation might cause weird conflicts if there are
@@ -129,7 +186,7 @@ func findFieldIndex(s reflect.Value, name string) (int, error) {
 	}
 
 	// we didn't find the field
-	return -1, fmt.Errorf("could not find field matching %v", name)
+	return -1, errFieldNotMatch{name}
 }
 
 // isList returns true if the element is something we can Len()

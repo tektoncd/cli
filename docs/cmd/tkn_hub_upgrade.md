@@ -25,7 +25,8 @@ Upgrade an installed resource
 ### Options inherited from parent commands
 
 ```
-      --api-server string   Hub API Server URL (default "https://api.hub.tekton.dev")
+      --api-server string   Hub API Server URL (default 'https://api.hub.tekton.dev').
+                            URL can also be defined in a file '$HOME/.tekton/hub-config' with a variable 'HUB_API_SERVER'.
 ```
 
 ### SEE ALSO

@@ -321,6 +321,8 @@ type ResourceDataResponseBody struct {
 	Name *string `form:"name,omitempty" json:"name,omitempty" xml:"name,omitempty"`
 	// Type of catalog to which resource belongs
 	Catalog *CatalogResponseBody `form:"catalog,omitempty" json:"catalog,omitempty" xml:"catalog,omitempty"`
+	// Categories related to resource
+	Categories []*CategoryResponseBody `form:"categories,omitempty" json:"categories,omitempty" xml:"categories,omitempty"`
 	// Kind of resource
 	Kind *string `form:"kind,omitempty" json:"kind,omitempty" xml:"kind,omitempty"`
 	// Latest version of resource
@@ -343,6 +345,14 @@ type CatalogResponseBody struct {
 	Type *string `form:"type,omitempty" json:"type,omitempty" xml:"type,omitempty"`
 	// URL of catalog
 	URL *string `form:"url,omitempty" json:"url,omitempty" xml:"url,omitempty"`
+}
+
+// CategoryResponseBody is used to define fields on response body types.
+type CategoryResponseBody struct {
+	// ID is the unique id of the category
+	ID *uint `form:"id,omitempty" json:"id,omitempty" xml:"id,omitempty"`
+	// Name of category
+	Name *string `form:"name,omitempty" json:"name,omitempty" xml:"name,omitempty"`
 }
 
 // ResourceVersionDataResponseBody is used to define fields on response body
@@ -1022,6 +1032,9 @@ func ValidateResourceDataResponseBody(body *ResourceDataResponseBody) (err error
 	if body.Catalog == nil {
 		err = goa.MergeErrors(err, goa.MissingFieldError("catalog", "body"))
 	}
+	if body.Categories == nil {
+		err = goa.MergeErrors(err, goa.MissingFieldError("categories", "body"))
+	}
 	if body.Kind == nil {
 		err = goa.MergeErrors(err, goa.MissingFieldError("kind", "body"))
 	}
@@ -1040,6 +1053,13 @@ func ValidateResourceDataResponseBody(body *ResourceDataResponseBody) (err error
 	if body.Catalog != nil {
 		if err2 := ValidateCatalogResponseBody(body.Catalog); err2 != nil {
 			err = goa.MergeErrors(err, err2)
+		}
+	}
+	for _, e := range body.Categories {
+		if e != nil {
+			if err2 := ValidateCategoryResponseBody(e); err2 != nil {
+				err = goa.MergeErrors(err, err2)
+			}
 		}
 	}
 	if body.LatestVersion != nil {
@@ -1083,6 +1103,18 @@ func ValidateCatalogResponseBody(body *CatalogResponseBody) (err error) {
 		if !(*body.Type == "official" || *body.Type == "community") {
 			err = goa.MergeErrors(err, goa.InvalidEnumValueError("body.type", *body.Type, []interface{}{"official", "community"}))
 		}
+	}
+	return
+}
+
+// ValidateCategoryResponseBody runs the validations defined on
+// CategoryResponseBody
+func ValidateCategoryResponseBody(body *CategoryResponseBody) (err error) {
+	if body.ID == nil {
+		err = goa.MergeErrors(err, goa.MissingFieldError("id", "body"))
+	}
+	if body.Name == nil {
+		err = goa.MergeErrors(err, goa.MissingFieldError("name", "body"))
 	}
 	return
 }

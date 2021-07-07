@@ -21,15 +21,17 @@ import (
 	"github.com/tektoncd/hub/api/pkg/cli/app"
 	"github.com/tektoncd/hub/api/pkg/cli/flag"
 	"github.com/tektoncd/hub/api/pkg/cli/hub"
+	so "github.com/tektoncd/hub/api/pkg/cli/options"
 	"github.com/tektoncd/hub/api/pkg/cli/printer"
 )
 
 type options struct {
-	cli     app.CLI
-	from    string
-	version string
-	kind    string
-	args    []string
+	cli       app.CLI
+	from      string
+	version   string
+	kind      string
+	args      []string
+	hubClient hub.Client
 }
 
 var cmdExamples string = `
@@ -63,7 +65,7 @@ func Command(cli app.CLI) *cobra.Command {
 		commandForKind("pipeline", opts),
 	)
 
-	cmd.PersistentFlags().StringVar(&opts.from, "from", "tekton", "Name of Catalog to which resource belongs to.")
+	cmd.PersistentFlags().StringVar(&opts.from, "from", "", "Name of Catalog to which resource belongs to.")
 	cmd.PersistentFlags().StringVar(&opts.version, "version", "", "Version of Resource")
 
 	return cmd
@@ -82,7 +84,6 @@ func commandForKind(kind string, opts *options) *cobra.Command {
 		Annotations: map[string]string{
 			"commandType": "main",
 		},
-		Args: cobra.ExactArgs(1),
 		RunE: func(cmd *cobra.Command, args []string) error {
 			opts.kind = kind
 			opts.args = args
@@ -97,10 +98,16 @@ func (opts *options) run() error {
 		return err
 	}
 
-	hubClient := opts.cli.Hub()
+	opts.hubClient = opts.cli.Hub()
+	var err error
 
-	resource := hubClient.GetResource(hub.ResourceOption{
-		Name:    opts.name(),
+	name, err := opts.GetResourceInfo()
+	if err != nil {
+		return err
+	}
+
+	resource := opts.hubClient.GetResource(hub.ResourceOption{
+		Name:    name,
 		Catalog: opts.from,
 		Kind:    opts.kind,
 		Version: opts.version,
@@ -115,10 +122,54 @@ func (opts *options) validate() error {
 }
 
 func (opts *options) name() string {
+	if len(opts.args) == 0 {
+		return ""
+	}
 	return strings.TrimSpace(opts.args[0])
 }
 
 func examples(kind string) string {
 	replacer := strings.NewReplacer("%s", kind, "%S", strings.Title(kind))
 	return replacer.Replace(cmdExamples)
+}
+
+func (opts *options) GetResourceInfo() (string, error) {
+
+	askOpts := so.Options{
+		Cli:       opts.cli,
+		Kind:      opts.kind,
+		HubClient: opts.hubClient,
+	}
+
+	var err error
+	// Check if catalog name is passed else
+	// ask the user to select the catalog
+	if opts.from == "" {
+		opts.from, err = askOpts.AskCatalogName()
+		if err != nil {
+			return "", err
+		}
+	}
+
+	askOpts.From = opts.from
+	name := opts.name()
+
+	// Check if resource name is passed else
+	// ask the user to select the resource
+	if name == "" {
+		name, err = askOpts.AskResourceName()
+		if err != nil {
+			return "", err
+		}
+	}
+
+	// Check if version of the resource is passed else
+	// ask the user to select the version of resource
+	if opts.version == "" {
+		opts.version, err = askOpts.AskVersion(name)
+		if err != nil {
+			return "", err
+		}
+	}
+	return name, nil
 }
