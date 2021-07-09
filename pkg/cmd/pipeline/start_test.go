@@ -4538,7 +4538,8 @@ func Test_start_pipeline_use_pipelinerun_cancelled_status_v1beta1(t *testing.T) 
 					},
 				},
 				Timeout: &metav1.Duration{Duration: timeoutDuration},
-				Status:  v1beta1.PipelineRunSpecStatus(v1beta1.PipelineRunSpecStatusCancelled),
+				// nolint: staticcheck
+				Status: v1beta1.PipelineRunSpecStatus(v1beta1.PipelineRunSpecStatusCancelledDeprecated),
 			},
 			Status: v1beta1.PipelineRunStatus{
 				Status: duckv1beta1.Status{

@@ -74,7 +74,7 @@ func cancelPipelineRun(p cli.Params, s *cli.Stream, prName string) error {
 		}
 	}
 
-	if _, err = pipelinerun.Patch(cs, prName, metav1.PatchOptions{}, p.Namespace()); err != nil {
+	if _, err = pipelinerun.Cancel(cs, prName, metav1.PatchOptions{}, p.Namespace()); err != nil {
 		return fmt.Errorf("failed to cancel PipelineRun: %s: %v", prName, err)
 
 	}

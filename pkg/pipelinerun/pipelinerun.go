@@ -149,11 +149,12 @@ type patchStringValue struct {
 	Value string `json:"value"`
 }
 
-func Patch(c *cli.Clients, prname string, opts metav1.PatchOptions, ns string) (*v1beta1.PipelineRun, error) {
+func Cancel(c *cli.Clients, prname string, opts metav1.PatchOptions, ns string) (*v1beta1.PipelineRun, error) {
 	payload := []patchStringValue{{
-		Op:    "replace",
-		Path:  "/spec/status",
-		Value: v1beta1.PipelineRunSpecStatusCancelled,
+		Op:   "replace",
+		Path: "/spec/status",
+		// nolint: staticcheck
+		Value: v1beta1.PipelineRunSpecStatusCancelledDeprecated,
 	}}
 
 	data, _ := json.Marshal(payload)
