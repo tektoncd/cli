@@ -2,15 +2,39 @@
 
 ## User facing roadmap
 
-### V1beta1 support and GA
+### pipeline API v1 support
 
-- Add support for v1beta1 and later on GA
-- Warn usage of PipelineResource in v1beta1 (no error but warn that it is not supported aka will work but can be broken in a later release)
-- Support for workspace, result, …
+- Add support for v1 API when it will be publish
+- Support for fields, …
 
-### Improve e2e Testing Coverage for CLI
+### triggers API v1beta1 support
 
-- We should do an assessment of what scenarios we have covered for e2e testing and figure out where additional testing is needed
+- Add support for v1beta1 triggers API
+
+### results integration
+
+Evaluate and provide an integration with the
+[results](https://github.com/tektoncd/results) project.
+
+### chains integration
+
+Evaluate and provide an integration with the
+[chains](https://github.com/tektoncd/chains) project.
+
+### operator integration
+
+Evaluate and provide an integration with the
+[operator](https://github.com/tektoncd/operator) project.
+
+### Integration with Hub
+
+Update support for the hub in the CLI as the hub evolves.
+
+### OCI Bundle support
+
+Implement
+[TEP-0031](https://github.com/tektoncd/community/blob/main/teps/0031-tekton-bundles-cli.md)
+that propose to add support for managing Tekton OCI bundles through =.
 
 ### Consistency across all CLI resources for list, delete, and describe subcommands
 
@@ -19,23 +43,6 @@
 ### Filtering for list and delete commands
 
 - We should provide filtering solutions for all list/delete commands associated with CLI
-
-### Define and carry out strategy around creation/deletion for the CLI:
-
-- There are two issues open around this:
-  - https://github.com/tektoncd/cli/issues/574
-  - https://github.com/tektoncd/cli/issues/575
-- There have been requests for a create command for the CLI similar to kubectl create/apply
-- We should support one of the above strategies, or we will not support creation/updating like kubectl create/apply -f moving forward
-- If we do not support a -f option, we should remove the create -f commands from pipeline/task/resource
-
-### Catalog integration
-
-- Related to the OCI experiment
-  ([#2137](https://github.com/tektoncd/pipeline/issues/2137)) and the
-  catalog / hub, integrate better with the/a catalog
-  - Allow searching catalog for a Task, Pipeline, …
-  - Allow importing a task from the catalog into the cluster
 
 ### Local to cluster build
 
@@ -72,3 +79,4 @@
   - Initial catalog / oci integration ?
     - Helper to author a catalog task / resource ? (tkn catalog task init … ?)
     - Integration with Tekdoc
+- How to drive usage and feedback from it ?
