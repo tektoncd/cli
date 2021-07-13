@@ -28,15 +28,16 @@ Authentication:
 	3. Additionally, you can use Basic auth via --remote-username and --remote-password
 
 Caching:
-    By default, bundles will be cached in ~/.tekton/bundles. If you would like to use a different location, set 
-"--cache-dir" and if you would like to skip the cache altogether, set "--no-cache".
+	By default, bundles will be cached in ${XDG_CACHE_HOME}/tekton/bundles. If ${XDG_CACHE_HOME} isn't set then
+	~/.cache/tekton/bundles will be used. If you would like to use a different location, set "--cache-dir" and if
+	you would like to skip the cache altogether, set "--no-cache".
 
 
 ### Options
 
 ```
       --allow-missing-template-keys   If true, ignore any errors in templates when a field or map key is missing in the template. Only applies to golang and jsonpath output formats. (default true)
-      --cache-dir string              A directory to cache Tekton bundles in. (default "~/.tekton/bundles")
+      --cache-dir string              A directory to cache Tekton bundles in. (default "~/.cache/tkn/bundles")
   -h, --help                          help for list
       --no-cache                      If set to true, pulls a Tekton bundle from the remote even its exact digest is available in the cache.
   -o, --output string                 Output format. One of: json|yaml|name|go-template|go-template-file|template|templatefile|jsonpath|jsonpath-as-json|jsonpath-file.

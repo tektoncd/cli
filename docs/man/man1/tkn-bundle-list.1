@@ -43,8 +43,9 @@ Authentication:
 
 .PP
 Caching:
-    By default, bundles will be cached in \~/.tekton/bundles. If you would like to use a different location, set
-"\-\-cache\-dir" and if you would like to skip the cache altogether, set "\-\-no\-cache".
+    By default, bundles will be cached in ${XDG\_CACHE\_HOME}/tekton/bundles. If ${XDG\_CACHE\_HOME} isn't set then
+    \~/.cache/tekton/bundles will be used. If you would like to use a different location, set "\-\-cache\-dir" and if
+    you would like to skip the cache altogether, set "\-\-no\-cache".
 
 
 .SH OPTIONS
@@ -53,7 +54,7 @@ Caching:
     If true, ignore any errors in templates when a field or map key is missing in the template. Only applies to golang and jsonpath output formats.
 
 .PP
-\fB\-\-cache\-dir\fP="\~/.tekton/bundles"
+\fB\-\-cache\-dir\fP="\~/.cache/tkn/bundles"
     A directory to cache Tekton bundles in.
 
 .PP
