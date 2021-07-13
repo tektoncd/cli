@@ -21,8 +21,9 @@ import (
 )
 
 const (
-	desc = `This command prints shell completion code which must be evaluated to provide
-interactive completion
+	desc = `Use to generate argument completion script 
+for one of the supported shells below. Next, invoke the script, and 
+then have interactive tab completion. 
 
 Supported Shells:
 	- bash
@@ -30,10 +31,9 @@ Supported Shells:
 	- fish
 	- powershell
 `
-	eg = `To load completions:
-
+	examples = `
 Bash:
-
+# Execute the following once:
 $ source <(tkn completion bash)
 
 # To load completions for each session, execute once:
@@ -45,32 +45,42 @@ MacOS:
 
 Zsh:
 
-# If shell completion is not already enabled in your environment you will need
-# to enable it.  You can execute the following once:
+# Execute the following once:
 
 $ echo "autoload -U compinit; compinit" >> ~/.zshrc
 
 # To load completions for each session, execute once:
 $ tkn completion zsh > "${fpath[1]}/_tkn"
 
-# You will need to start a new shell for this setup to take effect.
+# Restart shell for this setup to take effect.
 
 Fish:
-
+# Execute the following once:
 $ tkn completion fish | source
 
 # To load completions for each session, execute once:
 $ tkn completion fish > ~/.config/fish/completions/tkn.fish
+
+PowerShell:
+ 
+# Example 1: 
+PS> ./tkn completion powershell | Out-String | Invoke-Expression
+
+#Example 2: 
+# To load completions for every new session, run:
+PS> ./tkn completion powershell > Register-TektonArgumentCompleter.ps1
+
+# and source this file from your PowerShell profile.
 `
 )
 
 func Command() *cobra.Command {
 	var cmd = &cobra.Command{
-		Use:       "completion [SHELL]",
-		Short:     "Prints shell completion scripts",
+		Use:       "completion [bash|zsh|fish|powershell]",
+		Short:     "Generate argument completion script",
 		Long:      desc,
 		ValidArgs: []string{"bash", "zsh", "fish", "powershell"},
-		Example:   eg,
+		Example:   examples,
 		Annotations: map[string]string{
 			"commandType": "utility",
 		},
@@ -84,9 +94,8 @@ func Command() *cobra.Command {
 			case "fish":
 				_ = cmd.Root().GenFishCompletion(os.Stdout, true)
 			case "powershell":
-				_ = cmd.Root().GenPowerShellCompletion(os.Stdout)
+				_ = cmd.Root().GenPowerShellCompletionWithDesc(os.Stdout)
 			}
-
 			return nil
 		},
 	}
