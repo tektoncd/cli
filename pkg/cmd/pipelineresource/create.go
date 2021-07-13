@@ -163,7 +163,7 @@ func (res *Resource) askType() error {
 }
 
 func (res *Resource) AskGitParams() error {
-	urlParam, err := askParam("url", res.AskOpts)
+	urlParam, err := askParam("url", "", res.AskOpts)
 	if err != nil {
 		return err
 	}
@@ -171,7 +171,7 @@ func (res *Resource) AskGitParams() error {
 		res.PipelineResource.Spec.Params = append(res.PipelineResource.Spec.Params, urlParam)
 	}
 
-	revisionParam, err := askParam("revision", res.AskOpts)
+	revisionParam, err := askParam("revision", "main", res.AskOpts)
 	if err != nil {
 		return err
 	}
@@ -195,7 +195,7 @@ func (res *Resource) AskStorageParams() error {
 
 	switch storageType {
 	case "gcs":
-		locationParam, err := askParam("location", res.AskOpts)
+		locationParam, err := askParam("location", "", res.AskOpts)
 		if err != nil {
 			return err
 		}
@@ -203,7 +203,7 @@ func (res *Resource) AskStorageParams() error {
 			res.PipelineResource.Spec.Params = append(res.PipelineResource.Spec.Params, locationParam)
 		}
 
-		dirParam, err := askParam("dir", res.AskOpts)
+		dirParam, err := askParam("dir", "", res.AskOpts)
 		if err != nil {
 			return err
 		}
@@ -212,7 +212,7 @@ func (res *Resource) AskStorageParams() error {
 		}
 
 	case "build-gcs":
-		locationParam, err := askParam("location", res.AskOpts)
+		locationParam, err := askParam("location", "", res.AskOpts)
 		if err != nil {
 			return err
 		}
@@ -241,7 +241,7 @@ func (res *Resource) AskStorageParams() error {
 }
 
 func (res *Resource) AskImageParams() error {
-	urlParam, err := askParam("url", res.AskOpts)
+	urlParam, err := askParam("url", "docker.io/alpine", res.AskOpts)
 	if err != nil {
 		return err
 	}
@@ -249,7 +249,7 @@ func (res *Resource) AskImageParams() error {
 		res.PipelineResource.Spec.Params = append(res.PipelineResource.Spec.Params, urlParam)
 	}
 
-	digestParam, err := askParam("digest", res.AskOpts)
+	digestParam, err := askParam("digest", "latest", res.AskOpts)
 	if err != nil {
 		return err
 	}
@@ -262,7 +262,7 @@ func (res *Resource) AskImageParams() error {
 
 func (res *Resource) AskClusterParams() error {
 
-	urlParam, err := askParam("url", res.AskOpts)
+	urlParam, err := askParam("url", "", res.AskOpts)
 	if err != nil {
 		return err
 	}
@@ -270,7 +270,7 @@ func (res *Resource) AskClusterParams() error {
 		res.PipelineResource.Spec.Params = append(res.PipelineResource.Spec.Params, urlParam)
 	}
 
-	usernameParam, err := askParam("username", res.AskOpts)
+	usernameParam, err := askParam("username", "tekton", res.AskOpts)
 	if err != nil {
 		return err
 	}
@@ -323,7 +323,7 @@ func (res *Resource) AskClusterParams() error {
 			}
 			switch ans {
 			case qsOpts[0]: // plain text
-				cadataParam, err := askParam("cadata", res.AskOpts)
+				cadataParam, err := askParam("cadata", "", res.AskOpts)
 				if err != nil {
 					return err
 				}
@@ -357,7 +357,7 @@ func (res *Resource) AskClusterParams() error {
 		}
 		switch ans {
 		case qsOpts[0]: // plain text
-			tokenParam, err := askParam("token", res.AskOpts)
+			tokenParam, err := askParam("token", "", res.AskOpts)
 			if err != nil {
 				return err
 			}
@@ -365,7 +365,7 @@ func (res *Resource) AskClusterParams() error {
 				res.PipelineResource.Spec.Params = append(res.PipelineResource.Spec.Params, tokenParam)
 			}
 			if secure == "yes" {
-				cadataParam, err := askParam("cadata", res.AskOpts)
+				cadataParam, err := askParam("cadata", "", res.AskOpts)
 
 				if err != nil {
 					return err
@@ -404,7 +404,7 @@ func (res *Resource) AskClusterParams() error {
 }
 
 func (res *Resource) AskPullRequestParams() error {
-	urlParam, err := askParam("url", res.AskOpts)
+	urlParam, err := askParam("url", "", res.AskOpts)
 	if err != nil {
 		return err
 	}
@@ -434,7 +434,7 @@ func (res *Resource) AskPullRequestParams() error {
 }
 
 func (res *Resource) AskCloudEventParams() error {
-	targetURIParam, err := askParam("targetURI", res.AskOpts)
+	targetURIParam, err := askParam("targetURI", "", res.AskOpts)
 	if err != nil {
 		return err
 	}
@@ -444,12 +444,18 @@ func (res *Resource) AskCloudEventParams() error {
 	return nil
 }
 
-func askParam(paramName string, askOpts survey.AskOpt) (v1alpha1.ResourceParam, error) {
+func askParam(paramName, defaultValue string, askOpts survey.AskOpt) (v1alpha1.ResourceParam, error) {
 	var param v1alpha1.ResourceParam
+
+	msg := fmt.Sprintf("Enter a value for %s : ", paramName)
+	if defaultValue != "" {
+		msg = fmt.Sprintf("Enter a value for %s (%s) : ", paramName, defaultValue)
+	}
+
 	var qs = []*survey.Question{{
 		Name: "value",
 		Prompt: &survey.Input{
-			Message: fmt.Sprintf("Enter a value for %s : ", paramName),
+			Message: msg,
 		},
 	}}
 
@@ -460,6 +466,10 @@ func askParam(paramName string, askOpts survey.AskOpt) (v1alpha1.ResourceParam, 
 
 	if param.Value != "" {
 		param.Name = paramName
+	}
+
+	if param.Value == "" && defaultValue != "" {
+		param.Name = defaultValue
 	}
 
 	return param, nil
