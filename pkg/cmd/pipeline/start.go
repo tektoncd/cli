@@ -146,11 +146,12 @@ For passing the workspaces via flags:
 			if opt.UseParamDefaults && (opt.Last || opt.UsePipelineRun != "") {
 				return errors.New("cannot use --last or --use-pipelinerun options with --use-param-defaults option")
 			}
-			if opt.DryRun {
-				format := strings.ToLower(opt.Output)
-				if format != "" && format != "json" && format != "yaml" {
-					return fmt.Errorf("output format specified is %s but must be yaml or json", opt.Output)
-				}
+			format := strings.ToLower(opt.Output)
+			if format != "" && format != "json" && format != "yaml" {
+				return fmt.Errorf("output format specified is %s but must be yaml or json", opt.Output)
+			}
+			if format != "" && opt.ShowLog {
+				return errors.New("cannot use --output option with --showlog option")
 			}
 			opt.TektonOptions = flags.GetTektonOptions(cmd)
 			return nil
@@ -184,7 +185,7 @@ For passing the workspaces via flags:
 	c.Flags().StringSliceVarP(&opt.Labels, "labels", "l", []string{}, "pass labels as label=value.")
 	c.Flags().StringArrayVarP(&opt.Workspaces, "workspace", "w", []string{}, "pass one or more workspaces to map to the corresponding physical volumes")
 	c.Flags().BoolVarP(&opt.DryRun, "dry-run", "", false, "preview PipelineRun without running it")
-	c.Flags().StringVarP(&opt.Output, "output", "", "", "format of PipelineRun dry-run (yaml or json)")
+	c.Flags().StringVarP(&opt.Output, "output", "", "", "format of PipelineRun (yaml or json)")
 	c.Flags().StringVarP(&opt.PrefixName, "prefix-name", "", "", "specify a prefix for the PipelineRun name (must be lowercase alphanumeric characters)")
 	c.Flags().StringVarP(&opt.TimeOut, "timeout", "", "", "timeout for PipelineRun")
 	c.Flags().StringVarP(&opt.Filename, "filename", "f", "", "local or remote file name containing a Pipeline definition to start a PipelineRun")
@@ -329,12 +330,16 @@ func (opt *startOptions) startPipeline(pipelineStart *v1beta1.Pipeline) error {
 	}
 
 	if opt.DryRun {
-		return pipelineRunDryRun(cs, opt.Output, opt.stream, pr)
+		return printPipelineRun(cs, opt.Output, opt.stream, pr)
 	}
 
 	prCreated, err := pipelinerun.Create(cs, pr, metav1.CreateOptions{}, opt.cliparams.Namespace())
 	if err != nil {
 		return err
+	}
+
+	if opt.Output != "" {
+		return printPipelineRun(cs, opt.Output, opt.stream, prCreated)
 	}
 
 	fmt.Fprintf(opt.stream.Out, "PipelineRun started: %s\n", prCreated.Name)
@@ -702,7 +707,7 @@ func (opt *startOptions) createPipelineResource(resName string, resType v1alpha1
 	return newRes, nil
 }
 
-func pipelineRunDryRun(c *cli.Clients, output string, s *cli.Stream, pr *v1beta1.PipelineRun) error {
+func printPipelineRun(c *cli.Clients, output string, s *cli.Stream, pr *v1beta1.PipelineRun) error {
 	prWithVersion, err := convertedPrVersion(c, pr)
 	if err != nil {
 		return err

@@ -49,7 +49,7 @@ For passing the workspaces via flags:
   -i, --inputresource strings    pass the input resource name and ref as name=ref
   -l, --labels strings           pass labels as label=value.
   -L, --last                     re-run the Task using last TaskRun values
-      --output string            format of TaskRun dry-run (yaml or json)
+      --output string            format of TaskRun (yaml or json)
   -o, --outputresource strings   pass the output resource name and ref as name=ref
   -p, --param stringArray        pass the param as key=value for string type, or key=value1,value2,... for array type
       --pod-template string      local or remote file containing a PodTemplate definition
