@@ -159,6 +159,7 @@ for res in eventlistener triggertemplate triggerbinding clustertriggerbinding; d
 done
 
 # Run the e2e tests
+export SYSTEM_NAMESPACE=${SYSTEM_NAMESPACE:-"tekton-pipelines"}
 header "Running Go e2e tests"
 failed=0
 if [[ -e ./bin/tkn ]];then

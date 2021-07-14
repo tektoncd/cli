@@ -25,8 +25,10 @@ import (
 	"testing"
 	"time"
 
+	"knative.dev/pkg/system"
 	knativetest "knative.dev/pkg/test"
 
+	"github.com/tektoncd/pipeline/pkg/apis/config"
 	"github.com/tektoncd/pipeline/pkg/names"
 	"golang.org/x/xerrors"
 	"gopkg.in/yaml.v2"
@@ -159,8 +161,20 @@ func DeleteNamespace(namespace string, cs *Clients) {
 	}
 }
 
+func getDefaultSA(kubeClient *knativetest.KubeClient, namespace string) string {
+	configDefaultsCM, err := kubeClient.CoreV1().ConfigMaps(system.Namespace()).Get(context.Background(), config.GetDefaultsConfigName(), metav1.GetOptions{})
+	if err != nil {
+		log.Fatalf("Failed to get ConfigMap `%s`: %s", config.GetDefaultsConfigName(), err)
+	}
+	actual, ok := configDefaultsCM.Data["default-service-account"]
+	if !ok {
+		return "default"
+	}
+	return actual
+}
+
 func VerifyServiceAccountExistence(namespace string, kubeClient *knativetest.KubeClient) {
-	defaultSA := "default"
+	defaultSA := getDefaultSA(kubeClient, namespace)
 	log.Printf("Verify SA %q is created in namespace %q", defaultSA, namespace)
 
 	if err := wait.PollImmediate(Interval, Apitimeout, func() (bool, error) {
