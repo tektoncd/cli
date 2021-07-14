@@ -21,9 +21,11 @@ import (
 
 	"github.com/tektoncd/cli/pkg/actions"
 	"github.com/tektoncd/cli/pkg/cli"
+	"github.com/tektoncd/cli/pkg/task"
 	"github.com/tektoncd/pipeline/pkg/apis/pipeline/v1alpha1"
 	"github.com/tektoncd/pipeline/pkg/apis/pipeline/v1beta1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
 	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/apimachinery/pkg/runtime/schema"
 )
@@ -116,4 +118,45 @@ func getV1alpha1(c *cli.Clients, clustertaskname string, opts metav1.GetOptions)
 		return nil, err
 	}
 	return clustertask, nil
+}
+
+func Create(c *cli.Clients, ct *v1beta1.ClusterTask, opts metav1.CreateOptions) (*v1beta1.ClusterTask, error) {
+	gvr, err := actions.GetGroupVersionResource(clustertaskGroupResource, c.Tekton.Discovery())
+	if err != nil {
+		return nil, err
+	}
+
+	if gvr.Version == "v1alpha1" {
+		v1alpha1ClusterTask := convertToV1Alpha1(ct)
+		return createUnstructured(v1alpha1ClusterTask, c, opts)
+	}
+
+	return createUnstructured(ct, c, opts)
+}
+
+func createUnstructured(obj runtime.Object, c *cli.Clients, opts metav1.CreateOptions) (*v1beta1.ClusterTask, error) {
+	object, _ := runtime.DefaultUnstructuredConverter.ToUnstructured(obj)
+	unstructuredCT := &unstructured.Unstructured{
+		Object: object,
+	}
+	newUnstructuredCT, err := actions.Create(clustertaskGroupResource, c, unstructuredCT, "", opts)
+	if err != nil {
+		return nil, err
+	}
+	var clusterTask *v1beta1.ClusterTask
+	if err := runtime.DefaultUnstructuredConverter.FromUnstructured(newUnstructuredCT.UnstructuredContent(), &clusterTask); err != nil {
+		return nil, err
+	}
+	return clusterTask, nil
+}
+
+// convert v1beta1 ClusterTask to v1alpha1 ClusterTask to support backward compatibility
+func convertToV1Alpha1(ct *v1beta1.ClusterTask) *v1alpha1.ClusterTask {
+	downCT := &v1alpha1.ClusterTask{}
+	downCT.APIVersion = "v1alpha1"
+	downCT.Kind = "ClusterTask"
+	downCT.ObjectMeta = ct.ObjectMeta
+	downCT.Spec = v1alpha1.TaskSpec{}
+	downCT.Spec = *task.SpecConvertFrom(&ct.Spec)
+	return downCT
 }

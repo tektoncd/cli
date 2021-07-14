@@ -26,6 +26,7 @@ Manage ClusterTasks
 ### SEE ALSO
 
 * [tkn](tkn.md)	 - CLI for tekton pipelines
+* [tkn clustertask create](tkn_clustertask_create.md)	 - Create a ClusterTask from Task
 * [tkn clustertask delete](tkn_clustertask_delete.md)	 - Delete ClusterTasks in a cluster
 * [tkn clustertask describe](tkn_clustertask_describe.md)	 - Describe a ClusterTask
 * [tkn clustertask list](tkn_clustertask_list.md)	 - Lists ClusterTasks
