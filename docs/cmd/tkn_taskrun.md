@@ -32,4 +32,5 @@ Manage TaskRuns
 * [tkn taskrun describe](tkn_taskrun_describe.md)	 - Describe a TaskRun in a namespace
 * [tkn taskrun list](tkn_taskrun_list.md)	 - Lists TaskRuns in a namespace
 * [tkn taskrun logs](tkn_taskrun_logs.md)	 - Show TaskRuns logs
+* [tkn taskrun restart](tkn_taskrun_restart.md)	 - Restart a TaskRun in a namespace
 
