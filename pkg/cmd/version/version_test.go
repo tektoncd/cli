@@ -116,38 +116,38 @@ func TestGetComponentVersions(t *testing.T) {
 		namespace             string
 		userProvidedNamespace string
 		deployment            []*v1.Deployment
-		goldenFile            bool
+		versions              []string
 	}{{
 		name:                  "deployment only with pipeline installed",
 		namespace:             "test",
 		userProvidedNamespace: "test",
 		deployment:            []*v1.Deployment{pipelineDeployment},
-		goldenFile:            true,
+		versions:              []string{"dev", "v0.10.0", "unknown", "unknown"},
 	}, {
 		name:                  "deployment with pipeline and triggers installed",
 		namespace:             "test",
 		userProvidedNamespace: "test",
 		deployment:            []*v1.Deployment{pipelineDeployment, triggersDeployment},
-		goldenFile:            true,
+		versions:              []string{"dev", "v0.10.0", "unknown", "v0.5.0"},
 	}, {
 		name:                  "deployment with pipeline and dashboard installed",
 		namespace:             "test",
 		userProvidedNamespace: "test",
 		deployment:            []*v1.Deployment{pipelineDeployment, dashboardDeployment},
-		goldenFile:            true,
+		versions:              []string{"dev", "v0.10.0", "v0.7.0", "unknown"},
 	}, {
 		name:                  "deployment with pipeline, triggers and dashboard installed",
 		namespace:             "test",
 		userProvidedNamespace: "test",
 		deployment:            []*v1.Deployment{pipelineDeployment, triggersDeployment, dashboardDeployment},
-		goldenFile:            true,
+		versions:              []string{"dev", "v0.10.0", "v0.7.0", "v0.5.0"},
 	},
 	}
 	components := []string{"client", "pipeline", "dashboard", "triggers"}
 
 	for _, tp := range testParams {
 		t.Run(tp.name, func(t *testing.T) {
-			for _, c := range components {
+			for i, c := range components {
 				seedData, _ := test.SeedTestData(t, pipelinetest.Data{})
 				cs := pipelinetest.Clients{Kube: seedData.Kube}
 				p := &test.Params{Kube: cs.Kube}
@@ -164,7 +164,7 @@ func TestGetComponentVersions(t *testing.T) {
 				}
 				got, _ := test.ExecuteCommand(version, "version", "-n", "test", "--component", c)
 				fmt.Println(t.Name())
-				golden.Assert(t, got, fmt.Sprintf("%s-%s.golden", t.Name(), c))
+				assert.Equal(t, strings.TrimSpace(got), tp.versions[i])
 			}
 		})
 	}
