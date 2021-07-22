@@ -609,7 +609,7 @@ func getGitResource(rname string, namespace string) *v1alpha1.PipelineResource {
 	return tb.PipelineResource(rname, tb.PipelineResourceNamespace(namespace), tb.PipelineResourceSpec(
 		v1alpha1.PipelineResourceTypeGit,
 		tb.PipelineResourceSpecParam("url", "https://github.com/GoogleContainerTools/skaffold"),
-		tb.PipelineResourceSpecParam("revision", "master"),
+		tb.PipelineResourceSpecParam("revision", "main"),
 	))
 }
 
@@ -617,7 +617,7 @@ func getFaultGitResource(rname string, namespace string) *v1alpha1.PipelineResou
 	return tb.PipelineResource(rname, tb.PipelineResourceNamespace(namespace), tb.PipelineResourceSpec(
 		v1alpha1.PipelineResourceTypeGit,
 		tb.PipelineResourceSpecParam("url", "https://github.com/GoogleContainerTools/skaffold-1"),
-		tb.PipelineResourceSpecParam("revision", "master"),
+		tb.PipelineResourceSpecParam("revision", "main"),
 	))
 }
 
