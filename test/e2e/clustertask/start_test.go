@@ -117,7 +117,7 @@ Waiting for logs to be available...
 				if _, err := c.ExpectString("Choose the git resource to use for source:"); err != nil {
 					return err
 				}
-				if _, err := c.ExpectString("skaffold-git (https://github.com/GoogleContainerTools/skaffold)"); err != nil {
+				if _, err := c.ExpectString("skaffold-git (https://github.com/GoogleContainerTools/skaffold#main)"); err != nil {
 					return err
 				}
 				if _, err := c.SendLine(string(terminal.KeyEnter)); err != nil {

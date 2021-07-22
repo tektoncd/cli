@@ -51,7 +51,7 @@ func TestPipelineInteractiveStartE2E(t *testing.T) {
 					return err
 				}
 
-				if _, err := c.ExpectString("skaffold-git (https://github.com/GoogleContainerTools/skaffold)"); err != nil {
+				if _, err := c.ExpectString("skaffold-git (https://github.com/GoogleContainerTools/skaffold#main)"); err != nil {
 					return err
 				}
 
@@ -97,7 +97,7 @@ func TestPipelineInteractiveStartE2E(t *testing.T) {
 					return err
 				}
 
-				if _, err := c.ExpectString("skaffold-git (https://github.com/GoogleContainerTools/skaffold)"); err != nil {
+				if _, err := c.ExpectString("skaffold-git (https://github.com/GoogleContainerTools/skaffold#main)"); err != nil {
 					return err
 				}
 
@@ -131,7 +131,7 @@ func TestPipelineInteractiveStartE2E(t *testing.T) {
 					return err
 				}
 
-				if _, err := c.ExpectString("skaffold-git (https://github.com/GoogleContainerTools/skaffold)"); err != nil {
+				if _, err := c.ExpectString("skaffold-git (https://github.com/GoogleContainerTools/skaffold#main)"); err != nil {
 					return err
 				}
 
@@ -166,7 +166,7 @@ func TestPipelineInteractiveStartE2E(t *testing.T) {
 					return err
 				}
 
-				if _, err := c.ExpectString("skaffold-git (https://github.com/GoogleContainerTools/skaffold)"); err != nil {
+				if _, err := c.ExpectString("skaffold-git (https://github.com/GoogleContainerTools/skaffold#main)"); err != nil {
 					return err
 				}
 
@@ -246,7 +246,7 @@ func TestPipelineInteractiveStartWithNewResourceE2E(t *testing.T) {
 					return err
 				}
 
-				if _, err := c.SendLine("master"); err != nil {
+				if _, err := c.SendLine("main"); err != nil {
 					return err
 				}
 
