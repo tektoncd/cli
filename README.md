@@ -173,11 +173,11 @@ brew install tektoncd-cli
 `kubectl` will find any binary named `kubectl-*` on your PATH and consider it as a plugin.
 After installing tkn, create a link as kubectl-tkn
   ```shell
-$ ln -s /usr/local/bin/tkn /usr/local/bin/kubectl-tkn
+ln -s /usr/local/bin/tkn /usr/local/bin/kubectl-tkn
   ```
 Run the following to confirm tkn is available as a plugin:
   ```shell
-$ kubectl plugin list
+kubectl plugin list
   ```
 You should see the following after running kubectl plugin list if tkn is available as a plugin:
   ```shell
