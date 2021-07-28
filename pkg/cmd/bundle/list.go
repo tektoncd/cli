@@ -62,7 +62,7 @@ eg task).
 
 Authentication:
 	There are three ways to authenticate against your registry.
-	1. By default, your docker.config in your home directory is used.
+	1. By default, your docker.config in your home directory and podman's auth.json are used.
 	2. Additionally, you can supply a Bearer Token via --remote-bearer
 	3. Additionally, you can use Basic auth via --remote-username and --remote-password
 
