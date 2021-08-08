@@ -154,11 +154,12 @@ For passing the workspaces via flags:
 			if opt.UseParamDefaults && (opt.Last || opt.UseTaskRun != "") {
 				return errors.New("cannot use --last or --use-taskrun options with --use-param-defaults option")
 			}
-			if opt.DryRun {
-				format := strings.ToLower(opt.Output)
-				if format != "" && format != "json" && format != "yaml" {
-					return fmt.Errorf("output format specified is %s but must be yaml or json", opt.Output)
-				}
+			format := strings.ToLower(opt.Output)
+			if format != "" && format != "json" && format != "yaml" {
+				return fmt.Errorf("output format specified is %s but must be yaml or json", opt.Output)
+			}
+			if format != "" && opt.ShowLog {
+				return errors.New("cannot use --output option with --showlog option")
 			}
 			if err := flags.InitParams(p, cmd); err != nil {
 				return err
@@ -189,7 +190,7 @@ For passing the workspaces via flags:
 	c.Flags().BoolVarP(&opt.ShowLog, "showlog", "", false, "show logs right after starting the ClusterTask")
 	c.Flags().StringVar(&opt.TimeOut, "timeout", "", "timeout for TaskRun")
 	c.Flags().BoolVarP(&opt.DryRun, "dry-run", "", false, "preview TaskRun without running it")
-	c.Flags().StringVarP(&opt.Output, "output", "", "", "format of TaskRun dry-run (yaml or json)")
+	c.Flags().StringVarP(&opt.Output, "output", "", "", "format of TaskRun (yaml or json)")
 	c.Flags().StringVarP(&opt.PrefixName, "prefix-name", "", "", "specify a prefix for the TaskRun name (must be lowercase alphanumeric characters)")
 	c.Flags().StringVar(&opt.PodTemplate, "pod-template", "", "local or remote file containing a PodTemplate definition")
 	c.Flags().BoolVar(&opt.UseParamDefaults, "use-param-defaults", false, "use default parameter values without prompting for input")
@@ -297,12 +298,16 @@ func startClusterTask(opt startOptions, args []string) error {
 	}
 
 	if opt.DryRun {
-		return taskRunDryRun(cs, opt.Output, opt.stream, tr)
+		return printTaskRun(cs, opt.Output, opt.stream, tr)
 	}
 
 	trCreated, err := tractions.Create(cs, tr, metav1.CreateOptions{}, opt.cliparams.Namespace())
 	if err != nil {
 		return err
+	}
+
+	if opt.Output != "" {
+		return printTaskRun(cs, opt.Output, opt.stream, trCreated)
 	}
 
 	fmt.Fprintf(opt.stream.Out, "TaskRun started: %s\n", trCreated.Name)
@@ -371,7 +376,7 @@ func parseRes(res []string) (map[string]v1beta1.TaskResourceBinding, error) {
 	return resources, nil
 }
 
-func taskRunDryRun(c *cli.Clients, output string, s *cli.Stream, tr *v1beta1.TaskRun) error {
+func printTaskRun(c *cli.Clients, output string, s *cli.Stream, tr *v1beta1.TaskRun) error {
 	trWithVersion, err := convertedTrVersion(c, tr)
 	if err != nil {
 		return err
