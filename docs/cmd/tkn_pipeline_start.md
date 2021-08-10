@@ -61,6 +61,7 @@ my-secret, my-empty-dir and my-volume-claim-template)
       --pod-template string           local or remote file containing a PodTemplate definition
       --prefix-name string            specify a prefix for the PipelineRun name (must be lowercase alphanumeric characters)
   -r, --resource strings              pass the resource name and ref as name=ref
+      --return-name                   only return pipelinerun name
   -s, --serviceaccount string         pass the serviceaccount name
       --showlog                       show logs right after starting the Pipeline
       --task-serviceaccount strings   pass the service account corresponding to the task
