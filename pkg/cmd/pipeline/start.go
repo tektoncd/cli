@@ -81,6 +81,7 @@ type startOptions struct {
 	UseParamDefaults   bool
 	TektonOptions      flags.TektonOptions
 	PodTemplate        string
+	ReturnName         bool
 }
 
 type resourceOptionsFilter struct {
@@ -191,6 +192,7 @@ For passing the workspaces via flags:
 	c.Flags().StringVarP(&opt.Filename, "filename", "f", "", "local or remote file name containing a Pipeline definition to start a PipelineRun")
 	c.Flags().BoolVarP(&opt.UseParamDefaults, "use-param-defaults", "", false, "use default parameter values without prompting for input")
 	c.Flags().StringVar(&opt.PodTemplate, "pod-template", "", "local or remote file containing a PodTemplate definition")
+	c.Flags().BoolVarP(&opt.ReturnName, "return-name", "", false, "only return pipelinerun name")
 
 	c.Flags().StringVarP(&opt.ServiceAccountName, "serviceaccount", "s", "", "pass the serviceaccount name")
 	_ = c.RegisterFlagCompletionFunc("serviceaccount",
@@ -340,6 +342,11 @@ func (opt *startOptions) startPipeline(pipelineStart *v1beta1.Pipeline) error {
 
 	if opt.Output != "" {
 		return printPipelineRun(cs, opt.Output, opt.stream, prCreated)
+	}
+
+	if opt.ReturnName && !opt.ShowLog {
+		fmt.Fprint(opt.stream.Out, prCreated.Name)
+		return nil
 	}
 
 	fmt.Fprintf(opt.stream.Out, "PipelineRun started: %s\n", prCreated.Name)
