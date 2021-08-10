@@ -53,7 +53,7 @@ developing and running Pipelines. Your Kubernetes version must be 1.11 or later.
 
 To setup a cluster with GKE:
 
-1. [Install required tools and setup GCP project](https://knative.dev/v0.12-docs/install/knative-with-gke/)
+1. [Install required tools and setup GCP project](https://github.com/knative/docs/blob/release-0.12/docs/install/Knative-with-GKE.md)
     (You may find it useful to save the ID of the project in an environment
     variable (e.g. `PROJECT_ID`).
 <!-- TODO: Someone needs to validate the cluster-version-->
