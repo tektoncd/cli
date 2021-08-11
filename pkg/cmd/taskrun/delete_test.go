@@ -18,7 +18,9 @@ import (
 	"io"
 	"strings"
 	"testing"
+	"time"
 
+	"github.com/jonboulle/clockwork"
 	"github.com/tektoncd/cli/pkg/test"
 	cb "github.com/tektoncd/cli/pkg/test/builder"
 	testDynamic "github.com/tektoncd/cli/pkg/test/dynamic"
@@ -34,6 +36,8 @@ import (
 
 func TestTaskRunDelete(t *testing.T) {
 	version := "v1alpha1"
+	clock := clockwork.NewFakeClock()
+
 	ns := []*corev1.Namespace{
 		{
 			ObjectMeta: metav1.ObjectMeta{
@@ -73,6 +77,11 @@ func TestTaskRunDelete(t *testing.T) {
 				},
 			},
 			Status: v1alpha1.TaskRunStatus{
+				TaskRunStatusFields: v1alpha1.TaskRunStatusFields{
+					CompletionTime: &metav1.Time{
+						Time: clock.Now().Add(10 * time.Minute),
+					},
+				},
 				Status: duckv1beta1.Status{
 					Conditions: duckv1beta1.Conditions{
 						{
@@ -96,6 +105,11 @@ func TestTaskRunDelete(t *testing.T) {
 				},
 			},
 			Status: v1alpha1.TaskRunStatus{
+				TaskRunStatusFields: v1alpha1.TaskRunStatusFields{
+					CompletionTime: &metav1.Time{
+						Time: clock.Now().Add(10 * time.Minute),
+					},
+				},
 				Status: duckv1beta1.Status{
 					Conditions: duckv1beta1.Conditions{
 						{
@@ -119,6 +133,11 @@ func TestTaskRunDelete(t *testing.T) {
 				},
 			},
 			Status: v1alpha1.TaskRunStatus{
+				TaskRunStatusFields: v1alpha1.TaskRunStatusFields{
+					CompletionTime: &metav1.Time{
+						Time: clock.Now().Add(10 * time.Minute),
+					},
+				},
 				Status: duckv1beta1.Status{
 					Conditions: duckv1beta1.Conditions{
 						{
@@ -142,6 +161,11 @@ func TestTaskRunDelete(t *testing.T) {
 				},
 			},
 			Status: v1alpha1.TaskRunStatus{
+				TaskRunStatusFields: v1alpha1.TaskRunStatusFields{
+					CompletionTime: &metav1.Time{
+						Time: clock.Now().Add(10 * time.Minute),
+					},
+				},
 				Status: duckv1beta1.Status{
 					Conditions: duckv1beta1.Conditions{
 						{
@@ -165,6 +189,11 @@ func TestTaskRunDelete(t *testing.T) {
 				},
 			},
 			Status: v1alpha1.TaskRunStatus{
+				TaskRunStatusFields: v1alpha1.TaskRunStatusFields{
+					CompletionTime: &metav1.Time{
+						Time: clock.Now().Add(10 * time.Minute),
+					},
+				},
 				Status: duckv1beta1.Status{
 					Conditions: duckv1beta1.Conditions{
 						{
@@ -188,6 +217,40 @@ func TestTaskRunDelete(t *testing.T) {
 				},
 			},
 			Status: v1alpha1.TaskRunStatus{
+				TaskRunStatusFields: v1alpha1.TaskRunStatusFields{
+					CompletionTime: &metav1.Time{
+						Time: clock.Now().Add(10 * time.Minute),
+					},
+				},
+				Status: duckv1beta1.Status{
+					Conditions: duckv1beta1.Conditions{
+						{
+							Status: corev1.ConditionTrue,
+							Reason: v1beta1.TaskRunReasonSuccessful.String(),
+						},
+					},
+				},
+			},
+		},
+		{
+			ObjectMeta: metav1.ObjectMeta{
+				Name:      "tr0-7",
+				Namespace: "ns",
+				Labels:    map[string]string{"tekton.dev/clusterTask": "random"},
+			},
+			Spec: v1alpha1.TaskRunSpec{
+				TaskRef: &v1alpha1.TaskRef{
+					Name: "random",
+					Kind: v1alpha1.ClusterTaskKind,
+				},
+			},
+			Status: v1alpha1.TaskRunStatus{
+				TaskRunStatusFields: v1alpha1.TaskRunStatusFields{
+					CompletionTime: &metav1.Time{
+						// Use real time for testing keep-since
+						Time: time.Now(),
+					},
+				},
 				Status: duckv1beta1.Status{
 					Conditions: duckv1beta1.Conditions{
 						{
@@ -199,13 +262,14 @@ func TestTaskRunDelete(t *testing.T) {
 			},
 		},
 	}
+
 	type clients struct {
 		pipelineClient pipelinetest.Clients
 		dynamicClient  dynamic.Interface
 	}
 
 	seeds := make([]clients, 0)
-	for i := 0; i < 6; i++ {
+	for i := 0; i < 7; i++ {
 		cs, _ := test.SeedTestData(t, pipelinetest.Data{TaskRuns: trs, Tasks: tasks, ClusterTasks: clustertasks, Namespaces: ns})
 		cs.Pipeline.Resources = cb.APIResourceList(version, []string{"taskrun"})
 		tdc := testDynamic.Options{}
@@ -218,6 +282,7 @@ func TestTaskRunDelete(t *testing.T) {
 			cb.UnstructuredTR(trs[3], version),
 			cb.UnstructuredTR(trs[4], version),
 			cb.UnstructuredTR(trs[5], version),
+			cb.UnstructuredTR(trs[6], version),
 		)
 		if err != nil {
 			t.Errorf("unable to create dynamic client: %v", err)
@@ -432,6 +497,33 @@ func TestTaskRunDelete(t *testing.T) {
 			wantError:   false,
 			want:        "Are you sure you want to delete all TaskRuns related to ClusterTask \"random\" keeping 1 TaskRuns (y/n): All but 1 TaskRuns associated with ClusterTask \"random\" deleted in namespace \"ns\"\n",
 		},
+		{
+			name:        "Delete all Taskruns older than 60mn",
+			command:     []string{"delete", "-f", "--all", "--keep-since", "60", "-n", "ns"},
+			dynamic:     seeds[6].dynamicClient,
+			input:       seeds[6].pipelineClient,
+			inputStream: nil,
+			wantError:   false,
+			want:        "6 expired Taskruns has been deleted in namespace \"ns\", kept 1\n",
+		},
+		{
+			name:        "Only use since with --all",
+			command:     []string{"delete", "-f", "--keep-since", "60", "-n", "ns"},
+			dynamic:     seeds[6].dynamicClient,
+			input:       seeds[6].pipelineClient,
+			inputStream: nil,
+			wantError:   true,
+			want:        "--keep-since option can only be used with --all",
+		},
+		{
+			name:        "No mixing --keep-since and --keep",
+			command:     []string{"delete", "-f", "--keep-since", "60", "--keep", "5", "-n", "ns"},
+			dynamic:     seeds[6].dynamicClient,
+			input:       seeds[6].pipelineClient,
+			inputStream: nil,
+			wantError:   true,
+			want:        "cannot mix --keep and --keep-since options",
+		},
 	}
 
 	for _, tp := range testParams {
@@ -462,6 +554,8 @@ func TestTaskRunDelete(t *testing.T) {
 
 func TestTaskRunDelete_v1beta1(t *testing.T) {
 	version := "v1beta1"
+	clock := clockwork.NewFakeClock()
+
 	ns := []*corev1.Namespace{
 		{
 			ObjectMeta: metav1.ObjectMeta{
@@ -501,6 +595,11 @@ func TestTaskRunDelete_v1beta1(t *testing.T) {
 				},
 			},
 			Status: v1beta1.TaskRunStatus{
+				TaskRunStatusFields: v1beta1.TaskRunStatusFields{
+					CompletionTime: &metav1.Time{
+						Time: clock.Now().Add(10 * time.Minute),
+					},
+				},
 				Status: duckv1beta1.Status{
 					Conditions: duckv1beta1.Conditions{
 						{
@@ -524,6 +623,11 @@ func TestTaskRunDelete_v1beta1(t *testing.T) {
 				},
 			},
 			Status: v1beta1.TaskRunStatus{
+				TaskRunStatusFields: v1beta1.TaskRunStatusFields{
+					CompletionTime: &metav1.Time{
+						Time: clock.Now().Add(10 * time.Minute),
+					},
+				},
 				Status: duckv1beta1.Status{
 					Conditions: duckv1beta1.Conditions{
 						{
@@ -547,6 +651,11 @@ func TestTaskRunDelete_v1beta1(t *testing.T) {
 				},
 			},
 			Status: v1beta1.TaskRunStatus{
+				TaskRunStatusFields: v1beta1.TaskRunStatusFields{
+					CompletionTime: &metav1.Time{
+						Time: clock.Now().Add(10 * time.Minute),
+					},
+				},
 				Status: duckv1beta1.Status{
 					Conditions: duckv1beta1.Conditions{
 						{
@@ -570,6 +679,11 @@ func TestTaskRunDelete_v1beta1(t *testing.T) {
 				},
 			},
 			Status: v1beta1.TaskRunStatus{
+				TaskRunStatusFields: v1beta1.TaskRunStatusFields{
+					CompletionTime: &metav1.Time{
+						Time: clock.Now().Add(10 * time.Minute),
+					},
+				},
 				Status: duckv1beta1.Status{
 					Conditions: duckv1beta1.Conditions{
 						{
@@ -593,6 +707,11 @@ func TestTaskRunDelete_v1beta1(t *testing.T) {
 				},
 			},
 			Status: v1beta1.TaskRunStatus{
+				TaskRunStatusFields: v1beta1.TaskRunStatusFields{
+					CompletionTime: &metav1.Time{
+						Time: clock.Now().Add(10 * time.Minute),
+					},
+				},
 				Status: duckv1beta1.Status{
 					Conditions: duckv1beta1.Conditions{
 						{
@@ -616,6 +735,40 @@ func TestTaskRunDelete_v1beta1(t *testing.T) {
 				},
 			},
 			Status: v1beta1.TaskRunStatus{
+				TaskRunStatusFields: v1beta1.TaskRunStatusFields{
+					CompletionTime: &metav1.Time{
+						Time: clock.Now().Add(10 * time.Minute),
+					},
+				},
+				Status: duckv1beta1.Status{
+					Conditions: duckv1beta1.Conditions{
+						{
+							Status: corev1.ConditionTrue,
+							Reason: v1beta1.TaskRunReasonSuccessful.String(),
+						},
+					},
+				},
+			},
+		},
+		{
+			ObjectMeta: metav1.ObjectMeta{
+				Namespace: "ns",
+				Name:      "tr0-7",
+				Labels:    map[string]string{"tekton.dev/clusterTask": "random"},
+			},
+			Spec: v1beta1.TaskRunSpec{
+				TaskRef: &v1beta1.TaskRef{
+					Name: "random",
+					Kind: v1beta1.ClusterTaskKind,
+				},
+			},
+			Status: v1beta1.TaskRunStatus{
+				TaskRunStatusFields: v1beta1.TaskRunStatusFields{
+					CompletionTime: &metav1.Time{
+						// Use real time for testing keep-since
+						Time: time.Now(),
+					},
+				},
 				Status: duckv1beta1.Status{
 					Conditions: duckv1beta1.Conditions{
 						{
@@ -634,7 +787,7 @@ func TestTaskRunDelete_v1beta1(t *testing.T) {
 	}
 
 	seeds := make([]clients, 0)
-	for i := 0; i < 6; i++ {
+	for i := 0; i < 7; i++ {
 		trs := trdata
 		cs, _ := test.SeedV1beta1TestData(t, pipelinev1beta1test.Data{TaskRuns: trs, Tasks: tasks, ClusterTasks: clustertasks, Namespaces: ns})
 		cs.Pipeline.Resources = cb.APIResourceList(version, []string{"taskrun"})
@@ -648,6 +801,7 @@ func TestTaskRunDelete_v1beta1(t *testing.T) {
 			cb.UnstructuredV1beta1TR(trdata[3], version),
 			cb.UnstructuredV1beta1TR(trdata[4], version),
 			cb.UnstructuredV1beta1TR(trdata[5], version),
+			cb.UnstructuredV1beta1TR(trdata[6], version),
 		)
 		if err != nil {
 			t.Errorf("unable to create dynamic client: %v", err)
@@ -843,6 +997,33 @@ func TestTaskRunDelete_v1beta1(t *testing.T) {
 			inputStream: nil,
 			wantError:   false,
 			want:        "Are you sure you want to delete all TaskRuns related to ClusterTask \"random\" keeping 2 TaskRuns (y/n): All but 2 TaskRuns associated with ClusterTask \"random\" deleted in namespace \"ns\"\n",
+		},
+		{
+			name:        "Delete all Taskruns older than 60mn",
+			command:     []string{"delete", "-f", "--all", "--keep-since", "60", "-n", "ns"},
+			dynamic:     seeds[6].dynamicClient,
+			input:       seeds[6].pipelineClient,
+			inputStream: nil,
+			wantError:   false,
+			want:        "6 expired Taskruns has been deleted in namespace \"ns\", kept 1\n",
+		},
+		{
+			name:        "Only use since with --all",
+			command:     []string{"delete", "-f", "--keep-since", "60", "-n", "ns"},
+			dynamic:     seeds[6].dynamicClient,
+			input:       seeds[6].pipelineClient,
+			inputStream: nil,
+			wantError:   true,
+			want:        "--keep-since option can only be used with --all",
+		},
+		{
+			name:        "No mixing --keep-since and --keep",
+			command:     []string{"delete", "-f", "--keep-since", "60", "--keep", "5", "-n", "ns"},
+			dynamic:     seeds[6].dynamicClient,
+			input:       seeds[6].pipelineClient,
+			inputStream: nil,
+			wantError:   true,
+			want:        "cannot mix --keep and --keep-since options",
 		},
 	}
 
