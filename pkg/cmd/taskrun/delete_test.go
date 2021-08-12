@@ -432,6 +432,15 @@ func TestTaskRunDelete(t *testing.T) {
 			wantError:   false,
 			want:        "Are you sure you want to delete all TaskRuns related to ClusterTask \"random\" keeping 1 TaskRuns (y/n): All but 1 TaskRuns associated with ClusterTask \"random\" deleted in namespace \"ns\"\n",
 		},
+		{
+			name:        "Delete all with --ignore-running",
+			command:     []string{"delete", "--all", "-f", "-n", "ns", "--ignore-running"},
+			dynamic:     seeds[4].dynamicClient,
+			input:       seeds[4].pipelineClient,
+			inputStream: nil,
+			wantError:   false,
+			want:        "All TaskRuns deleted in namespace \"ns\"\n",
+		},
 	}
 
 	for _, tp := range testParams {
@@ -843,6 +852,15 @@ func TestTaskRunDelete_v1beta1(t *testing.T) {
 			inputStream: nil,
 			wantError:   false,
 			want:        "Are you sure you want to delete all TaskRuns related to ClusterTask \"random\" keeping 2 TaskRuns (y/n): All but 2 TaskRuns associated with ClusterTask \"random\" deleted in namespace \"ns\"\n",
+		},
+		{
+			name:        "Delete all with --ignore-running",
+			command:     []string{"delete", "--all", "-f", "-n", "ns", "--ignore-running"},
+			dynamic:     seeds[4].dynamicClient,
+			input:       seeds[4].pipelineClient,
+			inputStream: nil,
+			wantError:   false,
+			want:        "All TaskRuns deleted in namespace \"ns\"\n",
 		},
 	}
 

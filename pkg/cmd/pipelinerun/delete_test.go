@@ -358,6 +358,15 @@ func TestPipelineRunDelete(t *testing.T) {
 			wantError:   false,
 			want:        "Are you sure you want to delete all PipelineRuns in namespace \"ns\" (y/n): All PipelineRuns deleted in namespace \"ns\"\n",
 		},
+		{
+			name:        "Delete all by ignore-running",
+			command:     []string{"rm", "--all", "-n", "ns", "--ignore-running"},
+			dynamic:     seeds[5].dynamicClient,
+			input:       seeds[5].pipelineClient,
+			inputStream: nil,
+			wantError:   false,
+			want:        "Are you sure you want to delete all PipelineRuns in namespace \"ns\" (y/n): All PipelineRuns deleted in namespace \"ns\"\n",
+		},
 	}
 
 	for _, tp := range testParams {
@@ -684,6 +693,15 @@ func TestPipelineRunDelete_v1beta1(t *testing.T) {
 			inputStream: strings.NewReader("y"),
 			wantError:   true,
 			want:        "--keep flag should not have any arguments specified with it",
+		},
+		{
+			name:        "Delete all with ignore-running",
+			command:     []string{"rm", "--all", "-n", "ns", "--ignore-running"},
+			dynamic:     seeds[5].dynamicClient,
+			input:       seeds[5].pipelineClient,
+			inputStream: nil,
+			wantError:   false,
+			want:        "Are you sure you want to delete all PipelineRuns in namespace \"ns\" (y/n): All PipelineRuns deleted in namespace \"ns\"\n",
 		},
 	}
 

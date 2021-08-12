@@ -18,7 +18,6 @@ Delete PipelineRuns in a namespace
 
 Delete PipelineRuns with names 'foo' and 'bar' in namespace 'quux':
 
-	
     tkn pipelinerun delete foo bar -n quux
 
 or
