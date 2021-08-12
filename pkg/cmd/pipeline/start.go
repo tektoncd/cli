@@ -81,7 +81,6 @@ type startOptions struct {
 	UseParamDefaults   bool
 	TektonOptions      flags.TektonOptions
 	PodTemplate        string
-	ReturnName         bool
 }
 
 type resourceOptionsFilter struct {
@@ -148,7 +147,7 @@ For passing the workspaces via flags:
 				return errors.New("cannot use --last or --use-pipelinerun options with --use-param-defaults option")
 			}
 			format := strings.ToLower(opt.Output)
-			if format != "" && format != "json" && format != "yaml" {
+			if format != "" && format != "json" && format != "yaml" && format != "name" {
 				return fmt.Errorf("output format specified is %s but must be yaml or json", opt.Output)
 			}
 			if format != "" && opt.ShowLog {
@@ -186,13 +185,12 @@ For passing the workspaces via flags:
 	c.Flags().StringSliceVarP(&opt.Labels, "labels", "l", []string{}, "pass labels as label=value.")
 	c.Flags().StringArrayVarP(&opt.Workspaces, "workspace", "w", []string{}, "pass one or more workspaces to map to the corresponding physical volumes")
 	c.Flags().BoolVarP(&opt.DryRun, "dry-run", "", false, "preview PipelineRun without running it")
-	c.Flags().StringVarP(&opt.Output, "output", "", "", "format of PipelineRun (yaml or json)")
+	c.Flags().StringVarP(&opt.Output, "output", "", "", "format of PipelineRun (yaml or json or name)")
 	c.Flags().StringVarP(&opt.PrefixName, "prefix-name", "", "", "specify a prefix for the PipelineRun name (must be lowercase alphanumeric characters)")
 	c.Flags().StringVarP(&opt.TimeOut, "timeout", "", "", "timeout for PipelineRun")
 	c.Flags().StringVarP(&opt.Filename, "filename", "f", "", "local or remote file name containing a Pipeline definition to start a PipelineRun")
 	c.Flags().BoolVarP(&opt.UseParamDefaults, "use-param-defaults", "", false, "use default parameter values without prompting for input")
 	c.Flags().StringVar(&opt.PodTemplate, "pod-template", "", "local or remote file containing a PodTemplate definition")
-	c.Flags().BoolVarP(&opt.ReturnName, "return-name", "", false, "only return pipelinerun name")
 
 	c.Flags().StringVarP(&opt.ServiceAccountName, "serviceaccount", "s", "", "pass the serviceaccount name")
 	_ = c.RegisterFlagCompletionFunc("serviceaccount",
@@ -342,11 +340,6 @@ func (opt *startOptions) startPipeline(pipelineStart *v1beta1.Pipeline) error {
 
 	if opt.Output != "" {
 		return printPipelineRun(cs, opt.Output, opt.stream, prCreated)
-	}
-
-	if opt.ReturnName && !opt.ShowLog {
-		fmt.Fprint(opt.stream.Out, prCreated.Name)
-		return nil
 	}
 
 	fmt.Fprintf(opt.stream.Out, "PipelineRun started: %s\n", prCreated.Name)
@@ -734,6 +727,9 @@ func printPipelineRun(c *cli.Clients, output string, s *cli.Stream, pr *v1beta1.
 			return err
 		}
 		fmt.Fprintf(s.Out, "%s\n", prBytes)
+	}
+	if format == "name" {
+		fmt.Fprintf(s.Out, "%s\n", pr.Name)
 	}
 	return nil
 }
