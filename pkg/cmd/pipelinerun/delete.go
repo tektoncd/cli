@@ -89,7 +89,9 @@ or
 		},
 	}
 	f.AddFlags(c)
+
 	c.Flags().BoolVarP(&opts.ForceDelete, "force", "f", false, "Whether to force deletion (default: false)")
+	c.Flags().BoolVarP(&opts.IgnoreRunning, "ignore-running", "i", false, "ignore running PipelineRun  (default: false)")
 	c.Flags().StringVarP(&opts.ParentResourceName, "pipeline", "p", "", "The name of a Pipeline whose PipelineRuns should be deleted (does not delete the Pipeline)")
 	c.Flags().IntVarP(&opts.Keep, "keep", "", 0, "Keep n most recent number of PipelineRuns")
 	c.Flags().IntVarP(&opts.KeepSince, "keep-since", "", 0, "When deleting all PipelineRuns keep the ones that has been completed since n minutes")
@@ -112,7 +114,7 @@ func deletePipelineRuns(s *cli.Stream, p cli.Params, prNames []string, opts *opt
 		d = deleter.New("PipelineRun", func(pipelineRunName string) error {
 			return actions.Delete(prGroupResource, cs, pipelineRunName, p.Namespace(), metav1.DeleteOptions{})
 		})
-		prtodelete, prtokeep, err := allPipelineRunNames(cs, opts.Keep, opts.KeepSince, opts.LabelSelector, p.Namespace())
+		prtodelete, prtokeep, err := allPipelineRunNames(cs, opts.Keep, opts.KeepSince, opts.IgnoreRunning, opts.LabelSelector, p.Namespace())
 		if err != nil {
 			return err
 		}
@@ -174,7 +176,7 @@ func pipelineRunLister(cs *cli.Clients, keep int, ns string) func(string) ([]str
 	}
 }
 
-func allPipelineRunNames(cs *cli.Clients, keep, since int, labelselector, ns string) ([]string, []string, error) {
+func allPipelineRunNames(cs *cli.Clients, keep, since int, ignoreRunning bool, labelselector, ns string) ([]string, []string, error) {
 	var todelete, tokeep []string
 
 	options := v1.ListOptions{
@@ -184,6 +186,20 @@ func allPipelineRunNames(cs *cli.Clients, keep, since int, labelselector, ns str
 	pipelineRuns, err := pr.List(cs, options, ns)
 	if err != nil {
 		return todelete, tokeep, err
+	}
+
+	if ignoreRunning {
+		var pipelineRunTmps = []v1beta1.PipelineRun{}
+		for _, v := range pipelineRuns.Items {
+			for _, v2 := range v.Status.Conditions {
+				if v2.Reason == "Running" || v2.Reason == "Pending" {
+					continue
+				}
+				pipelineRunTmps = append(pipelineRunTmps, v)
+				break
+			}
+		}
+		pipelineRuns.Items = pipelineRunTmps
 	}
 
 	if since > 0 {

@@ -98,6 +98,7 @@ or
 		},
 	}
 	f.AddFlags(c)
+	c.Flags().BoolVarP(&opts.IgnoreRunning, "ignore-running", "i", false, "ignore running TaskRun  (default: false)")
 	c.Flags().BoolVarP(&opts.ForceDelete, "force", "f", false, "Whether to force deletion (default: false)")
 	c.Flags().StringVarP(&deleteOpts.TaskName, "task", "t", "", "The name of a Task whose TaskRuns should be deleted (does not delete the task)")
 	c.Flags().StringVarP(&deleteOpts.ClusterTaskName, "clustertask", "", "", "The name of a ClusterTask whose TaskRuns should be deleted (does not delete the ClusterTask)")
@@ -118,7 +119,7 @@ func deleteTaskRuns(s *cli.Stream, p cli.Params, trNames []string, opts *options
 		d = deleter.New("TaskRun", func(taskRunName string) error {
 			return actions.Delete(trGroupResource, cs, taskRunName, p.Namespace(), metav1.DeleteOptions{})
 		})
-		trs, err := allTaskRunNames(cs, opts.Keep, p.Namespace())
+		trs, err := allTaskRunNames(cs, opts.Keep, p.Namespace(), opts.IgnoreRunning)
 		if err != nil {
 			return err
 		}
@@ -184,11 +185,26 @@ func taskRunLister(p cli.Params, keep int, kind string, cs *cli.Clients) func(st
 	}
 }
 
-func allTaskRunNames(cs *cli.Clients, keep int, ns string) ([]string, error) {
+func allTaskRunNames(cs *cli.Clients, keep int, ns string, ignoreRunning bool) ([]string, error) {
 	taskRuns, err := trlist.TaskRuns(cs, metav1.ListOptions{}, ns)
 	if err != nil {
 		return nil, err
 	}
+
+	if ignoreRunning {
+		var taskRunTmp = []v1beta1.TaskRun{}
+		for _, v := range taskRuns.Items {
+			for _, v2 := range v.Status.Conditions {
+				if v2.Reason == "Running" || v2.Reason == "Pending" {
+					continue
+				}
+				taskRunTmp = append(taskRunTmp, v)
+				break
+			}
+		}
+		taskRuns.Items = taskRunTmp
+	}
+
 	return keepTaskRuns(taskRuns, keep), nil
 }
 

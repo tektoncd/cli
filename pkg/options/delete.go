@@ -28,6 +28,7 @@ type DeleteOptions struct {
 	ParentResource     string
 	ParentResourceName string
 	ForceDelete        bool
+	IgnoreRunning      bool
 	DeleteRelated      bool
 	DeleteAllNs        bool
 	DeleteAll          bool
