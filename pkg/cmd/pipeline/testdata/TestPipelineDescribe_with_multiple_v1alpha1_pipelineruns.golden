@@ -12,14 +12,6 @@ Params
  NAME             TYPE     DESCRIPTION   DEFAULT VALUE
  pipeline-param   string                 somethingdifferent
 
-Results
-
- No results
-
-Workspaces
-
- No workspaces
-
 Tasks
 
  NAME   TASKREF   RUNAFTER   TIMEOUT     CONDITIONS   PARAMS

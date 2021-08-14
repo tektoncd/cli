@@ -23,15 +23,7 @@ Results
  result-1   value-1
  result-2   value-2
 
-Workspaces
-
- No workspaces
-
 Taskruns
 
  NAME   TASK NAME   STARTED         DURATION    STATUS
  tr-1   t-1         0 seconds ago   5 minutes   Failed
-
-Skipped Tasks
-
- No Skipped Tasks

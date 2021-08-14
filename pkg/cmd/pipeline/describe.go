@@ -42,20 +42,18 @@ const describeTemplate = `{{decorate "bold" "Name"}}:	{{ .PipelineName }}
 {{decorate "bold" "Description"}}:	{{ .Pipeline.Spec.Description }}
 {{- end }}
 
+{{- if ne (len .Pipeline.Spec.Resources) 0 }}
+
 {{decorate "resources" ""}}{{decorate "underline bold" "Resources\n"}}
-{{- $rl := len .Pipeline.Spec.Resources }}{{ if eq $rl 0 }}
- No resources
-{{- else }}
  NAME	TYPE
 {{- range $i, $r := .Pipeline.Spec.Resources }}
  {{decorate "bullet" $r.Name }}	{{ $r.Type }}
 {{- end }}
 {{- end }}
 
+{{- if ne (len .Pipeline.Spec.Params) 0 }}
+
 {{decorate "params" ""}}{{decorate "underline bold" "Params\n"}}
-{{- $l := len .Pipeline.Spec.Params }}{{ if eq $l 0 }}
- No params
-{{- else }}
  NAME	TYPE	DESCRIPTION	DEFAULT VALUE
 {{- range $i, $p := .Pipeline.Spec.Params }}
 {{- if not $p.Default }}
@@ -70,40 +68,36 @@ const describeTemplate = `{{decorate "bold" "Name"}}:	{{ .PipelineName }}
 {{- end }}
 {{- end }}
 
+{{- if ne (len .Pipeline.Spec.Results) 0 }}
+
 {{decorate "results" ""}}{{decorate "underline bold" "Results\n"}}
-{{- if eq (len .Pipeline.Spec.Results) 0 }}
- No results
-{{- else }}
  NAME	DESCRIPTION
 {{- range $result := .Pipeline.Spec.Results }}
  {{ decorate "bullet" $result.Name }}	{{ formatDesc $result.Description }}
 {{- end }}
 {{- end }}
 
+{{- if ne (len .Pipeline.Spec.Workspaces) 0 }}
+
 {{decorate "workspaces" ""}}{{decorate "underline bold" "Workspaces\n"}}
-{{- if eq (len .Pipeline.Spec.Workspaces) 0 }}
- No workspaces
-{{- else }}
  NAME	DESCRIPTION
 {{- range $workspace := .Pipeline.Spec.Workspaces }}
  {{ decorate "bullet" $workspace.Name }}	{{ formatDesc $workspace.Description }}
 {{- end }}
 {{- end }}
 
+{{- if ne (len .Pipeline.Spec.Tasks) 0 }}
+
 {{decorate "tasks" ""}}{{decorate "underline bold" "Tasks\n"}}
-{{- $tl := len .Pipeline.Spec.Tasks }}{{ if eq $tl 0 }}
- No tasks
-{{- else }}
  NAME	TASKREF	RUNAFTER	TIMEOUT	CONDITIONS	PARAMS
 {{- range $i, $t := .Pipeline.Spec.Tasks }}
  {{decorate "bullet" $t.Name }}	{{ getTaskRefName $t }}	{{ join $t.RunAfter ", " }}	{{ formatTimeout $t.Timeout }}	{{ formatTaskConditions $t.Conditions }}	{{ formatParam $t.Params $.Pipeline.Spec.Params }}
 {{- end }}
 {{- end }}
 
+{{- if ne (len .PipelineRuns.Items) 0 }}
+
 {{decorate "pipelineruns" ""}}{{decorate "underline bold" "PipelineRuns\n"}}
-{{- $rl := len .PipelineRuns.Items }}{{ if eq $rl 0 }}
- No pipelineruns
-{{- else }}
  NAME	STARTED	DURATION	STATUS
 {{- range $i, $pr := .PipelineRuns.Items }}
  {{decorate "bullet" $pr.Name }}	{{ formatAge $pr.Status.StartTime $.Params.Time }}	{{ formatDuration $pr.Status.StartTime $pr.Status.CompletionTime }}	{{ formatCondition $pr.Status.Conditions }}

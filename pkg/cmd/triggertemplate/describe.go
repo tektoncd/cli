@@ -35,11 +35,9 @@ import (
 const describeTemplate = `{{decorate "bold" "Name"}}:	{{ .TriggerTemplate.Name }}
 {{decorate "bold" "Namespace"}}:	{{ .TriggerTemplate.Namespace }}
 
-{{decorate "params" ""}}{{decorate "underline bold" "Params\n"}}
+{{- if ne (len .TriggerTemplate.Spec.Params) 0 }}
 
-{{- if eq (len .TriggerTemplate.Spec.Params) 0 }}
- No params
-{{- else }}
+{{decorate "params" ""}}{{decorate "underline bold" "Params\n"}}
  NAME	DESCRIPTION	DEFAULT VALUE
 {{- range $p := .TriggerTemplate.Spec.Params }}
 {{- if not $p.Default }}

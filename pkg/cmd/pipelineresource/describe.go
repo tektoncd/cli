@@ -41,20 +41,18 @@ const templ = `{{decorate "bold" "Name"}}:	{{ .PipelineResource.Name }}
 {{decorate "bold" "Description"}}:	{{ .PipelineResource.Spec.Description }}
 {{- end }}
 
+{{- if ne (len .PipelineResource.Spec.Params) 0 }}
+
 {{decorate "underline bold" "Params\n"}}
-{{- $l := len .PipelineResource.Spec.Params }}{{ if eq $l 0 }}
- No params
-{{- else }}
  NAME	VALUE
 {{- range $i, $p := .PipelineResource.Spec.Params }}
  {{decorate "bullet" $p.Name }}	{{ $p.Value }}
 {{- end }}
 {{- end }}
 
+{{- if ne (len .PipelineResource.Spec.SecretParams) 0 }}
+
 {{decorate "underline bold" "Secret Params\n"}}
-{{- $l := len .PipelineResource.Spec.SecretParams }}{{ if eq $l 0 }}
- No secret params
-{{- else }}
  FIELDNAME	SECRETNAME
 {{- range $i, $p := .PipelineResource.Spec.SecretParams }}
  {{decorate "bullet" $p.FieldName }}	{{ $p.SecretName }}

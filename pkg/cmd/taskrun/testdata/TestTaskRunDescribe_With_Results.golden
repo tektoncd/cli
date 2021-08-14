@@ -9,32 +9,8 @@ Status
 STARTED          DURATION    STATUS
 10 minutes ago   5 minutes   Failed
 
-Input Resources
-
- No input resources
-
-Output Resources
-
- No output resources
-
-Params
-
- No params
-
 Results
 
  NAME       VALUE
  result-1   value-1
  result-2   value-2
-
-Workspaces
-
- No workspaces
-
-Steps
-
-No steps
-
-Sidecars
-
-No sidecars

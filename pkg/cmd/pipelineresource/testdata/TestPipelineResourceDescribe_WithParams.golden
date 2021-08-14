@@ -7,7 +7,3 @@ Params
 
  NAME   VALUE
  URL    quay.io/tekton/controller
-
-Secret Params
-
- No secret params

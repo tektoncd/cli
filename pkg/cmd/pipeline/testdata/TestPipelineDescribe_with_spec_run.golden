@@ -2,22 +2,6 @@ Name:          pipeline
 Namespace:     ns
 Description:   a test description
 
-Resources
-
- No resources
-
-Params
-
- No params
-
-Results
-
- No results
-
-Workspaces
-
- No workspaces
-
 Tasks
 
  NAME   TASKREF   RUNAFTER   TIMEOUT     CONDITIONS   PARAMS

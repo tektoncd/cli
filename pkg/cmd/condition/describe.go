@@ -49,20 +49,18 @@ const templ = `{{decorate "bold" "Name"}}:	{{ .Condition.Name }}
  {{decorate "bold" "Script"}}:	{{ .Condition.Spec.Check.Script }}
  {{- end }}
 
+{{- if ne (len .Condition.Spec.Resources) 0 }}
+
 {{decorate "resources" ""}}{{decorate "underline bold" "Resources\n"}}
-{{- $rl := len .Condition.Spec.Resources }}{{ if eq $rl 0 }}
- No resources
-{{- else }}
  NAME	TYPE
 {{- range $r := .Condition.Spec.Resources }}
  {{decorate "bullet" $r.Name }}	{{ $r.Type }}
 {{- end }}
 {{- end }}
 
+{{- if ne (len .Condition.Spec.Params) 0 }}
+
 {{decorate "params" ""}}{{decorate "underline bold" "Params\n"}}
-{{- $l := len .Condition.Spec.Params }}{{ if eq $l 0 }}
- No params
-{{- else }}
  NAME	TYPE	DESCRIPTION	DEFAULT VALUE
 {{- range $p := .Condition.Spec.Params }}
 {{- if not $p.Default }}
