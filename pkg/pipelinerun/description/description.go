@@ -60,10 +60,9 @@ STARTED	DURATION	STATUS
 {{ $msg }}
 {{- end }}
 
+{{- if ne (len .PipelineRun.Spec.Resources) 0 }}
+
 {{decorate "resources" ""}}{{decorate "underline bold" "Resources\n"}}
-{{- $l := len .PipelineRun.Spec.Resources }}{{ if eq $l 0 }}
- No resources
-{{- else }}
  NAME	RESOURCE REF
 {{- range $i, $r := .PipelineRun.Spec.Resources }}
 {{- $rRefName := pipelineResourceRefExists $r }}{{- if ne $rRefName "" }}
@@ -74,10 +73,9 @@ STARTED	DURATION	STATUS
 {{- end }}
 {{- end }}
 
+{{- if ne (len .PipelineRun.Spec.Params) 0 }}
+
 {{decorate "params" ""}}{{decorate "underline bold" "Params\n"}}
-{{- $l := len .PipelineRun.Spec.Params }}{{ if eq $l 0 }}
- No params
-{{- else }}
  NAME	VALUE
 {{- range $i, $p := .PipelineRun.Spec.Params }}
 {{- if eq $p.Value.Type "string" }}
@@ -88,21 +86,18 @@ STARTED	DURATION	STATUS
 {{- end }}
 {{- end }}
 
+{{- if ne (len .PipelineRun.Status.PipelineResults) 0 }}
+
 {{decorate "results" ""}}{{decorate "underline bold" "Results\n"}}
-{{- if eq (len .PipelineRun.Status.PipelineResults) 0 }}
- No results
-{{- else }}
  NAME	VALUE
 {{- range $result := .PipelineRun.Status.PipelineResults }}
  {{decorate "bullet" $result.Name }}	{{ formatResult $result.Value }}
 {{- end }}
 {{- end }}
 
-{{decorate "workspaces" ""}}{{decorate "underline bold" "Workspaces\n"}}
+{{- if ne (len .PipelineRun.Spec.Workspaces) 0 }}
 
-{{- if eq (len .PipelineRun.Spec.Workspaces) 0 }}
- No workspaces
-{{- else }}
+{{decorate "workspaces" ""}}{{decorate "underline bold" "Workspaces\n"}}
  NAME	SUB PATH	WORKSPACE BINDING
 {{- range $workspace := .PipelineRun.Spec.Workspaces }}
 {{- if not $workspace.SubPath }}
@@ -113,10 +108,9 @@ STARTED	DURATION	STATUS
 {{- end }}
 {{- end }}
 
+{{- if ne (len .TaskrunList) 0 }}
+
 {{decorate "taskruns" ""}}{{decorate "underline bold" "Taskruns\n"}}
-{{- $l := len .TaskrunList }}{{ if eq $l 0 }}
- No taskruns
-{{- else }}
  NAME	TASK NAME	STARTED	DURATION	STATUS
 {{- range $taskrun := .TaskrunList }}{{ if checkTRStatus $taskrun }}
  {{decorate "bullet" $taskrun.TaskrunName }}	{{ $taskrun.PipelineTaskName }}	{{ formatAge $taskrun.Status.StartTime $.Params.Time }}	{{ formatDuration $taskrun.Status.StartTime $taskrun.Status.CompletionTime }}	{{ formatCondition $taskrun.Status.Conditions }}
@@ -124,11 +118,9 @@ STARTED	DURATION	STATUS
 {{- end }}
 {{- end }}
 
-{{decorate "skippedtasks" ""}}{{decorate "underline bold" "Skipped Tasks\n"}}
+{{- if ne (len .PipelineRun.Status.SkippedTasks) 0 }}
 
-{{- $l := len .PipelineRun.Status.SkippedTasks }}{{ if eq $l 0 }}
- No Skipped Tasks
-{{- else }}
+{{decorate "skippedtasks" ""}}{{decorate "underline bold" "Skipped Tasks\n"}}
  NAME
 {{- range $skippedTask := .PipelineRun.Status.SkippedTasks }}
  {{decorate "bullet" $skippedTask.Name }}

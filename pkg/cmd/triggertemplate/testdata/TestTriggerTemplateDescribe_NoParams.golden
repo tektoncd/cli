@@ -1,10 +1,6 @@
 Name:        tt1
 Namespace:   ns
 
-Params
-
- No params
-
 ResourceTemplates
 
  NAME   GENERATENAME   KIND          APIVERSION

@@ -33,11 +33,9 @@ import (
 const describeTemplate = `{{decorate "bold" "Name"}}:	{{ .TriggerBinding.Name }}
 {{decorate "bold" "Namespace"}}:	{{ .TriggerBinding.Namespace }}
 
-{{decorate "params" ""}}{{decorate "underline bold" "Params\n"}}
+{{- if ne (len .TriggerBinding.Spec.Params) 0 }}
 
-{{- if eq (len .TriggerBinding.Spec.Params) 0 }}
- No params
-{{- else }}
+{{decorate "params" ""}}{{decorate "underline bold" "Params\n"}}
  NAME	VALUE
 {{- range $p := .TriggerBinding.Spec.Params }}
  {{decorate "bullet" $p.Name }}	{{ $p.Value }}

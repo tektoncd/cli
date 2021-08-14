@@ -15,27 +15,7 @@ Message
 
 Resource test-resource not found in the pipelinerun
 
-Resources
-
- No resources
-
-Params
-
- No params
-
-Results
-
- No results
-
-Workspaces
-
- No workspaces
-
 Taskruns
 
  NAME   TASK NAME   STARTED         DURATION    STATUS
  tr-1   t-1         8 minutes ago   3 minutes   ---
-
-Skipped Tasks
-
- No Skipped Tasks

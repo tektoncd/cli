@@ -21,19 +21,7 @@ Params
  NAME         VALUE
  test-param   param-value
 
-Results
-
- No results
-
-Workspaces
-
- No workspaces
-
 Taskruns
 
  NAME   TASK NAME   STARTED         DURATION    STATUS
  tr-1   t-1         8 minutes ago   3 minutes   Succeeded
-
-Skipped Tasks
-
- No Skipped Tasks

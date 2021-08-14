@@ -19,14 +19,6 @@ Params
  pipeline-param2   string   params without the ...   ---
  rev-param2        array                             ---
 
-Results
-
- No results
-
-Workspaces
-
- No workspaces
-
 Tasks
 
  NAME   TASKREF   RUNAFTER   TIMEOUT     CONDITIONS   PARAMS

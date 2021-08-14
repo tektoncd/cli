@@ -1,18 +1,6 @@
 Name:          clustertask-1
 Description:   a clustertest description
 
-Input Resources
-
- No input resources
-
-Output Resources
-
- No output resources
-
-Params
-
- No params
-
 Results
 
  NAME       DESCRIPTION
@@ -20,14 +8,6 @@ Results
  result-2   This is a descripti...
  result-3   
 
-Workspaces
-
- No workspaces
-
 Steps
 
  hello
-
-Taskruns
-
- No taskruns
