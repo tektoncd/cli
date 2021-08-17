@@ -11,7 +11,7 @@ require (
 	github.com/docker/docker v20.10.2+incompatible
 	github.com/fatih/color v1.9.0
 	github.com/ghodss/yaml v1.0.0
-	github.com/google/go-cmp v0.5.5
+	github.com/google/go-cmp v0.5.6
 	github.com/google/go-containerregistry v0.4.1-0.20210128200529-19c2b639fab1
 	github.com/hako/durafmt v0.0.0-20191009132224-3f39dc1ed9f4
 	github.com/hinshun/vt10x v0.0.0-20180809195222-d55458df857c
@@ -22,22 +22,22 @@ require (
 	github.com/spf13/cobra v1.1.3
 	github.com/spf13/pflag v1.0.5
 	github.com/tektoncd/hub/api v0.0.0-20210707072808-0ae1afc58dd8
-	github.com/tektoncd/pipeline v0.25.0
+	github.com/tektoncd/pipeline v0.27.1
 	github.com/tektoncd/plumbing v0.0.0-20210514044347-f8a9689d5bd5
 	github.com/tektoncd/triggers v0.14.2
 	github.com/tidwall/gjson v1.6.0 // indirect
 	go.opencensus.io v0.23.0
-	go.uber.org/multierr v1.5.0
+	go.uber.org/multierr v1.6.0
 	golang.org/x/term v0.0.0-20201210144234-2321bbc49cbf
 	golang.org/x/xerrors v0.0.0-20200804184101-5ec99f83aff1
 	gopkg.in/yaml.v2 v2.4.0
 	gotest.tools v2.2.0+incompatible
 	gotest.tools/v3 v3.0.2
-	k8s.io/api v0.19.7
-	k8s.io/apimachinery v0.19.7
-	k8s.io/cli-runtime v0.19.7
-	k8s.io/client-go v0.19.7
-	knative.dev/pkg v0.0.0-20210331065221-952fdd90dbb0
+	k8s.io/api v0.20.7
+	k8s.io/apimachinery v0.20.7
+	k8s.io/cli-runtime v0.20.7
+	k8s.io/client-go v0.20.7
+	knative.dev/pkg v0.0.0-20210730172132-bb4aaf09c430
 	sigs.k8s.io/yaml v1.2.0
 )
 

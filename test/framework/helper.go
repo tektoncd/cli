@@ -25,9 +25,6 @@ import (
 	"testing"
 	"time"
 
-	"knative.dev/pkg/system"
-	knativetest "knative.dev/pkg/test"
-
 	"github.com/tektoncd/pipeline/pkg/apis/config"
 	"github.com/tektoncd/pipeline/pkg/names"
 	"golang.org/x/xerrors"
@@ -36,6 +33,9 @@ import (
 	"k8s.io/apimachinery/pkg/api/errors"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/util/wait"
+	"k8s.io/client-go/kubernetes"
+	"knative.dev/pkg/system"
+	knativetest "knative.dev/pkg/test"
 	"knative.dev/pkg/test/logging"
 
 	// Mysteriously by k8s libs, or they fail to create `KubeClient`s from config. Apparently just importing it is enough. @_@ side effects @_@. https://github.com/kubernetes/client-go/issues/242
@@ -73,7 +73,7 @@ func Header(logf logging.FormatLogger, text string) {
 }
 
 // Create Service Account
-func CreateServiceAccountSecret(c *knativetest.KubeClient, namespace string, secretName string) (bool, error) {
+func CreateServiceAccountSecret(c kubernetes.Interface, namespace string, secretName string) (bool, error) {
 
 	file := os.Getenv("SERVICE_ACCOUNT_KEY_PATH")
 	if file == "" {
@@ -143,7 +143,7 @@ func initializeLogsAndMetrics(t *testing.T) {
 	})
 }
 
-func CreateNamespace(namespace string, kubeClient *knativetest.KubeClient) {
+func CreateNamespace(namespace string, kubeClient kubernetes.Interface) {
 	log.Printf("Create namespace %s to deploy to", namespace)
 	if _, err := kubeClient.CoreV1().Namespaces().Create(context.Background(), &corev1.Namespace{
 		ObjectMeta: metav1.ObjectMeta{
@@ -161,7 +161,7 @@ func DeleteNamespace(namespace string, cs *Clients) {
 	}
 }
 
-func getDefaultSA(kubeClient *knativetest.KubeClient, namespace string) string {
+func getDefaultSA(kubeClient kubernetes.Interface, namespace string) string {
 	configDefaultsCM, err := kubeClient.CoreV1().ConfigMaps(system.Namespace()).Get(context.Background(), config.GetDefaultsConfigName(), metav1.GetOptions{})
 	if err != nil {
 		log.Fatalf("Failed to get ConfigMap `%s`: %s", config.GetDefaultsConfigName(), err)
@@ -173,7 +173,7 @@ func getDefaultSA(kubeClient *knativetest.KubeClient, namespace string) string {
 	return actual
 }
 
-func VerifyServiceAccountExistence(namespace string, kubeClient *knativetest.KubeClient) {
+func VerifyServiceAccountExistence(namespace string, kubeClient kubernetes.Interface) {
 	defaultSA := getDefaultSA(kubeClient, namespace)
 	log.Printf("Verify SA %q is created in namespace %q", defaultSA, namespace)
 
@@ -188,7 +188,7 @@ func VerifyServiceAccountExistence(namespace string, kubeClient *knativetest.Kub
 	}
 }
 
-func VerifyServiceAccountExistenceForSecrets(namespace string, kubeClient *knativetest.KubeClient, sa string) {
+func VerifyServiceAccountExistenceForSecrets(namespace string, kubeClient kubernetes.Interface, sa string) {
 	defaultSA := sa
 	log.Printf("Verify SA %q is created in namespace %q", defaultSA, namespace)
 
