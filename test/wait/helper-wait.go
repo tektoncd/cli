@@ -28,8 +28,8 @@ import (
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/util/wait"
 	"k8s.io/apimachinery/pkg/watch"
+	"k8s.io/client-go/kubernetes"
 	"knative.dev/pkg/apis"
-	knativetest "knative.dev/pkg/test"
 )
 
 type TaskStateFn func(r *v1alpha1.Task) (bool, error)
@@ -79,7 +79,7 @@ func ForPodState(c *framework.Clients, name string, namespace string, inState fu
 	})
 }
 
-func ForPodStateKube(c *knativetest.KubeClient, namespace string, inState PodRunStateFn, desc string) error {
+func ForPodStateKube(c kubernetes.Interface, namespace string, inState PodRunStateFn, desc string) error {
 	podlist, err := c.CoreV1().Pods(namespace).List(context.Background(), metav1.ListOptions{})
 	if err != nil {
 		return err
@@ -108,7 +108,7 @@ func ForPodStateKube(c *knativetest.KubeClient, namespace string, inState PodRun
 
 }
 
-func ForPodStatus(kubeClient *knativetest.KubeClient, namespace string) {
+func ForPodStatus(kubeClient kubernetes.Interface, namespace string) {
 	watch, err := kubeClient.CoreV1().Pods(namespace).Watch(context.Background(), metav1.ListOptions{})
 	if err != nil {
 		log.Fatal(err.Error())
