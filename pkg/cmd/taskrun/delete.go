@@ -87,6 +87,10 @@ or
 				return fmt.Errorf("keep option should not be lower than 0")
 			}
 
+			if opts.KeepSince < 0 {
+				return fmt.Errorf("since option should not be lower than 0")
+			}
+
 			if opts.Keep > 0 && opts.ParentResourceName == "" {
 				opts.DeleteAllNs = true
 			}
