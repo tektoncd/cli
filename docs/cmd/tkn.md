@@ -21,6 +21,7 @@ CLI for tekton pipelines
 ### SEE ALSO
 
 * [tkn bundle](tkn_bundle.md)	 - Manage Tekton Bundles
+* [tkn chains](tkn_chains.md)	 - Manage Tekton Chains
 * [tkn clustertask](tkn_clustertask.md)	 - Manage ClusterTasks
 * [tkn clustertriggerbinding](tkn_clustertriggerbinding.md)	 - Manage ClusterTriggerBindings
 * [tkn completion](tkn_completion.md)	 - Prints shell completion scripts
