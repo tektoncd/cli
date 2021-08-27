@@ -21,6 +21,7 @@ import (
 	"github.com/spf13/pflag"
 	"github.com/tektoncd/cli/pkg/cli"
 	"github.com/tektoncd/cli/pkg/cmd/bundle"
+	"github.com/tektoncd/cli/pkg/cmd/chains"
 	"github.com/tektoncd/cli/pkg/cmd/clustertask"
 	"github.com/tektoncd/cli/pkg/cmd/clustertriggerbinding"
 	"github.com/tektoncd/cli/pkg/cmd/completion"
@@ -84,6 +85,7 @@ func Root(p cli.Params) *cobra.Command {
 
 	cmd.AddCommand(
 		bundle.Command(p),
+		chains.Command(p),
 		clustertask.Command(p),
 		clustertriggerbinding.Command(p),
 		completion.Command(),
