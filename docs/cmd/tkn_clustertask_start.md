@@ -60,6 +60,7 @@ For passing the workspaces via flags:
       --timeout string            timeout for TaskRun
       --use-param-defaults        use default parameter values without prompting for input
       --use-taskrun string        specify a TaskRun name to use its values to re-run the TaskRun
+      --use-workspace-defaults    use default workspace configuration without prompting for input
   -w, --workspace stringArray     pass one or more workspaces to map to the corresponding physical volumes
 ```
 

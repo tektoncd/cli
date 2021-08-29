@@ -77,6 +77,7 @@ type startOptions struct {
 	askOpts               survey.AskOpt
 	TektonOptions         flags.TektonOptions
 	UseParamDefaults      bool
+	UseWorkspaceDefaults  bool
 	PodTemplate           string
 	SkipOptionalWorkspace bool
 }
@@ -218,6 +219,7 @@ For passing the workspaces via flags:
 	c.Flags().StringVarP(&opt.Output, "output", "", "", "format of TaskRun (yaml or json)")
 	c.Flags().StringVarP(&opt.PrefixName, "prefix-name", "", "", "specify a prefix for the TaskRun name (must be lowercase alphanumeric characters)")
 	c.Flags().BoolVarP(&opt.UseParamDefaults, "use-param-defaults", "", false, "use default parameter values without prompting for input")
+	c.Flags().BoolVarP(&opt.UseWorkspaceDefaults, "use-workspace-defaults", "", false, "use default workspace configuration without prompting for input")
 	c.Flags().StringVar(&opt.PodTemplate, "pod-template", "", "local or remote file containing a PodTemplate definition")
 	c.Flags().BoolVarP(&opt.SkipOptionalWorkspace, "skip-optional-workspace", "", false, "skips the prompt for optional workspaces")
 	return c
@@ -554,7 +556,7 @@ func (opt *startOptions) getInputs() error {
 		opt.Params = append(opt.Params, intOpts.Params...)
 	}
 
-	if len(opt.Workspaces) == 0 && !opt.Last && opt.UseTaskRun == "" {
+	if len(opt.Workspaces) == 0 && !opt.Last && opt.UseTaskRun == "" && !opt.UseWorkspaceDefaults {
 		if err := intOpts.TaskWorkspaces(opt.task); err != nil {
 			return err
 		}

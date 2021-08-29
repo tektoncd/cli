@@ -68,6 +68,7 @@ my-secret, my-empty-dir and my-volume-claim-template)
       --timeout string                timeout for PipelineRun
       --use-param-defaults            use default parameter values without prompting for input
       --use-pipelinerun string        use this pipelinerun values to re-run the pipeline. 
+      --use-workspace-defaults        use default workspace configuration without prompting for input
   -w, --workspace stringArray         pass one or more workspaces to map to the corresponding physical volumes
 ```
 

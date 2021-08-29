@@ -79,6 +79,7 @@ type startOptions struct {
 	Filename              string
 	Workspaces            []string
 	UseParamDefaults      bool
+	UseWorkspaceDefaults  bool
 	TektonOptions         flags.TektonOptions
 	PodTemplate           string
 	SkipOptionalWorkspace bool
@@ -191,6 +192,7 @@ For passing the workspaces via flags:
 	c.Flags().StringVarP(&opt.TimeOut, "timeout", "", "", "timeout for PipelineRun")
 	c.Flags().StringVarP(&opt.Filename, "filename", "f", "", "local or remote file name containing a Pipeline definition to start a PipelineRun")
 	c.Flags().BoolVarP(&opt.UseParamDefaults, "use-param-defaults", "", false, "use default parameter values without prompting for input")
+	c.Flags().BoolVarP(&opt.UseWorkspaceDefaults, "use-workspace-defaults", "", false, "use default workspace configuration without prompting for input")
 	c.Flags().StringVar(&opt.PodTemplate, "pod-template", "", "local or remote file containing a PodTemplate definition")
 	c.Flags().BoolVarP(&opt.SkipOptionalWorkspace, "skip-optional-workspace", "", false, "skips the prompt for optional workspaces")
 
@@ -404,7 +406,7 @@ func (opt *startOptions) getInput(pipeline *v1beta1.Pipeline) error {
 		}
 	}
 
-	if len(opt.Workspaces) == 0 && !opt.Last && opt.UsePipelineRun == "" {
+	if len(opt.Workspaces) == 0 && !opt.Last && opt.UsePipelineRun == "" && !opt.UseWorkspaceDefaults {
 		if err = opt.getInputWorkspaces(pipeline); err != nil {
 			return err
 		}

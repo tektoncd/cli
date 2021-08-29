@@ -71,6 +71,7 @@ type startOptions struct {
 	PrefixName            string
 	Workspaces            []string
 	UseParamDefaults      bool
+	UseWorkspaceDefaults  bool
 	clustertask           *v1beta1.ClusterTask
 	askOpts               survey.AskOpt
 	TektonOptions         flags.TektonOptions
@@ -196,6 +197,7 @@ For passing the workspaces via flags:
 	c.Flags().StringVarP(&opt.PrefixName, "prefix-name", "", "", "specify a prefix for the TaskRun name (must be lowercase alphanumeric characters)")
 	c.Flags().StringVar(&opt.PodTemplate, "pod-template", "", "local or remote file containing a PodTemplate definition")
 	c.Flags().BoolVar(&opt.UseParamDefaults, "use-param-defaults", false, "use default parameter values without prompting for input")
+	c.Flags().BoolVarP(&opt.UseWorkspaceDefaults, "use-workspace-defaults", "", false, "use default workspace configuration without prompting for input")
 	c.Flags().BoolVarP(&opt.SkipOptionalWorkspace, "skip-optional-workspace", "", false, "skips the prompt for optional workspaces")
 
 	return c
@@ -472,7 +474,7 @@ func (opt *startOptions) getInputs() error {
 		opt.Params = append(opt.Params, intOpts.Params...)
 	}
 
-	if len(opt.Workspaces) == 0 && !opt.Last && opt.UseTaskRun == "" {
+	if len(opt.Workspaces) == 0 && !opt.Last && opt.UseTaskRun == "" && !opt.UseWorkspaceDefaults {
 		if err := intOpts.ClusterTaskWorkspaces(opt.clustertask); err != nil {
 			return err
 		}
