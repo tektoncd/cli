@@ -151,6 +151,14 @@ func TestDeleteOptions(t *testing.T) {
 			wantError:      true,
 			want:           "must provide Condition name(s) or use --all flag with delete",
 		},
+		{
+			name:           "Specify KeepSince, ParentResource, ParentResourceName and Resource",
+			opt:            &DeleteOptions{KeepSince: 20, ParentResource: "Task", ParentResourceName: "foobar", Resource: "TaskRun"},
+			resourcesNames: []string{},
+			wantError:      false,
+			stream:         &cli.Stream{In: strings.NewReader("y"), Out: os.Stdout},
+			want:           "Are you sure you want to delete all TaskRuns related to Task \"foobar\" except for ones created in last 20 minutes (y/n)",
+		},
 	}
 
 	for _, tp := range testParams {

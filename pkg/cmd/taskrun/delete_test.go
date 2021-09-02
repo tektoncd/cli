@@ -269,7 +269,7 @@ func TestTaskRunDelete(t *testing.T) {
 	}
 
 	seeds := make([]clients, 0)
-	for i := 0; i < 7; i++ {
+	for i := 0; i < 8; i++ {
 		cs, _ := test.SeedTestData(t, pipelinetest.Data{TaskRuns: trs, Tasks: tasks, ClusterTasks: clustertasks, Namespaces: ns})
 		cs.Pipeline.Resources = cb.APIResourceList(version, []string{"taskrun"})
 		tdc := testDynamic.Options{}
@@ -507,15 +507,6 @@ func TestTaskRunDelete(t *testing.T) {
 			want:        "6 expired Taskruns has been deleted in namespace \"ns\", kept 1\n",
 		},
 		{
-			name:        "Only use since with --all",
-			command:     []string{"delete", "-f", "--keep-since", "60", "-n", "ns"},
-			dynamic:     seeds[6].dynamicClient,
-			input:       seeds[6].pipelineClient,
-			inputStream: nil,
-			wantError:   true,
-			want:        "--keep-since option can only be used with --all",
-		},
-		{
 			name:        "No mixing --keep-since and --keep",
 			command:     []string{"delete", "-f", "--keep-since", "60", "--keep", "5", "-n", "ns"},
 			dynamic:     seeds[6].dynamicClient,
@@ -523,6 +514,24 @@ func TestTaskRunDelete(t *testing.T) {
 			inputStream: nil,
 			wantError:   true,
 			want:        "cannot mix --keep and --keep-since options",
+		},
+		{
+			name:        "Delete all Taskruns older than 60mn associated with random Task",
+			command:     []string{"delete", "-f", "--task", "random", "--keep-since", "60", "-n", "ns"},
+			dynamic:     seeds[7].dynamicClient,
+			input:       seeds[7].pipelineClient,
+			inputStream: nil,
+			wantError:   false,
+			want:        "All but 3 expired TaskRuns associated with \"Task\" \"random\" deleted in namespace \"ns\"\n",
+		},
+		{
+			name:        "Error --keep-since less than zero",
+			command:     []string{"delete", "-f", "--task", "random", "--keep-since", "-1", "-n", "ns"},
+			dynamic:     seeds[6].dynamicClient,
+			input:       seeds[6].pipelineClient,
+			inputStream: nil,
+			wantError:   true,
+			want:        "since option should not be lower than 0",
 		},
 	}
 
@@ -787,7 +796,7 @@ func TestTaskRunDelete_v1beta1(t *testing.T) {
 	}
 
 	seeds := make([]clients, 0)
-	for i := 0; i < 7; i++ {
+	for i := 0; i < 8; i++ {
 		trs := trdata
 		cs, _ := test.SeedV1beta1TestData(t, pipelinev1beta1test.Data{TaskRuns: trs, Tasks: tasks, ClusterTasks: clustertasks, Namespaces: ns})
 		cs.Pipeline.Resources = cb.APIResourceList(version, []string{"taskrun"})
@@ -1008,15 +1017,6 @@ func TestTaskRunDelete_v1beta1(t *testing.T) {
 			want:        "6 expired Taskruns has been deleted in namespace \"ns\", kept 1\n",
 		},
 		{
-			name:        "Only use since with --all",
-			command:     []string{"delete", "-f", "--keep-since", "60", "-n", "ns"},
-			dynamic:     seeds[6].dynamicClient,
-			input:       seeds[6].pipelineClient,
-			inputStream: nil,
-			wantError:   true,
-			want:        "--keep-since option can only be used with --all",
-		},
-		{
 			name:        "No mixing --keep-since and --keep",
 			command:     []string{"delete", "-f", "--keep-since", "60", "--keep", "5", "-n", "ns"},
 			dynamic:     seeds[6].dynamicClient,
@@ -1024,6 +1024,24 @@ func TestTaskRunDelete_v1beta1(t *testing.T) {
 			inputStream: nil,
 			wantError:   true,
 			want:        "cannot mix --keep and --keep-since options",
+		},
+		{
+			name:        "Delete all Taskruns older than 60mn associated with random Task",
+			command:     []string{"delete", "-f", "--task", "random", "--keep-since", "60", "-n", "ns"},
+			dynamic:     seeds[7].dynamicClient,
+			input:       seeds[7].pipelineClient,
+			inputStream: nil,
+			wantError:   false,
+			want:        "All but 3 expired TaskRuns associated with \"Task\" \"random\" deleted in namespace \"ns\"\n",
+		},
+		{
+			name:        "Error --keep-since less than zero",
+			command:     []string{"delete", "-f", "--task", "random", "--keep-since", "-1", "-n", "ns"},
+			dynamic:     seeds[6].dynamicClient,
+			input:       seeds[6].pipelineClient,
+			inputStream: nil,
+			wantError:   true,
+			want:        "since option should not be lower than 0",
 		},
 	}
 

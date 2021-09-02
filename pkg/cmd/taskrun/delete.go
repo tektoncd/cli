@@ -91,16 +91,12 @@ or
 				return fmt.Errorf("since option should not be lower than 0")
 			}
 
-			if opts.Keep > 0 && opts.ParentResourceName == "" {
+			if (opts.Keep > 0 || opts.KeepSince > 0) && opts.ParentResourceName == "" {
 				opts.DeleteAllNs = true
 			}
 
 			if opts.Keep > 0 && opts.KeepSince > 0 {
 				return fmt.Errorf("cannot mix --keep and --keep-since options")
-			}
-
-			if opts.KeepSince > 0 && !opts.DeleteAllNs {
-				return fmt.Errorf("--keep-since option can only be used with --all")
 			}
 
 			if err := opts.CheckOptions(s, args, p.Namespace()); err != nil {
@@ -133,7 +129,7 @@ func deleteTaskRuns(s *cli.Stream, p cli.Params, trNames []string, opts *options
 		d = deleter.New("TaskRun", func(taskRunName string) error {
 			return actions.Delete(trGroupResource, cs, taskRunName, p.Namespace(), metav1.DeleteOptions{})
 		})
-		trToDelete, trToKeep, err := allTaskRunNames(cs, opts.Keep, opts.KeepSince, p.Namespace())
+		trToDelete, trToKeep, err := allTaskRunNames(cs, opts.Keep, opts.KeepSince, opts.LabelSelector, p.Namespace())
 		if err != nil {
 			return err
 		}
@@ -150,7 +146,24 @@ func deleteTaskRuns(s *cli.Stream, p cli.Params, trNames []string, opts *options
 			err := fmt.Sprintf("the %s should not be deleted", opts.ParentResource)
 			return errors.New(err)
 		})
-		d.WithRelated("TaskRun", taskRunLister(p, opts.Keep, opts.ParentResource, cs), func(taskRunName string) error {
+
+		// Create a LabelSelector to filter the TaskRuns which are associated with particular
+		// Task or ClusterTask
+		resourceType := "task"
+		if opts.ParentResource == "ClusterTask" {
+			resourceType = "clusterTask"
+		}
+		labelSelector := fmt.Sprintf("tekton.dev/%s=%s", resourceType, opts.ParentResourceName)
+
+		// Compute the total no of TaskRuns which we need to delete
+		trToDelete, _, err := allTaskRunNames(cs, opts.Keep, opts.KeepSince, labelSelector, p.Namespace())
+		if err != nil {
+			return err
+		}
+		numberOfDeletedTr = len(trToDelete)
+
+		// Delete the TaskRuns associated with a Task or ClusterTask
+		d.WithRelated("TaskRun", taskRunLister(p, opts.Keep, opts.KeepSince, opts.ParentResource, cs), func(taskRunName string) error {
 			return actions.Delete(trGroupResource, cs, taskRunName, p.Namespace(), metav1.DeleteOptions{})
 		})
 		d.DeleteRelated(s, []string{opts.ParentResourceName})
@@ -162,6 +175,8 @@ func deleteTaskRuns(s *cli.Stream, p cli.Params, trNames []string, opts *options
 			case opts.Keep > 0:
 				// Should only occur in case of --task flag and --keep being used together
 				fmt.Fprintf(s.Out, "All but %d TaskRuns associated with %s %q deleted in namespace %q\n", opts.Keep, opts.ParentResource, opts.ParentResourceName, p.Namespace())
+			case opts.KeepSince > 0:
+				fmt.Fprintf(s.Out, "All but %d expired TaskRuns associated with %q %q deleted in namespace %q\n", numberOfDeletedTr, opts.ParentResource, opts.ParentResourceName, p.Namespace())
 			case opts.ParentResourceName != "":
 				fmt.Fprintf(s.Out, "All TaskRuns associated with %s %q deleted in namespace %q\n", opts.ParentResource, opts.ParentResourceName, p.Namespace())
 			default:
@@ -183,7 +198,7 @@ func deleteTaskRuns(s *cli.Stream, p cli.Params, trNames []string, opts *options
 	return d.Errors()
 }
 
-func taskRunLister(p cli.Params, keep int, kind string, cs *cli.Clients) func(string) ([]string, error) {
+func taskRunLister(p cli.Params, keep, since int, kind string, cs *cli.Clients) func(string) ([]string, error) {
 	return func(taskName string) ([]string, error) {
 		label := "task"
 		if kind == "ClusterTask" {
@@ -200,15 +215,22 @@ func taskRunLister(p cli.Params, keep int, kind string, cs *cli.Clients) func(st
 		if kind == "Task" {
 			trs.Items = taskpkg.FilterByRef(trs.Items, string(v1beta1.NamespacedTaskKind))
 		}
-		todelete, _ := keepTaskRunsByNumber(trs, keep)
+		var todelete []string
+		if since > 0 {
+			todelete, _ = keepTaskRunsByAge(trs, since)
+		} else {
+			todelete, _ = keepTaskRunsByNumber(trs, keep)
+		}
 		return todelete, nil
 	}
 }
 
-func allTaskRunNames(cs *cli.Clients, keep, since int, ns string) ([]string, []string, error) {
+func allTaskRunNames(cs *cli.Clients, keep, since int, labelSelector, ns string) ([]string, []string, error) {
 	var todelete, tokeep []string
 
-	taskRuns, err := trlist.TaskRuns(cs, metav1.ListOptions{}, ns)
+	taskRuns, err := trlist.TaskRuns(cs, metav1.ListOptions{
+		LabelSelector: labelSelector,
+	}, ns)
 	if err != nil {
 		return todelete, tokeep, err
 	}
