@@ -17,6 +17,7 @@ package pipelinerun
 import (
 	"errors"
 	"fmt"
+	"strings"
 	"time"
 
 	"github.com/spf13/cobra"
@@ -78,6 +79,10 @@ or
 
 			if (opts.Keep > 0 || opts.KeepSince > 0) && opts.ParentResourceName == "" {
 				opts.DeleteAllNs = true
+			}
+
+			if (opts.Keep > 0 || opts.KeepSince > 0) && opts.DeleteAllNs && opts.ParentResourceName != "" {
+				return fmt.Errorf("--keep or --keep-since, --all and --%s cannot be used together", strings.ToLower(opts.ParentResource))
 			}
 
 			if err := opts.CheckOptions(s, args, p.Namespace()); err != nil {

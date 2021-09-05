@@ -533,6 +533,15 @@ func TestTaskRunDelete(t *testing.T) {
 			wantError:   true,
 			want:        "since option should not be lower than 0",
 		},
+		{
+			name:        "Error --keep-since, --all and --task cannot be used",
+			command:     []string{"delete", "-f", "--task", "random", "--keep-since", "1", "--all", "-n", "ns"},
+			dynamic:     seeds[6].dynamicClient,
+			input:       seeds[6].pipelineClient,
+			inputStream: nil,
+			wantError:   true,
+			want:        "--keep or --keep-since, --all and --task cannot be used together",
+		},
 	}
 
 	for _, tp := range testParams {
@@ -1042,6 +1051,15 @@ func TestTaskRunDelete_v1beta1(t *testing.T) {
 			inputStream: nil,
 			wantError:   true,
 			want:        "since option should not be lower than 0",
+		},
+		{
+			name:        "Error --keep-since, --all and --task cannot be used",
+			command:     []string{"delete", "-f", "--task", "random", "--keep-since", "1", "--all", "-n", "ns"},
+			dynamic:     seeds[6].dynamicClient,
+			input:       seeds[6].pipelineClient,
+			inputStream: nil,
+			wantError:   true,
+			want:        "--keep or --keep-since, --all and --task cannot be used together",
 		},
 	}
 
