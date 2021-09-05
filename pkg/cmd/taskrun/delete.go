@@ -17,6 +17,7 @@ package taskrun
 import (
 	"errors"
 	"fmt"
+	"strings"
 	"time"
 
 	"github.com/tektoncd/cli/pkg/formatted"
@@ -97,6 +98,10 @@ or
 
 			if opts.Keep > 0 && opts.KeepSince > 0 {
 				return fmt.Errorf("cannot mix --keep and --keep-since options")
+			}
+
+			if (opts.Keep > 0 || opts.KeepSince > 0) && opts.DeleteAllNs && opts.ParentResourceName != "" {
+				return fmt.Errorf("--keep or --keep-since, --all and --%s cannot be used together", strings.ToLower(opts.ParentResource))
 			}
 
 			if err := opts.CheckOptions(s, args, p.Namespace()); err != nil {
