@@ -33,6 +33,7 @@ type DeleteOptions struct {
 	DeleteAll          bool
 	Keep               int
 	KeepSince          int
+	IgnoreRunning      bool
 	LabelSelector      string
 }
 
