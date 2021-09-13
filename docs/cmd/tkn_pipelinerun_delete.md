@@ -32,6 +32,7 @@ or
       --allow-missing-template-keys   If true, ignore any errors in templates when a field or map key is missing in the template. Only applies to golang and jsonpath output formats. (default true)
   -f, --force                         Whether to force deletion (default: false)
   -h, --help                          help for delete
+  -i, --ignore-running                ignore running PipelineRun (default: true) (default true)
       --keep int                      Keep n most recent number of PipelineRuns
       --keep-since int                When deleting all PipelineRuns keep the ones that has been completed since n minutes
       --label string                  A selector (label query) to filter on when running with --all, supports '=', '==', and '!='

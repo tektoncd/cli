@@ -378,7 +378,7 @@ func TestTaskRunDelete(t *testing.T) {
 			input:       seeds[0].pipelineClient,
 			inputStream: strings.NewReader("y"),
 			wantError:   false,
-			want:        "Are you sure you want to delete all TaskRuns related to Task \"random\" (y/n): All TaskRuns associated with Task \"random\" deleted in namespace \"ns\"\n",
+			want:        "Are you sure you want to delete all TaskRuns related to Task \"random\" (y/n): All TaskRuns(Completed) associated with Task \"random\" deleted in namespace \"ns\"\n",
 		},
 		{
 			name:        "Delete all with prompt",
@@ -387,7 +387,7 @@ func TestTaskRunDelete(t *testing.T) {
 			input:       seeds[3].pipelineClient,
 			inputStream: strings.NewReader("y"),
 			wantError:   false,
-			want:        "Are you sure you want to delete all TaskRuns in namespace \"ns\" (y/n): All TaskRuns deleted in namespace \"ns\"\n",
+			want:        "Are you sure you want to delete all TaskRuns in namespace \"ns\" (y/n): All TaskRuns(Completed) deleted in namespace \"ns\"\n",
 		},
 		{
 			name:        "Delete all with -f",
@@ -396,7 +396,7 @@ func TestTaskRunDelete(t *testing.T) {
 			input:       seeds[4].pipelineClient,
 			inputStream: nil,
 			wantError:   false,
-			want:        "All TaskRuns deleted in namespace \"ns\"\n",
+			want:        "All TaskRuns(Completed) deleted in namespace \"ns\"\n",
 		},
 		{
 			name:        "Delete all keeping 2",
@@ -405,7 +405,7 @@ func TestTaskRunDelete(t *testing.T) {
 			input:       seeds[4].pipelineClient,
 			inputStream: nil,
 			wantError:   false,
-			want:        "All but 2 TaskRuns deleted in namespace \"ns\"\n",
+			want:        "All but 2 TaskRuns(Completed) deleted in namespace \"ns\"\n",
 		},
 		{
 			name:        "Delete all keeping 1 with --all flag",
@@ -414,7 +414,7 @@ func TestTaskRunDelete(t *testing.T) {
 			input:       seeds[4].pipelineClient,
 			inputStream: nil,
 			wantError:   false,
-			want:        "All but 1 TaskRuns deleted in namespace \"ns\"\n",
+			want:        "All but 1 TaskRuns(Completed) deleted in namespace \"ns\"\n",
 		},
 		{
 			name:        "Keep -1 is a no go",
@@ -450,7 +450,7 @@ func TestTaskRunDelete(t *testing.T) {
 			input:       seeds[5].pipelineClient,
 			inputStream: nil,
 			wantError:   false,
-			want:        "Are you sure you want to delete all TaskRuns related to Task \"random\" keeping 2 TaskRuns (y/n): All but 2 TaskRuns associated with Task \"random\" deleted in namespace \"ns\"\n",
+			want:        "Are you sure you want to delete all TaskRuns related to Task \"random\" keeping 2 TaskRuns (y/n): All but 2 TaskRuns(Completed) associated with Task \"random\" deleted in namespace \"ns\"\n",
 		},
 		{
 			name:        "Error from using argument with --keep",
@@ -477,7 +477,7 @@ func TestTaskRunDelete(t *testing.T) {
 			input:       seeds[0].pipelineClient,
 			inputStream: strings.NewReader("y"),
 			wantError:   false,
-			want:        "Are you sure you want to delete all TaskRuns related to ClusterTask \"random\" (y/n): All TaskRuns associated with ClusterTask \"random\" deleted in namespace \"ns\"\n",
+			want:        "Are you sure you want to delete all TaskRuns related to ClusterTask \"random\" (y/n): All TaskRuns(Completed) associated with ClusterTask \"random\" deleted in namespace \"ns\"\n",
 		},
 		{
 			name:        "Error from deleting TaskRun with non-existing ClusterTask",
@@ -495,7 +495,7 @@ func TestTaskRunDelete(t *testing.T) {
 			input:       seeds[5].pipelineClient,
 			inputStream: nil,
 			wantError:   false,
-			want:        "Are you sure you want to delete all TaskRuns related to ClusterTask \"random\" keeping 1 TaskRuns (y/n): All but 1 TaskRuns associated with ClusterTask \"random\" deleted in namespace \"ns\"\n",
+			want:        "Are you sure you want to delete all TaskRuns related to ClusterTask \"random\" keeping 1 TaskRuns (y/n): All but 1 TaskRuns(Completed) associated with ClusterTask \"random\" deleted in namespace \"ns\"\n",
 		},
 		{
 			name:        "Delete all Taskruns older than 60mn",
@@ -504,7 +504,7 @@ func TestTaskRunDelete(t *testing.T) {
 			input:       seeds[6].pipelineClient,
 			inputStream: nil,
 			wantError:   false,
-			want:        "6 expired Taskruns has been deleted in namespace \"ns\", kept 1\n",
+			want:        "6 expired Taskruns(Completed) has been deleted in namespace \"ns\", kept 1\n",
 		},
 		{
 			name:        "No mixing --keep-since and --keep",
@@ -541,6 +541,33 @@ func TestTaskRunDelete(t *testing.T) {
 			inputStream: nil,
 			wantError:   true,
 			want:        "--keep or --keep-since, --all and --task cannot be used together",
+		},
+		{
+			name:        "Delete all with default --ignore-running",
+			command:     []string{"delete", "--all", "-f", "-n", "ns", "--ignore-running"},
+			dynamic:     seeds[4].dynamicClient,
+			input:       seeds[4].pipelineClient,
+			inputStream: nil,
+			wantError:   false,
+			want:        "All TaskRuns(Completed) deleted in namespace \"ns\"\n",
+		},
+		{
+			name:        "Delete all with explicit --ignore-running true",
+			command:     []string{"delete", "--all", "-f", "-n", "ns", "--ignore-running=true"},
+			dynamic:     seeds[4].dynamicClient,
+			input:       seeds[4].pipelineClient,
+			inputStream: nil,
+			wantError:   false,
+			want:        "All TaskRuns(Completed) deleted in namespace \"ns\"\n",
+		},
+		{
+			name:        "Delete all with --ignore-running false",
+			command:     []string{"delete", "--all", "-f", "-n", "ns", "--ignore-running=false"},
+			dynamic:     seeds[4].dynamicClient,
+			input:       seeds[4].pipelineClient,
+			inputStream: nil,
+			wantError:   false,
+			want:        "All TaskRuns deleted in namespace \"ns\"\n",
 		},
 	}
 
@@ -915,7 +942,7 @@ func TestTaskRunDelete_v1beta1(t *testing.T) {
 			input:       seeds[0].pipelineClient,
 			inputStream: strings.NewReader("y"),
 			wantError:   false,
-			want:        "Are you sure you want to delete all TaskRuns related to Task \"random\" (y/n): All TaskRuns associated with Task \"random\" deleted in namespace \"ns\"\n",
+			want:        "Are you sure you want to delete all TaskRuns related to Task \"random\" (y/n): All TaskRuns(Completed) associated with Task \"random\" deleted in namespace \"ns\"\n",
 		},
 		{
 			name:        "Delete all with prompt",
@@ -924,7 +951,7 @@ func TestTaskRunDelete_v1beta1(t *testing.T) {
 			input:       seeds[3].pipelineClient,
 			inputStream: strings.NewReader("y"),
 			wantError:   false,
-			want:        "Are you sure you want to delete all TaskRuns in namespace \"ns\" (y/n): All TaskRuns deleted in namespace \"ns\"\n",
+			want:        "Are you sure you want to delete all TaskRuns in namespace \"ns\" (y/n): All TaskRuns(Completed) deleted in namespace \"ns\"\n",
 		},
 		{
 			name:        "Delete all with -f",
@@ -933,7 +960,7 @@ func TestTaskRunDelete_v1beta1(t *testing.T) {
 			input:       seeds[4].pipelineClient,
 			inputStream: nil,
 			wantError:   false,
-			want:        "All TaskRuns deleted in namespace \"ns\"\n",
+			want:        "All TaskRuns(Completed) deleted in namespace \"ns\"\n",
 		},
 		{
 			name:        "Delete all keeping 2",
@@ -942,7 +969,7 @@ func TestTaskRunDelete_v1beta1(t *testing.T) {
 			input:       seeds[4].pipelineClient,
 			inputStream: nil,
 			wantError:   false,
-			want:        "All but 2 TaskRuns deleted in namespace \"ns\"\n",
+			want:        "All but 2 TaskRuns(Completed) deleted in namespace \"ns\"\n",
 		},
 		{
 			name:        "Keep -1 is a no go",
@@ -978,7 +1005,7 @@ func TestTaskRunDelete_v1beta1(t *testing.T) {
 			input:       seeds[5].pipelineClient,
 			inputStream: nil,
 			wantError:   false,
-			want:        "Are you sure you want to delete all TaskRuns related to Task \"random\" keeping 2 TaskRuns (y/n): All but 2 TaskRuns associated with Task \"random\" deleted in namespace \"ns\"\n",
+			want:        "Are you sure you want to delete all TaskRuns related to Task \"random\" keeping 2 TaskRuns (y/n): All but 2 TaskRuns(Completed) associated with Task \"random\" deleted in namespace \"ns\"\n",
 		},
 		{
 			name:        "Error from using argument with --keep",
@@ -996,7 +1023,7 @@ func TestTaskRunDelete_v1beta1(t *testing.T) {
 			input:       seeds[0].pipelineClient,
 			inputStream: strings.NewReader("y"),
 			wantError:   false,
-			want:        "Are you sure you want to delete all TaskRuns related to ClusterTask \"random\" (y/n): All TaskRuns associated with ClusterTask \"random\" deleted in namespace \"ns\"\n",
+			want:        "Are you sure you want to delete all TaskRuns related to ClusterTask \"random\" (y/n): All TaskRuns(Completed) associated with ClusterTask \"random\" deleted in namespace \"ns\"\n",
 		},
 		{
 			name:        "Error from deleting TaskRun with non-existing ClusterTask",
@@ -1014,7 +1041,7 @@ func TestTaskRunDelete_v1beta1(t *testing.T) {
 			input:       seeds[5].pipelineClient,
 			inputStream: nil,
 			wantError:   false,
-			want:        "Are you sure you want to delete all TaskRuns related to ClusterTask \"random\" keeping 2 TaskRuns (y/n): All but 2 TaskRuns associated with ClusterTask \"random\" deleted in namespace \"ns\"\n",
+			want:        "Are you sure you want to delete all TaskRuns related to ClusterTask \"random\" keeping 2 TaskRuns (y/n): All but 2 TaskRuns(Completed) associated with ClusterTask \"random\" deleted in namespace \"ns\"\n",
 		},
 		{
 			name:        "Delete all Taskruns older than 60mn",
@@ -1023,7 +1050,7 @@ func TestTaskRunDelete_v1beta1(t *testing.T) {
 			input:       seeds[6].pipelineClient,
 			inputStream: nil,
 			wantError:   false,
-			want:        "6 expired Taskruns has been deleted in namespace \"ns\", kept 1\n",
+			want:        "6 expired Taskruns(Completed) has been deleted in namespace \"ns\", kept 1\n",
 		},
 		{
 			name:        "No mixing --keep-since and --keep",
@@ -1060,6 +1087,33 @@ func TestTaskRunDelete_v1beta1(t *testing.T) {
 			inputStream: nil,
 			wantError:   true,
 			want:        "--keep or --keep-since, --all and --task cannot be used together",
+		},
+		{
+			name:        "Delete all with default --ignore-running",
+			command:     []string{"delete", "--all", "-f", "-n", "ns"},
+			dynamic:     seeds[4].dynamicClient,
+			input:       seeds[4].pipelineClient,
+			inputStream: nil,
+			wantError:   false,
+			want:        "All TaskRuns(Completed) deleted in namespace \"ns\"\n",
+		},
+		{
+			name:        "Delete all with explicit --ignore-running true",
+			command:     []string{"delete", "--all", "-f", "-n", "ns", "--ignore-running=true"},
+			dynamic:     seeds[4].dynamicClient,
+			input:       seeds[4].pipelineClient,
+			inputStream: nil,
+			wantError:   false,
+			want:        "All TaskRuns(Completed) deleted in namespace \"ns\"\n",
+		},
+		{
+			name:        "Delete all with explicit --ignore-running true",
+			command:     []string{"delete", "--all", "-f", "-n", "ns", "--ignore-running=false"},
+			dynamic:     seeds[4].dynamicClient,
+			input:       seeds[4].pipelineClient,
+			inputStream: nil,
+			wantError:   false,
+			want:        "All TaskRuns deleted in namespace \"ns\"\n",
 		},
 	}
 
