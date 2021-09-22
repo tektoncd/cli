@@ -16,7 +16,8 @@ import (
 
 // The resource service provides details about all kind of resources
 type Service interface {
-	// Find resources by a combination of name, kind , catalog and tags
+	// Find resources by a combination of name, kind, catalog, categories,
+	// platforms, and tags
 	Query(context.Context, *QueryPayload) (res *Resources, err error)
 	// List all resources sorted by rating and name
 	List(context.Context, *ListPayload) (res *Resources, err error)
@@ -54,6 +55,8 @@ type QueryPayload struct {
 	Categories []string
 	// Tags associated with a resource to filter by
 	Tags []string
+	// Platforms associated with a resource to filter by
+	Platforms []string
 	// Maximum number of resources to be returned
 	Limit uint
 	// Strategy used to find matching resources
@@ -152,6 +155,8 @@ type ResourceData struct {
 	LatestVersion *ResourceVersionData
 	// Tags related to resource
 	Tags []*Tag
+	// Platforms related to resource
+	Platforms []*Platform
 	// Rating of resource
 	Rating float64
 	// List of all versions of a resource
@@ -184,6 +189,8 @@ type ResourceVersionData struct {
 	Version string
 	// Display name of version
 	DisplayName string
+	// Deprecation status of a version
+	Deprecated *bool
 	// Description of version
 	Description string
 	// Minimum pipelines version the resource's version is compatible with
@@ -194,8 +201,17 @@ type ResourceVersionData struct {
 	WebURL string
 	// Timestamp when version was last updated
 	UpdatedAt string
+	// Platforms related to resource version
+	Platforms []*Platform
 	// Resource to which the version belongs
 	Resource *ResourceData
+}
+
+type Platform struct {
+	// ID is the unique id of platform
+	ID uint
+	// Name of platform
+	Name string
 }
 
 type Tag struct {
@@ -401,6 +417,12 @@ func newResourceDataInfo(vres *resourceviews.ResourceDataView) *ResourceData {
 			res.Tags[i] = transformResourceviewsTagViewToTag(val)
 		}
 	}
+	if vres.Platforms != nil {
+		res.Platforms = make([]*Platform, len(vres.Platforms))
+		for i, val := range vres.Platforms {
+			res.Platforms[i] = transformResourceviewsPlatformViewToPlatform(val)
+		}
+	}
 	if vres.Catalog != nil {
 		res.Catalog = newCatalogMin(vres.Catalog)
 	}
@@ -436,6 +458,12 @@ func newResourceDataWithoutVersion(vres *resourceviews.ResourceDataView) *Resour
 		res.Tags = make([]*Tag, len(vres.Tags))
 		for i, val := range vres.Tags {
 			res.Tags[i] = transformResourceviewsTagViewToTag(val)
+		}
+	}
+	if vres.Platforms != nil {
+		res.Platforms = make([]*Platform, len(vres.Platforms))
+		for i, val := range vres.Platforms {
+			res.Platforms[i] = transformResourceviewsPlatformViewToPlatform(val)
 		}
 	}
 	if vres.Catalog != nil {
@@ -475,6 +503,12 @@ func newResourceData(vres *resourceviews.ResourceDataView) *ResourceData {
 			res.Tags[i] = transformResourceviewsTagViewToTag(val)
 		}
 	}
+	if vres.Platforms != nil {
+		res.Platforms = make([]*Platform, len(vres.Platforms))
+		for i, val := range vres.Platforms {
+			res.Platforms[i] = transformResourceviewsPlatformViewToPlatform(val)
+		}
+	}
 	if vres.Versions != nil {
 		res.Versions = make([]*ResourceVersionData, len(vres.Versions))
 		for i, val := range vres.Versions {
@@ -511,6 +545,12 @@ func newResourceDataViewInfo(res *ResourceData) *resourceviews.ResourceDataView 
 			vres.Tags[i] = transformTagToResourceviewsTagView(val)
 		}
 	}
+	if res.Platforms != nil {
+		vres.Platforms = make([]*resourceviews.PlatformView, len(res.Platforms))
+		for i, val := range res.Platforms {
+			vres.Platforms[i] = transformPlatformToResourceviewsPlatformView(val)
+		}
+	}
 	if res.Catalog != nil {
 		vres.Catalog = newCatalogViewMin(res.Catalog)
 	}
@@ -536,6 +576,12 @@ func newResourceDataViewWithoutVersion(res *ResourceData) *resourceviews.Resourc
 		vres.Tags = make([]*resourceviews.TagView, len(res.Tags))
 		for i, val := range res.Tags {
 			vres.Tags[i] = transformTagToResourceviewsTagView(val)
+		}
+	}
+	if res.Platforms != nil {
+		vres.Platforms = make([]*resourceviews.PlatformView, len(res.Platforms))
+		for i, val := range res.Platforms {
+			vres.Platforms[i] = transformPlatformToResourceviewsPlatformView(val)
 		}
 	}
 	if res.Catalog != nil {
@@ -566,6 +612,12 @@ func newResourceDataView(res *ResourceData) *resourceviews.ResourceDataView {
 		vres.Tags = make([]*resourceviews.TagView, len(res.Tags))
 		for i, val := range res.Tags {
 			vres.Tags[i] = transformTagToResourceviewsTagView(val)
+		}
+	}
+	if res.Platforms != nil {
+		vres.Platforms = make([]*resourceviews.PlatformView, len(res.Platforms))
+		for i, val := range res.Platforms {
+			vres.Platforms[i] = transformPlatformToResourceviewsPlatformView(val)
 		}
 	}
 	if res.Versions != nil {
@@ -671,6 +723,12 @@ func newResourceVersionDataMin(vres *resourceviews.ResourceVersionDataView) *Res
 	if vres.WebURL != nil {
 		res.WebURL = *vres.WebURL
 	}
+	if vres.Platforms != nil {
+		res.Platforms = make([]*Platform, len(vres.Platforms))
+		for i, val := range vres.Platforms {
+			res.Platforms[i] = transformResourceviewsPlatformViewToPlatform(val)
+		}
+	}
 	if vres.Resource != nil {
 		res.Resource = newResourceData(vres.Resource)
 	}
@@ -680,7 +738,9 @@ func newResourceVersionDataMin(vres *resourceviews.ResourceVersionDataView) *Res
 // newResourceVersionDataWithoutResource converts projected type
 // ResourceVersionData to service type ResourceVersionData.
 func newResourceVersionDataWithoutResource(vres *resourceviews.ResourceVersionDataView) *ResourceVersionData {
-	res := &ResourceVersionData{}
+	res := &ResourceVersionData{
+		Deprecated: vres.Deprecated,
+	}
 	if vres.ID != nil {
 		res.ID = *vres.ID
 	}
@@ -704,6 +764,12 @@ func newResourceVersionDataWithoutResource(vres *resourceviews.ResourceVersionDa
 	}
 	if vres.UpdatedAt != nil {
 		res.UpdatedAt = *vres.UpdatedAt
+	}
+	if vres.Platforms != nil {
+		res.Platforms = make([]*Platform, len(vres.Platforms))
+		for i, val := range vres.Platforms {
+			res.Platforms[i] = transformResourceviewsPlatformViewToPlatform(val)
+		}
 	}
 	if vres.Resource != nil {
 		res.Resource = newResourceData(vres.Resource)
@@ -714,7 +780,9 @@ func newResourceVersionDataWithoutResource(vres *resourceviews.ResourceVersionDa
 // newResourceVersionData converts projected type ResourceVersionData to
 // service type ResourceVersionData.
 func newResourceVersionData(vres *resourceviews.ResourceVersionDataView) *ResourceVersionData {
-	res := &ResourceVersionData{}
+	res := &ResourceVersionData{
+		Deprecated: vres.Deprecated,
+	}
 	if vres.ID != nil {
 		res.ID = *vres.ID
 	}
@@ -738,6 +806,12 @@ func newResourceVersionData(vres *resourceviews.ResourceVersionDataView) *Resour
 	}
 	if vres.UpdatedAt != nil {
 		res.UpdatedAt = *vres.UpdatedAt
+	}
+	if vres.Platforms != nil {
+		res.Platforms = make([]*Platform, len(vres.Platforms))
+		for i, val := range vres.Platforms {
+			res.Platforms[i] = transformResourceviewsPlatformViewToPlatform(val)
+		}
 	}
 	if vres.Resource != nil {
 		res.Resource = newResourceDataInfo(vres.Resource)
@@ -764,6 +838,12 @@ func newResourceVersionDataViewMin(res *ResourceVersionData) *resourceviews.Reso
 		RawURL:  &res.RawURL,
 		WebURL:  &res.WebURL,
 	}
+	if res.Platforms != nil {
+		vres.Platforms = make([]*resourceviews.PlatformView, len(res.Platforms))
+		for i, val := range res.Platforms {
+			vres.Platforms[i] = transformPlatformToResourceviewsPlatformView(val)
+		}
+	}
 	return vres
 }
 
@@ -775,11 +855,18 @@ func newResourceVersionDataViewWithoutResource(res *ResourceVersionData) *resour
 		ID:                  &res.ID,
 		Version:             &res.Version,
 		DisplayName:         &res.DisplayName,
+		Deprecated:          res.Deprecated,
 		Description:         &res.Description,
 		MinPipelinesVersion: &res.MinPipelinesVersion,
 		RawURL:              &res.RawURL,
 		WebURL:              &res.WebURL,
 		UpdatedAt:           &res.UpdatedAt,
+	}
+	if res.Platforms != nil {
+		vres.Platforms = make([]*resourceviews.PlatformView, len(res.Platforms))
+		for i, val := range res.Platforms {
+			vres.Platforms[i] = transformPlatformToResourceviewsPlatformView(val)
+		}
 	}
 	return vres
 }
@@ -791,11 +878,18 @@ func newResourceVersionDataView(res *ResourceVersionData) *resourceviews.Resourc
 		ID:                  &res.ID,
 		Version:             &res.Version,
 		DisplayName:         &res.DisplayName,
+		Deprecated:          res.Deprecated,
 		Description:         &res.Description,
 		MinPipelinesVersion: &res.MinPipelinesVersion,
 		RawURL:              &res.RawURL,
 		WebURL:              &res.WebURL,
 		UpdatedAt:           &res.UpdatedAt,
+	}
+	if res.Platforms != nil {
+		vres.Platforms = make([]*resourceviews.PlatformView, len(res.Platforms))
+		for i, val := range res.Platforms {
+			vres.Platforms[i] = transformPlatformToResourceviewsPlatformView(val)
+		}
 	}
 	if res.Resource != nil {
 		vres.Resource = newResourceDataViewInfo(res.Resource)
@@ -921,6 +1015,20 @@ func transformResourceviewsTagViewToTag(v *resourceviews.TagView) *Tag {
 	return res
 }
 
+// transformResourceviewsPlatformViewToPlatform builds a value of type
+// *Platform from a value of type *resourceviews.PlatformView.
+func transformResourceviewsPlatformViewToPlatform(v *resourceviews.PlatformView) *Platform {
+	if v == nil {
+		return nil
+	}
+	res := &Platform{
+		ID:   *v.ID,
+		Name: *v.Name,
+	}
+
+	return res
+}
+
 // transformResourceviewsResourceVersionDataViewToResourceVersionData builds a
 // value of type *ResourceVersionData from a value of type
 // *resourceviews.ResourceVersionDataView.
@@ -932,11 +1040,18 @@ func transformResourceviewsResourceVersionDataViewToResourceVersionData(v *resou
 		ID:                  *v.ID,
 		Version:             *v.Version,
 		DisplayName:         *v.DisplayName,
+		Deprecated:          v.Deprecated,
 		Description:         *v.Description,
 		MinPipelinesVersion: *v.MinPipelinesVersion,
 		RawURL:              *v.RawURL,
 		WebURL:              *v.WebURL,
 		UpdatedAt:           *v.UpdatedAt,
+	}
+	if v.Platforms != nil {
+		res.Platforms = make([]*Platform, len(v.Platforms))
+		for i, val := range v.Platforms {
+			res.Platforms[i] = transformResourceviewsPlatformViewToPlatform(val)
+		}
 	}
 	if v.Resource != nil {
 		res.Resource = transformResourceviewsResourceDataViewToResourceData(v.Resource)
@@ -973,6 +1088,12 @@ func transformResourceviewsResourceDataViewToResourceData(v *resourceviews.Resou
 			res.Tags[i] = transformResourceviewsTagViewToTag(val)
 		}
 	}
+	if v.Platforms != nil {
+		res.Platforms = make([]*Platform, len(v.Platforms))
+		for i, val := range v.Platforms {
+			res.Platforms[i] = transformResourceviewsPlatformViewToPlatform(val)
+		}
+	}
 	if v.Versions != nil {
 		res.Versions = make([]*ResourceVersionData, len(v.Versions))
 		for i, val := range v.Versions {
@@ -1005,6 +1126,17 @@ func transformTagToResourceviewsTagView(v *Tag) *resourceviews.TagView {
 	return res
 }
 
+// transformPlatformToResourceviewsPlatformView builds a value of type
+// *resourceviews.PlatformView from a value of type *Platform.
+func transformPlatformToResourceviewsPlatformView(v *Platform) *resourceviews.PlatformView {
+	res := &resourceviews.PlatformView{
+		ID:   &v.ID,
+		Name: &v.Name,
+	}
+
+	return res
+}
+
 // transformResourceVersionDataToResourceviewsResourceVersionDataView builds a
 // value of type *resourceviews.ResourceVersionDataView from a value of type
 // *ResourceVersionData.
@@ -1013,11 +1145,18 @@ func transformResourceVersionDataToResourceviewsResourceVersionDataView(v *Resou
 		ID:                  &v.ID,
 		Version:             &v.Version,
 		DisplayName:         &v.DisplayName,
+		Deprecated:          v.Deprecated,
 		Description:         &v.Description,
 		MinPipelinesVersion: &v.MinPipelinesVersion,
 		RawURL:              &v.RawURL,
 		WebURL:              &v.WebURL,
 		UpdatedAt:           &v.UpdatedAt,
+	}
+	if v.Platforms != nil {
+		res.Platforms = make([]*resourceviews.PlatformView, len(v.Platforms))
+		for i, val := range v.Platforms {
+			res.Platforms[i] = transformPlatformToResourceviewsPlatformView(val)
+		}
 	}
 	if v.Resource != nil {
 		res.Resource = transformResourceDataToResourceviewsResourceDataView(v.Resource)
@@ -1045,6 +1184,12 @@ func transformResourceDataToResourceviewsResourceDataView(v *ResourceData) *reso
 		res.Tags = make([]*resourceviews.TagView, len(v.Tags))
 		for i, val := range v.Tags {
 			res.Tags[i] = transformTagToResourceviewsTagView(val)
+		}
+	}
+	if v.Platforms != nil {
+		res.Platforms = make([]*resourceviews.PlatformView, len(v.Platforms))
+		for i, val := range v.Platforms {
+			res.Platforms[i] = transformPlatformToResourceviewsPlatformView(val)
 		}
 	}
 	if v.Versions != nil {

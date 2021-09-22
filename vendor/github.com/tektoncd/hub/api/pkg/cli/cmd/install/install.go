@@ -29,8 +29,9 @@ import (
 )
 
 const (
-	defaultCatalog = "tekton"
-	versionLabel   = "app.kubernetes.io/version"
+	defaultCatalog        = "tekton"
+	versionLabel          = "app.kubernetes.io/version"
+	deprecationAnnotation = "tekton.dev/deprecated"
 )
 
 type options struct {
@@ -151,6 +152,10 @@ func (opts *options) run() error {
 		} else {
 			return opts.errors(resourceInstaller.GetPipelineVersion(), errors)
 		}
+	}
+
+	if opts.resource.GetAnnotations()[deprecationAnnotation] == "true" {
+		_ = printer.New(out).String("WARN: This version has been deprecated")
 	}
 
 	return printer.New(out).String(msg(opts.resource))

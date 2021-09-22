@@ -336,7 +336,7 @@ github.com/spf13/viper
 github.com/stoewer/go-strcase
 # github.com/subosito/gotenv v1.2.0
 github.com/subosito/gotenv
-# github.com/tektoncd/hub/api v0.0.0-20210707072808-0ae1afc58dd8
+# github.com/tektoncd/hub/api v0.0.0-20210922050526-aa589697cb58
 github.com/tektoncd/hub/api/gen/http/resource/client
 github.com/tektoncd/hub/api/gen/resource
 github.com/tektoncd/hub/api/gen/resource/views

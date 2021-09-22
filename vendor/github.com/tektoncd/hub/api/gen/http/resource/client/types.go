@@ -329,6 +329,8 @@ type ResourceDataResponseBody struct {
 	LatestVersion *ResourceVersionDataResponseBody `form:"latestVersion,omitempty" json:"latestVersion,omitempty" xml:"latestVersion,omitempty"`
 	// Tags related to resource
 	Tags []*TagResponseBody `form:"tags,omitempty" json:"tags,omitempty" xml:"tags,omitempty"`
+	// Platforms related to resource
+	Platforms []*PlatformResponseBody `form:"platforms,omitempty" json:"platforms,omitempty" xml:"platforms,omitempty"`
 	// Rating of resource
 	Rating *float64 `form:"rating,omitempty" json:"rating,omitempty" xml:"rating,omitempty"`
 	// List of all versions of a resource
@@ -364,6 +366,8 @@ type ResourceVersionDataResponseBody struct {
 	Version *string `form:"version,omitempty" json:"version,omitempty" xml:"version,omitempty"`
 	// Display name of version
 	DisplayName *string `form:"displayName,omitempty" json:"displayName,omitempty" xml:"displayName,omitempty"`
+	// Deprecation status of a version
+	Deprecated *bool `form:"deprecated,omitempty" json:"deprecated,omitempty" xml:"deprecated,omitempty"`
 	// Description of version
 	Description *string `form:"description,omitempty" json:"description,omitempty" xml:"description,omitempty"`
 	// Minimum pipelines version the resource's version is compatible with
@@ -374,8 +378,18 @@ type ResourceVersionDataResponseBody struct {
 	WebURL *string `form:"webURL,omitempty" json:"webURL,omitempty" xml:"webURL,omitempty"`
 	// Timestamp when version was last updated
 	UpdatedAt *string `form:"updatedAt,omitempty" json:"updatedAt,omitempty" xml:"updatedAt,omitempty"`
+	// Platforms related to resource version
+	Platforms []*PlatformResponseBody `form:"platforms,omitempty" json:"platforms,omitempty" xml:"platforms,omitempty"`
 	// Resource to which the version belongs
 	Resource *ResourceDataResponseBody `form:"resource,omitempty" json:"resource,omitempty" xml:"resource,omitempty"`
+}
+
+// PlatformResponseBody is used to define fields on response body types.
+type PlatformResponseBody struct {
+	// ID is the unique id of platform
+	ID *uint `form:"id,omitempty" json:"id,omitempty" xml:"id,omitempty"`
+	// Name of platform
+	Name *string `form:"name,omitempty" json:"name,omitempty" xml:"name,omitempty"`
 }
 
 // TagResponseBody is used to define fields on response body types.
@@ -1044,6 +1058,9 @@ func ValidateResourceDataResponseBody(body *ResourceDataResponseBody) (err error
 	if body.Tags == nil {
 		err = goa.MergeErrors(err, goa.MissingFieldError("tags", "body"))
 	}
+	if body.Platforms == nil {
+		err = goa.MergeErrors(err, goa.MissingFieldError("platforms", "body"))
+	}
 	if body.Rating == nil {
 		err = goa.MergeErrors(err, goa.MissingFieldError("rating", "body"))
 	}
@@ -1070,6 +1087,13 @@ func ValidateResourceDataResponseBody(body *ResourceDataResponseBody) (err error
 	for _, e := range body.Tags {
 		if e != nil {
 			if err2 := ValidateTagResponseBody(e); err2 != nil {
+				err = goa.MergeErrors(err, err2)
+			}
+		}
+	}
+	for _, e := range body.Platforms {
+		if e != nil {
+			if err2 := ValidatePlatformResponseBody(e); err2 != nil {
 				err = goa.MergeErrors(err, err2)
 			}
 		}
@@ -1146,6 +1170,9 @@ func ValidateResourceVersionDataResponseBody(body *ResourceVersionDataResponseBo
 	if body.UpdatedAt == nil {
 		err = goa.MergeErrors(err, goa.MissingFieldError("updatedAt", "body"))
 	}
+	if body.Platforms == nil {
+		err = goa.MergeErrors(err, goa.MissingFieldError("platforms", "body"))
+	}
 	if body.Resource == nil {
 		err = goa.MergeErrors(err, goa.MissingFieldError("resource", "body"))
 	}
@@ -1158,10 +1185,29 @@ func ValidateResourceVersionDataResponseBody(body *ResourceVersionDataResponseBo
 	if body.UpdatedAt != nil {
 		err = goa.MergeErrors(err, goa.ValidateFormat("body.updatedAt", *body.UpdatedAt, goa.FormatDateTime))
 	}
+	for _, e := range body.Platforms {
+		if e != nil {
+			if err2 := ValidatePlatformResponseBody(e); err2 != nil {
+				err = goa.MergeErrors(err, err2)
+			}
+		}
+	}
 	if body.Resource != nil {
 		if err2 := ValidateResourceDataResponseBody(body.Resource); err2 != nil {
 			err = goa.MergeErrors(err, err2)
 		}
+	}
+	return
+}
+
+// ValidatePlatformResponseBody runs the validations defined on
+// PlatformResponseBody
+func ValidatePlatformResponseBody(body *PlatformResponseBody) (err error) {
+	if body.ID == nil {
+		err = goa.MergeErrors(err, goa.MissingFieldError("id", "body"))
+	}
+	if body.Name == nil {
+		err = goa.MergeErrors(err, goa.MissingFieldError("name", "body"))
 	}
 	return
 }

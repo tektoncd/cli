@@ -43,7 +43,7 @@ const resTemplate = `{{ icon "name" }}Name: {{ .Resource.Name }}
 {{ $n := .ResVersion.DisplayName }}{{ if ne (default $n "") "" }}
 {{ icon "displayName" }}Display Name: {{ $n }}
 {{ end }}
-{{ icon "version" }}Version: {{ formatVersion .ResVersion.Version .Latest }}
+{{ icon "version" }}Version: {{ formatVersion .ResVersion.Version .Latest .Deprecated }}
 
 {{ icon "description" }}Description: {{ formatDesc .ResVersion.Description 80 16 }}
 
@@ -51,9 +51,23 @@ const resTemplate = `{{ icon "name" }}Name: {{ .Resource.Name }}
 
 {{ icon "rating" }}Rating: {{ .Resource.Rating }}
 
+{{ $t := len .Resource.Categories }}{{ if ne $t 0 }}
+{{- icon "categories" }}Categories
+ {{- range $p := .Resource.Categories }}
+  {{ icon "bullet" }}{{ $p.Name }}
+ {{- end }}
+{{- end }}
+
 {{ $t := len .Resource.Tags }}{{ if ne $t 0 }}
 {{- icon "tags" }}Tags
  {{- range $p := .Resource.Tags }}
+  {{ icon "bullet" }}{{ $p.Name }}
+ {{- end }}
+{{- end }}
+
+{{ $ps := len .ResVersion.Platforms }}{{ if ne $ps 0 }}
+{{- icon "platforms" }}Platforms
+ {{- range $p := .ResVersion.Platforms }}
   {{ icon "bullet" }}{{ $p.Name }}
  {{- end }}
 {{- end }}
@@ -78,6 +92,7 @@ type templateData struct {
 	Resource   *hub.ResourceData
 	ResVersion *hub.ResourceWithVersionData
 	Latest     bool
+	Deprecated bool
 }
 
 type options struct {
@@ -194,11 +209,19 @@ func (opts *options) run() error {
 	out := opts.cli.Stream().Out
 
 	resVersion := resource.(hub.ResourceWithVersionData)
+
+	var deprecated bool
+	if resVersion.Deprecated != nil {
+		deprecated = true
+	}
+
 	tmplData := templateData{
 		ResVersion: &resVersion,
 		Resource:   resVersion.Resource,
 		Latest:     false,
+		Deprecated: deprecated,
 	}
+
 	return printer.New(out).Tabbed(tmpl, tmplData)
 }
 

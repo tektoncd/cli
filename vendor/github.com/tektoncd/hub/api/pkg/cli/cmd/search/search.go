@@ -31,9 +31,19 @@ import (
 const resTemplate = `{{- $rl := len .Resources }}{{ if eq $rl 0 -}}
 No Resources found
 {{ else -}}
-NAME	KIND	CATALOG	DESCRIPTION	TAGS
+NAME	KIND	CATALOG	DESCRIPTION	PLATFORMS	TAGS	CATEGORIES
 {{ range $_, $r := .Resources -}}
-{{ formatName $r.Name $r.LatestVersion.Version }}	{{ $r.Kind }}	{{ formatCatalogName $r.Catalog.Name }}	{{ formatDesc $r.LatestVersion.Description 40 }}	{{ formatTags $r.Tags }}
+{{ formatName $r.Name $r.LatestVersion.Version }}	{{ $r.Kind }}	{{ formatCatalogName $r.Catalog.Name }}	{{ formatDesc $r.LatestVersion.Description 40 }}	{{ formatPlatforms $r.LatestVersion.Platforms }}	{{ formatTags $r.Tags }}	{{ formatCategories $r.Categories }}
+{{ end }}
+{{- end -}}
+`
+
+const minResTemplate = `{{- $rl := len .Resources }}{{ if eq $rl 0 -}}
+No Resources found
+{{ else -}}
+NAME	KIND	CATALOG	DESCRIPTION
+{{ range $_, $r := .Resources -}}
+{{ formatName $r.Name $r.LatestVersion.Version }}	{{ $r.Kind }}	{{ formatCatalogName $r.Catalog.Name }}	{{ formatDesc $r.LatestVersion.Description 40 }}
 {{ end }}
 {{- end -}}
 `
@@ -44,18 +54,23 @@ var (
 		"formatCatalogName": formatter.FormatCatalogName,
 		"formatDesc":        formatter.FormatDesc,
 		"formatTags":        formatter.FormatTags,
+		"formatCategories":  formatter.FormatCategories,
+		"formatPlatforms":   formatter.FormatPlatforms,
 	}
-	tmpl = template.Must(template.New("List Resources").Funcs(funcMap).Parse(resTemplate))
+	tmpl    = template.Must(template.New("List Resources").Funcs(funcMap).Parse(resTemplate))
+	minTmpl = template.Must(template.New("List Resources").Funcs(funcMap).Parse(minResTemplate))
 )
 
 type options struct {
-	cli    app.CLI
-	limit  uint
-	match  string
-	output string
-	tags   []string
-	kinds  []string
-	args   []string
+	cli        app.CLI
+	limit      uint
+	match      string
+	output     string
+	tags       []string
+	categories []string
+	kinds      []string
+	platforms  []string
+	args       []string
 }
 
 var examples string = `
@@ -76,7 +91,7 @@ func Command(cli app.CLI) *cobra.Command {
 
 	cmd := &cobra.Command{
 		Use:     "search",
-		Short:   "Search resource by a combination of name, kind, and tags",
+		Short:   "Search resource by a combination of name, kind, categories, platforms, and tags",
 		Long:    ``,
 		Example: examples,
 		Annotations: map[string]string{
@@ -94,7 +109,9 @@ func Command(cli app.CLI) *cobra.Command {
 	cmd.Flags().StringVar(&opts.match, "match", "contains", "Accept type of search. 'exact' or 'contains'.")
 	cmd.Flags().StringArrayVar(&opts.kinds, "kinds", nil, "Accepts a comma separated list of kinds")
 	cmd.Flags().StringArrayVar(&opts.tags, "tags", nil, "Accepts a comma separated list of tags")
-	cmd.Flags().StringVarP(&opts.output, "output", "o", "table", "Accepts output format: [table, json]")
+	cmd.Flags().StringArrayVar(&opts.categories, "categories", nil, "Accepts a comma separated list of categories")
+	cmd.Flags().StringArrayVar(&opts.platforms, "platforms", nil, "Accepts a comma separated list of platforms")
+	cmd.Flags().StringVarP(&opts.output, "output", "o", "table", "Accepts output format: [table, json, wide]")
 
 	return cmd
 }
@@ -108,11 +125,13 @@ func (opts *options) run() error {
 	hubClient := opts.cli.Hub()
 
 	result := hubClient.Search(hub.SearchOption{
-		Name:  opts.name(),
-		Kinds: opts.kinds,
-		Tags:  opts.tags,
-		Match: opts.match,
-		Limit: opts.limit,
+		Name:       opts.name(),
+		Kinds:      opts.kinds,
+		Tags:       opts.tags,
+		Categories: opts.categories,
+		Platforms:  opts.platforms,
+		Match:      opts.match,
+		Limit:      opts.limit,
 	})
 
 	out := opts.cli.Stream().Out
@@ -125,32 +144,37 @@ func (opts *options) run() error {
 	if err != nil {
 		return err
 	}
-
 	var templateData = struct {
 		Resources hub.SearchResponse
 	}{
 		Resources: typed,
 	}
+	if opts.output == "wide" {
+		return printer.New(out).Tabbed(tmpl, templateData)
+	} else {
+		return printer.New(out).Tabbed(minTmpl, templateData)
+	}
 
-	return printer.New(out).Tabbed(tmpl, templateData)
 }
 
 func (opts *options) validate() error {
 
-	if flag.AllEmpty(opts.args, opts.kinds, opts.tags) {
-		return fmt.Errorf("please specify a resource name, --tags or --kinds flag to search")
+	if flag.AllEmpty(opts.args, opts.kinds, opts.tags, opts.categories, opts.platforms) {
+		return fmt.Errorf("please specify a resource name, --tags, --platforms, --categories or --kinds flag to search")
 	}
 
 	if err := flag.InList("match", opts.match, []string{"contains", "exact"}); err != nil {
 		return err
 	}
 
-	if err := flag.InList("output", opts.output, []string{"table", "json"}); err != nil {
+	if err := flag.InList("output", opts.output, []string{"table", "json", "wide"}); err != nil {
 		return err
 	}
 
 	opts.kinds = flag.TrimArray(opts.kinds)
 	opts.tags = flag.TrimArray(opts.tags)
+	opts.categories = flag.TrimArray(opts.categories)
+	opts.platforms = flag.TrimArray(opts.platforms)
 
 	for _, k := range opts.kinds {
 		if !parser.IsSupportedKind(k) {
