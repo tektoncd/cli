@@ -5,7 +5,7 @@
 
 .SH NAME
 .PP
-tkn\-hub\-search \- Search resource by a combination of name, kind, and tags
+tkn\-hub\-search \- Search resource by a combination of name, kind, categories, platforms, and tags
 
 
 .SH SYNOPSIS
@@ -15,10 +15,14 @@ tkn\-hub\-search \- Search resource by a combination of name, kind, and tags
 
 .SH DESCRIPTION
 .PP
-Search resource by a combination of name, kind, and tags
+Search resource by a combination of name, kind, categories, platforms, and tags
 
 
 .SH OPTIONS
+.PP
+\fB\-\-categories\fP=[]
+    Accepts a comma separated list of categories
+
 .PP
 \fB\-h\fP, \fB\-\-help\fP[=false]
     help for search
@@ -37,7 +41,11 @@ Search resource by a combination of name, kind, and tags
 
 .PP
 \fB\-o\fP, \fB\-\-output\fP="table"
-    Accepts output format: [table, json]
+    Accepts output format: [table, json, wide]
+
+.PP
+\fB\-\-platforms\fP=[]
+    Accepts a comma separated list of platforms
 
 .PP
 \fB\-\-tags\fP=[]

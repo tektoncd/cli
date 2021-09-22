@@ -18,7 +18,7 @@ import (
 
 // BuildQueryPayload builds the payload for the resource Query endpoint from
 // CLI flags.
-func BuildQueryPayload(resourceQueryName string, resourceQueryCatalogs string, resourceQueryCategories string, resourceQueryKinds string, resourceQueryTags string, resourceQueryLimit string, resourceQueryMatch string) (*resource.QueryPayload, error) {
+func BuildQueryPayload(resourceQueryName string, resourceQueryCatalogs string, resourceQueryCategories string, resourceQueryKinds string, resourceQueryTags string, resourceQueryPlatforms string, resourceQueryLimit string, resourceQueryMatch string) (*resource.QueryPayload, error) {
 	var err error
 	var name string
 	{
@@ -62,6 +62,15 @@ func BuildQueryPayload(resourceQueryName string, resourceQueryCatalogs string, r
 			}
 		}
 	}
+	var platforms []string
+	{
+		if resourceQueryPlatforms != "" {
+			err = json.Unmarshal([]byte(resourceQueryPlatforms), &platforms)
+			if err != nil {
+				return nil, fmt.Errorf("invalid JSON for platforms, \nerror: %s, \nexample of valid JSON:\n%s", err, "'[\n      \"linux/s390x\",\n      \"linux/amd64\"\n   ]'")
+			}
+		}
+	}
 	var limit uint
 	{
 		if resourceQueryLimit != "" {
@@ -91,6 +100,7 @@ func BuildQueryPayload(resourceQueryName string, resourceQueryCatalogs string, r
 	v.Categories = categories
 	v.Kinds = kinds
 	v.Tags = tags
+	v.Platforms = platforms
 	v.Limit = limit
 	v.Match = match
 
