@@ -49,7 +49,7 @@ func GetAllPipelineNames(p cli.Params) ([]string, error) {
 }
 
 func List(c *cli.Clients, opts metav1.ListOptions, ns string) (*v1beta1.PipelineList, error) {
-	unstructuredP, err := actions.List(pipelineGroupResource, c, ns, opts)
+	unstructuredP, err := actions.List(pipelineGroupResource, c.Dynamic, c.Tekton.Discovery(), ns, opts)
 	if err != nil {
 		return nil, err
 	}
@@ -90,7 +90,7 @@ func Get(c *cli.Clients, pipelinename string, opts metav1.GetOptions, ns string)
 
 // It will fetch the resource in v1beta1 struct format
 func GetV1beta1(c *cli.Clients, pipelinename string, opts metav1.GetOptions, ns string) (*v1beta1.Pipeline, error) {
-	unstructuredP, err := actions.Get(pipelineGroupResource, c, pipelinename, ns, opts)
+	unstructuredP, err := actions.Get(pipelineGroupResource, c.Dynamic, c.Tekton.Discovery(), pipelinename, ns, opts)
 	if err != nil {
 		return nil, err
 	}
@@ -105,7 +105,7 @@ func GetV1beta1(c *cli.Clients, pipelinename string, opts metav1.GetOptions, ns 
 
 // It will fetch the resource in v1alpha1 struct format
 func getV1alpha1(c *cli.Clients, pipelinename string, opts metav1.GetOptions, ns string) (*v1alpha1.Pipeline, error) {
-	unstructuredP, err := actions.Get(pipelineGroupResource, c, pipelinename, ns, opts)
+	unstructuredP, err := actions.Get(pipelineGroupResource, c.Dynamic, c.Tekton.Discovery(), pipelinename, ns, opts)
 	if err != nil {
 		return nil, err
 	}

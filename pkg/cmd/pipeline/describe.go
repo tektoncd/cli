@@ -147,9 +147,14 @@ func describeCommand(p cli.Params) *cobra.Command {
 				opts.PipelineName = args[0]
 			}
 
+			cs, err := p.Clients()
+			if err != nil {
+				return err
+			}
+
 			if output != "" {
 				pipelineGroupResource := schema.GroupVersionResource{Group: "tekton.dev", Resource: "pipelines"}
-				return actions.PrintObject(pipelineGroupResource, opts.PipelineName, cmd.OutOrStdout(), p, f, p.Namespace())
+				return actions.PrintObject(pipelineGroupResource, opts.PipelineName, cmd.OutOrStdout(), cs.Dynamic, cs.Tekton.Discovery(), f, p.Namespace())
 			}
 
 			return printPipelineDescription(cmd.OutOrStdout(), p, opts.PipelineName)

@@ -17,18 +17,19 @@ package actions
 import (
 	"context"
 
-	"github.com/tektoncd/cli/pkg/cli"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime/schema"
+	"k8s.io/client-go/discovery"
+	"k8s.io/client-go/dynamic"
 )
 
-func Delete(gr schema.GroupVersionResource, clients *cli.Clients, objname, ns string, op metav1.DeleteOptions) error {
-	gvr, err := GetGroupVersionResource(gr, clients.Tekton.Discovery())
+func Delete(gr schema.GroupVersionResource, dynamic dynamic.Interface, discovery discovery.DiscoveryInterface, objname, ns string, op metav1.DeleteOptions) error {
+	gvr, err := GetGroupVersionResource(gr, discovery)
 	if err != nil {
 		return err
 	}
 
-	err = clients.Dynamic.Resource(*gvr).Namespace(ns).Delete(context.Background(), objname, op)
+	err = dynamic.Resource(*gvr).Namespace(ns).Delete(context.Background(), objname, op)
 	if err != nil {
 		return err
 	}

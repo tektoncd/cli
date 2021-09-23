@@ -1,9 +1,0 @@
-Name:        tt1
-Namespace:   ns
-
-Params
-
- NAME   DESCRIPTION              DEFAULT VALUE
- foo    foo required in res...   bar
-
- error decoding number from json: invalid character '(' looking for beginning of value

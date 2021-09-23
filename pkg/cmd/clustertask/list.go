@@ -56,9 +56,14 @@ func listCommand(p cli.Params) *cobra.Command {
 				return fmt.Errorf("output option not set properly: %v", err)
 			}
 
+			cs, err := p.Clients()
+			if err != nil {
+				return err
+			}
+
 			if output != "" {
 				ctGroupResource := schema.GroupVersionResource{Group: "tekton.dev", Resource: "clustertasks"}
-				return actions.PrintObjects(ctGroupResource, cmd.OutOrStdout(), p, f, "")
+				return actions.PrintObjects(ctGroupResource, cmd.OutOrStdout(), cs.Dynamic, cs.Tekton.Discovery(), f, "")
 			}
 			stream := &cli.Stream{
 				Out: cmd.OutOrStdout(),

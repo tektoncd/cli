@@ -21,13 +21,15 @@ import (
 	"time"
 
 	"github.com/jonboulle/clockwork"
-	"github.com/spf13/cobra"
 	"github.com/tektoncd/cli/pkg/test"
-	"github.com/tektoncd/triggers/pkg/apis/triggers/v1alpha1"
+	cb "github.com/tektoncd/cli/pkg/test/builder"
+	testDynamic "github.com/tektoncd/cli/pkg/test/dynamic"
+	"github.com/tektoncd/triggers/pkg/apis/triggers/v1beta1"
 	triggertest "github.com/tektoncd/triggers/test"
 	"gotest.tools/v3/golden"
 	corev1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+	"k8s.io/apimachinery/pkg/runtime"
 )
 
 func TestListTriggerTemplate(t *testing.T) {
@@ -51,7 +53,7 @@ func TestListTriggerTemplate(t *testing.T) {
 		},
 	}
 
-	tts := []*v1alpha1.TriggerTemplate{
+	tts := []*v1beta1.TriggerTemplate{
 		{
 			ObjectMeta: metav1.ObjectMeta{
 				Name:              "tt1",
@@ -89,57 +91,50 @@ func TestListTriggerTemplate(t *testing.T) {
 
 	tests := []struct {
 		name      string
-		command   *cobra.Command
 		args      []string
 		wantError bool
 	}{
 		{
 			name:      "Invalid namespace",
-			command:   command(t, tts, now, ns),
 			args:      []string{"list", "-n", "default"},
 			wantError: true,
 		},
 		{
 			name:      "No TriggerTemplate",
-			command:   command(t, tts, now, ns),
 			args:      []string{"list", "-n", "random"},
 			wantError: false,
 		},
 		{
 			name:      "Multiple TriggerTemplates",
-			command:   command(t, tts, now, ns),
 			args:      []string{"list", "-n", "foo"},
 			wantError: false,
 		},
 		{
 			name:      "Multiple TriggerTemplates with output format",
-			command:   command(t, tts, now, ns),
 			args:      []string{"list", "-n", "foo", "-o", "jsonpath={range .items[*]}{.metadata.name}{\"\\n\"}{end}"},
 			wantError: false,
 		},
 		{
 			name:      "TriggerTemplates from all namespaces",
-			command:   command(t, tts, now, ns),
 			args:      []string{"list", "--all-namespaces"},
 			wantError: false,
 		},
 		{
 			name:      "List TriggerTemplates without headers",
-			command:   command(t, tts, now, ns),
 			args:      []string{"list", "--no-headers"},
 			wantError: false,
 		},
 		{
 			name:      "List TriggerTemplates from all namespaces without headers",
-			command:   command(t, tts, now, ns),
 			args:      []string{"list", "--no-headers", "--all-namespaces"},
 			wantError: false,
 		},
 	}
+	p := command(t, tts, now, ns)
 
 	for _, td := range tests {
 		t.Run(td.name, func(t *testing.T) {
-			got, err := test.ExecuteCommand(td.command, td.args...)
+			got, err := test.ExecuteCommand(Command(p), td.args...)
 
 			if err != nil && !td.wantError {
 				t.Errorf("Unexpected error: %v", err)
@@ -165,20 +160,28 @@ func TestTriggerTemplateList_empty(t *testing.T) {
 		},
 	}
 
-	tt := []*v1alpha1.TriggerTemplate{}
+	tt := []*v1beta1.TriggerTemplate{}
 	listtt := command(t, tt, now, ns)
 
-	out, _ := test.ExecuteCommand(listtt, "list", "--all-namespaces")
+	out, _ := test.ExecuteCommand(Command(listtt), "list", "--all-namespaces")
 	test.AssertOutput(t, emptyMsg+"\n", out)
 }
 
-func command(t *testing.T, tts []*v1alpha1.TriggerTemplate, now time.Time, ns []*corev1.Namespace) *cobra.Command {
+func command(t *testing.T, tts []*v1beta1.TriggerTemplate, now time.Time, ns []*corev1.Namespace) *test.Params {
 	// fake clock advanced by 1 hour
 	clock := clockwork.NewFakeClockAt(now)
 
 	cs := test.SeedTestResources(t, triggertest.Resources{TriggerTemplates: tts, Namespaces: ns})
+	cs.Triggers.Resources = cb.TriggersAPIResourceList("v1beta1", []string{"triggertemplate"})
+	tdc := testDynamic.Options{}
+	var utts []runtime.Object
+	for _, tt := range tts {
+		utts = append(utts, cb.UnstructuredV1beta1TT(tt, "v1beta1"))
+	}
+	dc, err := tdc.Client(utts...)
+	if err != nil {
+		t.Errorf("unable to create dynamic client: %v", err)
+	}
 
-	p := &test.Params{Tekton: cs.Pipeline, Clock: clock, Kube: cs.Kube, Triggers: cs.Triggers}
-
-	return Command(p)
+	return &test.Params{Tekton: cs.Pipeline, Clock: clock, Kube: cs.Kube, Triggers: cs.Triggers, Dynamic: dc}
 }

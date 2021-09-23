@@ -49,7 +49,7 @@ func GetAllClusterTaskNames(p cli.Params) ([]string, error) {
 }
 
 func List(c *cli.Clients, opts metav1.ListOptions) (*v1beta1.ClusterTaskList, error) {
-	unstructuredCT, err := actions.List(clustertaskGroupResource, c, "", opts)
+	unstructuredCT, err := actions.List(clustertaskGroupResource, c.Dynamic, c.Tekton.Discovery(), "", opts)
 	if err != nil {
 		return nil, err
 	}
@@ -90,7 +90,7 @@ func Get(c *cli.Clients, clustertaskname string, opts metav1.GetOptions) (*v1bet
 
 // It will fetch the resource in v1beta1 struct format
 func GetV1beta1(c *cli.Clients, clustertaskname string, opts metav1.GetOptions) (*v1beta1.ClusterTask, error) {
-	unstructuredCT, err := actions.Get(clustertaskGroupResource, c, clustertaskname, "", opts)
+	unstructuredCT, err := actions.Get(clustertaskGroupResource, c.Dynamic, c.Tekton.Discovery(), clustertaskname, "", opts)
 	if err != nil {
 		return nil, err
 	}
@@ -105,7 +105,7 @@ func GetV1beta1(c *cli.Clients, clustertaskname string, opts metav1.GetOptions) 
 
 // It will fetch the resource in v1alpha1 struct format
 func getV1alpha1(c *cli.Clients, clustertaskname string, opts metav1.GetOptions) (*v1alpha1.ClusterTask, error) {
-	unstructuredCT, err := actions.Get(clustertaskGroupResource, c, clustertaskname, "", opts)
+	unstructuredCT, err := actions.Get(clustertaskGroupResource, c.Dynamic, c.Tekton.Discovery(), clustertaskname, "", opts)
 	if err != nil {
 		return nil, err
 	}

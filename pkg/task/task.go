@@ -49,7 +49,7 @@ func GetAllTaskNames(p cli.Params) ([]string, error) {
 }
 
 func List(c *cli.Clients, opts metav1.ListOptions, ns string) (*v1beta1.TaskList, error) {
-	unstructuredT, err := actions.List(taskGroupResource, c, ns, opts)
+	unstructuredT, err := actions.List(taskGroupResource, c.Dynamic, c.Tekton.Discovery(), ns, opts)
 	if err != nil {
 		return nil, err
 	}
@@ -90,7 +90,7 @@ func Get(c *cli.Clients, taskname string, opts metav1.GetOptions, ns string) (*v
 
 // It will fetch the resource in v1beta1 struct format
 func GetV1beta1(c *cli.Clients, taskname string, opts metav1.GetOptions, ns string) (*v1beta1.Task, error) {
-	unstructuredT, err := actions.Get(taskGroupResource, c, taskname, ns, opts)
+	unstructuredT, err := actions.Get(taskGroupResource, c.Dynamic, c.Tekton.Discovery(), taskname, ns, opts)
 	if err != nil {
 		return nil, err
 	}
@@ -105,7 +105,7 @@ func GetV1beta1(c *cli.Clients, taskname string, opts metav1.GetOptions, ns stri
 
 // It will fetch the resource in v1alpha1 struct format
 func getV1alpha1(c *cli.Clients, taskname string, opts metav1.GetOptions, ns string) (*v1alpha1.Task, error) {
-	unstructuredT, err := actions.Get(taskGroupResource, c, taskname, ns, opts)
+	unstructuredT, err := actions.Get(taskGroupResource, c.Dynamic, c.Tekton.Discovery(), taskname, ns, opts)
 	if err != nil {
 		return nil, err
 	}

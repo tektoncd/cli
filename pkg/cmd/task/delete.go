@@ -85,7 +85,7 @@ func deleteTask(opts *options.DeleteOptions, s *cli.Stream, p cli.Params, taskNa
 		return fmt.Errorf("failed to create tekton client")
 	}
 	d := deleter.New("Task", func(taskName string) error {
-		return actions.Delete(taskGroupResource, cs, taskName, p.Namespace(), metav1.DeleteOptions{})
+		return actions.Delete(taskGroupResource, cs.Dynamic, cs.Tekton.Discovery(), taskName, p.Namespace(), metav1.DeleteOptions{})
 	})
 	switch {
 	case opts.DeleteAllNs:
@@ -96,7 +96,7 @@ func deleteTask(opts *options.DeleteOptions, s *cli.Stream, p cli.Params, taskNa
 		d.Delete(s, taskNames)
 	case opts.DeleteRelated:
 		d.WithRelated("TaskRun", taskRunLister(cs, p.Namespace()), func(taskRunName string) error {
-			return actions.Delete(taskrunGroupResource, cs, taskRunName, p.Namespace(), metav1.DeleteOptions{})
+			return actions.Delete(taskrunGroupResource, cs.Dynamic, cs.Tekton.Discovery(), taskRunName, p.Namespace(), metav1.DeleteOptions{})
 		})
 		deletedTaskNames := d.Delete(s, taskNames)
 		d.DeleteRelated(s, deletedTaskNames)
