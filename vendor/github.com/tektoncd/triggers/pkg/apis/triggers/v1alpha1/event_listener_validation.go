@@ -22,6 +22,7 @@ import (
 	"encoding/json"
 	"fmt"
 
+	"github.com/tektoncd/triggers/pkg/apis/triggers"
 	corev1 "k8s.io/api/core/v1"
 	"k8s.io/apimachinery/pkg/util/sets"
 	"k8s.io/apimachinery/pkg/util/validation"
@@ -43,6 +44,11 @@ func (e *EventListener) Validate(ctx context.Context) *apis.FieldError {
 		// Since `el-` is added as the prefix of EventListener services, the name of EventListener must be no more than 60 characters long.
 		errs = errs.Also(apis.ErrInvalidValue(fmt.Sprintf("eventListener name '%s' must be no more than 60 characters long", e.ObjectMeta.Name), "metadata.name"))
 	}
+
+	if len(e.ObjectMeta.Annotations) != 0 {
+		errs = errs.Also(triggers.ValidateAnnotations(e.ObjectMeta.Annotations))
+	}
+
 	if apis.IsInDelete(ctx) {
 		return nil
 	}
@@ -52,13 +58,6 @@ func (e *EventListener) Validate(ctx context.Context) *apis.FieldError {
 func (s *EventListenerSpec) validate(ctx context.Context) (errs *apis.FieldError) {
 	for i, trigger := range s.Triggers {
 		errs = errs.Also(trigger.validate(ctx).ViaField(fmt.Sprintf("spec.triggers[%d]", i)))
-	}
-
-	// To be removed in a later release #1020
-	if s.DeprecatedReplicas != nil {
-		if *s.DeprecatedReplicas < 0 {
-			errs = errs.Also(apis.ErrInvalidValue(*s.DeprecatedReplicas, "spec.replicas"))
-		}
 	}
 
 	// Both Kubernetes and Custom resource can't be present at the same time
