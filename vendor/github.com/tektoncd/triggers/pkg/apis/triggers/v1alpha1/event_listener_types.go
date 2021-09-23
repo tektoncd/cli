@@ -28,6 +28,7 @@ import (
 	duckv1 "knative.dev/pkg/apis/duck/v1"
 	duckv1alpha1 "knative.dev/pkg/apis/duck/v1alpha1"
 	"knative.dev/pkg/apis/duck/v1beta1"
+	"knative.dev/pkg/kmeta"
 )
 
 // Check that EventListener may be validated and defaulted.
@@ -52,17 +53,16 @@ type EventListener struct {
 	Status EventListenerStatus `json:"status,omitempty"`
 }
 
+var _ kmeta.OwnerRefable = (*EventListener)(nil)
+
 // EventListenerSpec defines the desired state of the EventListener, represented
 // by a list of Triggers.
 type EventListenerSpec struct {
 	ServiceAccountName string                 `json:"serviceAccountName,omitempty"`
 	Triggers           []EventListenerTrigger `json:"triggers"`
-	// To be removed in a later release #1020
-	DeprecatedReplicas    *int32                `json:"replicas,omitempty"`
-	DeprecatedPodTemplate *PodTemplate          `json:"podTemplate,omitempty"`
-	NamespaceSelector     NamespaceSelector     `json:"namespaceSelector,omitempty"`
-	LabelSelector         *metav1.LabelSelector `json:"labelSelector,omitempty"`
-	Resources             Resources             `json:"resources,omitempty"`
+	NamespaceSelector  NamespaceSelector      `json:"namespaceSelector,omitempty"`
+	LabelSelector      *metav1.LabelSelector  `json:"labelSelector,omitempty"`
+	Resources          Resources              `json:"resources,omitempty"`
 }
 
 type Resources struct {
@@ -78,18 +78,6 @@ type KubernetesResource struct {
 	Replicas           *int32             `json:"replicas,omitempty"`
 	ServiceType        corev1.ServiceType `json:"serviceType,omitempty"`
 	duckv1.WithPodSpec `json:"spec,omitempty"`
-}
-
-type PodTemplate struct {
-	// If specified, the pod's tolerations.
-	// +optional
-	Tolerations []corev1.Toleration `json:"tolerations,omitempty"`
-
-	// NodeSelector is a selector which must be true for the pod to fit on a node.
-	// Selector which must match a node's labels for the pod to be scheduled on that node.
-	// More info: https://kubernetes.io/docs/concepts/configuration/assign-pod-node/
-	// +optional
-	NodeSelector map[string]string `json:"nodeSelector,omitempty"`
 }
 
 // EventListenerTrigger represents a connection between TriggerBinding, Params,
@@ -194,6 +182,11 @@ var eventListenerCondSet = apis.NewLivingConditionSet(
 	ServiceExists,
 	DeploymentExists,
 )
+
+// GetGroupVersionKind implements kmeta.OwnerRefable
+func (el *EventListener) GetGroupVersionKind() schema.GroupVersionKind {
+	return SchemeGroupVersion.WithKind("EventListener")
+}
 
 // GetCondition returns the Condition matching the given type.
 func (els *EventListenerStatus) GetCondition(t apis.ConditionType) *apis.Condition {
@@ -303,16 +296,6 @@ func (els *EventListenerStatus) InitializeConditions() {
 			Status: corev1.ConditionFalse,
 		})
 	}
-}
-
-// GetOwnerReference gets the EventListener as owner reference for any related
-// objects.
-func (el *EventListener) GetOwnerReference() *metav1.OwnerReference {
-	return metav1.NewControllerRef(el, schema.GroupVersionKind{
-		Group:   SchemeGroupVersion.Group,
-		Version: SchemeGroupVersion.Version,
-		Kind:    "EventListener",
-	})
 }
 
 // SetAddress sets the address (as part of Addressable contract) and marks the correct condition.

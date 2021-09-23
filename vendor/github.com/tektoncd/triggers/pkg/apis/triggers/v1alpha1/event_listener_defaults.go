@@ -19,13 +19,19 @@ package v1alpha1
 import (
 	"context"
 
+	"github.com/tektoncd/triggers/pkg/apis/config"
+	"github.com/tektoncd/triggers/pkg/apis/triggers/contexts"
 	"knative.dev/pkg/logging"
-	"knative.dev/pkg/ptr"
 )
 
 // SetDefaults sets the defaults on the object.
 func (el *EventListener) SetDefaults(ctx context.Context) {
-	if IsUpgradeViaDefaulting(ctx) {
+	cfg := config.FromContextOrDefaults(ctx)
+	if contexts.IsUpgradeViaDefaulting(ctx) {
+		defaultSA := cfg.Defaults.DefaultServiceAccount
+		if el.Spec.ServiceAccountName == "" && defaultSA != "" {
+			el.Spec.ServiceAccountName = defaultSA
+		}
 		// set defaults
 		if el.Spec.Resources.KubernetesResource != nil {
 			if el.Spec.Resources.KubernetesResource.Replicas != nil && *el.Spec.Resources.KubernetesResource.Replicas == 0 {
@@ -44,48 +50,6 @@ func (el *EventListener) SetDefaults(ctx context.Context) {
 					logger.Errorf("failed to setDefaults for trigger: %s; err: %s", t.Name, err)
 				}
 			}
-		}
-		el.Spec.updatePodTemplate()
-		// To be removed in a later release #1020
-		el.Spec.updateReplicas()
-	}
-}
-
-func (spec *EventListenerSpec) updatePodTemplate() {
-	if spec.DeprecatedPodTemplate != nil {
-		if spec.DeprecatedPodTemplate.NodeSelector != nil {
-			if spec.Resources.KubernetesResource == nil {
-				spec.Resources.KubernetesResource = &KubernetesResource{}
-			}
-			spec.Resources.KubernetesResource.Template.Spec.NodeSelector = spec.DeprecatedPodTemplate.NodeSelector
-			spec.DeprecatedPodTemplate.NodeSelector = nil
-		}
-		if spec.DeprecatedPodTemplate.Tolerations != nil {
-			if spec.Resources.KubernetesResource == nil {
-				spec.Resources.KubernetesResource = &KubernetesResource{}
-			}
-			spec.Resources.KubernetesResource.Template.Spec.Tolerations = spec.DeprecatedPodTemplate.Tolerations
-			spec.DeprecatedPodTemplate.Tolerations = nil
-		}
-		spec.DeprecatedPodTemplate = nil
-	}
-}
-
-// To be Removed in a later release #1020
-func (spec *EventListenerSpec) updateReplicas() {
-	if spec.DeprecatedReplicas != nil {
-		if *spec.DeprecatedReplicas == 0 {
-			if spec.Resources.KubernetesResource == nil {
-				spec.Resources.KubernetesResource = &KubernetesResource{}
-			}
-			spec.Resources.KubernetesResource.Replicas = ptr.Int32(1)
-			spec.DeprecatedReplicas = nil
-		} else if *spec.DeprecatedReplicas > 0 {
-			if spec.Resources.KubernetesResource == nil {
-				spec.Resources.KubernetesResource = &KubernetesResource{}
-			}
-			spec.Resources.KubernetesResource.Replicas = spec.DeprecatedReplicas
-			spec.DeprecatedReplicas = nil
 		}
 	}
 }
