@@ -1,5 +1,6 @@
 package eventlistener
 
+// TODO: properly move to v1beta1
 import (
 	"fmt"
 	"strings"
@@ -9,7 +10,7 @@ import (
 	"github.com/jonboulle/clockwork"
 	"github.com/spf13/cobra"
 	"github.com/tektoncd/cli/pkg/test"
-	"github.com/tektoncd/triggers/pkg/apis/triggers/v1alpha1"
+	v1alpha1 "github.com/tektoncd/triggers/pkg/apis/triggers/v1beta1"
 	triggertest "github.com/tektoncd/triggers/test"
 	"gotest.tools/v3/golden"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"

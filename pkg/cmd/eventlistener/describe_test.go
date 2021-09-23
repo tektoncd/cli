@@ -14,20 +14,20 @@
 
 package eventlistener
 
+// TODO: properly move to v1beta1
 import (
 	"fmt"
 	"testing"
 
 	"github.com/tektoncd/cli/pkg/test"
 	"github.com/tektoncd/pipeline/pkg/apis/pipeline/v1beta1"
-	"github.com/tektoncd/triggers/pkg/apis/triggers/v1alpha1"
+	v1alpha1 "github.com/tektoncd/triggers/pkg/apis/triggers/v1beta1"
 	triggertest "github.com/tektoncd/triggers/test"
 	"gotest.tools/v3/golden"
 	corev1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"knative.dev/pkg/apis"
-	duckv1alpha1 "knative.dev/pkg/apis/duck/v1alpha1"
-	beta1 "knative.dev/pkg/apis/duck/v1beta1"
+	duckv1alpha1 "knative.dev/pkg/apis/duck/v1beta1"
 )
 
 func TestEventListenerDescribe_InvalidNamespace(t *testing.T) {
@@ -146,11 +146,9 @@ func TestEventListenerDescribe_WithOutputStatusURLAndName(t *testing.T) {
 			Status: v1alpha1.EventListenerStatus{
 				AddressStatus: duckv1alpha1.AddressStatus{
 					Address: &duckv1alpha1.Addressable{
-						Addressable: beta1.Addressable{
-							URL: &apis.URL{
-								Scheme: "http",
-								Host:   "el-listener.default.svc.cluster.local",
-							},
+						URL: &apis.URL{
+							Scheme: "http",
+							Host:   "el-listener.default.svc.cluster.local",
 						},
 					},
 				},
@@ -454,11 +452,9 @@ func TestEventListenerDescribe_WithWebhookInterceptors(t *testing.T) {
 			Status: v1alpha1.EventListenerStatus{
 				AddressStatus: duckv1alpha1.AddressStatus{
 					Address: &duckv1alpha1.Addressable{
-						Addressable: beta1.Addressable{
-							URL: &apis.URL{
-								Scheme: "http",
-								Host:   "el-listener.default.svc.cluster.local",
-							},
+						URL: &apis.URL{
+							Scheme: "http",
+							Host:   "el-listener.default.svc.cluster.local",
 						},
 					},
 				},
@@ -680,7 +676,7 @@ func TestEventListenerDescribe_WithCELInterceptors(t *testing.T) {
 						},
 						Interceptors: []*v1alpha1.TriggerInterceptor{
 							{
-								DeprecatedCEL: &v1alpha1.CELInterceptor{
+								/*DeprecatedCEL: &v1alpha1.CELInterceptor{
 									Filter: "body.value == 'test'",
 									Overlays: []v1alpha1.CELOverlay{
 										{
@@ -688,7 +684,7 @@ func TestEventListenerDescribe_WithCELInterceptors(t *testing.T) {
 											Expression: "'testing'",
 										},
 									},
-								},
+								},*/
 							},
 						},
 					},
@@ -742,7 +738,7 @@ func TestEventListenerDescribe_WithMultipleBindingAndInterceptors(t *testing.T) 
 						},
 						Interceptors: []*v1alpha1.TriggerInterceptor{
 							{
-								DeprecatedCEL: &v1alpha1.CELInterceptor{
+								/*DeprecatedCEL: &v1alpha1.CELInterceptor{
 									Filter: "body.value == 'test'",
 									Overlays: []v1alpha1.CELOverlay{
 										{
@@ -750,7 +746,7 @@ func TestEventListenerDescribe_WithMultipleBindingAndInterceptors(t *testing.T) 
 											Expression: "'testing'",
 										},
 									},
-								},
+								},*/
 							},
 						},
 					},
@@ -785,7 +781,7 @@ func TestEventListenerDescribe_WithMultipleBindingAndInterceptors(t *testing.T) 
 								},
 							},
 							{
-								DeprecatedCEL: &v1alpha1.CELInterceptor{
+								/*DeprecatedCEL: &v1alpha1.CELInterceptor{
 									Filter: "body.value == 'test'",
 									Overlays: []v1alpha1.CELOverlay{
 										{
@@ -793,7 +789,7 @@ func TestEventListenerDescribe_WithMultipleBindingAndInterceptors(t *testing.T) 
 											Expression: "'testing'",
 										},
 									},
-								},
+								},*/
 							},
 						},
 					},
@@ -841,7 +837,7 @@ func TestEventListenerDescribe_OutputYAMLWithMultipleBindingAndInterceptors(t *t
 						},
 						Interceptors: []*v1alpha1.TriggerInterceptor{
 							{
-								DeprecatedCEL: &v1alpha1.CELInterceptor{
+								/*DeprecatedCEL: &v1alpha1.CELInterceptor{
 									Filter: "body.value == 'test'",
 									Overlays: []v1alpha1.CELOverlay{
 										{
@@ -849,7 +845,7 @@ func TestEventListenerDescribe_OutputYAMLWithMultipleBindingAndInterceptors(t *t
 											Expression: "'testing'",
 										},
 									},
-								},
+								},*/
 							},
 						},
 					},
@@ -884,7 +880,7 @@ func TestEventListenerDescribe_OutputYAMLWithMultipleBindingAndInterceptors(t *t
 								},
 							},
 							{
-								DeprecatedCEL: &v1alpha1.CELInterceptor{
+								/*DeprecatedCEL: &v1alpha1.CELInterceptor{
 									Filter: "body.value == 'test'",
 									Overlays: []v1alpha1.CELOverlay{
 										{
@@ -892,7 +888,7 @@ func TestEventListenerDescribe_OutputYAMLWithMultipleBindingAndInterceptors(t *t
 											Expression: "'testing'",
 										},
 									},
-								},
+								},*/
 							},
 						},
 					},
@@ -927,11 +923,9 @@ func TestEventListenerDescribe_WithOutputStatusURL(t *testing.T) {
 			Status: v1alpha1.EventListenerStatus{
 				AddressStatus: duckv1alpha1.AddressStatus{
 					Address: &duckv1alpha1.Addressable{
-						Addressable: beta1.Addressable{
-							URL: &apis.URL{
-								Scheme: "http",
-								Host:   "el-listener.default.svc.cluster.local",
-							},
+						URL: &apis.URL{
+							Scheme: "http",
+							Host:   "el-listener.default.svc.cluster.local",
 						},
 					},
 				},
