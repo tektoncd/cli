@@ -188,9 +188,14 @@ or
 				opts.TaskName = args[0]
 			}
 
+			cs, err := p.Clients()
+			if err != nil {
+				return err
+			}
+
 			if output != "" {
 				taskGroupResource := schema.GroupVersionResource{Group: "tekton.dev", Resource: "tasks"}
-				return actions.PrintObject(taskGroupResource, opts.TaskName, cmd.OutOrStdout(), p, f, p.Namespace())
+				return actions.PrintObject(taskGroupResource, opts.TaskName, cmd.OutOrStdout(), cs.Dynamic, cs.Tekton.Discovery(), f, p.Namespace())
 			}
 
 			return printTaskDescription(s, p, opts.TaskName)

@@ -60,7 +60,7 @@ func GetAllTaskRuns(p cli.Params, opts metav1.ListOptions, limit int) ([]string,
 func TaskRuns(c *cli.Clients, opts metav1.ListOptions, ns string) (*v1beta1.TaskRunList, error) {
 
 	trGroupResource := schema.GroupVersionResource{Group: "tekton.dev", Resource: "taskruns"}
-	unstructuredTRL, err := actions.List(trGroupResource, c, ns, opts)
+	unstructuredTRL, err := actions.List(trGroupResource, c.Dynamic, c.Tekton.Discovery(), ns, opts)
 	if err != nil {
 		return nil, err
 	}

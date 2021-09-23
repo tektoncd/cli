@@ -66,7 +66,7 @@ func GetAllPipelineRuns(p cli.Params, opts metav1.ListOptions, limit int) ([]str
 }
 
 func List(c *cli.Clients, opts metav1.ListOptions, ns string) (*v1beta1.PipelineRunList, error) {
-	unstructuredPR, err := actions.List(prGroupResource, c, ns, opts)
+	unstructuredPR, err := actions.List(prGroupResource, c.Dynamic, c.Tekton.Discovery(), ns, opts)
 	if err != nil {
 		return nil, err
 	}
@@ -107,7 +107,7 @@ func Get(c *cli.Clients, prname string, opts metav1.GetOptions, ns string) (*v1b
 
 // It will fetch the resource in v1beta1 struct format
 func GetV1beta1(c *cli.Clients, prname string, opts metav1.GetOptions, ns string) (*v1beta1.PipelineRun, error) {
-	unstructuredPR, err := actions.Get(prGroupResource, c, prname, ns, opts)
+	unstructuredPR, err := actions.Get(prGroupResource, c.Dynamic, c.Tekton.Discovery(), prname, ns, opts)
 	if err != nil {
 		return nil, err
 	}
@@ -122,7 +122,7 @@ func GetV1beta1(c *cli.Clients, prname string, opts metav1.GetOptions, ns string
 
 // It will fetch the resource in v1alpha1 struct format
 func getV1alpha1(c *cli.Clients, prname string, opts metav1.GetOptions, ns string) (*v1alpha1.PipelineRun, error) {
-	unstructuredPR, err := actions.Get(prGroupResource, c, prname, ns, opts)
+	unstructuredPR, err := actions.Get(prGroupResource, c.Dynamic, c.Tekton.Discovery(), prname, ns, opts)
 	if err != nil {
 		return nil, err
 	}

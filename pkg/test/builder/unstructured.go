@@ -17,6 +17,7 @@ package builder
 import (
 	"github.com/tektoncd/pipeline/pkg/apis/pipeline/v1alpha1"
 	"github.com/tektoncd/pipeline/pkg/apis/pipeline/v1beta1"
+	triggersv1beta1 "github.com/tektoncd/triggers/pkg/apis/triggers/v1beta1"
 	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
 	"k8s.io/apimachinery/pkg/runtime"
 )
@@ -106,6 +107,15 @@ func UnstructuredV1beta1CT(clustertask *v1beta1.ClusterTask, version string) *un
 	clustertask.APIVersion = "tekton.dev/" + version
 	clustertask.Kind = "clustertask"
 	object, _ := runtime.DefaultUnstructuredConverter.ToUnstructured(clustertask)
+	return &unstructured.Unstructured{
+		Object: object,
+	}
+}
+
+func UnstructuredV1beta1TT(triggertemplate *triggersv1beta1.TriggerTemplate, version string) *unstructured.Unstructured {
+	triggertemplate.APIVersion = "triggers.tekton.dev/" + version
+	triggertemplate.Kind = "triggertemplate"
+	object, _ := runtime.DefaultUnstructuredConverter.ToUnstructured(triggertemplate)
 	return &unstructured.Unstructured{
 		Object: object,
 	}

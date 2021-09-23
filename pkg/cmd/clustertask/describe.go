@@ -181,9 +181,14 @@ or
 				opts.ClusterTaskName = args[0]
 			}
 
+			cs, err := p.Clients()
+			if err != nil {
+				return err
+			}
+
 			if output != "" {
 				clustertaskGroupResource := schema.GroupVersionResource{Group: "tekton.dev", Resource: "clustertasks"}
-				return actions.PrintObject(clustertaskGroupResource, opts.ClusterTaskName, cmd.OutOrStdout(), p, f, "")
+				return actions.PrintObject(clustertaskGroupResource, opts.ClusterTaskName, cmd.OutOrStdout(), cs.Dynamic, cs.Tekton.Discovery(), f, "")
 			}
 
 			return printClusterTaskDescription(s, p, opts.ClusterTaskName)

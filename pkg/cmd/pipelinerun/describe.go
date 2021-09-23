@@ -104,9 +104,14 @@ or
 				opts.PipelineRunName = args[0]
 			}
 
+			cs, err := p.Clients()
+			if err != nil {
+				return err
+			}
+
 			if output != "" {
 				pipelineRunGroupResource := schema.GroupVersionResource{Group: "tekton.dev", Resource: "pipelineruns"}
-				return actions.PrintObject(pipelineRunGroupResource, opts.PipelineRunName, cmd.OutOrStdout(), p, f, p.Namespace())
+				return actions.PrintObject(pipelineRunGroupResource, opts.PipelineRunName, cmd.OutOrStdout(), cs.Dynamic, cs.Tekton.Discovery(), f, p.Namespace())
 			}
 
 			return prdesc.PrintPipelineRunDescription(s, opts.PipelineRunName, p)

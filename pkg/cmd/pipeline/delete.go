@@ -84,7 +84,7 @@ func deletePipelines(opts *options.DeleteOptions, s *cli.Stream, p cli.Params, p
 		return fmt.Errorf("failed to create tekton client")
 	}
 	d := deleter.New("Pipeline", func(pipelineName string) error {
-		return actions.Delete(pipelineGroupResource, cs, pipelineName, p.Namespace(), metav1.DeleteOptions{})
+		return actions.Delete(pipelineGroupResource, cs.Dynamic, cs.Tekton.Discovery(), pipelineName, p.Namespace(), metav1.DeleteOptions{})
 	})
 	switch {
 	case opts.DeleteAllNs:
@@ -95,7 +95,7 @@ func deletePipelines(opts *options.DeleteOptions, s *cli.Stream, p cli.Params, p
 		d.Delete(s, pNames)
 	case opts.DeleteRelated:
 		d.WithRelated("PipelineRun", pipelineRunLister(cs, p.Namespace()), func(pipelineRunName string) error {
-			return actions.Delete(pipelinerunGroupResource, cs, pipelineRunName, p.Namespace(), metav1.DeleteOptions{})
+			return actions.Delete(pipelinerunGroupResource, cs.Dynamic, cs.Tekton.Discovery(), pipelineRunName, p.Namespace(), metav1.DeleteOptions{})
 		})
 		deletedPipelineNames := d.Delete(s, pNames)
 		d.DeleteRelated(s, deletedPipelineNames)

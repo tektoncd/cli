@@ -18,21 +18,17 @@ import (
 	"context"
 	"io"
 
-	"github.com/tektoncd/cli/pkg/cli"
 	"github.com/tektoncd/cli/pkg/printer"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
 	"k8s.io/apimachinery/pkg/runtime/schema"
 	cliopts "k8s.io/cli-runtime/pkg/genericclioptions"
+	"k8s.io/client-go/discovery"
+	"k8s.io/client-go/dynamic"
 )
 
-func PrintObjects(groupResource schema.GroupVersionResource, w io.Writer, p cli.Params, f *cliopts.PrintFlags, ns string) error {
-	cs, err := p.Clients()
-	if err != nil {
-		return err
-	}
-
-	allres, err := List(groupResource, cs, ns, metav1.ListOptions{})
+func PrintObjects(groupResource schema.GroupVersionResource, w io.Writer, dynamic dynamic.Interface, discovery discovery.DiscoveryInterface, f *cliopts.PrintFlags, ns string) error {
+	allres, err := List(groupResource, dynamic, discovery, ns, metav1.ListOptions{})
 	if err != nil {
 		return err
 	}
@@ -40,13 +36,13 @@ func PrintObjects(groupResource schema.GroupVersionResource, w io.Writer, p cli.
 	return printer.PrintObject(w, allres, f)
 }
 
-func List(gr schema.GroupVersionResource, clients *cli.Clients, ns string, op metav1.ListOptions) (*unstructured.UnstructuredList, error) {
-	gvr, err := GetGroupVersionResource(gr, clients.Tekton.Discovery())
+func List(gr schema.GroupVersionResource, dynamic dynamic.Interface, discovery discovery.DiscoveryInterface, ns string, op metav1.ListOptions) (*unstructured.UnstructuredList, error) {
+	gvr, err := GetGroupVersionResource(gr, discovery)
 	if err != nil {
 		return nil, err
 	}
 
-	allRes, err := clients.Dynamic.Resource(*gvr).Namespace(ns).List(context.Background(), op)
+	allRes, err := dynamic.Resource(*gvr).Namespace(ns).List(context.Background(), op)
 	if err != nil {
 		return nil, err
 	}

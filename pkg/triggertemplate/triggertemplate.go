@@ -15,17 +15,26 @@
 package triggertemplate
 
 import (
-	"context"
+	"fmt"
+	"os"
 
-	"github.com/tektoncd/triggers/pkg/apis/triggers/v1alpha1"
-	"github.com/tektoncd/triggers/pkg/client/clientset/versioned"
+	"github.com/tektoncd/cli/pkg/actions"
+	"github.com/tektoncd/cli/pkg/cli"
+	"github.com/tektoncd/triggers/pkg/apis/triggers/v1beta1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/apimachinery/pkg/runtime/schema"
 )
 
-func GetAllTriggerTemplateNames(client versioned.Interface, namespace string) ([]string, error) {
+var triggertemplateGroupResource = schema.GroupVersionResource{Group: "triggers.tekton.dev", Resource: "triggertemplates"}
 
-	ps, err := List(client, namespace)
+func GetAllTriggerTemplateNames(p cli.Params) ([]string, error) {
+	cs, err := p.Clients()
+	if err != nil {
+		return nil, err
+	}
+
+	ps, err := List(cs, metav1.ListOptions{}, p.Namespace())
 	if err != nil {
 		return nil, err
 	}
@@ -37,19 +46,34 @@ func GetAllTriggerTemplateNames(client versioned.Interface, namespace string) ([
 	return ret, nil
 }
 
-func List(client versioned.Interface, namespace string) (*v1alpha1.TriggerTemplateList, error) {
-	tts, err := client.TriggersV1alpha1().TriggerTemplates(namespace).List(context.Background(), metav1.ListOptions{})
+func List(c *cli.Clients, opts metav1.ListOptions, ns string) (*v1beta1.TriggerTemplateList, error) {
+	unstructuredTT, err := actions.List(triggertemplateGroupResource, c.Dynamic, c.Triggers.Discovery(), ns, opts)
 	if err != nil {
 		return nil, err
 	}
 
-	// NOTE: this is required for -o json|yaml to work properly since
-	// tektoncd go client fails to set these; probably a bug
-	tts.GetObjectKind().SetGroupVersionKind(
-		schema.GroupVersionKind{
-			Version: "triggers.tekton.dev/v1alpha1",
-			Kind:    "TriggerTemplateList",
-		})
+	var triggertemplates *v1beta1.TriggerTemplateList
+	if err := runtime.DefaultUnstructuredConverter.FromUnstructured(unstructuredTT.UnstructuredContent(), &triggertemplates); err != nil {
+		return nil, err
+	}
+	if err != nil {
+		fmt.Fprintf(os.Stderr, "Failed to list triggertemplates from %s namespace \n", ns)
+		return nil, err
+	}
 
-	return tts, nil
+	return triggertemplates, nil
+}
+
+func Get(c *cli.Clients, ttname string, opts metav1.GetOptions, ns string) (*v1beta1.TriggerTemplate, error) {
+	unstructuredTT, err := actions.Get(triggertemplateGroupResource, c.Dynamic, c.Triggers.Discovery(), ttname, ns, opts)
+	if err != nil {
+		return nil, err
+	}
+
+	var tt *v1beta1.TriggerTemplate
+	if err := runtime.DefaultUnstructuredConverter.FromUnstructured(unstructuredTT.UnstructuredContent(), &tt); err != nil {
+		fmt.Fprintf(os.Stderr, "failed to get triggertemplate from %s namespace \n", ns)
+		return nil, err
+	}
+	return tt, nil
 }

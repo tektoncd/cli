@@ -50,7 +50,7 @@ func Get(c *cli.Clients, trname string, opts metav1.GetOptions, ns string) (*v1b
 
 // It will fetch the resource in v1beta1 struct format
 func GetV1beta1(c *cli.Clients, trname string, opts metav1.GetOptions, ns string) (*v1beta1.TaskRun, error) {
-	unstructuredTR, err := actions.Get(trGroupResource, c, trname, ns, opts)
+	unstructuredTR, err := actions.Get(trGroupResource, c.Dynamic, c.Tekton.Discovery(), trname, ns, opts)
 	if err != nil {
 		return nil, err
 	}
@@ -64,7 +64,7 @@ func GetV1beta1(c *cli.Clients, trname string, opts metav1.GetOptions, ns string
 
 // It will fetch the resource in v1alpha1 struct format
 func getV1alpha1(c *cli.Clients, trname string, opts metav1.GetOptions, ns string) (*v1alpha1.TaskRun, error) {
-	unstructuredTR, err := actions.Get(trGroupResource, c, trname, ns, opts)
+	unstructuredTR, err := actions.Get(trGroupResource, c.Dynamic, c.Tekton.Discovery(), trname, ns, opts)
 	if err != nil {
 		return nil, err
 	}

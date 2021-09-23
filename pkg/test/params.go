@@ -116,6 +116,12 @@ func (p *Params) Clients() (*cli.Clients, error) {
 		}
 	}
 
+	if triggers != nil {
+		if err = actions.InitializeAPIGroupRes(triggers.Discovery()); err != nil {
+			return nil, err
+		}
+	}
+
 	p.Cls = &cli.Clients{
 		Tekton:   tekton,
 		Kube:     kube,

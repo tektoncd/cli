@@ -15,7 +15,6 @@
 package triggertemplate
 
 import (
-	"context"
 	"fmt"
 	"io"
 	"text/tabwriter"
@@ -27,7 +26,7 @@ import (
 	"github.com/tektoncd/cli/pkg/options"
 	"github.com/tektoncd/cli/pkg/printer"
 	"github.com/tektoncd/cli/pkg/triggertemplate"
-	"github.com/tektoncd/triggers/pkg/apis/triggers/v1alpha1"
+	"github.com/tektoncd/triggers/pkg/apis/triggers/v1beta1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
 	"k8s.io/apimachinery/pkg/runtime"
@@ -96,18 +95,13 @@ or
 				Err: cmd.OutOrStderr(),
 			}
 
-			cs, err := p.Clients()
-			if err != nil {
-				return err
-			}
-
 			output, err := cmd.LocalFlags().GetString("output")
 			if err != nil {
 				return fmt.Errorf("output option not set properly: %v", err)
 			}
 
 			if len(args) == 0 {
-				tt, err := triggertemplate.GetAllTriggerTemplateNames(cs.Triggers, p.Namespace())
+				tt, err := triggertemplate.GetAllTriggerTemplateNames(p)
 				if err != nil {
 					return err
 				}
@@ -141,7 +135,7 @@ func describeTriggerTemplateOutput(w io.Writer, p cli.Params, f *cliopts.PrintFl
 		return err
 	}
 
-	tt, err := cs.Triggers.TriggersV1alpha1().TriggerTemplates(p.Namespace()).Get(context.Background(), name, metav1.GetOptions{})
+	tt, err := triggertemplate.Get(cs, name, metav1.GetOptions{}, p.Namespace())
 	if err != nil {
 		return err
 	}
@@ -150,7 +144,7 @@ func describeTriggerTemplateOutput(w io.Writer, p cli.Params, f *cliopts.PrintFl
 	// tektoncd go client fails to set these; probably a bug
 	tt.GetObjectKind().SetGroupVersionKind(
 		schema.GroupVersionKind{
-			Version: "triggers.tekton.dev/v1alpha1",
+			Version: "triggers.tekton.dev/v1beta1",
 			Kind:    "TriggerTemplate",
 		})
 
@@ -163,13 +157,13 @@ func printTriggerTemplateDescription(s *cli.Stream, p cli.Params, ttname string)
 		return fmt.Errorf("failed to create tekton client")
 	}
 
-	tt, err := cs.Triggers.TriggersV1alpha1().TriggerTemplates(p.Namespace()).Get(context.Background(), ttname, metav1.GetOptions{})
+	tt, err := triggertemplate.Get(cs, ttname, metav1.GetOptions{}, p.Namespace())
 	if err != nil {
 		return fmt.Errorf("failed to get TriggerTemplate %s from %s namespace: %v", ttname, p.Namespace(), err)
 	}
 
 	var data = struct {
-		TriggerTemplate *v1alpha1.TriggerTemplate
+		TriggerTemplate *v1beta1.TriggerTemplate
 	}{
 		TriggerTemplate: tt,
 	}
@@ -191,7 +185,7 @@ func printTriggerTemplateDescription(s *cli.Stream, p cli.Params, ttname string)
 	return w.Flush()
 }
 
-func checkError(resourceTemplate []v1alpha1.TriggerResourceTemplate) string {
+func checkError(resourceTemplate []v1beta1.TriggerResourceTemplate) string {
 	errValue := ""
 	for i := range resourceTemplate {
 		if _, err := runtime.DefaultUnstructuredConverter.ToUnstructured(&resourceTemplate[i]); err != nil {
@@ -201,7 +195,7 @@ func checkError(resourceTemplate []v1alpha1.TriggerResourceTemplate) string {
 	return errValue
 }
 
-func getResourceTemplate(resourceTemplate v1alpha1.TriggerResourceTemplate) *unstructured.Unstructured {
+func getResourceTemplate(resourceTemplate v1beta1.TriggerResourceTemplate) *unstructured.Unstructured {
 	d, _ := runtime.DefaultUnstructuredConverter.ToUnstructured(&resourceTemplate)
 	return &unstructured.Unstructured{Object: d}
 }

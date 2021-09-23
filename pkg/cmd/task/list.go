@@ -67,6 +67,11 @@ func listCommand(p cli.Params) *cobra.Command {
 			"commandType": "main",
 		},
 		RunE: func(cmd *cobra.Command, args []string) error {
+			cs, err := p.Clients()
+			if err != nil {
+				return err
+			}
+
 			output, err := cmd.LocalFlags().GetString("output")
 			if err != nil {
 				return fmt.Errorf("error: output option not set properly: %v", err)
@@ -74,7 +79,7 @@ func listCommand(p cli.Params) *cobra.Command {
 
 			if output != "" {
 				taskGroupResource := schema.GroupVersionResource{Group: "tekton.dev", Resource: "tasks"}
-				return actions.PrintObjects(taskGroupResource, cmd.OutOrStdout(), p, f, p.Namespace())
+				return actions.PrintObjects(taskGroupResource, cmd.OutOrStdout(), cs.Dynamic, cs.Tekton.Discovery(), f, p.Namespace())
 			}
 			stream := &cli.Stream{
 				Out: cmd.OutOrStdout(),

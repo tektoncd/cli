@@ -16,6 +16,7 @@ package clientset
 
 import (
 	"github.com/tektoncd/pipeline/pkg/apis/pipeline"
+	"github.com/tektoncd/triggers/pkg/apis/triggers"
 	"k8s.io/apimachinery/pkg/runtime/schema"
 	"k8s.io/client-go/dynamic"
 )
@@ -25,6 +26,11 @@ var allowedTektonTypes = map[string][]string{
 	"v1beta1":  {"pipelineresources", "pipelineruns", "taskruns", "pipelines", "clustertasks", "tasks", "conditions"},
 }
 
+var allowedTriggerTektonTypes = map[string][]string{
+	"v1alpha1": {"triggertemplates"},
+	"v1beta1":  {"triggertemplates"},
+}
+
 // WithClient adds Tekton related clients to the Dynamic client.
 func WithClient(client dynamic.Interface) Option {
 	return func(cs *Clientset) {
@@ -32,6 +38,17 @@ func WithClient(client dynamic.Interface) Option {
 			for _, resource := range resources {
 				r := schema.GroupVersionResource{
 					Group:    pipeline.GroupName,
+					Version:  version,
+					Resource: resource,
+				}
+				cs.Add(r, client)
+			}
+		}
+
+		for version, resources := range allowedTriggerTektonTypes {
+			for _, resource := range resources {
+				r := schema.GroupVersionResource{
+					Group:    triggers.GroupName,
 					Version:  version,
 					Resource: resource,
 				}

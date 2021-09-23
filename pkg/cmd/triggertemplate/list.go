@@ -23,7 +23,8 @@ import (
 	"github.com/tektoncd/cli/pkg/formatted"
 	"github.com/tektoncd/cli/pkg/printer"
 	"github.com/tektoncd/cli/pkg/triggertemplate"
-	"github.com/tektoncd/triggers/pkg/apis/triggers/v1alpha1"
+	"github.com/tektoncd/triggers/pkg/apis/triggers/v1beta1"
+	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	cliopts "k8s.io/cli-runtime/pkg/genericclioptions"
 )
 
@@ -67,7 +68,7 @@ or
 			if opts.AllNamespaces {
 				namespace = ""
 			}
-			tts, err := triggertemplate.List(cs.Triggers, namespace)
+			tts, err := triggertemplate.List(cs, metav1.ListOptions{}, namespace)
 			if err != nil {
 				if opts.AllNamespaces {
 					return fmt.Errorf("failed to list TriggerTemplates from all namespaces: %v", err)
@@ -104,7 +105,7 @@ or
 	return c
 }
 
-func printFormatted(s *cli.Stream, tts *v1alpha1.TriggerTemplateList, p cli.Params, allNamespaces bool, noHeaders bool) error {
+func printFormatted(s *cli.Stream, tts *v1beta1.TriggerTemplateList, p cli.Params, allNamespaces bool, noHeaders bool) error {
 	if len(tts.Items) == 0 {
 		fmt.Fprintln(s.Err, emptyMsg)
 		return nil

@@ -114,7 +114,7 @@ func deletePipelineRuns(s *cli.Stream, p cli.Params, prNames []string, opts *opt
 	switch {
 	case opts.DeleteAllNs:
 		d = deleter.New("PipelineRun", func(pipelineRunName string) error {
-			return actions.Delete(prGroupResource, cs, pipelineRunName, p.Namespace(), metav1.DeleteOptions{})
+			return actions.Delete(prGroupResource, cs.Dynamic, cs.Tekton.Discovery(), pipelineRunName, p.Namespace(), metav1.DeleteOptions{})
 		})
 		prtodelete, prtokeep, err := allPipelineRunNames(cs, opts.Keep, opts.KeepSince, opts.LabelSelector, p.Namespace())
 		if err != nil {
@@ -125,7 +125,7 @@ func deletePipelineRuns(s *cli.Stream, p cli.Params, prNames []string, opts *opt
 		d.Delete(s, prtodelete)
 	case opts.ParentResourceName == "":
 		d = deleter.New("PipelineRun", func(pipelineRunName string) error {
-			return actions.Delete(prGroupResource, cs, pipelineRunName, p.Namespace(), metav1.DeleteOptions{})
+			return actions.Delete(prGroupResource, cs.Dynamic, cs.Tekton.Discovery(), pipelineRunName, p.Namespace(), metav1.DeleteOptions{})
 		})
 		d.Delete(s, prNames)
 	default:
@@ -146,7 +146,7 @@ func deletePipelineRuns(s *cli.Stream, p cli.Params, prNames []string, opts *opt
 
 		// Delete the PipelineRuns associated with a Pipeline
 		d.WithRelated("PipelineRun", pipelineRunLister(cs, opts.Keep, opts.KeepSince, p.Namespace()), func(pipelineRunName string) error {
-			return actions.Delete(prGroupResource, cs, pipelineRunName, p.Namespace(), metav1.DeleteOptions{})
+			return actions.Delete(prGroupResource, cs.Dynamic, cs.Tekton.Discovery(), pipelineRunName, p.Namespace(), metav1.DeleteOptions{})
 		})
 		d.DeleteRelated(s, []string{opts.ParentResourceName})
 	}

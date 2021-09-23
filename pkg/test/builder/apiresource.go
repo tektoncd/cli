@@ -21,19 +21,29 @@ import (
 )
 
 const (
-	group string = "tekton.dev"
+	pipelinegroup string = "tekton.dev"
+	triggersGroup string = "triggers.tekton.dev"
 )
 
 func APIResourceList(version string, kinds []string) []*metav1.APIResourceList {
 	return []*metav1.APIResourceList{
 		{
-			GroupVersion: group + "/" + version,
-			APIResources: apiresources(version, kinds),
+			GroupVersion: pipelinegroup + "/" + version,
+			APIResources: apiresources(pipelinegroup, version, kinds),
 		},
 	}
 }
 
-func apiresources(version string, kinds []string) []metav1.APIResource {
+func TriggersAPIResourceList(version string, kinds []string) []*metav1.APIResourceList {
+	return []*metav1.APIResourceList{
+		{
+			GroupVersion: triggersGroup + "/" + version,
+			APIResources: apiresources(triggersGroup, version, kinds),
+		},
+	}
+}
+
+func apiresources(group string, version string, kinds []string) []metav1.APIResource {
 	apires := make([]metav1.APIResource, 0)
 	for _, kind := range kinds {
 		namespaced := true
