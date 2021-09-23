@@ -19,7 +19,8 @@ import (
 	"testing"
 
 	"github.com/tektoncd/cli/pkg/test"
-	"github.com/tektoncd/triggers/pkg/apis/triggers/v1alpha1"
+	// TODO: properly move to v1beta1
+	v1alpha1 "github.com/tektoncd/triggers/pkg/apis/triggers/v1beta1"
 	triggertest "github.com/tektoncd/triggers/test"
 	"gotest.tools/v3/golden"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"

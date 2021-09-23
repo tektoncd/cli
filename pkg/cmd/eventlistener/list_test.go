@@ -14,6 +14,7 @@
 
 package eventlistener
 
+// TODO: properly move to v1beta1
 import (
 	"fmt"
 	"strings"
@@ -23,15 +24,14 @@ import (
 	"github.com/jonboulle/clockwork"
 	"github.com/spf13/cobra"
 	"github.com/tektoncd/cli/pkg/test"
-	"github.com/tektoncd/triggers/pkg/apis/triggers/v1alpha1"
+	v1alpha1 "github.com/tektoncd/triggers/pkg/apis/triggers/v1beta1"
 	triggertest "github.com/tektoncd/triggers/test"
 	"gotest.tools/v3/golden"
 	corev1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"knative.dev/pkg/apis"
 	duckv1 "knative.dev/pkg/apis/duck/v1"
-	duckv1alpha1 "knative.dev/pkg/apis/duck/v1alpha1"
-	beta1 "knative.dev/pkg/apis/duck/v1beta1"
+	duckv1alpha1 "knative.dev/pkg/apis/duck/v1beta1"
 )
 
 func TestListEventListener(t *testing.T) {
@@ -75,11 +75,9 @@ func TestListEventListener(t *testing.T) {
 				},
 				AddressStatus: duckv1alpha1.AddressStatus{
 					Address: &duckv1alpha1.Addressable{
-						Addressable: beta1.Addressable{
-							URL: &apis.URL{
-								Scheme: "http",
-								Host:   "tb0-listener.default.svc.cluster.local",
-							},
+						URL: &apis.URL{
+							Scheme: "http",
+							Host:   "tb0-listener.default.svc.cluster.local",
 						},
 					},
 				},
@@ -104,11 +102,9 @@ func TestListEventListener(t *testing.T) {
 				},
 				AddressStatus: duckv1alpha1.AddressStatus{
 					Address: &duckv1alpha1.Addressable{
-						Addressable: beta1.Addressable{
-							URL: &apis.URL{
-								Scheme: "http",
-								Host:   "tb1-listener.default.svc.cluster.local",
-							},
+						URL: &apis.URL{
+							Scheme: "http",
+							Host:   "tb1-listener.default.svc.cluster.local",
 						},
 					},
 				},
@@ -133,11 +129,9 @@ func TestListEventListener(t *testing.T) {
 				},
 				AddressStatus: duckv1alpha1.AddressStatus{
 					Address: &duckv1alpha1.Addressable{
-						Addressable: beta1.Addressable{
-							URL: &apis.URL{
-								Scheme: "http",
-								Host:   "tb2-listener.default.svc.cluster.local",
-							},
+						URL: &apis.URL{
+							Scheme: "http",
+							Host:   "tb2-listener.default.svc.cluster.local",
 						},
 					},
 				},
@@ -162,11 +156,9 @@ func TestListEventListener(t *testing.T) {
 				},
 				AddressStatus: duckv1alpha1.AddressStatus{
 					Address: &duckv1alpha1.Addressable{
-						Addressable: beta1.Addressable{
-							URL: &apis.URL{
-								Scheme: "http",
-								Host:   "tb3-listener.default.svc.cluster.local",
-							},
+						URL: &apis.URL{
+							Scheme: "http",
+							Host:   "tb3-listener.default.svc.cluster.local",
 						},
 					},
 				},
