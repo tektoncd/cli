@@ -19,7 +19,9 @@ import (
 	"testing"
 
 	"github.com/tektoncd/cli/pkg/test"
-	v1alpha1 "github.com/tektoncd/triggers/pkg/apis/triggers/v1beta1"
+	cb "github.com/tektoncd/cli/pkg/test/builder"
+	testDynamic "github.com/tektoncd/cli/pkg/test/dynamic"
+	"github.com/tektoncd/triggers/pkg/apis/triggers/v1beta1"
 	triggertest "github.com/tektoncd/triggers/test"
 	"gotest.tools/v3/golden"
 	corev1 "k8s.io/api/core/v1"
@@ -28,8 +30,13 @@ import (
 
 func TestTriggerBindingDescribe_Invalid_Namespace(t *testing.T) {
 	cs := test.SeedTestResources(t, triggertest.Resources{})
-	p := &test.Params{Triggers: cs.Triggers, Kube: cs.Kube}
-
+	cs.Triggers.Resources = cb.TriggersAPIResourceList("v1beta1", []string{"triggerbinding"})
+	tdc := testDynamic.Options{}
+	dc, err := tdc.Client()
+	if err != nil {
+		t.Errorf("unable to create dynamic client: %v", err)
+	}
+	p := &test.Params{Triggers: cs.Triggers, Kube: cs.Kube, Dynamic: dc}
 	triggerBinding := Command(p)
 	out, err := test.ExecuteCommand(triggerBinding, "desc", "bar", "-n", "invalid")
 	if err == nil {
@@ -44,7 +51,13 @@ func TestTriggerBindingDescribe_NonExistedName(t *testing.T) {
 			Name: "ns",
 		},
 	}}})
-	p := &test.Params{Triggers: cs.Triggers, Kube: cs.Kube}
+	cs.Triggers.Resources = cb.TriggersAPIResourceList("v1beta1", []string{"triggerbinding"})
+	tdc := testDynamic.Options{}
+	dc, err := tdc.Client()
+	if err != nil {
+		t.Errorf("unable to create dynamic client: %v", err)
+	}
+	p := &test.Params{Triggers: cs.Triggers, Kube: cs.Kube, Dynamic: dc}
 
 	triggerBinding := Command(p)
 	out, err := test.ExecuteCommand(triggerBinding, "desc", "bar", "-n", "ns")
@@ -60,7 +73,13 @@ func TestTriggerBindingDescribe_Empty(t *testing.T) {
 			Name: "ns",
 		},
 	}}})
-	p := &test.Params{Triggers: cs.Triggers, Kube: cs.Kube}
+	cs.Triggers.Resources = cb.TriggersAPIResourceList("v1beta1", []string{"triggerbinding"})
+	tdc := testDynamic.Options{}
+	dc, err := tdc.Client()
+	if err != nil {
+		t.Errorf("unable to create dynamic client: %v", err)
+	}
+	p := &test.Params{Triggers: cs.Triggers, Kube: cs.Kube, Dynamic: dc}
 
 	triggerBinding := Command(p)
 	out, err := test.ExecuteCommand(triggerBinding, "desc", "-n", "ns")
@@ -71,7 +90,7 @@ func TestTriggerBindingDescribe_Empty(t *testing.T) {
 }
 
 func TestTriggerBindingDescribe_NoParams(t *testing.T) {
-	tbs := []*v1alpha1.TriggerBinding{
+	tbs := []*v1beta1.TriggerBinding{
 		{
 			ObjectMeta: metav1.ObjectMeta{
 				Name:      "tb1",
@@ -84,7 +103,15 @@ func TestTriggerBindingDescribe_NoParams(t *testing.T) {
 			Name: "ns",
 		},
 	}}})
-	p := &test.Params{Triggers: cs.Triggers, Kube: cs.Kube}
+	cs.Triggers.Resources = cb.TriggersAPIResourceList("v1beta1", []string{"triggerbinding"})
+	tdc := testDynamic.Options{}
+	dc, err := tdc.Client(
+		cb.UnstructuredV1beta1TB(tbs[0], "v1beta1"),
+	)
+	if err != nil {
+		t.Errorf("unable to create dynamic client: %v", err)
+	}
+	p := &test.Params{Triggers: cs.Triggers, Kube: cs.Kube, Dynamic: dc}
 
 	triggerBinding := Command(p)
 	out, err := test.ExecuteCommand(triggerBinding, "desc", "tb1", "-n", "ns")
@@ -95,14 +122,14 @@ func TestTriggerBindingDescribe_NoParams(t *testing.T) {
 }
 
 func TestTriggerBindingDescribe_WithParams(t *testing.T) {
-	tbs := []*v1alpha1.TriggerBinding{
+	tbs := []*v1beta1.TriggerBinding{
 		{
 			ObjectMeta: metav1.ObjectMeta{
 				Name:      "tb1",
 				Namespace: "ns",
 			},
-			Spec: v1alpha1.TriggerBindingSpec{
-				Params: []v1alpha1.Param{
+			Spec: v1beta1.TriggerBindingSpec{
+				Params: []v1beta1.Param{
 					{
 						Name:  "key",
 						Value: "value",
@@ -116,7 +143,15 @@ func TestTriggerBindingDescribe_WithParams(t *testing.T) {
 			Name: "ns",
 		},
 	}}})
-	p := &test.Params{Triggers: cs.Triggers, Kube: cs.Kube}
+	cs.Triggers.Resources = cb.TriggersAPIResourceList("v1beta1", []string{"triggerbinding"})
+	tdc := testDynamic.Options{}
+	dc, err := tdc.Client(
+		cb.UnstructuredV1beta1TB(tbs[0], "v1beta1"),
+	)
+	if err != nil {
+		t.Errorf("unable to create dynamic client: %v", err)
+	}
+	p := &test.Params{Triggers: cs.Triggers, Kube: cs.Kube, Dynamic: dc}
 
 	triggerBinding := Command(p)
 	out, err := test.ExecuteCommand(triggerBinding, "desc", "tb1", "-n", "ns")
@@ -127,14 +162,14 @@ func TestTriggerBindingDescribe_WithParams(t *testing.T) {
 }
 
 func TestTriggerBindingDescribe_WithOutputName(t *testing.T) {
-	tbs := []*v1alpha1.TriggerBinding{
+	tbs := []*v1beta1.TriggerBinding{
 		{
 			ObjectMeta: metav1.ObjectMeta{
 				Name:      "tb1",
 				Namespace: "ns",
 			},
-			Spec: v1alpha1.TriggerBindingSpec{
-				Params: []v1alpha1.Param{
+			Spec: v1beta1.TriggerBindingSpec{
+				Params: []v1beta1.Param{
 					{
 						Name:  "key",
 						Value: "value",
@@ -148,7 +183,15 @@ func TestTriggerBindingDescribe_WithOutputName(t *testing.T) {
 			Name: "ns",
 		},
 	}}})
-	p := &test.Params{Triggers: cs.Triggers, Kube: cs.Kube}
+	cs.Triggers.Resources = cb.TriggersAPIResourceList("v1beta1", []string{"triggerbinding"})
+	tdc := testDynamic.Options{}
+	dc, err := tdc.Client(
+		cb.UnstructuredV1beta1TB(tbs[0], "v1beta1"),
+	)
+	if err != nil {
+		t.Errorf("unable to create dynamic client: %v", err)
+	}
+	p := &test.Params{Triggers: cs.Triggers, Kube: cs.Kube, Dynamic: dc}
 
 	triggerBinding := Command(p)
 	out, err := test.ExecuteCommand(triggerBinding, "desc", "-o", "name", "-n", "ns", "tb1")
@@ -159,14 +202,14 @@ func TestTriggerBindingDescribe_WithOutputName(t *testing.T) {
 }
 
 func TestTriggerBindingDescribe_WithOutputYaml(t *testing.T) {
-	tbs := []*v1alpha1.TriggerBinding{
+	tbs := []*v1beta1.TriggerBinding{
 		{
 			ObjectMeta: metav1.ObjectMeta{
 				Name:      "tb1",
 				Namespace: "ns",
 			},
-			Spec: v1alpha1.TriggerBindingSpec{
-				Params: []v1alpha1.Param{
+			Spec: v1beta1.TriggerBindingSpec{
+				Params: []v1beta1.Param{
 					{
 						Name:  "key",
 						Value: "value",
@@ -180,7 +223,15 @@ func TestTriggerBindingDescribe_WithOutputYaml(t *testing.T) {
 			Name: "ns",
 		},
 	}}})
-	p := &test.Params{Triggers: cs.Triggers, Kube: cs.Kube}
+	cs.Triggers.Resources = cb.TriggersAPIResourceList("v1beta1", []string{"triggerbinding"})
+	tdc := testDynamic.Options{}
+	dc, err := tdc.Client(
+		cb.UnstructuredV1beta1TB(tbs[0], "v1beta1"),
+	)
+	if err != nil {
+		t.Errorf("unable to create dynamic client: %v", err)
+	}
+	p := &test.Params{Triggers: cs.Triggers, Kube: cs.Kube, Dynamic: dc}
 
 	triggerBinding := Command(p)
 	out, err := test.ExecuteCommand(triggerBinding, "desc", "-o", "yaml", "-n", "ns", "tb1")
@@ -191,14 +242,14 @@ func TestTriggerBindingDescribe_WithOutputYaml(t *testing.T) {
 }
 
 func TestTriggerBindingDescribe_WithMultipleParams(t *testing.T) {
-	tbs := []*v1alpha1.TriggerBinding{
+	tbs := []*v1beta1.TriggerBinding{
 		{
 			ObjectMeta: metav1.ObjectMeta{
 				Name:      "tb1",
 				Namespace: "ns",
 			},
-			Spec: v1alpha1.TriggerBindingSpec{
-				Params: []v1alpha1.Param{
+			Spec: v1beta1.TriggerBindingSpec{
+				Params: []v1beta1.Param{
 					{
 						Name:  "key1",
 						Value: "value1",
@@ -224,7 +275,15 @@ func TestTriggerBindingDescribe_WithMultipleParams(t *testing.T) {
 			Name: "ns",
 		},
 	}}})
-	p := &test.Params{Triggers: cs.Triggers, Kube: cs.Kube}
+	cs.Triggers.Resources = cb.TriggersAPIResourceList("v1beta1", []string{"triggerbinding"})
+	tdc := testDynamic.Options{}
+	dc, err := tdc.Client(
+		cb.UnstructuredV1beta1TB(tbs[0], "v1beta1"),
+	)
+	if err != nil {
+		t.Errorf("unable to create dynamic client: %v", err)
+	}
+	p := &test.Params{Triggers: cs.Triggers, Kube: cs.Kube, Dynamic: dc}
 
 	triggerBinding := Command(p)
 	out, err := test.ExecuteCommand(triggerBinding, "desc", "tb1", "-n", "ns")
@@ -235,14 +294,14 @@ func TestTriggerBindingDescribe_WithMultipleParams(t *testing.T) {
 }
 
 func TestTriggerBindingDescribe_AutoSelect(t *testing.T) {
-	tbs := []*v1alpha1.TriggerBinding{
+	tbs := []*v1beta1.TriggerBinding{
 		{
 			ObjectMeta: metav1.ObjectMeta{
 				Name:      "tb1",
 				Namespace: "ns",
 			},
-			Spec: v1alpha1.TriggerBindingSpec{
-				Params: []v1alpha1.Param{
+			Spec: v1beta1.TriggerBindingSpec{
+				Params: []v1beta1.Param{
 					{
 						Name:  "key",
 						Value: "value",
@@ -257,7 +316,15 @@ func TestTriggerBindingDescribe_AutoSelect(t *testing.T) {
 			Name: "ns",
 		},
 	}}})
-	p := &test.Params{Triggers: cs.Triggers, Kube: cs.Kube}
+	cs.Triggers.Resources = cb.TriggersAPIResourceList("v1beta1", []string{"triggerbinding"})
+	tdc := testDynamic.Options{}
+	dc, err := tdc.Client(
+		cb.UnstructuredV1beta1TB(tbs[0], "v1beta1"),
+	)
+	if err != nil {
+		t.Errorf("unable to create dynamic client: %v", err)
+	}
+	p := &test.Params{Triggers: cs.Triggers, Kube: cs.Kube, Dynamic: dc}
 
 	triggerBinding := Command(p)
 	out, err := test.ExecuteCommand(triggerBinding, "desc", "-n", "ns")

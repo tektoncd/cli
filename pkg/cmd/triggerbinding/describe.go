@@ -15,21 +15,18 @@
 package triggerbinding
 
 import (
-	"context"
 	"fmt"
-	"io"
 	"text/tabwriter"
 	"text/template"
 
 	"github.com/spf13/cobra"
+	"github.com/tektoncd/cli/pkg/actions"
 	"github.com/tektoncd/cli/pkg/cli"
 	"github.com/tektoncd/cli/pkg/formatted"
 	"github.com/tektoncd/cli/pkg/options"
-	"github.com/tektoncd/cli/pkg/printer"
 	"github.com/tektoncd/cli/pkg/triggerbinding"
-	"github.com/tektoncd/triggers/pkg/apis/triggers/v1alpha1"
+	"github.com/tektoncd/triggers/pkg/apis/triggers/v1beta1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
-	"k8s.io/apimachinery/pkg/runtime/schema"
 	cliopts "k8s.io/cli-runtime/pkg/genericclioptions"
 )
 
@@ -87,7 +84,7 @@ or
 			}
 
 			if len(args) == 0 {
-				tb, err := triggerbinding.GetAllTriggerBindingNames(cs.Triggers, p.Namespace())
+				tb, err := triggerbinding.GetAllTriggerBindingNames(cs, p.Namespace())
 				if err != nil {
 					return err
 				}
@@ -104,7 +101,7 @@ or
 			}
 
 			if output != "" {
-				return describeTriggerBindingOutput(cmd.OutOrStdout(), p, f, args[0])
+				return actions.PrintObject(triggerbindingGroupResource, opts.TriggerBindingName, cmd.OutOrStdout(), cs.Dynamic, cs.Triggers.Discovery(), f, p.Namespace())
 			}
 
 			return printTriggerBindingDescription(s, p, opts.TriggerBindingName)
@@ -115,41 +112,19 @@ or
 	return c
 }
 
-func describeTriggerBindingOutput(w io.Writer, p cli.Params, f *cliopts.PrintFlags, name string) error {
-	cs, err := p.Clients()
-	if err != nil {
-		return err
-	}
-
-	tb, err := cs.Triggers.TriggersV1alpha1().TriggerBindings(p.Namespace()).Get(context.Background(), name, metav1.GetOptions{})
-	if err != nil {
-		return err
-	}
-
-	// NOTE: this is required for -o json|yaml to work properly since
-	// tektoncd go client fails to set these; probably a bug
-	tb.GetObjectKind().SetGroupVersionKind(
-		schema.GroupVersionKind{
-			Version: "triggers.tekton.dev/v1alpha1",
-			Kind:    "TriggerBinding",
-		})
-
-	return printer.PrintObject(w, tb, f)
-}
-
 func printTriggerBindingDescription(s *cli.Stream, p cli.Params, tbName string) error {
 	cs, err := p.Clients()
 	if err != nil {
 		return fmt.Errorf("failed to create tekton client")
 	}
 
-	tb, err := cs.Triggers.TriggersV1alpha1().TriggerBindings(p.Namespace()).Get(context.Background(), tbName, metav1.GetOptions{})
+	tb, err := triggerbinding.Get(cs, tbName, metav1.GetOptions{}, p.Namespace())
 	if err != nil {
 		return fmt.Errorf("failed to get TriggerBinding %s from %s namespace: %v", tbName, p.Namespace(), err)
 	}
 
 	var data = struct {
-		TriggerBinding *v1alpha1.TriggerBinding
+		TriggerBinding *v1beta1.TriggerBinding
 	}{
 		TriggerBinding: tb,
 	}
