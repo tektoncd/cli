@@ -1,14 +1,14 @@
 module github.com/tektoncd/cli
 
-go 1.13
+go 1.15
 
 require (
 	github.com/AlecAivazis/survey/v2 v2.2.12
 	github.com/Netflix/go-expect v0.0.0-20200312175327-da48e75238e2
 	github.com/blang/semver v3.5.1+incompatible
 	github.com/cpuguy83/go-md2man v1.0.10
-	github.com/docker/cli v20.10.7+incompatible
-	github.com/docker/docker v20.10.7+incompatible
+	github.com/docker/cli v20.10.8+incompatible
+	github.com/docker/docker v20.10.8+incompatible
 	github.com/fatih/color v1.9.0
 	github.com/ghodss/yaml v1.0.0
 	github.com/google/go-cmp v0.5.6
@@ -22,30 +22,25 @@ require (
 	github.com/spf13/cobra v1.2.1
 	github.com/spf13/pflag v1.0.5
 	github.com/tektoncd/hub/api v0.0.0-20210922050526-aa589697cb58
-	github.com/tektoncd/pipeline v0.27.1
+	github.com/tektoncd/pipeline v0.28.0
 	github.com/tektoncd/plumbing v0.0.0-20210514044347-f8a9689d5bd5
 	github.com/tektoncd/triggers v0.16.0
 	go.opencensus.io v0.23.0
-	go.uber.org/multierr v1.6.0
-	golang.org/x/term v0.0.0-20201210144234-2321bbc49cbf
+	go.uber.org/multierr v1.7.0
+	golang.org/x/term v0.0.0-20210220032956-6a3ed077a48d
 	golang.org/x/xerrors v0.0.0-20200804184101-5ec99f83aff1
 	gopkg.in/yaml.v2 v2.4.0
 	gotest.tools v2.2.0+incompatible
 	gotest.tools/v3 v3.0.3
-	k8s.io/api v0.20.7
-	k8s.io/apimachinery v0.20.7
-	k8s.io/cli-runtime v0.20.7
-	k8s.io/client-go v0.20.7
-	knative.dev/pkg v0.0.0-20210730172132-bb4aaf09c430
+	k8s.io/api v0.21.4
+	k8s.io/apimachinery v0.21.4
+	k8s.io/cli-runtime v0.21.4
+	k8s.io/client-go v0.21.4
+	knative.dev/pkg v0.0.0-20210827184538-2bd91f75571c
 	sigs.k8s.io/yaml v1.2.0
 )
 
 replace (
-	// Needed until kustomize is updated in the k8s repos:
-	// https://github.com/kubernetes-sigs/kustomize/issues/1500
-	github.com/go-openapi/spec => github.com/go-openapi/spec v0.19.3
-	// Bundle tests are failing on new version because of layer issue
-	github.com/google/go-containerregistry => github.com/google/go-containerregistry v0.4.1-0.20210128200529-19c2b639fab1
-	github.com/kr/pty => github.com/creack/pty v1.1.10
+	github.com/kr/pty => github.com/creack/pty v1.1.16
 	maze.io/x/duration => git.maze.io/go/duration v0.0.0-20160924141736-faac084b6075
 )
