@@ -24,9 +24,9 @@ import (
 	"strings"
 	"time"
 
+	"github.com/google/go-containerregistry/internal/gzip"
 	v1 "github.com/google/go-containerregistry/pkg/v1"
 	"github.com/google/go-containerregistry/pkg/v1/empty"
-	"github.com/google/go-containerregistry/pkg/v1/internal/gzip"
 	"github.com/google/go-containerregistry/pkg/v1/match"
 	"github.com/google/go-containerregistry/pkg/v1/tarball"
 	"github.com/google/go-containerregistry/pkg/v1/types"
@@ -111,6 +111,14 @@ func Config(base v1.Image, cfg v1.Config) (v1.Image, error) {
 	cf.Config = cfg
 
 	return ConfigFile(base, cf)
+}
+
+// Annotations mutates the provided v1.Image to have the provided annotations
+func Annotations(base v1.Image, annotations map[string]string) v1.Image {
+	return &image{
+		base:        base,
+		annotations: annotations,
+	}
 }
 
 // ConfigFile mutates the provided v1.Image to have the provided v1.ConfigFile

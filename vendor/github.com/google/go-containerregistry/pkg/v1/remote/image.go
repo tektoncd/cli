@@ -21,10 +21,10 @@ import (
 	"net/url"
 	"sync"
 
-	"github.com/google/go-containerregistry/pkg/internal/redact"
+	"github.com/google/go-containerregistry/internal/redact"
+	"github.com/google/go-containerregistry/internal/verify"
 	"github.com/google/go-containerregistry/pkg/name"
 	v1 "github.com/google/go-containerregistry/pkg/v1"
-	"github.com/google/go-containerregistry/pkg/v1/internal/verify"
 	"github.com/google/go-containerregistry/pkg/v1/partial"
 	"github.com/google/go-containerregistry/pkg/v1/remote/transport"
 	"github.com/google/go-containerregistry/pkg/v1/types"
@@ -177,7 +177,7 @@ func (rl *remoteImageLayer) Compressed() (io.ReadCloser, error) {
 			continue
 		}
 
-		return verify.ReadCloser(resp.Body, rl.digest)
+		return verify.ReadCloser(resp.Body, d.Size, rl.digest)
 	}
 
 	return nil, lastErr
@@ -219,6 +219,11 @@ func (rl *remoteImageLayer) DiffID() (v1.Hash, error) {
 // See partial.Descriptor.
 func (rl *remoteImageLayer) Descriptor() (*v1.Descriptor, error) {
 	return partial.BlobDescriptor(rl, rl.digest)
+}
+
+// See partial.Exists.
+func (rl *remoteImageLayer) Exists() (bool, error) {
+	return rl.ri.blobExists(rl.digest)
 }
 
 // LayerByDigest implements partial.CompressedLayer
