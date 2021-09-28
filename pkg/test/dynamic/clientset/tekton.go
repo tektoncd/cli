@@ -27,8 +27,8 @@ var allowedTektonTypes = map[string][]string{
 }
 
 var allowedTriggerTektonTypes = map[string][]string{
-	"v1alpha1": {"triggertemplates"},
-	"v1beta1":  {"triggertemplates"},
+	"v1alpha1": {"triggertemplates", "triggerbindings"},
+	"v1beta1":  {"triggertemplates", "triggerbindings"},
 }
 
 // WithClient adds Tekton related clients to the Dynamic client.

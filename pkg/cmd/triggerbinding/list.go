@@ -24,7 +24,8 @@ import (
 	"github.com/tektoncd/cli/pkg/formatted"
 	"github.com/tektoncd/cli/pkg/printer"
 	"github.com/tektoncd/cli/pkg/triggerbinding"
-	"github.com/tektoncd/triggers/pkg/apis/triggers/v1alpha1"
+	"github.com/tektoncd/triggers/pkg/apis/triggers/v1beta1"
+	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	cliopts "k8s.io/cli-runtime/pkg/genericclioptions"
 )
 
@@ -69,7 +70,7 @@ or
 				namespace = ""
 			}
 
-			tbs, err := triggerbinding.List(cs.Triggers, namespace)
+			tbs, err := triggerbinding.List(cs, metav1.ListOptions{}, namespace)
 			if err != nil {
 				if opts.AllNamespaces {
 					return fmt.Errorf("failed to list TriggerBindings from all namespaces: %v", err)
@@ -114,7 +115,7 @@ or
 	return c
 }
 
-func printFormatted(s *cli.Stream, tbs *v1alpha1.TriggerBindingList, p cli.Params, allNamespaces bool, noHeaders bool) error {
+func printFormatted(s *cli.Stream, tbs *v1beta1.TriggerBindingList, p cli.Params, allNamespaces bool, noHeaders bool) error {
 	if len(tbs.Items) == 0 {
 		fmt.Fprintln(s.Err, emptyMsg)
 		return nil

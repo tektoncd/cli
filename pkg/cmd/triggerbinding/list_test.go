@@ -21,13 +21,15 @@ import (
 	"time"
 
 	"github.com/jonboulle/clockwork"
-	"github.com/spf13/cobra"
 	"github.com/tektoncd/cli/pkg/test"
-	v1alpha1 "github.com/tektoncd/triggers/pkg/apis/triggers/v1beta1"
+	cb "github.com/tektoncd/cli/pkg/test/builder"
+	testDynamic "github.com/tektoncd/cli/pkg/test/dynamic"
+	"github.com/tektoncd/triggers/pkg/apis/triggers/v1beta1"
 	triggertest "github.com/tektoncd/triggers/test"
 	"gotest.tools/v3/golden"
 	corev1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+	"k8s.io/apimachinery/pkg/runtime"
 )
 
 func TestListTriggerBinding(t *testing.T) {
@@ -51,7 +53,7 @@ func TestListTriggerBinding(t *testing.T) {
 		},
 	}
 
-	tbs := []*v1alpha1.TriggerBinding{
+	tbs := []*v1beta1.TriggerBinding{
 		{
 			ObjectMeta: metav1.ObjectMeta{
 				Name:              "tb0",
@@ -90,63 +92,56 @@ func TestListTriggerBinding(t *testing.T) {
 
 	tests := []struct {
 		name      string
-		command   *cobra.Command
 		args      []string
 		wantError bool
 	}{
 		{
 			name:      "Invalid namespace",
-			command:   command(t, tbs, now, ns),
 			args:      []string{"list", "-n", "default"},
 			wantError: true,
 		},
 		{
 			name:      "No TriggerBinding",
-			command:   command(t, tbs, now, ns),
 			args:      []string{"list", "-n", "random"},
 			wantError: false,
 		},
 		{
 			name:      "Multiple TriggerBinding",
-			command:   command(t, tbs, now, ns),
 			args:      []string{"list", "-n", "foo"},
 			wantError: false,
 		},
 		{
 			name:      "by output as name",
-			command:   command(t, tbs, now, ns),
 			args:      []string{"list", "-n", "foo", "-o", "name"},
 			wantError: false,
 		},
 		{
 			name:      "Multiple TriggerBinding with output format",
-			command:   command(t, tbs, now, ns),
 			args:      []string{"list", "-n", "foo", "-o", "jsonpath={range .items[*]}{.metadata.name}{\"\\n\"}{end}"},
 			wantError: false,
 		},
 		{
 			name:      "TriggerBindings from all namespaces",
-			command:   command(t, tbs, now, ns),
 			args:      []string{"list", "--all-namespaces"},
 			wantError: false,
 		},
 		{
 			name:      "List TriggerBindings without headers",
-			command:   command(t, tbs, now, ns),
 			args:      []string{"list", "--no-headers"},
 			wantError: false,
 		},
 		{
 			name:      "List TriggerBindings from all namespaces without headers",
-			command:   command(t, tbs, now, ns),
 			args:      []string{"list", "--no-headers", "--all-namespaces"},
 			wantError: false,
 		},
 	}
 
+	p := command(t, tbs, now, ns)
+
 	for _, td := range tests {
 		t.Run(td.name, func(t *testing.T) {
-			got, err := test.ExecuteCommand(td.command, td.args...)
+			got, err := test.ExecuteCommand(Command(p), td.args...)
 
 			if err != nil && !td.wantError {
 				t.Errorf("Unexpected error: %v", err)
@@ -156,15 +151,22 @@ func TestListTriggerBinding(t *testing.T) {
 	}
 }
 
-func command(t *testing.T, tbs []*v1alpha1.TriggerBinding, now time.Time, ns []*corev1.Namespace) *cobra.Command {
+func command(t *testing.T, tbs []*v1beta1.TriggerBinding, now time.Time, ns []*corev1.Namespace) *test.Params {
 	// fake clock advanced by 1 hour
 	clock := clockwork.NewFakeClockAt(now)
 
 	cs := test.SeedTestResources(t, triggertest.Resources{TriggerBindings: tbs, Namespaces: ns})
-
-	p := &test.Params{Tekton: cs.Pipeline, Clock: clock, Kube: cs.Kube, Triggers: cs.Triggers}
-
-	return Command(p)
+	cs.Triggers.Resources = cb.TriggersAPIResourceList("v1beta1", []string{"triggerbinding"})
+	tdc := testDynamic.Options{}
+	var utts []runtime.Object
+	for _, tb := range tbs {
+		utts = append(utts, cb.UnstructuredV1beta1TB(tb, "v1beta1"))
+	}
+	dc, err := tdc.Client(utts...)
+	if err != nil {
+		t.Errorf("unable to create dynamic client: %v", err)
+	}
+	return &test.Params{Tekton: cs.Pipeline, Clock: clock, Kube: cs.Kube, Triggers: cs.Triggers, Dynamic: dc}
 }
 
 func TestTriggerBindingList_empty(t *testing.T) {
@@ -183,9 +185,9 @@ func TestTriggerBindingList_empty(t *testing.T) {
 		},
 	}
 
-	tb := []*v1alpha1.TriggerBinding{}
+	tb := []*v1beta1.TriggerBinding{}
 	listtb := command(t, tb, now, ns)
 
-	out, _ := test.ExecuteCommand(listtb, "list", "--all-namespaces")
+	out, _ := test.ExecuteCommand(Command(listtb), "list", "--all-namespaces")
 	test.AssertOutput(t, emptyMsg+"\n", out)
 }

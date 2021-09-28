@@ -120,3 +120,12 @@ func UnstructuredV1beta1TT(triggertemplate *triggersv1beta1.TriggerTemplate, ver
 		Object: object,
 	}
 }
+
+func UnstructuredV1beta1TB(triggerbinding *triggersv1beta1.TriggerBinding, version string) *unstructured.Unstructured {
+	triggerbinding.APIVersion = "triggers.tekton.dev/" + version
+	triggerbinding.Kind = "TriggerBinding"
+	object, _ := runtime.DefaultUnstructuredConverter.ToUnstructured(triggerbinding)
+	return &unstructured.Unstructured{
+		Object: object,
+	}
+}
