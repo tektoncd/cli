@@ -15,21 +15,18 @@
 package clustertriggerbinding
 
 import (
-	"context"
 	"fmt"
-	"io"
 	"text/tabwriter"
 	"text/template"
 
 	"github.com/spf13/cobra"
+	"github.com/tektoncd/cli/pkg/actions"
 	"github.com/tektoncd/cli/pkg/cli"
 	"github.com/tektoncd/cli/pkg/clustertriggerbinding"
 	"github.com/tektoncd/cli/pkg/formatted"
 	"github.com/tektoncd/cli/pkg/options"
-	"github.com/tektoncd/cli/pkg/printer"
-	"github.com/tektoncd/triggers/pkg/apis/triggers/v1alpha1"
+	"github.com/tektoncd/triggers/pkg/apis/triggers/v1beta1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
-	"k8s.io/apimachinery/pkg/runtime/schema"
 	cliopts "k8s.io/cli-runtime/pkg/genericclioptions"
 )
 
@@ -86,7 +83,7 @@ or
 			}
 
 			if len(args) == 0 {
-				ctb, err := clustertriggerbinding.GetAllClusterTriggerBindingNames(cs.Triggers, p.Namespace())
+				ctb, err := clustertriggerbinding.GetAllClusterTriggerBindingNames(cs)
 				if err != nil {
 					return err
 				}
@@ -103,7 +100,7 @@ or
 			}
 
 			if output != "" {
-				return describeClusterTriggerBindingOutput(cmd.OutOrStdout(), p, f, args[0])
+				return actions.PrintObject(clustertriggerbindingGroupResource, opts.ClusterTriggerBindingName, cmd.OutOrStdout(), cs.Dynamic, cs.Triggers.Discovery(), f, "")
 			}
 
 			return printClusterTriggerBindingDescription(s, p, opts.ClusterTriggerBindingName)
@@ -114,41 +111,19 @@ or
 	return c
 }
 
-func describeClusterTriggerBindingOutput(w io.Writer, p cli.Params, f *cliopts.PrintFlags, name string) error {
-	cs, err := p.Clients()
-	if err != nil {
-		return err
-	}
-
-	ctb, err := cs.Triggers.TriggersV1alpha1().ClusterTriggerBindings().Get(context.Background(), name, metav1.GetOptions{})
-	if err != nil {
-		return err
-	}
-
-	// NOTE: this is required for -o json|yaml to work properly since
-	// tektoncd go client fails to set these; probably a bug
-	ctb.GetObjectKind().SetGroupVersionKind(
-		schema.GroupVersionKind{
-			Version: "triggers.tekton.dev/v1alpha1",
-			Kind:    "ClusterTriggerBinding",
-		})
-
-	return printer.PrintObject(w, ctb, f)
-}
-
 func printClusterTriggerBindingDescription(s *cli.Stream, p cli.Params, ctbName string) error {
 	cs, err := p.Clients()
 	if err != nil {
 		return fmt.Errorf("failed to create tekton client")
 	}
 
-	ctb, err := cs.Triggers.TriggersV1alpha1().ClusterTriggerBindings().Get(context.Background(), ctbName, metav1.GetOptions{})
+	ctb, err := clustertriggerbinding.Get(cs, ctbName, metav1.GetOptions{})
 	if err != nil {
 		return fmt.Errorf("failed to get ClusterTriggerBinding %s: %v", ctbName, err)
 	}
 
 	var data = struct {
-		ClusterTriggerBinding *v1alpha1.ClusterTriggerBinding
+		ClusterTriggerBinding *v1beta1.ClusterTriggerBinding
 	}{
 		ClusterTriggerBinding: ctb,
 	}

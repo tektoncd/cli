@@ -14,7 +14,6 @@
 
 package clustertriggerbinding
 
-// TODO: properly move to v1beta1
 import (
 	"fmt"
 	"strings"
@@ -24,16 +23,19 @@ import (
 	"github.com/jonboulle/clockwork"
 	"github.com/spf13/cobra"
 	"github.com/tektoncd/cli/pkg/test"
-	v1alpha1 "github.com/tektoncd/triggers/pkg/apis/triggers/v1beta1"
+	cb "github.com/tektoncd/cli/pkg/test/builder"
+	testDynamic "github.com/tektoncd/cli/pkg/test/dynamic"
+	"github.com/tektoncd/triggers/pkg/apis/triggers/v1beta1"
 	triggertest "github.com/tektoncd/triggers/test"
 	"gotest.tools/v3/golden"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+	"k8s.io/apimachinery/pkg/runtime"
 )
 
 func TestListClusterTriggerBinding(t *testing.T) {
 	now := time.Now()
 
-	ctbs := []*v1alpha1.ClusterTriggerBinding{
+	ctbs := []*v1beta1.ClusterTriggerBinding{
 		{
 			ObjectMeta: metav1.ObjectMeta{
 				Name:              "ctb1",
@@ -67,7 +69,7 @@ func TestListClusterTriggerBinding(t *testing.T) {
 	}{
 		{
 			name:      "No ClusterTriggerBindings",
-			command:   command(t, []*v1alpha1.ClusterTriggerBinding{}, now),
+			command:   command(t, []*v1beta1.ClusterTriggerBinding{}, now),
 			args:      []string{"list"},
 			wantError: false,
 		},
@@ -109,13 +111,21 @@ func TestListClusterTriggerBinding(t *testing.T) {
 	}
 }
 
-func command(t *testing.T, ctbs []*v1alpha1.ClusterTriggerBinding, now time.Time) *cobra.Command {
+func command(t *testing.T, ctbs []*v1beta1.ClusterTriggerBinding, now time.Time) *cobra.Command {
 	// fake clock advanced by 1 hour
 	clock := clockwork.NewFakeClockAt(now)
 
 	cs := test.SeedTestResources(t, triggertest.Resources{ClusterTriggerBindings: ctbs})
-
-	p := &test.Params{Tekton: cs.Pipeline, Clock: clock, Triggers: cs.Triggers}
-
+	cs.Triggers.Resources = cb.TriggersAPIResourceList("v1beta1", []string{"clustertriggerbinding"})
+	tdc := testDynamic.Options{}
+	var utts []runtime.Object
+	for _, ctb := range ctbs {
+		utts = append(utts, cb.UnstructuredV1beta1CTB(ctb, "v1beta1"))
+	}
+	dc, err := tdc.Client(utts...)
+	if err != nil {
+		t.Errorf("unable to create dynamic client: %v", err)
+	}
+	p := &test.Params{Triggers: cs.Triggers, Kube: cs.Kube, Dynamic: dc, Tekton: cs.Pipeline, Clock: clock}
 	return Command(p)
 }

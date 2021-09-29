@@ -15,11 +15,12 @@
 package clustertriggerbinding
 
 import (
-	"context"
 	"fmt"
 
 	"github.com/spf13/cobra"
+	"github.com/tektoncd/cli/pkg/actions"
 	"github.com/tektoncd/cli/pkg/cli"
+	"github.com/tektoncd/cli/pkg/clustertriggerbinding"
 	"github.com/tektoncd/cli/pkg/deleter"
 	"github.com/tektoncd/cli/pkg/formatted"
 	"github.com/tektoncd/cli/pkg/options"
@@ -77,11 +78,11 @@ func deleteClusterTriggerBindings(s *cli.Stream, p cli.Params, ctbNames []string
 		return fmt.Errorf("failed to create tekton client")
 	}
 	d := deleter.New("ClusterTriggerBinding", func(bindingName string) error {
-		return cs.Triggers.TriggersV1alpha1().ClusterTriggerBindings().Delete(context.Background(), bindingName, metav1.DeleteOptions{})
+		return actions.Delete(clustertriggerbindingGroupResource, cs.Dynamic, cs.Triggers.Discovery(), bindingName, "", metav1.DeleteOptions{})
 	})
 
 	if deleteAll {
-		ctbNames, err = allClusterTriggerBindingNames(p, cs)
+		ctbNames, err = clustertriggerbinding.GetAllClusterTriggerBindingNames(cs)
 		if err != nil {
 			return err
 		}
@@ -96,16 +97,4 @@ func deleteClusterTriggerBindings(s *cli.Stream, p cli.Params, ctbNames []string
 		}
 	}
 	return d.Errors()
-}
-
-func allClusterTriggerBindingNames(p cli.Params, cs *cli.Clients) ([]string, error) {
-	ctbs, err := cs.Triggers.TriggersV1alpha1().ClusterTriggerBindings().List(context.Background(), metav1.ListOptions{})
-	if err != nil {
-		return nil, err
-	}
-	var names []string
-	for _, ctb := range ctbs.Items {
-		names = append(names, ctb.Name)
-	}
-	return names, nil
 }

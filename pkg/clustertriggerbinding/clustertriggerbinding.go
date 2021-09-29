@@ -15,17 +15,21 @@
 package clustertriggerbinding
 
 import (
-	"context"
+	"fmt"
+	"os"
 
-	"github.com/tektoncd/triggers/pkg/apis/triggers/v1alpha1"
-	"github.com/tektoncd/triggers/pkg/client/clientset/versioned"
+	"github.com/tektoncd/cli/pkg/actions"
+	"github.com/tektoncd/cli/pkg/cli"
+	"github.com/tektoncd/triggers/pkg/apis/triggers/v1beta1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/apimachinery/pkg/runtime/schema"
 )
 
-func GetAllClusterTriggerBindingNames(client versioned.Interface, namespace string) ([]string, error) {
+var clustertriggerbindingGroupResource = schema.GroupVersionResource{Group: "triggers.tekton.dev", Resource: "clustertriggerbindings"}
 
-	ps, err := List(client, namespace)
+func GetAllClusterTriggerBindingNames(client *cli.Clients) ([]string, error) {
+	ps, err := List(client, metav1.ListOptions{})
 	if err != nil {
 		return nil, err
 	}
@@ -37,19 +41,34 @@ func GetAllClusterTriggerBindingNames(client versioned.Interface, namespace stri
 	return ret, nil
 }
 
-func List(client versioned.Interface, namespace string) (*v1alpha1.ClusterTriggerBindingList, error) {
-	ctbs, err := client.TriggersV1alpha1().ClusterTriggerBindings().List(context.Background(), metav1.ListOptions{})
+func List(c *cli.Clients, opts metav1.ListOptions) (*v1beta1.ClusterTriggerBindingList, error) {
+	unstructuredCTB, err := actions.List(clustertriggerbindingGroupResource, c.Dynamic, c.Triggers.Discovery(), "", opts)
 	if err != nil {
 		return nil, err
 	}
 
-	// NOTE: this is required for -o json|yaml to work properly since
-	// tektoncd go client fails to set these; probably a bug
-	ctbs.GetObjectKind().SetGroupVersionKind(
-		schema.GroupVersionKind{
-			Version: "triggers.tekton.dev/v1alpha1",
-			Kind:    "ClusterTriggerBindingList",
-		})
+	var clustertriggerbindings *v1beta1.ClusterTriggerBindingList
+	if err := runtime.DefaultUnstructuredConverter.FromUnstructured(unstructuredCTB.UnstructuredContent(), &clustertriggerbindings); err != nil {
+		return nil, err
+	}
+	if err != nil {
+		fmt.Fprintf(os.Stderr, "Failed to list clustertriggerbindings\n")
+		return nil, err
+	}
 
-	return ctbs, nil
+	return clustertriggerbindings, nil
+}
+
+func Get(c *cli.Clients, ctbname string, opts metav1.GetOptions) (*v1beta1.ClusterTriggerBinding, error) {
+	unstructuredCTB, err := actions.Get(clustertriggerbindingGroupResource, c.Dynamic, c.Triggers.Discovery(), ctbname, "", opts)
+	if err != nil {
+		return nil, err
+	}
+
+	var ctb *v1beta1.ClusterTriggerBinding
+	if err := runtime.DefaultUnstructuredConverter.FromUnstructured(unstructuredCTB.UnstructuredContent(), &ctb); err != nil {
+		fmt.Fprintf(os.Stderr, "failed to get clustertriggerbinding\n")
+		return nil, err
+	}
+	return ctb, nil
 }

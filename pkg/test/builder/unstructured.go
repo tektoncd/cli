@@ -129,3 +129,12 @@ func UnstructuredV1beta1TB(triggerbinding *triggersv1beta1.TriggerBinding, versi
 		Object: object,
 	}
 }
+
+func UnstructuredV1beta1CTB(clustertriggerbinding *triggersv1beta1.ClusterTriggerBinding, version string) *unstructured.Unstructured {
+	clustertriggerbinding.APIVersion = "triggers.tekton.dev/" + version
+	clustertriggerbinding.Kind = "ClusterTriggerBinding"
+	object, _ := runtime.DefaultUnstructuredConverter.ToUnstructured(clustertriggerbinding)
+	return &unstructured.Unstructured{
+		Object: object,
+	}
+}

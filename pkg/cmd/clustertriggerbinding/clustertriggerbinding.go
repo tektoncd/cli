@@ -18,7 +18,10 @@ import (
 	"github.com/spf13/cobra"
 	"github.com/tektoncd/cli/pkg/cli"
 	"github.com/tektoncd/cli/pkg/flags"
+	"k8s.io/apimachinery/pkg/runtime/schema"
 )
+
+var clustertriggerbindingGroupResource = schema.GroupVersionResource{Group: "triggers.tekton.dev", Resource: "clustertriggerbindings"}
 
 func Command(p cli.Params) *cobra.Command {
 	cmd := &cobra.Command{
