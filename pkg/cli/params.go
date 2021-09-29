@@ -153,6 +153,7 @@ func (p *TektonParams) Clients(cfg ...*rest.Config) (*Clients, error) {
 		Resource: resource,
 		Triggers: triggers,
 		Dynamic:  dynamic,
+		Config:   config,
 	}
 
 	return p.clients, nil

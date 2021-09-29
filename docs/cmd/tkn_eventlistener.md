@@ -31,4 +31,5 @@ Manage EventListeners
 * [tkn eventlistener describe](tkn_eventlistener_describe.md)	 - Describe EventListener in a namespace
 * [tkn eventlistener list](tkn_eventlistener_list.md)	 - Lists EventListeners in a namespace
 * [tkn eventlistener logs](tkn_eventlistener_logs.md)	 - Show EventListener logs
+* [tkn eventlistener port-forward](tkn_eventlistener_port-forward.md)	 - Port forwards an EventListener in a namespace
 

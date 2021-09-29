@@ -15,12 +15,14 @@
 package eventlistener
 
 import (
+	"context"
 	"fmt"
 	"os"
 
 	"github.com/tektoncd/cli/pkg/actions"
 	"github.com/tektoncd/cli/pkg/cli"
 	"github.com/tektoncd/triggers/pkg/apis/triggers/v1beta1"
+	v1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/apimachinery/pkg/runtime/schema"
@@ -71,4 +73,30 @@ func Get(c *cli.Clients, elName string, opts metav1.GetOptions, ns string) (*v1b
 		return nil, err
 	}
 	return el, nil
+}
+
+func Pods(c *cli.Clients, elName string, opts metav1.GetOptions, ns string) ([]v1.Pod, error) {
+	el, err := Get(c, elName, opts, ns)
+	if err != nil {
+		return nil, err
+	}
+
+	deploy, err := c.Kube.AppsV1().Deployments(ns).Get(context.Background(), el.Status.Configuration.GeneratedResourceName, metav1.GetOptions{})
+	if err != nil {
+		return nil, fmt.Errorf("failed to get Deployment %s: %v", el.Status.Configuration.GeneratedResourceName, err)
+	}
+
+	if deploy.Spec.Selector == nil {
+		return nil, fmt.Errorf("failed to get label selectors for Deployment %v", el.Status.Configuration.GeneratedResourceName)
+	}
+
+	pods, err := c.Kube.CoreV1().Pods(ns).List(context.Background(),
+		metav1.ListOptions{
+			LabelSelector: metav1.FormatLabelSelector(deploy.Spec.Selector),
+		})
+	if err != nil {
+		return nil, fmt.Errorf("failed to get pods for EventListener %s: %v", elName, err)
+	}
+
+	return pods.Items, nil
 }

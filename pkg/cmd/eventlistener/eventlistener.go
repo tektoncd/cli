@@ -42,6 +42,7 @@ func Command(p cli.Params) *cobra.Command {
 		describeCommand(p),
 		listCommand(p),
 		logCommand(p),
+		portforwardCommand(p),
 	)
 
 	return cmd

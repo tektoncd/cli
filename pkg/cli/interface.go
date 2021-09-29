@@ -40,6 +40,7 @@ type Clients struct {
 	Resource   versionedResource.Interface
 	HTTPClient http.Client
 	Dynamic    dynamic.Interface
+	Config     *rest.Config
 }
 
 // Params interface provides

@@ -15,8 +15,10 @@
 package cli
 
 import (
+	"bufio"
 	"bytes"
 	"fmt"
+	"io"
 	"os"
 	"os/exec"
 	"strings"
@@ -79,6 +81,60 @@ func (e TknRunner) Run(t *testing.T, args ...string) *icmd.Result {
 	}
 	cmd := append([]string{e.path}, args...)
 	return icmd.RunCmd(icmd.Cmd{Command: cmd, Timeout: timeout})
+}
+
+type StopFn func(*testing.T) *icmd.Result
+
+// Start will execute the tkn command and return immediately. It returns a function that can be
+// called to kill the command and return the results
+func (e TknRunner) Start(args ...string) StopFn {
+	if e.namespace != "" {
+		args = append(args, "--namespace", e.namespace)
+	}
+	cmd := append([]string{e.path}, args...)
+	res := icmd.StartCmd(icmd.Cmd{Command: cmd, Timeout: timeout})
+
+	return func(t *testing.T) *icmd.Result {
+		assert.NilError(t, res.Cmd.Process.Kill())
+		return icmd.WaitOnCmd(timeout, res)
+	}
+}
+
+// StartAndWaitUntil is the same as Start except it will only return after substring appears in the stdout
+func (e TknRunner) StartAndWaitUntil(t *testing.T, substring string, args ...string) StopFn {
+	if e.namespace != "" {
+		args = append(args, "--namespace", e.namespace)
+	}
+	cmd := append([]string{e.path}, args...)
+	stdoutR, stdoutW := io.Pipe()
+	res := icmd.StartCmd(icmd.Cmd{Command: cmd, Timeout: timeout, Stdout: stdoutW})
+	assert.NilError(t, res.Error)
+
+	done := make(chan struct{}, 1)
+	go func() {
+		buf := bufio.NewScanner(stdoutR)
+		for buf.Scan() {
+			text := buf.Text()
+			if strings.Contains(text, substring) {
+				done <- struct{}{}
+				// needs to keep reading stdout until EOF otherwise exec.Cmd.Wait() times out trying to copy IO
+			}
+		}
+	}()
+
+	timer := time.NewTimer(timeout)
+	for {
+		select {
+		case <-timer.C:
+			t.Fatalf("Timeout out waiting for substring in stdout")
+		case <-done:
+			return func(t *testing.T) *icmd.Result {
+				assert.NilError(t, res.Cmd.Process.Kill())
+				return icmd.WaitOnCmd(timeout, res)
+			}
+		}
+	}
+
 }
 
 // MustSucceed asserts that the command ran with 0 exit code

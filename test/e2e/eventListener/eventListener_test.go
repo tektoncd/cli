@@ -19,6 +19,8 @@ package eventListener
 
 import (
 	"context"
+	"io"
+	"net/http"
 	"os"
 	"testing"
 
@@ -69,6 +71,38 @@ func TestEventListenerE2E(t *testing.T) {
 
 		stdout := res.Stdout()
 		assert.Check(t, helper.ContainsAll(stdout, "github-listener-interceptor-el-github-listener-interceptor-", elPods.Items[0].Name))
+	})
+
+	t.Run("Port forwarding EventListener default port", func(t *testing.T) {
+		stopTkn := tkn.StartAndWaitUntil(t, "Forwarding from ",
+			"eventlistener", "port-forward", elName)
+
+		resp, err := http.Get("http://localhost:8080")
+		assert.NilError(t, err)
+		defer resp.Body.Close()
+
+		body, err := io.ReadAll(resp.Body)
+		assert.NilError(t, err)
+		assert.Check(t, helper.ContainsAll(string(body), "eventListener", elName))
+
+		stdout := stopTkn(t).Stdout()
+		assert.Check(t, helper.ContainsAll(stdout, "Handling connection for 8080"))
+	})
+
+	t.Run("Port forwarding EventListener alternative port", func(t *testing.T) {
+		stopTkn := tkn.StartAndWaitUntil(t, "Forwarding from ",
+			"eventlistener", "port-forward", elName, "-p", "9080:8080")
+
+		resp, err := http.Get("http://localhost:9080")
+		assert.NilError(t, err)
+		defer resp.Body.Close()
+
+		body, err := io.ReadAll(resp.Body)
+		assert.NilError(t, err)
+		assert.Check(t, helper.ContainsAll(string(body), "eventListener", elName))
+
+		stdout := stopTkn(t).Stdout()
+		assert.Check(t, helper.ContainsAll(stdout, "Handling connection for 9080"))
 	})
 
 	t.Logf("Scaling EventListener %s to 3 replicas in namespace %s", elName, namespace)
