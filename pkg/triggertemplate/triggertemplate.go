@@ -28,13 +28,8 @@ import (
 
 var triggertemplateGroupResource = schema.GroupVersionResource{Group: "triggers.tekton.dev", Resource: "triggertemplates"}
 
-func GetAllTriggerTemplateNames(p cli.Params) ([]string, error) {
-	cs, err := p.Clients()
-	if err != nil {
-		return nil, err
-	}
-
-	ps, err := List(cs, metav1.ListOptions{}, p.Namespace())
+func GetAllTriggerTemplateNames(client *cli.Clients, namespace string) ([]string, error) {
+	ps, err := List(client, metav1.ListOptions{}, namespace)
 	if err != nil {
 		return nil, err
 	}

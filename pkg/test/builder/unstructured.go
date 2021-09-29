@@ -114,7 +114,7 @@ func UnstructuredV1beta1CT(clustertask *v1beta1.ClusterTask, version string) *un
 
 func UnstructuredV1beta1TT(triggertemplate *triggersv1beta1.TriggerTemplate, version string) *unstructured.Unstructured {
 	triggertemplate.APIVersion = "triggers.tekton.dev/" + version
-	triggertemplate.Kind = "triggertemplate"
+	triggertemplate.Kind = "TriggerTemplate"
 	object, _ := runtime.DefaultUnstructuredConverter.ToUnstructured(triggertemplate)
 	return &unstructured.Unstructured{
 		Object: object,
