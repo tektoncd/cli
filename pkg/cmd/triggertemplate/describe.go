@@ -16,21 +16,19 @@ package triggertemplate
 
 import (
 	"fmt"
-	"io"
 	"text/tabwriter"
 	"text/template"
 
 	"github.com/spf13/cobra"
+	"github.com/tektoncd/cli/pkg/actions"
 	"github.com/tektoncd/cli/pkg/cli"
 	"github.com/tektoncd/cli/pkg/formatted"
 	"github.com/tektoncd/cli/pkg/options"
-	"github.com/tektoncd/cli/pkg/printer"
 	"github.com/tektoncd/cli/pkg/triggertemplate"
 	"github.com/tektoncd/triggers/pkg/apis/triggers/v1beta1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
 	"k8s.io/apimachinery/pkg/runtime"
-	"k8s.io/apimachinery/pkg/runtime/schema"
 	cliopts "k8s.io/cli-runtime/pkg/genericclioptions"
 )
 
@@ -95,13 +93,18 @@ or
 				Err: cmd.OutOrStderr(),
 			}
 
+			cs, err := p.Clients()
+			if err != nil {
+				return err
+			}
+
 			output, err := cmd.LocalFlags().GetString("output")
 			if err != nil {
 				return fmt.Errorf("output option not set properly: %v", err)
 			}
 
 			if len(args) == 0 {
-				tt, err := triggertemplate.GetAllTriggerTemplateNames(p)
+				tt, err := triggertemplate.GetAllTriggerTemplateNames(cs, p.Namespace())
 				if err != nil {
 					return err
 				}
@@ -118,7 +121,7 @@ or
 			}
 
 			if output != "" {
-				return describeTriggerTemplateOutput(cmd.OutOrStdout(), p, f, args[0])
+				return actions.PrintObject(triggertemplateGroupResource, opts.TriggerTemplateName, cmd.OutOrStdout(), cs.Dynamic, cs.Triggers.Discovery(), f, p.Namespace())
 			}
 
 			return printTriggerTemplateDescription(s, p, opts.TriggerTemplateName)
@@ -127,28 +130,6 @@ or
 
 	f.AddFlags(c)
 	return c
-}
-
-func describeTriggerTemplateOutput(w io.Writer, p cli.Params, f *cliopts.PrintFlags, name string) error {
-	cs, err := p.Clients()
-	if err != nil {
-		return err
-	}
-
-	tt, err := triggertemplate.Get(cs, name, metav1.GetOptions{}, p.Namespace())
-	if err != nil {
-		return err
-	}
-
-	// NOTE: this is required for -o json|yaml to work properly since
-	// tektoncd go client fails to set these; probably a bug
-	tt.GetObjectKind().SetGroupVersionKind(
-		schema.GroupVersionKind{
-			Version: "triggers.tekton.dev/v1beta1",
-			Kind:    "TriggerTemplate",
-		})
-
-	return printer.PrintObject(w, tt, f)
 }
 
 func printTriggerTemplateDescription(s *cli.Stream, p cli.Params, ttname string) error {
