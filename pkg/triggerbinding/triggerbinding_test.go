@@ -22,7 +22,7 @@ import (
 	"github.com/tektoncd/cli/pkg/test"
 	cb "github.com/tektoncd/cli/pkg/test/builder"
 	testDynamic "github.com/tektoncd/cli/pkg/test/dynamic"
-	v1alpha1 "github.com/tektoncd/triggers/pkg/apis/triggers/v1beta1"
+	"github.com/tektoncd/triggers/pkg/apis/triggers/v1beta1"
 	triggertest "github.com/tektoncd/triggers/test"
 	corev1 "k8s.io/api/core/v1"
 	v1 "k8s.io/apimachinery/pkg/apis/meta/v1"
@@ -31,7 +31,7 @@ import (
 func TestTrigger_GetAllTriggerBinding(t *testing.T) {
 	clock := clockwork.NewFakeClock()
 
-	tb := []*v1alpha1.TriggerBinding{
+	tb := []*v1beta1.TriggerBinding{
 		{
 			ObjectMeta: v1.ObjectMeta{
 				Name:              "tb1",
@@ -41,7 +41,7 @@ func TestTrigger_GetAllTriggerBinding(t *testing.T) {
 		},
 	}
 
-	tb2 := []*v1alpha1.TriggerBinding{
+	tb2 := []*v1beta1.TriggerBinding{
 		{
 			ObjectMeta: v1.ObjectMeta{
 				Name:              "tb1",
@@ -134,7 +134,7 @@ func TestTrigger_GetAllTriggerBinding(t *testing.T) {
 func TestTriggerBinding_List(t *testing.T) {
 	clock := clockwork.NewFakeClock()
 
-	tb := []*v1alpha1.TriggerBinding{
+	tb := []*v1beta1.TriggerBinding{
 		{
 			ObjectMeta: v1.ObjectMeta{
 				Name:              "tb1",
@@ -144,7 +144,7 @@ func TestTriggerBinding_List(t *testing.T) {
 		},
 	}
 
-	tb2 := []*v1alpha1.TriggerBinding{
+	tb2 := []*v1beta1.TriggerBinding{
 		{
 			ObjectMeta: v1.ObjectMeta{
 				Name:              "tb1",
@@ -237,7 +237,7 @@ func TestTriggerBinding_List(t *testing.T) {
 func TestTriggerBinding_Get(t *testing.T) {
 	clock := clockwork.NewFakeClock()
 
-	tb := []*v1alpha1.TriggerBinding{
+	tb := []*v1beta1.TriggerBinding{
 		{
 			ObjectMeta: v1.ObjectMeta{
 				Name:              "tb1",
