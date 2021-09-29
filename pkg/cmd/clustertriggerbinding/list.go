@@ -24,7 +24,8 @@ import (
 	"github.com/tektoncd/cli/pkg/clustertriggerbinding"
 	"github.com/tektoncd/cli/pkg/formatted"
 	"github.com/tektoncd/cli/pkg/printer"
-	"github.com/tektoncd/triggers/pkg/apis/triggers/v1alpha1"
+	"github.com/tektoncd/triggers/pkg/apis/triggers/v1beta1"
+	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	cliopts "k8s.io/cli-runtime/pkg/genericclioptions"
 )
 
@@ -63,7 +64,7 @@ or
 				return err
 			}
 
-			tbs, err := clustertriggerbinding.List(cs.Triggers, "")
+			tbs, err := clustertriggerbinding.List(cs, metav1.ListOptions{})
 			if err != nil {
 				return fmt.Errorf("failed to list ClusterTriggerBindings: %v", err)
 			}
@@ -104,7 +105,7 @@ or
 	return c
 }
 
-func printFormatted(s *cli.Stream, tbs *v1alpha1.ClusterTriggerBindingList, p cli.Params, noHeaders bool) error {
+func printFormatted(s *cli.Stream, tbs *v1beta1.ClusterTriggerBindingList, p cli.Params, noHeaders bool) error {
 	if len(tbs.Items) == 0 {
 		fmt.Fprintln(s.Err, emptyMsg)
 		return nil

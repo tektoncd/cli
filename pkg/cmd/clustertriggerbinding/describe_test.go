@@ -19,8 +19,9 @@ import (
 	"testing"
 
 	"github.com/tektoncd/cli/pkg/test"
-	// TODO: properly move to v1beta1
-	v1alpha1 "github.com/tektoncd/triggers/pkg/apis/triggers/v1beta1"
+	cb "github.com/tektoncd/cli/pkg/test/builder"
+	testDynamic "github.com/tektoncd/cli/pkg/test/dynamic"
+	"github.com/tektoncd/triggers/pkg/apis/triggers/v1beta1"
 	triggertest "github.com/tektoncd/triggers/test"
 	"gotest.tools/v3/golden"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
@@ -28,7 +29,13 @@ import (
 
 func TestClusterTriggerBindingDescribe_NonExistedName(t *testing.T) {
 	cs := test.SeedTestResources(t, triggertest.Resources{})
-	p := &test.Params{Triggers: cs.Triggers, Kube: cs.Kube}
+	cs.Triggers.Resources = cb.TriggersAPIResourceList("v1beta1", []string{"clustertriggerbinding"})
+	tdc := testDynamic.Options{}
+	dc, err := tdc.Client()
+	if err != nil {
+		t.Errorf("unable to create dynamic client: %v", err)
+	}
+	p := &test.Params{Triggers: cs.Triggers, Kube: cs.Kube, Dynamic: dc}
 
 	clusterTriggerBinding := Command(p)
 	out, err := test.ExecuteCommand(clusterTriggerBinding, "desc", "bar")
@@ -40,7 +47,13 @@ func TestClusterTriggerBindingDescribe_NonExistedName(t *testing.T) {
 
 func TestClusterTriggerBindingDescribe_Empty(t *testing.T) {
 	cs := test.SeedTestResources(t, triggertest.Resources{})
-	p := &test.Params{Triggers: cs.Triggers, Kube: cs.Kube}
+	cs.Triggers.Resources = cb.TriggersAPIResourceList("v1beta1", []string{"clustertriggerbinding"})
+	tdc := testDynamic.Options{}
+	dc, err := tdc.Client()
+	if err != nil {
+		t.Errorf("unable to create dynamic client: %v", err)
+	}
+	p := &test.Params{Triggers: cs.Triggers, Kube: cs.Kube, Dynamic: dc}
 
 	clusterTriggerBinding := Command(p)
 	out, err := test.ExecuteCommand(clusterTriggerBinding, "desc")
@@ -51,7 +64,7 @@ func TestClusterTriggerBindingDescribe_Empty(t *testing.T) {
 }
 
 func TestClusterTriggerBindingDescribe_NoParams(t *testing.T) {
-	ctbs := []*v1alpha1.ClusterTriggerBinding{
+	ctbs := []*v1beta1.ClusterTriggerBinding{
 		{
 			ObjectMeta: metav1.ObjectMeta{
 				Name: "ctb1",
@@ -59,7 +72,15 @@ func TestClusterTriggerBindingDescribe_NoParams(t *testing.T) {
 		},
 	}
 	cs := test.SeedTestResources(t, triggertest.Resources{ClusterTriggerBindings: ctbs})
-	p := &test.Params{Triggers: cs.Triggers, Kube: cs.Kube}
+	cs.Triggers.Resources = cb.TriggersAPIResourceList("v1beta1", []string{"clustertriggerbinding"})
+	tdc := testDynamic.Options{}
+	dc, err := tdc.Client(
+		cb.UnstructuredV1beta1CTB(ctbs[0], "v1beta1"),
+	)
+	if err != nil {
+		t.Errorf("unable to create dynamic client: %v", err)
+	}
+	p := &test.Params{Triggers: cs.Triggers, Kube: cs.Kube, Dynamic: dc}
 
 	clusterTriggerBinding := Command(p)
 	out, err := test.ExecuteCommand(clusterTriggerBinding, "desc", "ctb1")
@@ -70,13 +91,13 @@ func TestClusterTriggerBindingDescribe_NoParams(t *testing.T) {
 }
 
 func TestTriggerBindingDescribe_WithParams(t *testing.T) {
-	ctbs := []*v1alpha1.ClusterTriggerBinding{
+	ctbs := []*v1beta1.ClusterTriggerBinding{
 		{
 			ObjectMeta: metav1.ObjectMeta{
 				Name: "ctb1",
 			},
-			Spec: v1alpha1.TriggerBindingSpec{
-				Params: []v1alpha1.Param{
+			Spec: v1beta1.TriggerBindingSpec{
+				Params: []v1beta1.Param{
 					{
 						Name:  "key",
 						Value: "value",
@@ -86,7 +107,15 @@ func TestTriggerBindingDescribe_WithParams(t *testing.T) {
 		},
 	}
 	cs := test.SeedTestResources(t, triggertest.Resources{ClusterTriggerBindings: ctbs})
-	p := &test.Params{Triggers: cs.Triggers, Kube: cs.Kube}
+	cs.Triggers.Resources = cb.TriggersAPIResourceList("v1beta1", []string{"clustertriggerbinding"})
+	tdc := testDynamic.Options{}
+	dc, err := tdc.Client(
+		cb.UnstructuredV1beta1CTB(ctbs[0], "v1beta1"),
+	)
+	if err != nil {
+		t.Errorf("unable to create dynamic client: %v", err)
+	}
+	p := &test.Params{Triggers: cs.Triggers, Kube: cs.Kube, Dynamic: dc}
 
 	clusterTriggerBinding := Command(p)
 	out, err := test.ExecuteCommand(clusterTriggerBinding, "desc", "ctb1")
@@ -97,13 +126,13 @@ func TestTriggerBindingDescribe_WithParams(t *testing.T) {
 }
 
 func TestClusterTriggerBindingDescribe_WithOutputName(t *testing.T) {
-	ctbs := []*v1alpha1.ClusterTriggerBinding{
+	ctbs := []*v1beta1.ClusterTriggerBinding{
 		{
 			ObjectMeta: metav1.ObjectMeta{
 				Name: "ctb1",
 			},
-			Spec: v1alpha1.TriggerBindingSpec{
-				Params: []v1alpha1.Param{
+			Spec: v1beta1.TriggerBindingSpec{
+				Params: []v1beta1.Param{
 					{
 						Name:  "key",
 						Value: "value",
@@ -113,7 +142,15 @@ func TestClusterTriggerBindingDescribe_WithOutputName(t *testing.T) {
 		},
 	}
 	cs := test.SeedTestResources(t, triggertest.Resources{ClusterTriggerBindings: ctbs})
-	p := &test.Params{Triggers: cs.Triggers, Kube: cs.Kube}
+	cs.Triggers.Resources = cb.TriggersAPIResourceList("v1beta1", []string{"clustertriggerbinding"})
+	tdc := testDynamic.Options{}
+	dc, err := tdc.Client(
+		cb.UnstructuredV1beta1CTB(ctbs[0], "v1beta1"),
+	)
+	if err != nil {
+		t.Errorf("unable to create dynamic client: %v", err)
+	}
+	p := &test.Params{Triggers: cs.Triggers, Kube: cs.Kube, Dynamic: dc}
 
 	clusterTriggerBinding := Command(p)
 	out, err := test.ExecuteCommand(clusterTriggerBinding, "desc", "-o", "name", "ctb1")
@@ -124,13 +161,13 @@ func TestClusterTriggerBindingDescribe_WithOutputName(t *testing.T) {
 }
 
 func TestClusterTriggerBindingDescribe_WithOutputYaml(t *testing.T) {
-	ctbs := []*v1alpha1.ClusterTriggerBinding{
+	ctbs := []*v1beta1.ClusterTriggerBinding{
 		{
 			ObjectMeta: metav1.ObjectMeta{
 				Name: "ctb1",
 			},
-			Spec: v1alpha1.TriggerBindingSpec{
-				Params: []v1alpha1.Param{
+			Spec: v1beta1.TriggerBindingSpec{
+				Params: []v1beta1.Param{
 					{
 						Name:  "key",
 						Value: "value",
@@ -140,7 +177,15 @@ func TestClusterTriggerBindingDescribe_WithOutputYaml(t *testing.T) {
 		},
 	}
 	cs := test.SeedTestResources(t, triggertest.Resources{ClusterTriggerBindings: ctbs})
-	p := &test.Params{Triggers: cs.Triggers, Kube: cs.Kube}
+	cs.Triggers.Resources = cb.TriggersAPIResourceList("v1beta1", []string{"clustertriggerbinding"})
+	tdc := testDynamic.Options{}
+	dc, err := tdc.Client(
+		cb.UnstructuredV1beta1CTB(ctbs[0], "v1beta1"),
+	)
+	if err != nil {
+		t.Errorf("unable to create dynamic client: %v", err)
+	}
+	p := &test.Params{Triggers: cs.Triggers, Kube: cs.Kube, Dynamic: dc}
 
 	clusterTriggerBinding := Command(p)
 	out, err := test.ExecuteCommand(clusterTriggerBinding, "desc", "-o", "yaml", "ctb1")
@@ -151,13 +196,13 @@ func TestClusterTriggerBindingDescribe_WithOutputYaml(t *testing.T) {
 }
 
 func TestClusterTriggerBindingDescribe_WithMultipleParams(t *testing.T) {
-	ctbs := []*v1alpha1.ClusterTriggerBinding{
+	ctbs := []*v1beta1.ClusterTriggerBinding{
 		{
 			ObjectMeta: metav1.ObjectMeta{
 				Name: "ctb1",
 			},
-			Spec: v1alpha1.TriggerBindingSpec{
-				Params: []v1alpha1.Param{
+			Spec: v1beta1.TriggerBindingSpec{
+				Params: []v1beta1.Param{
 					{
 						Name:  "key1",
 						Value: "value1",
@@ -179,7 +224,15 @@ func TestClusterTriggerBindingDescribe_WithMultipleParams(t *testing.T) {
 		},
 	}
 	cs := test.SeedTestResources(t, triggertest.Resources{ClusterTriggerBindings: ctbs})
-	p := &test.Params{Triggers: cs.Triggers, Kube: cs.Kube}
+	cs.Triggers.Resources = cb.TriggersAPIResourceList("v1beta1", []string{"clustertriggerbinding"})
+	tdc := testDynamic.Options{}
+	dc, err := tdc.Client(
+		cb.UnstructuredV1beta1CTB(ctbs[0], "v1beta1"),
+	)
+	if err != nil {
+		t.Errorf("unable to create dynamic client: %v", err)
+	}
+	p := &test.Params{Triggers: cs.Triggers, Kube: cs.Kube, Dynamic: dc}
 
 	clusterTriggerBinding := Command(p)
 	out, err := test.ExecuteCommand(clusterTriggerBinding, "desc", "ctb1")
@@ -190,7 +243,7 @@ func TestClusterTriggerBindingDescribe_WithMultipleParams(t *testing.T) {
 }
 
 func TestClusterTriggerBindingDescribe_AutoSelect(t *testing.T) {
-	ctbs := []*v1alpha1.ClusterTriggerBinding{
+	ctbs := []*v1beta1.ClusterTriggerBinding{
 		{
 			ObjectMeta: metav1.ObjectMeta{
 				Name: "ctb1",
@@ -199,7 +252,15 @@ func TestClusterTriggerBindingDescribe_AutoSelect(t *testing.T) {
 	}
 
 	cs := test.SeedTestResources(t, triggertest.Resources{ClusterTriggerBindings: ctbs})
-	p := &test.Params{Triggers: cs.Triggers, Kube: cs.Kube}
+	cs.Triggers.Resources = cb.TriggersAPIResourceList("v1beta1", []string{"clustertriggerbinding"})
+	tdc := testDynamic.Options{}
+	dc, err := tdc.Client(
+		cb.UnstructuredV1beta1CTB(ctbs[0], "v1beta1"),
+	)
+	if err != nil {
+		t.Errorf("unable to create dynamic client: %v", err)
+	}
+	p := &test.Params{Triggers: cs.Triggers, Kube: cs.Kube, Dynamic: dc}
 
 	clusterTriggerBinding := Command(p)
 	out, err := test.ExecuteCommand(clusterTriggerBinding, "desc", "-n", "ns")

@@ -14,14 +14,15 @@
 
 package clustertriggerbinding
 
-// TODO: properly move to v1beta1
 import (
 	"testing"
 	"time"
 
 	"github.com/jonboulle/clockwork"
 	"github.com/tektoncd/cli/pkg/test"
-	v1alpha1 "github.com/tektoncd/triggers/pkg/apis/triggers/v1beta1"
+	cb "github.com/tektoncd/cli/pkg/test/builder"
+	testDynamic "github.com/tektoncd/cli/pkg/test/dynamic"
+	"github.com/tektoncd/triggers/pkg/apis/triggers/v1beta1"
 	triggertest "github.com/tektoncd/triggers/test"
 	v1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 )
@@ -29,7 +30,7 @@ import (
 func TestTrigger_GetAllClusterTriggerBinding(t *testing.T) {
 	clock := clockwork.NewFakeClock()
 
-	ctb := []*v1alpha1.ClusterTriggerBinding{
+	ctb := []*v1beta1.ClusterTriggerBinding{
 		{
 			ObjectMeta: v1.ObjectMeta{
 				Name:              "ctb1",
@@ -38,7 +39,7 @@ func TestTrigger_GetAllClusterTriggerBinding(t *testing.T) {
 		},
 	}
 
-	ctb2 := []*v1alpha1.ClusterTriggerBinding{
+	ctb2 := []*v1beta1.ClusterTriggerBinding{
 		{
 			ObjectMeta: v1.ObjectMeta{
 				Name:              "ctb1",
@@ -56,8 +57,27 @@ func TestTrigger_GetAllClusterTriggerBinding(t *testing.T) {
 	cs := test.SeedTestResources(t, triggertest.Resources{ClusterTriggerBindings: ctb})
 	cs2 := test.SeedTestResources(t, triggertest.Resources{ClusterTriggerBindings: ctb2})
 
-	p := &test.Params{Triggers: cs.Triggers, Kube: cs.Kube}
-	p2 := &test.Params{Triggers: cs2.Triggers, Kube: cs2.Kube}
+	cs.Triggers.Resources = cb.TriggersAPIResourceList("v1beta1", []string{"clustertriggerbinding"})
+	tdc := testDynamic.Options{}
+	dc, err := tdc.Client(
+		cb.UnstructuredV1beta1CTB(ctb[0], "v1beta1"),
+	)
+	if err != nil {
+		t.Errorf("unable to create dynamic client: %v", err)
+	}
+
+	cs2.Triggers.Resources = cb.TriggersAPIResourceList("v1beta1", []string{"clustertriggerbinding"})
+	tdc2 := testDynamic.Options{}
+	dc2, err := tdc2.Client(
+		cb.UnstructuredV1beta1CTB(ctb2[0], "v1beta1"),
+		cb.UnstructuredV1beta1CTB(ctb2[1], "v1beta1"),
+	)
+	if err != nil {
+		t.Errorf("unable to create dynamic client: %v", err)
+	}
+
+	p := &test.Params{Triggers: cs.Triggers, Kube: cs.Kube, Clock: clock, Dynamic: dc}
+	p2 := &test.Params{Triggers: cs2.Triggers, Kube: cs2.Kube, Clock: clock, Dynamic: dc2}
 
 	testParams := []struct {
 		name   string
@@ -78,7 +98,11 @@ func TestTrigger_GetAllClusterTriggerBinding(t *testing.T) {
 
 	for _, tp := range testParams {
 		t.Run(tp.name, func(t *testing.T) {
-			got, err := GetAllClusterTriggerBindingNames(tp.params.Triggers, tp.params.Namespace())
+			cs, err := tp.params.Clients()
+			if err != nil {
+				t.Errorf("unexpected Error, not able to get clients")
+			}
+			got, err := GetAllClusterTriggerBindingNames(cs)
 			if err != nil {
 				t.Errorf("unexpected Error")
 			}
@@ -90,7 +114,7 @@ func TestTrigger_GetAllClusterTriggerBinding(t *testing.T) {
 func TestClusterTriggerBinding_List(t *testing.T) {
 	clock := clockwork.NewFakeClock()
 
-	ctb := []*v1alpha1.ClusterTriggerBinding{
+	ctb := []*v1beta1.ClusterTriggerBinding{
 		{
 			ObjectMeta: v1.ObjectMeta{
 				Name:              "ctb1",
@@ -99,7 +123,7 @@ func TestClusterTriggerBinding_List(t *testing.T) {
 		},
 	}
 
-	ctb2 := []*v1alpha1.ClusterTriggerBinding{
+	ctb2 := []*v1beta1.ClusterTriggerBinding{
 		{
 			ObjectMeta: v1.ObjectMeta{
 				Name:              "ctb1",
@@ -117,8 +141,27 @@ func TestClusterTriggerBinding_List(t *testing.T) {
 	cs := test.SeedTestResources(t, triggertest.Resources{ClusterTriggerBindings: ctb})
 	cs2 := test.SeedTestResources(t, triggertest.Resources{ClusterTriggerBindings: ctb2})
 
-	p := &test.Params{Triggers: cs.Triggers, Kube: cs.Kube}
-	p2 := &test.Params{Triggers: cs2.Triggers, Kube: cs2.Kube}
+	cs.Triggers.Resources = cb.TriggersAPIResourceList("v1beta1", []string{"clustertriggerbinding"})
+	tdc := testDynamic.Options{}
+	dc, err := tdc.Client(
+		cb.UnstructuredV1beta1CTB(ctb[0], "v1beta1"),
+	)
+	if err != nil {
+		t.Errorf("unable to create dynamic client: %v", err)
+	}
+
+	cs2.Triggers.Resources = cb.TriggersAPIResourceList("v1beta1", []string{"clustertriggerbinding"})
+	tdc2 := testDynamic.Options{}
+	dc2, err := tdc2.Client(
+		cb.UnstructuredV1beta1CTB(ctb2[0], "v1beta1"),
+		cb.UnstructuredV1beta1CTB(ctb2[1], "v1beta1"),
+	)
+	if err != nil {
+		t.Errorf("unable to create dynamic client: %v", err)
+	}
+
+	p := &test.Params{Triggers: cs.Triggers, Kube: cs.Kube, Clock: clock, Dynamic: dc}
+	p2 := &test.Params{Triggers: cs2.Triggers, Kube: cs2.Kube, Clock: clock, Dynamic: dc2}
 
 	testParams := []struct {
 		name   string
@@ -139,16 +182,62 @@ func TestClusterTriggerBinding_List(t *testing.T) {
 
 	for _, tp := range testParams {
 		t.Run(tp.name, func(t *testing.T) {
-			got, err := List(tp.params.Triggers, "ns")
+			cs, err := tp.params.Clients()
+			if err != nil {
+				t.Errorf("unexpected Error, not able to get clients")
+			}
+			got, err := List(cs, v1.ListOptions{})
 			if err != nil {
 				t.Errorf("unexpected Error")
 			}
 
-			tbnames := []string{}
-			for _, tb := range got.Items {
-				tbnames = append(tbnames, tb.Name)
+			ctbnames := []string{}
+			for _, ctb := range got.Items {
+				ctbnames = append(ctbnames, ctb.Name)
 			}
-			test.AssertOutput(t, tp.want, tbnames)
+			test.AssertOutput(t, tp.want, ctbnames)
 		})
 	}
+}
+
+func TestClusterTriggerBinding_Get(t *testing.T) {
+	clock := clockwork.NewFakeClock()
+
+	ctb := []*v1beta1.ClusterTriggerBinding{
+		{
+			ObjectMeta: v1.ObjectMeta{
+				Name:              "ctb1",
+				CreationTimestamp: v1.Time{Time: clock.Now().Add(-5 * time.Minute)},
+			},
+		},
+		{
+			ObjectMeta: v1.ObjectMeta{
+				Name:              "ctb2",
+				CreationTimestamp: v1.Time{Time: clock.Now().Add(-5 * time.Minute)},
+			},
+		},
+	}
+
+	cs := test.SeedTestResources(t, triggertest.Resources{ClusterTriggerBindings: ctb})
+
+	cs.Triggers.Resources = cb.TriggersAPIResourceList("v1beta1", []string{"clustertriggerbinding"})
+	tdc := testDynamic.Options{}
+	dc, err := tdc.Client(
+		cb.UnstructuredV1beta1CTB(ctb[0], "v1beta1"),
+		cb.UnstructuredV1beta1CTB(ctb[1], "v1beta1"),
+	)
+	if err != nil {
+		t.Errorf("unable to create dynamic client: %v", err)
+	}
+
+	p := &test.Params{Triggers: cs.Triggers, Kube: cs.Kube, Clock: clock, Dynamic: dc}
+	c, err := p.Clients()
+	if err != nil {
+		t.Errorf("unable to create client: %v", err)
+	}
+	got, err := Get(c, "ctb2", v1.GetOptions{})
+	if err != nil {
+		t.Errorf("unexpected Error")
+	}
+	test.AssertOutput(t, "ctb2", got.Name)
 }
