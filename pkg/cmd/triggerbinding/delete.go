@@ -82,7 +82,7 @@ func deleteTriggerBindings(s *cli.Stream, p cli.Params, tbNames []string, delete
 	})
 
 	if deleteAll {
-		tbNames, err = allTriggerBindingNames(cs, p.Namespace())
+		tbNames, err = triggerbinding.GetAllTriggerBindingNames(cs, p.Namespace())
 		if err != nil {
 			return err
 		}
@@ -97,16 +97,4 @@ func deleteTriggerBindings(s *cli.Stream, p cli.Params, tbNames []string, delete
 		}
 	}
 	return d.Errors()
-}
-
-func allTriggerBindingNames(cs *cli.Clients, ns string) ([]string, error) {
-	tbs, err := triggerbinding.List(cs, metav1.ListOptions{}, ns)
-	if err != nil {
-		return nil, err
-	}
-	var names []string
-	for _, tb := range tbs.Items {
-		names = append(names, tb.Name)
-	}
-	return names, nil
 }
