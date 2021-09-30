@@ -20,8 +20,9 @@ import (
 	"testing"
 
 	"github.com/tektoncd/cli/pkg/test"
-	// TODO: properly move to v1beta1
-	v1alpha1 "github.com/tektoncd/triggers/pkg/apis/triggers/v1beta1"
+	cb "github.com/tektoncd/cli/pkg/test/builder"
+	testDynamic "github.com/tektoncd/cli/pkg/test/dynamic"
+	"github.com/tektoncd/triggers/pkg/apis/triggers/v1beta1"
 	triggertest "github.com/tektoncd/triggers/test"
 	corev1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
@@ -36,9 +37,9 @@ func TestEventListenerDelete(t *testing.T) {
 		},
 	}
 
-	seeds := make([]triggertest.Clients, 0)
+	seeds := make([]*test.Params, 0)
 	for i := 0; i < 5; i++ {
-		els := []*v1alpha1.EventListener{
+		els := []*v1beta1.EventListener{
 			{
 				ObjectMeta: metav1.ObjectMeta{
 					Name:      "el-1",
@@ -61,13 +62,24 @@ func TestEventListenerDelete(t *testing.T) {
 
 		ctx, _ := test.SetupFakeContext(t)
 		cs := triggertest.SeedResources(t, ctx, triggertest.Resources{EventListeners: els, Namespaces: ns})
-		seeds = append(seeds, cs)
+		cs.Triggers.Resources = cb.TriggersAPIResourceList("v1beta1", []string{"eventlistener"})
+		tdc := testDynamic.Options{}
+		dc, err := tdc.Client(
+			cb.UnstructuredV1beta1EL(els[0], "v1beta1"),
+			cb.UnstructuredV1beta1EL(els[1], "v1beta1"),
+			cb.UnstructuredV1beta1EL(els[2], "v1beta1"),
+		)
+		if err != nil {
+			t.Errorf("unable to create dynamic client: %v", err)
+		}
+		p := &test.Params{Triggers: cs.Triggers, Kube: cs.Kube, Dynamic: dc}
+		seeds = append(seeds, p)
 	}
 
 	testParams := []struct {
 		name        string
 		command     []string
-		input       triggertest.Clients
+		input       *test.Params
 		inputStream io.Reader
 		wantError   bool
 		want        string
@@ -180,8 +192,7 @@ func TestEventListenerDelete(t *testing.T) {
 
 	for _, tp := range testParams {
 		t.Run(tp.name, func(t *testing.T) {
-			p := &test.Params{Triggers: tp.input.Triggers, Kube: tp.input.Kube}
-			eventListener := Command(p)
+			eventListener := Command(tp.input)
 
 			if tp.inputStream != nil {
 				eventListener.SetIn(tp.inputStream)

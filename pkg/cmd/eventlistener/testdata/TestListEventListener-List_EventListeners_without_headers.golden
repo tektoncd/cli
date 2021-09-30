@@ -1,4 +1,3 @@
-tb0   2 minutes ago    http://tb0-listener.default.svc.cluster.local   True
 tb1   2 minutes ago    http://tb1-listener.default.svc.cluster.local   True
 tb2   30 seconds ago   http://tb2-listener.default.svc.cluster.local   True
 tb3   1 week ago       http://tb3-listener.default.svc.cluster.local   True
