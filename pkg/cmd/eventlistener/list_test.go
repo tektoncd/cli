@@ -14,7 +14,6 @@
 
 package eventlistener
 
-// TODO: properly move to v1beta1
 import (
 	"fmt"
 	"strings"
@@ -22,16 +21,18 @@ import (
 	"time"
 
 	"github.com/jonboulle/clockwork"
-	"github.com/spf13/cobra"
 	"github.com/tektoncd/cli/pkg/test"
-	v1alpha1 "github.com/tektoncd/triggers/pkg/apis/triggers/v1beta1"
+	cb "github.com/tektoncd/cli/pkg/test/builder"
+	testDynamic "github.com/tektoncd/cli/pkg/test/dynamic"
+	"github.com/tektoncd/triggers/pkg/apis/triggers/v1beta1"
 	triggertest "github.com/tektoncd/triggers/test"
 	"gotest.tools/v3/golden"
 	corev1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+	"k8s.io/apimachinery/pkg/runtime"
 	"knative.dev/pkg/apis"
 	duckv1 "knative.dev/pkg/apis/duck/v1"
-	duckv1alpha1 "knative.dev/pkg/apis/duck/v1beta1"
+	duckv1beta1 "knative.dev/pkg/apis/duck/v1beta1"
 )
 
 func TestListEventListener(t *testing.T) {
@@ -55,14 +56,14 @@ func TestListEventListener(t *testing.T) {
 		},
 	}
 
-	els := []*v1alpha1.EventListener{
+	els := []*v1beta1.EventListener{
 		{
 			ObjectMeta: metav1.ObjectMeta{
 				Name:              "tb0",
 				Namespace:         "bar",
 				CreationTimestamp: metav1.Time{Time: now.Add(-2 * time.Minute)},
 			},
-			Status: v1alpha1.EventListenerStatus{
+			Status: v1beta1.EventListenerStatus{
 				Status: duckv1.Status{
 					Conditions: duckv1.Conditions{
 						apis.Condition{
@@ -73,8 +74,8 @@ func TestListEventListener(t *testing.T) {
 						},
 					},
 				},
-				AddressStatus: duckv1alpha1.AddressStatus{
-					Address: &duckv1alpha1.Addressable{
+				AddressStatus: duckv1beta1.AddressStatus{
+					Address: &duckv1beta1.Addressable{
 						URL: &apis.URL{
 							Scheme: "http",
 							Host:   "tb0-listener.default.svc.cluster.local",
@@ -89,7 +90,7 @@ func TestListEventListener(t *testing.T) {
 				Namespace:         "foo",
 				CreationTimestamp: metav1.Time{Time: now.Add(-2 * time.Minute)},
 			},
-			Status: v1alpha1.EventListenerStatus{
+			Status: v1beta1.EventListenerStatus{
 				Status: duckv1.Status{
 					Conditions: duckv1.Conditions{
 						apis.Condition{
@@ -100,8 +101,8 @@ func TestListEventListener(t *testing.T) {
 						},
 					},
 				},
-				AddressStatus: duckv1alpha1.AddressStatus{
-					Address: &duckv1alpha1.Addressable{
+				AddressStatus: duckv1beta1.AddressStatus{
+					Address: &duckv1beta1.Addressable{
 						URL: &apis.URL{
 							Scheme: "http",
 							Host:   "tb1-listener.default.svc.cluster.local",
@@ -116,7 +117,7 @@ func TestListEventListener(t *testing.T) {
 				Namespace:         "foo",
 				CreationTimestamp: metav1.Time{Time: now.Add(-30 * time.Second)},
 			},
-			Status: v1alpha1.EventListenerStatus{
+			Status: v1beta1.EventListenerStatus{
 				Status: duckv1.Status{
 					Conditions: duckv1.Conditions{
 						apis.Condition{
@@ -127,8 +128,8 @@ func TestListEventListener(t *testing.T) {
 						},
 					},
 				},
-				AddressStatus: duckv1alpha1.AddressStatus{
-					Address: &duckv1alpha1.Addressable{
+				AddressStatus: duckv1beta1.AddressStatus{
+					Address: &duckv1beta1.Addressable{
 						URL: &apis.URL{
 							Scheme: "http",
 							Host:   "tb2-listener.default.svc.cluster.local",
@@ -143,7 +144,7 @@ func TestListEventListener(t *testing.T) {
 				Namespace:         "foo",
 				CreationTimestamp: metav1.Time{Time: now.Add(-200 * time.Hour)},
 			},
-			Status: v1alpha1.EventListenerStatus{
+			Status: v1beta1.EventListenerStatus{
 				Status: duckv1.Status{
 					Conditions: duckv1.Conditions{
 						apis.Condition{
@@ -154,8 +155,8 @@ func TestListEventListener(t *testing.T) {
 						},
 					},
 				},
-				AddressStatus: duckv1alpha1.AddressStatus{
-					Address: &duckv1alpha1.Addressable{
+				AddressStatus: duckv1beta1.AddressStatus{
+					Address: &duckv1beta1.Addressable{
 						URL: &apis.URL{
 							Scheme: "http",
 							Host:   "tb3-listener.default.svc.cluster.local",
@@ -176,7 +177,7 @@ func TestListEventListener(t *testing.T) {
 				Namespace:         "foo",
 				CreationTimestamp: metav1.Time{Time: now.Add(-10 * time.Second)},
 			},
-			Status: v1alpha1.EventListenerStatus{
+			Status: v1beta1.EventListenerStatus{
 				Status: duckv1.Status{
 					Conditions: duckv1.Conditions{
 						apis.Condition{
@@ -191,51 +192,44 @@ func TestListEventListener(t *testing.T) {
 		},
 	}
 
+	p := command(t, els, now, ns)
 	tests := []struct {
 		name      string
-		command   *cobra.Command
 		args      []string
 		wantError bool
 	}{
 		{
 			name:      "Invalid namespace",
-			command:   command(t, els, now, ns),
 			args:      []string{"list", "-n", "default"},
 			wantError: true,
 		},
 		{
 			name:      "No EventListener",
-			command:   command(t, els, now, ns),
 			args:      []string{"list", "-n", "random"},
 			wantError: false,
 		},
 		{
 			name:      "Multiple EventListener",
-			command:   command(t, els, now, ns),
 			args:      []string{"list", "-n", "foo"},
 			wantError: false,
 		},
 		{
 			name:      "Multiple EventListener with output format",
-			command:   command(t, els, now, ns),
 			args:      []string{"list", "-n", "foo", "-o", "jsonpath={range .items[*]}{.metadata.name}{\"\\n\"}{end}"},
 			wantError: false,
 		},
 		{
 			name:      "EventListeners from all-namespaces",
-			command:   command(t, els, now, ns),
 			args:      []string{"list", "--all-namespaces"},
 			wantError: false,
 		},
 		{
 			name:      "List EventListeners without headers",
-			command:   command(t, els, now, ns),
 			args:      []string{"list", "--no-headers"},
 			wantError: false,
 		},
 		{
 			name:      "List EventListeners from all namespaces without headers",
-			command:   command(t, els, now, ns),
 			args:      []string{"list", "--no-headers", "--all-namespaces"},
 			wantError: false,
 		},
@@ -243,7 +237,7 @@ func TestListEventListener(t *testing.T) {
 
 	for _, td := range tests {
 		t.Run(td.name, func(t *testing.T) {
-			got, err := test.ExecuteCommand(td.command, td.args...)
+			got, err := test.ExecuteCommand(Command(p), td.args...)
 
 			if err != nil && !td.wantError {
 				t.Errorf("Unexpected error: %v", err)
@@ -253,12 +247,21 @@ func TestListEventListener(t *testing.T) {
 	}
 }
 
-func command(t *testing.T, els []*v1alpha1.EventListener, now time.Time, ns []*corev1.Namespace) *cobra.Command {
+func command(t *testing.T, els []*v1beta1.EventListener, now time.Time, ns []*corev1.Namespace) *test.Params {
 	// fake clock advanced by 1 hour
 	clock := clockwork.NewFakeClockAt(now)
 	cs := test.SeedTestResources(t, triggertest.Resources{EventListeners: els, Namespaces: ns})
-	p := &test.Params{Tekton: cs.Pipeline, Clock: clock, Kube: cs.Kube, Triggers: cs.Triggers}
-	return Command(p)
+	cs.Triggers.Resources = cb.TriggersAPIResourceList("v1beta1", []string{"eventlistener"})
+	tdc := testDynamic.Options{}
+	var utts []runtime.Object
+	for _, el := range els {
+		utts = append(utts, cb.UnstructuredV1beta1EL(el, "v1beta1"))
+	}
+	dc, err := tdc.Client(utts...)
+	if err != nil {
+		t.Errorf("unable to create dynamic client: %v", err)
+	}
+	return &test.Params{Tekton: cs.Pipeline, Clock: clock, Kube: cs.Kube, Triggers: cs.Triggers, Dynamic: dc}
 }
 
 func TestEventListenersList_empty(t *testing.T) {
@@ -277,9 +280,9 @@ func TestEventListenersList_empty(t *testing.T) {
 		},
 	}
 
-	els := []*v1alpha1.EventListener{}
+	els := []*v1beta1.EventListener{}
 	listEls := command(t, els, now, ns)
 
-	out, _ := test.ExecuteCommand(listEls, "list", "--all-namespaces")
+	out, _ := test.ExecuteCommand(Command(listEls), "list", "--all-namespaces")
 	test.AssertOutput(t, emptyMsg+"\n", out)
 }

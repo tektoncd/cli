@@ -15,17 +15,21 @@
 package eventlistener
 
 import (
-	"context"
+	"fmt"
+	"os"
 
-	"github.com/tektoncd/triggers/pkg/apis/triggers/v1alpha1"
-	"github.com/tektoncd/triggers/pkg/client/clientset/versioned"
+	"github.com/tektoncd/cli/pkg/actions"
+	"github.com/tektoncd/cli/pkg/cli"
+	"github.com/tektoncd/triggers/pkg/apis/triggers/v1beta1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/apimachinery/pkg/runtime/schema"
 )
 
-func GetAllEventListenerNames(client versioned.Interface, namespace string) ([]string, error) {
+var eventlistenerGroupResource = schema.GroupVersionResource{Group: "triggers.tekton.dev", Resource: "eventlisteners"}
 
-	ps, err := List(client, namespace)
+func GetAllEventListenerNames(client *cli.Clients, namespace string) ([]string, error) {
+	ps, err := List(client, metav1.ListOptions{}, namespace)
 	if err != nil {
 		return nil, err
 	}
@@ -37,19 +41,20 @@ func GetAllEventListenerNames(client versioned.Interface, namespace string) ([]s
 	return ret, nil
 }
 
-func List(client versioned.Interface, namespace string) (*v1alpha1.EventListenerList, error) {
-	els, err := client.TriggersV1alpha1().EventListeners(namespace).List(context.Background(), metav1.ListOptions{})
+func List(c *cli.Clients, opts metav1.ListOptions, ns string) (*v1beta1.EventListenerList, error) {
+	unstructuredEL, err := actions.List(eventlistenerGroupResource, c.Dynamic, c.Triggers.Discovery(), ns, opts)
 	if err != nil {
 		return nil, err
 	}
 
-	// NOTE: this is required for -o json|yaml to work properly since
-	// tektoncd go client fails to set these; probably a bug
-	els.GetObjectKind().SetGroupVersionKind(
-		schema.GroupVersionKind{
-			Version: "triggers.tekton.dev/v1alpha1",
-			Kind:    "EventListenerList",
-		})
+	var eventlisteners *v1beta1.EventListenerList
+	if err := runtime.DefaultUnstructuredConverter.FromUnstructured(unstructuredEL.UnstructuredContent(), &eventlisteners); err != nil {
+		return nil, err
+	}
+	if err != nil {
+		fmt.Fprintf(os.Stderr, "Failed to list eventlisteners from %s namespace \n", ns)
+		return nil, err
+	}
 
-	return els, nil
+	return eventlisteners, nil
 }

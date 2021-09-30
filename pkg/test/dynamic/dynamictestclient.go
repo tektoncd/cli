@@ -57,6 +57,7 @@ func (opt *Options) Client(objects ...runtime.Object) (dynamic.Interface, error)
 			{Group: "triggers.tekton.dev", Version: "v1beta1", Resource: "triggertemplates"}:       "TriggerTemplateList",
 			{Group: "triggers.tekton.dev", Version: "v1beta1", Resource: "triggerbindings"}:        "TriggerBindingList",
 			{Group: "triggers.tekton.dev", Version: "v1beta1", Resource: "clustertriggerbindings"}: "ClusterTriggerBindingList",
+			{Group: "triggers.tekton.dev", Version: "v1beta1", Resource: "eventlisteners"}:         "EventListenerList",
 		},
 		objects...,
 	)

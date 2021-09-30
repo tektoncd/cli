@@ -172,7 +172,7 @@ or
 			}
 
 			if len(args) == 0 {
-				eventListenerNames, err := eventlistener.GetAllEventListenerNames(cs.Triggers, p.Namespace())
+				eventListenerNames, err := eventlistener.GetAllEventListenerNames(cs, p.Namespace())
 				if err != nil {
 					return err
 				}

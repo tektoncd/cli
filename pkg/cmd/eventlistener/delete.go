@@ -15,12 +15,13 @@
 package eventlistener
 
 import (
-	"context"
 	"fmt"
 
 	"github.com/spf13/cobra"
+	"github.com/tektoncd/cli/pkg/actions"
 	"github.com/tektoncd/cli/pkg/cli"
 	"github.com/tektoncd/cli/pkg/deleter"
+	"github.com/tektoncd/cli/pkg/eventlistener"
 	"github.com/tektoncd/cli/pkg/formatted"
 	"github.com/tektoncd/cli/pkg/options"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
@@ -77,10 +78,10 @@ func deleteEventListeners(s *cli.Stream, p cli.Params, elNames []string, deleteA
 		return fmt.Errorf("failed to create tekton client")
 	}
 	d := deleter.New("EventListener", func(listenerName string) error {
-		return cs.Triggers.TriggersV1alpha1().EventListeners(p.Namespace()).Delete(context.Background(), listenerName, metav1.DeleteOptions{})
+		return actions.Delete(eventlistenerGroupResource, cs.Dynamic, cs.Triggers.Discovery(), listenerName, p.Namespace(), metav1.DeleteOptions{})
 	})
 	if deleteAll {
-		elNames, err = allEventListenerNames(p, cs)
+		elNames, err = eventlistener.GetAllEventListenerNames(cs, p.Namespace())
 		if err != nil {
 			return err
 		}
@@ -95,16 +96,4 @@ func deleteEventListeners(s *cli.Stream, p cli.Params, elNames []string, deleteA
 		}
 	}
 	return d.Errors()
-}
-
-func allEventListenerNames(p cli.Params, cs *cli.Clients) ([]string, error) {
-	els, err := cs.Triggers.TriggersV1alpha1().EventListeners(p.Namespace()).List(context.Background(), metav1.ListOptions{})
-	if err != nil {
-		return nil, err
-	}
-	var names []string
-	for _, el := range els.Items {
-		names = append(names, el.Name)
-	}
-	return names, nil
 }
