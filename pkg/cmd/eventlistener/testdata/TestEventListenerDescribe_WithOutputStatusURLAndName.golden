@@ -8,8 +8,8 @@ EventListenerTriggers
  BINDINGS
 
   REF   KIND                    APIVERSION
-  tb1   ClusterTriggerBinding   v1alpha1
+  tb1   ClusterTriggerBinding   v1beta1
 
  TEMPLATE REF   APIVERSION
- tt1            v1alpha1
+ tt1            v1beta1
  

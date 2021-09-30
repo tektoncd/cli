@@ -12,5 +12,5 @@ EventListenerTriggers
   binding   somevalue
 
  TEMPLATE REF   APIVERSION
- someref        v1alpha1
+ someref        v1beta1
  

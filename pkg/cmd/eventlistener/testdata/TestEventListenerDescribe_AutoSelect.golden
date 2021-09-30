@@ -4,5 +4,5 @@ Namespace:   ns
 EventListenerTriggers
 
  TEMPLATE REF   APIVERSION
- tt1            v1alpha1
+ tt1            v1beta1
  

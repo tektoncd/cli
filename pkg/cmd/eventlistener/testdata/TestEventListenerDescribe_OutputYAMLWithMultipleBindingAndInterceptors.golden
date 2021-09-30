@@ -1,101 +1,66 @@
-{
-    "kind": "EventListener",
-    "apiVersion": "triggers.tekton.dev/v1alpha1",
-    "metadata": {
-        "name": "el1",
-        "namespace": "ns",
-        "creationTimestamp": null
-    },
-    "spec": {
-        "triggers": [
-            {
-                "bindings": [
-                    {
-                        "ref": "tb1",
-                        "kind": "TriggerBinding"
-                    },
-                    {
-                        "ref": "tb2",
-                        "kind": "ClusterTriggerBinding",
-                        "apiversion": "v1alpha1"
-                    },
-                    {
-                        "ref": "tb3",
-                        "kind": "TriggerBinding",
-                        "apiversion": "v1alpha1"
-                    }
-                ],
-                "template": {
-                    "ref": "tt1",
-                    "apiversion": "v1alpha1"
-                },
-                "name": "foo-trig",
-                "interceptors": [
-                    {
-                        "ref": {},
-                        "cel": {
-                            "filter": "body.value == 'test'",
-                            "overlays": [
-                                {
-                                    "key": "value",
-                                    "expression": "'testing'"
-                                }
-                            ]
-                        }
-                    }
-                ]
-            },
-            {
-                "bindings": [
-                    {
-                        "ref": "tb4",
-                        "kind": "TriggerBinding"
-                    },
-                    {
-                        "ref": "tb5",
-                        "kind": "ClusterTriggerBinding",
-                        "apiversion": "v1alpha1"
-                    }
-                ],
-                "template": {
-                    "ref": "tt2",
-                    "apiversion": "v1alpha1"
-                },
-                "name": "foo-trig",
-                "interceptors": [
-                    {
-                        "ref": {},
-                        "webhook": {
-                            "objectRef": {
-                                "kind": "Service",
-                                "namespace": "namespace",
-                                "name": "webhookTest",
-                                "apiVersion": "v1"
-                            }
-                        }
-                    },
-                    {
-                        "ref": {},
-                        "cel": {
-                            "filter": "body.value == 'test'",
-                            "overlays": [
-                                {
-                                    "key": "value",
-                                    "expression": "'testing'"
-                                }
-                            ]
-                        }
-                    }
-                ],
-                "serviceAccountName": "sa1"
-            }
-        ],
-        "namespaceSelector": {},
-        "resources": {}
-    },
-    "status": {
-        "configuration": {
-            "generatedName": ""
-        }
-    }
-}
+apiVersion: triggers.tekton.dev/v1beta1
+kind: EventListener
+metadata:
+  creationTimestamp: null
+  name: el1
+  namespace: ns
+spec:
+  namespaceSelector: {}
+  resources: {}
+  triggers:
+  - bindings:
+    - kind: TriggerBinding
+      ref: tb1
+    - apiversion: v1beta1
+      kind: ClusterTriggerBinding
+      ref: tb2
+    - apiversion: v1beta1
+      kind: TriggerBinding
+      ref: tb3
+    interceptors:
+    - params:
+      - name: filter
+        value: body.value == 'test'
+      - name: overlays
+        value:
+        - expression: '''testing'''
+          key: value
+      ref:
+        kind: ClusterInterceptor
+        name: cel
+    name: foo-trig
+    template:
+      apiversion: v1beta1
+      ref: tt1
+  - bindings:
+    - kind: TriggerBinding
+      ref: tb4
+    - apiversion: v1beta1
+      kind: ClusterTriggerBinding
+      ref: tb5
+    interceptors:
+    - ref: {}
+      webhook:
+        objectRef:
+          apiVersion: v1
+          kind: Service
+          name: webhookTest
+          namespace: namespace
+    - params:
+      - name: filter
+        value: body.value == 'test'
+      - name: overlays
+        value:
+        - expression: '''testing'''
+          key: value
+      ref:
+        kind: ClusterInterceptor
+        name: cel
+    name: foo-trig
+    serviceAccountName: sa1
+    template:
+      apiversion: v1beta1
+      ref: tt2
+status:
+  configuration:
+    generatedName: ""

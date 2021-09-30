@@ -10,17 +10,21 @@ EventListenerTriggers
 
   REF   KIND                    APIVERSION
   tb1   TriggerBinding          
-  tb2   ClusterTriggerBinding   v1alpha1
-  tb3   TriggerBinding          v1alpha1
+  tb2   ClusterTriggerBinding   v1beta1
+  tb3   TriggerBinding          v1beta1
 
  TEMPLATE REF   APIVERSION
- tt1            v1alpha1
+ tt1            v1beta1
  
  INTERCEPTORS
-- cel:
-    filter: body.value == 'test'
-    overlays:
+- params:
+  - name: filter
+    value: body.value == 'test'
+  - name: overlays
+    value:
     - expression: '''testing'''
       key: value
-  ref: {}
+  ref:
+    kind: ClusterInterceptor
+    name: cel
 

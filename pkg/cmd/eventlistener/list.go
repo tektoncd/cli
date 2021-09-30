@@ -133,26 +133,17 @@ func printFormatted(s *cli.Stream, els *v1beta1.EventListenerList, p cli.Params,
 				el.Namespace,
 				el.Name,
 				formatted.Age(&el.CreationTimestamp, p.Time()),
-				formatted.FormatAddress(geturl(el)),
+				formatted.FormatAddress(getURL(el)),
 				status,
 			)
 		} else {
-			fmt.Println(el.Status)
 			fmt.Fprintf(w, "%s\t%s\t%s\t%s\n",
 				el.Name,
 				formatted.Age(&el.CreationTimestamp, p.Time()),
-				formatted.FormatAddress(geturl(el)),
+				formatted.FormatAddress(getURL(el)),
 				status,
 			)
 		}
 	}
 	return w.Flush()
-}
-
-// TODO: remove and move to getURL in describe CMD
-func geturl(listener v1beta1.EventListener) string {
-	if listener.Status.AddressStatus.Address == nil {
-		return ""
-	}
-	return listener.Status.Address.URL.String()
 }

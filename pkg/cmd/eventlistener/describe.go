@@ -15,7 +15,6 @@
 package eventlistener
 
 import (
-	"context"
 	"fmt"
 	"io"
 	"os"
@@ -24,14 +23,13 @@ import (
 	"text/template"
 
 	"github.com/spf13/cobra"
+	"github.com/tektoncd/cli/pkg/actions"
 	"github.com/tektoncd/cli/pkg/cli"
 	"github.com/tektoncd/cli/pkg/eventlistener"
 	"github.com/tektoncd/cli/pkg/formatted"
 	"github.com/tektoncd/cli/pkg/options"
-	"github.com/tektoncd/cli/pkg/printer"
-	"github.com/tektoncd/triggers/pkg/apis/triggers/v1alpha1"
+	"github.com/tektoncd/triggers/pkg/apis/triggers/v1beta1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
-	"k8s.io/apimachinery/pkg/runtime/schema"
 	cliopts "k8s.io/cli-runtime/pkg/genericclioptions"
 	"sigs.k8s.io/yaml"
 )
@@ -192,7 +190,7 @@ or
 				if strings.ToLower(output) == "url" {
 					return describeEventListenerOutputURL(cmd.OutOrStdout(), p, args[0])
 				}
-				return describeEventListenerOutput(cmd.OutOrStdout(), p, f, args[0])
+				return actions.PrintObject(eventlistenerGroupResource, opts.EventListenerName, cmd.OutOrStdout(), cs.Dynamic, cs.Triggers.Discovery(), f, p.Namespace())
 			}
 			return printEventListenerDescription(s, p, opts.EventListenerName)
 		},
@@ -202,35 +200,13 @@ or
 	return c
 }
 
-func describeEventListenerOutput(w io.Writer, p cli.Params, f *cliopts.PrintFlags, name string) error {
-	cs, err := p.Clients()
-	if err != nil {
-		return err
-	}
-
-	el, err := cs.Triggers.TriggersV1alpha1().EventListeners(p.Namespace()).Get(context.Background(), name, metav1.GetOptions{})
-	if err != nil {
-		return err
-	}
-
-	// NOTE: this is required for -o json|yaml to work properly since
-	// tektoncd go client fails to set these; probably a bug
-	el.GetObjectKind().SetGroupVersionKind(
-		schema.GroupVersionKind{
-			Version: "triggers.tekton.dev/v1alpha1",
-			Kind:    "EventListener",
-		})
-
-	return printer.PrintObject(w, el, f)
-}
-
 func describeEventListenerOutputURL(w io.Writer, p cli.Params, name string) error {
 	cs, err := p.Clients()
 	if err != nil {
 		return err
 	}
 
-	el, err := cs.Triggers.TriggersV1alpha1().EventListeners(p.Namespace()).Get(context.Background(), name, metav1.GetOptions{})
+	el, err := eventlistener.Get(cs, name, metav1.GetOptions{}, p.Namespace())
 	if err != nil {
 		return err
 	}
@@ -248,13 +224,13 @@ func printEventListenerDescription(s *cli.Stream, p cli.Params, elName string) e
 		return fmt.Errorf("failed to create tekton client")
 	}
 
-	el, err := cs.Triggers.TriggersV1alpha1().EventListeners(p.Namespace()).Get(context.Background(), elName, metav1.GetOptions{})
+	el, err := eventlistener.Get(cs, elName, metav1.GetOptions{}, p.Namespace())
 	if err != nil {
 		return fmt.Errorf("failed to get EventListener %s: %v", elName, err)
 	}
 
 	var data = struct {
-		EventListener *v1alpha1.EventListener
+		EventListener *v1beta1.EventListener
 	}{
 		EventListener: el,
 	}
@@ -278,7 +254,7 @@ func printEventListenerDescription(s *cli.Stream, p cli.Params, elName string) e
 	return w.Flush()
 }
 
-func getInterceptors(interceptors []*v1alpha1.EventInterceptor) string {
+func getInterceptors(interceptors []*v1beta1.EventInterceptor) string {
 	resourceTemplate, err := yaml.Marshal(interceptors)
 	if err != nil {
 		return "yaml marshal failed with error: " + err.Error()
@@ -286,21 +262,21 @@ func getInterceptors(interceptors []*v1alpha1.EventInterceptor) string {
 	return string(resourceTemplate)
 }
 
-func getURL(listener v1alpha1.EventListener) string {
+func getURL(listener v1beta1.EventListener) string {
 	if listener.Status.AddressStatus.Address == nil {
 		return ""
 	}
 	return listener.Status.Address.URL.String()
 }
 
-func getEventListenerName(listener v1alpha1.EventListener) string {
+func getEventListenerName(listener v1beta1.EventListener) string {
 	if listener.Status.Configuration.GeneratedResourceName == "" {
 		return ""
 	}
 	return listener.Status.Configuration.GeneratedResourceName
 }
 
-func isBindingRefExist(bindings []*v1alpha1.EventListenerBinding) bool {
+func isBindingRefExist(bindings []*v1beta1.EventListenerBinding) bool {
 	refExist := false
 	for _, j := range bindings {
 		if j.Ref != "" {
@@ -310,7 +286,7 @@ func isBindingRefExist(bindings []*v1alpha1.EventListenerBinding) bool {
 	return refExist
 }
 
-func isBindingNameExist(bindings []*v1alpha1.EventListenerBinding) bool {
+func isBindingNameExist(bindings []*v1beta1.EventListenerBinding) bool {
 	nameExist := false
 	for _, j := range bindings {
 		if j.Name != "" {
@@ -320,7 +296,7 @@ func isBindingNameExist(bindings []*v1alpha1.EventListenerBinding) bool {
 	return nameExist
 }
 
-func isTemplateRefExist(templates *v1alpha1.EventListenerTemplate) bool {
+func isTemplateRefExist(templates *v1beta1.EventListenerTemplate) bool {
 	return templates.Ref != nil
 }
 
