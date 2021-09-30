@@ -10,16 +10,20 @@ import (
 	"github.com/jonboulle/clockwork"
 	"github.com/spf13/cobra"
 	"github.com/tektoncd/cli/pkg/test"
+	cb "github.com/tektoncd/cli/pkg/test/builder"
+	testDynamic "github.com/tektoncd/cli/pkg/test/dynamic"
+	"github.com/tektoncd/triggers/pkg/apis/triggers/v1beta1"
 	v1alpha1 "github.com/tektoncd/triggers/pkg/apis/triggers/v1beta1"
 	triggertest "github.com/tektoncd/triggers/test"
 	"gotest.tools/v3/golden"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+	"k8s.io/apimachinery/pkg/runtime"
 )
 
 func TestLogsEventListener(t *testing.T) {
 	now := time.Now()
 
-	els := []*v1alpha1.EventListener{
+	els := []*v1beta1.EventListener{
 		{
 			ObjectMeta: metav1.ObjectMeta{
 				Name: "eventlistener-no-pods",
@@ -29,7 +33,6 @@ func TestLogsEventListener(t *testing.T) {
 
 	tests := []struct {
 		name       string
-		command    *cobra.Command
 		args       []string
 		wantError  bool
 		goldenFile bool
@@ -37,7 +40,6 @@ func TestLogsEventListener(t *testing.T) {
 	}{
 		{
 			name:       "No arguments passed",
-			command:    commandLogs(t, els, now),
 			args:       []string{"logs"},
 			wantError:  true,
 			goldenFile: false,
@@ -45,7 +47,6 @@ func TestLogsEventListener(t *testing.T) {
 		},
 		{
 			name:       "No EventListener found",
-			command:    commandLogs(t, els, now),
 			args:       []string{"logs", "notFound"},
 			wantError:  true,
 			goldenFile: false,
@@ -53,7 +54,6 @@ func TestLogsEventListener(t *testing.T) {
 		},
 		{
 			name:       "No EventListener pods",
-			command:    commandLogs(t, els, now),
 			args:       []string{"logs", "eventlistener-no-pods"},
 			wantError:  false,
 			goldenFile: false,
@@ -61,7 +61,6 @@ func TestLogsEventListener(t *testing.T) {
 		},
 		{
 			name:       "Tail option as 0 results in error",
-			command:    commandLogs(t, els, now),
 			args:       []string{"logs", "eventlistener-no-pods", "-t", "0"},
 			wantError:  true,
 			goldenFile: false,
@@ -69,7 +68,6 @@ func TestLogsEventListener(t *testing.T) {
 		},
 		{
 			name:       "Tail option as -2 results in error",
-			command:    commandLogs(t, els, now),
 			args:       []string{"logs", "eventlistener-no-pods", "-t", "-2"},
 			wantError:  true,
 			goldenFile: false,
@@ -79,7 +77,7 @@ func TestLogsEventListener(t *testing.T) {
 
 	for _, td := range tests {
 		t.Run(td.name, func(t *testing.T) {
-			got, err := test.ExecuteCommand(td.command, td.args...)
+			got, err := test.ExecuteCommand(commandLogs(t, els, now), td.args...)
 
 			if err != nil && !td.wantError {
 				t.Errorf("Unexpected error: %v", err)
@@ -100,6 +98,18 @@ func TestLogsEventListener(t *testing.T) {
 func commandLogs(t *testing.T, els []*v1alpha1.EventListener, now time.Time) *cobra.Command {
 	clock := clockwork.NewFakeClockAt(now)
 	cs := test.SeedTestResources(t, triggertest.Resources{EventListeners: els})
-	p := &test.Params{Tekton: cs.Pipeline, Clock: clock, Kube: cs.Kube, Triggers: cs.Triggers}
+	cs.Triggers.Resources = cb.TriggersAPIResourceList("v1beta1", []string{"eventlistener"})
+	tdc := testDynamic.Options{}
+	var utts []runtime.Object
+	for _, el := range els {
+		utts = append(utts, cb.UnstructuredV1beta1EL(el, "v1beta1"))
+	}
+	dc, err := tdc.Client(utts...)
+	if err != nil {
+		t.Errorf("unable to create dynamic client: %v", err)
+	}
+
+	p := &test.Params{Tekton: cs.Pipeline, Clock: clock, Kube: cs.Kube, Triggers: cs.Triggers, Dynamic: dc}
+
 	return Command(p)
 }

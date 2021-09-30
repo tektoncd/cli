@@ -23,6 +23,7 @@ import (
 
 	"github.com/spf13/cobra"
 	"github.com/tektoncd/cli/pkg/cli"
+	"github.com/tektoncd/cli/pkg/eventlistener"
 	"github.com/tektoncd/cli/pkg/formatted"
 	"github.com/tektoncd/cli/pkg/options"
 	corev1 "k8s.io/api/core/v1"
@@ -56,7 +57,12 @@ Show 2 lines of most recent logs from all EventListener pods:
 				return fmt.Errorf("tail cannot be 0 or less than 0 unless -1 for all pods")
 			}
 
-			err := getEventListener(args[0], p)
+			cs, err := p.Clients()
+			if err != nil {
+				return fmt.Errorf("failed to create tekton client")
+			}
+
+			_, err = eventlistener.Get(cs, args[0], metav1.GetOptions{}, p.Namespace())
 			if err != nil {
 				return err
 			}
@@ -71,20 +77,6 @@ Show 2 lines of most recent logs from all EventListener pods:
 	}
 	c.Flags().Int64VarP(&opts.Tail, "tail", "t", 10, "Number of most recent log lines to show. Specify -1 for all logs from each pod.")
 	return c
-}
-
-func getEventListener(elName string, p cli.Params) error {
-	cs, err := p.Clients()
-	if err != nil {
-		return fmt.Errorf("failed to create tekton client")
-	}
-
-	_, err = cs.Triggers.TriggersV1alpha1().EventListeners(p.Namespace()).Get(context.Background(), elName, metav1.GetOptions{})
-	if err != nil {
-		return fmt.Errorf("failed to get EventListener %s: %v", elName, err)
-	}
-
-	return nil
 }
 
 func logs(elName string, p cli.Params, s *cli.Stream, opts *options.LogOptions) error {
