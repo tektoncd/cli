@@ -11,18 +11,22 @@ EventListenerTriggers
 
   REF   KIND                    APIVERSION
   tb1   TriggerBinding          
-  tb2   ClusterTriggerBinding   v1alpha1
+  tb2   ClusterTriggerBinding   v1beta1
 
  TEMPLATE REF   APIVERSION
- tt1            v1alpha1
+ tt1            v1beta1
  
  INTERCEPTORS
-- cel:
-    filter: body.value == 'test'
-    overlays:
+- params:
+  - name: filter
+    value: body.value == 'test'
+  - name: overlays
+    value:
     - expression: '''testing'''
       key: value
-  ref: {}
+  ref:
+    kind: ClusterInterceptor
+    name: cel
 
 EventListenerTriggers
 
@@ -33,10 +37,10 @@ EventListenerTriggers
 
   REF   KIND                    APIVERSION
   tb4   TriggerBinding          
-  tb5   ClusterTriggerBinding   v1alpha1
+  tb5   ClusterTriggerBinding   v1beta1
 
  TEMPLATE REF   APIVERSION
- tt2            v1alpha1
+ tt2            v1beta1
  
  SERVICE ACCOUNT NAME
  sa1
@@ -49,10 +53,14 @@ EventListenerTriggers
       kind: Service
       name: webhookTest
       namespace: namespace
-- cel:
-    filter: body.value == 'test'
-    overlays:
+- params:
+  - name: filter
+    value: body.value == 'test'
+  - name: overlays
+    value:
     - expression: '''testing'''
       key: value
-  ref: {}
+  ref:
+    kind: ClusterInterceptor
+    name: cel
 

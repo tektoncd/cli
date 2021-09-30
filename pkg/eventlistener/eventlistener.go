@@ -58,3 +58,17 @@ func List(c *cli.Clients, opts metav1.ListOptions, ns string) (*v1beta1.EventLis
 
 	return eventlisteners, nil
 }
+
+func Get(c *cli.Clients, elName string, opts metav1.GetOptions, ns string) (*v1beta1.EventListener, error) {
+	unstructuredEl, err := actions.Get(eventlistenerGroupResource, c.Dynamic, c.Triggers.Discovery(), elName, ns, opts)
+	if err != nil {
+		return nil, fmt.Errorf("failed to get EventListener %s: %v", elName, err)
+	}
+
+	var el *v1beta1.EventListener
+	if err := runtime.DefaultUnstructuredConverter.FromUnstructured(unstructuredEl.UnstructuredContent(), &el); err != nil {
+		fmt.Fprintf(os.Stderr, "failed to get eventlistener from %s namespace \n", ns)
+		return nil, err
+	}
+	return el, nil
+}
