@@ -27,7 +27,6 @@ import (
 	"github.com/Netflix/go-expect"
 	"github.com/google/go-cmp/cmp"
 	"github.com/jonboulle/clockwork"
-	tb "github.com/tektoncd/cli/internal/builder/v1alpha1"
 	"github.com/tektoncd/cli/pkg/cli"
 	"github.com/tektoncd/cli/pkg/pipeline"
 	"github.com/tektoncd/cli/pkg/pipelinerun"
@@ -51,7 +50,6 @@ import (
 	util_runtime "k8s.io/apimachinery/pkg/util/runtime"
 	"k8s.io/apimachinery/pkg/watch"
 	k8stest "k8s.io/client-go/testing"
-	"knative.dev/pkg/apis"
 	duckv1beta1 "knative.dev/pkg/apis/duck/v1beta1"
 )
 
@@ -152,33 +150,106 @@ func TestPipelineStart_ExecuteCommand(t *testing.T) {
 	c1 := &test.Params{Tekton: cs.Pipeline, Kube: cs.Kube, Dynamic: dc, Clock: clock, Resource: cs.Resource}
 
 	pipeline := []*v1alpha1.Pipeline{
-		tb.Pipeline("test-pipeline",
-			tb.PipelineNamespace("ns"),
-			tb.PipelineSpec(
-				tb.PipelineDeclaredResource("git-repo", "git"),
-				tb.PipelineDeclaredResource("build-image", "image"),
-				tb.PipelineParamSpec("pipeline-param", v1alpha1.ParamTypeString, tb.ParamSpecDefault("somethingdifferent")),
-				tb.PipelineParamSpec("rev-param", v1alpha1.ParamTypeString, tb.ParamSpecDefault("revision")),
-				tb.PipelineTask("unit-test-1", "unit-test-task",
-					tb.PipelineTaskInputResource("workspace", "git-repo"),
-					tb.PipelineTaskOutputResource("image-to-use", "best-image"),
-					tb.PipelineTaskOutputResource("workspace", "git-repo"),
-				),
-			),
-		),
+		{
+
+			ObjectMeta: metav1.ObjectMeta{
+				Name:      "test-pipeline",
+				Namespace: "ns",
+			},
+			Spec: v1alpha1.PipelineSpec{
+				Tasks: []v1alpha1.PipelineTask{
+					{
+						Name: "unit-test-1",
+						TaskRef: &v1beta1.TaskRef{
+							Name: "unit-test-task",
+						},
+						Resources: &v1beta1.PipelineTaskResources{
+							Inputs: []v1beta1.PipelineTaskInputResource{
+								{
+									Name:     "workspace",
+									Resource: "git-repo",
+								},
+							},
+							Outputs: []v1beta1.PipelineTaskOutputResource{
+								{
+									Name:     "image-to-use",
+									Resource: "best-image",
+								},
+								{
+									Name:     "workspace",
+									Resource: "git-repo",
+								},
+							},
+						},
+					},
+				},
+				Resources: []v1beta1.PipelineDeclaredResource{
+					{
+						Name: "git-repo",
+						Type: v1alpha1.PipelineResourceTypeGit,
+					},
+					{
+						Name: "build-image",
+						Type: v1alpha1.PipelineResourceTypeImage,
+					},
+				},
+				Params: []v1beta1.ParamSpec{
+					{
+						Name: "pipeline-param",
+						Type: v1beta1.ParamTypeString,
+						Default: &v1beta1.ArrayOrString{
+							Type:      v1beta1.ParamTypeString,
+							StringVal: "somethingdifferent",
+						},
+					},
+					{
+						Name: "rev-param",
+						Type: v1beta1.ParamTypeString,
+						Default: &v1beta1.ArrayOrString{
+							Type:      v1beta1.ParamTypeString,
+							StringVal: "revision",
+						},
+					},
+				},
+			},
+		},
 	}
 
 	pipeline2 := []*v1alpha1.Pipeline{
-		tb.Pipeline("test-pipeline",
-			tb.PipelineNamespace("ns"),
-			tb.PipelineSpec(
-				tb.PipelineTask("unit-test-1", "unit-test-task",
-					tb.PipelineTaskInputResource("workspace", "git-repo"),
-					tb.PipelineTaskOutputResource("image-to-use", "best-image"),
-					tb.PipelineTaskOutputResource("workspace", "git-repo"),
-				),
-			),
-		),
+		{
+			ObjectMeta: metav1.ObjectMeta{
+				Name:      "test-pipeline",
+				Namespace: "ns",
+			},
+			Spec: v1alpha1.PipelineSpec{
+				Tasks: []v1alpha1.PipelineTask{
+					{
+						Name: "unit-test-1",
+						TaskRef: &v1beta1.TaskRef{
+							Name: "unit-test-task",
+						},
+						Resources: &v1beta1.PipelineTaskResources{
+							Inputs: []v1beta1.PipelineTaskInputResource{
+								{
+									Name:     "workspace",
+									Resource: "git-repo",
+								},
+							},
+							Outputs: []v1beta1.PipelineTaskOutputResource{
+								{
+									Name:     "image-to-use",
+									Resource: "best-image",
+								},
+								{
+									Name:     "workspace",
+									Resource: "git-repo",
+								},
+							},
+						},
+					},
+				},
+			},
+		},
 	}
 	cs2, _ := test.SeedTestData(t, pipelinetest.Data{Pipelines: pipeline, Namespaces: namespaces})
 	cs2.Pipeline.Resources = cb.APIResourceList("v1alpha1", []string{"pipeline", "pipelinerun"})
@@ -260,18 +331,36 @@ func TestPipelineStart_ExecuteCommand(t *testing.T) {
 	// pipelineresources data for tests with --filename
 	objs2 := []runtime.Object{}
 	pres := []*v1alpha1.PipelineResource{
-		tb.PipelineResource("scaffold-git",
-			tb.PipelineResourceNamespace("ns"),
-			tb.PipelineResourceSpec("git",
-				tb.PipelineResourceSpecParam("url", "git@github.com:tektoncd/cli.git"),
-			),
-		),
-		tb.PipelineResource("imageres",
-			tb.PipelineResourceNamespace("ns"),
-			tb.PipelineResourceSpec("image",
-				tb.PipelineResourceSpecParam("url", "gcr.io/christiewilson-catfactory/leeroy-web"),
-			),
-		),
+		{
+			ObjectMeta: metav1.ObjectMeta{
+				Name:      "scaffold-git",
+				Namespace: "ns",
+			},
+			Spec: v1alpha1.PipelineResourceSpec{
+				Type: v1alpha1.PipelineResourceTypeGit,
+				Params: []v1alpha1.ResourceParam{
+					{
+						Name:  "url",
+						Value: "git@github.com:tektoncd/cli.git",
+					},
+				},
+			},
+		},
+		{
+			ObjectMeta: metav1.ObjectMeta{
+				Name:      "imageres",
+				Namespace: "ns",
+			},
+			Spec: v1alpha1.PipelineResourceSpec{
+				Type: v1alpha1.PipelineResourceTypeImage,
+				Params: []v1alpha1.ResourceParam{
+					{
+						Name:  "url",
+						Value: "gcr.io/christiewilson-catfactory/leeroy-web",
+					},
+				},
+			},
+		},
 	}
 	seedData2, _ := test.SeedTestData(t, pipelinetest.Data{
 		Namespaces:        namespaces,
@@ -946,18 +1035,36 @@ func TestPipelineV1beta1Start_ExecuteCommand(t *testing.T) {
 	// pipelineresources data for tests with --filename
 	objs2 := []runtime.Object{}
 	pres := []*v1alpha1.PipelineResource{
-		tb.PipelineResource("scaffold-git",
-			tb.PipelineResourceNamespace("ns"),
-			tb.PipelineResourceSpec("git",
-				tb.PipelineResourceSpecParam("url", "git@github.com:tektoncd/cli.git"),
-			),
-		),
-		tb.PipelineResource("imageres",
-			tb.PipelineResourceNamespace("ns"),
-			tb.PipelineResourceSpec("image",
-				tb.PipelineResourceSpecParam("url", "gcr.io/christiewilson-catfactory/leeroy-web"),
-			),
-		),
+		{
+			ObjectMeta: metav1.ObjectMeta{
+				Name:      "scaffold-git",
+				Namespace: "ns",
+			},
+			Spec: v1alpha1.PipelineResourceSpec{
+				Type: v1alpha1.PipelineResourceTypeGit,
+				Params: []v1alpha1.ResourceParam{
+					{
+						Name:  "url",
+						Value: "git@github.com:tektoncd/cli.git",
+					},
+				},
+			},
+		},
+		{
+			ObjectMeta: metav1.ObjectMeta{
+				Name:      "imageres",
+				Namespace: "ns",
+			},
+			Spec: v1alpha1.PipelineResourceSpec{
+				Type: v1alpha1.PipelineResourceTypeImage,
+				Params: []v1alpha1.ResourceParam{
+					{
+						Name:  "url",
+						Value: "gcr.io/christiewilson-catfactory/leeroy-web",
+					},
+				},
+			},
+		},
 	}
 	seedData2, _ := test.SeedV1beta1TestData(t, pipelinev1beta1test.Data{
 		Namespaces:        namespaces,
@@ -1447,28 +1554,90 @@ func TestPipelineStart_Interactive(t *testing.T) {
 
 	cs, _ := test.SeedTestData(t, pipelinetest.Data{
 		Pipelines: []*v1alpha1.Pipeline{
-			tb.Pipeline("test-pipeline",
-				tb.PipelineNamespace("ns"),
-				tb.PipelineSpec(
-					tb.PipelineDeclaredResource("git-repo", "git"),
-					tb.PipelineParamSpec("pipeline-param", v1alpha1.ParamTypeString, tb.ParamSpecDefault("somethingdifferent")),
-					tb.PipelineParamSpec("rev-param", v1alpha1.ParamTypeString, tb.ParamSpecDefault("revision")),
-					tb.PipelineParamSpec("array-param", v1alpha1.ParamTypeArray, tb.ParamSpecDefault("revision1", "revision2")),
-					tb.PipelineTask("unit-test-1", "unit-test-task",
-						tb.PipelineTaskInputResource("workspace", "git-repo"),
-						tb.PipelineTaskOutputResource("image-to-use", "best-image"),
-						tb.PipelineTaskOutputResource("workspace", "git-repo"),
-					),
-				),
-			),
+			{
+				ObjectMeta: metav1.ObjectMeta{
+					Name:      "test-pipeline",
+					Namespace: "ns",
+				},
+				Spec: v1alpha1.PipelineSpec{
+					Tasks: []v1alpha1.PipelineTask{
+						{
+							Name: "unit-test-1",
+							TaskRef: &v1beta1.TaskRef{
+								Name: "unit-test-task",
+							},
+							Resources: &v1beta1.PipelineTaskResources{
+								Inputs: []v1beta1.PipelineTaskInputResource{
+									{
+										Name:     "workspace",
+										Resource: "git-repo",
+									},
+								},
+								Outputs: []v1beta1.PipelineTaskOutputResource{
+									{
+										Name:     "image-to-use",
+										Resource: "best-image",
+									},
+									{
+										Name:     "workspace",
+										Resource: "git-repo",
+									},
+								},
+							},
+						},
+					},
+					Resources: []v1beta1.PipelineDeclaredResource{
+						{
+							Name: "git-repo",
+							Type: v1alpha1.PipelineResourceTypeGit,
+						},
+					},
+					Params: []v1beta1.ParamSpec{
+						{
+							Name: "pipeline-param",
+							Type: v1beta1.ParamTypeString,
+							Default: &v1beta1.ArrayOrString{
+								Type:      v1alpha1.ParamTypeString,
+								StringVal: "somethingdifferent",
+							},
+						},
+						{
+							Name: "rev-param",
+							Type: v1beta1.ParamTypeString,
+							Default: &v1beta1.ArrayOrString{
+								Type:      v1alpha1.ParamTypeString,
+								StringVal: "revision",
+							},
+						},
+						{
+							Name: "array-param",
+							Type: v1beta1.ParamTypeArray,
+							Default: &v1beta1.ArrayOrString{
+								Type:     v1alpha1.ParamTypeString,
+								ArrayVal: []string{"revision1", "revision2"},
+							},
+						},
+					},
+				},
+			},
 		},
 		PipelineResources: []*v1alpha1.PipelineResource{
-			tb.PipelineResource("scaffold-git",
-				tb.PipelineResourceNamespace("ns"),
-				tb.PipelineResourceSpec("git",
-					tb.PipelineResourceSpecParam("url", "git@github.com:tektoncd/cli.git"),
-				),
-			),
+
+			{
+				ObjectMeta: metav1.ObjectMeta{
+					Name:      "scaffold-git",
+					Namespace: "ns",
+				},
+				Spec: v1alpha1.PipelineResourceSpec{
+					Type: v1alpha1.PipelineResourceTypeGit,
+					Params: []v1alpha1.ResourceParam{
+						{
+							Name:  "url",
+							Value: "git@github.com:tektoncd/cli.git",
+						},
+					},
+				},
+			},
 		},
 		Namespaces: []*corev1.Namespace{
 			{
@@ -1482,406 +1651,934 @@ func TestPipelineStart_Interactive(t *testing.T) {
 	// Declared single pipeline resource, but has no resource
 	cs2, _ := test.SeedTestData(t, pipelinetest.Data{
 		Pipelines: []*v1alpha1.Pipeline{
-			tb.Pipeline("test-pipeline",
-				tb.PipelineNamespace("ns"),
-				tb.PipelineSpec(
-					tb.PipelineDeclaredResource("git-repo", "git"),
-					tb.PipelineTask("first-create-file", "create-file",
-						tb.PipelineTaskInputResource("workspace", "git-repo"),
-						tb.PipelineTaskOutputResource("workspace", "source-repo"),
-					),
-					tb.PipelineTask("then-check", "check-stuff-file-exists",
-						tb.PipelineTaskInputResource("workspace", "git-repo", tb.From("first-create-file")),
-					),
-				),
-			),
+			{
+				ObjectMeta: metav1.ObjectMeta{
+					Name:      "test-pipeline",
+					Namespace: "ns",
+				},
+				Spec: v1alpha1.PipelineSpec{
+					Tasks: []v1alpha1.PipelineTask{
+						{
+							Name: "first-create-file",
+							TaskRef: &v1beta1.TaskRef{
+								Name: "create-file",
+							},
+							Resources: &v1beta1.PipelineTaskResources{
+								Inputs: []v1beta1.PipelineTaskInputResource{
+									{
+										Name:     "workspace",
+										Resource: "git-repo",
+									},
+								},
+								Outputs: []v1beta1.PipelineTaskOutputResource{
+									{
+										Name:     "workspace",
+										Resource: "source-repo",
+									},
+								},
+							},
+						},
+						{
+							Name: "then-check",
+							TaskRef: &v1beta1.TaskRef{
+								Name: "check-stuff-file-exists",
+							},
+							Resources: &v1beta1.PipelineTaskResources{
+								Inputs: []v1beta1.PipelineTaskInputResource{
+									{
+										Name:     "workspace",
+										Resource: "git-repo",
+										From:     []string{"first-create-file"},
+									},
+								},
+							},
+						},
+					},
+					Resources: []v1beta1.PipelineDeclaredResource{
+						{
+							Name: "git-repo",
+							Type: v1alpha1.PipelineResourceTypeGit,
+						},
+					},
+				},
+			},
 		},
 
 		Tasks: []*v1alpha1.Task{
-			tb.Task("check-stuff-file-exists",
-				tb.TaskNamespace("ns"),
-				tb.TaskSpec(
-					tb.TaskInputs(
-						tb.InputsResource("workspace", "git",
-							tb.ResourceTargetPath("newworkspace")),
-					),
-					tb.Step("ubuntu",
-						tb.StepName("read"),
-						tb.StepCommand("/bin/bash"),
-						tb.StepArgs("-c", "cat", "/workspace/newworkspace/stuff"),
-					),
-				),
-			),
-			tb.Task("create-file",
-				tb.TaskNamespace("ns"),
-				tb.TaskSpec(
-					tb.TaskInputs(
-						tb.InputsResource("workspace", "git",
-							tb.ResourceTargetPath("damnworkspace")),
-					),
-					tb.TaskOutputs(
-						tb.OutputsResource("workspace", "git"),
-					),
-					tb.Step("ubuntu",
-						tb.StepName("read-docs-old"),
-						tb.StepCommand("/bin/bash"),
-						tb.StepArgs("-c", "ls -la /workspace/damnworkspace/docs/README.md"),
-					),
-					tb.Step("ubuntu",
-						tb.StepName("write-new-stuff"),
-						tb.StepCommand("bash"),
-						tb.StepArgs("-c", "ln -s /workspace/damnworkspace /workspace/output/workspace && echo some stuff > /workspace/output/workspace/stuff"),
-					),
-				),
-			),
+			{
+				ObjectMeta: metav1.ObjectMeta{
+					Name:      "check-stuff-file-exists",
+					Namespace: "ns",
+				},
+				Spec: v1alpha1.TaskSpec{
+					TaskSpec: v1beta1.TaskSpec{
+						Resources: &v1beta1.TaskResources{
+							Inputs: []v1beta1.TaskResource{
+								{
+									ResourceDeclaration: v1beta1.ResourceDeclaration{
+										Name:       "workspace",
+										Type:       v1beta1.PipelineResourceTypeGit,
+										TargetPath: "newworkspace",
+									},
+								},
+							},
+						},
+						Steps: []v1alpha1.Step{
+							{
+								Container: corev1.Container{
+									Name:    "read",
+									Image:   "ubuntu",
+									Command: []string{"/bin/bash"},
+									Args:    []string{"-c", "cat", "/workspace/newworkspace/stuff"},
+								},
+							},
+						},
+					},
+				},
+			},
+			{
+				ObjectMeta: metav1.ObjectMeta{
+					Name:      "create-file",
+					Namespace: "ns",
+				},
+				Spec: v1alpha1.TaskSpec{
+					TaskSpec: v1beta1.TaskSpec{
+						Resources: &v1beta1.TaskResources{
+							Inputs: []v1beta1.TaskResource{
+								{
+									ResourceDeclaration: v1beta1.ResourceDeclaration{
+										Name:       "workspace",
+										Type:       v1beta1.PipelineResourceTypeGit,
+										TargetPath: "damnworkspace",
+									},
+								},
+							},
+							Outputs: []v1beta1.TaskResource{
+								{
+									ResourceDeclaration: v1beta1.ResourceDeclaration{
+										Name: "workspace",
+										Type: v1beta1.PipelineResourceTypeGit,
+									},
+								},
+							},
+						},
+						Steps: []v1alpha1.Step{
+							{
+								Container: corev1.Container{
+									Image:   "ubuntu",
+									Name:    "read-docs-old",
+									Command: []string{"/bin/bash"},
+									Args:    []string{"-c", "ls -la /workspace/damnworkspace/docs/README.md"},
+								},
+							},
+							{
+								Container: corev1.Container{
+									Image:   "ubuntu",
+									Name:    "write-new-stuff",
+									Command: []string{"bash"},
+									Args:    []string{"-c", "ln -s /workspace/damnworkspace /workspace/output/workspace && echo some stuff > /workspace/output/workspace/stuff"},
+								},
+							},
+						},
+					},
+				},
+			},
 		},
 	})
 
 	// Declared multiple pipeline resource, but has no resource
 	cs3, _ := test.SeedTestData(t, pipelinetest.Data{
 		Pipelines: []*v1alpha1.Pipeline{
-			tb.Pipeline("test-pipeline",
-				tb.PipelineNamespace("ns"),
-				tb.PipelineSpec(
-					tb.PipelineDeclaredResource("git-repo", "git"),
-					tb.PipelineDeclaredResource("source-repo", "git"),
-					tb.PipelineTask("first-create-file", "create-file",
-						tb.PipelineTaskInputResource("workspace", "git-repo"),
-						tb.PipelineTaskOutputResource("workspace", "source-repo"),
-					),
-					tb.PipelineTask("then-check", "check-stuff-file-exists",
-						tb.PipelineTaskInputResource("workspace", "git-repo", tb.From("first-create-file")),
-					),
-				),
-			),
+			{
+				ObjectMeta: metav1.ObjectMeta{
+					Name:      "test-pipeline",
+					Namespace: "ns",
+				},
+				Spec: v1alpha1.PipelineSpec{
+					Tasks: []v1alpha1.PipelineTask{
+						{
+							Name: "first-create-file",
+							TaskRef: &v1beta1.TaskRef{
+								Name: "create-file",
+							},
+							Resources: &v1beta1.PipelineTaskResources{
+								Inputs: []v1beta1.PipelineTaskInputResource{
+									{
+										Name:     "workspace",
+										Resource: "git-repo",
+									},
+								},
+								Outputs: []v1beta1.PipelineTaskOutputResource{
+									{
+										Name:     "workspace",
+										Resource: "source-repo",
+									},
+								},
+							},
+						},
+						{
+							Name: "then-check",
+							TaskRef: &v1beta1.TaskRef{
+								Name: "check-stuff-file-exists",
+							},
+							Resources: &v1beta1.PipelineTaskResources{
+								Inputs: []v1beta1.PipelineTaskInputResource{
+									{
+										Name:     "workspace",
+										Resource: "git-repo",
+										From:     []string{"first-create-file"},
+									},
+								},
+							},
+						},
+					},
+					Resources: []v1beta1.PipelineDeclaredResource{
+						{
+							Name: "git-repo",
+							Type: v1alpha1.PipelineResourceTypeGit,
+						},
+						{
+							Name: "source-repo",
+							Type: v1alpha1.PipelineResourceTypeGit,
+						},
+					},
+				},
+			},
 		},
 
 		Tasks: []*v1alpha1.Task{
-			tb.Task("check-stuff-file-exists",
-				tb.TaskNamespace("ns"),
-				tb.TaskSpec(
-					tb.TaskInputs(
-						tb.InputsResource("workspace", "git",
-							tb.ResourceTargetPath("newworkspace")),
-					),
-					tb.Step("ubuntu",
-						tb.StepName("read"),
-						tb.StepCommand("/bin/bash"),
-						tb.StepArgs("-c", "cat", "/workspace/newworkspace/stuff"),
-					),
-				),
-			),
-			tb.Task("create-file",
-				tb.TaskNamespace("ns"),
-				tb.TaskSpec(
-					tb.TaskInputs(
-						tb.InputsResource("workspace", "git",
-							tb.ResourceTargetPath("damnworkspace")),
-					),
-					tb.TaskOutputs(
-						tb.OutputsResource("workspace", "git"),
-					),
-					tb.Step("ubuntu",
-						tb.StepName("read-docs-old"),
-						tb.StepCommand("/bin/bash"),
-						tb.StepArgs("-c", "ls -la /workspace/damnworkspace/docs/README.md"),
-					),
-					tb.Step("ubuntu",
-						tb.StepName("write-new-stuff"),
-						tb.StepCommand("bash"),
-						tb.StepArgs("-c", "ln -s /workspace/damnworkspace /workspace/output/workspace && echo some stuff > /workspace/output/workspace/stuff"),
-					),
-				),
-			),
+			{
+				ObjectMeta: metav1.ObjectMeta{
+					Name:      "check-stuff-file-exists",
+					Namespace: "ns",
+				},
+				Spec: v1alpha1.TaskSpec{
+					TaskSpec: v1beta1.TaskSpec{
+						Resources: &v1beta1.TaskResources{
+							Inputs: []v1beta1.TaskResource{
+								{
+									ResourceDeclaration: v1beta1.ResourceDeclaration{
+										Name:       "workspace",
+										Type:       v1beta1.PipelineResourceTypeGit,
+										TargetPath: "newworkspace",
+									},
+								},
+							},
+						},
+						Steps: []v1alpha1.Step{
+							{
+								Container: corev1.Container{
+									Name:    "read",
+									Image:   "ubuntu",
+									Command: []string{"/bin/bash"},
+									Args:    []string{"-c", "cat", "/workspace/newworkspace/stuff"},
+								},
+							},
+						},
+					},
+				},
+			},
+			{
+				ObjectMeta: metav1.ObjectMeta{
+					Name:      "create-file",
+					Namespace: "ns",
+				},
+				Spec: v1alpha1.TaskSpec{
+					TaskSpec: v1beta1.TaskSpec{
+						Resources: &v1beta1.TaskResources{
+							Inputs: []v1beta1.TaskResource{
+								{
+									ResourceDeclaration: v1beta1.ResourceDeclaration{
+										Name:       "workspace",
+										Type:       v1beta1.PipelineResourceTypeGit,
+										TargetPath: "damnworkspace",
+									},
+								},
+							},
+							Outputs: []v1beta1.TaskResource{
+								{
+									ResourceDeclaration: v1beta1.ResourceDeclaration{
+										Name: "workspace",
+										Type: v1beta1.PipelineResourceTypeGit,
+									},
+								},
+							},
+						},
+						Steps: []v1alpha1.Step{
+							{
+								Container: corev1.Container{
+									Image:   "ubuntu",
+									Name:    "read-docs-old",
+									Command: []string{"/bin/bash"},
+									Args:    []string{"-c", "ls -la /workspace/damnworkspace/docs/README.md"},
+								},
+							},
+							{
+								Container: corev1.Container{
+									Image:   "ubuntu",
+									Name:    "write-new-stuff",
+									Command: []string{"bash"},
+									Args:    []string{"-c", "ln -s /workspace/damnworkspace /workspace/output/workspace && echo some stuff > /workspace/output/workspace/stuff"},
+								},
+							},
+						},
+					},
+				},
+			},
 		},
 	})
 
 	// With single pipeline resource
 	cs4, _ := test.SeedTestData(t, pipelinetest.Data{
 		Pipelines: []*v1alpha1.Pipeline{
-			tb.Pipeline("test-pipeline",
-				tb.PipelineNamespace("ns"),
-				tb.PipelineSpec(
-					tb.PipelineDeclaredResource("git-repo", "git"),
-					tb.PipelineTask("first-create-file", "create-file",
-						tb.PipelineTaskInputResource("workspace", "git-repo"),
-						tb.PipelineTaskOutputResource("workspace", "source-repo"),
-					),
-					tb.PipelineTask("then-check", "check-stuff-file-exists",
-						tb.PipelineTaskInputResource("workspace", "git-repo", tb.From("first-create-file")),
-					),
-				),
-			),
+			{
+				ObjectMeta: metav1.ObjectMeta{
+					Name:      "test-pipeline",
+					Namespace: "ns",
+				},
+				Spec: v1alpha1.PipelineSpec{
+					Tasks: []v1alpha1.PipelineTask{
+						{
+							Name: "first-create-file",
+							TaskRef: &v1beta1.TaskRef{
+								Name: "create-file",
+							},
+							Resources: &v1beta1.PipelineTaskResources{
+								Inputs: []v1beta1.PipelineTaskInputResource{
+									{
+										Name:     "workspace",
+										Resource: "git-repo",
+									},
+								},
+								Outputs: []v1beta1.PipelineTaskOutputResource{
+									{
+										Name:     "workspace",
+										Resource: "source-repo",
+									},
+								},
+							},
+						},
+						{
+							Name: "then-check",
+							TaskRef: &v1beta1.TaskRef{
+								Name: "check-stuff-file-exists",
+							},
+							Resources: &v1beta1.PipelineTaskResources{
+								Inputs: []v1beta1.PipelineTaskInputResource{
+									{
+										Name:     "workspace",
+										Resource: "git-repo",
+										From:     []string{"first-create-file"},
+									},
+								},
+							},
+						},
+					},
+					Resources: []v1beta1.PipelineDeclaredResource{
+						{
+							Name: "git-repo",
+							Type: v1alpha1.PipelineResourceTypeGit,
+						},
+					},
+				},
+			},
 		},
 
 		PipelineResources: []*v1alpha1.PipelineResource{
-			tb.PipelineResource("gitres",
-				tb.PipelineResourceNamespace("ns"),
-				tb.PipelineResourceSpec("git",
-					tb.PipelineResourceSpecParam("url", "https://github.com/GoogleContainerTools/skaffold"),
-					tb.PipelineResourceSpecParam("version", "master"),
-				),
-			),
+			{
+				ObjectMeta: metav1.ObjectMeta{
+					Name:      "gitres",
+					Namespace: "ns",
+				},
+				Spec: v1alpha1.PipelineResourceSpec{
+					Type: v1alpha1.PipelineResourceTypeGit,
+					Params: []v1alpha1.ResourceParam{
+						{
+							Name:  "url",
+							Value: "https://github.com/GoogleContainerTools/skaffold",
+						},
+						{
+							Name:  "version",
+							Value: "master",
+						},
+					},
+				},
+			},
 		},
 
 		Tasks: []*v1alpha1.Task{
-			tb.Task("check-stuff-file-exists",
-				tb.TaskNamespace("ns"),
-				tb.TaskSpec(
-					tb.TaskInputs(
-						tb.InputsResource("workspace", "git",
-							tb.ResourceTargetPath("newworkspace")),
-					),
-					tb.Step("ubuntu",
-						tb.StepName("read"),
-						tb.StepCommand("/bin/bash"),
-						tb.StepArgs("-c", "cat", "/workspace/newworkspace/stuff"),
-					),
-				),
-			),
-			tb.Task("create-file",
-				tb.TaskNamespace("ns"),
-				tb.TaskSpec(
-					tb.TaskInputs(
-						tb.InputsResource("workspace", "git",
-							tb.ResourceTargetPath("damnworkspace")),
-					),
-					tb.TaskOutputs(
-						tb.OutputsResource("workspace", "git"),
-					),
-					tb.Step("ubuntu",
-						tb.StepName("read-docs-old"),
-						tb.StepCommand("/bin/bash"),
-						tb.StepArgs("-c", "ls -la /workspace/damnworkspace/docs/README.md"),
-					),
-					tb.Step("ubuntu",
-						tb.StepName("write-new-stuff"),
-						tb.StepCommand("bash"),
-						tb.StepArgs("-c", "ln -s /workspace/damnworkspace /workspace/output/workspace && echo some stuff > /workspace/output/workspace/stuff"),
-					),
-				),
-			),
+			{
+				ObjectMeta: metav1.ObjectMeta{
+					Name:      "check-stuff-file-exists",
+					Namespace: "ns",
+				},
+				Spec: v1alpha1.TaskSpec{
+					TaskSpec: v1beta1.TaskSpec{
+						Resources: &v1beta1.TaskResources{
+							Inputs: []v1beta1.TaskResource{
+								{
+									ResourceDeclaration: v1beta1.ResourceDeclaration{
+										Name:       "workspace",
+										Type:       v1beta1.PipelineResourceTypeGit,
+										TargetPath: "newworkspace",
+									},
+								},
+							},
+						},
+						Steps: []v1alpha1.Step{
+							{
+								Container: corev1.Container{
+									Name:    "read",
+									Image:   "ubuntu",
+									Command: []string{"/bin/bash"},
+									Args:    []string{"-c", "cat", "/workspace/newworkspace/stuff"},
+								},
+							},
+						},
+					},
+				},
+			},
+			{
+				ObjectMeta: metav1.ObjectMeta{
+					Name:      "create-file",
+					Namespace: "ns",
+				},
+				Spec: v1alpha1.TaskSpec{
+					TaskSpec: v1beta1.TaskSpec{
+						Resources: &v1beta1.TaskResources{
+							Inputs: []v1beta1.TaskResource{
+								{
+									ResourceDeclaration: v1beta1.ResourceDeclaration{
+										Name:       "workspace",
+										Type:       v1beta1.PipelineResourceTypeGit,
+										TargetPath: "damnworkspace",
+									},
+								},
+							},
+							Outputs: []v1beta1.TaskResource{
+								{
+									ResourceDeclaration: v1beta1.ResourceDeclaration{
+										Name: "workspace",
+										Type: v1beta1.PipelineResourceTypeGit,
+									},
+								},
+							},
+						},
+						Steps: []v1alpha1.Step{
+							{
+								Container: corev1.Container{
+									Image:   "ubuntu",
+									Name:    "read-docs-old",
+									Command: []string{"/bin/bash"},
+									Args:    []string{"-c", "ls -la /workspace/damnworkspace/docs/README.md"},
+								},
+							},
+							{
+								Container: corev1.Container{
+									Image:   "ubuntu",
+									Name:    "write-new-stuff",
+									Command: []string{"bash"},
+									Args:    []string{"-c", "ln -s /workspace/damnworkspace /workspace/output/workspace && echo some stuff > /workspace/output/workspace/stuff"},
+								},
+							},
+						},
+					},
+				},
+			},
 		},
 	})
 
 	// With single pipeline resource, another pipeline name
 	cs5, _ := test.SeedTestData(t, pipelinetest.Data{
 		Pipelines: []*v1alpha1.Pipeline{
-			tb.Pipeline("gitpipeline",
-				tb.PipelineNamespace("ns"),
-				tb.PipelineSpec(
-					tb.PipelineDeclaredResource("git-repo", "git"),
-					tb.PipelineTask("first-create-file", "create-file",
-						tb.PipelineTaskInputResource("workspace", "git-repo"),
-						tb.PipelineTaskOutputResource("workspace", "source-repo"),
-					),
-					tb.PipelineTask("then-check", "check-stuff-file-exists",
-						tb.PipelineTaskInputResource("workspace", "git-repo", tb.From("first-create-file")),
-					),
-				),
-			),
+			{
+				ObjectMeta: metav1.ObjectMeta{
+					Name:      "gitpipeline",
+					Namespace: "ns",
+				},
+				Spec: v1alpha1.PipelineSpec{
+					Tasks: []v1alpha1.PipelineTask{
+						{
+							Name: "first-create-file",
+							TaskRef: &v1beta1.TaskRef{
+								Name: "create-file",
+							},
+							Resources: &v1beta1.PipelineTaskResources{
+								Inputs: []v1beta1.PipelineTaskInputResource{
+									{
+										Name:     "workspace",
+										Resource: "git-repo",
+									},
+								},
+								Outputs: []v1beta1.PipelineTaskOutputResource{
+									{
+										Name:     "workspace",
+										Resource: "source-repo",
+									},
+								},
+							},
+						},
+						{
+							Name: "then-check",
+							TaskRef: &v1beta1.TaskRef{
+								Name: "check-stuff-file-exists",
+							},
+							Resources: &v1beta1.PipelineTaskResources{
+								Inputs: []v1beta1.PipelineTaskInputResource{
+									{
+										Name:     "workspace",
+										Resource: "git-repo",
+										From:     []string{"first-create-file"},
+									},
+								},
+							},
+						},
+					},
+					Resources: []v1beta1.PipelineDeclaredResource{
+						{
+							Name: "git-repo",
+							Type: v1alpha1.PipelineResourceTypeGit,
+						},
+					},
+				},
+			},
 		},
 
 		PipelineResources: []*v1alpha1.PipelineResource{
-			tb.PipelineResource("gitres",
-				tb.PipelineResourceNamespace("ns"),
-				tb.PipelineResourceSpec("git",
-					tb.PipelineResourceSpecParam("url", "https://github.com/GoogleContainerTools/skaffold"),
-					tb.PipelineResourceSpecParam("version", "master"),
-				),
-			),
+
+			{
+				ObjectMeta: metav1.ObjectMeta{
+					Name:      "gitres",
+					Namespace: "ns",
+				},
+				Spec: v1alpha1.PipelineResourceSpec{
+					Type: v1alpha1.PipelineResourceTypeGit,
+					Params: []v1alpha1.ResourceParam{
+						{
+							Name:  "url",
+							Value: "https://github.com/GoogleContainerTools/skaffold",
+						},
+						{
+							Name:  "version",
+							Value: "master",
+						},
+					},
+				},
+			},
 		},
 
 		Tasks: []*v1alpha1.Task{
-			tb.Task("check-stuff-file-exists",
-				tb.TaskNamespace("ns"),
-				tb.TaskSpec(
-					tb.TaskInputs(
-						tb.InputsResource("workspace", "git",
-							tb.ResourceTargetPath("newworkspace")),
-					),
-					tb.Step("ubuntu",
-						tb.StepName("read"),
-						tb.StepCommand("/bin/bash"),
-						tb.StepArgs("-c", "cat", "/workspace/newworkspace/stuff"),
-					),
-				),
-			),
-			tb.Task("create-file",
-				tb.TaskNamespace("ns"),
-				tb.TaskSpec(
-					tb.TaskInputs(
-						tb.InputsResource("workspace", "git",
-							tb.ResourceTargetPath("damnworkspace")),
-					),
-					tb.TaskOutputs(
-						tb.OutputsResource("workspace", "git"),
-					),
-					tb.Step("ubuntu",
-						tb.StepName("read-docs-old"),
-						tb.StepCommand("/bin/bash"),
-						tb.StepArgs("-c", "ls -la /workspace/damnworkspace/docs/README.md"),
-					),
-					tb.Step("ubuntu",
-						tb.StepName("write-new-stuff"),
-						tb.StepCommand("bash"),
-						tb.StepArgs("-c", "ln -s /workspace/damnworkspace /workspace/output/workspace && echo some stuff > /workspace/output/workspace/stuff"),
-					),
-				),
-			),
+			{
+				ObjectMeta: metav1.ObjectMeta{
+					Name:      "check-stuff-file-exists",
+					Namespace: "ns",
+				},
+				Spec: v1alpha1.TaskSpec{
+					TaskSpec: v1beta1.TaskSpec{
+						Resources: &v1beta1.TaskResources{
+							Inputs: []v1beta1.TaskResource{
+								{
+									ResourceDeclaration: v1beta1.ResourceDeclaration{
+										Name:       "workspace",
+										Type:       v1beta1.PipelineResourceTypeGit,
+										TargetPath: "newworkspace",
+									},
+								},
+							},
+						},
+						Steps: []v1alpha1.Step{
+							{
+								Container: corev1.Container{
+									Name:    "read",
+									Image:   "ubuntu",
+									Command: []string{"/bin/bash"},
+									Args:    []string{"-c", "cat", "/workspace/newworkspace/stuff"},
+								},
+							},
+						},
+					},
+				},
+			},
+			{
+				ObjectMeta: metav1.ObjectMeta{
+					Name:      "create-file",
+					Namespace: "ns",
+				},
+				Spec: v1alpha1.TaskSpec{
+					TaskSpec: v1beta1.TaskSpec{
+						Resources: &v1beta1.TaskResources{
+							Inputs: []v1beta1.TaskResource{
+								{
+									ResourceDeclaration: v1beta1.ResourceDeclaration{
+										Name:       "workspace",
+										Type:       v1beta1.PipelineResourceTypeGit,
+										TargetPath: "damnworkspace",
+									},
+								},
+							},
+							Outputs: []v1beta1.TaskResource{
+								{
+									ResourceDeclaration: v1beta1.ResourceDeclaration{
+										Name: "workspace",
+										Type: v1beta1.PipelineResourceTypeGit,
+									},
+								},
+							},
+						},
+						Steps: []v1alpha1.Step{
+							{
+								Container: corev1.Container{
+									Image:   "ubuntu",
+									Name:    "read-docs-old",
+									Command: []string{"/bin/bash"},
+									Args:    []string{"-c", "ls -la /workspace/damnworkspace/docs/README.md"},
+								},
+							},
+							{
+								Container: corev1.Container{
+									Image:   "ubuntu",
+									Name:    "write-new-stuff",
+									Command: []string{"bash"},
+									Args:    []string{"-c", "ln -s /workspace/damnworkspace /workspace/output/workspace && echo some stuff > /workspace/output/workspace/stuff"},
+								},
+							},
+						},
+					},
+				},
+			},
 		},
 	})
 
 	// With image resource
 	cs6, _ := test.SeedTestData(t, pipelinetest.Data{
 		Pipelines: []*v1alpha1.Pipeline{
-			tb.Pipeline("imagepipeline",
-				tb.PipelineNamespace("ns"),
-				tb.PipelineSpec(
-					tb.PipelineDeclaredResource("imageres", "image"),
-				),
-			),
+			{
+				ObjectMeta: metav1.ObjectMeta{
+					Name:      "imagepipeline",
+					Namespace: "ns",
+				},
+				Spec: v1alpha1.PipelineSpec{
+					Resources: []v1alpha1.PipelineDeclaredResource{
+						{
+							Name: "imageres",
+							Type: v1alpha1.PipelineResourceTypeImage,
+						},
+					},
+				},
+			},
 		},
 
 		PipelineResources: []*v1alpha1.PipelineResource{
-			tb.PipelineResource("imageres",
-				tb.PipelineResourceNamespace("ns"),
-				tb.PipelineResourceSpec("image",
-					tb.PipelineResourceSpecParam("url", "gcr.io/christiewilson-catfactory/leeroy-web"),
-				),
-			),
+			{
+				ObjectMeta: metav1.ObjectMeta{
+					Name:      "imageres",
+					Namespace: "ns",
+				},
+				Spec: v1alpha1.PipelineResourceSpec{
+					Type: v1alpha1.PipelineResourceTypeImage,
+					Params: []v1alpha1.ResourceParam{
+						{
+							Name:  "url",
+							Value: "gcr.io/christiewilson-catfactory/leeroy-web",
+						},
+					},
+				},
+			},
 		},
 	})
 
 	// With image resource, another pipeline name
 	cs7, _ := test.SeedTestData(t, pipelinetest.Data{
 		Pipelines: []*v1alpha1.Pipeline{
-			tb.Pipeline("imagepipeline2",
-				tb.PipelineNamespace("ns"),
-				tb.PipelineSpec(
-					tb.PipelineDeclaredResource("imageres", "image"),
-				),
-			),
+			{
+				ObjectMeta: metav1.ObjectMeta{
+					Name:      "imagepipeline2",
+					Namespace: "ns",
+				},
+				Spec: v1alpha1.PipelineSpec{
+					Resources: []v1alpha1.PipelineDeclaredResource{
+						{
+							Name: "imageres",
+							Type: v1alpha1.PipelineResourceTypeImage,
+						},
+					},
+				},
+			},
 		},
 
 		PipelineResources: []*v1alpha1.PipelineResource{
-			tb.PipelineResource("imageres",
-				tb.PipelineResourceNamespace("ns"),
-				tb.PipelineResourceSpec("image",
-					tb.PipelineResourceSpecParam("url", "gcr.io/christiewilson-catfactory/leeroy-web"),
-				),
-			),
+			{
+				ObjectMeta: metav1.ObjectMeta{
+					Name:      "imageres",
+					Namespace: "ns",
+				},
+				Spec: v1alpha1.PipelineResourceSpec{
+					Type: v1alpha1.PipelineResourceTypeImage,
+					Params: []v1alpha1.ResourceParam{
+						{
+							Name:  "url",
+							Value: "gcr.io/christiewilson-catfactory/leeroy-web",
+						},
+					},
+				},
+			},
 		},
 	})
 
 	// With storage resource
 	cs8, _ := test.SeedTestData(t, pipelinetest.Data{
 		Pipelines: []*v1alpha1.Pipeline{
-			tb.Pipeline("storagepipeline",
-				tb.PipelineNamespace("ns"),
-				tb.PipelineSpec(
-					tb.PipelineDeclaredResource("storageres", "storage"),
-				),
-			),
+			{
+				ObjectMeta: metav1.ObjectMeta{
+					Name:      "storagepipeline",
+					Namespace: "ns",
+				},
+				Spec: v1alpha1.PipelineSpec{
+					Resources: []v1alpha1.PipelineDeclaredResource{
+						{
+							Name: "storageres",
+							Type: v1alpha1.PipelineResourceTypeStorage,
+						},
+					},
+				},
+			},
 		},
 
 		PipelineResources: []*v1alpha1.PipelineResource{
-			tb.PipelineResource("storageres",
-				tb.PipelineResourceNamespace("ns"),
-				tb.PipelineResourceSpec("storage",
-					tb.PipelineResourceSpecParam("type", "gcs"),
-					tb.PipelineResourceSpecParam("location", "gs://some-bucket"),
-				),
-			),
+			{
+				ObjectMeta: metav1.ObjectMeta{
+					Name:      "imageres",
+					Namespace: "ns",
+				},
+				Spec: v1alpha1.PipelineResourceSpec{
+					Type: v1alpha1.PipelineResourceTypeStorage,
+					Params: []v1alpha1.ResourceParam{
+						{
+							Name:  "type",
+							Value: "gcs",
+						},
+						{
+							Name:  "location",
+							Value: "gs://some-bucket",
+						},
+					},
+				},
+			},
 		},
 	})
 
 	// With pullRequest resource
 	cs9, _ := test.SeedTestData(t, pipelinetest.Data{
 		Pipelines: []*v1alpha1.Pipeline{
-			tb.Pipeline("pullrequestpipeline",
-				tb.PipelineNamespace("ns"),
-				tb.PipelineSpec(
-					tb.PipelineDeclaredResource("pullreqres", "pullRequest"),
-					tb.PipelineTask("unit-test-1", "unit-test-task",
-						tb.PipelineTaskInputResource("pullres", "pullreqres"),
-					),
-				),
-			),
+			{
+				ObjectMeta: metav1.ObjectMeta{
+					Name:      "pullrequestpipeline",
+					Namespace: "ns",
+				},
+				Spec: v1alpha1.PipelineSpec{
+					Tasks: []v1alpha1.PipelineTask{
+						{
+							Name: "unit-test-1",
+							TaskRef: &v1beta1.TaskRef{
+								Name: "unit-test-task",
+							},
+							Resources: &v1beta1.PipelineTaskResources{
+								Inputs: []v1beta1.PipelineTaskInputResource{
+									{
+										Name:     "pullres",
+										Resource: "pullreqres",
+									},
+								},
+							},
+						},
+					},
+					Resources: []v1beta1.PipelineDeclaredResource{
+						{
+							Name: "pullreqres",
+							Type: v1alpha1.PipelineResourceTypePullRequest,
+						},
+					},
+				},
+			},
 		},
 
 		PipelineResources: []*v1alpha1.PipelineResource{
-			tb.PipelineResource("pullreqres",
-				tb.PipelineResourceNamespace("ns"),
-				tb.PipelineResourceSpec("pullRequest",
-					tb.PipelineResourceSpecParam("url", "https://github.com/tektoncd/cli/pull/1"),
-				),
-			),
+			{
+				ObjectMeta: metav1.ObjectMeta{
+					Name:      "pullreqres",
+					Namespace: "ns",
+				},
+				Spec: v1alpha1.PipelineResourceSpec{
+					Type: v1alpha1.PipelineResourceTypePullRequest,
+					Params: []v1alpha1.ResourceParam{
+						{
+							Name:  "url",
+							Value: "https://github.com/tektoncd/cli/pull/1",
+						},
+					},
+				},
+			},
 		},
 	})
 
 	// With cluster resource
 	cs10, _ := test.SeedTestData(t, pipelinetest.Data{
 		Pipelines: []*v1alpha1.Pipeline{
-			tb.Pipeline("clusterpipeline",
-				tb.PipelineNamespace("ns"),
-				tb.PipelineSpec(
-					tb.PipelineDeclaredResource("clusterres", "cluster"),
-					tb.PipelineTask("unit-test-1", "unit-test-task",
-						tb.PipelineTaskInputResource("clusres", "clusterresource"),
-					),
-				),
-			),
+			{
+				ObjectMeta: metav1.ObjectMeta{
+					Name:      "clusterpipeline",
+					Namespace: "ns",
+				},
+				Spec: v1alpha1.PipelineSpec{
+					Tasks: []v1alpha1.PipelineTask{
+						{
+							Name: "unit-test-1",
+							TaskRef: &v1beta1.TaskRef{
+								Name: "unit-test-task",
+							},
+							Resources: &v1beta1.PipelineTaskResources{
+								Inputs: []v1beta1.PipelineTaskInputResource{
+									{
+										Name:     "clusres",
+										Resource: "clusterresource",
+									},
+								},
+							},
+						},
+					},
+					Resources: []v1beta1.PipelineDeclaredResource{
+						{
+							Name: "clusterres",
+							Type: v1alpha1.PipelineResourceTypeCluster,
+						},
+					},
+				},
+			},
 		},
 
 		PipelineResources: []*v1alpha1.PipelineResource{
-			tb.PipelineResource("clusterresource",
-				tb.PipelineResourceNamespace("ns"),
-				tb.PipelineResourceSpec("cluster",
-					tb.PipelineResourceSpecParam("name", "abcClus"),
-					tb.PipelineResourceSpecParam("url", "https://10.20.30.40/"),
-					tb.PipelineResourceSpecParam("username", "thinkpad"),
-					tb.PipelineResourceSpecParam("cadata", "ca"),
-				),
-			),
+			{
+				ObjectMeta: metav1.ObjectMeta{
+					Name:      "clusterresource",
+					Namespace: "ns",
+				},
+				Spec: v1alpha1.PipelineResourceSpec{
+					Type: v1alpha1.PipelineResourceTypeCluster,
+					Params: []v1alpha1.ResourceParam{
+						{
+							Name:  "name",
+							Value: "abcClus",
+						},
+						{
+							Name:  "url",
+							Value: "https://10.20.30.40/",
+						},
+						{
+							Name:  "username",
+							Value: "thinkpad",
+						},
+						{
+							Name:  "cadata",
+							Value: "ca",
+						},
+					},
+				},
+			},
 		},
 	})
 
 	// With cloud resource
 	cs11, _ := test.SeedTestData(t, pipelinetest.Data{
 		Pipelines: []*v1alpha1.Pipeline{
-			tb.Pipeline("cloudpipeline",
-				tb.PipelineNamespace("ns"),
-				tb.PipelineSpec(
-					tb.PipelineDeclaredResource("cloudres", "cloudEvent"),
-					tb.PipelineTask("unit-test-1", "unit-test-task",
-						tb.PipelineTaskInputResource("clusres", "clusterresource"),
-					),
-				),
-			),
+			{
+				ObjectMeta: metav1.ObjectMeta{
+					Name:      "cloudpipeline",
+					Namespace: "ns",
+				},
+				Spec: v1alpha1.PipelineSpec{
+					Tasks: []v1alpha1.PipelineTask{
+						{
+							Name: "unit-test-1",
+							TaskRef: &v1beta1.TaskRef{
+								Name: "unit-test-task",
+							},
+							Resources: &v1beta1.PipelineTaskResources{
+								Inputs: []v1beta1.PipelineTaskInputResource{
+									{
+										Name:     "clusres",
+										Resource: "clusterresource",
+									},
+								},
+							},
+						},
+					},
+					Resources: []v1beta1.PipelineDeclaredResource{
+						{
+							Name: "cloudres",
+							Type: v1alpha1.PipelineResourceTypeCloudEvent,
+						},
+					},
+				},
+			},
 		},
 
 		PipelineResources: []*v1alpha1.PipelineResource{
-			tb.PipelineResource("cloudresource",
-				tb.PipelineResourceNamespace("ns"),
-				tb.PipelineResourceSpec("cloudEvent",
-					tb.PipelineResourceSpecParam("targetURI", "https://10.20.30.40/"),
-				),
-			),
+			{
+				ObjectMeta: metav1.ObjectMeta{
+					Name:      "cloudresource",
+					Namespace: "ns",
+				},
+				Spec: v1alpha1.PipelineResourceSpec{
+					Type: v1alpha1.PipelineResourceTypeCloudEvent,
+					Params: []v1alpha1.ResourceParam{
+						{
+							Name:  "targetURI",
+							Value: "https://10.20.30.40/",
+						},
+					},
+				},
+			},
 		},
 	})
 
 	cs12, _ := test.SeedTestData(t, pipelinetest.Data{
 		Pipelines: []*v1alpha1.Pipeline{
-			tb.Pipeline("cloudpipeline",
-				tb.PipelineNamespace("ns"),
-				tb.PipelineSpec(
-					tb.PipelineWorkspaceDeclaration("pvc", "config", "secret", "emptyDir"),
-					tb.PipelineTask("unit-test-1", "unit-test-task",
-						tb.PipelineTaskInputResource("clusres", "clusterresource"),
-					),
-				),
-			),
+			{
+				ObjectMeta: metav1.ObjectMeta{
+					Name:      "cloudpipeline",
+					Namespace: "ns",
+				},
+				Spec: v1alpha1.PipelineSpec{
+					Tasks: []v1alpha1.PipelineTask{
+						{
+							Name: "unit-test-1",
+							TaskRef: &v1beta1.TaskRef{
+								Name: "unit-test-task",
+							},
+							Resources: &v1beta1.PipelineTaskResources{
+								Inputs: []v1beta1.PipelineTaskInputResource{
+									{
+										Name:     "clusres",
+										Resource: "clusterresource",
+									},
+								},
+							},
+						},
+					},
+					Resources: []v1beta1.PipelineDeclaredResource{
+						{
+							Name: "pullreqres",
+							Type: v1alpha1.PipelineResourceTypePullRequest,
+						},
+					},
+					Workspaces: []v1alpha1.PipelineWorkspaceDeclaration{
+						{
+							Name:        "pvc",
+							Description: "config",
+						},
+					},
+				},
+			},
 		},
 	})
 
@@ -2876,21 +3573,65 @@ func TestPipelineStart_Interactive(t *testing.T) {
 
 func Test_start_pipeline(t *testing.T) {
 	pipelineName := "test-pipeline"
-
 	pipeline := []*v1alpha1.Pipeline{
-		tb.Pipeline(pipelineName,
-			tb.PipelineNamespace("ns"),
-			tb.PipelineSpec(
-				tb.PipelineDeclaredResource("git-repo", "git"),
-				tb.PipelineParamSpec("pipeline-param", v1alpha1.ParamTypeString, tb.ParamSpecDefault("somethingdifferent")),
-				tb.PipelineParamSpec("rev-param", v1alpha1.ParamTypeArray, tb.ParamSpecDefault("booms", "booms", "booms")),
-				tb.PipelineTask("unit-test-1", "unit-test-task",
-					tb.PipelineTaskInputResource("workspace", "git-repo"),
-					tb.PipelineTaskOutputResource("image-to-use", "best-image"),
-					tb.PipelineTaskOutputResource("workspace", "git-repo"),
-				),
-			), // spec
-		), // pipeline
+		{
+			ObjectMeta: metav1.ObjectMeta{
+				Name:      pipelineName,
+				Namespace: "ns",
+			},
+			Spec: v1alpha1.PipelineSpec{
+				Params: []v1alpha1.ParamSpec{
+					{
+						Name: "pipeline-param",
+						Type: v1beta1.ParamTypeString,
+						Default: &v1beta1.ArrayOrString{
+							Type:      v1beta1.ParamTypeString,
+							StringVal: "somethingdifferent",
+						},
+					},
+					{
+						Name: "rev-param",
+						Type: v1beta1.ParamTypeArray,
+						Default: &v1beta1.ArrayOrString{
+							Type:     v1beta1.ParamTypeArray,
+							ArrayVal: []string{"booms", "booms", "booms"},
+						},
+					},
+				},
+				Tasks: []v1alpha1.PipelineTask{
+					{
+						Name: "unit-test-1",
+						TaskRef: &v1beta1.TaskRef{
+							Name: "unit-test-task",
+						},
+						Resources: &v1beta1.PipelineTaskResources{
+							Inputs: []v1beta1.PipelineTaskInputResource{
+								{
+									Name:     "workspace",
+									Resource: "git-repo",
+								},
+								{
+									Name:     "image-to-use",
+									Resource: "best-image",
+								},
+							},
+							Outputs: []v1beta1.PipelineTaskOutputResource{
+								{
+									Name:     "workspace",
+									Resource: "git-repo",
+								},
+							},
+						},
+					},
+				},
+				Resources: []v1beta1.PipelineDeclaredResource{
+					{
+						Name: "git-repo",
+						Type: v1alpha1.PipelineResourceTypeGit,
+					},
+				},
+			},
+		},
 	}
 
 	ns := []*corev1.Namespace{
@@ -3072,42 +3813,135 @@ func Test_start_pipeline_last(t *testing.T) {
 	pipelineName := "test-pipeline"
 
 	ps := []*v1alpha1.Pipeline{
-		tb.Pipeline(pipelineName,
-			tb.PipelineNamespace("ns"),
-			tb.PipelineSpec(
-				tb.PipelineDeclaredResource("git-repo", "git"),
-				tb.PipelineDeclaredResource("build-image", "image"),
-				tb.PipelineWorkspaceDeclaration("test=workspace"),
-				tb.PipelineParamSpec("pipeline-param-1", v1alpha1.ParamTypeString, tb.ParamSpecDefault("somethingdifferent-1")),
-				tb.PipelineParamSpec("rev-param", v1alpha1.ParamTypeString, tb.ParamSpecDefault("revision")),
-				tb.PipelineTask("unit-test-1", "unit-test-task",
-					tb.PipelineTaskInputResource("workspace", "git-repo"),
-					tb.PipelineTaskOutputResource("image-to-use", "best-image"),
-					tb.PipelineTaskOutputResource("workspace", "git-repo"),
-					tb.PipelineTaskWorkspaceBinding("task-test-workspace", "test-workspace", ""),
-				),
-			), // spec
-		), // pipeline
+		{
+			ObjectMeta: metav1.ObjectMeta{
+				Name:      pipelineName,
+				Namespace: "ns",
+			},
+			Spec: v1alpha1.PipelineSpec{
+				Resources: []v1alpha1.PipelineDeclaredResource{
+					{
+						Name: "git-repo",
+						Type: v1alpha1.PipelineResourceTypeGit,
+					},
+					{
+						Name: "build-image",
+						Type: v1alpha1.PipelineResourceTypeImage,
+					},
+				},
+				Workspaces: []v1alpha1.PipelineWorkspaceDeclaration{
+					{
+						Name: "test=workspace",
+					},
+				},
+				Params: []v1alpha1.ParamSpec{
+					{
+						Name: "pipeline-param-1",
+						Type: v1alpha1.ParamTypeString,
+						Default: &v1alpha1.ArrayOrString{
+							Type:      v1alpha1.ParamTypeString,
+							StringVal: "somethingdifferent",
+						},
+					},
+					{
+						Name: "rev-param",
+						Type: v1alpha1.ParamTypeString,
+						Default: &v1alpha1.ArrayOrString{
+							Type:      v1alpha1.ParamTypeString,
+							StringVal: "revision",
+						},
+					},
+				},
+				Tasks: []v1alpha1.PipelineTask{
+					{
+						Name: "unit-test-1",
+						TaskRef: &v1alpha1.TaskRef{
+							Name: "unit-test-task",
+						},
+						Resources: &v1alpha1.PipelineTaskResources{
+							Inputs: []v1alpha1.PipelineTaskInputResource{
+								{
+									Name:     "workspace",
+									Resource: "git-repo",
+								},
+							},
+							Outputs: []v1alpha1.PipelineTaskOutputResource{
+								{
+									Name:     "image-to-use",
+									Resource: "best-image",
+								},
+								{
+									Name:     "workspace",
+									Resource: "git-repo",
+								},
+							},
+						},
+						Workspaces: []v1alpha1.WorkspacePipelineTaskBinding{
+							{
+								Name:      "task-test-workspace",
+								Workspace: "test-workspace",
+								SubPath:   "",
+							},
+						},
+					},
+				},
+			},
+		},
 	}
 
 	timeoutDuration, _ := time.ParseDuration("10s")
 
 	prs := []*v1alpha1.PipelineRun{
-		tb.PipelineRun("test-pipeline-run-123",
-			tb.PipelineRunNamespace("ns"),
-			tb.PipelineRunLabel("tekton.dev/pipeline", pipelineName),
-			tb.PipelineRunSpec(pipelineName,
-				tb.PipelineRunServiceAccountName("test-sa"),
-				tb.PipelineRunResourceBinding("git-repo", tb.PipelineResourceBindingRef("some-repo")),
-				tb.PipelineRunResourceBinding("build-image", tb.PipelineResourceBindingRef("some-image")),
-				tb.PipelineRunParam("pipeline-param-1", "somethingmorefun"),
-				tb.PipelineRunParam("rev-param", "revision1"),
-				tb.PipelineRunWorkspaceBindingEmptyDir("test-new"),
-				tb.PipelineRunTimeout(timeoutDuration),
-			),
-		),
+		{
+			ObjectMeta: metav1.ObjectMeta{
+				Name:      "test-pipeline-run-123",
+				Namespace: "ns",
+				Labels:    map[string]string{"tekton.dev/pipeline": pipelineName},
+			},
+			Spec: v1alpha1.PipelineRunSpec{
+				PipelineRef: &v1alpha1.PipelineRef{
+					Name: pipelineName,
+				},
+				ServiceAccountName: "test-sa",
+				Resources: []v1alpha1.PipelineResourceBinding{
+					{
+						Name: "git-repo",
+						ResourceRef: &v1alpha1.PipelineResourceRef{
+							Name: "some-repo",
+						},
+					},
+					{
+						Name: "build-image",
+						ResourceRef: &v1alpha1.PipelineResourceRef{
+							Name: "some-image",
+						},
+					},
+				},
+				Params: []v1alpha1.Param{
+					{
+						Name: "pipeline-param-1",
+						Value: v1alpha1.ArrayOrString{
+							Type:      v1alpha1.ParamTypeString,
+							StringVal: "somethingmorefun",
+						},
+					},
+					{
+						Name: "rev-param",
+						Value: v1alpha1.ArrayOrString{
+							Type:      v1alpha1.ParamTypeString,
+							StringVal: "revision1",
+						},
+					},
+				},
+				Workspaces: []v1alpha1.WorkspaceBinding{
+					{
+						Name: "test-new",
+					},
+				},
+				Timeout: &metav1.Duration{Duration: timeoutDuration},
+			},
+		},
 	}
-
 	ns := []*corev1.Namespace{
 		{
 			ObjectMeta: metav1.ObjectMeta{
@@ -3570,34 +4404,120 @@ func Test_start_pipeline_last_without_res_param(t *testing.T) {
 	pipelineName := "test-pipeline"
 
 	ps := []*v1alpha1.Pipeline{
-		tb.Pipeline(pipelineName,
-			tb.PipelineNamespace("ns"),
-			tb.PipelineSpec(
-				tb.PipelineDeclaredResource("git-repo", "git"),
-				tb.PipelineDeclaredResource("build-image", "image"),
-				tb.PipelineParamSpec("pipeline-param-1", v1alpha1.ParamTypeString, tb.ParamSpecDefault("somethingdifferent-1")),
-				tb.PipelineParamSpec("rev-param", v1alpha1.ParamTypeString, tb.ParamSpecDefault("revision")),
-				tb.PipelineTask("unit-test-1", "unit-test-task",
-					tb.PipelineTaskInputResource("workspace", "git-repo"),
-					tb.PipelineTaskOutputResource("image-to-use", "best-image"),
-					tb.PipelineTaskOutputResource("workspace", "git-repo"),
-				),
-			), // spec
-		), // pipeline
+		{
+			ObjectMeta: metav1.ObjectMeta{
+				Name:      pipelineName,
+				Namespace: "ns",
+			},
+			Spec: v1alpha1.PipelineSpec{
+				Tasks: []v1alpha1.PipelineTask{
+					{
+						Name: "unit-test-1",
+						TaskRef: &v1beta1.TaskRef{
+							Name: "unit-test-task",
+						},
+						Resources: &v1beta1.PipelineTaskResources{
+							Inputs: []v1beta1.PipelineTaskInputResource{
+								{
+									Name:     "workspace",
+									Resource: "git-repo",
+								},
+							},
+							Outputs: []v1beta1.PipelineTaskOutputResource{
+								{
+									Name:     "image-to-use",
+									Resource: "best-image",
+								},
+								{
+									Name:     "workspace",
+									Resource: "git-repo",
+								},
+							},
+						},
+						Workspaces: []v1beta1.WorkspacePipelineTaskBinding{
+							{
+								Name:      "task-test-workspace",
+								Workspace: "test-workspace",
+							},
+						},
+					},
+				},
+				Resources: []v1beta1.PipelineDeclaredResource{
+					{
+						Name: "git-repo",
+						Type: v1alpha1.PipelineResourceTypeGit,
+					},
+					{
+						Name: "build-image",
+						Type: v1alpha1.PipelineResourceTypeImage,
+					},
+				},
+				Params: []v1beta1.ParamSpec{
+					{
+						Name: "pipeline-param-1",
+						Type: v1beta1.ParamTypeString,
+						Default: &v1beta1.ArrayOrString{
+							Type:      v1beta1.ParamTypeString,
+							StringVal: "somethingdifferent-1",
+						},
+					},
+					{
+						Name: "rev-param",
+						Type: v1beta1.ParamTypeString,
+						Default: &v1beta1.ArrayOrString{
+							Type:      v1beta1.ParamTypeString,
+							StringVal: "revision",
+						},
+					},
+				},
+			},
+		},
 	}
 
 	prs := []*v1alpha1.PipelineRun{
-		tb.PipelineRun("test-pipeline-run-123",
-			tb.PipelineRunNamespace("ns"),
-			tb.PipelineRunLabel("tekton.dev/pipeline", pipelineName),
-			tb.PipelineRunSpec(pipelineName,
-				tb.PipelineRunServiceAccountName("test-sa"),
-				tb.PipelineRunResourceBinding("git-repo", tb.PipelineResourceBindingRef("some-repo")),
-				tb.PipelineRunResourceBinding("build-image", tb.PipelineResourceBindingRef("some-image")),
-				tb.PipelineRunParam("pipeline-param-1", "somethingmorefun"),
-				tb.PipelineRunParam("rev-param", "revision1"),
-			),
-		),
+		{
+			ObjectMeta: metav1.ObjectMeta{
+				Name:      "test-pipeline-run-123",
+				Namespace: "ns",
+				Labels:    map[string]string{"tekton.dev/pipeline": pipelineName},
+			},
+			Spec: v1alpha1.PipelineRunSpec{
+				PipelineRef: &v1beta1.PipelineRef{
+					Name: pipelineName,
+				},
+				ServiceAccountName: "test-sa",
+				Resources: []v1beta1.PipelineResourceBinding{
+					{
+						Name: "git-repo",
+						ResourceRef: &v1beta1.PipelineResourceRef{
+							Name: "some-repo",
+						},
+					},
+					{
+						Name: "build-image",
+						ResourceRef: &v1beta1.PipelineResourceRef{
+							Name: "some-image",
+						},
+					},
+				},
+				Params: []v1beta1.Param{
+					{
+						Name: "pipeline-param-1",
+						Value: v1beta1.ArrayOrString{
+							Type:      v1beta1.ParamTypeString,
+							StringVal: "somethingmorefun",
+						},
+					},
+					{
+						Name: "rev-param",
+						Value: v1beta1.ArrayOrString{
+							Type:      v1beta1.ParamTypeString,
+							StringVal: "revision1",
+						},
+					},
+				},
+			},
+		},
 	}
 
 	ns := []*corev1.Namespace{
@@ -3846,20 +4766,68 @@ func Test_start_pipeline_last_merge(t *testing.T) {
 	pipelineName := "test-pipeline"
 
 	ps := []*v1alpha1.Pipeline{
-		tb.Pipeline(pipelineName,
-			tb.PipelineNamespace("ns"),
-			tb.PipelineSpec(
-				tb.PipelineDeclaredResource("git-repo", "git"),
-				tb.PipelineDeclaredResource("build-image", "image"),
-				tb.PipelineParamSpec("pipeline-param", v1alpha1.ParamTypeString, tb.ParamSpecDefault("somethingdifferent-1")),
-				tb.PipelineParamSpec("rev-param", v1alpha1.ParamTypeString, tb.ParamSpecDefault("revision")),
-				tb.PipelineTask("unit-test-1", "unit-test-task",
-					tb.PipelineTaskInputResource("workspace", "git-repo"),
-					tb.PipelineTaskOutputResource("image-to-use", "best-image"),
-					tb.PipelineTaskOutputResource("workspace", "git-repo"),
-				),
-			), // spec
-		), // pipeline
+		{
+			ObjectMeta: metav1.ObjectMeta{
+				Name:      pipelineName,
+				Namespace: "ns",
+			},
+			Spec: v1alpha1.PipelineSpec{
+				Tasks: []v1alpha1.PipelineTask{
+					{
+						Name: "unit-test-1",
+						TaskRef: &v1beta1.TaskRef{
+							Name: "unit-test-task",
+						},
+						Resources: &v1beta1.PipelineTaskResources{
+							Inputs: []v1beta1.PipelineTaskInputResource{
+								{
+									Name:     "workspace",
+									Resource: "git-repo",
+								},
+							},
+							Outputs: []v1beta1.PipelineTaskOutputResource{
+								{
+									Name:     "image-to-use",
+									Resource: "best-image",
+								},
+								{
+									Name:     "workspace",
+									Resource: "git-repo",
+								},
+							},
+						},
+					},
+				},
+				Resources: []v1beta1.PipelineDeclaredResource{
+					{
+						Name: "git-repo",
+						Type: v1alpha1.PipelineResourceTypeGit,
+					},
+					{
+						Name: "build-image",
+						Type: v1alpha1.PipelineResourceTypeImage,
+					},
+				},
+				Params: []v1beta1.ParamSpec{
+					{
+						Name: "pipeline-param",
+						Type: v1beta1.ParamTypeString,
+						Default: &v1beta1.ArrayOrString{
+							Type:      v1beta1.ParamTypeString,
+							StringVal: "somethingdifferent-1",
+						},
+					},
+					{
+						Name: "rev-param",
+						Type: v1beta1.ParamTypeString,
+						Default: &v1beta1.ArrayOrString{
+							Type:      v1beta1.ParamTypeString,
+							StringVal: "revision",
+						},
+					},
+				},
+			},
+		},
 	}
 
 	prs := []*v1alpha1.PipelineRun{
@@ -4197,38 +5165,108 @@ func Test_start_pipeline_use_pipelinerun(t *testing.T) {
 	pipelineName := "test-pipeline"
 
 	ps := []*v1alpha1.Pipeline{
-		tb.Pipeline(pipelineName,
-			tb.PipelineNamespace("ns"),
-			tb.PipelineSpec(
-				tb.PipelineDeclaredResource("git-repo", "git"),
-				tb.PipelineDeclaredResource("build-image", "image"),
-				tb.PipelineParamSpec("pipeline-param", v1alpha1.ParamTypeString, tb.ParamSpecDefault("somethingdifferent-1")),
-				tb.PipelineParamSpec("rev-param", v1alpha1.ParamTypeString, tb.ParamSpecDefault("revision")),
-				tb.PipelineTask("unit-test-1", "unit-test-task",
-					tb.PipelineTaskInputResource("workspace", "git-repo"),
-					tb.PipelineTaskOutputResource("image-to-use", "best-image"),
-					tb.PipelineTaskOutputResource("workspace", "git-repo"),
-				),
-			), // spec
-		), // pipeline
+		{
+			ObjectMeta: metav1.ObjectMeta{
+				Name:      pipelineName,
+				Namespace: "ns",
+			},
+			Spec: v1alpha1.PipelineSpec{
+				Tasks: []v1alpha1.PipelineTask{
+					{
+						Name: "unit-test-1",
+						TaskRef: &v1alpha1.TaskRef{
+							Name: "unit-test-task",
+						},
+						Resources: &v1alpha1.PipelineTaskResources{
+							Inputs: []v1alpha1.PipelineTaskInputResource{
+								{
+									Name:     "workspace",
+									Resource: "git-repo",
+								},
+							},
+							Outputs: []v1alpha1.PipelineTaskOutputResource{
+								{
+									Name:     "image-to-use",
+									Resource: "best-image",
+								},
+								{
+									Name:     "workspace",
+									Resource: "git-repo",
+								},
+							},
+						},
+					},
+				},
+				Resources: []v1alpha1.PipelineDeclaredResource{
+					{
+						Name: "git-repo",
+						Type: v1alpha1.PipelineResourceTypeGit,
+					},
+					{
+						Name: "build-image",
+						Type: v1alpha1.PipelineResourceTypeImage,
+					},
+				},
+				Params: []v1alpha1.ParamSpec{
+					{
+						Name: "pipeline-param",
+						Type: v1alpha1.ParamTypeString,
+						Default: &v1alpha1.ArrayOrString{
+							Type:      v1alpha1.ParamTypeString,
+							StringVal: "somethingdifferent-1",
+						},
+					},
+					{
+						Name: "rev-param",
+						Type: v1alpha1.ParamTypeString,
+						Default: &v1alpha1.ArrayOrString{
+							Type:      v1alpha1.ParamTypeString,
+							StringVal: "revision",
+						},
+					},
+				},
+			},
+		},
 	}
 
 	timeoutDuration, _ := time.ParseDuration("10s")
 	theonename := "test-pipeline-run-be-the-one"
+
 	prs := []*v1alpha1.PipelineRun{
-		tb.PipelineRun("dont-bother-me-trying",
-			tb.PipelineRunNamespace("ns"),
-			tb.PipelineRunLabel("tekton.dev/pipeline", pipelineName),
-			tb.PipelineRunSpec(pipelineName),
-		),
-		tb.PipelineRun(theonename,
-			tb.PipelineRunNamespace("ns"),
-			tb.PipelineRunLabel("tekton.dev/pipeline", pipelineName),
-			tb.PipelineRunSpec(pipelineName,
-				tb.PipelineRunParam("brush", "teeth"),
-				tb.PipelineRunTimeout(timeoutDuration),
-			),
-		),
+		{
+			ObjectMeta: metav1.ObjectMeta{
+				Name:      "dont-bother-me-trying",
+				Namespace: "ns",
+				Labels:    map[string]string{"tekton.dev/pipeline": pipelineName},
+			},
+			Spec: v1alpha1.PipelineRunSpec{
+				PipelineRef: &v1alpha1.PipelineRef{
+					Name: pipelineName,
+				},
+			},
+		},
+		{
+			ObjectMeta: metav1.ObjectMeta{
+				Name:      theonename,
+				Namespace: "ns",
+				Labels:    map[string]string{"tekton.dev/pipeline": pipelineName},
+			},
+			Spec: v1alpha1.PipelineRunSpec{
+				PipelineRef: &v1alpha1.PipelineRef{
+					Name: pipelineName,
+				},
+				Params: []v1alpha1.Param{
+					{
+						Name: "brush",
+						Value: v1alpha1.ArrayOrString{
+							Type:      v1alpha1.ParamTypeString,
+							StringVal: "teeth",
+						},
+					},
+				},
+				Timeout: &metav1.Duration{Duration: timeoutDuration},
+			},
+		},
 	}
 
 	ns := []*corev1.Namespace{
@@ -4602,20 +5640,72 @@ func Test_start_pipeline_allkindparam(t *testing.T) {
 	pipelineName := "test-pipeline"
 
 	ps := []*v1alpha1.Pipeline{
-		tb.Pipeline(pipelineName,
-			tb.PipelineNamespace("ns"),
-			tb.PipelineSpec(
-				tb.PipelineDeclaredResource("git-repo", "git"),
-				tb.PipelineParamSpec("pipeline-param", v1alpha1.ParamTypeString, tb.ParamSpecDefault("somethingdifferent")),
-				tb.PipelineParamSpec("rev-param", v1alpha1.ParamTypeArray, tb.ParamSpecDefault("booms", "booms", "booms")),
-				tb.PipelineParamSpec("rev-param-new", v1alpha1.ParamTypeArray, tb.ParamSpecDefault("booms", "booms", "booms")),
-				tb.PipelineTask("unit-test-1", "unit-test-task",
-					tb.PipelineTaskInputResource("workspace", "git-repo"),
-					tb.PipelineTaskOutputResource("image-to-use", "best-image"),
-					tb.PipelineTaskOutputResource("workspace", "git-repo"),
-				),
-			), // spec
-		), // pipeline
+		{
+			ObjectMeta: metav1.ObjectMeta{
+				Name:      pipelineName,
+				Namespace: "ns",
+			},
+			Spec: v1alpha1.PipelineSpec{
+				Tasks: []v1alpha1.PipelineTask{
+					{
+						Name: "unit-test-1",
+						TaskRef: &v1beta1.TaskRef{
+							Name: "unit-test-task",
+						},
+						Resources: &v1beta1.PipelineTaskResources{
+							Inputs: []v1beta1.PipelineTaskInputResource{
+								{
+									Name:     "workspace",
+									Resource: "git-repo",
+								},
+							},
+							Outputs: []v1beta1.PipelineTaskOutputResource{
+								{
+									Name:     "image-to-use",
+									Resource: "best-image",
+								},
+								{
+									Name:     "workspace",
+									Resource: "git-repo",
+								},
+							},
+						},
+					},
+				},
+				Resources: []v1beta1.PipelineDeclaredResource{
+					{
+						Name: "git-repo",
+						Type: v1alpha1.PipelineResourceTypeGit,
+					},
+				},
+				Params: []v1beta1.ParamSpec{
+					{
+						Name: "pipeline-param",
+						Type: v1beta1.ParamTypeString,
+						Default: &v1beta1.ArrayOrString{
+							Type:      v1beta1.ParamTypeString,
+							StringVal: "somethingdifferent",
+						},
+					},
+					{
+						Name: "rev-param",
+						Type: v1beta1.ParamTypeArray,
+						Default: &v1beta1.ArrayOrString{
+							Type:     v1beta1.ParamTypeArray,
+							ArrayVal: []string{"booms", "booms", "booms"},
+						},
+					},
+					{
+						Name: "rev-param-new",
+						Type: v1beta1.ParamTypeArray,
+						Default: &v1beta1.ArrayOrString{
+							Type:     v1beta1.ParamTypeArray,
+							ArrayVal: []string{"booms", "booms", "booms"},
+						},
+					},
+				},
+			},
+		},
 	}
 
 	ns := []*corev1.Namespace{
@@ -4812,34 +5902,114 @@ func Test_start_pipeline_last_generate_name(t *testing.T) {
 	pipelineName := "test-pipeline"
 
 	ps := []*v1alpha1.Pipeline{
-		tb.Pipeline(pipelineName,
-			tb.PipelineNamespace("ns"),
-			tb.PipelineSpec(
-				tb.PipelineDeclaredResource("git-repo", "git"),
-				tb.PipelineDeclaredResource("build-image", "image"),
-				tb.PipelineParamSpec("pipeline-param-1", v1alpha1.ParamTypeString, tb.ParamSpecDefault("somethingdifferent-1")),
-				tb.PipelineParamSpec("rev-param", v1alpha1.ParamTypeString, tb.ParamSpecDefault("revision")),
-				tb.PipelineTask("unit-test-1", "unit-test-task",
-					tb.PipelineTaskInputResource("workspace", "git-repo"),
-					tb.PipelineTaskOutputResource("image-to-use", "best-image"),
-					tb.PipelineTaskOutputResource("workspace", "git-repo"),
-				),
-			),
-		),
+		{
+			ObjectMeta: metav1.ObjectMeta{
+				Name:      pipelineName,
+				Namespace: "ns",
+			},
+			Spec: v1alpha1.PipelineSpec{
+				Tasks: []v1alpha1.PipelineTask{
+					{
+						Name: "unit-test-1",
+						TaskRef: &v1beta1.TaskRef{
+							Name: "unit-test-task",
+						},
+						Resources: &v1beta1.PipelineTaskResources{
+							Inputs: []v1beta1.PipelineTaskInputResource{
+								{
+									Name:     "workspace",
+									Resource: "git-repo",
+								},
+							},
+							Outputs: []v1beta1.PipelineTaskOutputResource{
+								{
+									Name:     "image-to-use",
+									Resource: "best-image",
+								},
+								{
+									Name:     "workspace",
+									Resource: "git-repo",
+								},
+							},
+						},
+					},
+				},
+				Resources: []v1beta1.PipelineDeclaredResource{
+					{
+						Name: "git-repo",
+						Type: v1alpha1.PipelineResourceTypeGit,
+					},
+					{
+						Name: "build-image",
+						Type: v1alpha1.PipelineResourceTypeImage,
+					},
+				},
+				Params: []v1beta1.ParamSpec{
+					{
+						Name: "pipeline-param-1",
+						Type: v1beta1.ParamTypeString,
+						Default: &v1beta1.ArrayOrString{
+							Type:      v1beta1.ParamTypeString,
+							StringVal: "somethingdifferent-1",
+						},
+					},
+					{
+						Name: "rev-param",
+						Type: v1beta1.ParamTypeString,
+						Default: &v1beta1.ArrayOrString{
+							Type:      v1beta1.ParamTypeString,
+							StringVal: "revision",
+						},
+					},
+				},
+			},
+		},
 	}
 
 	prs := []*v1alpha1.PipelineRun{
-		tb.PipelineRun("test-pipeline-run-123",
-			tb.PipelineRunNamespace("ns"),
-			tb.PipelineRunLabel("tekton.dev/pipeline", pipelineName),
-			tb.PipelineRunSpec(pipelineName,
-				tb.PipelineRunServiceAccountName("test-sa"),
-				tb.PipelineRunResourceBinding("git-repo", tb.PipelineResourceBindingRef("some-repo")),
-				tb.PipelineRunResourceBinding("build-image", tb.PipelineResourceBindingRef("some-image")),
-				tb.PipelineRunParam("pipeline-param-1", "somethingmorefun"),
-				tb.PipelineRunParam("rev-param", "revision1"),
-			),
-		),
+		{
+			ObjectMeta: metav1.ObjectMeta{
+				Name:      "test-pipeline-run-123",
+				Namespace: "ns",
+				Labels:    map[string]string{"tekton.dev/pipeline": pipelineName},
+			},
+			Spec: v1alpha1.PipelineRunSpec{
+				PipelineRef: &v1alpha1.PipelineRef{
+					Name: pipelineName,
+				},
+				ServiceAccountName: "test-sa",
+				Resources: []v1beta1.PipelineResourceBinding{
+					{
+						Name: "git-repo",
+						ResourceRef: &v1beta1.PipelineResourceRef{
+							Name: "some-repo",
+						},
+					},
+					{
+						Name: "build-image",
+						ResourceRef: &v1beta1.PipelineResourceRef{
+							Name: "some-image",
+						},
+					},
+				},
+				Params: []v1beta1.Param{
+					{
+						Name: "pipeline-param-1",
+						Value: v1beta1.ArrayOrString{
+							Type:      v1beta1.ParamTypeString,
+							StringVal: "somethingmorefun",
+						},
+					},
+					{
+						Name: "rev-param",
+						Value: v1beta1.ArrayOrString{
+							Type:      v1beta1.ParamTypeString,
+							StringVal: "revision1",
+						},
+					},
+				},
+			},
+		},
 	}
 
 	// Setting GenerateName for test
@@ -5077,34 +6247,114 @@ func Test_start_pipeline_last_with_prefix_name(t *testing.T) {
 	pipelineName := "test-pipeline"
 
 	ps := []*v1alpha1.Pipeline{
-		tb.Pipeline(pipelineName,
-			tb.PipelineNamespace("ns"),
-			tb.PipelineSpec(
-				tb.PipelineDeclaredResource("git-repo", "git"),
-				tb.PipelineDeclaredResource("build-image", "image"),
-				tb.PipelineParamSpec("pipeline-param-1", v1alpha1.ParamTypeString, tb.ParamSpecDefault("somethingdifferent-1")),
-				tb.PipelineParamSpec("rev-param", v1alpha1.ParamTypeString, tb.ParamSpecDefault("revision")),
-				tb.PipelineTask("unit-test-1", "unit-test-task",
-					tb.PipelineTaskInputResource("workspace", "git-repo"),
-					tb.PipelineTaskOutputResource("image-to-use", "best-image"),
-					tb.PipelineTaskOutputResource("workspace", "git-repo"),
-				),
-			),
-		),
+		{
+			ObjectMeta: metav1.ObjectMeta{
+				Name:      pipelineName,
+				Namespace: "ns",
+			},
+			Spec: v1alpha1.PipelineSpec{
+				Tasks: []v1alpha1.PipelineTask{
+					{
+						Name: "unit-test-1",
+						TaskRef: &v1beta1.TaskRef{
+							Name: "unit-test-task",
+						},
+						Resources: &v1beta1.PipelineTaskResources{
+							Inputs: []v1beta1.PipelineTaskInputResource{
+								{
+									Name:     "workspace",
+									Resource: "git-repo",
+								},
+							},
+							Outputs: []v1beta1.PipelineTaskOutputResource{
+								{
+									Name:     "image-to-use",
+									Resource: "best-image",
+								},
+								{
+									Name:     "workspace",
+									Resource: "git-repo",
+								},
+							},
+						},
+					},
+				},
+				Resources: []v1beta1.PipelineDeclaredResource{
+					{
+						Name: "git-repo",
+						Type: v1alpha1.PipelineResourceTypeGit,
+					},
+					{
+						Name: "build-image",
+						Type: v1alpha1.PipelineResourceTypeImage,
+					},
+				},
+				Params: []v1beta1.ParamSpec{
+					{
+						Name: "pipeline-param-1",
+						Type: v1beta1.ParamTypeString,
+						Default: &v1beta1.ArrayOrString{
+							Type:      v1beta1.ParamTypeString,
+							StringVal: "somethingdifferent-1",
+						},
+					},
+					{
+						Name: "rev-param",
+						Type: v1beta1.ParamTypeString,
+						Default: &v1beta1.ArrayOrString{
+							Type:      v1beta1.ParamTypeString,
+							StringVal: "revision",
+						},
+					},
+				},
+			},
+		},
 	}
 
 	prs := []*v1alpha1.PipelineRun{
-		tb.PipelineRun("test-pipeline-run-123",
-			tb.PipelineRunNamespace("ns"),
-			tb.PipelineRunLabel("tekton.dev/pipeline", pipelineName),
-			tb.PipelineRunSpec(pipelineName,
-				tb.PipelineRunServiceAccountName("test-sa"),
-				tb.PipelineRunResourceBinding("git-repo", tb.PipelineResourceBindingRef("some-repo")),
-				tb.PipelineRunResourceBinding("build-image", tb.PipelineResourceBindingRef("some-image")),
-				tb.PipelineRunParam("pipeline-param-1", "somethingmorefun"),
-				tb.PipelineRunParam("rev-param", "revision1"),
-			),
-		),
+		{
+			ObjectMeta: metav1.ObjectMeta{
+				Name:      "test-pipeline-run-123",
+				Namespace: "ns",
+				Labels:    map[string]string{"tekton.dev/pipeline": pipelineName},
+			},
+			Spec: v1alpha1.PipelineRunSpec{
+				PipelineRef: &v1beta1.PipelineRef{
+					Name: pipelineName,
+				},
+				ServiceAccountName: "test-sa",
+				Resources: []v1beta1.PipelineResourceBinding{
+					{
+						Name: "git-repo",
+						ResourceRef: &v1beta1.PipelineResourceRef{
+							Name: "some-repo",
+						},
+					},
+					{
+						Name: "build-image",
+						ResourceRef: &v1beta1.PipelineResourceRef{
+							Name: "some-image",
+						},
+					},
+				},
+				Params: []v1beta1.Param{
+					{
+						Name: "pipeline-param-1",
+						Value: v1beta1.ArrayOrString{
+							Type:      v1beta1.ParamTypeString,
+							StringVal: "somethingmorefun",
+						},
+					},
+					{
+						Name: "rev-param",
+						Value: v1beta1.ArrayOrString{
+							Type:      v1beta1.ParamTypeString,
+							StringVal: "revision1",
+						},
+					},
+				},
+			},
+		},
 	}
 
 	ns := []*corev1.Namespace{
@@ -5339,34 +6589,114 @@ func Test_start_pipeline_with_prefix_name(t *testing.T) {
 	pipelineName := "test-pipeline"
 
 	ps := []*v1alpha1.Pipeline{
-		tb.Pipeline(pipelineName,
-			tb.PipelineNamespace("ns"),
-			tb.PipelineSpec(
-				tb.PipelineDeclaredResource("git-repo", "git"),
-				tb.PipelineDeclaredResource("build-image", "image"),
-				tb.PipelineParamSpec("pipeline-param-1", v1alpha1.ParamTypeString, tb.ParamSpecDefault("somethingdifferent-1")),
-				tb.PipelineParamSpec("rev-param", v1alpha1.ParamTypeString, tb.ParamSpecDefault("revision")),
-				tb.PipelineTask("unit-test-1", "unit-test-task",
-					tb.PipelineTaskInputResource("workspace", "git-repo"),
-					tb.PipelineTaskOutputResource("image-to-use", "best-image"),
-					tb.PipelineTaskOutputResource("workspace", "git-repo"),
-				),
-			),
-		),
+		{
+			ObjectMeta: metav1.ObjectMeta{
+				Name:      pipelineName,
+				Namespace: "ns",
+			},
+			Spec: v1alpha1.PipelineSpec{
+				Tasks: []v1alpha1.PipelineTask{
+					{
+						Name: "unit-test-1",
+						TaskRef: &v1beta1.TaskRef{
+							Name: "unit-test-task",
+						},
+						Resources: &v1beta1.PipelineTaskResources{
+							Inputs: []v1beta1.PipelineTaskInputResource{
+								{
+									Name:     "workspace",
+									Resource: "git-repo",
+								},
+							},
+							Outputs: []v1beta1.PipelineTaskOutputResource{
+								{
+									Name:     "image-to-use",
+									Resource: "best-image",
+								},
+								{
+									Name:     "workspace",
+									Resource: "git-repo",
+								},
+							},
+						},
+					},
+				},
+				Resources: []v1beta1.PipelineDeclaredResource{
+					{
+						Name: "git-repo",
+						Type: v1alpha1.PipelineResourceTypeGit,
+					},
+					{
+						Name: "build-image",
+						Type: v1alpha1.PipelineResourceTypeImage,
+					},
+				},
+				Params: []v1beta1.ParamSpec{
+					{
+						Name: "pipeline-param-1",
+						Type: v1beta1.ParamTypeString,
+						Default: &v1beta1.ArrayOrString{
+							Type:      v1beta1.ParamTypeString,
+							StringVal: "somethingdifferent-1",
+						},
+					},
+					{
+						Name: "rev-param",
+						Type: v1beta1.ParamTypeString,
+						Default: &v1beta1.ArrayOrString{
+							Type:      v1beta1.ParamTypeString,
+							StringVal: "revision",
+						},
+					},
+				},
+			},
+		},
 	}
 
 	prs := []*v1alpha1.PipelineRun{
-		tb.PipelineRun("test-pipeline-run-123",
-			tb.PipelineRunNamespace("ns"),
-			tb.PipelineRunLabel("tekton.dev/pipeline", pipelineName),
-			tb.PipelineRunSpec(pipelineName,
-				tb.PipelineRunServiceAccountName("test-sa"),
-				tb.PipelineRunResourceBinding("git-repo", tb.PipelineResourceBindingRef("some-repo")),
-				tb.PipelineRunResourceBinding("build-image", tb.PipelineResourceBindingRef("some-image")),
-				tb.PipelineRunParam("pipeline-param-1", "somethingmorefun"),
-				tb.PipelineRunParam("rev-param", "revision1"),
-			),
-		),
+		{
+			ObjectMeta: metav1.ObjectMeta{
+				Name:      "test-pipeline-run-123",
+				Namespace: "ns",
+				Labels:    map[string]string{"tekton.dev/pipeline": pipelineName},
+			},
+			Spec: v1alpha1.PipelineRunSpec{
+				PipelineRef: &v1alpha1.PipelineRef{
+					Name: pipelineName,
+				},
+				ServiceAccountName: "test-sa",
+				Resources: []v1beta1.PipelineResourceBinding{
+					{
+						Name: "git-repo",
+						ResourceRef: &v1beta1.PipelineResourceRef{
+							Name: "some-repo",
+						},
+					},
+					{
+						Name: "build-image",
+						ResourceRef: &v1beta1.PipelineResourceRef{
+							Name: "some-image",
+						},
+					},
+				},
+				Params: []v1beta1.Param{
+					{
+						Name: "pipeline-param-1",
+						Value: v1beta1.ArrayOrString{
+							Type:      v1beta1.ParamTypeString,
+							StringVal: "somethingmorefun",
+						},
+					},
+					{
+						Name: "rev-param",
+						Value: v1beta1.ArrayOrString{
+							Type:      v1beta1.ParamTypeString,
+							StringVal: "revision1",
+						},
+					},
+				},
+			},
+		},
 	}
 
 	ns := []*corev1.Namespace{
@@ -5642,50 +6972,119 @@ func Test_mergeResource(t *testing.T) {
 
 func Test_getPipelineResourceByFormat(t *testing.T) {
 	pipelineResources := []*v1alpha1.PipelineResource{
-		tb.PipelineResource("scaffold-git",
-			tb.PipelineResourceNamespace("ns"),
-			tb.PipelineResourceSpec("git",
-				tb.PipelineResourceSpecParam("url", "git@github.com:tektoncd/cli.git"),
-			),
-		),
-		tb.PipelineResource("scaffold-git-fork",
-			tb.PipelineResourceNamespace("ns"),
-			tb.PipelineResourceSpec("git",
-				tb.PipelineResourceSpecParam("url", "git@github.com:tektoncd-fork/cli.git"),
-				tb.PipelineResourceSpecParam("revision", "release"),
-			),
-		),
-		tb.PipelineResource("scaffold-image",
-			tb.PipelineResourceNamespace("ns"),
-			tb.PipelineResourceSpec("image",
-				tb.PipelineResourceSpecParam("url", "docker.io/tektoncd/cli"),
-			),
-		),
-		tb.PipelineResource("scaffold-pull",
-			tb.PipelineResourceNamespace("ns"),
-			tb.PipelineResourceSpec("pullRequest",
-				tb.PipelineResourceSpecParam("url", "https://github.com/tektoncd/cli/pulls/9"),
-			),
-		),
-		tb.PipelineResource("scaffold-cluster",
-			tb.PipelineResourceNamespace("ns"),
-			tb.PipelineResourceSpec("cluster",
-				tb.PipelineResourceSpecParam("url", "https://opemshift.com"),
-				tb.PipelineResourceSpecParam("user", "tektoncd-developer"),
-			),
-		),
-		tb.PipelineResource("scaffold-storage",
-			tb.PipelineResourceNamespace("ns"),
-			tb.PipelineResourceSpec("storage",
-				tb.PipelineResourceSpecParam("location", "/home/tektoncd"),
-			),
-		),
-		tb.PipelineResource("scaffold-cloud",
-			tb.PipelineResourceNamespace("ns"),
-			tb.PipelineResourceSpec("cloudEvent",
-				tb.PipelineResourceSpecParam("targetURI", "http://sink:8080"),
-			),
-		),
+		{
+			ObjectMeta: metav1.ObjectMeta{
+				Name:      "scaffold-git",
+				Namespace: "ns",
+			},
+			Spec: v1alpha1.PipelineResourceSpec{
+				Type: v1alpha1.PipelineResourceTypeGit,
+				Params: []v1alpha1.ResourceParam{
+					{
+						Name:  "url",
+						Value: "git@github.com:tektoncd/cli.git",
+					},
+				},
+			},
+		},
+		{
+			ObjectMeta: metav1.ObjectMeta{
+				Name:      "scaffold-git-fork",
+				Namespace: "ns",
+			},
+			Spec: v1alpha1.PipelineResourceSpec{
+				Type: v1alpha1.PipelineResourceTypeGit,
+				Params: []v1alpha1.ResourceParam{
+					{
+						Name:  "url",
+						Value: "git@github.com:tektoncd-fork/cli.git",
+					},
+					{
+						Name:  "revision",
+						Value: "release",
+					},
+				},
+			},
+		},
+		{
+			ObjectMeta: metav1.ObjectMeta{
+				Name:      "scaffold-image",
+				Namespace: "ns",
+			},
+			Spec: v1alpha1.PipelineResourceSpec{
+				Type: v1alpha1.PipelineResourceTypeImage,
+				Params: []v1alpha1.ResourceParam{
+					{
+						Name:  "url",
+						Value: "docker.io/tektoncd/cli",
+					},
+				},
+			},
+		},
+		{
+			ObjectMeta: metav1.ObjectMeta{
+				Name:      "scaffold-pull",
+				Namespace: "ns",
+			},
+			Spec: v1alpha1.PipelineResourceSpec{
+				Type: v1alpha1.PipelineResourceTypePullRequest,
+				Params: []v1alpha1.ResourceParam{
+					{
+						Name:  "url",
+						Value: "https://github.com/tektoncd/cli/pulls/9",
+					},
+				},
+			},
+		},
+		{
+			ObjectMeta: metav1.ObjectMeta{
+				Name:      "scaffold-cluster",
+				Namespace: "ns",
+			},
+			Spec: v1alpha1.PipelineResourceSpec{
+				Type: v1alpha1.PipelineResourceTypeCluster,
+				Params: []v1alpha1.ResourceParam{
+					{
+						Name:  "url",
+						Value: "https://opemshift.com",
+					},
+					{
+						Name:  "user",
+						Value: "tektoncd-developer",
+					},
+				},
+			},
+		},
+		{
+			ObjectMeta: metav1.ObjectMeta{
+				Name:      "scaffold-storage",
+				Namespace: "ns",
+			},
+			Spec: v1alpha1.PipelineResourceSpec{
+				Type: v1alpha1.PipelineResourceTypeStorage,
+				Params: []v1alpha1.ResourceParam{
+					{
+						Name:  "location",
+						Value: "/home/tektoncd",
+					},
+				},
+			},
+		},
+		{
+			ObjectMeta: metav1.ObjectMeta{
+				Name:      "scaffold-cloud",
+				Namespace: "ns",
+			},
+			Spec: v1alpha1.PipelineResourceSpec{
+				Type: v1alpha1.PipelineResourceTypeCloudEvent,
+				Params: []v1alpha1.ResourceParam{
+					{
+						Name:  "targetURI",
+						Value: "http://sink:8080",
+					},
+				},
+			},
+		},
 	}
 
 	ns := []*corev1.Namespace{
@@ -5840,39 +7239,61 @@ func Test_lastPipelineRun(t *testing.T) {
 	pr3Started := clock.Now().Add(-450 * time.Hour)
 
 	prs := []*v1alpha1.PipelineRun{
-		tb.PipelineRun("pr-2",
-			tb.PipelineRunNamespace("namespace"),
-			tb.PipelineRunLabel("tekton.dev/pipeline", "test"),
-			cb.PipelineRunCreationTimestamp(pr2Started),
-			tb.PipelineRunStatus(
-				tb.PipelineRunStatusCondition(apis.Condition{
-					Status: corev1.ConditionTrue,
-					Reason: v1beta1.PipelineRunReasonRunning.String(),
-				}),
-			),
-		),
-		tb.PipelineRun("pr-3",
-			tb.PipelineRunNamespace("namespace"),
-			tb.PipelineRunLabel("tekton.dev/pipeline", "test"),
-			cb.PipelineRunCreationTimestamp(pr3Started),
-			tb.PipelineRunStatus(
-				tb.PipelineRunStatusCondition(apis.Condition{
-					Status: corev1.ConditionFalse,
-					Reason: v1beta1.PipelineRunReasonFailed.String(),
-				}),
-			),
-		),
-		tb.PipelineRun("pr-1",
-			tb.PipelineRunNamespace("namespace"),
-			tb.PipelineRunLabel("tekton.dev/pipeline", "test"),
-			cb.PipelineRunCreationTimestamp(pr1Started),
-			tb.PipelineRunStatus(
-				tb.PipelineRunStatusCondition(apis.Condition{
-					Status: corev1.ConditionTrue,
-					Reason: v1beta1.PipelineRunReasonSuccessful.String(),
-				}),
-			),
-		),
+		{
+			ObjectMeta: metav1.ObjectMeta{
+				Name:              "pr-2",
+				Namespace:         "namespace",
+				Labels:            map[string]string{"tekton.dev/pipeline": "test"},
+				CreationTimestamp: metav1.Time{Time: pr2Started},
+			},
+			Status: v1beta1.PipelineRunStatus{
+				Status: duckv1beta1.Status{
+					Conditions: duckv1beta1.Conditions{
+						{
+							Status: corev1.ConditionTrue,
+							Reason: v1beta1.PipelineRunReasonRunning.String(),
+						},
+					},
+				},
+			},
+		},
+		{
+			ObjectMeta: metav1.ObjectMeta{
+				Name:              "pr-3",
+				Namespace:         "namespace",
+				Labels:            map[string]string{"tekton.dev/pipeline": "test"},
+				CreationTimestamp: metav1.Time{Time: pr3Started},
+			},
+			Status: v1beta1.PipelineRunStatus{
+				Status: duckv1beta1.Status{
+					Conditions: duckv1beta1.Conditions{
+						{
+							Status: corev1.ConditionFalse,
+							Reason: v1beta1.PipelineRunReasonSuccessful.String(),
+						},
+					},
+				},
+			},
+		},
+
+		{
+			ObjectMeta: metav1.ObjectMeta{
+				Name:              "pr-1",
+				Namespace:         "namespace",
+				Labels:            map[string]string{"tekton.dev/pipeline": "test"},
+				CreationTimestamp: metav1.Time{Time: pr1Started},
+			},
+			Status: v1beta1.PipelineRunStatus{
+				Status: duckv1beta1.Status{
+					Conditions: duckv1beta1.Conditions{
+						{
+							Status: corev1.ConditionTrue,
+							Reason: v1beta1.PipelineRunReasonSuccessful.String(),
+						},
+					},
+				},
+			},
+		},
 	}
 
 	ns := []*corev1.Namespace{

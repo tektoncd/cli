@@ -19,7 +19,6 @@ import (
 	"time"
 
 	"github.com/jonboulle/clockwork"
-	tb "github.com/tektoncd/cli/internal/builder/v1alpha1"
 	"github.com/tektoncd/cli/pkg/test"
 	cb "github.com/tektoncd/cli/pkg/test/builder"
 	testDynamic "github.com/tektoncd/cli/pkg/test/dynamic"
@@ -39,10 +38,15 @@ func TestPipelinesList(t *testing.T) {
 	clock := clockwork.NewFakeClock()
 
 	pdata := []*v1alpha1.Pipeline{
-		tb.Pipeline("pipeline", tb.PipelineNamespace("ns"),
-			// created  5 minutes back
-			cb.PipelineCreationTimestamp(clock.Now().Add(-5*time.Minute)),
-		),
+		{
+
+			ObjectMeta: metav1.ObjectMeta{
+				Name:      "pipeline",
+				Namespace: "ns",
+				// created  5 minutes back
+				CreationTimestamp: metav1.Time{Time: clock.Now().Add(-5 * time.Minute)},
+			},
+		},
 	}
 	cs, _ := test.SeedTestData(t, pipelinetest.Data{
 		Pipelines: pdata,
@@ -58,14 +62,22 @@ func TestPipelinesList(t *testing.T) {
 	}
 
 	pdata2 := []*v1alpha1.Pipeline{
-		tb.Pipeline("pipeline", tb.PipelineNamespace("ns"),
-			// created  5 minutes back
-			cb.PipelineCreationTimestamp(clock.Now().Add(-5*time.Minute)),
-		),
-		tb.Pipeline("pipeline2", tb.PipelineNamespace("ns"),
-			// created  5 minutes back
-			cb.PipelineCreationTimestamp(clock.Now().Add(-5*time.Minute)),
-		),
+		{
+			ObjectMeta: metav1.ObjectMeta{
+				Name:      "pipeline",
+				Namespace: "ns",
+				// created  5 minutes back
+				CreationTimestamp: metav1.Time{Time: clock.Now().Add(-5 * time.Minute)},
+			},
+		},
+		{
+			ObjectMeta: metav1.ObjectMeta{
+				Name:      "pipeline2",
+				Namespace: "ns",
+				// created  5 minutes back
+				CreationTimestamp: metav1.Time{Time: clock.Now().Add(-5 * time.Minute)},
+			},
+		},
 	}
 	cs2, _ := test.SeedTestData(t, pipelinetest.Data{
 		Pipelines: pdata2,
@@ -210,14 +222,22 @@ func TestPipelineGet(t *testing.T) {
 	clock := clockwork.NewFakeClock()
 
 	pdata := []*v1alpha1.Pipeline{
-		tb.Pipeline("pipeline", tb.PipelineNamespace("ns"),
-			// created  5 minutes back
-			cb.PipelineCreationTimestamp(clock.Now().Add(-5*time.Minute)),
-		),
-		tb.Pipeline("pipeline2", tb.PipelineNamespace("ns"),
-			// created  5 minutes back
-			cb.PipelineCreationTimestamp(clock.Now().Add(-5*time.Minute)),
-		),
+		{
+			ObjectMeta: metav1.ObjectMeta{
+				Name:      "pipeline",
+				Namespace: "ns",
+				// created  5 minutes back
+				CreationTimestamp: metav1.Time{Time: clock.Now().Add(-5 * time.Minute)},
+			},
+		},
+		{
+			ObjectMeta: metav1.ObjectMeta{
+				Name:      "pipeline2",
+				Namespace: "ns",
+				// created  5 minutes back
+				CreationTimestamp: metav1.Time{Time: clock.Now().Add(-5 * time.Minute)},
+			},
+		},
 	}
 	cs, _ := test.SeedTestData(t, pipelinetest.Data{
 		Pipelines: pdata,

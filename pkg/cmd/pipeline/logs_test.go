@@ -23,7 +23,6 @@ import (
 	"github.com/AlecAivazis/survey/v2/terminal"
 	goexpect "github.com/Netflix/go-expect"
 	"github.com/jonboulle/clockwork"
-	tb "github.com/tektoncd/cli/internal/builder/v1alpha1"
 	"github.com/tektoncd/cli/pkg/cli"
 	"github.com/tektoncd/cli/pkg/options"
 	"github.com/tektoncd/cli/pkg/test"
@@ -37,7 +36,6 @@ import (
 	corev1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/client-go/dynamic"
-	"knative.dev/pkg/apis"
 	duckv1beta1 "knative.dev/pkg/apis/duck/v1beta1"
 )
 
@@ -61,7 +59,12 @@ const (
 func TestPipelineLog(t *testing.T) {
 	clock := clockwork.NewFakeClock()
 	pdata := []*v1alpha1.Pipeline{
-		tb.Pipeline(pipelineName, tb.PipelineNamespace(ns)),
+		{
+			ObjectMeta: metav1.ObjectMeta{
+				Name:      pipelineName,
+				Namespace: ns,
+			},
+		},
 	}
 	cs, _ := test.SeedTestData(t, pipelinetest.Data{
 		Pipelines: pdata,
@@ -101,46 +104,75 @@ func TestPipelineLog(t *testing.T) {
 	}
 
 	pdata3 := []*v1alpha1.Pipeline{
-		tb.Pipeline(pipelineName,
-			tb.PipelineNamespace(ns),
-			// created  15 minutes back
-			cb.PipelineCreationTimestamp(clock.Now().Add(-15*time.Minute)),
-		),
+		{
+			ObjectMeta: metav1.ObjectMeta{
+				Name:      pipelineName,
+				Namespace: ns,
+				// created  15 minutes back
+				CreationTimestamp: metav1.Time{Time: clock.Now().Add(-15 * time.Minute)},
+			},
+		},
 	}
 
 	prdata3 := []*v1alpha1.PipelineRun{
-		tb.PipelineRun(prName,
-			tb.PipelineRunNamespace(ns),
-			cb.PipelineRunCreationTimestamp(clock.Now().Add(-10*time.Minute)),
-			tb.PipelineRunLabel("tekton.dev/pipeline", pipelineName),
-			tb.PipelineRunSpec(pipelineName),
-			tb.PipelineRunStatus(
-				tb.PipelineRunStatusCondition(apis.Condition{
-					Status: corev1.ConditionTrue,
-					Reason: v1beta1.PipelineRunReasonSuccessful.String(),
-				}),
-				// pipeline run started 5 minutes ago
-				tb.PipelineRunStartTime(clock.Now().Add(-5*time.Minute)),
-				// takes 10 minutes to complete
-				cb.PipelineRunCompletionTime(clock.Now().Add(10*time.Minute)),
-			),
-		),
-		tb.PipelineRun(prName2,
-			tb.PipelineRunNamespace(ns),
-			cb.PipelineRunCreationTimestamp(clock.Now().Add(-8*time.Minute)),
-			tb.PipelineRunLabel("tekton.dev/pipeline", pipelineName),
-			tb.PipelineRunSpec(pipelineName),
-			tb.PipelineRunStatus(
-				tb.PipelineRunStatusCondition(apis.Condition{
-					Status: corev1.ConditionTrue,
-					Reason: v1beta1.PipelineRunReasonSuccessful.String(),
-				}),
-				// pipeline run started 3 minutes ago
-				tb.PipelineRunStartTime(clock.Now().Add(-3*time.Minute)),
-				// takes 10 minutes to complete
-				cb.PipelineRunCompletionTime(clock.Now().Add(10*time.Minute)),
-			),
-		),
+		{
+			ObjectMeta: metav1.ObjectMeta{
+				Name:              prName,
+				Namespace:         ns,
+				CreationTimestamp: metav1.Time{Time: clock.Now().Add(-10 * time.Minute)},
+				Labels:            map[string]string{"tekton.dev/pipeline": pipelineName},
+			},
+			Spec: v1alpha1.PipelineRunSpec{
+				PipelineRef: &v1alpha1.PipelineRef{
+					Name: pipelineName,
+				},
+			},
+			Status: v1alpha1.PipelineRunStatus{
+				Status: duckv1beta1.Status{
+					Conditions: duckv1beta1.Conditions{
+						{
+							Status: corev1.ConditionTrue,
+							Reason: v1beta1.PipelineRunReasonSuccessful.String(),
+						},
+					},
+				},
+				PipelineRunStatusFields: v1alpha1.PipelineRunStatusFields{
+					// pipeline run started 5 minutes ago
+					StartTime: &metav1.Time{Time: clock.Now().Add(-5 * time.Minute)},
+					// takes 10 minutes to complete
+					CompletionTime: &metav1.Time{Time: clock.Now().Add(10 * time.Minute)},
+				},
+			},
+		},
+		{
+			ObjectMeta: metav1.ObjectMeta{
+				Name:              prName2,
+				Namespace:         ns,
+				CreationTimestamp: metav1.Time{Time: clock.Now().Add(-8 * time.Minute)},
+				Labels:            map[string]string{"tekton.dev/pipeline": pipelineName},
+			},
+			Spec: v1alpha1.PipelineRunSpec{
+				PipelineRef: &v1alpha1.PipelineRef{
+					Name: pipelineName,
+				},
+			},
+			Status: v1alpha1.PipelineRunStatus{
+				Status: duckv1beta1.Status{
+					Conditions: duckv1beta1.Conditions{
+						{
+							Status: corev1.ConditionTrue,
+							Reason: v1beta1.PipelineRunReasonSuccessful.String(),
+						},
+					},
+				},
+				PipelineRunStatusFields: v1alpha1.PipelineRunStatusFields{
+					// pipeline run started 3 minutes ago
+					StartTime: &metav1.Time{Time: clock.Now().Add(-3 * time.Minute)},
+					// takes 10 minutes to complete
+					CompletionTime: &metav1.Time{Time: clock.Now().Add(10 * time.Minute)},
+				},
+			},
+		},
 	}
 
 	cs3, _ := test.SeedTestData(t, pipelinetest.Data{
@@ -507,46 +539,74 @@ func TestPipelineLog_Interactive(t *testing.T) {
 
 	cs, _ := test.SeedTestData(t, pipelinetest.Data{
 		Pipelines: []*v1alpha1.Pipeline{
-			tb.Pipeline(pipelineName,
-				tb.PipelineNamespace(ns),
-				// created  15 minutes back
-				cb.PipelineCreationTimestamp(clock.Now().Add(-15*time.Minute)),
-			),
+			{
+				ObjectMeta: metav1.ObjectMeta{
+					Name:      pipelineName,
+					Namespace: ns,
+					// created  15 minutes back
+					CreationTimestamp: metav1.Time{Time: clock.Now().Add(-15 * time.Minute)},
+				},
+			},
 		},
 		PipelineRuns: []*v1alpha1.PipelineRun{
-
-			tb.PipelineRun(prName,
-				tb.PipelineRunNamespace(ns),
-				cb.PipelineRunCreationTimestamp(clock.Now().Add(-10*time.Minute)),
-				tb.PipelineRunLabel("tekton.dev/pipeline", pipelineName),
-				tb.PipelineRunSpec(pipelineName),
-				tb.PipelineRunStatus(
-					tb.PipelineRunStatusCondition(apis.Condition{
-						Status: corev1.ConditionTrue,
-						Reason: v1beta1.PipelineRunReasonSuccessful.String(),
-					}),
-					// pipeline run started 5 minutes ago
-					tb.PipelineRunStartTime(clock.Now().Add(-5*time.Minute)),
-					// takes 10 minutes to complete
-					cb.PipelineRunCompletionTime(clock.Now().Add(10*time.Minute)),
-				),
-			),
-			tb.PipelineRun(prName2,
-				tb.PipelineRunNamespace(ns),
-				cb.PipelineRunCreationTimestamp(clock.Now().Add(-8*time.Minute)),
-				tb.PipelineRunLabel("tekton.dev/pipeline", pipelineName),
-				tb.PipelineRunSpec(pipelineName),
-				tb.PipelineRunStatus(
-					tb.PipelineRunStatusCondition(apis.Condition{
-						Status: corev1.ConditionTrue,
-						Reason: v1beta1.PipelineRunReasonSuccessful.String(),
-					}),
-					// pipeline run started 3 minutes ago
-					tb.PipelineRunStartTime(clock.Now().Add(-3*time.Minute)),
-					// takes 10 minutes to complete
-					cb.PipelineRunCompletionTime(clock.Now().Add(10*time.Minute)),
-				),
-			),
+			{
+				ObjectMeta: metav1.ObjectMeta{
+					Name:              prName,
+					Namespace:         ns,
+					Labels:            map[string]string{"tekton.dev/pipeline": pipelineName},
+					CreationTimestamp: metav1.Time{Time: clock.Now().Add(-10 * time.Minute)},
+				},
+				Spec: v1alpha1.PipelineRunSpec{
+					PipelineRef: &v1alpha1.PipelineRef{
+						Name: pipelineName,
+					},
+				},
+				Status: v1beta1.PipelineRunStatus{
+					Status: duckv1beta1.Status{
+						Conditions: duckv1beta1.Conditions{
+							{
+								Status: corev1.ConditionTrue,
+								Reason: v1beta1.PipelineRunReasonSuccessful.String(),
+							},
+						},
+					},
+					PipelineRunStatusFields: v1beta1.PipelineRunStatusFields{
+						// pipeline run started 5 minutes ago
+						StartTime: &metav1.Time{Time: clock.Now().Add(-5 * time.Minute)},
+						// takes 10 minutes to complete
+						CompletionTime: &metav1.Time{Time: clock.Now().Add(10 * time.Minute)},
+					},
+				},
+			},
+			{
+				ObjectMeta: metav1.ObjectMeta{
+					Name:              prName2,
+					Namespace:         ns,
+					Labels:            map[string]string{"tekton.dev/pipeline": pipelineName},
+					CreationTimestamp: metav1.Time{Time: clock.Now().Add(-8 * time.Minute)},
+				},
+				Spec: v1alpha1.PipelineRunSpec{
+					PipelineRef: &v1alpha1.PipelineRef{
+						Name: pipelineName,
+					},
+				},
+				Status: v1beta1.PipelineRunStatus{
+					Status: duckv1beta1.Status{
+						Conditions: duckv1beta1.Conditions{
+							{
+								Status: corev1.ConditionTrue,
+								Reason: v1beta1.PipelineRunReasonSuccessful.String(),
+							},
+						},
+					},
+					PipelineRunStatusFields: v1beta1.PipelineRunStatusFields{
+						// pipeline run started 3 minutes ago
+						StartTime: &metav1.Time{Time: clock.Now().Add(-3 * time.Minute)},
+						// takes 10 minutes to complete
+						CompletionTime: &metav1.Time{Time: clock.Now().Add(10 * time.Minute)},
+					},
+				},
+			},
 		},
 		Namespaces: []*corev1.Namespace{
 			{
@@ -559,30 +619,45 @@ func TestPipelineLog_Interactive(t *testing.T) {
 
 	cs2, _ := test.SeedTestData(t, pipelinetest.Data{
 		Pipelines: []*v1alpha1.Pipeline{
-			tb.Pipeline(pipelineName,
-				tb.PipelineNamespace(ns),
-				// created  15 minutes back
-				cb.PipelineCreationTimestamp(clock.Now().Add(-15*time.Minute)),
-			),
+			{
+				ObjectMeta: metav1.ObjectMeta{
+					Name:      pipelineName,
+					Namespace: ns,
+					// created  15 minutes back
+					CreationTimestamp: metav1.Time{Time: clock.Now().Add(-15 * time.Minute)},
+				},
+			},
 		},
 		PipelineRuns: []*v1alpha1.PipelineRun{
-
-			tb.PipelineRun(prName,
-				tb.PipelineRunNamespace(ns),
-				cb.PipelineRunCreationTimestamp(clock.Now().Add(-10*time.Minute)),
-				tb.PipelineRunLabel("tekton.dev/pipeline", pipelineName),
-				tb.PipelineRunSpec(pipelineName),
-				tb.PipelineRunStatus(
-					tb.PipelineRunStatusCondition(apis.Condition{
-						Status: corev1.ConditionTrue,
-						Reason: v1beta1.PipelineRunReasonSuccessful.String(),
-					}),
-					// pipeline run started 5 minutes ago
-					tb.PipelineRunStartTime(clock.Now().Add(-5*time.Minute)),
-					// takes 10 minutes to complete
-					cb.PipelineRunCompletionTime(clock.Now().Add(10*time.Minute)),
-				),
-			),
+			{
+				ObjectMeta: metav1.ObjectMeta{
+					Name:              prName,
+					Namespace:         ns,
+					Labels:            map[string]string{"tekton.dev/pipeline": pipelineName},
+					CreationTimestamp: metav1.Time{Time: clock.Now().Add(-10 * time.Minute)},
+				},
+				Spec: v1alpha1.PipelineRunSpec{
+					PipelineRef: &v1alpha1.PipelineRef{
+						Name: pipelineName,
+					},
+				},
+				Status: v1beta1.PipelineRunStatus{
+					Status: duckv1beta1.Status{
+						Conditions: duckv1beta1.Conditions{
+							{
+								Status: corev1.ConditionTrue,
+								Reason: v1beta1.PipelineRunReasonSuccessful.String(),
+							},
+						},
+					},
+					PipelineRunStatusFields: v1beta1.PipelineRunStatusFields{
+						// pipeline run started 5 minutes ago
+						StartTime: &metav1.Time{Time: clock.Now().Add(-5 * time.Minute)},
+						// takes 10 minutes to complete
+						CompletionTime: &metav1.Time{Time: clock.Now().Add(10 * time.Minute)},
+					},
+				},
+			},
 		},
 		Namespaces: []*corev1.Namespace{
 			{
@@ -865,25 +940,43 @@ func TestLogs_Auto_Select_FirstPipeline(t *testing.T) {
 	clock := clockwork.NewFakeClock()
 
 	pdata := []*v1alpha1.Pipeline{
-		tb.Pipeline(pipelineName, tb.PipelineNamespace(ns)),
+		{
+			ObjectMeta: metav1.ObjectMeta{
+				Name:      pipelineName,
+				Namespace: ns,
+			},
+		},
 	}
 	prdata := []*v1alpha1.PipelineRun{
-		tb.PipelineRun(prName,
-			tb.PipelineRunNamespace(ns),
-			cb.PipelineRunCreationTimestamp(clock.Now().Add(-10*time.Minute)),
-			tb.PipelineRunLabel("tekton.dev/pipeline", pipelineName),
-			tb.PipelineRunSpec(pipelineName),
-			tb.PipelineRunStatus(
-				tb.PipelineRunStatusCondition(apis.Condition{
-					Status: corev1.ConditionTrue,
-					Reason: v1beta1.PipelineRunReasonSuccessful.String(),
-				}),
-				// pipeline run started 5 minutes ago
-				tb.PipelineRunStartTime(clock.Now().Add(-5*time.Minute)),
-				// takes 10 minutes to complete
-				cb.PipelineRunCompletionTime(clock.Now().Add(10*time.Minute)),
-			),
-		),
+		{
+			ObjectMeta: metav1.ObjectMeta{
+				Name:              prName2,
+				Namespace:         ns,
+				Labels:            map[string]string{"tekton.dev/pipeline": pipelineName},
+				CreationTimestamp: metav1.Time{Time: clock.Now().Add(-8 * time.Minute)},
+			},
+			Spec: v1alpha1.PipelineRunSpec{
+				PipelineRef: &v1alpha1.PipelineRef{
+					Name: pipelineName,
+				},
+			},
+			Status: v1beta1.PipelineRunStatus{
+				Status: duckv1beta1.Status{
+					Conditions: duckv1beta1.Conditions{
+						{
+							Status: corev1.ConditionTrue,
+							Reason: v1beta1.PipelineRunReasonSuccessful.String(),
+						},
+					},
+				},
+				PipelineRunStatusFields: v1beta1.PipelineRunStatusFields{
+					// pipeline run started 3 minutes ago
+					StartTime: &metav1.Time{Time: clock.Now().Add(-3 * time.Minute)},
+					// takes 10 minutes to complete
+					CompletionTime: &metav1.Time{Time: clock.Now().Add(10 * time.Minute)},
+				},
+			},
+		},
 	}
 	cs, _ := test.SeedTestData(t, pipelinetest.Data{
 		Pipelines:    pdata,
