@@ -21,7 +21,6 @@ import (
 	"time"
 
 	"github.com/jonboulle/clockwork"
-	tb "github.com/tektoncd/cli/internal/builder/v1alpha1"
 	"github.com/tektoncd/cli/pkg/test"
 	cb "github.com/tektoncd/cli/pkg/test/builder"
 	testDynamic "github.com/tektoncd/cli/pkg/test/dynamic"
@@ -33,7 +32,7 @@ import (
 	"gotest.tools/v3/golden"
 	corev1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
-	"knative.dev/pkg/apis"
+	duckv1beta1 "knative.dev/pkg/apis/duck/v1beta1"
 )
 
 func TestPipelinesList_invalid_namespace(t *testing.T) {
@@ -400,30 +399,46 @@ func TestPipelinesList_with_single_run(t *testing.T) {
 	clock := clockwork.NewFakeClock()
 	version := "v1alpha1"
 	pdata := []*v1alpha1.Pipeline{
-		tb.Pipeline("pipeline",
-			tb.PipelineNamespace("ns"),
-			// created  5 minutes back
-			cb.PipelineCreationTimestamp(clock.Now().Add(-5*time.Minute)),
-		),
+		{
+			ObjectMeta: metav1.ObjectMeta{
+				Name:      "pipeline",
+				Namespace: "ns",
+				// created  5 minutes back
+				CreationTimestamp: metav1.Time{Time: clock.Now().Add(-5 * time.Minute)},
+			},
+		},
 	}
 
 	prdata := []*v1alpha1.PipelineRun{
-		tb.PipelineRun("pipeline-run-1",
-			tb.PipelineRunNamespace("ns"),
-			cb.PipelineRunCreationTimestamp(clock.Now()),
-			tb.PipelineRunLabel("tekton.dev/pipeline", "pipeline"),
-			tb.PipelineRunSpec("pipeline"),
-			tb.PipelineRunStatus(
-				tb.PipelineRunStatusCondition(apis.Condition{
-					Status: corev1.ConditionTrue,
-					Reason: v1beta1.PipelineRunReasonSuccessful.String(),
-				}),
-				// pipeline run starts now
-				tb.PipelineRunStartTime(clock.Now()),
-				// takes 10 minutes to complete
-				cb.PipelineRunCompletionTime(clock.Now().Add(10*time.Minute)),
-			),
-		),
+		{
+			ObjectMeta: metav1.ObjectMeta{
+				Name:              "pipeline-run-1",
+				Namespace:         "ns",
+				CreationTimestamp: metav1.Time{Time: clock.Now()},
+				Labels:            map[string]string{"tekton.dev/pipeline": "pipeline"},
+			},
+			Spec: v1alpha1.PipelineRunSpec{
+				PipelineRef: &v1alpha1.PipelineRef{
+					Name: "pipeline",
+				},
+			},
+			Status: v1alpha1.PipelineRunStatus{
+				Status: duckv1beta1.Status{
+					Conditions: duckv1beta1.Conditions{
+						{
+							Status: corev1.ConditionTrue,
+							Reason: v1beta1.PipelineRunReasonSuccessful.String(),
+						},
+					},
+				},
+				PipelineRunStatusFields: v1beta1.PipelineRunStatusFields{
+					// pipeline run starts now
+					StartTime: &metav1.Time{Time: clock.Now()},
+					// takes 10 minutes to complete
+					CompletionTime: &metav1.Time{Time: clock.Now().Add(10 * time.Minute)},
+				},
+			},
+		},
 	}
 
 	cs, _ := test.SeedTestData(t, pipelinetest.Data{
@@ -487,43 +502,71 @@ func TestPipelinesList_latest_run(t *testing.T) {
 		secondRunCompleted = secondRunStarted.Add(runDuration) // takes less thus completes
 	)
 	pdata := []*v1alpha1.Pipeline{
-		tb.Pipeline("pipeline",
-			tb.PipelineNamespace("ns"),
-			// created  5 minutes back
-			cb.PipelineCreationTimestamp(pipelineCreated),
-		),
+		{
+			ObjectMeta: metav1.ObjectMeta{
+				Name:      "pipeline",
+				Namespace: "ns",
+				// created  5 minutes back
+				CreationTimestamp: metav1.Time{Time: pipelineCreated},
+			},
+		},
 	}
 
 	prdata := []*v1alpha1.PipelineRun{
-
-		tb.PipelineRun("pipeline-run-1",
-			tb.PipelineRunNamespace("ns"),
-			cb.PipelineRunCreationTimestamp(firstRunCreated),
-			tb.PipelineRunLabel("tekton.dev/pipeline", "pipeline"),
-			tb.PipelineRunSpec("pipeline"),
-			tb.PipelineRunStatus(
-				tb.PipelineRunStatusCondition(apis.Condition{
-					Status: corev1.ConditionTrue,
-					Reason: v1beta1.PipelineRunReasonSuccessful.String(),
-				}),
-				tb.PipelineRunStartTime(firstRunStarted),
-				cb.PipelineRunCompletionTime(firstRunCompleted),
-			),
-		),
-		tb.PipelineRun("pipeline-run-2",
-			tb.PipelineRunNamespace("ns"),
-			cb.PipelineRunCreationTimestamp(secondRunCreated),
-			tb.PipelineRunLabel("tekton.dev/pipeline", "pipeline"),
-			tb.PipelineRunSpec("pipeline"),
-			tb.PipelineRunStatus(
-				tb.PipelineRunStatusCondition(apis.Condition{
-					Status: corev1.ConditionTrue,
-					Reason: v1beta1.PipelineRunReasonSuccessful.String(),
-				}),
-				tb.PipelineRunStartTime(secondRunStarted),
-				cb.PipelineRunCompletionTime(secondRunCompleted),
-			),
-		),
+		{
+			ObjectMeta: metav1.ObjectMeta{
+				Name:              "pipeline-run-1",
+				Namespace:         "ns",
+				CreationTimestamp: metav1.Time{Time: firstRunCreated},
+				Labels:            map[string]string{"tekton.dev/pipeline": "pipeline"},
+			},
+			Spec: v1alpha1.PipelineRunSpec{
+				PipelineRef: &v1alpha1.PipelineRef{
+					Name: "pipeline",
+				},
+			},
+			Status: v1alpha1.PipelineRunStatus{
+				Status: duckv1beta1.Status{
+					Conditions: duckv1beta1.Conditions{
+						{
+							Status: corev1.ConditionTrue,
+							Reason: v1beta1.PipelineRunReasonSuccessful.String(),
+						},
+					},
+				},
+				PipelineRunStatusFields: v1beta1.PipelineRunStatusFields{
+					StartTime:      &metav1.Time{Time: firstRunStarted},
+					CompletionTime: &metav1.Time{Time: firstRunCompleted},
+				},
+			},
+		},
+		{
+			ObjectMeta: metav1.ObjectMeta{
+				Name:              "pipeline-run-2",
+				Namespace:         "ns",
+				CreationTimestamp: metav1.Time{Time: secondRunCreated},
+				Labels:            map[string]string{"tekton.dev/pipeline": "pipeline"},
+			},
+			Spec: v1alpha1.PipelineRunSpec{
+				PipelineRef: &v1alpha1.PipelineRef{
+					Name: "pipeline",
+				},
+			},
+			Status: v1alpha1.PipelineRunStatus{
+				Status: duckv1beta1.Status{
+					Conditions: duckv1beta1.Conditions{
+						{
+							Status: corev1.ConditionTrue,
+							Reason: v1beta1.PipelineRunReasonSuccessful.String(),
+						},
+					},
+				},
+				PipelineRunStatusFields: v1beta1.PipelineRunStatusFields{
+					StartTime:      &metav1.Time{Time: secondRunStarted},
+					CompletionTime: &metav1.Time{Time: secondRunCompleted},
+				},
+			},
+		},
 	}
 
 	cs, _ := test.SeedTestData(t, pipelinetest.Data{
@@ -568,9 +611,14 @@ type pipelineDetails struct {
 func seedPipelines(t *testing.T, clock clockwork.Clock, ps []pipelineDetails, nsList []*corev1.Namespace) (pipelinetest.Clients, []*v1alpha1.Pipeline) {
 	pipelines := []*v1alpha1.Pipeline{}
 	for _, p := range ps {
-		pipelines = append(pipelines, tb.Pipeline(p.name,
-			tb.PipelineNamespace(p.namespace),
-			cb.PipelineCreationTimestamp(clock.Now().Add(p.age*-1))))
+		pipelines = append(pipelines,
+			&v1alpha1.Pipeline{
+				ObjectMeta: metav1.ObjectMeta{
+					Name:              p.name,
+					Namespace:         p.namespace,
+					CreationTimestamp: metav1.Time{Time: clock.Now().Add(p.age * -1)},
+				},
+			})
 	}
 	cs, _ := test.SeedTestData(t, pipelinetest.Data{Pipelines: pipelines, Namespaces: nsList})
 
