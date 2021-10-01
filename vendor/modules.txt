@@ -513,7 +513,6 @@ github.com/tektoncd/triggers/pkg/client/injection/informers/triggers/v1beta1/tri
 github.com/tektoncd/triggers/pkg/client/listers/triggers/v1alpha1
 github.com/tektoncd/triggers/pkg/client/listers/triggers/v1beta1
 github.com/tektoncd/triggers/test
-github.com/tektoncd/triggers/test/builder
 # github.com/xlab/treeprint v0.0.0-20181112141820-a009c3971eca
 github.com/xlab/treeprint
 # go.opencensus.io v0.23.0

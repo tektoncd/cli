@@ -1,6 +1,5 @@
 package eventlistener
 
-// TODO: properly move to v1beta1
 import (
 	"fmt"
 	"strings"
@@ -13,7 +12,6 @@ import (
 	cb "github.com/tektoncd/cli/pkg/test/builder"
 	testDynamic "github.com/tektoncd/cli/pkg/test/dynamic"
 	"github.com/tektoncd/triggers/pkg/apis/triggers/v1beta1"
-	v1alpha1 "github.com/tektoncd/triggers/pkg/apis/triggers/v1beta1"
 	triggertest "github.com/tektoncd/triggers/test"
 	"gotest.tools/v3/golden"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
@@ -95,7 +93,7 @@ func TestLogsEventListener(t *testing.T) {
 	}
 }
 
-func commandLogs(t *testing.T, els []*v1alpha1.EventListener, now time.Time) *cobra.Command {
+func commandLogs(t *testing.T, els []*v1beta1.EventListener, now time.Time) *cobra.Command {
 	clock := clockwork.NewFakeClockAt(now)
 	cs := test.SeedTestResources(t, triggertest.Resources{EventListeners: els})
 	cs.Triggers.Resources = cb.TriggersAPIResourceList("v1beta1", []string{"eventlistener"})
