@@ -25,7 +25,6 @@ import (
 	"github.com/tektoncd/triggers/pkg/apis/triggers/v1beta1"
 	triggertest "github.com/tektoncd/triggers/test"
 	corev1 "k8s.io/api/core/v1"
-	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	v1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 )
 
@@ -221,7 +220,7 @@ func TestTriggerTemplate_List(t *testing.T) {
 			if err != nil {
 				t.Errorf("unexpected Error, not able to get clients")
 			}
-			got, err := List(cs, metav1.ListOptions{}, "ns")
+			got, err := List(cs, v1.ListOptions{}, "ns")
 			if err != nil {
 				t.Errorf("unexpected Error")
 			}
