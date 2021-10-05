@@ -91,6 +91,68 @@ func TestEventListenerE2E(t *testing.T) {
 	})
 }
 
+func TestEventListener_v1beta1E2E(t *testing.T) {
+	c, namespace := framework.Setup(t)
+	knativetest.CleanupOnInterrupt(func() { framework.TearDown(t, c, namespace) }, t.Logf)
+	defer cleanupResources(t, c, namespace)
+
+	kubectl := cli.NewKubectl(namespace)
+	tkn, err := cli.NewTknRunner(namespace)
+	assert.NilError(t, err)
+	elName := "github-listener-interceptor"
+
+	t.Logf("Creating EventListener %s in namespace %s", elName, namespace)
+	kubectl.MustSucceed(t, "create", "-f", helper.GetResourcePath("eventlistener/eventlistener_v1beta1.yaml"))
+	createResources(t, c, namespace)
+	// Wait for pods to become available for next test
+	kubectl.MustSucceed(t, "wait", "--for=condition=Ready", "pod", "-n", namespace, "--timeout=2m", "--all")
+
+	t.Run("Assert if EventListener AVAILABLE status is true", func(t *testing.T) {
+		res := tkn.MustSucceed(t, "eventlistener", "list")
+		stdout := res.Stdout()
+		assert.Check(t, helper.ContainsAll(stdout, elName, "AVAILABLE", "True"))
+	})
+
+	t.Run("Get logs of EventListener", func(t *testing.T) {
+		res := tkn.MustSucceed(t, "eventlistener", "logs", elName, "-t", "1")
+
+		elPods, err := c.KubeClient.CoreV1().Pods(namespace).List(context.Background(), metav1.ListOptions{LabelSelector: "eventlistener=" + elName})
+		if err != nil {
+			t.Fatalf("Error getting pods for EventListener %s: %v", elName, err)
+		}
+
+		podNum := len(elPods.Items)
+		if podNum != 1 {
+			t.Fatalf("Should be one replica for EventListener but had %d replicas", podNum)
+		}
+
+		stdout := res.Stdout()
+		assert.Check(t, helper.ContainsAll(stdout, "github-listener-interceptor-el-github-listener-interceptor-", elPods.Items[0].Name))
+	})
+
+	t.Logf("Scaling EventListener %s to 3 replicas in namespace %s", elName, namespace)
+	kubectl.MustSucceed(t, "apply", "-f", helper.GetResourcePath("eventlistener/eventlistener_v1beta1-multi-replica.yaml"))
+	// Wait for pods to become available for next test
+	kubectl.MustSucceed(t, "wait", "--for=condition=Ready", "pod", "-n", namespace, "--timeout=2m", "--all")
+
+	t.Run("Get logs of EventListener with multiple pods", func(t *testing.T) {
+		elPods, err := c.KubeClient.CoreV1().Pods(namespace).List(context.Background(), metav1.ListOptions{LabelSelector: "eventlistener=" + elName})
+		if err != nil {
+			t.Fatalf("Error getting pods for EventListener %s: %v", elName, err)
+		}
+
+		podNum := len(elPods.Items)
+		if podNum != 3 {
+			t.Fatalf("Should be three replicas for EventListener but had %d replicas", podNum)
+		}
+
+		res := tkn.MustSucceed(t, "eventlistener", "logs", elName, "-t", "1")
+		stdout := res.Stdout()
+
+		assert.Check(t, helper.ContainsAll(stdout, "github-listener-interceptor-el-github-listener-interceptor-", elPods.Items[0].Name, elPods.Items[1].Name, elPods.Items[2].Name))
+	})
+}
+
 func createResources(t *testing.T, c *framework.Clients, namespace string) {
 	t.Helper()
 	// Create ClusterRole required by triggers
