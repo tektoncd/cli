@@ -75,6 +75,7 @@ spec:
     - name: FILENAME
   tasks:
   - name: first-create-file          # 1. create file
+    retries: 3
     taskRef:
       name: create-file
     params:
@@ -90,6 +91,7 @@ spec:
       - name: workspace
         resource: source-repo
   - name: then-check                 # 2.  check file exists
+    retries: 2
     taskRef:
       name: check-stuff-file-exists
     resources:
