@@ -371,7 +371,7 @@ func cast2taskrun(obj runtime.Object) (*v1beta1.TaskRun, error) {
 }
 
 func isDone(tr *v1beta1.TaskRun, retries int) bool {
-	return tr.IsDone() && areRetriesScheduled(tr, retries)
+	return tr.IsDone() || !areRetriesScheduled(tr, retries)
 }
 
 func isFailure(tr *v1beta1.TaskRun, retries int) bool {
