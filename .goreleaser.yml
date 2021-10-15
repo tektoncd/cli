@@ -65,7 +65,7 @@ nfpms:
     homepage: https://github.com/tektoncd/cli/
     description: A command line interface for interacting with Tekton
     maintainer: Tekton Developers <tekton@tekton.dev>
-    license: BSD
+    license: Apache 2.0
     vendor: Tekton Developers
     formats:
     - deb
