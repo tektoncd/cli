@@ -22,7 +22,6 @@ import (
 
 	"github.com/jonboulle/clockwork"
 	"github.com/spf13/cobra"
-	tb "github.com/tektoncd/cli/internal/builder/v1alpha1"
 	"github.com/tektoncd/cli/pkg/test"
 	cb "github.com/tektoncd/cli/pkg/test/builder"
 	testDynamic "github.com/tektoncd/cli/pkg/test/dynamic"
@@ -34,7 +33,6 @@ import (
 	corev1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/client-go/dynamic"
-	"knative.dev/pkg/apis"
 	duckv1beta1 "knative.dev/pkg/apis/duck/v1beta1"
 )
 
@@ -48,66 +46,99 @@ func TestListPipelineRuns(t *testing.T) {
 	pr3Started := clock.Now().Add(-1 * time.Hour)
 
 	prs := []*v1alpha1.PipelineRun{
-		tb.PipelineRun("pr0-1",
-			tb.PipelineRunNamespace("namespace"),
-			tb.PipelineRunLabel("tekton.dev/pipeline", "random"),
-			tb.PipelineRunStatus(),
-		),
-		tb.PipelineRun("pr1-1",
-			tb.PipelineRunNamespace("namespace"),
-			tb.PipelineRunLabel("tekton.dev/pipeline", "pipeline"),
-			tb.PipelineRunStatus(
-				tb.PipelineRunStatusCondition(apis.Condition{
-					Status: corev1.ConditionTrue,
-					Reason: v1beta1.PipelineRunReasonSuccessful.String(),
-				}),
-				tb.PipelineRunStartTime(pr1Started),
-				cb.PipelineRunCompletionTime(pr1Started.Add(runDuration)),
-			),
-		),
-		tb.PipelineRun("pr2-1",
-			tb.PipelineRunNamespace("namespace"),
-			tb.PipelineRunLabel("tekton.dev/pipeline", "random"),
-			tb.PipelineRunStatus(
-				tb.PipelineRunStatusCondition(apis.Condition{
-					Status: corev1.ConditionTrue,
-					Reason: v1beta1.PipelineRunReasonRunning.String(),
-				}),
-				tb.PipelineRunStartTime(pr2Started),
-			),
-		),
-		tb.PipelineRun("pr2-2",
-			tb.PipelineRunNamespace("namespace"),
-			tb.PipelineRunLabel("tekton.dev/pipeline", "random"),
-			tb.PipelineRunLabel("viva", "galapagos"),
-			tb.PipelineRunStatus(
-				tb.PipelineRunStatusCondition(apis.Condition{
-					Status: corev1.ConditionFalse,
-					Reason: v1beta1.PipelineRunReasonFailed.String(),
-				}),
-				tb.PipelineRunStartTime(pr3Started),
-				cb.PipelineRunCompletionTime(pr3Started.Add(runDuration)),
-			),
-		),
-		tb.PipelineRun("pr3-1",
-			tb.PipelineRunNamespace("namespace"),
-			tb.PipelineRunLabel("tekton.dev/pipeline", "random"),
-			tb.PipelineRunLabel("viva", "wakanda"),
-			tb.PipelineRunStatus(),
-		),
+		{
+			ObjectMeta: metav1.ObjectMeta{
+				Name:      "pr0-1",
+				Namespace: "namespace",
+				Labels:    map[string]string{"tekton.dev/pipeline": "random"},
+			},
+		},
+		{
+			ObjectMeta: metav1.ObjectMeta{
+				Name:      "pr1-1",
+				Namespace: "namespace",
+				Labels:    map[string]string{"tekton.dev/pipeline": "pipeline"},
+			},
+			Status: v1beta1.PipelineRunStatus{
+				Status: duckv1beta1.Status{
+					Conditions: duckv1beta1.Conditions{
+						{
+							Status: corev1.ConditionTrue,
+							Reason: v1beta1.PipelineRunReasonSuccessful.String(),
+						},
+					},
+				},
+				PipelineRunStatusFields: v1alpha1.PipelineRunStatusFields{
+					StartTime:      &metav1.Time{Time: pr1Started},
+					CompletionTime: &metav1.Time{Time: pr1Started.Add(runDuration)},
+				},
+			},
+		},
+		{
+			ObjectMeta: metav1.ObjectMeta{
+				Name:      "pr2-1",
+				Namespace: "namespace",
+				Labels:    map[string]string{"tekton.dev/pipeline": "random"},
+			},
+			Status: v1beta1.PipelineRunStatus{
+				Status: duckv1beta1.Status{
+					Conditions: duckv1beta1.Conditions{
+						{
+							Status: corev1.ConditionTrue,
+							Reason: v1beta1.PipelineRunReasonRunning.String(),
+						},
+					},
+				},
+				PipelineRunStatusFields: v1alpha1.PipelineRunStatusFields{
+					StartTime: &metav1.Time{Time: pr2Started},
+				},
+			},
+		},
+		{
+			ObjectMeta: metav1.ObjectMeta{
+				Name:      "pr2-2",
+				Namespace: "namespace",
+				Labels:    map[string]string{"tekton.dev/pipeline": "random", "viva": "galapagos"},
+			},
+			Status: v1beta1.PipelineRunStatus{
+				Status: duckv1beta1.Status{
+					Conditions: duckv1beta1.Conditions{
+						{
+							Status: corev1.ConditionFalse,
+							Reason: v1beta1.PipelineRunReasonFailed.String(),
+						},
+					},
+				},
+				PipelineRunStatusFields: v1alpha1.PipelineRunStatusFields{
+					StartTime:      &metav1.Time{Time: pr3Started},
+					CompletionTime: &metav1.Time{Time: pr3Started.Add(runDuration)},
+				},
+			},
+		},
+		{
+			ObjectMeta: metav1.ObjectMeta{
+				Name:      "pr3-1",
+				Namespace: "namespace",
+				Labels:    map[string]string{"tekton.dev/pipeline": "random", "viva": "wakanda"},
+			},
+		},
 	}
 
 	prsMultipleNs := []*v1alpha1.PipelineRun{
-		tb.PipelineRun("pr4-1",
-			tb.PipelineRunNamespace("namespace-tout"),
-			tb.PipelineRunLabel("tekton.dev/pipeline", "random"),
-			tb.PipelineRunStatus(),
-		),
-		tb.PipelineRun("pr4-2",
-			tb.PipelineRunNamespace("namespace-lacher"),
-			tb.PipelineRunLabel("tekton.dev/pipeline", "random"),
-			tb.PipelineRunStatus(),
-		),
+		{
+			ObjectMeta: metav1.ObjectMeta{
+				Name:      "pr4-1",
+				Namespace: "namespace-tout",
+				Labels:    map[string]string{"tekton.dev/pipeline": "random"},
+			},
+		},
+		{
+			ObjectMeta: metav1.ObjectMeta{
+				Name:      "pr4-2",
+				Namespace: "namespace-lacher",
+				Labels:    map[string]string{"tekton.dev/pipeline": "random"},
+			},
+		},
 	}
 
 	ns := []*corev1.Namespace{

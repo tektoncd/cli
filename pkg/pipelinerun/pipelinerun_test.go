@@ -19,7 +19,6 @@ import (
 	"time"
 
 	"github.com/jonboulle/clockwork"
-	tb "github.com/tektoncd/cli/internal/builder/v1alpha1"
 	"github.com/tektoncd/cli/pkg/test"
 	cb "github.com/tektoncd/cli/pkg/test/builder"
 	testDynamic "github.com/tektoncd/cli/pkg/test/dynamic"
@@ -29,7 +28,6 @@ import (
 	pipelinetest "github.com/tektoncd/pipeline/test/v1alpha1"
 	corev1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
-	"knative.dev/pkg/apis"
 	duckv1beta1 "knative.dev/pkg/apis/duck/v1beta1"
 )
 
@@ -40,32 +38,55 @@ func TestPipelineRunsList_with_single_run(t *testing.T) {
 	runDuration := 1 * time.Minute
 
 	prdata := []*v1alpha1.PipelineRun{
-		tb.PipelineRun("pipelinerun", tb.PipelineRunNamespace("ns"),
-			tb.PipelineRunLabel("tekton.dev/pipeline", "random"),
-			tb.PipelineRunStatus(),
-		),
-		tb.PipelineRun("pipelinerun1", tb.PipelineRunNamespace("ns"),
-			tb.PipelineRunLabel("tekton.dev/pipeline", "pipeline"),
-			tb.PipelineRunStatus(
-				tb.PipelineRunStatusCondition(apis.Condition{
-					Status: corev1.ConditionTrue,
-					Reason: v1beta1.PipelineRunReasonSuccessful.String(),
-				}),
-				tb.PipelineRunStartTime(pr1Started),
-				cb.PipelineRunCompletionTime(pr1Started.Add(runDuration)),
-			),
-		),
-		tb.PipelineRun("pipelinerun2", tb.PipelineRunNamespace("ns"),
-			tb.PipelineRunLabel("tekton.dev/pipeline", "pipeline"),
-			tb.PipelineRunStatus(
-				tb.PipelineRunStatusCondition(apis.Condition{
-					Status: corev1.ConditionTrue,
-					Reason: v1beta1.PipelineRunReasonSuccessful.String(),
-				}),
-				tb.PipelineRunStartTime(pr1Started),
-				cb.PipelineRunCompletionTime(pr1Started.Add(runDuration)),
-			),
-		),
+		{
+			ObjectMeta: metav1.ObjectMeta{
+				Name:      "pipelinerun",
+				Namespace: "ns",
+				Labels:    map[string]string{"tekton.dev/pipeline": "random"},
+			},
+		},
+		{
+			ObjectMeta: metav1.ObjectMeta{
+				Name:      "pipelinerun1",
+				Namespace: "ns",
+				Labels:    map[string]string{"tekton.dev/pipeline": "pipeline"},
+			},
+			Status: v1alpha1.PipelineRunStatus{
+				Status: duckv1beta1.Status{
+					Conditions: duckv1beta1.Conditions{
+						{
+							Status: corev1.ConditionTrue,
+							Reason: v1beta1.PipelineRunReasonSuccessful.String(),
+						},
+					},
+				},
+				PipelineRunStatusFields: v1alpha1.PipelineRunStatusFields{
+					StartTime:      &metav1.Time{Time: pr1Started},
+					CompletionTime: &metav1.Time{Time: pr1Started.Add(runDuration)},
+				},
+			},
+		},
+		{
+			ObjectMeta: metav1.ObjectMeta{
+				Name:      "pipelinerun2",
+				Namespace: "ns",
+				Labels:    map[string]string{"tekton.dev/pipeline": "pipeline"},
+			},
+			Status: v1alpha1.PipelineRunStatus{
+				Status: duckv1beta1.Status{
+					Conditions: duckv1beta1.Conditions{
+						{
+							Status: corev1.ConditionTrue,
+							Reason: v1beta1.PipelineRunReasonSuccessful.String(),
+						},
+					},
+				},
+				PipelineRunStatusFields: v1alpha1.PipelineRunStatusFields{
+					StartTime:      &metav1.Time{Time: pr1Started},
+					CompletionTime: &metav1.Time{Time: pr1Started.Add(runDuration)},
+				},
+			},
+		},
 	}
 	cs, _ := test.SeedTestData(t, pipelinetest.Data{
 		PipelineRuns: prdata,
@@ -283,30 +304,48 @@ func TestPipelineRunGet(t *testing.T) {
 	runDuration := 1 * time.Minute
 
 	prdata := []*v1alpha1.PipelineRun{
-		tb.PipelineRun("pipelinerun1", tb.PipelineRunNamespace("ns"),
-			tb.PipelineRunLabel("tekton.dev/pipeline", "pipeline"),
-			tb.PipelineRunSpec("pipeline"),
-			tb.PipelineRunStatus(
-				tb.PipelineRunStatusCondition(apis.Condition{
-					Status: corev1.ConditionTrue,
-					Reason: v1beta1.PipelineRunReasonSuccessful.String(),
-				}),
-				tb.PipelineRunStartTime(pr1Started),
-				cb.PipelineRunCompletionTime(pr1Started.Add(runDuration)),
-			),
-		),
-		tb.PipelineRun("pipelinerun2", tb.PipelineRunNamespace("ns"),
-			tb.PipelineRunLabel("tekton.dev/pipeline", "pipeline"),
-			tb.PipelineRunSpec("pipeline"),
-			tb.PipelineRunStatus(
-				tb.PipelineRunStatusCondition(apis.Condition{
-					Status: corev1.ConditionTrue,
-					Reason: v1beta1.PipelineRunReasonSuccessful.String(),
-				}),
-				tb.PipelineRunStartTime(pr1Started),
-				cb.PipelineRunCompletionTime(pr1Started.Add(runDuration)),
-			),
-		),
+		{
+			ObjectMeta: metav1.ObjectMeta{
+				Name:      "pipelinerun1",
+				Namespace: "ns",
+				Labels:    map[string]string{"tekton.dev/pipeline": "pipeline"},
+			},
+			Status: v1alpha1.PipelineRunStatus{
+				Status: duckv1beta1.Status{
+					Conditions: duckv1beta1.Conditions{
+						{
+							Status: corev1.ConditionTrue,
+							Reason: v1beta1.PipelineRunReasonSuccessful.String(),
+						},
+					},
+				},
+				PipelineRunStatusFields: v1alpha1.PipelineRunStatusFields{
+					StartTime:      &metav1.Time{Time: pr1Started},
+					CompletionTime: &metav1.Time{Time: pr1Started.Add(runDuration)},
+				},
+			},
+		},
+		{
+			ObjectMeta: metav1.ObjectMeta{
+				Name:      "pipelinerun2",
+				Namespace: "ns",
+				Labels:    map[string]string{"tekton.dev/pipeline": "pipeline"},
+			},
+			Status: v1alpha1.PipelineRunStatus{
+				Status: duckv1beta1.Status{
+					Conditions: duckv1beta1.Conditions{
+						{
+							Status: corev1.ConditionTrue,
+							Reason: v1beta1.PipelineRunReasonSuccessful.String(),
+						},
+					},
+				},
+				PipelineRunStatusFields: v1alpha1.PipelineRunStatusFields{
+					StartTime:      &metav1.Time{Time: pr1Started},
+					CompletionTime: &metav1.Time{Time: pr1Started.Add(runDuration)},
+				},
+			},
+		},
 	}
 	cs, _ := test.SeedTestData(t, pipelinetest.Data{
 		PipelineRuns: prdata,
