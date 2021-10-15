@@ -18,7 +18,6 @@ import (
 	"errors"
 	"testing"
 
-	tb "github.com/tektoncd/cli/internal/builder/v1alpha1"
 	"github.com/tektoncd/cli/pkg/test"
 	tu "github.com/tektoncd/cli/pkg/test"
 	cb "github.com/tektoncd/cli/pkg/test/builder"
@@ -181,17 +180,49 @@ func Test_cancel_pipelinerun_client_err(t *testing.T) {
 	errStr := "test generated error"
 
 	prs := []*v1alpha1.PipelineRun{
-		tb.PipelineRun(prName,
-			tb.PipelineRunNamespace("ns"),
-			tb.PipelineRunLabel("tekton.dev/pipeline", "pipelineName"),
-			tb.PipelineRunSpec("pipelineName",
-				tb.PipelineRunServiceAccountName("test-sa"),
-				tb.PipelineRunResourceBinding("git-repo", tb.PipelineResourceBindingRef("some-repo")),
-				tb.PipelineRunResourceBinding("build-image", tb.PipelineResourceBindingRef("some-image")),
-				tb.PipelineRunParam("pipeline-param-1", "somethingmorefun"),
-				tb.PipelineRunParam("rev-param", "revision1"),
-			),
-		),
+		{
+			ObjectMeta: metav1.ObjectMeta{
+				Name:      prName,
+				Namespace: "ns",
+				Labels:    map[string]string{"tekton.dev/pipeline": "pipelineName"},
+			},
+			Spec: v1alpha1.PipelineRunSpec{
+				PipelineRef: &v1beta1.PipelineRef{
+					Name: "pipelineName",
+				},
+				ServiceAccountName: "test-sa",
+				Resources: []v1beta1.PipelineResourceBinding{
+					{
+						Name: "git-repo",
+						ResourceRef: &v1beta1.PipelineResourceRef{
+							Name: "some-repo",
+						},
+					},
+					{
+						Name: "build-image",
+						ResourceRef: &v1beta1.PipelineResourceRef{
+							Name: "some-image",
+						},
+					},
+				},
+				Params: []v1beta1.Param{
+					{
+						Name: "pipeline-param-1",
+						Value: v1beta1.ArrayOrString{
+							Type:      v1beta1.ParamTypeString,
+							StringVal: "somethingmorefun",
+						},
+					},
+					{
+						Name: "rev-param",
+						Value: v1beta1.ArrayOrString{
+							Type:      v1beta1.ParamTypeString,
+							StringVal: "revision1",
+						},
+					},
+				},
+			},
+		},
 	}
 
 	cs, _ := test.SeedTestData(t, pipelinetest.Data{PipelineRuns: prs, Namespaces: ns})
@@ -231,20 +262,56 @@ func Test_finished_pipelinerun_success(t *testing.T) {
 	prName := "test-pipeline-run-123"
 
 	prs := []*v1alpha1.PipelineRun{
-		tb.PipelineRun(prName,
-			tb.PipelineRunNamespace("ns"),
-			tb.PipelineRunLabel("tekton.dev/pipeline", "pipelineName"),
-			tb.PipelineRunSpec("pipelineName",
-				tb.PipelineRunServiceAccountName("test-sa"),
-				tb.PipelineRunResourceBinding("git-repo", tb.PipelineResourceBindingRef("some-repo")),
-				tb.PipelineRunResourceBinding("build-image", tb.PipelineResourceBindingRef("some-image")),
-				tb.PipelineRunParam("pipeline-param-1", "somethingmorefun"),
-				tb.PipelineRunParam("rev-param", "revision1"),
-			),
-			tb.PipelineRunStatus(
-				tb.PipelineRunStatusCondition(success),
-			),
-		),
+		{
+			ObjectMeta: metav1.ObjectMeta{
+				Name:      prName,
+				Namespace: "ns",
+				Labels:    map[string]string{"tekton.dev/pipeline": "pipelineName"},
+			},
+			Spec: v1alpha1.PipelineRunSpec{
+				PipelineRef: &v1beta1.PipelineRef{
+					Name: "pipelineName",
+				},
+				ServiceAccountName: "test-sa",
+				Resources: []v1beta1.PipelineResourceBinding{
+					{
+						Name: "git-repo",
+						ResourceRef: &v1beta1.PipelineResourceRef{
+							Name: "some-repo",
+						},
+					},
+					{
+						Name: "build-image",
+						ResourceRef: &v1beta1.PipelineResourceRef{
+							Name: "some-image",
+						},
+					},
+				},
+				Params: []v1beta1.Param{
+					{
+						Name: "pipeline-param-1",
+						Value: v1beta1.ArrayOrString{
+							Type:      v1beta1.ParamTypeString,
+							StringVal: "somethingmorefun",
+						},
+					},
+					{
+						Name: "rev-param",
+						Value: v1beta1.ArrayOrString{
+							Type:      v1beta1.ParamTypeString,
+							StringVal: "revision1",
+						},
+					},
+				},
+			},
+			Status: v1alpha1.PipelineRunStatus{
+				Status: duckv1beta1.Status{
+					Conditions: duckv1beta1.Conditions{
+						success,
+					},
+				},
+			},
+		},
 	}
 
 	cs, _ := test.SeedTestData(t, pipelinetest.Data{PipelineRuns: prs, Namespaces: ns})
@@ -277,20 +344,57 @@ func Test_finished_pipelinerun_failure(t *testing.T) {
 	prName := "test-pipeline-run-123"
 
 	prs := []*v1alpha1.PipelineRun{
-		tb.PipelineRun(prName,
-			tb.PipelineRunNamespace("ns"),
-			tb.PipelineRunLabel("tekton.dev/pipeline", "pipelineName"),
-			tb.PipelineRunSpec("pipelineName",
-				tb.PipelineRunServiceAccountName("test-sa"),
-				tb.PipelineRunResourceBinding("git-repo", tb.PipelineResourceBindingRef("some-repo")),
-				tb.PipelineRunResourceBinding("build-image", tb.PipelineResourceBindingRef("some-image")),
-				tb.PipelineRunParam("pipeline-param-1", "somethingmorefun"),
-				tb.PipelineRunParam("rev-param", "revision1"),
-			),
-			tb.PipelineRunStatus(
-				tb.PipelineRunStatusCondition(failure),
-			),
-		),
+
+		{
+			ObjectMeta: metav1.ObjectMeta{
+				Name:      prName,
+				Namespace: "ns",
+				Labels:    map[string]string{"tekton.dev/pipeline": "pipelineName"},
+			},
+			Spec: v1alpha1.PipelineRunSpec{
+				PipelineRef: &v1beta1.PipelineRef{
+					Name: "pipelineName",
+				},
+				ServiceAccountName: "test-sa",
+				Resources: []v1beta1.PipelineResourceBinding{
+					{
+						Name: "git-repo",
+						ResourceRef: &v1beta1.PipelineResourceRef{
+							Name: "some-repo",
+						},
+					},
+					{
+						Name: "build-image",
+						ResourceRef: &v1beta1.PipelineResourceRef{
+							Name: "some-image",
+						},
+					},
+				},
+				Params: []v1beta1.Param{
+					{
+						Name: "pipeline-param-1",
+						Value: v1beta1.ArrayOrString{
+							Type:      v1beta1.ParamTypeString,
+							StringVal: "somethingmorefun",
+						},
+					},
+					{
+						Name: "rev-param",
+						Value: v1beta1.ArrayOrString{
+							Type:      v1beta1.ParamTypeString,
+							StringVal: "revision1",
+						},
+					},
+				},
+			},
+			Status: v1alpha1.PipelineRunStatus{
+				Status: duckv1beta1.Status{
+					Conditions: duckv1beta1.Conditions{
+						failure,
+					},
+				},
+			},
+		},
 	}
 
 	cs, _ := test.SeedTestData(t, pipelinetest.Data{PipelineRuns: prs, Namespaces: ns})
@@ -323,20 +427,56 @@ func Test_finished_pipelinerun_cancel(t *testing.T) {
 	prName := "test-pipeline-run-123"
 
 	prs := []*v1alpha1.PipelineRun{
-		tb.PipelineRun(prName,
-			tb.PipelineRunNamespace("ns"),
-			tb.PipelineRunLabel("tekton.dev/pipeline", "pipelineName"),
-			tb.PipelineRunSpec("pipelineName",
-				tb.PipelineRunServiceAccountName("test-sa"),
-				tb.PipelineRunResourceBinding("git-repo", tb.PipelineResourceBindingRef("some-repo")),
-				tb.PipelineRunResourceBinding("build-image", tb.PipelineResourceBindingRef("some-image")),
-				tb.PipelineRunParam("pipeline-param-1", "somethingmorefun"),
-				tb.PipelineRunParam("rev-param", "revision1"),
-			),
-			tb.PipelineRunStatus(
-				tb.PipelineRunStatusCondition(cancel),
-			),
-		),
+		{
+			ObjectMeta: metav1.ObjectMeta{
+				Name:      prName,
+				Namespace: "ns",
+				Labels:    map[string]string{"tekton.dev/pipeline": "pipelineName"},
+			},
+			Spec: v1alpha1.PipelineRunSpec{
+				PipelineRef: &v1beta1.PipelineRef{
+					Name: "pipelineName",
+				},
+				ServiceAccountName: "test-sa",
+				Resources: []v1beta1.PipelineResourceBinding{
+					{
+						Name: "git-repo",
+						ResourceRef: &v1beta1.PipelineResourceRef{
+							Name: "some-repo",
+						},
+					},
+					{
+						Name: "build-image",
+						ResourceRef: &v1beta1.PipelineResourceRef{
+							Name: "some-image",
+						},
+					},
+				},
+				Params: []v1beta1.Param{
+					{
+						Name: "pipeline-param-1",
+						Value: v1beta1.ArrayOrString{
+							Type:      v1beta1.ParamTypeString,
+							StringVal: "somethingmorefun",
+						},
+					},
+					{
+						Name: "rev-param",
+						Value: v1beta1.ArrayOrString{
+							Type:      v1beta1.ParamTypeString,
+							StringVal: "revision1",
+						},
+					},
+				},
+			},
+			Status: v1alpha1.PipelineRunStatus{
+				Status: duckv1beta1.Status{
+					Conditions: duckv1beta1.Conditions{
+						cancel,
+					},
+				},
+			},
+		},
 	}
 
 	cs, _ := test.SeedTestData(t, pipelinetest.Data{PipelineRuns: prs, Namespaces: ns})

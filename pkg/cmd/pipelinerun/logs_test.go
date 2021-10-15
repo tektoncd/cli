@@ -21,8 +21,6 @@ import (
 	"time"
 
 	"github.com/jonboulle/clockwork"
-	tb "github.com/tektoncd/cli/internal/builder/v1alpha1"
-	tbv1beta1 "github.com/tektoncd/cli/internal/builder/v1beta1"
 	"github.com/tektoncd/cli/pkg/cli"
 	"github.com/tektoncd/cli/pkg/options"
 	"github.com/tektoncd/cli/pkg/pods/fake"
@@ -119,23 +117,38 @@ func TestLog_no_pipelinerun_argument(t *testing.T) {
 func TestLog_run_found(t *testing.T) {
 	clock := clockwork.NewFakeClock()
 	pdata := []*v1alpha1.Pipeline{
-		tb.Pipeline("pipeline",
-			tb.PipelineNamespace("ns"),
-			cb.PipelineCreationTimestamp(clock.Now().Add(-15*time.Minute)),
-		),
+		{
+			ObjectMeta: metav1.ObjectMeta{
+				Name:              "pipeline",
+				Namespace:         "ns",
+				CreationTimestamp: metav1.Time{Time: clock.Now().Add(-15 * time.Minute)},
+			},
+		},
 	}
 	prdata := []*v1alpha1.PipelineRun{
-		tb.PipelineRun("pipelinerun-1",
-			tb.PipelineRunNamespace("ns"),
-			tb.PipelineRunLabel("tekton.dev/pipeline", "pipeline"),
-			tb.PipelineRunSpec("pipeline"),
-			tb.PipelineRunStatus(
-				tb.PipelineRunStatusCondition(apis.Condition{
-					Status: corev1.ConditionTrue,
-					Reason: v1beta1.PipelineRunReasonSuccessful.String(),
-				}),
-			),
-		),
+		{
+			ObjectMeta: metav1.ObjectMeta{
+				Name:              "pipelinerun1",
+				Namespace:         "ns",
+				CreationTimestamp: metav1.Time{Time: clock.Now()},
+				Labels:            map[string]string{"tekton.dev/pipeline": "pipeline"},
+			},
+			Spec: v1alpha1.PipelineRunSpec{
+				PipelineRef: &v1alpha1.PipelineRef{
+					Name: "pipeline",
+				},
+			},
+			Status: v1alpha1.PipelineRunStatus{
+				Status: duckv1beta1.Status{
+					Conditions: duckv1beta1.Conditions{
+						{
+							Status: corev1.ConditionTrue,
+							Reason: v1beta1.PipelineRunReasonSuccessful.String(),
+						},
+					},
+				},
+			},
+		},
 	}
 	cs, _ := test.SeedTestData(t, pipelinetest.Data{
 		Pipelines:    pdata,
@@ -169,16 +182,23 @@ func TestLog_run_found(t *testing.T) {
 
 func TestLog_run_not_found(t *testing.T) {
 	pr := []*v1alpha1.PipelineRun{
-		tb.PipelineRun("output-pipeline-1",
-			tb.PipelineRunNamespace("ns"),
-			tb.PipelineRunLabel("tekton.dev/pipeline", "output-pipeline-1"),
-			tb.PipelineRunStatus(
-				tb.PipelineRunStatusCondition(apis.Condition{
-					Status: corev1.ConditionFalse,
-					Reason: v1beta1.PipelineRunReasonFailed.String(),
-				}),
-			),
-		),
+		{
+			ObjectMeta: metav1.ObjectMeta{
+				Name:      "output-pipeline-1",
+				Namespace: "ns",
+				Labels:    map[string]string{"tekton.dev/pipeline": "output-pipeline-1"},
+			},
+			Status: v1alpha1.PipelineRunStatus{
+				Status: duckv1beta1.Status{
+					Conditions: duckv1beta1.Conditions{
+						{
+							Status: corev1.ConditionFalse,
+							Reason: v1beta1.PipelineRunReasonSuccessful.String(),
+						},
+					},
+				},
+			},
+		},
 	}
 
 	ns := []*corev1.Namespace{
@@ -239,112 +259,211 @@ func TestPipelinerunLogs(t *testing.T) {
 	}
 
 	trs := []*v1alpha1.TaskRun{
-		tb.TaskRun(tr1Name,
-			tb.TaskRunNamespace(ns),
-			tb.TaskRunSpec(
-				tb.TaskRunTaskRef(task1Name),
-			),
-			tb.TaskRunStatus(
-				tb.PodName(tr1Pod),
-				tb.TaskRunStartTime(tr1StartTime),
-				tb.StatusCondition(apis.Condition{
-					Type:   apis.ConditionSucceeded,
-					Status: corev1.ConditionTrue,
-				}),
-				tb.StepState(
-					cb.StepName(tr1Step1Name),
-					tb.StateTerminated(0),
-				),
-				tb.StepState(
-					cb.StepName(nopStep),
-					tb.StateTerminated(0),
-				),
-			),
-			tb.TaskRunSpec(
-				tb.TaskRunTaskRef(task1Name),
-			),
-		),
-		tb.TaskRun(tr2Name,
-			tb.TaskRunNamespace(ns),
-			tb.TaskRunSpec(
-				tb.TaskRunTaskRef(task2Name),
-			),
-			tb.TaskRunStatus(
-				tb.PodName(tr2Pod),
-				tb.TaskRunStartTime(tr2StartTime),
-				tb.StatusCondition(apis.Condition{
-					Type:   apis.ConditionSucceeded,
-					Status: corev1.ConditionTrue,
-				}),
-				tb.StepState(
-					cb.StepName(tr2Step1Name),
-					tb.StateTerminated(0),
-				),
-				tb.StepState(
-					cb.StepName(nopStep),
-					tb.StateTerminated(0),
-				),
-			),
-			tb.TaskRunSpec(
-				tb.TaskRunTaskRef(task2Name),
-			),
-		),
+		{
+			ObjectMeta: metav1.ObjectMeta{
+				Namespace: ns,
+				Name:      tr1Name,
+			},
+			Spec: v1alpha1.TaskRunSpec{
+				TaskRef: &v1beta1.TaskRef{
+					Name: task1Name,
+				},
+			},
+			Status: v1beta1.TaskRunStatus{
+				Status: duckv1beta1.Status{
+					Conditions: duckv1beta1.Conditions{
+						{
+							Status: corev1.ConditionTrue,
+							Type:   apis.ConditionSucceeded,
+						},
+					},
+				},
+				TaskRunStatusFields: v1beta1.TaskRunStatusFields{
+					StartTime: &metav1.Time{Time: tr1StartTime},
+					PodName:   tr1Pod,
+					Steps: []v1beta1.StepState{
+						{
+							Name: tr1Step1Name,
+							ContainerState: corev1.ContainerState{
+								Terminated: &corev1.ContainerStateTerminated{
+									ExitCode: 0,
+								},
+							},
+						},
+						{
+							Name: nopStep,
+							ContainerState: corev1.ContainerState{
+								Terminated: &corev1.ContainerStateTerminated{
+									ExitCode: 0,
+								},
+							},
+						},
+					},
+				},
+			},
+		},
+		{
+			ObjectMeta: metav1.ObjectMeta{
+				Namespace: ns,
+				Name:      tr2Name,
+			},
+			Spec: v1alpha1.TaskRunSpec{
+				TaskRef: &v1beta1.TaskRef{
+					Name: task2Name,
+				},
+			},
+			Status: v1beta1.TaskRunStatus{
+				Status: duckv1beta1.Status{
+					Conditions: duckv1beta1.Conditions{
+						{
+							Status: corev1.ConditionTrue,
+							Type:   apis.ConditionSucceeded,
+						},
+					},
+				},
+				TaskRunStatusFields: v1beta1.TaskRunStatusFields{
+					StartTime: &metav1.Time{Time: tr2StartTime},
+					PodName:   tr2Pod,
+					Steps: []v1beta1.StepState{
+						{
+							Name: tr2Step1Name,
+							ContainerState: corev1.ContainerState{
+								Terminated: &corev1.ContainerStateTerminated{
+									ExitCode: 0,
+								},
+							},
+						},
+						{
+							Name: nopStep,
+							ContainerState: corev1.ContainerState{
+								Terminated: &corev1.ContainerStateTerminated{
+									ExitCode: 0,
+								},
+							},
+						},
+					},
+				},
+			},
+		},
 	}
 
 	prs := []*v1alpha1.PipelineRun{
-		tb.PipelineRun(prName,
-			tb.PipelineRunNamespace(ns),
-			tb.PipelineRunLabel("tekton.dev/pipeline", prName),
-			tb.PipelineRunSpec(pipelineName),
-			tb.PipelineRunStatus(
-				tb.PipelineRunStatusCondition(apis.Condition{
-					Status: corev1.ConditionTrue,
-					Reason: v1beta1.PipelineRunReasonSuccessful.String(),
-				}),
-				tb.PipelineRunTaskRunsStatus(tr1Name, &v1alpha1.PipelineRunTaskRunStatus{
-					PipelineTaskName: task1Name,
-					Status:           &trs[0].Status,
-				}),
-				tb.PipelineRunTaskRunsStatus(tr2Name, &v1alpha1.PipelineRunTaskRunStatus{
-					PipelineTaskName: task2Name,
-					Status:           &trs[1].Status,
-				}),
-			),
-		),
+		{
+			ObjectMeta: metav1.ObjectMeta{
+				Name:      prName,
+				Namespace: ns,
+				Labels:    map[string]string{"tekton.dev/pipeline": prName},
+			},
+			Spec: v1alpha1.PipelineRunSpec{
+				PipelineRef: &v1alpha1.PipelineRef{
+					Name: pipelineName,
+				},
+			},
+			Status: v1alpha1.PipelineRunStatus{
+				PipelineRunStatusFields: v1alpha1.PipelineRunStatusFields{
+					TaskRuns: map[string]*v1alpha1.PipelineRunTaskRunStatus{
+						tr1Name: {PipelineTaskName: task1Name, Status: &trs[0].Status},
+						tr2Name: {PipelineTaskName: task2Name, Status: &trs[1].Status},
+					},
+				},
+				Status: duckv1beta1.Status{
+					Conditions: duckv1beta1.Conditions{
+						{
+							Status: corev1.ConditionTrue,
+							Reason: v1beta1.PipelineRunReasonSuccessful.String(),
+						},
+					},
+				},
+			},
+		},
 	}
 	pps := []*v1alpha1.Pipeline{
-		tb.Pipeline(pipelineName,
-			tb.PipelineNamespace(ns),
-			tb.PipelineSpec(
-				tb.PipelineTask(task1Name, task1Name),
-				tb.PipelineTask(task2Name, task2Name),
-			),
-		),
+		{
+			ObjectMeta: metav1.ObjectMeta{
+				Name:      pipelineName,
+				Namespace: ns,
+			},
+			Spec: v1alpha1.PipelineSpec{
+				Tasks: []v1alpha1.PipelineTask{
+					{
+						Name: task1Name,
+						TaskRef: &v1alpha1.TaskRef{
+							Name: task1Name,
+						},
+					},
+					{
+						Name: task2Name,
+						TaskRef: &v1alpha1.TaskRef{
+							Name: task2Name,
+						},
+					},
+				},
+			},
+		},
 	}
 
 	p := []*corev1.Pod{
-		tbv1beta1.Pod(tr1Pod,
-			tbv1beta1.PodNamespace(ns),
-			tbv1beta1.PodLabel("tekton.dev/task", pipelineName),
-			tbv1beta1.PodSpec(
-				tbv1beta1.PodInitContainer(tr1InitStep1, "override-with-creds:latest"),
-				tbv1beta1.PodInitContainer(tr1InitStep2, "override-with-tools:latest"),
-				tbv1beta1.PodContainer(tr1Step1Name, tr1Step1Name+":latest"),
-				tbv1beta1.PodContainer(nopStep, "override-with-nop:latest"),
-			),
-			cb.PodStatus(
-				cb.PodInitContainerStatus(tr1InitStep1, "override-with-creds:latest"),
-				cb.PodInitContainerStatus(tr1InitStep2, "override-with-tools:latest"),
-			),
-		),
-		tbv1beta1.Pod(tr2Pod,
-			tbv1beta1.PodNamespace(ns),
-			tbv1beta1.PodLabel("tekton.dev/task", pipelineName),
-			tbv1beta1.PodSpec(
-				tbv1beta1.PodContainer(tr2Step1Name, tr1Step1Name+":latest"),
-				tbv1beta1.PodContainer(nopStep, "override-with-nop:latest"),
-			),
-		),
+		{
+			ObjectMeta: metav1.ObjectMeta{
+				Name:      tr1Pod,
+				Namespace: ns,
+				Labels:    map[string]string{"tekton.dev/task": pipelineName},
+			},
+			Spec: corev1.PodSpec{
+				InitContainers: []corev1.Container{
+					{
+						Name:  tr1InitStep1,
+						Image: "override-with-creds:latest",
+					},
+					{
+						Name:  tr1InitStep2,
+						Image: "override-with-tools:latest",
+					},
+				},
+				Containers: []corev1.Container{
+					{
+						Name:  tr1Step1Name,
+						Image: tr1Step1Name + ":latest",
+					},
+					{
+						Name:  nopStep,
+						Image: "override-with-nop:latest",
+					},
+				},
+			},
+			Status: corev1.PodStatus{
+				Phase: corev1.PodPhase(corev1.PodSucceeded),
+				InitContainerStatuses: []corev1.ContainerStatus{
+					{
+						Name:  tr1InitStep1,
+						Image: "override-with-creds:latest",
+					},
+					{
+						Name:  tr1InitStep2,
+						Image: "override-with-tools:latest",
+					},
+				},
+			},
+		},
+		{
+			ObjectMeta: metav1.ObjectMeta{
+				Name:      tr2Pod,
+				Namespace: ns,
+				Labels:    map[string]string{"tekton.dev/task": pipelineName},
+			},
+			Spec: corev1.PodSpec{
+				Containers: []corev1.Container{
+					{
+						Name:  tr2Step1Name,
+						Image: tr1Step1Name + ":latest",
+					},
+					{
+						Name:  nopStep,
+						Image: "override-with-nop:latest",
+					},
+				},
+			},
+		},
 	}
 
 	fakeLogs := fake.Logs(
@@ -460,66 +579,122 @@ func TestPipelinerunLog_completed_taskrun_only(t *testing.T) {
 	)
 
 	trdata := []*v1alpha1.TaskRun{
-		tb.TaskRun(tr1Name,
-			tb.TaskRunNamespace(ns),
-			tb.TaskRunSpec(
-				tb.TaskRunTaskRef(task1Name),
-			),
-			tb.TaskRunStatus(
-				tb.PodName(tr1Pod),
-				tb.TaskRunStartTime(tr1StartTime),
-				tb.StatusCondition(apis.Condition{
-					Type:   apis.ConditionSucceeded,
-					Status: corev1.ConditionTrue,
-				}),
-				tb.StepState(
-					cb.StepName(tr1Step1Name),
-					tb.StateTerminated(0),
-				),
-				tb.StepState(
-					cb.StepName("nop"),
-					tb.StateTerminated(0),
-				),
-			),
-			tb.TaskRunSpec(
-				tb.TaskRunTaskRef(task1Name),
-			),
-		),
-	}
-	pdata := []*v1alpha1.Pipeline{
-		tb.Pipeline(pipelineName,
-			tb.PipelineNamespace(ns),
-			tb.PipelineSpec(
-				tb.PipelineTask(task1Name, task1Name),
-				tb.PipelineTask(task2Name, task2Name),
-				tb.PipelineTask(task3Name, task3Name),
-				tb.PipelineTask(task4Name, task4Name),
-			),
-		),
-	}
-	prdata := []*v1alpha1.PipelineRun{
-		tb.PipelineRun(prName,
-			tb.PipelineRunNamespace(ns),
-			tb.PipelineRunLabel("tekton.dev/pipeline", prName),
-			tb.PipelineRunSpec(pipelineName),
-
-			tb.PipelineRunStatus(
-				tb.PipelineRunStatusCondition(apis.Condition{
-					Status: corev1.ConditionTrue,
-					Reason: v1beta1.PipelineRunReasonRunning.String(),
-				}),
-				tb.PipelineRunTaskRunsStatus(tr1Name, &v1alpha1.PipelineRunTaskRunStatus{
-					PipelineTaskName: task1Name,
-					Status: &v1alpha1.TaskRunStatus{
-						Status: duckv1beta1.Status{},
-						TaskRunStatusFields: v1beta1.TaskRunStatusFields{
-							StartTime:      &metav1.Time{Time: tr1StartTime},
-							CompletionTime: &metav1.Time{Time: tr1CompletionTime},
+		{
+			ObjectMeta: metav1.ObjectMeta{
+				Namespace: ns,
+				Name:      tr1Name,
+			},
+			Spec: v1alpha1.TaskRunSpec{
+				TaskRef: &v1beta1.TaskRef{
+					Name: task1Name,
+				},
+			},
+			Status: v1beta1.TaskRunStatus{
+				Status: duckv1beta1.Status{
+					Conditions: duckv1beta1.Conditions{
+						{
+							Status: corev1.ConditionTrue,
+							Type:   apis.ConditionSucceeded,
 						},
 					},
-				}),
-			),
-		),
+				},
+				TaskRunStatusFields: v1beta1.TaskRunStatusFields{
+					StartTime: &metav1.Time{Time: tr1StartTime},
+					PodName:   tr1Pod,
+					Steps: []v1beta1.StepState{
+						{
+							Name: tr1Step1Name,
+							ContainerState: corev1.ContainerState{
+								Terminated: &corev1.ContainerStateTerminated{
+									ExitCode: 0,
+								},
+							},
+						},
+						{
+							Name: "nop",
+							ContainerState: corev1.ContainerState{
+								Terminated: &corev1.ContainerStateTerminated{
+									ExitCode: 0,
+								},
+							},
+						},
+					},
+				},
+			},
+		},
+	}
+	pdata := []*v1alpha1.Pipeline{
+		{
+			ObjectMeta: metav1.ObjectMeta{
+				Name:      pipelineName,
+				Namespace: ns,
+			},
+			Spec: v1alpha1.PipelineSpec{
+				Tasks: []v1alpha1.PipelineTask{
+					{
+						Name: task1Name,
+						TaskRef: &v1alpha1.TaskRef{
+							Name: task1Name,
+						},
+					},
+					{
+						Name: task2Name,
+						TaskRef: &v1alpha1.TaskRef{
+							Name: task2Name,
+						},
+					},
+					{
+						Name: task3Name,
+						TaskRef: &v1alpha1.TaskRef{
+							Name: task3Name,
+						},
+					},
+					{
+						Name: task4Name,
+						TaskRef: &v1alpha1.TaskRef{
+							Name: task4Name,
+						},
+					},
+				},
+			},
+		},
+	}
+	prdata := []*v1alpha1.PipelineRun{
+		{
+			ObjectMeta: metav1.ObjectMeta{
+				Name:      prName,
+				Namespace: ns,
+				Labels:    map[string]string{"tekton.dev/pipeline": prName},
+			},
+			Spec: v1alpha1.PipelineRunSpec{
+				PipelineRef: &v1beta1.PipelineRef{
+					Name: pipelineName,
+				},
+			},
+			Status: v1beta1.PipelineRunStatus{
+				Status: duckv1beta1.Status{
+					Conditions: duckv1beta1.Conditions{
+						{
+							Status: corev1.ConditionTrue,
+							Reason: v1beta1.PipelineRunReasonRunning.String(),
+						},
+					},
+				},
+				PipelineRunStatusFields: v1beta1.PipelineRunStatusFields{
+					TaskRuns: map[string]*v1beta1.PipelineRunTaskRunStatus{
+						tr1Name: {
+							PipelineTaskName: task1Name,
+							Status: &v1beta1.TaskRunStatus{
+								TaskRunStatusFields: v1alpha1.TaskRunStatusFields{
+									StartTime:      &metav1.Time{Time: tr1StartTime},
+									CompletionTime: &metav1.Time{Time: tr1CompletionTime},
+								},
+							},
+						},
+					},
+				},
+			},
+		},
 	}
 	// define pipeline in pipelineRef
 	cs, _ := test.SeedTestData(t, pipelinetest.Data{
@@ -534,14 +709,25 @@ func TestPipelinerunLog_completed_taskrun_only(t *testing.T) {
 			},
 		},
 		Pods: []*corev1.Pod{
-			tbv1beta1.Pod(tr1Pod,
-				tbv1beta1.PodNamespace(ns),
-				tbv1beta1.PodLabel("tekton.dev/task", pipelineName),
-				tbv1beta1.PodSpec(
-					tbv1beta1.PodContainer(tr1Step1Name, tr1Step1Name+":latest"),
-					tbv1beta1.PodContainer("nop", "override-with-nop:latest"),
-				),
-			),
+			{
+				ObjectMeta: metav1.ObjectMeta{
+					Name:      tr1Pod,
+					Namespace: ns,
+					Labels:    map[string]string{"tekton.dev/task": pipelineName},
+				},
+				Spec: corev1.PodSpec{
+					Containers: []corev1.Container{
+						{
+							Name:  tr1Step1Name,
+							Image: tr1Step1Name + ":latest",
+						},
+						{
+							Name:  "nop",
+							Image: "override-with-nop:latest",
+						},
+					},
+				},
+			},
 		},
 	})
 	cs.Pipeline.Resources = cb.APIResourceList(versionA1, []string{"task", "taskrun", "pipeline", "pipelinerun"})
@@ -556,52 +742,94 @@ func TestPipelinerunLog_completed_taskrun_only(t *testing.T) {
 	}
 
 	tdata2 := []*v1alpha1.Task{
-		tb.Task("output-task2", tb.TaskNamespace("ns"), cb.TaskCreationTime(clockwork.NewFakeClock().Now())),
+		{
+			ObjectMeta: metav1.ObjectMeta{
+				Name:              "output-task2",
+				Namespace:         "ns",
+				CreationTimestamp: metav1.Time{Time: clockwork.NewFakeClock().Now()},
+			},
+		},
 	}
 	trdata2 := []*v1alpha1.TaskRun{
-		tb.TaskRun("output-taskrun2",
-			tb.TaskRunNamespace("ns"),
-			tb.TaskRunLabel("tekton.dev/task", "task"),
-			tb.TaskRunSpec(tb.TaskRunTaskRef("output-task2")),
-			tb.TaskRunStatus(
-				tb.PodName("output-task-pod-embedded"),
-				tb.TaskRunStartTime(clockwork.NewFakeClock().Now()),
-				tb.StatusCondition(apis.Condition{
-					Type:   apis.ConditionSucceeded,
-					Status: corev1.ConditionTrue,
-					Reason: v1beta1.PipelineRunReasonSuccessful.String(),
-				}),
-				tb.StepState(
-					cb.StepName("test-step"),
-					tb.StateTerminated(0),
-				),
-			),
-		),
-	}
-	prdata2 := []*v1alpha1.PipelineRun{
-		tb.PipelineRun("embedded-pipeline-1",
-			tb.PipelineRunNamespace("ns"),
-			tb.PipelineRunLabel("tekton.dev/pipeline", "embedded-pipeline-1"),
-			tb.PipelineRunSpec("", tb.PipelineRunPipelineSpec(
-				tb.PipelineTask("output-task2", "output-task2"),
-			)),
-			tb.PipelineRunStatus(
-				tb.PipelineRunStatusCondition(apis.Condition{
-					Status: corev1.ConditionTrue,
-					Reason: v1beta1.PipelineRunReasonRunning.String(),
-				}),
-				tb.PipelineRunTaskRunsStatus("output-taskrun2", &v1alpha1.PipelineRunTaskRunStatus{
-					PipelineTaskName: "output-task2",
-					Status: &v1alpha1.TaskRunStatus{
-						Status: duckv1beta1.Status{},
-						TaskRunStatusFields: v1beta1.TaskRunStatusFields{
-							StartTime:      &metav1.Time{Time: tr1StartTime},
-							CompletionTime: &metav1.Time{Time: tr1CompletionTime},
+		{
+			ObjectMeta: metav1.ObjectMeta{
+				Name:      "output-taskrun2",
+				Namespace: "ns",
+				Labels:    map[string]string{"tekton.dev/task": "task"},
+			},
+			Spec: v1alpha1.TaskRunSpec{
+				TaskRef: &v1alpha1.TaskRef{
+					Name: "output-task2",
+				},
+			},
+			Status: v1alpha1.TaskRunStatus{
+				Status: duckv1beta1.Status{
+					Conditions: duckv1beta1.Conditions{
+						{
+							Type:   apis.ConditionSucceeded,
+							Status: corev1.ConditionTrue,
+							Reason: v1beta1.PipelineRunReasonSuccessful.String(),
 						},
 					},
-				}),
-			),
-		),
+				},
+				TaskRunStatusFields: v1beta1.TaskRunStatusFields{
+					PodName:   "output-task-pod-embedded",
+					StartTime: &metav1.Time{Time: clockwork.NewFakeClock().Now()},
+					Steps: []v1alpha1.StepState{
+						{
+							Name: "test-step",
+							ContainerState: corev1.ContainerState{
+								Terminated: &corev1.ContainerStateTerminated{
+									ExitCode: 0,
+								},
+							},
+						},
+					},
+				},
+			},
+		},
+	}
+	prdata2 := []*v1alpha1.PipelineRun{
+		{
+			ObjectMeta: metav1.ObjectMeta{
+				Name:      "embedded-pipeline-1",
+				Namespace: "ns",
+				Labels:    map[string]string{"tekton.dev/pipeline": "embedded-pipeline-1"},
+			},
+			Spec: v1alpha1.PipelineRunSpec{
+				PipelineSpec: &v1alpha1.PipelineSpec{
+					Tasks: []v1alpha1.PipelineTask{
+						{
+							Name: "output-task2",
+							TaskRef: &v1alpha1.TaskRef{
+								Name: "output-task2",
+							},
+						},
+					},
+				},
+			},
+			Status: v1alpha1.PipelineRunStatus{
+				Status: duckv1beta1.Status{
+					Conditions: duckv1beta1.Conditions{
+						{
+							Status: corev1.ConditionTrue,
+							Reason: v1beta1.PipelineRunReasonRunning.String(),
+						},
+					},
+				},
+				PipelineRunStatusFields: v1alpha1.PipelineRunStatusFields{
+					TaskRuns: map[string]*v1alpha1.PipelineRunTaskRunStatus{
+						"output-taskrun2": {PipelineTaskName: "output-task2", Status: &v1alpha1.TaskRunStatus{
+							Status: duckv1beta1.Status{},
+							TaskRunStatusFields: v1alpha1.TaskRunStatusFields{
+								StartTime:      &metav1.Time{Time: tr1StartTime},
+								CompletionTime: &metav1.Time{Time: tr1CompletionTime},
+							},
+						}},
+					},
+				},
+			},
+		},
 	}
 	// define embedded pipeline
 	cs2, _ := test.SeedTestData(t, pipelinetest.Data{
@@ -616,16 +844,27 @@ func TestPipelinerunLog_completed_taskrun_only(t *testing.T) {
 			},
 		},
 		Pods: []*corev1.Pod{
-			tbv1beta1.Pod("output-task-pod-embedded",
-				tbv1beta1.PodNamespace("ns"),
-				tbv1beta1.PodSpec(
-					tbv1beta1.PodContainer("test-step", "test-step1:latest"),
-					tbv1beta1.PodContainer("nop2", "override-with-nop:latest"),
-				),
-				cb.PodStatus(
-					cb.PodPhase(corev1.PodSucceeded),
-				),
-			),
+			{
+				ObjectMeta: metav1.ObjectMeta{
+					Name:      "output-task-pod-embedded",
+					Namespace: "ns",
+				},
+				Spec: corev1.PodSpec{
+					Containers: []corev1.Container{
+						{
+							Name:  "test-step",
+							Image: "test-step1:latest",
+						},
+						{
+							Name:  "nop2",
+							Image: "override-with-nop:latest",
+						},
+					},
+				},
+				Status: corev1.PodStatus{
+					Phase: corev1.PodPhase(corev1.PodSucceeded),
+				},
+			},
 		},
 	})
 	cs2.Pipeline.Resources = cb.APIResourceList(versionA1, []string{"task", "taskrun", "pipeline", "pipelinerun"})
@@ -716,72 +955,123 @@ func TestPipelinerunLog_follow_mode(t *testing.T) {
 	}
 
 	trs := []*v1alpha1.TaskRun{
-		tb.TaskRun(tr1Name,
-			tb.TaskRunNamespace(ns),
-			tb.TaskRunSpec(
-				tb.TaskRunTaskRef(task1Name),
-			),
-			tb.TaskRunStatus(
-				tb.PodName(tr1Pod),
-				tb.TaskRunStartTime(tr1StartTime),
-				tb.StatusCondition(apis.Condition{
-					Type:   apis.ConditionSucceeded,
-					Status: corev1.ConditionTrue,
-				}),
-				tb.StepState(
-					cb.StepName(tr1Step1Name),
-					tb.StateTerminated(0),
-				),
-				tb.StepState(
-					cb.StepName("nop"),
-					tb.StateTerminated(0),
-				),
-			),
-			tb.TaskRunSpec(
-				tb.TaskRunTaskRef(task1Name),
-			),
-		),
+		{
+			ObjectMeta: metav1.ObjectMeta{
+				Name:      tr1Name,
+				Namespace: ns,
+			},
+			Spec: v1alpha1.TaskRunSpec{
+				TaskRef: &v1alpha1.TaskRef{
+					Name: task1Name,
+				},
+			},
+			Status: v1alpha1.TaskRunStatus{
+				Status: duckv1beta1.Status{
+					Conditions: duckv1beta1.Conditions{
+						{
+							Status: corev1.ConditionTrue,
+							Type:   apis.ConditionSucceeded,
+						},
+					},
+				},
+				TaskRunStatusFields: v1beta1.TaskRunStatusFields{
+					PodName:   tr1Pod,
+					StartTime: &metav1.Time{Time: tr1StartTime},
+					Steps: []v1alpha1.StepState{
+						{
+							Name: tr1Step1Name,
+							ContainerState: corev1.ContainerState{
+								Terminated: &corev1.ContainerStateTerminated{
+									ExitCode: 0,
+								},
+							},
+						},
+						{
+							Name: "nop",
+							ContainerState: corev1.ContainerState{
+								Terminated: &corev1.ContainerStateTerminated{
+									ExitCode: 0,
+								},
+							},
+						},
+					},
+				},
+			},
+		},
 	}
 
 	prs := []*v1alpha1.PipelineRun{
-		tb.PipelineRun(prName,
-			tb.PipelineRunNamespace(ns),
-			tb.PipelineRunLabel("tekton.dev/pipeline", prName),
-			tb.PipelineRunSpec(pipelineName),
-			tb.PipelineRunStatus(
-				tb.PipelineRunStatusCondition(apis.Condition{
-					Status: corev1.ConditionTrue,
-					Reason: v1beta1.PipelineRunReasonRunning.String(),
-				}),
-				tb.PipelineRunTaskRunsStatus(tr1Name, &v1alpha1.PipelineRunTaskRunStatus{
-					PipelineTaskName: task1Name,
-					Status:           &trs[0].Status,
-				}),
-			),
-		),
+		{
+			ObjectMeta: metav1.ObjectMeta{
+				Name:      prName,
+				Namespace: ns,
+				Labels:    map[string]string{"tekton.dev/pipeline": prName},
+			},
+			Spec: v1alpha1.PipelineRunSpec{
+				PipelineRef: &v1alpha1.PipelineRef{
+					Name: pipelineName,
+				},
+			},
+			Status: v1alpha1.PipelineRunStatus{
+				PipelineRunStatusFields: v1alpha1.PipelineRunStatusFields{
+					TaskRuns: map[string]*v1alpha1.PipelineRunTaskRunStatus{
+						tr1Name: {PipelineTaskName: task1Name, Status: &trs[0].Status},
+					},
+				},
+				Status: duckv1beta1.Status{
+					Conditions: duckv1beta1.Conditions{
+						{
+							Status: corev1.ConditionTrue,
+							Reason: v1beta1.PipelineRunReasonRunning.String(),
+						},
+					},
+				},
+			},
+		},
 	}
 
 	pps := []*v1alpha1.Pipeline{
-		tb.Pipeline(pipelineName,
-			tb.PipelineNamespace(ns),
-			tb.PipelineSpec(
-				tb.PipelineTask(task1Name, task1Name),
-			),
-		),
+		{
+			ObjectMeta: metav1.ObjectMeta{
+				Name:      pipelineName,
+				Namespace: ns,
+			},
+			Spec: v1alpha1.PipelineSpec{
+				Tasks: []v1alpha1.PipelineTask{
+					{
+						Name: task1Name,
+						TaskRef: &v1beta1.TaskRef{
+							Name: task1Name,
+						},
+					},
+				},
+			},
+		},
 	}
 
 	p := []*corev1.Pod{
-		tbv1beta1.Pod(tr1Pod,
-			tbv1beta1.PodNamespace(ns),
-			tbv1beta1.PodLabel("tekton.dev/task", pipelineName),
-			tbv1beta1.PodSpec(
-				tbv1beta1.PodContainer(tr1Step1Name, tr1Step1Name+":latest"),
-				tbv1beta1.PodContainer("nop", "override-with-nop:latest"),
-			),
-			cb.PodStatus(
-				cb.PodPhase(corev1.PodSucceeded),
-			),
-		),
+		{
+			ObjectMeta: metav1.ObjectMeta{
+				Name:      tr1Pod,
+				Namespace: ns,
+				Labels:    map[string]string{"tekton.dev/task": pipelineName},
+			},
+			Spec: corev1.PodSpec{
+				Containers: []corev1.Container{
+					{
+						Name:  tr1Step1Name,
+						Image: tr1Step1Name + ":latest",
+					},
+					{
+						Name:  "nop",
+						Image: "override-with-nop:latest",
+					},
+				},
+			},
+			Status: corev1.PodStatus{
+				Phase: corev1.PodPhase(corev1.PodSucceeded),
+			},
+		},
 	}
 
 	fakeLogStream := fake.Logs(
@@ -840,32 +1130,56 @@ func TestLogs_error_log(t *testing.T) {
 	}
 
 	ts := []*v1alpha1.Task{
-		tb.Task(taskName,
-			tb.TaskNamespace(ns),
-			tb.TaskSpec()),
+		{
+			ObjectMeta: metav1.ObjectMeta{
+				Name:      taskName,
+				Namespace: ns,
+			},
+		},
 	}
 
 	prs := []*v1alpha1.PipelineRun{
-		tb.PipelineRun(prName,
-			tb.PipelineRunNamespace(ns),
-			tb.PipelineRunLabel("tekton.dev/pipeline", prName),
-			tb.PipelineRunSpec(pipelineName),
-			tb.PipelineRunStatus(
-				tb.PipelineRunStatusCondition(apis.Condition{
-					Status:  corev1.ConditionFalse,
-					Message: errMsg,
-				}),
-			),
-		),
+		{
+			ObjectMeta: metav1.ObjectMeta{
+				Name:      prName,
+				Namespace: ns,
+				Labels:    map[string]string{"tekton.dev/pipeline": prName},
+			},
+			Spec: v1alpha1.PipelineRunSpec{
+				PipelineRef: &v1beta1.PipelineRef{
+					Name: pipelineName,
+				},
+			},
+			Status: v1beta1.PipelineRunStatus{
+				Status: duckv1beta1.Status{
+					Conditions: duckv1beta1.Conditions{
+						{
+							Status:  corev1.ConditionFalse,
+							Message: errMsg,
+						},
+					},
+				},
+			},
+		},
 	}
 
 	ps := []*v1alpha1.Pipeline{
-		tb.Pipeline(pipelineName,
-			tb.PipelineNamespace(ns),
-			tb.PipelineSpec(
-				tb.PipelineTask(taskName, taskName),
-			),
-		),
+		{
+			ObjectMeta: metav1.ObjectMeta{
+				Name:      pipelineName,
+				Namespace: ns,
+			},
+			Spec: v1alpha1.PipelineSpec{
+				Tasks: []v1alpha1.PipelineTask{
+					{
+						Name: taskName,
+						TaskRef: &v1alpha1.TaskRef{
+							Name: taskName,
+						},
+					},
+				},
+			},
+		},
 	}
 	cs, _ := test.SeedTestData(t, pipelinetest.Data{PipelineRuns: prs, Pipelines: ps, Tasks: ts, Namespaces: nsList})
 	cs.Pipeline.Resources = cb.APIResourceList(versionA1, []string{"task", "pipeline", "pipelinerun"})
@@ -903,26 +1217,47 @@ func TestLogs_nologs(t *testing.T) {
 	}
 
 	prs := []*v1alpha1.PipelineRun{
-		tb.PipelineRun(prName,
-			tb.PipelineRunNamespace(ns),
-			tb.PipelineRunLabel("tekton.dev/pipeline", prName),
-			tb.PipelineRunSpec(pipelineName),
-			tb.PipelineRunStatus(
-				tb.PipelineRunStatusCondition(apis.Condition{
-					Status:  corev1.ConditionUnknown,
-					Message: "Running",
-				}),
-			),
-		),
+		{
+			ObjectMeta: metav1.ObjectMeta{
+				Name:      prName,
+				Namespace: ns,
+				Labels:    map[string]string{"tekton.dev/pipeline": prName},
+			},
+			Spec: v1alpha1.PipelineRunSpec{
+				PipelineRef: &v1beta1.PipelineRef{
+					Name: pipelineName,
+				},
+			},
+			Status: v1alpha1.PipelineRunStatus{
+				Status: duckv1beta1.Status{
+					Conditions: duckv1beta1.Conditions{
+						{
+							Status:  corev1.ConditionUnknown,
+							Message: "Running",
+						},
+					},
+				},
+			},
+		},
 	}
 
 	ps := []*v1alpha1.Pipeline{
-		tb.Pipeline(pipelineName,
-			tb.PipelineNamespace(ns),
-			tb.PipelineSpec(
-				tb.PipelineTask(taskName, taskName),
-			),
-		),
+		{
+			ObjectMeta: metav1.ObjectMeta{
+				Name:      pipelineName,
+				Namespace: ns,
+			},
+			Spec: v1alpha1.PipelineSpec{
+				Tasks: []v1alpha1.PipelineTask{
+					{
+						Name: taskName,
+						TaskRef: &v1alpha1.TaskRef{
+							Name: taskName,
+						},
+					},
+				},
+			},
+		},
 	}
 	cs, _ := test.SeedTestData(t, pipelinetest.Data{PipelineRuns: prs, Pipelines: ps, Namespaces: nsList})
 	cs.Pipeline.Resources = cb.APIResourceList(versionA1, []string{"pipeline", "pipelinerun"})
@@ -960,27 +1295,48 @@ func TestLog_run_failed_with_and_without_follow(t *testing.T) {
 	}
 
 	prs := []*v1alpha1.PipelineRun{
-		tb.PipelineRun(prName,
-			tb.PipelineRunNamespace(ns),
-			tb.PipelineRunLabel("tekton.dev/pipeline", prName),
-			tb.PipelineRunSpec(pipelineName),
-			tb.PipelineRunStatus(
-				tb.PipelineRunStatusCondition(apis.Condition{
-					Type:    apis.ConditionSucceeded,
-					Status:  corev1.ConditionFalse,
-					Message: failMessage,
-				}),
-			),
-		),
+		{
+			ObjectMeta: metav1.ObjectMeta{
+				Name:      prName,
+				Namespace: ns,
+				Labels:    map[string]string{"tekton.dev/pipeline": prName},
+			},
+			Spec: v1alpha1.PipelineRunSpec{
+				PipelineRef: &v1beta1.PipelineRef{
+					Name: pipelineName,
+				},
+			},
+			Status: v1alpha1.PipelineRunStatus{
+				Status: duckv1beta1.Status{
+					Conditions: duckv1beta1.Conditions{
+						{
+							Status:  corev1.ConditionFalse,
+							Type:    apis.ConditionSucceeded,
+							Message: failMessage,
+						},
+					},
+				},
+			},
+		},
 	}
 
 	ps := []*v1alpha1.Pipeline{
-		tb.Pipeline(pipelineName,
-			tb.PipelineNamespace(ns),
-			tb.PipelineSpec(
-				tb.PipelineTask(taskName, taskName),
-			),
-		),
+		{
+			ObjectMeta: metav1.ObjectMeta{
+				Name:      pipelineName,
+				Namespace: ns,
+			},
+			Spec: v1alpha1.PipelineSpec{
+				Tasks: []v1alpha1.PipelineTask{
+					{
+						Name: taskName,
+						TaskRef: &v1alpha1.TaskRef{
+							Name: taskName,
+						},
+					},
+				},
+			},
+		},
 	}
 	cs, _ := test.SeedTestData(t, pipelinetest.Data{PipelineRuns: prs, Pipelines: ps, Namespaces: nsList})
 	cs.Pipeline.Resources = cb.APIResourceList(versionA1, []string{"pipeline", "pipelinerun"})
@@ -1026,51 +1382,87 @@ func TestLog_pipelinerun_still_running(t *testing.T) {
 	}
 
 	initialPRs := []*v1alpha1.PipelineRun{
-		tb.PipelineRun(prName,
-			tb.PipelineRunNamespace(ns),
-			tb.PipelineRunLabel("tekton.dev/pipeline", prName),
-			tb.PipelineRunSpec(pipelineName),
-			tb.PipelineRunStatus(
-				tb.PipelineRunStatusCondition(apis.Condition{
-					Type:    apis.ConditionSucceeded,
-					Status:  corev1.ConditionUnknown,
-					Message: "Running",
-				}),
-			),
-		),
+		{
+			ObjectMeta: metav1.ObjectMeta{
+				Name:      prName,
+				Namespace: ns,
+				Labels:    map[string]string{"tekton.dev/pipeline": prName},
+			},
+			Spec: v1alpha1.PipelineRunSpec{
+				PipelineRef: &v1beta1.PipelineRef{
+					Name: pipelineName,
+				},
+			},
+			Status: v1alpha1.PipelineRunStatus{
+				Status: duckv1beta1.Status{
+					Conditions: duckv1beta1.Conditions{
+						{
+							Status:  corev1.ConditionUnknown,
+							Type:    apis.ConditionSucceeded,
+							Message: "Running",
+						},
+					},
+				},
+			},
+		},
 	}
 
 	finalPRs := []*v1alpha1.PipelineRun{
-		tb.PipelineRun(prName,
-			tb.PipelineRunNamespace(ns),
-			tb.PipelineRunStatus(
-				tb.PipelineRunStatusCondition(apis.Condition{
-					Type:    apis.ConditionSucceeded,
-					Status:  corev1.ConditionUnknown,
-					Message: "Running",
-				}),
-			),
-		),
-
-		tb.PipelineRun(prName,
-			tb.PipelineRunNamespace(ns),
-			tb.PipelineRunStatus(
-				tb.PipelineRunStatusCondition(apis.Condition{
-					Type:    apis.ConditionSucceeded,
-					Status:  corev1.ConditionTrue,
-					Message: "Completed",
-				}),
-			),
-		),
+		{
+			ObjectMeta: metav1.ObjectMeta{
+				Name:      prName,
+				Namespace: ns,
+				Labels:    map[string]string{"tekton.dev/pipeline": prName},
+			},
+			Status: v1alpha1.PipelineRunStatus{
+				Status: duckv1beta1.Status{
+					Conditions: duckv1beta1.Conditions{
+						{
+							Status:  corev1.ConditionUnknown,
+							Type:    apis.ConditionSucceeded,
+							Message: "Running",
+						},
+					},
+				},
+			},
+		},
+		{
+			ObjectMeta: metav1.ObjectMeta{
+				Name:      prName,
+				Namespace: ns,
+				Labels:    map[string]string{"tekton.dev/pipeline": prName},
+			},
+			Status: v1alpha1.PipelineRunStatus{
+				Status: duckv1beta1.Status{
+					Conditions: duckv1beta1.Conditions{
+						{
+							Status:  corev1.ConditionTrue,
+							Type:    apis.ConditionSucceeded,
+							Message: "Completed",
+						},
+					},
+				},
+			},
+		},
 	}
 
 	ps := []*v1alpha1.Pipeline{
-		tb.Pipeline(pipelineName,
-			tb.PipelineNamespace(ns),
-			tb.PipelineSpec(
-				tb.PipelineTask(taskName, taskName),
-			),
-		),
+		{
+			ObjectMeta: metav1.ObjectMeta{
+				Name:      pipelineName,
+				Namespace: ns,
+			},
+			Spec: v1alpha1.PipelineSpec{
+				Tasks: []v1alpha1.PipelineTask{
+					{
+						Name: taskName,
+						TaskRef: &v1alpha1.TaskRef{
+							Name: taskName,
+						},
+					},
+				},
+			},
+		},
 	}
 	cs, _ := test.SeedTestData(t, pipelinetest.Data{PipelineRuns: initialPRs, Pipelines: ps, Namespaces: nsList})
 	watcher := watch.NewFake()
@@ -1112,27 +1504,48 @@ func TestLog_pipelinerun_status_done(t *testing.T) {
 	}
 
 	prs := []*v1alpha1.PipelineRun{
-		tb.PipelineRun(prName,
-			tb.PipelineRunNamespace(ns),
-			tb.PipelineRunLabel("tekton.dev/pipeline", prName),
-			tb.PipelineRunSpec(pipelineName),
-			tb.PipelineRunStatus(
-				tb.PipelineRunStatusCondition(apis.Condition{
-					Type:    apis.ConditionSucceeded,
-					Status:  corev1.ConditionUnknown,
-					Message: "Running",
-				}),
-			),
-		),
+		{
+			ObjectMeta: metav1.ObjectMeta{
+				Name:      prName,
+				Namespace: ns,
+				Labels:    map[string]string{"tekton.dev/pipeline": prName},
+			},
+			Spec: v1alpha1.PipelineRunSpec{
+				PipelineRef: &v1beta1.PipelineRef{
+					Name: pipelineName,
+				},
+			},
+			Status: v1alpha1.PipelineRunStatus{
+				Status: duckv1beta1.Status{
+					Conditions: duckv1beta1.Conditions{
+						{
+							Status:  corev1.ConditionUnknown,
+							Type:    apis.ConditionSucceeded,
+							Message: "Running",
+						},
+					},
+				},
+			},
+		},
 	}
 
 	ps := []*v1alpha1.Pipeline{
-		tb.Pipeline(pipelineName,
-			tb.PipelineNamespace(ns),
-			tb.PipelineSpec(
-				tb.PipelineTask(taskName, taskName),
-			),
-		),
+		{
+			ObjectMeta: metav1.ObjectMeta{
+				Name:      pipelineName,
+				Namespace: ns,
+			},
+			Spec: v1alpha1.PipelineSpec{
+				Tasks: []v1alpha1.PipelineTask{
+					{
+						Name: taskName,
+						TaskRef: &v1alpha1.TaskRef{
+							Name: taskName,
+						},
+					},
+				},
+			},
+		},
 	}
 	cs, _ := test.SeedTestData(t, pipelinetest.Data{PipelineRuns: prs, Pipelines: ps, Namespaces: nsList})
 	cs.Pipeline.Resources = cb.APIResourceList(versionA1, []string{"pipeline", "pipelinerun"})
@@ -1188,41 +1601,77 @@ func TestLog_pipelinerun_last(t *testing.T) {
 	}
 
 	pipelines := []*v1alpha1.Pipeline{
-		tb.Pipeline(pipelineName,
-			tb.PipelineNamespace(ns),
-			tb.PipelineSpec(
-				tb.PipelineTask(taskName, taskName),
-			),
-		),
+		{
+			ObjectMeta: metav1.ObjectMeta{
+				Name:      pipelineName,
+				Namespace: ns,
+			},
+			Spec: v1alpha1.PipelineSpec{
+				Tasks: []v1alpha1.PipelineTask{
+					{
+						Name: taskName,
+						TaskRef: &v1alpha1.TaskRef{
+							Name: taskName,
+						},
+					},
+				},
+			},
+		},
 	}
 
 	pipelineruns := []*v1alpha1.PipelineRun{
-		tb.PipelineRun(prName2,
-			tb.PipelineRunNamespace(ns),
-			tb.PipelineRunLabel("tekton.dev/pipeline", pipelineName),
-			tb.PipelineRunSpec(pipelineName),
-			tb.PipelineRunStatus(
-				tb.PipelineRunStartTime(time.Now().Add(time.Second)),
-				tb.PipelineRunStatusCondition(apis.Condition{
-					Type:    apis.ConditionSucceeded,
-					Status:  corev1.ConditionUnknown,
-					Message: "Running",
-				}),
-			),
-		),
-		tb.PipelineRun(prName,
-			tb.PipelineRunNamespace(ns),
-			tb.PipelineRunLabel("tekton.dev/pipeline", pipelineName),
-			tb.PipelineRunSpec(pipelineName),
-			tb.PipelineRunStatus(
-				tb.PipelineRunStartTime(time.Now()),
-				tb.PipelineRunStatusCondition(apis.Condition{
-					Type:    apis.ConditionSucceeded,
-					Status:  corev1.ConditionUnknown,
-					Message: "Running",
-				}),
-			),
-		),
+		{
+			ObjectMeta: metav1.ObjectMeta{
+				Name:      prName2,
+				Namespace: ns,
+				Labels:    map[string]string{"tekton.dev/pipeline": pipelineName},
+			},
+			Spec: v1alpha1.PipelineRunSpec{
+				PipelineRef: &v1beta1.PipelineRef{
+					Name: pipelineName,
+				},
+			},
+			Status: v1alpha1.PipelineRunStatus{
+				PipelineRunStatusFields: v1alpha1.PipelineRunStatusFields{
+					StartTime: &metav1.Time{Time: time.Now().Add(time.Second)},
+				},
+				Status: duckv1beta1.Status{
+					Conditions: duckv1beta1.Conditions{
+						{
+							Status:  corev1.ConditionUnknown,
+							Type:    apis.ConditionSucceeded,
+							Message: "Running",
+						},
+					},
+				},
+			},
+		},
+		{
+			ObjectMeta: metav1.ObjectMeta{
+				Name:      prName,
+				Namespace: ns,
+				Labels:    map[string]string{"tekton.dev/pipeline": pipelineName},
+			},
+			Spec: v1alpha1.PipelineRunSpec{
+				PipelineRef: &v1beta1.PipelineRef{
+					Name: pipelineName,
+				},
+			},
+			Status: v1alpha1.PipelineRunStatus{
+				PipelineRunStatusFields: v1alpha1.PipelineRunStatusFields{
+					StartTime: &metav1.Time{Time: time.Now()},
+				},
+				Status: duckv1beta1.Status{
+					Conditions: duckv1beta1.Conditions{
+						{
+							Status:  corev1.ConditionUnknown,
+							Type:    apis.ConditionSucceeded,
+							Message: "Running",
+						},
+					},
+				},
+			},
+		},
 	}
 
 	cs, _ := test.SeedTestData(t, pipelinetest.Data{PipelineRuns: pipelineruns, Pipelines: pipelines, Namespaces: namespaces})
@@ -1271,27 +1720,48 @@ func TestLog_pipelinerun_only_one(t *testing.T) {
 	}
 
 	pipelines := []*v1alpha1.Pipeline{
-		tb.Pipeline(pipelineName,
-			tb.PipelineNamespace(ns),
-			tb.PipelineSpec(
-				tb.PipelineTask(taskName, taskName),
-			),
-		),
+		{
+			ObjectMeta: metav1.ObjectMeta{
+				Name:      pipelineName,
+				Namespace: ns,
+			},
+			Spec: v1alpha1.PipelineSpec{
+				Tasks: []v1alpha1.PipelineTask{
+					{
+						Name: taskName,
+						TaskRef: &v1alpha1.TaskRef{
+							Name: taskName,
+						},
+					},
+				},
+			},
+		},
 	}
 
 	pipelineruns := []*v1alpha1.PipelineRun{
-		tb.PipelineRun(prName,
-			tb.PipelineRunNamespace(ns),
-			tb.PipelineRunLabel("tekton.dev/pipeline", pipelineName),
-			tb.PipelineRunSpec(pipelineName),
-			tb.PipelineRunStatus(
-				tb.PipelineRunStatusCondition(apis.Condition{
-					Type:    apis.ConditionSucceeded,
-					Status:  corev1.ConditionUnknown,
-					Message: "Running",
-				}),
-			),
-		),
+		{
+			ObjectMeta: metav1.ObjectMeta{
+				Name:      prName,
+				Namespace: ns,
+				Labels:    map[string]string{"tekton.dev/pipeline": pipelineName},
+			},
+			Spec: v1alpha1.PipelineRunSpec{
+				PipelineRef: &v1beta1.PipelineRef{
+					Name: pipelineName,
+				},
+			},
+			Status: v1alpha1.PipelineRunStatus{
+				Status: duckv1beta1.Status{
+					Conditions: duckv1beta1.Conditions{
+						{
+							Status:  corev1.ConditionUnknown,
+							Type:    apis.ConditionSucceeded,
+							Message: "Running",
+						},
+					},
+				},
+			},
+		},
 	}
 
 	cs, _ := test.SeedTestData(t, pipelinetest.Data{PipelineRuns: pipelineruns, Pipelines: pipelines, Namespaces: namespaces})
@@ -1501,14 +1971,25 @@ func TestPipelinerunLog_completed_taskrun_only_v1beta1(t *testing.T) {
 			},
 		},
 		Pods: []*corev1.Pod{
-			tbv1beta1.Pod(tr1Pod,
-				tbv1beta1.PodNamespace(ns),
-				tbv1beta1.PodLabel("tekton.dev/task", pipelineName),
-				tbv1beta1.PodSpec(
-					tbv1beta1.PodContainer(tr1Step1Name, tr1Step1Name+":latest"),
-					tbv1beta1.PodContainer("nop", "override-with-nop:latest"),
-				),
-			),
+			{
+				ObjectMeta: metav1.ObjectMeta{
+					Name:      tr1Pod,
+					Namespace: ns,
+					Labels:    map[string]string{"tekton.dev/task": pipelineName},
+				},
+				Spec: corev1.PodSpec{
+					Containers: []corev1.Container{
+						{
+							Name:  tr1Step1Name,
+							Image: tr1Step1Name + ":latest",
+						},
+						{
+							Name:  "nop",
+							Image: "override-with-nop:latest",
+						},
+					},
+				},
+			},
 		},
 	})
 	cs.Pipeline.Resources = cb.APIResourceList(versionB1, []string{"task", "taskrun", "pipeline", "pipelinerun"})
@@ -1632,16 +2113,27 @@ func TestPipelinerunLog_completed_taskrun_only_v1beta1(t *testing.T) {
 			},
 		},
 		Pods: []*corev1.Pod{
-			tbv1beta1.Pod("output-task-pod-embedded",
-				tbv1beta1.PodNamespace("ns"),
-				tbv1beta1.PodSpec(
-					tbv1beta1.PodContainer("test-step", "test-step1:latest"),
-					tbv1beta1.PodContainer("nop2", "override-with-nop:latest"),
-				),
-				cb.PodStatus(
-					cb.PodPhase(corev1.PodSucceeded),
-				),
-			),
+			{
+				ObjectMeta: metav1.ObjectMeta{
+					Name:      "output-task-pod-embedded",
+					Namespace: "ns",
+				},
+				Spec: corev1.PodSpec{
+					Containers: []corev1.Container{
+						{
+							Name:  "test-step",
+							Image: "test-step1:latest",
+						},
+						{
+							Name:  "nop2",
+							Image: "override-with-nop:latest",
+						},
+					},
+				},
+				Status: corev1.PodStatus{
+					Phase: corev1.PodPhase(corev1.PodSucceeded),
+				},
+			},
 		},
 	})
 	cs2.Pipeline.Resources = cb.APIResourceList(versionB1, []string{"task", "taskrun", "pipeline", "pipelinerun"})
@@ -1853,17 +2345,28 @@ func TestPipelinerunLog_follow_mode_v1beta1(t *testing.T) {
 	}
 
 	p := []*corev1.Pod{
-		tbv1beta1.Pod(tr1Pod,
-			tbv1beta1.PodNamespace(ns),
-			tbv1beta1.PodLabel("tekton.dev/task", pipelineName),
-			tbv1beta1.PodSpec(
-				tbv1beta1.PodContainer(tr1Step1Name, tr1Step1Name+":latest"),
-				tbv1beta1.PodContainer("nop", "override-with-nop:latest"),
-			),
-			cb.PodStatus(
-				cb.PodPhase(corev1.PodSucceeded),
-			),
-		),
+		{
+			ObjectMeta: metav1.ObjectMeta{
+				Name:      tr1Pod,
+				Namespace: ns,
+				Labels:    map[string]string{"tekton.dev/task": pipelineName},
+			},
+			Spec: corev1.PodSpec{
+				Containers: []corev1.Container{
+					{
+						Name:  tr1Step1Name,
+						Image: tr1Step1Name + ":latest",
+					},
+					{
+						Name:  "nop",
+						Image: "override-with-nop:latest",
+					},
+				},
+			},
+			Status: corev1.PodStatus{
+				Phase: corev1.PodPhase(corev1.PodSucceeded),
+			},
+		},
 	}
 
 	fakeLogStream := fake.Logs(
@@ -2767,26 +3270,42 @@ func TestPipelinerunLog_finally_v1beta1(t *testing.T) {
 	}
 
 	p := []*corev1.Pod{
-		tbv1beta1.Pod(tr1Pod,
-			tbv1beta1.PodNamespace(ns),
-			tbv1beta1.PodLabel("tekton.dev/task", pipelineName),
-			tbv1beta1.PodSpec(
-				tbv1beta1.PodContainer(tr1Step1Name, tr1Step1Name+":latest"),
-			),
-			cb.PodStatus(
-				cb.PodPhase(corev1.PodSucceeded),
-			),
-		),
-		tbv1beta1.Pod(finallyTrPod,
-			tbv1beta1.PodNamespace(ns),
-			tbv1beta1.PodLabel("tekton.dev/task", pipelineName),
-			tbv1beta1.PodSpec(
-				tbv1beta1.PodContainer(finallyTrStep1Name, finallyTrStep1Name+":latest"),
-			),
-			cb.PodStatus(
-				cb.PodPhase(corev1.PodSucceeded),
-			),
-		),
+		{
+			ObjectMeta: metav1.ObjectMeta{
+				Name:      tr1Pod,
+				Namespace: ns,
+				Labels:    map[string]string{"tekton.dev/task": pipelineName},
+			},
+			Spec: corev1.PodSpec{
+				Containers: []corev1.Container{
+					{
+						Name:  tr1Step1Name,
+						Image: tr1Step1Name + ":latest",
+					},
+				},
+			},
+			Status: corev1.PodStatus{
+				Phase: corev1.PodPhase(corev1.PodSucceeded),
+			},
+		},
+		{
+			ObjectMeta: metav1.ObjectMeta{
+				Name:      finallyTrPod,
+				Namespace: ns,
+				Labels:    map[string]string{"tekton.dev/task": pipelineName},
+			},
+			Spec: corev1.PodSpec{
+				Containers: []corev1.Container{
+					{
+						Name:  finallyTrStep1Name,
+						Image: finallyTrStep1Name + ":latest",
+					},
+				},
+			},
+			Status: corev1.PodStatus{
+				Phase: corev1.PodPhase(corev1.PodSucceeded),
+			},
+		},
 	}
 
 	fakeLogStream := fake.Logs(

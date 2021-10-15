@@ -18,7 +18,6 @@ import (
 	"testing"
 	"time"
 
-	tb "github.com/tektoncd/cli/internal/builder/v1alpha1"
 	"github.com/tektoncd/cli/pkg/actions"
 	trh "github.com/tektoncd/cli/pkg/taskrun"
 	"github.com/tektoncd/cli/pkg/test"
@@ -29,9 +28,11 @@ import (
 	"github.com/tektoncd/pipeline/pkg/client/clientset/versioned"
 	pipelinetest "github.com/tektoncd/pipeline/test/v1alpha1"
 	corev1 "k8s.io/api/core/v1"
+
+	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/watch"
 	k8stest "k8s.io/client-go/testing"
-	"knative.dev/pkg/apis"
+	duckv1beta1 "knative.dev/pkg/apis/duck/v1beta1"
 )
 
 func TestTracker_pipelinerun_complete(t *testing.T) {
@@ -84,56 +85,82 @@ func TestTracker_pipelinerun_complete(t *testing.T) {
 
 	for _, s := range scenarios {
 		taskruns := []*v1alpha1.TaskRun{
-			tb.TaskRun(tr1Name, tb.TaskRunNamespace(ns),
-				tb.TaskRunSpec(
-					tb.TaskRunTaskRef(task1Name),
-				),
-				tb.TaskRunStatus(
-					tb.PodName(tr1Pod),
-				),
-			),
-			tb.TaskRun(tr2Name, tb.TaskRunNamespace(ns),
-				tb.TaskRunSpec(
-					tb.TaskRunTaskRef(task2Name),
-				),
-				tb.TaskRunStatus(
-					tb.PodName(tr2Pod),
-				),
-			),
+			{
+				ObjectMeta: metav1.ObjectMeta{
+					Name:      tr1Name,
+					Namespace: ns,
+				},
+				Spec: v1alpha1.TaskRunSpec{
+					TaskRef: &v1beta1.TaskRef{
+						Name: task1Name,
+					},
+				},
+				Status: v1alpha1.TaskRunStatus{
+					TaskRunStatusFields: v1alpha1.TaskRunStatusFields{
+						PodName: tr1Pod,
+					},
+				},
+			},
+			{
+				ObjectMeta: metav1.ObjectMeta{
+					Name:      tr2Name,
+					Namespace: ns,
+				},
+				Spec: v1alpha1.TaskRunSpec{
+					TaskRef: &v1beta1.TaskRef{
+						Name: task2Name,
+					},
+				},
+				Status: v1alpha1.TaskRunStatus{
+					TaskRunStatusFields: v1alpha1.TaskRunStatusFields{
+						PodName: tr2Pod,
+					},
+				},
+			},
 		}
 
 		initialPR := []*v1alpha1.PipelineRun{
-			tb.PipelineRun(prName, tb.PipelineRunNamespace(ns),
-				tb.PipelineRunLabel("tekton.dev/pipeline", prName),
-				tb.PipelineRunStatus(
-					tb.PipelineRunStatusCondition(apis.Condition{
-						Status: corev1.ConditionUnknown,
-						Reason: v1beta1.PipelineRunReasonRunning.String(),
-					}),
-					tb.PipelineRunTaskRunsStatus(tr1Name, &v1alpha1.PipelineRunTaskRunStatus{
-						PipelineTaskName: task1Name,
-						Status:           &taskruns[0].Status,
-					}),
-				),
-			),
+			{
+				ObjectMeta: metav1.ObjectMeta{
+					Name:      prName,
+					Namespace: ns,
+					Labels:    map[string]string{"tekton.dev/pipeline": prName},
+				},
+				Status: v1beta1.PipelineRunStatus{
+					Status: duckv1beta1.Status{
+						Conditions: duckv1beta1.Conditions{
+							{
+								Status: corev1.ConditionUnknown,
+								Reason: v1beta1.PipelineRunReasonRunning.String(),
+							},
+						},
+					},
+					PipelineRunStatusFields: v1alpha1.PipelineRunStatusFields{
+						TaskRuns: map[string]*v1alpha1.PipelineRunTaskRunStatus{
+							tr1Name: {PipelineTaskName: task1Name, Status: &taskruns[0].Status},
+						},
+					},
+				},
+			},
 		}
-
-		prStatusFn := tb.PipelineRunStatus(
-			tb.PipelineRunStatusCondition(apis.Condition{
-				Status: corev1.ConditionTrue,
-				Reason: v1beta1.PipelineRunReasonSuccessful.String(),
-			}),
-			tb.PipelineRunTaskRunsStatus(tr1Name, &v1alpha1.PipelineRunTaskRunStatus{
-				PipelineTaskName: task1Name,
-				Status:           &taskruns[0].Status,
-			}),
-			tb.PipelineRunTaskRunsStatus(tr2Name, &v1alpha1.PipelineRunTaskRunStatus{
-				PipelineTaskName: task2Name,
-				Status:           &taskruns[1].Status,
-			}),
-		)
-		pr := &v1alpha1.PipelineRun{}
-		prStatusFn(pr)
+		pr := &v1alpha1.PipelineRun{
+			Status: v1alpha1.PipelineRunStatus{
+				Status: duckv1beta1.Status{
+					Conditions: duckv1beta1.Conditions{
+						{
+							Status: corev1.ConditionTrue,
+							Reason: v1beta1.PipelineRunReasonSuccessful.String(),
+						},
+					},
+				},
+				PipelineRunStatusFields: v1alpha1.PipelineRunStatusFields{
+					TaskRuns: map[string]*v1alpha1.PipelineRunTaskRunStatus{
+						tr1Name: {PipelineTaskName: task1Name, Status: &taskruns[0].Status},
+						tr2Name: {PipelineTaskName: task2Name, Status: &taskruns[1].Status},
+					},
+				},
+			},
+		}
 
 		tc := startPipelineRun(t, pipelinetest.Data{PipelineRuns: initialPR, TaskRuns: taskruns}, pr.Status)
 		tracker := NewTracker(pipelineName, ns, tc)
