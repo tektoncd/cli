@@ -18,9 +18,7 @@ import (
 	"testing"
 	"time"
 
-	tb "github.com/tektoncd/cli/internal/builder/v1beta1"
 	"github.com/tektoncd/cli/pkg/test"
-	cb "github.com/tektoncd/cli/pkg/test/builder"
 	pipelinetest "github.com/tektoncd/pipeline/test/v1alpha1"
 	corev1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
@@ -33,17 +31,25 @@ func Test_wait_pod_initialized(t *testing.T) {
 	podname := "test"
 	ns := "ns"
 
-	initial := tb.Pod(podname, tb.PodNamespace(ns),
-		cb.PodStatus(
-			cb.PodPhase(corev1.PodPending),
-		),
-	)
-	later := tb.Pod(podname, tb.PodNamespace(ns),
-		cb.PodStatus(
-			cb.PodPhase(corev1.PodRunning),
-		),
-	)
-	kc := simulateAddWatch(t, initial, later)
+	initial := corev1.Pod{
+		ObjectMeta: metav1.ObjectMeta{
+			Name:      podname,
+			Namespace: ns,
+		},
+		Status: corev1.PodStatus{
+			Phase: corev1.PodPending,
+		},
+	}
+	later := corev1.Pod{
+		ObjectMeta: metav1.ObjectMeta{
+			Name:      podname,
+			Namespace: ns,
+		},
+		Status: corev1.PodStatus{
+			Phase: corev1.PodRunning,
+		},
+	}
+	kc := simulateAddWatch(t, &initial, &later)
 
 	pod := NewWithDefaults(podname, ns, kc)
 	p, err := pod.Wait()
@@ -61,17 +67,25 @@ func Test_wait_pod_success(t *testing.T) {
 	podname := "test"
 	ns := "ns"
 
-	initial := tb.Pod(podname, tb.PodNamespace(ns),
-		cb.PodStatus(
-			cb.PodPhase(corev1.PodPending),
-		),
-	)
-	later := tb.Pod(podname, tb.PodNamespace(ns),
-		cb.PodStatus(
-			cb.PodPhase(corev1.PodSucceeded),
-		),
-	)
-	kc := simulateAddWatch(t, initial, later)
+	initial := corev1.Pod{
+		ObjectMeta: metav1.ObjectMeta{
+			Name:      podname,
+			Namespace: ns,
+		},
+		Status: corev1.PodStatus{
+			Phase: corev1.PodPending,
+		},
+	}
+	later := corev1.Pod{
+		ObjectMeta: metav1.ObjectMeta{
+			Name:      podname,
+			Namespace: ns,
+		},
+		Status: corev1.PodStatus{
+			Phase: corev1.PodSucceeded,
+		},
+	}
+	kc := simulateAddWatch(t, &initial, &later)
 
 	pod := NewWithDefaults(podname, ns, kc)
 	p, err := pod.Wait()
@@ -89,18 +103,31 @@ func Test_wait_pod_fail(t *testing.T) {
 	podname := "test"
 	ns := "ns"
 
-	initial := tb.Pod(podname, tb.PodNamespace(ns),
-		cb.PodStatus(
-			cb.PodPhase(corev1.PodPending),
-		),
-	)
-	later := tb.Pod(podname, tb.PodNamespace(ns),
-		cb.PodStatus(
-			cb.PodPhase(corev1.PodFailed),
-			cb.PodCondition(corev1.PodInitialized, corev1.ConditionTrue),
-		),
-	)
-	kc := simulateAddWatch(t, initial, later)
+	initial := corev1.Pod{
+		ObjectMeta: metav1.ObjectMeta{
+			Name:      podname,
+			Namespace: ns,
+		},
+		Status: corev1.PodStatus{
+			Phase: corev1.PodPending,
+		},
+	}
+	later := corev1.Pod{
+		ObjectMeta: metav1.ObjectMeta{
+			Name:      podname,
+			Namespace: ns,
+		},
+		Status: corev1.PodStatus{
+			Phase: corev1.PodFailed,
+			Conditions: []corev1.PodCondition{
+				{
+					Type:   corev1.PodInitialized,
+					Status: corev1.ConditionTrue,
+				},
+			},
+		},
+	}
+	kc := simulateAddWatch(t, &initial, &later)
 
 	pod := NewWithDefaults(podname, ns, kc)
 	p, err := pod.Wait()
@@ -118,21 +145,29 @@ func Test_wait_pod_imagepull_error(t *testing.T) {
 	podname := "test"
 	ns := "ns"
 
-	initial := tb.Pod(podname, tb.PodNamespace(ns),
-		cb.PodStatus(
-			cb.PodPhase(corev1.PodPending),
-		),
-	)
+	initial := corev1.Pod{
+		ObjectMeta: metav1.ObjectMeta{
+			Name:      podname,
+			Namespace: ns,
+		},
+		Status: corev1.PodStatus{
+			Phase: corev1.PodPending,
+		},
+	}
 
 	deletionTime := metav1.Now()
-	later := tb.Pod(podname, tb.PodNamespace(ns),
-		cb.PodDeletionTime(&deletionTime),
-		cb.PodStatus(
-			cb.PodPhase(corev1.PodFailed),
-		),
-	)
+	later := corev1.Pod{
+		ObjectMeta: metav1.ObjectMeta{
+			Name:              podname,
+			Namespace:         ns,
+			DeletionTimestamp: &deletionTime,
+		},
+		Status: corev1.PodStatus{
+			Phase: corev1.PodFailed,
+		},
+	}
 
-	kc := simulateDeleteWatch(t, initial, later)
+	kc := simulateDeleteWatch(t, &initial, &later)
 	pod := NewWithDefaults(podname, ns, kc)
 	p, err := pod.Wait()
 

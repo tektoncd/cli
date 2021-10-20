@@ -17,11 +17,11 @@ package pods
 import (
 	"testing"
 
-	tb "github.com/tektoncd/cli/internal/builder/v1beta1"
 	"github.com/tektoncd/cli/pkg/pods/fake"
 	"github.com/tektoncd/cli/pkg/test"
 	pipelinetest "github.com/tektoncd/pipeline/test/v1alpha1"
 	corev1 "k8s.io/api/core/v1"
+	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 )
 
 func TestContainer_fetch_logs(t *testing.T) {
@@ -31,12 +31,24 @@ func TestContainer_fetch_logs(t *testing.T) {
 	container2 := "nop"
 
 	ps := []*corev1.Pod{
-		tb.Pod(podName, tb.PodNamespace(ns),
-			tb.PodSpec(
-				tb.PodContainer(container1, "step-build-app:latest"),
-				tb.PodContainer(container2, "override-with-nop:latest"),
-			),
-		),
+		{
+			ObjectMeta: metav1.ObjectMeta{
+				Name:      podName,
+				Namespace: ns,
+			},
+			Spec: corev1.PodSpec{
+				Containers: []corev1.Container{
+					{
+						Name:  container1,
+						Image: "step-build-app:latest",
+					},
+					{
+						Name:  container2,
+						Image: "override-with-nop:latest",
+					},
+				},
+			},
+		},
 	}
 
 	logs := fake.Logs(

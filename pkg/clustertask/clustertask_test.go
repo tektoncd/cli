@@ -19,7 +19,6 @@ import (
 	"time"
 
 	"github.com/jonboulle/clockwork"
-	tb "github.com/tektoncd/cli/internal/builder/v1alpha1"
 	"github.com/tektoncd/cli/pkg/cli"
 	"github.com/tektoncd/cli/pkg/test"
 	cb "github.com/tektoncd/cli/pkg/test/builder"
@@ -119,10 +118,13 @@ func TestClusterTask_List(t *testing.T) {
 	version := "v1alpha1"
 	clock := clockwork.NewFakeClock()
 	ctdata := []*v1alpha1.ClusterTask{
-		tb.ClusterTask("clustertask",
-			// created  5 minutes back
-			cb.ClusterTaskCreationTime(clock.Now().Add(-5*time.Minute)),
-		),
+		{
+			ObjectMeta: metav1.ObjectMeta{
+				Name: "clustertask",
+				// created  5 minutes back
+				CreationTimestamp: metav1.Time{Time: clock.Now().Add(-5 * time.Minute)},
+			},
+		},
 	}
 	cs, _ := test.SeedTestData(t, pipelinetest.Data{
 		ClusterTasks: ctdata,
@@ -137,14 +139,20 @@ func TestClusterTask_List(t *testing.T) {
 	}
 
 	ctdata2 := []*v1alpha1.ClusterTask{
-		tb.ClusterTask("clustertask",
-			// created  5 minutes back
-			cb.ClusterTaskCreationTime(clock.Now().Add(-5*time.Minute)),
-		),
-		tb.ClusterTask("clustertask2",
-			// created  5 minutes back
-			cb.ClusterTaskCreationTime(clock.Now().Add(-5*time.Minute)),
-		),
+		{
+			ObjectMeta: metav1.ObjectMeta{
+				Name: "clustertask",
+				// created  5 minutes back
+				CreationTimestamp: metav1.Time{Time: clock.Now().Add(-5 * time.Minute)},
+			},
+		},
+		{
+			ObjectMeta: metav1.ObjectMeta{
+				Name: "clustertask2",
+				// created  5 minutes back
+				CreationTimestamp: metav1.Time{Time: clock.Now().Add(-5 * time.Minute)},
+			},
+		},
 	}
 	cs2, _ := test.SeedTestData(t, pipelinetest.Data{
 		ClusterTasks: ctdata2,
@@ -302,12 +310,18 @@ func TestClusterTask_Get(t *testing.T) {
 	version := "v1alpha1"
 	clock := clockwork.NewFakeClock()
 	ctdata := []*v1alpha1.ClusterTask{
-		tb.ClusterTask("clustertask"), // created  5 minutes back
-
-		tb.ClusterTask("clustertask2",
-			// created  5 minutes back
-			cb.ClusterTaskCreationTime(clock.Now().Add(-5*time.Minute)),
-		),
+		{
+			ObjectMeta: metav1.ObjectMeta{
+				Name: "clustertask",
+			},
+		},
+		{
+			ObjectMeta: metav1.ObjectMeta{
+				Name: "clustertask2",
+				// created  5 minutes back
+				CreationTimestamp: metav1.Time{Time: clock.Now().Add(-5 * time.Minute)},
+			},
+		},
 	}
 	cs, _ := test.SeedTestData(t, pipelinetest.Data{
 		ClusterTasks: ctdata,
