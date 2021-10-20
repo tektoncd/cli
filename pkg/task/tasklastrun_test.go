@@ -19,7 +19,6 @@ import (
 	"time"
 
 	"github.com/jonboulle/clockwork"
-	tb "github.com/tektoncd/cli/internal/builder/v1alpha1"
 	"github.com/tektoncd/cli/pkg/test"
 	cb "github.com/tektoncd/cli/pkg/test/builder"
 	testDynamic "github.com/tektoncd/cli/pkg/test/dynamic"
@@ -28,7 +27,6 @@ import (
 	pipelinetest "github.com/tektoncd/pipeline/test/v1alpha1"
 	corev1 "k8s.io/api/core/v1"
 	v1 "k8s.io/apimachinery/pkg/apis/meta/v1"
-	"knative.dev/pkg/apis"
 	duckv1beta1 "knative.dev/pkg/apis/duck/v1beta1"
 )
 
@@ -51,51 +49,100 @@ func TestTaskrunLatest_two_run(t *testing.T) {
 		secondRunCompleted = secondRunStarted.Add(5 * time.Minute)
 	)
 	tasks := []*v1alpha1.Task{
-		tb.Task("task", tb.TaskNamespace("ns"),
-			cb.TaskCreationTime(taskCreated),
-		),
+		{
+			ObjectMeta: v1.ObjectMeta{
+				Name:      "task",
+				Namespace: "ns",
+				// created  5 minutes back
+				CreationTimestamp: v1.Time{Time: taskCreated},
+			},
+		},
 	}
 	taskruns := []*v1alpha1.TaskRun{
-		tb.TaskRun("tr-1", tb.TaskRunNamespace("ns"),
-			cb.TaskRunCreationTime(firstRunCreated),
-			tb.TaskRunLabel("tekton.dev/task", "task"),
-			tb.TaskRunSpec(tb.TaskRunTaskRef("task", tb.TaskRefKind(v1alpha1.NamespacedTaskKind))),
-			tb.TaskRunStatus(
-				tb.StatusCondition(apis.Condition{
-					Status: corev1.ConditionTrue,
-					Reason: v1beta1.TaskRunReasonSuccessful.String(),
-				}),
-				tb.TaskRunStartTime(firstRunStarted),
-				cb.TaskRunCompletionTime(firstRunCompleted),
-			),
-		),
-		tb.TaskRun("tr-2", tb.TaskRunNamespace("ns"),
-			cb.TaskRunCreationTime(secondRunCompleted),
-			tb.TaskRunLabel("tekton.dev/task", "task"),
-			tb.TaskRunSpec(tb.TaskRunTaskRef("task", tb.TaskRefKind(v1alpha1.NamespacedTaskKind))),
-			tb.TaskRunStatus(
-				tb.StatusCondition(apis.Condition{
-					Status: corev1.ConditionTrue,
-					Reason: v1beta1.TaskRunReasonSuccessful.String(),
-				}),
-				tb.TaskRunStartTime(secondRunStarted),
-				cb.TaskRunCompletionTime(secondRunCompleted),
-			),
-		),
-		tb.TaskRun("tr-3", tb.TaskRunNamespace("ns"),
-			cb.TaskRunCreationTime(secondRunCompleted),
-			tb.TaskRunLabel("tekton.dev/clusterTask", "task"),
-			tb.TaskRunLabel("tekton.dev/task", "task"),
-			tb.TaskRunSpec(tb.TaskRunTaskRef("task", tb.TaskRefKind(v1alpha1.ClusterTaskKind))),
-			tb.TaskRunStatus(
-				tb.StatusCondition(apis.Condition{
-					Status: corev1.ConditionTrue,
-					Reason: v1beta1.TaskRunReasonSuccessful.String(),
-				}),
-				tb.TaskRunStartTime(secondRunStarted),
-				cb.TaskRunCompletionTime(secondRunCompleted),
-			),
-		),
+		{
+			ObjectMeta: v1.ObjectMeta{
+				Name:              "tr-1",
+				Namespace:         "ns",
+				Labels:            map[string]string{"tekton.dev/task": "task"},
+				CreationTimestamp: v1.Time{Time: firstRunCreated},
+			},
+			Spec: v1alpha1.TaskRunSpec{
+				TaskRef: &v1alpha1.TaskRef{
+					Name: "task",
+					Kind: v1alpha1.NamespacedTaskKind,
+				},
+			},
+			Status: v1alpha1.TaskRunStatus{
+				Status: duckv1beta1.Status{
+					Conditions: duckv1beta1.Conditions{
+						{
+							Status: corev1.ConditionTrue,
+							Reason: v1beta1.TaskRunReasonSuccessful.String(),
+						},
+					},
+				},
+				TaskRunStatusFields: v1alpha1.TaskRunStatusFields{
+					StartTime:      &v1.Time{Time: firstRunStarted},
+					CompletionTime: &v1.Time{Time: firstRunCompleted},
+				},
+			},
+		},
+		{
+			ObjectMeta: v1.ObjectMeta{
+				Name:              "tr-2",
+				Namespace:         "ns",
+				Labels:            map[string]string{"tekton.dev/task": "task"},
+				CreationTimestamp: v1.Time{Time: secondRunCompleted},
+			},
+			Spec: v1alpha1.TaskRunSpec{
+				TaskRef: &v1alpha1.TaskRef{
+					Name: "task",
+					Kind: v1alpha1.NamespacedTaskKind,
+				},
+			},
+			Status: v1alpha1.TaskRunStatus{
+				Status: duckv1beta1.Status{
+					Conditions: duckv1beta1.Conditions{
+						{
+							Status: corev1.ConditionTrue,
+							Reason: v1beta1.TaskRunReasonSuccessful.String(),
+						},
+					},
+				},
+				TaskRunStatusFields: v1alpha1.TaskRunStatusFields{
+					StartTime:      &v1.Time{Time: secondRunStarted},
+					CompletionTime: &v1.Time{Time: secondRunCompleted},
+				},
+			},
+		},
+		{
+			ObjectMeta: v1.ObjectMeta{
+				Name:              "tr-3",
+				Namespace:         "ns",
+				Labels:            map[string]string{"tekton.dev/clusterTask": "task"},
+				CreationTimestamp: v1.Time{Time: secondRunCompleted},
+			},
+			Spec: v1alpha1.TaskRunSpec{
+				TaskRef: &v1alpha1.TaskRef{
+					Name: "task",
+					Kind: v1alpha1.ClusterTaskKind,
+				},
+			},
+			Status: v1alpha1.TaskRunStatus{
+				Status: duckv1beta1.Status{
+					Conditions: duckv1beta1.Conditions{
+						{
+							Status: corev1.ConditionTrue,
+							Reason: v1beta1.TaskRunReasonSuccessful.String(),
+						},
+					},
+				},
+				TaskRunStatusFields: v1alpha1.TaskRunStatusFields{
+					StartTime:      &v1.Time{Time: secondRunStarted},
+					CompletionTime: &v1.Time{Time: secondRunCompleted},
+				},
+			},
+		},
 	}
 	cs, _ := test.SeedTestData(t, pipelinetest.Data{
 		Tasks:    tasks,
@@ -127,9 +174,14 @@ func TestTaskrunLatest_no_run(t *testing.T) {
 
 	clock := clockwork.NewFakeClock()
 	tasks := []*v1alpha1.Task{
-		tb.Task("task", tb.TaskNamespace("ns"),
-			cb.TaskCreationTime(clock.Now().Add(5*time.Minute)),
-		),
+		{
+			ObjectMeta: v1.ObjectMeta{
+				Name:      "task2",
+				Namespace: "ns",
+				// created  5 minutes back
+				CreationTimestamp: v1.Time{Time: clock.Now().Add(-5 * time.Minute)},
+			},
+		},
 	}
 	cs, _ := test.SeedTestData(t, pipelinetest.Data{
 		Tasks: tasks,

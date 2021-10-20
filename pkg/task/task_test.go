@@ -19,7 +19,6 @@ import (
 	"time"
 
 	"github.com/jonboulle/clockwork"
-	tb "github.com/tektoncd/cli/internal/builder/v1alpha1"
 	"github.com/tektoncd/cli/pkg/cli"
 	"github.com/tektoncd/cli/pkg/test"
 	cb "github.com/tektoncd/cli/pkg/test/builder"
@@ -35,10 +34,14 @@ func TestTask_GetAllTaskNames(t *testing.T) {
 	version := "v1alpha1"
 	clock := clockwork.NewFakeClock()
 	tdata := []*v1alpha1.Task{
-		tb.Task("task", tb.TaskNamespace("ns"),
-			// created  5 minutes back
-			cb.TaskCreationTime(clock.Now().Add(-5*time.Minute)),
-		),
+		{
+			ObjectMeta: metav1.ObjectMeta{
+				Name:      "task",
+				Namespace: "ns",
+				// created  5 minutes back
+				CreationTimestamp: metav1.Time{Time: clock.Now().Add(-5 * time.Minute)},
+			},
+		},
 	}
 	cs, _ := test.SeedTestData(t, pipelinetest.Data{
 		Tasks: tdata,
@@ -53,14 +56,22 @@ func TestTask_GetAllTaskNames(t *testing.T) {
 	}
 
 	tdata2 := []*v1alpha1.Task{
-		tb.Task("task", tb.TaskNamespace("ns"),
-			// created  5 minutes back
-			cb.TaskCreationTime(clock.Now().Add(-5*time.Minute)),
-		),
-		tb.Task("task2", tb.TaskNamespace("ns"),
-			// created  5 minutes back
-			cb.TaskCreationTime(clock.Now().Add(-5*time.Minute)),
-		),
+		{
+			ObjectMeta: metav1.ObjectMeta{
+				Name:      "task",
+				Namespace: "ns",
+				// created  5 minutes back
+				CreationTimestamp: metav1.Time{Time: clock.Now().Add(-5 * time.Minute)},
+			},
+		},
+		{
+			ObjectMeta: metav1.ObjectMeta{
+				Name:      "task2",
+				Namespace: "ns",
+				// created  5 minutes back
+				CreationTimestamp: metav1.Time{Time: clock.Now().Add(-5 * time.Minute)},
+			},
+		},
 	}
 	cs2, _ := test.SeedTestData(t, pipelinetest.Data{
 		Tasks: tdata2,
@@ -117,10 +128,14 @@ func TestTask_List(t *testing.T) {
 	version := "v1alpha1"
 	clock := clockwork.NewFakeClock()
 	tdata := []*v1alpha1.Task{
-		tb.Task("task", tb.TaskNamespace("ns"),
-			// created  5 minutes back
-			cb.TaskCreationTime(clock.Now().Add(-5*time.Minute)),
-		),
+		{
+			ObjectMeta: metav1.ObjectMeta{
+				Name:      "task",
+				Namespace: "ns",
+				// created  5 minutes back
+				CreationTimestamp: metav1.Time{Time: clock.Now().Add(-5 * time.Minute)},
+			},
+		},
 	}
 	cs, _ := test.SeedTestData(t, pipelinetest.Data{
 		Tasks: tdata,
@@ -135,14 +150,22 @@ func TestTask_List(t *testing.T) {
 	}
 
 	tdata2 := []*v1alpha1.Task{
-		tb.Task("task", tb.TaskNamespace("ns"),
-			// created  5 minutes back
-			cb.TaskCreationTime(clock.Now().Add(-5*time.Minute)),
-		),
-		tb.Task("task2", tb.TaskNamespace("ns"),
-			// created  5 minutes back
-			cb.TaskCreationTime(clock.Now().Add(-5*time.Minute)),
-		),
+		{
+			ObjectMeta: metav1.ObjectMeta{
+				Name:      "task",
+				Namespace: "ns",
+				// created  5 minutes back
+				CreationTimestamp: metav1.Time{Time: clock.Now().Add(-5 * time.Minute)},
+			},
+		},
+		{
+			ObjectMeta: metav1.ObjectMeta{
+				Name:      "task2",
+				Namespace: "ns",
+				// created  5 minutes back
+				CreationTimestamp: metav1.Time{Time: clock.Now().Add(-5 * time.Minute)},
+			},
+		},
 	}
 	cs2, _ := test.SeedTestData(t, pipelinetest.Data{
 		Tasks: tdata2,
@@ -303,12 +326,21 @@ func TestTask_Get(t *testing.T) {
 	version := "v1alpha1"
 	clock := clockwork.NewFakeClock()
 	tdata := []*v1alpha1.Task{
-		tb.Task("task", tb.TaskNamespace("ns")), // created  5 minutes back
+		{
+			ObjectMeta: metav1.ObjectMeta{
+				Name:      "task",
+				Namespace: "ns",
+			},
+		},
 
-		tb.Task("task2", tb.TaskNamespace("ns"),
-			// created  5 minutes back
-			cb.TaskCreationTime(clock.Now().Add(-5*time.Minute)),
-		),
+		{
+			ObjectMeta: metav1.ObjectMeta{
+				Name:      "task2",
+				Namespace: "ns",
+				// created  5 minutes back
+				CreationTimestamp: metav1.Time{Time: clock.Now().Add(-5 * time.Minute)},
+			},
+		},
 	}
 	cs, _ := test.SeedTestData(t, pipelinetest.Data{
 		Tasks: tdata,

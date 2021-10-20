@@ -26,16 +26,17 @@ import (
 	"github.com/AlecAivazis/survey/v2/terminal"
 	"github.com/Netflix/go-expect"
 	"github.com/google/go-cmp/cmp"
-	tb "github.com/tektoncd/cli/internal/builder/v1alpha1"
 	"github.com/tektoncd/cli/test/builder"
 	"github.com/tektoncd/cli/test/cli"
 	"github.com/tektoncd/cli/test/framework"
 	"github.com/tektoncd/cli/test/helper"
 	"github.com/tektoncd/cli/test/wait"
 	"github.com/tektoncd/pipeline/pkg/apis/pipeline/v1alpha1"
+	"github.com/tektoncd/pipeline/pkg/apis/pipeline/v1beta1"
 	"gotest.tools/v3/assert"
 	is "gotest.tools/v3/assert/cmp"
 	"gotest.tools/v3/icmd"
+	corev1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	knativetest "knative.dev/pkg/test"
 )
@@ -606,49 +607,187 @@ func TestDeletePipelinesE2E(t *testing.T) {
 }
 
 func getGitResource(rname string, namespace string) *v1alpha1.PipelineResource {
-	return tb.PipelineResource(rname, tb.PipelineResourceNamespace(namespace), tb.PipelineResourceSpec(
-		v1alpha1.PipelineResourceTypeGit,
-		tb.PipelineResourceSpecParam("url", "https://github.com/GoogleContainerTools/skaffold"),
-		tb.PipelineResourceSpecParam("revision", "main"),
-	))
+	return &v1alpha1.PipelineResource{
+		ObjectMeta: metav1.ObjectMeta{
+			Name:      rname,
+			Namespace: namespace,
+		},
+		Spec: v1alpha1.PipelineResourceSpec{
+			Type: v1alpha1.PipelineResourceTypeGit,
+			Params: []v1alpha1.ResourceParam{
+				{
+					Name:  "url",
+					Value: "https://github.com/GoogleContainerTools/skaffold",
+				},
+				{
+					Name:  "revision",
+					Value: "main",
+				},
+			},
+		},
+	}
 }
 
 func getFaultGitResource(rname string, namespace string) *v1alpha1.PipelineResource {
-	return tb.PipelineResource(rname, tb.PipelineResourceNamespace(namespace), tb.PipelineResourceSpec(
-		v1alpha1.PipelineResourceTypeGit,
-		tb.PipelineResourceSpecParam("url", "https://github.com/GoogleContainerTools/skaffold-1"),
-		tb.PipelineResourceSpecParam("revision", "main"),
-	))
+	return &v1alpha1.PipelineResource{
+		ObjectMeta: metav1.ObjectMeta{
+			Name:      rname,
+			Namespace: namespace,
+		},
+		Spec: v1alpha1.PipelineResourceSpec{
+			Type: v1alpha1.PipelineResourceTypeGit,
+			Params: []v1alpha1.ResourceParam{
+				{
+					Name:  "url",
+					Value: "https://github.com/GoogleContainerTools/skaffold-1",
+				},
+				{
+					Name:  "revision",
+					Value: "main",
+				},
+			},
+		},
+	}
 }
 
 func getCreateFileTask(taskname string, namespace string) *v1alpha1.Task {
-	taskSpecOps := []tb.TaskSpecOp{
-		tb.TaskInputs(tb.InputsResource("workspace", v1alpha1.PipelineResourceTypeGit, tb.ResourceTargetPath("damnworkspace"))),
-		tb.TaskOutputs(tb.OutputsResource("workspace", v1alpha1.PipelineResourceTypeGit)),
-		tb.Step("ubuntu", tb.StepName("read-docs-old"), tb.StepCommand("/bin/bash"), tb.StepArgs("-c", "ls -la /workspace/damnworkspace/docs/README.md")),
-		tb.Step("ubuntu", tb.StepName("write-new-stuff"), tb.StepCommand("bash"), tb.StepArgs("-c", "ln -s /workspace/damnworkspace /workspace/output/workspace && echo some stuff > /workspace/output/workspace/stuff")),
+	return &v1alpha1.Task{
+		ObjectMeta: metav1.ObjectMeta{
+			Name:      taskname,
+			Namespace: namespace,
+		},
+		Spec: v1alpha1.TaskSpec{
+			TaskSpec: v1beta1.TaskSpec{
+				Steps: []v1alpha1.Step{
+					{
+						Container: corev1.Container{
+							Name:    "read-docs-old",
+							Image:   "ubuntu",
+							Command: []string{"/bin/bash"},
+							Args:    []string{"-c", "ls -la /workspace/damnworkspace/docs/README.md"},
+						},
+					},
+					{
+						Container: corev1.Container{
+							Name:    "write-new-stuff",
+							Image:   "ubuntu",
+							Command: []string{"bash"},
+							Args:    []string{"-c", "ln -s /workspace/damnworkspace /workspace/output/workspace && echo some stuff > /workspace/output/workspace/stuff"},
+						},
+					},
+				},
+			},
+
+			Inputs: &v1alpha1.Inputs{
+				Resources: []v1alpha1.TaskResource{
+					{
+						ResourceDeclaration: v1alpha1.ResourceDeclaration{
+							Name:       "workspace",
+							Type:       v1alpha1.PipelineResourceTypeGit,
+							TargetPath: "damnworkspace",
+						},
+					},
+				},
+			},
+			Outputs: &v1alpha1.Outputs{
+				Resources: []v1beta1.TaskResource{
+					{
+						ResourceDeclaration: v1alpha1.ResourceDeclaration{
+							Name: "workspace",
+							Type: v1alpha1.PipelineResourceTypeImage,
+						},
+					},
+				},
+			},
+		},
 	}
-	return tb.Task(taskname, tb.TaskNamespace(namespace), tb.TaskSpec(taskSpecOps...))
 }
 
 func getReadFileTask(taskname string, namespace string) *v1alpha1.Task {
-	taskSpecOps := []tb.TaskSpecOp{
-		tb.TaskInputs(tb.InputsResource("workspace", v1alpha1.PipelineResourceTypeGit, tb.ResourceTargetPath("newworkspace"))),
-		tb.Step("ubuntu", tb.StepName("read"), tb.StepCommand("/bin/bash"), tb.StepArgs("-c", "cat /workspace/newworkspace/stuff")),
+	return &v1alpha1.Task{
+		ObjectMeta: metav1.ObjectMeta{
+			Name:      taskname,
+			Namespace: namespace,
+		},
+		Spec: v1alpha1.TaskSpec{
+			TaskSpec: v1beta1.TaskSpec{
+				Steps: []v1alpha1.Step{
+					{
+						Container: corev1.Container{
+							Name:    "read",
+							Image:   "ubuntu",
+							Command: []string{"/bin/bash"},
+							Args:    []string{"-c", "cat /workspace/newworkspace/stuff"},
+						},
+					},
+				},
+			},
+
+			Inputs: &v1alpha1.Inputs{
+				Resources: []v1alpha1.TaskResource{
+					{
+						ResourceDeclaration: v1alpha1.ResourceDeclaration{
+							Name:       "workspace",
+							Type:       v1alpha1.PipelineResourceTypeGit,
+							TargetPath: "newworkspace",
+						},
+					},
+				},
+			},
+		},
 	}
-	return tb.Task(taskname, tb.TaskNamespace(namespace), tb.TaskSpec(taskSpecOps...))
 }
 
 func getPipeline(pipelineName string, namespace string, createFiletaskName string, readFileTaskName string) *v1alpha1.Pipeline {
-	pipelineSpec := []tb.PipelineSpecOp{
-		tb.PipelineDeclaredResource("source-repo", "git"),
-		tb.PipelineTask("first-create-file", createFiletaskName,
-			tb.PipelineTaskInputResource("workspace", "source-repo"),
-			tb.PipelineTaskOutputResource("workspace", "source-repo"),
-		),
-		tb.PipelineTask("then-check", readFileTaskName,
-			tb.PipelineTaskInputResource("workspace", "source-repo", tb.From("first-create-file")),
-		),
+	return &v1alpha1.Pipeline{
+		ObjectMeta: metav1.ObjectMeta{
+			Name:      pipelineName,
+			Namespace: namespace,
+		},
+		Spec: v1alpha1.PipelineSpec{
+			Resources: []v1beta1.PipelineDeclaredResource{
+				{
+					Name: "source-repo",
+					Type: v1alpha1.PipelineResourceTypeGit,
+				},
+			},
+			Tasks: []v1alpha1.PipelineTask{
+				{
+					Name: "first-create-file",
+					TaskRef: &v1alpha1.TaskRef{
+						Name: createFiletaskName,
+					},
+					Resources: &v1alpha1.PipelineTaskResources{
+						Inputs: []v1alpha1.PipelineTaskInputResource{
+							{
+								Name:     "workspace",
+								Resource: "source-repo",
+							},
+						},
+						Outputs: []v1alpha1.PipelineTaskOutputResource{
+							{
+								Name:     "workspace",
+								Resource: "source-repo",
+							},
+						},
+					},
+				},
+				{
+					Name: "then-check",
+					TaskRef: &v1alpha1.TaskRef{
+						Name: readFileTaskName,
+					},
+					Resources: &v1alpha1.PipelineTaskResources{
+						Inputs: []v1alpha1.PipelineTaskInputResource{
+							{
+								Name:     "workspace",
+								Resource: "source-repo",
+								From:     []string{"first-create-file"},
+							},
+						},
+					},
+				},
+			},
+		},
 	}
-	return tb.Pipeline(pipelineName, tb.PipelineNamespace(namespace), tb.PipelineSpec(pipelineSpec...))
 }
