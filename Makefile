@@ -58,6 +58,7 @@ arm:
 .PHONY: arm64
 arm64:
 	GOOS=linux GOARCH=arm64 go build -mod=vendor $(LDFLAGS) -o bin/tkn-linux-arm64 ./cmd/tkn
+	GOOS=darwin GOARCH=arm64 go build -mod=vendor $(LDFLAGS) -o bin/tkn-darwin-arm64 ./cmd/tkn
 
 .PHONY: s390x
 s390x:
