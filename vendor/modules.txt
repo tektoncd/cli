@@ -309,7 +309,8 @@ github.com/modern-go/reflect2
 github.com/monochromegane/go-gitignore
 # github.com/opencontainers/go-digest v1.0.0
 github.com/opencontainers/go-digest
-# github.com/opencontainers/image-spec v1.0.1
+# github.com/opencontainers/image-spec v1.0.2
+## explicit
 github.com/opencontainers/image-spec/specs-go
 github.com/opencontainers/image-spec/specs-go/v1
 # github.com/openzipkin/zipkin-go v0.2.5
@@ -513,6 +514,8 @@ github.com/tektoncd/triggers/pkg/client/injection/informers/triggers/v1beta1/tri
 github.com/tektoncd/triggers/pkg/client/listers/triggers/v1alpha1
 github.com/tektoncd/triggers/pkg/client/listers/triggers/v1beta1
 github.com/tektoncd/triggers/test
+# github.com/tidwall/gjson v1.12.1
+## explicit
 # github.com/xlab/treeprint v0.0.0-20181112141820-a009c3971eca
 github.com/xlab/treeprint
 # go.opencensus.io v0.23.0
