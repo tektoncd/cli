@@ -18,6 +18,7 @@ require (
 	github.com/jonboulle/clockwork v0.1.1-0.20190114141812-62fb9bc030d1
 	github.com/ktr0731/go-fuzzyfinder v0.2.0
 	github.com/mitchellh/go-homedir v1.1.0
+	github.com/opencontainers/image-spec v1.0.2 // indirect
 	github.com/pkg/errors v0.9.1
 	github.com/spf13/cobra v1.2.1
 	github.com/spf13/pflag v1.0.5
@@ -25,6 +26,7 @@ require (
 	github.com/tektoncd/pipeline v0.28.0
 	github.com/tektoncd/plumbing v0.0.0-20210514044347-f8a9689d5bd5
 	github.com/tektoncd/triggers v0.16.0
+	github.com/tidwall/gjson v1.12.1 // indirect
 	go.opencensus.io v0.23.0
 	go.uber.org/multierr v1.7.0
 	golang.org/x/term v0.0.0-20210220032956-6a3ed077a48d
