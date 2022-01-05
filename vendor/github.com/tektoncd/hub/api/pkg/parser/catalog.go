@@ -41,31 +41,23 @@ const (
 	DisplayNameAnnotation         = "tekton.dev/displayName"
 	MinPipelinesVersionAnnotation = "tekton.dev/pipelines.minVersion"
 	TagsAnnotation                = "tekton.dev/tags"
-	CategoryAnnotation            = "tekton.dev/categories"
-	PlatformsAnnotation           = "tekton.dev/platforms"
-	DefaultPlatform               = "linux/amd64"
-	DeprecatedAnnotation          = "tekton.dev/deprecated"
 )
 
 type (
 	Resource struct {
-		Name       string
-		Kind       string
-		Tags       []string
-		Platforms  []string
-		Versions   []VersionInfo
-		Categories []string
+		Name     string
+		Kind     string
+		Tags     []string
+		Versions []VersionInfo
 	}
 
 	VersionInfo struct {
 		Version             string
 		DisplayName         string
-		Deprecated          bool
 		MinPipelinesVersion string
 		Description         string
 		Path                string
 		ModifiedAt          time.Time
-		Platforms           []string
 	}
 )
 
@@ -270,18 +262,6 @@ func (c CatalogParser) appendVersion(res *Resource, filePath string) Result {
 		result.Info(issue)
 	}
 
-	// optional check
-	isDeprecated, ok := annotations[DeprecatedAnnotation]
-	if ok {
-		issue := fmt.Sprintf("Resource %s - %s version of %s has been deprecated", tkn.GVK, version, tkn.Name)
-		log.With("action", "ignore").Info(issue)
-	}
-
-	var deprecated bool
-	if isDeprecated == "true" {
-		deprecated = true
-	}
-
 	description, found, err := unstructured.NestedString(u.Object, "spec", "description")
 	if !found || err != nil {
 		issue := fmt.Sprintf("Resource %s - %s has no description", tkn.GVK, tkn.Name)
@@ -292,33 +272,14 @@ func (c CatalogParser) appendVersion(res *Resource, filePath string) Result {
 	tags := annotations[TagsAnnotation]
 	tagList := strings.FieldsFunc(tags, func(c rune) bool { return c == ',' || c == ' ' })
 	res.Tags = append(res.Tags, tagList...)
-
-	categories := annotations[CategoryAnnotation]
-	categoryList := strings.FieldsFunc(categories, func(c rune) bool { return c == ',' })
-	for c := range categoryList {
-		categoryList[c] = strings.TrimSpace(categoryList[c])
-	}
-	res.Categories = append(res.Categories, categoryList...)
-
-	versionPlatforms := []string{}
-	platforms := annotations[PlatformsAnnotation]
-	platformList := strings.FieldsFunc(platforms, func(c rune) bool { return c == ',' || c == ' ' })
-	versionPlatforms = append(versionPlatforms, platformList...)
-	// add default platform value in case if platform is not specified
-	if len(versionPlatforms) == 0 {
-		versionPlatforms = append(versionPlatforms, DefaultPlatform)
-	}
-
 	res.Versions = append(res.Versions,
 		VersionInfo{
 			Version:             version,
 			DisplayName:         displayName,
-			Deprecated:          deprecated,
 			MinPipelinesVersion: MinPipelinesVersion,
 			Description:         description,
 			Path:                relPath,
 			ModifiedAt:          modified,
-			Platforms:           versionPlatforms,
 		},
 	)
 

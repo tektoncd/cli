@@ -19,7 +19,7 @@ import (
 	"errors"
 	"fmt"
 
-	tknVer "github.com/tektoncd/hub/api/pkg/cli/version"
+	"github.com/hashicorp/go-version"
 	kErr "k8s.io/apimachinery/pkg/api/errors"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
@@ -41,68 +41,22 @@ var (
 	ErrSameVersion              = errors.New("resource already exists with the requested verion")
 	ErrLowerVersion             = errors.New("cannot upgrade resource as requested version is lower than existing")
 	ErrHigherVersion            = errors.New("cannot downgrade resource as requested version is higher than existing")
-	ErrVersionIncompatible      = errors.New("requires compatible version")
-	ErrWarnVersionNotFound      = errors.New("pipeline version unknown")
 )
 
 type action string
 
 const (
-	update             action = "update"
-	upgrade            action = "upgrade"
-	downgrade          action = " downgrade"
-	ResourceMinVersion string = "tekton.dev/pipelines.minVersion"
+	update    action = "update"
+	upgrade   action = "upgrade"
+	downgrade action = " downgrade"
 )
 
-func (i *Installer) TektonPipelinesVersion() {
-
-	var err error
-	i.pipelineVersion, err = tknVer.GetPipelineVersion(i.cs.Dynamic())
-	if err != nil {
-		i.pipelineVersion = ""
-	}
-}
-
-func (i *Installer) GetPipelineVersion() string {
-	return i.pipelineVersion
-}
-
-func (i *Installer) checkVersion(resPipMinVersion string) error {
-	i.TektonPipelinesVersion()
-
-	if i.GetPipelineVersion() == "" {
-		return ErrWarnVersionNotFound
-	}
-
-	if i.GetPipelineVersion() < resPipMinVersion {
-		return ErrVersionIncompatible
-	}
-
-	return nil
-}
-
 // Install a resource
-func (i *Installer) Install(data []byte, catalog, namespace string) (*unstructured.Unstructured, []error) {
-
-	errors := make([]error, 0)
+func (i *Installer) Install(data []byte, catalog, namespace string) (*unstructured.Unstructured, error) {
 
 	newRes, err := toUnstructured(data)
 	if err != nil {
-		errors = append(errors, err)
-		return nil, errors
-	}
-
-	newResPipMinVersion := newRes.GetAnnotations()[ResourceMinVersion]
-	err = i.checkVersion("v" + newResPipMinVersion)
-	if err != nil {
-		if err == ErrWarnVersionNotFound {
-			errors = append(errors, err)
-		}
-
-		if err == ErrVersionIncompatible {
-			errors = append(errors, err)
-			return nil, errors
-		}
+		return nil, err
 	}
 
 	// Check if resource already exists
@@ -110,20 +64,13 @@ func (i *Installer) Install(data []byte, catalog, namespace string) (*unstructur
 	if err != nil {
 		// If error is notFoundError then create the resource
 		if kErr.IsNotFound(err) {
-			resp, err := i.createRes(newRes, catalog, namespace)
-			if err != nil {
-				errors = append(errors, err)
-			}
-			return resp, errors
+			return i.createRes(newRes, catalog, namespace)
 		}
-		errors = append(errors, err)
 		// otherwise return the error
-		return nil, errors
+		return nil, err
 	}
 
-	errors = append(errors, ErrAlreadyExist)
-
-	return existingRes, errors
+	return existingRes, ErrAlreadyExist
 }
 
 // LookupInstalled checks if a resource is installed
@@ -145,64 +92,35 @@ func (i *Installer) LookupInstalled(name, kind, namespace string) (*unstructured
 	return i.existingRes, nil
 }
 
-func (i *Installer) ListInstalled(kind, namespace string) ([]unstructured.Unstructured, error) {
-	i.TektonPipelinesVersion()
-	listResources, err := i.list(kind, namespace, metav1.ListOptions{})
-	if err != nil {
-		return nil, err
-	}
-
-	return listResources.Items, nil
-}
-
 // Update will updates an existing resource with the passed resource if exist
-func (i *Installer) Update(data []byte, catalog, namespace string) (*unstructured.Unstructured, []error) {
+func (i *Installer) Update(data []byte, catalog, namespace string) (*unstructured.Unstructured, error) {
 	return i.updateByAction(data, catalog, namespace, update)
 }
 
 // Upgrade an existing resource to a version upper version by passing it
-func (i *Installer) Upgrade(data []byte, catalog, namespace string) (*unstructured.Unstructured, []error) {
+func (i *Installer) Upgrade(data []byte, catalog, namespace string) (*unstructured.Unstructured, error) {
 	return i.updateByAction(data, catalog, namespace, upgrade)
 }
 
 // Downgrade an existing resource to a version lower version by passing it
-func (i *Installer) Downgrade(data []byte, catalog, namespace string) (*unstructured.Unstructured, []error) {
+func (i *Installer) Downgrade(data []byte, catalog, namespace string) (*unstructured.Unstructured, error) {
 	return i.updateByAction(data, catalog, namespace, downgrade)
 }
 
-func (i *Installer) updateByAction(data []byte, catalog, namespace string, action action) (*unstructured.Unstructured, []error) {
-
-	var errors []error
+func (i *Installer) updateByAction(data []byte, catalog, namespace string, action action) (*unstructured.Unstructured, error) {
 
 	newRes, err := toUnstructured(data)
 	if err != nil {
-		errors = append(errors, err)
-		return nil, errors
-	}
-
-	newResPipMinVersion := newRes.GetAnnotations()[ResourceMinVersion]
-
-	err = i.checkVersion("v" + newResPipMinVersion)
-	if err != nil {
-		if err == ErrWarnVersionNotFound {
-			errors = append(errors, err)
-		}
-
-		if err == ErrVersionIncompatible {
-			errors = append(errors, err)
-			return newRes, errors
-		}
+		return nil, err
 	}
 
 	if i.existingRes == nil {
 		i.existingRes, err = i.get(newRes.GetName(), newRes.GetKind(), namespace, metav1.GetOptions{})
 		if err != nil {
 			if kErr.IsNotFound(err) {
-				errors = append(errors, ErrNotFound)
-				return nil, errors
+				return nil, ErrNotFound
 			}
-			errors = append(errors, err)
-			return nil, errors
+			return nil, err
 		}
 	}
 
@@ -212,29 +130,26 @@ func (i *Installer) updateByAction(data []byte, catalog, namespace string, actio
 	switch action {
 	case upgrade:
 		if err = isUpgradable(existingVersion, newVersion); err != nil {
-			errors = append(errors, err)
-			return i.existingRes, errors
+			return i.existingRes, err
 		}
 	case downgrade:
 		if err = isDowngradable(existingVersion, newVersion); err != nil {
-			errors = append(errors, err)
-			return i.existingRes, errors
+			return i.existingRes, err
 		}
 	}
 
-	res, err := i.updateRes(i.existingRes, newRes, catalog, namespace)
-	if err != nil {
-		errors = append(errors, err)
-	}
-	return res, errors
+	return i.updateRes(i.existingRes, newRes, catalog, namespace)
 }
 
 func isUpgradable(existingVersion, newVersion string) error {
 
-	if newVersion == existingVersion {
+	exVer, _ := version.NewVersion(existingVersion)
+	newVer, _ := version.NewVersion(newVersion)
+
+	if newVer.Equal(exVer) {
 		return ErrSameVersion
 	}
-	if newVersion < existingVersion {
+	if newVer.LessThan(exVer) {
 		return ErrLowerVersion
 	}
 	return nil
@@ -242,10 +157,13 @@ func isUpgradable(existingVersion, newVersion string) error {
 
 func isDowngradable(existingVersion, newVersion string) error {
 
-	if newVersion == existingVersion {
+	exVer, _ := version.NewVersion(existingVersion)
+	newVer, _ := version.NewVersion(newVersion)
+
+	if newVer.Equal(exVer) {
 		return ErrSameVersion
 	}
-	if newVersion > existingVersion {
+	if newVer.GreaterThan(exVer) {
 		return ErrHigherVersion
 	}
 	return nil

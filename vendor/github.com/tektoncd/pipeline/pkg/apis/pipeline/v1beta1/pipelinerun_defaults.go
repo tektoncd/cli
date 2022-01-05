@@ -27,10 +27,12 @@ import (
 
 var _ apis.Defaultable = (*PipelineRun)(nil)
 
+// SetDefaults implements apis.Defaultable
 func (pr *PipelineRun) SetDefaults(ctx context.Context) {
 	pr.Spec.SetDefaults(ctx)
 }
 
+// SetDefaults implements apis.Defaultable
 func (prs *PipelineRunSpec) SetDefaults(ctx context.Context) {
 	cfg := config.FromContextOrDefaults(ctx)
 	if prs.Timeout == nil && prs.Timeouts == nil {
@@ -51,7 +53,7 @@ func (prs *PipelineRunSpec) SetDefaults(ctx context.Context) {
 
 	if prs.PipelineSpec != nil {
 		if config.FromContextOrDefaults(ctx).FeatureFlags.EnableAPIFields == "alpha" {
-			ctx = AddContextParams(ctx, prs.Params)
+			ctx = addContextParams(ctx, prs.Params)
 		}
 		prs.PipelineSpec.SetDefaults(ctx)
 	}

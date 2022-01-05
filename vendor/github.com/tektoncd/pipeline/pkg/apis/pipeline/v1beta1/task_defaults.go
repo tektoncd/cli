@@ -25,6 +25,7 @@ import (
 
 var _ apis.Defaultable = (*Task)(nil)
 
+// SetDefaults implements apis.Defaultable
 func (t *Task) SetDefaults(ctx context.Context) {
 	t.Spec.SetDefaults(ctx)
 }
@@ -35,7 +36,7 @@ func (ts *TaskSpec) SetDefaults(ctx context.Context) {
 		ts.Params[i].SetDefaults(ctx)
 	}
 	if config.FromContextOrDefaults(ctx).FeatureFlags.EnableAPIFields == "alpha" {
-		ctx = AddContextParamSpec(ctx, ts.Params)
-		ts.Params = GetContextParamSpecs(ctx)
+		ctx = addContextParamSpec(ctx, ts.Params)
+		ts.Params = getContextParamSpecs(ctx)
 	}
 }

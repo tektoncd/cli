@@ -17,7 +17,6 @@ package cmd
 import (
 	"github.com/spf13/cobra"
 	"github.com/tektoncd/hub/api/pkg/cli/app"
-	"github.com/tektoncd/hub/api/pkg/cli/cmd/check_upgrade"
 	"github.com/tektoncd/hub/api/pkg/cli/cmd/downgrade"
 	"github.com/tektoncd/hub/api/pkg/cli/cmd/get"
 	"github.com/tektoncd/hub/api/pkg/cli/cmd/info"
@@ -25,6 +24,7 @@ import (
 	"github.com/tektoncd/hub/api/pkg/cli/cmd/reinstall"
 	"github.com/tektoncd/hub/api/pkg/cli/cmd/search"
 	"github.com/tektoncd/hub/api/pkg/cli/cmd/upgrade"
+	"github.com/tektoncd/hub/api/pkg/cli/hub"
 )
 
 // Root represents the base command when called without any subcommands
@@ -55,10 +55,9 @@ func Root(cli app.CLI) *cobra.Command {
 		reinstall.Command(cli),
 		search.Command(cli),
 		upgrade.Command(cli),
-		check_upgrade.Command(cli),
 	)
 
-	cmd.PersistentFlags().StringVar(&apiURL, "api-server", "", "Hub API Server URL (default 'https://api.hub.tekton.dev').\nURL can also be defined in a file '$HOME/.tekton/hub-config' with a variable 'HUB_API_SERVER'.")
+	cmd.PersistentFlags().StringVar(&apiURL, "api-server", hub.URL(), "Hub API Server URL")
 
 	return cmd
 }

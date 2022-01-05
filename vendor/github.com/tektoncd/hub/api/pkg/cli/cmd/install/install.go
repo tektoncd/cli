@@ -18,6 +18,7 @@ import (
 	"fmt"
 	"strings"
 
+	"github.com/hashicorp/go-version"
 	"github.com/spf13/cobra"
 	"github.com/tektoncd/hub/api/pkg/cli/app"
 	"github.com/tektoncd/hub/api/pkg/cli/flag"
@@ -29,9 +30,8 @@ import (
 )
 
 const (
-	defaultCatalog        = "tekton"
-	versionLabel          = "app.kubernetes.io/version"
-	deprecationAnnotation = "tekton.dev/deprecated"
+	defaultCatalog = "tekton"
+	versionLabel   = "app.kubernetes.io/version"
 )
 
 type options struct {
@@ -134,30 +134,13 @@ func (opts *options) run() error {
 		}
 	}
 
+	installer := installer.New(opts.cs)
+	opts.resource, err = installer.Install(manifest, opts.from, opts.cs.Namespace())
+	if err != nil {
+		return opts.errors(err)
+	}
+
 	out := opts.cli.Stream().Out
-
-	resourceInstaller := installer.New(opts.cs)
-
-	var errors []error
-	opts.resource, errors = resourceInstaller.Install(manifest, opts.from, opts.cs.Namespace())
-
-	if len(errors) != 0 {
-		resourcePipelineMinVersion, err := opts.hubRes.MinPipelinesVersion()
-		if err != nil {
-			return err
-		}
-		// process the errors and return the response
-		if errors[0] == installer.ErrWarnVersionNotFound && len(errors) == 1 {
-			_ = printer.New(out).String("WARN: tekton pipelines version unknown, this resource is compatible with pipelines min version v" + resourcePipelineMinVersion)
-		} else {
-			return opts.errors(resourceInstaller.GetPipelineVersion(), errors)
-		}
-	}
-
-	if opts.resource.GetAnnotations()[deprecationAnnotation] == "true" {
-		_ = printer.New(out).String("WARN: This version has been deprecated")
-	}
-
 	return printer.New(out).String(msg(opts.resource))
 }
 
@@ -186,61 +169,55 @@ func (opts *options) isResourceNotFoundError(err error) error {
 	return err
 }
 
-func (opts *options) errors(pipelinesVersion string, errors []error) error {
+func (opts *options) errors(err error) error {
 
-	resourcePipelineMinVersion, vErr := opts.hubRes.MinPipelinesVersion()
-	if vErr != nil {
-		return vErr
-	}
-
-	resourceVersion, hubErr := opts.hubRes.ResourceVersion()
-	if hubErr != nil {
-		return opts.isResourceNotFoundError(hubErr)
-	}
-
-	for _, err := range errors {
-		if err == installer.ErrAlreadyExist {
-			existingVersion, ok := opts.resource.GetLabels()[versionLabel]
-			if ok {
-
-				switch {
-				case existingVersion == resourceVersion:
-					return fmt.Errorf("%s %s(%s) already exists in %s namespace. Use reinstall command to overwrite existing",
-						strings.Title(opts.resource.GetKind()), opts.resource.GetName(), existingVersion, opts.cs.Namespace())
-
-				case existingVersion < resourceVersion:
-					if opts.version == "" {
-						resourceVersion = resourceVersion + "(latest)"
-					}
-					return fmt.Errorf("%s %s(%s) already exists in %s namespace. Use upgrade command to install v%s",
-						strings.Title(opts.resource.GetKind()), opts.resource.GetName(), existingVersion, opts.cs.Namespace(), resourceVersion)
-
-				case existingVersion > resourceVersion:
-					return fmt.Errorf("%s %s(%s) already exists in %s namespace. Use downgrade command to install v%s",
-						strings.Title(opts.resource.GetKind()), opts.resource.GetName(), existingVersion, opts.cs.Namespace(), resourceVersion)
-
-				default:
-					return fmt.Errorf("%s %s(%s) already exists in %s namespace. Use reinstall command to overwrite existing",
-						strings.Title(opts.resource.GetKind()), opts.resource.GetName(), existingVersion, opts.cs.Namespace())
-				}
-
-			} else {
-				return fmt.Errorf("%s %s already exists in %s namespace but seems to be missing version label. Use reinstall command to overwrite existing",
-					strings.Title(opts.resource.GetKind()), opts.resource.GetName(), opts.cs.Namespace())
+	if err == installer.ErrAlreadyExist {
+		existingVersion, ok := opts.resource.GetLabels()[versionLabel]
+		if ok {
+			newVersion, hubErr := opts.hubRes.ResourceVersion()
+			if hubErr != nil {
+				return hubErr
 			}
-		}
 
-		if err == installer.ErrVersionIncompatible {
-			return fmt.Errorf("%s %s(%s) requires Tekton Pipelines min version v%s but found %s", strings.Title(opts.kind), opts.name(), resourceVersion, resourcePipelineMinVersion, pipelinesVersion)
-		}
+			exVer, _ := version.NewVersion(existingVersion)
+			newVer, _ := version.NewVersion(newVersion)
 
-		if strings.Contains(err.Error(), "mutation failed: cannot decode incoming new object") {
-			return fmt.Errorf("%v \nMake sure the pipeline version you are running is not lesser than %s and %s have correct spec fields",
-				err, resourcePipelineMinVersion, opts.kind)
+			switch {
+			case exVer.Equal(newVer):
+				return fmt.Errorf("%s %s(%s) already exists in %s namespace. Use reinstall command to overwrite existing",
+					strings.Title(opts.resource.GetKind()), opts.resource.GetName(), existingVersion, opts.cs.Namespace())
+
+			case exVer.LessThan(newVer):
+				if opts.version == "" {
+					newVersion = newVersion + "(latest)"
+				}
+				return fmt.Errorf("%s %s(%s) already exists in %s namespace. Use upgrade command to install v%s",
+					strings.Title(opts.resource.GetKind()), opts.resource.GetName(), existingVersion, opts.cs.Namespace(), newVersion)
+
+			case exVer.GreaterThan(newVer):
+				return fmt.Errorf("%s %s(%s) already exists in %s namespace. Use downgrade command to install v%s",
+					strings.Title(opts.resource.GetKind()), opts.resource.GetName(), existingVersion, opts.cs.Namespace(), newVersion)
+
+			default:
+				return fmt.Errorf("%s %s(%s) already exists in %s namespace. Use reinstall command to overwrite existing",
+					strings.Title(opts.resource.GetKind()), opts.resource.GetName(), existingVersion, opts.cs.Namespace())
+			}
+
+		} else {
+			return fmt.Errorf("%s %s already exists in %s namespace but seems to be missing version label. Use reinstall command to overwrite existing",
+				strings.Title(opts.resource.GetKind()), opts.resource.GetName(), opts.cs.Namespace())
 		}
 	}
 
-	return errors[0]
+	if strings.Contains(err.Error(), "mutation failed: cannot decode incoming new object") {
+		version, vErr := opts.hubRes.MinPipelinesVersion()
+		if vErr != nil {
+			return vErr
+		}
+		return fmt.Errorf("%v \nMake sure the pipeline version you are running is not lesser than %s and %s have correct spec fields",
+			err, version, opts.kind)
+	}
+	return err
 }
 
 func examples(kind string) string {

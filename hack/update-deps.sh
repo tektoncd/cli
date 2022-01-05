@@ -23,16 +23,19 @@ source $(git rev-parse --show-toplevel)/vendor/github.com/tektoncd/plumbing/scri
 cd ${REPO_ROOT_DIR}
 
 
-VERSION="master"
+
+VERSION="release-1.1"
+TRIGGERS_VERSION="v0.17.1"
+PIPELINE_VERSION="v0.31.0"
+HUB_VERSION="master"
 
 # The list of dependencies that we track at HEAD and periodically
 # float forward in this repository.
 FLOATING_DEPS=(
   "knative.dev/pkg@${VERSION}"
-  "github.com/tektoncd/pipeline@master"
-  "github.com/tektoncd/triggers@master"
-  "github.com/tektoncd/plumbing@master"
-  "github.com/tektoncd/hub/api@master"
+  "github.com/tektoncd/pipeline@${PIPELINE_VERSION}"
+  "github.com/tektoncd/triggers@${TRIGGERS_VERSION}"
+  "github.com/tektoncd/hub/api@${HUB_VERSION}"
 )
 
 # Parse flags to determine any we should pass to dep.

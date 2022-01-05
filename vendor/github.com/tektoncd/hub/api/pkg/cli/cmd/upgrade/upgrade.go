@@ -120,8 +120,8 @@ func (opts *options) run() error {
 		}
 	}
 
-	resInstaller := installer.New(opts.cs)
-	opts.resource, err = resInstaller.LookupInstalled(opts.name(), opts.kind, opts.cs.Namespace())
+	installer := installer.New(opts.cs)
+	opts.resource, err = installer.LookupInstalled(opts.name(), opts.kind, opts.cs.Namespace())
 	if err != nil {
 		if err = opts.lookupError(err); err != nil {
 			return err
@@ -143,24 +143,12 @@ func (opts *options) run() error {
 		return err
 	}
 
-	out := opts.cli.Stream().Out
-
-	var errors []error
-	opts.resource, errors = resInstaller.Upgrade(manifest, catalog, opts.cs.Namespace())
-	if len(errors) != 0 {
-
-		resourcePipelineMinVersion, vErr := opts.hubRes.MinPipelinesVersion()
-		if vErr != nil {
-			return vErr
-		}
-
-		if errors[0] == installer.ErrWarnVersionNotFound && len(errors) == 1 {
-			_ = printer.New(out).String("WARN: tekton pipelines version unknown, this resource is compatible with pipelines min version v" + resourcePipelineMinVersion)
-		} else {
-			return opts.errors(resourcePipelineMinVersion, resInstaller.GetPipelineVersion(), errors)
-		}
+	opts.resource, err = installer.Upgrade(manifest, catalog, opts.cs.Namespace())
+	if err != nil {
+		return opts.errors(err)
 	}
 
+	out := opts.cli.Stream().Out
 	return printer.New(out).String(msg(opts.resource))
 }
 
@@ -219,39 +207,37 @@ func (opts *options) lookupError(err error) error {
 	}
 }
 
-func (opts *options) errors(resourcePipelineMinVersion, pipelinesVersion string, errors []error) error {
+func (opts *options) errors(err error) error {
 
 	newVersion, hubErr := opts.hubRes.ResourceVersion()
 	if hubErr != nil {
 		return hubErr
 	}
 
-	for _, err := range errors {
-		if err == installer.ErrNotFound {
-			return fmt.Errorf("%s %s doesn't exists in %s namespace. Use install command to install the %s",
-				strings.Title(opts.kind), opts.name(), opts.cs.Namespace(), opts.kind)
-		}
-
-		if err == installer.ErrSameVersion {
-			return fmt.Errorf("cannot upgrade %s %s to v%s. existing resource seems to be of same version. Use reinstall command to overwrite existing %s",
-				strings.ToLower(opts.resource.GetKind()), opts.resource.GetName(), newVersion, opts.kind)
-		}
-
-		if err == installer.ErrLowerVersion {
-			existingVersion := opts.resource.GetLabels()[versionLabel]
-			return fmt.Errorf("cannot upgrade %s %s to v%s. existing resource seems to be of higher version(v%s). Use downgrade command",
-				strings.ToLower(opts.resource.GetKind()), opts.resource.GetName(), newVersion, existingVersion)
-		}
-
-		if err == installer.ErrVersionIncompatible {
-			return fmt.Errorf("cannot upgrade %s %s(%s) as it requires Tekton Pipelines min version v%s but found %s", strings.Title(opts.kind), opts.name(), newVersion, resourcePipelineMinVersion, pipelinesVersion)
-		}
-
-		if strings.Contains(err.Error(), "mutation failed: cannot decode incoming new object") {
-			return fmt.Errorf("%v \nMake sure the pipeline version you are running is not lesser than %s and %s have correct spec fields",
-				err, resourcePipelineMinVersion, opts.kind)
-		}
+	if err == installer.ErrNotFound {
+		return fmt.Errorf("%s %s doesn't exists in %s namespace. Use install command to install the %s",
+			strings.Title(opts.kind), opts.name(), opts.cs.Namespace(), opts.kind)
 	}
 
-	return errors[0]
+	if err == installer.ErrSameVersion {
+		return fmt.Errorf("cannot upgrade %s %s to v%s. existing resource seems to be of same version. Use reinstall command to overwrite existing %s",
+			strings.ToLower(opts.resource.GetKind()), opts.resource.GetName(), newVersion, opts.kind)
+	}
+
+	if err == installer.ErrLowerVersion {
+		existingVersion := opts.resource.GetLabels()[versionLabel]
+		return fmt.Errorf("cannot upgrade %s %s to v%s. existing resource seems to be of higher version(v%s). Use downgrade command",
+			strings.ToLower(opts.resource.GetKind()), opts.resource.GetName(), newVersion, existingVersion)
+	}
+
+	if strings.Contains(err.Error(), "mutation failed: cannot decode incoming new object") {
+		version, vErr := opts.hubRes.MinPipelinesVersion()
+		if vErr != nil {
+			return vErr
+		}
+		return fmt.Errorf("%v \nMake sure the pipeline version you are running is not lesser than %s and %s have correct spec fields",
+			err, version, opts.kind)
+	}
+
+	return err
 }

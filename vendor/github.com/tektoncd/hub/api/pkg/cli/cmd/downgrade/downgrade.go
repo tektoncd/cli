@@ -18,6 +18,7 @@ import (
 	"fmt"
 	"strings"
 
+	"github.com/hashicorp/go-version"
 	"github.com/spf13/cobra"
 	"github.com/tektoncd/hub/api/pkg/cli/app"
 	"github.com/tektoncd/hub/api/pkg/cli/flag"
@@ -121,8 +122,8 @@ func (opts *options) run() error {
 		}
 	}
 
-	resInstaller := installer.New(opts.cs)
-	opts.resource, err = resInstaller.LookupInstalled(opts.name(), opts.kind, opts.cs.Namespace())
+	installer := installer.New(opts.cs)
+	opts.resource, err = installer.LookupInstalled(opts.name(), opts.kind, opts.cs.Namespace())
 	if err != nil {
 		if err = opts.lookupError(err); err != nil {
 			return err
@@ -155,21 +156,12 @@ func (opts *options) run() error {
 		return err
 	}
 
-	out := opts.cli.Stream().Out
-
-	var errors []error
-	opts.resource, errors = resInstaller.Downgrade(manifest, catalog, opts.cs.Namespace())
-	if len(errors) != 0 {
-
-		resourcePipelineMinVersion := opts.resource.GetAnnotations()[installer.ResourceMinVersion]
-
-		if errors[0] == installer.ErrWarnVersionNotFound && len(errors) == 1 {
-			_ = printer.New(out).String("WARN: tekton pipelines version unknown, this resource is compatible with pipelines min version v" + resourcePipelineMinVersion)
-		} else {
-			return opts.errors(resourcePipelineMinVersion, resInstaller.GetPipelineVersion(), errors)
-		}
+	opts.resource, err = installer.Downgrade(manifest, catalog, opts.cs.Namespace())
+	if err != nil {
+		return opts.errors(err)
 	}
 
+	out := opts.cli.Stream().Out
 	return printer.New(out).String(msg(opts.resource))
 }
 
@@ -181,7 +173,9 @@ func msg(res *unstructured.Unstructured) string {
 
 func (opts *options) findLowerVersion(current string) (string, error) {
 	if opts.version != "" {
-		if current < opts.version {
+		currentVer, _ := version.NewVersion(current)
+		newVer, _ := version.NewVersion(opts.version)
+		if currentVer.LessThan(newVer) {
 			return "", fmt.Errorf("cannot downgrade %s %s to v%s. existing resource seems to be of lower version(v%s). Use upgrade command",
 				opts.kind, opts.name(), opts.version, current)
 		}
@@ -254,31 +248,23 @@ func (opts *options) lookupError(err error) error {
 	}
 }
 
-func (opts *options) errors(resourcePipelineMinVersion, pipelinesVersion string, errors []error) error {
+func (opts *options) errors(err error) error {
 
-	for _, err := range errors {
-
-		if err == installer.ErrNotFound {
-			return fmt.Errorf("%s %s doesn't exists in %s namespace. Use install command to install the resource",
-				strings.Title(opts.kind), opts.name(), opts.cs.Namespace())
-		}
-
-		if err == installer.ErrSameVersion {
-			return fmt.Errorf("cannot downgrade %s %s to v%s. existing resource seems to be of same version. Use reinstall command to overwrite existing %s",
-				strings.ToLower(opts.resource.GetKind()), opts.resource.GetName(), opts.version, opts.kind)
-		}
-
-		if err == installer.ErrVersionIncompatible {
-			return fmt.Errorf("cannot downgrade %s %s to v%s as it requires Pipelines min version v%s but found %s", strings.Title(opts.kind), opts.name(), opts.version, resourcePipelineMinVersion, pipelinesVersion)
-		}
-
-		if err == installer.ErrHigherVersion {
-			existingVersion := opts.resource.GetLabels()[versionLabel]
-			return fmt.Errorf("cannot downgrade %s %s to v%s. existing resource seems to be of lower version(v%s). Use upgrade command",
-				strings.ToLower(opts.resource.GetKind()), opts.resource.GetName(), opts.version, existingVersion)
-		}
-
+	if err == installer.ErrNotFound {
+		return fmt.Errorf("%s %s doesn't exists in %s namespace. Use install command to install the resource",
+			strings.Title(opts.kind), opts.name(), opts.cs.Namespace())
 	}
 
-	return errors[0]
+	if err == installer.ErrSameVersion {
+		return fmt.Errorf("cannot downgrade %s %s to v%s. existing resource seems to be of same version. Use reinstall command to overwrite existing %s",
+			strings.ToLower(opts.resource.GetKind()), opts.resource.GetName(), opts.version, opts.kind)
+	}
+
+	if err == installer.ErrHigherVersion {
+		existingVersion := opts.resource.GetLabels()[versionLabel]
+		return fmt.Errorf("cannot downgrade %s %s to v%s. existing resource seems to be of lower version(v%s). Use upgrade command",
+			strings.ToLower(opts.resource.GetKind()), opts.resource.GetName(), opts.version, existingVersion)
+	}
+
+	return err
 }

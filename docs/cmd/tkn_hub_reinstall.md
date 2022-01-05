@@ -26,8 +26,7 @@ Reinstall a resource by its kind and name
 ### Options inherited from parent commands
 
 ```
-      --api-server string   Hub API Server URL (default 'https://api.hub.tekton.dev').
-                            URL can also be defined in a file '$HOME/.tekton/hub-config' with a variable 'HUB_API_SERVER'.
+      --api-server string   Hub API Server URL (default "https://api.hub.tekton.dev")
 ```
 
 ### SEE ALSO

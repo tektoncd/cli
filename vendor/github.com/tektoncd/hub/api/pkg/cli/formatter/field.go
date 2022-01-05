@@ -18,7 +18,6 @@ import (
 	"fmt"
 	"strings"
 
-	"github.com/fatih/color"
 	"github.com/tektoncd/hub/api/gen/http/resource/client"
 	"github.com/tektoncd/hub/api/pkg/cli/hub"
 	"golang.org/x/term"
@@ -33,19 +32,12 @@ var icons = map[string]string{
 	"minPipelineVersion": "🗒  ",
 	"rating":             "⭐ ️",
 	"tags":               "🏷 ",
-	"platforms":          "💻 ",
 	"install":            "⚒ ",
-	"categories":         "🏷️  ️",
 }
 
 // FormatName returns name of resource with its latest version
 func FormatName(name, latestVersion string) string {
 	return fmt.Sprintf("%s (%s)", name, latestVersion)
-}
-
-// FormatCatalogName returns name of catalog from which the resource is
-func FormatCatalogName(catalogName string) string {
-	return strings.Title(catalogName)
 }
 
 // FormatDesc returns first 40 char of resource description
@@ -71,38 +63,6 @@ func FormatTags(tags []*client.TagResponseBody) string {
 			continue
 		}
 		sb.WriteString(strings.Trim(*t.Name, " "))
-	}
-	return sb.String()
-}
-
-// FormatCategories returns list of categories seperated by comma
-func FormatCategories(categories []*client.CategoryResponseBody) string {
-	var sb strings.Builder
-	if len(categories) == 0 {
-		return "---"
-	}
-	for i, c := range categories {
-		if i != len(categories)-1 {
-			sb.WriteString(strings.Trim(*c.Name, " ") + ", ")
-			continue
-		}
-		sb.WriteString(strings.Trim(*c.Name, " "))
-	}
-	return sb.String()
-}
-
-// FormatPlatforms returns list of platforms seperated by comma
-func FormatPlatforms(platforms []*client.PlatformResponseBody) string {
-	var sb strings.Builder
-	if len(platforms) == 0 {
-		return "---"
-	}
-	for i, p := range platforms {
-		if i != len(platforms)-1 {
-			sb.WriteString(strings.Trim(*p.Name, " ") + ", ")
-			continue
-		}
-		sb.WriteString(strings.Trim(*p.Name, " "))
 	}
 	return sb.String()
 }
@@ -143,7 +103,6 @@ func breakString(desc string, width, titleLength int) string {
 	for i := firstLineEnd; i < descLength; i = i + spaceIndex {
 		if descLength < i+width {
 			sb.WriteString(desc[i:])
-			break
 		} else {
 			spaceIndex = findSpaceIndexFromLast(desc[i : i+width])
 			sb.WriteString(desc[i:i+spaceIndex] + "\n")
@@ -158,12 +117,9 @@ func findSpaceIndexFromLast(str string) int {
 
 // FormatVersion returns version appended with (latest) if the
 // latest field passed is true
-func FormatVersion(version string, latest bool, deprecated bool) string {
+func FormatVersion(version string, latest bool) string {
 	if latest {
 		return version + " (Latest)"
-	}
-	if deprecated {
-		return version + " (Deprecated)"
 	}
 	return version
 }
@@ -185,7 +141,6 @@ func DefaultValue(val, def string) string {
 	return val
 }
 
-// FormatInstallCMD returns install command to be executed to install the resource
 func FormatInstallCMD(res hub.ResourceData, resVer hub.ResourceWithVersionData, latest bool) string {
 	var sb strings.Builder
 	sb.WriteString("tkn hub install")
@@ -202,16 +157,4 @@ func FormatInstallCMD(res hub.ResourceData, resVer hub.ResourceWithVersionData, 
 		sb.WriteString(" --from " + *res.Catalog.Name)
 	}
 	return sb.String()
-}
-
-func DecorateAttr(attrString, message string) string {
-	attr := color.Reset
-	switch attrString {
-	case "underline bold":
-		return color.New(color.Underline).Add(color.Bold).Sprintf(message)
-	case "bold":
-		attr = color.Bold
-	}
-
-	return color.New(attr).Sprintf(message)
 }

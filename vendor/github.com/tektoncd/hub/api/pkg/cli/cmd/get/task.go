@@ -40,6 +40,7 @@ func taskCommand(opts *options) *cobra.Command {
 		Annotations: map[string]string{
 			"commandType": "main",
 		},
+		Args: cobra.ExactArgs(1),
 		RunE: func(cmd *cobra.Command, args []string) error {
 			taskOpts.kind = kind
 			taskOpts.args = args
@@ -58,16 +59,9 @@ func (opts *taskOptions) run() error {
 		return err
 	}
 
-	opts.hubClient = opts.cli.Hub()
-	var err error
-
-	name, err := opts.GetResourceInfo()
-	if err != nil {
-		return err
-	}
-
-	resource := opts.hubClient.GetResource(hub.ResourceOption{
-		Name:    name,
+	hubClient := opts.cli.Hub()
+	resource := hubClient.GetResource(hub.ResourceOption{
+		Name:    opts.name(),
 		Catalog: opts.from,
 		Kind:    opts.kind,
 		Version: opts.version,

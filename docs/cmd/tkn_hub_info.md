@@ -15,7 +15,7 @@ Display info of resource by its name, kind, catalog, and version
 ### Options
 
 ```
-      --from string      Name of Catalog to which resource belongs.
+      --from string      Name of Catalog to which resource belongs. (default "tekton")
   -h, --help             help for info
       --version string   Version of Resource
 ```
@@ -23,8 +23,7 @@ Display info of resource by its name, kind, catalog, and version
 ### Options inherited from parent commands
 
 ```
-      --api-server string   Hub API Server URL (default 'https://api.hub.tekton.dev').
-                            URL can also be defined in a file '$HOME/.tekton/hub-config' with a variable 'HUB_API_SERVER'.
+      --api-server string   Hub API Server URL (default "https://api.hub.tekton.dev")
 ```
 
 ### SEE ALSO
