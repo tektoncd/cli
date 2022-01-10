@@ -1089,3 +1089,173 @@ func Test_finished_pipelinerun_cancelled(t *testing.T) {
 	expected := "Error: failed to cancel PipelineRun " + prName + ": PipelineRun has already finished execution\n"
 	tu.AssertOutput(t, expected, got)
 }
+
+func Test_cancel_pipelinerun_with_grace_stopped(t *testing.T) {
+	ns := []*corev1.Namespace{
+		{
+			ObjectMeta: metav1.ObjectMeta{
+				Name: "ns",
+			},
+		},
+	}
+
+	prName := "test-pipeline-run-123"
+
+	prs := []*v1beta1.PipelineRun{
+		{
+			ObjectMeta: metav1.ObjectMeta{
+				Name:      prName,
+				Namespace: "ns",
+				Labels:    map[string]string{"tekton.dev/pipeline": "pipelineName"},
+			},
+			Spec: v1beta1.PipelineRunSpec{
+				PipelineRef: &v1beta1.PipelineRef{
+					Name: "pipelineName",
+				},
+				ServiceAccountName: "test-sa",
+				Resources: []v1beta1.PipelineResourceBinding{
+					{
+						Name: "git-repo",
+						ResourceRef: &v1beta1.PipelineResourceRef{
+							Name: "some-repo",
+						},
+					},
+					{
+						Name: "build-image",
+						ResourceRef: &v1beta1.PipelineResourceRef{
+							Name: "some-image",
+						},
+					},
+				},
+				Params: []v1beta1.Param{
+					{
+						Name: "pipeline-param-1",
+						Value: v1beta1.ArrayOrString{
+							Type:      v1beta1.ParamTypeString,
+							StringVal: "somethingmorefun",
+						},
+					},
+					{
+						Name: "somethingmorefun",
+						Value: v1beta1.ArrayOrString{
+							Type:      v1beta1.ParamTypeString,
+							StringVal: "revision1",
+						},
+					},
+				},
+			},
+			Status: v1alpha1.PipelineRunStatus{
+				Status: duckv1beta1.Status{
+					Conditions: duckv1beta1.Conditions{
+						{
+							Status: corev1.ConditionUnknown,
+							Type:   apis.ConditionReady,
+						},
+					},
+				},
+			},
+		},
+	}
+
+	cs, _ := test.SeedV1beta1TestData(t, pipelinev1beta1test.Data{PipelineRuns: prs, Namespaces: ns})
+	cs.Pipeline.Resources = cb.APIResourceList(versionB1, []string{"pipeline", "pipelinerun"})
+	tdc := testDynamic.Options{}
+	dc, err := tdc.Client(
+		cb.UnstructuredV1beta1PR(prs[0], versionB1),
+	)
+	if err != nil {
+		t.Errorf("unable to create dynamic client: %v", err)
+	}
+	p := &tu.Params{Tekton: cs.Pipeline, Kube: cs.Kube, Dynamic: dc}
+
+	pRun := Command(p)
+	got, _ := tu.ExecuteCommand(pRun, "cancel", prName, "-n", "ns", "--grace", "StoppedRunFinally")
+
+	expected := "PipelineRun cancelled: " + prName + "\n"
+	tu.AssertOutput(t, expected, got)
+}
+
+func Test_cancel_pipelinerun_with_grace_cancelled(t *testing.T) {
+	ns := []*corev1.Namespace{
+		{
+			ObjectMeta: metav1.ObjectMeta{
+				Name: "ns",
+			},
+		},
+	}
+
+	prName := "test-pipeline-run-123"
+
+	prs := []*v1beta1.PipelineRun{
+		{
+			ObjectMeta: metav1.ObjectMeta{
+				Name:      prName,
+				Namespace: "ns",
+				Labels:    map[string]string{"tekton.dev/pipeline": "pipelineName"},
+			},
+			Spec: v1beta1.PipelineRunSpec{
+				PipelineRef: &v1beta1.PipelineRef{
+					Name: "pipelineName",
+				},
+				ServiceAccountName: "test-sa",
+				Resources: []v1beta1.PipelineResourceBinding{
+					{
+						Name: "git-repo",
+						ResourceRef: &v1beta1.PipelineResourceRef{
+							Name: "some-repo",
+						},
+					},
+					{
+						Name: "build-image",
+						ResourceRef: &v1beta1.PipelineResourceRef{
+							Name: "some-image",
+						},
+					},
+				},
+				Params: []v1beta1.Param{
+					{
+						Name: "pipeline-param-1",
+						Value: v1beta1.ArrayOrString{
+							Type:      v1beta1.ParamTypeString,
+							StringVal: "somethingmorefun",
+						},
+					},
+					{
+						Name: "somethingmorefun",
+						Value: v1beta1.ArrayOrString{
+							Type:      v1beta1.ParamTypeString,
+							StringVal: "revision1",
+						},
+					},
+				},
+			},
+			Status: v1alpha1.PipelineRunStatus{
+				Status: duckv1beta1.Status{
+					Conditions: duckv1beta1.Conditions{
+						{
+							Status: corev1.ConditionUnknown,
+							Type:   apis.ConditionReady,
+						},
+					},
+				},
+			},
+		},
+	}
+
+	cs, _ := test.SeedV1beta1TestData(t, pipelinev1beta1test.Data{PipelineRuns: prs, Namespaces: ns})
+	cs.Pipeline.Resources = cb.APIResourceList(versionB1, []string{"pipeline", "pipelinerun"})
+	tdc := testDynamic.Options{}
+	dc, err := tdc.Client(
+		cb.UnstructuredV1beta1PR(prs[0], versionB1),
+	)
+	if err != nil {
+		t.Errorf("unable to create dynamic client: %v", err)
+	}
+	p := &tu.Params{Tekton: cs.Pipeline, Kube: cs.Kube, Dynamic: dc}
+
+	pRun := Command(p)
+	got, _ := tu.ExecuteCommand(pRun, "cancel", prName, "-n", "ns", "--grace", "CancelledRunFinally")
+
+	expected := "PipelineRun cancelled: " + prName + "\n"
+	tu.AssertOutput(t, expected, got)
+}
