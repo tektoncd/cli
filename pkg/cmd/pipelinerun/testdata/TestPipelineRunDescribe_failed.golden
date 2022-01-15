@@ -13,7 +13,8 @@ STARTED          DURATION    STATUS
 
 Message
 
-Resource test-resource not found in the pipelinerun (Testing tr failed)
+Resource test-resource not found in the pipelinerun
+TaskRun(s) cancelled: tr-1
 
 Resources
 

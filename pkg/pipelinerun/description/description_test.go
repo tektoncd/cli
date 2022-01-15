@@ -19,6 +19,10 @@ import (
 
 	"github.com/tektoncd/cli/pkg/test"
 	"github.com/tektoncd/pipeline/pkg/apis/pipeline/v1beta1"
+	corev1 "k8s.io/api/core/v1"
+	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+	"knative.dev/pkg/apis"
+	duckv1beta1 "knative.dev/pkg/apis/duck/v1beta1"
 )
 
 func TestPipelineRefExists_Present(t *testing.T) {
@@ -59,4 +63,105 @@ func TestPipelineResourceRefExists_Not_Present(t *testing.T) {
 
 	output := pipelineResourceRefExists(spec)
 	test.AssertOutput(t, "", output)
+}
+
+func TestHasFailed_PipelineAndTaskRunFailedMessage(t *testing.T) {
+
+	trs := []*v1beta1.TaskRun{
+		{
+			ObjectMeta: metav1.ObjectMeta{
+				Name:      "tr-1",
+				Namespace: "ns",
+			},
+			Status: v1beta1.TaskRunStatus{
+				Status: duckv1beta1.Status{
+					Conditions: duckv1beta1.Conditions{
+						{
+							Status:  corev1.ConditionFalse,
+							Type:    apis.ConditionSucceeded,
+							Reason:  v1beta1.TaskRunReasonCancelled.String(),
+							Message: "TaskRun \"tr-1\" was cancelled",
+						},
+					},
+				},
+			},
+		},
+	}
+
+	pipelineRuns := []*v1beta1.PipelineRun{
+		{
+			ObjectMeta: metav1.ObjectMeta{
+				Name: "pipeline-run",
+			},
+			Status: v1beta1.PipelineRunStatus{
+				PipelineRunStatusFields: v1beta1.PipelineRunStatusFields{
+					TaskRuns: map[string]*v1beta1.PipelineRunTaskRunStatus{
+						"tr-1": {PipelineTaskName: "t-1", Status: &trs[0].Status},
+					},
+				},
+				Status: duckv1beta1.Status{
+					Conditions: duckv1beta1.Conditions{
+						{
+							Status:  corev1.ConditionFalse,
+							Reason:  "PipelineRunCancelled",
+							Message: "PipelineRun \"pipeline-run\" was cancelled",
+						},
+					},
+				},
+			},
+		},
+	}
+
+	message := hasFailed(pipelineRuns[0])
+	test.AssertOutput(t, "PipelineRun \"pipeline-run\" was cancelled\nTaskRun(s) cancelled: tr-1", message)
+}
+
+func TestHasFailed_PipelineFailedMessage(t *testing.T) {
+
+	trs := []*v1beta1.TaskRun{
+		{
+			ObjectMeta: metav1.ObjectMeta{
+				Name:      "tr-1",
+				Namespace: "ns",
+			},
+			Status: v1beta1.TaskRunStatus{
+				Status: duckv1beta1.Status{
+					Conditions: duckv1beta1.Conditions{
+						{
+							Status: corev1.ConditionTrue,
+							Type:   apis.ConditionSucceeded,
+							Reason: string(v1beta1.TaskRunReasonSuccessful),
+						},
+					},
+				},
+			},
+		},
+	}
+
+	pipelineRuns := []*v1beta1.PipelineRun{
+		{
+			ObjectMeta: metav1.ObjectMeta{
+				Name: "pipeline-run",
+			},
+			Status: v1beta1.PipelineRunStatus{
+				PipelineRunStatusFields: v1beta1.PipelineRunStatusFields{
+					TaskRuns: map[string]*v1beta1.PipelineRunTaskRunStatus{
+						"tr-1": {PipelineTaskName: "t-1", Status: &trs[0].Status},
+					},
+				},
+				Status: duckv1beta1.Status{
+					Conditions: duckv1beta1.Conditions{
+						{
+							Status:  corev1.ConditionFalse,
+							Reason:  "PipelineRunCancelled",
+							Message: "PipelineRun \"pipeline-run\" was cancelled",
+						},
+					},
+				},
+			},
+		},
+	}
+
+	message := hasFailed(pipelineRuns[0])
+	test.AssertOutput(t, "PipelineRun \"pipeline-run\" was cancelled", message)
 }
