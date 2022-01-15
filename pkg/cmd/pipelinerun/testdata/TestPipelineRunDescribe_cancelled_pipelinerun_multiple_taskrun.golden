@@ -1,0 +1,42 @@
+Name:           pipeline-run
+Namespace:      ns
+Pipeline Ref:   pipeline
+Timeout:        1h0m0s
+Labels:
+ tekton.dev/pipeline=pipeline
+
+Status
+
+STARTED          DURATION    STATUS
+10 minutes ago   5 minutes   Cancelled(PipelineRunCancelled)
+
+Message
+
+PipelineRun "pipeline-run" was cancelled
+TaskRun(s) cancelled: tr-1, tr-2
+
+Resources
+
+ No resources
+
+Params
+
+ No params
+
+Results
+
+ No results
+
+Workspaces
+
+ No workspaces
+
+Taskruns
+
+ NAME   TASK NAME   STARTED         DURATION    STATUS
+ tr-2   t-2         8 minutes ago   2 minutes   Cancelled(TaskRunCancelled)
+ tr-1   t-1         9 minutes ago   2 minutes   Cancelled(TaskRunCancelled)
+
+Skipped Tasks
+
+ No Skipped Tasks
