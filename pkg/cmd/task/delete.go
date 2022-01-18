@@ -25,10 +25,32 @@ import (
 	"github.com/tektoncd/cli/pkg/options"
 	"github.com/tektoncd/cli/pkg/task"
 	trlist "github.com/tektoncd/cli/pkg/taskrun/list"
+	"go.uber.org/multierr"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime/schema"
 	cliopts "k8s.io/cli-runtime/pkg/genericclioptions"
 )
+
+// taskExists validates that the arguments are valid Task names
+func taskExists(args []string, p cli.Params) ([]string, error) {
+
+	availableTaskNames := make([]string, 0)
+	c, err := p.Clients()
+	if err != nil {
+		return availableTaskNames, err
+	}
+	var errorList error
+	ns := p.Namespace()
+	for _, name := range args {
+		_, err := task.Get(c, name, metav1.GetOptions{}, ns)
+		if err != nil {
+			errorList = multierr.Append(errorList, err)
+			continue
+		}
+		availableTaskNames = append(availableTaskNames, name)
+	}
+	return availableTaskNames, errorList
+}
 
 func deleteCommand(p cli.Params) *cobra.Command {
 	opts := &options.DeleteOptions{Resource: "Task", ForceDelete: false, DeleteRelated: false}
@@ -61,11 +83,19 @@ or
 				Err: cmd.OutOrStderr(),
 			}
 
-			if err := opts.CheckOptions(s, args, p.Namespace()); err != nil {
+			availableTaskNames, errs := taskExists(args, p)
+			if len(availableTaskNames) == 0 && errs != nil {
+				return errs
+			}
+
+			if err := opts.CheckOptions(s, availableTaskNames, p.Namespace()); err != nil {
 				return err
 			}
 
-			return deleteTask(opts, s, p, args)
+			if err := deleteTask(opts, s, p, availableTaskNames); err != nil {
+				return err
+			}
+			return errs
 		},
 	}
 	f.AddFlags(c)

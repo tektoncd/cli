@@ -140,7 +140,7 @@ func TestClusterTaskDelete(t *testing.T) {
 	}
 
 	seeds := make([]clients, 0)
-	for i := 0; i < 5; i++ {
+	for i := 0; i < 6; i++ {
 		cs, _ := test.SeedTestData(t, pipelinetest.Data{
 			ClusterTasks: clusterTaskData,
 			TaskRuns:     taskRunData,
@@ -211,18 +211,18 @@ func TestClusterTaskDelete(t *testing.T) {
 			command:     []string{"rm", "nonexistent"},
 			dynamic:     seeds[2].dynamicClient,
 			input:       seeds[2].pipelineClient,
-			inputStream: strings.NewReader("y"),
+			inputStream: nil,
 			wantError:   true,
-			want:        "failed to delete ClusterTask \"nonexistent\": clustertasks.tekton.dev \"nonexistent\" not found",
+			want:        "clustertasks.tekton.dev \"nonexistent\" not found",
 		},
 		{
 			name:        "Remove multiple non existent resources",
 			command:     []string{"rm", "nonexistent", "nonexistent2", "-n", "ns"},
 			dynamic:     seeds[2].dynamicClient,
 			input:       seeds[2].pipelineClient,
-			inputStream: strings.NewReader("y"),
+			inputStream: nil,
 			wantError:   true,
-			want:        "failed to delete ClusterTask \"nonexistent\": clustertasks.tekton.dev \"nonexistent\" not found; failed to delete ClusterTask \"nonexistent2\": clustertasks.tekton.dev \"nonexistent2\" not found",
+			want:        "clustertasks.tekton.dev \"nonexistent\" not found; clustertasks.tekton.dev \"nonexistent2\" not found",
 		},
 		{
 			name:        "Remove multiple non existent resources with --trs flag",
@@ -231,7 +231,7 @@ func TestClusterTaskDelete(t *testing.T) {
 			input:       seeds[2].pipelineClient,
 			inputStream: nil,
 			wantError:   true,
-			want:        "failed to delete ClusterTask \"nonexistent\": clustertasks.tekton.dev \"nonexistent\" not found; failed to delete ClusterTask \"nonexistent2\": clustertasks.tekton.dev \"nonexistent2\" not found",
+			want:        "clustertasks.tekton.dev \"nonexistent\" not found; clustertasks.tekton.dev \"nonexistent2\" not found",
 		},
 		{
 			name:        "With delete taskrun(s) flag, reply yes",
@@ -280,9 +280,9 @@ func TestClusterTaskDelete(t *testing.T) {
 		},
 		{
 			name:        "Error from using clustertask name with --all",
-			command:     []string{"delete", "ct", "--all"},
-			dynamic:     seeds[4].dynamicClient,
-			input:       seeds[4].pipelineClient,
+			command:     []string{"delete", "tomatoes2", "--all"},
+			dynamic:     seeds[5].dynamicClient,
+			input:       seeds[5].pipelineClient,
 			inputStream: nil,
 			wantError:   true,
 			want:        "--all flag should not have any arguments or flags specified with it",
@@ -295,6 +295,15 @@ func TestClusterTaskDelete(t *testing.T) {
 			inputStream: nil,
 			wantError:   true,
 			want:        "must provide ClusterTask name(s) or use --all flag with delete",
+		},
+		{
+			name:        "Delete the ClusterTask present and give error for non-existent ClusterTask",
+			command:     []string{"delete", "nonexistent", "tomatoes2"},
+			dynamic:     seeds[5].dynamicClient,
+			input:       seeds[5].pipelineClient,
+			inputStream: nil,
+			wantError:   true,
+			want:        "clustertasks.tekton.dev \"nonexistent\" not found",
 		},
 	}
 
@@ -429,7 +438,7 @@ func TestClusterTaskDelete_v1beta1(t *testing.T) {
 	}
 
 	seeds := make([]clients, 0)
-	for i := 0; i < 5; i++ {
+	for i := 0; i < 6; i++ {
 		cs, _ := test.SeedV1beta1TestData(t, pipelinev1beta1test.Data{
 			ClusterTasks: clusterTaskData,
 			TaskRuns:     taskRunData,
@@ -500,18 +509,18 @@ func TestClusterTaskDelete_v1beta1(t *testing.T) {
 			command:     []string{"rm", "nonexistent"},
 			dynamic:     seeds[2].dynamicClient,
 			input:       seeds[2].pipelineClient,
-			inputStream: strings.NewReader("y"),
+			inputStream: nil,
 			wantError:   true,
-			want:        "failed to delete ClusterTask \"nonexistent\": clustertasks.tekton.dev \"nonexistent\" not found",
+			want:        "clustertasks.tekton.dev \"nonexistent\" not found",
 		},
 		{
 			name:        "Remove multiple non existent resources",
 			command:     []string{"rm", "nonexistent", "nonexistent2", "-n", "ns"},
 			dynamic:     seeds[2].dynamicClient,
 			input:       seeds[2].pipelineClient,
-			inputStream: strings.NewReader("y"),
+			inputStream: nil,
 			wantError:   true,
-			want:        "failed to delete ClusterTask \"nonexistent\": clustertasks.tekton.dev \"nonexistent\" not found; failed to delete ClusterTask \"nonexistent2\": clustertasks.tekton.dev \"nonexistent2\" not found",
+			want:        "clustertasks.tekton.dev \"nonexistent\" not found; clustertasks.tekton.dev \"nonexistent2\" not found",
 		},
 		{
 			name:        "Remove multiple non existent resources with --trs flag",
@@ -520,7 +529,7 @@ func TestClusterTaskDelete_v1beta1(t *testing.T) {
 			input:       seeds[2].pipelineClient,
 			inputStream: nil,
 			wantError:   true,
-			want:        "failed to delete ClusterTask \"nonexistent\": clustertasks.tekton.dev \"nonexistent\" not found; failed to delete ClusterTask \"nonexistent2\": clustertasks.tekton.dev \"nonexistent2\" not found",
+			want:        "clustertasks.tekton.dev \"nonexistent\" not found; clustertasks.tekton.dev \"nonexistent2\" not found",
 		},
 		{
 			name:        "With delete taskrun(s) flag, reply yes",
@@ -569,9 +578,9 @@ func TestClusterTaskDelete_v1beta1(t *testing.T) {
 		},
 		{
 			name:        "Error from using clustertask name with --all",
-			command:     []string{"delete", "ct", "--all"},
-			dynamic:     seeds[4].dynamicClient,
-			input:       seeds[4].pipelineClient,
+			command:     []string{"delete", "tomatoes2", "--all"},
+			dynamic:     seeds[5].dynamicClient,
+			input:       seeds[5].pipelineClient,
 			inputStream: nil,
 			wantError:   true,
 			want:        "--all flag should not have any arguments or flags specified with it",
@@ -584,6 +593,15 @@ func TestClusterTaskDelete_v1beta1(t *testing.T) {
 			inputStream: nil,
 			wantError:   true,
 			want:        "must provide ClusterTask name(s) or use --all flag with delete",
+		},
+		{
+			name:        "Delete the ClusterTask present and give error for non-existent ClusterTask",
+			command:     []string{"delete", "nonexistent", "tomatoes2"},
+			dynamic:     seeds[5].dynamicClient,
+			input:       seeds[5].pipelineClient,
+			inputStream: nil,
+			wantError:   true,
+			want:        "clustertasks.tekton.dev \"nonexistent\" not found",
 		},
 	}
 

@@ -25,10 +25,32 @@ import (
 	"github.com/tektoncd/cli/pkg/options"
 	"github.com/tektoncd/cli/pkg/pipeline"
 	"github.com/tektoncd/cli/pkg/pipelinerun"
+	"go.uber.org/multierr"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime/schema"
 	cliopts "k8s.io/cli-runtime/pkg/genericclioptions"
 )
+
+// pipelineExists validates that the arguments are valid pipeline names
+func pipelineExists(args []string, p cli.Params) ([]string, error) {
+
+	availablePNames := make([]string, 0)
+	c, err := p.Clients()
+	if err != nil {
+		return availablePNames, err
+	}
+	var errorList error
+	ns := p.Namespace()
+	for _, name := range args {
+		_, err := pipeline.Get(c, name, metav1.GetOptions{}, ns)
+		if err != nil {
+			errorList = multierr.Append(errorList, err)
+			continue
+		}
+		availablePNames = append(availablePNames, name)
+	}
+	return availablePNames, errorList
+}
 
 func deleteCommand(p cli.Params) *cobra.Command {
 	opts := &options.DeleteOptions{Resource: "Pipeline", ForceDelete: false, DeleteRelated: false, DeleteAllNs: false}
@@ -60,11 +82,19 @@ or
 				Err: cmd.OutOrStderr(),
 			}
 
-			if err := opts.CheckOptions(s, args, p.Namespace()); err != nil {
+			availablePNames, errs := pipelineExists(args, p)
+			if len(availablePNames) == 0 && errs != nil {
+				return errs
+			}
+
+			if err := opts.CheckOptions(s, availablePNames, p.Namespace()); err != nil {
 				return err
 			}
 
-			return deletePipelines(opts, s, p, args)
+			if err := deletePipelines(opts, s, p, availablePNames); err != nil {
+				return err
+			}
+			return errs
 		},
 	}
 	f.AddFlags(c)

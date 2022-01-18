@@ -137,7 +137,7 @@ func TestTaskDelete(t *testing.T) {
 	}
 
 	seeds := make([]clients, 0)
-	for i := 0; i < 8; i++ {
+	for i := 0; i < 9; i++ {
 
 		cs, _ := test.SeedTestData(t, pipelinetest.Data{
 			Tasks:    tdata,
@@ -219,7 +219,7 @@ func TestTaskDelete(t *testing.T) {
 			input:       seeds[2].pipelineClient,
 			inputStream: nil,
 			wantError:   true,
-			want:        "failed to delete Task \"nonexistent\": tasks.tekton.dev \"nonexistent\" not found",
+			want:        "tasks.tekton.dev \"nonexistent\" not found",
 		},
 		{
 			name:        "Remove multiple non existent resources",
@@ -228,7 +228,7 @@ func TestTaskDelete(t *testing.T) {
 			input:       seeds[2].pipelineClient,
 			inputStream: nil,
 			wantError:   true,
-			want:        "failed to delete Task \"nonexistent\": tasks.tekton.dev \"nonexistent\" not found; failed to delete Task \"nonexistent2\": tasks.tekton.dev \"nonexistent2\" not found",
+			want:        "tasks.tekton.dev \"nonexistent\" not found; tasks.tekton.dev \"nonexistent2\" not found",
 		},
 		{
 			name:        "Remove multiple non existent resources with --trs flag",
@@ -237,7 +237,7 @@ func TestTaskDelete(t *testing.T) {
 			input:       seeds[2].pipelineClient,
 			inputStream: nil,
 			wantError:   true,
-			want:        "failed to delete Task \"nonexistent\": tasks.tekton.dev \"nonexistent\" not found; failed to delete Task \"nonexistent2\": tasks.tekton.dev \"nonexistent2\" not found",
+			want:        "tasks.tekton.dev \"nonexistent\" not found; tasks.tekton.dev \"nonexistent2\" not found",
 		},
 		{
 			name:        "With delete taskruns flag, reply yes",
@@ -264,7 +264,7 @@ func TestTaskDelete(t *testing.T) {
 			input:       seeds[4].pipelineClient,
 			inputStream: nil,
 			wantError:   true,
-			want:        "failed to delete Task \"task\": tasks.tekton.dev \"task\" not found",
+			want:        "tasks.tekton.dev \"task\" not found",
 		},
 		{
 			name:        "Delete all with prompt",
@@ -285,11 +285,10 @@ func TestTaskDelete(t *testing.T) {
 			want:        "All Tasks deleted in namespace \"ns\"\n",
 		},
 		{
-			name:    "Error from using task name with --all",
-			command: []string{"delete", "task", "--all", "-n", "ns"},
-			dynamic: seeds[6].dynamicClient,
-			input:   seeds[6].pipelineClient,
-
+			name:        "Error from using task name with --all",
+			command:     []string{"delete", "task", "--all", "-n", "ns"},
+			dynamic:     seeds[7].dynamicClient,
+			input:       seeds[7].pipelineClient,
 			inputStream: nil,
 			wantError:   true,
 			want:        "--all flag should not have any arguments or flags specified with it",
@@ -311,6 +310,15 @@ func TestTaskDelete(t *testing.T) {
 			inputStream: nil,
 			wantError:   false,
 			want:        "Tasks deleted: \"task\", \"task2\"\n",
+		},
+		{
+			name:        "Delete the Task present and give error for non-existent Task",
+			command:     []string{"delete", "nonexistent", "task", "-n", "ns"},
+			dynamic:     seeds[8].dynamicClient,
+			input:       seeds[8].pipelineClient,
+			inputStream: nil,
+			wantError:   true,
+			want:        "tasks.tekton.dev \"nonexistent\" not found",
 		},
 	}
 
@@ -442,7 +450,7 @@ func TestTaskDelete_v1beta1(t *testing.T) {
 	}
 
 	seeds := make([]clients, 0)
-	for i := 0; i < 8; i++ {
+	for i := 0; i < 9; i++ {
 
 		cs, _ := test.SeedV1beta1TestData(t, pipelinev1beta1test.Data{
 			Tasks:    tdata,
@@ -524,7 +532,7 @@ func TestTaskDelete_v1beta1(t *testing.T) {
 			input:       seeds[2].pipelineClient,
 			inputStream: nil,
 			wantError:   true,
-			want:        "failed to delete Task \"nonexistent\": tasks.tekton.dev \"nonexistent\" not found",
+			want:        "tasks.tekton.dev \"nonexistent\" not found",
 		},
 		{
 			name:        "Remove multiple non existent resources",
@@ -533,7 +541,7 @@ func TestTaskDelete_v1beta1(t *testing.T) {
 			input:       seeds[2].pipelineClient,
 			inputStream: nil,
 			wantError:   true,
-			want:        "failed to delete Task \"nonexistent\": tasks.tekton.dev \"nonexistent\" not found; failed to delete Task \"nonexistent2\": tasks.tekton.dev \"nonexistent2\" not found",
+			want:        "tasks.tekton.dev \"nonexistent\" not found; tasks.tekton.dev \"nonexistent2\" not found",
 		},
 		{
 			name:        "Remove multiple non existent resources with --trs flag",
@@ -542,7 +550,7 @@ func TestTaskDelete_v1beta1(t *testing.T) {
 			input:       seeds[2].pipelineClient,
 			inputStream: nil,
 			wantError:   true,
-			want:        "failed to delete Task \"nonexistent\": tasks.tekton.dev \"nonexistent\" not found; failed to delete Task \"nonexistent2\": tasks.tekton.dev \"nonexistent2\" not found",
+			want:        "tasks.tekton.dev \"nonexistent\" not found; tasks.tekton.dev \"nonexistent2\" not found",
 		},
 		{
 			name:        "With delete taskruns flag, reply yes",
@@ -569,7 +577,7 @@ func TestTaskDelete_v1beta1(t *testing.T) {
 			input:       seeds[4].pipelineClient,
 			inputStream: nil,
 			wantError:   true,
-			want:        "failed to delete Task \"task\": tasks.tekton.dev \"task\" not found",
+			want:        "tasks.tekton.dev \"task\" not found",
 		},
 		{
 			name:        "Delete all with prompt",
@@ -590,11 +598,10 @@ func TestTaskDelete_v1beta1(t *testing.T) {
 			want:        "All Tasks deleted in namespace \"ns\"\n",
 		},
 		{
-			name:    "Error from using task name with --all",
-			command: []string{"delete", "task", "--all", "-n", "ns"},
-			dynamic: seeds[6].dynamicClient,
-			input:   seeds[6].pipelineClient,
-
+			name:        "Error from using task name with --all",
+			command:     []string{"delete", "task", "--all", "-n", "ns"},
+			dynamic:     seeds[7].dynamicClient,
+			input:       seeds[7].pipelineClient,
 			inputStream: nil,
 			wantError:   true,
 			want:        "--all flag should not have any arguments or flags specified with it",
@@ -616,6 +623,15 @@ func TestTaskDelete_v1beta1(t *testing.T) {
 			inputStream: nil,
 			wantError:   false,
 			want:        "Tasks deleted: \"task\", \"task2\"\n",
+		},
+		{
+			name:        "Delete the Task present and give error for non-existent Task",
+			command:     []string{"delete", "nonexistent", "task", "-n", "ns"},
+			dynamic:     seeds[8].dynamicClient,
+			input:       seeds[8].pipelineClient,
+			inputStream: nil,
+			wantError:   true,
+			want:        "tasks.tekton.dev \"nonexistent\" not found",
 		},
 	}
 

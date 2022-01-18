@@ -24,9 +24,31 @@ import (
 	"github.com/tektoncd/cli/pkg/eventlistener"
 	"github.com/tektoncd/cli/pkg/formatted"
 	"github.com/tektoncd/cli/pkg/options"
+	"go.uber.org/multierr"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	cliopts "k8s.io/cli-runtime/pkg/genericclioptions"
 )
+
+// eventListenerExists validates that the arguments are valid EventListener names
+func eventListenerExists(args []string, p cli.Params) ([]string, error) {
+
+	availableELs := make([]string, 0)
+	c, err := p.Clients()
+	if err != nil {
+		return availableELs, err
+	}
+	var errorList error
+	ns := p.Namespace()
+	for _, name := range args {
+		_, err := eventlistener.Get(c, name, metav1.GetOptions{}, ns)
+		if err != nil {
+			errorList = multierr.Append(errorList, err)
+			continue
+		}
+		availableELs = append(availableELs, name)
+	}
+	return availableELs, errorList
+}
 
 func deleteCommand(p cli.Params) *cobra.Command {
 	opts := &options.DeleteOptions{Resource: "eventlistener", ForceDelete: false, DeleteAllNs: false}
@@ -58,11 +80,19 @@ or
 				Err: cmd.OutOrStderr(),
 			}
 
-			if err := opts.CheckOptions(s, args, p.Namespace()); err != nil {
+			availableELs, errs := eventListenerExists(args, p)
+			if len(availableELs) == 0 && errs != nil {
+				return errs
+			}
+
+			if err := opts.CheckOptions(s, availableELs, p.Namespace()); err != nil {
 				return err
 			}
 
-			return deleteEventListeners(s, p, args, opts.DeleteAllNs)
+			if err := deleteEventListeners(s, p, availableELs, opts.DeleteAllNs); err != nil {
+				return err
+			}
+			return errs
 		},
 	}
 	f.AddFlags(c)

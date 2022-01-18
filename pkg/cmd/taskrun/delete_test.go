@@ -269,7 +269,7 @@ func TestTaskRunDelete(t *testing.T) {
 	}
 
 	seeds := make([]clients, 0)
-	for i := 0; i < 8; i++ {
+	for i := 0; i < 9; i++ {
 		cs, _ := test.SeedTestData(t, pipelinetest.Data{TaskRuns: trs, Tasks: tasks, ClusterTasks: clustertasks, Namespaces: ns})
 		cs.Pipeline.Resources = cb.APIResourceList(version, []string{"taskrun"})
 		tdc := testDynamic.Options{}
@@ -306,7 +306,7 @@ func TestTaskRunDelete(t *testing.T) {
 			input:       seeds[0].pipelineClient,
 			inputStream: nil,
 			wantError:   true,
-			want:        "failed to delete TaskRun \"tr0-1\": taskruns.tekton.dev \"tr0-1\" not found",
+			want:        "taskruns.tekton.dev \"tr0-1\" not found",
 		},
 		{
 			name:        "With force delete flag (shorthand)",
@@ -351,7 +351,7 @@ func TestTaskRunDelete(t *testing.T) {
 			input:       seeds[2].pipelineClient,
 			inputStream: nil,
 			wantError:   true,
-			want:        "failed to delete TaskRun \"nonexistent\": taskruns.tekton.dev \"nonexistent\" not found",
+			want:        "taskruns.tekton.dev \"nonexistent\" not found",
 		},
 		{
 			name:        "Remove multiple non existent resources",
@@ -360,7 +360,7 @@ func TestTaskRunDelete(t *testing.T) {
 			input:       seeds[2].pipelineClient,
 			inputStream: nil,
 			wantError:   true,
-			want:        "failed to delete TaskRun \"nonexistent\": taskruns.tekton.dev \"nonexistent\" not found; failed to delete TaskRun \"nonexistent2\": taskruns.tekton.dev \"nonexistent2\" not found",
+			want:        "taskruns.tekton.dev \"nonexistent\" not found; taskruns.tekton.dev \"nonexistent2\" not found",
 		},
 		{
 			name:        "Attempt remove forgetting to include taskrun names",
@@ -427,18 +427,18 @@ func TestTaskRunDelete(t *testing.T) {
 		},
 		{
 			name:        "Error from using taskrun name with --all",
-			command:     []string{"delete", "taskrun", "--all", "-n", "ns"},
-			dynamic:     seeds[4].dynamicClient,
-			input:       seeds[4].pipelineClient,
+			command:     []string{"delete", "tr0-7", "--all", "-n", "ns"},
+			dynamic:     seeds[5].dynamicClient,
+			input:       seeds[5].pipelineClient,
 			inputStream: nil,
 			wantError:   true,
 			want:        "--all flag should not have any arguments or flags specified with it",
 		},
 		{
 			name:        "Error from deleting TaskRun with non-existing Task",
-			command:     []string{"delete", "taskrun", "-t", "non-existing-task"},
-			dynamic:     seeds[4].dynamicClient,
-			input:       seeds[4].pipelineClient,
+			command:     []string{"delete", "tr0-7", "-t", "non-existing-task", "-n", "ns"},
+			dynamic:     seeds[5].dynamicClient,
+			input:       seeds[5].pipelineClient,
 			inputStream: nil,
 			wantError:   true,
 			want:        "no TaskRuns associated with Task \"non-existing-task\"",
@@ -454,7 +454,7 @@ func TestTaskRunDelete(t *testing.T) {
 		},
 		{
 			name:        "Error from using argument with --keep",
-			command:     []string{"rm", "taskrun", "--keep", "2"},
+			command:     []string{"rm", "tr0-7", "--keep", "2", "-n", "ns"},
 			dynamic:     seeds[5].dynamicClient,
 			input:       seeds[5].pipelineClient,
 			inputStream: nil,
@@ -481,9 +481,9 @@ func TestTaskRunDelete(t *testing.T) {
 		},
 		{
 			name:        "Error from deleting TaskRun with non-existing ClusterTask",
-			command:     []string{"delete", "taskrun", "--clustertask", "non-existing-clustertask"},
-			dynamic:     seeds[4].dynamicClient,
-			input:       seeds[4].pipelineClient,
+			command:     []string{"delete", "tr0-7", "--clustertask", "non-existing-clustertask", "-n", "ns"},
+			dynamic:     seeds[5].dynamicClient,
+			input:       seeds[5].pipelineClient,
 			inputStream: nil,
 			wantError:   true,
 			want:        "no TaskRuns associated with ClusterTask \"non-existing-clustertask\"",
@@ -568,6 +568,15 @@ func TestTaskRunDelete(t *testing.T) {
 			inputStream: nil,
 			wantError:   false,
 			want:        "All TaskRuns deleted in namespace \"ns\"\n",
+		},
+		{
+			name:        "Delete the Task present and give error for non-existent Task",
+			command:     []string{"delete", "nonexistent", "tr0-1", "-n", "ns"},
+			dynamic:     seeds[8].dynamicClient,
+			input:       seeds[8].pipelineClient,
+			inputStream: nil,
+			wantError:   true,
+			want:        "taskruns.tekton.dev \"nonexistent\" not found",
 		},
 	}
 
@@ -832,7 +841,7 @@ func TestTaskRunDelete_v1beta1(t *testing.T) {
 	}
 
 	seeds := make([]clients, 0)
-	for i := 0; i < 8; i++ {
+	for i := 0; i < 9; i++ {
 		trs := trdata
 		cs, _ := test.SeedV1beta1TestData(t, pipelinev1beta1test.Data{TaskRuns: trs, Tasks: tasks, ClusterTasks: clustertasks, Namespaces: ns})
 		cs.Pipeline.Resources = cb.APIResourceList(version, []string{"taskrun"})
@@ -870,7 +879,7 @@ func TestTaskRunDelete_v1beta1(t *testing.T) {
 			input:       seeds[0].pipelineClient,
 			inputStream: nil,
 			wantError:   true,
-			want:        "failed to delete TaskRun \"tr0-1\": taskruns.tekton.dev \"tr0-1\" not found",
+			want:        "taskruns.tekton.dev \"tr0-1\" not found",
 		},
 		{
 			name:        "With force delete flag (shorthand)",
@@ -915,7 +924,7 @@ func TestTaskRunDelete_v1beta1(t *testing.T) {
 			input:       seeds[2].pipelineClient,
 			inputStream: nil,
 			wantError:   true,
-			want:        "failed to delete TaskRun \"nonexistent\": taskruns.tekton.dev \"nonexistent\" not found",
+			want:        "taskruns.tekton.dev \"nonexistent\" not found",
 		},
 		{
 			name:        "Remove multiple non existent resources",
@@ -924,7 +933,7 @@ func TestTaskRunDelete_v1beta1(t *testing.T) {
 			input:       seeds[2].pipelineClient,
 			inputStream: nil,
 			wantError:   true,
-			want:        "failed to delete TaskRun \"nonexistent\": taskruns.tekton.dev \"nonexistent\" not found; failed to delete TaskRun \"nonexistent2\": taskruns.tekton.dev \"nonexistent2\" not found",
+			want:        "taskruns.tekton.dev \"nonexistent\" not found; taskruns.tekton.dev \"nonexistent2\" not found",
 		},
 		{
 			name:        "Attempt remove forgetting to include taskrun names",
@@ -982,18 +991,18 @@ func TestTaskRunDelete_v1beta1(t *testing.T) {
 		},
 		{
 			name:        "Error from using taskrun name with --all",
-			command:     []string{"delete", "taskrun", "--all", "-n", "ns"},
-			dynamic:     seeds[4].dynamicClient,
-			input:       seeds[4].pipelineClient,
+			command:     []string{"delete", "tr0-7", "--all", "-n", "ns"},
+			dynamic:     seeds[5].dynamicClient,
+			input:       seeds[5].pipelineClient,
 			inputStream: nil,
 			wantError:   true,
 			want:        "--all flag should not have any arguments or flags specified with it",
 		},
 		{
 			name:        "Error from deleting TaskRun with non-existing Task",
-			command:     []string{"delete", "taskrun", "-t", "non-existing-task"},
-			dynamic:     seeds[4].dynamicClient,
-			input:       seeds[4].pipelineClient,
+			command:     []string{"delete", "tr0-7", "-t", "non-existing-task", "-n", "ns"},
+			dynamic:     seeds[5].dynamicClient,
+			input:       seeds[5].pipelineClient,
 			inputStream: nil,
 			wantError:   true,
 			want:        "no TaskRuns associated with Task \"non-existing-task\"",
@@ -1009,7 +1018,7 @@ func TestTaskRunDelete_v1beta1(t *testing.T) {
 		},
 		{
 			name:        "Error from using argument with --keep",
-			command:     []string{"rm", "taskrun", "--keep", "2"},
+			command:     []string{"rm", "tr0-7", "-n", "ns", "--keep", "2"},
 			dynamic:     seeds[5].dynamicClient,
 			input:       seeds[5].pipelineClient,
 			inputStream: nil,
@@ -1027,9 +1036,9 @@ func TestTaskRunDelete_v1beta1(t *testing.T) {
 		},
 		{
 			name:        "Error from deleting TaskRun with non-existing ClusterTask",
-			command:     []string{"delete", "taskrun", "--clustertask", "non-existing-clustertask"},
-			dynamic:     seeds[4].dynamicClient,
-			input:       seeds[4].pipelineClient,
+			command:     []string{"delete", "tr0-7", "--clustertask", "non-existing-clustertask", "-n", "ns"},
+			dynamic:     seeds[5].dynamicClient,
+			input:       seeds[5].pipelineClient,
 			inputStream: nil,
 			wantError:   true,
 			want:        "no TaskRuns associated with ClusterTask \"non-existing-clustertask\"",
@@ -1114,6 +1123,15 @@ func TestTaskRunDelete_v1beta1(t *testing.T) {
 			inputStream: nil,
 			wantError:   false,
 			want:        "All TaskRuns deleted in namespace \"ns\"\n",
+		},
+		{
+			name:        "Delete the Task present and give error for non-existent Task",
+			command:     []string{"delete", "nonexistent", "tr0-1", "-n", "ns"},
+			dynamic:     seeds[8].dynamicClient,
+			input:       seeds[8].pipelineClient,
+			inputStream: nil,
+			wantError:   true,
+			want:        "taskruns.tekton.dev \"nonexistent\" not found",
 		},
 	}
 

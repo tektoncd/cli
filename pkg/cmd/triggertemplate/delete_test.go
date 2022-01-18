@@ -89,7 +89,7 @@ func TestTriggerTemplateDelete(t *testing.T) {
 			input:       seeds[0],
 			inputStream: nil,
 			wantError:   true,
-			want:        "failed to delete TriggerTemplate \"tt-1\": triggertemplates.triggers.tekton.dev \"tt-1\" not found",
+			want:        "triggertemplates.triggers.tekton.dev \"tt-1\" not found",
 		},
 		{
 			name:        "With force delete flag (shorthand)",
@@ -145,7 +145,7 @@ func TestTriggerTemplateDelete(t *testing.T) {
 			input:       seeds[2],
 			inputStream: nil,
 			wantError:   true,
-			want:        "failed to delete TriggerTemplate \"nonexistent\": triggertemplates.triggers.tekton.dev \"nonexistent\" not found",
+			want:        "triggertemplates.triggers.tekton.dev \"nonexistent\" not found",
 		},
 		{
 			name:        "Remove multiple non existent resources",
@@ -153,7 +153,7 @@ func TestTriggerTemplateDelete(t *testing.T) {
 			input:       seeds[2],
 			inputStream: nil,
 			wantError:   true,
-			want:        "failed to delete TriggerTemplate \"nonexistent\": triggertemplates.triggers.tekton.dev \"nonexistent\" not found; failed to delete TriggerTemplate \"nonexistent2\": triggertemplates.triggers.tekton.dev \"nonexistent2\" not found",
+			want:        "triggertemplates.triggers.tekton.dev \"nonexistent\" not found; triggertemplates.triggers.tekton.dev \"nonexistent2\" not found",
 		},
 		{
 			name:        "Delete all with prompt",
@@ -173,8 +173,8 @@ func TestTriggerTemplateDelete(t *testing.T) {
 		},
 		{
 			name:        "Error from using triggertemplate name with --all",
-			command:     []string{"delete", "tt", "--all", "-n", "ns"},
-			input:       seeds[4],
+			command:     []string{"delete", "tt-2", "--all", "-n", "ns"},
+			input:       seeds[1],
 			inputStream: nil,
 			wantError:   true,
 			want:        "--all flag should not have any arguments or flags specified with it",
@@ -186,6 +186,14 @@ func TestTriggerTemplateDelete(t *testing.T) {
 			inputStream: nil,
 			wantError:   true,
 			want:        "must provide triggertemplate name(s) or use --all flag with delete",
+		},
+		{
+			name:        "Delete the TriggerTemplate present and give error for non-existent TriggerTemplate",
+			command:     []string{"delete", "nonexistent", "tt-2"},
+			input:       seeds[1],
+			inputStream: nil,
+			wantError:   true,
+			want:        "triggertemplates.triggers.tekton.dev \"nonexistent\" not found",
 		},
 	}
 

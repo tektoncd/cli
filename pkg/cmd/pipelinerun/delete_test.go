@@ -182,7 +182,7 @@ func TestPipelineRunDelete(t *testing.T) {
 	}
 
 	seeds := make([]clients, 0)
-	for i := 0; i < 9; i++ {
+	for i := 0; i < 10; i++ {
 		cs, _ := test.SeedTestData(t, pipelinetest.Data{
 			Pipelines:    pdata,
 			PipelineRuns: prdata,
@@ -218,7 +218,7 @@ func TestPipelineRunDelete(t *testing.T) {
 			input:       seeds[0].pipelineClient,
 			inputStream: nil,
 			wantError:   true,
-			want:        "failed to delete PipelineRun \"pipeline-run-1\": pipelineruns.tekton.dev \"pipeline-run-1\" not found",
+			want:        "pipelineruns.tekton.dev \"pipeline-run-1\" not found",
 		},
 		{
 			name:        "With force delete flag (shorthand)",
@@ -263,7 +263,7 @@ func TestPipelineRunDelete(t *testing.T) {
 			input:       seeds[2].pipelineClient,
 			inputStream: nil,
 			wantError:   true,
-			want:        "failed to delete PipelineRun \"nonexistent\": pipelineruns.tekton.dev \"nonexistent\" not found",
+			want:        "pipelineruns.tekton.dev \"nonexistent\" not found",
 		},
 		{
 			name:        "Remove multiple non existent resources",
@@ -272,7 +272,7 @@ func TestPipelineRunDelete(t *testing.T) {
 			input:       seeds[2].pipelineClient,
 			inputStream: nil,
 			wantError:   true,
-			want:        "failed to delete PipelineRun \"nonexistent\": pipelineruns.tekton.dev \"nonexistent\" not found; failed to delete PipelineRun \"nonexistent2\": pipelineruns.tekton.dev \"nonexistent2\" not found",
+			want:        "pipelineruns.tekton.dev \"nonexistent\" not found; pipelineruns.tekton.dev \"nonexistent2\" not found",
 		},
 		{
 			name:        "Attempt remove forgetting to include pipelinerun names",
@@ -339,18 +339,18 @@ func TestPipelineRunDelete(t *testing.T) {
 		},
 		{
 			name:        "Error from using pipelinerun name with --all",
-			command:     []string{"delete", "pipelinerun", "--all", "-n", "ns"},
-			dynamic:     seeds[4].dynamicClient,
-			input:       seeds[4].pipelineClient,
+			command:     []string{"delete", "pipeline-run-1", "--all", "-n", "ns"},
+			dynamic:     seeds[5].dynamicClient,
+			input:       seeds[5].pipelineClient,
 			inputStream: nil,
 			wantError:   true,
 			want:        "--all flag should not have any arguments or flags specified with it",
 		},
 		{
 			name:        "Error from deleting PipelineRun with non-existing Pipeline",
-			command:     []string{"delete", "pipelinerun", "-p", "non-existing-pipeline"},
-			dynamic:     seeds[4].dynamicClient,
-			input:       seeds[4].pipelineClient,
+			command:     []string{"delete", "pipeline-run-1", "-p", "non-existing-pipeline", "-n", "ns"},
+			dynamic:     seeds[5].dynamicClient,
+			input:       seeds[5].pipelineClient,
 			inputStream: nil,
 			wantError:   true,
 			want:        "no PipelineRuns associated with Pipeline \"non-existing-pipeline\"",
@@ -366,7 +366,7 @@ func TestPipelineRunDelete(t *testing.T) {
 		},
 		{
 			name:        "Error from using argument with --keep",
-			command:     []string{"rm", "pipelinerun", "--keep", "2"},
+			command:     []string{"rm", "pipeline-run-1", "--keep", "2", "-n", "ns"},
 			dynamic:     seeds[6].dynamicClient,
 			input:       seeds[6].pipelineClient,
 			inputStream: nil,
@@ -462,6 +462,15 @@ func TestPipelineRunDelete(t *testing.T) {
 			inputStream: nil,
 			wantError:   true,
 			want:        "--keep or --keep-since, --all and --pipeline cannot be used together",
+		},
+		{
+			name:        "Delete the PipelineRun present and give error for non-existent PipelineRun",
+			command:     []string{"delete", "nonexistent", "pipeline-run-1", "-n", "ns"},
+			dynamic:     seeds[9].dynamicClient,
+			input:       seeds[9].pipelineClient,
+			inputStream: nil,
+			wantError:   true,
+			want:        "pipelineruns.tekton.dev \"nonexistent\" not found",
 		},
 	}
 
@@ -609,7 +618,7 @@ func TestPipelineRunDelete_v1beta1(t *testing.T) {
 	}
 
 	seeds := make([]clients, 0)
-	for i := 0; i < 7; i++ {
+	for i := 0; i < 8; i++ {
 		cs, _ := test.SeedV1beta1TestData(t, pipelinev1beta1test.Data{
 			Pipelines:    pdata,
 			PipelineRuns: prdata,
@@ -644,7 +653,7 @@ func TestPipelineRunDelete_v1beta1(t *testing.T) {
 			input:       seeds[0].pipelineClient,
 			inputStream: nil,
 			wantError:   true,
-			want:        "failed to delete PipelineRun \"pipeline-run-1\": pipelineruns.tekton.dev \"pipeline-run-1\" not found",
+			want:        "pipelineruns.tekton.dev \"pipeline-run-1\" not found",
 		},
 		{
 			name:        "With force delete flag (shorthand)",
@@ -689,7 +698,7 @@ func TestPipelineRunDelete_v1beta1(t *testing.T) {
 			input:       seeds[2].pipelineClient,
 			inputStream: nil,
 			wantError:   true,
-			want:        "failed to delete PipelineRun \"nonexistent\": pipelineruns.tekton.dev \"nonexistent\" not found",
+			want:        "pipelineruns.tekton.dev \"nonexistent\" not found",
 		},
 		{
 			name:        "Remove multiple non existent resources",
@@ -698,7 +707,7 @@ func TestPipelineRunDelete_v1beta1(t *testing.T) {
 			input:       seeds[2].pipelineClient,
 			inputStream: nil,
 			wantError:   true,
-			want:        "failed to delete PipelineRun \"nonexistent\": pipelineruns.tekton.dev \"nonexistent\" not found; failed to delete PipelineRun \"nonexistent2\": pipelineruns.tekton.dev \"nonexistent2\" not found",
+			want:        "pipelineruns.tekton.dev \"nonexistent\" not found; pipelineruns.tekton.dev \"nonexistent2\" not found",
 		},
 		{
 			name:        "Attempt remove forgetting to include pipelinerun names",
@@ -756,18 +765,18 @@ func TestPipelineRunDelete_v1beta1(t *testing.T) {
 		},
 		{
 			name:        "Error from using pipelinerun name with --all",
-			command:     []string{"delete", "pipelinerun", "--all", "-n", "ns"},
-			dynamic:     seeds[4].dynamicClient,
-			input:       seeds[4].pipelineClient,
+			command:     []string{"delete", "pipeline-run-1", "--all", "-n", "ns"},
+			dynamic:     seeds[5].dynamicClient,
+			input:       seeds[5].pipelineClient,
 			inputStream: nil,
 			wantError:   true,
 			want:        "--all flag should not have any arguments or flags specified with it",
 		},
 		{
 			name:        "Error from deleting PipelineRun with non-existing Pipeline",
-			command:     []string{"delete", "pipelinerun", "-p", "non-existing-pipeline"},
-			dynamic:     seeds[4].dynamicClient,
-			input:       seeds[4].pipelineClient,
+			command:     []string{"delete", "pipeline-run-1", "-p", "non-existing-pipeline", "-n", "ns"},
+			dynamic:     seeds[5].dynamicClient,
+			input:       seeds[5].pipelineClient,
 			inputStream: nil,
 			wantError:   true,
 			want:        "no PipelineRuns associated with Pipeline \"non-existing-pipeline\"",
@@ -783,10 +792,10 @@ func TestPipelineRunDelete_v1beta1(t *testing.T) {
 		},
 		{
 			name:        "Error from using argument with --keep",
-			command:     []string{"rm", "pipelinerun", "--keep", "2"},
+			command:     []string{"rm", "pipeline-run-1", "--keep", "2", "-n", "ns"},
 			dynamic:     seeds[5].dynamicClient,
 			input:       seeds[5].pipelineClient,
-			inputStream: strings.NewReader("y"),
+			inputStream: nil,
 			wantError:   true,
 			want:        "--keep flag should not have any arguments specified with it",
 		},
@@ -852,6 +861,15 @@ func TestPipelineRunDelete_v1beta1(t *testing.T) {
 			inputStream: nil,
 			wantError:   false,
 			want:        "Are you sure you want to delete all PipelineRuns in namespace \"ns\" (y/n): All PipelineRuns deleted in namespace \"ns\"\n",
+		},
+		{
+			name:        "Delete the PipelineRun present and give error for non-existent PipelineRun",
+			command:     []string{"delete", "nonexistent", "pipeline-run-1", "-n", "ns"},
+			dynamic:     seeds[7].dynamicClient,
+			input:       seeds[7].pipelineClient,
+			inputStream: nil,
+			wantError:   true,
+			want:        "pipelineruns.tekton.dev \"nonexistent\" not found",
 		},
 	}
 
