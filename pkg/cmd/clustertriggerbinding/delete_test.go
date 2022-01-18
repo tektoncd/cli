@@ -125,7 +125,7 @@ func TestClusterTriggerBindingDelete(t *testing.T) {
 			input:       seeds[2],
 			inputStream: nil,
 			wantError:   true,
-			want:        "failed to delete ClusterTriggerBinding \"nonexistent\": clustertriggerbindings.triggers.tekton.dev \"nonexistent\" not found",
+			want:        "clustertriggerbindings.triggers.tekton.dev \"nonexistent\" not found",
 		},
 		{
 			name:        "Remove multiple non existent resources",
@@ -133,7 +133,7 @@ func TestClusterTriggerBindingDelete(t *testing.T) {
 			input:       seeds[2],
 			inputStream: nil,
 			wantError:   true,
-			want:        "failed to delete ClusterTriggerBinding \"nonexistent\": clustertriggerbindings.triggers.tekton.dev \"nonexistent\" not found; failed to delete ClusterTriggerBinding \"nonexistent2\": clustertriggerbindings.triggers.tekton.dev \"nonexistent2\" not found",
+			want:        "clustertriggerbindings.triggers.tekton.dev \"nonexistent\" not found; clustertriggerbindings.triggers.tekton.dev \"nonexistent2\" not found",
 		},
 		{
 			name:        "Delete all with prompt",
@@ -153,8 +153,8 @@ func TestClusterTriggerBindingDelete(t *testing.T) {
 		},
 		{
 			name:        "Error from using clustertriggerbinding name with --all",
-			command:     []string{"delete", "ctb", "--all"},
-			input:       seeds[4],
+			command:     []string{"delete", "ctb-2", "--all"},
+			input:       seeds[1],
 			inputStream: nil,
 			wantError:   true,
 			want:        "--all flag should not have any arguments or flags specified with it",
@@ -166,6 +166,14 @@ func TestClusterTriggerBindingDelete(t *testing.T) {
 			inputStream: nil,
 			wantError:   true,
 			want:        "must provide clustertriggerbinding name(s) or use --all flag with delete",
+		},
+		{
+			name:        "Delete the ClusterTriggerBinding present and give error for non-existent ClusterTriggerBinding",
+			command:     []string{"delete", "nonexistent", "ctb-2"},
+			input:       seeds[1],
+			inputStream: nil,
+			wantError:   true,
+			want:        "clustertriggerbindings.triggers.tekton.dev \"nonexistent\" not found",
 		},
 	}
 

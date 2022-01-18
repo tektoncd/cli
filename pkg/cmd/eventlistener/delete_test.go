@@ -89,7 +89,7 @@ func TestEventListenerDelete(t *testing.T) {
 			input:       seeds[0],
 			inputStream: nil,
 			wantError:   true,
-			want:        "failed to delete EventListener \"el-1\": eventlisteners.triggers.tekton.dev \"el-1\" not found",
+			want:        "failed to get EventListener el-1: eventlisteners.triggers.tekton.dev \"el-1\" not found",
 		},
 		{
 			name:        "With force delete flag (shorthand)",
@@ -145,7 +145,7 @@ func TestEventListenerDelete(t *testing.T) {
 			input:       seeds[2],
 			inputStream: nil,
 			wantError:   true,
-			want:        "failed to delete EventListener \"nonexistent\": eventlisteners.triggers.tekton.dev \"nonexistent\" not found",
+			want:        "failed to get EventListener nonexistent: eventlisteners.triggers.tekton.dev \"nonexistent\" not found",
 		},
 		{
 			name:        "Remove multiple non existent resources",
@@ -153,7 +153,7 @@ func TestEventListenerDelete(t *testing.T) {
 			input:       seeds[2],
 			inputStream: nil,
 			wantError:   true,
-			want:        "failed to delete EventListener \"nonexistent\": eventlisteners.triggers.tekton.dev \"nonexistent\" not found; failed to delete EventListener \"nonexistent2\": eventlisteners.triggers.tekton.dev \"nonexistent2\" not found",
+			want:        "failed to get EventListener nonexistent: eventlisteners.triggers.tekton.dev \"nonexistent\" not found; failed to get EventListener nonexistent2: eventlisteners.triggers.tekton.dev \"nonexistent2\" not found",
 		},
 		{
 			name:        "Delete all with prompt",
@@ -173,8 +173,8 @@ func TestEventListenerDelete(t *testing.T) {
 		},
 		{
 			name:        "Error from using eventlistener name with --all",
-			command:     []string{"delete", "el", "--all", "-n", "ns"},
-			input:       seeds[4],
+			command:     []string{"delete", "el-2", "--all", "-n", "ns"},
+			input:       seeds[1],
 			inputStream: nil,
 			wantError:   true,
 			want:        "--all flag should not have any arguments or flags specified with it",
@@ -186,6 +186,14 @@ func TestEventListenerDelete(t *testing.T) {
 			inputStream: nil,
 			wantError:   true,
 			want:        "must provide eventlistener name(s) or use --all flag with delete",
+		},
+		{
+			name:        "Delete the EventListener present and give error for non-existent EventListener",
+			command:     []string{"delete", "nonexistent", "el-2"},
+			input:       seeds[1],
+			inputStream: nil,
+			wantError:   true,
+			want:        "failed to get EventListener nonexistent: eventlisteners.triggers.tekton.dev \"nonexistent\" not found",
 		},
 	}
 
