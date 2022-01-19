@@ -7536,3 +7536,122 @@ func Test_lastPipelineRun_V1beta1(t *testing.T) {
 		})
 	}
 }
+
+func Test_start_pipeline_with_skip_optional_workspace_flag(t *testing.T) {
+	pipelineName := "test-pipeline"
+	ps := []*v1beta1.Pipeline{
+		{
+			ObjectMeta: metav1.ObjectMeta{
+				Name:      pipelineName,
+				Namespace: "ns",
+			},
+			Spec: v1beta1.PipelineSpec{
+				Tasks: []v1beta1.PipelineTask{
+					{
+						Name: "unit-test-1",
+						TaskRef: &v1beta1.TaskRef{
+							Name: "unit-test-task",
+						},
+						Resources: &v1beta1.PipelineTaskResources{
+							Inputs: []v1beta1.PipelineTaskInputResource{
+								{
+									Name:     "workspace",
+									Resource: "git-repo",
+								},
+							},
+							Outputs: []v1beta1.PipelineTaskOutputResource{
+								{
+									Name:     "image-to-use",
+									Resource: "best-image",
+								},
+								{
+									Name:     "workspace",
+									Resource: "git-repo",
+								},
+							},
+						},
+						Workspaces: []v1beta1.WorkspacePipelineTaskBinding{
+							{
+								Name:      "task-test-workspace",
+								Workspace: "test-workspace",
+							},
+						},
+					},
+				},
+				Resources: []v1beta1.PipelineDeclaredResource{
+					{
+						Name: "git-repo",
+						Type: v1alpha1.PipelineResourceTypeGit,
+					},
+					{
+						Name: "build-image",
+						Type: v1alpha1.PipelineResourceTypeImage,
+					},
+				},
+				Params: []v1beta1.ParamSpec{
+					{
+						Name: "pipeline-param-1",
+						Type: v1beta1.ParamTypeString,
+						Default: &v1beta1.ArrayOrString{
+							Type:      v1beta1.ParamTypeString,
+							StringVal: "somethingdifferent-1",
+						},
+					},
+					{
+						Name: "rev-param",
+						Type: v1beta1.ParamTypeString,
+						Default: &v1beta1.ArrayOrString{
+							Type:      v1beta1.ParamTypeString,
+							StringVal: "revision",
+						},
+					},
+				},
+				Workspaces: []v1beta1.WorkspacePipelineDeclaration{
+					{
+						Name:     "test-workspace",
+						Optional: true,
+					},
+				},
+			},
+		},
+	}
+
+	ns := []*corev1.Namespace{
+		{
+			ObjectMeta: metav1.ObjectMeta{
+				Name: "ns",
+			},
+		},
+	}
+
+	seedData, _ := test.SeedV1beta1TestData(t, pipelinev1beta1test.Data{
+		Namespaces: ns,
+	})
+	cs := pipelinetest.Clients{
+		Pipeline: seedData.Pipeline,
+		Kube:     seedData.Kube,
+		Resource: seedData.Resource,
+	}
+	cs.Pipeline.Resources = cb.APIResourceList("v1beta1", []string{"pipeline", "pipelinerun"})
+	objs := []runtime.Object{ps[0]}
+	_, tdc := newPipelineClient("v1beta1", objs...)
+	dc, err := tdc.Client(
+		cb.UnstructuredV1beta1P(ps[0], "v1beta1"),
+	)
+	if err != nil {
+		t.Errorf("unable to create dynamic client: %v", err)
+	}
+	p := &test.Params{Tekton: cs.Pipeline, Kube: cs.Kube, Dynamic: dc, Resource: cs.Resource}
+
+	pipeline := Command(p)
+	got, _ := test.ExecuteCommand(pipeline, "start", pipelineName,
+		"--skip-optional-workspace",
+		"-n", "ns",
+		"-p=pipeline-param-1=value1",
+		"-p=rev-param=value2",
+		"-r=git-repo=some-repo",
+	)
+
+	expected := "PipelineRun started: random\n\nIn order to track the PipelineRun progress run:\ntkn pipelinerun logs random -f -n ns\n"
+	test.AssertOutput(t, expected, got)
+}

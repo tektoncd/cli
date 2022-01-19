@@ -43,23 +43,24 @@ For passing the workspaces via flags:
 ### Options
 
 ```
-      --dry-run                  preview TaskRun without running it
-  -f, --filename string          local or remote file name containing a Task definition to start a TaskRun
-  -h, --help                     help for start
-  -i, --inputresource strings    pass the input resource name and ref as name=ref
-  -l, --labels strings           pass labels as label=value.
-  -L, --last                     re-run the Task using last TaskRun values
-      --output string            format of TaskRun (yaml or json)
-  -o, --outputresource strings   pass the output resource name and ref as name=ref
-  -p, --param stringArray        pass the param as key=value for string type, or key=value1,value2,... for array type
-      --pod-template string      local or remote file containing a PodTemplate definition
-      --prefix-name string       specify a prefix for the TaskRun name (must be lowercase alphanumeric characters)
-  -s, --serviceaccount string    pass the serviceaccount name
-      --showlog                  show logs right after starting the Task
-      --timeout string           timeout for TaskRun
-      --use-param-defaults       use default parameter values without prompting for input
-      --use-taskrun string       specify a TaskRun name to use its values to re-run the TaskRun
-  -w, --workspace stringArray    pass one or more workspaces to map to the corresponding physical volumes
+      --dry-run                   preview TaskRun without running it
+  -f, --filename string           local or remote file name containing a Task definition to start a TaskRun
+  -h, --help                      help for start
+  -i, --inputresource strings     pass the input resource name and ref as name=ref
+  -l, --labels strings            pass labels as label=value.
+  -L, --last                      re-run the Task using last TaskRun values
+      --output string             format of TaskRun (yaml or json)
+  -o, --outputresource strings    pass the output resource name and ref as name=ref
+  -p, --param stringArray         pass the param as key=value for string type, or key=value1,value2,... for array type
+      --pod-template string       local or remote file containing a PodTemplate definition
+      --prefix-name string        specify a prefix for the TaskRun name (must be lowercase alphanumeric characters)
+  -s, --serviceaccount string     pass the serviceaccount name
+      --showlog                   show logs right after starting the Task
+      --skip-optional-workspace   skips the prompt for optional workspaces
+      --timeout string            timeout for TaskRun
+      --use-param-defaults        use default parameter values without prompting for input
+      --use-taskrun string        specify a TaskRun name to use its values to re-run the TaskRun
+  -w, --workspace stringArray     pass one or more workspaces to map to the corresponding physical volumes
 ```
 
 ### Options inherited from parent commands

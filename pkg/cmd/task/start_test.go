@@ -5684,3 +5684,60 @@ func TestTaskStart_ExecuteCommand_v1beta1(t *testing.T) {
 		})
 	}
 }
+
+func Test_start_task_with_skip_optional_workspace_flag(t *testing.T) {
+	tasks := []*v1beta1.Task{
+		{
+			ObjectMeta: metav1.ObjectMeta{
+				Name:      "task-1",
+				Namespace: "ns",
+			},
+			Spec: v1beta1.TaskSpec{
+				Steps: []v1beta1.Step{
+					{
+						Container: corev1.Container{
+							Name:  "hello",
+							Image: "busybox",
+						},
+					},
+				},
+				Workspaces: []v1beta1.WorkspaceDeclaration{
+					{
+						Name:        "test",
+						Description: "test workspace",
+						MountPath:   "/workspace/test/file",
+						ReadOnly:    true,
+						Optional:    true,
+					},
+				},
+			},
+		},
+	}
+
+	ns := []*corev1.Namespace{
+		{
+			ObjectMeta: metav1.ObjectMeta{
+				Name: "ns",
+			},
+		},
+	}
+
+	cs, _ := test.SeedV1beta1TestData(t, pipelinev1beta1test.Data{Tasks: tasks, Namespaces: ns})
+	cs.Pipeline.Resources = cb.APIResourceList(versionB1, []string{"task", "taskrun"})
+	tdc := testDynamic.Options{}
+	dc, err := tdc.Client(
+		cb.UnstructuredV1beta1T(tasks[0], versionB1))
+	if err != nil {
+		t.Errorf("unable to create dynamic client: %v", err)
+	}
+	p := &test.Params{Tekton: cs.Pipeline, Kube: cs.Kube, Dynamic: dc}
+
+	task := Command(p)
+	got, _ := test.ExecuteCommand(task, "start", "task-1",
+		"--skip-optional-workspace",
+		"-n", "ns",
+	)
+
+	expected := "TaskRun started: \n\nIn order to track the TaskRun progress run:\ntkn taskrun logs  -f -n ns\n"
+	test.AssertOutput(t, expected, got)
+}
