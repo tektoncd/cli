@@ -1089,6 +1089,31 @@ func Test_ClusterTask_Start_v1beta1(t *testing.T) {
 				},
 			},
 		},
+		{
+			ObjectMeta: v1.ObjectMeta{
+				Name:              "clustertask-4",
+				CreationTimestamp: metav1.Time{Time: clock.Now().Add(-1 * time.Minute)},
+			},
+			Spec: v1beta1.TaskSpec{
+				Steps: []v1beta1.Step{
+					{
+						Container: corev1.Container{
+							Name:  "hello",
+							Image: "busybox",
+						},
+					},
+				},
+				Workspaces: []v1beta1.WorkspaceDeclaration{
+					{
+						Name:        "test",
+						Description: "test workspace",
+						MountPath:   "/workspace/test/file",
+						ReadOnly:    true,
+						Optional:    true,
+					},
+				},
+			},
+		},
 	}
 
 	taskruns := []*v1beta1.TaskRun{
@@ -1241,6 +1266,19 @@ func Test_ClusterTask_Start_v1beta1(t *testing.T) {
 	cs6.Pipeline.Resources = cb.APIResourceList(versionB1, []string{"task", "taskrun", "clustertask"})
 	// seeds[6] - For starting ClusterTask with use-taskrun flag
 	seeds = append(seeds, clients{pipelineClient: cs6, dynamicClient: dc6})
+
+	// seeds[7] - Same data as seeds[0] but creates a new TaskRun
+	seedData7, _ := test.SeedV1beta1TestData(t, pipelinev1beta1test.Data{Namespaces: ns, TaskRuns: taskruns, ClusterTasks: clustertasks})
+	objs7 := []runtime.Object{clustertasks[3], taskruns[0]}
+	tdc7 := newDynamicClientOpt(versionB1, "taskrun-5", objs7...)
+	dc7, _ := tdc7.Client(
+		cb.UnstructuredV1beta1CT(clustertasks[3], versionB1),
+		cb.UnstructuredV1beta1TR(taskruns[0], versionB1),
+	)
+	cs7 := pipelinev1beta1test.Clients{Pipeline: seedData7.Pipeline, Kube: seedData7.Kube}
+	cs7.Pipeline.Resources = cb.APIResourceList(versionB1, []string{"task", "taskrun", "clustertask"})
+	// seeds[7] - For starting ClusterTask with skip-optional-workspaces flag
+	seeds = append(seeds, clients{pipelineClient: cs7, dynamicClient: dc7})
 
 	testParams := []struct {
 		name        string
@@ -1610,6 +1648,17 @@ func Test_ClusterTask_Start_v1beta1(t *testing.T) {
 			inputStream: nil,
 			wantError:   false,
 			goldenFile:  true,
+		},
+		{
+			name: "Start clustertask with skip-optional-workspaces flag",
+			command: []string{"start", "clustertask-4",
+				"--skip-optional-workspace",
+				"-s=svc1"},
+			dynamic:     seeds[7].dynamicClient,
+			input:       seeds[7].pipelineClient,
+			inputStream: nil,
+			wantError:   false,
+			want:        "TaskRun started: taskrun-5\n\nIn order to track the TaskRun progress run:\ntkn taskrun logs taskrun-5 -f -n ns\n",
 		},
 	}
 

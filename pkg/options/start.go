@@ -16,14 +16,15 @@ import (
 )
 
 type InteractiveOpts struct {
-	Stream          *cli.Stream
-	CliParams       cli.Params
-	InputResources  []string
-	OutputResources []string
-	Params          []string
-	Workspaces      []string
-	AskOpts         survey.AskOpt
-	Ns              string
+	Stream                *cli.Stream
+	CliParams             cli.Params
+	InputResources        []string
+	OutputResources       []string
+	Params                []string
+	Workspaces            []string
+	AskOpts               survey.AskOpt
+	Ns                    string
+	SkipOptionalWorkspace bool
 }
 
 type TaskRunOpts struct {
@@ -327,6 +328,9 @@ func (intOpts *InteractiveOpts) TaskParams(task *v1beta1.Task, skipParams map[st
 
 func (intOpts *InteractiveOpts) TaskWorkspaces(task *v1beta1.Task) error {
 	for _, ws := range task.Spec.Workspaces {
+		if ws.Optional && intOpts.SkipOptionalWorkspace {
+			continue
+		}
 		if ws.Optional {
 			isOptional, err := askParam(fmt.Sprintf("Do you want to give specifications for the optional workspace `%s`: (y/N)", ws.Name), intOpts.AskOpts)
 			if err != nil {
@@ -565,6 +569,9 @@ func (intOpts *InteractiveOpts) ClusterTaskParams(clustertask *v1beta1.ClusterTa
 
 func (intOpts *InteractiveOpts) ClusterTaskWorkspaces(clustertask *v1beta1.ClusterTask) error {
 	for _, ws := range clustertask.Spec.Workspaces {
+		if ws.Optional && intOpts.SkipOptionalWorkspace {
+			continue
+		}
 		if ws.Optional {
 			isOptional, err := askParam(fmt.Sprintf("Do you want to give specifications for the optional workspace `%s`: (y/N)", ws.Name), intOpts.AskOpts)
 			if err != nil {

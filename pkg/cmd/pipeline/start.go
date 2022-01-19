@@ -61,26 +61,27 @@ const (
 )
 
 type startOptions struct {
-	cliparams          cli.Params
-	stream             *cli.Stream
-	askOpts            survey.AskOpt
-	Params             []string
-	Resources          []string
-	ServiceAccountName string
-	ServiceAccounts    []string
-	Last               bool
-	UsePipelineRun     string
-	Labels             []string
-	ShowLog            bool
-	DryRun             bool
-	Output             string
-	PrefixName         string
-	TimeOut            string
-	Filename           string
-	Workspaces         []string
-	UseParamDefaults   bool
-	TektonOptions      flags.TektonOptions
-	PodTemplate        string
+	cliparams             cli.Params
+	stream                *cli.Stream
+	askOpts               survey.AskOpt
+	Params                []string
+	Resources             []string
+	ServiceAccountName    string
+	ServiceAccounts       []string
+	Last                  bool
+	UsePipelineRun        string
+	Labels                []string
+	ShowLog               bool
+	DryRun                bool
+	Output                string
+	PrefixName            string
+	TimeOut               string
+	Filename              string
+	Workspaces            []string
+	UseParamDefaults      bool
+	TektonOptions         flags.TektonOptions
+	PodTemplate           string
+	SkipOptionalWorkspace bool
 }
 
 type resourceOptionsFilter struct {
@@ -191,6 +192,7 @@ For passing the workspaces via flags:
 	c.Flags().StringVarP(&opt.Filename, "filename", "f", "", "local or remote file name containing a Pipeline definition to start a PipelineRun")
 	c.Flags().BoolVarP(&opt.UseParamDefaults, "use-param-defaults", "", false, "use default parameter values without prompting for input")
 	c.Flags().StringVar(&opt.PodTemplate, "pod-template", "", "local or remote file containing a PodTemplate definition")
+	c.Flags().BoolVarP(&opt.SkipOptionalWorkspace, "skip-optional-workspace", "", false, "skips the prompt for optional workspaces")
 
 	c.Flags().StringVarP(&opt.ServiceAccountName, "serviceaccount", "s", "", "pass the serviceaccount name")
 	_ = c.RegisterFlagCompletionFunc("serviceaccount",
@@ -802,6 +804,9 @@ func parsePipeline(pipelineLocation string, httpClient http.Client) (*v1beta1.Pi
 
 func (opt *startOptions) getInputWorkspaces(pipeline *v1beta1.Pipeline) error {
 	for _, ws := range pipeline.Spec.Workspaces {
+		if ws.Optional && opt.SkipOptionalWorkspace {
+			continue
+		}
 		if ws.Optional {
 			isOptional, err := askParam(fmt.Sprintf("Do you want to give specifications for the optional workspace `%s`: (y/N)", ws.Name), opt.askOpts)
 			if err != nil {

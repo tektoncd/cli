@@ -56,26 +56,27 @@ var (
 const invalidResource = "invalid input format for resource parameter: "
 
 type startOptions struct {
-	cliparams          cli.Params
-	stream             *cli.Stream
-	Params             []string
-	InputResources     []string
-	OutputResources    []string
-	ServiceAccountName string
-	Last               bool
-	Labels             []string
-	ShowLog            bool
-	TimeOut            string
-	DryRun             bool
-	Output             string
-	PrefixName         string
-	Workspaces         []string
-	UseParamDefaults   bool
-	clustertask        *v1beta1.ClusterTask
-	askOpts            survey.AskOpt
-	TektonOptions      flags.TektonOptions
-	PodTemplate        string
-	UseTaskRun         string
+	cliparams             cli.Params
+	stream                *cli.Stream
+	Params                []string
+	InputResources        []string
+	OutputResources       []string
+	ServiceAccountName    string
+	Last                  bool
+	Labels                []string
+	ShowLog               bool
+	TimeOut               string
+	DryRun                bool
+	Output                string
+	PrefixName            string
+	Workspaces            []string
+	UseParamDefaults      bool
+	clustertask           *v1beta1.ClusterTask
+	askOpts               survey.AskOpt
+	TektonOptions         flags.TektonOptions
+	PodTemplate           string
+	UseTaskRun            string
+	SkipOptionalWorkspace bool
 }
 
 // NameArg validates that the first argument is a valid clustertask name
@@ -195,6 +196,7 @@ For passing the workspaces via flags:
 	c.Flags().StringVarP(&opt.PrefixName, "prefix-name", "", "", "specify a prefix for the TaskRun name (must be lowercase alphanumeric characters)")
 	c.Flags().StringVar(&opt.PodTemplate, "pod-template", "", "local or remote file containing a PodTemplate definition")
 	c.Flags().BoolVar(&opt.UseParamDefaults, "use-param-defaults", false, "use default parameter values without prompting for input")
+	c.Flags().BoolVarP(&opt.SkipOptionalWorkspace, "skip-optional-workspace", "", false, "skips the prompt for optional workspaces")
 
 	return c
 }
@@ -436,10 +438,11 @@ func convertedTrVersion(c *cli.Clients, tr *v1beta1.TaskRun) (interface{}, error
 
 func (opt *startOptions) getInputs() error {
 	intOpts := options.InteractiveOpts{
-		Stream:    opt.stream,
-		CliParams: opt.cliparams,
-		AskOpts:   opt.askOpts,
-		Ns:        opt.cliparams.Namespace(),
+		Stream:                opt.stream,
+		CliParams:             opt.cliparams,
+		AskOpts:               opt.askOpts,
+		Ns:                    opt.cliparams.Namespace(),
+		SkipOptionalWorkspace: opt.SkipOptionalWorkspace,
 	}
 
 	if opt.clustertask.Spec.Resources != nil && !opt.Last && opt.UseTaskRun == "" {
