@@ -35,6 +35,7 @@ const (
 	pipelinesInfo                  string = "pipelines-info"
 	triggersInfo                   string = "triggers-info"
 	dashboardInfo                  string = "dashboard-info"
+	operatorInfo                   string = "operators-info"
 )
 
 var defaultNamespaces = []string{"tekton-pipelines", "openshift-pipelines"}
@@ -263,4 +264,24 @@ func findDashboardVersion(deployments []v1.Deployment) string {
 		}
 	}
 	return version
+}
+
+// GetOperatorVersion Get operator version
+func GetOperatorVersion(c *cli.Clients, ns string) (string, error) {
+
+	var version string
+	configMap, err := getConfigMap(c, operatorInfo, ns)
+	if err == nil {
+		version = configMap.Data["version"]
+	}
+
+	if version != "" {
+		return version, nil
+	}
+
+	if err != nil {
+		return "", err
+	}
+
+	return version, nil
 }
