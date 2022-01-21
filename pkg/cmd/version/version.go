@@ -90,6 +90,10 @@ func Command(p cli.Params) *cobra.Command {
 					if dashboardVersion != "" {
 						fmt.Fprintf(cmd.OutOrStdout(), "Dashboard version: %s\n", dashboardVersion)
 					}
+					operatorVersion, _ := version.GetOperatorVersion(cs, namespace)
+					if operatorVersion != "" {
+						fmt.Fprintf(cmd.OutOrStdout(), "Operator version: %s\n", operatorVersion)
+					}
 				case "client":
 					fmt.Fprintf(cmd.OutOrStdout(), "%s\n", clientVersion)
 				case "pipeline":
@@ -110,6 +114,12 @@ func Command(p cli.Params) *cobra.Command {
 						dashboardVersion = "unknown"
 					}
 					fmt.Fprintf(cmd.OutOrStdout(), "%s\n", dashboardVersion)
+				case "operator":
+					operatorVersion, _ := version.GetOperatorVersion(cs, namespace)
+					if operatorVersion == "" {
+						operatorVersion = "unknown"
+					}
+					fmt.Fprintf(cmd.OutOrStdout(), "%s\n", operatorVersion)
 				default:
 					fmt.Fprintf(cmd.OutOrStdout(), "Invalid component value\n")
 				}
@@ -119,7 +129,7 @@ func Command(p cli.Params) *cobra.Command {
 					fmt.Fprintf(cmd.OutOrStdout(), "Client version: %s\n", clientVersion)
 				case "client":
 					fmt.Fprintf(cmd.OutOrStdout(), "%s\n", clientVersion)
-				case "pipeline", "triggers", "dashboard":
+				case "pipeline", "triggers", "dashboard", "operator":
 					fmt.Fprintf(cmd.OutOrStdout(), "unknown\n")
 				default:
 					fmt.Fprintf(cmd.OutOrStdout(), "Invalid component value\n")

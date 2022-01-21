@@ -255,11 +255,17 @@ func TestGetVersions(t *testing.T) {
 	triggersDeployment := getDeploymentData("triggers-dep", "", triggersDeploymentLabels, map[string]string{"app.kubernetes.io/version": "v0.5.0"}, nil)
 	dashboardDeployment := getDeploymentData("dashboard-dep", "", dashboardDeploymentLabels, map[string]string{"app.kubernetes.io/version": "v0.7.0"}, nil)
 
+	pipelineConfigMap := getConfigMapData("pipelines-info", "v0.10.0", map[string]string{"app.kubernetes.io/part-of": "tekton-pipelines"})
+	triggersConfigMap := getConfigMapData("triggers-info", "v0.5.0", map[string]string{"app.kubernetes.io/part-of": "tekton-pipelines"})
+	dashboardConfigMap := getConfigMapData("dashboard-info", "v0.7.0", map[string]string{"app.kubernetes.io/part-of": "tekton-pipelines"})
+	operatorConfigMap := getConfigMapData("operators-info", "v0.54.0", map[string]string{"app.kubernetes.io/part-of": "tekton-pipelines"})
+
 	testParams := []struct {
 		name                  string
 		namespace             string
 		userProvidedNamespace string
 		deployment            []*v1.Deployment
+		configMap             []*corev1.ConfigMap
 		goldenFile            bool
 	}{{
 		name:       "empty deployment items",
@@ -290,6 +296,13 @@ func TestGetVersions(t *testing.T) {
 		userProvidedNamespace: "test",
 		deployment:            []*v1.Deployment{pipelineDeployment, triggersDeployment, dashboardDeployment},
 		goldenFile:            true,
+	}, {
+		name:                  "deployment with pipeline, triggers, dashboard and operator installed",
+		namespace:             "test",
+		userProvidedNamespace: "test",
+		deployment:            []*v1.Deployment{},
+		configMap:             []*corev1.ConfigMap{pipelineConfigMap, triggersConfigMap, dashboardConfigMap, operatorConfigMap},
+		goldenFile:            true,
 	}}
 	for _, tp := range testParams {
 		t.Run(tp.name, func(t *testing.T) {
@@ -305,6 +318,11 @@ func TestGetVersions(t *testing.T) {
 			for _, v := range tp.deployment {
 				if _, err := cls.Kube.AppsV1().Deployments(tp.namespace).Create(context.Background(), v, metav1.CreateOptions{}); err != nil {
 					t.Errorf("failed to create deployment: %v", err)
+				}
+			}
+			for _, v := range tp.configMap {
+				if _, err := cls.Kube.CoreV1().ConfigMaps(tp.namespace).Create(context.Background(), v, metav1.CreateOptions{}); err != nil {
+					t.Errorf("failed to create configMap")
 				}
 			}
 			got, _ := test.ExecuteCommand(version, "version", "-n", "test")
@@ -332,6 +350,19 @@ func getDeploymentData(name, image string, deploymentLabels, podTemplateLabels, 
 					}},
 				},
 			},
+		},
+	}
+}
+
+func getConfigMapData(name, version string, labels map[string]string) *corev1.ConfigMap {
+	return &corev1.ConfigMap{
+		TypeMeta: metav1.TypeMeta{},
+		ObjectMeta: metav1.ObjectMeta{
+			Name:   name,
+			Labels: labels,
+		},
+		Data: map[string]string{
+			"version": version,
 		},
 	}
 }

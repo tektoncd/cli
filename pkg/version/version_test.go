@@ -378,3 +378,43 @@ func TestGetDashboardVersionViaConfigMap(t *testing.T) {
 		})
 	}
 }
+
+func TestGetOperatorVersionViaConfigMap(t *testing.T) {
+
+	testParams := []struct {
+		name                  string
+		namespace             string
+		userProvidedNamespace string
+		configMap             *corev1.ConfigMap
+		want                  string
+	}{
+		{
+			name:      "get operator version from configmap in tekton-pipelines namespace",
+			namespace: "tekton-pipelines",
+			configMap: getConfigMapData("operators-info", "main", map[string]string{"app.kubernetes.io/part-of": "tekton-pipelines"}),
+			want:      "main",
+		},
+		{
+			name:                  "get operator version from configmap present in different namespace other than default namespaces",
+			namespace:             "test",
+			userProvidedNamespace: "test",
+			configMap:             getConfigMapData("operators-info", "test", map[string]string{"app.kubernetes.io/part-of": "tekton-pipelines"}),
+			want:                  "test",
+		},
+	}
+	for _, tp := range testParams {
+		t.Run(tp.name, func(t *testing.T) {
+			cs, _ := test.SeedTestData(t, pipelinetest.Data{})
+			p := &test.Params{Kube: cs.Kube}
+			cls, err := p.Clients()
+			if err != nil {
+				t.Errorf("failed to get client: %v", err)
+			}
+			if _, err := cls.Kube.CoreV1().ConfigMaps(tp.namespace).Create(context.Background(), tp.configMap, metav1.CreateOptions{}); err != nil {
+				t.Errorf("failed to create configmap: %v", err)
+			}
+			version, _ := GetOperatorVersion(cls, tp.userProvidedNamespace)
+			test.AssertOutput(t, tp.want, version)
+		})
+	}
+}
