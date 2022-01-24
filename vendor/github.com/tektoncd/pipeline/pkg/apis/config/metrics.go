@@ -70,7 +70,7 @@ const (
 	// DurationTaskrunTypeHistogram specify that histogram
 	// type metrics need to be use for Duration of Taskrun
 	DurationTaskrunTypeHistogram = "histogram"
-	// DurationTaskrunTypeHistogram specify that lastValue or
+	// DurationTaskrunTypeLastValue specify that lastValue or
 	// gauge type metrics need to be use for Duration of Taskrun
 	DurationTaskrunTypeLastValue = "lastvalue"
 
@@ -81,7 +81,7 @@ const (
 	// DurationPipelinerunTypeHistogram specify that histogram
 	// type metrics need to be use for Duration of Pipelinerun
 	DurationPipelinerunTypeHistogram = "histogram"
-	// DurationPipelinerunTypeHistogram specify that lastValue or
+	// DurationPipelinerunTypeLastValue specify that lastValue or
 	// gauge type metrics need to be use for Duration of Pipelinerun
 	DurationPipelinerunTypeLastValue = "lastvalue"
 )
@@ -95,7 +95,7 @@ type Metrics struct {
 	DurationPipelinerunType string
 }
 
-// GetArtifactBucketConfigName returns the name of the configmap containing all
+// GetMetricsConfigName returns the name of the configmap containing all
 // customizations for the storage bucket.
 func GetMetricsConfigName() string {
 	return metrics.ConfigMapName()
@@ -117,8 +117,8 @@ func (cfg *Metrics) Equals(other *Metrics) bool {
 		other.DurationPipelinerunType == cfg.DurationPipelinerunType
 }
 
-// NewMetricsFromMap returns a Config given a map corresponding to a ConfigMap
-func NewMetricsFromMap(cfgMap map[string]string) (*Metrics, error) {
+// newMetricsFromMap returns a Config given a map corresponding to a ConfigMap
+func newMetricsFromMap(cfgMap map[string]string) (*Metrics, error) {
 	tc := Metrics{
 		TaskrunLevel:            DefaultTaskrunLevel,
 		PipelinerunLevel:        DefaultPipelinerunLevel,
@@ -142,7 +142,7 @@ func NewMetricsFromMap(cfgMap map[string]string) (*Metrics, error) {
 	return &tc, nil
 }
 
-// NewArtifactBucketFromConfigMap returns a Config for the given configmap
+// NewMetricsFromConfigMap returns a Config for the given configmap
 func NewMetricsFromConfigMap(config *corev1.ConfigMap) (*Metrics, error) {
-	return NewMetricsFromMap(config.Data)
+	return newMetricsFromMap(config.Data)
 }

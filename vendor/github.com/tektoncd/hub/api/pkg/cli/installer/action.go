@@ -74,7 +74,7 @@ func (i *Installer) checkVersion(resPipMinVersion string) error {
 		return ErrWarnVersionNotFound
 	}
 
-	if i.GetPipelineVersion() < resPipMinVersion {
+	if i.GetPipelineVersion() < resPipMinVersion && i.GetPipelineVersion() != "devel" {
 		return ErrVersionIncompatible
 	}
 
