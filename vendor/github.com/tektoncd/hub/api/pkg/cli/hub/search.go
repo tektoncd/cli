@@ -20,7 +20,7 @@ import (
 	"net/url"
 	"strconv"
 
-	rclient "github.com/tektoncd/hub/api/gen/http/resource/client"
+	rclient "github.com/tektoncd/hub/api/v1/gen/http/resource/client"
 )
 
 // SearchOption defines option associated with query API

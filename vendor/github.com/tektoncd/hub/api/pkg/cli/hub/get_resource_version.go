@@ -20,7 +20,7 @@ import (
 	"net/http"
 	"strconv"
 
-	rclient "github.com/tektoncd/hub/api/gen/http/resource/client"
+	rclient "github.com/tektoncd/hub/api/v1/gen/http/resource/client"
 )
 
 // resVersionsResponse is the response of API when finding resource versions

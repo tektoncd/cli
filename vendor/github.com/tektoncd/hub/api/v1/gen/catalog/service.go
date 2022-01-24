@@ -43,6 +43,8 @@ type Catalog struct {
 	Type string
 	// URL of catalog
 	URL string
+	// Provider of catalog
+	Provider string
 }
 
 // MakeInternalError builds a goa.ServiceError from an error.

@@ -111,6 +111,7 @@ func imageNamesMapping() map[string]string {
 			"docker":                                "docker:18.06.3",
 			"mikefarah/yq:3":                        "danielxlee/yq:2.4.0",
 			"stedolan/jq":                           "ibmcom/jq-s390x:latest",
+			"amd64/ubuntu":                          "s390x/ubuntu",
 			"gcr.io/kaniko-project/executor:v1.3.0": getTestImage(kanikoImage),
 		}
 	case "ppc64le":
@@ -139,14 +140,13 @@ func initExcludedTests() sets.String {
 			// examples
 			"TestExamples/v1alpha1/taskruns/gcs-resource",
 			"TestExamples/v1beta1/taskruns/gcs-resource",
+			"TestExamples/v1beta1/taskruns/creds-init-only-mounts-provided-credentials",
 		)
 	case "ppc64le":
 		return sets.NewString(
 			// examples
 			"TestExamples/v1alpha1/taskruns/gcs-resource",
 			"TestExamples/v1beta1/taskruns/gcs-resource",
-			"TestExamples/v1beta1/pipelineruns/pipelinerun",
-			"TestYamls/yamls/v1beta1/pipelineruns/pipelinerun.yaml",
 		)
 	}
 

@@ -19,7 +19,7 @@ import (
 	"strings"
 
 	"github.com/fatih/color"
-	"github.com/tektoncd/hub/api/gen/http/resource/client"
+	"github.com/tektoncd/hub/api/v1/gen/http/resource/client"
 	"github.com/tektoncd/hub/api/pkg/cli/hub"
 	"golang.org/x/term"
 )

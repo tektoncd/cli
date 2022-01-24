@@ -27,7 +27,7 @@ import (
 
 const (
 	// hubURL - Hub API Server URL
-	hubURL = "https://api.hub.tekton.dev"
+	hubURL        = "https://api.hub.tekton.dev"
 	hubConfigPath = ".tekton/hub-config"
 )
 
