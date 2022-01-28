@@ -81,15 +81,15 @@ func (c *client) GetResource(opt ResourceOption) ResourceResult {
 func (opt ResourceOption) Endpoint() string {
 	if opt.Version != "" {
 		// API: /resource/<catalog>/<kind>/<name>/<version>
-		return fmt.Sprintf("/resource/%s/%s/%s/%s", opt.Catalog, opt.Kind, opt.Name, opt.Version)
+		return fmt.Sprintf("/v1/resource/%s/%s/%s/%s", opt.Catalog, opt.Kind, opt.Name, opt.Version)
 	}
 	if opt.PipelineVersion != "" {
 		opt.PipelineVersion = strings.TrimLeft(opt.PipelineVersion, "v")
 		// API: /resource/<catalog>/<kind>/<name>?pipelinesversion=<version>
-		return fmt.Sprintf("/resource/%s/%s/%s?pipelinesversion=%s", opt.Catalog, opt.Kind, opt.Name, opt.PipelineVersion)
+		return fmt.Sprintf("/v1/resource/%s/%s/%s?pipelinesversion=%s", opt.Catalog, opt.Kind, opt.Name, opt.PipelineVersion)
 	}
 	// API: /resource/<catalog>/<kind>/<name>
-	return fmt.Sprintf("/resource/%s/%s/%s", opt.Catalog, opt.Kind, opt.Name)
+	return fmt.Sprintf("/v1/resource/%s/%s/%s", opt.Catalog, opt.Kind, opt.Name)
 }
 
 func (rr *ResourceResult) unmarshalData() error {

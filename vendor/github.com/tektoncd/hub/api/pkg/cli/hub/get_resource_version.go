@@ -63,7 +63,7 @@ func (c *client) GetResourceVersions(opt ResourceOption) ResourceVersionResult {
 
 // Endpoint computes the endpoint url using input provided
 func resVersionsEndpoint(rID uint) string {
-	return fmt.Sprintf("/resource/%s/versions", strconv.FormatUint(uint64(rID), 10))
+	return fmt.Sprintf("/v1/resource/%s/versions", strconv.FormatUint(uint64(rID), 10))
 }
 
 func (rvr *ResourceVersionResult) unmarshalData() error {

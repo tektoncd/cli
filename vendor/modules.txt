@@ -370,7 +370,7 @@ github.com/stoewer/go-strcase
 github.com/stretchr/testify/assert
 # github.com/subosito/gotenv v1.2.0
 github.com/subosito/gotenv
-# github.com/tektoncd/hub/api v0.0.0-20220119052005-ec969c30e3cd
+# github.com/tektoncd/hub/api v0.0.0-20220128080824-5941f280d06a
 ## explicit
 github.com/tektoncd/hub/api/pkg/cli/app
 github.com/tektoncd/hub/api/pkg/cli/cmd

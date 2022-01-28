@@ -108,7 +108,7 @@ func (so SearchOption) Endpoint() string {
 
 	v.Set("match", so.Match)
 
-	return "/query?" + v.Encode()
+	return "/v1/query?" + v.Encode()
 }
 
 func addArraytoURL(param string, arr []string, v url.Values) {
