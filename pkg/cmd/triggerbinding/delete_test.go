@@ -59,8 +59,7 @@ func TestTriggerBindingDelete(t *testing.T) {
 				},
 			},
 		}
-		ctx, _ := test.SetupFakeContext(t)
-		cs := triggertest.SeedResources(t, ctx, triggertest.Resources{TriggerBindings: tbs, Namespaces: ns})
+		cs := test.SeedTestResources(t, triggertest.Resources{TriggerBindings: tbs, Namespaces: ns})
 		cs.Triggers.Resources = cb.TriggersAPIResourceList("v1beta1", []string{"triggerbinding"})
 		tdc := testDynamic.Options{}
 		dc, err := tdc.Client(

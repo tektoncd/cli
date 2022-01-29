@@ -397,7 +397,7 @@ github.com/tektoncd/hub/api/v1/gen/http/catalog/client
 github.com/tektoncd/hub/api/v1/gen/http/resource/client
 github.com/tektoncd/hub/api/v1/gen/resource
 github.com/tektoncd/hub/api/v1/gen/resource/views
-# github.com/tektoncd/pipeline v0.32.0
+# github.com/tektoncd/pipeline v0.32.1
 ## explicit
 github.com/tektoncd/pipeline/pkg/apis/config
 github.com/tektoncd/pipeline/pkg/apis/pipeline
@@ -479,7 +479,7 @@ github.com/tektoncd/pipeline/test/v1alpha1
 # github.com/tektoncd/plumbing v0.0.0-20211012143332-c7cc43d9bc0c
 ## explicit
 github.com/tektoncd/plumbing/scripts
-# github.com/tektoncd/triggers v0.17.1
+# github.com/tektoncd/triggers v0.18.0
 ## explicit
 github.com/tektoncd/triggers/pkg/apis/config
 github.com/tektoncd/triggers/pkg/apis/triggers
@@ -516,6 +516,7 @@ github.com/tektoncd/triggers/pkg/client/injection/informers/triggers/v1beta1/tri
 github.com/tektoncd/triggers/pkg/client/injection/informers/triggers/v1beta1/triggertemplate/fake
 github.com/tektoncd/triggers/pkg/client/listers/triggers/v1alpha1
 github.com/tektoncd/triggers/pkg/client/listers/triggers/v1beta1
+github.com/tektoncd/triggers/pkg/reconciler/eventlistener/resources
 github.com/tektoncd/triggers/test
 # github.com/tidwall/gjson v1.12.1
 ## explicit
@@ -1143,6 +1144,8 @@ k8s.io/utils/buffer
 k8s.io/utils/integer
 k8s.io/utils/pointer
 k8s.io/utils/trace
+# knative.dev/eventing v0.25.0
+knative.dev/eventing/pkg/reconciler/source
 # knative.dev/networking v0.0.0-20210803181815-acdfd41c575c
 knative.dev/networking/pkg
 knative.dev/networking/pkg/apis/networking
@@ -1160,8 +1163,8 @@ knative.dev/pkg/client/injection/ducks/duck/v1/podspecable
 knative.dev/pkg/client/injection/ducks/duck/v1/podspecable/fake
 knative.dev/pkg/client/injection/kube/client
 knative.dev/pkg/client/injection/kube/client/fake
-knative.dev/pkg/client/injection/kube/informers/apps/v1/deployment
-knative.dev/pkg/client/injection/kube/informers/apps/v1/deployment/fake
+knative.dev/pkg/client/injection/kube/informers/apps/v1/deployment/filtered
+knative.dev/pkg/client/injection/kube/informers/apps/v1/deployment/filtered/fake
 knative.dev/pkg/client/injection/kube/informers/core/v1/configmap
 knative.dev/pkg/client/injection/kube/informers/core/v1/configmap/fake
 knative.dev/pkg/client/injection/kube/informers/core/v1/limitrange
@@ -1172,8 +1175,8 @@ knative.dev/pkg/client/injection/kube/informers/core/v1/pod/filtered
 knative.dev/pkg/client/injection/kube/informers/core/v1/pod/filtered/fake
 knative.dev/pkg/client/injection/kube/informers/core/v1/secret
 knative.dev/pkg/client/injection/kube/informers/core/v1/secret/fake
-knative.dev/pkg/client/injection/kube/informers/core/v1/service
-knative.dev/pkg/client/injection/kube/informers/core/v1/service/fake
+knative.dev/pkg/client/injection/kube/informers/core/v1/service/filtered
+knative.dev/pkg/client/injection/kube/informers/core/v1/service/filtered/fake
 knative.dev/pkg/client/injection/kube/informers/core/v1/serviceaccount
 knative.dev/pkg/client/injection/kube/informers/core/v1/serviceaccount/fake
 knative.dev/pkg/client/injection/kube/informers/factory
@@ -1200,8 +1203,10 @@ knative.dev/pkg/network
 knative.dev/pkg/profiling
 knative.dev/pkg/ptr
 knative.dev/pkg/reconciler
+knative.dev/pkg/reconciler/testing
 knative.dev/pkg/signals
 knative.dev/pkg/system
+knative.dev/pkg/system/testing
 knative.dev/pkg/test
 knative.dev/pkg/test/environment
 knative.dev/pkg/test/ingress

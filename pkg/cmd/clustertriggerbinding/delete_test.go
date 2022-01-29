@@ -48,8 +48,7 @@ func TestClusterTriggerBindingDelete(t *testing.T) {
 				},
 			},
 		}
-		ctx, _ := test.SetupFakeContext(t)
-		cs := triggertest.SeedResources(t, ctx, triggertest.Resources{ClusterTriggerBindings: ctbs})
+		cs := test.SeedTestResources(t, triggertest.Resources{ClusterTriggerBindings: ctbs})
 		cs.Triggers.Resources = cb.TriggersAPIResourceList("v1beta1", []string{"clustertriggerbinding"})
 		tdc := testDynamic.Options{}
 		dc, err := tdc.Client(

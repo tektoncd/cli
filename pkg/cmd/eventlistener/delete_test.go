@@ -60,8 +60,7 @@ func TestEventListenerDelete(t *testing.T) {
 			},
 		}
 
-		ctx, _ := test.SetupFakeContext(t)
-		cs := triggertest.SeedResources(t, ctx, triggertest.Resources{EventListeners: els, Namespaces: ns})
+		cs := test.SeedTestResources(t, triggertest.Resources{EventListeners: els, Namespaces: ns})
 		cs.Triggers.Resources = cb.TriggersAPIResourceList("v1beta1", []string{"eventlistener"})
 		tdc := testDynamic.Options{}
 		dc, err := tdc.Client(
