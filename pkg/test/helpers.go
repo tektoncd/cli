@@ -26,9 +26,6 @@ import (
 	triggerstest "github.com/tektoncd/triggers/test"
 )
 
-// SetupFakeContext aliases tektoncd/pipeline so we don't need to import ttesting everywhere
-var SetupFakeContext = ttesting.SetupFakeContext
-
 func SeedTestData(t *testing.T, d pipelinetest.Data) (pipelinetest.Clients, pipelinetest.Informers) {
 	ctx, _ := ttesting.SetupFakeContext(t)
 	return pipelinetest.SeedTestData(t, ctx, d)
@@ -40,7 +37,7 @@ func SeedV1beta1TestData(t *testing.T, d pipelinev1beta1test.Data) (pipelinev1be
 }
 
 func SeedTestResources(t *testing.T, d triggerstest.Resources) triggerstest.Clients {
-	ctx, _ := ttesting.SetupFakeContext(t)
+	ctx, _ := triggerstest.SetupFakeContext(t)
 	return triggerstest.SeedResources(t, ctx, d)
 }
 

@@ -59,8 +59,7 @@ func TestTriggerTemplateDelete(t *testing.T) {
 				},
 			},
 		}
-		ctx, _ := test.SetupFakeContext(t)
-		cs := triggertest.SeedResources(t, ctx, triggertest.Resources{TriggerTemplates: tts, Namespaces: ns})
+		cs := test.SeedTestResources(t, triggertest.Resources{TriggerTemplates: tts, Namespaces: ns})
 		cs.Triggers.Resources = cb.TriggersAPIResourceList("v1beta1", []string{"triggertemplate"})
 		tdc := testDynamic.Options{}
 		dc, err := tdc.Client(
