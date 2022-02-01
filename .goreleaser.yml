@@ -44,7 +44,7 @@ release:
 brews:
   -
     name: tektoncd-cli
-    github:
+    tap:
       owner: tektoncd
       name: homebrew-tools
     folder: Formula
