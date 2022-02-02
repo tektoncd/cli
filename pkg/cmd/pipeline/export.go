@@ -12,11 +12,6 @@ import (
 	cliopts "k8s.io/cli-runtime/pkg/genericclioptions"
 )
 
-type ExportOptions struct {
-	Params       cli.Params
-	PipelineName string
-}
-
 func exportCommand(p cli.Params) *cobra.Command {
 	f := cliopts.NewPrintFlags("export")
 
@@ -78,7 +73,7 @@ func exportPipeline(out io.Writer, p cli.Params, pname string) error {
 	if err != nil {
 		return err
 	}
-	exported, err := export.PipelineToYaml(pipeline)
+	exported, err := export.TektonResourceToYaml(pipeline)
 	if err != nil {
 		return err
 	}
