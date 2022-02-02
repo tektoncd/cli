@@ -2,11 +2,11 @@
 <package xmlns="http://schemas.microsoft.com/packaging/2015/06/nuspec.xsd">
   <metadata>
     <id>tektoncd-cli</id>
-    <version>0.21.0</version>
+    <version>0.22.0</version>
     <title>Tekton CLI (tkn)</title>
     <authors>Tekton authors, see https://github.com/tektoncd/cli/graphs/contributors</authors>
     <projectUrl>https://github.com/tektoncd/cli</projectUrl>
-    <packageSourceUrl>https://github.com/tektoncd/cli/choco</packageSourceUrl>
+    <packageSourceUrl>https://github.com/tektoncd/cli/tree/main/choco</packageSourceUrl>
     <licenseUrl>https://github.com/tektoncd/cli/blob/master/LICENSE</licenseUrl>
     <requireLicenseAcceptance>false</requireLicenseAcceptance>
     <releaseNotes>https://github.com/tektoncd/cli/releases</releaseNotes>
