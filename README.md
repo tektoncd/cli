@@ -122,12 +122,12 @@ Expand-Archive $HOME/tektoncd/cli/*.zip -DestinationPath C:\Users\Developer\tekt
 
   * [Ubuntu PPA](https://launchpad.net/~tektoncd/+archive/ubuntu/cli/+packages)
 
-  If you are running on the latest LTS Ubuntu or Debian, you can use the TektonCD CLI PPA:
+  If you are running on the latest rolling Ubuntu or Debian, you can use the TektonCD CLI PPA:
 
   ```shell
   sudo apt update;sudo apt install -y gnupg
   sudo apt-key adv --keyserver keyserver.ubuntu.com --recv-keys 3EFE0E0A2F2F60AA
-  echo "deb http://ppa.launchpad.net/tektoncd/cli/ubuntu focal main"|sudo tee /etc/apt/sources.list.d/tektoncd-ubuntu-cli.list
+  echo "deb http://ppa.launchpad.net/tektoncd/cli/ubuntu impish main"|sudo tee /etc/apt/sources.list.d/tektoncd-ubuntu-cli.list
   sudo apt update && sudo apt install -y tektoncd-cli
   ```
 
