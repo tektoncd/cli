@@ -15,7 +15,7 @@ RUN set -ex \
     equivs \
     vim \
     libdistro-info-perl \
-    golang-any \
+    golang-1.14 \
     devscripts \
     debhelper \
     dh-golang \
