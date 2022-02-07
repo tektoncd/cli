@@ -33,6 +33,7 @@ all: bin/tkn test
 
 FORCE:
 
+.PHONY: vendor
 vendor:
 	@go mod vendor
 
