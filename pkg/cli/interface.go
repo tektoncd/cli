@@ -16,6 +16,7 @@ package cli
 
 import (
 	"io"
+	"k8s.io/client-go/rest"
 	"net/http"
 
 	"github.com/jonboulle/clockwork"
@@ -49,7 +50,7 @@ type Params interface {
 	// SetKubeContext extends the specificity of the above SetKubeConfigPath
 	// by using a context other than the default context in the given kubeconfig
 	SetKubeContext(string)
-	Clients() (*Clients, error)
+	Clients(...*rest.Config) (*Clients, error)
 	KubeClient() (k8s.Interface, error)
 
 	// SetNamespace can be used to store the namespace parameter that is needed
