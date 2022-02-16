@@ -22,6 +22,7 @@ import (
 	"github.com/tektoncd/cli/pkg/cli"
 	v1 "k8s.io/api/apps/v1"
 	corev1 "k8s.io/api/core/v1"
+	"k8s.io/apimachinery/pkg/api/errors"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 )
 
@@ -32,13 +33,14 @@ const (
 	oldTriggersControllerSelector  string = "app.kubernetes.io/component=controller,app.kubernetes.io/name=tekton-triggers"
 	dashboardControllerSelector    string = "app.kubernetes.io/part-of=tekton-dashboard,app.kubernetes.io/component=dashboard,app.kubernetes.io/name=dashboard"
 	oldDashboardControllerSelector string = "app=tekton-dashboard"
+	chainsInfo                     string = "chains-info"
 	pipelinesInfo                  string = "pipelines-info"
 	triggersInfo                   string = "triggers-info"
 	dashboardInfo                  string = "dashboard-info"
 	operatorInfo                   string = "operators-info"
 )
 
-var defaultNamespaces = []string{"tekton-pipelines", "openshift-pipelines"}
+var defaultNamespaces = []string{"tekton-pipelines", "openshift-pipelines", "tekton-chains"}
 
 // GetPipelineVersion Get pipeline version, functions imported from Dashboard
 func GetPipelineVersion(c *cli.Clients, ns string) (string, error) {
@@ -131,6 +133,9 @@ func getConfigMap(c *cli.Clients, name, ns string) (*corev1.ConfigMap, error) {
 	for _, n := range defaultNamespaces {
 		configMap, err = c.Kube.CoreV1().ConfigMaps(n).Get(context.Background(), name, metav1.GetOptions{})
 		if err != nil {
+			if errors.IsNotFound(err) {
+				continue
+			}
 			return nil, err
 		}
 		if configMap != nil {
@@ -176,6 +181,17 @@ func findPipelineVersion(deployments []v1.Deployment) string {
 		}
 	}
 	return version
+}
+
+// GetChainsVersion Get chains version
+func GetChainsVersion(c *cli.Clients, ns string) (string, error) {
+
+	configMap, err := getConfigMap(c, chainsInfo, ns)
+	if err != nil {
+		return "", err
+	}
+	version := configMap.Data["version"]
+	return version, nil
 }
 
 // GetTriggerVersion Get triggers version.

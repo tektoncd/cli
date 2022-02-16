@@ -75,6 +75,10 @@ func Command(p cli.Params) *cobra.Command {
 				switch component {
 				case "":
 					fmt.Fprintf(cmd.OutOrStdout(), "Client version: %s\n", clientVersion)
+					chainsVersion, _ := version.GetChainsVersion(cs, namespace)
+					if chainsVersion != "" {
+						fmt.Fprintf(cmd.OutOrStdout(), "Chains version: %s\n", chainsVersion)
+					}
 					pipelineVersion, _ := version.GetPipelineVersion(cs, namespace)
 					if pipelineVersion == "" {
 						pipelineVersion = "unknown, " +
@@ -96,6 +100,12 @@ func Command(p cli.Params) *cobra.Command {
 					}
 				case "client":
 					fmt.Fprintf(cmd.OutOrStdout(), "%s\n", clientVersion)
+				case "chains":
+					chainsVersion, _ := version.GetChainsVersion(cs, namespace)
+					if chainsVersion == "" {
+						chainsVersion = "unknown"
+					}
+					fmt.Fprintf(cmd.OutOrStdout(), "%s\n", chainsVersion)
 				case "pipeline":
 					pipelineVersion, _ := version.GetPipelineVersion(cs, namespace)
 					if pipelineVersion == "" {
@@ -129,7 +139,7 @@ func Command(p cli.Params) *cobra.Command {
 					fmt.Fprintf(cmd.OutOrStdout(), "Client version: %s\n", clientVersion)
 				case "client":
 					fmt.Fprintf(cmd.OutOrStdout(), "%s\n", clientVersion)
-				case "pipeline", "triggers", "dashboard", "operator":
+				case "chains", "pipeline", "triggers", "dashboard", "operator":
 					fmt.Fprintf(cmd.OutOrStdout(), "unknown\n")
 				default:
 					fmt.Fprintf(cmd.OutOrStdout(), "Invalid component value\n")
@@ -151,7 +161,7 @@ func Command(p cli.Params) *cobra.Command {
 		"namespace to check installed controller version")
 	flags.AddTektonOptions(cmd)
 
-	cmd.Flags().StringVarP(&component, "component", "", "", "provide a particular component name for its version (client|pipeline|triggers|dashboard)")
+	cmd.Flags().StringVarP(&component, "component", "", "", "provide a particular component name for its version (client|chains|pipeline|triggers|dashboard)")
 
 	if skipCheckFlag != "true" {
 		cmd.Flags().BoolVar(&check, "check", false, "check if a newer version is available")

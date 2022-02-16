@@ -256,6 +256,7 @@ func TestGetVersions(t *testing.T) {
 	dashboardDeployment := getDeploymentData("dashboard-dep", "", dashboardDeploymentLabels, map[string]string{"app.kubernetes.io/version": "v0.7.0"}, nil)
 
 	pipelineConfigMap := getConfigMapData("pipelines-info", "v0.10.0", map[string]string{"app.kubernetes.io/part-of": "tekton-pipelines"})
+	chainsConfigMap := getConfigMapData("chains-info", "v0.8.0", map[string]string{"app.kubernetes.io/part-of": "tekton-chains"})
 	triggersConfigMap := getConfigMapData("triggers-info", "v0.5.0", map[string]string{"app.kubernetes.io/part-of": "tekton-pipelines"})
 	dashboardConfigMap := getConfigMapData("dashboard-info", "v0.7.0", map[string]string{"app.kubernetes.io/part-of": "tekton-pipelines"})
 	operatorConfigMap := getConfigMapData("operators-info", "v0.54.0", map[string]string{"app.kubernetes.io/part-of": "tekton-pipelines"})
@@ -302,6 +303,13 @@ func TestGetVersions(t *testing.T) {
 		userProvidedNamespace: "test",
 		deployment:            []*v1.Deployment{},
 		configMap:             []*corev1.ConfigMap{pipelineConfigMap, triggersConfigMap, dashboardConfigMap, operatorConfigMap},
+		goldenFile:            true,
+	}, {
+		name:                  "deployment with pipeline, chains, triggers, dashboard and operator installed",
+		namespace:             "test",
+		userProvidedNamespace: "test",
+		deployment:            []*v1.Deployment{},
+		configMap:             []*corev1.ConfigMap{pipelineConfigMap, chainsConfigMap, triggersConfigMap, dashboardConfigMap, operatorConfigMap},
 		goldenFile:            true,
 	}}
 	for _, tp := range testParams {
