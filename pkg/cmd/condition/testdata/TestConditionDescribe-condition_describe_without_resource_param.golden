@@ -6,11 +6,3 @@ Check
  Name:     test
  Image:    busybox
  Script:   echo hello
-
-Resources
-
- No resources
-
-Params
-
- No params

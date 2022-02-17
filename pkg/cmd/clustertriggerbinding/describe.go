@@ -32,11 +32,9 @@ import (
 
 const describeTemplate = `{{decorate "bold" "Name"}}:	{{ .ClusterTriggerBinding.Name }}
 
-{{decorate "params" ""}}{{decorate "underline bold" "Params\n"}}
+{{- if ne (len .ClusterTriggerBinding.Spec.Params) 0 }}
 
-{{- if eq (len .ClusterTriggerBinding.Spec.Params) 0 }}
- No params
-{{- else }}
+{{decorate "params" ""}}{{decorate "underline bold" "Params\n"}}
  NAME	VALUE
 {{- range $p := .ClusterTriggerBinding.Spec.Params }}
  {{decorate "bullet" $p.Name }}	{{ $p.Value }}

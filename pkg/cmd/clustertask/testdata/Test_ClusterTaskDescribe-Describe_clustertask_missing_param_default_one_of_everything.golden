@@ -16,14 +16,6 @@ Params
  NAME    TYPE     DESCRIPTION   DEFAULT VALUE
  myarg   string                 ---
 
-Results
-
- No results
-
-Workspaces
-
- No workspaces
-
 Steps
 
  hello

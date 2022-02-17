@@ -2,22 +2,6 @@ Name:          task-1
 Namespace:     ns
 Description:   a test description
 
-Input Resources
-
- No input resources
-
-Output Resources
-
- No output resources
-
-Params
-
- No params
-
-Results
-
- No results
-
 Workspaces
 
  NAME   DESCRIPTION
@@ -26,7 +10,3 @@ Workspaces
 Steps
 
  hello
-
-Taskruns
-
- No taskruns

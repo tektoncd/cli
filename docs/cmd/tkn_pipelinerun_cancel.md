@@ -22,7 +22,12 @@ Cancel the PipelineRun named 'foo' from namespace 'bar':
 ### Options
 
 ```
-  -h, --help   help for cancel
+      --grace string   Gracefully cancel a PipelineRun
+                       To use this, you need to change the feature-flags configmap enable-api-fields to alpha instead of stable.
+                       Set to 'CancelledRunFinally' if you want to cancel the current running task and directly run the finally tasks.
+                       Set to 'StoppedRunFinally' if you want to cancel the remaining non-final task and directly run the finally tasks.
+                       
+  -h, --help           help for cancel
 ```
 
 ### Options inherited from parent commands

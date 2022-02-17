@@ -122,7 +122,7 @@ for task in ${CATALOG_TASKS};do
 done
 
 kubectl -n ${TARGET_NAMESPACE} apply -f https://raw.githubusercontent.com/tektoncd/catalog/master/task/git-clone/0.1/git-clone.yaml
-kubectl -n ${TARGET_NAMESPACE} apply -f https://raw.githubusercontent.com/tektoncd/catalog/master/task/goreleaser/0.1/goreleaser.yaml
+kubectl -n ${TARGET_NAMESPACE} apply -f https://raw.githubusercontent.com/tektoncd/catalog/master/task/goreleaser/0.2/goreleaser.yaml
 kubectl -n ${TARGET_NAMESPACE} apply -f ./tekton/get-version.yaml
 kubectl -n ${TARGET_NAMESPACE} apply -f ./tekton/publish.yaml
 

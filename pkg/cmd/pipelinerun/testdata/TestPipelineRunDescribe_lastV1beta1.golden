@@ -19,20 +19,8 @@ Params
  p-1    somethingdifferent
  p-2    [booms booms booms]
 
-Results
-
- No results
-
-Workspaces
-
- No workspaces
-
 Taskruns
 
  NAME   TASK NAME   STARTED          DURATION    STATUS
  tr-1   t-1         0 seconds ago    5 minutes   Failed
  tr-2   t-2         10 minutes ago   7 minutes   Succeeded
-
-Skipped Tasks
-
- No Skipped Tasks

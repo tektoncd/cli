@@ -21,9 +21,9 @@ import (
 	"time"
 
 	"github.com/tektoncd/pipeline/pkg/apis/config"
+	apisconfig "github.com/tektoncd/pipeline/pkg/apis/config"
 	"github.com/tektoncd/pipeline/pkg/apis/pipeline"
 	runv1alpha1 "github.com/tektoncd/pipeline/pkg/apis/run/v1alpha1"
-	corev1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime/schema"
 	"k8s.io/apimachinery/pkg/types"
@@ -53,6 +53,7 @@ type PipelineRun struct {
 	Status PipelineRunStatus `json:"status,omitempty"`
 }
 
+// GetName Returns the name of the PipelineRun
 func (pr *PipelineRun) GetName() string {
 	return pr.ObjectMeta.GetName()
 }
@@ -92,18 +93,53 @@ func (pr *PipelineRun) IsGracefullyStopped() bool {
 	return pr.Spec.Status == PipelineRunSpecStatusStoppedRunFinally
 }
 
-func (pr *PipelineRun) GetTimeout(ctx context.Context) time.Duration {
-	// Use the platform default if no timeout is set
-	if pr.Spec.Timeout == nil && pr.Spec.Timeouts == nil {
-		defaultTimeout := time.Duration(config.FromContextOrDefaults(ctx).Defaults.DefaultTimeoutMinutes)
-		return defaultTimeout * time.Minute
-	}
-
+// PipelineTimeout returns the the applicable timeout for the PipelineRun
+func (pr *PipelineRun) PipelineTimeout(ctx context.Context) time.Duration {
 	if pr.Spec.Timeout != nil {
 		return pr.Spec.Timeout.Duration
 	}
+	if pr.Spec.Timeouts != nil && pr.Spec.Timeouts.Pipeline != nil {
+		return pr.Spec.Timeouts.Pipeline.Duration
+	}
+	return time.Duration(config.FromContextOrDefaults(ctx).Defaults.DefaultTimeoutMinutes) * time.Minute
+}
 
-	return pr.Spec.Timeouts.Pipeline.Duration
+// TasksTimeout returns the the tasks timeout for the PipelineRun, if set,
+// or the tasks timeout computed from the Pipeline and Finally timeouts, if those are set.
+func (pr *PipelineRun) TasksTimeout() *metav1.Duration {
+	t := pr.Spec.Timeouts
+	if t == nil {
+		return nil
+	}
+	if t.Tasks != nil {
+		return t.Tasks
+	}
+	if t.Pipeline != nil && t.Finally != nil {
+		if t.Pipeline.Duration == apisconfig.NoTimeoutDuration || t.Finally.Duration == apisconfig.NoTimeoutDuration {
+			return nil
+		}
+		return &metav1.Duration{Duration: (t.Pipeline.Duration - t.Finally.Duration)}
+	}
+	return nil
+}
+
+// FinallyTimeout returns the the finally timeout for the PipelineRun, if set,
+// or the finally timeout computed from the Pipeline and Tasks timeouts, if those are set.
+func (pr *PipelineRun) FinallyTimeout() *metav1.Duration {
+	t := pr.Spec.Timeouts
+	if t == nil {
+		return nil
+	}
+	if t.Finally != nil {
+		return t.Finally
+	}
+	if t.Pipeline != nil && t.Tasks != nil {
+		if t.Pipeline.Duration == apisconfig.NoTimeoutDuration || t.Tasks.Duration == apisconfig.NoTimeoutDuration {
+			return nil
+		}
+		return &metav1.Duration{Duration: (t.Pipeline.Duration - t.Tasks.Duration)}
+	}
+	return nil
 }
 
 // IsPending returns true if the PipelineRun's spec status is set to Pending state
@@ -114,11 +150,6 @@ func (pr *PipelineRun) IsPending() bool {
 // GetNamespacedName returns a k8s namespaced name that identifies this PipelineRun
 func (pr *PipelineRun) GetNamespacedName() types.NamespacedName {
 	return types.NamespacedName{Namespace: pr.Namespace, Name: pr.Name}
-}
-
-// IsTimedOut returns true if a pipelinerun has exceeded its spec.Timeout based on its status.Timeout
-func (pr *PipelineRun) IsTimedOut() bool {
-	return pr.HasTimedOut()
 }
 
 // HasTimedOut returns true if a pipelinerun has exceeded its spec.Timeout based on its status.Timeout
@@ -207,6 +238,7 @@ type PipelineRunSpec struct {
 	TaskRunSpecs []PipelineTaskRunSpec `json:"taskRunSpecs,omitempty"`
 }
 
+// TimeoutFields allows granular specification of pipeline, task, and finally timeouts
 type TimeoutFields struct {
 	// Pipeline sets the maximum allowed duration for execution of the entire pipeline. The sum of individual timeouts for tasks and finally must not exceed this value.
 	Pipeline *metav1.Duration `json:"pipeline,omitempty"`
@@ -220,7 +252,7 @@ type TimeoutFields struct {
 type PipelineRunSpecStatus string
 
 const (
-	// Deprecated: "PipelineRunCancelled" indicates that the user wants to cancel the task,
+	// PipelineRunSpecStatusCancelledDeprecated Deprecated: indicates that the user wants to cancel the task,
 	// if not already cancelled or terminated (replaced by "Cancelled")
 	PipelineRunSpecStatusCancelledDeprecated = "PipelineRunCancelled"
 
@@ -356,18 +388,6 @@ func (pr *PipelineRunStatus) MarkFailed(reason, messageFormat string, messageA .
 // MarkRunning changes the Succeeded condition to Unknown with the provided reason and message.
 func (pr *PipelineRunStatus) MarkRunning(reason, messageFormat string, messageA ...interface{}) {
 	pipelineRunCondSet.Manage(pr).MarkUnknown(apis.ConditionSucceeded, reason, messageFormat, messageA...)
-}
-
-// MarkResourceNotConvertible adds a Warning-severity condition to the resource noting
-// that it cannot be converted to a higher version.
-func (pr *PipelineRunStatus) MarkResourceNotConvertible(err *CannotConvertError) {
-	pipelineRunCondSet.Manage(pr).SetCondition(apis.Condition{
-		Type:     ConditionTypeConvertible,
-		Status:   corev1.ConditionFalse,
-		Severity: apis.ConditionSeverityWarning,
-		Reason:   err.Field,
-		Message:  err.Message,
-	})
 }
 
 // PipelineRunStatusFields holds the fields of PipelineRunStatus' status.

@@ -58,10 +58,7 @@ const describeTemplate = `{{decorate "bold" "Name"}}:	{{ .EventListener.Name }}
 {{decorate "bold" "EventListnerServiceName"}}:	{{ $value }}
 {{- end }}
 
-{{- if eq (len .EventListener.Spec.Triggers) 0 }}
-
- No EventListenerTriggers
-{{- else }}
+{{- if ne (len .EventListener.Spec.Triggers) 0 }}
 {{ "" }}
 {{- range $v := .EventListener.Spec.Triggers }}
 {{decorate "bold" "EventListenerTriggers\n"}}

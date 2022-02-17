@@ -59,8 +59,7 @@ func TestTriggerBindingDelete(t *testing.T) {
 				},
 			},
 		}
-		ctx, _ := test.SetupFakeContext(t)
-		cs := triggertest.SeedResources(t, ctx, triggertest.Resources{TriggerBindings: tbs, Namespaces: ns})
+		cs := test.SeedTestResources(t, triggertest.Resources{TriggerBindings: tbs, Namespaces: ns})
 		cs.Triggers.Resources = cb.TriggersAPIResourceList("v1beta1", []string{"triggerbinding"})
 		tdc := testDynamic.Options{}
 		dc, err := tdc.Client(
@@ -89,7 +88,7 @@ func TestTriggerBindingDelete(t *testing.T) {
 			input:       seeds[0],
 			inputStream: nil,
 			wantError:   true,
-			want:        "failed to delete TriggerBinding \"tb-1\": triggerbindings.triggers.tekton.dev \"tb-1\" not found",
+			want:        "triggerbindings.triggers.tekton.dev \"tb-1\" not found",
 		},
 		{
 			name:        "With force delete flag (shorthand)",
@@ -145,7 +144,7 @@ func TestTriggerBindingDelete(t *testing.T) {
 			input:       seeds[2],
 			inputStream: nil,
 			wantError:   true,
-			want:        "failed to delete TriggerBinding \"nonexistent\": triggerbindings.triggers.tekton.dev \"nonexistent\" not found",
+			want:        "triggerbindings.triggers.tekton.dev \"nonexistent\" not found",
 		},
 		{
 			name:        "Remove multiple non existent resources",
@@ -153,7 +152,7 @@ func TestTriggerBindingDelete(t *testing.T) {
 			input:       seeds[2],
 			inputStream: nil,
 			wantError:   true,
-			want:        "failed to delete TriggerBinding \"nonexistent\": triggerbindings.triggers.tekton.dev \"nonexistent\" not found; failed to delete TriggerBinding \"nonexistent2\": triggerbindings.triggers.tekton.dev \"nonexistent2\" not found",
+			want:        "triggerbindings.triggers.tekton.dev \"nonexistent\" not found; triggerbindings.triggers.tekton.dev \"nonexistent2\" not found",
 		},
 		{
 			name:        "Delete all with prompt",
@@ -173,8 +172,8 @@ func TestTriggerBindingDelete(t *testing.T) {
 		},
 		{
 			name:        "Error from using triggerbinding name with --all",
-			command:     []string{"delete", "tb", "--all", "-n", "ns"},
-			input:       seeds[4],
+			command:     []string{"delete", "tb-2", "--all", "-n", "ns"},
+			input:       seeds[1],
 			inputStream: nil,
 			wantError:   true,
 			want:        "--all flag should not have any arguments or flags specified with it",
@@ -186,6 +185,14 @@ func TestTriggerBindingDelete(t *testing.T) {
 			inputStream: nil,
 			wantError:   true,
 			want:        "must provide triggerbinding name(s) or use --all flag with delete",
+		},
+		{
+			name:        "Delete the TriggerBinding present and give error for non-existent TriggerBinding",
+			command:     []string{"delete", "nonexistent", "tb-2"},
+			input:       seeds[1],
+			inputStream: nil,
+			wantError:   true,
+			want:        "triggerbindings.triggers.tekton.dev \"nonexistent\" not found",
 		},
 	}
 

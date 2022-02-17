@@ -1,26 +1,2 @@
 Name:        pipeline
 Namespace:   ns
-
-Resources
-
- No resources
-
-Params
-
- No params
-
-Results
-
- No results
-
-Workspaces
-
- No workspaces
-
-Tasks
-
- No tasks
-
-PipelineRuns
-
- No pipelineruns

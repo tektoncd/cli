@@ -6,10 +6,6 @@ Resources
  NAME   TYPE
  name   git
 
-Params
-
- No params
-
 Results
 
  NAME       DESCRIPTION
@@ -17,16 +13,8 @@ Results
  result-2   This is a descripti...
  result-3   
 
-Workspaces
-
- No workspaces
-
 Tasks
 
  NAME     TASKREF   RUNAFTER   TIMEOUT   CONDITIONS   PARAMS
  task-1   task-1               ---       ---          ---
  task-2   task-2               ---       ---          ---
-
-PipelineRuns
-
- No pipelineruns

@@ -26,20 +26,8 @@ Params
  input    param
  input2   param2
 
-Results
-
- No results
-
-Workspaces
-
- No workspaces
-
 Steps
 
  NAME    STATUS
  step3   Completed
  step4   Completed
-
-Sidecars
-
-No sidecars

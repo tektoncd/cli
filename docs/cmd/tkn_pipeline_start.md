@@ -63,6 +63,7 @@ my-secret, my-empty-dir and my-volume-claim-template)
   -r, --resource strings              pass the resource name and ref as name=ref
   -s, --serviceaccount string         pass the serviceaccount name
       --showlog                       show logs right after starting the Pipeline
+      --skip-optional-workspace       skips the prompt for optional workspaces
       --task-serviceaccount strings   pass the service account corresponding to the task
       --timeout string                timeout for PipelineRun
       --use-param-defaults            use default parameter values without prompting for input

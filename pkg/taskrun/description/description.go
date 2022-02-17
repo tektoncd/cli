@@ -62,14 +62,11 @@ STARTED 	DURATION 	STATUS
 {{ $msg }}
 {{- end }}
 
-{{decorate "inputresources" ""}}{{decorate "underline bold" "Input Resources\n"}}
+{{- if .TaskRun.Spec.Resources }}
+{{- if ne (len .TaskRun.Spec.Resources.Inputs) 0 }}
 
-{{- if not .TaskRun.Spec.Resources }}
- No input resources
-{{- else }}
-{{- $l := len .TaskRun.Spec.Resources.Inputs }}{{ if eq $l 0 }}
- No input resources
-{{- else }}
+{{decorate "inputresources" ""}}{{decorate "underline bold" "Input Resources"}}
+
  NAME	RESOURCE REF
 {{- range $ir := .TaskRun.Spec.Resources.Inputs }}
 {{- $rRefName := taskResourceRefExists $ir }}{{- if ne $rRefName "" }}
@@ -79,16 +76,11 @@ STARTED 	DURATION 	STATUS
 {{- end }}
 {{- end }}
 {{- end }}
-{{- end }}
 
-{{decorate "outputresources" ""}}{{decorate "underline bold" "Output Resources\n"}}
+{{- if ne (len .TaskRun.Spec.Resources.Outputs) 0 }}
 
-{{- if not .TaskRun.Spec.Resources }}
- No output resources
-{{- else }}
-{{- $l := len .TaskRun.Spec.Resources.Outputs }}{{ if eq $l 0 }}
- No output resources
-{{- else }}
+{{decorate "outputresources" ""}}{{decorate "underline bold" "Output Resources"}}
+
  NAME	RESOURCE REF
 {{- range $or := .TaskRun.Spec.Resources.Outputs }}
 {{- $rRefName := taskResourceRefExists $or }}{{- if ne $rRefName "" }}
@@ -100,11 +92,10 @@ STARTED 	DURATION 	STATUS
 {{- end }}
 {{- end }}
 
-{{decorate "params" ""}}{{decorate "underline bold" "Params\n"}}
+{{- if ne (len .TaskRun.Spec.Params) 0 }}
 
-{{- $l := len .TaskRun.Spec.Params }}{{ if eq $l 0 }}
- No params
-{{- else }}
+{{decorate "params" ""}}{{decorate "underline bold" "Params"}}
+
  NAME	VALUE
 {{- range $i, $p := .TaskRun.Spec.Params }}
 {{- if eq $p.Value.Type "string" }}
@@ -115,22 +106,20 @@ STARTED 	DURATION 	STATUS
 {{- end }}
 {{- end }}
 
-{{decorate "results" ""}}{{decorate "underline bold" "Results\n"}}
+{{- if ne (len .TaskRun.Status.TaskRunResults) 0 }}
 
-{{- if eq (len .TaskRun.Status.TaskRunResults) 0 }}
- No results
-{{- else }}
+{{decorate "results" ""}}{{decorate "underline bold" "Results"}}
+
  NAME	VALUE
 {{- range $result := .TaskRun.Status.TaskRunResults }}
  {{decorate "bullet" $result.Name }}	{{ formatResult $result.Value }}
 {{- end }}
 {{- end }}
 
-{{decorate "workspaces" ""}}{{decorate "underline bold" "Workspaces\n"}}
+{{- if ne (len .TaskRun.Spec.Workspaces) 0 }}
 
-{{- if eq (len .TaskRun.Spec.Workspaces) 0 }}
- No workspaces
-{{- else }}
+{{decorate "workspaces" ""}}{{decorate "underline bold" "Workspaces"}}
+
  NAME	SUB PATH	WORKSPACE BINDING
 {{- range $workspace := .TaskRun.Spec.Workspaces }}
 {{- if not $workspace.SubPath }}
@@ -141,11 +130,11 @@ STARTED 	DURATION 	STATUS
 {{- end }}
 {{- end }}
 
+{{- $sortedSteps := sortStepStates .TaskRun.Status.Steps }}
+{{- if ne (len $sortedSteps) 0 }}
+
 {{decorate "steps" ""}}{{decorate "underline bold" "Steps"}}
-{{$sortedSteps := sortStepStates .TaskRun.Status.Steps }}
-{{- $l := len $sortedSteps }}{{ if eq $l 0 }}
-No steps
-{{- else }}
+
  NAME	STATUS
 {{- range $step := $sortedSteps }}
 {{- $reason := stepReasonExists $step }}
@@ -153,11 +142,11 @@ No steps
 {{- end }}
 {{- end }}
 
+{{- $sidecars := .TaskRun.Status.Sidecars }}
+{{- if ne (len $sidecars) 0 }}
+
 {{decorate "sidecars" ""}}{{decorate "underline bold" "Sidecars"}}
-{{$sidecars := .TaskRun.Status.Sidecars }}
-{{- $l := len $sidecars }}{{ if eq $l 0 }}
-No sidecars
-{{- else }}
+
  NAME	STATUS
 {{- range $sidecar := $sidecars }}
 {{- $reason := sidecarReasonExists $sidecar }}

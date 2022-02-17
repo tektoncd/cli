@@ -24,9 +24,30 @@ import (
 	"github.com/tektoncd/cli/pkg/deleter"
 	"github.com/tektoncd/cli/pkg/formatted"
 	"github.com/tektoncd/cli/pkg/options"
+	"go.uber.org/multierr"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	cliopts "k8s.io/cli-runtime/pkg/genericclioptions"
 )
+
+// clusterTriggerBindingExists validates that the arguments are valid ClusterTriggerBinding names
+func clusterTriggerBindingExists(args []string, p cli.Params) ([]string, error) {
+
+	availbleCTBs := make([]string, 0)
+	c, err := p.Clients()
+	if err != nil {
+		return availbleCTBs, err
+	}
+	var errorList error
+	for _, name := range args {
+		_, err := clustertriggerbinding.Get(c, name, metav1.GetOptions{})
+		if err != nil {
+			errorList = multierr.Append(errorList, err)
+			continue
+		}
+		availbleCTBs = append(availbleCTBs, name)
+	}
+	return availbleCTBs, errorList
+}
 
 func deleteCommand(p cli.Params) *cobra.Command {
 	opts := &options.DeleteOptions{Resource: "clustertriggerbinding", ForceDelete: false, DeleteAll: false}
@@ -58,11 +79,19 @@ or
 				Err: cmd.OutOrStderr(),
 			}
 
-			if err := opts.CheckOptions(s, args, p.Namespace()); err != nil {
+			availbleCTBs, errs := clusterTriggerBindingExists(args, p)
+			if len(availbleCTBs) == 0 && errs != nil {
+				return errs
+			}
+
+			if err := opts.CheckOptions(s, availbleCTBs, p.Namespace()); err != nil {
 				return err
 			}
 
-			return deleteClusterTriggerBindings(s, p, args, opts.DeleteAll)
+			if err := deleteClusterTriggerBindings(s, p, availbleCTBs, opts.DeleteAll); err != nil {
+				return err
+			}
+			return errs
 		},
 	}
 	f.AddFlags(c)

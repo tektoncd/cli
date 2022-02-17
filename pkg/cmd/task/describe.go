@@ -44,42 +44,30 @@ const describeTemplate = `{{decorate "bold" "Name"}}:	{{ .Task.Name }}
 {{decorate "bold" "Version"}}:    	{{ $v }}
 {{- end }}
 
-{{decorate "inputresources" ""}}{{decorate "underline bold" "Input Resources\n"}}
+{{- if .Task.Spec.Resources }}
 
-{{- if not .Task.Spec.Resources }}
- No input resources
-{{- else }}
-{{- if eq (len .Task.Spec.Resources.Inputs) 0 }}
- No input resources
-{{- else }}
+{{decorate "inputresources" ""}}{{decorate "underline bold" "Input Resources\n"}}
+{{- if ne (len .Task.Spec.Resources.Inputs) 0 }}
  NAME	TYPE
 {{- range $ir := .Task.Spec.Resources.Inputs }}
  {{decorate "bullet" $ir.Name }}	{{ $ir.Type }}
 {{- end }}
 {{- end }}
-{{- end }}
+
+{{- if ne (len .Task.Spec.Resources.Outputs) 0 }}
 
 {{decorate "outputresources" ""}}{{decorate "underline bold" "Output Resources\n"}}
-
-{{- if not .Task.Spec.Resources }}
- No output resources
-{{- else }}
-{{- if eq (len .Task.Spec.Resources.Outputs) 0 }}
- No output resources
-{{- else }}
  NAME	TYPE
-
 {{- range $or := .Task.Spec.Resources.Outputs }}
  {{decorate "bullet" $or.Name }}	{{ $or.Type }}
 {{- end }}
 {{- end }}
+
 {{- end }}
 
-{{decorate "params" ""}}{{decorate "underline bold" "Params\n"}}
+{{- if ne (len .Task.Spec.Params) 0 }}
 
-{{- if eq (len .Task.Spec.Params) 0 }}
- No params
-{{- else }}
+{{decorate "params" ""}}{{decorate "underline bold" "Params\n"}}
  NAME	TYPE	DESCRIPTION	DEFAULT VALUE
 {{- range $p := .Task.Spec.Params }}
 {{- if not $p.Default }}
@@ -94,43 +82,35 @@ const describeTemplate = `{{decorate "bold" "Name"}}:	{{ .Task.Name }}
 {{- end }}
 {{- end }}
 
-{{decorate "results" ""}}{{decorate "underline bold" "Results\n"}}
+{{- if ne (len .Task.Spec.Results) 0 }}
 
-{{- if eq (len .Task.Spec.Results) 0 }}
- No results
-{{- else }}
+{{decorate "results" ""}}{{decorate "underline bold" "Results\n"}}
  NAME	DESCRIPTION
 {{- range $result := .Task.Spec.Results }}
  {{ decorate "bullet" $result.Name }}	{{ formatDesc $result.Description }}
 {{- end }}
 {{- end }}
 
-{{decorate "workspaces" ""}}{{decorate "underline bold" "Workspaces\n"}}
+{{- if ne (len .Task.Spec.Workspaces) 0 }}
 
-{{- if eq (len .Task.Spec.Workspaces) 0 }}
- No workspaces
-{{- else }}
+{{decorate "workspaces" ""}}{{decorate "underline bold" "Workspaces\n"}}
  NAME	DESCRIPTION
 {{- range $workspace := .Task.Spec.Workspaces }}
  {{ decorate "bullet" $workspace.Name }}	{{ formatDesc $workspace.Description }}
 {{- end }}
 {{- end }}
 
-{{decorate "steps" ""}}{{decorate "underline bold" "Steps\n"}}
+{{- if ne (len .Task.Spec.Steps) 0 }}
 
-{{- if eq (len .Task.Spec.Steps) 0 }}
- No steps
-{{- else }}
+{{decorate "steps" ""}}{{decorate "underline bold" "Steps\n"}}
 {{- range $step := .Task.Spec.Steps }}
  {{ autoStepName $step.Name | decorate "bullet" }}
 {{- end }}
 {{- end }}
 
-{{decorate "taskruns" ""}}{{decorate "underline bold" "Taskruns\n"}}
+{{- if ne (len .TaskRuns.Items) 0 }}
 
-{{- if eq (len .TaskRuns.Items) 0 }}
- No taskruns
-{{- else }}
+{{decorate "taskruns" ""}}{{decorate "underline bold" "Taskruns\n"}}
 NAME	STARTED	DURATION	STATUS
 {{ range $tr:=.TaskRuns.Items }}
 {{- $tr.Name }}	{{ formatAge $tr.Status.StartTime $.Time}}	{{ formatDuration $tr.Status.StartTime $tr.Status.CompletionTime }}	{{ formatCondition $tr.Status.Conditions }}
@@ -262,7 +242,7 @@ func printTaskDescription(s *cli.Stream, p cli.Params, tname string) error {
 		return fmt.Errorf("failed to execute template: %v", err)
 	}
 
-	return nil
+	return w.Flush()
 }
 
 // this will sort the Task Resource by Type and then by Name

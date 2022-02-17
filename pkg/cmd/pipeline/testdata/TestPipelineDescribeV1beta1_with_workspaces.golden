@@ -6,10 +6,6 @@ Resources
  NAME   TYPE
  name   git
 
-Params
-
- No params
-
 Results
 
  NAME       DESCRIPTION
@@ -27,7 +23,3 @@ Tasks
  NAME     TASKREF   RUNAFTER   TIMEOUT   CONDITIONS   PARAMS
  task-1   task-1               ---       ---          ---
  task-2   task-2               ---       ---          ---
-
-PipelineRuns
-
- No pipelineruns

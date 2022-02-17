@@ -17,27 +17,39 @@ package v1beta1
 import (
 	"context"
 	"fmt"
-
-	"github.com/tektoncd/pipeline/pkg/apis/config"
 )
 
-// paramCtxKey is the unique identifier for referencing param information from
+// enableImplicitParamContextKeyType is the unique type for referencing whether
+// Implicit Param behavior is enabled for the given request context.
+// See [TEP-0023](https://github.com/tektoncd/community/blob/main/teps/0023-implicit-mapping.md).
+//
+// +k8s:openapi-gen=false
+type enableImplicitParamContextKeyType struct{}
+
+// paramCtxKey is the unique type for referencing param information from
 // a context.Context. See [context.Context.Value](https://pkg.go.dev/context#Context)
 // for more details.
-var paramCtxKey struct{}
+//
+// +k8s:openapi-gen=false
+type paramCtxKeyType struct{}
+
+var (
+	enableImplicitParamContextKey = enableImplicitParamContextKeyType{}
+	paramCtxKey                   = paramCtxKeyType{}
+)
 
 // paramCtxVal is the data type stored in the param context.
 // This maps param names -> ParamSpec.
 type paramCtxVal map[string]ParamSpec
 
-// AddContextParams adds the given Params to the param context. This only
+// addContextParams adds the given Params to the param context. This only
 // preserves the fields included in ParamSpec - Name and Type.
-func AddContextParams(ctx context.Context, in []Param) context.Context {
+func addContextParams(ctx context.Context, in []Param) context.Context {
 	if in == nil {
 		return ctx
 	}
 
-	if config.FromContextOrDefaults(ctx).FeatureFlags.EnableAPIFields != "alpha" {
+	if !GetImplicitParamsEnabled(ctx) {
 		return ctx
 	}
 
@@ -67,13 +79,13 @@ func AddContextParams(ctx context.Context, in []Param) context.Context {
 	return context.WithValue(ctx, paramCtxKey, out)
 }
 
-// AddContextParamSpec adds the given ParamSpecs to the param context.
-func AddContextParamSpec(ctx context.Context, in []ParamSpec) context.Context {
+// addContextParamSpec adds the given ParamSpecs to the param context.
+func addContextParamSpec(ctx context.Context, in []ParamSpec) context.Context {
 	if in == nil {
 		return ctx
 	}
 
-	if config.FromContextOrDefaults(ctx).FeatureFlags.EnableAPIFields != "alpha" {
+	if !GetImplicitParamsEnabled(ctx) {
 		return ctx
 	}
 
@@ -97,12 +109,12 @@ func AddContextParamSpec(ctx context.Context, in []ParamSpec) context.Context {
 	return context.WithValue(ctx, paramCtxKey, out)
 }
 
-// GetContextParams returns the current context parameters overlayed with a
+// getContextParams returns the current context parameters overlayed with a
 // given set of params. Overrides should generally be the current layer you
 // are trying to evaluate. Any context params not in the overrides will default
 // to a generic pass-through param of the given type (i.e. $(params.name) or
 // $(params.name[*])).
-func GetContextParams(ctx context.Context, overlays ...Param) []Param {
+func getContextParams(ctx context.Context, overlays ...Param) []Param {
 	pv := paramCtxVal{}
 	v := ctx.Value(paramCtxKey)
 	if v == nil && len(overlays) == 0 {
@@ -151,8 +163,8 @@ func GetContextParams(ctx context.Context, overlays ...Param) []Param {
 	return out
 }
 
-// GetContextParamSpecs returns the current context ParamSpecs.
-func GetContextParamSpecs(ctx context.Context) []ParamSpec {
+// getContextParamSpecs returns the current context ParamSpecs.
+func getContextParamSpecs(ctx context.Context) []ParamSpec {
 	v := ctx.Value(paramCtxKey)
 	if v == nil {
 		return nil
@@ -169,4 +181,22 @@ func GetContextParamSpecs(ctx context.Context) []ParamSpec {
 		})
 	}
 	return out
+}
+
+// WithImplicitParamsEnabled enables implicit parameter behavior for the
+// request context. If enabled, parameters will propagate down embedded request
+// objects (e.g. PipelineRun -> Pipeline -> Task, Pipeline -> Task,
+// TaskRun -> Task) during defaulting.
+func WithImplicitParamsEnabled(ctx context.Context, v bool) context.Context {
+	return context.WithValue(ctx, enableImplicitParamContextKey, v)
+}
+
+// GetImplicitParamsEnabled returns whether implicit parameters are enabled for
+// the given context.
+func GetImplicitParamsEnabled(ctx context.Context) bool {
+	v := ctx.Value(enableImplicitParamContextKey)
+	if v == nil {
+		return false
+	}
+	return v.(bool)
 }

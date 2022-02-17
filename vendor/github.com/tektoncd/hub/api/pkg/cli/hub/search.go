@@ -20,7 +20,7 @@ import (
 	"net/url"
 	"strconv"
 
-	rclient "github.com/tektoncd/hub/api/gen/http/resource/client"
+	rclient "github.com/tektoncd/hub/api/v1/gen/http/resource/client"
 )
 
 // SearchOption defines option associated with query API
@@ -108,7 +108,7 @@ func (so SearchOption) Endpoint() string {
 
 	v.Set("match", so.Match)
 
-	return "/query?" + v.Encode()
+	return "/v1/query?" + v.Encode()
 }
 
 func addArraytoURL(param string, arr []string, v url.Values) {

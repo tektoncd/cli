@@ -97,10 +97,11 @@ func unmarshalCatalogResponseBodyToCatalogCatalog(v *CatalogResponseBody) *catal
 		return nil
 	}
 	res := &catalog.Catalog{
-		ID:   *v.ID,
-		Name: *v.Name,
-		Type: *v.Type,
-		URL:  *v.URL,
+		ID:       *v.ID,
+		Name:     *v.Name,
+		Type:     *v.Type,
+		URL:      *v.URL,
+		Provider: *v.Provider,
 	}
 
 	return res
