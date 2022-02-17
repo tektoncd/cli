@@ -108,14 +108,20 @@ func (p *TektonParams) KubeClient() (k8s.Interface, error) {
 	return kube, nil
 }
 
-func (p *TektonParams) Clients() (*Clients, error) {
+func (p *TektonParams) Clients(cfg ...*rest.Config) (*Clients, error) {
 	if p.clients != nil {
 		return p.clients, nil
 	}
+	var config *rest.Config
 
-	config, err := p.config()
-	if err != nil {
-		return nil, err
+	if len(cfg) != 0 && cfg[0] != nil {
+		config = cfg[0]
+	} else {
+		defaultConfig, err := p.config()
+		if err != nil {
+			return nil, err
+		}
+		config = defaultConfig
 	}
 
 	tekton, err := p.tektonClient(config)
