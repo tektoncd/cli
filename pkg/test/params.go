@@ -23,6 +23,7 @@ import (
 	versionedTriggers "github.com/tektoncd/triggers/pkg/client/clientset/versioned"
 	"k8s.io/client-go/dynamic"
 	k8s "k8s.io/client-go/kubernetes"
+	"k8s.io/client-go/rest"
 )
 
 type Params struct {
@@ -80,7 +81,7 @@ func (p *Params) KubeClient() (k8s.Interface, error) {
 	return p.Kube, nil
 }
 
-func (p *Params) Clients() (*cli.Clients, error) {
+func (p *Params) Clients(config ...*rest.Config) (*cli.Clients, error) {
 	if p.Cls != nil {
 		return p.Cls, nil
 	}
