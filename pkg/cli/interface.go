@@ -16,7 +16,6 @@ package cli
 
 import (
 	"io"
-	"k8s.io/client-go/rest"
 	"net/http"
 
 	"github.com/jonboulle/clockwork"
@@ -25,6 +24,7 @@ import (
 	versionedTriggers "github.com/tektoncd/triggers/pkg/client/clientset/versioned"
 	"k8s.io/client-go/dynamic"
 	k8s "k8s.io/client-go/kubernetes"
+	"k8s.io/client-go/rest"
 )
 
 type Stream struct {
