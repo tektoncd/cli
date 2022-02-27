@@ -24,6 +24,7 @@ import (
 	apisconfig "github.com/tektoncd/pipeline/pkg/apis/config"
 	"github.com/tektoncd/pipeline/pkg/apis/pipeline"
 	runv1alpha1 "github.com/tektoncd/pipeline/pkg/apis/run/v1alpha1"
+	"github.com/tektoncd/pipeline/pkg/clock"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime/schema"
 	"k8s.io/apimachinery/pkg/types"
@@ -153,16 +154,15 @@ func (pr *PipelineRun) GetNamespacedName() types.NamespacedName {
 }
 
 // HasTimedOut returns true if a pipelinerun has exceeded its spec.Timeout based on its status.Timeout
-func (pr *PipelineRun) HasTimedOut() bool {
-	pipelineTimeout := pr.Spec.Timeout
+func (pr *PipelineRun) HasTimedOut(ctx context.Context, c clock.Clock) bool {
+	timeout := pr.PipelineTimeout(ctx)
 	startTime := pr.Status.StartTime
 
-	if !startTime.IsZero() && pipelineTimeout != nil {
-		timeout := pipelineTimeout.Duration
+	if !startTime.IsZero() {
 		if timeout == config.NoTimeoutDuration {
 			return false
 		}
-		runtime := time.Since(startTime.Time)
+		runtime := c.Since(startTime.Time)
 		if runtime > timeout {
 			return true
 		}
@@ -285,6 +285,12 @@ type PipelineRef struct {
 	// Bundle url reference to a Tekton Bundle.
 	// +optional
 	Bundle string `json:"bundle,omitempty"`
+
+	// ResolverRef allows referencing a Pipeline in a remote location
+	// like a git repo. This field is only supported when the alpha
+	// feature gate is enabled.
+	// +optional
+	ResolverRef `json:",omitempty"`
 }
 
 // PipelineRunStatus defines the observed state of PipelineRun
@@ -341,7 +347,7 @@ func (pr *PipelineRunStatus) GetCondition(t apis.ConditionType) *apis.Condition 
 
 // InitializeConditions will set all conditions in pipelineRunCondSet to unknown for the PipelineRun
 // and set the started time to the current time
-func (pr *PipelineRunStatus) InitializeConditions() {
+func (pr *PipelineRunStatus) InitializeConditions(c clock.Clock) {
 	started := false
 	if pr.TaskRuns == nil {
 		pr.TaskRuns = make(map[string]*PipelineRunTaskRunStatus)
@@ -350,7 +356,7 @@ func (pr *PipelineRunStatus) InitializeConditions() {
 		pr.Runs = make(map[string]*PipelineRunRunStatus)
 	}
 	if pr.StartTime.IsZero() {
-		pr.StartTime = &metav1.Time{Time: time.Now()}
+		pr.StartTime = &metav1.Time{Time: c.Now()}
 		started = true
 	}
 	conditionManager := pipelineRunCondSet.Manage(pr)
@@ -505,9 +511,11 @@ type PipelineTaskRun struct {
 // PipelineTaskRunSpec  can be used to configure specific
 // specs for a concrete Task
 type PipelineTaskRunSpec struct {
-	PipelineTaskName       string       `json:"pipelineTaskName,omitempty"`
-	TaskServiceAccountName string       `json:"taskServiceAccountName,omitempty"`
-	TaskPodTemplate        *PodTemplate `json:"taskPodTemplate,omitempty"`
+	PipelineTaskName       string                   `json:"pipelineTaskName,omitempty"`
+	TaskServiceAccountName string                   `json:"taskServiceAccountName,omitempty"`
+	TaskPodTemplate        *PodTemplate             `json:"taskPodTemplate,omitempty"`
+	StepOverrides          []TaskRunStepOverride    `json:"stepOverrides,omitempty"`
+	SidecarOverrides       []TaskRunSidecarOverride `json:"sidecarOverrides,omitempty"`
 }
 
 // GetTaskRunSpec returns the task specific spec for a given
