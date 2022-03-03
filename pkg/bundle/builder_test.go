@@ -70,7 +70,7 @@ func TestBuildTektonBundle(t *testing.T) {
 
 	rc, err := layers[0].Uncompressed()
 	if err != nil {
-		t.Errorf("Failed to read image layer: %w", err)
+		t.Errorf("Failed to read image layer: %v", err)
 	}
 	defer rc.Close()
 
@@ -84,12 +84,12 @@ func TestBuildTektonBundle(t *testing.T) {
 	contents := make([]byte, header.Size)
 	if _, err := treader.Read(contents); err != nil && err != io.EOF {
 		// We only allow 1 resource per layer so this tar bundle should have one and only one file.
-		t.Errorf("failed to read tar bundle: %w", err)
+		t.Errorf("failed to read tar bundle: %v", err)
 	}
 
 	obj, _, err := scheme.Codecs.UniversalDeserializer().Decode(contents, nil, nil)
 	if err != nil {
-		t.Errorf("failed to decode layer contents to a Tekton object: %w", err)
+		t.Errorf("failed to decode layer contents to a Tekton object: %v", err)
 	}
 
 	if diff := cmp.Diff(obj, &task); diff != "" {

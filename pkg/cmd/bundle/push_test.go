@@ -116,7 +116,7 @@ func TestPushCommand(t *testing.T) {
 				remoteOptions:      bundle.RemoteOptions{},
 			}
 			if err := opts.Run([]string{ref}); err != nil {
-				t.Errorf("Unexpected failure calling run: %w", err)
+				t.Errorf("Unexpected failure calling run: %v", err)
 			}
 
 			// Fetch and verify the image was published as expected.
@@ -174,7 +174,7 @@ func readTarLayer(t *testing.T, layer v1.Layer) string {
 
 	rc, err := layer.Uncompressed()
 	if err != nil {
-		t.Errorf("Failed to read image layer: %w", err)
+		t.Errorf("Failed to read image layer: %v", err)
 	}
 	defer rc.Close()
 
@@ -189,7 +189,7 @@ func readTarLayer(t *testing.T, layer v1.Layer) string {
 	contents := make([]byte, header.Size)
 	if _, err := treader.Read(contents); err != nil && err != io.EOF {
 		// We only allow 1 resource per layer so this tar bundle should have one and only one file.
-		t.Errorf("failed to read tar bundle: %w", err)
+		t.Errorf("failed to read tar bundle: %v", err)
 	}
 	return string(contents)
 }
