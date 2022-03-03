@@ -9,13 +9,13 @@ require (
 	github.com/armon/go-radix v1.0.0
 	github.com/blang/semver v3.5.1+incompatible
 	github.com/cpuguy83/go-md2man v1.0.10
-	github.com/docker/cli v20.10.11+incompatible
-	github.com/docker/docker v20.10.11+incompatible
+	github.com/docker/cli v20.10.12+incompatible
+	github.com/docker/docker v20.10.12+incompatible
 	github.com/fatih/color v1.13.0
 	github.com/ghodss/yaml v1.0.0
 	github.com/golang/snappy v0.0.4
-	github.com/google/go-cmp v0.5.6
-	github.com/google/go-containerregistry v0.7.1-0.20211118220127-abdc633f8305
+	github.com/google/go-cmp v0.5.7
+	github.com/google/go-containerregistry v0.8.1-0.20220216220642-00c59d91847c
 	github.com/hako/durafmt v0.0.0-20191009132224-3f39dc1ed9f4
 	github.com/hashicorp/errwrap v1.1.0
 	github.com/hashicorp/go-hclog v1.0.0
@@ -50,6 +50,8 @@ require (
 	go.opencensus.io v0.23.0
 	go.uber.org/atomic v1.9.0
 	go.uber.org/multierr v1.7.0
+	go.uber.org/zap v1.19.1
+	golang.org/x/crypto v0.0.0-20220214200702-86341886e292
 	golang.org/x/term v0.0.0-20210927222741-03fcf44c2211
 	golang.org/x/xerrors v0.0.0-20200804184101-5ec99f83aff1
 	google.golang.org/protobuf v1.27.1
@@ -64,6 +66,11 @@ require (
 	sigs.k8s.io/yaml v1.3.0
 )
 
-replace github.com/kr/pty => github.com/creack/pty v1.1.16
-
-replace k8s.io/kube-openapi => k8s.io/kube-openapi v0.0.0-20211109043538-20434351676c
+replace (
+	github.com/kr/pty => github.com/creack/pty v1.1.16
+	k8s.io/api => k8s.io/api v0.22.5
+	k8s.io/apimachinery => k8s.io/apimachinery v0.22.5
+	k8s.io/client-go => k8s.io/client-go v0.22.5
+	k8s.io/code-generator => k8s.io/code-generator v0.22.5
+	k8s.io/kube-openapi => k8s.io/kube-openapi v0.0.0-20211109043538-20434351676c
+)
