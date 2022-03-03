@@ -63,7 +63,6 @@ func TestClusterTaskInteractiveStartE2E(t *testing.T) {
 				Err:      icmd.None,
 				Out:      expected,
 			})
-
 		})
 	}
 	t.Logf("Creating clustertask read-clustertask")
@@ -148,7 +147,8 @@ Waiting for logs to be available...
 
 				c.Close()
 				return nil
-			}})
+			},
+		})
 		taskRunGeneratedName := builder.GetTaskRunListWithClusterTaskName(c, clusterTaskName, true).Items[0].Name
 		if err := wait.ForTaskRunState(c, taskRunGeneratedName, wait.TaskRunSucceed(taskRunGeneratedName), "TaskRunSucceed"); err != nil {
 			t.Errorf("Error waiting for TaskRun to Succeed: %s", err)
@@ -170,13 +170,14 @@ Waiting for logs to be available...
 
 	t.Run("Start ClusterTask passing --param for some params and some params are not passed", func(t *testing.T) {
 		tkn.RunInteractiveTests(t, &cli.Prompt{
-			CmdArgs: []string{"clustertask", "start", clusterTaskName,
+			CmdArgs: []string{
+				"clustertask", "start", clusterTaskName,
 				"-i=source=" + tePipelineGitResourceName,
 				"--param=FILEPATH=docs",
 				"-w=name=shared-workspace,emptyDir=",
-				"--showlog"},
+				"--showlog",
+			},
 			Procedure: func(c *expect.Console) error {
-
 				if _, err := c.ExpectString("Value for param `FILENAME` of type `string`?"); err != nil {
 					return err
 				}
@@ -195,7 +196,8 @@ Waiting for logs to be available...
 
 				c.Close()
 				return nil
-			}})
+			},
+		})
 		taskRunGeneratedName := builder.GetTaskRunListWithClusterTaskName(c, clusterTaskName, true).Items[0].Name
 		if err := wait.ForTaskRunState(c, taskRunGeneratedName, wait.TaskRunSucceed(taskRunGeneratedName), "TaskRunSucceed"); err != nil {
 			t.Errorf("Error waiting for TaskRun to Succeed: %s", err)
@@ -204,13 +206,14 @@ Waiting for logs to be available...
 
 	t.Run("Start ClusterTask with --use-param-defaults and some of the params not having default", func(t *testing.T) {
 		tkn.RunInteractiveTests(t, &cli.Prompt{
-			CmdArgs: []string{"clustertask", "start", clusterTaskName,
+			CmdArgs: []string{
+				"clustertask", "start", clusterTaskName,
 				"-i=source=" + tePipelineGitResourceName,
 				"--use-param-defaults",
 				"-w=name=shared-workspace,emptyDir=",
-				"--showlog"},
+				"--showlog",
+			},
 			Procedure: func(c *expect.Console) error {
-
 				if _, err := c.ExpectString("Value for param `FILENAME` of type `string`?"); err != nil {
 					return err
 				}
@@ -229,7 +232,8 @@ Waiting for logs to be available...
 
 				c.Close()
 				return nil
-			}})
+			},
+		})
 		taskRunGeneratedName := builder.GetTaskRunListWithClusterTaskName(c, clusterTaskName, true).Items[0].Name
 		if err := wait.ForTaskRunState(c, taskRunGeneratedName, wait.TaskRunSucceed(taskRunGeneratedName), "TaskRunSucceed"); err != nil {
 			t.Errorf("Error waiting for TaskRun to Succeed: %s", err)
@@ -367,7 +371,8 @@ Waiting for logs to be available...
 
 				c.Close()
 				return nil
-			}})
+			},
+		})
 		taskRunGeneratedName := builder.GetTaskRunListWithClusterTaskName(c, clusterTaskName2, true).Items[0].Name
 		if err := wait.ForTaskRunState(c, taskRunGeneratedName, wait.TaskRunSucceed(taskRunGeneratedName), "TaskRunSucceed"); err != nil {
 			t.Errorf("Error waiting for TaskRun to Succeed: %s", err)
@@ -401,5 +406,4 @@ Waiting for logs to be available...
 		res = tkn.Run("clustertask", "list")
 		assert.Assert(t, !strings.Contains(res.Stdout(), clusterTaskName2))
 	})
-
 }

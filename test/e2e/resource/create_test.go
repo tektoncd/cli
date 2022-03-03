@@ -117,7 +117,8 @@ func TestCreateGitResourceInteractively(t *testing.T) {
 
 				c.Close()
 				return nil
-			}})
+			},
+		})
 	})
 
 	t.Run("list single pipeline resource of git type", func(t *testing.T) {
@@ -217,7 +218,8 @@ func TestCreateImageResourceInteractively(t *testing.T) {
 
 				c.Close()
 				return nil
-			}})
+			},
+		})
 	})
 
 	t.Run("list single pipeline resource of image type", func(t *testing.T) {
@@ -281,7 +283,8 @@ func TestCreateCloudEventResourceInteractively(t *testing.T) {
 
 				c.Close()
 				return nil
-			}})
+			},
+		})
 	})
 
 	t.Run("list single pipeline resource of cloud event type", func(t *testing.T) {
@@ -447,7 +450,8 @@ func TestCreateClusterResourceInteractively(t *testing.T) {
 
 				c.Close()
 				return nil
-			}})
+			},
+		})
 	})
 
 	t.Run("list single pipeline resource of cluster type", func(t *testing.T) {
@@ -559,7 +563,8 @@ func TestCreatePullRequestResourceInteractively(t *testing.T) {
 
 				c.Close()
 				return nil
-			}})
+			},
+		})
 	})
 
 	t.Run("list single pipeline resource of pullrequest type", func(t *testing.T) {
@@ -667,7 +672,8 @@ func TestCreateStroageResourceInteractively(t *testing.T) {
 
 				c.Close()
 				return nil
-			}})
+			},
+		})
 	})
 
 	t.Run("list single pipeline resource of storage type", func(t *testing.T) {

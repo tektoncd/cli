@@ -255,7 +255,8 @@ Waiting for logs to be available...
 
 				c.Close()
 				return nil
-			}})
+			},
+		})
 	})
 
 	t.Run("Start PipelineRun with tkn pipeline start --last", func(t *testing.T) {
