@@ -31,6 +31,7 @@ func TestWriteAndRead(t *testing.T) {
 	}
 
 	img := empty.Image
+	// nolint: staticcheck
 	testLayer, err := tarball.LayerFromReader(bytes.NewReader([]byte("some-contents")))
 	if err != nil {
 		t.Fatal(err)

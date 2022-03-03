@@ -50,6 +50,7 @@ func writeTarLayer(t *testing.T, img v1.Image, obj runtime.Object) (v1.Image, er
 		return nil, err
 	}
 
+	// nolint: staticcheck
 	layer, err := tarball.LayerFromReader(&tarbundle)
 	if err != nil {
 		return nil, fmt.Errorf("unexpected error adding layer to image %w", err)

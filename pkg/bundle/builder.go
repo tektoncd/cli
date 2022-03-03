@@ -52,6 +52,7 @@ func BuildTektonBundle(contents []string, log io.Writer) (v1.Image, error) {
 				return err
 			}
 
+			// nolint: staticcheck
 			l, err := tarball.LayerFromReader(&tarbundle)
 			if err != nil {
 				return err
