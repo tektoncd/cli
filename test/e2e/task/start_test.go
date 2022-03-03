@@ -1,4 +1,6 @@
+//go:build e2e
 // +build e2e
+
 // Copyright © 2020 The Tekton Authors.
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
@@ -100,12 +102,13 @@ Waiting for logs to be available...
 
 	t.Run("Start TaskRun using tkn task start command with --use-param-defaults and some of the params not having default", func(t *testing.T) {
 		tkn.RunInteractiveTests(t, &cli.Prompt{
-			CmdArgs: []string{"task", "start", "read-task",
+			CmdArgs: []string{
+				"task", "start", "read-task",
 				"-i=source=" + tePipelineGitResourceName,
 				"--use-param-defaults",
-				"--showlog"},
+				"--showlog",
+			},
 			Procedure: func(c *expect.Console) error {
-
 				if _, err := c.ExpectString("Value for param `FILENAME` of type `string`?"); err != nil {
 					return err
 				}
@@ -124,7 +127,8 @@ Waiting for logs to be available...
 
 				c.Close()
 				return nil
-			}})
+			},
+		})
 	})
 
 	t.Run("Get list of TaskRuns from namespace  "+namespace, func(t *testing.T) {
@@ -169,12 +173,13 @@ Waiting for logs to be available...
 
 	t.Run("Start TaskRun using tkn task start command with passing one param and tkn will ask for other", func(t *testing.T) {
 		tkn.RunInteractiveTests(t, &cli.Prompt{
-			CmdArgs: []string{"task", "start", "read-task",
+			CmdArgs: []string{
+				"task", "start", "read-task",
 				"-i=source=" + tePipelineGitResourceName,
 				"-p=FILEPATH=docs",
-				"--showlog"},
+				"--showlog",
+			},
 			Procedure: func(c *expect.Console) error {
-
 				if _, err := c.ExpectString("Value for param `FILENAME` of type `string`?"); err != nil {
 					return err
 				}
@@ -193,14 +198,14 @@ Waiting for logs to be available...
 
 				c.Close()
 				return nil
-			}})
+			},
+		})
 	})
 
 	t.Run("Validate interactive task logs, with  follow mode (-f) ", func(t *testing.T) {
 		tkn.RunInteractiveTests(t, &cli.Prompt{
 			CmdArgs: []string{"task", "logs", "-f"},
 			Procedure: func(c *expect.Console) error {
-
 				if _, err := c.ExpectString("Select taskrun:"); err != nil {
 					return err
 				}
@@ -215,7 +220,8 @@ Waiting for logs to be available...
 
 				c.Close()
 				return nil
-			}})
+			},
+		})
 	})
 
 	t.Logf("Creating Task task-with-workspace in namespace: %s ", namespace)
@@ -382,7 +388,8 @@ Waiting for logs to be available...
 
 				c.Close()
 				return nil
-			}})
+			},
+		})
 		taskRunGeneratedName := builder.GetTaskRunListWithTaskName(c, "task-optional-ws", true).Items[0].Name
 		if err := wait.ForTaskRunState(c, taskRunGeneratedName, wait.TaskRunSucceed(taskRunGeneratedName), "TaskRunSucceed"); err != nil {
 			t.Errorf("Error waiting for TaskRun to Succeed: %s", err)

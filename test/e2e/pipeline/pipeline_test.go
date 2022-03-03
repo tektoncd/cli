@@ -1,4 +1,6 @@
+//go:build e2e
 // +build e2e
+
 // Copyright © 2020 The Tekton Authors.
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
@@ -253,7 +255,8 @@ Waiting for logs to be available...
 
 				c.Close()
 				return nil
-			}})
+			},
+		})
 	})
 
 	t.Run("Start PipelineRun with tkn pipeline start --last", func(t *testing.T) {
