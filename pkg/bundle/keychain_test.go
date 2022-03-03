@@ -88,7 +88,7 @@ func TestGetPathToPodmanAuth(t *testing.T) {
 		assert.Equal(t, getPathToPodmanAuth(), authPath)
 	default:
 		os.Setenv("XDG_RUNTIME_DIR", "/run/user/1000")
-		assert.Equal(t, getPathToPodmanAuth(), filepath.Join("/run/user/1000/containers/auth.json"))
+		assert.Equal(t, getPathToPodmanAuth(), "/run/user/1000/containers/auth.json")
 		os.Unsetenv("XDG_RUNTIME_DIR")
 		assert.Equal(t, getPathToPodmanAuth(), fmt.Sprintf("/run/containers/%d/auth.json", os.Getuid()))
 	}
