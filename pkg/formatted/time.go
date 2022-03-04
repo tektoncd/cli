@@ -35,7 +35,7 @@ func Duration(t1, t2 *metav1.Time) string {
 	}
 
 	dur := t2.Time.Sub(t1.Time)
-	return durafmt.ParseShort(dur).String()
+	return dur.String()
 }
 
 func Timeout(t *metav1.Duration) string {

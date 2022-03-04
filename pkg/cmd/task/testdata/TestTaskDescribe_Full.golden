@@ -31,7 +31,7 @@ Steps
 
 Taskruns
 
-NAME   STARTED          DURATION    STATUS
-tr-2   10 minutes ago   7 minutes   Succeeded
-tr-1   20 minutes ago   5 minutes   Failed
+NAME   STARTED          DURATION   STATUS
+tr-2   10 minutes ago   7m0s       Succeeded
+tr-1   20 minutes ago   5m0s       Failed
 

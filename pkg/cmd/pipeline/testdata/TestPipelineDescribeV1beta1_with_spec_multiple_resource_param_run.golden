@@ -25,5 +25,5 @@ Tasks
 
 PipelineRuns
 
- NAME             STARTED          DURATION    STATUS
- pipeline-run-1   15 minutes ago   5 minutes   Succeeded
+ NAME             STARTED          DURATION   STATUS
+ pipeline-run-1   15 minutes ago   5m0s       Succeeded

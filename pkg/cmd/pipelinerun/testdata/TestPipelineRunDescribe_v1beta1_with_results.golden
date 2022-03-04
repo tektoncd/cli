@@ -4,8 +4,8 @@ Pipeline Ref:   pipeline
 
 Status
 
-STARTED          DURATION     STATUS
-10 minutes ago   20 minutes   Succeeded
+STARTED          DURATION   STATUS
+10 minutes ago   20m0s      Succeeded
 
 Resources
 
@@ -25,5 +25,5 @@ Results
 
 Taskruns
 
- NAME   TASK NAME   STARTED         DURATION    STATUS
- tr-1   t-1         0 seconds ago   5 minutes   Failed
+ NAME   TASK NAME   STARTED         DURATION   STATUS
+ tr-1   t-1         0 seconds ago   5m0s       Failed

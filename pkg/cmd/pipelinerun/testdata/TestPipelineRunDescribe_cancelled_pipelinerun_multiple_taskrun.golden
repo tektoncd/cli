@@ -7,8 +7,8 @@ Labels:
 
 Status
 
-STARTED          DURATION    STATUS
-10 minutes ago   5 minutes   Cancelled(PipelineRunCancelled)
+STARTED          DURATION   STATUS
+10 minutes ago   5m0s       Cancelled(PipelineRunCancelled)
 
 Message
 
@@ -17,6 +17,6 @@ TaskRun(s) cancelled: tr-1, tr-2
 
 Taskruns
 
- NAME   TASK NAME   STARTED         DURATION    STATUS
- tr-2   t-2         8 minutes ago   2 minutes   Cancelled(TaskRunCancelled)
- tr-1   t-1         9 minutes ago   2 minutes   Cancelled(TaskRunCancelled)
+ NAME   TASK NAME   STARTED         DURATION   STATUS
+ tr-2   t-2         8 minutes ago   2m0s       Cancelled(TaskRunCancelled)
+ tr-1   t-1         9 minutes ago   2m0s       Cancelled(TaskRunCancelled)

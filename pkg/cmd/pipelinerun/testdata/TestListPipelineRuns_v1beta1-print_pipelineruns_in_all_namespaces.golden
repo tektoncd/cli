@@ -1,6 +1,6 @@
 NAMESPACE   NAME    STARTED          DURATION   STATUS
 namespace   pr0-1   ---              ---        ---
 namespace   pr3-1   ---              ---        ---
-namespace   pr1-1   59 minutes ago   1 minute   Succeeded
-namespace   pr2-2   2 hours ago      1 minute   Failed
+namespace   pr1-1   59 minutes ago   1m0s       Succeeded
+namespace   pr2-2   2 hours ago      1m0s       Failed
 namespace   pr2-1   3 hours ago      ---        Succeeded(Running)

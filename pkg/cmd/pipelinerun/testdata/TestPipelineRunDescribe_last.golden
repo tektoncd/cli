@@ -7,11 +7,11 @@ Labels:
 
 Status
 
-STARTED         DURATION     STATUS
-5 minutes ago   15 minutes   Succeeded
+STARTED         DURATION   STATUS
+5 minutes ago   15m0s      Succeeded
 
 Taskruns
 
- NAME   TASK NAME   STARTED         DURATION    STATUS
- tr-2   t-2         5 minutes ago   4 minutes   Succeeded
- tr-1   t-1         8 minutes ago   3 minutes   Succeeded
+ NAME   TASK NAME   STARTED         DURATION   STATUS
+ tr-2   t-2         5 minutes ago   4m0s       Succeeded
+ tr-1   t-1         8 minutes ago   3m0s       Succeeded

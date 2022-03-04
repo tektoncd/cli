@@ -8,10 +8,10 @@ Labels:
 
 Status
 
-STARTED          DURATION    STATUS
-10 minutes ago   5 minutes   ---
+STARTED          DURATION   STATUS
+10 minutes ago   5m0s       ---
 
 Taskruns
 
- NAME   TASK NAME   STARTED         DURATION    STATUS
- tr-1   t-1         8 minutes ago   3 minutes   ---
+ NAME   TASK NAME   STARTED         DURATION   STATUS
+ tr-1   t-1         8 minutes ago   3m0s       ---

@@ -4,7 +4,7 @@ Namespace:   ns
 Status
 
 STARTED         DURATION    STATUS
-8 minutes ago   3 minutes   Cancelled(TaskRunCancelled)
+8 minutes ago   3m0s        Cancelled(TaskRunCancelled)
 
 Message
 
