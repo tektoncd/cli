@@ -32,7 +32,7 @@ FLOATING_DEPS=(
   "github.com/tektoncd/pipeline@master"
   "github.com/tektoncd/triggers@master"
   "github.com/tektoncd/plumbing@master"
-  "github.com/tektoncd/hub/api@master"
+  "github.com/tektoncd/hub@master"
 )
 
 # Parse flags to determine any we should pass to dep.

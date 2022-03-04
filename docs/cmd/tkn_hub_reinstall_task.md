@@ -22,7 +22,7 @@ Reinstall a Task of name 'foo':
 or
 
 Reinstall a Task of name 'foo' of version '0.3' from Catalog 'Tekton':
-	
+
 	tkn hub reinstall task foo --version 0.3 --from tekton
 
 

@@ -36,6 +36,18 @@ type ByCatalogKindNameVersionResponseBody struct {
 	Data *ResourceVersionDataResponseBody `form:"data,omitempty" json:"data,omitempty" xml:"data,omitempty"`
 }
 
+// ByCatalogKindNameVersionReadmeResponseBody is the type of the "resource"
+// service "ByCatalogKindNameVersionReadme" endpoint HTTP response body.
+type ByCatalogKindNameVersionReadmeResponseBody struct {
+	Data *ResourceContentResponseBody `form:"data,omitempty" json:"data,omitempty" xml:"data,omitempty"`
+}
+
+// ByCatalogKindNameVersionYamlResponseBody is the type of the "resource"
+// service "ByCatalogKindNameVersionYaml" endpoint HTTP response body.
+type ByCatalogKindNameVersionYamlResponseBody struct {
+	Data *ResourceContentResponseBody `form:"data,omitempty" json:"data,omitempty" xml:"data,omitempty"`
+}
+
 // ByVersionIDResponseBody is the type of the "resource" service "ByVersionId"
 // endpoint HTTP response body.
 type ByVersionIDResponseBody struct {
@@ -185,6 +197,82 @@ type ByCatalogKindNameVersionInternalErrorResponseBody struct {
 // service "ByCatalogKindNameVersion" endpoint HTTP response body for the
 // "not-found" error.
 type ByCatalogKindNameVersionNotFoundResponseBody struct {
+	// Name is the name of this class of errors.
+	Name *string `form:"name,omitempty" json:"name,omitempty" xml:"name,omitempty"`
+	// ID is a unique identifier for this particular occurrence of the problem.
+	ID *string `form:"id,omitempty" json:"id,omitempty" xml:"id,omitempty"`
+	// Message is a human-readable explanation specific to this occurrence of the
+	// problem.
+	Message *string `form:"message,omitempty" json:"message,omitempty" xml:"message,omitempty"`
+	// Is the error temporary?
+	Temporary *bool `form:"temporary,omitempty" json:"temporary,omitempty" xml:"temporary,omitempty"`
+	// Is the error a timeout?
+	Timeout *bool `form:"timeout,omitempty" json:"timeout,omitempty" xml:"timeout,omitempty"`
+	// Is the error a server-side fault?
+	Fault *bool `form:"fault,omitempty" json:"fault,omitempty" xml:"fault,omitempty"`
+}
+
+// ByCatalogKindNameVersionReadmeInternalErrorResponseBody is the type of the
+// "resource" service "ByCatalogKindNameVersionReadme" endpoint HTTP response
+// body for the "internal-error" error.
+type ByCatalogKindNameVersionReadmeInternalErrorResponseBody struct {
+	// Name is the name of this class of errors.
+	Name *string `form:"name,omitempty" json:"name,omitempty" xml:"name,omitempty"`
+	// ID is a unique identifier for this particular occurrence of the problem.
+	ID *string `form:"id,omitempty" json:"id,omitempty" xml:"id,omitempty"`
+	// Message is a human-readable explanation specific to this occurrence of the
+	// problem.
+	Message *string `form:"message,omitempty" json:"message,omitempty" xml:"message,omitempty"`
+	// Is the error temporary?
+	Temporary *bool `form:"temporary,omitempty" json:"temporary,omitempty" xml:"temporary,omitempty"`
+	// Is the error a timeout?
+	Timeout *bool `form:"timeout,omitempty" json:"timeout,omitempty" xml:"timeout,omitempty"`
+	// Is the error a server-side fault?
+	Fault *bool `form:"fault,omitempty" json:"fault,omitempty" xml:"fault,omitempty"`
+}
+
+// ByCatalogKindNameVersionReadmeNotFoundResponseBody is the type of the
+// "resource" service "ByCatalogKindNameVersionReadme" endpoint HTTP response
+// body for the "not-found" error.
+type ByCatalogKindNameVersionReadmeNotFoundResponseBody struct {
+	// Name is the name of this class of errors.
+	Name *string `form:"name,omitempty" json:"name,omitempty" xml:"name,omitempty"`
+	// ID is a unique identifier for this particular occurrence of the problem.
+	ID *string `form:"id,omitempty" json:"id,omitempty" xml:"id,omitempty"`
+	// Message is a human-readable explanation specific to this occurrence of the
+	// problem.
+	Message *string `form:"message,omitempty" json:"message,omitempty" xml:"message,omitempty"`
+	// Is the error temporary?
+	Temporary *bool `form:"temporary,omitempty" json:"temporary,omitempty" xml:"temporary,omitempty"`
+	// Is the error a timeout?
+	Timeout *bool `form:"timeout,omitempty" json:"timeout,omitempty" xml:"timeout,omitempty"`
+	// Is the error a server-side fault?
+	Fault *bool `form:"fault,omitempty" json:"fault,omitempty" xml:"fault,omitempty"`
+}
+
+// ByCatalogKindNameVersionYamlInternalErrorResponseBody is the type of the
+// "resource" service "ByCatalogKindNameVersionYaml" endpoint HTTP response
+// body for the "internal-error" error.
+type ByCatalogKindNameVersionYamlInternalErrorResponseBody struct {
+	// Name is the name of this class of errors.
+	Name *string `form:"name,omitempty" json:"name,omitempty" xml:"name,omitempty"`
+	// ID is a unique identifier for this particular occurrence of the problem.
+	ID *string `form:"id,omitempty" json:"id,omitempty" xml:"id,omitempty"`
+	// Message is a human-readable explanation specific to this occurrence of the
+	// problem.
+	Message *string `form:"message,omitempty" json:"message,omitempty" xml:"message,omitempty"`
+	// Is the error temporary?
+	Temporary *bool `form:"temporary,omitempty" json:"temporary,omitempty" xml:"temporary,omitempty"`
+	// Is the error a timeout?
+	Timeout *bool `form:"timeout,omitempty" json:"timeout,omitempty" xml:"timeout,omitempty"`
+	// Is the error a server-side fault?
+	Fault *bool `form:"fault,omitempty" json:"fault,omitempty" xml:"fault,omitempty"`
+}
+
+// ByCatalogKindNameVersionYamlNotFoundResponseBody is the type of the
+// "resource" service "ByCatalogKindNameVersionYaml" endpoint HTTP response
+// body for the "not-found" error.
+type ByCatalogKindNameVersionYamlNotFoundResponseBody struct {
 	// Name is the name of this class of errors.
 	Name *string `form:"name,omitempty" json:"name,omitempty" xml:"name,omitempty"`
 	// ID is a unique identifier for this particular occurrence of the problem.
@@ -414,6 +502,14 @@ type VersionsResponseBody struct {
 	Versions []*ResourceVersionDataResponseBody `form:"versions,omitempty" json:"versions,omitempty" xml:"versions,omitempty"`
 }
 
+// ResourceContentResponseBody is used to define fields on response body types.
+type ResourceContentResponseBody struct {
+	// Readme
+	Readme *string `form:"readme,omitempty" json:"readme,omitempty" xml:"readme,omitempty"`
+	// Yaml
+	Yaml *string `form:"yaml,omitempty" json:"yaml,omitempty" xml:"yaml,omitempty"`
+}
+
 // NewQueryResourcesOK builds a "resource" service "Query" endpoint result from
 // a HTTP "OK" response.
 func NewQueryResourcesOK(body *QueryResponseBody) *resourceviews.ResourcesView {
@@ -563,6 +659,86 @@ func NewByCatalogKindNameVersionInternalError(body *ByCatalogKindNameVersionInte
 // NewByCatalogKindNameVersionNotFound builds a resource service
 // ByCatalogKindNameVersion endpoint not-found error.
 func NewByCatalogKindNameVersionNotFound(body *ByCatalogKindNameVersionNotFoundResponseBody) *goa.ServiceError {
+	v := &goa.ServiceError{
+		Name:      *body.Name,
+		ID:        *body.ID,
+		Message:   *body.Message,
+		Temporary: *body.Temporary,
+		Timeout:   *body.Timeout,
+		Fault:     *body.Fault,
+	}
+
+	return v
+}
+
+// NewByCatalogKindNameVersionReadmeResourceVersionReadmeOK builds a "resource"
+// service "ByCatalogKindNameVersionReadme" endpoint result from a HTTP "OK"
+// response.
+func NewByCatalogKindNameVersionReadmeResourceVersionReadmeOK(body *ByCatalogKindNameVersionReadmeResponseBody) *resourceviews.ResourceVersionReadmeView {
+	v := &resourceviews.ResourceVersionReadmeView{}
+	v.Data = unmarshalResourceContentResponseBodyToResourceviewsResourceContentView(body.Data)
+
+	return v
+}
+
+// NewByCatalogKindNameVersionReadmeInternalError builds a resource service
+// ByCatalogKindNameVersionReadme endpoint internal-error error.
+func NewByCatalogKindNameVersionReadmeInternalError(body *ByCatalogKindNameVersionReadmeInternalErrorResponseBody) *goa.ServiceError {
+	v := &goa.ServiceError{
+		Name:      *body.Name,
+		ID:        *body.ID,
+		Message:   *body.Message,
+		Temporary: *body.Temporary,
+		Timeout:   *body.Timeout,
+		Fault:     *body.Fault,
+	}
+
+	return v
+}
+
+// NewByCatalogKindNameVersionReadmeNotFound builds a resource service
+// ByCatalogKindNameVersionReadme endpoint not-found error.
+func NewByCatalogKindNameVersionReadmeNotFound(body *ByCatalogKindNameVersionReadmeNotFoundResponseBody) *goa.ServiceError {
+	v := &goa.ServiceError{
+		Name:      *body.Name,
+		ID:        *body.ID,
+		Message:   *body.Message,
+		Temporary: *body.Temporary,
+		Timeout:   *body.Timeout,
+		Fault:     *body.Fault,
+	}
+
+	return v
+}
+
+// NewByCatalogKindNameVersionYamlResourceVersionYamlOK builds a "resource"
+// service "ByCatalogKindNameVersionYaml" endpoint result from a HTTP "OK"
+// response.
+func NewByCatalogKindNameVersionYamlResourceVersionYamlOK(body *ByCatalogKindNameVersionYamlResponseBody) *resourceviews.ResourceVersionYamlView {
+	v := &resourceviews.ResourceVersionYamlView{}
+	v.Data = unmarshalResourceContentResponseBodyToResourceviewsResourceContentView(body.Data)
+
+	return v
+}
+
+// NewByCatalogKindNameVersionYamlInternalError builds a resource service
+// ByCatalogKindNameVersionYaml endpoint internal-error error.
+func NewByCatalogKindNameVersionYamlInternalError(body *ByCatalogKindNameVersionYamlInternalErrorResponseBody) *goa.ServiceError {
+	v := &goa.ServiceError{
+		Name:      *body.Name,
+		ID:        *body.ID,
+		Message:   *body.Message,
+		Temporary: *body.Temporary,
+		Timeout:   *body.Timeout,
+		Fault:     *body.Fault,
+	}
+
+	return v
+}
+
+// NewByCatalogKindNameVersionYamlNotFound builds a resource service
+// ByCatalogKindNameVersionYaml endpoint not-found error.
+func NewByCatalogKindNameVersionYamlNotFound(body *ByCatalogKindNameVersionYamlNotFoundResponseBody) *goa.ServiceError {
 	v := &goa.ServiceError{
 		Name:      *body.Name,
 		ID:        *body.ID,
@@ -862,6 +1038,104 @@ func ValidateByCatalogKindNameVersionInternalErrorResponseBody(body *ByCatalogKi
 // ValidateByCatalogKindNameVersionNotFoundResponseBody runs the validations
 // defined on ByCatalogKindNameVersion_not-found_Response_Body
 func ValidateByCatalogKindNameVersionNotFoundResponseBody(body *ByCatalogKindNameVersionNotFoundResponseBody) (err error) {
+	if body.Name == nil {
+		err = goa.MergeErrors(err, goa.MissingFieldError("name", "body"))
+	}
+	if body.ID == nil {
+		err = goa.MergeErrors(err, goa.MissingFieldError("id", "body"))
+	}
+	if body.Message == nil {
+		err = goa.MergeErrors(err, goa.MissingFieldError("message", "body"))
+	}
+	if body.Temporary == nil {
+		err = goa.MergeErrors(err, goa.MissingFieldError("temporary", "body"))
+	}
+	if body.Timeout == nil {
+		err = goa.MergeErrors(err, goa.MissingFieldError("timeout", "body"))
+	}
+	if body.Fault == nil {
+		err = goa.MergeErrors(err, goa.MissingFieldError("fault", "body"))
+	}
+	return
+}
+
+// ValidateByCatalogKindNameVersionReadmeInternalErrorResponseBody runs the
+// validations defined on
+// ByCatalogKindNameVersionReadme_internal-error_Response_Body
+func ValidateByCatalogKindNameVersionReadmeInternalErrorResponseBody(body *ByCatalogKindNameVersionReadmeInternalErrorResponseBody) (err error) {
+	if body.Name == nil {
+		err = goa.MergeErrors(err, goa.MissingFieldError("name", "body"))
+	}
+	if body.ID == nil {
+		err = goa.MergeErrors(err, goa.MissingFieldError("id", "body"))
+	}
+	if body.Message == nil {
+		err = goa.MergeErrors(err, goa.MissingFieldError("message", "body"))
+	}
+	if body.Temporary == nil {
+		err = goa.MergeErrors(err, goa.MissingFieldError("temporary", "body"))
+	}
+	if body.Timeout == nil {
+		err = goa.MergeErrors(err, goa.MissingFieldError("timeout", "body"))
+	}
+	if body.Fault == nil {
+		err = goa.MergeErrors(err, goa.MissingFieldError("fault", "body"))
+	}
+	return
+}
+
+// ValidateByCatalogKindNameVersionReadmeNotFoundResponseBody runs the
+// validations defined on ByCatalogKindNameVersionReadme_not-found_Response_Body
+func ValidateByCatalogKindNameVersionReadmeNotFoundResponseBody(body *ByCatalogKindNameVersionReadmeNotFoundResponseBody) (err error) {
+	if body.Name == nil {
+		err = goa.MergeErrors(err, goa.MissingFieldError("name", "body"))
+	}
+	if body.ID == nil {
+		err = goa.MergeErrors(err, goa.MissingFieldError("id", "body"))
+	}
+	if body.Message == nil {
+		err = goa.MergeErrors(err, goa.MissingFieldError("message", "body"))
+	}
+	if body.Temporary == nil {
+		err = goa.MergeErrors(err, goa.MissingFieldError("temporary", "body"))
+	}
+	if body.Timeout == nil {
+		err = goa.MergeErrors(err, goa.MissingFieldError("timeout", "body"))
+	}
+	if body.Fault == nil {
+		err = goa.MergeErrors(err, goa.MissingFieldError("fault", "body"))
+	}
+	return
+}
+
+// ValidateByCatalogKindNameVersionYamlInternalErrorResponseBody runs the
+// validations defined on
+// ByCatalogKindNameVersionYaml_internal-error_Response_Body
+func ValidateByCatalogKindNameVersionYamlInternalErrorResponseBody(body *ByCatalogKindNameVersionYamlInternalErrorResponseBody) (err error) {
+	if body.Name == nil {
+		err = goa.MergeErrors(err, goa.MissingFieldError("name", "body"))
+	}
+	if body.ID == nil {
+		err = goa.MergeErrors(err, goa.MissingFieldError("id", "body"))
+	}
+	if body.Message == nil {
+		err = goa.MergeErrors(err, goa.MissingFieldError("message", "body"))
+	}
+	if body.Temporary == nil {
+		err = goa.MergeErrors(err, goa.MissingFieldError("temporary", "body"))
+	}
+	if body.Timeout == nil {
+		err = goa.MergeErrors(err, goa.MissingFieldError("timeout", "body"))
+	}
+	if body.Fault == nil {
+		err = goa.MergeErrors(err, goa.MissingFieldError("fault", "body"))
+	}
+	return
+}
+
+// ValidateByCatalogKindNameVersionYamlNotFoundResponseBody runs the
+// validations defined on ByCatalogKindNameVersionYaml_not-found_Response_Body
+func ValidateByCatalogKindNameVersionYamlNotFoundResponseBody(body *ByCatalogKindNameVersionYamlNotFoundResponseBody) (err error) {
 	if body.Name == nil {
 		err = goa.MergeErrors(err, goa.MissingFieldError("name", "body"))
 	}

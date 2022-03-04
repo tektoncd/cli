@@ -106,15 +106,20 @@ func (opts *options) run() error {
 		return err
 	}
 
-	resource := opts.hubClient.GetResource(hub.ResourceOption{
+	resource := opts.hubClient.GetResourceYaml(hub.ResourceOption{
 		Name:    name,
 		Catalog: opts.from,
 		Kind:    opts.kind,
 		Version: opts.version,
 	})
 
+	data, err := resource.ResourceYaml()
+	if err != nil {
+		return err
+	}
+
 	out := opts.cli.Stream().Out
-	return printer.New(out).Raw(resource.Manifest())
+	return printer.New(out).Raw([]byte(data), nil)
 }
 
 func (opts *options) validate() error {

@@ -35,6 +35,24 @@ type ResourceVersion struct {
 	View string
 }
 
+// ResourceVersionReadme is the viewed result type that is projected based on a
+// view.
+type ResourceVersionReadme struct {
+	// Type to project
+	Projected *ResourceVersionReadmeView
+	// View to render
+	View string
+}
+
+// ResourceVersionYaml is the viewed result type that is projected based on a
+// view.
+type ResourceVersionYaml struct {
+	// Type to project
+	Projected *ResourceVersionYamlView
+	// View to render
+	View string
+}
+
 // Resource is the viewed result type that is projected based on a view.
 type Resource struct {
 	// Type to project
@@ -162,6 +180,25 @@ type ResourceVersionView struct {
 	Data *ResourceVersionDataView
 }
 
+// ResourceVersionReadmeView is a type that runs validations on a projected
+// type.
+type ResourceVersionReadmeView struct {
+	Data *ResourceContentView
+}
+
+// ResourceContentView is a type that runs validations on a projected type.
+type ResourceContentView struct {
+	// Readme
+	Readme *string
+	// Yaml
+	Yaml *string
+}
+
+// ResourceVersionYamlView is a type that runs validations on a projected type.
+type ResourceVersionYamlView struct {
+	Data *ResourceContentView
+}
+
 // ResourceView is a type that runs validations on a projected type.
 type ResourceView struct {
 	Data *ResourceDataView
@@ -185,6 +222,20 @@ var (
 	// ResourceVersionMap is a map of attribute names in result type
 	// ResourceVersion indexed by view name.
 	ResourceVersionMap = map[string][]string{
+		"default": []string{
+			"data",
+		},
+	}
+	// ResourceVersionReadmeMap is a map of attribute names in result type
+	// ResourceVersionReadme indexed by view name.
+	ResourceVersionReadmeMap = map[string][]string{
+		"default": []string{
+			"data",
+		},
+	}
+	// ResourceVersionYamlMap is a map of attribute names in result type
+	// ResourceVersionYaml indexed by view name.
+	ResourceVersionYamlMap = map[string][]string{
 		"default": []string{
 			"data",
 		},
@@ -343,6 +394,20 @@ var (
 			"versions",
 		},
 	}
+	// ResourceContentMap is a map of attribute names in result type
+	// ResourceContent indexed by view name.
+	ResourceContentMap = map[string][]string{
+		"readme": []string{
+			"readme",
+		},
+		"yaml": []string{
+			"yaml",
+		},
+		"default": []string{
+			"readme",
+			"yaml",
+		},
+	}
 )
 
 // ValidateResources runs the validations defined on the viewed result type
@@ -375,6 +440,30 @@ func ValidateResourceVersion(result *ResourceVersion) (err error) {
 	switch result.View {
 	case "default", "":
 		err = ValidateResourceVersionView(result.Projected)
+	default:
+		err = goa.InvalidEnumValueError("view", result.View, []interface{}{"default"})
+	}
+	return
+}
+
+// ValidateResourceVersionReadme runs the validations defined on the viewed
+// result type ResourceVersionReadme.
+func ValidateResourceVersionReadme(result *ResourceVersionReadme) (err error) {
+	switch result.View {
+	case "default", "":
+		err = ValidateResourceVersionReadmeView(result.Projected)
+	default:
+		err = goa.InvalidEnumValueError("view", result.View, []interface{}{"default"})
+	}
+	return
+}
+
+// ValidateResourceVersionYaml runs the validations defined on the viewed
+// result type ResourceVersionYaml.
+func ValidateResourceVersionYaml(result *ResourceVersionYaml) (err error) {
+	switch result.View {
+	case "default", "":
+		err = ValidateResourceVersionYamlView(result.Projected)
 	default:
 		err = goa.InvalidEnumValueError("view", result.View, []interface{}{"default"})
 	}
@@ -902,6 +991,51 @@ func ValidateResourceVersionView(result *ResourceVersionView) (err error) {
 
 	if result.Data != nil {
 		if err2 := ValidateResourceVersionDataView(result.Data); err2 != nil {
+			err = goa.MergeErrors(err, err2)
+		}
+	}
+	return
+}
+
+// ValidateResourceVersionReadmeView runs the validations defined on
+// ResourceVersionReadmeView using the "default" view.
+func ValidateResourceVersionReadmeView(result *ResourceVersionReadmeView) (err error) {
+
+	if result.Data != nil {
+		if err2 := ValidateResourceContentViewReadme(result.Data); err2 != nil {
+			err = goa.MergeErrors(err, err2)
+		}
+	}
+	return
+}
+
+// ValidateResourceContentViewReadme runs the validations defined on
+// ResourceContentView using the "readme" view.
+func ValidateResourceContentViewReadme(result *ResourceContentView) (err error) {
+
+	return
+}
+
+// ValidateResourceContentViewYaml runs the validations defined on
+// ResourceContentView using the "yaml" view.
+func ValidateResourceContentViewYaml(result *ResourceContentView) (err error) {
+
+	return
+}
+
+// ValidateResourceContentView runs the validations defined on
+// ResourceContentView using the "default" view.
+func ValidateResourceContentView(result *ResourceContentView) (err error) {
+
+	return
+}
+
+// ValidateResourceVersionYamlView runs the validations defined on
+// ResourceVersionYamlView using the "default" view.
+func ValidateResourceVersionYamlView(result *ResourceVersionYamlView) (err error) {
+
+	if result.Data != nil {
+		if err2 := ValidateResourceContentViewYaml(result.Data); err2 != nil {
 			err = goa.MergeErrors(err, err2)
 		}
 	}
