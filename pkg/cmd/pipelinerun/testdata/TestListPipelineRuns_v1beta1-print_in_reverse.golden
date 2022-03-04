@@ -1,6 +1,6 @@
 NAME    STARTED          DURATION   STATUS
 pr2-1   3 hours ago      ---        Succeeded(Running)
-pr2-2   2 hours ago      1 minute   Failed
-pr1-1   59 minutes ago   1 minute   Succeeded
+pr2-2   2 hours ago      1m0s       Failed
+pr1-1   59 minutes ago   1m0s       Succeeded
 pr3-1   ---              ---        ---
 pr0-1   ---              ---        ---

@@ -3,5 +3,5 @@ Namespace:   ns
 
 PipelineRuns
 
- NAME             STARTED          DURATION     STATUS
- pipeline-run-1   15 minutes ago   10 minutes   Succeeded
+ NAME             STARTED          DURATION   STATUS
+ pipeline-run-1   15 minutes ago   10m0s      Succeeded

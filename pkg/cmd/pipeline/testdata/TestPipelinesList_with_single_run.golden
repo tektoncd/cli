@@ -1,2 +1,2 @@
-NAME       AGE              LAST RUN         STARTED          DURATION     STATUS
-pipeline   20 minutes ago   pipeline-run-1   15 minutes ago   10 minutes   Succeeded
+NAME       AGE              LAST RUN         STARTED          DURATION   STATUS
+pipeline   20 minutes ago   pipeline-run-1   15 minutes ago   10m0s      Succeeded

@@ -23,13 +23,76 @@ import (
 )
 
 func TestTimeout(t *testing.T) {
-	t1 := metav1.Duration{
-		Duration: 5 * time.Minute,
+	tcs := []struct {
+		duration *metav1.Duration
+		expected string
+	}{
+		{
+			&metav1.Duration{
+				Duration: 5 * time.Minute,
+			},
+			"5 minutes",
+		},
+		{
+			nil,
+			"---",
+		},
+		{
+			&metav1.Duration{
+				Duration: 1*time.Hour + 30*time.Minute,
+			},
+			"1 hour 30 minutes",
+		},
 	}
 
-	str := Timeout(&t1) // Timeout is defined
-	assert.Equal(t, str, "5 minutes")
+	for _, tc := range tcs {
+		str := Timeout(tc.duration)
+		assert.Equal(t, str, tc.expected)
+	}
+}
 
-	str = Timeout(nil) // Timeout is not defined
-	assert.Equal(t, str, "---")
+func TestDuration(t *testing.T) {
+	now := time.Now()
+	startTime := metav1.NewTime(now)
+	plusFifteen := metav1.NewTime(now.Add(time.Minute * 15))
+	plusOneHour := metav1.NewTime(now.Add(time.Hour * 1))
+	plusOneHourAndHalf := metav1.NewTime(now.Add(time.Hour*1 + time.Minute*30))
+	plusOneDayAndHalf := metav1.NewTime(now.Add(time.Hour*24 + time.Minute*35))
+
+	tcs := []struct {
+		startTime    *metav1.Time
+		completeTime *metav1.Time
+		expected     string
+	}{
+		{
+			nil,
+			nil,
+			"---",
+		},
+		{
+			&startTime,
+			&plusFifteen,
+			"15m0s",
+		},
+		{
+			&startTime,
+			&plusOneHour,
+			"1h0m0s",
+		},
+		{
+			&startTime,
+			&plusOneHourAndHalf,
+			"1h30m0s",
+		},
+		{
+			&startTime,
+			&plusOneDayAndHalf,
+			"24h35m0s",
+		},
+	}
+
+	for _, tc := range tcs {
+		str := Duration(tc.startTime, tc.completeTime)
+		assert.Equal(t, str, tc.expected)
+	}
 }

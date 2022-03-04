@@ -24,7 +24,7 @@ Steps
 
 Taskruns
 
-NAME        STARTED          DURATION     STATUS
-taskrun-1   10 minutes ago   27 minutes   Succeeded
-taskrun-3   12 minutes ago   ---          Running
+NAME        STARTED          DURATION   STATUS
+taskrun-1   10 minutes ago   27m0s      Succeeded
+taskrun-3   12 minutes ago   ---        Running
 
