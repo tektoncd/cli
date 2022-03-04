@@ -450,6 +450,219 @@ func DecodeByCatalogKindNameVersionResponse(decoder func(*http.Response) goahttp
 	}
 }
 
+// BuildByCatalogKindNameVersionReadmeRequest instantiates a HTTP request
+// object with method and path set to call the "resource" service
+// "ByCatalogKindNameVersionReadme" endpoint
+func (c *Client) BuildByCatalogKindNameVersionReadmeRequest(ctx context.Context, v interface{}) (*http.Request, error) {
+	var (
+		catalog string
+		kind    string
+		name    string
+		version string
+	)
+	{
+		p, ok := v.(*resource.ByCatalogKindNameVersionReadmePayload)
+		if !ok {
+			return nil, goahttp.ErrInvalidType("resource", "ByCatalogKindNameVersionReadme", "*resource.ByCatalogKindNameVersionReadmePayload", v)
+		}
+		catalog = p.Catalog
+		kind = p.Kind
+		name = p.Name
+		version = p.Version
+	}
+	u := &url.URL{Scheme: c.scheme, Host: c.host, Path: ByCatalogKindNameVersionReadmeResourcePath(catalog, kind, name, version)}
+	req, err := http.NewRequest("GET", u.String(), nil)
+	if err != nil {
+		return nil, goahttp.ErrInvalidURL("resource", "ByCatalogKindNameVersionReadme", u.String(), err)
+	}
+	if ctx != nil {
+		req = req.WithContext(ctx)
+	}
+
+	return req, nil
+}
+
+// DecodeByCatalogKindNameVersionReadmeResponse returns a decoder for responses
+// returned by the resource ByCatalogKindNameVersionReadme endpoint.
+// restoreBody controls whether the response body should be restored after
+// having been read.
+// DecodeByCatalogKindNameVersionReadmeResponse may return the following errors:
+//	- "internal-error" (type *goa.ServiceError): http.StatusInternalServerError
+//	- "not-found" (type *goa.ServiceError): http.StatusNotFound
+//	- error: internal error
+func DecodeByCatalogKindNameVersionReadmeResponse(decoder func(*http.Response) goahttp.Decoder, restoreBody bool) func(*http.Response) (interface{}, error) {
+	return func(resp *http.Response) (interface{}, error) {
+		if restoreBody {
+			b, err := ioutil.ReadAll(resp.Body)
+			if err != nil {
+				return nil, err
+			}
+			resp.Body = ioutil.NopCloser(bytes.NewBuffer(b))
+			defer func() {
+				resp.Body = ioutil.NopCloser(bytes.NewBuffer(b))
+			}()
+		} else {
+			defer resp.Body.Close()
+		}
+		switch resp.StatusCode {
+		case http.StatusOK:
+			var (
+				body ByCatalogKindNameVersionReadmeResponseBody
+				err  error
+			)
+			err = decoder(resp).Decode(&body)
+			if err != nil {
+				return nil, goahttp.ErrDecodingError("resource", "ByCatalogKindNameVersionReadme", err)
+			}
+			p := NewByCatalogKindNameVersionReadmeResourceVersionReadmeOK(&body)
+			view := "default"
+			vres := &resourceviews.ResourceVersionReadme{Projected: p, View: view}
+			if err = resourceviews.ValidateResourceVersionReadme(vres); err != nil {
+				return nil, goahttp.ErrValidationError("resource", "ByCatalogKindNameVersionReadme", err)
+			}
+			res := resource.NewResourceVersionReadme(vres)
+			return res, nil
+		case http.StatusInternalServerError:
+			var (
+				body ByCatalogKindNameVersionReadmeInternalErrorResponseBody
+				err  error
+			)
+			err = decoder(resp).Decode(&body)
+			if err != nil {
+				return nil, goahttp.ErrDecodingError("resource", "ByCatalogKindNameVersionReadme", err)
+			}
+			err = ValidateByCatalogKindNameVersionReadmeInternalErrorResponseBody(&body)
+			if err != nil {
+				return nil, goahttp.ErrValidationError("resource", "ByCatalogKindNameVersionReadme", err)
+			}
+			return nil, NewByCatalogKindNameVersionReadmeInternalError(&body)
+		case http.StatusNotFound:
+			var (
+				body ByCatalogKindNameVersionReadmeNotFoundResponseBody
+				err  error
+			)
+			err = decoder(resp).Decode(&body)
+			if err != nil {
+				return nil, goahttp.ErrDecodingError("resource", "ByCatalogKindNameVersionReadme", err)
+			}
+			err = ValidateByCatalogKindNameVersionReadmeNotFoundResponseBody(&body)
+			if err != nil {
+				return nil, goahttp.ErrValidationError("resource", "ByCatalogKindNameVersionReadme", err)
+			}
+			return nil, NewByCatalogKindNameVersionReadmeNotFound(&body)
+		default:
+			body, _ := ioutil.ReadAll(resp.Body)
+			return nil, goahttp.ErrInvalidResponse("resource", "ByCatalogKindNameVersionReadme", resp.StatusCode, string(body))
+		}
+	}
+}
+
+// BuildByCatalogKindNameVersionYamlRequest instantiates a HTTP request object
+// with method and path set to call the "resource" service
+// "ByCatalogKindNameVersionYaml" endpoint
+func (c *Client) BuildByCatalogKindNameVersionYamlRequest(ctx context.Context, v interface{}) (*http.Request, error) {
+	var (
+		catalog string
+		kind    string
+		name    string
+		version string
+	)
+	{
+		p, ok := v.(*resource.ByCatalogKindNameVersionYamlPayload)
+		if !ok {
+			return nil, goahttp.ErrInvalidType("resource", "ByCatalogKindNameVersionYaml", "*resource.ByCatalogKindNameVersionYamlPayload", v)
+		}
+		catalog = p.Catalog
+		kind = p.Kind
+		name = p.Name
+		version = p.Version
+	}
+	u := &url.URL{Scheme: c.scheme, Host: c.host, Path: ByCatalogKindNameVersionYamlResourcePath(catalog, kind, name, version)}
+	req, err := http.NewRequest("GET", u.String(), nil)
+	if err != nil {
+		return nil, goahttp.ErrInvalidURL("resource", "ByCatalogKindNameVersionYaml", u.String(), err)
+	}
+	if ctx != nil {
+		req = req.WithContext(ctx)
+	}
+
+	return req, nil
+}
+
+// DecodeByCatalogKindNameVersionYamlResponse returns a decoder for responses
+// returned by the resource ByCatalogKindNameVersionYaml endpoint. restoreBody
+// controls whether the response body should be restored after having been read.
+// DecodeByCatalogKindNameVersionYamlResponse may return the following errors:
+//	- "internal-error" (type *goa.ServiceError): http.StatusInternalServerError
+//	- "not-found" (type *goa.ServiceError): http.StatusNotFound
+//	- error: internal error
+func DecodeByCatalogKindNameVersionYamlResponse(decoder func(*http.Response) goahttp.Decoder, restoreBody bool) func(*http.Response) (interface{}, error) {
+	return func(resp *http.Response) (interface{}, error) {
+		if restoreBody {
+			b, err := ioutil.ReadAll(resp.Body)
+			if err != nil {
+				return nil, err
+			}
+			resp.Body = ioutil.NopCloser(bytes.NewBuffer(b))
+			defer func() {
+				resp.Body = ioutil.NopCloser(bytes.NewBuffer(b))
+			}()
+		} else {
+			defer resp.Body.Close()
+		}
+		switch resp.StatusCode {
+		case http.StatusOK:
+			var (
+				body ByCatalogKindNameVersionYamlResponseBody
+				err  error
+			)
+			err = decoder(resp).Decode(&body)
+			if err != nil {
+				return nil, goahttp.ErrDecodingError("resource", "ByCatalogKindNameVersionYaml", err)
+			}
+			p := NewByCatalogKindNameVersionYamlResourceVersionYamlOK(&body)
+			view := "default"
+			vres := &resourceviews.ResourceVersionYaml{Projected: p, View: view}
+			if err = resourceviews.ValidateResourceVersionYaml(vres); err != nil {
+				return nil, goahttp.ErrValidationError("resource", "ByCatalogKindNameVersionYaml", err)
+			}
+			res := resource.NewResourceVersionYaml(vres)
+			return res, nil
+		case http.StatusInternalServerError:
+			var (
+				body ByCatalogKindNameVersionYamlInternalErrorResponseBody
+				err  error
+			)
+			err = decoder(resp).Decode(&body)
+			if err != nil {
+				return nil, goahttp.ErrDecodingError("resource", "ByCatalogKindNameVersionYaml", err)
+			}
+			err = ValidateByCatalogKindNameVersionYamlInternalErrorResponseBody(&body)
+			if err != nil {
+				return nil, goahttp.ErrValidationError("resource", "ByCatalogKindNameVersionYaml", err)
+			}
+			return nil, NewByCatalogKindNameVersionYamlInternalError(&body)
+		case http.StatusNotFound:
+			var (
+				body ByCatalogKindNameVersionYamlNotFoundResponseBody
+				err  error
+			)
+			err = decoder(resp).Decode(&body)
+			if err != nil {
+				return nil, goahttp.ErrDecodingError("resource", "ByCatalogKindNameVersionYaml", err)
+			}
+			err = ValidateByCatalogKindNameVersionYamlNotFoundResponseBody(&body)
+			if err != nil {
+				return nil, goahttp.ErrValidationError("resource", "ByCatalogKindNameVersionYaml", err)
+			}
+			return nil, NewByCatalogKindNameVersionYamlNotFound(&body)
+		default:
+			body, _ := ioutil.ReadAll(resp.Body)
+			return nil, goahttp.ErrInvalidResponse("resource", "ByCatalogKindNameVersionYaml", resp.StatusCode, string(body))
+		}
+	}
+}
+
 // BuildByVersionIDRequest instantiates a HTTP request object with method and
 // path set to call the "resource" service "ByVersionId" endpoint
 func (c *Client) BuildByVersionIDRequest(ctx context.Context, v interface{}) (*http.Request, error) {
@@ -881,6 +1094,18 @@ func unmarshalVersionsResponseBodyToResourceviewsVersionsView(v *VersionsRespons
 	res.Versions = make([]*resourceviews.ResourceVersionDataView, len(v.Versions))
 	for i, val := range v.Versions {
 		res.Versions[i] = unmarshalResourceVersionDataResponseBodyToResourceviewsResourceVersionDataView(val)
+	}
+
+	return res
+}
+
+// unmarshalResourceContentResponseBodyToResourceviewsResourceContentView
+// builds a value of type *resourceviews.ResourceContentView from a value of
+// type *ResourceContentResponseBody.
+func unmarshalResourceContentResponseBodyToResourceviewsResourceContentView(v *ResourceContentResponseBody) *resourceviews.ResourceContentView {
+	res := &resourceviews.ResourceContentView{
+		Readme: v.Readme,
+		Yaml:   v.Yaml,
 	}
 
 	return res

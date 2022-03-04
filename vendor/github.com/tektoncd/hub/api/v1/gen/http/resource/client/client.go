@@ -31,6 +31,14 @@ type Client struct {
 	// the ByCatalogKindNameVersion endpoint.
 	ByCatalogKindNameVersionDoer goahttp.Doer
 
+	// ByCatalogKindNameVersionReadme Doer is the HTTP client used to make requests
+	// to the ByCatalogKindNameVersionReadme endpoint.
+	ByCatalogKindNameVersionReadmeDoer goahttp.Doer
+
+	// ByCatalogKindNameVersionYaml Doer is the HTTP client used to make requests
+	// to the ByCatalogKindNameVersionYaml endpoint.
+	ByCatalogKindNameVersionYamlDoer goahttp.Doer
+
 	// ByVersionID Doer is the HTTP client used to make requests to the ByVersionId
 	// endpoint.
 	ByVersionIDDoer goahttp.Doer
@@ -65,19 +73,21 @@ func NewClient(
 	restoreBody bool,
 ) *Client {
 	return &Client{
-		QueryDoer:                    doer,
-		ListDoer:                     doer,
-		VersionsByIDDoer:             doer,
-		ByCatalogKindNameVersionDoer: doer,
-		ByVersionIDDoer:              doer,
-		ByCatalogKindNameDoer:        doer,
-		ByIDDoer:                     doer,
-		CORSDoer:                     doer,
-		RestoreResponseBody:          restoreBody,
-		scheme:                       scheme,
-		host:                         host,
-		decoder:                      dec,
-		encoder:                      enc,
+		QueryDoer:                          doer,
+		ListDoer:                           doer,
+		VersionsByIDDoer:                   doer,
+		ByCatalogKindNameVersionDoer:       doer,
+		ByCatalogKindNameVersionReadmeDoer: doer,
+		ByCatalogKindNameVersionYamlDoer:   doer,
+		ByVersionIDDoer:                    doer,
+		ByCatalogKindNameDoer:              doer,
+		ByIDDoer:                           doer,
+		CORSDoer:                           doer,
+		RestoreResponseBody:                restoreBody,
+		scheme:                             scheme,
+		host:                               host,
+		decoder:                            dec,
+		encoder:                            enc,
 	}
 }
 
@@ -162,6 +172,44 @@ func (c *Client) ByCatalogKindNameVersion() goa.Endpoint {
 		resp, err := c.ByCatalogKindNameVersionDoer.Do(req)
 		if err != nil {
 			return nil, goahttp.ErrRequestError("resource", "ByCatalogKindNameVersion", err)
+		}
+		return decodeResponse(resp)
+	}
+}
+
+// ByCatalogKindNameVersionReadme returns an endpoint that makes HTTP requests
+// to the resource service ByCatalogKindNameVersionReadme server.
+func (c *Client) ByCatalogKindNameVersionReadme() goa.Endpoint {
+	var (
+		decodeResponse = DecodeByCatalogKindNameVersionReadmeResponse(c.decoder, c.RestoreResponseBody)
+	)
+	return func(ctx context.Context, v interface{}) (interface{}, error) {
+		req, err := c.BuildByCatalogKindNameVersionReadmeRequest(ctx, v)
+		if err != nil {
+			return nil, err
+		}
+		resp, err := c.ByCatalogKindNameVersionReadmeDoer.Do(req)
+		if err != nil {
+			return nil, goahttp.ErrRequestError("resource", "ByCatalogKindNameVersionReadme", err)
+		}
+		return decodeResponse(resp)
+	}
+}
+
+// ByCatalogKindNameVersionYaml returns an endpoint that makes HTTP requests to
+// the resource service ByCatalogKindNameVersionYaml server.
+func (c *Client) ByCatalogKindNameVersionYaml() goa.Endpoint {
+	var (
+		decodeResponse = DecodeByCatalogKindNameVersionYamlResponse(c.decoder, c.RestoreResponseBody)
+	)
+	return func(ctx context.Context, v interface{}) (interface{}, error) {
+		req, err := c.BuildByCatalogKindNameVersionYamlRequest(ctx, v)
+		if err != nil {
+			return nil, err
+		}
+		resp, err := c.ByCatalogKindNameVersionYamlDoer.Do(req)
+		if err != nil {
+			return nil, goahttp.ErrRequestError("resource", "ByCatalogKindNameVersionYaml", err)
 		}
 		return decodeResponse(resp)
 	}

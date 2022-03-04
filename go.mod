@@ -16,7 +16,7 @@ require (
 	github.com/golang/snappy v0.0.4
 	github.com/google/go-cmp v0.5.7
 	github.com/google/go-containerregistry v0.8.1-0.20220216220642-00c59d91847c
-	github.com/hako/durafmt v0.0.0-20191009132224-3f39dc1ed9f4
+	github.com/hako/durafmt v0.0.0-20210608085754-5c1018a4e16b
 	github.com/hashicorp/errwrap v1.1.0
 	github.com/hashicorp/go-hclog v1.0.0
 	github.com/hashicorp/go-immutable-radix v1.3.1
@@ -42,7 +42,7 @@ require (
 	github.com/spf13/cobra v1.3.0
 	github.com/spf13/pflag v1.0.5
 	github.com/tektoncd/chains v0.6.2-0.20211214203153-0c28d2682758
-	github.com/tektoncd/hub/api v0.0.0-20220128080824-5941f280d06a
+	github.com/tektoncd/hub v1.6.1-0.20220304075515-3ebdb197f089
 	github.com/tektoncd/pipeline v0.33.1
 	github.com/tektoncd/plumbing v0.0.0-20211012143332-c7cc43d9bc0c
 	github.com/tektoncd/triggers v0.19.0

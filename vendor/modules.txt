@@ -452,7 +452,7 @@ github.com/gregjones/httpcache/diskcache
 github.com/grpc-ecosystem/grpc-gateway/internal
 github.com/grpc-ecosystem/grpc-gateway/runtime
 github.com/grpc-ecosystem/grpc-gateway/utilities
-# github.com/hako/durafmt v0.0.0-20191009132224-3f39dc1ed9f4
+# github.com/hako/durafmt v0.0.0-20210608085754-5c1018a4e16b
 ## explicit
 github.com/hako/durafmt
 # github.com/hashicorp/errwrap v1.1.0
@@ -795,7 +795,7 @@ github.com/tektoncd/chains/pkg/chains/storage/oci
 github.com/tektoncd/chains/pkg/chains/storage/tekton
 github.com/tektoncd/chains/pkg/config
 github.com/tektoncd/chains/pkg/patch
-# github.com/tektoncd/hub/api v0.0.0-20220128080824-5941f280d06a
+# github.com/tektoncd/hub v1.6.1-0.20220304075515-3ebdb197f089
 ## explicit
 github.com/tektoncd/hub/api/pkg/cli/app
 github.com/tektoncd/hub/api/pkg/cli/cmd

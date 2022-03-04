@@ -15,7 +15,7 @@
 package get
 
 import (
-	"bytes"
+	"strings"
 
 	"github.com/spf13/cobra"
 	"github.com/tektoncd/hub/api/pkg/cli/hub"
@@ -66,14 +66,14 @@ func (opts *taskOptions) run() error {
 		return err
 	}
 
-	resource := opts.hubClient.GetResource(hub.ResourceOption{
+	resource := opts.hubClient.GetResourceYaml(hub.ResourceOption{
 		Name:    name,
 		Catalog: opts.from,
 		Kind:    opts.kind,
 		Version: opts.version,
 	})
 
-	data, err := resource.Manifest()
+	data, err := resource.ResourceYaml()
 	if err != nil {
 		return err
 	}
@@ -83,9 +83,9 @@ func (opts *taskOptions) run() error {
 	}
 
 	out := opts.cli.Stream().Out
-	return printer.New(out).Raw(data, nil)
+	return printer.New(out).Raw([]byte(data), nil)
 }
 
-func taskToClusterTask(data []byte) []byte {
-	return bytes.Replace(data, []byte("kind: Task"), []byte("kind: ClusterTask"), 1)
+func taskToClusterTask(data string) string {
+	return strings.ReplaceAll(data, "kind: Task", "kind: ClusterTask")
 }

@@ -74,7 +74,14 @@ func (c *client) Fetch(spec FetchSpec) (Repo, error) {
 }
 
 func (c *client) initRepo(spec FetchSpec) (*LocalRepo, error) {
-	log := c.log.With("name", "repo").With("url", spec.URL)
+
+	cloneUrl := spec.URL
+
+	if spec.SSHUrl != "" {
+		cloneUrl = spec.SSHUrl
+	}
+
+	log := c.log.With("name", "repo").With("url", cloneUrl)
 
 	clonePath := spec.clonePath()
 	repo := &LocalRepo{path: clonePath}
@@ -95,7 +102,7 @@ func (c *client) initRepo(spec FetchSpec) (*LocalRepo, error) {
 		return nil, fmt.Errorf("failed to change directory with path %s; err: %w", spec.Path, err)
 	}
 
-	if _, err := git(log, "", "remote", "add", "origin", spec.URL); err != nil {
+	if _, err := git(log, "", "remote", "add", "origin", cloneUrl); err != nil {
 		return nil, err
 	}
 

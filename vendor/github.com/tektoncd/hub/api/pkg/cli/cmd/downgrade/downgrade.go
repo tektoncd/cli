@@ -35,15 +35,16 @@ const (
 )
 
 type options struct {
-	cli            app.CLI
-	version        string
-	kind           string
-	args           []string
-	kc             kube.Config
-	cs             kube.ClientSet
-	hubRes         hub.ResourceVersionResult
-	hubResVersions *hub.ResVersions
-	resource       *unstructured.Unstructured
+	cli             app.CLI
+	version         string
+	kind            string
+	args            []string
+	kc              kube.Config
+	cs              kube.ClientSet
+	hubRes          hub.ResourceResult
+	hubResVerResult hub.ResourceVersionResult
+	hubResVersions  *hub.ResVersions
+	resource        *unstructured.Unstructured
 }
 
 var cmdExamples string = `
@@ -133,14 +134,14 @@ func (opts *options) run() error {
 	existingVersion := opts.resVersion()
 
 	hubClient := opts.cli.Hub()
-	opts.hubRes = hubClient.GetResourceVersions(hub.ResourceOption{
+	opts.hubResVerResult = hubClient.GetResourceVersions(hub.ResourceOption{
 		Name:    opts.name(),
 		Catalog: catalog,
 		Kind:    opts.kind,
 		Version: existingVersion,
 	})
 
-	opts.hubResVersions, err = opts.hubRes.ResourceVersions()
+	opts.hubResVersions, err = opts.hubResVerResult.ResourceVersions()
 	if err != nil {
 		return err
 	}
@@ -150,7 +151,14 @@ func (opts *options) run() error {
 		return err
 	}
 
-	manifest, err := opts.hubRes.VersionManifest(opts.version)
+	opts.hubRes = hubClient.GetResourceYaml(hub.ResourceOption{
+		Name:    opts.name(),
+		Catalog: catalog,
+		Kind:    opts.kind,
+		Version: opts.version,
+	})
+
+	manifest, err := opts.hubRes.ResourceYaml()
 	if err != nil {
 		return err
 	}
@@ -158,7 +166,7 @@ func (opts *options) run() error {
 	out := opts.cli.Stream().Out
 
 	var errors []error
-	opts.resource, errors = resInstaller.Downgrade(manifest, catalog, opts.cs.Namespace())
+	opts.resource, errors = resInstaller.Downgrade([]byte(manifest), catalog, opts.cs.Namespace())
 	if len(errors) != 0 {
 
 		resourcePipelineMinVersion := opts.resource.GetAnnotations()[installer.ResourceMinVersion]

@@ -25,6 +25,11 @@ type Service interface {
 	VersionsByID(context.Context, *VersionsByIDPayload) (res *ResourceVersions, err error)
 	// Find resource using name of catalog & name, kind and version of resource
 	ByCatalogKindNameVersion(context.Context, *ByCatalogKindNameVersionPayload) (res *ResourceVersion, err error)
+	// Find resource README using name of catalog & name, kind and version of
+	// resource
+	ByCatalogKindNameVersionReadme(context.Context, *ByCatalogKindNameVersionReadmePayload) (res *ResourceVersionReadme, err error)
+	// Find resource YAML using name of catalog & name, kind and version of resource
+	ByCatalogKindNameVersionYaml(context.Context, *ByCatalogKindNameVersionYamlPayload) (res *ResourceVersionYaml, err error)
 	// Find a resource using its version's id
 	ByVersionID(context.Context, *ByVersionIDPayload) (res *ResourceVersion, err error)
 	// Find resources using name of catalog, resource name and kind of resource
@@ -41,7 +46,7 @@ const ServiceName = "resource"
 // MethodNames lists the service method names as defined in the design. These
 // are the same values that are set in the endpoint request contexts under the
 // MethodKey key.
-var MethodNames = [7]string{"Query", "List", "VersionsByID", "ByCatalogKindNameVersion", "ByVersionId", "ByCatalogKindName", "ById"}
+var MethodNames = [9]string{"Query", "List", "VersionsByID", "ByCatalogKindNameVersion", "ByCatalogKindNameVersionReadme", "ByCatalogKindNameVersionYaml", "ByVersionId", "ByCatalogKindName", "ById"}
 
 // QueryPayload is the payload type of the resource service Query method.
 type QueryPayload struct {
@@ -104,6 +109,44 @@ type ByCatalogKindNameVersionPayload struct {
 // ByCatalogKindNameVersion method.
 type ResourceVersion struct {
 	Data *ResourceVersionData
+}
+
+// ByCatalogKindNameVersionReadmePayload is the payload type of the resource
+// service ByCatalogKindNameVersionReadme method.
+type ByCatalogKindNameVersionReadmePayload struct {
+	// name of catalog
+	Catalog string
+	// kind of resource
+	Kind string
+	// name of resource
+	Name string
+	// version of resource
+	Version string
+}
+
+// ResourceVersionReadme is the result type of the resource service
+// ByCatalogKindNameVersionReadme method.
+type ResourceVersionReadme struct {
+	Data *ResourceContent
+}
+
+// ByCatalogKindNameVersionYamlPayload is the payload type of the resource
+// service ByCatalogKindNameVersionYaml method.
+type ByCatalogKindNameVersionYamlPayload struct {
+	// name of catalog
+	Catalog string
+	// kind of resource
+	Kind string
+	// name of resource
+	Name string
+	// version of resource
+	Version string
+}
+
+// ResourceVersionYaml is the result type of the resource service
+// ByCatalogKindNameVersionYaml method.
+type ResourceVersionYaml struct {
+	Data *ResourceContent
 }
 
 // ByVersionIDPayload is the payload type of the resource service ByVersionId
@@ -235,6 +278,13 @@ type Versions struct {
 	Versions []*ResourceVersionData
 }
 
+type ResourceContent struct {
+	// Readme
+	Readme *string
+	// Yaml
+	Yaml *string
+}
+
 // MakeInternalError builds a goa.ServiceError from an error.
 func MakeInternalError(err error) *goa.ServiceError {
 	return &goa.ServiceError{
@@ -299,6 +349,34 @@ func NewResourceVersion(vres *resourceviews.ResourceVersion) *ResourceVersion {
 func NewViewedResourceVersion(res *ResourceVersion, view string) *resourceviews.ResourceVersion {
 	p := newResourceVersionView(res)
 	return &resourceviews.ResourceVersion{Projected: p, View: "default"}
+}
+
+// NewResourceVersionReadme initializes result type ResourceVersionReadme from
+// viewed result type ResourceVersionReadme.
+func NewResourceVersionReadme(vres *resourceviews.ResourceVersionReadme) *ResourceVersionReadme {
+	return newResourceVersionReadme(vres.Projected)
+}
+
+// NewViewedResourceVersionReadme initializes viewed result type
+// ResourceVersionReadme from result type ResourceVersionReadme using the given
+// view.
+func NewViewedResourceVersionReadme(res *ResourceVersionReadme, view string) *resourceviews.ResourceVersionReadme {
+	p := newResourceVersionReadmeView(res)
+	return &resourceviews.ResourceVersionReadme{Projected: p, View: "default"}
+}
+
+// NewResourceVersionYaml initializes result type ResourceVersionYaml from
+// viewed result type ResourceVersionYaml.
+func NewResourceVersionYaml(vres *resourceviews.ResourceVersionYaml) *ResourceVersionYaml {
+	return newResourceVersionYaml(vres.Projected)
+}
+
+// NewViewedResourceVersionYaml initializes viewed result type
+// ResourceVersionYaml from result type ResourceVersionYaml using the given
+// view.
+func NewViewedResourceVersionYaml(res *ResourceVersionYaml, view string) *resourceviews.ResourceVersionYaml {
+	p := newResourceVersionYamlView(res)
+	return &resourceviews.ResourceVersionYaml{Projected: p, View: "default"}
 }
 
 // NewResource initializes result type Resource from viewed result type
@@ -998,6 +1076,102 @@ func newResourceVersionView(res *ResourceVersion) *resourceviews.ResourceVersion
 	vres := &resourceviews.ResourceVersionView{}
 	if res.Data != nil {
 		vres.Data = newResourceVersionDataView(res.Data)
+	}
+	return vres
+}
+
+// newResourceVersionReadme converts projected type ResourceVersionReadme to
+// service type ResourceVersionReadme.
+func newResourceVersionReadme(vres *resourceviews.ResourceVersionReadmeView) *ResourceVersionReadme {
+	res := &ResourceVersionReadme{}
+	if vres.Data != nil {
+		res.Data = newResourceContentReadme(vres.Data)
+	}
+	return res
+}
+
+// newResourceVersionReadmeView projects result type ResourceVersionReadme to
+// projected type ResourceVersionReadmeView using the "default" view.
+func newResourceVersionReadmeView(res *ResourceVersionReadme) *resourceviews.ResourceVersionReadmeView {
+	vres := &resourceviews.ResourceVersionReadmeView{}
+	if res.Data != nil {
+		vres.Data = newResourceContentViewReadme(res.Data)
+	}
+	return vres
+}
+
+// newResourceContentReadme converts projected type ResourceContent to service
+// type ResourceContent.
+func newResourceContentReadme(vres *resourceviews.ResourceContentView) *ResourceContent {
+	res := &ResourceContent{
+		Readme: vres.Readme,
+	}
+	return res
+}
+
+// newResourceContentYaml converts projected type ResourceContent to service
+// type ResourceContent.
+func newResourceContentYaml(vres *resourceviews.ResourceContentView) *ResourceContent {
+	res := &ResourceContent{
+		Yaml: vres.Yaml,
+	}
+	return res
+}
+
+// newResourceContent converts projected type ResourceContent to service type
+// ResourceContent.
+func newResourceContent(vres *resourceviews.ResourceContentView) *ResourceContent {
+	res := &ResourceContent{
+		Readme: vres.Readme,
+		Yaml:   vres.Yaml,
+	}
+	return res
+}
+
+// newResourceContentViewReadme projects result type ResourceContent to
+// projected type ResourceContentView using the "readme" view.
+func newResourceContentViewReadme(res *ResourceContent) *resourceviews.ResourceContentView {
+	vres := &resourceviews.ResourceContentView{
+		Readme: res.Readme,
+	}
+	return vres
+}
+
+// newResourceContentViewYaml projects result type ResourceContent to projected
+// type ResourceContentView using the "yaml" view.
+func newResourceContentViewYaml(res *ResourceContent) *resourceviews.ResourceContentView {
+	vres := &resourceviews.ResourceContentView{
+		Yaml: res.Yaml,
+	}
+	return vres
+}
+
+// newResourceContentView projects result type ResourceContent to projected
+// type ResourceContentView using the "default" view.
+func newResourceContentView(res *ResourceContent) *resourceviews.ResourceContentView {
+	vres := &resourceviews.ResourceContentView{
+		Readme: res.Readme,
+		Yaml:   res.Yaml,
+	}
+	return vres
+}
+
+// newResourceVersionYaml converts projected type ResourceVersionYaml to
+// service type ResourceVersionYaml.
+func newResourceVersionYaml(vres *resourceviews.ResourceVersionYamlView) *ResourceVersionYaml {
+	res := &ResourceVersionYaml{}
+	if vres.Data != nil {
+		res.Data = newResourceContentYaml(vres.Data)
+	}
+	return res
+}
+
+// newResourceVersionYamlView projects result type ResourceVersionYaml to
+// projected type ResourceVersionYamlView using the "default" view.
+func newResourceVersionYamlView(res *ResourceVersionYaml) *resourceviews.ResourceVersionYamlView {
+	vres := &resourceviews.ResourceVersionYamlView{}
+	if res.Data != nil {
+		vres.Data = newResourceContentViewYaml(res.Data)
 	}
 	return vres
 }

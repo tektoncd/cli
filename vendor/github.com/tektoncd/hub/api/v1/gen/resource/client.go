@@ -15,25 +15,29 @@ import (
 
 // Client is the "resource" service client.
 type Client struct {
-	QueryEndpoint                    goa.Endpoint
-	ListEndpoint                     goa.Endpoint
-	VersionsByIDEndpoint             goa.Endpoint
-	ByCatalogKindNameVersionEndpoint goa.Endpoint
-	ByVersionIDEndpoint              goa.Endpoint
-	ByCatalogKindNameEndpoint        goa.Endpoint
-	ByIDEndpoint                     goa.Endpoint
+	QueryEndpoint                          goa.Endpoint
+	ListEndpoint                           goa.Endpoint
+	VersionsByIDEndpoint                   goa.Endpoint
+	ByCatalogKindNameVersionEndpoint       goa.Endpoint
+	ByCatalogKindNameVersionReadmeEndpoint goa.Endpoint
+	ByCatalogKindNameVersionYamlEndpoint   goa.Endpoint
+	ByVersionIDEndpoint                    goa.Endpoint
+	ByCatalogKindNameEndpoint              goa.Endpoint
+	ByIDEndpoint                           goa.Endpoint
 }
 
 // NewClient initializes a "resource" service client given the endpoints.
-func NewClient(query, list, versionsByID, byCatalogKindNameVersion, byVersionID, byCatalogKindName, byID goa.Endpoint) *Client {
+func NewClient(query, list, versionsByID, byCatalogKindNameVersion, byCatalogKindNameVersionReadme, byCatalogKindNameVersionYaml, byVersionID, byCatalogKindName, byID goa.Endpoint) *Client {
 	return &Client{
-		QueryEndpoint:                    query,
-		ListEndpoint:                     list,
-		VersionsByIDEndpoint:             versionsByID,
-		ByCatalogKindNameVersionEndpoint: byCatalogKindNameVersion,
-		ByVersionIDEndpoint:              byVersionID,
-		ByCatalogKindNameEndpoint:        byCatalogKindName,
-		ByIDEndpoint:                     byID,
+		QueryEndpoint:                          query,
+		ListEndpoint:                           list,
+		VersionsByIDEndpoint:                   versionsByID,
+		ByCatalogKindNameVersionEndpoint:       byCatalogKindNameVersion,
+		ByCatalogKindNameVersionReadmeEndpoint: byCatalogKindNameVersionReadme,
+		ByCatalogKindNameVersionYamlEndpoint:   byCatalogKindNameVersionYaml,
+		ByVersionIDEndpoint:                    byVersionID,
+		ByCatalogKindNameEndpoint:              byCatalogKindName,
+		ByIDEndpoint:                           byID,
 	}
 }
 
@@ -76,6 +80,28 @@ func (c *Client) ByCatalogKindNameVersion(ctx context.Context, p *ByCatalogKindN
 		return
 	}
 	return ires.(*ResourceVersion), nil
+}
+
+// ByCatalogKindNameVersionReadme calls the "ByCatalogKindNameVersionReadme"
+// endpoint of the "resource" service.
+func (c *Client) ByCatalogKindNameVersionReadme(ctx context.Context, p *ByCatalogKindNameVersionReadmePayload) (res *ResourceVersionReadme, err error) {
+	var ires interface{}
+	ires, err = c.ByCatalogKindNameVersionReadmeEndpoint(ctx, p)
+	if err != nil {
+		return
+	}
+	return ires.(*ResourceVersionReadme), nil
+}
+
+// ByCatalogKindNameVersionYaml calls the "ByCatalogKindNameVersionYaml"
+// endpoint of the "resource" service.
+func (c *Client) ByCatalogKindNameVersionYaml(ctx context.Context, p *ByCatalogKindNameVersionYamlPayload) (res *ResourceVersionYaml, err error) {
+	var ires interface{}
+	ires, err = c.ByCatalogKindNameVersionYamlEndpoint(ctx, p)
+	if err != nil {
+		return
+	}
+	return ires.(*ResourceVersionYaml), nil
 }
 
 // ByVersionID calls the "ByVersionId" endpoint of the "resource" service.

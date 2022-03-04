@@ -17,7 +17,6 @@ package hub
 import (
 	"encoding/json"
 	"fmt"
-	"net/http"
 	"strconv"
 
 	rclient "github.com/tektoncd/hub/api/v1/gen/http/resource/client"
@@ -91,34 +90,4 @@ func (rvr *ResourceVersionResult) ResourceVersions() (*ResVersions, error) {
 	}
 
 	return rvr.versions, nil
-}
-
-// VersionManifest gets the resource from catalog for the resource's version passed
-func (rvr *ResourceVersionResult) VersionManifest(version string) ([]byte, error) {
-
-	if err := rvr.unmarshalData(); err != nil {
-		return nil, err
-	}
-
-	var rawURL string
-	for _, v := range rvr.versions.Versions {
-		if version == *v.Version {
-			rawURL = *v.RawURL
-			break
-		}
-	}
-	if rawURL == "" {
-		return nil, fmt.Errorf("resource version (v%s) not found", version)
-	}
-
-	data, status, err := httpGet(rawURL)
-	if err != nil {
-		return nil, err
-	}
-
-	if status != http.StatusOK {
-		return nil, fmt.Errorf("failed to fetch resource from catalog")
-	}
-
-	return data, nil
 }

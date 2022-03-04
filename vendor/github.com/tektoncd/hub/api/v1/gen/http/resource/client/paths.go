@@ -31,6 +31,16 @@ func ByCatalogKindNameVersionResourcePath(catalog string, kind string, name stri
 	return fmt.Sprintf("/v1/resource/%v/%v/%v/%v", catalog, kind, name, version)
 }
 
+// ByCatalogKindNameVersionReadmeResourcePath returns the URL path to the resource service ByCatalogKindNameVersionReadme HTTP endpoint.
+func ByCatalogKindNameVersionReadmeResourcePath(catalog string, kind string, name string, version string) string {
+	return fmt.Sprintf("/v1/resource/%v/%v/%v/%v/readme", catalog, kind, name, version)
+}
+
+// ByCatalogKindNameVersionYamlResourcePath returns the URL path to the resource service ByCatalogKindNameVersionYaml HTTP endpoint.
+func ByCatalogKindNameVersionYamlResourcePath(catalog string, kind string, name string, version string) string {
+	return fmt.Sprintf("/v1/resource/%v/%v/%v/%v/yaml", catalog, kind, name, version)
+}
+
 // ByVersionIDResourcePath returns the URL path to the resource service ByVersionId HTTP endpoint.
 func ByVersionIDResourcePath(versionID uint) string {
 	return fmt.Sprintf("/v1/resource/version/%v", versionID)
