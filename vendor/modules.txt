@@ -19,7 +19,7 @@ cloud.google.com/go/storage/internal/apiv2
 contrib.go.opencensus.io/exporter/ocagent
 # contrib.go.opencensus.io/exporter/prometheus v0.4.0
 contrib.go.opencensus.io/exporter/prometheus
-# github.com/AlecAivazis/survey/v2 v2.2.12
+# github.com/AlecAivazis/survey/v2 v2.3.2
 ## explicit
 github.com/AlecAivazis/survey/v2
 github.com/AlecAivazis/survey/v2/core
