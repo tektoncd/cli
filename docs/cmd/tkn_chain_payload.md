@@ -1,16 +1,16 @@
-## tkn chains payload
+## tkn chain payload
 
-Print a Tekton chains' payload for a specific taskrun
+Print Tekton Chains' payload for a specific taskrun
 
 ### Usage
 
 ```
-tkn chains payload
+tkn chain payload
 ```
 
 ### Synopsis
 
-Print a Tekton chains' payload for a specific taskrun
+Print Tekton Chains' payload for a specific taskrun
 
 ### Options
 
@@ -26,10 +26,14 @@ Print a Tekton chains' payload for a specific taskrun
 ### Options inherited from parent commands
 
 ```
-  -C, --no-color   disable coloring (default: false)
+      --chains-namespace string   namespace in which chains is installed (default "tekton-chains")
+  -c, --context string            name of the kubeconfig context to use (default: kubectl config current-context)
+  -k, --kubeconfig string         kubectl config file (default: $HOME/.kube/config)
+  -n, --namespace string          namespace to use (default: from $KUBECONFIG)
+  -C, --no-color                  disable coloring (default: false)
 ```
 
 ### SEE ALSO
 
-* [tkn chains](tkn_chains.md)	 - Manage Tekton Chains
+* [tkn chain](tkn_chain.md)	 - Manage Chains
 
