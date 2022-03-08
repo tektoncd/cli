@@ -68,7 +68,6 @@ type BuilderConfig struct {
 type X509Signer struct {
 	FulcioEnabled bool
 	FulcioAddr    string
-	FulcioAuth    string
 }
 
 type KMSSigner struct {
@@ -153,12 +152,11 @@ func defaultConfig() *Config {
 		},
 		Signers: SignerConfigs{
 			X509: X509Signer{
-				FulcioAuth: "google",
-				FulcioAddr: "https://fulcio.sigstore.dev",
+				FulcioAddr: "https://v1.fulcio.sigstore.dev",
 			},
 		},
 		Builder: BuilderConfig{
-			ID: "tekton-chains",
+			ID: "https://tekton.dev/chains/v2",
 		},
 	}
 }
@@ -174,7 +172,7 @@ func NewConfigFromMap(data map[string]string) (*Config, error) {
 		asStringSet(taskrunStorageKey, &cfg.Artifacts.TaskRuns.StorageBackend, sets.NewString("tekton", "oci", "gcs", "docdb")),
 		asString(taskrunSignerKey, &cfg.Artifacts.TaskRuns.Signer, "x509", "kms"),
 		// OCI
-		asString(ociFormatKey, &cfg.Artifacts.OCI.Format, "tekton", "simplesigning"),
+		asString(ociFormatKey, &cfg.Artifacts.OCI.Format, "simplesigning"),
 		asStringSet(ociStorageKey, &cfg.Artifacts.OCI.StorageBackend, sets.NewString("tekton", "oci", "gcs", "docdb")),
 		asString(ociSignerKey, &cfg.Artifacts.OCI.Signer, "x509", "kms"),
 
@@ -191,7 +189,6 @@ func NewConfigFromMap(data map[string]string) (*Config, error) {
 		asString(kmsSignerKMSRef, &cfg.Signers.KMS.KMSRef),
 
 		asBool(x509SignerFulcioEnabled, &cfg.Signers.X509.FulcioEnabled),
-		asString(x509SignerFulcioAuth, &cfg.Signers.X509.FulcioAuth),
 		asString(x509SignerFulcioAddr, &cfg.Signers.X509.FulcioAddr),
 
 		// Build config

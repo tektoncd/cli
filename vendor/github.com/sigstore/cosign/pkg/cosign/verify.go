@@ -25,8 +25,13 @@ import (
 	"encoding/hex"
 	"encoding/json"
 	"fmt"
+	"os"
 	"strings"
 	"time"
+
+	"github.com/sigstore/cosign/pkg/blob"
+	"github.com/sigstore/cosign/pkg/oci/static"
+	"github.com/sigstore/cosign/pkg/types"
 
 	"github.com/cyberphone/json-canonicalization/go/src/webpki.org/jsoncanonicalizer"
 	"github.com/google/go-containerregistry/pkg/name"
@@ -35,14 +40,15 @@ import (
 
 	ssldsse "github.com/secure-systems-lab/go-securesystemslib/dsse"
 	"github.com/sigstore/cosign/pkg/oci"
+	"github.com/sigstore/cosign/pkg/oci/layout"
 	ociremote "github.com/sigstore/cosign/pkg/oci/remote"
-	rekor "github.com/sigstore/rekor/pkg/client"
 	"github.com/sigstore/rekor/pkg/generated/client"
 	"github.com/sigstore/rekor/pkg/generated/models"
 	"github.com/sigstore/sigstore/pkg/cryptoutils"
 	"github.com/sigstore/sigstore/pkg/signature"
 	"github.com/sigstore/sigstore/pkg/signature/dsse"
 	"github.com/sigstore/sigstore/pkg/signature/options"
+	sigPayload "github.com/sigstore/sigstore/pkg/signature/payload"
 )
 
 // CheckOpts are the options for checking signatures.
@@ -55,8 +61,8 @@ type CheckOpts struct {
 	// ClaimVerifier, if provided, verifies claims present in the oci.Signature.
 	ClaimVerifier func(sig oci.Signature, imageDigest v1.Hash, annotations map[string]interface{}) error
 
-	// RekorURL is the URL for the rekor server to use to verify signatures and public keys.
-	RekorURL string
+	// RekorClient, if set, is used to use to verify signatures and public keys.
+	RekorClient *client.Rekor
 
 	// SigVerifier is used to verify signatures.
 	SigVerifier signature.Verifier
@@ -67,6 +73,9 @@ type CheckOpts struct {
 	RootCerts *x509.CertPool
 	// CertEmail is the email expected for a certificate to be valid. The empty string means any certificate can be valid.
 	CertEmail string
+
+	// SignatureRef is the reference to the signature file
+	SignatureRef string
 }
 
 func getSignedEntity(signedImgRef name.Reference, regClientOpts []ociremote.Option) (oci.SignedEntity, v1.Hash, error) {
@@ -98,8 +107,12 @@ func verifyOCISignature(ctx context.Context, verifier signature.Verifier, sig oc
 	return verifier.VerifySignature(bytes.NewReader(signature), bytes.NewReader(payload), options.WithContext(ctx))
 }
 
-func verifyOCIAttestation(_ context.Context, verifier signature.Verifier, att oci.Signature) error {
-	// TODO(dekkagaijin): plumb through context
+// For unit testing
+type payloader interface {
+	Payload() ([]byte, error)
+}
+
+func verifyOCIAttestation(_ context.Context, verifier signature.Verifier, att payloader) error {
 	payload, err := att.Payload()
 	if err != nil {
 		return err
@@ -107,11 +120,18 @@ func verifyOCIAttestation(_ context.Context, verifier signature.Verifier, att oc
 
 	env := ssldsse.Envelope{}
 	if err := json.Unmarshal(payload, &env); err != nil {
-		return nil
+		return err
 	}
 
-	dssev := ssldsse.NewEnvelopeVerifier(&dsse.VerifierAdapter{SignatureVerifier: verifier})
-	return dssev.Verify(&env)
+	if env.PayloadType != types.IntotoPayloadType {
+		return fmt.Errorf("invalid payloadType %s on envelope. Expected %s", env.PayloadType, types.IntotoPayloadType)
+	}
+	dssev, err := ssldsse.NewEnvelopeVerifier(&dsse.VerifierAdapter{SignatureVerifier: verifier})
+	if err != nil {
+		return err
+	}
+	_, err = dssev.Verify(&env)
+	return err
 }
 
 func validateAndUnpackCert(cert *x509.Certificate, co *CheckOpts) (signature.Verifier, error) {
@@ -186,7 +206,16 @@ func tlogValidateCertificate(ctx context.Context, rekorClient *client.Rekor, sig
 	return checkExpiry(cert, time.Unix(*e.IntegratedTime, 0))
 }
 
-// VerifySignatures does all the main cosign checks in a loop, returning the verified signatures.
+type fakeOCISignatures struct {
+	oci.Signatures
+	signatures []oci.Signature
+}
+
+func (fos *fakeOCISignatures) Get() ([]oci.Signature, error) {
+	return fos.signatures, nil
+}
+
+// VerifyImageSignatures does all the main cosign checks in a loop, returning the verified signatures.
 // If there were no valid signatures, we return an error.
 func VerifyImageSignatures(ctx context.Context, signedImgRef name.Reference, co *CheckOpts) (checkedSignatures []oci.Signature, bundleVerified bool, err error) {
 	// Enforce this up front.
@@ -196,29 +225,81 @@ func VerifyImageSignatures(ctx context.Context, signedImgRef name.Reference, co 
 
 	// TODO(mattmoor): We could implement recursive verification if we just wrapped
 	// most of the logic below here in a call to mutate.Map
-
 	se, h, err := getSignedEntity(signedImgRef, co.RegistryClientOpts)
 	if err != nil {
 		return nil, false, err
 	}
+
+	var sigs oci.Signatures
+	sigRef := co.SignatureRef
+	if sigRef == "" {
+		sigs, err = se.Signatures()
+		if err != nil {
+			return nil, false, err
+		}
+	} else {
+		sigs, err = loadSignatureFromFile(sigRef, signedImgRef, co)
+		if err != nil {
+			return nil, false, err
+		}
+	}
+
+	return verifySignatures(ctx, sigs, h, co)
+}
+
+// VerifyLocalImageSignatures verifies signatures from a saved, local image, without any network calls, returning the verified signatures.
+// If there were no valid signatures, we return an error.
+func VerifyLocalImageSignatures(ctx context.Context, path string, co *CheckOpts) (checkedSignatures []oci.Signature, bundleVerified bool, err error) {
+	// Enforce this up front.
+	if co.RootCerts == nil && co.SigVerifier == nil {
+		return nil, false, errors.New("one of verifier or root certs is required")
+	}
+
+	se, err := layout.SignedImageIndex(path)
+	if err != nil {
+		return nil, false, err
+	}
+
+	var h v1.Hash
+	// Verify either an image index or image.
+	ii, err := se.SignedImageIndex(v1.Hash{})
+	if err != nil {
+		return nil, false, err
+	}
+	i, err := se.SignedImage(v1.Hash{})
+	if err != nil {
+		return nil, false, err
+	}
+	switch {
+	case ii != nil:
+		h, err = ii.Digest()
+		if err != nil {
+			return nil, false, err
+		}
+	case i != nil:
+		h, err = i.Digest()
+		if err != nil {
+			return nil, false, err
+		}
+	default:
+		return nil, false, errors.New("must verify either an image index or image")
+	}
+
 	sigs, err := se.Signatures()
 	if err != nil {
 		return nil, false, err
 	}
+
+	return verifySignatures(ctx, sigs, h, co)
+}
+
+func verifySignatures(ctx context.Context, sigs oci.Signatures, h v1.Hash, co *CheckOpts) (checkedSignatures []oci.Signature, bundleVerified bool, err error) {
 	sl, err := sigs.Get()
 	if err != nil {
 		return nil, false, err
 	}
 
 	validationErrs := []string{}
-
-	var rekorClient *client.Rekor
-	if co.RekorURL != "" {
-		rekorClient, err = rekor.GetRekorClient(co.RekorURL)
-		if err != nil {
-			return nil, false, err
-		}
-	}
 
 	for _, sig := range sl {
 		if err := func(sig oci.Signature) error {
@@ -250,21 +331,21 @@ func VerifyImageSignatures(ctx context.Context, signedImgRef name.Reference, co 
 			}
 
 			verified, err := VerifyBundle(ctx, sig)
-			if err != nil && co.RekorURL == "" {
+			if err != nil && co.RekorClient == nil {
 				return errors.Wrap(err, "unable to verify bundle")
 			}
 			bundleVerified = bundleVerified || verified
 
-			if !verified && co.RekorURL != "" {
+			if !verified && co.RekorClient != nil {
 				if co.SigVerifier != nil {
 					pub, err := co.SigVerifier.PublicKey(co.PKOpts...)
 					if err != nil {
 						return err
 					}
-					return tlogValidatePublicKey(ctx, rekorClient, pub, sig)
+					return tlogValidatePublicKey(ctx, co.RekorClient, pub, sig)
 				}
 
-				return tlogValidateCertificate(ctx, rekorClient, sig)
+				return tlogValidateCertificate(ctx, co.RekorClient, sig)
 			}
 			return nil
 		}(sig); err != nil {
@@ -279,6 +360,44 @@ func VerifyImageSignatures(ctx context.Context, signedImgRef name.Reference, co 
 		return nil, false, fmt.Errorf("no matching signatures:\n%s", strings.Join(validationErrs, "\n "))
 	}
 	return checkedSignatures, bundleVerified, nil
+}
+
+func loadSignatureFromFile(sigRef string, signedImgRef name.Reference, co *CheckOpts) (oci.Signatures, error) {
+	var b64sig string
+	targetSig, err := blob.LoadFileOrURL(sigRef)
+	if err != nil {
+		if !os.IsNotExist(err) {
+			return nil, err
+		}
+		targetSig = []byte(sigRef)
+	}
+
+	_, err = base64.StdEncoding.DecodeString(string(targetSig))
+
+	if err == nil {
+		b64sig = string(targetSig)
+	} else {
+		b64sig = base64.StdEncoding.EncodeToString(targetSig)
+	}
+
+	digest, err := ociremote.ResolveDigest(signedImgRef, co.RegistryClientOpts...)
+	if err != nil {
+		return nil, err
+	}
+
+	payload, err := (&sigPayload.Cosign{Image: digest}).MarshalJSON()
+
+	if err != nil {
+		return nil, err
+	}
+
+	sig, err := static.NewSignature(payload, b64sig)
+	if err != nil {
+		return nil, err
+	}
+	return &fakeOCISignatures{
+		signatures: []oci.Signature{sig},
+	}, nil
 }
 
 // VerifyAttestations does all the main cosign checks in a loop, returning the verified attestations.
@@ -300,20 +419,63 @@ func VerifyImageAttestations(ctx context.Context, signedImgRef name.Reference, c
 	if err != nil {
 		return nil, false, err
 	}
+
+	return verifyImageAttestations(ctx, atts, h, co)
+}
+
+// VerifyLocalImageAttestations verifies attestations from a saved, local image, without any network calls,
+// returning the verified attestations.
+// If there were no valid signatures, we return an error.
+func VerifyLocalImageAttestations(ctx context.Context, path string, co *CheckOpts) (checkedAttestations []oci.Signature, bundleVerified bool, err error) {
+	// Enforce this up front.
+	if co.RootCerts == nil && co.SigVerifier == nil {
+		return nil, false, errors.New("one of verifier or root certs is required")
+	}
+
+	se, err := layout.SignedImageIndex(path)
+	if err != nil {
+		return nil, false, err
+	}
+
+	var h v1.Hash
+	// Verify either an image index or image.
+	ii, err := se.SignedImageIndex(v1.Hash{})
+	if err != nil {
+		return nil, false, err
+	}
+	i, err := se.SignedImage(v1.Hash{})
+	if err != nil {
+		return nil, false, err
+	}
+	switch {
+	case ii != nil:
+		h, err = ii.Digest()
+		if err != nil {
+			return nil, false, err
+		}
+	case i != nil:
+		h, err = i.Digest()
+		if err != nil {
+			return nil, false, err
+		}
+	default:
+		return nil, false, errors.New("must verify either an image index or image")
+	}
+
+	atts, err := se.Attestations()
+	if err != nil {
+		return nil, false, err
+	}
+	return verifyImageAttestations(ctx, atts, h, co)
+}
+
+func verifyImageAttestations(ctx context.Context, atts oci.Signatures, h v1.Hash, co *CheckOpts) (checkedAttestations []oci.Signature, bundleVerified bool, err error) {
 	sl, err := atts.Get()
 	if err != nil {
 		return nil, false, err
 	}
 
 	validationErrs := []string{}
-
-	var rekorClient *client.Rekor
-	if co.RekorURL != "" {
-		rekorClient, err = rekor.GetRekorClient(co.RekorURL)
-		if err != nil {
-			return nil, false, err
-		}
-	}
 	for _, att := range sl {
 		if err := func(att oci.Signature) error {
 			verifier := co.SigVerifier
@@ -344,21 +506,21 @@ func VerifyImageAttestations(ctx context.Context, signedImgRef name.Reference, c
 			}
 
 			verified, err := VerifyBundle(ctx, att)
-			if err != nil && co.RekorURL == "" {
+			if err != nil && co.RekorClient == nil {
 				return errors.Wrap(err, "unable to verify bundle")
 			}
 			bundleVerified = bundleVerified || verified
 
-			if !verified && co.RekorURL != "" {
+			if !verified && co.RekorClient != nil {
 				if co.SigVerifier != nil {
 					pub, err := co.SigVerifier.PublicKey(co.PKOpts...)
 					if err != nil {
 						return err
 					}
-					return tlogValidatePublicKey(ctx, rekorClient, pub, att)
+					return tlogValidatePublicKey(ctx, co.RekorClient, pub, att)
 				}
 
-				return tlogValidateCertificate(ctx, rekorClient, att)
+				return tlogValidateCertificate(ctx, co.RekorClient, att)
 			}
 			return nil
 		}(att); err != nil {
@@ -398,7 +560,12 @@ func VerifyBundle(ctx context.Context, sig oci.Signature) (bool, error) {
 		return false, nil
 	}
 
-	rekorPubKey, err := PemToECDSAKey([]byte(GetRekorPub(ctx)))
+	pub, err := GetRekorPub(ctx)
+	if err != nil {
+		return false, errors.Wrap(err, "retrieving rekor public key")
+	}
+
+	rekorPubKey, err := PemToECDSAKey(pub)
 	if err != nil {
 		return false, errors.Wrap(err, "pem to ecdsa")
 	}
@@ -441,8 +608,10 @@ func VerifyBundle(ctx context.Context, sig oci.Signature) (bool, error) {
 func bundleHash(bundleBody, signature string) (string, string, error) {
 	var toto models.Intoto
 	var rekord models.Rekord
+	var hrekord models.Hashedrekord
 	var intotoObj models.IntotoV001Schema
 	var rekordObj models.RekordV001Schema
+	var hrekordObj models.HashedrekordV001Schema
 
 	bodyDecoded, err := base64.StdEncoding.DecodeString(bundleBody)
 	if err != nil {
@@ -469,20 +638,32 @@ func bundleHash(bundleBody, signature string) (string, string, error) {
 		return *intotoObj.Content.Hash.Algorithm, *intotoObj.Content.Hash.Value, nil
 	}
 
-	err = json.Unmarshal(bodyDecoded, &rekord)
-	if err != nil {
-		return "", "", err
+	if err := json.Unmarshal(bodyDecoded, &rekord); err == nil {
+		specMarshal, err := json.Marshal(rekord.Spec)
+		if err != nil {
+			return "", "", err
+		}
+		err = json.Unmarshal(specMarshal, &rekordObj)
+		if err != nil {
+			return "", "", err
+		}
+		return *rekordObj.Data.Hash.Algorithm, *rekordObj.Data.Hash.Value, nil
 	}
 
-	specMarshal, err := json.Marshal(rekord.Spec)
+	// Try hashedRekordObj
+	err = json.Unmarshal(bodyDecoded, &hrekord)
 	if err != nil {
 		return "", "", err
 	}
-	err = json.Unmarshal(specMarshal, &rekordObj)
+	specMarshal, err := json.Marshal(hrekord.Spec)
 	if err != nil {
 		return "", "", err
 	}
-	return *rekordObj.Data.Hash.Algorithm, *rekordObj.Data.Hash.Value, nil
+	err = json.Unmarshal(specMarshal, &hrekordObj)
+	if err != nil {
+		return "", "", err
+	}
+	return *hrekordObj.Data.Hash.Algorithm, *hrekordObj.Data.Hash.Value, nil
 }
 
 func VerifySET(bundlePayload oci.BundlePayload, signature []byte, pub *ecdsa.PublicKey) error {

@@ -112,7 +112,7 @@ func (b *Backend) uploadSignature(format simple.SimpleContainerImage, rawPayload
 	if err != nil {
 		return errors.Wrap(err, "getting digest")
 	}
-	se, err := ociremote.SignedEntity(ref)
+	se, err := ociremote.SignedEntity(ref, ociremote.WithRemoteOptions(b.auth))
 	if err != nil {
 		return errors.Wrap(err, "getting signed image")
 	}
@@ -168,7 +168,7 @@ func (b *Backend) uploadAttestation(attestation in_toto.Statement, signature str
 				return errors.Wrapf(err, "%s is not a valid repository", b.cfg.Storage.OCI.Repository)
 			}
 		}
-		se, err := ociremote.SignedEntity(ref)
+		se, err := ociremote.SignedEntity(ref, ociremote.WithRemoteOptions(b.auth))
 		if err != nil {
 			return errors.Wrap(err, "getting signed image")
 		}

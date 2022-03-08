@@ -48,7 +48,7 @@ type Signature struct {
 PAE implementes the DSSE Pre-Authentic Encoding
 https://github.com/secure-systems-lab/dsse/blob/master/protocol.md#signature-definition
 */
-func PAE(payloadType, payload string) []byte {
+func PAE(payloadType string, payload []byte) []byte {
 	return []byte(fmt.Sprintf("DSSEv1 %d %s %d %s",
 		len(payloadType), payloadType,
 		len(payload), payload))
@@ -67,7 +67,8 @@ using the current algorithm, and the key used (if applicable).
 For an example see EcdsaSigner in sign_test.go.
 */
 type Signer interface {
-	Sign(data []byte) ([]byte, string, error)
+	Sign(data []byte) ([]byte, error)
+	KeyID() (string, error)
 }
 
 // SignVerifer provides both the signing and verification interface.
@@ -79,14 +80,25 @@ type SignVerifier interface {
 // EnvelopeSigner creates signed Envelopes.
 type EnvelopeSigner struct {
 	providers []SignVerifier
-	ev        EnvelopeVerifier
+	ev        *envelopeVerifier
 }
 
 /*
 NewEnvelopeSigner creates an EnvelopeSigner that uses 1+ Signer
 algorithms to sign the data.
+Creates a verifier with threshold=1, at least one of the providers must validate signitures successfully.
 */
 func NewEnvelopeSigner(p ...SignVerifier) (*EnvelopeSigner, error) {
+	return NewMultiEnvelopeSigner(1, p...)
+}
+
+/*
+NewMultiEnvelopeSigner creates an EnvelopeSigner that uses 1+ Signer
+algorithms to sign the data.
+Creates a verifier with threshold.
+threashold indicates the amount of providers that must validate the envelope.
+*/
+func NewMultiEnvelopeSigner(threshold int, p ...SignVerifier) (*EnvelopeSigner, error) {
 	var providers []SignVerifier
 
 	for _, sv := range p {
@@ -104,11 +116,14 @@ func NewEnvelopeSigner(p ...SignVerifier) (*EnvelopeSigner, error) {
 		evps = append(evps, p.(Verifier))
 	}
 
+	ev, err := NewMultiEnvelopeVerifier(threshold, evps...)
+	if err != nil {
+		return nil, err
+	}
+
 	return &EnvelopeSigner{
 		providers: providers,
-		ev: EnvelopeVerifier{
-			providers: evps,
-		},
+		ev:        ev,
 	}, nil
 }
 
@@ -124,12 +139,16 @@ func (es *EnvelopeSigner) SignPayload(payloadType string, body []byte) (*Envelop
 		PayloadType: payloadType,
 	}
 
-	paeEnc := PAE(payloadType, string(body))
+	paeEnc := PAE(payloadType, body)
 
 	for _, signer := range es.providers {
-		sig, keyID, err := signer.Sign(paeEnc)
+		sig, err := signer.Sign(paeEnc)
 		if err != nil {
 			return nil, err
+		}
+		keyID, err := signer.KeyID()
+		if err != nil {
+			keyID = ""
 		}
 
 		e.Signatures = append(e.Signatures, Signature{
@@ -145,8 +164,9 @@ func (es *EnvelopeSigner) SignPayload(payloadType string, body []byte) (*Envelop
 Verify decodes the payload and verifies the signature.
 Any domain specific validation such as parsing the decoded body and
 validating the payload type is left out to the caller.
+Verify returns a list of accepted keys each including a keyid, public and signiture of the accepted provider keys.
 */
-func (es *EnvelopeSigner) Verify(e *Envelope) error {
+func (es *EnvelopeSigner) Verify(e *Envelope) ([]AcceptedKey, error) {
 	return es.ev.Verify(e)
 }
 

@@ -105,20 +105,22 @@ func ParseDurationSecond(in interface{}) (time.Duration, error) {
 		if inp == "" {
 			return dur, nil
 		}
+
+		if v, err := strconv.ParseInt(inp, 10, 64); err == nil {
+			return time.Duration(v) * time.Second, nil
+		}
+
+		if strings.HasSuffix(inp, "d") {
+			v, err := strconv.ParseInt(inp[:len(inp)-1], 10, 64)
+			if err != nil {
+				return dur, err
+			}
+			return time.Duration(v) * 24 * time.Hour, nil
+		}
+
 		var err error
-		// Look for a suffix otherwise its a plain second value
-		if strings.HasSuffix(inp, "s") || strings.HasSuffix(inp, "m") || strings.HasSuffix(inp, "h") || strings.HasSuffix(inp, "ms") {
-			dur, err = time.ParseDuration(inp)
-			if err != nil {
-				return dur, err
-			}
-		} else {
-			// Plain integer
-			secs, err := strconv.ParseInt(inp, 10, 64)
-			if err != nil {
-				return dur, err
-			}
-			dur = time.Duration(secs) * time.Second
+		if dur, err = time.ParseDuration(inp); err != nil {
+			return dur, err
 		}
 	case int:
 		dur = time.Duration(inp) * time.Second

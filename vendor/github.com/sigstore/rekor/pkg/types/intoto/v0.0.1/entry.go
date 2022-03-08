@@ -41,7 +41,6 @@ import (
 	"github.com/sigstore/rekor/pkg/pki/x509"
 	"github.com/sigstore/rekor/pkg/types"
 	"github.com/sigstore/rekor/pkg/types/intoto"
-	"github.com/sigstore/sigstore/pkg/cryptoutils"
 	"github.com/sigstore/sigstore/pkg/signature"
 	"github.com/sigstore/sigstore/pkg/signature/options"
 )
@@ -70,7 +69,7 @@ func NewEntry() types.EntryImpl {
 	return &V001Entry{}
 }
 
-func (v V001Entry) IndexKeys() []string {
+func (v V001Entry) IndexKeys() ([]string, error) {
 	var result []string
 
 	h := sha256.Sum256([]byte(v.env.Payload))
@@ -81,8 +80,7 @@ func (v V001Entry) IndexKeys() []string {
 	case in_toto.PayloadType:
 		statement, err := parseStatement(v.env.Payload)
 		if err != nil {
-			log.Logger.Info("invalid id in_toto Statement")
-			return result
+			return result, err
 		}
 		for _, s := range statement.Subject {
 			for alg, ds := range s.Digest {
@@ -92,7 +90,7 @@ func (v V001Entry) IndexKeys() []string {
 	default:
 		log.Logger.Infof("Unknown in_toto Statement Type: %s", v.env.PayloadType)
 	}
-	return result
+	return result, nil
 }
 
 func parseStatement(p string) (*in_toto.Statement, error) {
@@ -123,13 +121,7 @@ func (v *V001Entry) Unmarshal(pe models.ProposedEntry) error {
 		return err
 	}
 
-	// Only support x509 signatures for intoto attestations
-	af, err := pki.NewArtifactFactory(pki.X509)
-	if err != nil {
-		return err
-	}
-
-	v.keyObj, err = af.NewPublicKey(bytes.NewReader(*v.IntotoObj.PublicKey))
+	v.keyObj, err = x509.NewPublicKey(bytes.NewReader(*v.IntotoObj.PublicKey))
 	if err != nil {
 		return err
 	}
@@ -179,7 +171,10 @@ func (v *V001Entry) validate() error {
 	if err != nil {
 		return err
 	}
-	dsseVerifier, err := dsse.NewEnvelopeSigner(&verifier{v: vfr})
+	dsseVerifier, err := dsse.NewEnvelopeSigner(&verifier{
+		v:   vfr,
+		pub: pk,
+	})
 	if err != nil {
 		return err
 	}
@@ -192,46 +187,46 @@ func (v *V001Entry) validate() error {
 		return err
 	}
 
-	if err := dsseVerifier.Verify(&v.env); err != nil {
+	if _, err := dsseVerifier.Verify(&v.env); err != nil {
 		return err
 	}
 	return nil
 }
 
-func (v *V001Entry) Attestation() (string, []byte) {
+func (v *V001Entry) Attestation() []byte {
 	if len(v.env.Payload) > viper.GetInt("max_attestation_size") {
 		log.Logger.Infof("Skipping attestation storage, size %d is greater than max %d", len(v.env.Payload), viper.GetInt("max_attestation_size"))
-		return "", nil
+		return nil
 	}
-	return v.env.PayloadType, []byte(v.env.Payload)
+	return []byte(v.env.Payload)
 }
 
 type verifier struct {
-	s signature.Signer
-	v signature.Verifier
+	s   signature.Signer
+	v   signature.Verifier
+	pub crypto.PublicKey
 }
 
-func (v *verifier) Sign(data []byte) (sig []byte, pubKey string, err error) {
+func (v *verifier) KeyID() (string, error) {
+	return "", nil
+}
+
+func (v *verifier) Public() crypto.PublicKey {
+	return v.pub
+}
+
+func (v *verifier) Sign(data []byte) (sig []byte, err error) {
 	if v.s == nil {
-		return nil, "", errors.New("nil signer")
+		return nil, errors.New("nil signer")
 	}
 	sig, err = v.s.SignMessage(bytes.NewReader(data), options.WithCryptoSignerOpts(crypto.SHA256))
 	if err != nil {
-		return nil, "", err
+		return nil, err
 	}
-	pk, err := v.s.PublicKey()
-	if err != nil {
-		return nil, "", err
-	}
-	pubKeyBytes, err := cryptoutils.MarshalPublicKeyToPEM(pk)
-	if err != nil {
-		return nil, "", err
-	}
-	pubKey = string(pubKeyBytes)
-	return
+	return sig, nil
 }
 
-func (v *verifier) Verify(keyID string, data, sig []byte) error {
+func (v *verifier) Verify(data, sig []byte) error {
 	if v.v == nil {
 		return errors.New("nil verifier")
 	}
