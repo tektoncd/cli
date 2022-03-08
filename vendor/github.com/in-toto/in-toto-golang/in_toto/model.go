@@ -17,6 +17,7 @@ import (
 
 	slsa "github.com/in-toto/in-toto-golang/in_toto/slsa_provenance/v0.2"
 
+	"github.com/secure-systems-lab/go-securesystemslib/cjson"
 	"github.com/secure-systems-lab/go-securesystemslib/dsse"
 )
 
@@ -873,7 +874,7 @@ Signed field of the Metablock on which it was called.  If canonicalization
 fails the first return value is nil and the second return value is the error.
 */
 func (mb *Metablock) GetSignableRepresentation() ([]byte, error) {
-	return EncodeCanonical(mb.Signed)
+	return cjson.EncodeCanonical(mb.Signed)
 }
 
 /*
@@ -1038,5 +1039,6 @@ func (s *DSSESigner) Verify(e *dsse.Envelope) error {
 		return ErrInvalidPayloadType
 	}
 
-	return s.signer.Verify(e)
+	_, err := s.signer.Verify(e)
+	return err
 }

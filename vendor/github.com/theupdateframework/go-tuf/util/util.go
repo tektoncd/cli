@@ -72,7 +72,7 @@ func (e ErrUnknownHashAlgorithm) Error() string {
 	return fmt.Sprintf("unknown hash algorithm: %s", e.Name)
 }
 
-type PassphraseFunc func(role string, confirm bool) ([]byte, error)
+type PassphraseFunc func(role string, confirm bool, change bool) ([]byte, error)
 
 func FileMetaEqual(actual data.FileMeta, expected data.FileMeta) error {
 	if actual.Length != expected.Length {
@@ -215,7 +215,10 @@ func GenerateSnapshotFileMeta(r io.Reader, hashAlgorithms ...string) (data.Snaps
 	if err != nil {
 		return data.SnapshotFileMeta{}, err
 	}
-	return data.SnapshotFileMeta{m, v}, nil
+	return data.SnapshotFileMeta{
+		FileMeta: m,
+		Version:  v,
+	}, nil
 }
 
 func GenerateTargetFileMeta(r io.Reader, hashAlgorithms ...string) (data.TargetFileMeta, error) {
@@ -223,7 +226,9 @@ func GenerateTargetFileMeta(r io.Reader, hashAlgorithms ...string) (data.TargetF
 	if err != nil {
 		return data.TargetFileMeta{}, err
 	}
-	return data.TargetFileMeta{m}, nil
+	return data.TargetFileMeta{
+		FileMeta: m,
+	}, nil
 }
 
 func GenerateTimestampFileMeta(r io.Reader, hashAlgorithms ...string) (data.TimestampFileMeta, error) {
@@ -231,7 +236,10 @@ func GenerateTimestampFileMeta(r io.Reader, hashAlgorithms ...string) (data.Time
 	if err != nil {
 		return data.TimestampFileMeta{}, err
 	}
-	return data.TimestampFileMeta{m, v}, nil
+	return data.TimestampFileMeta{
+		FileMeta: m,
+		Version:  v,
+	}, nil
 }
 
 func NormalizeTarget(p string) string {
@@ -256,14 +264,6 @@ func HashedPaths(p string, hashes data.Hashes) []string {
 		paths = append(paths, hashedPath)
 	}
 	return paths
-}
-
-func StringSliceToSet(items []string) map[string]struct{} {
-	s := make(map[string]struct{})
-	for _, item := range items {
-		s[item] = struct{}{}
-	}
-	return s
 }
 
 func AtomicallyWriteFile(filename string, data []byte, perm os.FileMode) error {

@@ -156,7 +156,8 @@ func ExtractOCIImagesFromResults(tr *v1beta1.TaskRun, logger *zap.SugaredLogger)
 		if key.Name != "IMAGES" {
 			continue
 		}
-		imgs := strings.Split(key.Value, ",")
+		imgs := strings.FieldsFunc(key.Value, split)
+
 		for _, img := range imgs {
 			trimmed := strings.TrimSpace(img)
 			if trimmed == "" {
@@ -172,6 +173,12 @@ func ExtractOCIImagesFromResults(tr *v1beta1.TaskRun, logger *zap.SugaredLogger)
 	}
 
 	return objs
+}
+
+// split allows IMAGES to be separated either by commas (for backwards compatibility)
+// or by newlines
+func split(r rune) bool {
+	return r == '\n' || r == ','
 }
 
 func (oa *OCIArtifact) Type() string {

@@ -44,7 +44,8 @@ func Wrap(ctx context.Context, s Signer) (Signer, error) {
 
 	adapter := sslAdapter{
 		wrapped: s,
-		KeyID:   fingerprint,
+		keyID:   fingerprint,
+		pk:      sshpk,
 	}
 
 	envelope, err := dsse.NewEnvelopeSigner(&adapter)
@@ -63,15 +64,24 @@ func Wrap(ctx context.Context, s Signer) (Signer, error) {
 // sslAdapter converts our signing objects into the type expected by the Envelope signer for wrapping.
 type sslAdapter struct {
 	wrapped Signer
-	KeyID   string
+	keyID   string
+	pk      crypto.PublicKey
 }
 
-func (w *sslAdapter) Sign(data []byte) ([]byte, string, error) {
+func (w *sslAdapter) Sign(data []byte) ([]byte, error) {
 	sig, err := w.wrapped.SignMessage(bytes.NewReader(data))
-	return sig, w.KeyID, err
+	return sig, err
 }
 
-func (w *sslAdapter) Verify(keyID string, data, sig []byte) error {
+func (w *sslAdapter) KeyID() (string, error) {
+	return w.keyID, nil
+}
+
+func (w *sslAdapter) Public() crypto.PublicKey {
+	return w.pk
+}
+
+func (w *sslAdapter) Verify(data, sig []byte) error {
 	panic("unimplemented")
 }
 

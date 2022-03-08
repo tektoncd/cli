@@ -1,3 +1,16 @@
+# 2.11.0 (December 2021)
+
+#64: @DoubeDi added a method `GetItems` to retrieve all items in the cache. This method also triggers all callbacks associated with a normal `Get`
+
+## API changes:
+
+// GetItems returns a copy of all items in the cache. Returns nil when the cache has been closed.
+func (cache *Cache) GetItems() map[string]interface{} {
+
+# 2.10.0 (December 2021)
+
+#62 : @nikhilk1701 found a memory leak where removed items are not directly eligible for garbage collection. There are no API changes.
+
 # 2.9.0 (October 2021)
 
 #55,#56,#57 : @chenyahui was on fire and greatly improved the peformance of the library. He also got rid of the blocking call to expirationNotification, making the code run twice as fast in the benchmarks!

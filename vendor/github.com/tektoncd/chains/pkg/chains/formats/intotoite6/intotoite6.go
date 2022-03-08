@@ -202,7 +202,7 @@ func materials(tr *v1beta1.TaskRun) []slsa.ProvenanceMaterial {
 	if gitCommit != "" && gitURL != "" {
 		mats = append(mats, slsa.ProvenanceMaterial{
 			URI:    gitURL,
-			Digest: map[string]string{"revision": gitCommit},
+			Digest: map[string]string{"sha1": gitCommit},
 		})
 		return mats
 	}
@@ -226,20 +226,23 @@ func materials(tr *v1beta1.TaskRun) []slsa.ProvenanceMaterial {
 				continue
 			}
 			if rr.Key == "url" {
-				m.URI = rr.Value
+				m.URI = spdxGit(rr.Value, "")
 			} else if rr.Key == "commit" {
-				m.Digest["revision"] = rr.Value
+				m.Digest["sha1"] = rr.Value
 			}
 		}
 
+		var url string
+		var revision string
 		for _, param := range input.ResourceSpec.Params {
 			if param.Name == "url" {
-				m.URI = param.Value
+				url = param.Value
 			}
 			if param.Name == "revision" {
-				m.Digest[param.Name] = param.Value
+				revision = param.Value
 			}
 		}
+		m.URI = spdxGit(url, revision)
 		mats = append(mats, m)
 	}
 	return mats
@@ -286,5 +289,18 @@ func gitInfo(tr *v1beta1.TaskRun) (commit string, url string) {
 			url = r.Value
 		}
 	}
+
+	url = spdxGit(url, "")
 	return
+}
+
+// supports the SPDX format which is recommended by in-toto
+// ref: https://spdx.dev/spdx-specification-21-web-version/#h.49x2ik5
+// ref: https://github.com/in-toto/attestation/blob/849867bee97e33678f61cc6bd5da293097f84c25/spec/field_types.md
+func spdxGit(url, revision string) string {
+	prefix := "git+"
+	if revision == "" {
+		return prefix + url + ".git"
+	}
+	return prefix + url + fmt.Sprintf("@%s", revision)
 }

@@ -10,7 +10,7 @@ import (
 	"strings"
 	"time"
 
-	cjson "github.com/tent/canonical-json-go"
+	"github.com/secure-systems-lab/go-securesystemslib/cjson"
 	"github.com/theupdateframework/go-tuf/data"
 	"github.com/theupdateframework/go-tuf/internal/signer"
 	"github.com/theupdateframework/go-tuf/pkg/keys"
@@ -55,11 +55,16 @@ type LocalStore interface {
 	// GetSigners return a list of signers for a role.
 	GetSigners(string) ([]keys.Signer, error)
 
-	// SavePrivateKey adds a signer to a role.
+	// SaveSigner adds a signer to a role.
 	SaveSigner(string, keys.Signer) error
 
 	// Clean is used to remove all staged metadata files.
 	Clean() error
+}
+
+type PassphraseChanger interface {
+	// ChangePassphrase changes the passphrase for a role keys file.
+	ChangePassphrase(string) error
 }
 
 type Repo struct {
@@ -313,6 +318,18 @@ func (r *Repo) timestamp() (*data.Timestamp, error) {
 	return timestamp, nil
 }
 
+func (r *Repo) ChangePassphrase(keyRole string) error {
+	if !verify.ValidRole(keyRole) {
+		return ErrInvalidRole{keyRole}
+	}
+
+	if p, ok := r.local.(PassphraseChanger); ok {
+		return p.ChangePassphrase(keyRole)
+	}
+
+	return ErrChangePassphraseNotSupported
+}
+
 func (r *Repo) GenKey(role string) ([]string, error) {
 	return r.GenKeyWithExpires(role, data.DefaultExpires("root"))
 }
@@ -392,7 +409,7 @@ func (r *Repo) AddVerificationKeyWithExpiration(keyRole string, pk *data.PublicK
 }
 
 func validExpires(expires time.Time) bool {
-	return expires.Sub(time.Now()) > 0
+	return time.Until(expires) > 0
 }
 
 func (r *Repo) RootKeys() ([]*data.PublicKey, error) {
@@ -502,7 +519,7 @@ func (r *Repo) RevokeKeyWithExpires(keyRole, id string, expires time.Time) error
 }
 
 func (r *Repo) jsonMarshal(v interface{}) ([]byte, error) {
-	b, err := cjson.Marshal(v)
+	b, err := cjson.EncodeCanonical(v)
 	if err != nil {
 		return []byte{}, err
 	}

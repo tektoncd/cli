@@ -28,8 +28,8 @@ import (
 // heavily borrowed from https://github.com/google/trillian-examples/blob/master/formats/log/checkpoint.go
 
 type Checkpoint struct {
-	// Ecosystem is the ecosystem/version string
-	Ecosystem string
+	// Origin is the unique identifier/version string
+	Origin string
 	// Size is the number of entries in the log at this checkpoint.
 	Size uint64
 	// Hash is the hash which commits to the contents of the entire log.
@@ -41,7 +41,7 @@ type Checkpoint struct {
 // String returns the String representation of the Checkpoint
 func (c Checkpoint) String() string {
 	var b strings.Builder
-	fmt.Fprintf(&b, "%s\n%d\n%s\n", c.Ecosystem, c.Size, base64.StdEncoding.EncodeToString(c.Hash))
+	fmt.Fprintf(&b, "%s\n%d\n%s\n", c.Origin, c.Size, base64.StdEncoding.EncodeToString(c.Hash))
 	for _, line := range c.OtherContent {
 		fmt.Fprintf(&b, "%s\n", line)
 	}
@@ -70,8 +70,8 @@ func (c *Checkpoint) UnmarshalCheckpoint(data []byte) error {
 	if len(l) < 4 {
 		return errors.New("invalid checkpoint - too few newlines")
 	}
-	eco := string(l[0])
-	if len(eco) == 0 {
+	origin := string(l[0])
+	if len(origin) == 0 {
 		return errors.New("invalid checkpoint - empty ecosystem")
 	}
 	size, err := strconv.ParseUint(string(l[1]), 10, 64)
@@ -83,11 +83,11 @@ func (c *Checkpoint) UnmarshalCheckpoint(data []byte) error {
 		return fmt.Errorf("invalid checkpoint - invalid hash: %w", err)
 	}
 	*c = Checkpoint{
-		Ecosystem: eco,
-		Size:      size,
-		Hash:      h,
+		Origin: origin,
+		Size:   size,
+		Hash:   h,
 	}
-	if len(l) >= 5 {
+	if len(l) >= 3 {
 		for _, line := range l[3:] {
 			if len(line) == 0 {
 				break
@@ -149,6 +149,7 @@ func (r *SignedCheckpoint) SetTimestamp(timestamp uint64) {
 		}
 	}
 	r.OtherContent = append(r.OtherContent, fmt.Sprintf("Timestamp: %d", timestamp))
+	r.SignedNote = SignedNote{Note: string(r.Checkpoint.String())}
 }
 
 func (r *SignedCheckpoint) GetTimestamp() uint64 {
