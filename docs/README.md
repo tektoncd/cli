@@ -23,11 +23,10 @@ it from the source, or set it up as a [`kubectl` plugin](https://kubernetes.io/d
 {{% tabs %}}
 
 {{% tab "macOS" %}}
-`tkn` is available on macOS via [`brew`](https://brew.sh/):
+`tkn` is available on macOS via [`brew`](https://formulae.brew.sh/formula/tektoncd-cli):
 
 ```bash
-brew tap tektoncd/tools
-brew install tektoncd/tools/tektoncd-cli
+brew install tektoncd-cli
 ```
 
 You can also download it as a tarball from the [`tkn` Releases page](https://github.com/tektoncd/cli/releases).
@@ -95,9 +94,8 @@ rpm-based distros).
     rpm -Uvh LINK-TO-THE-PACKAGE
     ```
 
-    If you are using Fedora 30/31, CentOS 7/8, EPEL, or RHEL 8, @chmouel
-    provides an unofficial `copr` package repository for installing the
-    package:
+    If you are using the latest releases of Fedora or RHEL or CentOS, you may use the
+    TektonCD CLI unofficial `copr` package repository instead:
 
     ```bash
     dnf copr enable chmouel/tektoncd-cli
@@ -153,4 +151,4 @@ Run `tkn help` to see the list of available commands.
 
 ## What's next
 
-[A manual for using Tekton CLI is available on GitHub](https://github.com/tektoncd/cli/tree/main/docs).
+[A manual for Tekton CLI commands is available on GitHub](https://github.com/tektoncd/cli/tree/main/docs/man/man1).
