@@ -2,11 +2,53 @@
 
 ## User facing roadmap
 
-### V1beta1 support and GA
+### Support for Pipeline v1
 
-- Add support for v1beta1 and later on GA
-- Warn usage of PipelineResource in v1beta1 (no error but warn that it is not supported aka will work but can be broken in a later release)
-- Support for workspace, result, …
+- Add support for tektoncd/pipeline v1
+- Warn usage of PipelineResource in v1beta1 (no error but warn that it
+  is not supported aka will work but can be broken in a later release)
+
+### Remove unsupported APIs
+
+- Remove tektoncd/pipeline v1alpha1
+- Remove tektoncd/triggers v1alpha1 (later, most likely in 2023)
+
+### Advanced integration of chains
+
+Today, the `chains` sub-command support a relative subset of what
+chains can provide.
+
+### Results integration
+
+The `results` project comes up with it's own cli
+[`tkn-results`](https://github.com/tektoncd/results/tree/main/tools/tkn-results). We
+should aim to integrate that cli directly into `tkn`.
+
+As a "possible next step", we could exploration transparent behavior
+between list (from cluster & results). This means, when listing
+Pipelines or Task, we would *transparently* query the k8s API as well
+as the result API to get informations.
+
+### Operator integration
+
+User should be able to get `tkn` and install, upgrade and manage the
+operator lifecycle directly from it. *This should help adoption as well*.
+
+*There is an item in the Operator ROADMAP about this*.
+
+### Pipeline Breakpoint integration [#1476](https://github.com/tektoncd/cli/issues/1476)
+
+Once the Breakpoint feature is stable, `tkn` should provide a way to
+easily enter into debug mode and into a task waiting to be "debugged".
+
+### Integrate Catlin with tkn.
+
+Catlin is a command-line tool that Lints Tekton Resources and
+Catalogs. It will be it's own cli, but we should aim to integrate
+`tkn` with it (or at least part of it), be it through the extension
+mechanism or not.
+
+See https://github.com/tektoncd/community/issues/636.
 
 ### Improve e2e Testing Coverage for CLI
 
@@ -29,14 +71,6 @@
 - We should support one of the above strategies, or we will not support creation/updating like kubectl create/apply -f moving forward
 - If we do not support a -f option, we should remove the create -f commands from pipeline/task/resource
 
-### Catalog integration
-
-- Related to the OCI experiment
-  ([#2137](https://github.com/tektoncd/pipeline/issues/2137)) and the
-  catalog / hub, integrate better with the/a catalog
-  - Allow searching catalog for a Task, Pipeline, …
-  - Allow importing a task from the catalog into the cluster
-
 ### Local to cluster build
 
 - From a user working directory, be able to run a task or pipeline with the content of this working directory
@@ -48,12 +82,14 @@
   - Similar to oc new-app
   - Detect stuff, create task, …
 
-### Source to Pipeline resources
+### Source to Pipeline/Task
 
 - be able from the cli auto generate some Pipeline/tasks from a source
   code folder detecting what kind of source code it is (i.e: go, java,
   python, ruby, rust, project etc...) and automatically apply the
   standard from task the catalog.
+
+### Local Execution
 
 ## Technical roadmap
 
