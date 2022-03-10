@@ -149,6 +149,14 @@ You can install `tektoncd-cli` from [nixpkgs](https://github.com/NixOS/nixpkgs) 
 ```shell
 nix-env --install tektoncd-cli
 ```
+### Arch / Manjaro
+
+You can install [`tektoncd-cli`](https://archlinux.org/packages/community/x86_64/tekton-cli/) from the official arch package repository :
+
+```shell
+pacman -S tektoncd-cli
+```
+
 ### Homebrew on Linux
 
 You can install the latest tektoncd-cli if you are using [Homebrew on Linux](https://docs.brew.sh/Homebrew-on-Linux) as for the osx version you need to simply do :

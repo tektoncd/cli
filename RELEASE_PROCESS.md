@@ -73,6 +73,9 @@ dnf upgrade tektoncd-cli
 
   * [tkn image](https://github.com/tektoncd/plumbing/blob/main/tekton/images/tkn/Dockerfile)
 
+
+- Go to https://archlinux.org/packages/community/x86_64/tekton-cli/flag/ and let the packagers know the package is out of date by leaving a message to the release url and your email address so they can update it.
+
 - Update the version numbers in the main [README.md](README.md) to the version you are releasing by opening a pull request to the main branch of this repository. Do not worry about updating the README for the release branch.
 
 - Make sure we have a nice ChangeLog before doing the release, listing `features`
