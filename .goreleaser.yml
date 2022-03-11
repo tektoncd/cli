@@ -79,3 +79,7 @@ nfpms:
       darwin: macOS
       linux: Linux
       windows: Windows
+
+universal_binaries:
+- replace: true
+  name_template: 'tkn'
