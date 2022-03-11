@@ -40,7 +40,7 @@ const (
 	operatorInfo                   string = "operators-info"
 )
 
-var defaultNamespaces = []string{"tekton-pipelines", "openshift-pipelines", "tekton-chains"}
+var defaultNamespaces = []string{"tekton-pipelines", "openshift-pipelines", "tekton-chains", "tekton-operator", "openshift-operators"}
 
 // GetPipelineVersion Get pipeline version, functions imported from Dashboard
 func GetPipelineVersion(c *cli.Clients, ns string) (string, error) {
