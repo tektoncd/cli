@@ -610,6 +610,21 @@ func TestPipelineRunDelete_v1beta1(t *testing.T) {
 				},
 			},
 		},
+		{
+			// test pipelinerun status condition nil
+			ObjectMeta: metav1.ObjectMeta{
+				Namespace:         "ns",
+				Name:              "pipeline-run-4",
+				Labels:            map[string]string{"tekton.dev/pipeline": "pipeline"},
+				CreationTimestamp: metav1.Time{Time: clock.Now()},
+			},
+			Spec: v1beta1.PipelineRunSpec{
+				PipelineRef: &v1beta1.PipelineRef{
+					Name: "pipeline",
+				},
+			},
+			Status: v1beta1.PipelineRunStatus{},
+		},
 	}
 
 	type clients struct {
@@ -618,7 +633,7 @@ func TestPipelineRunDelete_v1beta1(t *testing.T) {
 	}
 
 	seeds := make([]clients, 0)
-	for i := 0; i < 8; i++ {
+	for i := 0; i < 10; i++ {
 		cs, _ := test.SeedV1beta1TestData(t, pipelinev1beta1test.Data{
 			Pipelines:    pdata,
 			PipelineRuns: prdata,
@@ -630,6 +645,7 @@ func TestPipelineRunDelete_v1beta1(t *testing.T) {
 			cb.UnstructuredV1beta1PR(prdata[0], version),
 			cb.UnstructuredV1beta1PR(prdata[1], version),
 			cb.UnstructuredV1beta1PR(prdata[2], version),
+			cb.UnstructuredV1beta1PR(prdata[3], version),
 		)
 		if err != nil {
 			t.Errorf("unable to create dynamic client: %v", err)
@@ -870,6 +886,52 @@ func TestPipelineRunDelete_v1beta1(t *testing.T) {
 			inputStream: nil,
 			wantError:   true,
 			want:        "pipelineruns.tekton.dev \"nonexistent\" not found",
+		},
+		// test pipelinerun delete with status as nil
+		{
+			name:        "Delete all the pipelineruns with keep-since except one without status conditions",
+			command:     []string{"delete", "--keep-since", "1", "-n", "ns", "-f"},
+			dynamic:     seeds[8].dynamicClient,
+			input:       seeds[8].pipelineClient,
+			inputStream: nil,
+			wantError:   false,
+			want:        "3 expired PipelineRuns(Completed) has been deleted in namespace \"ns\", kept 0\n",
+		},
+		{
+			name:        "Delete all the pipelineruns with keep-since except one without status conditions",
+			command:     []string{"delete", "--keep", "1", "-n", "ns", "-f", "--ignore-running=false"},
+			dynamic:     seeds[8].dynamicClient,
+			input:       seeds[8].pipelineClient,
+			inputStream: nil,
+			wantError:   false,
+			want:        "All but 1 PipelineRuns deleted in namespace \"ns\"\n",
+		},
+		{
+			name:        "Delete all the pipelineruns with keep-since ignore-running false except one without status conditions",
+			command:     []string{"delete", "--keep-since", "1", "-n", "ns", "-f", "--ignore-running=false"},
+			dynamic:     seeds[9].dynamicClient,
+			input:       seeds[9].pipelineClient,
+			inputStream: nil,
+			wantError:   false,
+			want:        "3 expired PipelineRuns has been deleted in namespace \"ns\", kept 0\n",
+		},
+		{
+			name:        "Delete all the pipelineruns including one without status",
+			command:     []string{"delete", "--all", "-n", "ns", "-f", "--ignore-running=false"},
+			dynamic:     seeds[9].dynamicClient,
+			input:       seeds[9].pipelineClient,
+			inputStream: nil,
+			wantError:   false,
+			want:        "All PipelineRuns deleted in namespace \"ns\"\n",
+		},
+		{
+			name:        "No pipelineruns after deleting all including running and nil status",
+			command:     []string{"ls", "-n", "ns"},
+			dynamic:     seeds[9].dynamicClient,
+			input:       seeds[9].pipelineClient,
+			inputStream: nil,
+			wantError:   false,
+			want:        "No PipelineRuns found\n",
 		},
 	}
 

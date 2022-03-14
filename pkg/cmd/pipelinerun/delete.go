@@ -259,6 +259,9 @@ func allPipelineRunNames(cs *cli.Clients, keep, since int, ignoreRunning bool, l
 	if ignoreRunning {
 		var pipelineRunTmps = []v1beta1.PipelineRun{}
 		for _, v := range pipelineRuns.Items {
+			if v.Status.Conditions == nil {
+				continue
+			}
 			for _, v2 := range v.Status.Conditions {
 				if v2.Reason == "Running" || v2.Reason == "Pending" {
 					continue
@@ -282,6 +285,9 @@ func keepPipelineRunsByAge(pipelineRuns *v1beta1.PipelineRunList, keep int) ([]s
 	var todelete, tokeep []string
 
 	for _, run := range pipelineRuns.Items {
+		if run.Status.Conditions == nil {
+			continue
+		}
 		if time.Since(run.Status.CompletionTime.Time) > time.Duration(keep)*time.Minute {
 			todelete = append(todelete, run.Name)
 		} else {
