@@ -30,6 +30,7 @@ Manage TaskRuns
 * [tkn taskrun cancel](tkn_taskrun_cancel.md)	 - Cancel a TaskRun in a namespace
 * [tkn taskrun delete](tkn_taskrun_delete.md)	 - Delete TaskRuns in a namespace
 * [tkn taskrun describe](tkn_taskrun_describe.md)	 - Describe a TaskRun in a namespace
+* [tkn taskrun export](tkn_taskrun_export.md)	 - Export TaskRun
 * [tkn taskrun list](tkn_taskrun_list.md)	 - Lists TaskRuns in a namespace
 * [tkn taskrun logs](tkn_taskrun_logs.md)	 - Show TaskRuns logs
 

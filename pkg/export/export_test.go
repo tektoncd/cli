@@ -89,6 +89,39 @@ spec: {}
 status: {}
 `,
 		},
+		{
+			name: "export taskrun to yaml",
+			p: &v1beta1.TaskRun{
+				Spec: v1beta1.TaskRunSpec{
+					ServiceAccountName: "hellomoto",
+				},
+				TypeMeta: metav1.TypeMeta{
+					APIVersion: "tekton.dev/v1beta1",
+					Kind:       "TaskRun",
+				},
+				ObjectMeta: metav1.ObjectMeta{
+					Name: "taskrun",
+					CreationTimestamp: metav1.Time{
+						Time: time.Now(),
+					},
+					ManagedFields: []metav1.ManagedFieldsEntry{
+						{
+							Manager: "tekton.dev",
+						},
+					},
+					ResourceVersion: "1",
+					UID:             "2",
+					Namespace:       "ironman",
+				},
+			},
+			want: `apiVersion: tekton.dev/v1beta1
+kind: TaskRun
+metadata:
+  name: taskrun
+spec:
+  serviceAccountName: hellomoto
+`,
+		},
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
