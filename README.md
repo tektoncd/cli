@@ -162,7 +162,6 @@ brew install tektoncd-cli
   If you have [go](https://golang.org/) installed and you want to compile the CLI from source, you can checkout the [Git repository](https://github.com/tektoncd/cli) and run the following commands:
 
   ```shell
-  export GO111MODULE=on
   make bin/tkn
   ```
 
