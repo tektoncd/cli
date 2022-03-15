@@ -507,15 +507,6 @@ func TestTaskRunDelete(t *testing.T) {
 			want:        "6 expired Taskruns(Completed) has been deleted in namespace \"ns\", kept 1\n",
 		},
 		{
-			name:        "No mixing --keep-since and --keep",
-			command:     []string{"delete", "-f", "--keep-since", "60", "--keep", "5", "-n", "ns"},
-			dynamic:     seeds[6].dynamicClient,
-			input:       seeds[6].pipelineClient,
-			inputStream: nil,
-			wantError:   true,
-			want:        "cannot mix --keep and --keep-since options",
-		},
-		{
 			name:        "Delete all Taskruns older than 60mn associated with random Task",
 			command:     []string{"delete", "-f", "--task", "random", "--keep-since", "60", "-n", "ns"},
 			dynamic:     seeds[7].dynamicClient,
@@ -833,6 +824,64 @@ func TestTaskRunDelete_v1beta1(t *testing.T) {
 				},
 			},
 		},
+		{
+			ObjectMeta: metav1.ObjectMeta{
+				Namespace: "ns",
+				Name:      "tr0-8",
+				Labels:    map[string]string{"tekton.dev/clusterTask": "random"},
+			},
+			Spec: v1beta1.TaskRunSpec{
+				TaskRef: &v1beta1.TaskRef{
+					Name: "random",
+					Kind: v1beta1.ClusterTaskKind,
+				},
+			},
+			Status: v1beta1.TaskRunStatus{
+				TaskRunStatusFields: v1beta1.TaskRunStatusFields{
+					CompletionTime: &metav1.Time{
+						// Use real time for testing keep-since and keep together
+						Time: time.Now(),
+					},
+				},
+				Status: duckv1beta1.Status{
+					Conditions: duckv1beta1.Conditions{
+						{
+							Status: corev1.ConditionTrue,
+							Reason: v1beta1.TaskRunReasonSuccessful.String(),
+						},
+					},
+				},
+			},
+		},
+		{
+			ObjectMeta: metav1.ObjectMeta{
+				Name:      "tr0-9",
+				Namespace: "ns",
+				Labels:    map[string]string{"tekton.dev/task": "random"},
+			},
+			Spec: v1beta1.TaskRunSpec{
+				TaskRef: &v1beta1.TaskRef{
+					Name: "random",
+					Kind: v1beta1.NamespacedTaskKind,
+				},
+			},
+			Status: v1beta1.TaskRunStatus{
+				TaskRunStatusFields: v1beta1.TaskRunStatusFields{
+					CompletionTime: &metav1.Time{
+						// for testing keep and keep-since together with resource name
+						Time: time.Now(),
+					},
+				},
+				Status: duckv1beta1.Status{
+					Conditions: duckv1beta1.Conditions{
+						{
+							Status: corev1.ConditionTrue,
+							Reason: v1beta1.TaskRunReasonSuccessful.String(),
+						},
+					},
+				},
+			},
+		},
 	}
 
 	type clients struct {
@@ -841,7 +890,7 @@ func TestTaskRunDelete_v1beta1(t *testing.T) {
 	}
 
 	seeds := make([]clients, 0)
-	for i := 0; i < 9; i++ {
+	for i := 0; i < 11; i++ {
 		trs := trdata
 		cs, _ := test.SeedV1beta1TestData(t, pipelinev1beta1test.Data{TaskRuns: trs, Tasks: tasks, ClusterTasks: clustertasks, Namespaces: ns})
 		cs.Pipeline.Resources = cb.APIResourceList(version, []string{"taskrun"})
@@ -856,6 +905,8 @@ func TestTaskRunDelete_v1beta1(t *testing.T) {
 			cb.UnstructuredV1beta1TR(trdata[4], version),
 			cb.UnstructuredV1beta1TR(trdata[5], version),
 			cb.UnstructuredV1beta1TR(trdata[6], version),
+			cb.UnstructuredV1beta1TR(trdata[7], version),
+			cb.UnstructuredV1beta1TR(trdata[8], version),
 		)
 		if err != nil {
 			t.Errorf("unable to create dynamic client: %v", err)
@@ -1059,16 +1110,7 @@ func TestTaskRunDelete_v1beta1(t *testing.T) {
 			input:       seeds[6].pipelineClient,
 			inputStream: nil,
 			wantError:   false,
-			want:        "6 expired Taskruns(Completed) has been deleted in namespace \"ns\", kept 1\n",
-		},
-		{
-			name:        "No mixing --keep-since and --keep",
-			command:     []string{"delete", "-f", "--keep-since", "60", "--keep", "5", "-n", "ns"},
-			dynamic:     seeds[6].dynamicClient,
-			input:       seeds[6].pipelineClient,
-			inputStream: nil,
-			wantError:   true,
-			want:        "cannot mix --keep and --keep-since options",
+			want:        "6 expired Taskruns(Completed) has been deleted in namespace \"ns\", kept 3\n",
 		},
 		{
 			name:        "Delete all Taskruns older than 60mn associated with random Task",
@@ -1093,6 +1135,42 @@ func TestTaskRunDelete_v1beta1(t *testing.T) {
 			command:     []string{"delete", "-f", "--task", "random", "--keep-since", "1", "--all", "-n", "ns"},
 			dynamic:     seeds[6].dynamicClient,
 			input:       seeds[6].pipelineClient,
+			inputStream: nil,
+			wantError:   true,
+			want:        "--keep or --keep-since, --all and --task cannot be used together",
+		},
+		{
+			name:        "Delete all TaskRuns older than 60mn and keeping 2 TaskRuns",
+			command:     []string{"delete", "-f", "--all", "--keep-since", "60", "--keep", "2", "-n", "ns"},
+			dynamic:     seeds[9].dynamicClient,
+			input:       seeds[9].pipelineClient,
+			inputStream: nil,
+			wantError:   false,
+			want:        "7 TaskRuns(Completed) has been deleted in namespace \"ns\", kept 2\n",
+		},
+		{
+			name:        "Delete all TaskRuns older than 60mn and keeping 2 TaskRuns associated with random Task",
+			command:     []string{"delete", "-f", "--task", "random", "--keep-since", "60", "--keep", "1", "-n", "ns"},
+			dynamic:     seeds[10].dynamicClient,
+			input:       seeds[10].pipelineClient,
+			inputStream: nil,
+			wantError:   false,
+			want:        "3 TaskRuns(Completed) associated with Task \"random\" has been deleted in namespace \"ns\"\n",
+		},
+		{
+			name:        "Error --keep-since and --keep less than zero",
+			command:     []string{"delete", "-f", "--task", "random", "--keep-since", "-1", "--keep", "-1", "-n", "ns"},
+			dynamic:     seeds[10].dynamicClient,
+			input:       seeds[10].pipelineClient,
+			inputStream: nil,
+			wantError:   true,
+			want:        "keep and keep-since option should not be lower than 0",
+		},
+		{
+			name:        "Error --keep-since, --keep, --all and --task cannot be used",
+			command:     []string{"delete", "-f", "--task", "random", "--keep-since", "1", "--keep", "1", "--all", "-n", "ns"},
+			dynamic:     seeds[10].dynamicClient,
+			input:       seeds[10].pipelineClient,
 			inputStream: nil,
 			wantError:   true,
 			want:        "--keep or --keep-since, --all and --task cannot be used together",

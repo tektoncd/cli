@@ -75,6 +75,9 @@ func (o *DeleteOptions) CheckOptions(s *cli.Stream, resourceNames []string, ns s
 	if o.KeepSince > 0 {
 		keepStr = fmt.Sprintf(" except for ones created in last %d minutes", o.KeepSince)
 	}
+	if o.Keep > 0 && o.KeepSince > 0 {
+		keepStr = fmt.Sprintf(" except for ones created in last %d minutes and keeping %d %ss", o.KeepSince, o.Keep, o.Resource)
+	}
 	switch {
 	case o.DeleteAllNs:
 		fmt.Fprintf(s.Out, "Are you sure you want to delete all %ss in namespace %q%s (y/n): ", o.Resource, ns, keepStr)
