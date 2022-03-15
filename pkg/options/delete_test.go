@@ -159,6 +159,22 @@ func TestDeleteOptions(t *testing.T) {
 			stream:         &cli.Stream{In: strings.NewReader("y"), Out: os.Stdout},
 			want:           "Are you sure you want to delete all TaskRuns related to Task \"foobar\" except for ones created in last 20 minutes (y/n)",
 		},
+		{
+			name:           "Specify Keep, ParentResource, ParentResourceName and Resource",
+			opt:            &DeleteOptions{Keep: 5, ParentResource: "Task", ParentResourceName: "foobar", Resource: "TaskRun"},
+			resourcesNames: []string{},
+			wantError:      false,
+			stream:         &cli.Stream{In: strings.NewReader("y"), Out: os.Stdout},
+			want:           "Are you sure you want to delete all TaskRuns related to Task \"foobar\" keeping 5 TaskRuns (y/n)",
+		},
+		{
+			name:           "Specify KeepSince, Keep, ParentResource, ParentResourceName and Resource",
+			opt:            &DeleteOptions{KeepSince: 20, Keep: 5, ParentResource: "Task", ParentResourceName: "foobar", Resource: "TaskRun"},
+			resourcesNames: []string{},
+			wantError:      false,
+			stream:         &cli.Stream{In: strings.NewReader("y"), Out: os.Stdout},
+			want:           "Are you sure you want to delete all TaskRuns related to Task \"foobar\" except for ones created in last 20 minutes and keeping 5 TaskRuns (y/n)",
+		},
 	}
 
 	for _, tp := range testParams {

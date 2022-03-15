@@ -106,6 +106,10 @@ or
 				opts.ParentResourceName = deleteOpts.TaskName
 			}
 
+			if opts.Keep < 0 && opts.KeepSince < 0 {
+				return fmt.Errorf("keep and keep-since option should not be lower than 0")
+			}
+
 			if opts.Keep < 0 {
 				return fmt.Errorf("keep option should not be lower than 0")
 			}
@@ -116,10 +120,6 @@ or
 
 			if (opts.Keep > 0 || opts.KeepSince > 0) && opts.ParentResourceName == "" {
 				opts.DeleteAllNs = true
-			}
-
-			if opts.Keep > 0 && opts.KeepSince > 0 {
-				return fmt.Errorf("cannot mix --keep and --keep-since options")
 			}
 
 			if (opts.Keep > 0 || opts.KeepSince > 0) && opts.DeleteAllNs && opts.ParentResourceName != "" {
@@ -199,7 +199,7 @@ func deleteTaskRuns(s *cli.Stream, p cli.Params, trNames []string, opts *options
 		numberOfDeletedTr = len(trToDelete)
 
 		// Delete the TaskRuns associated with a Task or ClusterTask
-		d.WithRelated("TaskRun", taskRunLister(p, opts.Keep, opts.KeepSince, opts.ParentResource, cs), func(taskRunName string) error {
+		d.WithRelated("TaskRun", taskRunLister(p, opts.Keep, opts.KeepSince, opts.ParentResource, cs, opts.IgnoreRunning), func(taskRunName string) error {
 			return actions.Delete(trGroupResource, cs.Dynamic, cs.Tekton.Discovery(), taskRunName, p.Namespace(), metav1.DeleteOptions{})
 		})
 		d.DeleteRelated(s, []string{opts.ParentResourceName})
@@ -208,6 +208,8 @@ func deleteTaskRuns(s *cli.Stream, p cli.Params, trNames []string, opts *options
 	if !opts.DeleteAllNs {
 		if d.Errors() == nil {
 			switch {
+			case opts.Keep > 0 && opts.KeepSince > 0 && !opts.IgnoreRunning:
+				fmt.Fprintf(s.Out, "%d TaskRuns associated with %s %q has been deleted in namespace %q\n", numberOfDeletedTr, opts.ParentResource, opts.ParentResourceName, p.Namespace())
 			case opts.Keep > 0 && !opts.IgnoreRunning:
 				// Should only occur in case of --task flag and --keep being used together
 				fmt.Fprintf(s.Out, "All but %d TaskRuns associated with %s %q deleted in namespace %q\n", opts.Keep, opts.ParentResource, opts.ParentResourceName, p.Namespace())
@@ -215,6 +217,8 @@ func deleteTaskRuns(s *cli.Stream, p cli.Params, trNames []string, opts *options
 				fmt.Fprintf(s.Out, "All but %d expired TaskRuns associated with %q %q deleted in namespace %q\n", numberOfDeletedTr, opts.ParentResource, opts.ParentResourceName, p.Namespace())
 			case opts.ParentResourceName != "" && !opts.IgnoreRunning:
 				fmt.Fprintf(s.Out, "All TaskRuns associated with %s %q deleted in namespace %q\n", opts.ParentResource, opts.ParentResourceName, p.Namespace())
+			case opts.Keep > 0 && opts.KeepSince > 0:
+				fmt.Fprintf(s.Out, "%d TaskRuns(Completed) associated with %s %q has been deleted in namespace %q\n", numberOfDeletedTr, opts.ParentResource, opts.ParentResourceName, p.Namespace())
 			case opts.Keep > 0:
 				// Should only occur in case of --task flag and --keep being used together
 				fmt.Fprintf(s.Out, "All but %d TaskRuns(Completed) associated with %s %q deleted in namespace %q\n", opts.Keep, opts.ParentResource, opts.ParentResourceName, p.Namespace())
@@ -229,10 +233,14 @@ func deleteTaskRuns(s *cli.Stream, p cli.Params, trNames []string, opts *options
 	} else if opts.DeleteAllNs {
 		if d.Errors() == nil {
 			switch {
+			case opts.Keep > 0 && opts.KeepSince > 0 && !opts.IgnoreRunning:
+				fmt.Fprintf(s.Out, "%d TaskRuns has been deleted in namespace %q, kept %d\n", numberOfDeletedTr, p.Namespace(), numberOfKeptTr)
 			case opts.Keep > 0 && !opts.IgnoreRunning:
 				fmt.Fprintf(s.Out, "All but %d TaskRuns deleted in namespace %q\n", opts.Keep, p.Namespace())
 			case opts.KeepSince > 0 && !opts.IgnoreRunning:
 				fmt.Fprintf(s.Out, "%d expired Taskruns has been deleted in namespace %q, kept %d\n", numberOfDeletedTr, p.Namespace(), numberOfKeptTr)
+			case opts.Keep > 0 && opts.KeepSince > 0:
+				fmt.Fprintf(s.Out, "%d TaskRuns(Completed) has been deleted in namespace %q, kept %d\n", numberOfDeletedTr, p.Namespace(), numberOfKeptTr)
 			case opts.Keep > 0:
 				fmt.Fprintf(s.Out, "All but %d TaskRuns(Completed) deleted in namespace %q\n", opts.Keep, p.Namespace())
 			case opts.KeepSince > 0:
@@ -247,7 +255,7 @@ func deleteTaskRuns(s *cli.Stream, p cli.Params, trNames []string, opts *options
 	return d.Errors()
 }
 
-func taskRunLister(p cli.Params, keep, since int, kind string, cs *cli.Clients) func(string) ([]string, error) {
+func taskRunLister(p cli.Params, keep, since int, kind string, cs *cli.Clients, ignoreRunning bool) func(string) ([]string, error) {
 	return func(taskName string) ([]string, error) {
 		label := "task"
 		if kind == "ClusterTask" {
@@ -265,9 +273,12 @@ func taskRunLister(p cli.Params, keep, since int, kind string, cs *cli.Clients) 
 			trs.Items = taskpkg.FilterByRef(trs.Items, string(v1beta1.NamespacedTaskKind))
 		}
 		var todelete []string
-		if since > 0 {
-			todelete, _ = keepTaskRunsByAge(trs, since)
-		} else {
+		switch {
+		case since > 0 && keep > 0:
+			todelete, _ = keepTaskRunsByAgeAndNumber(trs, since, keep, ignoreRunning)
+		case since > 0:
+			todelete, _ = keepTaskRunsByAge(trs, since, ignoreRunning)
+		default:
 			todelete, _ = keepTaskRunsByNumber(trs, keep)
 		}
 		return todelete, nil
@@ -297,22 +308,28 @@ func allTaskRunNames(cs *cli.Clients, keep, since int, ignoreRunning bool, label
 		}
 		taskRuns.Items = taskRunTmp
 	}
-
-	if since > 0 {
-		todelete, tokeep = keepTaskRunsByAge(taskRuns, since)
-	} else {
+	switch {
+	case since > 0 && keep > 0:
+		todelete, tokeep = keepTaskRunsByAgeAndNumber(taskRuns, since, keep, ignoreRunning)
+	case since > 0:
+		todelete, tokeep = keepTaskRunsByAge(taskRuns, since, ignoreRunning)
+	default:
 		todelete, tokeep = keepTaskRunsByNumber(taskRuns, keep)
 	}
 	return todelete, tokeep, nil
 }
 
-func keepTaskRunsByAge(taskRuns *v1beta1.TaskRunList, since int) ([]string, []string) {
+func keepTaskRunsByAge(taskRuns *v1beta1.TaskRunList, since int, ignoreRunning bool) ([]string, []string) {
 	var todelete, tokeep []string
 
 	for _, run := range taskRuns.Items {
-		if time.Since(run.Status.CompletionTime.Time) > time.Duration(since)*time.Minute {
+		switch {
+		// for TaskRuns in running status
+		case !ignoreRunning && run.Status.CompletionTime == nil:
 			todelete = append(todelete, run.Name)
-		} else {
+		case time.Since(run.Status.CompletionTime.Time) > time.Duration(since)*time.Minute:
+			todelete = append(todelete, run.Name)
+		default:
 			tokeep = append(tokeep, run.Name)
 		}
 	}
@@ -335,6 +352,17 @@ func keepTaskRunsByNumber(taskRuns *v1beta1.TaskRunList, keep int) ([]string, []
 			continue
 		}
 		todelete = append(todelete, tr.Name)
+	}
+	return todelete, tokeep
+}
+
+func keepTaskRunsByAgeAndNumber(taskRuns *v1beta1.TaskRunList, since int, keep int, ignoreRunning bool) ([]string, []string) {
+	var todelete, tokeep []string
+
+	todelete, tokeep = keepTaskRunsByAge(taskRuns, since, ignoreRunning)
+
+	if len(tokeep) != keep {
+		todelete, tokeep = keepTaskRunsByNumber(taskRuns, keep)
 	}
 	return todelete, tokeep
 }
