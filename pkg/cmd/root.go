@@ -35,6 +35,7 @@ import (
 	"github.com/tektoncd/cli/pkg/cmd/triggerbinding"
 	"github.com/tektoncd/cli/pkg/cmd/triggertemplate"
 	"github.com/tektoncd/cli/pkg/cmd/version"
+	"github.com/tektoncd/cli/pkg/plugins"
 	"github.com/tektoncd/cli/pkg/suggestion"
 	hubApp "github.com/tektoncd/hub/api/pkg/cli/app"
 	hub "github.com/tektoncd/hub/api/pkg/cli/cmd"
@@ -54,7 +55,12 @@ Available Commands:{{range .Commands}}{{if (eq .Annotations.commandType "main")}
   {{rpad .Name .NamePadding }} {{.Short}}{{end}}{{end}}{{end}}{{if HasUtilitySubCommands .}}
 
 Other Commands:{{range .Commands}}{{if (eq .Annotations.commandType "utility")}}
-  {{rpad .Name .NamePadding }} {{.Short}}{{end}}{{end}}{{end}}{{end}}{{if .HasAvailableLocalFlags}}
+  {{rpad .Name .NamePadding }} {{.Short}}{{end}}{{end}}{{end}}{{end}}{{if gt (len pluginList) 0}}
+
+Available Plugins:
+
+{{- range pluginList}}
+  {{.}}{{end}}{{end}}{{if .HasAvailableLocalFlags}}
 
 Flags:
 {{.LocalFlags.FlagUsages | trimTrailingWhitespaces}}{{end}}{{if .HasAvailableInheritedFlags}}
@@ -73,7 +79,7 @@ func Root(p cli.Params) *cobra.Command {
 	// azure library adding --azure-container-registry-config
 	pflag.CommandLine = pflag.NewFlagSet(os.Args[0], pflag.ExitOnError)
 
-	var cmd = &cobra.Command{
+	cmd := &cobra.Command{
 		Use:          "tkn",
 		Short:        "CLI for tekton pipelines",
 		Long:         ``,
@@ -101,15 +107,21 @@ func Root(p cli.Params) *cobra.Command {
 		version.Command(p),
 		hub.Root(hubApp.New()),
 	)
-
 	visitCommands(cmd, reconfigureCmdWithSubcmd)
+	addPluginsToHelp()
 
 	return cmd
+}
+
+func addPluginsToHelp() {
+	pluginList := plugins.GetAllTknPluginFromPaths()
+	cobra.AddTemplateFunc("pluginList", func() []string { return pluginList })
 }
 
 func hasMainSubCommands(cmd *cobra.Command) bool {
 	return len(subCommands(cmd, "main")) > 0
 }
+
 func hasUtilitySubCommands(cmd *cobra.Command) bool {
 	return len(subCommands(cmd, "utility")) > 0
 }
