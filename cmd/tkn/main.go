@@ -17,20 +17,12 @@ package main
 import (
 	"fmt"
 	"os"
-	"os/exec"
-	"path/filepath"
 	"syscall"
 
-	homedir "github.com/mitchellh/go-homedir"
-	"github.com/pkg/errors"
 	"github.com/tektoncd/cli/pkg/cli"
 	"github.com/tektoncd/cli/pkg/cmd"
+	"github.com/tektoncd/cli/pkg/plugins"
 	_ "k8s.io/client-go/plugin/pkg/client/auth"
-)
-
-const (
-	pluginDirEnv = "TKN_PLUGINS_DIR"
-	pluginDir    = "~/.config/tkn/plugins"
 )
 
 func main() {
@@ -40,21 +32,13 @@ func main() {
 	args := os.Args[1:]
 	cmd, _, _ := tkn.Find(args)
 	if cmd != nil && cmd == tkn && len(args) > 0 {
-		pluginCmd := "tkn-" + os.Args[1]
-		pluginDir, err := getPluginDir()
+		exCmd, err := plugins.FindPlugin(os.Args[1])
+		// if we can't find command then execute the normal tkn command.
 		if err != nil {
-			fmt.Fprintf(os.Stderr, "Error getting plugin folder: %v", err)
-		}
-		exCmd, err := findBinaryPluginDir(pluginDir, pluginCmd)
-		if err != nil {
-			// If we can't find the plugin in the plugin dir, try in the user
-			// PATH
-			exCmd, err = exec.LookPath(pluginCmd)
-			if err != nil {
-				goto CoreTkn
-			}
+			goto CoreTkn
 		}
 
+		// if we have found the plugin then sysexec it by replacing current process.
 		if err := syscall.Exec(exCmd, append([]string{exCmd}, os.Args[2:]...), os.Environ()); err != nil {
 			fmt.Fprintf(os.Stderr, "Command finished with error: %v", err)
 			os.Exit(127)
@@ -66,32 +50,4 @@ CoreTkn:
 	if err := tkn.Execute(); err != nil {
 		os.Exit(1)
 	}
-}
-
-func getPluginDir() (string, error) {
-	dir := os.Getenv(pluginDirEnv)
-	// if TKN_PLUGINS_DIR is set, follow it
-	if dir != "" {
-		return dir, nil
-	}
-	// Respect XDG_CONFIG_HOME if set
-	if xdgHome := os.Getenv("XDG_CONFIG_HOME"); xdgHome != "" {
-		return filepath.Join(xdgHome, "tkn", "plugins"), nil
-	}
-	// Fallback to default pluginDir (~/.config/tkn/plugins)
-	return homedir.Expand(pluginDir)
-}
-
-// Find a binary in Plugin Directory
-func findBinaryPluginDir(dir, cmd string) (string, error) {
-	path := filepath.Join(dir, cmd)
-	_, err := os.Stat(path)
-	if err == nil {
-		// Found in dir
-		return path, nil
-	}
-	if !os.IsNotExist(err) {
-		return "", errors.Wrap(err, fmt.Sprintf("i/o error while reading %s", path))
-	}
-	return "", err
 }

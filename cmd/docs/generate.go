@@ -132,6 +132,11 @@ func main() {
 	if err != nil {
 		fmt.Fprintln(os.Stderr, err.Error())
 	}
+	// Override PATH to make sure we don't get the plugins in PATH
+	oldEnv := os.Getenv("PATH")
+	os.Setenv("PATH", "")
+	defer os.Setenv("PATH", oldEnv)
+
 	fmt.Printf("Project root: %s\n", opts.source)
 	fmt.Printf("Generating yaml files into %s\n", opts.target)
 	if err := generateCliYaml(opts); err != nil {

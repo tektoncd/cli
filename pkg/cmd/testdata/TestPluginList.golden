@@ -1,0 +1,33 @@
+CLI for tekton pipelines
+
+Usage:
+tkn [flags]
+tkn [command]
+
+Available Commands:
+  bundle                Manage Tekton Bundles
+  chain                 Manage Chains
+  clustertask           Manage ClusterTasks
+  clustertriggerbinding Manage ClusterTriggerBindings
+  condition             Manage Conditions
+  eventlistener         Manage EventListeners
+  hub                   Interact with tekton hub
+  pipeline              Manage pipelines
+  pipelinerun           Manage PipelineRuns
+  resource              Manage pipeline resources
+  task                  Manage Tasks
+  taskrun               Manage TaskRuns
+  triggerbinding        Manage TriggerBindings
+  triggertemplate       Manage TriggerTemplates
+
+Other Commands:
+  completion            Prints shell completion scripts
+  version               Prints version information
+
+Available Plugins:
+  exec
+
+Flags:
+  -h, --help   help for tkn
+
+Use "tkn [command] --help" for more information about a command.

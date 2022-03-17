@@ -15,12 +15,18 @@
 package cmd
 
 import (
+	"fmt"
+	"io/ioutil"
 	"strings"
 	"testing"
 
 	"github.com/spf13/pflag"
 	"github.com/tektoncd/cli/pkg/test"
 	tu "github.com/tektoncd/cli/pkg/test"
+	"gotest.tools/v3/assert"
+	"gotest.tools/v3/env"
+	"gotest.tools/v3/fs"
+	"gotest.tools/v3/golden"
 )
 
 func TestCommand_no_global_flags(t *testing.T) {
@@ -59,4 +65,20 @@ func TestSubCommand_suggest(t *testing.T) {
 	}
 	expected := "unknown command \"des\" for \"tkn pipeline\"\n\nDid you mean this?\n\tdescribe\n"
 	tu.AssertOutput(t, expected, err.Error())
+}
+
+func TestPluginList(t *testing.T) {
+	nd := fs.NewDir(t, "TestPluginList")
+	defer nd.Remove()
+	// nolint: gosec
+	err := ioutil.WriteFile(nd.Join("tkn-exec"), []byte("exec"), 0o700)
+	assert.NilError(t, err)
+	err = ioutil.WriteFile(nd.Join("tkn-nonexec"), []byte("nonexec"), 0o600)
+	assert.NilError(t, err)
+	defer env.Patch(t, "PATH", nd.Path()+":/non/existing/path")()
+	p := &test.Params{}
+	cmd := Root(p)
+	out, err := test.ExecuteCommand(cmd, "help")
+	assert.NilError(t, err)
+	golden.Assert(t, out, fmt.Sprintf("%s.golden", t.Name()))
 }
