@@ -259,7 +259,7 @@ func TestGetVersions(t *testing.T) {
 	chainsConfigMap := getConfigMapData("chains-info", "v0.8.0", map[string]string{"app.kubernetes.io/part-of": "tekton-chains"})
 	triggersConfigMap := getConfigMapData("triggers-info", "v0.5.0", map[string]string{"app.kubernetes.io/part-of": "tekton-pipelines"})
 	dashboardConfigMap := getConfigMapData("dashboard-info", "v0.7.0", map[string]string{"app.kubernetes.io/part-of": "tekton-pipelines"})
-	operatorConfigMap := getConfigMapData("operators-info", "v0.54.0", map[string]string{"app.kubernetes.io/part-of": "tekton-pipelines"})
+	operatorConfigMap := getConfigMapData("tekton-operator-info", "v0.54.0", map[string]string{"app.kubernetes.io/part-of": "tekton-pipelines"})
 
 	testParams := []struct {
 		name                  string
