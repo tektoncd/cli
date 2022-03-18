@@ -42,6 +42,7 @@ func Command(p cli.Params) *cobra.Command {
 		cancelCommand(p),
 		deleteCommand(p),
 		exportCommand(p),
+		watchCommand(p),
 	)
 
 	return c

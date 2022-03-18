@@ -33,4 +33,5 @@ Manage PipelineRuns
 * [tkn pipelinerun export](tkn_pipelinerun_export.md)	 - Export PipelineRun
 * [tkn pipelinerun list](tkn_pipelinerun_list.md)	 - Lists PipelineRuns in a namespace
 * [tkn pipelinerun logs](tkn_pipelinerun_logs.md)	 - Show the logs of a PipelineRun
+* [tkn pipelinerun watch](tkn_pipelinerun_watch.md)	 - Watch a PipelineRun until it finishes
 
