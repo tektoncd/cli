@@ -37,7 +37,7 @@ const (
 	pipelinesInfo                  string = "pipelines-info"
 	triggersInfo                   string = "triggers-info"
 	dashboardInfo                  string = "dashboard-info"
-	operatorInfo                   string = "operators-info"
+	operatorInfo                   string = "tekton-operator-info"
 )
 
 var defaultNamespaces = []string{"tekton-pipelines", "openshift-pipelines", "tekton-chains", "tekton-operator", "openshift-operators"}

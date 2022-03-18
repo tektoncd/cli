@@ -430,14 +430,14 @@ func TestGetOperatorVersionViaConfigMap(t *testing.T) {
 		{
 			name:      "get operator version from configmap in tekton-pipelines namespace",
 			namespace: "tekton-pipelines",
-			configMap: getConfigMapData("operators-info", "main", map[string]string{"app.kubernetes.io/part-of": "tekton-pipelines"}),
+			configMap: getConfigMapData("tekton-operator-info", "main", map[string]string{"app.kubernetes.io/part-of": "tekton-pipelines"}),
 			want:      "main",
 		},
 		{
 			name:                  "get operator version from configmap present in different namespace other than default namespaces",
 			namespace:             "test",
 			userProvidedNamespace: "test",
-			configMap:             getConfigMapData("operators-info", "test", map[string]string{"app.kubernetes.io/part-of": "tekton-pipelines"}),
+			configMap:             getConfigMapData("tekton-operator-info", "test", map[string]string{"app.kubernetes.io/part-of": "tekton-pipelines"}),
 			want:                  "test",
 		},
 	}
