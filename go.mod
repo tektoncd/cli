@@ -39,7 +39,7 @@ require (
 	github.com/mitchellh/mapstructure v1.4.3
 	github.com/pierrec/lz4 v2.6.1+incompatible
 	github.com/pkg/errors v0.9.1
-	github.com/spf13/cobra v1.3.0
+	github.com/spf13/cobra v1.4.0
 	github.com/spf13/pflag v1.0.5
 	github.com/tektoncd/chains v0.8.0
 	github.com/tektoncd/hub v1.7.0
