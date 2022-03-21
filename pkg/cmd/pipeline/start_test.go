@@ -151,7 +151,6 @@ func TestPipelineStart_ExecuteCommand(t *testing.T) {
 
 	pipeline := []*v1alpha1.Pipeline{
 		{
-
 			ObjectMeta: metav1.ObjectMeta{
 				Name:      "test-pipeline",
 				Namespace: "ns",
@@ -425,7 +424,8 @@ func TestPipelineStart_ExecuteCommand(t *testing.T) {
 		},
 		{
 			name: "Start pipeline with showlog flag false",
-			command: []string{"start", "test-pipeline",
+			command: []string{
+				"start", "test-pipeline",
 				"-s=svc1",
 				"-r=source=scaffold-git",
 				"-p=pipeline-param=value1",
@@ -441,7 +441,8 @@ func TestPipelineStart_ExecuteCommand(t *testing.T) {
 		},
 		{
 			name: "Start pipeline with different context",
-			command: []string{"start", "test-pipeline",
+			command: []string{
+				"start", "test-pipeline",
 				"--context=GummyBear",
 				"-s=svc1",
 				"-r=source=scaffold-git",
@@ -458,7 +459,8 @@ func TestPipelineStart_ExecuteCommand(t *testing.T) {
 		},
 		{
 			name: "Start pipeline with invalid workspace name",
-			command: []string{"start", "test-pipeline",
+			command: []string{
+				"start", "test-pipeline",
 				"-s=svc1",
 				"-r=source=scaffold-git",
 				"-p=pipeline-param=value1",
@@ -475,7 +477,8 @@ func TestPipelineStart_ExecuteCommand(t *testing.T) {
 		},
 		{
 			name: "Wrong parameter name",
-			command: []string{"start", "test-pipeline",
+			command: []string{
+				"start", "test-pipeline",
 				"-s=svc1",
 				"-r=git-repo=scaffold-git",
 				"-p=rev-parm=revision2",
@@ -490,7 +493,8 @@ func TestPipelineStart_ExecuteCommand(t *testing.T) {
 		},
 		{
 			name: "Invalid resource parameter format",
-			command: []string{"start", "test-pipeline",
+			command: []string{
+				"start", "test-pipeline",
 				"-s=svc1",
 				"-r=git-reposcaffold-git",
 				"-p=pipeline-param=value",
@@ -506,7 +510,8 @@ func TestPipelineStart_ExecuteCommand(t *testing.T) {
 		},
 		{
 			name: "Invalid parameter format",
-			command: []string{"start", "test-pipeline",
+			command: []string{
+				"start", "test-pipeline",
 				"-s=svc1",
 				"-r=git-repo=scaffold-git",
 				"-p=rev-paramrevision2",
@@ -521,7 +526,8 @@ func TestPipelineStart_ExecuteCommand(t *testing.T) {
 		},
 		{
 			name: "Invalid label parameter format",
-			command: []string{"start", "test-pipeline",
+			command: []string{
+				"start", "test-pipeline",
 				"-s=svc1",
 				"-r=git-repo=scaffold-git",
 				"-p=rev-param=revision2",
@@ -538,7 +544,8 @@ func TestPipelineStart_ExecuteCommand(t *testing.T) {
 		},
 		{
 			name: "Invalid service account parameter format",
-			command: []string{"start", "test-pipeline",
+			command: []string{
+				"start", "test-pipeline",
 				"-s=svc1",
 				"-r=git-repo=scaffold-git",
 				"-p=pipeline-param=value1",
@@ -553,7 +560,8 @@ func TestPipelineStart_ExecuteCommand(t *testing.T) {
 		},
 		{
 			name: "List error with last flag",
-			command: []string{"start", "test-pipeline",
+			command: []string{
+				"start", "test-pipeline",
 				"-s=svc1",
 				"-r=git-repo=scaffold-git",
 				"-p=rev-param=revision2",
@@ -568,7 +576,8 @@ func TestPipelineStart_ExecuteCommand(t *testing.T) {
 		},
 		{
 			name: "Create error",
-			command: []string{"start", "test-pipeline",
+			command: []string{
+				"start", "test-pipeline",
 				"-s=svc1",
 				"-n", "ns",
 			},
@@ -579,7 +588,8 @@ func TestPipelineStart_ExecuteCommand(t *testing.T) {
 		},
 		{
 			name: "No pipelineruns with last flag",
-			command: []string{"start", "test-pipeline",
+			command: []string{
+				"start", "test-pipeline",
 				"-s=svc1",
 				"-r=git-repo=scaffold-git",
 				"-p=rev-param=revision2",
@@ -595,7 +605,8 @@ func TestPipelineStart_ExecuteCommand(t *testing.T) {
 		},
 		{
 			name: "Dry Run with invalid output",
-			command: []string{"start", "test-pipeline",
+			command: []string{
+				"start", "test-pipeline",
 				"-s=svc1",
 				"-r=source=scaffold-git",
 				"-p=pipeline-param=value1",
@@ -611,7 +622,8 @@ func TestPipelineStart_ExecuteCommand(t *testing.T) {
 		},
 		{
 			name: "Dry Run with only --dry-run specified",
-			command: []string{"start", "test-pipeline",
+			command: []string{
+				"start", "test-pipeline",
 				"-s=svc1",
 				"-r=source=scaffold-git",
 				"-p=pipeline-param=value1",
@@ -627,7 +639,8 @@ func TestPipelineStart_ExecuteCommand(t *testing.T) {
 		},
 		{
 			name: "Dry Run with --use-param-defaults and specified params",
-			command: []string{"start", "test-pipeline",
+			command: []string{
+				"start", "test-pipeline",
 				"-s=svc1",
 				"-r=source=scaffold-git",
 				"-p=pipeline-param=value1",
@@ -643,7 +656,8 @@ func TestPipelineStart_ExecuteCommand(t *testing.T) {
 		},
 		{
 			name: "Dry Run with --use-param-defaults and no specified params",
-			command: []string{"start", "test-pipeline",
+			command: []string{
+				"start", "test-pipeline",
 				"-s=svc1",
 				"-r=source=scaffold-git",
 				"--use-param-defaults",
@@ -658,7 +672,8 @@ func TestPipelineStart_ExecuteCommand(t *testing.T) {
 		},
 		{
 			name: "Dry Run with --use-param-defaults, --last and --use-pipelinerun",
-			command: []string{"start", "test-pipeline",
+			command: []string{
+				"start", "test-pipeline",
 				"-s=svc1",
 				"-r=source=scaffold-git",
 				"--use-param-defaults",
@@ -675,7 +690,8 @@ func TestPipelineStart_ExecuteCommand(t *testing.T) {
 		},
 		{
 			name: "Dry Run with --use-param-defaults and --use-pipelinerun",
-			command: []string{"start", "test-pipeline",
+			command: []string{
+				"start", "test-pipeline",
 				"-s=svc1",
 				"-r=source=scaffold-git",
 				"--use-param-defaults",
@@ -691,7 +707,8 @@ func TestPipelineStart_ExecuteCommand(t *testing.T) {
 		},
 		{
 			name: "Dry Run with --use-param-defaults and --last",
-			command: []string{"start", "test-pipeline",
+			command: []string{
+				"start", "test-pipeline",
 				"-s=svc1",
 				"-r=source=scaffold-git",
 				"--use-param-defaults",
@@ -707,7 +724,8 @@ func TestPipelineStart_ExecuteCommand(t *testing.T) {
 		},
 		{
 			name: "Dry Run with output=json",
-			command: []string{"start", "test-pipeline",
+			command: []string{
+				"start", "test-pipeline",
 				"-s=svc1",
 				"-r=source=scaffold-git",
 				"-p=pipeline-param=value1",
@@ -723,8 +741,27 @@ func TestPipelineStart_ExecuteCommand(t *testing.T) {
 			goldenFile: true,
 		},
 		{
+			name: "Dry Run with output=name",
+			command: []string{
+				"start", "test-pipeline",
+				"-s=svc1",
+				"-r=source=scaffold-git",
+				"-p=pipeline-param=value1",
+				"-p=rev-param=value2",
+				"-l=jemange=desfrites",
+				"-n", "ns",
+				"--dry-run",
+				"--output=name",
+			},
+			namespace:  "",
+			input:      c2,
+			wantError:  false,
+			goldenFile: true,
+		},
+		{
 			name: "Dry Run using --filename v1alpha1",
-			command: []string{"start", "-f", "./testdata/pipeline-v1alpha1.yaml",
+			command: []string{
+				"start", "-f", "./testdata/pipeline-v1alpha1.yaml",
 				"-r=source-repo=scaffold-git",
 				"-r=web-image=imageres",
 				"-n", "ns",
@@ -737,7 +774,8 @@ func TestPipelineStart_ExecuteCommand(t *testing.T) {
 		},
 		{
 			name: "Dry Run with output=json -f v1alpha1",
-			command: []string{"start", "-f", "./testdata/pipeline-v1alpha1.yaml",
+			command: []string{
+				"start", "-f", "./testdata/pipeline-v1alpha1.yaml",
 				"-r=source-repo=scaffold-git",
 				"-r=web-image=imageres",
 				"-p=pipeline-param=value1",
@@ -753,7 +791,8 @@ func TestPipelineStart_ExecuteCommand(t *testing.T) {
 		},
 		{
 			name: "Start pipeline using --filename v1alpha1",
-			command: []string{"start", "-f", "./testdata/pipeline-v1alpha1.yaml",
+			command: []string{
+				"start", "-f", "./testdata/pipeline-v1alpha1.yaml",
 				"-r=source-repo=scaffold-git",
 				"-r=web-image=imageres",
 				"-n", "ns",
@@ -765,7 +804,8 @@ func TestPipelineStart_ExecuteCommand(t *testing.T) {
 		},
 		{
 			name: "Start pipeline using invalid --filename v1alpha1",
-			command: []string{"start", "-f", "./testdata/pipeline-invalid-v1alpha1.yaml",
+			command: []string{
+				"start", "-f", "./testdata/pipeline-invalid-v1alpha1.yaml",
 				"-r=source-repo=scaffold-git",
 				"-r=web-image=imageres",
 				"-n", "ns",
@@ -777,7 +817,8 @@ func TestPipelineStart_ExecuteCommand(t *testing.T) {
 		},
 		{
 			name: "Error from using --last with --filename",
-			command: []string{"start", "-f", "./testdata/pipeline.yaml",
+			command: []string{
+				"start", "-f", "./testdata/pipeline.yaml",
 				"-r=source-repo=scaffold-git",
 				"-r=web-image=imageres",
 				"-n", "ns",
@@ -790,7 +831,8 @@ func TestPipelineStart_ExecuteCommand(t *testing.T) {
 		},
 		{
 			name: "Dry Run with --timeout specified",
-			command: []string{"start", "test-pipeline",
+			command: []string{
+				"start", "test-pipeline",
 				"-s=svc1",
 				"-r=source=scaffold-git",
 				"-p=pipeline-param=value1",
@@ -1119,7 +1161,8 @@ func TestPipelineV1beta1Start_ExecuteCommand(t *testing.T) {
 		},
 		{
 			name: "Start pipeline with showlog flag false",
-			command: []string{"start", "test-pipeline",
+			command: []string{
+				"start", "test-pipeline",
 				"-s=svc1",
 				"-r=source=scaffold-git",
 				"-p=pipeline-param=value1",
@@ -1135,7 +1178,8 @@ func TestPipelineV1beta1Start_ExecuteCommand(t *testing.T) {
 		},
 		{
 			name: "Start pipeline with invalid workspace name",
-			command: []string{"start", "test-pipeline",
+			command: []string{
+				"start", "test-pipeline",
 				"-s=svc1",
 				"-r=source=scaffold-git",
 				"-p=pipeline-param=value1",
@@ -1152,7 +1196,8 @@ func TestPipelineV1beta1Start_ExecuteCommand(t *testing.T) {
 		},
 		{
 			name: "Wrong parameter name",
-			command: []string{"start", "test-pipeline",
+			command: []string{
+				"start", "test-pipeline",
 				"-s=svc1",
 				"-r=git-repo=scaffold-git",
 				"-p=pipeline-param=value1",
@@ -1167,7 +1212,8 @@ func TestPipelineV1beta1Start_ExecuteCommand(t *testing.T) {
 		},
 		{
 			name: "Invalid resource parameter format",
-			command: []string{"start", "test-pipeline",
+			command: []string{
+				"start", "test-pipeline",
 				"-s=svc1",
 				"-r=git-reposcaffold-git",
 				"-p=pipeline-param=value",
@@ -1183,7 +1229,8 @@ func TestPipelineV1beta1Start_ExecuteCommand(t *testing.T) {
 		},
 		{
 			name: "Invalid parameter format",
-			command: []string{"start", "test-pipeline",
+			command: []string{
+				"start", "test-pipeline",
 				"-s=svc1",
 				"-r=git-repo=scaffold-git",
 				"-p=rev-paramrevision2",
@@ -1198,7 +1245,8 @@ func TestPipelineV1beta1Start_ExecuteCommand(t *testing.T) {
 		},
 		{
 			name: "Invalid label parameter format",
-			command: []string{"start", "test-pipeline",
+			command: []string{
+				"start", "test-pipeline",
 				"-s=svc1",
 				"-r=git-repo=scaffold-git",
 				"-p=pipeline-param=value",
@@ -1215,7 +1263,8 @@ func TestPipelineV1beta1Start_ExecuteCommand(t *testing.T) {
 		},
 		{
 			name: "Invalid service account parameter format",
-			command: []string{"start", "test-pipeline",
+			command: []string{
+				"start", "test-pipeline",
 				"-s=svc1",
 				"-r=git-repo=scaffold-git",
 				"-p=pipeline-param=value",
@@ -1230,7 +1279,8 @@ func TestPipelineV1beta1Start_ExecuteCommand(t *testing.T) {
 		},
 		{
 			name: "List error with last flag",
-			command: []string{"start", "test-pipeline",
+			command: []string{
+				"start", "test-pipeline",
 				"-s=svc1",
 				"-r=git-repo=scaffold-git",
 				"-p=rev-param=revision2",
@@ -1245,7 +1295,8 @@ func TestPipelineV1beta1Start_ExecuteCommand(t *testing.T) {
 		},
 		{
 			name: "Create error",
-			command: []string{"start", "test-pipeline",
+			command: []string{
+				"start", "test-pipeline",
 				"-s=svc1",
 				"-n", "ns",
 			},
@@ -1256,7 +1307,8 @@ func TestPipelineV1beta1Start_ExecuteCommand(t *testing.T) {
 		},
 		{
 			name: "No pipelineruns with last flag",
-			command: []string{"start", "test-pipeline",
+			command: []string{
+				"start", "test-pipeline",
 				"-s=svc1",
 				"-r=git-repo=scaffold-git",
 				"-p=rev-param=revision2",
@@ -1272,7 +1324,8 @@ func TestPipelineV1beta1Start_ExecuteCommand(t *testing.T) {
 		},
 		{
 			name: "Dry Run with invalid output",
-			command: []string{"start", "test-pipeline",
+			command: []string{
+				"start", "test-pipeline",
 				"-s=svc1",
 				"-r=source=scaffold-git",
 				"-p=pipeline-param=value1",
@@ -1289,7 +1342,8 @@ func TestPipelineV1beta1Start_ExecuteCommand(t *testing.T) {
 		},
 		{
 			name: "Dry Run with only --dry-run specified",
-			command: []string{"start", "test-pipeline",
+			command: []string{
+				"start", "test-pipeline",
 				"-s=svc1",
 				"-r=source=scaffold-git",
 				"-p=pipeline-param=value1",
@@ -1305,7 +1359,8 @@ func TestPipelineV1beta1Start_ExecuteCommand(t *testing.T) {
 		},
 		{
 			name: "Dry Run with --use-param-defaults and specified params",
-			command: []string{"start", "test-pipeline",
+			command: []string{
+				"start", "test-pipeline",
 				"-s=svc1",
 				"-r=source=scaffold-git",
 				"-p=pipeline-param=value1",
@@ -1321,7 +1376,8 @@ func TestPipelineV1beta1Start_ExecuteCommand(t *testing.T) {
 		},
 		{
 			name: "Dry Run with --use-param-defaults and no specified params",
-			command: []string{"start", "test-pipeline",
+			command: []string{
+				"start", "test-pipeline",
 				"-s=svc1",
 				"-r=source=scaffold-git",
 				"--use-param-defaults",
@@ -1336,7 +1392,8 @@ func TestPipelineV1beta1Start_ExecuteCommand(t *testing.T) {
 		},
 		{
 			name: "Dry Run with --use-param-defaults, --last and --use-pipelinerun",
-			command: []string{"start", "test-pipeline",
+			command: []string{
+				"start", "test-pipeline",
 				"-s=svc1",
 				"-r=source=scaffold-git",
 				"--use-param-defaults",
@@ -1353,7 +1410,8 @@ func TestPipelineV1beta1Start_ExecuteCommand(t *testing.T) {
 		},
 		{
 			name: "Dry Run with --use-param-defaults and --use-pipelinerun",
-			command: []string{"start", "test-pipeline",
+			command: []string{
+				"start", "test-pipeline",
 				"-s=svc1",
 				"-r=source=scaffold-git",
 				"--use-param-defaults",
@@ -1369,7 +1427,8 @@ func TestPipelineV1beta1Start_ExecuteCommand(t *testing.T) {
 		},
 		{
 			name: "Dry Run with --use-param-defaults and --last",
-			command: []string{"start", "test-pipeline",
+			command: []string{
+				"start", "test-pipeline",
 				"-s=svc1",
 				"-r=source=scaffold-git",
 				"--use-param-defaults",
@@ -1385,7 +1444,8 @@ func TestPipelineV1beta1Start_ExecuteCommand(t *testing.T) {
 		},
 		{
 			name: "Dry Run using --filename v1beta1",
-			command: []string{"start", "-f", "./testdata/pipeline-v1beta1.yaml",
+			command: []string{
+				"start", "-f", "./testdata/pipeline-v1beta1.yaml",
 				"-r=source-repo=scaffold-git",
 				"-r=web-image=imageres",
 				"-n", "ns",
@@ -1398,7 +1458,8 @@ func TestPipelineV1beta1Start_ExecuteCommand(t *testing.T) {
 		},
 		{
 			name: "Dry Run with output=json -f v1beta1",
-			command: []string{"start", "-f", "./testdata/pipeline-v1beta1.yaml",
+			command: []string{
+				"start", "-f", "./testdata/pipeline-v1beta1.yaml",
 				"-r=source-repo=scaffold-git",
 				"-r=web-image=imageres",
 				"-p=pipeline-param=value1",
@@ -1414,7 +1475,8 @@ func TestPipelineV1beta1Start_ExecuteCommand(t *testing.T) {
 		},
 		{
 			name: "Dry Run with output=json -f v1beta1 parameter without type",
-			command: []string{"start", "-f", "./testdata/pipeline-v1beta1-parameter-with-invalid-type.yaml",
+			command: []string{
+				"start", "-f", "./testdata/pipeline-v1beta1-parameter-with-invalid-type.yaml",
 				"-r=source-repo=scaffold-git",
 				"-r=web-image=imageres",
 				"-n", "ns",
@@ -1428,7 +1490,8 @@ func TestPipelineV1beta1Start_ExecuteCommand(t *testing.T) {
 		},
 		{
 			name: "Start pipeline using --filename v1beta1",
-			command: []string{"start", "-f", "./testdata/pipeline-v1beta1.yaml",
+			command: []string{
+				"start", "-f", "./testdata/pipeline-v1beta1.yaml",
 				"-r=source-repo=scaffold-git",
 				"-r=web-image=imageres",
 				"-n", "ns",
@@ -1440,7 +1503,8 @@ func TestPipelineV1beta1Start_ExecuteCommand(t *testing.T) {
 		},
 		{
 			name: "Start pipeline using invalid --filename v1beta1",
-			command: []string{"start", "-f", "./testdata/pipeline-invalid-v1beta1.yaml",
+			command: []string{
+				"start", "-f", "./testdata/pipeline-invalid-v1beta1.yaml",
 				"-r=source-repo=scaffold-git",
 				"-r=web-image=imageres",
 				"-n", "ns",
@@ -1452,7 +1516,8 @@ func TestPipelineV1beta1Start_ExecuteCommand(t *testing.T) {
 		},
 		{
 			name: "Error from using --last with --filename",
-			command: []string{"start", "-f", "./testdata/pipeline.yaml",
+			command: []string{
+				"start", "-f", "./testdata/pipeline.yaml",
 				"-r=source-repo=scaffold-git",
 				"-r=web-image=imageres",
 				"-n", "ns",
@@ -1465,7 +1530,8 @@ func TestPipelineV1beta1Start_ExecuteCommand(t *testing.T) {
 		},
 		{
 			name: "Dry Run with --timeout specified",
-			command: []string{"start", "test-pipeline",
+			command: []string{
+				"start", "test-pipeline",
 				"-s=svc1",
 				"-r=source=scaffold-git",
 				"-p=pipeline-param=value1",
@@ -1482,7 +1548,8 @@ func TestPipelineV1beta1Start_ExecuteCommand(t *testing.T) {
 		},
 		{
 			name: "Dry Run with invalid --timeout specified",
-			command: []string{"start", "test-pipeline",
+			command: []string{
+				"start", "test-pipeline",
 				"-s=svc1",
 				"-r=source=scaffold-git",
 				"-p=pipeline-param=value1",
@@ -1500,7 +1567,8 @@ func TestPipelineV1beta1Start_ExecuteCommand(t *testing.T) {
 		},
 		{
 			name: "Dry Run with PodTemplate",
-			command: []string{"start", "test-pipeline",
+			command: []string{
+				"start", "test-pipeline",
 				"-s=svc1",
 				"-r=source=scaffold-git",
 				"-p=pipeline-param=value1",
@@ -1622,7 +1690,6 @@ func TestPipelineStart_Interactive(t *testing.T) {
 			},
 		},
 		PipelineResources: []*v1alpha1.PipelineResource{
-
 			{
 				ObjectMeta: metav1.ObjectMeta{
 					Name:      "scaffold-git",
@@ -2145,7 +2212,6 @@ func TestPipelineStart_Interactive(t *testing.T) {
 		},
 
 		PipelineResources: []*v1alpha1.PipelineResource{
-
 			{
 				ObjectMeta: metav1.ObjectMeta{
 					Name:      "gitres",
@@ -3686,7 +3752,6 @@ func Test_start_pipeline(t *testing.T) {
 	if d := cmp.Equal(pr.Items[0].ObjectMeta.Labels, map[string]string{"jemange": "desfrites"}); !d {
 		t.Errorf("Error labels generated is different Labels Got: %+v", pr.Items[0].ObjectMeta.Labels)
 	}
-
 }
 
 func Test_start_pipeline_v1beta1(t *testing.T) {
@@ -3805,11 +3870,9 @@ func Test_start_pipeline_v1beta1(t *testing.T) {
 	if d := cmp.Equal(pr.Items[0].ObjectMeta.Labels, map[string]string{"jemange": "desfrites"}); !d {
 		t.Errorf("Error labels generated is different Labels Got: %+v", pr.Items[0].ObjectMeta.Labels)
 	}
-
 }
 
 func Test_start_pipeline_last(t *testing.T) {
-
 	pipelineName := "test-pipeline"
 
 	ps := []*v1alpha1.Pipeline{
@@ -4004,7 +4067,6 @@ func Test_start_pipeline_last(t *testing.T) {
 }
 
 func Test_start_pipeline_last_v1beta1(t *testing.T) {
-
 	pipelineName := "test-pipeline"
 	ps := []*v1beta1.Pipeline{
 		{
@@ -4207,7 +4269,6 @@ func Test_start_pipeline_last_v1beta1(t *testing.T) {
 }
 
 func Test_start_pipeline_last_override_timeout_v1beta1(t *testing.T) {
-
 	pipelineName := "test-pipeline"
 	ps := []*v1beta1.Pipeline{
 		{
@@ -4400,7 +4461,6 @@ func Test_start_pipeline_last_override_timeout_v1beta1(t *testing.T) {
 }
 
 func Test_start_pipeline_last_without_res_param(t *testing.T) {
-
 	pipelineName := "test-pipeline"
 
 	ps := []*v1alpha1.Pipeline{
@@ -4579,7 +4639,6 @@ func Test_start_pipeline_last_without_res_param(t *testing.T) {
 }
 
 func Test_start_pipeline_last_without_res_param_v1beta1(t *testing.T) {
-
 	pipelineName := "test-pipeline"
 
 	ps := []*v1beta1.Pipeline{
@@ -4762,7 +4821,6 @@ func Test_start_pipeline_last_without_res_param_v1beta1(t *testing.T) {
 }
 
 func Test_start_pipeline_last_merge(t *testing.T) {
-
 	pipelineName := "test-pipeline"
 
 	ps := []*v1alpha1.Pipeline{
@@ -4956,7 +5014,6 @@ func Test_start_pipeline_last_merge(t *testing.T) {
 }
 
 func Test_start_pipeline_last_merge_v1beta1(t *testing.T) {
-
 	pipelineName := "test-pipeline"
 
 	ps := []*v1beta1.Pipeline{
@@ -5161,7 +5218,6 @@ func Test_start_pipeline_last_merge_v1beta1(t *testing.T) {
 }
 
 func Test_start_pipeline_use_pipelinerun(t *testing.T) {
-
 	pipelineName := "test-pipeline"
 
 	ps := []*v1alpha1.Pipeline{
@@ -5314,7 +5370,6 @@ func Test_start_pipeline_use_pipelinerun(t *testing.T) {
 }
 
 func Test_start_pipeline_use_pipelinerun_v1beta1(t *testing.T) {
-
 	pipelineName := "test-pipeline"
 	theonename := "test-pipeline-run-be-the-one"
 	timeoutDuration, _ := time.ParseDuration("10s")
@@ -5764,7 +5819,6 @@ func Test_start_pipeline_allkindparam(t *testing.T) {
 	if d := cmp.Equal(pr.Items[0].ObjectMeta.Labels, map[string]string{"jemange": "desfrites"}); !d {
 		t.Errorf("Error labels generated is different Labels Got: %+v", pr.Items[0].ObjectMeta.Labels)
 	}
-
 }
 
 func Test_start_pipeline_allkindparam_v1beta1(t *testing.T) {
@@ -5894,11 +5948,9 @@ func Test_start_pipeline_allkindparam_v1beta1(t *testing.T) {
 	if d := cmp.Equal(pr.Items[0].ObjectMeta.Labels, map[string]string{"jemange": "desfrites"}); !d {
 		t.Errorf("Error labels generated is different Labels Got: %+v", pr.Items[0].ObjectMeta.Labels)
 	}
-
 }
 
 func Test_start_pipeline_last_generate_name(t *testing.T) {
-
 	pipelineName := "test-pipeline"
 
 	ps := []*v1alpha1.Pipeline{
@@ -6066,7 +6118,6 @@ func Test_start_pipeline_last_generate_name(t *testing.T) {
 }
 
 func Test_start_pipeline_last_generate_name_v1beta1(t *testing.T) {
-
 	pipelineName := "test-pipeline"
 
 	ps := []*v1beta1.Pipeline{
@@ -7335,7 +7386,6 @@ func Test_lastPipelineRun(t *testing.T) {
 					p := &test.Params{Tekton: cs.Pipeline, Kube: cs.Kube, Dynamic: dc, Clock: clock, Resource: cs.Resource}
 					p.SetNamespace("namespace")
 					return p
-
 				}(),
 			},
 			want:    "pr-1",
@@ -7356,7 +7406,6 @@ func Test_lastPipelineRun(t *testing.T) {
 					p := &test.Params{Tekton: cs.Pipeline, Kube: cs.Kube, Dynamic: dc, Resource: cs.Resource}
 					p.SetNamespace("namespace")
 					return p
-
 				}(),
 			},
 
@@ -7495,7 +7544,6 @@ func Test_lastPipelineRun_V1beta1(t *testing.T) {
 					p := &test.Params{Tekton: cs.Pipeline, Kube: cs.Kube, Dynamic: dc, Clock: clock, Resource: cs.Resource}
 					p.SetNamespace("namespace")
 					return p
-
 				}(),
 			},
 			want:    "pr-1",
@@ -7516,7 +7564,6 @@ func Test_lastPipelineRun_V1beta1(t *testing.T) {
 					p := &test.Params{Tekton: cs.Pipeline, Kube: cs.Kube, Dynamic: dc, Resource: cs.Resource}
 					p.SetNamespace("namespace")
 					return p
-
 				}(),
 			},
 
