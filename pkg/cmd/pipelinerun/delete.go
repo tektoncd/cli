@@ -169,7 +169,7 @@ func deletePipelineRuns(s *cli.Stream, p cli.Params, prNames []string, opts *opt
 		labelSelector := fmt.Sprintf("tekton.dev/pipeline=%s", opts.ParentResourceName)
 
 		// Compute the total no of PipelineRuns which we need to delete
-		prtodelete, _, err := allPipelineRunNames(cs, opts.Keep, opts.KeepSince, opts.IgnoreRunning, labelSelector, p.Namespace())
+		prtodelete, prtokeep, err := allPipelineRunNames(cs, opts.Keep, opts.KeepSince, opts.IgnoreRunning, labelSelector, p.Namespace())
 		if err != nil {
 			return err
 		}
@@ -179,6 +179,10 @@ func deletePipelineRuns(s *cli.Stream, p cli.Params, prNames []string, opts *opt
 		d.WithRelated("PipelineRun", pipelineRunLister(cs, opts.Keep, opts.KeepSince, p.Namespace(), opts.IgnoreRunning), func(pipelineRunName string) error {
 			return actions.Delete(prGroupResource, cs.Dynamic, cs.Tekton.Discovery(), pipelineRunName, p.Namespace(), metav1.DeleteOptions{})
 		})
+		if len(prtodelete) == 0 && opts.Keep > len(prtokeep) {
+			fmt.Fprintf(s.Out, "There is/are only %d %s(s) associated for Pipeline: %s \n", len(prtokeep), opts.Resource, opts.ParentResourceName)
+			return nil
+		}
 		d.DeleteRelated(s, []string{opts.ParentResourceName})
 	}
 

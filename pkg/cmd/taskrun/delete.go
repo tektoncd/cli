@@ -192,7 +192,7 @@ func deleteTaskRuns(s *cli.Stream, p cli.Params, trNames []string, opts *options
 		labelSelector := fmt.Sprintf("tekton.dev/%s=%s", resourceType, opts.ParentResourceName)
 
 		// Compute the total no of TaskRuns which we need to delete
-		trToDelete, _, err := allTaskRunNames(cs, opts.Keep, opts.KeepSince, opts.IgnoreRunning, labelSelector, p.Namespace())
+		trToDelete, trToKeep, err := allTaskRunNames(cs, opts.Keep, opts.KeepSince, opts.IgnoreRunning, labelSelector, p.Namespace())
 		if err != nil {
 			return err
 		}
@@ -202,6 +202,10 @@ func deleteTaskRuns(s *cli.Stream, p cli.Params, trNames []string, opts *options
 		d.WithRelated("TaskRun", taskRunLister(p, opts.Keep, opts.KeepSince, opts.ParentResource, cs, opts.IgnoreRunning), func(taskRunName string) error {
 			return actions.Delete(trGroupResource, cs.Dynamic, cs.Tekton.Discovery(), taskRunName, p.Namespace(), metav1.DeleteOptions{})
 		})
+		if len(trToDelete) == 0 && opts.Keep > len(trToKeep) {
+			fmt.Fprintf(s.Out, "There is/are only %d %s(s) associated for Task: %s \n", len(trToKeep), opts.Resource, opts.ParentResourceName)
+			return nil
+		}
 		d.DeleteRelated(s, []string{opts.ParentResourceName})
 	}
 
