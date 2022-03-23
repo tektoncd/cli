@@ -136,6 +136,9 @@ func getConfigMap(c *cli.Clients, name, ns string) (*corev1.ConfigMap, error) {
 			if errors.IsNotFound(err) {
 				continue
 			}
+			if strings.Contains(err.Error(), fmt.Sprintf(`cannot get resource "configmaps" in API group "" in the namespace "%s"`, n)) {
+				continue
+			}
 			return nil, err
 		}
 		if configMap != nil {
@@ -284,20 +287,10 @@ func findDashboardVersion(deployments []v1.Deployment) string {
 
 // GetOperatorVersion Get operator version
 func GetOperatorVersion(c *cli.Clients, ns string) (string, error) {
-
-	var version string
 	configMap, err := getConfigMap(c, operatorInfo, ns)
-	if err == nil {
-		version = configMap.Data["version"]
-	}
-
-	if version != "" {
-		return version, nil
-	}
-
 	if err != nil {
 		return "", err
 	}
-
+	version := configMap.Data["version"]
 	return version, nil
 }
