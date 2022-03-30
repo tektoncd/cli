@@ -2,23 +2,23 @@
 
 ## User facing roadmap
 
-### Support for Pipeline v1
+### Support for Pipeline v1 (#1546)
 
 - Add support for tektoncd/pipeline v1
 - Warn usage of PipelineResource in v1beta1 (no error but warn that it
   is not supported aka will work but can be broken in a later release)
 
-### Remove unsupported APIs
+### Remove unsupported APIs (#1335)
 
 - Remove tektoncd/pipeline v1alpha1
 - Remove tektoncd/triggers v1alpha1 (later, most likely in 2023)
 
-### Advanced integration of chains
+### Advanced integration of chains (#1547)
 
 Today, the `chains` sub-command support a relative subset of what
 chains can provide.
 
-### Results integration
+### Results integration (#1524)
 
 The `results` project comes up with it's own cli
 [`tkn-results`](https://github.com/tektoncd/results/tree/main/tools/tkn-results). We
@@ -29,7 +29,7 @@ between list (from cluster & results). This means, when listing
 Pipelines or Task, we would *transparently* query the k8s API as well
 as the result API to get informations.
 
-### Operator integration
+### Operator integration (#1472)
 
 User should be able to get `tkn` and install, upgrade and manage the
 operator lifecycle directly from it. *This should help adoption as well*.
@@ -41,7 +41,7 @@ operator lifecycle directly from it. *This should help adoption as well*.
 Once the Breakpoint feature is stable, `tkn` should provide a way to
 easily enter into debug mode and into a task waiting to be "debugged".
 
-### Integrate Catlin with tkn.
+### Integrate Catlin with tkn (#1548)
 
 Catlin is a command-line tool that Lints Tekton Resources and
 Catalogs. It will be it's own cli, but we should aim to integrate
@@ -50,19 +50,19 @@ mechanism or not.
 
 See https://github.com/tektoncd/community/issues/636.
 
-### Improve e2e Testing Coverage for CLI
+### Improve e2e Testing Coverage for CLI 
 
 - We should do an assessment of what scenarios we have covered for e2e testing and figure out where additional testing is needed
 
-### Consistency across all CLI resources for list, delete, and describe subcommands
+### Consistency across all CLI resources for list, delete, and describe subcommands (#1549)
 
 - We should work to make sure each resource introduced to the CLI always features these three subcommands
 
-### Filtering for list and delete commands
+### Filtering for list and delete commands (#1550)
 
 - We should provide filtering solutions for all list/delete commands associated with CLI
 
-### Define and carry out strategy around creation/deletion for the CLI:
+### Define and carry out strategy around creation/deletion for the CLI: (#574, #575)
 
 - There are two issues open around this:
   - https://github.com/tektoncd/cli/issues/574
@@ -82,7 +82,7 @@ See https://github.com/tektoncd/community/issues/636.
   - Similar to oc new-app
   - Detect stuff, create task, …
 
-### Source to Pipeline/Task
+### Source to Pipeline/Task (#1551)
 
 - be able from the cli auto generate some Pipeline/tasks from a source
   code folder detecting what kind of source code it is (i.e: go, java,
