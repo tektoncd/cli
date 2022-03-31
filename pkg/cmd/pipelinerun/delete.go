@@ -87,16 +87,16 @@ or
 				Err: cmd.OutOrStderr(),
 			}
 
+			if opts.Keep < 0 && opts.KeepSince < 0 {
+				return fmt.Errorf("keep and keep-since option should not be lower than 0")
+			}
+
 			if opts.Keep < 0 {
 				return fmt.Errorf("keep option should not be lower than 0")
 			}
 
 			if opts.KeepSince < 0 {
 				return fmt.Errorf("keep-since option should not be lower than 0")
-			}
-
-			if opts.Keep > 0 && opts.KeepSince > 0 {
-				return fmt.Errorf("cannot mix --keep and --keep-since options")
 			}
 
 			if (opts.Keep > 0 || opts.KeepSince > 0) && opts.ParentResourceName == "" {
@@ -176,7 +176,7 @@ func deletePipelineRuns(s *cli.Stream, p cli.Params, prNames []string, opts *opt
 		numberOfDeletedPr = len(prtodelete)
 
 		// Delete the PipelineRuns associated with a Pipeline
-		d.WithRelated("PipelineRun", pipelineRunLister(cs, opts.Keep, opts.KeepSince, p.Namespace()), func(pipelineRunName string) error {
+		d.WithRelated("PipelineRun", pipelineRunLister(cs, opts.Keep, opts.KeepSince, p.Namespace(), opts.IgnoreRunning), func(pipelineRunName string) error {
 			return actions.Delete(prGroupResource, cs.Dynamic, cs.Tekton.Discovery(), pipelineRunName, p.Namespace(), metav1.DeleteOptions{})
 		})
 		d.DeleteRelated(s, []string{opts.ParentResourceName})
@@ -185,13 +185,16 @@ func deletePipelineRuns(s *cli.Stream, p cli.Params, prNames []string, opts *opt
 	if !opts.DeleteAllNs {
 		if d.Errors() == nil {
 			switch {
-
+			case opts.Keep > 0 && opts.KeepSince > 0 && !opts.IgnoreRunning:
+				fmt.Fprintf(s.Out, "%d PipelineRuns associated with %s %q has been deleted in namespace %q\n", numberOfDeletedPr, opts.ParentResource, opts.ParentResourceName, p.Namespace())
 			case opts.Keep > 0 && !opts.IgnoreRunning:
 				fmt.Fprintf(s.Out, "All but %d PipelineRuns associated with Pipeline %q deleted in namespace %q\n", opts.Keep, opts.ParentResourceName, p.Namespace())
 			case opts.ParentResourceName != "" && !opts.IgnoreRunning:
 				fmt.Fprintf(s.Out, "All PipelineRuns associated with Pipeline %q deleted in namespace %q\n", opts.ParentResourceName, p.Namespace())
 			case opts.KeepSince > 0 && !opts.IgnoreRunning:
 				fmt.Fprintf(s.Out, "All but %d expired PipelineRuns associated with Pipeline %q deleted in namespace %q\n", numberOfDeletedPr, opts.ParentResourceName, p.Namespace())
+			case opts.Keep > 0 && opts.KeepSince > 0:
+				fmt.Fprintf(s.Out, "%d PipelineRuns(Completed) associated with %s %q has been deleted in namespace %q\n", numberOfDeletedPr, opts.ParentResource, opts.ParentResourceName, p.Namespace())
 			case opts.Keep > 0:
 				// Should only occur in case of --pipeline and --keep being used together
 				fmt.Fprintf(s.Out, "All but %d PipelineRuns(Completed) associated with Pipeline %q deleted in namespace %q\n", opts.Keep, opts.ParentResourceName, p.Namespace())
@@ -207,10 +210,14 @@ func deletePipelineRuns(s *cli.Stream, p cli.Params, prNames []string, opts *opt
 	} else if opts.DeleteAllNs {
 		if d.Errors() == nil {
 			switch {
+			case opts.Keep > 0 && opts.KeepSince > 0 && !opts.IgnoreRunning:
+				fmt.Fprintf(s.Out, "%d PipelineRuns has been deleted in namespace %q, kept %d\n", numberOfDeletedPr, p.Namespace(), numberOfKeptPr)
 			case opts.Keep > 0 && !opts.IgnoreRunning:
 				fmt.Fprintf(s.Out, "All but %d PipelineRuns deleted in namespace %q\n", opts.Keep, p.Namespace())
 			case opts.KeepSince > 0 && !opts.IgnoreRunning:
 				fmt.Fprintf(s.Out, "%d expired PipelineRuns has been deleted in namespace %q, kept %d\n", numberOfDeletedPr, p.Namespace(), numberOfKeptPr)
+			case opts.Keep > 0 && opts.KeepSince > 0:
+				fmt.Fprintf(s.Out, "%d PipelineRuns(Completed) has been deleted in namespace %q, kept %d\n", numberOfDeletedPr, p.Namespace(), numberOfKeptPr)
 			case opts.Keep > 0:
 				fmt.Fprintf(s.Out, "All but %d PipelineRuns(Completed) deleted in namespace %q\n", opts.Keep, p.Namespace())
 			case opts.KeepSince > 0:
@@ -225,7 +232,7 @@ func deletePipelineRuns(s *cli.Stream, p cli.Params, prNames []string, opts *opt
 	return d.Errors()
 }
 
-func pipelineRunLister(cs *cli.Clients, keep, since int, ns string) func(string) ([]string, error) {
+func pipelineRunLister(cs *cli.Clients, keep, since int, ns string, ignoreRunning bool) func(string) ([]string, error) {
 	return func(pipelineName string) ([]string, error) {
 		lOpts := metav1.ListOptions{
 			LabelSelector: fmt.Sprintf("tekton.dev/pipeline=%s", pipelineName),
@@ -235,9 +242,12 @@ func pipelineRunLister(cs *cli.Clients, keep, since int, ns string) func(string)
 			return nil, err
 		}
 		var todelete []string
-		if since > 0 {
-			todelete, _ = keepPipelineRunsByAge(pipelineRuns, since)
-		} else {
+		switch {
+		case since > 0 && keep > 0:
+			todelete, _ = keepPipelineRunsByAgeAndNumber(pipelineRuns, since, keep, ignoreRunning)
+		case since > 0:
+			todelete, _ = keepPipelineRunsByAge(pipelineRuns, since, ignoreRunning)
+		default:
 			todelete, _ = keepPipelineRunsByNumber(pipelineRuns, keep)
 		}
 		return todelete, nil
@@ -272,25 +282,30 @@ func allPipelineRunNames(cs *cli.Clients, keep, since int, ignoreRunning bool, l
 		}
 		pipelineRuns.Items = pipelineRunTmps
 	}
-
-	if since > 0 {
-		todelete, tokeep = keepPipelineRunsByAge(pipelineRuns, since)
-	} else {
+	switch {
+	case since > 0 && keep > 0:
+		todelete, tokeep = keepPipelineRunsByAgeAndNumber(pipelineRuns, since, keep, ignoreRunning)
+	case since > 0:
+		todelete, tokeep = keepPipelineRunsByAge(pipelineRuns, since, ignoreRunning)
+	default:
 		todelete, tokeep = keepPipelineRunsByNumber(pipelineRuns, keep)
 	}
 	return todelete, tokeep, nil
 }
 
-func keepPipelineRunsByAge(pipelineRuns *v1beta1.PipelineRunList, keep int) ([]string, []string) {
+func keepPipelineRunsByAge(pipelineRuns *v1beta1.PipelineRunList, keep int, ignoreRunning bool) ([]string, []string) {
 	var todelete, tokeep []string
-
 	for _, run := range pipelineRuns.Items {
 		if run.Status.Conditions == nil {
 			continue
 		}
-		if time.Since(run.Status.CompletionTime.Time) > time.Duration(keep)*time.Minute {
+		switch {
+		// for PipelineRuns in running status
+		case !ignoreRunning && run.Status.CompletionTime == nil:
 			todelete = append(todelete, run.Name)
-		} else {
+		case time.Since(run.Status.CompletionTime.Time) > time.Duration(keep)*time.Minute:
+			todelete = append(todelete, run.Name)
+		default:
 			tokeep = append(tokeep, run.Name)
 		}
 	}
@@ -313,6 +328,17 @@ func keepPipelineRunsByNumber(pipelineRuns *v1beta1.PipelineRunList, keep int) (
 			continue
 		}
 		todelete = append(todelete, run.Name)
+	}
+	return todelete, tokeep
+}
+
+func keepPipelineRunsByAgeAndNumber(pipelineRuns *v1beta1.PipelineRunList, since int, keep int, ignoreRunning bool) ([]string, []string) {
+	var todelete, tokeep []string
+
+	todelete, tokeep = keepPipelineRunsByAge(pipelineRuns, since, ignoreRunning)
+
+	if len(tokeep) != keep {
+		todelete, tokeep = keepPipelineRunsByNumber(pipelineRuns, keep)
 	}
 	return todelete, tokeep
 }
