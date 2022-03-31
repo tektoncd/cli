@@ -383,15 +383,6 @@ func TestPipelineRunDelete(t *testing.T) {
 			want:        "3 expired PipelineRuns(Completed) has been deleted in namespace \"ns\", kept 1\n",
 		},
 		{
-			name:        "No mixing --keep-since and --keep",
-			command:     []string{"delete", "-f", "--keep-since", "60", "--keep", "5", "-n", "ns"},
-			dynamic:     seeds[7].dynamicClient,
-			input:       seeds[7].pipelineClient,
-			inputStream: nil,
-			wantError:   true,
-			want:        "cannot mix --keep and --keep-since options",
-		},
-		{
 			name:        "Delete all by labels",
 			command:     []string{"rm", "--all", "-n", "ns", "--label", "iam=tobedeleted"},
 			dynamic:     seeds[5].dynamicClient,
@@ -633,7 +624,7 @@ func TestPipelineRunDelete_v1beta1(t *testing.T) {
 	}
 
 	seeds := make([]clients, 0)
-	for i := 0; i < 10; i++ {
+	for i := 0; i < 12; i++ {
 		cs, _ := test.SeedV1beta1TestData(t, pipelinev1beta1test.Data{
 			Pipelines:    pdata,
 			PipelineRuns: prdata,
@@ -825,13 +816,22 @@ func TestPipelineRunDelete_v1beta1(t *testing.T) {
 			want:        "All but 3 expired PipelineRuns(Completed) associated with Pipeline \"pipeline\" deleted in namespace \"ns\"\n",
 		},
 		{
-			name:        "Error on using --keep and --keep-since together",
+			name:        "Delete all PipelineRuns older than 60mn and keeping 2 PipelineRuns",
 			command:     []string{"delete", "-f", "--keep-since", "60", "--keep", "2", "-n", "ns"},
-			dynamic:     seeds[5].dynamicClient,
-			input:       seeds[5].pipelineClient,
+			dynamic:     seeds[11].dynamicClient,
+			input:       seeds[11].pipelineClient,
 			inputStream: nil,
-			wantError:   true,
-			want:        "cannot mix --keep and --keep-since options",
+			wantError:   false,
+			want:        "1 PipelineRuns(Completed) has been deleted in namespace \"ns\", kept 2\n",
+		},
+		{
+			name:        "Delete all PipelineRuns older than 60mn and keeping 2 PipelineRuns associated with Pipeline pipeline",
+			command:     []string{"delete", "-f", "--pipeline", "pipeline", "--keep-since", "60", "--keep", "2", "-n", "ns"},
+			dynamic:     seeds[10].dynamicClient,
+			input:       seeds[10].pipelineClient,
+			inputStream: nil,
+			wantError:   false,
+			want:        "1 PipelineRuns(Completed) associated with Pipeline \"pipeline\" has been deleted in namespace \"ns\"\n",
 		},
 		{
 			name:        "Error --keep-since less than zero",
@@ -843,8 +843,26 @@ func TestPipelineRunDelete_v1beta1(t *testing.T) {
 			want:        "keep-since option should not be lower than 0",
 		},
 		{
+			name:        "Error --keep-since and --keep less than zero",
+			command:     []string{"delete", "-f", "--keep-since", "-1", "--keep", "-1", "-n", "ns"},
+			dynamic:     seeds[5].dynamicClient,
+			input:       seeds[5].pipelineClient,
+			inputStream: nil,
+			wantError:   true,
+			want:        "keep and keep-since option should not be lower than 0",
+		},
+		{
 			name:        "Error --keep-since, --all and --task cannot be used",
 			command:     []string{"delete", "-f", "--keep-since", "1", "--all", "-p", "foobar", "-n", "ns"},
+			dynamic:     seeds[5].dynamicClient,
+			input:       seeds[5].pipelineClient,
+			inputStream: nil,
+			wantError:   true,
+			want:        "--keep or --keep-since, --all and --pipeline cannot be used together",
+		},
+		{
+			name:        "Error --keep-since, --keep, --all and --task cannot be used",
+			command:     []string{"delete", "-f", "--keep-since", "1", "--keep", "1", "--all", "-p", "foobar", "-n", "ns"},
 			dynamic:     seeds[5].dynamicClient,
 			input:       seeds[5].pipelineClient,
 			inputStream: nil,
