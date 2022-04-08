@@ -86,7 +86,7 @@ func cancelPipelineRun(p cli.Params, s *cli.Stream, prName string, graceCancelSt
 	}
 
 	// nolint: staticcheck
-	cancelStatus := v1beta1.PipelineRunSpecStatusCancelledDeprecated
+	cancelStatus := v1beta1.PipelineRunSpecStatusCancelled
 
 	switch strings.ToLower(graceCancelStatus) {
 	case strings.ToLower(v1beta1.PipelineRunSpecStatusCancelledRunFinally):
@@ -96,10 +96,26 @@ func cancelPipelineRun(p cli.Params, s *cli.Stream, prName string, graceCancelSt
 	}
 
 	if _, err = pipelinerun.Cancel(cs, prName, metav1.PatchOptions{}, cancelStatus, p.Namespace()); err != nil {
-		return fmt.Errorf("failed to cancel PipelineRun: %s: %v", prName, err)
-
+		// TODO: remove this once PipelineRunCancelled is removed permanently
+		// This is done so that existing users using older versions of Pipeline are not affected
+		if doRetryForCancellation(cancelStatus, err) {
+			cancelStatus = v1beta1.PipelineRunSpecStatusCancelledDeprecated
+			if _, err = pipelinerun.Cancel(cs, prName, metav1.PatchOptions{}, cancelStatus, p.Namespace()); err != nil {
+				return fmt.Errorf("failed to cancel PipelineRun: %s: %v", prName, err)
+			}
+		} else {
+			return fmt.Errorf("failed to cancel PipelineRun: %s: %v", prName, err)
+		}
 	}
 
 	fmt.Fprintf(s.Out, "PipelineRun cancelled: %s\n", pr.Name)
 	return nil
+}
+
+func doRetryForCancellation(status string, err error) bool {
+	featureGateErr := `graceful termination requires "enable-api-fields" feature gate to be "alpha" but it is "stable"`
+	if status == v1beta1.PipelineRunSpecStatusCancelled && strings.Contains(err.Error(), featureGateErr) {
+		return true
+	}
+	return false
 }
