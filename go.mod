@@ -8,6 +8,7 @@ require (
 	github.com/armon/go-metrics v0.3.10
 	github.com/armon/go-radix v1.0.0
 	github.com/blang/semver v3.5.1+incompatible
+	github.com/containerd/containerd v1.6.2 // indirect
 	github.com/cpuguy83/go-md2man v1.0.10
 	github.com/docker/cli v20.10.14+incompatible
 	github.com/docker/docker v20.10.14+incompatible
@@ -32,6 +33,7 @@ require (
 	github.com/hashicorp/vault/sdk v0.3.0
 	github.com/hinshun/vt10x v0.0.0-20180809195222-d55458df857c
 	github.com/jonboulle/clockwork v0.2.2
+	github.com/klauspost/compress v1.15.1 // indirect
 	github.com/ktr0731/go-fuzzyfinder v0.2.0
 	github.com/mitchellh/copystructure v1.2.0
 	github.com/mitchellh/go-homedir v1.1.0
@@ -52,9 +54,12 @@ require (
 	go.uber.org/multierr v1.7.0
 	go.uber.org/zap v1.20.0
 	golang.org/x/crypto v0.0.0-20220214200702-86341886e292
+	golang.org/x/net v0.0.0-20220412020605-290c469a71a5 // indirect
+	golang.org/x/sys v0.0.0-20220412071739-889880a91fd5 // indirect
 	golang.org/x/term v0.0.0-20210927222741-03fcf44c2211
 	golang.org/x/xerrors v0.0.0-20200804184101-5ec99f83aff1
-	google.golang.org/protobuf v1.27.1
+	google.golang.org/genproto v0.0.0-20220407144326-9054f6ed7bac // indirect
+	google.golang.org/protobuf v1.28.0
 	gopkg.in/yaml.v2 v2.4.0
 	gotest.tools v2.2.0+incompatible
 	gotest.tools/v3 v3.1.0
