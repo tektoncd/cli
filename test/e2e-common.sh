@@ -133,13 +133,14 @@ function install_pipeline_crd() {
   if [[ -n ${RELEASE_YAML_PIPELINE} ]];then
 	latestreleaseyaml=${RELEASE_YAML_PIPELINE}
   else
+
     # First try to install latestreleaseyaml from nightly
-    curl -o/dev/null -s -LI -f https://storage.googleapis.com/tekton-releases-nightly/pipeline/latest/release.yaml &&
-        latestreleaseyaml=https://storage.googleapis.com/tekton-releases-nightly/pipeline/latest/release.yaml
+    # TODO: re-enable this curl command once we are confident about nightly releases
+    # curl -o/dev/null -s -LI -f https://storage.googleapis.com/tekton-releases-nightly/pipeline/latest/release.yaml &&
+    #     latestreleaseyaml=https://storage.googleapis.com/tekton-releases-nightly/pipeline/latest/release.yaml
 
     # If for whatever reason the nightly release wasnt there (nightly ci failure?), try the released version
     [[ -n ${latestreleaseyaml} ]] || latestreleaseyaml=https://storage.googleapis.com/tekton-releases/pipeline/latest/release.yaml
-
   fi
   [[ -z ${latestreleaseyaml} ]] && fail_test "Could not get latest released release.yaml"
   kubectl apply -f ${latestreleaseyaml} ||
