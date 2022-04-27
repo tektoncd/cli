@@ -16,6 +16,7 @@ package bundle
 
 import (
 	"errors"
+	"strings"
 
 	"github.com/spf13/cobra"
 	"github.com/tektoncd/cli/pkg/cli"
@@ -35,7 +36,16 @@ func Command(p cli.Params) *cobra.Command {
 			"commandType": "main",
 		},
 		PersistentPreRunE: func(cmd *cobra.Command, args []string) error {
-			return flags.InitParams(p, cmd)
+			if err := flags.InitParams(p, cmd); err != nil {
+				// this check allows tkn version to be run without
+				// a kubeconfig so users can list and push bundles
+				noConfigErr := strings.Contains(err.Error(), "no configuration has been provided")
+				if noConfigErr {
+					return nil
+				}
+				return err
+			}
+			return nil
 		},
 	}
 
