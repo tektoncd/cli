@@ -53,7 +53,7 @@ fi
 
 
 # Ensure we have everything we need under vendor/
-go mod tidy
+go mod tidy -compat=1.17
 go mod vendor
 
 update_licenses third_party/VENDOR-LICENSE "./cmd/*"
