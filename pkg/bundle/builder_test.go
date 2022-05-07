@@ -37,6 +37,15 @@ func TestBuildTektonBundle(t *testing.T) {
 		t.Error(err)
 	}
 
+	cfg, err := img.ConfigFile()
+	if err != nil {
+		t.Error(err)
+		return
+	}
+	if cfg.Created.IsZero() {
+		t.Error("Created time of image was not set")
+	}
+
 	manifest, err := img.Manifest()
 	if err != nil {
 		t.Error(err)
