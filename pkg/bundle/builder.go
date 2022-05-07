@@ -7,6 +7,7 @@ import (
 	"fmt"
 	"io"
 	"strings"
+	"time"
 
 	v1 "github.com/google/go-containerregistry/pkg/v1"
 	"github.com/google/go-containerregistry/pkg/v1/empty"
@@ -78,6 +79,13 @@ func BuildTektonBundle(contents []string, log io.Writer) (v1.Image, error) {
 			return nil, err
 		}
 	}
+
+	// Set created time for bundle image
+	img, err := mutate.CreatedAt(img, v1.Time{Time: time.Now()})
+	if err != nil {
+		return nil, fmt.Errorf("failed to add created time to image: %w", err)
+	}
+
 	return img, nil
 }
 
