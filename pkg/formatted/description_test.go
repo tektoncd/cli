@@ -14,7 +14,12 @@
 
 package formatted
 
-import "testing"
+import (
+	"reflect"
+	"testing"
+
+	v1 "k8s.io/api/core/v1"
+)
 
 func TestFormatDesc(t *testing.T) {
 	tests := []struct {
@@ -52,6 +57,38 @@ func TestFormatDesc(t *testing.T) {
 		t.Run(tt.name, func(t *testing.T) {
 			if got := FormatDesc(tt.input); got != tt.want {
 				t.Errorf("Input = %s, want %s", got, tt.want)
+			}
+		})
+	}
+}
+
+func TestRemoveLastAppliedConfig(t *testing.T) {
+	tests := []struct {
+		name  string
+		input map[string]string
+		want  map[string]string
+	}{
+		{
+			name:  "Empty Annotation",
+			input: map[string]string{},
+			want:  map[string]string{},
+		},
+		{
+			name: "Annotations with last-applied-configuration",
+			input: map[string]string{
+				v1.LastAppliedConfigAnnotation: "JSON String",
+				"tekton.dev/tags":              "game",
+			},
+			want: map[string]string{
+				"tekton.dev/tags": "game",
+			},
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			if !reflect.DeepEqual(tt.want, RemoveLastAppliedConfig(tt.input)) {
+				t.Error("input = %w, want = %w", tt.input, tt.want)
 			}
 		})
 	}

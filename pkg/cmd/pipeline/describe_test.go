@@ -1335,3 +1335,45 @@ func TestPipelineDescribeV1beta1_with_workspaces(t *testing.T) {
 	}
 	golden.Assert(t, got, fmt.Sprintf("%s.golden", t.Name()))
 }
+
+func TestPipelineDescribe_with_annotations(t *testing.T) {
+	pipelines := []*v1beta1.Pipeline{
+		{
+			ObjectMeta: metav1.ObjectMeta{
+				Name:      "p1",
+				Namespace: "ns",
+				Annotations: map[string]string{
+					corev1.LastAppliedConfigAnnotation: "LastAppliedConfig",
+					"tekton.dev/tags":                  "testing",
+				},
+			},
+		},
+	}
+
+	namespaces := []*corev1.Namespace{
+		{
+			ObjectMeta: metav1.ObjectMeta{
+				Name: "ns",
+			},
+		},
+	}
+
+	version := "v1beta1"
+	tdc := testDynamic.Options{}
+	dynamic, err := tdc.Client(
+		cb.UnstructuredV1beta1P(pipelines[0], version),
+	)
+	if err != nil {
+		t.Errorf("unable to create dynamic client: %v", err)
+	}
+	cs, _ := test.SeedV1beta1TestData(t, pipelinev1beta1test.Data{Namespaces: namespaces, Pipelines: pipelines})
+	cs.Pipeline.Resources = cb.APIResourceList(version, []string{"pipeline", "pipelinerun"})
+	p := &test.Params{Tekton: cs.Pipeline, Kube: cs.Kube, Dynamic: dynamic}
+	pipeline := Command(p)
+
+	got, err := test.ExecuteCommand(pipeline, "desc", "-n", "ns", "p1")
+	if err != nil {
+		t.Errorf("Unexpected error: %v", err)
+	}
+	golden.Assert(t, got, fmt.Sprintf("%s.golden", t.Name()))
+}

@@ -1795,3 +1795,46 @@ func TestTaskRunDescribe_WithoutNameIfOnlyOneV1beta1TaskRunPresent(t *testing.T)
 	}
 	golden.Assert(t, out, fmt.Sprintf("%s.golden", t.Name()))
 }
+
+func TestTaskRunDescribe_with_annotations(t *testing.T) {
+	taskRuns := []*v1beta1.TaskRun{
+		{
+			ObjectMeta: metav1.ObjectMeta{
+				Namespace: "ns",
+				Name:      "tr-with-annotations",
+				Annotations: map[string]string{
+					corev1.LastAppliedConfigAnnotation: "LastAppliedConfig",
+					"tekton.dev/tags":                  "testing",
+				},
+			},
+		},
+	}
+
+	namespaces := []*corev1.Namespace{
+		{
+			ObjectMeta: metav1.ObjectMeta{
+				Name: "ns",
+			},
+		},
+	}
+
+	version := "v1beta1"
+	tdc := testDynamic.Options{}
+	dynamic, err := tdc.Client(
+		cb.UnstructuredV1beta1TR(taskRuns[0], version),
+	)
+	if err != nil {
+		t.Errorf("unable to create dynamic client: %v", err)
+	}
+	cs, _ := test.SeedV1beta1TestData(t, pipelinev1beta1test.Data{Namespaces: namespaces, TaskRuns: taskRuns})
+	cs.Pipeline.Resources = cb.APIResourceList(version, []string{"taskrun"})
+	p := &test.Params{Tekton: cs.Pipeline, Kube: cs.Kube, Dynamic: dynamic}
+	p.SetNamespace("ns")
+	taskrun := Command(p)
+	got, err := test.ExecuteCommand(taskrun, "desc", "tr-with-annotations")
+
+	if err != nil {
+		t.Errorf("Unexpected error: %v", err)
+	}
+	golden.Assert(t, got, fmt.Sprintf("%s.golden", t.Name()))
+}

@@ -1,0 +1,4 @@
+Name:        p1
+Namespace:   ns
+Annotations:
+ tekton.dev/tags=testing

@@ -710,3 +710,36 @@ func TestClusterTaskDescribe_WithoutNameIfOnlyOneV1beta1ClusterTaskPresent(t *te
 	}
 	golden.Assert(t, out, fmt.Sprintf("%s.golden", t.Name()))
 }
+
+func TestClusterTaskDescribe_with_annotations(t *testing.T) {
+	cttasks := []*v1beta1.ClusterTask{
+		{
+			ObjectMeta: metav1.ObjectMeta{
+				Name: "clustertask-1",
+				Annotations: map[string]string{
+					corev1.LastAppliedConfigAnnotation: "LastAppliedConfig",
+					"tekton.dev/tags":                  "testing",
+				},
+			},
+		},
+	}
+
+	version := "v1beta1"
+	tdc := testDynamic.Options{}
+	dynamic, err := tdc.Client(
+		cb.UnstructuredV1beta1CT(cttasks[0], version),
+	)
+	if err != nil {
+		t.Errorf("unable to create dynamic client: %v", err)
+	}
+
+	cs, _ := test.SeedV1beta1TestData(t, pipelinev1beta1test.Data{ClusterTasks: cttasks})
+	cs.Pipeline.Resources = cb.APIResourceList(version, []string{"clustertask", "taskrun"})
+	p := &test.Params{Tekton: cs.Pipeline, Kube: cs.Kube, Dynamic: dynamic}
+	cttask := Command(p)
+	out, err := test.ExecuteCommand(cttask, "desc")
+	if err != nil {
+		t.Errorf("Unexpected error: %v", err)
+	}
+	golden.Assert(t, out, fmt.Sprintf("%s.golden", t.Name()))
+}

@@ -49,6 +49,13 @@ const templ = `{{decorate "bold" "Name"}}:	{{ .TaskRun.Name }}
  {{ $k }}={{ $v }}
 {{- end }}
 {{- end }}
+{{- $annotations := removeLastAppliedConfig .TaskRun.Annotations -}}
+{{- if $annotations }}
+{{decorate "bold" "Annotations"}}:
+{{- range $k, $v := $annotations }}
+ {{ $k }}={{ $v }}
+{{- end }}
+{{- end }}
 
 {{decorate "status" ""}}{{decorate "underline bold" "Status"}}
 
@@ -217,19 +224,20 @@ func PrintTaskRunDescription(s *cli.Stream, trName string, p cli.Params) error {
 	}
 
 	funcMap := template.FuncMap{
-		"formatAge":             formatted.Age,
-		"formatDuration":        formatted.Duration,
-		"formatCondition":       formatted.Condition,
-		"formatResult":          formatted.Result,
-		"formatWorkspace":       formatted.Workspace,
-		"hasFailed":             hasFailed,
-		"taskRefExists":         taskRefExists,
-		"taskResourceRefExists": taskResourceRefExists,
-		"stepReasonExists":      stepReasonExists,
-		"sidecarReasonExists":   sidecarReasonExists,
-		"decorate":              formatted.DecorateAttr,
-		"sortStepStates":        sortStepStatesByStartTime,
-		"getTimeout":            getTimeoutValue,
+		"formatAge":               formatted.Age,
+		"formatDuration":          formatted.Duration,
+		"formatCondition":         formatted.Condition,
+		"formatResult":            formatted.Result,
+		"formatWorkspace":         formatted.Workspace,
+		"hasFailed":               hasFailed,
+		"taskRefExists":           taskRefExists,
+		"taskResourceRefExists":   taskResourceRefExists,
+		"stepReasonExists":        stepReasonExists,
+		"sidecarReasonExists":     sidecarReasonExists,
+		"decorate":                formatted.DecorateAttr,
+		"sortStepStates":          sortStepStatesByStartTime,
+		"getTimeout":              getTimeoutValue,
+		"removeLastAppliedConfig": formatted.RemoveLastAppliedConfig,
 	}
 
 	w := tabwriter.NewWriter(s.Out, 0, 5, 3, ' ', tabwriter.TabIndent)
