@@ -39,6 +39,13 @@ const describeTemplate = `{{decorate "bold" "Name"}}:	{{ .ClusterTask.Name }}
 {{- if ne .ClusterTask.Spec.Description "" }}
 {{decorate "bold" "Description"}}:	{{ .ClusterTask.Spec.Description }}
 {{- end }}
+{{- $annotations := removeLastAppliedConfig .ClusterTask.Annotations -}}
+{{- if $annotations }}
+{{decorate "bold" "Annotations"}}:
+{{- range $k, $v := $annotations }}
+ {{ $k }}={{ $v }}
+{{- end }}
+{{- end }}
 
 {{- if .ClusterTask.Spec.Resources }}
 
@@ -219,12 +226,13 @@ func printClusterTaskDescription(s *cli.Stream, p cli.Params, tname string) erro
 	}
 
 	funcMap := template.FuncMap{
-		"formatAge":       formatted.Age,
-		"formatDuration":  formatted.Duration,
-		"formatCondition": formatted.Condition,
-		"decorate":        formatted.DecorateAttr,
-		"autoStepName":    formatted.AutoStepName,
-		"formatDesc":      formatted.FormatDesc,
+		"formatAge":               formatted.Age,
+		"formatDuration":          formatted.Duration,
+		"formatCondition":         formatted.Condition,
+		"decorate":                formatted.DecorateAttr,
+		"autoStepName":            formatted.AutoStepName,
+		"formatDesc":              formatted.FormatDesc,
+		"removeLastAppliedConfig": formatted.RemoveLastAppliedConfig,
 	}
 
 	w := tabwriter.NewWriter(s.Out, 0, 5, 3, ' ', tabwriter.TabIndent)

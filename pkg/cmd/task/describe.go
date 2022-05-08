@@ -43,6 +43,13 @@ const describeTemplate = `{{decorate "bold" "Name"}}:	{{ .Task.Name }}
 {{- $v := findVersion .Task.Labels }} {{- if ne $v ""}}
 {{decorate "bold" "Version"}}:    	{{ $v }}
 {{- end }}
+{{- $annotations := removeLastAppliedConfig .Task.Annotations -}}
+{{- if $annotations }}
+{{decorate "bold" "Annotations"}}:
+{{- range $k, $v := $annotations }}
+ {{ $k }}={{ $v }}
+{{- end }}
+{{- end }}
 
 {{- if .Task.Spec.Resources }}
 
@@ -226,13 +233,14 @@ func printTaskDescription(s *cli.Stream, p cli.Params, tname string) error {
 	}
 
 	funcMap := template.FuncMap{
-		"formatAge":       formatted.Age,
-		"formatDuration":  formatted.Duration,
-		"formatCondition": formatted.Condition,
-		"decorate":        formatted.DecorateAttr,
-		"autoStepName":    formatted.AutoStepName,
-		"formatDesc":      formatted.FormatDesc,
-		"findVersion":     formatted.FindVersion,
+		"formatAge":               formatted.Age,
+		"formatDuration":          formatted.Duration,
+		"formatCondition":         formatted.Condition,
+		"decorate":                formatted.DecorateAttr,
+		"autoStepName":            formatted.AutoStepName,
+		"formatDesc":              formatted.FormatDesc,
+		"findVersion":             formatted.FindVersion,
+		"removeLastAppliedConfig": formatted.RemoveLastAppliedConfig,
 	}
 
 	w := tabwriter.NewWriter(s.Out, 0, 5, 3, ' ', tabwriter.TabIndent)

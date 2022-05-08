@@ -50,6 +50,13 @@ const templ = `{{decorate "bold" "Name"}}:	{{ .PipelineRun.Name }}
  {{ $k }}={{ $v }}
 {{- end }}
 {{- end }}
+{{- $annotations := removeLastAppliedConfig .PipelineRun.Annotations -}}
+{{- if $annotations }}
+{{decorate "bold" "Annotations"}}:
+{{- range $k, $v := $annotations }}
+ {{ $k }}={{ $v }}
+{{- end }}
+{{- end }}
 
 {{decorate "status" ""}}{{decorate "underline bold" "Status\n"}}
 STARTED	DURATION	STATUS
@@ -218,6 +225,7 @@ func PrintPipelineRunDescription(s *cli.Stream, prName string, p cli.Params) err
 		"decorate":                  formatted.DecorateAttr,
 		"getTimeout":                getTimeoutValue,
 		"checkTRStatus":             checkTaskRunStatus,
+		"removeLastAppliedConfig":   formatted.RemoveLastAppliedConfig,
 	}
 
 	w := tabwriter.NewWriter(s.Out, 0, 5, 3, ' ', tabwriter.TabIndent)

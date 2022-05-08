@@ -14,6 +14,10 @@
 
 package formatted
 
+import (
+	corev1 "k8s.io/api/core/v1"
+)
+
 // If description is longer than 20 char then it will return
 // initial 20 chars suffixed by ...
 func FormatDesc(desc string) string {
@@ -21,4 +25,14 @@ func FormatDesc(desc string) string {
 		return desc[0:19] + "..."
 	}
 	return desc
+}
+
+func RemoveLastAppliedConfig(annotations map[string]string) map[string]string {
+	removed := map[string]string{}
+	for k, v := range annotations {
+		if k != corev1.LastAppliedConfigAnnotation {
+			removed[k] = v
+		}
+	}
+	return removed
 }

@@ -41,6 +41,13 @@ const describeTemplate = `{{decorate "bold" "Name"}}:	{{ .PipelineName }}
 {{- if ne .Pipeline.Spec.Description "" }}
 {{decorate "bold" "Description"}}:	{{ .Pipeline.Spec.Description }}
 {{- end }}
+{{- $annotations := removeLastAppliedConfig .Pipeline.Annotations -}}
+{{- if $annotations }}
+{{decorate "bold" "Annotations"}}:
+{{- range $k, $v := $annotations }}
+ {{ $k }}={{ $v }}
+{{- end }}
+{{- end }}
 
 {{- if ne (len .Pipeline.Spec.Resources) 0 }}
 
@@ -196,15 +203,16 @@ func printPipelineDescription(out io.Writer, p cli.Params, pname string) error {
 	}
 
 	funcMap := template.FuncMap{
-		"formatAge":       formatted.Age,
-		"formatDuration":  formatted.Duration,
-		"formatCondition": formatted.Condition,
-		"decorate":        formatted.DecorateAttr,
-		"formatDesc":      formatted.FormatDesc,
-		"formatTimeout":   formatted.Timeout,
-		"formatParam":     formatted.Param,
-		"join":            strings.Join,
-		"getTaskRefName":  formatted.GetTaskRefName,
+		"formatAge":               formatted.Age,
+		"formatDuration":          formatted.Duration,
+		"formatCondition":         formatted.Condition,
+		"decorate":                formatted.DecorateAttr,
+		"formatDesc":              formatted.FormatDesc,
+		"formatTimeout":           formatted.Timeout,
+		"formatParam":             formatted.Param,
+		"join":                    strings.Join,
+		"getTaskRefName":          formatted.GetTaskRefName,
+		"removeLastAppliedConfig": formatted.RemoveLastAppliedConfig,
 	}
 
 	w := tabwriter.NewWriter(out, 0, 5, 3, ' ', tabwriter.TabIndent)

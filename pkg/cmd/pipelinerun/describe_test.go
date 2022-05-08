@@ -2890,3 +2890,50 @@ func TestPipelineRunDescribeWithTimeouts(t *testing.T) {
 	}
 	golden.Assert(t, got, fmt.Sprintf("%s.golden", t.Name()))
 }
+
+func TestPipelineRunDescribe_with_annotations(t *testing.T) {
+	prun := []*v1beta1.PipelineRun{
+		{
+			ObjectMeta: metav1.ObjectMeta{
+				Name:      "pr-with-annotations",
+				Namespace: "ns",
+				Annotations: map[string]string{
+					corev1.LastAppliedConfigAnnotation: "LastAppliedConfig",
+					"tekton.dev/tags":                  "testing",
+				},
+			},
+			Spec: v1beta1.PipelineRunSpec{
+				PipelineRef: &v1beta1.PipelineRef{
+					Name: "pr-with-annotations",
+				},
+			},
+		},
+	}
+
+	namespaces := []*corev1.Namespace{
+		{
+			ObjectMeta: metav1.ObjectMeta{
+				Name: "ns",
+			},
+		},
+	}
+
+	version := "v1beta1"
+	tdc := testDynamic.Options{}
+	dynamic, err := tdc.Client(
+		cb.UnstructuredV1beta1PR(prun[0], version),
+	)
+	if err != nil {
+		t.Errorf("unable to create dynamic client: %v", err)
+	}
+	cs, _ := test.SeedV1beta1TestData(t, pipelinev1beta1test.Data{Namespaces: namespaces, PipelineRuns: prun})
+	cs.Pipeline.Resources = cb.APIResourceList(version, []string{"pipelinerun", "taskrun"})
+	p := &test.Params{Tekton: cs.Pipeline, Kube: cs.Kube, Dynamic: dynamic}
+
+	pipelinerun := Command(p)
+	actual, err := test.ExecuteCommand(pipelinerun, "desc", "pr-with-annotations", "-n", "ns")
+	if err != nil {
+		t.Errorf("Unexpected error: %v", err)
+	}
+	golden.Assert(t, actual, fmt.Sprintf("%s.golden", t.Name()))
+}
