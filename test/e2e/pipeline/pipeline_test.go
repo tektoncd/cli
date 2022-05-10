@@ -373,7 +373,7 @@ Waiting for logs to be available...
 		// Expect successfully cancelled PipelineRun
 		expected := "PipelineRun cancelled: " + pipelineRunName + "\n"
 		assert.Assert(t, res.Stdout() == expected)
-		assert.Assert(t, "PipelineRunCancelled" == cancelledRun.Status.Conditions[0].Reason)
+		assert.Assert(t, "Cancelled" == cancelledRun.Status.Conditions[0].Reason)
 	})
 }
 
@@ -476,6 +476,7 @@ func TestPipelinesNegativeE2E(t *testing.T) {
 	var pipelineGeneratedName string
 
 	t.Run("Start Pipeline Run using pipeline start command with SA as 'pipelines' ", func(t *testing.T) {
+		t.Skip("skipping due to problems in TektonPipelines. See https://github.com/tektoncd/pipeline/issues/4747")
 		res := tkn.MustSucceed(t, "pipeline", "start", tePipelineName,
 			"-r=source-repo="+tePipelineFaultGitResourceName,
 			"-p=FILEPATH=docs",
