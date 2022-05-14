@@ -476,7 +476,6 @@ func TestPipelinesNegativeE2E(t *testing.T) {
 	var pipelineGeneratedName string
 
 	t.Run("Start Pipeline Run using pipeline start command with SA as 'pipelines' ", func(t *testing.T) {
-		t.Skip("skipping due to problems in TektonPipelines. See https://github.com/tektoncd/pipeline/issues/4747")
 		res := tkn.MustSucceed(t, "pipeline", "start", tePipelineName,
 			"-r=source-repo="+tePipelineFaultGitResourceName,
 			"-p=FILEPATH=docs",
