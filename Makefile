@@ -95,7 +95,7 @@ lint-yaml: ${YAML_FILES} ## runs yamllint on all yaml files
 .PHONY: test-unit
 test-unit: ./vendor ## run unit tests
 	@echo "Running unit tests..."
-	@go test -failfast -v -cover ./...
+	@go test ./pkg/... ./cmd/... -failfast -v -cover
 
 .PHONY: update-golden
 update-golden: ./vendor ## run unit tests (updating golden files)

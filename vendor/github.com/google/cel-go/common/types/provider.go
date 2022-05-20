@@ -22,7 +22,6 @@ import (
 	"github.com/google/cel-go/common/types/pb"
 	"github.com/google/cel-go/common/types/ref"
 	"github.com/google/cel-go/common/types/traits"
-
 	"google.golang.org/protobuf/proto"
 	"google.golang.org/protobuf/reflect/protoreflect"
 
@@ -207,7 +206,10 @@ func (p *protoTypeRegistry) NativeToValue(value interface{}) ref.Val {
 		if !found {
 			return NewErr("unknown type: '%s'", typeName)
 		}
-		unwrapped, isUnwrapped := td.MaybeUnwrap(v)
+		unwrapped, isUnwrapped, err := td.MaybeUnwrap(v)
+		if err != nil {
+			return UnsupportedRefValConversionErr(v)
+		}
 		if isUnwrapped {
 			return p.NativeToValue(unwrapped)
 		}
@@ -395,7 +397,10 @@ func nativeToValue(a ref.TypeAdapter, value interface{}) (ref.Val, bool) {
 		if !found {
 			return nil, false
 		}
-		val, unwrapped := td.MaybeUnwrap(v)
+		val, unwrapped, err := td.MaybeUnwrap(v)
+		if err != nil {
+			return UnsupportedRefValConversionErr(v), true
+		}
 		if !unwrapped {
 			return nil, false
 		}
