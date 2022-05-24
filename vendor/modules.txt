@@ -699,7 +699,7 @@ github.com/secure-systems-lab/go-securesystemslib/dsse
 github.com/segmentio/ksuid
 # github.com/shibumi/go-pathspec v1.3.0
 github.com/shibumi/go-pathspec
-# github.com/sigstore/cosign v1.4.2-0.20220103014340-1a7f9d61a2e9
+# github.com/sigstore/cosign v1.5.2
 github.com/sigstore/cosign/cmd/cosign/cli/fulcio
 github.com/sigstore/cosign/cmd/cosign/cli/fulcio/fulcioroots
 github.com/sigstore/cosign/cmd/cosign/cli/options

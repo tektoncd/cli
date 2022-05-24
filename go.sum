@@ -2132,8 +2132,8 @@ github.com/shurcooL/go v0.0.0-20180423040247-9e1955d9fb6e/go.mod h1:TDJrrUr11Vxr
 github.com/shurcooL/go-goon v0.0.0-20170922171312-37c2f522c041/go.mod h1:N5mDOmsrJOB+vfqUK+7DmDyjhSLIIBnXo9lvZJj3MWQ=
 github.com/shurcooL/graphql v0.0.0-20181231061246-d48a9a75455f/go.mod h1:AuYgA5Kyo4c7HfUmvRGs/6rGlMMV/6B1bVnB9JxJEEg=
 github.com/shurcooL/sanitized_anchor_name v1.0.0/go.mod h1:1NzhyTcUVG4SuEtjjoZeVRXNmyL/1OwPU0+IJeTBvfc=
-github.com/sigstore/cosign v1.4.2-0.20220103014340-1a7f9d61a2e9 h1:0bMd3YkLp5dCrmsvcLigzf5is4iyg68XCcpHuhSitG8=
-github.com/sigstore/cosign v1.4.2-0.20220103014340-1a7f9d61a2e9/go.mod h1:07cmUkSH4O6pbvSXSulNP4VPPzNPccq4tB3BXM2u5M0=
+github.com/sigstore/cosign v1.5.2 h1:YMVIjSLQ+6fL8m3deqLcg7aRqGbU/U6sJvcU0aT4fSM=
+github.com/sigstore/cosign v1.5.2/go.mod h1:USeA+jISR3H86hfgsTn1UJYKC9mgEE7/o+dJ7sk63MY=
 github.com/sigstore/fulcio v0.1.2-0.20211207184413-f4746cc4ff3d/go.mod h1:4MU8ZIe1hJz85JUaYi7v1kIxG3z9t1T6I8Ae4KFjPV4=
 github.com/sigstore/fulcio v0.1.2-0.20220103193424-0df42390d392 h1:lvFz1cMQbgLKq6vV85wL4yPEBMvaHeeOKSwSwozPq3s=
 github.com/sigstore/fulcio v0.1.2-0.20220103193424-0df42390d392/go.mod h1:HpEuqamoVS2jypmBqHcsF4goDzb28+0sQUyHUb+Cpf8=
