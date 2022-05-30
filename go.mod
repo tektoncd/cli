@@ -34,6 +34,7 @@ require (
 	github.com/hinshun/vt10x v0.0.0-20180809195222-d55458df857c
 	github.com/jonboulle/clockwork v0.2.2
 	github.com/ktr0731/go-fuzzyfinder v0.2.0
+	github.com/letsencrypt/boulder v0.0.0-20220331220046-b23ab962616e
 	github.com/mitchellh/copystructure v1.2.0
 	github.com/mitchellh/go-homedir v1.1.0
 	github.com/mitchellh/go-testing-interface v1.14.1
@@ -48,6 +49,7 @@ require (
 	github.com/tektoncd/plumbing v0.0.0-20211012143332-c7cc43d9bc0c
 	github.com/tektoncd/triggers v0.19.0
 	github.com/tidwall/gjson v1.12.1 // indirect
+	github.com/titanous/rocacheck v0.0.0-20171023193734-afe73141d399
 	go.opencensus.io v0.23.0
 	go.uber.org/atomic v1.9.0
 	go.uber.org/multierr v1.8.0
@@ -55,13 +57,15 @@ require (
 	golang.org/x/crypto v0.0.0-20220411220226-7b82a4e95df4
 	golang.org/x/term v0.0.0-20210927222741-03fcf44c2211
 	golang.org/x/xerrors v0.0.0-20220411194840-2f41105eb62f
+	google.golang.org/grpc v1.46.0
 	google.golang.org/protobuf v1.28.0
+	gopkg.in/square/go-jose.v2 v2.6.0
 	gopkg.in/yaml.v2 v2.4.0
 	gotest.tools v2.2.0+incompatible
 	gotest.tools/v3 v3.1.0
 	k8s.io/api v0.23.5
 	k8s.io/apimachinery v0.23.5
-	k8s.io/cli-runtime v0.21.4
+	k8s.io/cli-runtime v0.23.5
 	k8s.io/client-go v1.5.2
 	knative.dev/pkg v0.0.0-20220329144915-0a1ec2e0d46c
 	sigs.k8s.io/yaml v1.3.0
@@ -72,7 +76,7 @@ replace (
 	go.opentelemetry.io/contrib/instrumentation/google.golang.org/grpc/otelgrpc => go.opentelemetry.io/contrib/instrumentation/google.golang.org/grpc/otelgrpc v0.20.0
 	go.opentelemetry.io/otel => go.opentelemetry.io/otel v0.20.0
 	go.opentelemetry.io/otel/sdk => go.opentelemetry.io/otel/sdk v0.20.0
-	k8s.io/apimachinery => k8s.io/apimachinery v0.22.5
+	k8s.io/apimachinery => k8s.io/apimachinery v0.23.5
 	k8s.io/client-go => k8s.io/client-go v0.23.5
 	k8s.io/code-generator => k8s.io/code-generator v0.22.5
 	k8s.io/kube-openapi => k8s.io/kube-openapi v0.0.0-20211109043538-20434351676c
