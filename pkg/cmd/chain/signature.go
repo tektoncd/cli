@@ -15,6 +15,7 @@
 package chain
 
 import (
+	"context"
 	"fmt"
 
 	"github.com/spf13/cobra"
@@ -76,7 +77,7 @@ func printSignatures(cs *cli.Clients, namespace string, tr *v1beta1.TaskRun) err
 		}
 
 		// Fetch the signature.
-		signatures, err := backend.RetrieveSignatures(opts)
+		signatures, err := backend.RetrieveSignatures(context.Background(), tr, opts)
 		if err != nil {
 			return fmt.Errorf("error retrieving the signatures: %s", err)
 		}

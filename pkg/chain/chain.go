@@ -71,7 +71,7 @@ func initializeBackends(cs *cli.Clients, namespace string, tr *v1beta1.TaskRun, 
 	}
 
 	// Initialize the backend.
-	backends, err := storage.InitializeBackends(cs.Tekton, cs.Kube, sugaredLogger, tr, *cfg)
+	backends, err := storage.InitializeBackends(context.Background(), cs.Tekton, cs.Kube, sugaredLogger, *cfg)
 	if err != nil {
 		return nil, fmt.Errorf("error initializing backends: %s", err)
 	}
