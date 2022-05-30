@@ -15,11 +15,16 @@
 package cosign
 
 import (
+	"bytes"
 	"context"
+	"crypto"
+	"crypto/ecdsa"
 	"crypto/sha256"
+	"crypto/x509"
 	"encoding/base64"
 	"encoding/hex"
 	"fmt"
+	"os"
 	"strings"
 
 	"github.com/go-openapi/strfmt"
@@ -27,13 +32,12 @@ import (
 	"github.com/google/trillian/merkle/logverifier"
 	"github.com/google/trillian/merkle/rfc6962"
 	"github.com/pkg/errors"
+	"github.com/sigstore/cosign/pkg/cosign/bundle"
 	"github.com/sigstore/cosign/pkg/cosign/tuf"
-	"github.com/sigstore/cosign/pkg/oci"
 	"github.com/sigstore/rekor/pkg/generated/client/index"
 
 	"github.com/sigstore/rekor/pkg/generated/client"
 	"github.com/sigstore/rekor/pkg/generated/client/entries"
-	"github.com/sigstore/rekor/pkg/generated/client/pubkey"
 	"github.com/sigstore/rekor/pkg/generated/models"
 	hashedrekord_v001 "github.com/sigstore/rekor/pkg/types/hashedrekord/v0.0.1"
 	intoto_v001 "github.com/sigstore/rekor/pkg/types/intoto/v0.0.1"
@@ -42,15 +46,82 @@ import (
 // This is the rekor public key target name
 var rekorTargetStr = `rekor.pub`
 
-// GetRekorPub retrieves the rekor public key from the embedded or cached TUF root. If expired, makes a
-// network call to retrieve the updated target.
-func GetRekorPub(ctx context.Context) ([]byte, error) {
-	tuf, err := tuf.NewFromEnv(ctx)
+// RekorPubKey contains the ECDSA verification key and the current status
+// of the key according to TUF metadata, whether it's active or expired.
+type RekorPubKey struct {
+	PubKey *ecdsa.PublicKey
+	Status tuf.StatusKind
+}
+
+const (
+	// If specified, you can specify an oob Public Key that Rekor uses using
+	// this ENV variable.
+	altRekorPublicKey = "SIGSTORE_REKOR_PUBLIC_KEY"
+	// Add Rekor API Public Key
+	// If specified, will fetch the Rekor Public Key from the specified Rekor
+	// server and add it to RekorPubKeys.
+	// TODO(vaikas): Implement storing state like Rekor does so that if tree
+	// state ever changes, it will make lots of noise.
+	addRekorPublicKeyFromRekor = "SIGSTORE_TRUST_REKOR_API_PUBLIC_KEY"
+)
+
+// getLogID generates a SHA256 hash of a DER-encoded public key.
+func getLogID(pub crypto.PublicKey) (string, error) {
+	pubBytes, err := x509.MarshalPKIXPublicKey(pub)
+	if err != nil {
+		return "", err
+	}
+	digest := sha256.Sum256(pubBytes)
+	return hex.EncodeToString(digest[:]), nil
+}
+
+// GetRekorPubs retrieves trusted Rekor public keys from the embedded or cached
+// TUF root. If expired, makes a network call to retrieve the updated targets.
+func GetRekorPubs(ctx context.Context) (map[string]RekorPubKey, error) {
+	tufClient, err := tuf.NewFromEnv(ctx)
 	if err != nil {
 		return nil, err
 	}
-	defer tuf.Close()
-	return tuf.GetTarget(rekorTargetStr)
+	defer tufClient.Close()
+	targets, err := tufClient.GetTargetsByMeta(tuf.Rekor, []string{rekorTargetStr})
+	if err != nil {
+		return nil, err
+	}
+	publicKeys := make(map[string]RekorPubKey)
+	altRekorPub := os.Getenv(altRekorPublicKey)
+	if altRekorPub != "" {
+		fmt.Fprintf(os.Stderr, "**Warning** Using a non-standard public key for Rekor: %s\n", altRekorPub)
+		raw, err := os.ReadFile(altRekorPub)
+		if err != nil {
+			return nil, errors.Wrap(err, "error reading alternate Rekor public key file")
+		}
+		extra, err := PemToECDSAKey(raw)
+		if err != nil {
+			return nil, errors.Wrap(err, "error converting PEM to ECDSAKey")
+		}
+		keyID, err := getLogID(extra)
+		if err != nil {
+			return nil, errors.Wrap(err, "error generating log ID")
+		}
+		publicKeys[keyID] = RekorPubKey{PubKey: extra, Status: tuf.Active}
+	} else {
+		for _, t := range targets {
+			rekorPubKey, err := PemToECDSAKey(t.Target)
+			if err != nil {
+				return nil, errors.Wrap(err, "pem to ecdsa")
+			}
+			keyID, err := getLogID(rekorPubKey)
+			if err != nil {
+				return nil, errors.Wrap(err, "error generating log ID")
+			}
+			publicKeys[keyID] = RekorPubKey{PubKey: rekorPubKey, Status: t.Status}
+		}
+	}
+	if len(publicKeys) == 0 {
+		return nil, errors.New("none of the Rekor public keys have been found")
+	}
+
+	return publicKeys, nil
 }
 
 // TLogUpload will upload the signature, public key and payload to the transparency log.
@@ -85,7 +156,11 @@ func doUpload(ctx context.Context, rekorClient *client.Rekor, pe models.Proposed
 			fmt.Println("Signature already exists. Displaying proof")
 			uriSplit := strings.Split(existsErr.Location.String(), "/")
 			uuid := uriSplit[len(uriSplit)-1]
-			return verifyTLogEntry(ctx, rekorClient, uuid)
+			e, err := GetTlogEntry(ctx, rekorClient, uuid)
+			if err != nil {
+				return nil, err
+			}
+			return e, VerifyTLogEntry(ctx, rekorClient, e)
 		}
 		return nil, err
 	}
@@ -131,6 +206,28 @@ func rekorEntry(payload, signature, pubKey []byte) hashedrekord_v001.V001Entry {
 	}
 }
 
+func ComputeLeafHash(e *models.LogEntryAnon) ([]byte, error) {
+	entryBytes, err := base64.StdEncoding.DecodeString(e.Body.(string))
+	if err != nil {
+		return nil, err
+	}
+	return rfc6962.DefaultHasher.HashLeaf(entryBytes), nil
+}
+
+func verifyUUID(uuid string, e models.LogEntryAnon) error {
+	entryUUID, _ := hex.DecodeString(uuid)
+
+	// Verify leaf hash matches hash of the entry body.
+	computedLeafHash, err := ComputeLeafHash(&e)
+	if err != nil {
+		return err
+	}
+	if !bytes.Equal(computedLeafHash, entryUUID) {
+		return fmt.Errorf("computed leaf hash did not match entry UUID")
+	}
+	return nil
+}
+
 func GetTlogEntry(ctx context.Context, rekorClient *client.Rekor, uuid string) (*models.LogEntryAnon, error) {
 	params := entries.NewGetLogEntryByUUIDParamsWithContext(ctx)
 	params.SetEntryUUID(uuid)
@@ -138,7 +235,14 @@ func GetTlogEntry(ctx context.Context, rekorClient *client.Rekor, uuid string) (
 	if err != nil {
 		return nil, err
 	}
-	for _, e := range resp.Payload {
+	for k, e := range resp.Payload {
+		// Check that body hash matches UUID
+		if k != uuid {
+			return nil, fmt.Errorf("unexpected entry returned from rekor server")
+		}
+		if err := verifyUUID(k, e); err != nil {
+			return nil, err
+		}
 		return &e, nil
 	}
 	return nil, errors.New("empty response")
@@ -171,12 +275,12 @@ func proposedEntry(b64Sig string, payload, pubKey []byte) ([]models.ProposedEntr
 	return proposedEntry, nil
 }
 
-func FindTlogEntry(ctx context.Context, rekorClient *client.Rekor, b64Sig string, payload, pubKey []byte) (uuid string, index int64, err error) {
+func FindTlogEntry(ctx context.Context, rekorClient *client.Rekor, b64Sig string, payload, pubKey []byte) (entry *models.LogEntryAnon, err error) {
 	searchParams := entries.NewSearchLogQueryParamsWithContext(ctx)
 	searchLogQuery := models.SearchLogQuery{}
 	proposedEntry, err := proposedEntry(b64Sig, payload, pubKey)
 	if err != nil {
-		return "", 0, err
+		return nil, err
 	}
 
 	searchLogQuery.SetEntries(proposedEntry)
@@ -184,26 +288,27 @@ func FindTlogEntry(ctx context.Context, rekorClient *client.Rekor, b64Sig string
 	searchParams.SetEntry(&searchLogQuery)
 	resp, err := rekorClient.Entries.SearchLogQuery(searchParams)
 	if err != nil {
-		return "", 0, errors.Wrap(err, "searching log query")
+		return nil, errors.Wrap(err, "searching log query")
 	}
 	if len(resp.Payload) == 0 {
-		return "", 0, errors.New("signature not found in transparency log")
+		return nil, errors.New("signature not found in transparency log")
 	} else if len(resp.Payload) > 1 {
-		return "", 0, errors.New("multiple entries returned; this should not happen")
+		return nil, errors.New("multiple entries returned; this should not happen")
 	}
 	logEntry := resp.Payload[0]
 	if len(logEntry) != 1 {
-		return "", 0, errors.New("UUID value can not be extracted")
+		return nil, errors.New("UUID value can not be extracted")
 	}
 
-	for k := range logEntry {
-		uuid = k
+	var tlogEntry models.LogEntryAnon
+	for k, e := range logEntry {
+		// Check body hash matches uuid
+		if err := verifyUUID(k, e); err != nil {
+			return nil, err
+		}
+		tlogEntry = e
 	}
-	verifiedEntry, err := verifyTLogEntry(ctx, rekorClient, uuid)
-	if err != nil {
-		return "", 0, err
-	}
-	return uuid, *verifiedEntry.Verification.InclusionProof.LogIndex, nil
+	return &tlogEntry, nil
 }
 
 func FindTLogEntriesByPayload(ctx context.Context, rekorClient *client.Rekor, payload []byte) (uuids []string, err error) {
@@ -221,21 +326,9 @@ func FindTLogEntriesByPayload(ctx context.Context, rekorClient *client.Rekor, pa
 	return searchIndex.GetPayload(), nil
 }
 
-func verifyTLogEntry(ctx context.Context, rekorClient *client.Rekor, uuid string) (*models.LogEntryAnon, error) {
-	params := entries.NewGetLogEntryByUUIDParamsWithContext(ctx)
-	params.EntryUUID = uuid
-
-	lep, err := rekorClient.Entries.GetLogEntryByUUID(params)
-	if err != nil {
-		return nil, err
-	}
-
-	if len(lep.Payload) != 1 {
-		return nil, errors.New("UUID value can not be extracted")
-	}
-	e := lep.Payload[params.EntryUUID]
+func VerifyTLogEntry(ctx context.Context, rekorClient *client.Rekor, e *models.LogEntryAnon) error {
 	if e.Verification == nil || e.Verification.InclusionProof == nil {
-		return nil, errors.New("inclusion proof not provided")
+		return errors.New("inclusion proof not provided")
 	}
 
 	hashes := [][]byte{}
@@ -245,32 +338,58 @@ func verifyTLogEntry(ctx context.Context, rekorClient *client.Rekor, uuid string
 	}
 
 	rootHash, _ := hex.DecodeString(*e.Verification.InclusionProof.RootHash)
-	leafHash, _ := hex.DecodeString(params.EntryUUID)
+	entryBytes, err := base64.StdEncoding.DecodeString(e.Body.(string))
+	if err != nil {
+		return err
+	}
+	leafHash := rfc6962.DefaultHasher.HashLeaf(entryBytes)
 
+	// Verify the inclusion proof.
 	v := logverifier.New(rfc6962.DefaultHasher)
 	if err := v.VerifyInclusionProof(*e.Verification.InclusionProof.LogIndex, *e.Verification.InclusionProof.TreeSize, hashes, rootHash, leafHash); err != nil {
-		return nil, errors.Wrap(err, "verifying inclusion proof")
+		return errors.Wrap(err, "verifying inclusion proof")
 	}
 
 	// Verify rekor's signature over the SET.
-	resp, err := rekorClient.Pubkey.GetPublicKey(pubkey.NewGetPublicKeyParamsWithContext(ctx))
-	if err != nil {
-		return nil, errors.Wrap(err, "rekor public key")
-	}
-	rekorPubKey, err := PemToECDSAKey([]byte(resp.Payload))
-	if err != nil {
-		return nil, errors.Wrap(err, "rekor public key pem to ecdsa")
-	}
-
-	payload := oci.BundlePayload{
+	payload := bundle.RekorPayload{
 		Body:           e.Body,
 		IntegratedTime: *e.IntegratedTime,
 		LogIndex:       *e.LogIndex,
 		LogID:          *e.LogID,
 	}
-	if err := VerifySET(payload, []byte(e.Verification.SignedEntryTimestamp), rekorPubKey); err != nil {
-		return nil, errors.Wrap(err, "verifying signedEntryTimestamp")
+
+	rekorPubKeys, err := GetRekorPubs(ctx)
+	if err != nil {
+		return errors.Wrap(err, "unable to fetch Rekor public keys from TUF repository")
 	}
 
-	return &e, nil
+	addRekorPublic := os.Getenv(addRekorPublicKeyFromRekor)
+	if addRekorPublic != "" {
+		pubOK, err := rekorClient.Pubkey.GetPublicKey(nil)
+		if err != nil {
+			return errors.Wrap(err, "unable to fetch rekor public key from rekor")
+		}
+		pubFromAPI, err := PemToECDSAKey([]byte(pubOK.Payload))
+		if err != nil {
+			return errors.Wrap(err, "error converting rekor PEM public key from rekor to ECDSAKey")
+		}
+		keyID, err := getLogID(pubFromAPI)
+		if err != nil {
+			return errors.Wrap(err, "error generating log ID")
+		}
+		rekorPubKeys[keyID] = RekorPubKey{PubKey: pubFromAPI, Status: tuf.Active}
+	}
+
+	pubKey, ok := rekorPubKeys[payload.LogID]
+	if !ok {
+		return errors.New("rekor log public key not found for payload")
+	}
+	err = VerifySET(payload, []byte(e.Verification.SignedEntryTimestamp), pubKey.PubKey)
+	if err != nil {
+		return errors.Wrap(err, "verifying signedEntryTimestamp")
+	}
+	if pubKey.Status != tuf.Active {
+		fmt.Fprintf(os.Stderr, "**Info** Successfully verified Rekor entry using an expired verification key\n")
+	}
+	return nil
 }

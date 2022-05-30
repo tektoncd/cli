@@ -20,8 +20,24 @@ import "github.com/tektoncd/chains/pkg/chains/formats"
 
 // StorageOpts contains additional information required when storing signatures
 type StorageOpts struct {
-	Key           string
-	Cert          string
-	Chain         string
+	// Key stands for the identifier of an artifact.
+	// - For OCI artifact, it is first 12 chars of the image digest.
+	// - For TaskRun artifact, it is `taskrun-<UID>`
+	Key string
+
+	// Cert is an OPTIONAL property that contains a PEM-encoded x509 certificate.
+	// If present, this certificate MUST embed the public key that can be used to verify the signature.
+	// https://github.com/sigstore/cosign/blob/main/specs/SIGNATURE_SPEC.md
+	Cert string
+
+	// Chain string is an OPTIONAL property that contains a PEM-encoded, DER-formatted, ASN.1 x509 certificate chain.
+	// The certificate property MUST be present if this property is present.
+	// This chain MAY be used by implementations to verify the certificate property.
+	// https://github.com/sigstore/cosign/blob/main/specs/SIGNATURE_SPEC.md
+	Chain string
+
+	// PayloadFormat is the format to store payload in.
+	// - For OCI artifact, Chains only supports `simplesigning` format. https://www.redhat.com/en/blog/container-image-signing
+	// - For TaskRun artifact, Chains supports `tekton` and `in-toto` format. https://slsa.dev/provenance/v0.2
 	PayloadFormat formats.PayloadType
 }

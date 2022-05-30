@@ -25,14 +25,15 @@ import (
 	"time"
 
 	"github.com/coreos/go-oidc/v3/oidc"
+	"github.com/pkg/errors"
 	"github.com/segmentio/ksuid"
 	"github.com/skratchdot/open-golang/open"
 	"golang.org/x/oauth2"
-
-	"github.com/pkg/errors"
 )
 
 const oobRedirectURI = "urn:ietf:wg:oauth:2.0:oob"
+
+var browserOpener = open.Run
 
 // InteractiveIDTokenGetter is a type to get ID tokens for oauth flows
 type InteractiveIDTokenGetter struct {
@@ -49,8 +50,8 @@ func (i *InteractiveIDTokenGetter) GetIDToken(p *oidc.Provider, cfg oauth2.Confi
 
 	doneCh := make(chan string)
 	errCh := make(chan error)
-	// starts listener on ephemeral port
-	redirectServer, redirectURL, err := startRedirectListener(stateToken, doneCh, errCh)
+	// starts listener using the redirect_uri, otherwise starts on ephemeral port
+	redirectServer, redirectURL, err := startRedirectListener(stateToken, i.HTMLPage, cfg.RedirectURL, doneCh, errCh)
 	if err != nil {
 		return nil, errors.Wrap(err, "starting redirect listener")
 	}
@@ -74,7 +75,7 @@ func (i *InteractiveIDTokenGetter) GetIDToken(p *oidc.Provider, cfg oauth2.Confi
 	}
 	authCodeURL := cfg.AuthCodeURL(stateToken, opts...)
 	var code string
-	if err := open.Run(authCodeURL); err != nil {
+	if err := browserOpener(authCodeURL); err != nil {
 		// Swap to the out of band flow if we can't open the browser
 		fmt.Fprintf(os.Stderr, "error opening browser: %v\n", err)
 		code = doOobFlow(&cfg, stateToken, opts)
@@ -125,7 +126,9 @@ func (i *InteractiveIDTokenGetter) GetIDToken(p *oidc.Provider, cfg oauth2.Confi
 }
 
 func doOobFlow(cfg *oauth2.Config, stateToken string, opts []oauth2.AuthCodeOption) string {
-	cfg.RedirectURL = oobRedirectURI
+	if cfg.RedirectURL == "" {
+		cfg.RedirectURL = oobRedirectURI
+	}
 	authURL := cfg.AuthCodeURL(stateToken, opts...)
 	fmt.Fprintln(os.Stderr, "Go to the following link in a browser:\n\n\t", authURL)
 	fmt.Fprintf(os.Stderr, "Enter verification code: ")
@@ -134,27 +137,42 @@ func doOobFlow(cfg *oauth2.Config, stateToken string, opts []oauth2.AuthCodeOpti
 	return code
 }
 
-func startRedirectListener(state string, doneCh chan string, errCh chan error) (*http.Server, *url.URL, error) {
-	listener, err := net.Listen("tcp", "localhost:0")
-	if err != nil {
-		return nil, nil, err
-	}
+func startRedirectListener(state, htmlPage, redirectURL string, doneCh chan string, errCh chan error) (*http.Server, *url.URL, error) {
+	var listener net.Listener
+	var urlListener *url.URL
+	var err error
 
-	port := listener.Addr().(*net.TCPAddr).Port
+	if redirectURL == "" {
+		listener, err = net.Listen("tcp", "localhost:0")
+		if err != nil {
+			return nil, nil, err
+		}
 
-	url := &url.URL{
-		Scheme: "http",
-		Host:   fmt.Sprintf("localhost:%d", port),
-		Path:   "/auth/callback",
+		port := listener.Addr().(*net.TCPAddr).Port
+		urlListener = &url.URL{
+			Scheme: "http",
+			Host:   fmt.Sprintf("localhost:%d", port),
+			Path:   "/auth/callback",
+		}
+	} else {
+		urlListener, err = url.Parse(redirectURL)
+		if err != nil {
+			return nil, nil, err
+		}
+
+		listener, err = net.Listen("tcp", urlListener.Host)
+		if err != nil {
+			return nil, nil, err
+		}
 	}
 
 	m := http.NewServeMux()
 	s := &http.Server{
-		Addr:    url.Host,
+		Addr:    urlListener.Host,
 		Handler: m,
 	}
 
-	m.HandleFunc(url.Path, func(w http.ResponseWriter, r *http.Request) {
+	m.HandleFunc(urlListener.Path, func(w http.ResponseWriter, r *http.Request) {
 		// even though these are fetched from the FormValue method,
 		// these are supplied as query parameters
 		if r.FormValue("state") != state {
@@ -171,7 +189,7 @@ func startRedirectListener(state string, doneCh chan string, errCh chan error) (
 		}
 	}()
 
-	return s, url, nil
+	return s, urlListener, nil
 }
 
 func getCode(doneCh chan string, errCh chan error) (string, error) {

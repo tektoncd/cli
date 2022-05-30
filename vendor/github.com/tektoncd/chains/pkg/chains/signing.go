@@ -23,7 +23,6 @@ import (
 	"github.com/tektoncd/chains/pkg/artifacts"
 	"github.com/tektoncd/chains/pkg/chains/formats"
 	"github.com/tektoncd/chains/pkg/chains/formats/intotoite6"
-	"github.com/tektoncd/chains/pkg/chains/formats/provenance"
 	"github.com/tektoncd/chains/pkg/chains/formats/simple"
 	"github.com/tektoncd/chains/pkg/chains/formats/tekton"
 	"github.com/tektoncd/chains/pkg/chains/signing"
@@ -34,7 +33,6 @@ import (
 	"github.com/tektoncd/pipeline/pkg/apis/pipeline/v1beta1"
 	versioned "github.com/tektoncd/pipeline/pkg/client/clientset/versioned"
 	"go.uber.org/zap"
-	"k8s.io/client-go/kubernetes"
 	"knative.dev/pkg/logging"
 )
 
@@ -43,27 +41,32 @@ type Signer interface {
 }
 
 type TaskRunSigner struct {
-	KubeClient        kubernetes.Interface
-	Pipelineclientset versioned.Interface
+	// Formatters: format payload
+	// The keys are the names of different formatters {tekton, in-toto, simplesigning}. The first two are for TaskRun artifact, and simplesigning is for OCI artifact.
+	// The values are actual `Payloader` interfaces that can generate payload in different format from taskrun.
+	Formatters map[formats.PayloadType]formats.Payloader
+
+	// Backends: store payload and signature
+	// The keys are different storage option's name. {docdb, gcs, grafeas, oci, tekton}
+	// The values are the actual storage backends that will be used to store and retrieve provenance.
+	Backends          map[string]storage.Backend
 	SecretPath        string
+	Pipelineclientset versioned.Interface
 }
 
-// Set this as a var for mocking.
-var getBackends = storage.InitializeBackends
-
-func allSigners(sp string, cfg config.Config, l *zap.SugaredLogger) map[string]signing.Signer {
+func allSigners(ctx context.Context, sp string, cfg config.Config, l *zap.SugaredLogger) map[string]signing.Signer {
 	all := map[string]signing.Signer{}
 	for _, s := range signing.AllSigners {
 		switch s {
 		case signing.TypeX509:
-			signer, err := x509.NewSigner(sp, cfg, l)
+			signer, err := x509.NewSigner(ctx, sp, cfg, l)
 			if err != nil {
 				l.Warnf("error configuring x509 signer: %s", err)
 				continue
 			}
 			all[s] = signer
 		case signing.TypeKMS:
-			signer, err := kms.NewSigner(cfg.Signers.KMS, l)
+			signer, err := kms.NewSigner(ctx, cfg.Signers.KMS, l)
 			if err != nil {
 				l.Warnf("error configuring kms signer with config %v: %s", cfg.Signers.KMS, err)
 				continue
@@ -77,7 +80,7 @@ func allSigners(sp string, cfg config.Config, l *zap.SugaredLogger) map[string]s
 	return all
 }
 
-func allFormatters(cfg config.Config, l *zap.SugaredLogger) map[formats.PayloadType]formats.Payloader {
+func AllFormatters(cfg config.Config, l *zap.SugaredLogger) map[formats.PayloadType]formats.Payloader {
 	all := map[formats.PayloadType]formats.Payloader{}
 
 	for _, f := range formats.AllFormatters {
@@ -100,12 +103,6 @@ func allFormatters(cfg config.Config, l *zap.SugaredLogger) map[formats.PayloadT
 				l.Warnf("error configuring intoto formatter: %s", err)
 			}
 			all[f] = formatter
-		case formats.PayloadTypeProvenance:
-			formatter, err := provenance.NewFormatter(cfg, l)
-			if err != nil {
-				l.Warnf("error configuring tekton-provenance formatter: %s", err)
-			}
-			all[f] = formatter
 		}
 	}
 
@@ -114,7 +111,6 @@ func allFormatters(cfg config.Config, l *zap.SugaredLogger) map[formats.PayloadT
 
 // SignTaskRun signs a TaskRun, and marks it as signed.
 func (ts *TaskRunSigner) SignTaskRun(ctx context.Context, tr *v1beta1.TaskRun) error {
-	// Get all the things we might need (storage backends, signers and formatters)
 	cfg := *config.FromContext(ctx)
 	logger := logging.FromContext(ctx)
 
@@ -124,14 +120,7 @@ func (ts *TaskRunSigner) SignTaskRun(ctx context.Context, tr *v1beta1.TaskRun) e
 		&artifacts.OCIArtifact{Logger: logger},
 	}
 
-	// Storage
-	allBackends, err := getBackends(ts.Pipelineclientset, ts.KubeClient, logger, tr, cfg)
-	if err != nil {
-		return err
-	}
-
-	signers := allSigners(ts.SecretPath, cfg, logger)
-	allFormats := allFormatters(cfg, logger)
+	signers := allSigners(ctx, ts.SecretPath, cfg, logger)
 
 	rekorClient, err := getRekor(cfg.Transparency.URL, logger)
 	if err != nil {
@@ -146,7 +135,7 @@ func (ts *TaskRunSigner) SignTaskRun(ctx context.Context, tr *v1beta1.TaskRun) e
 		}
 		payloadFormat := signableType.PayloadFormat(cfg)
 		// Find the right payload format and format the object
-		payloader, ok := allFormats[payloadFormat]
+		payloader, ok := ts.Formatters[payloadFormat]
 
 		if !ok {
 			logger.Warnf("Format %s configured for TaskRun: %v %s was not found", payloadFormat, tr, signableType.Type())
@@ -199,14 +188,14 @@ func (ts *TaskRunSigner) SignTaskRun(ctx context.Context, tr *v1beta1.TaskRun) e
 
 			// Now store those!
 			for _, backend := range signableType.StorageBackend(cfg).List() {
-				b := allBackends[backend]
+				b := ts.Backends[backend]
 				storageOpts := config.StorageOpts{
 					Key:           signableType.Key(obj),
 					Cert:          signer.Cert(),
 					Chain:         signer.Chain(),
 					PayloadFormat: payloadFormat,
 				}
-				if err := b.StorePayload(rawPayload, string(signature), storageOpts); err != nil {
+				if err := b.StorePayload(ctx, tr, rawPayload, string(signature), storageOpts); err != nil {
 					logger.Error(err)
 					merr = multierror.Append(merr, err)
 				}
@@ -215,7 +204,6 @@ func (ts *TaskRunSigner) SignTaskRun(ctx context.Context, tr *v1beta1.TaskRun) e
 			if shouldUploadTlog(cfg, tr) {
 				entry, err := rekorClient.UploadTlog(ctx, signer, signature, rawPayload, signer.Cert(), string(payloadFormat))
 				if err != nil {
-					logger.Error(err)
 					merr = multierror.Append(merr, err)
 				} else {
 					logger.Infof("Uploaded entry to %s with index %d", cfg.Transparency.URL, *entry.LogIndex)
@@ -225,7 +213,7 @@ func (ts *TaskRunSigner) SignTaskRun(ctx context.Context, tr *v1beta1.TaskRun) e
 			}
 		}
 		if merr.ErrorOrNil() != nil {
-			if err := HandleRetry(tr, ts.Pipelineclientset, extraAnnotations); err != nil {
+			if err := HandleRetry(ctx, tr, ts.Pipelineclientset, extraAnnotations); err != nil {
 				merr = multierror.Append(merr, err)
 			}
 			return merr
@@ -233,12 +221,12 @@ func (ts *TaskRunSigner) SignTaskRun(ctx context.Context, tr *v1beta1.TaskRun) e
 	}
 
 	// Now mark the TaskRun as signed
-	return MarkSigned(tr, ts.Pipelineclientset, extraAnnotations)
+	return MarkSigned(ctx, tr, ts.Pipelineclientset, extraAnnotations)
 }
 
-func HandleRetry(tr *v1beta1.TaskRun, ps versioned.Interface, annotations map[string]string) error {
+func HandleRetry(ctx context.Context, tr *v1beta1.TaskRun, ps versioned.Interface, annotations map[string]string) error {
 	if RetryAvailable(tr) {
-		return AddRetry(tr, ps, annotations)
+		return AddRetry(ctx, tr, ps, annotations)
 	}
-	return MarkFailed(tr, ps, annotations)
+	return MarkFailed(ctx, tr, ps, annotations)
 }

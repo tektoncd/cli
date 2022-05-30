@@ -27,7 +27,6 @@ const (
 	PayloadTypeTekton        PayloadType = "tekton"
 	PayloadTypeSimpleSigning PayloadType = "simplesigning"
 	PayloadTypeInTotoIte6    PayloadType = "in-toto"
-	PayloadTypeProvenance    PayloadType = "tekton-provenance"
 )
 
-var AllFormatters = []PayloadType{PayloadTypeTekton, PayloadTypeSimpleSigning, PayloadTypeInTotoIte6, PayloadTypeProvenance}
+var AllFormatters = []PayloadType{PayloadTypeTekton, PayloadTypeSimpleSigning, PayloadTypeInTotoIte6}

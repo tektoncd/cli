@@ -19,6 +19,7 @@ package gitlab
 import (
 	"errors"
 	"fmt"
+	"net"
 	"net/http"
 	"time"
 )
@@ -66,6 +67,7 @@ type User struct {
 	WebURL                         string             `json:"web_url"`
 	CreatedAt                      *time.Time         `json:"created_at"`
 	Bio                            string             `json:"bio"`
+	Bot                            bool               `json:"bot"`
 	Location                       string             `json:"location"`
 	PublicEmail                    string             `json:"public_email"`
 	Skype                          string             `json:"skype"`
@@ -85,7 +87,9 @@ type User struct {
 	CanCreateProject               bool               `json:"can_create_project"`
 	ProjectsLimit                  int                `json:"projects_limit"`
 	CurrentSignInAt                *time.Time         `json:"current_sign_in_at"`
+	CurrentSignInIP                *net.IP            `json:"current_sign_in_ip"`
 	LastSignInAt                   *time.Time         `json:"last_sign_in_at"`
+	LastSignInIP                   *net.IP            `json:"last_sign_in_ip"`
 	ConfirmedAt                    *time.Time         `json:"confirmed_at"`
 	TwoFactorEnabled               bool               `json:"two_factor_enabled"`
 	Note                           string             `json:"note"`
@@ -96,6 +100,7 @@ type User struct {
 	ExtraSharedRunnersMinutesLimit int                `json:"extra_shared_runners_minutes_limit"`
 	UsingLicenseSeat               bool               `json:"using_license_seat"`
 	CustomAttributes               []*CustomAttribute `json:"custom_attributes"`
+	NamespaceID                    int                `json:"namespace_id"`
 }
 
 // UserIdentity represents a user identity.
@@ -127,6 +132,7 @@ type ListUsersOptions struct {
 	External             *bool      `url:"external,omitempty" json:"external,omitempty"`
 	WithoutProjects      *bool      `url:"without_projects,omitempty" json:"without_projects,omitempty"`
 	WithCustomAttributes *bool      `url:"with_custom_attributes,omitempty" json:"with_custom_attributes,omitempty"`
+	WithoutProjectBots   *bool      `url:"without_project_bots,omitempty" json:"without_project_bots,omitempty"`
 }
 
 // ListUsers gets a list of users.
@@ -246,6 +252,7 @@ type ModifyUserOptions struct {
 	External           *bool   `url:"external,omitempty" json:"external,omitempty"`
 	PrivateProfile     *bool   `url:"private_profile,omitempty" json:"private_profile,omitempty"`
 	Note               *string `url:"note,omitempty" json:"note,omitempty"`
+	PublicEmail        *string `url:"public_email,omitempty" json:"public_email,omitempty"`
 }
 
 // ModifyUser modifies an existing user. Only administrators can change attributes
@@ -393,6 +400,7 @@ type SSHKey struct {
 	Title     string     `json:"title"`
 	Key       string     `json:"key"`
 	CreatedAt *time.Time `json:"created_at"`
+	ExpiresAt *time.Time `json:"expires_at"`
 }
 
 // ListSSHKeys gets a list of currently authenticated user's SSH keys.
@@ -419,13 +427,16 @@ func (s *UsersService) ListSSHKeys(options ...RequestOptionFunc) ([]*SSHKey, *Re
 // https://docs.gitlab.com/ce/api/users.html#list-ssh-keys-for-user
 type ListSSHKeysForUserOptions ListOptions
 
-// ListSSHKeysForUser gets a list of a specified user's SSH keys. Available
-// only for admin
+// ListSSHKeysForUser gets a list of a specified user's SSH keys.
 //
 // GitLab API docs:
 // https://docs.gitlab.com/ce/api/users.html#list-ssh-keys-for-user
-func (s *UsersService) ListSSHKeysForUser(user int, opt *ListSSHKeysForUserOptions, options ...RequestOptionFunc) ([]*SSHKey, *Response, error) {
-	u := fmt.Sprintf("users/%d/keys", user)
+func (s *UsersService) ListSSHKeysForUser(uid interface{}, opt *ListSSHKeysForUserOptions, options ...RequestOptionFunc) ([]*SSHKey, *Response, error) {
+	user, err := parseID(uid)
+	if err != nil {
+		return nil, nil, err
+	}
+	u := fmt.Sprintf("users/%s/keys", user)
 
 	req, err := s.client.NewRequest(http.MethodGet, u, opt, options)
 	if err != nil {
@@ -446,6 +457,26 @@ func (s *UsersService) ListSSHKeysForUser(user int, opt *ListSSHKeysForUserOptio
 // GitLab API docs: https://docs.gitlab.com/ce/api/users.html#single-ssh-key
 func (s *UsersService) GetSSHKey(key int, options ...RequestOptionFunc) (*SSHKey, *Response, error) {
 	u := fmt.Sprintf("user/keys/%d", key)
+
+	req, err := s.client.NewRequest(http.MethodGet, u, nil, options)
+	if err != nil {
+		return nil, nil, err
+	}
+
+	k := new(SSHKey)
+	resp, err := s.client.Do(req, k)
+	if err != nil {
+		return nil, resp, err
+	}
+
+	return k, resp, err
+}
+
+// GetSSHKeyForUser gets a single key for a given user.
+//
+// GitLab API docs: https://docs.gitlab.com/ee/api/users.html#single-ssh-key-for-given-user
+func (s *UsersService) GetSSHKeyForUser(user int, key int, options ...RequestOptionFunc) (*SSHKey, *Response, error) {
+	u := fmt.Sprintf("users/%d/keys/%d", user, key)
 
 	req, err := s.client.NewRequest(http.MethodGet, u, nil, options)
 	if err != nil {
@@ -542,9 +573,172 @@ func (s *UsersService) DeleteSSHKeyForUser(user, key int, options ...RequestOpti
 	return s.client.Do(req, nil)
 }
 
+// GPGKey represents a GPG key.
+//
+// GitLab API docs: https://docs.gitlab.com/ce/api/users.html#list-all-gpg-keys
+type GPGKey struct {
+	ID        int        `json:"id"`
+	Key       string     `json:"key"`
+	CreatedAt *time.Time `json:"created_at"`
+}
+
+// ListGPGKeys gets a list of currently authenticated user’s GPG keys.
+//
+// GitLab API docs: https://docs.gitlab.com/ce/api/users.html#list-all-gpg-keys
+func (s *UsersService) ListGPGKeys(options ...RequestOptionFunc) ([]*GPGKey, *Response, error) {
+	req, err := s.client.NewRequest(http.MethodGet, "user/gpg_keys", nil, options)
+	if err != nil {
+		return nil, nil, err
+	}
+
+	var ks []*GPGKey
+	resp, err := s.client.Do(req, &ks)
+	if err != nil {
+		return nil, resp, err
+	}
+
+	return ks, resp, err
+}
+
+// GetGPGKey gets a specific GPG key of currently authenticated user.
+//
+// GitLab API docs: https://docs.gitlab.com/ce/api/users.html#get-a-specific-gpg-key
+func (s *UsersService) GetGPGKey(key int, options ...RequestOptionFunc) (*GPGKey, *Response, error) {
+	u := fmt.Sprintf("users/gpg_keys/%d", key)
+
+	req, err := s.client.NewRequest(http.MethodGet, u, nil, options)
+	if err != nil {
+		return nil, nil, err
+	}
+
+	k := new(GPGKey)
+	resp, err := s.client.Do(req, k)
+	if err != nil {
+		return nil, resp, err
+	}
+
+	return k, resp, err
+}
+
+// AddGPGKeyOptions represents the available AddGPGKey() options.
+//
+// GitLab API docs: https://docs.gitlab.com/ce/api/users.html#add-a-gpg-key
+type AddGPGKeyOptions struct {
+	Key *string `url:"key,omitempty" json:"key,omitempty"`
+}
+
+// AddGPGKey creates a new GPG key owned by the currently authenticated user.
+//
+// GitLab API docs: https://docs.gitlab.com/ce/api/users.html#add-a-gpg-key
+func (s *UsersService) AddGPGKey(opt *AddGPGKeyOptions, options ...RequestOptionFunc) (*GPGKey, *Response, error) {
+	req, err := s.client.NewRequest(http.MethodPost, "user/gpg_keys", opt, options)
+	if err != nil {
+		return nil, nil, err
+	}
+
+	k := new(GPGKey)
+	resp, err := s.client.Do(req, k)
+	if err != nil {
+		return nil, resp, err
+	}
+
+	return k, resp, err
+}
+
+// DeleteGPGKey deletes a GPG key owned by currently authenticated user.
+//
+// GitLab API docs: https://docs.gitlab.com/ce/api/users.html#delete-a-gpg-key
+func (s *UsersService) DeleteGPGKey(key int, options ...RequestOptionFunc) (*Response, error) {
+	u := fmt.Sprintf("users/gpg_keys/%d", key)
+
+	req, err := s.client.NewRequest(http.MethodDelete, u, nil, options)
+	if err != nil {
+		return nil, err
+	}
+
+	return s.client.Do(req, nil)
+}
+
+// ListGPGKeysForUser gets a list of a specified user’s GPG keys.
+//
+// GitLab API docs:
+// https://docs.gitlab.com/ce/api/users.html#list-all-gpg-keys-for-given-user
+func (s *UsersService) ListGPGKeysForUser(user int, options ...RequestOptionFunc) ([]*GPGKey, *Response, error) {
+	u := fmt.Sprintf("users/%d/gpg_keys", user)
+
+	req, err := s.client.NewRequest(http.MethodGet, u, nil, options)
+	if err != nil {
+		return nil, nil, err
+	}
+
+	var ks []*GPGKey
+	resp, err := s.client.Do(req, &ks)
+	if err != nil {
+		return nil, resp, err
+	}
+
+	return ks, resp, err
+}
+
+// GetGPGKeyForUser gets a specific GPG key for a given user.
+//
+// GitLab API docs: https://docs.gitlab.com/ce/api/users.html#get-a-specific-gpg-key-for-a-given-user
+func (s *UsersService) GetGPGKeyForUser(user, key int, options ...RequestOptionFunc) (*GPGKey, *Response, error) {
+	u := fmt.Sprintf("users/%d/gpg_keys/%d", user, key)
+
+	req, err := s.client.NewRequest(http.MethodGet, u, nil, options)
+	if err != nil {
+		return nil, nil, err
+	}
+
+	k := new(GPGKey)
+	resp, err := s.client.Do(req, k)
+	if err != nil {
+		return nil, resp, err
+	}
+
+	return k, resp, err
+}
+
+// AddGPGKeyForUser creates new GPG key owned by the specified user.
+//
+// GitLab API docs:
+// https://docs.gitlab.com/ce/api/users.html#add-a-gpg-key-for-a-given-user
+func (s *UsersService) AddGPGKeyForUser(user int, options ...RequestOptionFunc) (*GPGKey, *Response, error) {
+	u := fmt.Sprintf("users/%d/gpg_keys", user)
+
+	req, err := s.client.NewRequest(http.MethodPost, u, nil, options)
+	if err != nil {
+		return nil, nil, err
+	}
+
+	k := new(GPGKey)
+	resp, err := s.client.Do(req, k)
+	if err != nil {
+		return nil, resp, err
+	}
+
+	return k, resp, err
+}
+
+// DeleteGPGKeyForUser deletes a GPG key owned by a specified user.
+//
+// GitLab API docs:
+// https://docs.gitlab.com/ce/api/users.html#delete-a-gpg-key-for-a-given-user
+func (s *UsersService) DeleteGPGKeyForUser(user, key int, options ...RequestOptionFunc) (*Response, error) {
+	u := fmt.Sprintf("users/%d/gpg_keys/%d", user, key)
+
+	req, err := s.client.NewRequest(http.MethodDelete, u, nil, options)
+	if err != nil {
+		return nil, err
+	}
+
+	return s.client.Do(req, nil)
+}
+
 // Email represents an Email.
 //
-// GitLab API docs: https://doc.gitlab.com/ce/api/users.html#list-emails
+// GitLab API docs: https://docs.gitlab.com/ce/api/users.html#list-emails
 type Email struct {
 	ID    int    `json:"id"`
 	Email string `json:"email"`
@@ -744,6 +938,58 @@ func (s *UsersService) UnblockUser(user int, options ...RequestOptionFunc) error
 		return nil
 	case 403:
 		return ErrUserUnblockPrevented
+	case 404:
+		return ErrUserNotFound
+	default:
+		return fmt.Errorf("Received unexpected result code: %d", resp.StatusCode)
+	}
+}
+
+// BanUser bans the specified user. Available only for admin.
+//
+// GitLab API docs: https://docs.gitlab.com/ce/api/users.html#ban-user
+func (s *UsersService) BanUser(user int, options ...RequestOptionFunc) error {
+	u := fmt.Sprintf("users/%d/ban", user)
+
+	req, err := s.client.NewRequest(http.MethodPost, u, nil, options)
+	if err != nil {
+		return err
+	}
+
+	resp, err := s.client.Do(req, nil)
+	if err != nil && resp == nil {
+		return err
+	}
+
+	switch resp.StatusCode {
+	case 201:
+		return nil
+	case 404:
+		return ErrUserNotFound
+	default:
+		return fmt.Errorf("Received unexpected result code: %d", resp.StatusCode)
+	}
+}
+
+// UnbanUser unbans the specified user. Available only for admin.
+//
+// GitLab API docs: https://docs.gitlab.com/ce/api/users.html#unban-user
+func (s *UsersService) UnbanUser(user int, options ...RequestOptionFunc) error {
+	u := fmt.Sprintf("users/%d/unban", user)
+
+	req, err := s.client.NewRequest(http.MethodPost, u, nil, options)
+	if err != nil {
+		return err
+	}
+
+	resp, err := s.client.Do(req, nil)
+	if err != nil && resp == nil {
+		return err
+	}
+
+	switch resp.StatusCode {
+	case 201:
+		return nil
 	case 404:
 		return ErrUserNotFound
 	default:
@@ -979,31 +1225,15 @@ func (s *UsersService) RevokeImpersonationToken(user, token int, options ...Requ
 	return s.client.Do(req, nil)
 }
 
-// PersonalAccessToken represents a personal access token.
-//
-// GitLab API docs:
-// https://docs.gitlab.com/ee/api/users.html#create-a-personal-access-token
-type PersonalAccessToken struct {
-	ID        int        `json:"id"`
-	Name      string     `json:"name"`
-	Revoked   bool       `json:"revoked"`
-	CreatedAt *time.Time `json:"created_at"`
-	Scopes    []string   `json:"scopes"`
-	UserID    int        `json:"user_id"`
-	Active    bool       `json:"active"`
-	ExpiresAt *ISOTime   `json:"expires_at"`
-	Token     string     `json:"token"`
-}
-
 // CreatePersonalAccessTokenOptions represents the available
 // CreatePersonalAccessToken() options.
 //
 // GitLab API docs:
 // https://docs.gitlab.com/ee/api/users.html#create-a-personal-access-token
 type CreatePersonalAccessTokenOptions struct {
-	Name      *string  `url:"name,omitempty" json:"name,omitempty"`
-	ExpiresAt *ISOTime `url:"expires_at,omitempty" json:"expires_at,omitempty"`
-	Scopes    []string `url:"scopes,omitempty" json:"scopes,omitempty"`
+	Name      *string   `url:"name,omitempty" json:"name,omitempty"`
+	ExpiresAt *ISOTime  `url:"expires_at,omitempty" json:"expires_at,omitempty"`
+	Scopes    *[]string `url:"scopes,omitempty" json:"scopes,omitempty"`
 }
 
 // CreatePersonalAccessToken creates a personal access token.

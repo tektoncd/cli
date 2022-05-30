@@ -30,8 +30,9 @@ import (
 	"golang.org/x/term"
 
 	"github.com/sigstore/cosign/cmd/cosign/cli/fulcio/fulcioroots"
-	clioptions "github.com/sigstore/cosign/cmd/cosign/cli/options"
+	"github.com/sigstore/cosign/cmd/cosign/cli/options"
 	"github.com/sigstore/cosign/pkg/cosign"
+	"github.com/sigstore/cosign/pkg/providers"
 	"github.com/sigstore/fulcio/pkg/api"
 	"github.com/sigstore/sigstore/pkg/oauthflow"
 	"github.com/sigstore/sigstore/pkg/signature"
@@ -44,24 +45,24 @@ const (
 )
 
 type oidcConnector interface {
-	OIDConnect(string, string, string) (*oauthflow.OIDCIDToken, error)
+	OIDConnect(string, string, string, string) (*oauthflow.OIDCIDToken, error)
 }
 
 type realConnector struct {
 	flow oauthflow.TokenGetter
 }
 
-func (rf *realConnector) OIDConnect(url, clientID, secret string) (*oauthflow.OIDCIDToken, error) {
-	return oauthflow.OIDConnect(url, clientID, secret, rf.flow)
+func (rf *realConnector) OIDConnect(url, clientID, secret, redirectURL string) (*oauthflow.OIDCIDToken, error) {
+	return oauthflow.OIDConnect(url, clientID, secret, redirectURL, rf.flow)
 }
 
-func getCertForOauthID(priv *ecdsa.PrivateKey, fc api.Client, connector oidcConnector, oidcIssuer string, oidcClientID string) (*api.CertificateResponse, error) {
+func getCertForOauthID(priv *ecdsa.PrivateKey, fc api.Client, connector oidcConnector, oidcIssuer, oidcClientID, oidcClientSecret, oidcRedirectURL string) (*api.CertificateResponse, error) {
 	pubBytes, err := x509.MarshalPKIXPublicKey(&priv.PublicKey)
 	if err != nil {
 		return nil, err
 	}
 
-	tok, err := connector.OIDConnect(oidcIssuer, oidcClientID, "")
+	tok, err := connector.OIDConnect(oidcIssuer, oidcClientID, oidcClientSecret, oidcRedirectURL)
 	if err != nil {
 		return nil, err
 	}
@@ -85,7 +86,7 @@ func getCertForOauthID(priv *ecdsa.PrivateKey, fc api.Client, connector oidcConn
 }
 
 // GetCert returns the PEM-encoded signature of the OIDC identity returned as part of an interactive oauth2 flow plus the PEM-encoded cert chain.
-func GetCert(ctx context.Context, priv *ecdsa.PrivateKey, idToken, flow, oidcIssuer, oidcClientID string, fClient api.Client) (*api.CertificateResponse, error) {
+func GetCert(ctx context.Context, priv *ecdsa.PrivateKey, idToken, flow, oidcIssuer, oidcClientID, oidcClientSecret, oidcRedirectURL string, fClient api.Client) (*api.CertificateResponse, error) {
 	c := &realConnector{}
 	switch flow {
 	case FlowDevice:
@@ -99,7 +100,7 @@ func GetCert(ctx context.Context, priv *ecdsa.PrivateKey, idToken, flow, oidcIss
 		return nil, fmt.Errorf("unsupported oauth flow: %s", flow)
 	}
 
-	return getCertForOauthID(priv, fClient, c, oidcIssuer, oidcClientID)
+	return getCertForOauthID(priv, fClient, c, oidcIssuer, oidcClientID, oidcClientSecret, oidcRedirectURL)
 }
 
 type Signer struct {
@@ -110,7 +111,21 @@ type Signer struct {
 	*signature.ECDSASignerVerifier
 }
 
-func NewSigner(ctx context.Context, idToken, oidcIssuer, oidcClientID string, fClient api.Client) (*Signer, error) {
+func NewSigner(ctx context.Context, ko options.KeyOpts) (*Signer, error) {
+	fClient, err := NewClient(ko.FulcioURL)
+	if err != nil {
+		return nil, errors.Wrap(err, "creating Fulcio client")
+	}
+
+	idToken := ko.IDToken
+	// If token is not set in the options, get one from the provders
+	if idToken == "" && providers.Enabled(ctx) && !ko.OIDCDisableProviders {
+		idToken, err = providers.Provide(ctx, "sigstore")
+		if err != nil {
+			return nil, errors.Wrap(err, "fetching ambient OIDC credentials")
+		}
+	}
+
 	priv, err := cosign.GeneratePrivateKey()
 	if err != nil {
 		return nil, errors.Wrap(err, "generating cert")
@@ -123,6 +138,9 @@ func NewSigner(ctx context.Context, idToken, oidcIssuer, oidcClientID string, fC
 
 	var flow string
 	switch {
+	case ko.FulcioAuthFlow != "":
+		// Caller manually set flow option.
+		flow = ko.FulcioAuthFlow
 	case idToken != "":
 		flow = FlowToken
 	case !term.IsTerminal(0):
@@ -131,7 +149,7 @@ func NewSigner(ctx context.Context, idToken, oidcIssuer, oidcClientID string, fC
 	default:
 		flow = FlowNormal
 	}
-	Resp, err := GetCert(ctx, priv, idToken, flow, oidcIssuer, oidcClientID, fClient) // TODO, use the chain.
+	Resp, err := GetCert(ctx, priv, idToken, flow, ko.OIDCIssuer, ko.OIDCClientID, ko.OIDCClientSecret, ko.OIDCRedirectURL, fClient) // TODO, use the chain.
 	if err != nil {
 		return nil, errors.Wrap(err, "retrieving cert")
 	}
@@ -157,11 +175,15 @@ func GetRoots() *x509.CertPool {
 	return fulcioroots.Get()
 }
 
+func GetIntermediates() *x509.CertPool {
+	return fulcioroots.GetIntermediates()
+}
+
 func NewClient(fulcioURL string) (api.Client, error) {
 	fulcioServer, err := url.Parse(fulcioURL)
 	if err != nil {
 		return nil, err
 	}
-	fClient := api.NewClient(fulcioServer, api.WithUserAgent(clioptions.UserAgent()))
+	fClient := api.NewClient(fulcioServer, api.WithUserAgent(options.UserAgent()))
 	return fClient, nil
 }

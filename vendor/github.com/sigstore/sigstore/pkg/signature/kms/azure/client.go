@@ -1,5 +1,5 @@
 //
-// Copyright 2021 The Sigstore Authors.
+// Copyright 2022 The Sigstore Authors.
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -33,8 +33,17 @@ import (
 
 	kvauth "github.com/Azure/azure-sdk-for-go/services/keyvault/auth"
 	"github.com/Azure/azure-sdk-for-go/services/keyvault/v7.1/keyvault"
+	"github.com/Azure/go-autorest/autorest"
 	"github.com/Azure/go-autorest/autorest/to"
+	"github.com/sigstore/sigstore/pkg/signature"
+	sigkms "github.com/sigstore/sigstore/pkg/signature/kms"
 )
+
+func init() {
+	sigkms.AddProvider(ReferenceScheme, func(ctx context.Context, keyResourceID string, hashFunc crypto.Hash, opts ...signature.RPCOption) (sigkms.SignerVerifier, error) {
+		return LoadSignerVerifier(ctx, keyResourceID, hashFunc)
+	})
+}
 
 type azureVaultClient struct {
 	client    *keyvault.BaseClient
@@ -76,25 +85,10 @@ func parseReference(resourceID string) (vaultURL, vaultName, keyName string, err
 	return
 }
 
-func newAzureKMS(ctx context.Context, keyResourceID string) (*azureVaultClient, error) {
+func newAzureKMS(_ context.Context, keyResourceID string) (*azureVaultClient, error) {
 	vaultURL, vaultName, keyName, err := parseReference(keyResourceID)
 	if err != nil {
 		return nil, err
-	}
-
-	azureTenantID := os.Getenv("AZURE_TENANT_ID")
-	if azureTenantID == "" {
-		return nil, errors.New("AZURE_TENANT_ID is not set")
-	}
-
-	azureClientID := os.Getenv("AZURE_CLIENT_ID")
-	if azureClientID == "" {
-		return nil, errors.New("AZURE_CLIENT_ID is not set")
-	}
-
-	azureClientSecret := os.Getenv("AZURE_CLIENT_SECRET")
-	if azureClientSecret == "" {
-		return nil, errors.New("AZURE_CLIENT_SECRET is not set")
 	}
 
 	client, err := getKeysClient()
@@ -116,10 +110,74 @@ func newAzureKMS(ctx context.Context, keyResourceID string) (*azureVaultClient, 
 	return azClient, nil
 }
 
+type authenticationMethod string
+
+const (
+	unknownAuthenticationMethod     = "unknown"
+	environmentAuthenticationMethod = "environment"
+	cliAuthenticationMethod         = "cli"
+)
+
+// getAuthMethod returns the an authenticationMethod to use to get an Azure Authorizer.
+// If no environment variables are set, unknownAuthMethod will be used.
+// If the environment variable 'AZURE_AUTH_METHOD' is set to either environment or cli, use it.
+// If the environment variables 'AZURE_TENANT_ID', 'AZURE_CLIENT_ID' and 'AZURE_CLIENT_SECRET' are set, use environment.
+func getAuthenticationMethod() authenticationMethod {
+	tenantID := os.Getenv("AZURE_TENANT_ID")
+	clientID := os.Getenv("AZURE_CLIENT_ID")
+	clientSecret := os.Getenv("AZURE_CLIENT_SECRET")
+	authMethod := os.Getenv("AZURE_AUTH_METHOD")
+
+	if authMethod != "" {
+		switch strings.ToLower(authMethod) {
+		case "environment":
+			return environmentAuthenticationMethod
+		case "cli":
+			return cliAuthenticationMethod
+		}
+	}
+
+	if tenantID != "" && clientID != "" && clientSecret != "" {
+		return environmentAuthenticationMethod
+	}
+
+	return unknownAuthenticationMethod
+}
+
+// getAuthorizer takes an authenticationMethod and returns an Authorizer or an error.
+// If the method is unknown, Environment will be tested and if it returns an error CLI will be tested.
+// If the method is specified, the specified method will be used and no other will be tested.
+// This means the following default order of methods will be used if nothing else is defined:
+// 1. Client credentials (FromEnvironment)
+// 2. Client certificate (FromEnvironment)
+// 3. Username password (FromEnvironment)
+// 4. MSI (FromEnvironment)
+// 5. CLI (FromCLI)
+func getAuthorizer(method authenticationMethod) (autorest.Authorizer, error) {
+	switch method {
+	case environmentAuthenticationMethod:
+		return kvauth.NewAuthorizerFromEnvironment()
+	case cliAuthenticationMethod:
+		return kvauth.NewAuthorizerFromCLI()
+	case unknownAuthenticationMethod:
+		break
+	default:
+		return nil, fmt.Errorf("you should never reach this")
+	}
+
+	authorizer, err := kvauth.NewAuthorizerFromEnvironment()
+	if err == nil {
+		return authorizer, nil
+	}
+
+	return kvauth.NewAuthorizerFromCLI()
+}
+
 func getKeysClient() (keyvault.BaseClient, error) {
 	keyClient := keyvault.New()
 
-	authorizer, err := kvauth.NewAuthorizerFromEnvironment()
+	authMethod := getAuthenticationMethod()
+	authorizer, err := getAuthorizer(authMethod)
 	if err != nil {
 		return keyvault.BaseClient{}, err
 	}
@@ -219,7 +277,6 @@ func (a *azureVaultClient) createKey(ctx context.Context) (crypto.PublicKey, err
 }
 
 func (a *azureVaultClient) sign(ctx context.Context, hash []byte) ([]byte, error) {
-
 	params := keyvault.KeySignParameters{
 		Algorithm: keyvault.ES256,
 		Value:     to.StringPtr(base64.RawURLEncoding.EncodeToString(hash)),
@@ -239,7 +296,6 @@ func (a *azureVaultClient) sign(ctx context.Context, hash []byte) ([]byte, error
 }
 
 func (a *azureVaultClient) verify(ctx context.Context, signature, hash []byte) error {
-
 	params := keyvault.KeyVerifyParameters{
 		Algorithm: keyvault.ES256,
 		Digest:    to.StringPtr(base64.RawURLEncoding.EncodeToString(hash)),
