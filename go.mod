@@ -16,7 +16,7 @@ require (
 	github.com/ghodss/yaml v1.0.0
 	github.com/golang/snappy v0.0.4
 	github.com/google/go-cmp v0.5.8
-	github.com/google/go-containerregistry v0.8.1-0.20220216220642-00c59d91847c
+	github.com/google/go-containerregistry v0.8.1-0.20220414143355-892d7a808387
 	github.com/hako/durafmt v0.0.0-20210608085754-5c1018a4e16b
 	github.com/hashicorp/errwrap v1.1.0
 	github.com/hashicorp/go-hclog v1.2.0
@@ -45,10 +45,9 @@ require (
 	github.com/spf13/pflag v1.0.5
 	github.com/tektoncd/chains v0.9.0
 	github.com/tektoncd/hub v1.7.0
-	github.com/tektoncd/pipeline v0.33.1
-	github.com/tektoncd/plumbing v0.0.0-20211012143332-c7cc43d9bc0c
-	github.com/tektoncd/triggers v0.19.0
-	github.com/tidwall/gjson v1.12.1 // indirect
+	github.com/tektoncd/pipeline v0.35.0
+	github.com/tektoncd/plumbing v0.0.0-20220329085922-d765a5cba75f
+	github.com/tektoncd/triggers v0.20.0
 	github.com/titanous/rocacheck v0.0.0-20171023193734-afe73141d399
 	go.opencensus.io v0.23.0
 	go.uber.org/atomic v1.9.0
