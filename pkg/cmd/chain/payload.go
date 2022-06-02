@@ -15,6 +15,7 @@
 package chain
 
 import (
+	"context"
 	"fmt"
 
 	"github.com/spf13/cobra"
@@ -94,7 +95,7 @@ func printPayloads(cs *cli.Clients, namespace string, tr *v1beta1.TaskRun, skipV
 		}
 
 		// Fetch the payload.
-		payloads, err := backend.RetrievePayloads(opts)
+		payloads, err := backend.RetrievePayloads(context.Background(), tr, opts)
 		if err != nil {
 			return fmt.Errorf("error retrieving the payloads: %s", err)
 		}
