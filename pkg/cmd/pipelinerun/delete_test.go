@@ -174,6 +174,56 @@ func TestPipelineRunDelete(t *testing.T) {
 				},
 			},
 		},
+		{
+			ObjectMeta: metav1.ObjectMeta{
+				Name:              "pipeline-run-4",
+				Namespace:         "ns",
+				CreationTimestamp: metav1.Time{Time: clock.Now()},
+				Labels:            map[string]string{"tekton.dev/pipeline": "pipeline"},
+			},
+			Spec: v1alpha1.PipelineRunSpec{
+				PipelineRef: &v1alpha1.PipelineRef{
+					Name: "pipeline",
+				},
+			},
+			Status: v1beta1.PipelineRunStatus{
+				Status: duckv1beta1.Status{
+					Conditions: duckv1beta1.Conditions{
+						{
+							Status: corev1.ConditionTrue,
+							Reason: v1beta1.PipelineRunReasonPending.String(),
+						},
+					},
+				},
+			},
+		},
+		{
+			ObjectMeta: metav1.ObjectMeta{
+				Name:              "pipeline-run-5",
+				Namespace:         "ns",
+				CreationTimestamp: metav1.Time{Time: clock.Now()},
+				Labels:            map[string]string{"tekton.dev/pipeline": "pipeline"},
+			},
+			Spec: v1alpha1.PipelineRunSpec{
+				PipelineRef: &v1alpha1.PipelineRef{
+					Name: "pipeline",
+				},
+			},
+			Status: v1beta1.PipelineRunStatus{
+				Status: duckv1beta1.Status{
+					Conditions: duckv1beta1.Conditions{
+						{
+							Status: corev1.ConditionTrue,
+							Reason: v1beta1.PipelineRunReasonRunning.String(),
+						},
+					},
+				},
+				PipelineRunStatusFields: v1alpha1.PipelineRunStatusFields{
+					// pipeline run starts now
+					StartTime: &metav1.Time{Time: time.Now()},
+				},
+			},
+		},
 	}
 
 	type clients struct {
@@ -182,7 +232,7 @@ func TestPipelineRunDelete(t *testing.T) {
 	}
 
 	seeds := make([]clients, 0)
-	for i := 0; i < 10; i++ {
+	for i := 0; i < 13; i++ {
 		cs, _ := test.SeedTestData(t, pipelinetest.Data{
 			Pipelines:    pdata,
 			PipelineRuns: prdata,
@@ -195,6 +245,8 @@ func TestPipelineRunDelete(t *testing.T) {
 			cb.UnstructuredPR(prdata[1], version),
 			cb.UnstructuredPR(prdata[2], version),
 			cb.UnstructuredPR(prdata[3], version),
+			cb.UnstructuredPR(prdata[4], version),
+			cb.UnstructuredPR(prdata[5], version),
 		)
 		if err != nil {
 			t.Errorf("unable to create dynamic client: %v", err)
@@ -463,6 +515,33 @@ func TestPipelineRunDelete(t *testing.T) {
 			wantError:   true,
 			want:        "pipelineruns.tekton.dev \"nonexistent\" not found",
 		},
+		{
+			name:        "Delete all of a pipeline by default ignore-running",
+			command:     []string{"rm", "-p", "pipeline", "-n", "ns"},
+			dynamic:     seeds[10].dynamicClient,
+			input:       seeds[10].pipelineClient,
+			inputStream: nil,
+			wantError:   false,
+			want:        "Are you sure you want to delete all PipelineRuns related to Pipeline \"pipeline\" (y/n): All PipelineRuns(Completed) associated with Pipeline \"pipeline\" deleted in namespace \"ns\"\n",
+		},
+		{
+			name:        "Delete all of a pipeline by explicit ignore-running true",
+			command:     []string{"rm", "-p", "pipeline", "-n", "ns", "--ignore-running=true"},
+			dynamic:     seeds[11].dynamicClient,
+			input:       seeds[11].pipelineClient,
+			inputStream: nil,
+			wantError:   false,
+			want:        "Are you sure you want to delete all PipelineRuns related to Pipeline \"pipeline\" (y/n): All PipelineRuns(Completed) associated with Pipeline \"pipeline\" deleted in namespace \"ns\"\n",
+		},
+		{
+			name:        "Delete all of a pipeline by ignore-running false",
+			command:     []string{"rm", "-p", "pipeline", "-n", "ns", "--ignore-running=false"},
+			dynamic:     seeds[12].dynamicClient,
+			input:       seeds[12].pipelineClient,
+			inputStream: nil,
+			wantError:   false,
+			want:        "Are you sure you want to delete all PipelineRuns related to Pipeline \"pipeline\" (y/n): All PipelineRuns associated with Pipeline \"pipeline\" deleted in namespace \"ns\"\n",
+		},
 	}
 
 	for _, tp := range testParams {
@@ -616,6 +695,57 @@ func TestPipelineRunDelete_v1beta1(t *testing.T) {
 			},
 			Status: v1beta1.PipelineRunStatus{},
 		},
+		{
+			ObjectMeta: metav1.ObjectMeta{
+				Namespace:         "ns",
+				Name:              "pipeline-run-5",
+				Labels:            map[string]string{"tekton.dev/pipeline": "pipeline"},
+				CreationTimestamp: metav1.Time{Time: clock.Now()},
+			},
+			Spec: v1beta1.PipelineRunSpec{
+				PipelineRef: &v1beta1.PipelineRef{
+					Name: "pipeline",
+				},
+			},
+			Status: v1beta1.PipelineRunStatus{
+				Status: duckv1beta1.Status{
+					Conditions: duckv1beta1.Conditions{
+						{
+							Status: corev1.ConditionTrue,
+							Reason: v1beta1.PipelineRunReasonPending.String(),
+						},
+					},
+				},
+				PipelineRunStatusFields: v1beta1.PipelineRunStatusFields{},
+			},
+		},
+		{
+			ObjectMeta: metav1.ObjectMeta{
+				Namespace:         "ns",
+				Name:              "pipeline-run-6",
+				Labels:            map[string]string{"tekton.dev/pipeline": "pipeline"},
+				CreationTimestamp: metav1.Time{Time: clock.Now()},
+			},
+			Spec: v1beta1.PipelineRunSpec{
+				PipelineRef: &v1beta1.PipelineRef{
+					Name: "pipeline",
+				},
+			},
+			Status: v1beta1.PipelineRunStatus{
+				Status: duckv1beta1.Status{
+					Conditions: duckv1beta1.Conditions{
+						{
+							Status: corev1.ConditionTrue,
+							Reason: v1beta1.PipelineRunReasonRunning.String(),
+						},
+					},
+				},
+				PipelineRunStatusFields: v1beta1.PipelineRunStatusFields{
+					// pipeline run starts now
+					StartTime: &metav1.Time{Time: clock.Now()},
+				},
+			},
+		},
 	}
 
 	type clients struct {
@@ -624,7 +754,7 @@ func TestPipelineRunDelete_v1beta1(t *testing.T) {
 	}
 
 	seeds := make([]clients, 0)
-	for i := 0; i < 12; i++ {
+	for i := 0; i < 15; i++ {
 		cs, _ := test.SeedV1beta1TestData(t, pipelinev1beta1test.Data{
 			Pipelines:    pdata,
 			PipelineRuns: prdata,
@@ -637,6 +767,8 @@ func TestPipelineRunDelete_v1beta1(t *testing.T) {
 			cb.UnstructuredV1beta1PR(prdata[1], version),
 			cb.UnstructuredV1beta1PR(prdata[2], version),
 			cb.UnstructuredV1beta1PR(prdata[3], version),
+			cb.UnstructuredV1beta1PR(prdata[4], version),
+			cb.UnstructuredV1beta1PR(prdata[5], version),
 		)
 		if err != nil {
 			t.Errorf("unable to create dynamic client: %v", err)
@@ -931,7 +1063,7 @@ func TestPipelineRunDelete_v1beta1(t *testing.T) {
 			input:       seeds[9].pipelineClient,
 			inputStream: nil,
 			wantError:   false,
-			want:        "3 expired PipelineRuns has been deleted in namespace \"ns\", kept 0\n",
+			want:        "5 expired PipelineRuns has been deleted in namespace \"ns\", kept 0\n",
 		},
 		{
 			name:        "Delete all the pipelineruns including one without status",
@@ -959,6 +1091,33 @@ func TestPipelineRunDelete_v1beta1(t *testing.T) {
 			inputStream: nil,
 			wantError:   false,
 			want:        "There is/are only 2 PipelineRun(s) associated for Pipeline: pipeline \n",
+		},
+		{
+			name:        "Delete all of a pipeline by default ignore-running",
+			command:     []string{"rm", "-p", "pipeline", "-n", "ns"},
+			dynamic:     seeds[12].dynamicClient,
+			input:       seeds[12].pipelineClient,
+			inputStream: nil,
+			wantError:   false,
+			want:        "Are you sure you want to delete all PipelineRuns related to Pipeline \"pipeline\" (y/n): All PipelineRuns(Completed) associated with Pipeline \"pipeline\" deleted in namespace \"ns\"\n",
+		},
+		{
+			name:        "Delete all of a pipeline by explicit ignore-running true",
+			command:     []string{"rm", "-p", "pipeline", "-n", "ns", "--ignore-running=true"},
+			dynamic:     seeds[13].dynamicClient,
+			input:       seeds[13].pipelineClient,
+			inputStream: nil,
+			wantError:   false,
+			want:        "Are you sure you want to delete all PipelineRuns related to Pipeline \"pipeline\" (y/n): All PipelineRuns(Completed) associated with Pipeline \"pipeline\" deleted in namespace \"ns\"\n",
+		},
+		{
+			name:        "Delete all of a pipeline by ignore-running false",
+			command:     []string{"rm", "-p", "pipeline", "-n", "ns", "--ignore-running=false"},
+			dynamic:     seeds[14].dynamicClient,
+			input:       seeds[14].pipelineClient,
+			inputStream: nil,
+			wantError:   false,
+			want:        "Are you sure you want to delete all PipelineRuns related to Pipeline \"pipeline\" (y/n): All PipelineRuns associated with Pipeline \"pipeline\" deleted in namespace \"ns\"\n",
 		},
 	}
 

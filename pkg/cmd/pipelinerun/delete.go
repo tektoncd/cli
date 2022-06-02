@@ -174,6 +174,7 @@ func deletePipelineRuns(s *cli.Stream, p cli.Params, prNames []string, opts *opt
 			return err
 		}
 		numberOfDeletedPr = len(prtodelete)
+		numberOfKeptPr = len(prtokeep)
 
 		// Delete the PipelineRuns associated with a Pipeline
 		d.WithRelated("PipelineRun", pipelineRunLister(cs, opts.Keep, opts.KeepSince, p.Namespace(), opts.IgnoreRunning), func(pipelineRunName string) error {
@@ -238,23 +239,12 @@ func deletePipelineRuns(s *cli.Stream, p cli.Params, prNames []string, opts *opt
 
 func pipelineRunLister(cs *cli.Clients, keep, since int, ns string, ignoreRunning bool) func(string) ([]string, error) {
 	return func(pipelineName string) ([]string, error) {
-		lOpts := metav1.ListOptions{
-			LabelSelector: fmt.Sprintf("tekton.dev/pipeline=%s", pipelineName),
-		}
-		pipelineRuns, err := pr.List(cs, lOpts, ns)
+		labelSelector := fmt.Sprintf("tekton.dev/pipeline=%s", pipelineName)
+		prtodelete, _, err := allPipelineRunNames(cs, keep, since, ignoreRunning, labelSelector, ns)
 		if err != nil {
 			return nil, err
 		}
-		var todelete []string
-		switch {
-		case since > 0 && keep > 0:
-			todelete, _ = keepPipelineRunsByAgeAndNumber(pipelineRuns, since, keep, ignoreRunning)
-		case since > 0:
-			todelete, _ = keepPipelineRunsByAge(pipelineRuns, since, ignoreRunning)
-		default:
-			todelete, _ = keepPipelineRunsByNumber(pipelineRuns, keep)
-		}
-		return todelete, nil
+		return prtodelete, nil
 	}
 }
 
@@ -277,7 +267,7 @@ func allPipelineRunNames(cs *cli.Clients, keep, since int, ignoreRunning bool, l
 				continue
 			}
 			for _, v2 := range v.Status.Conditions {
-				if v2.Reason == "Running" || v2.Reason == "Pending" {
+				if v2.Reason == "Running" || v2.Reason == "Pending" || v2.Reason == "PipelineRunPending" || v2.Reason == "Started" {
 					continue
 				}
 				pipelineRunTmps = append(pipelineRunTmps, v)
