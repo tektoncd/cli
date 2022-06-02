@@ -22,7 +22,6 @@ import (
 
 	"github.com/tektoncd/cli/test/framework"
 	"github.com/tektoncd/pipeline/pkg/apis/pipeline/v1alpha1"
-	"golang.org/x/xerrors"
 	corev1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"knative.dev/pkg/apis"
@@ -37,7 +36,7 @@ func ForTaskRunToComplete(c *framework.Clients, trname string, namespace string)
 			if cond.Status == corev1.ConditionTrue || cond.Status == corev1.ConditionFalse {
 				return true, nil
 			} else if cond.Status != corev1.ConditionUnknown {
-				return false, xerrors.Errorf("taskRun %s failed ", trname)
+				return false, fmt.Errorf("taskRun %s failed ", trname)
 			}
 		}
 		return false, nil
@@ -53,7 +52,7 @@ func ForTaskRunToBeStarted(c *framework.Clients, trname string, namespace string
 		cond := tr.Status.GetCondition(apis.ConditionSucceeded)
 		if cond != nil {
 			if cond.Status == corev1.ConditionTrue || cond.Status == corev1.ConditionFalse {
-				return true, xerrors.Errorf("taskRun %s already finished!", trname)
+				return true, fmt.Errorf("TaskRun %s already finished", trname)
 			} else if cond.Status == corev1.ConditionUnknown && cond.Reason == "Running" || cond.Reason != "Pending" {
 				return true, nil
 			}
@@ -73,7 +72,7 @@ func ForPipelineRunToStart(c *framework.Clients, prname string, namespace string
 		c := pr.Status.GetCondition(apis.ConditionSucceeded)
 		if c != nil {
 			if c.Status == corev1.ConditionTrue || c.Status == corev1.ConditionFalse {
-				return true, xerrors.Errorf("pipelineRun %s already finished!", prname)
+				return true, fmt.Errorf("PipelineRun %s already finished", prname)
 			} else if c.Status == corev1.ConditionUnknown && (c.Reason == "Running" || c.Reason != "Pending") {
 				return true, nil
 			}
@@ -91,7 +90,7 @@ func ForPipelineRunToComplete(c *framework.Clients, prname string, namespace str
 		c := pr.Status.GetCondition(apis.ConditionSucceeded)
 		if c != nil {
 			if c.Status == corev1.ConditionTrue || c.Status == corev1.ConditionFalse {
-				return true, xerrors.Errorf("pipelineRun %s already finished!", prname)
+				return true, fmt.Errorf("PipelineRun %s already finished", prname)
 			} else if c.Status == corev1.ConditionUnknown && (c.Reason == "Running" || c.Reason == "Pending") {
 				return true, nil
 			}
@@ -117,7 +116,7 @@ func ForPipelineRunToComplete(c *framework.Clients, prname string, namespace str
 				c := tr.Status.GetCondition(apis.ConditionSucceeded)
 				if c != nil {
 					if c.Status == corev1.ConditionTrue || c.Status == corev1.ConditionFalse {
-						return true, xerrors.Errorf("taskRun %s already finished!", name)
+						return true, fmt.Errorf("TaskRun %s already finished", name)
 					} else if c.Status == corev1.ConditionUnknown && (c.Reason == "Running" || c.Reason == "Pending") {
 						return true, nil
 					}
@@ -145,7 +144,7 @@ func ForPipelineRunToComplete(c *framework.Clients, prname string, namespace str
 			if c.Status == corev1.ConditionTrue || c.Status == corev1.ConditionFalse {
 				return true, nil
 			} else if c.Status != corev1.ConditionUnknown {
-				return false, xerrors.Errorf("pipeline Run %s failed ", prname)
+				return false, fmt.Errorf("pipeline Run %s failed ", prname)
 			}
 		}
 		return false, nil
@@ -165,7 +164,7 @@ func ForPipelineRunToComplete(c *framework.Clients, prname string, namespace str
 					if cond.Status == corev1.ConditionTrue || cond.Status == corev1.ConditionFalse {
 						return true, nil
 					} else if cond.Status != corev1.ConditionUnknown {
-						return false, xerrors.Errorf("Task Run %s failed ", name)
+						return false, fmt.Errorf("Task Run %s failed ", name)
 					}
 				}
 				return false, nil
