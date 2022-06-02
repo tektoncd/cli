@@ -50,7 +50,7 @@ func GetTaskRunBackends(cs *cli.Clients, namespace string, tr *v1beta1.TaskRun) 
 	sugaredLogger := logger.Sugar()
 
 	// Get the storage backend.
-	backends, err := initializeBackends(cs, namespace, tr, sugaredLogger)
+	backends, err := initializeBackends(cs, namespace, sugaredLogger)
 	if err != nil {
 		return nil, config.StorageOpts{}, fmt.Errorf("failed to retrieve the backend storage: %v", err)
 	}
@@ -63,7 +63,7 @@ func GetTaskRunBackends(cs *cli.Clients, namespace string, tr *v1beta1.TaskRun) 
 	return backends, opts, nil
 }
 
-func initializeBackends(cs *cli.Clients, namespace string, tr *v1beta1.TaskRun, sugaredLogger *zap.SugaredLogger) (map[string]storage.Backend, error) {
+func initializeBackends(cs *cli.Clients, namespace string, sugaredLogger *zap.SugaredLogger) (map[string]storage.Backend, error) {
 	// Retrieve the Chains configuration.
 	cfg, err := getChainsConfig(cs, namespace)
 	if err != nil {
@@ -71,7 +71,7 @@ func initializeBackends(cs *cli.Clients, namespace string, tr *v1beta1.TaskRun, 
 	}
 
 	// Initialize the backend.
-	backends, err := storage.InitializeBackends(cs.Tekton, cs.Kube, sugaredLogger, tr, *cfg)
+	backends, err := storage.InitializeBackends(context.Background(), cs.Tekton, cs.Kube, sugaredLogger, *cfg)
 	if err != nil {
 		return nil, fmt.Errorf("error initializing backends: %s", err)
 	}
