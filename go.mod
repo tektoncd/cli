@@ -362,3 +362,5 @@ replace (
 	go.opentelemetry.io/otel/sdk => go.opentelemetry.io/otel/sdk v0.20.0
 	k8s.io/client-go => k8s.io/client-go v0.23.5
 )
+
+exclude github.com/antlr/antlr4 v0.0.0-20201029161626-9a95f0cc3d7c
