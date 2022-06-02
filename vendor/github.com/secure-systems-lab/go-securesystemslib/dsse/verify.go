@@ -20,7 +20,7 @@ type Verifier interface {
 	Public() crypto.PublicKey
 }
 
-type envelopeVerifier struct {
+type EnvelopeVerifier struct {
 	providers []Verifier
 	threshold int
 }
@@ -31,7 +31,7 @@ type AcceptedKey struct {
 	Sig    Signature
 }
 
-func (ev *envelopeVerifier) Verify(e *Envelope) ([]AcceptedKey, error) {
+func (ev *EnvelopeVerifier) Verify(e *Envelope) ([]AcceptedKey, error) {
 	if len(e.Signatures) == 0 {
 		return nil, ErrNoSignature
 	}
@@ -110,17 +110,17 @@ func (ev *envelopeVerifier) Verify(e *Envelope) ([]AcceptedKey, error) {
 	return acceptedKeys, nil
 }
 
-func NewEnvelopeVerifier(v ...Verifier) (*envelopeVerifier, error) {
+func NewEnvelopeVerifier(v ...Verifier) (*EnvelopeVerifier, error) {
 	return NewMultiEnvelopeVerifier(1, v...)
 }
 
-func NewMultiEnvelopeVerifier(threshold int, p ...Verifier) (*envelopeVerifier, error) {
+func NewMultiEnvelopeVerifier(threshold int, p ...Verifier) (*EnvelopeVerifier, error) {
 
 	if threshold <= 0 || threshold > len(p) {
 		return nil, errors.New("Invalid threshold")
 	}
 
-	ev := envelopeVerifier{
+	ev := EnvelopeVerifier{
 		providers: p,
 		threshold: threshold,
 	}

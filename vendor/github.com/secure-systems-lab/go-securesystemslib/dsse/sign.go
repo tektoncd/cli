@@ -80,7 +80,7 @@ type SignVerifier interface {
 // EnvelopeSigner creates signed Envelopes.
 type EnvelopeSigner struct {
 	providers []SignVerifier
-	ev        *envelopeVerifier
+	ev        *EnvelopeVerifier
 }
 
 /*

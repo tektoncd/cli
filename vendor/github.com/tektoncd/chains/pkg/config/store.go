@@ -25,6 +25,7 @@ import (
 
 type cfgKey struct{}
 
+// ConfigStore is the configuration from a ConfigMap
 // +k8s:deepcopy-gen=false
 type ConfigStore struct {
 	*configmap.UntypedStore

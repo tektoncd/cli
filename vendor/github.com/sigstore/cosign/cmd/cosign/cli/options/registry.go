@@ -17,21 +17,29 @@ package options
 import (
 	"context"
 	"crypto/tls"
+	"io/ioutil"
 	"net/http"
 
+	ecr "github.com/awslabs/amazon-ecr-credential-helper/ecr-login"
+	"github.com/chrismellard/docker-credential-acr-env/pkg/credhelper"
 	"github.com/google/go-containerregistry/pkg/authn"
-	"github.com/google/go-containerregistry/pkg/authn/k8schain"
+	"github.com/google/go-containerregistry/pkg/authn/github"
 	"github.com/google/go-containerregistry/pkg/name"
+	"github.com/google/go-containerregistry/pkg/v1/google"
 	"github.com/google/go-containerregistry/pkg/v1/remote"
 	ociremote "github.com/sigstore/cosign/pkg/oci/remote"
 	"github.com/spf13/cobra"
 )
+
+// Keychain is an alias of authn.Keychain to expose this configuration option to consumers of this lib
+type Keychain = authn.Keychain
 
 // RegistryOptions is the wrapper for the registry options.
 type RegistryOptions struct {
 	AllowInsecure      bool
 	KubernetesKeychain bool
 	RefOpts            ReferenceOptions
+	Keychain           Keychain
 }
 
 var _ Interface = (*RegistryOptions)(nil)
@@ -68,17 +76,23 @@ func (o *RegistryOptions) GetRegistryClientOpts(ctx context.Context) []remote.Op
 		remote.WithUserAgent(UserAgent()),
 	}
 
-	if o.KubernetesKeychain {
-		kc, err := k8schain.NewNoClient(ctx)
-		if err != nil {
-			panic(err.Error())
-		}
+	switch {
+	case o.Keychain != nil:
+		opts = append(opts, remote.WithAuthFromKeychain(o.Keychain))
+	case o.KubernetesKeychain:
+		kc := authn.NewMultiKeychain(
+			authn.DefaultKeychain,
+			google.Keychain,
+			authn.NewKeychainFromHelper(ecr.NewECRHelper(ecr.WithLogger(ioutil.Discard))),
+			authn.NewKeychainFromHelper(credhelper.NewACRCredentialsHelper()),
+			github.Keychain,
+		)
 		opts = append(opts, remote.WithAuthFromKeychain(kc))
-	} else {
+	default:
 		opts = append(opts, remote.WithAuthFromKeychain(authn.DefaultKeychain))
 	}
 
-	if o != nil && o.AllowInsecure {
+	if o.AllowInsecure {
 		opts = append(opts, remote.WithTransport(&http.Transport{TLSClientConfig: &tls.Config{InsecureSkipVerify: true}})) // #nosec G402
 	}
 	return opts

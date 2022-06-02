@@ -15,7 +15,6 @@ package chains
 
 import (
 	"context"
-	"time"
 
 	"github.com/pkg/errors"
 	"github.com/sigstore/cosign/pkg/cosign"
@@ -33,11 +32,6 @@ const (
 	RekorAnnotation = "chains.tekton.dev/transparency-upload"
 )
 
-var (
-	// using cosign default
-	timeout = 30 * time.Second
-)
-
 type rekor struct {
 	c      *client.Rekor
 	logger *zap.SugaredLogger
@@ -52,7 +46,7 @@ func (r *rekor) UploadTlog(ctx context.Context, signer signing.Signer, signature
 	if err != nil {
 		return nil, errors.Wrap(err, "public key or cert")
 	}
-	if payloadFormat == "in-toto" || payloadFormat == "tekton-provenance" {
+	if payloadFormat == "in-toto" {
 		return cosign.TLogUploadInTotoAttestation(ctx, r.c, signature, pkoc)
 	}
 	return cosign.TLogUpload(ctx, r.c, signature, rawPayload, pkoc)

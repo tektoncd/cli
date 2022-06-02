@@ -19,8 +19,6 @@ import (
 	"crypto"
 	"crypto/x509"
 	"fmt"
-	"os"
-	"path/filepath"
 	"strings"
 
 	"github.com/pkg/errors"
@@ -33,7 +31,27 @@ import (
 	"github.com/sigstore/cosign/pkg/cosign/pkcs11key"
 	"github.com/sigstore/sigstore/pkg/cryptoutils"
 	"github.com/sigstore/sigstore/pkg/signature"
+
 	"github.com/sigstore/sigstore/pkg/signature/kms"
+)
+
+var (
+	// Fulcio cert-extensions, documented here: https://github.com/sigstore/fulcio/blob/main/docs/oid-info.md
+	CertExtensionOIDCIssuer               = "1.3.6.1.4.1.57264.1.1"
+	CertExtensionGithubWorkflowTrigger    = "1.3.6.1.4.1.57264.1.2"
+	CertExtensionGithubWorkflowSha        = "1.3.6.1.4.1.57264.1.3"
+	CertExtensionGithubWorkflowName       = "1.3.6.1.4.1.57264.1.4"
+	CertExtensionGithubWorkflowRepository = "1.3.6.1.4.1.57264.1.5"
+	CertExtensionGithubWorkflowRef        = "1.3.6.1.4.1.57264.1.6"
+
+	CertExtensionMap = map[string]string{
+		CertExtensionOIDCIssuer:               "oidcIssuer",
+		CertExtensionGithubWorkflowTrigger:    "githubWorkflowTrigger",
+		CertExtensionGithubWorkflowSha:        "githubWorkflowSha",
+		CertExtensionGithubWorkflowName:       "githubWorkflowName",
+		CertExtensionGithubWorkflowRepository: "githubWorkflowRepository",
+		CertExtensionGithubWorkflowRef:        "githubWorkflowRef",
+	}
 )
 
 // LoadPublicKey is a wrapper for VerifierForKeyRef, hardcoding SHA256 as the hash algorithm
@@ -66,18 +84,22 @@ func VerifierForKeyRef(ctx context.Context, keyRef string, hashAlgorithm crypto.
 }
 
 func loadKey(keyPath string, pf cosign.PassFunc) (signature.SignerVerifier, error) {
-	kb, err := os.ReadFile(filepath.Clean(keyPath))
+	kb, err := blob.LoadFileOrURL(keyPath)
 	if err != nil {
 		return nil, err
 	}
-	pass, err := pf(false)
-	if err != nil {
-		return nil, err
+	pass := []byte{}
+	if pf != nil {
+		pass, err = pf(false)
+		if err != nil {
+			return nil, err
+		}
 	}
 	return cosign.LoadPrivateKey(kb, pass)
 }
 
-func loadPublicKey(raw []byte, hashAlgorithm crypto.Hash) (signature.Verifier, error) {
+// LoadPublicKeyRaw loads a verifier from a raw public key passed in
+func LoadPublicKeyRaw(raw []byte, hashAlgorithm crypto.Hash) (signature.Verifier, error) {
 	// PEM encoded file.
 	ed, err := cosign.PemToECDSAKey(raw)
 	if err != nil {
@@ -143,12 +165,18 @@ func SignerVerifierFromKeyRef(ctx context.Context, keyRef string, pf cosign.Pass
 		return cosign.LoadPrivateKey([]byte(pk), []byte(pass))
 	}
 
-	sv, err := kms.Get(ctx, keyRef, crypto.SHA256)
-	if err == nil {
-		return sv, nil
+	if strings.Contains(keyRef, "://") {
+		sv, err := kms.Get(ctx, keyRef, crypto.SHA256)
+		if err == nil {
+			return sv, nil
+		}
+		var e *kms.ProviderNotFoundError
+		if !errors.As(err, &e) {
+			return nil, fmt.Errorf("kms get: %w", err)
+		}
+		// ProviderNotFoundError is okay; loadKey handles other URL schemes
 	}
 
-	fmt.Fprintf(os.Stderr, "an error occurred: %v, will try to load key from disk...\n", err)
 	return loadKey(keyRef, pf)
 }
 
@@ -164,7 +192,7 @@ func PublicKeyFromKeyRefWithHashAlgo(ctx context.Context, keyRef string, hashAlg
 		}
 
 		if len(s.Data) > 0 {
-			return loadPublicKey(s.Data["cosign.pub"], hashAlgorithm)
+			return LoadPublicKeyRaw(s.Data["cosign.pub"], hashAlgorithm)
 		}
 	}
 
@@ -203,7 +231,7 @@ func PublicKeyFromKeyRefWithHashAlgo(ctx context.Context, keyRef string, hashAlg
 		}
 
 		if len(pubKey) > 0 {
-			return loadPublicKey([]byte(pubKey), hashAlgorithm)
+			return LoadPublicKeyRaw([]byte(pubKey), hashAlgorithm)
 		}
 	}
 
@@ -230,9 +258,22 @@ func CertSubject(c *x509.Certificate) string {
 
 func CertIssuerExtension(cert *x509.Certificate) string {
 	for _, ext := range cert.Extensions {
-		if ext.Id.String() == "1.3.6.1.4.1.57264.1.1" {
+		if ext.Id.String() == CertExtensionOIDCIssuer {
 			return string(ext.Value)
 		}
 	}
 	return ""
+}
+
+func CertExtensions(cert *x509.Certificate) map[string]string {
+	extensions := map[string]string{}
+	for _, ext := range cert.Extensions {
+		readableName, ok := CertExtensionMap[ext.Id.String()]
+		if ok {
+			extensions[readableName] = string(ext.Value)
+		} else {
+			extensions[ext.Id.String()] = string(ext.Value)
+		}
+	}
+	return extensions
 }
