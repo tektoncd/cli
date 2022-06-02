@@ -165,7 +165,7 @@ func deleteTaskRuns(s *cli.Stream, p cli.Params, trNames []string, opts *options
 		d = deleter.New("TaskRun", func(taskRunName string) error {
 			return actions.Delete(trGroupResource, cs.Dynamic, cs.Tekton.Discovery(), taskRunName, p.Namespace(), metav1.DeleteOptions{})
 		})
-		trToDelete, trToKeep, err := allTaskRunNames(cs, opts.Keep, opts.KeepSince, opts.IgnoreRunning, opts.LabelSelector, p.Namespace())
+		trToDelete, trToKeep, err := allTaskRunNames(cs, opts.Keep, opts.KeepSince, opts.IgnoreRunning, opts.LabelSelector, p.Namespace(), "")
 		if err != nil {
 			return err
 		}
@@ -192,18 +192,19 @@ func deleteTaskRuns(s *cli.Stream, p cli.Params, trNames []string, opts *options
 		labelSelector := fmt.Sprintf("tekton.dev/%s=%s", resourceType, opts.ParentResourceName)
 
 		// Compute the total no of TaskRuns which we need to delete
-		trToDelete, trToKeep, err := allTaskRunNames(cs, opts.Keep, opts.KeepSince, opts.IgnoreRunning, labelSelector, p.Namespace())
+		trToDelete, trToKeep, err := allTaskRunNames(cs, opts.Keep, opts.KeepSince, opts.IgnoreRunning, labelSelector, p.Namespace(), opts.ParentResource)
 		if err != nil {
 			return err
 		}
 		numberOfDeletedTr = len(trToDelete)
+		numberOfKeptTr = len(trToKeep)
 
 		// Delete the TaskRuns associated with a Task or ClusterTask
 		d.WithRelated("TaskRun", taskRunLister(p, opts.Keep, opts.KeepSince, opts.ParentResource, cs, opts.IgnoreRunning), func(taskRunName string) error {
 			return actions.Delete(trGroupResource, cs.Dynamic, cs.Tekton.Discovery(), taskRunName, p.Namespace(), metav1.DeleteOptions{})
 		})
 		if len(trToDelete) == 0 && opts.Keep > len(trToKeep) {
-			fmt.Fprintf(s.Out, "There is/are only %d %s(s) associated for Task: %s \n", len(trToKeep), opts.Resource, opts.ParentResourceName)
+			fmt.Fprintf(s.Out, "There is/are only %d %s(s) associated for %s: %s \n", len(trToKeep), opts.Resource, opts.ParentResource, opts.ParentResourceName)
 			return nil
 		}
 		d.DeleteRelated(s, []string{opts.ParentResourceName})
@@ -266,30 +267,16 @@ func taskRunLister(p cli.Params, keep, since int, kind string, cs *cli.Clients, 
 			label = "clusterTask"
 		}
 
-		lOpts := metav1.ListOptions{
-			LabelSelector: fmt.Sprintf("tekton.dev/%s=%s", label, taskName),
-		}
-		trs, err := trlist.TaskRuns(cs, lOpts, p.Namespace())
+		labelSelector := fmt.Sprintf("tekton.dev/%s=%s", label, taskName)
+		trToDelete, _, err := allTaskRunNames(cs, keep, since, ignoreRunning, labelSelector, p.Namespace(), kind)
 		if err != nil {
 			return nil, err
 		}
-		if kind == "Task" {
-			trs.Items = taskpkg.FilterByRef(trs.Items, string(v1beta1.NamespacedTaskKind))
-		}
-		var todelete []string
-		switch {
-		case since > 0 && keep > 0:
-			todelete, _ = keepTaskRunsByAgeAndNumber(trs, since, keep, ignoreRunning)
-		case since > 0:
-			todelete, _ = keepTaskRunsByAge(trs, since, ignoreRunning)
-		default:
-			todelete, _ = keepTaskRunsByNumber(trs, keep)
-		}
-		return todelete, nil
+		return trToDelete, nil
 	}
 }
 
-func allTaskRunNames(cs *cli.Clients, keep, since int, ignoreRunning bool, labelSelector, ns string) ([]string, []string, error) {
+func allTaskRunNames(cs *cli.Clients, keep, since int, ignoreRunning bool, labelSelector, ns, kind string) ([]string, []string, error) {
 	var todelete, tokeep []string
 
 	taskRuns, err := trlist.TaskRuns(cs, metav1.ListOptions{
@@ -299,11 +286,18 @@ func allTaskRunNames(cs *cli.Clients, keep, since int, ignoreRunning bool, label
 		return todelete, tokeep, err
 	}
 
+	if kind == "Task" {
+		taskRuns.Items = taskpkg.FilterByRef(taskRuns.Items, string(v1beta1.NamespacedTaskKind))
+	}
+
 	if ignoreRunning {
 		var taskRunTmp = []v1beta1.TaskRun{}
 		for _, v := range taskRuns.Items {
+			if v.Status.Conditions == nil {
+				continue
+			}
 			for _, v2 := range v.Status.Conditions {
-				if v2.Reason == "Running" || v2.Reason == "Pending" {
+				if v2.Reason == "Running" || v2.Reason == "Pending" || v2.Reason == "Started" {
 					continue
 				}
 				taskRunTmp = append(taskRunTmp, v)
