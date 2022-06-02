@@ -18,6 +18,7 @@ package cosign
 import (
 	"crypto"
 	"crypto/ecdsa"
+	"crypto/ed25519"
 	"crypto/elliptic"
 	"crypto/rand"
 	"crypto/rsa"
@@ -37,12 +38,18 @@ import (
 )
 
 const (
-	PrivateKeyPemType    = "ENCRYPTED COSIGN PRIVATE KEY"
+	CosignPrivateKeyPemType = "ENCRYPTED COSIGN PRIVATE KEY"
+	// PEM-encoded PKCS #1 RSA private key
 	RSAPrivateKeyPemType = "RSA PRIVATE KEY"
-	ECPrivateKeyPemType  = "EC PRIVATE KEY"
-	BundleKey            = static.BundleAnnotationKey
+	// PEM-encoded ECDSA private key
+	ECPrivateKeyPemType = "EC PRIVATE KEY"
+	// PEM-encoded PKCS #8 RSA, ECDSA or ED25519 private key
+	PrivateKeyPemType = "PRIVATE KEY"
+	BundleKey         = static.BundleAnnotationKey
 )
 
+// PassFunc is the function to be called to retrieve the signer password. If
+// nil, then it assumes that no password is provided.
 type PassFunc func(bool) ([]byte, error)
 
 type Keys struct {
@@ -75,28 +82,65 @@ func ImportKeyPair(keyPath string, pf PassFunc) (*KeysBytes, error) {
 
 	switch p.Type {
 	case RSAPrivateKeyPemType:
-		pk, err = x509.ParsePKCS1PrivateKey(p.Bytes)
+		rsaPk, err := x509.ParsePKCS1PrivateKey(p.Bytes)
 		if err != nil {
-			return nil, fmt.Errorf("parsing error")
+			return nil, fmt.Errorf("error parsing rsa private key")
+		}
+		if err = cryptoutils.ValidatePubKey(rsaPk.Public()); err != nil {
+			return nil, errors.Wrap(err, "error validating rsa key")
+		}
+		pk = rsaPk
+	case ECPrivateKeyPemType:
+		ecdsaPk, err := x509.ParseECPrivateKey(p.Bytes)
+		if err != nil {
+			return nil, fmt.Errorf("error parsing ecdsa private key")
+		}
+		if err = cryptoutils.ValidatePubKey(ecdsaPk.Public()); err != nil {
+			return nil, errors.Wrap(err, "error validating ecdsa key")
+		}
+		pk = ecdsaPk
+	case PrivateKeyPemType:
+		pkcs8Pk, err := x509.ParsePKCS8PrivateKey(p.Bytes)
+		if err != nil {
+			return nil, fmt.Errorf("error parsing pkcs #8 private key")
+		}
+		switch k := pkcs8Pk.(type) {
+		case *rsa.PrivateKey:
+			if err = cryptoutils.ValidatePubKey(k.Public()); err != nil {
+				return nil, errors.Wrap(err, "error validating rsa key")
+			}
+			pk = k
+		case *ecdsa.PrivateKey:
+			if err = cryptoutils.ValidatePubKey(k.Public()); err != nil {
+				return nil, errors.Wrap(err, "error validating ecdsa key")
+			}
+			pk = k
+		case ed25519.PrivateKey:
+			if err = cryptoutils.ValidatePubKey(k.Public()); err != nil {
+				return nil, errors.Wrap(err, "error validating ed25519 key")
+			}
+			pk = k
+		default:
+			return nil, fmt.Errorf("unexpected private key")
 		}
 	default:
-		pk, err = x509.ParseECPrivateKey(p.Bytes)
-		if err != nil {
-			return nil, fmt.Errorf("parsing error")
-		}
+		return nil, fmt.Errorf("unsupported private key")
 	}
 	return marshalKeyPair(Keys{pk, pk.Public()}, pf)
 }
 
-func marshalKeyPair(keypair Keys, pf PassFunc) (*KeysBytes, error) {
+func marshalKeyPair(keypair Keys, pf PassFunc) (key *KeysBytes, err error) {
 	x509Encoded, err := x509.MarshalPKCS8PrivateKey(keypair.private)
 	if err != nil {
 		return nil, errors.Wrap(err, "x509 encoding private key")
 	}
 
-	password, err := pf(true)
-	if err != nil {
-		return nil, err
+	password := []byte{}
+	if pf != nil {
+		password, err = pf(true)
+		if err != nil {
+			return nil, err
+		}
 	}
 
 	encBytes, err := encrypted.Encrypt(x509Encoded, password)
@@ -107,7 +151,7 @@ func marshalKeyPair(keypair Keys, pf PassFunc) (*KeysBytes, error) {
 	// store in PEM format
 	privBytes := pem.EncodeToMemory(&pem.Block{
 		Bytes: encBytes,
-		Type:  PrivateKeyPemType,
+		Type:  CosignPrivateKeyPemType,
 	})
 
 	// Now do the public key
@@ -154,7 +198,7 @@ func LoadPrivateKey(key []byte, pass []byte) (signature.SignerVerifier, error) {
 	if p == nil {
 		return nil, errors.New("invalid pem block")
 	}
-	if p.Type != PrivateKeyPemType {
+	if p.Type != CosignPrivateKeyPemType {
 		return nil, fmt.Errorf("unsupported pem type: %s", p.Type)
 	}
 
@@ -172,7 +216,9 @@ func LoadPrivateKey(key []byte, pass []byte) (signature.SignerVerifier, error) {
 		return signature.LoadRSAPKCS1v15SignerVerifier(pk, crypto.SHA256)
 	case *ecdsa.PrivateKey:
 		return signature.LoadECDSASignerVerifier(pk, crypto.SHA256)
+	case ed25519.PrivateKey:
+		return signature.LoadED25519SignerVerifier(pk)
 	default:
-		return nil, errors.Wrap(err, "unsupported key type")
+		return nil, errors.New("unsupported key type")
 	}
 }

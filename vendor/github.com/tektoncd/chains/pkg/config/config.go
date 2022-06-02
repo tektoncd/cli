@@ -34,10 +34,10 @@ type Config struct {
 	Transparency TransparencyConfig
 }
 
-// ArtifactConfig contains the configuration for how to sign/store/format the signatures for each artifact type
+// ArtifactConfigs contains the configuration for how to sign/store/format the signatures for each artifact type
 type ArtifactConfigs struct {
-	TaskRuns Artifact
 	OCI      Artifact
+	TaskRuns Artifact
 }
 
 // Artifact contains the configuration for how to sign/store/format the signatures for a single artifact
@@ -47,15 +47,17 @@ type Artifact struct {
 	Signer         string
 }
 
-// StorageConfig contains the configuration to instantiate different storage providers
+// StorageConfigs contains the configuration to instantiate different storage providers
 type StorageConfigs struct {
-	GCS    GCSStorageConfig
-	OCI    OCIStorageConfig
-	Tekton TektonStorageConfig
-	DocDB  DocDBStorageConfig
+	GCS     GCSStorageConfig
+	OCI     OCIStorageConfig
+	Tekton  TektonStorageConfig
+	DocDB   DocDBStorageConfig
+	Grafeas GrafeasConfig
+	PubSub  PubSubStorageConfig
 }
 
-// SigningConfig contains the configuration to instantiate different signers
+// SignerConfigs contains the configuration to instantiate different signers
 type SignerConfigs struct {
 	X509 X509Signer
 	KMS  KMSSigner
@@ -66,12 +68,35 @@ type BuilderConfig struct {
 }
 
 type X509Signer struct {
-	FulcioEnabled bool
-	FulcioAddr    string
+	FulcioEnabled    bool
+	FulcioAddr       string
+	FulcioOIDCIssuer string
+	FulcioProvider   string
 }
 
 type KMSSigner struct {
 	KMSRef string
+	Auth   KMSAuth
+}
+
+// KMSAuth configures authentication to the KMS server
+type KMSAuth struct {
+	Address string
+	Token   string
+	OIDC    KMSAuthOIDC
+	Spire   KMSAuthSpire
+}
+
+// KMSAuthOIDC configures settings to authenticate with OIDC
+type KMSAuthOIDC struct {
+	Path string
+	Role string
+}
+
+// KMSAuthSpire configures settings to get an auth token from spire
+type KMSAuthSpire struct {
+	Sock     string
+	Audience string
 }
 
 type GCSStorageConfig struct {
@@ -88,6 +113,23 @@ type TektonStorageConfig struct {
 
 type DocDBStorageConfig struct {
 	URL string
+}
+
+type GrafeasConfig struct {
+	// project id that is used to store notes and occurences
+	ProjectID string
+	// note id used to create a note that an occurrence will be attached to
+	NoteID string
+}
+
+type PubSubStorageConfig struct {
+	Provider string
+	Topic    string
+	Kafka    KafkaStorageConfig
+}
+
+type KafkaStorageConfig struct {
+	BootstrapServers string
 }
 
 type TransparencyConfig struct {
@@ -109,16 +151,35 @@ const (
 	ociRepositoryKey         = "storage.oci.repository"
 	ociRepositoryInsecureKey = "storage.oci.repository.insecure"
 	docDBUrlKey              = "storage.docdb.url"
+	grafeasProjectIDKey      = "storage.grafeas.projectid"
+	grafeasNoteIDKey         = "storage.grafeas.noteid"
 	// No config needed for Tekton object storage
 
 	// No config needed for x509 signer
 
+	// PubSub - General
+	pubsubProvider = "storage.pubsub.provider"
+	pubsubTopic    = "storage.pubsub.topic"
+
+	// No config for PubSub - In-Memory
+
+	// PubSub - Kafka
+	pubsubKafkaBootstrapServer = "storage.pubsub.kafka.bootstrap.servers"
+
 	// KMS
-	kmsSignerKMSRef = "signers.kms.kmsref"
+	kmsSignerKMSRef      = "signers.kms.kmsref"
+	kmsAuthAddress       = "signers.kms.auth.address"
+	kmsAuthToken         = "signers.kms.auth.token"
+	kmsAuthOIDCPath      = "signers.kms.auth.oidc.path"
+	kmsAuthOIDCRole      = "signers.kms.auth.oidc.role"
+	kmsAuthSpireSock     = "signers.kms.auth.spire.sock"
+	kmsAuthSpireAudience = "signers.kms.auth.spire.audience"
+
 	// Fulcio
-	x509SignerFulcioEnabled = "signers.x509.fulcio.enabled"
-	x509SignerFulcioAuth    = "signers.x509.fulcio.auth"
-	x509SignerFulcioAddr    = "signers.x509.fulcio.address"
+	x509SignerFulcioEnabled    = "signers.x509.fulcio.enabled"
+	x509SignerFulcioAddr       = "signers.x509.fulcio.address"
+	x509SignerFulcioOIDCIssuer = "signers.x509.fulcio.issuer"
+	x509SignerFulcioProvider   = "signers.x509.fulcio.provider"
 
 	// Builder config
 	builderIDKey = "builder.id"
@@ -152,7 +213,8 @@ func defaultConfig() *Config {
 		},
 		Signers: SignerConfigs{
 			X509: X509Signer{
-				FulcioAddr: "https://v1.fulcio.sigstore.dev",
+				FulcioAddr:       "https://fulcio.sigstore.dev",
+				FulcioOIDCIssuer: "https://oauth2.sigstore.dev/auth",
 			},
 		},
 		Builder: BuilderConfig{
@@ -168,28 +230,47 @@ func NewConfigFromMap(data map[string]string) (*Config, error) {
 	if err := cm.Parse(data,
 		// Artifact-specific configs
 		// TaskRuns
-		asString(taskrunFormatKey, &cfg.Artifacts.TaskRuns.Format, "tekton", "in-toto", "tekton-provenance"),
-		asStringSet(taskrunStorageKey, &cfg.Artifacts.TaskRuns.StorageBackend, sets.NewString("tekton", "oci", "gcs", "docdb")),
+		asString(taskrunFormatKey, &cfg.Artifacts.TaskRuns.Format, "tekton", "in-toto"),
+		asStringSet(taskrunStorageKey, &cfg.Artifacts.TaskRuns.StorageBackend, sets.NewString("tekton", "oci", "gcs", "docdb", "grafeas", "kafka")),
 		asString(taskrunSignerKey, &cfg.Artifacts.TaskRuns.Signer, "x509", "kms"),
+
 		// OCI
 		asString(ociFormatKey, &cfg.Artifacts.OCI.Format, "simplesigning"),
-		asStringSet(ociStorageKey, &cfg.Artifacts.OCI.StorageBackend, sets.NewString("tekton", "oci", "gcs", "docdb")),
+		asStringSet(ociStorageKey, &cfg.Artifacts.OCI.StorageBackend, sets.NewString("tekton", "oci", "gcs", "docdb", "grafeas", "kafka")),
 		asString(ociSignerKey, &cfg.Artifacts.OCI.Signer, "x509", "kms"),
+
+		// PubSub - General
+		asString(pubsubProvider, &cfg.Storage.PubSub.Provider, "inmemory", "kafka"),
+		asString(pubsubTopic, &cfg.Storage.PubSub.Topic),
+
+		// PubSub - Kafka
+		asString(pubsubKafkaBootstrapServer, &cfg.Storage.PubSub.Kafka.BootstrapServers),
 
 		// Storage level configs
 		asString(gcsBucketKey, &cfg.Storage.GCS.Bucket),
 		asString(ociRepositoryKey, &cfg.Storage.OCI.Repository),
 		asBool(ociRepositoryInsecureKey, &cfg.Storage.OCI.Insecure),
 		asString(docDBUrlKey, &cfg.Storage.DocDB.URL),
+		asString(grafeasProjectIDKey, &cfg.Storage.Grafeas.ProjectID),
+		asString(grafeasNoteIDKey, &cfg.Storage.Grafeas.NoteID),
 
 		oneOf(transparencyEnabledKey, &cfg.Transparency.Enabled, "true", "manual"),
 		oneOf(transparencyEnabledKey, &cfg.Transparency.VerifyAnnotation, "manual"),
 		asString(transparencyURLKey, &cfg.Transparency.URL),
 
 		asString(kmsSignerKMSRef, &cfg.Signers.KMS.KMSRef),
+		asString(kmsAuthAddress, &cfg.Signers.KMS.Auth.Address),
+		asString(kmsAuthToken, &cfg.Signers.KMS.Auth.Token),
+		asString(kmsAuthOIDCPath, &cfg.Signers.KMS.Auth.OIDC.Path),
+		asString(kmsAuthOIDCRole, &cfg.Signers.KMS.Auth.OIDC.Role),
+		asString(kmsAuthSpireSock, &cfg.Signers.KMS.Auth.Spire.Sock),
+		asString(kmsAuthSpireAudience, &cfg.Signers.KMS.Auth.Spire.Audience),
 
+		// Fulcio
 		asBool(x509SignerFulcioEnabled, &cfg.Signers.X509.FulcioEnabled),
 		asString(x509SignerFulcioAddr, &cfg.Signers.X509.FulcioAddr),
+		asString(x509SignerFulcioOIDCIssuer, &cfg.Signers.X509.FulcioOIDCIssuer),
+		asString(x509SignerFulcioProvider, &cfg.Signers.X509.FulcioProvider),
 
 		// Build config
 		asString(builderIDKey, &cfg.Builder.ID),

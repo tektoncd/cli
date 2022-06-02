@@ -44,15 +44,15 @@ func Reconciled(tr *v1beta1.TaskRun) bool {
 }
 
 // MarkSigned marks a TaskRun as signed.
-func MarkSigned(tr *v1beta1.TaskRun, ps versioned.Interface, annotations map[string]string) error {
+func MarkSigned(ctx context.Context, tr *v1beta1.TaskRun, ps versioned.Interface, annotations map[string]string) error {
 	if _, ok := tr.Annotations[ChainsAnnotation]; ok {
 		return nil
 	}
-	return AddAnnotation(tr, ps, ChainsAnnotation, "true", annotations)
+	return AddAnnotation(ctx, tr, ps, ChainsAnnotation, "true", annotations)
 }
 
-func MarkFailed(tr *v1beta1.TaskRun, ps versioned.Interface, annotations map[string]string) error {
-	return AddAnnotation(tr, ps, ChainsAnnotation, "failed", annotations)
+func MarkFailed(ctx context.Context, tr *v1beta1.TaskRun, ps versioned.Interface, annotations map[string]string) error {
+	return AddAnnotation(ctx, tr, ps, ChainsAnnotation, "failed", annotations)
 }
 
 func RetryAvailable(tr *v1beta1.TaskRun) bool {
@@ -67,19 +67,19 @@ func RetryAvailable(tr *v1beta1.TaskRun) bool {
 	return val < MaxRetries
 }
 
-func AddRetry(tr *v1beta1.TaskRun, ps versioned.Interface, annotations map[string]string) error {
+func AddRetry(ctx context.Context, tr *v1beta1.TaskRun, ps versioned.Interface, annotations map[string]string) error {
 	retries := tr.Annotations[RetryAnnotation]
 	if retries == "" {
-		return AddAnnotation(tr, ps, RetryAnnotation, "0", annotations)
+		return AddAnnotation(ctx, tr, ps, RetryAnnotation, "0", annotations)
 	}
 	val, err := strconv.Atoi(retries)
 	if err != nil {
 		return errors.Wrap(err, "adding retry")
 	}
-	return AddAnnotation(tr, ps, RetryAnnotation, fmt.Sprintf("%d", val+1), annotations)
+	return AddAnnotation(ctx, tr, ps, RetryAnnotation, fmt.Sprintf("%d", val+1), annotations)
 }
 
-func AddAnnotation(tr *v1beta1.TaskRun, ps versioned.Interface, key, value string, annotations map[string]string) error {
+func AddAnnotation(ctx context.Context, tr *v1beta1.TaskRun, ps versioned.Interface, key, value string, annotations map[string]string) error {
 	// Use patch instead of update to help prevent race conditions.
 	if annotations == nil {
 		annotations = map[string]string{}
@@ -90,7 +90,7 @@ func AddAnnotation(tr *v1beta1.TaskRun, ps versioned.Interface, key, value strin
 		return err
 	}
 	if _, err := ps.TektonV1beta1().TaskRuns(tr.Namespace).Patch(
-		context.TODO(), tr.Name, types.MergePatchType, patchBytes, v1.PatchOptions{}); err != nil {
+		ctx, tr.Name, types.MergePatchType, patchBytes, v1.PatchOptions{}); err != nil {
 		return err
 	}
 	return nil

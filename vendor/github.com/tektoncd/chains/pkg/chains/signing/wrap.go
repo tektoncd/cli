@@ -94,15 +94,15 @@ type sslSigner struct {
 	chain   string
 }
 
-func (s *sslSigner) Type() string {
-	return s.typ
+func (w *sslSigner) Type() string {
+	return w.typ
 }
-func (s *sslSigner) PublicKey(opts ...signature.PublicKeyOption) (crypto.PublicKey, error) {
-	return s.pub, nil
+func (w *sslSigner) PublicKey(opts ...signature.PublicKeyOption) (crypto.PublicKey, error) {
+	return w.pub, nil
 }
 
-func (s *sslSigner) Sign(ctx context.Context, payload []byte) ([]byte, []byte, error) {
-	env, err := s.wrapper.SignPayload(in_toto.PayloadType, payload)
+func (w *sslSigner) Sign(ctx context.Context, payload []byte) ([]byte, []byte, error) {
+	env, err := w.wrapper.SignPayload(in_toto.PayloadType, payload)
 	if err != nil {
 		return nil, nil, err
 	}
@@ -113,12 +113,12 @@ func (s *sslSigner) Sign(ctx context.Context, payload []byte) ([]byte, []byte, e
 	return b, []byte(env.Payload), nil
 }
 
-func (s *sslSigner) SignMessage(payload io.Reader, opts ...signature.SignOption) ([]byte, error) {
+func (w *sslSigner) SignMessage(payload io.Reader, opts ...signature.SignOption) ([]byte, error) {
 	m, err := ioutil.ReadAll(payload)
 	if err != nil {
 		return nil, err
 	}
-	env, err := s.wrapper.SignPayload(in_toto.PayloadType, m)
+	env, err := w.wrapper.SignPayload(in_toto.PayloadType, m)
 	if err != nil {
 		return nil, err
 	}

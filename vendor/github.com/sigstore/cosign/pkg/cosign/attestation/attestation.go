@@ -46,8 +46,17 @@ type CosignPredicate struct {
 // VulnPredicate specifies the format of the Vulnerability Scan Predicate
 type CosignVulnPredicate struct {
 	Invocation Invocation `json:"invocation"`
-	Scanners   []Scanner  `json:"scanners"`
+	Scanner    Scanner    `json:"scanner"`
 	Metadata   Metadata   `json:"metadata"`
+}
+
+// I think this will be moving to upstream in-toto in the fullness of time
+// but creating it here for now so that we have a way to deserialize it
+// as a InToto Statement
+// https://github.com/in-toto/attestation/issues/58
+type CosignVulnStatement struct {
+	in_toto.StatementHeader
+	Predicate CosignVulnPredicate `json:"predicate"`
 }
 
 type Invocation struct {

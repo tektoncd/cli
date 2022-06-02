@@ -20,11 +20,11 @@ import (
 	"fmt"
 
 	"github.com/tektoncd/chains/pkg/chains/formats"
+	"github.com/tektoncd/pipeline/pkg/apis/pipeline/v1beta1"
 
 	"github.com/in-toto/in-toto-golang/in_toto"
 	"github.com/secure-systems-lab/go-securesystemslib/dsse"
 
-	"github.com/google/go-containerregistry/pkg/authn"
 	"github.com/google/go-containerregistry/pkg/authn/k8schain"
 	"github.com/google/go-containerregistry/pkg/name"
 	"github.com/google/go-containerregistry/pkg/v1/remote"
@@ -37,7 +37,6 @@ import (
 	"github.com/tektoncd/chains/pkg/artifacts"
 	"github.com/tektoncd/chains/pkg/chains/formats/simple"
 	"github.com/tektoncd/chains/pkg/config"
-	"github.com/tektoncd/pipeline/pkg/apis/pipeline/v1beta1"
 	"go.uber.org/zap"
 	"k8s.io/client-go/kubernetes"
 )
@@ -47,61 +46,69 @@ const (
 )
 
 type Backend struct {
-	logger *zap.SugaredLogger
-	tr     *v1beta1.TaskRun
-	cfg    config.Config
-	kc     authn.Keychain
-	auth   remote.Option
+	logger           *zap.SugaredLogger
+	cfg              config.Config
+	client           kubernetes.Interface
+	getAuthenticator func(ctx context.Context, tr *v1beta1.TaskRun, client kubernetes.Interface) (remote.Option, error)
 }
 
 // NewStorageBackend returns a new OCI StorageBackend that stores signatures in an OCI registry
-func NewStorageBackend(logger *zap.SugaredLogger, client kubernetes.Interface, tr *v1beta1.TaskRun, cfg config.Config) (*Backend, error) {
-	kc, err := k8schain.New(context.TODO(), client,
-		k8schain.Options{Namespace: tr.Namespace, ServiceAccountName: tr.Spec.ServiceAccountName})
-	if err != nil {
-		return nil, err
-	}
-
+func NewStorageBackend(ctx context.Context, logger *zap.SugaredLogger, client kubernetes.Interface, cfg config.Config) *Backend {
 	return &Backend{
 		logger: logger,
-		tr:     tr,
 		cfg:    cfg,
-		kc:     kc,
-		auth:   remote.WithAuthFromKeychain(kc),
-	}, nil
+		client: client,
+		getAuthenticator: func(ctx context.Context, tr *v1beta1.TaskRun, client kubernetes.Interface) (remote.Option, error) {
+			kc, err := k8schain.New(ctx, client,
+				k8schain.Options{Namespace: tr.Namespace, ServiceAccountName: tr.Spec.ServiceAccountName})
+			if err != nil {
+				return nil, err
+			}
+			return remote.WithAuthFromKeychain(kc), nil
+		},
+	}
 }
 
 // StorePayload implements the storage.Backend interface.
-func (b *Backend) StorePayload(rawPayload []byte, signature string, storageOpts config.StorageOpts) error {
-	b.logger.Infof("Storing payload on TaskRun %s/%s", b.tr.Namespace, b.tr.Name)
+func (b *Backend) StorePayload(ctx context.Context, tr *v1beta1.TaskRun, rawPayload []byte, signature string, storageOpts config.StorageOpts) error {
+	auth, err := b.getAuthenticator(ctx, tr, b.client)
+	if err != nil {
+		return err
+	}
+
+	b.logger.Infof("Storing payload on TaskRun %s/%s", tr.Namespace, tr.Name)
 
 	if storageOpts.PayloadFormat == formats.PayloadTypeSimpleSigning {
 		format := simple.SimpleContainerImage{}
 		if err := json.Unmarshal(rawPayload, &format); err != nil {
 			return errors.Wrap(err, "unmarshal simplesigning")
 		}
-		return b.uploadSignature(format, rawPayload, signature, storageOpts)
+		return b.uploadSignature(format, rawPayload, signature, storageOpts, auth)
 	}
 
-	if storageOpts.PayloadFormat == formats.PayloadTypeInTotoIte6 || storageOpts.PayloadFormat == formats.PayloadTypeProvenance {
+	if storageOpts.PayloadFormat == formats.PayloadTypeInTotoIte6 {
 		attestation := in_toto.Statement{}
 		if err := json.Unmarshal(rawPayload, &attestation); err != nil {
 			return errors.Wrap(err, "unmarshal attestation")
 		}
 
 		// This can happen if the Task/TaskRun does not adhere to specific naming conventions
-		// like *IMAGE_URL that would serve as hints.
+		// like *IMAGE_URL that would serve as hints. This may be intentional for a Task/TaskRun
+		// that is not intended to produce an image, e.g. git-clone.
 		if len(attestation.Subject) == 0 {
-			return errors.New("Did not find anything to attest")
+			b.logger.Infof(
+				"No image subject to attest for TaskRun %s/%s. Skipping upload to registry",
+				tr.Namespace, tr.Name)
+			return nil
 		}
 
-		return b.uploadAttestation(attestation, signature, storageOpts)
+		return b.uploadAttestation(attestation, signature, storageOpts, auth)
 	}
 
 	return errors.New("OCI storage backend is only supported for OCI images and in-toto attestations")
 }
 
-func (b *Backend) uploadSignature(format simple.SimpleContainerImage, rawPayload []byte, signature string, storageOpts config.StorageOpts) error {
+func (b *Backend) uploadSignature(format simple.SimpleContainerImage, rawPayload []byte, signature string, storageOpts config.StorageOpts, remoteOpts ...remote.Option) error {
 	imageName := format.ImageName()
 	b.logger.Infof("Uploading %s signature", imageName)
 	var opts []name.Option
@@ -112,7 +119,7 @@ func (b *Backend) uploadSignature(format simple.SimpleContainerImage, rawPayload
 	if err != nil {
 		return errors.Wrap(err, "getting digest")
 	}
-	se, err := ociremote.SignedEntity(ref, ociremote.WithRemoteOptions(b.auth))
+	se, err := ociremote.SignedEntity(ref, ociremote.WithRemoteOptions(remoteOpts...))
 	if err != nil {
 		return errors.Wrap(err, "getting signed image")
 	}
@@ -140,14 +147,14 @@ func (b *Backend) uploadSignature(format simple.SimpleContainerImage, rawPayload
 		}
 	}
 	// Publish the signatures associated with this entity
-	if err := ociremote.WriteSignatures(repo, newSE, ociremote.WithRemoteOptions(b.auth)); err != nil {
+	if err := ociremote.WriteSignatures(repo, newSE, ociremote.WithRemoteOptions(remoteOpts...)); err != nil {
 		return err
 	}
 	b.logger.Infof("Successfully uploaded signature for %s", imageName)
 	return nil
 }
 
-func (b *Backend) uploadAttestation(attestation in_toto.Statement, signature string, storageOpts config.StorageOpts) error {
+func (b *Backend) uploadAttestation(attestation in_toto.Statement, signature string, storageOpts config.StorageOpts, remoteOpts ...remote.Option) error {
 	// upload an attestation for each subject
 	b.logger.Info("Starting to upload attestations to OCI ...")
 	for _, subj := range attestation.Subject {
@@ -168,7 +175,7 @@ func (b *Backend) uploadAttestation(attestation in_toto.Statement, signature str
 				return errors.Wrapf(err, "%s is not a valid repository", b.cfg.Storage.OCI.Repository)
 			}
 		}
-		se, err := ociremote.SignedEntity(ref, ociremote.WithRemoteOptions(b.auth))
+		se, err := ociremote.SignedEntity(ref, ociremote.WithRemoteOptions(remoteOpts...))
 		if err != nil {
 			return errors.Wrap(err, "getting signed image")
 		}
@@ -186,7 +193,7 @@ func (b *Backend) uploadAttestation(attestation in_toto.Statement, signature str
 			return err
 		}
 		// Publish the signatures associated with this entity
-		if err := ociremote.WriteAttestations(repo, newImage, ociremote.WithRemoteOptions(b.auth)); err != nil {
+		if err := ociremote.WriteAttestations(repo, newImage, ociremote.WithRemoteOptions(remoteOpts...)); err != nil {
 			return err
 		}
 		b.logger.Infof("Successfully uploaded attestation for %s", imageName)
@@ -198,8 +205,8 @@ func (b *Backend) Type() string {
 	return StorageBackendOCI
 }
 
-func (b *Backend) RetrieveSignatures(opts config.StorageOpts) (map[string][]string, error) {
-	images, err := b.RetrieveArtifact(opts)
+func (b *Backend) RetrieveSignatures(ctx context.Context, tr *v1beta1.TaskRun, opts config.StorageOpts) (map[string][]string, error) {
+	images, err := b.RetrieveArtifact(ctx, tr, opts)
 	if err != nil {
 		return nil, err
 	}
@@ -226,9 +233,9 @@ func (b *Backend) RetrieveSignatures(opts config.StorageOpts) (map[string][]stri
 	return m, nil
 }
 
-func (b *Backend) RetrievePayloads(opts config.StorageOpts) (map[string]string, error) {
+func (b *Backend) RetrievePayloads(ctx context.Context, tr *v1beta1.TaskRun, opts config.StorageOpts) (map[string]string, error) {
 	var err error
-	images, err := b.RetrieveArtifact(opts)
+	images, err := b.RetrieveArtifact(ctx, tr, opts)
 	if err != nil {
 		return nil, err
 	}
@@ -270,9 +277,9 @@ func (b *Backend) RetrievePayloads(opts config.StorageOpts) (map[string]string, 
 	return m, nil
 }
 
-func (b *Backend) RetrieveArtifact(opts config.StorageOpts) (map[string]oci.SignedImage, error) {
+func (b *Backend) RetrieveArtifact(ctx context.Context, tr *v1beta1.TaskRun, opts config.StorageOpts) (map[string]oci.SignedImage, error) {
 	// Given the TaskRun, retrieve the OCI images.
-	images := artifacts.ExtractOCIImagesFromResults(b.tr, b.logger)
+	images := artifacts.ExtractOCIImagesFromResults(tr, b.logger)
 	m := make(map[string]oci.SignedImage)
 
 	for _, image := range images {

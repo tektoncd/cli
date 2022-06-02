@@ -18,6 +18,7 @@ import (
 	"strings"
 
 	"github.com/tektoncd/chains/pkg/artifacts"
+	"github.com/tektoncd/chains/pkg/chains/storage"
 	"github.com/tektoncd/chains/pkg/config"
 	"github.com/tektoncd/pipeline/pkg/apis/pipeline/v1beta1"
 	versioned "github.com/tektoncd/pipeline/pkg/client/clientset/versioned"
@@ -48,11 +49,11 @@ func (tv *TaskRunVerifier) VerifyTaskRun(ctx context.Context, tr *v1beta1.TaskRu
 	}
 
 	// Storage
-	allBackends, err := getBackends(tv.Pipelineclientset, tv.KubeClient, logger, tr, cfg)
+	allBackends, err := storage.InitializeBackends(ctx, tv.Pipelineclientset, tv.KubeClient, logger, cfg)
 	if err != nil {
 		return err
 	}
-	signers := allSigners(tv.SecretPath, cfg, logger)
+	signers := allSigners(ctx, tv.SecretPath, cfg, logger)
 
 	for _, signableType := range enabledSignableTypes {
 		if !signableType.Enabled(cfg) {
@@ -68,11 +69,11 @@ func (tv *TaskRunVerifier) VerifyTaskRun(ctx context.Context, tr *v1beta1.TaskRu
 
 		for _, backend := range signableType.StorageBackend(cfg).List() {
 			b := allBackends[backend]
-			signatures, err := b.RetrieveSignatures(config.StorageOpts{})
+			signatures, err := b.RetrieveSignatures(ctx, tr, config.StorageOpts{})
 			if err != nil {
 				return err
 			}
-			payload, err := b.RetrievePayloads(config.StorageOpts{})
+			payload, err := b.RetrievePayloads(ctx, tr, config.StorageOpts{})
 			if err != nil {
 				return err
 			}
