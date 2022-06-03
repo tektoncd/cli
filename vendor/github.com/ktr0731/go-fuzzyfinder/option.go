@@ -1,10 +1,16 @@
 package fuzzyfinder
 
+import "sync"
+
 type opt struct {
-	mode        mode
-	previewFunc func(i, width, height int) string
-	multi       bool
-	hotReload   bool
+	mode          mode
+	previewFunc   func(i, width, height int) string
+	multi         bool
+	hotReload     bool
+	hotReloadLock sync.Locker
+	promptString  string
+	header        string
+	beginAtTop    bool
 }
 
 type mode int
@@ -19,6 +25,11 @@ const (
 	// ModeCaseInsensitive enables a case-insensitive matching.
 	ModeCaseInsensitive
 )
+
+var defaultOption = opt{
+	promptString: "> ",
+	hotReloadLock: &sync.Mutex{}, // this won't resolve the race condition but avoid nil panic
+}
 
 // Option represents available fuzzy-finding options.
 type Option func(*opt)
@@ -46,9 +57,49 @@ func WithPreviewWindow(f func(i, width, height int) string) Option {
 
 // WithHotReload reloads the passed slice automatically when some entries are appended.
 // The caller must pass a pointer of the slice instead of the slice itself.
+//
+// Deprecated: use WithHotReloadLock instead.
 func WithHotReload() Option {
 	return func(o *opt) {
 		o.hotReload = true
+	}
+}
+
+// WithHotReloadLock reloads the passed slice automatically when some entries are appended.
+// The caller must pass a pointer of the slice instead of the slice itself.
+// The caller must pass a RLock which is used to synchronize access to the slice.
+// The caller MUST NOT lock in the itemFunc passed to Find / FindMulti because it will be locked by the fuzzyfinder.
+// If used together with WithPreviewWindow, the caller MUST use the RLock only in the previewFunc passed to WithPreviewWindow. 
+func WithHotReloadLock(lock sync.Locker) Option {
+	return func(o *opt) {
+		o.hotReload = true
+		o.hotReloadLock = lock
+	}
+}
+
+type cursorPosition int
+
+const (
+	CursorPositionBottom cursorPosition = iota
+	CursorPositionTop
+)
+
+// WithCursorPosition sets the initial position of the cursor
+func WithCursorPosition(position cursorPosition) Option {
+	return func(o *opt) {
+		switch position {
+		case CursorPositionTop:
+			o.beginAtTop = true
+		case CursorPositionBottom:
+			o.beginAtTop = false
+		}
+	}
+}
+
+// WithPromptString changes the prompt string. The default value is "> ".
+func WithPromptString(s string) Option {
+	return func(o *opt) {
+		o.promptString = s
 	}
 }
 
@@ -56,5 +107,12 @@ func WithHotReload() Option {
 func withMulti() Option {
 	return func(o *opt) {
 		o.multi = true
+	}
+}
+
+// WithHeader enables to set the header.
+func WithHeader(s string) Option {
+	return func(o *opt) {
+		o.header = s
 	}
 }

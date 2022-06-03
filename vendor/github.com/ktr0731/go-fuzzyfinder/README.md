@@ -1,6 +1,6 @@
 # go-fuzzyfinder
 
-[![GoDoc](https://godoc.org/github.com/ktr0731/go-fuzzyfinder?status.svg)](https://godoc.org/github.com/ktr0731/go-fuzzyfinder)
+[![PkgGoDev](https://pkg.go.dev/badge/github.com/ktr0731/go-fuzzyfinder)](https://pkg.go.dev/github.com/ktr0731/go-fuzzyfinder)
 [![GitHub Actions](https://github.com/ktr0731/go-fuzzyfinder/workflows/main/badge.svg)](https://github.com/ktr0731/go-fuzzyfinder/actions)
 [![codecov](https://codecov.io/gh/ktr0731/go-fuzzyfinder/branch/master/graph/badge.svg?token=RvpSTKDJGO)](https://codecov.io/gh/ktr0731/go-fuzzyfinder)  
 
@@ -17,7 +17,7 @@ $ go get github.com/ktr0731/go-fuzzyfinder
 `go-fuzzyfinder` provides two functions, `Find` and `FindMulti`.
 `FindMulti` can select multiple lines. It is similar to `fzf -m`.
 
-This is [an example](//github.com/ktr0731/go-fuzzyfinder/blob/master/_example/track/main.go) of `FindMulti`.
+This is [an example](//github.com/ktr0731/go-fuzzyfinder/blob/master/example/track/main.go) of `FindMulti`.
 
 ``` go
 type Track struct {
