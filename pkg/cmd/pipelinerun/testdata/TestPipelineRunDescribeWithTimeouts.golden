@@ -1,0 +1,37 @@
+Name:           pipeline-run
+Namespace:      ns
+Pipeline Ref:   pipeline
+
+Status
+
+STARTED         DURATION   STATUS
+0 seconds ago   20m0s      Succeeded
+
+Timeouts
+ Pipeline:   1h0m0s
+ Tasks:      50m0s
+
+Resources
+
+ NAME    RESOURCE REF
+ res-1   test-res
+ res-2   test-res2
+
+Params
+
+ NAME   VALUE
+ p-1    somethingdifferent
+ p-2    [booms booms booms]
+
+Taskruns
+
+ NAME   TASK NAME   STARTED           DURATION   STATUS
+ tr-2   t-2         -10 minutes ago   7m0s       Succeeded
+ tr-1   t-1         0 seconds ago     5m0s       Failed
+
+Skipped Tasks
+
+ NAME
+ task-should-be-skipped-1
+ task-should-be-skipped-2
+ task-should-be-skipped-3

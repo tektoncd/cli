@@ -1,7 +1,7 @@
-Name:           pipeline-run
-Namespace:      ns
-Pipeline Ref:   pipeline
-Timeout:        1h0m0s
+Name:                  pipeline-run
+Namespace:             ns
+Pipeline Ref:          pipeline
+Timeout(Deprecated):   1h0m0s
 Labels:
  tekton.dev/pipeline=pipeline
 
