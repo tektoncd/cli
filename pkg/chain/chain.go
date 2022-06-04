@@ -17,6 +17,9 @@ package chain
 import (
 	"context"
 	"fmt"
+	"os"
+
+	"go.uber.org/zap/zapcore"
 
 	"github.com/tektoncd/chains/pkg/chains/storage"
 	"github.com/tektoncd/chains/pkg/config"
@@ -37,10 +40,12 @@ func ConfigMapToContext(cs *cli.Clients, namespace string) (context.Context, err
 
 func GetTaskRunBackends(cs *cli.Clients, namespace string, tr *v1beta1.TaskRun) (map[string]storage.Backend, config.StorageOpts, error) {
 	// Prepare the logger.
-	logger, err := zap.NewProduction()
-	if err != nil {
-		return nil, config.StorageOpts{}, err
+	encoderCfg := zapcore.EncoderConfig{
+		MessageKey: "msg",
 	}
+	core := zapcore.NewCore(zapcore.NewConsoleEncoder(encoderCfg), os.Stderr, zapcore.DebugLevel)
+	logger := zap.New(core).WithOptions()
+
 	// flushes buffer, if any
 	defer func() {
 		if err := logger.Sync(); err != nil {
