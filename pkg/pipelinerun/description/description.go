@@ -40,8 +40,9 @@ const templ = `{{decorate "bold" "Name"}}:	{{ .PipelineRun.Name }}
 
 {{- $timeout := getTimeout .PipelineRun -}}
 {{- if and (ne $timeout "") (ne $timeout "0s") }}
-{{decorate "bold" "Timeout"}}:	{{ .PipelineRun.Spec.Timeout.Duration.String }}
+{{decorate "bold" "Timeout(Deprecated)"}}:	{{ .PipelineRun.Spec.Timeout.Duration.String }}
 {{- end }}
+
 {{- $l := len .PipelineRun.Labels }}{{ if eq $l 0 }}
 {{- else }}
 {{decorate "bold" "Labels"}}:
@@ -58,6 +59,24 @@ STARTED	DURATION	STATUS
 
 {{decorate "message" ""}}{{decorate "underline bold" "Message\n"}}
 {{ $msg }}
+{{- end }}
+
+
+{{- if .PipelineRun.Spec.Timeouts }}
+
+{{decorate "timeouts" ""}}{{decorate "underline bold" "Timeouts"}}
+{{- $timeout := .PipelineRun.Spec.Timeouts.Pipeline -}}
+{{- if $timeout }}
+ {{decorate "bold" "Pipeline"}}:	{{ $timeout.Duration.String }}
+{{- end }}
+{{- $timeout := .PipelineRun.Spec.Timeouts.Tasks -}}
+{{- if $timeout }}
+ {{decorate "bold" "Tasks"}}:	{{ $timeout.Duration.String }}
+{{- end }}
+{{- $timeout := .PipelineRun.Spec.Timeouts.Finally -}}
+{{- if $timeout }}
+ {{decorate "bold" "Finally"}}:	{{ $timeout.Duration.String }}
+{{- end }}
 {{- end }}
 
 {{- if ne (len .PipelineRun.Spec.Resources) 0 }}
