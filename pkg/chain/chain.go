@@ -48,9 +48,8 @@ func GetTaskRunBackends(cs *cli.Clients, namespace string, tr *v1beta1.TaskRun) 
 
 	// flushes buffer, if any
 	defer func() {
-		if err := logger.Sync(); err != nil {
-			fmt.Println(err)
-		}
+		// intentionally ignoring error here, see https://github.com/uber-go/zap/issues/328
+		_ = logger.Sync()
 	}()
 	sugaredLogger := logger.Sugar()
 
