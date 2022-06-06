@@ -115,14 +115,14 @@ kubectl create namespace ${TARGET_NAMESPACE} 2>/dev/null || true
 
 for task in ${CATALOG_TASKS};do
   if [ ${task} == "lint" ]; then
-    kubectl -n ${TARGET_NAMESPACE} apply -f https://raw.githubusercontent.com/tektoncd/catalog/master/task/golangci-${task}/0.1/golangci-${task}.yaml
+    kubectl -n ${TARGET_NAMESPACE} apply -f https://raw.githubusercontent.com/tektoncd/catalog/main/task/golangci-${task}/0.2/golangci-${task}.yaml
   else
-    kubectl -n ${TARGET_NAMESPACE} apply -f https://raw.githubusercontent.com/tektoncd/catalog/master/task/golang-${task}/0.1/golang-${task}.yaml
+    kubectl -n ${TARGET_NAMESPACE} apply -f https://raw.githubusercontent.com/tektoncd/catalog/main/task/golang-${task}/0.2/golang-${task}.yaml
   fi
 done
 
-kubectl -n ${TARGET_NAMESPACE} apply -f https://raw.githubusercontent.com/tektoncd/catalog/master/task/git-clone/0.1/git-clone.yaml
-kubectl -n ${TARGET_NAMESPACE} apply -f https://raw.githubusercontent.com/tektoncd/catalog/master/task/goreleaser/0.2/goreleaser.yaml
+kubectl -n ${TARGET_NAMESPACE} apply -f https://raw.githubusercontent.com/tektoncd/catalog/main/task/git-clone/0.6/git-clone.yaml
+kubectl -n ${TARGET_NAMESPACE} apply -f https://raw.githubusercontent.com/tektoncd/catalog/main/task/goreleaser/0.2/goreleaser.yaml
 kubectl -n ${TARGET_NAMESPACE} apply -f ./tekton/get-version.yaml
 kubectl -n ${TARGET_NAMESPACE} apply -f ./tekton/publish.yaml
 
