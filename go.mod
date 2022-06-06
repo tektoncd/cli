@@ -12,7 +12,7 @@ require (
 	github.com/containerd/containerd v1.6.2 // indirect
 	github.com/cpuguy83/go-md2man v1.0.10
 	github.com/docker/cli v20.10.14+incompatible
-	github.com/docker/docker v20.10.14+incompatible
+	github.com/docker/docker v20.10.16+incompatible
 	github.com/fatih/color v1.13.0
 	github.com/ghodss/yaml v1.0.0
 	github.com/golang/protobuf v1.5.2
