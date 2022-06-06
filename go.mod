@@ -51,7 +51,7 @@ require (
 	github.com/ryanuber/go-glob v1.0.0
 	github.com/spf13/cobra v1.4.0
 	github.com/spf13/pflag v1.0.5
-	github.com/tektoncd/chains v0.9.0
+	github.com/tektoncd/chains v0.9.1-0.20220520120701-86291376000f
 	github.com/tektoncd/hub v1.7.0
 	github.com/tektoncd/pipeline v0.35.1
 	github.com/tektoncd/plumbing v0.0.0-20220329085922-d765a5cba75f

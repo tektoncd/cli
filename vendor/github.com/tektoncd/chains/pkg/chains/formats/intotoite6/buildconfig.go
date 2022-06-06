@@ -17,7 +17,6 @@ limitations under the License.
 package intotoite6
 
 import (
-	"fmt"
 	"strings"
 
 	"github.com/tektoncd/pipeline/pkg/apis/pipeline/v1beta1"
@@ -40,7 +39,6 @@ type Step struct {
 func buildConfig(tr *v1beta1.TaskRun) BuildConfig {
 	steps := []Step{}
 	for _, step := range tr.Status.Steps {
-		fmt.Println(step)
 		s := Step{}
 		c := container(step, tr)
 		// get the entrypoint
