@@ -62,7 +62,7 @@ func (b *Backend) StorePayload(ctx context.Context, tr *v1beta1.TaskRun, rawPayl
 	}
 	defer func() {
 		if err := topic.Shutdown(ctx); err != nil {
-			fmt.Println(err)
+			b.logger.Error(err)
 		}
 	}()
 

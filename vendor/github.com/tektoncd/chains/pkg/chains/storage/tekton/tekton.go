@@ -17,8 +17,6 @@ import (
 	"context"
 	"encoding/base64"
 	"fmt"
-	"strings"
-
 	"github.com/tektoncd/chains/pkg/config"
 
 	"github.com/tektoncd/chains/pkg/patch"
@@ -118,12 +116,7 @@ func (b *Backend) RetrieveSignatures(ctx context.Context, tr *v1beta1.TaskRun, o
 	}
 
 	m := make(map[string][]string)
-	for _, res := range tr.Status.TaskRunResults {
-		if strings.HasSuffix(res.Name, "IMAGE_URL") {
-			m[signatureAnnotation] = []string{signature}
-			break
-		}
-	}
+	m[signatureAnnotation] = []string{signature}
 	return m, nil
 }
 
@@ -136,13 +129,7 @@ func (b *Backend) RetrievePayloads(ctx context.Context, tr *v1beta1.TaskRun, opt
 		return nil, err
 	}
 	m := make(map[string]string)
-	for _, res := range tr.Status.TaskRunResults {
-		if strings.HasSuffix(res.Name, "IMAGE_URL") {
-			m[payloadAnnotation] = payload
-			break
-		}
-	}
-
+	m[payloadAnnotation] = payload
 	return m, nil
 }
 
