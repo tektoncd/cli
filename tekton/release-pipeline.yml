@@ -65,6 +65,8 @@ spec:
       params:
         - name: package
           value: $(params.package)
+        - name: packages
+          value: ./pkg/... ./cmd/...
         - name: version
           value: 1.17.8
         - name: flags
