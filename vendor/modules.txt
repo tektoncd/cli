@@ -936,7 +936,7 @@ github.com/jmespath/go-jmespath
 # github.com/joho/godotenv v1.3.0
 ## explicit
 github.com/joho/godotenv
-# github.com/jonboulle/clockwork v0.2.2
+# github.com/jonboulle/clockwork v0.3.0
 ## explicit; go 1.13
 github.com/jonboulle/clockwork
 # github.com/josharian/intern v1.0.0

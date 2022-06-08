@@ -39,7 +39,7 @@ require (
 	github.com/hashicorp/vault/sdk v0.4.1
 	github.com/hashicorp/yamux v0.0.0-20211028200310-0bc27b27de87
 	github.com/hinshun/vt10x v0.0.0-20180809195222-d55458df857c
-	github.com/jonboulle/clockwork v0.2.2
+	github.com/jonboulle/clockwork v0.3.0
 	github.com/ktr0731/go-fuzzyfinder v0.6.0
 	github.com/mitchellh/copystructure v1.2.0
 	github.com/mitchellh/go-homedir v1.1.0
