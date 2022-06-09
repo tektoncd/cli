@@ -146,7 +146,7 @@ func git(log *zap.SugaredLogger, kind string, args ...string) (string, error) {
 	output, err := rawGit(kind, args...)
 
 	if err != nil {
-		log.Errorf("git %s : error %s ;output: %s", strings.Join(args, " "), output)
+		log.Errorf("git %s : error %s ;output: %s", strings.Join(args, " "), err.Error(), output)
 		return "", err
 	}
 	return output, nil
