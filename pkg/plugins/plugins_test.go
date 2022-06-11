@@ -3,6 +3,7 @@ package plugins
 import (
 	"fmt"
 	"io/ioutil"
+	"os"
 	"testing"
 
 	"gotest.tools/v3/assert"
@@ -65,7 +66,15 @@ func TestGetAllTknPluginFromPaths(t *testing.T) {
 	assert.NilError(t, err)
 
 	defer env.Patch(t, "PATH", fmt.Sprintf("%s:%s", nd.Path(), nd2.Path()))()
+
+	// Reset the TKN_PLUGINS_DIR so that during local test
+	// existing plugins are not considered using tests
+	pluginHome := os.Getenv("TKN_PLUGINS_DIR")
+	os.Setenv("TKN_PLUGINS_DIR", "/non/existing/path")
+
 	plugins := GetAllTknPluginFromPaths()
 	assert.NilError(t, err)
 	assert.Equal(t, len(plugins), 1)
+
+	os.Setenv("TKN_PLUGINS_DIR", pluginHome)
 }

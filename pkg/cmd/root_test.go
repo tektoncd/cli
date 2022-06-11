@@ -17,6 +17,7 @@ package cmd
 import (
 	"fmt"
 	"io/ioutil"
+	"os"
 	"strings"
 	"testing"
 
@@ -76,9 +77,17 @@ func TestPluginList(t *testing.T) {
 	err = ioutil.WriteFile(nd.Join("tkn-nonexec"), []byte("nonexec"), 0o600)
 	assert.NilError(t, err)
 	defer env.Patch(t, "PATH", nd.Path()+":/non/existing/path")()
+
+	// Reset the TKN_PLUGINS_DIR so that during local test
+	// existing plugins are not considered using tests
+	pluginHome := os.Getenv("TKN_PLUGINS_DIR")
+	os.Setenv("TKN_PLUGINS_DIR", "/non/existing/path")
+
 	p := &test.Params{}
 	cmd := Root(p)
 	out, err := test.ExecuteCommand(cmd, "help")
 	assert.NilError(t, err)
 	golden.Assert(t, out, fmt.Sprintf("%s.golden", t.Name()))
+
+	os.Setenv("TKN_PLUGINS_DIR", pluginHome)
 }
