@@ -2,10 +2,8 @@
 
 currentdir=$(dirname $(readlink -f $0))
 repospecfile=${currentdir}/tekton.spec
-TMPD=$(mktemp -d)
+TMPD="/tmp/cli"
 mkdir -p ${TMPD}
-clean() { rm -rf ${TMPD} ;}
-trap clean EXIT
 
 set -ex
 
@@ -29,9 +27,15 @@ do
    sed -i "/vendored\slibraries/a $i" ${TMPD}/tekton.spec
 done
 
+( cd ${currentdir}/../../docs/man && tar czf ${TMPD}/manpages.tar.gz  man1)
+
 cd ${TMPD}
 
-curl -H "Authorization: token ${GITHUB_TOKEN}" -O -L https://github.com/tektoncd/cli/archive/v${version}.tar.gz
+# TODO: multiarch
+tarball=tkn_${version}_Linux_x86_64.tar.gz
+[[ -e ${tarball} ]] || \
+    curl -f -H "Authorization: token ${GITHUB_TOKEN}" \
+        -O -L https://github.com/tektoncd/cli/releases/download/v${version}/${tarball}
 
 rpmbuild -bs tekton.spec --define "_sourcedir $PWD" --define "_srcrpmdir $PWD"
 
