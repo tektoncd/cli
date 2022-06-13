@@ -14,27 +14,22 @@ See the License for the specific language governing permissions and
 limitations under the License.
 */
 
-package v1beta1
+package config
 
 import (
 	"context"
-
-	"knative.dev/pkg/apis"
 )
 
-var _ apis.Defaultable = (*Task)(nil)
+// isSubstituted is used for associating the parameter substitution inside the context.Context.
+type isSubstituted struct{}
 
-// SetDefaults implements apis.Defaultable
-func (t *Task) SetDefaults(ctx context.Context) {
-	t.Spec.SetDefaults(ctx)
+// WithinSubstituted is used to note that it is calling within
+// the context of a substitute variable operation.
+func WithinSubstituted(ctx context.Context) context.Context {
+	return context.WithValue(ctx, isSubstituted{}, true)
 }
 
-// SetDefaults set any defaults for the task spec
-func (ts *TaskSpec) SetDefaults(ctx context.Context) {
-	for i := range ts.Params {
-		ts.Params[i].SetDefaults(ctx)
-	}
-	for i := range ts.Results {
-		ts.Results[i].SetDefaults(ctx)
-	}
+// IsSubstituted indicates that the variables have been substituted.
+func IsSubstituted(ctx context.Context) bool {
+	return ctx.Value(isSubstituted{}) != nil
 }

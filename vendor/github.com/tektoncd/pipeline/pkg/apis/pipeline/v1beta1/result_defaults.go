@@ -1,12 +1,9 @@
 /*
-Copyright 2019 The Tekton Authors
-
+Copyright 2022 The Tekton Authors
 Licensed under the Apache License, Version 2.0 (the "License");
 you may not use this file except in compliance with the License.
 You may obtain a copy of the License at
-
     http://www.apache.org/licenses/LICENSE-2.0
-
 Unless required by applicable law or agreed to in writing, software
 distributed under the License is distributed on an "AS IS" BASIS,
 WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -16,25 +13,12 @@ limitations under the License.
 
 package v1beta1
 
-import (
-	"context"
+import "context"
 
-	"knative.dev/pkg/apis"
-)
-
-var _ apis.Defaultable = (*Task)(nil)
-
-// SetDefaults implements apis.Defaultable
-func (t *Task) SetDefaults(ctx context.Context) {
-	t.Spec.SetDefaults(ctx)
-}
-
-// SetDefaults set any defaults for the task spec
-func (ts *TaskSpec) SetDefaults(ctx context.Context) {
-	for i := range ts.Params {
-		ts.Params[i].SetDefaults(ctx)
-	}
-	for i := range ts.Results {
-		ts.Results[i].SetDefaults(ctx)
+// SetDefaults set the default type for TaskResult
+func (tr *TaskResult) SetDefaults(ctx context.Context) {
+	if tr != nil && tr.Type == "" {
+		// ResultsTypeString is the default value
+		tr.Type = ResultsTypeString
 	}
 }

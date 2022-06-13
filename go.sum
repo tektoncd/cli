@@ -2573,8 +2573,8 @@ github.com/tektoncd/hub v1.7.3/go.mod h1:ImsxOy1JNIF356zDTwq95fZbHgaIppEWhj6SRPh
 github.com/tektoncd/pipeline v0.31.1-0.20220105002759-3e137645be61/go.mod h1:dO84qW4sTq7S7Jv5G0PRmbTjvxnUAuDDxD1NBrsQX9w=
 github.com/tektoncd/pipeline v0.33.1/go.mod h1:5Re8byhcUd3afN6m6IKn0SfNvbJCRmQRyEOl7fz0OXo=
 github.com/tektoncd/pipeline v0.35.0/go.mod h1:+Jc1ESROXrzosXmpAKMWY8CJhUu52mK+wigjpVMgOio=
-github.com/tektoncd/pipeline v0.35.1 h1:cgEVV+DqXQRyduFDnqLjuK6uMcau3betM0iV+F1vjPQ=
-github.com/tektoncd/pipeline v0.35.1/go.mod h1:+Jc1ESROXrzosXmpAKMWY8CJhUu52mK+wigjpVMgOio=
+github.com/tektoncd/pipeline v0.36.0 h1:4FU7yZ28sv1LmXR9f7tngXcsu4Dq04q0nWTXEm+0RL4=
+github.com/tektoncd/pipeline v0.36.0/go.mod h1:ZZOSGj1vCeK/xONQGcxBs+m17NzCXNNOqglCDhOPwjY=
 github.com/tektoncd/plumbing v0.0.0-20211012143332-c7cc43d9bc0c/go.mod h1:b9esRuV1absBvaPzKkjYdKXjC5Tgs8/vh1sz++RiTdc=
 github.com/tektoncd/plumbing v0.0.0-20220304154415-13228ac1f4a4/go.mod h1:b9esRuV1absBvaPzKkjYdKXjC5Tgs8/vh1sz++RiTdc=
 github.com/tektoncd/plumbing v0.0.0-20220329085922-d765a5cba75f h1:74OqGOB+R3aobu2j9fxKnsgupS9c7KH1bZaR5LSXICw=
