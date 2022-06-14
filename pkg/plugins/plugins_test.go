@@ -6,7 +6,6 @@ import (
 	"testing"
 
 	"gotest.tools/v3/assert"
-	"gotest.tools/v3/env"
 	"gotest.tools/v3/fs"
 )
 
@@ -16,7 +15,7 @@ func TestFindPlugin(t *testing.T) {
 	// nolint: gosec
 	err := ioutil.WriteFile(nd.Join("tkn-test"), []byte("test"), 0o700)
 	assert.NilError(t, err)
-	defer env.Patch(t, pluginDirEnv, nd.Path())()
+	t.Setenv(pluginDirEnv, nd.Path())
 	path, err := FindPlugin("test")
 	assert.NilError(t, err)
 	assert.Equal(t, path, nd.Join("tkn-test"))
@@ -28,7 +27,7 @@ func TestFindPluginInPath(t *testing.T) {
 	// nolint: gosec
 	err := ioutil.WriteFile(nd.Join("tkn-testp"), []byte("testp"), 0o700)
 	assert.NilError(t, err)
-	defer env.Patch(t, "PATH", nd.Path())()
+	t.Setenv("PATH", nd.Path())
 	path, err := FindPlugin("testp")
 	assert.NilError(t, err)
 	assert.Equal(t, path, nd.Join("tkn-testp"))
@@ -41,8 +40,8 @@ func TestGetAllTknPluginFromPathPlugindir(t *testing.T) {
 	err := ioutil.WriteFile(nd.Join("tkn-fromplugindir"), []byte("test"), 0o700)
 	assert.NilError(t, err)
 
-	defer env.Patch(t, "PATH", "")()
-	defer env.Patch(t, pluginDirEnv, nd.Path())()
+	t.Setenv("PATH", "")
+	t.Setenv(pluginDirEnv, nd.Path())
 
 	paths := GetAllTknPluginFromPaths()
 	assert.NilError(t, err)
@@ -64,7 +63,8 @@ func TestGetAllTknPluginFromPaths(t *testing.T) {
 	err = ioutil.WriteFile(nd.Join("tkn-test"), []byte("testp"), 0o700)
 	assert.NilError(t, err)
 
-	defer env.Patch(t, "PATH", fmt.Sprintf("%s:%s", nd.Path(), nd2.Path()))()
+	t.Setenv("PATH", fmt.Sprintf("%s:%s", nd.Path(), nd2.Path()))
+	t.Setenv("TKN_PLUGINS_DIR", "/non/existing/path")
 	plugins := GetAllTknPluginFromPaths()
 	assert.NilError(t, err)
 	assert.Equal(t, len(plugins), 1)
