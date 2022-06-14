@@ -22,9 +22,7 @@ import (
 
 	"github.com/spf13/pflag"
 	"github.com/tektoncd/cli/pkg/test"
-	tu "github.com/tektoncd/cli/pkg/test"
 	"gotest.tools/v3/assert"
-	"gotest.tools/v3/env"
 	"gotest.tools/v3/fs"
 	"gotest.tools/v3/golden"
 )
@@ -53,7 +51,7 @@ func TestCommand_suggest(t *testing.T) {
 		t.Errorf("No errors was defined. Output: %s", out)
 	}
 	expected := "unknown command \"pi\" for \"tkn\"\n\nDid you mean this?\n\tpipeline\n\tpipelinerun\n"
-	tu.AssertOutput(t, expected, err.Error())
+	test.AssertOutput(t, expected, err.Error())
 }
 
 func TestSubCommand_suggest(t *testing.T) {
@@ -64,7 +62,7 @@ func TestSubCommand_suggest(t *testing.T) {
 		t.Errorf("No errors was defined. Output: %s", out)
 	}
 	expected := "unknown command \"des\" for \"tkn pipeline\"\n\nDid you mean this?\n\tdescribe\n"
-	tu.AssertOutput(t, expected, err.Error())
+	test.AssertOutput(t, expected, err.Error())
 }
 
 func TestPluginList(t *testing.T) {
@@ -75,7 +73,8 @@ func TestPluginList(t *testing.T) {
 	assert.NilError(t, err)
 	err = ioutil.WriteFile(nd.Join("tkn-nonexec"), []byte("nonexec"), 0o600)
 	assert.NilError(t, err)
-	defer env.Patch(t, "PATH", nd.Path()+":/non/existing/path")()
+	t.Setenv("PATH", nd.Path()+":/non/existing/path")
+	t.Setenv("TKN_PLUGINS_DIR", "/non/existing/path")
 	p := &test.Params{}
 	cmd := Root(p)
 	out, err := test.ExecuteCommand(cmd, "help")
