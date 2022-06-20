@@ -28,6 +28,7 @@ type Select struct {
 	VimMode       bool
 	FilterMessage string
 	Filter        func(filter string, value string, index int) bool
+	Description   func(value string, index int) string
 	filter        string
 	selectedIndex int
 	useDefault    bool
@@ -42,6 +43,7 @@ type SelectTemplateData struct {
 	Answer        string
 	ShowAnswer    bool
 	ShowHelp      bool
+	Description   func(value string, index int) string
 	Config        *PromptConfig
 
 	// These fields are used when rendering an individual option
@@ -57,10 +59,17 @@ func (s SelectTemplateData) IterateOption(ix int, opt core.OptionAnswer) interfa
 	return copy
 }
 
+func (s SelectTemplateData) GetDescription(opt core.OptionAnswer) string {
+	if s.Description == nil {
+		return ""
+	}
+	return s.Description(opt.Value, opt.Index)
+}
+
 var SelectQuestionTemplate = `
 {{- define "option"}}
     {{- if eq .SelectedIndex .CurrentIndex }}{{color .Config.Icons.SelectFocus.Format }}{{ .Config.Icons.SelectFocus.Text }} {{else}}{{color "default"}}  {{end}}
-    {{- .CurrentOpt.Value}}
+    {{- .CurrentOpt.Value}}{{ if ne ($.GetDescription .CurrentOpt) "" }} - {{color "cyan"}}{{ $.GetDescription .CurrentOpt }}{{end}}
     {{- color "reset"}}
 {{end}}
 {{- if .ShowHelp }}{{- color .Config.Icons.Help.Format }}{{ .Config.Icons.Help.Text }} {{ .Help }}{{color "reset"}}{{"\n"}}{{end}}
@@ -171,12 +180,13 @@ func (s *Select) OnChange(key rune, config *PromptConfig) bool {
 		Select:        *s,
 		SelectedIndex: idx,
 		ShowHelp:      s.showingHelp,
+		Description:   s.Description,
 		PageEntries:   opts,
 		Config:        config,
 	}
 
 	// render the options
-	s.RenderWithCursorOffset(SelectQuestionTemplate, tmplData, opts, idx)
+	_ = s.RenderWithCursorOffset(SelectQuestionTemplate, tmplData, opts, idx)
 
 	// keep prompting
 	return false
@@ -257,6 +267,7 @@ func (s *Select) Prompt(config *PromptConfig) (interface{}, error) {
 	tmplData := SelectTemplateData{
 		Select:        *s,
 		SelectedIndex: idx,
+		Description:   s.Description,
 		ShowHelp:      s.showingHelp,
 		PageEntries:   opts,
 		Config:        config,
@@ -272,8 +283,10 @@ func (s *Select) Prompt(config *PromptConfig) (interface{}, error) {
 	s.useDefault = true
 
 	rr := s.NewRuneReader()
-	rr.SetTermMode()
-	defer rr.RestoreTermMode()
+	_ = rr.SetTermMode()
+	defer func() {
+		_ = rr.RestoreTermMode()
+	}()
 
 	// start waiting for input
 	for {
@@ -338,10 +351,11 @@ func (s *Select) Cleanup(config *PromptConfig, val interface{}) error {
 	return s.Render(
 		SelectQuestionTemplate,
 		SelectTemplateData{
-			Select:     *s,
-			Answer:     val.(core.OptionAnswer).Value,
-			ShowAnswer: true,
-			Config:     config,
+			Select:      *s,
+			Answer:      val.(core.OptionAnswer).Value,
+			ShowAnswer:  true,
+			Description: s.Description,
+			Config:      config,
 		},
 	)
 }

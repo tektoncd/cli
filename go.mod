@@ -3,8 +3,8 @@ module github.com/tektoncd/cli
 go 1.17
 
 require (
-	github.com/AlecAivazis/survey/v2 v2.3.2
-	github.com/Netflix/go-expect v0.0.0-20200312175327-da48e75238e2
+	github.com/AlecAivazis/survey/v2 v2.3.5
+	github.com/Netflix/go-expect v0.0.0-20220104043353-73e0943537d2
 	github.com/armon/go-metrics v0.4.0
 	github.com/armon/go-radix v1.0.0
 	github.com/blang/semver v3.5.1+incompatible
@@ -38,7 +38,7 @@ require (
 	github.com/hashicorp/hcl v1.0.0
 	github.com/hashicorp/vault/sdk v0.5.0
 	github.com/hashicorp/yamux v0.0.0-20211028200310-0bc27b27de87
-	github.com/hinshun/vt10x v0.0.0-20180809195222-d55458df857c
+	github.com/hinshun/vt10x v0.0.0-20220119200601-820417d04eec
 	github.com/jonboulle/clockwork v0.3.0
 	github.com/ktr0731/go-fuzzyfinder v0.6.0
 	github.com/mitchellh/copystructure v1.2.0
@@ -147,6 +147,7 @@ require (
 	github.com/coreos/go-semver v0.3.0 // indirect
 	github.com/coreos/go-systemd/v22 v22.3.2 // indirect
 	github.com/cpuguy83/go-md2man/v2 v2.0.1 // indirect
+	github.com/creack/pty v1.1.17 // indirect
 	github.com/cyberphone/json-canonicalization v0.0.0-20210823021906-dc406ceaf94b // indirect
 	github.com/davecgh/go-spew v1.1.1 // indirect
 	github.com/dimchansky/utfbom v1.1.1 // indirect
@@ -231,7 +232,6 @@ require (
 	github.com/kballard/go-shellquote v0.0.0-20180428030007-95032a82bc51 // indirect
 	github.com/kelseyhightower/envconfig v1.4.0 // indirect
 	github.com/klauspost/compress v1.15.1 // indirect
-	github.com/kr/pty v1.1.8 // indirect
 	github.com/leodido/go-urn v1.2.1 // indirect
 	github.com/liggitt/tabwriter v0.0.0-20181228230101-89fcab3d43de // indirect
 	github.com/lucasb-eyer/go-colorful v1.0.3 // indirect

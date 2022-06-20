@@ -32,7 +32,7 @@ contrib.go.opencensus.io/exporter/ocagent
 # contrib.go.opencensus.io/exporter/prometheus v0.4.0
 ## explicit; go 1.13
 contrib.go.opencensus.io/exporter/prometheus
-# github.com/AlecAivazis/survey/v2 v2.3.2
+# github.com/AlecAivazis/survey/v2 v2.3.5
 ## explicit; go 1.13
 github.com/AlecAivazis/survey/v2
 github.com/AlecAivazis/survey/v2/core
@@ -78,8 +78,8 @@ github.com/Azure/go-autorest/tracing
 ## explicit; go 1.13
 github.com/Microsoft/go-winio
 github.com/Microsoft/go-winio/pkg/guid
-# github.com/Netflix/go-expect v0.0.0-20200312175327-da48e75238e2
-## explicit
+# github.com/Netflix/go-expect v0.0.0-20220104043353-73e0943537d2
+## explicit; go 1.13
 github.com/Netflix/go-expect
 # github.com/PaesslerAG/gval v1.0.0
 ## explicit
@@ -339,6 +339,9 @@ github.com/cpuguy83/go-md2man/md2man
 # github.com/cpuguy83/go-md2man/v2 v2.0.1
 ## explicit; go 1.11
 github.com/cpuguy83/go-md2man/v2/md2man
+# github.com/creack/pty v1.1.17
+## explicit; go 1.13
+github.com/creack/pty
 # github.com/cyberphone/json-canonicalization v0.0.0-20210823021906-dc406ceaf94b
 ## explicit
 github.com/cyberphone/json-canonicalization/go/src/webpki.org/jsoncanonicalizer
@@ -855,8 +858,8 @@ github.com/hashicorp/vault/sdk/version
 # github.com/hashicorp/yamux v0.0.0-20211028200310-0bc27b27de87
 ## explicit; go 1.15
 github.com/hashicorp/yamux
-# github.com/hinshun/vt10x v0.0.0-20180809195222-d55458df857c
-## explicit
+# github.com/hinshun/vt10x v0.0.0-20220119200601-820417d04eec
+## explicit; go 1.14
 github.com/hinshun/vt10x
 # github.com/imdario/mergo v0.3.12
 ## explicit; go 1.13
@@ -959,9 +962,6 @@ github.com/klauspost/compress/huff0
 github.com/klauspost/compress/internal/snapref
 github.com/klauspost/compress/zstd
 github.com/klauspost/compress/zstd/internal/xxhash
-# github.com/kr/pty v1.1.8 => github.com/creack/pty v1.1.16
-## explicit; go 1.13
-github.com/kr/pty
 # github.com/ktr0731/go-fuzzyfinder v0.6.0
 ## explicit; go 1.13
 github.com/ktr0731/go-fuzzyfinder
