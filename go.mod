@@ -11,7 +11,7 @@ require (
 	github.com/cenkalti/backoff/v3 v3.2.2
 	github.com/containerd/containerd v1.6.2 // indirect
 	github.com/cpuguy83/go-md2man v1.0.10
-	github.com/docker/cli v20.10.14+incompatible
+	github.com/docker/cli v20.10.17+incompatible
 	github.com/docker/docker v20.10.16+incompatible
 	github.com/fatih/color v1.13.0
 	github.com/ghodss/yaml v1.0.0
@@ -36,7 +36,7 @@ require (
 	github.com/hashicorp/go-version v1.5.0
 	github.com/hashicorp/golang-lru v0.5.4
 	github.com/hashicorp/hcl v1.0.0
-	github.com/hashicorp/vault/sdk v0.5.0
+	github.com/hashicorp/vault/sdk v0.5.2
 	github.com/hashicorp/yamux v0.0.0-20211028200310-0bc27b27de87
 	github.com/hinshun/vt10x v0.0.0-20180809195222-d55458df857c
 	github.com/jonboulle/clockwork v0.3.0
