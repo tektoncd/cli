@@ -25,7 +25,6 @@ import (
 	"github.com/tektoncd/cli/pkg/cmd/clustertask"
 	"github.com/tektoncd/cli/pkg/cmd/clustertriggerbinding"
 	"github.com/tektoncd/cli/pkg/cmd/completion"
-	"github.com/tektoncd/cli/pkg/cmd/condition"
 	"github.com/tektoncd/cli/pkg/cmd/eventlistener"
 	"github.com/tektoncd/cli/pkg/cmd/pipeline"
 	"github.com/tektoncd/cli/pkg/cmd/pipelineresource"
@@ -95,7 +94,6 @@ func Root(p cli.Params) *cobra.Command {
 		clustertask.Command(p),
 		clustertriggerbinding.Command(p),
 		completion.Command(),
-		condition.Command(p),
 		eventlistener.Command(p),
 		pipeline.Command(p),
 		pipelineresource.Command(p),
