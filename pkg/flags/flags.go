@@ -74,12 +74,12 @@ func AddTektonOptions(cmd *cobra.Command) {
 // GetTektonOptions get the global tekton Options that are not passed to a subcommands
 func GetTektonOptions(cmd *cobra.Command) TektonOptions {
 	kcPath, _ := cmd.Flags().GetString(kubeConfig)
-	kContext, _ := cmd.Flags().GetString(context)
+	kubeContext, _ := cmd.Flags().GetString(context)
 	ns, _ := cmd.Flags().GetString(namespace)
 	nocolourFlag, _ := cmd.Flags().GetBool(nocolor)
 	return TektonOptions{
 		KubeConfig: kcPath,
-		Context:    kContext,
+		Context:    kubeContext,
 		Namespace:  ns,
 		Nocolour:   nocolourFlag,
 	}
@@ -97,11 +97,11 @@ func InitParams(p cli.Params, cmd *cobra.Command) error {
 	}
 	p.SetKubeConfigPath(kcPath)
 
-	kContext, err := cmd.Flags().GetString(context)
+	kubeContext, err := cmd.Flags().GetString(context)
 	if err != nil {
 		return err
 	}
-	p.SetKubeContext(kContext)
+	p.SetKubeContext(kubeContext)
 
 	// ensure that the config is valid by creating a client
 	if _, err := p.Clients(); err != nil {

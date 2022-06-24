@@ -24,6 +24,7 @@ import (
 	"k8s.io/apimachinery/pkg/types"
 )
 
+// Patch takes a partial resource, an object name in the cluster, and patch data to be applied to that object, and patches the object using the dynamic client.
 func Patch(gr schema.GroupVersionResource, clients *cli.Clients, objName string, data []byte, opt metav1.PatchOptions, ns string) (*unstructured.Unstructured, error) {
 	gvr, err := GetGroupVersionResource(gr, clients.Tekton.Discovery())
 	if err != nil {

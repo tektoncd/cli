@@ -45,3 +45,5 @@ tags
 
 # Chocolatey
 *.nupkg
+
+.bin

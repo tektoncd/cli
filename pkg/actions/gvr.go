@@ -27,6 +27,7 @@ var (
 	apiGroupRes []*restmapper.APIGroupResources
 )
 
+// GetGroupVersionResource takes a partial resource, and returns the full resource matching the partial resource, if there's only one match.
 func GetGroupVersionResource(gr schema.GroupVersionResource, discovery discovery.DiscoveryInterface) (*schema.GroupVersionResource, error) {
 	var err error
 	doOnce.Do(func() {
@@ -45,6 +46,7 @@ func GetGroupVersionResource(gr schema.GroupVersionResource, discovery discovery
 	return &gvr, nil
 }
 
+// InitializeAPIGroupRes initializes and populates the discovery client.
 func InitializeAPIGroupRes(discovery discovery.DiscoveryInterface) error {
 	var err error
 	apiGroupRes, err = restmapper.GetAPIGroupResources(discovery)
