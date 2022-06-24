@@ -1,8 +1,0 @@
-Name:        cond-2
-Namespace:   ns
-
-Check
-
- Name:     test
- Image:    busybox
- Script:   echo hello

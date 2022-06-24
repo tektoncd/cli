@@ -110,6 +110,7 @@ test-e2e: bin/tkn ## run e2e tests
 .PHONY: docs
 docs: bin/docs ## update docs
 	@echo "Generating docs"
+	@mkdir -p ./docs/cmd ./docs/man/man1
 	@./bin/docs --target=./docs/cmd
 	@./bin/docs --target=./docs/man/man1 --kind=man
 	@rm -f ./bin/docs
