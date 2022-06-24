@@ -20,7 +20,6 @@ import (
 	"sync"
 	"time"
 
-	"github.com/pkg/errors"
 	"github.com/tektoncd/cli/pkg/pods"
 	tr "github.com/tektoncd/cli/pkg/taskrun"
 	"github.com/tektoncd/pipeline/pkg/apis/pipeline/v1beta1"
@@ -198,7 +197,7 @@ func (r *Reader) readPodLogs(podC <-chan string, podErrC <-chan error, follow bo
 				pod, err = p.Get()
 			}
 			if err != nil {
-				errC <- errors.New(fmt.Sprintf("task %s failed: %s. Run tkn tr desc %s for more details.", r.task, strings.TrimSpace(err.Error()), r.run))
+				errC <- fmt.Errorf("task %s failed: %s. Run tkn tr desc %s for more details", r.task, strings.TrimSpace(err.Error()), r.run)
 			}
 			steps := filterSteps(pod, r.allSteps, r.steps)
 			r.readStepsLogs(logC, errC, steps, p, follow)

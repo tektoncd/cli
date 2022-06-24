@@ -23,6 +23,7 @@ import (
 	"k8s.io/client-go/dynamic"
 )
 
+// Delete is used to take a partial resource and the name of an object in the cluster and delete it using the dynamic client.
 func Delete(gr schema.GroupVersionResource, dynamic dynamic.Interface, discovery discovery.DiscoveryInterface, objname, ns string, op metav1.DeleteOptions) error {
 	gvr, err := GetGroupVersionResource(gr, discovery)
 	if err != nil {

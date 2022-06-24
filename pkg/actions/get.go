@@ -27,6 +27,7 @@ import (
 	"k8s.io/client-go/dynamic"
 )
 
+// PrintObject is used to take a partial resource and the name of an object in the cluster, fetch it using the dynamic client, and print out the object.
 func PrintObject(groupResource schema.GroupVersionResource, obj string, w io.Writer, dynamic dynamic.Interface, discovery discovery.DiscoveryInterface, f *cliopts.PrintFlags, ns string) error {
 	res, err := Get(groupResource, dynamic, discovery, obj, ns, metav1.GetOptions{})
 	if err != nil {
@@ -36,6 +37,7 @@ func PrintObject(groupResource schema.GroupVersionResource, obj string, w io.Wri
 	return printer.PrintObject(w, res, f)
 }
 
+// Get is used to take a partial resource and the name of an object in the cluster and fetch it from the cluster using the dynamic client.
 func Get(gr schema.GroupVersionResource, dynamic dynamic.Interface, discovery discovery.DiscoveryInterface, objname, ns string, op metav1.GetOptions) (*unstructured.Unstructured, error) {
 	gvr, err := GetGroupVersionResource(gr, discovery)
 	if err != nil {

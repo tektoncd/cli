@@ -23,6 +23,7 @@ import (
 	"k8s.io/apimachinery/pkg/runtime/schema"
 )
 
+// Create is used to take a partial resource and an unstructured object and create it in the cluster using the dynamic client.
 func Create(gr schema.GroupVersionResource, clients *cli.Clients, object *unstructured.Unstructured, ns string, op metav1.CreateOptions) (*unstructured.Unstructured, error) {
 	gvr, err := GetGroupVersionResource(gr, clients.Tekton.Discovery())
 	if err != nil {

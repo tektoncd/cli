@@ -4,7 +4,9 @@ To run tests:
 
 ```shell
 # Unit tests
-go test ./...
+go test $(go list ./... | grep -v third_party/)
+# or
+make test-unit
 
 # Integration tests (against your current kube cluster)
 go test -v -count=1 -tags=e2e ./test/...
@@ -15,7 +17,9 @@ go test -v -count=1 -tags=e2e ./test/...
 Unit tests live side by side with the code they are testing and can be run with:
 
 ```shell
-go test ./...
+go test $(go list ./... | grep -v third_party/)
+# or
+make test-unit
 ```
 
 By default `go test` will not run [the end to end tests](#end-to-end-tests),

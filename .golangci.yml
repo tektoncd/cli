@@ -1,4 +1,5 @@
 run:
+  issues-exit-code: 1
   build-tags:
     - e2e
   skip-dirs:
@@ -13,6 +14,6 @@ linters:
   - goimports
   - gosec
   - gocritic
-  - golint
+  - revive
   - misspell
   - deadcode

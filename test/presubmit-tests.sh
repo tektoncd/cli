@@ -114,7 +114,7 @@ function build_tests() {
   # For documentation PRs, just check the md files
   (( IS_DOCUMENTATION_PR )) && return ${failed}
   # Skip build test if there is no go code
-  local go_pkg_dirs="$(go list ./...)"
+  local go_pkg_dirs="$(go list ./... |grep -v third_party/)"
   [[ -z "${go_pkg_dirs}" ]] && return ${failed}
   # Ensure all the code builds
   subheader "Checking that go code builds"

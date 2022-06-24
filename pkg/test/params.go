@@ -27,14 +27,14 @@ import (
 )
 
 type Params struct {
-	ns, kConfig, kContext string
-	Tekton                versioned.Interface
-	Resource              versionedResource.Interface
-	Triggers              versionedTriggers.Interface
-	Kube                  k8s.Interface
-	Clock                 clockwork.Clock
-	Cls                   *cli.Clients
-	Dynamic               dynamic.Interface
+	ns, kubeCfg, kubeCtx string
+	Tekton               versioned.Interface
+	Resource             versionedResource.Interface
+	Triggers             versionedTriggers.Interface
+	Kube                 k8s.Interface
+	Clock                clockwork.Clock
+	Cls                  *cli.Clients
+	Dynamic              dynamic.Interface
 }
 
 var _ cli.Params = &Params{}
@@ -50,15 +50,15 @@ func (p *Params) SetNoColour(b bool) {
 }
 
 func (p *Params) SetKubeConfigPath(path string) {
-	p.kConfig = path
+	p.kubeCfg = path
 }
 
 func (p *Params) SetKubeContext(context string) {
-	p.kContext = context
+	p.kubeCtx = context
 }
 
 func (p *Params) KubeConfigPath() string {
-	return p.kConfig
+	return p.kubeCfg
 }
 
 func (p *Params) tektonClient() (versioned.Interface, error) {

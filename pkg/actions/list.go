@@ -27,6 +27,7 @@ import (
 	"k8s.io/client-go/dynamic"
 )
 
+// PrintObjects takes a partial resource, fetches a list of that resource's objects in the cluster using the dynamic client, and prints out the objects.
 func PrintObjects(groupResource schema.GroupVersionResource, w io.Writer, dynamic dynamic.Interface, discovery discovery.DiscoveryInterface, f *cliopts.PrintFlags, ns string) error {
 	allres, err := List(groupResource, dynamic, discovery, ns, metav1.ListOptions{})
 	if err != nil {
@@ -36,6 +37,7 @@ func PrintObjects(groupResource schema.GroupVersionResource, w io.Writer, dynami
 	return printer.PrintObject(w, allres, f)
 }
 
+// List takes a partial resource and fetches a list of that resource's objects in the cluster using the dynamic client.
 func List(gr schema.GroupVersionResource, dynamic dynamic.Interface, discovery discovery.DiscoveryInterface, ns string, op metav1.ListOptions) (*unstructured.UnstructuredList, error) {
 	gvr, err := GetGroupVersionResource(gr, discovery)
 	if err != nil {
