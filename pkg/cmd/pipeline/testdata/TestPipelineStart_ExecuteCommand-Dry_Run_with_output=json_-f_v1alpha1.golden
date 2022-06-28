@@ -80,6 +80,18 @@
 						}
 					]
 				}
+			],
+			"params": [
+				{
+					"name": "pipeline-param",
+					"type": "string",
+					"default": "foo"
+				},
+				{
+					"name": "rev-param",
+					"type": "string",
+					"default": "bar"
+				}
 			]
 		},
 		"resources": [
