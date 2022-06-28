@@ -17,6 +17,13 @@ kind: Pipeline
 metadata:
   name: test-pipeline
 spec:
+  params:
+    - name: pipeline-param
+      type: string
+      default: "foo"
+    - name: rev-param
+      type: string
+      default: "bar"
   resources:
     - name: source-repo
       type: git

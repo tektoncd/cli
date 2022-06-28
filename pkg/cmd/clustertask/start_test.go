@@ -223,6 +223,12 @@ func Test_ClusterTask_Start(t *testing.T) {
 							},
 						},
 					},
+					Params: []v1alpha1.ParamSpec{
+						{
+							Name: "myarg",
+							Type: v1alpha1.ParamTypeString,
+						},
+					},
 					Steps: []v1alpha1.Step{
 						{
 							Container: corev1.Container{
