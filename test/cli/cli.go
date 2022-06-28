@@ -25,7 +25,7 @@ import (
 
 	"github.com/Netflix/go-expect"
 	goexpect "github.com/Netflix/go-expect"
-	"github.com/hinshun/vt10x"
+	"github.com/tektoncd/cli/test/helper"
 	"gotest.tools/v3/assert"
 	"gotest.tools/v3/icmd"
 )
@@ -113,7 +113,7 @@ func (e TknRunner) RunInteractiveTests(t *testing.T, ops *Prompt) *expect.Consol
 
 	// Multiplex output to a buffer as well for the raw bytes.
 	buf := new(bytes.Buffer)
-	c, state, err := vt10x.NewVT10XConsole(goexpect.WithStdout(buf))
+	c, state, err := helper.NewVT10XConsole(goexpect.WithStdout(buf))
 	assert.NilError(t, err)
 	defer c.Close()
 

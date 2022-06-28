@@ -21,7 +21,7 @@ import (
 	"github.com/AlecAivazis/survey/v2"
 	"github.com/AlecAivazis/survey/v2/terminal"
 	goexpect "github.com/Netflix/go-expect"
-	"github.com/hinshun/vt10x"
+	"github.com/tektoncd/cli/test/helper"
 	"gotest.tools/v3/assert"
 )
 
@@ -36,7 +36,7 @@ type Prompt struct {
 func (pt *Prompt) RunTest(t *testing.T, procedure func(*goexpect.Console) error, test func(terminal.Stdio) error) {
 	// Multiplex output to a buffer as well for the raw bytes.
 	buf := new(bytes.Buffer)
-	c, state, err := vt10x.NewVT10XConsole(goexpect.WithStdout(buf))
+	c, state, err := helper.NewVT10XConsole(goexpect.WithStdout(buf))
 	assert.NilError(t, err)
 	defer c.Close()
 

@@ -1,4 +1,3 @@
-//go:build darwin || nacl || netbsd || plan9 || windows
 // +build darwin nacl netbsd plan9 windows
 
 package mlock

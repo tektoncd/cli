@@ -24,7 +24,10 @@ import (
 	"testing"
 	"text/template"
 
+	"github.com/Netflix/go-expect"
+	"github.com/creack/pty"
 	"github.com/google/go-cmp/cmp"
+	"github.com/hinshun/vt10x"
 	gotestcmp "gotest.tools/assert/cmp"
 )
 
@@ -91,4 +94,22 @@ func ContainsAll(target string, substrings ...string) gotestcmp.Comparison {
 		}
 		return gotestcmp.ResultSuccess
 	}
+}
+
+// NewVT10XConsole returns a new expect.Console that multiplexes the
+// Stdin/Stdout to a VT10X terminal, allowing Console to interact with an
+// application sending ANSI escape sequences.
+func NewVT10XConsole(opts ...expect.ConsoleOpt) (*expect.Console, vt10x.Terminal, error) {
+	ptm, pts, err := pty.Open()
+	if err != nil {
+		return nil, nil, err
+	}
+
+	term := vt10x.New(vt10x.WithWriter(pts))
+	c, err := expect.NewConsole(append(opts, expect.WithStdin(ptm), expect.WithStdout(term), expect.WithCloser(ptm, pts))...)
+	if err != nil {
+		return nil, nil, err
+	}
+
+	return c, term, nil
 }
