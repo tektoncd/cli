@@ -3,8 +3,8 @@ module github.com/tektoncd/cli
 go 1.17
 
 require (
-	github.com/AlecAivazis/survey/v2 v2.3.2
-	github.com/Netflix/go-expect v0.0.0-20200312175327-da48e75238e2
+	github.com/AlecAivazis/survey/v2 v2.3.5
+	github.com/Netflix/go-expect v0.0.0-20220104043353-73e0943537d2
 	github.com/armon/go-metrics v0.4.0
 	github.com/armon/go-radix v1.0.0
 	github.com/blang/semver v3.5.1+incompatible
@@ -38,7 +38,7 @@ require (
 	github.com/hashicorp/hcl v1.0.0
 	github.com/hashicorp/vault/sdk v0.5.2
 	github.com/hashicorp/yamux v0.0.0-20211028200310-0bc27b27de87
-	github.com/hinshun/vt10x v0.0.0-20180809195222-d55458df857c
+	github.com/hinshun/vt10x v0.0.0-20220228203356-1ab2cad5fd82
 	github.com/jonboulle/clockwork v0.3.0
 	github.com/ktr0731/go-fuzzyfinder v0.6.0
 	github.com/mitchellh/copystructure v1.2.0
@@ -81,6 +81,7 @@ require (
 )
 
 require (
+	github.com/creack/pty v1.1.17
 	github.com/letsencrypt/boulder v0.0.0-20220331220046-b23ab962616e
 	github.com/titanous/rocacheck v0.0.0-20171023193734-afe73141d399
 )
@@ -231,7 +232,6 @@ require (
 	github.com/kballard/go-shellquote v0.0.0-20180428030007-95032a82bc51 // indirect
 	github.com/kelseyhightower/envconfig v1.4.0 // indirect
 	github.com/klauspost/compress v1.15.1 // indirect
-	github.com/kr/pty v1.1.8 // indirect
 	github.com/leodido/go-urn v1.2.1 // indirect
 	github.com/liggitt/tabwriter v0.0.0-20181228230101-89fcab3d43de // indirect
 	github.com/lucasb-eyer/go-colorful v1.0.3 // indirect
