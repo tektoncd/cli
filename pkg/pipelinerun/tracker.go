@@ -93,7 +93,14 @@ func (t *Tracker) Monitor(allowed []string) <-chan []trh.Run {
 			if !ok || pr == nil {
 				return
 			}
+
+			trMap, runMap, err := getFullPipelineTaskStatuses(context.Background(), t.Tekton, t.Ns, pr)
+			if err != nil {
+				return
+			}
 			pr.DeepCopyInto(&pipelinerunConverted)
+			pipelinerunConverted.Status.TaskRuns = trMap
+			pipelinerunConverted.Status.Runs = runMap
 		}
 
 		trC <- t.findNewTaskruns(&pipelinerunConverted, allowed)

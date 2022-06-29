@@ -1,4 +1,4 @@
-module github.com/tektoncd/pipeline/tools
+module github.com/tektoncd/cli/tools
 
 go 1.17
 

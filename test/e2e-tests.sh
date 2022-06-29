@@ -38,6 +38,12 @@ tkn() {
     fi
 }
 
+function set_minimal_embedded_status() {
+  jsonpatch=$(printf "{\"data\": {\"embedded-status\": \"%s\"}}" "minimal")
+  echo "feature-flags ConfigMap patch: ${jsonpatch}"
+  kubectl patch configmap feature-flags -n tekton-pipelines -p "$jsonpatch"
+}
+
 kubectl get crds|grep tekton\\.dev && fail_test "TektonCD CRDS should not be installed, you should reset them before each runs"
 
 # command before creation of resources
@@ -170,6 +176,15 @@ else
     export TEST_CLIENT_BINARY="${PWD}/tkn"
 fi
 go_test_e2e ./test/e2e/... || failed=1
+(( failed )) && fail_test
+
+# Re-run the PipelineRun tests with "embedded-status" set to "minimal"
+header "Running Go e2e tests with Pipeline embedded-status set to minimal"
+
+set_minimal_embedded_status
+failed=0
+
+go_test_e2e ./test/e2e/pipelinerun/... || failed=1
 (( failed )) && fail_test
 
 success
