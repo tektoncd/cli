@@ -15,9 +15,11 @@
 package pipelinerun
 
 import (
+	"fmt"
 	"testing"
 	"time"
 
+	"github.com/google/go-cmp/cmp"
 	"github.com/jonboulle/clockwork"
 	"github.com/tektoncd/cli/pkg/test"
 	cb "github.com/tektoncd/cli/pkg/test/builder"
@@ -25,9 +27,12 @@ import (
 	"github.com/tektoncd/pipeline/pkg/apis/pipeline/v1alpha1"
 	"github.com/tektoncd/pipeline/pkg/apis/pipeline/v1beta1"
 	pipelinev1beta1test "github.com/tektoncd/pipeline/test"
+	"github.com/tektoncd/pipeline/test/diff"
+	"github.com/tektoncd/pipeline/test/parse"
 	pipelinetest "github.com/tektoncd/pipeline/test/v1alpha1"
 	corev1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+	"knative.dev/pkg/apis"
 	duckv1beta1 "knative.dev/pkg/apis/duck/v1beta1"
 )
 
@@ -38,6 +43,7 @@ func TestPipelineRunsList_with_single_run(t *testing.T) {
 	runDuration := 1 * time.Minute
 
 	prdata := []*v1alpha1.PipelineRun{
+
 		{
 			ObjectMeta: metav1.ObjectMeta{
 				Name:      "pipelinerun",
@@ -457,6 +463,376 @@ func TestPipelineRunGet_v1beta1(t *testing.T) {
 		t.Errorf("unexpected Error")
 	}
 	test.AssertOutput(t, "pipelinerun1", got.Name)
+}
+
+func TestPipelineRunGet_MinimalEmbeddedStatus(t *testing.T) {
+	version := "v1beta1"
+	clock := clockwork.NewFakeClock()
+	pr1Started := clock.Now().Add(10 * time.Second)
+	runDuration := 1 * time.Minute
+
+	prdata := []*v1beta1.PipelineRun{
+		parse.MustParsePipelineRun(t, fmt.Sprintf(`
+metadata:
+  name: pipelinerun1
+  namespace: ns
+  labels:
+    tekton.dev/pipeline: pipeline
+spec:
+  pipelineRef:
+    name: pipeline
+status:
+  conditions:
+  - lastTransitionTime: null
+    message: All Tasks have completed executing
+    reason: Succeeded
+    status: "True"
+    type: Succeeded
+  startTime: %s
+  completionTime: %s
+  childReferences:
+  - apiVersion: tekton.dev/v1beta1
+    kind: TaskRun
+    name: task-run-1
+    pipelineTaskName: tr1
+  - apiVersion: tekton.dev/v1beta1
+    kind: TaskRun
+    name: task-run-2
+    pipelineTaskName: tr2
+  - apiVersion: tekton.dev/v1alpha1
+    kind: Run
+    name: run-1
+    pipelineTaskName: r1
+  - apiVersion: tekton.dev/v1alpha1
+    kind: Run
+    name: run-2
+    pipelineTaskName: r2
+`, pr1Started.Format(time.RFC3339), pr1Started.Add(runDuration).Format(time.RFC3339))),
+		parse.MustParsePipelineRun(t, fmt.Sprintf(`
+metadata:
+  name: pipelinerun2
+  namespace: ns
+  labels:
+    tekton.dev/pipeline: pipeline
+spec:
+  pipelineRef:
+    name: pipeline
+status:
+  conditions:
+  - lastTransitionTime: null
+    message: All Tasks have completed executing
+    reason: Succeeded
+    status: "True"
+    type: Succeeded
+  startTime: %s
+  completionTime: %s
+  taskRuns:
+    task-run-1:
+      pipelineTaskName: tr1
+      status:
+        conditions:
+        - reason: Succeeded
+          status: "True"
+          type: Succeeded
+    task-run-2:
+      pipelineTaskName: tr2
+      status:
+        conditions:
+        - reason: Failed
+          status: "False"
+          type: Succeeded
+  runs:
+    run-1:
+      pipelineTaskName: r1
+      status:
+        conditions:
+        - reason: Succeeded
+          status: "True"
+          type: Succeeded
+    run-2:
+      pipelineTaskName: r2
+      status:
+        conditions:
+        - reason: Failed
+          status: "False"
+          type: Succeeded
+`, pr1Started.Format(time.RFC3339), pr1Started.Add(runDuration).Format(time.RFC3339))),
+	}
+
+	trData := []*v1beta1.TaskRun{
+		parse.MustParseTaskRun(t, `
+metadata:
+  name: task-run-1
+  namespace: ns
+spec:
+  taskRef:
+    name: someTask
+status:
+  conditions:
+  - reason: Succeeded
+    status: "True"
+    type: Succeeded
+`),
+		parse.MustParseTaskRun(t, `
+metadata:
+  name: task-run-2
+  namespace: ns
+spec:
+  taskRef:
+    name: someTask
+status:
+  conditions:
+  - reason: Failed
+    status: "False"
+    type: Succeeded
+`),
+	}
+
+	runsData := []*v1alpha1.Run{
+		parse.MustParseRun(t, `
+metadata:
+  name: run-1
+  namespace: ns
+spec:
+  ref:
+    name: someCustomTask
+status:
+  conditions:
+  - reason: Succeeded
+    status: "True"
+    type: Succeeded
+`),
+		parse.MustParseRun(t, `
+metadata:
+  name: run-2
+  namespace: ns
+spec:
+  ref:
+    name: someCustomTask
+status:
+  conditions:
+  - reason: Failed
+    status: "False"
+    type: Succeeded
+`),
+	}
+
+	cs, _ := test.SeedV1beta1TestData(t, pipelinev1beta1test.Data{
+		PipelineRuns: prdata,
+		TaskRuns:     trData,
+		Runs:         runsData,
+	})
+
+	cs.Pipeline.Resources = cb.APIResourceList(version, []string{"pipelinerun"})
+	tdc := testDynamic.Options{}
+	dc, err := tdc.Client(
+		cb.UnstructuredV1beta1PR(prdata[0], version),
+		cb.UnstructuredV1beta1PR(prdata[1], version),
+	)
+	if err != nil {
+		t.Errorf("unable to create dynamic client: %v", err)
+	}
+
+	p := &test.Params{Tekton: cs.Pipeline, Clock: clock, Kube: cs.Kube, Dynamic: dc}
+	c, err := p.Clients()
+	if err != nil {
+		t.Errorf("unable to create client: %v", err)
+	}
+
+	got, err := Get(c, "pipelinerun1", metav1.GetOptions{}, "ns")
+	if err != nil {
+		t.Errorf("unexpected Error")
+	}
+	test.AssertOutput(t, "pipelinerun1", got.Name)
+
+	tr1 := got.Status.TaskRuns[trData[0].Name]
+	if tr1 == nil {
+		t.Fatalf("TaskRun status map does not contain expected TaskRun %s", trData[0].Name)
+	}
+	test.AssertOutput(t, string(v1beta1.TaskRunReasonSuccessful), tr1.Status.GetCondition(apis.ConditionSucceeded).Reason)
+	tr2 := got.Status.TaskRuns[trData[1].Name]
+	if tr2 == nil {
+		t.Fatalf("TaskRun status map does not contain expected TaskRun %s", trData[1].Name)
+	}
+	test.AssertOutput(t, string(v1beta1.TaskRunReasonFailed), tr2.Status.GetCondition(apis.ConditionSucceeded).Reason)
+
+	r1 := got.Status.Runs[runsData[0].Name]
+	if r1 == nil {
+		t.Fatalf("Run status map does not contain expected Run %s", runsData[0].Name)
+	}
+	test.AssertOutput(t, "Succeeded", r1.Status.GetCondition(apis.ConditionSucceeded).Reason)
+	r2 := got.Status.Runs[runsData[1].Name]
+	if r2 == nil {
+		t.Fatalf("Run status map does not contain expected Run %s", runsData[1].Name)
+	}
+	test.AssertOutput(t, "Failed", r2.Status.GetCondition(apis.ConditionSucceeded).Reason)
+
+	gotFull, err := Get(c, "pipelinerun2", metav1.GetOptions{}, "ns")
+	if err != nil {
+		t.Errorf("unexpected Error")
+	}
+
+	if d := cmp.Diff(got.Status.TaskRuns, gotFull.Status.TaskRuns); d != "" {
+		t.Errorf("mismatch between minimal and full TaskRun statuses: %s", diff.PrintWantGot(d))
+	}
+	if d := cmp.Diff(got.Status.Runs, gotFull.Status.Runs); d != "" {
+		t.Errorf("mismatch between minimal and full Run statuses: %s", diff.PrintWantGot(d))
+	}
+}
+
+func TestPipelineRunList_MinimalEmbeddedStatus(t *testing.T) {
+	version := "v1beta1"
+	clock := clockwork.NewFakeClock()
+	pr1Started := clock.Now().Add(10 * time.Second)
+	runDuration := 1 * time.Minute
+
+	prdata := []*v1beta1.PipelineRun{parse.MustParsePipelineRun(t, fmt.Sprintf(`
+metadata:
+  name: pipelinerun1
+  namespace: ns
+  labels:
+    tekton.dev/pipeline: pipeline
+spec:
+  pipelineRef:
+    name: pipeline
+status:
+  conditions:
+  - lastTransitionTime: null
+    message: All Tasks have completed executing
+    reason: Succeeded
+    status: "True"
+    type: Succeeded
+  startTime: %s
+  completionTime: %s
+  childReferences:
+  - apiVersion: tekton.dev/v1beta1
+    kind: TaskRun
+    name: task-run-1
+    pipelineTaskName: tr1
+  - apiVersion: tekton.dev/v1beta1
+    kind: TaskRun
+    name: task-run-2
+    pipelineTaskName: tr2
+  - apiVersion: tekton.dev/v1alpha1
+    kind: Run
+    name: run-1
+    pipelineTaskName: r1
+  - apiVersion: tekton.dev/v1alpha1
+    kind: Run
+    name: run-2
+    pipelineTaskName: r2
+`, pr1Started.Format(time.RFC3339), pr1Started.Add(runDuration).Format(time.RFC3339))),
+	}
+
+	trData := []*v1beta1.TaskRun{
+		parse.MustParseTaskRun(t, `
+metadata:
+  name: task-run-1
+  namespace: ns
+spec:
+  taskRef:
+    name: someTask
+status:
+  conditions:
+  - reason: Succeeded
+    status: "True"
+    type: Succeeded
+`),
+		parse.MustParseTaskRun(t, `
+metadata:
+  name: task-run-2
+  namespace: ns
+spec:
+  taskRef:
+    name: someTask
+status:
+  conditions:
+  - reason: Failed
+    status: "False"
+    type: Succeeded
+`),
+	}
+
+	runsData := []*v1alpha1.Run{
+		parse.MustParseRun(t, `
+metadata:
+  name: run-1
+  namespace: ns
+spec:
+  ref:
+    name: someCustomTask
+status:
+  conditions:
+  - reason: Succeeded
+    status: "True"
+    type: Succeeded
+`),
+		parse.MustParseRun(t, `
+metadata:
+  name: run-2
+  namespace: ns
+spec:
+  ref:
+    name: someCustomTask
+status:
+  conditions:
+  - reason: Failed
+    status: "False"
+    type: Succeeded
+`),
+	}
+
+	cs, _ := test.SeedV1beta1TestData(t, pipelinev1beta1test.Data{
+		PipelineRuns: prdata,
+		TaskRuns:     trData,
+		Runs:         runsData,
+	})
+
+	cs.Pipeline.Resources = cb.APIResourceList(version, []string{"pipelinerun"})
+	tdc := testDynamic.Options{}
+	dc, err := tdc.Client(
+		cb.UnstructuredV1beta1PR(prdata[0], version),
+	)
+	if err != nil {
+		t.Errorf("unable to create dynamic client: %v", err)
+	}
+
+	p := &test.Params{Tekton: cs.Pipeline, Clock: clock, Kube: cs.Kube, Dynamic: dc}
+	c, err := p.Clients()
+	if err != nil {
+		t.Errorf("unable to create client: %v", err)
+	}
+
+	prList, err := List(c, metav1.ListOptions{}, "ns")
+	if err != nil {
+		t.Errorf("unexpected Error")
+	}
+	test.AssertOutput(t, 1, len(prList.Items))
+
+	got := prList.Items[0]
+	test.AssertOutput(t, "pipelinerun1", got.Name)
+
+	tr1 := got.Status.TaskRuns[trData[0].Name]
+	if tr1 == nil {
+		t.Fatalf("TaskRun status map does not contain expected TaskRun %s", trData[0].Name)
+	}
+	test.AssertOutput(t, string(v1beta1.TaskRunReasonSuccessful), tr1.Status.GetCondition(apis.ConditionSucceeded).Reason)
+	tr2 := got.Status.TaskRuns[trData[1].Name]
+	if tr2 == nil {
+		t.Fatalf("TaskRun status map does not contain expected TaskRun %s", trData[1].Name)
+	}
+	test.AssertOutput(t, string(v1beta1.TaskRunReasonFailed), tr2.Status.GetCondition(apis.ConditionSucceeded).Reason)
+
+	r1 := got.Status.Runs[runsData[0].Name]
+	if r1 == nil {
+		t.Fatalf("Run status map does not contain expected Run %s", runsData[0].Name)
+	}
+	test.AssertOutput(t, "Succeeded", r1.Status.GetCondition(apis.ConditionSucceeded).Reason)
+	r2 := got.Status.Runs[runsData[1].Name]
+	if r2 == nil {
+		t.Fatalf("Run status map does not contain expected Run %s", runsData[1].Name)
+	}
+	test.AssertOutput(t, "Failed", r2.Status.GetCondition(apis.ConditionSucceeded).Reason)
 }
 
 func TestPipelineRunCreate(t *testing.T) {

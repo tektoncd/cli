@@ -34,6 +34,7 @@ import (
 	pipelinetest "github.com/tektoncd/pipeline/test/v1alpha1"
 	corev1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/apimachinery/pkg/watch"
 	"k8s.io/client-go/dynamic"
 	"knative.dev/pkg/apis"
@@ -258,13 +259,13 @@ func TestPipelinerunLogs(t *testing.T) {
 		},
 	}
 
-	trs := []*v1alpha1.TaskRun{
+	trs := []*v1beta1.TaskRun{
 		{
 			ObjectMeta: metav1.ObjectMeta{
 				Namespace: ns,
 				Name:      tr1Name,
 			},
-			Spec: v1alpha1.TaskRunSpec{
+			Spec: v1beta1.TaskRunSpec{
 				TaskRef: &v1beta1.TaskRef{
 					Name: task1Name,
 				},
@@ -307,7 +308,7 @@ func TestPipelinerunLogs(t *testing.T) {
 				Namespace: ns,
 				Name:      tr2Name,
 			},
-			Spec: v1alpha1.TaskRunSpec{
+			Spec: v1beta1.TaskRunSpec{
 				TaskRef: &v1beta1.TaskRef{
 					Name: task2Name,
 				},
@@ -347,23 +348,36 @@ func TestPipelinerunLogs(t *testing.T) {
 		},
 	}
 
-	prs := []*v1alpha1.PipelineRun{
+	prs := []*v1beta1.PipelineRun{
 		{
 			ObjectMeta: metav1.ObjectMeta{
 				Name:      prName,
 				Namespace: ns,
 				Labels:    map[string]string{"tekton.dev/pipeline": prName},
 			},
-			Spec: v1alpha1.PipelineRunSpec{
-				PipelineRef: &v1alpha1.PipelineRef{
+			Spec: v1beta1.PipelineRunSpec{
+				PipelineRef: &v1beta1.PipelineRef{
 					Name: pipelineName,
 				},
 			},
-			Status: v1alpha1.PipelineRunStatus{
-				PipelineRunStatusFields: v1alpha1.PipelineRunStatusFields{
-					TaskRuns: map[string]*v1alpha1.PipelineRunTaskRunStatus{
-						tr1Name: {PipelineTaskName: task1Name, Status: &trs[0].Status},
-						tr2Name: {PipelineTaskName: task2Name, Status: &trs[1].Status},
+			Status: v1beta1.PipelineRunStatus{
+				PipelineRunStatusFields: v1beta1.PipelineRunStatusFields{
+					ChildReferences: []v1beta1.ChildStatusReference{
+						{
+							Name:             tr1Name,
+							PipelineTaskName: task1Name,
+							TypeMeta: runtime.TypeMeta{
+								APIVersion: "tekton.dev/v1beta1",
+								Kind:       "TaskRun",
+							},
+						}, {
+							Name:             tr2Name,
+							PipelineTaskName: task2Name,
+							TypeMeta: runtime.TypeMeta{
+								APIVersion: "tekton.dev/v1beta1",
+								Kind:       "TaskRun",
+							},
+						},
 					},
 				},
 				Status: duckv1beta1.Status{
@@ -377,23 +391,23 @@ func TestPipelinerunLogs(t *testing.T) {
 			},
 		},
 	}
-	pps := []*v1alpha1.Pipeline{
+	pps := []*v1beta1.Pipeline{
 		{
 			ObjectMeta: metav1.ObjectMeta{
 				Name:      pipelineName,
 				Namespace: ns,
 			},
-			Spec: v1alpha1.PipelineSpec{
-				Tasks: []v1alpha1.PipelineTask{
+			Spec: v1beta1.PipelineSpec{
+				Tasks: []v1beta1.PipelineTask{
 					{
 						Name: task1Name,
-						TaskRef: &v1alpha1.TaskRef{
+						TaskRef: &v1beta1.TaskRef{
 							Name: task1Name,
 						},
 					},
 					{
 						Name: task2Name,
-						TaskRef: &v1alpha1.TaskRef{
+						TaskRef: &v1beta1.TaskRef{
 							Name: task2Name,
 						},
 					},
@@ -532,19 +546,19 @@ func TestPipelinerunLogs(t *testing.T) {
 
 	for _, s := range scenarios {
 		t.Run(s.name, func(t *testing.T) {
-			cs, _ := test.SeedTestData(t, pipelinetest.Data{PipelineRuns: prs, Pipelines: pps, TaskRuns: trs, Pods: p, Namespaces: nsList})
+			cs, _ := test.SeedV1beta1TestData(t, pipelinev1beta1test.Data{PipelineRuns: prs, Pipelines: pps, TaskRuns: trs, Pods: p, Namespaces: nsList})
 			cs.Pipeline.Resources = cb.APIResourceList(versionA1, []string{"task", "taskrun", "pipeline", "pipelinerun"})
 			tdc := testDynamic.Options{}
 			dc, err := tdc.Client(
-				cb.UnstructuredP(pps[0], versionA1),
-				cb.UnstructuredPR(prs[0], versionA1),
-				cb.UnstructuredTR(trs[0], versionA1),
-				cb.UnstructuredTR(trs[1], versionA1),
+				cb.UnstructuredV1beta1P(pps[0], versionA1),
+				cb.UnstructuredV1beta1PR(prs[0], versionA1),
+				cb.UnstructuredV1beta1TR(trs[0], versionA1),
+				cb.UnstructuredV1beta1TR(trs[1], versionA1),
 			)
 			if err != nil {
 				t.Errorf("unable to create dynamic client: %v", err)
 			}
-			prlo := logOptsv1aplha1(prName, ns, cs, dc, fake.Streamer(fakeLogs), s.allSteps, false, s.prefixing, s.tasks...)
+			prlo := logOptsv1beta1(prName, ns, cs, dc, fake.Streamer(fakeLogs), s.allSteps, false, s.prefixing, s.tasks...)
 			output, _ := fetchLogs(prlo)
 
 			expected := strings.Join(s.expectedLogs, "\n") + "\n"

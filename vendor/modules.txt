@@ -1419,6 +1419,8 @@ github.com/tektoncd/pipeline/pkg/remote
 github.com/tektoncd/pipeline/pkg/remote/oci
 github.com/tektoncd/pipeline/pkg/substitution
 github.com/tektoncd/pipeline/test
+github.com/tektoncd/pipeline/test/diff
+github.com/tektoncd/pipeline/test/parse
 github.com/tektoncd/pipeline/test/v1alpha1
 # github.com/tektoncd/plumbing v0.0.0-20220329085922-d765a5cba75f
 ## explicit; go 1.13
