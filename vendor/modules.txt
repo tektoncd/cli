@@ -2164,7 +2164,7 @@ gotest.tools/assert/cmp
 gotest.tools/internal/difflib
 gotest.tools/internal/format
 gotest.tools/internal/source
-# gotest.tools/v3 v3.2.0
+# gotest.tools/v3 v3.3.0
 ## explicit; go 1.13
 gotest.tools/v3/assert
 gotest.tools/v3/assert/cmp
