@@ -27,3 +27,6 @@ override_dh_auto_install:
 	dh_auto_install -O--buildsystem=golang
 	install -D -m644 debian/tkn.zsh-completion debian/tektoncd-cli/usr/share/zsh/vendor-completions/_tkn
 	install -D -m644 debian/tkn.zsh-completion debian/tektoncd-cli/usr/share/bash-completion/completions/tkn
+
+override_dh_builddeb:
+	dh_builddeb -- -Zgzip
