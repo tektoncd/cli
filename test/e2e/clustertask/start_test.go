@@ -56,7 +56,7 @@ func TestClusterTaskInteractiveStartE2E(t *testing.T) {
 	// Set environment variable TEST_CLUSTERTASK_LIST_EMPTY to any value to skip "No ClusterTasks found" test
 	if os.Getenv("TEST_CLUSTERTASK_LIST_EMPTY") == "" {
 		t.Run("Get list of ClusterTasks when none present", func(t *testing.T) {
-			res := tkn.Run("clustertask", "list")
+			res := tkn.Run(t, "clustertask", "list")
 			expected := "No ClusterTasks found\n"
 			res.Assert(t, icmd.Expected{
 				ExitCode: 0,
@@ -74,7 +74,7 @@ func TestClusterTaskInteractiveStartE2E(t *testing.T) {
 	kubectl.MustSucceed(t, "create", "-f", helper.GetResourcePath("git-resource.yaml"))
 
 	t.Run("Get list of ClusterTasks", func(t *testing.T) {
-		res := tkn.Run("clustertask", "list")
+		res := tkn.Run(t, "clustertask", "list")
 		if os.Getenv("TEST_CLUSTERTASK_LIST_EMPTY") == "" {
 			expected := builder.ListAllClusterTasksOutput(t, c, map[int]interface{}{
 				0: &builder.TaskData{
@@ -241,7 +241,7 @@ Waiting for logs to be available...
 	})
 
 	t.Run("Start ClusterTask with --pod-template", func(t *testing.T) {
-		if tkn.CheckVersion("Pipeline", "v0.10.2") {
+		if tkn.CheckVersion(t, "Pipeline", "v0.10.2") {
 			t.Skip("Skip test as pipeline v0.10 doesn't support certain PodTemplate properties")
 		}
 
@@ -389,7 +389,7 @@ Waiting for logs to be available...
 		})
 
 		// Check if clustertask %s got deleted
-		res = tkn.Run("clustertask", "list")
+		res = tkn.Run(t, "clustertask", "list")
 		assert.Assert(t, !strings.Contains(res.Stdout(), clusterTaskName))
 	})
 
@@ -403,7 +403,7 @@ Waiting for logs to be available...
 		})
 
 		// Check if clustertask %s got deleted
-		res = tkn.Run("clustertask", "list")
+		res = tkn.Run(t, "clustertask", "list")
 		assert.Assert(t, !strings.Contains(res.Stdout(), clusterTaskName2))
 	})
 }

@@ -72,7 +72,8 @@ func NewTknRunner(namespace string) (TknRunner, error) {
 }
 
 // Run will help you execute tkn command on a specific namespace, with a timeout
-func (e TknRunner) Run(args ...string) *icmd.Result {
+func (e TknRunner) Run(t *testing.T, args ...string) *icmd.Result {
+	t.Helper()
 	if e.namespace != "" {
 		args = append(args, "--namespace", e.namespace)
 	}
@@ -82,24 +83,28 @@ func (e TknRunner) Run(args ...string) *icmd.Result {
 
 // MustSucceed asserts that the command ran with 0 exit code
 func (e TknRunner) MustSucceed(t *testing.T, args ...string) *icmd.Result {
+	t.Helper()
 	return e.Assert(t, icmd.Success, args...)
 }
 
 // Assert runs a command and verifies exit code (0)
 func (e TknRunner) Assert(t *testing.T, exp icmd.Expected, args ...string) *icmd.Result {
-	res := e.Run(args...)
+	t.Helper()
+	res := e.Run(t, args...)
 	res.Assert(t, exp)
 	return res
 }
 
 // RunNoNamespace will help you execute tkn command without namespace, with a timeout
-func (e TknRunner) RunNoNamespace(args ...string) *icmd.Result {
+func (e TknRunner) RunNoNamespace(t *testing.T, args ...string) *icmd.Result {
+	t.Helper()
 	cmd := append([]string{e.path}, args...)
 	return icmd.RunCmd(icmd.Cmd{Command: cmd, Timeout: timeout})
 }
 
 // RunWithOption will help you execute tkn command with namespace, cmd option
-func (e TknRunner) RunWithOption(option icmd.CmdOp, args ...string) *icmd.Result {
+func (e TknRunner) RunWithOption(t *testing.T, option icmd.CmdOp, args ...string) *icmd.Result {
+	t.Helper()
 	if e.namespace != "" {
 		args = append(args, "--namespace", e.namespace)
 	}
@@ -161,7 +166,8 @@ func NewKubectl(namespace string) Kubectl {
 }
 
 // Run will help you execute kubectl command on a specific namespace, with a timeout
-func (k Kubectl) Run(args ...string) *icmd.Result {
+func (k Kubectl) Run(t *testing.T, args ...string) *icmd.Result {
+	t.Helper()
 	if k.namespace != "" {
 		args = append(args, "--namespace", k.namespace)
 	}
@@ -170,19 +176,22 @@ func (k Kubectl) Run(args ...string) *icmd.Result {
 }
 
 // RunNoNamespace will help you execute kubectl command without namespace, with a timeout
-func (k Kubectl) RunNoNamespace(args ...string) *icmd.Result {
+func (k Kubectl) RunNoNamespace(t *testing.T, args ...string) *icmd.Result {
+	t.Helper()
 	cmd := append([]string{"kubectl"}, args...)
 	return icmd.RunCmd(icmd.Cmd{Command: cmd, Timeout: timeout})
 }
 
 // MustSucceed asserts that the command ran with 0 exit code
 func (k Kubectl) MustSucceed(t *testing.T, args ...string) *icmd.Result {
+	t.Helper()
 	return k.Assert(t, icmd.Success, args...)
 }
 
 // Assert runs a command and verifies against expected
 func (k Kubectl) Assert(t *testing.T, exp icmd.Expected, args ...string) *icmd.Result {
-	res := k.Run(args...)
+	t.Helper()
+	res := k.Run(t, args...)
 	res.Assert(t, exp)
 	time.Sleep(1 * time.Second)
 	return res
@@ -190,7 +199,8 @@ func (k Kubectl) Assert(t *testing.T, exp icmd.Expected, args ...string) *icmd.R
 
 // TODO: Re-write this to just get the version of Tekton components through tkn version
 // as described in https://github.com/tektoncd/cli/issues/1067
-func (e TknRunner) CheckVersion(component string, version string) bool {
+func (e TknRunner) CheckVersion(t *testing.T, component string, version string) bool {
+	t.Helper()
 	cmd := append([]string{e.path}, "version")
 	result := icmd.RunCmd(icmd.Cmd{Command: cmd, Timeout: timeout})
 

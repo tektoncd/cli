@@ -50,13 +50,13 @@ func TestTknPlugin(t *testing.T) {
 		tkn.MustSucceed(t, "success", "with", "args")
 	})
 	t.Run("Failure", func(t *testing.T) {
-		tkn.Run("failure").Assert(t, icmd.Expected{
+		tkn.Run(t, "failure").Assert(t, icmd.Expected{
 			ExitCode: 12,
 		})
-		tkn.Run("failure", "with", "args").Assert(t, icmd.Expected{
+		tkn.Run(t, "failure", "with", "args").Assert(t, icmd.Expected{
 			ExitCode: 12,
 		})
-		tkn.Run("failure", "exit20").Assert(t, icmd.Expected{
+		tkn.Run(t, "failure", "exit20").Assert(t, icmd.Expected{
 			ExitCode: 20,
 		})
 	})

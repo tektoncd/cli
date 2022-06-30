@@ -19,19 +19,20 @@ package pipeline
 
 import (
 	"context"
+	"os"
 	"testing"
 
 	"github.com/tektoncd/cli/test/cli"
 	"github.com/tektoncd/cli/test/framework"
 	"github.com/tektoncd/cli/test/helper"
 	"gotest.tools/assert"
+	corev1 "k8s.io/api/core/v1"
 	rbacv1 "k8s.io/api/rbac/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	knativetest "knative.dev/pkg/test"
 )
 
 func TestEventListenerE2E(t *testing.T) {
-	t.Parallel()
 	c, namespace := framework.Setup(t)
 	knativetest.CleanupOnInterrupt(func() { framework.TearDown(t, c, namespace) }, t.Logf)
 	defer cleanupResources(t, c, namespace)
@@ -42,8 +43,8 @@ func TestEventListenerE2E(t *testing.T) {
 	elName := "github-listener-interceptor"
 
 	t.Logf("Creating EventListener %s in namespace %s", elName, namespace)
-	kubectl.MustSucceed(t, "create", "-f", helper.GetResourcePath("eventlistener/eventlistener.yaml"))
 	createResources(t, c, namespace)
+	kubectl.MustSucceed(t, "create", "-f", helper.GetResourcePath("eventlistener/eventlistener.yaml"))
 	// Wait for pods to become available for next test
 	kubectl.MustSucceed(t, "wait", "--for=condition=Ready", "pod", "-n", namespace, "--timeout=2m", "--all")
 
@@ -104,8 +105,8 @@ func TestEventListener_v1beta1E2E(t *testing.T) {
 	elName := "github-listener-interceptor"
 
 	t.Logf("Creating EventListener %s in namespace %s", elName, namespace)
-	kubectl.MustSucceed(t, "create", "-f", helper.GetResourcePath("eventlistener/eventlistener_v1beta1.yaml"))
 	createResources(t, c, namespace)
+	kubectl.MustSucceed(t, "create", "-f", helper.GetResourcePath("eventlistener/eventlistener_v1beta1.yaml"))
 	// Wait for pods to become available for next test
 	kubectl.MustSucceed(t, "wait", "--for=condition=Ready", "pod", "-n", namespace, "--timeout=2m", "--all")
 
@@ -157,8 +158,32 @@ func TestEventListener_v1beta1E2E(t *testing.T) {
 
 func createResources(t *testing.T, c *framework.Clients, namespace string) {
 	t.Helper()
+
+	// Create SA and secret
+	_, err := c.KubeClient.CoreV1().Secrets(namespace).Create(context.Background(),
+		&corev1.Secret{
+			ObjectMeta: metav1.ObjectMeta{Name: "github-secret"},
+			Type:       corev1.SecretTypeOpaque,
+			StringData: map[string]string{"secretToken": "1234567"},
+		}, metav1.CreateOptions{})
+	if err != nil {
+		t.Fatalf("Error creating secret: %s", err)
+	}
+
+	_, err = c.KubeClient.CoreV1().ServiceAccounts(namespace).Create(context.Background(),
+		&corev1.ServiceAccount{
+			ObjectMeta: metav1.ObjectMeta{Name: "tekton-triggers-github-sa"},
+			Secrets: []corev1.ObjectReference{{
+				Namespace: namespace,
+				Name:      "github-secret",
+			}},
+		}, metav1.CreateOptions{})
+	if err != nil {
+		t.Fatalf("Error creating SA: %s", err)
+	}
+
 	// Create ClusterRole required by triggers
-	_, err := c.KubeClient.RbacV1().ClusterRoles().Create(context.Background(),
+	_, err = c.KubeClient.RbacV1().ClusterRoles().Create(context.Background(),
 		&rbacv1.ClusterRole{
 			ObjectMeta: metav1.ObjectMeta{Name: "sa-clusterrole"},
 			Rules: []rbacv1.PolicyRule{{
@@ -195,12 +220,14 @@ func cleanupResources(t *testing.T, c *framework.Clients, namespace string) {
 	t.Helper()
 	framework.TearDown(t, c, namespace)
 
-	// Cleanup cluster-scoped resources
-	t.Logf("Deleting cluster-scoped resources")
-	if err := c.KubeClient.RbacV1().ClusterRoles().Delete(context.Background(), "sa-clusterrole", metav1.DeleteOptions{}); err != nil {
-		t.Errorf("Failed to delete clusterrole sa-clusterrole: %s", err)
-	}
-	if err := c.KubeClient.RbacV1().ClusterRoleBindings().Delete(context.Background(), "sa-clusterrolebinding", metav1.DeleteOptions{}); err != nil {
-		t.Errorf("Failed to delete clusterrolebinding sa-clusterrolebinding: %s", err)
+	if os.Getenv("TEST_KEEP_NAMESPACES") == "" && !t.Failed() {
+		// Cleanup cluster-scoped resources
+		t.Logf("Deleting cluster-scoped resources")
+		if err := c.KubeClient.RbacV1().ClusterRoles().Delete(context.Background(), "sa-clusterrole", metav1.DeleteOptions{}); err != nil {
+			t.Errorf("Failed to delete clusterrole sa-clusterrole: %s", err)
+		}
+		if err := c.KubeClient.RbacV1().ClusterRoleBindings().Delete(context.Background(), "sa-clusterrolebinding", metav1.DeleteOptions{}); err != nil {
+			t.Errorf("Failed to delete clusterrolebinding sa-clusterrolebinding: %s", err)
+		}
 	}
 }

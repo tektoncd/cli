@@ -82,13 +82,6 @@ spec:
                   - name: url
                     value: $(tt.params.gitrepositoryurl)
 ---
-apiVersion: v1
-kind: ServiceAccount
-metadata:
-  name: tekton-triggers-github-sa
-secrets:
-  - name: github-secret
----
 apiVersion: rbac.authorization.k8s.io/v1
 kind: RoleBinding
 metadata:
@@ -118,11 +111,3 @@ rules:
   - apiGroups: ["tekton.dev"]
     resources: ["pipelineruns", "pipelineresources", "taskruns"]
     verbs: ["create"]
----
-apiVersion: v1
-kind: Secret
-metadata:
-  name: github-secret
-type: Opaque
-stringData:
-  secretToken: "1234567"
