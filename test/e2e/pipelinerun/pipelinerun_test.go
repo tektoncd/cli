@@ -38,7 +38,7 @@ func TestPipelineRunLogE2E(t *testing.T) {
 	tkn, err := cli.NewTknRunner(namespace)
 	assert.NilError(t, err)
 
-	if tkn.CheckVersion("Pipeline", "v0.10.2") {
+	if tkn.CheckVersion(t, "Pipeline", "v0.10.2") {
 		t.Skip("Skip test as pipeline v0.10.2 doesn't support finally")
 	}
 
@@ -46,7 +46,7 @@ func TestPipelineRunLogE2E(t *testing.T) {
 	kubectl.MustSucceed(t, "create", "-f", helper.GetResourcePath("pipelinerun-with-finally.yaml"))
 
 	t.Run("Pipelinerun logs with finally  "+namespace, func(t *testing.T) {
-		res := tkn.Run("pipelinerun", "logs", "exit-handler", "-f")
+		res := tkn.Run(t, "pipelinerun", "logs", "exit-handler", "-f")
 		s := []string{
 			"[print-msg : main] printing a message\n",
 			"[echo-on-exit : main] finally\n",

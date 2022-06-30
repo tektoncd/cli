@@ -68,7 +68,7 @@ func TestPipelinesE2E(t *testing.T) {
 	kubectl.MustSucceed(t, "create", "-f", helper.GetResourcePath("git-resource.yaml"))
 
 	t.Run("Get list of Tasks from namespace  "+namespace, func(t *testing.T) {
-		res := tkn.Run("task", "list")
+		res := tkn.Run(t, "task", "list")
 		expected := builder.ListAllTasksOutput(t, c, map[int]interface{}{
 			0: &builder.TaskData{
 				Name: TaskName2,
@@ -85,7 +85,7 @@ func TestPipelinesE2E(t *testing.T) {
 	})
 
 	t.Run("Get list of Pipelines from namespace  "+namespace, func(t *testing.T) {
-		res := tkn.Run("pipelines", "list")
+		res := tkn.Run(t, "pipelines", "list")
 		expected := builder.ListAllPipelinesOutput(t, c, map[int]interface{}{
 			0: &builder.PipelinesListData{
 				Name:   tePipelineName,
@@ -100,7 +100,7 @@ func TestPipelinesE2E(t *testing.T) {
 	})
 
 	t.Run("Get list of pipelines from other namespace [default] should throw Error", func(t *testing.T) {
-		res := tkn.RunNoNamespace("pipelines", "list", "-n", "default")
+		res := tkn.RunNoNamespace(t, "pipelines", "list", "-n", "default")
 		res.Assert(t, icmd.Expected{
 			ExitCode: 0,
 			Out:      "No Pipelines found\n",
@@ -109,7 +109,7 @@ func TestPipelinesE2E(t *testing.T) {
 	})
 
 	t.Run("Validate pipelines format for -o (output) flag, as Json Path", func(t *testing.T) {
-		res := tkn.Run("pipelines", "list", `-o=jsonpath={range.items[*]}{.metadata.name}{"\n"}{end}`)
+		res := tkn.Run(t, "pipelines", "list", `-o=jsonpath={range.items[*]}{.metadata.name}{"\n"}{end}`)
 		expected := builder.ListResourceNamesForJSONPath(
 			builder.GetPipelineListWithTestData(t, c,
 				map[int]interface{}{
@@ -131,7 +131,7 @@ func TestPipelinesE2E(t *testing.T) {
 	})
 
 	t.Run("Validate Pipeline describe command in namespace "+namespace, func(t *testing.T) {
-		res := tkn.Run("pipeline", "describe", tePipelineName)
+		res := tkn.Run(t, "pipeline", "describe", tePipelineName)
 		expected := builder.GetPipelineDescribeOutput(t, c, tePipelineName,
 			map[int]interface{}{
 				0: &builder.PipelineDescribeData{
@@ -182,7 +182,7 @@ Waiting for logs to be available...
 	time.Sleep(1 * time.Second)
 
 	t.Run("Get list of Taskruns from namespace  "+namespace, func(t *testing.T) {
-		res := tkn.Run("taskrun", "list")
+		res := tkn.Run(t, "taskrun", "list")
 		expected := builder.ListAllTaskRunsOutput(t, c, false, map[int]interface{}{
 			0: &builder.TaskRunData{
 				Name:   "output-pipeline-run-",
@@ -201,7 +201,7 @@ Waiting for logs to be available...
 	})
 
 	t.Run("Validate Pipeline describe command in namespace "+namespace+" after PipelineRun completed successfully", func(t *testing.T) {
-		res := tkn.Run("pipeline", "describe", tePipelineName)
+		res := tkn.Run(t, "pipeline", "describe", tePipelineName)
 		expected := builder.GetPipelineDescribeOutput(t, c, tePipelineName,
 			map[int]interface{}{
 				0: &builder.PipelineDescribeData{
@@ -290,7 +290,7 @@ Waiting for logs to be available...
 	kubectl.MustSucceed(t, "create", "-f", helper.GetResourcePath("pipeline-with-workspace.yaml"))
 
 	t.Run("Start PipelineRun with --workspace and volumeClaimTemplate", func(t *testing.T) {
-		if tkn.CheckVersion("Pipeline", "v0.10.2") {
+		if tkn.CheckVersion(t, "Pipeline", "v0.10.2") {
 			t.Skip("Skip test as pipeline v0.10.2 doesn't support volumeClaimTemplates")
 		}
 
@@ -339,7 +339,7 @@ Waiting for logs to be available...
 		pipelineRunLast := builder.GetPipelineRunListWithName(c, tePipelineName, true).Items[0]
 
 		// Cancel PipelineRun
-		res := tkn.Run("pipelinerun", "cancel", pipelineRunLast.Name)
+		res := tkn.Run(t, "pipelinerun", "cancel", pipelineRunLast.Name)
 
 		// Expect error from PipelineRun cancel for already completed PipelineRun
 		expected := "Error: failed to cancel PipelineRun " + pipelineRunLast.Name + ": PipelineRun has already finished execution\n"
@@ -396,7 +396,7 @@ func TestPipelinesNegativeE2E(t *testing.T) {
 	}
 
 	t.Run("Get list of Pipelines from namespace  "+namespace, func(t *testing.T) {
-		res := tkn.Run("pipelines", "list")
+		res := tkn.Run(t, "pipelines", "list")
 		expected := builder.ListAllPipelinesOutput(t, c, map[int]interface{}{
 			0: &builder.PipelinesListData{
 				Name:   tePipelineName,
@@ -411,7 +411,7 @@ func TestPipelinesNegativeE2E(t *testing.T) {
 	})
 
 	t.Run("Get list of pipelines from other namespace [default] should throw Error", func(t *testing.T) {
-		res := tkn.RunNoNamespace("pipelines", "list", "-n", "default")
+		res := tkn.RunNoNamespace(t, "pipelines", "list", "-n", "default")
 		res.Assert(t, icmd.Expected{
 			ExitCode: 0,
 			Out:      "No Pipelines found\n",
@@ -420,7 +420,7 @@ func TestPipelinesNegativeE2E(t *testing.T) {
 	})
 
 	t.Run("Validate pipelines format for -o (output) flag, as Json Path", func(t *testing.T) {
-		res := tkn.Run("pipelines", "list", `-o=jsonpath={range.items[*]}{.metadata.name}{"\n"}{end}`)
+		res := tkn.Run(t, "pipelines", "list", `-o=jsonpath={range.items[*]}{.metadata.name}{"\n"}{end}`)
 		expected := builder.ListResourceNamesForJSONPath(
 			builder.GetPipelineListWithTestData(t, c,
 				map[int]interface{}{
@@ -442,7 +442,7 @@ func TestPipelinesNegativeE2E(t *testing.T) {
 	})
 
 	t.Run("Validate Pipeline describe command in namespace "+namespace, func(t *testing.T) {
-		res := tkn.Run("pipeline", "describe", tePipelineName)
+		res := tkn.Run(t, "pipeline", "describe", tePipelineName)
 		expected := builder.GetPipelineDescribeOutput(t, c, tePipelineName,
 			map[int]interface{}{
 				0: &builder.PipelineDescribeData{
@@ -494,7 +494,7 @@ Waiting for logs to be available...
 	time.Sleep(1 * time.Second)
 
 	t.Run("Validate Pipeline describe command in namespace "+namespace+" after PipelineRun completed successfully", func(t *testing.T) {
-		res := tkn.Run("pipeline", "describe", tePipelineName)
+		res := tkn.Run(t, "pipeline", "describe", tePipelineName)
 		expected := builder.GetPipelineDescribeOutput(t, c, tePipelineName,
 			map[int]interface{}{
 				0: &builder.PipelineDescribeData{
@@ -565,7 +565,7 @@ func TestDeletePipelinesE2E(t *testing.T) {
 	time.Sleep(1 * time.Second)
 
 	t.Run("Delete pipeline "+tePipelineName+"-1"+" from namespace "+namespace+" With force delete flag (shorthand)", func(t *testing.T) {
-		res := tkn.Run("pipeline", "rm", tePipelineName+"-1", "-f")
+		res := tkn.Run(t, "pipeline", "rm", tePipelineName+"-1", "-f")
 		res.Assert(t, icmd.Expected{
 			ExitCode: 0,
 			Out:      "Pipelines deleted: \"" + tePipelineName + "-1" + "\"\n",
@@ -573,7 +573,7 @@ func TestDeletePipelinesE2E(t *testing.T) {
 	})
 
 	t.Run("Delete pipeline "+tePipelineName+"-2"+" from namespace "+namespace+" With force delete flag", func(t *testing.T) {
-		res := tkn.Run("pipeline", "rm", tePipelineName+"-2", "--force")
+		res := tkn.Run(t, "pipeline", "rm", tePipelineName+"-2", "--force")
 		res.Assert(t, icmd.Expected{
 			ExitCode: 0,
 			Out:      "Pipelines deleted: \"" + tePipelineName + "-2" + "\"\n",
@@ -581,7 +581,7 @@ func TestDeletePipelinesE2E(t *testing.T) {
 	})
 
 	t.Run("Delete pipeline "+tePipelineName+"-3"+" from namespace "+namespace+" without force flag, reply no", func(t *testing.T) {
-		res := tkn.RunWithOption(icmd.WithStdin(strings.NewReader("n")),
+		res := tkn.RunWithOption(t, icmd.WithStdin(strings.NewReader("n")),
 			"pipeline", "rm", tePipelineName+"-3")
 		res.Assert(t, icmd.Expected{
 			ExitCode: 1,
@@ -590,7 +590,7 @@ func TestDeletePipelinesE2E(t *testing.T) {
 	})
 
 	t.Run("Delete pipeline "+tePipelineName+"-3"+" from namespace "+namespace+" without force flag, reply yes", func(t *testing.T) {
-		res := tkn.RunWithOption(icmd.WithStdin(strings.NewReader("y")),
+		res := tkn.RunWithOption(t, icmd.WithStdin(strings.NewReader("y")),
 			"pipeline", "rm", tePipelineName+"-3")
 		res.Assert(t, icmd.Expected{
 			ExitCode: 0,
@@ -600,7 +600,7 @@ func TestDeletePipelinesE2E(t *testing.T) {
 	})
 
 	t.Run("Check for list of pipelines, After Successful Deletion of pipeline in namespace "+namespace+" should throw an error", func(t *testing.T) {
-		res := tkn.Run("pipelines", "list")
+		res := tkn.Run(t, "pipelines", "list")
 		res.Assert(t, icmd.Expected{
 			ExitCode: 0,
 			Out:      "No Pipelines found\n",

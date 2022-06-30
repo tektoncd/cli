@@ -58,7 +58,7 @@ func TestTaskStartE2E(t *testing.T) {
 	kubectl.MustSucceed(t, "create", "-f", helper.GetResourcePath("git-resource.yaml"))
 
 	t.Run("Get list of Tasks from namespace  "+namespace, func(t *testing.T) {
-		res := tkn.Run("task", "list")
+		res := tkn.Run(t, "task", "list")
 		expected := builder.ListAllTasksOutput(t, c, map[int]interface{}{
 			0: &builder.TaskData{
 				Name: "read-task",
@@ -149,7 +149,7 @@ Waiting for logs to be available...
 			t.Errorf("Error waiting for TaskRun to Succeed: %s", err)
 		}
 
-		res := tkn.Run("taskrun", "list")
+		res := tkn.Run(t, "taskrun", "list")
 		expected := builder.ListAllTaskRunsOutput(t, c, false, map[int]interface{}{
 			0: &builder.TaskRunData{
 				Name:   "read-task-run-",
@@ -228,7 +228,7 @@ Waiting for logs to be available...
 	kubectl.MustSucceed(t, "create", "-f", helper.GetResourcePath("task-with-workspace.yaml"))
 
 	t.Run("Start TaskRun with --workspace and volumeClaimTemplate", func(t *testing.T) {
-		if tkn.CheckVersion("Pipeline", "v0.10.2") {
+		if tkn.CheckVersion(t, "Pipeline", "v0.10.2") {
 			t.Skip("Skip test as pipeline v0.10 doesn't support volumeClaimTemplates")
 		}
 
@@ -272,7 +272,7 @@ Waiting for logs to be available...
 		taskRunLast := builder.GetTaskRunListWithTaskName(c, "read-task", true).Items[0]
 
 		// Cancel TaskRun
-		res := tkn.Run("taskrun", "cancel", taskRunLast.Name)
+		res := tkn.Run(t, "taskrun", "cancel", taskRunLast.Name)
 
 		// Expect error from TaskRun cancel for already completed TaskRun
 		expected := "Error: failed to cancel TaskRun " + taskRunLast.Name + ": TaskRun has already finished execution\n"

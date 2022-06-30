@@ -20,6 +20,7 @@
 # instead of detecting the latest released one from tektoncd/pipeline releases
 RELEASE_YAML_PIPELINES=${RELEASE_YAML_PIPELINE:-}
 RELEASE_YAML_TRIGGERS=${RELEASE_YAML_TRIGGERS:-}
+RELEASE_YAML_TRIGGERS_INTERCEPTORS=${RELEASE_YAML_TRIGGERS_INTERCEPTORS:-}
 
 source $(dirname $0)/../vendor/github.com/tektoncd/plumbing/scripts/e2e-tests.sh
 
@@ -157,6 +158,7 @@ function install_pipeline_crd() {
 
 function install_triggers_crd() {
   local latestreleaseyaml
+  local latestinterceptorsyaml
   echo ">> Deploying Tekton Triggers"
   if [[ -n ${RELEASE_YAML_TRIGGERS} ]];then
 	latestreleaseyaml=${RELEASE_YAML_TRIGGERS}
@@ -168,9 +170,26 @@ function install_triggers_crd() {
     # If for whatever reason the nightly release wasnt there (nightly ci failure?), try the released version
     [[ -z ${latestreleaseyaml} ]] && latestreleaseyaml="https://storage.googleapis.com/tekton-releases/triggers/latest/release.yaml"
   fi
+  if [[ -n ${RELEASE_YAML_TRIGGERS_INTERCEPTORS} ]];then
+	latestinterceptorsyaml=${RELEASE_YAML_TRIGGERS_INTERCEPTORS}
+  else
+    # First try to install latest interceptors from nightly
+    curl -o/dev/null -s -LI -f https://storage.googleapis.com/tekton-releases-nightly/triggers/latest/interceptors.yaml &&
+        latestinterceptorsyaml=https://storage.googleapis.com/tekton-releases-nightly/triggers/latest/interceptors.yaml
+
+    # If for whatever reason the nightly release wasnt there (nightly ci failure?), try the released version
+    [[ -z ${latestinterceptorsyaml} ]] && latestinterceptorsyaml="https://storage.googleapis.com/tekton-releases/triggers/latest/interceptors.yaml"
+  fi
   [[ -z ${latestreleaseyaml} ]] && fail_test "Could not get latest released release.yaml"
+  [[ -z ${latestinterceptorsyaml} ]] && fail_test "Could not get latest released interceptors.yaml"
   kubectl apply -f ${latestreleaseyaml} ||
     fail_test "Build triggers installation failed"
+
+  # Wait for pods to be running in the namespaces we are deploying to
+  wait_until_pods_running tekton-pipelines || fail_test "Tekton Triggers did not come up"
+
+  kubectl wait --for=condition=Established --timeout=30s crds/clusterinterceptors.triggers.tekton.dev || fail_test "cluster interceptors never established"
+  kubectl apply -f ${latestinterceptorsyaml} || fail_test "Interceptors installation failed"
 
   # Make sure that eveything is cleaned up in the current namespace.
   for res in eventlistener triggertemplate triggerbinding clustertriggerbinding; do
