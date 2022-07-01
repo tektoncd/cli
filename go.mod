@@ -12,7 +12,7 @@ require (
 	github.com/containerd/containerd v1.6.2 // indirect
 	github.com/cpuguy83/go-md2man v1.0.10
 	github.com/docker/cli v20.10.17+incompatible
-	github.com/docker/docker v20.10.16+incompatible
+	github.com/docker/docker v20.10.17+incompatible
 	github.com/fatih/color v1.13.0
 	github.com/ghodss/yaml v1.0.0
 	github.com/golang/protobuf v1.5.2
@@ -70,7 +70,7 @@ require (
 	gopkg.in/square/go-jose.v2 v2.6.0
 	gopkg.in/yaml.v2 v2.4.0
 	gotest.tools v2.2.0+incompatible
-	gotest.tools/v3 v3.2.0
+	gotest.tools/v3 v3.3.0
 	k8s.io/api v0.23.5
 	k8s.io/apimachinery v0.23.5
 	k8s.io/cli-runtime v0.23.5
