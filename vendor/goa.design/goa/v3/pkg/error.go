@@ -16,6 +16,8 @@ type (
 		Name string
 		// ID is a unique value for each occurrence of the error.
 		ID string
+		// Pointer to the field that caused this error, if appropriate
+		Field *string
 		// Message contains the specific error details.
 		Message string
 		// Is the error a timeout?
@@ -24,7 +26,27 @@ type (
 		Temporary bool
 		// Is the error a server-side fault?
 		Fault bool
+		// History tracks all the individual errors that were built into this error, should
+		// this error have been merged.
+		history []ServiceError
 	}
+)
+
+const (
+	// InvalidFieldType is the error name for invalid field type errors.
+	InvalidFieldType = "invalid_field_type"
+	// MissingField is the error name for missing field errors.
+	MissingField = "missing_field"
+	// InvalidEnumValue is the error name for invalid enum value errors.
+	InvalidEnumValue = "invalid_enum_value"
+	// InvalidFormat is the error name for invalid format errors.
+	InvalidFormat = "invalid_format"
+	// InvalidPattern is the error name for invalid pattern errors.
+	InvalidPattern = "invalid_pattern"
+	// InvalidRange is the error name for invalid range errors.
+	InvalidRange = "invalid_range"
+	// InvalidLength is the error name for invalid length errors.
+	InvalidLength = "invalid_length"
 )
 
 // Fault creates an error given a format and values a la fmt.Printf. The error
@@ -75,13 +97,15 @@ func DecodePayloadError(msg string) error {
 // InvalidFieldTypeError is the error produced by the generated code when the
 // type of a payload field does not match the type defined in the design.
 func InvalidFieldTypeError(name string, val interface{}, expected string) error {
-	return PermanentError("invalid_field_type", "invalid value %#v for %q, must be a %s", val, name, expected)
+	return withField(name, PermanentError(
+		InvalidFieldType, "invalid value %#v for %q, must be a %s", val, name, expected))
 }
 
 // MissingFieldError is the error produced by the generated code when a payload
 // is missing a required field.
 func MissingFieldError(name, context string) error {
-	return PermanentError("missing_field", "%q is missing from %s", name, context)
+	return withField(name, PermanentError(
+		MissingField, "%q is missing from %s", name, context))
 }
 
 // InvalidEnumValueError is the error produced by the generated code when the
@@ -92,21 +116,24 @@ func InvalidEnumValueError(name string, val interface{}, allowed []interface{}) 
 	for i, a := range allowed {
 		elems[i] = fmt.Sprintf("%#v", a)
 	}
-	return PermanentError("invalid_enum_value", "value of %s must be one of %s but got value %#v", name, strings.Join(elems, ", "), val)
+	return withField(name, PermanentError(
+		InvalidEnumValue, "value of %s must be one of %s but got value %#v", name, strings.Join(elems, ", "), val))
 }
 
 // InvalidFormatError is the error produced by the generated code when the value
 // of a payload field does not match the format validation defined in the
 // design.
 func InvalidFormatError(name, target string, format Format, formatError error) error {
-	return PermanentError("invalid_format", "%s must be formatted as a %s but got value %q, %s", name, format, target, formatError.Error())
+	return withField(name, PermanentError(
+		InvalidFormat, "%s must be formatted as a %s but got value %q, %s", name, format, target, formatError.Error()))
 }
 
 // InvalidPatternError is the error produced by the generated code when the
 // value of a payload field does not match the pattern validation defined in the
 // design.
 func InvalidPatternError(name, target string, pattern string) error {
-	return PermanentError("invalid_pattern", "%s must match the regexp %q but got value %q", name, pattern, target)
+	return withField(name, PermanentError(
+		InvalidPattern, "%s must match the regexp %q but got value %q", name, pattern, target))
 }
 
 // InvalidRangeError is the error produced by the generated code when the value
@@ -117,7 +144,8 @@ func InvalidRangeError(name string, target interface{}, value interface{}, min b
 	if !min {
 		comp = "lesser or equal"
 	}
-	return PermanentError("invalid_range", "%s must be %s than %d but got value %#v", name, comp, value, target)
+	return withField(name, PermanentError(
+		InvalidRange, "%s must be %s than %d but got value %#v", name, comp, value, target))
 }
 
 // InvalidLengthError is the error produced by the generated code when the value
@@ -128,7 +156,8 @@ func InvalidLengthError(name string, target interface{}, ln, value int, min bool
 	if !min {
 		comp = "lesser or equal"
 	}
-	return PermanentError("invalid_length", "length of %s must be %s than %d but got value %#v (len=%d)", name, comp, value, target, ln)
+	return withField(name, PermanentError(
+		InvalidLength, "length of %s must be %s than %d but got value %#v (len=%d)", name, comp, value, target, ln))
 }
 
 // NewErrorID creates a unique 8 character ID that is well suited to use as an
@@ -170,6 +199,13 @@ func MergeErrors(err, other error) error {
 	if e.Name == "error" {
 		e.Name = o.Name
 	}
+
+	// Combine error lineage. We only ever put original errors into the history slice, so we
+	// don't need to worry about gaining intermediate merges.
+	//
+	// Do this before we modify ourselves, as History() may include us!
+	e.history = append(e.History(), o.History()...)
+
 	e.Message = e.Message + "; " + o.Message
 	e.Timeout = e.Timeout && o.Timeout
 	e.Temporary = e.Temporary && o.Temporary
@@ -178,11 +214,25 @@ func MergeErrors(err, other error) error {
 	return e
 }
 
+// History returns the history of error revisions, ignoring the result of any merges.
+func (e ServiceError) History() []ServiceError {
+	if len(e.history) > 0 {
+		return e.history
+	}
+
+	return []ServiceError{e}
+}
+
 // Error returns the error message.
-func (s *ServiceError) Error() string { return s.Message }
+func (e *ServiceError) Error() string { return e.Message }
 
 // ErrorName returns the error name.
-func (s *ServiceError) ErrorName() string { return s.Name }
+func (e *ServiceError) ErrorName() string { return e.Name }
+
+func withField(field string, err *ServiceError) *ServiceError {
+	err.Field = &field
+	return err
+}
 
 func newError(name string, timeout, temporary, fault bool, format string, v ...interface{}) *ServiceError {
 	return &ServiceError{
