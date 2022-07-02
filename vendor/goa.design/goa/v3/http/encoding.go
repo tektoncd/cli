@@ -55,6 +55,7 @@ type (
 //     * application/json using package encoding/json
 //     * application/xml using package encoding/xml
 //     * application/gob using package encoding/gob
+//     * text/html and text/plain for strings
 //
 // RequestDecoder defaults to the JSON decoder if the request "Content-Type"
 // header does not match any of the supported mime type or is missing
@@ -169,6 +170,10 @@ func ResponseEncoder(ctx context.Context, w http.ResponseWriter) Encoder {
 // RequestEncoder returns a HTTP request encoder.
 // The encoder uses package encoding/json.
 func RequestEncoder(r *http.Request) Encoder {
+	const k = "Content-Type"
+	if h := r.Header.Get(k); h == "" {
+		r.Header.Set(k, "application/json")
+	}
 	var buf bytes.Buffer
 	r.Body = ioutil.NopCloser(&buf)
 	return json.NewEncoder(&buf)
