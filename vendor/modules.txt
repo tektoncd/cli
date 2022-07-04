@@ -339,7 +339,7 @@ github.com/cpuguy83/go-md2man/md2man
 # github.com/cpuguy83/go-md2man/v2 v2.0.2
 ## explicit; go 1.11
 github.com/cpuguy83/go-md2man/v2/md2man
-# github.com/creack/pty v1.1.17
+# github.com/creack/pty v1.1.18
 ## explicit; go 1.13
 github.com/creack/pty
 # github.com/cyberphone/json-canonicalization v0.0.0-20210823021906-dc406ceaf94b
@@ -1345,7 +1345,7 @@ github.com/tektoncd/hub/api/v1/gen/http/catalog/client
 github.com/tektoncd/hub/api/v1/gen/http/resource/client
 github.com/tektoncd/hub/api/v1/gen/resource
 github.com/tektoncd/hub/api/v1/gen/resource/views
-# github.com/tektoncd/pipeline v0.35.1
+# github.com/tektoncd/pipeline v0.37.1
 ## explicit; go 1.17
 github.com/tektoncd/pipeline/pkg/apis/config
 github.com/tektoncd/pipeline/pkg/apis/pipeline
@@ -1374,8 +1374,6 @@ github.com/tektoncd/pipeline/pkg/client/injection/informers/factory
 github.com/tektoncd/pipeline/pkg/client/injection/informers/factory/fake
 github.com/tektoncd/pipeline/pkg/client/injection/informers/pipeline/v1alpha1/clustertask
 github.com/tektoncd/pipeline/pkg/client/injection/informers/pipeline/v1alpha1/clustertask/fake
-github.com/tektoncd/pipeline/pkg/client/injection/informers/pipeline/v1alpha1/condition
-github.com/tektoncd/pipeline/pkg/client/injection/informers/pipeline/v1alpha1/condition/fake
 github.com/tektoncd/pipeline/pkg/client/injection/informers/pipeline/v1alpha1/pipeline
 github.com/tektoncd/pipeline/pkg/client/injection/informers/pipeline/v1alpha1/pipeline/fake
 github.com/tektoncd/pipeline/pkg/client/injection/informers/pipeline/v1alpha1/pipelinerun

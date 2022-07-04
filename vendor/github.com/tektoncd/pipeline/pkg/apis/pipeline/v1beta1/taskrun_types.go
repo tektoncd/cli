@@ -140,6 +140,11 @@ const (
 	TaskRunReasonCancelled TaskRunReason = "TaskRunCancelled"
 	// TaskRunReasonTimedOut is the reason set when the Taskrun has timed out
 	TaskRunReasonTimedOut TaskRunReason = "TaskRunTimeout"
+	// TaskRunReasonResolvingTaskRef indicates that the TaskRun is waiting for
+	// its taskRef to be asynchronously resolved.
+	TaskRunReasonResolvingTaskRef = "ResolvingTaskRef"
+	// TaskRunReasonImagePullFailed is the reason set when the step of a task fails due to image not being pulled
+	TaskRunReasonImagePullFailed TaskRunReason = "TaskRunImagePullFailed"
 )
 
 func (t TaskRunReason) String() string {
@@ -233,15 +238,6 @@ type TaskRunStatusFields struct {
 
 	// TaskSpec contains the Spec from the dereferenced Task definition used to instantiate this TaskRun.
 	TaskSpec *TaskSpec `json:"taskSpec,omitempty"`
-}
-
-// TaskRunResult used to describe the results of a task
-type TaskRunResult struct {
-	// Name the given name
-	Name string `json:"name"`
-
-	// Value the given value of the result
-	Value string `json:"value"`
 }
 
 // TaskRunStepOverride is used to override the values of a Step in the corresponding Task.
@@ -418,7 +414,7 @@ func (tr *TaskRun) HasStarted() bool {
 
 // IsSuccessful returns true if the TaskRun's status indicates that it is done.
 func (tr *TaskRun) IsSuccessful() bool {
-	return tr.Status.GetCondition(apis.ConditionSucceeded).IsTrue()
+	return tr != nil && tr.Status.GetCondition(apis.ConditionSucceeded).IsTrue()
 }
 
 // IsCancelled returns true if the TaskRun's spec status is set to Cancelled state

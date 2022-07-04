@@ -172,12 +172,6 @@ type PipelineTask struct {
 	// +optional
 	TaskSpec *EmbeddedTask `json:"taskSpec,omitempty"`
 
-	// Conditions is a list of conditions that need to be true for the task to run
-	// Conditions are deprecated, use WhenExpressions instead
-	// +optional
-	// +listType=atomic
-	Conditions []PipelineTaskCondition `json:"conditions,omitempty"`
-
 	// WhenExpressions is a list of when expressions that need to be true for the task to run
 	// +optional
 	WhenExpressions WhenExpressions `json:"when,omitempty"`
@@ -248,11 +242,6 @@ func (pt PipelineTask) validateCustomTask() (errs *apis.FieldError) {
 		errs = errs.Also(apis.ErrInvalidValue("custom task spec must specify apiVersion", "taskSpec.apiVersion"))
 	}
 
-	// Conditions are deprecated so the effort to support them with custom tasks is not justified.
-	// When expressions should be used instead.
-	if len(pt.Conditions) > 0 {
-		errs = errs.Also(apis.ErrInvalidValue("custom tasks do not support conditions - use when expressions instead", "conditions"))
-	}
 	// TODO(#3133): Support these features if possible.
 	if pt.Resources != nil {
 		errs = errs.Also(apis.ErrInvalidValue("custom tasks do not support PipelineResources", "resources"))
@@ -277,6 +266,7 @@ func (pt PipelineTask) validateBundle() (errs *apis.FieldError) {
 
 // validateTask validates a pipeline task or a final task for taskRef and taskSpec
 func (pt PipelineTask) validateTask(ctx context.Context) (errs *apis.FieldError) {
+	cfg := config.FromContextOrDefaults(ctx)
 	// Validate TaskSpec if it's present
 	if pt.TaskSpec != nil {
 		errs = errs.Also(pt.TaskSpec.Validate(ctx).ViaField("taskSpec"))
@@ -287,21 +277,21 @@ func (pt PipelineTask) validateTask(ctx context.Context) (errs *apis.FieldError)
 			if errSlice := validation.IsQualifiedName(pt.TaskRef.Name); len(errSlice) != 0 {
 				errs = errs.Also(apis.ErrInvalidValue(strings.Join(errSlice, ","), "name"))
 			}
-		} else {
+		} else if pt.TaskRef.Resolver == "" {
 			errs = errs.Also(apis.ErrInvalidValue("taskRef must specify name", "taskRef.name"))
 		}
 		// fail if bundle is present when EnableTektonOCIBundles feature flag is off (as it won't be allowed nor used)
-		if pt.TaskRef.Bundle != "" {
+		if !cfg.FeatureFlags.EnableTektonOCIBundles && pt.TaskRef.Bundle != "" {
 			errs = errs.Also(apis.ErrDisallowedFields("taskref.bundle"))
 		}
-		// fail if resolver or resource are present regardless
-		// of enabled api fields because remote resolution is
-		// not implemented yet for PipelineTasks.
-		if pt.TaskRef.Resolver != "" {
-			errs = errs.Also(apis.ErrDisallowedFields("taskref.resolver"))
-		}
-		if len(pt.TaskRef.Resource) > 0 {
-			errs = errs.Also(apis.ErrDisallowedFields("taskref.resource"))
+		if cfg.FeatureFlags.EnableAPIFields != config.AlphaAPIFields {
+			// fail if resolver or resource are present when enable-api-fields is false.
+			if pt.TaskRef.Resolver != "" {
+				errs = errs.Also(apis.ErrDisallowedFields("taskref.resolver"))
+			}
+			if len(pt.TaskRef.Resource) > 0 {
+				errs = errs.Also(apis.ErrDisallowedFields("taskref.resource"))
+			}
 		}
 	}
 	return errs
@@ -312,10 +302,32 @@ func (pt *PipelineTask) validateMatrix(ctx context.Context) (errs *apis.FieldErr
 		// This is an alpha feature and will fail validation if it's used in a pipeline spec
 		// when the enable-api-fields feature gate is anything but "alpha".
 		errs = errs.Also(ValidateEnabledAPIFields(ctx, "matrix", config.AlphaAPIFields))
+		errs = errs.Also(pt.validateMatrixCombinationsCount(ctx))
 	}
 	errs = errs.Also(validateParameterInOneOfMatrixOrParams(pt.Matrix, pt.Params))
 	errs = errs.Also(validateParametersInTaskMatrix(pt.Matrix))
 	return errs
+}
+
+func (pt *PipelineTask) validateMatrixCombinationsCount(ctx context.Context) (errs *apis.FieldError) {
+	matrixCombinationsCount := pt.GetMatrixCombinationsCount()
+	maxMatrixCombinationsCount := config.FromContextOrDefaults(ctx).Defaults.DefaultMaxMatrixCombinationsCount
+	if matrixCombinationsCount > maxMatrixCombinationsCount {
+		errs = errs.Also(apis.ErrOutOfBoundsValue(matrixCombinationsCount, 0, maxMatrixCombinationsCount, "matrix"))
+	}
+	return errs
+}
+
+// GetMatrixCombinationsCount returns the count of combinations of Parameters generated from the Matrix in PipelineTask.
+func (pt *PipelineTask) GetMatrixCombinationsCount() int {
+	if len(pt.Matrix) == 0 {
+		return 0
+	}
+	count := 1
+	for _, param := range pt.Matrix {
+		count *= len(param.Value.ArrayVal)
+	}
+	return count
 }
 
 func (pt *PipelineTask) validateResultsFromMatrixedPipelineTasksNotConsumed(matrixedPipelineTasks sets.String) (errs *apis.FieldError) {
@@ -405,7 +417,14 @@ func validateExecutionStatusVariablesExpressions(expressions []string, ptNames s
 
 func (pt *PipelineTask) validateWorkspaces(workspaceNames sets.String) (errs *apis.FieldError) {
 	for i, ws := range pt.Workspaces {
-		if !workspaceNames.Has(ws.Workspace) {
+		if ws.Workspace == "" {
+			if !workspaceNames.Has(ws.Name) {
+				errs = errs.Also(apis.ErrInvalidValue(
+					fmt.Sprintf("pipeline task %q expects workspace with name %q but none exists in pipeline spec", pt.Name, ws.Name),
+					"",
+				).ViaFieldIndex("workspaces", i))
+			}
+		} else if !workspaceNames.Has(ws.Workspace) {
 			errs = errs.Also(apis.ErrInvalidValue(
 				fmt.Sprintf("pipeline task %q expects workspace with name %q but none exists in pipeline spec", pt.Name, ws.Workspace),
 				"",
@@ -485,13 +504,6 @@ func (pt PipelineTask) resourceDeps() []string {
 		}
 	}
 
-	// Add any dependents from conditional resources.
-	for _, cond := range pt.Conditions {
-		for _, rd := range cond.Resources {
-			resourceDeps = append(resourceDeps, rd.From...)
-		}
-	}
-
 	// Add any dependents from result references.
 	for _, ref := range PipelineTaskResultRefs(&pt) {
 		resourceDeps = append(resourceDeps, ref.PipelineTask)
@@ -563,22 +575,6 @@ func (l PipelineTaskList) Validate(ctx context.Context, taskNames sets.String, p
 type PipelineTaskParam struct {
 	Name  string `json:"name"`
 	Value string `json:"value"`
-}
-
-// PipelineTaskCondition allows a PipelineTask to declare a Condition to be evaluated before
-// the Task is run.
-type PipelineTaskCondition struct {
-	// ConditionRef is the name of the Condition to use for the conditionCheck
-	ConditionRef string `json:"conditionRef"`
-
-	// Params declare parameters passed to this Condition
-	// +optional
-	// +listType=atomic
-	Params []Param `json:"params,omitempty"`
-
-	// Resources declare the resources provided to this Condition as input
-	// +listType=atomic
-	Resources []PipelineTaskInputResource `json:"resources,omitempty"`
 }
 
 // PipelineDeclaredResource is used by a Pipeline to declare the types of the

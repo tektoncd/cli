@@ -53,7 +53,7 @@ require (
 	github.com/spf13/pflag v1.0.5
 	github.com/tektoncd/chains v0.9.1-0.20220520120701-86291376000f
 	github.com/tektoncd/hub v1.8.0
-	github.com/tektoncd/pipeline v0.35.1
+	github.com/tektoncd/pipeline v0.37.1
 	github.com/tektoncd/plumbing v0.0.0-20220329085922-d765a5cba75f
 	github.com/tektoncd/triggers v0.20.1
 	go.opencensus.io v0.23.0
@@ -81,7 +81,7 @@ require (
 )
 
 require (
-	github.com/creack/pty v1.1.17
+	github.com/creack/pty v1.1.18
 	github.com/letsencrypt/boulder v0.0.0-20220331220046-b23ab962616e
 	github.com/titanous/rocacheck v0.0.0-20171023193734-afe73141d399
 )
