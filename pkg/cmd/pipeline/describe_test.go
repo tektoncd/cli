@@ -1145,19 +1145,11 @@ func TestPipelineDescribeV1beta1_task_conditions(t *testing.T) {
 						TaskRef: &v1beta1.TaskRef{
 							Name: "task-1",
 						},
-						Conditions: []v1beta1.PipelineTaskCondition{
-							{ConditionRef: "condition-1"},
-							{ConditionRef: "condition-2"},
-							{ConditionRef: "condition-3"},
-						},
 					},
 					{
 						Name: "task-2",
 						TaskRef: &v1beta1.TaskRef{
 							Name: "task-2",
-						},
-						Conditions: []v1beta1.PipelineTaskCondition{
-							{ConditionRef: "condition-1"},
 						},
 					},
 				},

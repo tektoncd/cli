@@ -3,5 +3,5 @@ Namespace:   ns
 
 Tasks
 
- NAME   TASKREF    RUNAFTER   TIMEOUT   CONDITIONS   PARAMS
- task   EMBEDDED              ---       ---          ---
+ NAME   TASKREF    RUNAFTER   TIMEOUT   PARAMS
+ task   EMBEDDED              ---       ---

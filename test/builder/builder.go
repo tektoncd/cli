@@ -690,9 +690,9 @@ const describeTemplate = `{{decorate "bold" "Name"}}:	{{ .PipelineName }}
 {{- if ne (len .Pipeline.Spec.Tasks) 0 }}
 
 {{decorate "tasks" ""}}{{decorate "underline bold" "Tasks\n"}}
- NAME	TASKREF	RUNAFTER	TIMEOUT	CONDITIONS	PARAMS
+ NAME	TASKREF	RUNAFTER	TIMEOUT	PARAMS
 {{- range $i, $t := .Pipeline.Spec.Tasks }}
- {{decorate "bullet" $t.Name }}	{{ $t.TaskRef.Name }}	{{ join $t.RunAfter ", " }}	{{ formatTimeout $t.Timeout }}	{{ formatTaskConditions $t.Conditions }}	{{ formatParam $t.Params $.Pipeline.Spec.Params }}
+ {{decorate "bullet" $t.Name }}	{{ $t.TaskRef.Name }}	{{ join $t.RunAfter ", " }}	{{ formatTimeout $t.Timeout }}	{{ formatParam $t.Params $.Pipeline.Spec.Params }}
 {{- end }}
 {{- end }}
 
@@ -730,15 +730,14 @@ func GetPipelineDescribeOutput(t *testing.T, cs *framework.Clients, pname string
 	}
 
 	funcMap := template.FuncMap{
-		"formatAge":            formatted.Age,
-		"formatDuration":       formatted.Duration,
-		"formatCondition":      formatted.Condition,
-		"formatTimeout":        formatted.Timeout,
-		"formatDesc":           formatted.FormatDesc,
-		"formatParam":          formatted.Param,
-		"decorate":             formatted.DecorateAttr,
-		"join":                 strings.Join,
-		"formatTaskConditions": formatted.TaskConditions,
+		"formatAge":       formatted.Age,
+		"formatDuration":  formatted.Duration,
+		"formatCondition": formatted.Condition,
+		"formatTimeout":   formatted.Timeout,
+		"formatDesc":      formatted.FormatDesc,
+		"formatParam":     formatted.Param,
+		"decorate":        formatted.DecorateAttr,
+		"join":            strings.Join,
 	}
 
 	var tmplBytes bytes.Buffer

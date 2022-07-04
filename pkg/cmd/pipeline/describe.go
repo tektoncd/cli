@@ -89,9 +89,9 @@ const describeTemplate = `{{decorate "bold" "Name"}}:	{{ .PipelineName }}
 {{- if ne (len .Pipeline.Spec.Tasks) 0 }}
 
 {{decorate "tasks" ""}}{{decorate "underline bold" "Tasks\n"}}
- NAME	TASKREF	RUNAFTER	TIMEOUT	CONDITIONS	PARAMS
+ NAME	TASKREF	RUNAFTER	TIMEOUT	PARAMS
 {{- range $i, $t := .Pipeline.Spec.Tasks }}
- {{decorate "bullet" $t.Name }}	{{ getTaskRefName $t }}	{{ join $t.RunAfter ", " }}	{{ formatTimeout $t.Timeout }}	{{ formatTaskConditions $t.Conditions }}	{{ formatParam $t.Params $.Pipeline.Spec.Params }}
+ {{decorate "bullet" $t.Name }}	{{ getTaskRefName $t }}	{{ join $t.RunAfter ", " }}	{{ formatTimeout $t.Timeout }}	{{ formatParam $t.Params $.Pipeline.Spec.Params }}
 {{- end }}
 {{- end }}
 
@@ -196,16 +196,15 @@ func printPipelineDescription(out io.Writer, p cli.Params, pname string) error {
 	}
 
 	funcMap := template.FuncMap{
-		"formatAge":            formatted.Age,
-		"formatDuration":       formatted.Duration,
-		"formatCondition":      formatted.Condition,
-		"decorate":             formatted.DecorateAttr,
-		"formatDesc":           formatted.FormatDesc,
-		"formatTimeout":        formatted.Timeout,
-		"formatParam":          formatted.Param,
-		"join":                 strings.Join,
-		"formatTaskConditions": formatted.TaskConditions,
-		"getTaskRefName":       formatted.GetTaskRefName,
+		"formatAge":       formatted.Age,
+		"formatDuration":  formatted.Duration,
+		"formatCondition": formatted.Condition,
+		"decorate":        formatted.DecorateAttr,
+		"formatDesc":      formatted.FormatDesc,
+		"formatTimeout":   formatted.Timeout,
+		"formatParam":     formatted.Param,
+		"join":            strings.Join,
+		"getTaskRefName":  formatted.GetTaskRefName,
 	}
 
 	w := tabwriter.NewWriter(out, 0, 5, 3, ' ', tabwriter.TabIndent)
