@@ -24,6 +24,7 @@ import (
 	"gocloud.dev/docstore"
 	_ "gocloud.dev/docstore/awsdynamodb"
 	_ "gocloud.dev/docstore/gcpfirestore"
+	_ "gocloud.dev/docstore/mongodocstore"
 )
 
 const (
