@@ -20,11 +20,13 @@ import (
 	"context"
 	"fmt"
 	"path/filepath"
+	"regexp"
 	"strings"
 	"time"
 
 	"github.com/tektoncd/pipeline/pkg/apis/config"
 	"github.com/tektoncd/pipeline/pkg/apis/validate"
+	"github.com/tektoncd/pipeline/pkg/list"
 	"github.com/tektoncd/pipeline/pkg/substitution"
 	corev1 "k8s.io/api/core/v1"
 	"k8s.io/apimachinery/pkg/util/sets"
@@ -33,6 +35,8 @@ import (
 )
 
 var _ apis.Validatable = (*Task)(nil)
+
+const variableNameFormat = "^[_a-zA-Z][_a-zA-Z0-9.-]*$"
 
 // Validate implements apis.Validatable
 func (t *Task) Validate(ctx context.Context) *apis.FieldError {
@@ -48,6 +52,15 @@ func (ts *TaskSpec) Validate(ctx context.Context) (errs *apis.FieldError) {
 	if len(ts.Steps) == 0 {
 		errs = errs.Also(apis.ErrMissingField("steps"))
 	}
+
+	if config.IsSubstituted(ctx) {
+		// Validate the task's workspaces only.
+		errs = errs.Also(validateDeclaredWorkspaces(ts.Workspaces, ts.Steps, ts.StepTemplate).ViaField("workspaces"))
+		errs = errs.Also(validateWorkspaceUsages(ctx, ts))
+
+		return errs
+	}
+
 	errs = errs.Also(ValidateVolumes(ts.Volumes).ViaField("volumes"))
 	errs = errs.Also(validateDeclaredWorkspaces(ts.Workspaces, ts.Steps, ts.StepTemplate).ViaField("workspaces"))
 	errs = errs.Also(validateWorkspaceUsages(ctx, ts))
@@ -62,10 +75,10 @@ func (ts *TaskSpec) Validate(ctx context.Context) (errs *apis.FieldError) {
 
 	errs = errs.Also(validateSteps(ctx, mergedSteps).ViaField("steps"))
 	errs = errs.Also(ts.Resources.Validate(ctx).ViaField("resources"))
-	errs = errs.Also(ValidateParameterTypes(ts.Params).ViaField("params"))
-	errs = errs.Also(ValidateParameterVariables(ts.Steps, ts.Params))
-	errs = errs.Also(ValidateResourcesVariables(ts.Steps, ts.Resources))
-	errs = errs.Also(validateTaskContextVariables(ts.Steps))
+	errs = errs.Also(ValidateParameterTypes(ctx, ts.Params).ViaField("params"))
+	errs = errs.Also(ValidateParameterVariables(ctx, ts.Steps, ts.Params))
+	errs = errs.Also(ValidateResourcesVariables(ctx, ts.Steps, ts.Resources))
+	errs = errs.Also(validateTaskContextVariables(ctx, ts.Steps))
 	errs = errs.Also(validateResults(ctx, ts.Results).ViaField("results"))
 	return errs
 }
@@ -77,17 +90,9 @@ func validateResults(ctx context.Context, results []TaskResult) (errs *apis.Fiel
 	return errs
 }
 
-// Validate implements apis.Validatable
-func (tr TaskResult) Validate(_ context.Context) *apis.FieldError {
-	if !resultNameFormatRegex.MatchString(tr.Name) {
-		return apis.ErrInvalidKeyName(tr.Name, "name", fmt.Sprintf("Name must consist of alphanumeric characters, '-', '_', and must start and end with an alphanumeric character (e.g. 'MyName',  or 'my-name',  or 'my_name', regex used for validation is '%s')", ResultNameFormat))
-	}
-	return nil
-}
-
 // a mount path which conflicts with any other declared workspaces, with the explicitly
 // declared volume mounts, or with the stepTemplate. The names must also be unique.
-func validateDeclaredWorkspaces(workspaces []WorkspaceDeclaration, steps []Step, stepTemplate *corev1.Container) (errs *apis.FieldError) {
+func validateDeclaredWorkspaces(workspaces []WorkspaceDeclaration, steps []Step, stepTemplate *StepTemplate) (errs *apis.FieldError) {
 	mountPaths := sets.NewString()
 	for _, step := range steps {
 		for _, vm := range step.VolumeMounts {
@@ -245,8 +250,13 @@ func validateStep(ctx context.Context, s Step, names sets.String) (errs *apis.Fi
 }
 
 // ValidateParameterTypes validates all the types within a slice of ParamSpecs
-func ValidateParameterTypes(params []ParamSpec) (errs *apis.FieldError) {
+func ValidateParameterTypes(ctx context.Context, params []ParamSpec) (errs *apis.FieldError) {
 	for _, p := range params {
+		if p.Type == ParamTypeObject {
+			// Object type parameter is an alpha feature and will fail validation if it's used in a task spec
+			// when the enable-api-fields feature gate is not "alpha".
+			errs = errs.Also(ValidateEnabledAPIFields(ctx, "object type parameter", config.AlphaAPIFields))
+		}
 		errs = errs.Also(p.ValidateType())
 	}
 	return errs
@@ -276,26 +286,63 @@ func (p ParamSpec) ValidateType() *apis.FieldError {
 			},
 		}
 	}
+
+	// Check object type and its PropertySpec type
+	return p.ValidateObjectType()
+}
+
+// ValidateObjectType checks that object type parameter does not miss the
+// definition of `properties` section and the type of a PropertySpec is allowed.
+// (Currently, only string is allowed)
+func (p ParamSpec) ValidateObjectType() *apis.FieldError {
+	if p.Type == ParamTypeObject && p.Properties == nil {
+		return apis.ErrMissingField(fmt.Sprintf("%s.properties", p.Name))
+	}
+
+	invalidKeys := []string{}
+	for key, propertySpec := range p.Properties {
+		if propertySpec.Type != ParamTypeString {
+			invalidKeys = append(invalidKeys, key)
+		}
+	}
+
+	if len(invalidKeys) != 0 {
+		return &apis.FieldError{
+			Message: fmt.Sprintf("The value type specified for these keys %v is invalid", invalidKeys),
+			Paths:   []string{fmt.Sprintf("%s.properties", p.Name)},
+		}
+	}
+
 	return nil
 }
 
 // ValidateParameterVariables validates all variables within a slice of ParamSpecs against a slice of Steps
-func ValidateParameterVariables(steps []Step, params []ParamSpec) *apis.FieldError {
+func ValidateParameterVariables(ctx context.Context, steps []Step, params []ParamSpec) *apis.FieldError {
 	parameterNames := sets.NewString()
 	arrayParameterNames := sets.NewString()
-
+	objectParamSpecs := []ParamSpec{}
+	var errs *apis.FieldError
 	for _, p := range params {
+		// validate no duplicate names
+		if parameterNames.Has(p.Name) {
+			errs = errs.Also(apis.ErrGeneric("parameter appears more than once", "").ViaFieldKey("params", p.Name))
+		}
 		parameterNames.Insert(p.Name)
 		if p.Type == ParamTypeArray {
 			arrayParameterNames.Insert(p.Name)
 		}
+		if p.Type == ParamTypeObject {
+			objectParamSpecs = append(objectParamSpecs, p)
+		}
 	}
 
-	errs := validateVariables(steps, "params", parameterNames)
-	return errs.Also(validateArrayUsage(steps, "params", arrayParameterNames))
+	errs = errs.Also(validateVariables(ctx, steps, "params", parameterNames))
+	errs = errs.Also(validateArrayUsage(steps, "params", arrayParameterNames))
+	errs = errs.Also(validateObjectDefault(objectParamSpecs))
+	return errs.Also(validateObjectUsage(ctx, steps, objectParamSpecs))
 }
 
-func validateTaskContextVariables(steps []Step) *apis.FieldError {
+func validateTaskContextVariables(ctx context.Context, steps []Step) *apis.FieldError {
 	taskRunContextNames := sets.NewString().Insert(
 		"name",
 		"namespace",
@@ -305,12 +352,12 @@ func validateTaskContextVariables(steps []Step) *apis.FieldError {
 		"name",
 		"retry-count",
 	)
-	errs := validateVariables(steps, "context\\.taskRun", taskRunContextNames)
-	return errs.Also(validateVariables(steps, "context\\.task", taskContextNames))
+	errs := validateVariables(ctx, steps, "context\\.taskRun", taskRunContextNames)
+	return errs.Also(validateVariables(ctx, steps, "context\\.task", taskContextNames))
 }
 
 // ValidateResourcesVariables validates all variables within a TaskResources against a slice of Steps
-func ValidateResourcesVariables(steps []Step, resources *TaskResources) *apis.FieldError {
+func ValidateResourcesVariables(ctx context.Context, steps []Step, resources *TaskResources) *apis.FieldError {
 	if resources == nil {
 		return nil
 	}
@@ -325,7 +372,98 @@ func ValidateResourcesVariables(steps []Step, resources *TaskResources) *apis.Fi
 			resourceNames.Insert(r.Name)
 		}
 	}
-	return validateVariables(steps, "resources.(?:inputs|outputs)", resourceNames)
+	return validateVariables(ctx, steps, "resources.(?:inputs|outputs)", resourceNames)
+}
+
+// validateObjectUsage validates the usage of individual attributes of an object param and the usage of the entire object
+func validateObjectUsage(ctx context.Context, steps []Step, params []ParamSpec) (errs *apis.FieldError) {
+	objectParameterNames := sets.NewString()
+	for _, p := range params {
+		// collect all names of object type params
+		objectParameterNames.Insert(p.Name)
+
+		// collect all keys for this object param
+		objectKeys := sets.NewString()
+		for key := range p.Properties {
+			objectKeys.Insert(key)
+		}
+
+		// check if the object's key names are referenced correctly i.e. param.objectParam.key1
+		errs = errs.Also(validateVariables(ctx, steps, fmt.Sprintf("params\\.%s", p.Name), objectKeys))
+	}
+
+	return errs.Also(validateObjectUsageAsWhole(steps, "params", objectParameterNames))
+}
+
+// validateObjectDefault validates the keys of all the object params within a
+// slice of ParamSpecs are provided in default iff the default section is provided.
+func validateObjectDefault(objectParams []ParamSpec) (errs *apis.FieldError) {
+	for _, p := range objectParams {
+		errs = errs.Also(validateObjectKeys(p.Properties, p.Default).ViaField(p.Name))
+	}
+	return errs
+}
+
+// validateObjectKeys validates if object keys defined in properties are all provided in its value provider iff the provider is not nil.
+func validateObjectKeys(properties map[string]PropertySpec, propertiesProvider *ArrayOrString) (errs *apis.FieldError) {
+	if propertiesProvider == nil || propertiesProvider.ObjectVal == nil {
+		return nil
+	}
+
+	neededKeys := []string{}
+	providedKeys := []string{}
+
+	// collect all needed keys
+	for key := range properties {
+		neededKeys = append(neededKeys, key)
+	}
+
+	// collect all provided keys
+	for key := range propertiesProvider.ObjectVal {
+		providedKeys = append(providedKeys, key)
+	}
+
+	missings := list.DiffLeft(neededKeys, providedKeys)
+	if len(missings) != 0 {
+		return &apis.FieldError{
+			Message: fmt.Sprintf("Required key(s) %s are missing in the value provider.", missings),
+			Paths:   []string{fmt.Sprintf("properties"), fmt.Sprintf("default")},
+		}
+	}
+
+	return nil
+}
+
+// validateObjectUsageAsWhole makes sure the object params are not used as whole when providing values for strings
+// i.e. param.objectParam, param.objectParam[*]
+func validateObjectUsageAsWhole(steps []Step, prefix string, vars sets.String) (errs *apis.FieldError) {
+	for idx, step := range steps {
+		errs = errs.Also(validateStepObjectUsageAsWhole(step, prefix, vars)).ViaFieldIndex("steps", idx)
+	}
+	return errs
+}
+
+func validateStepObjectUsageAsWhole(step Step, prefix string, vars sets.String) *apis.FieldError {
+	errs := validateTaskNoObjectReferenced(step.Name, prefix, vars).ViaField("name")
+	errs = errs.Also(validateTaskNoObjectReferenced(step.Image, prefix, vars).ViaField("image"))
+	errs = errs.Also(validateTaskNoObjectReferenced(step.WorkingDir, prefix, vars).ViaField("workingDir"))
+	errs = errs.Also(validateTaskNoObjectReferenced(step.Script, prefix, vars).ViaField("script"))
+	for i, cmd := range step.Command {
+		errs = errs.Also(validateTaskNoObjectReferenced(cmd, prefix, vars).ViaFieldIndex("command", i))
+	}
+	for i, arg := range step.Args {
+		errs = errs.Also(validateTaskNoObjectReferenced(arg, prefix, vars).ViaFieldIndex("args", i))
+
+	}
+	for _, env := range step.Env {
+		errs = errs.Also(validateTaskNoObjectReferenced(env.Value, prefix, vars).ViaFieldKey("env", env.Name))
+	}
+	for i, v := range step.VolumeMounts {
+		errs = errs.Also(validateTaskNoObjectReferenced(v.Name, prefix, vars).ViaField("name").ViaFieldIndex("volumeMount", i))
+		errs = errs.Also(validateTaskNoObjectReferenced(v.MountPath, prefix, vars).ViaField("mountPath").ViaFieldIndex("volumeMount", i))
+		errs = errs.Also(validateTaskNoObjectReferenced(v.SubPath, prefix, vars).ViaField("subPath").ViaFieldIndex("volumeMount", i))
+	}
+	return errs
 }
 
 func validateArrayUsage(steps []Step, prefix string, vars sets.String) (errs *apis.FieldError) {
@@ -358,18 +496,42 @@ func validateStepArrayUsage(step Step, prefix string, vars sets.String) *apis.Fi
 	return errs
 }
 
-func validateVariables(steps []Step, prefix string, vars sets.String) (errs *apis.FieldError) {
+func validateVariables(ctx context.Context, steps []Step, prefix string, vars sets.String) (errs *apis.FieldError) {
+	// validate that the variable name format follows the rules
+	// - Must only contain alphanumeric characters, hyphens (-), underscores (_), and dots (.)
+	// - Must begin with a letter or an underscore (_)
+	re := regexp.MustCompile(variableNameFormat)
+	invalidNames := []string{}
+	// Converting to sorted list here rather than just looping map keys
+	// because we want the order of items in vars to be deterministic for purpose of unit testing
+	for _, name := range vars.List() {
+		if !re.MatchString(name) {
+			invalidNames = append(invalidNames, name)
+		}
+	}
+
+	if len(invalidNames) != 0 {
+		return &apis.FieldError{
+			Message: fmt.Sprintf("The format of following variable names is invalid. %s", invalidNames),
+			Paths:   []string{"params"},
+			Details: "Names: \nMust only contain alphanumeric characters, hyphens (-), underscores (_), and dots (.)\nMust begin with a letter or an underscore (_)",
+		}
+	}
+
+	// We've checked param name format. Now, we want to check if param names are referenced correctly in each step
 	for idx, step := range steps {
-		errs = errs.Also(validateStepVariables(step, prefix, vars).ViaFieldIndex("steps", idx))
+		errs = errs.Also(validateStepVariables(ctx, step, prefix, vars).ViaFieldIndex("steps", idx))
 	}
 	return errs
 }
 
-func validateStepVariables(step Step, prefix string, vars sets.String) *apis.FieldError {
+func validateStepVariables(ctx context.Context, step Step, prefix string, vars sets.String) *apis.FieldError {
 	errs := validateTaskVariable(step.Name, prefix, vars).ViaField("name")
 	errs = errs.Also(validateTaskVariable(step.Image, prefix, vars).ViaField("image"))
 	errs = errs.Also(validateTaskVariable(step.WorkingDir, prefix, vars).ViaField("workingDir"))
-	errs = errs.Also(validateTaskVariable(step.Script, prefix, vars).ViaField("script"))
+	if !(config.FromContextOrDefaults(ctx).FeatureFlags.EnableAPIFields == "alpha" && prefix == "params") {
+		errs = errs.Also(validateTaskVariable(step.Script, prefix, vars).ViaField("script"))
+	}
 	for i, cmd := range step.Command {
 		errs = errs.Also(validateTaskVariable(cmd, prefix, vars).ViaFieldIndex("command", i))
 	}
@@ -389,6 +551,10 @@ func validateStepVariables(step Step, prefix string, vars sets.String) *apis.Fie
 
 func validateTaskVariable(value, prefix string, vars sets.String) *apis.FieldError {
 	return substitution.ValidateVariableP(value, prefix, vars)
+}
+
+func validateTaskNoObjectReferenced(value, prefix string, objectNames sets.String) *apis.FieldError {
+	return substitution.ValidateEntireVariableProhibitedP(value, prefix, objectNames)
 }
 
 func validateTaskNoArrayReferenced(value, prefix string, arrayNames sets.String) *apis.FieldError {

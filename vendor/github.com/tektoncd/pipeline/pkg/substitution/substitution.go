@@ -27,11 +27,11 @@ import (
 
 const parameterSubstitution = `[_a-zA-Z][_a-zA-Z0-9.-]*(\[\*\])?`
 
-const braceMatchingRegex = "(\\$(\\(%s\\.(?P<var>%s)\\)))"
+const braceMatchingRegex = "(\\$(\\(%s(\\.(?P<var1>%s)|\\[\"(?P<var2>%s)\"\\]|\\['(?P<var3>%s)'\\])\\)))"
 
 // ValidateVariable makes sure all variables in the provided string are known
 func ValidateVariable(name, value, prefix, locationName, path string, vars sets.String) *apis.FieldError {
-	if vs, present := extractVariablesFromString(value, prefix); present {
+	if vs, present, _ := extractVariablesFromString(value, prefix); present {
 		for _, v := range vs {
 			v = strings.TrimSuffix(v, "[*]")
 			if !vars.Has(v) {
@@ -47,7 +47,14 @@ func ValidateVariable(name, value, prefix, locationName, path string, vars sets.
 
 // ValidateVariableP makes sure all variables for a parameter in the provided string are known
 func ValidateVariableP(value, prefix string, vars sets.String) *apis.FieldError {
-	if vs, present := extractVariablesFromString(value, prefix); present {
+	if vs, present, errString := extractVariablesFromString(value, prefix); present {
+		if errString != "" {
+			return &apis.FieldError{
+				Message: errString,
+				Paths:   []string{""},
+			}
+
+		}
 		for _, v := range vs {
 			v = strings.TrimSuffix(v, "[*]")
 			if !vars.Has(v) {
@@ -64,7 +71,7 @@ func ValidateVariableP(value, prefix string, vars sets.String) *apis.FieldError 
 
 // ValidateVariableProhibited verifies that variables matching the relevant string expressions do not reference any of the names present in vars.
 func ValidateVariableProhibited(name, value, prefix, locationName, path string, vars sets.String) *apis.FieldError {
-	if vs, present := extractVariablesFromString(value, prefix); present {
+	if vs, present, _ := extractVariablesFromString(value, prefix); present {
 		for _, v := range vs {
 			v = strings.TrimSuffix(v, "[*]")
 			if vars.Has(v) {
@@ -80,7 +87,14 @@ func ValidateVariableProhibited(name, value, prefix, locationName, path string, 
 
 // ValidateVariableProhibitedP verifies that variables for a parameter matching the relevant string expressions do not reference any of the names present in vars.
 func ValidateVariableProhibitedP(value, prefix string, vars sets.String) *apis.FieldError {
-	if vs, present := extractVariablesFromString(value, prefix); present {
+	if vs, present, errString := extractVariablesFromString(value, prefix); present {
+		if errString != "" {
+			return &apis.FieldError{
+				Message: errString,
+				Paths:   []string{""},
+			}
+
+		}
 		for _, v := range vs {
 			v = strings.TrimSuffix(v, "[*]")
 			if vars.Has(v) {
@@ -95,9 +109,34 @@ func ValidateVariableProhibitedP(value, prefix string, vars sets.String) *apis.F
 	return nil
 }
 
+// ValidateEntireVariableProhibitedP verifies that values of object type are not used as whole.
+func ValidateEntireVariableProhibitedP(value, prefix string, vars sets.String) *apis.FieldError {
+	vs, err := extractEntireVariablesFromString(value, prefix)
+	if err != nil {
+		return &apis.FieldError{
+			Message: fmt.Sprintf("extractEntireVariablesFromString failed : %v", err),
+			// Empty path is required to make the `ViaField`, … work
+			Paths: []string{""},
+		}
+	}
+
+	for _, v := range vs {
+		v = strings.TrimSuffix(v, "[*]")
+		if vars.Has(v) {
+			return &apis.FieldError{
+				Message: fmt.Sprintf("variable type invalid in %q", value),
+				// Empty path is required to make the `ViaField`, … work
+				Paths: []string{""},
+			}
+		}
+	}
+
+	return nil
+}
+
 // ValidateVariableIsolated verifies that variables matching the relevant string expressions are completely isolated if present.
 func ValidateVariableIsolated(name, value, prefix, locationName, path string, vars sets.String) *apis.FieldError {
-	if vs, present := extractVariablesFromString(value, prefix); present {
+	if vs, present, _ := extractVariablesFromString(value, prefix); present {
 		firstMatch, _ := extractExpressionFromString(value, prefix)
 		for _, v := range vs {
 			v = strings.TrimSuffix(v, "[*]")
@@ -116,7 +155,14 @@ func ValidateVariableIsolated(name, value, prefix, locationName, path string, va
 
 // ValidateVariableIsolatedP verifies that variables matching the relevant string expressions are completely isolated if present.
 func ValidateVariableIsolatedP(value, prefix string, vars sets.String) *apis.FieldError {
-	if vs, present := extractVariablesFromString(value, prefix); present {
+	if vs, present, errString := extractVariablesFromString(value, prefix); present {
+		if errString != "" {
+			return &apis.FieldError{
+				Message: errString,
+				Paths:   []string{""},
+			}
+
+		}
 		firstMatch, _ := extractExpressionFromString(value, prefix)
 		for _, v := range vs {
 			v = strings.TrimSuffix(v, "[*]")
@@ -137,7 +183,7 @@ func ValidateVariableIsolatedP(value, prefix string, vars sets.String) *apis.Fie
 // Extract a the first full string expressions found (e.g "$(input.params.foo)"). Return
 // "" and false if nothing is found.
 func extractExpressionFromString(s, prefix string) (string, bool) {
-	pattern := fmt.Sprintf(braceMatchingRegex, prefix, parameterSubstitution)
+	pattern := fmt.Sprintf(braceMatchingRegex, prefix, parameterSubstitution, parameterSubstitution, parameterSubstitution)
 	re := regexp.MustCompile(pattern)
 	match := re.FindStringSubmatch(s)
 	if match == nil {
@@ -146,22 +192,68 @@ func extractExpressionFromString(s, prefix string) (string, bool) {
 	return match[0], true
 }
 
-func extractVariablesFromString(s, prefix string) ([]string, bool) {
-	pattern := fmt.Sprintf(braceMatchingRegex, prefix, parameterSubstitution)
+func extractVariablesFromString(s, prefix string) ([]string, bool, string) {
+	pattern := fmt.Sprintf(braceMatchingRegex, prefix, parameterSubstitution, parameterSubstitution, parameterSubstitution)
 	re := regexp.MustCompile(pattern)
 	matches := re.FindAllStringSubmatch(s, -1)
+	errString := ""
 	if len(matches) == 0 {
-		return []string{}, false
+		return []string{}, false, ""
+	}
+	vars := make([]string, len(matches))
+	for i, match := range matches {
+		groups := matchGroups(match, re)
+		for j, v := range []string{"var1", "var2", "var3"} {
+			val := groups[v]
+			// If using the dot notation, the number of dot-separated components is restricted up to 2.
+			// Valid Examples:
+			//  - extract "aString" from <prefix>.aString
+			//  - extract "anObject" from <prefix>.anObject.key
+			// Invalid Examples:
+			//  - <prefix>.foo.bar.baz....
+			if j == 0 && strings.Contains(val, ".") {
+				if len(strings.Split(val, ".")) > 2 {
+					errString = fmt.Sprintf(`Invalid referencing of parameters in "%s"! Only two dot-separated components after the prefix "%s" are allowed.`, s, prefix)
+					return vars, true, errString
+				}
+				vars[i] = strings.SplitN(val, ".", 2)[0]
+				break
+			}
+			if val != "" {
+				vars[i] = val
+				break
+			}
+		}
+	}
+	return vars, true, errString
+}
+
+func extractEntireVariablesFromString(s, prefix string) ([]string, error) {
+	pattern := fmt.Sprintf(braceMatchingRegex, prefix, parameterSubstitution, parameterSubstitution, parameterSubstitution)
+	re, err := regexp.Compile(pattern)
+	if err != nil {
+		return nil, fmt.Errorf("Fail to parse regex pattern: %v", err)
+	}
+
+	matches := re.FindAllStringSubmatch(s, -1)
+	if len(matches) == 0 {
+		return []string{}, nil
 	}
 	vars := make([]string, len(matches))
 	for i, match := range matches {
 		groups := matchGroups(match, re)
 		// foo -> foo
-		// foo.bar -> foo
-		// foo.bar.baz -> foo
-		vars[i] = strings.SplitN(groups["var"], ".", 2)[0]
+		// foo.bar -> foo.bar
+		// foo.bar.baz -> foo.bar.baz
+		for _, v := range []string{"var1", "var2", "var3"} {
+			val := groups[v]
+			if val != "" {
+				vars[i] = val
+				break
+			}
+		}
 	}
-	return vars, true
+	return vars, nil
 }
 
 func matchGroups(matches []string, pattern *regexp.Regexp) map[string]string {
