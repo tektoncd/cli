@@ -339,7 +339,7 @@ github.com/cpuguy83/go-md2man/md2man
 # github.com/cpuguy83/go-md2man/v2 v2.0.2
 ## explicit; go 1.11
 github.com/cpuguy83/go-md2man/v2/md2man
-# github.com/creack/pty v1.1.17
+# github.com/creack/pty v1.1.18
 ## explicit; go 1.13
 github.com/creack/pty
 # github.com/cyberphone/json-canonicalization v0.0.0-20210823021906-dc406ceaf94b

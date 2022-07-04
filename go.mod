@@ -81,7 +81,7 @@ require (
 )
 
 require (
-	github.com/creack/pty v1.1.17
+	github.com/creack/pty v1.1.18
 	github.com/letsencrypt/boulder v0.0.0-20220331220046-b23ab962616e
 	github.com/titanous/rocacheck v0.0.0-20171023193734-afe73141d399
 )
