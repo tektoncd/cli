@@ -8,6 +8,6 @@ Resources
 
 Tasks
 
- NAME     TASKREF   RUNAFTER   TIMEOUT   CONDITIONS   PARAMS
- task-1   task-1               ---       ---          ---
- task-2   task-2               ---       ---          ---
+ NAME     TASKREF   RUNAFTER   TIMEOUT   PARAMS
+ task-1   task-1               ---       ---
+ task-2   task-2               ---       ---

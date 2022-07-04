@@ -4,8 +4,8 @@ Description:   a test description
 
 Tasks
 
- NAME   TASKREF   RUNAFTER   TIMEOUT     CONDITIONS   PARAMS
- task   taskref   one, two   5 minutes   ---          task-param: value
+ NAME   TASKREF   RUNAFTER   TIMEOUT     PARAMS
+ task   taskref   one, two   5 minutes   task-param: value
 
 PipelineRuns
 
