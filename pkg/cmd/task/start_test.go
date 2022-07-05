@@ -300,16 +300,12 @@ func Test_start_task_not_found(t *testing.T) {
 					Description: "a test description",
 					Steps: []v1alpha1.Step{
 						{
-							Container: corev1.Container{
-								Name:  "hello",
-								Image: "busybox",
-							},
+							Name:  "hello",
+							Image: "busybox",
 						},
 						{
-							Container: corev1.Container{
-								Name:  "exit",
-								Image: "busybox",
-							},
+							Name:  "exit",
+							Image: "busybox",
 						},
 					},
 				},
@@ -419,16 +415,12 @@ func Test_start_task_not_found_v1beta1(t *testing.T) {
 				},
 				Steps: []v1beta1.Step{
 					{
-						Container: corev1.Container{
-							Name:  "hello",
-							Image: "busybox",
-						},
+						Name:  "hello",
+						Image: "busybox",
 					},
 					{
-						Container: corev1.Container{
-							Name:  "exit",
-							Image: "busybox",
-						},
+						Name:  "exit",
+						Image: "busybox",
 					},
 				},
 			},
@@ -468,16 +460,12 @@ func Test_start_task(t *testing.T) {
 				TaskSpec: v1beta1.TaskSpec{
 					Steps: []v1alpha1.Step{
 						{
-							Container: corev1.Container{
-								Name:  "hello",
-								Image: "busybox",
-							},
+							Name:  "hello",
+							Image: "busybox",
 						},
 						{
-							Container: corev1.Container{
-								Name:  "exit",
-								Image: "busybox",
-							},
+							Name:  "exit",
+							Image: "busybox",
 						},
 					},
 				},
@@ -645,16 +633,12 @@ func Test_start_task_v1beta1_context(t *testing.T) {
 				},
 				Steps: []v1beta1.Step{
 					{
-						Container: corev1.Container{
-							Name:  "hello",
-							Image: "busybox",
-						},
+						Name:  "hello",
+						Image: "busybox",
 					},
 					{
-						Container: corev1.Container{
-							Name:  "exit",
-							Image: "busybox",
-						},
+						Name:  "exit",
+						Image: "busybox",
 					},
 				},
 			},
@@ -742,16 +726,12 @@ func Test_start_task_v1beta1(t *testing.T) {
 				},
 				Steps: []v1beta1.Step{
 					{
-						Container: corev1.Container{
-							Name:  "hello",
-							Image: "busybox",
-						},
+						Name:  "hello",
+						Image: "busybox",
 					},
 					{
-						Container: corev1.Container{
-							Name:  "exit",
-							Image: "busybox",
-						},
+						Name:  "exit",
+						Image: "busybox",
 					},
 				},
 			},
@@ -849,16 +829,12 @@ func Test_start_task_last(t *testing.T) {
 				TaskSpec: v1beta1.TaskSpec{
 					Steps: []v1alpha1.Step{
 						{
-							Container: corev1.Container{
-								Name:  "hello",
-								Image: "busybox",
-							},
+							Name:  "hello",
+							Image: "busybox",
 						},
 						{
-							Container: corev1.Container{
-								Name:  "exit",
-								Image: "busybox",
-							},
+							Name:  "exit",
+							Image: "busybox",
 						},
 					},
 					Workspaces: []v1beta1.WorkspaceDeclaration{
@@ -1075,16 +1051,12 @@ func Test_start_task_last_v1beta1(t *testing.T) {
 				},
 				Steps: []v1beta1.Step{
 					{
-						Container: corev1.Container{
-							Name:  "hello",
-							Image: "busybox",
-						},
+						Name:  "hello",
+						Image: "busybox",
 					},
 					{
-						Container: corev1.Container{
-							Name:  "exit",
-							Image: "busybox",
-						},
+						Name:  "exit",
+						Image: "busybox",
 					},
 				},
 				Workspaces: []v1beta1.WorkspaceDeclaration{
@@ -1233,16 +1205,12 @@ func Test_start_task_last_with_override_timeout_v1beta1(t *testing.T) {
 			Spec: v1beta1.TaskSpec{
 				Steps: []v1beta1.Step{
 					{
-						Container: corev1.Container{
-							Name:  "hello",
-							Image: "busybox",
-						},
+						Name:  "hello",
+						Image: "busybox",
 					},
 					{
-						Container: corev1.Container{
-							Name:  "exit",
-							Image: "busybox",
-						},
+						Name:  "exit",
+						Image: "busybox",
 					},
 				},
 			},
@@ -1321,16 +1289,12 @@ func Test_start_use_taskrun(t *testing.T) {
 				TaskSpec: v1beta1.TaskSpec{
 					Steps: []v1alpha1.Step{
 						{
-							Container: corev1.Container{
-								Name:  "hello",
-								Image: "busybox",
-							},
+							Name:  "hello",
+							Image: "busybox",
 						},
 						{
-							Container: corev1.Container{
-								Name:  "exit",
-								Image: "busybox",
-							},
+							Name:  "exit",
+							Image: "busybox",
 						},
 					},
 					Workspaces: []v1beta1.WorkspaceDeclaration{
@@ -1489,16 +1453,12 @@ func Test_start_use_taskrun_v1beta1(t *testing.T) {
 				},
 				Steps: []v1beta1.Step{
 					{
-						Container: corev1.Container{
-							Name:  "hello",
-							Image: "busybox",
-						},
+						Name:  "hello",
+						Image: "busybox",
 					},
 					{
-						Container: corev1.Container{
-							Name:  "exit",
-							Image: "busybox",
-						},
+						Name:  "exit",
+						Image: "busybox",
 					},
 				},
 				Workspaces: []v1beta1.WorkspaceDeclaration{
@@ -1627,16 +1587,12 @@ func Test_start_use_taskrun_cancelled_status_v1beta1(t *testing.T) {
 				},
 				Steps: []v1beta1.Step{
 					{
-						Container: corev1.Container{
-							Name:  "hello",
-							Image: "busybox",
-						},
+						Name:  "hello",
+						Image: "busybox",
 					},
 					{
-						Container: corev1.Container{
-							Name:  "exit",
-							Image: "busybox",
-						},
+						Name:  "exit",
+						Image: "busybox",
 					},
 				},
 				Workspaces: []v1beta1.WorkspaceDeclaration{
@@ -1727,16 +1683,12 @@ func Test_start_task_last_generate_name(t *testing.T) {
 				TaskSpec: v1beta1.TaskSpec{
 					Steps: []v1alpha1.Step{
 						{
-							Container: corev1.Container{
-								Name:  "hello",
-								Image: "busybox",
-							},
+							Name:  "hello",
+							Image: "busybox",
 						},
 						{
-							Container: corev1.Container{
-								Name:  "exit",
-								Image: "busybox",
-							},
+							Name:  "exit",
+							Image: "busybox",
 						},
 					},
 					Workspaces: []v1beta1.WorkspaceDeclaration{
@@ -1925,16 +1877,12 @@ func Test_start_task_last_generate_name_v1beta1(t *testing.T) {
 				},
 				Steps: []v1beta1.Step{
 					{
-						Container: corev1.Container{
-							Name:  "hello",
-							Image: "busybox",
-						},
+						Name:  "hello",
+						Image: "busybox",
 					},
 					{
-						Container: corev1.Container{
-							Name:  "exit",
-							Image: "busybox",
-						},
+						Name:  "exit",
+						Image: "busybox",
 					},
 				},
 				Workspaces: []v1beta1.WorkspaceDeclaration{
@@ -2060,16 +2008,12 @@ func Test_start_task_last_with_prefix_name(t *testing.T) {
 				TaskSpec: v1beta1.TaskSpec{
 					Steps: []v1alpha1.Step{
 						{
-							Container: corev1.Container{
-								Name:  "hello",
-								Image: "busybox",
-							},
+							Name:  "hello",
+							Image: "busybox",
 						},
 						{
-							Container: corev1.Container{
-								Name:  "exit",
-								Image: "busybox",
-							},
+							Name:  "exit",
+							Image: "busybox",
 						},
 					},
 					Workspaces: []v1beta1.WorkspaceDeclaration{
@@ -2257,16 +2201,12 @@ func Test_start_task_last_with_prefix_name_v1beta1(t *testing.T) {
 				},
 				Steps: []v1beta1.Step{
 					{
-						Container: corev1.Container{
-							Name:  "hello",
-							Image: "busybox",
-						},
+						Name:  "hello",
+						Image: "busybox",
 					},
 					{
-						Container: corev1.Container{
-							Name:  "exit",
-							Image: "busybox",
-						},
+						Name:  "exit",
+						Image: "busybox",
 					},
 				},
 				Workspaces: []v1beta1.WorkspaceDeclaration{
@@ -2391,16 +2331,12 @@ func Test_start_task_with_prefix_name(t *testing.T) {
 				TaskSpec: v1beta1.TaskSpec{
 					Steps: []v1alpha1.Step{
 						{
-							Container: corev1.Container{
-								Name:  "hello",
-								Image: "busybox",
-							},
+							Name:  "hello",
+							Image: "busybox",
 						},
 						{
-							Container: corev1.Container{
-								Name:  "exit",
-								Image: "busybox",
-							},
+							Name:  "exit",
+							Image: "busybox",
 						},
 					},
 					Workspaces: []v1beta1.WorkspaceDeclaration{
@@ -2588,16 +2524,12 @@ func Test_start_task_with_prefix_name_v1beta1(t *testing.T) {
 				},
 				Steps: []v1beta1.Step{
 					{
-						Container: corev1.Container{
-							Name:  "hello",
-							Image: "busybox",
-						},
+						Name:  "hello",
+						Image: "busybox",
 					},
 					{
-						Container: corev1.Container{
-							Name:  "exit",
-							Image: "busybox",
-						},
+						Name:  "exit",
+						Image: "busybox",
 					},
 				},
 				Workspaces: []v1beta1.WorkspaceDeclaration{
@@ -2722,16 +2654,12 @@ func Test_start_task_last_with_inputs(t *testing.T) {
 				TaskSpec: v1beta1.TaskSpec{
 					Steps: []v1alpha1.Step{
 						{
-							Container: corev1.Container{
-								Name:  "hello",
-								Image: "busybox",
-							},
+							Name:  "hello",
+							Image: "busybox",
 						},
 						{
-							Container: corev1.Container{
-								Name:  "exit",
-								Image: "busybox",
-							},
+							Name:  "exit",
+							Image: "busybox",
 						},
 					},
 				},
@@ -2933,16 +2861,12 @@ func Test_start_task_last_with_inputs_v1beta1(t *testing.T) {
 				},
 				Steps: []v1beta1.Step{
 					{
-						Container: corev1.Container{
-							Name:  "hello",
-							Image: "busybox",
-						},
+						Name:  "hello",
+						Image: "busybox",
 					},
 					{
-						Container: corev1.Container{
-							Name:  "exit",
-							Image: "busybox",
-						},
+						Name:  "exit",
+						Image: "busybox",
 					},
 				},
 				Workspaces: []v1beta1.WorkspaceDeclaration{
@@ -3095,16 +3019,12 @@ func Test_start_task_last_without_taskrun(t *testing.T) {
 				TaskSpec: v1beta1.TaskSpec{
 					Steps: []v1alpha1.Step{
 						{
-							Container: corev1.Container{
-								Name:  "hello",
-								Image: "busybox",
-							},
+							Name:  "hello",
+							Image: "busybox",
 						},
 						{
-							Container: corev1.Container{
-								Name:  "exit",
-								Image: "busybox",
-							},
+							Name:  "exit",
+							Image: "busybox",
 						},
 					},
 				},
@@ -3216,16 +3136,12 @@ func Test_start_task_last_without_taskrun_v1beta1(t *testing.T) {
 				},
 				Steps: []v1beta1.Step{
 					{
-						Container: corev1.Container{
-							Name:  "hello",
-							Image: "busybox",
-						},
+						Name:  "hello",
+						Image: "busybox",
 					},
 					{
-						Container: corev1.Container{
-							Name:  "exit",
-							Image: "busybox",
-						},
+						Name:  "exit",
+						Image: "busybox",
 					},
 				},
 				Workspaces: []v1beta1.WorkspaceDeclaration{
@@ -3275,16 +3191,12 @@ func Test_start_task_client_error(t *testing.T) {
 				TaskSpec: v1beta1.TaskSpec{
 					Steps: []v1alpha1.Step{
 						{
-							Container: corev1.Container{
-								Name:  "hello",
-								Image: "busybox",
-							},
+							Name:  "hello",
+							Image: "busybox",
 						},
 						{
-							Container: corev1.Container{
-								Name:  "exit",
-								Image: "busybox",
-							},
+							Name:  "exit",
+							Image: "busybox",
 						},
 					},
 				},
@@ -3412,16 +3324,12 @@ func Test_start_task_client_error_v1beta1(t *testing.T) {
 				},
 				Steps: []v1beta1.Step{
 					{
-						Container: corev1.Container{
-							Name:  "hello",
-							Image: "busybox",
-						},
+						Name:  "hello",
+						Image: "busybox",
 					},
 					{
-						Container: corev1.Container{
-							Name:  "exit",
-							Image: "busybox",
-						},
+						Name:  "exit",
+						Image: "busybox",
 					},
 				},
 			},
@@ -3479,16 +3387,12 @@ func Test_start_task_invalid_input_res(t *testing.T) {
 				TaskSpec: v1beta1.TaskSpec{
 					Steps: []v1alpha1.Step{
 						{
-							Container: corev1.Container{
-								Name:  "hello",
-								Image: "busybox",
-							},
+							Name:  "hello",
+							Image: "busybox",
 						},
 						{
-							Container: corev1.Container{
-								Name:  "exit",
-								Image: "busybox",
-							},
+							Name:  "exit",
+							Image: "busybox",
 						},
 					},
 				},
@@ -3607,16 +3511,12 @@ func Test_start_task_invalid_input_res_v1beta1(t *testing.T) {
 				},
 				Steps: []v1beta1.Step{
 					{
-						Container: corev1.Container{
-							Name:  "hello",
-							Image: "busybox",
-						},
+						Name:  "hello",
+						Image: "busybox",
 					},
 					{
-						Container: corev1.Container{
-							Name:  "exit",
-							Image: "busybox",
-						},
+						Name:  "exit",
+						Image: "busybox",
 					},
 				},
 			},
@@ -3665,16 +3565,12 @@ func Test_start_task_invalid_workspace(t *testing.T) {
 				TaskSpec: v1beta1.TaskSpec{
 					Steps: []v1alpha1.Step{
 						{
-							Container: corev1.Container{
-								Name:  "hello",
-								Image: "busybox",
-							},
+							Name:  "hello",
+							Image: "busybox",
 						},
 						{
-							Container: corev1.Container{
-								Name:  "exit",
-								Image: "busybox",
-							},
+							Name:  "exit",
+							Image: "busybox",
 						},
 					},
 				},
@@ -3764,16 +3660,12 @@ func Test_start_task_invalid_workspace_v1beta1(t *testing.T) {
 				},
 				Steps: []v1beta1.Step{
 					{
-						Container: corev1.Container{
-							Name:  "hello",
-							Image: "busybox",
-						},
+						Name:  "hello",
+						Image: "busybox",
 					},
 					{
-						Container: corev1.Container{
-							Name:  "exit",
-							Image: "busybox",
-						},
+						Name:  "exit",
+						Image: "busybox",
 					},
 				},
 				Workspaces: []v1beta1.WorkspaceDeclaration{
@@ -3825,16 +3717,12 @@ func Test_start_task_invalid_output_res(t *testing.T) {
 				TaskSpec: v1beta1.TaskSpec{
 					Steps: []v1alpha1.Step{
 						{
-							Container: corev1.Container{
-								Name:  "hello",
-								Image: "busybox",
-							},
+							Name:  "hello",
+							Image: "busybox",
 						},
 						{
-							Container: corev1.Container{
-								Name:  "exit",
-								Image: "busybox",
-							},
+							Name:  "exit",
+							Image: "busybox",
 						},
 					},
 				},
@@ -3951,16 +3839,12 @@ func Test_start_task_invalid_output_res_v1beta1(t *testing.T) {
 				},
 				Steps: []v1beta1.Step{
 					{
-						Container: corev1.Container{
-							Name:  "hello",
-							Image: "busybox",
-						},
+						Name:  "hello",
+						Image: "busybox",
 					},
 					{
-						Container: corev1.Container{
-							Name:  "exit",
-							Image: "busybox",
-						},
+						Name:  "exit",
+						Image: "busybox",
 					},
 				},
 			},
@@ -4007,16 +3891,12 @@ func Test_start_task_invalid_param(t *testing.T) {
 				TaskSpec: v1beta1.TaskSpec{
 					Steps: []v1alpha1.Step{
 						{
-							Container: corev1.Container{
-								Name:  "hello",
-								Image: "busybox",
-							},
+							Name:  "hello",
+							Image: "busybox",
 						},
 						{
-							Container: corev1.Container{
-								Name:  "exit",
-								Image: "busybox",
-							},
+							Name:  "exit",
+							Image: "busybox",
 						},
 					},
 				},
@@ -4131,16 +4011,12 @@ func Test_start_task_invalid_param_v1beta1(t *testing.T) {
 				},
 				Steps: []v1beta1.Step{
 					{
-						Container: corev1.Container{
-							Name:  "hello",
-							Image: "busybox",
-						},
+						Name:  "hello",
+						Image: "busybox",
 					},
 					{
-						Container: corev1.Container{
-							Name:  "exit",
-							Image: "busybox",
-						},
+						Name:  "exit",
+						Image: "busybox",
 					},
 				},
 			},
@@ -4185,16 +4061,12 @@ func Test_start_task_invalid_label(t *testing.T) {
 				TaskSpec: v1beta1.TaskSpec{
 					Steps: []v1alpha1.Step{
 						{
-							Container: corev1.Container{
-								Name:  "hello",
-								Image: "busybox",
-							},
+							Name:  "hello",
+							Image: "busybox",
 						},
 						{
-							Container: corev1.Container{
-								Name:  "exit",
-								Image: "busybox",
-							},
+							Name:  "exit",
+							Image: "busybox",
 						},
 					},
 				},
@@ -4312,16 +4184,12 @@ func Test_start_task_invalid_label_v1beta1(t *testing.T) {
 				},
 				Steps: []v1beta1.Step{
 					{
-						Container: corev1.Container{
-							Name:  "hello",
-							Image: "busybox",
-						},
+						Name:  "hello",
+						Image: "busybox",
 					},
 					{
-						Container: corev1.Container{
-							Name:  "exit",
-							Image: "busybox",
-						},
+						Name:  "exit",
+						Image: "busybox",
 					},
 				},
 			},
@@ -4369,16 +4237,12 @@ func Test_start_task_allkindparam(t *testing.T) {
 				TaskSpec: v1beta1.TaskSpec{
 					Steps: []v1alpha1.Step{
 						{
-							Container: corev1.Container{
-								Name:  "hello",
-								Image: "busybox",
-							},
+							Name:  "hello",
+							Image: "busybox",
 						},
 						{
-							Container: corev1.Container{
-								Name:  "exit",
-								Image: "busybox",
-							},
+							Name:  "exit",
+							Image: "busybox",
 						},
 					},
 				},
@@ -4553,16 +4417,12 @@ func Test_start_task_allkindparam_v1beta1(t *testing.T) {
 				},
 				Steps: []v1beta1.Step{
 					{
-						Container: corev1.Container{
-							Name:  "hello",
-							Image: "busybox",
-						},
+						Name:  "hello",
+						Image: "busybox",
 					},
 					{
-						Container: corev1.Container{
-							Name:  "exit",
-							Image: "busybox",
-						},
+						Name:  "exit",
+						Image: "busybox",
 					},
 				},
 			},
@@ -4659,16 +4519,12 @@ func Test_start_task_wrong_param(t *testing.T) {
 				TaskSpec: v1beta1.TaskSpec{
 					Steps: []v1alpha1.Step{
 						{
-							Container: corev1.Container{
-								Name:  "hello",
-								Image: "busybox",
-							},
+							Name:  "hello",
+							Image: "busybox",
 						},
 						{
-							Container: corev1.Container{
-								Name:  "exit",
-								Image: "busybox",
-							},
+							Name:  "exit",
+							Image: "busybox",
 						},
 					},
 				},
@@ -4788,16 +4644,12 @@ func Test_start_task_wrong_param_v1beta1(t *testing.T) {
 				},
 				Steps: []v1beta1.Step{
 					{
-						Container: corev1.Container{
-							Name:  "hello",
-							Image: "busybox",
-						},
+						Name:  "hello",
+						Image: "busybox",
 					},
 					{
-						Container: corev1.Container{
-							Name:  "exit",
-							Image: "busybox",
-						},
+						Name:  "exit",
+						Image: "busybox",
 					},
 				},
 			},
@@ -5019,16 +4871,12 @@ func TestTaskStart_ExecuteCommand(t *testing.T) {
 				TaskSpec: v1beta1.TaskSpec{
 					Steps: []v1alpha1.Step{
 						{
-							Container: corev1.Container{
-								Name:  "hello",
-								Image: "busybox",
-							},
+							Name:  "hello",
+							Image: "busybox",
 						},
 						{
-							Container: corev1.Container{
-								Name:  "exit",
-								Image: "busybox",
-							},
+							Name:  "exit",
+							Image: "busybox",
 						},
 					},
 				},
@@ -5392,16 +5240,13 @@ func TestTaskStart_ExecuteCommand_v1beta1(t *testing.T) {
 				},
 				Steps: []v1beta1.Step{
 					{
-						Container: corev1.Container{
-							Name:  "hello",
-							Image: "busybox",
-						},
+
+						Name:  "hello",
+						Image: "busybox",
 					},
 					{
-						Container: corev1.Container{
-							Name:  "exit",
-							Image: "busybox",
-						},
+						Name:  "exit",
+						Image: "busybox",
 					},
 				},
 			},
@@ -5695,10 +5540,8 @@ func Test_start_task_with_skip_optional_workspace_flag(t *testing.T) {
 			Spec: v1beta1.TaskSpec{
 				Steps: []v1beta1.Step{
 					{
-						Container: corev1.Container{
-							Name:  "hello",
-							Image: "busybox",
-						},
+						Name:  "hello",
+						Image: "busybox",
 					},
 				},
 				Workspaces: []v1beta1.WorkspaceDeclaration{

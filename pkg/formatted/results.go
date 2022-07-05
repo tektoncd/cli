@@ -14,10 +14,34 @@
 
 package formatted
 
-import "strings"
+import (
+	"encoding/json"
+	"strings"
+
+	"github.com/tektoncd/pipeline/pkg/apis/pipeline/v1beta1"
+)
 
 // Result will format a given result value
-func Result(value string) string {
+func Result(value v1beta1.ArrayOrString) string {
+	switch value.Type {
+	case v1beta1.ParamTypeString:
+		// remove trailing new-line from value
+		return strings.TrimSuffix(value.StringVal, "\n")
+	case v1beta1.ParamTypeArray:
+		return strings.Join(value.ArrayVal, ", ")
+	case v1beta1.ParamTypeObject:
+		// FIXME: do not ignore the error
+		v, _ := json.Marshal(value.ObjectVal)
+		return string(v)
+	}
+	return "<invalid result type>"
+}
+
+// ResultString will format a given result value.
+// This is a deprecated function, that should get removed once all results
+// are using ArrayOrString.
+// Deprecated
+func ResultString(value string) string {
 	// remove trailing new-line from value
 	return strings.TrimSuffix(value, "\n")
 }

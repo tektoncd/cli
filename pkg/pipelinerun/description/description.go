@@ -191,7 +191,7 @@ func PrintPipelineRunDescription(s *cli.Stream, prName string, p cli.Params) err
 		"formatAge":                 formatted.Age,
 		"formatDuration":            formatted.Duration,
 		"formatCondition":           formatted.Condition,
-		"formatResult":              formatted.Result,
+		"formatResult":              formatted.ResultString,
 		"formatWorkspace":           formatted.Workspace,
 		"hasFailed":                 hasFailed,
 		"pipelineRefExists":         pipelineRefExists,
