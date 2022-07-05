@@ -306,16 +306,12 @@ func TestTaskDescribe_Full(t *testing.T) {
 					Description: "a test description",
 					Steps: []v1alpha1.Step{
 						{
-							Container: corev1.Container{
-								Name:  "hello",
-								Image: "busybox",
-							},
+							Name:  "hello",
+							Image: "busybox",
 						},
 						{
-							Container: corev1.Container{
-								Name:  "exit",
-								Image: "busybox",
-							},
+							Name:  "exit",
+							Image: "busybox",
 						},
 					},
 				},
@@ -722,16 +718,12 @@ func TestTaskV1beta1Describe_Full(t *testing.T) {
 				},
 				Steps: []v1beta1.Step{
 					{
-						Container: corev1.Container{
-							Name:  "hello",
-							Image: "busybox",
-						},
+						Name:  "hello",
+						Image: "busybox",
 					},
 					{
-						Container: corev1.Container{
-							Name:  "exit",
-							Image: "busybox",
-						},
+						Name:  "exit",
+						Image: "busybox",
 					},
 				},
 			},
@@ -866,10 +858,8 @@ func TestTaskDescribe_With_Results(t *testing.T) {
 				Description: "a test description",
 				Steps: []v1beta1.Step{
 					{
-						Container: corev1.Container{
-							Name:  "hello",
-							Image: "busybox",
-						},
+						Name:  "hello",
+						Image: "busybox",
 					},
 				},
 				Results: []v1beta1.TaskResult{
@@ -929,10 +919,8 @@ func TestTaskDescribe_With_Workspaces(t *testing.T) {
 				Description: "a test description",
 				Steps: []v1beta1.Step{
 					{
-						Container: corev1.Container{
-							Name:  "hello",
-							Image: "busybox",
-						},
+						Name:  "hello",
+						Image: "busybox",
 					},
 				},
 				Workspaces: []v1beta1.WorkspaceDeclaration{
@@ -987,10 +975,8 @@ func TestTaskDescribe_With_Empty_Labels(t *testing.T) {
 				Description: "a test description",
 				Steps: []v1beta1.Step{
 					{
-						Container: corev1.Container{
-							Name:  "hello",
-							Image: "busybox",
-						},
+						Name:  "hello",
+						Image: "busybox",
 					},
 				},
 			},
@@ -1038,10 +1024,8 @@ func TestTaskDescribe_With_Different_Labels(t *testing.T) {
 				Description: "a test description",
 				Steps: []v1beta1.Step{
 					{
-						Container: corev1.Container{
-							Name:  "hello",
-							Image: "busybox",
-						},
+						Name:  "hello",
+						Image: "busybox",
 					},
 				},
 			},
