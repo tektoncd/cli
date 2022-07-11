@@ -76,6 +76,9 @@ type startOptions struct {
 	Output                string
 	PrefixName            string
 	TimeOut               string
+	PipelineTimeOut       string
+	TasksTimeOut          string
+	FinallyTimeOut        string
 	Filename              string
 	Workspaces            []string
 	UseParamDefaults      bool
@@ -189,6 +192,10 @@ For passing the workspaces via flags:
 	c.Flags().StringVarP(&opt.Output, "output", "o", "", "format of PipelineRun (yaml, json or name)")
 	c.Flags().StringVarP(&opt.PrefixName, "prefix-name", "", "", "specify a prefix for the PipelineRun name (must be lowercase alphanumeric characters)")
 	c.Flags().StringVarP(&opt.TimeOut, "timeout", "", "", "timeout for PipelineRun")
+	_ = c.Flags().MarkDeprecated("timeout", "please use --pipeline-timeout flag instead")
+	c.Flags().StringVarP(&opt.PipelineTimeOut, "pipeline-timeout", "", "", "timeout for PipelineRun")
+	c.Flags().StringVarP(&opt.TasksTimeOut, "tasks-timeout", "", "", "timeout for Pipeline TaskRuns")
+	c.Flags().StringVarP(&opt.FinallyTimeOut, "finally-timeout", "", "", "timeout for Finally TaskRuns")
 	c.Flags().StringVarP(&opt.Filename, "filename", "f", "", "local or remote file name containing a Pipeline definition to start a PipelineRun")
 	c.Flags().BoolVarP(&opt.UseParamDefaults, "use-param-defaults", "", false, "use default parameter values without prompting for input")
 	c.Flags().StringVar(&opt.PodTemplate, "pod-template", "", "local or remote file containing a PodTemplate definition")
@@ -290,6 +297,12 @@ func (opt *startOptions) startPipeline(pipelineStart *v1beta1.Pipeline) error {
 			return err
 		}
 		pr.Spec.Timeout = &metav1.Duration{Duration: timeoutDuration}
+	}
+
+	if opt.TasksTimeOut != "" || opt.PipelineTimeOut != "" || opt.FinallyTimeOut != "" {
+		if err := opt.getTimeouts(pr); err != nil {
+			return err
+		}
 	}
 
 	if err := mergeRes(pr, opt.Resources); err != nil {
@@ -410,6 +423,35 @@ func (opt *startOptions) getInput(pipeline *v1beta1.Pipeline) error {
 		}
 	}
 
+	return nil
+}
+
+func (opt *startOptions) getTimeouts(pr *v1beta1.PipelineRun) error {
+	pr.Spec.Timeouts = &v1beta1.TimeoutFields{}
+
+	if opt.PipelineTimeOut != "" {
+		timeoutDuration, err := time.ParseDuration(opt.PipelineTimeOut)
+		if err != nil {
+			return err
+		}
+		pr.Spec.Timeouts.Pipeline = &metav1.Duration{Duration: timeoutDuration}
+	}
+
+	if opt.TasksTimeOut != "" {
+		timeoutDuration, err := time.ParseDuration(opt.TasksTimeOut)
+		if err != nil {
+			return err
+		}
+		pr.Spec.Timeouts.Tasks = &metav1.Duration{Duration: timeoutDuration}
+	}
+
+	if opt.FinallyTimeOut != "" {
+		timeoutDuration, err := time.ParseDuration(opt.FinallyTimeOut)
+		if err != nil {
+			return err
+		}
+		pr.Spec.Timeouts.Finally = &metav1.Duration{Duration: timeoutDuration}
+	}
 	return nil
 }
 

@@ -834,7 +834,7 @@ func TestPipelineStart_ExecuteCommand(t *testing.T) {
 			want:      "cannot use --last option with --filename option",
 		},
 		{
-			name: "Dry Run with --timeout specified",
+			name: "Dry Run with --timeout specified (deprecated)",
 			command: []string{
 				"start", "test-pipeline",
 				"-s=svc1",
@@ -1533,7 +1533,7 @@ func TestPipelineV1beta1Start_ExecuteCommand(t *testing.T) {
 			want:      "cannot use --last option with --filename option",
 		},
 		{
-			name: "Dry Run with --timeout specified",
+			name: "Dry Run with --timeout specified (deprecated)",
 			command: []string{
 				"start", "test-pipeline",
 				"-s=svc1",
@@ -1551,7 +1551,64 @@ func TestPipelineV1beta1Start_ExecuteCommand(t *testing.T) {
 			goldenFile: true,
 		},
 		{
-			name: "Dry Run with invalid --timeout specified",
+			name: "Dry Run with --pipeline-timeout specified",
+			command: []string{
+				"start", "test-pipeline",
+				"-s=svc1",
+				"-r=source=scaffold-git",
+				"-p=pipeline-param=value1",
+				"-p=rev-param=value2",
+				"-l=jemange=desfrites",
+				"-n", "ns",
+				"--dry-run",
+				"--pipeline-timeout", "1s",
+			},
+			namespace:  "",
+			input:      c2,
+			wantError:  false,
+			goldenFile: true,
+		},
+		{
+			name: "Dry Run with --pipeline-timeout, --tasks-timeout specified",
+			command: []string{
+				"start", "test-pipeline",
+				"-s=svc1",
+				"-r=source=scaffold-git",
+				"-p=pipeline-param=value1",
+				"-p=rev-param=value2",
+				"-l=jemange=desfrites",
+				"-n", "ns",
+				"--dry-run",
+				"--pipeline-timeout", "2s",
+				"--tasks-timeout", "1s",
+			},
+			namespace:  "",
+			input:      c2,
+			wantError:  false,
+			goldenFile: true,
+		},
+		{
+			name: "Dry Run with --pipeline-timeout, --tasks-timeout, --finally-timeout specified",
+			command: []string{
+				"start", "test-pipeline",
+				"-s=svc1",
+				"-r=source=scaffold-git",
+				"-p=pipeline-param=value1",
+				"-p=rev-param=value2",
+				"-l=jemange=desfrites",
+				"-n", "ns",
+				"--dry-run",
+				"--pipeline-timeout", "3s",
+				"--tasks-timeout", "1s",
+				"--finally-timeout", "1s",
+			},
+			namespace:  "",
+			input:      c2,
+			wantError:  false,
+			goldenFile: true,
+		},
+		{
+			name: "Dry Run with invalid --timeout specified (deprecated)",
 			command: []string{
 				"start", "test-pipeline",
 				"-s=svc1",
@@ -1569,6 +1626,64 @@ func TestPipelineV1beta1Start_ExecuteCommand(t *testing.T) {
 			hasPrefix: true,
 			want:      `time: unknown unit`,
 		},
+		{
+			name: "Dry Run with invalid --pipeline-timeout specified",
+			command: []string{
+				"start", "test-pipeline",
+				"-s=svc1",
+				"-r=source=scaffold-git",
+				"-p=pipeline-param=value1",
+				"-p=rev-param=value2",
+				"-l=jemange=desfrites",
+				"-n", "ns",
+				"--dry-run",
+				"--pipeline-timeout", "5d",
+			},
+			namespace: "",
+			input:     c2,
+			wantError: true,
+			hasPrefix: true,
+			want:      `time: unknown unit`,
+		},
+		{
+			name: "Dry Run with invalid --tasks-timeout specified",
+			command: []string{
+				"start", "test-pipeline",
+				"-s=svc1",
+				"-r=source=scaffold-git",
+				"-p=pipeline-param=value1",
+				"-p=rev-param=value2",
+				"-l=jemange=desfrites",
+				"-n", "ns",
+				"--dry-run",
+				"--tasks-timeout", "5d",
+			},
+			namespace: "",
+			input:     c2,
+			wantError: true,
+			hasPrefix: true,
+			want:      `time: unknown unit`,
+		},
+		{
+			name: "Dry Run with --finally-timeout specified",
+			command: []string{
+				"start", "test-pipeline",
+				"-s=svc1",
+				"-r=source=scaffold-git",
+				"-p=pipeline-param=value1",
+				"-p=rev-param=value2",
+				"-l=jemange=desfrites",
+				"-n", "ns",
+				"--dry-run",
+				"--finally-timeout", "5d",
+			},
+			namespace: "",
+			input:     c2,
+			wantError: true,
+			hasPrefix: true,
+			want:      `time: unknown unit`,
+		},
+
 		{
 			name: "Dry Run with PodTemplate",
 			command: []string{
@@ -4248,7 +4363,7 @@ func Test_start_pipeline_last_v1beta1(t *testing.T) {
 	test.AssertOutput(t, timeoutDuration, pr.Spec.Timeout.Duration)
 }
 
-func Test_start_pipeline_last_override_timeout_v1beta1(t *testing.T) {
+func Test_start_pipeline_last_override_timeout_deprecated_v1beta1(t *testing.T) {
 	pipelineName := "test-pipeline"
 	ps := []*v1beta1.Pipeline{
 		{
@@ -4426,7 +4541,7 @@ func Test_start_pipeline_last_override_timeout_v1beta1(t *testing.T) {
 		"-n", "ns",
 	)
 
-	expected := "PipelineRun started: random\n\nIn order to track the PipelineRun progress run:\ntkn pipelinerun logs random -f -n ns\n"
+	expected := "Flag --timeout has been deprecated, please use --pipeline-timeout flag instead\nPipelineRun started: random\n\nIn order to track the PipelineRun progress run:\ntkn pipelinerun logs random -f -n ns\n"
 	test.AssertOutput(t, expected, got)
 
 	cl, _ := p.Clients()
@@ -7681,4 +7796,29 @@ func Test_start_pipeline_with_skip_optional_workspace_flag(t *testing.T) {
 
 	expected := "PipelineRun started: random\n\nIn order to track the PipelineRun progress run:\ntkn pipelinerun logs random -f -n ns\n"
 	test.AssertOutput(t, expected, got)
+}
+
+func Test_GetTimeouts(t *testing.T) {
+	opts := startOptions{
+		PipelineTimeOut: "1m",
+		TasksTimeOut:    "2m",
+	}
+
+	prs := []*v1beta1.PipelineRun{
+		{
+			ObjectMeta: metav1.ObjectMeta{
+				Name:      "pr-1",
+				Namespace: "namespace",
+				Labels:    map[string]string{"tekton.dev/pipeline": "test"},
+			},
+		},
+	}
+
+	err := opts.getTimeouts(prs[0])
+	if err != nil {
+		t.Errorf("Expected nil, Got err: %v", err)
+	}
+
+	test.AssertOutput(t, "2m0s", prs[0].Spec.Timeouts.Tasks.Duration.String())
+	test.AssertOutput(t, "1m0s", prs[0].Spec.Timeouts.Pipeline.Duration.String())
 }
