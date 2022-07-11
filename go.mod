@@ -53,7 +53,7 @@ require (
 	github.com/spf13/pflag v1.0.5
 	github.com/tektoncd/chains v0.10.0
 	github.com/tektoncd/hub v1.8.0
-	github.com/tektoncd/pipeline v0.37.1
+	github.com/tektoncd/pipeline v0.37.2
 	github.com/tektoncd/plumbing v0.0.0-20220329085922-d765a5cba75f
 	github.com/tektoncd/triggers v0.20.1
 	go.opencensus.io v0.23.0
