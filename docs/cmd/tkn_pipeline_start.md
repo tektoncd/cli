@@ -53,11 +53,13 @@ my-secret, my-empty-dir and my-volume-claim-template)
 ```
       --dry-run                       preview PipelineRun without running it
   -f, --filename string               local or remote file name containing a Pipeline definition to start a PipelineRun
+      --finally-timeout string        timeout for Finally TaskRuns
   -h, --help                          help for start
   -l, --labels strings                pass labels as label=value.
   -L, --last                          re-run the Pipeline using last PipelineRun values
   -o, --output string                 format of PipelineRun (yaml, json or name)
   -p, --param stringArray             pass the param as key=value for string type, or key=value1,value2,... for array type
+      --pipeline-timeout string       timeout for PipelineRun
       --pod-template string           local or remote file containing a PodTemplate definition
       --prefix-name string            specify a prefix for the PipelineRun name (must be lowercase alphanumeric characters)
   -r, --resource strings              pass the resource name and ref as name=ref
@@ -65,7 +67,7 @@ my-secret, my-empty-dir and my-volume-claim-template)
       --showlog                       show logs right after starting the Pipeline
       --skip-optional-workspace       skips the prompt for optional workspaces
       --task-serviceaccount strings   pass the service account corresponding to the task
-      --timeout string                timeout for PipelineRun
+      --tasks-timeout string          timeout for Pipeline TaskRuns
       --use-param-defaults            use default parameter values without prompting for input
       --use-pipelinerun string        use this pipelinerun values to re-run the pipeline. 
   -w, --workspace stringArray         pass one or more workspaces to map to the corresponding physical volumes

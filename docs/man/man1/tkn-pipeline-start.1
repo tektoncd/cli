@@ -36,6 +36,10 @@ Parameters, at least those that have no default value
     local or remote file name containing a Pipeline definition to start a PipelineRun
 
 .PP
+\fB\-\-finally\-timeout\fP=""
+    timeout for Finally TaskRuns
+
+.PP
 \fB\-h\fP, \fB\-\-help\fP[=false]
     help for start
 
@@ -54,6 +58,10 @@ Parameters, at least those that have no default value
 .PP
 \fB\-p\fP, \fB\-\-param\fP=[]
     pass the param as key=value for string type, or key=value1,value2,... for array type
+
+.PP
+\fB\-\-pipeline\-timeout\fP=""
+    timeout for PipelineRun
 
 .PP
 \fB\-\-pod\-template\fP=""
@@ -84,8 +92,8 @@ Parameters, at least those that have no default value
     pass the service account corresponding to the task
 
 .PP
-\fB\-\-timeout\fP=""
-    timeout for PipelineRun
+\fB\-\-tasks\-timeout\fP=""
+    timeout for Pipeline TaskRuns
 
 .PP
 \fB\-\-use\-param\-defaults\fP[=false]

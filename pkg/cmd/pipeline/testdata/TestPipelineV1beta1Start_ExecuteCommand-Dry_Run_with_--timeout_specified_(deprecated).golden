@@ -1,3 +1,4 @@
+Flag --timeout has been deprecated, please use --pipeline-timeout flag instead
 apiVersion: tekton.dev/v1beta1
 kind: PipelineRun
 metadata:
