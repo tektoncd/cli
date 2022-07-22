@@ -24,6 +24,10 @@ import (
 func BuildTektonBundle(contents []string, log io.Writer) (v1.Image, error) {
 	img := empty.Image
 
+	if len(contents) > tkremote.MaximumBundleObjects {
+		return nil, fmt.Errorf("bundle contains more than the maximum %d allow objects", tkremote.MaximumBundleObjects)
+	}
+
 	fmt.Fprint(log, "Creating Tekton Bundle:\n")
 
 	// For each block of input, attempt to parse all of the YAML/JSON objects as Tekton objects and compress them into
@@ -95,5 +99,9 @@ func getObjectName(obj runtime.Object) (string, error) {
 	if !ok {
 		return "", errors.New("object is not a registered kubernetes resource")
 	}
-	return metaObj.GetName(), nil
+	name := metaObj.GetName()
+	if name == "" {
+		return "", errors.New("kubernetes resources should have a name")
+	}
+	return name, nil
 }

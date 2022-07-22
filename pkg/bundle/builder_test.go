@@ -3,6 +3,8 @@ package bundle
 import (
 	"archive/tar"
 	"bytes"
+	"errors"
+	"fmt"
 	"io"
 	"testing"
 
@@ -103,5 +105,106 @@ func TestBuildTektonBundle(t *testing.T) {
 
 	if diff := cmp.Diff(obj, &task); diff != "" {
 		t.Error(diff)
+	}
+}
+
+func TestBadObj(t *testing.T) {
+	task := v1beta1.Task{
+		TypeMeta: metav1.TypeMeta{
+			APIVersion: "tekton.dev/v1beta1",
+			Kind:       "Task",
+		},
+		ObjectMeta: metav1.ObjectMeta{},
+		Spec:       v1beta1.TaskSpec{Description: "foobar"},
+	}
+
+	raw, err := yaml.Marshal(task)
+	if err != nil {
+		t.Error(err)
+		return
+	}
+	_, err = BuildTektonBundle([]string{string(raw)}, &bytes.Buffer{})
+	noNameErr := errors.New("kubernetes resources should have a name")
+	if err == nil {
+		t.Errorf("expected error: %v", noNameErr)
+	}
+}
+
+func TestLessThenMaxBundle(t *testing.T) {
+	task := v1beta1.Task{
+		TypeMeta: metav1.TypeMeta{
+			APIVersion: "tekton.dev/v1beta1",
+			Kind:       "Task",
+		},
+		ObjectMeta: metav1.ObjectMeta{Name: "foo"},
+		Spec:       v1beta1.TaskSpec{Description: "foobar"},
+	}
+
+	raw, err := yaml.Marshal(task)
+	if err != nil {
+		t.Error(err)
+		return
+	}
+	// no error for less then max
+	_, err = BuildTektonBundle([]string{string(raw)}, &bytes.Buffer{})
+	if err != nil {
+		t.Error(err)
+	}
+
+}
+
+func TestJustEnoughBundleSize(t *testing.T) {
+	var justEnoughObj []string
+	for i := 0; i == tkremote.MaximumBundleObjects; i++ {
+		name := fmt.Sprintf("%d-task", i)
+		task := v1beta1.Task{
+			TypeMeta: metav1.TypeMeta{
+				APIVersion: "tekton.dev/v1beta1",
+				Kind:       "Task",
+			},
+			ObjectMeta: metav1.ObjectMeta{Name: name},
+			Spec:       v1beta1.TaskSpec{Description: "foobar"},
+		}
+
+		raw, err := yaml.Marshal(task)
+		if err != nil {
+			t.Error(err)
+			return
+		}
+		justEnoughObj = append(justEnoughObj, string(raw))
+	}
+	// no error for the max
+	_, err := BuildTektonBundle(justEnoughObj, &bytes.Buffer{})
+	if err != nil {
+		t.Error(err)
+	}
+}
+
+func TestTooManyInBundle(t *testing.T) {
+	toManyObjErr := fmt.Sprintf("contained more than the maximum %d allow objects", tkremote.MaximumBundleObjects)
+	var toMuchObj []string
+	for i := 0; i <= tkremote.MaximumBundleObjects; i++ {
+		name := fmt.Sprintf("%d-task", i)
+		task := v1beta1.Task{
+			TypeMeta: metav1.TypeMeta{
+				APIVersion: "tekton.dev/v1beta1",
+				Kind:       "Task",
+			},
+			ObjectMeta: metav1.ObjectMeta{Name: name},
+			Spec:       v1beta1.TaskSpec{Description: "foobar"},
+		}
+
+		raw, err := yaml.Marshal(task)
+		if err != nil {
+			t.Error(err)
+			return
+		}
+		toMuchObj = append(toMuchObj, string(raw))
+	}
+
+	// expect error when we hit the max
+	_, err := BuildTektonBundle(toMuchObj, &bytes.Buffer{})
+	if err == nil {
+		t.Errorf("expected error: %v", toManyObjErr)
 	}
 }
