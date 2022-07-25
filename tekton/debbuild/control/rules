@@ -11,7 +11,7 @@ endif
 BUILD_DATE := $(BUILD_DATE:+0000=Z)
 
 %:
-	dh $@
+	dh $@ --builddirectory=_build --buildsystem=golang
 
 override_dh_auto_build:
 	@set -x ; export XDG_CACHE_HOME=/tmp/cache ; \
