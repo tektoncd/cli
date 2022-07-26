@@ -33,8 +33,8 @@ import (
 	"github.com/tektoncd/cli/test/framework"
 	"github.com/tektoncd/cli/test/helper"
 	"github.com/tektoncd/cli/test/wait"
-	"github.com/tektoncd/pipeline/pkg/apis/pipeline/v1alpha1"
 	"github.com/tektoncd/pipeline/pkg/apis/pipeline/v1beta1"
+	"github.com/tektoncd/pipeline/pkg/apis/resource/v1alpha1"
 	"gotest.tools/v3/assert"
 	is "gotest.tools/v3/assert/cmp"
 	"gotest.tools/v3/icmd"
@@ -126,7 +126,7 @@ func TestPipelinesE2E(t *testing.T) {
 
 	t.Run("Pipeline json Schema validation with -o (output) flag, as Json ", func(t *testing.T) {
 		res := tkn.MustSucceed(t, "pipelines", "list", "-o", "json")
-		assert.NilError(t, json.Unmarshal([]byte(res.Stdout()), &v1alpha1.PipelineList{}))
+		assert.NilError(t, json.Unmarshal([]byte(res.Stdout()), &v1beta1.PipelineList{}))
 	})
 
 	t.Run("Validate Pipeline describe command in namespace "+namespace, func(t *testing.T) {
@@ -437,7 +437,7 @@ func TestPipelinesNegativeE2E(t *testing.T) {
 
 	t.Run("Pipeline json Schema validation with -o (output) flag, as Json ", func(t *testing.T) {
 		res := tkn.MustSucceed(t, "pipelines", "list", "-o", "json")
-		assert.NilError(t, json.Unmarshal([]byte(res.Stdout()), &v1alpha1.PipelineList{}))
+		assert.NilError(t, json.Unmarshal([]byte(res.Stdout()), &v1beta1.PipelineList{}))
 	})
 
 	t.Run("Validate Pipeline describe command in namespace "+namespace, func(t *testing.T) {
@@ -652,47 +652,43 @@ func getFaultGitResource(rname string, namespace string) *v1alpha1.PipelineResou
 	}
 }
 
-func getCreateFileTask(taskname string, namespace string) *v1alpha1.Task {
-	return &v1alpha1.Task{
+func getCreateFileTask(taskname string, namespace string) *v1beta1.Task {
+	return &v1beta1.Task{
 		ObjectMeta: metav1.ObjectMeta{
 			Name:      taskname,
 			Namespace: namespace,
 		},
-		Spec: v1alpha1.TaskSpec{
-			TaskSpec: v1beta1.TaskSpec{
-				Steps: []v1alpha1.Step{
-					{
-						Name:    "read-docs-old",
-						Image:   "ubuntu",
-						Command: []string{"/bin/bash"},
-						Args:    []string{"-c", "ls -la /workspace/damnworkspace/docs/README.md"},
-					},
-					{
-						Name:    "write-new-stuff",
-						Image:   "ubuntu",
-						Command: []string{"bash"},
-						Args:    []string{"-c", "ln -s /workspace/damnworkspace /workspace/output/workspace && echo some stuff > /workspace/output/workspace/stuff"},
-					},
+		Spec: v1beta1.TaskSpec{
+			Steps: []v1beta1.Step{
+				{
+					Name:    "read-docs-old",
+					Image:   "ubuntu",
+					Command: []string{"/bin/bash"},
+					Args:    []string{"-c", "ls -la /workspace/damnworkspace/docs/README.md"},
+				},
+				{
+					Name:    "write-new-stuff",
+					Image:   "ubuntu",
+					Command: []string{"bash"},
+					Args:    []string{"-c", "ln -s /workspace/damnworkspace /workspace/output/workspace && echo some stuff > /workspace/output/workspace/stuff"},
 				},
 			},
 
-			Inputs: &v1alpha1.Inputs{
-				Resources: []v1alpha1.TaskResource{
+			Resources: &v1beta1.TaskResources{
+				Inputs: []v1beta1.TaskResource{
 					{
-						ResourceDeclaration: v1alpha1.ResourceDeclaration{
+						ResourceDeclaration: v1beta1.ResourceDeclaration{
 							Name:       "workspace",
-							Type:       v1alpha1.PipelineResourceTypeGit,
+							Type:       v1beta1.PipelineResourceTypeGit,
 							TargetPath: "damnworkspace",
 						},
 					},
 				},
-			},
-			Outputs: &v1alpha1.Outputs{
-				Resources: []v1beta1.TaskResource{
+				Outputs: []v1beta1.TaskResource{
 					{
-						ResourceDeclaration: v1alpha1.ResourceDeclaration{
+						ResourceDeclaration: v1beta1.ResourceDeclaration{
 							Name: "workspace",
-							Type: v1alpha1.PipelineResourceTypeImage,
+							Type: v1beta1.PipelineResourceTypeImage,
 						},
 					},
 				},
@@ -701,30 +697,28 @@ func getCreateFileTask(taskname string, namespace string) *v1alpha1.Task {
 	}
 }
 
-func getReadFileTask(taskname string, namespace string) *v1alpha1.Task {
-	return &v1alpha1.Task{
+func getReadFileTask(taskname string, namespace string) *v1beta1.Task {
+	return &v1beta1.Task{
 		ObjectMeta: metav1.ObjectMeta{
 			Name:      taskname,
 			Namespace: namespace,
 		},
-		Spec: v1alpha1.TaskSpec{
-			TaskSpec: v1beta1.TaskSpec{
-				Steps: []v1alpha1.Step{
-					{
-						Name:    "read",
-						Image:   "ubuntu",
-						Command: []string{"/bin/bash"},
-						Args:    []string{"-c", "cat /workspace/newworkspace/stuff"},
-					},
+		Spec: v1beta1.TaskSpec{
+			Steps: []v1beta1.Step{
+				{
+					Name:    "read",
+					Image:   "ubuntu",
+					Command: []string{"/bin/bash"},
+					Args:    []string{"-c", "cat /workspace/newworkspace/stuff"},
 				},
 			},
 
-			Inputs: &v1alpha1.Inputs{
-				Resources: []v1alpha1.TaskResource{
+			Resources: &v1beta1.TaskResources{
+				Inputs: []v1beta1.TaskResource{
 					{
-						ResourceDeclaration: v1alpha1.ResourceDeclaration{
+						ResourceDeclaration: v1beta1.ResourceDeclaration{
 							Name:       "workspace",
-							Type:       v1alpha1.PipelineResourceTypeGit,
+							Type:       v1beta1.PipelineResourceTypeGit,
 							TargetPath: "newworkspace",
 						},
 					},
@@ -734,33 +728,33 @@ func getReadFileTask(taskname string, namespace string) *v1alpha1.Task {
 	}
 }
 
-func getPipeline(pipelineName string, namespace string, createFiletaskName string, readFileTaskName string) *v1alpha1.Pipeline {
-	return &v1alpha1.Pipeline{
+func getPipeline(pipelineName string, namespace string, createFiletaskName string, readFileTaskName string) *v1beta1.Pipeline {
+	return &v1beta1.Pipeline{
 		ObjectMeta: metav1.ObjectMeta{
 			Name:      pipelineName,
 			Namespace: namespace,
 		},
-		Spec: v1alpha1.PipelineSpec{
+		Spec: v1beta1.PipelineSpec{
 			Resources: []v1beta1.PipelineDeclaredResource{
 				{
 					Name: "source-repo",
-					Type: v1alpha1.PipelineResourceTypeGit,
+					Type: v1beta1.PipelineResourceTypeGit,
 				},
 			},
-			Tasks: []v1alpha1.PipelineTask{
+			Tasks: []v1beta1.PipelineTask{
 				{
 					Name: "first-create-file",
-					TaskRef: &v1alpha1.TaskRef{
+					TaskRef: &v1beta1.TaskRef{
 						Name: createFiletaskName,
 					},
-					Resources: &v1alpha1.PipelineTaskResources{
-						Inputs: []v1alpha1.PipelineTaskInputResource{
+					Resources: &v1beta1.PipelineTaskResources{
+						Inputs: []v1beta1.PipelineTaskInputResource{
 							{
 								Name:     "workspace",
 								Resource: "source-repo",
 							},
 						},
-						Outputs: []v1alpha1.PipelineTaskOutputResource{
+						Outputs: []v1beta1.PipelineTaskOutputResource{
 							{
 								Name:     "workspace",
 								Resource: "source-repo",
@@ -770,11 +764,11 @@ func getPipeline(pipelineName string, namespace string, createFiletaskName strin
 				},
 				{
 					Name: "then-check",
-					TaskRef: &v1alpha1.TaskRef{
+					TaskRef: &v1beta1.TaskRef{
 						Name: readFileTaskName,
 					},
-					Resources: &v1alpha1.PipelineTaskResources{
-						Inputs: []v1alpha1.PipelineTaskInputResource{
+					Resources: &v1beta1.PipelineTaskResources{
+						Inputs: []v1beta1.PipelineTaskInputResource{
 							{
 								Name:     "workspace",
 								Resource: "source-repo",

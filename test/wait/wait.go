@@ -21,7 +21,7 @@ import (
 	"sync"
 
 	"github.com/tektoncd/cli/test/framework"
-	"github.com/tektoncd/pipeline/pkg/apis/pipeline/v1alpha1"
+	"github.com/tektoncd/pipeline/pkg/apis/pipeline/v1beta1"
 	corev1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"knative.dev/pkg/apis"
@@ -30,7 +30,7 @@ import (
 // ForTaskRunToComplete Wait For Task Run Resource to be completed
 func ForTaskRunToComplete(c *framework.Clients, trname string, namespace string) {
 	log.Printf("Waiting for TaskRun %s in namespace %s to complete", trname, namespace)
-	if err := ForTaskRunState(c, trname, func(tr *v1alpha1.TaskRun) (bool, error) {
+	if err := ForTaskRunState(c, trname, func(tr *v1beta1.TaskRun) (bool, error) {
 		cond := tr.Status.GetCondition(apis.ConditionSucceeded)
 		if cond != nil {
 			if cond.Status == corev1.ConditionTrue || cond.Status == corev1.ConditionFalse {
@@ -48,7 +48,7 @@ func ForTaskRunToComplete(c *framework.Clients, trname string, namespace string)
 // ForTaskRunToBeStarted Wait For Task Run Resource to be completed
 func ForTaskRunToBeStarted(c *framework.Clients, trname string, namespace string) {
 	log.Printf("Waiting for TaskRun %s in namespace %s to be started", trname, namespace)
-	if err := ForTaskRunState(c, trname, func(tr *v1alpha1.TaskRun) (bool, error) {
+	if err := ForTaskRunState(c, trname, func(tr *v1beta1.TaskRun) (bool, error) {
 		cond := tr.Status.GetCondition(apis.ConditionSucceeded)
 		if cond != nil {
 			if cond.Status == corev1.ConditionTrue || cond.Status == corev1.ConditionFalse {
@@ -68,7 +68,7 @@ func ForTaskRunToBeStarted(c *framework.Clients, trname string, namespace string
 func ForPipelineRunToStart(c *framework.Clients, prname string, namespace string) {
 
 	log.Printf("Waiting for Pipelinerun %s in namespace %s to be started", prname, namespace)
-	if err := ForPipelineRunState(c, prname, framework.Apitimeout, func(pr *v1alpha1.PipelineRun) (bool, error) {
+	if err := ForPipelineRunState(c, prname, framework.Apitimeout, func(pr *v1beta1.PipelineRun) (bool, error) {
 		c := pr.Status.GetCondition(apis.ConditionSucceeded)
 		if c != nil {
 			if c.Status == corev1.ConditionTrue || c.Status == corev1.ConditionFalse {
@@ -86,7 +86,7 @@ func ForPipelineRunToStart(c *framework.Clients, prname string, namespace string
 // WaitForPipelineRunToComplete Wait for Pipeline Run to complete
 func ForPipelineRunToComplete(c *framework.Clients, prname string, namespace string) {
 	log.Printf("Waiting for Pipelinerun %s in namespace %s to be started", prname, namespace)
-	if err := ForPipelineRunState(c, prname, framework.Apitimeout, func(pr *v1alpha1.PipelineRun) (bool, error) {
+	if err := ForPipelineRunState(c, prname, framework.Apitimeout, func(pr *v1beta1.PipelineRun) (bool, error) {
 		c := pr.Status.GetCondition(apis.ConditionSucceeded)
 		if c != nil {
 			if c.Status == corev1.ConditionTrue || c.Status == corev1.ConditionFalse {
@@ -112,7 +112,7 @@ func ForPipelineRunToComplete(c *framework.Clients, prname string, namespace str
 
 	for _, taskrunItem := range taskrunList.Items {
 		go func(name string) {
-			err := ForTaskRunState(c, name, func(tr *v1alpha1.TaskRun) (bool, error) {
+			err := ForTaskRunState(c, name, func(tr *v1beta1.TaskRun) (bool, error) {
 				c := tr.Status.GetCondition(apis.ConditionSucceeded)
 				if c != nil {
 					if c.Status == corev1.ConditionTrue || c.Status == corev1.ConditionFalse {
@@ -138,7 +138,7 @@ func ForPipelineRunToComplete(c *framework.Clients, prname string, namespace str
 	}
 
 	log.Printf("Waiting for PipelineRun %s in namespace %s to be Completed", prname, namespace)
-	if err := ForPipelineRunState(c, prname, framework.Apitimeout, func(pr *v1alpha1.PipelineRun) (bool, error) {
+	if err := ForPipelineRunState(c, prname, framework.Apitimeout, func(pr *v1beta1.PipelineRun) (bool, error) {
 		c := pr.Status.GetCondition(apis.ConditionSucceeded)
 		if c != nil {
 			if c.Status == corev1.ConditionTrue || c.Status == corev1.ConditionFalse {
@@ -158,7 +158,7 @@ func ForPipelineRunToComplete(c *framework.Clients, prname string, namespace str
 		wg.Add(1)
 		go func(name string) {
 			defer wg.Done()
-			err := ForTaskRunState(c, name, func(tr *v1alpha1.TaskRun) (bool, error) {
+			err := ForTaskRunState(c, name, func(tr *v1beta1.TaskRun) (bool, error) {
 				cond := tr.Status.GetCondition(apis.ConditionSucceeded)
 				if cond != nil {
 					if cond.Status == corev1.ConditionTrue || cond.Status == corev1.ConditionFalse {

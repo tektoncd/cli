@@ -18,7 +18,7 @@ import (
 	"log"
 
 	"github.com/tektoncd/pipeline/pkg/client/clientset/versioned"
-	"github.com/tektoncd/pipeline/pkg/client/clientset/versioned/typed/pipeline/v1alpha1"
+	"github.com/tektoncd/pipeline/pkg/client/clientset/versioned/typed/pipeline/v1beta1"
 	resourceversioned "github.com/tektoncd/pipeline/pkg/client/resource/clientset/versioned"
 	resourcev1alpha1 "github.com/tektoncd/pipeline/pkg/client/resource/clientset/versioned/typed/resource/v1alpha1"
 	"k8s.io/client-go/kubernetes"
@@ -28,11 +28,11 @@ import (
 // clients holds instances of interfaces for making requests to the Pipeline controllers.
 type Clients struct {
 	KubeClient             kubernetes.Interface
-	PipelineClient         v1alpha1.PipelineInterface
-	TaskClient             v1alpha1.TaskInterface
-	ClusterTaskClient      v1alpha1.ClusterTaskInterface
-	TaskRunClient          v1alpha1.TaskRunInterface
-	PipelineRunClient      v1alpha1.PipelineRunInterface
+	PipelineClient         v1beta1.PipelineInterface
+	TaskClient             v1beta1.TaskInterface
+	ClusterTaskClient      v1beta1.ClusterTaskInterface
+	TaskRunClient          v1beta1.TaskRunInterface
+	PipelineRunClient      v1beta1.PipelineRunInterface
 	PipelineResourceClient resourcev1alpha1.PipelineResourceInterface
 }
 
@@ -64,11 +64,11 @@ func NewClients(configPath, clusterName, namespace string) *Clients {
 	if err != nil {
 		log.Fatalf("failed to create pipeline clientset from config file at %s: %s", configPath, err)
 	}
-	c.PipelineClient = cs.TektonV1alpha1().Pipelines(namespace)
-	c.TaskClient = cs.TektonV1alpha1().Tasks(namespace)
-	c.ClusterTaskClient = cs.TektonV1alpha1().ClusterTasks()
-	c.TaskRunClient = cs.TektonV1alpha1().TaskRuns(namespace)
-	c.PipelineRunClient = cs.TektonV1alpha1().PipelineRuns(namespace)
+	c.PipelineClient = cs.TektonV1beta1().Pipelines(namespace)
+	c.TaskClient = cs.TektonV1beta1().Tasks(namespace)
+	c.ClusterTaskClient = cs.TektonV1beta1().ClusterTasks()
+	c.TaskRunClient = cs.TektonV1beta1().TaskRuns(namespace)
+	c.PipelineRunClient = cs.TektonV1beta1().PipelineRuns(namespace)
 	c.PipelineResourceClient = rcs.TektonV1alpha1().PipelineResources(namespace)
 	return c
 }

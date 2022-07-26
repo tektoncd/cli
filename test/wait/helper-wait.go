@@ -21,7 +21,7 @@ import (
 	"time"
 
 	"github.com/tektoncd/cli/test/framework"
-	"github.com/tektoncd/pipeline/pkg/apis/pipeline/v1alpha1"
+	"github.com/tektoncd/pipeline/pkg/apis/pipeline/v1beta1"
 	"go.opencensus.io/trace"
 	corev1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
@@ -31,13 +31,13 @@ import (
 	"knative.dev/pkg/apis"
 )
 
-type TaskStateFn func(r *v1alpha1.Task) (bool, error)
+type TaskStateFn func(r *v1beta1.Task) (bool, error)
 
 // TaskRunStateFn is a condition function on TaskRun used polling functions
-type TaskRunStateFn func(r *v1alpha1.TaskRun) (bool, error)
+type TaskRunStateFn func(r *v1beta1.TaskRun) (bool, error)
 
 // PipelineRunStateFn is a condition function on TaskRun used polling functions
-type PipelineRunStateFn func(pr *v1alpha1.PipelineRun) (bool, error)
+type PipelineRunStateFn func(pr *v1beta1.PipelineRun) (bool, error)
 
 type PodRunStateFn func(r *corev1.Pod) (bool, error)
 
@@ -187,7 +187,7 @@ func ForServiceExternalIPState(c *framework.Clients, namespace, name string, inS
 // TaskRunSucceed provides a poll condition function that checks if the TaskRun
 // has successfully completed.
 func TaskRunSucceed(name string) TaskRunStateFn {
-	return func(tr *v1alpha1.TaskRun) (bool, error) {
+	return func(tr *v1beta1.TaskRun) (bool, error) {
 		c := tr.Status.GetCondition(apis.ConditionSucceeded)
 		if c != nil {
 			if c.Status == corev1.ConditionTrue {
@@ -221,7 +221,7 @@ func PodRunSucceed(name string) PodRunStateFn {
 // TaskRunFailed provides a poll condition function that checks if the TaskRun
 // has failed.
 func TaskRunFailed(name string) TaskRunStateFn {
-	return func(tr *v1alpha1.TaskRun) (bool, error) {
+	return func(tr *v1beta1.TaskRun) (bool, error) {
 		c := tr.Status.GetCondition(apis.ConditionSucceeded)
 		if c != nil {
 			if c.Status == corev1.ConditionTrue {
@@ -237,7 +237,7 @@ func TaskRunFailed(name string) TaskRunStateFn {
 // PipelineRunSucceed provides a poll condition function that checks if the PipelineRun
 // has successfully completed.
 func PipelineRunSucceed(name string) PipelineRunStateFn {
-	return func(pr *v1alpha1.PipelineRun) (bool, error) {
+	return func(pr *v1beta1.PipelineRun) (bool, error) {
 		c := pr.Status.GetCondition(apis.ConditionSucceeded)
 		if c != nil {
 			if c.Status == corev1.ConditionTrue {
@@ -253,7 +253,7 @@ func PipelineRunSucceed(name string) PipelineRunStateFn {
 // PipelineRunFailed provides a poll condition function that checks if the PipelineRun
 // has failed.
 func PipelineRunFailed(name string) PipelineRunStateFn {
-	return func(tr *v1alpha1.PipelineRun) (bool, error) {
+	return func(tr *v1beta1.PipelineRun) (bool, error) {
 		c := tr.Status.GetCondition(apis.ConditionSucceeded)
 		if c != nil {
 			if c.Status == corev1.ConditionTrue {
