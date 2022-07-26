@@ -1,6 +1,6 @@
 #!/usr/bin/make -f
 
-TKN := obj-$(DEB_HOST_GNU_TYPE)/bin/tkn
+TKN := _build/bin/tkn
 
 DATE_FMT = %Y-%m-%dT%H:%M:%S%z
 ifdef SOURCE_DATE_EPOCH
