@@ -19,16 +19,17 @@ import (
 	"sort"
 	"strings"
 
-	"github.com/tektoncd/pipeline/pkg/apis/pipeline/v1alpha1"
+	"github.com/tektoncd/pipeline/pkg/apis/pipeline/v1beta1"
+	"github.com/tektoncd/pipeline/pkg/apis/resource/v1alpha1"
 	corev1 "k8s.io/api/core/v1"
 )
 
 func Details(pre v1alpha1.PipelineResource) string {
 	var key = "url"
-	if pre.Spec.Type == v1alpha1.PipelineResourceTypeStorage {
+	if pre.Spec.Type == v1beta1.PipelineResourceTypeStorage {
 		key = "location"
 	}
-	if pre.Spec.Type == v1alpha1.PipelineResourceTypeCloudEvent {
+	if pre.Spec.Type == v1beta1.PipelineResourceTypeCloudEvent {
 		key = "targeturi"
 	}
 
@@ -41,7 +42,7 @@ func Details(pre v1alpha1.PipelineResource) string {
 	return "---"
 }
 
-func TaskRunHasFailed(tr *v1alpha1.TaskRun) string {
+func TaskRunHasFailed(tr *v1beta1.TaskRun) string {
 	if len(tr.Status.Conditions) == 0 {
 		return ""
 	}
@@ -53,7 +54,7 @@ func TaskRunHasFailed(tr *v1alpha1.TaskRun) string {
 }
 
 // this will sort the Resource by Type and then by Name
-func SortResourcesByTypeAndName(pres []v1alpha1.PipelineDeclaredResource) []v1alpha1.PipelineDeclaredResource {
+func SortResourcesByTypeAndName(pres []v1beta1.PipelineDeclaredResource) []v1beta1.PipelineDeclaredResource {
 	sort.Slice(pres, func(i, j int) bool {
 		if pres[j].Type < pres[i].Type {
 			return false
@@ -71,7 +72,7 @@ func SortResourcesByTypeAndName(pres []v1alpha1.PipelineDeclaredResource) []v1al
 
 // Pipeline Run Describe command
 
-func PipelineRunHasFailed(pr *v1alpha1.PipelineRun) string {
+func PipelineRunHasFailed(pr *v1beta1.PipelineRun) string {
 	if len(pr.Status.Conditions) == 0 {
 		return ""
 	}
@@ -95,7 +96,7 @@ type TaskrunList []tkr
 
 type tkr struct {
 	TaskrunName string
-	*v1alpha1.PipelineRunTaskRunStatus
+	*v1beta1.PipelineRunTaskRunStatus
 }
 
 func (s TaskrunList) Len() int      { return len(s) }

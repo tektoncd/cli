@@ -17,18 +17,18 @@ package builder
 import (
 	"sort"
 
-	"github.com/tektoncd/pipeline/pkg/apis/pipeline/v1alpha1"
+	"github.com/tektoncd/pipeline/pkg/apis/pipeline/v1beta1"
 )
 
-func SortByStartTimeTaskRun(trs []v1alpha1.TaskRun) {
+func SortByStartTimeTaskRun(trs []v1beta1.TaskRun) {
 	sort.Sort(byStartTimeTR(trs))
 }
 
-func SortByStartTimePipelineRun(prs []v1alpha1.PipelineRun) {
+func SortByStartTimePipelineRun(prs []v1beta1.PipelineRun) {
 	sort.Sort(byStartTimePR(prs))
 }
 
-type byStartTimeTR []v1alpha1.TaskRun
+type byStartTimeTR []v1beta1.TaskRun
 
 func (trs byStartTimeTR) Len() int      { return len(trs) }
 func (trs byStartTimeTR) Swap(i, j int) { trs[i], trs[j] = trs[j], trs[i] }
@@ -42,7 +42,7 @@ func (trs byStartTimeTR) Less(i, j int) bool {
 	return trs[j].Status.StartTime.Before(trs[i].Status.StartTime)
 }
 
-type byStartTimePR []v1alpha1.PipelineRun
+type byStartTimePR []v1beta1.PipelineRun
 
 func (prs byStartTimePR) Len() int      { return len(prs) }
 func (prs byStartTimePR) Swap(i, j int) { prs[i], prs[j] = prs[j], prs[i] }

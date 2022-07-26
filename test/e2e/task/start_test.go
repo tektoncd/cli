@@ -30,7 +30,6 @@ import (
 	"github.com/tektoncd/cli/test/helper"
 	"github.com/tektoncd/cli/test/wait"
 	"github.com/tektoncd/pipeline/pkg/apis/pipeline/v1beta1"
-
 	"gotest.tools/v3/assert"
 	is "gotest.tools/v3/assert/cmp"
 	"gotest.tools/v3/icmd"

@@ -26,19 +26,18 @@ spec:
     value: https://github.com/GoogleContainerTools/skaffold
 ---
 # Task writes "some stuff" to a predefined path in the workspace git PipelineResource
-apiVersion: tekton.dev/v1alpha1
+apiVersion: tekton.dev/v1beta1
 kind: Task
 metadata:
   name: create-file
   namespace: tektoncd
 spec:
-  inputs:
-    resources:
+  resources:
+    inputs:
     - name: workspace
       type: git
       targetPath: damnworkspace
-  outputs:
-    resources:
+    outputs:
     - name: workspace
       type: git
   steps:
@@ -52,14 +51,14 @@ spec:
     args: ['-c', 'ln -s /workspace/damnworkspace /workspace/output/workspace && echo some stuff > /workspace/output/workspace/stuff']
 ---
 # Reads a file from a predefined path in the workspace git PipelineResource
-apiVersion: tekton.dev/v1alpha1
+apiVersion: tekton.dev/v1beta1
 kind: Task
 metadata:
   name: check-stuff-file-exists
   namespace: tektoncd
 spec:
-  inputs:
-    resources:
+  resources:
+    inputs:
     - name: workspace
       type: git
       targetPath: newworkspace
@@ -72,7 +71,7 @@ spec:
 # The Output of the first Task (git resource) create-file is given as an `Input`
 # to the next `Task` check-stuff-file-exists using`from` clause.
 
-apiVersion: tekton.dev/v1alpha1
+apiVersion: tekton.dev/v1beta1
 kind: Pipeline
 metadata:
   name: output-pipeline
@@ -101,7 +100,7 @@ spec:
         resource: source-repo
         from: [first-create-file]
 ---
-apiVersion: tekton.dev/v1alpha1
+apiVersion: tekton.dev/v1beta1
 kind: PipelineRun
 metadata:
   name: output-pipeline-run

@@ -30,11 +30,12 @@ import (
 	"github.com/jonboulle/clockwork"
 	"github.com/tektoncd/cli/pkg/formatted"
 	"github.com/tektoncd/cli/test/framework"
-	"github.com/tektoncd/pipeline/pkg/apis/pipeline/v1alpha1"
+	"github.com/tektoncd/pipeline/pkg/apis/pipeline/v1beta1"
+	"github.com/tektoncd/pipeline/pkg/apis/resource/v1alpha1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 )
 
-func GetTask(c *framework.Clients, name string) *v1alpha1.Task {
+func GetTask(c *framework.Clients, name string) *v1beta1.Task {
 
 	task, err := c.TaskClient.Get(context.Background(), name, metav1.GetOptions{})
 	if err != nil {
@@ -44,7 +45,7 @@ func GetTask(c *framework.Clients, name string) *v1alpha1.Task {
 	return task
 }
 
-func GetClusterTask(c *framework.Clients, name string) *v1alpha1.ClusterTask {
+func GetClusterTask(c *framework.Clients, name string) *v1beta1.ClusterTask {
 	clustertask, err := c.ClusterTaskClient.Get(context.Background(), name, metav1.GetOptions{})
 	if err != nil {
 		log.Fatalf("Couldn't get expected clustertask  %s", err)
@@ -52,7 +53,7 @@ func GetClusterTask(c *framework.Clients, name string) *v1alpha1.ClusterTask {
 	return clustertask
 }
 
-func GetTaskList(c *framework.Clients) *v1alpha1.TaskList {
+func GetTaskList(c *framework.Clients) *v1beta1.TaskList {
 
 	tasklist, err := c.TaskClient.List(context.Background(), metav1.ListOptions{})
 
@@ -63,7 +64,7 @@ func GetTaskList(c *framework.Clients) *v1alpha1.TaskList {
 	return tasklist
 }
 
-func GetClusterTaskList(c *framework.Clients) *v1alpha1.ClusterTaskList {
+func GetClusterTaskList(c *framework.Clients) *v1beta1.ClusterTaskList {
 	clustertasklist, err := c.ClusterTaskClient.List(context.Background(), metav1.ListOptions{})
 	if err != nil {
 		log.Fatalf("Couldn't get expected clustertasklist  %s", err)
@@ -71,7 +72,7 @@ func GetClusterTaskList(c *framework.Clients) *v1alpha1.ClusterTaskList {
 	return clustertasklist
 }
 
-func GetTaskRun(c *framework.Clients, name string) *v1alpha1.TaskRun {
+func GetTaskRun(c *framework.Clients, name string) *v1beta1.TaskRun {
 
 	taskRun, err := c.TaskRunClient.Get(context.Background(), name, metav1.GetOptions{})
 
@@ -82,7 +83,7 @@ func GetTaskRun(c *framework.Clients, name string) *v1alpha1.TaskRun {
 	return taskRun
 }
 
-func GetTaskRunList(c *framework.Clients) *v1alpha1.TaskRunList {
+func GetTaskRunList(c *framework.Clients) *v1beta1.TaskRunList {
 	taskRunlist, err := c.TaskRunClient.List(context.Background(), metav1.ListOptions{})
 
 	if err != nil {
@@ -114,7 +115,7 @@ func GetPipelineResourceList(c *framework.Clients) *v1alpha1.PipelineResourceLis
 	return pipelineResourceList
 }
 
-func GetPipeline(c *framework.Clients, name string) *v1alpha1.Pipeline {
+func GetPipeline(c *framework.Clients, name string) *v1beta1.Pipeline {
 
 	pipeline, err := c.PipelineClient.Get(context.Background(), name, metav1.GetOptions{})
 
@@ -125,7 +126,7 @@ func GetPipeline(c *framework.Clients, name string) *v1alpha1.Pipeline {
 	return pipeline
 }
 
-func GetPipelineList(c *framework.Clients) *v1alpha1.PipelineList {
+func GetPipelineList(c *framework.Clients) *v1beta1.PipelineList {
 
 	pipelineList, err := c.PipelineClient.List(context.Background(), metav1.ListOptions{})
 
@@ -136,7 +137,7 @@ func GetPipelineList(c *framework.Clients) *v1alpha1.PipelineList {
 	return pipelineList
 }
 
-func GetPipelineRun(c *framework.Clients, name string) *v1alpha1.PipelineRun {
+func GetPipelineRun(c *framework.Clients, name string) *v1beta1.PipelineRun {
 
 	pipelineRun, err := c.PipelineRunClient.Get(context.Background(), name, metav1.GetOptions{})
 
@@ -147,7 +148,7 @@ func GetPipelineRun(c *framework.Clients, name string) *v1alpha1.PipelineRun {
 	return pipelineRun
 }
 
-func GetPipelineRunListWithName(c *framework.Clients, pname string, sortByStartTime bool) *v1alpha1.PipelineRunList {
+func GetPipelineRunListWithName(c *framework.Clients, pname string, sortByStartTime bool) *v1beta1.PipelineRunList {
 	opts := metav1.ListOptions{
 		LabelSelector: fmt.Sprintf("tekton.dev/pipeline=%s", pname),
 	}
@@ -164,7 +165,7 @@ func GetPipelineRunListWithName(c *framework.Clients, pname string, sortByStartT
 	return pipelineRunList
 }
 
-func GetTaskRunListByLabel(c *framework.Clients, tname string, sortByStartTime bool, label string) *v1alpha1.TaskRunList {
+func GetTaskRunListByLabel(c *framework.Clients, tname string, sortByStartTime bool, label string) *v1beta1.TaskRunList {
 	opts := metav1.ListOptions{
 		LabelSelector: label,
 	}
@@ -183,17 +184,17 @@ func GetTaskRunListByLabel(c *framework.Clients, tname string, sortByStartTime b
 	return taskRunList
 }
 
-func GetTaskRunListWithTaskName(c *framework.Clients, tname string, sortByStartTime bool) *v1alpha1.TaskRunList {
+func GetTaskRunListWithTaskName(c *framework.Clients, tname string, sortByStartTime bool) *v1beta1.TaskRunList {
 	label := fmt.Sprintf("tekton.dev/task=%s", tname)
 	return GetTaskRunListByLabel(c, tname, sortByStartTime, label)
 }
 
-func GetTaskRunListWithClusterTaskName(c *framework.Clients, ctname string, sortByStartTime bool) *v1alpha1.TaskRunList {
+func GetTaskRunListWithClusterTaskName(c *framework.Clients, ctname string, sortByStartTime bool) *v1beta1.TaskRunList {
 	label := fmt.Sprintf("tekton.dev/clusterTask=%s", ctname)
 	return GetTaskRunListByLabel(c, ctname, sortByStartTime, label)
 }
 
-func GetPipelineRunList(c *framework.Clients) *v1alpha1.PipelineRunList {
+func GetPipelineRunList(c *framework.Clients) *v1beta1.PipelineRunList {
 
 	pipelineRunList, err := c.PipelineRunClient.List(context.Background(), metav1.ListOptions{})
 
@@ -213,7 +214,7 @@ func ListResourceNamesForJSONPath(obj interface{}) string {
 	w := tabwriter.NewWriter(&tmplBytes, 0, 5, 3, ' ', tabwriter.TabIndent)
 
 	switch obj := obj.(type) {
-	case *v1alpha1.TaskList:
+	case *v1beta1.TaskList:
 
 		if len(obj.Items) == 0 {
 
@@ -227,7 +228,7 @@ func ListResourceNamesForJSONPath(obj interface{}) string {
 		}
 		w.Flush()
 		return tmplBytes.String()
-	case *v1alpha1.TaskRunList:
+	case *v1beta1.TaskRunList:
 		if len(obj.Items) == 0 {
 
 			return emptyMsg
@@ -242,7 +243,7 @@ func ListResourceNamesForJSONPath(obj interface{}) string {
 		}
 		w.Flush()
 		return tmplBytes.String()
-	case *v1alpha1.PipelineList:
+	case *v1beta1.PipelineList:
 		if len(obj.Items) == 0 {
 			return emptyMsg
 		}
@@ -255,7 +256,7 @@ func ListResourceNamesForJSONPath(obj interface{}) string {
 		w.Flush()
 		return tmplBytes.String()
 
-	case *v1alpha1.PipelineRunList:
+	case *v1beta1.PipelineRunList:
 		if len(obj.Items) == 0 {
 			return emptyMsg
 		}
@@ -279,7 +280,7 @@ func ListResourceNamesForJSONPath(obj interface{}) string {
 		}
 		w.Flush()
 		return tmplBytes.String()
-	case *v1alpha1.ClusterTaskList:
+	case *v1beta1.ClusterTaskList:
 		if len(obj.Items) == 0 {
 			return emptyMsg
 		}
@@ -367,7 +368,7 @@ func ListAllClusterTasksOutput(t *testing.T, cs *framework.Clients, td map[int]i
 	return tmplBytes.String()
 }
 
-func GetTaskListWithTestData(t *testing.T, c *framework.Clients, td map[int]interface{}) *v1alpha1.TaskList {
+func GetTaskListWithTestData(t *testing.T, c *framework.Clients, td map[int]interface{}) *v1beta1.TaskList {
 	t.Helper()
 
 	tasklist := GetTaskList(c)
@@ -393,7 +394,7 @@ func GetTaskListWithTestData(t *testing.T, c *framework.Clients, td map[int]inte
 	return tasklist
 }
 
-func GetClusterTaskListWithTestData(t *testing.T, c *framework.Clients, td map[int]interface{}) *v1alpha1.ClusterTaskList {
+func GetClusterTaskListWithTestData(t *testing.T, c *framework.Clients, td map[int]interface{}) *v1beta1.ClusterTaskList {
 	t.Helper()
 
 	clustertasklist := GetClusterTaskList(c)
@@ -445,7 +446,7 @@ NAME	STARTED	DURATION	STATUS{{- if $.AllNamespaces }}	NAMESPACE{{- end }}
 		SortByStartTimeTaskRun(taskrun.Items)
 	}
 	var data = struct {
-		TaskRuns      *v1alpha1.TaskRunList
+		TaskRuns      *v1beta1.TaskRunList
 		Time          clockwork.Clock
 		AllNamespaces bool
 	}{
@@ -473,7 +474,7 @@ NAME	STARTED	DURATION	STATUS{{- if $.AllNamespaces }}	NAMESPACE{{- end }}
 	return tmplBytes.String()
 }
 
-func GetTaskRunListWithTestData(t *testing.T, c *framework.Clients, td map[int]interface{}) *v1alpha1.TaskRunList {
+func GetTaskRunListWithTestData(t *testing.T, c *framework.Clients, td map[int]interface{}) *v1beta1.TaskRunList {
 	taskRunlist := GetTaskRunList(c)
 	if len(taskRunlist.Items) != len(td) {
 		t.Errorf("Length of taskrun list and Testdata provided not matching")
@@ -502,7 +503,7 @@ func GetTaskRunListWithTestData(t *testing.T, c *framework.Clients, td map[int]i
 	return taskRunlist
 }
 
-type pipelineruns map[string]v1alpha1.PipelineRun
+type pipelineruns map[string]v1beta1.PipelineRun
 
 type PipelinesListData struct {
 	Name   string
@@ -533,7 +534,7 @@ func ListAllPipelinesOutput(t *testing.T, cs *framework.Clients, td map[int]inte
 		t.Error("Failed to list pipelines")
 	}
 	var data = struct {
-		Pipelines    *v1alpha1.PipelineList
+		Pipelines    *v1beta1.PipelineList
 		PipelineRuns pipelineruns
 		Params       clockwork.Clock
 	}{
@@ -543,7 +544,7 @@ func ListAllPipelinesOutput(t *testing.T, cs *framework.Clients, td map[int]inte
 	}
 
 	funcMap := template.FuncMap{
-		"accessMap": func(prs pipelineruns, name string) *v1alpha1.PipelineRun {
+		"accessMap": func(prs pipelineruns, name string) *v1beta1.PipelineRun {
 			if pr, ok := prs[name]; ok {
 				return &pr
 			}
@@ -570,7 +571,7 @@ func ListAllPipelinesOutput(t *testing.T, cs *framework.Clients, td map[int]inte
 	return tmplBytes.String()
 }
 
-func listPipelineDetailsWithTestData(t *testing.T, cs *framework.Clients, td map[int]interface{}) (*v1alpha1.PipelineList, pipelineruns, error) {
+func listPipelineDetailsWithTestData(t *testing.T, cs *framework.Clients, td map[int]interface{}) (*v1beta1.PipelineList, pipelineruns, error) {
 	t.Helper()
 	ps := GetPipelineListWithTestData(t, cs, td)
 	runs := GetPipelineRunList(cs)
@@ -596,7 +597,7 @@ func listPipelineDetailsWithTestData(t *testing.T, cs *framework.Clients, td map
 	return ps, latestRuns, nil
 }
 
-func GetPipelineListWithTestData(t *testing.T, c *framework.Clients, td map[int]interface{}) *v1alpha1.PipelineList {
+func GetPipelineListWithTestData(t *testing.T, c *framework.Clients, td map[int]interface{}) *v1beta1.PipelineList {
 	t.Helper()
 	ps := GetPipelineList(c)
 
@@ -718,8 +719,8 @@ func GetPipelineDescribeOutput(t *testing.T, cs *framework.Clients, pname string
 	pipelineRuns := GetPipelineRunListWithNameAndTestData(t, cs, pname, td)
 
 	var data = struct {
-		Pipeline     *v1alpha1.Pipeline
-		PipelineRuns *v1alpha1.PipelineRunList
+		Pipeline     *v1beta1.Pipeline
+		PipelineRuns *v1beta1.PipelineRunList
 		PipelineName string
 		Params       clockwork.Clock
 	}{
@@ -756,7 +757,7 @@ func GetPipelineDescribeOutput(t *testing.T, cs *framework.Clients, pname string
 
 }
 
-func GetPipelineWithTestData(t *testing.T, c *framework.Clients, name string, td map[int]interface{}) *v1alpha1.Pipeline {
+func GetPipelineWithTestData(t *testing.T, c *framework.Clients, name string, td map[int]interface{}) *v1beta1.Pipeline {
 	t.Helper()
 	pipeline := GetPipeline(c, name)
 
@@ -770,19 +771,17 @@ func GetPipelineWithTestData(t *testing.T, c *framework.Clients, name string, td
 					pipeline.Spec.Resources[count].Name = k
 					switch v {
 					case "git":
-						pipeline.Spec.Resources[count].Type = v1alpha1.PipelineResourceTypeGit
+						pipeline.Spec.Resources[count].Type = v1beta1.PipelineResourceTypeGit
 					case "storage":
-						pipeline.Spec.Resources[count].Type = v1alpha1.PipelineResourceTypeStorage
+						pipeline.Spec.Resources[count].Type = v1beta1.PipelineResourceTypeStorage
 					case "image":
-						pipeline.Spec.Resources[count].Type = v1alpha1.PipelineResourceTypeImage
+						pipeline.Spec.Resources[count].Type = v1beta1.PipelineResourceTypeImage
 					case "cluster":
-						pipeline.Spec.Resources[count].Type = v1alpha1.PipelineResourceTypeCluster
+						pipeline.Spec.Resources[count].Type = v1beta1.PipelineResourceTypeCluster
 					case "pullRequest":
-						pipeline.Spec.Resources[count].Type = v1alpha1.PipelineResourceTypePullRequest
-					case "gcs":
-						pipeline.Spec.Resources[count].Type = v1alpha1.PipelineResourceTypeGCS
+						pipeline.Spec.Resources[count].Type = v1beta1.PipelineResourceTypePullRequest
 					default:
-						t.Errorf("Provided PipelineResourcesData is not Valid Type : Need to Provide (%s, %s, %s, %s)", v1alpha1.PipelineResourceTypeGit, v1alpha1.PipelineResourceTypeImage, v1alpha1.PipelineResourceTypePullRequest, v1alpha1.PipelineResourceTypeCluster)
+						t.Errorf("Provided PipelineResourcesData is not Valid Type : Need to Provide (%s, %s, %s, %s)", v1beta1.PipelineResourceTypeGit, v1beta1.PipelineResourceTypeImage, v1beta1.PipelineResourceTypePullRequest, v1beta1.PipelineResourceTypeCluster)
 					}
 
 					count++
@@ -818,7 +817,7 @@ func GetPipelineWithTestData(t *testing.T, c *framework.Clients, name string, td
 	return pipeline
 }
 
-func GetPipelineRunListWithNameAndTestData(t *testing.T, c *framework.Clients, pname string, td map[int]interface{}) *v1alpha1.PipelineRunList {
+func GetPipelineRunListWithNameAndTestData(t *testing.T, c *framework.Clients, pname string, td map[int]interface{}) *v1beta1.PipelineRunList {
 	t.Helper()
 	opts := metav1.ListOptions{
 		LabelSelector: fmt.Sprintf("tekton.dev/pipeline=%s", pname),

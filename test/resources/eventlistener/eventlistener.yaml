@@ -56,14 +56,14 @@ spec:
     - name: gitrevision
     - name: gitrepositoryurl
   resourcetemplates:
-    - apiVersion: tekton.dev/v1alpha1
+    - apiVersion: tekton.dev/v1beta1
       kind: TaskRun
       metadata:
         generateName: github-run-
       spec:
         taskSpec:
-          inputs:
-            resources:
+          resources:
+            inputs:
               - name: source
                 type: git
           steps:

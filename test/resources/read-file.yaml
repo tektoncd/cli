@@ -12,17 +12,17 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-apiVersion: tekton.dev/v1alpha1
+apiVersion: tekton.dev/v1beta1
 kind: Task
 metadata:
   name: read-task
 spec:
-  inputs:
-    params:
-    - name: FILEPATH
-      default: "docs"
-    - name: FILENAME
-    resources:
+  params:
+  - name: FILEPATH
+    default: "docs"
+  - name: FILENAME
+  resources:
+    inputs:
     - name: source
       type: git
   steps:

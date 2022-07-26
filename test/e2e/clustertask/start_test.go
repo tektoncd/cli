@@ -33,7 +33,6 @@ import (
 	"github.com/tektoncd/cli/test/framework"
 	"github.com/tektoncd/cli/test/helper"
 	"github.com/tektoncd/cli/test/wait"
-
 	"gotest.tools/v3/assert"
 	is "gotest.tools/v3/assert/cmp"
 	"gotest.tools/v3/icmd"
