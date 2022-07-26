@@ -21,6 +21,17 @@ func TestFindPlugin(t *testing.T) {
 	assert.Equal(t, path, nd.Join("tkn-test"))
 }
 
+func TestFindPluginNoExec(t *testing.T) {
+	nd := fs.NewDir(t, "TestFindPlugins")
+	defer nd.Remove()
+	// nolint: gosec
+	err := ioutil.WriteFile(nd.Join("tkn-test"), []byte("test"), 0o600)
+	assert.NilError(t, err)
+	t.Setenv(pluginDirEnv, nd.Path())
+	_, err = FindPlugin("test")
+	assert.ErrorContains(t, err, "cannot find plugin")
+}
+
 func TestFindPluginInPath(t *testing.T) {
 	nd := fs.NewDir(t, "TestFindPluginsInPath")
 	defer nd.Remove()

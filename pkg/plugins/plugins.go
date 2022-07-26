@@ -33,11 +33,22 @@ func getPluginDir() (string, error) {
 
 // Find a binary in plugin homedir directory or user paths.
 func FindPlugin(pluginame string) (string, error) {
+	tknBinary, err := os.Executable()
+	if err != nil {
+		return "", err
+	}
+	pluginNearTknPath := fmt.Sprintf("%s-%s", tknBinary, pluginame)
+	info, err := os.Stat(pluginNearTknPath)
+	if err == nil && info.Mode()&0o111 != 0 {
+		// Found in current dir
+		return pluginNearTknPath, nil
+	}
+
 	cmd := tknPrefix + pluginame
 	dir, _ := getPluginDir()
 	path := filepath.Join(dir, cmd)
-	_, err := os.Stat(path)
-	if err == nil {
+	info, err = os.Stat(path)
+	if err == nil && info.Mode()&0o111 != 0 {
 		// Found in dir
 		return path, nil
 	}
@@ -56,6 +67,11 @@ func GetAllTknPluginFromPaths() []string {
 	if dir, err := getPluginDir(); err == nil {
 		paths = append(paths, dir)
 	}
+	tknBinary, err := os.Executable()
+	if err == nil {
+		paths = append(paths, filepath.Dir(tknBinary))
+	}
+
 	// go over all paths in the PATH environment
 	// and add them to the completion command
 	for _, path := range paths {
