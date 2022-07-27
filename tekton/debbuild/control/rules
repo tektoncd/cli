@@ -17,7 +17,7 @@ override_dh_auto_build:
 	@set -x ; export XDG_CACHE_HOME=/tmp/cache ; \
 	RELEASED_VERSION=`curl -s  https://api.github.com/repos/tektoncd/cli/releases/latest|python3 -c "import sys, json;x=json.load(sys.stdin);print(x['tag_name'])"|sed 's/^v//'` ; test -n "$$RELEASED_VERSION" || RELEASED_VERSION=$(BUILD_DATE) ; \
 	test -e ./debian/VERSION && VERSION=`cat debian/VERSION` || VERSION=$$RELEASED_VERSION ; \
-		go build -mod=vendor -v -o ${TKN} -ldflags "-X github.com/tektoncd/cli/pkg/cmd/version.clientVersion=$$VERSION" ./cmd/tkn
+		CGO_ENABLED=0 go build -mod=vendor -v -o ${TKN} -ldflags "-X github.com/tektoncd/cli/pkg/cmd/version.clientVersion=$$VERSION" ./cmd/tkn
 	$(TKN) completion zsh > debian/tkn.zsh-completion
 	$(TKN) completion bash > debian/tektoncd-cli.bash-completion
 
