@@ -1445,7 +1445,7 @@ github.com/tektoncd/resolution/pkg/client/injection/informers/resolution/v1alpha
 github.com/tektoncd/resolution/pkg/client/listers/resolution/v1alpha1
 github.com/tektoncd/resolution/pkg/common
 github.com/tektoncd/resolution/pkg/resource
-# github.com/tektoncd/triggers v0.20.1
+# github.com/tektoncd/triggers v0.20.2
 ## explicit; go 1.17
 github.com/tektoncd/triggers/pkg/apis/config
 github.com/tektoncd/triggers/pkg/apis/triggers
