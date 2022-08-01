@@ -14,10 +14,12 @@ limitations under the License.
 package artifacts
 
 import (
+	_ "crypto/sha256" // Recommended by go-digest.
 	"fmt"
 	"strings"
 
 	"github.com/google/go-containerregistry/pkg/name"
+	"github.com/opencontainers/go-digest"
 	"github.com/tektoncd/chains/pkg/chains/formats"
 	"github.com/tektoncd/chains/pkg/config"
 	"github.com/tektoncd/pipeline/pkg/apis/pipeline/v1beta1"
@@ -76,6 +78,14 @@ type image struct {
 	digest string
 }
 
+// StructuredSignable contains info for signable targets to become either subjects or materials in intoto Statements.
+// URI is the resource uri for the target needed iff the target is a material.
+// Digest is the target's SHA digest.
+type StructuredSignable struct {
+	URI    string
+	Digest string
+}
+
 func (oa *OCIArtifact) ExtractObjects(tr *v1beta1.TaskRun) []interface{} {
 	imageResourceNames := map[string]*image{}
 	if tr.Status.TaskSpec != nil && tr.Status.TaskSpec.Resources != nil {
@@ -117,40 +127,20 @@ func (oa *OCIArtifact) ExtractObjects(tr *v1beta1.TaskRun) []interface{} {
 }
 
 func ExtractOCIImagesFromResults(tr *v1beta1.TaskRun, logger *zap.SugaredLogger) []interface{} {
-	taskResultImages := map[string]*image{}
-	var objs []interface{}
-	urlSuffix := "IMAGE_URL"
-	digestSuffix := "IMAGE_DIGEST"
-	for _, res := range tr.Status.TaskRunResults {
-		if strings.HasSuffix(res.Name, urlSuffix) {
-			p := strings.TrimSuffix(res.Name, urlSuffix)
-			if v, ok := taskResultImages[p]; ok {
-				v.url = strings.Trim(res.Value.StringVal, "\n")
-			} else {
-				taskResultImages[p] = &image{url: strings.Trim(res.Value.StringVal, "\n")}
-			}
+	ss := extractTargetFromResults(tr, "IMAGE_URL", "IMAGE_DIGEST", logger)
+	objs := []interface{}{}
+	for _, s := range ss {
+		if s == nil || s.Digest == "" || s.URI == "" {
+			continue
 		}
-		if strings.HasSuffix(res.Name, digestSuffix) {
-			p := strings.TrimSuffix(res.Name, digestSuffix)
-			if v, ok := taskResultImages[p]; ok {
-				v.digest = strings.Trim(res.Value.StringVal, "\n")
-			} else {
-				taskResultImages[p] = &image{digest: strings.Trim(res.Value.StringVal, "\n")}
-			}
+		dgst, err := name.NewDigest(fmt.Sprintf("%s@%s", s.URI, s.Digest))
+		if err != nil {
+			logger.Errorf("error getting digest: %v", err)
+			continue
 		}
-	}
-	// Only add it if we got both the URL and digest.
-	for _, img := range taskResultImages {
-		if img != nil && img.url != "" && img.digest != "" {
-			dgst, err := name.NewDigest(fmt.Sprintf("%s@%s", img.url, img.digest))
-			if err != nil {
-				logger.Errorf("error getting digest: %v", err)
-				return nil
-			}
-			objs = append(objs, dgst)
-		}
-	}
 
+		objs = append(objs, dgst)
+	}
 	// look for a comma separated list of images
 	for _, key := range tr.Status.TaskRunResults {
 		if key.Name != "IMAGES" {
@@ -173,6 +163,65 @@ func ExtractOCIImagesFromResults(tr *v1beta1.TaskRun, logger *zap.SugaredLogger)
 	}
 
 	return objs
+}
+
+// ExtractSignableTargetFromResults extracts signable targets that aim to generate intoto provenance as materials within TaskRun results and store them as StructuredSignable.
+func ExtractSignableTargetFromResults(tr *v1beta1.TaskRun, logger *zap.SugaredLogger) []*StructuredSignable {
+	objs := []*StructuredSignable{}
+	ss := extractTargetFromResults(tr, "ARTIFACT_URI", "ARTIFACT_DIGEST", logger)
+	// Only add it if we got both the signable URI and digest.
+	for _, s := range ss {
+		if s == nil || s.Digest == "" || s.URI == "" {
+			continue
+		}
+		if err := checkDigest(s.Digest); err != nil {
+			logger.Errorf("error getting digest %s: %v", s.Digest, err)
+			continue
+		}
+
+		objs = append(objs, s)
+	}
+
+	return objs
+}
+
+func extractTargetFromResults(tr *v1beta1.TaskRun, identifierSuffix string, digestSuffix string, logger *zap.SugaredLogger) map[string]*StructuredSignable {
+	ss := map[string]*StructuredSignable{}
+
+	for _, res := range tr.Status.TaskRunResults {
+		if strings.HasSuffix(res.Name, identifierSuffix) {
+			marker := strings.TrimSuffix(res.Name, identifierSuffix)
+			if v, ok := ss[marker]; ok {
+				v.URI = strings.TrimSpace(res.Value.StringVal)
+
+			} else {
+				ss[marker] = &StructuredSignable{URI: strings.TrimSpace(res.Value.StringVal)}
+			}
+			// TODO: add logic for Intoto signable target as input.
+		}
+		if strings.HasSuffix(res.Name, digestSuffix) {
+			marker := strings.TrimSuffix(res.Name, digestSuffix)
+			if v, ok := ss[marker]; ok {
+				v.Digest = strings.TrimSpace(res.Value.StringVal)
+			} else {
+				ss[marker] = &StructuredSignable{Digest: strings.TrimSpace(res.Value.StringVal)}
+			}
+		}
+
+	}
+	return ss
+}
+
+func checkDigest(dig string) error {
+	prefix := digest.Canonical.String() + ":"
+	if !strings.HasPrefix(dig, prefix) {
+		return fmt.Errorf("unsupported digest algorithm: %s", dig)
+	}
+	hex := strings.TrimPrefix(dig, prefix)
+	if err := digest.Canonical.Validate(hex); err != nil {
+		return err
+	}
+	return nil
 }
 
 // split allows IMAGES to be separated either by commas (for backwards compatibility)
