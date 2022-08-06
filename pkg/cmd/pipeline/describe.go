@@ -87,9 +87,9 @@ const describeTemplate = `{{decorate "bold" "Name"}}:	{{ .PipelineName }}
 {{- if ne (len .Pipeline.Spec.Workspaces) 0 }}
 
 {{decorate "workspaces" ""}}{{decorate "underline bold" "Workspaces\n"}}
- NAME	DESCRIPTION
+ NAME	DESCRIPTION	OPTIONAL
 {{- range $workspace := .Pipeline.Spec.Workspaces }}
- {{ decorate "bullet" $workspace.Name }}	{{ formatDesc $workspace.Description }}
+ {{ decorate "bullet" $workspace.Name }}	{{ formatDesc $workspace.Description }}	{{ $workspace.Optional }}
 {{- end }}
 {{- end }}
 

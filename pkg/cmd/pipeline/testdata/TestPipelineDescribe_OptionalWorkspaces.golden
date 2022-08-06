@@ -15,8 +15,9 @@ Results
 
 Workspaces
 
- NAME   DESCRIPTION      OPTIONAL
- test   test workspace   false
+ NAME            DESCRIPTION              OPTIONAL
+ test            test workspace           false
+ test-optional   test optional works...   true
 
 Tasks
 
