@@ -4,8 +4,8 @@ Description:   a test description
 
 Workspaces
 
- NAME   DESCRIPTION
- test   test workspace
+ NAME   DESCRIPTION      OPTIONAL
+ test   test workspace   false
 
 Steps
 
