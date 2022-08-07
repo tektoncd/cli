@@ -1,4 +1,4 @@
-apiVersion: tekton.dev/v1alpha1
+apiVersion: tekton.dev/v1beta1
 kind: TaskRun
 metadata:
   creationTimestamp: null
@@ -6,23 +6,21 @@ metadata:
   labels:
     key: value
 spec:
-  inputs:
-    params:
-    - name: myarg
-      value: value1
-    - name: print
-      value:
-      - boom
-      - boom
-    resources:
+  params:
+  - name: myarg
+    value: value1
+  - name: print
+    value:
+    - boom
+  resources:
+    inputs:
     - name: my-image
       resourceRef:
         name: image
     - name: my-repo
       resourceRef:
         name: git
-  outputs:
-    resources:
+    outputs:
     - name: code-image
       resourceRef:
         name: output-image

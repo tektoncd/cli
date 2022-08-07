@@ -120,7 +120,7 @@ func TestCreate_InNamespace(t *testing.T) {
 		},
 	}
 
-	version := "v1alpha1"
+	version := "v1beta1"
 	tdc := testDynamic.Options{}
 	dynamic, err := tdc.Client(
 		cb.UnstructuredV1beta1T(tasks[0], version),
@@ -155,7 +155,7 @@ func TestCreate_WithoutFlag(t *testing.T) {
 		},
 	}
 
-	version := "v1alpha1"
+	version := "v1beta1"
 	tdc := testDynamic.Options{}
 	dynamic, err := tdc.Client(
 		cb.UnstructuredV1beta1T(tasks[0], version),

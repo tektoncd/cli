@@ -21,7 +21,6 @@ import (
 )
 
 const (
-	versionA1 = "v1alpha1"
 	versionB1 = "v1beta1"
 )
 
