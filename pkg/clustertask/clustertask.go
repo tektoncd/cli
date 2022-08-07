@@ -15,13 +15,11 @@
 package clustertask
 
 import (
-	"context"
 	"fmt"
 	"os"
 
 	"github.com/tektoncd/cli/pkg/actions"
 	"github.com/tektoncd/cli/pkg/cli"
-	"github.com/tektoncd/pipeline/pkg/apis/pipeline/v1alpha1"
 	"github.com/tektoncd/pipeline/pkg/apis/pipeline/v1beta1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
@@ -67,30 +65,8 @@ func List(c *cli.Clients, opts metav1.ListOptions) (*v1beta1.ClusterTaskList, er
 	return clustertasks, nil
 }
 
-// It will fetch the resource based on the api available and return v1beta1 form
+// It will fetch the ClusterTask based on ClusterTask name
 func Get(c *cli.Clients, clustertaskname string, opts metav1.GetOptions) (*v1beta1.ClusterTask, error) {
-	gvr, err := actions.GetGroupVersionResource(clustertaskGroupResource, c.Tekton.Discovery())
-	if err != nil {
-		return nil, err
-	}
-
-	if gvr.Version == "v1alpha1" {
-		clustertask, err := getV1alpha1(c, clustertaskname, opts)
-		if err != nil {
-			return nil, err
-		}
-		var clustertaskConverted v1beta1.ClusterTask
-		err = clustertask.ConvertTo(context.Background(), &clustertaskConverted)
-		if err != nil {
-			return nil, err
-		}
-		return &clustertaskConverted, nil
-	}
-	return GetV1beta1(c, clustertaskname, opts)
-}
-
-// It will fetch the resource in v1beta1 struct format
-func GetV1beta1(c *cli.Clients, clustertaskname string, opts metav1.GetOptions) (*v1beta1.ClusterTask, error) {
 	unstructuredCT, err := actions.Get(clustertaskGroupResource, c.Dynamic, c.Tekton.Discovery(), clustertaskname, "", opts)
 	if err != nil {
 		return nil, err
@@ -99,21 +75,6 @@ func GetV1beta1(c *cli.Clients, clustertaskname string, opts metav1.GetOptions) 
 	var clustertask *v1beta1.ClusterTask
 	if err := runtime.DefaultUnstructuredConverter.FromUnstructured(unstructuredCT.UnstructuredContent(), &clustertask); err != nil {
 		fmt.Fprintf(os.Stderr, "failed to get clustertask\n")
-		return nil, err
-	}
-	return clustertask, nil
-}
-
-// It will fetch the resource in v1alpha1 struct format
-func getV1alpha1(c *cli.Clients, clustertaskname string, opts metav1.GetOptions) (*v1alpha1.ClusterTask, error) {
-	unstructuredCT, err := actions.Get(clustertaskGroupResource, c.Dynamic, c.Tekton.Discovery(), clustertaskname, "", opts)
-	if err != nil {
-		return nil, err
-	}
-
-	var clustertask *v1alpha1.ClusterTask
-	if err := runtime.DefaultUnstructuredConverter.FromUnstructured(unstructuredCT.UnstructuredContent(), &clustertask); err != nil {
-		fmt.Fprintf(os.Stderr, "failed to get clustertask")
 		return nil, err
 	}
 	return clustertask, nil

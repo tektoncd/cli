@@ -37,7 +37,7 @@ func nameArg(args []string, p cli.Params) error {
 			return err
 		}
 		name := args[0]
-		if _, err = cthelper.GetV1beta1(c, name, metav1.GetOptions{}); err != nil {
+		if _, err = cthelper.Get(c, name, metav1.GetOptions{}); err != nil {
 			return err
 		}
 	}

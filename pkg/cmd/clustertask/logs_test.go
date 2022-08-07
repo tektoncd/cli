@@ -24,10 +24,8 @@ import (
 	"github.com/tektoncd/cli/pkg/test"
 	cb "github.com/tektoncd/cli/pkg/test/builder"
 	testDynamic "github.com/tektoncd/cli/pkg/test/dynamic"
-	"github.com/tektoncd/pipeline/pkg/apis/pipeline/v1alpha1"
 	"github.com/tektoncd/pipeline/pkg/apis/pipeline/v1beta1"
 	pipelinev1beta1test "github.com/tektoncd/pipeline/test"
-	pipelinetest "github.com/tektoncd/pipeline/test/v1alpha1"
 	corev1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/client-go/dynamic"
@@ -41,20 +39,20 @@ func init() {
 
 func TestClusterTaskLog(t *testing.T) {
 	clock := clockwork.NewFakeClock()
-	clustertask1 := []*v1alpha1.ClusterTask{
+	clustertask1 := []*v1beta1.ClusterTask{
 		{
 			ObjectMeta: metav1.ObjectMeta{
 				Name: "task",
 			},
 		},
 	}
-	cs, _ := test.SeedTestData(t, pipelinetest.Data{
+	cs, _ := test.SeedV1beta1TestData(t, pipelinev1beta1test.Data{
 		ClusterTasks: clustertask1,
 	})
-	cs.Pipeline.Resources = cb.APIResourceList(versionA1, []string{"clustertask", "taskrun"})
+	cs.Pipeline.Resources = cb.APIResourceList(versionB1, []string{"clustertask", "taskrun"})
 	tdc1 := testDynamic.Options{}
 	dc1, err := tdc1.Client(
-		cb.UnstructuredCT(clustertask1[0], versionA1),
+		cb.UnstructuredV1beta1CT(clustertask1[0], versionB1),
 	)
 	if err != nil {
 		t.Errorf("unable to create dynamic client: %v", err)
@@ -67,7 +65,7 @@ func TestClusterTaskLog(t *testing.T) {
 	testParams := []struct {
 		name      string
 		command   []string
-		input     pipelinetest.Clients
+		input     pipelinev1beta1test.Clients
 		dc        dynamic.Interface
 		wantError bool
 		want      string

@@ -26,10 +26,8 @@ import (
 	"github.com/tektoncd/cli/pkg/test"
 	cb "github.com/tektoncd/cli/pkg/test/builder"
 	testDynamic "github.com/tektoncd/cli/pkg/test/dynamic"
-	"github.com/tektoncd/pipeline/pkg/apis/pipeline/v1alpha1"
 	"github.com/tektoncd/pipeline/pkg/apis/pipeline/v1beta1"
 	pipelinev1beta1test "github.com/tektoncd/pipeline/test"
-	pipelinetest "github.com/tektoncd/pipeline/test/v1alpha1"
 	"gotest.tools/v3/golden"
 	corev1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
@@ -41,67 +39,65 @@ import (
 func Test_ClusterTaskDescribe(t *testing.T) {
 	clock := clockwork.NewFakeClock()
 
-	clustertasks := []*v1alpha1.ClusterTask{
+	clustertasks := []*v1beta1.ClusterTask{
 		{
 			ObjectMeta: metav1.ObjectMeta{
 				Name:              "clustertask-full",
 				CreationTimestamp: metav1.Time{Time: clock.Now().Add(1 * time.Minute)},
 			},
-			Spec: v1alpha1.TaskSpec{
-				TaskSpec: v1beta1.TaskSpec{
-					Resources: &v1beta1.TaskResources{
-						Inputs: []v1beta1.TaskResource{
-							{
-								ResourceDeclaration: v1alpha1.ResourceDeclaration{
-									Name: "my-repo",
-									Type: v1alpha1.PipelineResourceTypeGit,
-								},
-							},
-							{
-								ResourceDeclaration: v1alpha1.ResourceDeclaration{
-									Name: "my-image",
-									Type: v1alpha1.PipelineResourceTypeImage,
-								},
+			Spec: v1beta1.TaskSpec{
+				Resources: &v1beta1.TaskResources{
+					Inputs: []v1beta1.TaskResource{
+						{
+							ResourceDeclaration: v1beta1.ResourceDeclaration{
+								Name: "my-repo",
+								Type: v1beta1.PipelineResourceTypeGit,
 							},
 						},
-						Outputs: []v1beta1.TaskResource{
-							{
-								ResourceDeclaration: v1alpha1.ResourceDeclaration{
-									Name: "code-image",
-									Type: v1alpha1.PipelineResourceTypeImage,
-								},
+						{
+							ResourceDeclaration: v1beta1.ResourceDeclaration{
+								Name: "my-image",
+								Type: v1beta1.PipelineResourceTypeImage,
 							},
 						},
 					},
-					Params: []v1alpha1.ParamSpec{
+					Outputs: []v1beta1.TaskResource{
 						{
-							Name:        "myarg",
-							Type:        v1beta1.ParamTypeString,
-							Description: "param type is string",
-							Default: &v1beta1.ArrayOrString{
-								Type:      v1beta1.ParamTypeString,
-								StringVal: "default",
-							},
-						},
-						{
-							Name:        "print",
-							Type:        v1beta1.ParamTypeArray,
-							Description: "param type is array",
-							Default: &v1beta1.ArrayOrString{
-								Type:     v1beta1.ParamTypeArray,
-								ArrayVal: []string{"booms", "booms", "booms"},
+							ResourceDeclaration: v1beta1.ResourceDeclaration{
+								Name: "code-image",
+								Type: v1beta1.PipelineResourceTypeImage,
 							},
 						},
 					},
-					Steps: []v1alpha1.Step{
-						{
-							Name:  "hello",
-							Image: "busybox",
+				},
+				Params: []v1beta1.ParamSpec{
+					{
+						Name:        "myarg",
+						Type:        v1beta1.ParamTypeString,
+						Description: "param type is string",
+						Default: &v1beta1.ArrayOrString{
+							Type:      v1beta1.ParamTypeString,
+							StringVal: "default",
 						},
-						{
-							Name:  "exit",
-							Image: "busybox",
+					},
+					{
+						Name:        "print",
+						Type:        v1beta1.ParamTypeArray,
+						Description: "param type is array",
+						Default: &v1beta1.ArrayOrString{
+							Type:     v1beta1.ParamTypeArray,
+							ArrayVal: []string{"booms", "booms", "booms"},
 						},
+					},
+				},
+				Steps: []v1beta1.Step{
+					{
+						Name:  "hello",
+						Image: "busybox",
+					},
+					{
+						Name:  "exit",
+						Image: "busybox",
 					},
 				},
 			},
@@ -111,38 +107,36 @@ func Test_ClusterTaskDescribe(t *testing.T) {
 				Name:              "clustertask-one-everything",
 				CreationTimestamp: metav1.Time{Time: clock.Now().Add(1 * time.Minute)},
 			},
-			Spec: v1alpha1.TaskSpec{
-				TaskSpec: v1beta1.TaskSpec{
-					Description: "a test description",
-					Resources: &v1beta1.TaskResources{
-						Inputs: []v1beta1.TaskResource{
-							{
-								ResourceDeclaration: v1alpha1.ResourceDeclaration{
-									Name: "my-repo",
-									Type: v1alpha1.PipelineResourceTypeGit,
-								},
-							},
-						},
-						Outputs: []v1beta1.TaskResource{
-							{
-								ResourceDeclaration: v1alpha1.ResourceDeclaration{
-									Name: "code-image",
-									Type: v1alpha1.PipelineResourceTypeImage,
-								},
+			Spec: v1beta1.TaskSpec{
+				Description: "a test description",
+				Resources: &v1beta1.TaskResources{
+					Inputs: []v1beta1.TaskResource{
+						{
+							ResourceDeclaration: v1beta1.ResourceDeclaration{
+								Name: "my-repo",
+								Type: v1beta1.PipelineResourceTypeGit,
 							},
 						},
 					},
-					Params: []v1alpha1.ParamSpec{
+					Outputs: []v1beta1.TaskResource{
 						{
-							Name: "myarg",
-							Type: v1beta1.ParamTypeString,
+							ResourceDeclaration: v1beta1.ResourceDeclaration{
+								Name: "code-image",
+								Type: v1beta1.PipelineResourceTypeImage,
+							},
 						},
 					},
-					Steps: []v1alpha1.Step{
-						{
-							Name:  "hello",
-							Image: "busybox",
-						},
+				},
+				Params: []v1beta1.ParamSpec{
+					{
+						Name: "myarg",
+						Type: v1beta1.ParamTypeString,
+					},
+				},
+				Steps: []v1beta1.Step{
+					{
+						Name:  "hello",
+						Image: "busybox",
 					},
 				},
 			},
@@ -155,7 +149,7 @@ func Test_ClusterTaskDescribe(t *testing.T) {
 		},
 	}
 
-	taskruns := []*v1alpha1.TaskRun{
+	taskruns := []*v1beta1.TaskRun{
 		{
 			ObjectMeta: metav1.ObjectMeta{
 				Name:      "taskrun-1",
@@ -164,44 +158,44 @@ func Test_ClusterTaskDescribe(t *testing.T) {
 					"tekton.dev/clusterTask": "clustertask-full",
 				},
 			},
-			Spec: v1alpha1.TaskRunSpec{
-				TaskRef: &v1alpha1.TaskRef{
+			Spec: v1beta1.TaskRunSpec{
+				TaskRef: &v1beta1.TaskRef{
 					Name: "clustertask-full",
-					Kind: v1alpha1.ClusterTaskKind,
+					Kind: v1beta1.ClusterTaskKind,
 				},
 				ServiceAccountName: "svc",
-				Params: []v1alpha1.Param{
+				Params: []v1beta1.Param{
 					{
 						Name: "myarg",
-						Value: v1alpha1.ArrayOrString{
-							Type:      v1alpha1.ParamTypeString,
+						Value: v1beta1.ArrayOrString{
+							Type:      v1beta1.ParamTypeString,
 							StringVal: "value",
 						},
 					},
 					{
 						Name: "print",
-						Value: v1alpha1.ArrayOrString{
-							Type:     v1alpha1.ParamTypeArray,
+						Value: v1beta1.ArrayOrString{
+							Type:     v1beta1.ParamTypeArray,
 							ArrayVal: []string{"booms", "booms", "booms"},
 						},
 					},
 				},
 				Resources: &v1beta1.TaskRunResources{
-					Inputs: []v1alpha1.TaskResourceBinding{
+					Inputs: []v1beta1.TaskResourceBinding{
 						{
-							PipelineResourceBinding: v1alpha1.PipelineResourceBinding{
+							PipelineResourceBinding: v1beta1.PipelineResourceBinding{
 								Name: "my-repo",
-								ResourceRef: &v1alpha1.PipelineResourceRef{
+								ResourceRef: &v1beta1.PipelineResourceRef{
 									Name: "git",
 								},
 							},
 						},
 					},
-					Outputs: []v1alpha1.TaskResourceBinding{
+					Outputs: []v1beta1.TaskResourceBinding{
 						{
-							PipelineResourceBinding: v1alpha1.PipelineResourceBinding{
+							PipelineResourceBinding: v1beta1.PipelineResourceBinding{
 								Name: "my-image",
-								ResourceRef: &v1alpha1.PipelineResourceRef{
+								ResourceRef: &v1beta1.PipelineResourceRef{
 									Name: "image",
 								},
 							},
@@ -209,7 +203,7 @@ func Test_ClusterTaskDescribe(t *testing.T) {
 					},
 				},
 			},
-			Status: v1alpha1.TaskRunStatus{
+			Status: v1beta1.TaskRunStatus{
 				Status: duckv1beta1.Status{
 					Conditions: duckv1beta1.Conditions{
 						{
@@ -232,27 +226,27 @@ func Test_ClusterTaskDescribe(t *testing.T) {
 					"tekton.dev/clusterTask": "clustertask-one-everything",
 				},
 			},
-			Spec: v1alpha1.TaskRunSpec{
-				TaskRef: &v1alpha1.TaskRef{
+			Spec: v1beta1.TaskRunSpec{
+				TaskRef: &v1beta1.TaskRef{
 					Name: "clustertask-one-everything",
-					Kind: v1alpha1.ClusterTaskKind,
+					Kind: v1beta1.ClusterTaskKind,
 				},
 				ServiceAccountName: "svc",
-				Params: []v1alpha1.Param{
+				Params: []v1beta1.Param{
 					{
 						Name: "myarg",
-						Value: v1alpha1.ArrayOrString{
-							Type:      v1alpha1.ParamTypeString,
+						Value: v1beta1.ArrayOrString{
+							Type:      v1beta1.ParamTypeString,
 							StringVal: "value",
 						},
 					},
 				},
 				Resources: &v1beta1.TaskRunResources{
-					Inputs: []v1alpha1.TaskResourceBinding{
+					Inputs: []v1beta1.TaskResourceBinding{
 						{
-							PipelineResourceBinding: v1alpha1.PipelineResourceBinding{
+							PipelineResourceBinding: v1beta1.PipelineResourceBinding{
 								Name: "my-repo",
-								ResourceRef: &v1alpha1.PipelineResourceRef{
+								ResourceRef: &v1beta1.PipelineResourceRef{
 									Name: "git",
 								},
 							},
@@ -260,7 +254,7 @@ func Test_ClusterTaskDescribe(t *testing.T) {
 					},
 				},
 			},
-			Status: v1alpha1.TaskRunStatus{
+			Status: v1beta1.TaskRunStatus{
 				Status: duckv1beta1.Status{
 					Conditions: duckv1beta1.Conditions{
 						{
@@ -283,44 +277,44 @@ func Test_ClusterTaskDescribe(t *testing.T) {
 					"tekton.dev/clusterTask": "clustertask-full",
 				},
 			},
-			Spec: v1alpha1.TaskRunSpec{
-				TaskRef: &v1alpha1.TaskRef{
+			Spec: v1beta1.TaskRunSpec{
+				TaskRef: &v1beta1.TaskRef{
 					Name: "clustertask-full",
-					Kind: v1alpha1.ClusterTaskKind,
+					Kind: v1beta1.ClusterTaskKind,
 				},
 				ServiceAccountName: "svc",
-				Params: []v1alpha1.Param{
+				Params: []v1beta1.Param{
 					{
 						Name: "myarg",
-						Value: v1alpha1.ArrayOrString{
-							Type:      v1alpha1.ParamTypeString,
+						Value: v1beta1.ArrayOrString{
+							Type:      v1beta1.ParamTypeString,
 							StringVal: "value",
 						},
 					},
 					{
 						Name: "print",
-						Value: v1alpha1.ArrayOrString{
-							Type:     v1alpha1.ParamTypeArray,
+						Value: v1beta1.ArrayOrString{
+							Type:     v1beta1.ParamTypeArray,
 							ArrayVal: []string{"booms", "booms", "booms"},
 						},
 					},
 				},
 				Resources: &v1beta1.TaskRunResources{
-					Inputs: []v1alpha1.TaskResourceBinding{
+					Inputs: []v1beta1.TaskResourceBinding{
 						{
-							PipelineResourceBinding: v1alpha1.PipelineResourceBinding{
+							PipelineResourceBinding: v1beta1.PipelineResourceBinding{
 								Name: "my-repo",
-								ResourceRef: &v1alpha1.PipelineResourceRef{
+								ResourceRef: &v1beta1.PipelineResourceRef{
 									Name: "git",
 								},
 							},
 						},
 					},
-					Outputs: []v1alpha1.TaskResourceBinding{
+					Outputs: []v1beta1.TaskResourceBinding{
 						{
-							PipelineResourceBinding: v1alpha1.PipelineResourceBinding{
+							PipelineResourceBinding: v1beta1.PipelineResourceBinding{
 								Name: "my-image",
-								ResourceRef: &v1alpha1.PipelineResourceRef{
+								ResourceRef: &v1beta1.PipelineResourceRef{
 									Name: "image",
 								},
 							},
@@ -328,7 +322,7 @@ func Test_ClusterTaskDescribe(t *testing.T) {
 					},
 				},
 			},
-			Status: v1alpha1.TaskRunStatus{
+			Status: v1beta1.TaskRunStatus{
 				Status: duckv1beta1.Status{
 					Conditions: duckv1beta1.Conditions{
 						{
@@ -352,20 +346,20 @@ func Test_ClusterTaskDescribe(t *testing.T) {
 		},
 	}
 
-	version := "v1alpha1"
+	version := "v1beta1"
 	tdc := testDynamic.Options{}
 	dynamic, err := tdc.Client(
-		cb.UnstructuredCT(clustertasks[0], version),
-		cb.UnstructuredCT(clustertasks[1], version),
-		cb.UnstructuredCT(clustertasks[2], version),
-		cb.UnstructuredTR(taskruns[0], version),
-		cb.UnstructuredTR(taskruns[1], version),
-		cb.UnstructuredTR(taskruns[2], version),
+		cb.UnstructuredV1beta1CT(clustertasks[0], version),
+		cb.UnstructuredV1beta1CT(clustertasks[1], version),
+		cb.UnstructuredV1beta1CT(clustertasks[2], version),
+		cb.UnstructuredV1beta1TR(taskruns[0], version),
+		cb.UnstructuredV1beta1TR(taskruns[1], version),
+		cb.UnstructuredV1beta1TR(taskruns[2], version),
 	)
 	if err != nil {
 		t.Errorf("unable to create dynamic client: %v", err)
 	}
-	cs, _ := test.SeedTestData(t, pipelinetest.Data{ClusterTasks: clustertasks, Namespaces: ns, TaskRuns: taskruns})
+	cs, _ := test.SeedV1beta1TestData(t, pipelinev1beta1test.Data{ClusterTasks: clustertasks, Namespaces: ns, TaskRuns: taskruns})
 	cs.Pipeline.Resources = cb.APIResourceList(version, []string{"clustertask", "taskrun"})
 	p := &test.Params{Tekton: cs.Pipeline, Kube: cs.Kube, Dynamic: dynamic, Clock: clock}
 	p.SetNamespace("ns")
@@ -378,14 +372,14 @@ func Test_ClusterTaskDescribe(t *testing.T) {
 				return true, nil, errors.New("fake list taskrun error")
 			}}}}
 	dynamic2, err := tdc2.Client(
-		cb.UnstructuredCT(clustertasks[0], version),
-		cb.UnstructuredCT(clustertasks[1], version),
-		cb.UnstructuredCT(clustertasks[2], version),
+		cb.UnstructuredV1beta1CT(clustertasks[0], version),
+		cb.UnstructuredV1beta1CT(clustertasks[1], version),
+		cb.UnstructuredV1beta1CT(clustertasks[2], version),
 	)
 	if err != nil {
 		t.Errorf("unable to create dynamic client: %v", err)
 	}
-	cs2, _ := test.SeedTestData(t, pipelinetest.Data{ClusterTasks: clustertasks, Namespaces: ns})
+	cs2, _ := test.SeedV1beta1TestData(t, pipelinev1beta1test.Data{ClusterTasks: clustertasks, Namespaces: ns})
 	cs2.Pipeline.Resources = cb.APIResourceList(version, []string{"clustertask", "taskrun"})
 	p2 := &test.Params{Tekton: cs2.Pipeline, Kube: cs2.Kube, Dynamic: dynamic2, Clock: clock}
 	p2.SetNamespace("ns")
@@ -458,23 +452,23 @@ func Test_ClusterTaskDescribe(t *testing.T) {
 }
 
 func TestClusterTaskDescribe_WithoutNameIfOnlyOneClusterTaskPresent(t *testing.T) {
-	cstasks := []*v1alpha1.ClusterTask{
+	cstasks := []*v1beta1.ClusterTask{
 		{
 			ObjectMeta: metav1.ObjectMeta{
 				Name: "task-1",
 			},
 		},
 	}
-	version := "v1alpha1"
+	version := "v1beta1"
 	tdc := testDynamic.Options{}
 	dynamic, err := tdc.Client(
-		cb.UnstructuredCT(cstasks[0], version),
+		cb.UnstructuredV1beta1CT(cstasks[0], version),
 	)
 	if err != nil {
 		t.Errorf("unable to create dynamic client: %v", err)
 	}
 
-	cs, _ := test.SeedTestData(t, pipelinetest.Data{ClusterTasks: cstasks})
+	cs, _ := test.SeedV1beta1TestData(t, pipelinev1beta1test.Data{ClusterTasks: cstasks})
 	cs.Pipeline.Resources = cb.APIResourceList(version, []string{"clustertask", "taskrun"})
 	p := &test.Params{Tekton: cs.Pipeline, Kube: cs.Kube, Dynamic: dynamic}
 	clusterTask := Command(p)
@@ -491,7 +485,7 @@ func TestClusterTask_custom_output(t *testing.T) {
 
 	clock := clockwork.NewFakeClock()
 
-	cstasks := []*v1alpha1.ClusterTask{
+	cstasks := []*v1beta1.ClusterTask{
 		{
 			ObjectMeta: metav1.ObjectMeta{
 				Name: name,
@@ -499,7 +493,7 @@ func TestClusterTask_custom_output(t *testing.T) {
 		},
 	}
 
-	cs, _ := test.SeedTestData(t, pipelinetest.Data{
+	cs, _ := test.SeedV1beta1TestData(t, pipelinev1beta1test.Data{
 		ClusterTasks: cstasks,
 		Namespaces: []*corev1.Namespace{
 			{
@@ -510,10 +504,10 @@ func TestClusterTask_custom_output(t *testing.T) {
 		},
 	})
 
-	version := "v1alpha1"
+	version := "v1beta1"
 	tdc := testDynamic.Options{}
 	dynamic, err := tdc.Client(
-		cb.UnstructuredCT(cstasks[0], version),
+		cb.UnstructuredV1beta1CT(cstasks[0], version),
 	)
 	if err != nil {
 		t.Errorf("unable to create dynamic client: %v", err)
