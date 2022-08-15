@@ -57,7 +57,7 @@ require (
 	github.com/tektoncd/plumbing v0.0.0-20220329085922-d765a5cba75f
 	github.com/tektoncd/triggers v0.20.2
 	go.opencensus.io v0.23.0
-	go.uber.org/atomic v1.9.0
+	go.uber.org/atomic v1.10.0
 	go.uber.org/multierr v1.8.0
 	go.uber.org/zap v1.22.0
 	golang.org/x/crypto v0.0.0-20220525230936-793ad666bf5e
