@@ -16,8 +16,8 @@ package file
 
 import (
 	"fmt"
-	"io/ioutil"
 	"net/http"
+	"os"
 	"strings"
 	"testing"
 
@@ -29,7 +29,7 @@ import (
 
 func TestLoadLocalFile(t *testing.T) {
 	localTarget := "./testdata/task.yaml"
-	localContent, err := ioutil.ReadFile(localTarget)
+	localContent, err := os.ReadFile(localTarget)
 	if err != nil {
 		t.Errorf("file path %s does not exist", localTarget)
 	}

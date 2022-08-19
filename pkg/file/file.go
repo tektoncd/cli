@@ -17,9 +17,9 @@ package file
 import (
 	"bytes"
 	"fmt"
-	"io/ioutil"
 	"log"
 	"net/http"
+	"os"
 	"strings"
 )
 
@@ -44,7 +44,7 @@ func LoadFileContent(httpClient http.Client, target string, validate TypeValidat
 	if strings.HasPrefix(target, "http") {
 		content, err = getRemoteContent(httpClient, target)
 	} else {
-		content, err = ioutil.ReadFile(target)
+		content, err = os.ReadFile(target)
 	}
 
 	if err != nil {

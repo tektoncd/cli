@@ -3,7 +3,7 @@ package bundle
 import (
 	"bytes"
 	"fmt"
-	"io/ioutil"
+	"io"
 	"net/http/httptest"
 	"net/url"
 	"os"
@@ -18,7 +18,7 @@ import (
 )
 
 func TestWriteAndRead(t *testing.T) {
-	tempDir, err := ioutil.TempDir(os.TempDir(), "write-and-read-test")
+	tempDir, err := os.MkdirTemp(os.TempDir(), "write-and-read-test")
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -82,7 +82,7 @@ func TestWriteAndRead(t *testing.T) {
 	}
 
 	reader, _ := layers[0].Uncompressed()
-	remoteContents, err := ioutil.ReadAll(reader)
+	remoteContents, err := io.ReadAll(reader)
 	if err != nil {
 		t.Fatal(err)
 	}

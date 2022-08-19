@@ -17,7 +17,7 @@ package version
 import (
 	"encoding/json"
 	"fmt"
-	"io/ioutil"
+	"io"
 	"log"
 	"net/http"
 	"strings"
@@ -221,7 +221,7 @@ func (cli *Client) getRelease(url string) (ghversion GHVersion, err error) {
 		return ghversion, fmt.Errorf("invalid http status %d, error: %s", res.StatusCode, res.Status)
 	}
 
-	body, err := ioutil.ReadAll(res.Body)
+	body, err := io.ReadAll(res.Body)
 	if err != nil {
 		return ghversion, errors.Wrap(err, "failed to read the latest version response body")
 	}

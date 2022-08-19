@@ -4,7 +4,7 @@
 // you may not use this file except in compliance with the License.
 // You may obtain a copy of the License at
 //
-//     http://www.apache.org/licenses/LICENSE-2.0
+//	http://www.apache.org/licenses/LICENSE-2.0
 //
 // Unless required by applicable law or agreed to in writing, software
 // distributed under the License is distributed on an "AS IS" BASIS,
@@ -15,7 +15,6 @@ package main
 
 import (
 	"fmt"
-	"io/ioutil"
 	"log"
 	"os"
 	"path/filepath"
@@ -86,7 +85,7 @@ func loadLongDescription(cmd *cobra.Command, path ...string) error {
 			continue
 		}
 
-		content, err := ioutil.ReadFile(fullpath)
+		content, err := os.ReadFile(fullpath)
 		if err != nil {
 			return err
 		}

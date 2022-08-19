@@ -17,7 +17,6 @@ package fake
 import (
 	"fmt"
 	"io"
-	"io/ioutil"
 	"strings"
 
 	"github.com/tektoncd/cli/pkg/pods/stream"
@@ -41,7 +40,7 @@ func (ps *PodStream) Stream() (io.ReadCloser, error) {
 		for _, c := range fl.Containers {
 			if c.Name == ps.opts.Container {
 				log := strings.Join(c.Logs, "\n")
-				return ioutil.NopCloser(strings.NewReader(log)), nil
+				return io.NopCloser(strings.NewReader(log)), nil
 			}
 		}
 	}

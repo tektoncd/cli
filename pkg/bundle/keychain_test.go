@@ -3,7 +3,6 @@ package bundle
 import (
 	"encoding/base64"
 	"fmt"
-	"io/ioutil"
 	"os"
 	"path/filepath"
 	"reflect"
@@ -18,7 +17,7 @@ import (
 var testRegistry, _ = name.NewRegistry("test.io", name.WeakValidation)
 
 func setupConfigDir(t *testing.T) string {
-	tmpdir, err := ioutil.TempDir("", "keychain")
+	tmpdir, err := os.MkdirTemp(os.TempDir(), "keychain")
 	if err != nil {
 		t.Fatalf("creating temp dir: %v", err)
 	}
@@ -40,7 +39,7 @@ func setUpConfigFile(t *testing.T, content string) string {
 		t.Fatalf("unable to mkdir %q: %v", authFileDir, err)
 	}
 
-	if err := ioutil.WriteFile(authFile, []byte(content), 0600); err != nil {
+	if err := os.WriteFile(authFile, []byte(content), 0600); err != nil {
 		t.Fatalf("write %q: %v", authFile, err)
 	}
 	return tmpdir
