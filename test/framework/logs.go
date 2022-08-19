@@ -17,7 +17,7 @@ package framework
 import (
 	"context"
 	"fmt"
-	"io/ioutil"
+	"io"
 	"strings"
 
 	corev1 "k8s.io/api/core/v1"
@@ -49,7 +49,7 @@ func getContainerLogsFromPod(c kubernetes.Interface, pod, namespace string) (str
 		if err != nil {
 			return "", err
 		}
-		bs, err := ioutil.ReadAll(rc)
+		bs, err := io.ReadAll(rc)
 		if err != nil {
 			return "", err
 		}

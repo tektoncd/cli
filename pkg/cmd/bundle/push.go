@@ -4,7 +4,7 @@
 // you may not use this file except in compliance with the License.
 // You may obtain a copy of the License at
 //
-//     http://www.apache.org/licenses/LICENSE-2.0
+//	http://www.apache.org/licenses/LICENSE-2.0
 //
 // Unless required by applicable law or agreed to in writing, software
 // distributed under the License is distributed on an "AS IS" BASIS,
@@ -15,7 +15,8 @@ package bundle
 
 import (
 	"fmt"
-	"io/ioutil"
+	"io"
+	"os"
 
 	"github.com/google/go-containerregistry/pkg/name"
 	"github.com/spf13/cobra"
@@ -92,7 +93,7 @@ func (p *pushOptions) parseArgsAndFlags(args []string) error {
 	for _, path := range p.bundleContentPaths {
 		if path == "-" {
 			// If this flag's value is '-', assume the user has piped input into stdin.
-			stdinContents, err := ioutil.ReadAll(p.stream.In)
+			stdinContents, err := io.ReadAll(p.stream.In)
 			if err != nil || len(stdinContents) == 0 {
 				return fmt.Errorf("failed to read bundle contents from stdin: %w", err)
 			}
@@ -100,7 +101,7 @@ func (p *pushOptions) parseArgsAndFlags(args []string) error {
 			continue
 		}
 
-		contents, err := ioutil.ReadFile(path)
+		contents, err := os.ReadFile(path)
 		if err != nil {
 			return fmt.Errorf("failed to find and read file %s: %w", path, err)
 		}

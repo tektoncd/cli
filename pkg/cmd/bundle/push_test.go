@@ -5,7 +5,6 @@ import (
 	"bytes"
 	"fmt"
 	"io"
-	"io/ioutil"
 	"net/http/httptest"
 	"net/url"
 	"os"
@@ -85,7 +84,7 @@ func TestPushCommand(t *testing.T) {
 
 			ref := fmt.Sprintf("%s/test-img-namespace/%s:1.0", u.Host, tc.name)
 
-			testDir, err := ioutil.TempDir(os.TempDir(), tc.name+"-")
+			testDir, err := os.MkdirTemp(os.TempDir(), tc.name+"-")
 			if err != nil {
 				t.Fatal(err)
 			}
@@ -99,7 +98,7 @@ func TestPushCommand(t *testing.T) {
 				}
 
 				filename := path.Join(testDir, name)
-				if err := ioutil.WriteFile(filename, []byte(contents), os.ModePerm); err != nil {
+				if err := os.WriteFile(filename, []byte(contents), os.ModePerm); err != nil {
 					t.Fatalf("failed to write file %s: %s", filename, err)
 				}
 				paths = append(paths, filename)

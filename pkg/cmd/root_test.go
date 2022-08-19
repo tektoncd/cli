@@ -16,7 +16,7 @@ package cmd
 
 import (
 	"fmt"
-	"io/ioutil"
+	"os"
 	"strings"
 	"testing"
 
@@ -69,9 +69,9 @@ func TestPluginList(t *testing.T) {
 	nd := fs.NewDir(t, "TestPluginList")
 	defer nd.Remove()
 	// nolint: gosec
-	err := ioutil.WriteFile(nd.Join("tkn-exec"), []byte("exec"), 0o700)
+	err := os.WriteFile(nd.Join("tkn-exec"), []byte("exec"), 0o700)
 	assert.NilError(t, err)
-	err = ioutil.WriteFile(nd.Join("tkn-nonexec"), []byte("nonexec"), 0o600)
+	err = os.WriteFile(nd.Join("tkn-nonexec"), []byte("nonexec"), 0o600)
 	assert.NilError(t, err)
 	t.Setenv("PATH", nd.Path()+":/non/existing/path")
 	t.Setenv("TKN_PLUGINS_DIR", "/non/existing/path")
