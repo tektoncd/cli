@@ -20,7 +20,6 @@ import (
 
 	"github.com/tektoncd/cli/pkg/actions"
 	trh "github.com/tektoncd/cli/pkg/taskrun"
-	"github.com/tektoncd/pipeline/pkg/apis/pipeline/v1alpha1"
 	"github.com/tektoncd/pipeline/pkg/apis/pipeline/v1beta1"
 	"github.com/tektoncd/pipeline/pkg/client/clientset/versioned"
 	informers "github.com/tektoncd/pipeline/pkg/client/informers/externalversions"
@@ -79,29 +78,22 @@ func (t *Tracker) Monitor(allowed []string) <-chan []trh.Run {
 
 	eventHandler := func(obj interface{}) {
 		var pipelinerunConverted v1beta1.PipelineRun
-		switch gvr.Version {
-		case "v1alpha1":
-			pr, ok := obj.(*v1alpha1.PipelineRun)
-			if !ok || pr == nil {
-				return
-			}
-			if err := pr.ConvertTo(context.Background(), &pipelinerunConverted); err != nil {
-				return
-			}
-		case "v1beta1":
-			pr, ok := obj.(*v1beta1.PipelineRun)
-			if !ok || pr == nil {
-				return
-			}
-
-			trMap, runMap, err := getFullPipelineTaskStatuses(context.Background(), t.Tekton, t.Ns, pr)
-			if err != nil {
-				return
-			}
-			pr.DeepCopyInto(&pipelinerunConverted)
-			pipelinerunConverted.Status.TaskRuns = trMap
-			pipelinerunConverted.Status.Runs = runMap
+		if gvr.Version != "v1beta1" {
+			return
 		}
+
+		pr, ok := obj.(*v1beta1.PipelineRun)
+		if !ok || pr == nil {
+			return
+		}
+
+		trMap, runMap, err := getFullPipelineTaskStatuses(context.Background(), t.Tekton, t.Ns, pr)
+		if err != nil {
+			return
+		}
+		pr.DeepCopyInto(&pipelinerunConverted)
+		pipelinerunConverted.Status.TaskRuns = trMap
+		pipelinerunConverted.Status.Runs = runMap
 
 		trC <- t.findNewTaskruns(&pipelinerunConverted, allowed)
 
