@@ -746,6 +746,33 @@ func TestPipelineRunDelete_v1beta1(t *testing.T) {
 				},
 			},
 		},
+		{
+			ObjectMeta: metav1.ObjectMeta{
+				Namespace:         "ns",
+				Name:              "pipeline-run-7",
+				Labels:            map[string]string{"tekton.dev/pipeline": "pipeline"},
+				CreationTimestamp: metav1.Time{Time: clock.Now()},
+			},
+			Spec: v1beta1.PipelineRunSpec{
+				PipelineRef: &v1beta1.PipelineRef{
+					Name: "pipeline",
+				},
+			},
+			Status: v1beta1.PipelineRunStatus{
+				Status: duckv1beta1.Status{
+					Conditions: duckv1beta1.Conditions{
+						{
+							Status: corev1.ConditionUnknown,
+							Reason: v1beta1.PipelineRunReasonPending.String(),
+						},
+					},
+				},
+				PipelineRunStatusFields: v1beta1.PipelineRunStatusFields{
+					// pipeline run starts now
+					StartTime: &metav1.Time{Time: clock.Now()},
+				},
+			},
+		},
 	}
 
 	type clients struct {
@@ -754,7 +781,7 @@ func TestPipelineRunDelete_v1beta1(t *testing.T) {
 	}
 
 	seeds := make([]clients, 0)
-	for i := 0; i < 15; i++ {
+	for i := 0; i < 16; i++ {
 		cs, _ := test.SeedV1beta1TestData(t, pipelinev1beta1test.Data{
 			Pipelines:    pdata,
 			PipelineRuns: prdata,
@@ -769,6 +796,7 @@ func TestPipelineRunDelete_v1beta1(t *testing.T) {
 			cb.UnstructuredV1beta1PR(prdata[3], version),
 			cb.UnstructuredV1beta1PR(prdata[4], version),
 			cb.UnstructuredV1beta1PR(prdata[5], version),
+			cb.UnstructuredV1beta1PR(prdata[6], version),
 		)
 		if err != nil {
 			t.Errorf("unable to create dynamic client: %v", err)
@@ -1063,7 +1091,7 @@ func TestPipelineRunDelete_v1beta1(t *testing.T) {
 			input:       seeds[9].pipelineClient,
 			inputStream: nil,
 			wantError:   false,
-			want:        "5 expired PipelineRuns has been deleted in namespace \"ns\", kept 0\n",
+			want:        "6 expired PipelineRuns has been deleted in namespace \"ns\", kept 0\n",
 		},
 		{
 			name:        "Delete all the pipelineruns including one without status",
@@ -1118,6 +1146,24 @@ func TestPipelineRunDelete_v1beta1(t *testing.T) {
 			inputStream: nil,
 			wantError:   false,
 			want:        "Are you sure you want to delete all PipelineRuns related to Pipeline \"pipeline\" (y/n): All PipelineRuns associated with Pipeline \"pipeline\" deleted in namespace \"ns\"\n",
+		},
+		{
+			name:        "Ignore deleting PipelineRun with Status Unknown",
+			command:     []string{"delete", "--all", "-n", "ns", "-f"},
+			dynamic:     seeds[15].dynamicClient,
+			input:       seeds[15].pipelineClient,
+			inputStream: nil,
+			wantError:   false,
+			want:        "All PipelineRuns(Completed) deleted in namespace \"ns\"\n",
+		},
+		{
+			name:        "PipelineRun with Status Unknown exists",
+			command:     []string{"ls", "-n", "ns"},
+			dynamic:     seeds[15].dynamicClient,
+			input:       seeds[15].pipelineClient,
+			inputStream: nil,
+			wantError:   false,
+			want:        "NAME             STARTED         DURATION   STATUS\npipeline-run-4   ---             ---        ---\npipeline-run-5   ---             ---        Succeeded(PipelineRunPending)\npipeline-run-6   0 seconds ago   ---        Succeeded(Running)\npipeline-run-7   0 seconds ago   ---        Running(PipelineRunPending)\n",
 		},
 	}
 
