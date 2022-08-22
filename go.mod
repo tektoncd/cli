@@ -71,8 +71,8 @@ require (
 	gopkg.in/yaml.v2 v2.4.0
 	gotest.tools v2.2.0+incompatible
 	gotest.tools/v3 v3.3.0
-	k8s.io/api v0.23.5
-	k8s.io/apimachinery v0.23.5
+	k8s.io/api v0.24.4
+	k8s.io/apimachinery v0.24.4
 	k8s.io/cli-runtime v0.23.5
 	k8s.io/client-go v1.5.2
 	knative.dev/pkg v0.0.0-20220329144915-0a1ec2e0d46c
@@ -344,7 +344,7 @@ require (
 	gopkg.in/yaml.v3 v3.0.1 // indirect
 	k8s.io/apiextensions-apiserver v0.23.4 // indirect
 	k8s.io/klog/v2 v2.60.1 // indirect
-	k8s.io/kube-openapi v0.0.0-20220124234850-424119656bbf // indirect
+	k8s.io/kube-openapi v0.0.0-20220328201542-3ee0da9b0b42 // indirect
 	k8s.io/utils v0.0.0-20220210201930-3a6ce19ff2f9 // indirect
 	knative.dev/eventing v0.30.1-0.20220407170245-58865afba92c // indirect
 	knative.dev/networking v0.0.0-20220404212543-dde40b019aff // indirect
@@ -355,6 +355,8 @@ require (
 	sigs.k8s.io/release-utils v0.6.0 // indirect
 	sigs.k8s.io/structured-merge-diff/v4 v4.2.1 // indirect
 )
+
+require github.com/google/gnostic v0.5.7-v3refs // indirect
 
 replace (
 	github.com/kr/pty => github.com/creack/pty v1.1.16
