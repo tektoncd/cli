@@ -24,10 +24,8 @@ import (
 	"github.com/tektoncd/cli/pkg/test"
 	cb "github.com/tektoncd/cli/pkg/test/builder"
 	testDynamic "github.com/tektoncd/cli/pkg/test/dynamic"
-	"github.com/tektoncd/pipeline/pkg/apis/pipeline/v1alpha1"
 	"github.com/tektoncd/pipeline/pkg/apis/pipeline/v1beta1"
 	pipelinev1beta1test "github.com/tektoncd/pipeline/test"
-	pipelinetest "github.com/tektoncd/pipeline/test/v1alpha1"
 	"gotest.tools/v3/golden"
 	corev1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
@@ -43,7 +41,7 @@ var (
 )
 
 func TestTaskRunDescribe_invalid_namespace(t *testing.T) {
-	cs, _ := test.SeedTestData(t, pipelinetest.Data{
+	cs, _ := test.SeedV1beta1TestData(t, pipelinev1beta1test.Data{
 		Namespaces: []*corev1.Namespace{
 			{
 				ObjectMeta: metav1.ObjectMeta{
@@ -55,7 +53,7 @@ func TestTaskRunDescribe_invalid_namespace(t *testing.T) {
 	tdc := testDynamic.Options{}
 	dc, _ := tdc.Client()
 	p := &test.Params{Tekton: cs.Pipeline, Kube: cs.Kube, Dynamic: dc}
-	cs.Pipeline.Resources = cb.APIResourceList("v1alpha1", []string{"taskrun"})
+	cs.Pipeline.Resources = cb.APIResourceList("v1beta1", []string{"taskrun"})
 
 	taskrun := Command(p)
 	out, err := test.ExecuteCommand(taskrun, "desc", "bar", "-n", "invalid")
@@ -67,7 +65,7 @@ func TestTaskRunDescribe_invalid_namespace(t *testing.T) {
 }
 
 func TestTaskRunDescribe_not_found(t *testing.T) {
-	cs, _ := test.SeedTestData(t, pipelinetest.Data{
+	cs, _ := test.SeedV1beta1TestData(t, pipelinev1beta1test.Data{
 		Namespaces: []*corev1.Namespace{
 			{
 				ObjectMeta: metav1.ObjectMeta{
@@ -77,7 +75,7 @@ func TestTaskRunDescribe_not_found(t *testing.T) {
 		},
 	})
 
-	cs.Pipeline.Resources = cb.APIResourceList("v1alpha1", []string{"taskrun"})
+	cs.Pipeline.Resources = cb.APIResourceList("v1beta1", []string{"taskrun"})
 	tdc := testDynamic.Options{}
 	dynamic, err := tdc.Client()
 	if err != nil {
@@ -97,20 +95,20 @@ func TestTaskRunDescribe_not_found(t *testing.T) {
 func TestTaskRunDescribe_empty_taskrun(t *testing.T) {
 	clock := clockwork.NewFakeClock()
 
-	trs := []*v1alpha1.TaskRun{
+	trs := []*v1beta1.TaskRun{
 		{
 			ObjectMeta: metav1.ObjectMeta{
 				Name:      "tr-1",
 				Namespace: "ns",
 				Labels:    map[string]string{"tekton.dev/task": "t1"},
 			},
-			Spec: v1alpha1.TaskRunSpec{
-				TaskRef: &v1alpha1.TaskRef{
+			Spec: v1beta1.TaskRunSpec{
+				TaskRef: &v1beta1.TaskRef{
 					Name: "t1",
 				},
 				Timeout: &metav1.Duration{Duration: 1 * time.Hour},
 			},
-			Status: v1alpha1.TaskRunStatus{
+			Status: v1beta1.TaskRunStatus{
 				Status: duckv1beta1.Status{
 					Conditions: duckv1beta1.Conditions{
 						{
@@ -123,7 +121,7 @@ func TestTaskRunDescribe_empty_taskrun(t *testing.T) {
 		},
 	}
 
-	cs, _ := test.SeedTestData(t, pipelinetest.Data{
+	cs, _ := test.SeedV1beta1TestData(t, pipelinev1beta1test.Data{
 		TaskRuns: trs,
 		Namespaces: []*corev1.Namespace{
 			{
@@ -134,10 +132,10 @@ func TestTaskRunDescribe_empty_taskrun(t *testing.T) {
 		},
 	})
 
-	version := "v1alpha1"
+	version := "v1beta1"
 	tdc := testDynamic.Options{}
 	dynamic, err := tdc.Client(
-		cb.UnstructuredTR(trs[0], version),
+		cb.UnstructuredV1beta1TR(trs[0], version),
 	)
 	if err != nil {
 		t.Errorf("unable to create dynamic client: %v", err)
@@ -159,16 +157,16 @@ func TestTaskRunDescribe_empty_taskrun(t *testing.T) {
 func TestTaskRunDescribe_only_taskrun(t *testing.T) {
 	clock := clockwork.NewFakeClock()
 
-	trs := []*v1alpha1.TaskRun{
+	trs := []*v1beta1.TaskRun{
 		{
 			ObjectMeta: metav1.ObjectMeta{
 				Name:      "tr-1",
 				Namespace: "ns",
 			},
-			Status: v1alpha1.TaskRunStatus{
-				TaskRunStatusFields: v1alpha1.TaskRunStatusFields{
+			Status: v1beta1.TaskRunStatus{
+				TaskRunStatusFields: v1beta1.TaskRunStatusFields{
 					StartTime: &metav1.Time{Time: clockwork.NewFakeClock().Now().Add(20 * time.Second)},
-					Steps: []v1alpha1.StepState{
+					Steps: []v1beta1.StepState{
 						{
 							Name: "step1",
 							ContainerState: corev1.ContainerState{
@@ -196,66 +194,11 @@ func TestTaskRunDescribe_only_taskrun(t *testing.T) {
 					},
 				},
 			},
-			Spec: v1alpha1.TaskRunSpec{
-				TaskRef: &v1alpha1.TaskRef{
-					Name: "t1",
-				},
-				Timeout: &metav1.Duration{Duration: 1 * time.Hour},
-				Inputs: &v1alpha1.TaskRunInputs{
-					Params: []v1alpha1.Param{
-						{
-							Name:  "input",
-							Value: v1alpha1.ArrayOrString{Type: v1alpha1.ParamTypeString, StringVal: "param"},
-						},
-						{
-							Name:  "input2",
-							Value: v1alpha1.ArrayOrString{Type: v1alpha1.ParamTypeString, StringVal: "param2"},
-						},
-					},
-					Resources: []v1alpha1.TaskResourceBinding{
-						{
-							PipelineResourceBinding: v1alpha1.PipelineResourceBinding{
-								Name: "git",
-								ResourceRef: &v1alpha1.PipelineResourceRef{
-									Name: "git",
-								},
-							},
-						},
-						{
-							PipelineResourceBinding: v1alpha1.PipelineResourceBinding{
-								Name: "image-input",
-								ResourceRef: &v1alpha1.PipelineResourceRef{
-									Name: "image",
-								},
-							},
-						},
-					},
-				},
-				Outputs: &v1alpha1.TaskRunOutputs{
-					Resources: []v1alpha1.TaskResourceBinding{
-						{
-							PipelineResourceBinding: v1alpha1.PipelineResourceBinding{
-								Name: "image-output",
-								ResourceRef: &v1alpha1.PipelineResourceRef{
-									Name: "image",
-								},
-							},
-						},
-						{
-							PipelineResourceBinding: v1alpha1.PipelineResourceBinding{
-								Name: "image-output2",
-								ResourceRef: &v1alpha1.PipelineResourceRef{
-									Name: "image",
-								},
-							},
-						},
-					},
-				},
-			},
+			Spec: testTaskSpec,
 		},
 	}
 
-	cs, _ := test.SeedTestData(t, pipelinetest.Data{
+	cs, _ := test.SeedV1beta1TestData(t, pipelinev1beta1test.Data{
 		TaskRuns: trs,
 		Namespaces: []*corev1.Namespace{
 			{
@@ -266,10 +209,10 @@ func TestTaskRunDescribe_only_taskrun(t *testing.T) {
 		},
 	})
 
-	version := "v1alpha1"
+	version := "v1beta1"
 	tdc := testDynamic.Options{}
 	dynamic, err := tdc.Client(
-		cb.UnstructuredTR(trs[0], version),
+		cb.UnstructuredV1beta1TR(trs[0], version),
 	)
 	if err != nil {
 		t.Errorf("unable to create dynamic client: %v", err)
@@ -292,13 +235,13 @@ func TestTaskRunDescribe_only_taskrun(t *testing.T) {
 func TestTaskRunDescribe_failed(t *testing.T) {
 	clock := clockwork.NewFakeClock()
 
-	trs := []*v1alpha1.TaskRun{
+	trs := []*v1beta1.TaskRun{
 		{
 			ObjectMeta: metav1.ObjectMeta{
 				Name:      "tr-1",
 				Namespace: "ns",
 			},
-			Status: v1alpha1.TaskRunStatus{
+			Status: v1beta1.TaskRunStatus{
 				Status: duckv1beta1.Status{
 					Conditions: duckv1beta1.Conditions{
 						{
@@ -308,13 +251,13 @@ func TestTaskRunDescribe_failed(t *testing.T) {
 						},
 					},
 				},
-				TaskRunStatusFields: v1alpha1.TaskRunStatusFields{
+				TaskRunStatusFields: v1beta1.TaskRunStatusFields{
 					StartTime:      &metav1.Time{Time: clock.Now().Add(2 * time.Minute)},
 					CompletionTime: &metav1.Time{Time: clock.Now().Add(5 * time.Minute)},
 				},
 			},
-			Spec: v1alpha1.TaskRunSpec{
-				TaskRef: &v1alpha1.TaskRef{
+			Spec: v1beta1.TaskRunSpec{
+				TaskRef: &v1beta1.TaskRef{
 					Name: "t1",
 				},
 				Timeout: &metav1.Duration{Duration: 1 * time.Hour},
@@ -322,7 +265,7 @@ func TestTaskRunDescribe_failed(t *testing.T) {
 		},
 	}
 
-	cs, _ := test.SeedTestData(t, pipelinetest.Data{
+	cs, _ := test.SeedV1beta1TestData(t, pipelinev1beta1test.Data{
 		TaskRuns: trs,
 		Namespaces: []*corev1.Namespace{
 			{
@@ -333,10 +276,10 @@ func TestTaskRunDescribe_failed(t *testing.T) {
 		},
 	})
 
-	version := "v1alpha1"
+	version := "v1beta1"
 	tdc := testDynamic.Options{}
 	dynamic, err := tdc.Client(
-		cb.UnstructuredTR(trs[0], version),
+		cb.UnstructuredV1beta1TR(trs[0], version),
 	)
 	if err != nil {
 		t.Errorf("unable to create dynamic client: %v", err)
@@ -359,14 +302,14 @@ func TestTaskRunDescribe_failed(t *testing.T) {
 func TestTaskRunDescribe_no_taskref(t *testing.T) {
 	clock := clockwork.NewFakeClock()
 
-	trs := []*v1alpha1.TaskRun{
+	trs := []*v1beta1.TaskRun{
 		{
 			ObjectMeta: metav1.ObjectMeta{
 				Name:      "tr-1",
 				Namespace: "ns",
 			},
-			Status: v1alpha1.TaskRunStatus{
-				TaskRunStatusFields: v1alpha1.TaskRunStatusFields{
+			Status: v1beta1.TaskRunStatus{
+				TaskRunStatusFields: v1beta1.TaskRunStatusFields{
 					StartTime:      &metav1.Time{Time: clock.Now().Add(2 * time.Minute)},
 					CompletionTime: &metav1.Time{Time: clock.Now().Add(5 * time.Minute)},
 				},
@@ -383,7 +326,7 @@ func TestTaskRunDescribe_no_taskref(t *testing.T) {
 		},
 	}
 
-	cs, _ := test.SeedTestData(t, pipelinetest.Data{
+	cs, _ := test.SeedV1beta1TestData(t, pipelinev1beta1test.Data{
 		TaskRuns: trs,
 		Namespaces: []*corev1.Namespace{
 			{
@@ -394,10 +337,10 @@ func TestTaskRunDescribe_no_taskref(t *testing.T) {
 		},
 	})
 
-	version := "v1alpha1"
+	version := "v1beta1"
 	tdc := testDynamic.Options{}
 	dynamic, err := tdc.Client(
-		cb.UnstructuredTR(trs[0], version),
+		cb.UnstructuredV1beta1TR(trs[0], version),
 	)
 	if err != nil {
 		t.Errorf("unable to create dynamic client: %v", err)
@@ -454,14 +397,14 @@ func TestTaskRunDescribe_last_no_taskrun_present(t *testing.T) {
 func TestTaskRunDescribe_no_resourceref(t *testing.T) {
 	clock := clockwork.NewFakeClock()
 
-	trs := []*v1alpha1.TaskRun{
+	trs := []*v1beta1.TaskRun{
 		{
 			ObjectMeta: metav1.ObjectMeta{
 				Name:      "tr-1",
 				Namespace: "ns",
 			},
-			Status: v1alpha1.TaskRunStatus{
-				TaskRunStatusFields: v1alpha1.TaskRunStatusFields{
+			Status: v1beta1.TaskRunStatus{
+				TaskRunStatusFields: v1beta1.TaskRunStatusFields{
 					StartTime: &metav1.Time{Time: clockwork.NewFakeClock().Now().Add(20 * time.Second)},
 					Steps: []v1beta1.StepState{
 						{
@@ -491,57 +434,11 @@ func TestTaskRunDescribe_no_resourceref(t *testing.T) {
 					},
 				},
 			},
-			Spec: v1alpha1.TaskRunSpec{
-				TaskRef: &v1alpha1.TaskRef{
-					Name: "t1",
-				},
-				Timeout: &metav1.Duration{Duration: 1 * time.Hour},
-				Inputs: &v1alpha1.TaskRunInputs{
-					Params: []v1alpha1.Param{
-						{
-							Name:  "input",
-							Value: v1alpha1.ArrayOrString{Type: v1alpha1.ParamTypeString, StringVal: "param"},
-						},
-						{
-							Name:  "input2",
-							Value: v1alpha1.ArrayOrString{Type: v1alpha1.ParamTypeString, StringVal: "param2"},
-						},
-					},
-					Resources: []v1alpha1.TaskResourceBinding{
-						{
-							PipelineResourceBinding: v1alpha1.PipelineResourceBinding{
-								Name: "git",
-							},
-						},
-						{
-							PipelineResourceBinding: v1alpha1.PipelineResourceBinding{
-								Name: "image-input",
-								ResourceRef: &v1alpha1.PipelineResourceRef{
-									Name: "image",
-								},
-							},
-						},
-					},
-				},
-				Outputs: &v1alpha1.TaskRunOutputs{
-					Resources: []v1alpha1.TaskResourceBinding{
-						{
-							PipelineResourceBinding: v1alpha1.PipelineResourceBinding{
-								Name: "image-output",
-							},
-						},
-						{
-							PipelineResourceBinding: v1alpha1.PipelineResourceBinding{
-								Name: "image-output2",
-							},
-						},
-					},
-				},
-			},
+			Spec: testTaskSpec,
 		},
 	}
 
-	cs, _ := test.SeedTestData(t, pipelinetest.Data{
+	cs, _ := test.SeedV1beta1TestData(t, pipelinev1beta1test.Data{
 		TaskRuns: trs,
 		Namespaces: []*corev1.Namespace{
 			{
@@ -552,10 +449,10 @@ func TestTaskRunDescribe_no_resourceref(t *testing.T) {
 		},
 	})
 
-	version := "v1alpha1"
+	version := "v1beta1"
 	tdc := testDynamic.Options{}
 	dynamic, err := tdc.Client(
-		cb.UnstructuredTR(trs[0], version),
+		cb.UnstructuredV1beta1TR(trs[0], version),
 	)
 	if err != nil {
 		t.Errorf("unable to create dynamic client: %v", err)
@@ -578,16 +475,16 @@ func TestTaskRunDescribe_no_resourceref(t *testing.T) {
 func TestTaskRunDescribe_step_sidecar_status_defaults_and_failures(t *testing.T) {
 	clock := clockwork.NewFakeClock()
 
-	trs := []*v1alpha1.TaskRun{
+	trs := []*v1beta1.TaskRun{
 		{
 			ObjectMeta: metav1.ObjectMeta{
 				Name:      "tr-1",
 				Namespace: "ns",
 			},
-			Status: v1alpha1.TaskRunStatus{
-				TaskRunStatusFields: v1alpha1.TaskRunStatusFields{
+			Status: v1beta1.TaskRunStatus{
+				TaskRunStatusFields: v1beta1.TaskRunStatusFields{
 					StartTime: &metav1.Time{Time: clockwork.NewFakeClock().Now().Add(20 * time.Second)},
-					Steps: []v1alpha1.StepState{
+					Steps: []v1beta1.StepState{
 						{
 							Name: "step1",
 							ContainerState: corev1.ContainerState{
@@ -600,7 +497,7 @@ func TestTaskRunDescribe_step_sidecar_status_defaults_and_failures(t *testing.T)
 							Name: "step2",
 						},
 					},
-					Sidecars: []v1alpha1.SidecarState{
+					Sidecars: []v1beta1.SidecarState{
 						{
 							Name: "sidecar1",
 							ContainerState: corev1.ContainerState{
@@ -623,57 +520,11 @@ func TestTaskRunDescribe_step_sidecar_status_defaults_and_failures(t *testing.T)
 					},
 				},
 			},
-			Spec: v1alpha1.TaskRunSpec{
-				TaskRef: &v1alpha1.TaskRef{
-					Name: "t1",
-				},
-				Timeout: &metav1.Duration{Duration: 1 * time.Hour},
-				Inputs: &v1alpha1.TaskRunInputs{
-					Params: []v1alpha1.Param{
-						{
-							Name:  "input",
-							Value: v1alpha1.ArrayOrString{Type: v1alpha1.ParamTypeString, StringVal: "param"},
-						},
-						{
-							Name:  "input2",
-							Value: v1alpha1.ArrayOrString{Type: v1alpha1.ParamTypeString, StringVal: "param2"},
-						},
-					},
-					Resources: []v1alpha1.TaskResourceBinding{
-						{
-							PipelineResourceBinding: v1alpha1.PipelineResourceBinding{
-								Name: "git",
-							},
-						},
-						{
-							PipelineResourceBinding: v1alpha1.PipelineResourceBinding{
-								Name: "image-input",
-								ResourceRef: &v1alpha1.PipelineResourceRef{
-									Name: "image",
-								},
-							},
-						},
-					},
-				},
-				Outputs: &v1alpha1.TaskRunOutputs{
-					Resources: []v1alpha1.TaskResourceBinding{
-						{
-							PipelineResourceBinding: v1alpha1.PipelineResourceBinding{
-								Name: "image-output",
-							},
-						},
-						{
-							PipelineResourceBinding: v1alpha1.PipelineResourceBinding{
-								Name: "image-output2",
-							},
-						},
-					},
-				},
-			},
+			Spec: testTaskSpec,
 		},
 	}
 
-	cs, _ := test.SeedTestData(t, pipelinetest.Data{
+	cs, _ := test.SeedV1beta1TestData(t, pipelinev1beta1test.Data{
 		TaskRuns: trs,
 		Namespaces: []*corev1.Namespace{
 			{
@@ -684,10 +535,10 @@ func TestTaskRunDescribe_step_sidecar_status_defaults_and_failures(t *testing.T)
 		},
 	})
 
-	version := "v1alpha1"
+	version := "v1beta1"
 	tdc := testDynamic.Options{}
 	dynamic, err := tdc.Client(
-		cb.UnstructuredTR(trs[0], version),
+		cb.UnstructuredV1beta1TR(trs[0], version),
 	)
 	if err != nil {
 		t.Errorf("unable to create dynamic client: %v", err)
@@ -710,16 +561,16 @@ func TestTaskRunDescribe_step_sidecar_status_defaults_and_failures(t *testing.T)
 func TestTaskRunDescribe_step_status_pending_one_sidecar(t *testing.T) {
 	clock := clockwork.NewFakeClock()
 
-	trs := []*v1alpha1.TaskRun{
+	trs := []*v1beta1.TaskRun{
 		{
 			ObjectMeta: metav1.ObjectMeta{
 				Name:      "tr-1",
 				Namespace: "ns",
 			},
-			Status: v1alpha1.TaskRunStatus{
-				TaskRunStatusFields: v1alpha1.TaskRunStatusFields{
+			Status: v1beta1.TaskRunStatus{
+				TaskRunStatusFields: v1beta1.TaskRunStatusFields{
 					StartTime: &metav1.Time{Time: clockwork.NewFakeClock().Now().Add(20 * time.Second)},
-					Steps: []v1alpha1.StepState{
+					Steps: []v1beta1.StepState{
 						{
 							Name: "step1",
 							ContainerState: corev1.ContainerState{
@@ -758,57 +609,11 @@ func TestTaskRunDescribe_step_status_pending_one_sidecar(t *testing.T) {
 					},
 				},
 			},
-			Spec: v1alpha1.TaskRunSpec{
-				TaskRef: &v1alpha1.TaskRef{
-					Name: "t1",
-				},
-				Timeout: &metav1.Duration{Duration: 1 * time.Hour},
-				Inputs: &v1alpha1.TaskRunInputs{
-					Params: []v1alpha1.Param{
-						{
-							Name:  "input",
-							Value: v1alpha1.ArrayOrString{Type: v1alpha1.ParamTypeString, StringVal: "param"},
-						},
-						{
-							Name:  "input2",
-							Value: v1alpha1.ArrayOrString{Type: v1alpha1.ParamTypeString, StringVal: "param2"},
-						},
-					},
-					Resources: []v1alpha1.TaskResourceBinding{
-						{
-							PipelineResourceBinding: v1alpha1.PipelineResourceBinding{
-								Name: "git",
-							},
-						},
-						{
-							PipelineResourceBinding: v1alpha1.PipelineResourceBinding{
-								Name: "image-input",
-								ResourceRef: &v1alpha1.PipelineResourceRef{
-									Name: "image",
-								},
-							},
-						},
-					},
-				},
-				Outputs: &v1alpha1.TaskRunOutputs{
-					Resources: []v1alpha1.TaskResourceBinding{
-						{
-							PipelineResourceBinding: v1alpha1.PipelineResourceBinding{
-								Name: "image-output",
-							},
-						},
-						{
-							PipelineResourceBinding: v1alpha1.PipelineResourceBinding{
-								Name: "image-output2",
-							},
-						},
-					},
-				},
-			},
+			Spec: testTaskSpec,
 		},
 	}
 
-	cs, _ := test.SeedTestData(t, pipelinetest.Data{
+	cs, _ := test.SeedV1beta1TestData(t, pipelinev1beta1test.Data{
 		TaskRuns: trs,
 		Namespaces: []*corev1.Namespace{
 			{
@@ -819,10 +624,10 @@ func TestTaskRunDescribe_step_status_pending_one_sidecar(t *testing.T) {
 		},
 	})
 
-	version := "v1alpha1"
+	version := "v1beta1"
 	tdc := testDynamic.Options{}
 	dynamic, err := tdc.Client(
-		cb.UnstructuredTR(trs[0], version),
+		cb.UnstructuredV1beta1TR(trs[0], version),
 	)
 	if err != nil {
 		t.Errorf("unable to create dynamic client: %v", err)
@@ -845,16 +650,16 @@ func TestTaskRunDescribe_step_status_pending_one_sidecar(t *testing.T) {
 func TestTaskRunDescribe_step_status_running_multiple_sidecars(t *testing.T) {
 	clock := clockwork.NewFakeClock()
 
-	trs := []*v1alpha1.TaskRun{
+	trs := []*v1beta1.TaskRun{
 		{
 			ObjectMeta: metav1.ObjectMeta{
 				Name:      "tr-1",
 				Namespace: "ns",
 			},
-			Status: v1alpha1.TaskRunStatus{
-				TaskRunStatusFields: v1alpha1.TaskRunStatusFields{
+			Status: v1beta1.TaskRunStatus{
+				TaskRunStatusFields: v1beta1.TaskRunStatusFields{
 					StartTime: &metav1.Time{Time: clockwork.NewFakeClock().Now().Add(20 * time.Second)},
-					Steps: []v1alpha1.StepState{
+					Steps: []v1beta1.StepState{
 						{
 							Name: "step1",
 							ContainerState: corev1.ContainerState{
@@ -872,7 +677,7 @@ func TestTaskRunDescribe_step_status_running_multiple_sidecars(t *testing.T) {
 							},
 						},
 					},
-					Sidecars: []v1alpha1.SidecarState{
+					Sidecars: []v1beta1.SidecarState{
 						{
 							Name: "sidecar1",
 							ContainerState: corev1.ContainerState{
@@ -901,57 +706,11 @@ func TestTaskRunDescribe_step_status_running_multiple_sidecars(t *testing.T) {
 					},
 				},
 			},
-			Spec: v1alpha1.TaskRunSpec{
-				TaskRef: &v1alpha1.TaskRef{
-					Name: "t1",
-				},
-				Timeout: &metav1.Duration{Duration: 1 * time.Hour},
-				Inputs: &v1alpha1.TaskRunInputs{
-					Params: []v1alpha1.Param{
-						{
-							Name:  "input",
-							Value: v1alpha1.ArrayOrString{Type: v1alpha1.ParamTypeString, StringVal: "param"},
-						},
-						{
-							Name:  "input2",
-							Value: v1alpha1.ArrayOrString{Type: v1alpha1.ParamTypeString, StringVal: "param2"},
-						},
-					},
-					Resources: []v1alpha1.TaskResourceBinding{
-						{
-							PipelineResourceBinding: v1alpha1.PipelineResourceBinding{
-								Name: "git",
-							},
-						},
-						{
-							PipelineResourceBinding: v1alpha1.PipelineResourceBinding{
-								Name: "image-input",
-								ResourceRef: &v1alpha1.PipelineResourceRef{
-									Name: "image",
-								},
-							},
-						},
-					},
-				},
-				Outputs: &v1alpha1.TaskRunOutputs{
-					Resources: []v1alpha1.TaskResourceBinding{
-						{
-							PipelineResourceBinding: v1alpha1.PipelineResourceBinding{
-								Name: "image-output",
-							},
-						},
-						{
-							PipelineResourceBinding: v1alpha1.PipelineResourceBinding{
-								Name: "image-output2",
-							},
-						},
-					},
-				},
-			},
+			Spec: testTaskSpec,
 		},
 	}
 
-	cs, _ := test.SeedTestData(t, pipelinetest.Data{
+	cs, _ := test.SeedV1beta1TestData(t, pipelinev1beta1test.Data{
 		TaskRuns: trs,
 		Namespaces: []*corev1.Namespace{
 			{
@@ -962,10 +721,10 @@ func TestTaskRunDescribe_step_status_running_multiple_sidecars(t *testing.T) {
 		},
 	})
 
-	version := "v1alpha1"
+	version := "v1beta1"
 	tdc := testDynamic.Options{}
 	dynamic, err := tdc.Client(
-		cb.UnstructuredTR(trs[0], version),
+		cb.UnstructuredV1beta1TR(trs[0], version),
 	)
 	if err != nil {
 		t.Errorf("unable to create dynamic client: %v", err)
@@ -988,13 +747,13 @@ func TestTaskRunDescribe_step_status_running_multiple_sidecars(t *testing.T) {
 func TestTaskRunDescribe_cancel_taskrun(t *testing.T) {
 	clock := clockwork.NewFakeClock()
 
-	trs := []*v1alpha1.TaskRun{
+	trs := []*v1beta1.TaskRun{
 		{
 			ObjectMeta: metav1.ObjectMeta{
 				Name:      "tr-1",
 				Namespace: "ns",
 			},
-			Status: v1alpha1.TaskRunStatus{
+			Status: v1beta1.TaskRunStatus{
 				TaskRunStatusFields: v1beta1.TaskRunStatusFields{
 					StartTime:      &metav1.Time{Time: clock.Now().Add(2 * time.Minute)},
 					CompletionTime: &metav1.Time{Time: clock.Now().Add(5 * time.Minute)},
@@ -1012,7 +771,7 @@ func TestTaskRunDescribe_cancel_taskrun(t *testing.T) {
 		},
 	}
 
-	cs, _ := test.SeedTestData(t, pipelinetest.Data{
+	cs, _ := test.SeedV1beta1TestData(t, pipelinev1beta1test.Data{
 		TaskRuns: trs,
 		Namespaces: []*corev1.Namespace{
 			{
@@ -1023,10 +782,10 @@ func TestTaskRunDescribe_cancel_taskrun(t *testing.T) {
 		},
 	})
 
-	version := "v1alpha1"
+	version := "v1beta1"
 	tdc := testDynamic.Options{}
 	dynamic, err := tdc.Client(
-		cb.UnstructuredTR(trs[0], version),
+		cb.UnstructuredV1beta1TR(trs[0], version),
 	)
 	if err != nil {
 		t.Errorf("unable to create dynamic client: %v", err)
@@ -1052,7 +811,7 @@ func TestTaskRunDescribe_custom_output(t *testing.T) {
 
 	clock := clockwork.NewFakeClock()
 
-	trs := []*v1alpha1.TaskRun{
+	trs := []*v1beta1.TaskRun{
 		{
 			ObjectMeta: metav1.ObjectMeta{
 				Name:      name,
@@ -1061,7 +820,7 @@ func TestTaskRunDescribe_custom_output(t *testing.T) {
 		},
 	}
 
-	cs, _ := test.SeedTestData(t, pipelinetest.Data{
+	cs, _ := test.SeedV1beta1TestData(t, pipelinev1beta1test.Data{
 		TaskRuns: trs,
 		Namespaces: []*corev1.Namespace{
 			{
@@ -1072,10 +831,10 @@ func TestTaskRunDescribe_custom_output(t *testing.T) {
 		},
 	})
 
-	version := "v1alpha1"
+	version := "v1beta1"
 	tdc := testDynamic.Options{}
 	dynamic, err := tdc.Client(
-		cb.UnstructuredTR(trs[0], version),
+		cb.UnstructuredV1beta1TR(trs[0], version),
 	)
 	if err != nil {
 		t.Errorf("unable to create dynamic client: %v", err)
@@ -1099,19 +858,19 @@ func TestTaskRunDescribe_custom_output(t *testing.T) {
 }
 
 func TestTaskRunWithSpecDescribe_custom_timeout(t *testing.T) {
-	trs := []*v1alpha1.TaskRun{
+	trs := []*v1beta1.TaskRun{
 		{
 			ObjectMeta: metav1.ObjectMeta{
 				Name:      "tr-custom-timeout",
 				Namespace: "ns",
 			},
-			Spec: v1alpha1.TaskRunSpec{
+			Spec: v1beta1.TaskRunSpec{
 				Timeout: &metav1.Duration{Duration: time.Minute},
 			},
 		},
 	}
 
-	cs, _ := test.SeedTestData(t, pipelinetest.Data{
+	cs, _ := test.SeedV1beta1TestData(t, pipelinev1beta1test.Data{
 		TaskRuns: trs,
 		Namespaces: []*corev1.Namespace{
 			{
@@ -1122,10 +881,10 @@ func TestTaskRunWithSpecDescribe_custom_timeout(t *testing.T) {
 		},
 	})
 
-	version := "v1alpha1"
+	version := "v1beta1"
 	tdc := testDynamic.Options{}
 	dynamic, err := tdc.Client(
-		cb.UnstructuredTR(trs[0], version),
+		cb.UnstructuredV1beta1TR(trs[0], version),
 	)
 	if err != nil {
 		t.Errorf("unable to create dynamic client: %v", err)
@@ -1147,19 +906,19 @@ func TestTaskRunWithSpecDescribe_custom_timeout(t *testing.T) {
 func TestTaskRunDescribe_WithoutNameIfOnlyOneTaskRunPresent(t *testing.T) {
 	clock := clockwork.NewFakeClock()
 
-	trs := []*v1alpha1.TaskRun{
+	trs := []*v1beta1.TaskRun{
 		{
 			ObjectMeta: metav1.ObjectMeta{
 				Namespace: "ns",
 				Name:      "tr-1",
 				Labels:    map[string]string{"tekton.dev/task": "t1"},
 			},
-			Spec: v1alpha1.TaskRunSpec{
-				TaskRef: &v1alpha1.TaskRef{
+			Spec: v1beta1.TaskRunSpec{
+				TaskRef: &v1beta1.TaskRef{
 					Name: "t1",
 				},
 			},
-			Status: v1alpha1.TaskRunStatus{
+			Status: v1beta1.TaskRunStatus{
 				Status: duckv1beta1.Status{
 					Conditions: duckv1beta1.Conditions{
 						{
@@ -1176,7 +935,7 @@ func TestTaskRunDescribe_WithoutNameIfOnlyOneTaskRunPresent(t *testing.T) {
 		},
 	}
 
-	cs, _ := test.SeedTestData(t, pipelinetest.Data{
+	cs, _ := test.SeedV1beta1TestData(t, pipelinev1beta1test.Data{
 		TaskRuns: trs,
 		Namespaces: []*corev1.Namespace{
 			{
@@ -1187,10 +946,10 @@ func TestTaskRunDescribe_WithoutNameIfOnlyOneTaskRunPresent(t *testing.T) {
 		},
 	})
 
-	version := "v1alpha1"
+	version := "v1beta1"
 	tdc := testDynamic.Options{}
 	dynamic, err := tdc.Client(
-		cb.UnstructuredTR(trs[0], version),
+		cb.UnstructuredV1beta1TR(trs[0], version),
 	)
 	if err != nil {
 		t.Errorf("unable to create dynamic client: %v", err)
@@ -1297,16 +1056,16 @@ func TestTaskRunDescribe_lastV1beta1(t *testing.T) {
 
 func TestTaskRunDescribe_last(t *testing.T) {
 	clock := clockwork.NewFakeClock()
-	trs := []*v1alpha1.TaskRun{
+	trs := []*v1beta1.TaskRun{
 		{
 			ObjectMeta: metav1.ObjectMeta{
 				Name:      "tr-1",
 				Namespace: "ns",
 			},
-			Status: v1alpha1.TaskRunStatus{
-				TaskRunStatusFields: v1alpha1.TaskRunStatusFields{
+			Status: v1beta1.TaskRunStatus{
+				TaskRunStatusFields: v1beta1.TaskRunStatusFields{
 					StartTime: &metav1.Time{Time: clockwork.NewFakeClock().Now().Add(20 * time.Second)},
-					Steps: []v1alpha1.StepState{
+					Steps: []v1beta1.StepState{
 						{
 							Name: "step1",
 							ContainerState: corev1.ContainerState{
@@ -1334,72 +1093,17 @@ func TestTaskRunDescribe_last(t *testing.T) {
 					},
 				},
 			},
-			Spec: v1alpha1.TaskRunSpec{
-				TaskRef: &v1alpha1.TaskRef{
-					Name: "t1",
-				},
-				Timeout: &metav1.Duration{Duration: 1 * time.Hour},
-				Inputs: &v1alpha1.TaskRunInputs{
-					Params: []v1alpha1.Param{
-						{
-							Name:  "input",
-							Value: v1alpha1.ArrayOrString{Type: v1alpha1.ParamTypeString, StringVal: "param"},
-						},
-						{
-							Name:  "input2",
-							Value: v1alpha1.ArrayOrString{Type: v1alpha1.ParamTypeString, StringVal: "param2"},
-						},
-					},
-					Resources: []v1alpha1.TaskResourceBinding{
-						{
-							PipelineResourceBinding: v1alpha1.PipelineResourceBinding{
-								Name: "git",
-								ResourceRef: &v1alpha1.PipelineResourceRef{
-									Name: "git",
-								},
-							},
-						},
-						{
-							PipelineResourceBinding: v1alpha1.PipelineResourceBinding{
-								Name: "image-input",
-								ResourceRef: &v1alpha1.PipelineResourceRef{
-									Name: "image",
-								},
-							},
-						},
-					},
-				},
-				Outputs: &v1alpha1.TaskRunOutputs{
-					Resources: []v1alpha1.TaskResourceBinding{
-						{
-							PipelineResourceBinding: v1alpha1.PipelineResourceBinding{
-								Name: "image-output",
-								ResourceRef: &v1alpha1.PipelineResourceRef{
-									Name: "image",
-								},
-							},
-						},
-						{
-							PipelineResourceBinding: v1alpha1.PipelineResourceBinding{
-								Name: "image-output2",
-								ResourceRef: &v1alpha1.PipelineResourceRef{
-									Name: "image",
-								},
-							},
-						},
-					},
-				},
-			},
+			Spec: testTaskSpec,
 		},
 		{
 			ObjectMeta: metav1.ObjectMeta{
 				Name:      "tr-2",
 				Namespace: "ns",
 			},
-			Status: v1alpha1.TaskRunStatus{
-				TaskRunStatusFields: v1alpha1.TaskRunStatusFields{
+			Status: v1beta1.TaskRunStatus{
+				TaskRunStatusFields: v1beta1.TaskRunStatusFields{
 					StartTime: &metav1.Time{Time: clockwork.NewFakeClock().Now().Add(2 * time.Minute)},
-					Steps: []v1alpha1.StepState{
+					Steps: []v1beta1.StepState{
 						{
 							Name: "step3",
 							ContainerState: corev1.ContainerState{
@@ -1427,66 +1131,11 @@ func TestTaskRunDescribe_last(t *testing.T) {
 					},
 				},
 			},
-			Spec: v1alpha1.TaskRunSpec{
-				TaskRef: &v1alpha1.TaskRef{
-					Name: "t1",
-				},
-				Timeout: &metav1.Duration{Duration: 1 * time.Hour},
-				Inputs: &v1alpha1.TaskRunInputs{
-					Params: []v1alpha1.Param{
-						{
-							Name:  "input",
-							Value: v1alpha1.ArrayOrString{Type: v1alpha1.ParamTypeString, StringVal: "param"},
-						},
-						{
-							Name:  "input2",
-							Value: v1alpha1.ArrayOrString{Type: v1alpha1.ParamTypeString, StringVal: "param2"},
-						},
-					},
-					Resources: []v1alpha1.TaskResourceBinding{
-						{
-							PipelineResourceBinding: v1alpha1.PipelineResourceBinding{
-								Name: "git",
-								ResourceRef: &v1alpha1.PipelineResourceRef{
-									Name: "git",
-								},
-							},
-						},
-						{
-							PipelineResourceBinding: v1alpha1.PipelineResourceBinding{
-								Name: "image-input",
-								ResourceRef: &v1alpha1.PipelineResourceRef{
-									Name: "image",
-								},
-							},
-						},
-					},
-				},
-				Outputs: &v1alpha1.TaskRunOutputs{
-					Resources: []v1alpha1.TaskResourceBinding{
-						{
-							PipelineResourceBinding: v1alpha1.PipelineResourceBinding{
-								Name: "image-output",
-								ResourceRef: &v1alpha1.PipelineResourceRef{
-									Name: "image",
-								},
-							},
-						},
-						{
-							PipelineResourceBinding: v1alpha1.PipelineResourceBinding{
-								Name: "image-output2",
-								ResourceRef: &v1alpha1.PipelineResourceRef{
-									Name: "image",
-								},
-							},
-						},
-					},
-				},
-			},
+			Spec: testTaskSpec,
 		},
 	}
 
-	cs, _ := test.SeedTestData(t, pipelinetest.Data{
+	cs, _ := test.SeedV1beta1TestData(t, pipelinev1beta1test.Data{
 		TaskRuns: trs,
 		Namespaces: []*corev1.Namespace{
 			{
@@ -1497,11 +1146,11 @@ func TestTaskRunDescribe_last(t *testing.T) {
 		},
 	})
 
-	version := "v1alpha1"
+	version := "v1beta1"
 	tdc := testDynamic.Options{}
 	dynamic, err := tdc.Client(
-		cb.UnstructuredTR(trs[0], version),
-		cb.UnstructuredTR(trs[1], version),
+		cb.UnstructuredV1beta1TR(trs[0], version),
+		cb.UnstructuredV1beta1TR(trs[1], version),
 	)
 	if err != nil {
 		t.Errorf("unable to create dynamic client: %v", err)
@@ -1546,7 +1195,7 @@ func TestTaskRunDescribe_With_Results(t *testing.T) {
 				TaskRunStatusFields: v1beta1.TaskRunStatusFields{
 					StartTime:      &metav1.Time{Time: clock.Now().Add(-10 * time.Minute)},
 					CompletionTime: &metav1.Time{Time: clock.Now().Add(-5 * time.Minute)},
-					TaskRunResults: []v1alpha1.TaskRunResult{
+					TaskRunResults: []v1beta1.TaskRunResult{
 						{
 							Name: "result-1",
 							Value: v1beta1.ArrayOrString{
@@ -1597,19 +1246,19 @@ func TestTaskRunDescribe_With_Results(t *testing.T) {
 }
 
 func TestTaskRunDescribe_zero_timeout(t *testing.T) {
-	trs := []*v1alpha1.TaskRun{
+	trs := []*v1beta1.TaskRun{
 		{
 			ObjectMeta: metav1.ObjectMeta{
 				Name:      "tr-zero-timeout",
 				Namespace: "ns",
 			},
-			Spec: v1alpha1.TaskRunSpec{
+			Spec: v1beta1.TaskRunSpec{
 				Timeout: &metav1.Duration{Duration: 0},
 			},
 		},
 	}
 
-	cs, _ := test.SeedTestData(t, pipelinetest.Data{
+	cs, _ := test.SeedV1beta1TestData(t, pipelinev1beta1test.Data{
 		TaskRuns: trs,
 		Namespaces: []*corev1.Namespace{
 			{
@@ -1623,7 +1272,7 @@ func TestTaskRunDescribe_zero_timeout(t *testing.T) {
 	version := "v1beta1"
 	tdc := testDynamic.Options{}
 	dynamic, err := tdc.Client(
-		cb.UnstructuredTR(trs[0], version),
+		cb.UnstructuredV1beta1TR(trs[0], version),
 	)
 	if err != nil {
 		t.Errorf("unable to create dynamic client: %v", err)
@@ -1686,7 +1335,7 @@ func TestTaskRunDescribe_With_Workspaces(t *testing.T) {
 				TaskRunStatusFields: v1beta1.TaskRunStatusFields{
 					StartTime:      &metav1.Time{Time: clock.Now().Add(-10 * time.Minute)},
 					CompletionTime: &metav1.Time{Time: clock.Now().Add(-5 * time.Minute)},
-					TaskRunResults: []v1alpha1.TaskRunResult{
+					TaskRunResults: []v1beta1.TaskRunResult{
 						{
 							Name: "result-1",
 							Value: v1beta1.ArrayOrString{
@@ -1837,4 +1486,54 @@ func TestTaskRunDescribe_with_annotations(t *testing.T) {
 		t.Errorf("Unexpected error: %v", err)
 	}
 	golden.Assert(t, got, fmt.Sprintf("%s.golden", t.Name()))
+}
+
+var testTaskSpec = v1beta1.TaskRunSpec{
+	TaskRef: &v1beta1.TaskRef{
+		Name: "t1",
+	},
+	Params: []v1beta1.Param{{
+		Name: "input",
+		Value: v1beta1.ArrayOrString{
+			Type:      v1beta1.ParamTypeString,
+			StringVal: "param",
+		},
+	}, {
+		Name: "input2",
+		Value: v1beta1.ArrayOrString{
+			Type:      v1beta1.ParamTypeString,
+			StringVal: "param2",
+		},
+	}},
+	Timeout: &metav1.Duration{Duration: time.Hour},
+	Resources: &v1beta1.TaskRunResources{
+		Inputs: []v1beta1.TaskResourceBinding{
+			v1beta1.TaskResourceBinding{
+				PipelineResourceBinding: v1beta1.PipelineResourceBinding{
+					Name:        "git",
+					ResourceRef: &v1beta1.PipelineResourceRef{Name: "git"},
+				},
+			},
+			v1beta1.TaskResourceBinding{
+				PipelineResourceBinding: v1beta1.PipelineResourceBinding{
+					Name:        "image-input",
+					ResourceRef: &v1beta1.PipelineResourceRef{Name: "image"},
+				},
+			},
+		},
+		Outputs: []v1beta1.TaskResourceBinding{
+			v1beta1.TaskResourceBinding{
+				PipelineResourceBinding: v1beta1.PipelineResourceBinding{
+					Name:        "image-output",
+					ResourceRef: &v1beta1.PipelineResourceRef{Name: "image"},
+				},
+			},
+			v1beta1.TaskResourceBinding{
+				PipelineResourceBinding: v1beta1.PipelineResourceBinding{
+					Name:        "image-output2",
+					ResourceRef: &v1beta1.PipelineResourceRef{Name: "image"},
+				},
+			},
+		},
+	},
 }

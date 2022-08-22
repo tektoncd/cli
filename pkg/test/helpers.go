@@ -60,6 +60,21 @@ Actual
 `, diff, expected, actual)
 }
 
+func AssertOutputContains(t *testing.T, expected, actual string) {
+	t.Helper()
+	if !strings.Contains(actual, expected) {
+		t.Errorf(`
+Unexpected output:
+
+Expected to contain
+%s
+
+Actual
+%s
+`, expected, actual)
+	}
+}
+
 func AssertOutputPrefix(t *testing.T, expected, actual string) {
 	t.Helper()
 

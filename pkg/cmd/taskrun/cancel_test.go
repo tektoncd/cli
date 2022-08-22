@@ -34,6 +34,8 @@ import (
 	duckv1beta1 "knative.dev/pkg/apis/duck/v1beta1"
 )
 
+const versionA1 = "v1alpha1"
+
 func TestTaskRunCancel(t *testing.T) {
 	trs := []*v1alpha1.TaskRun{
 		{

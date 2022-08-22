@@ -1,11 +1,11 @@
-Name:        tr-1
-Namespace:   ns
-Task Ref:    t1
-Timeout:     1h0m0s
-Labels:
+[1mName[0m:        tr-1
+[1mNamespace[0m:   ns
+[1mTask Ref[0m:    t1
+[1mTimeout[0m:     1h0m0s
+[1mLabels[0m:
  tekton.dev/task=t1
 
-Status
+🌡️  [4;1mStatus[0m
 
 STARTED    DURATION    STATUS
----        ---         Succeeded
+---        ---         [92mSucceeded[0m

@@ -1,9 +1,9 @@
-Name:        tr-with-annotations
-Namespace:   ns
-Annotations:
+[1mName[0m:        tr-with-annotations
+[1mNamespace[0m:   ns
+[1mAnnotations[0m:
  tekton.dev/tags=testing
 
-Status
+🌡️  [4;1mStatus[0m
 
 STARTED    DURATION    STATUS
 ---        ---         ---

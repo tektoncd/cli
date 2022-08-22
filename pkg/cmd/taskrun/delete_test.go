@@ -1697,15 +1697,17 @@ func Test_ClusterTask_TaskRuns_Not_Deleted_With_Task_Option(t *testing.T) {
 	}
 
 	// Expect TaskRun from kind ClusterTask random remains after deletion
-	expected := `NAME    STARTED   DURATION   STATUS
-tr0-2   ---       ---        Succeeded
-`
+	expected := []string{`NAME    STARTED   DURATION   STATUS`,
+		`tr0-2   ---       ---        `, "Succeeded"}
+
 	// Run list command to confirm TaskRun still present
 	out, err := test.ExecuteCommand(taskrun, "list", "-n", "ns")
 	if err != nil {
 		t.Errorf("no error expected but received error: %v", err)
 	}
-	test.AssertOutput(t, expected, out)
+	for _, e := range expected {
+		test.AssertOutputContains(t, e, out)
+	}
 }
 
 func Test_Task_TaskRuns_Not_Deleted_With_ClusterTask_Option(t *testing.T) {
@@ -1813,13 +1815,15 @@ func Test_Task_TaskRuns_Not_Deleted_With_ClusterTask_Option(t *testing.T) {
 	}
 
 	// Expect TaskRun from kind ClusterTask random remains after deletion
-	expected := `NAME    STARTED   DURATION   STATUS
-tr0-1   ---       ---        Succeeded
-`
+	expected := []string{`NAME    STARTED   DURATION   STATUS
+tr0-1   ---       ---        `, "Succeeded"}
+	//
 	// Run list command to confirm TaskRun still present
 	out, err := test.ExecuteCommand(taskrun, "list", "-n", "ns")
 	if err != nil {
 		t.Errorf("no error expected but received error: %v", err)
 	}
-	test.AssertOutput(t, expected, out)
+	for _, e := range expected {
+		test.AssertOutputContains(t, e, out)
+	}
 }

@@ -1,8 +1,8 @@
-Name:        tr-custom-timeout
-Namespace:   ns
-Timeout:     1m0s
+[1mName[0m:        tr-custom-timeout
+[1mNamespace[0m:   ns
+[1mTimeout[0m:     1m0s
 
-Status
+🌡️  [4;1mStatus[0m
 
 STARTED    DURATION    STATUS
 ---        ---         ---

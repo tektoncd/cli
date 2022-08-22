@@ -16,7 +16,6 @@ package taskrun
 
 import (
 	"bytes"
-	"strings"
 	"testing"
 	"time"
 
@@ -29,10 +28,8 @@ import (
 	"github.com/tektoncd/cli/pkg/test"
 	cb "github.com/tektoncd/cli/pkg/test/builder"
 	testDynamic "github.com/tektoncd/cli/pkg/test/dynamic"
-	"github.com/tektoncd/pipeline/pkg/apis/pipeline/v1alpha1"
 	"github.com/tektoncd/pipeline/pkg/apis/pipeline/v1beta1"
 	pipelinev1beta1test "github.com/tektoncd/pipeline/test"
-	pipelinetest "github.com/tektoncd/pipeline/test/v1alpha1"
 	corev1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/watch"
@@ -42,13 +39,10 @@ import (
 	duckv1beta1 "knative.dev/pkg/apis/duck/v1beta1"
 )
 
-const (
-	versionA1 = "v1alpha1"
-	versionB1 = "v1beta1"
-)
+const versionB1 = "v1beta1"
 
 func TestLog_invalid_namespace(t *testing.T) {
-	tr := []*v1alpha1.TaskRun{
+	tr := []*v1beta1.TaskRun{
 		{
 			ObjectMeta: metav1.ObjectMeta{
 				Name:      "output-taskrun-1",
@@ -65,12 +59,12 @@ func TestLog_invalid_namespace(t *testing.T) {
 		},
 	}
 
-	cs, _ := test.SeedTestData(t, pipelinetest.Data{TaskRuns: tr, Namespaces: nsList})
+	cs, _ := test.SeedV1beta1TestData(t, pipelinev1beta1test.Data{TaskRuns: tr, Namespaces: nsList})
 	watcher := watch.NewFake()
 	cs.Kube.PrependWatchReactor("pods", k8stest.DefaultWatchReactor(watcher, nil))
 	tdc := testDynamic.Options{}
 	dc, _ := tdc.Client()
-	cs.Pipeline.Resources = cb.APIResourceList("v1alpha1", []string{"taskrun"})
+	cs.Pipeline.Resources = cb.APIResourceList("v1beta1", []string{"taskrun"})
 	p := &test.Params{Tekton: cs.Pipeline, Kube: cs.Kube, Dynamic: dc}
 
 	c := Command(p)
@@ -80,7 +74,7 @@ func TestLog_invalid_namespace(t *testing.T) {
 }
 
 func TestLog_no_taskrun_arg(t *testing.T) {
-	cs, _ := test.SeedTestData(t, pipelinetest.Data{
+	cs, _ := test.SeedV1beta1TestData(t, pipelinev1beta1test.Data{
 		Namespaces: []*corev1.Namespace{
 			{
 				ObjectMeta: metav1.ObjectMeta{
@@ -95,7 +89,7 @@ func TestLog_no_taskrun_arg(t *testing.T) {
 	if err != nil {
 		t.Errorf("unable to create dynamic client: %v", err)
 	}
-	task2 := []*v1alpha1.Task{
+	task2 := []*v1beta1.Task{
 		{
 			ObjectMeta: metav1.ObjectMeta{
 				Name:              "task",
@@ -104,20 +98,20 @@ func TestLog_no_taskrun_arg(t *testing.T) {
 			},
 		},
 	}
-	taskrun2 := []*v1alpha1.TaskRun{
+	taskrun2 := []*v1beta1.TaskRun{
 		{
 			ObjectMeta: metav1.ObjectMeta{
 				Name:      "taskrun1",
 				Namespace: "ns",
 				Labels:    map[string]string{"tekton.dev/task": "task"},
 			},
-			Spec: v1alpha1.TaskRunSpec{
-				TaskRef: &v1alpha1.TaskRef{
+			Spec: v1beta1.TaskRunSpec{
+				TaskRef: &v1beta1.TaskRef{
 					Name: "task",
-					Kind: v1alpha1.NamespacedTaskKind,
+					Kind: v1beta1.NamespacedTaskKind,
 				},
 			},
-			Status: v1alpha1.TaskRunStatus{
+			Status: v1beta1.TaskRunStatus{
 				Status: duckv1beta1.Status{
 					Conditions: duckv1beta1.Conditions{
 						{
@@ -126,9 +120,9 @@ func TestLog_no_taskrun_arg(t *testing.T) {
 						},
 					},
 				},
-				TaskRunStatusFields: v1alpha1.TaskRunStatusFields{
+				TaskRunStatusFields: v1beta1.TaskRunStatusFields{
 					StartTime: &metav1.Time{Time: clockwork.NewRealClock().Now()},
-					Steps: []v1alpha1.StepState{
+					Steps: []v1beta1.StepState{
 						{
 							Name: "step1",
 							ContainerState: corev1.ContainerState{
@@ -143,7 +137,7 @@ func TestLog_no_taskrun_arg(t *testing.T) {
 			},
 		},
 	}
-	cs2, _ := test.SeedTestData(t, pipelinetest.Data{
+	cs2, _ := test.SeedV1beta1TestData(t, pipelinev1beta1test.Data{
 		Tasks:    task2,
 		TaskRuns: taskrun2,
 		Namespaces: []*corev1.Namespace{
@@ -173,10 +167,10 @@ func TestLog_no_taskrun_arg(t *testing.T) {
 			},
 		},
 	})
-	cs2.Pipeline.Resources = cb.APIResourceList("v1alpha1", []string{"taskrun"})
+	cs2.Pipeline.Resources = cb.APIResourceList("v1beta1", []string{"taskrun"})
 	tdc2 := testDynamic.Options{}
 	dc2, err := tdc2.Client(
-		cb.UnstructuredTR(taskrun2[0], "v1alpha1"),
+		cb.UnstructuredV1beta1TR(taskrun2[0], "v1beta1"),
 	)
 	if err != nil {
 		t.Errorf("unable to create dynamic client: %v", err)
@@ -185,7 +179,7 @@ func TestLog_no_taskrun_arg(t *testing.T) {
 	testParams := []struct {
 		name      string
 		dc        dynamic.Interface
-		input     pipelinetest.Clients
+		input     pipelinev1beta1test.Clients
 		wantError bool
 	}{
 		{
@@ -204,7 +198,7 @@ func TestLog_no_taskrun_arg(t *testing.T) {
 
 	for _, tp := range testParams {
 		t.Run(tp.name, func(t *testing.T) {
-			trlo := logoptsV1alpha1("", "ns", tp.input, fake.Streamer(fake.Logs()), false, false, false, []string{}, tp.dc)
+			trlo := logoptsV1beta1("", "ns", tp.input, fake.Streamer(fake.Logs()), false, false, false, []string{}, tp.dc)
 			_, err := fetchLogs(trlo)
 			if tp.wantError {
 				if err == nil {
@@ -220,7 +214,7 @@ func TestLog_no_taskrun_arg(t *testing.T) {
 }
 
 func TestLog_missing_taskrun(t *testing.T) {
-	tr := []*v1alpha1.TaskRun{
+	tr := []*v1beta1.TaskRun{
 		{
 			ObjectMeta: metav1.ObjectMeta{
 				Name:      "output-taskrun-1",
@@ -238,13 +232,13 @@ func TestLog_missing_taskrun(t *testing.T) {
 	}
 	tdc := testDynamic.Options{}
 	dc, err := tdc.Client(
-		cb.UnstructuredTR(tr[0], "v1alpha1"),
+		cb.UnstructuredV1beta1TR(tr[0], "v1beta1"),
 	)
 	if err != nil {
 		t.Errorf("unable to create dynamic client: %v", err)
 	}
-	cs, _ := test.SeedTestData(t, pipelinetest.Data{TaskRuns: tr, Namespaces: nsList})
-	cs.Pipeline.Resources = cb.APIResourceList("v1alpha1", []string{"taskrun"})
+	cs, _ := test.SeedV1beta1TestData(t, pipelinev1beta1test.Data{TaskRuns: tr, Namespaces: nsList})
+	cs.Pipeline.Resources = cb.APIResourceList("v1beta1", []string{"taskrun"})
 	watcher := watch.NewFake()
 	cs.Kube.PrependWatchReactor("pods", k8stest.DefaultWatchReactor(watcher, nil))
 	p := &test.Params{Tekton: cs.Pipeline, Kube: cs.Kube, Dynamic: dc}
@@ -264,7 +258,7 @@ func TestLog_invalid_flags(t *testing.T) {
 		},
 	}
 
-	cs, _ := test.SeedTestData(t, pipelinetest.Data{Namespaces: nsList})
+	cs, _ := test.SeedV1beta1TestData(t, pipelinev1beta1test.Data{Namespaces: nsList})
 	p := &test.Params{Tekton: cs.Pipeline, Kube: cs.Kube}
 
 	c := Command(p)
@@ -282,7 +276,7 @@ func TestLog_invalid_limit(t *testing.T) {
 		},
 	}
 
-	cs, _ := test.SeedTestData(t, pipelinetest.Data{Namespaces: ns})
+	cs, _ := test.SeedV1beta1TestData(t, pipelinev1beta1test.Data{Namespaces: ns})
 	p := &test.Params{Tekton: cs.Pipeline, Kube: cs.Kube}
 	c := Command(p)
 
@@ -308,18 +302,18 @@ func TestLog_taskrun_logs(t *testing.T) {
 		nopStep     = "nop"
 	)
 
-	trs := []*v1alpha1.TaskRun{
+	trs := []*v1beta1.TaskRun{
 		{
 			ObjectMeta: metav1.ObjectMeta{
 				Name:      trName,
 				Namespace: ns,
 			},
-			Spec: v1alpha1.TaskRunSpec{
-				TaskRef: &v1alpha1.TaskRef{
+			Spec: v1beta1.TaskRunSpec{
+				TaskRef: &v1beta1.TaskRef{
 					Name: taskName,
 				},
 			},
-			Status: v1alpha1.TaskRunStatus{
+			Status: v1beta1.TaskRunStatus{
 				Status: duckv1beta1.Status{
 					Conditions: duckv1beta1.Conditions{
 						{
@@ -328,9 +322,9 @@ func TestLog_taskrun_logs(t *testing.T) {
 						},
 					},
 				},
-				TaskRunStatusFields: v1alpha1.TaskRunStatusFields{
+				TaskRunStatusFields: v1beta1.TaskRunStatusFields{
 					StartTime: &metav1.Time{Time: trStartTime},
-					Steps: []v1alpha1.StepState{
+					Steps: []v1beta1.StepState{
 						{
 							Name: trStep1Name,
 							ContainerState: corev1.ContainerState{
@@ -393,37 +387,25 @@ func TestLog_taskrun_logs(t *testing.T) {
 		),
 	)
 
-	cs, _ := test.SeedTestData(t, pipelinetest.Data{TaskRuns: trs, Pods: ps, Namespaces: nsList})
+	cs, _ := test.SeedV1beta1TestData(t, pipelinev1beta1test.Data{TaskRuns: trs, Pods: ps, Namespaces: nsList})
 	cs.Pipeline.Resources = cb.APIResourceList(versionA1, []string{"taskrun"})
 	tdc := testDynamic.Options{}
 	dc, err := tdc.Client(
-		cb.UnstructuredTR(trs[0], versionA1),
+		cb.UnstructuredV1beta1TR(trs[0], versionA1),
 	)
 	if err != nil {
 		t.Errorf("unable to create dynamic client: %v", err)
 	}
-	trlo := logoptsV1alpha1(trName, ns, cs, fake.Streamer(logs), false, false, true, []string{}, dc)
+	trlo := logoptsV1beta1(trName, ns, cs, fake.Streamer(logs), false, false, true, []string{}, dc)
 	output, _ := fetchLogs(trlo)
 
 	expectedLogs := []string{
-		"[writefile-step] wrote a file\n",
-		"[nop] Build successful\n",
+		"[writefile-step]", "wrote a file\n",
+		"[nop]", "Build successful\n",
 	}
-	expected := strings.Join(expectedLogs, "\n") + "\n"
-
-	test.AssertOutput(t, expected, output)
-
-	trlo = logoptsV1alpha1(trName, ns, cs, fake.Streamer(logs), false, false, false, []string{}, dc)
-	output, _ = fetchLogs(trlo)
-
-	expectedLogs = []string{
-		"wrote a file\n",
-		"Build successful\n",
+	for _, e := range expectedLogs {
+		test.AssertOutputContains(t, e, output)
 	}
-	expected = strings.Join(expectedLogs, "\n") + "\n"
-
-	test.AssertOutput(t, expected, output)
-
 }
 
 func TestLog_taskrun_logs_v1beta1(t *testing.T) {
@@ -535,23 +517,12 @@ func TestLog_taskrun_logs_v1beta1(t *testing.T) {
 	output, _ := fetchLogs(trlo)
 
 	expectedLogs := []string{
-		"[writefile-step] wrote a file\n",
-		"[nop] Build successful\n",
+		"[writefile-step]", "wrote a file\n",
+		"[nop]", "Build successful\n",
 	}
-	expected := strings.Join(expectedLogs, "\n") + "\n"
-
-	test.AssertOutput(t, expected, output)
-
-	trlo = logoptsV1beta1(trName, ns, cs, fake.Streamer(logs), false, false, false, []string{}, dc)
-	output, _ = fetchLogs(trlo)
-
-	expectedLogs = []string{
-		"wrote a file\n",
-		"Build successful\n",
+	for _, e := range expectedLogs {
+		test.AssertOutputContains(t, e, output)
 	}
-	expected = strings.Join(expectedLogs, "\n") + "\n"
-
-	test.AssertOutput(t, expected, output)
 }
 
 func TestLog_taskrun_logs_no_pod_name(t *testing.T) {
@@ -863,14 +834,15 @@ func TestLog_taskrun_all_steps(t *testing.T) {
 	output, _ := fetchLogs(trl)
 
 	expectedLogs := []string{
-		"[credential-initializer-mdzbr] initialized the credentials\n",
-		"[place-tools] place tools log\n",
-		"[writefile-step] written a file\n",
-		"[nop] Build successful\n",
+		"[credential-initializer-mdzbr]", "initialized the credentials\n",
+		"[place-tools]", "place tools log\n",
+		"[writefile-step]", "written a file\n",
+		"[nop]", "Build successful\n",
 	}
-	expected := strings.Join(expectedLogs, "\n") + "\n"
 
-	test.AssertOutput(t, expected, output)
+	for _, e := range expectedLogs {
+		test.AssertOutputContains(t, e, output)
+	}
 }
 
 func TestLog_taskrun_all_steps_v1beta1(t *testing.T) {
@@ -1008,14 +980,14 @@ func TestLog_taskrun_all_steps_v1beta1(t *testing.T) {
 	output, _ := fetchLogs(trl)
 
 	expectedLogs := []string{
-		"[credential-initializer-mdzbr] initialized the credentials\n",
-		"[place-tools] place tools log\n",
-		"[writefile-step] written a file\n",
-		"[nop] Build successful\n",
+		"[credential-initializer-mdzbr]", "initialized the credentials\n",
+		"[place-tools]", "place tools log\n",
+		"[writefile-step]", "written a file\n",
+		"[nop]", "Build successful\n",
 	}
-	expected := strings.Join(expectedLogs, "\n") + "\n"
-
-	test.AssertOutput(t, expected, output)
+	for _, e := range expectedLogs {
+		test.AssertOutputContains(t, e, output)
+	}
 }
 
 func TestLog_taskrun_given_steps(t *testing.T) {
@@ -1032,18 +1004,18 @@ func TestLog_taskrun_given_steps(t *testing.T) {
 		nopStep     = "nop"
 	)
 
-	trs := []*v1alpha1.TaskRun{
+	trs := []*v1beta1.TaskRun{
 		{
 			ObjectMeta: metav1.ObjectMeta{
 				Name:      trName,
 				Namespace: ns,
 			},
-			Spec: v1alpha1.TaskRunSpec{
-				TaskRef: &v1alpha1.TaskRef{
+			Spec: v1beta1.TaskRunSpec{
+				TaskRef: &v1beta1.TaskRef{
 					Name: taskName,
 				},
 			},
-			Status: v1alpha1.TaskRunStatus{
+			Status: v1beta1.TaskRunStatus{
 				Status: duckv1beta1.Status{
 					Conditions: duckv1beta1.Conditions{
 						{
@@ -1052,9 +1024,9 @@ func TestLog_taskrun_given_steps(t *testing.T) {
 						},
 					},
 				},
-				TaskRunStatusFields: v1alpha1.TaskRunStatusFields{
+				TaskRunStatusFields: v1beta1.TaskRunStatusFields{
 					StartTime: &metav1.Time{Time: trStartTime},
-					Steps: []v1alpha1.StepState{
+					Steps: []v1beta1.StepState{
 						{
 							Name: trStep1Name,
 							ContainerState: corev1.ContainerState{
@@ -1139,24 +1111,24 @@ func TestLog_taskrun_given_steps(t *testing.T) {
 		),
 	)
 
-	cs, _ := test.SeedTestData(t, pipelinetest.Data{TaskRuns: trs, Pods: p, Namespaces: nsList})
+	cs, _ := test.SeedV1beta1TestData(t, pipelinev1beta1test.Data{TaskRuns: trs, Pods: p, Namespaces: nsList})
 	cs.Pipeline.Resources = cb.APIResourceList(versionA1, []string{"taskrun"})
 	tdc := testDynamic.Options{}
 	dc, err := tdc.Client(
-		cb.UnstructuredTR(trs[0], versionA1))
+		cb.UnstructuredV1beta1TR(trs[0], versionA1))
 	if err != nil {
 		t.Errorf("unable to create dynamic client: %v", err)
 	}
 
-	trl := logoptsV1alpha1(trName, ns, cs, fake.Streamer(logs), false, false, true, []string{trStep1Name}, dc)
+	trl := logoptsV1beta1(trName, ns, cs, fake.Streamer(logs), false, false, true, []string{trStep1Name}, dc)
 	output, _ := fetchLogs(trl)
 
 	expectedLogs := []string{
-		"[writefile-step] written a file\n",
+		"[writefile-step]", "written a file\n",
 	}
-	expected := strings.Join(expectedLogs, "\n") + "\n"
-
-	test.AssertOutput(t, expected, output)
+	for _, e := range expectedLogs {
+		test.AssertOutputContains(t, e, output)
+	}
 }
 
 func TestLog_taskrun_given_steps_v1beta1(t *testing.T) {
@@ -1293,11 +1265,11 @@ func TestLog_taskrun_given_steps_v1beta1(t *testing.T) {
 	output, _ := fetchLogs(trl)
 
 	expectedLogs := []string{
-		"[writefile-step] written a file\n",
+		"[writefile-step]", "written a file\n",
 	}
-	expected := strings.Join(expectedLogs, "\n") + "\n"
-
-	test.AssertOutput(t, expected, output)
+	for _, e := range expectedLogs {
+		test.AssertOutputContains(t, e, output)
+	}
 }
 
 func TestLog_taskrun_follow_mode(t *testing.T) {
@@ -1314,18 +1286,18 @@ func TestLog_taskrun_follow_mode(t *testing.T) {
 		nopStep     = "nop"
 	)
 
-	trs := []*v1alpha1.TaskRun{
+	trs := []*v1beta1.TaskRun{
 		{
 			ObjectMeta: metav1.ObjectMeta{
 				Name:      trName,
 				Namespace: ns,
 			},
-			Spec: v1alpha1.TaskRunSpec{
-				TaskRef: &v1alpha1.TaskRef{
+			Spec: v1beta1.TaskRunSpec{
+				TaskRef: &v1beta1.TaskRef{
 					Name: taskName,
 				},
 			},
-			Status: v1alpha1.TaskRunStatus{
+			Status: v1beta1.TaskRunStatus{
 				Status: duckv1beta1.Status{
 					Conditions: duckv1beta1.Conditions{
 						{
@@ -1334,9 +1306,9 @@ func TestLog_taskrun_follow_mode(t *testing.T) {
 						},
 					},
 				},
-				TaskRunStatusFields: v1alpha1.TaskRunStatusFields{
+				TaskRunStatusFields: v1beta1.TaskRunStatusFields{
 					StartTime: &metav1.Time{Time: trStartTime},
-					Steps: []v1alpha1.StepState{
+					Steps: []v1beta1.StepState{
 						{
 							Name: trStep1Name,
 							ContainerState: corev1.ContainerState{
@@ -1421,26 +1393,26 @@ func TestLog_taskrun_follow_mode(t *testing.T) {
 		),
 	)
 
-	cs, _ := test.SeedTestData(t, pipelinetest.Data{TaskRuns: trs, Pods: p, Namespaces: nsList})
+	cs, _ := test.SeedV1beta1TestData(t, pipelinev1beta1test.Data{TaskRuns: trs, Pods: p, Namespaces: nsList})
 	cs.Pipeline.Resources = cb.APIResourceList(versionA1, []string{"taskrun"})
 	tdc := testDynamic.Options{}
 	dc, err := tdc.Client(
-		cb.UnstructuredTR(trs[0], versionA1),
+		cb.UnstructuredV1beta1TR(trs[0], versionA1),
 	)
 	if err != nil {
 		t.Errorf("unable to create dynamic client: %v", err)
 	}
 
-	trlo := logoptsV1alpha1(trName, ns, cs, fake.Streamer(logs), false, true, true, []string{}, dc)
+	trlo := logoptsV1beta1(trName, ns, cs, fake.Streamer(logs), false, true, true, []string{}, dc)
 	output, _ := fetchLogs(trlo)
 
 	expectedLogs := []string{
-		"[writefile-step] wrote a file\n",
-		"[nop] Build successful\n",
+		"[writefile-step]", "wrote a file\n",
+		"[nop]", "Build successful\n",
 	}
-	expected := strings.Join(expectedLogs, "\n") + "\n"
-
-	test.AssertOutput(t, expected, output)
+	for _, e := range expectedLogs {
+		test.AssertOutputContains(t, e, output)
+	}
 }
 
 func TestLog_taskrun_follow_mode_v1beta1(t *testing.T) {
@@ -1578,12 +1550,12 @@ func TestLog_taskrun_follow_mode_v1beta1(t *testing.T) {
 	output, _ := fetchLogs(trlo)
 
 	expectedLogs := []string{
-		"[writefile-step] wrote a file\n",
-		"[nop] Build successful\n",
+		"[writefile-step]", "wrote a file\n",
+		"[nop]", "Build successful\n",
 	}
-	expected := strings.Join(expectedLogs, "\n") + "\n"
-
-	test.AssertOutput(t, expected, output)
+	for _, e := range expectedLogs {
+		test.AssertOutputContains(t, e, output)
+	}
 }
 
 func TestLog_taskrun_last(t *testing.T) {
@@ -1600,18 +1572,18 @@ func TestLog_taskrun_last(t *testing.T) {
 		nopStep      = "nop"
 	)
 
-	taskruns := []*v1alpha1.TaskRun{
+	taskruns := []*v1beta1.TaskRun{
 		{
 			ObjectMeta: metav1.ObjectMeta{
 				Name:      trName1,
 				Namespace: ns,
 			},
-			Spec: v1alpha1.TaskRunSpec{
-				TaskRef: &v1alpha1.TaskRef{
+			Spec: v1beta1.TaskRunSpec{
+				TaskRef: &v1beta1.TaskRef{
 					Name: taskName,
 				},
 			},
-			Status: v1alpha1.TaskRunStatus{
+			Status: v1beta1.TaskRunStatus{
 				Status: duckv1beta1.Status{
 					Conditions: duckv1beta1.Conditions{
 						{
@@ -1620,9 +1592,9 @@ func TestLog_taskrun_last(t *testing.T) {
 						},
 					},
 				},
-				TaskRunStatusFields: v1alpha1.TaskRunStatusFields{
+				TaskRunStatusFields: v1beta1.TaskRunStatusFields{
 					StartTime: &metav1.Time{Time: tr1StartTime},
-					Steps: []v1alpha1.StepState{
+					Steps: []v1beta1.StepState{
 						{
 							Name: trStepName,
 							ContainerState: corev1.ContainerState{
@@ -1649,12 +1621,12 @@ func TestLog_taskrun_last(t *testing.T) {
 				Name:      trName2,
 				Namespace: ns,
 			},
-			Spec: v1alpha1.TaskRunSpec{
-				TaskRef: &v1alpha1.TaskRef{
+			Spec: v1beta1.TaskRunSpec{
+				TaskRef: &v1beta1.TaskRef{
 					Name: taskName,
 				},
 			},
-			Status: v1alpha1.TaskRunStatus{
+			Status: v1beta1.TaskRunStatus{
 				Status: duckv1beta1.Status{
 					Conditions: duckv1beta1.Conditions{
 						{
@@ -1664,9 +1636,9 @@ func TestLog_taskrun_last(t *testing.T) {
 						},
 					},
 				},
-				TaskRunStatusFields: v1alpha1.TaskRunStatusFields{
+				TaskRunStatusFields: v1beta1.TaskRunStatusFields{
 					StartTime: &metav1.Time{Time: tr2StartTime},
-					Steps: []v1alpha1.StepState{
+					Steps: []v1beta1.StepState{
 						{
 							Name: trStepName,
 							ContainerState: corev1.ContainerState{
@@ -1698,11 +1670,11 @@ func TestLog_taskrun_last(t *testing.T) {
 		},
 	}
 
-	cs, _ := test.SeedTestData(t, pipelinetest.Data{TaskRuns: taskruns, Namespaces: namespaces})
+	cs, _ := test.SeedV1beta1TestData(t, pipelinev1beta1test.Data{TaskRuns: taskruns, Namespaces: namespaces})
 	tdc := testDynamic.Options{}
 	dc, err := tdc.Client(
-		cb.UnstructuredTR(taskruns[0], versionA1),
-		cb.UnstructuredTR(taskruns[1], versionA1),
+		cb.UnstructuredV1beta1TR(taskruns[0], versionA1),
+		cb.UnstructuredV1beta1TR(taskruns[1], versionA1),
 	)
 	if err != nil {
 		t.Errorf("unable to create dynamic client: %v", err)
@@ -1880,18 +1852,18 @@ func TestLog_taskrun_follow_mode_no_pod_name(t *testing.T) {
 		nopStep     = "nop"
 	)
 
-	trs := []*v1alpha1.TaskRun{
+	trs := []*v1beta1.TaskRun{
 		{
 			ObjectMeta: metav1.ObjectMeta{
 				Name:      trName,
 				Namespace: ns,
 			},
-			Spec: v1alpha1.TaskRunSpec{
-				TaskRef: &v1alpha1.TaskRef{
+			Spec: v1beta1.TaskRunSpec{
+				TaskRef: &v1beta1.TaskRef{
 					Name: taskName,
 				},
 			},
-			Status: v1alpha1.TaskRunStatus{
+			Status: v1beta1.TaskRunStatus{
 				Status: duckv1beta1.Status{
 					Conditions: duckv1beta1.Conditions{
 						{
@@ -1900,9 +1872,9 @@ func TestLog_taskrun_follow_mode_no_pod_name(t *testing.T) {
 						},
 					},
 				},
-				TaskRunStatusFields: v1alpha1.TaskRunStatusFields{
+				TaskRunStatusFields: v1beta1.TaskRunStatusFields{
 					StartTime: &metav1.Time{Time: trStartTime},
-					Steps: []v1alpha1.StepState{
+					Steps: []v1beta1.StepState{
 						{
 							Name: trStep1Name,
 							ContainerState: corev1.ContainerState{
@@ -1986,24 +1958,24 @@ func TestLog_taskrun_follow_mode_no_pod_name(t *testing.T) {
 		),
 	)
 
-	cs, _ := test.SeedTestData(t, pipelinetest.Data{TaskRuns: trs, Pods: p, Namespaces: nsList})
+	cs, _ := test.SeedV1beta1TestData(t, pipelinev1beta1test.Data{TaskRuns: trs, Pods: p, Namespaces: nsList})
 	cs.Pipeline.Resources = cb.APIResourceList(versionA1, []string{"taskrun"})
 	tdc := testDynamic.Options{}
 	dc, err := tdc.Client(
-		cb.UnstructuredTR(trs[0], versionA1),
+		cb.UnstructuredV1beta1TR(trs[0], versionA1),
 	)
 	if err != nil {
 		t.Errorf("unable to create dynamic client: %v", err)
 	}
 
-	trlo := logoptsV1alpha1(trName, ns, cs, fake.Streamer(logs), false, true, true, []string{}, dc)
+	trlo := logoptsV1beta1(trName, ns, cs, fake.Streamer(logs), false, true, true, []string{}, dc)
 	_, err = fetchLogs(trlo)
 	if err == nil {
 		t.Error("Expecting an error but it's empty")
 	}
 
 	expected := "pod for taskrun output-task-run not available yet"
-	test.AssertOutput(t, expected, err.Error())
+	test.AssertOutputContains(t, expected, err.Error())
 }
 
 func TestLog_taskrun_follow_mode_no_pod_name_v1beta1(t *testing.T) {
@@ -2143,7 +2115,7 @@ func TestLog_taskrun_follow_mode_no_pod_name_v1beta1(t *testing.T) {
 	}
 
 	expected := "pod for taskrun output-task-run not available yet"
-	test.AssertOutput(t, expected, err.Error())
+	test.AssertOutputContains(t, expected, err.Error())
 }
 
 func TestLog_taskrun_follow_mode_update_pod_name(t *testing.T) {
@@ -2160,18 +2132,18 @@ func TestLog_taskrun_follow_mode_update_pod_name(t *testing.T) {
 		nopStep     = "nop"
 	)
 
-	trs := []*v1alpha1.TaskRun{
+	trs := []*v1beta1.TaskRun{
 		{
 			ObjectMeta: metav1.ObjectMeta{
 				Name:      trName,
 				Namespace: ns,
 			},
-			Spec: v1alpha1.TaskRunSpec{
-				TaskRef: &v1alpha1.TaskRef{
+			Spec: v1beta1.TaskRunSpec{
+				TaskRef: &v1beta1.TaskRef{
 					Name: taskName,
 				},
 			},
-			Status: v1alpha1.TaskRunStatus{
+			Status: v1beta1.TaskRunStatus{
 				Status: duckv1beta1.Status{
 					Conditions: duckv1beta1.Conditions{
 						{
@@ -2181,9 +2153,9 @@ func TestLog_taskrun_follow_mode_update_pod_name(t *testing.T) {
 						},
 					},
 				},
-				TaskRunStatusFields: v1alpha1.TaskRunStatusFields{
+				TaskRunStatusFields: v1beta1.TaskRunStatusFields{
 					StartTime: &metav1.Time{Time: trStartTime},
-					Steps: []v1alpha1.StepState{
+					Steps: []v1beta1.StepState{
 						{
 							Name: trStep1Name,
 							ContainerState: corev1.ContainerState{
@@ -2267,18 +2239,18 @@ func TestLog_taskrun_follow_mode_update_pod_name(t *testing.T) {
 		),
 	)
 
-	cs, _ := test.SeedTestData(t, pipelinetest.Data{TaskRuns: trs, Pods: p, Namespaces: nsList})
+	cs, _ := test.SeedV1beta1TestData(t, pipelinev1beta1test.Data{TaskRuns: trs, Pods: p, Namespaces: nsList})
 	cs.Pipeline.Resources = cb.APIResourceList(versionA1, []string{"taskrun"})
 	watcher := watch.NewRaceFreeFake()
 	tdc := testDynamic.Options{WatchResource: "taskruns", Watcher: watcher}
 	dc, err := tdc.Client(
-		cb.UnstructuredTR(trs[0], versionA1),
+		cb.UnstructuredV1beta1TR(trs[0], versionA1),
 	)
 	if err != nil {
 		t.Errorf("unable to create dynamic client: %v", err)
 	}
 
-	trlo := logoptsV1alpha1(trName, ns, cs, fake.Streamer(logs), false, true, true, []string{}, dc)
+	trlo := logoptsV1beta1(trName, ns, cs, fake.Streamer(logs), false, true, true, []string{}, dc)
 
 	go func() {
 		time.Sleep(time.Second * 1)
@@ -2292,11 +2264,12 @@ func TestLog_taskrun_follow_mode_update_pod_name(t *testing.T) {
 	}
 
 	expectedLogs := []string{
-		"[writefile-step] wrote a file\n",
-		"[nop] Build successful\n",
+		"[writefile-step]", "wrote a file\n",
+		"[nop]", "Build successful\n",
 	}
-	expected := strings.Join(expectedLogs, "\n") + "\n"
-	test.AssertOutput(t, expected, output)
+	for _, e := range expectedLogs {
+		test.AssertOutputContains(t, e, output)
+	}
 }
 
 func TestLog_taskrun_follow_mode_update_pod_name_v1beta1(t *testing.T) {
@@ -2445,11 +2418,12 @@ func TestLog_taskrun_follow_mode_update_pod_name_v1beta1(t *testing.T) {
 	}
 
 	expectedLogs := []string{
-		"[writefile-step] wrote a file\n",
-		"[nop] Build successful\n",
+		"[writefile-step]", "wrote a file\n",
+		"[nop]", "Build successful\n",
 	}
-	expected := strings.Join(expectedLogs, "\n") + "\n"
-	test.AssertOutput(t, expected, output)
+	for _, e := range expectedLogs {
+		test.AssertOutputContains(t, e, output)
+	}
 }
 
 func TestLog_taskrun_follow_mode_update_timeout(t *testing.T) {
@@ -2466,18 +2440,18 @@ func TestLog_taskrun_follow_mode_update_timeout(t *testing.T) {
 		nopStep     = "nop"
 	)
 
-	trs := []*v1alpha1.TaskRun{
+	trs := []*v1beta1.TaskRun{
 		{
 			ObjectMeta: metav1.ObjectMeta{
 				Name:      trName,
 				Namespace: ns,
 			},
-			Spec: v1alpha1.TaskRunSpec{
-				TaskRef: &v1alpha1.TaskRef{
+			Spec: v1beta1.TaskRunSpec{
+				TaskRef: &v1beta1.TaskRef{
 					Name: taskName,
 				},
 			},
-			Status: v1alpha1.TaskRunStatus{
+			Status: v1beta1.TaskRunStatus{
 				Status: duckv1beta1.Status{
 					Conditions: duckv1beta1.Conditions{
 						{
@@ -2487,9 +2461,9 @@ func TestLog_taskrun_follow_mode_update_timeout(t *testing.T) {
 						},
 					},
 				},
-				TaskRunStatusFields: v1alpha1.TaskRunStatusFields{
+				TaskRunStatusFields: v1beta1.TaskRunStatusFields{
 					StartTime: &metav1.Time{Time: trStartTime},
-					Steps: []v1alpha1.StepState{
+					Steps: []v1beta1.StepState{
 						{
 							Name: trStep1Name,
 							ContainerState: corev1.ContainerState{
@@ -2573,18 +2547,18 @@ func TestLog_taskrun_follow_mode_update_timeout(t *testing.T) {
 		),
 	)
 
-	cs, _ := test.SeedTestData(t, pipelinetest.Data{TaskRuns: trs, Pods: p, Namespaces: nsList})
+	cs, _ := test.SeedV1beta1TestData(t, pipelinev1beta1test.Data{TaskRuns: trs, Pods: p, Namespaces: nsList})
 	cs.Pipeline.Resources = cb.APIResourceList(versionA1, []string{"taskrun"})
 	watcher := watch.NewRaceFreeFake()
 	tdc := testDynamic.Options{WatchResource: "taskruns", Watcher: watcher}
 	dc, err := tdc.Client(
-		cb.UnstructuredTR(trs[0], versionA1),
+		cb.UnstructuredV1beta1TR(trs[0], versionA1),
 	)
 	if err != nil {
 		t.Errorf("unable to create dynamic client: %v", err)
 	}
 
-	trlo := logoptsV1alpha1(trName, ns, cs, fake.Streamer(logs), false, true, true, []string{}, dc)
+	trlo := logoptsV1beta1(trName, ns, cs, fake.Streamer(logs), false, true, true, []string{}, dc)
 
 	go func() {
 		time.Sleep(time.Second * 1)
@@ -2597,7 +2571,7 @@ func TestLog_taskrun_follow_mode_update_timeout(t *testing.T) {
 	}
 
 	expectedOut := "task output-task create has not started yet or pod for task not yet available\n"
-	test.AssertOutput(t, expectedOut, output)
+	test.AssertOutputContains(t, expectedOut, output)
 }
 
 func TestLog_taskrun_follow_mode_update_timeout_v1beta1(t *testing.T) {
@@ -2745,7 +2719,7 @@ func TestLog_taskrun_follow_mode_update_timeout_v1beta1(t *testing.T) {
 	}
 
 	expectedOut := "task output-task create has not started yet or pod for task not yet available\n"
-	test.AssertOutput(t, expectedOut, output)
+	test.AssertOutputContains(t, expectedOut, output)
 }
 
 func TestLog_taskrun_follow_mode_no_output_provided(t *testing.T) {
@@ -2762,18 +2736,18 @@ func TestLog_taskrun_follow_mode_no_output_provided(t *testing.T) {
 		nopStep     = "nop"
 	)
 
-	trs := []*v1alpha1.TaskRun{
+	trs := []*v1beta1.TaskRun{
 		{
 			ObjectMeta: metav1.ObjectMeta{
 				Name:      trName,
 				Namespace: ns,
 			},
-			Spec: v1alpha1.TaskRunSpec{
-				TaskRef: &v1alpha1.TaskRef{
+			Spec: v1beta1.TaskRunSpec{
+				TaskRef: &v1beta1.TaskRef{
 					Name: taskName,
 				},
 			},
-			Status: v1alpha1.TaskRunStatus{
+			Status: v1beta1.TaskRunStatus{
 				Status: duckv1beta1.Status{
 					Conditions: duckv1beta1.Conditions{
 						{
@@ -2783,9 +2757,9 @@ func TestLog_taskrun_follow_mode_no_output_provided(t *testing.T) {
 						},
 					},
 				},
-				TaskRunStatusFields: v1alpha1.TaskRunStatusFields{
+				TaskRunStatusFields: v1beta1.TaskRunStatusFields{
 					StartTime: &metav1.Time{Time: trStartTime},
-					Steps: []v1alpha1.StepState{
+					Steps: []v1beta1.StepState{
 						{
 							Name: trStep1Name,
 							ContainerState: corev1.ContainerState{
@@ -2864,18 +2838,18 @@ func TestLog_taskrun_follow_mode_no_output_provided(t *testing.T) {
 		fake.Task(trPod),
 	)
 
-	cs, _ := test.SeedTestData(t, pipelinetest.Data{TaskRuns: trs, Pods: p, Namespaces: nsList})
+	cs, _ := test.SeedV1beta1TestData(t, pipelinev1beta1test.Data{TaskRuns: trs, Pods: p, Namespaces: nsList})
 	cs.Pipeline.Resources = cb.APIResourceList(versionA1, []string{"taskrun"})
 	watcher := watch.NewRaceFreeFake()
 	tdc := testDynamic.Options{WatchResource: "taskruns", Watcher: watcher}
 	dc, err := tdc.Client(
-		cb.UnstructuredTR(trs[0], versionA1),
+		cb.UnstructuredV1beta1TR(trs[0], versionA1),
 	)
 	if err != nil {
 		t.Errorf("unable to create dynamic client: %v", err)
 	}
 
-	trlo := logoptsV1alpha1(trName, ns, cs, fake.Streamer(logs), false, true, true, []string{}, dc)
+	trlo := logoptsV1beta1(trName, ns, cs, fake.Streamer(logs), false, true, true, []string{}, dc)
 
 	output, err := fetchLogs(trlo)
 	if err != nil {
@@ -2883,7 +2857,7 @@ func TestLog_taskrun_follow_mode_no_output_provided(t *testing.T) {
 	}
 
 	expected := "task output-task has failed: invalid output resources: TaskRun's declared resources didn't match usage in Task: Didn't provide required values: [builtImage]\n"
-	test.AssertOutput(t, expected, output)
+	test.AssertOutputContains(t, expected, output)
 }
 
 func TestLog_taskrun_follow_mode_no_output_provided_v1beta1(t *testing.T) {
@@ -3022,28 +2996,7 @@ func TestLog_taskrun_follow_mode_no_output_provided_v1beta1(t *testing.T) {
 	}
 
 	expected := "task output-task has failed: invalid output resources: TaskRun's declared resources didn't match usage in Task: Didn't provide required values: [builtImage]\n"
-	test.AssertOutput(t, expected, output)
-}
-
-func logoptsV1alpha1(run, ns string, cs pipelinetest.Clients, streamer stream.NewStreamerFunc,
-	allSteps bool, follow bool, prefixing bool, steps []string, dc dynamic.Interface) *options.LogOptions {
-	p := test.Params{
-		Kube:    cs.Kube,
-		Tekton:  cs.Pipeline,
-		Dynamic: dc,
-	}
-	p.SetNamespace(ns)
-
-	return &options.LogOptions{
-		TaskrunName: run,
-		AllSteps:    allSteps,
-		Follow:      follow,
-		Params:      &p,
-		Streamer:    streamer,
-		Limit:       5,
-		Steps:       steps,
-		Prefixing:   prefixing,
-	}
+	test.AssertOutputContains(t, expected, output)
 }
 
 func logoptsV1beta1(run, ns string, cs pipelinev1beta1test.Clients, streamer stream.NewStreamerFunc,

@@ -1,11 +1,11 @@
-Name:        tr-1
-Namespace:   ns
+[1mName[0m:        tr-1
+[1mNamespace[0m:   ns
 
-Status
+🌡️  [4;1mStatus[0m
 
 STARTED         DURATION    STATUS
-8 minutes ago   3m0s        Failed
+8 minutes ago   3m0s        [91mFailed[0m
 
-Message
+[4;1mMessage[0m
 
 Testing tr failed

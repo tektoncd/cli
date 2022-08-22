@@ -1,10 +1,10 @@
-Name:        tr-2
-Namespace:   ns
-Task Ref:    task-1
-Labels:
+[1mName[0m:        tr-2
+[1mNamespace[0m:   ns
+[1mTask Ref[0m:    task-1
+[1mLabels[0m:
  tekton.dev/task=task-1
 
-Status
+🌡️  [4;1mStatus[0m
 
 STARTED         DURATION    STATUS
-0 seconds ago   5m0s        Succeeded
+0 seconds ago   5m0s        [92mSucceeded[0m
