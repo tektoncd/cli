@@ -267,7 +267,7 @@ func allPipelineRunNames(cs *cli.Clients, keep, since int, ignoreRunning bool, l
 				continue
 			}
 			for _, v2 := range v.Status.Conditions {
-				if v2.Reason == "Running" || v2.Reason == "Pending" || v2.Reason == "PipelineRunPending" || v2.Reason == "Started" {
+				if v2.Status == "Unknown" || v2.Reason == "Running" || v2.Reason == "Pending" || v2.Reason == "PipelineRunPending" || v2.Reason == "Started" {
 					continue
 				}
 				pipelineRunTmps = append(pipelineRunTmps, v)
