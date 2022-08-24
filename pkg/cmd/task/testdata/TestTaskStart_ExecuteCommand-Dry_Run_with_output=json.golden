@@ -1,18 +1,24 @@
 {
 	"kind": "TaskRun",
-	"apiVersion": "tekton.dev/v1alpha1",
+	"apiVersion": "tekton.dev/v1beta1",
 	"metadata": {
 		"generateName": "task-1-run-",
 		"namespace": "ns",
 		"creationTimestamp": null
 	},
 	"spec": {
-		"serviceAccountName": "svc1",
-		"taskRef": {
-			"name": "task-1"
-		},
-		"inputs": {
-			"resources": [
+		"params": [
+			{
+				"name": "myarg",
+				"value": "arg"
+			},
+			{
+				"name": "task-param",
+				"value": "arg"
+			}
+		],
+		"resources": {
+			"inputs": [
 				{
 					"name": "my-repo",
 					"resourceRef": {
@@ -20,19 +26,7 @@
 					}
 				}
 			],
-			"params": [
-				{
-					"name": "myarg",
-					"value": "arg"
-				},
-				{
-					"name": "task-param",
-					"value": "arg"
-				}
-			]
-		},
-		"outputs": {
-			"resources": [
+			"outputs": [
 				{
 					"name": "code-image",
 					"resourceRef": {
@@ -40,6 +34,10 @@
 					}
 				}
 			]
+		},
+		"serviceAccountName": "svc1",
+		"taskRef": {
+			"name": "task-1"
 		}
 	},
 	"status": {

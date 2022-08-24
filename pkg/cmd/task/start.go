@@ -41,10 +41,9 @@ import (
 	"github.com/tektoncd/cli/pkg/task"
 	traction "github.com/tektoncd/cli/pkg/taskrun"
 	"github.com/tektoncd/cli/pkg/workspaces"
-	"github.com/tektoncd/pipeline/pkg/apis/pipeline/v1alpha1"
 	"github.com/tektoncd/pipeline/pkg/apis/pipeline/v1beta1"
+	"github.com/tektoncd/pipeline/pkg/apis/resource/v1alpha1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
-	"k8s.io/client-go/discovery"
 	"sigs.k8s.io/yaml"
 )
 
@@ -236,16 +235,7 @@ func parseTask(taskLocation string, httpClient http.Client) (*v1beta1.Task, erro
 	}
 	task := v1beta1.Task{}
 	if m["apiVersion"] == "tekton.dev/v1alpha1" {
-		v1alpha1Task := v1alpha1.Task{}
-		if err := yaml.UnmarshalStrict(b, &v1alpha1Task); err != nil {
-			return nil, err
-		}
-		if err := v1alpha1Task.ConvertTo(context.Background(), &task); err != nil {
-			return nil, err
-		}
-		task.TypeMeta.APIVersion = "tekton.dev/v1alpha1"
-		task.TypeMeta.APIVersion = "Task"
-		return &task, nil
+		return nil, fmt.Errorf("v1alpha1 is no longer supported")
 	}
 
 	if err := yaml.UnmarshalStrict(b, &task); err != nil {
@@ -377,7 +367,7 @@ func startTask(opt startOptions, args []string) error {
 	}
 
 	if opt.DryRun {
-		return printTaskRun(cs, opt.Output, opt.stream, tr)
+		return printTaskRun(opt.Output, opt.stream, tr)
 	}
 
 	trCreated, err := traction.Create(cs, tr, metav1.CreateOptions{}, opt.cliparams.Namespace())
@@ -386,7 +376,7 @@ func startTask(opt startOptions, args []string) error {
 	}
 
 	if opt.Output != "" {
-		return printTaskRun(cs, opt.Output, opt.stream, trCreated)
+		return printTaskRun(opt.Output, opt.stream, trCreated)
 	}
 
 	fmt.Fprintf(opt.stream.Out, "TaskRun started: %s\n", trCreated.Name)
@@ -456,15 +446,10 @@ func parseRes(res []string) (map[string]v1beta1.TaskResourceBinding, error) {
 	return resources, nil
 }
 
-func printTaskRun(c *cli.Clients, output string, s *cli.Stream, tr *v1beta1.TaskRun) error {
-	trWithVersion, err := convertedTrVersion(c, tr)
-	if err != nil {
-		return err
-	}
-
+func printTaskRun(output string, s *cli.Stream, tr *v1beta1.TaskRun) error {
 	format := strings.ToLower(output)
 	if format == "" || format == "yaml" {
-		trBytes, err := yaml.Marshal(trWithVersion)
+		trBytes, err := yaml.Marshal(tr)
 		if err != nil {
 			return err
 		}
@@ -472,7 +457,7 @@ func printTaskRun(c *cli.Clients, output string, s *cli.Stream, tr *v1beta1.Task
 	}
 
 	if format == "json" {
-		trBytes, err := json.MarshalIndent(trWithVersion, "", "\t")
+		trBytes, err := json.MarshalIndent(tr, "", "\t")
 		if err != nil {
 			return err
 		}
@@ -480,37 +465,6 @@ func printTaskRun(c *cli.Clients, output string, s *cli.Stream, tr *v1beta1.Task
 	}
 
 	return nil
-}
-
-func getAPIVersion(discovery discovery.DiscoveryInterface) (string, error) {
-	_, err := discovery.ServerResourcesForGroupVersion("tekton.dev/v1beta1")
-	if err != nil {
-		_, err = discovery.ServerResourcesForGroupVersion("tekton.dev/v1alpha1")
-		if err != nil {
-			return "", fmt.Errorf("couldn't get available Tekton api versions from server")
-		}
-		return "tekton.dev/v1alpha1", nil
-	}
-	return "tekton.dev/v1beta1", nil
-}
-
-func convertedTrVersion(c *cli.Clients, tr *v1beta1.TaskRun) (interface{}, error) {
-	version, err := getAPIVersion(c.Tekton.Discovery())
-	if err != nil {
-		return nil, err
-	}
-
-	if version == "tekton.dev/v1alpha1" {
-		trConverted := traction.ConvertFrom(tr)
-		trConverted.APIVersion = version
-		trConverted.Kind = "TaskRun"
-		if err != nil {
-			return nil, err
-		}
-		return &trConverted, nil
-	}
-
-	return tr, nil
 }
 
 func (opt *startOptions) getInputs() error {
