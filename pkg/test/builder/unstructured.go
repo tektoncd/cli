@@ -49,7 +49,8 @@ func UnstructuredTR(taskrun *v1alpha1.TaskRun, version string) *unstructured.Uns
 	}
 }
 
-func UnstructuredT(task *v1alpha1.Task, version string) *unstructured.Unstructured {
+// TODO: to remove after v1alpha1 support removal
+func Unstructuredv1alpha1T(task *v1alpha1.Task, version string) *unstructured.Unstructured {
 	task.APIVersion = "tekton.dev/" + version
 	task.Kind = "task"
 	object, _ := runtime.DefaultUnstructuredConverter.ToUnstructured(task)
@@ -94,7 +95,7 @@ func UnstructuredV1beta1TR(taskrun *v1beta1.TaskRun, version string) *unstructur
 	}
 }
 
-func UnstructuredV1beta1T(task *v1beta1.Task, version string) *unstructured.Unstructured {
+func UnstructuredT(task *v1beta1.Task, version string) *unstructured.Unstructured {
 	task.APIVersion = "tekton.dev/" + version
 	task.Kind = "task"
 	object, _ := runtime.DefaultUnstructuredConverter.ToUnstructured(task)

@@ -22,16 +22,15 @@ import (
 	"github.com/tektoncd/cli/pkg/test"
 	cb "github.com/tektoncd/cli/pkg/test/builder"
 	testDynamic "github.com/tektoncd/cli/pkg/test/dynamic"
-	"github.com/tektoncd/pipeline/pkg/apis/pipeline/v1alpha1"
 	"github.com/tektoncd/pipeline/pkg/apis/pipeline/v1beta1"
-	pipelinetest "github.com/tektoncd/pipeline/test/v1alpha1"
+	pipelinetest "github.com/tektoncd/pipeline/test"
 	corev1 "k8s.io/api/core/v1"
 	v1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	duckv1beta1 "knative.dev/pkg/apis/duck/v1beta1"
 )
 
 const (
-	versionA1 = "v1alpha1"
+	versionA1 = "v1beta1"
 )
 
 func TestTaskrunLatest_two_run(t *testing.T) {
@@ -48,7 +47,7 @@ func TestTaskrunLatest_two_run(t *testing.T) {
 		secondRunStarted   = secondRunCreated.Add(2 * time.Second)
 		secondRunCompleted = secondRunStarted.Add(5 * time.Minute)
 	)
-	tasks := []*v1alpha1.Task{
+	tasks := []*v1beta1.Task{
 		{
 			ObjectMeta: v1.ObjectMeta{
 				Name:      "task",
@@ -58,7 +57,7 @@ func TestTaskrunLatest_two_run(t *testing.T) {
 			},
 		},
 	}
-	taskruns := []*v1alpha1.TaskRun{
+	taskruns := []*v1beta1.TaskRun{
 		{
 			ObjectMeta: v1.ObjectMeta{
 				Name:              "tr-1",
@@ -66,13 +65,13 @@ func TestTaskrunLatest_two_run(t *testing.T) {
 				Labels:            map[string]string{"tekton.dev/task": "task"},
 				CreationTimestamp: v1.Time{Time: firstRunCreated},
 			},
-			Spec: v1alpha1.TaskRunSpec{
-				TaskRef: &v1alpha1.TaskRef{
+			Spec: v1beta1.TaskRunSpec{
+				TaskRef: &v1beta1.TaskRef{
 					Name: "task",
-					Kind: v1alpha1.NamespacedTaskKind,
+					Kind: v1beta1.NamespacedTaskKind,
 				},
 			},
-			Status: v1alpha1.TaskRunStatus{
+			Status: v1beta1.TaskRunStatus{
 				Status: duckv1beta1.Status{
 					Conditions: duckv1beta1.Conditions{
 						{
@@ -81,7 +80,7 @@ func TestTaskrunLatest_two_run(t *testing.T) {
 						},
 					},
 				},
-				TaskRunStatusFields: v1alpha1.TaskRunStatusFields{
+				TaskRunStatusFields: v1beta1.TaskRunStatusFields{
 					StartTime:      &v1.Time{Time: firstRunStarted},
 					CompletionTime: &v1.Time{Time: firstRunCompleted},
 				},
@@ -94,13 +93,13 @@ func TestTaskrunLatest_two_run(t *testing.T) {
 				Labels:            map[string]string{"tekton.dev/task": "task"},
 				CreationTimestamp: v1.Time{Time: secondRunCompleted},
 			},
-			Spec: v1alpha1.TaskRunSpec{
-				TaskRef: &v1alpha1.TaskRef{
+			Spec: v1beta1.TaskRunSpec{
+				TaskRef: &v1beta1.TaskRef{
 					Name: "task",
-					Kind: v1alpha1.NamespacedTaskKind,
+					Kind: v1beta1.NamespacedTaskKind,
 				},
 			},
-			Status: v1alpha1.TaskRunStatus{
+			Status: v1beta1.TaskRunStatus{
 				Status: duckv1beta1.Status{
 					Conditions: duckv1beta1.Conditions{
 						{
@@ -109,7 +108,7 @@ func TestTaskrunLatest_two_run(t *testing.T) {
 						},
 					},
 				},
-				TaskRunStatusFields: v1alpha1.TaskRunStatusFields{
+				TaskRunStatusFields: v1beta1.TaskRunStatusFields{
 					StartTime:      &v1.Time{Time: secondRunStarted},
 					CompletionTime: &v1.Time{Time: secondRunCompleted},
 				},
@@ -122,13 +121,13 @@ func TestTaskrunLatest_two_run(t *testing.T) {
 				Labels:            map[string]string{"tekton.dev/clusterTask": "task"},
 				CreationTimestamp: v1.Time{Time: secondRunCompleted},
 			},
-			Spec: v1alpha1.TaskRunSpec{
-				TaskRef: &v1alpha1.TaskRef{
+			Spec: v1beta1.TaskRunSpec{
+				TaskRef: &v1beta1.TaskRef{
 					Name: "task",
-					Kind: v1alpha1.ClusterTaskKind,
+					Kind: v1beta1.ClusterTaskKind,
 				},
 			},
-			Status: v1alpha1.TaskRunStatus{
+			Status: v1beta1.TaskRunStatus{
 				Status: duckv1beta1.Status{
 					Conditions: duckv1beta1.Conditions{
 						{
@@ -137,14 +136,14 @@ func TestTaskrunLatest_two_run(t *testing.T) {
 						},
 					},
 				},
-				TaskRunStatusFields: v1alpha1.TaskRunStatusFields{
+				TaskRunStatusFields: v1beta1.TaskRunStatusFields{
 					StartTime:      &v1.Time{Time: secondRunStarted},
 					CompletionTime: &v1.Time{Time: secondRunCompleted},
 				},
 			},
 		},
 	}
-	cs, _ := test.SeedTestData(t, pipelinetest.Data{
+	cs, _ := test.SeedV1beta1TestData(t, pipelinetest.Data{
 		Tasks:    tasks,
 		TaskRuns: taskruns,
 	})
@@ -152,9 +151,9 @@ func TestTaskrunLatest_two_run(t *testing.T) {
 	tdc := testDynamic.Options{}
 	dc, _ := tdc.Client(
 		cb.UnstructuredT(tasks[0], versionA1),
-		cb.UnstructuredTR(taskruns[0], versionA1),
-		cb.UnstructuredTR(taskruns[1], versionA1),
-		cb.UnstructuredTR(taskruns[2], versionA1),
+		cb.UnstructuredV1beta1TR(taskruns[0], versionA1),
+		cb.UnstructuredV1beta1TR(taskruns[1], versionA1),
+		cb.UnstructuredV1beta1TR(taskruns[2], versionA1),
 	)
 	p := &test.Params{Tekton: cs.Pipeline, Clock: clock, Dynamic: dc}
 	client, err := p.Clients()
@@ -173,7 +172,7 @@ func TestTaskrunLatest_two_run(t *testing.T) {
 func TestTaskrunLatest_no_run(t *testing.T) {
 
 	clock := clockwork.NewFakeClock()
-	tasks := []*v1alpha1.Task{
+	tasks := []*v1beta1.Task{
 		{
 			ObjectMeta: v1.ObjectMeta{
 				Name:      "task2",
@@ -183,7 +182,7 @@ func TestTaskrunLatest_no_run(t *testing.T) {
 			},
 		},
 	}
-	cs, _ := test.SeedTestData(t, pipelinetest.Data{
+	cs, _ := test.SeedV1beta1TestData(t, pipelinetest.Data{
 		Tasks: tasks,
 	})
 	cs.Pipeline.Resources = cb.APIResourceList(versionA1, []string{"task", "taskrun"})
@@ -219,7 +218,7 @@ func TestTaskrunLatestForClusterTask_two_run(t *testing.T) {
 		secondRunStarted   = secondRunCreated.Add(2 * time.Second)
 		secondRunCompleted = secondRunStarted.Add(5 * time.Minute)
 	)
-	clustertasks := []*v1alpha1.ClusterTask{
+	clustertasks := []*v1beta1.ClusterTask{
 		{
 			ObjectMeta: v1.ObjectMeta{
 				Name:              "task",
@@ -227,7 +226,7 @@ func TestTaskrunLatestForClusterTask_two_run(t *testing.T) {
 			},
 		},
 	}
-	taskruns := []*v1alpha1.TaskRun{
+	taskruns := []*v1beta1.TaskRun{
 		{
 			ObjectMeta: v1.ObjectMeta{
 				Name:              "tr-1",
@@ -235,10 +234,10 @@ func TestTaskrunLatestForClusterTask_two_run(t *testing.T) {
 				CreationTimestamp: v1.Time{Time: firstRunCreated},
 				Labels:            map[string]string{"tekton.dev/clusterTask": "task"},
 			},
-			Spec: v1alpha1.TaskRunSpec{
-				TaskRef: &v1alpha1.TaskRef{
+			Spec: v1beta1.TaskRunSpec{
+				TaskRef: &v1beta1.TaskRef{
 					Name: "task",
-					Kind: v1alpha1.ClusterTaskKind,
+					Kind: v1beta1.ClusterTaskKind,
 				},
 			},
 			Status: v1beta1.TaskRunStatus{
@@ -263,10 +262,10 @@ func TestTaskrunLatestForClusterTask_two_run(t *testing.T) {
 				CreationTimestamp: v1.Time{Time: secondRunCompleted},
 				Labels:            map[string]string{"tekton.dev/clusterTask": "task", "tekton.dev/task": "task"},
 			},
-			Spec: v1alpha1.TaskRunSpec{
-				TaskRef: &v1alpha1.TaskRef{
+			Spec: v1beta1.TaskRunSpec{
+				TaskRef: &v1beta1.TaskRef{
 					Name: "task",
-					Kind: v1alpha1.ClusterTaskKind,
+					Kind: v1beta1.ClusterTaskKind,
 				},
 			},
 			Status: v1beta1.TaskRunStatus{
@@ -291,10 +290,10 @@ func TestTaskrunLatestForClusterTask_two_run(t *testing.T) {
 				CreationTimestamp: v1.Time{Time: secondRunCompleted},
 				Labels:            map[string]string{"tekton.dev/task": "task"},
 			},
-			Spec: v1alpha1.TaskRunSpec{
-				TaskRef: &v1alpha1.TaskRef{
+			Spec: v1beta1.TaskRunSpec{
+				TaskRef: &v1beta1.TaskRef{
 					Name: "task",
-					Kind: v1alpha1.NamespacedTaskKind,
+					Kind: v1beta1.NamespacedTaskKind,
 				},
 			},
 			Status: v1beta1.TaskRunStatus{
@@ -313,17 +312,17 @@ func TestTaskrunLatestForClusterTask_two_run(t *testing.T) {
 			},
 		},
 	}
-	cs, _ := test.SeedTestData(t, pipelinetest.Data{
+	cs, _ := test.SeedV1beta1TestData(t, pipelinetest.Data{
 		ClusterTasks: clustertasks,
 		TaskRuns:     taskruns,
 	})
 	cs.Pipeline.Resources = cb.APIResourceList(versionA1, []string{"clustertask", "taskrun"})
 	tdc := testDynamic.Options{}
 	dc, _ := tdc.Client(
-		cb.UnstructuredCT(clustertasks[0], versionA1),
-		cb.UnstructuredTR(taskruns[0], versionA1),
-		cb.UnstructuredTR(taskruns[1], versionA1),
-		cb.UnstructuredTR(taskruns[2], versionA1),
+		cb.UnstructuredV1beta1CT(clustertasks[0], versionA1),
+		cb.UnstructuredV1beta1TR(taskruns[0], versionA1),
+		cb.UnstructuredV1beta1TR(taskruns[1], versionA1),
+		cb.UnstructuredV1beta1TR(taskruns[2], versionA1),
 	)
 	p := &test.Params{Tekton: cs.Pipeline, Clock: clock, Dynamic: dc}
 	client, err := p.Clients()
@@ -360,9 +359,9 @@ func TestFilterByRef(t *testing.T) {
 				Labels:            map[string]string{"tekton.dev/task": "task"},
 			},
 			Spec: v1beta1.TaskRunSpec{
-				TaskRef: &v1alpha1.TaskRef{
+				TaskRef: &v1beta1.TaskRef{
 					Name: "task",
-					Kind: v1alpha1.NamespacedTaskKind,
+					Kind: v1beta1.NamespacedTaskKind,
 				},
 			},
 			Status: v1beta1.TaskRunStatus{
@@ -388,9 +387,9 @@ func TestFilterByRef(t *testing.T) {
 				Labels:            map[string]string{"tekton.dev/clusterTask": "task"},
 			},
 			Spec: v1beta1.TaskRunSpec{
-				TaskRef: &v1alpha1.TaskRef{
+				TaskRef: &v1beta1.TaskRef{
 					Name: "task",
-					Kind: v1alpha1.ClusterTaskKind,
+					Kind: v1beta1.ClusterTaskKind,
 				},
 			},
 			Status: v1beta1.TaskRunStatus{

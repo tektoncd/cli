@@ -21,7 +21,7 @@ import (
 	cb "github.com/tektoncd/cli/pkg/test/builder"
 	testDynamic "github.com/tektoncd/cli/pkg/test/dynamic"
 	"github.com/tektoncd/pipeline/pkg/apis/pipeline/v1beta1"
-	pipelinev1beta1test "github.com/tektoncd/pipeline/test"
+	pipelinetest "github.com/tektoncd/pipeline/test"
 	corev1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 )
@@ -47,7 +47,7 @@ func TestCreate_ClusterTaskNotExist(t *testing.T) {
 		t.Errorf("unable to create dynamic client: %v", err)
 	}
 
-	cs, _ := test.SeedV1beta1TestData(t, pipelinev1beta1test.Data{ClusterTasks: clustertasks})
+	cs, _ := test.SeedV1beta1TestData(t, pipelinetest.Data{ClusterTasks: clustertasks})
 	p := &test.Params{Tekton: cs.Pipeline, Kube: cs.Kube, Dynamic: dynamic}
 	p.SetNamespace("default")
 	cs.Pipeline.Resources = cb.APIResourceList(version, []string{"task", "clustertask"})
@@ -74,7 +74,7 @@ func TestCreate(t *testing.T) {
 		},
 	}
 
-	version := "v1alpha1"
+	version := "v1beta1"
 	tdc := testDynamic.Options{}
 	dynamic, err := tdc.Client(
 		cb.UnstructuredV1beta1CT(ctasks[0], version),
@@ -83,7 +83,7 @@ func TestCreate(t *testing.T) {
 		t.Errorf("unable to create dynamic client: %v", err)
 	}
 
-	cs, _ := test.SeedV1beta1TestData(t, pipelinev1beta1test.Data{ClusterTasks: ctasks})
+	cs, _ := test.SeedV1beta1TestData(t, pipelinetest.Data{ClusterTasks: ctasks})
 	p := &test.Params{Tekton: cs.Pipeline, Kube: cs.Kube, Dynamic: dynamic}
 	p.SetNamespace("default")
 	cs.Pipeline.Resources = cb.APIResourceList(version, []string{"task", "clustertask"})
@@ -127,7 +127,7 @@ func TestCreate_InNamespace(t *testing.T) {
 		t.Errorf("unable to create dynamic client: %v", err)
 	}
 
-	cs, _ := test.SeedV1beta1TestData(t, pipelinev1beta1test.Data{ClusterTasks: ctasks, Namespaces: namespaces})
+	cs, _ := test.SeedV1beta1TestData(t, pipelinetest.Data{ClusterTasks: ctasks, Namespaces: namespaces})
 	p := &test.Params{Tekton: cs.Pipeline, Kube: cs.Kube, Dynamic: dynamic}
 	cs.Pipeline.Resources = cb.APIResourceList(version, []string{"task", "clustertask"})
 
@@ -153,7 +153,7 @@ func TestCreate_WithoutFlag(t *testing.T) {
 		},
 	}
 
-	version := "v1alpha1"
+	version := "v1beta1"
 	tdc := testDynamic.Options{}
 	dynamic, err := tdc.Client(
 		cb.UnstructuredV1beta1CT(clustertasks[0], version),
@@ -162,7 +162,7 @@ func TestCreate_WithoutFlag(t *testing.T) {
 		t.Errorf("unable to create dynamic client: %v", err)
 	}
 
-	cs, _ := test.SeedV1beta1TestData(t, pipelinev1beta1test.Data{ClusterTasks: clustertasks})
+	cs, _ := test.SeedV1beta1TestData(t, pipelinetest.Data{ClusterTasks: clustertasks})
 	p := &test.Params{Tekton: cs.Pipeline, Kube: cs.Kube, Dynamic: dynamic}
 	cs.Pipeline.Resources = cb.APIResourceList(version, []string{"task", "clustertask"})
 

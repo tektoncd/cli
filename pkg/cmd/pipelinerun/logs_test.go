@@ -884,7 +884,7 @@ func TestPipelinerunLog_completed_taskrun_only(t *testing.T) {
 	cs2.Pipeline.Resources = cb.APIResourceList(versionA1, []string{"task", "taskrun", "pipeline", "pipelinerun"})
 	tdc2 := testDynamic.Options{}
 	dc2, err := tdc2.Client(
-		cb.UnstructuredT(tdata2[0], versionA1),
+		cb.Unstructuredv1alpha1T(tdata2[0], versionA1),
 		cb.UnstructuredTR(trdata2[0], versionA1),
 		cb.UnstructuredPR(prdata2[0], versionA1),
 	)
@@ -1199,7 +1199,7 @@ func TestLogs_error_log(t *testing.T) {
 	cs.Pipeline.Resources = cb.APIResourceList(versionA1, []string{"task", "pipeline", "pipelinerun"})
 	tdc := testDynamic.Options{}
 	dc, err := tdc.Client(
-		cb.UnstructuredT(ts[0], versionA1),
+		cb.Unstructuredv1alpha1T(ts[0], versionA1),
 		cb.UnstructuredP(ps[0], versionA1),
 		cb.UnstructuredPR(prs[0], versionA1),
 	)
@@ -2151,7 +2151,7 @@ func TestPipelinerunLog_completed_taskrun_only_v1beta1(t *testing.T) {
 	cs2.Pipeline.Resources = cb.APIResourceList(versionB1, []string{"task", "taskrun", "pipeline", "pipelinerun"})
 	tdc2 := testDynamic.Options{}
 	dc2, err := tdc2.Client(
-		cb.UnstructuredV1beta1T(tdata2[0], versionB1),
+		cb.UnstructuredT(tdata2[0], versionB1),
 		cb.UnstructuredV1beta1TR(trdata2[0], versionB1),
 		cb.UnstructuredV1beta1PR(prdata2[0], versionB1),
 	)
@@ -2494,7 +2494,7 @@ func TestLogs_error_log_v1beta1(t *testing.T) {
 	cs.Pipeline.Resources = cb.APIResourceList(versionB1, []string{"task", "pipeline", "pipelinerun"})
 	tdc := testDynamic.Options{}
 	dc, err := tdc.Client(
-		cb.UnstructuredV1beta1T(ts[0], versionB1),
+		cb.UnstructuredT(ts[0], versionB1),
 		cb.UnstructuredV1beta1P(ps[0], versionB1),
 		cb.UnstructuredV1beta1PR(prs[0], versionB1),
 	)

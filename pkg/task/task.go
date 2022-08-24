@@ -15,7 +15,6 @@
 package task
 
 import (
-	"context"
 	"fmt"
 	"os"
 
@@ -67,30 +66,8 @@ func List(c *cli.Clients, opts metav1.ListOptions, ns string) (*v1beta1.TaskList
 	return tasks, nil
 }
 
-// It will fetch the resource based on the api available and return v1beta1 form
+// Get will fetch the task resource based on the task name
 func Get(c *cli.Clients, taskname string, opts metav1.GetOptions, ns string) (*v1beta1.Task, error) {
-	gvr, err := actions.GetGroupVersionResource(taskGroupResource, c.Tekton.Discovery())
-	if err != nil {
-		return nil, err
-	}
-
-	if gvr.Version == "v1alpha1" {
-		task, err := getV1alpha1(c, taskname, opts, ns)
-		if err != nil {
-			return nil, err
-		}
-		var taskConverted v1beta1.Task
-		err = task.ConvertTo(context.Background(), &taskConverted)
-		if err != nil {
-			return nil, err
-		}
-		return &taskConverted, nil
-	}
-	return GetV1beta1(c, taskname, opts, ns)
-}
-
-// It will fetch the resource in v1beta1 struct format
-func GetV1beta1(c *cli.Clients, taskname string, opts metav1.GetOptions, ns string) (*v1beta1.Task, error) {
 	unstructuredT, err := actions.Get(taskGroupResource, c.Dynamic, c.Tekton.Discovery(), taskname, ns, opts)
 	if err != nil {
 		return nil, err
@@ -104,22 +81,8 @@ func GetV1beta1(c *cli.Clients, taskname string, opts metav1.GetOptions, ns stri
 	return task, nil
 }
 
-// It will fetch the resource in v1alpha1 struct format
-func getV1alpha1(c *cli.Clients, taskname string, opts metav1.GetOptions, ns string) (*v1alpha1.Task, error) {
-	unstructuredT, err := actions.Get(taskGroupResource, c.Dynamic, c.Tekton.Discovery(), taskname, ns, opts)
-	if err != nil {
-		return nil, err
-	}
-
-	var task *v1alpha1.Task
-	if err := runtime.DefaultUnstructuredConverter.FromUnstructured(unstructuredT.UnstructuredContent(), &task); err != nil {
-		fmt.Fprintf(os.Stderr, "failed to get task from %s namespace \n", ns)
-		return nil, err
-	}
-	return task, nil
-}
-
-// this will convert v1beta1 TaskSpec to v1alpha1 TaskSpec
+// SpecConvertFrom will convert v1beta1 TaskSpec to v1alpha1 TaskSpec
+// TODO: remove after taskrun bump to v1beta1
 func SpecConvertFrom(spec *v1beta1.TaskSpec) *v1alpha1.TaskSpec {
 	downTaskSpec := &v1alpha1.TaskSpec{}
 	if spec != nil {
@@ -188,11 +151,7 @@ func Create(c *cli.Clients, t *v1beta1.Task, opts metav1.CreateOptions, ns strin
 		return nil, err
 	}
 
-	return createUnstructured(t, c, opts, ns)
-}
-
-func createUnstructured(obj runtime.Object, c *cli.Clients, opts metav1.CreateOptions, ns string) (*v1beta1.Task, error) {
-	object, err := runtime.DefaultUnstructuredConverter.ToUnstructured(obj)
+	object, err := runtime.DefaultUnstructuredConverter.ToUnstructured(t)
 	if err != nil {
 		return nil, err
 	}
