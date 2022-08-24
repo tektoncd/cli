@@ -1,5 +1,5 @@
 Flag --timeout has been deprecated, please use --pipeline-timeout flag instead
-apiVersion: tekton.dev/v1alpha1
+apiVersion: tekton.dev/v1beta1
 kind: PipelineRun
 metadata:
   creationTimestamp: null
@@ -12,7 +12,7 @@ spec:
   - name: pipeline-param
     value: value1
   - name: rev-param
-    value: revision
+    value: value2
   pipelineRef:
     name: test-pipeline
   resources:

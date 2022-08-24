@@ -41,12 +41,11 @@ import (
 	"github.com/tektoncd/cli/pkg/pipelinerun"
 	"github.com/tektoncd/cli/pkg/pods"
 	"github.com/tektoncd/cli/pkg/workspaces"
-	"github.com/tektoncd/pipeline/pkg/apis/pipeline/v1alpha1"
 	"github.com/tektoncd/pipeline/pkg/apis/pipeline/v1beta1"
+	"github.com/tektoncd/pipeline/pkg/apis/resource/v1alpha1"
 	versionedResource "github.com/tektoncd/pipeline/pkg/client/resource/clientset/versioned"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	v1 "k8s.io/apimachinery/pkg/apis/meta/v1"
-	"k8s.io/client-go/discovery"
 	"sigs.k8s.io/yaml"
 )
 
@@ -345,7 +344,7 @@ func (opt *startOptions) startPipeline(pipelineStart *v1beta1.Pipeline) error {
 	}
 
 	if opt.DryRun {
-		return printPipelineRun(cs, opt.Output, opt.stream, pr)
+		return printPipelineRun(opt.Output, opt.stream, pr)
 	}
 
 	prCreated, err := pipelinerun.Create(cs, pr, metav1.CreateOptions{}, opt.cliparams.Namespace())
@@ -354,7 +353,7 @@ func (opt *startOptions) startPipeline(pipelineStart *v1beta1.Pipeline) error {
 	}
 
 	if opt.Output != "" {
-		return printPipelineRun(cs, opt.Output, opt.stream, prCreated)
+		return printPipelineRun(opt.Output, opt.stream, prCreated)
 	}
 
 	fmt.Fprintf(opt.stream.Out, "PipelineRun started: %s\n", prCreated.Name)
@@ -751,14 +750,10 @@ func (opt *startOptions) createPipelineResource(resName string, resType v1alpha1
 	return newRes, nil
 }
 
-func printPipelineRun(c *cli.Clients, output string, s *cli.Stream, pr *v1beta1.PipelineRun) error {
-	prWithVersion, err := convertedPrVersion(c, pr)
-	if err != nil {
-		return err
-	}
+func printPipelineRun(output string, s *cli.Stream, pr *v1beta1.PipelineRun) error {
 	format := strings.ToLower(output)
 	if format == "" || format == "yaml" {
-		prBytes, err := yaml.Marshal(prWithVersion)
+		prBytes, err := yaml.Marshal(pr)
 		if err != nil {
 			return err
 		}
@@ -770,7 +765,7 @@ func printPipelineRun(c *cli.Clients, output string, s *cli.Stream, pr *v1beta1.
 	}
 
 	if format == "json" {
-		prBytes, err := json.MarshalIndent(prWithVersion, "", "\t")
+		prBytes, err := json.MarshalIndent(pr, "", "\t")
 		if err != nil {
 			return err
 		}
@@ -821,18 +816,7 @@ func parsePipeline(pipelineLocation string, httpClient http.Client) (*v1beta1.Pi
 		return nil, err
 	}
 	if m["apiVersion"] == "tekton.dev/v1alpha1" {
-		pipeline := v1alpha1.Pipeline{}
-		if err := yaml.UnmarshalStrict(b, &pipeline); err != nil {
-			return nil, err
-		}
-		var pipelineConverted v1beta1.Pipeline
-		err = pipeline.ConvertTo(context.Background(), &pipelineConverted)
-		if err != nil {
-			return nil, err
-		}
-		pipelineConverted.TypeMeta.APIVersion = "tekton.dev/v1alpha1"
-		pipelineConverted.TypeMeta.APIVersion = "Pipeline"
-		return &pipelineConverted, nil
+		return nil, fmt.Errorf("v1alpha1 is no longer supported")
 	}
 
 	pipeline := v1beta1.Pipeline{}
@@ -967,36 +951,4 @@ func askParam(ques string, askOpts survey.AskOpt, def ...string) (string, error)
 	}
 
 	return ans, nil
-}
-
-func getAPIVersion(discovery discovery.DiscoveryInterface) (string, error) {
-	_, err := discovery.ServerResourcesForGroupVersion("tekton.dev/v1beta1")
-	if err != nil {
-		_, err = discovery.ServerResourcesForGroupVersion("tekton.dev/v1alpha1")
-		if err != nil {
-			return "", fmt.Errorf("couldn't get available Tekton api versions from server")
-		}
-		return "tekton.dev/v1alpha1", nil
-	}
-	return "tekton.dev/v1beta1", nil
-}
-
-func convertedPrVersion(c *cli.Clients, pr *v1beta1.PipelineRun) (interface{}, error) {
-	version, err := getAPIVersion(c.Tekton.Discovery())
-	if err != nil {
-		return nil, err
-	}
-
-	if version == "tekton.dev/v1alpha1" {
-		var prConverted v1alpha1.PipelineRun
-		err = prConverted.ConvertFrom(context.Background(), pr)
-		prConverted.APIVersion = version
-		prConverted.Kind = "PipelineRun"
-		if err != nil {
-			return nil, err
-		}
-		return &prConverted, nil
-	}
-
-	return pr, nil
 }

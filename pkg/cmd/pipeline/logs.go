@@ -25,7 +25,6 @@ import (
 	"github.com/tektoncd/cli/pkg/formatted"
 	"github.com/tektoncd/cli/pkg/options"
 	"github.com/tektoncd/cli/pkg/pipeline"
-	phelper "github.com/tektoncd/cli/pkg/pipeline"
 	prhelper "github.com/tektoncd/cli/pkg/pipelinerun"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 )
@@ -37,7 +36,7 @@ func nameArg(args []string, p cli.Params) error {
 			return err
 		}
 		name, ns := args[0], p.Namespace()
-		if _, err = phelper.GetV1beta1(c, name, metav1.GetOptions{}, ns); err != nil {
+		if _, err = pipeline.Get(c, name, metav1.GetOptions{}, ns); err != nil {
 			return err
 		}
 	}
@@ -139,7 +138,7 @@ func getAllInputs(opts *options.LogOptions) error {
 		return err
 	}
 
-	ps, err := phelper.GetAllPipelineNames(opts.Params)
+	ps, err := pipeline.GetAllPipelineNames(opts.Params)
 	if err != nil {
 		return err
 	}
