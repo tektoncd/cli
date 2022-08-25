@@ -59,7 +59,7 @@ require (
 	go.opencensus.io v0.23.0
 	go.uber.org/atomic v1.10.0
 	go.uber.org/multierr v1.8.0
-	go.uber.org/zap v1.22.0
+	go.uber.org/zap v1.23.0
 	golang.org/x/crypto v0.0.0-20220525230936-793ad666bf5e
 	golang.org/x/net v0.0.0-20220621193019-9d032be2e588
 	golang.org/x/sys v0.0.0-20220702020025-31831981b65f
