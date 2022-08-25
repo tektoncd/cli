@@ -1,33 +1,10 @@
 Name:        tr-2
 Namespace:   ns
-Task Ref:    t1
-Timeout:     1h0m0s
+Task Ref:    task-1
+Labels:
+ tekton.dev/task=task-1
 
 Status
 
 STARTED         DURATION    STATUS
-8 minutes ago   ---         Succeeded
-
-Input Resources
-
- NAME          RESOURCE REF
- git           git
- image-input   image
-
-Output Resources
-
- NAME            RESOURCE REF
- image-output    image
- image-output2   image
-
-Params
-
- NAME     VALUE
- input    param
- input2   param2
-
-Steps
-
- NAME    STATUS
- step3   Completed
- step4   Completed
+0 seconds ago   5m0s        Succeeded
