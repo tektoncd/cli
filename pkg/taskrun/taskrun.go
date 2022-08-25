@@ -17,7 +17,6 @@ package taskrun
 import (
 	"sort"
 
-	"github.com/tektoncd/pipeline/pkg/apis/pipeline/v1alpha1"
 	"github.com/tektoncd/pipeline/pkg/apis/pipeline/v1beta1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime/schema"
@@ -55,7 +54,7 @@ func IsFiltered(tr Run, allowed []string) bool {
 	return len(Filter(trs, allowed)) == 0
 }
 
-func HasScheduled(trs *v1alpha1.PipelineRunTaskRunStatus) bool {
+func HasScheduled(trs *v1beta1.PipelineRunTaskRunStatus) bool {
 	if trs.Status != nil {
 		return trs.Status.PodName != ""
 	}

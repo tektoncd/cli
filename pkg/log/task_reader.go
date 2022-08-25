@@ -44,7 +44,7 @@ func (s *step) hasStarted() bool {
 }
 
 func (r *Reader) readTaskLog() (<-chan Log, <-chan error, error) {
-	tr, err := tr.GetV1beta1(r.clients, r.run, metav1.GetOptions{}, r.ns)
+	tr, err := tr.Get(r.clients, r.run, metav1.GetOptions{}, r.ns)
 	if err != nil {
 		return nil, nil, fmt.Errorf("%s: %s", MsgTRNotFoundErr, err)
 	}

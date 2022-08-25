@@ -26,24 +26,7 @@ import (
 )
 
 func Create(c *cli.Clients, tr *v1beta1.TaskRun, opts metav1.CreateOptions, ns string) (*v1beta1.TaskRun, error) {
-	trGVR, err := actions.GetGroupVersionResource(trGroupResource, c.Tekton.Discovery())
-	if err != nil {
-		return nil, err
-	}
-
-	if trGVR.Version == "v1alpha1" {
-		v1alpha1TaskRun := ConvertFrom(tr)
-		if err != nil {
-			return nil, err
-		}
-		return createUnstructured(v1alpha1TaskRun, c, opts, ns)
-	}
-
-	return createUnstructured(tr, c, opts, ns)
-}
-
-func createUnstructured(obj runtime.Object, c *cli.Clients, opts metav1.CreateOptions, ns string) (*v1beta1.TaskRun, error) {
-	object, _ := runtime.DefaultUnstructuredConverter.ToUnstructured(obj)
+	object, _ := runtime.DefaultUnstructuredConverter.ToUnstructured(tr)
 	unstructuredTR := &unstructured.Unstructured{
 		Object: object,
 	}

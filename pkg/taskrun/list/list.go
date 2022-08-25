@@ -15,18 +15,12 @@
 package list
 
 import (
-	"context"
-	"fmt"
-	"os"
-
 	"github.com/tektoncd/cli/pkg/actions"
 	"github.com/tektoncd/cli/pkg/cli"
 	"github.com/tektoncd/cli/pkg/formatted"
 	trsort "github.com/tektoncd/cli/pkg/taskrun/sort"
-	"github.com/tektoncd/pipeline/pkg/apis/pipeline/v1alpha1"
 	"github.com/tektoncd/pipeline/pkg/apis/pipeline/v1beta1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
-	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
 	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/apimachinery/pkg/runtime/schema"
 )
@@ -58,28 +52,12 @@ func GetAllTaskRuns(p cli.Params, opts metav1.ListOptions, limit int) ([]string,
 }
 
 func TaskRuns(c *cli.Clients, opts metav1.ListOptions, ns string) (*v1beta1.TaskRunList, error) {
-
 	trGroupResource := schema.GroupVersionResource{Group: "tekton.dev", Resource: "taskruns"}
 	unstructuredTRL, err := actions.List(trGroupResource, c.Dynamic, c.Tekton.Discovery(), ns, opts)
 	if err != nil {
 		return nil, err
 	}
 
-	for i, tr := range unstructuredTRL.Items {
-		if tr.GroupVersionKind().Version == "v1alpha1" {
-			var v1alpha1TR *v1alpha1.TaskRun
-			if err := runtime.DefaultUnstructuredConverter.FromUnstructured(tr.UnstructuredContent(), &v1alpha1TR); err != nil {
-				return nil, err
-			}
-			updatedTaskRun := v1beta1.TaskRun{}
-			err := v1alpha1TR.ConvertTo(context.Background(), &updatedTaskRun)
-			if err != nil {
-				fmt.Fprintln(os.Stdout, err)
-			}
-			object, _ := runtime.DefaultUnstructuredConverter.ToUnstructured(&updatedTaskRun)
-			unstructuredTRL.Items[i] = unstructured.Unstructured{Object: object}
-		}
-	}
 	var runs *v1beta1.TaskRunList
 	if err := runtime.DefaultUnstructuredConverter.FromUnstructured(unstructuredTRL.UnstructuredContent(), &runs); err != nil {
 		return nil, err
