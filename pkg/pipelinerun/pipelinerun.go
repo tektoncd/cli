@@ -24,7 +24,6 @@ import (
 	"github.com/tektoncd/cli/pkg/cli"
 	"github.com/tektoncd/cli/pkg/formatted"
 	prsort "github.com/tektoncd/cli/pkg/pipelinerun/sort"
-	"github.com/tektoncd/pipeline/pkg/apis/pipeline/v1alpha1"
 	"github.com/tektoncd/pipeline/pkg/apis/pipeline/v1beta1"
 	"github.com/tektoncd/pipeline/pkg/client/clientset/versioned"
 	"k8s.io/apimachinery/pkg/api/errors"
@@ -97,30 +96,8 @@ func List(c *cli.Clients, opts metav1.ListOptions, ns string) (*v1beta1.Pipeline
 	return prList, nil
 }
 
-// It will fetch the resource based on the api available and return v1beta1 form
-func Get(c *cli.Clients, prname string, opts metav1.GetOptions, ns string) (*v1beta1.PipelineRun, error) {
-	gvr, err := actions.GetGroupVersionResource(prGroupResource, c.Tekton.Discovery())
-	if err != nil {
-		return nil, err
-	}
-
-	if gvr.Version == "v1alpha1" {
-		pipelinerun, err := getV1alpha1(c, prname, opts, ns)
-		if err != nil {
-			return nil, err
-		}
-		var pipelinerunConverted v1beta1.PipelineRun
-		err = pipelinerun.ConvertTo(context.Background(), &pipelinerunConverted)
-		if err != nil {
-			return nil, err
-		}
-		return &pipelinerunConverted, nil
-	}
-	return GetV1beta1(c, prname, opts, ns)
-}
-
 // It will fetch the resource in v1beta1 struct format
-func GetV1beta1(c *cli.Clients, prname string, opts metav1.GetOptions, ns string) (*v1beta1.PipelineRun, error) {
+func Get(c *cli.Clients, prname string, opts metav1.GetOptions, ns string) (*v1beta1.PipelineRun, error) {
 	unstructuredPR, err := actions.Get(prGroupResource, c.Dynamic, c.Tekton.Discovery(), prname, ns, opts)
 	if err != nil {
 		return nil, err
@@ -138,21 +115,6 @@ func GetV1beta1(c *cli.Clients, prname string, opts metav1.GetOptions, ns string
 	}
 
 	return populatedPR, nil
-}
-
-// It will fetch the resource in v1alpha1 struct format
-func getV1alpha1(c *cli.Clients, prname string, opts metav1.GetOptions, ns string) (*v1alpha1.PipelineRun, error) {
-	unstructuredPR, err := actions.Get(prGroupResource, c.Dynamic, c.Tekton.Discovery(), prname, ns, opts)
-	if err != nil {
-		return nil, err
-	}
-
-	var pipelinerun *v1alpha1.PipelineRun
-	if err := runtime.DefaultUnstructuredConverter.FromUnstructured(unstructuredPR.UnstructuredContent(), &pipelinerun); err != nil {
-		fmt.Fprintf(os.Stderr, "Failed to get pipelinerun from %s namespace \n", ns)
-		return nil, err
-	}
-	return pipelinerun, nil
 }
 
 func Watch(c *cli.Clients, opts metav1.ListOptions, ns string) (watch.Interface, error) {
@@ -198,16 +160,6 @@ func Create(c *cli.Clients, pr *v1beta1.PipelineRun, opts metav1.CreateOptions, 
 		return nil, err
 	}
 
-	if gvr.Version == "v1alpha1" {
-		var pipelinerunConverted v1alpha1.PipelineRun
-		err = pipelinerunConverted.ConvertFrom(context.Background(), pr)
-		if err != nil {
-			return nil, err
-		}
-		pipelinerunConverted.Kind = "PipelineRun"
-		pipelinerunConverted.APIVersion = "tekton.dev/v1alpha1"
-		return createUnstructured(&pipelinerunConverted, c, opts, ns, gvr)
-	}
 	return createUnstructured(pr, c, opts, ns, gvr)
 }
 
