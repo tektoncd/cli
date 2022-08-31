@@ -74,7 +74,7 @@ func cancelPipelineRun(p cli.Params, s *cli.Stream, prName string, graceCancelSt
 		return fmt.Errorf("failed to create tekton client")
 	}
 
-	pr, err := pipelinerun.GetV1beta1(cs, prName, metav1.GetOptions{}, p.Namespace())
+	pr, err := pipelinerun.Get(cs, prName, metav1.GetOptions{}, p.Namespace())
 	if err != nil {
 		return fmt.Errorf("failed to find PipelineRun: %s", prName)
 	}

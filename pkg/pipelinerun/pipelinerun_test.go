@@ -29,7 +29,6 @@ import (
 	pipelinev1beta1test "github.com/tektoncd/pipeline/test"
 	"github.com/tektoncd/pipeline/test/diff"
 	"github.com/tektoncd/pipeline/test/parse"
-	pipelinetest "github.com/tektoncd/pipeline/test/v1alpha1"
 	corev1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"knative.dev/pkg/apis"
@@ -37,126 +36,6 @@ import (
 )
 
 func TestPipelineRunsList_with_single_run(t *testing.T) {
-	version := "v1alpha1"
-	clock := clockwork.NewFakeClock()
-	pr1Started := clock.Now().Add(10 * time.Second)
-	runDuration := 1 * time.Minute
-
-	prdata := []*v1alpha1.PipelineRun{
-
-		{
-			ObjectMeta: metav1.ObjectMeta{
-				Name:      "pipelinerun",
-				Namespace: "ns",
-				Labels:    map[string]string{"tekton.dev/pipeline": "random"},
-			},
-		},
-		{
-			ObjectMeta: metav1.ObjectMeta{
-				Name:      "pipelinerun1",
-				Namespace: "ns",
-				Labels:    map[string]string{"tekton.dev/pipeline": "pipeline"},
-			},
-			Status: v1alpha1.PipelineRunStatus{
-				Status: duckv1beta1.Status{
-					Conditions: duckv1beta1.Conditions{
-						{
-							Status: corev1.ConditionTrue,
-							Reason: v1beta1.PipelineRunReasonSuccessful.String(),
-						},
-					},
-				},
-				PipelineRunStatusFields: v1alpha1.PipelineRunStatusFields{
-					StartTime:      &metav1.Time{Time: pr1Started},
-					CompletionTime: &metav1.Time{Time: pr1Started.Add(runDuration)},
-				},
-			},
-		},
-		{
-			ObjectMeta: metav1.ObjectMeta{
-				Name:      "pipelinerun2",
-				Namespace: "ns",
-				Labels:    map[string]string{"tekton.dev/pipeline": "pipeline"},
-			},
-			Status: v1alpha1.PipelineRunStatus{
-				Status: duckv1beta1.Status{
-					Conditions: duckv1beta1.Conditions{
-						{
-							Status: corev1.ConditionTrue,
-							Reason: v1beta1.PipelineRunReasonSuccessful.String(),
-						},
-					},
-				},
-				PipelineRunStatusFields: v1alpha1.PipelineRunStatusFields{
-					StartTime:      &metav1.Time{Time: pr1Started},
-					CompletionTime: &metav1.Time{Time: pr1Started.Add(runDuration)},
-				},
-			},
-		},
-	}
-	cs, _ := test.SeedTestData(t, pipelinetest.Data{
-		PipelineRuns: prdata,
-	})
-	cs.Pipeline.Resources = cb.APIResourceList(version, []string{"pipelinerun"})
-	tdc := testDynamic.Options{}
-	dc, err := tdc.Client(
-		cb.UnstructuredPR(prdata[0], version),
-		cb.UnstructuredPR(prdata[1], version),
-		cb.UnstructuredPR(prdata[2], version),
-	)
-	if err != nil {
-		t.Errorf("unable to create dynamic client: %v", err)
-	}
-
-	p := &test.Params{Tekton: cs.Pipeline, Clock: clock, Kube: cs.Kube, Dynamic: dc}
-	p2 := &test.Params{Tekton: cs.Pipeline, Clock: clock, Kube: cs.Kube, Dynamic: dc}
-	p2.SetNamespace("unknown")
-
-	testParams := []struct {
-		name        string
-		params      *test.Params
-		listOptions metav1.ListOptions
-		want        []string
-	}{
-		{
-			name:        "Specify related pipeline",
-			params:      p,
-			listOptions: metav1.ListOptions{LabelSelector: "tekton.dev/pipeline=pipeline"},
-			want: []string{
-				"pipelinerun1 started -10 seconds ago",
-				"pipelinerun2 started -10 seconds ago",
-			},
-		},
-		{
-			name:        "Not specify related pipeline",
-			params:      p,
-			listOptions: metav1.ListOptions{},
-			want: []string{
-				"pipelinerun started ---",
-				"pipelinerun1 started -10 seconds ago",
-				"pipelinerun2 started -10 seconds ago",
-			},
-		},
-		{
-			name:        "Specify unknown namespace",
-			params:      p2,
-			listOptions: metav1.ListOptions{},
-			want:        []string{},
-		},
-	}
-
-	for _, tp := range testParams {
-		t.Run(tp.name, func(t *testing.T) {
-			got, err := GetAllPipelineRuns(tp.params, tp.listOptions, 5)
-			if err != nil {
-				t.Errorf("unexpected Error")
-			}
-			test.AssertOutput(t, tp.want, got)
-		})
-	}
-}
-
-func TestPipelineRunsV1beta1List_with_single_run(t *testing.T) {
 	version := "v1beta1"
 	clock := clockwork.NewFakeClock()
 	pr1Started := clock.Now().Add(10 * time.Second)
@@ -304,82 +183,6 @@ func TestPipelineRunsV1beta1List_with_single_run(t *testing.T) {
 }
 
 func TestPipelineRunGet(t *testing.T) {
-	version := "v1alpha1"
-	clock := clockwork.NewFakeClock()
-	pr1Started := clock.Now().Add(10 * time.Second)
-	runDuration := 1 * time.Minute
-
-	prdata := []*v1alpha1.PipelineRun{
-		{
-			ObjectMeta: metav1.ObjectMeta{
-				Name:      "pipelinerun1",
-				Namespace: "ns",
-				Labels:    map[string]string{"tekton.dev/pipeline": "pipeline"},
-			},
-			Status: v1alpha1.PipelineRunStatus{
-				Status: duckv1beta1.Status{
-					Conditions: duckv1beta1.Conditions{
-						{
-							Status: corev1.ConditionTrue,
-							Reason: v1beta1.PipelineRunReasonSuccessful.String(),
-						},
-					},
-				},
-				PipelineRunStatusFields: v1alpha1.PipelineRunStatusFields{
-					StartTime:      &metav1.Time{Time: pr1Started},
-					CompletionTime: &metav1.Time{Time: pr1Started.Add(runDuration)},
-				},
-			},
-		},
-		{
-			ObjectMeta: metav1.ObjectMeta{
-				Name:      "pipelinerun2",
-				Namespace: "ns",
-				Labels:    map[string]string{"tekton.dev/pipeline": "pipeline"},
-			},
-			Status: v1alpha1.PipelineRunStatus{
-				Status: duckv1beta1.Status{
-					Conditions: duckv1beta1.Conditions{
-						{
-							Status: corev1.ConditionTrue,
-							Reason: v1beta1.PipelineRunReasonSuccessful.String(),
-						},
-					},
-				},
-				PipelineRunStatusFields: v1alpha1.PipelineRunStatusFields{
-					StartTime:      &metav1.Time{Time: pr1Started},
-					CompletionTime: &metav1.Time{Time: pr1Started.Add(runDuration)},
-				},
-			},
-		},
-	}
-	cs, _ := test.SeedTestData(t, pipelinetest.Data{
-		PipelineRuns: prdata,
-	})
-	cs.Pipeline.Resources = cb.APIResourceList(version, []string{"pipelinerun"})
-	tdc := testDynamic.Options{}
-	dc, err := tdc.Client(
-		cb.UnstructuredPR(prdata[0], version),
-		cb.UnstructuredPR(prdata[1], version),
-	)
-	if err != nil {
-		t.Errorf("unable to create dynamic client: %v", err)
-	}
-
-	p := &test.Params{Tekton: cs.Pipeline, Clock: clock, Kube: cs.Kube, Dynamic: dc}
-	c, err := p.Clients()
-	if err != nil {
-		t.Errorf("unable to create client: %v", err)
-	}
-
-	got, err := Get(c, "pipelinerun1", metav1.GetOptions{}, "ns")
-	if err != nil {
-		t.Errorf("unexpected Error")
-	}
-	test.AssertOutput(t, "pipelinerun1", got.Name)
-}
-
-func TestPipelineRunGet_v1beta1(t *testing.T) {
 	version := "v1beta1"
 	clock := clockwork.NewFakeClock()
 	pr1Started := clock.Now().Add(10 * time.Second)
@@ -836,42 +639,6 @@ status:
 }
 
 func TestPipelineRunCreate(t *testing.T) {
-	version := "v1alpha1"
-	prdata := v1beta1.PipelineRun{
-		ObjectMeta: metav1.ObjectMeta{
-			Name:      "pipelinerun1",
-			Namespace: "ns",
-			Labels:    map[string]string{"tekton.dev/pipeline": "pipeline"},
-		},
-		Spec: v1beta1.PipelineRunSpec{
-			PipelineRef: &v1beta1.PipelineRef{
-				Name: "pipeline",
-			},
-		},
-	}
-
-	cs, _ := test.SeedTestData(t, pipelinetest.Data{})
-	cs.Pipeline.Resources = cb.APIResourceList(version, []string{"pipelinerun"})
-	tdc := testDynamic.Options{}
-	dc, err := tdc.Client()
-	if err != nil {
-		t.Errorf("unable to create dynamic client: %v", err)
-	}
-
-	p := &test.Params{Tekton: cs.Pipeline, Kube: cs.Kube, Dynamic: dc}
-	c, err := p.Clients()
-	if err != nil {
-		t.Errorf("unable to create client: %v", err)
-	}
-
-	got, err := Create(c, &prdata, metav1.CreateOptions{}, "ns")
-	if err != nil {
-		t.Errorf("unexpected Error")
-	}
-	test.AssertOutput(t, "pipelinerun1", got.Name)
-}
-
-func TestPipelineRunCreate_v1beta1(t *testing.T) {
 	version := "v1beta1"
 	prdata := v1beta1.PipelineRun{
 		ObjectMeta: metav1.ObjectMeta{
