@@ -185,6 +185,11 @@ func ExtractSignableTargetFromResults(tr *v1beta1.TaskRun, logger *zap.SugaredLo
 	return objs
 }
 
+// FullRef returns the full reference of the signable artifact in the format of URI@DIGEST
+func (s *StructuredSignable) FullRef() string {
+	return fmt.Sprintf("%s@%s", s.URI, s.Digest)
+}
+
 func extractTargetFromResults(tr *v1beta1.TaskRun, identifierSuffix string, digestSuffix string, logger *zap.SugaredLogger) map[string]*StructuredSignable {
 	ss := map[string]*StructuredSignable{}
 

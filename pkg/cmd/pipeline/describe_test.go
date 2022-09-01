@@ -972,13 +972,25 @@ func TestPipelineDescribe_with_results(t *testing.T) {
 					{
 						Name:        "result-1",
 						Description: "This is a description for result 1",
+						Type:        v1beta1.ResultsTypeString,
+						Value: v1beta1.ArrayOrString{
+							Type: v1beta1.ParamTypeString,
+						},
 					},
 					{
 						Name:        "result-2",
 						Description: "This is a description for result 2",
+						Type:        v1beta1.ResultsTypeString,
+						Value: v1beta1.ArrayOrString{
+							Type: v1beta1.ParamTypeString,
+						},
 					},
 					{
 						Name: "result-3",
+						Type: v1beta1.ResultsTypeString,
+						Value: v1beta1.ArrayOrString{
+							Type: v1beta1.ParamTypeString,
+						},
 					},
 				},
 			},
@@ -1045,13 +1057,25 @@ func TestPipelineDescribe_with_workspaces(t *testing.T) {
 					{
 						Name:        "result-1",
 						Description: "This is a description for result 1",
+						Type:        v1beta1.ResultsTypeString,
+						Value: v1beta1.ArrayOrString{
+							Type: v1beta1.ParamTypeString,
+						},
 					},
 					{
 						Name:        "result-2",
 						Description: "This is a description for result 2",
+						Type:        v1beta1.ResultsTypeString,
+						Value: v1beta1.ArrayOrString{
+							Type: v1beta1.ParamTypeString,
+						},
 					},
 					{
 						Name: "result-3",
+						Type: v1beta1.ResultsTypeString,
+						Value: v1beta1.ArrayOrString{
+							Type: v1beta1.ParamTypeString,
+						},
 					},
 				},
 				Workspaces: []v1beta1.PipelineWorkspaceDeclaration{
@@ -1166,13 +1190,25 @@ func TestPipelineDescribe_with_OptionalWorkspaces(t *testing.T) {
 					{
 						Name:        "result-1",
 						Description: "This is a description for result 1",
+						Type:        v1beta1.ResultsTypeString,
+						Value: v1beta1.ArrayOrString{
+							Type: v1beta1.ParamTypeString,
+						},
 					},
 					{
 						Name:        "result-2",
 						Description: "This is a description for result 2",
+						Type:        v1beta1.ResultsTypeString,
+						Value: v1beta1.ArrayOrString{
+							Type: v1beta1.ParamTypeString,
+						},
 					},
 					{
 						Name: "result-3",
+						Type: v1beta1.ResultsTypeString,
+						Value: v1beta1.ArrayOrString{
+							Type: v1beta1.ParamTypeString,
+						},
 					},
 				},
 				Workspaces: []v1beta1.PipelineWorkspaceDeclaration{
