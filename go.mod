@@ -51,7 +51,7 @@ require (
 	github.com/spf13/cobra v1.5.0
 	github.com/spf13/pflag v1.0.5
 	github.com/tektoncd/chains v0.12.1-0.20220901150427-1bf8faaf4475
-	github.com/tektoncd/hub v1.8.0
+	github.com/tektoncd/hub v1.9.0
 	github.com/tektoncd/pipeline v0.38.3
 	github.com/tektoncd/plumbing v0.0.0-20220329085922-d765a5cba75f
 	github.com/tektoncd/triggers v0.20.2
@@ -60,8 +60,8 @@ require (
 	go.uber.org/multierr v1.8.0
 	go.uber.org/zap v1.23.0
 	golang.org/x/crypto v0.0.0-20220525230936-793ad666bf5e
-	golang.org/x/net v0.0.0-20220722155237-a158d28d115b
-	golang.org/x/sys v0.0.0-20220722155257-8c9f86f7a55f
+	golang.org/x/net v0.0.0-20220802222814-0bcc04d9c69b
+	golang.org/x/sys v0.0.0-20220803195053-6e608f9ce704
 	golang.org/x/term v0.0.0-20210927222741-03fcf44c2211
 	golang.org/x/time v0.0.0-20220224211638-0e9765cccd65
 	google.golang.org/grpc v1.49.0
@@ -161,7 +161,7 @@ require (
 	github.com/gdamore/tcell/v2 v2.4.0 // indirect
 	github.com/go-chi/chi v4.1.2+incompatible // indirect
 	github.com/go-errors/errors v1.0.1 // indirect
-	github.com/go-kit/log v0.2.0 // indirect
+	github.com/go-kit/log v0.2.1 // indirect
 	github.com/go-logfmt/logfmt v0.5.1 // indirect
 	github.com/go-logr/logr v1.2.2 // indirect
 	github.com/go-openapi/analysis v0.21.2 // indirect
@@ -321,7 +321,7 @@ require (
 	go.opentelemetry.io/otel/trace v1.3.0 // indirect
 	go.opentelemetry.io/proto/otlp v0.12.0 // indirect
 	go.starlark.net v0.0.0-20200306205701-8dd3e2ee1dd5 // indirect
-	goa.design/goa/v3 v3.7.6 // indirect
+	goa.design/goa/v3 v3.8.2 // indirect
 	gocloud.dev v0.25.0 // indirect
 	gocloud.dev/docstore/mongodocstore v0.25.0 // indirect
 	gocloud.dev/pubsub/kafkapubsub v0.25.0 // indirect
@@ -334,7 +334,7 @@ require (
 	gomodules.xyz/jsonpatch/v2 v2.2.0 // indirect
 	google.golang.org/api v0.85.0 // indirect
 	google.golang.org/appengine v1.6.7 // indirect
-	google.golang.org/genproto v0.0.0-20220630174209-ad1d48641aa7 // indirect
+	google.golang.org/genproto v0.0.0-20220803205849-8f55acc8769f // indirect
 	gopkg.in/cheggaaa/pb.v1 v1.0.28 // indirect
 	gopkg.in/inf.v0 v0.9.1 // indirect
 	gopkg.in/ini.v1 v1.66.6 // indirect
