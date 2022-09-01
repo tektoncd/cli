@@ -25,7 +25,7 @@ import (
 	"github.com/tektoncd/cli/pkg/cli"
 	pressort "github.com/tektoncd/cli/pkg/pipelineresource/sort"
 	"github.com/tektoncd/cli/pkg/printer"
-	"github.com/tektoncd/pipeline/pkg/apis/pipeline/v1alpha1"
+	"github.com/tektoncd/pipeline/pkg/apis/resource/v1alpha1"
 	versionedResource "github.com/tektoncd/pipeline/pkg/client/resource/clientset/versioned"
 	v1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime/schema"

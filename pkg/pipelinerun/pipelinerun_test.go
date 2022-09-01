@@ -26,7 +26,7 @@ import (
 	testDynamic "github.com/tektoncd/cli/pkg/test/dynamic"
 	"github.com/tektoncd/pipeline/pkg/apis/pipeline/v1alpha1"
 	"github.com/tektoncd/pipeline/pkg/apis/pipeline/v1beta1"
-	pipelinev1beta1test "github.com/tektoncd/pipeline/test"
+	pipelinetest "github.com/tektoncd/pipeline/test"
 	"github.com/tektoncd/pipeline/test/diff"
 	"github.com/tektoncd/pipeline/test/parse"
 	corev1 "k8s.io/api/core/v1"
@@ -120,7 +120,7 @@ func TestPipelineRunsList_with_single_run(t *testing.T) {
 			},
 		},
 	}
-	cs, _ := test.SeedV1beta1TestData(t, pipelinev1beta1test.Data{
+	cs, _ := test.SeedV1beta1TestData(t, pipelinetest.Data{
 		PipelineRuns: prdata,
 	})
 	cs.Pipeline.Resources = cb.APIResourceList(version, []string{"pipelinerun"})
@@ -242,7 +242,7 @@ func TestPipelineRunGet(t *testing.T) {
 			},
 		},
 	}
-	cs, _ := test.SeedV1beta1TestData(t, pipelinev1beta1test.Data{
+	cs, _ := test.SeedV1beta1TestData(t, pipelinetest.Data{
 		PipelineRuns: prdata,
 	})
 	cs.Pipeline.Resources = cb.APIResourceList(version, []string{"pipelinerun"})
@@ -420,7 +420,7 @@ status:
 `),
 	}
 
-	cs, _ := test.SeedV1beta1TestData(t, pipelinev1beta1test.Data{
+	cs, _ := test.SeedV1beta1TestData(t, pipelinetest.Data{
 		PipelineRuns: prdata,
 		TaskRuns:     trData,
 		Runs:         runsData,
@@ -585,7 +585,7 @@ status:
 `),
 	}
 
-	cs, _ := test.SeedV1beta1TestData(t, pipelinev1beta1test.Data{
+	cs, _ := test.SeedV1beta1TestData(t, pipelinetest.Data{
 		PipelineRuns: prdata,
 		TaskRuns:     trData,
 		Runs:         runsData,
@@ -653,7 +653,7 @@ func TestPipelineRunCreate(t *testing.T) {
 		},
 	}
 
-	cs, _ := test.SeedV1beta1TestData(t, pipelinev1beta1test.Data{})
+	cs, _ := test.SeedV1beta1TestData(t, pipelinetest.Data{})
 	cs.Pipeline.Resources = cb.APIResourceList(version, []string{"pipelinerun"})
 	tdc := testDynamic.Options{}
 	dc, err := tdc.Client()

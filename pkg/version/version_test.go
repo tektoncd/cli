@@ -19,7 +19,7 @@ import (
 	"testing"
 
 	"github.com/tektoncd/cli/pkg/test"
-	pipelinetest "github.com/tektoncd/pipeline/test/v1alpha1"
+	pipelinetest "github.com/tektoncd/pipeline/test"
 	v1 "k8s.io/api/apps/v1"
 	corev1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
@@ -83,7 +83,7 @@ func TestGetPipelineVersion(t *testing.T) {
 	}}
 	for _, tp := range testParams {
 		t.Run(tp.name, func(t *testing.T) {
-			cs, _ := test.SeedTestData(t, pipelinetest.Data{})
+			cs, _ := test.SeedV1beta1TestData(t, pipelinetest.Data{})
 			p := &test.Params{Kube: cs.Kube}
 			cls, err := p.Clients()
 			if err != nil {
@@ -123,7 +123,7 @@ func TestGetPipelinesVersionViaConfigMap(t *testing.T) {
 	}
 	for _, tp := range testParams {
 		t.Run(tp.name, func(t *testing.T) {
-			cs, _ := test.SeedTestData(t, pipelinetest.Data{})
+			cs, _ := test.SeedV1beta1TestData(t, pipelinetest.Data{})
 			p := &test.Params{Kube: cs.Kube}
 			cls, err := p.Clients()
 			if err != nil {
@@ -198,7 +198,7 @@ func TestGetChainsVersionViaConfigMap(t *testing.T) {
 	}
 	for _, tp := range testParams {
 		t.Run(tp.name, func(t *testing.T) {
-			cs, _ := test.SeedTestData(t, pipelinetest.Data{})
+			cs, _ := test.SeedV1beta1TestData(t, pipelinetest.Data{})
 			p := &test.Params{Kube: cs.Kube}
 			cls, err := p.Clients()
 			if err != nil {
@@ -261,7 +261,7 @@ func TestGetTriggerVersion(t *testing.T) {
 	}}
 	for _, tp := range testParams {
 		t.Run(tp.name, func(t *testing.T) {
-			cs, _ := test.SeedTestData(t, pipelinetest.Data{})
+			cs, _ := test.SeedV1beta1TestData(t, pipelinetest.Data{})
 			p := &test.Params{Kube: cs.Kube}
 			cls, err := p.Clients()
 			if err != nil {
@@ -300,7 +300,7 @@ func TestGetTriggersVersionViaConfigMap(t *testing.T) {
 	}
 	for _, tp := range testParams {
 		t.Run(tp.name, func(t *testing.T) {
-			cs, _ := test.SeedTestData(t, pipelinetest.Data{})
+			cs, _ := test.SeedV1beta1TestData(t, pipelinetest.Data{})
 			p := &test.Params{Kube: cs.Kube}
 			cls, err := p.Clients()
 			if err != nil {
@@ -363,7 +363,7 @@ func TestGetDashboardVersion(t *testing.T) {
 
 	for _, tp := range testParams {
 		t.Run(tp.name, func(t *testing.T) {
-			cs, _ := test.SeedTestData(t, pipelinetest.Data{})
+			cs, _ := test.SeedV1beta1TestData(t, pipelinetest.Data{})
 			p := &test.Params{Kube: cs.Kube}
 			cls, err := p.Clients()
 			if err != nil {
@@ -403,7 +403,7 @@ func TestGetDashboardVersionViaConfigMap(t *testing.T) {
 	}
 	for _, tp := range testParams {
 		t.Run(tp.name, func(t *testing.T) {
-			cs, _ := test.SeedTestData(t, pipelinetest.Data{})
+			cs, _ := test.SeedV1beta1TestData(t, pipelinetest.Data{})
 			p := &test.Params{Kube: cs.Kube}
 			cls, err := p.Clients()
 			if err != nil {
@@ -443,7 +443,7 @@ func TestGetOperatorVersionViaConfigMap(t *testing.T) {
 	}
 	for _, tp := range testParams {
 		t.Run(tp.name, func(t *testing.T) {
-			cs, _ := test.SeedTestData(t, pipelinetest.Data{})
+			cs, _ := test.SeedV1beta1TestData(t, pipelinetest.Data{})
 			p := &test.Params{Kube: cs.Kube}
 			cls, err := p.Clients()
 			if err != nil {

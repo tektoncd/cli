@@ -10,7 +10,7 @@ spec:
     description: test with one param
     name: key
   resourcetemplates:
-  - apiVersion: tekton.dev/v1alpha1
+  - apiVersion: tekton.dev/v1beta1
     kind: PipelineRun
     metadata:
       creationTimestamp: null

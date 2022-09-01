@@ -41,10 +41,9 @@ import (
 	"github.com/tektoncd/cli/pkg/pods"
 	tractions "github.com/tektoncd/cli/pkg/taskrun"
 	"github.com/tektoncd/cli/pkg/workspaces"
-	"github.com/tektoncd/pipeline/pkg/apis/pipeline/v1alpha1"
 	"github.com/tektoncd/pipeline/pkg/apis/pipeline/v1beta1"
+	"github.com/tektoncd/pipeline/pkg/apis/resource/v1alpha1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
-	"k8s.io/client-go/discovery"
 )
 
 var (
@@ -380,14 +379,10 @@ func parseRes(res []string) (map[string]v1beta1.TaskResourceBinding, error) {
 }
 
 func printTaskRun(c *cli.Clients, output string, s *cli.Stream, tr *v1beta1.TaskRun) error {
-	trWithVersion, err := convertedTrVersion(c, tr)
-	if err != nil {
-		return err
-	}
 	format := strings.ToLower(output)
 
 	if format == "" || format == "yaml" {
-		trBytes, err := yaml.Marshal(trWithVersion)
+		trBytes, err := yaml.Marshal(tr)
 		if err != nil {
 			return err
 		}
@@ -395,7 +390,7 @@ func printTaskRun(c *cli.Clients, output string, s *cli.Stream, tr *v1beta1.Task
 	}
 
 	if format == "json" {
-		trBytes, err := json.MarshalIndent(trWithVersion, "", "\t")
+		trBytes, err := json.MarshalIndent(tr, "", "\t")
 		if err != nil {
 			return err
 		}
@@ -403,37 +398,6 @@ func printTaskRun(c *cli.Clients, output string, s *cli.Stream, tr *v1beta1.Task
 	}
 
 	return nil
-}
-
-func getAPIVersion(discovery discovery.DiscoveryInterface) (string, error) {
-	_, err := discovery.ServerResourcesForGroupVersion("tekton.dev/v1beta1")
-	if err != nil {
-		_, err = discovery.ServerResourcesForGroupVersion("tekton.dev/v1alpha1")
-		if err != nil {
-			return "", fmt.Errorf("couldn't get available Tekton api versions from server")
-		}
-		return "tekton.dev/v1alpha1", nil
-	}
-	return "tekton.dev/v1beta1", nil
-}
-
-func convertedTrVersion(c *cli.Clients, tr *v1beta1.TaskRun) (interface{}, error) {
-	version, err := getAPIVersion(c.Tekton.Discovery())
-	if err != nil {
-		return nil, err
-	}
-
-	if version == "tekton.dev/v1alpha1" {
-		trConverted := tractions.ConvertFrom(tr)
-		trConverted.APIVersion = version
-		trConverted.Kind = "TaskRun"
-		if err != nil {
-			return nil, err
-		}
-		return &trConverted, nil
-	}
-
-	return tr, nil
 }
 
 func (opt *startOptions) getInputs() error {

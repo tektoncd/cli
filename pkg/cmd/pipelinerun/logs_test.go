@@ -40,8 +40,7 @@ import (
 )
 
 const (
-	versionA1 = "v1alpha1"
-	versionB1 = "v1beta1"
+	version = "v1beta1"
 )
 
 func TestLog_invalid_namespace(t *testing.T) {
@@ -56,7 +55,7 @@ func TestLog_invalid_namespace(t *testing.T) {
 	dc, _ := tdc.Client()
 	cs, _ := test.SeedV1beta1TestData(t, pipelinev1beta1test.Data{Namespaces: ns})
 	p := &test.Params{Tekton: cs.Pipeline, Kube: cs.Kube, Dynamic: dc}
-	cs.Pipeline.Resources = cb.APIResourceList("v1alpha1", []string{"pipelinerun"})
+	cs.Pipeline.Resources = cb.APIResourceList(version, []string{"pipelinerun"})
 	c := Command(p)
 
 	out, err := test.ExecuteCommand(c, "logs", "pipelinerun", "-n", "invalid")
@@ -160,11 +159,11 @@ func TestLog_run_found(t *testing.T) {
 			},
 		},
 	})
-	cs.Pipeline.Resources = cb.APIResourceList(versionA1, []string{"pipeline", "pipelinerun"})
+	cs.Pipeline.Resources = cb.APIResourceList(version, []string{"pipeline", "pipelinerun"})
 	tdc := testDynamic.Options{}
 	dc, err := tdc.Client(
-		cb.UnstructuredV1beta1P(pdata[0], versionA1),
-		cb.UnstructuredV1beta1PR(prdata[0], versionA1),
+		cb.UnstructuredV1beta1P(pdata[0], version),
+		cb.UnstructuredV1beta1PR(prdata[0], version),
 	)
 	if err != nil {
 		t.Errorf("unable to create dynamic client: %v", err)
@@ -209,10 +208,10 @@ func TestLog_run_not_found(t *testing.T) {
 	}
 
 	cs, _ := test.SeedV1beta1TestData(t, pipelinev1beta1test.Data{PipelineRuns: pr, Namespaces: ns})
-	cs.Pipeline.Resources = cb.APIResourceList(versionA1, []string{"pipelinerun"})
+	cs.Pipeline.Resources = cb.APIResourceList(version, []string{"pipelinerun"})
 	tdc := testDynamic.Options{}
 	dc, err := tdc.Client(
-		cb.UnstructuredV1beta1PR(pr[0], versionA1),
+		cb.UnstructuredV1beta1PR(pr[0], version),
 	)
 	if err != nil {
 		t.Errorf("unable to create dynamic client: %v", err)
@@ -545,13 +544,13 @@ func TestPipelinerunLogs(t *testing.T) {
 	for _, s := range scenarios {
 		t.Run(s.name, func(t *testing.T) {
 			cs, _ := test.SeedV1beta1TestData(t, pipelinev1beta1test.Data{PipelineRuns: prs, Pipelines: pps, TaskRuns: trs, Pods: p, Namespaces: nsList})
-			cs.Pipeline.Resources = cb.APIResourceList(versionA1, []string{"task", "taskrun", "pipeline", "pipelinerun"})
+			cs.Pipeline.Resources = cb.APIResourceList(version, []string{"task", "taskrun", "pipeline", "pipelinerun"})
 			tdc := testDynamic.Options{}
 			dc, err := tdc.Client(
-				cb.UnstructuredV1beta1P(pps[0], versionA1),
-				cb.UnstructuredV1beta1PR(prs[0], versionA1),
-				cb.UnstructuredV1beta1TR(trs[0], versionA1),
-				cb.UnstructuredV1beta1TR(trs[1], versionA1),
+				cb.UnstructuredV1beta1P(pps[0], version),
+				cb.UnstructuredV1beta1PR(prs[0], version),
+				cb.UnstructuredV1beta1TR(trs[0], version),
+				cb.UnstructuredV1beta1TR(trs[1], version),
 			)
 			if err != nil {
 				t.Errorf("unable to create dynamic client: %v", err)
@@ -755,12 +754,12 @@ func TestPipelinerunLog_completed_taskrun_only_v1beta1(t *testing.T) {
 			},
 		},
 	})
-	cs.Pipeline.Resources = cb.APIResourceList(versionB1, []string{"task", "taskrun", "pipeline", "pipelinerun"})
+	cs.Pipeline.Resources = cb.APIResourceList(version, []string{"task", "taskrun", "pipeline", "pipelinerun"})
 	tdc := testDynamic.Options{}
 	dc, err := tdc.Client(
-		cb.UnstructuredV1beta1TR(trdata[0], versionB1),
-		cb.UnstructuredV1beta1P(pdata[0], versionB1),
-		cb.UnstructuredV1beta1PR(prdata[0], versionB1),
+		cb.UnstructuredV1beta1TR(trdata[0], version),
+		cb.UnstructuredV1beta1P(pdata[0], version),
+		cb.UnstructuredV1beta1PR(prdata[0], version),
 	)
 	if err != nil {
 		t.Errorf("unable to create dynamic client: %v", err)
@@ -898,12 +897,12 @@ func TestPipelinerunLog_completed_taskrun_only_v1beta1(t *testing.T) {
 			},
 		},
 	})
-	cs2.Pipeline.Resources = cb.APIResourceList(versionB1, []string{"task", "taskrun", "pipeline", "pipelinerun"})
+	cs2.Pipeline.Resources = cb.APIResourceList(version, []string{"task", "taskrun", "pipeline", "pipelinerun"})
 	tdc2 := testDynamic.Options{}
 	dc2, err := tdc2.Client(
-		cb.UnstructuredT(tdata2[0], versionB1),
-		cb.UnstructuredV1beta1TR(trdata2[0], versionB1),
-		cb.UnstructuredV1beta1PR(prdata2[0], versionB1),
+		cb.UnstructuredT(tdata2[0], version),
+		cb.UnstructuredV1beta1TR(trdata2[0], version),
+		cb.UnstructuredV1beta1PR(prdata2[0], version),
 	)
 	if err != nil {
 		t.Errorf("unable to create dynamic client: %v", err)
@@ -1144,12 +1143,12 @@ func TestPipelinerunLog_follow_mode_v1beta1(t *testing.T) {
 	)
 
 	cs, _ := test.SeedV1beta1TestData(t, pipelinev1beta1test.Data{PipelineRuns: prs, Pipelines: pps, TaskRuns: trs, Pods: p, Namespaces: nsList})
-	cs.Pipeline.Resources = cb.APIResourceList(versionB1, []string{"task", "taskrun", "pipeline", "pipelinerun"})
+	cs.Pipeline.Resources = cb.APIResourceList(version, []string{"task", "taskrun", "pipeline", "pipelinerun"})
 	tdc := testDynamic.Options{}
 	dc, err := tdc.Client(
-		cb.UnstructuredV1beta1TR(trs[0], versionB1),
-		cb.UnstructuredV1beta1PR(prs[0], versionB1),
-		cb.UnstructuredV1beta1P(pps[0], versionB1),
+		cb.UnstructuredV1beta1TR(trs[0], version),
+		cb.UnstructuredV1beta1PR(prs[0], version),
+		cb.UnstructuredV1beta1P(pps[0], version),
 	)
 
 	if err != nil {
@@ -1241,12 +1240,12 @@ func TestLogs_error_log_v1beta1(t *testing.T) {
 	}
 
 	cs, _ := test.SeedV1beta1TestData(t, pipelinev1beta1test.Data{PipelineRuns: prs, Pipelines: ps, Tasks: ts, Namespaces: nsList})
-	cs.Pipeline.Resources = cb.APIResourceList(versionB1, []string{"task", "pipeline", "pipelinerun"})
+	cs.Pipeline.Resources = cb.APIResourceList(version, []string{"task", "pipeline", "pipelinerun"})
 	tdc := testDynamic.Options{}
 	dc, err := tdc.Client(
-		cb.UnstructuredT(ts[0], versionB1),
-		cb.UnstructuredV1beta1P(ps[0], versionB1),
-		cb.UnstructuredV1beta1PR(prs[0], versionB1),
+		cb.UnstructuredT(ts[0], version),
+		cb.UnstructuredV1beta1P(ps[0], version),
+		cb.UnstructuredV1beta1PR(prs[0], version),
 	)
 	if err != nil {
 		t.Errorf("unable to create dynamic client: %v", err)
@@ -1320,11 +1319,11 @@ func TestLogs_nologs_v1beta1(t *testing.T) {
 	}
 
 	cs, _ := test.SeedV1beta1TestData(t, pipelinev1beta1test.Data{PipelineRuns: prs, Pipelines: ps, Namespaces: nsList})
-	cs.Pipeline.Resources = cb.APIResourceList(versionB1, []string{"pipeline", "pipelinerun"})
+	cs.Pipeline.Resources = cb.APIResourceList(version, []string{"pipeline", "pipelinerun"})
 	tdc := testDynamic.Options{}
 	dc, err := tdc.Client(
-		cb.UnstructuredV1beta1P(ps[0], versionB1),
-		cb.UnstructuredV1beta1PR(prs[0], versionB1),
+		cb.UnstructuredV1beta1P(ps[0], version),
+		cb.UnstructuredV1beta1PR(prs[0], version),
 	)
 	if err != nil {
 		t.Errorf("unable to create dynamic client: %v", err)
@@ -1400,11 +1399,11 @@ func TestLog_run_failed_with_and_without_follow_v1beta1(t *testing.T) {
 	}
 
 	cs, _ := test.SeedV1beta1TestData(t, pipelinev1beta1test.Data{PipelineRuns: prs, Pipelines: ps, Namespaces: nsList})
-	cs.Pipeline.Resources = cb.APIResourceList(versionB1, []string{"pipeline", "pipelinerun"})
+	cs.Pipeline.Resources = cb.APIResourceList(version, []string{"pipeline", "pipelinerun"})
 	tdc := testDynamic.Options{}
 	dc, err := tdc.Client(
-		cb.UnstructuredV1beta1P(ps[0], versionB1),
-		cb.UnstructuredV1beta1PR(prs[0], versionB1),
+		cb.UnstructuredV1beta1P(ps[0], version),
+		cb.UnstructuredV1beta1PR(prs[0], version),
 	)
 	if err != nil {
 		t.Errorf("unable to create dynamic client: %v", err)
@@ -1536,11 +1535,11 @@ func TestLog_pipelinerun_still_running_v1beta1(t *testing.T) {
 
 	cs, _ := test.SeedV1beta1TestData(t, pipelinev1beta1test.Data{PipelineRuns: initialPRs, Pipelines: ps, Namespaces: nsList})
 	watcher := watch.NewFake()
-	cs.Pipeline.Resources = cb.APIResourceList(versionB1, []string{"taskrun", "pipeline", "pipelinerun"})
+	cs.Pipeline.Resources = cb.APIResourceList(version, []string{"taskrun", "pipeline", "pipelinerun"})
 	tdc := testDynamic.Options{WatchResource: "pipelineruns", Watcher: watcher}
 	dc, err := tdc.Client(
-		cb.UnstructuredV1beta1P(ps[0], versionB1),
-		cb.UnstructuredV1beta1PR(initialPRs[0], versionB1),
+		cb.UnstructuredV1beta1P(ps[0], version),
+		cb.UnstructuredV1beta1PR(initialPRs[0], version),
 	)
 	if err != nil {
 		t.Errorf("unable to create dynamic client: %v", err)
@@ -1619,12 +1618,12 @@ func TestLog_pipelinerun_status_done_v1beta1(t *testing.T) {
 	}
 
 	cs, _ := test.SeedV1beta1TestData(t, pipelinev1beta1test.Data{PipelineRuns: prs, Pipelines: ps, Namespaces: nsList})
-	cs.Pipeline.Resources = cb.APIResourceList(versionB1, []string{"pipeline", "pipelinerun"})
+	cs.Pipeline.Resources = cb.APIResourceList(version, []string{"pipeline", "pipelinerun"})
 	watcher := watch.NewFake()
 	tdc := testDynamic.Options{WatchResource: "pipelineruns", Watcher: watcher}
 	dc, err := tdc.Client(
-		cb.UnstructuredV1beta1P(ps[0], versionB1),
-		cb.UnstructuredV1beta1PR(prs[0], versionB1),
+		cb.UnstructuredV1beta1P(ps[0], version),
+		cb.UnstructuredV1beta1PR(prs[0], version),
 	)
 	if err != nil {
 		t.Errorf("unable to create dynamic client: %v", err)
@@ -1747,11 +1746,11 @@ func TestLog_pipelinerun_last_v1beta1(t *testing.T) {
 	}
 
 	cs, _ := test.SeedV1beta1TestData(t, pipelinev1beta1test.Data{PipelineRuns: pipelineruns, Pipelines: pipelines, Namespaces: namespaces})
-	cs.Pipeline.Resources = cb.APIResourceList(versionB1, []string{"pipelinerun"})
+	cs.Pipeline.Resources = cb.APIResourceList(version, []string{"pipelinerun"})
 	tdc := testDynamic.Options{}
 	dc, err := tdc.Client(
-		cb.UnstructuredV1beta1PR(pipelineruns[0], versionB1),
-		cb.UnstructuredV1beta1PR(pipelineruns[1], versionB1),
+		cb.UnstructuredV1beta1PR(pipelineruns[0], version),
+		cb.UnstructuredV1beta1PR(pipelineruns[1], version),
 	)
 	if err != nil {
 		t.Errorf("unable to create dynamic client: %v", err)
@@ -1836,10 +1835,10 @@ func TestLog_pipelinerun_only_one_v1beta1(t *testing.T) {
 	}
 
 	cs, _ := test.SeedV1beta1TestData(t, pipelinev1beta1test.Data{PipelineRuns: pipelineruns, Pipelines: pipelines, Namespaces: namespaces})
-	cs.Pipeline.Resources = cb.APIResourceList(versionB1, []string{"pipelinerun"})
+	cs.Pipeline.Resources = cb.APIResourceList(version, []string{"pipelinerun"})
 	tdc := testDynamic.Options{}
 	dc, err := tdc.Client(
-		cb.UnstructuredV1beta1PR(pipelineruns[0], versionB1),
+		cb.UnstructuredV1beta1PR(pipelineruns[0], version),
 	)
 	if err != nil {
 		t.Errorf("unable to create dynamic client: %v", err)
@@ -2080,14 +2079,14 @@ func TestPipelinerunLog_finally_v1beta1(t *testing.T) {
 	)
 
 	cs, _ := test.SeedV1beta1TestData(t, pipelinev1beta1test.Data{PipelineRuns: prs, Pipelines: pps, TaskRuns: trs, Pods: p, Namespaces: nsList})
-	cs.Pipeline.Resources = cb.APIResourceList(versionB1, []string{"task", "taskrun", "pipeline", "pipelinerun"})
+	cs.Pipeline.Resources = cb.APIResourceList(version, []string{"task", "taskrun", "pipeline", "pipelinerun"})
 
 	tdc := testDynamic.Options{}
 	dc, err := tdc.Client(
-		cb.UnstructuredV1beta1TR(trs[0], versionB1),
-		cb.UnstructuredV1beta1TR(trs[1], versionB1),
-		cb.UnstructuredV1beta1PR(prs[0], versionB1),
-		cb.UnstructuredV1beta1P(pps[0], versionB1),
+		cb.UnstructuredV1beta1TR(trs[0], version),
+		cb.UnstructuredV1beta1TR(trs[1], version),
+		cb.UnstructuredV1beta1PR(prs[0], version),
+		cb.UnstructuredV1beta1P(pps[0], version),
 	)
 
 	if err != nil {

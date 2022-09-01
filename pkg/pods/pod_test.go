@@ -19,7 +19,7 @@ import (
 	"time"
 
 	"github.com/tektoncd/cli/pkg/test"
-	pipelinetest "github.com/tektoncd/pipeline/test/v1alpha1"
+	pipelinetest "github.com/tektoncd/pipeline/test"
 	corev1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/watch"
@@ -185,7 +185,7 @@ func simulateAddWatch(t *testing.T, initial *corev1.Pod, later *corev1.Pod) k8s.
 		initial,
 	}
 
-	clients, _ := test.SeedTestData(t, pipelinetest.Data{Pods: ps})
+	clients, _ := test.SeedV1beta1TestData(t, pipelinetest.Data{Pods: ps})
 	watcher := watch.NewFake()
 	clients.Kube.PrependWatchReactor("pods", k8stest.DefaultWatchReactor(watcher, nil))
 
@@ -202,7 +202,7 @@ func simulateDeleteWatch(t *testing.T, initial *corev1.Pod, later *corev1.Pod) k
 		initial,
 	}
 
-	clients, _ := test.SeedTestData(t, pipelinetest.Data{Pods: ps})
+	clients, _ := test.SeedV1beta1TestData(t, pipelinetest.Data{Pods: ps})
 	watcher := watch.NewFake()
 	clients.Kube.PrependWatchReactor("pods", k8stest.DefaultWatchReactor(watcher, nil))
 

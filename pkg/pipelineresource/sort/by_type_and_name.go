@@ -17,7 +17,7 @@ package pipelineresource
 import (
 	"sort"
 
-	"github.com/tektoncd/pipeline/pkg/apis/pipeline/v1alpha1"
+	"github.com/tektoncd/pipeline/pkg/apis/resource/v1alpha1"
 )
 
 func SortByTypeAndName(pres []v1alpha1.PipelineResource) {

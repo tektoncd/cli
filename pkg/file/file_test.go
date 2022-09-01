@@ -23,7 +23,7 @@ import (
 
 	"github.com/ghodss/yaml"
 	"github.com/google/go-cmp/cmp"
-	"github.com/tektoncd/pipeline/pkg/apis/pipeline/v1alpha1"
+	"github.com/tektoncd/pipeline/pkg/apis/pipeline/v1beta1"
 	"gotest.tools/v3/assert"
 )
 
@@ -34,7 +34,7 @@ func TestLoadLocalFile(t *testing.T) {
 		t.Errorf("file path %s does not exist", localTarget)
 	}
 
-	var taskExpected v1alpha1.Task
+	var taskExpected v1beta1.Task
 	err = yaml.Unmarshal(localContent, &taskExpected)
 	if err != nil {
 		t.Errorf("Error from unmarshal of local file")
@@ -46,7 +46,7 @@ func TestLoadLocalFile(t *testing.T) {
 		t.Errorf("Error from running localContentLoad")
 	}
 
-	var taskResult v1alpha1.Task
+	var taskResult v1beta1.Task
 	err = yaml.Unmarshal(localContentLoad, &taskResult)
 	if err != nil {
 		t.Errorf("Error from unmarshal after running LoadFileContent")

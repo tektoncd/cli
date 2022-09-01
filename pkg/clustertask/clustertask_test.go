@@ -23,17 +23,15 @@ import (
 	"github.com/tektoncd/cli/pkg/test"
 	cb "github.com/tektoncd/cli/pkg/test/builder"
 	testDynamic "github.com/tektoncd/cli/pkg/test/dynamic"
-	"github.com/tektoncd/pipeline/pkg/apis/pipeline/v1alpha1"
 	"github.com/tektoncd/pipeline/pkg/apis/pipeline/v1beta1"
-	pipelinev1beta1test "github.com/tektoncd/pipeline/test"
-	pipelinetest "github.com/tektoncd/pipeline/test/v1alpha1"
+	pipelinetest "github.com/tektoncd/pipeline/test"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 )
 
 func TestClusterTask_GetAllTaskNames(t *testing.T) {
-	version := "v1alpha1"
+	version := "v1beta1"
 	clock := clockwork.NewFakeClock()
-	ctdata := []*v1alpha1.ClusterTask{
+	ctdata := []*v1beta1.ClusterTask{
 		{
 			ObjectMeta: metav1.ObjectMeta{
 				Name: "clustertask",
@@ -42,19 +40,19 @@ func TestClusterTask_GetAllTaskNames(t *testing.T) {
 			},
 		},
 	}
-	cs, _ := test.SeedTestData(t, pipelinetest.Data{
+	cs, _ := test.SeedV1beta1TestData(t, pipelinetest.Data{
 		ClusterTasks: ctdata,
 	})
 	cs.Pipeline.Resources = cb.APIResourceList(version, []string{"clustertask"})
 	tdc := testDynamic.Options{}
 	dc, err := tdc.Client(
-		cb.UnstructuredCT(ctdata[0], version),
+		cb.UnstructuredV1beta1CT(ctdata[0], version),
 	)
 	if err != nil {
 		t.Errorf("unable to create dynamic client: %v", err)
 	}
 
-	ctdata2 := []*v1alpha1.ClusterTask{
+	ctdata2 := []*v1beta1.ClusterTask{
 		{
 			ObjectMeta: metav1.ObjectMeta{
 				Name: "clustertask",
@@ -70,14 +68,14 @@ func TestClusterTask_GetAllTaskNames(t *testing.T) {
 			},
 		},
 	}
-	cs2, _ := test.SeedTestData(t, pipelinetest.Data{
+	cs2, _ := test.SeedV1beta1TestData(t, pipelinetest.Data{
 		ClusterTasks: ctdata2,
 	})
 	cs2.Pipeline.Resources = cb.APIResourceList(version, []string{"clustertask"})
 	tdc2 := testDynamic.Options{}
 	dc2, err := tdc2.Client(
-		cb.UnstructuredCT(ctdata2[0], version),
-		cb.UnstructuredCT(ctdata2[1], version),
+		cb.UnstructuredV1beta1CT(ctdata2[0], version),
+		cb.UnstructuredV1beta1CT(ctdata2[1], version),
 	)
 	if err != nil {
 		t.Errorf("unable to create dynamic client: %v", err)
@@ -124,7 +122,7 @@ func TestClusterTask_List(t *testing.T) {
 			},
 		},
 	}
-	cs, _ := test.SeedV1beta1TestData(t, pipelinev1beta1test.Data{
+	cs, _ := test.SeedV1beta1TestData(t, pipelinetest.Data{
 		ClusterTasks: ctdata,
 	})
 	cs.Pipeline.Resources = cb.APIResourceList(version, []string{"clustertask"})
@@ -148,7 +146,7 @@ func TestClusterTask_List(t *testing.T) {
 			},
 		},
 	}
-	cs2, _ := test.SeedV1beta1TestData(t, pipelinev1beta1test.Data{
+	cs2, _ := test.SeedV1beta1TestData(t, pipelinetest.Data{
 		ClusterTasks: ctdata2,
 	})
 	cs2.Pipeline.Resources = cb.APIResourceList(version, []string{"clustertask"})
@@ -222,7 +220,7 @@ func TestClusterTask_Get(t *testing.T) {
 			},
 		},
 	}
-	cs, _ := test.SeedV1beta1TestData(t, pipelinev1beta1test.Data{
+	cs, _ := test.SeedV1beta1TestData(t, pipelinetest.Data{
 		ClusterTasks: ctdata,
 	})
 	cs.Pipeline.Resources = cb.APIResourceList(version, []string{"clustertask"})
@@ -258,7 +256,7 @@ func TestClusterTask_Create(t *testing.T) {
 			},
 		},
 	}
-	cs, _ := test.SeedV1beta1TestData(t, pipelinev1beta1test.Data{})
+	cs, _ := test.SeedV1beta1TestData(t, pipelinetest.Data{})
 	cs.Pipeline.Resources = cb.APIResourceList(version, []string{"clustertask"})
 	tdc := testDynamic.Options{}
 	dc, err := tdc.Client()

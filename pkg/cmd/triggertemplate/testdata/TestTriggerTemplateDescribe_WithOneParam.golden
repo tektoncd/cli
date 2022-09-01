@@ -9,4 +9,4 @@ Params
 ResourceTemplates
 
  NAME   GENERATENAME   KIND          APIVERSION
- ---    ex2            PipelineRun   tekton.dev/v1alpha1
+ ---    ex2            PipelineRun   tekton.dev/v1beta1
