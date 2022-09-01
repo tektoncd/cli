@@ -117,7 +117,11 @@ STARTED	DURATION	STATUS
 {{decorate "results" ""}}{{decorate "underline bold" "Results\n"}}
  NAME	VALUE
 {{- range $result := .PipelineRun.Status.PipelineResults }}
- {{decorate "bullet" $result.Name }}	{{ formatResult $result.Value }}
+{{- if eq $result.Value.Type "string" }}
+ {{decorate "bullet" $result.Name }}	{{ $result.Value.StringVal }}
+{{- else }}
+ {{decorate "bullet" $result.Name }}	{{ $result.Value.ArrayVal }}
+{{- end }}
 {{- end }}
 {{- end }}
 

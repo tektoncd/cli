@@ -38,14 +38,14 @@ const (
 // Backend is a storage backend that stores signed payloads in the TaskRun metadata as an annotation.
 // It is stored as base64 encoded JSON.
 type Backend struct {
-	pipelienclientset versioned.Interface
+	pipelineclientset versioned.Interface
 	logger            *zap.SugaredLogger
 }
 
 // NewStorageBackend returns a new Tekton StorageBackend that stores signatures on a TaskRun
 func NewStorageBackend(ps versioned.Interface, logger *zap.SugaredLogger) *Backend {
 	return &Backend{
-		pipelienclientset: ps,
+		pipelineclientset: ps,
 		logger:            logger,
 	}
 }
@@ -65,7 +65,7 @@ func (b *Backend) StorePayload(ctx context.Context, tr *v1beta1.TaskRun, rawPayl
 	if err != nil {
 		return err
 	}
-	if _, err := b.pipelienclientset.TektonV1beta1().TaskRuns(tr.Namespace).Patch(
+	if _, err := b.pipelineclientset.TektonV1beta1().TaskRuns(tr.Namespace).Patch(
 		ctx, tr.Name, types.MergePatchType, patchBytes, v1.PatchOptions{}); err != nil {
 		return err
 	}
@@ -80,7 +80,7 @@ func (b *Backend) Type() string {
 func (b *Backend) retrieveAnnotationValue(ctx context.Context, tr *v1beta1.TaskRun, annotationKey string, decode bool) (string, error) {
 	// Retrieve the TaskRun.
 	b.logger.Infof("Retrieving annotation %q on TaskRun %s/%s", annotationKey, tr.Namespace, tr.Name)
-	tr, err := b.pipelienclientset.TektonV1beta1().TaskRuns(tr.Namespace).Get(ctx, tr.Name, v1.GetOptions{})
+	tr, err := b.pipelineclientset.TektonV1beta1().TaskRuns(tr.Namespace).Get(ctx, tr.Name, v1.GetOptions{})
 	if err != nil {
 		return "", fmt.Errorf("error retrieving taskrun: %s", err)
 	}

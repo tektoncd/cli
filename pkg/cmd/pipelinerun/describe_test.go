@@ -1895,12 +1895,18 @@ func TestPipelineRunDescribe_v1beta1_with_results(t *testing.T) {
 					},
 					PipelineResults: []v1beta1.PipelineRunResult{
 						{
-							Name:  "result-1",
-							Value: "value-1",
+							Name: "result-1",
+							Value: v1beta1.ArrayOrString{
+								Type:      v1beta1.ParamTypeString,
+								StringVal: "value-1",
+							},
 						},
 						{
-							Name:  "result-2",
-							Value: "value-2",
+							Name: "result-2",
+							Value: v1beta1.ArrayOrString{
+								Type:      v1beta1.ParamTypeString,
+								StringVal: "value-2",
+							},
 						},
 					},
 				},
@@ -2086,12 +2092,18 @@ func TestPipelineRunDescribe_v1beta1_with_workspaces(t *testing.T) {
 					},
 					PipelineResults: []v1beta1.PipelineRunResult{
 						{
-							Name:  "result-1",
-							Value: "value-1",
+							Name: "result-1",
+							Value: v1beta1.ArrayOrString{
+								Type:      v1beta1.ParamTypeString,
+								StringVal: "value-1",
+							},
 						},
 						{
-							Name:  "result-2",
-							Value: "value-2",
+							Name: "result-2",
+							Value: v1beta1.ArrayOrString{
+								Type:      v1beta1.ParamTypeString,
+								StringVal: "value-2",
+							},
 						},
 					},
 				},

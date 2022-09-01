@@ -21,21 +21,18 @@ import (
 	"sort"
 	"strings"
 
-	slsa "github.com/in-toto/in-toto-golang/in_toto/slsa_provenance/v0.2"
-
+	"github.com/google/go-containerregistry/pkg/name"
 	intoto "github.com/in-toto/in-toto-golang/in_toto"
+	slsa "github.com/in-toto/in-toto-golang/in_toto/slsa_provenance/v0.2"
 	"github.com/tektoncd/chains/pkg/artifacts"
 	"github.com/tektoncd/chains/pkg/chains/formats"
 	"github.com/tektoncd/chains/pkg/config"
-	"github.com/tektoncd/pipeline/pkg/apis/pipeline/v1alpha1"
 	"github.com/tektoncd/pipeline/pkg/apis/pipeline/v1beta1"
+	"github.com/tektoncd/pipeline/pkg/apis/resource/v1alpha1"
 	"go.uber.org/zap"
-
-	"github.com/google/go-containerregistry/pkg/name"
 )
 
 const (
-	tektonID                     = "https://tekton.dev/attestations/chains@v2"
 	commitParam                  = "CHAINS-GIT_COMMIT"
 	urlParam                     = "CHAINS-GIT_URL"
 	ChainsReproducibleAnnotation = "chains.tekton.dev/reproducible"
@@ -83,7 +80,7 @@ func (i *InTotoIte6) generateAttestationFromTaskRun(tr *v1beta1.TaskRun) (interf
 			Builder: slsa.ProvenanceBuilder{
 				ID: i.builderID,
 			},
-			BuildType:   tektonID,
+			BuildType:   fmt.Sprintf("%s/%s", tr.GetGroupVersionKind().GroupVersion().String(), tr.GetGroupVersionKind().Kind),
 			Invocation:  invocation(tr),
 			BuildConfig: buildConfig(tr),
 			Metadata:    metadata(tr),
@@ -267,16 +264,6 @@ func (i *InTotoIte6) Type() formats.PayloadType {
 // with specified names.
 func gitInfo(tr *v1beta1.TaskRun) (commit string, url string) {
 	// Scan for git params to use for materials
-	for _, p := range tr.Spec.Params {
-		if p.Name == commitParam {
-			commit = p.Value.StringVal
-			continue
-		}
-		if p.Name == urlParam {
-			url = p.Value.StringVal
-		}
-	}
-
 	if tr.Status.TaskSpec != nil {
 		for _, p := range tr.Status.TaskSpec.Params {
 			if p.Default == nil {
@@ -289,6 +276,16 @@ func gitInfo(tr *v1beta1.TaskRun) (commit string, url string) {
 			if p.Name == urlParam {
 				url = p.Default.StringVal
 			}
+		}
+	}
+
+	for _, p := range tr.Spec.Params {
+		if p.Name == commitParam {
+			commit = p.Value.StringVal
+			continue
+		}
+		if p.Name == urlParam {
+			url = p.Value.StringVal
 		}
 	}
 
