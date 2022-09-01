@@ -93,14 +93,12 @@ func (p *TektonParams) dynamicClient(config *rest.Config) (dynamic.Interface, er
 
 // Only returns kube client, not tekton client
 func (p *TektonParams) KubeClient() (k8s.Interface, error) {
-
 	config, err := p.config()
 	if err != nil {
 		return nil, err
 	}
 
 	kube, err := p.kubeClient(config)
-
 	if err != nil {
 		return nil, err
 	}
@@ -181,6 +179,11 @@ func (p *TektonParams) config() (*rest.Config, error) {
 	if err != nil {
 		return nil, errors.Wrap(err, "Parsing kubeconfig failed")
 	}
+
+	// set values as done in kubectl
+	config.QPS = 50.0
+	config.Burst = 300
+
 	return config, nil
 }
 
