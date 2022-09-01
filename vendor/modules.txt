@@ -1357,18 +1357,8 @@ github.com/tektoncd/pipeline/pkg/client/injection/client
 github.com/tektoncd/pipeline/pkg/client/injection/client/fake
 github.com/tektoncd/pipeline/pkg/client/injection/informers/factory
 github.com/tektoncd/pipeline/pkg/client/injection/informers/factory/fake
-github.com/tektoncd/pipeline/pkg/client/injection/informers/pipeline/v1alpha1/clustertask
-github.com/tektoncd/pipeline/pkg/client/injection/informers/pipeline/v1alpha1/clustertask/fake
-github.com/tektoncd/pipeline/pkg/client/injection/informers/pipeline/v1alpha1/pipeline
-github.com/tektoncd/pipeline/pkg/client/injection/informers/pipeline/v1alpha1/pipeline/fake
-github.com/tektoncd/pipeline/pkg/client/injection/informers/pipeline/v1alpha1/pipelinerun
-github.com/tektoncd/pipeline/pkg/client/injection/informers/pipeline/v1alpha1/pipelinerun/fake
 github.com/tektoncd/pipeline/pkg/client/injection/informers/pipeline/v1alpha1/run
 github.com/tektoncd/pipeline/pkg/client/injection/informers/pipeline/v1alpha1/run/fake
-github.com/tektoncd/pipeline/pkg/client/injection/informers/pipeline/v1alpha1/task
-github.com/tektoncd/pipeline/pkg/client/injection/informers/pipeline/v1alpha1/task/fake
-github.com/tektoncd/pipeline/pkg/client/injection/informers/pipeline/v1alpha1/taskrun
-github.com/tektoncd/pipeline/pkg/client/injection/informers/pipeline/v1alpha1/taskrun/fake
 github.com/tektoncd/pipeline/pkg/client/injection/informers/pipeline/v1beta1/clustertask
 github.com/tektoncd/pipeline/pkg/client/injection/informers/pipeline/v1beta1/clustertask/fake
 github.com/tektoncd/pipeline/pkg/client/injection/informers/pipeline/v1beta1/pipeline
@@ -1409,7 +1399,6 @@ github.com/tektoncd/pipeline/pkg/substitution
 github.com/tektoncd/pipeline/test
 github.com/tektoncd/pipeline/test/diff
 github.com/tektoncd/pipeline/test/parse
-github.com/tektoncd/pipeline/test/v1alpha1
 # github.com/tektoncd/plumbing v0.0.0-20220329085922-d765a5cba75f
 ## explicit; go 1.13
 github.com/tektoncd/plumbing/scripts

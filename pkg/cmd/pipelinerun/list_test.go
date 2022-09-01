@@ -292,7 +292,7 @@ func TestListPipeline_empty(t *testing.T) {
 	}
 
 	cs, _ := test.SeedV1beta1TestData(t, pipelinev1beta1test.Data{Namespaces: ns})
-	cs.Pipeline.Resources = cb.APIResourceList("v1alpha1", []string{"pipelinerun"})
+	cs.Pipeline.Resources = cb.APIResourceList(version, []string{"pipelinerun"})
 	tdc := testDynamic.Options{}
 	dc, err := tdc.Client()
 	if err != nil {

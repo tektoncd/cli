@@ -21,8 +21,8 @@ import (
 
 	"github.com/jonboulle/clockwork"
 	"github.com/tektoncd/cli/pkg/test"
-	"github.com/tektoncd/pipeline/pkg/apis/pipeline/v1alpha1"
-	pipelinetest "github.com/tektoncd/pipeline/test/v1alpha1"
+	"github.com/tektoncd/pipeline/pkg/apis/resource/v1alpha1"
+	pipelinetest "github.com/tektoncd/pipeline/test"
 	"gotest.tools/v3/golden"
 	corev1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
@@ -37,7 +37,7 @@ func TestPipelineResourceDescribe_Invalid_Namespace(t *testing.T) {
 		},
 	}
 
-	cs, _ := test.SeedTestData(t, pipelinetest.Data{Namespaces: ns})
+	cs, _ := test.SeedV1beta1TestData(t, pipelinetest.Data{Namespaces: ns})
 	p := &test.Params{Tekton: cs.Pipeline, Kube: cs.Kube, Resource: cs.Resource}
 
 	res := Command(p)
@@ -59,7 +59,7 @@ func TestPipelineResourceDescribe_Empty(t *testing.T) {
 		},
 	}
 
-	cs, _ := test.SeedTestData(t, pipelinetest.Data{Namespaces: ns})
+	cs, _ := test.SeedV1beta1TestData(t, pipelinetest.Data{Namespaces: ns})
 	p := &test.Params{Tekton: cs.Pipeline, Kube: cs.Kube, Resource: cs.Resource}
 
 	res := Command(p)
@@ -100,7 +100,7 @@ func TestPipelineResourceDescribe_WithParams(t *testing.T) {
 		},
 	}
 
-	cs, _ := test.SeedTestData(t, pipelinetest.Data{PipelineResources: pres, Namespaces: ns})
+	cs, _ := test.SeedV1beta1TestData(t, pipelinetest.Data{PipelineResources: pres, Namespaces: ns})
 	p := &test.Params{Tekton: cs.Pipeline, Kube: cs.Kube, Resource: cs.Resource}
 	pipelineresource := Command(p)
 	out, _ := test.ExecuteCommand(pipelineresource, "desc", "test-1", "-n", "test-ns-1")
@@ -146,7 +146,7 @@ func TestPipelineResourceDescribe_WithSecretParams(t *testing.T) {
 		},
 	}
 
-	cs, _ := test.SeedTestData(t, pipelinetest.Data{PipelineResources: pres, Namespaces: ns})
+	cs, _ := test.SeedV1beta1TestData(t, pipelinetest.Data{PipelineResources: pres, Namespaces: ns})
 	p := &test.Params{Tekton: cs.Pipeline, Kube: cs.Kube, Resource: cs.Resource}
 	pipelineresource := Command(p)
 	out, _ := test.ExecuteCommand(pipelineresource, "desc", "test-1", "-n", "test-ns-1")
@@ -168,7 +168,7 @@ func TestPipelineResourcesDescribe_custom_output(t *testing.T) {
 		},
 	}
 
-	cs, _ := test.SeedTestData(t, pipelinetest.Data{
+	cs, _ := test.SeedV1beta1TestData(t, pipelinetest.Data{
 		PipelineResources: prs,
 		Namespaces: []*corev1.Namespace{
 			{

@@ -21,19 +21,13 @@ import (
 
 	"github.com/google/go-cmp/cmp"
 	ttesting "github.com/tektoncd/pipeline/pkg/reconciler/testing"
-	pipelinev1beta1test "github.com/tektoncd/pipeline/test"
-	pipelinetest "github.com/tektoncd/pipeline/test/v1alpha1"
+	pipelinetest "github.com/tektoncd/pipeline/test"
 	triggerstest "github.com/tektoncd/triggers/test"
 )
 
-func SeedTestData(t *testing.T, d pipelinetest.Data) (pipelinetest.Clients, pipelinetest.Informers) {
+func SeedV1beta1TestData(t *testing.T, d pipelinetest.Data) (pipelinetest.Clients, pipelinetest.Informers) {
 	ctx, _ := ttesting.SetupFakeContext(t)
 	return pipelinetest.SeedTestData(t, ctx, d)
-}
-
-func SeedV1beta1TestData(t *testing.T, d pipelinev1beta1test.Data) (pipelinev1beta1test.Clients, pipelinev1beta1test.Informers) {
-	ctx, _ := ttesting.SetupFakeContext(t)
-	return pipelinev1beta1test.SeedTestData(t, ctx, d)
 }
 
 func SeedTestResources(t *testing.T, d triggerstest.Resources) triggerstest.Clients {

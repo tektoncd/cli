@@ -15,58 +15,11 @@
 package builder
 
 import (
-	"github.com/tektoncd/pipeline/pkg/apis/pipeline/v1alpha1"
 	"github.com/tektoncd/pipeline/pkg/apis/pipeline/v1beta1"
 	triggersv1beta1 "github.com/tektoncd/triggers/pkg/apis/triggers/v1beta1"
 	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
 	"k8s.io/apimachinery/pkg/runtime"
 )
-
-func UnstructuredP(pipeline *v1alpha1.Pipeline, version string) *unstructured.Unstructured {
-	pipeline.APIVersion = "tekton.dev/" + version
-	pipeline.Kind = "pipeline"
-	object, _ := runtime.DefaultUnstructuredConverter.ToUnstructured(pipeline)
-	return &unstructured.Unstructured{
-		Object: object,
-	}
-}
-
-func UnstructuredPR(pipelinerun *v1alpha1.PipelineRun, version string) *unstructured.Unstructured {
-	pipelinerun.APIVersion = "tekton.dev/" + version
-	pipelinerun.Kind = "pipelinerun"
-	object, _ := runtime.DefaultUnstructuredConverter.ToUnstructured(pipelinerun)
-	return &unstructured.Unstructured{
-		Object: object,
-	}
-}
-
-func UnstructuredTR(taskrun *v1alpha1.TaskRun, version string) *unstructured.Unstructured {
-	taskrun.APIVersion = "tekton.dev/" + version
-	taskrun.Kind = "taskrun"
-	object, _ := runtime.DefaultUnstructuredConverter.ToUnstructured(taskrun)
-	return &unstructured.Unstructured{
-		Object: object,
-	}
-}
-
-// TODO: to remove after v1alpha1 support removal
-func Unstructuredv1alpha1T(task *v1alpha1.Task, version string) *unstructured.Unstructured {
-	task.APIVersion = "tekton.dev/" + version
-	task.Kind = "task"
-	object, _ := runtime.DefaultUnstructuredConverter.ToUnstructured(task)
-	return &unstructured.Unstructured{
-		Object: object,
-	}
-}
-
-func UnstructuredCT(clustertask *v1alpha1.ClusterTask, version string) *unstructured.Unstructured {
-	clustertask.APIVersion = "tekton.dev/" + version
-	clustertask.Kind = "clustertask"
-	object, _ := runtime.DefaultUnstructuredConverter.ToUnstructured(clustertask)
-	return &unstructured.Unstructured{
-		Object: object,
-	}
-}
 
 func UnstructuredV1beta1P(pipeline *v1beta1.Pipeline, version string) *unstructured.Unstructured {
 	pipeline.APIVersion = "tekton.dev/" + version

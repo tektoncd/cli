@@ -27,7 +27,7 @@ import (
 	"time"
 
 	"github.com/tektoncd/cli/pkg/test"
-	pipelinetest "github.com/tektoncd/pipeline/test/v1alpha1"
+	pipelinetest "github.com/tektoncd/pipeline/test"
 	"gotest.tools/v3/assert"
 	"gotest.tools/v3/golden"
 	v1 "k8s.io/api/apps/v1"
@@ -81,7 +81,7 @@ func TestVersionGood(t *testing.T) {
 
 	clientVersion = "v1.2.3"
 
-	seedData, _ := test.SeedTestData(t, pipelinetest.Data{})
+	seedData, _ := test.SeedV1beta1TestData(t, pipelinetest.Data{})
 
 	cs := pipelinetest.Clients{Kube: seedData.Kube}
 	p := &test.Params{Kube: cs.Kube}
@@ -148,7 +148,7 @@ func TestGetComponentVersions(t *testing.T) {
 	for _, tp := range testParams {
 		t.Run(tp.name, func(t *testing.T) {
 			for i, c := range components {
-				seedData, _ := test.SeedTestData(t, pipelinetest.Data{})
+				seedData, _ := test.SeedV1beta1TestData(t, pipelinetest.Data{})
 				cs := pipelinetest.Clients{Kube: seedData.Kube}
 				p := &test.Params{Kube: cs.Kube}
 				version := Command(p)
@@ -314,7 +314,7 @@ func TestGetVersions(t *testing.T) {
 	}}
 	for _, tp := range testParams {
 		t.Run(tp.name, func(t *testing.T) {
-			seedData, _ := test.SeedTestData(t, pipelinetest.Data{})
+			seedData, _ := test.SeedV1beta1TestData(t, pipelinetest.Data{})
 			cs := pipelinetest.Clients{Kube: seedData.Kube}
 			p := &test.Params{Kube: cs.Kube}
 			version := Command(p)

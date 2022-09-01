@@ -25,8 +25,8 @@ import (
 	goexpect "github.com/Netflix/go-expect"
 	"github.com/tektoncd/cli/pkg/cli"
 	"github.com/tektoncd/cli/pkg/test"
-	"github.com/tektoncd/pipeline/pkg/apis/pipeline/v1alpha1"
-	pipelinetest "github.com/tektoncd/pipeline/test/v1alpha1"
+	"github.com/tektoncd/pipeline/pkg/apis/resource/v1alpha1"
+	pipelinetest "github.com/tektoncd/pipeline/test"
 	corev1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 )
@@ -56,7 +56,7 @@ func getPipelineResource() *v1alpha1.PipelineResource {
 
 func TestPipelineResource_resource_noName(t *testing.T) {
 	pres := getPipelineResource()
-	cs, _ := test.SeedTestData(t, pipelinetest.Data{
+	cs, _ := test.SeedV1beta1TestData(t, pipelinetest.Data{
 		PipelineResources: []*v1alpha1.PipelineResource{
 			pres,
 		},
@@ -121,7 +121,7 @@ func TestPipelineResource_resource_noName(t *testing.T) {
 func TestPipelineResource_resource_already_exist(t *testing.T) {
 	t.Skip("Skipping due of flakiness")
 	pres := getPipelineResource()
-	cs, _ := test.SeedTestData(t, pipelinetest.Data{
+	cs, _ := test.SeedV1beta1TestData(t, pipelinetest.Data{
 		PipelineResources: []*v1alpha1.PipelineResource{
 			pres,
 		},
@@ -173,7 +173,7 @@ func TestPipelineResource_resource_already_exist(t *testing.T) {
 func TestPipelineResource_allResourceType(t *testing.T) {
 	t.Skip("Skipping due of flakiness")
 
-	cs, _ := test.SeedTestData(t, pipelinetest.Data{
+	cs, _ := test.SeedV1beta1TestData(t, pipelinetest.Data{
 		Namespaces: []*corev1.Namespace{
 			{
 				ObjectMeta: metav1.ObjectMeta{
@@ -281,7 +281,7 @@ func TestPipelineResource_allResourceType(t *testing.T) {
 func TestPipelineResource_create_cloudEventResource(t *testing.T) {
 	t.Skip("Skipping due of flakiness")
 
-	cs, _ := test.SeedTestData(t, pipelinetest.Data{
+	cs, _ := test.SeedV1beta1TestData(t, pipelinetest.Data{
 		Namespaces: []*corev1.Namespace{
 			{
 				ObjectMeta: metav1.ObjectMeta{
@@ -351,7 +351,7 @@ func TestPipelineResource_create_cloudEventResource(t *testing.T) {
 func TestPipelineResource_create_clusterResource_secure_password_text(t *testing.T) {
 	t.Skip("Skipping due of flakiness")
 
-	cs, _ := test.SeedTestData(t, pipelinetest.Data{
+	cs, _ := test.SeedV1beta1TestData(t, pipelinetest.Data{
 		Namespaces: []*corev1.Namespace{
 			{
 				ObjectMeta: metav1.ObjectMeta{
@@ -489,7 +489,7 @@ func TestPipelineResource_create_clusterResource_secure_password_text(t *testing
 func TestPipelineResource_create_clusterResource_secure_token_text(t *testing.T) {
 	t.Skip("Skipping due of flakiness")
 
-	cs, _ := test.SeedTestData(t, pipelinetest.Data{
+	cs, _ := test.SeedV1beta1TestData(t, pipelinetest.Data{
 		Namespaces: []*corev1.Namespace{
 			{
 				ObjectMeta: metav1.ObjectMeta{
@@ -631,7 +631,7 @@ func TestPipelineResource_create_clusterResource_secure_token_text(t *testing.T)
 func TestPipelineResource_create_gitResource(t *testing.T) {
 	t.Skip("Skipping due of flakiness")
 
-	cs, _ := test.SeedTestData(t, pipelinetest.Data{
+	cs, _ := test.SeedV1beta1TestData(t, pipelinetest.Data{
 		Namespaces: []*corev1.Namespace{
 			{
 				ObjectMeta: metav1.ObjectMeta{
@@ -728,7 +728,7 @@ func TestPipelineResource_create_gitResource(t *testing.T) {
 func TestPipelineResource_create_imageResource(t *testing.T) {
 	t.Skip("Skipping due of flakiness")
 
-	cs, _ := test.SeedTestData(t, pipelinetest.Data{
+	cs, _ := test.SeedV1beta1TestData(t, pipelinetest.Data{
 		Namespaces: []*corev1.Namespace{
 			{
 				ObjectMeta: metav1.ObjectMeta{
@@ -830,7 +830,7 @@ func TestPipelineResource_create_imageResource(t *testing.T) {
 func TestPipelineResource_create_clusterResource_secure_password_secret(t *testing.T) {
 	t.Skip("Skipping due of flakiness")
 
-	cs, _ := test.SeedTestData(t, pipelinetest.Data{
+	cs, _ := test.SeedV1beta1TestData(t, pipelinetest.Data{
 		Namespaces: []*corev1.Namespace{
 			{
 				ObjectMeta: metav1.ObjectMeta{
@@ -984,7 +984,7 @@ func TestPipelineResource_create_clusterResource_secure_password_secret(t *testi
 func TestPipelineResource_create_clusterResource_secure_token_secret(t *testing.T) {
 	t.Skip("Skipping due of flakiness")
 
-	cs, _ := test.SeedTestData(t, pipelinetest.Data{
+	cs, _ := test.SeedV1beta1TestData(t, pipelinetest.Data{
 		Namespaces: []*corev1.Namespace{
 			{
 				ObjectMeta: metav1.ObjectMeta{
@@ -1150,7 +1150,7 @@ func TestPipelineResource_create_clusterResource_secure_token_secret(t *testing.
 func TestPipelineResource_create_pullRequestResource(t *testing.T) {
 	t.Skip("Skipping due of flakiness")
 
-	cs, _ := test.SeedTestData(t, pipelinetest.Data{
+	cs, _ := test.SeedV1beta1TestData(t, pipelinetest.Data{
 		Namespaces: []*corev1.Namespace{
 			{
 				ObjectMeta: metav1.ObjectMeta{
@@ -1279,7 +1279,7 @@ func TestPipelineResource_create_pullRequestResource(t *testing.T) {
 func TestPipelineResource_create_gcsStorageResource(t *testing.T) {
 	t.Skip("Skipping due of flakiness")
 
-	cs, _ := test.SeedTestData(t, pipelinetest.Data{
+	cs, _ := test.SeedV1beta1TestData(t, pipelinetest.Data{
 		Namespaces: []*corev1.Namespace{
 			{
 				ObjectMeta: metav1.ObjectMeta{
@@ -1421,7 +1421,7 @@ func TestPipelineResource_create_gcsStorageResource(t *testing.T) {
 func TestPipelineResource_create_buildGCSstorageResource(t *testing.T) {
 	t.Skip("Skipping due of flakiness")
 
-	cs, _ := test.SeedTestData(t, pipelinetest.Data{
+	cs, _ := test.SeedV1beta1TestData(t, pipelinetest.Data{
 		Namespaces: []*corev1.Namespace{
 			{
 				ObjectMeta: metav1.ObjectMeta{

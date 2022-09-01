@@ -9,8 +9,8 @@ import (
 	"github.com/tektoncd/cli/pkg/cli"
 	"github.com/tektoncd/cli/pkg/task"
 	tractions "github.com/tektoncd/cli/pkg/taskrun"
-	"github.com/tektoncd/pipeline/pkg/apis/pipeline/v1alpha1"
 	"github.com/tektoncd/pipeline/pkg/apis/pipeline/v1beta1"
+	"github.com/tektoncd/pipeline/pkg/apis/resource/v1alpha1"
 	versionedResource "github.com/tektoncd/pipeline/pkg/client/resource/clientset/versioned"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 )
