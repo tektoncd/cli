@@ -52,8 +52,8 @@ require (
 	github.com/spf13/pflag v1.0.5
 	github.com/tektoncd/chains v0.12.1-0.20220901150427-1bf8faaf4475
 	github.com/tektoncd/hub v1.9.0
-	github.com/tektoncd/pipeline v0.38.3
-	github.com/tektoncd/plumbing v0.0.0-20220329085922-d765a5cba75f
+	github.com/tektoncd/pipeline v0.39.0
+	github.com/tektoncd/plumbing v0.0.0-20220817140952-3da8ce01aeeb
 	github.com/tektoncd/triggers v0.20.2
 	go.opencensus.io v0.23.0
 	go.uber.org/atomic v1.10.0
@@ -70,11 +70,11 @@ require (
 	gopkg.in/yaml.v2 v2.4.0
 	gotest.tools v2.2.0+incompatible
 	gotest.tools/v3 v3.3.0
-	k8s.io/api v0.23.5
-	k8s.io/apimachinery v0.23.5
+	k8s.io/api v0.23.9
+	k8s.io/apimachinery v0.23.9
 	k8s.io/cli-runtime v0.23.5
 	k8s.io/client-go v1.5.2
-	knative.dev/pkg v0.0.0-20220329144915-0a1ec2e0d46c
+	knative.dev/pkg v0.0.0-20220805012121-7b8b06028e4f
 	sigs.k8s.io/yaml v1.3.0
 )
 
@@ -129,7 +129,7 @@ require (
 	github.com/census-instrumentation/opencensus-proto v0.3.0 // indirect
 	github.com/cespare/xxhash/v2 v2.1.2 // indirect
 	github.com/chrismellard/docker-credential-acr-env v0.0.0-20220119192733-fe33c00cee21 // indirect
-	github.com/cloudevents/sdk-go/v2 v2.10.1 // indirect
+	github.com/cloudevents/sdk-go/v2 v2.11.0 // indirect
 	github.com/cncf/udpa/go v0.0.0-20210930031921-04548b0d99d4 // indirect
 	github.com/cncf/xds/go v0.0.0-20211130200136-a8f946100490 // indirect
 	github.com/common-nighthawk/go-figure v0.0.0-20210622060536-734e95fb86be // indirect
@@ -340,8 +340,8 @@ require (
 	gopkg.in/ini.v1 v1.66.6 // indirect
 	gopkg.in/natefinch/lumberjack.v2 v2.0.0 // indirect
 	gopkg.in/yaml.v3 v3.0.1 // indirect
-	k8s.io/apiextensions-apiserver v0.23.4 // indirect
-	k8s.io/klog/v2 v2.60.1 // indirect
+	k8s.io/apiextensions-apiserver v0.23.9 // indirect
+	k8s.io/klog/v2 v2.70.2-0.20220707122935-0990e81f1a8f // indirect
 	k8s.io/kube-openapi v0.0.0-20220124234850-424119656bbf // indirect
 	k8s.io/utils v0.0.0-20220210201930-3a6ce19ff2f9 // indirect
 	knative.dev/eventing v0.30.1-0.20220407170245-58865afba92c // indirect
