@@ -81,11 +81,6 @@ func Get(c *cli.Clients, taskname string, opts metav1.GetOptions, ns string) (*v
 }
 
 func Create(c *cli.Clients, t *v1beta1.Task, opts metav1.CreateOptions, ns string) (*v1beta1.Task, error) {
-	_, err := actions.GetGroupVersionResource(taskGroupResource, c.Tekton.Discovery())
-	if err != nil {
-		return nil, err
-	}
-
 	object, err := runtime.DefaultUnstructuredConverter.ToUnstructured(t)
 	if err != nil {
 		return nil, err

@@ -81,16 +81,7 @@ func Get(c *cli.Clients, clustertaskname string, opts metav1.GetOptions) (*v1bet
 }
 
 func Create(c *cli.Clients, ct *v1beta1.ClusterTask, opts metav1.CreateOptions) (*v1beta1.ClusterTask, error) {
-	_, err := actions.GetGroupVersionResource(clustertaskGroupResource, c.Tekton.Discovery())
-	if err != nil {
-		return nil, err
-	}
-
-	return createUnstructured(ct, c, opts)
-}
-
-func createUnstructured(obj runtime.Object, c *cli.Clients, opts metav1.CreateOptions) (*v1beta1.ClusterTask, error) {
-	object, err := runtime.DefaultUnstructuredConverter.ToUnstructured(obj)
+	object, err := runtime.DefaultUnstructuredConverter.ToUnstructured(ct)
 	if err != nil {
 		return nil, err
 	}
