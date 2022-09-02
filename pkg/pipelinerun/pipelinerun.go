@@ -155,21 +155,12 @@ func Cancel(c *cli.Clients, prname string, opts metav1.PatchOptions, cancelStatu
 
 // It will create the resource based on the api available.
 func Create(c *cli.Clients, pr *v1beta1.PipelineRun, opts metav1.CreateOptions, ns string) (*v1beta1.PipelineRun, error) {
-	gvr, err := actions.GetGroupVersionResource(prGroupResource, c.Tekton.Discovery())
-	if err != nil {
-		return nil, err
-	}
-
-	return createUnstructured(pr, c, opts, ns, gvr)
-}
-
-func createUnstructured(obj runtime.Object, c *cli.Clients, opts metav1.CreateOptions, ns string, resource *schema.GroupVersionResource) (*v1beta1.PipelineRun, error) {
-	object, _ := runtime.DefaultUnstructuredConverter.ToUnstructured(obj)
+	object, _ := runtime.DefaultUnstructuredConverter.ToUnstructured(pr)
 	unstructuredPR := &unstructured.Unstructured{
 		Object: object,
 	}
 
-	newUnstructuredPR, err := actions.Create(*resource, c, unstructuredPR, ns, opts)
+	newUnstructuredPR, err := actions.Create(prGroupResource, c, unstructuredPR, ns, opts)
 	if err != nil {
 		return nil, err
 	}
