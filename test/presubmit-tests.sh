@@ -132,7 +132,7 @@ function build_tests() {
 
 # We use the default build, unit and integration test runners.
 if [[ "$1" == "--build-cross-tests" ]]; then
-    make cross
+    make -j4 cross
 else
     main $@
 fi
