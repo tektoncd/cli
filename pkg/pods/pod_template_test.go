@@ -21,14 +21,14 @@ import (
 
 	"github.com/tektoncd/cli/pkg/file"
 	"github.com/tektoncd/cli/pkg/test"
-	"github.com/tektoncd/pipeline/pkg/apis/pipeline/v1beta1"
+	"github.com/tektoncd/pipeline/pkg/apis/pipeline/pod"
 	corev1 "k8s.io/api/core/v1"
 )
 
-func getTestPodTemplate() v1beta1.PodTemplate {
+func getTestPodTemplate() pod.PodTemplate {
 	runAsNonRoot := true
 	runAsUser := int64(1001)
-	return v1beta1.PodTemplate{
+	return pod.PodTemplate{
 		ImagePullSecrets: nil,
 		HostNetwork:      false,
 		SchedulerName:    "SchedulerName",
