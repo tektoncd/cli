@@ -221,7 +221,7 @@ func deleteTaskRuns(s *cli.Stream, p cli.Params, trNames []string, opts *options
 			case opts.KeepSince > 0 && !opts.IgnoreRunning:
 				fmt.Fprintf(s.Out, "All but %d expired TaskRuns associated with %q %q deleted in namespace %q\n", numberOfDeletedTr, opts.ParentResource, opts.ParentResourceName, p.Namespace())
 			case opts.ParentResourceName != "" && !opts.IgnoreRunning:
-				fmt.Fprintf(s.Out, "All TaskRuns associated with %s %q deleted in namespace %q\n", opts.ParentResource, opts.ParentResourceName, p.Namespace())
+				fmt.Fprintf(s.Out, "All %d TaskRuns associated with %s %q deleted in namespace %q\n", numberOfDeletedTr, opts.ParentResource, opts.ParentResourceName, p.Namespace())
 			case opts.Keep > 0 && opts.KeepSince > 0:
 				fmt.Fprintf(s.Out, "%d TaskRuns(Completed) associated with %s %q has been deleted in namespace %q\n", numberOfDeletedTr, opts.ParentResource, opts.ParentResourceName, p.Namespace())
 			case opts.Keep > 0:
@@ -230,7 +230,7 @@ func deleteTaskRuns(s *cli.Stream, p cli.Params, trNames []string, opts *options
 			case opts.KeepSince > 0:
 				fmt.Fprintf(s.Out, "All but %d expired TaskRuns associated with %q %q deleted in namespace %q\n", numberOfDeletedTr, opts.ParentResource, opts.ParentResourceName, p.Namespace())
 			case opts.ParentResourceName != "":
-				fmt.Fprintf(s.Out, "All TaskRuns(Completed) associated with %s %q deleted in namespace %q\n", opts.ParentResource, opts.ParentResourceName, p.Namespace())
+				fmt.Fprintf(s.Out, "All %d TaskRuns(Completed) associated with %s %q deleted in namespace %q\n", numberOfDeletedTr, opts.ParentResource, opts.ParentResourceName, p.Namespace())
 			default:
 				d.PrintSuccesses(s)
 			}
@@ -251,9 +251,9 @@ func deleteTaskRuns(s *cli.Stream, p cli.Params, trNames []string, opts *options
 			case opts.KeepSince > 0:
 				fmt.Fprintf(s.Out, "%d expired Taskruns(Completed) has been deleted in namespace %q, kept %d\n", numberOfDeletedTr, p.Namespace(), numberOfKeptTr)
 			case !opts.IgnoreRunning:
-				fmt.Fprintf(s.Out, "All TaskRuns deleted in namespace %q\n", p.Namespace())
+				fmt.Fprintf(s.Out, "All %d TaskRuns deleted in namespace %q\n", numberOfDeletedTr, p.Namespace())
 			default:
-				fmt.Fprintf(s.Out, "All TaskRuns(Completed) deleted in namespace %q\n", p.Namespace())
+				fmt.Fprintf(s.Out, "All %d TaskRuns(Completed) deleted in namespace %q\n", numberOfDeletedTr, p.Namespace())
 			}
 		}
 	}
@@ -293,16 +293,11 @@ func allTaskRunNames(cs *cli.Clients, keep, since int, ignoreRunning bool, label
 	if ignoreRunning {
 		var taskRunTmp = []v1beta1.TaskRun{}
 		for _, v := range taskRuns.Items {
-			if v.Status.Conditions == nil {
+			if v.Status.CompletionTime == nil {
+				// Skip TaskRuns without CompletionTimes as they have not finished running yet
 				continue
 			}
-			for _, v2 := range v.Status.Conditions {
-				if v2.Reason == "Running" || v2.Reason == "Pending" || v2.Reason == "Started" {
-					continue
-				}
-				taskRunTmp = append(taskRunTmp, v)
-				break
-			}
+			taskRunTmp = append(taskRunTmp, v)
 		}
 		taskRuns.Items = taskRunTmp
 	}
