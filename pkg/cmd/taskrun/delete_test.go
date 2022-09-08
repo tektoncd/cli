@@ -1068,14 +1068,12 @@ func TestTaskRunDelete_v1beta1(t *testing.T) {
 			},
 			Status: v1beta1.TaskRunStatus{
 				TaskRunStatusFields: v1beta1.TaskRunStatusFields{
-					CompletionTime: &metav1.Time{
-						Time: clock.Now().Add(10 * time.Minute),
-					},
+					CompletionTime: nil,
 				},
 				Status: duckv1beta1.Status{
 					Conditions: duckv1beta1.Conditions{
 						{
-							Status: corev1.ConditionTrue,
+							Status: corev1.ConditionUnknown,
 							Reason: v1beta1.TaskRunReasonStarted.String(),
 						},
 					},
@@ -1096,14 +1094,12 @@ func TestTaskRunDelete_v1beta1(t *testing.T) {
 			},
 			Status: v1beta1.TaskRunStatus{
 				TaskRunStatusFields: v1beta1.TaskRunStatusFields{
-					CompletionTime: &metav1.Time{
-						Time: clock.Now().Add(10 * time.Minute),
-					},
+					CompletionTime: nil,
 				},
 				Status: duckv1beta1.Status{
 					Conditions: duckv1beta1.Conditions{
 						{
-							Status: corev1.ConditionTrue,
+							Status: corev1.ConditionUnknown,
 							Reason: v1beta1.TaskRunReasonRunning.String(),
 						},
 					},
@@ -1124,15 +1120,12 @@ func TestTaskRunDelete_v1beta1(t *testing.T) {
 			},
 			Status: v1beta1.TaskRunStatus{
 				TaskRunStatusFields: v1beta1.TaskRunStatusFields{
-					CompletionTime: &metav1.Time{
-						// Use real time for testing keep-since and keep together
-						Time: time.Now(),
-					},
+					CompletionTime: nil,
 				},
 				Status: duckv1beta1.Status{
 					Conditions: duckv1beta1.Conditions{
 						{
-							Status: corev1.ConditionTrue,
+							Status: corev1.ConditionUnknown,
 							Reason: v1beta1.TaskRunReasonStarted.String(),
 						},
 					},
@@ -1153,16 +1146,39 @@ func TestTaskRunDelete_v1beta1(t *testing.T) {
 			},
 			Status: v1beta1.TaskRunStatus{
 				TaskRunStatusFields: v1beta1.TaskRunStatusFields{
-					CompletionTime: &metav1.Time{
-						// Use real time for testing keep-since and keep together
-						Time: time.Now(),
-					},
+					CompletionTime: nil,
 				},
 				Status: duckv1beta1.Status{
 					Conditions: duckv1beta1.Conditions{
 						{
-							Status: corev1.ConditionTrue,
+							Status: corev1.ConditionUnknown,
 							Reason: v1beta1.TaskRunReasonRunning.String(),
+						},
+					},
+				},
+			},
+		},
+		{
+			ObjectMeta: metav1.ObjectMeta{
+				Namespace: "ns",
+				Name:      "tr0-14",
+				Labels:    map[string]string{"tekton.dev/clusterTask": "random"},
+			},
+			Spec: v1beta1.TaskRunSpec{
+				TaskRef: &v1beta1.TaskRef{
+					Name: "random",
+					Kind: v1beta1.ClusterTaskKind,
+				},
+			},
+			Status: v1beta1.TaskRunStatus{
+				TaskRunStatusFields: v1beta1.TaskRunStatusFields{
+					CompletionTime: nil,
+				},
+				Status: duckv1beta1.Status{
+					Conditions: duckv1beta1.Conditions{
+						{
+							Status: corev1.ConditionUnknown,
+							Reason: "ExceededResourceQuota",
 						},
 					},
 				},
@@ -1197,6 +1213,7 @@ func TestTaskRunDelete_v1beta1(t *testing.T) {
 			cb.UnstructuredV1beta1TR(trdata[10], version),
 			cb.UnstructuredV1beta1TR(trdata[11], version),
 			cb.UnstructuredV1beta1TR(trdata[12], version),
+			cb.UnstructuredV1beta1TR(trdata[13], version),
 		)
 		if err != nil {
 			t.Errorf("unable to create dynamic client: %v", err)
@@ -1292,7 +1309,7 @@ func TestTaskRunDelete_v1beta1(t *testing.T) {
 			input:       seeds[0].pipelineClient,
 			inputStream: strings.NewReader("y"),
 			wantError:   false,
-			want:        "Are you sure you want to delete all TaskRuns related to Task \"random\" (y/n): All TaskRuns(Completed) associated with Task \"random\" deleted in namespace \"ns\"\n",
+			want:        "Are you sure you want to delete all TaskRuns related to Task \"random\" (y/n): All 3 TaskRuns(Completed) associated with Task \"random\" deleted in namespace \"ns\"\n",
 		},
 		{
 			name:        "Delete all with prompt",
@@ -1301,7 +1318,7 @@ func TestTaskRunDelete_v1beta1(t *testing.T) {
 			input:       seeds[3].pipelineClient,
 			inputStream: strings.NewReader("y"),
 			wantError:   false,
-			want:        "Are you sure you want to delete all TaskRuns in namespace \"ns\" (y/n): All TaskRuns(Completed) deleted in namespace \"ns\"\n",
+			want:        "Are you sure you want to delete all TaskRuns in namespace \"ns\" (y/n): All 9 TaskRuns(Completed) deleted in namespace \"ns\"\n",
 		},
 		{
 			name:        "Delete all with -f",
@@ -1310,7 +1327,7 @@ func TestTaskRunDelete_v1beta1(t *testing.T) {
 			input:       seeds[4].pipelineClient,
 			inputStream: nil,
 			wantError:   false,
-			want:        "All TaskRuns(Completed) deleted in namespace \"ns\"\n",
+			want:        "All 9 TaskRuns(Completed) deleted in namespace \"ns\"\n",
 		},
 		{
 			name:        "Delete all keeping 2",
@@ -1373,7 +1390,7 @@ func TestTaskRunDelete_v1beta1(t *testing.T) {
 			input:       seeds[0].pipelineClient,
 			inputStream: strings.NewReader("y"),
 			wantError:   false,
-			want:        "Are you sure you want to delete all TaskRuns related to ClusterTask \"random\" (y/n): All TaskRuns(Completed) associated with ClusterTask \"random\" deleted in namespace \"ns\"\n",
+			want:        "Are you sure you want to delete all TaskRuns related to ClusterTask \"random\" (y/n): All 5 TaskRuns(Completed) associated with ClusterTask \"random\" deleted in namespace \"ns\"\n",
 		},
 		{
 			name:        "Error from deleting TaskRun with non-existing ClusterTask",
@@ -1472,7 +1489,7 @@ func TestTaskRunDelete_v1beta1(t *testing.T) {
 			input:       seeds[4].pipelineClient,
 			inputStream: nil,
 			wantError:   false,
-			want:        "All TaskRuns(Completed) deleted in namespace \"ns\"\n",
+			want:        "All 0 TaskRuns(Completed) deleted in namespace \"ns\"\n",
 		},
 		{
 			name:        "Delete all with explicit --ignore-running true",
@@ -1481,16 +1498,16 @@ func TestTaskRunDelete_v1beta1(t *testing.T) {
 			input:       seeds[4].pipelineClient,
 			inputStream: nil,
 			wantError:   false,
-			want:        "All TaskRuns(Completed) deleted in namespace \"ns\"\n",
+			want:        "All 0 TaskRuns(Completed) deleted in namespace \"ns\"\n",
 		},
 		{
-			name:        "Delete all with explicit --ignore-running true",
+			name:        "Delete all with --ignore-running false",
 			command:     []string{"delete", "--all", "-f", "-n", "ns", "--ignore-running=false"},
 			dynamic:     seeds[4].dynamicClient,
 			input:       seeds[4].pipelineClient,
 			inputStream: nil,
 			wantError:   false,
-			want:        "All TaskRuns deleted in namespace \"ns\"\n",
+			want:        "All 5 TaskRuns deleted in namespace \"ns\"\n",
 		},
 		{
 			name:        "Delete the Task present and give error for non-existent Task",
@@ -1517,7 +1534,7 @@ func TestTaskRunDelete_v1beta1(t *testing.T) {
 			input:       seeds[11].pipelineClient,
 			inputStream: nil,
 			wantError:   false,
-			want:        "All TaskRuns(Completed) associated with Task \"random\" deleted in namespace \"ns\"\n",
+			want:        "All 4 TaskRuns(Completed) associated with Task \"random\" deleted in namespace \"ns\"\n",
 		},
 		{
 			name:        "Delete all of task with explicit --ignore-running true",
@@ -1526,7 +1543,7 @@ func TestTaskRunDelete_v1beta1(t *testing.T) {
 			input:       seeds[12].pipelineClient,
 			inputStream: nil,
 			wantError:   false,
-			want:        "All TaskRuns(Completed) associated with Task \"random\" deleted in namespace \"ns\"\n",
+			want:        "All 4 TaskRuns(Completed) associated with Task \"random\" deleted in namespace \"ns\"\n",
 		},
 		{
 			name:        "Delete all of task with --ignore-running false",
@@ -1535,7 +1552,7 @@ func TestTaskRunDelete_v1beta1(t *testing.T) {
 			input:       seeds[13].pipelineClient,
 			inputStream: nil,
 			wantError:   false,
-			want:        "All TaskRuns associated with Task \"random\" deleted in namespace \"ns\"\n",
+			want:        "All 6 TaskRuns associated with Task \"random\" deleted in namespace \"ns\"\n",
 		},
 		{
 			name:        "Delete all of clustertask with default --ignore-running",
@@ -1544,7 +1561,7 @@ func TestTaskRunDelete_v1beta1(t *testing.T) {
 			input:       seeds[14].pipelineClient,
 			inputStream: nil,
 			wantError:   false,
-			want:        "All TaskRuns(Completed) associated with ClusterTask \"random\" deleted in namespace \"ns\"\n",
+			want:        "All 5 TaskRuns(Completed) associated with ClusterTask \"random\" deleted in namespace \"ns\"\n",
 		},
 		{
 			name:        "Delete all of clustertask with explicit --ignore-running true",
@@ -1553,7 +1570,7 @@ func TestTaskRunDelete_v1beta1(t *testing.T) {
 			input:       seeds[15].pipelineClient,
 			inputStream: nil,
 			wantError:   false,
-			want:        "All TaskRuns(Completed) associated with ClusterTask \"random\" deleted in namespace \"ns\"\n",
+			want:        "All 5 TaskRuns(Completed) associated with ClusterTask \"random\" deleted in namespace \"ns\"\n",
 		},
 		{
 			name:        "Delete all of clustertask with --ignore-running false",
@@ -1562,7 +1579,7 @@ func TestTaskRunDelete_v1beta1(t *testing.T) {
 			input:       seeds[16].pipelineClient,
 			inputStream: nil,
 			wantError:   false,
-			want:        "All TaskRuns associated with ClusterTask \"random\" deleted in namespace \"ns\"\n",
+			want:        "All 8 TaskRuns associated with ClusterTask \"random\" deleted in namespace \"ns\"\n",
 		},
 	}
 
@@ -1633,6 +1650,11 @@ func Test_ClusterTask_TaskRuns_Not_Deleted_With_Task_Option(t *testing.T) {
 				},
 			},
 			Status: v1beta1.TaskRunStatus{
+				TaskRunStatusFields: v1beta1.TaskRunStatusFields{
+					CompletionTime: &metav1.Time{
+						Time: time.Now(),
+					},
+				},
 				Status: duckv1beta1.Status{
 					Conditions: duckv1beta1.Conditions{
 						{
@@ -1662,6 +1684,11 @@ func Test_ClusterTask_TaskRuns_Not_Deleted_With_Task_Option(t *testing.T) {
 				},
 			},
 			Status: v1beta1.TaskRunStatus{
+				TaskRunStatusFields: v1beta1.TaskRunStatusFields{
+					CompletionTime: &metav1.Time{
+						Time: time.Now(),
+					},
+				},
 				Status: duckv1beta1.Status{
 					Conditions: duckv1beta1.Conditions{
 						{
@@ -1749,6 +1776,11 @@ func Test_Task_TaskRuns_Not_Deleted_With_ClusterTask_Option(t *testing.T) {
 				},
 			},
 			Status: v1beta1.TaskRunStatus{
+				TaskRunStatusFields: v1beta1.TaskRunStatusFields{
+					CompletionTime: &metav1.Time{
+						Time: time.Now(),
+					},
+				},
 				Status: duckv1beta1.Status{
 					Conditions: duckv1beta1.Conditions{
 						{
@@ -1778,6 +1810,11 @@ func Test_Task_TaskRuns_Not_Deleted_With_ClusterTask_Option(t *testing.T) {
 				},
 			},
 			Status: v1beta1.TaskRunStatus{
+				TaskRunStatusFields: v1beta1.TaskRunStatusFields{
+					CompletionTime: &metav1.Time{
+						Time: time.Now(),
+					},
+				},
 				Status: duckv1beta1.Status{
 					Conditions: duckv1beta1.Conditions{
 						{
