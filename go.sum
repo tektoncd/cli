@@ -139,8 +139,9 @@ github.com/ActiveState/vt10x v1.3.1 h1:7qi8BGXUEBghzBxfXSY0J77etO+L95PZQlwD7ay2m
 github.com/ActiveState/vt10x v1.3.1/go.mod h1:8wJKd36c9NmCfGyPyOJmkvyIMvbUPfHkfdS8zZlK19s=
 github.com/AdaLogics/go-fuzz-headers v0.0.0-20210715213245-6c3934b029d8/go.mod h1:CzsSbkDixRphAF5hS6wbMKq0eI6ccJRb7/A0M6JBnwg=
 github.com/AdaLogics/go-fuzz-headers v0.0.0-20211102141018-f7be0cbad29c/go.mod h1:WpB7kf89yJUETZxQnP1kgYPNwlT2jjdDYUCoxVggM3g=
-github.com/AlecAivazis/survey/v2 v2.3.5 h1:A8cYupsAZkjaUmhtTYv3sSqc7LO5mp1XDfqe5E/9wRQ=
 github.com/AlecAivazis/survey/v2 v2.3.5/go.mod h1:4AuI9b7RjAR+G7v9+C4YSlX/YL3K3cWNXgWXOhllqvI=
+github.com/AlecAivazis/survey/v2 v2.3.6 h1:NvTuVHISgTHEHeBFqt6BHOe4Ny/NwGZr7w+F8S9ziyw=
+github.com/AlecAivazis/survey/v2 v2.3.6/go.mod h1:4AuI9b7RjAR+G7v9+C4YSlX/YL3K3cWNXgWXOhllqvI=
 github.com/Antonboom/errname v0.1.5/go.mod h1:DugbBstvPFQbv/5uLcRRzfrNqKE9tVdVCqWCLp6Cifo=
 github.com/Antonboom/errname v0.1.7/go.mod h1:g0ONh16msHIPgJSGsecu1G/dcF2hlYR/0SddnIAGavU=
 github.com/Antonboom/nilnil v0.1.0/go.mod h1:PhHLvRPSghY5Y7mX4TW+BHZQYo1A8flE5H20D3IPZBo=
