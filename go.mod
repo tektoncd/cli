@@ -11,7 +11,7 @@ require (
 	github.com/cenkalti/backoff/v3 v3.2.2
 	github.com/cpuguy83/go-md2man v1.0.10
 	github.com/docker/cli v20.10.18+incompatible
-	github.com/docker/docker v20.10.17+incompatible
+	github.com/docker/docker v20.10.18+incompatible
 	github.com/fatih/color v1.13.0
 	github.com/ghodss/yaml v1.0.0
 	github.com/golang/protobuf v1.5.2
