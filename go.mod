@@ -3,7 +3,7 @@ module github.com/tektoncd/cli
 go 1.17
 
 require (
-	github.com/AlecAivazis/survey/v2 v2.3.5
+	github.com/AlecAivazis/survey/v2 v2.3.6
 	github.com/Netflix/go-expect v0.0.0-20220104043353-73e0943537d2
 	github.com/armon/go-metrics v0.4.1
 	github.com/armon/go-radix v1.0.0
