@@ -55,15 +55,16 @@ MacOS:
 .PP
 Zsh:
 
+.PP
+$ source <(tkn completion zsh)
 
-.SH If shell completion is not already enabled in your environment you will need
 
-.SH to enable it.  You can execute the following once:
+.SH To load completions for every sessions, you can execute the following once:
 .PP
 $ echo "autoload \-U compinit; compinit" >> \~/.zshrc
 
 
-.SH To load completions for each session, execute once:
+.SH and add the completion to your fpath (may differ from the first one in the fpath array)
 .PP
 $ tkn completion zsh > "${fpath[1]}/\_tkn"
 

@@ -15,7 +15,8 @@
 package completion
 
 import (
-	"os"
+	"bytes"
+	"fmt"
 
 	"github.com/spf13/cobra"
 )
@@ -45,12 +46,13 @@ MacOS:
 
 Zsh:
 
-# If shell completion is not already enabled in your environment you will need
-# to enable it.  You can execute the following once:
+$ source <(tkn completion zsh)
+
+# To load completions for every sessions, you can execute the following once:
 
 $ echo "autoload -U compinit; compinit" >> ~/.zshrc
 
-# To load completions for each session, execute once:
+# and add the completion to your fpath (may differ from the first one in the fpath array)
 $ tkn completion zsh > "${fpath[1]}/_tkn"
 
 # You will need to start a new shell for this setup to take effect.
@@ -64,8 +66,15 @@ $ tkn completion fish > ~/.config/fish/completions/tkn.fish
 `
 )
 
+func genZshCompletion(cmd *cobra.Command) string {
+	var output bytes.Buffer
+	_ = cmd.Root().GenZshCompletion(&output)
+	return fmt.Sprintf("#compdef %s\ncompdef _%s %s\n%s", cmd.Root().Use,
+		cmd.Root().Use, cmd.Root().Use, output.String())
+}
+
 func Command() *cobra.Command {
-	var cmd = &cobra.Command{
+	cmd := &cobra.Command{
 		Use:       "completion [SHELL]",
 		Short:     "Prints shell completion scripts",
 		Long:      desc,
@@ -78,13 +87,13 @@ func Command() *cobra.Command {
 		RunE: func(cmd *cobra.Command, args []string) error {
 			switch args[0] {
 			case "bash":
-				_ = cmd.Root().GenBashCompletion(os.Stdout)
+				_ = cmd.Root().GenBashCompletion(cmd.OutOrStdout())
 			case "zsh":
-				_ = cmd.Root().GenZshCompletion(os.Stdout)
+				fmt.Fprint(cmd.OutOrStdout(), genZshCompletion(cmd))
 			case "fish":
-				_ = cmd.Root().GenFishCompletion(os.Stdout, true)
+				_ = cmd.Root().GenFishCompletion(cmd.OutOrStdout(), true)
 			case "powershell":
-				_ = cmd.Root().GenPowerShellCompletion(os.Stdout)
+				_ = cmd.Root().GenPowerShellCompletion(cmd.OutOrStdout())
 			}
 
 			return nil
