@@ -15,9 +15,11 @@
 package completion
 
 import (
+	"strings"
 	"testing"
 
 	"github.com/tektoncd/cli/pkg/test"
+	"gotest.tools/v3/assert"
 )
 
 func TestCompletion_Empty(t *testing.T) {
@@ -29,4 +31,10 @@ func TestCompletion_Empty(t *testing.T) {
 	}
 	expected := "accepts 1 arg(s), received 0"
 	test.AssertOutput(t, expected, err.Error())
+}
+
+func TestCompletionZSH(t *testing.T) {
+	cmd := Command()
+	output := genZshCompletion(cmd)
+	assert.Assert(t, strings.HasPrefix(output, "#compdef"))
 }

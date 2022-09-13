@@ -37,12 +37,13 @@ MacOS:
 
 Zsh:
 
-# If shell completion is not already enabled in your environment you will need
-# to enable it.  You can execute the following once:
+$ source <(tkn completion zsh)
+
+# To load completions for every sessions, you can execute the following once:
 
 $ echo "autoload -U compinit; compinit" >> ~/.zshrc
 
-# To load completions for each session, execute once:
+# and add the completion to your fpath (may differ from the first one in the fpath array)
 $ tkn completion zsh > "${fpath[1]}/_tkn"
 
 # You will need to start a new shell for this setup to take effect.
