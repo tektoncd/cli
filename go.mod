@@ -73,7 +73,7 @@ require (
 	k8s.io/api v0.23.9
 	k8s.io/apimachinery v0.23.9
 	k8s.io/cli-runtime v0.23.9
-	k8s.io/client-go v1.5.2
+	k8s.io/client-go v0.23.9
 	knative.dev/pkg v0.0.0-20220805012121-7b8b06028e4f
 	sigs.k8s.io/yaml v1.3.0
 )
@@ -359,7 +359,6 @@ replace (
 	go.opentelemetry.io/contrib/instrumentation/google.golang.org/grpc/otelgrpc => go.opentelemetry.io/contrib/instrumentation/google.golang.org/grpc/otelgrpc v0.20.0
 	go.opentelemetry.io/otel => go.opentelemetry.io/otel v0.20.0
 	go.opentelemetry.io/otel/sdk => go.opentelemetry.io/otel/sdk v0.20.0
-	k8s.io/client-go => k8s.io/client-go v0.23.9
 )
 
 exclude github.com/antlr/antlr4 v0.0.0-20201029161626-9a95f0cc3d7c
