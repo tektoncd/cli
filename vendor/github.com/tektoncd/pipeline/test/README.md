@@ -2,19 +2,35 @@
 
 To run tests:
 
-```shell
-# Land the latest codes
-ko apply -R -f ./config/
-
+[Unit tests](#unit-tests) and build tests (those run by [presubmits](#presubmit-tests)) run against your Pipelines clone:
+```sh
 # Unit tests
 go test ./...
+# Build tests
+./test/presubmit-tests.sh --build-tests
+```
 
-# Integration tests (against your current kube cluster)
+[E2E tests](#end-to-end-tests) run test cases in your local Pipelines clone
+against the Pipelines installation on your current kube cluster.
+To ensure your local changes are reflected on your cluster, you must first build
+and install them with `ko apply -R -f ./config/`.
+
+```shell
+# Integration tests
 go test -v -count=1 -tags=e2e -timeout=20m ./test
 
-# Conformance tests  (against your current kube cluster)
+# Conformance tests
 go test -v -count=1 -tags=conformance -timeout=10m ./test
 ```
+
+By running the commands above, you start the tests on the cluster of `current-context`
+in local kubeconfig file (~/.kube/config by default) in you local machine.
+
+> Sometimes local tests pass but presubmit tests fail, one possible reason
+is the difference of running environments. The envs that our presubmit test
+uses are stored in ./*.env files. Specifically,
+> - e2e-tests-kind-prow-alpha.env for [`pull-tekton-pipeline-alpha-integration-tests`](https://github.com/tektoncd/plumbing/blob/d2c8ccb63d02c6e72c62def788af32d63ff1981a/prow/config.yaml#L1304)
+> - e2e-tests-kind-prow.env for [`pull-tekton-pipeline-integration-tests`](https://github.com/tektoncd/plumbing/blob/d2c8ccb63d02c6e72c62def788af32d63ff1981a/prow/config.yaml#L1249)
 
 ## Unit tests
 

@@ -25,6 +25,7 @@ import (
 	"github.com/tektoncd/chains/pkg/chains/formats/intotoite6"
 	"github.com/tektoncd/chains/pkg/chains/formats/simple"
 	"github.com/tektoncd/chains/pkg/chains/formats/tekton"
+	"github.com/tektoncd/chains/pkg/chains/objects"
 	"github.com/tektoncd/chains/pkg/chains/signing"
 	"github.com/tektoncd/chains/pkg/chains/signing/kms"
 	"github.com/tektoncd/chains/pkg/chains/signing/x509"
@@ -37,10 +38,10 @@ import (
 )
 
 type Signer interface {
-	SignTaskRun(ctx context.Context, tr *v1beta1.TaskRun) error
+	Sign(ctx context.Context, obj objects.TektonObject) error
 }
 
-type TaskRunSigner struct {
+type ObjectSigner struct {
 	// Formatters: format payload
 	// The keys are the names of different formatters {tekton, in-toto, simplesigning}. The first two are for TaskRun artifact, and simplesigning is for OCI artifact.
 	// The values are actual `Payloader` interfaces that can generate payload in different format from taskrun.
@@ -56,7 +57,11 @@ type TaskRunSigner struct {
 
 func allSigners(ctx context.Context, sp string, cfg config.Config, l *zap.SugaredLogger) map[string]signing.Signer {
 	all := map[string]signing.Signer{}
-	neededSigners := map[string]struct{}{cfg.Artifacts.OCI.Signer: {}, cfg.Artifacts.TaskRuns.Signer: {}}
+	neededSigners := map[string]struct{}{
+		cfg.Artifacts.OCI.Signer:          {},
+		cfg.Artifacts.TaskRuns.Signer:     {},
+		cfg.Artifacts.PipelineRuns.Signer: {},
+	}
 
 	for _, s := range signing.AllSigners {
 		if _, ok := neededSigners[s]; !ok {
@@ -114,18 +119,35 @@ func AllFormatters(cfg config.Config, l *zap.SugaredLogger) map[formats.PayloadT
 	return all
 }
 
-// SignTaskRun signs a TaskRun, and marks it as signed.
-func (ts *TaskRunSigner) SignTaskRun(ctx context.Context, tr *v1beta1.TaskRun) error {
+// TODO: Hook this up to config.
+func getSignableTypes(obj objects.TektonObject, logger *zap.SugaredLogger) ([]artifacts.Signable, error) {
+	switch v := obj.GetObject().(type) {
+	case *v1beta1.TaskRun:
+		return []artifacts.Signable{
+			&artifacts.TaskRunArtifact{Logger: logger},
+			&artifacts.OCIArtifact{Logger: logger},
+		}, nil
+	case *v1beta1.PipelineRun:
+		return []artifacts.Signable{
+			&artifacts.PipelineRunArtifact{Logger: logger},
+		}, nil
+	default:
+		return nil, fmt.Errorf("unsupported type of object to be signed: %s", v)
+	}
+}
+
+// Signs TaskRun and PipelineRun objects, as well as generates attesations for each
+// Follows process of extract payload, sign payload, store payload and signature
+func (o *ObjectSigner) Sign(ctx context.Context, tektonObj objects.TektonObject) error {
 	cfg := *config.FromContext(ctx)
 	logger := logging.FromContext(ctx)
 
-	// TODO: Hook this up to config.
-	enabledSignableTypes := []artifacts.Signable{
-		&artifacts.TaskRunArtifact{Logger: logger},
-		&artifacts.OCIArtifact{Logger: logger},
+	signableTypes, err := getSignableTypes(tektonObj, logger)
+	if err != nil {
+		return err
 	}
 
-	signers := allSigners(ctx, ts.SecretPath, cfg, logger)
+	signers := allSigners(ctx, o.SecretPath, cfg, logger)
 
 	rekorClient, err := getRekor(cfg.Transparency.URL, logger)
 	if err != nil {
@@ -134,22 +156,22 @@ func (ts *TaskRunSigner) SignTaskRun(ctx context.Context, tr *v1beta1.TaskRun) e
 
 	var merr *multierror.Error
 	extraAnnotations := map[string]string{}
-	for _, signableType := range enabledSignableTypes {
+	for _, signableType := range signableTypes {
 		if !signableType.Enabled(cfg) {
 			continue
 		}
 		payloadFormat := signableType.PayloadFormat(cfg)
 		// Find the right payload format and format the object
-		payloader, ok := ts.Formatters[payloadFormat]
+		payloader, ok := o.Formatters[payloadFormat]
 
 		if !ok {
-			logger.Warnf("Format %s configured for TaskRun: %v %s was not found", payloadFormat, tr, signableType.Type())
+			logger.Warnf("Format %s configured for %s: %v was not found", payloadFormat, tektonObj.GetKind(), signableType.Type())
 			continue
 		}
 
 		// Extract all the "things" to be signed.
 		// We might have a few of each type (several binaries, or images)
-		objects := signableType.ExtractObjects(tr)
+		objects := signableType.ExtractObjects(tektonObj)
 
 		// Go through each object one at a time.
 		for _, obj := range objects {
@@ -159,7 +181,7 @@ func (ts *TaskRunSigner) SignTaskRun(ctx context.Context, tr *v1beta1.TaskRun) e
 				logger.Error(err)
 				continue
 			}
-			logger.Infof("Created payload of type %s for TaskRun %s/%s", string(payloadFormat), tr.Namespace, tr.Name)
+			logger.Infof("Created payload of type %s for %s %s/%s", string(payloadFormat), tektonObj.GetKind(), tektonObj.GetNamespace(), tektonObj.GetName())
 
 			// Sign it!
 			signerType := signableType.Signer(cfg)
@@ -193,20 +215,20 @@ func (ts *TaskRunSigner) SignTaskRun(ctx context.Context, tr *v1beta1.TaskRun) e
 
 			// Now store those!
 			for _, backend := range signableType.StorageBackend(cfg).List() {
-				b := ts.Backends[backend]
+				b := o.Backends[backend]
 				storageOpts := config.StorageOpts{
 					Key:           signableType.Key(obj),
 					Cert:          signer.Cert(),
 					Chain:         signer.Chain(),
 					PayloadFormat: payloadFormat,
 				}
-				if err := b.StorePayload(ctx, tr, rawPayload, string(signature), storageOpts); err != nil {
+				if err := b.StorePayload(ctx, tektonObj, rawPayload, string(signature), storageOpts); err != nil {
 					logger.Error(err)
 					merr = multierror.Append(merr, err)
 				}
 			}
 
-			if shouldUploadTlog(cfg, tr) {
+			if shouldUploadTlog(cfg, tektonObj) {
 				entry, err := rekorClient.UploadTlog(ctx, signer, signature, rawPayload, signer.Cert(), string(payloadFormat))
 				if err != nil {
 					merr = multierror.Append(merr, err)
@@ -218,7 +240,7 @@ func (ts *TaskRunSigner) SignTaskRun(ctx context.Context, tr *v1beta1.TaskRun) e
 			}
 		}
 		if merr.ErrorOrNil() != nil {
-			if err := HandleRetry(ctx, tr, ts.Pipelineclientset, extraAnnotations); err != nil {
+			if err := HandleRetry(ctx, tektonObj, o.Pipelineclientset, extraAnnotations); err != nil {
 				merr = multierror.Append(merr, err)
 			}
 			return merr
@@ -226,12 +248,12 @@ func (ts *TaskRunSigner) SignTaskRun(ctx context.Context, tr *v1beta1.TaskRun) e
 	}
 
 	// Now mark the TaskRun as signed
-	return MarkSigned(ctx, tr, ts.Pipelineclientset, extraAnnotations)
+	return MarkSigned(ctx, tektonObj, o.Pipelineclientset, extraAnnotations)
 }
 
-func HandleRetry(ctx context.Context, tr *v1beta1.TaskRun, ps versioned.Interface, annotations map[string]string) error {
-	if RetryAvailable(tr) {
-		return AddRetry(ctx, tr, ps, annotations)
+func HandleRetry(ctx context.Context, obj objects.TektonObject, ps versioned.Interface, annotations map[string]string) error {
+	if RetryAvailable(obj) {
+		return AddRetry(ctx, obj, ps, annotations)
 	}
-	return MarkFailed(ctx, tr, ps, annotations)
+	return MarkFailed(ctx, obj, ps, annotations)
 }

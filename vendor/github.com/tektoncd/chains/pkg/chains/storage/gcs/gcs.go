@@ -21,6 +21,7 @@ import (
 
 	"cloud.google.com/go/storage"
 
+	"github.com/tektoncd/chains/pkg/chains/objects"
 	"github.com/tektoncd/chains/pkg/config"
 	"github.com/tektoncd/pipeline/pkg/apis/pipeline/v1beta1"
 	"go.uber.org/zap"
@@ -60,7 +61,9 @@ func NewStorageBackend(ctx context.Context, logger *zap.SugaredLogger, cfg confi
 }
 
 // StorePayload implements the storage.Backend interface.
-func (b *Backend) StorePayload(ctx context.Context, tr *v1beta1.TaskRun, rawPayload []byte, signature string, opts config.StorageOpts) error {
+func (b *Backend) StorePayload(ctx context.Context, obj objects.TektonObject, rawPayload []byte, signature string, opts config.StorageOpts) error {
+	// TODO: Handle unsupported type gracefully
+	tr := obj.GetObject().(*v1beta1.TaskRun)
 	// We need multiple objects: the signature and the payload. We want to make these unique to the UID, but easy to find based on the
 	// name/namespace as well.
 	// $bucket/taskrun-$namespace-$name/$key.signature
@@ -141,7 +144,9 @@ func (r *reader) GetReader(ctx context.Context, object string) (io.ReadCloser, e
 	return r.client.Bucket(r.bucket).Object(object).NewReader(ctx)
 }
 
-func (b *Backend) RetrieveSignatures(ctx context.Context, tr *v1beta1.TaskRun, opts config.StorageOpts) (map[string][]string, error) {
+func (b *Backend) RetrieveSignatures(ctx context.Context, obj objects.TektonObject, opts config.StorageOpts) (map[string][]string, error) {
+	// TODO: Handle unsupported type gracefully
+	tr := obj.GetObject().(*v1beta1.TaskRun)
 	object := sigName(tr, opts)
 	signature, err := b.retrieveObject(ctx, object)
 	if err != nil {
@@ -153,7 +158,9 @@ func (b *Backend) RetrieveSignatures(ctx context.Context, tr *v1beta1.TaskRun, o
 	return m, nil
 }
 
-func (b *Backend) RetrievePayloads(ctx context.Context, tr *v1beta1.TaskRun, opts config.StorageOpts) (map[string]string, error) {
+func (b *Backend) RetrievePayloads(ctx context.Context, obj objects.TektonObject, opts config.StorageOpts) (map[string]string, error) {
+	// TODO: Handle unsupported type gracefully
+	tr := obj.GetObject().(*v1beta1.TaskRun)
 	object := payloadName(tr, opts)
 	m := make(map[string]string)
 	payload, err := b.retrieveObject(ctx, object)

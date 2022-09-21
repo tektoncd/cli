@@ -23,7 +23,7 @@ import (
 	"time"
 )
 
-//BuildEvent represents a build event
+// BuildEvent represents a build event.
 //
 // GitLab API docs:
 // https://docs.gitlab.com/ce/user/project/integrations/webhooks.html#build-events
@@ -37,6 +37,7 @@ type BuildEvent struct {
 	BuildName         string     `json:"build_name"`
 	BuildStage        string     `json:"build_stage"`
 	BuildStatus       string     `json:"build_status"`
+	BuildCreatedAt    string     `json:"build_created_at"`
 	BuildStartedAt    string     `json:"build_started_at"`
 	BuildFinishedAt   string     `json:"build_finished_at"`
 	BuildDuration     float64    `json:"build_duration"`
@@ -193,6 +194,7 @@ type IssueCommentEvent struct {
 		Attachment   string  `json:"attachment"`
 		LineCode     string  `json:"line_code"`
 		CommitID     string  `json:"commit_id"`
+		DiscussionID string  `json:"discussion_id"`
 		NoteableID   int     `json:"noteable_id"`
 		System       bool    `json:"system"`
 		StDiff       []*Diff `json:"st_diff"`
@@ -273,6 +275,10 @@ type IssueEvent struct {
 	Assignees *[]EventUser `json:"assignees"`
 	Labels    []Label      `json:"labels"`
 	Changes   struct {
+		Assignees struct {
+			Previous []*EventUser `json:"previous"`
+			Current  []*EventUser `json:"current"`
+		} `json:"assignees"`
 		Description struct {
 			Previous string `json:"previous"`
 			Current  string `json:"current"`
@@ -515,11 +521,12 @@ type MergeEvent struct {
 				Email string `json:"email"`
 			} `json:"author"`
 		} `json:"last_commit"`
-		WorkInProgress bool       `json:"work_in_progress"`
-		URL            string     `json:"url"`
-		Action         string     `json:"action"`
-		OldRev         string     `json:"oldrev"`
-		Assignee       *EventUser `json:"assignee"`
+		BlockingDiscussionsResolved bool       `json:"blocking_discussions_resolved"`
+		WorkInProgress              bool       `json:"work_in_progress"`
+		URL                         string     `json:"url"`
+		Action                      string     `json:"action"`
+		OldRev                      string     `json:"oldrev"`
+		Assignee                    *EventUser `json:"assignee"`
 	} `json:"object_attributes"`
 	Repository *Repository  `json:"repository"`
 	Assignee   *EventUser   `json:"assignee"`

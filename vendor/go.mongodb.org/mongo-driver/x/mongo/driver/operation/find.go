@@ -9,6 +9,7 @@ package operation
 import (
 	"context"
 	"errors"
+	"time"
 
 	"go.mongodb.org/mongo-driver/bson/bsontype"
 	"go.mongodb.org/mongo-driver/event"
@@ -30,6 +31,7 @@ type Find struct {
 	comment             *string
 	filter              bsoncore.Document
 	hint                bsoncore.Value
+	let                 bsoncore.Document
 	limit               *int64
 	max                 bsoncore.Document
 	maxTimeMS           *int64
@@ -57,6 +59,7 @@ type Find struct {
 	retry               *driver.RetryMode
 	result              driver.CursorResponse
 	serverAPI           *driver.ServerAPIOptions
+	timeout             *time.Duration
 }
 
 // NewFind constructs and returns a new Find.
@@ -78,7 +81,7 @@ func (f *Find) processResponse(info driver.ResponseInfo) error {
 	return err
 }
 
-// Execute runs this operations and returns an error if the operaiton did not execute successfully.
+// Execute runs this operations and returns an error if the operation did not execute successfully.
 func (f *Find) Execute(ctx context.Context) error {
 	if f.deployment == nil {
 		return errors.New("the Find operation must have a Deployment set before Execute can be called")
@@ -100,6 +103,7 @@ func (f *Find) Execute(ctx context.Context) error {
 		Selector:          f.selector,
 		Legacy:            driver.LegacyFind,
 		ServerAPI:         f.serverAPI,
+		Timeout:           f.timeout,
 	}.Execute(ctx, nil)
 
 }
@@ -136,13 +140,17 @@ func (f *Find) command(dst []byte, desc description.SelectedServer) ([]byte, err
 	if f.hint.Type != bsontype.Type(0) {
 		dst = bsoncore.AppendValueElement(dst, "hint", f.hint)
 	}
+	if f.let != nil {
+		dst = bsoncore.AppendDocumentElement(dst, "let", f.let)
+	}
 	if f.limit != nil {
 		dst = bsoncore.AppendInt64Element(dst, "limit", *f.limit)
 	}
 	if f.max != nil {
 		dst = bsoncore.AppendDocumentElement(dst, "max", f.max)
 	}
-	if f.maxTimeMS != nil {
+	// Only append specified maxTimeMS if timeout is not also specified.
+	if f.maxTimeMS != nil && f.timeout == nil {
 		dst = bsoncore.AppendInt64Element(dst, "maxTimeMS", *f.maxTimeMS)
 	}
 	if f.min != nil {
@@ -261,6 +269,16 @@ func (f *Find) Hint(hint bsoncore.Value) *Find {
 	return f
 }
 
+// Let specifies the let document to use. This option is only valid for server versions 5.0 and above.
+func (f *Find) Let(let bsoncore.Document) *Find {
+	if f == nil {
+		f = new(Find)
+	}
+
+	f.let = let
+	return f
+}
+
 // Limit sets a limit on the number of documents to return.
 func (f *Find) Limit(limit int64) *Find {
 	if f == nil {
@@ -321,7 +339,7 @@ func (f *Find) OplogReplay(oplogReplay bool) *Find {
 	return f
 }
 
-// Project limits the fields returned for all documents.
+// Projection limits the fields returned for all documents.
 func (f *Find) Projection(projection bsoncore.Document) *Find {
 	if f == nil {
 		f = new(Find)
@@ -481,7 +499,7 @@ func (f *Find) ReadConcern(readConcern *readconcern.ReadConcern) *Find {
 	return f
 }
 
-// ReadPreference set the read prefernce used with this operation.
+// ReadPreference set the read preference used with this operation.
 func (f *Find) ReadPreference(readPreference *readpref.ReadPref) *Find {
 	if f == nil {
 		f = new(Find)
@@ -519,5 +537,15 @@ func (f *Find) ServerAPI(serverAPI *driver.ServerAPIOptions) *Find {
 	}
 
 	f.serverAPI = serverAPI
+	return f
+}
+
+// Timeout sets the timeout for this operation.
+func (f *Find) Timeout(timeout *time.Duration) *Find {
+	if f == nil {
+		f = new(Find)
+	}
+
+	f.timeout = timeout
 	return f
 }

@@ -2,8 +2,11 @@ package test
 
 import (
 	"context"
+	"errors"
+	"fmt"
+	"strings"
 
-	resolution "github.com/tektoncd/resolution/pkg/resource"
+	resolution "github.com/tektoncd/pipeline/pkg/resolution/resource"
 )
 
 var _ resolution.Requester = &Requester{}
@@ -37,12 +40,32 @@ type Requester struct {
 	ResolvedResource resolution.ResolvedResource
 	// An error to return when a request is submitted.
 	SubmitErr error
+	// Params that should match those on the request in order to return the resolved resource
+	Params map[string]string
 }
 
 // Submit implements resolution.Requester, accepting the name of a
 // resolver and a request for a specific remote file, and then returns
 // whatever mock data was provided on initialization.
 func (r *Requester) Submit(ctx context.Context, resolverName resolution.ResolverName, req resolution.Request) (resolution.ResolvedResource, error) {
+	if len(r.Params) == 0 {
+		return r.ResolvedResource, r.SubmitErr
+	}
+	reqParams := make(map[string]string)
+	for k, v := range req.Params() {
+		reqParams[k] = v
+	}
+
+	var wrongParams []string
+	for k, v := range r.Params {
+		if reqValue, ok := reqParams[k]; !ok || reqValue != v {
+			wrongParams = append(wrongParams, fmt.Sprintf("expected %s param to be %s, but was %s", k, v, reqValue))
+		}
+	}
+	if len(wrongParams) > 0 {
+		return nil, errors.New(strings.Join(wrongParams, "; "))
+	}
+
 	return r.ResolvedResource, r.SubmitErr
 }
 

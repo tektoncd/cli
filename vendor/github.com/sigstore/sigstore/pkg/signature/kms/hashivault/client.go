@@ -20,6 +20,7 @@ import (
 	"crypto"
 	"encoding/base64"
 	"encoding/json"
+	"errors"
 	"fmt"
 	"log"
 	"os"
@@ -28,10 +29,9 @@ import (
 	"strconv"
 	"time"
 
-	"github.com/ReneKroon/ttlcache/v2"
 	vault "github.com/hashicorp/vault/api"
+	"github.com/jellydator/ttlcache/v2"
 	"github.com/mitchellh/go-homedir"
-	"github.com/pkg/errors"
 	"github.com/sigstore/sigstore/pkg/cryptoutils"
 	"github.com/sigstore/sigstore/pkg/signature"
 	sigkms "github.com/sigstore/sigstore/pkg/signature/kms"
@@ -79,7 +79,7 @@ func parseReference(resourceID string) (keyPath string, err error) {
 	i := referenceRegex.SubexpIndex("path")
 	v := referenceRegex.FindStringSubmatch(resourceID)
 	if len(v) < i+1 {
-		err = errors.Errorf("invalid vault format %q", resourceID)
+		err = fmt.Errorf("invalid vault format %q: %w", resourceID, err)
 		return
 	}
 	keyPath = v[i]
@@ -87,6 +87,10 @@ func parseReference(resourceID string) (keyPath string, err error) {
 }
 
 func newHashivaultClient(address, token, transitSecretEnginePath, keyResourceID string, keyVersion uint64) (*hashivaultClient, error) {
+	if err := ValidReference(keyResourceID); err != nil {
+		return nil, err
+	}
+
 	keyPath, err := parseReference(keyResourceID)
 	if err != nil {
 		return nil, err
@@ -103,7 +107,7 @@ func newHashivaultClient(address, token, transitSecretEnginePath, keyResourceID 
 		Address: address,
 	})
 	if err != nil {
-		return nil, errors.Wrap(err, "new vault client")
+		return nil, fmt.Errorf("new vault client: %w", err)
 	}
 
 	if token == "" {
@@ -113,12 +117,12 @@ func newHashivaultClient(address, token, transitSecretEnginePath, keyResourceID 
 		log.Printf("VAULT_TOKEN is not set, trying to read token from file at path ~/.vault-token")
 		homeDir, err := homedir.Dir()
 		if err != nil {
-			return nil, errors.Wrap(err, "get home directory")
+			return nil, fmt.Errorf("get home directory: %w", err)
 		}
 
 		tokenFromFile, err := os.ReadFile(filepath.Join(homeDir, ".vault-token"))
 		if err != nil {
-			return nil, errors.Wrap(err, "read .vault-token file")
+			return nil, fmt.Errorf("read .vault-token file: %w", err)
 		}
 
 		token = string(tokenFromFile)
@@ -160,7 +164,7 @@ func oidcLogin(_ context.Context, address, path, role, token string) (string, er
 		Address: address,
 	})
 	if err != nil {
-		return "", errors.Wrap(err, "new vault client")
+		return "", fmt.Errorf("new vault client: %w", err)
 	}
 
 	loginData := map[string]interface{}{
@@ -170,7 +174,7 @@ func oidcLogin(_ context.Context, address, path, role, token string) (string, er
 	fullpath := fmt.Sprintf("auth/%s/login", path)
 	resp, err := client.Logical().Write(fullpath, loginData)
 	if err != nil {
-		return "", errors.Wrap(err, "vault oidc login")
+		return "", fmt.Errorf("vault oidc login: %w", err)
 	}
 	return resp.TokenID()
 }
@@ -190,34 +194,54 @@ func (h *hashivaultClient) keyCacheLoaderFunction(key string) (data interface{},
 func (h *hashivaultClient) fetchPublicKey(_ context.Context) (crypto.PublicKey, error) {
 	client := h.client.Logical()
 
-	keyResult, err := client.Read(fmt.Sprintf("/%s/keys/%s", h.transitSecretEnginePath, h.keyPath))
+	path := fmt.Sprintf("/%s/keys/%s", h.transitSecretEnginePath, h.keyPath)
+
+	keyResult, err := client.Read(path)
 	if err != nil {
-		return nil, errors.Wrap(err, "public key")
+		return nil, fmt.Errorf("public key: %w", err)
+	}
+
+	if keyResult == nil {
+		return nil, fmt.Errorf("could not read data from transit key path: %s", path)
 	}
 
 	keysData, hasKeys := keyResult.Data["keys"]
 	latestVersion, hasVersion := keyResult.Data["latest_version"]
 	if !hasKeys || !hasVersion {
-		return nil, errors.New("Failed to read transit key keys: corrupted response")
+		return nil, errors.New("failed to read transit key keys: corrupted response")
 	}
 
 	keys, ok := keysData.(map[string]interface{})
 	if !ok {
-		return nil, errors.New("Failed to read transit key keys: Invalid keys map")
+		return nil, errors.New("failed to read transit key keys: Invalid keys map")
 	}
 
-	keyVersion := latestVersion.(json.Number)
+	keyVersion, ok := latestVersion.(json.Number)
+	if !ok {
+		return nil, fmt.Errorf("format of 'latest_version' is not json.Number")
+	}
+
 	keyData, ok := keys[string(keyVersion)]
 	if !ok {
-		return nil, errors.New("Failed to read transit key keys: corrupted response")
+		return nil, errors.New("failed to read transit key keys: corrupted response")
 	}
 
-	publicKeyPem, ok := keyData.(map[string]interface{})["public_key"]
+	keyMap, ok := keyData.(map[string]interface{})
 	if !ok {
-		return nil, errors.New("Failed to read transit key keys: corrupted response")
+		return nil, fmt.Errorf("could not parse transit key keys data as map[string]interface{}")
 	}
 
-	return cryptoutils.UnmarshalPEMToPublicKey([]byte(publicKeyPem.(string)))
+	publicKeyPem, ok := keyMap["public_key"]
+	if !ok {
+		return nil, errors.New("failed to read transit key keys: corrupted response")
+	}
+
+	strPublicKeyPem, ok := publicKeyPem.(string)
+	if !ok {
+		return nil, fmt.Errorf("could not parse public key pem as string")
+	}
+
+	return cryptoutils.UnmarshalPEMToPublicKey([]byte(strPublicKeyPem))
 }
 
 func (h *hashivaultClient) public() (crypto.PublicKey, error) {
@@ -236,7 +260,7 @@ func (h hashivaultClient) sign(digest []byte, alg crypto.Hash, opts ...signature
 
 	if keyVersion != "" {
 		if _, err := strconv.ParseUint(keyVersion, 10, 64); err != nil {
-			return nil, errors.Wrap(err, "parsing requested key version")
+			return nil, fmt.Errorf("parsing requested key version: %w", err)
 		}
 	}
 
@@ -246,12 +270,12 @@ func (h hashivaultClient) sign(digest []byte, alg crypto.Hash, opts ...signature
 		"key_version": keyVersion,
 	})
 	if err != nil {
-		return nil, errors.Wrap(err, "Transit: failed to sign payload")
+		return nil, fmt.Errorf("transit: failed to sign payload: %w", err)
 	}
 
 	encodedSignature, ok := signResult.Data["signature"]
 	if !ok {
-		return nil, errors.New("Transit: response corrupted in-transit")
+		return nil, errors.New("transit: response corrupted in-transit")
 	}
 
 	return vaultDecode(encodedSignature, keyVersionUsedPtr)
@@ -271,7 +295,7 @@ func (h hashivaultClient) verify(sig, digest []byte, alg crypto.Hash, opts ...si
 		// keyVersion >= 1 on verification but can be set to 0 on signing
 		kvUint, err := strconv.ParseUint(keyVersion, 10, 64)
 		if err != nil {
-			return errors.Wrap(err, "parsing requested key version")
+			return fmt.Errorf("parsing requested key version: %w", err)
 		} else if kvUint == 0 {
 			return errors.New("key version must be >= 1")
 		}
@@ -293,9 +317,8 @@ func (h hashivaultClient) verify(sig, digest []byte, alg crypto.Hash, opts ...si
 		"prehashed": alg != crypto.Hash(0),
 		"signature": fmt.Sprintf("%s%s", vaultDataPrefix, encodedSig),
 	})
-
 	if err != nil {
-		return errors.Wrap(err, "verify")
+		return fmt.Errorf("verify: %w", err)
 	}
 
 	valid, ok := result.Data["valid"]
@@ -305,11 +328,11 @@ func (h hashivaultClient) verify(sig, digest []byte, alg crypto.Hash, opts ...si
 
 	isValid, ok := valid.(bool)
 	if !ok {
-		return fmt.Errorf("data type assertion for field `valid` failed: %T %#v", valid.(bool), valid.(bool))
+		return fmt.Errorf("received non-bool value from 'valid' key")
 	}
 
 	if !isValid {
-		return errors.New("Failed vault verification")
+		return errors.New("failed vault verification")
 	}
 
 	return nil
@@ -319,7 +342,7 @@ func (h hashivaultClient) verify(sig, digest []byte, alg crypto.Hash, opts ...si
 func vaultDecode(data interface{}, keyVersionUsed *string) ([]byte, error) {
 	encoded, ok := data.(string)
 	if !ok {
-		return nil, errors.New("Received non-string data")
+		return nil, errors.New("received non-string data")
 	}
 
 	if keyVersionUsed != nil {
@@ -351,7 +374,7 @@ func (h hashivaultClient) createKey(typeStr string) (crypto.PublicKey, error) {
 	if _, err := client.Write(fmt.Sprintf("/%s/keys/%s", h.transitSecretEnginePath, h.keyPath), map[string]interface{}{
 		"type": typeStr,
 	}); err != nil {
-		return nil, errors.Wrap(err, "Failed to create transit key")
+		return nil, fmt.Errorf("failed to create transit key: %w", err)
 	}
 	return h.public()
 }

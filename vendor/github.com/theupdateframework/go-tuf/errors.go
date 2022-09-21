@@ -17,7 +17,7 @@ type ErrMissingMetadata struct {
 }
 
 func (e ErrMissingMetadata) Error() string {
-	return fmt.Sprintf("tuf: missing metadata %s", e.Name)
+	return fmt.Sprintf("tuf: missing metadata file %s", e.Name)
 }
 
 type ErrFileNotFound struct {
@@ -28,12 +28,12 @@ func (e ErrFileNotFound) Error() string {
 	return fmt.Sprintf("tuf: file not found %s", e.Path)
 }
 
-type ErrInsufficientKeys struct {
+type ErrNoKeys struct {
 	Name string
 }
 
-func (e ErrInsufficientKeys) Error() string {
-	return fmt.Sprintf("tuf: insufficient keys to sign %s", e.Name)
+func (e ErrNoKeys) Error() string {
+	return fmt.Sprintf("tuf: no keys available to sign %s", e.Name)
 }
 
 type ErrInsufficientSignatures struct {
@@ -46,11 +46,12 @@ func (e ErrInsufficientSignatures) Error() string {
 }
 
 type ErrInvalidRole struct {
-	Role string
+	Role   string
+	Reason string
 }
 
 func (e ErrInvalidRole) Error() string {
-	return fmt.Sprintf("tuf: invalid role %s", e.Role)
+	return fmt.Sprintf("tuf: invalid role %s: %s", e.Role, e.Reason)
 }
 
 type ErrInvalidExpires struct {
@@ -86,4 +87,12 @@ type ErrPassphraseRequired struct {
 
 func (e ErrPassphraseRequired) Error() string {
 	return fmt.Sprintf("tuf: a passphrase is required to access the encrypted %s keys file", e.Role)
+}
+
+type ErrNoDelegatedTarget struct {
+	Path string
+}
+
+func (e ErrNoDelegatedTarget) Error() string {
+	return fmt.Sprintf("tuf: no delegated target for path %s", e.Path)
 }

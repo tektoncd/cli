@@ -19,6 +19,7 @@ import (
 	"fmt"
 
 	"github.com/spf13/cobra"
+	"github.com/tektoncd/chains/pkg/chains/objects"
 	"github.com/tektoncd/cli/pkg/chain"
 	"github.com/tektoncd/cli/pkg/cli"
 	"github.com/tektoncd/cli/pkg/taskrun"
@@ -77,7 +78,8 @@ func printSignatures(cs *cli.Clients, namespace string, tr *v1beta1.TaskRun) err
 		}
 
 		// Fetch the signature.
-		signatures, err := backend.RetrieveSignatures(context.Background(), tr, opts)
+		trObj := objects.NewTaskRunObject(tr)
+		signatures, err := backend.RetrieveSignatures(context.Background(), trObj, opts)
 		if err != nil {
 			return fmt.Errorf("error retrieving the signatures: %s", err)
 		}

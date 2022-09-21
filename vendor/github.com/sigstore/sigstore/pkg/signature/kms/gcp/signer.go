@@ -18,12 +18,13 @@ package gcp
 import (
 	"context"
 	"crypto"
+	"fmt"
 	"hash/crc32"
 	"io"
 
-	"github.com/pkg/errors"
 	"github.com/sigstore/sigstore/pkg/signature"
 	"github.com/sigstore/sigstore/pkg/signature/options"
+	"google.golang.org/api/option"
 )
 
 var gcpSupportedHashFuncs = []crypto.Hash{
@@ -41,13 +42,13 @@ type SignerVerifier struct {
 // LoadSignerVerifier generates signatures using the specified key object in GCP KMS and hash algorithm.
 //
 // It also can verify signatures locally using the public key. hashFunc must not be crypto.Hash(0).
-func LoadSignerVerifier(defaultCtx context.Context, referenceStr string) (*SignerVerifier, error) {
+func LoadSignerVerifier(defaultCtx context.Context, referenceStr string, opts ...option.ClientOption) (*SignerVerifier, error) {
 	g := &SignerVerifier{
 		defaultCtx: defaultCtx,
 	}
 
 	var err error
-	g.client, err = newGCPClient(defaultCtx, referenceStr)
+	g.client, err = newGCPClient(defaultCtx, referenceStr, opts...)
 	if err != nil {
 		return nil, err
 	}
@@ -76,7 +77,7 @@ func (g *SignerVerifier) SignMessage(message io.Reader, opts ...signature.SignOp
 
 	signerOpts, err = g.client.getHashFunc()
 	if err != nil {
-		return nil, errors.Wrap(err, "getting fetching default hash function")
+		return nil, fmt.Errorf("getting fetching default hash function: %w", err)
 	}
 
 	for _, opt := range opts {
@@ -167,7 +168,7 @@ func (c cryptoSignerWrapper) Sign(_ io.Reader, digest []byte, opts crypto.Signer
 func (g *SignerVerifier) CryptoSigner(ctx context.Context, errFunc func(error)) (crypto.Signer, crypto.SignerOpts, error) {
 	defaultHf, err := g.client.getHashFunc()
 	if err != nil {
-		return nil, nil, errors.Wrap(err, "getting fetching default hash function")
+		return nil, nil, fmt.Errorf("getting fetching default hash function: %w", err)
 	}
 
 	csw := &cryptoSignerWrapper{

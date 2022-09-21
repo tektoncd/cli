@@ -19,24 +19,14 @@ import (
 	"context"
 	"encoding/json"
 	"errors"
-	"fmt"
-	"os"
 
 	"github.com/coreos/go-oidc/v3/oidc"
+	soauth "github.com/sigstore/sigstore/pkg/oauth"
 	"golang.org/x/oauth2"
 	"gopkg.in/square/go-jose.v2"
 )
 
 const (
-	htmlPage = `<html>
-<title>Sigstore Auth</title>
-<body>
-<h1>Sigstore Auth Successful</h1>
-<p>You may now close this page.</p>
-</body>
-</html>
-`
-
 	// PublicInstanceGithubAuthSubURL Default connector ids used by `oauth2.sigstore.dev` for Github
 	PublicInstanceGithubAuthSubURL = "https://github.com/login/oauth"
 	// PublicInstanceGoogleAuthSubURL Default connector ids used by `oauth2.sigstore.dev` for Google
@@ -65,14 +55,12 @@ func ConnectorIDOpt(prov string) oauth2.AuthCodeOption {
 // DefaultIDTokenGetter is the default implementation.
 // The HTML page and message printed to the terminal can be customized.
 var DefaultIDTokenGetter = &InteractiveIDTokenGetter{
-	MessagePrinter: func(url string) { fmt.Fprintf(os.Stderr, "Your browser will now be opened to:\n%s\n", url) },
-	HTMLPage:       htmlPage,
+	HTMLPage: soauth.InteractiveSuccessHTML,
 }
 
 // PublicInstanceGithubIDTokenGetter is a `oauth2.sigstore.dev` flow selecting github as an Idp
 // Flow is based on `DefaultIDTokenGetter` fields
 var PublicInstanceGithubIDTokenGetter = &InteractiveIDTokenGetter{
-	MessagePrinter:     DefaultIDTokenGetter.MessagePrinter,
 	HTMLPage:           DefaultIDTokenGetter.HTMLPage,
 	ExtraAuthURLParams: []oauth2.AuthCodeOption{ConnectorIDOpt(PublicInstanceGithubAuthSubURL)},
 }
@@ -80,7 +68,6 @@ var PublicInstanceGithubIDTokenGetter = &InteractiveIDTokenGetter{
 // PublicInstanceGoogleIDTokenGetter is a `oauth2.sigstore.dev` flow selecting github as an Idp
 // Flow is based on `DefaultIDTokenGetter` fields
 var PublicInstanceGoogleIDTokenGetter = &InteractiveIDTokenGetter{
-	MessagePrinter:     DefaultIDTokenGetter.MessagePrinter,
 	HTMLPage:           DefaultIDTokenGetter.HTMLPage,
 	ExtraAuthURLParams: []oauth2.AuthCodeOption{ConnectorIDOpt(PublicInstanceGoogleAuthSubURL)},
 }
@@ -88,14 +75,18 @@ var PublicInstanceGoogleIDTokenGetter = &InteractiveIDTokenGetter{
 // PublicInstanceMicrosoftIDTokenGetter is a `oauth2.sigstore.dev` flow selecting microsoft as an Idp
 // Flow is based on `DefaultIDTokenGetter` fields
 var PublicInstanceMicrosoftIDTokenGetter = &InteractiveIDTokenGetter{
-	MessagePrinter:     DefaultIDTokenGetter.MessagePrinter,
 	HTMLPage:           DefaultIDTokenGetter.HTMLPage,
 	ExtraAuthURLParams: []oauth2.AuthCodeOption{ConnectorIDOpt(PublicInstanceMicrosoftAuthSubURL)},
 }
 
 // OIDConnect requests an OIDC Identity Token from the specified issuer using the specified client credentials and TokenGetter
 // NOTE: If the redirectURL is empty a listener on localhost:0 is configured with '/auth/callback' as default path.
-func OIDConnect(issuer string, id string, secret string, redirectURL string, tg TokenGetter) (*OIDCIDToken, error) {
+func OIDConnect(issuer, id, secret, redirectURL string, tg TokenGetter) (*OIDCIDToken, error) {
+	// Check if it's a StaticTokenGetter since NewProvider below will make
+	// network calls unnecessarily and they are ignored.
+	if sg, ok := tg.(*StaticTokenGetter); ok {
+		return sg.GetIDToken(nil, oauth2.Config{})
+	}
 	provider, err := oidc.NewProvider(context.Background(), issuer)
 	if err != nil {
 		return nil, err

@@ -18,21 +18,22 @@ package aws
 import (
 	"context"
 	"crypto"
+	"fmt"
 	"io"
 
-	"github.com/aws/aws-sdk-go/service/kms"
-	"github.com/pkg/errors"
+	"github.com/aws/aws-sdk-go-v2/config"
+	"github.com/aws/aws-sdk-go-v2/service/kms/types"
 	"github.com/sigstore/sigstore/pkg/signature"
 	"github.com/sigstore/sigstore/pkg/signature/options"
 )
 
-var awsSupportedAlgorithms = []string{
-	kms.CustomerMasterKeySpecRsa2048,
-	kms.CustomerMasterKeySpecRsa3072,
-	kms.CustomerMasterKeySpecRsa4096,
-	kms.CustomerMasterKeySpecEccNistP256,
-	kms.CustomerMasterKeySpecEccNistP384,
-	kms.CustomerMasterKeySpecEccNistP521,
+var awsSupportedAlgorithms = []types.CustomerMasterKeySpec{
+	types.CustomerMasterKeySpecRsa2048,
+	types.CustomerMasterKeySpecRsa3072,
+	types.CustomerMasterKeySpecRsa4096,
+	types.CustomerMasterKeySpecEccNistP256,
+	types.CustomerMasterKeySpecEccNistP384,
+	types.CustomerMasterKeySpecEccNistP521,
 }
 
 var awsSupportedHashFuncs = []crypto.Hash{
@@ -49,11 +50,11 @@ type SignerVerifier struct {
 // LoadSignerVerifier generates signatures using the specified key object in AWS KMS and hash algorithm.
 //
 // It also can verify signatures locally using the public key. hashFunc must not be crypto.Hash(0).
-func LoadSignerVerifier(referenceStr string) (*SignerVerifier, error) {
+func LoadSignerVerifier(ctx context.Context, referenceStr string, opts ...func(*config.LoadOptions) error) (*SignerVerifier, error) {
 	a := &SignerVerifier{}
 
 	var err error
-	a.client, err = newAWSClient(referenceStr)
+	a.client, err = newAWSClient(ctx, referenceStr, opts...)
 	if err != nil {
 		return nil, err
 	}
@@ -87,7 +88,7 @@ func (a *SignerVerifier) SignMessage(message io.Reader, opts ...signature.SignOp
 	var signerOpts crypto.SignerOpts
 	signerOpts, err = a.client.getHashFunc(ctx)
 	if err != nil {
-		return nil, errors.Wrap(err, "getting fetching default hash function")
+		return nil, fmt.Errorf("getting fetching default hash function: %w", err)
 	}
 	for _, opt := range opts {
 		opt.ApplyCryptoSignerOpts(&signerOpts)
@@ -154,7 +155,7 @@ func (a *SignerVerifier) VerifySignature(sig, message io.Reader, opts ...signatu
 	var signerOpts crypto.SignerOpts
 	signerOpts, err = a.client.getHashFunc(ctx)
 	if err != nil {
-		return errors.Wrap(err, "getting hash func")
+		return fmt.Errorf("getting hash func: %w", err)
 	}
 	for _, opt := range opts {
 		opt.ApplyCryptoSignerOpts(&signerOpts)
@@ -170,7 +171,7 @@ func (a *SignerVerifier) VerifySignature(sig, message io.Reader, opts ...signatu
 
 	sigBytes, err := io.ReadAll(sig)
 	if err != nil {
-		return errors.Wrap(err, "reading signature")
+		return fmt.Errorf("reading signature: %w", err)
 	}
 	return a.client.verifyRemotely(ctx, sigBytes, digest)
 }
@@ -214,7 +215,7 @@ func (c cryptoSignerWrapper) Sign(_ io.Reader, digest []byte, opts crypto.Signer
 func (a *SignerVerifier) CryptoSigner(ctx context.Context, errFunc func(error)) (crypto.Signer, crypto.SignerOpts, error) {
 	defaultHf, err := a.client.getHashFunc(ctx)
 	if err != nil {
-		return nil, nil, errors.Wrap(err, "getting fetching default hash function")
+		return nil, nil, fmt.Errorf("getting fetching default hash function: %w", err)
 	}
 
 	csw := &cryptoSignerWrapper{
@@ -229,10 +230,14 @@ func (a *SignerVerifier) CryptoSigner(ctx context.Context, errFunc func(error)) 
 
 // SupportedAlgorithms returns the list of algorithms supported by the AWS KMS service
 func (*SignerVerifier) SupportedAlgorithms() []string {
-	return awsSupportedAlgorithms
+	s := make([]string, len(awsSupportedAlgorithms))
+	for i := range awsSupportedAlgorithms {
+		s[i] = string(awsSupportedAlgorithms[i])
+	}
+	return s
 }
 
 // DefaultAlgorithm returns the default algorithm for the AWS KMS service
 func (*SignerVerifier) DefaultAlgorithm() string {
-	return kms.CustomerMasterKeySpecEccNistP256
+	return string(types.CustomerMasterKeySpecEccNistP256)
 }

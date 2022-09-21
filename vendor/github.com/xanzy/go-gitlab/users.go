@@ -207,6 +207,7 @@ type CreateUserOptions struct {
 	External            *bool   `url:"external,omitempty" json:"external,omitempty"`
 	PrivateProfile      *bool   `url:"private_profile,omitempty" json:"private_profile,omitempty"`
 	Note                *string `url:"note,omitempty" json:"note,omitempty"`
+	ThemeID             *int    `url:"theme_id,omitempty" json:"theme_id,omitempty"`
 }
 
 // CreateUser creates a new user. Note only administrators can create new users.
@@ -252,6 +253,7 @@ type ModifyUserOptions struct {
 	External           *bool   `url:"external,omitempty" json:"external,omitempty"`
 	PrivateProfile     *bool   `url:"private_profile,omitempty" json:"private_profile,omitempty"`
 	Note               *string `url:"note,omitempty" json:"note,omitempty"`
+	ThemeID            *int    `url:"theme_id,omitempty" json:"theme_id,omitempty"`
 	PublicEmail        *string `url:"public_email,omitempty" json:"public_email,omitempty"`
 }
 
@@ -604,7 +606,7 @@ func (s *UsersService) ListGPGKeys(options ...RequestOptionFunc) ([]*GPGKey, *Re
 //
 // GitLab API docs: https://docs.gitlab.com/ce/api/users.html#get-a-specific-gpg-key
 func (s *UsersService) GetGPGKey(key int, options ...RequestOptionFunc) (*GPGKey, *Response, error) {
-	u := fmt.Sprintf("users/gpg_keys/%d", key)
+	u := fmt.Sprintf("user/gpg_keys/%d", key)
 
 	req, err := s.client.NewRequest(http.MethodGet, u, nil, options)
 	if err != nil {
@@ -649,7 +651,7 @@ func (s *UsersService) AddGPGKey(opt *AddGPGKeyOptions, options ...RequestOption
 //
 // GitLab API docs: https://docs.gitlab.com/ce/api/users.html#delete-a-gpg-key
 func (s *UsersService) DeleteGPGKey(key int, options ...RequestOptionFunc) (*Response, error) {
-	u := fmt.Sprintf("users/gpg_keys/%d", key)
+	u := fmt.Sprintf("user/gpg_keys/%d", key)
 
 	req, err := s.client.NewRequest(http.MethodDelete, u, nil, options)
 	if err != nil {
@@ -704,10 +706,10 @@ func (s *UsersService) GetGPGKeyForUser(user, key int, options ...RequestOptionF
 //
 // GitLab API docs:
 // https://docs.gitlab.com/ce/api/users.html#add-a-gpg-key-for-a-given-user
-func (s *UsersService) AddGPGKeyForUser(user int, options ...RequestOptionFunc) (*GPGKey, *Response, error) {
+func (s *UsersService) AddGPGKeyForUser(user int, opt *AddGPGKeyOptions, options ...RequestOptionFunc) (*GPGKey, *Response, error) {
 	u := fmt.Sprintf("users/%d/gpg_keys", user)
 
-	req, err := s.client.NewRequest(http.MethodPost, u, nil, options)
+	req, err := s.client.NewRequest(http.MethodPost, u, opt, options)
 	if err != nil {
 		return nil, nil, err
 	}
@@ -812,9 +814,10 @@ func (s *UsersService) GetEmail(email int, options ...RequestOptionFunc) (*Email
 
 // AddEmailOptions represents the available AddEmail() options.
 //
-// GitLab API docs: https://docs.gitlab.com/ce/api/projects.html#add-email
+// GitLab API docs: https://docs.gitlab.com/ce/api/users.html#add-email
 type AddEmailOptions struct {
-	Email *string `url:"email,omitempty" json:"email,omitempty"`
+	Email            *string `url:"email,omitempty" json:"email,omitempty"`
+	SkipConfirmation *bool   `url:"skip_confirmation,omitempty" json:"skip_confirmation,omitempty"`
 }
 
 // AddEmail creates a new email owned by the currently authenticated user.

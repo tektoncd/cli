@@ -24,9 +24,12 @@ import (
 	"runtime/debug"
 	"strings"
 	"text/tabwriter"
+	"time"
 
 	"github.com/common-nighthawk/go-figure"
 )
+
+const unknown = "unknown"
 
 // Base version information.
 //
@@ -37,13 +40,19 @@ var (
 	// branch should be tagged using the correct versioning strategy.
 	gitVersion = "devel"
 	// SHA1 from git, output of $(git rev-parse HEAD)
-	gitCommit = "unknown"
+	gitCommit = unknown
 	// State of git tree, either "clean" or "dirty"
-	gitTreeState = "unknown"
+	gitTreeState = unknown
 	// Build date in ISO8601 format, output of $(date -u +'%Y-%m-%dT%H:%M:%SZ')
-	buildDate = "unknown"
+	buildDate = unknown
 	// flag to print the ascii name banner
 	asciiName = "true"
+	// goVersion is the used golang version.
+	goVersion = unknown
+	// compiler is the used golang compiler.
+	compiler = unknown
+	// platform is the used os/arch identifier.
+	platform = unknown
 )
 
 type Info struct {
@@ -61,36 +70,101 @@ type Info struct {
 	Description string `json:"-"`
 }
 
+func getBuildInfo() *debug.BuildInfo {
+	bi, ok := debug.ReadBuildInfo()
+	if !ok {
+		return nil
+	}
+	return bi
+}
+
+func getGitVersion(bi *debug.BuildInfo) string {
+	if bi == nil {
+		return unknown
+	}
+
+	// TODO: remove this when the issue https://github.com/golang/go/issues/29228 is fixed
+	if bi.Main.Version == "(devel)" || bi.Main.Version == "" {
+		return gitVersion
+	}
+
+	return bi.Main.Version
+}
+
+func getCommit(bi *debug.BuildInfo) string {
+	return getKey(bi, "vcs.revision")
+}
+
+func getDirty(bi *debug.BuildInfo) string {
+	modified := getKey(bi, "vcs.modified")
+	if modified == "true" {
+		return "dirty"
+	}
+	if modified == "false" {
+		return "clean"
+	}
+	return unknown
+}
+
+func getBuildDate(bi *debug.BuildInfo) string {
+	buildTime := getKey(bi, "vcs.time")
+	t, err := time.Parse("2006-01-02T15:04:05Z", buildTime)
+	if err != nil {
+		return unknown
+	}
+	return t.Format("2006-01-02T15:04:05")
+}
+
+func getKey(bi *debug.BuildInfo, key string) string {
+	if bi == nil {
+		return unknown
+	}
+	for _, iter := range bi.Settings {
+		if iter.Key == key {
+			return iter.Value
+		}
+	}
+	return unknown
+}
+
 // GetVersionInfo represents known information on how this binary was built.
 func GetVersionInfo() Info {
-	info := Info{
+	buildInfo := getBuildInfo()
+	gitVersion = getGitVersion(buildInfo)
+	if gitCommit == unknown {
+		gitCommit = getCommit(buildInfo)
+	}
+
+	if gitTreeState == unknown {
+		gitTreeState = getDirty(buildInfo)
+	}
+
+	if buildDate == unknown {
+		buildDate = getBuildDate(buildInfo)
+	}
+
+	if goVersion == unknown {
+		goVersion = runtime.Version()
+	}
+
+	if compiler == unknown {
+		compiler = runtime.Compiler
+	}
+
+	if platform == unknown {
+		platform = fmt.Sprintf("%s/%s", runtime.GOOS, runtime.GOARCH)
+	}
+
+	return Info{
 		ASCIIName:    asciiName,
 		GitVersion:   gitVersion,
 		GitCommit:    gitCommit,
 		GitTreeState: gitTreeState,
 		BuildDate:    buildDate,
-		GoVersion:    runtime.Version(),
-		Compiler:     runtime.Compiler,
-		Platform:     fmt.Sprintf("%s/%s", runtime.GOOS, runtime.GOARCH),
+		GoVersion:    goVersion,
+		Compiler:     compiler,
+		Platform:     platform,
 	}
-
-	// Look for the default version and replace it from runtime build info if possible.
-	if info.GitVersion != "devel" {
-		return info
-	}
-
-	// If there is debug info for the module, this binary was installed outside
-	// the normal build process and might not have the ld flags set.
-	bi, ok := debug.ReadBuildInfo()
-	if !ok {
-		return info
-	}
-
-	// Version is set in artifacts built with -X sigs.k8s.io/release-utils/version.gitVersion=<version>
-	// Ensure version is also set when installed via go install <module>
-	info.GitVersion = bi.Main.Version
-
-	return info
 }
 
 // String returns the string representation of the version info

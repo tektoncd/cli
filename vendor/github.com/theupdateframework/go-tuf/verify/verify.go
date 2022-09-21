@@ -13,10 +13,10 @@ import (
 type signedMeta struct {
 	Type    string    `json:"_type"`
 	Expires time.Time `json:"expires"`
-	Version int       `json:"version"`
+	Version int64     `json:"version"`
 }
 
-func (db *DB) VerifyIgnoreExpiredCheck(s *data.Signed, role string, minVersion int) error {
+func (db *DB) VerifyIgnoreExpiredCheck(s *data.Signed, role string, minVersion int64) error {
 	if err := db.VerifySignatures(s, role); err != nil {
 		return err
 	}
@@ -46,8 +46,8 @@ func (db *DB) VerifyIgnoreExpiredCheck(s *data.Signed, role string, minVersion i
 	return nil
 }
 
-func (db *DB) Verify(s *data.Signed, role string, minVersion int) error {
-
+func (db *DB) Verify(s *data.Signed, role string, minVersion int64) error {
+	// Verify signatures and versions
 	err := db.VerifyIgnoreExpiredCheck(s, role, minVersion)
 
 	if err != nil {
@@ -58,7 +58,7 @@ func (db *DB) Verify(s *data.Signed, role string, minVersion int) error {
 	if err := json.Unmarshal(s.Signed, sm); err != nil {
 		return err
 	}
-
+	// Verify expiration
 	if IsExpired(sm.Expires) {
 		return ErrExpired{sm.Expires}
 	}
@@ -92,8 +92,8 @@ func (db *DB) VerifySignatures(s *data.Signed, role string) error {
 	// Verify that a threshold of keys signed the data. Since keys can have
 	// multiple key ids, we need to protect against multiple attached
 	// signatures that just differ on the key id.
-	seen := make(map[string]struct{})
-	valid := 0
+	verifiedKeyIDs := make(map[string]struct{})
+	numVerifiedKeys := 0
 	for _, sig := range s.Signatures {
 		if !roleData.ValidKey(sig.KeyID) {
 			continue
@@ -104,27 +104,38 @@ func (db *DB) VerifySignatures(s *data.Signed, role string) error {
 		}
 
 		if err := verifier.Verify(msg, sig.Signature); err != nil {
+			// FIXME: don't err out on the 1st bad signature.
 			return ErrInvalid
 		}
 
 		// Only consider this key valid if we haven't seen any of it's
 		// key ids before.
-		if _, ok := seen[sig.KeyID]; !ok {
-			for _, id := range verifier.MarshalPublicKey().IDs() {
-				seen[id] = struct{}{}
+		// Careful: we must not rely on the key IDs _declared in the file_,
+		// instead we get to decide what key IDs this key correspond to.
+		// XXX dangerous; better stop supporting multiple key IDs altogether.
+		keyIDs := verifier.MarshalPublicKey().IDs()
+		wasKeySeen := false
+		for _, keyID := range keyIDs {
+			if _, present := verifiedKeyIDs[keyID]; present {
+				wasKeySeen = true
+			}
+		}
+		if !wasKeySeen {
+			for _, id := range keyIDs {
+				verifiedKeyIDs[id] = struct{}{}
 			}
 
-			valid++
+			numVerifiedKeys++
 		}
 	}
-	if valid < roleData.Threshold {
-		return ErrRoleThreshold{roleData.Threshold, valid}
+	if numVerifiedKeys < roleData.Threshold {
+		return ErrRoleThreshold{roleData.Threshold, numVerifiedKeys}
 	}
 
 	return nil
 }
 
-func (db *DB) Unmarshal(b []byte, v interface{}, role string, minVersion int) error {
+func (db *DB) Unmarshal(b []byte, v interface{}, role string, minVersion int64) error {
 	s := &data.Signed{}
 	if err := json.Unmarshal(b, s); err != nil {
 		return err
@@ -136,7 +147,7 @@ func (db *DB) Unmarshal(b []byte, v interface{}, role string, minVersion int) er
 }
 
 // UnmarshalExpired is exactly like Unmarshal except ignores expired timestamp error.
-func (db *DB) UnmarshalIgnoreExpired(b []byte, v interface{}, role string, minVersion int) error {
+func (db *DB) UnmarshalIgnoreExpired(b []byte, v interface{}, role string, minVersion int64) error {
 	s := &data.Signed{}
 	if err := json.Unmarshal(b, s); err != nil {
 		return err

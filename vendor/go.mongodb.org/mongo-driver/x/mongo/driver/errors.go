@@ -1,3 +1,9 @@
+// Copyright (C) MongoDB, Inc. 2022-present.
+//
+// Licensed under the Apache License, Version 2.0 (the "License"); you may
+// not use this file except in compliance with the License. You may obtain
+// a copy of the License at http://www.apache.org/licenses/LICENSE-2.0
+
 package driver
 
 import (
@@ -39,6 +45,9 @@ var (
 	// ErrUnsupportedStorageEngine is returned when a retryable write is attempted against a server
 	// that uses a storage engine that does not support retryable writes
 	ErrUnsupportedStorageEngine = errors.New("this MongoDB deployment does not support retryable writes. Please add retryWrites=false to your connection string")
+	// ErrDeadlineWouldBeExceeded is returned when a Timeout set on an operation would be exceeded
+	// if the operation were sent to the server.
+	ErrDeadlineWouldBeExceeded = errors.New("operation not sent to server, as Timeout would be exceeded")
 )
 
 // QueryFailureError is an error representing a command failure as a document.
@@ -82,6 +91,7 @@ type WriteCommandError struct {
 	WriteConcernError *WriteConcernError
 	WriteErrors       WriteErrors
 	Labels            []string
+	Raw               bsoncore.Document
 }
 
 // UnsupportedStorageEngine returns whether or not the WriteCommandError comes from a retryable write being attempted
@@ -129,6 +139,7 @@ type WriteConcernError struct {
 	Details         bsoncore.Document
 	Labels          []string
 	TopologyVersion *description.TopologyVersion
+	Raw             bsoncore.Document
 }
 
 func (wce WriteConcernError) Error() string {
@@ -189,6 +200,7 @@ type WriteError struct {
 	Code    int64
 	Message string
 	Details bsoncore.Document
+	Raw     bsoncore.Document
 }
 
 func (we WriteError) Error() string { return we.Message }
@@ -218,6 +230,7 @@ type Error struct {
 	Name            string
 	Wrapped         error
 	TopologyVersion *description.TopologyVersion
+	Raw             bsoncore.Document
 }
 
 // UnsupportedStorageEngine returns whether e came as a result of an unsupported storage engine
@@ -417,6 +430,7 @@ func ExtractErrorFromServerResponse(doc bsoncore.Document) error {
 					we.Details = make([]byte, len(info))
 					copy(we.Details, info)
 				}
+				we.Raw = doc
 				wcError.WriteErrors = append(wcError.WriteErrors, we)
 			}
 		case "writeConcernError":
@@ -425,6 +439,7 @@ func ExtractErrorFromServerResponse(doc bsoncore.Document) error {
 				break
 			}
 			wcError.WriteConcernError = new(WriteConcernError)
+			wcError.WriteConcernError.Raw = doc
 			if code, exists := doc.Lookup("code").AsInt64OK(); exists {
 				wcError.WriteConcernError.Code = code
 			}
@@ -472,6 +487,7 @@ func ExtractErrorFromServerResponse(doc bsoncore.Document) error {
 			Name:            codeName,
 			Labels:          labels,
 			TopologyVersion: tv,
+			Raw:             doc,
 		}
 	}
 
@@ -480,6 +496,7 @@ func ExtractErrorFromServerResponse(doc bsoncore.Document) error {
 		if wcError.WriteConcernError != nil {
 			wcError.WriteConcernError.TopologyVersion = tv
 		}
+		wcError.Raw = doc
 		return wcError
 	}
 

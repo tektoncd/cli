@@ -28,6 +28,7 @@ import (
 	"github.com/sigstore/cosign/pkg/types"
 	"github.com/tektoncd/chains/pkg/artifacts"
 	"github.com/tektoncd/chains/pkg/chains/formats"
+	"github.com/tektoncd/chains/pkg/chains/objects"
 	"github.com/tektoncd/chains/pkg/config"
 	"github.com/tektoncd/pipeline/pkg/apis/pipeline/v1beta1"
 	"go.uber.org/zap"
@@ -87,7 +88,9 @@ func NewStorageBackend(ctx context.Context, logger *zap.SugaredLogger, cfg confi
 }
 
 // StorePayload implements the storage.Backend interface.
-func (b *Backend) StorePayload(ctx context.Context, tr *v1beta1.TaskRun, rawPayload []byte, signature string, opts config.StorageOpts) error {
+func (b *Backend) StorePayload(ctx context.Context, obj objects.TektonObject, rawPayload []byte, signature string, opts config.StorageOpts) error {
+	// TODO: Gracefully handle unexpected type
+	tr := obj.GetObject().(*v1beta1.TaskRun)
 	// We only support simplesigning for OCI images, and in-toto for taskrun.
 	if opts.PayloadFormat != formats.PayloadTypeInTotoIte6 && opts.PayloadFormat != formats.PayloadTypeSimpleSigning {
 		return errors.New("Grafeas storage backend only supports simplesigning and intoto payload format.")
@@ -126,7 +129,9 @@ func (b *Backend) StorePayload(ctx context.Context, tr *v1beta1.TaskRun, rawPayl
 }
 
 // Retrieve payloads from grafeas server and store it in a map
-func (b *Backend) RetrievePayloads(ctx context.Context, tr *v1beta1.TaskRun, opts config.StorageOpts) (map[string]string, error) {
+func (b *Backend) RetrievePayloads(ctx context.Context, obj objects.TektonObject, opts config.StorageOpts) (map[string]string, error) {
+	// TODO: Gracefully handle unexpected type
+	tr := obj.GetObject().(*v1beta1.TaskRun)
 	// initialize an empty map for result
 	result := make(map[string]string)
 
@@ -150,7 +155,9 @@ func (b *Backend) RetrievePayloads(ctx context.Context, tr *v1beta1.TaskRun, opt
 }
 
 // Retrieve signatures from grafeas server and store it in a map
-func (b *Backend) RetrieveSignatures(ctx context.Context, tr *v1beta1.TaskRun, opts config.StorageOpts) (map[string][]string, error) {
+func (b *Backend) RetrieveSignatures(ctx context.Context, obj objects.TektonObject, opts config.StorageOpts) (map[string][]string, error) {
+	// TODO: Gracefully handle unexpected type
+	tr := obj.GetObject().(*v1beta1.TaskRun)
 	// initialize an empty map for result
 	result := make(map[string][]string)
 
@@ -409,7 +416,8 @@ func (b *Backend) retrieveSingleOCIURI(tr *v1beta1.TaskRun, opts config.StorageO
 func (b *Backend) retrieveAllArtifactIdentifiers(tr *v1beta1.TaskRun) []string {
 	result := []string{}
 	// for image artifacts
-	images := artifacts.ExtractOCIImagesFromResults(tr, b.logger)
+	trObj := objects.NewTaskRunObject(tr)
+	images := artifacts.ExtractOCIImagesFromResults(trObj, b.logger)
 	for _, image := range images {
 		ref, ok := image.(name.Digest)
 		if !ok {
@@ -419,7 +427,7 @@ func (b *Backend) retrieveAllArtifactIdentifiers(tr *v1beta1.TaskRun) []string {
 	}
 
 	// for other signable artifacts
-	artifacts := artifacts.ExtractSignableTargetFromResults(tr, b.logger)
+	artifacts := artifacts.ExtractSignableTargetFromResults(trObj, b.logger)
 	for _, a := range artifacts {
 		result = append(result, a.FullRef())
 	}

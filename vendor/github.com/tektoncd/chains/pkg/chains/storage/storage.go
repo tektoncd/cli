@@ -16,6 +16,7 @@ package storage
 import (
 	"context"
 
+	"github.com/tektoncd/chains/pkg/chains/objects"
 	"github.com/tektoncd/chains/pkg/chains/storage/docdb"
 	"github.com/tektoncd/chains/pkg/chains/storage/gcs"
 	"github.com/tektoncd/chains/pkg/chains/storage/grafeas"
@@ -23,7 +24,6 @@ import (
 	"github.com/tektoncd/chains/pkg/chains/storage/pubsub"
 	"github.com/tektoncd/chains/pkg/chains/storage/tekton"
 	"github.com/tektoncd/chains/pkg/config"
-	"github.com/tektoncd/pipeline/pkg/apis/pipeline/v1beta1"
 	"github.com/tektoncd/pipeline/pkg/client/clientset/versioned"
 	"go.uber.org/zap"
 	"k8s.io/client-go/kubernetes"
@@ -31,11 +31,11 @@ import (
 
 // Backend is an interface to store a chains Payload
 type Backend interface {
-	StorePayload(ctx context.Context, tr *v1beta1.TaskRun, rawPayload []byte, signature string, opts config.StorageOpts) error
+	StorePayload(ctx context.Context, obj objects.TektonObject, rawPayload []byte, signature string, opts config.StorageOpts) error
 	// RetrievePayloads maps [ref]:[payload] for a TaskRun
-	RetrievePayloads(ctx context.Context, tr *v1beta1.TaskRun, opts config.StorageOpts) (map[string]string, error)
+	RetrievePayloads(ctx context.Context, obj objects.TektonObject, opts config.StorageOpts) (map[string]string, error)
 	// RetrieveSignatures maps [ref]:[list of signatures] for a TaskRun
-	RetrieveSignatures(ctx context.Context, tr *v1beta1.TaskRun, opts config.StorageOpts) (map[string][]string, error)
+	RetrieveSignatures(ctx context.Context, obj objects.TektonObject, opts config.StorageOpts) (map[string][]string, error)
 	// Type is the string representation of the backend
 	Type() string
 }
@@ -49,6 +49,9 @@ func InitializeBackends(ctx context.Context, ps versioned.Interface, kc kubernet
 	}
 	if cfg.Artifacts.OCI.Enabled() {
 		configuredBackends = append(configuredBackends, cfg.Artifacts.OCI.StorageBackend.List()...)
+	}
+	if cfg.Artifacts.PipelineRuns.Enabled() {
+		configuredBackends = append(configuredBackends, cfg.Artifacts.PipelineRuns.StorageBackend.List()...)
 	}
 
 	// Now only initialize and return the configured ones.

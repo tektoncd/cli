@@ -26,8 +26,12 @@ import (
 type Interface interface {
 	// Pipelines returns a PipelineInformer.
 	Pipelines() PipelineInformer
+	// PipelineRuns returns a PipelineRunInformer.
+	PipelineRuns() PipelineRunInformer
 	// Tasks returns a TaskInformer.
 	Tasks() TaskInformer
+	// TaskRuns returns a TaskRunInformer.
+	TaskRuns() TaskRunInformer
 }
 
 type version struct {
@@ -46,7 +50,17 @@ func (v *version) Pipelines() PipelineInformer {
 	return &pipelineInformer{factory: v.factory, namespace: v.namespace, tweakListOptions: v.tweakListOptions}
 }
 
+// PipelineRuns returns a PipelineRunInformer.
+func (v *version) PipelineRuns() PipelineRunInformer {
+	return &pipelineRunInformer{factory: v.factory, namespace: v.namespace, tweakListOptions: v.tweakListOptions}
+}
+
 // Tasks returns a TaskInformer.
 func (v *version) Tasks() TaskInformer {
 	return &taskInformer{factory: v.factory, namespace: v.namespace, tweakListOptions: v.tweakListOptions}
+}
+
+// TaskRuns returns a TaskRunInformer.
+func (v *version) TaskRuns() TaskRunInformer {
+	return &taskRunInformer{factory: v.factory, namespace: v.namespace, tweakListOptions: v.tweakListOptions}
 }

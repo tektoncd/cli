@@ -1,3 +1,9 @@
+// Copyright (C) MongoDB, Inc. 2022-present.
+//
+// Licensed under the Apache License, Version 2.0 (the "License"); you may
+// not use this file except in compliance with the License. You may obtain
+// a copy of the License at http://www.apache.org/licenses/LICENSE-2.0
+
 package topology
 
 import (
@@ -11,7 +17,7 @@ type ConnectionError struct {
 	ConnectionID string
 	Wrapped      error
 
-	// init will be set to true if this error occured during connection initialization or
+	// init will be set to true if this error occurred during connection initialization or
 	// during a connection handshake.
 	init    bool
 	message string
@@ -21,7 +27,7 @@ type ConnectionError struct {
 func (e ConnectionError) Error() string {
 	message := e.message
 	if e.init {
-		fullMsg := "error occured during connection handshake"
+		fullMsg := "error occurred during connection handshake"
 		if message != "" {
 			fullMsg = fmt.Sprintf("%s: %s", fullMsg, message)
 		}
