@@ -17,6 +17,8 @@ import (
 	"sync"
 	"sync/atomic"
 	"time"
+	"unicode"
+	"unicode/utf8"
 
 	"github.com/fatih/color"
 )
@@ -420,7 +422,9 @@ func (l *intLogger) logPlain(t time.Time, name string, level Level, msg string, 
 				} else {
 					l.writer.WriteByte('=')
 				}
-				l.writer.WriteString(strconv.Quote(val))
+				l.writer.WriteByte('"')
+				writeEscapedForOutput(l.writer, val, true)
+				l.writer.WriteByte('"')
 			} else {
 				l.writer.WriteByte(' ')
 				l.writer.WriteString(key)
@@ -448,17 +452,96 @@ func writeIndent(w *writer, str string, indent string) {
 		if nl == -1 {
 			if str != "" {
 				w.WriteString(indent)
-				w.WriteString(str)
+				writeEscapedForOutput(w, str, false)
 				w.WriteString("\n")
 			}
 			return
 		}
 
 		w.WriteString(indent)
-		w.WriteString(str[:nl])
+		writeEscapedForOutput(w, str[:nl], false)
 		w.WriteString("\n")
 		str = str[nl+1:]
 	}
+}
+
+func needsEscaping(str string) bool {
+	for _, b := range str {
+		if !unicode.IsPrint(b) || b == '"' {
+			return true
+		}
+	}
+
+	return false
+}
+
+const (
+	lowerhex = "0123456789abcdef"
+)
+
+var bufPool = sync.Pool{
+	New: func() interface{} {
+		return new(bytes.Buffer)
+	},
+}
+
+func writeEscapedForOutput(w io.Writer, str string, escapeQuotes bool) {
+	if !needsEscaping(str) {
+		w.Write([]byte(str))
+		return
+	}
+
+	bb := bufPool.Get().(*bytes.Buffer)
+	bb.Reset()
+
+	defer bufPool.Put(bb)
+
+	for _, r := range str {
+		if escapeQuotes && r == '"' {
+			bb.WriteString(`\"`)
+		} else if unicode.IsPrint(r) {
+			bb.WriteRune(r)
+		} else {
+			switch r {
+			case '\a':
+				bb.WriteString(`\a`)
+			case '\b':
+				bb.WriteString(`\b`)
+			case '\f':
+				bb.WriteString(`\f`)
+			case '\n':
+				bb.WriteString(`\n`)
+			case '\r':
+				bb.WriteString(`\r`)
+			case '\t':
+				bb.WriteString(`\t`)
+			case '\v':
+				bb.WriteString(`\v`)
+			default:
+				switch {
+				case r < ' ':
+					bb.WriteString(`\x`)
+					bb.WriteByte(lowerhex[byte(r)>>4])
+					bb.WriteByte(lowerhex[byte(r)&0xF])
+				case !utf8.ValidRune(r):
+					r = 0xFFFD
+					fallthrough
+				case r < 0x10000:
+					bb.WriteString(`\u`)
+					for s := 12; s >= 0; s -= 4 {
+						bb.WriteByte(lowerhex[r>>uint(s)&0xF])
+					}
+				default:
+					bb.WriteString(`\U`)
+					for s := 28; s >= 0; s -= 4 {
+						bb.WriteByte(lowerhex[r>>uint(s)&0xF])
+					}
+				}
+			}
+		}
+	}
+
+	w.Write(bb.Bytes())
 }
 
 func (l *intLogger) renderSlice(v reflect.Value) string {
