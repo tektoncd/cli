@@ -17,7 +17,9 @@ package oauthflow
 
 import (
 	"context"
+	"errors"
 	"fmt"
+	"io"
 	"net"
 	"net/http"
 	"net/url"
@@ -25,7 +27,6 @@ import (
 	"time"
 
 	"github.com/coreos/go-oidc/v3/oidc"
-	"github.com/pkg/errors"
 	"github.com/segmentio/ksuid"
 	"github.com/skratchdot/open-golang/open"
 	"golang.org/x/oauth2"
@@ -37,9 +38,10 @@ var browserOpener = open.Run
 
 // InteractiveIDTokenGetter is a type to get ID tokens for oauth flows
 type InteractiveIDTokenGetter struct {
-	MessagePrinter     func(url string)
 	HTMLPage           string
 	ExtraAuthURLParams []oauth2.AuthCodeOption
+	Input              io.Reader
+	Output             io.Writer
 }
 
 // GetIDToken gets an OIDC ID Token from the specified provider using an interactive browser session
@@ -53,7 +55,7 @@ func (i *InteractiveIDTokenGetter) GetIDToken(p *oidc.Provider, cfg oauth2.Confi
 	// starts listener using the redirect_uri, otherwise starts on ephemeral port
 	redirectServer, redirectURL, err := startRedirectListener(stateToken, i.HTMLPage, cfg.RedirectURL, doneCh, errCh)
 	if err != nil {
-		return nil, errors.Wrap(err, "starting redirect listener")
+		return nil, fmt.Errorf("starting redirect listener: %w", err)
 	}
 	defer func() {
 		go func() {
@@ -77,14 +79,14 @@ func (i *InteractiveIDTokenGetter) GetIDToken(p *oidc.Provider, cfg oauth2.Confi
 	var code string
 	if err := browserOpener(authCodeURL); err != nil {
 		// Swap to the out of band flow if we can't open the browser
-		fmt.Fprintf(os.Stderr, "error opening browser: %v\n", err)
-		code = doOobFlow(&cfg, stateToken, opts)
+		fmt.Fprintf(i.GetOutput(), "error opening browser: %v\n", err)
+		code = i.doOobFlow(&cfg, stateToken, opts)
 	} else {
-		fmt.Fprintf(os.Stderr, "Your browser will now be opened to:\n%s\n", authCodeURL)
+		fmt.Fprintf(i.GetOutput(), "Your browser will now be opened to:\n%s\n", authCodeURL)
 		code, err = getCode(doneCh, errCh)
 		if err != nil {
-			fmt.Fprintf(os.Stderr, "error getting code from local server: %v\n", err)
-			code = doOobFlow(&cfg, stateToken, opts)
+			fmt.Fprintf(i.GetOutput(), "error getting code from local server: %v\n", err)
+			code = i.doOobFlow(&cfg, stateToken, opts)
 		}
 	}
 	token, err := cfg.Exchange(context.Background(), code, append(pkce.TokenURLOpts(), oidc.Nonce(nonce))...)
@@ -125,16 +127,34 @@ func (i *InteractiveIDTokenGetter) GetIDToken(p *oidc.Provider, cfg oauth2.Confi
 	return &returnToken, nil
 }
 
-func doOobFlow(cfg *oauth2.Config, stateToken string, opts []oauth2.AuthCodeOption) string {
+func (i *InteractiveIDTokenGetter) doOobFlow(cfg *oauth2.Config, stateToken string, opts []oauth2.AuthCodeOption) string {
 	if cfg.RedirectURL == "" {
 		cfg.RedirectURL = oobRedirectURI
 	}
 	authURL := cfg.AuthCodeURL(stateToken, opts...)
-	fmt.Fprintln(os.Stderr, "Go to the following link in a browser:\n\n\t", authURL)
-	fmt.Fprintf(os.Stderr, "Enter verification code: ")
+	fmt.Fprintln(i.GetOutput(), "Go to the following link in a browser:\n\n\t", authURL)
+	fmt.Fprintf(i.GetOutput(), "Enter verification code: ")
 	var code string
-	fmt.Scanln(&code)
+	fmt.Fscanln(i.GetInput(), &code)
 	return code
+}
+
+// GetInput returns the input reader for the token getter. If one is not set,
+// it defaults to stdin.
+func (i *InteractiveIDTokenGetter) GetInput() io.Reader {
+	if i.Input == nil {
+		return os.Stdin
+	}
+	return i.Input
+}
+
+// GetOutput returns the output writer for the token getter. If one is not set,
+// it defaults to stderr.
+func (i *InteractiveIDTokenGetter) GetOutput() io.Writer {
+	if i.Output == nil {
+		return os.Stderr
+	}
+	return i.Output
 }
 
 func startRedirectListener(state, htmlPage, redirectURL string, doneCh chan string, errCh chan error) (*http.Server, *url.URL, error) {
@@ -148,10 +168,14 @@ func startRedirectListener(state, htmlPage, redirectURL string, doneCh chan stri
 			return nil, nil, err
 		}
 
-		port := listener.Addr().(*net.TCPAddr).Port
+		addr, ok := listener.Addr().(*net.TCPAddr)
+		if !ok {
+			return nil, nil, fmt.Errorf("listener addr is not TCPAddr")
+		}
+
 		urlListener = &url.URL{
 			Scheme: "http",
-			Host:   fmt.Sprintf("localhost:%d", port),
+			Host:   fmt.Sprintf("localhost:%d", addr.Port),
 			Path:   "/auth/callback",
 		}
 	} else {
@@ -170,6 +194,9 @@ func startRedirectListener(state, htmlPage, redirectURL string, doneCh chan stri
 	s := &http.Server{
 		Addr:    urlListener.Host,
 		Handler: m,
+
+		// an arbitrary reasonable value to fix gosec lint error
+		ReadHeaderTimeout: 2 * time.Second,
 	}
 
 	m.HandleFunc(urlListener.Path, func(w http.ResponseWriter, r *http.Request) {

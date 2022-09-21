@@ -22,15 +22,15 @@ import (
 	"crypto/rand"
 	"crypto/sha256"
 	"crypto/x509"
+	"errors"
 	"fmt"
 	"net/url"
 	"os"
 
-	"github.com/pkg/errors"
 	"golang.org/x/term"
 
-	"github.com/sigstore/cosign/cmd/cosign/cli/fulcio/fulcioroots"
 	"github.com/sigstore/cosign/cmd/cosign/cli/options"
+	"github.com/sigstore/cosign/internal/pkg/cosign/fulcio/fulcioroots"
 	"github.com/sigstore/cosign/pkg/cosign"
 	"github.com/sigstore/cosign/pkg/providers"
 	"github.com/sigstore/fulcio/pkg/api"
@@ -39,9 +39,15 @@ import (
 )
 
 const (
-	FlowNormal = "normal"
-	FlowDevice = "device"
-	FlowToken  = "token"
+	flowNormal = "normal"
+	flowDevice = "device"
+	flowToken  = "token"
+	// spacing is intentional to have this indented
+	privacyStatement = `
+        Note that there may be personally identifiable information associated with this signed artifact.
+        This may include the email address associated with the account with which you authenticate.
+        This information will be used for signing this artifact and will be stored in public transparency logs and cannot be removed later.`
+	privacyStatementConfirmation = "        By typing 'y', you attest that you grant (or have permission to grant) and agree to have this information stored permanently in transparency logs."
 )
 
 type oidcConnector interface {
@@ -56,7 +62,7 @@ func (rf *realConnector) OIDConnect(url, clientID, secret, redirectURL string) (
 	return oauthflow.OIDConnect(url, clientID, secret, redirectURL, rf.flow)
 }
 
-func getCertForOauthID(priv *ecdsa.PrivateKey, fc api.Client, connector oidcConnector, oidcIssuer, oidcClientID, oidcClientSecret, oidcRedirectURL string) (*api.CertificateResponse, error) {
+func getCertForOauthID(priv *ecdsa.PrivateKey, fc api.LegacyClient, connector oidcConnector, oidcIssuer, oidcClientID, oidcClientSecret, oidcRedirectURL string) (*api.CertificateResponse, error) {
 	pubBytes, err := x509.MarshalPKIXPublicKey(&priv.PublicKey)
 	if err != nil {
 		return nil, err
@@ -86,15 +92,14 @@ func getCertForOauthID(priv *ecdsa.PrivateKey, fc api.Client, connector oidcConn
 }
 
 // GetCert returns the PEM-encoded signature of the OIDC identity returned as part of an interactive oauth2 flow plus the PEM-encoded cert chain.
-func GetCert(ctx context.Context, priv *ecdsa.PrivateKey, idToken, flow, oidcIssuer, oidcClientID, oidcClientSecret, oidcRedirectURL string, fClient api.Client) (*api.CertificateResponse, error) {
+func GetCert(ctx context.Context, priv *ecdsa.PrivateKey, idToken, flow, oidcIssuer, oidcClientID, oidcClientSecret, oidcRedirectURL string, fClient api.LegacyClient) (*api.CertificateResponse, error) {
 	c := &realConnector{}
 	switch flow {
-	case FlowDevice:
-		c.flow = oauthflow.NewDeviceFlowTokenGetter(
-			oidcIssuer, oauthflow.SigstoreDeviceURL, oauthflow.SigstoreTokenURL)
-	case FlowNormal:
+	case flowDevice:
+		c.flow = oauthflow.NewDeviceFlowTokenGetterForIssuer(oidcIssuer)
+	case flowNormal:
 		c.flow = oauthflow.DefaultIDTokenGetter
-	case FlowToken:
+	case flowToken:
 		c.flow = &oauthflow.StaticTokenGetter{RawToken: idToken}
 	default:
 		return nil, fmt.Errorf("unsupported oauth flow: %s", flow)
@@ -114,21 +119,30 @@ type Signer struct {
 func NewSigner(ctx context.Context, ko options.KeyOpts) (*Signer, error) {
 	fClient, err := NewClient(ko.FulcioURL)
 	if err != nil {
-		return nil, errors.Wrap(err, "creating Fulcio client")
+		return nil, fmt.Errorf("creating Fulcio client: %w", err)
 	}
 
 	idToken := ko.IDToken
+	var provider providers.Interface
 	// If token is not set in the options, get one from the provders
 	if idToken == "" && providers.Enabled(ctx) && !ko.OIDCDisableProviders {
-		idToken, err = providers.Provide(ctx, "sigstore")
+		if ko.OIDCProvider != "" {
+			provider, err = providers.ProvideFrom(ctx, ko.OIDCProvider)
+			if err != nil {
+				return nil, fmt.Errorf("getting provider: %w", err)
+			}
+			idToken, err = provider.Provide(ctx, "sigstore")
+		} else {
+			idToken, err = providers.Provide(ctx, "sigstore")
+		}
 		if err != nil {
-			return nil, errors.Wrap(err, "fetching ambient OIDC credentials")
+			return nil, fmt.Errorf("fetching ambient OIDC credentials: %w", err)
 		}
 	}
 
 	priv, err := cosign.GeneratePrivateKey()
 	if err != nil {
-		return nil, errors.Wrap(err, "generating cert")
+		return nil, fmt.Errorf("generating cert: %w", err)
 	}
 	signer, err := signature.LoadECDSASignerVerifier(priv, crypto.SHA256)
 	if err != nil {
@@ -136,22 +150,31 @@ func NewSigner(ctx context.Context, ko options.KeyOpts) (*Signer, error) {
 	}
 	fmt.Fprintln(os.Stderr, "Retrieving signed certificate...")
 
+	fmt.Fprintln(os.Stderr, privacyStatement)
+
 	var flow string
 	switch {
 	case ko.FulcioAuthFlow != "":
 		// Caller manually set flow option.
 		flow = ko.FulcioAuthFlow
 	case idToken != "":
-		flow = FlowToken
+		flow = flowToken
 	case !term.IsTerminal(0):
 		fmt.Fprintln(os.Stderr, "Non-interactive mode detected, using device flow.")
-		flow = FlowDevice
+		flow = flowDevice
 	default:
-		flow = FlowNormal
+		ok, err := cosign.ConfirmPrompt(privacyStatementConfirmation, ko.SkipConfirmation)
+		if err != nil {
+			return nil, err
+		}
+		if !ok {
+			return nil, errors.New("no confirmation")
+		}
+		flow = flowNormal
 	}
 	Resp, err := GetCert(ctx, priv, idToken, flow, ko.OIDCIssuer, ko.OIDCClientID, ko.OIDCClientSecret, ko.OIDCRedirectURL, fClient) // TODO, use the chain.
 	if err != nil {
-		return nil, errors.Wrap(err, "retrieving cert")
+		return nil, fmt.Errorf("retrieving cert: %w", err)
 	}
 
 	f := &Signer{
@@ -171,15 +194,15 @@ func (f *Signer) PublicKey(opts ...signature.PublicKeyOption) (crypto.PublicKey,
 
 var _ signature.Signer = &Signer{}
 
-func GetRoots() *x509.CertPool {
+func GetRoots() (*x509.CertPool, error) {
 	return fulcioroots.Get()
 }
 
-func GetIntermediates() *x509.CertPool {
+func GetIntermediates() (*x509.CertPool, error) {
 	return fulcioroots.GetIntermediates()
 }
 
-func NewClient(fulcioURL string) (api.Client, error) {
+func NewClient(fulcioURL string) (api.LegacyClient, error) {
 	fulcioServer, err := url.Parse(fulcioURL)
 	if err != nil {
 		return nil, err

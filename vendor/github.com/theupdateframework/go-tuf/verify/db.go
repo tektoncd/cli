@@ -28,59 +28,53 @@ func NewDB() *DB {
 	}
 }
 
-type DelegationsVerifier struct {
-	DB *DB
-}
-
-func (d *DelegationsVerifier) Unmarshal(b []byte, v interface{}, role string, minVersion int) error {
-	return d.DB.Unmarshal(b, v, role, minVersion)
-}
-
-// NewDelegationsVerifier returns a DelegationsVerifier that verifies delegations
-// of a given Targets. It reuses the DB struct to leverage verified keys, roles
-// unmarshals.
-func NewDelegationsVerifier(d *data.Delegations) (DelegationsVerifier, error) {
+// NewDBFromDelegations returns a DB that verifies delegations
+// of a given Targets.
+func NewDBFromDelegations(d *data.Delegations) (*DB, error) {
 	db := &DB{
 		roles:     make(map[string]*Role, len(d.Roles)),
 		verifiers: make(map[string]keys.Verifier, len(d.Keys)),
 	}
 	for _, r := range d.Roles {
 		if _, ok := roles.TopLevelRoles[r.Name]; ok {
-			return DelegationsVerifier{}, ErrInvalidDelegatedRole
+			return nil, ErrInvalidDelegatedRole
 		}
 		role := &data.Role{Threshold: r.Threshold, KeyIDs: r.KeyIDs}
-		if err := db.addRole(r.Name, role); err != nil {
-			return DelegationsVerifier{}, err
+		if err := db.AddRole(r.Name, role); err != nil {
+			return nil, err
 		}
 	}
 	for id, k := range d.Keys {
 		if err := db.AddKey(id, k); err != nil {
-			return DelegationsVerifier{}, err
+			return nil, err
 		}
 	}
-	return DelegationsVerifier{db}, nil
+	return db, nil
 }
 
 func (db *DB) AddKey(id string, k *data.PublicKey) error {
-	if !k.ContainsID(id) {
-		return ErrWrongID{}
-	}
 	verifier, err := keys.GetVerifier(k)
 	if err != nil {
-		return ErrInvalidKey
+		return err // ErrInvalidKey
 	}
+
+	// TUF is considering in TAP-12 removing the
+	// requirement that the keyid hash algorithm be derived
+	// from the public key. So to be forwards compatible,
+	// we allow any key ID, rather than checking k.ContainsID(id)
+	//
+	// AddKey should be idempotent, so we allow re-adding the same PublicKey.
+	//
+	// TAP-12: https://github.com/theupdateframework/taps/blob/master/tap12.md
+	if oldVerifier, exists := db.verifiers[id]; exists && oldVerifier.Public() != verifier.Public() {
+		return ErrRepeatID{id}
+	}
+
 	db.verifiers[id] = verifier
 	return nil
 }
 
 func (db *DB) AddRole(name string, r *data.Role) error {
-	if !roles.IsTopLevelRole(name) {
-		return ErrInvalidRole
-	}
-	return db.addRole(name, r)
-}
-
-func (db *DB) addRole(name string, r *data.Role) error {
 	if r.Threshold < 1 {
 		return ErrInvalidThreshold
 	}
@@ -90,9 +84,6 @@ func (db *DB) addRole(name string, r *data.Role) error {
 		Threshold: r.Threshold,
 	}
 	for _, id := range r.KeyIDs {
-		if len(id) != data.KeyIDLength {
-			return ErrInvalidKeyID
-		}
 		role.KeyIDs[id] = struct{}{}
 	}
 

@@ -10,6 +10,7 @@ import (
 	"context"
 	"errors"
 	"fmt"
+	"time"
 
 	"go.mongodb.org/mongo-driver/bson"
 	"go.mongodb.org/mongo-driver/event"
@@ -35,10 +36,12 @@ type ListDatabases struct {
 	selector            description.ServerSelector
 	crypt               driver.Crypt
 	serverAPI           *driver.ServerAPIOptions
+	timeout             *time.Duration
 
 	result ListDatabasesResult
 }
 
+// ListDatabasesResult represents a listDatabases result returned by the server.
 type ListDatabasesResult struct {
 	// An array of documents, one document for each database
 	Databases []databaseRecord
@@ -52,7 +55,7 @@ type databaseRecord struct {
 	Empty      bool
 }
 
-func buildListDatabasesResult(response bsoncore.Document, srvr driver.Server) (ListDatabasesResult, error) {
+func buildListDatabasesResult(response bsoncore.Document) (ListDatabasesResult, error) {
 	elements, err := response.Elements()
 	if err != nil {
 		return ListDatabasesResult{}, err
@@ -133,12 +136,12 @@ func (ld *ListDatabases) Result() ListDatabasesResult { return ld.result }
 func (ld *ListDatabases) processResponse(info driver.ResponseInfo) error {
 	var err error
 
-	ld.result, err = buildListDatabasesResult(info.ServerResponse, info.Server)
+	ld.result, err = buildListDatabasesResult(info.ServerResponse)
 	return err
 
 }
 
-// Execute runs this operations and returns an error if the operaiton did not execute successfully.
+// Execute runs this operations and returns an error if the operation did not execute successfully.
 func (ld *ListDatabases) Execute(ctx context.Context) error {
 	if ld.deployment == nil {
 		return errors.New("the ListDatabases operation must have a Deployment set before Execute can be called")
@@ -159,6 +162,7 @@ func (ld *ListDatabases) Execute(ctx context.Context) error {
 		Selector:       ld.selector,
 		Crypt:          ld.crypt,
 		ServerAPI:      ld.serverAPI,
+		Timeout:        ld.timeout,
 	}.Execute(ctx, nil)
 
 }
@@ -261,7 +265,7 @@ func (ld *ListDatabases) Deployment(deployment driver.Deployment) *ListDatabases
 	return ld
 }
 
-// ReadPreference set the read prefernce used with this operation.
+// ReadPreference set the read preference used with this operation.
 func (ld *ListDatabases) ReadPreference(readPreference *readpref.ReadPref) *ListDatabases {
 	if ld == nil {
 		ld = new(ListDatabases)
@@ -309,5 +313,15 @@ func (ld *ListDatabases) ServerAPI(serverAPI *driver.ServerAPIOptions) *ListData
 	}
 
 	ld.serverAPI = serverAPI
+	return ld
+}
+
+// Timeout sets the timeout for this operation.
+func (ld *ListDatabases) Timeout(timeout *time.Duration) *ListDatabases {
+	if ld == nil {
+		ld = new(ListDatabases)
+	}
+
+	ld.timeout = timeout
 	return ld
 }

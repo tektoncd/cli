@@ -21,6 +21,7 @@ import (
 	"github.com/google/go-containerregistry/pkg/name"
 	"github.com/opencontainers/go-digest"
 	"github.com/tektoncd/chains/pkg/chains/formats"
+	"github.com/tektoncd/chains/pkg/chains/objects"
 	"github.com/tektoncd/chains/pkg/config"
 	"github.com/tektoncd/pipeline/pkg/apis/pipeline/v1beta1"
 	"go.uber.org/zap"
@@ -28,7 +29,7 @@ import (
 )
 
 type Signable interface {
-	ExtractObjects(tr *v1beta1.TaskRun) []interface{}
+	ExtractObjects(obj objects.TektonObject) []interface{}
 	StorageBackend(cfg config.Config) sets.String
 	Signer(cfg config.Config) string
 	PayloadFormat(cfg config.Config) formats.PayloadType
@@ -42,13 +43,14 @@ type TaskRunArtifact struct {
 }
 
 func (ta *TaskRunArtifact) Key(obj interface{}) string {
-	tr := obj.(*v1beta1.TaskRun)
-	return "taskrun-" + string(tr.UID)
+	tro := obj.(*objects.TaskRunObject)
+	return "taskrun-" + string(tro.UID)
 }
 
-func (ta *TaskRunArtifact) ExtractObjects(tr *v1beta1.TaskRun) []interface{} {
-	return []interface{}{tr}
+func (ta *TaskRunArtifact) ExtractObjects(obj objects.TektonObject) []interface{} {
+	return []interface{}{obj}
 }
+
 func (ta *TaskRunArtifact) Type() string {
 	return "tekton"
 }
@@ -69,6 +71,40 @@ func (ta *TaskRunArtifact) Enabled(cfg config.Config) bool {
 	return cfg.Artifacts.TaskRuns.Enabled()
 }
 
+type PipelineRunArtifact struct {
+	Logger *zap.SugaredLogger
+}
+
+func (pa *PipelineRunArtifact) Key(obj interface{}) string {
+	pro := obj.(*objects.PipelineRunObject)
+	return "pipelinerun-" + string(pro.UID)
+}
+
+func (pa *PipelineRunArtifact) ExtractObjects(obj objects.TektonObject) []interface{} {
+	return []interface{}{obj}
+}
+
+func (pa *PipelineRunArtifact) Type() string {
+	// TODO: Is this right?
+	return "tekton-pipeline-run"
+}
+
+func (pa *PipelineRunArtifact) StorageBackend(cfg config.Config) sets.String {
+	return cfg.Artifacts.PipelineRuns.StorageBackend
+}
+
+func (pa *PipelineRunArtifact) PayloadFormat(cfg config.Config) formats.PayloadType {
+	return formats.PayloadType(cfg.Artifacts.PipelineRuns.Format)
+}
+
+func (pa *PipelineRunArtifact) Signer(cfg config.Config) string {
+	return cfg.Artifacts.PipelineRuns.Signer
+}
+
+func (pa *PipelineRunArtifact) Enabled(cfg config.Config) bool {
+	return cfg.Artifacts.PipelineRuns.Enabled()
+}
+
 type OCIArtifact struct {
 	Logger *zap.SugaredLogger
 }
@@ -86,49 +122,53 @@ type StructuredSignable struct {
 	Digest string
 }
 
-func (oa *OCIArtifact) ExtractObjects(tr *v1beta1.TaskRun) []interface{} {
-	imageResourceNames := map[string]*image{}
-	if tr.Status.TaskSpec != nil && tr.Status.TaskSpec.Resources != nil {
-		for _, output := range tr.Status.TaskSpec.Resources.Outputs {
-			if output.Type == v1beta1.PipelineResourceTypeImage {
-				imageResourceNames[output.Name] = &image{}
+func (oa *OCIArtifact) ExtractObjects(obj objects.TektonObject) []interface{} {
+	objs := []interface{}{}
+
+	// TODO: Not applicable to PipelineRuns, should look into a better way to separate this out
+	if tr, ok := obj.GetObject().(*v1beta1.TaskRun); ok {
+		imageResourceNames := map[string]*image{}
+		if tr.Status.TaskSpec != nil && tr.Status.TaskSpec.Resources != nil {
+			for _, output := range tr.Status.TaskSpec.Resources.Outputs {
+				if output.Type == v1beta1.PipelineResourceTypeImage {
+					imageResourceNames[output.Name] = &image{}
+				}
 			}
 		}
-	}
 
-	for _, rr := range tr.Status.ResourcesResult {
-		img, ok := imageResourceNames[rr.ResourceName]
-		if !ok {
-			continue
+		for _, rr := range tr.Status.ResourcesResult {
+			img, ok := imageResourceNames[rr.ResourceName]
+			if !ok {
+				continue
+			}
+			// We have a result for an image!
+			if rr.Key == "url" {
+				img.url = rr.Value
+			} else if rr.Key == "digest" {
+				img.digest = rr.Value
+			}
 		}
-		// We have a result for an image!
-		if rr.Key == "url" {
-			img.url = rr.Value
-		} else if rr.Key == "digest" {
-			img.digest = rr.Value
-		}
-	}
 
-	objs := []interface{}{}
-	for _, image := range imageResourceNames {
-		dgst, err := name.NewDigest(fmt.Sprintf("%s@%s", image.url, image.digest))
-		if err != nil {
-			oa.Logger.Error(err)
-			continue
+		for _, image := range imageResourceNames {
+			dgst, err := name.NewDigest(fmt.Sprintf("%s@%s", image.url, image.digest))
+			if err != nil {
+				oa.Logger.Error(err)
+				continue
+			}
+			objs = append(objs, dgst)
 		}
-		objs = append(objs, dgst)
 	}
 
 	// Now check TaskResults
-	resultImages := ExtractOCIImagesFromResults(tr, oa.Logger)
+	resultImages := ExtractOCIImagesFromResults(obj, oa.Logger)
 	objs = append(objs, resultImages...)
 
 	return objs
 }
 
-func ExtractOCIImagesFromResults(tr *v1beta1.TaskRun, logger *zap.SugaredLogger) []interface{} {
-	ss := extractTargetFromResults(tr, "IMAGE_URL", "IMAGE_DIGEST", logger)
+func ExtractOCIImagesFromResults(obj objects.TektonObject, logger *zap.SugaredLogger) []interface{} {
 	objs := []interface{}{}
+	ss := extractTargetFromResults(obj, "IMAGE_URL", "IMAGE_DIGEST", logger)
 	for _, s := range ss {
 		if s == nil || s.Digest == "" || s.URI == "" {
 			continue
@@ -142,7 +182,7 @@ func ExtractOCIImagesFromResults(tr *v1beta1.TaskRun, logger *zap.SugaredLogger)
 		objs = append(objs, dgst)
 	}
 	// look for a comma separated list of images
-	for _, key := range tr.Status.TaskRunResults {
+	for _, key := range obj.GetResults() {
 		if key.Name != "IMAGES" {
 			continue
 		}
@@ -166,9 +206,9 @@ func ExtractOCIImagesFromResults(tr *v1beta1.TaskRun, logger *zap.SugaredLogger)
 }
 
 // ExtractSignableTargetFromResults extracts signable targets that aim to generate intoto provenance as materials within TaskRun results and store them as StructuredSignable.
-func ExtractSignableTargetFromResults(tr *v1beta1.TaskRun, logger *zap.SugaredLogger) []*StructuredSignable {
+func ExtractSignableTargetFromResults(obj objects.TektonObject, logger *zap.SugaredLogger) []*StructuredSignable {
 	objs := []*StructuredSignable{}
-	ss := extractTargetFromResults(tr, "ARTIFACT_URI", "ARTIFACT_DIGEST", logger)
+	ss := extractTargetFromResults(obj, "ARTIFACT_URI", "ARTIFACT_DIGEST", logger)
 	// Only add it if we got both the signable URI and digest.
 	for _, s := range ss {
 		if s == nil || s.Digest == "" || s.URI == "" {
@@ -190,10 +230,10 @@ func (s *StructuredSignable) FullRef() string {
 	return fmt.Sprintf("%s@%s", s.URI, s.Digest)
 }
 
-func extractTargetFromResults(tr *v1beta1.TaskRun, identifierSuffix string, digestSuffix string, logger *zap.SugaredLogger) map[string]*StructuredSignable {
+func extractTargetFromResults(obj objects.TektonObject, identifierSuffix string, digestSuffix string, logger *zap.SugaredLogger) map[string]*StructuredSignable {
 	ss := map[string]*StructuredSignable{}
 
-	for _, res := range tr.Status.TaskRunResults {
+	for _, res := range obj.GetResults() {
 		if strings.HasSuffix(res.Name, identifierSuffix) {
 			marker := strings.TrimSuffix(res.Name, identifierSuffix)
 			if v, ok := ss[marker]; ok {

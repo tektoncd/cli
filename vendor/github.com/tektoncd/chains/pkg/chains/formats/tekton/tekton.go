@@ -17,8 +17,7 @@ import (
 	"fmt"
 
 	"github.com/tektoncd/chains/pkg/chains/formats"
-
-	"github.com/tektoncd/pipeline/pkg/apis/pipeline/v1beta1"
+	"github.com/tektoncd/chains/pkg/chains/objects"
 )
 
 // Tekton is a formatter that just captures the TaskRun Status with no modifications.
@@ -31,14 +30,14 @@ func NewFormatter() (formats.Payloader, error) {
 
 // CreatePayload implements the Payloader interface.
 func (i *Tekton) CreatePayload(obj interface{}) (interface{}, error) {
-
 	switch v := obj.(type) {
-	case *v1beta1.TaskRun:
+	case *objects.TaskRunObject:
+		return v.Status, nil
+	case *objects.PipelineRunObject:
 		return v.Status, nil
 	default:
 		return nil, fmt.Errorf("unsupported type %s", v)
 	}
-
 }
 
 func (i *Tekton) Type() formats.PayloadType {

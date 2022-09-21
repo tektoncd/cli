@@ -10,8 +10,10 @@ import (
 	"context"
 	"errors"
 	"fmt"
+	"time"
 
 	"go.mongodb.org/mongo-driver/bson"
+	"go.mongodb.org/mongo-driver/bson/bsontype"
 	"go.mongodb.org/mongo-driver/event"
 	"go.mongodb.org/mongo-driver/mongo/description"
 	"go.mongodb.org/mongo-driver/mongo/writeconcern"
@@ -23,6 +25,7 @@ import (
 // Update performs an update operation.
 type Update struct {
 	bypassDocumentValidation *bool
+	comment                  bsoncore.Value
 	ordered                  *bool
 	updates                  []bsoncore.Document
 	session                  *session.Client
@@ -39,6 +42,8 @@ type Update struct {
 	result                   UpdateResult
 	crypt                    driver.Crypt
 	serverAPI                *driver.ServerAPIOptions
+	let                      bsoncore.Document
+	timeout                  *time.Duration
 }
 
 // Upsert contains the information for an upsert in an Update operation.
@@ -50,14 +55,14 @@ type Upsert struct {
 // UpdateResult contains information for the result of an Update operation.
 type UpdateResult struct {
 	// Number of documents matched.
-	N int32
+	N int64
 	// Number of documents modified.
-	NModified int32
+	NModified int64
 	// Information about upserted documents.
 	Upserted []Upsert
 }
 
-func buildUpdateResult(response bsoncore.Document, srvr driver.Server) (UpdateResult, error) {
+func buildUpdateResult(response bsoncore.Document) (UpdateResult, error) {
 	elements, err := response.Elements()
 	if err != nil {
 		return UpdateResult{}, err
@@ -67,15 +72,15 @@ func buildUpdateResult(response bsoncore.Document, srvr driver.Server) (UpdateRe
 		switch element.Key() {
 		case "nModified":
 			var ok bool
-			ur.NModified, ok = element.Value().Int32OK()
+			ur.NModified, ok = element.Value().AsInt64OK()
 			if !ok {
-				return ur, fmt.Errorf("response field 'nModified' is type int32, but received BSON type %s", element.Value().Type)
+				return ur, fmt.Errorf("response field 'nModified' is type int32 or int64, but received BSON type %s", element.Value().Type)
 			}
 		case "n":
 			var ok bool
-			ur.N, ok = element.Value().Int32OK()
+			ur.N, ok = element.Value().AsInt64OK()
 			if !ok {
-				return ur, fmt.Errorf("response field 'n' is type int32, but received BSON type %s", element.Value().Type)
+				return ur, fmt.Errorf("response field 'n' is type int32 or int64, but received BSON type %s", element.Value().Type)
 			}
 		case "upserted":
 			arr, ok := element.Value().ArrayOK()
@@ -116,7 +121,7 @@ func NewUpdate(updates ...bsoncore.Document) *Update {
 func (u *Update) Result() UpdateResult { return u.result }
 
 func (u *Update) processResponse(info driver.ResponseInfo) error {
-	ur, err := buildUpdateResult(info.ServerResponse, info.Server)
+	ur, err := buildUpdateResult(info.ServerResponse)
 
 	u.result.N += ur.N
 	u.result.NModified += ur.NModified
@@ -130,7 +135,7 @@ func (u *Update) processResponse(info driver.ResponseInfo) error {
 
 }
 
-// Execute runs this operations and returns an error if the operaiton did not execute successfully.
+// Execute runs this operations and returns an error if the operation did not execute successfully.
 func (u *Update) Execute(ctx context.Context) error {
 	if u.deployment == nil {
 		return errors.New("the Update operation must have a Deployment set before Execute can be called")
@@ -156,6 +161,7 @@ func (u *Update) Execute(ctx context.Context) error {
 		WriteConcern:      u.writeConcern,
 		Crypt:             u.crypt,
 		ServerAPI:         u.serverAPI,
+		Timeout:           u.timeout,
 	}.Execute(ctx, nil)
 
 }
@@ -166,6 +172,9 @@ func (u *Update) command(dst []byte, desc description.SelectedServer) ([]byte, e
 		(desc.WireVersion != nil && desc.WireVersion.Includes(4)) {
 
 		dst = bsoncore.AppendBooleanElement(dst, "bypassDocumentValidation", *u.bypassDocumentValidation)
+	}
+	if u.comment.Type != bsontype.Type(0) {
+		dst = bsoncore.AppendValueElement(dst, "comment", u.comment)
 	}
 	if u.ordered != nil {
 
@@ -184,6 +193,9 @@ func (u *Update) command(dst []byte, desc description.SelectedServer) ([]byte, e
 		if desc.WireVersion == nil || !desc.WireVersion.Includes(6) {
 			return nil, errors.New("the 'arrayFilters' command parameter requires a minimum server wire version of 6")
 		}
+	}
+	if u.let != nil {
+		dst = bsoncore.AppendDocumentElement(dst, "let", u.let)
 	}
 
 	return dst, nil
@@ -286,6 +298,16 @@ func (u *Update) CommandMonitor(monitor *event.CommandMonitor) *Update {
 	return u
 }
 
+// Comment sets a value to help trace an operation.
+func (u *Update) Comment(comment bsoncore.Value) *Update {
+	if u == nil {
+		u = new(Update)
+	}
+
+	u.comment = comment
+	return u
+}
+
 // Database sets the database to run this operation against.
 func (u *Update) Database(database string) *Update {
 	if u == nil {
@@ -355,5 +377,25 @@ func (u *Update) ServerAPI(serverAPI *driver.ServerAPIOptions) *Update {
 	}
 
 	u.serverAPI = serverAPI
+	return u
+}
+
+// Let specifies the let document to use. This option is only valid for server versions 5.0 and above.
+func (u *Update) Let(let bsoncore.Document) *Update {
+	if u == nil {
+		u = new(Update)
+	}
+
+	u.let = let
+	return u
+}
+
+// Timeout sets the timeout for this operation.
+func (u *Update) Timeout(timeout *time.Duration) *Update {
+	if u == nil {
+		u = new(Update)
+	}
+
+	u.timeout = timeout
 	return u
 }

@@ -18,8 +18,8 @@ import (
 	"encoding/base64"
 	"fmt"
 
+	"github.com/tektoncd/chains/pkg/chains/objects"
 	"github.com/tektoncd/chains/pkg/config"
-	"github.com/tektoncd/pipeline/pkg/apis/pipeline/v1beta1"
 	"go.uber.org/zap"
 	"gocloud.dev/pubsub/kafkapubsub"
 
@@ -52,8 +52,8 @@ func (b *Backend) Type() string {
 	return StorageBackendPubSub
 }
 
-func (b *Backend) StorePayload(ctx context.Context, tr *v1beta1.TaskRun, rawPayload []byte, signature string, opts config.StorageOpts) error {
-	b.logger.Infof("Storing payload on TaskRun %s/%s", tr.Namespace, tr.Name)
+func (b *Backend) StorePayload(ctx context.Context, obj objects.TektonObject, rawPayload []byte, signature string, opts config.StorageOpts) error {
+	b.logger.Infof("Storing payload on Object %s/%s", obj.GetNamespace(), obj.GetName())
 
 	// Construct a *pubsub.Topic.
 	topic, err := b.NewTopic()
@@ -81,11 +81,11 @@ func (b *Backend) StorePayload(ctx context.Context, tr *v1beta1.TaskRun, rawPayl
 	return nil
 }
 
-func (b *Backend) RetrievePayloads(ctx context.Context, tr *v1beta1.TaskRun, opts config.StorageOpts) (map[string]string, error) {
+func (b *Backend) RetrievePayloads(ctx context.Context, _ objects.TektonObject, opts config.StorageOpts) (map[string]string, error) {
 	return nil, fmt.Errorf("not implemented for this storage backend: %s", b.Type())
 }
 
-func (b *Backend) RetrieveSignatures(ctx context.Context, tr *v1beta1.TaskRun, opts config.StorageOpts) (map[string][]string, error) {
+func (b *Backend) RetrieveSignatures(ctx context.Context, _ objects.TektonObject, opts config.StorageOpts) (map[string][]string, error) {
 	return nil, fmt.Errorf("not implemented for this storage backend: %s", b.Type())
 }
 

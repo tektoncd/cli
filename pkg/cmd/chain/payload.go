@@ -20,6 +20,7 @@ import (
 
 	"github.com/spf13/cobra"
 	"github.com/tektoncd/chains/pkg/chains"
+	"github.com/tektoncd/chains/pkg/chains/objects"
 	"github.com/tektoncd/cli/pkg/chain"
 	"github.com/tektoncd/cli/pkg/cli"
 	"github.com/tektoncd/cli/pkg/taskrun"
@@ -95,7 +96,8 @@ func printPayloads(cs *cli.Clients, namespace string, tr *v1beta1.TaskRun, skipV
 		}
 
 		// Fetch the payload.
-		payloads, err := backend.RetrievePayloads(context.Background(), tr, opts)
+		trObj := objects.NewTaskRunObject(tr)
+		payloads, err := backend.RetrievePayloads(context.Background(), trObj, opts)
 		if err != nil {
 			return fmt.Errorf("error retrieving the payloads: %s", err)
 		}

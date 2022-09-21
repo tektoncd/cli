@@ -19,11 +19,9 @@ import (
 	"strconv"
 
 	"github.com/pkg/errors"
+	"github.com/tektoncd/chains/pkg/chains/objects"
 	"github.com/tektoncd/chains/pkg/patch"
-	"github.com/tektoncd/pipeline/pkg/apis/pipeline/v1beta1"
 	versioned "github.com/tektoncd/pipeline/pkg/client/clientset/versioned"
-	v1 "k8s.io/apimachinery/pkg/apis/meta/v1"
-	"k8s.io/apimachinery/pkg/types"
 )
 
 const (
@@ -34,52 +32,53 @@ const (
 	MaxRetries                   = 3
 )
 
-// Reconciled determines whether a TaskRun has already passed through the reconcile loops, up to 3x
-func Reconciled(tr *v1beta1.TaskRun) bool {
-	val, ok := tr.ObjectMeta.Annotations[ChainsAnnotation]
+// Reconciled determines whether a Tekton object has already passed through the reconcile loops, up to 3x
+func Reconciled(obj objects.TektonObject) bool {
+	annotations := obj.GetAnnotations()
+	val, ok := annotations[ChainsAnnotation]
 	if !ok {
 		return false
 	}
 	return val == "true" || val == "failed"
 }
 
-// MarkSigned marks a TaskRun as signed.
-func MarkSigned(ctx context.Context, tr *v1beta1.TaskRun, ps versioned.Interface, annotations map[string]string) error {
-	if _, ok := tr.Annotations[ChainsAnnotation]; ok {
+// MarkSigned marks a Tekton object as signed.
+func MarkSigned(ctx context.Context, obj objects.TektonObject, ps versioned.Interface, annotations map[string]string) error {
+	if _, ok := obj.GetAnnotations()[ChainsAnnotation]; ok {
 		return nil
 	}
-	return AddAnnotation(ctx, tr, ps, ChainsAnnotation, "true", annotations)
+	return AddAnnotation(ctx, obj, ps, ChainsAnnotation, "true", annotations)
 }
 
-func MarkFailed(ctx context.Context, tr *v1beta1.TaskRun, ps versioned.Interface, annotations map[string]string) error {
-	return AddAnnotation(ctx, tr, ps, ChainsAnnotation, "failed", annotations)
+func MarkFailed(ctx context.Context, obj objects.TektonObject, ps versioned.Interface, annotations map[string]string) error {
+	return AddAnnotation(ctx, obj, ps, ChainsAnnotation, "failed", annotations)
 }
 
-func RetryAvailable(tr *v1beta1.TaskRun) bool {
-	retries, ok := tr.Annotations[RetryAnnotation]
+func RetryAvailable(obj objects.TektonObject) bool {
+	ann, ok := obj.GetAnnotations()[RetryAnnotation]
 	if !ok {
 		return true
 	}
-	val, err := strconv.Atoi(retries)
+	val, err := strconv.Atoi(ann)
 	if err != nil {
 		return false
 	}
 	return val < MaxRetries
 }
 
-func AddRetry(ctx context.Context, tr *v1beta1.TaskRun, ps versioned.Interface, annotations map[string]string) error {
-	retries := tr.Annotations[RetryAnnotation]
-	if retries == "" {
-		return AddAnnotation(ctx, tr, ps, RetryAnnotation, "0", annotations)
+func AddRetry(ctx context.Context, obj objects.TektonObject, ps versioned.Interface, annotations map[string]string) error {
+	ann := obj.GetAnnotations()[RetryAnnotation]
+	if ann == "" {
+		return AddAnnotation(ctx, obj, ps, RetryAnnotation, "0", annotations)
 	}
-	val, err := strconv.Atoi(retries)
+	val, err := strconv.Atoi(ann)
 	if err != nil {
 		return errors.Wrap(err, "adding retry")
 	}
-	return AddAnnotation(ctx, tr, ps, RetryAnnotation, fmt.Sprintf("%d", val+1), annotations)
+	return AddAnnotation(ctx, obj, ps, RetryAnnotation, fmt.Sprintf("%d", val+1), annotations)
 }
 
-func AddAnnotation(ctx context.Context, tr *v1beta1.TaskRun, ps versioned.Interface, key, value string, annotations map[string]string) error {
+func AddAnnotation(ctx context.Context, obj objects.TektonObject, ps versioned.Interface, key, value string, annotations map[string]string) error {
 	// Use patch instead of update to help prevent race conditions.
 	if annotations == nil {
 		annotations = map[string]string{}
@@ -89,8 +88,8 @@ func AddAnnotation(ctx context.Context, tr *v1beta1.TaskRun, ps versioned.Interf
 	if err != nil {
 		return err
 	}
-	if _, err := ps.TektonV1beta1().TaskRuns(tr.Namespace).Patch(
-		ctx, tr.Name, types.MergePatchType, patchBytes, v1.PatchOptions{}); err != nil {
+	err = obj.Patch(ctx, ps, patchBytes)
+	if err != nil {
 		return err
 	}
 	return nil

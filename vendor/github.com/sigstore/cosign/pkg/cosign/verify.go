@@ -21,10 +21,10 @@ import (
 	"crypto/ecdsa"
 	"crypto/sha256"
 	"crypto/x509"
-	"encoding/asn1"
 	"encoding/base64"
 	"encoding/hex"
 	"encoding/json"
+	"errors"
 	"fmt"
 	"os"
 	"regexp"
@@ -33,7 +33,7 @@ import (
 
 	"github.com/sigstore/cosign/cmd/cosign/cli/fulcio/fulcioverifier/ctl"
 	cbundle "github.com/sigstore/cosign/pkg/cosign/bundle"
-	"github.com/sigstore/cosign/pkg/cosign/tuf"
+	"github.com/sigstore/sigstore/pkg/tuf"
 
 	"github.com/sigstore/cosign/pkg/blob"
 	"github.com/sigstore/cosign/pkg/oci/static"
@@ -42,7 +42,6 @@ import (
 	"github.com/cyberphone/json-canonicalization/go/src/webpki.org/jsoncanonicalizer"
 	"github.com/google/go-containerregistry/pkg/name"
 	v1 "github.com/google/go-containerregistry/pkg/v1"
-	"github.com/pkg/errors"
 
 	ssldsse "github.com/secure-systems-lab/go-securesystemslib/dsse"
 	"github.com/sigstore/cosign/pkg/oci"
@@ -58,10 +57,13 @@ import (
 )
 
 // Identity specifies an issuer/subject to verify a signature against.
-// Both Issuer/Subject support regexp.
+// Both IssuerRegExp/SubjectRegExp support regexp while Issuer/Subject are for
+// strict matching.
 type Identity struct {
-	Issuer  string
-	Subject string
+	Issuer        string
+	Subject       string
+	IssuerRegExp  string
+	SubjectRegExp string
 }
 
 // CheckOpts are the options for checking signatures.
@@ -71,6 +73,7 @@ type CheckOpts struct {
 
 	// Annotations optionally specifies image signature annotations to verify.
 	Annotations map[string]interface{}
+
 	// ClaimVerifier, if provided, verifies claims present in the oci.Signature.
 	ClaimVerifier func(sig oci.Signature, imageDigest v1.Hash, annotations map[string]interface{}) error
 
@@ -90,6 +93,18 @@ type CheckOpts struct {
 	CertEmail string
 	// CertOidcIssuer is the OIDC issuer expected for a certificate to be valid. The empty string means any certificate can be valid.
 	CertOidcIssuer string
+
+	// CertGithubWorkflowTrigger is the GitHub Workflow Trigger name expected for a certificate to be valid. The empty string means any certificate can be valid.
+	CertGithubWorkflowTrigger string
+	// CertGithubWorkflowSha is the GitHub Workflow SHA expected for a certificate to be valid. The empty string means any certificate can be valid.
+	CertGithubWorkflowSha string
+	// CertGithubWorkflowName is the GitHub Workflow Name expected for a certificate to be valid. The empty string means any certificate can be valid.
+	CertGithubWorkflowName string
+	// CertGithubWorkflowRepository is the GitHub Workflow Repository  expected for a certificate to be valid. The empty string means any certificate can be valid.
+	CertGithubWorkflowRepository string
+	// CertGithubWorkflowRef is the GitHub Workflow Ref expected for a certificate to be valid. The empty string means any certificate can be valid.
+	CertGithubWorkflowRef string
+
 	// EnforceSCT requires that a certificate contain an embedded SCT during verification. An SCT is proof of inclusion in a
 	// certificate transparency log.
 	EnforceSCT bool
@@ -149,7 +164,7 @@ func verifyOCIAttestation(_ context.Context, verifier signature.Verifier, att pa
 	}
 
 	if env.PayloadType != types.IntotoPayloadType {
-		return fmt.Errorf("invalid payloadType %s on envelope. Expected %s", env.PayloadType, types.IntotoPayloadType)
+		return NewVerificationError("invalid payloadType %s on envelope. Expected %s", env.PayloadType, types.IntotoPayloadType)
 	}
 	dssev, err := ssldsse.NewEnvelopeVerifier(&dsse.VerifierAdapter{SignatureVerifier: verifier})
 	if err != nil {
@@ -164,7 +179,7 @@ func verifyOCIAttestation(_ context.Context, verifier signature.Verifier, att pa
 func ValidateAndUnpackCert(cert *x509.Certificate, co *CheckOpts) (signature.Verifier, error) {
 	verifier, err := signature.LoadVerifier(cert.PublicKey, crypto.SHA256)
 	if err != nil {
-		return nil, errors.Wrap(err, "invalid certificate found on signature")
+		return nil, fmt.Errorf("invalid certificate found on signature: %w", err)
 	}
 
 	// Now verify the cert, then the signature.
@@ -172,71 +187,18 @@ func ValidateAndUnpackCert(cert *x509.Certificate, co *CheckOpts) (signature.Ver
 	if err != nil {
 		return nil, err
 	}
-	if co.CertEmail != "" {
-		emailVerified := false
-		for _, em := range cert.EmailAddresses {
-			if co.CertEmail == em {
-				emailVerified = true
-				break
-			}
-		}
-		if !emailVerified {
-			return nil, errors.New("expected email not found in certificate")
-		}
-	}
-	if co.CertOidcIssuer != "" {
-		if getIssuer(cert) != co.CertOidcIssuer {
-			return nil, errors.New("expected oidc issuer not found in certificate")
-		}
-	}
-	// If there are identities given, go through them and if one of them
-	// matches, call that good, otherwise, return an error.
-	if len(co.Identities) > 0 {
-		for _, identity := range co.Identities {
-			issuerMatches := false
-			// Check the issuer first
-			if identity.Issuer != "" {
-				issuer := getIssuer(cert)
-				if regex, err := regexp.Compile(identity.Issuer); err != nil {
-					return nil, fmt.Errorf("malformed issuer in identity: %s : %w", identity.Issuer, err)
-				} else if regex.MatchString(issuer) {
-					issuerMatches = true
-				}
-			} else {
-				// No issuer constraint on this identity, so checks out
-				issuerMatches = true
-			}
 
-			// Then the subject
-			subjectMatches := false
-			if identity.Subject != "" {
-				regex, err := regexp.Compile(identity.Subject)
-				if err != nil {
-					return nil, fmt.Errorf("malformed subject in identity: %s : %w", identity.Subject, err)
-				}
-				for _, san := range getSubjectAlternateNames(cert) {
-					if regex.MatchString(san) {
-						subjectMatches = true
-						break
-					}
-				}
-			} else {
-				// No subject constraint on this identity, so checks out
-				subjectMatches = true
-			}
-			if subjectMatches && issuerMatches {
-				// If both issuer / subject match, return verifier
-				return verifier, nil
-			}
-		}
-		return nil, errors.New("none of the expected identities matched what was in the certificate")
+	err = CheckCertificatePolicy(cert, co)
+	if err != nil {
+		return nil, err
 	}
+
 	contains, err := ctl.ContainsSCT(cert.Raw)
 	if err != nil {
 		return nil, err
 	}
 	if co.EnforceSCT && !contains {
-		return nil, errors.New("certificate does not include required embedded SCT")
+		return nil, &VerificationError{"certificate does not include required embedded SCT"}
 	}
 	if contains {
 		// handle if chains has more than one chain - grab first and print message
@@ -247,7 +209,125 @@ func ValidateAndUnpackCert(cert *x509.Certificate, co *CheckOpts) (signature.Ver
 			return nil, err
 		}
 	}
+
 	return verifier, nil
+}
+
+// CheckCertificatePolicy checks that the certificate subject and issuer match
+// the expected values.
+func CheckCertificatePolicy(cert *x509.Certificate, co *CheckOpts) error {
+	ce := CertExtensions{Cert: cert}
+	if co.CertEmail != "" {
+		emailVerified := false
+		for _, em := range cert.EmailAddresses {
+			if co.CertEmail == em {
+				emailVerified = true
+				break
+			}
+		}
+		if !emailVerified {
+			return &VerificationError{"expected email not found in certificate"}
+		}
+	}
+
+	if err := validateCertExtensions(ce, co); err != nil {
+		return err
+	}
+	issuer := ce.GetIssuer()
+	// If there are identities given, go through them and if one of them
+	// matches, call that good, otherwise, return an error.
+	if len(co.Identities) > 0 {
+		for _, identity := range co.Identities {
+			issuerMatches := false
+			switch {
+			// Check the issuer first
+			case identity.IssuerRegExp != "":
+				if regex, err := regexp.Compile(identity.IssuerRegExp); err != nil {
+					return fmt.Errorf("malformed issuer in identity: %s : %w", identity.IssuerRegExp, err)
+				} else if regex.MatchString(issuer) {
+					issuerMatches = true
+				}
+			case identity.Issuer != "":
+				if identity.Issuer == issuer {
+					issuerMatches = true
+				}
+			default:
+				// No issuer constraint on this identity, so checks out
+				issuerMatches = true
+			}
+
+			// Then the subject
+			subjectMatches := false
+			switch {
+			case identity.SubjectRegExp != "":
+				regex, err := regexp.Compile(identity.SubjectRegExp)
+				if err != nil {
+					return fmt.Errorf("malformed subject in identity: %s : %w", identity.SubjectRegExp, err)
+				}
+				for _, san := range getSubjectAlternateNames(cert) {
+					if regex.MatchString(san) {
+						subjectMatches = true
+						break
+					}
+				}
+			case identity.Subject != "":
+				for _, san := range getSubjectAlternateNames(cert) {
+					if san == identity.Subject {
+						subjectMatches = true
+						break
+					}
+				}
+			default:
+				// No subject constraint on this identity, so checks out
+				subjectMatches = true
+			}
+			if subjectMatches && issuerMatches {
+				// If both issuer / subject match, return verifier
+				return nil
+			}
+		}
+		return &VerificationError{"none of the expected identities matched what was in the certificate"}
+	}
+	return nil
+}
+
+func validateCertExtensions(ce CertExtensions, co *CheckOpts) error {
+	if co.CertOidcIssuer != "" {
+		if ce.GetIssuer() != co.CertOidcIssuer {
+			return &VerificationError{"expected oidc issuer not found in certificate"}
+		}
+	}
+
+	if co.CertGithubWorkflowTrigger != "" {
+		if ce.GetCertExtensionGithubWorkflowTrigger() != co.CertGithubWorkflowTrigger {
+			return &VerificationError{"expected GitHub Workflow Trigger not found in certificate"}
+		}
+	}
+
+	if co.CertGithubWorkflowSha != "" {
+		if ce.GetExtensionGithubWorkflowSha() != co.CertGithubWorkflowSha {
+			return &VerificationError{"expected GitHub Workflow SHA not found in certificate"}
+		}
+	}
+
+	if co.CertGithubWorkflowName != "" {
+		if ce.GetCertExtensionGithubWorkflowName() != co.CertGithubWorkflowName {
+			return &VerificationError{"expected GitHub Workflow Name not found in certificate"}
+		}
+	}
+
+	if co.CertGithubWorkflowRepository != "" {
+		if ce.GetCertExtensionGithubWorkflowRepository() != co.CertGithubWorkflowRepository {
+			return &VerificationError{"expected GitHub Workflow Repository not found in certificate"}
+		}
+	}
+
+	if co.CertGithubWorkflowRef != "" {
+		if ce.GetCertExtensionGithubWorkflowRef() != co.CertGithubWorkflowRef {
+			return &VerificationError{"expected GitHub Workflow Ref not found in certificate"}
+		}
+	}
+	return nil
 }
 
 // getSubjectAlternateNames returns all of the following for a Certificate.
@@ -266,16 +346,6 @@ func getSubjectAlternateNames(cert *x509.Certificate) []string {
 		sans = append(sans, uri.String())
 	}
 	return sans
-}
-
-// getIssuer returns the issuer for a Certificate
-func getIssuer(cert *x509.Certificate) string {
-	for _, ext := range cert.Extensions {
-		if ext.Id.Equal(asn1.ObjectIdentifier{1, 3, 6, 1, 4, 1, 57264, 1, 1}) {
-			return string(ext.Value)
-		}
-	}
-	return ""
 }
 
 // ValidateAndUnpackCertWithChain creates a Verifier from a certificate. Verifies that the certificate
@@ -447,7 +517,7 @@ func verifySignatures(ctx context.Context, sigs oci.Signatures, h v1.Hash, co *C
 		checkedSignatures = append(checkedSignatures, sig)
 	}
 	if len(checkedSignatures) == 0 {
-		return nil, false, fmt.Errorf("no matching signatures:\n%s", strings.Join(validationErrs, "\n "))
+		return nil, false, fmt.Errorf("%w:\n%s", ErrNoMatchingSignatures, strings.Join(validationErrs, "\n "))
 	}
 	return checkedSignatures, bundleVerified, nil
 }
@@ -462,7 +532,7 @@ func VerifyImageSignature(ctx context.Context, sig oci.Signature, h v1.Hash, co 
 			return bundleVerified, err
 		}
 		if cert == nil {
-			return bundleVerified, errors.New("no certificate found on signature")
+			return bundleVerified, &VerificationError{"no certificate found on signature"}
 		}
 		// Create a certificate pool for intermediate CA certificates, excluding the root
 		chain, err := sig.Chain()
@@ -497,9 +567,9 @@ func VerifyImageSignature(ctx context.Context, sig oci.Signature, h v1.Hash, co 
 		}
 	}
 
-	bundleVerified, err = VerifyBundle(ctx, sig)
+	bundleVerified, err = VerifyBundle(ctx, sig, co.RekorClient)
 	if err != nil && co.RekorClient == nil {
-		return false, errors.Wrap(err, "unable to verify bundle")
+		return false, fmt.Errorf("unable to verify bundle: %w", err)
 	}
 
 	if !bundleVerified && co.RekorClient != nil {
@@ -641,7 +711,7 @@ func verifyImageAttestations(ctx context.Context, atts oci.Signatures, h v1.Hash
 					return err
 				}
 				if cert == nil {
-					return errors.New("no certificate found on attestation")
+					return &VerificationError{"no certificate found on attestation"}
 				}
 				// Create a certificate pool for intermediate CA certificates, excluding the root
 				chain, err := att.Chain()
@@ -676,9 +746,9 @@ func verifyImageAttestations(ctx context.Context, atts oci.Signatures, h v1.Hash
 				}
 			}
 
-			verified, err := VerifyBundle(ctx, att)
+			verified, err := VerifyBundle(ctx, att, co.RekorClient)
 			if err != nil && co.RekorClient == nil {
-				return errors.Wrap(err, "unable to verify bundle")
+				return fmt.Errorf("unable to verify bundle: %w", err)
 			}
 			bundleVerified = bundleVerified || verified
 
@@ -703,7 +773,7 @@ func verifyImageAttestations(ctx context.Context, atts oci.Signatures, h v1.Hash
 		checkedAttestations = append(checkedAttestations, att)
 	}
 	if len(checkedAttestations) == 0 {
-		return nil, false, fmt.Errorf("no matching attestations:\n%s", strings.Join(validationErrs, "\n "))
+		return nil, false, fmt.Errorf("%w:\n%s", ErrNoMatchingAttestations, strings.Join(validationErrs, "\n "))
 	}
 	return checkedAttestations, bundleVerified, nil
 }
@@ -714,17 +784,17 @@ func CheckExpiry(cert *x509.Certificate, it time.Time) error {
 		return t.Format(time.RFC3339)
 	}
 	if cert.NotAfter.Before(it) {
-		return fmt.Errorf("certificate expired before signatures were entered in log: %s is before %s",
+		return NewVerificationError("certificate expired before signatures were entered in log: %s is before %s",
 			ft(cert.NotAfter), ft(it))
 	}
 	if cert.NotBefore.After(it) {
-		return fmt.Errorf("certificate was issued after signatures were entered in log: %s is after %s",
+		return NewVerificationError("certificate was issued after signatures were entered in log: %s is after %s",
 			ft(cert.NotAfter), ft(it))
 	}
 	return nil
 }
 
-func VerifyBundle(ctx context.Context, sig oci.Signature) (bool, error) {
+func VerifyBundle(ctx context.Context, sig oci.Signature, rekorClient *client.Rekor) (bool, error) {
 	bundle, err := sig.Bundle()
 	if err != nil {
 		return false, err
@@ -736,14 +806,14 @@ func VerifyBundle(ctx context.Context, sig oci.Signature) (bool, error) {
 		return false, err
 	}
 
-	publicKeys, err := GetRekorPubs(ctx)
+	publicKeys, err := GetRekorPubs(ctx, rekorClient)
 	if err != nil {
-		return false, errors.Wrap(err, "retrieving rekor public key")
+		return false, fmt.Errorf("retrieving rekor public key: %w", err)
 	}
 
 	pubKey, ok := publicKeys[bundle.Payload.LogID]
 	if !ok {
-		return false, errors.New("rekor log public key not found for payload")
+		return false, &VerificationError{"rekor log public key not found for payload"}
 	}
 	err = VerifySET(bundle.Payload, bundle.SignedEntryTimestamp, pubKey.PubKey)
 	if err != nil {
@@ -762,17 +832,17 @@ func VerifyBundle(ctx context.Context, sig oci.Signature) (bool, error) {
 		// Verify the cert against the integrated time.
 		// Note that if the caller requires the certificate to be present, it has to ensure that itself.
 		if err := CheckExpiry(cert, time.Unix(bundle.Payload.IntegratedTime, 0)); err != nil {
-			return false, errors.Wrap(err, "checking expiry on cert")
+			return false, fmt.Errorf("checking expiry on cert: %w", err)
 		}
 	}
 
 	payload, err := sig.Payload()
 	if err != nil {
-		return false, errors.Wrap(err, "reading payload")
+		return false, fmt.Errorf("reading payload: %w", err)
 	}
 	signature, err := sig.Base64Signature()
 	if err != nil {
-		return false, errors.Wrap(err, "reading base64signature")
+		return false, fmt.Errorf("reading base64signature: %w", err)
 	}
 
 	alg, bundlehash, err := bundleHash(bundle.Payload.Body.(string), signature)
@@ -780,7 +850,7 @@ func VerifyBundle(ctx context.Context, sig oci.Signature) (bool, error) {
 	payloadHash := hex.EncodeToString(h[:])
 
 	if alg != "sha256" || bundlehash != payloadHash {
-		return false, errors.Wrap(err, "matching bundle to payload")
+		return false, fmt.Errorf("matching bundle to payload: %w", err)
 	}
 	return true, nil
 }
@@ -791,7 +861,7 @@ func compareSigs(bundleBody string, sig oci.Signature) error {
 	// we've returned nil (there are several reasons possible here).
 	actualSig, err := sig.Base64Signature()
 	if err != nil {
-		return errors.Wrap(err, "base64 signature")
+		return fmt.Errorf("base64 signature: %w", err)
 	}
 	if actualSig == "" {
 		// NB: empty sig means this is an attestation
@@ -799,13 +869,13 @@ func compareSigs(bundleBody string, sig oci.Signature) error {
 	}
 	bundleSignature, err := bundleSig(bundleBody)
 	if err != nil {
-		return errors.Wrap(err, "failed to extract signature from bundle")
+		return fmt.Errorf("failed to extract signature from bundle: %w", err)
 	}
 	if bundleSignature == "" {
 		return nil
 	}
 	if bundleSignature != actualSig {
-		return fmt.Errorf("signature in bundle does not match signature being verified")
+		return &VerificationError{"signature in bundle does not match signature being verified"}
 	}
 	return nil
 }
@@ -880,7 +950,7 @@ func bundleSig(bundleBody string) (string, error) {
 
 	bodyDecoded, err := base64.StdEncoding.DecodeString(bundleBody)
 	if err != nil {
-		return "", errors.Wrap(err, "decoding bundleBody")
+		return "", fmt.Errorf("decoding bundleBody: %w", err)
 	}
 
 	// Try Rekord
@@ -912,17 +982,17 @@ func bundleSig(bundleBody string) (string, error) {
 func VerifySET(bundlePayload cbundle.RekorPayload, signature []byte, pub *ecdsa.PublicKey) error {
 	contents, err := json.Marshal(bundlePayload)
 	if err != nil {
-		return errors.Wrap(err, "marshaling")
+		return fmt.Errorf("marshaling: %w", err)
 	}
 	canonicalized, err := jsoncanonicalizer.Transform(contents)
 	if err != nil {
-		return errors.Wrap(err, "canonicalizing")
+		return fmt.Errorf("canonicalizing: %w", err)
 	}
 
 	// verify the SET against the public key
 	hash := sha256.Sum256(canonicalized)
 	if !ecdsa.VerifyASN1(pub, hash[:], signature) {
-		return errors.New("unable to verify")
+		return &VerificationError{"unable to verify SET"}
 	}
 	return nil
 }

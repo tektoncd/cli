@@ -20,6 +20,7 @@ import (
 	"crypto"
 	"crypto/ecdsa"
 	"crypto/rsa"
+	"errors"
 	"fmt"
 	"hash/crc32"
 	"io"
@@ -28,11 +29,11 @@ import (
 	"time"
 
 	gcpkms "cloud.google.com/go/kms/apiv1"
+	"google.golang.org/api/option"
 	kmspb "google.golang.org/genproto/googleapis/cloud/kms/v1"
 	"google.golang.org/protobuf/types/known/wrapperspb"
 
-	"github.com/ReneKroon/ttlcache/v2"
-	"github.com/pkg/errors"
+	"github.com/jellydator/ttlcache/v2"
 	"github.com/sigstore/sigstore/pkg/cryptoutils"
 	"github.com/sigstore/sigstore/pkg/signature"
 	sigkms "github.com/sigstore/sigstore/pkg/signature/kms"
@@ -84,9 +85,8 @@ type gcpClient struct {
 	kmsClient  *gcpkms.KeyManagementClient
 }
 
-func newGCPClient(ctx context.Context, refStr string) (*gcpClient, error) {
-	var err error
-	if err = ValidReference(refStr); err != nil {
+func newGCPClient(ctx context.Context, refStr string, opts ...option.ClientOption) (*gcpClient, error) {
+	if err := ValidReference(refStr); err != nil {
 		return nil, err
 	}
 
@@ -99,14 +99,15 @@ func newGCPClient(ctx context.Context, refStr string) (*gcpClient, error) {
 		refString:  refStr,
 		kvCache:    ttlcache.NewCache(),
 	}
+	var err error
 	g.projectID, g.locationID, g.keyRing, g.keyName, g.version, err = parseReference(refStr)
 	if err != nil {
 		return nil, err
 	}
 
-	g.kmsClient, err = gcpkms.NewKeyManagementClient(ctx)
+	g.kmsClient, err = gcpkms.NewKeyManagementClient(ctx, opts...)
 	if err != nil {
-		return nil, errors.Wrap(err, "new gcp kms client")
+		return nil, fmt.Errorf("new gcp kms client: %w", err)
 	}
 
 	g.kvCache.SetLoaderFunction(g.kvCacheLoaderFunction)
@@ -114,7 +115,7 @@ func newGCPClient(ctx context.Context, refStr string) (*gcpClient, error) {
 	// prime the cache
 	_, err = g.kvCache.Get(cacheKey)
 	if err != nil {
-		return nil, errors.Wrap(err, "initializing key version from GCP KMS")
+		return nil, fmt.Errorf("initializing key version from GCP KMS: %w", err)
 	}
 	return g, nil
 }
@@ -139,7 +140,7 @@ func ValidReference(ref string) error {
 func parseReference(resourceID string) (projectID, locationID, keyRing, keyName, version string, err error) {
 	v := re.FindStringSubmatch(resourceID)
 	if len(v) != 6 {
-		err = errors.Errorf("invalid gcpkms format %q", resourceID)
+		err = fmt.Errorf("invalid gcpkms format %q", resourceID)
 		return
 	}
 	projectID, locationID, keyRing, keyName, version = v[1], v[2], v[3], v[4], v[5]
@@ -203,7 +204,7 @@ func (g *gcpClient) keyVersionName(ctx context.Context) (*cryptoKeyVersion, erro
 		// pick the key version that is enabled with the greatest version value
 		kv, err = iterator.Next()
 		if err != nil {
-			return nil, errors.Wrap(err, "unable to find an enabled key version in GCP KMS")
+			return nil, fmt.Errorf("unable to find an enabled key version in GCP KMS: %w", err)
 		}
 	}
 	// kv is keyVersion to use
@@ -213,7 +214,7 @@ func (g *gcpClient) keyVersionName(ctx context.Context) (*cryptoKeyVersion, erro
 
 	pubKey, err := g.fetchPublicKey(ctx, kv.Name)
 	if err != nil {
-		return nil, errors.Wrap(err, "unable to fetch public key while creating signer")
+		return nil, fmt.Errorf("unable to fetch public key while creating signer: %w", err)
 	}
 
 	// crv.Verifier is set here to enable storing the public key & hash algorithm together,
@@ -245,7 +246,7 @@ func (g *gcpClient) keyVersionName(ctx context.Context) (*cryptoKeyVersion, erro
 		return nil, errors.New("unknown algorithm specified by KMS")
 	}
 	if err != nil {
-		return nil, errors.Wrap(err, "initializing internal verifier")
+		return nil, fmt.Errorf("initializing internal verifier: %w", err)
 	}
 	return &crv, nil
 }
@@ -256,7 +257,7 @@ func (g *gcpClient) fetchPublicKey(ctx context.Context, name string) (crypto.Pub
 	// Call the API.
 	pk, err := g.kmsClient.GetPublicKey(ctx, pkreq)
 	if err != nil {
-		return nil, errors.Wrap(err, "public key")
+		return nil, fmt.Errorf("public key: %w", err)
 	}
 	return cryptoutils.UnmarshalPEMToPublicKey([]byte(pk.GetPem()))
 }
@@ -278,7 +279,12 @@ func (g *gcpClient) getCKV() (*cryptoKeyVersion, error) {
 		return nil, err
 	}
 
-	return kmsVersionInt.(*cryptoKeyVersion), nil
+	kv, ok := kmsVersionInt.(*cryptoKeyVersion)
+	if !ok {
+		return nil, fmt.Errorf("could not parse kms version cache value as CryptoKeyVersion")
+	}
+
+	return kv, nil
 }
 
 func (g *gcpClient) sign(ctx context.Context, digest []byte, alg crypto.Hash, crc uint32) ([]byte, error) {
@@ -315,7 +321,7 @@ func (g *gcpClient) sign(ctx context.Context, digest []byte, alg crypto.Hash, cr
 
 	resp, err := g.kmsClient.AsymmetricSign(ctx, &gcpSignReq)
 	if err != nil {
-		return nil, errors.Wrap(err, "calling GCP AsymmetricSign")
+		return nil, fmt.Errorf("calling GCP AsymmetricSign: %w", err)
 	}
 
 	// Optional, but recommended: perform integrity verification on result.
@@ -334,7 +340,7 @@ func (g *gcpClient) sign(ctx context.Context, digest []byte, alg crypto.Hash, cr
 func (g *gcpClient) public(ctx context.Context) (crypto.PublicKey, error) {
 	crv, err := g.getCKV()
 	if err != nil {
-		return nil, errors.Wrap(err, "transient error getting info from KMS")
+		return nil, fmt.Errorf("transient error getting info from KMS: %w", err)
 	}
 	return crv.Verifier.PublicKey(options.WithContext(ctx))
 }
@@ -342,7 +348,7 @@ func (g *gcpClient) public(ctx context.Context) (crypto.PublicKey, error) {
 func (g *gcpClient) verify(sig, message io.Reader, opts ...signature.VerifyOption) error {
 	crv, err := g.getCKV()
 	if err != nil {
-		return errors.Wrap(err, "transient error getting info from KMS")
+		return fmt.Errorf("transient error getting info from KMS: %w", err)
 	}
 	if err := crv.Verifier.VerifySignature(sig, message, opts...); err != nil {
 		// key could have been rotated, clear cache and try again if we're not pinned to a version
@@ -350,18 +356,18 @@ func (g *gcpClient) verify(sig, message io.Reader, opts ...signature.VerifyOptio
 			_ = g.kvCache.Remove(cacheKey)
 			crv, err = g.getCKV()
 			if err != nil {
-				return errors.Wrap(err, "transient error getting info from KMS")
+				return fmt.Errorf("transient error getting info from KMS: %w", err)
 			}
 			return crv.Verifier.VerifySignature(sig, message, opts...)
 		}
-		return errors.Wrap(err, "failed to verify for fixed version")
+		return fmt.Errorf("failed to verify for fixed version: %w", err)
 	}
 	return nil
 }
 
 func (g *gcpClient) createKey(ctx context.Context, algorithm string) (crypto.PublicKey, error) {
 	if err := g.createKeyRing(ctx); err != nil {
-		return nil, errors.Wrap(err, "creating key ring")
+		return nil, fmt.Errorf("creating key ring: %w", err)
 	}
 
 	getKeyRequest := &kmspb.GetCryptoKeyRequest{
@@ -386,7 +392,7 @@ func (g *gcpClient) createKey(ctx context.Context, algorithm string) (crypto.Pub
 		},
 	}
 	if _, err := g.kmsClient.CreateCryptoKey(ctx, createKeyRequest); err != nil {
-		return nil, errors.Wrap(err, "creating crypto key")
+		return nil, fmt.Errorf("creating crypto key: %w", err)
 	}
 	return g.public(ctx)
 }

@@ -10,7 +10,9 @@ import (
 	"context"
 	"errors"
 	"fmt"
+	"time"
 
+	"go.mongodb.org/mongo-driver/bson/bsontype"
 	"go.mongodb.org/mongo-driver/event"
 	"go.mongodb.org/mongo-driver/mongo/description"
 	"go.mongodb.org/mongo-driver/mongo/writeconcern"
@@ -21,6 +23,7 @@ import (
 
 // Delete performs a delete operation
 type Delete struct {
+	comment      bsoncore.Value
 	deletes      []bsoncore.Document
 	ordered      *bool
 	session      *session.Client
@@ -36,14 +39,17 @@ type Delete struct {
 	hint         *bool
 	result       DeleteResult
 	serverAPI    *driver.ServerAPIOptions
+	let          bsoncore.Document
+	timeout      *time.Duration
 }
 
+// DeleteResult represents a delete result returned by the server.
 type DeleteResult struct {
 	// Number of documents successfully deleted.
-	N int32
+	N int64
 }
 
-func buildDeleteResult(response bsoncore.Document, srvr driver.Server) (DeleteResult, error) {
+func buildDeleteResult(response bsoncore.Document) (DeleteResult, error) {
 	elements, err := response.Elements()
 	if err != nil {
 		return DeleteResult{}, err
@@ -53,9 +59,9 @@ func buildDeleteResult(response bsoncore.Document, srvr driver.Server) (DeleteRe
 		switch element.Key() {
 		case "n":
 			var ok bool
-			dr.N, ok = element.Value().AsInt32OK()
+			dr.N, ok = element.Value().AsInt64OK()
 			if !ok {
-				return dr, fmt.Errorf("response field 'n' is type int32, but received BSON type %s", element.Value().Type)
+				return dr, fmt.Errorf("response field 'n' is type int32 or int64, but received BSON type %s", element.Value().Type)
 			}
 		}
 	}
@@ -73,12 +79,12 @@ func NewDelete(deletes ...bsoncore.Document) *Delete {
 func (d *Delete) Result() DeleteResult { return d.result }
 
 func (d *Delete) processResponse(info driver.ResponseInfo) error {
-	dr, err := buildDeleteResult(info.ServerResponse, info.Server)
+	dr, err := buildDeleteResult(info.ServerResponse)
 	d.result.N += dr.N
 	return err
 }
 
-// Execute runs this operations and returns an error if the operaiton did not execute successfully.
+// Execute runs this operations and returns an error if the operation did not execute successfully.
 func (d *Delete) Execute(ctx context.Context) error {
 	if d.deployment == nil {
 		return errors.New("the Delete operation must have a Deployment set before Execute can be called")
@@ -104,12 +110,16 @@ func (d *Delete) Execute(ctx context.Context) error {
 		Selector:          d.selector,
 		WriteConcern:      d.writeConcern,
 		ServerAPI:         d.serverAPI,
+		Timeout:           d.timeout,
 	}.Execute(ctx, nil)
 
 }
 
 func (d *Delete) command(dst []byte, desc description.SelectedServer) ([]byte, error) {
 	dst = bsoncore.AppendStringElement(dst, "delete", d.collection)
+	if d.comment.Type != bsontype.Type(0) {
+		dst = bsoncore.AppendValueElement(dst, "comment", d.comment)
+	}
 	if d.ordered != nil {
 		dst = bsoncore.AppendBooleanElement(dst, "ordered", *d.ordered)
 	}
@@ -120,6 +130,9 @@ func (d *Delete) command(dst []byte, desc description.SelectedServer) ([]byte, e
 		if !d.writeConcern.Acknowledged() {
 			return nil, errUnacknowledgedHint
 		}
+	}
+	if d.let != nil {
+		dst = bsoncore.AppendDocumentElement(dst, "let", d.let)
 	}
 	return dst, nil
 }
@@ -174,6 +187,16 @@ func (d *Delete) Collection(collection string) *Delete {
 	}
 
 	d.collection = collection
+	return d
+}
+
+// Comment sets a value to help trace an operation.
+func (d *Delete) Comment(comment bsoncore.Value) *Delete {
+	if d == nil {
+		d = new(Delete)
+	}
+
+	d.comment = comment
 	return d
 }
 
@@ -267,5 +290,25 @@ func (d *Delete) ServerAPI(serverAPI *driver.ServerAPIOptions) *Delete {
 	}
 
 	d.serverAPI = serverAPI
+	return d
+}
+
+// Let specifies the let document to use. This option is only valid for server versions 5.0 and above.
+func (d *Delete) Let(let bsoncore.Document) *Delete {
+	if d == nil {
+		d = new(Delete)
+	}
+
+	d.let = let
+	return d
+}
+
+// Timeout sets the timeout for this operation.
+func (d *Delete) Timeout(timeout *time.Duration) *Delete {
+	if d == nil {
+		d = new(Delete)
+	}
+
+	d.timeout = timeout
 	return d
 }

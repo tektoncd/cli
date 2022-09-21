@@ -18,12 +18,15 @@ var (
 	ErrInvalidDelegatedRole = errors.New("tuf: invalid delegated role")
 	ErrInvalidKeyID         = errors.New("tuf: invalid key id")
 	ErrInvalidThreshold     = errors.New("tuf: invalid role threshold")
+	ErrMissingTargetFile    = errors.New("tuf: missing previously listed targets metadata file")
 )
 
-type ErrWrongID struct{}
+type ErrRepeatID struct {
+	KeyID string
+}
 
-func (ErrWrongID) Error() string {
-	return "tuf: key id mismatch"
+func (e ErrRepeatID) Error() string {
+	return fmt.Sprintf("tuf: duplicate key id (%s)", e.KeyID)
 }
 
 type ErrUnknownRole struct {
@@ -43,8 +46,8 @@ func (e ErrExpired) Error() string {
 }
 
 type ErrLowVersion struct {
-	Actual  int
-	Current int
+	Actual  int64
+	Current int64
 }
 
 func (e ErrLowVersion) Error() string {
@@ -52,8 +55,8 @@ func (e ErrLowVersion) Error() string {
 }
 
 type ErrWrongVersion struct {
-	Given    int
-	Expected int
+	Given    int64
+	Expected int64
 }
 
 func (e ErrWrongVersion) Error() string {

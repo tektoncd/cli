@@ -20,7 +20,7 @@ import (
 	"fmt"
 
 	"github.com/tektoncd/chains/pkg/chains/formats"
-	"github.com/tektoncd/pipeline/pkg/apis/pipeline/v1beta1"
+	"github.com/tektoncd/chains/pkg/chains/objects"
 
 	"github.com/in-toto/in-toto-golang/in_toto"
 	"github.com/secure-systems-lab/go-securesystemslib/dsse"
@@ -49,7 +49,7 @@ type Backend struct {
 	logger           *zap.SugaredLogger
 	cfg              config.Config
 	client           kubernetes.Interface
-	getAuthenticator func(ctx context.Context, tr *v1beta1.TaskRun, client kubernetes.Interface) (remote.Option, error)
+	getAuthenticator func(ctx context.Context, obj objects.TektonObject, client kubernetes.Interface) (remote.Option, error)
 }
 
 // NewStorageBackend returns a new OCI StorageBackend that stores signatures in an OCI registry
@@ -58,9 +58,9 @@ func NewStorageBackend(ctx context.Context, logger *zap.SugaredLogger, client ku
 		logger: logger,
 		cfg:    cfg,
 		client: client,
-		getAuthenticator: func(ctx context.Context, tr *v1beta1.TaskRun, client kubernetes.Interface) (remote.Option, error) {
+		getAuthenticator: func(ctx context.Context, obj objects.TektonObject, client kubernetes.Interface) (remote.Option, error) {
 			kc, err := k8schain.New(ctx, client,
-				k8schain.Options{Namespace: tr.Namespace, ServiceAccountName: tr.Spec.ServiceAccountName})
+				k8schain.Options{Namespace: obj.GetNamespace(), ServiceAccountName: obj.GetServiceAccountName()})
 			if err != nil {
 				return nil, err
 			}
@@ -70,13 +70,13 @@ func NewStorageBackend(ctx context.Context, logger *zap.SugaredLogger, client ku
 }
 
 // StorePayload implements the storage.Backend interface.
-func (b *Backend) StorePayload(ctx context.Context, tr *v1beta1.TaskRun, rawPayload []byte, signature string, storageOpts config.StorageOpts) error {
-	auth, err := b.getAuthenticator(ctx, tr, b.client)
+func (b *Backend) StorePayload(ctx context.Context, obj objects.TektonObject, rawPayload []byte, signature string, storageOpts config.StorageOpts) error {
+	auth, err := b.getAuthenticator(ctx, obj, b.client)
 	if err != nil {
 		return err
 	}
 
-	b.logger.Infof("Storing payload on TaskRun %s/%s", tr.Namespace, tr.Name)
+	b.logger.Infof("Storing payload on %s/%s/%s", obj.GetKind(), obj.GetNamespace(), obj.GetName())
 
 	if storageOpts.PayloadFormat == formats.PayloadTypeSimpleSigning {
 		format := simple.SimpleContainerImage{}
@@ -97,8 +97,7 @@ func (b *Backend) StorePayload(ctx context.Context, tr *v1beta1.TaskRun, rawPayl
 		// that is not intended to produce an image, e.g. git-clone.
 		if len(attestation.Subject) == 0 {
 			b.logger.Infof(
-				"No image subject to attest for TaskRun %s/%s. Skipping upload to registry",
-				tr.Namespace, tr.Name)
+				"No image subject to attest for %s/%s/%s. Skipping upload to registry", obj.GetKind(), obj.GetNamespace(), obj.GetName())
 			return nil
 		}
 
@@ -207,8 +206,8 @@ func (b *Backend) Type() string {
 	return StorageBackendOCI
 }
 
-func (b *Backend) RetrieveSignatures(ctx context.Context, tr *v1beta1.TaskRun, opts config.StorageOpts) (map[string][]string, error) {
-	images, err := b.RetrieveArtifact(ctx, tr, opts)
+func (b *Backend) RetrieveSignatures(ctx context.Context, obj objects.TektonObject, opts config.StorageOpts) (map[string][]string, error) {
+	images, err := b.RetrieveArtifact(ctx, obj, opts)
 	if err != nil {
 		return nil, err
 	}
@@ -235,9 +234,9 @@ func (b *Backend) RetrieveSignatures(ctx context.Context, tr *v1beta1.TaskRun, o
 	return m, nil
 }
 
-func (b *Backend) RetrievePayloads(ctx context.Context, tr *v1beta1.TaskRun, opts config.StorageOpts) (map[string]string, error) {
+func (b *Backend) RetrievePayloads(ctx context.Context, obj objects.TektonObject, opts config.StorageOpts) (map[string]string, error) {
 	var err error
-	images, err := b.RetrieveArtifact(ctx, tr, opts)
+	images, err := b.RetrieveArtifact(ctx, obj, opts)
 	if err != nil {
 		return nil, err
 	}
@@ -279,9 +278,9 @@ func (b *Backend) RetrievePayloads(ctx context.Context, tr *v1beta1.TaskRun, opt
 	return m, nil
 }
 
-func (b *Backend) RetrieveArtifact(ctx context.Context, tr *v1beta1.TaskRun, opts config.StorageOpts) (map[string]oci.SignedImage, error) {
+func (b *Backend) RetrieveArtifact(ctx context.Context, obj objects.TektonObject, opts config.StorageOpts) (map[string]oci.SignedImage, error) {
 	// Given the TaskRun, retrieve the OCI images.
-	images := artifacts.ExtractOCIImagesFromResults(tr, b.logger)
+	images := artifacts.ExtractOCIImagesFromResults(obj, b.logger)
 	m := make(map[string]oci.SignedImage)
 
 	for _, image := range images {

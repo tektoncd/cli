@@ -18,8 +18,8 @@ import (
 	"encoding/base64"
 	"encoding/json"
 
+	"github.com/tektoncd/chains/pkg/chains/objects"
 	"github.com/tektoncd/chains/pkg/config"
-	"github.com/tektoncd/pipeline/pkg/apis/pipeline/v1beta1"
 	"go.uber.org/zap"
 	"gocloud.dev/docstore"
 	_ "gocloud.dev/docstore/awsdynamodb"
@@ -62,7 +62,7 @@ func NewStorageBackend(ctx context.Context, logger *zap.SugaredLogger, cfg confi
 }
 
 // StorePayload implements the Payloader interface.
-func (b *Backend) StorePayload(ctx context.Context, _ *v1beta1.TaskRun, rawPayload []byte, signature string, opts config.StorageOpts) error {
+func (b *Backend) StorePayload(ctx context.Context, _ objects.TektonObject, rawPayload []byte, signature string, opts config.StorageOpts) error {
 	var obj interface{}
 	if err := json.Unmarshal(rawPayload, &obj); err != nil {
 		return err
@@ -88,7 +88,7 @@ func (b *Backend) Type() string {
 	return StorageTypeDocDB
 }
 
-func (b *Backend) RetrieveSignatures(ctx context.Context, _ *v1beta1.TaskRun, opts config.StorageOpts) (map[string][]string, error) {
+func (b *Backend) RetrieveSignatures(ctx context.Context, _ objects.TektonObject, opts config.StorageOpts) (map[string][]string, error) {
 	// Retrieve the document.
 	documents, err := b.retrieveDocuments(ctx, opts)
 	if err != nil {
@@ -107,7 +107,7 @@ func (b *Backend) RetrieveSignatures(ctx context.Context, _ *v1beta1.TaskRun, op
 	return m, nil
 }
 
-func (b *Backend) RetrievePayloads(ctx context.Context, _ *v1beta1.TaskRun, opts config.StorageOpts) (map[string]string, error) {
+func (b *Backend) RetrievePayloads(ctx context.Context, _ objects.TektonObject, opts config.StorageOpts) (map[string]string, error) {
 	documents, err := b.retrieveDocuments(ctx, opts)
 	if err != nil {
 		return nil, err

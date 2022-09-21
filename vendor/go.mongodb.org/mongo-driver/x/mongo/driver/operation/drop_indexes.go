@@ -10,6 +10,7 @@ import (
 	"context"
 	"errors"
 	"fmt"
+	"time"
 
 	"go.mongodb.org/mongo-driver/event"
 	"go.mongodb.org/mongo-driver/mongo/description"
@@ -34,14 +35,16 @@ type DropIndexes struct {
 	writeConcern *writeconcern.WriteConcern
 	result       DropIndexesResult
 	serverAPI    *driver.ServerAPIOptions
+	timeout      *time.Duration
 }
 
+// DropIndexesResult represents a dropIndexes result returned by the server.
 type DropIndexesResult struct {
 	// Number of indexes that existed before the drop was executed.
 	NIndexesWas int32
 }
 
-func buildDropIndexesResult(response bsoncore.Document, srvr driver.Server) (DropIndexesResult, error) {
+func buildDropIndexesResult(response bsoncore.Document) (DropIndexesResult, error) {
 	elements, err := response.Elements()
 	if err != nil {
 		return DropIndexesResult{}, err
@@ -72,11 +75,11 @@ func (di *DropIndexes) Result() DropIndexesResult { return di.result }
 
 func (di *DropIndexes) processResponse(info driver.ResponseInfo) error {
 	var err error
-	di.result, err = buildDropIndexesResult(info.ServerResponse, info.Server)
+	di.result, err = buildDropIndexesResult(info.ServerResponse)
 	return err
 }
 
-// Execute runs this operations and returns an error if the operaiton did not execute successfully.
+// Execute runs this operations and returns an error if the operation did not execute successfully.
 func (di *DropIndexes) Execute(ctx context.Context) error {
 	if di.deployment == nil {
 		return errors.New("the DropIndexes operation must have a Deployment set before Execute can be called")
@@ -94,6 +97,7 @@ func (di *DropIndexes) Execute(ctx context.Context) error {
 		Selector:          di.selector,
 		WriteConcern:      di.writeConcern,
 		ServerAPI:         di.serverAPI,
+		Timeout:           di.timeout,
 	}.Execute(ctx, nil)
 
 }
@@ -103,7 +107,8 @@ func (di *DropIndexes) command(dst []byte, desc description.SelectedServer) ([]b
 	if di.index != nil {
 		dst = bsoncore.AppendStringElement(dst, "index", *di.index)
 	}
-	if di.maxTimeMS != nil {
+	// Only append specified maxTimeMS if timeout is not also specified.
+	if di.maxTimeMS != nil && di.timeout == nil {
 		dst = bsoncore.AppendInt64Element(dst, "maxTimeMS", *di.maxTimeMS)
 	}
 	return dst, nil
@@ -227,5 +232,15 @@ func (di *DropIndexes) ServerAPI(serverAPI *driver.ServerAPIOptions) *DropIndexe
 	}
 
 	di.serverAPI = serverAPI
+	return di
+}
+
+// Timeout sets the timeout for this operation.
+func (di *DropIndexes) Timeout(timeout *time.Duration) *DropIndexes {
+	if di == nil {
+		di = new(DropIndexes)
+	}
+
+	di.timeout = timeout
 	return di
 }
