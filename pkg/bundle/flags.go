@@ -20,8 +20,7 @@ type RemoteOptions struct {
 // ToOptions outputs a list of `remoteimg.Option`s that can be passed into various fetch/write calls to a remote
 // registry.
 func (r *RemoteOptions) ToOptions() []remoteimg.Option {
-	keychains := authn.NewMultiKeychain(authn.DefaultKeychain, PodmanKeyChain)
-	opts := []remoteimg.Option{remoteimg.WithAuthFromKeychain(keychains)}
+	var opts []remoteimg.Option
 
 	// Set the auth chain based on the flags.
 	if r.bearerToken != "" {
@@ -32,6 +31,12 @@ func (r *RemoteOptions) ToOptions() []remoteimg.Option {
 			Username: r.basicUsername,
 			Password: r.basicPassword,
 		}))
+	}
+
+	// Use local keychain if no auth is provided. It's not allowed to use both.
+	if len(opts) == 0 {
+		keychains := authn.NewMultiKeychain(authn.DefaultKeychain, PodmanKeyChain)
+		opts = []remoteimg.Option{remoteimg.WithAuthFromKeychain(keychains)}
 	}
 
 	transport := http.DefaultTransport.(*http.Transport)
