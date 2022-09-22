@@ -392,7 +392,7 @@ func (opt *startOptions) getInput(pipeline *v1beta1.Pipeline) error {
 		return err
 	}
 
-	if len(opt.Resources) == 0 && !opt.Last && opt.UsePipelineRun == "" {
+	if len(pipeline.Spec.Resources) > 0 && len(opt.Resources) == 0 && !opt.Last && opt.UsePipelineRun == "" {
 		pres, err := getPipelineResources(cs.Resource, opt.cliparams.Namespace())
 		if err != nil {
 			return fmt.Errorf("failed to list PipelineResources from namespace %s: %v", opt.cliparams.Namespace(), err)
