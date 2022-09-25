@@ -18,12 +18,12 @@ import (
 	"context"
 	"fmt"
 	"io"
+	"sync"
 	"time"
 
 	"github.com/tektoncd/cli/pkg/pods/stream"
 	corev1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
-	v1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/fields"
 	"k8s.io/client-go/informers"
 	k8s "k8s.io/client-go/kubernetes"
@@ -78,10 +78,15 @@ func (p *Pod) Wait() (*corev1.Pod, error) {
 
 	stopC := make(chan struct{})
 	eventC := make(chan interface{})
-	defer close(eventC)
-	defer close(stopC)
+	mu := sync.Mutex{}
+	defer func() {
+		mu.Lock()
+		close(stopC)
+		close(eventC)
+		mu.Unlock()
+	}()
 
-	p.watcher(stopC, eventC)
+	p.watcher(stopC, eventC, &mu)
 
 	var pod *corev1.Pod
 	var err error
@@ -95,7 +100,7 @@ func (p *Pod) Wait() (*corev1.Pod, error) {
 	return pod, err
 }
 
-func (p *Pod) watcher(stopC <-chan struct{}, eventC chan<- interface{}) {
+func (p *Pod) watcher(stopC <-chan struct{}, eventC chan<- interface{}, mu *sync.Mutex) {
 	factory := informers.NewSharedInformerFactoryWithOptions(
 		p.Kc, time.Second*10,
 		informers.WithNamespace(p.Ns),
@@ -103,17 +108,45 @@ func (p *Pod) watcher(stopC <-chan struct{}, eventC chan<- interface{}) {
 
 	factory.Core().V1().Pods().Informer().AddEventHandler(
 		cache.ResourceEventHandlerFuncs{
-			AddFunc:    func(obj interface{}) { eventC <- obj },
-			UpdateFunc: func(oldObj, newObj interface{}) { eventC <- newObj },
-			DeleteFunc: func(obj interface{}) { eventC <- obj },
+			AddFunc: func(obj interface{}) {
+				mu.Lock()
+				defer mu.Unlock()
+				select {
+				case <-stopC:
+					return
+				default:
+					// default is used to avoid pseudo-random selection of multiple matching cases
+					eventC <- obj
+				}
+			},
+			UpdateFunc: func(oldObj, newObj interface{}) {
+				mu.Lock()
+				defer mu.Unlock()
+				select {
+				case <-stopC:
+					return
+				default:
+					eventC <- newObj
+				}
+			},
+			DeleteFunc: func(obj interface{}) {
+				mu.Lock()
+				defer mu.Unlock()
+				select {
+				case <-stopC:
+					return
+				default:
+					eventC <- obj
+				}
+			},
 		})
 
 	factory.Start(stopC)
 	factory.WaitForCacheSync(stopC)
 }
 
-func podOpts(name string) func(opts *v1.ListOptions) {
-	return func(opts *v1.ListOptions) {
+func podOpts(name string) func(opts *metav1.ListOptions) {
+	return func(opts *metav1.ListOptions) {
 		opts.FieldSelector = fields.OneTermEqualSelector("metadata.name", name).String()
 	}
 }
