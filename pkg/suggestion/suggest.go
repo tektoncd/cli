@@ -77,7 +77,7 @@ func SubcommandsRequiredWithSuggestions(cmd *cobra.Command, args []string) error
 	if typedName == "" {
 		return cmd.Help()
 	}
-	return fmt.Errorf("command %s %s doesn't exist. Run tkn help for available commands", cmd.Name(), typedName)
+	return fmt.Errorf("command %s %s doesn't exist. Run %s help for available commands", cmd.Name(), typedName, cmd.Root().Name())
 }
 
 // suggestsByPrefixOrLd suggests a command by levenshtein distance or by prefix.
