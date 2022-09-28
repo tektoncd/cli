@@ -25,6 +25,8 @@ import (
 	"github.com/tektoncd/hub/api/pkg/cli/installer"
 	"github.com/tektoncd/hub/api/pkg/cli/kube"
 	"github.com/tektoncd/hub/api/pkg/cli/printer"
+	"golang.org/x/text/cases"
+	"golang.org/x/text/language"
 	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
 )
 
@@ -91,7 +93,7 @@ func commandForKind(kind string, opts *options) *cobra.Command {
 
 	return &cobra.Command{
 		Use:          kind,
-		Short:        "Install " + strings.Title(kind) + " from a catalog by its name and version",
+		Short:        "Install " + cases.Title(language.English).String(kind) + " from a catalog by its name and version",
 		Long:         ``,
 		SilenceUsage: true,
 		Example:      examples(kind),
@@ -178,7 +180,7 @@ func (opts *options) run() error {
 func msg(res *unstructured.Unstructured) string {
 	version := res.GetLabels()[versionLabel]
 	return fmt.Sprintf("%s %s(%s) installed in %s namespace",
-		strings.Title(res.GetKind()), res.GetName(), version, res.GetNamespace())
+		cases.Title(language.English).String(res.GetKind()), res.GetName(), version, res.GetNamespace())
 }
 
 func (opts *options) validate() error {
@@ -195,7 +197,7 @@ func (opts *options) isResourceNotFoundError(err error) error {
 		if opts.version != "" {
 			res = res + fmt.Sprintf("(%s)", opts.version)
 		}
-		return fmt.Errorf("%s %s from %s catalog not found in Hub", strings.Title(opts.kind), res, opts.from)
+		return fmt.Errorf("%s %s from %s catalog not found in Hub", cases.Title(language.English).String(opts.kind), res, opts.from)
 	}
 	return err
 }
@@ -220,32 +222,32 @@ func (opts *options) errors(pipelinesVersion string, errors []error) error {
 				switch {
 				case existingVersion == resourceVersion:
 					return fmt.Errorf("%s %s(%s) already exists in %s namespace. Use reinstall command to overwrite existing",
-						strings.Title(opts.resource.GetKind()), opts.resource.GetName(), existingVersion, opts.cs.Namespace())
+						cases.Title(language.English).String(opts.resource.GetKind()), opts.resource.GetName(), existingVersion, opts.cs.Namespace())
 
 				case existingVersion < resourceVersion:
 					if opts.version == "" {
 						resourceVersion = resourceVersion + "(latest)"
 					}
 					return fmt.Errorf("%s %s(%s) already exists in %s namespace. Use upgrade command to install v%s",
-						strings.Title(opts.resource.GetKind()), opts.resource.GetName(), existingVersion, opts.cs.Namespace(), resourceVersion)
+						cases.Title(language.English).String(opts.resource.GetKind()), opts.resource.GetName(), existingVersion, opts.cs.Namespace(), resourceVersion)
 
 				case existingVersion > resourceVersion:
 					return fmt.Errorf("%s %s(%s) already exists in %s namespace. Use downgrade command to install v%s",
-						strings.Title(opts.resource.GetKind()), opts.resource.GetName(), existingVersion, opts.cs.Namespace(), resourceVersion)
+						cases.Title(language.English).String(opts.resource.GetKind()), opts.resource.GetName(), existingVersion, opts.cs.Namespace(), resourceVersion)
 
 				default:
 					return fmt.Errorf("%s %s(%s) already exists in %s namespace. Use reinstall command to overwrite existing",
-						strings.Title(opts.resource.GetKind()), opts.resource.GetName(), existingVersion, opts.cs.Namespace())
+						cases.Title(language.English).String(opts.resource.GetKind()), opts.resource.GetName(), existingVersion, opts.cs.Namespace())
 				}
 
 			} else {
 				return fmt.Errorf("%s %s already exists in %s namespace but seems to be missing version label. Use reinstall command to overwrite existing",
-					strings.Title(opts.resource.GetKind()), opts.resource.GetName(), opts.cs.Namespace())
+					cases.Title(language.English).String(opts.resource.GetKind()), opts.resource.GetName(), opts.cs.Namespace())
 			}
 		}
 
 		if err == installer.ErrVersionIncompatible {
-			return fmt.Errorf("%s %s(%s) requires Tekton Pipelines min version v%s but found %s", strings.Title(opts.kind), opts.name(), resourceVersion, resourcePipelineMinVersion, pipelinesVersion)
+			return fmt.Errorf("%s %s(%s) requires Tekton Pipelines min version v%s but found %s", cases.Title(language.English).String(opts.kind), opts.name(), resourceVersion, resourcePipelineMinVersion, pipelinesVersion)
 		}
 
 		if strings.Contains(err.Error(), "mutation failed: cannot decode incoming new object") {
@@ -258,6 +260,6 @@ func (opts *options) errors(pipelinesVersion string, errors []error) error {
 }
 
 func examples(kind string) string {
-	replacer := strings.NewReplacer("%s", kind, "%S", strings.Title(kind))
+	replacer := strings.NewReplacer("%s", kind, "%S", cases.Title(language.English).String(kind))
 	return replacer.Replace(cmdExamples)
 }

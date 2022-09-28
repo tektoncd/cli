@@ -19,9 +19,11 @@ import (
 	"strings"
 
 	"github.com/fatih/color"
-	"github.com/tektoncd/hub/api/v1/gen/http/resource/client"
 	"github.com/tektoncd/hub/api/pkg/cli/hub"
+	"github.com/tektoncd/hub/api/v1/gen/http/resource/client"
 	"golang.org/x/term"
+	"golang.org/x/text/cases"
+	"golang.org/x/text/language"
 )
 
 var icons = map[string]string{
@@ -45,7 +47,7 @@ func FormatName(name, latestVersion string) string {
 
 // FormatCatalogName returns name of catalog from which the resource is
 func FormatCatalogName(catalogName string) string {
-	return strings.Title(catalogName)
+	return cases.Title(language.English).String(catalogName)
 }
 
 // FormatDesc returns first 40 char of resource description

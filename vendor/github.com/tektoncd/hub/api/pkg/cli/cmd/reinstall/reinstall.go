@@ -25,6 +25,8 @@ import (
 	"github.com/tektoncd/hub/api/pkg/cli/installer"
 	"github.com/tektoncd/hub/api/pkg/cli/kube"
 	"github.com/tektoncd/hub/api/pkg/cli/printer"
+	"golang.org/x/text/cases"
+	"golang.org/x/text/language"
 	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
 )
 
@@ -91,7 +93,7 @@ func commandForKind(kind string, opts *options) *cobra.Command {
 
 	return &cobra.Command{
 		Use:          kind,
-		Short:        "Reinstall a " + strings.Title(kind) + " by its name",
+		Short:        "Reinstall a " + cases.Title(language.English).String(kind) + " by its name",
 		Long:         ``,
 		SilenceUsage: true,
 		Example:      examples(kind),
@@ -166,7 +168,7 @@ func (opts *options) run() error {
 func msg(res *unstructured.Unstructured) string {
 	version := res.GetLabels()["app.kubernetes.io/version"]
 	return fmt.Sprintf("%s %s(%s) reinstalled in %s namespace",
-		strings.Title(res.GetKind()), res.GetName(), version, res.GetNamespace())
+		cases.Title(language.English).String(res.GetKind()), res.GetName(), version, res.GetNamespace())
 }
 
 func (opts *options) validate() error {
@@ -183,7 +185,7 @@ func (opts *options) isResourceNotFoundError(err error) error {
 		if opts.version != "" {
 			res = res + fmt.Sprintf("(%s)", opts.version)
 		}
-		return fmt.Errorf("%s %s from %s catalog not found in Hub", strings.Title(opts.kind), res, opts.from)
+		return fmt.Errorf("%s %s from %s catalog not found in Hub", cases.Title(language.English).String(opts.kind), res, opts.from)
 	}
 	return err
 }
@@ -193,7 +195,7 @@ func (opts *options) lookupError(err error) error {
 	switch err {
 	case installer.ErrNotFound:
 		return fmt.Errorf("%s %s doesn't exists in %s namespace. Use install command to install the %s",
-			strings.Title(opts.kind), opts.name(), opts.cs.Namespace(), opts.kind)
+			cases.Title(language.English).String(opts.kind), opts.name(), opts.cs.Namespace(), opts.kind)
 
 	case installer.ErrVersionAndCatalogMissing:
 		if opts.version == "" {
@@ -228,11 +230,11 @@ func (opts *options) errors(resourcePipelineMinVersion, pipelinesVersion string,
 	for _, err := range errors {
 		if err == installer.ErrNotFound {
 			return fmt.Errorf("%s %s doesn't exists in %s namespace. Use install command to install the resource",
-				strings.Title(opts.kind), opts.name(), opts.cs.Namespace())
+				cases.Title(language.English).String(opts.kind), opts.name(), opts.cs.Namespace())
 		}
 
 		if err == installer.ErrVersionIncompatible {
-			return fmt.Errorf("%s %s(%s) can't be reinstalled as it requires Pipelines min version v%s but found %s", strings.Title(opts.kind), opts.name(), resourceVersion, resourcePipelineMinVersion, pipelinesVersion)
+			return fmt.Errorf("%s %s(%s) can't be reinstalled as it requires Pipelines min version v%s but found %s", cases.Title(language.English).String(opts.kind), opts.name(), resourceVersion, resourcePipelineMinVersion, pipelinesVersion)
 		}
 
 		if strings.Contains(err.Error(), "mutation failed: cannot decode incoming new object") {
@@ -274,6 +276,6 @@ func (opts *options) resVersion() string {
 }
 
 func examples(kind string) string {
-	replacer := strings.NewReplacer("%s", kind, "%S", strings.Title(kind))
+	replacer := strings.NewReplacer("%s", kind, "%S", cases.Title(language.English).String(kind))
 	return replacer.Replace(cmdExamples)
 }

@@ -25,6 +25,8 @@ import (
 	"github.com/tektoncd/hub/api/pkg/cli/installer"
 	"github.com/tektoncd/hub/api/pkg/cli/kube"
 	"github.com/tektoncd/hub/api/pkg/cli/printer"
+	"golang.org/x/text/cases"
+	"golang.org/x/text/language"
 )
 
 const upgradeTemplate = `{{decorate "underline bold" "Upgrades Available\n" }}
@@ -132,7 +134,7 @@ func commandForKind(kind string, opts *options) *cobra.Command {
 
 	return &cobra.Command{
 		Use:          kind,
-		Short:        "Check updates for " + strings.Title(kind) + " installed via Hub CLI",
+		Short:        "Check updates for " + cases.Title(language.English).String(kind) + " installed via Hub CLI",
 		Long:         ``,
 		SilenceUsage: true,
 		Example:      examples(kind),
@@ -201,7 +203,7 @@ func (opts *options) run() error {
 		if opts.version < *hubResource.LatestVersion.Version {
 			hubRes := hubRes{
 				Name:           *hubResource.Name,
-				Catalog:        strings.Title(resourceCatalogLabel),
+				Catalog:        cases.Title(language.English).String(resourceCatalogLabel),
 				CurrentVersion: opts.version,
 				LatestVersion:  *hubResource.LatestVersion.Version,
 			}
@@ -222,6 +224,6 @@ func (opts *options) run() error {
 }
 
 func examples(kind string) string {
-	replacer := strings.NewReplacer("%s", kind, "%S", strings.Title(kind))
+	replacer := strings.NewReplacer("%s", kind, "%S", cases.Title(language.English).String(kind))
 	return replacer.Replace(cmdExamples)
 }
