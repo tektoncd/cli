@@ -53,7 +53,7 @@ require (
 	github.com/spf13/cobra v1.5.0
 	github.com/spf13/pflag v1.0.5
 	github.com/tektoncd/chains v0.12.1-0.20220920205308-b34353430a40
-	github.com/tektoncd/hub v1.9.0
+	github.com/tektoncd/hub v1.10.0
 	github.com/tektoncd/pipeline v0.40.0
 	github.com/tektoncd/plumbing v0.0.0-20220817140952-3da8ce01aeeb
 	github.com/tektoncd/triggers v0.21.0
@@ -335,7 +335,7 @@ require (
 	go.opentelemetry.io/otel/trace v1.7.0 // indirect
 	go.opentelemetry.io/proto/otlp v0.16.0 // indirect
 	go.starlark.net v0.0.0-20200306205701-8dd3e2ee1dd5 // indirect
-	goa.design/goa/v3 v3.8.2 // indirect
+	goa.design/goa/v3 v3.8.5 // indirect
 	gocloud.dev v0.26.0 // indirect
 	gocloud.dev/docstore/mongodocstore v0.26.0 // indirect
 	gocloud.dev/pubsub/kafkapubsub v0.26.0 // indirect

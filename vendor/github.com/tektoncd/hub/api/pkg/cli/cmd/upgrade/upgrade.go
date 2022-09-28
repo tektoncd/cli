@@ -25,6 +25,8 @@ import (
 	"github.com/tektoncd/hub/api/pkg/cli/installer"
 	"github.com/tektoncd/hub/api/pkg/cli/kube"
 	"github.com/tektoncd/hub/api/pkg/cli/printer"
+	"golang.org/x/text/cases"
+	"golang.org/x/text/language"
 	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
 )
 
@@ -89,7 +91,7 @@ func commandForKind(kind string, opts *options) *cobra.Command {
 
 	return &cobra.Command{
 		Use:          kind,
-		Short:        "Upgrade a " + strings.Title(kind) + " by its name",
+		Short:        "Upgrade a " + cases.Title(language.English).String(kind) + " by its name",
 		Long:         ``,
 		SilenceUsage: true,
 		Example:      examples(kind),
@@ -181,7 +183,7 @@ func (opts *options) run() error {
 func msg(res *unstructured.Unstructured) string {
 	version := res.GetLabels()[versionLabel]
 	return fmt.Sprintf("%s %s upgraded to v%s in %s namespace",
-		strings.Title(res.GetKind()), res.GetName(), version, res.GetNamespace())
+		cases.Title(language.English).String(res.GetKind()), res.GetName(), version, res.GetNamespace())
 }
 
 func (opts *options) validate() error {
@@ -193,7 +195,7 @@ func (opts *options) name() string {
 }
 
 func examples(kind string) string {
-	replacer := strings.NewReplacer("%s", kind, "%S", strings.Title(kind))
+	replacer := strings.NewReplacer("%s", kind, "%S", cases.Title(language.English).String(kind))
 	return replacer.Replace(cmdExamples)
 }
 
@@ -214,15 +216,15 @@ func (opts *options) lookupError(err error) error {
 	switch err {
 	case installer.ErrNotFound:
 		return fmt.Errorf("%s %s doesn't exist in %s namespace. Use install command to install the %s",
-			strings.Title(opts.kind), opts.name(), opts.cs.Namespace(), opts.kind)
+			cases.Title(language.English).String(opts.kind), opts.name(), opts.cs.Namespace(), opts.kind)
 
 	case installer.ErrVersionAndCatalogMissing:
 		return fmt.Errorf("%s %s seems to be missing version and catalog label. Use reinstall command to overwrite existing %s",
-			strings.Title(opts.resource.GetKind()), opts.resource.GetName(), opts.kind)
+			cases.Title(language.English).String(opts.resource.GetKind()), opts.resource.GetName(), opts.kind)
 
 	case installer.ErrVersionMissing:
 		return fmt.Errorf("%s %s seems to be missing version label. Use reinstall command to overwrite existing %s",
-			strings.Title(opts.resource.GetKind()), opts.resource.GetName(), opts.kind)
+			cases.Title(language.English).String(opts.resource.GetKind()), opts.resource.GetName(), opts.kind)
 
 	// Skip catalog missing error and use default catalog
 	case installer.ErrCatalogMissing:
@@ -243,7 +245,7 @@ func (opts *options) errors(resourcePipelineMinVersion, pipelinesVersion string,
 	for _, err := range errors {
 		if err == installer.ErrNotFound {
 			return fmt.Errorf("%s %s doesn't exists in %s namespace. Use install command to install the %s",
-				strings.Title(opts.kind), opts.name(), opts.cs.Namespace(), opts.kind)
+				cases.Title(language.English).String(opts.kind), opts.name(), opts.cs.Namespace(), opts.kind)
 		}
 
 		if err == installer.ErrSameVersion {
@@ -258,7 +260,7 @@ func (opts *options) errors(resourcePipelineMinVersion, pipelinesVersion string,
 		}
 
 		if err == installer.ErrVersionIncompatible {
-			return fmt.Errorf("cannot upgrade %s %s(%s) as it requires Tekton Pipelines min version v%s but found %s", strings.Title(opts.kind), opts.name(), newVersion, resourcePipelineMinVersion, pipelinesVersion)
+			return fmt.Errorf("cannot upgrade %s %s(%s) as it requires Tekton Pipelines min version v%s but found %s", cases.Title(language.English).String(opts.kind), opts.name(), newVersion, resourcePipelineMinVersion, pipelinesVersion)
 		}
 
 		if strings.Contains(err.Error(), "mutation failed: cannot decode incoming new object") {

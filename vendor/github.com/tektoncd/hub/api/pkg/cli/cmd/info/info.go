@@ -25,6 +25,8 @@ import (
 	"github.com/tektoncd/hub/api/pkg/cli/hub"
 	so "github.com/tektoncd/hub/api/pkg/cli/options"
 	"github.com/tektoncd/hub/api/pkg/cli/printer"
+	"golang.org/x/text/cases"
+	"golang.org/x/text/language"
 )
 
 var cmdExamples string = `
@@ -133,7 +135,7 @@ func commandForKind(kind string, opts *options) *cobra.Command {
 
 	return &cobra.Command{
 		Use:          kind,
-		Short:        "Display info of " + strings.Title(kind) + " by its name, catalog and version",
+		Short:        "Display info of " + cases.Title(language.English).String(kind) + " by its name, catalog and version",
 		Long:         ``,
 		SilenceUsage: true,
 		Example:      examples(kind),
@@ -237,6 +239,6 @@ func (opts *options) name() string {
 }
 
 func examples(kind string) string {
-	replacer := strings.NewReplacer("%s", kind, "%S", strings.Title(kind))
+	replacer := strings.NewReplacer("%s", kind, "%S", cases.Title(language.English).String(kind))
 	return replacer.Replace(cmdExamples)
 }
