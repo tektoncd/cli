@@ -219,15 +219,14 @@ type PipelineRunSpec struct {
 	// Used for cancelling a pipelinerun (and maybe more later on)
 	// +optional
 	Status PipelineRunSpecStatus `json:"status,omitempty"`
-	// This is an alpha field. You must set the "enable-api-fields" feature flag to "alpha"
-	// for this field to be supported.
-	//
 	// Time after which the Pipeline times out.
 	// Currently three keys are accepted in the map
 	// pipeline, tasks and finally
 	// with Timeouts.pipeline >= Timeouts.tasks + Timeouts.finally
 	// +optional
 	Timeouts *TimeoutFields `json:"timeouts,omitempty"`
+
+	// Timeout Deprecated: use pipelineRunSpec.Timeouts.Pipeline instead
 	// Time after which the Pipeline times out. Defaults to never.
 	// Refer to Go's ParseDuration documentation for expected format: https://golang.org/pkg/time/#ParseDuration
 	// +optional
@@ -484,11 +483,35 @@ type PipelineRunStatusFields struct {
 type SkippedTask struct {
 	// Name is the Pipeline Task name
 	Name string `json:"name"`
+	// Reason is the cause of the PipelineTask being skipped.
+	Reason SkippingReason `json:"reason"`
 	// WhenExpressions is the list of checks guarding the execution of the PipelineTask
 	// +optional
 	// +listType=atomic
 	WhenExpressions []WhenExpression `json:"whenExpressions,omitempty"`
 }
+
+// SkippingReason explains why a PipelineTask was skipped.
+type SkippingReason string
+
+const (
+	// WhenExpressionsSkip means the task was skipped due to at least one of its when expressions evaluating to false
+	WhenExpressionsSkip SkippingReason = "When Expressions evaluated to false"
+	// ConditionsSkip means the task was skipped due to at least one of its conditions failing
+	ConditionsSkip SkippingReason = "Conditions failed"
+	// ParentTasksSkip means the task was skipped because its parent was skipped
+	ParentTasksSkip SkippingReason = "Parent Tasks were skipped"
+	// StoppingSkip means the task was skipped because the pipeline run is stopping
+	StoppingSkip SkippingReason = "PipelineRun was stopping"
+	// GracefullyCancelledSkip means the task was skipped because the pipeline run has been gracefully cancelled
+	GracefullyCancelledSkip SkippingReason = "PipelineRun was gracefully cancelled"
+	// GracefullyStoppedSkip means the task was skipped because the pipeline run has been gracefully stopped
+	GracefullyStoppedSkip SkippingReason = "PipelineRun was gracefully stopped"
+	// MissingResultsSkip means the task was skipped because it's missing necessary results
+	MissingResultsSkip SkippingReason = "Results were missing"
+	// None means the task was not skipped
+	None SkippingReason = "None"
+)
 
 // PipelineRunResult used to describe the results of a pipeline
 type PipelineRunResult struct {
@@ -577,6 +600,9 @@ type PipelineTaskRunSpec struct {
 	StepOverrides []TaskRunStepOverride `json:"stepOverrides,omitempty"`
 	// +listType=atomic
 	SidecarOverrides []TaskRunSidecarOverride `json:"sidecarOverrides,omitempty"`
+
+	// +optional
+	Metadata *PipelineTaskMetadata `json:"metadata,omitempty"`
 }
 
 // GetTaskRunSpec returns the task specific spec for a given
@@ -597,6 +623,7 @@ func (pr *PipelineRun) GetTaskRunSpec(pipelineTaskName string) PipelineTaskRunSp
 			}
 			s.StepOverrides = task.StepOverrides
 			s.SidecarOverrides = task.SidecarOverrides
+			s.Metadata = task.Metadata
 		}
 	}
 	return s

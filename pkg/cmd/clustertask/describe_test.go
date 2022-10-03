@@ -95,16 +95,12 @@ func Test_ClusterTaskDescribe(t *testing.T) {
 					},
 					Steps: []v1alpha1.Step{
 						{
-							Container: corev1.Container{
-								Name:  "hello",
-								Image: "busybox",
-							},
+							Name:  "hello",
+							Image: "busybox",
 						},
 						{
-							Container: corev1.Container{
-								Name:  "exit",
-								Image: "busybox",
-							},
+							Name:  "exit",
+							Image: "busybox",
 						},
 					},
 				},
@@ -144,10 +140,8 @@ func Test_ClusterTaskDescribe(t *testing.T) {
 					},
 					Steps: []v1alpha1.Step{
 						{
-							Container: corev1.Container{
-								Name:  "hello",
-								Image: "busybox",
-							},
+							Name:  "hello",
+							Image: "busybox",
 						},
 					},
 				},
@@ -598,10 +592,8 @@ func TestClusterTaskDescribe_With_Results(t *testing.T) {
 				Description: "a clustertest description",
 				Steps: []v1beta1.Step{
 					{
-						Container: corev1.Container{
-							Name:  "hello",
-							Image: "busybox",
-						},
+						Name:  "hello",
+						Image: "busybox",
 					},
 				},
 				Results: []v1beta1.TaskResult{
@@ -654,10 +646,8 @@ func TestClusterTaskDescribe_With_Workspaces(t *testing.T) {
 				Description: "a clustertest description",
 				Steps: []v1beta1.Step{
 					{
-						Container: corev1.Container{
-							Name:  "hello",
-							Image: "busybox",
-						},
+						Name:  "hello",
+						Image: "busybox",
 					},
 				},
 				Workspaces: []v1beta1.WorkspaceDeclaration{

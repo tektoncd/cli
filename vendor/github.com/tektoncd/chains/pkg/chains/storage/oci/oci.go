@@ -105,7 +105,9 @@ func (b *Backend) StorePayload(ctx context.Context, tr *v1beta1.TaskRun, rawPayl
 		return b.uploadAttestation(attestation, signature, storageOpts, auth)
 	}
 
-	return errors.New("OCI storage backend is only supported for OCI images and in-toto attestations")
+	// Fallback in case unsupported payload format is used or the deprecated "tekton" format
+	b.logger.Info("Skipping upload to OCI registry, OCI storage backend is only supported for OCI images and in-toto attestations")
+	return nil
 }
 
 func (b *Backend) uploadSignature(format simple.SimpleContainerImage, rawPayload []byte, signature string, storageOpts config.StorageOpts, remoteOpts ...remote.Option) error {

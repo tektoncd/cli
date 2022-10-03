@@ -37,10 +37,8 @@ func TestConditionDescribe(t *testing.T) {
 			},
 			Spec: v1alpha1.ConditionSpec{
 				Check: v1beta1.Step{
-					Container: corev1.Container{
-						Name:  "test",
-						Image: "busybox",
-					},
+					Name:   "test",
+					Image:  "busybox",
 					Script: "echo hello",
 				},
 				Params: []v1beta1.ParamSpec{
@@ -91,10 +89,8 @@ func TestConditionDescribe(t *testing.T) {
 			},
 			Spec: v1alpha1.ConditionSpec{
 				Check: v1beta1.Step{
-					Container: corev1.Container{
-						Name:  "test",
-						Image: "busybox",
-					},
+					Name:   "test",
+					Image:  "busybox",
 					Script: "echo hello",
 				},
 			},
@@ -106,10 +102,8 @@ func TestConditionDescribe(t *testing.T) {
 			},
 			Spec: v1alpha1.ConditionSpec{
 				Check: v1beta1.Step{
-					Container: corev1.Container{
-						Name:  "test",
-						Image: "busybox",
-					},
+					Name:   "test",
+					Image:  "busybox",
 					Script: "echo hello",
 				},
 				Params: []v1beta1.ParamSpec{
@@ -134,12 +128,10 @@ func TestConditionDescribe(t *testing.T) {
 			},
 			Spec: v1alpha1.ConditionSpec{
 				Check: v1beta1.Step{
-					Container: corev1.Container{
-						Name:    "test",
-						Image:   "busybox",
-						Args:    []string{"echo", "hello"},
-						Command: []string{"/bin/sh"},
-					},
+					Name:    "test",
+					Image:   "busybox",
+					Args:    []string{"echo", "hello"},
+					Command: []string{"/bin/sh"},
 				},
 				Params: []v1beta1.ParamSpec{
 					{

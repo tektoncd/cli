@@ -783,10 +783,10 @@ func TestPipelineDescribeV1beta1_with_taskSpec(t *testing.T) {
 					{
 						Name: "task",
 						TaskSpec: &v1beta1.EmbeddedTask{TaskSpec: v1beta1.TaskSpec{
-							Steps: []v1beta1.Step{{Container: corev1.Container{
+							Steps: []v1beta1.Step{{
 								Name:  "step",
 								Image: "myimage",
-							}}},
+							}},
 						}},
 					},
 				},
