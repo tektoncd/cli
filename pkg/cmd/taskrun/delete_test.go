@@ -1138,3 +1138,227 @@ tr0-1   ---       ---        Succeeded
 	}
 	test.AssertOutput(t, expected, out)
 }
+
+func Test_TaskRuns_Delete_With_Running_PipelineRun(t *testing.T) {
+	clock := clockwork.NewFakeClock()
+
+	ns := []*corev1.Namespace{
+		{
+			ObjectMeta: metav1.ObjectMeta{
+				Name: "ns",
+			},
+		},
+	}
+
+	tasks := []*v1beta1.Task{
+		{
+			ObjectMeta: metav1.ObjectMeta{
+				Name:      "random",
+				Namespace: "ns",
+			},
+		},
+	}
+
+	trdata := []*v1beta1.TaskRun{
+		{
+			ObjectMeta: metav1.ObjectMeta{
+				Namespace: "ns",
+				Name:      "tr0-1",
+				Labels:    map[string]string{"tekton.dev/task": "random"},
+				OwnerReferences: []metav1.OwnerReference{
+					{
+						APIVersion:         "tekton.dev/v1beta1",
+						Kind:               "PipelineRun",
+						Name:               "pipeline-run-1",
+						UID:                "",
+						Controller:         nil,
+						BlockOwnerDeletion: nil,
+					}},
+			},
+			Spec: v1beta1.TaskRunSpec{
+				TaskRef: &v1beta1.TaskRef{
+					Name: "random",
+					Kind: v1beta1.NamespacedTaskKind,
+				},
+			},
+			Status: v1beta1.TaskRunStatus{
+				TaskRunStatusFields: v1beta1.TaskRunStatusFields{
+					CompletionTime: &metav1.Time{
+						Time: time.Now(),
+					},
+				},
+				Status: duckv1beta1.Status{
+					Conditions: duckv1beta1.Conditions{
+						{
+							Status: corev1.ConditionTrue,
+							Reason: v1beta1.TaskRunReasonSuccessful.String(),
+						},
+					},
+				},
+			},
+		},
+		{
+			ObjectMeta: metav1.ObjectMeta{
+				Namespace: "ns",
+				Name:      "tr0-2",
+				Labels: map[string]string{
+					"tekton.dev/task": "random",
+				},
+				OwnerReferences: []metav1.OwnerReference{
+					{
+						APIVersion:         "tekton.dev/v1beta1",
+						Kind:               "PipelineRun",
+						Name:               "pipeline-run-1",
+						UID:                "",
+						Controller:         nil,
+						BlockOwnerDeletion: nil,
+					}},
+			},
+			Spec: v1beta1.TaskRunSpec{
+				TaskRef: &v1beta1.TaskRef{
+					Name: "random",
+					Kind: v1beta1.NamespacedTaskKind,
+				},
+			},
+			Status: v1beta1.TaskRunStatus{
+				TaskRunStatusFields: v1beta1.TaskRunStatusFields{
+					CompletionTime: &metav1.Time{
+						Time: time.Now(),
+					},
+				},
+				Status: duckv1beta1.Status{
+					Conditions: duckv1beta1.Conditions{
+						{
+							Status: corev1.ConditionUnknown,
+							Reason: v1beta1.TaskRunReasonRunning.String(),
+						},
+					},
+				},
+			},
+		},
+	}
+
+	prdata := []*v1beta1.PipelineRun{
+		{
+			ObjectMeta: metav1.ObjectMeta{
+				Namespace:         "ns",
+				Name:              "pipeline-run-1",
+				Labels:            map[string]string{"tekton.dev/pipeline": "pipeline"},
+				CreationTimestamp: metav1.Time{Time: clock.Now()},
+			},
+			Spec: v1beta1.PipelineRunSpec{
+				PipelineRef: &v1beta1.PipelineRef{
+					Name: "pipeline",
+				},
+			},
+			Status: v1beta1.PipelineRunStatus{
+				Status: duckv1beta1.Status{
+					Conditions: duckv1beta1.Conditions{
+						{
+							Status: corev1.ConditionTrue,
+							Reason: v1beta1.PipelineRunReasonRunning.String(),
+						},
+					},
+				},
+				PipelineRunStatusFields: v1beta1.PipelineRunStatusFields{
+					// pipeline run starts now
+					StartTime: &metav1.Time{Time: clock.Now()},
+				},
+			},
+		},
+	}
+
+	type clients struct {
+		pipelineClient pipelinetest.Clients
+		dynamicClient  dynamic.Interface
+	}
+
+	seeds := make([]clients, 0)
+	for i := 0; i < 5; i++ {
+		trs := trdata
+		prs := prdata
+		cs, _ := test.SeedV1beta1TestData(t, pipelinetest.Data{TaskRuns: trs, Tasks: tasks, PipelineRuns: prs, Namespaces: ns})
+		cs.Pipeline.Resources = cb.APIResourceList(version, []string{"taskrun", "pipelinerun"})
+		tdc := testDynamic.Options{}
+		dc, err := tdc.Client(
+			cb.UnstructuredT(tasks[0], version),
+			cb.UnstructuredV1beta1TR(trdata[0], version),
+			cb.UnstructuredV1beta1TR(trdata[1], version),
+			cb.UnstructuredV1beta1PR(prs[0], version),
+		)
+		if err != nil {
+			t.Errorf("unable to create dynamic client: %v", err)
+		}
+		seeds = append(seeds, clients{cs, dc})
+	}
+	testParams := []struct {
+		name        string
+		command     []string
+		dynamic     dynamic.Interface
+		input       pipelinetest.Clients
+		inputStream io.Reader
+		wantError   bool
+		want        string
+	}{
+		{
+			name:        "Taskrun with running pipelinerun and answer y",
+			command:     []string{"rm", "tr0-1", "-n", "ns"},
+			dynamic:     seeds[0].dynamicClient,
+			input:       seeds[0].pipelineClient,
+			inputStream: strings.NewReader("y"),
+			wantError:   false,
+			want:        "Are you sure you want to delete TaskRun(s) \"tr0-1\" (y/n): TaskRun(s): tr0-1 attached to PipelineRun is still running deleting will restart the completed taskrun. Proceed (y/n): TaskRuns deleted: \"tr0-1\"\n",
+		},
+		{
+			name:        "Taskrun with running pipelinerun force",
+			command:     []string{"rm", "tr0-1", "-n", "ns", "-f"},
+			dynamic:     seeds[2].dynamicClient,
+			input:       seeds[2].pipelineClient,
+			inputStream: nil,
+			wantError:   false,
+			want:        "warning: Taskrun tr0-1 related pipelinerun still running.\nTaskRuns deleted: \"tr0-1\"\n",
+		},
+		{
+			name:        "All taskruns with running pipelinerun ",
+			command:     []string{"delete", "-n", "ns", "--all"},
+			dynamic:     seeds[3].dynamicClient,
+			input:       seeds[3].pipelineClient,
+			inputStream: strings.NewReader("y"),
+			wantError:   false,
+			want:        "Are you sure you want to delete all TaskRuns in namespace \"ns\" (y/n): All 0 TaskRuns(Completed) deleted in namespace \"ns\"\n",
+		},
+		{
+			name:        "All taskruns with running pipelinerun ",
+			command:     []string{"delete", "-n", "ns", "--all", "--ignore-running-pipelinerun=false"},
+			dynamic:     seeds[4].dynamicClient,
+			input:       seeds[4].pipelineClient,
+			inputStream: strings.NewReader("y"),
+			wantError:   false,
+			want:        "Are you sure you want to delete all TaskRuns in namespace \"ns\" (y/n): All 2 TaskRuns(Completed) deleted in namespace \"ns\"\n",
+		},
+	}
+	for _, tp := range testParams {
+		t.Run(tp.name, func(t *testing.T) {
+			p := &test.Params{Tekton: tp.input.Pipeline, Kube: tp.input.Kube, Dynamic: tp.dynamic}
+			taskrun := Command(p)
+
+			if tp.inputStream != nil {
+				taskrun.SetIn(tp.inputStream)
+			}
+
+			out, err := test.ExecuteCommand(taskrun, tp.command...)
+			if tp.wantError {
+				if err == nil {
+					t.Errorf("error expected here")
+				} else {
+					test.AssertOutput(t, tp.want, err.Error())
+				}
+			} else {
+				if err != nil {
+					t.Errorf("unexpected Error")
+				}
+				test.AssertOutput(t, tp.want, out)
+			}
+		})
+	}
+}
