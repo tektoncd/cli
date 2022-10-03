@@ -24,17 +24,18 @@ import (
 )
 
 type DeleteOptions struct {
-	Resource           string
-	ParentResource     string
-	ParentResourceName string
-	ForceDelete        bool
-	DeleteRelated      bool
-	DeleteAllNs        bool
-	DeleteAll          bool
-	Keep               int
-	KeepSince          int
-	IgnoreRunning      bool
-	LabelSelector      string
+	Resource                 string
+	ParentResource           string
+	ParentResourceName       string
+	ForceDelete              bool
+	DeleteRelated            bool
+	DeleteAllNs              bool
+	DeleteAll                bool
+	Keep                     int
+	KeepSince                int
+	IgnoreRunning            bool
+	IgnoreRunningPipelinerun bool
+	LabelSelector            string
 }
 
 func (o *DeleteOptions) CheckOptions(s *cli.Stream, resourceNames []string, ns string) error {
@@ -91,16 +92,19 @@ func (o *DeleteOptions) CheckOptions(s *cli.Stream, resourceNames []string, ns s
 		fmt.Fprintf(s.Out, "Are you sure you want to delete %s(s) %s (y/n): ", o.Resource, formattedNames)
 	}
 
+	return o.TakeInput(s, formattedNames)
+}
+
+func (o *DeleteOptions) TakeInput(s *cli.Stream, formattedNames string) error {
 	scanner := bufio.NewScanner(s.In)
 	for scanner.Scan() {
 		t := strings.TrimSpace(scanner.Text())
 		if t == "y" {
-			break
+			return nil
 		} else if t == "n" {
 			return fmt.Errorf("canceled deleting %s(s) %s", o.Resource, formattedNames)
 		}
 		fmt.Fprint(s.Out, "Please enter (y/n): ")
 	}
-
 	return nil
 }

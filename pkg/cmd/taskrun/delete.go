@@ -26,10 +26,12 @@ import (
 	"github.com/tektoncd/cli/pkg/deleter"
 	"github.com/tektoncd/cli/pkg/formatted"
 	"github.com/tektoncd/cli/pkg/options"
+	pipelinerunpkg "github.com/tektoncd/cli/pkg/pipelinerun"
 	taskpkg "github.com/tektoncd/cli/pkg/task"
 	"github.com/tektoncd/cli/pkg/taskrun"
 	trlist "github.com/tektoncd/cli/pkg/taskrun/list"
 	trsort "github.com/tektoncd/cli/pkg/taskrun/sort"
+	"github.com/tektoncd/pipeline/pkg/apis/pipeline"
 	"github.com/tektoncd/pipeline/pkg/apis/pipeline/v1beta1"
 	"go.uber.org/multierr"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
@@ -58,6 +60,7 @@ func trExists(args []string, p cli.Params) ([]string, error) {
 			errorList = multierr.Append(errorList, err)
 			continue
 		}
+
 		availableTrs = append(availableTrs, name)
 	}
 	return availableTrs, errorList
@@ -149,6 +152,8 @@ or
 	c.Flags().IntVarP(&opts.Keep, "keep", "", 0, "Keep n most recent number of TaskRuns")
 	c.Flags().IntVarP(&opts.KeepSince, "keep-since", "", 0, "When deleting all TaskRuns keep the ones that has been completed since n minutes")
 	c.Flags().BoolVarP(&opts.IgnoreRunning, "ignore-running", "i", true, "ignore running TaskRun (default: true)")
+	c.Flags().BoolVarP(&opts.IgnoreRunningPipelinerun, "ignore-running-pipelinerun", "", true, "ignore deleting taskruns of a running PipelineRun (default: true)")
+
 	return c
 }
 
@@ -165,7 +170,7 @@ func deleteTaskRuns(s *cli.Stream, p cli.Params, trNames []string, opts *options
 		d = deleter.New("TaskRun", func(taskRunName string) error {
 			return actions.Delete(trGroupResource, cs.Dynamic, cs.Tekton.Discovery(), taskRunName, p.Namespace(), metav1.DeleteOptions{})
 		})
-		trToDelete, trToKeep, err := allTaskRunNames(cs, opts.Keep, opts.KeepSince, opts.IgnoreRunning, opts.LabelSelector, p.Namespace(), "")
+		trToDelete, trToKeep, err := allTaskRunNames(cs, opts.Keep, opts.KeepSince, opts.IgnoreRunning, opts.IgnoreRunningPipelinerun, opts.LabelSelector, p.Namespace(), "")
 		if err != nil {
 			return err
 		}
@@ -176,7 +181,27 @@ func deleteTaskRuns(s *cli.Stream, p cli.Params, trNames []string, opts *options
 		d = deleter.New("TaskRun", func(taskRunName string) error {
 			return actions.Delete(trGroupResource, cs.Dynamic, cs.Tekton.Discovery(), taskRunName, p.Namespace(), metav1.DeleteOptions{})
 		})
-		d.Delete(s, trNames)
+		var processedTrNames []string
+
+		for _, trNane := range trNames {
+			tr, err := taskrun.Get(cs, trNane, metav1.GetOptions{}, p.Namespace())
+			if err != nil {
+				return fmt.Errorf("failed to get taskrun")
+			}
+			prFinished := ownerPrFinished(cs, *tr)
+
+			if !prFinished && opts.ForceDelete {
+				fmt.Fprintf(s.Out, "warning: Taskrun %s related pipelinerun still running.\n", tr.Name)
+			}
+			if !prFinished && !opts.ForceDelete {
+				fmt.Fprintf(s.Out, "TaskRun(s): %s attached to PipelineRun is still running deleting will restart the completed taskrun. Proceed (y/n): ", tr.Name)
+				if err := opts.TakeInput(s, ""); err != nil {
+					continue
+				}
+			}
+			processedTrNames = append(processedTrNames, tr.Name)
+		}
+		d.Delete(s, processedTrNames)
 	default:
 		d = deleter.New(opts.ParentResource, func(_ string) error {
 			err := fmt.Sprintf("the %s should not be deleted", opts.ParentResource)
@@ -192,7 +217,7 @@ func deleteTaskRuns(s *cli.Stream, p cli.Params, trNames []string, opts *options
 		labelSelector := fmt.Sprintf("tekton.dev/%s=%s", resourceType, opts.ParentResourceName)
 
 		// Compute the total no of TaskRuns which we need to delete
-		trToDelete, trToKeep, err := allTaskRunNames(cs, opts.Keep, opts.KeepSince, opts.IgnoreRunning, labelSelector, p.Namespace(), opts.ParentResource)
+		trToDelete, trToKeep, err := allTaskRunNames(cs, opts.Keep, opts.KeepSince, opts.IgnoreRunning, opts.IgnoreRunningPipelinerun, labelSelector, p.Namespace(), opts.ParentResource)
 		if err != nil {
 			return err
 		}
@@ -200,7 +225,7 @@ func deleteTaskRuns(s *cli.Stream, p cli.Params, trNames []string, opts *options
 		numberOfKeptTr = len(trToKeep)
 
 		// Delete the TaskRuns associated with a Task or ClusterTask
-		d.WithRelated("TaskRun", taskRunLister(p, opts.Keep, opts.KeepSince, opts.ParentResource, cs, opts.IgnoreRunning), func(taskRunName string) error {
+		d.WithRelated("TaskRun", taskRunLister(p, opts.Keep, opts.KeepSince, opts.ParentResource, cs, opts.IgnoreRunning, opts.IgnoreRunningPipelinerun), func(taskRunName string) error {
 			return actions.Delete(trGroupResource, cs.Dynamic, cs.Tekton.Discovery(), taskRunName, p.Namespace(), metav1.DeleteOptions{})
 		})
 		if len(trToDelete) == 0 && opts.Keep > len(trToKeep) {
@@ -260,7 +285,7 @@ func deleteTaskRuns(s *cli.Stream, p cli.Params, trNames []string, opts *options
 	return d.Errors()
 }
 
-func taskRunLister(p cli.Params, keep, since int, kind string, cs *cli.Clients, ignoreRunning bool) func(string) ([]string, error) {
+func taskRunLister(p cli.Params, keep, since int, kind string, cs *cli.Clients, ignoreRunning, ignoreRunningOwner bool) func(string) ([]string, error) {
 	return func(taskName string) ([]string, error) {
 		label := "task"
 		if kind == "ClusterTask" {
@@ -268,7 +293,7 @@ func taskRunLister(p cli.Params, keep, since int, kind string, cs *cli.Clients, 
 		}
 
 		labelSelector := fmt.Sprintf("tekton.dev/%s=%s", label, taskName)
-		trToDelete, _, err := allTaskRunNames(cs, keep, since, ignoreRunning, labelSelector, p.Namespace(), kind)
+		trToDelete, _, err := allTaskRunNames(cs, keep, since, ignoreRunning, ignoreRunningOwner, labelSelector, p.Namespace(), kind)
 		if err != nil {
 			return nil, err
 		}
@@ -276,7 +301,7 @@ func taskRunLister(p cli.Params, keep, since int, kind string, cs *cli.Clients, 
 	}
 }
 
-func allTaskRunNames(cs *cli.Clients, keep, since int, ignoreRunning bool, labelSelector, ns, kind string) ([]string, []string, error) {
+func allTaskRunNames(cs *cli.Clients, keep, since int, ignoreRunning, ignoreRunningOwner bool, labelSelector, ns, kind string) ([]string, []string, error) {
 	var todelete, tokeep []string
 
 	taskRuns, err := trlist.TaskRuns(cs, metav1.ListOptions{
@@ -290,9 +315,14 @@ func allTaskRunNames(cs *cli.Clients, keep, since int, ignoreRunning bool, label
 		taskRuns.Items = taskpkg.FilterByRef(taskRuns.Items, string(v1beta1.NamespacedTaskKind))
 	}
 
+	if ignoreRunningOwner {
+		taskRuns = trsWithOwnerPrFinished(cs, taskRuns)
+	}
+
 	if ignoreRunning {
 		var taskRunTmp = []v1beta1.TaskRun{}
 		for _, v := range taskRuns.Items {
+
 			if v.Status.CompletionTime == nil {
 				// Skip TaskRuns without CompletionTimes as they have not finished running yet
 				continue
@@ -358,4 +388,28 @@ func keepTaskRunsByAgeAndNumber(taskRuns *v1beta1.TaskRunList, since int, keep i
 		todelete, tokeep = keepTaskRunsByNumber(taskRuns, keep)
 	}
 	return todelete, tokeep
+}
+
+func trsWithOwnerPrFinished(cs *cli.Clients, runs *v1beta1.TaskRunList) *v1beta1.TaskRunList {
+	var filteredTrs v1beta1.TaskRunList
+	for _, tr := range runs.Items {
+		if ownerPrFinished(cs, tr) {
+			filteredTrs.Items = append(filteredTrs.Items, tr)
+		}
+	}
+	return &filteredTrs
+}
+
+func ownerPrFinished(cs *cli.Clients, tr v1beta1.TaskRun) bool {
+	for _, ref := range tr.GetOwnerReferences() {
+		if ref.Kind == pipeline.PipelineRunControllerName {
+			pr, err := pipelinerunpkg.Get(cs, ref.Name, metav1.GetOptions{}, tr.Namespace)
+			if err != nil {
+				return false
+			}
+			// return false without CompletionTimes as owner pipelinerun have not finished running yet
+			return pr.Status.CompletionTime != nil
+		}
+	}
+	return true
 }
