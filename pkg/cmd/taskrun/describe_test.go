@@ -1548,12 +1548,18 @@ func TestTaskRunDescribe_With_Results(t *testing.T) {
 					CompletionTime: &metav1.Time{Time: clock.Now().Add(-5 * time.Minute)},
 					TaskRunResults: []v1alpha1.TaskRunResult{
 						{
-							Name:  "result-1",
-							Value: "value-1",
+							Name: "result-1",
+							Value: v1beta1.ArrayOrString{
+								Type:      v1beta1.ParamTypeString,
+								StringVal: "value-1",
+							},
 						},
 						{
-							Name:  "result-2",
-							Value: "value-2",
+							Name: "result-2",
+							Value: v1beta1.ArrayOrString{
+								Type:      v1beta1.ParamTypeString,
+								StringVal: "value-2",
+							},
 						},
 					},
 				},
@@ -1682,12 +1688,18 @@ func TestTaskRunDescribe_With_Workspaces(t *testing.T) {
 					CompletionTime: &metav1.Time{Time: clock.Now().Add(-5 * time.Minute)},
 					TaskRunResults: []v1alpha1.TaskRunResult{
 						{
-							Name:  "result-1",
-							Value: "value-1",
+							Name: "result-1",
+							Value: v1beta1.ArrayOrString{
+								Type:      v1beta1.ParamTypeString,
+								StringVal: "value-1",
+							},
 						},
 						{
-							Name:  "result-2",
-							Value: "value-2",
+							Name: "result-2",
+							Value: v1beta1.ArrayOrString{
+								Type:      v1beta1.ParamTypeString,
+								StringVal: "value-2",
+							},
 						},
 					},
 				},

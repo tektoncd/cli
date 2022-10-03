@@ -38,7 +38,6 @@ import (
 	"gotest.tools/v3/assert"
 	is "gotest.tools/v3/assert/cmp"
 	"gotest.tools/v3/icmd"
-	corev1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	knativetest "knative.dev/pkg/test"
 )
@@ -663,20 +662,16 @@ func getCreateFileTask(taskname string, namespace string) *v1alpha1.Task {
 			TaskSpec: v1beta1.TaskSpec{
 				Steps: []v1alpha1.Step{
 					{
-						Container: corev1.Container{
-							Name:    "read-docs-old",
-							Image:   "ubuntu",
-							Command: []string{"/bin/bash"},
-							Args:    []string{"-c", "ls -la /workspace/damnworkspace/docs/README.md"},
-						},
+						Name:    "read-docs-old",
+						Image:   "ubuntu",
+						Command: []string{"/bin/bash"},
+						Args:    []string{"-c", "ls -la /workspace/damnworkspace/docs/README.md"},
 					},
 					{
-						Container: corev1.Container{
-							Name:    "write-new-stuff",
-							Image:   "ubuntu",
-							Command: []string{"bash"},
-							Args:    []string{"-c", "ln -s /workspace/damnworkspace /workspace/output/workspace && echo some stuff > /workspace/output/workspace/stuff"},
-						},
+						Name:    "write-new-stuff",
+						Image:   "ubuntu",
+						Command: []string{"bash"},
+						Args:    []string{"-c", "ln -s /workspace/damnworkspace /workspace/output/workspace && echo some stuff > /workspace/output/workspace/stuff"},
 					},
 				},
 			},
@@ -716,12 +711,10 @@ func getReadFileTask(taskname string, namespace string) *v1alpha1.Task {
 			TaskSpec: v1beta1.TaskSpec{
 				Steps: []v1alpha1.Step{
 					{
-						Container: corev1.Container{
-							Name:    "read",
-							Image:   "ubuntu",
-							Command: []string{"/bin/bash"},
-							Args:    []string{"-c", "cat /workspace/newworkspace/stuff"},
-						},
+						Name:    "read",
+						Image:   "ubuntu",
+						Command: []string{"/bin/bash"},
+						Args:    []string{"-c", "cat /workspace/newworkspace/stuff"},
 					},
 				},
 			},

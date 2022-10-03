@@ -125,17 +125,17 @@ func ExtractOCIImagesFromResults(tr *v1beta1.TaskRun, logger *zap.SugaredLogger)
 		if strings.HasSuffix(res.Name, urlSuffix) {
 			p := strings.TrimSuffix(res.Name, urlSuffix)
 			if v, ok := taskResultImages[p]; ok {
-				v.url = strings.Trim(res.Value, "\n")
+				v.url = strings.Trim(res.Value.StringVal, "\n")
 			} else {
-				taskResultImages[p] = &image{url: strings.Trim(res.Value, "\n")}
+				taskResultImages[p] = &image{url: strings.Trim(res.Value.StringVal, "\n")}
 			}
 		}
 		if strings.HasSuffix(res.Name, digestSuffix) {
 			p := strings.TrimSuffix(res.Name, digestSuffix)
 			if v, ok := taskResultImages[p]; ok {
-				v.digest = strings.Trim(res.Value, "\n")
+				v.digest = strings.Trim(res.Value.StringVal, "\n")
 			} else {
-				taskResultImages[p] = &image{digest: strings.Trim(res.Value, "\n")}
+				taskResultImages[p] = &image{digest: strings.Trim(res.Value.StringVal, "\n")}
 			}
 		}
 	}
@@ -156,7 +156,7 @@ func ExtractOCIImagesFromResults(tr *v1beta1.TaskRun, logger *zap.SugaredLogger)
 		if key.Name != "IMAGES" {
 			continue
 		}
-		imgs := strings.FieldsFunc(key.Value, split)
+		imgs := strings.FieldsFunc(key.Value.StringVal, split)
 
 		for _, img := range imgs {
 			trimmed := strings.TrimSpace(img)

@@ -277,6 +277,7 @@ func (pt PipelineTask) validateBundle() (errs *apis.FieldError) {
 
 // validateTask validates a pipeline task or a final task for taskRef and taskSpec
 func (pt PipelineTask) validateTask(ctx context.Context) (errs *apis.FieldError) {
+	cfg := config.FromContextOrDefaults(ctx)
 	// Validate TaskSpec if it's present
 	if pt.TaskSpec != nil {
 		errs = errs.Also(pt.TaskSpec.Validate(ctx).ViaField("taskSpec"))
@@ -287,21 +288,21 @@ func (pt PipelineTask) validateTask(ctx context.Context) (errs *apis.FieldError)
 			if errSlice := validation.IsQualifiedName(pt.TaskRef.Name); len(errSlice) != 0 {
 				errs = errs.Also(apis.ErrInvalidValue(strings.Join(errSlice, ","), "name"))
 			}
-		} else {
+		} else if pt.TaskRef.Resolver == "" {
 			errs = errs.Also(apis.ErrInvalidValue("taskRef must specify name", "taskRef.name"))
 		}
 		// fail if bundle is present when EnableTektonOCIBundles feature flag is off (as it won't be allowed nor used)
-		if pt.TaskRef.Bundle != "" {
+		if !cfg.FeatureFlags.EnableTektonOCIBundles && pt.TaskRef.Bundle != "" {
 			errs = errs.Also(apis.ErrDisallowedFields("taskref.bundle"))
 		}
-		// fail if resolver or resource are present regardless
-		// of enabled api fields because remote resolution is
-		// not implemented yet for PipelineTasks.
-		if pt.TaskRef.Resolver != "" {
-			errs = errs.Also(apis.ErrDisallowedFields("taskref.resolver"))
-		}
-		if len(pt.TaskRef.Resource) > 0 {
-			errs = errs.Also(apis.ErrDisallowedFields("taskref.resource"))
+		if cfg.FeatureFlags.EnableAPIFields != config.AlphaAPIFields {
+			// fail if resolver or resource are present when enable-api-fields is false.
+			if pt.TaskRef.Resolver != "" {
+				errs = errs.Also(apis.ErrDisallowedFields("taskref.resolver"))
+			}
+			if len(pt.TaskRef.Resource) > 0 {
+				errs = errs.Also(apis.ErrDisallowedFields("taskref.resource"))
+			}
 		}
 	}
 	return errs
@@ -405,7 +406,14 @@ func validateExecutionStatusVariablesExpressions(expressions []string, ptNames s
 
 func (pt *PipelineTask) validateWorkspaces(workspaceNames sets.String) (errs *apis.FieldError) {
 	for i, ws := range pt.Workspaces {
-		if !workspaceNames.Has(ws.Workspace) {
+		if ws.Workspace == "" {
+			if !workspaceNames.Has(ws.Name) {
+				errs = errs.Also(apis.ErrInvalidValue(
+					fmt.Sprintf("pipeline task %q expects workspace with name %q but none exists in pipeline spec", pt.Name, ws.Name),
+					"",
+				).ViaFieldIndex("workspaces", i))
+			}
+		} else if !workspaceNames.Has(ws.Workspace) {
 			errs = errs.Also(apis.ErrInvalidValue(
 				fmt.Sprintf("pipeline task %q expects workspace with name %q but none exists in pipeline spec", pt.Name, ws.Workspace),
 				"",
@@ -461,51 +469,38 @@ func (pt PipelineTask) Validate(ctx context.Context) (errs *apis.FieldError) {
 
 // Deps returns all other PipelineTask dependencies of this PipelineTask, based on resource usage or ordering
 func (pt PipelineTask) Deps() []string {
-	deps := []string{}
+	// hold the list of dependencies in a set to avoid duplicates
+	deps := sets.NewString()
 
-	deps = append(deps, pt.resourceDeps()...)
-	deps = append(deps, pt.orderingDeps()...)
-
-	uniqueDeps := sets.NewString()
-	for _, w := range deps {
-		if uniqueDeps.Has(w) {
-			continue
-		}
-		uniqueDeps.Insert(w)
-	}
-
-	return uniqueDeps.List()
-}
-
-func (pt PipelineTask) resourceDeps() []string {
-	resourceDeps := []string{}
+	// add any new dependents from a resource/workspace
 	if pt.Resources != nil {
 		for _, rd := range pt.Resources.Inputs {
-			resourceDeps = append(resourceDeps, rd.From...)
+			for _, f := range rd.From {
+				deps.Insert(f)
+			}
 		}
 	}
 
 	// Add any dependents from conditional resources.
 	for _, cond := range pt.Conditions {
 		for _, rd := range cond.Resources {
-			resourceDeps = append(resourceDeps, rd.From...)
+			for _, f := range rd.From {
+				deps.Insert(f)
+			}
 		}
 	}
 
-	// Add any dependents from result references.
+	// add any new dependents from result references - resource dependency
 	for _, ref := range PipelineTaskResultRefs(&pt) {
-		resourceDeps = append(resourceDeps, ref.PipelineTask)
+		deps.Insert(ref.PipelineTask)
 	}
 
-	return resourceDeps
-}
-
-func (pt PipelineTask) orderingDeps() []string {
-	orderingDeps := []string{}
+	// add any new dependents from runAfter - order dependency
 	for _, runAfter := range pt.RunAfter {
-		orderingDeps = append(orderingDeps, runAfter)
+		deps.Insert(runAfter)
 	}
-	return orderingDeps
+
+	return deps.List()
 }
 
 // PipelineTaskList is a list of PipelineTasks

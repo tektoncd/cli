@@ -175,16 +175,12 @@ func Test_ClusterTask_Start(t *testing.T) {
 					},
 					Steps: []v1alpha1.Step{
 						{
-							Container: corev1.Container{
-								Name:  "hello",
-								Image: "busybox",
-							},
+							Name:  "hello",
+							Image: "busybox",
 						},
 						{
-							Container: corev1.Container{
-								Name:  "exit",
-								Image: "busybox",
-							},
+							Name:  "exit",
+							Image: "busybox",
 						},
 					},
 					Workspaces: []v1alpha1.WorkspaceDeclaration{
@@ -225,16 +221,12 @@ func Test_ClusterTask_Start(t *testing.T) {
 					},
 					Steps: []v1alpha1.Step{
 						{
-							Container: corev1.Container{
-								Name:  "hello",
-								Image: "busybox",
-							},
+							Name:  "hello",
+							Image: "busybox",
 						},
 						{
-							Container: corev1.Container{
-								Name:  "exit",
-								Image: "busybox",
-							},
+							Name:  "exit",
+							Image: "busybox",
 						},
 					},
 				},
@@ -291,16 +283,12 @@ func Test_ClusterTask_Start(t *testing.T) {
 					},
 					Steps: []v1beta1.Step{
 						{
-							Container: corev1.Container{
-								Name:  "hello",
-								Image: "busybox",
-							},
+							Name:  "hello",
+							Image: "busybox",
 						},
 						{
-							Container: corev1.Container{
-								Name:  "exit",
-								Image: "busybox",
-							},
+							Name:  "exit",
+							Image: "busybox",
 						},
 					},
 					Workspaces: []v1alpha1.WorkspaceDeclaration{
@@ -949,16 +937,12 @@ func Test_ClusterTask_Start_v1beta1(t *testing.T) {
 				},
 				Steps: []v1beta1.Step{
 					{
-						Container: corev1.Container{
-							Name:  "hello",
-							Image: "busybox",
-						},
+						Name:  "hello",
+						Image: "busybox",
 					},
 					{
-						Container: corev1.Container{
-							Name:  "exit",
-							Image: "busybox",
-						},
+						Name:  "exit",
+						Image: "busybox",
 					},
 				},
 				Workspaces: []v1beta1.WorkspaceDeclaration{
@@ -1003,16 +987,12 @@ func Test_ClusterTask_Start_v1beta1(t *testing.T) {
 				},
 				Steps: []v1beta1.Step{
 					{
-						Container: corev1.Container{
-							Name:  "hello",
-							Image: "busybox",
-						},
+						Name:  "hello",
+						Image: "busybox",
 					},
 					{
-						Container: corev1.Container{
-							Name:  "exit",
-							Image: "busybox",
-						},
+						Name:  "exit",
+						Image: "busybox",
 					},
 				},
 			},
@@ -1067,16 +1047,12 @@ func Test_ClusterTask_Start_v1beta1(t *testing.T) {
 				},
 				Steps: []v1beta1.Step{
 					{
-						Container: corev1.Container{
-							Name:  "hello",
-							Image: "busybox",
-						},
+						Name:  "hello",
+						Image: "busybox",
 					},
 					{
-						Container: corev1.Container{
-							Name:  "exit",
-							Image: "busybox",
-						},
+						Name:  "exit",
+						Image: "busybox",
 					},
 				},
 				Workspaces: []v1beta1.WorkspaceDeclaration{
@@ -1097,10 +1073,8 @@ func Test_ClusterTask_Start_v1beta1(t *testing.T) {
 			Spec: v1beta1.TaskSpec{
 				Steps: []v1beta1.Step{
 					{
-						Container: corev1.Container{
-							Name:  "hello",
-							Image: "busybox",
-						},
+						Name:  "hello",
+						Image: "busybox",
 					},
 				},
 				Workspaces: []v1beta1.WorkspaceDeclaration{
@@ -1905,16 +1879,12 @@ func Test_start_use_taskrun_cancelled_status_v1beta1(t *testing.T) {
 				},
 				Steps: []v1beta1.Step{
 					{
-						Container: corev1.Container{
-							Name:  "hello",
-							Image: "busybox",
-						},
+						Name:  "hello",
+						Image: "busybox",
 					},
 					{
-						Container: corev1.Container{
-							Name:  "exit",
-							Image: "busybox",
-						},
+						Name:  "exit",
+						Image: "busybox",
 					},
 				},
 			},
@@ -1993,16 +1963,12 @@ func Test_start_clustertask_last_override_timeout(t *testing.T) {
 			Spec: v1beta1.TaskSpec{
 				Steps: []v1beta1.Step{
 					{
-						Container: corev1.Container{
-							Name:  "hello",
-							Image: "busybox",
-						},
+						Name:  "hello",
+						Image: "busybox",
 					},
 					{
-						Container: corev1.Container{
-							Name:  "exit",
-							Image: "busybox",
-						},
+						Name:  "exit",
+						Image: "busybox",
 					},
 				},
 			},

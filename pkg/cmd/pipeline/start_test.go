@@ -1792,12 +1792,10 @@ func TestPipelineStart_Interactive(t *testing.T) {
 						},
 						Steps: []v1alpha1.Step{
 							{
-								Container: corev1.Container{
-									Name:    "read",
-									Image:   "ubuntu",
-									Command: []string{"/bin/bash"},
-									Args:    []string{"-c", "cat", "/workspace/newworkspace/stuff"},
-								},
+								Name:    "read",
+								Image:   "ubuntu",
+								Command: []string{"/bin/bash"},
+								Args:    []string{"-c", "cat", "/workspace/newworkspace/stuff"},
 							},
 						},
 					},
@@ -1831,20 +1829,16 @@ func TestPipelineStart_Interactive(t *testing.T) {
 						},
 						Steps: []v1alpha1.Step{
 							{
-								Container: corev1.Container{
-									Image:   "ubuntu",
-									Name:    "read-docs-old",
-									Command: []string{"/bin/bash"},
-									Args:    []string{"-c", "ls -la /workspace/damnworkspace/docs/README.md"},
-								},
+								Image:   "ubuntu",
+								Name:    "read-docs-old",
+								Command: []string{"/bin/bash"},
+								Args:    []string{"-c", "ls -la /workspace/damnworkspace/docs/README.md"},
 							},
 							{
-								Container: corev1.Container{
-									Image:   "ubuntu",
-									Name:    "write-new-stuff",
-									Command: []string{"bash"},
-									Args:    []string{"-c", "ln -s /workspace/damnworkspace /workspace/output/workspace && echo some stuff > /workspace/output/workspace/stuff"},
-								},
+								Image:   "ubuntu",
+								Name:    "write-new-stuff",
+								Command: []string{"bash"},
+								Args:    []string{"-c", "ln -s /workspace/damnworkspace /workspace/output/workspace && echo some stuff > /workspace/output/workspace/stuff"},
 							},
 						},
 					},
@@ -1934,12 +1928,10 @@ func TestPipelineStart_Interactive(t *testing.T) {
 						},
 						Steps: []v1alpha1.Step{
 							{
-								Container: corev1.Container{
-									Name:    "read",
-									Image:   "ubuntu",
-									Command: []string{"/bin/bash"},
-									Args:    []string{"-c", "cat", "/workspace/newworkspace/stuff"},
-								},
+								Name:    "read",
+								Image:   "ubuntu",
+								Command: []string{"/bin/bash"},
+								Args:    []string{"-c", "cat", "/workspace/newworkspace/stuff"},
 							},
 						},
 					},
@@ -1973,20 +1965,16 @@ func TestPipelineStart_Interactive(t *testing.T) {
 						},
 						Steps: []v1alpha1.Step{
 							{
-								Container: corev1.Container{
-									Image:   "ubuntu",
-									Name:    "read-docs-old",
-									Command: []string{"/bin/bash"},
-									Args:    []string{"-c", "ls -la /workspace/damnworkspace/docs/README.md"},
-								},
+								Image:   "ubuntu",
+								Name:    "read-docs-old",
+								Command: []string{"/bin/bash"},
+								Args:    []string{"-c", "ls -la /workspace/damnworkspace/docs/README.md"},
 							},
 							{
-								Container: corev1.Container{
-									Image:   "ubuntu",
-									Name:    "write-new-stuff",
-									Command: []string{"bash"},
-									Args:    []string{"-c", "ln -s /workspace/damnworkspace /workspace/output/workspace && echo some stuff > /workspace/output/workspace/stuff"},
-								},
+								Image:   "ubuntu",
+								Name:    "write-new-stuff",
+								Command: []string{"bash"},
+								Args:    []string{"-c", "ln -s /workspace/damnworkspace /workspace/output/workspace && echo some stuff > /workspace/output/workspace/stuff"},
 							},
 						},
 					},
@@ -2094,12 +2082,10 @@ func TestPipelineStart_Interactive(t *testing.T) {
 						},
 						Steps: []v1alpha1.Step{
 							{
-								Container: corev1.Container{
-									Name:    "read",
-									Image:   "ubuntu",
-									Command: []string{"/bin/bash"},
-									Args:    []string{"-c", "cat", "/workspace/newworkspace/stuff"},
-								},
+								Name:    "read",
+								Image:   "ubuntu",
+								Command: []string{"/bin/bash"},
+								Args:    []string{"-c", "cat", "/workspace/newworkspace/stuff"},
 							},
 						},
 					},
@@ -2133,20 +2119,16 @@ func TestPipelineStart_Interactive(t *testing.T) {
 						},
 						Steps: []v1alpha1.Step{
 							{
-								Container: corev1.Container{
-									Image:   "ubuntu",
-									Name:    "read-docs-old",
-									Command: []string{"/bin/bash"},
-									Args:    []string{"-c", "ls -la /workspace/damnworkspace/docs/README.md"},
-								},
+								Image:   "ubuntu",
+								Name:    "read-docs-old",
+								Command: []string{"/bin/bash"},
+								Args:    []string{"-c", "ls -la /workspace/damnworkspace/docs/README.md"},
 							},
 							{
-								Container: corev1.Container{
-									Image:   "ubuntu",
-									Name:    "write-new-stuff",
-									Command: []string{"bash"},
-									Args:    []string{"-c", "ln -s /workspace/damnworkspace /workspace/output/workspace && echo some stuff > /workspace/output/workspace/stuff"},
-								},
+								Image:   "ubuntu",
+								Name:    "write-new-stuff",
+								Command: []string{"bash"},
+								Args:    []string{"-c", "ln -s /workspace/damnworkspace /workspace/output/workspace && echo some stuff > /workspace/output/workspace/stuff"},
 							},
 						},
 					},
@@ -2254,12 +2236,10 @@ func TestPipelineStart_Interactive(t *testing.T) {
 						},
 						Steps: []v1alpha1.Step{
 							{
-								Container: corev1.Container{
-									Name:    "read",
-									Image:   "ubuntu",
-									Command: []string{"/bin/bash"},
-									Args:    []string{"-c", "cat", "/workspace/newworkspace/stuff"},
-								},
+								Name:    "read",
+								Image:   "ubuntu",
+								Command: []string{"/bin/bash"},
+								Args:    []string{"-c", "cat", "/workspace/newworkspace/stuff"},
 							},
 						},
 					},
@@ -2293,20 +2273,16 @@ func TestPipelineStart_Interactive(t *testing.T) {
 						},
 						Steps: []v1alpha1.Step{
 							{
-								Container: corev1.Container{
-									Image:   "ubuntu",
-									Name:    "read-docs-old",
-									Command: []string{"/bin/bash"},
-									Args:    []string{"-c", "ls -la /workspace/damnworkspace/docs/README.md"},
-								},
+								Image:   "ubuntu",
+								Name:    "read-docs-old",
+								Command: []string{"/bin/bash"},
+								Args:    []string{"-c", "ls -la /workspace/damnworkspace/docs/README.md"},
 							},
 							{
-								Container: corev1.Container{
-									Image:   "ubuntu",
-									Name:    "write-new-stuff",
-									Command: []string{"bash"},
-									Args:    []string{"-c", "ln -s /workspace/damnworkspace /workspace/output/workspace && echo some stuff > /workspace/output/workspace/stuff"},
-								},
+								Image:   "ubuntu",
+								Name:    "write-new-stuff",
+								Command: []string{"bash"},
+								Args:    []string{"-c", "ln -s /workspace/damnworkspace /workspace/output/workspace && echo some stuff > /workspace/output/workspace/stuff"},
 							},
 						},
 					},
