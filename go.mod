@@ -54,7 +54,7 @@ require (
 	github.com/spf13/pflag v1.0.5
 	github.com/tektoncd/chains v0.12.1-0.20220920205308-b34353430a40
 	github.com/tektoncd/hub v1.10.0
-	github.com/tektoncd/pipeline v0.40.1
+	github.com/tektoncd/pipeline v0.40.2
 	github.com/tektoncd/plumbing v0.0.0-20220817140952-3da8ce01aeeb
 	github.com/tektoncd/triggers v0.21.0
 	github.com/titanous/rocacheck v0.0.0-20171023193734-afe73141d399
