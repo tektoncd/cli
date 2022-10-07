@@ -496,7 +496,7 @@ func TestTaskRunDelete(t *testing.T) {
 			input:       seeds[0].pipelineClient,
 			inputStream: strings.NewReader("y"),
 			wantError:   false,
-			want:        "Are you sure you want to delete all TaskRuns related to Task \"random\" (y/n): All TaskRuns(Completed) associated with Task \"random\" deleted in namespace \"ns\"\n",
+			want:        "Are you sure you want to delete all TaskRuns related to Task \"random\" (y/n): All 4 TaskRuns(Completed) associated with Task \"random\" deleted in namespace \"ns\"\n",
 		},
 		{
 			name:        "Delete all with prompt",
@@ -505,7 +505,7 @@ func TestTaskRunDelete(t *testing.T) {
 			input:       seeds[3].pipelineClient,
 			inputStream: strings.NewReader("y"),
 			wantError:   false,
-			want:        "Are you sure you want to delete all TaskRuns in namespace \"ns\" (y/n): All TaskRuns(Completed) deleted in namespace \"ns\"\n",
+			want:        "Are you sure you want to delete all TaskRuns in namespace \"ns\" (y/n): All 11 TaskRuns(Completed) deleted in namespace \"ns\"\n",
 		},
 		{
 			name:        "Delete all with -f",
@@ -514,7 +514,7 @@ func TestTaskRunDelete(t *testing.T) {
 			input:       seeds[4].pipelineClient,
 			inputStream: nil,
 			wantError:   false,
-			want:        "All TaskRuns(Completed) deleted in namespace \"ns\"\n",
+			want:        "All 11 TaskRuns(Completed) deleted in namespace \"ns\"\n",
 		},
 		{
 			name:        "Delete all keeping 2",
@@ -595,7 +595,7 @@ func TestTaskRunDelete(t *testing.T) {
 			input:       seeds[0].pipelineClient,
 			inputStream: strings.NewReader("y"),
 			wantError:   false,
-			want:        "Are you sure you want to delete all TaskRuns related to ClusterTask \"random\" (y/n): All TaskRuns(Completed) associated with ClusterTask \"random\" deleted in namespace \"ns\"\n",
+			want:        "Are you sure you want to delete all TaskRuns related to ClusterTask \"random\" (y/n): All 6 TaskRuns(Completed) associated with ClusterTask \"random\" deleted in namespace \"ns\"\n",
 		},
 		{
 			name:        "Error from deleting TaskRun with non-existing ClusterTask",
@@ -622,7 +622,7 @@ func TestTaskRunDelete(t *testing.T) {
 			input:       seeds[6].pipelineClient,
 			inputStream: nil,
 			wantError:   false,
-			want:        "6 expired Taskruns(Completed) has been deleted in namespace \"ns\", kept 1\n",
+			want:        "8 expired Taskruns(Completed) has been deleted in namespace \"ns\", kept 3\n",
 		},
 		{
 			name:        "Delete all Taskruns older than 60mn associated with random Task",
@@ -631,7 +631,7 @@ func TestTaskRunDelete(t *testing.T) {
 			input:       seeds[7].pipelineClient,
 			inputStream: nil,
 			wantError:   false,
-			want:        "All but 3 expired TaskRuns associated with \"Task\" \"random\" deleted in namespace \"ns\"\n",
+			want:        "All but 5 expired TaskRuns associated with \"Task\" \"random\" deleted in namespace \"ns\"\n",
 		},
 		{
 			name:        "Error --keep-since less than zero",
@@ -658,7 +658,7 @@ func TestTaskRunDelete(t *testing.T) {
 			input:       seeds[4].pipelineClient,
 			inputStream: nil,
 			wantError:   false,
-			want:        "All TaskRuns(Completed) deleted in namespace \"ns\"\n",
+			want:        "All 0 TaskRuns(Completed) deleted in namespace \"ns\"\n",
 		},
 		{
 			name:        "Delete all with explicit --ignore-running true",
@@ -667,7 +667,7 @@ func TestTaskRunDelete(t *testing.T) {
 			input:       seeds[4].pipelineClient,
 			inputStream: nil,
 			wantError:   false,
-			want:        "All TaskRuns(Completed) deleted in namespace \"ns\"\n",
+			want:        "All 0 TaskRuns(Completed) deleted in namespace \"ns\"\n",
 		},
 		{
 			name:        "Delete all with --ignore-running false",
@@ -676,7 +676,7 @@ func TestTaskRunDelete(t *testing.T) {
 			input:       seeds[4].pipelineClient,
 			inputStream: nil,
 			wantError:   false,
-			want:        "All TaskRuns deleted in namespace \"ns\"\n",
+			want:        "All 0 TaskRuns deleted in namespace \"ns\"\n",
 		},
 		{
 			name:        "Delete the Task present and give error for non-existent Task",
@@ -694,7 +694,7 @@ func TestTaskRunDelete(t *testing.T) {
 			input:       seeds[9].pipelineClient,
 			inputStream: nil,
 			wantError:   false,
-			want:        "All TaskRuns(Completed) associated with Task \"random\" deleted in namespace \"ns\"\n",
+			want:        "All 5 TaskRuns(Completed) associated with Task \"random\" deleted in namespace \"ns\"\n",
 		},
 		{
 			name:        "Delete all of task with explicit --ignore-running true",
@@ -703,7 +703,7 @@ func TestTaskRunDelete(t *testing.T) {
 			input:       seeds[10].pipelineClient,
 			inputStream: nil,
 			wantError:   false,
-			want:        "All TaskRuns(Completed) associated with Task \"random\" deleted in namespace \"ns\"\n",
+			want:        "All 5 TaskRuns(Completed) associated with Task \"random\" deleted in namespace \"ns\"\n",
 		},
 		{
 			name:        "Delete all of task with --ignore-running false",
@@ -712,7 +712,7 @@ func TestTaskRunDelete(t *testing.T) {
 			input:       seeds[11].pipelineClient,
 			inputStream: nil,
 			wantError:   false,
-			want:        "All TaskRuns associated with Task \"random\" deleted in namespace \"ns\"\n",
+			want:        "All 5 TaskRuns associated with Task \"random\" deleted in namespace \"ns\"\n",
 		},
 		{
 			name:        "Delete all of clustertask with default --ignore-running",
@@ -721,7 +721,7 @@ func TestTaskRunDelete(t *testing.T) {
 			input:       seeds[12].pipelineClient,
 			inputStream: nil,
 			wantError:   false,
-			want:        "All TaskRuns(Completed) associated with ClusterTask \"random\" deleted in namespace \"ns\"\n",
+			want:        "All 6 TaskRuns(Completed) associated with ClusterTask \"random\" deleted in namespace \"ns\"\n",
 		},
 		{
 			name:        "Delete all of clustertask with explicit --ignore-running true",
@@ -730,7 +730,7 @@ func TestTaskRunDelete(t *testing.T) {
 			input:       seeds[13].pipelineClient,
 			inputStream: nil,
 			wantError:   false,
-			want:        "All TaskRuns(Completed) associated with ClusterTask \"random\" deleted in namespace \"ns\"\n",
+			want:        "All 6 TaskRuns(Completed) associated with ClusterTask \"random\" deleted in namespace \"ns\"\n",
 		},
 		{
 			name:        "Delete all of clustertask with --ignore-running false",
@@ -739,7 +739,7 @@ func TestTaskRunDelete(t *testing.T) {
 			input:       seeds[14].pipelineClient,
 			inputStream: nil,
 			wantError:   false,
-			want:        "All TaskRuns associated with ClusterTask \"random\" deleted in namespace \"ns\"\n",
+			want:        "All 6 TaskRuns associated with ClusterTask \"random\" deleted in namespace \"ns\"\n",
 		},
 	}
 
@@ -1862,6 +1862,7 @@ tr0-1   ---       ---        Succeeded
 }
 
 func Test_TaskRuns_Delete_With_Running_PipelineRun(t *testing.T) {
+	version := "v1beta1"
 	clock := clockwork.NewFakeClock()
 
 	ns := []*corev1.Namespace{
@@ -1991,7 +1992,7 @@ func Test_TaskRuns_Delete_With_Running_PipelineRun(t *testing.T) {
 	}
 
 	type clients struct {
-		pipelineClient pipelinetest.Clients
+		pipelineClient pipelinev1beta1test.Clients
 		dynamicClient  dynamic.Interface
 	}
 
@@ -1999,11 +2000,11 @@ func Test_TaskRuns_Delete_With_Running_PipelineRun(t *testing.T) {
 	for i := 0; i < 5; i++ {
 		trs := trdata
 		prs := prdata
-		cs, _ := test.SeedV1beta1TestData(t, pipelinetest.Data{TaskRuns: trs, Tasks: tasks, PipelineRuns: prs, Namespaces: ns})
+		cs, _ := test.SeedV1beta1TestData(t, pipelinev1beta1test.Data{TaskRuns: trs, Tasks: tasks, PipelineRuns: prs, Namespaces: ns})
 		cs.Pipeline.Resources = cb.APIResourceList(version, []string{"taskrun", "pipelinerun"})
 		tdc := testDynamic.Options{}
 		dc, err := tdc.Client(
-			cb.UnstructuredT(tasks[0], version),
+			cb.UnstructuredV1beta1T(tasks[0], version),
 			cb.UnstructuredV1beta1TR(trdata[0], version),
 			cb.UnstructuredV1beta1TR(trdata[1], version),
 			cb.UnstructuredV1beta1PR(prs[0], version),
@@ -2017,7 +2018,7 @@ func Test_TaskRuns_Delete_With_Running_PipelineRun(t *testing.T) {
 		name        string
 		command     []string
 		dynamic     dynamic.Interface
-		input       pipelinetest.Clients
+		input       pipelinev1beta1test.Clients
 		inputStream io.Reader
 		wantError   bool
 		want        string
