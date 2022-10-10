@@ -34,7 +34,7 @@ func cancelCommand(p cli.Params) *cobra.Command {
 `
 
 	graceCancelDescription := `Gracefully cancel a PipelineRun
-To use this, you need to change the feature-flags configmap enable-api-fields to alpha instead of stable.
+To use this, you need to change the feature-flags configmap enable-api-fields to beta instead of stable.
 Set to 'CancelledRunFinally' if you want to cancel the current running task and directly run the finally tasks.
 Set to 'StoppedRunFinally' if you want to cancel the remaining non-final task and directly run the finally tasks.
 `
