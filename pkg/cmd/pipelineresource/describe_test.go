@@ -46,7 +46,7 @@ func TestPipelineResourceDescribe_Invalid_Namespace(t *testing.T) {
 		t.Errorf("Error expected here")
 	}
 
-	expected := "Error: failed to find pipelineresource \"bar\"\n"
+	expected := "Command \"describe\" is deprecated, PipelineResource commands are deprecated, they will be removed soon as it get removed from API.\nError: failed to find pipelineresource \"bar\"\n"
 	test.AssertOutput(t, expected, out)
 }
 
@@ -155,7 +155,7 @@ func TestPipelineResourceDescribe_WithSecretParams(t *testing.T) {
 
 func TestPipelineResourcesDescribe_custom_output(t *testing.T) {
 	name := "pipeline-resource"
-	expected := "pipelineresource.tekton.dev/" + name
+	expected := "Command \"describe\" is deprecated, PipelineResource commands are deprecated, they will be removed soon as it get removed from API.\npipelineresource.tekton.dev/" + name
 
 	clock := clockwork.NewFakeClock()
 

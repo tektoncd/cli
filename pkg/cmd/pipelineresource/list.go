@@ -121,6 +121,7 @@ func listCommand(p cli.Params) *cobra.Command {
 	cmd.Flags().StringVarP(&opts.Type, "type", "t", "", "Pipeline resource type")
 	cmd.Flags().BoolVarP(&opts.NoHeaders, "no-headers", "", opts.NoHeaders, "do not print column headers with output (default print column headers with output)")
 	cmd.Flags().BoolVarP(&opts.AllNamespaces, "all-namespaces", "A", opts.AllNamespaces, "list pipeline resources from all namespaces")
+	cmd.Deprecated = "PipelineResource commands are deprecated, they will be removed soon as it get removed from API."
 
 	return cmd
 }

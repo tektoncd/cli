@@ -1,3 +1,4 @@
+Command "list" is deprecated, PipelineResource commands are deprecated, they will be removed soon as it get removed from API.
 test-5   cloudEvent   targetURI: http://sink
 test     git          url: git@github.com:tektoncd/cli-new.git
 test-2   git          url: git@github.com:tektoncd/cli.git

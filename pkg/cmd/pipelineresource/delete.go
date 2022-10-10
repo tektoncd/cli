@@ -67,6 +67,7 @@ or
 	f.AddFlags(c)
 	c.Flags().BoolVarP(&opts.ForceDelete, "force", "f", false, "Whether to force deletion (default: false)")
 	c.Flags().BoolVarP(&opts.DeleteAllNs, "all", "", false, "Delete all PipelineResources in a namespace (default: false)")
+	c.Deprecated = "PipelineResource commands are deprecated, they will be removed soon as it get removed from API."
 
 	return c
 }

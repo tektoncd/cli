@@ -80,7 +80,7 @@ func TestPipelineResourceDelete(t *testing.T) {
 			input:       seeds[0],
 			inputStream: nil,
 			wantError:   false,
-			want:        "PipelineResources deleted: \"pre-1\"\n",
+			want:        "Command \"delete\" is deprecated, PipelineResource commands are deprecated, they will be removed soon as it get removed from API.\nPipelineResources deleted: \"pre-1\"\n",
 		},
 		{
 			name:        "With force delete flag",
@@ -88,7 +88,7 @@ func TestPipelineResourceDelete(t *testing.T) {
 			input:       seeds[1],
 			inputStream: nil,
 			wantError:   false,
-			want:        "PipelineResources deleted: \"pre-1\"\n",
+			want:        "Command \"delete\" is deprecated, PipelineResource commands are deprecated, they will be removed soon as it get removed from API.\nPipelineResources deleted: \"pre-1\"\n",
 		},
 		{
 			name:        "Without force delete flag, reply no",
@@ -104,7 +104,7 @@ func TestPipelineResourceDelete(t *testing.T) {
 			input:       seeds[2],
 			inputStream: strings.NewReader("y"),
 			wantError:   false,
-			want:        "Are you sure you want to delete pipelineresource(s) \"pre-1\" (y/n): PipelineResources deleted: \"pre-1\"\n",
+			want:        "Command \"delete\" is deprecated, PipelineResource commands are deprecated, they will be removed soon as it get removed from API.\nAre you sure you want to delete pipelineresource(s) \"pre-1\" (y/n): PipelineResources deleted: \"pre-1\"\n",
 		},
 		{
 			name:        "Remove non existent resource",
@@ -128,7 +128,7 @@ func TestPipelineResourceDelete(t *testing.T) {
 			input:       seeds[3],
 			inputStream: strings.NewReader("y"),
 			wantError:   false,
-			want:        "Are you sure you want to delete all pipelineresources in namespace \"ns\" (y/n): All PipelineResources deleted in namespace \"ns\"\n",
+			want:        "Command \"delete\" is deprecated, PipelineResource commands are deprecated, they will be removed soon as it get removed from API.\nAre you sure you want to delete all pipelineresources in namespace \"ns\" (y/n): All PipelineResources deleted in namespace \"ns\"\n",
 		},
 		{
 			name:        "Delete all with -f",
@@ -136,7 +136,7 @@ func TestPipelineResourceDelete(t *testing.T) {
 			input:       seeds[4],
 			inputStream: nil,
 			wantError:   false,
-			want:        "All PipelineResources deleted in namespace \"ns\"\n",
+			want:        "Command \"delete\" is deprecated, PipelineResource commands are deprecated, they will be removed soon as it get removed from API.\nAll PipelineResources deleted in namespace \"ns\"\n",
 		},
 		{
 			name:        "Error from using pipelineresource name with --all",

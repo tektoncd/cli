@@ -219,7 +219,7 @@ func TestPipelineResourceList_empty(t *testing.T) {
 	pipelineresource := Command(p)
 
 	out, _ := test.ExecuteCommand(pipelineresource, "list", "-n", "test-ns-3")
-	test.AssertOutput(t, msgNoPREsFound+"\n", out)
+	test.AssertOutput(t, "Command \"list\" is deprecated, PipelineResource commands are deprecated, they will be removed soon as it get removed from API.\n"+msgNoPREsFound+"\n", out)
 }
 
 func TestPipelineResourceList_invalidType(t *testing.T) {
