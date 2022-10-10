@@ -74,6 +74,7 @@ func createCommand(p cli.Params) *cobra.Command {
 		},
 	}
 	f.AddFlags(c)
+	c.Deprecated = "PipelineResource commands are deprecated, they will be removed soon as it get removed from API."
 	return c
 }
 

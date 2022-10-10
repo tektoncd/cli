@@ -40,6 +40,7 @@ func Command(p cli.Params) *cobra.Command {
 		describeCommand(p),
 		listCommand(p),
 	)
+	cmd.Deprecated = "PipelineResource commands are deprecated, they will be removed soon as it get removed from API."
 
 	return cmd
 }
