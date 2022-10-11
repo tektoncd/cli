@@ -250,6 +250,7 @@ We are so excited to have you!
 - See [CONTRIBUTING.md](CONTRIBUTING.md) for an overview of our processes
 - See [DEVELOPMENT.md](DEVELOPMENT.md) for how to get started
 - See [ROADMAP.md](ROADMAP.md) for the current roadmap
+- See [releases.md][releases.md] for our release cadence and processes
 - Look at our
   [good first issues](https://github.com/tektoncd/cli/issues?q=is%3Aissue+is%3Aopen+label%3A%22good+first+issue%22)
   and our
