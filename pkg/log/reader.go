@@ -32,6 +32,7 @@ type Reader struct {
 	stream          *cli.Stream
 	allSteps        bool
 	follow          bool
+	timestamps      bool
 	tasks           []string
 	steps           []string
 	logType         string
@@ -72,6 +73,7 @@ func NewReader(logType string, opts *options.LogOptions) (*Reader, error) {
 		streamer:        streamer,
 		stream:          opts.Stream,
 		follow:          opts.Follow,
+		timestamps:      opts.Timestamps,
 		allSteps:        opts.AllSteps,
 		tasks:           opts.Tasks,
 		steps:           opts.Steps,

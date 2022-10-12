@@ -80,7 +80,7 @@ func (r *Reader) readLiveTaskLogs(tr *v1beta1.TaskRun) (<-chan Log, <-chan error
 	if err != nil {
 		return nil, nil, err
 	}
-	logC, errC := r.readPodLogs(podC, podErrC, r.follow)
+	logC, errC := r.readPodLogs(podC, podErrC, r.follow, r.timestamps)
 	return logC, errC, nil
 }
 
@@ -115,18 +115,18 @@ func (r *Reader) readAvailableTaskLogs(tr *v1beta1.TaskRun) (<-chan Log, <-chan 
 		}
 	}()
 
-	logC, errC := r.readPodLogs(podC, nil, false)
+	logC, errC := r.readPodLogs(podC, nil, false, r.timestamps)
 	return logC, errC, nil
 }
 
-func (r *Reader) readStepsLogs(logC chan<- Log, errC chan<- error, steps []*step, pod *pods.Pod, follow bool) {
+func (r *Reader) readStepsLogs(logC chan<- Log, errC chan<- error, steps []*step, pod *pods.Pod, follow, timestamps bool) {
 	for _, step := range steps {
 		if !follow && !step.hasStarted() {
 			continue
 		}
 
 		container := pod.Container(step.container)
-		containerLogC, containerLogErrC, err := container.LogReader(follow).Read()
+		containerLogC, containerLogErrC, err := container.LogReader(follow, timestamps).Read()
 		if err != nil {
 			errC <- fmt.Errorf("error in getting logs for step %s: %s", step.name, err)
 			continue
@@ -159,7 +159,7 @@ func (r *Reader) readStepsLogs(logC chan<- Log, errC chan<- error, steps []*step
 	}
 }
 
-func (r *Reader) readPodLogs(podC <-chan string, podErrC <-chan error, follow bool) (<-chan Log, <-chan error) {
+func (r *Reader) readPodLogs(podC <-chan string, podErrC <-chan error, follow, timestamps bool) (<-chan Log, <-chan error) {
 	logC := make(chan Log)
 	errC := make(chan error)
 	var wg sync.WaitGroup
@@ -200,7 +200,7 @@ func (r *Reader) readPodLogs(podC <-chan string, podErrC <-chan error, follow bo
 				errC <- fmt.Errorf("task %s failed: %s. Run tkn tr desc %s for more details", r.task, strings.TrimSpace(err.Error()), r.run)
 			}
 			steps := filterSteps(pod, r.allSteps, r.steps)
-			r.readStepsLogs(logC, errC, steps, p, follow)
+			r.readStepsLogs(logC, errC, steps, p, follow, timestamps)
 		}
 	}()
 
