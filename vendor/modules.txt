@@ -899,8 +899,8 @@ github.com/imdario/mergo
 ## explicit; go 1.17
 github.com/in-toto/in-toto-golang/in_toto
 github.com/in-toto/in-toto-golang/in_toto/slsa_provenance/v0.2
-# github.com/inconshreveable/mousetrap v1.0.0
-## explicit
+# github.com/inconshreveable/mousetrap v1.0.1
+## explicit; go 1.18
 github.com/inconshreveable/mousetrap
 # github.com/jcmturner/aescts/v2 v2.0.0
 ## explicit; go 1.13
@@ -1271,7 +1271,7 @@ github.com/spf13/afero/mem
 # github.com/spf13/cast v1.5.0
 ## explicit; go 1.18
 github.com/spf13/cast
-# github.com/spf13/cobra v1.5.0
+# github.com/spf13/cobra v1.6.0
 ## explicit; go 1.15
 github.com/spf13/cobra
 # github.com/spf13/jwalterweatherman v1.1.0
