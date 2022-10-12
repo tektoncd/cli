@@ -79,17 +79,19 @@ type LogReader struct {
 	containerName string
 	pod           *Pod
 	follow        bool
+	timestamps    bool
 }
 
-func (c *Container) LogReader(follow bool) *LogReader {
-	return &LogReader{c.name, c.pod, follow}
+func (c *Container) LogReader(follow, timestamps bool) *LogReader {
+	return &LogReader{c.name, c.pod, follow, timestamps}
 }
 
 func (lr *LogReader) Read() (<-chan Log, <-chan error, error) {
 	pod := lr.pod
 	opts := &corev1.PodLogOptions{
-		Follow:    lr.follow,
-		Container: lr.containerName,
+		Follow:     lr.follow,
+		Container:  lr.containerName,
+		Timestamps: lr.timestamps,
 	}
 
 	stream, err := pod.Stream(opts)

@@ -63,15 +63,16 @@ func TestContainer_fetch_logs(t *testing.T) {
 	pod := New(podName, ns, cs.Kube, fake.Streamer(logs))
 
 	type testdata struct {
-		container string
-		follow    bool
-		expected  []Log
+		container  string
+		follow     bool
+		timestamps bool
+		expected   []Log
 	}
 
 	td := []testdata{
 
 		{
-			container: container1, follow: false,
+			container: container1, follow: false, timestamps: false,
 			expected: []Log{{
 				PodName:       podName,
 				ContainerName: container1,
@@ -80,7 +81,7 @@ func TestContainer_fetch_logs(t *testing.T) {
 		},
 
 		{
-			container: container2, follow: false,
+			container: container2, follow: false, timestamps: false,
 			expected: []Log{{
 				PodName:       podName,
 				ContainerName: container2,
@@ -90,7 +91,7 @@ func TestContainer_fetch_logs(t *testing.T) {
 	}
 
 	for _, d := range td {
-		lr := pod.Container(d.container).LogReader(d.follow)
+		lr := pod.Container(d.container).LogReader(d.follow, d.timestamps)
 		output, err := containerLogs(lr)
 
 		if err != nil {
