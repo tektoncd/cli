@@ -32,5 +32,7 @@ Manage Tasks
 * [tkn task describe](tkn_task_describe.md)	 - Describe a Task in a namespace
 * [tkn task list](tkn_task_list.md)	 - Lists Tasks in a namespace
 * [tkn task logs](tkn_task_logs.md)	 - Show Task logs
+* [tkn task sign](tkn_task_sign.md)	 - Sign Tekton Task
 * [tkn task start](tkn_task_start.md)	 - Start Tasks
+* [tkn task verify](tkn_task_verify.md)	 - Verify Tekton Task
 
