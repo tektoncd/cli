@@ -50,7 +50,7 @@ Show 2 lines of most recent logs from all EventListener pods:
 		Annotations: map[string]string{
 			"commandType": "main",
 		},
-		Args:              cobra.ExactValidArgs(1),
+		Args:              cobra.MatchAll(cobra.ExactArgs(1), cobra.OnlyValidArgs),
 		ValidArgsFunction: formatted.ParentCompletion,
 		RunE: func(cmd *cobra.Command, args []string) error {
 			if opts.Tail <= 0 && opts.Tail != -1 {
