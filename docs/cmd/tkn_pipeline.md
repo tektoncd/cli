@@ -32,5 +32,7 @@ Manage pipelines
 * [tkn pipeline export](tkn_pipeline_export.md)	 - Export Pipeline
 * [tkn pipeline list](tkn_pipeline_list.md)	 - Lists Pipelines in a namespace
 * [tkn pipeline logs](tkn_pipeline_logs.md)	 - Show Pipeline logs
+* [tkn pipeline sign](tkn_pipeline_sign.md)	 - Sign Tekton Pipeline
 * [tkn pipeline start](tkn_pipeline_start.md)	 - Start Pipelines
+* [tkn pipeline verify](tkn_pipeline_verify.md)	 - Verify Tekton Pipeline
 
