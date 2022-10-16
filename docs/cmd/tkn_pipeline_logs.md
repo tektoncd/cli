@@ -35,11 +35,12 @@ Show logs for given Pipeline and PipelineRun:
 ### Options
 
 ```
-  -a, --all         show all logs including init steps injected by tekton
-  -f, --follow      stream live logs
-  -h, --help        help for logs
-  -L, --last        show logs for last PipelineRun
-      --limit int   lists number of PipelineRuns (default 5)
+  -a, --all          show all logs including init steps injected by tekton
+  -f, --follow       stream live logs
+  -h, --help         help for logs
+  -L, --last         show logs for last PipelineRun
+      --limit int    lists number of PipelineRuns (default 5)
+  -t, --timestamps   show logs with timestamp
 ```
 
 ### Options inherited from parent commands
