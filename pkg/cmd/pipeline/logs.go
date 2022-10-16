@@ -92,6 +92,7 @@ Show logs for given Pipeline and PipelineRun:
 	c.Flags().BoolVarP(&opts.Last, "last", "L", false, "show logs for last PipelineRun")
 	c.Flags().BoolVarP(&opts.AllSteps, "all", "a", false, "show all logs including init steps injected by tekton")
 	c.Flags().BoolVarP(&opts.Follow, "follow", "f", false, "stream live logs")
+	c.Flags().BoolVarP(&opts.Timestamps, "timestamps", "t", false, "show logs with timestamp")
 	c.Flags().IntVarP(&opts.Limit, "limit", "", 5, "lists number of PipelineRuns")
 
 	return c

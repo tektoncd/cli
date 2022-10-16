@@ -34,11 +34,12 @@ Show logs for given ClusterTask and associated TaskRun:
 ### Options
 
 ```
-  -a, --all         show all logs including init steps injected by tekton
-  -f, --follow      stream live logs
-  -h, --help        help for logs
-  -L, --last        show logs for last TaskRun
-      --limit int   lists number of TaskRuns (default 5)
+  -a, --all          show all logs including init steps injected by tekton
+  -f, --follow       stream live logs
+  -h, --help         help for logs
+  -L, --last         show logs for last TaskRun
+      --limit int    lists number of TaskRuns (default 5)
+  -t, --timestamps   show logs with timestamp
 ```
 
 ### Options inherited from parent commands
