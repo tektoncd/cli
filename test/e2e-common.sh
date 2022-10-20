@@ -143,6 +143,7 @@ function install_pipeline_crd() {
     # If for whatever reason the nightly release wasnt there (nightly ci failure?), try the released version
     [[ -n ${latestreleaseyaml} ]] || latestreleaseyaml=https://storage.googleapis.com/tekton-releases/pipeline/latest/release.yaml
   fi
+  latestreleaseyaml="https://github.com/tektoncd/pipeline/releases/download/v0.37.2/release.yaml"
   [[ -z ${latestreleaseyaml} ]] && fail_test "Could not get latest released release.yaml"
   kubectl apply -f ${latestreleaseyaml} ||
     fail_test "Build pipeline installation failed"
@@ -168,6 +169,7 @@ function install_triggers_crd() {
         latestreleaseyaml=https://storage.googleapis.com/tekton-releases-nightly/triggers/latest/release.yaml
 
     # If for whatever reason the nightly release wasnt there (nightly ci failure?), try the released version
+    latestreleaseyaml="https://github.com/tektoncd/triggers/releases/download/v0.20.1/release.yaml"
     [[ -z ${latestreleaseyaml} ]] && latestreleaseyaml="https://storage.googleapis.com/tekton-releases/triggers/latest/release.yaml"
   fi
   if [[ -n ${RELEASE_YAML_TRIGGERS_INTERCEPTORS} ]];then
