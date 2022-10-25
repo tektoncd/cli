@@ -1,17 +1,19 @@
+<img src="logos/tcell.png" style="float: right"/>
 
-# ![Tcell](logos/tcell.png)
+# Tcell
 
 _Tcell_ is a _Go_ package that provides a cell based view for text terminals, like _XTerm_.
 It was inspired by _termbox_, but includes many additional improvements.
 
-[![Linux Status](https://img.shields.io/travis/gdamore/tcell.svg?label=linux)](https://travis-ci.org/gdamore/tcell)
-[![Windows Status](https://img.shields.io/appveyor/ci/gdamore/tcell.svg?label=windows)](https://ci.appveyor.com/project/gdamore/tcell)
-[![Apache License](https://img.shields.io/badge/license-APACHE2-blue.svg)](https://github.com/gdamore/tcell/blob/master/LICENSE)
-[![Documentation](https://img.shields.io/badge/godoc-reference-blue.svg)](https://pkg.go.dev/github.com/gdamore/tcell/v2)
-[![Report Card](https://goreportcard.com/badge/gdamore/tcell)](http://goreportcard.com/report/gdamore/tcell/v2)
-[![Discord](https://img.shields.io/discord/639503822733180969?label=discord)](https://discord.gg/urTTxDN)
-[![Coverage](https://codecov.io/gh/gdamore/tcell/branch/master/graph/badge.svg)](https://codecov.io/gh/gdamore/tcell)
+[![Stand With Ukraine](https://raw.githubusercontent.com/vshymanskyy/StandWithUkraine/main/badges/StandWithUkraine.svg)](https://stand-with-ukraine.pp.ua)
+[![Linux](https://img.shields.io/github/workflow/status/gdamore/tcell/linux?logoColor=grey&logo=linux&label=)](https://github.com/gdamore/tcell/actions/workflows/linux.yml)
+[![Windows](https://img.shields.io/github/workflow/status/gdamore/tcell/windows?logoColor=grey&logo=windows&label=)](https://github.com/gdamore/tcell/actions/workflows/windows.yml)
+[![Apache License](https://img.shields.io/github/license/gdamore/tcell.svg?logoColor=silver&logo=opensourceinitiative&color=blue&label=)](https://github.com/gdamore/tcell/blob/master/LICENSE)
+[![Docs](https://img.shields.io/badge/godoc-reference-blue.svg?label=&logo=go)](https://pkg.go.dev/github.com/gdamore/tcell/v2)
+[![Discord](https://img.shields.io/discord/639503822733180969?label=&logo=discord)](https://discord.gg/urTTxDN)
+[![Coverage](https://img.shields.io/codecov/c/github/gdamore/tcell?logoColor=grey&logo=codecov&label=)](https://codecov.io/gh/gdamore/tcell)
 
+Please see [here](UKRAINE.md) for an important message for the people of Russia.
 
 NOTE: This is version 2 of _Tcell_.  There are breaking changes relative to version 1.
 Version 1.x remains available using the import `github.com/gdamore/tcell`.
@@ -19,6 +21,7 @@ Version 1.x remains available using the import `github.com/gdamore/tcell`.
 ## Tutorial
 
 A brief, and still somewhat rough, [tutorial](TUTORIAL.md) is available.
+
 ## Examples
 
 * [proxima5](https://github.com/gdamore/proxima5) - space shooter ([video](https://youtu.be/jNxKTCmY_bQ))
@@ -47,6 +50,7 @@ A brief, and still somewhat rough, [tutorial](TUTORIAL.md) is available.
 * [gorss](https://github.com/lallassu/gorss) - RSS/Atom feed reader
 * [memoryalike](https://github.com/Bios-Marcel/memoryalike) - memorization game
 * [lf](https://github.com/gokcehan/lf) - file manager
+* [goful](https://github.com/anmitsu/goful) - CUI file manager
 * [gokeybr](https://github.com/bunyk/gokeybr) - deliberately practice your typing
 * [gonano](https://github.com/jbaramidze/gonano) - editor, mimics _nano_
 * [uchess](https://github.com/tmountain/uchess) - UCI chess client
@@ -55,6 +59,11 @@ A brief, and still somewhat rough, [tutorial](TUTORIAL.md) is available.
 * [tmux-wormhole](https://github.com/gcla/tmux-wormhole) - _tmux_ plugin to transfer files
 * [gruid-tcell](https://github.com/anaseto/gruid-tcell) - driver for the grid based UI and game framework
 * [aretext](https://github.com/aretext/aretext) - minimalist text editor with _vim_ key bindings
+* [sync](https://github.com/kyprifog/sync) - GitHub repo synchronization tool
+* [statusbar](https://github.com/kyprifog/statusbar) - statusbar motivation tool for tracking periodic tasks/goals
+* [todo](https://github.com/kyprifog/todo) - simple todo app
+* [gosnakego](https://github.com/liweiyi88/gosnakego) - a snake game
+
 
 ## Pure Go Terminfo Database
 
