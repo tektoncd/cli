@@ -1,4 +1,4 @@
-// Copyright 2021 The TCell Authors
+// Copyright 2022 The TCell Authors
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use file except in compliance with the License.
@@ -46,19 +46,36 @@ func NewTerminfoScreen() (Screen, error) {
 	return NewTerminfoScreenFromTty(nil)
 }
 
-// NewTerminfoScreenFromTty returns a Screen using a custom Tty implementation.
-// If the passed in tty is nil, then a reasonable default (typically /dev/tty)
-// is presumed, at least on UNIX hosts. (Windows hosts will typically fail this
-// call altogether.)
-func NewTerminfoScreenFromTty(tty Tty) (Screen, error) {
-	ti, e := terminfo.LookupTerminfo(os.Getenv("TERM"))
+// LookupTerminfo attempts to find a definition for the named $TERM falling
+// back to attempting to parse the output from infocmp.
+func LookupTerminfo(name string) (ti *terminfo.Terminfo, e error) {
+	ti, e = terminfo.LookupTerminfo(name)
 	if e != nil {
-		ti, e = loadDynamicTerminfo(os.Getenv("TERM"))
+		ti, e = loadDynamicTerminfo(name)
 		if e != nil {
 			return nil, e
 		}
 		terminfo.AddTerminfo(ti)
 	}
+
+	return
+}
+
+// NewTerminfoScreenFromTtyTerminfo returns a Screen using a custom Tty
+// implementation  and custom terminfo specification.
+// If the passed in tty is nil, then a reasonable default (typically /dev/tty)
+// is presumed, at least on UNIX hosts. (Windows hosts will typically fail this
+// call altogether.)
+// If passed terminfo is nil, then TERM environment variable is queried for
+// terminal specification.
+func NewTerminfoScreenFromTtyTerminfo(tty Tty, ti *terminfo.Terminfo) (s Screen, e error) {
+	if ti == nil {
+		ti, e = LookupTerminfo(os.Getenv("TERM"))
+		if e != nil {
+			return
+		}
+	}
+
 	t := &tScreen{ti: ti, tty: tty}
 
 	t.keyexist = make(map[Key]bool)
@@ -75,6 +92,14 @@ func NewTerminfoScreenFromTty(tty Tty) (Screen, error) {
 	}
 
 	return t, nil
+}
+
+// NewTerminfoScreenFromTty returns a Screen using a custom Tty implementation.
+// If the passed in tty is nil, then a reasonable default (typically /dev/tty)
+// is presumed, at least on UNIX hosts. (Windows hosts will typically fail this
+// call altogether.)
+func NewTerminfoScreenFromTty(tty Tty) (Screen, error) {
+	return NewTerminfoScreenFromTtyTerminfo(tty, nil)
 }
 
 // tKeyCode represents a combination of a key code and modifiers.
@@ -123,6 +148,11 @@ type tScreen struct {
 	finiOnce     sync.Once
 	enablePaste  string
 	disablePaste string
+	enterUrl     string
+	exitUrl      string
+	setWinSize   string
+	cursorStyles map[CursorStyle]string
+	cursorStyle  CursorStyle
 	saved        *term.State
 	stopQ        chan struct{}
 	running      bool
@@ -307,6 +337,54 @@ func (t *tScreen) prepareBracketedPaste() {
 	}
 }
 
+func (t *tScreen) prepareExtendedOSC() {
+	// More stuff for limits in terminfo.  This time we are applying
+	// the most common OSC (operating system commands).  Generally
+	// terminals that don't understand these will ignore them.
+	// Again, we condition this based on mouse capabilities.
+	if t.ti.EnterUrl != "" {
+		t.enterUrl = t.ti.EnterUrl
+		t.exitUrl = t.ti.ExitUrl
+	} else if t.ti.Mouse != "" {
+		t.enterUrl = "\x1b]8;;%p1%s\x1b\\"
+		t.exitUrl = "\x1b]8;;\x1b\\"
+	}
+
+	if t.ti.SetWindowSize != "" {
+		t.setWinSize = t.ti.SetWindowSize
+	} else if t.ti.Mouse != "" {
+		t.setWinSize = "\x1b[8;%p1%p2%d;%dt"
+	}
+}
+
+func (t *tScreen) prepareCursorStyles() {
+	// Another workaround for lack of reporting in terminfo.
+	// We assume if the terminal has a mouse entry, that it
+	// offers bracketed paste.  But we allow specific overrides
+	// via our terminal database.
+	if t.ti.CursorDefault != "" {
+		t.cursorStyles = map[CursorStyle]string{
+			CursorStyleDefault:           t.ti.CursorDefault,
+			CursorStyleBlinkingBlock:     t.ti.CursorBlinkingBlock,
+			CursorStyleSteadyBlock:       t.ti.CursorSteadyBlock,
+			CursorStyleBlinkingUnderline: t.ti.CursorBlinkingUnderline,
+			CursorStyleSteadyUnderline:   t.ti.CursorSteadyUnderline,
+			CursorStyleBlinkingBar:       t.ti.CursorBlinkingBar,
+			CursorStyleSteadyBar:         t.ti.CursorSteadyBar,
+		}
+	} else if t.ti.Mouse != "" {
+		t.cursorStyles = map[CursorStyle]string{
+			CursorStyleDefault:           "\x1b[0 q",
+			CursorStyleBlinkingBlock:     "\x1b[1 q",
+			CursorStyleSteadyBlock:       "\x1b[2 q",
+			CursorStyleBlinkingUnderline: "\x1b[3 q",
+			CursorStyleSteadyUnderline:   "\x1b[4 q",
+			CursorStyleBlinkingBar:       "\x1b[5 q",
+			CursorStyleSteadyBar:         "\x1b[6 q",
+		}
+	}
+}
+
 func (t *tScreen) prepareKey(key Key, val string) {
 	t.prepareKeyMod(key, ModNone, val)
 }
@@ -446,6 +524,8 @@ func (t *tScreen) prepareKeys() {
 	t.prepareKey(keyPasteEnd, ti.PasteEnd)
 	t.prepareXtermModifiers()
 	t.prepareBracketedPaste()
+	t.prepareCursorStyles()
+	t.prepareExtendedOSC()
 
 outer:
 	// Add key mappings for control keys.
@@ -492,6 +572,18 @@ func (t *tScreen) SetStyle(style Style) {
 
 func (t *tScreen) Clear() {
 	t.Fill(' ', t.style)
+	t.Lock()
+	t.clear = true
+	w, h := t.cells.Size()
+	// because we are going to clear (see t.clear) in the next cycle,
+	// let's also unmark the dirty bit so that we don't waste cycles
+	// drawing things that are already dealt with via the clear escape sequence.
+	for row := 0; row < h; row++ {
+		for col := 0; col < w; col++ {
+			t.cells.SetDirty(col, row, false)
+		}
+	}
+	t.Unlock()
 }
 
 func (t *tScreen) Fill(r rune, style Style) {
@@ -555,11 +647,27 @@ func (t *tScreen) encodeRune(r rune, buf []byte) []byte {
 	return buf
 }
 
-func (t *tScreen) sendFgBg(fg Color, bg Color) {
+func (t *tScreen) sendFgBg(fg Color, bg Color, attr AttrMask) AttrMask {
 	ti := t.ti
 	if ti.Colors == 0 {
-		return
+		// foreground vs background, we calculate luminance
+		// and possibly do a reverse video
+		if !fg.Valid() {
+			return attr
+		}
+		v, ok := t.colors[fg]
+		if !ok {
+			v = FindColor(fg, []Color{ColorBlack, ColorWhite})
+			t.colors[fg] = v
+		}
+		switch v {
+		case ColorWhite:
+			return attr
+		case ColorBlack:
+			return attr ^ AttrReverse
+		}
 	}
+
 	if fg == ColorReset || bg == ColorReset {
 		t.TPuts(ti.ResetFgBg)
 	}
@@ -570,7 +678,7 @@ func (t *tScreen) sendFgBg(fg Color, bg Color) {
 			t.TPuts(ti.TParm(ti.SetFgBgRGB,
 				int(r1), int(g1), int(b1),
 				int(r2), int(g2), int(b2)))
-			return
+			return attr
 		}
 
 		if fg.IsRGB() && ti.SetFgRGB != "" {
@@ -617,6 +725,7 @@ func (t *tScreen) sendFgBg(fg Color, bg Color) {
 			t.TPuts(ti.TParm(ti.SetBg, int(bg&0xff)))
 		}
 	}
+	return attr
 }
 
 func (t *tScreen) drawCell(x, y int) int {
@@ -659,7 +768,7 @@ func (t *tScreen) drawCell(x, y int) int {
 
 		t.TPuts(ti.AttrOff)
 
-		t.sendFgBg(fg, bg)
+		attrs = t.sendFgBg(fg, bg, attrs)
 		if attrs&AttrBold != 0 {
 			t.TPuts(ti.Bold)
 		}
@@ -681,8 +790,19 @@ func (t *tScreen) drawCell(x, y int) int {
 		if attrs&AttrStrikeThrough != 0 {
 			t.TPuts(ti.StrikeThrough)
 		}
+
+		// URL string can be long, so don't send it unless we really need to
+		if t.enterUrl != "" && t.curstyle != style {
+			if style.url != "" {
+				t.TPuts(ti.TParm(t.enterUrl, style.url))
+			} else {
+				t.TPuts(t.exitUrl)
+			}
+		}
+
 		t.curstyle = style
 	}
+
 	// now emit runes - taking care to not overrun width with a
 	// wide character, and to ensure that we emit exactly one regular
 	// character followed up by any residual combing characters
@@ -729,6 +849,12 @@ func (t *tScreen) ShowCursor(x, y int) {
 	t.Unlock()
 }
 
+func (t *tScreen) SetCursorStyle(cs CursorStyle) {
+	t.Lock()
+	t.cursorStyle = cs
+	t.Unlock()
+}
+
 func (t *tScreen) HideCursor() {
 	t.ShowCursor(-1, -1)
 }
@@ -743,6 +869,11 @@ func (t *tScreen) showCursor() {
 	}
 	t.TPuts(t.ti.TGoto(x, y))
 	t.TPuts(t.ti.ShowCursor)
+	if t.cursorStyles != nil {
+		if esc, ok := t.cursorStyles[t.cursorStyle]; ok {
+			t.TPuts(esc)
+		}
+	}
 	t.cx = x
 	t.cy = y
 }
@@ -779,8 +910,10 @@ func (t *tScreen) Show() {
 }
 
 func (t *tScreen) clearScreen() {
+	t.TPuts(t.ti.AttrOff)
+	t.TPuts(t.exitUrl)
 	fg, bg, _ := t.style.Decompose()
-	t.sendFgBg(fg, bg)
+	_ = t.sendFgBg(fg, bg, AttrNone)
 	t.TPuts(t.ti.Clear)
 	t.clear = false
 }
@@ -798,9 +931,11 @@ func (t *tScreen) hideCursor() {
 }
 
 func (t *tScreen) draw() {
-	// clobber cursor position, because we're gonna change it all
+	// clobber cursor position, because we're going to change it all
 	t.cx = -1
 	t.cy = -1
+	// make no style assumptions
+	t.curstyle = styleInvalid
 
 	t.buf.Reset()
 	t.buffering = true
@@ -844,7 +979,7 @@ func (t *tScreen) EnableMouse(flags ...MouseFlags) {
 		flagsPresent = true
 	}
 	if !flagsPresent {
-		f = MouseMotionEvents
+		f = MouseMotionEvents | MouseDragEvents | MouseButtonEvents
 	}
 
 	t.Lock()
@@ -860,14 +995,20 @@ func (t *tScreen) enableMouse(f MouseFlags) {
 	if len(t.mouse) != 0 {
 		// start by disabling all tracking.
 		t.TPuts("\x1b[?1000l\x1b[?1002l\x1b[?1003l\x1b[?1006l")
+		if f&MouseButtonEvents != 0 {
+			t.TPuts("\x1b[?1000h")
+		}
+		if f&MouseDragEvents != 0 {
+			t.TPuts("\x1b[?1002h")
+		}
 		if f&MouseMotionEvents != 0 {
-			t.TPuts("\x1b[?1003h\x1b[?1006h")
-		} else if f&MouseDragEvents != 0 {
-			t.TPuts("\x1b[?1002h\x1b[?1006h")
-		} else if f&MouseButtonEvents != 0 {
-			t.TPuts("\x1b[?1000h\x1b[?1006h")
+			t.TPuts("\x1b[?1003h")
+		}
+		if f&(MouseButtonEvents|MouseDragEvents|MouseMotionEvents) != 0 {
+			t.TPuts("\x1b[?1006h")
 		}
 	}
+
 }
 
 func (t *tScreen) DisableMouse() {
@@ -978,7 +1119,7 @@ func (t *tScreen) HasPendingEvent() bool {
 // the terminals Alternate Character Set to represent other glyphs.
 // For example, the upper left corner of the box drawing set can be
 // displayed by printing "l" while in the alternate character set.
-// Its not quite that simple, since the "l" is the terminfo name,
+// It's not quite that simple, since the "l" is the terminfo name,
 // and it may be necessary to use a different character based on
 // the terminal implementation (or the terminal may lack support for
 // this altogether).  See buildAcsMap below for detail.
@@ -1499,7 +1640,7 @@ func (t *tScreen) mainLoop(stopQ chan struct{}) {
 		case <-t.keytimer.C:
 			// If the timer fired, and the current time
 			// is after the expiration of the escape sequence,
-			// then we assume the escape sequence reached it's
+			// then we assume the escape sequence reached its
 			// conclusion, and process the chunk independently.
 			// This lets us detect conflicts such as a lone ESC.
 			if buf.Len() > 0 {
@@ -1547,7 +1688,12 @@ func (t *tScreen) inputLoop(stopQ chan struct{}) {
 		switch e {
 		case nil:
 		default:
-			_ = t.PostEvent(NewEventError(e))
+			t.Lock()
+			running := t.running
+			t.Unlock()
+			if running {
+				_ = t.PostEvent(NewEventError(e))
+			}
 			return
 		}
 		if n > 0 {
@@ -1623,6 +1769,14 @@ func (t *tScreen) HasKey(k Key) bool {
 	return t.keyexist[k]
 }
 
+func (t *tScreen) SetSize(w, h int) {
+	if t.setWinSize != "" {
+		t.TPuts(t.ti.TParm(t.setWinSize, w, h))
+	}
+	t.cells.Invalidate()
+	t.resize()
+}
+
 func (t *tScreen) Resize(int, int, int, int) {}
 
 func (t *tScreen) Suspend() error {
@@ -1635,7 +1789,7 @@ func (t *tScreen) Resume() error {
 }
 
 // engage is used to place the terminal in raw mode and establish screen size, etc.
-// Thing of this is as tcell "engaging" the clutch, as it's going to be driving the
+// Think of this is as tcell "engaging" the clutch, as it's going to be driving the
 // terminal interface.
 func (t *tScreen) engage() error {
 	t.Lock()
@@ -1702,6 +1856,9 @@ func (t *tScreen) disengage() {
 	ti := t.ti
 	t.cells.Resize(0, 0)
 	t.TPuts(ti.ShowCursor)
+	if t.cursorStyles != nil && t.cursorStyle != CursorStyleDefault {
+		t.TPuts(t.cursorStyles[t.cursorStyle])
+	}
 	t.TPuts(ti.ResetFgBg)
 	t.TPuts(ti.AttrOff)
 	t.TPuts(ti.Clear)
