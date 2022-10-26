@@ -56,10 +56,10 @@ Available Commands:{{range .Commands}}{{if (eq .Annotations.commandType "main")}
 Other Commands:{{range .Commands}}{{if (eq .Annotations.commandType "utility")}}
   {{rpad .Name .NamePadding }} {{.Short}}{{end}}{{end}}{{end}}{{end}}{{if gt (len pluginList) 0}}
 
-Available Plugins:
+Available Plugins:{{ range $name, $description := pluginList }}
+  {{$name}}  {{$description}} {{end}}
 
-{{- range pluginList}}
-  {{.}}{{end}}{{end}}{{if .HasAvailableLocalFlags}}
+
 
 Flags:
 {{.LocalFlags.FlagUsages | trimTrailingWhitespaces}}{{end}}{{if .HasAvailableInheritedFlags}}
@@ -113,7 +113,7 @@ func Root(p cli.Params) *cobra.Command {
 
 func addPluginsToHelp() {
 	pluginList := plugins.GetAllTknPluginFromPaths()
-	cobra.AddTemplateFunc("pluginList", func() []string { return pluginList })
+	cobra.AddTemplateFunc("pluginList", func() map[string]string { return pluginList })
 }
 
 func hasMainSubCommands(cmd *cobra.Command) bool {

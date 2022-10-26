@@ -49,9 +49,21 @@ func FindPlugin(pluginame string) (string, error) {
 	return "", fmt.Errorf("cannot find plugin in path or %s: %s", pluginDir, cmd)
 }
 
-func GetAllTknPluginFromPaths() []string {
-	pluginlist := []string{}
+// Execute the plugin binary and returns plugin's description
+func getPluginDescription(pluginPath string) string {
+
+	output, _ := exec.Command(pluginPath).Output()
+
+	description := strings.Split(string(output), "Usage:")
+
+	return strings.TrimSpace(description[0])
+
+}
+
+func GetAllTknPluginFromPaths() map[string]string {
+	pluginlist := make(map[string]string)
 	paths := filepath.SplitList(os.Getenv("PATH"))
+
 	if dir, err := getPluginDir(); err == nil {
 		paths = append(paths, dir)
 	}
@@ -67,28 +79,23 @@ func GetAllTknPluginFromPaths() []string {
 		for _, file := range files {
 			if strings.HasPrefix(file.Name(), tknPrefix) {
 				basep := strings.TrimLeft(file.Name(), tknPrefix)
-				if contains(pluginlist, basep) {
+				_, isPresent := pluginlist[basep]
+				if isPresent {
 					continue
 				}
 				fpath := filepath.Join(path, file.Name())
 				info, err := os.Stat(fpath)
+
+				description := getPluginDescription(fpath)
+
 				if err != nil {
 					continue
 				}
 				if info.Mode()&0o111 != 0 {
-					pluginlist = append(pluginlist, basep)
+					pluginlist[basep] = description
 				}
 			}
 		}
 	}
 	return pluginlist
-}
-
-func contains(s []string, e string) bool {
-	for _, a := range s {
-		if a == e {
-			return true
-		}
-	}
-	return false
 }
