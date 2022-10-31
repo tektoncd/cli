@@ -36,12 +36,24 @@ need to have a PipelineResource for your git repository. See
 * You need to get your API file from https://copr.fedorainfracloud.org/api/ and have it saved to `~/.config/copr`. You will need to change the 
 `username` field to `chmouel` since the copr repo is currently `/chmouel/tektoncd-cli/`.
 
-* Make sure you have the GitHub token set as documented in [RELEASE_PROCESS.md](../../RELEASE_PROCESS.md). You can also just add the `--namespace` option to all `kubectl` commands below and specify the namespace where you ran the release (by default, the namespace used in `release.sh` is `release`).
+* Make sure you have the GitHub token set as documented in [RELEASE_PROCESS.md](../../RELEASE_PROCESS.md). You can also just add the `--namespace` option to all `kubectl` and `tkn` commands below and specify the namespace where you ran the release (by default, the namespace used in `release.sh` is `release`).
 
 * You create the secret from that copr config file:
 
 ```
 kubectl create secret generic copr-cli-config --from-file=copr=${HOME}/.config/copr
+```
+
+* Make sure you already have git-clone Task installed. To verify, run the command:
+
+```
+tkn task list | grep "git-clone"
+```
+
+If the above command doesn't return anything then you can install using:
+
+```
+tkn hub install task git-clone
 ```
 
 * You should be able create the task with:
@@ -56,10 +68,10 @@ And run it with:
 kubectl create -f rpmbuild-run.yml
 ```
 
-* Use `tkn tr desc rpmbuild-taskrun` to make sure the taskrun didn't fail on validation 
+* Use `tkn pr desc rpmbuild-pipelinerun` to make sure the `PipelineRun` didn't fail on validation 
 
-And use the following command to get the logs of the taskrun: 
+And use the following command to get the logs of the `PipelineRun`: 
 
 ```
-tkn tr logs rpmbuild-taskrun -f
+tkn pr logs rpmbuild-pipelinerun -f
 ```
