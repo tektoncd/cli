@@ -4,11 +4,9 @@ kind: Task
 metadata:
   name: rpmbuild
 spec:
-  resources:
-    inputs:
-      - name: source
-        type: git
-        targetPath: src
+  workspaces:
+    - name: source
+      description: Volume containing the source code
   steps:
   - name: build-rpm
     env:
@@ -23,5 +21,5 @@ spec:
           name: copr-cli-config
           key: copr
     image: quay.io/chmouel/rpmbuild
-    workingdir: /workspace/src
+    workingDir: $(workspaces.source.path)
     command: ["tekton/rpmbuild/build.sh"]
