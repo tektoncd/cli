@@ -88,28 +88,6 @@ spec:
       workspaces:
         - name: source
           workspace: shared-workspace
-    - name: publish
-      runAfter: [build, unit-tests]
-      taskRef:
-        name: kaniko-build-and-push
-      params:
-        - name: DOCKERFILE
-          value: contrib/tkn-image/Dockerfile
-        - name: package
-          value: $(params.package)
-        - name: EXTRA_ARGS
-          value:
-            - --destination=gcr.io/tekton-releases/github.com/tektoncd/cli/cmd/tkn:latest
-            - --destination=gcr.io/tekton-releases/github.com/tektoncd/cli/cmd/tkn:$(tasks.get-versions.results.version)
-            - --destination=gcr.io/tekton-releases/github.com/tektoncd/cli/cmd/tkn:v$(tasks.get-versions.results.major)
-            - --destination=gcr.io/tekton-releases/github.com/tektoncd/cli/cmd/tkn:v$(tasks.get-versions.results.major).$(tasks.get-versions.results.minor)
-            - --destination=gcr.io/tekton-releases/tkn:latest
-            - --destination=gcr.io/tekton-releases/tkn:$(tasks.get-versions.results.version)
-            - --destination=gcr.io/tekton-releases/tkn:v$(tasks.get-versions.results.major)
-            - --destination=gcr.io/tekton-releases/tkn:v$(tasks.get-versions.results.major).$(tasks.get-versions.results.minor)
-      workspaces:
-        - name: source
-          workspace: shared-workspace
     - name: release
       runAfter: [build, unit-tests]
       taskRef:
