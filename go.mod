@@ -53,7 +53,7 @@ require (
 	github.com/tektoncd/chains v0.12.1-0.20220901150427-1bf8faaf4475
 	github.com/tektoncd/hub v1.9.0
 	github.com/tektoncd/pipeline v0.38.3
-	github.com/tektoncd/plumbing v0.0.0-20220329085922-d765a5cba75f
+	github.com/tektoncd/plumbing v0.0.0-20221102182345-5dbcfda657d7
 	github.com/tektoncd/triggers v0.20.2
 	go.opencensus.io v0.23.0
 	go.uber.org/atomic v1.10.0
