@@ -71,6 +71,7 @@ install_triggers_crd
 
 # listing objects after CRD is created should not fail
 kubectl config set-context $(kubectl config current-context) --namespace=default
+run_test "show installed versions for triggers and pipelines" tkn version
 run_test  "list pipelinerun for pipeline foo" tkn pipelinerun list foo
 run_test  "list pipelinerun"  tkn pipelinerun list
 run_test  "list pipelines" tkn pipeline list
