@@ -62,6 +62,7 @@ type ResolutionRequestSpec struct {
 	// resource being requested. For example: repo URL, commit SHA,
 	// path to file, the kind of authentication to leverage, etc.
 	// +optional
+	// +listType=atomic
 	Params []pipelinev1beta1.Param `json:"params,omitempty"`
 }
 
@@ -79,6 +80,9 @@ type ResolutionRequestStatusFields struct {
 	// of the requested resource in-lined into the ResolutionRequest
 	// object.
 	Data string `json:"data"`
+	// Source is the source reference of the remote data that records the url, digest
+	// and the entrypoint.
+	Source *pipelinev1beta1.ConfigSource `json:"source"`
 }
 
 // GetStatus implements KRShaped.

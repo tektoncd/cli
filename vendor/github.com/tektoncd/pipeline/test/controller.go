@@ -23,9 +23,10 @@ import (
 	"testing"
 
 	// Link in the fakes so they get injected into injection.Fake
+	"github.com/tektoncd/pipeline/pkg/apis/config"
 	"github.com/tektoncd/pipeline/pkg/apis/pipeline/v1alpha1"
 	"github.com/tektoncd/pipeline/pkg/apis/pipeline/v1beta1"
-	resolutionv1alpha1 "github.com/tektoncd/pipeline/pkg/apis/resolution/v1alpha1"
+	resolutionv1alpha1 "github.com/tektoncd/pipeline/pkg/apis/resolution/v1beta1"
 	resourcev1alpha1 "github.com/tektoncd/pipeline/pkg/apis/resource/v1alpha1"
 	fakepipelineclientset "github.com/tektoncd/pipeline/pkg/client/clientset/versioned/fake"
 	informersv1alpha1 "github.com/tektoncd/pipeline/pkg/client/informers/externalversions/pipeline/v1alpha1"
@@ -38,9 +39,9 @@ import (
 	faketaskinformer "github.com/tektoncd/pipeline/pkg/client/injection/informers/pipeline/v1beta1/task/fake"
 	faketaskruninformer "github.com/tektoncd/pipeline/pkg/client/injection/informers/pipeline/v1beta1/taskrun/fake"
 	fakeresolutionclientset "github.com/tektoncd/pipeline/pkg/client/resolution/clientset/versioned/fake"
-	resolutioninformersv1alpha1 "github.com/tektoncd/pipeline/pkg/client/resolution/informers/externalversions/resolution/v1alpha1"
+	resolutioninformersv1alpha1 "github.com/tektoncd/pipeline/pkg/client/resolution/informers/externalversions/resolution/v1beta1"
 	fakeresolutionrequestclient "github.com/tektoncd/pipeline/pkg/client/resolution/injection/client/fake"
-	fakeresolutionrequestinformer "github.com/tektoncd/pipeline/pkg/client/resolution/injection/informers/resolution/v1alpha1/resolutionrequest/fake"
+	fakeresolutionrequestinformer "github.com/tektoncd/pipeline/pkg/client/resolution/injection/informers/resolution/v1beta1/resolutionrequest/fake"
 	fakeresourceclientset "github.com/tektoncd/pipeline/pkg/client/resource/clientset/versioned/fake"
 	resourceinformersv1alpha1 "github.com/tektoncd/pipeline/pkg/client/resource/informers/externalversions/resource/v1alpha1"
 	fakeresourceclient "github.com/tektoncd/pipeline/pkg/client/resource/injection/client/fake"
@@ -63,6 +64,7 @@ import (
 	fakefilteredpodinformer "knative.dev/pkg/client/injection/kube/informers/core/v1/pod/filtered/fake"
 	fakeserviceaccountinformer "knative.dev/pkg/client/injection/kube/informers/core/v1/serviceaccount/fake"
 	"knative.dev/pkg/controller"
+	"knative.dev/pkg/system"
 )
 
 // Data represents the desired state of the system (i.e. existing resources) to seed controllers
@@ -273,7 +275,7 @@ func SeedTestData(t *testing.T, ctx context.Context, d Data) (Clients, Informers
 	c.ResolutionRequests.PrependReactor("*", "resolutionrequests", AddToInformer(t, i.ResolutionRequest.Informer().GetIndexer()))
 	for _, rr := range d.ResolutionRequests {
 		rr := rr.DeepCopy() // Avoid assumptions that the informer's copy is modified.
-		if _, err := c.ResolutionRequests.ResolutionV1alpha1().ResolutionRequests(rr.Namespace).Create(ctx, rr, metav1.CreateOptions{}); err != nil {
+		if _, err := c.ResolutionRequests.ResolutionV1beta1().ResolutionRequests(rr.Namespace).Create(ctx, rr, metav1.CreateOptions{}); err != nil {
 			t.Fatal(err)
 		}
 	}
@@ -322,4 +324,56 @@ var _ ktesting.Reactor = (*ResourceVersionReactor)(nil)
 // This does not work with patches.
 func PrependResourceVersionReactor(f *ktesting.Fake) {
 	f.ReactionChain = append([]ktesting.Reactor{&ResourceVersionReactor{}}, f.ReactionChain...)
+}
+
+// EnsureConfigurationConfigMapsExist makes sure all the configmaps exists.
+func EnsureConfigurationConfigMapsExist(d *Data) {
+	var defaultsExists, featureFlagsExists, artifactBucketExists, artifactPVCExists, metricsExists bool
+	for _, cm := range d.ConfigMaps {
+		if cm.Name == config.GetDefaultsConfigName() {
+			defaultsExists = true
+		}
+		if cm.Name == config.GetFeatureFlagsConfigName() {
+			featureFlagsExists = true
+		}
+		if cm.Name == config.GetArtifactBucketConfigName() {
+			artifactBucketExists = true
+		}
+		if cm.Name == config.GetArtifactPVCConfigName() {
+			artifactPVCExists = true
+		}
+		if cm.Name == config.GetMetricsConfigName() {
+			metricsExists = true
+		}
+	}
+	if !defaultsExists {
+		d.ConfigMaps = append(d.ConfigMaps, &corev1.ConfigMap{
+			ObjectMeta: metav1.ObjectMeta{Name: config.GetDefaultsConfigName(), Namespace: system.Namespace()},
+			Data:       map[string]string{},
+		})
+	}
+	if !featureFlagsExists {
+		d.ConfigMaps = append(d.ConfigMaps, &corev1.ConfigMap{
+			ObjectMeta: metav1.ObjectMeta{Name: config.GetFeatureFlagsConfigName(), Namespace: system.Namespace()},
+			Data:       map[string]string{},
+		})
+	}
+	if !artifactBucketExists {
+		d.ConfigMaps = append(d.ConfigMaps, &corev1.ConfigMap{
+			ObjectMeta: metav1.ObjectMeta{Name: config.GetArtifactBucketConfigName(), Namespace: system.Namespace()},
+			Data:       map[string]string{},
+		})
+	}
+	if !artifactPVCExists {
+		d.ConfigMaps = append(d.ConfigMaps, &corev1.ConfigMap{
+			ObjectMeta: metav1.ObjectMeta{Name: config.GetArtifactPVCConfigName(), Namespace: system.Namespace()},
+			Data:       map[string]string{},
+		})
+	}
+	if !metricsExists {
+		d.ConfigMaps = append(d.ConfigMaps, &corev1.ConfigMap{
+			ObjectMeta: metav1.ObjectMeta{Name: config.GetMetricsConfigName(), Namespace: system.Namespace()},
+			Data:       map[string]string{},
+		})
+	}
 }
