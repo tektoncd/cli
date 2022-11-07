@@ -6,7 +6,10 @@ import (
 	"fmt"
 	"strings"
 
+	"github.com/google/go-cmp/cmp"
+	pipelinev1beta1 "github.com/tektoncd/pipeline/pkg/apis/pipeline/v1beta1"
 	resolution "github.com/tektoncd/pipeline/pkg/resolution/resource"
+	"github.com/tektoncd/pipeline/test/diff"
 )
 
 var _ resolution.Requester = &Requester{}
@@ -41,7 +44,7 @@ type Requester struct {
 	// An error to return when a request is submitted.
 	SubmitErr error
 	// Params that should match those on the request in order to return the resolved resource
-	Params map[string]string
+	Params []pipelinev1beta1.Param
 }
 
 // Submit implements resolution.Requester, accepting the name of a
@@ -51,15 +54,17 @@ func (r *Requester) Submit(ctx context.Context, resolverName resolution.Resolver
 	if len(r.Params) == 0 {
 		return r.ResolvedResource, r.SubmitErr
 	}
-	reqParams := make(map[string]string)
-	for k, v := range req.Params() {
-		reqParams[k] = v
+	reqParams := make(map[string]pipelinev1beta1.ParamValue)
+	for _, p := range req.Params() {
+		reqParams[p.Name] = p.Value
 	}
 
 	var wrongParams []string
-	for k, v := range r.Params {
-		if reqValue, ok := reqParams[k]; !ok || reqValue != v {
-			wrongParams = append(wrongParams, fmt.Sprintf("expected %s param to be %s, but was %s", k, v, reqValue))
+	for _, p := range r.Params {
+		if reqValue, ok := reqParams[p.Name]; !ok {
+			wrongParams = append(wrongParams, fmt.Sprintf("expected %s param to be %#v, but was %#v", p.Name, p.Value, reqValue))
+		} else if d := cmp.Diff(p.Value, reqValue); d != "" {
+			wrongParams = append(wrongParams, fmt.Sprintf("%s param did not match: %s", p.Name, diff.PrintWantGot(d)))
 		}
 	}
 	if len(wrongParams) > 0 {
@@ -79,6 +84,8 @@ type ResolvedResource struct {
 	DataErr error
 	// Annotations to return when resolution is complete.
 	ResolvedAnnotations map[string]string
+	// ResolvedSource to return the source reference of the remote data
+	ResolvedSource *pipelinev1beta1.ConfigSource
 }
 
 // Data implements resolution.ResolvedResource and returns the mock
@@ -91,4 +98,10 @@ func (r *ResolvedResource) Data() ([]byte, error) {
 // the mock annotations given to it on initialization.
 func (r *ResolvedResource) Annotations() map[string]string {
 	return r.ResolvedAnnotations
+}
+
+// Source is the source reference of the remote data that records where the remote
+// file came from including the url, digest and the entrypoint.
+func (r *ResolvedResource) Source() *pipelinev1beta1.ConfigSource {
+	return r.ResolvedSource
 }
