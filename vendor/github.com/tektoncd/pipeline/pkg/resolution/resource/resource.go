@@ -19,6 +19,7 @@ package resource
 import (
 	"context"
 
+	pipelinev1beta1 "github.com/tektoncd/pipeline/pkg/apis/pipeline/v1beta1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 )
 
@@ -43,7 +44,7 @@ type Requester interface {
 type Request interface {
 	Name() string
 	Namespace() string
-	Params() map[string]string
+	Params() []pipelinev1beta1.Param
 }
 
 // OwnedRequest is implemented by any type implementing Request that also needs
@@ -58,4 +59,5 @@ type OwnedRequest interface {
 type ResolvedResource interface {
 	Data() ([]byte, error)
 	Annotations() map[string]string
+	Source() *pipelinev1beta1.ConfigSource
 }

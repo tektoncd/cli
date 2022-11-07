@@ -39,7 +39,7 @@ Caching:
       --cache-dir string              A directory to cache Tekton bundles in. (default "~/.tekton/bundles")
   -h, --help                          help for list
       --no-cache                      If set to true, pulls a Tekton bundle from the remote even its exact digest is available in the cache.
-  -o, --output string                 Output format. One of: json|yaml|name|go-template|go-template-file|template|templatefile|jsonpath|jsonpath-as-json|jsonpath-file.
+  -o, --output string                 Output format. One of: (json, yaml, name, go-template, go-template-file, template, templatefile, jsonpath, jsonpath-as-json, jsonpath-file).
       --remote-bearer string          A Bearer token to authenticate against the repository
       --remote-password string        A password to pass to the registry for basic auth. Must be used with --remote-username
       --remote-skip-tls               If set to true, skips TLS check when connecting to the registry
