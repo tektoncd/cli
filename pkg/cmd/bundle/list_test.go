@@ -48,34 +48,34 @@ func TestListCommand(t *testing.T) {
 		{
 			name:           "no-format",
 			format:         "",
-			expectedStdout: "task.tekton.dev/foobar\npipeline.tekton.dev/foobar\n",
+			expectedStdout: "*Warning*: This is an experimental command, it's usage and behavior can change in the next release(s)\ntask.tekton.dev/foobar\npipeline.tekton.dev/foobar\n",
 		}, {
 			name:           "name-format",
 			format:         "name",
-			expectedStdout: "task.tekton.dev/foobar\npipeline.tekton.dev/foobar\n",
+			expectedStdout: "*Warning*: This is an experimental command, it's usage and behavior can change in the next release(s)\ntask.tekton.dev/foobar\npipeline.tekton.dev/foobar\n",
 		}, {
 			name:           "yaml-format",
 			format:         "yaml",
-			expectedStdout: examplePullTask + examplePullPipeline,
+			expectedStdout: "*Warning*: This is an experimental command, it's usage and behavior can change in the next release(s)\n" + examplePullTask + examplePullPipeline,
 		}, {
 			name:           "specify-kind-task",
 			format:         "name",
-			expectedStdout: "task.tekton.dev/foobar\n",
+			expectedStdout: "*Warning*: This is an experimental command, it's usage and behavior can change in the next release(s)\ntask.tekton.dev/foobar\n",
 			additionalArgs: []string{"Task"},
 		}, {
 			name:           "specify-kind-task-lowercase-plural",
 			format:         "name",
-			expectedStdout: "task.tekton.dev/foobar\n",
+			expectedStdout: "*Warning*: This is an experimental command, it's usage and behavior can change in the next release(s)\ntask.tekton.dev/foobar\n",
 			additionalArgs: []string{"tasks"},
 		}, {
 			name:           "specify-kind-task-lowercase-singular",
 			format:         "name",
-			expectedStdout: "task.tekton.dev/foobar\n",
+			expectedStdout: "*Warning*: This is an experimental command, it's usage and behavior can change in the next release(s)\ntask.tekton.dev/foobar\n",
 			additionalArgs: []string{"task"},
 		}, {
 			name:           "specify-kind-pipeline",
 			format:         "name",
-			expectedStdout: "pipeline.tekton.dev/foobar\n",
+			expectedStdout: "*Warning*: This is an experimental command, it's usage and behavior can change in the next release(s)\npipeline.tekton.dev/foobar\n",
 			additionalArgs: []string{"Pipeline"},
 		}, {
 			name:           "specify-kind-name-dne",
@@ -85,7 +85,7 @@ func TestListCommand(t *testing.T) {
 		}, {
 			name:           "specify-kind-name",
 			format:         "name",
-			expectedStdout: "pipeline.tekton.dev/foobar\n",
+			expectedStdout: "*Warning*: This is an experimental command, it's usage and behavior can change in the next release(s)\npipeline.tekton.dev/foobar\n",
 			additionalArgs: []string{"Pipeline", "foobar"},
 		},
 	}
