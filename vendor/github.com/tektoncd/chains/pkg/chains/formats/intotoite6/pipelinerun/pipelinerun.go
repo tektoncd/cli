@@ -18,6 +18,7 @@ import (
 
 	intoto "github.com/in-toto/in-toto-golang/in_toto"
 	slsa "github.com/in-toto/in-toto-golang/in_toto/slsa_provenance/v0.2"
+	"github.com/tektoncd/chains/pkg/artifacts"
 	"github.com/tektoncd/chains/pkg/chains/formats/intotoite6/attest"
 	"github.com/tektoncd/chains/pkg/chains/formats/intotoite6/extract"
 	"github.com/tektoncd/chains/pkg/chains/objects"
@@ -25,10 +26,6 @@ import (
 	"go.uber.org/zap"
 	corev1 "k8s.io/api/core/v1"
 	"knative.dev/pkg/apis"
-)
-
-const (
-	TektonPipelineRunID = "https://tekton.dev/attestations/chains/pipelinerun@v2"
 )
 
 type BuildConfig struct {
@@ -60,11 +57,11 @@ func GenerateAttestation(builderID string, pro *objects.PipelineRunObject, logge
 			Builder: slsa.ProvenanceBuilder{
 				ID: builderID,
 			},
-			BuildType:   TektonPipelineRunID,
+			BuildType:   pro.GetGVK(),
 			Invocation:  invocation(pro),
 			BuildConfig: buildConfig(pro, logger),
 			Metadata:    metadata(pro),
-			Materials:   materials(pro),
+			Materials:   materials(pro, logger),
 		},
 	}
 	return att, nil
@@ -172,7 +169,7 @@ func metadata(pro *objects.PipelineRunObject) *slsa.ProvenanceMetadata {
 }
 
 // add any Git specification to materials
-func materials(pro *objects.PipelineRunObject) []slsa.ProvenanceMaterial {
+func materials(pro *objects.PipelineRunObject, logger *zap.SugaredLogger) []slsa.ProvenanceMaterial {
 	var mats []slsa.ProvenanceMaterial
 	var commit, url string
 	// search spec.params
@@ -185,6 +182,9 @@ func materials(pro *objects.PipelineRunObject) []slsa.ProvenanceMaterial {
 			url = p.Value.StringVal
 		}
 	}
+
+	sms := artifacts.RetrieveMaterialsFromStructuredResults(pro, artifacts.ArtifactsInputsResultName, logger)
+	mats = append(mats, sms...)
 
 	// search status.PipelineSpec.params
 	if pro.Status.PipelineSpec != nil {

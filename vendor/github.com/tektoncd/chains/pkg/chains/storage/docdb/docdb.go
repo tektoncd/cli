@@ -72,7 +72,7 @@ func (b *Backend) StorePayload(ctx context.Context, _ objects.TektonObject, rawP
 		Signed:    rawPayload,
 		Signature: base64.StdEncoding.EncodeToString([]byte(signature)),
 		Object:    obj,
-		Name:      opts.Key,
+		Name:      opts.ShortKey,
 		Cert:      opts.Cert,
 		Chain:     opts.Chain,
 	}
@@ -122,7 +122,7 @@ func (b *Backend) RetrievePayloads(ctx context.Context, _ objects.TektonObject, 
 }
 
 func (b *Backend) retrieveDocuments(ctx context.Context, opts config.StorageOpts) ([]SignedDocument, error) {
-	d := SignedDocument{Name: opts.Key}
+	d := SignedDocument{Name: opts.ShortKey}
 	if err := b.coll.Get(ctx, &d); err != nil {
 		return []SignedDocument{}, err
 	}

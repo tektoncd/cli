@@ -17,6 +17,7 @@ limitations under the License.
 package extract
 
 import (
+	"fmt"
 	"sort"
 	"strings"
 
@@ -30,8 +31,13 @@ import (
 	"go.uber.org/zap"
 )
 
-// GetSubjectDigests extracts OCI images from the TaskRun based on standard hinting set up
-// It also goes through looking for any PipelineResources of Image type
+// SubjectDigests returns software artifacts produced from the TaskRun/PipelineRun object
+// in the form of standard subject field of intoto statement.
+// The type hinting fields expected in results help identify the generated software artifacts.
+// Valid type hinting fields must:
+//   - have suffix `IMAGE_URL` & `IMAGE_DIGEST` or `ARTIFACT_URI` & `ARTIFACT_DIGEST` pair.
+//   - the `*_DIGEST` field must be in the format of "<algorithm>:<actual-sha>" where the algorithm must be "sha256" and actual sha must be valid per https://github.com/opencontainers/image-spec/blob/main/descriptor.md#sha-256.
+//   - the `*_URL` or `*_URI` fields cannot be empty.
 func SubjectDigests(obj objects.TektonObject, logger *zap.SugaredLogger) []intoto.Subject {
 	var subjects []intoto.Subject
 
@@ -58,6 +64,19 @@ func SubjectDigests(obj objects.TektonObject, logger *zap.SugaredLogger) []intot
 			Name: obj.URI,
 			Digest: slsa.DigestSet{
 				splits[0]: splits[1],
+			},
+		})
+	}
+
+	ssts := artifacts.ExtractStructuredTargetFromResults(obj, artifacts.ArtifactsOutputsResultName, logger)
+	for _, s := range ssts {
+		splits := strings.Split(s.Digest, ":")
+		alg := splits[0]
+		digest := splits[1]
+		subjects = append(subjects, intoto.Subject{
+			Name: s.URI,
+			Digest: slsa.DigestSet{
+				alg: digest,
 			},
 		})
 	}
@@ -104,4 +123,20 @@ func SubjectDigests(obj objects.TektonObject, logger *zap.SugaredLogger) []intot
 		return subjects[i].Name <= subjects[j].Name
 	})
 	return subjects
+}
+
+// RetrieveAllArtifactURIs returns all the URIs of the software artifacts produced from the run object.
+// - It first extracts intoto subjects from run object results and converts the subjects
+// to a slice of string URIs in the format of "NAME" + "@" + "ALGORITHM" + ":" + "DIGEST".
+// - If no subjects could be extracted from results, then an empty slice is returned.
+func RetrieveAllArtifactURIs(obj objects.TektonObject, logger *zap.SugaredLogger) []string {
+	result := []string{}
+	subjects := SubjectDigests(obj, logger)
+
+	for _, s := range subjects {
+		for algo, digest := range s.Digest {
+			result = append(result, fmt.Sprintf("%s@%s:%s", s.Name, algo, digest))
+		}
+	}
+	return result
 }

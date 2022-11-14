@@ -60,7 +60,11 @@ func NewStorageBackend(ctx context.Context, logger *zap.SugaredLogger, client ku
 		client: client,
 		getAuthenticator: func(ctx context.Context, obj objects.TektonObject, client kubernetes.Interface) (remote.Option, error) {
 			kc, err := k8schain.New(ctx, client,
-				k8schain.Options{Namespace: obj.GetNamespace(), ServiceAccountName: obj.GetServiceAccountName()})
+				k8schain.Options{
+					Namespace:          obj.GetNamespace(),
+					ServiceAccountName: obj.GetServiceAccountName(),
+					ImagePullSecrets:   obj.GetPullSecrets(),
+				})
 			if err != nil {
 				return nil, err
 			}
@@ -76,7 +80,7 @@ func (b *Backend) StorePayload(ctx context.Context, obj objects.TektonObject, ra
 		return err
 	}
 
-	b.logger.Infof("Storing payload on %s/%s/%s", obj.GetKind(), obj.GetNamespace(), obj.GetName())
+	b.logger.Infof("Storing payload on %s/%s/%s", obj.GetGVK(), obj.GetNamespace(), obj.GetName())
 
 	if storageOpts.PayloadFormat == formats.PayloadTypeSimpleSigning {
 		format := simple.SimpleContainerImage{}
@@ -97,7 +101,7 @@ func (b *Backend) StorePayload(ctx context.Context, obj objects.TektonObject, ra
 		// that is not intended to produce an image, e.g. git-clone.
 		if len(attestation.Subject) == 0 {
 			b.logger.Infof(
-				"No image subject to attest for %s/%s/%s. Skipping upload to registry", obj.GetKind(), obj.GetNamespace(), obj.GetName())
+				"No image subject to attest for %s/%s/%s. Skipping upload to registry", obj.GetGVK(), obj.GetNamespace(), obj.GetName())
 			return nil
 		}
 

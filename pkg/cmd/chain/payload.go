@@ -92,7 +92,7 @@ func printPayloads(cs *cli.Clients, namespace string, tr *v1beta1.TaskRun, skipV
 			}
 
 			// The key must be fetched from the secrets.
-			opts.Key = fmt.Sprintf(x509Keypair, namespace)
+			opts.FullKey = fmt.Sprintf(x509Keypair, namespace)
 		}
 
 		// Fetch the payload.

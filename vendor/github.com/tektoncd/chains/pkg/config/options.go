@@ -20,10 +20,16 @@ import "github.com/tektoncd/chains/pkg/chains/formats"
 
 // StorageOpts contains additional information required when storing signatures
 type StorageOpts struct {
-	// Key stands for the identifier of an artifact.
+	// FullKey stands for the identifier of an artifact.
+	// - For OCI artifact, it is the full representation in the format of `<NAME>@sha256:<DIGEST>`.
+	// - For TaskRun/PipelineRun artifact, it is `<GROUP>-<VERSION>-<KIND>-<UID>`
+	FullKey string
+
+	// ShortKey is the short version of an artifact identifier. This is useful for annotation based storage
+	// because annotation key has limitations (https://kubernetes.io/docs/concepts/overview/working-with-objects/annotations/#syntax-and-character-set).
 	// - For OCI artifact, it is first 12 chars of the image digest.
-	// - For TaskRun artifact, it is `taskrun-<UID>`
-	Key string
+	// - For TaskRun/PipelineRun artifact, it is `<KIND>-<UID>`.
+	ShortKey string
 
 	// Cert is an OPTIONAL property that contains a PEM-encoded x509 certificate.
 	// If present, this certificate MUST embed the public key that can be used to verify the signature.

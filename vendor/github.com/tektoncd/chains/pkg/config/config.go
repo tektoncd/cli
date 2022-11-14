@@ -255,8 +255,8 @@ func NewConfigFromMap(data map[string]string) (*Config, error) {
 		asString(taskrunSignerKey, &cfg.Artifacts.TaskRuns.Signer, "x509", "kms"),
 
 		// PipelineRuns
-		asString(pipelinerunFormatKey, &cfg.Artifacts.PipelineRuns.Format, "tekton", "in-toto", "tekton-provenance"),
-		asStringSet(pipelinerunStorageKey, &cfg.Artifacts.PipelineRuns.StorageBackend, sets.NewString("tekton", "oci")),
+		asString(pipelinerunFormatKey, &cfg.Artifacts.PipelineRuns.Format, "tekton", "in-toto"),
+		asStringSet(pipelinerunStorageKey, &cfg.Artifacts.PipelineRuns.StorageBackend, sets.NewString("tekton", "oci", "grafeas")),
 		asString(pipelinerunSignerKey, &cfg.Artifacts.PipelineRuns.Signer, "x509", "kms"),
 
 		// OCI
