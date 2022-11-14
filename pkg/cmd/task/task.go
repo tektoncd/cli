@@ -17,6 +17,7 @@ package task
 import (
 	"github.com/spf13/cobra"
 	"github.com/tektoncd/cli/pkg/cli"
+	"github.com/tektoncd/cli/pkg/cli/prerun"
 	"github.com/tektoncd/cli/pkg/flags"
 )
 
@@ -28,9 +29,7 @@ func Command(p cli.Params) *cobra.Command {
 		Annotations: map[string]string{
 			"commandType": "main",
 		},
-		PersistentPreRunE: func(cmd *cobra.Command, args []string) error {
-			return flags.InitParams(p, cmd)
-		},
+		PersistentPreRunE: prerun.PersistentPreRunE(p),
 	}
 
 	flags.AddTektonOptions(cmd)
@@ -44,3 +43,19 @@ func Command(p cli.Params) *cobra.Command {
 	)
 	return cmd
 }
+
+// Example of an "marked experimental" sub command
+// func fooCommand(p cli.Params) *cobra.Command {
+// 	return &cobra.Command{
+// 		Use:   "foo",
+// 		Short: "Foo is bar and baz",
+// 		Annotations: map[string]string{
+// 			"experimental": "",
+// 			"commandType":  "main",
+// 		},
+// 		RunE: func(cmd *cobra.Command, args []string) error {
+// 			fmt.Fprintf(cmd.OutOrStdout(), "Foo is bar\n")
+// 			return nil
+// 		},
+// 	}
+// }

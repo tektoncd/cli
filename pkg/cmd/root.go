@@ -15,11 +15,13 @@
 package cmd
 
 import (
+	"fmt"
 	"os"
 
 	"github.com/spf13/cobra"
 	"github.com/spf13/pflag"
 	"github.com/tektoncd/cli/pkg/cli"
+	"github.com/tektoncd/cli/pkg/cli/prerun"
 	"github.com/tektoncd/cli/pkg/cmd/bundle"
 	"github.com/tektoncd/cli/pkg/cmd/chain"
 	"github.com/tektoncd/cli/pkg/cmd/clustertask"
@@ -42,7 +44,15 @@ import (
 
 const usageTemplate = `Usage:{{if .Runnable}}
 {{.UseLine}}{{end}}{{if .HasAvailableSubCommands}}
-{{.CommandPath}} [command]{{end}}{{if gt (len .Aliases) 0}}
+{{.CommandPath}} [command]{{end}}
+{{- if isExperimental .}}
+
+EXPERIMENTAL:
+  {{.CommandPath}} is an experimental feature.
+  Experimental features provide early access to the project functionality. These
+  features may change between releases without warning, or can be removed from a
+  future release.{{- end}}
+{{if gt (len .Aliases) 0}}
 
 Aliases:
   {{.NameAndAliases}}{{end}}{{if .HasExample}}
@@ -51,15 +61,18 @@ Examples:
   {{.Example}}{{end}}{{if .HasAvailableSubCommands}}{{if HasMainSubCommands .}}
 
 Available Commands:{{range .Commands}}{{if (eq .Annotations.commandType "main")}}
-  {{rpad .Name .NamePadding }} {{.Short}}{{end}}{{end}}{{end}}{{if HasUtilitySubCommands .}}
+  {{rpad (commandName .) .NamePadding }} {{.Short}}{{if isExperimental .}} (experimental){{end}}{{end}}{{end}}{{end}}{{if HasUtilitySubCommands .}}
 
 Other Commands:{{range .Commands}}{{if (eq .Annotations.commandType "utility")}}
-  {{rpad .Name .NamePadding }} {{.Short}}{{end}}{{end}}{{end}}{{end}}{{if gt (len pluginList) 0}}
+  {{rpad (commandName .) .NamePadding }} {{.Short}}{{if isExperimental .}} (experimental){{end}}{{end}}{{end}}{{end}}{{end}}{{if gt (len pluginList) 0}}
+{{- if not .HasParent}}
 
 Available Plugins:
 
 {{- range pluginList}}
-  {{.}}{{end}}{{end}}{{if .HasAvailableLocalFlags}}
+  {{.}}
+{{- end}}
+{{- end}}{{end}}{{if .HasAvailableLocalFlags}}
 
 Flags:
 {{.LocalFlags.FlagUsages | trimTrailingWhitespaces}}{{end}}{{if .HasAvailableInheritedFlags}}
@@ -107,8 +120,17 @@ func Root(p cli.Params) *cobra.Command {
 	)
 	visitCommands(cmd, reconfigureCmdWithSubcmd)
 	addPluginsToHelp()
+	cobra.AddTemplateFunc("isExperimental", prerun.IsExperimental)
+	cobra.AddTemplateFunc("commandName", commandName)
 
 	return cmd
+}
+
+func commandName(cmd *cobra.Command) string {
+	if prerun.IsExperimental(cmd) {
+		return fmt.Sprintf("%s*", cmd.Name())
+	}
+	return cmd.Name()
 }
 
 func addPluginsToHelp() {

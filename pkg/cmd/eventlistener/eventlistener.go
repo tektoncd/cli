@@ -17,6 +17,7 @@ package eventlistener
 import (
 	"github.com/spf13/cobra"
 	"github.com/tektoncd/cli/pkg/cli"
+	"github.com/tektoncd/cli/pkg/cli/prerun"
 	"github.com/tektoncd/cli/pkg/flags"
 	"k8s.io/apimachinery/pkg/runtime/schema"
 )
@@ -31,9 +32,7 @@ func Command(p cli.Params) *cobra.Command {
 		Annotations: map[string]string{
 			"commandType": "main",
 		},
-		PersistentPreRunE: func(cmd *cobra.Command, args []string) error {
-			return flags.InitParams(p, cmd)
-		},
+		PersistentPreRunE: prerun.PersistentPreRunE(p),
 	}
 
 	flags.AddTektonOptions(cmd)

@@ -49,7 +49,7 @@ func listCommand(p cli.Params) *cobra.Command {
 	}
 	f := cliopts.NewPrintFlags("")
 
-	longHelp := `List the contents of a Tekton Bundle from a registry. You can further narrow down the results by 
+	longHelp := `List the contents of a Tekton Bundle from a registry. You can further narrow down the results by
 optionally specifying the kind, and then the name:
 
 	tkn bundle list docker.io/myorg/mybundle:latest // fetches all objects
@@ -67,7 +67,7 @@ Authentication:
 	3. Additionally, you can use Basic auth via --remote-username and --remote-password
 
 Caching:
-    By default, bundles will be cached in ~/.tekton/bundles. If you would like to use a different location, set 
+    By default, bundles will be cached in ~/.tekton/bundles. If you would like to use a different location, set
 "--cache-dir" and if you would like to skip the cache altogether, set "--no-cache".
 `
 
