@@ -74,7 +74,7 @@ func printSignatures(cs *cli.Clients, namespace string, tr *v1beta1.TaskRun) err
 		// Some limitations occur when the backend is OCI.
 		if backend.Type() == "oci" {
 			// The key must be fetched from the secrets.
-			opts.Key = fmt.Sprintf(x509Keypair, namespace)
+			opts.FullKey = fmt.Sprintf(x509Keypair, namespace)
 		}
 
 		// Fetch the signature.

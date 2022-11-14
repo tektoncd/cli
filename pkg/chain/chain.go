@@ -61,7 +61,7 @@ func GetTaskRunBackends(cs *cli.Clients, namespace string, tr *v1beta1.TaskRun) 
 
 	// Initialize the storage options.
 	opts := config.StorageOpts{
-		Key: fmt.Sprintf("taskrun-%s", tr.UID),
+		ShortKey: fmt.Sprintf("taskrun-%s", tr.UID),
 	}
 
 	return backends, opts, nil

@@ -19,6 +19,7 @@ import (
 	"strings"
 
 	"github.com/google/go-containerregistry/pkg/name"
+	slsa "github.com/in-toto/in-toto-golang/in_toto/slsa_provenance/v0.2"
 	"github.com/opencontainers/go-digest"
 	"github.com/tektoncd/chains/pkg/chains/formats"
 	"github.com/tektoncd/chains/pkg/chains/objects"
@@ -28,12 +29,24 @@ import (
 	"k8s.io/apimachinery/pkg/util/sets"
 )
 
+const (
+	ArtifactsInputsResultName  = "ARTIFACT_INPUTS"
+	ArtifactsOutputsResultName = "ARTIFACT_OUTPUTS"
+)
+
 type Signable interface {
 	ExtractObjects(obj objects.TektonObject) []interface{}
 	StorageBackend(cfg config.Config) sets.String
 	Signer(cfg config.Config) string
 	PayloadFormat(cfg config.Config) formats.PayloadType
-	Key(interface{}) string
+	// FullKey returns the full identifier for a signable artifact.
+	// - For OCI artifact, it is the full representation in the format of `<NAME>@sha256:<DIGEST>`.
+	// - For TaskRun/PipelineRun artifact, it is `<GROUP>-<VERSION>-<KIND>-<UID>`
+	FullKey(interface{}) string
+	// ShortKey returns the short version  of an artifact identifier.
+	// - For OCI artifact, it is first 12 chars of the image digest.
+	// - For TaskRun/PipelineRun artifact, it is `<KIND>-<UID>`.
+	ShortKey(interface{}) string
 	Type() string
 	Enabled(cfg config.Config) bool
 }
@@ -42,9 +55,17 @@ type TaskRunArtifact struct {
 	Logger *zap.SugaredLogger
 }
 
-func (ta *TaskRunArtifact) Key(obj interface{}) string {
+var _ Signable = &TaskRunArtifact{}
+
+func (ta *TaskRunArtifact) ShortKey(obj interface{}) string {
 	tro := obj.(*objects.TaskRunObject)
 	return "taskrun-" + string(tro.UID)
+}
+
+func (ta *TaskRunArtifact) FullKey(obj interface{}) string {
+	tro := obj.(*objects.TaskRunObject)
+	gvk := tro.GetGroupVersionKind()
+	return fmt.Sprintf("%s-%s-%s-%s", gvk.Group, gvk.Version, gvk.Kind, tro.UID)
 }
 
 func (ta *TaskRunArtifact) ExtractObjects(obj objects.TektonObject) []interface{} {
@@ -75,9 +96,17 @@ type PipelineRunArtifact struct {
 	Logger *zap.SugaredLogger
 }
 
-func (pa *PipelineRunArtifact) Key(obj interface{}) string {
+var _ Signable = &PipelineRunArtifact{}
+
+func (pa *PipelineRunArtifact) ShortKey(obj interface{}) string {
 	pro := obj.(*objects.PipelineRunObject)
 	return "pipelinerun-" + string(pro.UID)
+}
+
+func (pa *PipelineRunArtifact) FullKey(obj interface{}) string {
+	pro := obj.(*objects.PipelineRunObject)
+	gvk := pro.GetGroupVersionKind()
+	return fmt.Sprintf("%s-%s-%s-%s", gvk.Group, gvk.Version, gvk.Kind, pro.UID)
 }
 
 func (pa *PipelineRunArtifact) ExtractObjects(obj objects.TektonObject) []interface{} {
@@ -108,6 +137,8 @@ func (pa *PipelineRunArtifact) Enabled(cfg config.Config) bool {
 type OCIArtifact struct {
 	Logger *zap.SugaredLogger
 }
+
+var _ Signable = &OCIArtifact{}
 
 type image struct {
 	url    string
@@ -235,6 +266,10 @@ func extractTargetFromResults(obj objects.TektonObject, identifierSuffix string,
 
 	for _, res := range obj.GetResults() {
 		if strings.HasSuffix(res.Name, identifierSuffix) {
+			if res.Value.StringVal == "" {
+				logger.Debugf("error getting string value for %s", res.Name)
+				continue
+			}
 			marker := strings.TrimSuffix(res.Name, identifierSuffix)
 			if v, ok := ss[marker]; ok {
 				v.URI = strings.TrimSpace(res.Value.StringVal)
@@ -245,6 +280,10 @@ func extractTargetFromResults(obj objects.TektonObject, identifierSuffix string,
 			// TODO: add logic for Intoto signable target as input.
 		}
 		if strings.HasSuffix(res.Name, digestSuffix) {
+			if res.Value.StringVal == "" {
+				logger.Debugf("error getting string value for %s", res.Name)
+				continue
+			}
 			marker := strings.TrimSuffix(res.Name, digestSuffix)
 			if v, ok := ss[marker]; ok {
 				v.Digest = strings.TrimSpace(res.Value.StringVal)
@@ -255,6 +294,76 @@ func extractTargetFromResults(obj objects.TektonObject, identifierSuffix string,
 
 	}
 	return ss
+}
+
+// RetrieveMaterialsFromStructuredResults retrieves structured results from Tekton Object, and convert them into materials.
+func RetrieveMaterialsFromStructuredResults(obj objects.TektonObject, categoryMarker string, logger *zap.SugaredLogger) []slsa.ProvenanceMaterial {
+	// Retrieve structured provenance for inputs.
+	mats := []slsa.ProvenanceMaterial{}
+	ssts := ExtractStructuredTargetFromResults(obj, ArtifactsInputsResultName, logger)
+	for _, s := range ssts {
+		if err := checkDigest(s.Digest); err != nil {
+			logger.Debugf("Digest for %s not in the right format: %s, %v", s.URI, s.Digest, err)
+			continue
+		}
+		splits := strings.Split(s.Digest, ":")
+		alg := splits[0]
+		digest := splits[1]
+		mats = append(mats, slsa.ProvenanceMaterial{
+			URI:    s.URI,
+			Digest: map[string]string{alg: digest},
+		})
+	}
+	return mats
+}
+
+// ExtractStructuredTargetFromResults extracts structured signable targets aim to generate intoto provenance as materials within TaskRun results and store them as StructuredSignable.
+// categoryMarker categorizes signable targets into inputs and outputs.
+func ExtractStructuredTargetFromResults(obj objects.TektonObject, categoryMarker string, logger *zap.SugaredLogger) []*StructuredSignable {
+	objs := []*StructuredSignable{}
+	if categoryMarker != ArtifactsInputsResultName && categoryMarker != ArtifactsOutputsResultName {
+		return objs
+	}
+
+	// TODO(#592): support structured results using Run
+	results := []objects.Result{}
+	for _, res := range obj.GetResults() {
+		results = append(results, objects.Result{
+			Name:  res.Name,
+			Value: res.Value,
+		})
+	}
+	for _, res := range results {
+		if strings.HasSuffix(res.Name, categoryMarker) {
+			valid, err := isStructuredResult(res, categoryMarker)
+			if err != nil {
+				logger.Debugf("ExtractStructuredTargetFromResults: %v", err)
+			}
+			if valid {
+				objs = append(objs, &StructuredSignable{URI: res.Value.ObjectVal["uri"], Digest: res.Value.ObjectVal["digest"]})
+			}
+		}
+	}
+	return objs
+}
+
+func isStructuredResult(res objects.Result, categoryMarker string) (bool, error) {
+	if !strings.HasSuffix(res.Name, categoryMarker) {
+		return false, nil
+	}
+	if res.Value.ObjectVal == nil {
+		return false, fmt.Errorf("%s should be an object: %v", res.Name, res.Value.ObjectVal)
+	}
+	if res.Value.ObjectVal["uri"] == "" {
+		return false, fmt.Errorf("%s should have uri field: %v", res.Name, res.Value.ObjectVal)
+	}
+	if res.Value.ObjectVal["digest"] == "" {
+		return false, fmt.Errorf("%s should have digest field: %v", res.Name, res.Value.ObjectVal)
+	}
+	if err := checkDigest(res.Value.ObjectVal["digest"]); err != nil {
+		return false, fmt.Errorf("error getting digest %s: %v", res.Value.ObjectVal["digest"], err)
+	}
+	return true, nil
 }
 
 func checkDigest(dig string) error {
@@ -291,9 +400,14 @@ func (oa *OCIArtifact) Signer(cfg config.Config) string {
 	return cfg.Artifacts.OCI.Signer
 }
 
-func (oa *OCIArtifact) Key(obj interface{}) string {
+func (oa *OCIArtifact) ShortKey(obj interface{}) string {
 	v := obj.(name.Digest)
 	return strings.TrimPrefix(v.DigestStr(), "sha256:")[:12]
+}
+
+func (oa *OCIArtifact) FullKey(obj interface{}) string {
+	v := obj.(name.Digest)
+	return v.Name()
 }
 
 func (oa *OCIArtifact) Enabled(cfg config.Config) bool {

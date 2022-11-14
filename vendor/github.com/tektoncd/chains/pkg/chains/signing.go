@@ -165,7 +165,7 @@ func (o *ObjectSigner) Sign(ctx context.Context, tektonObj objects.TektonObject)
 		payloader, ok := o.Formatters[payloadFormat]
 
 		if !ok {
-			logger.Warnf("Format %s configured for %s: %v was not found", payloadFormat, tektonObj.GetKind(), signableType.Type())
+			logger.Warnf("Format %s configured for %s: %v was not found", payloadFormat, tektonObj.GetGVK(), signableType.Type())
 			continue
 		}
 
@@ -181,7 +181,7 @@ func (o *ObjectSigner) Sign(ctx context.Context, tektonObj objects.TektonObject)
 				logger.Error(err)
 				continue
 			}
-			logger.Infof("Created payload of type %s for %s %s/%s", string(payloadFormat), tektonObj.GetKind(), tektonObj.GetNamespace(), tektonObj.GetName())
+			logger.Infof("Created payload of type %s for %s %s/%s", string(payloadFormat), tektonObj.GetGVK(), tektonObj.GetNamespace(), tektonObj.GetName())
 
 			// Sign it!
 			signerType := signableType.Signer(cfg)
@@ -217,7 +217,8 @@ func (o *ObjectSigner) Sign(ctx context.Context, tektonObj objects.TektonObject)
 			for _, backend := range signableType.StorageBackend(cfg).List() {
 				b := o.Backends[backend]
 				storageOpts := config.StorageOpts{
-					Key:           signableType.Key(obj),
+					ShortKey:      signableType.ShortKey(obj),
+					FullKey:       signableType.FullKey(obj),
 					Cert:          signer.Cert(),
 					Chain:         signer.Chain(),
 					PayloadFormat: payloadFormat,
@@ -238,6 +239,7 @@ func (o *ObjectSigner) Sign(ctx context.Context, tektonObj objects.TektonObject)
 					extraAnnotations[ChainsTransparencyAnnotation] = fmt.Sprintf("%s/api/v1/log/entries?logIndex=%d", cfg.Transparency.URL, *entry.LogIndex)
 				}
 			}
+
 		}
 		if merr.ErrorOrNil() != nil {
 			if err := HandleRetry(ctx, tektonObj, o.Pipelineclientset, extraAnnotations); err != nil {
@@ -247,8 +249,12 @@ func (o *ObjectSigner) Sign(ctx context.Context, tektonObj objects.TektonObject)
 		}
 	}
 
-	// Now mark the TaskRun as signed
-	return MarkSigned(ctx, tektonObj, o.Pipelineclientset, extraAnnotations)
+	// Now mark the TektonObject as signed
+	if err := MarkSigned(ctx, tektonObj, o.Pipelineclientset, extraAnnotations); err != nil {
+		return err
+	}
+
+	return nil
 }
 
 func HandleRetry(ctx context.Context, obj objects.TektonObject, ps versioned.Interface, annotations map[string]string) error {

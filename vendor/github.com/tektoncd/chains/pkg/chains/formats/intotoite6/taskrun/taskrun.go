@@ -14,10 +14,9 @@ limitations under the License.
 package taskrun
 
 import (
-	"fmt"
-
 	intoto "github.com/in-toto/in-toto-golang/in_toto"
 	slsa "github.com/in-toto/in-toto-golang/in_toto/slsa_provenance/v0.2"
+	"github.com/tektoncd/chains/pkg/artifacts"
 	"github.com/tektoncd/chains/pkg/chains/formats/intotoite6/attest"
 	"github.com/tektoncd/chains/pkg/chains/formats/intotoite6/extract"
 	"github.com/tektoncd/chains/pkg/chains/objects"
@@ -26,14 +25,8 @@ import (
 	"go.uber.org/zap"
 )
 
-const (
-	TektonID = "https://tekton.dev/attestations/chains@v2"
-)
-
 func GenerateAttestation(builderID string, tro *objects.TaskRunObject, logger *zap.SugaredLogger) (interface{}, error) {
 	subjects := extract.SubjectDigests(tro, logger)
-
-	tr := tro.GetObject().(*v1beta1.TaskRun)
 
 	att := intoto.ProvenanceStatement{
 		StatementHeader: intoto.StatementHeader{
@@ -45,11 +38,11 @@ func GenerateAttestation(builderID string, tro *objects.TaskRunObject, logger *z
 			Builder: slsa.ProvenanceBuilder{
 				ID: builderID,
 			},
-			BuildType:   fmt.Sprintf("%s/%s", tr.GetGroupVersionKind().GroupVersion().String(), tr.GetGroupVersionKind().Kind),
+			BuildType:   tro.GetGVK(),
 			Invocation:  invocation(tro),
 			BuildConfig: buildConfig(tro),
 			Metadata:    metadata(tro),
-			Materials:   materials(tro),
+			Materials:   materials(tro, logger),
 		},
 	}
 	return att, nil
@@ -83,7 +76,7 @@ func metadata(tro *objects.TaskRunObject) *slsa.ProvenanceMetadata {
 }
 
 // add any Git specification to materials
-func materials(tro *objects.TaskRunObject) []slsa.ProvenanceMaterial {
+func materials(tro *objects.TaskRunObject, logger *zap.SugaredLogger) []slsa.ProvenanceMaterial {
 	var mats []slsa.ProvenanceMaterial
 	gitCommit, gitURL := gitInfo(tro)
 
@@ -95,6 +88,9 @@ func materials(tro *objects.TaskRunObject) []slsa.ProvenanceMaterial {
 		})
 		return mats
 	}
+
+	sms := artifacts.RetrieveMaterialsFromStructuredResults(tro, artifacts.ArtifactsInputsResultName, logger)
+	mats = append(mats, sms...)
 
 	if tro.Spec.Resources == nil {
 		return mats

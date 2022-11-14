@@ -187,17 +187,17 @@ func (b *Backend) retrieveObject(ctx context.Context, object string) (string, er
 }
 
 func sigName(tr *v1beta1.TaskRun, opts config.StorageOpts) string {
-	return fmt.Sprintf(SignatureNameFormat, tr.Namespace, tr.Name, opts.Key)
+	return fmt.Sprintf(SignatureNameFormat, tr.Namespace, tr.Name, opts.ShortKey)
 }
 
 func payloadName(tr *v1beta1.TaskRun, opts config.StorageOpts) string {
-	return fmt.Sprintf(PayloadNameFormat, tr.Namespace, tr.Name, opts.Key)
+	return fmt.Sprintf(PayloadNameFormat, tr.Namespace, tr.Name, opts.ShortKey)
 }
 
 func certName(tr *v1beta1.TaskRun, opts config.StorageOpts) string {
-	return fmt.Sprintf(CertNameFormat, tr.Namespace, tr.Name, opts.Key)
+	return fmt.Sprintf(CertNameFormat, tr.Namespace, tr.Name, opts.ShortKey)
 }
 
 func chainName(tr *v1beta1.TaskRun, opts config.StorageOpts) string {
-	return fmt.Sprintf(ChainNameFormat, tr.Namespace, tr.Name, opts.Key)
+	return fmt.Sprintf(ChainNameFormat, tr.Namespace, tr.Name, opts.ShortKey)
 }
