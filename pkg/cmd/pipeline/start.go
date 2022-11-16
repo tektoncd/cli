@@ -135,6 +135,13 @@ For passing the workspaces via flags:
    resources:
      requests:
        storage: 1Gi
+- In case of binding a CSI workspace, you can pass it like -w name=my-csi,csiFile=csi.yaml
+  but you need to create a csi.yaml file before hand. Sample contents of the file are as follows:
+  
+  driver: secrets-store.csi.k8s.io
+  readOnly: true
+  volumeAttributes:
+    secretProviderClass: "vault-database"
 `,
 		SilenceUsage: true,
 

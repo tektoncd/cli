@@ -35,6 +35,7 @@ var (
 	secretParam             = "secret"
 	configItemParam         = "item"
 	volumeClaimTemplateFile = "volumeClaimTemplateFile"
+	csiFile                 = "csiFile"
 )
 
 const invalidWorkspace = "invalid input format for workspace : "
@@ -88,47 +89,54 @@ func parseWorkspace(w []string, httpClient http.Client) (map[string]v1beta1.Work
 			return nil, err
 		}
 
-		// check for volumeClaimTemplate
-		vctFile, err := getPar(r, volumeClaimTemplateFile)
-		if err != nil {
-			err = setWorkspaceConfig(r, &wB)
-			if err == nil {
-				ws[name] = wB
-				nWB++
-			} else if err != errNotFoundParam {
-				return nil, err
-			}
-
-			err = setWorkspaceSecret(r, &wB)
-			if err == nil {
-				ws[name] = wB
-				nWB++
-			} else if err != errNotFoundParam {
-				return nil, err
-			}
-
-			err = setWorkspaceEmptyDir(r, &wB)
-			if err == nil {
-				ws[name] = wB
-				nWB++
-			}
-
-			err = setWorkspacePVC(r, &wB)
-			if err == nil {
-				ws[name] = wB
-				nWB++
-			}
-
-			if nWB != 1 {
-				return nil, errors.New(invalidWorkspace + v)
-			}
-		} else {
+		if vctFile, err := getPar(r, volumeClaimTemplateFile); err == nil {
 			err = setWorkspaceVCTemplate(r, &wB, vctFile, httpClient)
 			if err != nil {
 				return nil, err
 			}
 			ws[name] = wB
+			continue
 		}
+
+		if csiFile, err := getPar(r, csiFile); err == nil {
+			err = setWorkspaceCSITemplate(r, &wB, csiFile, httpClient)
+			if err != nil {
+				return nil, err
+			}
+			ws[name] = wB
+			continue
+		}
+
+		err = setWorkspaceConfig(r, &wB)
+		if err == nil {
+			ws[name] = wB
+			nWB++
+		} else if err != errNotFoundParam {
+			return nil, err
+		}
+
+		err = setWorkspaceSecret(r, &wB)
+		if err == nil {
+			ws[name] = wB
+			nWB++
+		} else if err != errNotFoundParam {
+			return nil, err
+		}
+
+		if err = setWorkspaceEmptyDir(r, &wB); err == nil {
+			ws[name] = wB
+			nWB++
+		}
+
+		if err = setWorkspacePVC(r, &wB); err == nil {
+			ws[name] = wB
+			nWB++
+		}
+
+		if nWB != 1 {
+			return nil, errors.New(invalidWorkspace + v)
+		}
+
 	}
 
 	return ws, nil
@@ -246,6 +254,16 @@ func setWorkspaceVCTemplate(r []string, wB *v1beta1.WorkspaceBinding, vctFile st
 	return nil
 }
 
+func setWorkspaceCSITemplate(r []string, wB *v1beta1.WorkspaceBinding, vctFile string, httpClient http.Client) error {
+	csi, err := parseCSITemplate(vctFile, httpClient)
+	if err != nil {
+		return err
+	}
+
+	wB.CSI = csi
+	return nil
+}
+
 func parseVolumeClaimTemplate(filePath string, httpClient http.Client) (*corev1.PersistentVolumeClaim, error) {
 	b, err := file.LoadFileContent(httpClient, filePath, file.IsYamlFile(), fmt.Errorf("invalid file format for %s: .yaml or .yml file extension and format required", filePath))
 	if err != nil {
@@ -262,6 +280,24 @@ func parseVolumeClaimTemplate(filePath string, httpClient http.Client) (*corev1.
 		return nil, err
 	}
 	return &pvc, nil
+}
+
+func parseCSITemplate(filePath string, httpClient http.Client) (*corev1.CSIVolumeSource, error) {
+	b, err := file.LoadFileContent(httpClient, filePath, file.IsYamlFile(), fmt.Errorf("invalid file format for %s: .yaml or .yml file extension and format required", filePath))
+	if err != nil {
+		return nil, err
+	}
+	m := map[string]interface{}{}
+	err = yaml.UnmarshalStrict(b, &m)
+	if err != nil {
+		return nil, err
+	}
+
+	csi := corev1.CSIVolumeSource{}
+	if err := yaml.UnmarshalStrict(b, &csi); err != nil {
+		return nil, err
+	}
+	return &csi, nil
 }
 
 func getPar(r []string, par string) (string, error) {

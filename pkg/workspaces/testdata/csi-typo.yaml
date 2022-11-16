@@ -1,0 +1,4 @@
+drive: secrets-store.csi.k8s.io
+readOnly: true
+volumeAttributes:
+  secretProviderClass: "vault-database"

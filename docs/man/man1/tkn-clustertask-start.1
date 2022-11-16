@@ -157,8 +157,19 @@ requests:
 storage: 1Gi
 
 .RE
+.IP \(bu 2
+In case of binding a CSI workspace, you can pass it like \-w name=my\-csi,csiFile=csi.yaml
+but you need to create a csi.yaml file before hand. Sample contents of the file are as follows:
+
+.br
 
 .RE
+
+.PP
+driver: secrets\-store.csi.k8s.io
+  readOnly: true
+  volumeAttributes:
+    secretProviderClass: "vault\-database"
 
 
 .SH SEE ALSO

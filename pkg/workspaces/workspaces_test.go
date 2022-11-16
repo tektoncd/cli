@@ -21,7 +21,6 @@ import (
 	"github.com/tektoncd/cli/pkg/test"
 	"github.com/tektoncd/pipeline/pkg/apis/pipeline/v1beta1"
 	corev1 "k8s.io/api/core/v1"
-	v1 "k8s.io/api/core/v1"
 	"k8s.io/apimachinery/pkg/api/resource"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 )
@@ -116,7 +115,7 @@ func TestMerge(t *testing.T) {
 	test.AssertOutput(t, 7, len(outWS))
 
 	optWS = []string{"name=volumeclaimtemplatews,volumeClaimTemplateFile=./testdata/pvc.yaml"}
-	outWS, err = Merge(ws, optWS, httpClient)
+	_, err = Merge(ws, optWS, httpClient)
 	if err != nil {
 		t.Errorf("Not expected error: " + err.Error())
 	}
@@ -128,9 +127,23 @@ func TestMerge(t *testing.T) {
 	}
 	test.AssertOutput(t, "error unmarshaling JSON: while decoding JSON: json: unknown field \"storageClassNam\"", err.Error())
 
+	optWS = []string{"name=csiws,csiFile=./testdata/csi.yaml"}
+	outWS, err = Merge(ws, optWS, httpClient)
+	if err != nil {
+		t.Errorf("Not expected error: " + err.Error())
+	}
+
+	optWS = []string{"name=csiws,csiFile=./testdata/csi-typo.yaml"}
+	_, err = Merge(ws, optWS, httpClient)
+	if err == nil {
+		t.Errorf("Expected error")
+	}
+	test.AssertOutput(t, "error unmarshaling JSON: while decoding JSON: json: unknown field \"drive\"", err.Error())
+
 	storageClassName := "storageclassname"
+	isCsiReadOnly := true
 	expectedWS := []v1beta1.WorkspaceBinding{
-		{Name: "foo", ConfigMap: &corev1.ConfigMapVolumeSource{LocalObjectReference: v1.LocalObjectReference{Name: "bar"}}},
+		{Name: "foo", ConfigMap: &corev1.ConfigMapVolumeSource{LocalObjectReference: corev1.LocalObjectReference{Name: "bar"}}},
 		{Name: "emptydir-data", EmptyDir: &corev1.EmptyDirVolumeSource{}},
 		{
 			Name: "password-vault",
@@ -180,6 +193,14 @@ func TestMerge(t *testing.T) {
 				},
 			},
 		},
+		{
+			Name: "csiws",
+			CSI: &corev1.CSIVolumeSource{
+				Driver:           "secrets-store.csi.k8s.io",
+				ReadOnly:         &isCsiReadOnly,
+				VolumeAttributes: map[string]string{"secretProviderClass": "vault-database"},
+			},
+		},
 	}
 
 	for i := range outWS {
@@ -200,6 +221,8 @@ func TestMerge(t *testing.T) {
 			test.AssertOutput(t, expectedWS[6], outWS[i])
 		case "volumeclaimtemplatews":
 			test.AssertOutput(t, expectedWS[7], outWS[i])
+		case "csiws":
+			test.AssertOutput(t, expectedWS[8], outWS[i])
 		}
 	}
 }
