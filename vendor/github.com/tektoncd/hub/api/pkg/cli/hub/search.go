@@ -49,13 +49,25 @@ type SearchResult struct {
 	err       error
 }
 
-// Search queries the data using Hub Endpoint
-func (h *client) Search(so SearchOption) SearchResult {
-	data, status, err := h.Get(so.Endpoint())
+// Search queries the data using Artifact Hub Endpoint
+func (a *artifactHubClient) Search(so SearchOption) SearchResult {
+	// Todo: implement Search for Artifact Hub
+	return SearchResult{}
+}
+
+// Search queries the data using TektonHub Endpoint
+func (t *tektonHubclient) Search(so SearchOption) SearchResult {
+	data, status, err := t.Get(so.Endpoint())
 	if status == http.StatusNotFound {
 		err = nil
 	}
 	return SearchResult{data: data, status: status, err: err}
+}
+
+// Search queries the data using Hub Endpoint
+func (h *artifactHubCatalogResponse) Search(so SearchOption) SearchResult {
+	// todo: implement Search function for Artifact Hub
+	return SearchResult{}
 }
 
 // Raw returns API response as byte array

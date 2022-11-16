@@ -34,6 +34,12 @@ type (
 		// err holds the original error if exists.
 		err error
 	}
+
+	// GoaErrorNamer is an interface implemented by generated error structs that
+	// exposes the name of the error as defined in the design.
+	GoaErrorNamer interface {
+		GoaErrorName() string
+	}
 )
 
 const (
@@ -245,7 +251,12 @@ func (e ServiceError) History() []ServiceError {
 func (e *ServiceError) Error() string { return e.Message }
 
 // ErrorName returns the error name.
+//
+// Deprecated: Use GoaErrorName - https://github.com/goadesign/goa/issues/3105
 func (e *ServiceError) ErrorName() string { return e.Name }
+
+// GoaErrorName returns the error name.
+func (e *ServiceError) GoaErrorName() string { return e.ErrorName() }
 
 func (e *ServiceError) Unwrap() error { return e.err }
 
