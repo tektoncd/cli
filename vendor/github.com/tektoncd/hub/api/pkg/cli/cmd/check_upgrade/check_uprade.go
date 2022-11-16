@@ -15,6 +15,7 @@
 package check_upgrade
 
 import (
+	"fmt"
 	"strings"
 	"text/template"
 
@@ -151,6 +152,10 @@ func commandForKind(kind string, opts *options) *cobra.Command {
 }
 
 func (opts *options) run() error {
+	// Todo: support check-upgrade sub command for artifact type
+	if opts.cli.Hub().GetType() == hub.ArtifactHubType {
+		return fmt.Errorf("check-upgrade sub command is not supported for artifact type")
+	}
 
 	var err error
 	if opts.cs == nil {

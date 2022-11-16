@@ -26,12 +26,17 @@ import (
 )
 
 const (
+	ArtifactHubType = "artifact"
+	TektonHubType   = "tekton"
+
 	// hubURL - Hub API Server URL
-	hubURL        = "https://api.hub.tekton.dev"
-	hubConfigPath = ".tekton/hub-config"
+	tektonHubURL   = "https://api.hub.tekton.dev"
+	artifactHubURL = "https://artifacthub.io"
+	hubConfigPath  = ".tekton/hub-config"
 )
 
 type Client interface {
+	GetType() string
 	SetURL(u string) error
 	Get(endpoint string) ([]byte, int, error)
 	GetCatalogsList() ([]string, error)
@@ -43,54 +48,104 @@ type Client interface {
 	GetResourceVersionslist(opt ResourceOption) ([]string, error)
 }
 
-type client struct {
+type tektonHubclient struct {
 	apiURL string
 }
 
-var _ Client = (*client)(nil)
+type artifactHubClient struct {
+	apiURL string
+}
 
-func NewClient() *client {
-	return &client{apiURL: hubURL}
+var _ Client = (*tektonHubclient)(nil)
+var _ Client = (*artifactHubClient)(nil)
+
+func NewTektonHubClient() *tektonHubclient {
+	return &tektonHubclient{apiURL: tektonHubURL}
+}
+
+func NewArtifactHubClient() *artifactHubClient {
+	return &artifactHubClient{apiURL: artifactHubURL}
 }
 
 // URL returns the Hub API Server URL
 func URL() string {
-	return hubURL
+	return tektonHubURL
 }
 
-// SetURL validates and sets the hub apiURL server URL
-// URL passed through flag will take precedence over the hub API URL
+// GetType returns the type of the Hub Client
+func (a *artifactHubClient) GetType() string {
+	return ArtifactHubType
+}
+
+// GetType returns the type of the Hub Client
+func (t *tektonHubclient) GetType() string {
+	return TektonHubType
+}
+
+// SetURL validates and sets the Artifact Hub apiURL server URL
+// URL passed through flag will take precedence over the Artifact Hub API URL
 // in config file and default URL
-func (h *client) SetURL(apiURL string) error {
-
-	if apiURL != "" {
-		_, err := url.ParseRequestURI(apiURL)
-		if err != nil {
-			return err
-		}
-		h.apiURL = apiURL
-		return nil
-	}
-
-	if err := loadConfigFile(); err != nil {
+func (a *artifactHubClient) SetURL(apiURL string) error {
+	resUrl, err := resolveUrl(apiURL, "ARTIFACT_HUB_API_SERVER", artifactHubURL)
+	if err != nil {
 		return err
 	}
 
-	viper.AutomaticEnv()
-	if apiURL := viper.GetString("HUB_API_SERVER"); apiURL != "" {
-		_, err := url.ParseRequestURI(apiURL)
-		if err != nil {
-			return fmt.Errorf("invalid url set for HUB_API_SERVER: %s : %v", apiURL, err)
-		}
-		h.apiURL = apiURL
-	}
-
+	a.apiURL = resUrl
 	return nil
 }
 
-// Get gets data from Hub
-func (h *client) Get(endpoint string) ([]byte, int, error) {
-	data, status, err := httpGet(h.apiURL + endpoint)
+// SetURL validates and sets the Tekton Hub apiURL server URL
+// URL passed through flag will take precedence over the Tekton Hub API URL
+// in config file and default URL
+func (t *tektonHubclient) SetURL(apiURL string) error {
+	resUrl, err := resolveUrl(apiURL, "TEKTON_HUB_API_SERVER", tektonHubURL)
+	if err != nil {
+		return err
+	}
+
+	t.apiURL = resUrl
+	return nil
+}
+
+// Get gets data from Artifact Hub
+func (a *artifactHubClient) Get(endpoint string) ([]byte, int, error) {
+	return get(a.apiURL + endpoint)
+}
+
+// Get gets data from Tekton Hub
+func (t *tektonHubclient) Get(endpoint string) ([]byte, int, error) {
+	return get(t.apiURL + endpoint)
+}
+
+func resolveUrl(apiURL, envVariable, defaultUrl string) (string, error) {
+	if apiURL != "" {
+		_, err := url.ParseRequestURI(apiURL)
+		if err != nil {
+			return "", err
+		}
+
+		return apiURL, nil
+	}
+
+	if err := loadConfigFile(); err != nil {
+		return "", err
+	}
+
+	viper.AutomaticEnv()
+	if apiURL := viper.GetString(envVariable); apiURL != "" {
+		_, err := url.ParseRequestURI(apiURL)
+		if err != nil {
+			return "", fmt.Errorf("invalid url set for %s: %s : %v", envVariable, apiURL, err)
+		}
+		return apiURL, nil
+	}
+
+	return defaultUrl, nil
+}
+
+func get(url string) ([]byte, int, error) {
+	data, status, err := httpGet(url)
 	if err != nil {
 		return nil, 0, err
 	}

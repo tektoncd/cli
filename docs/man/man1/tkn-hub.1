@@ -22,12 +22,17 @@ Interact with tekton hub
 .PP
 \fB\-\-api\-server\fP=""
     Hub API Server URL (default '
-\[la]https://api.hub.tekton.dev'\[ra]).
-URL can also be defined in a file '$HOME/.tekton/hub\-config' with a variable 'HUB\_API\_SERVER'.
+\[la]https://api.hub.tekton.dev'\[ra] for 'tekton' type; default '
+\[la]https://artifacthub.io'\[ra] for 'artifact' type).
+URL can also be defined in a file '$HOME/.tekton/hub\-config' with a variable 'TEKTON\_HUB\_API\_SERVER'/'ARTIFACT\_HUB\_API\_SERVER'.
 
 .PP
 \fB\-h\fP, \fB\-\-help\fP[=false]
     help for hub
+
+.PP
+\fB\-\-type\fP="tekton"
+    The type of Hub from where to pull the resource. Either 'artifact' or 'tekton' (default 'tekton')
 
 
 .SH SEE ALSO

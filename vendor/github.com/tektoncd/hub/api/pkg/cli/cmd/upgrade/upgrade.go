@@ -187,6 +187,11 @@ func msg(res *unstructured.Unstructured) string {
 }
 
 func (opts *options) validate() error {
+	// Todo: support upgrade sub command for artifact type
+	if opts.cli.Hub().GetType() == hub.ArtifactHubType {
+		return fmt.Errorf("upgrade sub command is not supported for artifact type")
+	}
+
 	return flag.ValidateVersion(opts.version)
 }
 

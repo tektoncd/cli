@@ -158,6 +158,10 @@ func (opts *options) run() error {
 }
 
 func (opts *options) validate() error {
+	// Todo: support search sub command for artifact type
+	if opts.cli.Hub().GetType() == hub.ArtifactHubType {
+		return fmt.Errorf("search sub command is not supported for artifact type")
+	}
 
 	if flag.AllEmpty(opts.args, opts.kinds, opts.tags, opts.categories, opts.platforms) {
 		return fmt.Errorf("please specify a resource name, --tags, --platforms, --categories or --kinds flag to search")
