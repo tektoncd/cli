@@ -33,6 +33,17 @@ To create a workspace-template.yaml
       			storage: 1Gi
 	EOF
 
+To create a csi-template.yaml
+
+	```sh
+	$ cat <<EOF > csi-template.yaml
+	driver: secrets-store.csi.k8s.io
+	readOnly: true
+	volumeAttributes:
+  		secretProviderClass: "vault-database"
+	EOF
+	```
+
 To run a Pipeline that has one git resource, one image resource,
 two parameters (foo and bar) and four workspaces (my-config, my-pvc,
 my-secret, my-empty-dir and my-volume-claim-template)
@@ -47,6 +58,7 @@ my-secret, my-empty-dir and my-volume-claim-template)
 		--workspace name=my-empty-dir,emptyDir="" \
 		--workspace name=my-pvc,claimName=pvc1,subPath=dir
 		--workspace name=my-volume-claim-template,volumeClaimTemplateFile=workspace-template.yaml
+		--workspace name=my-csi-template,csiFile=csi-template.yaml
 
 ### Options
 

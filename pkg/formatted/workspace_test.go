@@ -47,6 +47,12 @@ func TestWorkspace(t *testing.T) {
 				SecretName: "foobar",
 			},
 		},
+		{
+			Name: "csi",
+			CSI: &corev1.CSIVolumeSource{
+				Driver: "secrets-store.csi.k8s.io",
+			},
+		},
 	}
 	defaultEmptyWorkspaceStr := Workspace(workspaceSpec[0]) // EmptyDir workspace with default storage medium
 	assert.Equal(t, defaultEmptyWorkspaceStr, "EmptyDir (emptyDir=)")
@@ -59,4 +65,7 @@ func TestWorkspace(t *testing.T) {
 
 	secretWorkspaceStr := Workspace(workspaceSpec[3]) // Secret Workspace
 	assert.Equal(t, secretWorkspaceStr, "Secret (secret=foobar)")
+
+	csiWorkspaceStr := Workspace(workspaceSpec[4]) // CSI Workspace
+	assert.Equal(t, csiWorkspaceStr, "CSI (Driver=secrets-store.csi.k8s.io)")
 }

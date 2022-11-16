@@ -41,6 +41,9 @@ func Workspace(ws v1beta1.WorkspaceBinding) string {
 		secret := getWorkspaceSecret(ws.Secret)
 		return fmt.Sprintf("Secret (%s)", secret)
 	}
+	if ws.CSI != nil {
+		return fmt.Sprintf("CSI (Driver=%s)", ws.CSI.Driver)
+	}
 	return ""
 }
 
