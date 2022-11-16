@@ -211,6 +211,11 @@ func (opts *options) findLowerVersion(current string) (string, error) {
 }
 
 func (opts *options) validate() error {
+	// Todo: support downgrade sub command for artifact type
+	if opts.cli.Hub().GetType() == hub.ArtifactHubType {
+		return fmt.Errorf("downgrade sub command is not supported for artifact type")
+	}
+
 	return flag.ValidateVersion(opts.version)
 }
 

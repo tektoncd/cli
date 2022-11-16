@@ -172,6 +172,11 @@ func msg(res *unstructured.Unstructured) string {
 }
 
 func (opts *options) validate() error {
+	// Todo: support reinstall sub command for artifact type
+	if opts.cli.Hub().GetType() == hub.ArtifactHubType {
+		return fmt.Errorf("reinstall sub command is not supported for artifact type")
+	}
+
 	return flag.ValidateVersion(opts.version)
 }
 

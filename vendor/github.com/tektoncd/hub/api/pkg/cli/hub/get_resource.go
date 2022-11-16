@@ -72,9 +72,15 @@ type ResourceWithVersionData = rclient.ResourceVersionDataResponseBody
 
 type resourceYaml = rclient.ByCatalogKindNameVersionYamlResponseBody
 
-// GetResource queries the data using Hub Endpoint
-func (c *client) GetResource(opt ResourceOption) ResourceResult {
-	data, status, err := c.Get(opt.Endpoint())
+// GetResource queries the data using Artifact Hub Endpoint
+func (a *artifactHubClient) GetResource(opt ResourceOption) ResourceResult {
+	// Todo: implement GetResource for Artifact Hub
+	return ResourceResult{}
+}
+
+// GetResource queries the data using Tekton Hub Endpoint
+func (t *tektonHubclient) GetResource(opt ResourceOption) ResourceResult {
+	data, status, err := t.Get(opt.Endpoint())
 
 	return ResourceResult{
 		data:    data,
@@ -85,11 +91,17 @@ func (c *client) GetResource(opt ResourceOption) ResourceResult {
 	}
 }
 
-// GetResource queries the data using Hub Endpoint
-func (c *client) GetResourceYaml(opt ResourceOption) ResourceResult {
+// GetResource queries the data using Artifact Hub Endpoint
+func (a *artifactHubClient) GetResourceYaml(opt ResourceOption) ResourceResult {
+	// Todo: implement GetResourceYaml for Artifact Hub
+	return ResourceResult{}
+}
 
-	yaml, yamlStatus, yamlErr := c.Get(fmt.Sprintf("/v1/resource/%s/%s/%s/%s/yaml", opt.Catalog, opt.Kind, opt.Name, opt.Version))
-	data, status, err := c.Get(opt.Endpoint())
+// GetResource queries the data using Tekton Hub Endpoint
+func (t *tektonHubclient) GetResourceYaml(opt ResourceOption) ResourceResult {
+
+	yaml, yamlStatus, yamlErr := t.Get(fmt.Sprintf("/v1/resource/%s/%s/%s/%s/yaml", opt.Catalog, opt.Kind, opt.Name, opt.Version))
+	data, status, err := t.Get(opt.Endpoint())
 
 	return ResourceResult{
 		data:       data,
@@ -243,9 +255,14 @@ func (rr *ResourceResult) MinPipelinesVersion() (string, error) {
 	return *rr.resourceData.LatestVersion.MinPipelinesVersion, nil
 }
 
-func (hubClient *client) GetResourcesList(so SearchOption) ([]string, error) {
+func (a *artifactHubClient) GetResourcesList(so SearchOption) ([]string, error) {
+	// Todo: implement GetResourcesList for Artifact Hub
+	return []string{}, nil
+}
+
+func (t *tektonHubclient) GetResourcesList(so SearchOption) ([]string, error) {
 	// Get all resources
-	result := hubClient.Search(SearchOption{
+	result := t.Search(SearchOption{
 		Kinds:   so.Kinds,
 		Catalog: so.Catalog,
 	})
@@ -270,10 +287,15 @@ func (hubClient *client) GetResourcesList(so SearchOption) ([]string, error) {
 	return resources, nil
 }
 
-func (hubClient *client) GetResourceVersionslist(r ResourceOption) ([]string, error) {
+func (a *artifactHubClient) GetResourceVersionslist(r ResourceOption) ([]string, error) {
+	// Todo: implement GetResourceVersionslist for Artifact Hub
+	return []string{}, nil
+}
+
+func (t *tektonHubclient) GetResourceVersionslist(r ResourceOption) ([]string, error) {
 	opts := &ResourceVersionOptions{}
 	// Get the resource versions
-	opts.hubResVersionsRes = hubClient.GetResourceVersions(ResourceOption{
+	opts.hubResVersionsRes = t.GetResourceVersions(ResourceOption{
 		Name:    r.Name,
 		Catalog: r.Catalog,
 		Kind:    r.Kind,

@@ -15,6 +15,8 @@
 package cmd
 
 import (
+	"fmt"
+
 	"github.com/spf13/cobra"
 	"github.com/tektoncd/hub/api/pkg/cli/app"
 	"github.com/tektoncd/hub/api/pkg/cli/cmd/check_upgrade"
@@ -25,12 +27,13 @@ import (
 	"github.com/tektoncd/hub/api/pkg/cli/cmd/reinstall"
 	"github.com/tektoncd/hub/api/pkg/cli/cmd/search"
 	"github.com/tektoncd/hub/api/pkg/cli/cmd/upgrade"
+	"github.com/tektoncd/hub/api/pkg/cli/hub"
 )
 
 // Root represents the base command when called without any subcommands
 func Root(cli app.CLI) *cobra.Command {
-
 	apiURL := ""
+	hubType := ""
 
 	cmd := &cobra.Command{
 		Use: "hub",
@@ -41,6 +44,12 @@ func Root(cli app.CLI) *cobra.Command {
 		Long:         ``,
 		SilenceUsage: true,
 		PersistentPreRunE: func(cmd *cobra.Command, args []string) error {
+			if hubType != hub.ArtifactHubType && hubType != hub.TektonHubType {
+				return fmt.Errorf("invalid hub type: %s, expecting artifact or tekton", hubType)
+			}
+			if err := cli.SetHub(hubType); err != nil {
+				return err
+			}
 			return cli.Hub().SetURL(apiURL)
 		},
 	}
@@ -58,7 +67,8 @@ func Root(cli app.CLI) *cobra.Command {
 		check_upgrade.Command(cli),
 	)
 
-	cmd.PersistentFlags().StringVar(&apiURL, "api-server", "", "Hub API Server URL (default 'https://api.hub.tekton.dev').\nURL can also be defined in a file '$HOME/.tekton/hub-config' with a variable 'HUB_API_SERVER'.")
+	cmd.PersistentFlags().StringVar(&apiURL, "api-server", "", "Hub API Server URL (default 'https://api.hub.tekton.dev' for 'tekton' type; default 'https://artifacthub.io' for 'artifact' type).\nURL can also be defined in a file '$HOME/.tekton/hub-config' with a variable 'TEKTON_HUB_API_SERVER'/'ARTIFACT_HUB_API_SERVER'.")
+	cmd.PersistentFlags().StringVar(&hubType, "type", "tekton", "The type of Hub from where to pull the resource. Either 'artifact' or 'tekton' (default 'tekton')")
 
 	return cmd
 }

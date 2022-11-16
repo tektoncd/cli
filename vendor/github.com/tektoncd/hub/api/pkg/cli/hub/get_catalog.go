@@ -16,9 +16,17 @@ package hub
 
 import (
 	"encoding/json"
+	"fmt"
 	"net/http"
 
 	cclient "github.com/tektoncd/hub/api/v1/gen/http/catalog/client"
+)
+
+const (
+	tektonHubCatEndpoint    = "/v1/catalogs"
+	artifactHubCatEndpoint  = "/api/v1/repositories/search"
+	artifactHubTaskType     = 7
+	artifactHubPipelineType = 11
 )
 
 type CatalogResult struct {
@@ -29,8 +37,12 @@ type CatalogResult struct {
 }
 type CatalogData = cclient.ListResponseBody
 
-func (c *client) GetAllCatalogs() CatalogResult {
-	data, status, err := c.Get(catalogEndpoint())
+type artifactHubCatalogResponse struct {
+	Name string `json:"name,omitempty"`
+}
+
+func (c *tektonHubclient) GetAllCatalogs() CatalogResult {
+	data, status, err := c.Get(tektonHubCatEndpoint)
 	if status == http.StatusNotFound {
 		err = nil
 	}
@@ -51,14 +63,29 @@ func (cr *CatalogResult) Type() (CatalogData, error) {
 	return cr.Catalog, cr.err
 }
 
-// Endpoint computes the endpoint url using input provided
-func catalogEndpoint() string {
-	return "/v1/catalogs"
+func (a *artifactHubClient) GetCatalogsList() ([]string, error) {
+	data, _, err := a.Get(fmt.Sprintf("%s?kind=%v&kind=%v", artifactHubCatEndpoint, artifactHubTaskType, artifactHubPipelineType))
+	if err != nil {
+		return nil, err
+	}
+
+	resp := []artifactHubCatalogResponse{}
+	err = json.Unmarshal(data, &resp)
+	if err != nil {
+		return nil, fmt.Errorf("error unmarshalling json response: %w", err)
+	}
+
+	var cat []string
+	for _, r := range resp {
+		cat = append(cat, r.Name)
+	}
+
+	return cat, nil
 }
 
-func (h *client) GetCatalogsList() ([]string, error) {
+func (t *tektonHubclient) GetCatalogsList() ([]string, error) {
 	// Get all catalogs
-	c := h.GetAllCatalogs()
+	c := t.GetAllCatalogs()
 
 	// Unmarshal the data
 	var err error

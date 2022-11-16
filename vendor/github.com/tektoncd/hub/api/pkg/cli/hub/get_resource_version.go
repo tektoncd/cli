@@ -38,12 +38,18 @@ type ResourceVersionResult struct {
 	versions *ResVersions
 }
 
-// GetResourceVersion queries the data using Hub Endpoint
-func (c *client) GetResourceVersions(opt ResourceOption) ResourceVersionResult {
+// GetResourceVersion queries the data using Artifact Hub Endpoint
+func (a *artifactHubClient) GetResourceVersions(opt ResourceOption) ResourceVersionResult {
+	// Todo: implement GetResourceVersions for Artifact Hub
+	return ResourceVersionResult{}
+}
+
+// GetResourceVersion queries the data using Tekton Hub Endpoint
+func (t *tektonHubclient) GetResourceVersions(opt ResourceOption) ResourceVersionResult {
 
 	rvr := ResourceVersionResult{set: false}
 
-	rvr.rr = c.GetResource(opt)
+	rvr.rr = t.GetResource(opt)
 	if rvr.err = rvr.rr.unmarshalData(); rvr.err != nil {
 		return rvr
 	}
@@ -55,7 +61,7 @@ func (c *client) GetResourceVersions(opt ResourceOption) ResourceVersionResult {
 		resID = *rvr.rr.resourceData.ID
 	}
 
-	rvr.data, rvr.status, rvr.err = c.Get(resVersionsEndpoint(resID))
+	rvr.data, rvr.status, rvr.err = t.Get(resVersionsEndpoint(resID))
 
 	return rvr
 }

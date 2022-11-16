@@ -15,6 +15,7 @@
 package get
 
 import (
+	"fmt"
 	"strings"
 
 	"github.com/spf13/cobra"
@@ -125,6 +126,11 @@ func (opts *options) run() error {
 }
 
 func (opts *options) validate() error {
+	// Todo: support get sub command for artifact type
+	if opts.cli.Hub().GetType() == hub.ArtifactHubType {
+		return fmt.Errorf("get sub command is not supported for artifact type")
+	}
+
 	return flag.ValidateVersion(opts.version)
 }
 

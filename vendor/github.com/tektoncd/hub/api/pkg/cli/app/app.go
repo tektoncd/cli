@@ -15,6 +15,7 @@
 package app
 
 import (
+	"fmt"
 	"io"
 
 	"github.com/tektoncd/hub/api/pkg/cli/hub"
@@ -29,6 +30,7 @@ type CLI interface {
 	Hub() hub.Client
 	Stream() Stream
 	SetStream(out, err io.Writer)
+	SetHub(hubType string) error
 }
 
 type cli struct {
@@ -39,7 +41,7 @@ type cli struct {
 var _ CLI = (*cli)(nil)
 
 func New() *cli {
-	return &cli{hub: hub.NewClient()}
+	return &cli{}
 }
 
 func (c *cli) Stream() Stream {
@@ -52,4 +54,16 @@ func (c *cli) SetStream(out, err io.Writer) {
 
 func (c *cli) Hub() hub.Client {
 	return c.hub
+}
+
+func (c *cli) SetHub(hubType string) error {
+	if hubType == hub.TektonHubType {
+		c.hub = hub.NewTektonHubClient()
+		return nil
+	} else if hubType == hub.ArtifactHubType {
+		c.hub = hub.NewArtifactHubClient()
+		return nil
+	}
+
+	return fmt.Errorf("invalid hub type: %s", hubType)
 }
