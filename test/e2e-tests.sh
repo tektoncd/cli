@@ -27,6 +27,7 @@ cd $(dirname $(readlink -f $0))/../
 ci_run && {
   header "Setting up environment"
   initialize $@
+
 }
 
 tkn() {

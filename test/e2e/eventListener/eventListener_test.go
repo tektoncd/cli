@@ -32,7 +32,7 @@ import (
 	knativetest "knative.dev/pkg/test"
 )
 
-func TestEventListenerE2E(t *testing.T) {
+/*func TestEventListenerE2E(t *testing.T) {
 	c, namespace := framework.Setup(t)
 	knativetest.CleanupOnInterrupt(func() { framework.TearDown(t, c, namespace) }, t.Logf)
 	defer cleanupResources(t, c, namespace)
@@ -93,7 +93,7 @@ func TestEventListenerE2E(t *testing.T) {
 		assert.Check(t, helper.ContainsAll(stdout, "github-listener-interceptor-el-github-listener-interceptor-", elPods.Items[0].Name, elPods.Items[1].Name, elPods.Items[2].Name))
 	})
 }
-
+*/
 func TestEventListener_v1beta1E2E(t *testing.T) {
 	c, namespace := framework.Setup(t)
 	knativetest.CleanupOnInterrupt(func() { framework.TearDown(t, c, namespace) }, t.Logf)

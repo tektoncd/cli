@@ -148,16 +148,16 @@ type KeyBundle struct {
 }
 
 func GetPrivateKeyTypeFromSigner(signer crypto.Signer) PrivateKeyType {
-	switch signer.(type) {
-	case *rsa.PrivateKey:
+	// We look at the public key types to work-around limitations/typing of managed keys.
+	switch signer.Public().(type) {
+	case *rsa.PublicKey:
 		return RSAPrivateKey
-	case *ecdsa.PrivateKey:
+	case *ecdsa.PublicKey:
 		return ECPrivateKey
-	case ed25519.PrivateKey:
+	case ed25519.PublicKey:
 		return Ed25519PrivateKey
-	default:
-		return UnknownPrivateKey
 	}
+	return UnknownPrivateKey
 }
 
 // ToPEMBundle converts a string-based certificate bundle
@@ -710,6 +710,7 @@ type CAInfoBundle struct {
 	ParsedCertBundle
 	URLs                 *URLEntries
 	LeafNotAfterBehavior NotAfterBehavior
+	RevocationSigAlg     x509.SignatureAlgorithm
 }
 
 func (b *CAInfoBundle) GetCAChain() []*CertBlock {
@@ -782,6 +783,7 @@ type CreationParameters struct {
 	PolicyIdentifiers             []string
 	BasicConstraintsValidForNonCA bool
 	SignatureBits                 int
+	UsePSS                        bool
 	ForceAppendCaChain            bool
 
 	// Only used when signing a CA cert
@@ -796,6 +798,9 @@ type CreationParameters struct {
 
 	// The duration the certificate will use NotBefore
 	NotBeforeDuration time.Duration
+
+	// The explicit SKID to use; especially useful for cross-signing.
+	SKID []byte
 }
 
 type CreationBundle struct {
