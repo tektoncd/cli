@@ -7,7 +7,6 @@ builds:
   binary: tkn
   goos:
   - linux
-  - darwin
   - windows
   goarch:
   - amd64
@@ -16,6 +15,17 @@ builds:
   - ppc64le
   ldflags:
   - -w -X github.com/tektoncd/cli/pkg/cmd/version.clientVersion={{.Version}}
+- env:
+    - CGO_ENABLED=1
+  main: ./cmd/tkn
+  binary: tkn
+  goos:
+    - darwin
+  goarch:
+    - amd64
+    - arm64
+  ldflags:
+    - -w -X github.com/tektoncd/cli/pkg/cmd/version.clientVersion={{.Version}}
 archives:
 - name_template: "{{ .Binary }}_{{ .Version }}_{{ .Os }}_{{ .Arch }}"
   replacements:
