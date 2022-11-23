@@ -1497,7 +1497,7 @@ github.com/tektoncd/pipeline/test/parse
 # github.com/tektoncd/plumbing v0.0.0-20221102182345-5dbcfda657d7
 ## explicit; go 1.13
 github.com/tektoncd/plumbing/scripts
-# github.com/tektoncd/triggers v0.21.0
+# github.com/tektoncd/triggers v0.22.0
 ## explicit; go 1.17
 github.com/tektoncd/triggers/pkg/apis/config
 github.com/tektoncd/triggers/pkg/apis/triggers
@@ -1522,6 +1522,8 @@ github.com/tektoncd/triggers/pkg/client/injection/informers/factory
 github.com/tektoncd/triggers/pkg/client/injection/informers/factory/fake
 github.com/tektoncd/triggers/pkg/client/injection/informers/triggers/v1alpha1/clusterinterceptor
 github.com/tektoncd/triggers/pkg/client/injection/informers/triggers/v1alpha1/clusterinterceptor/fake
+github.com/tektoncd/triggers/pkg/client/injection/informers/triggers/v1alpha1/interceptor
+github.com/tektoncd/triggers/pkg/client/injection/informers/triggers/v1alpha1/interceptor/fake
 github.com/tektoncd/triggers/pkg/client/injection/informers/triggers/v1beta1/clustertriggerbinding
 github.com/tektoncd/triggers/pkg/client/injection/informers/triggers/v1beta1/clustertriggerbinding/fake
 github.com/tektoncd/triggers/pkg/client/injection/informers/triggers/v1beta1/eventlistener
@@ -2331,7 +2333,7 @@ k8s.io/api/scheduling/v1beta1
 k8s.io/api/storage/v1
 k8s.io/api/storage/v1alpha1
 k8s.io/api/storage/v1beta1
-# k8s.io/apiextensions-apiserver v0.25.2
+# k8s.io/apiextensions-apiserver v0.25.3
 ## explicit; go 1.19
 k8s.io/apiextensions-apiserver/pkg/apis/apiextensions
 k8s.io/apiextensions-apiserver/pkg/apis/apiextensions/v1
