@@ -101,7 +101,7 @@ metadata:
 rules:
   # Permissions for every EventListener deployment to function
   - apiGroups: ["triggers.tekton.dev"]
-    resources: ["eventlisteners", "triggerbindings", "triggertemplates", "triggers"]
+    resources: ["eventlisteners", "triggerbindings", "interceptors", "triggertemplates", "triggers"]
     verbs: ["get", "list"]
   - apiGroups: [""]
     # secrets are only needed for Github/Gitlab interceptors, serviceaccounts only for per trigger authorization
