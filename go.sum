@@ -2963,8 +2963,8 @@ github.com/tdakkota/asciicheck v0.0.0-20200416200610-e657995f937b/go.mod h1:yHp0
 github.com/tdakkota/asciicheck v0.1.1/go.mod h1:yHp0ai0Z9gUljN3o0xMhYJnH/IcvkdTBOX2fmJ93JEM=
 github.com/tektoncd/chains v0.13.0 h1:sS1AN/LBHkg3/XC9blFAvvkssyJx9I+WXOR7NRdZwYU=
 github.com/tektoncd/chains v0.13.0/go.mod h1:h8/jCr1JA12/kuOMRCmNclURrFZERPaXCsklrBA4dLE=
-github.com/tektoncd/hub v1.11.0 h1:PMSzGWtCbsqCoToXVo0ozN+zw6BWW6Y2Dt3CO4RKDKc=
-github.com/tektoncd/hub v1.11.0/go.mod h1:6pCq7zMVlQhqVMEmKme9fc9CYnEDxqWr5xIFVTUvRUE=
+github.com/tektoncd/hub v1.11.1 h1:ec1Q0twM2VTwKnZT5n1U/x+2JKC8wrESbRPPWHyGLEc=
+github.com/tektoncd/hub v1.11.1/go.mod h1:6pCq7zMVlQhqVMEmKme9fc9CYnEDxqWr5xIFVTUvRUE=
 github.com/tektoncd/pipeline v0.39.0/go.mod h1:wOhlnZ3Z6gRFBN9kR4geMCu2VAcQ4DmX44adwOZcz0U=
 github.com/tektoncd/pipeline v0.40.1/go.mod h1:DqabXb6NBN/CMMZn20UXiGkdHEgMfRDvh2r6g/YEQ50=
 github.com/tektoncd/pipeline v0.41.0 h1:FksQuX83ZRasZygQPNmaR6hKBh6gy822XxRuoKBqPUE=
