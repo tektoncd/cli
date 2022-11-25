@@ -103,11 +103,6 @@ func InitParams(p cli.Params, cmd *cobra.Command) error {
 	}
 	p.SetKubeContext(kubeContext)
 
-	// ensure that the config is valid by creating a client
-	if _, err := p.Clients(); err != nil {
-		return err
-	}
-
 	ns, err := cmd.Flags().GetString(namespace)
 	if err != nil {
 		return err
