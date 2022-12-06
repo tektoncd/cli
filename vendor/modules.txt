@@ -588,7 +588,7 @@ github.com/go-openapi/jsonreference/internal
 # github.com/go-openapi/loads v0.21.2
 ## explicit; go 1.13
 github.com/go-openapi/loads
-# github.com/go-openapi/runtime v0.24.1
+# github.com/go-openapi/runtime v0.24.2
 ## explicit; go 1.15
 github.com/go-openapi/runtime
 github.com/go-openapi/runtime/client
@@ -801,7 +801,7 @@ github.com/grpc-ecosystem/go-grpc-prometheus
 github.com/grpc-ecosystem/grpc-gateway/internal
 github.com/grpc-ecosystem/grpc-gateway/runtime
 github.com/grpc-ecosystem/grpc-gateway/utilities
-# github.com/grpc-ecosystem/grpc-gateway/v2 v2.11.2
+# github.com/grpc-ecosystem/grpc-gateway/v2 v2.11.3
 ## explicit; go 1.17
 github.com/grpc-ecosystem/grpc-gateway/v2/internal/httprule
 github.com/grpc-ecosystem/grpc-gateway/v2/runtime
@@ -1195,7 +1195,7 @@ github.com/segmentio/ksuid
 # github.com/shibumi/go-pathspec v1.3.0
 ## explicit; go 1.17
 github.com/shibumi/go-pathspec
-# github.com/sigstore/cosign v1.12.1
+# github.com/sigstore/cosign v1.13.1
 ## explicit; go 1.18
 github.com/sigstore/cosign/cmd/cosign/cli/fulcio
 github.com/sigstore/cosign/cmd/cosign/cli/fulcio/fulcioverifier/ctl
@@ -1223,7 +1223,7 @@ github.com/sigstore/cosign/pkg/oci/static
 github.com/sigstore/cosign/pkg/providers
 github.com/sigstore/cosign/pkg/signature
 github.com/sigstore/cosign/pkg/types
-# github.com/sigstore/fulcio v0.5.3
+# github.com/sigstore/fulcio v0.6.0
 ## explicit; go 1.18
 github.com/sigstore/fulcio/pkg/api
 # github.com/sigstore/rekor v0.12.1-0.20220915152154-4bb6f441c1b2
