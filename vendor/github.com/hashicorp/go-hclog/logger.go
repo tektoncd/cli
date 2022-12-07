@@ -198,6 +198,9 @@ type Logger interface {
 	// implementation cannot update the level on the fly, it should no-op.
 	SetLevel(level Level)
 
+	// Returns the current level
+	GetLevel() Level
+
 	// Return a value that conforms to the stdlib log.Logger interface
 	StandardLogger(opts *StandardLoggerOptions) *log.Logger
 

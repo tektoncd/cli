@@ -261,7 +261,6 @@ func needsQuoting(str string) bool {
 //  2. Color the whole log line, based on the level.
 //  3. Color only the header (level) part of the log line.
 //  4. Color both the header and fields of the log line.
-//
 func (l *intLogger) logPlain(t time.Time, name string, level Level, msg string, args ...interface{}) {
 
 	if !l.disableTime {
@@ -843,6 +842,11 @@ func (l *intLogger) resetOutput(opts *LoggerOptions) error {
 // well.
 func (l *intLogger) SetLevel(level Level) {
 	atomic.StoreInt32(l.level, int32(level))
+}
+
+// Returns the current level
+func (l *intLogger) GetLevel() Level {
+	return Level(atomic.LoadInt32(l.level))
 }
 
 // Create a *log.Logger that will send it's data through this Logger. This
