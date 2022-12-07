@@ -34,6 +34,7 @@ import (
 	fakepipelineclient "github.com/tektoncd/pipeline/pkg/client/injection/client/fake"
 	fakeruninformer "github.com/tektoncd/pipeline/pkg/client/injection/informers/pipeline/v1alpha1/run/fake"
 	fakeclustertaskinformer "github.com/tektoncd/pipeline/pkg/client/injection/informers/pipeline/v1beta1/clustertask/fake"
+	fakecustomruninformer "github.com/tektoncd/pipeline/pkg/client/injection/informers/pipeline/v1beta1/customrun/fake"
 	fakepipelineinformer "github.com/tektoncd/pipeline/pkg/client/injection/informers/pipeline/v1beta1/pipeline/fake"
 	fakepipelineruninformer "github.com/tektoncd/pipeline/pkg/client/injection/informers/pipeline/v1beta1/pipelinerun/fake"
 	faketaskinformer "github.com/tektoncd/pipeline/pkg/client/injection/informers/pipeline/v1beta1/task/fake"
@@ -70,19 +71,21 @@ import (
 // Data represents the desired state of the system (i.e. existing resources) to seed controllers
 // with.
 type Data struct {
-	PipelineRuns       []*v1beta1.PipelineRun
-	Pipelines          []*v1beta1.Pipeline
-	TaskRuns           []*v1beta1.TaskRun
-	Tasks              []*v1beta1.Task
-	ClusterTasks       []*v1beta1.ClusterTask
-	PipelineResources  []*resourcev1alpha1.PipelineResource
-	Runs               []*v1alpha1.Run
-	Pods               []*corev1.Pod
-	Namespaces         []*corev1.Namespace
-	ConfigMaps         []*corev1.ConfigMap
-	ServiceAccounts    []*corev1.ServiceAccount
-	LimitRange         []*corev1.LimitRange
-	ResolutionRequests []*resolutionv1alpha1.ResolutionRequest
+	PipelineRuns            []*v1beta1.PipelineRun
+	Pipelines               []*v1beta1.Pipeline
+	TaskRuns                []*v1beta1.TaskRun
+	Tasks                   []*v1beta1.Task
+	ClusterTasks            []*v1beta1.ClusterTask
+	PipelineResources       []*resourcev1alpha1.PipelineResource
+	Runs                    []*v1alpha1.Run
+	CustomRuns              []*v1beta1.CustomRun
+	Pods                    []*corev1.Pod
+	Namespaces              []*corev1.Namespace
+	ConfigMaps              []*corev1.ConfigMap
+	ServiceAccounts         []*corev1.ServiceAccount
+	LimitRange              []*corev1.LimitRange
+	ResolutionRequests      []*resolutionv1alpha1.ResolutionRequest
+	ExpectedCloudEventCount int
 }
 
 // Clients holds references to clients which are useful for reconciler tests.
@@ -100,6 +103,7 @@ type Informers struct {
 	Pipeline          informersv1beta1.PipelineInformer
 	TaskRun           informersv1beta1.TaskRunInformer
 	Run               informersv1alpha1.RunInformer
+	CustomRun         informersv1beta1.CustomRunInformer
 	Task              informersv1beta1.TaskInformer
 	ClusterTask       informersv1beta1.ClusterTaskInformer
 	PipelineResource  resourceinformersv1alpha1.PipelineResourceInformer
@@ -183,6 +187,7 @@ func SeedTestData(t *testing.T, ctx context.Context, d Data) (Clients, Informers
 		Pipeline:          fakepipelineinformer.Get(ctx),
 		TaskRun:           faketaskruninformer.Get(ctx),
 		Run:               fakeruninformer.Get(ctx),
+		CustomRun:         fakecustomruninformer.Get(ctx),
 		Task:              faketaskinformer.Get(ctx),
 		ClusterTask:       fakeclustertaskinformer.Get(ctx),
 		PipelineResource:  fakeresourceinformer.Get(ctx),
@@ -242,6 +247,13 @@ func SeedTestData(t *testing.T, ctx context.Context, d Data) (Clients, Informers
 	for _, run := range d.Runs {
 		run := run.DeepCopy() // Avoid assumptions that the informer's copy is modified.
 		if _, err := c.Pipeline.TektonV1alpha1().Runs(run.Namespace).Create(ctx, run, metav1.CreateOptions{}); err != nil {
+			t.Fatal(err)
+		}
+	}
+	c.Pipeline.PrependReactor("*", "customruns", AddToInformer(t, i.CustomRun.Informer().GetIndexer()))
+	for _, customRun := range d.CustomRuns {
+		run := customRun.DeepCopy() // Avoid assumptions that the informer's copy is modified.
+		if _, err := c.Pipeline.TektonV1beta1().CustomRuns(run.Namespace).Create(ctx, run, metav1.CreateOptions{}); err != nil {
 			t.Fatal(err)
 		}
 	}
@@ -328,7 +340,7 @@ func PrependResourceVersionReactor(f *ktesting.Fake) {
 
 // EnsureConfigurationConfigMapsExist makes sure all the configmaps exists.
 func EnsureConfigurationConfigMapsExist(d *Data) {
-	var defaultsExists, featureFlagsExists, artifactBucketExists, artifactPVCExists, metricsExists bool
+	var defaultsExists, featureFlagsExists, artifactBucketExists, artifactPVCExists, metricsExists, trustedresourcesExists bool
 	for _, cm := range d.ConfigMaps {
 		if cm.Name == config.GetDefaultsConfigName() {
 			defaultsExists = true
@@ -344,6 +356,9 @@ func EnsureConfigurationConfigMapsExist(d *Data) {
 		}
 		if cm.Name == config.GetMetricsConfigName() {
 			metricsExists = true
+		}
+		if cm.Name == config.GetTrustedResourcesConfigName() {
+			trustedresourcesExists = true
 		}
 	}
 	if !defaultsExists {
@@ -373,6 +388,12 @@ func EnsureConfigurationConfigMapsExist(d *Data) {
 	if !metricsExists {
 		d.ConfigMaps = append(d.ConfigMaps, &corev1.ConfigMap{
 			ObjectMeta: metav1.ObjectMeta{Name: config.GetMetricsConfigName(), Namespace: system.Namespace()},
+			Data:       map[string]string{},
+		})
+	}
+	if !trustedresourcesExists {
+		d.ConfigMaps = append(d.ConfigMaps, &corev1.ConfigMap{
+			ObjectMeta: metav1.ObjectMeta{Name: config.GetTrustedResourcesConfigName(), Namespace: system.Namespace()},
 			Data:       map[string]string{},
 		})
 	}
