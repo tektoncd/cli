@@ -275,7 +275,7 @@ func TestPipelineRunGet_MinimalEmbeddedStatus(t *testing.T) {
 	runDuration := 1 * time.Minute
 
 	prdata := []*v1beta1.PipelineRun{
-		parse.MustParsePipelineRun(t, fmt.Sprintf(`
+		parse.MustParseV1beta1PipelineRun(t, fmt.Sprintf(`
 metadata:
   name: pipelinerun1
   namespace: ns
@@ -311,7 +311,7 @@ status:
     name: run-2
     pipelineTaskName: r2
 `, pr1Started.Format(time.RFC3339), pr1Started.Add(runDuration).Format(time.RFC3339))),
-		parse.MustParsePipelineRun(t, fmt.Sprintf(`
+		parse.MustParseV1beta1PipelineRun(t, fmt.Sprintf(`
 metadata:
   name: pipelinerun2
   namespace: ns
@@ -363,7 +363,7 @@ status:
 	}
 
 	trData := []*v1beta1.TaskRun{
-		parse.MustParseTaskRun(t, `
+		parse.MustParseV1beta1TaskRun(t, `
 metadata:
   name: task-run-1
   namespace: ns
@@ -376,7 +376,7 @@ status:
     status: "True"
     type: Succeeded
 `),
-		parse.MustParseTaskRun(t, `
+		parse.MustParseV1beta1TaskRun(t, `
 metadata:
   name: task-run-2
   namespace: ns
@@ -489,7 +489,7 @@ func TestPipelineRunList_MinimalEmbeddedStatus(t *testing.T) {
 	pr1Started := clock.Now().Add(10 * time.Second)
 	runDuration := 1 * time.Minute
 
-	prdata := []*v1beta1.PipelineRun{parse.MustParsePipelineRun(t, fmt.Sprintf(`
+	prdata := []*v1beta1.PipelineRun{parse.MustParseV1beta1PipelineRun(t, fmt.Sprintf(`
 metadata:
   name: pipelinerun1
   namespace: ns
@@ -528,7 +528,7 @@ status:
 	}
 
 	trData := []*v1beta1.TaskRun{
-		parse.MustParseTaskRun(t, `
+		parse.MustParseV1beta1TaskRun(t, `
 metadata:
   name: task-run-1
   namespace: ns
@@ -541,7 +541,7 @@ status:
     status: "True"
     type: Succeeded
 `),
-		parse.MustParseTaskRun(t, `
+		parse.MustParseV1beta1TaskRun(t, `
 metadata:
   name: task-run-2
   namespace: ns
