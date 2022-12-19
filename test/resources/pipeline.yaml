@@ -70,7 +70,7 @@ spec:
     type: git
   params:
     - name: FILEPATH
-      default: "docs"
+      default: "docs-v2"
     - name: FILENAME
   tasks:
   - name: first-create-file          # 1. create file

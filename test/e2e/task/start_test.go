@@ -73,7 +73,7 @@ func TestTaskStartE2E(t *testing.T) {
 	t.Run("Start TaskRun using tkn start command with SA as 'pipeline' ", func(t *testing.T) {
 		res := tkn.MustSucceed(t, "task", "start", "read-task",
 			"-i=source="+tePipelineGitResourceName,
-			"-p=FILEPATH=docs",
+			"-p=FILEPATH=docs-v2",
 			"-p=FILENAME=README.md",
 			"--showlog")
 
@@ -175,7 +175,7 @@ Waiting for logs to be available...
 			CmdArgs: []string{
 				"task", "start", "read-task",
 				"-i=source=" + tePipelineGitResourceName,
-				"-p=FILEPATH=docs",
+				"-p=FILEPATH=docs-v2",
 				"--showlog",
 			},
 			Procedure: func(c *expect.Console) error {
@@ -255,7 +255,7 @@ Waiting for logs to be available...
 	t.Run("Start TaskRun with --pod-template", func(t *testing.T) {
 		tkn.MustSucceed(t, "task", "start", "read-task",
 			"-i=source="+tePipelineGitResourceName,
-			"-p=FILEPATH=docs",
+			"-p=FILEPATH=docs-v2",
 			"-p=FILENAME=README.md",
 			"--showlog",
 			"--pod-template="+helper.GetResourcePath("/podtemplate/podtemplate.yaml"))
