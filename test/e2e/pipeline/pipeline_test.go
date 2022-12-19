@@ -164,7 +164,7 @@ func TestPipelinesE2E(t *testing.T) {
 	t.Run("Start PipelineRun using pipeline start command with SA as 'pipeline' ", func(t *testing.T) {
 		res := tkn.MustSucceed(t, "pipeline", "start", tePipelineName,
 			"-r=source-repo="+tePipelineGitResourceName,
-			"-p=FILEPATH=docs",
+			"-p=FILEPATH=docs-v2",
 			"-p=FILENAME=README.md",
 			"--showlog")
 
@@ -477,7 +477,7 @@ func TestPipelinesNegativeE2E(t *testing.T) {
 	t.Run("Start Pipeline Run using pipeline start command with SA as 'pipelines' ", func(t *testing.T) {
 		res := tkn.MustSucceed(t, "pipeline", "start", tePipelineName,
 			"-r=source-repo="+tePipelineFaultGitResourceName,
-			"-p=FILEPATH=docs",
+			"-p=FILEPATH=docs-v2",
 			"-p=FILENAME=README.md",
 			"--showlog",
 			"true")
@@ -664,7 +664,7 @@ func getCreateFileTask(taskname string, namespace string) *v1beta1.Task {
 					Name:    "read-docs-old",
 					Image:   "ubuntu",
 					Command: []string{"/bin/bash"},
-					Args:    []string{"-c", "ls -la /workspace/damnworkspace/docs/README.md"},
+					Args:    []string{"-c", "ls -la /workspace/damnworkspace/docs-v2/README.md"},
 				},
 				{
 					Name:    "write-new-stuff",

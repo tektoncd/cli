@@ -21,7 +21,7 @@ spec:
     - name: shared-workspace
   params:
     - name: FILEPATH
-      default: "docs"
+      default: "docs-v2"
     - name: FILENAME
   resources:
     inputs:

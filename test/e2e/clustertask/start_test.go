@@ -93,7 +93,7 @@ func TestClusterTaskInteractiveStartE2E(t *testing.T) {
 	t.Run("Start ClusterTask with flags", func(t *testing.T) {
 		res := tkn.MustSucceed(t, "clustertask", "start", clusterTaskName,
 			"-i=source="+tePipelineGitResourceName,
-			"-p=FILEPATH=docs",
+			"-p=FILEPATH=docs-v2",
 			"-p=FILENAME=README.md",
 			"-w=name=shared-workspace,emptyDir=",
 			"--showlog")
@@ -123,11 +123,11 @@ Waiting for logs to be available...
 				if _, err := c.SendLine(string(terminal.KeyEnter)); err != nil {
 					return err
 				}
-				if _, err := c.ExpectString("Value for param `FILEPATH` of type `string`? (Default is `docs`)"); err != nil {
+				if _, err := c.ExpectString("Value for param `FILEPATH` of type `string`? (Default is `docs-v2`)"); err != nil {
 					return err
 				}
 
-				if _, err := c.ExpectString("(docs)"); err != nil {
+				if _, err := c.ExpectString("(docs-v2)"); err != nil {
 					return err
 				}
 				if _, err := c.SendLine(string(terminal.KeyEnter)); err != nil {
@@ -172,7 +172,7 @@ Waiting for logs to be available...
 			CmdArgs: []string{
 				"clustertask", "start", clusterTaskName,
 				"-i=source=" + tePipelineGitResourceName,
-				"--param=FILEPATH=docs",
+				"--param=FILEPATH=docs-v2",
 				"-w=name=shared-workspace,emptyDir=",
 				"--showlog",
 			},
@@ -246,7 +246,7 @@ Waiting for logs to be available...
 
 		tkn.MustSucceed(t, "clustertask", "start", clusterTaskName,
 			"-i=source="+tePipelineGitResourceName,
-			"-p=FILEPATH=docs",
+			"-p=FILEPATH=docs-v2",
 			"-p=FILENAME=README.md",
 			"-w=name=shared-workspace,emptyDir=",
 			"--showlog",

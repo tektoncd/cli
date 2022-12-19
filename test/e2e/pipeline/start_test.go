@@ -61,11 +61,11 @@ func TestPipelineInteractiveStartE2E(t *testing.T) {
 					return err
 				}
 
-				if _, err := c.ExpectString("Value for param `FILEPATH` of type `string`? (Default is `docs`)"); err != nil {
+				if _, err := c.ExpectString("Value for param `FILEPATH` of type `string`? (Default is `docs-v2`)"); err != nil {
 					return err
 				}
 
-				if _, err := c.ExpectString("(docs)"); err != nil {
+				if _, err := c.ExpectString("(docs-v2)"); err != nil {
 					return err
 				}
 
@@ -132,7 +132,7 @@ func TestPipelineInteractiveStartE2E(t *testing.T) {
 		tkn.RunInteractiveTests(t, &cli.Prompt{
 			CmdArgs: []string{
 				"pipeline", "start", "output-pipeline",
-				"-p=FILEPATH=docs", "--use-param-defaults",
+				"-p=FILEPATH=docs-v2", "--use-param-defaults",
 			},
 			Procedure: func(c *expect.Console) error {
 				if _, err := c.ExpectString("Choose the git resource to use for source-repo:"); err != nil {
@@ -266,11 +266,11 @@ func TestPipelineInteractiveStartWithNewResourceE2E(t *testing.T) {
 					return err
 				}
 
-				if _, err := c.ExpectString("Value for param `FILEPATH` of type `string`? (Default is `docs`)"); err != nil {
+				if _, err := c.ExpectString("Value for param `FILEPATH` of type `string`? (Default is `docs-v2`)"); err != nil {
 					return err
 				}
 
-				if _, err := c.ExpectString("(docs)"); err != nil {
+				if _, err := c.ExpectString("(docs-v2)"); err != nil {
 					return err
 				}
 
