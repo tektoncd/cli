@@ -30,8 +30,8 @@ cloud.google.com/go/kms/internal
 # cloud.google.com/go/longrunning v0.3.0
 ## explicit; go 1.19
 cloud.google.com/go/longrunning/autogen/longrunningpb
-# cloud.google.com/go/storage v1.27.0
-## explicit; go 1.17
+# cloud.google.com/go/storage v1.28.1
+## explicit; go 1.19
 cloud.google.com/go/storage
 cloud.google.com/go/storage/internal
 cloud.google.com/go/storage/internal/apiv2
@@ -95,8 +95,8 @@ github.com/Microsoft/go-winio/pkg/guid
 # github.com/Netflix/go-expect v0.0.0-20220104043353-73e0943537d2
 ## explicit; go 1.13
 github.com/Netflix/go-expect
-# github.com/Shopify/sarama v1.32.0
-## explicit; go 1.16
+# github.com/Shopify/sarama v1.37.2
+## explicit; go 1.17
 github.com/Shopify/sarama
 # github.com/ThalesIgnite/crypto11 v1.2.5
 ## explicit; go 1.13
@@ -360,7 +360,7 @@ github.com/cloudevents/sdk-go/v2/types
 # github.com/cncf/udpa/go v0.0.0-20210930031921-04548b0d99d4
 ## explicit; go 1.11
 github.com/cncf/udpa/go/udpa/type/v1
-# github.com/cncf/xds/go v0.0.0-20211130200136-a8f946100490
+# github.com/cncf/xds/go v0.0.0-20220314180256-7f1daf1720fc
 ## explicit; go 1.11
 github.com/cncf/xds/go/udpa/annotations
 github.com/cncf/xds/go/udpa/type/v1
@@ -425,8 +425,8 @@ github.com/docker/docker-credential-helpers/credentials
 # github.com/dustin/go-humanize v1.0.0
 ## explicit
 github.com/dustin/go-humanize
-# github.com/eapache/go-resiliency v1.2.0
-## explicit
+# github.com/eapache/go-resiliency v1.3.0
+## explicit; go 1.13
 github.com/eapache/go-resiliency/breaker
 # github.com/eapache/go-xerial-snappy v0.0.0-20180814174437-776d5712da21
 ## explicit
@@ -438,7 +438,7 @@ github.com/eapache/queue
 ## explicit; go 1.13
 github.com/emicklei/go-restful/v3
 github.com/emicklei/go-restful/v3/log
-# github.com/envoyproxy/go-control-plane v0.10.2-0.20220325020618-49ff273808a1
+# github.com/envoyproxy/go-control-plane v0.10.3
 ## explicit; go 1.16
 github.com/envoyproxy/go-control-plane/envoy/admin/v3
 github.com/envoyproxy/go-control-plane/envoy/annotations
@@ -485,7 +485,7 @@ github.com/envoyproxy/go-control-plane/envoy/type/metadata/v3
 github.com/envoyproxy/go-control-plane/envoy/type/tracing/v2
 github.com/envoyproxy/go-control-plane/envoy/type/tracing/v3
 github.com/envoyproxy/go-control-plane/envoy/type/v3
-# github.com/envoyproxy/protoc-gen-validate v0.6.2
+# github.com/envoyproxy/protoc-gen-validate v0.6.7
 ## explicit; go 1.12
 github.com/envoyproxy/protoc-gen-validate/validate
 # github.com/evanphx/json-patch v4.12.0+incompatible
@@ -919,12 +919,12 @@ github.com/jcmturner/aescts/v2
 # github.com/jcmturner/dnsutils/v2 v2.0.0
 ## explicit; go 1.13
 github.com/jcmturner/dnsutils/v2
-# github.com/jcmturner/gofork v1.0.0
-## explicit
+# github.com/jcmturner/gofork v1.7.6
+## explicit; go 1.7
 github.com/jcmturner/gofork/encoding/asn1
 github.com/jcmturner/gofork/x/crypto/pbkdf2
-# github.com/jcmturner/gokrb5/v8 v8.4.2
-## explicit; go 1.14
+# github.com/jcmturner/gokrb5/v8 v8.4.3
+## explicit; go 1.16
 github.com/jcmturner/gokrb5/v8/asn1tools
 github.com/jcmturner/gokrb5/v8/client
 github.com/jcmturner/gokrb5/v8/config
@@ -1001,7 +1001,7 @@ github.com/kballard/go-shellquote
 # github.com/kelseyhightower/envconfig v1.4.0
 ## explicit
 github.com/kelseyhightower/envconfig
-# github.com/klauspost/compress v1.15.11
+# github.com/klauspost/compress v1.15.12
 ## explicit; go 1.17
 github.com/klauspost/compress
 github.com/klauspost/compress/fse
@@ -1088,8 +1088,8 @@ github.com/modern-go/reflect2
 # github.com/monochromegane/go-gitignore v0.0.0-20200626010858-205db1a8cc00
 ## explicit
 github.com/monochromegane/go-gitignore
-# github.com/montanaflynn/stats v0.0.0-20171201202039-1bf9dbcd8cbe
-## explicit
+# github.com/montanaflynn/stats v0.6.6
+## explicit; go 1.13
 github.com/montanaflynn/stats
 # github.com/mozillazg/docker-credential-acr-helper v0.3.0
 ## explicit; go 1.17
@@ -1142,6 +1142,13 @@ github.com/peterbourgon/diskv
 ## explicit
 github.com/pierrec/lz4
 github.com/pierrec/lz4/internal/xxh32
+# github.com/pierrec/lz4/v4 v4.1.17
+## explicit; go 1.14
+github.com/pierrec/lz4/v4
+github.com/pierrec/lz4/v4/internal/lz4block
+github.com/pierrec/lz4/v4/internal/lz4errors
+github.com/pierrec/lz4/v4/internal/lz4stream
+github.com/pierrec/lz4/v4/internal/xxh32
 # github.com/pkg/errors v0.9.1
 ## explicit
 github.com/pkg/errors
@@ -1347,18 +1354,13 @@ github.com/syndtr/goleveldb/leveldb/opt
 github.com/syndtr/goleveldb/leveldb/storage
 github.com/syndtr/goleveldb/leveldb/table
 github.com/syndtr/goleveldb/leveldb/util
-# github.com/tektoncd/chains v0.13.0
+# github.com/tektoncd/chains v0.14.0
 ## explicit; go 1.18
 github.com/tektoncd/chains/pkg/artifacts
 github.com/tektoncd/chains/pkg/chains
 github.com/tektoncd/chains/pkg/chains/formats
-github.com/tektoncd/chains/pkg/chains/formats/intotoite6
-github.com/tektoncd/chains/pkg/chains/formats/intotoite6/attest
 github.com/tektoncd/chains/pkg/chains/formats/intotoite6/extract
-github.com/tektoncd/chains/pkg/chains/formats/intotoite6/pipelinerun
-github.com/tektoncd/chains/pkg/chains/formats/intotoite6/taskrun
 github.com/tektoncd/chains/pkg/chains/formats/simple
-github.com/tektoncd/chains/pkg/chains/formats/tekton
 github.com/tektoncd/chains/pkg/chains/objects
 github.com/tektoncd/chains/pkg/chains/signing
 github.com/tektoncd/chains/pkg/chains/signing/kms
@@ -1745,7 +1747,7 @@ go.etcd.io/etcd/tests/v3/integration
 # go.etcd.io/etcd/v3 v3.6.0-alpha.0
 ## explicit; go 1.17
 go.etcd.io/etcd/v3
-# go.mongodb.org/mongo-driver v1.10.0
+# go.mongodb.org/mongo-driver v1.10.3
 ## explicit; go 1.10
 go.mongodb.org/mongo-driver/bson
 go.mongodb.org/mongo-driver/bson/bsoncodec
@@ -1880,7 +1882,7 @@ go.uber.org/zap/zaptest
 ## explicit; go 1.19
 goa.design/goa/v3/http
 goa.design/goa/v3/pkg
-# gocloud.dev v0.26.0
+# gocloud.dev v0.27.0
 ## explicit; go 1.12
 gocloud.dev/aws
 gocloud.dev/docstore
@@ -1899,10 +1901,10 @@ gocloud.dev/pubsub
 gocloud.dev/pubsub/batcher
 gocloud.dev/pubsub/driver
 gocloud.dev/pubsub/mempubsub
-# gocloud.dev/docstore/mongodocstore v0.26.0
+# gocloud.dev/docstore/mongodocstore v0.27.0
 ## explicit; go 1.12
 gocloud.dev/docstore/mongodocstore
-# gocloud.dev/pubsub/kafkapubsub v0.26.0
+# gocloud.dev/pubsub/kafkapubsub v0.27.0
 ## explicit; go 1.12
 gocloud.dev/pubsub/kafkapubsub
 # golang.org/x/crypto v0.4.0
@@ -2736,7 +2738,7 @@ knative.dev/eventing/pkg/reconciler/source
 ## explicit; go 1.16
 knative.dev/networking/pkg/apis/networking
 knative.dev/networking/pkg/apis/networking/v1alpha1
-# knative.dev/pkg v0.0.0-20221011175852-714b7630a836
+# knative.dev/pkg v0.0.0-20221031202413-2f194914a4b2
 ## explicit; go 1.18
 knative.dev/pkg/apis
 knative.dev/pkg/apis/duck

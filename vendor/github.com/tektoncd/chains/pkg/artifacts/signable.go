@@ -21,7 +21,6 @@ import (
 	"github.com/google/go-containerregistry/pkg/name"
 	slsa "github.com/in-toto/in-toto-golang/in_toto/slsa_provenance/v0.2"
 	"github.com/opencontainers/go-digest"
-	"github.com/tektoncd/chains/pkg/chains/formats"
 	"github.com/tektoncd/chains/pkg/chains/objects"
 	"github.com/tektoncd/chains/pkg/config"
 	"github.com/tektoncd/pipeline/pkg/apis/pipeline/v1beta1"
@@ -38,7 +37,7 @@ type Signable interface {
 	ExtractObjects(obj objects.TektonObject) []interface{}
 	StorageBackend(cfg config.Config) sets.String
 	Signer(cfg config.Config) string
-	PayloadFormat(cfg config.Config) formats.PayloadType
+	PayloadFormat(cfg config.Config) config.PayloadType
 	// FullKey returns the full identifier for a signable artifact.
 	// - For OCI artifact, it is the full representation in the format of `<NAME>@sha256:<DIGEST>`.
 	// - For TaskRun/PipelineRun artifact, it is `<GROUP>-<VERSION>-<KIND>-<UID>`
@@ -80,8 +79,8 @@ func (ta *TaskRunArtifact) StorageBackend(cfg config.Config) sets.String {
 	return cfg.Artifacts.TaskRuns.StorageBackend
 }
 
-func (ta *TaskRunArtifact) PayloadFormat(cfg config.Config) formats.PayloadType {
-	return formats.PayloadType(cfg.Artifacts.TaskRuns.Format)
+func (ta *TaskRunArtifact) PayloadFormat(cfg config.Config) config.PayloadType {
+	return config.PayloadType(cfg.Artifacts.TaskRuns.Format)
 }
 
 func (ta *TaskRunArtifact) Signer(cfg config.Config) string {
@@ -122,8 +121,8 @@ func (pa *PipelineRunArtifact) StorageBackend(cfg config.Config) sets.String {
 	return cfg.Artifacts.PipelineRuns.StorageBackend
 }
 
-func (pa *PipelineRunArtifact) PayloadFormat(cfg config.Config) formats.PayloadType {
-	return formats.PayloadType(cfg.Artifacts.PipelineRuns.Format)
+func (pa *PipelineRunArtifact) PayloadFormat(cfg config.Config) config.PayloadType {
+	return config.PayloadType(cfg.Artifacts.PipelineRuns.Format)
 }
 
 func (pa *PipelineRunArtifact) Signer(cfg config.Config) string {
@@ -392,8 +391,8 @@ func (oa *OCIArtifact) StorageBackend(cfg config.Config) sets.String {
 	return cfg.Artifacts.OCI.StorageBackend
 }
 
-func (oa *OCIArtifact) PayloadFormat(cfg config.Config) formats.PayloadType {
-	return formats.PayloadType(cfg.Artifacts.OCI.Format)
+func (oa *OCIArtifact) PayloadFormat(cfg config.Config) config.PayloadType {
+	return config.PayloadType(cfg.Artifacts.OCI.Format)
 }
 
 func (oa *OCIArtifact) Signer(cfg config.Config) string {
