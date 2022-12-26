@@ -23,6 +23,7 @@ import (
 	"github.com/tektoncd/pipeline/pkg/apis/pipeline/v1beta1"
 	"github.com/tektoncd/pipeline/pkg/client/clientset/versioned"
 	informers "github.com/tektoncd/pipeline/pkg/client/informers/externalversions"
+	"github.com/tektoncd/pipeline/pkg/status"
 	corev1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/fields"
@@ -83,7 +84,7 @@ func (t *Tracker) Monitor(allowed []string) <-chan []trh.Run {
 			return
 		}
 
-		trMap, runMap, err := getFullPipelineTaskStatuses(context.Background(), t.Tekton, t.Ns, pr)
+		trMap, runMap, err := status.GetFullPipelineTaskStatuses(context.Background(), t.Tekton, t.Ns, pr)
 		if err != nil {
 			return
 		}
