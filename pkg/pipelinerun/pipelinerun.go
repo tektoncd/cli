@@ -25,8 +25,7 @@ import (
 	"github.com/tektoncd/cli/pkg/formatted"
 	prsort "github.com/tektoncd/cli/pkg/pipelinerun/sort"
 	"github.com/tektoncd/pipeline/pkg/apis/pipeline/v1beta1"
-	"github.com/tektoncd/pipeline/pkg/client/clientset/versioned"
-	"k8s.io/apimachinery/pkg/api/errors"
+	"github.com/tektoncd/pipeline/pkg/status"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
 	"k8s.io/apimachinery/pkg/runtime"
@@ -174,7 +173,7 @@ func Create(c *cli.Clients, pr *v1beta1.PipelineRun, opts metav1.CreateOptions, 
 }
 
 func populatePipelineRunTaskStatuses(c *cli.Clients, ns string, pr v1beta1.PipelineRun) (*v1beta1.PipelineRun, error) {
-	taskRunMap, runMap, err := getFullPipelineTaskStatuses(context.Background(), c.Tekton, ns, &pr)
+	taskRunMap, runMap, err := status.GetFullPipelineTaskStatuses(context.Background(), c.Tekton, ns, &pr)
 	if err != nil {
 		fmt.Fprintf(os.Stderr, "Failed to get TaskRun and Run statuses for PipelineRun %s from namespace %s\n", pr.Name, ns)
 		return nil, err
@@ -183,60 +182,4 @@ func populatePipelineRunTaskStatuses(c *cli.Clients, ns string, pr v1beta1.Pipel
 	pr.Status.Runs = runMap
 
 	return &pr, nil
-}
-
-// getFullPipelineTaskStatuses returns populated TaskRun and Run status maps for a PipelineRun from its ChildReferences.
-// If the PipelineRun has no ChildReferences, its .Status.TaskRuns and .Status.Runs will be returned instead.
-// TODO(abayer): Remove in favor of github.com/tektoncd/pipeline/pkg/status.GetFullPipelineTaskStatuses when CLI can move to Pipeline v0.36.0 or later.
-func getFullPipelineTaskStatuses(ctx context.Context, client versioned.Interface, ns string, pr *v1beta1.PipelineRun) (map[string]*v1beta1.PipelineRunTaskRunStatus,
-	map[string]*v1beta1.PipelineRunRunStatus, error) {
-	// If the PipelineRun is nil, just return
-	if pr == nil {
-		return nil, nil, nil
-	}
-
-	// If there are no child references or either TaskRuns or Runs is non-zero, return the existing TaskRuns and Runs maps
-	if len(pr.Status.ChildReferences) == 0 || len(pr.Status.TaskRuns) > 0 || len(pr.Status.Runs) > 0 {
-		return pr.Status.TaskRuns, pr.Status.Runs, nil
-	}
-
-	trStatuses := make(map[string]*v1beta1.PipelineRunTaskRunStatus)
-	runStatuses := make(map[string]*v1beta1.PipelineRunRunStatus)
-
-	for _, cr := range pr.Status.ChildReferences {
-		switch cr.Kind {
-		case "TaskRun":
-			tr, err := client.TektonV1beta1().TaskRuns(ns).Get(ctx, cr.Name, metav1.GetOptions{})
-			if err != nil && !errors.IsNotFound(err) {
-				return nil, nil, err
-			}
-
-			trStatuses[cr.Name] = &v1beta1.PipelineRunTaskRunStatus{
-				PipelineTaskName: cr.PipelineTaskName,
-				WhenExpressions:  cr.WhenExpressions,
-			}
-
-			if tr != nil {
-				trStatuses[cr.Name].Status = &tr.Status
-			}
-		case "Run":
-			r, err := client.TektonV1alpha1().Runs(ns).Get(ctx, cr.Name, metav1.GetOptions{})
-			if err != nil && !errors.IsNotFound(err) {
-				return nil, nil, err
-			}
-
-			runStatuses[cr.Name] = &v1beta1.PipelineRunRunStatus{
-				PipelineTaskName: cr.PipelineTaskName,
-				WhenExpressions:  cr.WhenExpressions,
-			}
-
-			if r != nil {
-				runStatuses[cr.Name].Status = &r.Status
-			}
-		default:
-			// Don't do anything for unknown types.
-		}
-	}
-
-	return trStatuses, runStatuses, nil
 }
