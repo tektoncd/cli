@@ -37,7 +37,7 @@ import (
 	"k8s.io/client-go/dynamic"
 	k8stest "k8s.io/client-go/testing"
 	"knative.dev/pkg/apis"
-	duckv1beta1 "knative.dev/pkg/apis/duck/v1beta1"
+	duckv1 "knative.dev/pkg/apis/duck/v1"
 )
 
 const (
@@ -115,8 +115,8 @@ func TestLog_no_taskrun_arg(t *testing.T) {
 				},
 			},
 			Status: v1beta1.TaskRunStatus{
-				Status: duckv1beta1.Status{
-					Conditions: duckv1beta1.Conditions{
+				Status: duckv1.Status{
+					Conditions: duckv1.Conditions{
 						{
 							Status: corev1.ConditionTrue,
 							Reason: v1beta1.TaskRunReasonSuccessful.String(),
@@ -317,8 +317,8 @@ func TestLog_taskrun_logs(t *testing.T) {
 				},
 			},
 			Status: v1beta1.TaskRunStatus{
-				Status: duckv1beta1.Status{
-					Conditions: duckv1beta1.Conditions{
+				Status: duckv1.Status{
+					Conditions: duckv1.Conditions{
 						{
 							Type:   apis.ConditionSucceeded,
 							Status: corev1.ConditionTrue,
@@ -444,8 +444,8 @@ func TestLog_taskrun_logs_no_pod_name(t *testing.T) {
 				},
 			},
 			Status: v1beta1.TaskRunStatus{
-				Status: duckv1beta1.Status{
-					Conditions: duckv1beta1.Conditions{
+				Status: duckv1.Status{
+					Conditions: duckv1.Conditions{
 						{
 							Type:   apis.ConditionSucceeded,
 							Status: corev1.ConditionTrue,
@@ -536,8 +536,8 @@ func TestLog_taskrun_all_steps(t *testing.T) {
 				},
 			},
 			Status: v1beta1.TaskRunStatus{
-				Status: duckv1beta1.Status{
-					Conditions: duckv1beta1.Conditions{
+				Status: duckv1.Status{
+					Conditions: duckv1.Conditions{
 						{
 							Type:   apis.ConditionSucceeded,
 							Status: corev1.ConditionTrue,
@@ -680,8 +680,8 @@ func TestLog_taskrun_given_steps(t *testing.T) {
 				},
 			},
 			Status: v1beta1.TaskRunStatus{
-				Status: duckv1beta1.Status{
-					Conditions: duckv1beta1.Conditions{
+				Status: duckv1.Status{
+					Conditions: duckv1.Conditions{
 						{
 							Type:   apis.ConditionSucceeded,
 							Status: corev1.ConditionTrue,
@@ -821,8 +821,8 @@ func TestLog_taskrun_follow_mode(t *testing.T) {
 				},
 			},
 			Status: v1beta1.TaskRunStatus{
-				Status: duckv1beta1.Status{
-					Conditions: duckv1beta1.Conditions{
+				Status: duckv1.Status{
+					Conditions: duckv1.Conditions{
 						{
 							Type:   apis.ConditionSucceeded,
 							Status: corev1.ConditionTrue,
@@ -964,8 +964,8 @@ func TestLog_taskrun_last(t *testing.T) {
 				},
 			},
 			Status: v1beta1.TaskRunStatus{
-				Status: duckv1beta1.Status{
-					Conditions: duckv1beta1.Conditions{
+				Status: duckv1.Status{
+					Conditions: duckv1.Conditions{
 						{
 							Type:   apis.ConditionSucceeded,
 							Status: corev1.ConditionTrue,
@@ -1007,8 +1007,8 @@ func TestLog_taskrun_last(t *testing.T) {
 				},
 			},
 			Status: v1beta1.TaskRunStatus{
-				Status: duckv1beta1.Status{
-					Conditions: duckv1beta1.Conditions{
+				Status: duckv1.Status{
+					Conditions: duckv1.Conditions{
 						{
 							Type:   apis.ConditionSucceeded,
 							Status: corev1.ConditionTrue,
@@ -1104,8 +1104,8 @@ func TestLog_taskrun_follow_mode_no_pod_name(t *testing.T) {
 				},
 			},
 			Status: v1beta1.TaskRunStatus{
-				Status: duckv1beta1.Status{
-					Conditions: duckv1beta1.Conditions{
+				Status: duckv1.Status{
+					Conditions: duckv1.Conditions{
 						{
 							Type:   apis.ConditionSucceeded,
 							Status: corev1.ConditionTrue,
@@ -1244,8 +1244,8 @@ func TestLog_taskrun_follow_mode_update_pod_name(t *testing.T) {
 				},
 			},
 			Status: v1beta1.TaskRunStatus{
-				Status: duckv1beta1.Status{
-					Conditions: duckv1beta1.Conditions{
+				Status: duckv1.Status{
+					Conditions: duckv1.Conditions{
 						{
 							Type:    apis.ConditionSucceeded,
 							Status:  corev1.ConditionUnknown,
@@ -1397,8 +1397,8 @@ func TestLog_taskrun_follow_mode_update_timeout(t *testing.T) {
 				},
 			},
 			Status: v1beta1.TaskRunStatus{
-				Status: duckv1beta1.Status{
-					Conditions: duckv1beta1.Conditions{
+				Status: duckv1.Status{
+					Conditions: duckv1.Conditions{
 						{
 							Type:    apis.ConditionSucceeded,
 							Status:  corev1.ConditionUnknown,
@@ -1545,8 +1545,8 @@ func TestLog_taskrun_follow_mode_no_output_provided(t *testing.T) {
 				},
 			},
 			Status: v1beta1.TaskRunStatus{
-				Status: duckv1beta1.Status{
-					Conditions: duckv1beta1.Conditions{
+				Status: duckv1.Status{
+					Conditions: duckv1.Conditions{
 						{
 							Status:  corev1.ConditionFalse,
 							Reason:  v1beta1.TaskRunReasonFailed.String(),

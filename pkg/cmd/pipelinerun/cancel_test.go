@@ -29,7 +29,7 @@ import (
 	"k8s.io/apimachinery/pkg/runtime"
 	k8stest "k8s.io/client-go/testing"
 	"knative.dev/pkg/apis"
-	duckv1beta1 "knative.dev/pkg/apis/duck/v1beta1"
+	duckv1 "knative.dev/pkg/apis/duck/v1"
 )
 
 func Test_cancel_invalid_namespace(t *testing.T) {
@@ -129,8 +129,8 @@ func Test_cancel_pipelinerun_v1beta1(t *testing.T) {
 				},
 			},
 			Status: v1beta1.PipelineRunStatus{
-				Status: duckv1beta1.Status{
-					Conditions: duckv1beta1.Conditions{
+				Status: duckv1.Status{
+					Conditions: duckv1.Conditions{
 						{
 							Status: corev1.ConditionUnknown,
 							Type:   apis.ConditionReady,
@@ -297,8 +297,8 @@ func Test_finished_pipelinerun_success_v1beta1(t *testing.T) {
 				},
 			},
 			Status: v1beta1.PipelineRunStatus{
-				Status: duckv1beta1.Status{
-					Conditions: duckv1beta1.Conditions{
+				Status: duckv1.Status{
+					Conditions: duckv1.Conditions{
 						{
 							Status: corev1.ConditionTrue,
 							Type:   apis.ConditionSucceeded,
@@ -382,8 +382,8 @@ func Test_finished_pipelinerun_failure_v1beta1(t *testing.T) {
 				},
 			},
 			Status: v1beta1.PipelineRunStatus{
-				Status: duckv1beta1.Status{
-					Conditions: duckv1beta1.Conditions{
+				Status: duckv1.Status{
+					Conditions: duckv1.Conditions{
 						{
 							Status: corev1.ConditionFalse,
 							Type:   apis.ConditionSucceeded,
@@ -467,8 +467,8 @@ func Test_finished_pipelinerun_cancel_v1beta1(t *testing.T) {
 				},
 			},
 			Status: v1beta1.PipelineRunStatus{
-				Status: duckv1beta1.Status{
-					Conditions: duckv1beta1.Conditions{
+				Status: duckv1.Status{
+					Conditions: duckv1.Conditions{
 						{
 							Status: corev1.ConditionFalse,
 							Reason: "PipelineRunCancelled",
@@ -552,8 +552,8 @@ func Test_finished_pipelinerun_timeout_v1beta1(t *testing.T) {
 				},
 			},
 			Status: v1beta1.PipelineRunStatus{
-				Status: duckv1beta1.Status{
-					Conditions: duckv1beta1.Conditions{
+				Status: duckv1.Status{
+					Conditions: duckv1.Conditions{
 						{
 							Status: corev1.ConditionFalse,
 							Reason: v1beta1.PipelineRunReasonTimedOut.String(),
@@ -637,8 +637,8 @@ func Test_finished_pipelinerun_cancelled(t *testing.T) {
 				},
 			},
 			Status: v1beta1.PipelineRunStatus{
-				Status: duckv1beta1.Status{
-					Conditions: duckv1beta1.Conditions{
+				Status: duckv1.Status{
+					Conditions: duckv1.Conditions{
 						{
 							Status: corev1.ConditionFalse,
 							Reason: "Cancelled",
@@ -722,8 +722,8 @@ func Test_cancel_pipelinerun_with_grace_stopped(t *testing.T) {
 				},
 			},
 			Status: v1beta1.PipelineRunStatus{
-				Status: duckv1beta1.Status{
-					Conditions: duckv1beta1.Conditions{
+				Status: duckv1.Status{
+					Conditions: duckv1.Conditions{
 						{
 							Status: corev1.ConditionUnknown,
 							Type:   apis.ConditionReady,
@@ -807,8 +807,8 @@ func Test_cancel_pipelinerun_with_grace_cancelled(t *testing.T) {
 				},
 			},
 			Status: v1beta1.PipelineRunStatus{
-				Status: duckv1beta1.Status{
-					Conditions: duckv1beta1.Conditions{
+				Status: duckv1.Status{
+					Conditions: duckv1.Conditions{
 						{
 							Status: corev1.ConditionUnknown,
 							Type:   apis.ConditionReady,

@@ -29,7 +29,7 @@ import (
 	"gotest.tools/v3/golden"
 	corev1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
-	duckv1beta1 "knative.dev/pkg/apis/duck/v1beta1"
+	duckv1 "knative.dev/pkg/apis/duck/v1"
 )
 
 func TestPipelineDescribe_invalid_namespace(t *testing.T) {
@@ -143,8 +143,8 @@ func TestPipelineDescribe_with_run(t *testing.T) {
 				},
 			},
 			Status: v1beta1.PipelineRunStatus{
-				Status: duckv1beta1.Status{
-					Conditions: duckv1beta1.Conditions{
+				Status: duckv1.Status{
+					Conditions: duckv1.Conditions{
 						{
 							Status: corev1.ConditionTrue,
 							Reason: v1beta1.PipelineRunReasonSuccessful.String(),
@@ -240,8 +240,8 @@ func TestPipelineDescribe_with_spec_run(t *testing.T) {
 				},
 			},
 			Status: v1beta1.PipelineRunStatus{
-				Status: duckv1beta1.Status{
-					Conditions: duckv1beta1.Conditions{
+				Status: duckv1.Status{
+					Conditions: duckv1.Conditions{
 						{
 							Status: corev1.ConditionTrue,
 							Reason: v1beta1.PipelineRunReasonSuccessful.String(),
@@ -353,8 +353,8 @@ func TestPipelineDescribe_with_spec_resource_param_run(t *testing.T) {
 				},
 			},
 			Status: v1beta1.PipelineRunStatus{
-				Status: duckv1beta1.Status{
-					Conditions: duckv1beta1.Conditions{
+				Status: duckv1.Status{
+					Conditions: duckv1.Conditions{
 						{
 							Status: corev1.ConditionTrue,
 							Reason: v1beta1.PipelineRunReasonSuccessful.String(),
@@ -466,8 +466,8 @@ func TestPipelineDescribe_with_multiple_pipelineruns(t *testing.T) {
 				},
 			},
 			Status: v1beta1.PipelineRunStatus{
-				Status: duckv1beta1.Status{
-					Conditions: duckv1beta1.Conditions{
+				Status: duckv1.Status{
+					Conditions: duckv1.Conditions{
 						{
 							Status: corev1.ConditionTrue,
 							Reason: v1beta1.PipelineRunReasonSuccessful.String(),
@@ -495,8 +495,8 @@ func TestPipelineDescribe_with_multiple_pipelineruns(t *testing.T) {
 				},
 			},
 			Status: v1beta1.PipelineRunStatus{
-				Status: duckv1beta1.Status{
-					Conditions: duckv1beta1.Conditions{
+				Status: duckv1.Status{
+					Conditions: duckv1.Conditions{
 						{
 							Status: corev1.ConditionTrue,
 							Reason: v1beta1.PipelineRunReasonSuccessful.String(),
@@ -525,8 +525,8 @@ func TestPipelineDescribe_with_multiple_pipelineruns(t *testing.T) {
 				},
 			},
 			Status: v1beta1.PipelineRunStatus{
-				Status: duckv1beta1.Status{
-					Conditions: duckv1beta1.Conditions{
+				Status: duckv1.Status{
+					Conditions: duckv1.Conditions{
 						{
 							Status: corev1.ConditionTrue,
 							Reason: v1beta1.PipelineRunReasonSuccessful.String(),
@@ -718,8 +718,8 @@ func TestPipelineDescribe_with_spec_multiple_resource_param_run(t *testing.T) {
 				},
 			},
 			Status: v1beta1.PipelineRunStatus{
-				Status: duckv1beta1.Status{
-					Conditions: duckv1beta1.Conditions{
+				Status: duckv1.Status{
+					Conditions: duckv1.Conditions{
 						{
 							Status: corev1.ConditionTrue,
 							Reason: v1beta1.PipelineRunReasonSuccessful.String(),

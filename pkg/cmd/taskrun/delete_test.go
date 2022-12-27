@@ -29,7 +29,7 @@ import (
 	corev1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/client-go/dynamic"
-	duckv1beta1 "knative.dev/pkg/apis/duck/v1beta1"
+	duckv1 "knative.dev/pkg/apis/duck/v1"
 )
 
 func TestTaskRunDelete(t *testing.T) {
@@ -79,8 +79,8 @@ func TestTaskRunDelete(t *testing.T) {
 						Time: clock.Now().Add(10 * time.Minute),
 					},
 				},
-				Status: duckv1beta1.Status{
-					Conditions: duckv1beta1.Conditions{
+				Status: duckv1.Status{
+					Conditions: duckv1.Conditions{
 						{
 							Status: corev1.ConditionTrue,
 							Reason: v1beta1.TaskRunReasonSuccessful.String(),
@@ -107,8 +107,8 @@ func TestTaskRunDelete(t *testing.T) {
 						Time: clock.Now().Add(10 * time.Minute),
 					},
 				},
-				Status: duckv1beta1.Status{
-					Conditions: duckv1beta1.Conditions{
+				Status: duckv1.Status{
+					Conditions: duckv1.Conditions{
 						{
 							Status: corev1.ConditionTrue,
 							Reason: v1beta1.TaskRunReasonSuccessful.String(),
@@ -135,8 +135,8 @@ func TestTaskRunDelete(t *testing.T) {
 						Time: clock.Now().Add(10 * time.Minute),
 					},
 				},
-				Status: duckv1beta1.Status{
-					Conditions: duckv1beta1.Conditions{
+				Status: duckv1.Status{
+					Conditions: duckv1.Conditions{
 						{
 							Status: corev1.ConditionTrue,
 							Reason: v1beta1.TaskRunReasonSuccessful.String(),
@@ -163,8 +163,8 @@ func TestTaskRunDelete(t *testing.T) {
 						Time: clock.Now().Add(10 * time.Minute),
 					},
 				},
-				Status: duckv1beta1.Status{
-					Conditions: duckv1beta1.Conditions{
+				Status: duckv1.Status{
+					Conditions: duckv1.Conditions{
 						{
 							Status: corev1.ConditionTrue,
 							Reason: v1beta1.TaskRunReasonSuccessful.String(),
@@ -191,8 +191,8 @@ func TestTaskRunDelete(t *testing.T) {
 						Time: clock.Now().Add(10 * time.Minute),
 					},
 				},
-				Status: duckv1beta1.Status{
-					Conditions: duckv1beta1.Conditions{
+				Status: duckv1.Status{
+					Conditions: duckv1.Conditions{
 						{
 							Status: corev1.ConditionTrue,
 							Reason: v1beta1.TaskRunReasonSuccessful.String(),
@@ -219,8 +219,8 @@ func TestTaskRunDelete(t *testing.T) {
 						Time: clock.Now().Add(10 * time.Minute),
 					},
 				},
-				Status: duckv1beta1.Status{
-					Conditions: duckv1beta1.Conditions{
+				Status: duckv1.Status{
+					Conditions: duckv1.Conditions{
 						{
 							Status: corev1.ConditionTrue,
 							Reason: v1beta1.TaskRunReasonSuccessful.String(),
@@ -248,8 +248,8 @@ func TestTaskRunDelete(t *testing.T) {
 						Time: time.Now(),
 					},
 				},
-				Status: duckv1beta1.Status{
-					Conditions: duckv1beta1.Conditions{
+				Status: duckv1.Status{
+					Conditions: duckv1.Conditions{
 						{
 							Status: corev1.ConditionTrue,
 							Reason: v1beta1.TaskRunReasonSuccessful.String(),
@@ -277,8 +277,8 @@ func TestTaskRunDelete(t *testing.T) {
 						Time: time.Now(),
 					},
 				},
-				Status: duckv1beta1.Status{
-					Conditions: duckv1beta1.Conditions{
+				Status: duckv1.Status{
+					Conditions: duckv1.Conditions{
 						{
 							Status: corev1.ConditionTrue,
 							Reason: v1beta1.TaskRunReasonSuccessful.String(),
@@ -306,8 +306,8 @@ func TestTaskRunDelete(t *testing.T) {
 						Time: time.Now(),
 					},
 				},
-				Status: duckv1beta1.Status{
-					Conditions: duckv1beta1.Conditions{
+				Status: duckv1.Status{
+					Conditions: duckv1.Conditions{
 						{
 							Status: corev1.ConditionTrue,
 							Reason: v1beta1.TaskRunReasonSuccessful.String(),
@@ -332,8 +332,8 @@ func TestTaskRunDelete(t *testing.T) {
 				TaskRunStatusFields: v1beta1.TaskRunStatusFields{
 					CompletionTime: nil,
 				},
-				Status: duckv1beta1.Status{
-					Conditions: duckv1beta1.Conditions{
+				Status: duckv1.Status{
+					Conditions: duckv1.Conditions{
 						{
 							Status: corev1.ConditionUnknown,
 							Reason: v1beta1.TaskRunReasonStarted.String(),
@@ -358,8 +358,8 @@ func TestTaskRunDelete(t *testing.T) {
 				TaskRunStatusFields: v1beta1.TaskRunStatusFields{
 					CompletionTime: nil,
 				},
-				Status: duckv1beta1.Status{
-					Conditions: duckv1beta1.Conditions{
+				Status: duckv1.Status{
+					Conditions: duckv1.Conditions{
 						{
 							Status: corev1.ConditionUnknown,
 							Reason: v1beta1.TaskRunReasonRunning.String(),
@@ -384,8 +384,8 @@ func TestTaskRunDelete(t *testing.T) {
 				TaskRunStatusFields: v1beta1.TaskRunStatusFields{
 					CompletionTime: nil,
 				},
-				Status: duckv1beta1.Status{
-					Conditions: duckv1beta1.Conditions{
+				Status: duckv1.Status{
+					Conditions: duckv1.Conditions{
 						{
 							Status: corev1.ConditionUnknown,
 							Reason: v1beta1.TaskRunReasonStarted.String(),
@@ -410,8 +410,8 @@ func TestTaskRunDelete(t *testing.T) {
 				TaskRunStatusFields: v1beta1.TaskRunStatusFields{
 					CompletionTime: nil,
 				},
-				Status: duckv1beta1.Status{
-					Conditions: duckv1beta1.Conditions{
+				Status: duckv1.Status{
+					Conditions: duckv1.Conditions{
 						{
 							Status: corev1.ConditionUnknown,
 							Reason: v1beta1.TaskRunReasonRunning.String(),
@@ -436,8 +436,8 @@ func TestTaskRunDelete(t *testing.T) {
 				TaskRunStatusFields: v1beta1.TaskRunStatusFields{
 					CompletionTime: nil,
 				},
-				Status: duckv1beta1.Status{
-					Conditions: duckv1beta1.Conditions{
+				Status: duckv1.Status{
+					Conditions: duckv1.Conditions{
 						{
 							Status: corev1.ConditionUnknown,
 							Reason: "ExceededResourceQuota",
@@ -934,8 +934,8 @@ func Test_ClusterTask_TaskRuns_Not_Deleted_With_Task_Option(t *testing.T) {
 						Time: time.Now(),
 					},
 				},
-				Status: duckv1beta1.Status{
-					Conditions: duckv1beta1.Conditions{
+				Status: duckv1.Status{
+					Conditions: duckv1.Conditions{
 						{
 							Status: corev1.ConditionTrue,
 							Reason: v1beta1.TaskRunReasonSuccessful.String(),
@@ -968,8 +968,8 @@ func Test_ClusterTask_TaskRuns_Not_Deleted_With_Task_Option(t *testing.T) {
 						Time: time.Now(),
 					},
 				},
-				Status: duckv1beta1.Status{
-					Conditions: duckv1beta1.Conditions{
+				Status: duckv1.Status{
+					Conditions: duckv1.Conditions{
 						{
 							Status: corev1.ConditionTrue,
 							Reason: v1beta1.TaskRunReasonSuccessful.String(),
@@ -1059,8 +1059,8 @@ func Test_Task_TaskRuns_Not_Deleted_With_ClusterTask_Option(t *testing.T) {
 						Time: time.Now(),
 					},
 				},
-				Status: duckv1beta1.Status{
-					Conditions: duckv1beta1.Conditions{
+				Status: duckv1.Status{
+					Conditions: duckv1.Conditions{
 						{
 							Status: corev1.ConditionTrue,
 							Reason: v1beta1.TaskRunReasonSuccessful.String(),
@@ -1093,8 +1093,8 @@ func Test_Task_TaskRuns_Not_Deleted_With_ClusterTask_Option(t *testing.T) {
 						Time: time.Now(),
 					},
 				},
-				Status: duckv1beta1.Status{
-					Conditions: duckv1beta1.Conditions{
+				Status: duckv1.Status{
+					Conditions: duckv1.Conditions{
 						{
 							Status: corev1.ConditionTrue,
 							Reason: v1beta1.TaskRunReasonSuccessful.String(),
@@ -1187,8 +1187,8 @@ func Test_TaskRuns_Delete_With_Running_PipelineRun(t *testing.T) {
 						Time: time.Now(),
 					},
 				},
-				Status: duckv1beta1.Status{
-					Conditions: duckv1beta1.Conditions{
+				Status: duckv1.Status{
+					Conditions: duckv1.Conditions{
 						{
 							Status: corev1.ConditionTrue,
 							Reason: v1beta1.TaskRunReasonSuccessful.String(),
@@ -1226,8 +1226,8 @@ func Test_TaskRuns_Delete_With_Running_PipelineRun(t *testing.T) {
 						Time: time.Now(),
 					},
 				},
-				Status: duckv1beta1.Status{
-					Conditions: duckv1beta1.Conditions{
+				Status: duckv1.Status{
+					Conditions: duckv1.Conditions{
 						{
 							Status: corev1.ConditionUnknown,
 							Reason: v1beta1.TaskRunReasonRunning.String(),
@@ -1252,8 +1252,8 @@ func Test_TaskRuns_Delete_With_Running_PipelineRun(t *testing.T) {
 				},
 			},
 			Status: v1beta1.PipelineRunStatus{
-				Status: duckv1beta1.Status{
-					Conditions: duckv1beta1.Conditions{
+				Status: duckv1.Status{
+					Conditions: duckv1.Conditions{
 						{
 							Status: corev1.ConditionTrue,
 							Reason: v1beta1.PipelineRunReasonRunning.String(),

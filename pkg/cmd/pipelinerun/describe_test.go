@@ -31,7 +31,7 @@ import (
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/selection"
 	"knative.dev/pkg/apis"
-	duckv1beta1 "knative.dev/pkg/apis/duck/v1beta1"
+	duckv1 "knative.dev/pkg/apis/duck/v1"
 )
 
 func TestPipelineRunDescribe_invalid_namespace(t *testing.T) {
@@ -96,8 +96,8 @@ func TestPipelineRunDescribe_only_taskrun(t *testing.T) {
 					StartTime:      &metav1.Time{Time: clock.Now().Add(2 * time.Minute)},
 					CompletionTime: &metav1.Time{Time: clock.Now().Add(5 * time.Minute)},
 				},
-				Status: duckv1beta1.Status{
-					Conditions: duckv1beta1.Conditions{
+				Status: duckv1.Status{
+					Conditions: duckv1.Conditions{
 						{
 							Status: corev1.ConditionTrue,
 							Type:   apis.ConditionSucceeded,
@@ -130,8 +130,8 @@ func TestPipelineRunDescribe_only_taskrun(t *testing.T) {
 					StartTime:      &metav1.Time{Time: clock.Now()},
 					CompletionTime: &metav1.Time{Time: clock.Now().Add(5 * time.Minute)},
 				},
-				Status: duckv1beta1.Status{
-					Conditions: duckv1beta1.Conditions{
+				Status: duckv1.Status{
+					Conditions: duckv1.Conditions{
 						{
 							Status: corev1.ConditionTrue,
 							Reason: v1beta1.PipelineRunReasonSuccessful.String(),
@@ -188,8 +188,8 @@ func TestPipelineRunDescribe_multiple_taskrun_ordering(t *testing.T) {
 					StartTime:      &metav1.Time{Time: clock.Now().Add(2 * time.Minute)},
 					CompletionTime: &metav1.Time{Time: clock.Now().Add(5 * time.Minute)},
 				},
-				Status: duckv1beta1.Status{
-					Conditions: duckv1beta1.Conditions{
+				Status: duckv1.Status{
+					Conditions: duckv1.Conditions{
 						{
 							Status: corev1.ConditionTrue,
 							Type:   apis.ConditionSucceeded,
@@ -208,8 +208,8 @@ func TestPipelineRunDescribe_multiple_taskrun_ordering(t *testing.T) {
 					StartTime:      &metav1.Time{Time: clock.Now().Add(5 * time.Minute)},
 					CompletionTime: &metav1.Time{Time: clock.Now().Add(9 * time.Minute)},
 				},
-				Status: duckv1beta1.Status{
-					Conditions: duckv1beta1.Conditions{
+				Status: duckv1.Status{
+					Conditions: duckv1.Conditions{
 						{
 							Status: corev1.ConditionTrue,
 							Type:   apis.ConditionSucceeded,
@@ -243,8 +243,8 @@ func TestPipelineRunDescribe_multiple_taskrun_ordering(t *testing.T) {
 					StartTime:      &metav1.Time{Time: clock.Now()},
 					CompletionTime: &metav1.Time{Time: clock.Now().Add(15 * time.Minute)},
 				},
-				Status: duckv1beta1.Status{
-					Conditions: duckv1beta1.Conditions{
+				Status: duckv1.Status{
+					Conditions: duckv1.Conditions{
 						{
 							Status: corev1.ConditionTrue,
 							Reason: v1beta1.PipelineRunReasonSuccessful.String(),
@@ -303,8 +303,8 @@ func TestPipelineRunDescribe_multiple_taskrun_without_status(t *testing.T) {
 					StartTime:      &metav1.Time{Time: clock.Now().Add(2 * time.Minute)},
 					CompletionTime: &metav1.Time{Time: clock.Now().Add(5 * time.Minute)},
 				},
-				Status: duckv1beta1.Status{
-					Conditions: duckv1beta1.Conditions{
+				Status: duckv1.Status{
+					Conditions: duckv1.Conditions{
 						{
 							Status: corev1.ConditionTrue,
 							Type:   apis.ConditionSucceeded,
@@ -338,8 +338,8 @@ func TestPipelineRunDescribe_multiple_taskrun_without_status(t *testing.T) {
 					StartTime:      &metav1.Time{Time: clock.Now()},
 					CompletionTime: &metav1.Time{Time: clock.Now().Add(5 * time.Minute)},
 				},
-				Status: duckv1beta1.Status{
-					Conditions: duckv1beta1.Conditions{
+				Status: duckv1.Status{
+					Conditions: duckv1.Conditions{
 						{
 							Status: corev1.ConditionFalse,
 							Reason: v1beta1.PipelineRunReasonFailed.String(),
@@ -396,8 +396,8 @@ func TestPipelineRunDescribe_failed(t *testing.T) {
 					StartTime:      &metav1.Time{Time: clock.Now().Add(2 * time.Minute)},
 					CompletionTime: &metav1.Time{Time: clock.Now().Add(5 * time.Minute)},
 				},
-				Status: duckv1beta1.Status{
-					Conditions: duckv1beta1.Conditions{
+				Status: duckv1.Status{
+					Conditions: duckv1.Conditions{
 						{
 							Status:  corev1.ConditionFalse,
 							Reason:  v1beta1.PipelineRunReasonFailed.String(),
@@ -432,8 +432,8 @@ func TestPipelineRunDescribe_failed(t *testing.T) {
 					StartTime:      &metav1.Time{Time: clock.Now()},
 					CompletionTime: &metav1.Time{Time: clock.Now().Add(5 * time.Minute)},
 				},
-				Status: duckv1beta1.Status{
-					Conditions: duckv1beta1.Conditions{
+				Status: duckv1.Status{
+					Conditions: duckv1.Conditions{
 						{
 							Status:  corev1.ConditionFalse,
 							Reason:  "Resource not found",
@@ -548,8 +548,8 @@ func TestPipelineRunDescribe_failed_withoutTRCondition(t *testing.T) {
 					StartTime:      &metav1.Time{Time: clock.Now()},
 					CompletionTime: &metav1.Time{Time: clock.Now().Add(5 * time.Minute)},
 				},
-				Status: duckv1beta1.Status{
-					Conditions: duckv1beta1.Conditions{
+				Status: duckv1.Status{
+					Conditions: duckv1.Conditions{
 						{
 							Status:  corev1.ConditionFalse,
 							Reason:  "Resource not found",
@@ -684,8 +684,8 @@ func TestPipelineRunDescribe_with_resources_taskrun(t *testing.T) {
 					StartTime:      &metav1.Time{Time: clock.Now().Add(2 * time.Minute)},
 					CompletionTime: &metav1.Time{Time: clock.Now().Add(5 * time.Minute)},
 				},
-				Status: duckv1beta1.Status{
-					Conditions: duckv1beta1.Conditions{
+				Status: duckv1.Status{
+					Conditions: duckv1.Conditions{
 						{
 							Status: corev1.ConditionTrue,
 							Type:   apis.ConditionSucceeded,
@@ -736,8 +736,8 @@ func TestPipelineRunDescribe_with_resources_taskrun(t *testing.T) {
 					StartTime:      &metav1.Time{Time: clock.Now()},
 					CompletionTime: &metav1.Time{Time: clock.Now().Add(5 * time.Minute)},
 				},
-				Status: duckv1beta1.Status{
-					Conditions: duckv1beta1.Conditions{
+				Status: duckv1.Status{
+					Conditions: duckv1.Conditions{
 						{
 							Status: corev1.ConditionTrue,
 							Reason: v1beta1.PipelineRunReasonSuccessful.String(),
@@ -929,8 +929,8 @@ func TestPipelineRunDescribe_no_resourceref(t *testing.T) {
 					StartTime:      &metav1.Time{Time: clock.Now().Add(2 * time.Minute)},
 					CompletionTime: &metav1.Time{Time: clock.Now().Add(5 * time.Minute)},
 				},
-				Status: duckv1beta1.Status{
-					Conditions: duckv1beta1.Conditions{
+				Status: duckv1.Status{
+					Conditions: duckv1.Conditions{
 						{
 							Status: corev1.ConditionTrue,
 							Type:   apis.ConditionSucceeded,
@@ -978,8 +978,8 @@ func TestPipelineRunDescribe_no_resourceref(t *testing.T) {
 					StartTime:      &metav1.Time{Time: clock.Now()},
 					CompletionTime: &metav1.Time{Time: clock.Now().Add(5 * time.Minute)},
 				},
-				Status: duckv1beta1.Status{
-					Conditions: duckv1beta1.Conditions{
+				Status: duckv1.Status{
+					Conditions: duckv1.Conditions{
 						{
 							Status: corev1.ConditionTrue,
 							Reason: v1beta1.PipelineRunReasonSuccessful.String(),
@@ -1036,8 +1036,8 @@ func TestPipelineRunDescribe_cancelled_pipelinerun(t *testing.T) {
 					StartTime:      &metav1.Time{Time: clock.Now().Add(2 * time.Minute)},
 					CompletionTime: &metav1.Time{Time: clock.Now().Add(5 * time.Minute)},
 				},
-				Status: duckv1beta1.Status{
-					Conditions: duckv1beta1.Conditions{
+				Status: duckv1.Status{
+					Conditions: duckv1.Conditions{
 						{
 							Status: corev1.ConditionTrue,
 							Type:   apis.ConditionSucceeded,
@@ -1070,8 +1070,8 @@ func TestPipelineRunDescribe_cancelled_pipelinerun(t *testing.T) {
 					StartTime:      &metav1.Time{Time: clock.Now()},
 					CompletionTime: &metav1.Time{Time: clock.Now().Add(5 * time.Minute)},
 				},
-				Status: duckv1beta1.Status{
-					Conditions: duckv1beta1.Conditions{
+				Status: duckv1.Status{
+					Conditions: duckv1.Conditions{
 						{
 							Status:  corev1.ConditionFalse,
 							Reason:  "PipelineRunCancelled",
@@ -1125,8 +1125,8 @@ func TestPipelineRunDescribe_without_tr_start_time(t *testing.T) {
 				Namespace: "ns",
 			},
 			Status: v1beta1.TaskRunStatus{
-				Status: duckv1beta1.Status{
-					Conditions: duckv1beta1.Conditions{
+				Status: duckv1.Status{
+					Conditions: duckv1.Conditions{
 						{
 							Status: corev1.ConditionUnknown,
 							Type:   apis.ConditionReady,
@@ -1158,8 +1158,8 @@ func TestPipelineRunDescribe_without_tr_start_time(t *testing.T) {
 					},
 					StartTime: &metav1.Time{Time: clock.Now()},
 				},
-				Status: duckv1beta1.Status{
-					Conditions: duckv1beta1.Conditions{
+				Status: duckv1.Status{
+					Conditions: duckv1.Conditions{
 						{
 							Status: corev1.ConditionUnknown,
 							Reason: v1beta1.PipelineRunReasonRunning.String(),
@@ -1306,8 +1306,8 @@ func TestPipelineRunDescribeV1beta1(t *testing.T) {
 				},
 			},
 			Status: v1beta1.TaskRunStatus{
-				Status: duckv1beta1.Status{
-					Conditions: duckv1beta1.Conditions{
+				Status: duckv1.Status{
+					Conditions: duckv1.Conditions{
 						{
 							Status: corev1.ConditionFalse,
 							Reason: v1beta1.PipelineRunReasonFailed.String(),
@@ -1332,8 +1332,8 @@ func TestPipelineRunDescribeV1beta1(t *testing.T) {
 				},
 			},
 			Status: v1beta1.TaskRunStatus{
-				Status: duckv1beta1.Status{
-					Conditions: duckv1beta1.Conditions{
+				Status: duckv1.Status{
+					Conditions: duckv1.Conditions{
 						{
 							Status: corev1.ConditionTrue,
 							Reason: v1beta1.PipelineRunReasonSuccessful.String(),
@@ -1390,8 +1390,8 @@ func TestPipelineRunDescribeV1beta1(t *testing.T) {
 				},
 			},
 			Status: v1beta1.PipelineRunStatus{
-				Status: duckv1beta1.Status{
-					Conditions: duckv1beta1.Conditions{
+				Status: duckv1.Status{
+					Conditions: duckv1.Conditions{
 						{
 							Status:  corev1.ConditionTrue,
 							Reason:  v1beta1.PipelineRunReasonSuccessful.String(),
@@ -1463,8 +1463,8 @@ func TestPipelineRunDescribeV1beta1_taskrun_with_no_status(t *testing.T) {
 				},
 			},
 			Status: v1beta1.TaskRunStatus{
-				Status: duckv1beta1.Status{
-					Conditions: duckv1beta1.Conditions{
+				Status: duckv1.Status{
+					Conditions: duckv1.Conditions{
 						{
 							Status: corev1.ConditionFalse,
 							Reason: v1beta1.PipelineRunReasonFailed.String(),
@@ -1533,8 +1533,8 @@ func TestPipelineRunDescribeV1beta1_taskrun_with_no_status(t *testing.T) {
 				},
 			},
 			Status: v1beta1.PipelineRunStatus{
-				Status: duckv1beta1.Status{
-					Conditions: duckv1beta1.Conditions{
+				Status: duckv1.Status{
+					Conditions: duckv1.Conditions{
 						{
 							Status:  corev1.ConditionTrue,
 							Reason:  v1beta1.PipelineRunReasonSuccessful.String(),
@@ -1606,8 +1606,8 @@ func TestPipelineRunDescribe_lastV1beta1(t *testing.T) {
 				},
 			},
 			Status: v1beta1.TaskRunStatus{
-				Status: duckv1beta1.Status{
-					Conditions: duckv1beta1.Conditions{
+				Status: duckv1.Status{
+					Conditions: duckv1.Conditions{
 						{
 							Status: corev1.ConditionFalse,
 							Reason: v1beta1.PipelineRunReasonFailed.String(),
@@ -1632,8 +1632,8 @@ func TestPipelineRunDescribe_lastV1beta1(t *testing.T) {
 				},
 			},
 			Status: v1beta1.TaskRunStatus{
-				Status: duckv1beta1.Status{
-					Conditions: duckv1beta1.Conditions{
+				Status: duckv1.Status{
+					Conditions: duckv1.Conditions{
 						{
 							Status: corev1.ConditionTrue,
 							Reason: v1beta1.PipelineRunReasonSuccessful.String(),
@@ -1690,8 +1690,8 @@ func TestPipelineRunDescribe_lastV1beta1(t *testing.T) {
 				},
 			},
 			Status: v1beta1.PipelineRunStatus{
-				Status: duckv1beta1.Status{
-					Conditions: duckv1beta1.Conditions{
+				Status: duckv1.Status{
+					Conditions: duckv1.Conditions{
 						{
 							Status:  corev1.ConditionTrue,
 							Reason:  v1beta1.PipelineRunReasonSuccessful.String(),
@@ -1756,8 +1756,8 @@ func TestPipelineRunDescribe_lastV1beta1(t *testing.T) {
 				},
 			},
 			Status: v1beta1.PipelineRunStatus{
-				Status: duckv1beta1.Status{
-					Conditions: duckv1beta1.Conditions{
+				Status: duckv1.Status{
+					Conditions: duckv1.Conditions{
 						{
 							Status:  corev1.ConditionTrue,
 							Reason:  v1beta1.PipelineRunReasonSuccessful.String(),
@@ -1830,8 +1830,8 @@ func TestPipelineRunDescribe_v1beta1_with_results(t *testing.T) {
 				},
 			},
 			Status: v1beta1.TaskRunStatus{
-				Status: duckv1beta1.Status{
-					Conditions: duckv1beta1.Conditions{
+				Status: duckv1.Status{
+					Conditions: duckv1.Conditions{
 						{
 							Status: corev1.ConditionFalse,
 							Reason: v1beta1.PipelineRunReasonFailed.String(),
@@ -1875,8 +1875,8 @@ func TestPipelineRunDescribe_v1beta1_with_results(t *testing.T) {
 				},
 			},
 			Status: v1beta1.PipelineRunStatus{
-				Status: duckv1beta1.Status{
-					Conditions: duckv1beta1.Conditions{
+				Status: duckv1.Status{
+					Conditions: duckv1.Conditions{
 						{
 							Status:  corev1.ConditionTrue,
 							Reason:  v1beta1.PipelineRunReasonSuccessful.String(),
@@ -2007,8 +2007,8 @@ func TestPipelineRunDescribe_v1beta1_with_workspaces(t *testing.T) {
 				},
 			},
 			Status: v1beta1.TaskRunStatus{
-				Status: duckv1beta1.Status{
-					Conditions: duckv1beta1.Conditions{
+				Status: duckv1.Status{
+					Conditions: duckv1.Conditions{
 						{
 							Status: corev1.ConditionFalse,
 							Reason: v1beta1.PipelineRunReasonFailed.String(),
@@ -2072,8 +2072,8 @@ func TestPipelineRunDescribe_v1beta1_with_workspaces(t *testing.T) {
 				},
 			},
 			Status: v1beta1.PipelineRunStatus{
-				Status: duckv1beta1.Status{
-					Conditions: duckv1beta1.Conditions{
+				Status: duckv1.Status{
+					Conditions: duckv1.Conditions{
 						{
 							Status:  corev1.ConditionTrue,
 							Reason:  v1beta1.PipelineRunReasonSuccessful.String(),
@@ -2195,8 +2195,8 @@ func TestPipelineRunDescribeWithSkippedTasksV1beta1(t *testing.T) {
 				},
 			},
 			Status: v1beta1.TaskRunStatus{
-				Status: duckv1beta1.Status{
-					Conditions: duckv1beta1.Conditions{
+				Status: duckv1.Status{
+					Conditions: duckv1.Conditions{
 						{
 							Status: corev1.ConditionFalse,
 							Reason: v1beta1.PipelineRunReasonFailed.String(),
@@ -2221,8 +2221,8 @@ func TestPipelineRunDescribeWithSkippedTasksV1beta1(t *testing.T) {
 				},
 			},
 			Status: v1beta1.TaskRunStatus{
-				Status: duckv1beta1.Status{
-					Conditions: duckv1beta1.Conditions{
+				Status: duckv1.Status{
+					Conditions: duckv1.Conditions{
 						{
 							Status: corev1.ConditionTrue,
 							Reason: v1beta1.PipelineRunReasonSuccessful.String(),
@@ -2279,8 +2279,8 @@ func TestPipelineRunDescribeWithSkippedTasksV1beta1(t *testing.T) {
 				},
 			},
 			Status: v1beta1.PipelineRunStatus{
-				Status: duckv1beta1.Status{
-					Conditions: duckv1beta1.Conditions{
+				Status: duckv1.Status{
+					Conditions: duckv1.Conditions{
 						{
 							Status:  corev1.ConditionTrue,
 							Reason:  v1beta1.PipelineRunReasonSuccessful.String(),
@@ -2382,8 +2382,8 @@ func TestPipelineRunDescribe_cancelled_pipelinerun_multiple_taskrun(t *testing.T
 					StartTime:      &metav1.Time{Time: clock.Now().Add(1 * time.Minute)},
 					CompletionTime: &metav1.Time{Time: clock.Now().Add(3 * time.Minute)},
 				},
-				Status: duckv1beta1.Status{
-					Conditions: duckv1beta1.Conditions{
+				Status: duckv1.Status{
+					Conditions: duckv1.Conditions{
 						{
 							Status:  corev1.ConditionFalse,
 							Type:    apis.ConditionSucceeded,
@@ -2404,8 +2404,8 @@ func TestPipelineRunDescribe_cancelled_pipelinerun_multiple_taskrun(t *testing.T
 					StartTime:      &metav1.Time{Time: clock.Now().Add(2 * time.Minute)},
 					CompletionTime: &metav1.Time{Time: clock.Now().Add(4 * time.Minute)},
 				},
-				Status: duckv1beta1.Status{
-					Conditions: duckv1beta1.Conditions{
+				Status: duckv1.Status{
+					Conditions: duckv1.Conditions{
 						{
 							Status:  corev1.ConditionFalse,
 							Type:    apis.ConditionSucceeded,
@@ -2441,8 +2441,8 @@ func TestPipelineRunDescribe_cancelled_pipelinerun_multiple_taskrun(t *testing.T
 					StartTime:      &metav1.Time{Time: clock.Now()},
 					CompletionTime: &metav1.Time{Time: clock.Now().Add(5 * time.Minute)},
 				},
-				Status: duckv1beta1.Status{
-					Conditions: duckv1beta1.Conditions{
+				Status: duckv1.Status{
+					Conditions: duckv1.Conditions{
 						{
 							Status:  corev1.ConditionFalse,
 							Reason:  "PipelineRunCancelled",
@@ -2503,8 +2503,8 @@ func TestPipelineRunDescribeWithTimeouts(t *testing.T) {
 				},
 			},
 			Status: v1beta1.TaskRunStatus{
-				Status: duckv1beta1.Status{
-					Conditions: duckv1beta1.Conditions{
+				Status: duckv1.Status{
+					Conditions: duckv1.Conditions{
 						{
 							Status: corev1.ConditionFalse,
 							Reason: v1beta1.PipelineRunReasonFailed.String(),
@@ -2529,8 +2529,8 @@ func TestPipelineRunDescribeWithTimeouts(t *testing.T) {
 				},
 			},
 			Status: v1beta1.TaskRunStatus{
-				Status: duckv1beta1.Status{
-					Conditions: duckv1beta1.Conditions{
+				Status: duckv1.Status{
+					Conditions: duckv1.Conditions{
 						{
 							Status: corev1.ConditionTrue,
 							Reason: v1beta1.PipelineRunReasonSuccessful.String(),
@@ -2591,8 +2591,8 @@ func TestPipelineRunDescribeWithTimeouts(t *testing.T) {
 				},
 			},
 			Status: v1beta1.PipelineRunStatus{
-				Status: duckv1beta1.Status{
-					Conditions: duckv1beta1.Conditions{
+				Status: duckv1.Status{
+					Conditions: duckv1.Conditions{
 						{
 							Status:  corev1.ConditionTrue,
 							Reason:  v1beta1.PipelineRunReasonSuccessful.String(),

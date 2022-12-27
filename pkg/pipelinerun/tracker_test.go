@@ -26,15 +26,14 @@ import (
 	cb "github.com/tektoncd/cli/pkg/test/builder"
 	"github.com/tektoncd/pipeline/pkg/apis/pipeline/v1beta1"
 	"github.com/tektoncd/pipeline/pkg/client/clientset/versioned"
-	pipelinev1beta1test "github.com/tektoncd/pipeline/test"
+	pipelinetest "github.com/tektoncd/pipeline/test"
 	"github.com/tektoncd/pipeline/test/diff"
 	corev1 "k8s.io/api/core/v1"
-	"k8s.io/apimachinery/pkg/runtime"
-
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/apimachinery/pkg/watch"
 	k8stest "k8s.io/client-go/testing"
-	duckv1beta1 "knative.dev/pkg/apis/duck/v1beta1"
+	duckv1 "knative.dev/pkg/apis/duck/v1"
 )
 
 func TestTracker_pipelinerun_complete(t *testing.T) {
@@ -154,8 +153,8 @@ func TestTracker_pipelinerun_complete(t *testing.T) {
 					Labels:    map[string]string{"tekton.dev/pipeline": prName},
 				},
 				Status: v1beta1.PipelineRunStatus{
-					Status: duckv1beta1.Status{
-						Conditions: duckv1beta1.Conditions{
+					Status: duckv1.Status{
+						Conditions: duckv1.Conditions{
 							{
 								Status: corev1.ConditionUnknown,
 								Reason: v1beta1.PipelineRunReasonRunning.String(),
@@ -183,8 +182,8 @@ func TestTracker_pipelinerun_complete(t *testing.T) {
 
 		pr := &v1beta1.PipelineRun{
 			Status: v1beta1.PipelineRunStatus{
-				Status: duckv1beta1.Status{
-					Conditions: duckv1beta1.Conditions{
+				Status: duckv1.Status{
+					Conditions: duckv1.Conditions{
 						{
 							Status: corev1.ConditionTrue,
 							Reason: v1beta1.PipelineRunReasonSuccessful.String(),
@@ -222,7 +221,7 @@ func TestTracker_pipelinerun_complete(t *testing.T) {
 			}}
 		}
 
-		tc := startPipelineRun(t, pipelinev1beta1test.Data{PipelineRuns: initialPR, TaskRuns: taskruns}, pr.Status)
+		tc := startPipelineRun(t, pipelinetest.Data{PipelineRuns: initialPR, TaskRuns: taskruns}, pr.Status)
 		tracker := NewTracker(pipelineName, ns, tc)
 		if err := actions.InitializeAPIGroupRes(tracker.Tekton.Discovery()); err != nil {
 			t.Errorf("failed to initialize APIGroup Resource")
@@ -244,7 +243,7 @@ func taskRunsFor(onlyTasks []string, tracker *Tracker) []trh.Run {
 	return output
 }
 
-func startPipelineRun(t *testing.T, data pipelinev1beta1test.Data, prStatus ...v1beta1.PipelineRunStatus) versioned.Interface {
+func startPipelineRun(t *testing.T, data pipelinetest.Data, prStatus ...v1beta1.PipelineRunStatus) versioned.Interface {
 	cs, _ := test.SeedV1beta1TestData(t, data)
 
 	// to keep pushing the taskrun over the period(simulate watch)

@@ -31,7 +31,7 @@ import (
 	corev1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/client-go/dynamic"
-	duckv1beta1 "knative.dev/pkg/apis/duck/v1beta1"
+	duckv1 "knative.dev/pkg/apis/duck/v1"
 )
 
 func TestListPipelineRuns_v1beta1(t *testing.T) {
@@ -58,8 +58,8 @@ func TestListPipelineRuns_v1beta1(t *testing.T) {
 				Labels:    map[string]string{"tekton.dev/pipeline": "pipeline"},
 			},
 			Status: v1beta1.PipelineRunStatus{
-				Status: duckv1beta1.Status{
-					Conditions: duckv1beta1.Conditions{
+				Status: duckv1.Status{
+					Conditions: duckv1.Conditions{
 						{
 							Status: corev1.ConditionTrue,
 							Reason: v1beta1.PipelineRunReasonSuccessful.String(),
@@ -79,8 +79,8 @@ func TestListPipelineRuns_v1beta1(t *testing.T) {
 				Labels:    map[string]string{"tekton.dev/pipeline": "random"},
 			},
 			Status: v1beta1.PipelineRunStatus{
-				Status: duckv1beta1.Status{
-					Conditions: duckv1beta1.Conditions{
+				Status: duckv1.Status{
+					Conditions: duckv1.Conditions{
 						{
 							Status: corev1.ConditionTrue,
 							Reason: v1beta1.PipelineRunReasonRunning.String(),
@@ -99,8 +99,8 @@ func TestListPipelineRuns_v1beta1(t *testing.T) {
 				Labels:    map[string]string{"tekton.dev/pipeline": "random", "viva": "galapagos"},
 			},
 			Status: v1beta1.PipelineRunStatus{
-				Status: duckv1beta1.Status{
-					Conditions: duckv1beta1.Conditions{
+				Status: duckv1.Status{
+					Conditions: duckv1.Conditions{
 						{
 							Status: corev1.ConditionFalse,
 							Reason: v1beta1.PipelineRunReasonFailed.String(),

@@ -36,7 +36,7 @@ import (
 	"k8s.io/apimachinery/pkg/watch"
 	"k8s.io/client-go/dynamic"
 	"knative.dev/pkg/apis"
-	duckv1beta1 "knative.dev/pkg/apis/duck/v1beta1"
+	duckv1 "knative.dev/pkg/apis/duck/v1"
 )
 
 const (
@@ -137,8 +137,8 @@ func TestLog_run_found(t *testing.T) {
 				},
 			},
 			Status: v1beta1.PipelineRunStatus{
-				Status: duckv1beta1.Status{
-					Conditions: duckv1beta1.Conditions{
+				Status: duckv1.Status{
+					Conditions: duckv1.Conditions{
 						{
 							Status: corev1.ConditionTrue,
 							Reason: v1beta1.PipelineRunReasonSuccessful.String(),
@@ -187,8 +187,8 @@ func TestLog_run_not_found(t *testing.T) {
 				Labels:    map[string]string{"tekton.dev/pipeline": "output-pipeline-1"},
 			},
 			Status: v1beta1.PipelineRunStatus{
-				Status: duckv1beta1.Status{
-					Conditions: duckv1beta1.Conditions{
+				Status: duckv1.Status{
+					Conditions: duckv1.Conditions{
 						{
 							Status: corev1.ConditionFalse,
 							Reason: v1beta1.PipelineRunReasonSuccessful.String(),
@@ -268,8 +268,8 @@ func TestPipelinerunLogs(t *testing.T) {
 				},
 			},
 			Status: v1beta1.TaskRunStatus{
-				Status: duckv1beta1.Status{
-					Conditions: duckv1beta1.Conditions{
+				Status: duckv1.Status{
+					Conditions: duckv1.Conditions{
 						{
 							Status: corev1.ConditionTrue,
 							Type:   apis.ConditionSucceeded,
@@ -311,8 +311,8 @@ func TestPipelinerunLogs(t *testing.T) {
 				},
 			},
 			Status: v1beta1.TaskRunStatus{
-				Status: duckv1beta1.Status{
-					Conditions: duckv1beta1.Conditions{
+				Status: duckv1.Status{
+					Conditions: duckv1.Conditions{
 						{
 							Status: corev1.ConditionTrue,
 							Type:   apis.ConditionSucceeded,
@@ -377,8 +377,8 @@ func TestPipelinerunLogs(t *testing.T) {
 						},
 					},
 				},
-				Status: duckv1beta1.Status{
-					Conditions: duckv1beta1.Conditions{
+				Status: duckv1.Status{
+					Conditions: duckv1.Conditions{
 						{
 							Status: corev1.ConditionTrue,
 							Reason: v1beta1.PipelineRunReasonSuccessful.String(),
@@ -609,8 +609,8 @@ func TestPipelinerunLog_completed_taskrun_only_v1beta1(t *testing.T) {
 				},
 			},
 			Status: v1beta1.TaskRunStatus{
-				Status: duckv1beta1.Status{
-					Conditions: duckv1beta1.Conditions{
+				Status: duckv1.Status{
+					Conditions: duckv1.Conditions{
 						{
 							Status: corev1.ConditionTrue,
 							Type:   apis.ConditionSucceeded,
@@ -693,8 +693,8 @@ func TestPipelinerunLog_completed_taskrun_only_v1beta1(t *testing.T) {
 				},
 			},
 			Status: v1beta1.PipelineRunStatus{
-				Status: duckv1beta1.Status{
-					Conditions: duckv1beta1.Conditions{
+				Status: duckv1.Status{
+					Conditions: duckv1.Conditions{
 						{
 							Status: corev1.ConditionTrue,
 							Reason: v1beta1.PipelineRunReasonRunning.String(),
@@ -706,7 +706,7 @@ func TestPipelinerunLog_completed_taskrun_only_v1beta1(t *testing.T) {
 						tr1Name: {
 							PipelineTaskName: task1Name,
 							Status: &v1beta1.TaskRunStatus{
-								Status: duckv1beta1.Status{},
+								Status: duckv1.Status{},
 								TaskRunStatusFields: v1beta1.TaskRunStatusFields{
 									StartTime:      &metav1.Time{Time: tr1StartTime},
 									CompletionTime: &metav1.Time{Time: tr1CompletionTime},
@@ -788,8 +788,8 @@ func TestPipelinerunLog_completed_taskrun_only_v1beta1(t *testing.T) {
 				},
 			},
 			Status: v1beta1.TaskRunStatus{
-				Status: duckv1beta1.Status{
-					Conditions: duckv1beta1.Conditions{
+				Status: duckv1.Status{
+					Conditions: duckv1.Conditions{
 						{
 							Status: corev1.ConditionTrue,
 							Type:   apis.ConditionSucceeded,
@@ -835,8 +835,8 @@ func TestPipelinerunLog_completed_taskrun_only_v1beta1(t *testing.T) {
 				},
 			},
 			Status: v1beta1.PipelineRunStatus{
-				Status: duckv1beta1.Status{
-					Conditions: duckv1beta1.Conditions{
+				Status: duckv1.Status{
+					Conditions: duckv1.Conditions{
 						{
 							Status: corev1.ConditionTrue,
 							Reason: v1beta1.PipelineRunReasonRunning.String(),
@@ -848,7 +848,7 @@ func TestPipelinerunLog_completed_taskrun_only_v1beta1(t *testing.T) {
 						"output-taskrun2": {
 							PipelineTaskName: "output-task2",
 							Status: &v1beta1.TaskRunStatus{
-								Status: duckv1beta1.Status{},
+								Status: duckv1.Status{},
 								TaskRunStatusFields: v1beta1.TaskRunStatusFields{
 									StartTime:      &metav1.Time{Time: tr1StartTime},
 									CompletionTime: &metav1.Time{Time: tr1CompletionTime},
@@ -1018,8 +1018,8 @@ func TestPipelinerunLog_follow_mode_v1beta1(t *testing.T) {
 				},
 			},
 			Status: v1beta1.TaskRunStatus{
-				Status: duckv1beta1.Status{
-					Conditions: duckv1beta1.Conditions{
+				Status: duckv1.Status{
+					Conditions: duckv1.Conditions{
 						{
 							Status: corev1.ConditionTrue,
 							Type:   apis.ConditionSucceeded,
@@ -1066,8 +1066,8 @@ func TestPipelinerunLog_follow_mode_v1beta1(t *testing.T) {
 				},
 			},
 			Status: v1beta1.PipelineRunStatus{
-				Status: duckv1beta1.Status{
-					Conditions: duckv1beta1.Conditions{
+				Status: duckv1.Status{
+					Conditions: duckv1.Conditions{
 						{
 							Status: corev1.ConditionTrue,
 							Reason: v1beta1.PipelineRunReasonRunning.String(),
@@ -1208,8 +1208,8 @@ func TestLogs_error_log_v1beta1(t *testing.T) {
 				},
 			},
 			Status: v1beta1.PipelineRunStatus{
-				Status: duckv1beta1.Status{
-					Conditions: duckv1beta1.Conditions{
+				Status: duckv1.Status{
+					Conditions: duckv1.Conditions{
 						{
 							Status:  corev1.ConditionFalse,
 							Message: errMsg,
@@ -1287,8 +1287,8 @@ func TestLogs_nologs_v1beta1(t *testing.T) {
 				},
 			},
 			Status: v1beta1.PipelineRunStatus{
-				Status: duckv1beta1.Status{
-					Conditions: duckv1beta1.Conditions{
+				Status: duckv1.Status{
+					Conditions: duckv1.Conditions{
 						{
 							Status:  corev1.ConditionUnknown,
 							Message: "Running",
@@ -1366,8 +1366,8 @@ func TestLog_run_failed_with_and_without_follow_v1beta1(t *testing.T) {
 				},
 			},
 			Status: v1beta1.PipelineRunStatus{
-				Status: duckv1beta1.Status{
-					Conditions: duckv1beta1.Conditions{
+				Status: duckv1.Status{
+					Conditions: duckv1.Conditions{
 						{
 							Type:    apis.ConditionSucceeded,
 							Status:  corev1.ConditionFalse,
@@ -1454,8 +1454,8 @@ func TestLog_pipelinerun_still_running_v1beta1(t *testing.T) {
 				},
 			},
 			Status: v1beta1.PipelineRunStatus{
-				Status: duckv1beta1.Status{
-					Conditions: duckv1beta1.Conditions{
+				Status: duckv1.Status{
+					Conditions: duckv1.Conditions{
 						{
 							Status:  corev1.ConditionUnknown,
 							Type:    apis.ConditionSucceeded,
@@ -1479,8 +1479,8 @@ func TestLog_pipelinerun_still_running_v1beta1(t *testing.T) {
 				},
 			},
 			Status: v1beta1.PipelineRunStatus{
-				Status: duckv1beta1.Status{
-					Conditions: duckv1beta1.Conditions{
+				Status: duckv1.Status{
+					Conditions: duckv1.Conditions{
 						{
 							Status:  corev1.ConditionUnknown,
 							Type:    apis.ConditionSucceeded,
@@ -1501,8 +1501,8 @@ func TestLog_pipelinerun_still_running_v1beta1(t *testing.T) {
 				},
 			},
 			Status: v1beta1.PipelineRunStatus{
-				Status: duckv1beta1.Status{
-					Conditions: duckv1beta1.Conditions{
+				Status: duckv1.Status{
+					Conditions: duckv1.Conditions{
 						{
 							Status:  corev1.ConditionTrue,
 							Type:    apis.ConditionSucceeded,
@@ -1585,8 +1585,8 @@ func TestLog_pipelinerun_status_done_v1beta1(t *testing.T) {
 				},
 			},
 			Status: v1beta1.PipelineRunStatus{
-				Status: duckv1beta1.Status{
-					Conditions: duckv1beta1.Conditions{
+				Status: duckv1.Status{
+					Conditions: duckv1.Conditions{
 						{
 							Type:    apis.ConditionSucceeded,
 							Status:  corev1.ConditionUnknown,
@@ -1706,8 +1706,8 @@ func TestLog_pipelinerun_last_v1beta1(t *testing.T) {
 				PipelineRunStatusFields: v1beta1.PipelineRunStatusFields{
 					StartTime: &pr2StartTime,
 				},
-				Status: duckv1beta1.Status{
-					Conditions: duckv1beta1.Conditions{
+				Status: duckv1.Status{
+					Conditions: duckv1.Conditions{
 						{
 							Type:    apis.ConditionSucceeded,
 							Status:  corev1.ConditionUnknown,
@@ -1732,8 +1732,8 @@ func TestLog_pipelinerun_last_v1beta1(t *testing.T) {
 				PipelineRunStatusFields: v1beta1.PipelineRunStatusFields{
 					StartTime: &pr1StartTime,
 				},
-				Status: duckv1beta1.Status{
-					Conditions: duckv1beta1.Conditions{
+				Status: duckv1.Status{
+					Conditions: duckv1.Conditions{
 						{
 							Type:    apis.ConditionSucceeded,
 							Status:  corev1.ConditionUnknown,
@@ -1821,8 +1821,8 @@ func TestLog_pipelinerun_only_one_v1beta1(t *testing.T) {
 				},
 			},
 			Status: v1beta1.PipelineRunStatus{
-				Status: duckv1beta1.Status{
-					Conditions: duckv1beta1.Conditions{
+				Status: duckv1.Status{
+					Conditions: duckv1.Conditions{
 						{
 							Type:    apis.ConditionSucceeded,
 							Status:  corev1.ConditionUnknown,
@@ -1903,8 +1903,8 @@ func TestPipelinerunLog_finally_v1beta1(t *testing.T) {
 				},
 			},
 			Status: v1beta1.TaskRunStatus{
-				Status: duckv1beta1.Status{
-					Conditions: duckv1beta1.Conditions{
+				Status: duckv1.Status{
+					Conditions: duckv1.Conditions{
 						{
 							Status: corev1.ConditionTrue,
 							Type:   apis.ConditionSucceeded,
@@ -1939,8 +1939,8 @@ func TestPipelinerunLog_finally_v1beta1(t *testing.T) {
 				},
 			},
 			Status: v1beta1.TaskRunStatus{
-				Status: duckv1beta1.Status{
-					Conditions: duckv1beta1.Conditions{
+				Status: duckv1.Status{
+					Conditions: duckv1.Conditions{
 						{
 							Status: corev1.ConditionTrue,
 							Type:   apis.ConditionSucceeded,
@@ -1979,8 +1979,8 @@ func TestPipelinerunLog_finally_v1beta1(t *testing.T) {
 				},
 			},
 			Status: v1beta1.PipelineRunStatus{
-				Status: duckv1beta1.Status{
-					Conditions: duckv1beta1.Conditions{
+				Status: duckv1.Status{
+					Conditions: duckv1.Conditions{
 						{
 							Status: corev1.ConditionTrue,
 							Reason: v1beta1.PipelineRunReasonRunning.String(),

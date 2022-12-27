@@ -22,7 +22,7 @@ import (
 	corev1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"knative.dev/pkg/apis"
-	duckv1beta1 "knative.dev/pkg/apis/duck/v1beta1"
+	duckv1 "knative.dev/pkg/apis/duck/v1"
 )
 
 func TestPipelineRefExists_Present(t *testing.T) {
@@ -74,8 +74,8 @@ func TestHasFailed_PipelineAndTaskRunFailedMessage(t *testing.T) {
 				Namespace: "ns",
 			},
 			Status: v1beta1.TaskRunStatus{
-				Status: duckv1beta1.Status{
-					Conditions: duckv1beta1.Conditions{
+				Status: duckv1.Status{
+					Conditions: duckv1.Conditions{
 						{
 							Status:  corev1.ConditionFalse,
 							Type:    apis.ConditionSucceeded,
@@ -99,8 +99,8 @@ func TestHasFailed_PipelineAndTaskRunFailedMessage(t *testing.T) {
 						"tr-1": {PipelineTaskName: "t-1", Status: &trs[0].Status},
 					},
 				},
-				Status: duckv1beta1.Status{
-					Conditions: duckv1beta1.Conditions{
+				Status: duckv1.Status{
+					Conditions: duckv1.Conditions{
 						{
 							Status:  corev1.ConditionFalse,
 							Reason:  "PipelineRunCancelled",
@@ -125,8 +125,8 @@ func TestHasFailed_PipelineFailedMessage(t *testing.T) {
 				Namespace: "ns",
 			},
 			Status: v1beta1.TaskRunStatus{
-				Status: duckv1beta1.Status{
-					Conditions: duckv1beta1.Conditions{
+				Status: duckv1.Status{
+					Conditions: duckv1.Conditions{
 						{
 							Status: corev1.ConditionTrue,
 							Type:   apis.ConditionSucceeded,
@@ -149,8 +149,8 @@ func TestHasFailed_PipelineFailedMessage(t *testing.T) {
 						"tr-1": {PipelineTaskName: "t-1", Status: &trs[0].Status},
 					},
 				},
-				Status: duckv1beta1.Status{
-					Conditions: duckv1beta1.Conditions{
+				Status: duckv1.Status{
+					Conditions: duckv1.Conditions{
 						{
 							Status:  corev1.ConditionFalse,
 							Reason:  "PipelineRunCancelled",
