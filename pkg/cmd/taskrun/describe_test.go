@@ -30,7 +30,7 @@ import (
 	corev1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"knative.dev/pkg/apis"
-	duckv1beta1 "knative.dev/pkg/apis/duck/v1beta1"
+	duckv1 "knative.dev/pkg/apis/duck/v1"
 )
 
 var (
@@ -109,8 +109,8 @@ func TestTaskRunDescribe_empty_taskrun(t *testing.T) {
 				Timeout: &metav1.Duration{Duration: 1 * time.Hour},
 			},
 			Status: v1beta1.TaskRunStatus{
-				Status: duckv1beta1.Status{
-					Conditions: duckv1beta1.Conditions{
+				Status: duckv1.Status{
+					Conditions: duckv1.Conditions{
 						{
 							Status: corev1.ConditionTrue,
 							Reason: v1beta1.TaskRunReasonSuccessful.String(),
@@ -184,8 +184,8 @@ func TestTaskRunDescribe_only_taskrun(t *testing.T) {
 						},
 					},
 				},
-				Status: duckv1beta1.Status{
-					Conditions: duckv1beta1.Conditions{
+				Status: duckv1.Status{
+					Conditions: duckv1.Conditions{
 						{
 							Status: corev1.ConditionTrue,
 							Type:   apis.ConditionSucceeded,
@@ -293,8 +293,8 @@ func TestTaskRunDescribe_failed(t *testing.T) {
 				Namespace: "ns",
 			},
 			Status: v1beta1.TaskRunStatus{
-				Status: duckv1beta1.Status{
-					Conditions: duckv1beta1.Conditions{
+				Status: duckv1.Status{
+					Conditions: duckv1.Conditions{
 						{
 							Status:  corev1.ConditionFalse,
 							Reason:  v1beta1.TaskRunReasonFailed.String(),
@@ -363,8 +363,8 @@ func TestTaskRunDescribe_no_taskref(t *testing.T) {
 					StartTime:      &metav1.Time{Time: clock.Now().Add(2 * time.Minute)},
 					CompletionTime: &metav1.Time{Time: clock.Now().Add(5 * time.Minute)},
 				},
-				Status: duckv1beta1.Status{
-					Conditions: duckv1beta1.Conditions{
+				Status: duckv1.Status{
+					Conditions: duckv1.Conditions{
 						{
 							Status:  corev1.ConditionFalse,
 							Reason:  v1beta1.TaskRunReasonFailed.String(),
@@ -473,8 +473,8 @@ func TestTaskRunDescribe_no_resourceref(t *testing.T) {
 						},
 					},
 				},
-				Status: duckv1beta1.Status{
-					Conditions: duckv1beta1.Conditions{
+				Status: duckv1.Status{
+					Conditions: duckv1.Conditions{
 						{
 							Status: corev1.ConditionTrue,
 							Type:   apis.ConditionSucceeded,
@@ -602,8 +602,8 @@ func TestTaskRunDescribe_step_sidecar_status_defaults_and_failures(t *testing.T)
 						},
 					},
 				},
-				Status: duckv1beta1.Status{
-					Conditions: duckv1beta1.Conditions{
+				Status: duckv1.Status{
+					Conditions: duckv1.Conditions{
 						{
 							Status: corev1.ConditionFalse,
 							Reason: v1beta1.TaskRunReasonFailed.String(),
@@ -733,8 +733,8 @@ func TestTaskRunDescribe_step_status_pending_one_sidecar(t *testing.T) {
 						},
 					},
 				},
-				Status: duckv1beta1.Status{
-					Conditions: duckv1beta1.Conditions{
+				Status: duckv1.Status{
+					Conditions: duckv1.Conditions{
 						{
 							Status: corev1.ConditionUnknown,
 							Type:   apis.ConditionSucceeded,
@@ -873,8 +873,8 @@ func TestTaskRunDescribe_step_status_running_multiple_sidecars(t *testing.T) {
 						},
 					},
 				},
-				Status: duckv1beta1.Status{
-					Conditions: duckv1beta1.Conditions{
+				Status: duckv1.Status{
+					Conditions: duckv1.Conditions{
 						{
 							Status: corev1.ConditionUnknown,
 							Type:   apis.ConditionSucceeded,
@@ -978,8 +978,8 @@ func TestTaskRunDescribe_cancel_taskrun(t *testing.T) {
 					StartTime:      &metav1.Time{Time: clock.Now().Add(2 * time.Minute)},
 					CompletionTime: &metav1.Time{Time: clock.Now().Add(5 * time.Minute)},
 				},
-				Status: duckv1beta1.Status{
-					Conditions: duckv1beta1.Conditions{
+				Status: duckv1.Status{
+					Conditions: duckv1.Conditions{
 						{
 							Status:  corev1.ConditionFalse,
 							Reason:  "TaskRunCancelled",
@@ -1135,8 +1135,8 @@ func TestTaskRunDescribe_last(t *testing.T) {
 				},
 			},
 			Status: v1beta1.TaskRunStatus{
-				Status: duckv1beta1.Status{
-					Conditions: duckv1beta1.Conditions{
+				Status: duckv1.Status{
+					Conditions: duckv1.Conditions{
 						{
 							Status: corev1.ConditionFalse,
 							Reason: v1beta1.TaskRunReasonFailed.String(),
@@ -1161,8 +1161,8 @@ func TestTaskRunDescribe_last(t *testing.T) {
 				},
 			},
 			Status: v1beta1.TaskRunStatus{
-				Status: duckv1beta1.Status{
-					Conditions: duckv1beta1.Conditions{
+				Status: duckv1.Status{
+					Conditions: duckv1.Conditions{
 						{
 							Status: corev1.ConditionTrue,
 							Reason: v1beta1.TaskRunReasonSuccessful.String(),
@@ -1220,8 +1220,8 @@ func TestTaskRunDescribe_With_Results(t *testing.T) {
 				},
 			},
 			Status: v1beta1.TaskRunStatus{
-				Status: duckv1beta1.Status{
-					Conditions: duckv1beta1.Conditions{
+				Status: duckv1.Status{
+					Conditions: duckv1.Conditions{
 						{
 							Status: corev1.ConditionFalse,
 							Reason: v1beta1.TaskRunReasonFailed.String(),
@@ -1358,8 +1358,8 @@ func TestTaskRunDescribe_With_Workspaces(t *testing.T) {
 				},
 			},
 			Status: v1beta1.TaskRunStatus{
-				Status: duckv1beta1.Status{
-					Conditions: duckv1beta1.Conditions{
+				Status: duckv1.Status{
+					Conditions: duckv1.Conditions{
 						{
 							Status: corev1.ConditionFalse,
 							Reason: v1beta1.TaskRunReasonFailed.String(),
@@ -1433,8 +1433,8 @@ func TestTaskRunDescribe_WithoutNameIfOnlyOneTaskRunPresent(t *testing.T) {
 				},
 			},
 			Status: v1beta1.TaskRunStatus{
-				Status: duckv1beta1.Status{
-					Conditions: duckv1beta1.Conditions{
+				Status: duckv1.Status{
+					Conditions: duckv1.Conditions{
 						{
 							Status: corev1.ConditionFalse,
 							Reason: v1beta1.TaskRunReasonFailed.String(),

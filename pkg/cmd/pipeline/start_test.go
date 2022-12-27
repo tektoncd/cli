@@ -48,7 +48,7 @@ import (
 	util "k8s.io/apimachinery/pkg/util/runtime"
 	"k8s.io/apimachinery/pkg/watch"
 	k8stest "k8s.io/client-go/testing"
-	duckv1beta1 "knative.dev/pkg/apis/duck/v1beta1"
+	duckv1 "knative.dev/pkg/apis/duck/v1"
 )
 
 func newPipelineClient(objs ...runtime.Object) (*fakepipelineclientset.Clientset, testDynamic.Options) {
@@ -3266,8 +3266,8 @@ func Test_start_pipeline_last(t *testing.T) {
 				Timeout: &metav1.Duration{Duration: timeoutDuration},
 			},
 			Status: v1beta1.PipelineRunStatus{
-				Status: duckv1beta1.Status{
-					Conditions: duckv1beta1.Conditions{
+				Status: duckv1.Status{
+					Conditions: duckv1.Conditions{
 						{
 							Status: corev1.ConditionTrue,
 							Reason: v1beta1.PipelineRunReasonSuccessful.String(),
@@ -3469,8 +3469,8 @@ func Test_start_pipeline_last_override_timeout_deprecated(t *testing.T) {
 				Timeout: &metav1.Duration{Duration: timeoutDuration},
 			},
 			Status: v1beta1.PipelineRunStatus{
-				Status: duckv1beta1.Status{
-					Conditions: duckv1beta1.Conditions{
+				Status: duckv1.Status{
+					Conditions: duckv1.Conditions{
 						{
 							Status: corev1.ConditionTrue,
 							Reason: v1beta1.PipelineRunReasonSuccessful.String(),
@@ -3643,8 +3643,8 @@ func Test_start_pipeline_last_without_res_param(t *testing.T) {
 				},
 			},
 			Status: v1beta1.PipelineRunStatus{
-				Status: duckv1beta1.Status{
-					Conditions: duckv1beta1.Conditions{
+				Status: duckv1.Status{
+					Conditions: duckv1.Conditions{
 						{
 							Status: corev1.ConditionTrue,
 							Reason: v1beta1.PipelineRunReasonSuccessful.String(),
@@ -3835,8 +3835,8 @@ func Test_start_pipeline_last_merge(t *testing.T) {
 				},
 			},
 			Status: v1beta1.PipelineRunStatus{
-				Status: duckv1beta1.Status{
-					Conditions: duckv1beta1.Conditions{
+				Status: duckv1.Status{
+					Conditions: duckv1.Conditions{
 						{
 							Status: corev1.ConditionTrue,
 							Reason: v1beta1.PipelineRunReasonSuccessful.String(),
@@ -4000,8 +4000,8 @@ func Test_start_pipeline_use_pipelinerun(t *testing.T) {
 				},
 			},
 			Status: v1beta1.PipelineRunStatus{
-				Status: duckv1beta1.Status{
-					Conditions: duckv1beta1.Conditions{
+				Status: duckv1.Status{
+					Conditions: duckv1.Conditions{
 						{
 							Status: corev1.ConditionTrue,
 							Reason: v1beta1.PipelineRunReasonSuccessful.String(),
@@ -4032,8 +4032,8 @@ func Test_start_pipeline_use_pipelinerun(t *testing.T) {
 				Timeout: &metav1.Duration{Duration: timeoutDuration},
 			},
 			Status: v1beta1.PipelineRunStatus{
-				Status: duckv1beta1.Status{
-					Conditions: duckv1beta1.Conditions{
+				Status: duckv1.Status{
+					Conditions: duckv1.Conditions{
 						{
 							Status: corev1.ConditionTrue,
 							Reason: v1beta1.PipelineRunReasonSuccessful.String(),
@@ -4183,8 +4183,8 @@ func Test_start_pipeline_use_pipelinerun_cancelled_status(t *testing.T) {
 				Status: v1beta1.PipelineRunSpecStatus(v1beta1.PipelineRunSpecStatusCancelled),
 			},
 			Status: v1beta1.PipelineRunStatus{
-				Status: duckv1beta1.Status{
-					Conditions: duckv1beta1.Conditions{
+				Status: duckv1.Status{
+					Conditions: duckv1.Conditions{
 						{
 							Status: corev1.ConditionFalse,
 							Reason: v1beta1.PipelineRunReasonCancelled.String(),
@@ -4480,8 +4480,8 @@ func Test_start_pipeline_last_generate_name(t *testing.T) {
 				},
 			},
 			Status: v1beta1.PipelineRunStatus{
-				Status: duckv1beta1.Status{
-					Conditions: duckv1beta1.Conditions{
+				Status: duckv1.Status{
+					Conditions: duckv1.Conditions{
 						{
 							Status: corev1.ConditionTrue,
 							Reason: v1beta1.PipelineRunReasonSuccessful.String(),
@@ -4657,8 +4657,8 @@ func Test_start_pipeline_last_with_prefix_name(t *testing.T) {
 				},
 			},
 			Status: v1beta1.PipelineRunStatus{
-				Status: duckv1beta1.Status{
-					Conditions: duckv1beta1.Conditions{
+				Status: duckv1.Status{
+					Conditions: duckv1.Conditions{
 						{
 							Status: corev1.ConditionTrue,
 							Reason: v1beta1.PipelineRunReasonSuccessful.String(),
@@ -4833,8 +4833,8 @@ func Test_start_pipeline_with_prefix_name(t *testing.T) {
 				},
 			},
 			Status: v1beta1.PipelineRunStatus{
-				Status: duckv1beta1.Status{
-					Conditions: duckv1beta1.Conditions{
+				Status: duckv1.Status{
+					Conditions: duckv1.Conditions{
 						{
 							Status: corev1.ConditionTrue,
 							Reason: v1beta1.PipelineRunReasonSuccessful.String(),
@@ -5222,8 +5222,8 @@ func Test_lastPipelineRun(t *testing.T) {
 				},
 			},
 			Status: v1beta1.PipelineRunStatus{
-				Status: duckv1beta1.Status{
-					Conditions: duckv1beta1.Conditions{
+				Status: duckv1.Status{
+					Conditions: duckv1.Conditions{
 						{
 							Status: corev1.ConditionTrue,
 							Reason: v1beta1.PipelineRunReasonRunning.String(),
@@ -5245,8 +5245,8 @@ func Test_lastPipelineRun(t *testing.T) {
 				},
 			},
 			Status: v1beta1.PipelineRunStatus{
-				Status: duckv1beta1.Status{
-					Conditions: duckv1beta1.Conditions{
+				Status: duckv1.Status{
+					Conditions: duckv1.Conditions{
 						{
 							Status: corev1.ConditionFalse,
 							Reason: v1beta1.PipelineRunReasonFailed.String(),
@@ -5268,8 +5268,8 @@ func Test_lastPipelineRun(t *testing.T) {
 				},
 			},
 			Status: v1beta1.PipelineRunStatus{
-				Status: duckv1beta1.Status{
-					Conditions: duckv1beta1.Conditions{
+				Status: duckv1.Status{
+					Conditions: duckv1.Conditions{
 						{
 							Status: corev1.ConditionTrue,
 							Reason: v1beta1.PipelineRunReasonSuccessful.String(),

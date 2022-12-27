@@ -34,7 +34,7 @@ import (
 	corev1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/client-go/dynamic"
-	duckv1beta1 "knative.dev/pkg/apis/duck/v1beta1"
+	duckv1 "knative.dev/pkg/apis/duck/v1"
 )
 
 func init() {
@@ -123,8 +123,8 @@ func TestPipelineLog(t *testing.T) {
 				},
 			},
 			Status: v1beta1.PipelineRunStatus{
-				Status: duckv1beta1.Status{
-					Conditions: duckv1beta1.Conditions{
+				Status: duckv1.Status{
+					Conditions: duckv1.Conditions{
 						{
 							Status: corev1.ConditionTrue,
 							Reason: v1beta1.PipelineRunReasonSuccessful.String(),
@@ -152,8 +152,8 @@ func TestPipelineLog(t *testing.T) {
 				},
 			},
 			Status: v1beta1.PipelineRunStatus{
-				Status: duckv1beta1.Status{
-					Conditions: duckv1beta1.Conditions{
+				Status: duckv1.Status{
+					Conditions: duckv1.Conditions{
 						{
 							Status: corev1.ConditionTrue,
 							Reason: v1beta1.PipelineRunReasonSuccessful.String(),
@@ -320,8 +320,8 @@ func TestPipelineLog_Interactive(t *testing.T) {
 					},
 				},
 				Status: v1beta1.PipelineRunStatus{
-					Status: duckv1beta1.Status{
-						Conditions: duckv1beta1.Conditions{
+					Status: duckv1.Status{
+						Conditions: duckv1.Conditions{
 							{
 								Status: corev1.ConditionTrue,
 								Reason: v1beta1.PipelineRunReasonSuccessful.String(),
@@ -349,8 +349,8 @@ func TestPipelineLog_Interactive(t *testing.T) {
 					},
 				},
 				Status: v1beta1.PipelineRunStatus{
-					Status: duckv1beta1.Status{
-						Conditions: duckv1beta1.Conditions{
+					Status: duckv1.Status{
+						Conditions: duckv1.Conditions{
 							{
 								Status: corev1.ConditionTrue,
 								Reason: v1beta1.PipelineRunReasonSuccessful.String(),
@@ -400,8 +400,8 @@ func TestPipelineLog_Interactive(t *testing.T) {
 					},
 				},
 				Status: v1beta1.PipelineRunStatus{
-					Status: duckv1beta1.Status{
-						Conditions: duckv1beta1.Conditions{
+					Status: duckv1.Status{
+						Conditions: duckv1.Conditions{
 							{
 								Status: corev1.ConditionTrue,
 								Reason: v1beta1.PipelineRunReasonSuccessful.String(),
@@ -720,8 +720,8 @@ func TestLogs_Auto_Select_FirstPipeline(t *testing.T) {
 				},
 			},
 			Status: v1beta1.PipelineRunStatus{
-				Status: duckv1beta1.Status{
-					Conditions: duckv1beta1.Conditions{
+				Status: duckv1.Status{
+					Conditions: duckv1.Conditions{
 						{
 							Status: corev1.ConditionTrue,
 							Reason: v1beta1.PipelineRunReasonSuccessful.String(),

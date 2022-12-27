@@ -29,7 +29,7 @@ import (
 	corev1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/client-go/dynamic"
-	duckv1beta1 "knative.dev/pkg/apis/duck/v1beta1"
+	duckv1 "knative.dev/pkg/apis/duck/v1"
 )
 
 func TestPipelineRunDelete(t *testing.T) {
@@ -68,8 +68,8 @@ func TestPipelineRunDelete(t *testing.T) {
 				},
 			},
 			Status: v1beta1.PipelineRunStatus{
-				Status: duckv1beta1.Status{
-					Conditions: duckv1beta1.Conditions{
+				Status: duckv1.Status{
+					Conditions: duckv1.Conditions{
 						{
 							Status: corev1.ConditionTrue,
 							Reason: v1beta1.PipelineRunReasonSuccessful.String(),
@@ -97,8 +97,8 @@ func TestPipelineRunDelete(t *testing.T) {
 				},
 			},
 			Status: v1beta1.PipelineRunStatus{
-				Status: duckv1beta1.Status{
-					Conditions: duckv1beta1.Conditions{
+				Status: duckv1.Status{
+					Conditions: duckv1.Conditions{
 						{
 							Status: corev1.ConditionTrue,
 							Reason: v1beta1.PipelineRunReasonSuccessful.String(),
@@ -126,8 +126,8 @@ func TestPipelineRunDelete(t *testing.T) {
 				},
 			},
 			Status: v1beta1.PipelineRunStatus{
-				Status: duckv1beta1.Status{
-					Conditions: duckv1beta1.Conditions{
+				Status: duckv1.Status{
+					Conditions: duckv1.Conditions{
 						{
 							Status: corev1.ConditionTrue,
 							Reason: v1beta1.PipelineRunReasonSuccessful.String(),
@@ -170,8 +170,8 @@ func TestPipelineRunDelete(t *testing.T) {
 				},
 			},
 			Status: v1beta1.PipelineRunStatus{
-				Status: duckv1beta1.Status{
-					Conditions: duckv1beta1.Conditions{
+				Status: duckv1.Status{
+					Conditions: duckv1.Conditions{
 						{
 							Status: corev1.ConditionTrue,
 							Reason: v1beta1.PipelineRunReasonPending.String(),
@@ -194,8 +194,8 @@ func TestPipelineRunDelete(t *testing.T) {
 				},
 			},
 			Status: v1beta1.PipelineRunStatus{
-				Status: duckv1beta1.Status{
-					Conditions: duckv1beta1.Conditions{
+				Status: duckv1.Status{
+					Conditions: duckv1.Conditions{
 						{
 							Status: corev1.ConditionTrue,
 							Reason: v1beta1.PipelineRunReasonRunning.String(),
@@ -221,8 +221,8 @@ func TestPipelineRunDelete(t *testing.T) {
 				},
 			},
 			Status: v1beta1.PipelineRunStatus{
-				Status: duckv1beta1.Status{
-					Conditions: duckv1beta1.Conditions{
+				Status: duckv1.Status{
+					Conditions: duckv1.Conditions{
 						{
 							Status: corev1.ConditionUnknown,
 							Reason: v1beta1.PipelineRunReasonPending.String(),

@@ -27,7 +27,7 @@ import (
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/fields"
 	"k8s.io/apimachinery/pkg/runtime"
-	duckv1beta1 "knative.dev/pkg/apis/duck/v1beta1"
+	duckv1 "knative.dev/pkg/apis/duck/v1"
 )
 
 func (r *Reader) readPipelineLog() (<-chan Log, <-chan error, error) {
@@ -234,14 +234,14 @@ func empty(status v1beta1.PipelineRunStatus) bool {
 	return len(status.Conditions) == 0
 }
 
-func hasPipelineRunFailed(prConditions duckv1beta1.Conditions) error {
+func hasPipelineRunFailed(prConditions duckv1.Conditions) error {
 	if len(prConditions) != 0 && prConditions[0].Status == corev1.ConditionFalse {
 		return fmt.Errorf("pipelinerun has failed: %s", prConditions[0].Message)
 	}
 	return nil
 }
 
-func isPipelineRunRunning(prConditions duckv1beta1.Conditions) bool {
+func isPipelineRunRunning(prConditions duckv1.Conditions) bool {
 	if len(prConditions) != 0 && prConditions[0].Status == corev1.ConditionUnknown {
 		return true
 	}

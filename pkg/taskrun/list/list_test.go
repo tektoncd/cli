@@ -26,7 +26,7 @@ import (
 	pipelinetest "github.com/tektoncd/pipeline/test"
 	corev1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
-	duckv1beta1 "knative.dev/pkg/apis/duck/v1beta1"
+	duckv1 "knative.dev/pkg/apis/duck/v1"
 )
 
 func TestPipelinesList_GetAllTaskRuns(t *testing.T) {
@@ -48,8 +48,8 @@ func TestPipelinesList_GetAllTaskRuns(t *testing.T) {
 				},
 			},
 			Status: v1beta1.TaskRunStatus{
-				Status: duckv1beta1.Status{
-					Conditions: duckv1beta1.Conditions{
+				Status: duckv1.Status{
+					Conditions: duckv1.Conditions{
 						{
 							Status: corev1.ConditionTrue,
 							Reason: v1beta1.TaskRunReasonSuccessful.String(),
@@ -74,8 +74,8 @@ func TestPipelinesList_GetAllTaskRuns(t *testing.T) {
 				},
 			},
 			Status: v1beta1.TaskRunStatus{
-				Status: duckv1beta1.Status{
-					Conditions: duckv1beta1.Conditions{
+				Status: duckv1.Status{
+					Conditions: duckv1.Conditions{
 						{
 							Status: corev1.ConditionTrue,
 							Reason: v1beta1.TaskRunReasonSuccessful.String(),
