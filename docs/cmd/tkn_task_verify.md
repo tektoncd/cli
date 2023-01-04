@@ -23,7 +23,7 @@ tkn task verify
 Verify a Task signed.yaml:
 	tkn Task verify signed.yaml -K=cosign.pub
 or using kms
-	tkn Task verify signed.yaml -K=gcpkms://projects/PROJECTID/locations/LOCATION/keyRings/KEYRING/cryptoKeys/KEY/cryptoKeyVersions/VERSION
+	tkn Task verify signed.yaml -m=gcpkms://projects/PROJECTID/locations/LOCATION/keyRings/KEYRING/cryptoKeys/KEY/cryptoKeyVersions/VERSION
 
 ### Options
 

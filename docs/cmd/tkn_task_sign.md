@@ -23,7 +23,7 @@ tkn task sign
 Sign a Task task.yaml:
 	tkn task sign task.yaml -K=cosign.key -f=signed.yaml
 or using kms
-	tkn task sign task.yaml -K=gcpkms://projects/PROJECTID/locations/LOCATION/keyRings/KEYRING/cryptoKeys/KEY/cryptoKeyVersions/VERSION -f=signed.yaml
+	tkn task sign task.yaml -m=gcpkms://projects/PROJECTID/locations/LOCATION/keyRings/KEYRING/cryptoKeys/KEY/cryptoKeyVersions/VERSION -f=signed.yaml
 
 ### Options
 

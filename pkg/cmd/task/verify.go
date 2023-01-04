@@ -38,7 +38,7 @@ func verifyCommand(p cli.Params) *cobra.Command {
 	eg := `Verify a Task signed.yaml:
 	tkn Task verify signed.yaml -K=cosign.pub
 or using kms
-	tkn Task verify signed.yaml -K=gcpkms://projects/PROJECTID/locations/LOCATION/keyRings/KEYRING/cryptoKeys/KEY/cryptoKeyVersions/VERSION`
+	tkn Task verify signed.yaml -m=gcpkms://projects/PROJECTID/locations/LOCATION/keyRings/KEYRING/cryptoKeys/KEY/cryptoKeyVersions/VERSION`
 	long := `
 	Verify the Tekton Task with user provided private key file or KMS reference. Key files support ecdsa, ed25519, rsa.
 	For KMS:

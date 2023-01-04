@@ -38,7 +38,7 @@ func verifyCommand(p cli.Params) *cobra.Command {
 	eg := `Verify a Pipeline signed.yaml:
 	tkn pipeline verify signed.yaml -K=cosign.pub
 or using kms
-	tkn pipeline verify signed.yaml -K=gcpkms://projects/PROJECTID/locations/LOCATION/keyRings/KEYRING/cryptoKeys/KEY/cryptoKeyVersions/VERSION`
+	tkn pipeline verify signed.yaml -m=gcpkms://projects/PROJECTID/locations/LOCATION/keyRings/KEYRING/cryptoKeys/KEY/cryptoKeyVersions/VERSION`
 	long := `
 	Verify the Tekton Pipeline with user provided private key file or KMS reference. Key files support ecdsa, ed25519, rsa.
 	For KMS:

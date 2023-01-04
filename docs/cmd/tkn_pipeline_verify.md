@@ -23,7 +23,7 @@ tkn pipeline verify
 Verify a Pipeline signed.yaml:
 	tkn pipeline verify signed.yaml -K=cosign.pub
 or using kms
-	tkn pipeline verify signed.yaml -K=gcpkms://projects/PROJECTID/locations/LOCATION/keyRings/KEYRING/cryptoKeys/KEY/cryptoKeyVersions/VERSION
+	tkn pipeline verify signed.yaml -m=gcpkms://projects/PROJECTID/locations/LOCATION/keyRings/KEYRING/cryptoKeys/KEY/cryptoKeyVersions/VERSION
 
 ### Options
 
