@@ -23,7 +23,7 @@ tkn pipeline sign
 Sign a Pipeline pipeline.yaml:
 	tkn pipeline sign pipeline.yaml -K=cosign.key -f=signed.yaml
 or using kms
-	tkn pipeline sign pipeline.yaml -K=gcpkms://projects/PROJECTID/locations/LOCATION/keyRings/KEYRING/cryptoKeys/KEY/cryptoKeyVersions/VERSION -f=signed.yaml
+	tkn pipeline sign pipeline.yaml -m=gcpkms://projects/PROJECTID/locations/LOCATION/keyRings/KEYRING/cryptoKeys/KEY/cryptoKeyVersions/VERSION -f=signed.yaml
 
 ### Options
 

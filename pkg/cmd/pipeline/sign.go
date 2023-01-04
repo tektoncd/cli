@@ -39,7 +39,7 @@ func signCommand(p cli.Params) *cobra.Command {
 	eg := `Sign a Pipeline pipeline.yaml:
 	tkn pipeline sign pipeline.yaml -K=cosign.key -f=signed.yaml
 or using kms
-	tkn pipeline sign pipeline.yaml -K=gcpkms://projects/PROJECTID/locations/LOCATION/keyRings/KEYRING/cryptoKeys/KEY/cryptoKeyVersions/VERSION -f=signed.yaml`
+	tkn pipeline sign pipeline.yaml -m=gcpkms://projects/PROJECTID/locations/LOCATION/keyRings/KEYRING/cryptoKeys/KEY/cryptoKeyVersions/VERSION -f=signed.yaml`
 	long := `
 	Sign the Tekton Pipeline with user provided private key file or KMS reference. Key files support ecdsa, ed25519, rsa.
 	For KMS:
