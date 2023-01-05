@@ -14,23 +14,32 @@ limitations under the License.
 package simple
 
 import (
+	"context"
 	"fmt"
 
 	"github.com/sigstore/sigstore/pkg/signature/payload"
 	"github.com/tektoncd/chains/pkg/chains/formats"
+	"github.com/tektoncd/chains/pkg/config"
 
 	"github.com/google/go-containerregistry/pkg/name"
 )
 
+const (
+	PayloadTypeSimpleSigning = formats.PayloadTypeSimpleSigning
+)
+
+func init() {
+	formats.RegisterPayloader(PayloadTypeSimpleSigning, NewFormatter)
+}
+
 // SimpleSigning is a formatter that uses the RedHat simple signing format
 // https://www.redhat.com/en/blog/container-image-signing
-type SimpleSigning struct {
-}
+type SimpleSigning struct{}
 
 type SimpleContainerImage payload.SimpleContainerImage
 
 // CreatePayload implements the Payloader interface.
-func (i *SimpleSigning) CreatePayload(obj interface{}) (interface{}, error) {
+func (i *SimpleSigning) CreatePayload(ctx context.Context, obj interface{}) (interface{}, error) {
 	switch v := obj.(type) {
 	case name.Digest:
 		format := NewSimpleStruct(v)
@@ -44,7 +53,7 @@ func (i *SimpleSigning) Wrap() bool {
 	return false
 }
 
-func NewFormatter() (formats.Payloader, error) {
+func NewFormatter(config.Config) (formats.Payloader, error) {
 	return &SimpleSigning{}, nil
 }
 
@@ -57,6 +66,6 @@ func (i SimpleContainerImage) ImageName() string {
 	return fmt.Sprintf("%s@%s", i.Critical.Identity.DockerReference, i.Critical.Image.DockerManifestDigest)
 }
 
-func (i *SimpleSigning) Type() formats.PayloadType {
+func (i *SimpleSigning) Type() config.PayloadType {
 	return formats.PayloadTypeSimpleSigning
 }

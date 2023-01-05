@@ -16,7 +16,10 @@ limitations under the License.
 
 package config
 
-import "github.com/tektoncd/chains/pkg/chains/formats"
+// PayloadType specifies the format to store payload in.
+// - For OCI artifact, Chains only supports `simplesigning` format. https://www.redhat.com/en/blog/container-image-signing
+// - For Tekton artifacts, Chains supports `tekton` and `in-toto` format. https://slsa.dev/provenance/v0.2
+type PayloadType string
 
 // StorageOpts contains additional information required when storing signatures
 type StorageOpts struct {
@@ -43,7 +46,5 @@ type StorageOpts struct {
 	Chain string
 
 	// PayloadFormat is the format to store payload in.
-	// - For OCI artifact, Chains only supports `simplesigning` format. https://www.redhat.com/en/blog/container-image-signing
-	// - For TaskRun artifact, Chains supports `tekton` and `in-toto` format. https://slsa.dev/provenance/v0.2
-	PayloadFormat formats.PayloadType
+	PayloadFormat PayloadType
 }

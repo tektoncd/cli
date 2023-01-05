@@ -13,20 +13,45 @@ limitations under the License.
 
 package formats
 
+import (
+	"context"
+	"fmt"
+
+	"github.com/tektoncd/chains/pkg/config"
+)
+
 // Payloader is an interface to generate a chains Payload from a TaskRun
 type Payloader interface {
-	CreatePayload(obj interface{}) (interface{}, error)
-	Type() PayloadType
+	CreatePayload(ctx context.Context, obj interface{}) (interface{}, error)
+	Type() config.PayloadType
 	Wrap() bool
 }
 
-type PayloadType string
-
-// If you update this, remember to update AllFormatters
 const (
-	PayloadTypeTekton        PayloadType = "tekton"
-	PayloadTypeSimpleSigning PayloadType = "simplesigning"
-	PayloadTypeInTotoIte6    PayloadType = "in-toto"
+	PayloadTypeTekton        config.PayloadType = "tekton"
+	PayloadTypeSimpleSigning config.PayloadType = "simplesigning"
+	PayloadTypeInTotoIte6    config.PayloadType = "in-toto"
 )
 
-var AllFormatters = []PayloadType{PayloadTypeTekton, PayloadTypeSimpleSigning, PayloadTypeInTotoIte6}
+var (
+	payloaderMap = map[config.PayloadType]PayloaderInit{}
+)
+
+// PayloaderInit initializes a new Payloader instance for the given config.
+type PayloaderInit func(config.Config) (Payloader, error)
+
+// RegisterPayloader registers the PayloaderInit func for the given type.
+// This is suitable to be calling during init() to register Payloader types.
+func RegisterPayloader(key config.PayloadType, init PayloaderInit) {
+	payloaderMap[key] = init
+}
+
+// GetPayloader returns a new Payloader of the given type.
+// If no Payloader is registered for the type, an error is returned.
+func GetPayloader(key config.PayloadType, cfg config.Config) (Payloader, error) {
+	fn, ok := payloaderMap[key]
+	if !ok {
+		return nil, fmt.Errorf("payloader %q not found", key)
+	}
+	return fn(cfg)
+}
