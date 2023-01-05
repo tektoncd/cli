@@ -22,9 +22,6 @@ import (
 	"github.com/hashicorp/go-multierror"
 	"github.com/tektoncd/chains/pkg/artifacts"
 	"github.com/tektoncd/chains/pkg/chains/formats"
-	"github.com/tektoncd/chains/pkg/chains/formats/intotoite6"
-	"github.com/tektoncd/chains/pkg/chains/formats/simple"
-	"github.com/tektoncd/chains/pkg/chains/formats/tekton"
 	"github.com/tektoncd/chains/pkg/chains/objects"
 	"github.com/tektoncd/chains/pkg/chains/signing"
 	"github.com/tektoncd/chains/pkg/chains/signing/kms"
@@ -42,11 +39,6 @@ type Signer interface {
 }
 
 type ObjectSigner struct {
-	// Formatters: format payload
-	// The keys are the names of different formatters {tekton, in-toto, simplesigning}. The first two are for TaskRun artifact, and simplesigning is for OCI artifact.
-	// The values are actual `Payloader` interfaces that can generate payload in different format from taskrun.
-	Formatters map[formats.PayloadType]formats.Payloader
-
 	// Backends: store payload and signature
 	// The keys are different storage option's name. {docdb, gcs, grafeas, oci, tekton}
 	// The values are the actual storage backends that will be used to store and retrieve provenance.
@@ -87,35 +79,6 @@ func allSigners(ctx context.Context, sp string, cfg config.Config, l *zap.Sugare
 			l.Panicf("unsupported signer: %s", s)
 		}
 	}
-	return all
-}
-
-func AllFormatters(cfg config.Config, l *zap.SugaredLogger) map[formats.PayloadType]formats.Payloader {
-	all := map[formats.PayloadType]formats.Payloader{}
-
-	for _, f := range formats.AllFormatters {
-		switch f {
-		case formats.PayloadTypeTekton:
-			formatter, err := tekton.NewFormatter()
-			if err != nil {
-				l.Warnf("error configuring tekton formatter: %s", err)
-			}
-			all[f] = formatter
-		case formats.PayloadTypeSimpleSigning:
-			formatter, err := simple.NewFormatter()
-			if err != nil {
-				l.Warnf("error configuring simplesigning formatter: %s", err)
-			}
-			all[f] = formatter
-		case formats.PayloadTypeInTotoIte6:
-			formatter, err := intotoite6.NewFormatter(cfg, l)
-			if err != nil {
-				l.Warnf("error configuring intoto formatter: %s", err)
-			}
-			all[f] = formatter
-		}
-	}
-
 	return all
 }
 
@@ -162,9 +125,8 @@ func (o *ObjectSigner) Sign(ctx context.Context, tektonObj objects.TektonObject)
 		}
 		payloadFormat := signableType.PayloadFormat(cfg)
 		// Find the right payload format and format the object
-		payloader, ok := o.Formatters[payloadFormat]
-
-		if !ok {
+		payloader, err := formats.GetPayloader(payloadFormat, cfg)
+		if err != nil {
 			logger.Warnf("Format %s configured for %s: %v was not found", payloadFormat, tektonObj.GetGVK(), signableType.Type())
 			continue
 		}
@@ -176,7 +138,7 @@ func (o *ObjectSigner) Sign(ctx context.Context, tektonObj objects.TektonObject)
 		// Go through each object one at a time.
 		for _, obj := range objects {
 
-			payload, err := payloader.CreatePayload(obj)
+			payload, err := payloader.CreatePayload(ctx, obj)
 			if err != nil {
 				logger.Error(err)
 				continue
