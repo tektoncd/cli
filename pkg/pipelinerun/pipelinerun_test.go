@@ -641,6 +641,10 @@ status:
 func TestPipelineRunCreate(t *testing.T) {
 	version := "v1beta1"
 	prdata := v1beta1.PipelineRun{
+		TypeMeta: metav1.TypeMeta{
+			Kind:       "PipelineRun",
+			APIVersion: version,
+		},
 		ObjectMeta: metav1.ObjectMeta{
 			Name:      "pipelinerun1",
 			Namespace: "ns",

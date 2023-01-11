@@ -266,6 +266,10 @@ func TestTask_Create(t *testing.T) {
 	clock := clockwork.NewFakeClock()
 	tdata := []*v1beta1.Task{
 		{
+			TypeMeta: metav1.TypeMeta{
+				Kind:       "Task",
+				APIVersion: version,
+			},
 			ObjectMeta: metav1.ObjectMeta{
 				Name:      "task",
 				Namespace: "ns",

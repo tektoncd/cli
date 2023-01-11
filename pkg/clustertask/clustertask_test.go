@@ -251,6 +251,10 @@ func TestClusterTask_Create(t *testing.T) {
 	clock := clockwork.NewFakeClock()
 	ctdata := []*v1beta1.ClusterTask{
 		{
+			TypeMeta: metav1.TypeMeta{
+				Kind:       "clustertask",
+				APIVersion: version,
+			},
 			ObjectMeta: metav1.ObjectMeta{
 				Name: "clustertask",
 			},

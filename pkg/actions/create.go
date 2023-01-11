@@ -25,7 +25,7 @@ import (
 
 // Create is used to take a partial resource and an unstructured object and create it in the cluster using the dynamic client.
 func Create(gr schema.GroupVersionResource, clients *cli.Clients, object *unstructured.Unstructured, ns string, op metav1.CreateOptions) (*unstructured.Unstructured, error) {
-	gvr, err := GetGroupVersionResource(gr, clients.Tekton.Discovery())
+	gvr, err := getGVRWithObject(object, gr)
 	if err != nil {
 		return nil, err
 	}
@@ -34,4 +34,12 @@ func Create(gr schema.GroupVersionResource, clients *cli.Clients, object *unstru
 		return nil, err
 	}
 	return obj, nil
+}
+
+func getGVRWithObject(object *unstructured.Unstructured, gr schema.GroupVersionResource) (*schema.GroupVersionResource, error) {
+	gv, err := schema.ParseGroupVersion(object.GetAPIVersion())
+	if err == nil {
+		gr.Version = gv.Version
+	}
+	return &gr, nil
 }
