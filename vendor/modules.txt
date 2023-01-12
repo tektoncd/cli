@@ -1374,7 +1374,7 @@ github.com/tektoncd/chains/pkg/chains/storage/pubsub
 github.com/tektoncd/chains/pkg/chains/storage/tekton
 github.com/tektoncd/chains/pkg/config
 github.com/tektoncd/chains/pkg/patch
-# github.com/tektoncd/hub v1.11.1
+# github.com/tektoncd/hub v1.11.2
 ## explicit; go 1.17
 github.com/tektoncd/hub/api/pkg/cli/app
 github.com/tektoncd/hub/api/pkg/cli/cmd
