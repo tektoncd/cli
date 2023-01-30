@@ -124,7 +124,12 @@ func (mc *metricsConfig) record(ctx context.Context, mss []stats.Measurement, ro
 
 func createMetricsConfig(_ context.Context, ops ExporterOptions) (*metricsConfig, error) {
 	var mc metricsConfig
+
+	if ops.Domain == "" {
+		return nil, errors.New("metrics domain cannot be empty")
+	}
 	mc.domain = ops.Domain
+
 	if ops.Component == "" {
 		return nil, errors.New("metrics component name cannot be empty")
 	}
@@ -154,9 +159,6 @@ func createMetricsConfig(_ context.Context, ops ExporterOptions) (*metricsConfig
 
 	switch mc.backendDestination {
 	case openCensus:
-		if ops.Domain == "" {
-			return nil, errors.New("metrics domain cannot be empty")
-		}
 		mc.collectorAddress = ops.ConfigMap[collectorAddressKey]
 		if isSecure := ops.ConfigMap[collectorSecureKey]; isSecure != "" {
 			var err error
@@ -219,7 +221,22 @@ func Domain() string {
 	if domain := os.Getenv(DomainEnv); domain != "" {
 		return domain
 	}
-	return ""
+
+	panic(fmt.Sprintf(`The environment variable %q is not set
+
+If this is a process running on Kubernetes, then it should be specifying
+this via:
+
+  env:
+  - name: %s
+    value: knative.dev/some-repository
+
+If this is a Go unit test consuming metric.Domain() then it should add the
+following import:
+
+import (
+	_ "knative.dev/pkg/metrics/testing"
+)`, DomainEnv, DomainEnv))
 }
 
 // prometheusPort returns the TCP port number configured via the environment
