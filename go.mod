@@ -13,7 +13,7 @@ require (
 	github.com/creack/pty v1.1.18
 	github.com/docker/cli v20.10.23+incompatible
 	github.com/docker/docker v20.10.23+incompatible
-	github.com/fatih/color v1.14.0
+	github.com/fatih/color v1.14.1
 	github.com/ghodss/yaml v1.0.0
 	github.com/golang/protobuf v1.5.2
 	github.com/golang/snappy v0.0.4
