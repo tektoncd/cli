@@ -106,7 +106,6 @@ or
 }
 
 func deletePipelines(opts *options.DeleteOptions, s *cli.Stream, p cli.Params, pNames []string) error {
-	pipelineGroupResource := schema.GroupVersionResource{Group: "tekton.dev", Resource: "pipelines"}
 	pipelinerunGroupResource := schema.GroupVersionResource{Group: "tekton.dev", Resource: "pipelineruns"}
 
 	cs, err := p.Clients()
@@ -118,7 +117,7 @@ func deletePipelines(opts *options.DeleteOptions, s *cli.Stream, p cli.Params, p
 	})
 	switch {
 	case opts.DeleteAllNs:
-		pNames, err = allPipelineNames(cs, p.Namespace())
+		pNames, err = pipeline.GetAllPipelineNames(pipelineGroupResource, cs, p.Namespace())
 		if err != nil {
 			return err
 		}
@@ -157,16 +156,4 @@ func pipelineRunLister(cs *cli.Clients, ns string) func(string) ([]string, error
 		}
 		return names, nil
 	}
-}
-
-func allPipelineNames(cs *cli.Clients, ns string) ([]string, error) {
-	ps, err := pipeline.List(cs, metav1.ListOptions{}, ns)
-	if err != nil {
-		return nil, err
-	}
-	var names []string
-	for _, p := range ps.Items {
-		names = append(names, p.Name)
-	}
-	return names, nil
 }

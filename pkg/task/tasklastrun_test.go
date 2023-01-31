@@ -150,7 +150,7 @@ func TestTaskrunLatest_two_run(t *testing.T) {
 	cs.Pipeline.Resources = cb.APIResourceList(versionA1, []string{"task", "taskrun"})
 	tdc := testDynamic.Options{}
 	dc, _ := tdc.Client(
-		cb.UnstructuredT(tasks[0], versionA1),
+		cb.UnstructuredV1beta1T(tasks[0], versionA1),
 		cb.UnstructuredV1beta1TR(taskruns[0], versionA1),
 		cb.UnstructuredV1beta1TR(taskruns[1], versionA1),
 		cb.UnstructuredV1beta1TR(taskruns[2], versionA1),
@@ -188,7 +188,7 @@ func TestTaskrunLatest_no_run(t *testing.T) {
 	cs.Pipeline.Resources = cb.APIResourceList(versionA1, []string{"task", "taskrun"})
 	tdc := testDynamic.Options{}
 	dc, _ := tdc.Client(
-		cb.UnstructuredT(tasks[0], versionA1))
+		cb.UnstructuredV1beta1T(tasks[0], versionA1))
 	p := &test.Params{Tekton: cs.Pipeline, Clock: clock, Dynamic: dc}
 	client, err := p.Clients()
 	if err != nil {

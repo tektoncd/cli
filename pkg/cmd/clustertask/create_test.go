@@ -41,7 +41,7 @@ func TestCreate_TaskNotExist(t *testing.T) {
 	version := "v1beta1"
 	tdc := testDynamic.Options{}
 	dynamic, err := tdc.Client(
-		cb.UnstructuredT(tasks[0], version),
+		cb.UnstructuredV1beta1T(tasks[0], version),
 	)
 	if err != nil {
 		t.Errorf("unable to create dynamic client: %v", err)
@@ -78,7 +78,7 @@ func TestCreate(t *testing.T) {
 	version := "v1beta1"
 	tdc := testDynamic.Options{}
 	dynamic, err := tdc.Client(
-		cb.UnstructuredT(tasks[0], version),
+		cb.UnstructuredV1beta1T(tasks[0], version),
 	)
 	if err != nil {
 		t.Errorf("unable to create dynamic client: %v", err)
@@ -123,7 +123,7 @@ func TestCreate_InNamespace(t *testing.T) {
 	version := "v1beta1"
 	tdc := testDynamic.Options{}
 	dynamic, err := tdc.Client(
-		cb.UnstructuredT(tasks[0], version),
+		cb.UnstructuredV1beta1T(tasks[0], version),
 	)
 	if err != nil {
 		t.Errorf("unable to create dynamic client: %v", err)
@@ -158,7 +158,7 @@ func TestCreate_WithoutFlag(t *testing.T) {
 	version := "v1beta1"
 	tdc := testDynamic.Options{}
 	dynamic, err := tdc.Client(
-		cb.UnstructuredT(tasks[0], version),
+		cb.UnstructuredV1beta1T(tasks[0], version),
 	)
 	if err != nil {
 		t.Errorf("unable to create dynamic client: %v", err)

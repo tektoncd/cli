@@ -30,6 +30,11 @@ func SeedV1beta1TestData(t *testing.T, d pipelinetest.Data) (pipelinetest.Client
 	return pipelinetest.SeedTestData(t, ctx, d)
 }
 
+func SeedTestData(t *testing.T, d Data) (Clients, Informers) {
+	ctx, _ := ttesting.SetupFakeContext(t)
+	return seedTestData(t, ctx, d)
+}
+
 func SeedTestResources(t *testing.T, d triggerstest.Resources) triggerstest.Clients {
 	ctx, _ := triggerstest.SetupFakeContext(t)
 	return triggerstest.SeedResources(t, ctx, d)

@@ -900,7 +900,7 @@ func TestPipelinerunLog_completed_taskrun_only_v1beta1(t *testing.T) {
 	cs2.Pipeline.Resources = cb.APIResourceList(version, []string{"task", "taskrun", "pipeline", "pipelinerun"})
 	tdc2 := testDynamic.Options{}
 	dc2, err := tdc2.Client(
-		cb.UnstructuredT(tdata2[0], version),
+		cb.UnstructuredV1beta1T(tdata2[0], version),
 		cb.UnstructuredV1beta1TR(trdata2[0], version),
 		cb.UnstructuredV1beta1PR(prdata2[0], version),
 	)
@@ -1243,7 +1243,7 @@ func TestLogs_error_log_v1beta1(t *testing.T) {
 	cs.Pipeline.Resources = cb.APIResourceList(version, []string{"task", "pipeline", "pipelinerun"})
 	tdc := testDynamic.Options{}
 	dc, err := tdc.Client(
-		cb.UnstructuredT(ts[0], version),
+		cb.UnstructuredV1beta1T(ts[0], version),
 		cb.UnstructuredV1beta1P(ps[0], version),
 		cb.UnstructuredV1beta1PR(prs[0], version),
 	)

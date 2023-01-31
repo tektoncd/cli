@@ -15,11 +15,48 @@
 package builder
 
 import (
+	v1 "github.com/tektoncd/pipeline/pkg/apis/pipeline/v1"
 	"github.com/tektoncd/pipeline/pkg/apis/pipeline/v1beta1"
 	triggersv1beta1 "github.com/tektoncd/triggers/pkg/apis/triggers/v1beta1"
 	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
 	"k8s.io/apimachinery/pkg/runtime"
 )
+
+func UnstructuredP(pipeline *v1.Pipeline, version string) *unstructured.Unstructured {
+	pipeline.APIVersion = "tekton.dev/" + version
+	pipeline.Kind = "pipeline"
+	object, _ := runtime.DefaultUnstructuredConverter.ToUnstructured(pipeline)
+	return &unstructured.Unstructured{
+		Object: object,
+	}
+}
+
+func UnstructuredPR(pipelinerun *v1.PipelineRun, version string) *unstructured.Unstructured {
+	pipelinerun.APIVersion = "tekton.dev/" + version
+	pipelinerun.Kind = "pipelinerun"
+	object, _ := runtime.DefaultUnstructuredConverter.ToUnstructured(pipelinerun)
+	return &unstructured.Unstructured{
+		Object: object,
+	}
+}
+
+func UnstructuredTR(taskrun *v1.TaskRun, version string) *unstructured.Unstructured {
+	taskrun.APIVersion = "tekton.dev/" + version
+	taskrun.Kind = "taskrun"
+	object, _ := runtime.DefaultUnstructuredConverter.ToUnstructured(taskrun)
+	return &unstructured.Unstructured{
+		Object: object,
+	}
+}
+
+func UnstructuredT(task *v1.Task, version string) *unstructured.Unstructured {
+	task.APIVersion = "tekton.dev/" + version
+	task.Kind = "task"
+	object, _ := runtime.DefaultUnstructuredConverter.ToUnstructured(task)
+	return &unstructured.Unstructured{
+		Object: object,
+	}
+}
 
 func UnstructuredV1beta1P(pipeline *v1beta1.Pipeline, version string) *unstructured.Unstructured {
 	pipeline.APIVersion = "tekton.dev/" + version
@@ -48,7 +85,7 @@ func UnstructuredV1beta1TR(taskrun *v1beta1.TaskRun, version string) *unstructur
 	}
 }
 
-func UnstructuredT(task *v1beta1.Task, version string) *unstructured.Unstructured {
+func UnstructuredV1beta1T(task *v1beta1.Task, version string) *unstructured.Unstructured {
 	task.APIVersion = "tekton.dev/" + version
 	task.Kind = "task"
 	object, _ := runtime.DefaultUnstructuredConverter.ToUnstructured(task)

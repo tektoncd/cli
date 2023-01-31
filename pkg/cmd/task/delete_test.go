@@ -152,8 +152,8 @@ func TestTaskDelete(t *testing.T) {
 		cs.Pipeline.Resources = cb.APIResourceList(version, []string{"task", "taskrun"})
 		tdc := testDynamic.Options{}
 		dc, err := tdc.Client(
-			cb.UnstructuredT(tdata[0], version),
-			cb.UnstructuredT(tdata[1], version),
+			cb.UnstructuredV1beta1T(tdata[0], version),
+			cb.UnstructuredV1beta1T(tdata[1], version),
 			cb.UnstructuredV1beta1TR(trdata[0], version),
 			cb.UnstructuredV1beta1TR(trdata[1], version),
 			cb.UnstructuredV1beta1TR(trdata[2], version),

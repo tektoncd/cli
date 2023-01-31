@@ -1444,6 +1444,14 @@ github.com/tektoncd/pipeline/pkg/client/injection/client
 github.com/tektoncd/pipeline/pkg/client/injection/client/fake
 github.com/tektoncd/pipeline/pkg/client/injection/informers/factory
 github.com/tektoncd/pipeline/pkg/client/injection/informers/factory/fake
+github.com/tektoncd/pipeline/pkg/client/injection/informers/pipeline/v1/pipeline
+github.com/tektoncd/pipeline/pkg/client/injection/informers/pipeline/v1/pipeline/fake
+github.com/tektoncd/pipeline/pkg/client/injection/informers/pipeline/v1/pipelinerun
+github.com/tektoncd/pipeline/pkg/client/injection/informers/pipeline/v1/pipelinerun/fake
+github.com/tektoncd/pipeline/pkg/client/injection/informers/pipeline/v1/task
+github.com/tektoncd/pipeline/pkg/client/injection/informers/pipeline/v1/task/fake
+github.com/tektoncd/pipeline/pkg/client/injection/informers/pipeline/v1/taskrun
+github.com/tektoncd/pipeline/pkg/client/injection/informers/pipeline/v1/taskrun/fake
 github.com/tektoncd/pipeline/pkg/client/injection/informers/pipeline/v1alpha1/run
 github.com/tektoncd/pipeline/pkg/client/injection/informers/pipeline/v1alpha1/run/fake
 github.com/tektoncd/pipeline/pkg/client/injection/informers/pipeline/v1alpha1/verificationpolicy

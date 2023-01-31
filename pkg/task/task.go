@@ -20,6 +20,7 @@ import (
 
 	"github.com/tektoncd/cli/pkg/actions"
 	"github.com/tektoncd/cli/pkg/cli"
+	v1 "github.com/tektoncd/pipeline/pkg/apis/pipeline/v1"
 	"github.com/tektoncd/pipeline/pkg/apis/pipeline/v1beta1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
@@ -29,40 +30,17 @@ import (
 
 var taskGroupResource = schema.GroupVersionResource{Group: "tekton.dev", Resource: "tasks"}
 
-func GetAllTaskNames(p cli.Params) ([]string, error) {
-	cs, err := p.Clients()
-	if err != nil {
-		return nil, err
-	}
-
-	ps, err := List(cs, metav1.ListOptions{}, p.Namespace())
-	if err != nil {
-		return nil, err
+func GetAllTaskNames(gr schema.GroupVersionResource, c *cli.Clients, ns string) ([]string, error) {
+	var tasks *v1.TaskList
+	if err := actions.ListV1(gr, c, metav1.ListOptions{}, ns, &tasks); err != nil {
+		return nil, fmt.Errorf("failed to list Tasks from namespace %s: %v", ns, err)
 	}
 
 	ret := []string{}
-	for _, item := range ps.Items {
+	for _, item := range tasks.Items {
 		ret = append(ret, item.ObjectMeta.Name)
 	}
 	return ret, nil
-}
-
-func List(c *cli.Clients, opts metav1.ListOptions, ns string) (*v1beta1.TaskList, error) {
-	unstructuredT, err := actions.List(taskGroupResource, c.Dynamic, c.Tekton.Discovery(), ns, opts)
-	if err != nil {
-		return nil, err
-	}
-
-	var tasks *v1beta1.TaskList
-	if err := runtime.DefaultUnstructuredConverter.FromUnstructured(unstructuredT.UnstructuredContent(), &tasks); err != nil {
-		return nil, err
-	}
-	if err != nil {
-		fmt.Fprintf(os.Stderr, "Failed to list tasks from %s namespace \n", ns)
-		return nil, err
-	}
-
-	return tasks, nil
 }
 
 // Get will fetch the task resource based on the task name

@@ -139,7 +139,12 @@ func getAllInputs(opts *options.LogOptions) error {
 		return err
 	}
 
-	ps, err := pipeline.GetAllPipelineNames(opts.Params)
+	cs, err := opts.Params.Clients()
+	if err != nil {
+		return err
+	}
+
+	ps, err := pipeline.GetAllPipelineNames(pipelineGroupResource, cs, opts.Params.Namespace())
 	if err != nil {
 		return err
 	}

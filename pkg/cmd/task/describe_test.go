@@ -110,8 +110,8 @@ func TestTaskDescribe_OnlyName(t *testing.T) {
 	version := "v1beta1"
 	tdc := testDynamic.Options{}
 	dynamic, err := tdc.Client(
-		cb.UnstructuredT(tasks[0], version),
-		cb.UnstructuredT(tasks[1], version),
+		cb.UnstructuredV1beta1T(tasks[0], version),
+		cb.UnstructuredV1beta1T(tasks[1], version),
 	)
 	if err != nil {
 		t.Errorf("unable to create dynamic client: %v", err)
@@ -159,8 +159,8 @@ func TestTaskDescribe_OnlyNameDiffNameSpace(t *testing.T) {
 	version := "v1beta1"
 	tdc := testDynamic.Options{}
 	dynamic, err := tdc.Client(
-		cb.UnstructuredT(tasks[0], version),
-		cb.UnstructuredT(tasks[1], version),
+		cb.UnstructuredV1beta1T(tasks[0], version),
+		cb.UnstructuredV1beta1T(tasks[1], version),
 	)
 	if err != nil {
 		t.Errorf("unable to create dynamic client: %v", err)
@@ -230,8 +230,8 @@ func TestTaskDescribe_OnlyNameParams(t *testing.T) {
 	version := "v1beta1"
 	tdc := testDynamic.Options{}
 	dynamic, err := tdc.Client(
-		cb.UnstructuredT(tasks[0], version),
-		cb.UnstructuredT(tasks[1], version),
+		cb.UnstructuredV1beta1T(tasks[0], version),
+		cb.UnstructuredV1beta1T(tasks[1], version),
 	)
 	if err != nil {
 		t.Errorf("unable to create dynamic client: %v", err)
@@ -285,8 +285,8 @@ func TestTaskDescribe_TaskRunError(t *testing.T) {
 					return true, nil, errors.New("fake list taskrun error")
 				}}}}
 	dynamic, err := tdc.Client(
-		cb.UnstructuredT(tasks[0], version),
-		cb.UnstructuredT(tasks[1], version),
+		cb.UnstructuredV1beta1T(tasks[0], version),
+		cb.UnstructuredV1beta1T(tasks[1], version),
 	)
 	if err != nil {
 		t.Errorf("unable to create dynamic client: %v", err)
@@ -332,7 +332,7 @@ func TestTaskDescribe_custom_output(t *testing.T) {
 	version := "v1beta1"
 	tdc := testDynamic.Options{}
 	dynamic, err := tdc.Client(
-		cb.UnstructuredT(tasks[0], version),
+		cb.UnstructuredV1beta1T(tasks[0], version),
 	)
 	if err != nil {
 		t.Errorf("unable to create dynamic client: %v", err)
@@ -374,7 +374,7 @@ func TestTaskDescribe_WithoutNameIfOnlyOneTaskPresent(t *testing.T) {
 	version := "v1beta1"
 	tdc := testDynamic.Options{}
 	dynamic, err := tdc.Client(
-		cb.UnstructuredT(tasks[0], version),
+		cb.UnstructuredV1beta1T(tasks[0], version),
 	)
 	if err != nil {
 		t.Errorf("unable to create dynamic client: %v", err)
@@ -574,7 +574,7 @@ func TestTaskDescribe_Full(t *testing.T) {
 	version := "v1beta1"
 	tdc := testDynamic.Options{}
 	dynamic, err := tdc.Client(
-		cb.UnstructuredT(tasks[0], version),
+		cb.UnstructuredV1beta1T(tasks[0], version),
 		cb.UnstructuredV1beta1TR(taskRuns[0], version),
 		cb.UnstructuredV1beta1TR(taskRuns[1], version),
 		cb.UnstructuredV1beta1TR(taskRuns[2], version),
@@ -639,7 +639,7 @@ func TestTaskDescribe_With_Results(t *testing.T) {
 	version := "v1beta1"
 	tdc := testDynamic.Options{}
 	dynamic, err := tdc.Client(
-		cb.UnstructuredT(tasks[0], version),
+		cb.UnstructuredV1beta1T(tasks[0], version),
 	)
 	if err != nil {
 		t.Errorf("unable to create dynamic client: %v", err)
@@ -695,7 +695,7 @@ func TestTaskDescribe_With_Workspaces(t *testing.T) {
 	version := "v1beta1"
 	tdc := testDynamic.Options{}
 	dynamic, err := tdc.Client(
-		cb.UnstructuredT(tasks[0], version),
+		cb.UnstructuredV1beta1T(tasks[0], version),
 	)
 	if err != nil {
 		t.Errorf("unable to create dynamic client: %v", err)
@@ -743,7 +743,7 @@ func TestTaskDescribe_With_Empty_Labels(t *testing.T) {
 	version := "v1beta1"
 	tdc := testDynamic.Options{}
 	dynamic, err := tdc.Client(
-		cb.UnstructuredT(tasks[0], version),
+		cb.UnstructuredV1beta1T(tasks[0], version),
 	)
 	if err != nil {
 		t.Errorf("unable to create dynamic client: %v", err)
@@ -792,7 +792,7 @@ func TestTaskDescribe_With_Different_Labels(t *testing.T) {
 	version := "v1beta1"
 	tdc := testDynamic.Options{}
 	dynamic, err := tdc.Client(
-		cb.UnstructuredT(tasks[0], version),
+		cb.UnstructuredV1beta1T(tasks[0], version),
 	)
 	if err != nil {
 		t.Errorf("unable to create dynamic client: %v", err)
@@ -835,7 +835,7 @@ func TestTaskDescribe_with_annotations(t *testing.T) {
 	version := "v1beta1"
 	tdc := testDynamic.Options{}
 	dynamic, err := tdc.Client(
-		cb.UnstructuredT(tasks[0], version),
+		cb.UnstructuredV1beta1T(tasks[0], version),
 	)
 	if err != nil {
 		t.Errorf("unable to create dynamic client: %v", err)
@@ -898,7 +898,7 @@ func TestTaskDescribe_With_OptionalWorkspaces(t *testing.T) {
 	version := "v1beta1"
 	tdc := testDynamic.Options{}
 	dynamic, err := tdc.Client(
-		cb.UnstructuredT(tasks[0], version),
+		cb.UnstructuredV1beta1T(tasks[0], version),
 	)
 	if err != nil {
 		t.Errorf("unable to create dynamic client: %v", err)

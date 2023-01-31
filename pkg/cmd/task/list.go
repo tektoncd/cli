@@ -24,10 +24,8 @@ import (
 	"github.com/tektoncd/cli/pkg/actions"
 	"github.com/tektoncd/cli/pkg/cli"
 	"github.com/tektoncd/cli/pkg/formatted"
-	"github.com/tektoncd/cli/pkg/task"
-	"github.com/tektoncd/pipeline/pkg/apis/pipeline/v1beta1"
+	v1 "github.com/tektoncd/pipeline/pkg/apis/pipeline/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
-	"k8s.io/apimachinery/pkg/runtime/schema"
 	cliopts "k8s.io/cli-runtime/pkg/genericclioptions"
 )
 
@@ -78,7 +76,6 @@ func listCommand(p cli.Params) *cobra.Command {
 			}
 
 			if output != "" {
-				taskGroupResource := schema.GroupVersionResource{Group: "tekton.dev", Resource: "tasks"}
 				return actions.PrintObjects(taskGroupResource, cmd.OutOrStdout(), cs.Dynamic, cs.Tekton.Discovery(), f, p.Namespace())
 			}
 			stream := &cli.Stream{
@@ -105,13 +102,14 @@ func printTaskDetails(s *cli.Stream, p cli.Params, allnamespaces bool, noheaders
 	if allnamespaces {
 		ns = ""
 	}
-	tasks, err := task.List(cs, metav1.ListOptions{}, ns)
-	if err != nil {
+
+	var tasks *v1.TaskList
+	if err := actions.ListV1(taskGroupResource, cs, metav1.ListOptions{}, ns, &tasks); err != nil {
 		return fmt.Errorf("failed to list Tasks from namespace %s: %v", ns, err)
 	}
 
 	var data = struct {
-		Tasks         *v1beta1.TaskList
+		Tasks         *v1.TaskList
 		Time          clockwork.Clock
 		AllNamespaces bool
 		NoHeaders     bool

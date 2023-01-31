@@ -131,8 +131,13 @@ func describeCommand(p cli.Params) *cobra.Command {
 				return fmt.Errorf("output option not set properly: %v", err)
 			}
 
+			cs, err := p.Clients()
+			if err != nil {
+				return err
+			}
+
 			if len(args) == 0 {
-				pipelineNames, err := pipeline.GetAllPipelineNames(p)
+				pipelineNames, err := pipeline.GetAllPipelineNames(pipelineGroupResource, cs, p.Namespace())
 				if err != nil {
 					return err
 				}
@@ -146,11 +151,6 @@ func describeCommand(p cli.Params) *cobra.Command {
 				}
 			} else {
 				opts.PipelineName = args[0]
-			}
-
-			cs, err := p.Clients()
-			if err != nil {
-				return err
 			}
 
 			if output != "" {

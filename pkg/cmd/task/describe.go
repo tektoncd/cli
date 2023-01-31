@@ -158,26 +158,26 @@ or
 				return fmt.Errorf("output option not set properly: %v", err)
 			}
 
+			cs, err := p.Clients()
+			if err != nil {
+				return err
+			}
+
 			if len(args) == 0 {
-				taskNames, err := task.GetAllTaskNames(p)
+				taskNames, err := task.GetAllTaskNames(taskGroupResource, cs, p.Namespace())
 				if err != nil {
 					return err
 				}
 				if len(taskNames) == 1 {
 					opts.TaskName = taskNames[0]
 				} else {
-					err = askTaskName(opts, p)
+					err = askTaskName(opts, cs, p.Namespace())
 					if err != nil {
 						return err
 					}
 				}
 			} else {
 				opts.TaskName = args[0]
-			}
-
-			cs, err := p.Clients()
-			if err != nil {
-				return err
 			}
 
 			if output != "" {
@@ -270,8 +270,8 @@ func sortResourcesByTypeAndName(tres []v1beta1.TaskResource) []v1beta1.TaskResou
 	return tres
 }
 
-func askTaskName(opts *options.DescribeOptions, p cli.Params) error {
-	taskNames, err := task.GetAllTaskNames(p)
+func askTaskName(opts *options.DescribeOptions, c *cli.Clients, ns string) error {
+	taskNames, err := task.GetAllTaskNames(taskGroupResource, c, ns)
 	if err != nil {
 		return err
 	}
