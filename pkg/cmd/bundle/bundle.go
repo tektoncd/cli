@@ -35,6 +35,7 @@ func Command(p cli.Params) *cobra.Command {
 		Annotations: map[string]string{
 			"commandType":  "main",
 			"experimental": "",
+			"kubernetes":   "false",
 		},
 		PersistentPreRunE: prerun.PersistentPreRunE(p),
 	}

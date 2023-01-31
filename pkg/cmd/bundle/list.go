@@ -77,6 +77,7 @@ Caching:
 		Long:  longHelp,
 		Annotations: map[string]string{
 			"commandType": "main",
+			"kubernetes":  "false",
 		},
 		Args: cobra.RangeArgs(1, 3),
 		PreRunE: func(cmd *cobra.Command, args []string) error {
