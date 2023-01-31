@@ -24,9 +24,9 @@ import (
 	"github.com/tektoncd/cli/pkg/cli"
 	"github.com/tektoncd/cli/pkg/formatted"
 	"github.com/tektoncd/cli/pkg/pipeline"
+	v1 "github.com/tektoncd/pipeline/pkg/apis/pipeline/v1"
 	"github.com/tektoncd/pipeline/pkg/apis/pipeline/v1beta1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
-	"k8s.io/apimachinery/pkg/runtime/schema"
 	cliopts "k8s.io/cli-runtime/pkg/genericclioptions"
 )
 
@@ -88,7 +88,6 @@ func listCommand(p cli.Params) *cobra.Command {
 			}
 
 			if output != "" {
-				pipelineGroupResource := schema.GroupVersionResource{Group: "tekton.dev", Resource: "pipelines"}
 				return actions.PrintObjects(pipelineGroupResource, cmd.OutOrStdout(), cs.Dynamic, cs.Tekton.Discovery(), f, p.Namespace())
 			}
 			stream := &cli.Stream{
@@ -122,7 +121,7 @@ func printPipelineDetails(s *cli.Stream, p cli.Params, allnamespaces bool, nohea
 	}
 
 	var data = struct {
-		Pipelines     *v1beta1.PipelineList
+		Pipelines     *v1.PipelineList
 		PipelineRuns  pipelineruns
 		Params        cli.Params
 		AllNamespaces bool
@@ -159,18 +158,18 @@ func printPipelineDetails(s *cli.Stream, p cli.Params, allnamespaces bool, nohea
 
 type pipelineruns map[string]v1beta1.PipelineRun
 
-func listPipelineDetails(cs *cli.Clients, ns string) (*v1beta1.PipelineList, pipelineruns, error) {
-	ps, err := pipeline.List(cs, metav1.ListOptions{}, ns)
-	if err != nil {
+func listPipelineDetails(cs *cli.Clients, ns string) (*v1.PipelineList, pipelineruns, error) {
+	var pipelines *v1.PipelineList
+	if err := actions.ListV1(pipelineGroupResource, cs, metav1.ListOptions{}, ns, &pipelines); err != nil {
 		return nil, nil, err
 	}
 
-	if len(ps.Items) == 0 {
-		return ps, pipelineruns{}, nil
+	if len(pipelines.Items) == 0 {
+		return pipelines, pipelineruns{}, nil
 	}
 	lastRuns := pipelineruns{}
 
-	for _, p := range ps.Items {
+	for _, p := range pipelines.Items {
 		// TODO: may be just the pipeline details can be print
 		lastRun, err := pipeline.LastRun(cs, p.Name, ns)
 		if err != nil {
@@ -179,5 +178,5 @@ func listPipelineDetails(cs *cli.Clients, ns string) (*v1beta1.PipelineList, pip
 		lastRuns[p.Name] = *lastRun
 	}
 
-	return ps, lastRuns, nil
+	return pipelines, lastRuns, nil
 }

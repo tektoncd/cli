@@ -289,7 +289,7 @@ func Test_start_task_not_found(t *testing.T) {
 	cs, _ := test.SeedV1beta1TestData(t, pipelinetest.Data{Tasks: tasks, Namespaces: ns})
 	tdc := testDynamic.Options{}
 	dc, err := tdc.Client(
-		cb.UnstructuredT(tasks[0], version))
+		cb.UnstructuredV1beta1T(tasks[0], version))
 	if err != nil {
 		t.Errorf("unable to create dynamic client: %v", err)
 	}
@@ -368,7 +368,7 @@ func Test_start_task_context(t *testing.T) {
 	cs.Pipeline.Resources = cb.APIResourceList(version, []string{"task", "taskrun"})
 	tdc := testDynamic.Options{}
 	dc, err := tdc.Client(
-		cb.UnstructuredT(tasks[0], version))
+		cb.UnstructuredV1beta1T(tasks[0], version))
 	if err != nil {
 		t.Errorf("unable to create dynamic client: %v", err)
 	}
@@ -461,7 +461,7 @@ func Test_start_task(t *testing.T) {
 	cs.Pipeline.Resources = cb.APIResourceList(version, []string{"task", "taskrun"})
 	tdc := testDynamic.Options{}
 	dc, err := tdc.Client(
-		cb.UnstructuredT(tasks[0], version))
+		cb.UnstructuredV1beta1T(tasks[0], version))
 	if err != nil {
 		t.Errorf("unable to create dynamic client: %v", err)
 	}
@@ -662,7 +662,7 @@ func Test_start_task_last(t *testing.T) {
 	objs := []runtime.Object{tasks[0], taskruns[0]}
 	_, tdc := newPipelineClient(objs...)
 	dc, _ := tdc.Client(
-		cb.UnstructuredT(tasks[0], version),
+		cb.UnstructuredV1beta1T(tasks[0], version),
 		cb.UnstructuredV1beta1TR(taskruns[0], version),
 	)
 
@@ -768,7 +768,7 @@ func Test_start_task_last_with_override_timeout(t *testing.T) {
 	objs := []runtime.Object{tasks[0], taskruns[0]}
 	_, tdc := newPipelineClient(objs...)
 	dc, _ := tdc.Client(
-		cb.UnstructuredT(tasks[0], version),
+		cb.UnstructuredV1beta1T(tasks[0], version),
 		cb.UnstructuredV1beta1TR(taskruns[0], version),
 	)
 
@@ -909,7 +909,7 @@ func Test_start_use_taskrun(t *testing.T) {
 	}
 	cs.Pipeline.Resources = cb.APIResourceList(version, []string{"task", "taskrun"})
 	dc, _ := tdc.Client(
-		cb.UnstructuredT(tasks[0], version),
+		cb.UnstructuredV1beta1T(tasks[0], version),
 		cb.UnstructuredV1beta1TR(taskruns[0], version),
 		cb.UnstructuredV1beta1TR(taskruns[1], version),
 	)
@@ -1031,7 +1031,7 @@ func Test_start_use_taskrun_cancelled_status(t *testing.T) {
 	}
 	cs.Pipeline.Resources = cb.APIResourceList(version, []string{"task", "taskrun"})
 	dc, _ := tdc.Client(
-		cb.UnstructuredT(tasks[0], version),
+		cb.UnstructuredV1beta1T(tasks[0], version),
 		cb.UnstructuredV1beta1TR(taskruns[0], version),
 	)
 	p := &test.Params{Tekton: cs.Pipeline, Kube: cs.Kube, Dynamic: dc}
@@ -1199,7 +1199,7 @@ func Test_start_task_last_generate_name(t *testing.T) {
 	}
 	cs.Pipeline.Resources = cb.APIResourceList(version, []string{"task", "taskrun"})
 	dc, _ := tdc.Client(
-		cb.UnstructuredT(tasks[0], version),
+		cb.UnstructuredV1beta1T(tasks[0], version),
 		cb.UnstructuredV1beta1TR(taskruns[0], version))
 	p := &test.Params{Tekton: cs.Pipeline, Kube: cs.Kube, Dynamic: dc}
 
@@ -1360,7 +1360,7 @@ func Test_start_task_last_with_prefix_name(t *testing.T) {
 	}
 	cs.Pipeline.Resources = cb.APIResourceList(version, []string{"task", "taskrun"})
 	dc, _ := tdc.Client(
-		cb.UnstructuredT(tasks[0], version),
+		cb.UnstructuredV1beta1T(tasks[0], version),
 		cb.UnstructuredV1beta1TR(taskruns[0], version))
 	p := &test.Params{Tekton: cs.Pipeline, Kube: cs.Kube, Dynamic: dc}
 
@@ -1522,7 +1522,7 @@ func Test_start_task_with_prefix_name(t *testing.T) {
 	}
 	cs.Pipeline.Resources = cb.APIResourceList(version, []string{"task", "taskrun"})
 	dc, _ := tdc.Client(
-		cb.UnstructuredT(tasks[0], version),
+		cb.UnstructuredV1beta1T(tasks[0], version),
 		cb.UnstructuredV1beta1TR(taskruns[0], version))
 	p := &test.Params{Tekton: cs.Pipeline, Kube: cs.Kube, Resource: cs.Resource, Dynamic: dc}
 
@@ -1684,7 +1684,7 @@ func Test_start_task_last_with_inputs(t *testing.T) {
 	}
 	cs.Pipeline.Resources = cb.APIResourceList(version, []string{"task", "taskrun"})
 	dc, _ := tdc.Client(
-		cb.UnstructuredT(tasks[0], version),
+		cb.UnstructuredV1beta1T(tasks[0], version),
 		cb.UnstructuredV1beta1TR(taskruns[0], version))
 	p := &test.Params{Tekton: cs.Pipeline, Kube: cs.Kube, Dynamic: dc}
 
@@ -1811,7 +1811,7 @@ func Test_start_task_last_without_taskrun(t *testing.T) {
 	objs := []runtime.Object{tasks[0]}
 	_, tdc := newPipelineClient(objs...)
 	dc, _ := tdc.Client(
-		cb.UnstructuredT(tasks[0], version),
+		cb.UnstructuredV1beta1T(tasks[0], version),
 	)
 
 	p := &test.Params{Tekton: cs.Pipeline, Kube: cs.Kube, Dynamic: dc}
@@ -1900,7 +1900,7 @@ func Test_start_task_client_error(t *testing.T) {
 		},
 	}
 	dc, _ := tdc.Client(
-		cb.UnstructuredT(tasks[0], version),
+		cb.UnstructuredV1beta1T(tasks[0], version),
 	)
 
 	p := &test.Params{Tekton: cs.Pipeline, Kube: cs.Kube, Resource: cs.Resource, Dynamic: dc}
@@ -1986,7 +1986,7 @@ func Test_start_task_invalid_input_res(t *testing.T) {
 	cs.Pipeline.Resources = cb.APIResourceList(version, []string{"task", "taskrun"})
 	tdc := testDynamic.Options{}
 	dc, _ := tdc.Client(
-		cb.UnstructuredT(tasks[0], version),
+		cb.UnstructuredV1beta1T(tasks[0], version),
 	)
 
 	p := &test.Params{Tekton: cs.Pipeline, Kube: cs.Kube, Resource: cs.Resource, Dynamic: dc}
@@ -2070,7 +2070,7 @@ func Test_start_task_invalid_workspace(t *testing.T) {
 	cs.Pipeline.Resources = cb.APIResourceList(version, []string{"task", "taskrun"})
 	tdc := testDynamic.Options{}
 	dc, _ := tdc.Client(
-		cb.UnstructuredT(tasks[0], version),
+		cb.UnstructuredV1beta1T(tasks[0], version),
 	)
 	p := &test.Params{Tekton: cs.Pipeline, Kube: cs.Kube, Resource: cs.Resource, Dynamic: dc}
 
@@ -2153,7 +2153,7 @@ func Test_start_task_invalid_output_res(t *testing.T) {
 	cs.Pipeline.Resources = cb.APIResourceList(version, []string{"task", "taskrun"})
 	tdc := testDynamic.Options{}
 	dc, _ := tdc.Client(
-		cb.UnstructuredT(tasks[0], version),
+		cb.UnstructuredV1beta1T(tasks[0], version),
 	)
 	p := &test.Params{Tekton: cs.Pipeline, Kube: cs.Kube, Resource: cs.Resource, Dynamic: dc}
 
@@ -2238,7 +2238,7 @@ func Test_start_task_invalid_param(t *testing.T) {
 	cs.Pipeline.Resources = cb.APIResourceList(version, []string{"task", "taskrun"})
 	tdc := testDynamic.Options{}
 	dc, _ := tdc.Client(
-		cb.UnstructuredT(tasks[0], version),
+		cb.UnstructuredV1beta1T(tasks[0], version),
 	)
 	p := &test.Params{Tekton: cs.Pipeline, Kube: cs.Kube, Resource: cs.Resource, Dynamic: dc}
 
@@ -2321,7 +2321,7 @@ func Test_start_task_invalid_label(t *testing.T) {
 	cs.Pipeline.Resources = cb.APIResourceList(version, []string{"task", "taskrun"})
 	tdc := testDynamic.Options{}
 	dc, _ := tdc.Client(
-		cb.UnstructuredT(tasks[0], version),
+		cb.UnstructuredV1beta1T(tasks[0], version),
 	)
 	p := &test.Params{Tekton: cs.Pipeline, Kube: cs.Kube, Resource: cs.Resource, Dynamic: dc}
 
@@ -2411,7 +2411,7 @@ func Test_start_task_allkindparam(t *testing.T) {
 	cs.Pipeline.Resources = cb.APIResourceList(version, []string{"task", "taskrun"})
 	tdc := testDynamic.Options{}
 	dc, _ := tdc.Client(
-		cb.UnstructuredT(tasks[0], version),
+		cb.UnstructuredV1beta1T(tasks[0], version),
 	)
 	p := &test.Params{Tekton: cs.Pipeline, Kube: cs.Kube, Dynamic: dc}
 
@@ -2546,7 +2546,7 @@ func Test_start_task_wrong_param(t *testing.T) {
 	cs.Pipeline.Resources = cb.APIResourceList(version, []string{"task", "taskrun"})
 	tdc := testDynamic.Options{}
 	dc, _ := tdc.Client(
-		cb.UnstructuredT(tasks[0], version),
+		cb.UnstructuredV1beta1T(tasks[0], version),
 	)
 	p := &test.Params{Tekton: cs.Pipeline, Kube: cs.Kube, Dynamic: dc}
 
@@ -2723,7 +2723,7 @@ func TestTaskStart_ExecuteCommand(t *testing.T) {
 	cs.Pipeline.Resources = cb.APIResourceList(version, []string{"task"})
 	tdc := testDynamic.Options{}
 	dc, _ := tdc.Client(
-		cb.UnstructuredT(tasks[0], version),
+		cb.UnstructuredV1beta1T(tasks[0], version),
 	)
 
 	testParams := []struct {
@@ -3044,7 +3044,7 @@ func Test_start_task_with_skip_optional_workspace_flag(t *testing.T) {
 	cs.Pipeline.Resources = cb.APIResourceList(version, []string{"task", "taskrun"})
 	tdc := testDynamic.Options{}
 	dc, err := tdc.Client(
-		cb.UnstructuredT(tasks[0], version))
+		cb.UnstructuredV1beta1T(tasks[0], version))
 	if err != nil {
 		t.Errorf("unable to create dynamic client: %v", err)
 	}

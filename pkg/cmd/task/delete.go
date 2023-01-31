@@ -107,7 +107,6 @@ or
 }
 
 func deleteTask(opts *options.DeleteOptions, s *cli.Stream, p cli.Params, taskNames []string) error {
-	taskGroupResource := schema.GroupVersionResource{Group: "tekton.dev", Resource: "tasks"}
 	taskrunGroupResource := schema.GroupVersionResource{Group: "tekton.dev", Resource: "taskruns"}
 
 	cs, err := p.Clients()
@@ -119,7 +118,7 @@ func deleteTask(opts *options.DeleteOptions, s *cli.Stream, p cli.Params, taskNa
 	})
 	switch {
 	case opts.DeleteAllNs:
-		taskNames, err = allTaskNames(cs, p.Namespace())
+		taskNames, err = task.GetAllTaskNames(taskGroupResource, cs, p.Namespace())
 		if err != nil {
 			return err
 		}
@@ -160,16 +159,4 @@ func taskRunLister(cs *cli.Clients, ns string) func(string) ([]string, error) {
 		}
 		return names, nil
 	}
-}
-
-func allTaskNames(cs *cli.Clients, ns string) ([]string, error) {
-	ts, err := task.List(cs, metav1.ListOptions{}, ns)
-	if err != nil {
-		return nil, err
-	}
-	var names []string
-	for _, t := range ts.Items {
-		names = append(names, t.Name)
-	}
-	return names, nil
 }

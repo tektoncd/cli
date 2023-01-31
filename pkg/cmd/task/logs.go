@@ -138,7 +138,11 @@ func initOpts(opts *options.LogOptions, args []string) error {
 }
 
 func getAllInputs(opts *options.LogOptions) error {
-	ts, err := thelper.GetAllTaskNames(opts.Params)
+	cs, err := opts.Params.Clients()
+	if err != nil {
+		return err
+	}
+	ts, err := thelper.GetAllTaskNames(taskGroupResource, cs, opts.Params.Namespace())
 	if err != nil {
 		return err
 	}

@@ -18,19 +18,17 @@ import (
 	"testing"
 
 	"github.com/jonboulle/clockwork"
+	"github.com/tektoncd/cli/pkg/cli"
 	"github.com/tektoncd/cli/pkg/test"
 	cb "github.com/tektoncd/cli/pkg/test/builder"
 	testDynamic "github.com/tektoncd/cli/pkg/test/dynamic"
+	v1 "github.com/tektoncd/pipeline/pkg/apis/pipeline/v1"
 	"github.com/tektoncd/pipeline/pkg/apis/pipeline/v1beta1"
 	pipelinetest "github.com/tektoncd/pipeline/test"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 )
 
-const (
-	version = "v1beta1"
-)
-
-func TestPipelinesList(t *testing.T) {
+func TestPipelinesList_v1beta1(t *testing.T) {
 	clock := clockwork.NewFakeClock()
 
 	pdata := []*v1beta1.Pipeline{
@@ -44,6 +42,7 @@ func TestPipelinesList(t *testing.T) {
 	cs, _ := test.SeedV1beta1TestData(t, pipelinetest.Data{
 		Pipelines: pdata,
 	})
+	version := "v1beta1"
 	cs.Pipeline.Resources = cb.APIResourceList(version, []string{"pipeline"})
 	tdc := testDynamic.Options{}
 	dc, err := tdc.Client(
@@ -85,31 +84,158 @@ func TestPipelinesList(t *testing.T) {
 	p3 := &test.Params{Tekton: cs2.Pipeline, Clock: clock, Kube: cs2.Kube, Dynamic: dc2}
 	p3.SetNamespace("unknown")
 
+	c1, err := p.Clients()
+	if err != nil {
+		t.Errorf("unable to create client: %v", err)
+	}
+
+	c2, err := p2.Clients()
+	if err != nil {
+		t.Errorf("unable to create client: %v", err)
+	}
+
+	c3, err := p3.Clients()
+	if err != nil {
+		t.Errorf("unable to create client: %v", err)
+	}
+
 	testParams := []struct {
-		name   string
-		params *test.Params
-		want   []string
+		name      string
+		namespace string
+		client    *cli.Clients
+		want      []string
 	}{
 		{
-			name:   "Single Pipeline",
-			params: p,
-			want:   []string{"pipeline"},
+			name:      "Single Pipeline",
+			namespace: p.Namespace(),
+			client:    c1,
+			want:      []string{"pipeline"},
 		},
 		{
-			name:   "Multi Pipelines",
-			params: p2,
-			want:   []string{"pipeline", "pipeline2"},
+			name:      "Multi Pipelines",
+			namespace: p2.Namespace(),
+			client:    c2,
+			want:      []string{"pipeline", "pipeline2"},
 		},
 		{
-			name:   "Unknown namespace",
-			params: p3,
-			want:   []string{},
+			name:      "Unknown namespace",
+			namespace: p3.Namespace(),
+			client:    c3,
+			want:      []string{},
 		},
 	}
 
 	for _, tp := range testParams {
 		t.Run(tp.name, func(t *testing.T) {
-			got, err := GetAllPipelineNames(tp.params)
+			got, err := GetAllPipelineNames(pipelineGroupResource, tp.client, tp.namespace)
+			if err != nil {
+				t.Errorf("unexpected Error")
+			}
+			test.AssertOutput(t, tp.want, got)
+		})
+	}
+}
+
+func TestPipelinesList(t *testing.T) {
+	clock := clockwork.NewFakeClock()
+
+	pdata := []*v1.Pipeline{
+		{
+			ObjectMeta: metav1.ObjectMeta{
+				Name:      "pipeline",
+				Namespace: "ns",
+			},
+		},
+	}
+	cs, _ := test.SeedTestData(t, test.Data{
+		Pipelines: pdata,
+	})
+	version := "v1"
+	cs.Pipeline.Resources = cb.APIResourceList(version, []string{"pipeline"})
+	tdc := testDynamic.Options{}
+	dc, err := tdc.Client(
+		cb.UnstructuredP(pdata[0], version),
+	)
+	if err != nil {
+		t.Errorf("unable to create dynamic client: %v", err)
+	}
+
+	pdata2 := []*v1.Pipeline{
+		{
+			ObjectMeta: metav1.ObjectMeta{
+				Name:      "pipeline",
+				Namespace: "ns",
+			},
+		},
+		{
+			ObjectMeta: metav1.ObjectMeta{
+				Name:      "pipeline2",
+				Namespace: "ns",
+			},
+		},
+	}
+	cs2, _ := test.SeedTestData(t, test.Data{
+		Pipelines: pdata2,
+	})
+	cs2.Pipeline.Resources = cb.APIResourceList(version, []string{"pipeline", "pipelinerun"})
+	tdc2 := testDynamic.Options{}
+	dc2, err := tdc2.Client(
+		cb.UnstructuredP(pdata2[0], version),
+		cb.UnstructuredP(pdata2[1], version),
+	)
+	if err != nil {
+		t.Errorf("unable to create dynamic client: %v", err)
+	}
+
+	p := &test.Params{Tekton: cs.Pipeline, Clock: clock, Kube: cs.Kube, Dynamic: dc}
+	p2 := &test.Params{Tekton: cs2.Pipeline, Clock: clock, Kube: cs2.Kube, Dynamic: dc2}
+	p3 := &test.Params{Tekton: cs2.Pipeline, Clock: clock, Kube: cs2.Kube, Dynamic: dc2}
+	p3.SetNamespace("unknown")
+
+	c1, err := p.Clients()
+	if err != nil {
+		t.Errorf("unable to create client: %v", err)
+	}
+
+	c2, err := p2.Clients()
+	if err != nil {
+		t.Errorf("unable to create client: %v", err)
+	}
+
+	c3, err := p3.Clients()
+	if err != nil {
+		t.Errorf("unable to create client: %v", err)
+	}
+
+	testParams := []struct {
+		name      string
+		namespace string
+		client    *cli.Clients
+		want      []string
+	}{
+		{
+			name:      "Single Pipeline",
+			namespace: p.Namespace(),
+			client:    c1,
+			want:      []string{"pipeline"},
+		},
+		{
+			name:      "Multi Pipelines",
+			namespace: p2.Namespace(),
+			client:    c2,
+			want:      []string{"pipeline", "pipeline2"},
+		},
+		{
+			name:      "Unknown namespace",
+			namespace: p3.Namespace(),
+			client:    c3,
+			want:      []string{},
+		},
+	}
+
+	for _, tp := range testParams {
+		t.Run(tp.name, func(t *testing.T) {
+			got, err := GetAllPipelineNames(pipelineGroupResource, tp.client, tp.namespace)
 			if err != nil {
 				t.Errorf("unexpected Error")
 			}
@@ -135,6 +261,7 @@ func TestPipelineGet(t *testing.T) {
 			},
 		},
 	}
+	version := "v1beta1"
 	cs, _ := test.SeedV1beta1TestData(t, pipelinetest.Data{
 		Pipelines: pdata,
 	})
