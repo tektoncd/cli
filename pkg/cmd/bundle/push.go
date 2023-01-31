@@ -58,6 +58,7 @@ Input:
 		Long:  longHelp,
 		Annotations: map[string]string{
 			"commandType": "main",
+			"kubernetes":  "false",
 		},
 		Args: cobra.ExactArgs(1),
 		PreRunE: func(cmd *cobra.Command, args []string) error {
