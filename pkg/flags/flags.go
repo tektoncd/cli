@@ -103,6 +103,16 @@ func InitParams(p cli.Params, cmd *cobra.Command) error {
 	}
 	p.SetKubeContext(kubeContext)
 
+	// ensure that the config is valid by creating a client but skip for bundle cmd
+	// as bundle cmd does not need k8s client and config
+	// if this annotation is available on cmd and value is false then client
+	// will not be initialized
+	if cmd.Annotations["kubernetes"] != "false" {
+		if _, err := p.Clients(); err != nil {
+			return err
+		}
+	}
+
 	ns, err := cmd.Flags().GetString(namespace)
 	if err != nil {
 		return err

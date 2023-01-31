@@ -175,14 +175,14 @@ func list(p cli.Params, task string, limit int, labelselector string, allnamespa
 		}
 	}
 
-	ns := p.Namespace()
-	if allnamespaces {
-		ns = ""
-	}
-
 	cs, err := p.Clients()
 	if err != nil {
 		return nil, err
+	}
+
+	ns := p.Namespace()
+	if allnamespaces {
+		ns = ""
 	}
 
 	trs, err := trlist.TaskRuns(cs, options, ns)
