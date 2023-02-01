@@ -100,21 +100,6 @@ func TestPipelineResourceList(t *testing.T) {
 				},
 			},
 		},
-		{
-			ObjectMeta: metav1.ObjectMeta{
-				Name:      "test-5",
-				Namespace: "test-ns-1",
-			},
-			Spec: v1alpha1.PipelineResourceSpec{
-				Type: v1alpha1.PipelineResourceTypeCloudEvent,
-				Params: []v1alpha1.ResourceParam{
-					{
-						Name:  "targetURI",
-						Value: "http://sink",
-					},
-				},
-			},
-		},
 	}
 
 	ns := []*corev1.Namespace{

@@ -28,9 +28,9 @@ func Test_PipelineResourcesByNamespace(t *testing.T) {
 			Name:      "pres0-1",
 		},
 		Spec: v1alpha1.PipelineResourceSpec{
-			Type: "cloudEvent",
+			Type: "pullRequest",
 			Params: []v1alpha1.ResourceParam{
-				{Name: "targetURI", Value: "http://sink"},
+				{Name: "url", Value: "https://github.com/tektoncd/cli/pull/1"},
 			},
 		},
 	}
@@ -67,9 +67,9 @@ func Test_PipelineResourcesByNamespace(t *testing.T) {
 			Name:      "pres1-1",
 		},
 		Spec: v1alpha1.PipelineResourceSpec{
-			Type: "cloudEvent",
+			Type: "pullRequest",
 			Params: []v1alpha1.ResourceParam{
-				{Name: "justUri", Value: "http://sunk"},
+				{Name: "url", Value: "https://github.com/tektoncd/cli/pull/2"},
 			},
 		},
 	}
@@ -106,9 +106,9 @@ func Test_PipelineResourcesByNamespace(t *testing.T) {
 			Name:      "pres2-1",
 		},
 		Spec: v1alpha1.PipelineResourceSpec{
-			Type: "cloudEvent",
+			Type: "pullRequest",
 			Params: []v1alpha1.ResourceParam{
-				{Name: "targetURI", Value: "http://sink"},
+				{Name: "url", Value: "https://github.com/tektoncd/cli/pull/3"},
 			},
 		},
 	}
@@ -154,47 +154,47 @@ func Test_PipelineResourcesByNamespace(t *testing.T) {
 	SortByNamespace(pres)
 
 	element1 := pres[0].Name
-	if element1 != "pres0-1" {
-		t.Errorf("SortPipelineResourcesByNamespace should be pres0-1 but returned: %s", element1)
+	if element1 != "pres0-2" {
+		t.Errorf("SortPipelineResourcesByNamespace should be pres0-2 but returned: %s", element1)
 	}
 
 	element2 := pres[1].Name
-	if element2 != "pres0-2" {
-		t.Errorf("SortPipelineResourcesByNamespace should be pres0-2 but returned: %s", element2)
+	if element2 != "pres0-3" {
+		t.Errorf("SortPipelineResourcesByNamespace should be pres0-3 but returned: %s", element2)
 	}
 
 	element3 := pres[2].Name
-	if element3 != "pres0-3" {
-		t.Errorf("SortPipelineResourcesByNamespace should be pres0-3 but returned: %s", element3)
+	if element3 != "pres0-1" {
+		t.Errorf("SortPipelineResourcesByNamespace should be pres0-1 but returned: %s", element3)
 	}
 
 	element4 := pres[3].Name
-	if element4 != "pres1-1" {
-		t.Errorf("SortPipelineResourcesByNamespace should be pres1-1 but returned: %s", element4)
+	if element4 != "pres1-2" {
+		t.Errorf("SortPipelineResourcesByNamespace should be pres1-2 but returned: %s", element4)
 	}
 
 	element5 := pres[4].Name
-	if element5 != "pres1-2" {
-		t.Errorf("SortPipelineResourcesByNamespace should be pres1-2 but returned: %s", element5)
+	if element5 != "pres1-3" {
+		t.Errorf("SortPipelineResourcesByNamespace should be pres1-3 but returned: %s", element5)
 	}
 
 	element6 := pres[5].Name
-	if element6 != "pres1-3" {
-		t.Errorf("SortPipelineResourcesByNamespace should be pres1-3 but returned: %s", element6)
+	if element6 != "pres1-1" {
+		t.Errorf("SortPipelineResourcesByNamespace should be pres1-1 but returned: %s", element6)
 	}
 
 	element7 := pres[6].Name
-	if element7 != "pres2-1" {
-		t.Errorf("SortPipelineResourcesByNamespace should be pres2-1 but returned: %s", element7)
+	if element7 != "pres2-2" {
+		t.Errorf("SortPipelineResourcesByNamespace should be pres2-2 but returned: %s", element7)
 	}
 
 	element8 := pres[7].Name
-	if element8 != "pres2-2" {
-		t.Errorf("SortPipelineResourcesByNamespace should be pres2-2 but returned: %s", element8)
+	if element8 != "pres2-3" {
+		t.Errorf("SortPipelineResourcesByNamespace should be pres2-3 but returned: %s", element8)
 	}
 
 	element9 := pres[8].Name
-	if element9 != "pres2-3" {
-		t.Errorf("SortPipelineResourcesByNamespace should be pres2-3 but returned: %s", element9)
+	if element9 != "pres2-1" {
+		t.Errorf("SortPipelineResourcesByNamespace should be pres2-1 but returned: %s", element9)
 	}
 }

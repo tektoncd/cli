@@ -470,9 +470,7 @@ func createPipelineResource(resType v1alpha1.PipelineResourceType, askOpt survey
 		v1alpha1.PipelineResourceTypeGit:         res.AskGitParams,
 		v1alpha1.PipelineResourceTypeStorage:     res.AskStorageParams,
 		v1alpha1.PipelineResourceTypeImage:       res.AskImageParams,
-		v1alpha1.PipelineResourceTypeCluster:     res.AskClusterParams,
 		v1alpha1.PipelineResourceTypePullRequest: res.AskPullRequestParams,
-		v1alpha1.PipelineResourceTypeCloudEvent:  res.AskCloudEventParams,
 	}
 	if res.PipelineResource.Spec.Type != "" {
 		if err := resourceTypeParams[res.PipelineResource.Spec.Type](); err != nil {

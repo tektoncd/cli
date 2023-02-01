@@ -776,12 +776,10 @@ func GetPipelineWithTestData(t *testing.T, c *framework.Clients, name string, td
 						pipeline.Spec.Resources[count].Type = v1beta1.PipelineResourceTypeStorage
 					case "image":
 						pipeline.Spec.Resources[count].Type = v1beta1.PipelineResourceTypeImage
-					case "cluster":
-						pipeline.Spec.Resources[count].Type = v1beta1.PipelineResourceTypeCluster
 					case "pullRequest":
 						pipeline.Spec.Resources[count].Type = v1beta1.PipelineResourceTypePullRequest
 					default:
-						t.Errorf("Provided PipelineResourcesData is not Valid Type : Need to Provide (%s, %s, %s, %s)", v1beta1.PipelineResourceTypeGit, v1beta1.PipelineResourceTypeImage, v1beta1.PipelineResourceTypePullRequest, v1beta1.PipelineResourceTypeCluster)
+						t.Errorf("Provided PipelineResourcesData is not Valid Type : Need to Provide (%s, %s, %s)", v1beta1.PipelineResourceTypeGit, v1beta1.PipelineResourceTypeImage, v1beta1.PipelineResourceTypePullRequest)
 					}
 
 					count++

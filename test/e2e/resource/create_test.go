@@ -18,7 +18,6 @@
 package resource
 
 import (
-	"context"
 	"fmt"
 	"strings"
 	"testing"
@@ -29,8 +28,6 @@ import (
 	"github.com/tektoncd/cli/test/framework"
 	"gotest.tools/v3/assert"
 	"gotest.tools/v3/golden"
-	corev1 "k8s.io/api/core/v1"
-	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	knativetest "knative.dev/pkg/test"
 )
 
@@ -60,22 +57,6 @@ func TestCreateGitResourceInteractively(t *testing.T) {
 				}
 
 				if _, err := c.ExpectString("Select a resource type to create :"); err != nil {
-					return err
-				}
-
-				if _, err := c.ExpectString("cloudEvent"); err != nil {
-					return err
-				}
-
-				if _, err := c.Send(string(terminal.KeyArrowDown)); err != nil {
-					return err
-				}
-
-				if _, err := c.ExpectString("cluster"); err != nil {
-					return err
-				}
-
-				if _, err := c.Send(string(terminal.KeyArrowDown)); err != nil {
 					return err
 				}
 
@@ -156,22 +137,6 @@ func TestCreateImageResourceInteractively(t *testing.T) {
 					return err
 				}
 
-				if _, err := c.ExpectString("cloudEvent"); err != nil {
-					return err
-				}
-
-				if _, err := c.Send(string(terminal.KeyArrowDown)); err != nil {
-					return err
-				}
-
-				if _, err := c.ExpectString("cluster"); err != nil {
-					return err
-				}
-
-				if _, err := c.Send(string(terminal.KeyArrowDown)); err != nil {
-					return err
-				}
-
 				if _, err := c.ExpectString("git"); err != nil {
 					return err
 				}
@@ -228,238 +193,6 @@ func TestCreateImageResourceInteractively(t *testing.T) {
 	})
 }
 
-func TestCreateCloudEventResourceInteractively(t *testing.T) {
-	t.Parallel()
-	c, namespace := framework.Setup(t)
-	knativetest.CleanupOnInterrupt(func() { framework.TearDown(t, c, namespace) }, t.Logf)
-	defer framework.TearDown(t, c, namespace)
-
-	tkn, err := cli.NewTknRunner(namespace)
-	assert.NilError(t, err)
-
-	t.Run("Create pipeline resource of cloud event type, interactively in namespace "+namespace, func(t *testing.T) {
-		tkn.RunInteractiveTests(t, &cli.Prompt{
-			CmdArgs: []string{"resource", "create"},
-			Procedure: func(c *expect.Console) error {
-				if _, err := c.ExpectString("Enter a name for a pipeline resource :"); err != nil {
-					return err
-				}
-
-				if _, err := c.Send("my-cloud"); err != nil {
-					return err
-				}
-
-				if _, err := c.Send(string(terminal.KeyEnter)); err != nil {
-					return err
-				}
-
-				if _, err := c.ExpectString("Select a resource type to create :"); err != nil {
-					return err
-				}
-
-				if _, err := c.ExpectString("cloudEvent"); err != nil {
-					return err
-				}
-
-				if _, err := c.Send(string(terminal.KeyEnter)); err != nil {
-					return err
-				}
-
-				if _, err := c.ExpectString("Enter a value for targetURI :"); err != nil {
-					return err
-				}
-
-				if _, err := c.SendLine("http://localhost:8080"); err != nil {
-					return err
-				}
-
-				if _, err := c.ExpectString("New cloudEvent resource \"my-cloud\" has been created"); err != nil {
-					return err
-				}
-
-				if _, err := c.ExpectEOF(); err != nil {
-					return err
-				}
-
-				c.Close()
-				return nil
-			},
-		})
-	})
-
-	t.Run("list single pipeline resource of cloud event type", func(t *testing.T) {
-		res := tkn.MustSucceed(t, "resource", "list")
-		golden.Assert(t, res.Stdout(), strings.ReplaceAll(fmt.Sprintf("%s.golden", t.Name()), "/", "-"))
-	})
-}
-
-func TestCreateClusterResourceInteractively(t *testing.T) {
-	t.Parallel()
-	secretName := "hw-secret"
-	c, namespace := framework.Setup(t)
-	knativetest.CleanupOnInterrupt(func() { framework.TearDown(t, c, namespace) }, t.Logf)
-	defer framework.TearDown(t, c, namespace)
-
-	tkn, err := cli.NewTknRunner(namespace)
-	assert.NilError(t, err)
-
-	t.Logf("Creating secret %s", secretName)
-	if _, err := c.KubeClient.CoreV1().Secrets(namespace).Create(context.Background(), getClusterResourceTaskSecret(namespace, secretName), metav1.CreateOptions{}); err != nil {
-		t.Fatalf("Failed to create Secret `%s`: %s", secretName, err)
-	}
-
-	t.Run("Create pipeline resource of cluster type, interactively in namespace "+namespace, func(t *testing.T) {
-		tkn.RunInteractiveTests(t, &cli.Prompt{
-			CmdArgs: []string{"resource", "create"},
-			Procedure: func(c *expect.Console) error {
-				if _, err := c.ExpectString("Enter a name for a pipeline resource :"); err != nil {
-					return err
-				}
-
-				if _, err := c.SendLine("my-cluster"); err != nil {
-					return err
-				}
-
-				if _, err := c.ExpectString("Select a resource type to create :"); err != nil {
-					return err
-				}
-
-				if _, err := c.ExpectString("cloudEvent"); err != nil {
-					return err
-				}
-
-				if _, err := c.Send(string(terminal.KeyArrowDown)); err != nil {
-					return err
-				}
-
-				if _, err := c.ExpectString("cluster"); err != nil {
-					return err
-				}
-
-				if _, err := c.Send(string(terminal.KeyEnter)); err != nil {
-					return err
-				}
-
-				if _, err := c.ExpectString("Enter a value for url :"); err != nil {
-					return err
-				}
-
-				if _, err := c.SendLine("https://1.1.1.1"); err != nil {
-					return err
-				}
-
-				if _, err := c.ExpectString("Enter a value for username :"); err != nil {
-					return err
-				}
-
-				if _, err := c.SendLine("test-user"); err != nil {
-					return err
-				}
-
-				if _, err := c.ExpectString("Is the cluster secure"); err != nil {
-					return err
-				}
-
-				if _, err := c.ExpectString("yes"); err != nil {
-					return err
-				}
-
-				if _, err := c.Send(string(terminal.KeyEnter)); err != nil {
-					return err
-				}
-
-				if _, err := c.ExpectString("Which authentication technique you want to use"); err != nil {
-					return err
-				}
-
-				if _, err := c.ExpectString("password"); err != nil {
-					return err
-				}
-
-				if _, err := c.Send(string(terminal.KeyArrowDown)); err != nil {
-					return err
-				}
-
-				if _, err := c.ExpectString("token"); err != nil {
-					return err
-				}
-
-				if _, err := c.Send(string(terminal.KeyEnter)); err != nil {
-					return err
-				}
-
-				if _, err := c.ExpectString("How do you want to set cluster credentials"); err != nil {
-					return err
-				}
-
-				if _, err := c.ExpectString("Passing plain text as parameters"); err != nil {
-					return err
-				}
-
-				if _, err := c.Send(string(terminal.KeyArrowDown)); err != nil {
-					return err
-				}
-
-				if _, err := c.ExpectString("Using existing kubernetes secrets"); err != nil {
-					return err
-				}
-
-				if _, err := c.Send(string(terminal.KeyEnter)); err != nil {
-					return err
-				}
-
-				if _, err := c.ExpectString("Secret Key for token :"); err != nil {
-					return err
-				}
-
-				if _, err := c.SendLine("tokenkey"); err != nil {
-					return err
-				}
-
-				if _, err := c.ExpectString("Secret Name for token :"); err != nil {
-					return err
-				}
-
-				if _, err := c.SendLine(secretName); err != nil {
-					return err
-				}
-
-				if _, err := c.ExpectString("Secret Key for cadata :"); err != nil {
-					return err
-				}
-
-				if _, err := c.SendLine("cadatakey"); err != nil {
-					return err
-				}
-
-				if _, err := c.ExpectString("Secret Name for cadata :"); err != nil {
-					return err
-				}
-
-				if _, err := c.SendLine(secretName); err != nil {
-					return err
-				}
-
-				if _, err := c.ExpectString("New cluster resource \"my-cluster\" has been created"); err != nil {
-					return err
-				}
-
-				if _, err := c.ExpectEOF(); err != nil {
-					return err
-				}
-
-				c.Close()
-				return nil
-			},
-		})
-	})
-
-	t.Run("list single pipeline resource of cluster type", func(t *testing.T) {
-		res := tkn.MustSucceed(t, "resource", "list")
-		golden.Assert(t, res.Stdout(), strings.ReplaceAll(fmt.Sprintf("%s.golden", t.Name()), "/", "-"))
-	})
-}
-
 func TestCreatePullRequestResourceInteractively(t *testing.T) {
 	t.Parallel()
 	c, namespace := framework.Setup(t)
@@ -482,22 +215,6 @@ func TestCreatePullRequestResourceInteractively(t *testing.T) {
 				}
 
 				if _, err := c.ExpectString("Select a resource type to create :"); err != nil {
-					return err
-				}
-
-				if _, err := c.ExpectString("cloudEvent"); err != nil {
-					return err
-				}
-
-				if _, err := c.Send(string(terminal.KeyArrowDown)); err != nil {
-					return err
-				}
-
-				if _, err := c.ExpectString("cluster"); err != nil {
-					return err
-				}
-
-				if _, err := c.Send(string(terminal.KeyArrowDown)); err != nil {
 					return err
 				}
 
@@ -573,7 +290,7 @@ func TestCreatePullRequestResourceInteractively(t *testing.T) {
 	})
 }
 
-func TestCreateStroageResourceInteractively(t *testing.T) {
+func TestCreateStorageResourceInteractively(t *testing.T) {
 	t.Parallel()
 	c, namespace := framework.Setup(t)
 	knativetest.CleanupOnInterrupt(func() { framework.TearDown(t, c, namespace) }, t.Logf)
@@ -602,7 +319,7 @@ func TestCreateStroageResourceInteractively(t *testing.T) {
 					return err
 				}
 
-				if _, err := c.ExpectString("cloudEvent"); err != nil {
+				if _, err := c.ExpectString("git"); err != nil {
 					return err
 				}
 
@@ -680,17 +397,4 @@ func TestCreateStroageResourceInteractively(t *testing.T) {
 		res := tkn.MustSucceed(t, "resource", "list")
 		golden.Assert(t, res.Stdout(), strings.ReplaceAll(fmt.Sprintf("%s.golden", t.Name()), "/", "-"))
 	})
-}
-
-func getClusterResourceTaskSecret(namespace, name string) *corev1.Secret {
-	return &corev1.Secret{
-		ObjectMeta: metav1.ObjectMeta{
-			Name:      name,
-			Namespace: namespace,
-		},
-		Data: map[string][]byte{
-			"cadatakey": []byte("Y2EtY2VydAo="), // ca-cert
-			"tokenkey":  []byte("dG9rZW4K"),     // token
-		},
-	}
 }

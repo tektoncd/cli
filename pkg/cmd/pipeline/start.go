@@ -89,10 +89,8 @@ type startOptions struct {
 type resourceOptionsFilter struct {
 	git         []string
 	image       []string
-	cluster     []string
 	storage     []string
 	pullRequest []string
-	cloudEvent  []string
 }
 
 func startCommand(p cli.Params) *cobra.Command {
@@ -592,23 +590,6 @@ func getPipelineResourcesByFormat(resources []v1alpha1.PipelineResource) (ret re
 				}
 			}
 			ret.storage = append(ret.storage, fmt.Sprintf("%s (%s)", res.Name, output))
-		case "cluster":
-			for _, param := range res.Spec.Params {
-				if param.Name == "url" {
-					output = param.Value + output
-				}
-				if param.Name == "user" {
-					output = output + "#" + param.Value
-				}
-			}
-			ret.cluster = append(ret.cluster, fmt.Sprintf("%s (%s)", res.Name, output))
-		case "cloudEvent":
-			for _, param := range res.Spec.Params {
-				if param.Name == "targetURI" {
-					output = param.Value + output
-				}
-			}
-			ret.cloudEvent = append(ret.cloudEvent, fmt.Sprintf("%s (%s)", res.Name, output))
 		}
 	}
 	return
@@ -624,14 +605,8 @@ func getOptionsByType(resources resourceOptionsFilter, restype string) []string 
 	if restype == "pullRequest" {
 		return resources.pullRequest
 	}
-	if restype == "cluster" {
-		return resources.cluster
-	}
 	if restype == "storage" {
 		return resources.storage
-	}
-	if restype == "cloudEvent" {
-		return resources.cloudEvent
 	}
 	return []string{}
 }
@@ -736,9 +711,7 @@ func (opt *startOptions) createPipelineResource(resName string, resType v1alpha1
 		v1alpha1.PipelineResourceTypeGit:         res.AskGitParams,
 		v1alpha1.PipelineResourceTypeStorage:     res.AskStorageParams,
 		v1alpha1.PipelineResourceTypeImage:       res.AskImageParams,
-		v1alpha1.PipelineResourceTypeCluster:     res.AskClusterParams,
 		v1alpha1.PipelineResourceTypePullRequest: res.AskPullRequestParams,
-		v1alpha1.PipelineResourceTypeCloudEvent:  res.AskCloudEventParams,
 	}
 	if res.PipelineResource.Spec.Type != "" {
 		if err := resourceTypeParams[res.PipelineResource.Spec.Type](); err != nil {
