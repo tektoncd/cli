@@ -1,5 +1,4 @@
 Command "list" is deprecated, PipelineResource commands are deprecated, they will be removed soon as it get removed from API.
-test-5
 test
 test-2
 test-1

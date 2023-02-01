@@ -96,9 +96,7 @@ func (res *Resource) createInteractive() error {
 		v1alpha1.PipelineResourceTypeGit:         res.AskGitParams,
 		v1alpha1.PipelineResourceTypeStorage:     res.AskStorageParams,
 		v1alpha1.PipelineResourceTypeImage:       res.AskImageParams,
-		v1alpha1.PipelineResourceTypeCluster:     res.AskClusterParams,
 		v1alpha1.PipelineResourceTypePullRequest: res.AskPullRequestParams,
-		v1alpha1.PipelineResourceTypeCloudEvent:  res.AskCloudEventParams,
 	}
 	if res.PipelineResource.Spec.Type != "" {
 		if err := resourceTypeParams[res.PipelineResource.Spec.Type](); err != nil {
@@ -261,149 +259,6 @@ func (res *Resource) AskImageParams() error {
 	return nil
 }
 
-func (res *Resource) AskClusterParams() error {
-
-	urlParam, err := askParam("url", res.AskOpts)
-	if err != nil {
-		return err
-	}
-	if urlParam.Name != "" {
-		res.PipelineResource.Spec.Params = append(res.PipelineResource.Spec.Params, urlParam)
-	}
-
-	usernameParam, err := askParam("username", res.AskOpts)
-	if err != nil {
-		return err
-	}
-	if usernameParam.Name != "" {
-		res.PipelineResource.Spec.Params = append(res.PipelineResource.Spec.Params, usernameParam)
-	}
-
-	secure, err := askToSelect("Is the cluster secure?", []string{"yes", "no"}, res.AskOpts)
-	if err != nil {
-		return err
-	}
-	insecureParam := v1alpha1.ResourceParam{}
-	insecureParam.Name = "insecure"
-	if secure == "yes" {
-		insecureParam.Value = "false"
-	} else {
-		insecureParam.Value = "true"
-	}
-	res.PipelineResource.Spec.Params = append(res.PipelineResource.Spec.Params, insecureParam)
-
-	qs := "Which authentication technique you want to use?"
-	qsOpts := []string{
-		"password",
-		"token",
-	}
-	ans, err := askToSelect(qs, qsOpts, res.AskOpts)
-	if err != nil {
-		return err
-	}
-	switch ans {
-	case qsOpts[0]: // Using password authentication technique
-
-		passwordParam, err := askPassword(res.AskOpts)
-
-		if err != nil {
-			return err
-		}
-		if passwordParam.Name != "" {
-			res.PipelineResource.Spec.Params = append(res.PipelineResource.Spec.Params, passwordParam)
-		}
-		if secure == "yes" {
-			qs := "How do you want to set cadata?"
-			qsOpts := []string{
-				"Passing plain text as parameters",
-				"Using existing kubernetes secrets",
-			}
-			ans, err := askToSelect(qs, qsOpts, res.AskOpts)
-			if err != nil {
-				return err
-			}
-			switch ans {
-			case qsOpts[0]: // plain text
-				cadataParam, err := askParam("cadata", res.AskOpts)
-				if err != nil {
-					return err
-				}
-				if cadataParam.Name != "" {
-					res.PipelineResource.Spec.Params = append(res.PipelineResource.Spec.Params, cadataParam)
-				}
-
-			case qsOpts[1]: // kubernetes secrets
-				secret, err := askSecret("cadata", res.AskOpts)
-				if err != nil {
-					return err
-				}
-				res.PipelineResource.Spec.SecretParams = append(res.PipelineResource.Spec.SecretParams, secret)
-
-			}
-		} else {
-			cadataParam := v1alpha1.ResourceParam{}
-			cadataParam.Name = "cadata"
-			res.PipelineResource.Spec.Params = append(res.PipelineResource.Spec.Params, cadataParam)
-		}
-
-	case qsOpts[1]: // Using token authentication technique
-		qs := "How do you want to set cluster credentials?"
-		qsOpts := []string{
-			"Passing plain text as parameters",
-			"Using existing kubernetes secrets",
-		}
-		ans, err := askToSelect(qs, qsOpts, res.AskOpts)
-		if err != nil {
-			return err
-		}
-		switch ans {
-		case qsOpts[0]: // plain text
-			tokenParam, err := askParam("token", res.AskOpts)
-			if err != nil {
-				return err
-			}
-			if tokenParam.Name != "" {
-				res.PipelineResource.Spec.Params = append(res.PipelineResource.Spec.Params, tokenParam)
-			}
-			if secure == "yes" {
-				cadataParam, err := askParam("cadata", res.AskOpts)
-
-				if err != nil {
-					return err
-				}
-				if cadataParam.Name != "" {
-					res.PipelineResource.Spec.Params = append(res.PipelineResource.Spec.Params, cadataParam)
-				}
-			} else {
-				// doing this as pipeline returns error if cadata is not present.
-				param := v1alpha1.ResourceParam{}
-				param.Name = "cadata"
-				res.PipelineResource.Spec.Params = append(res.PipelineResource.Spec.Params, param)
-			}
-
-		case qsOpts[1]: // kubernetes secretes
-			secret, err := askSecret("token", res.AskOpts)
-			if err != nil {
-				return err
-			}
-			res.PipelineResource.Spec.SecretParams = append(res.PipelineResource.Spec.SecretParams, secret)
-
-			if secure == "yes" {
-				secret, err := askSecret("cadata", res.AskOpts)
-				if err != nil {
-					return err
-				}
-				res.PipelineResource.Spec.SecretParams = append(res.PipelineResource.Spec.SecretParams, secret)
-			} else {
-				caSecret := v1alpha1.SecretParam{}
-				caSecret.FieldName = "cadata"
-				res.PipelineResource.Spec.SecretParams = append(res.PipelineResource.Spec.SecretParams, caSecret)
-			}
-		}
-	}
-	return nil
-}
-
 func (res *Resource) AskPullRequestParams() error {
 	urlParam, err := askParam("url", res.AskOpts)
 	if err != nil {
@@ -431,17 +286,6 @@ func (res *Resource) AskPullRequestParams() error {
 	}
 	res.PipelineResource.Spec.SecretParams = append(res.PipelineResource.Spec.SecretParams, secret)
 
-	return nil
-}
-
-func (res *Resource) AskCloudEventParams() error {
-	targetURIParam, err := askParam("targetURI", res.AskOpts)
-	if err != nil {
-		return err
-	}
-	if targetURIParam.Name != "" {
-		res.PipelineResource.Spec.Params = append(res.PipelineResource.Spec.Params, targetURIParam)
-	}
 	return nil
 }
 
@@ -510,25 +354,6 @@ func askToSelect(message string, options []string, askOpts survey.AskOpt) (strin
 	return ans, nil
 }
 
-func askPassword(askOpts survey.AskOpt) (v1alpha1.ResourceParam, error) {
-	var param v1alpha1.ResourceParam
-	var qs = []*survey.Question{{
-		Name: "value",
-		Prompt: &survey.Password{
-			Message: "Enter a value for password :",
-		},
-	}}
-
-	err := survey.Ask(qs, &param, askOpts)
-	if err != nil {
-		return param, Error(err)
-	}
-
-	param.Name = "password"
-
-	return param, nil
-}
-
 func allResourceType() []string {
 	var resType []string
 
@@ -541,7 +366,7 @@ func allResourceType() []string {
 }
 
 func cast(answer string) v1alpha1.PipelineResourceType {
-	return v1alpha1.PipelineResourceType(answer)
+	return answer
 }
 
 func Error(err error) error {

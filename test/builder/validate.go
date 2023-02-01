@@ -29,9 +29,6 @@ func Details(pre v1alpha1.PipelineResource) string {
 	if pre.Spec.Type == v1beta1.PipelineResourceTypeStorage {
 		key = "location"
 	}
-	if pre.Spec.Type == v1beta1.PipelineResourceTypeCloudEvent {
-		key = "targeturi"
-	}
 
 	for _, p := range pre.Spec.Params {
 		if strings.ToLower(p.Name) == key {

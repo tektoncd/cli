@@ -54,9 +54,9 @@ func Test_PipelineResourcesByTypeAndName(t *testing.T) {
 			Name:      "pres2-1",
 		},
 		Spec: v1alpha1.PipelineResourceSpec{
-			Type: "cloudEvent",
+			Type: "pullRequest",
 			Params: []v1alpha1.ResourceParam{
-				{Name: "targetURI", Value: "http://sink"},
+				{Name: "url", Value: "https://github.com/tektoncd/cli/pull/1"},
 			},
 		},
 	}
@@ -70,17 +70,18 @@ func Test_PipelineResourcesByTypeAndName(t *testing.T) {
 	SortByTypeAndName(pres)
 
 	element1Type := pres[0].Spec.Type
-	if element1Type != "cloudEvent" {
-		t.Errorf("SortPipelineResourcesByTypeAndName should be cloudEvent but returned: %s", element1Type)
+	if element1Type != "git" {
+		t.Errorf("SortPipelineResourcesByTypeAndName should be git but returned: %s", element1Type)
 	}
 
 	element2Type := pres[1].Spec.Type
-	if element2Type != "git" {
-		t.Errorf("SortPipelineResourcesByTypeAndName should be git but returned: %s", element2Type)
+	if element2Type != "image" {
+		t.Errorf("SortPipelineResourcesByTypeAndName should be image but returned: %s", element2Type)
 	}
 
 	element3Type := pres[2].Spec.Type
-	if element3Type != "image" {
-		t.Errorf("SortPipelineResourcesByTypeAndName should be image but returned: %s", element3Type)
+	if element3Type != "pullRequest" {
+		t.Errorf("SortPipelineResourcesByTypeAndName should be pullRequest but returned: %s", element3Type)
 	}
+
 }
