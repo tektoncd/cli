@@ -24,6 +24,8 @@ import (
 	"strings"
 	"time"
 
+	"knative.dev/pkg/apis"
+
 	"github.com/AlecAivazis/survey/v2"
 	"github.com/AlecAivazis/survey/v2/terminal"
 	"github.com/spf13/cobra"
@@ -414,7 +416,22 @@ func (opt *startOptions) startPipeline(pipelineStart *v1beta1.Pipeline) error {
 		Params:          opt.cliparams,
 		AllSteps:        false,
 	}
-	return prcmd.Run(runLogOpts)
+	if err = prcmd.Run(runLogOpts); err != nil {
+		return err
+	}
+
+	// Fetch the PipelineRun to get the PipelineRun status
+	prLatest, err := pipelinerun.GetPipelineRun(pipelineRunGroupResource, cs, prCreated.Name, prCreated.Namespace)
+	if err != nil {
+		return err
+	}
+
+	// If PipelineRun status is not Succeeded, print the PipelineRun status
+	if prLatest.Status.GetCondition(apis.ConditionSucceeded).IsFalse() {
+		return fmt.Errorf("pipelinerun %s did not succeed", prLatest.Name)
+	}
+
+	return nil
 }
 
 func (opt *startOptions) getInput(pipeline *v1beta1.Pipeline) error {

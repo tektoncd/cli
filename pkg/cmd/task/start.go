@@ -425,7 +425,23 @@ func startTask(opt startOptions, args []string) error {
 		Params:      opt.cliparams,
 		AllSteps:    false,
 	}
-	return taskrun.Run(runLogOpts)
+
+	if err := taskrun.Run(runLogOpts); err != nil {
+		return err
+	}
+
+	// fetch the taskrun again to get the latest status
+	trLatest, err := traction.GetTaskRun(taskrunGroupResource, cs, trCreated.Name, trCreated.Namespace)
+	if err != nil {
+		return err
+	}
+
+	// check if the created taskrun succeed or not
+	if !trLatest.IsSuccessful() {
+		return fmt.Errorf("taskRun %s did not succeed", trCreated.Name)
+	}
+
+	return nil
 }
 
 func printTaskRun(output string, s *cli.Stream, tr interface{}) error {
