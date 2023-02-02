@@ -15,10 +15,15 @@
 package taskrun
 
 import (
+	"context"
 	"sort"
 
+	"github.com/tektoncd/cli/pkg/actions"
+	"github.com/tektoncd/cli/pkg/cli"
 	v1 "github.com/tektoncd/pipeline/pkg/apis/pipeline/v1"
+	"github.com/tektoncd/pipeline/pkg/apis/pipeline/v1beta1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+	"k8s.io/apimachinery/pkg/runtime/schema"
 )
 
 type Run struct {
@@ -100,4 +105,31 @@ func SortTasksBySpecOrder(pipelineTasks []v1.PipelineTask, pipelinesTaskRuns map
 	}
 	sort.Sort(trs)
 	return trs
+}
+
+func GetTaskRunV1beta1(gr schema.GroupVersionResource, c *cli.Clients, trName, ns string) (*v1beta1.TaskRun, error) {
+	var taskrun v1beta1.TaskRun
+	gvr, err := actions.GetGroupVersionResource(gr, c.Tekton.Discovery())
+	if err != nil {
+		return nil, err
+	}
+
+	if gvr.Version == "v1beta1" {
+		err := actions.GetV1(gr, c, trName, ns, metav1.GetOptions{}, &taskrun)
+		if err != nil {
+			return nil, err
+		}
+		return &taskrun, nil
+	}
+
+	var taskrunV1 v1.TaskRun
+	err = actions.GetV1(gr, c, trName, ns, metav1.GetOptions{}, &taskrunV1)
+	if err != nil {
+		return nil, err
+	}
+	err = taskrun.ConvertFrom(context.Background(), &taskrunV1)
+	if err != nil {
+		return nil, err
+	}
+	return &taskrun, nil
 }

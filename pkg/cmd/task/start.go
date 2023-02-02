@@ -425,7 +425,36 @@ func startTask(opt startOptions, args []string) error {
 		Params:      opt.cliparams,
 		AllSteps:    false,
 	}
-	return taskrun.Run(runLogOpts)
+
+	if err := taskrun.Run(runLogOpts); err != nil {
+		return err
+	}
+
+	start := time.Now()
+	timeout := 10 * time.Second
+
+	for {
+		trCreated, err = traction.GetTaskRunV1beta1(taskrunGroupResource, cs, trCreated.Name, trCreated.Namespace)
+		if err != nil {
+			return err
+		}
+
+		if trCreated.IsDone() {
+			break
+		}
+
+		if time.Since(start) > timeout {
+			return errors.New("timeout waiting for TaskRun to be done")
+		}
+
+		time.Sleep(1 * time.Second)
+	}
+
+	// check if the created taskrun succeed or not
+	if !trCreated.IsSuccessful() {
+		return errors.New(trCreated.Name + " has failed.")
+	}
+	return nil
 }
 
 func printTaskRun(output string, s *cli.Stream, tr interface{}) error {

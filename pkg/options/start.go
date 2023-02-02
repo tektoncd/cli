@@ -1,17 +1,14 @@
 package options
 
 import (
-	"context"
 	"fmt"
 	"strings"
 
 	"github.com/AlecAivazis/survey/v2"
-	"github.com/tektoncd/cli/pkg/actions"
 	"github.com/tektoncd/cli/pkg/cli"
 	"github.com/tektoncd/cli/pkg/task"
-	v1 "github.com/tektoncd/pipeline/pkg/apis/pipeline/v1"
+	taskrunpkg "github.com/tektoncd/cli/pkg/taskrun"
 	"github.com/tektoncd/pipeline/pkg/apis/pipeline/v1beta1"
-	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime/schema"
 )
 
@@ -47,13 +44,13 @@ func (taskRunOpts *TaskRunOpts) UseTaskRunFrom(tr *v1beta1.TaskRun, cs *cli.Clie
 			return err
 		}
 
-		trUsed, err = getTaskRunV1beta1(taskrunGroupResource, cs, name, taskRunOpts.CliParams.Namespace())
+		trUsed, err = taskrunpkg.GetTaskRunV1beta1(taskrunGroupResource, cs, name, taskRunOpts.CliParams.Namespace())
 		if err != nil {
 			return err
 		}
 
 	} else if taskRunOpts.UseTaskRun != "" {
-		trUsed, err = getTaskRunV1beta1(taskrunGroupResource, cs, taskRunOpts.UseTaskRun, taskRunOpts.CliParams.Namespace())
+		trUsed, err = taskrunpkg.GetTaskRunV1beta1(taskrunGroupResource, cs, taskRunOpts.UseTaskRun, taskRunOpts.CliParams.Namespace())
 		if err != nil {
 			return err
 		}
@@ -362,31 +359,4 @@ func askParam(ques string, askOpts survey.AskOpt, def ...string) (string, error)
 	}
 
 	return ans, nil
-}
-
-func getTaskRunV1beta1(gr schema.GroupVersionResource, c *cli.Clients, trName, ns string) (*v1beta1.TaskRun, error) {
-	var taskrun v1beta1.TaskRun
-	gvr, err := actions.GetGroupVersionResource(gr, c.Tekton.Discovery())
-	if err != nil {
-		return nil, err
-	}
-
-	if gvr.Version == "v1beta1" {
-		err := actions.GetV1(gr, c, trName, ns, metav1.GetOptions{}, &taskrun)
-		if err != nil {
-			return nil, err
-		}
-		return &taskrun, nil
-	}
-
-	var taskrunV1 v1.TaskRun
-	err = actions.GetV1(gr, c, trName, ns, metav1.GetOptions{}, &taskrunV1)
-	if err != nil {
-		return nil, err
-	}
-	err = taskrun.ConvertFrom(context.Background(), &taskrunV1)
-	if err != nil {
-		return nil, err
-	}
-	return &taskrun, nil
 }

@@ -44,6 +44,7 @@ import (
 	"github.com/tektoncd/pipeline/pkg/apis/pipeline/v1beta1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime/schema"
+	"knative.dev/pkg/apis"
 	"sigs.k8s.io/yaml"
 )
 
@@ -414,7 +415,36 @@ func (opt *startOptions) startPipeline(pipelineStart *v1beta1.Pipeline) error {
 		Params:          opt.cliparams,
 		AllSteps:        false,
 	}
-	return prcmd.Run(runLogOpts)
+
+	if err := prcmd.Run(runLogOpts); err != nil {
+		return err
+	}
+
+	start := time.Now()
+	timeout := 10 * time.Second
+
+	for {
+		prCreated, err = getPipelineRunV1beta1(pipelineRunGroupResource, cs, prCreated.Name, prCreated.Namespace)
+		if err != nil {
+			return err
+		}
+
+		if prCreated.IsDone() {
+			break
+		}
+
+		if time.Since(start) > timeout {
+			return errors.New("timeout waiting for PipelineRun to be done")
+		}
+
+		time.Sleep(1 * time.Second)
+	}
+
+	// check if the created pipelinerun succeed or not
+	if !prCreated.Status.GetCondition(apis.ConditionSucceeded).IsTrue() {
+		return errors.New(prCreated.Name + " has failed.")
+	}
+	return nil
 }
 
 func (opt *startOptions) getInput(pipeline *v1beta1.Pipeline) error {
