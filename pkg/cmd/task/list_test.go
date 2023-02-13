@@ -1056,3 +1056,100 @@ func TestTaskList_Only_Tasks_all_namespaces_no_headers(t *testing.T) {
 
 	golden.Assert(t, output, fmt.Sprintf("%s.golden", t.Name()))
 }
+
+func TestTaskList_in_all_namespaces_with_output_yaml_flag(t *testing.T) {
+	clock := clockwork.NewFakeClock()
+
+	tasks := []*v1.Task{
+		{
+			ObjectMeta: metav1.ObjectMeta{
+				Name:              "tomatoes",
+				Namespace:         "namespace",
+				CreationTimestamp: metav1.Time{Time: clock.Now().Add(-1 * time.Minute)},
+			},
+		},
+		{
+			ObjectMeta: metav1.ObjectMeta{
+				Name:              "mangoes",
+				Namespace:         "namespace",
+				CreationTimestamp: metav1.Time{Time: clock.Now().Add(-20 * time.Second)},
+			},
+		},
+		{
+			ObjectMeta: metav1.ObjectMeta{
+				Name:              "bananas",
+				Namespace:         "namespace",
+				CreationTimestamp: metav1.Time{Time: clock.Now().Add(-512 * time.Hour)},
+			},
+		},
+		{
+			ObjectMeta: metav1.ObjectMeta{
+				Name:              "tomates",
+				Namespace:         "espace-de-nom",
+				CreationTimestamp: metav1.Time{Time: clock.Now().Add(-1 * time.Minute)},
+			},
+		},
+		{
+			ObjectMeta: metav1.ObjectMeta{
+				Name:              "mangues",
+				Namespace:         "espace-de-nom",
+				CreationTimestamp: metav1.Time{Time: clock.Now().Add(-20 * time.Second)},
+			},
+		},
+		{
+			ObjectMeta: metav1.ObjectMeta{
+				Name:              "bananes",
+				Namespace:         "espace-de-nom",
+				CreationTimestamp: metav1.Time{Time: clock.Now().Add(-512 * time.Hour)},
+			},
+		},
+		{
+			ObjectMeta: metav1.ObjectMeta{
+				Name:              "pommes",
+				Namespace:         "espace-de-nom",
+				CreationTimestamp: metav1.Time{Time: clock.Now().Add(-513 * time.Hour)},
+			},
+			Spec: v1.TaskSpec{
+				Description: "",
+			},
+		},
+		{
+			ObjectMeta: metav1.ObjectMeta{
+				Name:              "oignons",
+				Namespace:         "espace-de-nom",
+				CreationTimestamp: metav1.Time{Time: clock.Now().Add(-515 * time.Hour)},
+			},
+			Spec: v1.TaskSpec{
+				Description: "a test task to test description of task",
+			},
+		},
+	}
+
+	version := "v1"
+	tdc := testDynamic.Options{}
+	dynamic, err := tdc.Client(
+		cb.UnstructuredT(tasks[0], version),
+		cb.UnstructuredT(tasks[1], version),
+		cb.UnstructuredT(tasks[2], version),
+		cb.UnstructuredT(tasks[3], version),
+		cb.UnstructuredT(tasks[4], version),
+		cb.UnstructuredT(tasks[5], version),
+		cb.UnstructuredT(tasks[6], version),
+		cb.UnstructuredT(tasks[7], version),
+	)
+	if err != nil {
+		t.Errorf("unable to create dynamic client: %v", err)
+	}
+
+	cs, _ := test.SeedTestData(t, test.Data{Tasks: tasks})
+	p := &test.Params{Tekton: cs.Pipeline, Clock: clock, Kube: cs.Kube, Dynamic: dynamic}
+	cs.Pipeline.Resources = cb.APIResourceList(version, []string{"task"})
+	task := Command(p)
+
+	output, err := test.ExecuteCommand(task, "list", "--all-namespaces", "--output=yaml")
+	if err != nil {
+		t.Errorf("Unexpected error: %v", err)
+	}
+
+	golden.Assert(t, output, fmt.Sprintf("%s.golden", t.Name()))
+}
