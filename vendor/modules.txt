@@ -824,6 +824,10 @@ github.com/hashicorp/go-hclog
 # github.com/hashicorp/go-immutable-radix v1.3.1
 ## explicit
 github.com/hashicorp/go-immutable-radix
+# github.com/hashicorp/go-kms-wrapping/v2 v2.0.7
+## explicit; go 1.17
+github.com/hashicorp/go-kms-wrapping/v2
+github.com/hashicorp/go-kms-wrapping/v2/internal/xor
 # github.com/hashicorp/go-multierror v1.1.1
 ## explicit; go 1.13
 github.com/hashicorp/go-multierror
@@ -874,7 +878,7 @@ github.com/hashicorp/hcl/json/token
 # github.com/hashicorp/vault/api v1.8.2
 ## explicit; go 1.19
 github.com/hashicorp/vault/api
-# github.com/hashicorp/vault/sdk v0.7.0
+# github.com/hashicorp/vault/sdk v0.8.1
 ## explicit; go 1.19
 github.com/hashicorp/vault/sdk/helper/certutil
 github.com/hashicorp/vault/sdk/helper/compressutil
@@ -893,7 +897,6 @@ github.com/hashicorp/vault/sdk/helper/wrapping
 github.com/hashicorp/vault/sdk/logical
 github.com/hashicorp/vault/sdk/physical
 github.com/hashicorp/vault/sdk/physical/inmem
-github.com/hashicorp/vault/sdk/version
 # github.com/hashicorp/yamux v0.1.1
 ## explicit; go 1.15
 github.com/hashicorp/yamux
@@ -1180,8 +1183,6 @@ github.com/rcrowley/go-metrics
 # github.com/rivo/uniseg v0.4.2
 ## explicit; go 1.18
 github.com/rivo/uniseg
-# github.com/rogpeppe/go-internal v1.9.0
-## explicit; go 1.17
 # github.com/russross/blackfriday v1.6.0
 ## explicit; go 1.13
 github.com/russross/blackfriday

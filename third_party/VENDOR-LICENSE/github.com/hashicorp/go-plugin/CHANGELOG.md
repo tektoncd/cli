@@ -1,3 +1,21 @@
+## v1.4.8
+
+BUG FIXES:
+
+* Fix windows build: [[GH-227](https://github.com/hashicorp/go-plugin/pull/227)]
+
+## v1.4.7
+
+ENHANCEMENTS:
+
+* More detailed error message on plugin start failure: [[GH-223](https://github.com/hashicorp/go-plugin/pull/223)]
+
+## v1.4.6
+
+BUG FIXES:
+
+* server: Prevent gRPC broker goroutine leak when using `GRPCServer` type `GracefulStop()` or `Stop()` methods [[GH-220](https://github.com/hashicorp/go-plugin/pull/220)]
+
 ## v1.4.5
 
 ENHANCEMENTS:
