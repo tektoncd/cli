@@ -87,8 +87,13 @@ func listCommand(p cli.Params) *cobra.Command {
 				return fmt.Errorf("output option not set properly: %v", err)
 			}
 
+			ns := p.Namespace()
+			if opts.AllNamespaces {
+				ns = ""
+			}
+
 			if output != "" {
-				return actions.PrintObjects(pipelineGroupResource, cmd.OutOrStdout(), cs.Dynamic, cs.Tekton.Discovery(), f, p.Namespace())
+				return actions.PrintObjects(pipelineGroupResource, cmd.OutOrStdout(), cs.Dynamic, cs.Tekton.Discovery(), f, ns)
 			}
 			stream := &cli.Stream{
 				Out: cmd.OutOrStdout(),

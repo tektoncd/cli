@@ -1,0 +1,47 @@
+apiVersion: tekton.dev/v1
+items:
+- apiVersion: tekton.dev/v1
+  kind: pipeline
+  metadata:
+    creationTimestamp: "1984-03-13T16:00:00Z"
+    name: bananes
+    namespace: espace-de-nom
+  spec: {}
+- apiVersion: tekton.dev/v1
+  kind: pipeline
+  metadata:
+    creationTimestamp: "1984-04-03T23:59:40Z"
+    name: mangues
+    namespace: espace-de-nom
+  spec: {}
+- apiVersion: tekton.dev/v1
+  kind: pipeline
+  metadata:
+    creationTimestamp: "1984-04-03T23:59:00Z"
+    name: tomates
+    namespace: espace-de-nom
+  spec: {}
+- apiVersion: tekton.dev/v1
+  kind: pipeline
+  metadata:
+    creationTimestamp: "1984-03-13T16:00:00Z"
+    name: bananas
+    namespace: namespace
+  spec: {}
+- apiVersion: tekton.dev/v1
+  kind: pipeline
+  metadata:
+    creationTimestamp: "1984-04-03T23:59:40Z"
+    name: mangoes
+    namespace: namespace
+  spec: {}
+- apiVersion: tekton.dev/v1
+  kind: pipeline
+  metadata:
+    creationTimestamp: "1984-04-03T23:59:00Z"
+    name: tomatoes
+    namespace: namespace
+  spec: {}
+kind: PipelineList
+metadata:
+  resourceVersion: ""

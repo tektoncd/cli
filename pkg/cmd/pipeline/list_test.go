@@ -1091,3 +1091,80 @@ func TestPipelinesList_latest_run(t *testing.T) {
 	}
 	golden.Assert(t, got, fmt.Sprintf("%s.golden", t.Name()))
 }
+
+func TestPipelineList_in_all_namespaces_with_output_yaml_flag(t *testing.T) {
+
+	clock := clockwork.NewFakeClock()
+	version := "v1"
+
+	pdata := []*v1.Pipeline{
+		{
+			ObjectMeta: metav1.ObjectMeta{
+				Name:              "tomatoes",
+				Namespace:         "namespace",
+				CreationTimestamp: metav1.Time{Time: clock.Now().Add(-1 * time.Minute)},
+			},
+		},
+		{
+			ObjectMeta: metav1.ObjectMeta{
+				Name:              "mangoes",
+				Namespace:         "namespace",
+				CreationTimestamp: metav1.Time{Time: clock.Now().Add(-20 * time.Second)},
+			},
+		},
+		{
+			ObjectMeta: metav1.ObjectMeta{
+				Name:      "bananas",
+				Namespace: "namespace",
+				// Created 3 weeks ago
+				CreationTimestamp: metav1.Time{Time: clock.Now().Add(-512 * time.Hour)},
+			},
+		},
+		{
+			ObjectMeta: metav1.ObjectMeta{
+				Name:              "tomates",
+				Namespace:         "espace-de-nom",
+				CreationTimestamp: metav1.Time{Time: clock.Now().Add(-1 * time.Minute)},
+			},
+		},
+		{
+			ObjectMeta: metav1.ObjectMeta{
+				Name:              "mangues",
+				Namespace:         "espace-de-nom",
+				CreationTimestamp: metav1.Time{Time: clock.Now().Add(-20 * time.Second)},
+			},
+		},
+		{
+			ObjectMeta: metav1.ObjectMeta{
+				Name:      "bananes",
+				Namespace: "espace-de-nom",
+				// Created 3 weeks ago
+				CreationTimestamp: metav1.Time{Time: clock.Now().Add(-512 * time.Hour)},
+			},
+		},
+	}
+
+	tdc := testDynamic.Options{}
+	dynamic, err := tdc.Client(
+		cb.UnstructuredP(pdata[0], version),
+		cb.UnstructuredP(pdata[1], version),
+		cb.UnstructuredP(pdata[2], version),
+		cb.UnstructuredP(pdata[3], version),
+		cb.UnstructuredP(pdata[4], version),
+		cb.UnstructuredP(pdata[5], version),
+	)
+	if err != nil {
+		t.Errorf("unable to create dynamic client: %v", err)
+	}
+	cs, _ := test.SeedTestData(t, test.Data{Pipelines: pdata, Namespaces: nil})
+	p := &test.Params{Tekton: cs.Pipeline, Clock: clock, Kube: cs.Kube, Dynamic: dynamic}
+	cs.Pipeline.Resources = cb.APIResourceList(version, []string{"pipeline"})
+	pipeline := Command(p)
+
+	output, err := test.ExecuteCommand(pipeline, "list", "--all-namespaces", "--output=yaml")
+	if err != nil {
+		t.Errorf("Unexpected error: %v", err)
+	}
+
+	golden.Assert(t, output, fmt.Sprintf("%s.golden", t.Name()))
+}
