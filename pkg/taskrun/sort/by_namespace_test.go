@@ -19,36 +19,30 @@ import (
 	"time"
 
 	"github.com/jonboulle/clockwork"
-	"github.com/tektoncd/pipeline/pkg/apis/pipeline/v1beta1"
+	v1 "github.com/tektoncd/pipeline/pkg/apis/pipeline/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 )
 
 func Test_TaskRunsByNamespace(t *testing.T) {
-	tr1 := v1beta1.TaskRun{
-		ObjectMeta: metav1.ObjectMeta{
-			Namespace: "abc",
-			Name:      "tr0-1",
+	trs := []v1.TaskRun{
+		{
+			ObjectMeta: metav1.ObjectMeta{
+				Namespace: "def",
+				Name:      "tr1-1",
+			},
 		},
-	}
-
-	tr2 := v1beta1.TaskRun{
-		ObjectMeta: metav1.ObjectMeta{
-			Namespace: "def",
-			Name:      "tr1-1",
+		{
+			ObjectMeta: metav1.ObjectMeta{
+				Namespace: "ghi",
+				Name:      "tr2-1",
+			},
 		},
-	}
-
-	tr3 := v1beta1.TaskRun{
-		ObjectMeta: metav1.ObjectMeta{
-			Namespace: "ghi",
-			Name:      "tr2-1",
+		{
+			ObjectMeta: metav1.ObjectMeta{
+				Namespace: "abc",
+				Name:      "tr0-1",
+			},
 		},
-	}
-
-	trs := []v1beta1.TaskRun{
-		tr2,
-		tr3,
-		tr1,
 	}
 
 	SortByNamespace(trs)
@@ -69,7 +63,7 @@ func Test_TaskRunsByNamespace(t *testing.T) {
 	}
 }
 
-func Test_PipelineRunsByNamespaceWithStartTime(t *testing.T) {
+func Test_TaskRunsByNamespaceWithStartTime(t *testing.T) {
 
 	clock := clockwork.NewFakeClock()
 
@@ -80,61 +74,79 @@ func Test_PipelineRunsByNamespaceWithStartTime(t *testing.T) {
 	tr20Started := clock.Now().Add(10 * time.Second)
 	tr21Started := clock.Now().Add(-1 * time.Hour)
 
-	tr00 := v1beta1.TaskRun{
+	tr00 := v1.TaskRun{
 		ObjectMeta: metav1.ObjectMeta{
 			Namespace: "abc",
 			Name:      "tr0-0",
 		},
+		Status: v1.TaskRunStatus{
+			TaskRunStatusFields: v1.TaskRunStatusFields{
+				StartTime: &metav1.Time{Time: tr00Started},
+			},
+		},
 	}
 
-	tr00.Status.StartTime = &metav1.Time{Time: tr00Started}
-
-	tr01 := v1beta1.TaskRun{
+	tr01 := v1.TaskRun{
 		ObjectMeta: metav1.ObjectMeta{
 			Namespace: "abc",
 			Name:      "tr0-1",
 		},
+		Status: v1.TaskRunStatus{
+			TaskRunStatusFields: v1.TaskRunStatusFields{
+				StartTime: &metav1.Time{Time: tr01Started},
+			},
+		},
 	}
 
-	tr01.Status.StartTime = &metav1.Time{Time: tr01Started}
-
-	tr10 := v1beta1.TaskRun{
+	tr10 := v1.TaskRun{
 		ObjectMeta: metav1.ObjectMeta{
 			Namespace: "def",
 			Name:      "tr1-0",
 		},
+		Status: v1.TaskRunStatus{
+			TaskRunStatusFields: v1.TaskRunStatusFields{
+				StartTime: &metav1.Time{Time: tr10Started},
+			},
+		},
 	}
 
-	tr10.Status.StartTime = &metav1.Time{Time: tr10Started}
-
-	tr11 := v1beta1.TaskRun{
+	tr11 := v1.TaskRun{
 		ObjectMeta: metav1.ObjectMeta{
 			Namespace: "def",
 			Name:      "tr1-1",
 		},
+		Status: v1.TaskRunStatus{
+			TaskRunStatusFields: v1.TaskRunStatusFields{
+				StartTime: &metav1.Time{Time: tr11Started},
+			},
+		},
 	}
 
-	tr11.Status.StartTime = &metav1.Time{Time: tr11Started}
-
-	tr20 := v1beta1.TaskRun{
+	tr20 := v1.TaskRun{
 		ObjectMeta: metav1.ObjectMeta{
 			Namespace: "ghi",
 			Name:      "tr2-0",
 		},
+		Status: v1.TaskRunStatus{
+			TaskRunStatusFields: v1.TaskRunStatusFields{
+				StartTime: &metav1.Time{Time: tr20Started},
+			},
+		},
 	}
 
-	tr20.Status.StartTime = &metav1.Time{Time: tr20Started}
-
-	tr21 := v1beta1.TaskRun{
+	tr21 := v1.TaskRun{
 		ObjectMeta: metav1.ObjectMeta{
 			Namespace: "ghi",
 			Name:      "tr2-1",
 		},
+		Status: v1.TaskRunStatus{
+			TaskRunStatusFields: v1.TaskRunStatusFields{
+				StartTime: &metav1.Time{Time: tr21Started},
+			},
+		},
 	}
 
-	tr21.Status.StartTime = &metav1.Time{Time: tr21Started}
-
-	trs := []v1beta1.TaskRun{
+	trs := []v1.TaskRun{
 		tr11,
 		tr21,
 		tr01,

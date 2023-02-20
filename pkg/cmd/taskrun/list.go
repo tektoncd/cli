@@ -22,14 +22,14 @@ import (
 
 	"github.com/jonboulle/clockwork"
 	"github.com/spf13/cobra"
+	"github.com/tektoncd/cli/pkg/actions"
 	"github.com/tektoncd/cli/pkg/cli"
 	"github.com/tektoncd/cli/pkg/formatted"
 	"github.com/tektoncd/cli/pkg/printer"
 	taskpkg "github.com/tektoncd/cli/pkg/task"
-	trlist "github.com/tektoncd/cli/pkg/taskrun/list"
 	trsort "github.com/tektoncd/cli/pkg/taskrun/sort"
-	"github.com/tektoncd/pipeline/pkg/apis/pipeline/v1beta1"
-	v1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+	v1 "github.com/tektoncd/pipeline/pkg/apis/pipeline/v1"
+	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	cliopts "k8s.io/cli-runtime/pkg/genericclioptions"
 )
 
@@ -143,7 +143,7 @@ List all TaskRuns of Task 'foo' in namespace 'bar':
 	return c
 }
 
-func reverse(trs *v1beta1.TaskRunList) {
+func reverse(trs *v1.TaskRunList) {
 	i := 0
 	j := len(trs.Items) - 1
 	trItems := trs.Items
@@ -155,9 +155,9 @@ func reverse(trs *v1beta1.TaskRunList) {
 	trs.Items = trItems
 }
 
-func list(p cli.Params, task string, limit int, labelselector string, allnamespaces bool) (*v1beta1.TaskRunList, error) {
+func list(p cli.Params, task string, limit int, labelselector string, allnamespaces bool) (*v1.TaskRunList, error) {
 	var selector string
-	var options v1.ListOptions
+	var options metav1.ListOptions
 
 	if task != "" && labelselector != "" {
 		return nil, fmt.Errorf("specifying a Task and labels are not compatible")
@@ -170,7 +170,7 @@ func list(p cli.Params, task string, limit int, labelselector string, allnamespa
 	}
 
 	if selector != "" {
-		options = v1.ListOptions{
+		options = metav1.ListOptions{
 			LabelSelector: selector,
 		}
 	}
@@ -185,14 +185,14 @@ func list(p cli.Params, task string, limit int, labelselector string, allnamespa
 		ns = ""
 	}
 
-	trs, err := trlist.TaskRuns(cs, options, ns)
-	if err != nil {
+	var trs *v1.TaskRunList
+	if err := actions.ListV1(taskrunGroupResource, cs, options, ns, &trs); err != nil {
 		return nil, err
 	}
 
 	// this is required as the same label is getting added for both task and ClusterTask
 	if task != "" {
-		trs.Items = taskpkg.FilterByRef(trs.Items, string(v1beta1.NamespacedTaskKind))
+		trs.Items = taskpkg.FilterByRef(trs.Items, string(v1.NamespacedTaskKind))
 	}
 
 	trslen := len(trs.Items)
@@ -218,10 +218,10 @@ func list(p cli.Params, task string, limit int, labelselector string, allnamespa
 	return trs, nil
 }
 
-func printFormatted(s *cli.Stream, trs *v1beta1.TaskRunList, c clockwork.Clock, allnamespaces bool, noheaders bool) error {
+func printFormatted(s *cli.Stream, trs *v1.TaskRunList, c clockwork.Clock, allnamespaces bool, noheaders bool) error {
 
 	var data = struct {
-		TaskRuns      *v1beta1.TaskRunList
+		TaskRuns      *v1.TaskRunList
 		Time          clockwork.Clock
 		AllNamespaces bool
 		NoHeaders     bool

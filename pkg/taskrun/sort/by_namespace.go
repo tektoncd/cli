@@ -17,14 +17,14 @@ package taskrun
 import (
 	"sort"
 
-	"github.com/tektoncd/pipeline/pkg/apis/pipeline/v1beta1"
+	v1 "github.com/tektoncd/pipeline/pkg/apis/pipeline/v1"
 )
 
-func SortByNamespace(trs []v1beta1.TaskRun) {
+func SortByNamespace(trs []v1.TaskRun) {
 	sort.Sort(byNamespace(trs))
 }
 
-type byNamespace []v1beta1.TaskRun
+type byNamespace []v1.TaskRun
 
 func (trs byNamespace) compareNamespace(ins, jns string) (lt, eq bool) {
 	lt, eq = ins < jns, ins == jns
