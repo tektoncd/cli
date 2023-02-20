@@ -3,7 +3,18 @@ updates:
   - package-ecosystem: "gomod" # See documentation for possible values
     directory: "/" # Location of package manifests
     schedule:
-      interval: "weekly"
+      interval: "daily"
     labels:
     - "ok-to-test"
     - "dependencies"
+    - "release-note-none"
+    - "kind/misc"
+  - package-ecosystem: "gomod"
+    directory: "/tools"
+    schedule:
+      interval: "daily"
+    labels:
+      - "ok-to-test"
+      - "dependencies"
+      - "release-note-none"
+      - "kind/misc"
