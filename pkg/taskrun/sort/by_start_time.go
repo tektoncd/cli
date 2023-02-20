@@ -17,14 +17,14 @@ package taskrun
 import (
 	"sort"
 
-	"github.com/tektoncd/pipeline/pkg/apis/pipeline/v1beta1"
+	v1 "github.com/tektoncd/pipeline/pkg/apis/pipeline/v1"
 )
 
-func SortByStartTime(trs []v1beta1.TaskRun) {
+func SortByStartTime(trs []v1.TaskRun) {
 	sort.Sort(byStartTime(trs))
 }
 
-type byStartTime []v1beta1.TaskRun
+type byStartTime []v1.TaskRun
 
 func (trs byStartTime) Len() int      { return len(trs) }
 func (trs byStartTime) Swap(i, j int) { trs[i], trs[j] = trs[j], trs[i] }

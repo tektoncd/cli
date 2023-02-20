@@ -24,7 +24,7 @@ import (
 	"github.com/tektoncd/cli/pkg/deleter"
 	"github.com/tektoncd/cli/pkg/formatted"
 	"github.com/tektoncd/cli/pkg/options"
-	trlist "github.com/tektoncd/cli/pkg/taskrun/list"
+	v1 "github.com/tektoncd/pipeline/pkg/apis/pipeline/v1"
 	"go.uber.org/multierr"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime/schema"
@@ -146,8 +146,9 @@ func taskRunLister(cs *cli.Clients, p cli.Params) func(string) ([]string, error)
 		lOpts := metav1.ListOptions{
 			LabelSelector: fmt.Sprintf("tekton.dev/clusterTask=%s", taskName),
 		}
-		taskRuns, err := trlist.TaskRuns(cs, lOpts, p.Namespace())
-		if err != nil {
+
+		var taskRuns *v1.TaskRunList
+		if err := actions.ListV1(taskrunGroupResource, cs, lOpts, p.Namespace(), &taskRuns); err != nil {
 			return nil, err
 		}
 		var names []string

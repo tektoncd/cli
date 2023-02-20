@@ -63,10 +63,17 @@ func (taskRunOpts *TaskRunOpts) UseTaskRunFrom(tr *v1beta1.TaskRun, cs *cli.Clie
 		err    error
 	)
 	if taskRunOpts.Last {
-		trUsed, err = task.LastRun(cs, tname, taskRunOpts.CliParams.Namespace(), taskKind)
+		trtemp, err := task.LastRun(cs, tname, taskRunOpts.CliParams.Namespace(), taskKind)
 		if err != nil {
 			return err
 		}
+
+		// TODO: remove as we move the start command to v1
+		err = trUsed.ConvertFrom(context.TODO(), trtemp)
+		if err != nil {
+			return err
+		}
+
 	} else if taskRunOpts.UseTaskRun != "" {
 		trUsed, err = tractions.Get(cs, taskRunOpts.UseTaskRun, metav1.GetOptions{}, taskRunOpts.CliParams.Namespace())
 		if err != nil {

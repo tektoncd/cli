@@ -24,8 +24,8 @@ import (
 	"github.com/tektoncd/cli/pkg/cli"
 	"github.com/tektoncd/cli/pkg/formatted"
 	"github.com/tektoncd/cli/pkg/options"
+	"github.com/tektoncd/cli/pkg/taskrun"
 	trdesc "github.com/tektoncd/cli/pkg/taskrun/description"
-	trlist "github.com/tektoncd/cli/pkg/taskrun/list"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime/schema"
 	cliopts "k8s.io/cli-runtime/pkg/genericclioptions"
@@ -74,10 +74,15 @@ or
 				}
 			}
 
+			cs, err := p.Clients()
+			if err != nil {
+				return err
+			}
+
 			if len(args) == 0 {
 				lOpts := metav1.ListOptions{}
 				if !opts.Last {
-					trs, err := trlist.GetAllTaskRuns(p, lOpts, opts.Limit)
+					trs, err := taskrun.GetAllTaskRuns(taskrunGroupResource, lOpts, cs, p.Namespace(), opts.Limit, p.Time())
 					if err != nil {
 						return err
 					}
@@ -90,7 +95,7 @@ or
 						}
 					}
 				} else {
-					trs, err := trlist.GetAllTaskRuns(p, lOpts, 1)
+					trs, err := taskrun.GetAllTaskRuns(taskrunGroupResource, lOpts, cs, p.Namespace(), 1, p.Time())
 					if err != nil {
 						return err
 					}
@@ -102,11 +107,6 @@ or
 				}
 			} else {
 				opts.TaskrunName = args[0]
-			}
-
-			cs, err := p.Clients()
-			if err != nil {
-				return err
 			}
 
 			if output != "" {

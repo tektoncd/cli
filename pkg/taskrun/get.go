@@ -19,6 +19,7 @@ import (
 
 	"github.com/tektoncd/cli/pkg/actions"
 	"github.com/tektoncd/cli/pkg/cli"
+	v1 "github.com/tektoncd/pipeline/pkg/apis/pipeline/v1"
 	"github.com/tektoncd/pipeline/pkg/apis/pipeline/v1beta1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime"
@@ -32,6 +33,21 @@ func Get(c *cli.Clients, trname string, opts metav1.GetOptions, ns string) (*v1b
 	}
 
 	var taskrun *v1beta1.TaskRun
+	if err := runtime.DefaultUnstructuredConverter.FromUnstructured(unstructuredTR.UnstructuredContent(), &taskrun); err != nil {
+		return nil, fmt.Errorf("failed to get TaskRun from namespace %s", ns)
+	}
+	return taskrun, nil
+}
+
+// GetV1 will fetch the taskrun resource based on the taskrun name
+// TODO: remove after get action is moved to v1
+func GetV1(c *cli.Clients, trname string, opts metav1.GetOptions, ns string) (*v1.TaskRun, error) {
+	unstructuredTR, err := actions.Get(trGroupResource, c.Dynamic, c.Tekton.Discovery(), trname, ns, opts)
+	if err != nil {
+		return nil, err
+	}
+
+	var taskrun *v1.TaskRun
 	if err := runtime.DefaultUnstructuredConverter.FromUnstructured(unstructuredTR.UnstructuredContent(), &taskrun); err != nil {
 		return nil, fmt.Errorf("failed to get TaskRun from namespace %s", ns)
 	}
