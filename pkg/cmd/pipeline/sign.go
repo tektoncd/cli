@@ -53,6 +53,7 @@ or using kms
 		Long:  long,
 		Annotations: map[string]string{
 			"commandType":  "main",
+			"kubernetes":   "false",
 			"experimental": "",
 		},
 		Args:    cobra.ExactArgs(1),
