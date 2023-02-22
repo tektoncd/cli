@@ -16,24 +16,31 @@ package actions
 
 import (
 	"context"
+	"fmt"
+	"os"
 
 	"github.com/tektoncd/cli/pkg/cli"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
-	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
+	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/apimachinery/pkg/runtime/schema"
 	"k8s.io/apimachinery/pkg/types"
 )
 
 // Patch takes a partial resource, an object name in the cluster, and patch data to be applied to that object, and patches the object using the dynamic client.
-func Patch(gr schema.GroupVersionResource, clients *cli.Clients, objName string, data []byte, opt metav1.PatchOptions, ns string) (*unstructured.Unstructured, error) {
+func Patch(gr schema.GroupVersionResource, clients *cli.Clients, objName string, data []byte, opt metav1.PatchOptions, ns string, obj interface{}) error {
 	gvr, err := GetGroupVersionResource(gr, clients.Tekton.Discovery())
 	if err != nil {
-		return nil, err
+		return err
 	}
-	patchedObj, err := clients.Dynamic.Resource(*gvr).Namespace(ns).Patch(context.Background(), objName, types.JSONPatchType, data, opt)
+	unstructuredObj, err := clients.Dynamic.Resource(*gvr).Namespace(ns).Patch(context.Background(), objName, types.JSONPatchType, data, opt)
 	if err != nil {
-		return nil, err
+		fmt.Fprintf(os.Stderr, "Failed to patch object from %s namespace \n", ns)
+		return err
 	}
 
-	return patchedObj, nil
+	if err := runtime.DefaultUnstructuredConverter.FromUnstructured(unstructuredObj.UnstructuredContent(), obj); err != nil {
+		return err
+	}
+
+	return nil
 }

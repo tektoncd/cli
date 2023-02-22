@@ -24,6 +24,7 @@ import (
 	"github.com/tektoncd/cli/pkg/cli"
 	"github.com/tektoncd/cli/pkg/formatted"
 	prsort "github.com/tektoncd/cli/pkg/pipelinerun/sort"
+	v1 "github.com/tektoncd/pipeline/pkg/apis/pipeline/v1"
 	"github.com/tektoncd/pipeline/pkg/apis/pipeline/v1beta1"
 	"github.com/tektoncd/pipeline/pkg/status"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
@@ -130,7 +131,7 @@ type patchStringValue struct {
 	Value string `json:"value"`
 }
 
-func Cancel(c *cli.Clients, prname string, opts metav1.PatchOptions, cancelStatus, ns string) (*v1beta1.PipelineRun, error) {
+func Cancel(c *cli.Clients, prname string, opts metav1.PatchOptions, cancelStatus, ns string) (*v1.PipelineRun, error) {
 	payload := []patchStringValue{{
 		Op:    "replace",
 		Path:  "/spec/status",
@@ -139,13 +140,9 @@ func Cancel(c *cli.Clients, prname string, opts metav1.PatchOptions, cancelStatu
 
 	data, _ := json.Marshal(payload)
 	prGroupResource := schema.GroupVersionResource{Group: "tekton.dev", Resource: "pipelineruns"}
-	unstructuredPR, err := actions.Patch(prGroupResource, c, prname, data, opts, ns)
+	var pipelinerun *v1.PipelineRun
+	err := actions.Patch(prGroupResource, c, prname, data, opts, ns, &pipelinerun)
 	if err != nil {
-		return nil, err
-	}
-
-	var pipelinerun *v1beta1.PipelineRun
-	if err := runtime.DefaultUnstructuredConverter.FromUnstructured(unstructuredPR.UnstructuredContent(), &pipelinerun); err != nil {
 		return nil, err
 	}
 
