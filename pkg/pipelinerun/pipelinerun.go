@@ -96,7 +96,7 @@ type patchStringValue struct {
 	Value string `json:"value"`
 }
 
-func Cancel(c *cli.Clients, prname string, opts metav1.PatchOptions, cancelStatus, ns string) (*v1beta1.PipelineRun, error) {
+func Cancel(c *cli.Clients, prname string, opts metav1.PatchOptions, cancelStatus, ns string) (*v1.PipelineRun, error) {
 	payload := []patchStringValue{{
 		Op:    "replace",
 		Path:  "/spec/status",
@@ -104,13 +104,10 @@ func Cancel(c *cli.Clients, prname string, opts metav1.PatchOptions, cancelStatu
 	}}
 
 	data, _ := json.Marshal(payload)
-	unstructuredPR, err := actions.Patch(prGroupResource, c, prname, data, opts, ns)
+	prGroupResource := schema.GroupVersionResource{Group: "tekton.dev", Resource: "pipelineruns"}
+	var pipelinerun *v1.PipelineRun
+	err := actions.Patch(prGroupResource, c, prname, data, opts, ns, &pipelinerun)
 	if err != nil {
-		return nil, err
-	}
-
-	var pipelinerun *v1beta1.PipelineRun
-	if err := runtime.DefaultUnstructuredConverter.FromUnstructured(unstructuredPR.UnstructuredContent(), &pipelinerun); err != nil {
 		return nil, err
 	}
 
