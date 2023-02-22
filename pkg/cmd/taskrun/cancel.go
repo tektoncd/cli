@@ -15,15 +15,25 @@
 package taskrun
 
 import (
+	"encoding/json"
 	"fmt"
 
 	"github.com/spf13/cobra"
+	"github.com/tektoncd/cli/pkg/actions"
 	"github.com/tektoncd/cli/pkg/cli"
 	"github.com/tektoncd/cli/pkg/formatted"
 	"github.com/tektoncd/cli/pkg/taskrun"
+	v1 "github.com/tektoncd/pipeline/pkg/apis/pipeline/v1"
 	corev1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+	"k8s.io/apimachinery/pkg/runtime/schema"
 )
+
+type patchStringValue struct {
+	Op    string `json:"op"`
+	Path  string `json:"path"`
+	Value string `json:"value"`
+}
 
 func cancelCommand(p cli.Params) *cobra.Command {
 	eg := `Cancel the TaskRun named 'foo' from namespace 'bar':
@@ -71,10 +81,28 @@ func cancelTaskRun(p cli.Params, s *cli.Stream, trName string) error {
 		}
 	}
 
-	if _, err := taskrun.Patch(cs, trName, metav1.PatchOptions{}, p.Namespace()); err != nil {
+	if _, err := patch(cs, trName, metav1.PatchOptions{}, p.Namespace()); err != nil {
 		return fmt.Errorf("failed to cancel TaskRun %s: %v", trName, err)
 	}
 
 	fmt.Fprintf(s.Out, "TaskRun cancelled: %s\n", tr.Name)
 	return nil
+}
+
+func patch(c *cli.Clients, trname string, opts metav1.PatchOptions, ns string) (*v1.TaskRun, error) {
+	payload := []patchStringValue{{
+		Op:    "replace",
+		Path:  "/spec/status",
+		Value: v1.TaskRunSpecStatusCancelled,
+	}}
+
+	data, _ := json.Marshal(payload)
+	var taskrun *v1.TaskRun
+	var trGroupResource = schema.GroupVersionResource{Group: "tekton.dev", Resource: "taskruns"}
+	err := actions.Patch(trGroupResource, c, trname, data, opts, ns, &taskrun)
+	if err != nil {
+		return nil, err
+	}
+
+	return taskrun, nil
 }
