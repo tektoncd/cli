@@ -1,0 +1,118 @@
+# Copyright 2023 The Tekton Authors
+#
+# Licensed under the Apache License, Version 2.0 (the "License");
+# you may not use this file except in compliance with the License.
+# You may obtain a copy of the License at
+#
+#     http://www.apache.org/licenses/LICENSE-2.0
+#
+# Unless required by applicable law or agreed to in writing, software
+# distributed under the License is distributed on an "AS IS" BASIS,
+# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+# See the License for the specific language governing permissions and
+# limitations under the License.
+
+---
+apiVersion: triggers.tekton.dev/v1alpha1
+kind: EventListener
+metadata:
+  name: github-listener-interceptor
+spec:
+  serviceAccountName: tekton-triggers-github-log-sa
+  triggers:
+    - name: github-listener
+      interceptors:
+        - github:
+            secretRef:
+              secretName: github-secret
+              secretKey: secretToken
+            eventTypes:
+              - pull_request
+        - cel:
+            filter: "body.action in ['opened', 'synchronize', 'reopened']"
+      bindings:
+        - ref: github-pr-binding
+      template:
+        ref: github-template
+---
+apiVersion: triggers.tekton.dev/v1alpha1
+kind: TriggerBinding
+metadata:
+  name: github-pr-binding
+spec:
+  params:
+    - name: gitrevision
+      value: $(body.pull_request.head.sha)
+    - name: gitrepositoryurl
+      value: $(body.repository.clone_url)
+
+---
+apiVersion: triggers.tekton.dev/v1alpha1
+kind: TriggerTemplate
+metadata:
+  name: github-template
+spec:
+  params:
+    - name: gitrevision
+    - name: gitrepositoryurl
+  resourcetemplates:
+    - apiVersion: tekton.dev/v1beta1
+      kind: TaskRun
+      metadata:
+        generateName: github-run-
+      spec:
+        taskSpec:
+          resources:
+            inputs:
+              - name: source
+                type: git
+          steps:
+            - image: ubuntu
+              script: |
+                #! /bin/bash
+                ls -al $(inputs.resources.source.path)
+        inputs:
+          resources:
+            - name: source
+              resourceSpec:
+                type: git
+                params:
+                  - name: revision
+                    value: $(tt.params.gitrevision)
+                  - name: url
+                    value: $(tt.params.gitrepositoryurl)
+---
+apiVersion: v1
+kind: ServiceAccount
+metadata:
+  name: tekton-triggers-github-log-sa
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: RoleBinding
+metadata:
+  name: tekton-triggers-github-binding
+subjects:
+  - kind: ServiceAccount
+    name: tekton-triggers-github-log-sa
+roleRef:
+  apiGroup: rbac.authorization.k8s.io
+  kind: Role
+  name: tekton-triggers-github-minimal
+---
+kind: Role
+apiVersion: rbac.authorization.k8s.io/v1
+metadata:
+  name: tekton-triggers-github-minimal
+rules:
+  # Permissions for every EventListener deployment to function
+  - apiGroups: ["triggers.tekton.dev"]
+    resources: ["eventlisteners", "triggerbindings", "interceptors", "triggertemplates", "triggers"]
+    verbs: ["get", "list"]
+  - apiGroups: [""]
+    # secrets are only needed for Github/Gitlab interceptors, serviceaccounts only for per trigger authorization
+    resources: ["configmaps", "secrets", "serviceaccounts"]
+    verbs: ["get", "list", "watch"]
+  # Permissions to create resources in associated TriggerTemplates
+  - apiGroups: ["tekton.dev"]
+    resources: ["pipelineruns", "pipelineresources", "taskruns"]
+    verbs: ["create"]
