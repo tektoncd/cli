@@ -112,11 +112,6 @@ func (o *ObjectSigner) Sign(ctx context.Context, tektonObj objects.TektonObject)
 
 	signers := allSigners(ctx, o.SecretPath, cfg, logger)
 
-	rekorClient, err := getRekor(cfg.Transparency.URL, logger)
-	if err != nil {
-		return err
-	}
-
 	var merr *multierror.Error
 	extraAnnotations := map[string]string{}
 	for _, signableType := range signableTypes {
@@ -192,6 +187,11 @@ func (o *ObjectSigner) Sign(ctx context.Context, tektonObj objects.TektonObject)
 			}
 
 			if shouldUploadTlog(cfg, tektonObj) {
+				rekorClient, err := getRekor(cfg.Transparency.URL, logger)
+				if err != nil {
+					return err
+				}
+
 				entry, err := rekorClient.UploadTlog(ctx, signer, signature, rawPayload, signer.Cert(), string(payloadFormat))
 				if err != nil {
 					merr = multierror.Append(merr, err)

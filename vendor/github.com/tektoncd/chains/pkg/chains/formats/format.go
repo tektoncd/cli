@@ -31,10 +31,12 @@ const (
 	PayloadTypeTekton        config.PayloadType = "tekton"
 	PayloadTypeSimpleSigning config.PayloadType = "simplesigning"
 	PayloadTypeInTotoIte6    config.PayloadType = "in-toto"
+	PayloadTypeSlsav1        config.PayloadType = "slsa/v1"
 )
 
 var (
-	payloaderMap = map[config.PayloadType]PayloaderInit{}
+	IntotoAttestationSet = map[config.PayloadType]struct{}{PayloadTypeInTotoIte6: {}, PayloadTypeSlsav1: {}}
+	payloaderMap         = map[config.PayloadType]PayloaderInit{}
 )
 
 // PayloaderInit initializes a new Payloader instance for the given config.

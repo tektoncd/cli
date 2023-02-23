@@ -22,6 +22,7 @@ import (
 	"github.com/sigstore/rekor/pkg/generated/client"
 	"github.com/sigstore/rekor/pkg/generated/models"
 	"github.com/sigstore/sigstore/pkg/cryptoutils"
+	"github.com/tektoncd/chains/pkg/chains/formats"
 	"github.com/tektoncd/chains/pkg/chains/objects"
 	"github.com/tektoncd/chains/pkg/chains/signing"
 	"github.com/tektoncd/chains/pkg/config"
@@ -46,7 +47,7 @@ func (r *rekor) UploadTlog(ctx context.Context, signer signing.Signer, signature
 	if err != nil {
 		return nil, errors.Wrap(err, "public key or cert")
 	}
-	if payloadFormat == "in-toto" {
+	if _, ok := formats.IntotoAttestationSet[config.PayloadType(payloadFormat)]; ok {
 		return cosign.TLogUploadInTotoAttestation(ctx, r.c, signature, pkoc)
 	}
 	return cosign.TLogUpload(ctx, r.c, signature, rawPayload, pkoc)
@@ -68,7 +69,6 @@ func publicKeyOrCert(signer signing.Signer, cert string) ([]byte, error) {
 	return pem, nil
 }
 
-// for testing
 var getRekor = func(url string, l *zap.SugaredLogger) (rekorClient, error) {
 	rekorClient, err := rc.GetRekorClient(url)
 	if err != nil {

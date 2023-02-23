@@ -15,7 +15,9 @@ package artifacts
 
 import (
 	_ "crypto/sha256" // Recommended by go-digest.
+	_ "crypto/sha512" // Recommended by go-digest.
 	"fmt"
+	"regexp"
 	"strings"
 
 	"github.com/google/go-containerregistry/pkg/name"
@@ -31,6 +33,10 @@ import (
 const (
 	ArtifactsInputsResultName  = "ARTIFACT_INPUTS"
 	ArtifactsOutputsResultName = "ARTIFACT_OUTPUTS"
+)
+
+var (
+	Sha1Regexp *regexp.Regexp = regexp.MustCompile(`^[a-f0-9]{40}$`)
 )
 
 type Signable interface {
@@ -339,6 +345,7 @@ func ExtractStructuredTargetFromResults(obj objects.TektonObject, categoryMarker
 				logger.Debugf("ExtractStructuredTargetFromResults: %v", err)
 			}
 			if valid {
+				logger.Debugf("Extracted Structured data from Result %s, %s", res.Value.ObjectVal["uri"], res.Value.ObjectVal["digest"])
 				objs = append(objs, &StructuredSignable{URI: res.Value.ObjectVal["uri"], Digest: res.Value.ObjectVal["digest"]})
 			}
 		}
@@ -366,13 +373,28 @@ func isStructuredResult(res objects.Result, categoryMarker string) (bool, error)
 }
 
 func checkDigest(dig string) error {
-	prefix := digest.Canonical.String() + ":"
-	if !strings.HasPrefix(dig, prefix) {
-		return fmt.Errorf("unsupported digest algorithm: %s", dig)
+	parts := strings.Split(dig, ":")
+	if len(parts) != 2 {
+		return fmt.Errorf("digest string %s, not in the format of <algorithm>:<digest>", dig)
 	}
-	hex := strings.TrimPrefix(dig, prefix)
-	if err := digest.Canonical.Validate(hex); err != nil {
-		return err
+	algo_string := strings.ToLower(strings.TrimSpace(parts[0]))
+	algo := digest.Algorithm(algo_string)
+	hex := strings.TrimSpace(parts[1])
+
+	switch {
+	case algo.Available():
+		if err := algo.Validate(hex); err != nil {
+			return err
+		}
+	case algo_string == "sha1":
+		// Version 1.0.0, which is the released version, of go_digest does not support SHA1,
+		// hence this has to be handled differently.
+		if !Sha1Regexp.MatchString(hex) {
+			return fmt.Errorf("sha1 digest %s does not match regexp %s", dig, Sha1Regexp.String())
+		}
+	default:
+		return fmt.Errorf("unsupported digest algorithm: %s", dig)
+
 	}
 	return nil
 }

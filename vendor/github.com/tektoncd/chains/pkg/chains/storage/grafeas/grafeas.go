@@ -26,7 +26,7 @@ import (
 	"github.com/pkg/errors"
 	"github.com/sigstore/cosign/pkg/types"
 	"github.com/tektoncd/chains/pkg/chains/formats"
-	"github.com/tektoncd/chains/pkg/chains/formats/intotoite6/extract"
+	"github.com/tektoncd/chains/pkg/chains/formats/slsa/extract"
 	"github.com/tektoncd/chains/pkg/chains/objects"
 	"github.com/tektoncd/chains/pkg/config"
 	"github.com/tektoncd/pipeline/pkg/apis/pipeline/v1beta1"
@@ -90,7 +90,7 @@ func NewStorageBackend(ctx context.Context, logger *zap.SugaredLogger, cfg confi
 // StorePayload implements the storage.Backend interface.
 func (b *Backend) StorePayload(ctx context.Context, obj objects.TektonObject, rawPayload []byte, signature string, opts config.StorageOpts) error {
 	// We only support simplesigning for OCI images, and in-toto for taskrun & pipelinerun.
-	if opts.PayloadFormat != formats.PayloadTypeInTotoIte6 && opts.PayloadFormat != formats.PayloadTypeSimpleSigning {
+	if _, ok := formats.IntotoAttestationSet[opts.PayloadFormat]; !ok && opts.PayloadFormat != formats.PayloadTypeSimpleSigning {
 		return errors.New("Grafeas storage backend only supports simplesigning and intoto payload format.")
 	}
 
@@ -386,7 +386,7 @@ func (b *Backend) getAllOccurrences(ctx context.Context, obj objects.TektonObjec
 	uriFilters := extract.RetrieveAllArtifactURIs(obj, b.logger)
 
 	// step 2: find all build occurrences
-	if opts.PayloadFormat == formats.PayloadTypeInTotoIte6 {
+	if _, ok := formats.IntotoAttestationSet[opts.PayloadFormat]; ok {
 		occs, err := b.findOccurrencesForCriteria(ctx, b.getBuildNotePath(obj), uriFilters)
 		if err != nil {
 			return nil, err
