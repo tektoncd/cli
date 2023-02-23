@@ -20,7 +20,6 @@ import (
 	"encoding/json"
 	"fmt"
 	"io"
-	"io/ioutil"
 
 	"github.com/in-toto/in-toto-golang/in_toto"
 	"github.com/secure-systems-lab/go-securesystemslib/dsse"
@@ -114,7 +113,7 @@ func (w *sslSigner) Sign(ctx context.Context, payload []byte) ([]byte, []byte, e
 }
 
 func (w *sslSigner) SignMessage(payload io.Reader, opts ...signature.SignOption) ([]byte, error) {
-	m, err := ioutil.ReadAll(payload)
+	m, err := io.ReadAll(payload)
 	if err != nil {
 		return nil, err
 	}

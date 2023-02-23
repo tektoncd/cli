@@ -20,7 +20,7 @@ import (
 	cx509 "crypto/x509"
 	"encoding/pem"
 	"fmt"
-	"io/ioutil"
+	"os"
 	"path/filepath"
 
 	"github.com/pkg/errors"
@@ -54,9 +54,9 @@ func NewSigner(ctx context.Context, secretPath string, cfg config.Config, logger
 
 	if cfg.Signers.X509.FulcioEnabled {
 		return fulcioSigner(ctx, cfg.Signers.X509, logger)
-	} else if contents, err := ioutil.ReadFile(x509PrivateKeyPath); err == nil {
+	} else if contents, err := os.ReadFile(x509PrivateKeyPath); err == nil {
 		return x509Signer(contents, logger)
-	} else if contents, err := ioutil.ReadFile(cosignPrivateKeypath); err == nil {
+	} else if contents, err := os.ReadFile(cosignPrivateKeypath); err == nil {
 		return cosignSigner(secretPath, contents, logger)
 	}
 	return nil, errors.New("no valid private key found, looked for: [x509.pem, cosign.key]")
@@ -124,7 +124,7 @@ func x509Signer(privateKey []byte, logger *zap.SugaredLogger) (*Signer, error) {
 func cosignSigner(secretPath string, privateKey []byte, logger *zap.SugaredLogger) (*Signer, error) {
 	logger.Info("Found cosign key...")
 	cosignPasswordPath := filepath.Join(secretPath, "cosign.password")
-	password, err := ioutil.ReadFile(cosignPasswordPath)
+	password, err := os.ReadFile(cosignPasswordPath)
 	if err != nil {
 		return nil, errors.Wrap(err, "reading cosign.password file")
 	}
