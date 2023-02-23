@@ -23,7 +23,6 @@ import (
 	"crypto/rand"
 	"crypto/x509"
 	"encoding/pem"
-	"io/ioutil"
 	"os"
 	"path/filepath"
 	"testing"
@@ -97,7 +96,7 @@ func TestSign(t *testing.T) {
 			if err := Sign(tc.resource, filepath.Join(tmpDir, privateKeyFile), "", filepath.Join(tmpDir, tc.targetFile)); err != nil {
 				t.Fatalf("Sign() get err %v", err)
 			}
-			signed, err := ioutil.ReadFile(filepath.Join(tmpDir, tc.targetFile))
+			signed, err := os.ReadFile(filepath.Join(tmpDir, tc.targetFile))
 			if err != nil {
 				t.Fatalf("error reading file: %v", err)
 			}
