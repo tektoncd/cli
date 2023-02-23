@@ -17,7 +17,6 @@ import (
 	"context"
 	"fmt"
 	"io"
-	"io/ioutil"
 
 	"cloud.google.com/go/storage"
 
@@ -179,7 +178,7 @@ func (b *Backend) retrieveObject(ctx context.Context, object string) (string, er
 	}
 
 	defer reader.Close()
-	payload, err := ioutil.ReadAll(reader)
+	payload, err := io.ReadAll(reader)
 	if err != nil {
 		return "", err
 	}

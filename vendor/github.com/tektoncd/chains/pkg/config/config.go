@@ -208,12 +208,12 @@ func defaultConfig() *Config {
 	return &Config{
 		Artifacts: ArtifactConfigs{
 			TaskRuns: Artifact{
-				Format:         "tekton",
+				Format:         "in-toto",
 				StorageBackend: sets.NewString("tekton"),
 				Signer:         "x509",
 			},
 			PipelineRuns: Artifact{
-				Format:         "tekton",
+				Format:         "in-toto",
 				StorageBackend: sets.NewString("tekton"),
 				Signer:         "x509",
 			},
@@ -250,12 +250,12 @@ func NewConfigFromMap(data map[string]string) (*Config, error) {
 	if err := cm.Parse(data,
 		// Artifact-specific configs
 		// TaskRuns
-		asString(taskrunFormatKey, &cfg.Artifacts.TaskRuns.Format, "tekton", "in-toto"),
+		asString(taskrunFormatKey, &cfg.Artifacts.TaskRuns.Format, "in-toto", "slsa/v1"),
 		asStringSet(taskrunStorageKey, &cfg.Artifacts.TaskRuns.StorageBackend, sets.NewString("tekton", "oci", "gcs", "docdb", "grafeas", "kafka")),
 		asString(taskrunSignerKey, &cfg.Artifacts.TaskRuns.Signer, "x509", "kms"),
 
 		// PipelineRuns
-		asString(pipelinerunFormatKey, &cfg.Artifacts.PipelineRuns.Format, "tekton", "in-toto"),
+		asString(pipelinerunFormatKey, &cfg.Artifacts.PipelineRuns.Format, "in-toto", "slsa/v1"),
 		asStringSet(pipelinerunStorageKey, &cfg.Artifacts.PipelineRuns.StorageBackend, sets.NewString("tekton", "oci", "grafeas")),
 		asString(pipelinerunSignerKey, &cfg.Artifacts.PipelineRuns.Signer, "x509", "kms"),
 

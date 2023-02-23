@@ -41,9 +41,7 @@ import (
 	"k8s.io/client-go/kubernetes"
 )
 
-const (
-	StorageBackendOCI = "oci"
-)
+const StorageBackendOCI = "oci"
 
 type Backend struct {
 	logger           *zap.SugaredLogger
@@ -90,7 +88,7 @@ func (b *Backend) StorePayload(ctx context.Context, obj objects.TektonObject, ra
 		return b.uploadSignature(format, rawPayload, signature, storageOpts, auth)
 	}
 
-	if storageOpts.PayloadFormat == formats.PayloadTypeInTotoIte6 {
+	if _, ok := formats.IntotoAttestationSet[storageOpts.PayloadFormat]; ok {
 		attestation := in_toto.Statement{}
 		if err := json.Unmarshal(rawPayload, &attestation); err != nil {
 			return errors.Wrap(err, "unmarshal attestation")

@@ -30,7 +30,7 @@ cloud.google.com/go/kms/internal
 # cloud.google.com/go/longrunning v0.3.0
 ## explicit; go 1.19
 cloud.google.com/go/longrunning/autogen/longrunningpb
-# cloud.google.com/go/storage v1.28.1
+# cloud.google.com/go/storage v1.29.0
 ## explicit; go 1.19
 cloud.google.com/go/storage
 cloud.google.com/go/storage/internal
@@ -383,7 +383,7 @@ github.com/coreos/go-oidc/v3/oidc
 # github.com/coreos/go-semver v0.3.0
 ## explicit
 github.com/coreos/go-semver/semver
-# github.com/coreos/go-systemd/v22 v22.3.3-0.20220203105225-a9a7ef127534
+# github.com/coreos/go-systemd/v22 v22.5.0
 ## explicit; go 1.12
 github.com/coreos/go-systemd/v22/journal
 # github.com/cpuguy83/go-md2man v1.0.10
@@ -630,7 +630,7 @@ github.com/gogo/protobuf/sortkeys
 # github.com/golang-jwt/jwt v3.2.2+incompatible
 ## explicit
 github.com/golang-jwt/jwt
-# github.com/golang-jwt/jwt/v4 v4.4.2
+# github.com/golang-jwt/jwt/v4 v4.4.3
 ## explicit; go 1.16
 github.com/golang-jwt/jwt/v4
 # github.com/golang/glog v1.0.0
@@ -1155,7 +1155,7 @@ github.com/pkg/errors
 # github.com/pmezard/go-difflib v1.0.0
 ## explicit
 github.com/pmezard/go-difflib/difflib
-# github.com/prometheus/client_golang v1.13.0
+# github.com/prometheus/client_golang v1.13.1
 ## explicit; go 1.17
 github.com/prometheus/client_golang/prometheus
 github.com/prometheus/client_golang/prometheus/internal
@@ -1352,13 +1352,13 @@ github.com/syndtr/goleveldb/leveldb/opt
 github.com/syndtr/goleveldb/leveldb/storage
 github.com/syndtr/goleveldb/leveldb/table
 github.com/syndtr/goleveldb/leveldb/util
-# github.com/tektoncd/chains v0.14.0
+# github.com/tektoncd/chains v0.15.0
 ## explicit; go 1.18
 github.com/tektoncd/chains/pkg/artifacts
 github.com/tektoncd/chains/pkg/chains
 github.com/tektoncd/chains/pkg/chains/formats
-github.com/tektoncd/chains/pkg/chains/formats/intotoite6/extract
 github.com/tektoncd/chains/pkg/chains/formats/simple
+github.com/tektoncd/chains/pkg/chains/formats/slsa/extract
 github.com/tektoncd/chains/pkg/chains/objects
 github.com/tektoncd/chains/pkg/chains/signing
 github.com/tektoncd/chains/pkg/chains/signing/kms
@@ -1755,8 +1755,8 @@ go.etcd.io/etcd/tests/v3/integration
 # go.etcd.io/etcd/v3 v3.6.0-alpha.0
 ## explicit; go 1.17
 go.etcd.io/etcd/v3
-# go.mongodb.org/mongo-driver v1.10.3
-## explicit; go 1.10
+# go.mongodb.org/mongo-driver v1.11.0
+## explicit; go 1.13
 go.mongodb.org/mongo-driver/bson
 go.mongodb.org/mongo-driver/bson/bsoncodec
 go.mongodb.org/mongo-driver/bson/bsonoptions
@@ -1834,16 +1834,16 @@ go.opentelemetry.io/otel/semconv/internal
 go.opentelemetry.io/otel/semconv/v1.12.0
 go.opentelemetry.io/otel/semconv/v1.4.0
 go.opentelemetry.io/otel/semconv/v1.7.0
-# go.opentelemetry.io/otel/exporters/otlp/internal/retry v1.7.0
-## explicit; go 1.16
+# go.opentelemetry.io/otel/exporters/otlp/internal/retry v1.11.1
+## explicit; go 1.18
 go.opentelemetry.io/otel/exporters/otlp/internal/retry
-# go.opentelemetry.io/otel/exporters/otlp/otlptrace v1.7.0
-## explicit; go 1.16
+# go.opentelemetry.io/otel/exporters/otlp/otlptrace v1.11.1
+## explicit; go 1.18
 go.opentelemetry.io/otel/exporters/otlp/otlptrace
 go.opentelemetry.io/otel/exporters/otlp/otlptrace/internal/otlpconfig
 go.opentelemetry.io/otel/exporters/otlp/otlptrace/internal/tracetransform
-# go.opentelemetry.io/otel/exporters/otlp/otlptrace/otlptracegrpc v1.7.0
-## explicit; go 1.16
+# go.opentelemetry.io/otel/exporters/otlp/otlptrace/otlptracegrpc v1.11.1
+## explicit; go 1.18
 go.opentelemetry.io/otel/exporters/otlp/otlptrace/otlptracegrpc
 # go.opentelemetry.io/otel/sdk v1.11.1
 ## explicit; go 1.18
@@ -1855,7 +1855,7 @@ go.opentelemetry.io/otel/sdk/trace
 # go.opentelemetry.io/otel/trace v1.11.1
 ## explicit; go 1.18
 go.opentelemetry.io/otel/trace
-# go.opentelemetry.io/proto/otlp v0.16.0
+# go.opentelemetry.io/proto/otlp v0.19.0
 ## explicit; go 1.14
 go.opentelemetry.io/proto/otlp/collector/trace/v1
 go.opentelemetry.io/proto/otlp/common/v1
@@ -1891,7 +1891,7 @@ go.uber.org/zap/zaptest
 ## explicit; go 1.19
 goa.design/goa/v3/http
 goa.design/goa/v3/pkg
-# gocloud.dev v0.27.0
+# gocloud.dev v0.28.0
 ## explicit; go 1.12
 gocloud.dev/aws
 gocloud.dev/docstore
@@ -1910,10 +1910,10 @@ gocloud.dev/pubsub
 gocloud.dev/pubsub/batcher
 gocloud.dev/pubsub/driver
 gocloud.dev/pubsub/mempubsub
-# gocloud.dev/docstore/mongodocstore v0.27.0
+# gocloud.dev/docstore/mongodocstore v0.28.0
 ## explicit; go 1.12
 gocloud.dev/docstore/mongodocstore
-# gocloud.dev/pubsub/kafkapubsub v0.27.0
+# gocloud.dev/pubsub/kafkapubsub v0.28.0
 ## explicit; go 1.12
 gocloud.dev/pubsub/kafkapubsub
 # golang.org/x/crypto v0.6.0
@@ -1949,7 +1949,7 @@ golang.org/x/crypto/sha3
 golang.org/x/crypto/ssh
 golang.org/x/crypto/ssh/internal/bcrypt_pbkdf
 golang.org/x/crypto/ssh/terminal
-# golang.org/x/exp v0.0.0-20220823124025-807a23277127
+# golang.org/x/exp v0.0.0-20221031165847-c99f073a8326
 ## explicit; go 1.18
 golang.org/x/exp/constraints
 golang.org/x/exp/slices
