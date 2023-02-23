@@ -16,8 +16,8 @@ package task
 
 import (
 	"fmt"
-	"io/ioutil"
 	"log"
+	"os"
 
 	"github.com/spf13/cobra"
 	"github.com/tektoncd/cli/pkg/cli"
@@ -69,7 +69,7 @@ or using kms
 				Err: cmd.OutOrStderr(),
 			}
 
-			b, err := ioutil.ReadFile(args[0])
+			b, err := os.ReadFile(args[0])
 			if err != nil {
 				log.Fatalf("error reading file: %v", err)
 				return err

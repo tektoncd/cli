@@ -16,7 +16,6 @@ package task
 
 import (
 	"context"
-	"io/ioutil"
 	"os"
 	"path/filepath"
 	"testing"
@@ -48,7 +47,7 @@ func TestSign(t *testing.T) {
 		t.Errorf("error getting verifier from key file: %v", err)
 	}
 
-	signed, err := ioutil.ReadFile(targetFile)
+	signed, err := os.ReadFile(targetFile)
 	if err != nil {
 		t.Fatalf("error reading file: %v", err)
 	}
