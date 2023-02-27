@@ -17,14 +17,14 @@ package pipelinerun
 import (
 	"sort"
 
-	"github.com/tektoncd/pipeline/pkg/apis/pipeline/v1beta1"
+	v1 "github.com/tektoncd/pipeline/pkg/apis/pipeline/v1"
 )
 
-func SortByStartTime(prs []v1beta1.PipelineRun) {
+func SortByStartTime(prs []v1.PipelineRun) {
 	sort.Sort(byStartTime(prs))
 }
 
-type byStartTime []v1beta1.PipelineRun
+type byStartTime []v1.PipelineRun
 
 func (prs byStartTime) Len() int      { return len(prs) }
 func (prs byStartTime) Swap(i, j int) { prs[i], prs[j] = prs[j], prs[i] }

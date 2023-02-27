@@ -24,7 +24,7 @@ import (
 	"github.com/tektoncd/cli/pkg/formatted"
 	"github.com/tektoncd/cli/pkg/options"
 	"github.com/tektoncd/cli/pkg/pipeline"
-	"github.com/tektoncd/cli/pkg/pipelinerun"
+	v1 "github.com/tektoncd/pipeline/pkg/apis/pipeline/v1"
 	"go.uber.org/multierr"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime/schema"
@@ -146,10 +146,11 @@ func pipelineRunLister(cs *cli.Clients, ns string) func(string) ([]string, error
 		lOpts := metav1.ListOptions{
 			LabelSelector: fmt.Sprintf("tekton.dev/pipeline=%s", pipelineName),
 		}
-		pipelineRuns, err := pipelinerun.List(cs, lOpts, ns)
-		if err != nil {
+		var pipelineRuns *v1.PipelineRunList
+		if err := actions.ListV1(pipelineRunGroupResource, cs, lOpts, ns, &pipelineRuns); err != nil {
 			return nil, err
 		}
+
 		var names []string
 		for _, pr := range pipelineRuns.Items {
 			names = append(names, pr.Name)

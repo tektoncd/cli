@@ -19,33 +19,33 @@ import (
 	"time"
 
 	"github.com/jonboulle/clockwork"
-	"github.com/tektoncd/pipeline/pkg/apis/pipeline/v1beta1"
+	v1 "github.com/tektoncd/pipeline/pkg/apis/pipeline/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 )
 
 func Test_PipelineRunsByNamespace(t *testing.T) {
-	pr1 := v1beta1.PipelineRun{
+	pr1 := v1.PipelineRun{
 		ObjectMeta: metav1.ObjectMeta{
 			Namespace: "abc",
 			Name:      "pr0-1",
 		},
 	}
 
-	pr2 := v1beta1.PipelineRun{
+	pr2 := v1.PipelineRun{
 		ObjectMeta: metav1.ObjectMeta{
 			Namespace: "def",
 			Name:      "pr1-1",
 		},
 	}
 
-	pr3 := v1beta1.PipelineRun{
+	pr3 := v1.PipelineRun{
 		ObjectMeta: metav1.ObjectMeta{
 			Namespace: "ghi",
 			Name:      "pr2-1",
 		},
 	}
 
-	prs := []v1beta1.PipelineRun{
+	prs := []v1.PipelineRun{
 		pr2,
 		pr3,
 		pr1,
@@ -80,7 +80,7 @@ func Test_PipelineRunsByNamespaceWithStartTime(t *testing.T) {
 	pr20Started := clock.Now().Add(10 * time.Second)
 	pr21Started := clock.Now().Add(-1 * time.Hour)
 
-	pr00 := v1beta1.PipelineRun{
+	pr00 := v1.PipelineRun{
 		ObjectMeta: metav1.ObjectMeta{
 			Namespace: "abc",
 			Name:      "pr0-0",
@@ -89,7 +89,7 @@ func Test_PipelineRunsByNamespaceWithStartTime(t *testing.T) {
 
 	pr00.Status.StartTime = &metav1.Time{Time: pr00Started}
 
-	pr01 := v1beta1.PipelineRun{
+	pr01 := v1.PipelineRun{
 		ObjectMeta: metav1.ObjectMeta{
 			Namespace: "abc",
 			Name:      "pr0-1",
@@ -98,7 +98,7 @@ func Test_PipelineRunsByNamespaceWithStartTime(t *testing.T) {
 
 	pr01.Status.StartTime = &metav1.Time{Time: pr01Started}
 
-	pr10 := v1beta1.PipelineRun{
+	pr10 := v1.PipelineRun{
 		ObjectMeta: metav1.ObjectMeta{
 			Namespace: "def",
 			Name:      "pr1-0",
@@ -107,7 +107,7 @@ func Test_PipelineRunsByNamespaceWithStartTime(t *testing.T) {
 
 	pr10.Status.StartTime = &metav1.Time{Time: pr10Started}
 
-	pr11 := v1beta1.PipelineRun{
+	pr11 := v1.PipelineRun{
 		ObjectMeta: metav1.ObjectMeta{
 			Namespace: "def",
 			Name:      "pr1-1",
@@ -116,7 +116,7 @@ func Test_PipelineRunsByNamespaceWithStartTime(t *testing.T) {
 
 	pr11.Status.StartTime = &metav1.Time{Time: pr11Started}
 
-	pr20 := v1beta1.PipelineRun{
+	pr20 := v1.PipelineRun{
 		ObjectMeta: metav1.ObjectMeta{
 			Namespace: "ghi",
 			Name:      "pr2-0",
@@ -125,7 +125,7 @@ func Test_PipelineRunsByNamespaceWithStartTime(t *testing.T) {
 
 	pr20.Status.StartTime = &metav1.Time{Time: pr20Started}
 
-	pr21 := v1beta1.PipelineRun{
+	pr21 := v1.PipelineRun{
 		ObjectMeta: metav1.ObjectMeta{
 			Namespace: "ghi",
 			Name:      "pr2-1",
@@ -134,7 +134,7 @@ func Test_PipelineRunsByNamespaceWithStartTime(t *testing.T) {
 
 	pr21.Status.StartTime = &metav1.Time{Time: pr21Started}
 
-	prs := []v1beta1.PipelineRun{
+	prs := []v1.PipelineRun{
 		pr11,
 		pr21,
 		pr01,

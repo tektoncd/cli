@@ -17,14 +17,14 @@ package pipelinerun
 import (
 	"sort"
 
-	"github.com/tektoncd/pipeline/pkg/apis/pipeline/v1beta1"
+	v1 "github.com/tektoncd/pipeline/pkg/apis/pipeline/v1"
 )
 
-func SortByNamespace(prs []v1beta1.PipelineRun) {
+func SortByNamespace(prs []v1.PipelineRun) {
 	sort.Sort(byNamespace(prs))
 }
 
-type byNamespace []v1beta1.PipelineRun
+type byNamespace []v1.PipelineRun
 
 func (prs byNamespace) compareNamespace(ins, jns string) (lt, eq bool) {
 	lt, eq = ins < jns, ins == jns

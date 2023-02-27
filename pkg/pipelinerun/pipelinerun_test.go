@@ -21,9 +21,11 @@ import (
 
 	"github.com/google/go-cmp/cmp"
 	"github.com/jonboulle/clockwork"
+	"github.com/tektoncd/cli/pkg/cli"
 	"github.com/tektoncd/cli/pkg/test"
 	cb "github.com/tektoncd/cli/pkg/test/builder"
 	testDynamic "github.com/tektoncd/cli/pkg/test/dynamic"
+	v1 "github.com/tektoncd/pipeline/pkg/apis/pipeline/v1"
 	"github.com/tektoncd/pipeline/pkg/apis/pipeline/v1alpha1"
 	"github.com/tektoncd/pipeline/pkg/apis/pipeline/v1beta1"
 	pipelinetest "github.com/tektoncd/pipeline/test"
@@ -35,7 +37,7 @@ import (
 	duckv1 "knative.dev/pkg/apis/duck/v1"
 )
 
-func TestPipelineRunsList_with_single_run(t *testing.T) {
+func TestPipelineRunsList_v1beta1(t *testing.T) {
 	version := "v1beta1"
 	clock := clockwork.NewFakeClock()
 	pr1Started := clock.Now().Add(10 * time.Second)
@@ -138,15 +140,29 @@ func TestPipelineRunsList_with_single_run(t *testing.T) {
 	p2 := &test.Params{Tekton: cs.Pipeline, Clock: clock, Kube: cs.Kube, Dynamic: dc}
 	p2.SetNamespace("unknown")
 
+	c1, err := p.Clients()
+	if err != nil {
+		t.Errorf("unable to create client: %v", err)
+	}
+
+	c2, err := p2.Clients()
+	if err != nil {
+		t.Errorf("unable to create client: %v", err)
+	}
+
 	testParams := []struct {
 		name        string
-		params      *test.Params
+		namespace   string
+		client      *cli.Clients
+		time        clockwork.Clock
 		listOptions metav1.ListOptions
 		want        []string
 	}{
 		{
 			name:        "Specify related pipeline",
-			params:      p,
+			client:      c1,
+			namespace:   p.Namespace(),
+			time:        p.Time(),
 			listOptions: metav1.ListOptions{LabelSelector: "tekton.dev/pipeline=pipeline"},
 			want: []string{
 				"pipelinerun1 started -10 seconds ago",
@@ -155,7 +171,9 @@ func TestPipelineRunsList_with_single_run(t *testing.T) {
 		},
 		{
 			name:        "Not specify related pipeline",
-			params:      p,
+			client:      c1,
+			namespace:   p.Namespace(),
+			time:        p.Time(),
 			listOptions: metav1.ListOptions{},
 			want: []string{
 				"pipelinerun started -10 seconds ago",
@@ -165,7 +183,9 @@ func TestPipelineRunsList_with_single_run(t *testing.T) {
 		},
 		{
 			name:        "Specify unknown namespace",
-			params:      p2,
+			client:      c2,
+			namespace:   p2.Namespace(),
+			time:        p2.Time(),
 			listOptions: metav1.ListOptions{},
 			want:        []string{},
 		},
@@ -173,7 +193,172 @@ func TestPipelineRunsList_with_single_run(t *testing.T) {
 
 	for _, tp := range testParams {
 		t.Run(tp.name, func(t *testing.T) {
-			got, err := GetAllPipelineRuns(tp.params, tp.listOptions, 5)
+			got, err := GetAllPipelineRuns(prGroupResource, tp.listOptions, tp.client, tp.namespace, 5, tp.time)
+			if err != nil {
+				t.Errorf("unexpected Error")
+			}
+			test.AssertOutput(t, tp.want, got)
+		})
+	}
+}
+
+func TestPipelineRunsList(t *testing.T) {
+	version := "v1"
+	clock := clockwork.NewFakeClock()
+	pr1Started := clock.Now().Add(10 * time.Second)
+	runDuration := 1 * time.Minute
+	prdata := []*v1.PipelineRun{
+		{
+			ObjectMeta: metav1.ObjectMeta{
+				Name:      "pipelinerun",
+				Namespace: "ns",
+				Labels:    map[string]string{"tekton.dev/pipeline": "random"},
+			},
+			Spec: v1.PipelineRunSpec{
+				PipelineRef: &v1.PipelineRef{
+					Name: "random",
+				},
+			},
+			Status: v1.PipelineRunStatus{
+				Status: duckv1.Status{
+					Conditions: duckv1.Conditions{
+						{
+							Status: corev1.ConditionTrue,
+							Reason: v1.PipelineRunReasonSuccessful.String(),
+						},
+					},
+				},
+				PipelineRunStatusFields: v1.PipelineRunStatusFields{
+					StartTime:      &metav1.Time{Time: pr1Started},
+					CompletionTime: &metav1.Time{Time: pr1Started.Add(runDuration)},
+				},
+			},
+		},
+		{
+			ObjectMeta: metav1.ObjectMeta{
+				Name:      "pipelinerun1",
+				Namespace: "ns",
+				Labels:    map[string]string{"tekton.dev/pipeline": "pipeline"},
+			},
+			Spec: v1.PipelineRunSpec{
+				PipelineRef: &v1.PipelineRef{
+					Name: "pipeline",
+				},
+			},
+			Status: v1.PipelineRunStatus{
+				Status: duckv1.Status{
+					Conditions: duckv1.Conditions{
+						{
+							Status: corev1.ConditionTrue,
+							Reason: v1.PipelineRunReasonSuccessful.String(),
+						},
+					},
+				},
+				PipelineRunStatusFields: v1.PipelineRunStatusFields{
+					StartTime:      &metav1.Time{Time: pr1Started},
+					CompletionTime: &metav1.Time{Time: pr1Started.Add(runDuration)},
+				},
+			},
+		},
+		{
+			ObjectMeta: metav1.ObjectMeta{
+				Name:      "pipelinerun2",
+				Namespace: "ns",
+				Labels:    map[string]string{"tekton.dev/pipeline": "pipeline"},
+			},
+			Spec: v1.PipelineRunSpec{
+				PipelineRef: &v1.PipelineRef{
+					Name: "pipeline",
+				},
+			},
+			Status: v1.PipelineRunStatus{
+				Status: duckv1.Status{
+					Conditions: duckv1.Conditions{
+						{
+							Status: corev1.ConditionTrue,
+							Reason: v1.PipelineRunReasonSuccessful.String(),
+						},
+					},
+				},
+				PipelineRunStatusFields: v1.PipelineRunStatusFields{
+					StartTime:      &metav1.Time{Time: pr1Started},
+					CompletionTime: &metav1.Time{Time: pr1Started.Add(runDuration)},
+				},
+			},
+		},
+	}
+	cs, _ := test.SeedTestData(t, test.Data{
+		PipelineRuns: prdata,
+	})
+	cs.Pipeline.Resources = cb.APIResourceList(version, []string{"pipelinerun"})
+	tdc := testDynamic.Options{}
+	dc, err := tdc.Client(
+		cb.UnstructuredPR(prdata[0], version),
+		cb.UnstructuredPR(prdata[1], version),
+		cb.UnstructuredPR(prdata[2], version),
+	)
+	if err != nil {
+		t.Errorf("unable to create dynamic client: %v", err)
+	}
+
+	p := &test.Params{Tekton: cs.Pipeline, Clock: clock, Kube: cs.Kube, Dynamic: dc}
+	p2 := &test.Params{Tekton: cs.Pipeline, Clock: clock, Kube: cs.Kube, Dynamic: dc}
+	p2.SetNamespace("unknown")
+
+	c1, err := p.Clients()
+	if err != nil {
+		t.Errorf("unable to create client: %v", err)
+	}
+
+	c2, err := p2.Clients()
+	if err != nil {
+		t.Errorf("unable to create client: %v", err)
+	}
+
+	testParams := []struct {
+		name        string
+		namespace   string
+		client      *cli.Clients
+		time        clockwork.Clock
+		listOptions metav1.ListOptions
+		want        []string
+	}{
+		{
+			name:        "Specify related pipeline",
+			client:      c1,
+			namespace:   p.Namespace(),
+			time:        p.Time(),
+			listOptions: metav1.ListOptions{LabelSelector: "tekton.dev/pipeline=pipeline"},
+			want: []string{
+				"pipelinerun1 started -10 seconds ago",
+				"pipelinerun2 started -10 seconds ago",
+			},
+		},
+		{
+			name:        "Not specify related pipeline",
+			client:      c1,
+			namespace:   p.Namespace(),
+			time:        p.Time(),
+			listOptions: metav1.ListOptions{},
+			want: []string{
+				"pipelinerun started -10 seconds ago",
+				"pipelinerun1 started -10 seconds ago",
+				"pipelinerun2 started -10 seconds ago",
+			},
+		},
+		{
+			name:        "Specify unknown namespace",
+			client:      c2,
+			namespace:   p2.Namespace(),
+			time:        p2.Time(),
+			listOptions: metav1.ListOptions{},
+			want:        []string{},
+		},
+	}
+
+	for _, tp := range testParams {
+		t.Run(tp.name, func(t *testing.T) {
+			got, err := GetAllPipelineRuns(prGroupResource, tp.listOptions, tp.client, tp.namespace, 5, tp.time)
 			if err != nil {
 				t.Errorf("unexpected Error")
 			}
@@ -481,161 +666,6 @@ status:
 	if d := cmp.Diff(got.Status.Runs, gotFull.Status.Runs); d != "" {
 		t.Errorf("mismatch between minimal and full Run statuses: %s", diff.PrintWantGot(d))
 	}
-}
-
-func TestPipelineRunList_MinimalEmbeddedStatus(t *testing.T) {
-	version := "v1beta1"
-	clock := clockwork.NewFakeClock()
-	pr1Started := clock.Now().Add(10 * time.Second)
-	runDuration := 1 * time.Minute
-
-	prdata := []*v1beta1.PipelineRun{parse.MustParseV1beta1PipelineRun(t, fmt.Sprintf(`
-metadata:
-  name: pipelinerun1
-  namespace: ns
-  labels:
-    tekton.dev/pipeline: pipeline
-spec:
-  pipelineRef:
-    name: pipeline
-status:
-  conditions:
-  - lastTransitionTime: null
-    message: All Tasks have completed executing
-    reason: Succeeded
-    status: "True"
-    type: Succeeded
-  startTime: %s
-  completionTime: %s
-  childReferences:
-  - apiVersion: tekton.dev/v1beta1
-    kind: TaskRun
-    name: task-run-1
-    pipelineTaskName: tr1
-  - apiVersion: tekton.dev/v1beta1
-    kind: TaskRun
-    name: task-run-2
-    pipelineTaskName: tr2
-  - apiVersion: tekton.dev/v1alpha1
-    kind: Run
-    name: run-1
-    pipelineTaskName: r1
-  - apiVersion: tekton.dev/v1alpha1
-    kind: Run
-    name: run-2
-    pipelineTaskName: r2
-`, pr1Started.Format(time.RFC3339), pr1Started.Add(runDuration).Format(time.RFC3339))),
-	}
-
-	trData := []*v1beta1.TaskRun{
-		parse.MustParseV1beta1TaskRun(t, `
-metadata:
-  name: task-run-1
-  namespace: ns
-spec:
-  taskRef:
-    name: someTask
-status:
-  conditions:
-  - reason: Succeeded
-    status: "True"
-    type: Succeeded
-`),
-		parse.MustParseV1beta1TaskRun(t, `
-metadata:
-  name: task-run-2
-  namespace: ns
-spec:
-  taskRef:
-    name: someTask
-status:
-  conditions:
-  - reason: Failed
-    status: "False"
-    type: Succeeded
-`),
-	}
-
-	runsData := []*v1alpha1.Run{
-		parse.MustParseRun(t, `
-metadata:
-  name: run-1
-  namespace: ns
-spec:
-  ref:
-    name: someCustomTask
-status:
-  conditions:
-  - reason: Succeeded
-    status: "True"
-    type: Succeeded
-`),
-		parse.MustParseRun(t, `
-metadata:
-  name: run-2
-  namespace: ns
-spec:
-  ref:
-    name: someCustomTask
-status:
-  conditions:
-  - reason: Failed
-    status: "False"
-    type: Succeeded
-`),
-	}
-
-	cs, _ := test.SeedV1beta1TestData(t, pipelinetest.Data{
-		PipelineRuns: prdata,
-		TaskRuns:     trData,
-		Runs:         runsData,
-	})
-
-	cs.Pipeline.Resources = cb.APIResourceList(version, []string{"pipelinerun"})
-	tdc := testDynamic.Options{}
-	dc, err := tdc.Client(
-		cb.UnstructuredV1beta1PR(prdata[0], version),
-	)
-	if err != nil {
-		t.Errorf("unable to create dynamic client: %v", err)
-	}
-
-	p := &test.Params{Tekton: cs.Pipeline, Clock: clock, Kube: cs.Kube, Dynamic: dc}
-	c, err := p.Clients()
-	if err != nil {
-		t.Errorf("unable to create client: %v", err)
-	}
-
-	prList, err := List(c, metav1.ListOptions{}, "ns")
-	if err != nil {
-		t.Errorf("unexpected Error")
-	}
-	test.AssertOutput(t, 1, len(prList.Items))
-
-	got := prList.Items[0]
-	test.AssertOutput(t, "pipelinerun1", got.Name)
-
-	tr1 := got.Status.TaskRuns[trData[0].Name]
-	if tr1 == nil {
-		t.Fatalf("TaskRun status map does not contain expected TaskRun %s", trData[0].Name)
-	}
-	test.AssertOutput(t, string(v1beta1.TaskRunReasonSuccessful), tr1.Status.GetCondition(apis.ConditionSucceeded).Reason)
-	tr2 := got.Status.TaskRuns[trData[1].Name]
-	if tr2 == nil {
-		t.Fatalf("TaskRun status map does not contain expected TaskRun %s", trData[1].Name)
-	}
-	test.AssertOutput(t, string(v1beta1.TaskRunReasonFailed), tr2.Status.GetCondition(apis.ConditionSucceeded).Reason)
-
-	r1 := got.Status.Runs[runsData[0].Name]
-	if r1 == nil {
-		t.Fatalf("Run status map does not contain expected Run %s", runsData[0].Name)
-	}
-	test.AssertOutput(t, "Succeeded", r1.Status.GetCondition(apis.ConditionSucceeded).Reason)
-	r2 := got.Status.Runs[runsData[1].Name]
-	if r2 == nil {
-		t.Fatalf("Run status map does not contain expected Run %s", runsData[1].Name)
-	}
-	test.AssertOutput(t, "Failed", r2.Status.GetCondition(apis.ConditionSucceeded).Reason)
 }
 
 func TestPipelineRunCreate(t *testing.T) {

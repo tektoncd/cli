@@ -28,7 +28,7 @@ import (
 	"github.com/tektoncd/cli/pkg/options"
 	pr "github.com/tektoncd/cli/pkg/pipelinerun"
 	prsort "github.com/tektoncd/cli/pkg/pipelinerun/sort"
-	"github.com/tektoncd/pipeline/pkg/apis/pipeline/v1beta1"
+	v1 "github.com/tektoncd/pipeline/pkg/apis/pipeline/v1"
 	"go.uber.org/multierr"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime/schema"
@@ -255,13 +255,13 @@ func allPipelineRunNames(cs *cli.Clients, keep, since int, ignoreRunning bool, l
 		LabelSelector: labelselector,
 	}
 
-	pipelineRuns, err := pr.List(cs, options, ns)
-	if err != nil {
+	var pipelineRuns *v1.PipelineRunList
+	if err := actions.ListV1(pipelineRunGroupResource, cs, options, ns, &pipelineRuns); err != nil {
 		return todelete, tokeep, err
 	}
 
 	if ignoreRunning {
-		var pipelineRunTmps = []v1beta1.PipelineRun{}
+		var pipelineRunTmps = []v1.PipelineRun{}
 		for _, v := range pipelineRuns.Items {
 			if v.Status.Conditions == nil {
 				continue
@@ -287,7 +287,7 @@ func allPipelineRunNames(cs *cli.Clients, keep, since int, ignoreRunning bool, l
 	return todelete, tokeep, nil
 }
 
-func keepPipelineRunsByAge(pipelineRuns *v1beta1.PipelineRunList, keep int, ignoreRunning bool) ([]string, []string) {
+func keepPipelineRunsByAge(pipelineRuns *v1.PipelineRunList, keep int, ignoreRunning bool) ([]string, []string) {
 	var todelete, tokeep []string
 	for _, run := range pipelineRuns.Items {
 		if run.Status.Conditions == nil {
@@ -306,7 +306,7 @@ func keepPipelineRunsByAge(pipelineRuns *v1beta1.PipelineRunList, keep int, igno
 	return todelete, tokeep
 }
 
-func keepPipelineRunsByNumber(pipelineRuns *v1beta1.PipelineRunList, keep int) ([]string, []string) {
+func keepPipelineRunsByNumber(pipelineRuns *v1.PipelineRunList, keep int) ([]string, []string) {
 	var todelete, tokeep []string
 	counter := 0
 
@@ -326,7 +326,7 @@ func keepPipelineRunsByNumber(pipelineRuns *v1beta1.PipelineRunList, keep int) (
 	return todelete, tokeep
 }
 
-func keepPipelineRunsByAgeAndNumber(pipelineRuns *v1beta1.PipelineRunList, since int, keep int, ignoreRunning bool) ([]string, []string) {
+func keepPipelineRunsByAgeAndNumber(pipelineRuns *v1.PipelineRunList, since int, keep int, ignoreRunning bool) ([]string, []string) {
 	var todelete, tokeep []string
 
 	todelete, tokeep = keepPipelineRunsByAge(pipelineRuns, since, ignoreRunning)

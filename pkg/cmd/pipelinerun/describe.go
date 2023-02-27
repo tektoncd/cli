@@ -24,7 +24,7 @@ import (
 	"github.com/tektoncd/cli/pkg/cli"
 	"github.com/tektoncd/cli/pkg/formatted"
 	"github.com/tektoncd/cli/pkg/options"
-	prhelper "github.com/tektoncd/cli/pkg/pipelinerun"
+	pipelinerunpkg "github.com/tektoncd/cli/pkg/pipelinerun"
 	prdesc "github.com/tektoncd/cli/pkg/pipelinerun/description"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime/schema"
@@ -74,10 +74,15 @@ or
 				}
 			}
 
+			cs, err := p.Clients()
+			if err != nil {
+				return err
+			}
+
 			if len(args) == 0 {
 				lOpts := metav1.ListOptions{}
 				if !opts.Last {
-					prs, err := prhelper.GetAllPipelineRuns(p, lOpts, opts.Limit)
+					prs, err := pipelinerunpkg.GetAllPipelineRuns(pipelineRunGroupResource, lOpts, cs, p.Namespace(), opts.Limit, p.Time())
 					if err != nil {
 						return err
 					}
@@ -90,7 +95,7 @@ or
 						}
 					}
 				} else {
-					prs, err := prhelper.GetAllPipelineRuns(p, lOpts, 1)
+					prs, err := pipelinerunpkg.GetAllPipelineRuns(pipelineRunGroupResource, lOpts, cs, p.Namespace(), 1, p.Time())
 					if err != nil {
 						return err
 					}
@@ -102,11 +107,6 @@ or
 				}
 			} else {
 				opts.PipelineRunName = args[0]
-			}
-
-			cs, err := p.Clients()
-			if err != nil {
-				return err
 			}
 
 			if output != "" {

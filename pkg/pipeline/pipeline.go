@@ -28,6 +28,7 @@ import (
 )
 
 var pipelineGroupResource = schema.GroupVersionResource{Group: "tekton.dev", Resource: "pipelines"}
+var pipelineRunGroupResource = schema.GroupVersionResource{Group: "tekton.dev", Resource: "pipelineruns"}
 
 func GetAllPipelineNames(gr schema.GroupVersionResource, c *cli.Clients, ns string) ([]string, error) {
 	var pipelines *v1.PipelineList
