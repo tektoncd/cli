@@ -22,8 +22,7 @@ import (
 	"github.com/tektoncd/cli/pkg/test"
 	cb "github.com/tektoncd/cli/pkg/test/builder"
 	testDynamic "github.com/tektoncd/cli/pkg/test/dynamic"
-	"github.com/tektoncd/pipeline/pkg/apis/pipeline/v1beta1"
-	pipelinetest "github.com/tektoncd/pipeline/test"
+	v1 "github.com/tektoncd/pipeline/pkg/apis/pipeline/v1"
 	corev1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	duckv1 "knative.dev/pkg/apis/duck/v1"
@@ -41,7 +40,7 @@ func TestPipelineRunLast_two_run(t *testing.T) {
 	// second run based on creationTimestamp
 
 	var (
-		version         = "v1beta1"
+		version         = "v1"
 		pipelineCreated = clock.Now().Add(-5 * time.Minute)
 		runDuration     = 5 * time.Minute
 
@@ -54,7 +53,7 @@ func TestPipelineRunLast_two_run(t *testing.T) {
 		secondRunCompleted = secondRunStarted.Add(runDuration) // takes less thus completes
 	)
 
-	pdata := []*v1beta1.Pipeline{
+	pdata := []*v1.Pipeline{
 		{
 			ObjectMeta: metav1.ObjectMeta{
 				Name:              "pipeline",
@@ -64,7 +63,7 @@ func TestPipelineRunLast_two_run(t *testing.T) {
 		},
 	}
 
-	prdata := []*v1beta1.PipelineRun{
+	prdata := []*v1.PipelineRun{
 		{
 			ObjectMeta: metav1.ObjectMeta{
 				Name:              "pipeline-run-1",
@@ -72,21 +71,21 @@ func TestPipelineRunLast_two_run(t *testing.T) {
 				Labels:            map[string]string{"tekton.dev/pipeline": "pipeline"},
 				CreationTimestamp: metav1.Time{Time: firstRunCreated},
 			},
-			Spec: v1beta1.PipelineRunSpec{
-				PipelineRef: &v1beta1.PipelineRef{
+			Spec: v1.PipelineRunSpec{
+				PipelineRef: &v1.PipelineRef{
 					Name: "pipeline",
 				},
 			},
-			Status: v1beta1.PipelineRunStatus{
+			Status: v1.PipelineRunStatus{
 				Status: duckv1.Status{
 					Conditions: duckv1.Conditions{
 						{
 							Status: corev1.ConditionTrue,
-							Reason: v1beta1.PipelineRunReasonSuccessful.String(),
+							Reason: v1.PipelineRunReasonSuccessful.String(),
 						},
 					},
 				},
-				PipelineRunStatusFields: v1beta1.PipelineRunStatusFields{
+				PipelineRunStatusFields: v1.PipelineRunStatusFields{
 					StartTime:      &metav1.Time{Time: firstRunStarted},
 					CompletionTime: &metav1.Time{Time: firstRunCompleted},
 				},
@@ -99,21 +98,21 @@ func TestPipelineRunLast_two_run(t *testing.T) {
 				Labels:            map[string]string{"tekton.dev/pipeline": "pipeline"},
 				CreationTimestamp: metav1.Time{Time: secondRunCreated},
 			},
-			Spec: v1beta1.PipelineRunSpec{
-				PipelineRef: &v1beta1.PipelineRef{
+			Spec: v1.PipelineRunSpec{
+				PipelineRef: &v1.PipelineRef{
 					Name: "pipeline",
 				},
 			},
-			Status: v1beta1.PipelineRunStatus{
+			Status: v1.PipelineRunStatus{
 				Status: duckv1.Status{
 					Conditions: duckv1.Conditions{
 						{
 							Status: corev1.ConditionTrue,
-							Reason: v1beta1.PipelineRunReasonSuccessful.String(),
+							Reason: v1.PipelineRunReasonSuccessful.String(),
 						},
 					},
 				},
-				PipelineRunStatusFields: v1beta1.PipelineRunStatusFields{
+				PipelineRunStatusFields: v1.PipelineRunStatusFields{
 					StartTime:      &metav1.Time{Time: secondRunStarted},
 					CompletionTime: &metav1.Time{Time: secondRunCompleted},
 				},
@@ -121,7 +120,7 @@ func TestPipelineRunLast_two_run(t *testing.T) {
 		},
 	}
 
-	cs, _ := test.SeedV1beta1TestData(t, pipelinetest.Data{
+	cs, _ := test.SeedTestData(t, test.Data{
 		Pipelines:    pdata,
 		PipelineRuns: prdata,
 	})
@@ -129,9 +128,9 @@ func TestPipelineRunLast_two_run(t *testing.T) {
 	cs.Pipeline.Resources = cb.APIResourceList(version, []string{"pipeline", "pipelinerun"})
 	tdc := testDynamic.Options{}
 	dc, err := tdc.Client(
-		cb.UnstructuredV1beta1P(pdata[0], version),
-		cb.UnstructuredV1beta1PR(prdata[0], version),
-		cb.UnstructuredV1beta1PR(prdata[1], version),
+		cb.UnstructuredP(pdata[0], version),
+		cb.UnstructuredPR(prdata[0], version),
+		cb.UnstructuredPR(prdata[1], version),
 	)
 	if err != nil {
 		t.Errorf("unable to create dynamic client: %v", err)
@@ -153,9 +152,9 @@ func TestPipelineRunLast_two_run(t *testing.T) {
 
 func TestPipelinerunLatest_no_run(t *testing.T) {
 	clock := clockwork.NewFakeClock()
-	version := "v1beta1"
+	version := "v1"
 
-	pdata := []*v1beta1.Pipeline{
+	pdata := []*v1.Pipeline{
 		{
 			ObjectMeta: metav1.ObjectMeta{
 				Name:              "pipeline",
@@ -165,14 +164,14 @@ func TestPipelinerunLatest_no_run(t *testing.T) {
 		},
 	}
 
-	cs, _ := test.SeedV1beta1TestData(t, pipelinetest.Data{
+	cs, _ := test.SeedTestData(t, test.Data{
 		Pipelines: pdata,
 	})
 
 	cs.Pipeline.Resources = cb.APIResourceList(version, []string{"pipeline", "pipelinerun"})
 	tdc := testDynamic.Options{}
 	dc, err := tdc.Client(
-		cb.UnstructuredV1beta1P(pdata[0], version),
+		cb.UnstructuredP(pdata[0], version),
 	)
 	if err != nil {
 		t.Errorf("unable to create dynamic client: %v", err)

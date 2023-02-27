@@ -266,7 +266,13 @@ func (opt *startOptions) startPipeline(pipelineStart *v1beta1.Pipeline) error {
 	if opt.Last || opt.UsePipelineRun != "" {
 		var usepr *v1beta1.PipelineRun
 		if opt.Last {
-			usepr, err = pipeline.LastRun(cs, pipelineStart.ObjectMeta.Name, opt.cliparams.Namespace())
+			prtemp, err := pipeline.LastRun(cs, pipelineStart.ObjectMeta.Name, opt.cliparams.Namespace())
+			if err != nil {
+				return err
+			}
+
+			// TODO: remove as we move the start command to v1
+			err = usepr.ConvertFrom(context.TODO(), prtemp)
 			if err != nil {
 				return err
 			}

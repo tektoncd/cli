@@ -20,10 +20,12 @@ import (
 	"fmt"
 	"os"
 
+	"github.com/jonboulle/clockwork"
 	"github.com/tektoncd/cli/pkg/actions"
 	"github.com/tektoncd/cli/pkg/cli"
 	"github.com/tektoncd/cli/pkg/formatted"
 	prsort "github.com/tektoncd/cli/pkg/pipelinerun/sort"
+	v1 "github.com/tektoncd/pipeline/pkg/apis/pipeline/v1"
 	"github.com/tektoncd/pipeline/pkg/apis/pipeline/v1beta1"
 	"github.com/tektoncd/pipeline/pkg/status"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
@@ -36,63 +38,27 @@ import (
 var prGroupResource = schema.GroupVersionResource{Group: "tekton.dev", Resource: "pipelineruns"}
 
 // GetAllPipelineRuns returns all pipelinesruns running in a namespace
-func GetAllPipelineRuns(p cli.Params, opts metav1.ListOptions, limit int) ([]string, error) {
-	cs, err := p.Clients()
-	if err != nil {
-		return nil, err
+func GetAllPipelineRuns(gr schema.GroupVersionResource, opts metav1.ListOptions, c *cli.Clients, ns string, limit int, time clockwork.Clock) ([]string, error) {
+	var pipelineruns *v1.PipelineRunList
+	if err := actions.ListV1(gr, c, opts, ns, &pipelineruns); err != nil {
+		return nil, fmt.Errorf("failed to list PipelineRuns from namespace %s: %v", ns, err)
 	}
 
-	runs, err := List(cs, opts, p.Namespace())
-	if err != nil {
-		return nil, err
-	}
-
-	runslen := len(runs.Items)
-	if runslen > 1 {
-		prsort.SortByStartTime(runs.Items)
-	}
-
+	runslen := len(pipelineruns.Items)
 	if limit > runslen {
 		limit = runslen
 	}
 
+	if runslen > 1 {
+		prsort.SortByStartTime(pipelineruns.Items)
+	}
 	ret := []string{}
-	for i, run := range runs.Items {
+	for i, run := range pipelineruns.Items {
 		if i < limit {
-			ret = append(ret, run.ObjectMeta.Name+" started "+formatted.Age(run.Status.StartTime, p.Time()))
+			ret = append(ret, run.ObjectMeta.Name+" started "+formatted.Age(run.Status.StartTime, time))
 		}
 	}
 	return ret, nil
-}
-
-func List(c *cli.Clients, opts metav1.ListOptions, ns string) (*v1beta1.PipelineRunList, error) {
-	unstructuredPR, err := actions.List(prGroupResource, c.Dynamic, c.Tekton.Discovery(), ns, opts)
-	if err != nil {
-		return nil, err
-	}
-
-	var prList *v1beta1.PipelineRunList
-	if err := runtime.DefaultUnstructuredConverter.FromUnstructured(unstructuredPR.UnstructuredContent(), &prList); err != nil {
-		return nil, err
-	}
-	if err != nil {
-		fmt.Fprintf(os.Stderr, "Failed to list pipelineruns from %s namespace \n", ns)
-		return nil, err
-	}
-
-	var populatedPRs []v1beta1.PipelineRun
-
-	for _, pr := range prList.Items {
-		updatedPR, err := populatePipelineRunTaskStatuses(c, ns, pr)
-		if err != nil {
-			return nil, err
-		}
-		populatedPRs = append(populatedPRs, *updatedPR)
-	}
-
-	prList.Items = populatedPRs
-
-	return prList, nil
 }
 
 // It will fetch the resource in v1beta1 struct format
@@ -138,7 +104,6 @@ func Cancel(c *cli.Clients, prname string, opts metav1.PatchOptions, cancelStatu
 	}}
 
 	data, _ := json.Marshal(payload)
-	prGroupResource := schema.GroupVersionResource{Group: "tekton.dev", Resource: "pipelineruns"}
 	unstructuredPR, err := actions.Patch(prGroupResource, c, prname, data, opts, ns)
 	if err != nil {
 		return nil, err

@@ -19,7 +19,10 @@ import (
 	"github.com/tektoncd/cli/pkg/cli"
 	"github.com/tektoncd/cli/pkg/cli/prerun"
 	"github.com/tektoncd/cli/pkg/flags"
+	"k8s.io/apimachinery/pkg/runtime/schema"
 )
+
+var pipelineRunGroupResource = schema.GroupVersionResource{Group: "tekton.dev", Resource: "pipelineruns"}
 
 // Command instantiates the pipelinerun command
 func Command(p cli.Params) *cobra.Command {

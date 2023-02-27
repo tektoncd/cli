@@ -28,8 +28,8 @@ import (
 	"github.com/tektoncd/cli/pkg/formatted"
 	"github.com/tektoncd/cli/pkg/options"
 	"github.com/tektoncd/cli/pkg/pipeline"
-	"github.com/tektoncd/cli/pkg/pipelinerun"
 	prsort "github.com/tektoncd/cli/pkg/pipelinerun/sort"
+	v1 "github.com/tektoncd/pipeline/pkg/apis/pipeline/v1"
 	"github.com/tektoncd/pipeline/pkg/apis/pipeline/v1beta1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime/schema"
@@ -184,7 +184,9 @@ func printPipelineDescription(out io.Writer, p cli.Params, pname string) error {
 	opts := metav1.ListOptions{
 		LabelSelector: fmt.Sprintf("tekton.dev/pipeline=%s", pname),
 	}
-	pipelineRuns, err := pipelinerun.List(cs, opts, p.Namespace())
+
+	var pipelineRuns *v1.PipelineRunList
+	err = actions.ListV1(pipelineRunGroupResource, cs, opts, p.Namespace(), &pipelineRuns)
 	if err != nil {
 		return err
 	}
@@ -192,7 +194,7 @@ func printPipelineDescription(out io.Writer, p cli.Params, pname string) error {
 
 	var data = struct {
 		Pipeline     *v1beta1.Pipeline
-		PipelineRuns *v1beta1.PipelineRunList
+		PipelineRuns *v1.PipelineRunList
 		PipelineName string
 		Params       cli.Params
 	}{
