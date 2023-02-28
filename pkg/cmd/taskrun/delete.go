@@ -32,7 +32,6 @@ import (
 	trsort "github.com/tektoncd/cli/pkg/taskrun/sort"
 	"github.com/tektoncd/pipeline/pkg/apis/pipeline"
 	v1 "github.com/tektoncd/pipeline/pkg/apis/pipeline/v1"
-	"github.com/tektoncd/pipeline/pkg/apis/pipeline/v1beta1"
 	"go.uber.org/multierr"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	cliopts "k8s.io/cli-runtime/pkg/genericclioptions"
@@ -311,7 +310,7 @@ func allTaskRunNames(cs *cli.Clients, keep, since int, ignoreRunning, ignoreRunn
 	}
 
 	if kind == "Task" {
-		taskRuns.Items = taskpkg.FilterByRef(taskRuns.Items, string(v1beta1.NamespacedTaskKind))
+		taskRuns.Items = taskpkg.FilterByRef(taskRuns.Items, string(v1.NamespacedTaskKind))
 	}
 
 	if ignoreRunningOwner {
