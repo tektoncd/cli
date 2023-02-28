@@ -115,7 +115,7 @@ func deleteClusterTasks(opts *options.DeleteOptions, s *cli.Stream, p cli.Params
 	})
 	switch {
 	case opts.DeleteAll:
-		cts, err := clustertask.GetAllClusterTaskNames(p)
+		cts, err := clustertask.GetAllClusterTaskNames(clustertaskGroupResource, cs)
 		if err != nil {
 			return err
 		}

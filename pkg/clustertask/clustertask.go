@@ -29,15 +29,10 @@ import (
 
 var clustertaskGroupResource = schema.GroupVersionResource{Group: "tekton.dev", Resource: "clustertasks"}
 
-func GetAllClusterTaskNames(p cli.Params) ([]string, error) {
-	cs, err := p.Clients()
-	if err != nil {
-		return nil, err
-	}
-
-	clustertasks, err := List(cs, metav1.ListOptions{})
-	if err != nil {
-		return nil, err
+func GetAllClusterTaskNames(gr schema.GroupVersionResource, c *cli.Clients) ([]string, error) {
+	var clustertasks *v1beta1.ClusterTaskList
+	if err := actions.ListV1(gr, c, metav1.ListOptions{}, "", &clustertasks); err != nil {
+		return nil, fmt.Errorf("failed to list clusterTasks: %v", err)
 	}
 
 	ret := []string{}
@@ -45,24 +40,6 @@ func GetAllClusterTaskNames(p cli.Params) ([]string, error) {
 		ret = append(ret, item.ObjectMeta.Name)
 	}
 	return ret, nil
-}
-
-func List(c *cli.Clients, opts metav1.ListOptions) (*v1beta1.ClusterTaskList, error) {
-	unstructuredCT, err := actions.List(clustertaskGroupResource, c.Dynamic, c.Tekton.Discovery(), "", opts)
-	if err != nil {
-		return nil, err
-	}
-
-	var clustertasks *v1beta1.ClusterTaskList
-	if err := runtime.DefaultUnstructuredConverter.FromUnstructured(unstructuredCT.UnstructuredContent(), &clustertasks); err != nil {
-		return nil, err
-	}
-	if err != nil {
-		fmt.Fprintf(os.Stderr, "Failed to list clustertasks\n")
-		return nil, err
-	}
-
-	return clustertasks, nil
 }
 
 // It will fetch the ClusterTask based on ClusterTask name
