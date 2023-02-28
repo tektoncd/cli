@@ -19,6 +19,7 @@ import (
 	"time"
 
 	"github.com/jonboulle/clockwork"
+	"github.com/tektoncd/cli/pkg/actions"
 	"github.com/tektoncd/cli/pkg/cli"
 	"github.com/tektoncd/cli/pkg/test"
 	cb "github.com/tektoncd/cli/pkg/test/builder"
@@ -84,26 +85,36 @@ func TestClusterTask_GetAllTaskNames(t *testing.T) {
 	p := &test.Params{Tekton: cs.Pipeline, Clock: clock, Kube: cs.Kube, Dynamic: dc}
 	p2 := &test.Params{Tekton: cs2.Pipeline, Clock: clock, Kube: cs2.Kube, Dynamic: dc2}
 
+	c1, err := p.Clients()
+	if err != nil {
+		t.Errorf("unable to create client: %v", err)
+	}
+
+	c2, err := p2.Clients()
+	if err != nil {
+		t.Errorf("unable to create client: %v", err)
+	}
+
 	testParams := []struct {
 		name   string
-		params *test.Params
+		client *cli.Clients
 		want   []string
 	}{
 		{
 			name:   "Single ClusterTask",
-			params: p,
+			client: c1,
 			want:   []string{"clustertask"},
 		},
 		{
 			name:   "Multi ClusterTasks",
-			params: p2,
+			client: c2,
 			want:   []string{"clustertask", "clustertask2"},
 		},
 	}
 
 	for _, tp := range testParams {
 		t.Run(tp.name, func(t *testing.T) {
-			got, err := GetAllClusterTaskNames(tp.params)
+			got, err := GetAllClusterTaskNames(clustertaskGroupResource, tp.client)
 			if err != nil {
 				t.Errorf("unexpected Error")
 			}
@@ -191,13 +202,13 @@ func TestClusterTask_List(t *testing.T) {
 
 	for _, tp := range testParams {
 		t.Run(tp.name, func(t *testing.T) {
-			got, err := List(tp.client, metav1.ListOptions{})
-			if err != nil {
+			var clustertasks *v1beta1.ClusterTaskList
+			if err := actions.ListV1(clustertaskGroupResource, tp.client, metav1.ListOptions{}, "", &clustertasks); err != nil {
 				t.Errorf("unexpected Error")
 			}
 
 			ctnames := []string{}
-			for _, ct := range got.Items {
+			for _, ct := range clustertasks.Items {
 				ctnames = append(ctnames, ct.Name)
 			}
 			test.AssertOutput(t, tp.want, ctnames)

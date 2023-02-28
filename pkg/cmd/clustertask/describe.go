@@ -154,8 +154,13 @@ or
 				return fmt.Errorf("output option not set properly: %v", err)
 			}
 
+			cs, err := p.Clients()
+			if err != nil {
+				return err
+			}
+
 			if len(args) == 0 {
-				clusterTaskNames, err := clustertask.GetAllClusterTaskNames(p)
+				clusterTaskNames, err := clustertask.GetAllClusterTaskNames(clustertaskGroupResource, cs)
 				if err != nil {
 					return err
 				}
@@ -169,11 +174,6 @@ or
 				}
 			} else {
 				opts.ClusterTaskName = args[0]
-			}
-
-			cs, err := p.Clients()
-			if err != nil {
-				return err
 			}
 
 			if output != "" {

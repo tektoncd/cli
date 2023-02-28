@@ -139,7 +139,12 @@ func initOpts(opts *options.LogOptions, args []string) error {
 }
 
 func getAllInputs(opts *options.LogOptions) error {
-	cts, err := clustertask.GetAllClusterTaskNames(opts.Params)
+	cs, err := opts.Params.Clients()
+	if err != nil {
+		return err
+	}
+
+	cts, err := clustertask.GetAllClusterTaskNames(clustertaskGroupResource, cs)
 	if err != nil {
 		return err
 	}
