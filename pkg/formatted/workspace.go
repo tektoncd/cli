@@ -17,11 +17,40 @@ package formatted
 import (
 	"fmt"
 
+	v1 "github.com/tektoncd/pipeline/pkg/apis/pipeline/v1"
 	"github.com/tektoncd/pipeline/pkg/apis/pipeline/v1beta1"
 	corev1 "k8s.io/api/core/v1"
 )
 
 func Workspace(ws v1beta1.WorkspaceBinding) string {
+	if ws.VolumeClaimTemplate != nil {
+		return "VolumeClaimTemplate"
+	}
+	if ws.PersistentVolumeClaim != nil {
+		claimName := ws.PersistentVolumeClaim.ClaimName
+		return fmt.Sprintf("PersistentVolumeClaim (claimName=%s)", claimName)
+	}
+	if ws.EmptyDir != nil {
+		dirType := getWorkspaceEmptyDir(ws.EmptyDir)
+		return fmt.Sprintf("EmptyDir (emptyDir=%s)", dirType)
+	}
+	if ws.ConfigMap != nil {
+		cm := getWorkspaceConfig(ws.ConfigMap)
+		return fmt.Sprintf("ConfigMap (%s)", cm)
+	}
+	if ws.Secret != nil {
+		secret := getWorkspaceSecret(ws.Secret)
+		return fmt.Sprintf("Secret (%s)", secret)
+	}
+	if ws.CSI != nil {
+		return fmt.Sprintf("CSI (Driver=%s)", ws.CSI.Driver)
+	}
+	return ""
+}
+
+// TODO: rename this to Workspace once PipelineRun describe is also migrated to v1
+// also remove above function
+func WorkspaceV1(ws v1.WorkspaceBinding) string {
 	if ws.VolumeClaimTemplate != nil {
 		return "VolumeClaimTemplate"
 	}

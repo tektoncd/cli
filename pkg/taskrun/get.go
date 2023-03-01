@@ -15,6 +15,7 @@
 package taskrun
 
 import (
+	"context"
 	"fmt"
 
 	"github.com/tektoncd/cli/pkg/actions"
@@ -23,6 +24,7 @@ import (
 	"github.com/tektoncd/pipeline/pkg/apis/pipeline/v1beta1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime"
+	"k8s.io/apimachinery/pkg/runtime/schema"
 )
 
 // Get will fetch the taskrun resource based on the taskrun name
@@ -42,6 +44,25 @@ func Get(c *cli.Clients, trname string, opts metav1.GetOptions, ns string) (*v1b
 // GetV1 will fetch the taskrun resource based on the taskrun name
 // TODO: remove after get action is moved to v1
 func GetV1(c *cli.Clients, trname string, opts metav1.GetOptions, ns string) (*v1.TaskRun, error) {
+
+	gvr, err := actions.GetGroupVersionResource(schema.GroupVersionResource{Group: "tekton.dev", Resource: "tasks"}, c.Tekton.Discovery())
+	if err != nil {
+		return nil, err
+	}
+
+	if gvr.Version == "v1beta1" {
+		taskRunV1Beta1, err := Get(c, trname, opts, ns)
+		if err != nil {
+			return nil, err
+		}
+		var taskRunConverted v1.TaskRun
+		err = taskRunV1Beta1.ConvertTo(context.Background(), &taskRunConverted)
+		if err != nil {
+			return nil, err
+		}
+		return &taskRunConverted, nil
+	}
+
 	unstructuredTR, err := actions.Get(trGroupResource, c.Dynamic, c.Tekton.Discovery(), trname, ns, opts)
 	if err != nil {
 		return nil, err

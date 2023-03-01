@@ -23,6 +23,7 @@ import (
 )
 
 func TestWorkspace(t *testing.T) {
+	// TODO: change this to []v1.WorkspaceBinding
 	workspaceSpec := []v1beta1.WorkspaceBinding{
 		{
 			Name:     "emptydir-default",

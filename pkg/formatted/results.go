@@ -18,18 +18,18 @@ import (
 	"encoding/json"
 	"strings"
 
-	"github.com/tektoncd/pipeline/pkg/apis/pipeline/v1beta1"
+	v1 "github.com/tektoncd/pipeline/pkg/apis/pipeline/v1"
 )
 
 // Result will format a given result value
-func Result(value v1beta1.ArrayOrString) string {
+func Result(value v1.ParamValue) string {
 	switch value.Type {
-	case v1beta1.ParamTypeString:
+	case v1.ParamTypeString:
 		// remove trailing new-line from value
 		return strings.TrimSuffix(value.StringVal, "\n")
-	case v1beta1.ParamTypeArray:
+	case v1.ParamTypeArray:
 		return strings.Join(value.ArrayVal, ", ")
-	case v1beta1.ParamTypeObject:
+	case v1.ParamTypeObject:
 		// FIXME: do not ignore the error
 		v, _ := json.Marshal(value.ObjectVal)
 		return string(v)

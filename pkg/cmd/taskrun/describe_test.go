@@ -53,7 +53,7 @@ func TestTaskRunDescribe_invalid_namespace(t *testing.T) {
 	tdc := testDynamic.Options{}
 	dc, _ := tdc.Client()
 	p := &test.Params{Tekton: cs.Pipeline, Kube: cs.Kube, Dynamic: dc}
-	cs.Pipeline.Resources = cb.APIResourceList(version, []string{"taskrun"})
+	cs.Pipeline.Resources = cb.APIResourceList(version, []string{"task", "taskrun"})
 
 	taskrun := Command(p)
 	out, err := test.ExecuteCommand(taskrun, "desc", "bar", "-n", "invalid")
@@ -75,7 +75,7 @@ func TestTaskRunDescribe_not_found(t *testing.T) {
 		},
 	})
 
-	cs.Pipeline.Resources = cb.APIResourceList(version, []string{"taskrun"})
+	cs.Pipeline.Resources = cb.APIResourceList(version, []string{"task", "taskrun"})
 	tdc := testDynamic.Options{}
 	dynamic, err := tdc.Client()
 	if err != nil {
@@ -139,7 +139,7 @@ func TestTaskRunDescribe_empty_taskrun(t *testing.T) {
 	if err != nil {
 		t.Errorf("unable to create dynamic client: %v", err)
 	}
-	cs.Pipeline.Resources = cb.APIResourceList(version, []string{"taskrun"})
+	cs.Pipeline.Resources = cb.APIResourceList(version, []string{"task", "taskrun"})
 	if err != nil {
 		fmt.Println(err)
 	}
@@ -268,7 +268,7 @@ func TestTaskRunDescribe_only_taskrun(t *testing.T) {
 	if err != nil {
 		t.Errorf("unable to create dynamic client: %v", err)
 	}
-	cs.Pipeline.Resources = cb.APIResourceList(version, []string{"taskrun"})
+	cs.Pipeline.Resources = cb.APIResourceList(version, []string{"task", "taskrun"})
 	if err != nil {
 		fmt.Println(err)
 	}
@@ -334,7 +334,7 @@ func TestTaskRunDescribe_failed(t *testing.T) {
 	if err != nil {
 		t.Errorf("unable to create dynamic client: %v", err)
 	}
-	cs.Pipeline.Resources = cb.APIResourceList(version, []string{"taskrun"})
+	cs.Pipeline.Resources = cb.APIResourceList(version, []string{"task", "taskrun"})
 	if err != nil {
 		fmt.Println(err)
 	}
@@ -394,7 +394,7 @@ func TestTaskRunDescribe_no_taskref(t *testing.T) {
 	if err != nil {
 		t.Errorf("unable to create dynamic client: %v", err)
 	}
-	cs.Pipeline.Resources = cb.APIResourceList(version, []string{"taskrun"})
+	cs.Pipeline.Resources = cb.APIResourceList(version, []string{"task", "taskrun"})
 	if err != nil {
 		fmt.Println(err)
 	}
@@ -427,7 +427,7 @@ func TestTaskRunDescribe_last_no_taskrun_present(t *testing.T) {
 	if err != nil {
 		t.Errorf("unable to create dynamic client: %v", err)
 	}
-	cs.Pipeline.Resources = cb.APIResourceList(version, []string{"taskrun"})
+	cs.Pipeline.Resources = cb.APIResourceList(version, []string{"task", "taskrun"})
 	if err != nil {
 		fmt.Println(err)
 	}
@@ -548,7 +548,7 @@ func TestTaskRunDescribe_no_resourceref(t *testing.T) {
 	if err != nil {
 		t.Errorf("unable to create dynamic client: %v", err)
 	}
-	cs.Pipeline.Resources = cb.APIResourceList(version, []string{"taskrun"})
+	cs.Pipeline.Resources = cb.APIResourceList(version, []string{"task", "taskrun"})
 	if err != nil {
 		fmt.Println(err)
 	}
@@ -677,7 +677,7 @@ func TestTaskRunDescribe_step_sidecar_status_defaults_and_failures(t *testing.T)
 	if err != nil {
 		t.Errorf("unable to create dynamic client: %v", err)
 	}
-	cs.Pipeline.Resources = cb.APIResourceList(version, []string{"taskrun"})
+	cs.Pipeline.Resources = cb.APIResourceList(version, []string{"task", "taskrun"})
 	if err != nil {
 		fmt.Println(err)
 	}
@@ -809,7 +809,7 @@ func TestTaskRunDescribe_step_status_pending_one_sidecar(t *testing.T) {
 	if err != nil {
 		t.Errorf("unable to create dynamic client: %v", err)
 	}
-	cs.Pipeline.Resources = cb.APIResourceList(version, []string{"taskrun"})
+	cs.Pipeline.Resources = cb.APIResourceList(version, []string{"task", "taskrun"})
 	if err != nil {
 		fmt.Println(err)
 	}
@@ -949,7 +949,7 @@ func TestTaskRunDescribe_step_status_running_multiple_sidecars(t *testing.T) {
 	if err != nil {
 		t.Errorf("unable to create dynamic client: %v", err)
 	}
-	cs.Pipeline.Resources = cb.APIResourceList(version, []string{"taskrun"})
+	cs.Pipeline.Resources = cb.APIResourceList(version, []string{"task", "taskrun"})
 	if err != nil {
 		fmt.Println(err)
 	}
@@ -1009,7 +1009,7 @@ func TestTaskRunDescribe_cancel_taskrun(t *testing.T) {
 	if err != nil {
 		t.Errorf("unable to create dynamic client: %v", err)
 	}
-	cs.Pipeline.Resources = cb.APIResourceList(version, []string{"taskrun"})
+	cs.Pipeline.Resources = cb.APIResourceList(version, []string{"task", "taskrun"})
 	if err != nil {
 		fmt.Println(err)
 	}
@@ -1057,7 +1057,7 @@ func TestTaskRunDescribe_custom_output(t *testing.T) {
 	if err != nil {
 		t.Errorf("unable to create dynamic client: %v", err)
 	}
-	cs.Pipeline.Resources = cb.APIResourceList(version, []string{"taskrun"})
+	cs.Pipeline.Resources = cb.APIResourceList(version, []string{"task", "taskrun"})
 	if err != nil {
 		fmt.Println(err)
 	}
@@ -1106,7 +1106,7 @@ func TestTaskRunDescribe_WithSpec_custom_timeout(t *testing.T) {
 	if err != nil {
 		t.Errorf("unable to create dynamic client: %v", err)
 	}
-	cs.Pipeline.Resources = cb.APIResourceList(version, []string{"taskrun"})
+	cs.Pipeline.Resources = cb.APIResourceList(version, []string{"task", "taskrun"})
 	if err != nil {
 		fmt.Println(err)
 	}
@@ -1194,7 +1194,7 @@ func TestTaskRunDescribe_last(t *testing.T) {
 		t.Errorf("unable to create dynamic client: %v", err)
 	}
 	cs, _ := test.SeedV1beta1TestData(t, pipelinetest.Data{Namespaces: namespaces, TaskRuns: taskRuns})
-	cs.Pipeline.Resources = cb.APIResourceList(version, []string{"taskrun"})
+	cs.Pipeline.Resources = cb.APIResourceList(version, []string{"task", "taskrun"})
 	p := &test.Params{Tekton: cs.Pipeline, Kube: cs.Kube, Dynamic: dynamic}
 	taskrun := Command(p)
 	got, err := test.ExecuteCommand(taskrun, "desc", "-n", "ns", "--last")
@@ -1268,7 +1268,7 @@ func TestTaskRunDescribe_With_Results(t *testing.T) {
 		t.Errorf("unable to create dynamic client: %v", err)
 	}
 	cs, _ := test.SeedV1beta1TestData(t, pipelinetest.Data{Namespaces: namespaces, TaskRuns: taskRuns})
-	cs.Pipeline.Resources = cb.APIResourceList(version, []string{"taskrun"})
+	cs.Pipeline.Resources = cb.APIResourceList(version, []string{"task", "taskrun"})
 	p := &test.Params{Tekton: cs.Pipeline, Kube: cs.Kube, Dynamic: dynamic}
 	p.SetNamespace("ns")
 	taskrun := Command(p)
@@ -1312,7 +1312,7 @@ func TestTaskRunDescribe_zero_timeout(t *testing.T) {
 		t.Errorf("unable to create dynamic client: %v", err)
 	}
 
-	cs.Pipeline.Resources = cb.APIResourceList(version, []string{"taskrun"})
+	cs.Pipeline.Resources = cb.APIResourceList(version, []string{"task", "taskrun"})
 	p := &test.Params{Tekton: cs.Pipeline, Kube: cs.Kube, Dynamic: dynamic}
 	taskrun := Command(p)
 	actual, err := test.ExecuteCommand(taskrun, "desc", "tr-zero-timeout", "-n", "ns")
@@ -1406,7 +1406,7 @@ func TestTaskRunDescribe_With_Workspaces(t *testing.T) {
 		t.Errorf("unable to create dynamic client: %v", err)
 	}
 	cs, _ := test.SeedV1beta1TestData(t, pipelinetest.Data{Namespaces: namespaces, TaskRuns: taskRuns})
-	cs.Pipeline.Resources = cb.APIResourceList(version, []string{"taskrun"})
+	cs.Pipeline.Resources = cb.APIResourceList(version, []string{"task", "taskrun"})
 	p := &test.Params{Tekton: cs.Pipeline, Kube: cs.Kube, Dynamic: dynamic}
 	p.SetNamespace("ns")
 	taskrun := Command(p)
@@ -1466,7 +1466,7 @@ func TestTaskRunDescribe_WithoutNameIfOnlyOneTaskRunPresent(t *testing.T) {
 	}
 
 	cs, _ := test.SeedV1beta1TestData(t, pipelinetest.Data{Namespaces: namespaces, TaskRuns: taskRuns})
-	cs.Pipeline.Resources = cb.APIResourceList(version, []string{"taskrun"})
+	cs.Pipeline.Resources = cb.APIResourceList(version, []string{"task", "taskrun"})
 	p := &test.Params{Tekton: cs.Pipeline, Kube: cs.Kube, Dynamic: dynamic}
 	p.SetNamespace("ns")
 	taskrun := Command(p)
@@ -1507,7 +1507,7 @@ func TestTaskRunDescribe_with_annotations(t *testing.T) {
 		t.Errorf("unable to create dynamic client: %v", err)
 	}
 	cs, _ := test.SeedV1beta1TestData(t, pipelinetest.Data{Namespaces: namespaces, TaskRuns: taskRuns})
-	cs.Pipeline.Resources = cb.APIResourceList(version, []string{"taskrun"})
+	cs.Pipeline.Resources = cb.APIResourceList(version, []string{"task", "taskrun"})
 	p := &test.Params{Tekton: cs.Pipeline, Kube: cs.Kube, Dynamic: dynamic}
 	p.SetNamespace("ns")
 	taskrun := Command(p)

@@ -458,7 +458,7 @@ func TestTaskRunDelete_v1beta1(t *testing.T) {
 	for i := 0; i < 17; i++ {
 		trs := trdata
 		cs, _ := test.SeedV1beta1TestData(t, pipelinetest.Data{TaskRuns: trs, Tasks: tasks, ClusterTasks: clustertasks, Namespaces: ns})
-		cs.Pipeline.Resources = cb.APIResourceList(version, []string{"taskrun"})
+		cs.Pipeline.Resources = cb.APIResourceList(version, []string{"task", "taskrun"})
 		tdc := testDynamic.Options{}
 		dc, err := tdc.Client(
 			cb.UnstructuredV1beta1T(tasks[0], version),
@@ -1306,7 +1306,7 @@ func TestTaskRunDelete(t *testing.T) {
 	for i := 0; i < 17; i++ {
 		trs := trdata
 		cs, _ := test.SeedTestData(t, test.Data{TaskRuns: trs, Tasks: tasks, Namespaces: ns})
-		cs.Pipeline.Resources = cb.APIResourceList(version, []string{"taskrun"})
+		cs.Pipeline.Resources = cb.APIResourceList(version, []string{"task", "taskrun"})
 		tdc := testDynamic.Options{}
 		dc, err := tdc.Client(
 			cb.UnstructuredT(tasks[0], version),
@@ -1830,7 +1830,7 @@ func Test_ClusterTask_TaskRuns_Not_Deleted_With_Task_Option_v1beta1(t *testing.T
 
 	trs := trdata
 	cs, _ := test.SeedV1beta1TestData(t, pipelinetest.Data{TaskRuns: trs, Namespaces: ns})
-	cs.Pipeline.Resources = cb.APIResourceList(version, []string{"taskrun"})
+	cs.Pipeline.Resources = cb.APIResourceList(version, []string{"task", "taskrun"})
 	tdc := testDynamic.Options{}
 	dc, err := tdc.Client(
 		cb.UnstructuredV1beta1T(tasks[0], version),
@@ -1947,7 +1947,7 @@ func Test_ClusterTask_TaskRuns_Not_Deleted_With_Task_Option(t *testing.T) {
 
 	trs := trdata
 	cs, _ := test.SeedTestData(t, test.Data{TaskRuns: trs, Namespaces: ns})
-	cs.Pipeline.Resources = cb.APIResourceList(version, []string{"taskrun"})
+	cs.Pipeline.Resources = cb.APIResourceList(version, []string{"task", "taskrun"})
 	tdc := testDynamic.Options{}
 	dc, err := tdc.Client(
 		cb.UnstructuredT(tasks[0], version),
@@ -2071,7 +2071,7 @@ func Test_Task_TaskRuns_Not_Deleted_With_ClusterTask_Option_v1beta1(t *testing.T
 
 	trs := trdata
 	cs, _ := test.SeedV1beta1TestData(t, pipelinetest.Data{TaskRuns: trs, Namespaces: ns})
-	cs.Pipeline.Resources = cb.APIResourceList(version, []string{"taskrun"})
+	cs.Pipeline.Resources = cb.APIResourceList(version, []string{"task", "taskrun"})
 	tdc := testDynamic.Options{}
 	dc, err := tdc.Client(
 		cb.UnstructuredV1beta1T(tasks[0], version),
@@ -2188,7 +2188,7 @@ func Test_Task_TaskRuns_Not_Deleted_With_ClusterTask_Option(t *testing.T) {
 
 	trs := trdata
 	cs, _ := test.SeedTestData(t, test.Data{TaskRuns: trs, Namespaces: ns})
-	cs.Pipeline.Resources = cb.APIResourceList(version, []string{"taskrun"})
+	cs.Pipeline.Resources = cb.APIResourceList(version, []string{"task", "taskrun"})
 	tdc := testDynamic.Options{}
 	dc, err := tdc.Client(
 		cb.UnstructuredT(tasks[0], version),
@@ -2358,7 +2358,7 @@ func Test_TaskRuns_Delete_With_Running_PipelineRun_v1beta1(t *testing.T) {
 		trs := trdata
 		prs := prdata
 		cs, _ := test.SeedV1beta1TestData(t, pipelinetest.Data{TaskRuns: trs, Tasks: tasks, PipelineRuns: prs, Namespaces: ns})
-		cs.Pipeline.Resources = cb.APIResourceList(version, []string{"taskrun", "pipelinerun"})
+		cs.Pipeline.Resources = cb.APIResourceList(version, []string{"task", "taskrun", "pipelinerun"})
 		tdc := testDynamic.Options{}
 		dc, err := tdc.Client(
 			cb.UnstructuredV1beta1T(tasks[0], version),
@@ -2582,7 +2582,7 @@ func Test_TaskRuns_Delete_With_Running_PipelineRun(t *testing.T) {
 		trs := trdata
 		prs := prdata
 		cs, _ := test.SeedTestData(t, test.Data{TaskRuns: trs, Tasks: tasks, PipelineRuns: prs, Namespaces: ns})
-		cs.Pipeline.Resources = cb.APIResourceList(version, []string{"taskrun", "pipelinerun"})
+		cs.Pipeline.Resources = cb.APIResourceList(version, []string{"task", "taskrun", "pipelinerun"})
 		tdc := testDynamic.Options{}
 		dc, err := tdc.Client(
 			cb.UnstructuredT(tasks[0], version),
