@@ -27,6 +27,7 @@ import (
 	testDynamic "github.com/tektoncd/cli/pkg/test/dynamic"
 	v1 "github.com/tektoncd/pipeline/pkg/apis/pipeline/v1"
 	"github.com/tektoncd/pipeline/pkg/apis/pipeline/v1beta1"
+	"github.com/tektoncd/pipeline/pkg/apis/resource/v1alpha1"
 	pipelinetest "github.com/tektoncd/pipeline/test"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 )
@@ -450,7 +451,7 @@ func TestTask_List(t *testing.T) {
 	}
 }
 
-func TestTask_Get(t *testing.T) {
+func TestTask_Get_v1beta1(t *testing.T) {
 	version := "v1beta1"
 	clock := clockwork.NewFakeClock()
 	tdata := []*v1beta1.Task{
@@ -459,11 +460,17 @@ func TestTask_Get(t *testing.T) {
 				Name:      "task",
 				Namespace: "ns",
 			},
-		},
-		{
-			ObjectMeta: metav1.ObjectMeta{
-				Name:      "task2",
-				Namespace: "ns",
+			Spec: v1beta1.TaskSpec{
+				Resources: &v1beta1.TaskResources{
+					Inputs: []v1beta1.TaskResource{
+						{
+							ResourceDeclaration: v1alpha1.ResourceDeclaration{
+								Name: "git",
+								Type: v1alpha1.PipelineResourceTypeGit,
+							},
+						},
+					},
+				},
 			},
 		},
 	}
@@ -474,7 +481,6 @@ func TestTask_Get(t *testing.T) {
 	tdc := testDynamic.Options{}
 	dc, err := tdc.Client(
 		cb.UnstructuredV1beta1T(tdata[0], version),
-		cb.UnstructuredV1beta1T(tdata[1], version),
 	)
 	if err != nil {
 		t.Errorf("unable to create dynamic client: %v", err)
@@ -486,7 +492,44 @@ func TestTask_Get(t *testing.T) {
 		t.Errorf("unable to create client: %v", err)
 	}
 
-	got, err := Get(c, "task", metav1.GetOptions{}, "ns")
+	got, err := GetV1(c, "task", metav1.GetOptions{}, "ns")
+	if err != nil {
+		t.Errorf("unexpected Error")
+	}
+	test.AssertOutput(t, "task", got.Name)
+	test.AssertOutput(t, got.Annotations["tekton.dev/v1beta1Resources"], "{\"inputs\":[{\"name\":\"git\",\"type\":\"git\"}]}")
+}
+
+func TestTask_Get(t *testing.T) {
+	version := "v1"
+	clock := clockwork.NewFakeClock()
+	tdata := []*v1.Task{
+		{
+			ObjectMeta: metav1.ObjectMeta{
+				Name:      "task",
+				Namespace: "ns",
+			},
+		},
+	}
+	cs, _ := test.SeedTestData(t, test.Data{
+		Tasks: tdata,
+	})
+	cs.Pipeline.Resources = cb.APIResourceList(version, []string{"task"})
+	tdc := testDynamic.Options{}
+	dc, err := tdc.Client(
+		cb.UnstructuredT(tdata[0], version),
+	)
+	if err != nil {
+		t.Errorf("unable to create dynamic client: %v", err)
+	}
+
+	p := &test.Params{Tekton: cs.Pipeline, Clock: clock, Kube: cs.Kube, Dynamic: dc}
+	c, err := p.Clients()
+	if err != nil {
+		t.Errorf("unable to create client: %v", err)
+	}
+
+	got, err := GetV1(c, "task", metav1.GetOptions{}, "ns")
 	if err != nil {
 		t.Errorf("unexpected Error")
 	}

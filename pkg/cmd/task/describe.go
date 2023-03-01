@@ -16,7 +16,6 @@ package task
 
 import (
 	"fmt"
-	"sort"
 	"text/tabwriter"
 	"text/template"
 
@@ -29,7 +28,6 @@ import (
 	"github.com/tektoncd/cli/pkg/task"
 	trsort "github.com/tektoncd/cli/pkg/taskrun/sort"
 	v1 "github.com/tektoncd/pipeline/pkg/apis/pipeline/v1"
-	"github.com/tektoncd/pipeline/pkg/apis/pipeline/v1beta1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime/schema"
 	cliopts "k8s.io/cli-runtime/pkg/genericclioptions"
@@ -49,27 +47,6 @@ const describeTemplate = `{{decorate "bold" "Name"}}:	{{ .Task.Name }}
 {{- range $k, $v := $annotations }}
  {{ $k }}={{ $v }}
 {{- end }}
-{{- end }}
-
-{{- if .Task.Spec.Resources }}
-
-{{decorate "inputresources" ""}}{{decorate "underline bold" "Input Resources\n"}}
-{{- if ne (len .Task.Spec.Resources.Inputs) 0 }}
- NAME	TYPE
-{{- range $ir := .Task.Spec.Resources.Inputs }}
- {{decorate "bullet" $ir.Name }}	{{ $ir.Type }}
-{{- end }}
-{{- end }}
-
-{{- if ne (len .Task.Spec.Resources.Outputs) 0 }}
-
-{{decorate "outputresources" ""}}{{decorate "underline bold" "Output Resources\n"}}
- NAME	TYPE
-{{- range $or := .Task.Spec.Resources.Outputs }}
- {{decorate "bullet" $or.Name }}	{{ $or.Type }}
-{{- end }}
-{{- end }}
-
 {{- end }}
 
 {{- if ne (len .Task.Spec.Params) 0 }}
@@ -199,14 +176,9 @@ func printTaskDescription(s *cli.Stream, p cli.Params, tname string) error {
 		return fmt.Errorf("failed to create tekton client")
 	}
 
-	t, err := task.Get(cs, tname, metav1.GetOptions{}, p.Namespace())
+	t, err := task.GetV1(cs, tname, metav1.GetOptions{}, p.Namespace())
 	if err != nil {
 		return fmt.Errorf("failed to get Task %s: %v", tname, err)
-	}
-
-	if t.Spec.Resources != nil {
-		t.Spec.Resources.Inputs = sortResourcesByTypeAndName(t.Spec.Resources.Inputs)
-		t.Spec.Resources.Outputs = sortResourcesByTypeAndName(t.Spec.Resources.Outputs)
 	}
 
 	opts := metav1.ListOptions{
@@ -224,7 +196,7 @@ func printTaskDescription(s *cli.Stream, p cli.Params, tname string) error {
 	trsort.SortByStartTime(taskRuns.Items)
 
 	var data = struct {
-		Task     *v1beta1.Task
+		Task     *v1.Task
 		TaskRuns *v1.TaskRunList
 		Time     clockwork.Clock
 	}{
@@ -252,23 +224,6 @@ func printTaskDescription(s *cli.Stream, p cli.Params, tname string) error {
 	}
 
 	return w.Flush()
-}
-
-// this will sort the Task Resource by Type and then by Name
-func sortResourcesByTypeAndName(tres []v1beta1.TaskResource) []v1beta1.TaskResource {
-	sort.Slice(tres, func(i, j int) bool {
-		if tres[j].Type < tres[i].Type {
-			return false
-		}
-
-		if tres[j].Type > tres[i].Type {
-			return true
-		}
-
-		return tres[j].Name > tres[i].Name
-	})
-
-	return tres
 }
 
 func askTaskName(opts *options.DescribeOptions, c *cli.Clients, ns string) error {
