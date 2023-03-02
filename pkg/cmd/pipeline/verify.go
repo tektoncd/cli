@@ -21,6 +21,7 @@ import (
 
 	"github.com/spf13/cobra"
 	"github.com/tektoncd/cli/pkg/cli"
+	"github.com/tektoncd/cli/pkg/cli/prerun"
 	"github.com/tektoncd/cli/pkg/trustedresources"
 	"github.com/tektoncd/pipeline/pkg/apis/pipeline/v1beta1"
 	cliopts "k8s.io/cli-runtime/pkg/genericclioptions"
@@ -57,6 +58,9 @@ or using kms
 		},
 		Args:    cobra.ExactArgs(1),
 		Example: eg,
+		PersistentPreRunE: func(cmd *cobra.Command, args []string) error {
+			return prerun.WarnExperimental(cmd)
+		},
 		RunE: func(cmd *cobra.Command, args []string) error {
 			s := &cli.Stream{
 				Out: cmd.OutOrStdout(),
