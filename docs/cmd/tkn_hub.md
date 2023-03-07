@@ -18,7 +18,7 @@ Interact with tekton hub
       --api-server string   Hub API Server URL (default 'https://api.hub.tekton.dev' for 'tekton' type; default 'https://artifacthub.io' for 'artifact' type).
                             URL can also be defined in a file '$HOME/.tekton/hub-config' with a variable 'TEKTON_HUB_API_SERVER'/'ARTIFACT_HUB_API_SERVER'.
   -h, --help                help for hub
-      --type string         The type of Hub from where to pull the resource. Either 'artifact' or 'tekton' (default 'tekton') (default "tekton")
+      --type string         The type of Hub from where to pull the resource. Either 'artifact' or 'tekton' (default "tekton")
 ```
 
 ### SEE ALSO

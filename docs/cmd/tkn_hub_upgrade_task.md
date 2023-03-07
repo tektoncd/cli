@@ -41,7 +41,7 @@ Upgrade a Task of name 'foo' to version '0.3':
   -k, --kubeconfig string   Kubectl config file (default: $HOME/.kube/config)
   -n, --namespace string    Namespace to use (default: from $KUBECONFIG)
       --to string           Version of Resource
-      --type string         The type of Hub from where to pull the resource. Either 'artifact' or 'tekton' (default 'tekton') (default "tekton")
+      --type string         The type of Hub from where to pull the resource. Either 'artifact' or 'tekton' (default "tekton")
 ```
 
 ### SEE ALSO

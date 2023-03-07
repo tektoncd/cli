@@ -41,7 +41,7 @@ Reinstall a Task of name 'foo' of version '0.3' from Catalog 'Tekton':
       --from string         Name of Catalog to which resource belongs. (default "tekton")
   -k, --kubeconfig string   Kubectl config file (default: $HOME/.kube/config)
   -n, --namespace string    Namespace to use (default: from $KUBECONFIG)
-      --type string         The type of Hub from where to pull the resource. Either 'artifact' or 'tekton' (default 'tekton') (default "tekton")
+      --type string         The type of Hub from where to pull the resource. Either 'artifact' or 'tekton' (default "tekton")
       --version string      Version of Resource
 ```
 

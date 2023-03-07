@@ -17,7 +17,7 @@ Check updates for Task installed via Hub CLI
 
 Check for Upgrades of Task installed via Tekton Hub CLI:
 
-	tkn hub check-upgrades task
+	tkn hub check-upgrade task
 
 The above command will check for upgrades of Tasks installed via Tekton Hub CLI
 and will skip the Tasks which are not installed by Tekton Hub CLI.
@@ -40,7 +40,7 @@ else it will show latest compatible version.
   -c, --context string      Name of the kubeconfig context to use (default: kubectl config current-context)
   -k, --kubeconfig string   Kubectl config file (default: $HOME/.kube/config)
   -n, --namespace string    Namespace to use (default: from $KUBECONFIG)
-      --type string         The type of Hub from where to pull the resource. Either 'artifact' or 'tekton' (default 'tekton') (default "tekton")
+      --type string         The type of Hub from where to pull the resource. Either 'artifact' or 'tekton' (default "tekton")
 ```
 
 ### SEE ALSO
