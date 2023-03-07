@@ -19,6 +19,7 @@ import (
 	"sync"
 
 	"github.com/tektoncd/hub/api/pkg/git"
+	v1 "github.com/tektoncd/pipeline/pkg/apis/pipeline/v1"
 	"github.com/tektoncd/pipeline/pkg/apis/pipeline/v1beta1"
 	"go.uber.org/zap"
 	"k8s.io/apimachinery/pkg/runtime"
@@ -30,8 +31,8 @@ type Parser interface {
 }
 
 func registerSchema() {
-	beta1 := runtime.NewSchemeBuilder(v1beta1.AddToScheme)
-	if err := beta1.AddToScheme(scheme.Scheme); err != nil {
+	tektonSchemes := runtime.NewSchemeBuilder(v1beta1.AddToScheme, v1.AddToScheme)
+	if err := tektonSchemes.AddToScheme(scheme.Scheme); err != nil {
 		fmt.Printf("Failed to apply all stored functions to the scheme %v", err)
 	}
 }

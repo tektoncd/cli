@@ -97,7 +97,7 @@ type options struct {
 var cmdExamples string = `
 Check for Upgrades of %S installed via Tekton Hub CLI:
 
-	tkn hub check-upgrades %s
+	tkn hub check-upgrade %s
 
 The above command will check for upgrades of %Ss installed via Tekton Hub CLI
 and will skip the %Ss which are not installed by Tekton Hub CLI.

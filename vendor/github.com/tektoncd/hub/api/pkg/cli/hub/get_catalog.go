@@ -22,13 +22,6 @@ import (
 	cclient "github.com/tektoncd/hub/api/v1/gen/http/catalog/client"
 )
 
-const (
-	tektonHubCatEndpoint    = "/v1/catalogs"
-	artifactHubCatEndpoint  = "/api/v1/repositories/search"
-	artifactHubTaskType     = 7
-	artifactHubPipelineType = 11
-)
-
 type CatalogResult struct {
 	data    []byte
 	status  int
@@ -41,7 +34,7 @@ type artifactHubCatalogResponse struct {
 	Name string `json:"name,omitempty"`
 }
 
-func (c *tektonHubclient) GetAllCatalogs() CatalogResult {
+func (c *tektonHubClient) GetAllCatalogs() CatalogResult {
 	data, status, err := c.Get(tektonHubCatEndpoint)
 	if status == http.StatusNotFound {
 		err = nil
@@ -64,7 +57,7 @@ func (cr *CatalogResult) Type() (CatalogData, error) {
 }
 
 func (a *artifactHubClient) GetCatalogsList() ([]string, error) {
-	data, _, err := a.Get(fmt.Sprintf("%s?kind=%v&kind=%v", artifactHubCatEndpoint, artifactHubTaskType, artifactHubPipelineType))
+	data, _, err := a.Get(fmt.Sprintf("%s?kind=%v&kind=%v", artifactHubCatSearchEndpoint, artifactHubTaskType, artifactHubPipelineType))
 	if err != nil {
 		return nil, err
 	}
@@ -83,7 +76,7 @@ func (a *artifactHubClient) GetCatalogsList() ([]string, error) {
 	return cat, nil
 }
 
-func (t *tektonHubclient) GetCatalogsList() ([]string, error) {
+func (t *tektonHubClient) GetCatalogsList() ([]string, error) {
 	// Get all catalogs
 	c := t.GetAllCatalogs()
 

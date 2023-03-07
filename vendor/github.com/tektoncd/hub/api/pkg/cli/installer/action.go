@@ -19,6 +19,7 @@ import (
 	"errors"
 	"fmt"
 
+	"github.com/tektoncd/hub/api/pkg/cli/hub"
 	tknVer "github.com/tektoncd/hub/api/pkg/cli/version"
 	kErr "k8s.io/apimachinery/pkg/api/errors"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
@@ -27,8 +28,14 @@ import (
 )
 
 const (
-	catalogLabel = "hub.tekton.dev/catalog"
-	versionLabel = "app.kubernetes.io/version"
+	versionLabel                = "app.kubernetes.io/version"
+	tektonHubCatalogLabel       = "hub.tekton.dev/catalog"
+	artifactHubCatalogLabel     = "artifacthub.io/catalog"
+	artifactHubOrgLabel         = "artifacthub.io/org"
+	artifactHubSupportTierLabel = "artifacthub.io/support-tier"
+	communitySupportTier        = "Community"
+	verifiedSupportTier         = "Verified"
+	verifiedCatOrg              = "tektoncd"
 )
 
 // Errors
@@ -82,7 +89,7 @@ func (i *Installer) checkVersion(resPipMinVersion string) error {
 }
 
 // Install a resource
-func (i *Installer) Install(data []byte, catalog, namespace string) (*unstructured.Unstructured, []error) {
+func (i *Installer) Install(data []byte, hubType, org, catalog, namespace string) (*unstructured.Unstructured, []error) {
 
 	errors := make([]error, 0)
 
@@ -110,7 +117,7 @@ func (i *Installer) Install(data []byte, catalog, namespace string) (*unstructur
 	if err != nil {
 		// If error is notFoundError then create the resource
 		if kErr.IsNotFound(err) {
-			resp, err := i.createRes(newRes, catalog, namespace)
+			resp, err := i.createRes(newRes, hubType, org, catalog, namespace)
 			if err != nil {
 				errors = append(errors, err)
 			}
@@ -259,7 +266,7 @@ func checkLabels(res *unstructured.Unstructured) error {
 	}
 
 	_, versionOk := labels[versionLabel]
-	_, catalogOk := labels[catalogLabel]
+	_, catalogOk := labels[tektonHubCatalogLabel]
 
 	// If both label exist then return nil
 	if versionOk == catalogOk && versionOk {
@@ -277,9 +284,11 @@ func checkLabels(res *unstructured.Unstructured) error {
 	return nil
 }
 
-func (i *Installer) createRes(obj *unstructured.Unstructured, catalog, namespace string) (*unstructured.Unstructured, error) {
+func (i *Installer) createRes(obj *unstructured.Unstructured, hubType, org, catalog, namespace string) (*unstructured.Unstructured, error) {
 
-	addCatalogLabel(obj, catalog)
+	if err := addCatalogLabel(obj, hubType, org, catalog); err != nil {
+		return nil, err
+	}
 	res, err := i.create(obj, namespace, metav1.CreateOptions{})
 	if err != nil {
 		return nil, err
@@ -289,7 +298,11 @@ func (i *Installer) createRes(obj *unstructured.Unstructured, catalog, namespace
 
 func (i *Installer) updateRes(existing, new *unstructured.Unstructured, catalog, namespace string) (*unstructured.Unstructured, error) {
 
-	addCatalogLabel(new, catalog)
+	// TODO: update addCatalogLabel() params when supporting upgrade/downgrade command for artifact type
+	if err := addCatalogLabel(new, hub.TektonHubType, "", catalog); err != nil {
+		return nil, err
+	}
+
 	// replace label, annotation and spec of old resource with new
 	existing.SetLabels(new.GetLabels())
 	existing.SetAnnotations(new.GetAnnotations())
@@ -314,11 +327,27 @@ func toUnstructured(data []byte) (*unstructured.Unstructured, error) {
 	return res, nil
 }
 
-func addCatalogLabel(obj *unstructured.Unstructured, catalog string) {
+func addCatalogLabel(obj *unstructured.Unstructured, hubType, org, catalog string) error {
 	labels := obj.GetLabels()
 	if len(labels) == 0 {
 		labels = make(map[string]string)
 	}
-	labels[catalogLabel] = catalog
+
+	switch hubType {
+	case hub.TektonHubType:
+		labels[tektonHubCatalogLabel] = catalog
+	case hub.ArtifactHubType:
+		labels[artifactHubCatalogLabel] = catalog
+		if org == verifiedCatOrg {
+			labels[artifactHubSupportTierLabel] = verifiedSupportTier
+		} else {
+			labels[artifactHubSupportTierLabel] = communitySupportTier
+		}
+		labels[artifactHubOrgLabel] = org
+	default:
+		return fmt.Errorf("hub type: %s not supported in addCatalogLabel", hubType)
+	}
+
 	obj.SetLabels(labels)
+	return nil
 }
