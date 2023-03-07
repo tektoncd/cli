@@ -1,4 +1,4 @@
-// Copyright 2018 Google LLC
+// Copyright 2022 Google LLC
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -12,18 +12,10 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-package types
+package traits
 
-import (
-	"reflect"
-
-	structpb "google.golang.org/protobuf/types/known/structpb"
-)
-
-// JSON type constants representing the reflected types of protobuf JSON values.
-var (
-	jsonValueType     = reflect.TypeOf(&structpb.Value{})
-	jsonListValueType = reflect.TypeOf(&structpb.ListValue{})
-	jsonStructType    = reflect.TypeOf(&structpb.Struct{})
-	jsonNullType      = reflect.TypeOf(structpb.NullValue_NULL_VALUE)
-)
+// Zeroer interface for testing whether a CEL value is a zero value for its type.
+type Zeroer interface {
+	// IsZeroValue indicates whether the object is the zero value for the type.
+	IsZeroValue() bool
+}
