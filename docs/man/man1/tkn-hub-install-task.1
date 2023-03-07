@@ -37,7 +37,7 @@ URL can also be defined in a file '$HOME/.tekton/hub\-config' with a variable 'T
     Name of the kubeconfig context to use (default: kubectl config current\-context)
 
 .PP
-\fB\-\-from\fP="tekton"
+\fB\-\-from\fP=""
     Name of Catalog to which resource belongs.
 
 .PP
@@ -50,7 +50,7 @@ URL can also be defined in a file '$HOME/.tekton/hub\-config' with a variable 'T
 
 .PP
 \fB\-\-type\fP="tekton"
-    The type of Hub from where to pull the resource. Either 'artifact' or 'tekton' (default 'tekton')
+    The type of Hub from where to pull the resource. Either 'artifact' or 'tekton'
 
 .PP
 \fB\-\-version\fP=""
@@ -84,6 +84,10 @@ tkn hub install task foo \-\-version 0.3 \-\-from tekton
 
 .fi
 .RE
+
+.PP
+Note that the resources in Artifact Hub follow full SemVer \- <major>\&.<minor>\&.<patch> (e.g. 0.3.0),
+please double check the version used
 
 
 .SH SEE ALSO

@@ -16,7 +16,7 @@ Install a resource from a catalog by its kind, name and version
 
 ```
   -c, --context string      Name of the kubeconfig context to use (default: kubectl config current-context)
-      --from string         Name of Catalog to which resource belongs. (default "tekton")
+      --from string         Name of Catalog to which resource belongs.
   -h, --help                help for install
   -k, --kubeconfig string   Kubectl config file (default: $HOME/.kube/config)
   -n, --namespace string    Namespace to use (default: from $KUBECONFIG)
@@ -28,7 +28,7 @@ Install a resource from a catalog by its kind, name and version
 ```
       --api-server string   Hub API Server URL (default 'https://api.hub.tekton.dev' for 'tekton' type; default 'https://artifacthub.io' for 'artifact' type).
                             URL can also be defined in a file '$HOME/.tekton/hub-config' with a variable 'TEKTON_HUB_API_SERVER'/'ARTIFACT_HUB_API_SERVER'.
-      --type string         The type of Hub from where to pull the resource. Either 'artifact' or 'tekton' (default 'tekton') (default "tekton")
+      --type string         The type of Hub from where to pull the resource. Either 'artifact' or 'tekton' (default "tekton")
 ```
 
 ### SEE ALSO
