@@ -16,7 +16,7 @@ package hub
 
 import (
 	"fmt"
-	"io/ioutil"
+	"io"
 	"net/http"
 	"net/url"
 	"os/user"
@@ -33,6 +33,12 @@ const (
 	tektonHubURL   = "https://api.hub.tekton.dev"
 	artifactHubURL = "https://artifacthub.io"
 	hubConfigPath  = ".tekton/hub-config"
+
+	tektonHubCatEndpoint         = "/v1/catalogs"
+	artifactHubCatSearchEndpoint = "/api/v1/repositories/search"
+	artifactHubCatInfoEndpoint   = "/api/v1/packages/tekton"
+	artifactHubTaskType          = 7
+	artifactHubPipelineType      = 11
 )
 
 type Client interface {
@@ -48,7 +54,7 @@ type Client interface {
 	GetResourceVersionslist(opt ResourceOption) ([]string, error)
 }
 
-type tektonHubclient struct {
+type tektonHubClient struct {
 	apiURL string
 }
 
@@ -56,11 +62,11 @@ type artifactHubClient struct {
 	apiURL string
 }
 
-var _ Client = (*tektonHubclient)(nil)
+var _ Client = (*tektonHubClient)(nil)
 var _ Client = (*artifactHubClient)(nil)
 
-func NewTektonHubClient() *tektonHubclient {
-	return &tektonHubclient{apiURL: tektonHubURL}
+func NewTektonHubClient() *tektonHubClient {
+	return &tektonHubClient{apiURL: tektonHubURL}
 }
 
 func NewArtifactHubClient() *artifactHubClient {
@@ -78,7 +84,7 @@ func (a *artifactHubClient) GetType() string {
 }
 
 // GetType returns the type of the Hub Client
-func (t *tektonHubclient) GetType() string {
+func (t *tektonHubClient) GetType() string {
 	return TektonHubType
 }
 
@@ -98,7 +104,7 @@ func (a *artifactHubClient) SetURL(apiURL string) error {
 // SetURL validates and sets the Tekton Hub apiURL server URL
 // URL passed through flag will take precedence over the Tekton Hub API URL
 // in config file and default URL
-func (t *tektonHubclient) SetURL(apiURL string) error {
+func (t *tektonHubClient) SetURL(apiURL string) error {
 	resUrl, err := resolveUrl(apiURL, "TEKTON_HUB_API_SERVER", tektonHubURL)
 	if err != nil {
 		return err
@@ -114,7 +120,7 @@ func (a *artifactHubClient) Get(endpoint string) ([]byte, int, error) {
 }
 
 // Get gets data from Tekton Hub
-func (t *tektonHubclient) Get(endpoint string) ([]byte, int, error) {
+func (t *tektonHubClient) Get(endpoint string) ([]byte, int, error) {
 	return get(t.apiURL + endpoint)
 }
 
@@ -178,7 +184,7 @@ func httpGet(url string) ([]byte, int, error) {
 	}
 	defer resp.Body.Close()
 
-	data, err := ioutil.ReadAll(resp.Body)
+	data, err := io.ReadAll(resp.Body)
 	if err != nil {
 		return nil, 0, err
 	}

@@ -68,7 +68,7 @@ func Root(cli app.CLI) *cobra.Command {
 	)
 
 	cmd.PersistentFlags().StringVar(&apiURL, "api-server", "", "Hub API Server URL (default 'https://api.hub.tekton.dev' for 'tekton' type; default 'https://artifacthub.io' for 'artifact' type).\nURL can also be defined in a file '$HOME/.tekton/hub-config' with a variable 'TEKTON_HUB_API_SERVER'/'ARTIFACT_HUB_API_SERVER'.")
-	cmd.PersistentFlags().StringVar(&hubType, "type", "tekton", "The type of Hub from where to pull the resource. Either 'artifact' or 'tekton' (default 'tekton')")
+	cmd.PersistentFlags().StringVar(&hubType, "type", "tekton", "The type of Hub from where to pull the resource. Either 'artifact' or 'tekton'")
 
 	return cmd
 }

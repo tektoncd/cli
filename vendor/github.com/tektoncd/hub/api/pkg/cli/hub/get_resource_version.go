@@ -28,8 +28,13 @@ type resVersionsResponse = rclient.VersionsByIDResponseBody
 // ResVersions is the data in API response consisting of list of versions
 type ResVersions = rclient.VersionsResponseBody
 
+type ResourceVersionResult interface {
+	ResourceVersions() (*ResVersions, error)
+	UnmarshalData() error
+}
+
 // ResourceVersionResult defines API response
-type ResourceVersionResult struct {
+type TektonHubResourceVersionResult struct {
 	rr       ResourceResult
 	data     []byte
 	status   int
@@ -38,32 +43,32 @@ type ResourceVersionResult struct {
 	versions *ResVersions
 }
 
-// GetResourceVersion queries the data using Artifact Hub Endpoint
+// GetResourceVersions queries the data using Artifact Hub Endpoint
 func (a *artifactHubClient) GetResourceVersions(opt ResourceOption) ResourceVersionResult {
 	// Todo: implement GetResourceVersions for Artifact Hub
-	return ResourceVersionResult{}
+	return nil
 }
 
-// GetResourceVersion queries the data using Tekton Hub Endpoint
-func (t *tektonHubclient) GetResourceVersions(opt ResourceOption) ResourceVersionResult {
+// GetResourceVersions queries the data using Tekton Hub Endpoint
+func (t *tektonHubClient) GetResourceVersions(opt ResourceOption) ResourceVersionResult {
 
-	rvr := ResourceVersionResult{set: false}
+	rvr := TektonHubResourceVersionResult{set: false}
 
-	rvr.rr = t.GetResource(opt)
-	if rvr.err = rvr.rr.unmarshalData(); rvr.err != nil {
-		return rvr
+	rr := t.GetResource(opt).(*TektonHubResourceResult)
+	rvr.rr = rr
+	if rvr.err = rvr.rr.UnmarshalData(); rvr.err != nil {
+		return &rvr
 	}
 
 	var resID uint
-	if rvr.rr.version != "" {
-		resID = *rvr.rr.resourceWithVersionData.Resource.ID
+	if rr.version != "" {
+		resID = *rr.resourceWithVersionData.Resource.ID
 	} else {
-		resID = *rvr.rr.resourceData.ID
+		resID = *rr.resourceData.ID
 	}
-
 	rvr.data, rvr.status, rvr.err = t.Get(resVersionsEndpoint(resID))
 
-	return rvr
+	return &rvr
 }
 
 // Endpoint computes the endpoint url using input provided
@@ -71,7 +76,7 @@ func resVersionsEndpoint(rID uint) string {
 	return fmt.Sprintf("/v1/resource/%s/versions", strconv.FormatUint(uint64(rID), 10))
 }
 
-func (rvr *ResourceVersionResult) unmarshalData() error {
+func (rvr *TektonHubResourceVersionResult) UnmarshalData() error {
 	if rvr.err != nil {
 		return rvr.err
 	}
@@ -89,9 +94,9 @@ func (rvr *ResourceVersionResult) unmarshalData() error {
 }
 
 // ResourceVersions returns list of all versions of the resource
-func (rvr *ResourceVersionResult) ResourceVersions() (*ResVersions, error) {
+func (rvr *TektonHubResourceVersionResult) ResourceVersions() (*ResVersions, error) {
 
-	if err := rvr.unmarshalData(); err != nil {
+	if err := rvr.UnmarshalData(); err != nil {
 		return nil, err
 	}
 

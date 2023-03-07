@@ -27,8 +27,9 @@ var (
 	apiGroupRes []*restmapper.APIGroupResources
 )
 
-func getGroupVersionResource(gr schema.GroupVersionResource, discovery discovery.DiscoveryInterface) (*schema.GroupVersionResource, error) {
+func getVersionList(gr schema.GroupVersionResource, discovery discovery.DiscoveryInterface) ([]string, error) {
 	var err error
+
 	doOnce.Do(func() {
 		err = initializeAPIGroupRes(discovery)
 	})
@@ -37,17 +38,24 @@ func getGroupVersionResource(gr schema.GroupVersionResource, discovery discovery
 	}
 
 	rm := restmapper.NewDiscoveryRESTMapper(apiGroupRes)
-	gvr, err := rm.ResourceFor(gr)
+
+	gvrs, err := rm.ResourcesFor(gr)
 	if err != nil {
 		return nil, err
 	}
 
-	return &gvr, nil
+	versions := []string{}
+	for _, gvr := range gvrs {
+		versions = append(versions, gvr.Version)
+	}
+
+	return versions, err
 }
 
 func initializeAPIGroupRes(discovery discovery.DiscoveryInterface) error {
 	var err error
 	apiGroupRes, err = restmapper.GetAPIGroupResources(discovery)
+
 	if err != nil {
 		return err
 	}

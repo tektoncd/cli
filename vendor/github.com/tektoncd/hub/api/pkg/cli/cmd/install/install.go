@@ -31,9 +31,9 @@ import (
 )
 
 const (
-	defaultCatalog        = "tekton"
-	versionLabel          = "app.kubernetes.io/version"
-	deprecationAnnotation = "tekton.dev/deprecated"
+	defaultTektonHubCatalog = "tekton"
+	versionLabel            = "app.kubernetes.io/version"
+	deprecationAnnotation   = "tekton.dev/deprecated"
 )
 
 type options struct {
@@ -58,6 +58,9 @@ or
 Install a %S of name 'foo' of version '0.3' from Catalog 'Tekton':
 
     tkn hub install %s foo --version 0.3 --from tekton
+
+Note that the resources in Artifact Hub follow full SemVer - <major>.<minor>.<patch> (e.g. 0.3.0),
+please double check the version used
 `
 
 func Command(cli app.CLI) *cobra.Command {
@@ -77,7 +80,7 @@ func Command(cli app.CLI) *cobra.Command {
 		commandForKind("task", opts),
 	)
 
-	cmd.PersistentFlags().StringVar(&opts.from, "from", defaultCatalog, "Name of Catalog to which resource belongs.")
+	cmd.PersistentFlags().StringVar(&opts.from, "from", "", "Name of Catalog to which resource belongs.")
 	cmd.PersistentFlags().StringVar(&opts.version, "version", "", "Version of Resource")
 
 	cmd.PersistentFlags().StringVarP(&opts.kc.Path, "kubeconfig", "k", "", "Kubectl config file (default: $HOME/.kube/config)")
@@ -101,9 +104,23 @@ func commandForKind(kind string, opts *options) *cobra.Command {
 			"commandType": "main",
 		},
 		Args: cobra.ExactArgs(1),
-		RunE: func(cmd *cobra.Command, args []string) error {
+		PreRunE: func(cmd *cobra.Command, args []string) error {
+			hubType, _ := cmd.Flags().GetString("type")
+			from, _ := cmd.Flags().GetString("from")
+
+			if hubType == hub.TektonHubType && from == "" {
+				opts.from = defaultTektonHubCatalog
+			}
+			if hubType == hub.ArtifactHubType && from == "" {
+				return fmt.Errorf("missing catalog name for artifact type, please specify catalog name by --from flag")
+			}
+
 			opts.kind = kind
 			opts.args = args
+
+			return nil
+		},
+		RunE: func(cmd *cobra.Command, args []string) error {
 			return opts.run()
 		},
 	}
@@ -154,8 +171,14 @@ func (opts *options) run() error {
 
 	resourceInstaller := installer.New(opts.cs)
 
+	org, err := opts.hubRes.Org()
+	if err != nil {
+		return err
+	}
+	hubType := opts.cli.Hub().GetType()
+
 	var errors []error
-	opts.resource, errors = resourceInstaller.Install([]byte(manifest), opts.from, opts.cs.Namespace())
+	opts.resource, errors = resourceInstaller.Install([]byte(manifest), hubType, org, opts.from, opts.cs.Namespace())
 
 	if len(errors) != 0 {
 		resourcePipelineMinVersion, err := opts.hubRes.MinPipelinesVersion()
@@ -184,11 +207,6 @@ func msg(res *unstructured.Unstructured) string {
 }
 
 func (opts *options) validate() error {
-	// Todo: support install sub command for artifact type
-	if opts.cli.Hub().GetType() == hub.ArtifactHubType {
-		return fmt.Errorf("install sub command is not supported for artifact type")
-	}
-
 	return flag.ValidateVersion(opts.version)
 }
 
@@ -223,6 +241,13 @@ func (opts *options) errors(pipelinesVersion string, errors []error) error {
 		if err == installer.ErrAlreadyExist {
 			existingVersion, ok := opts.resource.GetLabels()[versionLabel]
 			if ok {
+				// if version uses simple SemVer(<major>.<minor>), convert it to full SemVer (<major>.<minor>.<patch>)for comparison
+				if len(strings.Split(existingVersion, ".")) == 2 {
+					existingVersion += ".0"
+				}
+				if len(strings.Split(resourceVersion, ".")) == 2 {
+					resourceVersion += ".0"
+				}
 
 				switch {
 				case existingVersion == resourceVersion:

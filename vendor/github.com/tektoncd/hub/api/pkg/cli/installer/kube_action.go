@@ -16,6 +16,7 @@ package installer
 
 import (
 	"context"
+	"fmt"
 	"strings"
 
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
@@ -27,13 +28,24 @@ const tektonGroup = "tekton.dev"
 
 func (i *Installer) create(object *unstructured.Unstructured, namespace string, op metav1.CreateOptions) (*unstructured.Unstructured, error) {
 
-	gvrObj := schema.GroupVersionResource{Group: tektonGroup, Resource: object.GetKind()}
-	gvr, err := getGroupVersionResource(gvrObj, i.cs.Tekton().Discovery())
+	grObj := schema.GroupVersionResource{Group: tektonGroup, Resource: object.GetKind()}
+	versions, err := getVersionList(grObj, i.cs.Tekton().Discovery())
 	if err != nil {
 		return nil, err
 	}
 
-	obj, err := i.cs.Dynamic().Resource(*gvr).Namespace(namespace).Create(context.Background(), object, op)
+	gvr := schema.GroupVersionResource{
+		Group:    object.GroupVersionKind().Group,
+		Resource: strings.ToLower(object.GetKind()) + "s",
+	}
+
+	if contains(versions, object.GroupVersionKind().Version) {
+		gvr.Version = object.GroupVersionKind().Version
+	} else {
+		return nil, fmt.Errorf("Error: API version in the data %s does not match the expected API version", object.GroupVersionKind().Version)
+	}
+
+	obj, err := i.cs.Dynamic().Resource(gvr).Namespace(namespace).Create(context.Background(), object, op)
 	if err != nil {
 		return nil, err
 	}
@@ -42,12 +54,18 @@ func (i *Installer) create(object *unstructured.Unstructured, namespace string, 
 
 func (i *Installer) get(objectName, kind, namespace string, op metav1.GetOptions) (*unstructured.Unstructured, error) {
 
-	gvrObj := schema.GroupVersionResource{Group: tektonGroup, Resource: kind}
-	gvr, err := getGroupVersionResource(gvrObj, i.cs.Tekton().Discovery())
+	grObj := schema.GroupVersionResource{Group: tektonGroup, Resource: kind}
+	versions, err := getVersionList(grObj, i.cs.Tekton().Discovery())
 	if err != nil {
 		return nil, err
 	}
-	obj, err := i.cs.Dynamic().Resource(*gvr).Namespace(namespace).Get(context.Background(), objectName, op)
+
+	gvr := schema.GroupVersionResource{
+		Group:    tektonGroup,
+		Resource: strings.ToLower(kind) + "s",
+		Version:  versions[0],
+	}
+	obj, err := i.cs.Dynamic().Resource(gvr).Namespace(namespace).Get(context.Background(), objectName, op)
 	if err != nil {
 		return nil, err
 	}
@@ -56,12 +74,22 @@ func (i *Installer) get(objectName, kind, namespace string, op metav1.GetOptions
 
 func (i *Installer) update(object *unstructured.Unstructured, namespace string, op metav1.UpdateOptions) (*unstructured.Unstructured, error) {
 
-	gvrObj := schema.GroupVersionResource{Group: tektonGroup, Resource: object.GetKind()}
-	gvr, err := getGroupVersionResource(gvrObj, i.cs.Tekton().Discovery())
+	grObj := schema.GroupVersionResource{Group: tektonGroup, Resource: object.GetKind()}
+	versions, err := getVersionList(grObj, i.cs.Tekton().Discovery())
 	if err != nil {
 		return nil, err
 	}
-	obj, err := i.cs.Dynamic().Resource(*gvr).Namespace(namespace).Update(context.Background(), object, op)
+	gvr := schema.GroupVersionResource{
+		Group:    object.GroupVersionKind().Group,
+		Resource: strings.ToLower(object.GetKind()) + "s",
+	}
+	if contains(versions, object.GroupVersionKind().Version) {
+		gvr.Version = object.GroupVersionKind().Version
+	} else {
+		return nil, fmt.Errorf("Error: API version in the data %s does not match the expected API version", object.GroupVersionKind().Version)
+	}
+
+	obj, err := i.cs.Dynamic().Resource(gvr).Namespace(namespace).Update(context.Background(), object, op)
 	if err != nil {
 		return nil, err
 	}
@@ -70,14 +98,30 @@ func (i *Installer) update(object *unstructured.Unstructured, namespace string, 
 
 func (i *Installer) list(kind, namespace string, op metav1.ListOptions) (*unstructured.UnstructuredList, error) {
 
-	gvrObj := schema.GroupVersionResource{Group: tektonGroup, Resource: strings.ToLower(kind) + "s"}
-	gvr, err := getGroupVersionResource(gvrObj, i.cs.Tekton().Discovery())
+	grObj := schema.GroupVersionResource{Group: tektonGroup, Resource: strings.ToLower(kind) + "s"}
+	versions, err := getVersionList(grObj, i.cs.Tekton().Discovery())
 	if err != nil {
 		return nil, err
 	}
-	obj, err := i.cs.Dynamic().Resource(*gvr).Namespace(namespace).List(context.Background(), op)
+
+	gvr := schema.GroupVersionResource{
+		Group:    tektonGroup,
+		Resource: strings.ToLower(kind) + "s",
+		Version:  versions[0],
+	}
+	obj, err := i.cs.Dynamic().Resource(gvr).Namespace(namespace).List(context.Background(), op)
 	if err != nil {
 		return nil, err
 	}
 	return obj, nil
+}
+
+// contains checks whether the array contains the string and return true or false
+func contains(list []string, value string) bool {
+	for _, item := range list {
+		if item == value {
+			return true
+		}
+	}
+	return false
 }
