@@ -1335,7 +1335,7 @@ github.com/tektoncd/hub/api/v1/gen/http/catalog/client
 github.com/tektoncd/hub/api/v1/gen/http/resource/client
 github.com/tektoncd/hub/api/v1/gen/resource
 github.com/tektoncd/hub/api/v1/gen/resource/views
-# github.com/tektoncd/pipeline v0.44.0
+# github.com/tektoncd/pipeline v0.45.0
 ## explicit; go 1.18
 github.com/tektoncd/pipeline/pkg/apis/config
 github.com/tektoncd/pipeline/pkg/apis/config/resolver
@@ -1444,6 +1444,7 @@ github.com/tektoncd/pipeline/pkg/remote
 github.com/tektoncd/pipeline/pkg/remote/oci
 github.com/tektoncd/pipeline/pkg/resolution/common
 github.com/tektoncd/pipeline/pkg/resolution/resource
+github.com/tektoncd/pipeline/pkg/spire/config
 github.com/tektoncd/pipeline/pkg/status
 github.com/tektoncd/pipeline/pkg/substitution
 github.com/tektoncd/pipeline/test
