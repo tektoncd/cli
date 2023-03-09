@@ -17,102 +17,124 @@ package formatted
 import (
 	"testing"
 
-	"github.com/tektoncd/pipeline/pkg/apis/pipeline/v1beta1"
+	v1 "github.com/tektoncd/pipeline/pkg/apis/pipeline/v1"
 	"gotest.tools/v3/assert"
 )
 
 func TestParam(t *testing.T) {
-	paramSpec := []v1beta1.ParamSpec{
+	paramSpec := []v1.ParamSpec{
 		{
 			Name:    "foo",
-			Type:    v1beta1.ParamTypeString,
-			Default: &v1beta1.ArrayOrString{Type: v1beta1.ParamTypeString, StringVal: "astring"},
+			Type:    v1.ParamTypeString,
+			Default: &v1.ParamValue{Type: v1.ParamTypeString, StringVal: "astring"},
 		},
 		{
 			Name:    "bar",
-			Type:    v1beta1.ParamTypeString,
-			Default: &v1beta1.ArrayOrString{Type: v1beta1.ParamTypeString, StringVal: "bstring"},
+			Type:    v1.ParamTypeString,
+			Default: &v1.ParamValue{Type: v1.ParamTypeString, StringVal: "bstring"},
 		},
 		{
 			Name:    "foo-array-1",
-			Type:    v1beta1.ParamTypeArray,
-			Default: &v1beta1.ArrayOrString{Type: v1beta1.ParamTypeArray, ArrayVal: []string{"a1", "a2"}},
+			Type:    v1.ParamTypeArray,
+			Default: &v1.ParamValue{Type: v1.ParamTypeArray, ArrayVal: []string{"a1", "a2"}},
 		},
 		{
 			Name:    "foo-array-2",
-			Type:    v1beta1.ParamTypeArray,
-			Default: &v1beta1.ArrayOrString{Type: v1beta1.ParamTypeArray, ArrayVal: []string{"b1", "b2"}},
+			Type:    v1.ParamTypeArray,
+			Default: &v1.ParamValue{Type: v1.ParamTypeArray, ArrayVal: []string{"b1", "b2"}},
 		},
 		{
 			Name: "no-def-val",
-			Type: v1beta1.ParamTypeString,
+			Type: v1.ParamTypeString,
 		},
 		{
 			Name: "no-def-val-1",
-			Type: v1beta1.ParamTypeArray,
+			Type: v1.ParamTypeArray,
+		},
+		{
+			Name: "no-def-val-2",
+			Type: v1.ParamTypeObject,
 		},
 	}
-	p := []v1beta1.Param{
+	p := []v1.Param{
 		{
 			Name: "foo",
-			Value: v1beta1.ArrayOrString{
-				Type:      v1beta1.ParamTypeString,
+			Value: v1.ParamValue{
+				Type:      v1.ParamTypeString,
 				StringVal: "bar",
 			},
 		},
 		{
 			Name: "foo-1",
-			Value: v1beta1.ArrayOrString{
-				Type:      v1beta1.ParamTypeString,
+			Value: v1.ParamValue{
+				Type:      v1.ParamTypeString,
 				StringVal: "bar-1",
 			},
 		},
 	}
-	p1 := []v1beta1.Param{
+	p1 := []v1.Param{
 		{
 			Name: "foo",
-			Value: v1beta1.ArrayOrString{
-				Type:     v1beta1.ParamTypeArray,
+			Value: v1.ParamValue{
+				Type:     v1.ParamTypeArray,
 				ArrayVal: []string{"v1", "v2"},
 			},
 		},
 		{
 			Name: "foo-bar",
-			Value: v1beta1.ArrayOrString{
-				Type:     v1beta1.ParamTypeArray,
+			Value: v1.ParamValue{
+				Type:     v1.ParamTypeArray,
 				ArrayVal: []string{"v3", "v4", "v5"},
 			},
 		},
 	}
-	p2 := []v1beta1.Param{
+	p2 := []v1.Param{
 		{
 			Name: "foo",
-			Value: v1beta1.ArrayOrString{
-				Type:      v1beta1.ParamTypeString,
+			Value: v1.ParamValue{
+				Type:      v1.ParamTypeString,
 				StringVal: "$(params.foo)",
 			},
 		},
 		{
 			Name: "foo-array",
-			Value: v1beta1.ArrayOrString{
-				Type:     v1beta1.ParamTypeArray,
+			Value: v1.ParamValue{
+				Type:     v1.ParamTypeArray,
 				ArrayVal: []string{"$(params.foo-array-1)", "$(params.foo-array-2)", "last"},
 			},
 		},
 	}
-	p3 := []v1beta1.Param{
+	p3 := []v1.Param{
 		{
 			Name: "foo",
-			Value: v1beta1.ArrayOrString{
-				Type:      v1beta1.ParamTypeString,
+			Value: v1.ParamValue{
+				Type:      v1.ParamTypeString,
 				StringVal: "$(no-def-val)",
 			},
 		},
 		{
 			Name: "foo-array",
-			Value: v1beta1.ArrayOrString{
-				Type:     v1beta1.ParamTypeArray,
+			Value: v1.ParamValue{
+				Type:     v1.ParamTypeArray,
 				ArrayVal: []string{"$(no-def-val)", "$(no-def-val-1)", "last"},
+			},
+		},
+	}
+	p4 := []v1.Param{
+		{
+			Name: "foo",
+			Value: v1.ParamValue{
+				Type:      v1.ParamTypeObject,
+				ObjectVal: map[string]string{"key1": "$(no-def-val-2)"},
+			},
+		},
+	}
+	p5 := []v1.Param{
+		{
+			Name: "foo",
+			Value: v1.ParamValue{
+				Type:      v1.ParamTypeObject,
+				ObjectVal: map[string]string{"key1": "$(params.foo)"},
 			},
 		},
 	}
@@ -131,4 +153,10 @@ func TestParam(t *testing.T) {
 
 	str = Param(p3, paramSpec)                                              // Param value and default is not defined
 	assert.Equal(t, str, "foo: string, foo-array: [ string, array, last ]") // show param type
+
+	str = Param(p4, paramSpec) // Param has object type
+	assert.Equal(t, str, "foo: { key1: object }")
+
+	str = Param(p5, paramSpec) // Param has object type
+	assert.Equal(t, str, "foo: { key1: astring }")
 }

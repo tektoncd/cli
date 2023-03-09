@@ -15,19 +15,20 @@
 package pipeline
 
 import (
+	"context"
 	"fmt"
 	"io"
-	"sort"
 	"strings"
 	"text/tabwriter"
 	"text/template"
 
+	"github.com/jonboulle/clockwork"
 	"github.com/spf13/cobra"
 	"github.com/tektoncd/cli/pkg/actions"
 	"github.com/tektoncd/cli/pkg/cli"
 	"github.com/tektoncd/cli/pkg/formatted"
 	"github.com/tektoncd/cli/pkg/options"
-	"github.com/tektoncd/cli/pkg/pipeline"
+	pipelinepkg "github.com/tektoncd/cli/pkg/pipeline"
 	prsort "github.com/tektoncd/cli/pkg/pipelinerun/sort"
 	v1 "github.com/tektoncd/pipeline/pkg/apis/pipeline/v1"
 	"github.com/tektoncd/pipeline/pkg/apis/pipeline/v1beta1"
@@ -36,7 +37,7 @@ import (
 	cliopts "k8s.io/cli-runtime/pkg/genericclioptions"
 )
 
-const describeTemplate = `{{decorate "bold" "Name"}}:	{{ .PipelineName }}
+const DescribeTemplate = `{{decorate "bold" "Name"}}:	{{ .PipelineName }}
 {{decorate "bold" "Namespace"}}:	{{ .Pipeline.Namespace }}
 {{- if ne .Pipeline.Spec.Description "" }}
 {{decorate "bold" "Description"}}:	{{ .Pipeline.Spec.Description }}
@@ -46,15 +47,6 @@ const describeTemplate = `{{decorate "bold" "Name"}}:	{{ .PipelineName }}
 {{decorate "bold" "Annotations"}}:
 {{- range $k, $v := $annotations }}
  {{ $k }}={{ $v }}
-{{- end }}
-{{- end }}
-
-{{- if ne (len .Pipeline.Spec.Resources) 0 }}
-
-{{decorate "resources" ""}}{{decorate "underline bold" "Resources\n"}}
- NAME	TYPE
-{{- range $i, $r := .Pipeline.Spec.Resources }}
- {{decorate "bullet" $r.Name }}	{{ $r.Type }}
 {{- end }}
 {{- end }}
 
@@ -68,8 +60,10 @@ const describeTemplate = `{{decorate "bold" "Name"}}:	{{ .PipelineName }}
 {{- else }}
 {{- if eq $p.Type "string" }}
  {{decorate "bullet" $p.Name }}	{{ $p.Type }}	{{ formatDesc $p.Description }}	{{ $p.Default.StringVal }}
-{{- else }}
+{{- else if eq $p.Type "array" }}
  {{decorate "bullet" $p.Name }}	{{ $p.Type }}	{{ formatDesc $p.Description }}	{{ $p.Default.ArrayVal }}
+{{- else }}
+ {{decorate "bullet" $p.Name }}	{{ $p.Type }}	{{ formatDesc $p.Description }}	{{ $p.Default.ObjectVal }}
 {{- end }}
 {{- end }}
 {{- end }}
@@ -107,7 +101,7 @@ const describeTemplate = `{{decorate "bold" "Name"}}:	{{ .PipelineName }}
 {{decorate "pipelineruns" ""}}{{decorate "underline bold" "PipelineRuns\n"}}
  NAME	STARTED	DURATION	STATUS
 {{- range $i, $pr := .PipelineRuns.Items }}
- {{decorate "bullet" $pr.Name }}	{{ formatAge $pr.Status.StartTime $.Params.Time }}	{{ formatDuration $pr.Status.StartTime $pr.Status.CompletionTime }}	{{ formatCondition $pr.Status.Conditions }}
+ {{decorate "bullet" $pr.Name }}	{{ formatAge $pr.Status.StartTime $.Time }}	{{ formatDuration $pr.Status.StartTime $pr.Status.CompletionTime }}	{{ formatCondition $pr.Status.Conditions }}
 {{- end }}
 {{- end }}
 `
@@ -137,7 +131,7 @@ func describeCommand(p cli.Params) *cobra.Command {
 			}
 
 			if len(args) == 0 {
-				pipelineNames, err := pipeline.GetAllPipelineNames(pipelineGroupResource, cs, p.Namespace())
+				pipelineNames, err := pipelinepkg.GetAllPipelineNames(pipelineGroupResource, cs, p.Namespace())
 				if err != nil {
 					return err
 				}
@@ -154,11 +148,10 @@ func describeCommand(p cli.Params) *cobra.Command {
 			}
 
 			if output != "" {
-				pipelineGroupResource := schema.GroupVersionResource{Group: "tekton.dev", Resource: "pipelines"}
-				return actions.PrintObject(pipelineGroupResource, opts.PipelineName, cmd.OutOrStdout(), cs.Dynamic, cs.Tekton.Discovery(), f, p.Namespace())
+				return actions.PrintObjectV1(pipelineGroupResource, opts.PipelineName, cmd.OutOrStdout(), cs, f, p.Namespace())
 			}
 
-			return printPipelineDescription(cmd.OutOrStdout(), p, opts.PipelineName)
+			return printPipelineDescription(cmd.OutOrStdout(), cs, p.Namespace(), opts.PipelineName, p.Time())
 		},
 	}
 
@@ -166,42 +159,33 @@ func describeCommand(p cli.Params) *cobra.Command {
 	return c
 }
 
-func printPipelineDescription(out io.Writer, p cli.Params, pname string) error {
-	cs, err := p.Clients()
+func printPipelineDescription(out io.Writer, c *cli.Clients, ns string, pName string, time clockwork.Clock) error {
+	pipeline, err := getPipeline(pipelineGroupResource, c, pName, ns)
 	if err != nil {
 		return err
-	}
-
-	pipeline, err := pipeline.Get(cs, pname, metav1.GetOptions{}, p.Namespace())
-	if err != nil {
-		return err
-	}
-
-	if len(pipeline.Spec.Resources) > 0 {
-		pipeline.Spec.Resources = sortResourcesByTypeAndName(pipeline.Spec.Resources)
 	}
 
 	opts := metav1.ListOptions{
-		LabelSelector: fmt.Sprintf("tekton.dev/pipeline=%s", pname),
+		LabelSelector: fmt.Sprintf("tekton.dev/pipeline=%s", pName),
 	}
 
 	var pipelineRuns *v1.PipelineRunList
-	err = actions.ListV1(pipelineRunGroupResource, cs, opts, p.Namespace(), &pipelineRuns)
+	err = actions.ListV1(pipelineRunGroupResource, c, opts, ns, &pipelineRuns)
 	if err != nil {
 		return err
 	}
 	prsort.SortByStartTime(pipelineRuns.Items)
 
 	var data = struct {
-		Pipeline     *v1beta1.Pipeline
+		Pipeline     *v1.Pipeline
 		PipelineRuns *v1.PipelineRunList
 		PipelineName string
-		Params       cli.Params
+		Time         clockwork.Clock
 	}{
 		Pipeline:     pipeline,
 		PipelineRuns: pipelineRuns,
-		PipelineName: pname,
-		Params:       p,
+		PipelineName: pName,
+		Time:         time,
 	}
 
 	funcMap := template.FuncMap{
@@ -218,7 +202,7 @@ func printPipelineDescription(out io.Writer, p cli.Params, pname string) error {
 	}
 
 	w := tabwriter.NewWriter(out, 0, 5, 3, ' ', tabwriter.TabIndent)
-	t := template.Must(template.New("Describe Pipeline").Funcs(funcMap).Parse(describeTemplate))
+	t := template.Must(template.New("Describe Pipeline").Funcs(funcMap).Parse(DescribeTemplate))
 	err = t.Execute(w, data)
 	if err != nil {
 		return err
@@ -227,25 +211,7 @@ func printPipelineDescription(out io.Writer, p cli.Params, pname string) error {
 	return w.Flush()
 }
 
-// this will sort the Resource by Type and then by Name
-func sortResourcesByTypeAndName(pres []v1beta1.PipelineDeclaredResource) []v1beta1.PipelineDeclaredResource {
-	sort.Slice(pres, func(i, j int) bool {
-		if pres[j].Type < pres[i].Type {
-			return false
-		}
-
-		if pres[j].Type > pres[i].Type {
-			return true
-		}
-
-		return pres[j].Name > pres[i].Name
-	})
-
-	return pres
-}
-
 func askPipelineName(opts *options.DescribeOptions, pipelineNames []string) error {
-
 	if len(pipelineNames) == 0 {
 		return fmt.Errorf("no Pipelines found")
 	}
@@ -256,4 +222,32 @@ func askPipelineName(opts *options.DescribeOptions, pipelineNames []string) erro
 	}
 
 	return nil
+}
+
+func getPipeline(gr schema.GroupVersionResource, c *cli.Clients, pName, ns string) (*v1.Pipeline, error) {
+	var pipeline v1.Pipeline
+	gvr, err := actions.GetGroupVersionResource(gr, c.Tekton.Discovery())
+	if err != nil {
+		return nil, err
+	}
+
+	if gvr.Version == "v1" {
+		err := actions.GetV1(pipelineGroupResource, c, pName, ns, metav1.GetOptions{}, &pipeline)
+		if err != nil {
+			return nil, err
+		}
+		return &pipeline, nil
+
+	}
+
+	var pipelineV1beta1 v1beta1.Pipeline
+	err = actions.GetV1(pipelineGroupResource, c, pName, ns, metav1.GetOptions{}, &pipelineV1beta1)
+	if err != nil {
+		return nil, err
+	}
+	err = pipelineV1beta1.ConvertTo(context.Background(), &pipeline)
+	if err != nil {
+		return nil, err
+	}
+	return &pipeline, nil
 }

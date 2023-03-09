@@ -1,6 +1,8 @@
 Name:          pipeline
 Namespace:     ns
 Description:   a test description
+Annotations:
+ tekton.dev/v1beta1Resources=[{"name":"name","type":"git"}]
 
 Params
 

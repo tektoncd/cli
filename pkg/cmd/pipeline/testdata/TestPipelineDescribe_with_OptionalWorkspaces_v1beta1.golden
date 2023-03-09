@@ -1,5 +1,7 @@
 Name:        pipeline
 Namespace:   ns
+Annotations:
+ tekton.dev/v1beta1Resources=[{"name":"name","type":"git"}]
 
 Results
 

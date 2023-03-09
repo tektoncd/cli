@@ -1,10 +1,7 @@
 Name:        pipeline
 Namespace:   ns
-
-Resources
-
- NAME   TYPE
- name   git
+Annotations:
+ tekton.dev/v1beta1Resources=[{"name":"name","type":"git"}]
 
 Tasks
 
