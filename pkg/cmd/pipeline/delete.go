@@ -23,7 +23,7 @@ import (
 	"github.com/tektoncd/cli/pkg/deleter"
 	"github.com/tektoncd/cli/pkg/formatted"
 	"github.com/tektoncd/cli/pkg/options"
-	"github.com/tektoncd/cli/pkg/pipeline"
+	pipelinepkg "github.com/tektoncd/cli/pkg/pipeline"
 	v1 "github.com/tektoncd/pipeline/pkg/apis/pipeline/v1"
 	"go.uber.org/multierr"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
@@ -42,7 +42,8 @@ func pipelineExists(args []string, p cli.Params) ([]string, error) {
 	var errorList error
 	ns := p.Namespace()
 	for _, name := range args {
-		_, err := pipeline.Get(c, name, metav1.GetOptions{}, ns)
+		var pipeline *v1.Pipeline
+		err := actions.GetV1(pipelineGroupResource, c, name, ns, metav1.GetOptions{}, &pipeline)
 		if err != nil {
 			errorList = multierr.Append(errorList, err)
 			continue
@@ -117,7 +118,7 @@ func deletePipelines(opts *options.DeleteOptions, s *cli.Stream, p cli.Params, p
 	})
 	switch {
 	case opts.DeleteAllNs:
-		pNames, err = pipeline.GetAllPipelineNames(pipelineGroupResource, cs, p.Namespace())
+		pNames, err = pipelinepkg.GetAllPipelineNames(pipelineGroupResource, cs, p.Namespace())
 		if err != nil {
 			return err
 		}

@@ -28,8 +28,10 @@ import (
 
 	"github.com/google/go-cmp/cmp"
 	"github.com/jonboulle/clockwork"
+	pipelineCmd "github.com/tektoncd/cli/pkg/cmd/pipeline"
 	"github.com/tektoncd/cli/pkg/formatted"
 	"github.com/tektoncd/cli/test/framework"
+	v1 "github.com/tektoncd/pipeline/pkg/apis/pipeline/v1"
 	"github.com/tektoncd/pipeline/pkg/apis/pipeline/v1beta1"
 	"github.com/tektoncd/pipeline/pkg/apis/resource/v1alpha1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
@@ -638,114 +640,49 @@ type TaskRefData struct {
 	RunAfter []string
 }
 
-const describeTemplate = `{{decorate "bold" "Name"}}:	{{ .PipelineName }}
-{{decorate "bold" "Namespace"}}:	{{ .Pipeline.Namespace }}
-{{- if ne .Pipeline.Spec.Description "" }}
-{{decorate "bold" "Description"}}:	{{ .Pipeline.Spec.Description }}
-{{- end }}
-
-{{- if ne (len .Pipeline.Spec.Resources) 0 }}
-
-{{decorate "resources" ""}}{{decorate "underline bold" "Resources\n"}}
- NAME	TYPE
-{{- range $i, $r := .Pipeline.Spec.Resources }}
- {{decorate "bullet" $r.Name }}	{{ $r.Type }}
-{{- end }}
-{{- end }}
-
-{{- if ne (len .Pipeline.Spec.Params) 0 }}
-
-{{decorate "params" ""}}{{decorate "underline bold" "Params\n"}}
- NAME	TYPE	DESCRIPTION	DEFAULT VALUE
-{{- range $i, $p := .Pipeline.Spec.Params }}
-{{- if not $p.Default }}
- {{decorate "bullet" $p.Name }}	{{ $p.Type }}	{{ formatDesc $p.Description }}	{{ "---" }}
-{{- else }}
-{{- if eq $p.Type "string" }}
- {{decorate "bullet" $p.Name }}	{{ $p.Type }}	{{ formatDesc $p.Description }}	{{ $p.Default.StringVal }}
-{{- else }}
- {{decorate "bullet" $p.Name }}	{{ $p.Type }}	{{ formatDesc $p.Description }}	{{ $p.Default.ArrayVal }}
-{{- end }}
-{{- end }}
-{{- end }}
-{{- end }}
-
-{{- if ne (len .Pipeline.Spec.Results) 0 }}
-
-{{decorate "results" ""}}{{decorate "underline bold" "Results\n"}}
- NAME	DESCRIPTION
-{{- range $result := .Pipeline.Spec.Results }}
- {{ decorate "bullet" $result.Name }}	{{ formatDesc $result.Description }}
-{{- end }}
-{{- end }}
-
-{{- if ne (len .Pipeline.Spec.Workspaces) 0 }}
-
-{{decorate "workspaces" ""}}{{decorate "underline bold" "Workspaces\n"}}
- NAME	DESCRIPTION
-{{- range $workspace := .Pipeline.Spec.Workspaces }}
- {{ decorate "bullet" $workspace.Name }}	{{ formatDesc $workspace.Description }}
-{{- end }}
-{{- end }}
-
-{{- if ne (len .Pipeline.Spec.Tasks) 0 }}
-
-{{decorate "tasks" ""}}{{decorate "underline bold" "Tasks\n"}}
- NAME	TASKREF	RUNAFTER	TIMEOUT	PARAMS
-{{- range $i, $t := .Pipeline.Spec.Tasks }}
- {{decorate "bullet" $t.Name }}	{{ $t.TaskRef.Name }}	{{ join $t.RunAfter ", " }}	{{ formatTimeout $t.Timeout }}	{{ formatParam $t.Params $.Pipeline.Spec.Params }}
-{{- end }}
-{{- end }}
-
-{{- if ne (len .PipelineRuns.Items) 0 }}
-
-{{decorate "pipelineruns" ""}}{{decorate "underline bold" "PipelineRuns\n"}}
- NAME	STARTED	DURATION	STATUS
-{{- range $i, $pr := .PipelineRuns.Items }}
- {{decorate "bullet" $pr.Name }}	{{ formatAge $pr.Status.StartTime $.Params }}	{{ formatDuration $pr.Status.StartTime $pr.Status.CompletionTime }}	{{ formatCondition $pr.Status.Conditions }}
-{{- end }}
-{{- end }}
-`
-
 func GetPipelineDescribeOutput(t *testing.T, cs *framework.Clients, pname string, td map[int]interface{}) string {
 
 	t.Helper()
 	clock := clockwork.NewFakeClockAt(time.Now())
 
-	pipeline := GetPipelineWithTestData(t, cs, pname, td)
-	if len(pipeline.Spec.Resources) > 0 {
-		pipeline.Spec.Resources = SortResourcesByTypeAndName(pipeline.Spec.Resources)
+	pipelineV1beta1 := GetPipelineWithTestData(t, cs, pname, td)
+	var pipelineV1 v1.Pipeline
+	err := pipelineV1beta1.ConvertTo(context.Background(), &pipelineV1)
+	if err != nil {
+		panic(err)
 	}
 	pipelineRuns := GetPipelineRunListWithNameAndTestData(t, cs, pname, td)
 
 	var data = struct {
-		Pipeline     *v1beta1.Pipeline
+		Pipeline     *v1.Pipeline
 		PipelineRuns *v1beta1.PipelineRunList
 		PipelineName string
-		Params       clockwork.Clock
+		Time         clockwork.Clock
 	}{
-		Pipeline:     pipeline,
+		Pipeline:     &pipelineV1,
 		PipelineRuns: pipelineRuns,
 		PipelineName: pname,
-		Params:       clock,
+		Time:         clock,
 	}
 
 	funcMap := template.FuncMap{
-		"formatAge":       formatted.Age,
-		"formatDuration":  formatted.Duration,
-		"formatCondition": formatted.Condition,
-		"formatTimeout":   formatted.Timeout,
-		"formatDesc":      formatted.FormatDesc,
-		"formatParam":     formatted.Param,
-		"decorate":        formatted.DecorateAttr,
-		"join":            strings.Join,
+		"formatAge":               formatted.Age,
+		"formatDuration":          formatted.Duration,
+		"formatCondition":         formatted.Condition,
+		"formatTimeout":           formatted.Timeout,
+		"formatDesc":              formatted.FormatDesc,
+		"formatParam":             formatted.Param,
+		"decorate":                formatted.DecorateAttr,
+		"join":                    strings.Join,
+		"getTaskRefName":          formatted.GetTaskRefName,
+		"removeLastAppliedConfig": formatted.RemoveLastAppliedConfig,
 	}
 
 	var tmplBytes bytes.Buffer
 
 	w := tabwriter.NewWriter(&tmplBytes, 0, 5, 3, ' ', tabwriter.TabIndent)
 
-	tmp := template.Must(template.New("Describe Pipeline").Funcs(funcMap).Parse(describeTemplate))
+	tmp := template.Must(template.New("Describe Pipeline").Funcs(funcMap).Parse(pipelineCmd.DescribeTemplate))
 
 	err1 := tmp.Execute(w, data)
 	if err1 != nil {

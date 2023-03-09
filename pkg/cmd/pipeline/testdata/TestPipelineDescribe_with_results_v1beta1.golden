@@ -1,5 +1,7 @@
 Name:        pipeline
 Namespace:   ns
+Annotations:
+ tekton.dev/v1beta1Resources=[{"name":"name","type":"git"}]
 
 Results
 
@@ -7,12 +9,6 @@ Results
  result-1   This is a descripti...
  result-2   This is a descripti...
  result-3   
-
-Workspaces
-
- NAME            DESCRIPTION              OPTIONAL
- test            test workspace           false
- test-optional   test optional works...   true
 
 Tasks
 

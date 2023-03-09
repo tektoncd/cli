@@ -1,0 +1,7 @@
+Name:        pipeline
+Namespace:   ns
+
+Tasks
+
+ NAME   TASKREF    RUNAFTER   TIMEOUT   PARAMS
+ task   EMBEDDED              ---       ---

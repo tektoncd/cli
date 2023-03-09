@@ -1,11 +1,13 @@
 Name:          pipeline
 Namespace:     ns
 Description:   a test description
+Annotations:
+ tekton.dev/v1beta1Resources=[{"name":"name","type":"git"}]
 
 Params
 
- NAME             TYPE     DESCRIPTION   DEFAULT VALUE
- pipeline-param   string                 somethingdifferent
+ NAME             TYPE     DESCRIPTION            DEFAULT VALUE
+ pipeline-param   string   param of type string   somethingdifferent
 
 Tasks
 
@@ -16,5 +18,3 @@ PipelineRuns
 
  NAME             STARTED          DURATION   STATUS
  pipeline-run-1   15 minutes ago   10m0s      Succeeded
- pipeline-run-3   25 minutes ago   20m0s      Succeeded
- pipeline-run-2   30 minutes ago   25m0s      Succeeded

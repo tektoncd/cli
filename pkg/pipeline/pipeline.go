@@ -43,6 +43,7 @@ func GetAllPipelineNames(gr schema.GroupVersionResource, c *cli.Clients, ns stri
 	return ret, nil
 }
 
+// TODO: remove as all the function uses are moved to new func
 // Get will fetch the pipeline resource based on pipeline name
 func Get(c *cli.Clients, pipelinename string, opts metav1.GetOptions, ns string) (*v1beta1.Pipeline, error) {
 	unstructuredP, err := actions.Get(pipelineGroupResource, c.Dynamic, c.Tekton.Discovery(), pipelinename, ns, opts)

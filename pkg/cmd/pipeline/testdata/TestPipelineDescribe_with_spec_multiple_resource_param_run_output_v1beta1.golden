@@ -1,0 +1,43 @@
+apiVersion: tekton.dev/v1beta1
+kind: pipeline
+metadata:
+  creationTimestamp: null
+  name: pipeline
+  namespace: ns
+spec:
+  params:
+  - default: somethingdifferent
+    name: pipeline-param
+    type: string
+  - default:
+    - booms
+    - booms
+    - booms
+    name: rev-param
+    type: array
+  - name: pipeline-param
+    type: string
+  - name: rev-param2
+    type: array
+  resources:
+  - name: name
+    type: git
+  - name: code
+    type: git
+  - name: code-image
+    type: image
+  - name: artifact-image
+    type: image
+  - name: repo
+    type: git
+  tasks:
+  - name: task
+    params:
+    - name: param
+      value: value
+    runAfter:
+    - one
+    - two
+    taskRef:
+      name: taskref
+    timeout: 5m0s
