@@ -1,0 +1,48 @@
+apiVersion: tekton.dev/v1
+kind: Pipeline
+metadata:
+  annotations:
+    pipeline.dev: cli
+  generateName: generate-name
+spec:
+  params:
+  - default: somethingdifferent
+    name: pipeline-param
+    type: string
+  - default:
+    - booms
+    - booms
+    - booms
+    name: rev-param
+    type: array
+  - name: pipeline-param
+    type: string
+  - name: rev-param2
+    type: array
+  results:
+  - description: This is a description for result 1
+    name: result-1
+    type: string
+    value: ""
+  - description: This is a description for result 2
+    name: result-2
+    type: string
+    value: ""
+  - description: ""
+    name: result-3
+    type: string
+    value: ""
+  tasks:
+  - name: task
+    params:
+    - name: param
+      value: value
+    runAfter:
+    - one
+    - two
+    taskRef:
+      name: taskref
+    timeout: 5m0s
+  workspaces:
+  - description: test workspace
+    name: test

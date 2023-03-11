@@ -18,12 +18,14 @@ import (
 	"io"
 
 	"github.com/spf13/cobra"
+	"github.com/tektoncd/cli/pkg/actions"
 	"github.com/tektoncd/cli/pkg/cli"
 	"github.com/tektoncd/cli/pkg/export"
 	"github.com/tektoncd/cli/pkg/options"
-	"github.com/tektoncd/cli/pkg/pipeline"
+	pipelinepkg "github.com/tektoncd/cli/pkg/pipeline"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	cliopts "k8s.io/cli-runtime/pkg/genericclioptions"
+	"sigs.k8s.io/yaml"
 )
 
 func exportCommand(p cli.Params) *cobra.Command {
@@ -49,13 +51,12 @@ func exportCommand(p cli.Params) *cobra.Command {
 		},
 		RunE: func(cmd *cobra.Command, args []string) error {
 			opts := &options.DescribeOptions{Params: p}
+			cs, err := p.Clients()
+			if err != nil {
+				return err
+			}
 			if len(args) == 0 {
-				cs, err := p.Clients()
-				if err != nil {
-					return err
-				}
-
-				pipelineNames, err := pipeline.GetAllPipelineNames(pipelineGroupResource, cs, p.Namespace())
+				pipelineNames, err := pipelinepkg.GetAllPipelineNames(pipelineGroupResource, cs, p.Namespace())
 				if err != nil {
 					return err
 				}
@@ -71,7 +72,7 @@ func exportCommand(p cli.Params) *cobra.Command {
 				opts.PipelineName = args[0]
 			}
 
-			err := exportPipeline(cmd.OutOrStdout(), p, opts.PipelineName)
+			err = exportPipeline(cmd.OutOrStdout(), cs, p.Namespace(), opts.PipelineName)
 			if err != nil {
 				return err
 			}
@@ -82,20 +83,24 @@ func exportCommand(p cli.Params) *cobra.Command {
 	return c
 }
 
-func exportPipeline(out io.Writer, p cli.Params, pname string) error {
-	cs, err := p.Clients()
+func exportPipeline(out io.Writer, c *cli.Clients, ns string, pName string) error {
+	obj, err := actions.GetUnstructured(pipelineGroupResource, c, pName, ns, metav1.GetOptions{})
 	if err != nil {
 		return err
 	}
 
-	pipeline, err := pipeline.Get(cs, pname, metav1.GetOptions{}, p.Namespace())
+	err = export.RemoveFieldForExport(obj)
 	if err != nil {
 		return err
 	}
-	exported, err := export.TektonResourceToYaml(pipeline)
+
+	obj.SetKind("Pipeline")
+
+	data, err := yaml.Marshal(obj)
 	if err != nil {
 		return err
 	}
-	_, err = out.Write([]byte(exported))
+
+	_, err = out.Write(data)
 	return err
 }
