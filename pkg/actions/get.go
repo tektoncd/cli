@@ -42,7 +42,7 @@ func PrintObject(groupResource schema.GroupVersionResource, obj string, w io.Wri
 
 // PrintObject is used to take a partial resource and the name of an object in the cluster, fetch it using the dynamic client, and print out the object.
 func PrintObjectV1(groupResource schema.GroupVersionResource, obj string, w io.Writer, client *cli.Clients, f *cliopts.PrintFlags, ns string) error {
-	res, err := get(groupResource, client, obj, ns, metav1.GetOptions{})
+	res, err := GetUnstructured(groupResource, client, obj, ns, metav1.GetOptions{})
 	if err != nil {
 		return err
 	}
@@ -52,7 +52,7 @@ func PrintObjectV1(groupResource schema.GroupVersionResource, obj string, w io.W
 
 // GetV1 is used to take a partial resource and the name of an object in the cluster and fetch it from the cluster using the dynamic client.
 func GetV1(gr schema.GroupVersionResource, c *cli.Clients, objname, ns string, op metav1.GetOptions, obj interface{}) error {
-	unstructuredObj, err := get(gr, c, objname, ns, op)
+	unstructuredObj, err := GetUnstructured(gr, c, objname, ns, op)
 	if err != nil {
 		return err
 	}
@@ -64,7 +64,7 @@ func GetV1(gr schema.GroupVersionResource, c *cli.Clients, objname, ns string, o
 	return nil
 }
 
-func get(gr schema.GroupVersionResource, c *cli.Clients, objname, ns string, op metav1.GetOptions) (*unstructured.Unstructured, error) {
+func GetUnstructured(gr schema.GroupVersionResource, c *cli.Clients, objname, ns string, op metav1.GetOptions) (*unstructured.Unstructured, error) {
 	gvr, err := GetGroupVersionResource(gr, c.Tekton.Discovery())
 	if err != nil {
 		return nil, err

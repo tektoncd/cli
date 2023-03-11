@@ -1,0 +1,33 @@
+apiVersion: tekton.dev/v1beta1
+kind: Pipeline
+metadata:
+  annotations:
+    pipeline.dev: cli
+  generateName: generate-name
+spec:
+  resources:
+  - name: name
+    type: git
+  results:
+  - description: This is a description for result 1
+    name: result-1
+    type: string
+    value: ""
+  - description: This is a description for result 2
+    name: result-2
+    type: string
+    value: ""
+  - description: ""
+    name: result-3
+    type: string
+    value: ""
+  tasks:
+  - name: task-1
+    taskRef:
+      name: task-1
+  - name: task-2
+    taskRef:
+      name: task-2
+  workspaces:
+  - description: test workspace
+    name: test

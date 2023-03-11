@@ -19,12 +19,14 @@ import (
 	"strings"
 
 	"github.com/spf13/cobra"
+	"github.com/tektoncd/cli/pkg/actions"
 	"github.com/tektoncd/cli/pkg/cli"
 	"github.com/tektoncd/cli/pkg/export"
 	"github.com/tektoncd/cli/pkg/options"
-	"github.com/tektoncd/cli/pkg/pipelinerun"
+	pipelinerunpkg "github.com/tektoncd/cli/pkg/pipelinerun"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	cliopts "k8s.io/cli-runtime/pkg/genericclioptions"
+	"sigs.k8s.io/yaml"
 )
 
 func exportCommand(p cli.Params) *cobra.Command {
@@ -50,12 +52,12 @@ func exportCommand(p cli.Params) *cobra.Command {
 		},
 		RunE: func(cmd *cobra.Command, args []string) error {
 			opts := &options.DescribeOptions{Params: p}
+			cs, err := opts.Params.Clients()
+			if err != nil {
+				return err
+			}
 			if len(args) == 0 {
-				clients, err := opts.Params.Clients()
-				if err != nil {
-					return err
-				}
-				pipelineRunNames, err := pipelinerun.GetAllPipelineRuns(pipelineRunGroupResource, metav1.ListOptions{}, clients, opts.Params.Namespace(), 5, opts.Params.Time())
+				pipelineRunNames, err := pipelinerunpkg.GetAllPipelineRuns(pipelineRunGroupResource, metav1.ListOptions{}, cs, opts.Params.Namespace(), 5, opts.Params.Time())
 				if err != nil {
 					return err
 				}
@@ -71,7 +73,7 @@ func exportCommand(p cli.Params) *cobra.Command {
 				opts.PipelineRunName = args[0]
 			}
 
-			err := exportPipelineRun(cmd.OutOrStdout(), p, opts.PipelineRunName)
+			err = exportPipelineRun(cmd.OutOrStdout(), cs, opts.Params.Namespace(), opts.PipelineRunName)
 			if err != nil {
 				return err
 			}
@@ -82,20 +84,24 @@ func exportCommand(p cli.Params) *cobra.Command {
 	return c
 }
 
-func exportPipelineRun(out io.Writer, p cli.Params, pname string) error {
-	cs, err := p.Clients()
+func exportPipelineRun(out io.Writer, c *cli.Clients, ns string, prName string) error {
+	obj, err := actions.GetUnstructured(pipelineRunGroupResource, c, prName, ns, metav1.GetOptions{})
 	if err != nil {
 		return err
 	}
 
-	pipelinerun, err := pipelinerun.Get(cs, pname, metav1.GetOptions{}, p.Namespace())
+	err = export.RemoveFieldForExport(obj)
 	if err != nil {
 		return err
 	}
-	exported, err := export.TektonResourceToYaml(pipelinerun)
+
+	obj.SetKind("PipelineRun")
+
+	data, err := yaml.Marshal(obj)
 	if err != nil {
 		return err
 	}
-	_, err = out.Write([]byte(exported))
+
+	_, err = out.Write(data)
 	return err
 }

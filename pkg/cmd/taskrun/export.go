@@ -18,12 +18,13 @@ import (
 	"io"
 
 	"github.com/spf13/cobra"
+	"github.com/tektoncd/cli/pkg/actions"
 	"github.com/tektoncd/cli/pkg/cli"
 	"github.com/tektoncd/cli/pkg/export"
 	"github.com/tektoncd/cli/pkg/options"
-	"github.com/tektoncd/cli/pkg/taskrun"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	cliopts "k8s.io/cli-runtime/pkg/genericclioptions"
+	"sigs.k8s.io/yaml"
 )
 
 func exportCommand(p cli.Params) *cobra.Command {
@@ -74,14 +75,23 @@ func exportTaskRun(out io.Writer, p cli.Params, trName string) error {
 		return err
 	}
 
-	trun, err := taskrun.Get(cs, trName, metav1.GetOptions{}, p.Namespace())
+	obj, err := actions.GetUnstructured(taskrunGroupResource, cs, trName, p.Namespace(), metav1.GetOptions{})
 	if err != nil {
 		return err
 	}
-	exported, err := export.TektonResourceToYaml(trun)
+
+	err = export.RemoveFieldForExport(obj)
 	if err != nil {
 		return err
 	}
-	_, err = out.Write([]byte(exported))
+
+	obj.SetKind("TaskRun")
+
+	data, err := yaml.Marshal(obj)
+	if err != nil {
+		return err
+	}
+
+	_, err = out.Write(data)
 	return err
 }

@@ -1,0 +1,12 @@
+apiVersion: tekton.dev/v1beta1
+kind: PipelineRun
+metadata:
+  annotations:
+    pipeline.dev: cli
+  generateName: generate-name
+  labels:
+    tekton.dev/pipeline: pipeline
+spec:
+  pipelineRef:
+    name: pipeline
+  timeout: 1h0m0s

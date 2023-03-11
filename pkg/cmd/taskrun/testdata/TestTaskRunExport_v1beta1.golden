@@ -1,0 +1,13 @@
+apiVersion: tekton.dev/v1beta1
+kind: TaskRun
+metadata:
+  annotations:
+    pipeline.dev: cli
+  generateName: generate-name
+  labels:
+    tekton.dev/task: task
+spec:
+  serviceAccountName: ""
+  taskRef:
+    name: task
+  timeout: 1h0m0s
