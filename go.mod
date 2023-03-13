@@ -59,10 +59,10 @@ require (
 	gopkg.in/yaml.v3 v3.0.1
 	gotest.tools v2.2.0+incompatible
 	gotest.tools/v3 v3.4.0
-	k8s.io/api v0.25.5
+	k8s.io/api v0.25.7
 	k8s.io/apimachinery v0.26.2
-	k8s.io/cli-runtime v0.25.4
-	k8s.io/client-go v0.25.4
+	k8s.io/cli-runtime v0.25.7
+	k8s.io/client-go v0.25.7
 	knative.dev/pkg v0.0.0-20221123011842-b78020c16606
 	sigs.k8s.io/yaml v1.3.0
 )
