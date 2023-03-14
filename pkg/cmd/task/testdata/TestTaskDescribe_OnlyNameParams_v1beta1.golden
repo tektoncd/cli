@@ -1,0 +1,9 @@
+Name:        task-1
+Namespace:   ns
+
+Params
+
+ NAME      TYPE     DESCRIPTION              DEFAULT VALUE
+ myarg     string   params without the ...   ---
+ myprint   string   testing very long d...   ---
+ myarray   array                             ---

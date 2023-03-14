@@ -450,7 +450,7 @@ func TestTask_List(t *testing.T) {
 	}
 }
 
-func TestTask_Get(t *testing.T) {
+func TestTask_Get_v1beta1(t *testing.T) {
 	version := "v1beta1"
 	clock := clockwork.NewFakeClock()
 	tdata := []*v1beta1.Task{
@@ -486,11 +486,57 @@ func TestTask_Get(t *testing.T) {
 		t.Errorf("unable to create client: %v", err)
 	}
 
-	got, err := Get(c, "task", metav1.GetOptions{}, "ns")
+	var task *v1beta1.Pipeline
+	err = actions.GetV1(taskGroupResource, c, "task", "ns", metav1.GetOptions{}, &task)
 	if err != nil {
 		t.Errorf("unexpected Error")
 	}
-	test.AssertOutput(t, "task", got.Name)
+	test.AssertOutput(t, "task", task.Name)
+}
+
+func TestTask_Get(t *testing.T) {
+	version := "v1"
+	clock := clockwork.NewFakeClock()
+	tdata := []*v1.Task{
+		{
+			ObjectMeta: metav1.ObjectMeta{
+				Name:      "task",
+				Namespace: "ns",
+			},
+		},
+		{
+			ObjectMeta: metav1.ObjectMeta{
+				Name:      "task2",
+				Namespace: "ns",
+			},
+		},
+	}
+	cs, _ := test.SeedTestData(t, test.Data{
+		Tasks: tdata,
+	})
+	cs.Pipeline.Resources = cb.APIResourceList(version, []string{"task"})
+	tdc := testDynamic.Options{}
+	dc, err := tdc.Client(
+		cb.UnstructuredT(tdata[0], version),
+		cb.UnstructuredT(tdata[1], version),
+	)
+	if err != nil {
+		t.Errorf("unable to create dynamic client: %v", err)
+	}
+
+	p := &test.Params{Tekton: cs.Pipeline, Clock: clock, Kube: cs.Kube, Dynamic: dc}
+	c, err := p.Clients()
+	if err != nil {
+		t.Errorf("unable to create client: %v", err)
+	}
+
+	var task *v1.Task
+	err = actions.GetV1(taskGroupResource, c, "task", "ns", metav1.GetOptions{}, &task)
+	if err != nil {
+		t.Errorf("unexpected Error")
+	}
+
+	test.AssertOutput(t, "task", task.Name)
 }
 
 func TestTask_Create(t *testing.T) {

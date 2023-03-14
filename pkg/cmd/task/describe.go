@@ -15,8 +15,8 @@
 package task
 
 import (
+	"context"
 	"fmt"
-	"sort"
 	"text/tabwriter"
 	"text/template"
 
@@ -51,27 +51,6 @@ const describeTemplate = `{{decorate "bold" "Name"}}:	{{ .Task.Name }}
 {{- end }}
 {{- end }}
 
-{{- if .Task.Spec.Resources }}
-
-{{decorate "inputresources" ""}}{{decorate "underline bold" "Input Resources\n"}}
-{{- if ne (len .Task.Spec.Resources.Inputs) 0 }}
- NAME	TYPE
-{{- range $ir := .Task.Spec.Resources.Inputs }}
- {{decorate "bullet" $ir.Name }}	{{ $ir.Type }}
-{{- end }}
-{{- end }}
-
-{{- if ne (len .Task.Spec.Resources.Outputs) 0 }}
-
-{{decorate "outputresources" ""}}{{decorate "underline bold" "Output Resources\n"}}
- NAME	TYPE
-{{- range $or := .Task.Spec.Resources.Outputs }}
- {{decorate "bullet" $or.Name }}	{{ $or.Type }}
-{{- end }}
-{{- end }}
-
-{{- end }}
-
 {{- if ne (len .Task.Spec.Params) 0 }}
 
 {{decorate "params" ""}}{{decorate "underline bold" "Params\n"}}
@@ -82,8 +61,10 @@ const describeTemplate = `{{decorate "bold" "Name"}}:	{{ .Task.Name }}
 {{- else }}
 {{- if eq $p.Type "string" }}
  {{decorate "bullet" $p.Name }}	{{ $p.Type }}	{{ formatDesc $p.Description }}	{{ $p.Default.StringVal }}
-{{- else }}
+{{- else if eq $p.Type "array" }}
  {{decorate "bullet" $p.Name }}	{{ $p.Type }}	{{ formatDesc $p.Description }}	{{ $p.Default.ArrayVal }}
+{{- else }}
+ {{decorate "bullet" $p.Name }}	{{ $p.Type }}	{{ formatDesc $p.Description }}	{{ $p.Default.ObjectVal }}
 {{- end }}
 {{- end }}
 {{- end }}
@@ -182,7 +163,7 @@ or
 
 			if output != "" {
 				taskGroupResource := schema.GroupVersionResource{Group: "tekton.dev", Resource: "tasks"}
-				return actions.PrintObject(taskGroupResource, opts.TaskName, cmd.OutOrStdout(), cs.Dynamic, cs.Tekton.Discovery(), f, p.Namespace())
+				return actions.PrintObjectV1(taskGroupResource, opts.TaskName, cmd.OutOrStdout(), cs, f, p.Namespace())
 			}
 
 			return printTaskDescription(s, p, opts.TaskName)
@@ -199,14 +180,9 @@ func printTaskDescription(s *cli.Stream, p cli.Params, tname string) error {
 		return fmt.Errorf("failed to create tekton client")
 	}
 
-	t, err := task.Get(cs, tname, metav1.GetOptions{}, p.Namespace())
+	t, err := getTask(taskGroupResource, cs, tname, p.Namespace())
 	if err != nil {
 		return fmt.Errorf("failed to get Task %s: %v", tname, err)
-	}
-
-	if t.Spec.Resources != nil {
-		t.Spec.Resources.Inputs = sortResourcesByTypeAndName(t.Spec.Resources.Inputs)
-		t.Spec.Resources.Outputs = sortResourcesByTypeAndName(t.Spec.Resources.Outputs)
 	}
 
 	opts := metav1.ListOptions{
@@ -224,7 +200,7 @@ func printTaskDescription(s *cli.Stream, p cli.Params, tname string) error {
 	trsort.SortByStartTime(taskRuns.Items)
 
 	var data = struct {
-		Task     *v1beta1.Task
+		Task     *v1.Task
 		TaskRuns *v1.TaskRunList
 		Time     clockwork.Clock
 	}{
@@ -254,23 +230,6 @@ func printTaskDescription(s *cli.Stream, p cli.Params, tname string) error {
 	return w.Flush()
 }
 
-// this will sort the Task Resource by Type and then by Name
-func sortResourcesByTypeAndName(tres []v1beta1.TaskResource) []v1beta1.TaskResource {
-	sort.Slice(tres, func(i, j int) bool {
-		if tres[j].Type < tres[i].Type {
-			return false
-		}
-
-		if tres[j].Type > tres[i].Type {
-			return true
-		}
-
-		return tres[j].Name > tres[i].Name
-	})
-
-	return tres
-}
-
 func askTaskName(opts *options.DescribeOptions, c *cli.Clients, ns string) error {
 	taskNames, err := task.GetAllTaskNames(taskGroupResource, c, ns)
 	if err != nil {
@@ -286,4 +245,32 @@ func askTaskName(opts *options.DescribeOptions, c *cli.Clients, ns string) error
 	}
 
 	return nil
+}
+
+func getTask(gr schema.GroupVersionResource, c *cli.Clients, tName, ns string) (*v1.Task, error) {
+	var task v1.Task
+	gvr, err := actions.GetGroupVersionResource(gr, c.Tekton.Discovery())
+	if err != nil {
+		return nil, err
+	}
+
+	if gvr.Version == "v1" {
+		err := actions.GetV1(taskGroupResource, c, tName, ns, metav1.GetOptions{}, &task)
+		if err != nil {
+			return nil, err
+		}
+		return &task, nil
+
+	}
+
+	var taskV1beta1 v1beta1.Task
+	err = actions.GetV1(taskGroupResource, c, tName, ns, metav1.GetOptions{}, &taskV1beta1)
+	if err != nil {
+		return nil, err
+	}
+	err = taskV1beta1.ConvertTo(context.Background(), &task)
+	if err != nil {
+		return nil, err
+	}
+	return &task, nil
 }

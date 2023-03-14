@@ -19,6 +19,7 @@ import (
 	"strings"
 
 	"github.com/spf13/cobra"
+	"github.com/tektoncd/cli/pkg/actions"
 	"github.com/tektoncd/cli/pkg/cli"
 	"github.com/tektoncd/cli/pkg/cmd/taskrun"
 	"github.com/tektoncd/cli/pkg/flags"
@@ -26,6 +27,7 @@ import (
 	"github.com/tektoncd/cli/pkg/options"
 	task "github.com/tektoncd/cli/pkg/task"
 	taskrunpkg "github.com/tektoncd/cli/pkg/taskrun"
+	v1 "github.com/tektoncd/pipeline/pkg/apis/pipeline/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 )
 
@@ -36,7 +38,8 @@ func nameArg(args []string, p cli.Params) error {
 			return err
 		}
 		name, ns := args[0], p.Namespace()
-		if _, err = task.Get(c, name, metav1.GetOptions{}, ns); err != nil {
+		var task *v1.Task
+		if err = actions.GetV1(taskGroupResource, c, name, ns, metav1.GetOptions{}, &task); err != nil {
 			return err
 		}
 	}

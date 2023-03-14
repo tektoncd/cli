@@ -1,0 +1,13 @@
+Name:          task-1
+Namespace:     ns
+Description:   a test description
+
+Workspaces
+
+ NAME            DESCRIPTION              OPTIONAL
+ test            test workspace           false
+ test-optional   test optional works...   true
+
+Steps
+
+ hello

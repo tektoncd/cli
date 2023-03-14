@@ -42,7 +42,8 @@ func taskExists(args []string, p cli.Params) ([]string, error) {
 	var errorList error
 	ns := p.Namespace()
 	for _, name := range args {
-		_, err := task.Get(c, name, metav1.GetOptions{}, ns)
+		var task *v1.Task
+		err := actions.GetV1(taskGroupResource, c, name, ns, metav1.GetOptions{}, &task)
 		if err != nil {
 			errorList = multierr.Append(errorList, err)
 			continue
