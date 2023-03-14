@@ -43,6 +43,7 @@ func GetAllTaskNames(gr schema.GroupVersionResource, c *cli.Clients, ns string) 
 	return ret, nil
 }
 
+// TODO: remove as all the function uses are moved to new func
 // Get will fetch the task resource based on the task name
 func Get(c *cli.Clients, taskname string, opts metav1.GetOptions, ns string) (*v1beta1.Task, error) {
 	unstructuredT, err := actions.Get(taskGroupResource, c.Dynamic, c.Tekton.Discovery(), taskname, ns, opts)
