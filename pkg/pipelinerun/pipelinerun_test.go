@@ -21,6 +21,7 @@ import (
 
 	"github.com/google/go-cmp/cmp"
 	"github.com/jonboulle/clockwork"
+	"github.com/tektoncd/cli/pkg/actions"
 	"github.com/tektoncd/cli/pkg/cli"
 	"github.com/tektoncd/cli/pkg/test"
 	cb "github.com/tektoncd/cli/pkg/test/builder"
@@ -193,7 +194,7 @@ func TestPipelineRunsList_v1beta1(t *testing.T) {
 
 	for _, tp := range testParams {
 		t.Run(tp.name, func(t *testing.T) {
-			got, err := GetAllPipelineRuns(prGroupResource, tp.listOptions, tp.client, tp.namespace, 5, tp.time)
+			got, err := GetAllPipelineRuns(pipelineRunGroupResource, tp.listOptions, tp.client, tp.namespace, 5, tp.time)
 			if err != nil {
 				t.Errorf("unexpected Error")
 			}
@@ -358,7 +359,7 @@ func TestPipelineRunsList(t *testing.T) {
 
 	for _, tp := range testParams {
 		t.Run(tp.name, func(t *testing.T) {
-			got, err := GetAllPipelineRuns(prGroupResource, tp.listOptions, tp.client, tp.namespace, 5, tp.time)
+			got, err := GetAllPipelineRuns(pipelineRunGroupResource, tp.listOptions, tp.client, tp.namespace, 5, tp.time)
 			if err != nil {
 				t.Errorf("unexpected Error")
 			}
@@ -367,7 +368,7 @@ func TestPipelineRunsList(t *testing.T) {
 	}
 }
 
-func TestPipelineRunGet(t *testing.T) {
+func TestPipelineRunGet_v1beta1(t *testing.T) {
 	version := "v1beta1"
 	clock := clockwork.NewFakeClock()
 	pr1Started := clock.Now().Add(10 * time.Second)
@@ -446,11 +447,99 @@ func TestPipelineRunGet(t *testing.T) {
 		t.Errorf("unable to create client: %v", err)
 	}
 
-	got, err := Get(c, "pipelinerun1", metav1.GetOptions{}, "ns")
+	var pipeline *v1beta1.PipelineRun
+	err = actions.GetV1(pipelineRunGroupResource, c, "pipelinerun1", "ns", metav1.GetOptions{}, &pipeline)
 	if err != nil {
 		t.Errorf("unexpected Error")
 	}
-	test.AssertOutput(t, "pipelinerun1", got.Name)
+	test.AssertOutput(t, "pipelinerun1", pipeline.Name)
+}
+
+func TestPipelineRunGet(t *testing.T) {
+	version := "v1"
+	clock := clockwork.NewFakeClock()
+	pr1Started := clock.Now().Add(10 * time.Second)
+	runDuration := 1 * time.Minute
+
+	prdata := []*v1.PipelineRun{
+		{
+			ObjectMeta: metav1.ObjectMeta{
+				Name:      "pipelinerun1",
+				Namespace: "ns",
+				Labels:    map[string]string{"tekton.dev/pipeline": "pipeline"},
+			},
+			Spec: v1.PipelineRunSpec{
+				PipelineRef: &v1.PipelineRef{
+					Name: "pipeline",
+				},
+			},
+			Status: v1.PipelineRunStatus{
+				Status: duckv1.Status{
+					Conditions: duckv1.Conditions{
+						{
+							Status: corev1.ConditionTrue,
+							Reason: v1.PipelineRunReasonSuccessful.String(),
+						},
+					},
+				},
+				PipelineRunStatusFields: v1.PipelineRunStatusFields{
+					StartTime:      &metav1.Time{Time: pr1Started},
+					CompletionTime: &metav1.Time{Time: pr1Started.Add(runDuration)},
+				},
+			},
+		},
+		{
+			ObjectMeta: metav1.ObjectMeta{
+				Name:      "pipelinerun2",
+				Namespace: "ns",
+				Labels:    map[string]string{"tekton.dev/pipeline": "pipeline"},
+			},
+			Spec: v1.PipelineRunSpec{
+				PipelineRef: &v1.PipelineRef{
+					Name: "pipeline",
+				},
+			},
+			Status: v1.PipelineRunStatus{
+				Status: duckv1.Status{
+					Conditions: duckv1.Conditions{
+						{
+							Status: corev1.ConditionTrue,
+							Reason: v1.PipelineRunReasonSuccessful.String(),
+						},
+					},
+				},
+				PipelineRunStatusFields: v1.PipelineRunStatusFields{
+					StartTime:      &metav1.Time{Time: pr1Started},
+					CompletionTime: &metav1.Time{Time: pr1Started.Add(runDuration)},
+				},
+			},
+		},
+	}
+	cs, _ := test.SeedTestData(t, test.Data{
+		PipelineRuns: prdata,
+	})
+	cs.Pipeline.Resources = cb.APIResourceList(version, []string{"pipelinerun"})
+	tdc := testDynamic.Options{}
+	dc, err := tdc.Client(
+		cb.UnstructuredPR(prdata[0], version),
+		cb.UnstructuredPR(prdata[1], version),
+	)
+	if err != nil {
+		t.Errorf("unable to create dynamic client: %v", err)
+	}
+
+	p := &test.Params{Tekton: cs.Pipeline, Clock: clock, Kube: cs.Kube, Dynamic: dc}
+	c, err := p.Clients()
+	if err != nil {
+		t.Errorf("unable to create client: %v", err)
+	}
+
+	var pipeline *v1.PipelineRun
+	err = actions.GetV1(pipelineRunGroupResource, c, "pipelinerun1", "ns", metav1.GetOptions{}, &pipeline)
+	if err != nil {
+		t.Errorf("unexpected Error")
+	}
+	test.AssertOutput(t, "pipelinerun1", pipeline.Name)
 }
 
 func TestPipelineRunGet_MinimalEmbeddedStatus(t *testing.T) {

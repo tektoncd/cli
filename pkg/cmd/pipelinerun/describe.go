@@ -25,9 +25,7 @@ import (
 	"github.com/tektoncd/cli/pkg/formatted"
 	"github.com/tektoncd/cli/pkg/options"
 	pipelinerunpkg "github.com/tektoncd/cli/pkg/pipelinerun"
-	prdesc "github.com/tektoncd/cli/pkg/pipelinerun/description"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
-	"k8s.io/apimachinery/pkg/runtime/schema"
 	cliopts "k8s.io/cli-runtime/pkg/genericclioptions"
 )
 
@@ -110,11 +108,10 @@ or
 			}
 
 			if output != "" {
-				pipelineRunGroupResource := schema.GroupVersionResource{Group: "tekton.dev", Resource: "pipelineruns"}
-				return actions.PrintObject(pipelineRunGroupResource, opts.PipelineRunName, cmd.OutOrStdout(), cs.Dynamic, cs.Tekton.Discovery(), f, p.Namespace())
+				return actions.PrintObjectV1(pipelineRunGroupResource, opts.PipelineRunName, cmd.OutOrStdout(), cs, f, p.Namespace())
 			}
 
-			return prdesc.PrintPipelineRunDescription(s, opts.PipelineRunName, p)
+			return pipelinerunpkg.PrintPipelineRunDescription(s.Out, cs, opts.Params.Namespace(), opts.PipelineRunName, opts.Params.Time())
 		},
 	}
 

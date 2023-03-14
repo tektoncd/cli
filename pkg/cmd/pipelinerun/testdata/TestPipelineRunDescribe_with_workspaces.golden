@@ -7,11 +7,6 @@ Status
 STARTED          DURATION   STATUS
 10 minutes ago   20m0s      Succeeded
 
-Resources
-
- NAME    RESOURCE REF
- res-1   test-res
-
 Params
 
  NAME   VALUE

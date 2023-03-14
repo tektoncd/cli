@@ -26,7 +26,6 @@ import (
 	"github.com/tektoncd/cli/pkg/deleter"
 	"github.com/tektoncd/cli/pkg/formatted"
 	"github.com/tektoncd/cli/pkg/options"
-	pipelinerunpkg "github.com/tektoncd/cli/pkg/pipelinerun"
 	taskpkg "github.com/tektoncd/cli/pkg/task"
 	"github.com/tektoncd/cli/pkg/taskrun"
 	trsort "github.com/tektoncd/cli/pkg/taskrun/sort"
@@ -401,7 +400,8 @@ func trsWithOwnerPrFinished(cs *cli.Clients, runs *v1.TaskRunList) *v1.TaskRunLi
 func ownerPrFinished(cs *cli.Clients, tr v1.TaskRun) bool {
 	for _, ref := range tr.GetOwnerReferences() {
 		if ref.Kind == pipeline.PipelineRunControllerName {
-			pr, err := pipelinerunpkg.Get(cs, ref.Name, metav1.GetOptions{}, tr.Namespace)
+			var pr *v1.PipelineRun
+			err := actions.GetV1(pipelineRunGroupResource, cs, tr.Namespace, ref.Name, metav1.GetOptions{}, &pr)
 			if err != nil {
 				return false
 			}

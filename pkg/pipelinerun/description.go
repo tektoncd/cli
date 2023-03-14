@@ -12,35 +12,35 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-package description
+package pipelinerun
 
 import (
+	"context"
 	"fmt"
+	"io"
 	"sort"
 	"strings"
 	"text/tabwriter"
 	"text/template"
 
+	"github.com/jonboulle/clockwork"
+	"github.com/tektoncd/cli/pkg/actions"
 	"github.com/tektoncd/cli/pkg/cli"
 	"github.com/tektoncd/cli/pkg/formatted"
-	"github.com/tektoncd/cli/pkg/pipelinerun"
+	v1 "github.com/tektoncd/pipeline/pkg/apis/pipeline/v1"
 	"github.com/tektoncd/pipeline/pkg/apis/pipeline/v1beta1"
 	corev1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+	"k8s.io/apimachinery/pkg/runtime/schema"
 )
 
-const templ = `{{decorate "bold" "Name"}}:	{{ .PipelineRun.Name }}
+const describeTemplate = `{{decorate "bold" "Name"}}:	{{ .PipelineRun.Name }}
 {{decorate "bold" "Namespace"}}:	{{ .PipelineRun.Namespace }}
 {{- $pRefName := pipelineRefExists .PipelineRun.Spec }}{{- if ne $pRefName "" }}
 {{decorate "bold" "Pipeline Ref"}}:	{{ $pRefName }}
 {{- end }}
-{{- if ne .PipelineRun.Spec.ServiceAccountName "" }}
-{{decorate "bold" "Service Account"}}:	{{ .PipelineRun.Spec.ServiceAccountName }}
-{{- end }}
-
-{{- $timeout := getTimeout .PipelineRun -}}
-{{- if and (ne $timeout "") (ne $timeout "0s") }}
-{{decorate "bold" "Timeout(Deprecated)"}}:	{{ .PipelineRun.Spec.Timeout.Duration.String }}
+{{- if ne .PipelineRun.Spec.TaskRunTemplate.ServiceAccountName "" }}
+{{decorate "bold" "Service Account"}}:	{{ .PipelineRun.Spec.TaskRunTemplate.ServiceAccountName }}
 {{- end }}
 
 {{- $l := len .PipelineRun.Labels }}{{ if eq $l 0 }}
@@ -60,8 +60,8 @@ const templ = `{{decorate "bold" "Name"}}:	{{ .PipelineRun.Name }}
 
 {{decorate "status" ""}}{{decorate "underline bold" "Status\n"}}
 STARTED	DURATION	STATUS
-{{ formatAge .PipelineRun.Status.StartTime  .Params.Time }}	{{ formatDuration .PipelineRun.Status.StartTime .PipelineRun.Status.CompletionTime }}	{{ formatCondition .PipelineRun.Status.Conditions }}
-{{- $msg := hasFailed .PipelineRun -}}
+{{ formatAge .PipelineRun.Status.StartTime  .Time }}	{{ formatDuration .PipelineRun.Status.StartTime .PipelineRun.Status.CompletionTime }}	{{ formatCondition .PipelineRun.Status.Conditions }}
+{{- $msg := hasFailed .PipelineRun .TaskrunList -}}
 {{-  if ne $msg "" }}
 
 {{decorate "message" ""}}{{decorate "underline bold" "Message\n"}}
@@ -86,19 +86,6 @@ STARTED	DURATION	STATUS
 {{- end }}
 {{- end }}
 
-{{- if ne (len .PipelineRun.Spec.Resources) 0 }}
-
-{{decorate "resources" ""}}{{decorate "underline bold" "Resources\n"}}
- NAME	RESOURCE REF
-{{- range $i, $r := .PipelineRun.Spec.Resources }}
-{{- $rRefName := pipelineResourceRefExists $r }}{{- if ne $rRefName "" }}
- {{decorate "bullet" $r.Name }}	{{ $r.ResourceRef.Name }}
-{{- else }}
- {{decorate "bullet" $r.Name }}	{{ "" }}
-{{- end }}
-{{- end }}
-{{- end }}
-
 {{- if ne (len .PipelineRun.Spec.Params) 0 }}
 
 {{decorate "params" ""}}{{decorate "underline bold" "Params\n"}}
@@ -106,17 +93,19 @@ STARTED	DURATION	STATUS
 {{- range $i, $p := .PipelineRun.Spec.Params }}
 {{- if eq $p.Value.Type "string" }}
  {{decorate "bullet" $p.Name }}	{{ $p.Value.StringVal }}
-{{- else }}
+{{- else if eq $p.Value.Type "array" }}
  {{decorate "bullet" $p.Name }}	{{ $p.Value.ArrayVal }}
+{{- else }}
+ {{decorate "bullet" $p.Name }}	{{ $p.Value.ObjectVal }}
 {{- end }}
 {{- end }}
 {{- end }}
 
-{{- if ne (len .PipelineRun.Status.PipelineResults) 0 }}
+{{- if ne (len .PipelineRun.Status.Results) 0 }}
 
 {{decorate "results" ""}}{{decorate "underline bold" "Results\n"}}
  NAME	VALUE
-{{- range $result := .PipelineRun.Status.PipelineResults }}
+{{- range $result := .PipelineRun.Status.Results }}
 {{- if eq $result.Value.Type "string" }}
  {{decorate "bullet" $result.Name }}	{{ $result.Value.StringVal }}
 {{- else }}
@@ -143,7 +132,7 @@ STARTED	DURATION	STATUS
 {{decorate "taskruns" ""}}{{decorate "underline bold" "Taskruns\n"}}
  NAME	TASK NAME	STARTED	DURATION	STATUS
 {{- range $taskrun := .TaskrunList }}{{ if checkTRStatus $taskrun }}
- {{decorate "bullet" $taskrun.TaskrunName }}	{{ $taskrun.PipelineTaskName }}	{{ formatAge $taskrun.Status.StartTime $.Params.Time }}	{{ formatDuration $taskrun.Status.StartTime $taskrun.Status.CompletionTime }}	{{ formatCondition $taskrun.Status.Conditions }}
+ {{decorate "bullet" $taskrun.TaskRunName }}	{{ $taskrun.PipelineTaskName }}	{{ formatAge $taskrun.Status.StartTime $.Time }}	{{ formatDuration $taskrun.Status.StartTime $taskrun.Status.CompletionTime }}	{{ formatCondition $taskrun.Status.Conditions }}
 {{- end }}
 {{- end }}
 {{- end }}
@@ -158,16 +147,17 @@ STARTED	DURATION	STATUS
 {{- end }}
 `
 
-type tkr struct {
-	TaskrunName string
-	*v1beta1.PipelineRunTaskRunStatus
+type TaskRunWithStatus struct {
+	TaskRunName      string
+	PipelineTaskName string
+	Status           *v1.TaskRunStatus
 }
 
-type taskrunList []tkr
+type TaskRunWithStatusList []TaskRunWithStatus
 
-func (trs taskrunList) Len() int      { return len(trs) }
-func (trs taskrunList) Swap(i, j int) { trs[i], trs[j] = trs[j], trs[i] }
-func (trs taskrunList) Less(i, j int) bool {
+func (trs TaskRunWithStatusList) Len() int      { return len(trs) }
+func (trs TaskRunWithStatusList) Swap(i, j int) { trs[i], trs[j] = trs[j], trs[i] }
+func (trs TaskRunWithStatusList) Less(i, j int) bool {
 	if trs[j].Status == nil || trs[j].Status.StartTime == nil {
 		return false
 	}
@@ -179,85 +169,108 @@ func (trs taskrunList) Less(i, j int) bool {
 	return trs[j].Status.StartTime.Before(trs[i].Status.StartTime)
 }
 
-func newTaskrunListFromMap(statusMap map[string]*v1beta1.PipelineRunTaskRunStatus) taskrunList {
-	var trl taskrunList
-	for taskrunName, taskrunStatus := range statusMap {
-		trl = append(trl, tkr{
-			taskrunName,
-			taskrunStatus,
-		})
-	}
-	return trl
-}
-
-func PrintPipelineRunDescription(s *cli.Stream, prName string, p cli.Params) error {
-	cs, err := p.Clients()
-	if err != nil {
-		return fmt.Errorf("failed to create tekton client: %v", err)
-	}
-
-	pr, err := pipelinerun.Get(cs, prName, metav1.GetOptions{}, p.Namespace())
+func PrintPipelineRunDescription(out io.Writer, c *cli.Clients, ns string, prName string, time clockwork.Clock) error {
+	pr, err := getPipelineRun(pipelineRunGroupResource, c, prName, ns)
 	if err != nil {
 		return fmt.Errorf("failed to find pipelinerun %q", prName)
 	}
 
-	var trl taskrunList
-	if len(pr.Status.TaskRuns) != 0 {
-		trl = newTaskrunListFromMap(pr.Status.TaskRuns)
-		sort.Sort(trl)
+	var taskRunList TaskRunWithStatusList
+	for _, child := range pr.Status.ChildReferences {
+		if child.Kind == "TaskRun" {
+			var tr *v1.TaskRun
+			err = actions.GetV1(taskrunGroupResource, c, child.Name, ns, metav1.GetOptions{}, &tr)
+			if err != nil {
+				return fmt.Errorf("failed to find get taskruns of the pipelineruns")
+			}
+			taskRunList = append(taskRunList, TaskRunWithStatus{
+				tr.Name,
+				child.PipelineTaskName,
+				&tr.Status,
+			})
+		}
+	}
+
+	if len(taskRunList) != 0 {
+		sort.Sort(taskRunList)
 	}
 
 	var data = struct {
-		PipelineRun *v1beta1.PipelineRun
-		Params      cli.Params
-		TaskrunList taskrunList
+		PipelineRun *v1.PipelineRun
+		Time        clockwork.Clock
+		TaskrunList TaskRunWithStatusList
 	}{
 		PipelineRun: pr,
-		Params:      p,
-		TaskrunList: trl,
+		Time:        time,
+		TaskrunList: taskRunList,
 	}
 
 	funcMap := template.FuncMap{
-		"formatAge":                 formatted.Age,
-		"formatDuration":            formatted.Duration,
-		"formatCondition":           formatted.Condition,
-		"formatResult":              formatted.ResultString,
-		"formatWorkspace":           formatted.Workspace,
-		"hasFailed":                 hasFailed,
-		"pipelineRefExists":         pipelineRefExists,
-		"pipelineResourceRefExists": pipelineResourceRefExists,
-		"decorate":                  formatted.DecorateAttr,
-		"getTimeout":                getTimeoutValue,
-		"checkTRStatus":             checkTaskRunStatus,
-		"removeLastAppliedConfig":   formatted.RemoveLastAppliedConfig,
+		"formatAge":               formatted.Age,
+		"formatDuration":          formatted.Duration,
+		"formatCondition":         formatted.Condition,
+		"formatResult":            formatted.Result,
+		"formatWorkspace":         formatted.Workspace,
+		"hasFailed":               hasFailed,
+		"pipelineRefExists":       formatted.PipelineRefExists,
+		"decorate":                formatted.DecorateAttr,
+		"checkTRStatus":           checkTaskRunStatus,
+		"removeLastAppliedConfig": formatted.RemoveLastAppliedConfig,
 	}
 
-	w := tabwriter.NewWriter(s.Out, 0, 5, 3, ' ', tabwriter.TabIndent)
-	t := template.Must(template.New("Describe Pipelinerun").Funcs(funcMap).Parse(templ))
+	w := tabwriter.NewWriter(out, 0, 5, 3, ' ', tabwriter.TabIndent)
+	t := template.Must(template.New("Describe Pipelinerun").Funcs(funcMap).Parse(describeTemplate))
 
 	if err = t.Execute(w, data); err != nil {
-		fmt.Fprintf(s.Err, "failed to execute template: ")
 		return err
 	}
 	return w.Flush()
 }
 
-func hasFailed(pr *v1beta1.PipelineRun) string {
+func getPipelineRun(gr schema.GroupVersionResource, c *cli.Clients, prName, ns string) (*v1.PipelineRun, error) {
+	var pipelinerun v1.PipelineRun
+	gvr, err := actions.GetGroupVersionResource(gr, c.Tekton.Discovery())
+	if err != nil {
+		return nil, err
+	}
+
+	if gvr.Version == "v1" {
+		err := actions.GetV1(pipelineRunGroupResource, c, prName, ns, metav1.GetOptions{}, &pipelinerun)
+		if err != nil {
+			return nil, err
+		}
+		return &pipelinerun, nil
+	}
+
+	var pipelinerunV1beta1 v1beta1.PipelineRun
+	err = actions.GetV1(pipelineRunGroupResource, c, prName, ns, metav1.GetOptions{}, &pipelinerunV1beta1)
+	if err != nil {
+		return nil, err
+	}
+
+	err = pipelinerunV1beta1.ConvertTo(context.Background(), &pipelinerun)
+	if err != nil {
+		return nil, err
+	}
+	return &pipelinerun, nil
+}
+
+func hasFailed(pr *v1.PipelineRun, taskruns TaskRunWithStatusList) string {
 	if len(pr.Status.Conditions) == 0 {
 		return ""
 	}
 
 	if pr.Status.Conditions[0].Status == corev1.ConditionFalse {
-		trNames := []string{}
-		for taskRunName, tr := range pr.Status.TaskRuns {
-			if tr.Status == nil {
+		var trNames []string
+		for _, taskrun := range taskruns {
+			if taskrun.Status == nil {
 				continue
 			}
-			if len(tr.Status.Conditions) == 0 {
+			if len(taskrun.Status.Conditions) == 0 {
 				continue
 			}
-			if tr.Status.Conditions[0].Status == corev1.ConditionFalse {
-				trNames = append(trNames, taskRunName)
+			if taskrun.Status.Conditions[0].Status == corev1.ConditionFalse {
+				trNames = append(trNames, taskrun.TaskRunName)
 			}
 		}
 		message := pr.Status.Conditions[0].Message
@@ -270,31 +283,6 @@ func hasFailed(pr *v1beta1.PipelineRun) string {
 	return ""
 }
 
-func getTimeoutValue(pr *v1beta1.PipelineRun) string {
-	if pr.Spec.Timeout != nil {
-		return pr.Spec.Timeout.Duration.String()
-	}
-	return ""
-}
-
-func checkTaskRunStatus(taskRun tkr) bool {
-	return taskRun.PipelineRunTaskRunStatus.Status != nil
-}
-
-// Check if PipelineRef exists on a PipelineRunSpec. Returns empty string if not present.
-func pipelineRefExists(spec v1beta1.PipelineRunSpec) string {
-	if spec.PipelineRef == nil {
-		return ""
-	}
-
-	return spec.PipelineRef.Name
-}
-
-// Check if PipelineResourceRef exists on a PipelineResourceBinding. Returns empty string if not present.
-func pipelineResourceRefExists(res v1beta1.PipelineResourceBinding) string {
-	if res.ResourceRef == nil {
-		return ""
-	}
-
-	return res.ResourceRef.Name
+func checkTaskRunStatus(taskRun TaskRunWithStatus) bool {
+	return taskRun.Status != nil
 }

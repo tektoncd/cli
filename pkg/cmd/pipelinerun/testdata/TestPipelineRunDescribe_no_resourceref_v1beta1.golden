@@ -1,8 +1,11 @@
-Name:           pipeline-run
-Namespace:      ns
-Pipeline Ref:   pipeline
+Name:              pipeline-run
+Namespace:         ns
+Pipeline Ref:      pipeline
+Service Account:   test-sa
 Labels:
  tekton.dev/pipeline=pipeline
+Annotations:
+ tekton.dev/v1beta1Resources=[{"name":"test-resource"}]
 
 Status
 
@@ -11,6 +14,11 @@ STARTED          DURATION   STATUS
 
 Timeouts
  Pipeline:   1h0m0s
+
+Params
+
+ NAME         VALUE
+ test-param   param-value
 
 Taskruns
 

@@ -36,12 +36,3 @@ func Result(value v1beta1.ArrayOrString) string {
 	}
 	return "<invalid result type>"
 }
-
-// ResultString will format a given result value.
-// This is a deprecated function, that should get removed once all results
-// are using ArrayOrString.
-// Deprecated
-func ResultString(value string) string {
-	// remove trailing new-line from value
-	return strings.TrimSuffix(value, "\n")
-}

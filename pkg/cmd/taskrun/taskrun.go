@@ -23,6 +23,7 @@ import (
 )
 
 var taskrunGroupResource = schema.GroupVersionResource{Group: "tekton.dev", Resource: "taskruns"}
+var pipelineRunGroupResource = schema.GroupVersionResource{Group: "tekton.dev", Resource: "pipelineruns"}
 
 func Command(p cli.Params) *cobra.Command {
 	cmd := &cobra.Command{

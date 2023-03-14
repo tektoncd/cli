@@ -1,0 +1,10 @@
+Name:           pr-with-annotations
+Namespace:      ns
+Pipeline Ref:   pr-with-annotations
+Annotations:
+ tekton.dev/tags=testing
+
+Status
+
+STARTED   DURATION   STATUS
+---       ---        ---

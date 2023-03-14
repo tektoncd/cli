@@ -18,7 +18,8 @@ import (
 	"reflect"
 	"testing"
 
-	v1 "k8s.io/api/core/v1"
+	v1 "github.com/tektoncd/pipeline/pkg/apis/pipeline/v1"
+	metav1 "k8s.io/api/core/v1"
 )
 
 func TestFormatDesc(t *testing.T) {
@@ -76,8 +77,8 @@ func TestRemoveLastAppliedConfig(t *testing.T) {
 		{
 			name: "Annotations with last-applied-configuration",
 			input: map[string]string{
-				v1.LastAppliedConfigAnnotation: "JSON String",
-				"tekton.dev/tags":              "game",
+				metav1.LastAppliedConfigAnnotation: "JSON String",
+				"tekton.dev/tags":                  "game",
 			},
 			want: map[string]string{
 				"tekton.dev/tags": "game",
@@ -91,5 +92,29 @@ func TestRemoveLastAppliedConfig(t *testing.T) {
 				t.Error("input = %w, want = %w", tt.input, tt.want)
 			}
 		})
+	}
+}
+
+func TestPipelineRefExists_Present(t *testing.T) {
+	spec := v1.PipelineRunSpec{
+		PipelineRef: &v1.PipelineRef{
+			Name: "Pipeline",
+		},
+	}
+
+	output := PipelineRefExists(spec)
+	if output != "Pipeline" {
+		t.Errorf("Input = %s, want %s", output, "Pipeline")
+	}
+}
+
+func TestPipelineRefExists_Not_Present(t *testing.T) {
+	spec := v1.PipelineRunSpec{
+		PipelineRef: nil,
+	}
+
+	output := PipelineRefExists(spec)
+	if output != "" {
+		t.Errorf("Input = %s, want %s", output, "")
 	}
 }

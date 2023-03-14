@@ -1,4 +1,4 @@
-// Copyright © 2019 The Tekton Authors.
+// Copyright © 2023 The Tekton Authors.
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -24,8 +24,7 @@ import (
 	"github.com/tektoncd/cli/pkg/test"
 	cb "github.com/tektoncd/cli/pkg/test/builder"
 	testDynamic "github.com/tektoncd/cli/pkg/test/dynamic"
-	"github.com/tektoncd/pipeline/pkg/apis/pipeline/v1beta1"
-	pipelinetest "github.com/tektoncd/pipeline/test"
+	v1 "github.com/tektoncd/pipeline/pkg/apis/pipeline/v1"
 	"gotest.tools/v3/golden"
 	corev1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
@@ -35,7 +34,7 @@ import (
 	duckv1 "knative.dev/pkg/apis/duck/v1"
 )
 
-func TestPipelineRunDescribe_not_found_v1beta1(t *testing.T) {
+func TestPipelineRunDescribe_invalid_namespace(t *testing.T) {
 	ns := []*corev1.Namespace{
 		{
 			ObjectMeta: metav1.ObjectMeta{
@@ -44,8 +43,29 @@ func TestPipelineRunDescribe_not_found_v1beta1(t *testing.T) {
 		},
 	}
 
-	cs, _ := test.SeedV1beta1TestData(t, pipelinetest.Data{Namespaces: ns})
-	cs.Pipeline.Resources = cb.APIResourceList("v1beta1", []string{"pipelinerun"})
+	cs, _ := test.SeedTestData(t, test.Data{Namespaces: ns})
+	p := &test.Params{Tekton: cs.Pipeline, Kube: cs.Kube}
+
+	pipelinerun := Command(p)
+	out, err := test.ExecuteCommand(pipelinerun, "desc", "bar", "-n", "invalid")
+	if err == nil {
+		t.Errorf("Expected error for invalid namespace")
+	}
+	expected := "Error: failed to find pipelinerun \"bar\"\n"
+	test.AssertOutput(t, expected, out)
+}
+
+func TestPipelineRunDescribe_not_found(t *testing.T) {
+	ns := []*corev1.Namespace{
+		{
+			ObjectMeta: metav1.ObjectMeta{
+				Name: "ns",
+			},
+		},
+	}
+
+	cs, _ := test.SeedTestData(t, test.Data{Namespaces: ns})
+	cs.Pipeline.Resources = cb.APIResourceList("v1", []string{"pipelinerun"})
 	tdc := testDynamic.Options{}
 	dynamic, err := tdc.Client()
 	if err != nil {
@@ -62,17 +82,17 @@ func TestPipelineRunDescribe_not_found_v1beta1(t *testing.T) {
 	test.AssertOutput(t, expected, err.Error())
 }
 
-func TestPipelineRunDescribe_only_taskrun_v1beta1(t *testing.T) {
+func TestPipelineRunDescribe_only_taskrun(t *testing.T) {
 	clock := clockwork.NewFakeClock()
 
-	trs := []*v1beta1.TaskRun{
+	trs := []*v1.TaskRun{
 		{
 			ObjectMeta: metav1.ObjectMeta{
 				Name:      "tr-1",
 				Namespace: "ns",
 			},
-			Status: v1beta1.TaskRunStatus{
-				TaskRunStatusFields: v1beta1.TaskRunStatusFields{
+			Status: v1.TaskRunStatus{
+				TaskRunStatusFields: v1.TaskRunStatusFields{
 					StartTime:      &metav1.Time{Time: clock.Now().Add(2 * time.Minute)},
 					CompletionTime: &metav1.Time{Time: clock.Now().Add(5 * time.Minute)},
 				},
@@ -88,7 +108,7 @@ func TestPipelineRunDescribe_only_taskrun_v1beta1(t *testing.T) {
 		},
 	}
 
-	pipelineRuns := []*v1beta1.PipelineRun{
+	pipelineRuns := []*v1.PipelineRun{
 		{
 			ObjectMeta: metav1.ObjectMeta{
 				Name:              "pipeline-run",
@@ -96,15 +116,17 @@ func TestPipelineRunDescribe_only_taskrun_v1beta1(t *testing.T) {
 				CreationTimestamp: metav1.Time{Time: clock.Now()},
 				Labels:            map[string]string{"tekton.dev/pipeline": "pipeline"},
 			},
-			Spec: v1beta1.PipelineRunSpec{
-				Timeout: &metav1.Duration{Duration: 1 * time.Hour},
-				PipelineRef: &v1beta1.PipelineRef{
+			Spec: v1.PipelineRunSpec{
+				PipelineRef: &v1.PipelineRef{
 					Name: "pipeline",
 				},
+				Timeouts: &v1.TimeoutFields{
+					Pipeline: &metav1.Duration{Duration: 1 * time.Hour},
+				},
 			},
-			Status: v1beta1.PipelineRunStatus{
-				PipelineRunStatusFields: v1beta1.PipelineRunStatusFields{
-					ChildReferences: []v1beta1.ChildStatusReference{
+			Status: v1.PipelineRunStatus{
+				PipelineRunStatusFields: v1.PipelineRunStatusFields{
+					ChildReferences: []v1.ChildStatusReference{
 						{
 							Name:             "tr-1",
 							PipelineTaskName: "t-1",
@@ -120,7 +142,7 @@ func TestPipelineRunDescribe_only_taskrun_v1beta1(t *testing.T) {
 					Conditions: duckv1.Conditions{
 						{
 							Status: corev1.ConditionTrue,
-							Reason: v1beta1.PipelineRunReasonSuccessful.String(),
+							Reason: v1.PipelineRunReasonSuccessful.String(),
 						},
 					},
 				},
@@ -136,16 +158,16 @@ func TestPipelineRunDescribe_only_taskrun_v1beta1(t *testing.T) {
 		},
 	}
 
-	version := "v1beta1"
+	version := "v1"
 	tdc := testDynamic.Options{}
 	dynamic, err := tdc.Client(
-		cb.UnstructuredV1beta1PR(pipelineRuns[0], version),
-		cb.UnstructuredV1beta1TR(trs[0], version),
+		cb.UnstructuredPR(pipelineRuns[0], version),
+		cb.UnstructuredTR(trs[0], version),
 	)
 	if err != nil {
 		t.Errorf("unable to create dynamic client: %v", err)
 	}
-	cs, _ := test.SeedV1beta1TestData(t, pipelinetest.Data{Namespaces: namespaces, PipelineRuns: pipelineRuns,
+	cs, _ := test.SeedTestData(t, test.Data{Namespaces: namespaces, PipelineRuns: pipelineRuns,
 		TaskRuns: trs,
 	})
 	cs.Pipeline.Resources = cb.APIResourceList(version, []string{"pipelinerun", "taskrun"})
@@ -160,17 +182,17 @@ func TestPipelineRunDescribe_only_taskrun_v1beta1(t *testing.T) {
 	golden.Assert(t, actual, fmt.Sprintf("%s.golden", t.Name()))
 }
 
-func TestPipelineRunDescribe_multiple_taskrun_ordering_v1beta1(t *testing.T) {
+func TestPipelineRunDescribe_multiple_taskrun_ordering(t *testing.T) {
 	clock := clockwork.NewFakeClock()
 
-	trs := []*v1beta1.TaskRun{
+	trs := []*v1.TaskRun{
 		{
 			ObjectMeta: metav1.ObjectMeta{
 				Name:      "tr-1",
 				Namespace: "ns",
 			},
-			Status: v1beta1.TaskRunStatus{
-				TaskRunStatusFields: v1beta1.TaskRunStatusFields{
+			Status: v1.TaskRunStatus{
+				TaskRunStatusFields: v1.TaskRunStatusFields{
 					StartTime:      &metav1.Time{Time: clock.Now().Add(2 * time.Minute)},
 					CompletionTime: &metav1.Time{Time: clock.Now().Add(5 * time.Minute)},
 				},
@@ -189,8 +211,8 @@ func TestPipelineRunDescribe_multiple_taskrun_ordering_v1beta1(t *testing.T) {
 				Name:      "tr-2",
 				Namespace: "ns",
 			},
-			Status: v1beta1.TaskRunStatus{
-				TaskRunStatusFields: v1beta1.TaskRunStatusFields{
+			Status: v1.TaskRunStatus{
+				TaskRunStatusFields: v1.TaskRunStatusFields{
 					StartTime:      &metav1.Time{Time: clock.Now().Add(5 * time.Minute)},
 					CompletionTime: &metav1.Time{Time: clock.Now().Add(9 * time.Minute)},
 				},
@@ -206,7 +228,7 @@ func TestPipelineRunDescribe_multiple_taskrun_ordering_v1beta1(t *testing.T) {
 		},
 	}
 
-	pipelineRuns := []*v1beta1.PipelineRun{
+	pipelineRuns := []*v1.PipelineRun{
 		{
 			ObjectMeta: metav1.ObjectMeta{
 				Name:              "pipeline-run",
@@ -214,15 +236,17 @@ func TestPipelineRunDescribe_multiple_taskrun_ordering_v1beta1(t *testing.T) {
 				CreationTimestamp: metav1.Time{Time: clock.Now()},
 				Labels:            map[string]string{"tekton.dev/pipeline": "pipeline"},
 			},
-			Spec: v1beta1.PipelineRunSpec{
-				Timeout: &metav1.Duration{Duration: 1 * time.Hour},
-				PipelineRef: &v1beta1.PipelineRef{
+			Spec: v1.PipelineRunSpec{
+				PipelineRef: &v1.PipelineRef{
 					Name: "pipeline",
 				},
+				Timeouts: &v1.TimeoutFields{
+					Pipeline: &metav1.Duration{Duration: 1 * time.Hour},
+				},
 			},
-			Status: v1beta1.PipelineRunStatus{
-				PipelineRunStatusFields: v1beta1.PipelineRunStatusFields{
-					ChildReferences: []v1beta1.ChildStatusReference{
+			Status: v1.PipelineRunStatus{
+				PipelineRunStatusFields: v1.PipelineRunStatusFields{
+					ChildReferences: []v1.ChildStatusReference{
 						{
 							Name:             "tr-1",
 							PipelineTaskName: "t-1",
@@ -245,7 +269,7 @@ func TestPipelineRunDescribe_multiple_taskrun_ordering_v1beta1(t *testing.T) {
 					Conditions: duckv1.Conditions{
 						{
 							Status: corev1.ConditionTrue,
-							Reason: v1beta1.PipelineRunReasonSuccessful.String(),
+							Reason: v1.PipelineRunReasonSuccessful.String(),
 						},
 					},
 				},
@@ -261,17 +285,17 @@ func TestPipelineRunDescribe_multiple_taskrun_ordering_v1beta1(t *testing.T) {
 		},
 	}
 
-	version := "v1beta1"
+	version := "v1"
 	tdc := testDynamic.Options{}
 	dynamic, err := tdc.Client(
-		cb.UnstructuredV1beta1PR(pipelineRuns[0], version),
-		cb.UnstructuredV1beta1TR(trs[0], version),
-		cb.UnstructuredV1beta1TR(trs[1], version),
+		cb.UnstructuredPR(pipelineRuns[0], version),
+		cb.UnstructuredTR(trs[0], version),
+		cb.UnstructuredTR(trs[1], version),
 	)
 	if err != nil {
 		t.Errorf("unable to create dynamic client: %v", err)
 	}
-	cs, _ := test.SeedV1beta1TestData(t, pipelinetest.Data{Namespaces: namespaces, PipelineRuns: pipelineRuns,
+	cs, _ := test.SeedTestData(t, test.Data{Namespaces: namespaces, PipelineRuns: pipelineRuns,
 		TaskRuns: trs,
 	})
 	cs.Pipeline.Resources = cb.APIResourceList(version, []string{"pipelinerun", "taskrun"})
@@ -287,17 +311,17 @@ func TestPipelineRunDescribe_multiple_taskrun_ordering_v1beta1(t *testing.T) {
 
 }
 
-func TestPipelineRunDescribe_multiple_taskrun_without_status_v1beta1(t *testing.T) {
+func TestPipelineRunDescribe_multiple_taskrun_without_status(t *testing.T) {
 	clock := clockwork.NewFakeClock()
 
-	trs := []*v1beta1.TaskRun{
+	trs := []*v1.TaskRun{
 		{
 			ObjectMeta: metav1.ObjectMeta{
 				Name:      "tr-1",
 				Namespace: "ns",
 			},
-			Status: v1beta1.TaskRunStatus{
-				TaskRunStatusFields: v1beta1.TaskRunStatusFields{
+			Status: v1.TaskRunStatus{
+				TaskRunStatusFields: v1.TaskRunStatusFields{
 					StartTime:      &metav1.Time{Time: clock.Now().Add(2 * time.Minute)},
 					CompletionTime: &metav1.Time{Time: clock.Now().Add(5 * time.Minute)},
 				},
@@ -316,11 +340,11 @@ func TestPipelineRunDescribe_multiple_taskrun_without_status_v1beta1(t *testing.
 				Name:      "tr-0",
 				Namespace: "ns",
 			},
-			Status: v1beta1.TaskRunStatus{},
+			Status: v1.TaskRunStatus{},
 		},
 	}
 
-	pipelineRuns := []*v1beta1.PipelineRun{
+	pipelineRuns := []*v1.PipelineRun{
 		{
 			ObjectMeta: metav1.ObjectMeta{
 				Name:              "pipeline-run",
@@ -328,15 +352,17 @@ func TestPipelineRunDescribe_multiple_taskrun_without_status_v1beta1(t *testing.
 				CreationTimestamp: metav1.Time{Time: clock.Now()},
 				Labels:            map[string]string{"tekton.dev/pipeline": "pipeline"},
 			},
-			Spec: v1beta1.PipelineRunSpec{
-				Timeout: &metav1.Duration{Duration: 1 * time.Hour},
-				PipelineRef: &v1beta1.PipelineRef{
+			Spec: v1.PipelineRunSpec{
+				Timeouts: &v1.TimeoutFields{
+					Pipeline: &metav1.Duration{Duration: 1 * time.Hour},
+				},
+				PipelineRef: &v1.PipelineRef{
 					Name: "pipeline",
 				},
 			},
-			Status: v1beta1.PipelineRunStatus{
-				PipelineRunStatusFields: v1beta1.PipelineRunStatusFields{
-					ChildReferences: []v1beta1.ChildStatusReference{
+			Status: v1.PipelineRunStatus{
+				PipelineRunStatusFields: v1.PipelineRunStatusFields{
+					ChildReferences: []v1.ChildStatusReference{
 						{
 							Name:             "tr-1",
 							PipelineTaskName: "t-1",
@@ -359,7 +385,7 @@ func TestPipelineRunDescribe_multiple_taskrun_without_status_v1beta1(t *testing.
 					Conditions: duckv1.Conditions{
 						{
 							Status: corev1.ConditionFalse,
-							Reason: v1beta1.PipelineRunReasonFailed.String(),
+							Reason: v1.PipelineRunReasonFailed.String(),
 						},
 					},
 				},
@@ -375,17 +401,17 @@ func TestPipelineRunDescribe_multiple_taskrun_without_status_v1beta1(t *testing.
 		},
 	}
 
-	version := "v1beta1"
+	version := "v1"
 	tdc := testDynamic.Options{}
 	dynamic, err := tdc.Client(
-		cb.UnstructuredV1beta1PR(pipelineRuns[0], version),
-		cb.UnstructuredV1beta1TR(trs[0], version),
-		cb.UnstructuredV1beta1TR(trs[1], version),
+		cb.UnstructuredPR(pipelineRuns[0], version),
+		cb.UnstructuredTR(trs[0], version),
+		cb.UnstructuredTR(trs[1], version),
 	)
 	if err != nil {
 		t.Errorf("unable to create dynamic client: %v", err)
 	}
-	cs, _ := test.SeedV1beta1TestData(t, pipelinetest.Data{Namespaces: namespaces, PipelineRuns: pipelineRuns,
+	cs, _ := test.SeedTestData(t, test.Data{Namespaces: namespaces, PipelineRuns: pipelineRuns,
 		TaskRuns: trs,
 	})
 	cs.Pipeline.Resources = cb.APIResourceList(version, []string{"pipelinerun", "taskrun"})
@@ -400,17 +426,17 @@ func TestPipelineRunDescribe_multiple_taskrun_without_status_v1beta1(t *testing.
 	golden.Assert(t, actual, fmt.Sprintf("%s.golden", t.Name()))
 }
 
-func TestPipelineRunDescribe_failed_v1beta1(t *testing.T) {
+func TestPipelineRunDescribe_failed(t *testing.T) {
 	clock := clockwork.NewFakeClock()
 
-	trs := []*v1beta1.TaskRun{
+	trs := []*v1.TaskRun{
 		{
 			ObjectMeta: metav1.ObjectMeta{
 				Name:      "tr-1",
 				Namespace: "ns",
 			},
-			Status: v1beta1.TaskRunStatus{
-				TaskRunStatusFields: v1beta1.TaskRunStatusFields{
+			Status: v1.TaskRunStatus{
+				TaskRunStatusFields: v1.TaskRunStatusFields{
 					StartTime:      &metav1.Time{Time: clock.Now().Add(2 * time.Minute)},
 					CompletionTime: &metav1.Time{Time: clock.Now().Add(5 * time.Minute)},
 				},
@@ -418,7 +444,7 @@ func TestPipelineRunDescribe_failed_v1beta1(t *testing.T) {
 					Conditions: duckv1.Conditions{
 						{
 							Status:  corev1.ConditionFalse,
-							Reason:  v1beta1.PipelineRunReasonFailed.String(),
+							Reason:  v1.PipelineRunReasonFailed.String(),
 							Message: "Testing tr failed",
 						},
 					},
@@ -427,7 +453,7 @@ func TestPipelineRunDescribe_failed_v1beta1(t *testing.T) {
 		},
 	}
 
-	pipelineRuns := []*v1beta1.PipelineRun{
+	pipelineRuns := []*v1.PipelineRun{
 		{
 			ObjectMeta: metav1.ObjectMeta{
 				Name:              "pipeline-run",
@@ -435,16 +461,20 @@ func TestPipelineRunDescribe_failed_v1beta1(t *testing.T) {
 				CreationTimestamp: metav1.Time{Time: clock.Now()},
 				Labels:            map[string]string{"tekton.dev/pipeline": "pipeline"},
 			},
-			Spec: v1beta1.PipelineRunSpec{
-				Timeout: &metav1.Duration{Duration: 1 * time.Hour},
-				PipelineRef: &v1beta1.PipelineRef{
+			Spec: v1.PipelineRunSpec{
+				Timeouts: &v1.TimeoutFields{
+					Pipeline: &metav1.Duration{Duration: 1 * time.Hour},
+				},
+				PipelineRef: &v1.PipelineRef{
 					Name: "pipeline",
 				},
-				ServiceAccountName: "test-sa",
+				TaskRunTemplate: v1.PipelineTaskRunTemplate{
+					ServiceAccountName: "test-sa",
+				},
 			},
-			Status: v1beta1.PipelineRunStatus{
-				PipelineRunStatusFields: v1beta1.PipelineRunStatusFields{
-					ChildReferences: []v1beta1.ChildStatusReference{
+			Status: v1.PipelineRunStatus{
+				PipelineRunStatusFields: v1.PipelineRunStatusFields{
+					ChildReferences: []v1.ChildStatusReference{
 						{
 							Name:             "tr-1",
 							PipelineTaskName: "t-1",
@@ -477,16 +507,16 @@ func TestPipelineRunDescribe_failed_v1beta1(t *testing.T) {
 		},
 	}
 
-	version := "v1beta1"
+	version := "v1"
 	tdc := testDynamic.Options{}
 	dynamic, err := tdc.Client(
-		cb.UnstructuredV1beta1PR(pipelineRuns[0], version),
-		cb.UnstructuredV1beta1TR(trs[0], version),
+		cb.UnstructuredPR(pipelineRuns[0], version),
+		cb.UnstructuredTR(trs[0], version),
 	)
 	if err != nil {
 		t.Errorf("unable to create dynamic client: %v", err)
 	}
-	cs, _ := test.SeedV1beta1TestData(t, pipelinetest.Data{Namespaces: namespaces, PipelineRuns: pipelineRuns,
+	cs, _ := test.SeedTestData(t, test.Data{Namespaces: namespaces, PipelineRuns: pipelineRuns,
 		TaskRuns: trs,
 	})
 	cs.Pipeline.Resources = cb.APIResourceList(version, []string{"pipelinerun", "taskrun"})
@@ -501,8 +531,8 @@ func TestPipelineRunDescribe_failed_v1beta1(t *testing.T) {
 	golden.Assert(t, actual, fmt.Sprintf("%s.golden", t.Name()))
 }
 
-func TestPipelineRunDescribe_last_no_PipelineRun_present_v1beta1(t *testing.T) {
-	pipelineRuns := []*v1beta1.PipelineRun{}
+func TestPipelineRunDescribe_last_no_PipelineRun_present(t *testing.T) {
+	pipelineRuns := []*v1.PipelineRun{}
 	namespaces := []*corev1.Namespace{
 		{
 			ObjectMeta: metav1.ObjectMeta{
@@ -511,13 +541,13 @@ func TestPipelineRunDescribe_last_no_PipelineRun_present_v1beta1(t *testing.T) {
 		},
 	}
 
-	version := "v1beta1"
+	version := "v1"
 	tdc := testDynamic.Options{}
 	dynamic, err := tdc.Client()
 	if err != nil {
 		t.Errorf("unable to create dynamic client: %v", err)
 	}
-	cs, _ := test.SeedV1beta1TestData(t, pipelinetest.Data{Namespaces: namespaces, PipelineRuns: pipelineRuns})
+	cs, _ := test.SeedTestData(t, test.Data{Namespaces: namespaces, PipelineRuns: pipelineRuns})
 
 	cs.Pipeline.Resources = cb.APIResourceList(version, []string{"pipelinerun"})
 	p := &test.Params{Tekton: cs.Pipeline, Kube: cs.Kube, Dynamic: dynamic}
@@ -531,17 +561,17 @@ func TestPipelineRunDescribe_last_no_PipelineRun_present_v1beta1(t *testing.T) {
 	test.AssertOutput(t, expected, out)
 }
 
-func TestPipelineRunDescribe_failed_withoutTRCondition_v1beta1(t *testing.T) {
+func TestPipelineRunDescribe_failed_withoutTRCondition(t *testing.T) {
 	clock := clockwork.NewFakeClock()
 
-	trs := []*v1beta1.TaskRun{
+	trs := []*v1.TaskRun{
 		{
 			ObjectMeta: metav1.ObjectMeta{
 				Name:      "tr-1",
 				Namespace: "ns",
 			},
-			Status: v1beta1.TaskRunStatus{
-				TaskRunStatusFields: v1beta1.TaskRunStatusFields{
+			Status: v1.TaskRunStatus{
+				TaskRunStatusFields: v1.TaskRunStatusFields{
 					StartTime:      &metav1.Time{Time: clock.Now().Add(2 * time.Minute)},
 					CompletionTime: &metav1.Time{Time: clock.Now().Add(5 * time.Minute)},
 				},
@@ -549,7 +579,7 @@ func TestPipelineRunDescribe_failed_withoutTRCondition_v1beta1(t *testing.T) {
 		},
 	}
 
-	pipelineRuns := []*v1beta1.PipelineRun{
+	pipelineRuns := []*v1.PipelineRun{
 		{
 			ObjectMeta: metav1.ObjectMeta{
 				Name:              "pipeline-run",
@@ -557,16 +587,20 @@ func TestPipelineRunDescribe_failed_withoutTRCondition_v1beta1(t *testing.T) {
 				CreationTimestamp: metav1.Time{Time: clock.Now()},
 				Labels:            map[string]string{"tekton.dev/pipeline": "pipeline"},
 			},
-			Spec: v1beta1.PipelineRunSpec{
-				Timeout: &metav1.Duration{Duration: 1 * time.Hour},
-				PipelineRef: &v1beta1.PipelineRef{
+			Spec: v1.PipelineRunSpec{
+				Timeouts: &v1.TimeoutFields{
+					Pipeline: &metav1.Duration{Duration: 1 * time.Hour},
+				},
+				PipelineRef: &v1.PipelineRef{
 					Name: "pipeline",
 				},
-				ServiceAccountName: "test-sa",
+				TaskRunTemplate: v1.PipelineTaskRunTemplate{
+					ServiceAccountName: "test-sa",
+				},
 			},
-			Status: v1beta1.PipelineRunStatus{
-				PipelineRunStatusFields: v1beta1.PipelineRunStatusFields{
-					ChildReferences: []v1beta1.ChildStatusReference{
+			Status: v1.PipelineRunStatus{
+				PipelineRunStatusFields: v1.PipelineRunStatusFields{
+					ChildReferences: []v1.ChildStatusReference{
 						{
 							Name:             "tr-1",
 							PipelineTaskName: "t-1",
@@ -599,16 +633,16 @@ func TestPipelineRunDescribe_failed_withoutTRCondition_v1beta1(t *testing.T) {
 		},
 	}
 
-	version := "v1beta1"
+	version := "v1"
 	tdc := testDynamic.Options{}
 	dynamic, err := tdc.Client(
-		cb.UnstructuredV1beta1PR(pipelineRuns[0], version),
-		cb.UnstructuredV1beta1TR(trs[0], version),
+		cb.UnstructuredPR(pipelineRuns[0], version),
+		cb.UnstructuredTR(trs[0], version),
 	)
 	if err != nil {
 		t.Errorf("unable to create dynamic client: %v", err)
 	}
-	cs, _ := test.SeedV1beta1TestData(t, pipelinetest.Data{Namespaces: namespaces, PipelineRuns: pipelineRuns,
+	cs, _ := test.SeedTestData(t, test.Data{Namespaces: namespaces, PipelineRuns: pipelineRuns,
 		TaskRuns: trs,
 	})
 	cs.Pipeline.Resources = cb.APIResourceList(version, []string{"pipelinerun", "taskrun"})
@@ -623,17 +657,17 @@ func TestPipelineRunDescribe_failed_withoutTRCondition_v1beta1(t *testing.T) {
 	golden.Assert(t, actual, fmt.Sprintf("%s.golden", t.Name()))
 }
 
-func TestPipelineRunDescribe_failed_withoutPRCondition_v1beta1(t *testing.T) {
+func TestPipelineRunDescribe_failed_withoutPRCondition(t *testing.T) {
 	clock := clockwork.NewFakeClock()
 
-	trs := []*v1beta1.TaskRun{
+	trs := []*v1.TaskRun{
 		{
 			ObjectMeta: metav1.ObjectMeta{
 				Name:      "tr-1",
 				Namespace: "ns",
 			},
-			Status: v1beta1.TaskRunStatus{
-				TaskRunStatusFields: v1beta1.TaskRunStatusFields{
+			Status: v1.TaskRunStatus{
+				TaskRunStatusFields: v1.TaskRunStatusFields{
 					StartTime:      &metav1.Time{Time: clock.Now().Add(2 * time.Minute)},
 					CompletionTime: &metav1.Time{Time: clock.Now().Add(5 * time.Minute)},
 				},
@@ -641,7 +675,7 @@ func TestPipelineRunDescribe_failed_withoutPRCondition_v1beta1(t *testing.T) {
 		},
 	}
 
-	pipelineRuns := []*v1beta1.PipelineRun{
+	pipelineRuns := []*v1.PipelineRun{
 		{
 			ObjectMeta: metav1.ObjectMeta{
 				Name:              "pipeline-run",
@@ -649,16 +683,20 @@ func TestPipelineRunDescribe_failed_withoutPRCondition_v1beta1(t *testing.T) {
 				CreationTimestamp: metav1.Time{Time: clock.Now()},
 				Labels:            map[string]string{"tekton.dev/pipeline": "pipeline"},
 			},
-			Spec: v1beta1.PipelineRunSpec{
-				Timeout: &metav1.Duration{Duration: 1 * time.Hour},
-				PipelineRef: &v1beta1.PipelineRef{
+			Spec: v1.PipelineRunSpec{
+				Timeouts: &v1.TimeoutFields{
+					Pipeline: &metav1.Duration{Duration: 1 * time.Hour},
+				},
+				PipelineRef: &v1.PipelineRef{
 					Name: "pipeline",
 				},
-				ServiceAccountName: "test-sa",
+				TaskRunTemplate: v1.PipelineTaskRunTemplate{
+					ServiceAccountName: "test-sa",
+				},
 			},
-			Status: v1beta1.PipelineRunStatus{
-				PipelineRunStatusFields: v1beta1.PipelineRunStatusFields{
-					ChildReferences: []v1beta1.ChildStatusReference{
+			Status: v1.PipelineRunStatus{
+				PipelineRunStatusFields: v1.PipelineRunStatusFields{
+					ChildReferences: []v1.ChildStatusReference{
 						{
 							Name:             "tr-1",
 							PipelineTaskName: "t-1",
@@ -682,16 +720,16 @@ func TestPipelineRunDescribe_failed_withoutPRCondition_v1beta1(t *testing.T) {
 		},
 	}
 
-	version := "v1beta1"
+	version := "v1"
 	tdc := testDynamic.Options{}
 	dynamic, err := tdc.Client(
-		cb.UnstructuredV1beta1PR(pipelineRuns[0], version),
-		cb.UnstructuredV1beta1TR(trs[0], version),
+		cb.UnstructuredPR(pipelineRuns[0], version),
+		cb.UnstructuredTR(trs[0], version),
 	)
 	if err != nil {
 		t.Errorf("unable to create dynamic client: %v", err)
 	}
-	cs, _ := test.SeedV1beta1TestData(t, pipelinetest.Data{Namespaces: namespaces, PipelineRuns: pipelineRuns,
+	cs, _ := test.SeedTestData(t, test.Data{Namespaces: namespaces, PipelineRuns: pipelineRuns,
 		TaskRuns: trs,
 	})
 	cs.Pipeline.Resources = cb.APIResourceList(version, []string{"pipelinerun", "taskrun"})
@@ -706,17 +744,17 @@ func TestPipelineRunDescribe_failed_withoutPRCondition_v1beta1(t *testing.T) {
 	golden.Assert(t, actual, fmt.Sprintf("%s.golden", t.Name()))
 }
 
-func TestPipelineRunDescribe_with_resources_taskrun_v1beta1(t *testing.T) {
+func TestPipelineRunDescribe_with_resources_taskrun(t *testing.T) {
 	clock := clockwork.NewFakeClock()
 
-	trs := []*v1beta1.TaskRun{
+	trs := []*v1.TaskRun{
 		{
 			ObjectMeta: metav1.ObjectMeta{
 				Name:      "tr-1",
 				Namespace: "ns",
 			},
-			Status: v1beta1.TaskRunStatus{
-				TaskRunStatusFields: v1beta1.TaskRunStatusFields{
+			Status: v1.TaskRunStatus{
+				TaskRunStatusFields: v1.TaskRunStatusFields{
 					StartTime:      &metav1.Time{Time: clock.Now().Add(2 * time.Minute)},
 					CompletionTime: &metav1.Time{Time: clock.Now().Add(5 * time.Minute)},
 				},
@@ -732,7 +770,7 @@ func TestPipelineRunDescribe_with_resources_taskrun_v1beta1(t *testing.T) {
 		},
 	}
 
-	pipelineRuns := []*v1beta1.PipelineRun{
+	pipelineRuns := []*v1.PipelineRun{
 		{
 			ObjectMeta: metav1.ObjectMeta{
 				Name:              "pipeline-run",
@@ -740,33 +778,29 @@ func TestPipelineRunDescribe_with_resources_taskrun_v1beta1(t *testing.T) {
 				CreationTimestamp: metav1.Time{Time: clock.Now()},
 				Labels:            map[string]string{"tekton.dev/pipeline": "pipeline"},
 			},
-			Spec: v1beta1.PipelineRunSpec{
-				Timeout: &metav1.Duration{Duration: 1 * time.Hour},
-				PipelineRef: &v1beta1.PipelineRef{
+			Spec: v1.PipelineRunSpec{
+				Timeouts: &v1.TimeoutFields{
+					Pipeline: &metav1.Duration{Duration: 1 * time.Hour},
+				},
+				PipelineRef: &v1.PipelineRef{
 					Name: "pipeline",
 				},
-				ServiceAccountName: "test-sa",
-				Resources: []v1beta1.PipelineResourceBinding{
-					{
-						Name: "test-resource",
-						ResourceRef: &v1beta1.PipelineResourceRef{
-							Name: "test-resource-ref",
-						},
-					},
+				TaskRunTemplate: v1.PipelineTaskRunTemplate{
+					ServiceAccountName: "test-sa",
 				},
-				Params: []v1beta1.Param{
+				Params: []v1.Param{
 					{
 						Name: "test-param",
-						Value: v1beta1.ArrayOrString{
-							Type:      v1beta1.ParamTypeString,
+						Value: v1.ParamValue{
+							Type:      v1.ParamTypeString,
 							StringVal: "param-value",
 						},
 					},
 				},
 			},
-			Status: v1beta1.PipelineRunStatus{
-				PipelineRunStatusFields: v1beta1.PipelineRunStatusFields{
-					ChildReferences: []v1beta1.ChildStatusReference{
+			Status: v1.PipelineRunStatus{
+				PipelineRunStatusFields: v1.PipelineRunStatusFields{
+					ChildReferences: []v1.ChildStatusReference{
 						{
 							Name:             "tr-1",
 							PipelineTaskName: "t-1",
@@ -782,7 +816,7 @@ func TestPipelineRunDescribe_with_resources_taskrun_v1beta1(t *testing.T) {
 					Conditions: duckv1.Conditions{
 						{
 							Status: corev1.ConditionTrue,
-							Reason: v1beta1.PipelineRunReasonSuccessful.String(),
+							Reason: v1.PipelineRunReasonSuccessful.String(),
 						},
 					},
 				},
@@ -798,16 +832,16 @@ func TestPipelineRunDescribe_with_resources_taskrun_v1beta1(t *testing.T) {
 		},
 	}
 
-	version := "v1beta1"
+	version := "v1"
 	tdc := testDynamic.Options{}
 	dynamic, err := tdc.Client(
-		cb.UnstructuredV1beta1PR(pipelineRuns[0], version),
-		cb.UnstructuredV1beta1TR(trs[0], version),
+		cb.UnstructuredPR(pipelineRuns[0], version),
+		cb.UnstructuredTR(trs[0], version),
 	)
 	if err != nil {
 		t.Errorf("unable to create dynamic client: %v", err)
 	}
-	cs, _ := test.SeedV1beta1TestData(t, pipelinetest.Data{Namespaces: namespaces, PipelineRuns: pipelineRuns,
+	cs, _ := test.SeedTestData(t, test.Data{Namespaces: namespaces, PipelineRuns: pipelineRuns,
 		TaskRuns: trs,
 	})
 	cs.Pipeline.Resources = cb.APIResourceList(version, []string{"pipelinerun", "taskrun"})
@@ -822,10 +856,10 @@ func TestPipelineRunDescribe_with_resources_taskrun_v1beta1(t *testing.T) {
 	golden.Assert(t, actual, fmt.Sprintf("%s.golden", t.Name()))
 }
 
-func TestPipelineRunDescribe_without_start_time_v1beta1(t *testing.T) {
+func TestPipelineRunDescribe_without_start_time(t *testing.T) {
 	clock := clockwork.NewFakeClock()
 
-	pipelineRuns := []*v1beta1.PipelineRun{
+	pipelineRuns := []*v1.PipelineRun{
 		{
 			ObjectMeta: metav1.ObjectMeta{
 				Name:              "pipeline-run",
@@ -833,9 +867,11 @@ func TestPipelineRunDescribe_without_start_time_v1beta1(t *testing.T) {
 				CreationTimestamp: metav1.Time{Time: clock.Now()},
 				Labels:            map[string]string{"tekton.dev/pipeline": "pipeline"},
 			},
-			Spec: v1beta1.PipelineRunSpec{
-				Timeout: &metav1.Duration{Duration: 1 * time.Hour},
-				PipelineRef: &v1beta1.PipelineRef{
+			Spec: v1.PipelineRunSpec{
+				Timeouts: &v1.TimeoutFields{
+					Pipeline: &metav1.Duration{Duration: 1 * time.Hour},
+				},
+				PipelineRef: &v1.PipelineRef{
 					Name: "pipeline",
 				},
 			},
@@ -850,15 +886,15 @@ func TestPipelineRunDescribe_without_start_time_v1beta1(t *testing.T) {
 		},
 	}
 
-	version := "v1beta1"
+	version := "v1"
 	tdc := testDynamic.Options{}
 	dynamic, err := tdc.Client(
-		cb.UnstructuredV1beta1PR(pipelineRuns[0], version),
+		cb.UnstructuredPR(pipelineRuns[0], version),
 	)
 	if err != nil {
 		t.Errorf("unable to create dynamic client: %v", err)
 	}
-	cs, _ := test.SeedV1beta1TestData(t, pipelinetest.Data{Namespaces: namespaces, PipelineRuns: pipelineRuns})
+	cs, _ := test.SeedTestData(t, test.Data{Namespaces: namespaces, PipelineRuns: pipelineRuns})
 	cs.Pipeline.Resources = cb.APIResourceList(version, []string{"pipelinerun", "taskrun"})
 	p := &test.Params{Tekton: cs.Pipeline, Kube: cs.Kube, Dynamic: dynamic, Clock: clock}
 
@@ -871,10 +907,10 @@ func TestPipelineRunDescribe_without_start_time_v1beta1(t *testing.T) {
 	golden.Assert(t, actual, fmt.Sprintf("%s.golden", t.Name()))
 }
 
-func TestPipelineRunDescribe_without_pipelineref_v1beta1(t *testing.T) {
+func TestPipelineRunDescribe_without_pipelineref(t *testing.T) {
 	clock := clockwork.NewFakeClock()
 
-	pipelineRuns := []*v1beta1.PipelineRun{
+	pipelineRuns := []*v1.PipelineRun{
 		{
 			ObjectMeta: metav1.ObjectMeta{
 				Name:              "pipeline-run",
@@ -893,15 +929,15 @@ func TestPipelineRunDescribe_without_pipelineref_v1beta1(t *testing.T) {
 		},
 	}
 
-	version := "v1beta1"
+	version := "v1"
 	tdc := testDynamic.Options{}
 	dynamic, err := tdc.Client(
-		cb.UnstructuredV1beta1PR(pipelineRuns[0], version),
+		cb.UnstructuredPR(pipelineRuns[0], version),
 	)
 	if err != nil {
 		t.Errorf("unable to create dynamic client: %v", err)
 	}
-	cs, _ := test.SeedV1beta1TestData(t, pipelinetest.Data{Namespaces: namespaces, PipelineRuns: pipelineRuns})
+	cs, _ := test.SeedTestData(t, test.Data{Namespaces: namespaces, PipelineRuns: pipelineRuns})
 	cs.Pipeline.Resources = cb.APIResourceList(version, []string{"pipelinerun", "taskrun"})
 	p := &test.Params{Tekton: cs.Pipeline, Kube: cs.Kube, Dynamic: dynamic, Clock: clock}
 
@@ -914,10 +950,10 @@ func TestPipelineRunDescribe_without_pipelineref_v1beta1(t *testing.T) {
 	golden.Assert(t, actual, fmt.Sprintf("%s.golden", t.Name()))
 }
 
-func TestPipelineRunDescribe_withoutNameOfOnlyOnePipelineRunPresent_v1beta1(t *testing.T) {
+func TestPipelineRunDescribe_withoutNameOfOnlyOnePipelineRunPresent(t *testing.T) {
 	clock := clockwork.NewFakeClock()
 
-	pipelineRuns := []*v1beta1.PipelineRun{
+	pipelineRuns := []*v1.PipelineRun{
 		{
 			ObjectMeta: metav1.ObjectMeta{
 				Name:              "pipeline-run",
@@ -936,15 +972,15 @@ func TestPipelineRunDescribe_withoutNameOfOnlyOnePipelineRunPresent_v1beta1(t *t
 		},
 	}
 
-	version := "v1beta1"
+	version := "v1"
 	tdc := testDynamic.Options{}
 	dynamic, err := tdc.Client(
-		cb.UnstructuredV1beta1PR(pipelineRuns[0], version),
+		cb.UnstructuredPR(pipelineRuns[0], version),
 	)
 	if err != nil {
 		t.Errorf("unable to create dynamic client: %v", err)
 	}
-	cs, _ := test.SeedV1beta1TestData(t, pipelinetest.Data{Namespaces: namespaces, PipelineRuns: pipelineRuns})
+	cs, _ := test.SeedTestData(t, test.Data{Namespaces: namespaces, PipelineRuns: pipelineRuns})
 	cs.Pipeline.Resources = cb.APIResourceList(version, []string{"pipelinerun", "taskrun"})
 	p := &test.Params{Tekton: cs.Pipeline, Kube: cs.Kube, Dynamic: dynamic, Clock: clock}
 	p.SetNamespace("ns")
@@ -957,17 +993,17 @@ func TestPipelineRunDescribe_withoutNameOfOnlyOnePipelineRunPresent_v1beta1(t *t
 	golden.Assert(t, actual, fmt.Sprintf("%s.golden", t.Name()))
 }
 
-func TestPipelineRunDescribe_no_resourceref_v1beta1(t *testing.T) {
+func TestPipelineRunDescribe_no_resourceref(t *testing.T) {
 	clock := clockwork.NewFakeClock()
 
-	trs := []*v1beta1.TaskRun{
+	trs := []*v1.TaskRun{
 		{
 			ObjectMeta: metav1.ObjectMeta{
 				Name:      "tr-1",
 				Namespace: "ns",
 			},
-			Status: v1beta1.TaskRunStatus{
-				TaskRunStatusFields: v1beta1.TaskRunStatusFields{
+			Status: v1.TaskRunStatus{
+				TaskRunStatusFields: v1.TaskRunStatusFields{
 					StartTime:      &metav1.Time{Time: clock.Now().Add(2 * time.Minute)},
 					CompletionTime: &metav1.Time{Time: clock.Now().Add(5 * time.Minute)},
 				},
@@ -983,7 +1019,7 @@ func TestPipelineRunDescribe_no_resourceref_v1beta1(t *testing.T) {
 		},
 	}
 
-	pipelineRuns := []*v1beta1.PipelineRun{
+	pipelineRuns := []*v1.PipelineRun{
 		{
 			ObjectMeta: metav1.ObjectMeta{
 				Name:              "pipeline-run",
@@ -991,30 +1027,29 @@ func TestPipelineRunDescribe_no_resourceref_v1beta1(t *testing.T) {
 				CreationTimestamp: metav1.Time{Time: clock.Now()},
 				Labels:            map[string]string{"tekton.dev/pipeline": "pipeline"},
 			},
-			Spec: v1beta1.PipelineRunSpec{
-				Timeout: &metav1.Duration{Duration: 1 * time.Hour},
-				PipelineRef: &v1beta1.PipelineRef{
+			Spec: v1.PipelineRunSpec{
+				Timeouts: &v1.TimeoutFields{
+					Pipeline: &metav1.Duration{Duration: 1 * time.Hour},
+				},
+				PipelineRef: &v1.PipelineRef{
 					Name: "pipeline",
 				},
-				ServiceAccountName: "test-sa",
-				Resources: []v1beta1.PipelineResourceBinding{
-					{
-						Name: "test-resource",
-					},
+				TaskRunTemplate: v1.PipelineTaskRunTemplate{
+					ServiceAccountName: "test-sa",
 				},
-				Params: []v1beta1.Param{
+				Params: []v1.Param{
 					{
 						Name: "test-param",
-						Value: v1beta1.ArrayOrString{
-							Type:      v1beta1.ParamTypeString,
+						Value: v1.ParamValue{
+							Type:      v1.ParamTypeString,
 							StringVal: "param-value",
 						},
 					},
 				},
 			},
-			Status: v1beta1.PipelineRunStatus{
-				PipelineRunStatusFields: v1beta1.PipelineRunStatusFields{
-					ChildReferences: []v1beta1.ChildStatusReference{
+			Status: v1.PipelineRunStatus{
+				PipelineRunStatusFields: v1.PipelineRunStatusFields{
+					ChildReferences: []v1.ChildStatusReference{
 						{
 							Name:             "tr-1",
 							PipelineTaskName: "t-1",
@@ -1030,7 +1065,7 @@ func TestPipelineRunDescribe_no_resourceref_v1beta1(t *testing.T) {
 					Conditions: duckv1.Conditions{
 						{
 							Status: corev1.ConditionTrue,
-							Reason: v1beta1.PipelineRunReasonSuccessful.String(),
+							Reason: v1.PipelineRunReasonSuccessful.String(),
 						},
 					},
 				},
@@ -1046,16 +1081,16 @@ func TestPipelineRunDescribe_no_resourceref_v1beta1(t *testing.T) {
 		},
 	}
 
-	version := "v1beta1"
+	version := "v1"
 	tdc := testDynamic.Options{}
 	dynamic, err := tdc.Client(
-		cb.UnstructuredV1beta1PR(pipelineRuns[0], version),
-		cb.UnstructuredV1beta1TR(trs[0], version),
+		cb.UnstructuredPR(pipelineRuns[0], version),
+		cb.UnstructuredTR(trs[0], version),
 	)
 	if err != nil {
 		t.Errorf("unable to create dynamic client: %v", err)
 	}
-	cs, _ := test.SeedV1beta1TestData(t, pipelinetest.Data{Namespaces: namespaces, PipelineRuns: pipelineRuns,
+	cs, _ := test.SeedTestData(t, test.Data{Namespaces: namespaces, PipelineRuns: pipelineRuns,
 		TaskRuns: trs,
 	})
 	cs.Pipeline.Resources = cb.APIResourceList(version, []string{"pipelinerun", "taskrun"})
@@ -1070,17 +1105,17 @@ func TestPipelineRunDescribe_no_resourceref_v1beta1(t *testing.T) {
 	golden.Assert(t, actual, fmt.Sprintf("%s.golden", t.Name()))
 }
 
-func TestPipelineRunDescribe_cancelled_pipelinerun_v1beta1(t *testing.T) {
+func TestPipelineRunDescribe_cancelled_pipelinerun(t *testing.T) {
 	clock := clockwork.NewFakeClock()
 
-	trs := []*v1beta1.TaskRun{
+	trs := []*v1.TaskRun{
 		{
 			ObjectMeta: metav1.ObjectMeta{
 				Name:      "tr-1",
 				Namespace: "ns",
 			},
-			Status: v1beta1.TaskRunStatus{
-				TaskRunStatusFields: v1beta1.TaskRunStatusFields{
+			Status: v1.TaskRunStatus{
+				TaskRunStatusFields: v1.TaskRunStatusFields{
 					StartTime:      &metav1.Time{Time: clock.Now().Add(2 * time.Minute)},
 					CompletionTime: &metav1.Time{Time: clock.Now().Add(5 * time.Minute)},
 				},
@@ -1096,7 +1131,7 @@ func TestPipelineRunDescribe_cancelled_pipelinerun_v1beta1(t *testing.T) {
 		},
 	}
 
-	pipelineRuns := []*v1beta1.PipelineRun{
+	pipelineRuns := []*v1.PipelineRun{
 		{
 			ObjectMeta: metav1.ObjectMeta{
 				Name:              "pipeline-run",
@@ -1104,15 +1139,17 @@ func TestPipelineRunDescribe_cancelled_pipelinerun_v1beta1(t *testing.T) {
 				CreationTimestamp: metav1.Time{Time: clock.Now()},
 				Labels:            map[string]string{"tekton.dev/pipeline": "pipeline"},
 			},
-			Spec: v1beta1.PipelineRunSpec{
-				Timeout: &metav1.Duration{Duration: 1 * time.Hour},
-				PipelineRef: &v1beta1.PipelineRef{
+			Spec: v1.PipelineRunSpec{
+				Timeouts: &v1.TimeoutFields{
+					Pipeline: &metav1.Duration{Duration: 1 * time.Hour},
+				},
+				PipelineRef: &v1.PipelineRef{
 					Name: "pipeline",
 				},
 			},
-			Status: v1beta1.PipelineRunStatus{
-				PipelineRunStatusFields: v1beta1.PipelineRunStatusFields{
-					ChildReferences: []v1beta1.ChildStatusReference{
+			Status: v1.PipelineRunStatus{
+				PipelineRunStatusFields: v1.PipelineRunStatusFields{
+					ChildReferences: []v1.ChildStatusReference{
 						{
 							Name:             "tr-1",
 							PipelineTaskName: "t-1",
@@ -1145,16 +1182,16 @@ func TestPipelineRunDescribe_cancelled_pipelinerun_v1beta1(t *testing.T) {
 		},
 	}
 
-	version := "v1beta1"
+	version := "v1"
 	tdc := testDynamic.Options{}
 	dynamic, err := tdc.Client(
-		cb.UnstructuredV1beta1PR(pipelineRuns[0], version),
-		cb.UnstructuredV1beta1TR(trs[0], version),
+		cb.UnstructuredPR(pipelineRuns[0], version),
+		cb.UnstructuredTR(trs[0], version),
 	)
 	if err != nil {
 		t.Errorf("unable to create dynamic client: %v", err)
 	}
-	cs, _ := test.SeedV1beta1TestData(t, pipelinetest.Data{Namespaces: namespaces, PipelineRuns: pipelineRuns,
+	cs, _ := test.SeedTestData(t, test.Data{Namespaces: namespaces, PipelineRuns: pipelineRuns,
 		TaskRuns: trs,
 	})
 	cs.Pipeline.Resources = cb.APIResourceList(version, []string{"pipelinerun", "taskrun"})
@@ -1169,16 +1206,16 @@ func TestPipelineRunDescribe_cancelled_pipelinerun_v1beta1(t *testing.T) {
 	golden.Assert(t, actual, fmt.Sprintf("%s.golden", t.Name()))
 }
 
-func TestPipelineRunDescribe_without_tr_start_time_v1beta1(t *testing.T) {
+func TestPipelineRunDescribe_without_tr_start_time(t *testing.T) {
 	clock := clockwork.NewFakeClock()
 
-	trs := []*v1beta1.TaskRun{
+	trs := []*v1.TaskRun{
 		{
 			ObjectMeta: metav1.ObjectMeta{
 				Name:      "tr-1",
 				Namespace: "ns",
 			},
-			Status: v1beta1.TaskRunStatus{
+			Status: v1.TaskRunStatus{
 				Status: duckv1.Status{
 					Conditions: duckv1.Conditions{
 						{
@@ -1191,7 +1228,7 @@ func TestPipelineRunDescribe_without_tr_start_time_v1beta1(t *testing.T) {
 		},
 	}
 
-	pipelineRuns := []*v1beta1.PipelineRun{
+	pipelineRuns := []*v1.PipelineRun{
 		{
 			ObjectMeta: metav1.ObjectMeta{
 				Name:              "pipeline-run",
@@ -1199,15 +1236,17 @@ func TestPipelineRunDescribe_without_tr_start_time_v1beta1(t *testing.T) {
 				CreationTimestamp: metav1.Time{Time: clock.Now()},
 				Labels:            map[string]string{"tekton.dev/pipeline": "pipeline"},
 			},
-			Spec: v1beta1.PipelineRunSpec{
-				Timeout: &metav1.Duration{Duration: 1 * time.Hour},
-				PipelineRef: &v1beta1.PipelineRef{
+			Spec: v1.PipelineRunSpec{
+				Timeouts: &v1.TimeoutFields{
+					Pipeline: &metav1.Duration{Duration: 1 * time.Hour},
+				},
+				PipelineRef: &v1.PipelineRef{
 					Name: "pipeline",
 				},
 			},
-			Status: v1beta1.PipelineRunStatus{
-				PipelineRunStatusFields: v1beta1.PipelineRunStatusFields{
-					ChildReferences: []v1beta1.ChildStatusReference{
+			Status: v1.PipelineRunStatus{
+				PipelineRunStatusFields: v1.PipelineRunStatusFields{
+					ChildReferences: []v1.ChildStatusReference{
 						{
 							Name:             "tr-1",
 							PipelineTaskName: "t-1",
@@ -1222,7 +1261,7 @@ func TestPipelineRunDescribe_without_tr_start_time_v1beta1(t *testing.T) {
 					Conditions: duckv1.Conditions{
 						{
 							Status: corev1.ConditionUnknown,
-							Reason: v1beta1.PipelineRunReasonRunning.String(),
+							Reason: v1.PipelineRunReasonRunning.String(),
 						},
 					},
 				},
@@ -1238,16 +1277,16 @@ func TestPipelineRunDescribe_without_tr_start_time_v1beta1(t *testing.T) {
 		},
 	}
 
-	version := "v1beta1"
+	version := "v1"
 	tdc := testDynamic.Options{}
 	dynamic, err := tdc.Client(
-		cb.UnstructuredV1beta1PR(pipelineRuns[0], version),
-		cb.UnstructuredV1beta1TR(trs[0], version),
+		cb.UnstructuredPR(pipelineRuns[0], version),
+		cb.UnstructuredTR(trs[0], version),
 	)
 	if err != nil {
 		t.Errorf("unable to create dynamic client: %v", err)
 	}
-	cs, _ := test.SeedV1beta1TestData(t, pipelinetest.Data{Namespaces: namespaces, PipelineRuns: pipelineRuns,
+	cs, _ := test.SeedTestData(t, test.Data{Namespaces: namespaces, PipelineRuns: pipelineRuns,
 		TaskRuns: trs,
 	})
 	cs.Pipeline.Resources = cb.APIResourceList(version, []string{"pipelinerun", "taskrun"})
@@ -1262,19 +1301,19 @@ func TestPipelineRunDescribe_without_tr_start_time_v1beta1(t *testing.T) {
 	golden.Assert(t, actual, fmt.Sprintf("%s.golden", t.Name()))
 }
 
-func TestPipelineRunDescribe_custom_timeout_v1beta1(t *testing.T) {
-	prun := []*v1beta1.PipelineRun{
+func TestPipelineRunDescribe_custom_timeout(t *testing.T) {
+	prun := []*v1.PipelineRun{
 		{
 			ObjectMeta: metav1.ObjectMeta{
 				Name:      "pr-custom-timeout",
 				Namespace: "ns",
 			},
-			Spec: v1beta1.PipelineRunSpec{
-				PipelineRef: &v1beta1.PipelineRef{
+			Spec: v1.PipelineRunSpec{
+				PipelineRef: &v1.PipelineRef{
 					Name: "pr-custom-timeout",
 				},
-				Timeout: &metav1.Duration{
-					Duration: time.Minute,
+				Timeouts: &v1.TimeoutFields{
+					Pipeline: &metav1.Duration{Duration: 1 * time.Minute},
 				},
 			},
 		},
@@ -1288,15 +1327,15 @@ func TestPipelineRunDescribe_custom_timeout_v1beta1(t *testing.T) {
 		},
 	}
 
-	version := "v1beta1"
+	version := "v1"
 	tdc := testDynamic.Options{}
 	dynamic, err := tdc.Client(
-		cb.UnstructuredV1beta1PR(prun[0], version),
+		cb.UnstructuredPR(prun[0], version),
 	)
 	if err != nil {
 		t.Errorf("unable to create dynamic client: %v", err)
 	}
-	cs, _ := test.SeedV1beta1TestData(t, pipelinetest.Data{Namespaces: namespaces, PipelineRuns: prun})
+	cs, _ := test.SeedTestData(t, test.Data{Namespaces: namespaces, PipelineRuns: prun})
 	cs.Pipeline.Resources = cb.APIResourceList(version, []string{"pipelinerun", "taskrun"})
 	p := &test.Params{Tekton: cs.Pipeline, Kube: cs.Kube, Dynamic: dynamic}
 
@@ -1308,10 +1347,10 @@ func TestPipelineRunDescribe_custom_timeout_v1beta1(t *testing.T) {
 	golden.Assert(t, actual, fmt.Sprintf("%s.golden", t.Name()))
 }
 
-func TestPipelineRunDescribe_custom_output_v1beta1(t *testing.T) {
+func TestPipelineRunDescribe_custom_output(t *testing.T) {
 	pipelinerunname := "pipeline-run"
 	expected := "pipelinerun.tekton.dev/" + pipelinerunname
-	prun := []*v1beta1.PipelineRun{
+	prun := []*v1.PipelineRun{
 		{
 			ObjectMeta: metav1.ObjectMeta{
 				Name:      pipelinerunname,
@@ -1327,15 +1366,15 @@ func TestPipelineRunDescribe_custom_output_v1beta1(t *testing.T) {
 		},
 	}
 
-	version := "v1beta1"
+	version := "v1"
 	tdc := testDynamic.Options{}
 	dynamic, err := tdc.Client(
-		cb.UnstructuredV1beta1PR(prun[0], version),
+		cb.UnstructuredPR(prun[0], version),
 	)
 	if err != nil {
 		t.Errorf("unable to create dynamic client: %v", err)
 	}
-	cs, _ := test.SeedV1beta1TestData(t, pipelinetest.Data{Namespaces: namespaces, PipelineRuns: prun})
+	cs, _ := test.SeedTestData(t, test.Data{Namespaces: namespaces, PipelineRuns: prun})
 	cs.Pipeline.Resources = cb.APIResourceList(version, []string{"pipelinerun", "taskrun"})
 	p := &test.Params{Tekton: cs.Pipeline, Kube: cs.Kube, Dynamic: dynamic}
 
@@ -1350,31 +1389,31 @@ func TestPipelineRunDescribe_custom_output_v1beta1(t *testing.T) {
 	}
 }
 
-func TestPipelineRunDescribe_v1beta1(t *testing.T) {
+func TestPipelineRunDescribe(t *testing.T) {
 	clock := clockwork.NewFakeClock()
 	pipelinerunname := "pipeline-run"
-	taskRuns := []*v1beta1.TaskRun{
+	taskRuns := []*v1.TaskRun{
 		{
 			ObjectMeta: metav1.ObjectMeta{
 				Namespace: "ns",
 				Name:      "tr-1",
 				Labels:    map[string]string{"tekton.dev/task": "task-1"},
 			},
-			Spec: v1beta1.TaskRunSpec{
-				TaskRef: &v1beta1.TaskRef{
+			Spec: v1.TaskRunSpec{
+				TaskRef: &v1.TaskRef{
 					Name: "task-1",
 				},
 			},
-			Status: v1beta1.TaskRunStatus{
+			Status: v1.TaskRunStatus{
 				Status: duckv1.Status{
 					Conditions: duckv1.Conditions{
 						{
 							Status: corev1.ConditionFalse,
-							Reason: v1beta1.PipelineRunReasonFailed.String(),
+							Reason: v1.PipelineRunReasonFailed.String(),
 						},
 					},
 				},
-				TaskRunStatusFields: v1beta1.TaskRunStatusFields{
+				TaskRunStatusFields: v1.TaskRunStatusFields{
 					StartTime:      &metav1.Time{Time: clock.Now()},
 					CompletionTime: &metav1.Time{Time: clock.Now().Add(5 * time.Minute)},
 				},
@@ -1386,21 +1425,21 @@ func TestPipelineRunDescribe_v1beta1(t *testing.T) {
 				Name:      "tr-2",
 				Labels:    map[string]string{"tekton.dev/task": "task-1"},
 			},
-			Spec: v1beta1.TaskRunSpec{
-				TaskRef: &v1beta1.TaskRef{
+			Spec: v1.TaskRunSpec{
+				TaskRef: &v1.TaskRef{
 					Name: "task-1",
 				},
 			},
-			Status: v1beta1.TaskRunStatus{
+			Status: v1.TaskRunStatus{
 				Status: duckv1.Status{
 					Conditions: duckv1.Conditions{
 						{
 							Status: corev1.ConditionTrue,
-							Reason: v1beta1.PipelineRunReasonSuccessful.String(),
+							Reason: v1.PipelineRunReasonSuccessful.String(),
 						},
 					},
 				},
-				TaskRunStatusFields: v1beta1.TaskRunStatusFields{
+				TaskRunStatusFields: v1.TaskRunStatusFields{
 					StartTime:      &metav1.Time{Time: clock.Now().Add(10 * time.Minute)},
 					CompletionTime: &metav1.Time{Time: clock.Now().Add(17 * time.Minute)},
 				},
@@ -1408,61 +1447,47 @@ func TestPipelineRunDescribe_v1beta1(t *testing.T) {
 		},
 	}
 
-	prun := []*v1beta1.PipelineRun{
+	prun := []*v1.PipelineRun{
 		{
 			ObjectMeta: metav1.ObjectMeta{
 				Name:      pipelinerunname,
 				Namespace: "ns",
 			},
-			Spec: v1beta1.PipelineRunSpec{
-				PipelineRef: &v1beta1.PipelineRef{
+			Spec: v1.PipelineRunSpec{
+				PipelineRef: &v1.PipelineRef{
 					Name: "pipeline",
 				},
-				Resources: []v1beta1.PipelineResourceBinding{
-					{
-						Name: "res-1",
-						ResourceRef: &v1beta1.PipelineResourceRef{
-							Name: "test-res",
-						},
-					},
-					{
-						Name: "res-2",
-						ResourceRef: &v1beta1.PipelineResourceRef{
-							Name: "test-res2",
-						},
-					},
-				},
-				Params: []v1beta1.Param{
+				Params: []v1.Param{
 					{
 						Name: "p-1",
-						Value: v1beta1.ArrayOrString{
-							Type:      v1beta1.ParamTypeString,
+						Value: v1.ParamValue{
+							Type:      v1.ParamTypeString,
 							StringVal: "somethingdifferent",
 						},
 					},
 					{
 						Name: "p-2",
-						Value: v1beta1.ArrayOrString{
-							Type:     v1beta1.ParamTypeArray,
+						Value: v1.ParamValue{
+							Type:     v1.ParamTypeArray,
 							ArrayVal: []string{"booms", "booms", "booms"},
 						},
 					},
 				},
 			},
-			Status: v1beta1.PipelineRunStatus{
+			Status: v1.PipelineRunStatus{
 				Status: duckv1.Status{
 					Conditions: duckv1.Conditions{
 						{
 							Status:  corev1.ConditionTrue,
-							Reason:  v1beta1.PipelineRunReasonSuccessful.String(),
+							Reason:  v1.PipelineRunReasonSuccessful.String(),
 							Message: "Completed",
 						},
 					},
 				},
-				PipelineRunStatusFields: v1beta1.PipelineRunStatusFields{
+				PipelineRunStatusFields: v1.PipelineRunStatusFields{
 					StartTime:      &metav1.Time{Time: clock.Now()},
 					CompletionTime: &metav1.Time{Time: clock.Now().Add(20 * time.Minute)},
-					ChildReferences: []v1beta1.ChildStatusReference{
+					ChildReferences: []v1.ChildStatusReference{
 						{
 							Name:             "tr-1",
 							PipelineTaskName: "t-1",
@@ -1491,17 +1516,17 @@ func TestPipelineRunDescribe_v1beta1(t *testing.T) {
 		},
 	}
 
-	version := "v1beta1"
+	version := "v1"
 	tdc := testDynamic.Options{}
 	dynamic, err := tdc.Client(
-		cb.UnstructuredV1beta1PR(prun[0], version),
-		cb.UnstructuredV1beta1TR(taskRuns[0], version),
-		cb.UnstructuredV1beta1TR(taskRuns[1], version),
+		cb.UnstructuredPR(prun[0], version),
+		cb.UnstructuredTR(taskRuns[0], version),
+		cb.UnstructuredTR(taskRuns[1], version),
 	)
 	if err != nil {
 		t.Errorf("unable to create dynamic client: %v", err)
 	}
-	cs, _ := test.SeedV1beta1TestData(t, pipelinetest.Data{Namespaces: namespaces, PipelineRuns: prun, TaskRuns: taskRuns})
+	cs, _ := test.SeedTestData(t, test.Data{Namespaces: namespaces, PipelineRuns: prun, TaskRuns: taskRuns})
 	cs.Pipeline.Resources = cb.APIResourceList(version, []string{"pipelinerun", "taskrun"})
 	p := &test.Params{Tekton: cs.Pipeline, Kube: cs.Kube, Dynamic: dynamic}
 
@@ -1513,31 +1538,31 @@ func TestPipelineRunDescribe_v1beta1(t *testing.T) {
 	golden.Assert(t, got, fmt.Sprintf("%s.golden", t.Name()))
 }
 
-func TestPipelineRunDescribe_taskrun_with_no_status_v1beta1(t *testing.T) {
+func TestPipelineRunDescribe_taskrun_with_no_status(t *testing.T) {
 	clock := clockwork.NewFakeClock()
 	pipelinerunname := "pipeline-run"
-	taskRuns := []*v1beta1.TaskRun{
+	taskRuns := []*v1.TaskRun{
 		{
 			ObjectMeta: metav1.ObjectMeta{
 				Namespace: "ns",
 				Name:      "tr-1",
 				Labels:    map[string]string{"tekton.dev/task": "task-1"},
 			},
-			Spec: v1beta1.TaskRunSpec{
-				TaskRef: &v1beta1.TaskRef{
+			Spec: v1.TaskRunSpec{
+				TaskRef: &v1.TaskRef{
 					Name: "task-1",
 				},
 			},
-			Status: v1beta1.TaskRunStatus{
+			Status: v1.TaskRunStatus{
 				Status: duckv1.Status{
 					Conditions: duckv1.Conditions{
 						{
 							Status: corev1.ConditionFalse,
-							Reason: v1beta1.PipelineRunReasonFailed.String(),
+							Reason: v1.PipelineRunReasonFailed.String(),
 						},
 					},
 				},
-				TaskRunStatusFields: v1beta1.TaskRunStatusFields{
+				TaskRunStatusFields: v1.TaskRunStatusFields{
 					StartTime:      &metav1.Time{Time: clock.Now()},
 					CompletionTime: &metav1.Time{Time: clock.Now().Add(5 * time.Minute)},
 				},
@@ -1549,69 +1574,55 @@ func TestPipelineRunDescribe_taskrun_with_no_status_v1beta1(t *testing.T) {
 				Name:      "tr-2",
 				Labels:    map[string]string{"tekton.dev/task": "task-1"},
 			},
-			Spec: v1beta1.TaskRunSpec{
-				TaskRef: &v1beta1.TaskRef{
+			Spec: v1.TaskRunSpec{
+				TaskRef: &v1.TaskRef{
 					Name: "task-1",
 				},
 			},
 		},
 	}
 
-	prun := []*v1beta1.PipelineRun{
+	prun := []*v1.PipelineRun{
 		{
 			ObjectMeta: metav1.ObjectMeta{
 				Name:      pipelinerunname,
 				Namespace: "ns",
 			},
-			Spec: v1beta1.PipelineRunSpec{
-				PipelineRef: &v1beta1.PipelineRef{
+			Spec: v1.PipelineRunSpec{
+				PipelineRef: &v1.PipelineRef{
 					Name: "pipeline",
 				},
-				Resources: []v1beta1.PipelineResourceBinding{
-					{
-						Name: "res-1",
-						ResourceRef: &v1beta1.PipelineResourceRef{
-							Name: "test-res",
-						},
-					},
-					{
-						Name: "res-2",
-						ResourceRef: &v1beta1.PipelineResourceRef{
-							Name: "test-res2",
-						},
-					},
-				},
-				Params: []v1beta1.Param{
+				Params: []v1.Param{
 					{
 						Name: "p-1",
-						Value: v1beta1.ArrayOrString{
-							Type:      v1beta1.ParamTypeString,
+						Value: v1.ParamValue{
+							Type:      v1.ParamTypeString,
 							StringVal: "somethingdifferent",
 						},
 					},
 					{
 						Name: "p-2",
-						Value: v1beta1.ArrayOrString{
-							Type:     v1beta1.ParamTypeArray,
+						Value: v1.ParamValue{
+							Type:     v1.ParamTypeArray,
 							ArrayVal: []string{"booms", "booms", "booms"},
 						},
 					},
 				},
 			},
-			Status: v1beta1.PipelineRunStatus{
+			Status: v1.PipelineRunStatus{
 				Status: duckv1.Status{
 					Conditions: duckv1.Conditions{
 						{
 							Status:  corev1.ConditionTrue,
-							Reason:  v1beta1.PipelineRunReasonSuccessful.String(),
+							Reason:  v1.PipelineRunReasonSuccessful.String(),
 							Message: "Completed",
 						},
 					},
 				},
-				PipelineRunStatusFields: v1beta1.PipelineRunStatusFields{
+				PipelineRunStatusFields: v1.PipelineRunStatusFields{
 					StartTime:      &metav1.Time{Time: clock.Now()},
 					CompletionTime: &metav1.Time{Time: clock.Now().Add(20 * time.Minute)},
-					ChildReferences: []v1beta1.ChildStatusReference{
+					ChildReferences: []v1.ChildStatusReference{
 						{
 							Name:             "tr-1",
 							PipelineTaskName: "t-1",
@@ -1640,17 +1651,17 @@ func TestPipelineRunDescribe_taskrun_with_no_status_v1beta1(t *testing.T) {
 		},
 	}
 
-	version := "v1beta1"
+	version := "v1"
 	tdc := testDynamic.Options{}
 	dynamic, err := tdc.Client(
-		cb.UnstructuredV1beta1PR(prun[0], version),
-		cb.UnstructuredV1beta1TR(taskRuns[0], version),
-		cb.UnstructuredV1beta1TR(taskRuns[1], version),
+		cb.UnstructuredPR(prun[0], version),
+		cb.UnstructuredTR(taskRuns[0], version),
+		cb.UnstructuredTR(taskRuns[1], version),
 	)
 	if err != nil {
 		t.Errorf("unable to create dynamic client: %v", err)
 	}
-	cs, _ := test.SeedV1beta1TestData(t, pipelinetest.Data{Namespaces: namespaces, PipelineRuns: prun, TaskRuns: taskRuns})
+	cs, _ := test.SeedTestData(t, test.Data{Namespaces: namespaces, PipelineRuns: prun, TaskRuns: taskRuns})
 	cs.Pipeline.Resources = cb.APIResourceList(version, []string{"pipelinerun", "taskrun"})
 	p := &test.Params{Tekton: cs.Pipeline, Kube: cs.Kube, Dynamic: dynamic}
 
@@ -1662,32 +1673,32 @@ func TestPipelineRunDescribe_taskrun_with_no_status_v1beta1(t *testing.T) {
 	golden.Assert(t, got, fmt.Sprintf("%s.golden", t.Name()))
 }
 
-func TestPipelineRunDescribe_last_v1beta1(t *testing.T) {
+func TestPipelineRunDescribe_last(t *testing.T) {
 	clock := clockwork.NewFakeClock()
 	pipelinerunname1 := "pipeline-run"
 	pipelinerunname2 := "pipeline-run2"
-	taskRuns := []*v1beta1.TaskRun{
+	taskRuns := []*v1.TaskRun{
 		{
 			ObjectMeta: metav1.ObjectMeta{
 				Namespace: "ns",
 				Name:      "tr-1",
 				Labels:    map[string]string{"tekton.dev/task": "task-1"},
 			},
-			Spec: v1beta1.TaskRunSpec{
-				TaskRef: &v1beta1.TaskRef{
+			Spec: v1.TaskRunSpec{
+				TaskRef: &v1.TaskRef{
 					Name: "task-1",
 				},
 			},
-			Status: v1beta1.TaskRunStatus{
+			Status: v1.TaskRunStatus{
 				Status: duckv1.Status{
 					Conditions: duckv1.Conditions{
 						{
 							Status: corev1.ConditionFalse,
-							Reason: v1beta1.PipelineRunReasonFailed.String(),
+							Reason: v1.PipelineRunReasonFailed.String(),
 						},
 					},
 				},
-				TaskRunStatusFields: v1beta1.TaskRunStatusFields{
+				TaskRunStatusFields: v1.TaskRunStatusFields{
 					StartTime:      &metav1.Time{Time: clock.Now()},
 					CompletionTime: &metav1.Time{Time: clock.Now().Add(5 * time.Minute)},
 				},
@@ -1699,21 +1710,21 @@ func TestPipelineRunDescribe_last_v1beta1(t *testing.T) {
 				Name:      "tr-2",
 				Labels:    map[string]string{"tekton.dev/task": "task-1"},
 			},
-			Spec: v1beta1.TaskRunSpec{
-				TaskRef: &v1beta1.TaskRef{
+			Spec: v1.TaskRunSpec{
+				TaskRef: &v1.TaskRef{
 					Name: "task-1",
 				},
 			},
-			Status: v1beta1.TaskRunStatus{
+			Status: v1.TaskRunStatus{
 				Status: duckv1.Status{
 					Conditions: duckv1.Conditions{
 						{
 							Status: corev1.ConditionTrue,
-							Reason: v1beta1.PipelineRunReasonSuccessful.String(),
+							Reason: v1.PipelineRunReasonSuccessful.String(),
 						},
 					},
 				},
-				TaskRunStatusFields: v1beta1.TaskRunStatusFields{
+				TaskRunStatusFields: v1.TaskRunStatusFields{
 					StartTime:      &metav1.Time{Time: clock.Now().Add(-10 * time.Minute)},
 					CompletionTime: &metav1.Time{Time: clock.Now().Add(-3 * time.Minute)},
 				},
@@ -1721,61 +1732,47 @@ func TestPipelineRunDescribe_last_v1beta1(t *testing.T) {
 		},
 	}
 
-	prun := []*v1beta1.PipelineRun{
+	prun := []*v1.PipelineRun{
 		{
 			ObjectMeta: metav1.ObjectMeta{
 				Name:      pipelinerunname1,
 				Namespace: "ns",
 			},
-			Spec: v1beta1.PipelineRunSpec{
-				PipelineRef: &v1beta1.PipelineRef{
+			Spec: v1.PipelineRunSpec{
+				PipelineRef: &v1.PipelineRef{
 					Name: "pipeline",
 				},
-				Resources: []v1beta1.PipelineResourceBinding{
-					{
-						Name: "res-1",
-						ResourceRef: &v1beta1.PipelineResourceRef{
-							Name: "test-res",
-						},
-					},
-					{
-						Name: "res-2",
-						ResourceRef: &v1beta1.PipelineResourceRef{
-							Name: "test-res2",
-						},
-					},
-				},
-				Params: []v1beta1.Param{
+				Params: []v1.Param{
 					{
 						Name: "p-1",
-						Value: v1beta1.ArrayOrString{
-							Type:      v1beta1.ParamTypeString,
+						Value: v1.ParamValue{
+							Type:      v1.ParamTypeString,
 							StringVal: "somethingdifferent",
 						},
 					},
 					{
 						Name: "p-2",
-						Value: v1beta1.ArrayOrString{
-							Type:     v1beta1.ParamTypeArray,
+						Value: v1.ParamValue{
+							Type:     v1.ParamTypeArray,
 							ArrayVal: []string{"booms", "booms", "booms"},
 						},
 					},
 				},
 			},
-			Status: v1beta1.PipelineRunStatus{
+			Status: v1.PipelineRunStatus{
 				Status: duckv1.Status{
 					Conditions: duckv1.Conditions{
 						{
 							Status:  corev1.ConditionTrue,
-							Reason:  v1beta1.PipelineRunReasonSuccessful.String(),
+							Reason:  v1.PipelineRunReasonSuccessful.String(),
 							Message: "Completed",
 						},
 					},
 				},
-				PipelineRunStatusFields: v1beta1.PipelineRunStatusFields{
+				PipelineRunStatusFields: v1.PipelineRunStatusFields{
 					StartTime:      &metav1.Time{Time: clock.Now().Add(-10 * time.Minute)},
 					CompletionTime: &metav1.Time{Time: clock.Now().Add(10 * time.Minute)},
-					ChildReferences: []v1beta1.ChildStatusReference{
+					ChildReferences: []v1.ChildStatusReference{
 						{
 							Name:             "tr-1",
 							PipelineTaskName: "t-1",
@@ -1799,55 +1796,41 @@ func TestPipelineRunDescribe_last_v1beta1(t *testing.T) {
 				Name:      pipelinerunname2,
 				Namespace: "ns",
 			},
-			Spec: v1beta1.PipelineRunSpec{
-				PipelineRef: &v1beta1.PipelineRef{
+			Spec: v1.PipelineRunSpec{
+				PipelineRef: &v1.PipelineRef{
 					Name: "pipeline2",
 				},
-				Resources: []v1beta1.PipelineResourceBinding{
-					{
-						Name: "res-1x",
-						ResourceRef: &v1beta1.PipelineResourceRef{
-							Name: "test-res",
-						},
-					},
-					{
-						Name: "res-2x",
-						ResourceRef: &v1beta1.PipelineResourceRef{
-							Name: "test-res2",
-						},
-					},
-				},
-				Params: []v1beta1.Param{
+				Params: []v1.Param{
 					{
 						Name: "p-1",
-						Value: v1beta1.ArrayOrString{
-							Type:      v1beta1.ParamTypeString,
+						Value: v1.ParamValue{
+							Type:      v1.ParamTypeString,
 							StringVal: "somethingdifferent",
 						},
 					},
 					{
 						Name: "p-2",
-						Value: v1beta1.ArrayOrString{
-							Type:     v1beta1.ParamTypeArray,
+						Value: v1.ParamValue{
+							Type:     v1.ParamTypeArray,
 							ArrayVal: []string{"booms", "booms", "booms"},
 						},
 					},
 				},
 			},
-			Status: v1beta1.PipelineRunStatus{
+			Status: v1.PipelineRunStatus{
 				Status: duckv1.Status{
 					Conditions: duckv1.Conditions{
 						{
 							Status:  corev1.ConditionTrue,
-							Reason:  v1beta1.PipelineRunReasonSuccessful.String(),
+							Reason:  v1.PipelineRunReasonSuccessful.String(),
 							Message: "Completed",
 						},
 					},
 				},
-				PipelineRunStatusFields: v1beta1.PipelineRunStatusFields{
+				PipelineRunStatusFields: v1.PipelineRunStatusFields{
 					StartTime:      &metav1.Time{Time: clock.Now()},
 					CompletionTime: &metav1.Time{Time: clock.Now().Add(20 * time.Minute)},
-					ChildReferences: []v1beta1.ChildStatusReference{
+					ChildReferences: []v1.ChildStatusReference{
 						{
 							Name:             "tr-1",
 							PipelineTaskName: "t-1",
@@ -1876,18 +1859,18 @@ func TestPipelineRunDescribe_last_v1beta1(t *testing.T) {
 		},
 	}
 
-	version := "v1beta1"
+	version := "v1"
 	tdc := testDynamic.Options{}
 	dynamic, err := tdc.Client(
-		cb.UnstructuredV1beta1PR(prun[0], version),
-		cb.UnstructuredV1beta1PR(prun[1], version),
-		cb.UnstructuredV1beta1TR(taskRuns[0], version),
-		cb.UnstructuredV1beta1TR(taskRuns[1], version),
+		cb.UnstructuredPR(prun[0], version),
+		cb.UnstructuredPR(prun[1], version),
+		cb.UnstructuredTR(taskRuns[0], version),
+		cb.UnstructuredTR(taskRuns[1], version),
 	)
 	if err != nil {
 		t.Errorf("unable to create dynamic client: %v", err)
 	}
-	cs, _ := test.SeedV1beta1TestData(t, pipelinetest.Data{Namespaces: namespaces, PipelineRuns: prun, TaskRuns: taskRuns})
+	cs, _ := test.SeedTestData(t, test.Data{Namespaces: namespaces, PipelineRuns: prun, TaskRuns: taskRuns})
 	cs.Pipeline.Resources = cb.APIResourceList(version, []string{"pipelinerun", "taskrun"})
 	p := &test.Params{Tekton: cs.Pipeline, Kube: cs.Kube, Dynamic: dynamic}
 
@@ -1899,31 +1882,31 @@ func TestPipelineRunDescribe_last_v1beta1(t *testing.T) {
 	golden.Assert(t, got, fmt.Sprintf("%s.golden", t.Name()))
 }
 
-func TestPipelineRunDescribe_with_results_v1beta1(t *testing.T) {
+func TestPipelineRunDescribe_with_results(t *testing.T) {
 	clock := clockwork.NewFakeClock()
 	pipelinerunname := "pipeline-run"
-	taskRuns := []*v1beta1.TaskRun{
+	taskRuns := []*v1.TaskRun{
 		{
 			ObjectMeta: metav1.ObjectMeta{
 				Namespace: "ns",
 				Name:      "tr-1",
 				Labels:    map[string]string{"tekton.dev/task": "task-1"},
 			},
-			Spec: v1beta1.TaskRunSpec{
-				TaskRef: &v1beta1.TaskRef{
+			Spec: v1.TaskRunSpec{
+				TaskRef: &v1.TaskRef{
 					Name: "task-1",
 				},
 			},
-			Status: v1beta1.TaskRunStatus{
+			Status: v1.TaskRunStatus{
 				Status: duckv1.Status{
 					Conditions: duckv1.Conditions{
 						{
 							Status: corev1.ConditionFalse,
-							Reason: v1beta1.PipelineRunReasonFailed.String(),
+							Reason: v1.PipelineRunReasonFailed.String(),
 						},
 					},
 				},
-				TaskRunStatusFields: v1beta1.TaskRunStatusFields{
+				TaskRunStatusFields: v1.TaskRunStatusFields{
 					StartTime:      &metav1.Time{Time: clock.Now()},
 					CompletionTime: &metav1.Time{Time: clock.Now().Add(5 * time.Minute)},
 				},
@@ -1931,48 +1914,40 @@ func TestPipelineRunDescribe_with_results_v1beta1(t *testing.T) {
 		},
 	}
 
-	prun := []*v1beta1.PipelineRun{
+	prun := []*v1.PipelineRun{
 		{
 			ObjectMeta: metav1.ObjectMeta{
 				Name:      pipelinerunname,
 				Namespace: "ns",
 			},
-			Spec: v1beta1.PipelineRunSpec{
-				PipelineRef: &v1beta1.PipelineRef{
+			Spec: v1.PipelineRunSpec{
+				PipelineRef: &v1.PipelineRef{
 					Name: "pipeline",
 				},
-				Resources: []v1beta1.PipelineResourceBinding{
-					{
-						Name: "res-1",
-						ResourceRef: &v1beta1.PipelineResourceRef{
-							Name: "test-res",
-						},
-					},
-				},
-				Params: []v1beta1.Param{
+				Params: []v1.Param{
 					{
 						Name: "p-1",
-						Value: v1beta1.ArrayOrString{
-							Type:      v1beta1.ParamTypeString,
+						Value: v1.ParamValue{
+							Type:      v1.ParamTypeString,
 							StringVal: "somethingdifferent",
 						},
 					},
 				},
 			},
-			Status: v1beta1.PipelineRunStatus{
+			Status: v1.PipelineRunStatus{
 				Status: duckv1.Status{
 					Conditions: duckv1.Conditions{
 						{
 							Status:  corev1.ConditionTrue,
-							Reason:  v1beta1.PipelineRunReasonSuccessful.String(),
+							Reason:  v1.PipelineRunReasonSuccessful.String(),
 							Message: "Completed",
 						},
 					},
 				},
-				PipelineRunStatusFields: v1beta1.PipelineRunStatusFields{
+				PipelineRunStatusFields: v1.PipelineRunStatusFields{
 					StartTime:      &metav1.Time{Time: clock.Now().Add(-10 * time.Minute)},
 					CompletionTime: &metav1.Time{Time: clock.Now().Add(10 * time.Minute)},
-					ChildReferences: []v1beta1.ChildStatusReference{
+					ChildReferences: []v1.ChildStatusReference{
 						{
 							Name:             "tr-1",
 							PipelineTaskName: "t-1",
@@ -1981,18 +1956,18 @@ func TestPipelineRunDescribe_with_results_v1beta1(t *testing.T) {
 							},
 						},
 					},
-					PipelineResults: []v1beta1.PipelineRunResult{
+					Results: []v1.PipelineRunResult{
 						{
 							Name: "result-1",
-							Value: v1beta1.ArrayOrString{
-								Type:      v1beta1.ParamTypeString,
+							Value: v1.ParamValue{
+								Type:      v1.ParamTypeString,
 								StringVal: "value-1",
 							},
 						},
 						{
 							Name: "result-2",
-							Value: v1beta1.ArrayOrString{
-								Type:      v1beta1.ParamTypeString,
+							Value: v1.ParamValue{
+								Type:      v1.ParamTypeString,
 								StringVal: "value-2",
 							},
 						},
@@ -2010,16 +1985,16 @@ func TestPipelineRunDescribe_with_results_v1beta1(t *testing.T) {
 		},
 	}
 
-	version := "v1beta1"
+	version := "v1"
 	tdc := testDynamic.Options{}
 	dynamic, err := tdc.Client(
-		cb.UnstructuredV1beta1PR(prun[0], version),
-		cb.UnstructuredV1beta1TR(taskRuns[0], version),
+		cb.UnstructuredPR(prun[0], version),
+		cb.UnstructuredTR(taskRuns[0], version),
 	)
 	if err != nil {
 		t.Errorf("unable to create dynamic client: %v", err)
 	}
-	cs, _ := test.SeedV1beta1TestData(t, pipelinetest.Data{Namespaces: namespaces, PipelineRuns: prun, TaskRuns: taskRuns})
+	cs, _ := test.SeedTestData(t, test.Data{Namespaces: namespaces, PipelineRuns: prun, TaskRuns: taskRuns})
 	cs.Pipeline.Resources = cb.APIResourceList(version, []string{"pipelinerun", "taskrun"})
 	p := &test.Params{Tekton: cs.Pipeline, Kube: cs.Kube, Dynamic: dynamic}
 
@@ -2031,19 +2006,19 @@ func TestPipelineRunDescribe_with_results_v1beta1(t *testing.T) {
 	golden.Assert(t, got, fmt.Sprintf("%s.golden", t.Name()))
 }
 
-func TestPipelineRunDescribe_zero_timeout_v1beta1(t *testing.T) {
-	prun := []*v1beta1.PipelineRun{
+func TestPipelineRunDescribe_zero_timeout(t *testing.T) {
+	prun := []*v1.PipelineRun{
 		{
 			ObjectMeta: metav1.ObjectMeta{
 				Name:      "pipeline-run-zero-timeout",
 				Namespace: "ns",
 			},
-			Spec: v1beta1.PipelineRunSpec{
-				PipelineRef: &v1beta1.PipelineRef{
+			Spec: v1.PipelineRunSpec{
+				PipelineRef: &v1.PipelineRef{
 					Name: "pipeline-zero-timeout",
 				},
-				Timeout: &metav1.Duration{
-					Duration: 0,
+				Timeouts: &v1.TimeoutFields{
+					Pipeline: &metav1.Duration{Duration: 0},
 				},
 			},
 		},
@@ -2057,16 +2032,16 @@ func TestPipelineRunDescribe_zero_timeout_v1beta1(t *testing.T) {
 		},
 	}
 
-	version := "v1beta1"
+	version := "v1"
 	tdc := testDynamic.Options{}
 	dynamic, err := tdc.Client(
-		cb.UnstructuredV1beta1PR(prun[0], version),
+		cb.UnstructuredPR(prun[0], version),
 	)
 	if err != nil {
 		t.Errorf("unable to create dynamic client: %v", err)
 	}
 
-	cs, _ := test.SeedV1beta1TestData(t, pipelinetest.Data{Namespaces: namespaces, PipelineRuns: prun})
+	cs, _ := test.SeedTestData(t, test.Data{Namespaces: namespaces, PipelineRuns: prun})
 	cs.Pipeline.Resources = cb.APIResourceList(version, []string{"pipelinerun", "taskrun"})
 	p := &test.Params{Tekton: cs.Pipeline, Kube: cs.Kube, Dynamic: dynamic}
 
@@ -2079,31 +2054,31 @@ func TestPipelineRunDescribe_zero_timeout_v1beta1(t *testing.T) {
 	golden.Assert(t, actual, fmt.Sprintf("%s.golden", t.Name()))
 }
 
-func TestPipelineRunDescribe_with_workspaces_v1beta1(t *testing.T) {
+func TestPipelineRunDescribe_with_workspaces(t *testing.T) {
 	clock := clockwork.NewFakeClock()
 	pipelinerunname := "pipeline-run"
-	taskRuns := []*v1beta1.TaskRun{
+	taskRuns := []*v1.TaskRun{
 		{
 			ObjectMeta: metav1.ObjectMeta{
 				Namespace: "ns",
 				Name:      "tr-1",
 				Labels:    map[string]string{"tekton.dev/task": "task-1"},
 			},
-			Spec: v1beta1.TaskRunSpec{
-				TaskRef: &v1beta1.TaskRef{
+			Spec: v1.TaskRunSpec{
+				TaskRef: &v1.TaskRef{
 					Name: "task-1",
 				},
 			},
-			Status: v1beta1.TaskRunStatus{
+			Status: v1.TaskRunStatus{
 				Status: duckv1.Status{
 					Conditions: duckv1.Conditions{
 						{
 							Status: corev1.ConditionFalse,
-							Reason: v1beta1.PipelineRunReasonFailed.String(),
+							Reason: v1.PipelineRunReasonFailed.String(),
 						},
 					},
 				},
-				TaskRunStatusFields: v1beta1.TaskRunStatusFields{
+				TaskRunStatusFields: v1.TaskRunStatusFields{
 					StartTime:      &metav1.Time{Time: clock.Now()},
 					CompletionTime: &metav1.Time{Time: clock.Now().Add(5 * time.Minute)},
 				},
@@ -2111,34 +2086,26 @@ func TestPipelineRunDescribe_with_workspaces_v1beta1(t *testing.T) {
 		},
 	}
 
-	prun := []*v1beta1.PipelineRun{
+	prun := []*v1.PipelineRun{
 		{
 			ObjectMeta: metav1.ObjectMeta{
 				Name:      pipelinerunname,
 				Namespace: "ns",
 			},
-			Spec: v1beta1.PipelineRunSpec{
-				PipelineRef: &v1beta1.PipelineRef{
+			Spec: v1.PipelineRunSpec{
+				PipelineRef: &v1.PipelineRef{
 					Name: "pipeline",
 				},
-				Resources: []v1beta1.PipelineResourceBinding{
-					{
-						Name: "res-1",
-						ResourceRef: &v1beta1.PipelineResourceRef{
-							Name: "test-res",
-						},
-					},
-				},
-				Params: []v1beta1.Param{
+				Params: []v1.Param{
 					{
 						Name: "p-1",
-						Value: v1beta1.ArrayOrString{
-							Type:      v1beta1.ParamTypeString,
+						Value: v1.ParamValue{
+							Type:      v1.ParamTypeString,
 							StringVal: "somethingdifferent",
 						},
 					},
 				},
-				Workspaces: []v1beta1.WorkspaceBinding{
+				Workspaces: []v1.WorkspaceBinding{
 					{
 						Name:     "test",
 						SubPath:  "test",
@@ -2159,20 +2126,20 @@ func TestPipelineRunDescribe_with_workspaces_v1beta1(t *testing.T) {
 					},
 				},
 			},
-			Status: v1beta1.PipelineRunStatus{
+			Status: v1.PipelineRunStatus{
 				Status: duckv1.Status{
 					Conditions: duckv1.Conditions{
 						{
 							Status:  corev1.ConditionTrue,
-							Reason:  v1beta1.PipelineRunReasonSuccessful.String(),
+							Reason:  v1.PipelineRunReasonSuccessful.String(),
 							Message: "Completed",
 						},
 					},
 				},
-				PipelineRunStatusFields: v1beta1.PipelineRunStatusFields{
+				PipelineRunStatusFields: v1.PipelineRunStatusFields{
 					StartTime:      &metav1.Time{Time: clock.Now().Add(-10 * time.Minute)},
 					CompletionTime: &metav1.Time{Time: clock.Now().Add(10 * time.Minute)},
-					ChildReferences: []v1beta1.ChildStatusReference{
+					ChildReferences: []v1.ChildStatusReference{
 						{
 							Name:             "tr-1",
 							PipelineTaskName: "t-1",
@@ -2181,18 +2148,18 @@ func TestPipelineRunDescribe_with_workspaces_v1beta1(t *testing.T) {
 							},
 						},
 					},
-					PipelineResults: []v1beta1.PipelineRunResult{
+					Results: []v1.PipelineRunResult{
 						{
 							Name: "result-1",
-							Value: v1beta1.ArrayOrString{
-								Type:      v1beta1.ParamTypeString,
+							Value: v1.ParamValue{
+								Type:      v1.ParamTypeString,
 								StringVal: "value-1",
 							},
 						},
 						{
 							Name: "result-2",
-							Value: v1beta1.ArrayOrString{
-								Type:      v1beta1.ParamTypeString,
+							Value: v1.ParamValue{
+								Type:      v1.ParamTypeString,
 								StringVal: "value-2",
 							},
 						},
@@ -2210,16 +2177,16 @@ func TestPipelineRunDescribe_with_workspaces_v1beta1(t *testing.T) {
 		},
 	}
 
-	version := "v1beta1"
+	version := "v1"
 	tdc := testDynamic.Options{}
 	dynamic, err := tdc.Client(
-		cb.UnstructuredV1beta1PR(prun[0], version),
-		cb.UnstructuredV1beta1TR(taskRuns[0], version),
+		cb.UnstructuredPR(prun[0], version),
+		cb.UnstructuredTR(taskRuns[0], version),
 	)
 	if err != nil {
 		t.Errorf("unable to create dynamic client: %v", err)
 	}
-	cs, _ := test.SeedV1beta1TestData(t, pipelinetest.Data{Namespaces: namespaces, PipelineRuns: prun, TaskRuns: taskRuns})
+	cs, _ := test.SeedTestData(t, test.Data{Namespaces: namespaces, PipelineRuns: prun, TaskRuns: taskRuns})
 	cs.Pipeline.Resources = cb.APIResourceList(version, []string{"pipelinerun", "taskrun"})
 	p := &test.Params{Tekton: cs.Pipeline, Kube: cs.Kube, Dynamic: dynamic}
 
@@ -2231,31 +2198,31 @@ func TestPipelineRunDescribe_with_workspaces_v1beta1(t *testing.T) {
 	golden.Assert(t, got, fmt.Sprintf("%s.golden", t.Name()))
 }
 
-func TestPipelineRunDescribeWithSkippedTasks_v1beta1(t *testing.T) {
+func TestPipelineRunDescribeWithSkippedTasks(t *testing.T) {
 	clock := clockwork.NewFakeClock()
 	pipelinerunname := "pipeline-run"
-	taskRuns := []*v1beta1.TaskRun{
+	taskRuns := []*v1.TaskRun{
 		{
 			ObjectMeta: metav1.ObjectMeta{
 				Namespace: "ns",
 				Name:      "tr-1",
 				Labels:    map[string]string{"tekton.dev/task": "task-1"},
 			},
-			Spec: v1beta1.TaskRunSpec{
-				TaskRef: &v1beta1.TaskRef{
+			Spec: v1.TaskRunSpec{
+				TaskRef: &v1.TaskRef{
 					Name: "task-1",
 				},
 			},
-			Status: v1beta1.TaskRunStatus{
+			Status: v1.TaskRunStatus{
 				Status: duckv1.Status{
 					Conditions: duckv1.Conditions{
 						{
 							Status: corev1.ConditionFalse,
-							Reason: v1beta1.PipelineRunReasonFailed.String(),
+							Reason: v1.PipelineRunReasonFailed.String(),
 						},
 					},
 				},
-				TaskRunStatusFields: v1beta1.TaskRunStatusFields{
+				TaskRunStatusFields: v1.TaskRunStatusFields{
 					StartTime:      &metav1.Time{Time: clock.Now()},
 					CompletionTime: &metav1.Time{Time: clock.Now().Add(5 * time.Minute)},
 				},
@@ -2267,21 +2234,21 @@ func TestPipelineRunDescribeWithSkippedTasks_v1beta1(t *testing.T) {
 				Name:      "tr-2",
 				Labels:    map[string]string{"tekton.dev/task": "task-1"},
 			},
-			Spec: v1beta1.TaskRunSpec{
-				TaskRef: &v1beta1.TaskRef{
+			Spec: v1.TaskRunSpec{
+				TaskRef: &v1.TaskRef{
 					Name: "task-1",
 				},
 			},
-			Status: v1beta1.TaskRunStatus{
+			Status: v1.TaskRunStatus{
 				Status: duckv1.Status{
 					Conditions: duckv1.Conditions{
 						{
 							Status: corev1.ConditionTrue,
-							Reason: v1beta1.PipelineRunReasonSuccessful.String(),
+							Reason: v1.PipelineRunReasonSuccessful.String(),
 						},
 					},
 				},
-				TaskRunStatusFields: v1beta1.TaskRunStatusFields{
+				TaskRunStatusFields: v1.TaskRunStatusFields{
 					StartTime:      &metav1.Time{Time: clock.Now().Add(10 * time.Minute)},
 					CompletionTime: &metav1.Time{Time: clock.Now().Add(17 * time.Minute)},
 				},
@@ -2289,61 +2256,47 @@ func TestPipelineRunDescribeWithSkippedTasks_v1beta1(t *testing.T) {
 		},
 	}
 
-	prun := []*v1beta1.PipelineRun{
+	prun := []*v1.PipelineRun{
 		{
 			ObjectMeta: metav1.ObjectMeta{
 				Name:      pipelinerunname,
 				Namespace: "ns",
 			},
-			Spec: v1beta1.PipelineRunSpec{
-				PipelineRef: &v1beta1.PipelineRef{
+			Spec: v1.PipelineRunSpec{
+				PipelineRef: &v1.PipelineRef{
 					Name: "pipeline",
 				},
-				Resources: []v1beta1.PipelineResourceBinding{
-					{
-						Name: "res-1",
-						ResourceRef: &v1beta1.PipelineResourceRef{
-							Name: "test-res",
-						},
-					},
-					{
-						Name: "res-2",
-						ResourceRef: &v1beta1.PipelineResourceRef{
-							Name: "test-res2",
-						},
-					},
-				},
-				Params: []v1beta1.Param{
+				Params: []v1.Param{
 					{
 						Name: "p-1",
-						Value: v1beta1.ArrayOrString{
-							Type:      v1beta1.ParamTypeString,
+						Value: v1.ParamValue{
+							Type:      v1.ParamTypeString,
 							StringVal: "somethingdifferent",
 						},
 					},
 					{
 						Name: "p-2",
-						Value: v1beta1.ArrayOrString{
-							Type:     v1beta1.ParamTypeArray,
+						Value: v1.ParamValue{
+							Type:     v1.ParamTypeArray,
 							ArrayVal: []string{"booms", "booms", "booms"},
 						},
 					},
 				},
 			},
-			Status: v1beta1.PipelineRunStatus{
+			Status: v1.PipelineRunStatus{
 				Status: duckv1.Status{
 					Conditions: duckv1.Conditions{
 						{
 							Status:  corev1.ConditionTrue,
-							Reason:  v1beta1.PipelineRunReasonSuccessful.String(),
+							Reason:  v1.PipelineRunReasonSuccessful.String(),
 							Message: "Completed",
 						},
 					},
 				},
-				PipelineRunStatusFields: v1beta1.PipelineRunStatusFields{
+				PipelineRunStatusFields: v1.PipelineRunStatusFields{
 					StartTime:      &metav1.Time{Time: clock.Now()},
 					CompletionTime: &metav1.Time{Time: clock.Now().Add(20 * time.Minute)},
-					ChildReferences: []v1beta1.ChildStatusReference{
+					ChildReferences: []v1.ChildStatusReference{
 						{
 							Name:             "tr-1",
 							PipelineTaskName: "t-1",
@@ -2359,10 +2312,10 @@ func TestPipelineRunDescribeWithSkippedTasks_v1beta1(t *testing.T) {
 							},
 						},
 					},
-					SkippedTasks: []v1beta1.SkippedTask{
+					SkippedTasks: []v1.SkippedTask{
 						{
 							Name: "task-should-be-skipped-1",
-							WhenExpressions: []v1beta1.WhenExpression{
+							WhenExpressions: []v1.WhenExpression{
 								{
 									Input:    "yes",
 									Operator: selection.In,
@@ -2372,7 +2325,7 @@ func TestPipelineRunDescribeWithSkippedTasks_v1beta1(t *testing.T) {
 						},
 						{
 							Name: "task-should-be-skipped-2",
-							WhenExpressions: []v1beta1.WhenExpression{
+							WhenExpressions: []v1.WhenExpression{
 								{
 									Input:    "README.md",
 									Operator: selection.NotIn,
@@ -2382,7 +2335,7 @@ func TestPipelineRunDescribeWithSkippedTasks_v1beta1(t *testing.T) {
 						},
 						{
 							Name: "task-should-be-skipped-3",
-							WhenExpressions: []v1beta1.WhenExpression{
+							WhenExpressions: []v1.WhenExpression{
 								{
 									Input:    "monday",
 									Operator: selection.NotIn,
@@ -2404,17 +2357,17 @@ func TestPipelineRunDescribeWithSkippedTasks_v1beta1(t *testing.T) {
 		},
 	}
 
-	version := "v1beta1"
+	version := "v1"
 	tdc := testDynamic.Options{}
 	dynamic, err := tdc.Client(
-		cb.UnstructuredV1beta1PR(prun[0], version),
-		cb.UnstructuredV1beta1TR(taskRuns[0], version),
-		cb.UnstructuredV1beta1TR(taskRuns[1], version),
+		cb.UnstructuredPR(prun[0], version),
+		cb.UnstructuredTR(taskRuns[0], version),
+		cb.UnstructuredTR(taskRuns[1], version),
 	)
 	if err != nil {
 		t.Errorf("unable to create dynamic client: %v", err)
 	}
-	cs, _ := test.SeedV1beta1TestData(t, pipelinetest.Data{Namespaces: namespaces, PipelineRuns: prun, TaskRuns: taskRuns})
+	cs, _ := test.SeedTestData(t, test.Data{Namespaces: namespaces, PipelineRuns: prun, TaskRuns: taskRuns})
 	cs.Pipeline.Resources = cb.APIResourceList(version, []string{"pipelinerun", "taskrun"})
 	p := &test.Params{Tekton: cs.Pipeline, Kube: cs.Kube, Dynamic: dynamic}
 
@@ -2426,17 +2379,17 @@ func TestPipelineRunDescribeWithSkippedTasks_v1beta1(t *testing.T) {
 	golden.Assert(t, got, fmt.Sprintf("%s.golden", t.Name()))
 }
 
-func TestPipelineRunDescribe_cancelled_pipelinerun_multiple_taskrun_v1beta1(t *testing.T) {
+func TestPipelineRunDescribe_cancelled_pipelinerun_multiple_taskrun(t *testing.T) {
 	clock := clockwork.NewFakeClock()
 
-	trs := []*v1beta1.TaskRun{
+	trs := []*v1.TaskRun{
 		{
 			ObjectMeta: metav1.ObjectMeta{
 				Name:      "tr-1",
 				Namespace: "ns",
 			},
-			Status: v1beta1.TaskRunStatus{
-				TaskRunStatusFields: v1beta1.TaskRunStatusFields{
+			Status: v1.TaskRunStatus{
+				TaskRunStatusFields: v1.TaskRunStatusFields{
 					StartTime:      &metav1.Time{Time: clock.Now().Add(1 * time.Minute)},
 					CompletionTime: &metav1.Time{Time: clock.Now().Add(3 * time.Minute)},
 				},
@@ -2445,7 +2398,7 @@ func TestPipelineRunDescribe_cancelled_pipelinerun_multiple_taskrun_v1beta1(t *t
 						{
 							Status:  corev1.ConditionFalse,
 							Type:    apis.ConditionSucceeded,
-							Reason:  v1beta1.TaskRunReasonCancelled.String(),
+							Reason:  v1.TaskRunReasonCancelled.String(),
 							Message: "TaskRun \"tr-1\" was cancelled",
 						},
 					},
@@ -2457,8 +2410,8 @@ func TestPipelineRunDescribe_cancelled_pipelinerun_multiple_taskrun_v1beta1(t *t
 				Name:      "tr-2",
 				Namespace: "ns",
 			},
-			Status: v1beta1.TaskRunStatus{
-				TaskRunStatusFields: v1beta1.TaskRunStatusFields{
+			Status: v1.TaskRunStatus{
+				TaskRunStatusFields: v1.TaskRunStatusFields{
 					StartTime:      &metav1.Time{Time: clock.Now().Add(2 * time.Minute)},
 					CompletionTime: &metav1.Time{Time: clock.Now().Add(4 * time.Minute)},
 				},
@@ -2467,7 +2420,7 @@ func TestPipelineRunDescribe_cancelled_pipelinerun_multiple_taskrun_v1beta1(t *t
 						{
 							Status:  corev1.ConditionFalse,
 							Type:    apis.ConditionSucceeded,
-							Reason:  v1beta1.TaskRunReasonCancelled.String(),
+							Reason:  v1.TaskRunReasonCancelled.String(),
 							Message: "TaskRun \"tr-2\" was cancelled",
 						},
 					},
@@ -2476,7 +2429,7 @@ func TestPipelineRunDescribe_cancelled_pipelinerun_multiple_taskrun_v1beta1(t *t
 		},
 	}
 
-	pipelineRuns := []*v1beta1.PipelineRun{
+	pipelineRuns := []*v1.PipelineRun{
 		{
 			ObjectMeta: metav1.ObjectMeta{
 				Name:              "pipeline-run",
@@ -2484,15 +2437,17 @@ func TestPipelineRunDescribe_cancelled_pipelinerun_multiple_taskrun_v1beta1(t *t
 				CreationTimestamp: metav1.Time{Time: clock.Now()},
 				Labels:            map[string]string{"tekton.dev/pipeline": "pipeline"},
 			},
-			Spec: v1beta1.PipelineRunSpec{
-				Timeout: &metav1.Duration{Duration: 1 * time.Hour},
-				PipelineRef: &v1beta1.PipelineRef{
+			Spec: v1.PipelineRunSpec{
+				Timeouts: &v1.TimeoutFields{
+					Pipeline: &metav1.Duration{Duration: 1 * time.Hour},
+				},
+				PipelineRef: &v1.PipelineRef{
 					Name: "pipeline",
 				},
 			},
-			Status: v1beta1.PipelineRunStatus{
-				PipelineRunStatusFields: v1beta1.PipelineRunStatusFields{
-					ChildReferences: []v1beta1.ChildStatusReference{
+			Status: v1.PipelineRunStatus{
+				PipelineRunStatusFields: v1.PipelineRunStatusFields{
+					ChildReferences: []v1.ChildStatusReference{
 						{
 							Name:             "tr-1",
 							PipelineTaskName: "t-1",
@@ -2532,17 +2487,17 @@ func TestPipelineRunDescribe_cancelled_pipelinerun_multiple_taskrun_v1beta1(t *t
 		},
 	}
 
-	version := "v1beta1"
+	version := "v1"
 	tdc := testDynamic.Options{}
 	dynamic, err := tdc.Client(
-		cb.UnstructuredV1beta1PR(pipelineRuns[0], version),
-		cb.UnstructuredV1beta1TR(trs[0], version),
-		cb.UnstructuredV1beta1TR(trs[1], version),
+		cb.UnstructuredPR(pipelineRuns[0], version),
+		cb.UnstructuredTR(trs[0], version),
+		cb.UnstructuredTR(trs[1], version),
 	)
 	if err != nil {
 		t.Errorf("unable to create dynamic client: %v", err)
 	}
-	cs, _ := test.SeedV1beta1TestData(t, pipelinetest.Data{Namespaces: namespaces, PipelineRuns: pipelineRuns,
+	cs, _ := test.SeedTestData(t, test.Data{Namespaces: namespaces, PipelineRuns: pipelineRuns,
 		TaskRuns: trs,
 	})
 	cs.Pipeline.Resources = cb.APIResourceList(version, []string{"pipelinerun", "taskrun"})
@@ -2557,31 +2512,31 @@ func TestPipelineRunDescribe_cancelled_pipelinerun_multiple_taskrun_v1beta1(t *t
 	golden.Assert(t, actual, fmt.Sprintf("%s.golden", t.Name()))
 }
 
-func TestPipelineRunDescribeWithTimeouts_v1beta1(t *testing.T) {
+func TestPipelineRunDescribeWithTimeouts(t *testing.T) {
 	clock := clockwork.NewFakeClock()
 	pipelinerunname := "pipeline-run"
-	taskRuns := []*v1beta1.TaskRun{
+	taskRuns := []*v1.TaskRun{
 		{
 			ObjectMeta: metav1.ObjectMeta{
 				Namespace: "ns",
 				Name:      "tr-1",
 				Labels:    map[string]string{"tekton.dev/task": "task-1"},
 			},
-			Spec: v1beta1.TaskRunSpec{
-				TaskRef: &v1beta1.TaskRef{
+			Spec: v1.TaskRunSpec{
+				TaskRef: &v1.TaskRef{
 					Name: "task-1",
 				},
 			},
-			Status: v1beta1.TaskRunStatus{
+			Status: v1.TaskRunStatus{
 				Status: duckv1.Status{
 					Conditions: duckv1.Conditions{
 						{
 							Status: corev1.ConditionFalse,
-							Reason: v1beta1.PipelineRunReasonFailed.String(),
+							Reason: v1.PipelineRunReasonFailed.String(),
 						},
 					},
 				},
-				TaskRunStatusFields: v1beta1.TaskRunStatusFields{
+				TaskRunStatusFields: v1.TaskRunStatusFields{
 					StartTime:      &metav1.Time{Time: clock.Now()},
 					CompletionTime: &metav1.Time{Time: clock.Now().Add(5 * time.Minute)},
 				},
@@ -2593,21 +2548,21 @@ func TestPipelineRunDescribeWithTimeouts_v1beta1(t *testing.T) {
 				Name:      "tr-2",
 				Labels:    map[string]string{"tekton.dev/task": "task-1"},
 			},
-			Spec: v1beta1.TaskRunSpec{
-				TaskRef: &v1beta1.TaskRef{
+			Spec: v1.TaskRunSpec{
+				TaskRef: &v1.TaskRef{
 					Name: "task-1",
 				},
 			},
-			Status: v1beta1.TaskRunStatus{
+			Status: v1.TaskRunStatus{
 				Status: duckv1.Status{
 					Conditions: duckv1.Conditions{
 						{
 							Status: corev1.ConditionTrue,
-							Reason: v1beta1.PipelineRunReasonSuccessful.String(),
+							Reason: v1.PipelineRunReasonSuccessful.String(),
 						},
 					},
 				},
-				TaskRunStatusFields: v1beta1.TaskRunStatusFields{
+				TaskRunStatusFields: v1.TaskRunStatusFields{
 					StartTime:      &metav1.Time{Time: clock.Now().Add(10 * time.Minute)},
 					CompletionTime: &metav1.Time{Time: clock.Now().Add(17 * time.Minute)},
 				},
@@ -2615,65 +2570,51 @@ func TestPipelineRunDescribeWithTimeouts_v1beta1(t *testing.T) {
 		},
 	}
 
-	prun := []*v1beta1.PipelineRun{
+	prun := []*v1.PipelineRun{
 		{
 			ObjectMeta: metav1.ObjectMeta{
 				Name:      pipelinerunname,
 				Namespace: "ns",
 			},
-			Spec: v1beta1.PipelineRunSpec{
-				PipelineRef: &v1beta1.PipelineRef{
+			Spec: v1.PipelineRunSpec{
+				PipelineRef: &v1.PipelineRef{
 					Name: "pipeline",
 				},
-				Timeouts: &v1beta1.TimeoutFields{
+				Timeouts: &v1.TimeoutFields{
 					Tasks:    &metav1.Duration{Duration: 50 * time.Minute},
 					Pipeline: &metav1.Duration{Duration: 1 * time.Hour},
 				},
-				Resources: []v1beta1.PipelineResourceBinding{
-					{
-						Name: "res-1",
-						ResourceRef: &v1beta1.PipelineResourceRef{
-							Name: "test-res",
-						},
-					},
-					{
-						Name: "res-2",
-						ResourceRef: &v1beta1.PipelineResourceRef{
-							Name: "test-res2",
-						},
-					},
-				},
-				Params: []v1beta1.Param{
+				Params: []v1.Param{
 					{
 						Name: "p-1",
-						Value: v1beta1.ArrayOrString{
-							Type:      v1beta1.ParamTypeString,
+						Value: v1.ParamValue{
+							Type:      v1.ParamTypeString,
 							StringVal: "somethingdifferent",
 						},
 					},
 					{
 						Name: "p-2",
-						Value: v1beta1.ArrayOrString{
-							Type:     v1beta1.ParamTypeArray,
+						Value: v1.ParamValue{
+							Type:     v1.ParamTypeArray,
 							ArrayVal: []string{"booms", "booms", "booms"},
 						},
 					},
 				},
 			},
-			Status: v1beta1.PipelineRunStatus{
+			Status: v1.PipelineRunStatus{
 				Status: duckv1.Status{
 					Conditions: duckv1.Conditions{
 						{
 							Status:  corev1.ConditionTrue,
-							Reason:  v1beta1.PipelineRunReasonSuccessful.String(),
+							Reason:  v1.PipelineRunReasonSuccessful.String(),
 							Message: "Completed",
 						},
 					},
 				},
-				PipelineRunStatusFields: v1beta1.PipelineRunStatusFields{
+				PipelineRunStatusFields: v1.PipelineRunStatusFields{
 					StartTime:      &metav1.Time{Time: clock.Now()},
 					CompletionTime: &metav1.Time{Time: clock.Now().Add(20 * time.Minute)},
-					ChildReferences: []v1beta1.ChildStatusReference{
+					ChildReferences: []v1.ChildStatusReference{
 						{
 							Name:             "tr-1",
 							PipelineTaskName: "t-1",
@@ -2689,10 +2630,10 @@ func TestPipelineRunDescribeWithTimeouts_v1beta1(t *testing.T) {
 							},
 						},
 					},
-					SkippedTasks: []v1beta1.SkippedTask{
+					SkippedTasks: []v1.SkippedTask{
 						{
 							Name: "task-should-be-skipped-1",
-							WhenExpressions: []v1beta1.WhenExpression{
+							WhenExpressions: []v1.WhenExpression{
 								{
 									Input:    "yes",
 									Operator: selection.In,
@@ -2702,7 +2643,7 @@ func TestPipelineRunDescribeWithTimeouts_v1beta1(t *testing.T) {
 						},
 						{
 							Name: "task-should-be-skipped-2",
-							WhenExpressions: []v1beta1.WhenExpression{
+							WhenExpressions: []v1.WhenExpression{
 								{
 									Input:    "README.md",
 									Operator: selection.NotIn,
@@ -2712,7 +2653,7 @@ func TestPipelineRunDescribeWithTimeouts_v1beta1(t *testing.T) {
 						},
 						{
 							Name: "task-should-be-skipped-3",
-							WhenExpressions: []v1beta1.WhenExpression{
+							WhenExpressions: []v1.WhenExpression{
 								{
 									Input:    "monday",
 									Operator: selection.NotIn,
@@ -2734,17 +2675,17 @@ func TestPipelineRunDescribeWithTimeouts_v1beta1(t *testing.T) {
 		},
 	}
 
-	version := "v1beta1"
+	version := "v1"
 	tdc := testDynamic.Options{}
 	dynamic, err := tdc.Client(
-		cb.UnstructuredV1beta1PR(prun[0], version),
-		cb.UnstructuredV1beta1TR(taskRuns[0], version),
-		cb.UnstructuredV1beta1TR(taskRuns[1], version),
+		cb.UnstructuredPR(prun[0], version),
+		cb.UnstructuredTR(taskRuns[0], version),
+		cb.UnstructuredTR(taskRuns[1], version),
 	)
 	if err != nil {
 		t.Errorf("unable to create dynamic client: %v", err)
 	}
-	cs, _ := test.SeedV1beta1TestData(t, pipelinetest.Data{Namespaces: namespaces, PipelineRuns: prun, TaskRuns: taskRuns})
+	cs, _ := test.SeedTestData(t, test.Data{Namespaces: namespaces, PipelineRuns: prun, TaskRuns: taskRuns})
 	cs.Pipeline.Resources = cb.APIResourceList(version, []string{"pipelinerun", "taskrun"})
 	p := &test.Params{Tekton: cs.Pipeline, Kube: cs.Kube, Dynamic: dynamic}
 
@@ -2756,8 +2697,8 @@ func TestPipelineRunDescribeWithTimeouts_v1beta1(t *testing.T) {
 	golden.Assert(t, got, fmt.Sprintf("%s.golden", t.Name()))
 }
 
-func TestPipelineRunDescribe_with_annotations_v1beta1(t *testing.T) {
-	prun := []*v1beta1.PipelineRun{
+func TestPipelineRunDescribe_with_annotations(t *testing.T) {
+	prun := []*v1.PipelineRun{
 		{
 			ObjectMeta: metav1.ObjectMeta{
 				Name:      "pr-with-annotations",
@@ -2767,8 +2708,8 @@ func TestPipelineRunDescribe_with_annotations_v1beta1(t *testing.T) {
 					"tekton.dev/tags":                  "testing",
 				},
 			},
-			Spec: v1beta1.PipelineRunSpec{
-				PipelineRef: &v1beta1.PipelineRef{
+			Spec: v1.PipelineRunSpec{
+				PipelineRef: &v1.PipelineRef{
 					Name: "pr-with-annotations",
 				},
 			},
@@ -2783,15 +2724,15 @@ func TestPipelineRunDescribe_with_annotations_v1beta1(t *testing.T) {
 		},
 	}
 
-	version := "v1beta1"
+	version := "v1"
 	tdc := testDynamic.Options{}
 	dynamic, err := tdc.Client(
-		cb.UnstructuredV1beta1PR(prun[0], version),
+		cb.UnstructuredPR(prun[0], version),
 	)
 	if err != nil {
 		t.Errorf("unable to create dynamic client: %v", err)
 	}
-	cs, _ := test.SeedV1beta1TestData(t, pipelinetest.Data{Namespaces: namespaces, PipelineRuns: prun})
+	cs, _ := test.SeedTestData(t, test.Data{Namespaces: namespaces, PipelineRuns: prun})
 	cs.Pipeline.Resources = cb.APIResourceList(version, []string{"pipelinerun", "taskrun"})
 	p := &test.Params{Tekton: cs.Pipeline, Kube: cs.Kube, Dynamic: dynamic}
 
