@@ -19,10 +19,11 @@ import (
 	"strings"
 
 	"github.com/spf13/cobra"
+	"github.com/tektoncd/cli/pkg/actions"
 	"github.com/tektoncd/cli/pkg/cli"
 	"github.com/tektoncd/cli/pkg/formatted"
-	"github.com/tektoncd/cli/pkg/pipelinerun"
-	"github.com/tektoncd/pipeline/pkg/apis/pipeline/v1beta1"
+	pipelinerunpkg "github.com/tektoncd/cli/pkg/pipelinerun"
+	v1 "github.com/tektoncd/pipeline/pkg/apis/pipeline/v1"
 	corev1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 )
@@ -39,7 +40,7 @@ Set to 'CancelledRunFinally' if you want to cancel the current running task and 
 Set to 'StoppedRunFinally' if you want to cancel the remaining non-final task and directly run the finally tasks.
 `
 
-	cancelStatus := ""
+	graceCancelStatus := ""
 
 	c := &cobra.Command{
 		Use:     "cancel",
@@ -60,11 +61,11 @@ Set to 'StoppedRunFinally' if you want to cancel the remaining non-final task an
 				Err: cmd.OutOrStderr(),
 			}
 
-			return cancelPipelineRun(p, s, pr, cancelStatus)
+			return cancelPipelineRun(p, s, pr, graceCancelStatus)
 		},
 	}
 
-	c.Flags().StringVarP(&cancelStatus, "grace", "", "", graceCancelDescription)
+	c.Flags().StringVarP(&graceCancelStatus, "grace", "", "", graceCancelDescription)
 	return c
 }
 
@@ -74,7 +75,8 @@ func cancelPipelineRun(p cli.Params, s *cli.Stream, prName string, graceCancelSt
 		return fmt.Errorf("failed to create tekton client")
 	}
 
-	pr, err := pipelinerun.Get(cs, prName, metav1.GetOptions{}, p.Namespace())
+	var pr *v1.PipelineRun
+	err = actions.GetV1(pipelineRunGroupResource, cs, prName, p.Namespace(), metav1.GetOptions{}, &pr)
 	if err != nil {
 		return fmt.Errorf("failed to find PipelineRun: %s", prName)
 	}
@@ -85,17 +87,15 @@ func cancelPipelineRun(p cli.Params, s *cli.Stream, prName string, graceCancelSt
 		}
 	}
 
-	// nolint: staticcheck
-	cancelStatus := v1beta1.PipelineRunSpecStatusCancelled
-
+	cancelStatus := v1.PipelineRunSpecStatusCancelled
 	switch strings.ToLower(graceCancelStatus) {
-	case strings.ToLower(v1beta1.PipelineRunSpecStatusCancelledRunFinally):
-		cancelStatus = v1beta1.PipelineRunSpecStatusCancelledRunFinally
-	case strings.ToLower(v1beta1.PipelineRunSpecStatusStoppedRunFinally):
-		cancelStatus = v1beta1.PipelineRunSpecStatusStoppedRunFinally
+	case strings.ToLower(v1.PipelineRunSpecStatusCancelledRunFinally):
+		cancelStatus = v1.PipelineRunSpecStatusCancelledRunFinally
+	case strings.ToLower(v1.PipelineRunSpecStatusStoppedRunFinally):
+		cancelStatus = v1.PipelineRunSpecStatusStoppedRunFinally
 	}
 
-	if _, err = pipelinerun.Cancel(cs, prName, metav1.PatchOptions{}, cancelStatus, p.Namespace()); err != nil {
+	if _, err = pipelinerunpkg.Cancel(cs, prName, metav1.PatchOptions{}, cancelStatus, p.Namespace()); err != nil {
 		return fmt.Errorf("failed to cancel PipelineRun: %s: %v", prName, err)
 	}
 

@@ -228,7 +228,7 @@ func PrintTaskRunDescription(s *cli.Stream, trName string, p cli.Params) error {
 		"formatDuration":          formatted.Duration,
 		"formatCondition":         formatted.Condition,
 		"formatResult":            formatted.Result,
-		"formatWorkspace":         formatted.Workspace,
+		"formatWorkspace":         formatted.WorkspaceV1beta1,
 		"hasFailed":               hasFailed,
 		"taskRefExists":           taskRefExists,
 		"taskResourceRefExists":   taskResourceRefExists,

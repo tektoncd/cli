@@ -1,17 +1,13 @@
 Name:           pipeline-run2
 Namespace:      ns
 Pipeline Ref:   pipeline2
+Annotations:
+ tekton.dev/v1beta1Resources=[{"name":"res-1x","resourceRef":{"name":"test-res"}},{"name":"res-2x","resourceRef":{"name":"test-res2"}}]
 
 Status
 
 STARTED         DURATION   STATUS
 0 seconds ago   20m0s      Succeeded
-
-Resources
-
- NAME     RESOURCE REF
- res-1x   test-res
- res-2x   test-res2
 
 Params
 

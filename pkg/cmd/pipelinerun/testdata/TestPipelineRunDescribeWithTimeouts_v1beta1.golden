@@ -1,6 +1,8 @@
 Name:           pipeline-run
 Namespace:      ns
 Pipeline Ref:   pipeline
+Annotations:
+ tekton.dev/v1beta1Resources=[{"name":"res-1","resourceRef":{"name":"test-res"}},{"name":"res-2","resourceRef":{"name":"test-res2"}}]
 
 Status
 

@@ -7,12 +7,6 @@ Status
 STARTED         DURATION   STATUS
 0 seconds ago   20m0s      Succeeded
 
-Resources
-
- NAME    RESOURCE REF
- res-1   test-res
- res-2   test-res2
-
 Params
 
  NAME   VALUE
@@ -21,5 +15,6 @@ Params
 
 Taskruns
 
- NAME   TASK NAME   STARTED         DURATION   STATUS
- tr-1   t-1         0 seconds ago   5m0s       Failed
+ NAME   TASK NAME   STARTED           DURATION   STATUS
+ tr-2   t-2         -10 minutes ago   7m0s       Succeeded
+ tr-1   t-1         0 seconds ago     5m0s       Failed

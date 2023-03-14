@@ -12,74 +12,31 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-package description
+package pipelinerun
 
 import (
 	"testing"
 
 	"github.com/tektoncd/cli/pkg/test"
-	"github.com/tektoncd/pipeline/pkg/apis/pipeline/v1beta1"
+	v1 "github.com/tektoncd/pipeline/pkg/apis/pipeline/v1"
 	corev1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"knative.dev/pkg/apis"
 	duckv1 "knative.dev/pkg/apis/duck/v1"
 )
 
-func TestPipelineRefExists_Present(t *testing.T) {
-	spec := v1beta1.PipelineRunSpec{
-		PipelineRef: &v1beta1.PipelineRef{
-			Name: "Pipeline",
-		},
-	}
-
-	output := pipelineRefExists(spec)
-	test.AssertOutput(t, "Pipeline", output)
-}
-
-func TestPipelineRefExists_Not_Present(t *testing.T) {
-	spec := v1beta1.PipelineRunSpec{
-		PipelineRef: nil,
-	}
-
-	output := pipelineRefExists(spec)
-	test.AssertOutput(t, "", output)
-}
-
-func TestPipelineResourceRefExists_Present(t *testing.T) {
-	spec := v1beta1.PipelineResourceBinding{
-		ResourceRef: &v1beta1.PipelineResourceRef{
-			Name: "Pipeline",
-		},
-	}
-
-	output := pipelineResourceRefExists(spec)
-	test.AssertOutput(t, "Pipeline", output)
-}
-
-func TestPipelineResourceRefExists_Not_Present(t *testing.T) {
-	spec := v1beta1.PipelineResourceBinding{
-		ResourceRef: nil,
-	}
-
-	output := pipelineResourceRefExists(spec)
-	test.AssertOutput(t, "", output)
-}
-
 func TestHasFailed_PipelineAndTaskRunFailedMessage(t *testing.T) {
-
-	trs := []*v1beta1.TaskRun{
+	taskRunWithStatusList := TaskRunWithStatusList{
 		{
-			ObjectMeta: metav1.ObjectMeta{
-				Name:      "tr-1",
-				Namespace: "ns",
-			},
-			Status: v1beta1.TaskRunStatus{
+			TaskRunName:      "tr-1",
+			PipelineTaskName: "task",
+			Status: &v1.TaskRunStatus{
 				Status: duckv1.Status{
 					Conditions: duckv1.Conditions{
 						{
 							Status:  corev1.ConditionFalse,
 							Type:    apis.ConditionSucceeded,
-							Reason:  v1beta1.TaskRunReasonCancelled.String(),
+							Reason:  v1.TaskRunReasonCancelled.String(),
 							Message: "TaskRun \"tr-1\" was cancelled",
 						},
 					},
@@ -88,15 +45,18 @@ func TestHasFailed_PipelineAndTaskRunFailedMessage(t *testing.T) {
 		},
 	}
 
-	pipelineRuns := []*v1beta1.PipelineRun{
+	pipelineRuns := []*v1.PipelineRun{
 		{
 			ObjectMeta: metav1.ObjectMeta{
 				Name: "pipeline-run",
 			},
-			Status: v1beta1.PipelineRunStatus{
-				PipelineRunStatusFields: v1beta1.PipelineRunStatusFields{
-					TaskRuns: map[string]*v1beta1.PipelineRunTaskRunStatus{
-						"tr-1": {PipelineTaskName: "t-1", Status: &trs[0].Status},
+			Status: v1.PipelineRunStatus{
+				PipelineRunStatusFields: v1.PipelineRunStatusFields{
+					ChildReferences: []v1.ChildStatusReference{
+						{
+							Name:             "tr-1",
+							PipelineTaskName: "test",
+						},
 					},
 				},
 				Status: duckv1.Status{
@@ -112,25 +72,22 @@ func TestHasFailed_PipelineAndTaskRunFailedMessage(t *testing.T) {
 		},
 	}
 
-	message := hasFailed(pipelineRuns[0])
+	message := hasFailed(pipelineRuns[0], taskRunWithStatusList)
 	test.AssertOutput(t, "PipelineRun \"pipeline-run\" was cancelled\nTaskRun(s) cancelled: tr-1", message)
 }
 
 func TestHasFailed_PipelineFailedMessage(t *testing.T) {
-
-	trs := []*v1beta1.TaskRun{
+	taskRunWithStatusList := TaskRunWithStatusList{
 		{
-			ObjectMeta: metav1.ObjectMeta{
-				Name:      "tr-1",
-				Namespace: "ns",
-			},
-			Status: v1beta1.TaskRunStatus{
+			TaskRunName:      "tr-1",
+			PipelineTaskName: "t-1",
+			Status: &v1.TaskRunStatus{
 				Status: duckv1.Status{
 					Conditions: duckv1.Conditions{
 						{
 							Status: corev1.ConditionTrue,
 							Type:   apis.ConditionSucceeded,
-							Reason: string(v1beta1.TaskRunReasonSuccessful),
+							Reason: v1.TaskRunReasonSuccessful.String(),
 						},
 					},
 				},
@@ -138,15 +95,18 @@ func TestHasFailed_PipelineFailedMessage(t *testing.T) {
 		},
 	}
 
-	pipelineRuns := []*v1beta1.PipelineRun{
+	pipelineRuns := []*v1.PipelineRun{
 		{
 			ObjectMeta: metav1.ObjectMeta{
 				Name: "pipeline-run",
 			},
-			Status: v1beta1.PipelineRunStatus{
-				PipelineRunStatusFields: v1beta1.PipelineRunStatusFields{
-					TaskRuns: map[string]*v1beta1.PipelineRunTaskRunStatus{
-						"tr-1": {PipelineTaskName: "t-1", Status: &trs[0].Status},
+			Status: v1.PipelineRunStatus{
+				PipelineRunStatusFields: v1.PipelineRunStatusFields{
+					ChildReferences: []v1.ChildStatusReference{
+						{
+							Name:             "tr-1",
+							PipelineTaskName: "t-1",
+						},
 					},
 				},
 				Status: duckv1.Status{
@@ -162,6 +122,6 @@ func TestHasFailed_PipelineFailedMessage(t *testing.T) {
 		},
 	}
 
-	message := hasFailed(pipelineRuns[0])
+	message := hasFailed(pipelineRuns[0], taskRunWithStatusList)
 	test.AssertOutput(t, "PipelineRun \"pipeline-run\" was cancelled", message)
 }

@@ -17,13 +17,13 @@ package formatted
 import (
 	"testing"
 
-	"github.com/tektoncd/pipeline/pkg/apis/pipeline/v1beta1"
+	v1 "github.com/tektoncd/pipeline/pkg/apis/pipeline/v1"
 	"gotest.tools/v3/assert"
 	corev1 "k8s.io/api/core/v1"
 )
 
 func TestWorkspace(t *testing.T) {
-	workspaceSpec := []v1beta1.WorkspaceBinding{
+	workspaceSpec := []v1.WorkspaceBinding{
 		{
 			Name:     "emptydir-default",
 			EmptyDir: &corev1.EmptyDirVolumeSource{},

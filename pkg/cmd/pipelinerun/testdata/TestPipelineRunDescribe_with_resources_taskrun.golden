@@ -1,8 +1,7 @@
-Name:                  pipeline-run
-Namespace:             ns
-Pipeline Ref:          pipeline
-Service Account:       test-sa
-Timeout(Deprecated):   1h0m0s
+Name:              pipeline-run
+Namespace:         ns
+Pipeline Ref:      pipeline
+Service Account:   test-sa
 Labels:
  tekton.dev/pipeline=pipeline
 
@@ -11,10 +10,8 @@ Status
 STARTED          DURATION   STATUS
 10 minutes ago   5m0s       Succeeded
 
-Resources
-
- NAME            RESOURCE REF
- test-resource   test-resource-ref
+Timeouts
+ Pipeline:   1h0m0s
 
 Params
 

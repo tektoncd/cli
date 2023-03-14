@@ -35,7 +35,8 @@ import (
 	"k8s.io/apimachinery/pkg/watch"
 )
 
-var prGroupResource = schema.GroupVersionResource{Group: "tekton.dev", Resource: "pipelineruns"}
+var pipelineRunGroupResource = schema.GroupVersionResource{Group: "tekton.dev", Resource: "pipelineruns"}
+var taskrunGroupResource = schema.GroupVersionResource{Group: "tekton.dev", Resource: "taskruns"}
 
 // GetAllPipelineRuns returns all pipelinesruns running in a namespace
 func GetAllPipelineRuns(gr schema.GroupVersionResource, opts metav1.ListOptions, c *cli.Clients, ns string, limit int, time clockwork.Clock) ([]string, error) {
@@ -61,9 +62,10 @@ func GetAllPipelineRuns(gr schema.GroupVersionResource, opts metav1.ListOptions,
 	return ret, nil
 }
 
+// TODO: remove as all the function uses are moved to new func
 // It will fetch the resource in v1beta1 struct format
 func Get(c *cli.Clients, prname string, opts metav1.GetOptions, ns string) (*v1beta1.PipelineRun, error) {
-	unstructuredPR, err := actions.Get(prGroupResource, c.Dynamic, c.Tekton.Discovery(), prname, ns, opts)
+	unstructuredPR, err := actions.Get(pipelineRunGroupResource, c.Dynamic, c.Tekton.Discovery(), prname, ns, opts)
 	if err != nil {
 		return nil, err
 	}
@@ -83,7 +85,7 @@ func Get(c *cli.Clients, prname string, opts metav1.GetOptions, ns string) (*v1b
 }
 
 func Watch(c *cli.Clients, opts metav1.ListOptions, ns string) (watch.Interface, error) {
-	watch, err := actions.Watch(prGroupResource, c, ns, opts)
+	watch, err := actions.Watch(pipelineRunGroupResource, c, ns, opts)
 	if err != nil {
 		return nil, err
 	}
@@ -121,7 +123,7 @@ func Create(c *cli.Clients, pr *v1beta1.PipelineRun, opts metav1.CreateOptions, 
 		Object: object,
 	}
 
-	newUnstructuredPR, err := actions.Create(prGroupResource, c, unstructuredPR, ns, opts)
+	newUnstructuredPR, err := actions.Create(pipelineRunGroupResource, c, unstructuredPR, ns, opts)
 	if err != nil {
 		return nil, err
 	}

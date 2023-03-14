@@ -26,7 +26,6 @@ import (
 	"github.com/tektoncd/cli/pkg/deleter"
 	"github.com/tektoncd/cli/pkg/formatted"
 	"github.com/tektoncd/cli/pkg/options"
-	pr "github.com/tektoncd/cli/pkg/pipelinerun"
 	prsort "github.com/tektoncd/cli/pkg/pipelinerun/sort"
 	v1 "github.com/tektoncd/pipeline/pkg/apis/pipeline/v1"
 	"go.uber.org/multierr"
@@ -46,7 +45,8 @@ func prExists(args []string, p cli.Params) ([]string, error) {
 	var errorList error
 	ns := p.Namespace()
 	for _, name := range args {
-		_, err := pr.Get(c, name, metav1.GetOptions{}, ns)
+		var pr *v1.PipelineRun
+		err := actions.GetV1(pipelineRunGroupResource, c, name, ns, metav1.GetOptions{}, &pr)
 		if err != nil {
 			errorList = multierr.Append(errorList, err)
 			continue
