@@ -15,7 +15,6 @@
 package task
 
 import (
-	"context"
 	"fmt"
 	"os"
 
@@ -44,6 +43,7 @@ func GetAllTaskNames(gr schema.GroupVersionResource, c *cli.Clients, ns string) 
 	return ret, nil
 }
 
+// TODO: remove as all the function uses are moved to new func
 // Get will fetch the task resource based on the task name
 func Get(c *cli.Clients, taskname string, opts metav1.GetOptions, ns string) (*v1beta1.Task, error) {
 	unstructuredT, err := actions.Get(taskGroupResource, c.Dynamic, c.Tekton.Discovery(), taskname, ns, opts)
@@ -52,41 +52,6 @@ func Get(c *cli.Clients, taskname string, opts metav1.GetOptions, ns string) (*v
 	}
 
 	var task *v1beta1.Task
-	if err := runtime.DefaultUnstructuredConverter.FromUnstructured(unstructuredT.UnstructuredContent(), &task); err != nil {
-		fmt.Fprintf(os.Stderr, "failed to get task from %s namespace \n", ns)
-		return nil, err
-	}
-	return task, nil
-}
-
-// Get will fetch the task resource based on the task name
-// TODO: remove after all are subcommands are moved to v1
-func GetV1(c *cli.Clients, taskname string, opts metav1.GetOptions, ns string) (*v1.Task, error) {
-
-	gvr, err := actions.GetGroupVersionResource(schema.GroupVersionResource{Group: "tekton.dev", Resource: "tasks"}, c.Tekton.Discovery())
-	if err != nil {
-		return nil, err
-	}
-
-	if gvr.Version == "v1beta1" {
-		taskV1Beta1, err := Get(c, taskname, opts, ns)
-		if err != nil {
-			return nil, err
-		}
-		var taskConverted v1.Task
-		err = taskV1Beta1.ConvertTo(context.Background(), &taskConverted)
-		if err != nil {
-			return nil, err
-		}
-		return &taskConverted, nil
-	}
-
-	unstructuredT, err := actions.Get(taskGroupResource, c.Dynamic, c.Tekton.Discovery(), taskname, ns, opts)
-	if err != nil {
-		return nil, err
-	}
-
-	var task *v1.Task
 	if err := runtime.DefaultUnstructuredConverter.FromUnstructured(unstructuredT.UnstructuredContent(), &task); err != nil {
 		fmt.Fprintf(os.Stderr, "failed to get task from %s namespace \n", ns)
 		return nil, err

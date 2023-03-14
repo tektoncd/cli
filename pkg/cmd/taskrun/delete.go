@@ -53,7 +53,8 @@ func trExists(args []string, p cli.Params) ([]string, error) {
 	var errorList error
 	ns := p.Namespace()
 	for _, name := range args {
-		_, err := taskrun.Get(c, name, metav1.GetOptions{}, ns)
+		var taskRun *v1.TaskRun
+		err := actions.GetV1(taskrunGroupResource, c, name, ns, metav1.GetOptions{}, &taskRun)
 		if err != nil {
 			errorList = multierr.Append(errorList, err)
 			continue

@@ -492,12 +492,12 @@ func TestTask_Get_v1beta1(t *testing.T) {
 		t.Errorf("unable to create client: %v", err)
 	}
 
-	got, err := GetV1(c, "task", metav1.GetOptions{}, "ns")
+	var task *v1beta1.Task
+	err = actions.GetV1(taskGroupResource, c, "task", "ns", metav1.GetOptions{}, &task)
 	if err != nil {
 		t.Errorf("unexpected Error")
 	}
-	test.AssertOutput(t, "task", got.Name)
-	test.AssertOutput(t, got.Annotations["tekton.dev/v1beta1Resources"], "{\"inputs\":[{\"name\":\"git\",\"type\":\"git\"}]}")
+	test.AssertOutput(t, "task", task.Name)
 }
 
 func TestTask_Get(t *testing.T) {
@@ -529,11 +529,12 @@ func TestTask_Get(t *testing.T) {
 		t.Errorf("unable to create client: %v", err)
 	}
 
-	got, err := GetV1(c, "task", metav1.GetOptions{}, "ns")
+	var task *v1.Task
+	err = actions.GetV1(taskGroupResource, c, "task", "ns", metav1.GetOptions{}, &task)
 	if err != nil {
 		t.Errorf("unexpected Error")
 	}
-	test.AssertOutput(t, "task", got.Name)
+	test.AssertOutput(t, "task", task.Name)
 }
 
 func TestTask_Create(t *testing.T) {

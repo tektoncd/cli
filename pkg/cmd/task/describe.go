@@ -29,7 +29,6 @@ import (
 	trsort "github.com/tektoncd/cli/pkg/taskrun/sort"
 	v1 "github.com/tektoncd/pipeline/pkg/apis/pipeline/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
-	"k8s.io/apimachinery/pkg/runtime/schema"
 	cliopts "k8s.io/cli-runtime/pkg/genericclioptions"
 )
 
@@ -59,8 +58,10 @@ const describeTemplate = `{{decorate "bold" "Name"}}:	{{ .Task.Name }}
 {{- else }}
 {{- if eq $p.Type "string" }}
  {{decorate "bullet" $p.Name }}	{{ $p.Type }}	{{ formatDesc $p.Description }}	{{ $p.Default.StringVal }}
-{{- else }}
+{{- else if eq $p.Type "array" }}
  {{decorate "bullet" $p.Name }}	{{ $p.Type }}	{{ formatDesc $p.Description }}	{{ $p.Default.ArrayVal }}
+ {{- else }}
+ {{decorate "bullet" $p.Name }}	{{ $p.Type }}	{{ formatDesc $p.Description }}	{{ $p.Default.ObjectVal }}
 {{- end }}
 {{- end }}
 {{- end }}
@@ -158,8 +159,9 @@ or
 			}
 
 			if output != "" {
-				taskGroupResource := schema.GroupVersionResource{Group: "tekton.dev", Resource: "tasks"}
-				return actions.PrintObject(taskGroupResource, opts.TaskName, cmd.OutOrStdout(), cs.Dynamic, cs.Tekton.Discovery(), f, p.Namespace())
+				// taskGroupResource := schema.GroupVersionResource{Group: "tekton.dev", Resource: "tasks"}
+				// return actions.PrintObjectV1(taskGroupResource, opts.TaskName, cmd.OutOrStdout(), cs.Dynamic, cs.Tekton.Discovery(), f, p.Namespace())
+				return actions.PrintObjectV1(taskGroupResource, opts.TaskName, cmd.OutOrStdout(), cs, f, p.Namespace())
 			}
 
 			return printTaskDescription(s, p, opts.TaskName)
@@ -176,7 +178,8 @@ func printTaskDescription(s *cli.Stream, p cli.Params, tname string) error {
 		return fmt.Errorf("failed to create tekton client")
 	}
 
-	t, err := task.GetV1(cs, tname, metav1.GetOptions{}, p.Namespace())
+	var t *v1.Task
+	err = actions.GetV1(taskGroupResource, cs, tname, p.Namespace(), metav1.GetOptions{}, &t)
 	if err != nil {
 		return fmt.Errorf("failed to get Task %s: %v", tname, err)
 	}
