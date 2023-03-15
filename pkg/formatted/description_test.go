@@ -18,6 +18,7 @@ import (
 	"reflect"
 	"testing"
 
+	"github.com/tektoncd/cli/pkg/test"
 	v1 "github.com/tektoncd/pipeline/pkg/apis/pipeline/v1"
 	metav1 "k8s.io/api/core/v1"
 )
@@ -117,4 +118,24 @@ func TestPipelineRefExists_Not_Present(t *testing.T) {
 	if output != "" {
 		t.Errorf("Input = %s, want %s", output, "")
 	}
+}
+
+func TestTaskRefExists_Present(t *testing.T) {
+	spec := v1.TaskRunSpec{
+		TaskRef: &v1.TaskRef{
+			Name: "Task",
+		},
+	}
+
+	output := TaskRefExists(spec)
+	test.AssertOutput(t, "Task", output)
+}
+
+func TestTaskRefExists_Not_Present(t *testing.T) {
+	spec := v1.TaskRunSpec{
+		TaskRef: nil,
+	}
+
+	output := TaskRefExists(spec)
+	test.AssertOutput(t, "", output)
 }

@@ -1,0 +1,11 @@
+Name:        tr-1
+Namespace:   ns
+Task Ref:    t1
+Timeout:     1h0m0s
+Labels:
+ tekton.dev/task=t1
+
+Status
+
+STARTED    DURATION    STATUS
+---        ---         Succeeded

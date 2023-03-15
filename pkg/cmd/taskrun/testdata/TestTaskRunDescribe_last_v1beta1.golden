@@ -1,0 +1,10 @@
+Name:        tr-2
+Namespace:   ns
+Task Ref:    task-1
+Labels:
+ tekton.dev/task=task-1
+
+Status
+
+STARTED         DURATION    STATUS
+0 seconds ago   5m0s        Succeeded

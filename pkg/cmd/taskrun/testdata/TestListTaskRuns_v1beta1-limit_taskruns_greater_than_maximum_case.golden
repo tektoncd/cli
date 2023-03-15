@@ -1,0 +1,7 @@
+NAME    STARTED          DURATION   STATUS
+tr0-1   ---              ---        Succeeded
+tr3-1   ---              ---        Failed
+tr4-1   ---              ---        Failed
+tr2-2   59 minutes ago   1m0s       Failed
+tr1-1   1 hour ago       1m0s       Succeeded
+tr2-1   1 hour ago       ---        Running

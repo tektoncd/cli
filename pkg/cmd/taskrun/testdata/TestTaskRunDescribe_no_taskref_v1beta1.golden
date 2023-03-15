@@ -1,0 +1,11 @@
+Name:        tr-1
+Namespace:   ns
+
+Status
+
+STARTED         DURATION    STATUS
+8 minutes ago   3m0s        Failed
+
+Message
+
+Testing tr failed

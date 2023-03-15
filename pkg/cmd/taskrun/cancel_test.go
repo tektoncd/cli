@@ -169,19 +169,19 @@ func TestTaskRunCancel_v1beta1(t *testing.T) {
 	cancels := make([]clients, 0)
 
 	cs, _ := test.SeedV1beta1TestData(t, pipelinetest.Data{TaskRuns: trs, Namespaces: ns})
-	cs.Pipeline.Resources = cb.APIResourceList(version, []string{"task", "taskrun"})
+	cs.Pipeline.Resources = cb.APIResourceList(versionv1beta1, []string{"task", "taskrun"})
 	tdc := testDynamic.Options{}
 	dc, err := tdc.Client(
-		cb.UnstructuredV1beta1TR(trs[0], version),
-		cb.UnstructuredV1beta1TR(trs[1], version),
-		cb.UnstructuredV1beta1TR(trs[2], version),
+		cb.UnstructuredV1beta1TR(trs[0], versionv1beta1),
+		cb.UnstructuredV1beta1TR(trs[1], versionv1beta1),
+		cb.UnstructuredV1beta1TR(trs[2], versionv1beta1),
 	)
 	if err != nil {
 		t.Errorf("unable to create dynamic client: %v", err)
 	}
 
 	cs2, _ := test.SeedV1beta1TestData(t, pipelinetest.Data{TaskRuns: trs2, Namespaces: ns})
-	cs2.Pipeline.Resources = cb.APIResourceList(version, []string{"task", "taskrun"})
+	cs2.Pipeline.Resources = cb.APIResourceList(versionv1beta1, []string{"task", "taskrun"})
 	tdc2 := testDynamic.Options{PrependReactors: []testDynamic.PrependOpt{
 		{Verb: "patch",
 			Resource: "taskruns",
@@ -189,17 +189,17 @@ func TestTaskRunCancel_v1beta1(t *testing.T) {
 				return true, nil, errors.New("test error")
 			}}}}
 	dc2, err := tdc2.Client(
-		cb.UnstructuredV1beta1TR(trs2[0], version),
+		cb.UnstructuredV1beta1TR(trs2[0], versionv1beta1),
 	)
 	if err != nil {
 		t.Errorf("unable to create dynamic client: %v", err)
 	}
 
 	cs3, _ := test.SeedV1beta1TestData(t, pipelinetest.Data{TaskRuns: trs3, Namespaces: ns})
-	cs3.Pipeline.Resources = cb.APIResourceList(version, []string{"task", "taskrun"})
+	cs3.Pipeline.Resources = cb.APIResourceList(versionv1beta1, []string{"task", "taskrun"})
 	tdc3 := testDynamic.Options{}
 	dc3, err := tdc3.Client(
-		cb.UnstructuredV1beta1TR(trs3[0], version),
+		cb.UnstructuredV1beta1TR(trs3[0], versionv1beta1),
 	)
 	if err != nil {
 		t.Errorf("unable to create dynamic client: %v", err)

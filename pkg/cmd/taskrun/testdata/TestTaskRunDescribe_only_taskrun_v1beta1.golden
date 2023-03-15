@@ -1,0 +1,23 @@
+Name:        tr-1
+Namespace:   ns
+Task Ref:    t1
+Timeout:     1h0m0s
+Annotations:
+ tekton.dev/v1beta1Resources={"inputs":[{"name":"git","resourceRef":{"name":"git"}},{"name":"image-input","resourceRef":{"name":"image"}}],"outputs":[{"name":"image-output","resourceRef":{"name":"image"}},{"name":"image-output2","resourceRef":{"name":"image"}}]}
+
+Status
+
+STARTED         DURATION    STATUS
+9 minutes ago   ---         Succeeded
+
+Params
+
+ NAME     VALUE
+ input    param
+ input2   param2
+
+Steps
+
+ NAME    STATUS
+ step1   Completed
+ step2   Completed

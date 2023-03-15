@@ -209,7 +209,6 @@ func PrintPipelineRunDescription(out io.Writer, c *cli.Clients, ns string, prNam
 		"formatAge":               formatted.Age,
 		"formatDuration":          formatted.Duration,
 		"formatCondition":         formatted.Condition,
-		"formatResult":            formatted.Result,
 		"formatWorkspace":         formatted.Workspace,
 		"hasFailed":               hasFailed,
 		"pipelineRefExists":       formatted.PipelineRefExists,

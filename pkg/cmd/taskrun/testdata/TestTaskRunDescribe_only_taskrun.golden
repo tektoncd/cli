@@ -8,18 +8,6 @@ Status
 STARTED         DURATION    STATUS
 9 minutes ago   ---         Succeeded
 
-Input Resources
-
- NAME          RESOURCE REF
- git           git
- image-input   image
-
-Output Resources
-
- NAME            RESOURCE REF
- image-output    image
- image-output2   image
-
 Params
 
  NAME     VALUE

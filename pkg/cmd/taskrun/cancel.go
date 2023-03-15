@@ -22,7 +22,6 @@ import (
 	"github.com/tektoncd/cli/pkg/actions"
 	"github.com/tektoncd/cli/pkg/cli"
 	"github.com/tektoncd/cli/pkg/formatted"
-	"github.com/tektoncd/cli/pkg/taskrun"
 	v1 "github.com/tektoncd/pipeline/pkg/apis/pipeline/v1"
 	corev1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
@@ -70,13 +69,14 @@ func cancelTaskRun(p cli.Params, s *cli.Stream, trName string) error {
 		return fmt.Errorf("failed to create tekton client")
 	}
 
-	tr, err := taskrun.Get(cs, trName, metav1.GetOptions{}, p.Namespace())
+	var taskrun *v1.TaskRun
+	err = actions.GetV1(taskrunGroupResource, cs, trName, p.Namespace(), metav1.GetOptions{}, &taskrun)
 	if err != nil {
 		return fmt.Errorf("failed to find TaskRun: %s", trName)
 	}
 
-	if len(tr.Status.Conditions) > 0 {
-		if tr.Status.Conditions[0].Status != corev1.ConditionUnknown {
+	if len(taskrun.Status.Conditions) > 0 {
+		if taskrun.Status.Conditions[0].Status != corev1.ConditionUnknown {
 			return fmt.Errorf("failed to cancel TaskRun %s: TaskRun has already finished execution", trName)
 		}
 	}
@@ -85,7 +85,7 @@ func cancelTaskRun(p cli.Params, s *cli.Stream, trName string) error {
 		return fmt.Errorf("failed to cancel TaskRun %s: %v", trName, err)
 	}
 
-	fmt.Fprintf(s.Out, "TaskRun cancelled: %s\n", tr.Name)
+	fmt.Fprintf(s.Out, "TaskRun cancelled: %s\n", taskrun.Name)
 	return nil
 }
 

@@ -12,21 +12,25 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-package description
+package taskrun
 
 import (
+	"context"
 	"fmt"
+	"io"
 	"sort"
 	"text/tabwriter"
 	"text/template"
 
 	"github.com/jonboulle/clockwork"
+	"github.com/tektoncd/cli/pkg/actions"
 	"github.com/tektoncd/cli/pkg/cli"
 	"github.com/tektoncd/cli/pkg/formatted"
-	"github.com/tektoncd/cli/pkg/taskrun"
+	v1 "github.com/tektoncd/pipeline/pkg/apis/pipeline/v1"
 	"github.com/tektoncd/pipeline/pkg/apis/pipeline/v1beta1"
 	corev1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+	"k8s.io/apimachinery/pkg/runtime/schema"
 )
 
 const templ = `{{decorate "bold" "Name"}}:	{{ .TaskRun.Name }}
@@ -69,36 +73,6 @@ STARTED 	DURATION 	STATUS
 {{ $msg }}
 {{- end }}
 
-{{- if .TaskRun.Spec.Resources }}
-{{- if ne (len .TaskRun.Spec.Resources.Inputs) 0 }}
-
-{{decorate "inputresources" ""}}{{decorate "underline bold" "Input Resources"}}
-
- NAME	RESOURCE REF
-{{- range $ir := .TaskRun.Spec.Resources.Inputs }}
-{{- $rRefName := taskResourceRefExists $ir }}{{- if ne $rRefName "" }}
- {{decorate "bullet" $ir.Name }}	{{ $ir.ResourceRef.Name }}
-{{- else }}
- {{decorate "bullet" $ir.Name }}	{{ "" }}
-{{- end }}
-{{- end }}
-{{- end }}
-
-{{- if ne (len .TaskRun.Spec.Resources.Outputs) 0 }}
-
-{{decorate "outputresources" ""}}{{decorate "underline bold" "Output Resources"}}
-
- NAME	RESOURCE REF
-{{- range $or := .TaskRun.Spec.Resources.Outputs }}
-{{- $rRefName := taskResourceRefExists $or }}{{- if ne $rRefName "" }}
- {{decorate "bullet" $or.Name }}	{{ $or.ResourceRef.Name }}
-{{- else }}
- {{decorate "bullet" $or.Name }}	{{ "" }}
-{{- end }}
-{{- end }}
-{{- end }}
-{{- end }}
-
 {{- if ne (len .TaskRun.Spec.Params) 0 }}
 
 {{decorate "params" ""}}{{decorate "underline bold" "Params"}}
@@ -107,18 +81,20 @@ STARTED 	DURATION 	STATUS
 {{- range $i, $p := .TaskRun.Spec.Params }}
 {{- if eq $p.Value.Type "string" }}
  {{decorate "bullet" $p.Name }}	{{ $p.Value.StringVal }}
-{{- else }}
+{{- else if eq $p.Value.Type "array" }}
  {{decorate "bullet" $p.Name }}	{{ $p.Value.ArrayVal }}
+{{- else }}
+ {{decorate "bullet" $p.Name }}	{{ $p.Value.ObjectVal }}
 {{- end }}
 {{- end }}
 {{- end }}
 
-{{- if ne (len .TaskRun.Status.TaskRunResults) 0 }}
+{{- if ne (len .TaskRun.Status.Results) 0 }}
 
 {{decorate "results" ""}}{{decorate "underline bold" "Results"}}
 
  NAME	VALUE
-{{- range $result := .TaskRun.Status.TaskRunResults }}
+{{- range $result := .TaskRun.Status.Results }}
  {{decorate "bullet" $result.Name }}	{{ formatResult $result.Value }}
 {{- end }}
 {{- end }}
@@ -162,7 +138,7 @@ STARTED 	DURATION 	STATUS
 {{- end }}
 `
 
-func sortStepStatesByStartTime(steps []v1beta1.StepState) []v1beta1.StepState {
+func sortStepStatesByStartTime(steps []v1.StepState) []v1.StepState {
 	sort.Slice(steps, func(i, j int) bool {
 		if steps[j].Waiting != nil && steps[i].Waiting != nil {
 			return false
@@ -204,23 +180,18 @@ func sortStepStatesByStartTime(steps []v1beta1.StepState) []v1beta1.StepState {
 	return steps
 }
 
-func PrintTaskRunDescription(s *cli.Stream, trName string, p cli.Params) error {
-	cs, err := p.Clients()
-	if err != nil {
-		return fmt.Errorf("failed to create tekton client: %v", err)
-	}
-
-	tr, err := taskrun.Get(cs, trName, metav1.GetOptions{}, p.Namespace())
+func PrintTaskRunDescription(out io.Writer, c *cli.Clients, ns string, trName string, time clockwork.Clock) error {
+	tr, err := getTaskRun(taskrunGroupResource, c, trName, ns)
 	if err != nil {
 		return fmt.Errorf("failed to get TaskRun %s: %v", trName, err)
 	}
 
 	var data = struct {
-		TaskRun *v1beta1.TaskRun
+		TaskRun *v1.TaskRun
 		Time    clockwork.Clock
 	}{
 		TaskRun: tr,
-		Time:    p.Time(),
+		Time:    time,
 	}
 
 	funcMap := template.FuncMap{
@@ -228,10 +199,9 @@ func PrintTaskRunDescription(s *cli.Stream, trName string, p cli.Params) error {
 		"formatDuration":          formatted.Duration,
 		"formatCondition":         formatted.Condition,
 		"formatResult":            formatted.Result,
-		"formatWorkspace":         formatted.WorkspaceV1beta1,
+		"formatWorkspace":         formatted.Workspace,
 		"hasFailed":               hasFailed,
-		"taskRefExists":           taskRefExists,
-		"taskResourceRefExists":   taskResourceRefExists,
+		"taskRefExists":           formatted.TaskRefExists,
 		"stepReasonExists":        stepReasonExists,
 		"sidecarReasonExists":     sidecarReasonExists,
 		"decorate":                formatted.DecorateAttr,
@@ -240,18 +210,17 @@ func PrintTaskRunDescription(s *cli.Stream, trName string, p cli.Params) error {
 		"removeLastAppliedConfig": formatted.RemoveLastAppliedConfig,
 	}
 
-	w := tabwriter.NewWriter(s.Out, 0, 5, 3, ' ', tabwriter.TabIndent)
+	w := tabwriter.NewWriter(out, 0, 5, 3, ' ', tabwriter.TabIndent)
 	t := template.Must(template.New("Describe TaskRun").Funcs(funcMap).Parse(templ))
 
 	err = t.Execute(w, data)
 	if err != nil {
-		fmt.Fprintf(s.Err, "failed to execute template: ")
 		return err
 	}
 	return w.Flush()
 }
 
-func hasFailed(tr *v1beta1.TaskRun) string {
+func hasFailed(tr *v1.TaskRun) string {
 	if len(tr.Status.Conditions) == 0 {
 		return ""
 	}
@@ -263,33 +232,15 @@ func hasFailed(tr *v1beta1.TaskRun) string {
 	return ""
 }
 
-func getTimeoutValue(tr *v1beta1.TaskRun) string {
+func getTimeoutValue(tr *v1.TaskRun) string {
 	if tr.Spec.Timeout != nil {
 		return tr.Spec.Timeout.Duration.String()
 	}
 	return ""
 }
 
-// Check if TaskRef exists on a TaskRunSpec. Returns empty string if not present.
-func taskRefExists(spec v1beta1.TaskRunSpec) string {
-	if spec.TaskRef == nil {
-		return ""
-	}
-
-	return spec.TaskRef.Name
-}
-
-// Check if TaskResourceRef exists on a TaskResourceBinding. Returns empty string if not present.
-func taskResourceRefExists(res v1beta1.TaskResourceBinding) string {
-	if res.ResourceRef == nil {
-		return ""
-	}
-
-	return res.ResourceRef.Name
-}
-
 // Check if step is in waiting, running, or terminated state by checking StepState of the step.
-func stepReasonExists(state v1beta1.StepState) string {
+func stepReasonExists(state v1.StepState) string {
 	if state.Waiting == nil {
 		if state.Running != nil {
 			return formatted.ColorStatus("Running")
@@ -306,7 +257,7 @@ func stepReasonExists(state v1beta1.StepState) string {
 }
 
 // Check if sidecar is in waiting, running, or terminated state by checking SidecarState of the sidecar.
-func sidecarReasonExists(state v1beta1.SidecarState) string {
+func sidecarReasonExists(state v1.SidecarState) string {
 	if state.Waiting == nil {
 
 		if state.Running != nil {
@@ -321,4 +272,32 @@ func sidecarReasonExists(state v1beta1.SidecarState) string {
 	}
 
 	return formatted.ColorStatus(state.Waiting.Reason)
+}
+
+func getTaskRun(gr schema.GroupVersionResource, c *cli.Clients, trName, ns string) (*v1.TaskRun, error) {
+	var taskrun v1.TaskRun
+	gvr, err := actions.GetGroupVersionResource(gr, c.Tekton.Discovery())
+	if err != nil {
+		return nil, err
+	}
+
+	if gvr.Version == "v1" {
+		err := actions.GetV1(gr, c, trName, ns, metav1.GetOptions{}, &taskrun)
+		if err != nil {
+			return nil, err
+		}
+		return &taskrun, nil
+	}
+
+	var taskrunV1beta1 v1beta1.TaskRun
+	err = actions.GetV1(gr, c, trName, ns, metav1.GetOptions{}, &taskrunV1beta1)
+	if err != nil {
+		return nil, err
+	}
+
+	err = taskrunV1beta1.ConvertTo(context.Background(), &taskrun)
+	if err != nil {
+		return nil, err
+	}
+	return &taskrun, nil
 }

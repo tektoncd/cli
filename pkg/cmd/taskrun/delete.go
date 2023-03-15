@@ -27,7 +27,6 @@ import (
 	"github.com/tektoncd/cli/pkg/formatted"
 	"github.com/tektoncd/cli/pkg/options"
 	taskpkg "github.com/tektoncd/cli/pkg/task"
-	"github.com/tektoncd/cli/pkg/taskrun"
 	trsort "github.com/tektoncd/cli/pkg/taskrun/sort"
 	"github.com/tektoncd/pipeline/pkg/apis/pipeline"
 	v1 "github.com/tektoncd/pipeline/pkg/apis/pipeline/v1"
@@ -52,8 +51,8 @@ func trExists(args []string, p cli.Params) ([]string, error) {
 	var errorList error
 	ns := p.Namespace()
 	for _, name := range args {
-		_, err := taskrun.Get(c, name, metav1.GetOptions{}, ns)
-		if err != nil {
+		var tr *v1.TaskRun
+		if err = actions.GetV1(taskrunGroupResource, c, name, ns, metav1.GetOptions{}, &tr); err != nil {
 			errorList = multierr.Append(errorList, err)
 			continue
 		}
@@ -180,8 +179,8 @@ func deleteTaskRuns(s *cli.Stream, p cli.Params, trNames []string, opts *options
 		var processedTrNames []string
 
 		for _, trNane := range trNames {
-			tr, err := taskrun.GetV1(cs, trNane, metav1.GetOptions{}, p.Namespace())
-			if err != nil {
+			var tr *v1.TaskRun
+			if err = actions.GetV1(taskrunGroupResource, cs, trNane, p.Namespace(), metav1.GetOptions{}, &tr); err != nil {
 				return fmt.Errorf("failed to get taskrun")
 			}
 			prFinished := ownerPrFinished(cs, *tr)
