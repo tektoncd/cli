@@ -1,0 +1,23 @@
+Name:        tr-1
+Namespace:   ns
+Task Ref:    task-1
+Labels:
+ tekton.dev/task=task-1
+
+Status
+
+STARTED          DURATION    STATUS
+10 minutes ago   5m0s        Failed
+
+Results
+
+ NAME       VALUE
+ result-1   value-1
+ result-2   value-2
+
+Workspaces
+
+ NAME        SUB PATH   WORKSPACE BINDING
+ test        test       EmptyDir (emptyDir=)
+ configmap   ---        ConfigMap (config=bar)
+ secret      ---        Secret (secret=foobar)

@@ -28,7 +28,7 @@ import (
 	"github.com/tektoncd/cli/pkg/cli"
 	pipelinerunpkg "github.com/tektoncd/cli/pkg/pipelinerun"
 	"github.com/tektoncd/cli/pkg/pods/stream"
-	trdesc "github.com/tektoncd/cli/pkg/taskrun/description"
+	taskrunpkg "github.com/tektoncd/cli/pkg/taskrun"
 )
 
 type LogOptions struct {
@@ -131,17 +131,17 @@ func (opts *LogOptions) FuzzyAsk(resource string, options []string) error {
 			}
 
 			bname := strings.Fields(options[i])[0]
+			cs, err := opts.Params.Clients()
+			if err != nil {
+				return fmt.Sprintf("Cannot initialize client: %s", err.Error())
+			}
 			switch resource {
 			case ResourceNameTaskRun:
-				err := trdesc.PrintTaskRunDescription(&s, bname, opts.Params)
+				err := taskrunpkg.PrintTaskRunDescription(s.Out, cs, opts.Params.Namespace(), bname, opts.Params.Time())
 				if err != nil {
 					return fmt.Sprintf("Cannot get taskrun description for %s: %s", bname, err.Error())
 				}
 			case ResourceNamePipelineRun:
-				cs, err := opts.Params.Clients()
-				if err != nil {
-					return fmt.Sprintf("Cannot initialize client: %s", err.Error())
-				}
 				err = pipelinerunpkg.PrintPipelineRunDescription(s.Out, cs, opts.Params.Namespace(), bname, opts.Params.Time())
 				if err != nil {
 					return fmt.Sprintf("Cannot get pipelinerun description for %s: %s", bname, err.Error())

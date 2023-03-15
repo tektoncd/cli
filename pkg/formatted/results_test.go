@@ -17,67 +17,67 @@ package formatted
 import (
 	"testing"
 
-	"github.com/tektoncd/pipeline/pkg/apis/pipeline/v1beta1"
+	v1 "github.com/tektoncd/pipeline/pkg/apis/pipeline/v1"
 )
 
 func TestResult(t *testing.T) {
 	tt := []struct {
 		name  string
-		value v1beta1.ArrayOrString
+		value v1.ParamValue
 		want  string
 	}{
 		{
 			name: "Empty value in the result",
-			value: v1beta1.ArrayOrString{
-				Type:      v1beta1.ParamTypeString,
+			value: v1.ParamValue{
+				Type:      v1.ParamTypeString,
 				StringVal: "",
 			},
 			want: "",
 		},
 		{
 			name: "Proper value in the result",
-			value: v1beta1.ArrayOrString{
-				Type:      v1beta1.ParamTypeString,
+			value: v1.ParamValue{
+				Type:      v1.ParamTypeString,
 				StringVal: "sha: 2r17r2176r7\n",
 			},
 			want: "sha: 2r17r2176r7",
 		},
 		{
 			name: "Empty line in the result",
-			value: v1beta1.ArrayOrString{
-				Type:      v1beta1.ParamTypeString,
+			value: v1.ParamValue{
+				Type:      v1.ParamTypeString,
 				StringVal: "\n",
 			},
 			want: "",
 		},
 		{
 			name: "Empty array in the result",
-			value: v1beta1.ArrayOrString{
-				Type:     v1beta1.ParamTypeArray,
+			value: v1.ParamValue{
+				Type:     v1.ParamTypeArray,
 				ArrayVal: []string{},
 			},
 			want: "",
 		},
 		{
 			name: "Array in the result",
-			value: v1beta1.ArrayOrString{
-				Type:     v1beta1.ParamTypeArray,
+			value: v1.ParamValue{
+				Type:     v1.ParamTypeArray,
 				ArrayVal: []string{"foo", "bar"},
 			},
 			want: "foo, bar",
 		},
 		{
 			name: "Empty object in the result",
-			value: v1beta1.ArrayOrString{
-				Type:      v1beta1.ParamTypeObject,
+			value: v1.ParamValue{
+				Type:      v1.ParamTypeObject,
 				ObjectVal: map[string]string{},
 			},
 			want: "{}",
 		},
 		{
 			name: "Object in the result",
-			value: v1beta1.ArrayOrString{
-				Type:      v1beta1.ParamTypeObject,
+			value: v1.ParamValue{
+				Type:      v1.ParamTypeObject,
 				ObjectVal: map[string]string{"foo": "bar", "baz": "crazy"},
 			},
 			want: `{"baz":"crazy","foo":"bar"}`,

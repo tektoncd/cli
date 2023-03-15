@@ -1,0 +1,9 @@
+Name:        tr-with-annotations
+Namespace:   ns
+Annotations:
+ tekton.dev/tags=testing
+
+Status
+
+STARTED    DURATION    STATUS
+---        ---         ---

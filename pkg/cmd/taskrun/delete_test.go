@@ -458,25 +458,25 @@ func TestTaskRunDelete_v1beta1(t *testing.T) {
 	for i := 0; i < 17; i++ {
 		trs := trdata
 		cs, _ := test.SeedV1beta1TestData(t, pipelinetest.Data{TaskRuns: trs, Tasks: tasks, ClusterTasks: clustertasks, Namespaces: ns})
-		cs.Pipeline.Resources = cb.APIResourceList(version, []string{"taskrun"})
+		cs.Pipeline.Resources = cb.APIResourceList(versionv1beta1, []string{"taskrun"})
 		tdc := testDynamic.Options{}
 		dc, err := tdc.Client(
-			cb.UnstructuredV1beta1T(tasks[0], version),
-			cb.UnstructuredV1beta1CT(clustertasks[0], version),
-			cb.UnstructuredV1beta1TR(trdata[0], version),
-			cb.UnstructuredV1beta1TR(trdata[1], version),
-			cb.UnstructuredV1beta1TR(trdata[2], version),
-			cb.UnstructuredV1beta1TR(trdata[3], version),
-			cb.UnstructuredV1beta1TR(trdata[4], version),
-			cb.UnstructuredV1beta1TR(trdata[5], version),
-			cb.UnstructuredV1beta1TR(trdata[6], version),
-			cb.UnstructuredV1beta1TR(trdata[7], version),
-			cb.UnstructuredV1beta1TR(trdata[8], version),
-			cb.UnstructuredV1beta1TR(trdata[9], version),
-			cb.UnstructuredV1beta1TR(trdata[10], version),
-			cb.UnstructuredV1beta1TR(trdata[11], version),
-			cb.UnstructuredV1beta1TR(trdata[12], version),
-			cb.UnstructuredV1beta1TR(trdata[13], version),
+			cb.UnstructuredV1beta1T(tasks[0], versionv1beta1),
+			cb.UnstructuredV1beta1CT(clustertasks[0], versionv1beta1),
+			cb.UnstructuredV1beta1TR(trdata[0], versionv1beta1),
+			cb.UnstructuredV1beta1TR(trdata[1], versionv1beta1),
+			cb.UnstructuredV1beta1TR(trdata[2], versionv1beta1),
+			cb.UnstructuredV1beta1TR(trdata[3], versionv1beta1),
+			cb.UnstructuredV1beta1TR(trdata[4], versionv1beta1),
+			cb.UnstructuredV1beta1TR(trdata[5], versionv1beta1),
+			cb.UnstructuredV1beta1TR(trdata[6], versionv1beta1),
+			cb.UnstructuredV1beta1TR(trdata[7], versionv1beta1),
+			cb.UnstructuredV1beta1TR(trdata[8], versionv1beta1),
+			cb.UnstructuredV1beta1TR(trdata[9], versionv1beta1),
+			cb.UnstructuredV1beta1TR(trdata[10], versionv1beta1),
+			cb.UnstructuredV1beta1TR(trdata[11], versionv1beta1),
+			cb.UnstructuredV1beta1TR(trdata[12], versionv1beta1),
+			cb.UnstructuredV1beta1TR(trdata[13], versionv1beta1),
 		)
 		if err != nil {
 			t.Errorf("unable to create dynamic client: %v", err)
@@ -1830,13 +1830,13 @@ func Test_ClusterTask_TaskRuns_Not_Deleted_With_Task_Option_v1beta1(t *testing.T
 
 	trs := trdata
 	cs, _ := test.SeedV1beta1TestData(t, pipelinetest.Data{TaskRuns: trs, Namespaces: ns})
-	cs.Pipeline.Resources = cb.APIResourceList(version, []string{"taskrun"})
+	cs.Pipeline.Resources = cb.APIResourceList(versionv1beta1, []string{"taskrun"})
 	tdc := testDynamic.Options{}
 	dc, err := tdc.Client(
-		cb.UnstructuredV1beta1T(tasks[0], version),
-		cb.UnstructuredV1beta1CT(clustertasks[0], version),
-		cb.UnstructuredV1beta1TR(trdata[0], version),
-		cb.UnstructuredV1beta1TR(trdata[1], version),
+		cb.UnstructuredV1beta1T(tasks[0], versionv1beta1),
+		cb.UnstructuredV1beta1CT(clustertasks[0], versionv1beta1),
+		cb.UnstructuredV1beta1TR(trdata[0], versionv1beta1),
+		cb.UnstructuredV1beta1TR(trdata[1], versionv1beta1),
 	)
 	if err != nil {
 		t.Errorf("unable to create dynamic client: %v", err)
@@ -1947,12 +1947,12 @@ func Test_ClusterTask_TaskRuns_Not_Deleted_With_Task_Option(t *testing.T) {
 
 	trs := trdata
 	cs, _ := test.SeedTestData(t, test.Data{TaskRuns: trs, Namespaces: ns})
-	cs.Pipeline.Resources = cb.APIResourceList(version, []string{"taskrun"})
+	cs.Pipeline.Resources = cb.APIResourceList(versionv1beta1, []string{"taskrun"})
 	tdc := testDynamic.Options{}
 	dc, err := tdc.Client(
-		cb.UnstructuredT(tasks[0], version),
-		cb.UnstructuredTR(trdata[0], version),
-		cb.UnstructuredTR(trdata[1], version),
+		cb.UnstructuredT(tasks[0], versionv1beta1),
+		cb.UnstructuredTR(trdata[0], versionv1beta1),
+		cb.UnstructuredTR(trdata[1], versionv1beta1),
 	)
 	if err != nil {
 		t.Errorf("unable to create dynamic client: %v", err)
@@ -2071,13 +2071,13 @@ func Test_Task_TaskRuns_Not_Deleted_With_ClusterTask_Option_v1beta1(t *testing.T
 
 	trs := trdata
 	cs, _ := test.SeedV1beta1TestData(t, pipelinetest.Data{TaskRuns: trs, Namespaces: ns})
-	cs.Pipeline.Resources = cb.APIResourceList(version, []string{"taskrun"})
+	cs.Pipeline.Resources = cb.APIResourceList(versionv1beta1, []string{"taskrun"})
 	tdc := testDynamic.Options{}
 	dc, err := tdc.Client(
-		cb.UnstructuredV1beta1T(tasks[0], version),
-		cb.UnstructuredV1beta1CT(clustertasks[0], version),
-		cb.UnstructuredV1beta1TR(trdata[0], version),
-		cb.UnstructuredV1beta1TR(trdata[1], version),
+		cb.UnstructuredV1beta1T(tasks[0], versionv1beta1),
+		cb.UnstructuredV1beta1CT(clustertasks[0], versionv1beta1),
+		cb.UnstructuredV1beta1TR(trdata[0], versionv1beta1),
+		cb.UnstructuredV1beta1TR(trdata[1], versionv1beta1),
 	)
 	if err != nil {
 		t.Errorf("unable to create dynamic client: %v", err)
@@ -2358,13 +2358,13 @@ func Test_TaskRuns_Delete_With_Running_PipelineRun_v1beta1(t *testing.T) {
 		trs := trdata
 		prs := prdata
 		cs, _ := test.SeedV1beta1TestData(t, pipelinetest.Data{TaskRuns: trs, Tasks: tasks, PipelineRuns: prs, Namespaces: ns})
-		cs.Pipeline.Resources = cb.APIResourceList(version, []string{"taskrun", "pipelinerun"})
+		cs.Pipeline.Resources = cb.APIResourceList(versionv1beta1, []string{"taskrun", "pipelinerun"})
 		tdc := testDynamic.Options{}
 		dc, err := tdc.Client(
-			cb.UnstructuredV1beta1T(tasks[0], version),
-			cb.UnstructuredV1beta1TR(trdata[0], version),
-			cb.UnstructuredV1beta1TR(trdata[1], version),
-			cb.UnstructuredV1beta1PR(prs[0], version),
+			cb.UnstructuredV1beta1T(tasks[0], versionv1beta1),
+			cb.UnstructuredV1beta1TR(trdata[0], versionv1beta1),
+			cb.UnstructuredV1beta1TR(trdata[1], versionv1beta1),
+			cb.UnstructuredV1beta1PR(prs[0], versionv1beta1),
 		)
 		if err != nil {
 			t.Errorf("unable to create dynamic client: %v", err)

@@ -24,10 +24,8 @@ import (
 	"github.com/tektoncd/cli/pkg/cli"
 	"github.com/tektoncd/cli/pkg/formatted"
 	"github.com/tektoncd/cli/pkg/options"
-	"github.com/tektoncd/cli/pkg/taskrun"
-	trdesc "github.com/tektoncd/cli/pkg/taskrun/description"
+	taskrunpkg "github.com/tektoncd/cli/pkg/taskrun"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
-	"k8s.io/apimachinery/pkg/runtime/schema"
 	cliopts "k8s.io/cli-runtime/pkg/genericclioptions"
 )
 
@@ -82,7 +80,7 @@ or
 			if len(args) == 0 {
 				lOpts := metav1.ListOptions{}
 				if !opts.Last {
-					trs, err := taskrun.GetAllTaskRuns(taskrunGroupResource, lOpts, cs, p.Namespace(), opts.Limit, p.Time())
+					trs, err := taskrunpkg.GetAllTaskRuns(taskrunGroupResource, lOpts, cs, p.Namespace(), opts.Limit, p.Time())
 					if err != nil {
 						return err
 					}
@@ -95,7 +93,7 @@ or
 						}
 					}
 				} else {
-					trs, err := taskrun.GetAllTaskRuns(taskrunGroupResource, lOpts, cs, p.Namespace(), 1, p.Time())
+					trs, err := taskrunpkg.GetAllTaskRuns(taskrunGroupResource, lOpts, cs, p.Namespace(), 1, p.Time())
 					if err != nil {
 						return err
 					}
@@ -110,11 +108,10 @@ or
 			}
 
 			if output != "" {
-				taskRunGroupResource := schema.GroupVersionResource{Group: "tekton.dev", Resource: "taskruns"}
-				return actions.PrintObject(taskRunGroupResource, opts.TaskrunName, cmd.OutOrStdout(), cs.Dynamic, cs.Tekton.Discovery(), f, p.Namespace())
+				return actions.PrintObjectV1(taskrunGroupResource, opts.TaskrunName, cmd.OutOrStdout(), cs, f, p.Namespace())
 			}
 
-			return trdesc.PrintTaskRunDescription(s, opts.TaskrunName, p)
+			return taskrunpkg.PrintTaskRunDescription(s.Out, cs, opts.Params.Namespace(), opts.TaskrunName, opts.Params.Time())
 		},
 	}
 

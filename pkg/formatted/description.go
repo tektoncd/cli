@@ -46,3 +46,12 @@ func PipelineRefExists(spec v1.PipelineRunSpec) string {
 
 	return spec.PipelineRef.Name
 }
+
+// Check if TaskRef exists on a TaskRunSpec. Returns empty string if not present.
+func TaskRefExists(spec v1.TaskRunSpec) string {
+	if spec.TaskRef == nil {
+		return ""
+	}
+
+	return spec.TaskRef.Name
+}
