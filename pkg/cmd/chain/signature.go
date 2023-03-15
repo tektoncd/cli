@@ -20,9 +20,9 @@ import (
 
 	"github.com/spf13/cobra"
 	"github.com/tektoncd/chains/pkg/chains/objects"
+	"github.com/tektoncd/cli/pkg/actions"
 	"github.com/tektoncd/cli/pkg/chain"
 	"github.com/tektoncd/cli/pkg/cli"
-	"github.com/tektoncd/cli/pkg/taskrun"
 	"github.com/tektoncd/pipeline/pkg/apis/pipeline/v1beta1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 )
@@ -50,13 +50,12 @@ func signatureCommand(p cli.Params) *cobra.Command {
 				return fmt.Errorf("failed to create tekton client")
 			}
 
-			// Retrieve the taskrun.
-			tr, err := taskrun.Get(cs, taskName, metav1.GetOptions{}, p.Namespace())
-			if err != nil {
+			var taskrun *v1beta1.TaskRun
+			if err = actions.GetV1(taskrunGroupResource, cs, taskName, p.Namespace(), metav1.GetOptions{}, &taskrun); err != nil {
 				return fmt.Errorf("failed to get TaskRun %s: %v", taskName, err)
 			}
 
-			return printSignatures(cs, chainsNamespace, tr)
+			return printSignatures(cs, chainsNamespace, taskrun)
 		},
 	}
 
