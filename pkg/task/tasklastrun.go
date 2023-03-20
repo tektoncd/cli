@@ -26,6 +26,15 @@ import (
 
 var taskrunGroupResource = schema.GroupVersionResource{Group: "tekton.dev", Resource: "taskruns"}
 
+// LastRun returns the name of last taskrun for a given task/clustertask
+func LastRunName(cs *cli.Clients, resourceName, ns, kind string) (string, error) {
+	latest, err := LastRun(cs, resourceName, ns, kind)
+	if err != nil {
+		return "", err
+	}
+	return latest.Name, nil
+}
+
 // LastRun returns the last taskrun for a given task/clustertask
 func LastRun(cs *cli.Clients, resourceName, ns, kind string) (*v1.TaskRun, error) {
 	options := metav1.ListOptions{}

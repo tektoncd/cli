@@ -65,7 +65,7 @@ func parseParam(p []string) (map[string]v1beta1.Param, error) {
 
 		param := v1beta1.Param{
 			Name: r[0],
-			Value: v1beta1.ArrayOrString{
+			Value: v1beta1.ParamValue{
 				Type: paramByType[r[0]],
 			},
 		}
@@ -81,6 +81,19 @@ func parseParam(p []string) (map[string]v1beta1.Param, error) {
 				param.Value.ArrayVal = strings.Split(r[1], ",")
 			}
 		}
+
+		if paramByType[r[0]] == "object" {
+			fields := strings.Split(r[1], ",")
+			object := map[string]string{}
+			for _, field := range fields {
+				r := strings.SplitN(field, ":", 2)
+				if len(r) != 2 {
+					return nil, errors.New(invalidParam + v)
+				}
+				object[strings.TrimSpace(r[0])] = strings.TrimSpace(r[1])
+			}
+			param.Value.ObjectVal = object
+		}
 		params[r[0]] = param
 	}
 	return params, nil
@@ -92,7 +105,11 @@ func FilterParamsByType(params []v1beta1.ParamSpec) {
 			paramByType[p.Name] = v1beta1.ParamTypeString
 			continue
 		}
-		paramByType[p.Name] = v1beta1.ParamTypeArray
+		if p.Type == "array" {
+			paramByType[p.Name] = v1beta1.ParamTypeArray
+			continue
+		}
+		paramByType[p.Name] = v1beta1.ParamTypeObject
 	}
 }
 

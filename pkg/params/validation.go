@@ -18,12 +18,15 @@ import (
 	"fmt"
 
 	"github.com/tektoncd/pipeline/pkg/apis/pipeline/v1beta1"
+	"k8s.io/apimachinery/pkg/util/sets"
 )
+
+var allowedParamTypes = sets.NewString("string", "array", "object")
 
 func ValidateParamType(params []v1beta1.ParamSpec) error {
 	paramsWithInvalidType := make([]v1beta1.ParamSpec, 0)
 	for _, param := range params {
-		if param.Type != "string" && param.Type != "array" {
+		if !allowedParamTypes.Has(string(param.Type)) {
 			paramsWithInvalidType = append(paramsWithInvalidType, param)
 		}
 	}

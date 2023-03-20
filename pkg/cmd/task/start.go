@@ -28,6 +28,7 @@ import (
 	"github.com/AlecAivazis/survey/v2"
 	"github.com/AlecAivazis/survey/v2/terminal"
 	"github.com/spf13/cobra"
+	"github.com/tektoncd/cli/pkg/actions"
 	"github.com/tektoncd/cli/pkg/cli"
 	"github.com/tektoncd/cli/pkg/cmd/pipelineresource"
 	"github.com/tektoncd/cli/pkg/cmd/taskrun"
@@ -38,12 +39,13 @@ import (
 	"github.com/tektoncd/cli/pkg/options"
 	"github.com/tektoncd/cli/pkg/params"
 	"github.com/tektoncd/cli/pkg/pods"
-	"github.com/tektoncd/cli/pkg/task"
 	traction "github.com/tektoncd/cli/pkg/taskrun"
 	"github.com/tektoncd/cli/pkg/workspaces"
+	v1 "github.com/tektoncd/pipeline/pkg/apis/pipeline/v1"
 	"github.com/tektoncd/pipeline/pkg/apis/pipeline/v1beta1"
 	"github.com/tektoncd/pipeline/pkg/apis/resource/v1alpha1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+	"k8s.io/apimachinery/pkg/runtime/schema"
 	"sigs.k8s.io/yaml"
 )
 
@@ -92,7 +94,7 @@ func NameArg(args []string, p cli.Params, opt *startOptions) error {
 	}
 
 	name, ns := args[0], p.Namespace()
-	t, err := task.Get(c, name, metav1.GetOptions{}, ns)
+	t, err := getTaskV1beta1(taskGroupResource, c, name, ns)
 	if err != nil {
 		return fmt.Errorf(errInvalidTask, name, ns)
 	}
@@ -201,7 +203,7 @@ For passing the workspaces via flags:
 
 	c.Flags().StringSliceVarP(&opt.InputResources, "inputresource", "i", []string{}, "pass the input resource name and ref as name=ref")
 	c.Flags().StringSliceVarP(&opt.OutputResources, "outputresource", "o", []string{}, "pass the output resource name and ref as name=ref")
-	c.Flags().StringArrayVarP(&opt.Params, "param", "p", []string{}, "pass the param as key=value for string type, or key=value1,value2,... for array type")
+	c.Flags().StringArrayVarP(&opt.Params, "param", "p", []string{}, "pass the param as key=value for string type, or key=value1,value2,... for array type, or key=\"key1:value1, key2:value2\" for object type")
 	c.Flags().StringVarP(&opt.ServiceAccountName, "serviceaccount", "s", "", "pass the serviceaccount name")
 	_ = c.RegisterFlagCompletionFunc("serviceaccount",
 		func(cmd *cobra.Command, args []string, toComplete string) ([]string, cobra.ShellCompDirective) {
@@ -240,13 +242,25 @@ func parseTask(taskLocation string, httpClient http.Client) (*v1beta1.Task, erro
 	if err != nil {
 		return nil, err
 	}
-	task := v1beta1.Task{}
+
 	if m["apiVersion"] == "tekton.dev/v1alpha1" {
 		return nil, fmt.Errorf("v1alpha1 is no longer supported")
 	}
 
-	if err := yaml.UnmarshalStrict(b, &task); err != nil {
-		return nil, err
+	task := v1beta1.Task{}
+	if m["apiVersion"] == "tekton.dev/v1" {
+		taskV1 := v1.Task{}
+		if err := yaml.UnmarshalStrict(b, &taskV1); err != nil {
+			return nil, err
+		}
+		err = task.ConvertFrom(context.Background(), &taskV1)
+		if err != nil {
+			return nil, err
+		}
+	} else {
+		if err := yaml.UnmarshalStrict(b, &task); err != nil {
+			return nil, err
+		}
 	}
 
 	err = params.ValidateParamType(task.Spec.Params)
@@ -559,4 +573,31 @@ func createPipelineResource(resType v1alpha1.PipelineResourceType, askOpt survey
 	}
 	fmt.Fprintf(s.Out, "New %s resource \"%s\" has been created\n", newRes.Spec.Type, newRes.Name)
 	return newRes, nil
+}
+
+func getTaskV1beta1(gr schema.GroupVersionResource, c *cli.Clients, tName, ns string) (*v1beta1.Task, error) {
+	var task v1beta1.Task
+	gvr, err := actions.GetGroupVersionResource(gr, c.Tekton.Discovery())
+	if err != nil {
+		return nil, err
+	}
+
+	if gvr.Version == "v1beta1" {
+		err := actions.GetV1(taskGroupResource, c, tName, ns, metav1.GetOptions{}, &task)
+		if err != nil {
+			return nil, err
+		}
+		return &task, nil
+	}
+
+	var taskV1 v1.Task
+	err = actions.GetV1(taskGroupResource, c, tName, ns, metav1.GetOptions{}, &taskV1)
+	if err != nil {
+		return nil, err
+	}
+	err = task.ConvertFrom(context.Background(), &taskV1)
+	if err != nil {
+		return nil, err
+	}
+	return &task, nil
 }
