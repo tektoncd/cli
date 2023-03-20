@@ -58,7 +58,7 @@ For passing the workspaces via flags:
   -L, --last                      re-run the Task using last TaskRun values
       --output string             format of TaskRun (yaml or json)
   -o, --outputresource strings    pass the output resource name and ref as name=ref
-  -p, --param stringArray         pass the param as key=value for string type, or key=value1,value2,... for array type
+  -p, --param stringArray         pass the param as key=value for string type, or key=value1,value2,... for array type, or key="key1:value1, key2:value2" for object type
       --pod-template string       local or remote file containing a PodTemplate definition
       --prefix-name string        specify a prefix for the TaskRun name (must be lowercase alphanumeric characters)
   -s, --serviceaccount string     pass the serviceaccount name

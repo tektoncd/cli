@@ -6,14 +6,18 @@ import (
 	"strings"
 
 	"github.com/AlecAivazis/survey/v2"
+	"github.com/tektoncd/cli/pkg/actions"
 	"github.com/tektoncd/cli/pkg/cli"
 	"github.com/tektoncd/cli/pkg/task"
-	tractions "github.com/tektoncd/cli/pkg/taskrun"
+	v1 "github.com/tektoncd/pipeline/pkg/apis/pipeline/v1"
 	"github.com/tektoncd/pipeline/pkg/apis/pipeline/v1beta1"
 	"github.com/tektoncd/pipeline/pkg/apis/resource/v1alpha1"
 	versionedResource "github.com/tektoncd/pipeline/pkg/client/resource/clientset/versioned"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+	"k8s.io/apimachinery/pkg/runtime/schema"
 )
+
+var taskrunGroupResource = schema.GroupVersionResource{Group: "tekton.dev", Resource: "taskruns"}
 
 type InteractiveOpts struct {
 	Stream                *cli.Stream
@@ -63,19 +67,18 @@ func (taskRunOpts *TaskRunOpts) UseTaskRunFrom(tr *v1beta1.TaskRun, cs *cli.Clie
 		err    error
 	)
 	if taskRunOpts.Last {
-		trtemp, err := task.LastRun(cs, tname, taskRunOpts.CliParams.Namespace(), taskKind)
+		name, err := task.LastRunName(cs, tname, taskRunOpts.CliParams.Namespace(), taskKind)
 		if err != nil {
 			return err
 		}
 
-		// TODO: remove as we move the start command to v1
-		err = trUsed.ConvertFrom(context.TODO(), trtemp)
+		trUsed, err = getTaskRunV1beta1(taskrunGroupResource, cs, name, taskRunOpts.CliParams.Namespace())
 		if err != nil {
 			return err
 		}
 
 	} else if taskRunOpts.UseTaskRun != "" {
-		trUsed, err = tractions.Get(cs, taskRunOpts.UseTaskRun, metav1.GetOptions{}, taskRunOpts.CliParams.Namespace())
+		trUsed, err = getTaskRunV1beta1(taskrunGroupResource, cs, taskRunOpts.UseTaskRun, taskRunOpts.CliParams.Namespace())
 		if err != nil {
 			return err
 		}
@@ -282,8 +285,12 @@ func (intOpts *InteractiveOpts) TaskParams(task *v1beta1.Task, skipParams map[st
 			if param.Default != nil {
 				if param.Type == "string" {
 					defaultValue = param.Default.StringVal
-				} else {
+				}
+				if param.Type == "array" {
 					defaultValue = strings.Join(param.Default.ArrayVal, ",")
+				}
+				if param.Type == "object" {
+					defaultValue = fmt.Sprintf("%+v", param.Default.ObjectVal)
 				}
 				ques += fmt.Sprintf(" (Default is `%s`)", defaultValue)
 				input.Default = defaultValue
@@ -523,8 +530,12 @@ func (intOpts *InteractiveOpts) ClusterTaskParams(clustertask *v1beta1.ClusterTa
 			if param.Default != nil {
 				if param.Type == "string" {
 					defaultValue = param.Default.StringVal
-				} else {
+				}
+				if param.Type == "array" {
 					defaultValue = strings.Join(param.Default.ArrayVal, ",")
+				}
+				if param.Type == "object" {
+					defaultValue = fmt.Sprintf("%+v", param.Default.ObjectVal)
 				}
 				ques += fmt.Sprintf(" (Default is `%s`)", defaultValue)
 				input.Default = defaultValue
@@ -668,4 +679,31 @@ func askParam(ques string, askOpts survey.AskOpt, def ...string) (string, error)
 	}
 
 	return ans, nil
+}
+
+func getTaskRunV1beta1(gr schema.GroupVersionResource, c *cli.Clients, trName, ns string) (*v1beta1.TaskRun, error) {
+	var taskrun v1beta1.TaskRun
+	gvr, err := actions.GetGroupVersionResource(gr, c.Tekton.Discovery())
+	if err != nil {
+		return nil, err
+	}
+
+	if gvr.Version == "v1beta1" {
+		err := actions.GetV1(gr, c, trName, ns, metav1.GetOptions{}, &taskrun)
+		if err != nil {
+			return nil, err
+		}
+		return &taskrun, nil
+	}
+
+	var taskrunV1 v1.TaskRun
+	err = actions.GetV1(gr, c, trName, ns, metav1.GetOptions{}, &taskrunV1)
+	if err != nil {
+		return nil, err
+	}
+	err = taskrun.ConvertFrom(context.Background(), &taskrunV1)
+	if err != nil {
+		return nil, err
+	}
+	return &taskrun, nil
 }

@@ -258,7 +258,6 @@ Waiting for logs to be available...
 		}
 	})
 
-	/*TODO: this should be fixed with start command
 	t.Run("Start TaskRun using tkn ct start with --last option", func(t *testing.T) {
 		// Get last TaskRun for read-clustertask
 		lastTaskRun := builder.GetTaskRunListWithClusterTaskName(c, clusterTaskName, true).Items[0]
@@ -283,7 +282,7 @@ Waiting for logs to be available...
 		if d := cmp.Diff(got, expected); d != "" {
 			t.Fatalf("-got, +want: %v", d)
 		}
-	})*/
+	})
 
 	t.Run("Start TaskRun using tkn ct start with --use-taskrun option", func(t *testing.T) {
 		// Get last TaskRun for read-clustertask

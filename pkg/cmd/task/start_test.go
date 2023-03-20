@@ -515,8 +515,6 @@ func Test_start_task(t *testing.T) {
 }
 
 func Test_start_task_last(t *testing.T) {
-	// TODO: this should be fixed with start command
-	t.Skip()
 	tasks := []*v1beta1.Task{
 		{
 			ObjectMeta: metav1.ObjectMeta{
@@ -703,8 +701,6 @@ func Test_start_task_last(t *testing.T) {
 }
 
 func Test_start_task_last_with_override_timeout(t *testing.T) {
-	// TODO: this should be fixed with start command
-	t.Skip()
 	tasks := []*v1beta1.Task{
 		{
 			ObjectMeta: metav1.ObjectMeta{
@@ -1045,8 +1041,6 @@ func Test_start_use_taskrun_cancelled_status(t *testing.T) {
 }
 
 func Test_start_task_last_generate_name(t *testing.T) {
-	// TODO: this should be fixed with start command
-	t.Skip()
 	tasks := []*v1beta1.Task{
 		{
 			ObjectMeta: metav1.ObjectMeta{
@@ -1211,8 +1205,6 @@ func Test_start_task_last_generate_name(t *testing.T) {
 }
 
 func Test_start_task_last_with_prefix_name(t *testing.T) {
-	// TODO: this should be fixed with start command
-	t.Skip()
 	tasks := []*v1beta1.Task{
 		{
 			ObjectMeta: metav1.ObjectMeta{
@@ -1376,8 +1368,6 @@ func Test_start_task_last_with_prefix_name(t *testing.T) {
 }
 
 func Test_start_task_with_prefix_name(t *testing.T) {
-	// TODO: this should be fixed with start command
-	t.Skip()
 	tasks := []*v1beta1.Task{
 		{
 			ObjectMeta: metav1.ObjectMeta{
@@ -1541,8 +1531,6 @@ func Test_start_task_with_prefix_name(t *testing.T) {
 }
 
 func Test_start_task_last_with_inputs(t *testing.T) {
-	// TODO: this should be fixed with start command
-	t.Skip()
 	tasks := []*v1beta1.Task{
 		{
 			ObjectMeta: metav1.ObjectMeta{
@@ -1732,8 +1720,6 @@ func Test_start_task_last_with_inputs(t *testing.T) {
 }
 
 func Test_start_task_last_without_taskrun(t *testing.T) {
-	// TODO: this should be fixed with start command
-	t.Skip()
 	tasks := []*v1beta1.Task{
 		{
 			ObjectMeta: metav1.ObjectMeta{
@@ -2383,6 +2369,10 @@ func Test_start_task_allkindparam(t *testing.T) {
 						Name: "printafter",
 						Type: v1beta1.ParamTypeArray,
 					},
+					{
+						Name: "printlast",
+						Type: v1beta1.ParamTypeObject,
+					},
 				},
 				Steps: []v1beta1.Step{
 					{
@@ -2421,6 +2411,7 @@ func Test_start_task_allkindparam(t *testing.T) {
 		"-p=myarg=value1",
 		"-p=print=boom,boom",
 		"-p=printafter=booms",
+		"-p=printlast=a:b, c:d",
 		"-l=key=value",
 		"-o=code-image=output-image",
 		"-s=svc1",
@@ -2439,7 +2430,7 @@ func Test_start_task_allkindparam(t *testing.T) {
 		t.Errorf("Error taskrun generated is different %+v", tr)
 	}
 
-	test.AssertOutput(t, 3, len(tr.Items[0].Spec.Params))
+	test.AssertOutput(t, 4, len(tr.Items[0].Spec.Params))
 
 	for _, v := range tr.Items[0].Spec.Params {
 		if v.Name == "my-arg" {
@@ -2452,6 +2443,10 @@ func Test_start_task_allkindparam(t *testing.T) {
 
 		if v.Name == "printafter" {
 			test.AssertOutput(t, v1.ParamValue{Type: v1.ParamTypeArray, ArrayVal: []string{"booms"}}, v.Value)
+		}
+
+		if v.Name == "printlast" {
+			test.AssertOutput(t, v1.ParamValue{Type: v1.ParamTypeObject, ObjectVal: map[string]string{"a": "b", "c": "d"}}, v.Value)
 		}
 	}
 

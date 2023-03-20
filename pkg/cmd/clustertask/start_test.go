@@ -535,7 +535,6 @@ func Test_ClusterTask_Start(t *testing.T) {
 			wantError:   false,
 			want:        "TaskRun started: taskrun-1\n\nIn order to track the TaskRun progress run:\ntkn taskrun logs taskrun-1 -f -n ns\n",
 		},
-		/*TODO: this should be fixed with start command
 		{
 			name:        "Start with --last option",
 			command:     []string{"start", "clustertask-1", "--last"},
@@ -544,7 +543,7 @@ func Test_ClusterTask_Start(t *testing.T) {
 			inputStream: nil,
 			wantError:   false,
 			want:        "TaskRun started: taskrun-2\n\nIn order to track the TaskRun progress run:\ntkn taskrun logs taskrun-2 -f -n ns\n",
-		},*/
+		},
 		{
 			name:        "Start with --use-taskrun option",
 			command:     []string{"start", "clustertask-1", "--use-taskrun", "taskrun-123"},
@@ -673,7 +672,6 @@ func Test_ClusterTask_Start(t *testing.T) {
 			wantError:   false,
 			goldenFile:  true,
 		},
-		/*TODO: this should be fixed with start command
 		{
 			name: "Dry run with --last",
 			command: []string{"start", "clustertask-1",
@@ -689,7 +687,7 @@ func Test_ClusterTask_Start(t *testing.T) {
 			inputStream: nil,
 			wantError:   false,
 			goldenFile:  true,
-		},*/
+		},
 		{
 			name: "Dry run with --timeout v1beta1",
 			command: []string{"start", "clustertask-2",
@@ -835,7 +833,6 @@ func Test_ClusterTask_Start(t *testing.T) {
 			wantError:   false,
 			goldenFile:  true,
 		},
-		/*TODO: this should be fixed with start command
 		{
 			name: "Dry Run with --prefix-name and --last v1beta1",
 			command: []string{"start", "clustertask-1",
@@ -851,7 +848,7 @@ func Test_ClusterTask_Start(t *testing.T) {
 			inputStream: nil,
 			wantError:   false,
 			goldenFile:  true,
-		},*/
+		},
 		{
 			name: "Start clustertask with skip-optional-workspaces flag",
 			command: []string{"start", "clustertask-4",
