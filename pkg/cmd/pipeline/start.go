@@ -28,6 +28,7 @@ import (
 	"github.com/AlecAivazis/survey/v2"
 	"github.com/AlecAivazis/survey/v2/terminal"
 	"github.com/spf13/cobra"
+	"github.com/tektoncd/cli/pkg/actions"
 	"github.com/tektoncd/cli/pkg/cli"
 	"github.com/tektoncd/cli/pkg/cmd/pipelineresource"
 	prcmd "github.com/tektoncd/cli/pkg/cmd/pipelinerun"
@@ -37,15 +38,16 @@ import (
 	"github.com/tektoncd/cli/pkg/labels"
 	"github.com/tektoncd/cli/pkg/options"
 	"github.com/tektoncd/cli/pkg/params"
-	"github.com/tektoncd/cli/pkg/pipeline"
+	pipelinepkg "github.com/tektoncd/cli/pkg/pipeline"
 	"github.com/tektoncd/cli/pkg/pipelinerun"
 	"github.com/tektoncd/cli/pkg/pods"
 	"github.com/tektoncd/cli/pkg/workspaces"
+	v1 "github.com/tektoncd/pipeline/pkg/apis/pipeline/v1"
 	"github.com/tektoncd/pipeline/pkg/apis/pipeline/v1beta1"
 	"github.com/tektoncd/pipeline/pkg/apis/resource/v1alpha1"
 	versionedResource "github.com/tektoncd/pipeline/pkg/client/resource/clientset/versioned"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
-	v1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+	"k8s.io/apimachinery/pkg/runtime/schema"
 	"sigs.k8s.io/yaml"
 )
 
@@ -181,7 +183,7 @@ For passing the workspaces via flags:
 
 	c.Flags().BoolVarP(&opt.ShowLog, "showlog", "", false, "show logs right after starting the Pipeline")
 	c.Flags().StringSliceVarP(&opt.Resources, "resource", "r", []string{}, "pass the resource name and ref as name=ref")
-	c.Flags().StringArrayVarP(&opt.Params, "param", "p", []string{}, "pass the param as key=value for string type, or key=value1,value2,... for array type")
+	c.Flags().StringArrayVarP(&opt.Params, "param", "p", []string{}, "pass the param as key=value for string type, or key=value1,value2,... for array type, or key=\"key1:value1, key2:value2\" for object type")
 	c.Flags().BoolVarP(&opt.Last, "last", "L", false, "re-run the Pipeline using last PipelineRun values")
 	c.Flags().StringVarP(&opt.UsePipelineRun, "use-pipelinerun", "", "", "use this pipelinerun values to re-run the pipeline. ")
 	_ = c.RegisterFlagCompletionFunc("use-pipelinerun",
@@ -266,18 +268,16 @@ func (opt *startOptions) startPipeline(pipelineStart *v1beta1.Pipeline) error {
 	if opt.Last || opt.UsePipelineRun != "" {
 		var usepr *v1beta1.PipelineRun
 		if opt.Last {
-			prtemp, err := pipeline.LastRun(cs, pipelineStart.ObjectMeta.Name, opt.cliparams.Namespace())
+			name, err := pipelinepkg.LastRunName(cs, pipelineStart.ObjectMeta.Name, opt.cliparams.Namespace())
 			if err != nil {
 				return err
 			}
-
-			// TODO: remove as we move the start command to v1
-			err = usepr.ConvertFrom(context.TODO(), prtemp)
+			usepr, err = getPipelineRunV1beta1(pipelineRunGroupResource, cs, name, opt.cliparams.Namespace())
 			if err != nil {
 				return err
 			}
 		} else {
-			usepr, err = pipelinerun.Get(cs, opt.UsePipelineRun, v1.GetOptions{}, opt.cliparams.Namespace())
+			usepr, err = getPipelineRunV1beta1(pipelineRunGroupResource, cs, opt.UsePipelineRun, opt.cliparams.Namespace())
 			if err != nil {
 				return err
 			}
@@ -528,8 +528,12 @@ func (opt *startOptions) getInputParams(pipeline *v1beta1.Pipeline, skipParams m
 			if param.Default != nil {
 				if param.Type == "string" {
 					defaultValue = param.Default.StringVal
-				} else {
+				}
+				if param.Type == "array" {
 					defaultValue = strings.Join(param.Default.ArrayVal, ",")
+				}
+				if param.Type == "object" {
+					defaultValue = fmt.Sprintf("%+v", param.Default.ObjectVal)
 				}
 				ques += fmt.Sprintf(" (Default is `%s`)", defaultValue)
 				input.Default = defaultValue
@@ -554,7 +558,7 @@ func (opt *startOptions) getInputParams(pipeline *v1beta1.Pipeline, skipParams m
 }
 
 func getPipelineResources(client versionedResource.Interface, namespace string) (*v1alpha1.PipelineResourceList, error) {
-	pres, err := client.TektonV1alpha1().PipelineResources(namespace).List(context.Background(), v1.ListOptions{})
+	pres, err := client.TektonV1alpha1().PipelineResources(namespace).List(context.Background(), metav1.ListOptions{})
 	if err != nil {
 		return nil, err
 	}
@@ -704,7 +708,7 @@ func (opt *startOptions) createPipelineResource(resName string, resType v1alpha1
 		AskOpts: opt.askOpts,
 		Params:  opt.cliparams,
 		PipelineResource: v1alpha1.PipelineResource{
-			ObjectMeta: v1.ObjectMeta{Namespace: opt.cliparams.Namespace()},
+			ObjectMeta: metav1.ObjectMeta{Namespace: opt.cliparams.Namespace()},
 			Spec:       v1alpha1.PipelineResourceSpec{Type: resType},
 		},
 	}
@@ -775,7 +779,7 @@ func NameArg(args []string, p cli.Params, file string) (*v1beta1.Pipeline, error
 	if file == "" {
 		name, ns := args[0], p.Namespace()
 		// get pipeline by pipeline name passed as arg[0] from namespace
-		pipelineNs, err := pipeline.Get(c, name, metav1.GetOptions{}, ns)
+		pipelineNs, err := getPipelineV1beta1(pipelineGroupResource, c, name, ns)
 		if err != nil {
 			return pipelineErr, fmt.Errorf(errInvalidPipeline, name, ns)
 		}
@@ -806,8 +810,19 @@ func parsePipeline(pipelineLocation string, httpClient http.Client) (*v1beta1.Pi
 	}
 
 	pipeline := v1beta1.Pipeline{}
-	if err := yaml.UnmarshalStrict(b, &pipeline); err != nil {
-		return nil, err
+	if m["apiVersion"] == "tekton.dev/v1" {
+		pipelineV1 := v1.Pipeline{}
+		if err := yaml.UnmarshalStrict(b, &pipelineV1); err != nil {
+			return nil, err
+		}
+		err = pipeline.ConvertFrom(context.Background(), &pipelineV1)
+		if err != nil {
+			return nil, err
+		}
+	} else {
+		if err := yaml.UnmarshalStrict(b, &pipeline); err != nil {
+			return nil, err
+		}
 	}
 
 	err = params.ValidateParamType(pipeline.Spec.Params)
@@ -937,4 +952,58 @@ func askParam(ques string, askOpts survey.AskOpt, def ...string) (string, error)
 	}
 
 	return ans, nil
+}
+
+func getPipelineV1beta1(gr schema.GroupVersionResource, c *cli.Clients, pName, ns string) (*v1beta1.Pipeline, error) {
+	var pipeline v1beta1.Pipeline
+	gvr, err := actions.GetGroupVersionResource(gr, c.Tekton.Discovery())
+	if err != nil {
+		return nil, err
+	}
+
+	if gvr.Version == "v1beta1" {
+		err := actions.GetV1(gr, c, pName, ns, metav1.GetOptions{}, &pipeline)
+		if err != nil {
+			return nil, err
+		}
+		return &pipeline, nil
+	}
+
+	var pipelineV1 v1.Pipeline
+	err = actions.GetV1(gr, c, pName, ns, metav1.GetOptions{}, &pipelineV1)
+	if err != nil {
+		return nil, err
+	}
+	err = pipeline.ConvertFrom(context.Background(), &pipelineV1)
+	if err != nil {
+		return nil, err
+	}
+	return &pipeline, nil
+}
+
+func getPipelineRunV1beta1(gr schema.GroupVersionResource, c *cli.Clients, prName, ns string) (*v1beta1.PipelineRun, error) {
+	var pipelinerun v1beta1.PipelineRun
+	gvr, err := actions.GetGroupVersionResource(gr, c.Tekton.Discovery())
+	if err != nil {
+		return nil, err
+	}
+
+	if gvr.Version == "v1beta1" {
+		err := actions.GetV1(gr, c, prName, ns, metav1.GetOptions{}, &pipelinerun)
+		if err != nil {
+			return nil, err
+		}
+		return &pipelinerun, nil
+	}
+
+	var pipelinerunV1 v1.PipelineRun
+	err = actions.GetV1(gr, c, prName, ns, metav1.GetOptions{}, &pipelinerunV1)
+	if err != nil {
+		return nil, err
+	}
+	err = pipelinerun.ConvertFrom(context.Background(), &pipelinerunV1)
+	if err != nil {
+		return nil, err
+	}
+	return &pipelinerun, nil
 }
