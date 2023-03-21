@@ -70,7 +70,7 @@ my-secret, my-empty-dir and my-volume-claim-template)
   -l, --labels strings                pass labels as label=value.
   -L, --last                          re-run the Pipeline using last PipelineRun values
   -o, --output string                 format of PipelineRun (yaml, json or name)
-  -p, --param stringArray             pass the param as key=value for string type, or key=value1,value2,... for array type
+  -p, --param stringArray             pass the param as key=value for string type, or key=value1,value2,... for array type, or key="key1:value1, key2:value2" for object type
       --pipeline-timeout string       timeout for PipelineRun
       --pod-template string           local or remote file containing a PodTemplate definition
       --prefix-name string            specify a prefix for the PipelineRun name (must be lowercase alphanumeric characters)

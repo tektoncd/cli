@@ -118,6 +118,39 @@ func Cancel(c *cli.Clients, prname string, opts metav1.PatchOptions, cancelStatu
 
 // It will create the resource based on the api available.
 func Create(c *cli.Clients, pr *v1beta1.PipelineRun, opts metav1.CreateOptions, ns string) (*v1beta1.PipelineRun, error) {
+	gvr, err := actions.GetGroupVersionResource(pipelineRunGroupResource, c.Tekton.Discovery())
+	if err != nil {
+		return nil, err
+	}
+
+	if gvr.Version == "v1" {
+		prv1 := v1.PipelineRun{}
+		err = pr.ConvertTo(context.Background(), &prv1)
+		if err != nil {
+			return nil, err
+		}
+
+		object, _ := runtime.DefaultUnstructuredConverter.ToUnstructured(prv1)
+		unstructuredPR := &unstructured.Unstructured{
+			Object: object,
+		}
+		newUnstructuredPR, err := actions.Create(pipelineRunGroupResource, c, unstructuredPR, ns, opts)
+		if err != nil {
+			return nil, err
+		}
+		var pipelinerun v1.PipelineRun
+		if err := runtime.DefaultUnstructuredConverter.FromUnstructured(newUnstructuredPR.UnstructuredContent(), &pipelinerun); err != nil {
+			return nil, err
+		}
+
+		pipelinerunv1beta1 := v1beta1.PipelineRun{}
+		err = pipelinerunv1beta1.ConvertFrom(context.Background(), &pipelinerun)
+		if err != nil {
+			return nil, err
+		}
+		return &pipelinerunv1beta1, nil
+	}
+
 	object, _ := runtime.DefaultUnstructuredConverter.ToUnstructured(pr)
 	unstructuredPR := &unstructured.Unstructured{
 		Object: object,

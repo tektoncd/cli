@@ -2835,8 +2835,6 @@ func Test_start_pipeline(t *testing.T) {
 }
 
 func Test_start_pipeline_last(t *testing.T) {
-	// TODO: this should be fixed with start command
-	t.Skip()
 	pipelineName := "test-pipeline"
 	ps := []*v1beta1.Pipeline{
 		{
@@ -3039,8 +3037,6 @@ func Test_start_pipeline_last(t *testing.T) {
 }
 
 func Test_start_pipeline_last_override_timeout_deprecated(t *testing.T) {
-	// TODO: this should be fixed with start command
-	t.Skip()
 	pipelineName := "test-pipeline"
 	ps := []*v1beta1.Pipeline{
 		{
@@ -3233,8 +3229,6 @@ func Test_start_pipeline_last_override_timeout_deprecated(t *testing.T) {
 }
 
 func Test_start_pipeline_last_without_res_param(t *testing.T) {
-	// TODO: this should be fixed with start command
-	t.Skip()
 	pipelineName := "test-pipeline"
 
 	ps := []*v1beta1.Pipeline{
@@ -3417,8 +3411,6 @@ func Test_start_pipeline_last_without_res_param(t *testing.T) {
 }
 
 func Test_start_pipeline_last_merge(t *testing.T) {
-	// TODO: this should be fixed with start command
-	t.Skip()
 	pipelineName := "test-pipeline"
 
 	ps := []*v1beta1.Pipeline{
@@ -4075,8 +4067,6 @@ func Test_start_pipeline_allkindparam(t *testing.T) {
 }
 
 func Test_start_pipeline_last_generate_name(t *testing.T) {
-	// TODO: this should be fixed with start command
-	t.Skip()
 	pipelineName := "test-pipeline"
 
 	ps := []*v1beta1.Pipeline{
@@ -4254,8 +4244,6 @@ func Test_start_pipeline_last_generate_name(t *testing.T) {
 }
 
 func Test_start_pipeline_last_with_prefix_name(t *testing.T) {
-	// TODO: this should be fixed with start command
-	t.Skip()
 	pipelineName := "test-pipeline"
 
 	ps := []*v1beta1.Pipeline{
