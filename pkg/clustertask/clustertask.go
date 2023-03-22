@@ -42,6 +42,7 @@ func GetAllClusterTaskNames(gr schema.GroupVersionResource, c *cli.Clients) ([]s
 	return ret, nil
 }
 
+// TODO: remove as all the function uses are moved to new func
 // It will fetch the ClusterTask based on ClusterTask name
 func Get(c *cli.Clients, clustertaskname string, opts metav1.GetOptions) (*v1beta1.ClusterTask, error) {
 	unstructuredCT, err := actions.Get(clustertaskGroupResource, c.Dynamic, c.Tekton.Discovery(), clustertaskname, "", opts)

@@ -250,11 +250,12 @@ func TestClusterTask_Get(t *testing.T) {
 		t.Errorf("unable to create client: %v", err)
 	}
 
-	got, err := Get(c, "clustertask", metav1.GetOptions{})
+	var clustertask *v1beta1.ClusterTask
+	err = actions.GetV1(clustertaskGroupResource, c, "clustertask", "", metav1.GetOptions{}, &clustertask)
 	if err != nil {
 		t.Errorf("unexpected Error")
 	}
-	test.AssertOutput(t, "clustertask", got.Name)
+	test.AssertOutput(t, "clustertask", clustertask.Name)
 }
 
 func TestClusterTask_Create(t *testing.T) {

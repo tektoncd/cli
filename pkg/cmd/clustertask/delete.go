@@ -20,11 +20,12 @@ import (
 	"github.com/spf13/cobra"
 	"github.com/tektoncd/cli/pkg/actions"
 	"github.com/tektoncd/cli/pkg/cli"
-	"github.com/tektoncd/cli/pkg/clustertask"
+	clustertaskpkg "github.com/tektoncd/cli/pkg/clustertask"
 	"github.com/tektoncd/cli/pkg/deleter"
 	"github.com/tektoncd/cli/pkg/formatted"
 	"github.com/tektoncd/cli/pkg/options"
 	v1 "github.com/tektoncd/pipeline/pkg/apis/pipeline/v1"
+	"github.com/tektoncd/pipeline/pkg/apis/pipeline/v1beta1"
 	"go.uber.org/multierr"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime/schema"
@@ -41,7 +42,8 @@ func ctExists(args []string, p cli.Params) ([]string, error) {
 	}
 	var errorList error
 	for _, name := range args {
-		_, err := clustertask.Get(c, name, metav1.GetOptions{})
+		var clustertask *v1beta1.ClusterTask
+		err := actions.GetV1(clustertaskGroupResource, c, name, "", metav1.GetOptions{}, &clustertask)
 		if err != nil {
 			errorList = multierr.Append(errorList, err)
 			continue
@@ -115,7 +117,7 @@ func deleteClusterTasks(opts *options.DeleteOptions, s *cli.Stream, p cli.Params
 	})
 	switch {
 	case opts.DeleteAll:
-		cts, err := clustertask.GetAllClusterTaskNames(clustertaskGroupResource, cs)
+		cts, err := clustertaskpkg.GetAllClusterTaskNames(clustertaskGroupResource, cs)
 		if err != nil {
 			return err
 		}

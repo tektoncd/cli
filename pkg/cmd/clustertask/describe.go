@@ -24,14 +24,13 @@ import (
 	"github.com/spf13/cobra"
 	"github.com/tektoncd/cli/pkg/actions"
 	"github.com/tektoncd/cli/pkg/cli"
-	"github.com/tektoncd/cli/pkg/clustertask"
+	clustertaskpkg "github.com/tektoncd/cli/pkg/clustertask"
 	"github.com/tektoncd/cli/pkg/formatted"
 	"github.com/tektoncd/cli/pkg/options"
 	trsort "github.com/tektoncd/cli/pkg/taskrun/sort"
 	v1 "github.com/tektoncd/pipeline/pkg/apis/pipeline/v1"
 	"github.com/tektoncd/pipeline/pkg/apis/pipeline/v1beta1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
-	"k8s.io/apimachinery/pkg/runtime/schema"
 	cliopts "k8s.io/cli-runtime/pkg/genericclioptions"
 )
 
@@ -78,8 +77,10 @@ const describeTemplate = `{{decorate "bold" "Name"}}:	{{ .ClusterTask.Name }}
 {{- else }}
 {{- if eq $p.Type "string" }}
  {{decorate "bullet" $p.Name }}	{{ $p.Type }}	{{ formatDesc $p.Description }}	{{ $p.Default.StringVal }}
-{{- else }}
+{{- else if eq $p.Type "array" }}
  {{decorate "bullet" $p.Name }}	{{ $p.Type }}	{{ formatDesc $p.Description }}	{{ $p.Default.ArrayVal }}
+{{- else }}
+ {{decorate "bullet" $p.Name }}	{{ $p.Type }}	{{ formatDesc $p.Description }}	{{ $p.Default.ObjectVal }}
 {{- end }}
 {{- end }}
 {{- end }}
@@ -160,7 +161,7 @@ or
 			}
 
 			if len(args) == 0 {
-				clusterTaskNames, err := clustertask.GetAllClusterTaskNames(clustertaskGroupResource, cs)
+				clusterTaskNames, err := clustertaskpkg.GetAllClusterTaskNames(clustertaskGroupResource, cs)
 				if err != nil {
 					return err
 				}
@@ -177,11 +178,10 @@ or
 			}
 
 			if output != "" {
-				clustertaskGroupResource := schema.GroupVersionResource{Group: "tekton.dev", Resource: "clustertasks"}
-				return actions.PrintObject(clustertaskGroupResource, opts.ClusterTaskName, cmd.OutOrStdout(), cs.Dynamic, cs.Tekton.Discovery(), f, "")
+				return actions.PrintObjectV1(clustertaskGroupResource, opts.ClusterTaskName, cmd.OutOrStdout(), cs, f, "")
 			}
 
-			return printClusterTaskDescription(s, p, opts.ClusterTaskName)
+			return printClusterTaskDescription(s, cs, opts.ClusterTaskName, p.Namespace(), p.Time())
 		},
 	}
 
@@ -189,29 +189,25 @@ or
 	return c
 }
 
-func printClusterTaskDescription(s *cli.Stream, p cli.Params, tname string) error {
-	cs, err := p.Clients()
+func printClusterTaskDescription(s *cli.Stream, cs *cli.Clients, ctname, namespace string, time clockwork.Clock) error {
+	var clustertask *v1beta1.ClusterTask
+	err := actions.GetV1(clustertaskGroupResource, cs, ctname, "", metav1.GetOptions{}, &clustertask)
 	if err != nil {
-		return fmt.Errorf("failed to create tekton client")
+		return fmt.Errorf("failed to get ClusterTask %s", ctname)
 	}
 
-	ct, err := clustertask.Get(cs, tname, metav1.GetOptions{})
-	if err != nil {
-		return fmt.Errorf("failed to get ClusterTask %s", tname)
-	}
-
-	if ct.Spec.Resources != nil {
-		ct.Spec.Resources.Inputs = sortResourcesByTypeAndName(ct.Spec.Resources.Inputs)
-		ct.Spec.Resources.Outputs = sortResourcesByTypeAndName(ct.Spec.Resources.Outputs)
+	if clustertask.Spec.Resources != nil {
+		clustertask.Spec.Resources.Inputs = sortResourcesByTypeAndName(clustertask.Spec.Resources.Inputs)
+		clustertask.Spec.Resources.Outputs = sortResourcesByTypeAndName(clustertask.Spec.Resources.Outputs)
 	}
 
 	opts := metav1.ListOptions{
-		LabelSelector: fmt.Sprintf("tekton.dev/clusterTask=%s", tname),
+		LabelSelector: fmt.Sprintf("tekton.dev/clusterTask=%s", ctname),
 	}
 
 	var taskRuns *v1.TaskRunList
-	if err := actions.ListV1(taskrunGroupResource, cs, opts, p.Namespace(), &taskRuns); err != nil {
-		return fmt.Errorf("failed to get TaskRuns for ClusterTask %s", tname)
+	if err := actions.ListV1(taskrunGroupResource, cs, opts, namespace, &taskRuns); err != nil {
+		return fmt.Errorf("failed to get TaskRuns for ClusterTask %s", ctname)
 	}
 
 	trsort.SortByStartTime(taskRuns.Items)
@@ -221,9 +217,9 @@ func printClusterTaskDescription(s *cli.Stream, p cli.Params, tname string) erro
 		TaskRuns    *v1.TaskRunList
 		Time        clockwork.Clock
 	}{
-		ClusterTask: ct,
+		ClusterTask: clustertask,
 		TaskRuns:    taskRuns,
-		Time:        p.Time(),
+		Time:        time,
 	}
 
 	funcMap := template.FuncMap{
