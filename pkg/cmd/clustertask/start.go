@@ -28,8 +28,8 @@ import (
 	"github.com/AlecAivazis/survey/v2/terminal"
 	"github.com/ghodss/yaml"
 	"github.com/spf13/cobra"
+	"github.com/tektoncd/cli/pkg/actions"
 	"github.com/tektoncd/cli/pkg/cli"
-	ctactions "github.com/tektoncd/cli/pkg/clustertask"
 	"github.com/tektoncd/cli/pkg/cmd/pipelineresource"
 	"github.com/tektoncd/cli/pkg/cmd/taskrun"
 	"github.com/tektoncd/cli/pkg/file"
@@ -90,7 +90,8 @@ func NameArg(args []string, p cli.Params, opt *startOptions) error {
 	}
 
 	name := args[0]
-	ct, err := ctactions.Get(c, name, metav1.GetOptions{})
+	var ct *v1beta1.ClusterTask
+	err = actions.GetV1(clustertaskGroupResource, c, name, "", metav1.GetOptions{}, &ct)
 	if err != nil {
 		return fmt.Errorf(errInvalidClusterTask, name)
 	}
