@@ -97,7 +97,7 @@ Show logs for given ClusterTask and associated TaskRun:
 	c.Flags().BoolVarP(&opts.Follow, "follow", "f", false, "stream live logs")
 	c.Flags().BoolVarP(&opts.Timestamps, "timestamps", "t", false, "show logs with timestamp")
 	c.Flags().IntVarP(&opts.Limit, "limit", "", 5, "lists number of TaskRuns")
-
+	c.Deprecated = "ClusterTasks are deprecated, this command will be removed in future releases."
 	return c
 }
 

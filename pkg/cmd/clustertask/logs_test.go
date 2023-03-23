@@ -76,7 +76,7 @@ func TestClusterTaskLog(t *testing.T) {
 			input:     cs,
 			dc:        dc1,
 			wantError: true,
-			want:      "Error: no TaskRuns found for ClusterTask task\n",
+			want:      "Command \"logs\" is deprecated, ClusterTasks are deprecated, this command will be removed in future releases.\nError: no TaskRuns found for ClusterTask task\n",
 		},
 		{
 			name:      "Specify notexist task name",
@@ -84,7 +84,7 @@ func TestClusterTaskLog(t *testing.T) {
 			input:     cs,
 			dc:        dc1,
 			wantError: true,
-			want:      "Error: clustertasks.tekton.dev \"notexist\" not found\n",
+			want:      "Command \"logs\" is deprecated, ClusterTasks are deprecated, this command will be removed in future releases.\nError: clustertasks.tekton.dev \"notexist\" not found\n",
 		},
 		{
 			name:      "Specify notexist taskrun name",
@@ -92,7 +92,7 @@ func TestClusterTaskLog(t *testing.T) {
 			input:     cs,
 			dc:        dc1,
 			wantError: true,
-			want:      "Error: Unable to get TaskRun: taskruns.tekton.dev \"notexist\" not found\n",
+			want:      "Command \"logs\" is deprecated, ClusterTasks are deprecated, this command will be removed in future releases.\nError: Unable to get TaskRun: taskruns.tekton.dev \"notexist\" not found\n",
 		},
 		{
 			name:      "Specify negative number to limit",
@@ -100,7 +100,7 @@ func TestClusterTaskLog(t *testing.T) {
 			input:     cs,
 			dc:        dc1,
 			wantError: true,
-			want:      "Error: limit was -1 but must be a positive number\n",
+			want:      "Command \"logs\" is deprecated, ClusterTasks are deprecated, this command will be removed in future releases.\nError: limit was -1 but must be a positive number\n",
 		},
 	}
 
@@ -244,7 +244,7 @@ func TestClusterTaskLog_v1beta1(t *testing.T) {
 			input:     cs,
 			dc:        dc1,
 			wantError: true,
-			want:      "Error: no TaskRuns found for ClusterTask task\n",
+			want:      "Command \"logs\" is deprecated, ClusterTasks are deprecated, this command will be removed in future releases.\nError: no TaskRuns found for ClusterTask task\n",
 		},
 		{
 			name:      "Specify notexist task name",
@@ -252,7 +252,7 @@ func TestClusterTaskLog_v1beta1(t *testing.T) {
 			input:     cs,
 			dc:        dc1,
 			wantError: true,
-			want:      "Error: clustertasks.tekton.dev \"notexist\" not found\n",
+			want:      "Command \"logs\" is deprecated, ClusterTasks are deprecated, this command will be removed in future releases.\nError: clustertasks.tekton.dev \"notexist\" not found\n",
 		},
 		{
 			name:      "Specify notexist taskrun name",
@@ -260,7 +260,7 @@ func TestClusterTaskLog_v1beta1(t *testing.T) {
 			input:     cs,
 			dc:        dc1,
 			wantError: true,
-			want:      "Error: Unable to get TaskRun: taskruns.tekton.dev \"notexist\" not found\n",
+			want:      "Command \"logs\" is deprecated, ClusterTasks are deprecated, this command will be removed in future releases.\nError: Unable to get TaskRun: taskruns.tekton.dev \"notexist\" not found\n",
 		},
 		{
 			name:      "Specify negative number to limit",
@@ -268,7 +268,7 @@ func TestClusterTaskLog_v1beta1(t *testing.T) {
 			input:     cs,
 			dc:        dc1,
 			wantError: true,
-			want:      "Error: limit was -1 but must be a positive number\n",
+			want:      "Command \"logs\" is deprecated, ClusterTasks are deprecated, this command will be removed in future releases.\nError: limit was -1 but must be a positive number\n",
 		},
 	}
 

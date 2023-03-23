@@ -175,7 +175,7 @@ func TestClusterTaskDelete(t *testing.T) {
 			input:       seeds[0].pipelineClient,
 			inputStream: nil,
 			wantError:   false,
-			want:        "ClusterTasks deleted: \"tomatoes\"\n",
+			want:        "Command \"delete\" is deprecated, ClusterTasks are deprecated, this command will be removed in future releases.\nClusterTasks deleted: \"tomatoes\"\n",
 		},
 		{
 			name:        "With force delete flag",
@@ -184,7 +184,7 @@ func TestClusterTaskDelete(t *testing.T) {
 			input:       seeds[1].pipelineClient,
 			inputStream: nil,
 			wantError:   false,
-			want:        "ClusterTasks deleted: \"tomatoes\"\n",
+			want:        "Command \"delete\" is deprecated, ClusterTasks are deprecated, this command will be removed in future releases.\nClusterTasks deleted: \"tomatoes\"\n",
 		},
 		{
 			name:        "Without force delete flag, reply no",
@@ -202,7 +202,7 @@ func TestClusterTaskDelete(t *testing.T) {
 			input:       seeds[3].pipelineClient,
 			inputStream: strings.NewReader("y"),
 			wantError:   false,
-			want:        "Are you sure you want to delete ClusterTask(s) \"tomatoes\" (y/n): ClusterTasks deleted: \"tomatoes\"\n",
+			want:        "Command \"delete\" is deprecated, ClusterTasks are deprecated, this command will be removed in future releases.\nAre you sure you want to delete ClusterTask(s) \"tomatoes\" (y/n): ClusterTasks deleted: \"tomatoes\"\n",
 		},
 		{
 			name:        "Remove non existent resource",
@@ -238,7 +238,7 @@ func TestClusterTaskDelete(t *testing.T) {
 			input:       seeds[4].pipelineClient,
 			inputStream: strings.NewReader("y"),
 			wantError:   false,
-			want:        "Are you sure you want to delete ClusterTask(s) \"tomatoes\" and related resources (y/n): TaskRuns deleted: \"task-run-1\", \"task-run-2\"\nClusterTasks deleted: \"tomatoes\"\n",
+			want:        "Command \"delete\" is deprecated, ClusterTasks are deprecated, this command will be removed in future releases.\nAre you sure you want to delete ClusterTask(s) \"tomatoes\" and related resources (y/n): TaskRuns deleted: \"task-run-1\", \"task-run-2\"\nClusterTasks deleted: \"tomatoes\"\n",
 		},
 		{
 			name:        "With force delete flag, reply yes, multiple clustertasks",
@@ -247,7 +247,7 @@ func TestClusterTaskDelete(t *testing.T) {
 			input:       seeds[1].pipelineClient,
 			inputStream: strings.NewReader("y"),
 			wantError:   false,
-			want:        "ClusterTasks deleted: \"tomatoes2\", \"tomatoes3\"\n",
+			want:        "Command \"delete\" is deprecated, ClusterTasks are deprecated, this command will be removed in future releases.\nClusterTasks deleted: \"tomatoes2\", \"tomatoes3\"\n",
 		},
 		{
 			name:        "Without force delete flag, reply yes, multiple clustertasks",
@@ -256,7 +256,7 @@ func TestClusterTaskDelete(t *testing.T) {
 			input:       seeds[2].pipelineClient,
 			inputStream: strings.NewReader("y"),
 			wantError:   false,
-			want:        "Are you sure you want to delete ClusterTask(s) \"tomatoes2\", \"tomatoes3\" (y/n): ClusterTasks deleted: \"tomatoes2\", \"tomatoes3\"\n",
+			want:        "Command \"delete\" is deprecated, ClusterTasks are deprecated, this command will be removed in future releases.\nAre you sure you want to delete ClusterTask(s) \"tomatoes2\", \"tomatoes3\" (y/n): ClusterTasks deleted: \"tomatoes2\", \"tomatoes3\"\n",
 		},
 		{
 			name:        "Delete all with prompt",
@@ -265,7 +265,7 @@ func TestClusterTaskDelete(t *testing.T) {
 			input:       seeds[3].pipelineClient,
 			inputStream: strings.NewReader("y"),
 			wantError:   false,
-			want:        "Are you sure you want to delete all ClusterTasks (y/n): All ClusterTasks deleted\n",
+			want:        "Command \"delete\" is deprecated, ClusterTasks are deprecated, this command will be removed in future releases.\nAre you sure you want to delete all ClusterTasks (y/n): All ClusterTasks deleted\n",
 		},
 		{
 			name:        "Delete all with -f",
@@ -274,7 +274,7 @@ func TestClusterTaskDelete(t *testing.T) {
 			input:       seeds[4].pipelineClient,
 			inputStream: nil,
 			wantError:   false,
-			want:        "All ClusterTasks deleted\n",
+			want:        "Command \"delete\" is deprecated, ClusterTasks are deprecated, this command will be removed in future releases.\nAll ClusterTasks deleted\n",
 		},
 		{
 			name:        "Error from using clustertask name with --all",

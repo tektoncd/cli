@@ -102,6 +102,7 @@ or
 	c.Flags().BoolVarP(&opts.ForceDelete, "force", "f", false, "Whether to force deletion (default: false)")
 	c.Flags().BoolVarP(&opts.DeleteAll, "all", "", false, "Delete all ClusterTasks (default: false)")
 	c.Flags().BoolVarP(&opts.DeleteRelated, "trs", "", false, "Whether to delete ClusterTask(s) and related resources (TaskRuns) (default: false)")
+	c.Deprecated = "ClusterTasks are deprecated, this command will be removed in future releases."
 	return c
 }
 func deleteClusterTasks(opts *options.DeleteOptions, s *cli.Stream, p cli.Params, ctNames []string) error {

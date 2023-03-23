@@ -45,8 +45,8 @@ func TestClusterTaskList_Empty(t *testing.T) {
 	if err != nil {
 		t.Errorf("Unexpected error: %v", err)
 	}
-
-	test.AssertOutput(t, emptyMsg, output)
+	warning := "Command \"list\" is deprecated, ClusterTasks are deprecated, this command will be removed in future releases.\n"
+	test.AssertOutput(t, warning+emptyMsg, output)
 }
 
 func TestClusterTaskListOnlyClusterTasksv1beta1(t *testing.T) {

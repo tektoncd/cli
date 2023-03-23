@@ -1,1 +1,2 @@
+Command "describe" is deprecated, ClusterTasks are deprecated, this command will be removed in future releases.
 Name:   clustertask-justname

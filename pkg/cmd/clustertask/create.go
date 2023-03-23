@@ -64,6 +64,7 @@ or
 		},
 	}
 	c.Flags().StringVarP(&opts.From, "from", "", "", "Create a ClusterTask from Task in a particular namespace")
+	c.Deprecated = "ClusterTasks are deprecated, this command will be removed in future releases."
 	return c
 }
 

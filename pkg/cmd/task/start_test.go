@@ -132,7 +132,9 @@ func Test_start_has_task_filename_v1beta1(t *testing.T) {
 		t.Errorf("Not expecting an error, but got %s", err.Error())
 	}
 
-	expected := "TaskRun started: \n\nIn order to track the TaskRun progress run:\ntkn taskrun logs  -f -n ns\n"
+	expected := "Flag --inputresource has been deprecated, pipelineresources have been deprecated, this flag will be removed soon\n" +
+		"Flag --outputresource has been deprecated, pipelineresources have been deprecated, this flag will be removed soon\n" +
+		"TaskRun started: \n\nIn order to track the TaskRun progress run:\ntkn taskrun logs  -f -n ns\n"
 	test.AssertOutput(t, expected, got)
 }
 
@@ -158,7 +160,9 @@ func Test_start_task_filename_param_with_invalid_type_v1beta1(t *testing.T) {
 		t.Errorf("expected an error but didn't get one")
 	}
 
-	expected := "Error: params does not have a valid type - 'pathToDockerFile'\n"
+	expected := "Flag --inputresource has been deprecated, pipelineresources have been deprecated, this flag will be removed soon\n" +
+		"Flag --outputresource has been deprecated, pipelineresources have been deprecated, this flag will be removed soon\n" +
+		"Error: params does not have a valid type - 'pathToDockerFile'\n"
 	test.AssertOutput(t, expected, got)
 }
 
@@ -354,7 +358,10 @@ func Test_start_task_context_v1beta1(t *testing.T) {
 		"-s=svc1",
 		"-n=ns")
 
-	gcExpected := "TaskRun started: \n\nIn order to track the TaskRun progress run:\ntkn taskrun --context=NinjaRabbit logs  -f -n ns\n"
+	gcExpected := "Flag --inputresource has been deprecated, pipelineresources have been deprecated, this flag will be removed soon\n" +
+		"Flag --inputresource has been deprecated, pipelineresources have been deprecated, this flag will be removed soon\n" +
+		"Flag --outputresource has been deprecated, pipelineresources have been deprecated, this flag will be removed soon\n" +
+		"TaskRun started: \n\nIn order to track the TaskRun progress run:\ntkn taskrun --context=NinjaRabbit logs  -f -n ns\n"
 	test.AssertOutput(t, gcExpected, gotConfig)
 
 }
@@ -445,7 +452,10 @@ func Test_start_task_v1beta1(t *testing.T) {
 		"-s=svc1",
 		"-n=ns")
 
-	expected := "TaskRun started: \n\nIn order to track the TaskRun progress run:\ntkn taskrun logs  -f -n ns\n"
+	expected := "Flag --inputresource has been deprecated, pipelineresources have been deprecated, this flag will be removed soon\n" +
+		"Flag --inputresource has been deprecated, pipelineresources have been deprecated, this flag will be removed soon\n" +
+		"Flag --outputresource has been deprecated, pipelineresources have been deprecated, this flag will be removed soon\n" +
+		"TaskRun started: \n\nIn order to track the TaskRun progress run:\ntkn taskrun logs  -f -n ns\n"
 	test.AssertOutput(t, expected, got)
 	clients, _ := p.Clients()
 
@@ -1649,7 +1659,9 @@ func Test_start_task_last_with_inputs_v1beta1(t *testing.T) {
 		"-n=ns",
 		"--last")
 
-	expected := "TaskRun started: random\n\nIn order to track the TaskRun progress run:\ntkn taskrun logs random -f -n ns\n"
+	expected := "Flag --inputresource has been deprecated, pipelineresources have been deprecated, this flag will be removed soon\n" +
+		"Flag --outputresource has been deprecated, pipelineresources have been deprecated, this flag will be removed soon\n" +
+		"TaskRun started: random\n\nIn order to track the TaskRun progress run:\ntkn taskrun logs random -f -n ns\n"
 	test.AssertOutput(t, expected, got)
 
 	clients, _ := p.Clients()
@@ -1865,7 +1877,10 @@ func Test_start_task_client_error_v1beta1(t *testing.T) {
 		"-p=print=boom,boom",
 		"-o=code-image=image",
 	)
-	expected := "Error: cluster not accessible\n"
+	expected := "Flag --inputresource has been deprecated, pipelineresources have been deprecated, this flag will be removed soon\n" +
+		"Flag --inputresource has been deprecated, pipelineresources have been deprecated, this flag will be removed soon\n" +
+		"Flag --outputresource has been deprecated, pipelineresources have been deprecated, this flag will be removed soon\n" +
+		"Error: cluster not accessible\n"
 	test.AssertOutput(t, expected, got)
 }
 
@@ -1952,7 +1967,10 @@ func Test_start_task_invalid_input_res_v1beta1(t *testing.T) {
 		"-p=myarg=abc",
 		"-p=print=xyz",
 	)
-	expected := "Error: invalid input format for resource parameter: my-repo git-repo\n"
+	expected := "Flag --inputresource has been deprecated, pipelineresources have been deprecated, this flag will be removed soon\n" +
+		"Flag --inputresource has been deprecated, pipelineresources have been deprecated, this flag will be removed soon\n" +
+		"Flag --outputresource has been deprecated, pipelineresources have been deprecated, this flag will be removed soon\n" +
+		"Error: invalid input format for resource parameter: my-repo git-repo\n"
 	test.AssertOutput(t, expected, got)
 }
 
@@ -2032,7 +2050,9 @@ func Test_start_task_invalid_workspace_v1beta1(t *testing.T) {
 		"-o=code-image=some",
 		"-n", "ns",
 	)
-	expected := "Error: Name not found for workspace\n"
+	expected := "Flag --inputresource has been deprecated, pipelineresources have been deprecated, this flag will be removed soon\n" +
+		"Flag --outputresource has been deprecated, pipelineresources have been deprecated, this flag will be removed soon\n" +
+		"Error: Name not found for workspace\n"
 	test.AssertOutput(t, expected, got)
 }
 
@@ -2117,7 +2137,9 @@ func Test_start_task_invalid_output_res_v1beta1(t *testing.T) {
 		"-p=myarg=abc",
 		"-p=print=xyz",
 	)
-	expected := "Error: invalid input format for resource parameter: code-image image-final\n"
+	expected := "Flag --outputresource has been deprecated, pipelineresources have been deprecated, this flag will be removed soon\n" +
+		"Flag --inputresource has been deprecated, pipelineresources have been deprecated, this flag will be removed soon\n" +
+		"Error: invalid input format for resource parameter: code-image image-final\n"
 	test.AssertOutput(t, expected, got)
 }
 
@@ -2200,7 +2222,9 @@ func Test_start_task_invalid_param_v1beta1(t *testing.T) {
 		"-o=out=out",
 		"-n", "ns",
 	)
-	expected := "Error: invalid input format for param parameter: myarg boom\n"
+	expected := "Flag --inputresource has been deprecated, pipelineresources have been deprecated, this flag will be removed soon\n" +
+		"Flag --outputresource has been deprecated, pipelineresources have been deprecated, this flag will be removed soon\n" +
+		"Error: invalid input format for param parameter: myarg boom\n"
 	test.AssertOutput(t, expected, got)
 }
 
@@ -2286,7 +2310,9 @@ func Test_start_task_invalid_label_v1beta1(t *testing.T) {
 		"-p=myarg=abc",
 		"-p=print=xyz",
 	)
-	expected := "Error: invalid input format for label parameter: myarg boom\n"
+	expected := "Flag --inputresource has been deprecated, pipelineresources have been deprecated, this flag will be removed soon\n" +
+		"Flag --outputresource has been deprecated, pipelineresources have been deprecated, this flag will be removed soon\n" +
+		"Error: invalid input format for label parameter: myarg boom\n"
 	test.AssertOutput(t, expected, got)
 }
 
@@ -2383,7 +2409,10 @@ func Test_start_task_allkindparam_v1beta1(t *testing.T) {
 		"-s=svc1",
 		"-n=ns")
 
-	expected := "TaskRun started: \n\nIn order to track the TaskRun progress run:\ntkn taskrun logs  -f -n ns\n"
+	expected := "Flag --inputresource has been deprecated, pipelineresources have been deprecated, this flag will be removed soon\n" +
+		"Flag --inputresource has been deprecated, pipelineresources have been deprecated, this flag will be removed soon\n" +
+		"Flag --outputresource has been deprecated, pipelineresources have been deprecated, this flag will be removed soon\n" +
+		"TaskRun started: \n\nIn order to track the TaskRun progress run:\ntkn taskrun logs  -f -n ns\n"
 	test.AssertOutput(t, expected, got)
 	clients, _ := p.Clients()
 
@@ -2507,7 +2536,10 @@ func Test_start_task_wrong_param_v1beta1(t *testing.T) {
 		"-s=svc1",
 		"-n=ns")
 
-	expected := "Error: param 'myar' not present in spec\n"
+	expected := "Flag --inputresource has been deprecated, pipelineresources have been deprecated, this flag will be removed soon\n" +
+		"Flag --inputresource has been deprecated, pipelineresources have been deprecated, this flag will be removed soon\n" +
+		"Flag --outputresource has been deprecated, pipelineresources have been deprecated, this flag will be removed soon\n" +
+		"Error: param 'myar' not present in spec\n"
 	test.AssertOutput(t, expected, got)
 }
 

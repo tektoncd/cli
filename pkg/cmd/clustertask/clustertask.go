@@ -46,5 +46,6 @@ func Command(p cli.Params) *cobra.Command {
 		logCommand(p),
 		createCommand(p),
 	)
+	cmd.Deprecated = "ClusterTasks are deprecated, this command will be removed in future releases."
 	return cmd
 }

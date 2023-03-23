@@ -1,3 +1,5 @@
+Flag --resource has been deprecated, pipelineresources have been deprecated, this flag will be removed soon
+Flag --resource has been deprecated, pipelineresources have been deprecated, this flag will be removed soon
 {
 	"kind": "PipelineRun",
 	"apiVersion": "tekton.dev/v1beta1",

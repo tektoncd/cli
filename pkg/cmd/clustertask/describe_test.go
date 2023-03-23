@@ -481,7 +481,7 @@ func TestClusterTaskDescribe_WithoutNameIfOnlyOneClusterTaskPresent(t *testing.T
 
 func TestClusterTask_custom_output(t *testing.T) {
 	name := "clustertask"
-	expected := "clustertask.tekton.dev/" + name
+	expected := "Command \"describe\" is deprecated, ClusterTasks are deprecated, this command will be removed in future releases.\nclustertask.tekton.dev/" + name
 
 	clock := clockwork.NewFakeClock()
 
@@ -529,7 +529,7 @@ func TestClusterTask_custom_output(t *testing.T) {
 
 func TestClusterTaskV1beta1_custom_output(t *testing.T) {
 	name := "clustertask"
-	expected := "clustertask.tekton.dev/" + name
+	expected := "Command \"describe\" is deprecated, ClusterTasks are deprecated, this command will be removed in future releases.\nclustertask.tekton.dev/" + name
 
 	clock := clockwork.NewFakeClock()
 

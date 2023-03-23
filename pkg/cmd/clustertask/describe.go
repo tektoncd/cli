@@ -186,6 +186,7 @@ or
 	}
 
 	f.AddFlags(c)
+	c.Deprecated = "ClusterTasks are deprecated, this command will be removed in future releases."
 	return c
 }
 
