@@ -12,89 +12,48 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-# Task writes "some stuff" to a predefined path in the workspace git PipelineResource
-
-apiVersion: tekton.dev/v1beta1
+apiVersion: tekton.dev/v1
 kind: Task
 metadata:
-  name: create-file
+  name: create-file-verify
 spec:
-  resources:
-    inputs:
-    - name: workspace
-      type: git
-      targetPath: damnworkspace
-    outputs:
-    - name: workspace
-      type: git
+  workspaces:
+    - name: shared-data
   params:
-  - name: FILEPATH
-  - name: FILENAME
+  - name: message
+  - name: filename
   steps:
-  - name: read-docs-old
+  - name: create-new-file
     image: ubuntu
-    command: ["/bin/bash"]
-    args: ['-c', 'ls -la /workspace/damnworkspace/$(inputs.params.FILEPATH)/$(inputs.params.FILENAME)']  # tests that targetpath works
+    script: touch $(workspaces.shared-data.path)/$(params.filename)
   - name: write-new-stuff
     image: ubuntu
-    command: ['bash']
-    args: ['-c', 'ln -s /workspace/damnworkspace /workspace/output/workspace && echo some stuff > /workspace/output/workspace/stuff']
----
-# Reads a file from a predefined path in the workspace git PipelineResource
-apiVersion: tekton.dev/v1beta1
-kind: Task
-metadata:
-  name: check-stuff-file-exists
-spec:
-  resources:
-    inputs:
-    - name: workspace
-      type: git
-      targetPath: newworkspace
-  steps:
+    script: echo $(params.message) > $(workspaces.shared-data.path)/$(params.filename)
   - name: read
     image: ubuntu
-    command: ["/bin/bash"]
-    args: ['-c', 'cat /workspace/newworkspace/stuff']  # tests that new targetpath and previous task output is dumped
+    script: cat $(workspaces.shared-data.path)/$(params.filename)
 ---
-# The Output of the first Task (git resource) create-file is given as an `Input`
-# to the next `Task` check-stuff-file-exists using`from` clause.
 
-apiVersion: tekton.dev/v1beta1
+apiVersion: tekton.dev/v1
 kind: Pipeline
 metadata:
   name: output-pipeline
 spec:
-  resources:
-  - name: source-repo
-    type: git
+  workspaces:
+    - name: shared-data
   params:
-    - name: FILEPATH
-      default: "docs-v2"
-    - name: FILENAME
+    - name: message
+      default: "hello"
+    - name: filename
   tasks:
-  - name: first-create-file          # 1. create file
+  - name: first-create-file
     retries: 3
     taskRef:
-      name: create-file
+      name: create-file-verify
     params:
-      - name: FILEPATH
-        value: $(params.FILEPATH)
-      - name: FILENAME
-        value: $(params.FILENAME)
-    resources:
-      inputs:
-      - name: workspace
-        resource: source-repo
-      outputs:
-      - name: workspace
-        resource: source-repo
-  - name: then-check                 # 2.  check file exists
-    retries: 2
-    taskRef:
-      name: check-stuff-file-exists
-    resources:
-      inputs:
-      - name: workspace
-        resource: source-repo
-        from: [first-create-file]
+      - name: message
+        value: $(params.message)
+      - name: filename
+        value: $(params.filename)
+    workspaces:
+      - name: shared-data

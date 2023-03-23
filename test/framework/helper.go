@@ -71,35 +71,6 @@ func Header(logf logging.FormatLogger, text string) {
 	logf(bar)
 }
 
-// Create Service Account
-func CreateServiceAccountSecret(c kubernetes.Interface, namespace string, secretName string) (bool, error) {
-
-	file := os.Getenv("SERVICE_ACCOUNT_KEY_PATH")
-	if file == "" {
-		log.Printf("Not creating service account secret, relying on default credentials in namespace %s.", namespace)
-		return false, nil
-	}
-
-	sec := &corev1.Secret{
-		ObjectMeta: metav1.ObjectMeta{
-			Name:      secretName,
-			Namespace: namespace,
-		},
-		StringData: map[string]string{
-			"username": string(`cHJhdmVlbjRnMA==`),
-			"password": string(`UHJhdmVlbkA0ZzA=`),
-		},
-	}
-
-	_, err := c.CoreV1().Secrets(namespace).Create(context.Background(), sec, metav1.CreateOptions{})
-	if err != nil {
-		log.Fatalf("Error in creating Secrets into namespace "+namespace+" err: %s", err)
-	}
-
-	log.Printf("Creating service account secret")
-	return true, err
-}
-
 func TearDown(t *testing.T, cs *Clients, namespace string) {
 	t.Helper()
 	if cs.KubeClient == nil {

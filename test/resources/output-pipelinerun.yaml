@@ -12,104 +12,69 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-apiVersion: tekton.dev/v1alpha1
-kind: PipelineResource
-metadata:
-  name: skaffold-git
-  namespace: tektoncd
-spec:
-  type: git
-  params:
-  - name: revision
-    value: main
-  - name: url
-    value: https://github.com/GoogleContainerTools/skaffold
----
-# Task writes "some stuff" to a predefined path in the workspace git PipelineResource
-apiVersion: tekton.dev/v1beta1
+apiVersion: tekton.dev/v1
 kind: Task
 metadata:
-  name: create-file
+  name: create-file-verify
   namespace: tektoncd
 spec:
-  resources:
-    inputs:
-    - name: workspace
-      type: git
-      targetPath: damnworkspace
-    outputs:
-    - name: workspace
-      type: git
+  workspaces:
+  - name: shared-data
+  params:
+  - name: message
+  - name: filename
   steps:
-  - name: read-docs-old
+  - name: create-new-file
     image: ubuntu
-    command: ["/bin/bash"]
-    args: ['-c', 'ls -la /workspace/damnworkspace/README.md']  # tests that targetpath works
+    script: touch $(workspaces.shared-data.path)/$(params.filename)
   - name: write-new-stuff
     image: ubuntu
-    command: ['bash']
-    args: ['-c', 'ln -s /workspace/damnworkspace /workspace/output/workspace && echo some stuff > /workspace/output/workspace/stuff']
----
-# Reads a file from a predefined path in the workspace git PipelineResource
-apiVersion: tekton.dev/v1beta1
-kind: Task
-metadata:
-  name: check-stuff-file-exists
-  namespace: tektoncd
-spec:
-  resources:
-    inputs:
-    - name: workspace
-      type: git
-      targetPath: newworkspace
-  steps:
+    script: echo $(params.message) > $(workspaces.shared-data.path)/$(params.filename)
   - name: read
     image: ubuntu
-    command: ["/bin/bash"]
-    args: ['-c', 'cat /workspace/newworkspace/stuff']  # tests that new targetpath and previous task output is dumped
+    script: cat $(workspaces.shared-data.path)/$(params.filename)
 ---
-# The Output of the first Task (git resource) create-file is given as an `Input`
-# to the next `Task` check-stuff-file-exists using`from` clause.
 
-apiVersion: tekton.dev/v1beta1
+apiVersion: tekton.dev/v1
 kind: Pipeline
 metadata:
   name: output-pipeline
   namespace: tektoncd
 spec:
-  resources:
-  - name: source-repo
-    type: git
+  workspaces:
+    - name: shared-data
+  params:
+    - name: message
+      default: "hello"
+    - name: filename
   tasks:
-  - name: first-create-file          # 1. create file
-    taskRef:
-      name: create-file
-    resources:
-      inputs:
-      - name: workspace
-        resource: source-repo
-      outputs:
-      - name: workspace
-        resource: source-repo
-  - name: then-check                 # 2.  check file exists
-    taskRef:
-      name: check-stuff-file-exists
-    resources:
-      inputs:
-      - name: workspace
-        resource: source-repo
-        from: [first-create-file]
+    - name: first-create-file
+      retries: 3
+      taskRef:
+        name: create-file-verify
+      params:
+        - name: message
+          value: $(params.message)
+        - name: filename
+          value: $(params.filename)
+      workspaces:
+        - name: shared-data
 ---
-apiVersion: tekton.dev/v1beta1
+apiVersion: tekton.dev/v1
 kind: PipelineRun
 metadata:
   name: output-pipeline-run
   namespace: tektoncd
 spec:
+  params:
+    - name: filename
+      value: output
+    - name: message
+      value: test-e2e
   pipelineRef:
     name: output-pipeline
-  serviceAccountName: 'default'
-  resources:
-  - name: source-repo
-    resourceRef:
-      name: skaffold-git
+  taskRunTemplate:
+    serviceAccountName: default
+  workspaces:
+    - emptyDir: {}
+      name: shared-data

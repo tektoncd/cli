@@ -18,6 +18,7 @@ import (
 	"log"
 
 	"github.com/tektoncd/pipeline/pkg/client/clientset/versioned"
+	v1 "github.com/tektoncd/pipeline/pkg/client/clientset/versioned/typed/pipeline/v1"
 	"github.com/tektoncd/pipeline/pkg/client/clientset/versioned/typed/pipeline/v1beta1"
 	resourceversioned "github.com/tektoncd/pipeline/pkg/client/resource/clientset/versioned"
 	resourcev1alpha1 "github.com/tektoncd/pipeline/pkg/client/resource/clientset/versioned/typed/resource/v1alpha1"
@@ -28,11 +29,11 @@ import (
 // clients holds instances of interfaces for making requests to the Pipeline controllers.
 type Clients struct {
 	KubeClient             kubernetes.Interface
-	PipelineClient         v1beta1.PipelineInterface
-	TaskClient             v1beta1.TaskInterface
+	PipelineClient         v1.PipelineInterface
+	TaskClient             v1.TaskInterface
 	ClusterTaskClient      v1beta1.ClusterTaskInterface
-	TaskRunClient          v1beta1.TaskRunInterface
-	PipelineRunClient      v1beta1.PipelineRunInterface
+	TaskRunClient          v1.TaskRunInterface
+	PipelineRunClient      v1.PipelineRunInterface
 	PipelineResourceClient resourcev1alpha1.PipelineResourceInterface
 }
 
@@ -64,11 +65,11 @@ func NewClients(configPath, clusterName, namespace string) *Clients {
 	if err != nil {
 		log.Fatalf("failed to create pipeline clientset from config file at %s: %s", configPath, err)
 	}
-	c.PipelineClient = cs.TektonV1beta1().Pipelines(namespace)
-	c.TaskClient = cs.TektonV1beta1().Tasks(namespace)
+	c.PipelineClient = cs.TektonV1().Pipelines(namespace)
+	c.TaskClient = cs.TektonV1().Tasks(namespace)
 	c.ClusterTaskClient = cs.TektonV1beta1().ClusterTasks()
-	c.TaskRunClient = cs.TektonV1beta1().TaskRuns(namespace)
-	c.PipelineRunClient = cs.TektonV1beta1().PipelineRuns(namespace)
+	c.TaskRunClient = cs.TektonV1().TaskRuns(namespace)
+	c.PipelineRunClient = cs.TektonV1().PipelineRuns(namespace)
 	c.PipelineResourceClient = rcs.TektonV1alpha1().PipelineResources(namespace)
 	return c
 }
@@ -76,11 +77,4 @@ func NewClients(configPath, clusterName, namespace string) *Clients {
 type Test struct {
 	Cmd      string
 	Expected map[int]interface{}
-}
-
-func NewTestData(cmd string, expected map[int]interface{}) *Test {
-	t := &Test{}
-	t.Cmd = cmd
-	t.Expected = expected
-	return t
 }

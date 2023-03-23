@@ -36,10 +36,6 @@ import (
 	knativetest "knative.dev/pkg/test"
 )
 
-const (
-	tePipelineGitResourceName = "skaffold-git"
-)
-
 func TestTaskStartE2E(t *testing.T) {
 	t.Parallel()
 	c, namespace := framework.Setup(t)
@@ -52,9 +48,6 @@ func TestTaskStartE2E(t *testing.T) {
 
 	t.Logf("Creating Task read-task in namespace: %s ", namespace)
 	kubectl.MustSucceed(t, "create", "-f", helper.GetResourcePath("read-file.yaml"))
-
-	t.Logf("Creating git pipeline resource in namespace: %s", namespace)
-	kubectl.MustSucceed(t, "create", "-f", helper.GetResourcePath("git-resource.yaml"))
 
 	t.Run("Get list of Tasks from namespace  "+namespace, func(t *testing.T) {
 		res := tkn.Run(t, "task", "list")
@@ -72,9 +65,9 @@ func TestTaskStartE2E(t *testing.T) {
 
 	t.Run("Start TaskRun using tkn start command with SA as 'pipeline' ", func(t *testing.T) {
 		res := tkn.MustSucceed(t, "task", "start", "read-task",
-			"-i=source="+tePipelineGitResourceName,
-			"-p=FILEPATH=docs-v2",
-			"-p=FILENAME=README.md",
+			"-p=message=e2e-test",
+			"-p=heading=start",
+			"-w=name=write-allowed,emptyDir=",
 			"--showlog")
 
 		vars := make(map[string]interface{})
@@ -92,9 +85,9 @@ Waiting for logs to be available...
 
 	t.Run("Start TaskRun using tkn task start command with --use-param-defaults and all the params having default", func(t *testing.T) {
 		res := tkn.MustSucceed(t, "task", "start", "read-task",
-			"-i=source="+tePipelineGitResourceName,
 			"--use-param-defaults",
-			"-p=FILENAME=README.md",
+			"-p=heading=start",
+			"-w=name=write-allowed,emptyDir=",
 			"--showlog")
 		assert.Assert(t, is.Regexp("TaskRun started:.*", res.Stdout()))
 	})
@@ -103,16 +96,16 @@ Waiting for logs to be available...
 		tkn.RunInteractiveTests(t, &cli.Prompt{
 			CmdArgs: []string{
 				"task", "start", "read-task",
-				"-i=source=" + tePipelineGitResourceName,
+				"-w=name=write-allowed,emptyDir=",
 				"--use-param-defaults",
 				"--showlog",
 			},
 			Procedure: func(c *expect.Console) error {
-				if _, err := c.ExpectString("Value for param `FILENAME` of type `string`?"); err != nil {
+				if _, err := c.ExpectString("Value for param `heading` of type `string`?"); err != nil {
 					return err
 				}
 
-				if _, err := c.SendLine("README.md"); err != nil {
+				if _, err := c.SendLine("start"); err != nil {
 					return err
 				}
 
@@ -149,7 +142,7 @@ Waiting for logs to be available...
 		}
 
 		res := tkn.Run(t, "taskrun", "list")
-		expected := builder.ListAllTaskRunsOutput(t, c, false, map[int]interface{}{
+		expected := builder.ListAllTaskRunsOutput(t, c, false, false, map[int]interface{}{
 			0: &builder.TaskRunData{
 				Name:   "read-task-run-",
 				Status: "Succeeded",
@@ -174,16 +167,16 @@ Waiting for logs to be available...
 		tkn.RunInteractiveTests(t, &cli.Prompt{
 			CmdArgs: []string{
 				"task", "start", "read-task",
-				"-i=source=" + tePipelineGitResourceName,
-				"-p=FILEPATH=docs-v2",
+				"-w=name=write-allowed,emptyDir=",
+				"-p=message=e2e-test",
 				"--showlog",
 			},
 			Procedure: func(c *expect.Console) error {
-				if _, err := c.ExpectString("Value for param `FILENAME` of type `string`?"); err != nil {
+				if _, err := c.ExpectString("Value for param `heading` of type `string`?"); err != nil {
 					return err
 				}
 
-				if _, err := c.SendLine("README.md"); err != nil {
+				if _, err := c.SendLine("start"); err != nil {
 					return err
 				}
 
@@ -254,9 +247,9 @@ Waiting for logs to be available...
 
 	t.Run("Start TaskRun with --pod-template", func(t *testing.T) {
 		tkn.MustSucceed(t, "task", "start", "read-task",
-			"-i=source="+tePipelineGitResourceName,
-			"-p=FILEPATH=docs-v2",
-			"-p=FILENAME=README.md",
+			"-p=message=e2e-test",
+			"-p=heading=start",
+			"-w=name=write-allowed,emptyDir=",
 			"--showlog",
 			"--pod-template="+helper.GetResourcePath("/podtemplate/podtemplate.yaml"))
 
@@ -313,7 +306,7 @@ Waiting for logs to be available...
 			"--last",
 			"--showlog")
 
-		// Sleep to make make sure TaskRun is created/running
+		// Sleep to make sure TaskRun is created/running
 		time.Sleep(1 * time.Second)
 
 		// Get name of most recent TaskRun and wait for it to succeed
