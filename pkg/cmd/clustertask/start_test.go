@@ -23,7 +23,7 @@ import (
 	"time"
 
 	"github.com/jonboulle/clockwork"
-	traction "github.com/tektoncd/cli/pkg/taskrun"
+	"github.com/tektoncd/cli/pkg/actions"
 	"github.com/tektoncd/cli/pkg/test"
 	cb "github.com/tektoncd/cli/pkg/test/builder"
 	testDynamic "github.com/tektoncd/cli/pkg/test/dynamic"
@@ -1084,8 +1084,8 @@ func Test_start_use_taskrun_cancelled_status(t *testing.T) {
 	expected := "TaskRun started: ct-run-2\n\nIn order to track the TaskRun progress run:\ntkn taskrun logs ct-run-2 -f -n ns\n"
 	test.AssertOutput(t, expected, got)
 	clients, _ := p.Clients()
-	tr, err := traction.Get(clients, trName2, metav1.GetOptions{}, "ns")
-	if err != nil {
+	var tr *v1beta1.TaskRun
+	if err := actions.GetV1(taskrunGroupResource, clients, trName2, "ns", metav1.GetOptions{}, &tr); err != nil {
 		t.Errorf("Error listing taskruns %s", err.Error())
 	}
 
@@ -1173,8 +1173,8 @@ func Test_start_clustertask_last_override_timeout(t *testing.T) {
 	expected := "TaskRun started: ct-run-2\n\nIn order to track the TaskRun progress run:\ntkn taskrun logs ct-run-2 -f -n ns\n"
 	test.AssertOutput(t, expected, got)
 	clients, _ := p.Clients()
-	tr, err := traction.Get(clients, trName2, metav1.GetOptions{}, "ns")
-	if err != nil {
+	var tr *v1beta1.TaskRun
+	if err := actions.GetV1(taskrunGroupResource, clients, trName2, "ns", metav1.GetOptions{}, &tr); err != nil {
 		t.Errorf("Error listing taskruns %s", err.Error())
 	}
 

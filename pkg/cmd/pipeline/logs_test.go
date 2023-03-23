@@ -50,7 +50,8 @@ var (
 )
 
 const (
-	version = "v1beta1"
+	versionv1beta1 = "v1beta1"
+	version        = "v1"
 )
 
 func TestPipelineLog(t *testing.T) {
@@ -73,10 +74,10 @@ func TestPipelineLog(t *testing.T) {
 			},
 		},
 	})
-	cs.Pipeline.Resources = cb.APIResourceList(version, []string{"pipeline", "pipelinerun"})
+	cs.Pipeline.Resources = cb.APIResourceList(versionv1beta1, []string{"pipeline", "pipelinerun"})
 	tdc := testDynamic.Options{}
 	dc, err := tdc.Client(
-		cb.UnstructuredV1beta1P(pdata[0], version))
+		cb.UnstructuredV1beta1P(pdata[0], versionv1beta1))
 	if err != nil {
 		t.Errorf("unable to create dynamic client: %v", err)
 	}
@@ -91,10 +92,10 @@ func TestPipelineLog(t *testing.T) {
 			},
 		},
 	})
-	cs2.Pipeline.Resources = cb.APIResourceList(version, []string{"pipeline", "pipelinerun"})
+	cs2.Pipeline.Resources = cb.APIResourceList(versionv1beta1, []string{"pipeline", "pipelinerun"})
 	tdc2 := testDynamic.Options{}
 	dc2, err := tdc2.Client(
-		cb.UnstructuredV1beta1P(pdata[0], version),
+		cb.UnstructuredV1beta1P(pdata[0], versionv1beta1),
 	)
 	if err != nil {
 		t.Errorf("unable to create dynamic client: %v", err)
@@ -181,12 +182,12 @@ func TestPipelineLog(t *testing.T) {
 			},
 		},
 	})
-	cs3.Pipeline.Resources = cb.APIResourceList(version, []string{"pipeline", "pipelinerun"})
+	cs3.Pipeline.Resources = cb.APIResourceList(versionv1beta1, []string{"pipeline", "pipelinerun"})
 	tdc3 := testDynamic.Options{}
 	dc3, err := tdc3.Client(
-		cb.UnstructuredV1beta1P(pdata3[0], version),
-		cb.UnstructuredV1beta1PR(prdata3[0], version),
-		cb.UnstructuredV1beta1PR(prdata3[1], version),
+		cb.UnstructuredV1beta1P(pdata3[0], versionv1beta1),
+		cb.UnstructuredV1beta1PR(prdata3[0], versionv1beta1),
+		cb.UnstructuredV1beta1PR(prdata3[1], versionv1beta1),
 	)
 	if err != nil {
 		t.Errorf("unable to create dynamic client: %v", err)
@@ -749,11 +750,11 @@ func TestLogs_Auto_Select_FirstPipeline(t *testing.T) {
 			},
 		},
 	})
-	cs.Pipeline.Resources = cb.APIResourceList(version, []string{"pipeline", "pipelinerun"})
+	cs.Pipeline.Resources = cb.APIResourceList(versionv1beta1, []string{"pipeline", "pipelinerun"})
 	tdc := testDynamic.Options{}
 	dc, err := tdc.Client(
-		cb.UnstructuredV1beta1P(pdata[0], version),
-		cb.UnstructuredV1beta1PR(prdata[0], version),
+		cb.UnstructuredV1beta1P(pdata[0], versionv1beta1),
+		cb.UnstructuredV1beta1PR(prdata[0], versionv1beta1),
 	)
 	if err != nil {
 		t.Errorf("unable to create dynamic client: %v", err)

@@ -1,8 +1,6 @@
-apiVersion: tekton.dev/v1
+apiVersion: tekton.dev/v1beta1
 kind: TaskRun
 metadata:
-  annotations:
-    tekton.dev/v1beta1Resources: '{}'
   creationTimestamp: null
   generateName: task-1-run-
   namespace: ns
@@ -12,11 +10,15 @@ spec:
     value: arg
   - name: task-param
     value: arg
-  podTemplate:
-    schedulerName: SchedulerName
-    securityContext:
-      runAsNonRoot: true
-      runAsUser: 1001
+  resources:
+    inputs:
+    - name: my-repo
+      resourceRef:
+        name: git-repo
+    outputs:
+    - name: code-image
+      resourceRef:
+        name: output-image
   serviceAccountName: svc1
   taskRef:
     name: task-1

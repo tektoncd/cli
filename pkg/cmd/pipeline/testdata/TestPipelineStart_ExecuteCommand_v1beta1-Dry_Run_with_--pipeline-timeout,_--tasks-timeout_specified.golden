@@ -1,4 +1,4 @@
-apiVersion: tekton.dev/v1
+apiVersion: tekton.dev/v1beta1
 kind: PipelineRun
 metadata:
   creationTimestamp: null
@@ -14,10 +14,12 @@ spec:
     value: value2
   pipelineRef:
     name: test-pipeline
-  taskRunTemplate:
-    serviceAccountName: svc1
+  resources:
+  - name: source
+    resourceRef:
+      name: scaffold-git
+  serviceAccountName: svc1
   timeouts:
-    finally: 1s
-    pipeline: 3s
+    pipeline: 2s
     tasks: 1s
 status: {}

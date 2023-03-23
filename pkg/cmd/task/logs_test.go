@@ -43,7 +43,8 @@ func init() {
 }
 
 const (
-	version = "v1beta1"
+	versionv1beta1 = "v1beta1"
+	version        = "v1"
 )
 
 func TestTaskLog(t *testing.T) {
@@ -67,10 +68,10 @@ func TestTaskLog(t *testing.T) {
 			},
 		},
 	})
-	cs.Pipeline.Resources = cb.APIResourceList(version, []string{"task", "taskrun"})
+	cs.Pipeline.Resources = cb.APIResourceList(versionv1beta1, []string{"task", "taskrun"})
 	tdc1 := testDynamic.Options{}
 	dc1, err := tdc1.Client(
-		cb.UnstructuredV1beta1T(task1[0], version),
+		cb.UnstructuredV1beta1T(task1[0], versionv1beta1),
 	)
 	if err != nil {
 		t.Errorf("unable to create dynamic client: %v", err)
@@ -94,10 +95,10 @@ func TestTaskLog(t *testing.T) {
 			},
 		},
 	})
-	cs2.Pipeline.Resources = cb.APIResourceList(version, []string{"task", "taskrun"})
+	cs2.Pipeline.Resources = cb.APIResourceList(versionv1beta1, []string{"task", "taskrun"})
 	tdc2 := testDynamic.Options{}
 	dc2, err := tdc2.Client(
-		cb.UnstructuredV1beta1T(task2[0], version),
+		cb.UnstructuredV1beta1T(task2[0], versionv1beta1),
 	)
 	if err != nil {
 		t.Errorf("unable to create dynamic client: %v", err)
@@ -709,11 +710,11 @@ func TestLogs_Auto_Select_FirstTask(t *testing.T) {
 			},
 		},
 	})
-	cs.Pipeline.Resources = cb.APIResourceList(version, []string{"task", "taskrun"})
+	cs.Pipeline.Resources = cb.APIResourceList(versionv1beta1, []string{"task", "taskrun"})
 	tdc := testDynamic.Options{}
 	dc, err := tdc.Client(
-		cb.UnstructuredV1beta1T(tdata[0], version),
-		cb.UnstructuredV1beta1TR(trdata[0], version),
+		cb.UnstructuredV1beta1T(tdata[0], versionv1beta1),
+		cb.UnstructuredV1beta1TR(trdata[0], versionv1beta1),
 	)
 	if err != nil {
 		t.Errorf("unable to create dynamic client: %v", err)

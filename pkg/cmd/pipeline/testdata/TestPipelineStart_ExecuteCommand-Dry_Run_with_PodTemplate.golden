@@ -1,4 +1,4 @@
-apiVersion: tekton.dev/v1beta1
+apiVersion: tekton.dev/v1
 kind: PipelineRun
 metadata:
   creationTimestamp: null
@@ -14,14 +14,11 @@ spec:
     value: value2
   pipelineRef:
     name: test-pipeline
-  podTemplate:
-    schedulerName: SchedulerName
-    securityContext:
-      runAsNonRoot: true
-      runAsUser: 1001
-  resources:
-  - name: source
-    resourceRef:
-      name: scaffold-git
-  serviceAccountName: svc1
+  taskRunTemplate:
+    podTemplate:
+      schedulerName: SchedulerName
+      securityContext:
+        runAsNonRoot: true
+        runAsUser: 1001
+    serviceAccountName: svc1
 status: {}

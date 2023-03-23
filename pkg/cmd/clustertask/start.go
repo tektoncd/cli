@@ -41,6 +41,7 @@ import (
 	"github.com/tektoncd/cli/pkg/pods"
 	tractions "github.com/tektoncd/cli/pkg/taskrun"
 	"github.com/tektoncd/cli/pkg/workspaces"
+	v1 "github.com/tektoncd/pipeline/pkg/apis/pipeline/v1"
 	"github.com/tektoncd/pipeline/pkg/apis/pipeline/v1beta1"
 	"github.com/tektoncd/pipeline/pkg/apis/resource/v1alpha1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
@@ -308,7 +309,21 @@ func startClusterTask(opt startOptions, args []string) error {
 	}
 
 	if opt.DryRun {
-		return printTaskRun(cs, opt.Output, opt.stream, tr)
+		gvr, err := actions.GetGroupVersionResource(taskrunGroupResource, cs.Tekton.Discovery())
+		if err != nil {
+			return err
+		}
+		if gvr.Version == "v1" {
+			var trv1 v1.TaskRun
+			err = tr.ConvertTo(context.Background(), &trv1)
+			if err != nil {
+				return err
+			}
+			trv1.Kind = "TaskRun"
+			trv1.APIVersion = "tekton.dev/v1"
+			return printTaskRun(opt.Output, opt.stream, &trv1)
+		}
+		return printTaskRun(opt.Output, opt.stream, tr)
 	}
 
 	trCreated, err := tractions.Create(cs, tr, metav1.CreateOptions{}, opt.cliparams.Namespace())
@@ -317,7 +332,21 @@ func startClusterTask(opt startOptions, args []string) error {
 	}
 
 	if opt.Output != "" {
-		return printTaskRun(cs, opt.Output, opt.stream, trCreated)
+		gvr, err := actions.GetGroupVersionResource(taskrunGroupResource, cs.Tekton.Discovery())
+		if err != nil {
+			return err
+		}
+		if gvr.Version == "v1" {
+			var trv1 v1.TaskRun
+			err = trCreated.ConvertTo(context.Background(), &trv1)
+			if err != nil {
+				return err
+			}
+			trv1.Kind = "TaskRun"
+			trv1.APIVersion = "tekton.dev/v1"
+			return printTaskRun(opt.Output, opt.stream, &trv1)
+		}
+		return printTaskRun(opt.Output, opt.stream, trCreated)
 	}
 
 	fmt.Fprintf(opt.stream.Out, "TaskRun started: %s\n", trCreated.Name)
@@ -386,7 +415,7 @@ func parseRes(res []string) (map[string]v1beta1.TaskResourceBinding, error) {
 	return resources, nil
 }
 
-func printTaskRun(c *cli.Clients, output string, s *cli.Stream, tr *v1beta1.TaskRun) error {
+func printTaskRun(output string, s *cli.Stream, tr interface{}) error {
 	format := strings.ToLower(output)
 
 	if format == "" || format == "yaml" {

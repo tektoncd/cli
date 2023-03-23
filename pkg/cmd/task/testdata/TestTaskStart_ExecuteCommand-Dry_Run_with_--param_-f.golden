@@ -1,54 +1,37 @@
-apiVersion: tekton.dev/v1beta1
+apiVersion: tekton.dev/v1
 kind: TaskRun
 metadata:
+  annotations:
+    tekton.dev/v1beta1Resources: '{}'
   creationTimestamp: null
-  generateName: test-task-run-
+  generateName: task-v1-run-
   namespace: ns
 spec:
   params:
-  - name: pathToContext
-    value: /context
-  - name: pathToDockerFile
-    value: /path
-  resources:
-    inputs:
-    - name: docker-source
-      resourceRef:
-        name: git
-    outputs:
-    - name: builtImage
-      resourceRef:
-        name: image
+  - name: foobar
+    value: context
   serviceAccountName: svc1
   taskSpec:
     params:
-    - default: /workspace/docker-source/Dockerfile
-      description: The path to the dockerfile to build
-      name: pathToDockerFile
+    - name: foobar
       type: string
-    - default: /workspace/docker-source
-      description: The build context used by Kaniko (https://github.com/GoogleContainerTools/kaniko#kaniko-build-contexts)
-      name: pathToContext
-      type: string
-    resources:
-      inputs:
-      - name: docker-source
-        type: git
-      outputs:
-      - name: builtImage
-        type: image
+    results:
+    - name: url
     steps:
-    - args:
-      - --dockerfile=$(inputs.params.pathToDockerFile)
-      - --destination=$(outputs.resources.builtImage.url)
-      - --context=$(inputs.params.pathToContext)
-      command:
-      - /kaniko/executor
+    - computeResources: {}
       env:
-      - name: DOCKER_CONFIG
-        value: /tekton/home/.docker/
-      image: gcr.io/kaniko-project/executor:v0.14.0
-      name: build-and-push
-      resources: {}
+      - name: PARAM_URL
+        value: $(params.foobar)
+      image: alpine
+      name: build-sources
+      script: |
+        #!/bin/sh
+
+        printf "%s" "${PARAM_URL}" > "$(results.url.path)"
+    workspaces:
+    - name: temporary
+  workspaces:
+  - emptyDir: {}
+    name: temporary
 status:
   podName: ""
