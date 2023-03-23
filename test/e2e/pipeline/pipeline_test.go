@@ -33,8 +33,7 @@ import (
 	"github.com/tektoncd/cli/test/framework"
 	"github.com/tektoncd/cli/test/helper"
 	"github.com/tektoncd/cli/test/wait"
-	"github.com/tektoncd/pipeline/pkg/apis/pipeline/v1beta1"
-	"github.com/tektoncd/pipeline/pkg/apis/resource/v1alpha1"
+	v1 "github.com/tektoncd/pipeline/pkg/apis/pipeline/v1"
 	"gotest.tools/v3/assert"
 	is "gotest.tools/v3/assert/cmp"
 	"gotest.tools/v3/icmd"
@@ -43,11 +42,8 @@ import (
 )
 
 const (
-	TaskName1                      = "create-file"
-	TaskName2                      = "check-stuff-file-exists"
-	tePipelineName                 = "output-pipeline"
-	tePipelineGitResourceName      = "skaffold-git"
-	tePipelineFaultGitResourceName = "skaffold-git-1"
+	TaskName       = "create-file-verify"
+	tePipelineName = "output-pipeline"
 )
 
 func TestPipelinesE2E(t *testing.T) {
@@ -63,17 +59,11 @@ func TestPipelinesE2E(t *testing.T) {
 	t.Logf("Creating pipeline in namespace: %s", namespace)
 	kubectl.MustSucceed(t, "create", "-f", helper.GetResourcePath("pipeline.yaml"))
 
-	t.Logf("Creating git pipeline resource in namespace: %s", namespace)
-	kubectl.MustSucceed(t, "create", "-f", helper.GetResourcePath("git-resource.yaml"))
-
 	t.Run("Get list of Tasks from namespace  "+namespace, func(t *testing.T) {
 		res := tkn.Run(t, "task", "list")
 		expected := builder.ListAllTasksOutput(t, c, map[int]interface{}{
 			0: &builder.TaskData{
-				Name: TaskName2,
-			},
-			1: &builder.TaskData{
-				Name: TaskName1,
+				Name: TaskName,
 			},
 		})
 		res.Assert(t, icmd.Expected{
@@ -126,7 +116,7 @@ func TestPipelinesE2E(t *testing.T) {
 
 	t.Run("Pipeline json Schema validation with -o (output) flag, as Json ", func(t *testing.T) {
 		res := tkn.MustSucceed(t, "pipelines", "list", "-o", "json")
-		assert.NilError(t, json.Unmarshal([]byte(res.Stdout()), &v1beta1.PipelineList{}))
+		assert.NilError(t, json.Unmarshal([]byte(res.Stdout()), &v1.PipelineList{}))
 	})
 
 	t.Run("Validate Pipeline describe command in namespace "+namespace, func(t *testing.T) {
@@ -135,17 +125,11 @@ func TestPipelinesE2E(t *testing.T) {
 			map[int]interface{}{
 				0: &builder.PipelineDescribeData{
 					Name: tePipelineName,
-					Resources: map[string]string{
-						"source-repo": "git",
-					},
+
 					Task: map[int]interface{}{
 						0: &builder.TaskRefData{
 							TaskName: "first-create-file",
-							TaskRef:  TaskName1,
-						},
-						1: &builder.TaskRefData{
-							TaskName: "then-check",
-							TaskRef:  TaskName2,
+							TaskRef:  TaskName,
 						},
 					},
 					Runs: map[string]string{},
@@ -163,9 +147,9 @@ func TestPipelinesE2E(t *testing.T) {
 
 	t.Run("Start PipelineRun using pipeline start command with SA as 'pipeline' ", func(t *testing.T) {
 		res := tkn.MustSucceed(t, "pipeline", "start", tePipelineName,
-			"-r=source-repo="+tePipelineGitResourceName,
-			"-p=FILEPATH=docs-v2",
-			"-p=FILENAME=README.md",
+			"-p=message=e2e-test",
+			"-p=filename=output",
+			"-w=name=shared-data,emptyDir=",
 			"--showlog")
 
 		time.Sleep(1 * time.Second)
@@ -182,12 +166,8 @@ Waiting for logs to be available...
 
 	t.Run("Get list of Taskruns from namespace  "+namespace, func(t *testing.T) {
 		res := tkn.Run(t, "taskrun", "list")
-		expected := builder.ListAllTaskRunsOutput(t, c, false, map[int]interface{}{
+		expected := builder.ListAllTaskRunsOutput(t, c, false, false, map[int]interface{}{
 			0: &builder.TaskRunData{
-				Name:   "output-pipeline-run-",
-				Status: "Succeeded",
-			},
-			1: &builder.TaskRunData{
 				Name:   "output-pipeline-run-",
 				Status: "Succeeded",
 			},
@@ -205,18 +185,10 @@ Waiting for logs to be available...
 			map[int]interface{}{
 				0: &builder.PipelineDescribeData{
 					Name: tePipelineName,
-					Resources: map[string]string{
-						"source-repo": "git",
-					},
 					Task: map[int]interface{}{
 						0: &builder.TaskRefData{
 							TaskName: "first-create-file",
-							TaskRef:  TaskName1,
-							RunAfter: nil,
-						},
-						1: &builder.TaskRefData{
-							TaskName: "then-check",
-							TaskRef:  TaskName2,
+							TaskRef:  TaskName,
 							RunAfter: nil,
 						},
 					},
@@ -318,10 +290,10 @@ Waiting for logs to be available...
 
 	t.Run("Start PipelineRun with --pod-template", func(t *testing.T) {
 		tkn.MustSucceed(t, "pipeline", "start", tePipelineName,
-			"-r=source-repo="+tePipelineGitResourceName,
+			"-p=filename=output",
+			"-w=name=shared-data,emptyDir=",
 			"--pod-template="+helper.GetResourcePath("/podtemplate/podtemplate.yaml"),
 			"--use-param-defaults",
-			"-p=FILENAME=README.md",
 			"--showlog")
 
 		time.Sleep(1 * time.Second)
@@ -389,11 +361,6 @@ func TestPipelinesNegativeE2E(t *testing.T) {
 	t.Logf("Creating pipeline in namespace: %s", namespace)
 	kubectl.MustSucceed(t, "create", "-f", helper.GetResourcePath("pipeline.yaml"))
 
-	t.Logf("Creating (Fault) Git PipelineResource %s", tePipelineFaultGitResourceName)
-	if _, err := c.PipelineResourceClient.Create(context.Background(), getFaultGitResource(tePipelineFaultGitResourceName, namespace), metav1.CreateOptions{}); err != nil {
-		t.Fatalf("Failed to create fault Pipeline Resource `%s`: %s", tePipelineFaultGitResourceName, err)
-	}
-
 	t.Run("Get list of Pipelines from namespace  "+namespace, func(t *testing.T) {
 		res := tkn.Run(t, "pipelines", "list")
 		expected := builder.ListAllPipelinesOutput(t, c, map[int]interface{}{
@@ -437,7 +404,7 @@ func TestPipelinesNegativeE2E(t *testing.T) {
 
 	t.Run("Pipeline json Schema validation with -o (output) flag, as Json ", func(t *testing.T) {
 		res := tkn.MustSucceed(t, "pipelines", "list", "-o", "json")
-		assert.NilError(t, json.Unmarshal([]byte(res.Stdout()), &v1beta1.PipelineList{}))
+		assert.NilError(t, json.Unmarshal([]byte(res.Stdout()), &v1.PipelineList{}))
 	})
 
 	t.Run("Validate Pipeline describe command in namespace "+namespace, func(t *testing.T) {
@@ -446,18 +413,10 @@ func TestPipelinesNegativeE2E(t *testing.T) {
 			map[int]interface{}{
 				0: &builder.PipelineDescribeData{
 					Name: tePipelineName,
-					Resources: map[string]string{
-						"source-repo": "git",
-					},
 					Task: map[int]interface{}{
 						0: &builder.TaskRefData{
 							TaskName: "first-create-file",
-							TaskRef:  TaskName1,
-							RunAfter: nil,
-						},
-						1: &builder.TaskRefData{
-							TaskName: "then-check",
-							TaskRef:  TaskName2,
+							TaskRef:  TaskName,
 							RunAfter: nil,
 						},
 					},
@@ -476,9 +435,9 @@ func TestPipelinesNegativeE2E(t *testing.T) {
 
 	t.Run("Start Pipeline Run using pipeline start command with SA as 'pipelines' ", func(t *testing.T) {
 		res := tkn.MustSucceed(t, "pipeline", "start", tePipelineName,
-			"-r=source-repo="+tePipelineFaultGitResourceName,
-			"-p=FILEPATH=docs-v2",
-			"-p=FILENAME=README.md",
+			"-p=message=e2e-test",
+			"-p=filename=output",
+			"-w=name=share-data,emptyDir=",
 			"--showlog",
 			"true")
 
@@ -498,23 +457,15 @@ Waiting for logs to be available...
 			map[int]interface{}{
 				0: &builder.PipelineDescribeData{
 					Name: tePipelineName,
-					Resources: map[string]string{
-						"source-repo": "git",
-					},
 					Task: map[int]interface{}{
 						0: &builder.TaskRefData{
 							TaskName: "first-create-file",
-							TaskRef:  TaskName1,
-							RunAfter: nil,
-						},
-						1: &builder.TaskRefData{
-							TaskName: "then-check",
-							TaskRef:  TaskName2,
+							TaskRef:  TaskName,
 							RunAfter: nil,
 						},
 					},
 					Runs: map[string]string{
-						pipelineGeneratedName: "Failed",
+						pipelineGeneratedName: "InvalidWorkspaceBindings",
 					},
 				},
 			})
@@ -535,28 +486,9 @@ func TestDeletePipelinesE2E(t *testing.T) {
 	tkn, err := cli.NewTknRunner(namespace)
 	assert.NilError(t, err)
 
-	t.Logf("Creating Git PipelineResource %s", tePipelineGitResourceName)
-	if _, err := c.PipelineResourceClient.Create(context.Background(), getGitResource(tePipelineGitResourceName, namespace), metav1.CreateOptions{}); err != nil {
-		t.Fatalf("Failed to create Pipeline Resource `%s`: %s", tePipelineGitResourceName, err)
-	}
-
-	t.Logf("Creating (Fault) Git PipelineResource %s", tePipelineFaultGitResourceName)
-	if _, err := c.PipelineResourceClient.Create(context.Background(), getFaultGitResource(tePipelineFaultGitResourceName, namespace), metav1.CreateOptions{}); err != nil {
-		t.Fatalf("Failed to create fault Pipeline Resource `%s`: %s", tePipelineFaultGitResourceName, err)
-	}
-
-	t.Logf("Creating Task  %s", TaskName1)
-	if _, err := c.TaskClient.Create(context.Background(), getCreateFileTask(TaskName1, namespace), metav1.CreateOptions{}); err != nil {
-		t.Fatalf("Failed to create Task Resource `%s`: %s", TaskName1, err)
-	}
-
-	t.Logf("Creating Task  %s", TaskName2)
-	if _, err := c.TaskClient.Create(context.Background(), getReadFileTask(TaskName2, namespace), metav1.CreateOptions{}); err != nil {
-		t.Fatalf("Failed to create Task Resource `%s`: %s", TaskName2, err)
-	}
 	for i := 1; i <= 3; i++ {
 		t.Logf("Create Pipeline %s", tePipelineName+"-"+strconv.Itoa(i))
-		if _, err := c.PipelineClient.Create(context.Background(), getPipeline(tePipelineName+"-"+strconv.Itoa(i), namespace, TaskName1, TaskName2), metav1.CreateOptions{}); err != nil {
+		if _, err := c.PipelineClient.Create(context.Background(), getPipeline(tePipelineName+"-"+strconv.Itoa(i), namespace, TaskName), metav1.CreateOptions{}); err != nil {
 			t.Fatalf("Failed to create pipeline `%s`: %s", tePipelineName+"-"+strconv.Itoa(i), err)
 		}
 	}
@@ -608,173 +540,18 @@ func TestDeletePipelinesE2E(t *testing.T) {
 	})
 }
 
-func getGitResource(rname string, namespace string) *v1alpha1.PipelineResource {
-	return &v1alpha1.PipelineResource{
-		ObjectMeta: metav1.ObjectMeta{
-			Name:      rname,
-			Namespace: namespace,
-		},
-		Spec: v1alpha1.PipelineResourceSpec{
-			Type: v1alpha1.PipelineResourceTypeGit,
-			Params: []v1alpha1.ResourceParam{
-				{
-					Name:  "url",
-					Value: "https://github.com/GoogleContainerTools/skaffold",
-				},
-				{
-					Name:  "revision",
-					Value: "main",
-				},
-			},
-		},
-	}
-}
-
-func getFaultGitResource(rname string, namespace string) *v1alpha1.PipelineResource {
-	return &v1alpha1.PipelineResource{
-		ObjectMeta: metav1.ObjectMeta{
-			Name:      rname,
-			Namespace: namespace,
-		},
-		Spec: v1alpha1.PipelineResourceSpec{
-			Type: v1alpha1.PipelineResourceTypeGit,
-			Params: []v1alpha1.ResourceParam{
-				{
-					Name:  "url",
-					Value: "https://github.com/GoogleContainerTools/skaffold-1",
-				},
-				{
-					Name:  "revision",
-					Value: "main",
-				},
-			},
-		},
-	}
-}
-
-func getCreateFileTask(taskname string, namespace string) *v1beta1.Task {
-	return &v1beta1.Task{
-		ObjectMeta: metav1.ObjectMeta{
-			Name:      taskname,
-			Namespace: namespace,
-		},
-		Spec: v1beta1.TaskSpec{
-			Steps: []v1beta1.Step{
-				{
-					Name:    "read-docs-old",
-					Image:   "ubuntu",
-					Command: []string{"/bin/bash"},
-					Args:    []string{"-c", "ls -la /workspace/damnworkspace/docs-v2/README.md"},
-				},
-				{
-					Name:    "write-new-stuff",
-					Image:   "ubuntu",
-					Command: []string{"bash"},
-					Args:    []string{"-c", "ln -s /workspace/damnworkspace /workspace/output/workspace && echo some stuff > /workspace/output/workspace/stuff"},
-				},
-			},
-
-			Resources: &v1beta1.TaskResources{
-				Inputs: []v1beta1.TaskResource{
-					{
-						ResourceDeclaration: v1beta1.ResourceDeclaration{
-							Name:       "workspace",
-							Type:       v1beta1.PipelineResourceTypeGit,
-							TargetPath: "damnworkspace",
-						},
-					},
-				},
-				Outputs: []v1beta1.TaskResource{
-					{
-						ResourceDeclaration: v1beta1.ResourceDeclaration{
-							Name: "workspace",
-							Type: v1beta1.PipelineResourceTypeImage,
-						},
-					},
-				},
-			},
-		},
-	}
-}
-
-func getReadFileTask(taskname string, namespace string) *v1beta1.Task {
-	return &v1beta1.Task{
-		ObjectMeta: metav1.ObjectMeta{
-			Name:      taskname,
-			Namespace: namespace,
-		},
-		Spec: v1beta1.TaskSpec{
-			Steps: []v1beta1.Step{
-				{
-					Name:    "read",
-					Image:   "ubuntu",
-					Command: []string{"/bin/bash"},
-					Args:    []string{"-c", "cat /workspace/newworkspace/stuff"},
-				},
-			},
-
-			Resources: &v1beta1.TaskResources{
-				Inputs: []v1beta1.TaskResource{
-					{
-						ResourceDeclaration: v1beta1.ResourceDeclaration{
-							Name:       "workspace",
-							Type:       v1beta1.PipelineResourceTypeGit,
-							TargetPath: "newworkspace",
-						},
-					},
-				},
-			},
-		},
-	}
-}
-
-func getPipeline(pipelineName string, namespace string, createFiletaskName string, readFileTaskName string) *v1beta1.Pipeline {
-	return &v1beta1.Pipeline{
+func getPipeline(pipelineName string, namespace string, createFiletaskName string) *v1.Pipeline {
+	return &v1.Pipeline{
 		ObjectMeta: metav1.ObjectMeta{
 			Name:      pipelineName,
 			Namespace: namespace,
 		},
-		Spec: v1beta1.PipelineSpec{
-			Resources: []v1beta1.PipelineDeclaredResource{
-				{
-					Name: "source-repo",
-					Type: v1beta1.PipelineResourceTypeGit,
-				},
-			},
-			Tasks: []v1beta1.PipelineTask{
+		Spec: v1.PipelineSpec{
+			Tasks: []v1.PipelineTask{
 				{
 					Name: "first-create-file",
-					TaskRef: &v1beta1.TaskRef{
+					TaskRef: &v1.TaskRef{
 						Name: createFiletaskName,
-					},
-					Resources: &v1beta1.PipelineTaskResources{
-						Inputs: []v1beta1.PipelineTaskInputResource{
-							{
-								Name:     "workspace",
-								Resource: "source-repo",
-							},
-						},
-						Outputs: []v1beta1.PipelineTaskOutputResource{
-							{
-								Name:     "workspace",
-								Resource: "source-repo",
-							},
-						},
-					},
-				},
-				{
-					Name: "then-check",
-					TaskRef: &v1beta1.TaskRef{
-						Name: readFileTaskName,
-					},
-					Resources: &v1beta1.PipelineTaskResources{
-						Inputs: []v1beta1.PipelineTaskInputResource{
-							{
-								Name:     "workspace",
-								Resource: "source-repo",
-								From:     []string{"first-create-file"},
-							},
-						},
 					},
 				},
 			},

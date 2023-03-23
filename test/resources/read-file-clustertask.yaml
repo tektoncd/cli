@@ -17,17 +17,20 @@ kind: ClusterTask
 metadata:
   generateName: read-clustertask-
 spec:
-  workspaces:
-    - name: shared-workspace
   params:
-    - name: FILEPATH
-      default: "docs-v2"
-    - name: FILENAME
-  resources:
-    inputs:
-      - name: source
-        type: git
+    - name: message
+      default: "hello"
+    - name: heading
   steps:
-    - name: read-file-content
+    - name: write-allowed
       image: ubuntu
-      script: "cat $(inputs.resources.source.path)/$(inputs.params.FILEPATH)/$(inputs.params.FILENAME)"
+      script: echo $(params.heading);echo $(params.message) > $(workspaces.write-allowed.path)/foo
+    - name: read-allowed
+      image: ubuntu
+      script: cat $(workspaces.write-allowed.path)/foo | grep $(params.message)
+  workspaces:
+    - name: write-allowed
+      description: |
+        The folder where we write the message to. If no workspace
+        is provided then the message will not be written.
+      mountPath: /custom/path/relative/to/root

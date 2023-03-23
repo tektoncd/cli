@@ -38,12 +38,6 @@ tkn() {
     fi
 }
 
-function set_minimal_embedded_status() {
-  jsonpatch=$(printf "{\"data\": {\"embedded-status\": \"%s\"}}" "minimal")
-  echo "feature-flags ConfigMap patch: ${jsonpatch}"
-  kubectl patch configmap feature-flags -n tekton-pipelines -p "$jsonpatch"
-}
-
 kubectl get crds|grep tekton\\.dev && fail_test "TektonCD CRDS should not be installed, you should reset them before each runs"
 
 # command before creation of resources
@@ -129,20 +123,17 @@ run_test  "describe eventlistener" tkn eventlistener describe github-listener-in
 run_test  "show logs" tkn pipelinerun logs output-pipeline-run
 run_test  "show logs" tkn taskrun logs test-template-volume
 run_test  "list pipelineresources" tkn resource list
-run_test  "describe pipelineresource" tkn resource desc skaffold-git
 
 # delete pipeline, pipelinerun, task, taskrun, and pipelineresource
 run_test  "delete pipeline" tkn pipeline delete output-pipeline -f
 run_test  "delete pipelinerun" tkn pipelinerun delete output-pipeline-run -f
-run_test  "delete resource" tkn resource delete skaffold-git -f
-run_test  "delete task" tkn task delete create-file -f
+run_test  "delete task" tkn task delete create-file-verify -f
 run_test  "delete taskrun" tkn taskrun delete test-template-volume -f
 run_test  "delete eventlistener" tkn eventlistener delete github-listener-interceptor -f
 
 # confirm deletion (TODO: Add task test when added desc or logs to task command)
 must_fail  "describe deleted pipeline" tkn pipeline describe output-pipeline
 must_fail  "describe deleted pipelinerun" tkn pipelinerun describe output-pipeline-run
-must_fail  "describe deleted resource" tkn resource describe skaffold-git
 must_fail  "show logs deleted taskrun" tkn taskrun logs test-template-volume
 must_fail  "describe deleted eventlistener" tkn eventlistener describe github-listener-interceptor
 
@@ -177,15 +168,6 @@ else
     export TEST_CLIENT_BINARY="${PWD}/tkn"
 fi
 go_test_e2e ./test/e2e/... || failed=1
-(( failed )) && fail_test
-
-# Re-run the PipelineRun tests with "embedded-status" set to "minimal"
-header "Running Go e2e tests with Pipeline embedded-status set to minimal"
-
-set_minimal_embedded_status
-failed=0
-
-go_test_e2e ./test/e2e/pipelinerun/... || failed=1
 (( failed )) && fail_test
 
 success

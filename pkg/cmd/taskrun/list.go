@@ -33,7 +33,7 @@ import (
 	cliopts "k8s.io/cli-runtime/pkg/genericclioptions"
 )
 
-const listTemplate = `{{- $trl := len .TaskRuns.Items -}}{{- if eq $trl 0 -}}
+const ListTemplate = `{{- $trl := len .TaskRuns.Items -}}{{- if eq $trl 0 -}}
 No TaskRuns found
 {{ else -}}
 {{- if not $.NoHeaders -}}
@@ -239,7 +239,7 @@ func printFormatted(s *cli.Stream, trs *v1.TaskRunList, c clockwork.Clock, allna
 	}
 
 	w := tabwriter.NewWriter(s.Out, 0, 5, 3, ' ', tabwriter.TabIndent)
-	t := template.Must(template.New("List TaskRuns").Funcs(funcMap).Parse(listTemplate))
+	t := template.Must(template.New("List TaskRuns").Funcs(funcMap).Parse(ListTemplate))
 
 	err := t.Execute(w, data)
 	if err != nil {

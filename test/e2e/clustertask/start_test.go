@@ -39,10 +39,6 @@ import (
 	knativetest "knative.dev/pkg/test"
 )
 
-const (
-	tePipelineGitResourceName = "skaffold-git"
-)
-
 func TestClusterTaskInteractiveStartE2E(t *testing.T) {
 	t.Parallel()
 	c, namespace := framework.Setup(t)
@@ -70,9 +66,6 @@ func TestClusterTaskInteractiveStartE2E(t *testing.T) {
 	regex := regexp.MustCompile(`read-clustertask-[a-z0-9]+`)
 	clusterTaskName := regex.FindString(res.Stdout())
 
-	t.Logf("Creating git pipeline resource in namespace: %s", namespace)
-	kubectl.MustSucceed(t, "create", "-f", helper.GetResourcePath("git-resource.yaml"))
-
 	t.Run("Get list of ClusterTasks", func(t *testing.T) {
 		res := tkn.Run(t, "clustertask", "list")
 		if os.Getenv("TEST_CLUSTERTASK_LIST_EMPTY") == "" {
@@ -94,10 +87,9 @@ func TestClusterTaskInteractiveStartE2E(t *testing.T) {
 
 	t.Run("Start ClusterTask with flags", func(t *testing.T) {
 		res := tkn.MustSucceed(t, "clustertask", "start", clusterTaskName,
-			"-i=source="+tePipelineGitResourceName,
-			"-p=FILEPATH=docs-v2",
-			"-p=FILENAME=README.md",
-			"-w=name=shared-workspace,emptyDir=",
+			"-p=message=e2e-test",
+			"-p=heading=start",
+			"-w=name=write-allowed,emptyDir=",
 			"--showlog")
 
 		vars := make(map[string]interface{})
@@ -114,32 +106,23 @@ Waiting for logs to be available...
 
 	t.Run("Start ClusterTask interactively", func(t *testing.T) {
 		tkn.RunInteractiveTests(t, &cli.Prompt{
-			CmdArgs: []string{"clustertask", "start", clusterTaskName, "-w=name=shared-workspace,emptyDir="},
+			CmdArgs: []string{"clustertask", "start", clusterTaskName, "-w=name=write-allowed,emptyDir="},
 			Procedure: func(c *expect.Console) error {
-				if _, err := c.ExpectString("Choose the git resource to use for source:"); err != nil {
-					return err
-				}
-				if _, err := c.ExpectString("skaffold-git (https://github.com/GoogleContainerTools/skaffold#main)"); err != nil {
-					return err
-				}
-				if _, err := c.SendLine(string(terminal.KeyEnter)); err != nil {
-					return err
-				}
-				if _, err := c.ExpectString("Value for param `FILEPATH` of type `string`? (Default is `docs-v2`)"); err != nil {
+				if _, err := c.ExpectString("Value for param `message` of type `string`? (Default is `hello`)"); err != nil {
 					return err
 				}
 
-				if _, err := c.ExpectString("(docs-v2)"); err != nil {
+				if _, err := c.ExpectString("hello"); err != nil {
 					return err
 				}
-				if _, err := c.SendLine(string(terminal.KeyEnter)); err != nil {
+				if _, err := c.SendLine("test-e2e"); err != nil {
 					return err
 				}
-				if _, err := c.ExpectString("Value for param `FILENAME` of type `string`?"); err != nil {
+				if _, err := c.ExpectString("Value for param `heading` of type `string`?"); err != nil {
 					return err
 				}
 
-				if _, err := c.SendLine("README.md"); err != nil {
+				if _, err := c.SendLine("start"); err != nil {
 					return err
 				}
 				if _, err := c.ExpectEOF(); err != nil {
@@ -158,10 +141,9 @@ Waiting for logs to be available...
 
 	t.Run("Start ClusterTask with --use-param-defaults and all the params having default", func(t *testing.T) {
 		tkn.MustSucceed(t, "clustertask", "start", clusterTaskName,
-			"-i=source="+tePipelineGitResourceName,
-			"-p=FILENAME=README.md",
-			"-w=name=shared-workspace,emptyDir=",
 			"--use-param-defaults",
+			"-p=heading=start",
+			"-w=name=write-allowed,emptyDir=",
 			"--showlog")
 		taskRunGeneratedName := builder.GetTaskRunListWithClusterTaskName(c, clusterTaskName, true).Items[0].Name
 		if err := wait.ForTaskRunState(c, taskRunGeneratedName, wait.TaskRunSucceed(taskRunGeneratedName), "TaskRunSucceed"); err != nil {
@@ -173,17 +155,16 @@ Waiting for logs to be available...
 		tkn.RunInteractiveTests(t, &cli.Prompt{
 			CmdArgs: []string{
 				"clustertask", "start", clusterTaskName,
-				"-i=source=" + tePipelineGitResourceName,
-				"--param=FILEPATH=docs-v2",
-				"-w=name=shared-workspace,emptyDir=",
+				"-w=name=write-allowed,emptyDir=",
+				"--param=message=test-e2e",
 				"--showlog",
 			},
 			Procedure: func(c *expect.Console) error {
-				if _, err := c.ExpectString("Value for param `FILENAME` of type `string`?"); err != nil {
+				if _, err := c.ExpectString("Value for param `heading` of type `string`?"); err != nil {
 					return err
 				}
 
-				if _, err := c.SendLine("README.md"); err != nil {
+				if _, err := c.SendLine("start"); err != nil {
 					return err
 				}
 
@@ -209,17 +190,16 @@ Waiting for logs to be available...
 		tkn.RunInteractiveTests(t, &cli.Prompt{
 			CmdArgs: []string{
 				"clustertask", "start", clusterTaskName,
-				"-i=source=" + tePipelineGitResourceName,
+				"-w=name=write-allowed,emptyDir=",
 				"--use-param-defaults",
-				"-w=name=shared-workspace,emptyDir=",
 				"--showlog",
 			},
 			Procedure: func(c *expect.Console) error {
-				if _, err := c.ExpectString("Value for param `FILENAME` of type `string`?"); err != nil {
+				if _, err := c.ExpectString("Value for param `heading` of type `string`?"); err != nil {
 					return err
 				}
 
-				if _, err := c.SendLine("README.md"); err != nil {
+				if _, err := c.SendLine("start"); err != nil {
 					return err
 				}
 
@@ -247,10 +227,9 @@ Waiting for logs to be available...
 		}
 
 		tkn.MustSucceed(t, "clustertask", "start", clusterTaskName,
-			"-i=source="+tePipelineGitResourceName,
-			"-p=FILEPATH=docs-v2",
-			"-p=FILENAME=README.md",
-			"-w=name=shared-workspace,emptyDir=",
+			"-p=message=e2e-test",
+			"-p=heading=start",
+			"-w=name=write-allowed,emptyDir=",
 			"--showlog",
 			"--pod-template="+helper.GetResourcePath("/podtemplate/podtemplate.yaml"))
 

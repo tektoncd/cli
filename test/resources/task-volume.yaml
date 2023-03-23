@@ -13,7 +13,7 @@
 # limitations under the License.
 
 ---
-apiVersion: tekton.dev/v1beta1
+apiVersion: tekton.dev/v1
 kind: Task
 metadata:
   name: task-volume
@@ -39,7 +39,7 @@ spec:
   - name: custom
     emptyDir: {}
 ---
-apiVersion: tekton.dev/v1beta1
+apiVersion: tekton.dev/v1
 kind: TaskRun
 metadata:
   name: test-template-volume
