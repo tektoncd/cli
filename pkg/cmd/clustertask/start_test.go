@@ -533,7 +533,11 @@ func Test_ClusterTask_Start(t *testing.T) {
 			input:       seeds[0].pipelineClient,
 			inputStream: nil,
 			wantError:   false,
-			want:        "TaskRun started: taskrun-1\n\nIn order to track the TaskRun progress run:\ntkn taskrun logs taskrun-1 -f -n ns\n",
+			want: "Command \"start\" is deprecated, ClusterTasks are deprecated, this command will be removed in future releases.\n" +
+				"Flag --inputresource has been deprecated, pipelineresources have been deprecated, this flag will be removed soon\n" +
+				"Flag --inputresource has been deprecated, pipelineresources have been deprecated, this flag will be removed soon\n" +
+				"Flag --outputresource has been deprecated, pipelineresources have been deprecated, this flag will be removed soon\n" +
+				"TaskRun started: taskrun-1\n\nIn order to track the TaskRun progress run:\ntkn taskrun logs taskrun-1 -f -n ns\n",
 		},
 		{
 			name:        "Start with --last option",
@@ -542,7 +546,8 @@ func Test_ClusterTask_Start(t *testing.T) {
 			input:       seeds[1].pipelineClient,
 			inputStream: nil,
 			wantError:   false,
-			want:        "TaskRun started: taskrun-2\n\nIn order to track the TaskRun progress run:\ntkn taskrun logs taskrun-2 -f -n ns\n",
+			want: "Command \"start\" is deprecated, ClusterTasks are deprecated, this command will be removed in future releases.\n" +
+				"TaskRun started: taskrun-2\n\nIn order to track the TaskRun progress run:\ntkn taskrun logs taskrun-2 -f -n ns\n",
 		},
 		{
 			name:        "Start with --use-taskrun option",
@@ -551,7 +556,8 @@ func Test_ClusterTask_Start(t *testing.T) {
 			input:       seeds[6].pipelineClient,
 			inputStream: nil,
 			wantError:   false,
-			want:        "TaskRun started: taskrun-4\n\nIn order to track the TaskRun progress run:\ntkn taskrun logs taskrun-4 -f -n ns\n",
+			want: "Command \"start\" is deprecated, ClusterTasks are deprecated, this command will be removed in future releases.\n" +
+				"TaskRun started: taskrun-4\n\nIn order to track the TaskRun progress run:\ntkn taskrun logs taskrun-4 -f -n ns\n",
 		},
 		{
 			name: "Invalid input format",
@@ -858,7 +864,8 @@ func Test_ClusterTask_Start(t *testing.T) {
 			input:       seeds[7].pipelineClient,
 			inputStream: nil,
 			wantError:   false,
-			want:        "TaskRun started: taskrun-5\n\nIn order to track the TaskRun progress run:\ntkn taskrun logs taskrun-5 -f -n ns\n",
+			want: "Command \"start\" is deprecated, ClusterTasks are deprecated, this command will be removed in future releases.\n" +
+				"TaskRun started: taskrun-5\n\nIn order to track the TaskRun progress run:\ntkn taskrun logs taskrun-5 -f -n ns\n",
 		},
 	}
 
@@ -1081,7 +1088,7 @@ func Test_start_use_taskrun_cancelled_status(t *testing.T) {
 	clustertask := Command(p)
 	got, _ := test.ExecuteCommand(clustertask, "start", "clustertask", "--use-taskrun", trName, "-n", "ns")
 
-	expected := "TaskRun started: ct-run-2\n\nIn order to track the TaskRun progress run:\ntkn taskrun logs ct-run-2 -f -n ns\n"
+	expected := "Command \"start\" is deprecated, ClusterTasks are deprecated, this command will be removed in future releases.\nTaskRun started: ct-run-2\n\nIn order to track the TaskRun progress run:\ntkn taskrun logs ct-run-2 -f -n ns\n"
 	test.AssertOutput(t, expected, got)
 	clients, _ := p.Clients()
 	var tr *v1beta1.TaskRun
@@ -1170,7 +1177,7 @@ func Test_start_clustertask_last_override_timeout(t *testing.T) {
 		t.Errorf("Error listing taskruns %s", err.Error())
 	}
 
-	expected := "TaskRun started: ct-run-2\n\nIn order to track the TaskRun progress run:\ntkn taskrun logs ct-run-2 -f -n ns\n"
+	expected := "Command \"start\" is deprecated, ClusterTasks are deprecated, this command will be removed in future releases.\nTaskRun started: ct-run-2\n\nIn order to track the TaskRun progress run:\ntkn taskrun logs ct-run-2 -f -n ns\n"
 	test.AssertOutput(t, expected, got)
 	clients, _ := p.Clients()
 	var tr *v1beta1.TaskRun

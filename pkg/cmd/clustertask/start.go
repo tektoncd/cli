@@ -191,6 +191,8 @@ For passing the workspaces via flags:
 
 	c.Flags().StringSliceVarP(&opt.InputResources, "inputresource", "i", []string{}, "pass the input resource name and ref as name=ref")
 	c.Flags().StringSliceVarP(&opt.OutputResources, "outputresource", "o", []string{}, "pass the output resource name and ref as name=ref")
+	_ = c.Flags().MarkDeprecated("inputresource", "pipelineresources have been deprecated, this flag will be removed soon")
+	_ = c.Flags().MarkDeprecated("outputresource", "pipelineresources have been deprecated, this flag will be removed soon")
 	c.Flags().StringArrayVarP(&opt.Params, "param", "p", []string{}, "pass the param as key=value for string type, or key=value1,value2,... for array type, or key=\"key1:value1, key2:value2\" for object type")
 	c.Flags().StringVarP(&opt.ServiceAccountName, "serviceaccount", "s", "", "pass the serviceaccount name")
 	c.Flags().BoolVarP(&opt.Last, "last", "L", false, "re-run the ClusterTask using last TaskRun values")
@@ -205,7 +207,7 @@ For passing the workspaces via flags:
 	c.Flags().StringVar(&opt.PodTemplate, "pod-template", "", "local or remote file containing a PodTemplate definition")
 	c.Flags().BoolVar(&opt.UseParamDefaults, "use-param-defaults", false, "use default parameter values without prompting for input")
 	c.Flags().BoolVarP(&opt.SkipOptionalWorkspace, "skip-optional-workspace", "", false, "skips the prompt for optional workspaces")
-
+	c.Deprecated = "ClusterTasks are deprecated, this command will be removed in future releases."
 	return c
 }
 

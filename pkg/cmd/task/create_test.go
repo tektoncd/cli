@@ -58,7 +58,7 @@ func TestCreate_ClusterTaskNotExist(t *testing.T) {
 	if err == nil {
 		t.Errorf("Expected error got nil")
 	}
-	expected := "Error: ClusterTask ct-2 does not exist\n"
+	expected := "Command \"create\" is deprecated, ClusterTasks are deprecated, this command will be removed in future releases.\nError: ClusterTask ct-2 does not exist\n"
 	test.AssertOutput(t, expected, out)
 }
 
@@ -94,7 +94,7 @@ func TestCreate(t *testing.T) {
 	if err != nil {
 		t.Errorf("Unexpected error: %v", err)
 	}
-	expected := "Task t-1 created from ClusterTask ct-1 in namespace default\n"
+	expected := "Command \"create\" is deprecated, ClusterTasks are deprecated, this command will be removed in future releases.\nTask t-1 created from ClusterTask ct-1 in namespace default\n"
 	test.AssertOutput(t, expected, out)
 }
 
@@ -137,7 +137,7 @@ func TestCreate_InNamespace(t *testing.T) {
 	if err != nil {
 		t.Errorf("Unexpected error: %v", err)
 	}
-	expected := "Task ct-1 created from ClusterTask ct-1 in namespace ns\n"
+	expected := "Command \"create\" is deprecated, ClusterTasks are deprecated, this command will be removed in future releases.\nTask ct-1 created from ClusterTask ct-1 in namespace ns\n"
 	test.AssertOutput(t, expected, out)
 }
 
@@ -172,7 +172,7 @@ func TestCreate_WithoutFlag(t *testing.T) {
 	if err == nil {
 		t.Errorf("Expected error got nil")
 	}
-	expected := "Error: --from flag not passed\n"
+	expected := "Command \"create\" is deprecated, ClusterTasks are deprecated, this command will be removed in future releases.\nError: --from flag not passed\n"
 	test.AssertOutput(t, expected, out)
 }
 

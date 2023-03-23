@@ -428,7 +428,8 @@ func TestPipelineStart_ExecuteCommand_v1beta1(t *testing.T) {
 			namespace: "",
 			input:     c2,
 			wantError: false,
-			want:      "PipelineRun started: \n\nIn order to track the PipelineRun progress run:\ntkn pipelinerun logs  -f -n ns\n",
+			want: "Flag --resource has been deprecated, pipelineresources have been deprecated, this flag will be removed soon\n" +
+				"PipelineRun started: \n\nIn order to track the PipelineRun progress run:\ntkn pipelinerun logs  -f -n ns\n",
 		},
 		{
 			name: "Start pipeline with different context",
@@ -446,7 +447,8 @@ func TestPipelineStart_ExecuteCommand_v1beta1(t *testing.T) {
 			namespace: "",
 			input:     c7,
 			wantError: false,
-			want:      "PipelineRun started: \n\nIn order to track the PipelineRun progress run:\ntkn pipelinerun --context=GummyBear logs  -f -n ns\n",
+			want: "Flag --resource has been deprecated, pipelineresources have been deprecated, this flag will be removed soon\n" +
+				"PipelineRun started: \n\nIn order to track the PipelineRun progress run:\ntkn pipelinerun --context=GummyBear logs  -f -n ns\n",
 		},
 		{
 			name: "Start pipeline with invalid workspace name",
@@ -807,7 +809,9 @@ func TestPipelineStart_ExecuteCommand_v1beta1(t *testing.T) {
 			namespace: "",
 			input:     c6,
 			wantError: false,
-			want:      "PipelineRun started: random\n\nIn order to track the PipelineRun progress run:\ntkn pipelinerun logs random -f -n ns\n",
+			want: "Flag --resource has been deprecated, pipelineresources have been deprecated, this flag will be removed soon\n" +
+				"Flag --resource has been deprecated, pipelineresources have been deprecated, this flag will be removed soon\n" +
+				"PipelineRun started: random\n\nIn order to track the PipelineRun progress run:\ntkn pipelinerun logs random -f -n ns\n",
 		},
 		{
 			name: "Start pipeline using invalid --filename v1beta1",
@@ -2806,7 +2810,8 @@ func Test_start_pipeline_v1beta1(t *testing.T) {
 		"-s=svc1",
 		"-n", "ns")
 
-	expected := "PipelineRun started: \n\nIn order to track the PipelineRun progress run:\ntkn pipelinerun logs  -f -n ns\n"
+	expected := "Flag --resource has been deprecated, pipelineresources have been deprecated, this flag will be removed soon\n" +
+		"PipelineRun started: \n\nIn order to track the PipelineRun progress run:\ntkn pipelinerun logs  -f -n ns\n"
 	test.AssertOutput(t, expected, got)
 
 	cl, _ := p.Clients()
@@ -3581,7 +3586,8 @@ func Test_start_pipeline_last_merge_v1beta1(t *testing.T) {
 		"--task-serviceaccount=task5=task3svc5",
 		"-n=ns")
 
-	expected := "PipelineRun started: random\n\nIn order to track the PipelineRun progress run:\ntkn pipelinerun logs random -f -n ns\n"
+	expected := "Flag --resource has been deprecated, pipelineresources have been deprecated, this flag will be removed soon\n" +
+		"PipelineRun started: random\n\nIn order to track the PipelineRun progress run:\ntkn pipelinerun logs random -f -n ns\n"
 	test.AssertOutput(t, expected, got)
 
 	cl, _ := p.Clients()
@@ -4035,7 +4041,8 @@ func Test_start_pipeline_allkindparam_v1beta1(t *testing.T) {
 		"-s=svc1",
 		"-n", "ns")
 
-	expected := "PipelineRun started: \n\nIn order to track the PipelineRun progress run:\ntkn pipelinerun logs  -f -n ns\n"
+	expected := "Flag --resource has been deprecated, pipelineresources have been deprecated, this flag will be removed soon\n" +
+		"PipelineRun started: \n\nIn order to track the PipelineRun progress run:\ntkn pipelinerun logs  -f -n ns\n"
 	test.AssertOutput(t, expected, got)
 
 	cl, _ := p.Clients()
@@ -4230,7 +4237,8 @@ func Test_start_pipeline_last_generate_name_v1beta1(t *testing.T) {
 		"--task-serviceaccount=task5=task3svc5",
 		"-n", "ns")
 
-	expected := "PipelineRun started: random\n\nIn order to track the PipelineRun progress run:\ntkn pipelinerun logs random -f -n ns\n"
+	expected := "Flag --resource has been deprecated, pipelineresources have been deprecated, this flag will be removed soon\n" +
+		"PipelineRun started: random\n\nIn order to track the PipelineRun progress run:\ntkn pipelinerun logs random -f -n ns\n"
 	test.AssertOutput(t, expected, got)
 
 	cl, _ := p.Clients()
@@ -4406,7 +4414,8 @@ func Test_start_pipeline_last_with_prefix_name_v1beta1(t *testing.T) {
 		"--prefix-name", "myprname",
 	)
 
-	expected := "PipelineRun started: random\n\nIn order to track the PipelineRun progress run:\ntkn pipelinerun logs random -f -n ns\n"
+	expected := "Flag --resource has been deprecated, pipelineresources have been deprecated, this flag will be removed soon\n" +
+		"PipelineRun started: random\n\nIn order to track the PipelineRun progress run:\ntkn pipelinerun logs random -f -n ns\n"
 	test.AssertOutput(t, expected, got)
 
 	cl, _ := p.Clients()
@@ -4582,7 +4591,8 @@ func Test_start_pipeline_with_prefix_name_v1beta1(t *testing.T) {
 		"--prefix-name", "myprname",
 	)
 
-	expected := "PipelineRun started: random\n\nIn order to track the PipelineRun progress run:\ntkn pipelinerun logs random -f -n ns\n"
+	expected := "Flag --resource has been deprecated, pipelineresources have been deprecated, this flag will be removed soon\n" +
+		"PipelineRun started: random\n\nIn order to track the PipelineRun progress run:\ntkn pipelinerun logs random -f -n ns\n"
 	test.AssertOutput(t, expected, got)
 
 	cl, _ := p.Clients()
@@ -4867,6 +4877,7 @@ func Test_start_pipeline_with_skip_optional_workspace_flag_v1beta1(t *testing.T)
 		"-r=git-repo=some-repo",
 	)
 
-	expected := "PipelineRun started: random\n\nIn order to track the PipelineRun progress run:\ntkn pipelinerun logs random -f -n ns\n"
+	expected := "Flag --resource has been deprecated, pipelineresources have been deprecated, this flag will be removed soon\n" +
+		"PipelineRun started: random\n\nIn order to track the PipelineRun progress run:\ntkn pipelinerun logs random -f -n ns\n"
 	test.AssertOutput(t, expected, got)
 }

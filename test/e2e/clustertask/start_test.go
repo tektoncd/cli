@@ -57,9 +57,10 @@ func TestClusterTaskInteractiveStartE2E(t *testing.T) {
 		t.Run("Get list of ClusterTasks when none present", func(t *testing.T) {
 			res := tkn.Run(t, "clustertask", "list")
 			expected := "No ClusterTasks found\n"
+			expectedErr := "Command \"list\" is deprecated, ClusterTasks are deprecated, this command will be removed in future releases.\n"
 			res.Assert(t, icmd.Expected{
 				ExitCode: 0,
-				Err:      icmd.None,
+				Err:      expectedErr,
 				Out:      expected,
 			})
 		})
@@ -80,9 +81,10 @@ func TestClusterTaskInteractiveStartE2E(t *testing.T) {
 					Name: clusterTaskName,
 				},
 			})
+			expectedErr := "Command \"list\" is deprecated, ClusterTasks are deprecated, this command will be removed in future releases.\n"
 			res.Assert(t, icmd.Expected{
 				ExitCode: 0,
-				Err:      icmd.None,
+				Err:      expectedErr,
 				Out:      expected,
 			})
 		} else {
@@ -382,8 +384,9 @@ Waiting for logs to be available...
 	t.Run(fmt.Sprintf("Delete clustertask %s", clusterTaskName), func(t *testing.T) {
 		res := tkn.MustSucceed(t, "clustertask", "delete", clusterTaskName, "-f")
 		expected := fmt.Sprintf("ClusterTasks deleted: \"%s\"", clusterTaskName)
+		expectedErr := "Command \"delete\" is deprecated, ClusterTasks are deprecated, this command will be removed in future releases.\n"
 		res.Assert(t, icmd.Expected{
-			Err: icmd.None,
+			Err: expectedErr,
 			Out: expected,
 		})
 
@@ -396,8 +399,9 @@ Waiting for logs to be available...
 	t.Run(fmt.Sprintf("Delete clustertask %s", clusterTaskName2), func(t *testing.T) {
 		res := tkn.MustSucceed(t, "clustertask", "delete", clusterTaskName2, "-f")
 		expected := fmt.Sprintf("ClusterTasks deleted: \"%s\"", clusterTaskName2)
+		expectedErr := "Command \"delete\" is deprecated, ClusterTasks are deprecated, this command will be removed in future releases.\n"
 		res.Assert(t, icmd.Expected{
-			Err: icmd.None,
+			Err: expectedErr,
 			Out: expected,
 		})
 

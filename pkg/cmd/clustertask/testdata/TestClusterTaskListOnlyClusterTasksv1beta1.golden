@@ -1,3 +1,4 @@
+Command "list" is deprecated, ClusterTasks are deprecated, this command will be removed in future releases.
 NAME        DESCRIPTION              AGE
 apple       a clustertask to te...   3 weeks ago
 avocados                             20 seconds ago

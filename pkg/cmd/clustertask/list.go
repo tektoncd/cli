@@ -74,6 +74,7 @@ func listCommand(p cli.Params) *cobra.Command {
 	}
 	f.AddFlags(c)
 	c.Flags().BoolVar(&opts.NoHeaders, "no-headers", opts.NoHeaders, "do not print column headers with output (default print column headers with output)")
+	c.Deprecated = "ClusterTasks are deprecated, this command will be removed in future releases."
 	return c
 }
 
