@@ -129,8 +129,10 @@ func Create(c *cli.Clients, pr *v1beta1.PipelineRun, opts metav1.CreateOptions, 
 		if err != nil {
 			return nil, err
 		}
+		prv1.Kind = "PipelineRun"
+		prv1.APIVersion = "tekton.dev/v1"
 
-		object, _ := runtime.DefaultUnstructuredConverter.ToUnstructured(prv1)
+		object, _ := runtime.DefaultUnstructuredConverter.ToUnstructured(&prv1)
 		unstructuredPR := &unstructured.Unstructured{
 			Object: object,
 		}
@@ -148,6 +150,8 @@ func Create(c *cli.Clients, pr *v1beta1.PipelineRun, opts metav1.CreateOptions, 
 		if err != nil {
 			return nil, err
 		}
+		pipelinerunv1beta1.Kind = "PipelineRun"
+		pipelinerunv1beta1.APIVersion = "tekton.dev/v1beta1"
 		return &pipelinerunv1beta1, nil
 	}
 

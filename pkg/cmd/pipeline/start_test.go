@@ -30,7 +30,6 @@ import (
 	"github.com/tektoncd/cli/pkg/actions"
 	"github.com/tektoncd/cli/pkg/cli"
 	"github.com/tektoncd/cli/pkg/pipeline"
-	"github.com/tektoncd/cli/pkg/pipelinerun"
 	"github.com/tektoncd/cli/pkg/test"
 	cb "github.com/tektoncd/cli/pkg/test/builder"
 	testDynamic "github.com/tektoncd/cli/pkg/test/dynamic"
@@ -53,7 +52,7 @@ import (
 	duckv1 "knative.dev/pkg/apis/duck/v1"
 )
 
-func newPipelineClient(objs ...runtime.Object) (*fakepipelineclientset.Clientset, testDynamic.Options) {
+func newV1beta1PipelineClient(objs ...runtime.Object) (*fakepipelineclientset.Clientset, testDynamic.Options) {
 	scheme := runtime.NewScheme()
 	codecs := serializer.NewCodecFactory(scheme)
 	localSchemeBuilder := runtime.SchemeBuilder{v1beta1.AddToScheme}
@@ -111,7 +110,7 @@ func newPipelineClient(objs ...runtime.Object) (*fakepipelineclientset.Clientset
 					}
 
 					v1beta1PR := obj.(*v1beta1.PipelineRun)
-					unstructuredPR := cb.UnstructuredV1beta1PR(v1beta1PR, version)
+					unstructuredPR := cb.UnstructuredV1beta1PR(v1beta1PR, versionv1beta1)
 					return true, unstructuredPR, nil
 				},
 			},
@@ -120,7 +119,7 @@ func newPipelineClient(objs ...runtime.Object) (*fakepipelineclientset.Clientset
 	return nil, dc
 }
 
-func TestPipelineStart_ExecuteCommand(t *testing.T) {
+func TestPipelineStart_ExecuteCommand_v1beta1(t *testing.T) {
 	clock := clockwork.NewFakeClock()
 	namespaces := []*corev1.Namespace{
 		{
@@ -131,7 +130,7 @@ func TestPipelineStart_ExecuteCommand(t *testing.T) {
 	}
 
 	cs, _ := test.SeedV1beta1TestData(t, pipelinetest.Data{})
-	cs.Pipeline.Resources = cb.APIResourceList(version, []string{"pipeline", "pipelinerun"})
+	cs.Pipeline.Resources = cb.APIResourceList(versionv1beta1, []string{"pipeline", "pipelinerun"})
 	tdc := testDynamic.Options{}
 	dc, err := tdc.Client()
 	if err != nil {
@@ -245,7 +244,7 @@ func TestPipelineStart_ExecuteCommand(t *testing.T) {
 	cs2.Pipeline.Resources = cb.APIResourceList("v1beta1", []string{"pipeline", "pipelinerun"})
 	tdc2 := testDynamic.Options{}
 	dc2, err := tdc2.Client(
-		cb.UnstructuredV1beta1P(pipeline[0], version),
+		cb.UnstructuredV1beta1P(pipeline[0], versionv1beta1),
 	)
 	if err != nil {
 		t.Errorf("unable to create dynamic client: %v", err)
@@ -267,7 +266,7 @@ func TestPipelineStart_ExecuteCommand(t *testing.T) {
 		},
 	}
 	dc3, err := tdc3.Client(
-		cb.UnstructuredV1beta1P(pipeline[0], version),
+		cb.UnstructuredV1beta1P(pipeline[0], versionv1beta1),
 	)
 	if err != nil {
 		t.Errorf("unable to create dynamic client: %v", err)
@@ -289,7 +288,7 @@ func TestPipelineStart_ExecuteCommand(t *testing.T) {
 		},
 	}
 	dc4, err := tdc4.Client(
-		cb.UnstructuredV1beta1P(pipeline2[0], version),
+		cb.UnstructuredV1beta1P(pipeline2[0], versionv1beta1),
 	)
 	if err != nil {
 		t.Errorf("unable to create dynamic client: %v", err)
@@ -309,9 +308,9 @@ func TestPipelineStart_ExecuteCommand(t *testing.T) {
 		Kube:     seedData.Kube,
 	}
 	cs5.Pipeline.Resources = cb.APIResourceList("v1beta1", []string{"pipeline", "pipelinerun"})
-	_, tdc5 := newPipelineClient(objs...)
+	_, tdc5 := newV1beta1PipelineClient(objs...)
 	dc5, err := tdc5.Client(
-		cb.UnstructuredV1beta1P(pipeline[0], version),
+		cb.UnstructuredV1beta1P(pipeline[0], versionv1beta1),
 	)
 	if err != nil {
 		t.Errorf("unable to create dynamic client: %v", err)
@@ -362,7 +361,7 @@ func TestPipelineStart_ExecuteCommand(t *testing.T) {
 		Resource: seedData2.Resource,
 	}
 	cs6.Pipeline.Resources = cb.APIResourceList("v1beta1", []string{"pipeline", "pipelinerun"})
-	_, tdc6 := newPipelineClient(objs2...)
+	_, tdc6 := newV1beta1PipelineClient(objs2...)
 	dc6, err := tdc6.Client()
 	if err != nil {
 		t.Errorf("unable to create dynamic client: %v", err)
@@ -370,10 +369,10 @@ func TestPipelineStart_ExecuteCommand(t *testing.T) {
 	c6 := &test.Params{Tekton: cs6.Pipeline, Kube: cs6.Kube, Dynamic: dc6, Clock: clock, Resource: cs6.Resource}
 
 	cs7, _ := test.SeedV1beta1TestData(t, pipelinetest.Data{Pipelines: pipeline, Namespaces: namespaces})
-	cs7.Pipeline.Resources = cb.APIResourceList(version, []string{"pipeline", "pipelinerun"})
+	cs7.Pipeline.Resources = cb.APIResourceList(versionv1beta1, []string{"pipeline", "pipelinerun"})
 	tdc7 := testDynamic.Options{}
 	dc7, err := tdc7.Client(
-		cb.UnstructuredV1beta1P(pipeline[0], version),
+		cb.UnstructuredV1beta1P(pipeline[0], versionv1beta1),
 	)
 	if err != nil {
 		t.Errorf("unable to create dynamic client: %v", err)
@@ -1041,7 +1040,7 @@ func TestPipelineStart_ExecuteCommand(t *testing.T) {
 	}
 }
 
-func TestPipelineStart_Interactive(t *testing.T) {
+func TestPipelineStart_Interactive_v1beta1(t *testing.T) {
 	t.Skip("Skipping due of flakiness")
 
 	cs, _ := test.SeedV1beta1TestData(t, pipelinetest.Data{
@@ -2715,7 +2714,7 @@ func TestPipelineStart_Interactive(t *testing.T) {
 	}
 }
 
-func Test_start_pipeline(t *testing.T) {
+func Test_start_pipeline_v1beta1(t *testing.T) {
 	pipelineName := "test-pipeline"
 
 	pipeline := []*v1beta1.Pipeline{
@@ -2791,7 +2790,7 @@ func Test_start_pipeline(t *testing.T) {
 	cs.Pipeline.Resources = cb.APIResourceList("v1beta1", []string{"pipeline", "pipelinerun"})
 	tdc := testDynamic.Options{}
 	dc, err := tdc.Client(
-		cb.UnstructuredV1beta1P(pipeline[0], version),
+		cb.UnstructuredV1beta1P(pipeline[0], versionv1beta1),
 	)
 	if err != nil {
 		t.Errorf("unable to create dynamic client: %v", err)
@@ -2834,7 +2833,7 @@ func Test_start_pipeline(t *testing.T) {
 	}
 }
 
-func Test_start_pipeline_last(t *testing.T) {
+func Test_start_pipeline_last_v1beta1(t *testing.T) {
 	pipelineName := "test-pipeline"
 	ps := []*v1beta1.Pipeline{
 		{
@@ -2993,7 +2992,7 @@ func Test_start_pipeline_last(t *testing.T) {
 	}
 	cs.Pipeline.Resources = cb.APIResourceList("v1beta1", []string{"pipeline", "pipelinerun"})
 	objs := []runtime.Object{ps[0], prs[0]}
-	_, tdc := newPipelineClient(objs...)
+	_, tdc := newV1beta1PipelineClient(objs...)
 	dc, err := tdc.Client(
 		cb.UnstructuredV1beta1P(ps[0], "v1beta1"),
 		cb.UnstructuredV1beta1PR(prs[0], "v1beta1"),
@@ -3013,8 +3012,8 @@ func Test_start_pipeline_last(t *testing.T) {
 	test.AssertOutput(t, expected, got)
 
 	cl, _ := p.Clients()
-	pr, err := pipelinerun.Get(cl, "random", metav1.GetOptions{}, "ns")
-	if err != nil {
+	var pr *v1beta1.PipelineRun
+	if err = actions.GetV1(pipelineRunGroupResource, cl, "random", "ns", metav1.GetOptions{}, &pr); err != nil {
 		t.Errorf("Error getting pipelineruns %s", err.Error())
 	}
 
@@ -3036,7 +3035,7 @@ func Test_start_pipeline_last(t *testing.T) {
 	test.AssertOutput(t, timeoutDuration, pr.Spec.Timeout.Duration)
 }
 
-func Test_start_pipeline_last_override_timeout_deprecated(t *testing.T) {
+func Test_start_pipeline_last_override_timeout_deprecated_v1beta1(t *testing.T) {
 	pipelineName := "test-pipeline"
 	ps := []*v1beta1.Pipeline{
 		{
@@ -3196,7 +3195,7 @@ func Test_start_pipeline_last_override_timeout_deprecated(t *testing.T) {
 	}
 	cs.Pipeline.Resources = cb.APIResourceList("v1beta1", []string{"pipeline", "pipelinerun"})
 	objs := []runtime.Object{ps[0], prs[0]}
-	_, tdc := newPipelineClient(objs...)
+	_, tdc := newV1beta1PipelineClient(objs...)
 	dc, err := tdc.Client(
 		cb.UnstructuredV1beta1P(ps[0], "v1beta1"),
 		cb.UnstructuredV1beta1PR(prs[0], "v1beta1"),
@@ -3218,8 +3217,8 @@ func Test_start_pipeline_last_override_timeout_deprecated(t *testing.T) {
 	test.AssertOutput(t, expected, got)
 
 	cl, _ := p.Clients()
-	pr, err := pipelinerun.Get(cl, "random", metav1.GetOptions{}, "ns")
-	if err != nil {
+	var pr *v1beta1.PipelineRun
+	if err = actions.GetV1(pipelineRunGroupResource, cl, "random", "ns", metav1.GetOptions{}, &pr); err != nil {
 		t.Errorf("Error getting pipelineruns %s", err.Error())
 	}
 
@@ -3228,7 +3227,7 @@ func Test_start_pipeline_last_override_timeout_deprecated(t *testing.T) {
 	test.AssertOutput(t, timeoutDuration, pr.Spec.Timeout.Duration)
 }
 
-func Test_start_pipeline_last_without_res_param(t *testing.T) {
+func Test_start_pipeline_last_without_res_param_v1beta1(t *testing.T) {
 	pipelineName := "test-pipeline"
 
 	ps := []*v1beta1.Pipeline{
@@ -3370,7 +3369,7 @@ func Test_start_pipeline_last_without_res_param(t *testing.T) {
 	}
 	cs.Pipeline.Resources = cb.APIResourceList("v1beta1", []string{"pipeline", "pipelinerun"})
 	objs := []runtime.Object{ps[0], prs[0]}
-	_, tdc := newPipelineClient(objs...)
+	_, tdc := newV1beta1PipelineClient(objs...)
 	dc, err := tdc.Client(
 		cb.UnstructuredV1beta1P(ps[0], "v1beta1"),
 		cb.UnstructuredV1beta1PR(prs[0], "v1beta1"),
@@ -3389,8 +3388,8 @@ func Test_start_pipeline_last_without_res_param(t *testing.T) {
 	test.AssertOutput(t, expected, got)
 
 	cl, _ := p.Clients()
-	pr, err := pipelinerun.Get(cl, "random", metav1.GetOptions{}, "ns")
-	if err != nil {
+	var pr *v1beta1.PipelineRun
+	if err = actions.GetV1(pipelineRunGroupResource, cl, "random", "ns", metav1.GetOptions{}, &pr); err != nil {
 		t.Errorf("Error getting pipelineruns %s", err.Error())
 	}
 
@@ -3410,7 +3409,7 @@ func Test_start_pipeline_last_without_res_param(t *testing.T) {
 	test.AssertOutput(t, "test-sa", pr.Spec.ServiceAccountName)
 }
 
-func Test_start_pipeline_last_merge(t *testing.T) {
+func Test_start_pipeline_last_merge_v1beta1(t *testing.T) {
 	pipelineName := "test-pipeline"
 
 	ps := []*v1beta1.Pipeline{
@@ -3562,7 +3561,7 @@ func Test_start_pipeline_last_merge(t *testing.T) {
 	}
 	cs.Pipeline.Resources = cb.APIResourceList("v1beta1", []string{"pipeline", "pipelinerun"})
 	objs := []runtime.Object{ps[0], prs[0]}
-	_, tdc := newPipelineClient(objs...)
+	_, tdc := newV1beta1PipelineClient(objs...)
 	dc, err := tdc.Client(
 		cb.UnstructuredV1beta1P(ps[0], "v1beta1"),
 		cb.UnstructuredV1beta1PR(prs[0], "v1beta1"),
@@ -3586,8 +3585,8 @@ func Test_start_pipeline_last_merge(t *testing.T) {
 	test.AssertOutput(t, expected, got)
 
 	cl, _ := p.Clients()
-	pr, err := pipelinerun.Get(cl, "random", metav1.GetOptions{}, "ns")
-	if err != nil {
+	var pr *v1beta1.PipelineRun
+	if err = actions.GetV1(pipelineRunGroupResource, cl, "random", "ns", metav1.GetOptions{}, &pr); err != nil {
 		t.Errorf("Error getting pipelineruns %s", err.Error())
 	}
 
@@ -3614,7 +3613,7 @@ func Test_start_pipeline_last_merge(t *testing.T) {
 	test.AssertOutput(t, "svc1", pr.Spec.ServiceAccountName)
 }
 
-func Test_start_pipeline_use_pipelinerun(t *testing.T) {
+func Test_start_pipeline_use_pipelinerun_v1beta1(t *testing.T) {
 	pipelineName := "test-pipeline"
 	theonename := "test-pipeline-run-be-the-one"
 	timeoutDuration, _ := time.ParseDuration("10s")
@@ -3759,7 +3758,7 @@ func Test_start_pipeline_use_pipelinerun(t *testing.T) {
 	}
 	cs.Pipeline.Resources = cb.APIResourceList("v1beta1", []string{"pipeline", "pipelinerun"})
 	objs := []runtime.Object{ps[0], prs[0], prs[1]}
-	_, tdc := newPipelineClient(objs...)
+	_, tdc := newV1beta1PipelineClient(objs...)
 	dc, err := tdc.Client(
 		cb.UnstructuredV1beta1P(ps[0], "v1beta1"),
 		cb.UnstructuredV1beta1PR(prs[0], "v1beta1"),
@@ -3776,8 +3775,8 @@ func Test_start_pipeline_use_pipelinerun(t *testing.T) {
 		"--use-pipelinerun="+theonename, "-n", "ns")
 
 	cl, _ := p.Clients()
-	pr, err := pipelinerun.Get(cl, "random", metav1.GetOptions{}, "ns")
-	if err != nil {
+	var pr *v1beta1.PipelineRun
+	if err = actions.GetV1(pipelineRunGroupResource, cl, "random", "ns", metav1.GetOptions{}, &pr); err != nil {
 		t.Errorf("Error getting pipelineruns %s", err.Error())
 	}
 	test.AssertOutput(t, pr.Spec.Params[0].Name, "brush")
@@ -3785,7 +3784,7 @@ func Test_start_pipeline_use_pipelinerun(t *testing.T) {
 	test.AssertOutput(t, timeoutDuration, pr.Spec.Timeout.Duration)
 }
 
-func Test_start_pipeline_use_pipelinerun_cancelled_status(t *testing.T) {
+func Test_start_pipeline_use_pipelinerun_cancelled_status_v1beta1(t *testing.T) {
 	pipelineName := "test-pipeline"
 	theonename := "test-pipeline-run-be-the-one"
 	timeoutDuration, _ := time.ParseDuration("10s")
@@ -3910,7 +3909,7 @@ func Test_start_pipeline_use_pipelinerun_cancelled_status(t *testing.T) {
 	}
 	cs.Pipeline.Resources = cb.APIResourceList("v1beta1", []string{"pipeline", "pipelinerun"})
 	objs := []runtime.Object{ps[0], prs[0]}
-	_, tdc := newPipelineClient(objs...)
+	_, tdc := newV1beta1PipelineClient(objs...)
 	dc, err := tdc.Client(
 		cb.UnstructuredV1beta1P(ps[0], "v1beta1"),
 		cb.UnstructuredV1beta1PR(prs[0], "v1beta1"),
@@ -3925,8 +3924,8 @@ func Test_start_pipeline_use_pipelinerun_cancelled_status(t *testing.T) {
 		"--use-pipelinerun="+theonename, "-n", "ns")
 
 	cl, _ := p.Clients()
-	pr, err := pipelinerun.Get(cl, "random", metav1.GetOptions{}, "ns")
-	if err != nil {
+	var pr *v1beta1.PipelineRun
+	if err = actions.GetV1(pipelineRunGroupResource, cl, "random", "ns", metav1.GetOptions{}, &pr); err != nil {
 		t.Errorf("Error getting pipelineruns %s", err.Error())
 	}
 	test.AssertOutput(t, pr.Spec.Params[0].Name, "brush")
@@ -3936,7 +3935,7 @@ func Test_start_pipeline_use_pipelinerun_cancelled_status(t *testing.T) {
 	test.AssertOutput(t, v1beta1.PipelineRunSpecStatus(""), pr.Spec.Status)
 }
 
-func Test_start_pipeline_allkindparam(t *testing.T) {
+func Test_start_pipeline_allkindparam_v1beta1(t *testing.T) {
 	pipelineName := "test-pipeline"
 	ps := []*v1beta1.Pipeline{
 		{
@@ -4019,7 +4018,7 @@ func Test_start_pipeline_allkindparam(t *testing.T) {
 	cs.Pipeline.Resources = cb.APIResourceList("v1beta1", []string{"pipeline", "pipelinerun"})
 	tdc := testDynamic.Options{}
 	dc, err := tdc.Client(
-		cb.UnstructuredV1beta1P(ps[0], version),
+		cb.UnstructuredV1beta1P(ps[0], versionv1beta1),
 	)
 	if err != nil {
 		t.Errorf("unable to create dynamic client: %v", err)
@@ -4066,7 +4065,7 @@ func Test_start_pipeline_allkindparam(t *testing.T) {
 	}
 }
 
-func Test_start_pipeline_last_generate_name(t *testing.T) {
+func Test_start_pipeline_last_generate_name_v1beta1(t *testing.T) {
 	pipelineName := "test-pipeline"
 
 	ps := []*v1beta1.Pipeline{
@@ -4211,7 +4210,7 @@ func Test_start_pipeline_last_generate_name(t *testing.T) {
 	}
 	cs.Pipeline.Resources = cb.APIResourceList("v1beta1", []string{"pipeline", "pipelinerun"})
 	objs := []runtime.Object{ps[0], prs[0]}
-	_, tdc := newPipelineClient(objs...)
+	_, tdc := newV1beta1PipelineClient(objs...)
 	dc, err := tdc.Client(
 		cb.UnstructuredV1beta1P(ps[0], "v1beta1"),
 		cb.UnstructuredV1beta1PR(prs[0], "v1beta1"),
@@ -4235,15 +4234,15 @@ func Test_start_pipeline_last_generate_name(t *testing.T) {
 	test.AssertOutput(t, expected, got)
 
 	cl, _ := p.Clients()
-	pr, err := pipelinerun.Get(cl, "random", metav1.GetOptions{}, "ns")
-	if err != nil {
+	var pr *v1beta1.PipelineRun
+	if err = actions.GetV1(pipelineRunGroupResource, cl, "random", "ns", metav1.GetOptions{}, &pr); err != nil {
 		t.Errorf("Error getting pipelineruns %s", err.Error())
 	}
 
 	test.AssertOutput(t, "test-generatename-pipeline-run-", pr.ObjectMeta.GenerateName)
 }
 
-func Test_start_pipeline_last_with_prefix_name(t *testing.T) {
+func Test_start_pipeline_last_with_prefix_name_v1beta1(t *testing.T) {
 	pipelineName := "test-pipeline"
 
 	ps := []*v1beta1.Pipeline{
@@ -4385,7 +4384,7 @@ func Test_start_pipeline_last_with_prefix_name(t *testing.T) {
 	}
 	cs.Pipeline.Resources = cb.APIResourceList("v1beta1", []string{"pipeline", "pipelinerun"})
 	objs := []runtime.Object{ps[0], prs[0]}
-	_, tdc := newPipelineClient(objs...)
+	_, tdc := newV1beta1PipelineClient(objs...)
 	dc, err := tdc.Client(
 		cb.UnstructuredV1beta1P(ps[0], "v1beta1"),
 		cb.UnstructuredV1beta1PR(prs[0], "v1beta1"),
@@ -4411,15 +4410,15 @@ func Test_start_pipeline_last_with_prefix_name(t *testing.T) {
 	test.AssertOutput(t, expected, got)
 
 	cl, _ := p.Clients()
-	pr, err := pipelinerun.Get(cl, "random", metav1.GetOptions{}, "ns")
-	if err != nil {
+	var pr *v1beta1.PipelineRun
+	if err = actions.GetV1(pipelineRunGroupResource, cl, "random", "ns", metav1.GetOptions{}, &pr); err != nil {
 		t.Errorf("Error getting pipelineruns %s", err.Error())
 	}
 
 	test.AssertOutput(t, "myprname-", pr.ObjectMeta.GenerateName)
 }
 
-func Test_start_pipeline_with_prefix_name(t *testing.T) {
+func Test_start_pipeline_with_prefix_name_v1beta1(t *testing.T) {
 	pipelineName := "test-pipeline"
 
 	ps := []*v1beta1.Pipeline{
@@ -4561,7 +4560,7 @@ func Test_start_pipeline_with_prefix_name(t *testing.T) {
 	}
 	cs.Pipeline.Resources = cb.APIResourceList("v1beta1", []string{"pipeline", "pipelinerun"})
 	objs := []runtime.Object{ps[0], prs[0]}
-	_, tdc := newPipelineClient(objs...)
+	_, tdc := newV1beta1PipelineClient(objs...)
 	dc, err := tdc.Client(
 		cb.UnstructuredV1beta1P(ps[0], "v1beta1"),
 		cb.UnstructuredV1beta1PR(prs[0], "v1beta1"),
@@ -4587,273 +4586,15 @@ func Test_start_pipeline_with_prefix_name(t *testing.T) {
 	test.AssertOutput(t, expected, got)
 
 	cl, _ := p.Clients()
-	pr, err := pipelinerun.Get(cl, "random", metav1.GetOptions{}, "ns")
-	if err != nil {
+	var pr *v1beta1.PipelineRun
+	if err = actions.GetV1(pipelineRunGroupResource, cl, "random", "ns", metav1.GetOptions{}, &pr); err != nil {
 		t.Errorf("Error getting pipelineruns %s", err.Error())
 	}
 
 	test.AssertOutput(t, "myprname-", pr.ObjectMeta.GenerateName)
 }
 
-func Test_mergeResource(t *testing.T) {
-	pr := &v1beta1.PipelineRun{
-		ObjectMeta: metav1.ObjectMeta{
-			Namespace:    "ns",
-			GenerateName: "test-run",
-		},
-		Spec: v1beta1.PipelineRunSpec{
-			PipelineRef: &v1beta1.PipelineRef{Name: "test"},
-			Resources: []v1beta1.PipelineResourceBinding{
-				{
-					Name: "source",
-					ResourceRef: &v1beta1.PipelineResourceRef{
-						Name: "git",
-					},
-				},
-			},
-		},
-	}
-
-	err := mergeRes(pr, []string{"test"})
-	if err == nil {
-		t.Errorf("Expected error")
-	}
-
-	err = mergeRes(pr, []string{})
-	if err != nil {
-		t.Errorf("Did not expect error")
-	}
-	test.AssertOutput(t, 1, len(pr.Spec.Resources))
-
-	err = mergeRes(pr, []string{"image=test-1"})
-	if err != nil {
-		t.Errorf("Did not expect error")
-	}
-	test.AssertOutput(t, 2, len(pr.Spec.Resources))
-
-	err = mergeRes(pr, []string{"image=test-new", "image-2=test-2"})
-	if err != nil {
-		t.Errorf("Did not expect error")
-	}
-	test.AssertOutput(t, 3, len(pr.Spec.Resources))
-}
-
-func Test_getPipelineResourceByFormat(t *testing.T) {
-	pipelineResources := []*v1alpha1.PipelineResource{
-		{
-			ObjectMeta: metav1.ObjectMeta{
-				Name:      "scaffold-git",
-				Namespace: "ns",
-			},
-			Spec: v1alpha1.PipelineResourceSpec{
-				Type: v1alpha1.PipelineResourceTypeGit,
-				Params: []v1alpha1.ResourceParam{
-					{
-						Name:  "url",
-						Value: "git@github.com:tektoncd/cli.git",
-					},
-				},
-			},
-		},
-		{
-			ObjectMeta: metav1.ObjectMeta{
-				Name:      "scaffold-git-fork",
-				Namespace: "ns",
-			},
-			Spec: v1alpha1.PipelineResourceSpec{
-				Type: v1alpha1.PipelineResourceTypeGit,
-				Params: []v1alpha1.ResourceParam{
-					{
-						Name:  "url",
-						Value: "git@github.com:tektoncd-fork/cli.git",
-					},
-					{
-						Name:  "revision",
-						Value: "release",
-					},
-				},
-			},
-		},
-		{
-			ObjectMeta: metav1.ObjectMeta{
-				Name:      "scaffold-image",
-				Namespace: "ns",
-			},
-			Spec: v1alpha1.PipelineResourceSpec{
-				Type: v1alpha1.PipelineResourceTypeImage,
-				Params: []v1alpha1.ResourceParam{
-					{
-						Name:  "url",
-						Value: "docker.io/tektoncd/cli",
-					},
-				},
-			},
-		},
-		{
-			ObjectMeta: metav1.ObjectMeta{
-				Name:      "scaffold-pull",
-				Namespace: "ns",
-			},
-			Spec: v1alpha1.PipelineResourceSpec{
-				Type: v1alpha1.PipelineResourceTypePullRequest,
-				Params: []v1alpha1.ResourceParam{
-					{
-						Name:  "url",
-						Value: "https://github.com/tektoncd/cli/pulls/9",
-					},
-				},
-			},
-		},
-		{
-			ObjectMeta: metav1.ObjectMeta{
-				Name:      "scaffold-storage",
-				Namespace: "ns",
-			},
-			Spec: v1alpha1.PipelineResourceSpec{
-				Type: v1alpha1.PipelineResourceTypeStorage,
-				Params: []v1alpha1.ResourceParam{
-					{
-						Name:  "location",
-						Value: "/home/tektoncd",
-					},
-				},
-			},
-		},
-	}
-
-	ns := []*corev1.Namespace{
-		{
-			ObjectMeta: metav1.ObjectMeta{
-				Name: "ns",
-			},
-		},
-	}
-
-	cs, _ := test.SeedV1beta1TestData(t, pipelinetest.Data{PipelineResources: pipelineResources, Namespaces: ns})
-	res, _ := getPipelineResources(cs.Resource, "ns")
-	resFormat := getPipelineResourcesByFormat(res.Items)
-
-	output := getOptionsByType(resFormat, "git")
-	expected := []string{"scaffold-git (git@github.com:tektoncd/cli.git)", "scaffold-git-fork (git@github.com:tektoncd-fork/cli.git#release)"}
-	if !reflect.DeepEqual(output, expected) {
-		t.Errorf("output git = %v, want %v", output, expected)
-	}
-
-	output = getOptionsByType(resFormat, "image")
-	expected = []string{"scaffold-image (docker.io/tektoncd/cli)"}
-	if !reflect.DeepEqual(output, expected) {
-		t.Errorf("output image = %v, want %v", output, expected)
-	}
-
-	output = getOptionsByType(resFormat, "pullRequest")
-	expected = []string{"scaffold-pull (https://github.com/tektoncd/cli/pulls/9)"}
-	if !reflect.DeepEqual(output, expected) {
-		t.Errorf("output pullRequest = %v, want %v", output, expected)
-	}
-
-	output = getOptionsByType(resFormat, "storage")
-	expected = []string{"scaffold-storage (/home/tektoncd)"}
-	if !reflect.DeepEqual(output, expected) {
-		t.Errorf("output storage = %v, want %v", output, expected)
-	}
-
-	output = getOptionsByType(resFormat, "file")
-	expected = []string{}
-	if !reflect.DeepEqual(output, expected) {
-		t.Errorf("output error = %v, want %v", output, expected)
-	}
-}
-
-func Test_parseRes(t *testing.T) {
-	type args struct {
-		res []string
-	}
-	tests := []struct {
-		name    string
-		args    args
-		want    map[string]v1beta1.PipelineResourceBinding
-		wantErr bool
-	}{{
-		name: "Test_parseRes No Err",
-		args: args{
-			res: []string{"source=git", "image=docker2"},
-		},
-		want: map[string]v1beta1.PipelineResourceBinding{"source": {
-			Name: "source",
-			ResourceRef: &v1beta1.PipelineResourceRef{
-				Name: "git",
-			},
-		}, "image": {
-			Name: "image",
-			ResourceRef: &v1beta1.PipelineResourceRef{
-				Name: "docker2",
-			},
-		}},
-		wantErr: false,
-	}, {
-		name: "Test_parseRes Err",
-		args: args{
-			res: []string{"value1", "value2"},
-		},
-		wantErr: true,
-	}}
-
-	for _, tt := range tests {
-		t.Run(tt.name, func(t *testing.T) {
-			got, err := parseRes(tt.args.res)
-			if (err != nil) != tt.wantErr {
-				t.Errorf("parseRes() error = %v, wantErr %v", err, tt.wantErr)
-				return
-			}
-			if !reflect.DeepEqual(got, tt.want) {
-				t.Errorf("parseRes() = %v, want %v", got, tt.want)
-			}
-		})
-	}
-}
-
-func Test_parseTaskSvc(t *testing.T) {
-	type args struct {
-		p []string
-	}
-	tests := []struct {
-		name    string
-		args    args
-		want    map[string]v1beta1.PipelineTaskRunSpec
-		wantErr bool
-	}{{
-		name: "Test_parseParam No Err",
-		args: args{
-			p: []string{"key1=value1", "key2=value2"},
-		},
-		want: map[string]v1beta1.PipelineTaskRunSpec{
-			"key1": {PipelineTaskName: "key1", TaskServiceAccountName: "value1"},
-			"key2": {PipelineTaskName: "key2", TaskServiceAccountName: "value2"},
-		},
-		wantErr: false,
-	}, {
-		name: "Test_parseParam Err",
-		args: args{
-			p: []string{"value1", "value2"},
-		},
-		wantErr: true,
-	}}
-
-	for _, tt := range tests {
-		t.Run(tt.name, func(t *testing.T) {
-			got, err := parseTaskSvc(tt.args.p)
-			if (err != nil) != tt.wantErr {
-				t.Errorf("parseSvc() error = %v, wantErr %v", err, tt.wantErr)
-				return
-			}
-			if !reflect.DeepEqual(got, tt.want) {
-				t.Errorf("parseSvc() = %v, want %v", got, tt.want)
-			}
-		})
-	}
-}
-
-func Test_lastPipelineRun(t *testing.T) {
+func Test_lastPipelineRun_v1beta1(t *testing.T) {
 	clock := clockwork.NewFakeClock()
 
 	pr1Started := clock.Now().Add(10 * time.Second)
@@ -4961,9 +4702,9 @@ func Test_lastPipelineRun(t *testing.T) {
 					cs.Pipeline.Resources = cb.APIResourceList("v1beta1", []string{"pipeline", "pipelinerun"})
 					tdc := testDynamic.Options{}
 					dc, err := tdc.Client(
-						cb.UnstructuredV1beta1PR(prs[0], version),
-						cb.UnstructuredV1beta1PR(prs[1], version),
-						cb.UnstructuredV1beta1PR(prs[2], version),
+						cb.UnstructuredV1beta1PR(prs[0], versionv1beta1),
+						cb.UnstructuredV1beta1PR(prs[1], versionv1beta1),
+						cb.UnstructuredV1beta1PR(prs[2], versionv1beta1),
 					)
 					if err != nil {
 						t.Errorf("unable to create dynamic client: %v", err)
@@ -5011,7 +4752,7 @@ func Test_lastPipelineRun(t *testing.T) {
 	}
 }
 
-func Test_start_pipeline_with_skip_optional_workspace_flag(t *testing.T) {
+func Test_start_pipeline_with_skip_optional_workspace_flag_v1beta1(t *testing.T) {
 	pipelineName := "test-pipeline"
 	ps := []*v1beta1.Pipeline{
 		{
@@ -5108,7 +4849,7 @@ func Test_start_pipeline_with_skip_optional_workspace_flag(t *testing.T) {
 	}
 	cs.Pipeline.Resources = cb.APIResourceList("v1beta1", []string{"pipeline", "pipelinerun"})
 	objs := []runtime.Object{ps[0]}
-	_, tdc := newPipelineClient(objs...)
+	_, tdc := newV1beta1PipelineClient(objs...)
 	dc, err := tdc.Client(
 		cb.UnstructuredV1beta1P(ps[0], "v1beta1"),
 	)
@@ -5128,29 +4869,4 @@ func Test_start_pipeline_with_skip_optional_workspace_flag(t *testing.T) {
 
 	expected := "PipelineRun started: random\n\nIn order to track the PipelineRun progress run:\ntkn pipelinerun logs random -f -n ns\n"
 	test.AssertOutput(t, expected, got)
-}
-
-func Test_GetTimeouts(t *testing.T) {
-	opts := startOptions{
-		PipelineTimeOut: "1m",
-		TasksTimeOut:    "2m",
-	}
-
-	prs := []*v1beta1.PipelineRun{
-		{
-			ObjectMeta: metav1.ObjectMeta{
-				Name:      "pr-1",
-				Namespace: "namespace",
-				Labels:    map[string]string{"tekton.dev/pipeline": "test"},
-			},
-		},
-	}
-
-	err := opts.getTimeouts(prs[0])
-	if err != nil {
-		t.Errorf("Expected nil, Got err: %v", err)
-	}
-
-	test.AssertOutput(t, "2m0s", prs[0].Spec.Timeouts.Tasks.Duration.String())
-	test.AssertOutput(t, "1m0s", prs[0].Spec.Timeouts.Pipeline.Duration.String())
 }

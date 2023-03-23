@@ -388,6 +388,20 @@ func startTask(opt startOptions, args []string) error {
 	}
 
 	if opt.DryRun {
+		gvr, err := actions.GetGroupVersionResource(taskrunGroupResource, cs.Tekton.Discovery())
+		if err != nil {
+			return err
+		}
+		if gvr.Version == "v1" {
+			var trv1 v1.TaskRun
+			err = tr.ConvertTo(context.Background(), &trv1)
+			if err != nil {
+				return err
+			}
+			trv1.Kind = "TaskRun"
+			trv1.APIVersion = "tekton.dev/v1"
+			return printTaskRun(opt.Output, opt.stream, &trv1)
+		}
 		return printTaskRun(opt.Output, opt.stream, tr)
 	}
 
@@ -397,6 +411,20 @@ func startTask(opt startOptions, args []string) error {
 	}
 
 	if opt.Output != "" {
+		gvr, err := actions.GetGroupVersionResource(taskrunGroupResource, cs.Tekton.Discovery())
+		if err != nil {
+			return err
+		}
+		if gvr.Version == "v1" {
+			var trv1 v1.TaskRun
+			err = trCreated.ConvertTo(context.Background(), &trv1)
+			if err != nil {
+				return err
+			}
+			trv1.Kind = "TaskRun"
+			trv1.APIVersion = "tekton.dev/v1"
+			return printTaskRun(opt.Output, opt.stream, &trv1)
+		}
 		return printTaskRun(opt.Output, opt.stream, trCreated)
 	}
 
@@ -467,7 +495,7 @@ func parseRes(res []string) (map[string]v1beta1.TaskResourceBinding, error) {
 	return resources, nil
 }
 
-func printTaskRun(output string, s *cli.Stream, tr *v1beta1.TaskRun) error {
+func printTaskRun(output string, s *cli.Stream, tr interface{}) error {
 	format := strings.ToLower(output)
 	if format == "" || format == "yaml" {
 		trBytes, err := yaml.Marshal(tr)

@@ -1,0 +1,94 @@
+{
+	"kind": "TaskRun",
+	"apiVersion": "tekton.dev/v1beta1",
+	"metadata": {
+		"generateName": "test-task-run-",
+		"namespace": "ns",
+		"creationTimestamp": null
+	},
+	"spec": {
+		"params": [
+			{
+				"name": "pathToContext",
+				"value": "/context"
+			},
+			{
+				"name": "pathToDockerFile",
+				"value": "/path"
+			}
+		],
+		"resources": {
+			"inputs": [
+				{
+					"name": "docker-source",
+					"resourceRef": {
+						"name": "git"
+					}
+				}
+			],
+			"outputs": [
+				{
+					"name": "builtImage",
+					"resourceRef": {
+						"name": "image"
+					}
+				}
+			]
+		},
+		"serviceAccountName": "svc1",
+		"taskSpec": {
+			"resources": {
+				"inputs": [
+					{
+						"name": "docker-source",
+						"type": "git"
+					}
+				],
+				"outputs": [
+					{
+						"name": "builtImage",
+						"type": "image"
+					}
+				]
+			},
+			"params": [
+				{
+					"name": "pathToDockerFile",
+					"type": "string",
+					"description": "The path to the dockerfile to build",
+					"default": "/workspace/docker-source/Dockerfile"
+				},
+				{
+					"name": "pathToContext",
+					"type": "string",
+					"description": "The build context used by Kaniko (https://github.com/GoogleContainerTools/kaniko#kaniko-build-contexts)",
+					"default": "/workspace/docker-source"
+				}
+			],
+			"steps": [
+				{
+					"name": "build-and-push",
+					"image": "gcr.io/kaniko-project/executor:v0.14.0",
+					"command": [
+						"/kaniko/executor"
+					],
+					"args": [
+						"--dockerfile=$(inputs.params.pathToDockerFile)",
+						"--destination=$(outputs.resources.builtImage.url)",
+						"--context=$(inputs.params.pathToContext)"
+					],
+					"env": [
+						{
+							"name": "DOCKER_CONFIG",
+							"value": "/tekton/home/.docker/"
+						}
+					],
+					"resources": {}
+				}
+			]
+		}
+	},
+	"status": {
+		"podName": ""
+	}
+}

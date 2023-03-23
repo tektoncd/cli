@@ -1,0 +1,59 @@
+{
+	"kind": "PipelineRun",
+	"apiVersion": "tekton.dev/v1",
+	"metadata": {
+		"generateName": "test-pipeline-run-",
+		"namespace": "ns",
+		"creationTimestamp": null
+	},
+	"spec": {
+		"pipelineSpec": {
+			"tasks": [
+				{
+					"name": "build-skaffold-web",
+					"taskRef": {
+						"name": "build-docker-image-from-git-source"
+					},
+					"params": [
+						{
+							"name": "pathToDockerFile",
+							"value": "Dockerfile"
+						},
+						{
+							"name": "pathToContext",
+							"value": "/workspace/docker-source/examples/microservices/leeroy-web"
+						}
+					]
+				},
+				{
+					"name": "deploy-web",
+					"taskRef": {
+						"name": "deploy-using-kubectl"
+					},
+					"params": [
+						{
+							"name": "path",
+							"value": "/workspace/source/examples/microservices/leeroy-web/kubernetes/deployment.yaml"
+						},
+						{
+							"name": "yamlPathToImage",
+							"value": "spec.template.spec.containers[0].image"
+						}
+					]
+				}
+			]
+		},
+		"params": [
+			{
+				"name": "pipeline-param",
+				"value": "value1"
+			},
+			{
+				"name": "rev-param",
+				"value": "value2"
+			}
+		],
+		"taskRunTemplate": {}
+	},
+	"status": {}
+}

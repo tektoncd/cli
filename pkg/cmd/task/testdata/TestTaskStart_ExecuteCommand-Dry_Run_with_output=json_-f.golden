@@ -1,92 +1,60 @@
 {
 	"kind": "TaskRun",
-	"apiVersion": "tekton.dev/v1beta1",
+	"apiVersion": "tekton.dev/v1",
 	"metadata": {
-		"generateName": "test-task-run-",
+		"generateName": "task-v1-run-",
 		"namespace": "ns",
-		"creationTimestamp": null
+		"creationTimestamp": null,
+		"annotations": {
+			"tekton.dev/v1beta1Resources": "{}"
+		}
 	},
 	"spec": {
 		"params": [
 			{
-				"name": "pathToContext",
-				"value": "/context"
-			},
-			{
-				"name": "pathToDockerFile",
-				"value": "/path"
+				"name": "foobar",
+				"value": "context"
 			}
 		],
-		"resources": {
-			"inputs": [
-				{
-					"name": "docker-source",
-					"resourceRef": {
-						"name": "git"
-					}
-				}
-			],
-			"outputs": [
-				{
-					"name": "builtImage",
-					"resourceRef": {
-						"name": "image"
-					}
-				}
-			]
-		},
 		"serviceAccountName": "svc1",
 		"taskSpec": {
-			"resources": {
-				"inputs": [
-					{
-						"name": "docker-source",
-						"type": "git"
-					}
-				],
-				"outputs": [
-					{
-						"name": "builtImage",
-						"type": "image"
-					}
-				]
-			},
 			"params": [
 				{
-					"name": "pathToDockerFile",
-					"type": "string",
-					"description": "The path to the dockerfile to build",
-					"default": "/workspace/docker-source/Dockerfile"
-				},
-				{
-					"name": "pathToContext",
-					"type": "string",
-					"description": "The build context used by Kaniko (https://github.com/GoogleContainerTools/kaniko#kaniko-build-contexts)",
-					"default": "/workspace/docker-source"
+					"name": "foobar",
+					"type": "string"
 				}
 			],
 			"steps": [
 				{
-					"name": "build-and-push",
-					"image": "gcr.io/kaniko-project/executor:v0.14.0",
-					"command": [
-						"/kaniko/executor"
-					],
-					"args": [
-						"--dockerfile=$(inputs.params.pathToDockerFile)",
-						"--destination=$(outputs.resources.builtImage.url)",
-						"--context=$(inputs.params.pathToContext)"
-					],
+					"name": "build-sources",
+					"image": "alpine",
 					"env": [
 						{
-							"name": "DOCKER_CONFIG",
-							"value": "/tekton/home/.docker/"
+							"name": "PARAM_URL",
+							"value": "$(params.foobar)"
 						}
 					],
-					"resources": {}
+					"computeResources": {},
+					"script": "#!/bin/sh\n\nprintf \"%s\" \"${PARAM_URL}\" \u003e \"$(results.url.path)\"\n"
+				}
+			],
+			"workspaces": [
+				{
+					"name": "temporary"
+				}
+			],
+			"results": [
+				{
+					"name": "url"
 				}
 			]
-		}
+		},
+		"workspaces": [
+			{
+				"name": "temporary",
+				"emptyDir": {}
+			}
+		]
 	},
 	"status": {
 		"podName": ""

@@ -355,6 +355,25 @@ func (opt *startOptions) startPipeline(pipelineStart *v1beta1.Pipeline) error {
 	}
 
 	if opt.DryRun {
+		format := strings.ToLower(opt.Output)
+		if format == "name" {
+			fmt.Fprintf(opt.stream.Out, "%s\n", pr.GetName())
+			return nil
+		}
+		gvr, err := actions.GetGroupVersionResource(pipelineRunGroupResource, cs.Tekton.Discovery())
+		if err != nil {
+			return err
+		}
+		if gvr.Version == "v1" {
+			var prv1 v1.PipelineRun
+			err = pr.ConvertTo(context.Background(), &prv1)
+			if err != nil {
+				return err
+			}
+			prv1.Kind = "PipelineRun"
+			prv1.APIVersion = "tekton.dev/v1"
+			return printPipelineRun(opt.Output, opt.stream, &prv1)
+		}
 		return printPipelineRun(opt.Output, opt.stream, pr)
 	}
 
@@ -364,6 +383,25 @@ func (opt *startOptions) startPipeline(pipelineStart *v1beta1.Pipeline) error {
 	}
 
 	if opt.Output != "" {
+		format := strings.ToLower(opt.Output)
+		if format == "name" {
+			fmt.Fprintf(opt.stream.Out, "%s\n", prCreated.GetName())
+			return nil
+		}
+		gvr, err := actions.GetGroupVersionResource(pipelineRunGroupResource, cs.Tekton.Discovery())
+		if err != nil {
+			return err
+		}
+		if gvr.Version == "v1" {
+			var prv1 v1.PipelineRun
+			err = prCreated.ConvertTo(context.Background(), &prv1)
+			if err != nil {
+				return err
+			}
+			prv1.Kind = "PipelineRun"
+			prv1.APIVersion = "tekton.dev/v1"
+			return printPipelineRun(opt.Output, opt.stream, &prv1)
+		}
 		return printPipelineRun(opt.Output, opt.stream, prCreated)
 	}
 
@@ -740,7 +778,7 @@ func (opt *startOptions) createPipelineResource(resName string, resType v1alpha1
 	return newRes, nil
 }
 
-func printPipelineRun(output string, s *cli.Stream, pr *v1beta1.PipelineRun) error {
+func printPipelineRun(output string, s *cli.Stream, pr interface{}) error {
 	format := strings.ToLower(output)
 	if format == "" || format == "yaml" {
 		prBytes, err := yaml.Marshal(pr)
@@ -748,10 +786,6 @@ func printPipelineRun(output string, s *cli.Stream, pr *v1beta1.PipelineRun) err
 			return err
 		}
 		fmt.Fprintf(s.Out, "%s", prBytes)
-	}
-
-	if format == "name" {
-		fmt.Fprintf(s.Out, "%s\n", pr.GetName())
 	}
 
 	if format == "json" {

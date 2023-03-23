@@ -38,8 +38,10 @@ func Create(c *cli.Clients, tr *v1beta1.TaskRun, opts metav1.CreateOptions, ns s
 		if err != nil {
 			return nil, err
 		}
+		trv1.Kind = "TaskRun"
+		trv1.APIVersion = "tekton.dev/v1"
 
-		object, _ := runtime.DefaultUnstructuredConverter.ToUnstructured(trv1)
+		object, _ := runtime.DefaultUnstructuredConverter.ToUnstructured(&trv1)
 		unstructuredTR := &unstructured.Unstructured{
 			Object: object,
 		}
@@ -57,6 +59,8 @@ func Create(c *cli.Clients, tr *v1beta1.TaskRun, opts metav1.CreateOptions, ns s
 		if err != nil {
 			return nil, err
 		}
+		taskrunv1beta1.Kind = "TaskRun"
+		taskrunv1beta1.APIVersion = "tekton.dev/v1beta1"
 		return &taskrunv1beta1, nil
 	}
 
