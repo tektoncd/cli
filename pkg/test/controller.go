@@ -29,8 +29,10 @@ import (
 	"github.com/tektoncd/pipeline/test"
 	corev1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+	coreinformers "k8s.io/client-go/informers/core/v1"
 	fakekubeclientset "k8s.io/client-go/kubernetes/fake"
 	fakekubeclient "knative.dev/pkg/client/injection/kube/client/fake"
+	fakefilteredpodinformer "knative.dev/pkg/client/injection/kube/informers/core/v1/pod/filtered/fake"
 )
 
 type Data struct {
@@ -39,6 +41,7 @@ type Data struct {
 	TaskRuns     []*v1.TaskRun
 	Tasks        []*v1.Task
 	Namespaces   []*corev1.Namespace
+	Pods         []*corev1.Pod
 }
 
 // Clients holds references to clients which are useful for reconciler tests.
@@ -53,6 +56,7 @@ type Informers struct {
 	Pipeline    informersv1.PipelineInformer
 	TaskRun     informersv1.TaskRunInformer
 	Task        informersv1.TaskInformer
+	Pod         coreinformers.PodInformer
 }
 
 // seedTestData returns Clients and Informers populated with the
@@ -72,6 +76,7 @@ func seedTestData(t *testing.T, ctx context.Context, d Data) (Clients, Informers
 		Pipeline:    fakepipelineinformer.Get(ctx),
 		TaskRun:     faketaskruninformer.Get(ctx),
 		Task:        faketaskinformer.Get(ctx),
+		Pod:         fakefilteredpodinformer.Get(ctx, v1.ManagedByLabelKey),
 	}
 
 	// Attach reactors that add resource mutations to the appropriate
@@ -102,6 +107,13 @@ func seedTestData(t *testing.T, ctx context.Context, d Data) (Clients, Informers
 	for _, ta := range d.Tasks {
 		ta := ta.DeepCopy() // Avoid assumptions that the informer's copy is modified.
 		if _, err := c.Pipeline.TektonV1().Tasks(ta.Namespace).Create(ctx, ta, metav1.CreateOptions{}); err != nil {
+			t.Fatal(err)
+		}
+	}
+	c.Kube.PrependReactor("*", "pods", test.AddToInformer(t, i.Pod.Informer().GetIndexer()))
+	for _, p := range d.Pods {
+		p := p.DeepCopy() // Avoid assumptions that the informer's copy is modified.
+		if _, err := c.Kube.CoreV1().Pods(p.Namespace).Create(ctx, p, metav1.CreateOptions{}); err != nil {
 			t.Fatal(err)
 		}
 	}

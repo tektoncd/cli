@@ -14,10 +14,14 @@
 
 package log
 
+import "k8s.io/apimachinery/pkg/runtime/schema"
+
 const (
 	LogTypePipeline = "pipeline"
 	LogTypeTask     = "task"
 )
+
+var taskrunGroupResource = schema.GroupVersionResource{Group: "tekton.dev", Resource: "taskruns"}
 
 // Log represents data to write on log channel
 type Log struct {
