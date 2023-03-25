@@ -181,7 +181,7 @@ func sortStepStatesByStartTime(steps []v1.StepState) []v1.StepState {
 }
 
 func PrintTaskRunDescription(out io.Writer, c *cli.Clients, ns string, trName string, time clockwork.Clock) error {
-	tr, err := getTaskRun(taskrunGroupResource, c, trName, ns)
+	tr, err := GetTaskRun(taskrunGroupResource, c, trName, ns)
 	if err != nil {
 		return fmt.Errorf("failed to get TaskRun %s: %v", trName, err)
 	}
@@ -274,7 +274,7 @@ func sidecarReasonExists(state v1.SidecarState) string {
 	return formatted.ColorStatus(state.Waiting.Reason)
 }
 
-func getTaskRun(gr schema.GroupVersionResource, c *cli.Clients, trName, ns string) (*v1.TaskRun, error) {
+func GetTaskRun(gr schema.GroupVersionResource, c *cli.Clients, trName, ns string) (*v1.TaskRun, error) {
 	var taskrun v1.TaskRun
 	gvr, err := actions.GetGroupVersionResource(gr, c.Tekton.Discovery())
 	if err != nil {
