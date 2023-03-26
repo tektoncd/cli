@@ -19,15 +19,14 @@ import (
 	"time"
 
 	"github.com/tektoncd/cli/pkg/actions"
-	trh "github.com/tektoncd/cli/pkg/taskrun"
+	"github.com/tektoncd/cli/pkg/cli"
+	taskrunpkg "github.com/tektoncd/cli/pkg/taskrun"
+	v1 "github.com/tektoncd/pipeline/pkg/apis/pipeline/v1"
 	"github.com/tektoncd/pipeline/pkg/apis/pipeline/v1beta1"
-	"github.com/tektoncd/pipeline/pkg/client/clientset/versioned"
 	informers "github.com/tektoncd/pipeline/pkg/client/informers/externalversions"
-	"github.com/tektoncd/pipeline/pkg/status"
 	corev1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/fields"
-	"k8s.io/apimachinery/pkg/runtime/schema"
 	"k8s.io/client-go/tools/cache"
 )
 
@@ -35,16 +34,16 @@ import (
 type Tracker struct {
 	Name         string
 	Ns           string
-	Tekton       versioned.Interface
+	Client       *cli.Clients
 	ongoingTasks map[string]bool
 }
 
 // NewTracker returns a new instance of Tracker
-func NewTracker(name string, ns string, tekton versioned.Interface) *Tracker {
+func NewTracker(name string, ns string, client *cli.Clients) *Tracker {
 	return &Tracker{
 		Name:         name,
 		Ns:           ns,
-		Tekton:       tekton,
+		Client:       client,
 		ongoingTasks: map[string]bool{},
 	}
 }
@@ -53,24 +52,24 @@ func NewTracker(name string, ns string, tekton versioned.Interface) *Tracker {
 // an event upon starting of a new Pipeline's Task.
 // allowed containers the name of the Pipeline tasks, which used as filter
 // limit the events to only those tasks
-func (t *Tracker) Monitor(allowed []string) <-chan []trh.Run {
+func (t *Tracker) Monitor(allowed []string) <-chan []taskrunpkg.Run {
 
 	factory := informers.NewSharedInformerFactoryWithOptions(
-		t.Tekton,
+		t.Client.Tekton,
 		time.Second*10,
 		informers.WithNamespace(t.Ns),
 		informers.WithTweakListOptions(pipelinerunOpts(t.Name)))
 
 	gvr, _ := actions.GetGroupVersionResource(
-		schema.GroupVersionResource{Group: "tekton.dev", Resource: "pipelineruns"},
-		t.Tekton.Discovery(),
+		pipelineRunGroupResource,
+		t.Client.Tekton.Discovery(),
 	)
 
 	genericInformer, _ := factory.ForResource(*gvr)
 	informer := genericInformer.Informer()
 
 	stopC := make(chan struct{})
-	trC := make(chan []trh.Run)
+	trC := make(chan []taskrunpkg.Run)
 
 	go func() {
 		<-stopC
@@ -78,21 +77,28 @@ func (t *Tracker) Monitor(allowed []string) <-chan []trh.Run {
 	}()
 
 	eventHandler := func(obj interface{}) {
-		var pipelinerunConverted v1beta1.PipelineRun
-		pr, ok := obj.(*v1beta1.PipelineRun)
+		var pipelinerunConverted v1.PipelineRun
+		pr, ok := obj.(*v1.PipelineRun)
 		if !ok || pr == nil {
-			return
+			prV1beta1, ok := obj.(*v1beta1.PipelineRun)
+			if !ok || prV1beta1 == nil {
+				return
+			}
+			var prv1 v1.PipelineRun
+			err := prV1beta1.ConvertTo(context.Background(), &prv1)
+			if err != nil {
+				return
+			}
+			pr = &prv1
 		}
 
-		trMap, runMap, err := status.GetFullPipelineTaskStatuses(context.Background(), t.Tekton, t.Ns, pr)
+		trsMap, err := GetTaskRunsWithStatus(pr, t.Client, t.Ns)
 		if err != nil {
 			return
 		}
 		pr.DeepCopyInto(&pipelinerunConverted)
-		pipelinerunConverted.Status.TaskRuns = trMap
-		pipelinerunConverted.Status.Runs = runMap
 
-		trC <- t.findNewTaskruns(&pipelinerunConverted, allowed)
+		trC <- t.findNewTaskruns(&pipelinerunConverted, allowed, trsMap)
 
 		if hasCompleted(&pipelinerunConverted) {
 			close(stopC) // should close trC
@@ -122,9 +128,9 @@ func pipelinerunOpts(name string) func(opts *metav1.ListOptions) {
 // handles changes to pipelinerun and pushes the Run information to the
 // channel if the task is new and is in the allowed list of tasks
 // returns true if the pipelinerun has finished
-func (t *Tracker) findNewTaskruns(pr *v1beta1.PipelineRun, allowed []string) []trh.Run {
-	ret := []trh.Run{}
-	for tr, trs := range pr.Status.TaskRuns {
+func (t *Tracker) findNewTaskruns(pr *v1.PipelineRun, allowed []string, trStatuses map[string]*v1.PipelineRunTaskRunStatus) []taskrunpkg.Run {
+	ret := []taskrunpkg.Run{}
+	for tr, trs := range trStatuses {
 		retries := 0
 		if pr.Status.PipelineSpec != nil {
 			for _, pipelineTask := range pr.Status.PipelineSpec.Tasks {
@@ -133,11 +139,11 @@ func (t *Tracker) findNewTaskruns(pr *v1beta1.PipelineRun, allowed []string) []t
 				}
 			}
 		}
-		run := trh.Run{Name: tr, Task: trs.PipelineTaskName, Retries: retries}
+		run := taskrunpkg.Run{Name: tr, Task: trs.PipelineTaskName, Retries: retries}
 
 		if t.loggingInProgress(tr) ||
-			!trh.HasScheduled(trs) ||
-			trh.IsFiltered(run, allowed) {
+			!taskrunpkg.HasScheduled(trs) ||
+			taskrunpkg.IsFiltered(run, allowed) {
 			continue
 		}
 
@@ -148,15 +154,45 @@ func (t *Tracker) findNewTaskruns(pr *v1beta1.PipelineRun, allowed []string) []t
 	return ret
 }
 
-func hasCompleted(pr *v1beta1.PipelineRun) bool {
+func hasCompleted(pr *v1.PipelineRun) bool {
 	if len(pr.Status.Conditions) == 0 {
 		return false
 	}
-
 	return pr.Status.Conditions[0].Status != corev1.ConditionUnknown
 }
 
 func (t *Tracker) loggingInProgress(tr string) bool {
 	_, ok := t.ongoingTasks[tr]
 	return ok
+}
+
+func GetTaskRunsWithStatus(pr *v1.PipelineRun, c *cli.Clients, ns string) (map[string]*v1.PipelineRunTaskRunStatus, error) {
+	// If the PipelineRun is nil, just return
+	if pr == nil {
+		return nil, nil
+	}
+
+	// If there are no child references return the existing TaskRuns and Runs maps
+	if len(pr.Status.ChildReferences) == 0 {
+		return map[string]*v1.PipelineRunTaskRunStatus{}, nil
+	}
+
+	trStatuses := make(map[string]*v1.PipelineRunTaskRunStatus)
+	for _, cr := range pr.Status.ChildReferences {
+		//TODO: Needs to handle Run, CustomRun later
+		if cr.Kind == "TaskRun" {
+			tr, err := taskrunpkg.GetTaskRun(taskrunGroupResource, c, cr.Name, ns)
+			if err != nil {
+				return nil, err
+			}
+
+			trStatuses[cr.Name] = &v1.PipelineRunTaskRunStatus{
+				PipelineTaskName: cr.PipelineTaskName,
+				Status:           &tr.Status,
+			}
+
+		}
+	}
+
+	return trStatuses, nil
 }

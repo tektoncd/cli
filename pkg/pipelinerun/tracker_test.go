@@ -15,18 +15,19 @@
 package pipelinerun
 
 import (
+	"fmt"
 	"testing"
 	"time"
 
 	"github.com/google/go-cmp/cmp"
 	"github.com/google/go-cmp/cmp/cmpopts"
 	"github.com/tektoncd/cli/pkg/actions"
+	"github.com/tektoncd/cli/pkg/cli"
 	trh "github.com/tektoncd/cli/pkg/taskrun"
 	"github.com/tektoncd/cli/pkg/test"
 	cb "github.com/tektoncd/cli/pkg/test/builder"
-	"github.com/tektoncd/pipeline/pkg/apis/pipeline/v1beta1"
-	"github.com/tektoncd/pipeline/pkg/client/clientset/versioned"
-	pipelinetest "github.com/tektoncd/pipeline/test"
+	testDynamic "github.com/tektoncd/cli/pkg/test/dynamic"
+	v1 "github.com/tektoncd/pipeline/pkg/apis/pipeline/v1"
 	"github.com/tektoncd/pipeline/test/diff"
 	corev1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
@@ -50,20 +51,18 @@ func TestTracker_pipelinerun_complete(t *testing.T) {
 		tr2Name   = "output-task-2"
 		tr2Pod    = "output-task-2-pod-123456"
 
-		allTasks  = []string{}
+		allTasks  = []string{task1Name, task2Name}
 		onlyTask1 = []string{task1Name}
 	)
 
 	scenarios := []struct {
-		name               string
-		tasks              []string
-		fullEmbeddedStatus bool
-		expected           []trh.Run
+		name     string
+		tasks    []string
+		expected []trh.Run
 	}{
 		{
-			name:               "for all tasks, full status",
-			tasks:              allTasks,
-			fullEmbeddedStatus: true,
+			name:  "for all tasks",
+			tasks: allTasks,
 			expected: []trh.Run{
 				{
 					Name: tr1Name,
@@ -74,32 +73,8 @@ func TestTracker_pipelinerun_complete(t *testing.T) {
 				},
 			},
 		}, {
-			name:               "for one task, full status",
-			tasks:              onlyTask1,
-			fullEmbeddedStatus: true,
-			expected: []trh.Run{
-				{
-					Name: tr1Name,
-					Task: task1Name,
-				},
-			},
-		}, {
-			name:               "for all tasks, minimal status",
-			tasks:              allTasks,
-			fullEmbeddedStatus: false,
-			expected: []trh.Run{
-				{
-					Name: tr1Name,
-					Task: task1Name,
-				}, {
-					Name: tr2Name,
-					Task: task2Name,
-				},
-			},
-		}, {
-			name:               "for one task, minimal status",
-			tasks:              onlyTask1,
-			fullEmbeddedStatus: false,
+			name:  "for one task",
+			tasks: onlyTask1,
 			expected: []trh.Run{
 				{
 					Name: tr1Name,
@@ -110,19 +85,19 @@ func TestTracker_pipelinerun_complete(t *testing.T) {
 	}
 
 	for _, s := range scenarios {
-		taskruns := []*v1beta1.TaskRun{
+		taskruns := []*v1.TaskRun{
 			{
 				ObjectMeta: metav1.ObjectMeta{
 					Name:      tr1Name,
 					Namespace: ns,
 				},
-				Spec: v1beta1.TaskRunSpec{
-					TaskRef: &v1beta1.TaskRef{
+				Spec: v1.TaskRunSpec{
+					TaskRef: &v1.TaskRef{
 						Name: task1Name,
 					},
 				},
-				Status: v1beta1.TaskRunStatus{
-					TaskRunStatusFields: v1beta1.TaskRunStatusFields{
+				Status: v1.TaskRunStatus{
+					TaskRunStatusFields: v1.TaskRunStatusFields{
 						PodName: tr1Pod,
 					},
 				},
@@ -132,98 +107,86 @@ func TestTracker_pipelinerun_complete(t *testing.T) {
 					Name:      tr2Name,
 					Namespace: ns,
 				},
-				Spec: v1beta1.TaskRunSpec{
-					TaskRef: &v1beta1.TaskRef{
+				Spec: v1.TaskRunSpec{
+					TaskRef: &v1.TaskRef{
 						Name: task2Name,
 					},
 				},
-				Status: v1beta1.TaskRunStatus{
-					TaskRunStatusFields: v1beta1.TaskRunStatusFields{
+				Status: v1.TaskRunStatus{
+					TaskRunStatusFields: v1.TaskRunStatusFields{
 						PodName: tr2Pod,
 					},
 				},
 			},
 		}
 
-		initialPR := []*v1beta1.PipelineRun{
+		initialPR := []*v1.PipelineRun{
 			{
 				ObjectMeta: metav1.ObjectMeta{
 					Name:      prName,
 					Namespace: ns,
 					Labels:    map[string]string{"tekton.dev/pipeline": prName},
 				},
-				Status: v1beta1.PipelineRunStatus{
+				Status: v1.PipelineRunStatus{
 					Status: duckv1.Status{
 						Conditions: duckv1.Conditions{
 							{
 								Status: corev1.ConditionUnknown,
-								Reason: v1beta1.PipelineRunReasonRunning.String(),
+								Reason: v1.PipelineRunReasonRunning.String(),
 							},
 						},
 					},
-					PipelineRunStatusFields: v1beta1.PipelineRunStatusFields{},
+					PipelineRunStatusFields: v1.PipelineRunStatusFields{
+						ChildReferences: []v1.ChildStatusReference{
+							{
+								Name:             tr1Name,
+								PipelineTaskName: task1Name,
+								TypeMeta: runtime.TypeMeta{
+									APIVersion: "tekton.dev/v1",
+									Kind:       "TaskRun",
+								},
+							},
+						},
+					},
 				},
 			},
 		}
-		if s.fullEmbeddedStatus {
-			initialPR[0].Status.TaskRuns = map[string]*v1beta1.PipelineRunTaskRunStatus{
-				tr1Name: {PipelineTaskName: task1Name, Status: &taskruns[0].Status},
-			}
-		} else {
-			initialPR[0].Status.ChildReferences = []v1beta1.ChildStatusReference{{
-				Name:             tr1Name,
-				PipelineTaskName: task1Name,
-				TypeMeta: runtime.TypeMeta{
-					APIVersion: "tekton.dev/v1beta1",
-					Kind:       "TaskRun",
-				},
-			}}
-		}
 
-		pr := &v1beta1.PipelineRun{
-			Status: v1beta1.PipelineRunStatus{
+		pr := &v1.PipelineRun{
+			Status: v1.PipelineRunStatus{
 				Status: duckv1.Status{
 					Conditions: duckv1.Conditions{
 						{
 							Status: corev1.ConditionTrue,
-							Reason: v1beta1.PipelineRunReasonSuccessful.String(),
+							Reason: v1.PipelineRunReasonSuccessful.String(),
 						},
 					},
 				},
-				PipelineRunStatusFields: v1beta1.PipelineRunStatusFields{
-					TaskRuns: map[string]*v1beta1.PipelineRunTaskRunStatus{
-						tr1Name: {PipelineTaskName: task1Name, Status: &taskruns[0].Status},
-						tr2Name: {PipelineTaskName: task2Name, Status: &taskruns[1].Status},
+				PipelineRunStatusFields: v1.PipelineRunStatusFields{
+					ChildReferences: []v1.ChildStatusReference{
+						{
+							Name:             tr1Name,
+							PipelineTaskName: task1Name,
+							TypeMeta: runtime.TypeMeta{
+								APIVersion: "tekton.dev/v1",
+								Kind:       "TaskRun",
+							},
+						}, {
+							Name:             tr2Name,
+							PipelineTaskName: task2Name,
+							TypeMeta: runtime.TypeMeta{
+								APIVersion: "tekton.dev/v1",
+								Kind:       "TaskRun",
+							},
+						},
 					},
 				},
 			},
 		}
-		if s.fullEmbeddedStatus {
-			initialPR[0].Status.TaskRuns = map[string]*v1beta1.PipelineRunTaskRunStatus{
-				tr1Name: {PipelineTaskName: task1Name, Status: &taskruns[0].Status},
-				tr2Name: {PipelineTaskName: task2Name, Status: &taskruns[1].Status},
-			}
-		} else {
-			initialPR[0].Status.ChildReferences = []v1beta1.ChildStatusReference{{
-				Name:             tr1Name,
-				PipelineTaskName: task1Name,
-				TypeMeta: runtime.TypeMeta{
-					APIVersion: "tekton.dev/v1beta1",
-					Kind:       "TaskRun",
-				},
-			}, {
-				Name:             tr2Name,
-				PipelineTaskName: task2Name,
-				TypeMeta: runtime.TypeMeta{
-					APIVersion: "tekton.dev/v1beta1",
-					Kind:       "TaskRun",
-				},
-			}}
-		}
 
-		tc := startPipelineRun(t, pipelinetest.Data{PipelineRuns: initialPR, TaskRuns: taskruns}, pr.Status)
+		tc := startPipelineRun(t, test.Data{PipelineRuns: initialPR, TaskRuns: taskruns}, pr.Status)
 		tracker := NewTracker(pipelineName, ns, tc)
-		if err := actions.InitializeAPIGroupRes(tracker.Tekton.Discovery()); err != nil {
+		if err := actions.InitializeAPIGroupRes(tc.Tekton.Discovery()); err != nil {
 			t.Errorf("failed to initialize APIGroup Resource")
 		}
 		output := taskRunsFor(s.tasks, tracker)
@@ -243,13 +206,24 @@ func taskRunsFor(onlyTasks []string, tracker *Tracker) []trh.Run {
 	return output
 }
 
-func startPipelineRun(t *testing.T, data pipelinetest.Data, prStatus ...v1beta1.PipelineRunStatus) versioned.Interface {
-	cs, _ := test.SeedV1beta1TestData(t, data)
+func startPipelineRun(t *testing.T, data test.Data, prStatus ...v1.PipelineRunStatus) *cli.Clients {
+	cs, _ := test.SeedTestData(t, data)
 
 	// to keep pushing the taskrun over the period(simulate watch)
 	watcher := watch.NewFake()
 	cs.Pipeline.PrependWatchReactor("pipelineruns", k8stest.DefaultWatchReactor(watcher, nil))
-	cs.Pipeline.Resources = cb.APIResourceList("v1beta1", []string{"task", "taskrun", "pipeline", "pipelinerun"})
+	cs.Pipeline.Resources = cb.APIResourceList("v1", []string{"task", "taskrun", "pipeline", "pipelinerun"})
+
+	tdc := testDynamic.Options{}
+	dynamic, err := tdc.Client(
+		cb.UnstructuredPR(data.PipelineRuns[0], "v1"),
+		cb.UnstructuredTR(data.TaskRuns[0], "v1"),
+		cb.UnstructuredTR(data.TaskRuns[1], "v1"),
+	)
+	if err != nil {
+		fmt.Println(err)
+	}
+
 	go func() {
 		for _, status := range prStatus {
 			time.Sleep(time.Second * 2)
@@ -258,5 +232,9 @@ func startPipelineRun(t *testing.T, data pipelinetest.Data, prStatus ...v1beta1.
 		}
 	}()
 
-	return cs.Pipeline
+	return &cli.Clients{
+		Tekton:  cs.Pipeline,
+		Kube:    cs.Kube,
+		Dynamic: dynamic,
+	}
 }

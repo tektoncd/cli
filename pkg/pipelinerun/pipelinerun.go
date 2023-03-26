@@ -18,7 +18,6 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
-	"os"
 
 	"github.com/jonboulle/clockwork"
 	"github.com/tektoncd/cli/pkg/actions"
@@ -27,12 +26,10 @@ import (
 	prsort "github.com/tektoncd/cli/pkg/pipelinerun/sort"
 	v1 "github.com/tektoncd/pipeline/pkg/apis/pipeline/v1"
 	"github.com/tektoncd/pipeline/pkg/apis/pipeline/v1beta1"
-	"github.com/tektoncd/pipeline/pkg/status"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
 	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/apimachinery/pkg/runtime/schema"
-	"k8s.io/apimachinery/pkg/watch"
 )
 
 var pipelineRunGroupResource = schema.GroupVersionResource{Group: "tekton.dev", Resource: "pipelineruns"}
@@ -60,36 +57,6 @@ func GetAllPipelineRuns(gr schema.GroupVersionResource, opts metav1.ListOptions,
 		}
 	}
 	return ret, nil
-}
-
-// TODO: remove as all the function uses are moved to new func
-// It will fetch the resource in v1beta1 struct format
-func Get(c *cli.Clients, prname string, opts metav1.GetOptions, ns string) (*v1beta1.PipelineRun, error) {
-	unstructuredPR, err := actions.Get(pipelineRunGroupResource, c.Dynamic, c.Tekton.Discovery(), prname, ns, opts)
-	if err != nil {
-		return nil, err
-	}
-
-	var pipelinerun *v1beta1.PipelineRun
-	if err := runtime.DefaultUnstructuredConverter.FromUnstructured(unstructuredPR.UnstructuredContent(), &pipelinerun); err != nil {
-		fmt.Fprintf(os.Stderr, "Failed to get pipelinerun from %s namespace \n", ns)
-		return nil, err
-	}
-
-	populatedPR, err := populatePipelineRunTaskStatuses(c, ns, *pipelinerun)
-	if err != nil {
-		return nil, err
-	}
-
-	return populatedPR, nil
-}
-
-func Watch(c *cli.Clients, opts metav1.ListOptions, ns string) (watch.Interface, error) {
-	watch, err := actions.Watch(pipelineRunGroupResource, c, ns, opts)
-	if err != nil {
-		return nil, err
-	}
-	return watch, nil
 }
 
 type patchStringValue struct {
@@ -171,16 +138,4 @@ func Create(c *cli.Clients, pr *v1beta1.PipelineRun, opts metav1.CreateOptions, 
 	}
 
 	return pipelinerun, nil
-}
-
-func populatePipelineRunTaskStatuses(c *cli.Clients, ns string, pr v1beta1.PipelineRun) (*v1beta1.PipelineRun, error) {
-	taskRunMap, runMap, err := status.GetFullPipelineTaskStatuses(context.Background(), c.Tekton, ns, &pr)
-	if err != nil {
-		fmt.Fprintf(os.Stderr, "Failed to get TaskRun and Run statuses for PipelineRun %s from namespace %s\n", pr.Name, ns)
-		return nil, err
-	}
-	pr.Status.TaskRuns = taskRunMap
-	pr.Status.Runs = runMap
-
-	return &pr, nil
 }
