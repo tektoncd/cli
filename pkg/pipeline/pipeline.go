@@ -15,15 +15,14 @@
 package pipeline
 
 import (
+	"context"
 	"fmt"
-	"os"
 
 	"github.com/tektoncd/cli/pkg/actions"
 	"github.com/tektoncd/cli/pkg/cli"
 	v1 "github.com/tektoncd/pipeline/pkg/apis/pipeline/v1"
 	"github.com/tektoncd/pipeline/pkg/apis/pipeline/v1beta1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
-	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/apimachinery/pkg/runtime/schema"
 )
 
@@ -43,18 +42,30 @@ func GetAllPipelineNames(gr schema.GroupVersionResource, c *cli.Clients, ns stri
 	return ret, nil
 }
 
-// TODO: remove as all the function uses are moved to new func
-// Get will fetch the pipeline resource based on pipeline name
-func Get(c *cli.Clients, pipelinename string, opts metav1.GetOptions, ns string) (*v1beta1.Pipeline, error) {
-	unstructuredP, err := actions.Get(pipelineGroupResource, c.Dynamic, c.Tekton.Discovery(), pipelinename, ns, opts)
+func GetPipeline(gr schema.GroupVersionResource, c *cli.Clients, pName, ns string) (*v1.Pipeline, error) {
+	var pipeline v1.Pipeline
+	gvr, err := actions.GetGroupVersionResource(gr, c.Tekton.Discovery())
 	if err != nil {
 		return nil, err
 	}
 
-	var pipeline *v1beta1.Pipeline
-	if err := runtime.DefaultUnstructuredConverter.FromUnstructured(unstructuredP.UnstructuredContent(), &pipeline); err != nil {
-		fmt.Fprintf(os.Stderr, "failed to get pipeline from %s namespace \n", ns)
+	if gvr.Version == "v1" {
+		err := actions.GetV1(gr, c, pName, ns, metav1.GetOptions{}, &pipeline)
+		if err != nil {
+			return nil, err
+		}
+		return &pipeline, nil
+
+	}
+
+	var pipelineV1beta1 v1beta1.Pipeline
+	err = actions.GetV1(gr, c, pName, ns, metav1.GetOptions{}, &pipelineV1beta1)
+	if err != nil {
 		return nil, err
 	}
-	return pipeline, nil
+	err = pipelineV1beta1.ConvertTo(context.Background(), &pipeline)
+	if err != nil {
+		return nil, err
+	}
+	return &pipeline, nil
 }

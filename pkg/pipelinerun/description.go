@@ -170,7 +170,7 @@ func (trs TaskRunWithStatusList) Less(i, j int) bool {
 }
 
 func PrintPipelineRunDescription(out io.Writer, c *cli.Clients, ns string, prName string, time clockwork.Clock) error {
-	pr, err := getPipelineRun(pipelineRunGroupResource, c, prName, ns)
+	pr, err := GetPipelineRun(pipelineRunGroupResource, c, prName, ns)
 	if err != nil {
 		return fmt.Errorf("failed to find pipelinerun %q", prName)
 	}
@@ -226,7 +226,7 @@ func PrintPipelineRunDescription(out io.Writer, c *cli.Clients, ns string, prNam
 	return w.Flush()
 }
 
-func getPipelineRun(gr schema.GroupVersionResource, c *cli.Clients, prName, ns string) (*v1.PipelineRun, error) {
+func GetPipelineRun(gr schema.GroupVersionResource, c *cli.Clients, prName, ns string) (*v1.PipelineRun, error) {
 	var pipelinerun v1.PipelineRun
 	gvr, err := actions.GetGroupVersionResource(gr, c.Tekton.Discovery())
 	if err != nil {

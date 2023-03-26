@@ -15,7 +15,6 @@
 package pipeline
 
 import (
-	"context"
 	"fmt"
 	"io"
 	"strings"
@@ -31,9 +30,7 @@ import (
 	pipelinepkg "github.com/tektoncd/cli/pkg/pipeline"
 	prsort "github.com/tektoncd/cli/pkg/pipelinerun/sort"
 	v1 "github.com/tektoncd/pipeline/pkg/apis/pipeline/v1"
-	"github.com/tektoncd/pipeline/pkg/apis/pipeline/v1beta1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
-	"k8s.io/apimachinery/pkg/runtime/schema"
 	cliopts "k8s.io/cli-runtime/pkg/genericclioptions"
 )
 
@@ -160,7 +157,7 @@ func describeCommand(p cli.Params) *cobra.Command {
 }
 
 func printPipelineDescription(out io.Writer, c *cli.Clients, ns string, pName string, time clockwork.Clock) error {
-	pipeline, err := getPipeline(pipelineGroupResource, c, pName, ns)
+	pipeline, err := pipelinepkg.GetPipeline(pipelineGroupResource, c, pName, ns)
 	if err != nil {
 		return err
 	}
@@ -222,32 +219,4 @@ func askPipelineName(opts *options.DescribeOptions, pipelineNames []string) erro
 	}
 
 	return nil
-}
-
-func getPipeline(gr schema.GroupVersionResource, c *cli.Clients, pName, ns string) (*v1.Pipeline, error) {
-	var pipeline v1.Pipeline
-	gvr, err := actions.GetGroupVersionResource(gr, c.Tekton.Discovery())
-	if err != nil {
-		return nil, err
-	}
-
-	if gvr.Version == "v1" {
-		err := actions.GetV1(pipelineGroupResource, c, pName, ns, metav1.GetOptions{}, &pipeline)
-		if err != nil {
-			return nil, err
-		}
-		return &pipeline, nil
-
-	}
-
-	var pipelineV1beta1 v1beta1.Pipeline
-	err = actions.GetV1(pipelineGroupResource, c, pName, ns, metav1.GetOptions{}, &pipelineV1beta1)
-	if err != nil {
-		return nil, err
-	}
-	err = pipelineV1beta1.ConvertTo(context.Background(), &pipeline)
-	if err != nil {
-		return nil, err
-	}
-	return &pipeline, nil
 }

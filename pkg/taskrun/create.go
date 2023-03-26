@@ -45,7 +45,7 @@ func Create(c *cli.Clients, tr *v1beta1.TaskRun, opts metav1.CreateOptions, ns s
 		unstructuredTR := &unstructured.Unstructured{
 			Object: object,
 		}
-		newUnstructuredTR, err := actions.Create(trGroupResource, c, unstructuredTR, ns, opts)
+		newUnstructuredTR, err := actions.Create(taskrunGroupResource, c, unstructuredTR, ns, opts)
 		if err != nil {
 			return nil, err
 		}
@@ -68,7 +68,7 @@ func Create(c *cli.Clients, tr *v1beta1.TaskRun, opts metav1.CreateOptions, ns s
 	unstructuredTR := &unstructured.Unstructured{
 		Object: object,
 	}
-	newUnstructuredTR, err := actions.Create(trGroupResource, c, unstructuredTR, ns, opts)
+	newUnstructuredTR, err := actions.Create(taskrunGroupResource, c, unstructuredTR, ns, opts)
 	if err != nil {
 		return nil, err
 	}
