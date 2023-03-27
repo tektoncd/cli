@@ -1,6 +1,6 @@
 module github.com/tektoncd/cli
 
-go 1.17
+go 1.18
 
 require (
 	github.com/AlecAivazis/survey/v2 v2.3.6
@@ -39,7 +39,7 @@ require (
 	github.com/spf13/cobra v1.6.1
 	github.com/spf13/pflag v1.0.5
 	github.com/tektoncd/chains v0.15.0
-	github.com/tektoncd/hub v1.12.0
+	github.com/tektoncd/hub v1.12.1
 	github.com/tektoncd/pipeline v0.44.0
 	github.com/tektoncd/plumbing v0.0.0-20221102182345-5dbcfda657d7
 	github.com/tektoncd/triggers v0.23.0
@@ -361,5 +361,3 @@ require (
 	sigs.k8s.io/release-utils v0.7.3 // indirect
 	sigs.k8s.io/structured-merge-diff/v4 v4.2.3 // indirect
 )
-
-exclude github.com/antlr/antlr4 v0.0.0-20201029161626-9a95f0cc3d7c
