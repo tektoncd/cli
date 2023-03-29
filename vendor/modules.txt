@@ -401,7 +401,7 @@ github.com/dimchansky/utfbom
 # github.com/dimfeld/httptreemux/v5 v5.5.0
 ## explicit; go 1.9
 github.com/dimfeld/httptreemux/v5
-# github.com/docker/cli v23.0.1+incompatible
+# github.com/docker/cli v23.0.2+incompatible
 ## explicit
 github.com/docker/cli/cli/config
 github.com/docker/cli/cli/config/configfile
