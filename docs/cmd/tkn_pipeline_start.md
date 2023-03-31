@@ -77,6 +77,7 @@ my-secret, my-empty-dir and my-volume-claim-template)
   -s, --serviceaccount string         pass the serviceaccount name
       --showlog                       show logs right after starting the Pipeline
       --skip-optional-workspace       skips the prompt for optional workspaces
+      --task-run-spec string          local or remote file containing a TaskRunSpec definition
       --task-serviceaccount strings   pass the service account corresponding to the task
       --tasks-timeout string          timeout for Pipeline TaskRuns
       --use-param-defaults            use default parameter values without prompting for input
