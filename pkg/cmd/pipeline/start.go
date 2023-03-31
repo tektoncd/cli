@@ -85,6 +85,7 @@ type startOptions struct {
 	UseParamDefaults      bool
 	TektonOptions         flags.TektonOptions
 	PodTemplate           string
+	TaskRunSpec           string
 	SkipOptionalWorkspace bool
 }
 
@@ -206,6 +207,7 @@ For passing the workspaces via flags:
 	c.Flags().StringVarP(&opt.Filename, "filename", "f", "", "local or remote file name containing a Pipeline definition to start a PipelineRun")
 	c.Flags().BoolVarP(&opt.UseParamDefaults, "use-param-defaults", "", false, "use default parameter values without prompting for input")
 	c.Flags().StringVar(&opt.PodTemplate, "pod-template", "", "local or remote file containing a PodTemplate definition")
+	c.Flags().StringVar(&opt.TaskRunSpec, "task-run-spec", "", "local or remote file containing a TaskRunSpec definition")
 	c.Flags().BoolVarP(&opt.SkipOptionalWorkspace, "skip-optional-workspace", "", false, "skips the prompt for optional workspaces")
 
 	c.Flags().StringVarP(&opt.ServiceAccountName, "serviceaccount", "s", "", "pass the serviceaccount name")
@@ -353,6 +355,15 @@ func (opt *startOptions) startPipeline(pipelineStart *v1beta1.Pipeline) error {
 			return err
 		}
 		pr.Spec.PodTemplate = &podTemplate
+	}
+
+	taskRunSpecLocation := opt.TaskRunSpec
+	if taskRunSpecLocation != "" {
+		taskRunSpec, err := pods.ParseTaskRunSpec(cs.HTTPClient, taskRunSpecLocation, file.IsYamlFile(), fmt.Errorf("invalid file format for %s: .yaml or .yml file extension and format required", taskRunSpecLocation))
+		if err != nil {
+			return err
+		}
+		pr.Spec.TaskRunSpecs = taskRunSpec
 	}
 
 	if opt.DryRun {
