@@ -18,20 +18,22 @@ import (
 	"net/http"
 
 	"github.com/tektoncd/cli/pkg/file"
-	"github.com/tektoncd/pipeline/pkg/apis/pipeline/pod"
+	"github.com/tektoncd/pipeline/pkg/apis/pipeline/v1beta1"
 	"sigs.k8s.io/yaml"
 )
 
-func ParsePodTemplate(httpClient http.Client, podTemplateLocation string, validate file.TypeValidator, errorMsg error) (pod.PodTemplate, error) {
-	podTemplate := pod.PodTemplate{}
-	b, err := file.LoadFileContent(httpClient, podTemplateLocation, validate, errorMsg)
+type TaskRunSpec = []v1beta1.PipelineTaskRunSpec
+
+func ParseTaskRunSpec(httpClient http.Client, taskRunSpecLocation string, validate file.TypeValidator, errorMsg error) (TaskRunSpec, error) {
+	taskRunSpec := TaskRunSpec{}
+	b, err := file.LoadFileContent(httpClient, taskRunSpecLocation, validate, errorMsg)
 	if err != nil {
-		return podTemplate, err
+		return taskRunSpec, err
 	}
 
-	if err := yaml.UnmarshalStrict(b, &podTemplate); err != nil {
-		return podTemplate, err
+	if err := yaml.UnmarshalStrict(b, &taskRunSpec); err != nil {
+		return taskRunSpec, err
 	}
 
-	return podTemplate, nil
+	return taskRunSpec, nil
 }
