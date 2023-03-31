@@ -1,0 +1,6 @@
+- pipelineTaskName: unit-test-task
+  taskPodTemplate:
+    schedulerName: SchedulerName
+    securityContext:
+      runAsNonRoot: true
+      runAsUser: 1001
