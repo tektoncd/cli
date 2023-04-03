@@ -42,7 +42,7 @@ require (
 	github.com/tektoncd/hub v1.12.1
 	github.com/tektoncd/pipeline v0.44.0
 	github.com/tektoncd/plumbing v0.0.0-20221102182345-5dbcfda657d7
-	github.com/tektoncd/triggers v0.23.0
+	github.com/tektoncd/triggers v0.23.1
 	github.com/theupdateframework/go-tuf v0.5.2
 	github.com/titanous/rocacheck v0.0.0-20171023193734-afe73141d399
 	go.opencensus.io v0.24.0
@@ -63,7 +63,7 @@ require (
 	k8s.io/apimachinery v0.26.3
 	k8s.io/cli-runtime v0.25.8
 	k8s.io/client-go v0.25.8
-	knative.dev/pkg v0.0.0-20221123011842-b78020c16606
+	knative.dev/pkg v0.0.0-20230224205330-75da922ef055
 	sigs.k8s.io/yaml v1.3.0
 )
 
@@ -348,10 +348,10 @@ require (
 	gopkg.in/inf.v0 v0.9.1 // indirect
 	gopkg.in/ini.v1 v1.67.0 // indirect
 	gopkg.in/natefinch/lumberjack.v2 v2.0.0 // indirect
-	k8s.io/apiextensions-apiserver v0.25.3 // indirect
-	k8s.io/klog/v2 v2.80.1 // indirect
+	k8s.io/apiextensions-apiserver v0.25.4 // indirect
+	k8s.io/klog/v2 v2.80.2-0.20221028030830-9ae4992afb54 // indirect
 	k8s.io/kube-openapi v0.0.0-20221012153701-172d655c2280 // indirect
-	k8s.io/utils v0.0.0-20221107191617-1a15be271d1d // indirect
+	k8s.io/utils v0.0.0-20221108210102-8e77b1f39fe2 // indirect
 	knative.dev/eventing v0.30.1-0.20220407170245-58865afba92c // indirect
 	knative.dev/networking v0.0.0-20220404212543-dde40b019aff // indirect
 	knative.dev/serving v0.30.1-0.20220402124840-21c05dc9d9a4 // indirect
