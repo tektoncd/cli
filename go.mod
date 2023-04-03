@@ -27,7 +27,7 @@ require (
 	github.com/hashicorp/golang-lru v0.5.4
 	github.com/hashicorp/hcl v1.0.0
 	github.com/hinshun/vt10x v0.0.0-20220228203356-1ab2cad5fd82
-	github.com/jonboulle/clockwork v0.3.0
+	github.com/jonboulle/clockwork v0.4.0
 	github.com/ktr0731/go-fuzzyfinder v0.7.0
 	github.com/letsencrypt/boulder v0.0.0-20221109233200-85aa52084eaf
 	github.com/mitchellh/go-homedir v1.1.0
