@@ -36,7 +36,7 @@ require (
 	github.com/ryanuber/go-glob v1.0.0
 	github.com/sigstore/cosign v1.13.1
 	github.com/sigstore/sigstore v1.5.2
-	github.com/spf13/cobra v1.6.1
+	github.com/spf13/cobra v1.7.0
 	github.com/spf13/pflag v1.0.5
 	github.com/tektoncd/chains v0.15.0
 	github.com/tektoncd/hub v1.12.1
