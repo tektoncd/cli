@@ -21,6 +21,8 @@ import (
 	"time"
 
 	"github.com/jonboulle/clockwork"
+	"github.com/tektoncd/cli/pkg/actions"
+	"github.com/tektoncd/cli/pkg/cli"
 	"github.com/tektoncd/cli/pkg/test"
 	cb "github.com/tektoncd/cli/pkg/test/builder"
 	testDynamic "github.com/tektoncd/cli/pkg/test/dynamic"
@@ -2510,7 +2512,7 @@ func Test_TaskRuns_Delete_With_Running_PipelineRun(t *testing.T) {
 				},
 				OwnerReferences: []metav1.OwnerReference{
 					{
-						APIVersion:         "tekton.dev/v1beta1",
+						APIVersion:         "tekton.dev/v1",
 						Kind:               "PipelineRun",
 						Name:               "pipeline-run-1",
 						UID:                "",
@@ -2665,4 +2667,242 @@ func Test_TaskRuns_Delete_With_Running_PipelineRun(t *testing.T) {
 			}
 		})
 	}
+}
+
+func Test_TaskRuns_Delete_With_Successful_PipelineRun(t *testing.T) {
+	clock := clockwork.NewFakeClock()
+
+	ns := []*corev1.Namespace{
+		{
+			ObjectMeta: metav1.ObjectMeta{
+				Name: "ns",
+			},
+		},
+	}
+
+	trs := []*v1.TaskRun{
+		{
+			ObjectMeta: metav1.ObjectMeta{
+				Namespace: "ns",
+				Name:      "tr0-1",
+				Labels:    map[string]string{"tekton.dev/task": "random"},
+				OwnerReferences: []metav1.OwnerReference{
+					{
+						APIVersion:         "tekton.dev/v1",
+						Kind:               "PipelineRun",
+						Name:               "pipeline-run-1",
+						UID:                "",
+						Controller:         nil,
+						BlockOwnerDeletion: nil,
+					}},
+			},
+			Spec: v1.TaskRunSpec{
+				TaskRef: &v1.TaskRef{
+					Name: "random",
+					Kind: v1.NamespacedTaskKind,
+				},
+			},
+			Status: v1.TaskRunStatus{
+				TaskRunStatusFields: v1.TaskRunStatusFields{
+					CompletionTime: &metav1.Time{
+						Time: clock.Now(),
+					},
+				},
+				Status: duckv1.Status{
+					Conditions: duckv1.Conditions{
+						{
+							Status: corev1.ConditionTrue,
+							Reason: v1.TaskRunReasonSuccessful.String(),
+						},
+					},
+				},
+			},
+		},
+		{
+			ObjectMeta: metav1.ObjectMeta{
+				Namespace: "ns",
+				Name:      "tr0-2",
+				Labels: map[string]string{
+					"tekton.dev/task": "random",
+				},
+				OwnerReferences: []metav1.OwnerReference{
+					{
+						APIVersion:         "tekton.dev/v1",
+						Kind:               "PipelineRun",
+						Name:               "pipeline-run-1",
+						UID:                "",
+						Controller:         nil,
+						BlockOwnerDeletion: nil,
+					}},
+			},
+			Spec: v1.TaskRunSpec{
+				TaskRef: &v1.TaskRef{
+					Name: "random",
+					Kind: v1.NamespacedTaskKind,
+				},
+			},
+			Status: v1.TaskRunStatus{
+				TaskRunStatusFields: v1.TaskRunStatusFields{
+					CompletionTime: &metav1.Time{
+						Time: clock.Now(),
+					},
+				},
+				Status: duckv1.Status{
+					Conditions: duckv1.Conditions{
+						{
+							Status: corev1.ConditionTrue,
+							Reason: v1.TaskRunReasonSuccessful.String(),
+						},
+					},
+				},
+			},
+		},
+		{
+			ObjectMeta: metav1.ObjectMeta{
+				Namespace: "ns",
+				Name:      "tr0-3",
+				Labels: map[string]string{
+					"tekton.dev/task": "random",
+				},
+				OwnerReferences: []metav1.OwnerReference{
+					{
+						APIVersion:         "tekton.dev/v1",
+						Kind:               "PipelineRun",
+						Name:               "pipeline-run-1",
+						UID:                "",
+						Controller:         nil,
+						BlockOwnerDeletion: nil,
+					}},
+			},
+			Spec: v1.TaskRunSpec{
+				TaskRef: &v1.TaskRef{
+					Name: "random",
+					Kind: v1.NamespacedTaskKind,
+				},
+			},
+			Status: v1.TaskRunStatus{
+				TaskRunStatusFields: v1.TaskRunStatusFields{
+					CompletionTime: &metav1.Time{
+						Time: clock.Now(),
+					},
+				},
+				Status: duckv1.Status{
+					Conditions: duckv1.Conditions{
+						{
+							Status: corev1.ConditionTrue,
+							Reason: v1.TaskRunReasonSuccessful.String(),
+						},
+					},
+				},
+			},
+		},
+		{
+			ObjectMeta: metav1.ObjectMeta{
+				Namespace: "ns",
+				Name:      "tr0-4",
+				Labels: map[string]string{
+					"tekton.dev/task": "random",
+				},
+				OwnerReferences: []metav1.OwnerReference{
+					{
+						APIVersion:         "tekton.dev/v1",
+						Kind:               "PipelineRun",
+						Name:               "pipeline-run-1",
+						UID:                "",
+						Controller:         nil,
+						BlockOwnerDeletion: nil,
+					}},
+			},
+			Spec: v1.TaskRunSpec{
+				TaskRef: &v1.TaskRef{
+					Name: "random",
+					Kind: v1.NamespacedTaskKind,
+				},
+			},
+			Status: v1.TaskRunStatus{
+				TaskRunStatusFields: v1.TaskRunStatusFields{
+					CompletionTime: &metav1.Time{
+						Time: clock.Now(),
+					},
+				},
+				Status: duckv1.Status{
+					Conditions: duckv1.Conditions{
+						{
+							Status: corev1.ConditionTrue,
+							Reason: v1.TaskRunReasonSuccessful.String(),
+						},
+					},
+				},
+			},
+		},
+	}
+
+	prs := []*v1.PipelineRun{
+		{
+			ObjectMeta: metav1.ObjectMeta{
+				Namespace:         "ns",
+				Name:              "pipeline-run-1",
+				Labels:            map[string]string{"tekton.dev/pipeline": "pipeline"},
+				CreationTimestamp: metav1.Time{Time: clock.Now()},
+			},
+			Spec: v1.PipelineRunSpec{
+				PipelineRef: &v1.PipelineRef{
+					Name: "pipeline",
+				},
+			},
+			Status: v1.PipelineRunStatus{
+				Status: duckv1.Status{
+					Conditions: duckv1.Conditions{
+						{
+							Status: corev1.ConditionTrue,
+							Reason: v1.PipelineRunReasonSuccessful.String(),
+						},
+					},
+				},
+				PipelineRunStatusFields: v1.PipelineRunStatusFields{
+					// pipeline run starts now
+					StartTime:      &metav1.Time{Time: clock.Now()},
+					CompletionTime: &metav1.Time{Time: clock.Now()},
+				},
+			},
+		},
+	}
+
+	cs, _ := test.SeedTestData(t, test.Data{TaskRuns: trs, PipelineRuns: prs, Namespaces: ns})
+	cs.Pipeline.Resources = cb.APIResourceList(version, []string{"taskrun", "pipelinerun"})
+	tdc := testDynamic.Options{}
+	dc, err := tdc.Client(
+		cb.UnstructuredTR(trs[0], version),
+		cb.UnstructuredTR(trs[1], version),
+		cb.UnstructuredTR(trs[2], version),
+		cb.UnstructuredTR(trs[3], version),
+		cb.UnstructuredPR(prs[0], version),
+	)
+	if err != nil {
+		t.Errorf("unable to create dynamic client: %v", err)
+	}
+
+	p := &test.Params{Tekton: cs.Pipeline, Kube: cs.Kube, Dynamic: dc, Clock: clock}
+	p.SetNamespace("ns")
+
+	command := Command(p)
+	command.SetIn(strings.NewReader("y"))
+	expected := "Are you sure you want to delete all TaskRuns in namespace \"ns\" keeping 1 TaskRuns (y/n): All but 1 TaskRuns(Completed) deleted in namespace \"ns\"\n"
+	out, err := test.ExecuteCommand(command, "delete", "--keep", "1")
+	if err != nil {
+		t.Errorf("unexpected Error")
+	}
+	test.AssertOutput(t, expected, out)
+
+	client := &cli.Clients{
+		Tekton:  cs.Pipeline,
+		Kube:    cs.Kube,
+		Dynamic: dc,
+	}
+	var tr v1.TaskRunList
+	err = actions.ListV1(taskrunGroupResource, client, metav1.ListOptions{}, p.Namespace(), &tr)
+	if err != nil {
+		t.Errorf("unexpected Error")
+	}
+	test.AssertOutput(t, 1, len(tr.Items))
 }
