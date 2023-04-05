@@ -400,7 +400,7 @@ func ownerPrFinished(cs *cli.Clients, tr v1.TaskRun) bool {
 	for _, ref := range tr.GetOwnerReferences() {
 		if ref.Kind == pipeline.PipelineRunControllerName {
 			var pr *v1.PipelineRun
-			err := actions.GetV1(pipelineRunGroupResource, cs, tr.Namespace, ref.Name, metav1.GetOptions{}, &pr)
+			err := actions.GetV1(pipelineRunGroupResource, cs, ref.Name, tr.Namespace, metav1.GetOptions{}, &pr)
 			if err != nil {
 				return false
 			}
