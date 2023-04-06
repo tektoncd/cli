@@ -207,7 +207,7 @@ For passing the workspaces via flags:
 	c.Flags().StringVarP(&opt.Filename, "filename", "f", "", "local or remote file name containing a Pipeline definition to start a PipelineRun")
 	c.Flags().BoolVarP(&opt.UseParamDefaults, "use-param-defaults", "", false, "use default parameter values without prompting for input")
 	c.Flags().StringVar(&opt.PodTemplate, "pod-template", "", "local or remote file containing a PodTemplate definition")
-	c.Flags().StringVar(&opt.TaskRunSpec, "task-run-spec", "", "local or remote file containing a TaskRunSpec definition")
+	c.Flags().StringVar(&opt.TaskRunSpec, "taskrun-spec", "", "local or remote file containing a TaskRunSpec definition")
 	c.Flags().BoolVarP(&opt.SkipOptionalWorkspace, "skip-optional-workspace", "", false, "skips the prompt for optional workspaces")
 
 	c.Flags().StringVarP(&opt.ServiceAccountName, "serviceaccount", "s", "", "pass the serviceaccount name")

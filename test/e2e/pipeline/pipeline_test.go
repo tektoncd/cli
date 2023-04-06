@@ -305,11 +305,11 @@ Waiting for logs to be available...
 		}
 	})
 
-	t.Run("Start PipelineRun with --task-run-spec", func(t *testing.T) {
+	t.Run("Start PipelineRun with --taskrun-spec", func(t *testing.T) {
 		tkn.MustSucceed(t, "pipeline", "start", tePipelineName,
 			"-p=filename=output",
 			"-w=name=shared-data,emptyDir=",
-			"--task-run-spec="+helper.GetResourcePath("/taskrunspec/taskrunspec.yaml"),
+			"--taskrun-spec="+helper.GetResourcePath("/taskrunspec/taskrunspec.yaml"),
 			"--use-param-defaults",
 			"--showlog")
 

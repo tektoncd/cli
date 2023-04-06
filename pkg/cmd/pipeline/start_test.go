@@ -1022,7 +1022,7 @@ func TestPipelineStart_ExecuteCommand_v1beta1(t *testing.T) {
 				"-l=jemange=desfrites",
 				"-n", "ns",
 				"--dry-run",
-				"--task-run-spec", "./testdata/taskrunspec.yaml",
+				"--taskrun-spec", "./testdata/taskrunspec.yaml",
 			},
 			namespace:  "",
 			input:      c2,
