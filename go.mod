@@ -48,7 +48,7 @@ require (
 	go.opencensus.io v0.24.0
 	go.uber.org/multierr v1.9.0
 	go.uber.org/zap v1.24.0
-	golang.org/x/crypto v0.7.0
+	golang.org/x/crypto v0.8.0
 	golang.org/x/net v0.9.0
 	golang.org/x/term v0.7.0
 	golang.org/x/time v0.3.0
