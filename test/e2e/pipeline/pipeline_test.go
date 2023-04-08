@@ -309,7 +309,7 @@ Waiting for logs to be available...
 		tkn.MustSucceed(t, "pipeline", "start", tePipelineName,
 			"-p=filename=output",
 			"-w=name=shared-data,emptyDir=",
-			"--taskrun-spec="+helper.GetResourcePath("/taskrunspec/taskrunspec.yaml"),
+			"--taskrun-spec="+helper.GetResourcePath("/taskrunspec.yaml"),
 			"--use-param-defaults",
 			"--showlog")
 
