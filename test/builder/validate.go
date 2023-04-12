@@ -15,7 +15,6 @@
 package builder
 
 import (
-	"fmt"
 	"sort"
 	"strings"
 
@@ -68,26 +67,6 @@ func SortResourcesByTypeAndName(pres []v1beta1.PipelineDeclaredResource) []v1bet
 }
 
 // Pipeline Run Describe command
-
-func PipelineRunHasFailed(pr *v1beta1.PipelineRun) string {
-	if len(pr.Status.Conditions) == 0 {
-		return ""
-	}
-
-	if pr.Status.Conditions[0].Status == corev1.ConditionFalse {
-		for _, taskrunStatus := range pr.Status.TaskRuns {
-			if len(taskrunStatus.Status.Conditions) == 0 {
-				continue
-			}
-			if taskrunStatus.Status.Conditions[0].Status == corev1.ConditionFalse {
-				return fmt.Sprintf("%s (%s)", pr.Status.Conditions[0].Message,
-					taskrunStatus.Status.Conditions[0].Message)
-			}
-		}
-		return pr.Status.Conditions[0].Message
-	}
-	return ""
-}
 
 type TaskrunList []tkr
 
