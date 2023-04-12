@@ -127,14 +127,12 @@ func Test_start_has_task_filename_v1beta1(t *testing.T) {
 	c := Command(&test.Params{Tekton: cs.Pipeline, Kube: cs.Kube, Dynamic: dc})
 
 	got, err := test.ExecuteCommand(c, "start", "-n", "ns", "--filename=./testdata/task.yaml",
-		"-i=docker-source=/path", "-o=build-image=image", "-p=pathToDockerFile=path", "--use-param-defaults")
+		"-p=pathToDockerFile=path", "--use-param-defaults")
 	if err != nil {
 		t.Errorf("Not expecting an error, but got %s", err.Error())
 	}
 
-	expected := "Flag --inputresource has been deprecated, pipelineresources have been deprecated, this flag will be removed soon\n" +
-		"Flag --outputresource has been deprecated, pipelineresources have been deprecated, this flag will be removed soon\n" +
-		"TaskRun started: \n\nIn order to track the TaskRun progress run:\ntkn taskrun logs  -f -n ns\n"
+	expected := "TaskRun started: \n\nIn order to track the TaskRun progress run:\ntkn taskrun logs  -f -n ns\n"
 	test.AssertOutput(t, expected, got)
 }
 
@@ -155,14 +153,12 @@ func Test_start_task_filename_param_with_invalid_type_v1beta1(t *testing.T) {
 	}
 	c := Command(&test.Params{Tekton: cs.Pipeline, Kube: cs.Kube, Dynamic: dc})
 
-	got, err := test.ExecuteCommand(c, "start", "-n", "ns", "--filename=./testdata/task-param-with-invalid-type.yaml", "-i=docker-source=/path", "-o=build-image=image", "-p=pathToDockerFile=path")
+	got, err := test.ExecuteCommand(c, "start", "-n", "ns", "--filename=./testdata/task-param-with-invalid-type.yaml", "-p=pathToDockerFile=path")
 	if err == nil {
 		t.Errorf("expected an error but didn't get one")
 	}
 
-	expected := "Flag --inputresource has been deprecated, pipelineresources have been deprecated, this flag will be removed soon\n" +
-		"Flag --outputresource has been deprecated, pipelineresources have been deprecated, this flag will be removed soon\n" +
-		"Error: params does not have a valid type - 'pathToDockerFile'\n"
+	expected := "Error: params does not have a valid type - 'pathToDockerFile'\n"
 	test.AssertOutput(t, expected, got)
 }
 
@@ -200,30 +196,6 @@ func Test_start_task_not_found_v1beta1(t *testing.T) {
 				Namespace: "ns",
 			},
 			Spec: v1beta1.TaskSpec{
-				Resources: &v1beta1.TaskResources{
-					Inputs: []v1beta1.TaskResource{
-						{
-							ResourceDeclaration: v1beta1.ResourceDeclaration{
-								Name: "my-repo",
-								Type: v1beta1.PipelineResourceTypeGit,
-							},
-						},
-						{
-							ResourceDeclaration: v1beta1.ResourceDeclaration{
-								Name: "my-image",
-								Type: v1beta1.PipelineResourceTypeImage,
-							},
-						},
-					},
-					Outputs: []v1beta1.TaskResource{
-						{
-							ResourceDeclaration: v1beta1.ResourceDeclaration{
-								Name: "code-image",
-								Type: v1beta1.PipelineResourceTypeImage,
-							},
-						},
-					},
-				},
 				Params: []v1beta1.ParamSpec{
 					{
 						Name: "myarg",
@@ -278,30 +250,6 @@ func Test_start_task_context_v1beta1(t *testing.T) {
 				Namespace: "ns",
 			},
 			Spec: v1beta1.TaskSpec{
-				Resources: &v1beta1.TaskResources{
-					Inputs: []v1beta1.TaskResource{
-						{
-							ResourceDeclaration: v1beta1.ResourceDeclaration{
-								Name: "my-repo",
-								Type: v1beta1.PipelineResourceTypeGit,
-							},
-						},
-						{
-							ResourceDeclaration: v1beta1.ResourceDeclaration{
-								Name: "my-image",
-								Type: v1beta1.PipelineResourceTypeImage,
-							},
-						},
-					},
-					Outputs: []v1beta1.TaskResource{
-						{
-							ResourceDeclaration: v1beta1.ResourceDeclaration{
-								Name: "code-image",
-								Type: v1beta1.PipelineResourceTypeImage,
-							},
-						},
-					},
-				},
 				Params: []v1beta1.ParamSpec{
 					{
 						Name: "myarg",
@@ -348,20 +296,14 @@ func Test_start_task_context_v1beta1(t *testing.T) {
 
 	gotConfig, _ := test.ExecuteCommand(task, "start", "task-1",
 		"--context=NinjaRabbit",
-		"-i=my-repo=git",
-		"-i=my-image=image",
 		"-p=myarg=value1",
 		"-p=print=boom,boom",
 		"-l=key=value",
-		"-o=code-image=output-image",
 		"-w=name=pvc,claimName=pvc3",
 		"-s=svc1",
 		"-n=ns")
 
-	gcExpected := "Flag --inputresource has been deprecated, pipelineresources have been deprecated, this flag will be removed soon\n" +
-		"Flag --inputresource has been deprecated, pipelineresources have been deprecated, this flag will be removed soon\n" +
-		"Flag --outputresource has been deprecated, pipelineresources have been deprecated, this flag will be removed soon\n" +
-		"TaskRun started: \n\nIn order to track the TaskRun progress run:\ntkn taskrun --context=NinjaRabbit logs  -f -n ns\n"
+	gcExpected := "TaskRun started: \n\nIn order to track the TaskRun progress run:\ntkn taskrun --context=NinjaRabbit logs  -f -n ns\n"
 	test.AssertOutput(t, gcExpected, gotConfig)
 
 }
@@ -374,30 +316,6 @@ func Test_start_task_v1beta1(t *testing.T) {
 				Namespace: "ns",
 			},
 			Spec: v1beta1.TaskSpec{
-				Resources: &v1beta1.TaskResources{
-					Inputs: []v1beta1.TaskResource{
-						{
-							ResourceDeclaration: v1beta1.ResourceDeclaration{
-								Name: "my-repo",
-								Type: v1beta1.PipelineResourceTypeGit,
-							},
-						},
-						{
-							ResourceDeclaration: v1beta1.ResourceDeclaration{
-								Name: "my-image",
-								Type: v1beta1.PipelineResourceTypeImage,
-							},
-						},
-					},
-					Outputs: []v1beta1.TaskResource{
-						{
-							ResourceDeclaration: v1beta1.ResourceDeclaration{
-								Name: "code-image",
-								Type: v1beta1.PipelineResourceTypeImage,
-							},
-						},
-					},
-				},
 				Params: []v1beta1.ParamSpec{
 					{
 						Name: "myarg",
@@ -442,20 +360,14 @@ func Test_start_task_v1beta1(t *testing.T) {
 
 	task := Command(p)
 	got, _ := test.ExecuteCommand(task, "start", "task-1",
-		"-i=my-repo=git",
-		"-i=my-image=image",
 		"-p=myarg=value1",
 		"-p=print=boom,boom",
 		"-l=key=value",
-		"-o=code-image=output-image",
 		"-w=name=pvc,claimName=pvc3",
 		"-s=svc1",
 		"-n=ns")
 
-	expected := "Flag --inputresource has been deprecated, pipelineresources have been deprecated, this flag will be removed soon\n" +
-		"Flag --inputresource has been deprecated, pipelineresources have been deprecated, this flag will be removed soon\n" +
-		"Flag --outputresource has been deprecated, pipelineresources have been deprecated, this flag will be removed soon\n" +
-		"TaskRun started: \n\nIn order to track the TaskRun progress run:\ntkn taskrun logs  -f -n ns\n"
+	expected := "TaskRun started: \n\nIn order to track the TaskRun progress run:\ntkn taskrun logs  -f -n ns\n"
 	test.AssertOutput(t, expected, got)
 	clients, _ := p.Clients()
 
@@ -498,30 +410,6 @@ func Test_start_task_last_v1beta1(t *testing.T) {
 				Namespace: "ns",
 			},
 			Spec: v1beta1.TaskSpec{
-				Resources: &v1beta1.TaskResources{
-					Inputs: []v1beta1.TaskResource{
-						{
-							ResourceDeclaration: v1beta1.ResourceDeclaration{
-								Name: "my-repo",
-								Type: v1beta1.PipelineResourceTypeGit,
-							},
-						},
-						{
-							ResourceDeclaration: v1beta1.ResourceDeclaration{
-								Name: "my-image",
-								Type: v1beta1.PipelineResourceTypeImage,
-							},
-						},
-					},
-					Outputs: []v1beta1.TaskResource{
-						{
-							ResourceDeclaration: v1beta1.ResourceDeclaration{
-								Name: "code-image",
-								Type: v1beta1.PipelineResourceTypeImage,
-							},
-						},
-					},
-				},
 				Params: []v1beta1.ParamSpec{
 					{
 						Name: "myarg",
@@ -571,28 +459,6 @@ func Test_start_task_last_v1beta1(t *testing.T) {
 					{
 						Name:  "print",
 						Value: v1beta1.ArrayOrString{Type: v1beta1.ParamTypeArray, ArrayVal: []string{"booms", "booms", "booms"}},
-					},
-				},
-				Resources: &v1beta1.TaskRunResources{
-					Inputs: []v1beta1.TaskResourceBinding{
-						{
-							PipelineResourceBinding: v1beta1.PipelineResourceBinding{
-								Name: "my-repo",
-								ResourceRef: &v1beta1.PipelineResourceRef{
-									Name: "git",
-								},
-							},
-						},
-					},
-					Outputs: []v1beta1.TaskResourceBinding{
-						{
-							PipelineResourceBinding: v1beta1.PipelineResourceBinding{
-								Name: "code-image",
-								ResourceRef: &v1beta1.PipelineResourceRef{
-									Name: "image",
-								},
-							},
-						},
 					},
 				},
 				ServiceAccountName: "svc",
@@ -646,12 +512,6 @@ func Test_start_task_last_v1beta1(t *testing.T) {
 		t.Errorf("Error listing taskruns %s", err.Error())
 	}
 
-	for _, v := range tr.Spec.Resources.Inputs {
-		if v.Name == "my-repo" {
-			test.AssertOutput(t, "git", v.ResourceRef.Name)
-		}
-	}
-
 	test.AssertOutput(t, 2, len(tr.Spec.Params))
 
 	for _, v := range tr.Spec.Params {
@@ -661,12 +521,6 @@ func Test_start_task_last_v1beta1(t *testing.T) {
 
 		if v.Name == "print" {
 			test.AssertOutput(t, v1beta1.ArrayOrString{Type: v1beta1.ParamTypeArray, ArrayVal: []string{"booms", "booms", "booms"}}, v.Value)
-		}
-	}
-
-	for _, v := range tr.Spec.Resources.Outputs {
-		if v.Name == "code-image" {
-			test.AssertOutput(t, "image", v.ResourceRef.Name)
 		}
 	}
 
@@ -767,24 +621,6 @@ func Test_start_use_taskrun_v1beta1(t *testing.T) {
 				Namespace: "ns",
 			},
 			Spec: v1beta1.TaskSpec{
-				Resources: &v1beta1.TaskResources{
-					Inputs: []v1beta1.TaskResource{
-						{
-							ResourceDeclaration: v1beta1.ResourceDeclaration{
-								Name: "my-repo",
-								Type: v1beta1.PipelineResourceTypeGit,
-							},
-						},
-					},
-					Outputs: []v1beta1.TaskResource{
-						{
-							ResourceDeclaration: v1beta1.ResourceDeclaration{
-								Name: "code-image",
-								Type: v1beta1.PipelineResourceTypeImage,
-							},
-						},
-					},
-				},
 				Params: []v1beta1.ParamSpec{
 					{
 						Name: "myarg",
@@ -901,24 +737,6 @@ func Test_start_use_taskrun_cancelled_status_v1beta1(t *testing.T) {
 				Namespace: "ns",
 			},
 			Spec: v1beta1.TaskSpec{
-				Resources: &v1beta1.TaskResources{
-					Inputs: []v1beta1.TaskResource{
-						{
-							ResourceDeclaration: v1beta1.ResourceDeclaration{
-								Name: "my-repo",
-								Type: v1beta1.PipelineResourceTypeGit,
-							},
-						},
-					},
-					Outputs: []v1beta1.TaskResource{
-						{
-							ResourceDeclaration: v1beta1.ResourceDeclaration{
-								Name: "code-image",
-								Type: v1beta1.PipelineResourceTypeImage,
-							},
-						},
-					},
-				},
 				Params: []v1beta1.ParamSpec{
 					{
 						Name: "myarg",
@@ -1024,30 +842,6 @@ func Test_start_task_last_generate_name_v1beta1(t *testing.T) {
 				Namespace: "ns",
 			},
 			Spec: v1beta1.TaskSpec{
-				Resources: &v1beta1.TaskResources{
-					Inputs: []v1beta1.TaskResource{
-						{
-							ResourceDeclaration: v1beta1.ResourceDeclaration{
-								Name: "my-repo",
-								Type: v1beta1.PipelineResourceTypeGit,
-							},
-						},
-						{
-							ResourceDeclaration: v1beta1.ResourceDeclaration{
-								Name: "my-image",
-								Type: v1beta1.PipelineResourceTypeImage,
-							},
-						},
-					},
-					Outputs: []v1beta1.TaskResource{
-						{
-							ResourceDeclaration: v1beta1.ResourceDeclaration{
-								Name: "code-image",
-								Type: v1beta1.PipelineResourceTypeImage,
-							},
-						},
-					},
-				},
 				Params: []v1beta1.ParamSpec{
 					{
 						Name: "myarg",
@@ -1098,28 +892,6 @@ func Test_start_task_last_generate_name_v1beta1(t *testing.T) {
 					{
 						Name:  "print",
 						Value: v1beta1.ArrayOrString{Type: v1beta1.ParamTypeArray, ArrayVal: []string{"booms", "booms", "booms"}},
-					},
-				},
-				Resources: &v1beta1.TaskRunResources{
-					Inputs: []v1beta1.TaskResourceBinding{
-						{
-							PipelineResourceBinding: v1beta1.PipelineResourceBinding{
-								Name: "my-repo",
-								ResourceRef: &v1beta1.PipelineResourceRef{
-									Name: "git",
-								},
-							},
-						},
-					},
-					Outputs: []v1beta1.TaskResourceBinding{
-						{
-							PipelineResourceBinding: v1beta1.PipelineResourceBinding{
-								Name: "code-image",
-								ResourceRef: &v1beta1.PipelineResourceRef{
-									Name: "image",
-								},
-							},
-						},
 					},
 				},
 				ServiceAccountName: "svc",
@@ -1188,30 +960,6 @@ func Test_start_task_last_with_prefix_name_v1beta1(t *testing.T) {
 				Namespace: "ns",
 			},
 			Spec: v1beta1.TaskSpec{
-				Resources: &v1beta1.TaskResources{
-					Inputs: []v1beta1.TaskResource{
-						{
-							ResourceDeclaration: v1beta1.ResourceDeclaration{
-								Name: "my-repo",
-								Type: v1beta1.PipelineResourceTypeGit,
-							},
-						},
-						{
-							ResourceDeclaration: v1beta1.ResourceDeclaration{
-								Name: "my-image",
-								Type: v1beta1.PipelineResourceTypeImage,
-							},
-						},
-					},
-					Outputs: []v1beta1.TaskResource{
-						{
-							ResourceDeclaration: v1beta1.ResourceDeclaration{
-								Name: "code-image",
-								Type: v1beta1.PipelineResourceTypeImage,
-							},
-						},
-					},
-				},
 				Params: []v1beta1.ParamSpec{
 					{
 						Name: "myarg",
@@ -1262,28 +1010,6 @@ func Test_start_task_last_with_prefix_name_v1beta1(t *testing.T) {
 					{
 						Name:  "print",
 						Value: v1beta1.ArrayOrString{Type: v1beta1.ParamTypeArray, ArrayVal: []string{"booms", "booms", "booms"}},
-					},
-				},
-				Resources: &v1beta1.TaskRunResources{
-					Inputs: []v1beta1.TaskResourceBinding{
-						{
-							PipelineResourceBinding: v1beta1.PipelineResourceBinding{
-								Name: "my-repo",
-								ResourceRef: &v1beta1.PipelineResourceRef{
-									Name: "git",
-								},
-							},
-						},
-					},
-					Outputs: []v1beta1.TaskResourceBinding{
-						{
-							PipelineResourceBinding: v1beta1.PipelineResourceBinding{
-								Name: "code-image",
-								ResourceRef: &v1beta1.PipelineResourceRef{
-									Name: "image",
-								},
-							},
-						},
 					},
 				},
 				ServiceAccountName: "svc",
@@ -1351,30 +1077,6 @@ func Test_start_task_with_prefix_name_v1beta1(t *testing.T) {
 				Namespace: "ns",
 			},
 			Spec: v1beta1.TaskSpec{
-				Resources: &v1beta1.TaskResources{
-					Inputs: []v1beta1.TaskResource{
-						{
-							ResourceDeclaration: v1beta1.ResourceDeclaration{
-								Name: "my-repo",
-								Type: v1beta1.PipelineResourceTypeGit,
-							},
-						},
-						{
-							ResourceDeclaration: v1beta1.ResourceDeclaration{
-								Name: "my-image",
-								Type: v1beta1.PipelineResourceTypeImage,
-							},
-						},
-					},
-					Outputs: []v1beta1.TaskResource{
-						{
-							ResourceDeclaration: v1beta1.ResourceDeclaration{
-								Name: "code-image",
-								Type: v1beta1.PipelineResourceTypeImage,
-							},
-						},
-					},
-				},
 				Params: []v1beta1.ParamSpec{
 					{
 						Name: "myarg",
@@ -1425,28 +1127,6 @@ func Test_start_task_with_prefix_name_v1beta1(t *testing.T) {
 					{
 						Name:  "print",
 						Value: v1beta1.ArrayOrString{Type: v1beta1.ParamTypeArray, ArrayVal: []string{"booms", "booms", "booms"}},
-					},
-				},
-				Resources: &v1beta1.TaskRunResources{
-					Inputs: []v1beta1.TaskResourceBinding{
-						{
-							PipelineResourceBinding: v1beta1.PipelineResourceBinding{
-								Name: "my-repo",
-								ResourceRef: &v1beta1.PipelineResourceRef{
-									Name: "git",
-								},
-							},
-						},
-					},
-					Outputs: []v1beta1.TaskResourceBinding{
-						{
-							PipelineResourceBinding: v1beta1.PipelineResourceBinding{
-								Name: "code-image",
-								ResourceRef: &v1beta1.PipelineResourceRef{
-									Name: "image",
-								},
-							},
-						},
 					},
 				},
 				ServiceAccountName: "svc",
@@ -1514,30 +1194,6 @@ func Test_start_task_last_with_inputs_v1beta1(t *testing.T) {
 				Namespace: "ns",
 			},
 			Spec: v1beta1.TaskSpec{
-				Resources: &v1beta1.TaskResources{
-					Inputs: []v1beta1.TaskResource{
-						{
-							ResourceDeclaration: v1beta1.ResourceDeclaration{
-								Name: "my-repo",
-								Type: v1beta1.PipelineResourceTypeGit,
-							},
-						},
-						{
-							ResourceDeclaration: v1beta1.ResourceDeclaration{
-								Name: "my-image",
-								Type: v1beta1.PipelineResourceTypeImage,
-							},
-						},
-					},
-					Outputs: []v1beta1.TaskResource{
-						{
-							ResourceDeclaration: v1beta1.ResourceDeclaration{
-								Name: "code-image",
-								Type: v1beta1.PipelineResourceTypeImage,
-							},
-						},
-					},
-				},
 				Params: []v1beta1.ParamSpec{
 					{
 						Name: "myarg",
@@ -1590,28 +1246,6 @@ func Test_start_task_last_with_inputs_v1beta1(t *testing.T) {
 						Value: v1beta1.ArrayOrString{Type: v1beta1.ParamTypeArray, ArrayVal: []string{"booms", "booms", "booms"}},
 					},
 				},
-				Resources: &v1beta1.TaskRunResources{
-					Inputs: []v1beta1.TaskResourceBinding{
-						{
-							PipelineResourceBinding: v1beta1.PipelineResourceBinding{
-								Name: "my-repo",
-								ResourceRef: &v1beta1.PipelineResourceRef{
-									Name: "git",
-								},
-							},
-						},
-					},
-					Outputs: []v1beta1.TaskResourceBinding{
-						{
-							PipelineResourceBinding: v1beta1.PipelineResourceBinding{
-								Name: "code-image",
-								ResourceRef: &v1beta1.PipelineResourceRef{
-									Name: "image",
-								},
-							},
-						},
-					},
-				},
 				ServiceAccountName: "svc",
 				TaskRef: &v1beta1.TaskRef{
 					Name: "task",
@@ -1651,29 +1285,19 @@ func Test_start_task_last_with_inputs_v1beta1(t *testing.T) {
 
 	task := Command(p)
 	got, _ := test.ExecuteCommand(task, "start", "task",
-		"-i=my-repo=git-new",
 		"-p=myarg=value1",
 		"-p=print=boom,boom",
-		"-o=code-image=output-image",
 		"-s=svc1",
 		"-n=ns",
 		"--last")
 
-	expected := "Flag --inputresource has been deprecated, pipelineresources have been deprecated, this flag will be removed soon\n" +
-		"Flag --outputresource has been deprecated, pipelineresources have been deprecated, this flag will be removed soon\n" +
-		"TaskRun started: random\n\nIn order to track the TaskRun progress run:\ntkn taskrun logs random -f -n ns\n"
+	expected := "TaskRun started: random\n\nIn order to track the TaskRun progress run:\ntkn taskrun logs random -f -n ns\n"
 	test.AssertOutput(t, expected, got)
 
 	clients, _ := p.Clients()
 	var tr *v1beta1.TaskRun
 	if err := actions.GetV1(taskrunGroupResource, clients, "random", "ns", metav1.GetOptions{}, &tr); err != nil {
 		t.Errorf("Error listing taskruns %s", err.Error())
-	}
-
-	for _, v := range tr.Spec.Resources.Inputs {
-		if v.Name == "my-repo" {
-			test.AssertOutput(t, "git-new", v.ResourceRef.Name)
-		}
 	}
 
 	test.AssertOutput(t, 2, len(tr.Spec.Params))
@@ -1687,13 +1311,6 @@ func Test_start_task_last_with_inputs_v1beta1(t *testing.T) {
 			test.AssertOutput(t, v1beta1.ArrayOrString{Type: v1beta1.ParamTypeArray, ArrayVal: []string{"boom", "boom"}}, v.Value)
 		}
 	}
-
-	for _, v := range tr.Spec.Resources.Outputs {
-		if v.Name == "code-image" {
-			test.AssertOutput(t, "output-image", v.ResourceRef.Name)
-		}
-	}
-
 	test.AssertOutput(t, "svc1", tr.Spec.ServiceAccountName)
 }
 
@@ -1705,30 +1322,6 @@ func Test_start_task_last_without_taskrun_v1beta1(t *testing.T) {
 				Namespace: "ns",
 			},
 			Spec: v1beta1.TaskSpec{
-				Resources: &v1beta1.TaskResources{
-					Inputs: []v1beta1.TaskResource{
-						{
-							ResourceDeclaration: v1beta1.ResourceDeclaration{
-								Name: "my-repo",
-								Type: v1beta1.PipelineResourceTypeGit,
-							},
-						},
-						{
-							ResourceDeclaration: v1beta1.ResourceDeclaration{
-								Name: "my-image",
-								Type: v1beta1.PipelineResourceTypeImage,
-							},
-						},
-					},
-					Outputs: []v1beta1.TaskResource{
-						{
-							ResourceDeclaration: v1beta1.ResourceDeclaration{
-								Name: "code-image",
-								Type: v1beta1.PipelineResourceTypeImage,
-							},
-						},
-					},
-				},
 				Params: []v1beta1.ParamSpec{
 					{
 						Name: "myarg",
@@ -1793,30 +1386,6 @@ func Test_start_task_client_error_v1beta1(t *testing.T) {
 				Namespace: "ns",
 			},
 			Spec: v1beta1.TaskSpec{
-				Resources: &v1beta1.TaskResources{
-					Inputs: []v1beta1.TaskResource{
-						{
-							ResourceDeclaration: v1beta1.ResourceDeclaration{
-								Name: "my-repo",
-								Type: v1beta1.PipelineResourceTypeGit,
-							},
-						},
-						{
-							ResourceDeclaration: v1beta1.ResourceDeclaration{
-								Name: "my-image",
-								Type: v1beta1.PipelineResourceTypeImage,
-							},
-						},
-					},
-					Outputs: []v1beta1.TaskResource{
-						{
-							ResourceDeclaration: v1beta1.ResourceDeclaration{
-								Name: "code-image",
-								Type: v1beta1.PipelineResourceTypeImage,
-							},
-						},
-					},
-				},
 				Params: []v1beta1.ParamSpec{
 					{
 						Name: "myarg",
@@ -1871,106 +1440,10 @@ func Test_start_task_client_error_v1beta1(t *testing.T) {
 	task := Command(p)
 	got, _ := test.ExecuteCommand(task,
 		"start", "task-1", "-n", "ns",
-		"-i=my-repo=git",
-		"-i=my-image=image",
 		"-p=myarg=value1",
 		"-p=print=boom,boom",
-		"-o=code-image=image",
 	)
-	expected := "Flag --inputresource has been deprecated, pipelineresources have been deprecated, this flag will be removed soon\n" +
-		"Flag --inputresource has been deprecated, pipelineresources have been deprecated, this flag will be removed soon\n" +
-		"Flag --outputresource has been deprecated, pipelineresources have been deprecated, this flag will be removed soon\n" +
-		"Error: cluster not accessible\n"
-	test.AssertOutput(t, expected, got)
-}
-
-func Test_start_task_invalid_input_res_v1beta1(t *testing.T) {
-	tasks := []*v1beta1.Task{
-		{
-			ObjectMeta: metav1.ObjectMeta{
-				Name:      "task-1",
-				Namespace: "ns",
-			},
-			Spec: v1beta1.TaskSpec{
-				Resources: &v1beta1.TaskResources{
-					Inputs: []v1beta1.TaskResource{
-						{
-							ResourceDeclaration: v1beta1.ResourceDeclaration{
-								Name: "my-repo",
-								Type: v1beta1.PipelineResourceTypeGit,
-							},
-						},
-						{
-							ResourceDeclaration: v1beta1.ResourceDeclaration{
-								Name: "my-image",
-								Type: v1beta1.PipelineResourceTypeImage,
-							},
-						},
-					},
-					Outputs: []v1beta1.TaskResource{
-						{
-							ResourceDeclaration: v1beta1.ResourceDeclaration{
-								Name: "code-image",
-								Type: v1beta1.PipelineResourceTypeImage,
-							},
-						},
-					},
-				},
-				Params: []v1beta1.ParamSpec{
-					{
-						Name: "myarg",
-						Type: v1beta1.ParamTypeString,
-					},
-					{
-						Name: "print",
-						Type: v1beta1.ParamTypeArray,
-					},
-				},
-				Steps: []v1beta1.Step{
-					{
-						Name:  "hello",
-						Image: "busybox",
-					},
-					{
-						Name:  "exit",
-						Image: "busybox",
-					},
-				},
-			},
-		},
-	}
-
-	ns := []*corev1.Namespace{
-		{
-			ObjectMeta: metav1.ObjectMeta{
-				Name: "ns",
-			},
-		},
-	}
-
-	cs, _ := test.SeedV1beta1TestData(t, pipelinetest.Data{Tasks: tasks, Namespaces: ns})
-	cs.Pipeline.Resources = cb.APIResourceList(versionv1beta1, []string{"task", "taskrun"})
-	tdc := testDynamic.Options{}
-	dc, _ := tdc.Client(
-		cb.UnstructuredV1beta1T(tasks[0], versionv1beta1),
-	)
-
-	p := &test.Params{Tekton: cs.Pipeline, Kube: cs.Kube, Resource: cs.Resource, Dynamic: dc}
-
-	task := Command(p)
-	got, _ := test.ExecuteCommand(task, "start", "task-1",
-		"-i=my-repo git-repo",
-		"-i=my-image=lkadjf",
-		"-o=some=some",
-		"-p=some=some",
-		"-n", "ns",
-		"-p=myarg=abc",
-		"-p=print=xyz",
-	)
-	expected := "Flag --inputresource has been deprecated, pipelineresources have been deprecated, this flag will be removed soon\n" +
-		"Flag --inputresource has been deprecated, pipelineresources have been deprecated, this flag will be removed soon\n" +
-		"Flag --outputresource has been deprecated, pipelineresources have been deprecated, this flag will be removed soon\n" +
-		"Error: invalid input format for resource parameter: my-repo git-repo\n"
+	expected := "Error: cluster not accessible\n"
 	test.AssertOutput(t, expected, got)
 }
 
@@ -1982,30 +1455,6 @@ func Test_start_task_invalid_workspace_v1beta1(t *testing.T) {
 				Namespace: "ns",
 			},
 			Spec: v1beta1.TaskSpec{
-				Resources: &v1beta1.TaskResources{
-					Inputs: []v1beta1.TaskResource{
-						{
-							ResourceDeclaration: v1beta1.ResourceDeclaration{
-								Name: "my-repo",
-								Type: v1beta1.PipelineResourceTypeGit,
-							},
-						},
-						{
-							ResourceDeclaration: v1beta1.ResourceDeclaration{
-								Name: "my-image",
-								Type: v1beta1.PipelineResourceTypeImage,
-							},
-						},
-					},
-					Outputs: []v1beta1.TaskResource{
-						{
-							ResourceDeclaration: v1beta1.ResourceDeclaration{
-								Name: "code-image",
-								Type: v1beta1.PipelineResourceTypeImage,
-							},
-						},
-					},
-				},
 				Steps: []v1beta1.Step{
 					{
 						Name:  "hello",
@@ -2046,100 +1495,9 @@ func Test_start_task_invalid_workspace_v1beta1(t *testing.T) {
 	task := Command(p)
 	got, _ := test.ExecuteCommand(task, "start", "task-1",
 		"-w=claimName=pvc3",
-		"-i=my-image=lkadjf",
-		"-o=code-image=some",
 		"-n", "ns",
 	)
-	expected := "Flag --inputresource has been deprecated, pipelineresources have been deprecated, this flag will be removed soon\n" +
-		"Flag --outputresource has been deprecated, pipelineresources have been deprecated, this flag will be removed soon\n" +
-		"Error: Name not found for workspace\n"
-	test.AssertOutput(t, expected, got)
-}
-
-func Test_start_task_invalid_output_res_v1beta1(t *testing.T) {
-	tasks := []*v1beta1.Task{
-		{
-			ObjectMeta: metav1.ObjectMeta{
-				Name:      "task-1",
-				Namespace: "ns",
-			},
-			Spec: v1beta1.TaskSpec{
-				Resources: &v1beta1.TaskResources{
-					Inputs: []v1beta1.TaskResource{
-						{
-							ResourceDeclaration: v1beta1.ResourceDeclaration{
-								Name: "my-repo",
-								Type: v1beta1.PipelineResourceTypeGit,
-							},
-						},
-						{
-							ResourceDeclaration: v1beta1.ResourceDeclaration{
-								Name: "my-image",
-								Type: v1beta1.PipelineResourceTypeImage,
-							},
-						},
-					},
-					Outputs: []v1beta1.TaskResource{
-						{
-							ResourceDeclaration: v1beta1.ResourceDeclaration{
-								Name: "code-image",
-								Type: v1beta1.PipelineResourceTypeImage,
-							},
-						},
-					},
-				},
-				Params: []v1beta1.ParamSpec{
-					{
-						Name: "myarg",
-						Type: v1beta1.ParamTypeString,
-					},
-					{
-						Name: "print",
-						Type: v1beta1.ParamTypeArray,
-					},
-				},
-				Steps: []v1beta1.Step{
-					{
-						Name:  "hello",
-						Image: "busybox",
-					},
-					{
-						Name:  "exit",
-						Image: "busybox",
-					},
-				},
-			},
-		},
-	}
-
-	ns := []*corev1.Namespace{
-		{
-			ObjectMeta: metav1.ObjectMeta{
-				Name: "ns",
-			},
-		},
-	}
-
-	cs, _ := test.SeedV1beta1TestData(t, pipelinetest.Data{Tasks: tasks, Namespaces: ns})
-	cs.Pipeline.Resources = cb.APIResourceList(versionv1beta1, []string{"task", "taskrun"})
-	tdc := testDynamic.Options{}
-	dc, _ := tdc.Client(
-		cb.UnstructuredV1beta1T(tasks[0], versionv1beta1),
-	)
-	p := &test.Params{Tekton: cs.Pipeline, Kube: cs.Kube, Resource: cs.Resource, Dynamic: dc}
-
-	task := Command(p)
-	got, _ := test.ExecuteCommand(task, "start", "task-1",
-		"-o", "code-image image-final",
-		"-i=my-repo=something",
-		"-p=print=cat",
-		"-n", "ns",
-		"-p=myarg=abc",
-		"-p=print=xyz",
-	)
-	expected := "Flag --outputresource has been deprecated, pipelineresources have been deprecated, this flag will be removed soon\n" +
-		"Flag --inputresource has been deprecated, pipelineresources have been deprecated, this flag will be removed soon\n" +
-		"Error: invalid input format for resource parameter: code-image image-final\n"
+	expected := "Error: Name not found for workspace\n"
 	test.AssertOutput(t, expected, got)
 }
 
@@ -2151,30 +1509,6 @@ func Test_start_task_invalid_param_v1beta1(t *testing.T) {
 				Namespace: "ns",
 			},
 			Spec: v1beta1.TaskSpec{
-				Resources: &v1beta1.TaskResources{
-					Inputs: []v1beta1.TaskResource{
-						{
-							ResourceDeclaration: v1beta1.ResourceDeclaration{
-								Name: "my-repo",
-								Type: v1beta1.PipelineResourceTypeGit,
-							},
-						},
-						{
-							ResourceDeclaration: v1beta1.ResourceDeclaration{
-								Name: "my-image",
-								Type: v1beta1.PipelineResourceTypeImage,
-							},
-						},
-					},
-					Outputs: []v1beta1.TaskResource{
-						{
-							ResourceDeclaration: v1beta1.ResourceDeclaration{
-								Name: "code-image",
-								Type: v1beta1.PipelineResourceTypeImage,
-							},
-						},
-					},
-				},
 				Params: []v1beta1.ParamSpec{
 					{
 						Name: "myarg",
@@ -2218,13 +1552,9 @@ func Test_start_task_invalid_param_v1beta1(t *testing.T) {
 	task := Command(p)
 	got, _ := test.ExecuteCommand(task, "start", "task-1",
 		"-p", "myarg boom",
-		"-i=my-repo=repo",
-		"-o=out=out",
 		"-n", "ns",
 	)
-	expected := "Flag --inputresource has been deprecated, pipelineresources have been deprecated, this flag will be removed soon\n" +
-		"Flag --outputresource has been deprecated, pipelineresources have been deprecated, this flag will be removed soon\n" +
-		"Error: invalid input format for param parameter: myarg boom\n"
+	expected := "Error: invalid input format for param parameter: myarg boom\n"
 	test.AssertOutput(t, expected, got)
 }
 
@@ -2236,30 +1566,6 @@ func Test_start_task_invalid_label_v1beta1(t *testing.T) {
 				Namespace: "ns",
 			},
 			Spec: v1beta1.TaskSpec{
-				Resources: &v1beta1.TaskResources{
-					Inputs: []v1beta1.TaskResource{
-						{
-							ResourceDeclaration: v1beta1.ResourceDeclaration{
-								Name: "my-repo",
-								Type: v1beta1.PipelineResourceTypeGit,
-							},
-						},
-						{
-							ResourceDeclaration: v1beta1.ResourceDeclaration{
-								Name: "my-image",
-								Type: v1beta1.PipelineResourceTypeImage,
-							},
-						},
-					},
-					Outputs: []v1beta1.TaskResource{
-						{
-							ResourceDeclaration: v1beta1.ResourceDeclaration{
-								Name: "code-image",
-								Type: v1beta1.PipelineResourceTypeImage,
-							},
-						},
-					},
-				},
 				Params: []v1beta1.ParamSpec{
 					{
 						Name: "myarg",
@@ -2303,16 +1609,12 @@ func Test_start_task_invalid_label_v1beta1(t *testing.T) {
 	task := Command(p)
 	got, _ := test.ExecuteCommand(task, "start", "task-1",
 		"-l", "myarg boom",
-		"-i=input=input",
-		"-o=out=out",
 		"-p=param=param",
 		"-n", "ns",
 		"-p=myarg=abc",
 		"-p=print=xyz",
 	)
-	expected := "Flag --inputresource has been deprecated, pipelineresources have been deprecated, this flag will be removed soon\n" +
-		"Flag --outputresource has been deprecated, pipelineresources have been deprecated, this flag will be removed soon\n" +
-		"Error: invalid input format for label parameter: myarg boom\n"
+	expected := "Error: invalid input format for label parameter: myarg boom\n"
 	test.AssertOutput(t, expected, got)
 }
 
@@ -2324,30 +1626,6 @@ func Test_start_task_allkindparam_v1beta1(t *testing.T) {
 				Namespace: "ns",
 			},
 			Spec: v1beta1.TaskSpec{
-				Resources: &v1beta1.TaskResources{
-					Inputs: []v1beta1.TaskResource{
-						{
-							ResourceDeclaration: v1beta1.ResourceDeclaration{
-								Name: "my-repo",
-								Type: v1beta1.PipelineResourceTypeGit,
-							},
-						},
-						{
-							ResourceDeclaration: v1beta1.ResourceDeclaration{
-								Name: "my-image",
-								Type: v1beta1.PipelineResourceTypeImage,
-							},
-						},
-					},
-					Outputs: []v1beta1.TaskResource{
-						{
-							ResourceDeclaration: v1beta1.ResourceDeclaration{
-								Name: "code-image",
-								Type: v1beta1.PipelineResourceTypeImage,
-							},
-						},
-					},
-				},
 				Params: []v1beta1.ParamSpec{
 					{
 						Name: "myarg",
@@ -2398,21 +1676,15 @@ func Test_start_task_allkindparam_v1beta1(t *testing.T) {
 
 	task := Command(p)
 	got, _ := test.ExecuteCommand(task, "start", "task-1",
-		"-i=my-repo=git",
-		"-i=my-image=image",
 		"-p=myarg=value1",
 		"-p=print=boom,boom",
 		"-p=printafter=booms",
 		"-p=printlast=a:b, c:d",
 		"-l=key=value",
-		"-o=code-image=output-image",
 		"-s=svc1",
 		"-n=ns")
 
-	expected := "Flag --inputresource has been deprecated, pipelineresources have been deprecated, this flag will be removed soon\n" +
-		"Flag --inputresource has been deprecated, pipelineresources have been deprecated, this flag will be removed soon\n" +
-		"Flag --outputresource has been deprecated, pipelineresources have been deprecated, this flag will be removed soon\n" +
-		"TaskRun started: \n\nIn order to track the TaskRun progress run:\ntkn taskrun logs  -f -n ns\n"
+	expected := "TaskRun started: \n\nIn order to track the TaskRun progress run:\ntkn taskrun logs  -f -n ns\n"
 	test.AssertOutput(t, expected, got)
 	clients, _ := p.Clients()
 
@@ -2460,30 +1732,6 @@ func Test_start_task_wrong_param_v1beta1(t *testing.T) {
 				Namespace: "ns",
 			},
 			Spec: v1beta1.TaskSpec{
-				Resources: &v1beta1.TaskResources{
-					Inputs: []v1beta1.TaskResource{
-						{
-							ResourceDeclaration: v1beta1.ResourceDeclaration{
-								Name: "my-repo",
-								Type: v1beta1.PipelineResourceTypeGit,
-							},
-						},
-						{
-							ResourceDeclaration: v1beta1.ResourceDeclaration{
-								Name: "my-image",
-								Type: v1beta1.PipelineResourceTypeImage,
-							},
-						},
-					},
-					Outputs: []v1beta1.TaskResource{
-						{
-							ResourceDeclaration: v1beta1.ResourceDeclaration{
-								Name: "code-image",
-								Type: v1beta1.PipelineResourceTypeImage,
-							},
-						},
-					},
-				},
 				Params: []v1beta1.ParamSpec{
 					{
 						Name: "myarg",
@@ -2526,20 +1774,14 @@ func Test_start_task_wrong_param_v1beta1(t *testing.T) {
 
 	task := Command(p)
 	got, _ := test.ExecuteCommand(task, "start", "task-1",
-		"-i=my-repo=git",
-		"-i=my-image=image",
 		"-p=myar=value1",
 		"-p=myarg=value1",
 		"-p=print=boom,boom",
 		"-l=key=value",
-		"-o=code-image=output-image",
 		"-s=svc1",
 		"-n=ns")
 
-	expected := "Flag --inputresource has been deprecated, pipelineresources have been deprecated, this flag will be removed soon\n" +
-		"Flag --inputresource has been deprecated, pipelineresources have been deprecated, this flag will be removed soon\n" +
-		"Flag --outputresource has been deprecated, pipelineresources have been deprecated, this flag will be removed soon\n" +
-		"Error: param 'myar' not present in spec\n"
+	expected := "Error: param 'myar' not present in spec\n"
 	test.AssertOutput(t, expected, got)
 }
 
@@ -2551,24 +1793,6 @@ func TestTaskStart_ExecuteCommand_v1beta1(t *testing.T) {
 				Namespace: "ns",
 			},
 			Spec: v1beta1.TaskSpec{
-				Resources: &v1beta1.TaskResources{
-					Inputs: []v1beta1.TaskResource{
-						{
-							ResourceDeclaration: v1beta1.ResourceDeclaration{
-								Name: "my-repo",
-								Type: v1beta1.PipelineResourceTypeGit,
-							},
-						},
-					},
-					Outputs: []v1beta1.TaskResource{
-						{
-							ResourceDeclaration: v1beta1.ResourceDeclaration{
-								Name: "code-image",
-								Type: v1beta1.PipelineResourceTypeImage,
-							},
-						},
-					},
-				},
 				Params: []v1beta1.ParamSpec{
 					{
 						Name: "myarg",
@@ -2631,8 +1855,6 @@ func TestTaskStart_ExecuteCommand_v1beta1(t *testing.T) {
 		{
 			name: "Dry Run with invalid output",
 			command: []string{"start", "task-1",
-				"-i=my-repo=git-repo",
-				"-o=code-image=output-image",
 				"-p=myarg=arg",
 				"-p=task-param=arg",
 				"-s=svc1",
@@ -2647,8 +1869,6 @@ func TestTaskStart_ExecuteCommand_v1beta1(t *testing.T) {
 		{
 			name: "Dry Run with only --dry-run specified",
 			command: []string{"start", "task-1",
-				"-i=my-repo=git-repo",
-				"-o=code-image=output-image",
 				"-p=myarg=arg",
 				"-p=task-param=arg",
 				"-s=svc1",
@@ -2663,8 +1883,6 @@ func TestTaskStart_ExecuteCommand_v1beta1(t *testing.T) {
 		{
 			name: "Dry Run with --use-param-defaults and specified params",
 			command: []string{"start", "task-1",
-				"-i=my-repo=git-repo",
-				"-o=code-image=output-image",
 				"-p=myarg=arg",
 				"-s=svc1",
 				"-n", "ns",
@@ -2679,8 +1897,6 @@ func TestTaskStart_ExecuteCommand_v1beta1(t *testing.T) {
 		{
 			name: "Dry Run with --use-param-defaults and no specified params",
 			command: []string{"start", "task-1",
-				"-i=my-repo=git-repo",
-				"-o=code-image=output-image",
 				"-s=svc1",
 				"-n", "ns",
 				"--dry-run",
@@ -2694,8 +1910,6 @@ func TestTaskStart_ExecuteCommand_v1beta1(t *testing.T) {
 		{
 			name: "Dry Run with --use-param-defaults, --last and --use-taskrun",
 			command: []string{"start", "task-1",
-				"-i=my-repo=git-repo",
-				"-o=code-image=output-image",
 				"-s=svc1",
 				"-n", "ns",
 				"--dry-run",
@@ -2711,8 +1925,6 @@ func TestTaskStart_ExecuteCommand_v1beta1(t *testing.T) {
 		{
 			name: "Dry Run with --use-param-defaults and --use-taskrun",
 			command: []string{"start", "task-1",
-				"-i=my-repo=git-repo",
-				"-o=code-image=output-image",
 				"-s=svc1",
 				"-n", "ns",
 				"--dry-run",
@@ -2727,8 +1939,6 @@ func TestTaskStart_ExecuteCommand_v1beta1(t *testing.T) {
 		{
 			name: "Dry Run with --use-param-defaults and --last",
 			command: []string{"start", "task-1",
-				"-i=my-repo=git-repo",
-				"-o=code-image=output-image",
 				"-s=svc1",
 				"-n", "ns",
 				"--dry-run",
@@ -2743,8 +1953,6 @@ func TestTaskStart_ExecuteCommand_v1beta1(t *testing.T) {
 		{
 			name: "Dry Run with output=json",
 			command: []string{"start", "task-1",
-				"-i=my-repo=git-repo",
-				"-o=code-image=output-image",
 				"-p=myarg=arg",
 				"-p=task-param=arg",
 				"-s=svc1",
@@ -2763,8 +1971,6 @@ func TestTaskStart_ExecuteCommand_v1beta1(t *testing.T) {
 				"-f", "./testdata/task.yaml",
 				"-n", "ns",
 				"-s=svc1",
-				"-i=docker-source=git",
-				"-o=builtImage=image",
 				"-p=pathToContext=/context",
 				"-p=pathToDockerFile=/path",
 				"--dry-run",
@@ -2778,8 +1984,6 @@ func TestTaskStart_ExecuteCommand_v1beta1(t *testing.T) {
 		{
 			name: "Dry Run with --timeout specified",
 			command: []string{"start", "task-1",
-				"-i=my-repo=git-repo",
-				"-o=code-image=output-image",
 				"-p=myarg=arg",
 				"-p=task-param=arg",
 				"-s=svc1",
@@ -2795,8 +1999,6 @@ func TestTaskStart_ExecuteCommand_v1beta1(t *testing.T) {
 		{
 			name: "Dry Run with invalid --timeout specified",
 			command: []string{"start", "task-1",
-				"-i=my-repo=git-repo",
-				"-o=code-image=output-image",
 				"-p=myarg=arg",
 				"-p=task-param=arg",
 				"-s=svc1",
@@ -2818,8 +2020,6 @@ func TestTaskStart_ExecuteCommand_v1beta1(t *testing.T) {
 				"-s=svc1",
 				"-p=pathToContext=/context",
 				"-p=pathToDockerFile=/path",
-				"-i=docker-source=git",
-				"-o=builtImage=image",
 				"--dry-run",
 				"--output=json"},
 			namespace:  "",
@@ -2834,8 +2034,6 @@ func TestTaskStart_ExecuteCommand_v1beta1(t *testing.T) {
 				"-f", "./testdata/task.yaml",
 				"-n", "ns",
 				"-s=svc1",
-				"-i=docker-source=git",
-				"-o=builtImage=image",
 				"--dry-run",
 				"-p=pathToContext=/context",
 				"-p=pathToDockerFile=/path",
@@ -2849,8 +2047,6 @@ func TestTaskStart_ExecuteCommand_v1beta1(t *testing.T) {
 		{
 			name: "Dry Run with PodTemplate",
 			command: []string{"start", "task-1",
-				"-i=my-repo=git-repo",
-				"-o=code-image=output-image",
 				"-p=myarg=arg",
 				"-p=task-param=arg",
 				"-s=svc1",

@@ -21,7 +21,6 @@ import (
 	"fmt"
 	"net/http"
 	"os"
-	"sort"
 	"strings"
 	"time"
 
@@ -30,7 +29,6 @@ import (
 	"github.com/spf13/cobra"
 	"github.com/tektoncd/cli/pkg/actions"
 	"github.com/tektoncd/cli/pkg/cli"
-	"github.com/tektoncd/cli/pkg/cmd/pipelineresource"
 	"github.com/tektoncd/cli/pkg/cmd/taskrun"
 	"github.com/tektoncd/cli/pkg/file"
 	"github.com/tektoncd/cli/pkg/flags"
@@ -43,7 +41,6 @@ import (
 	"github.com/tektoncd/cli/pkg/workspaces"
 	v1 "github.com/tektoncd/pipeline/pkg/apis/pipeline/v1"
 	"github.com/tektoncd/pipeline/pkg/apis/pipeline/v1beta1"
-	"github.com/tektoncd/pipeline/pkg/apis/resource/v1alpha1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime/schema"
 	"sigs.k8s.io/yaml"
@@ -55,14 +52,10 @@ var (
 	errTaskAlreadyPresent = "Task with name %s already exists in namespace %s"
 )
 
-const invalidResource = "invalid input format for resource parameter: "
-
 type startOptions struct {
 	cliparams             cli.Params
 	stream                *cli.Stream
 	Params                []string
-	InputResources        []string
-	OutputResources       []string
 	ServiceAccountName    string
 	Last                  bool
 	Labels                []string
@@ -201,10 +194,6 @@ For passing the workspaces via flags:
 		},
 	}
 
-	c.Flags().StringSliceVarP(&opt.InputResources, "inputresource", "i", []string{}, "pass the input resource name and ref as name=ref")
-	c.Flags().StringSliceVarP(&opt.OutputResources, "outputresource", "o", []string{}, "pass the output resource name and ref as name=ref")
-	_ = c.Flags().MarkDeprecated("inputresource", "pipelineresources have been deprecated, this flag will be removed soon")
-	_ = c.Flags().MarkDeprecated("outputresource", "pipelineresources have been deprecated, this flag will be removed soon")
 	c.Flags().StringArrayVarP(&opt.Params, "param", "p", []string{}, "pass the param as key=value for string type, or key=value1,value2,... for array type, or key=\"key1:value1, key2:value2\" for object type")
 	c.Flags().StringVarP(&opt.ServiceAccountName, "serviceaccount", "s", "", "pass the serviceaccount name")
 	_ = c.RegisterFlagCompletionFunc("serviceaccount",
@@ -343,21 +332,6 @@ func startTask(opt startOptions, args []string) error {
 		tr.Spec.Timeout = &metav1.Duration{Duration: timeoutDuration}
 	}
 
-	if tr.Spec.Resources == nil {
-		tr.Spec.Resources = &v1beta1.TaskRunResources{}
-	}
-	inputRes, err := mergeRes(tr.Spec.Resources.Inputs, opt.InputResources)
-	if err != nil {
-		return err
-	}
-	tr.Spec.Resources.Inputs = inputRes
-
-	outRes, err := mergeRes(tr.Spec.Resources.Outputs, opt.OutputResources)
-	if err != nil {
-		return err
-	}
-	tr.Spec.Resources.Outputs = outRes
-
 	labels, err := labels.MergeLabels(tr.ObjectMeta.Labels, opt.Labels)
 	if err != nil {
 		return err
@@ -454,49 +428,6 @@ func startTask(opt startOptions, args []string) error {
 	return taskrun.Run(runLogOpts)
 }
 
-func mergeRes(r []v1beta1.TaskResourceBinding, optRes []string) ([]v1beta1.TaskResourceBinding, error) {
-	res, err := parseRes(optRes)
-	if err != nil {
-		return nil, err
-	}
-
-	if len(res) == 0 {
-		return r, nil
-	}
-
-	for i := range r {
-		if v, ok := res[r[i].Name]; ok {
-			r[i] = v
-			delete(res, v.Name)
-		}
-	}
-	for _, v := range res {
-		r = append(r, v)
-	}
-
-	sort.Slice(r, func(i, j int) bool { return r[i].Name < r[j].Name })
-	return r, nil
-}
-
-func parseRes(res []string) (map[string]v1beta1.TaskResourceBinding, error) {
-	resources := map[string]v1beta1.TaskResourceBinding{}
-	for _, v := range res {
-		r := strings.SplitN(v, "=", 2)
-		if len(r) != 2 {
-			return nil, errors.New(invalidResource + v)
-		}
-		resources[r[0]] = v1beta1.TaskResourceBinding{
-			PipelineResourceBinding: v1beta1.PipelineResourceBinding{
-				Name: r[0],
-				ResourceRef: &v1beta1.PipelineResourceRef{
-					Name: r[1],
-				},
-			},
-		}
-	}
-	return resources, nil
-}
-
 func printTaskRun(output string, s *cli.Stream, tr interface{}) error {
 	format := strings.ToLower(output)
 	if format == "" || format == "yaml" {
@@ -532,21 +463,6 @@ func (opt *startOptions) getInputs() error {
 		SkipOptionalWorkspace: opt.SkipOptionalWorkspace,
 	}
 
-	if opt.task.Spec.Resources != nil && !opt.Last && opt.UseTaskRun == "" {
-		if len(opt.InputResources) == 0 {
-			if err := intOpts.TaskInputResources(opt.task, createPipelineResource); err != nil {
-				return err
-			}
-			opt.InputResources = append(opt.InputResources, intOpts.InputResources...)
-		}
-		if len(opt.OutputResources) == 0 {
-			if err := intOpts.TaskOutputResources(opt.task, createPipelineResource); err != nil {
-				return err
-			}
-			opt.OutputResources = append(opt.OutputResources, intOpts.OutputResources...)
-		}
-	}
-
 	params.FilterParamsByType(opt.task.Spec.Params)
 	if !opt.Last && opt.UseTaskRun == "" {
 		skipParams, err := params.ParseParams(opt.Params)
@@ -567,42 +483,6 @@ func (opt *startOptions) getInputs() error {
 	}
 
 	return nil
-}
-
-func createPipelineResource(resType v1alpha1.PipelineResourceType, askOpt survey.AskOpt, p cli.Params, s *cli.Stream) (*v1alpha1.PipelineResource, error) {
-	res := pipelineresource.Resource{
-		AskOpts: askOpt,
-		Params:  p,
-		PipelineResource: v1alpha1.PipelineResource{
-			ObjectMeta: metav1.ObjectMeta{Namespace: p.Namespace()},
-			Spec:       v1alpha1.PipelineResourceSpec{Type: resType},
-		}}
-
-	if err := res.AskMeta(); err != nil {
-		return nil, err
-	}
-
-	resourceTypeParams := map[v1alpha1.PipelineResourceType]func() error{
-		v1alpha1.PipelineResourceTypeGit:         res.AskGitParams,
-		v1alpha1.PipelineResourceTypeStorage:     res.AskStorageParams,
-		v1alpha1.PipelineResourceTypeImage:       res.AskImageParams,
-		v1alpha1.PipelineResourceTypePullRequest: res.AskPullRequestParams,
-	}
-	if res.PipelineResource.Spec.Type != "" {
-		if err := resourceTypeParams[res.PipelineResource.Spec.Type](); err != nil {
-			return nil, err
-		}
-	}
-	cs, err := p.Clients()
-	if err != nil {
-		return nil, err
-	}
-	newRes, err := cs.Resource.TektonV1alpha1().PipelineResources(p.Namespace()).Create(context.Background(), &res.PipelineResource, metav1.CreateOptions{})
-	if err != nil {
-		return nil, err
-	}
-	fmt.Fprintf(s.Out, "New %s resource \"%s\" has been created\n", newRes.Spec.Type, newRes.Name)
-	return newRes, nil
 }
 
 func getTaskV1beta1(gr schema.GroupVersionResource, c *cli.Clients, tName, ns string) (*v1beta1.Task, error) {

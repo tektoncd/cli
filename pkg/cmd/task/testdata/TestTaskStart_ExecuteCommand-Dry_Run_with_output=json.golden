@@ -4,10 +4,7 @@
 	"metadata": {
 		"generateName": "task-1-run-",
 		"namespace": "ns",
-		"creationTimestamp": null,
-		"annotations": {
-			"tekton.dev/v1beta1Resources": "{}"
-		}
+		"creationTimestamp": null
 	},
 	"spec": {
 		"params": [

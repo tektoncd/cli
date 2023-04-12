@@ -28,13 +28,6 @@ spec:
         The build context used by Kaniko
         (https://github.com/GoogleContainerTools/kaniko#kaniko-build-contexts)
       default: /workspace/docker-source
-  resources:
-    inputs:
-      - name: docker-source
-        type: git
-    outputs:
-      - name: builtImage
-        type: image
   steps:
     - name: build-and-push
       image: gcr.io/kaniko-project/executor:v0.14.0
