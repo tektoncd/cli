@@ -1,5 +1,3 @@
-Flag --inputresource has been deprecated, pipelineresources have been deprecated, this flag will be removed soon
-Flag --outputresource has been deprecated, pipelineresources have been deprecated, this flag will be removed soon
 {
 	"kind": "TaskRun",
 	"apiVersion": "tekton.dev/v1beta1",
@@ -19,40 +17,8 @@ Flag --outputresource has been deprecated, pipelineresources have been deprecate
 				"value": "/path"
 			}
 		],
-		"resources": {
-			"inputs": [
-				{
-					"name": "docker-source",
-					"resourceRef": {
-						"name": "git"
-					}
-				}
-			],
-			"outputs": [
-				{
-					"name": "builtImage",
-					"resourceRef": {
-						"name": "image"
-					}
-				}
-			]
-		},
 		"serviceAccountName": "svc1",
 		"taskSpec": {
-			"resources": {
-				"inputs": [
-					{
-						"name": "docker-source",
-						"type": "git"
-					}
-				],
-				"outputs": [
-					{
-						"name": "builtImage",
-						"type": "image"
-					}
-				]
-			},
 			"params": [
 				{
 					"name": "pathToDockerFile",

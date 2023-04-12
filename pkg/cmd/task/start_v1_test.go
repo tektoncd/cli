@@ -27,7 +27,6 @@ import (
 	cb "github.com/tektoncd/cli/pkg/test/builder"
 	testDynamic "github.com/tektoncd/cli/pkg/test/dynamic"
 	v1 "github.com/tektoncd/pipeline/pkg/apis/pipeline/v1"
-	"github.com/tektoncd/pipeline/pkg/apis/pipeline/v1beta1"
 	fakepipelineclientset "github.com/tektoncd/pipeline/pkg/client/clientset/versioned/fake"
 	"gotest.tools/v3/golden"
 	corev1 "k8s.io/api/core/v1"
@@ -1783,92 +1782,6 @@ func Test_start_task_wrong_param(t *testing.T) {
 
 	expected := "Error: param 'myar' not present in spec\n"
 	test.AssertOutput(t, expected, got)
-}
-
-func Test_mergeResource(t *testing.T) {
-	res := []v1beta1.TaskResourceBinding{{
-		PipelineResourceBinding: v1beta1.PipelineResourceBinding{
-			Name: "source",
-			ResourceRef: &v1beta1.PipelineResourceRef{
-				Name: "git",
-			},
-		},
-	}}
-
-	_, err := mergeRes(res, []string{"test"})
-	if err == nil {
-		t.Errorf("Expected error")
-	}
-
-	res, err = mergeRes(res, []string{})
-	if err != nil {
-		t.Errorf("Did not expect error")
-	}
-	test.AssertOutput(t, 1, len(res))
-
-	res, err = mergeRes(res, []string{"image=test-1"})
-	if err != nil {
-		t.Errorf("Did not expect error")
-	}
-	test.AssertOutput(t, 2, len(res))
-
-	res, err = mergeRes(res, []string{"image=test-new", "image-2=test-2"})
-	if err != nil {
-		t.Errorf("Did not expect error")
-	}
-	test.AssertOutput(t, 3, len(res))
-}
-
-func Test_parseRes(t *testing.T) {
-	type args struct {
-		res []string
-	}
-	tests := []struct {
-		name    string
-		args    args
-		want    map[string]v1beta1.TaskResourceBinding
-		wantErr bool
-	}{{
-		name: "Test_parseRes No Err",
-		args: args{
-			res: []string{"source=git", "image=docker2"},
-		},
-		want: map[string]v1beta1.TaskResourceBinding{"source": {
-			PipelineResourceBinding: v1beta1.PipelineResourceBinding{
-				Name: "source",
-				ResourceRef: &v1beta1.PipelineResourceRef{
-					Name: "git",
-				},
-			},
-		}, "image": {
-			PipelineResourceBinding: v1beta1.PipelineResourceBinding{
-				Name: "image",
-				ResourceRef: &v1beta1.PipelineResourceRef{
-					Name: "docker2",
-				},
-			},
-		}},
-		wantErr: false,
-	}, {
-		name: "Test_parseRes Err",
-		args: args{
-			res: []string{"value1", "value2"},
-		},
-		wantErr: true,
-	}}
-
-	for _, tt := range tests {
-		t.Run(tt.name, func(t *testing.T) {
-			got, err := parseRes(tt.args.res)
-			if (err != nil) != tt.wantErr {
-				t.Errorf("parseRes() error = %v, wantErr %v", err, tt.wantErr)
-				return
-			}
-			if !reflect.DeepEqual(got, tt.want) {
-				t.Errorf("parseRes() = %v, want %v", got, tt.want)
-			}
-		})
-	}
 }
 
 func TestTaskStart_ExecuteCommand(t *testing.T) {

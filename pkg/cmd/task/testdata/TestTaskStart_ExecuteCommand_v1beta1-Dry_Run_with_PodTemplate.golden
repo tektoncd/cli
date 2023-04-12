@@ -1,5 +1,3 @@
-Flag --inputresource has been deprecated, pipelineresources have been deprecated, this flag will be removed soon
-Flag --outputresource has been deprecated, pipelineresources have been deprecated, this flag will be removed soon
 apiVersion: tekton.dev/v1beta1
 kind: TaskRun
 metadata:
@@ -17,15 +15,6 @@ spec:
     securityContext:
       runAsNonRoot: true
       runAsUser: 1001
-  resources:
-    inputs:
-    - name: my-repo
-      resourceRef:
-        name: git-repo
-    outputs:
-    - name: code-image
-      resourceRef:
-        name: output-image
   serviceAccountName: svc1
   taskRef:
     name: task-1
