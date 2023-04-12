@@ -2805,21 +2805,6 @@ func Test_getPipelineResourceByFormat(t *testing.T) {
 		},
 		{
 			ObjectMeta: metav1.ObjectMeta{
-				Name:      "scaffold-pull",
-				Namespace: "ns",
-			},
-			Spec: v1alpha1.PipelineResourceSpec{
-				Type: v1alpha1.PipelineResourceTypePullRequest,
-				Params: []v1alpha1.ResourceParam{
-					{
-						Name:  "url",
-						Value: "https://github.com/tektoncd/cli/pulls/9",
-					},
-				},
-			},
-		},
-		{
-			ObjectMeta: metav1.ObjectMeta{
 				Name:      "scaffold-storage",
 				Namespace: "ns",
 			},
@@ -2857,12 +2842,6 @@ func Test_getPipelineResourceByFormat(t *testing.T) {
 	expected = []string{"scaffold-image (docker.io/tektoncd/cli)"}
 	if !reflect.DeepEqual(output, expected) {
 		t.Errorf("output image = %v, want %v", output, expected)
-	}
-
-	output = getOptionsByType(resFormat, "pullRequest")
-	expected = []string{"scaffold-pull (https://github.com/tektoncd/cli/pulls/9)"}
-	if !reflect.DeepEqual(output, expected) {
-		t.Errorf("output pullRequest = %v, want %v", output, expected)
 	}
 
 	output = getOptionsByType(resFormat, "storage")

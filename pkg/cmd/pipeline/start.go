@@ -137,7 +137,7 @@ For passing the workspaces via flags:
        storage: 1Gi
 - In case of binding a CSI workspace, you can pass it like -w name=my-csi,csiFile=csi.yaml
   but you need to create a csi.yaml file before hand. Sample contents of the file are as follows:
-  
+
   driver: secrets-store.csi.k8s.io
   readOnly: true
   volumeAttributes:
@@ -757,10 +757,9 @@ func (opt *startOptions) createPipelineResource(resName string, resType v1alpha1
 	}
 
 	resourceTypeParams := map[v1alpha1.PipelineResourceType]func() error{
-		v1alpha1.PipelineResourceTypeGit:         res.AskGitParams,
-		v1alpha1.PipelineResourceTypeStorage:     res.AskStorageParams,
-		v1alpha1.PipelineResourceTypeImage:       res.AskImageParams,
-		v1alpha1.PipelineResourceTypePullRequest: res.AskPullRequestParams,
+		v1alpha1.PipelineResourceTypeGit:     res.AskGitParams,
+		v1alpha1.PipelineResourceTypeStorage: res.AskStorageParams,
+		v1alpha1.PipelineResourceTypeImage:   res.AskImageParams,
 	}
 	if res.PipelineResource.Spec.Type != "" {
 		if err := resourceTypeParams[res.PipelineResource.Spec.Type](); err != nil {

@@ -93,10 +93,9 @@ func (res *Resource) createInteractive() error {
 	}
 
 	resourceTypeParams := map[v1alpha1.PipelineResourceType]func() error{
-		v1alpha1.PipelineResourceTypeGit:         res.AskGitParams,
-		v1alpha1.PipelineResourceTypeStorage:     res.AskStorageParams,
-		v1alpha1.PipelineResourceTypeImage:       res.AskImageParams,
-		v1alpha1.PipelineResourceTypePullRequest: res.AskPullRequestParams,
+		v1alpha1.PipelineResourceTypeGit:     res.AskGitParams,
+		v1alpha1.PipelineResourceTypeStorage: res.AskStorageParams,
+		v1alpha1.PipelineResourceTypeImage:   res.AskImageParams,
 	}
 	if res.PipelineResource.Spec.Type != "" {
 		if err := resourceTypeParams[res.PipelineResource.Spec.Type](); err != nil {
@@ -255,36 +254,6 @@ func (res *Resource) AskImageParams() error {
 	if digestParam.Name != "" {
 		res.PipelineResource.Spec.Params = append(res.PipelineResource.Spec.Params, digestParam)
 	}
-
-	return nil
-}
-
-func (res *Resource) AskPullRequestParams() error {
-	urlParam, err := askParam("url", res.AskOpts)
-	if err != nil {
-		return err
-	}
-	if urlParam.Name != "" {
-		res.PipelineResource.Spec.Params = append(res.PipelineResource.Spec.Params, urlParam)
-	}
-
-	// ask for the secrets
-	qsOpts := []string{"Yes", "No"}
-	qs := "Do you want to set secrets ?"
-
-	ans, e := askToSelect(qs, qsOpts, res.AskOpts)
-	if e != nil {
-		return e
-	}
-	if ans == qsOpts[1] {
-		return nil
-	}
-
-	secret, err := askSecret("githubToken", res.AskOpts)
-	if err != nil {
-		return err
-	}
-	res.PipelineResource.Spec.SecretParams = append(res.PipelineResource.Spec.SecretParams, secret)
 
 	return nil
 }

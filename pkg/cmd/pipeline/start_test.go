@@ -1820,60 +1820,6 @@ func TestPipelineStart_Interactive_v1beta1(t *testing.T) {
 		},
 	})
 
-	// With pullRequest resource
-	cs9, _ := test.SeedV1beta1TestData(t, pipelinetest.Data{
-		Pipelines: []*v1beta1.Pipeline{
-			{
-				ObjectMeta: metav1.ObjectMeta{
-					Name:      "pullrequestpipeline",
-					Namespace: "ns",
-				},
-				Spec: v1beta1.PipelineSpec{
-					Tasks: []v1beta1.PipelineTask{
-						{
-							Name: "unit-test-1",
-							TaskRef: &v1beta1.TaskRef{
-								Name: "unit-test-task",
-							},
-							Resources: &v1beta1.PipelineTaskResources{
-								Inputs: []v1beta1.PipelineTaskInputResource{
-									{
-										Name:     "pullres",
-										Resource: "pullreqres",
-									},
-								},
-							},
-						},
-					},
-					Resources: []v1beta1.PipelineDeclaredResource{
-						{
-							Name: "pullreqres",
-							Type: v1beta1.PipelineResourceTypePullRequest,
-						},
-					},
-				},
-			},
-		},
-
-		PipelineResources: []*v1alpha1.PipelineResource{
-			{
-				ObjectMeta: metav1.ObjectMeta{
-					Name:      "pullreqres",
-					Namespace: "ns",
-				},
-				Spec: v1alpha1.PipelineResourceSpec{
-					Type: v1alpha1.PipelineResourceTypePullRequest,
-					Params: []v1alpha1.ResourceParam{
-						{
-							Name:  "url",
-							Value: "https://github.com/tektoncd/cli/pull/1",
-						},
-					},
-				},
-			},
-		},
-	})
-
 	cs12, _ := test.SeedV1beta1TestData(t, pipelinetest.Data{
 		Pipelines: []*v1beta1.Pipeline{
 			{
@@ -1900,8 +1846,8 @@ func TestPipelineStart_Interactive_v1beta1(t *testing.T) {
 					},
 					Resources: []v1beta1.PipelineDeclaredResource{
 						{
-							Name: "pullreqres",
-							Type: v1beta1.PipelineResourceTypePullRequest,
+							Name: "git",
+							Type: v1beta1.PipelineResourceTypeGit,
 						},
 					},
 					Workspaces: []v1beta1.PipelineWorkspaceDeclaration{
@@ -2421,99 +2367,6 @@ func TestPipelineStart_Interactive_v1beta1(t *testing.T) {
 					}
 
 					if runs.Items != nil && runs.Items[0].Spec.PipelineRef.Name != "storagepipeline" {
-						return errors.New("pipelinerun not found")
-					}
-
-					c.Close()
-					return nil
-				},
-			},
-		},
-		{
-			name:               "Create new pullRequest resource with existing resource",
-			namespace:          "ns",
-			input:              cs9,
-			last:               false,
-			serviceAccountName: "svc1",
-			serviceAccounts:    []string{"task1=svc1"},
-			prompt: prompt.Prompt{
-				CmdArgs: []string{"pullrequestpipeline"},
-				Procedure: func(c *expect.Console) error {
-					if _, err := c.ExpectString("Choose the pullRequest resource to use for pullreqres"); err != nil {
-						return err
-					}
-
-					if _, err := c.Send(string(terminal.KeyArrowDown)); err != nil {
-						return err
-					}
-
-					if _, err := c.ExpectString("create new \"pullRequest\" resource"); err != nil {
-						return err
-					}
-
-					if _, err := c.Send(string(terminal.KeyEnter)); err != nil {
-						return err
-					}
-
-					if _, err := c.ExpectString("Enter a name for a pipeline resource :"); err != nil {
-						return err
-					}
-
-					if _, err := c.SendLine("newpullreq"); err != nil {
-						return err
-					}
-
-					if _, err := c.ExpectString("Enter a value for url :"); err != nil {
-						return err
-					}
-
-					if _, err := c.SendLine("https://github.com/tektoncd/cli/pull/1"); err != nil {
-						return err
-					}
-
-					if _, err := c.ExpectString("Do you want to set secrets ?"); err != nil {
-						return err
-					}
-
-					if _, err := c.ExpectString("Yes"); err != nil {
-						return err
-					}
-
-					if _, err := c.Send(string(terminal.KeyEnter)); err != nil {
-						return err
-					}
-
-					if _, err := c.ExpectString("Secret Key for githubToken"); err != nil {
-						return err
-					}
-
-					if _, err := c.SendLine("githubToken"); err != nil {
-						return err
-					}
-
-					if _, err := c.ExpectString("Secret Name for githubToken "); err != nil {
-						return err
-					}
-
-					if _, err := c.SendLine("githubTokenName"); err != nil {
-						return err
-					}
-
-					if _, err := c.Send(string(terminal.KeyEnter)); err != nil {
-						return err
-					}
-
-					if _, err := c.ExpectEOF(); err != nil {
-						return err
-					}
-
-					tekton := cs9.Pipeline.TektonV1beta1()
-					runs, err := tekton.PipelineRuns("ns").List(context.Background(), metav1.ListOptions{})
-					if err != nil {
-						return err
-					}
-
-					if runs.Items != nil && runs.Items[0].Spec.PipelineRef.Name != "pullrequestpipeline" {
 						return errors.New("pipelinerun not found")
 					}
 
