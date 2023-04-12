@@ -1,7 +1,4 @@
 Command "start" is deprecated, ClusterTasks are deprecated, this command will be removed in future releases.
-Flag --inputresource has been deprecated, pipelineresources have been deprecated, this flag will be removed soon
-Flag --inputresource has been deprecated, pipelineresources have been deprecated, this flag will be removed soon
-Flag --outputresource has been deprecated, pipelineresources have been deprecated, this flag will be removed soon
 apiVersion: tekton.dev/v1beta1
 kind: TaskRun
 metadata:
@@ -10,18 +7,6 @@ metadata:
   labels:
     key: value
 spec:
-  resources:
-    inputs:
-    - name: my-image
-      resourceRef:
-        name: image
-    - name: my-repo
-      resourceRef:
-        name: git
-    outputs:
-    - name: code-image
-      resourceRef:
-        name: output-image
   serviceAccountName: svc1
   taskRef:
     kind: ClusterTask
