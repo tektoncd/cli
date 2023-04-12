@@ -127,30 +127,6 @@ func Test_ClusterTask_Start(t *testing.T) {
 				CreationTimestamp: metav1.Time{Time: clock.Now().Add(-1 * time.Minute)},
 			},
 			Spec: v1beta1.TaskSpec{
-				Resources: &v1beta1.TaskResources{
-					Inputs: []v1beta1.TaskResource{
-						{
-							ResourceDeclaration: v1beta1.ResourceDeclaration{
-								Name: "my-repo",
-								Type: v1beta1.PipelineResourceTypeGit,
-							},
-						},
-						{
-							ResourceDeclaration: v1beta1.ResourceDeclaration{
-								Name: "my-image",
-								Type: v1beta1.PipelineResourceTypeImage,
-							},
-						},
-					},
-					Outputs: []v1beta1.TaskResource{
-						{
-							ResourceDeclaration: v1beta1.ResourceDeclaration{
-								Name: "code-image",
-								Type: v1beta1.PipelineResourceTypeImage,
-							},
-						},
-					},
-				},
 				Params: []v1beta1.ParamSpec{
 					{
 						Name: "myarg",
@@ -187,24 +163,6 @@ func Test_ClusterTask_Start(t *testing.T) {
 				CreationTimestamp: metav1.Time{Time: clock.Now().Add(-1 * time.Minute)},
 			},
 			Spec: v1beta1.TaskSpec{
-				Resources: &v1beta1.TaskResources{
-					Inputs: []v1beta1.TaskResource{
-						{
-							ResourceDeclaration: v1beta1.ResourceDeclaration{
-								Name: "my-repo",
-								Type: v1beta1.PipelineResourceTypeGit,
-							},
-						},
-					},
-					Outputs: []v1beta1.TaskResource{
-						{
-							ResourceDeclaration: v1beta1.ResourceDeclaration{
-								Name: "code-image",
-								Type: v1beta1.PipelineResourceTypeImage,
-							},
-						},
-					},
-				},
 				Params: []v1beta1.ParamSpec{
 					{
 						Name: "myarg",
@@ -229,30 +187,6 @@ func Test_ClusterTask_Start(t *testing.T) {
 				CreationTimestamp: metav1.Time{Time: clock.Now().Add(-1 * time.Minute)},
 			},
 			Spec: v1beta1.TaskSpec{
-				Resources: &v1beta1.TaskResources{
-					Inputs: []v1beta1.TaskResource{
-						{
-							ResourceDeclaration: v1beta1.ResourceDeclaration{
-								Name: "my-repo",
-								Type: v1beta1.PipelineResourceTypeGit,
-							},
-						},
-						{
-							ResourceDeclaration: v1beta1.ResourceDeclaration{
-								Name: "my-image",
-								Type: v1beta1.PipelineResourceTypeImage,
-							},
-						},
-					},
-					Outputs: []v1beta1.TaskResource{
-						{
-							ResourceDeclaration: v1beta1.ResourceDeclaration{
-								Name: "code-image",
-								Type: v1beta1.PipelineResourceTypeImage,
-							},
-						},
-					},
-				},
 				Params: []v1beta1.ParamSpec{
 					{
 						Name: "myarg",
@@ -332,28 +266,6 @@ func Test_ClusterTask_Start(t *testing.T) {
 					{
 						Name:  "print",
 						Value: v1beta1.ArrayOrString{Type: v1beta1.ParamTypeArray, ArrayVal: []string{"booms", "booms", "booms"}},
-					},
-				},
-				Resources: &v1beta1.TaskRunResources{
-					Inputs: []v1beta1.TaskResourceBinding{
-						{
-							PipelineResourceBinding: v1beta1.PipelineResourceBinding{
-								Name: "my-repo",
-								ResourceRef: &v1beta1.PipelineResourceRef{
-									Name: "git",
-								},
-							},
-						},
-					},
-					Outputs: []v1beta1.TaskResourceBinding{
-						{
-							PipelineResourceBinding: v1beta1.PipelineResourceBinding{
-								Name: "code-image",
-								ResourceRef: &v1beta1.PipelineResourceRef{
-									Name: "image",
-								},
-							},
-						},
 					},
 				},
 				ServiceAccountName: "svc",
@@ -521,12 +433,9 @@ func Test_ClusterTask_Start(t *testing.T) {
 		{
 			name: "Start clustertask",
 			command: []string{"start", "clustertask-1",
-				"-i", "my-repo=git",
-				"-i", "my-image=image",
 				"-p", "myarg=value1",
 				"-p", "print=boom,boom",
 				"-l", "key=value",
-				"-o", "code-image=output-image",
 				"-w", "name=test,claimName=pvc3",
 				"-s=svc1"},
 			dynamic:     seeds[0].dynamicClient,
@@ -534,9 +443,6 @@ func Test_ClusterTask_Start(t *testing.T) {
 			inputStream: nil,
 			wantError:   false,
 			want: "Command \"start\" is deprecated, ClusterTasks are deprecated, this command will be removed in future releases.\n" +
-				"Flag --inputresource has been deprecated, pipelineresources have been deprecated, this flag will be removed soon\n" +
-				"Flag --inputresource has been deprecated, pipelineresources have been deprecated, this flag will be removed soon\n" +
-				"Flag --outputresource has been deprecated, pipelineresources have been deprecated, this flag will be removed soon\n" +
 				"TaskRun started: taskrun-1\n\nIn order to track the TaskRun progress run:\ntkn taskrun logs taskrun-1 -f -n ns\n",
 		},
 		{
@@ -560,48 +466,11 @@ func Test_ClusterTask_Start(t *testing.T) {
 				"TaskRun started: taskrun-4\n\nIn order to track the TaskRun progress run:\ntkn taskrun logs taskrun-4 -f -n ns\n",
 		},
 		{
-			name: "Invalid input format",
-			command: []string{"start", "clustertask-1",
-				"-i", "my-repo git",
-				"-i", "my-image=image",
-				"-p", "myarg=value1",
-				"-p", "print=boom,boom",
-				"-l", "key=value",
-				"-o", "code-image=output-image",
-				"-w", "name=test,claimName=pvc3",
-				"-s=svc1"},
-			dynamic:     seeds[0].dynamicClient,
-			input:       seeds[0].pipelineClient,
-			inputStream: nil,
-			wantError:   true,
-			want:        "invalid input format for resource parameter: my-repo git",
-		},
-		{
-			name: "Invalid output format",
-			command: []string{"start", "clustertask-1",
-				"-i", "my-repo=git",
-				"-i", "my-image=image",
-				"-p", "myarg=value1",
-				"-p", "print=boom,boom",
-				"-l", "key=value",
-				"-o", "code-image output-image",
-				"-w", "name=test,claimName=pvc3",
-				"-s=svc1"},
-			dynamic:     seeds[0].dynamicClient,
-			input:       seeds[0].pipelineClient,
-			inputStream: nil,
-			wantError:   true,
-			want:        "invalid input format for resource parameter: code-image output-image",
-		},
-		{
 			name: "Invalid param format",
 			command: []string{"start", "clustertask-1",
-				"-i", "my-repo=git",
-				"-i", "my-image=image",
 				"-p", "myarg value1",
 				"-p", "print=boom,boom",
 				"-l", "key=value",
-				"-o", "code-image=output-image",
 				"-w", "name=test,claimName=pvc3",
 				"-s=svc1"},
 			dynamic:     seeds[0].dynamicClient,
@@ -613,12 +482,9 @@ func Test_ClusterTask_Start(t *testing.T) {
 		{
 			name: "Invalid label format",
 			command: []string{"start", "clustertask-1",
-				"-i", "my-repo=git",
-				"-i", "my-image=image",
 				"-p", "myarg=value1",
 				"-p", "print=boom,boom",
 				"-l", "key value",
-				"-o", "code-image=output-image",
 				"-w", "name=test,claimName=pvc3",
 				"-s=svc1"},
 			dynamic:     seeds[0].dynamicClient,
@@ -630,13 +496,10 @@ func Test_ClusterTask_Start(t *testing.T) {
 		{
 			name: "Param not in spec",
 			command: []string{"start", "clustertask-1",
-				"-i", "my-repo=git",
-				"-i", "my-image=image",
 				"-p", "myar=value1",
 				"-p", "myarg=value1",
 				"-p", "print=boom,boom",
 				"-l", "key=value",
-				"-o", "code-image=output-image",
 				"-w", "name=test,claimName=pvc3",
 				"-s=svc1"},
 			dynamic:     seeds[0].dynamicClient,
@@ -648,9 +511,7 @@ func Test_ClusterTask_Start(t *testing.T) {
 		{
 			name: "Dry run with invalid output",
 			command: []string{"start", "clustertask-1",
-				"-i", "my-repo=git",
 				"-p", "myarg=value1",
-				"-o", "code-image=output-image",
 				"-l", "key=value",
 				"-s=svc1",
 				"--dry-run",
@@ -665,9 +526,7 @@ func Test_ClusterTask_Start(t *testing.T) {
 		{
 			name: "Dry run with no output v1beta1",
 			command: []string{"start", "clustertask-2",
-				"-i", "my-repo=git",
 				"-p", "myarg=value1",
-				"-o", "code-image=output-image",
 				"-l", "key=value",
 				"-s=svc1",
 				"--dry-run",
@@ -681,8 +540,6 @@ func Test_ClusterTask_Start(t *testing.T) {
 		{
 			name: "Dry run with --last",
 			command: []string{"start", "clustertask-1",
-				"-i", "my-repo=git",
-				"-o", "code-image=output-image",
 				"-l", "key=value",
 				"-s=svc1",
 				"--dry-run",
@@ -697,9 +554,7 @@ func Test_ClusterTask_Start(t *testing.T) {
 		{
 			name: "Dry run with --timeout v1beta1",
 			command: []string{"start", "clustertask-2",
-				"-i", "my-repo=git",
 				"-p", "myarg=value1",
-				"-o", "code-image=output-image",
 				"-l", "key=value",
 				"-s=svc1",
 				"--dry-run",
@@ -714,9 +569,7 @@ func Test_ClusterTask_Start(t *testing.T) {
 		{
 			name: "Dry run with invalid --timeout v1beta1",
 			command: []string{"start", "clustertask-2",
-				"-i", "my-repo=git",
 				"-p", "myarg=value1",
-				"-o", "code-image=output-image",
 				"-l", "key=value",
 				"-s=svc1",
 				"--dry-run",
@@ -732,11 +585,9 @@ func Test_ClusterTask_Start(t *testing.T) {
 		{
 			name: "Dry run with PodTemplate",
 			command: []string{"start", "clustertask-2",
-				"-i", "my-repo=git",
 				"-p", "myarg=value1",
 				"-p", "print=boom",
 				"-l", "key=value",
-				"-o", "code-image=output-image",
 				"-l", "key=value",
 				"-s=svc1",
 				"--dry-run",
@@ -751,12 +602,9 @@ func Test_ClusterTask_Start(t *testing.T) {
 		{
 			name: "Dry Run with --use-param-defaults and specified params",
 			command: []string{"start", "clustertask-3",
-				"-i", "my-repo=git",
-				"-i", "my-image=image",
 				"-p", "myarg=value1",
 				"-p", "print=boom",
 				"-l", "key=value",
-				"-o", "code-image=output-image",
 				"-w", "name=test,emptyDir=",
 				"-s=svc1",
 				"--dry-run",
@@ -770,10 +618,7 @@ func Test_ClusterTask_Start(t *testing.T) {
 		{
 			name: "Dry Run with --use-param-defaults and no specified params",
 			command: []string{"start", "clustertask-3",
-				"-i", "my-repo=git",
-				"-i", "my-image=image",
 				"-l", "key=value",
-				"-o", "code-image=output-image",
 				"-w", "name=test,emptyDir=",
 				"-s=svc1",
 				"--dry-run",
@@ -787,10 +632,7 @@ func Test_ClusterTask_Start(t *testing.T) {
 		{
 			name: "Dry Run with --use-param-defaults and --last",
 			command: []string{"start", "clustertask-3",
-				"-i", "my-repo=git",
-				"-i", "my-image=image",
 				"-l", "key=value",
-				"-o", "code-image=output-image",
 				"-w", "name=test,emptyDir=",
 				"-s=svc1",
 				"--dry-run",
@@ -805,10 +647,7 @@ func Test_ClusterTask_Start(t *testing.T) {
 		{
 			name: "Dry Run with --use-param-defaults and --use-taskrun",
 			command: []string{"start", "clustertask-3",
-				"-i", "my-repo=git",
-				"-i", "my-image=image",
 				"-l", "key=value",
-				"-o", "code-image=output-image",
 				"-w", "name=test,emptyDir=",
 				"-s=svc1",
 				"--dry-run",
@@ -823,12 +662,9 @@ func Test_ClusterTask_Start(t *testing.T) {
 		{
 			name: "Dry Run with --prefix-name v1beta1",
 			command: []string{"start", "clustertask-3",
-				"-i", "my-repo=git",
-				"-i", "my-image=image",
 				"-p", "myarg=value1",
 				"-p", "print=boom",
 				"-l", "key=value",
-				"-o", "code-image=output-image",
 				"-w", "name=test,emptyDir=",
 				"-s=svc1",
 				"--dry-run",
@@ -842,8 +678,6 @@ func Test_ClusterTask_Start(t *testing.T) {
 		{
 			name: "Dry Run with --prefix-name and --last v1beta1",
 			command: []string{"start", "clustertask-1",
-				"-i", "my-repo=git",
-				"-o", "code-image=output-image",
 				"-l", "key=value",
 				"-s=svc1",
 				"--dry-run",
@@ -903,92 +737,6 @@ func Test_ClusterTask_Start(t *testing.T) {
 	}
 }
 
-func Test_mergeResource(t *testing.T) {
-	res := []v1beta1.TaskResourceBinding{{
-		PipelineResourceBinding: v1beta1.PipelineResourceBinding{
-			Name: "source",
-			ResourceRef: &v1beta1.PipelineResourceRef{
-				Name: "git",
-			},
-		},
-	}}
-
-	_, err := mergeRes(res, []string{"test"})
-	if err == nil {
-		t.Errorf("Expected error")
-	}
-
-	res, err = mergeRes(res, []string{})
-	if err != nil {
-		t.Errorf("Did not expect error")
-	}
-	test.AssertOutput(t, 1, len(res))
-
-	res, err = mergeRes(res, []string{"image=test-1"})
-	if err != nil {
-		t.Errorf("Did not expect error")
-	}
-	test.AssertOutput(t, 2, len(res))
-
-	res, err = mergeRes(res, []string{"image=test-new", "image-2=test-2"})
-	if err != nil {
-		t.Errorf("Did not expect error")
-	}
-	test.AssertOutput(t, 3, len(res))
-}
-
-func Test_parseRes(t *testing.T) {
-	type args struct {
-		res []string
-	}
-	tests := []struct {
-		name    string
-		args    args
-		want    map[string]v1beta1.TaskResourceBinding
-		wantErr bool
-	}{{
-		name: "Test_parseRes No Err",
-		args: args{
-			res: []string{"source=git", "image=docker2"},
-		},
-		want: map[string]v1beta1.TaskResourceBinding{"source": {
-			PipelineResourceBinding: v1beta1.PipelineResourceBinding{
-				Name: "source",
-				ResourceRef: &v1beta1.PipelineResourceRef{
-					Name: "git",
-				},
-			},
-		}, "image": {
-			PipelineResourceBinding: v1beta1.PipelineResourceBinding{
-				Name: "image",
-				ResourceRef: &v1beta1.PipelineResourceRef{
-					Name: "docker2",
-				},
-			},
-		}},
-		wantErr: false,
-	}, {
-		name: "Test_parseRes Err",
-		args: args{
-			res: []string{"value1", "value2"},
-		},
-		wantErr: true,
-	}}
-
-	for _, tt := range tests {
-		t.Run(tt.name, func(t *testing.T) {
-			got, err := parseRes(tt.args.res)
-			if (err != nil) != tt.wantErr {
-				t.Errorf("parseRes() error = %v, wantErr %v", err, tt.wantErr)
-				return
-			}
-			if !reflect.DeepEqual(got, tt.want) {
-				t.Errorf("parseRes() = %v, want %v", got, tt.want)
-			}
-		})
-	}
-}
-
 func Test_start_use_taskrun_cancelled_status(t *testing.T) {
 	ctasks := []*v1beta1.ClusterTask{
 		{
@@ -996,24 +744,6 @@ func Test_start_use_taskrun_cancelled_status(t *testing.T) {
 				Name: "clustertask",
 			},
 			Spec: v1beta1.TaskSpec{
-				Resources: &v1beta1.TaskResources{
-					Inputs: []v1beta1.TaskResource{
-						{
-							ResourceDeclaration: v1beta1.ResourceDeclaration{
-								Name: "my-repo",
-								Type: v1beta1.PipelineResourceTypeGit,
-							},
-						},
-					},
-					Outputs: []v1beta1.TaskResource{
-						{
-							ResourceDeclaration: v1beta1.ResourceDeclaration{
-								Name: "code-image",
-								Type: v1beta1.PipelineResourceTypeImage,
-							},
-						},
-					},
-				},
 				Params: []v1beta1.ParamSpec{
 					{
 						Name: "myarg",
