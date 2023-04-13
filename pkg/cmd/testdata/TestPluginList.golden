@@ -14,7 +14,6 @@ Available Commands:
   hub                   Interact with tekton hub
   pipeline              Manage pipelines
   pipelinerun           Manage PipelineRuns
-  resource              Manage pipeline resources
   task                  Manage Tasks
   taskrun               Manage TaskRuns
   triggerbinding        Manage TriggerBindings

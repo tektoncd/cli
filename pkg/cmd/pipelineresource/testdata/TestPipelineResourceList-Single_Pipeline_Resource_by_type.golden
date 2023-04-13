@@ -1,3 +1,0 @@
-Command "list" is deprecated, PipelineResource commands are deprecated, they will be removed soon as it get removed from API.
-NAME     TYPE    DETAILS
-test-4   image   URL: quey.io/tekton/webhook

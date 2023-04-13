@@ -122,7 +122,6 @@ run_test  "describe eventlistener" tkn eventlistener describe github-listener-in
 
 run_test  "show logs" tkn pipelinerun logs output-pipeline-run
 run_test  "show logs" tkn taskrun logs test-template-volume
-run_test  "list pipelineresources" tkn resource list
 
 # delete pipeline, pipelinerun, task, taskrun, and pipelineresource
 run_test  "delete pipeline" tkn pipeline delete output-pipeline -f
@@ -147,7 +146,7 @@ must_fail "hub search cli" tkn hub --api-server=api.nonexistent.server search cl
 must_fail "hub get task cli" tkn hub --api-server=api.nonexistent.server get task cli
 
 # Make sure that eveything is cleaned up in the current namespace.
-for res in pipelineresources tasks pipelines taskruns pipelineruns; do
+for res in tasks pipelines taskruns pipelineruns; do
   kubectl delete --ignore-not-found=true ${res}.tekton.dev --all
 done
 

@@ -29,7 +29,6 @@ import (
 	"github.com/tektoncd/cli/pkg/cmd/completion"
 	"github.com/tektoncd/cli/pkg/cmd/eventlistener"
 	"github.com/tektoncd/cli/pkg/cmd/pipeline"
-	"github.com/tektoncd/cli/pkg/cmd/pipelineresource"
 	"github.com/tektoncd/cli/pkg/cmd/pipelinerun"
 	"github.com/tektoncd/cli/pkg/cmd/task"
 	"github.com/tektoncd/cli/pkg/cmd/taskrun"
@@ -109,7 +108,6 @@ func Root(p cli.Params) *cobra.Command {
 		completion.Command(),
 		eventlistener.Command(p),
 		pipeline.Command(p),
-		pipelineresource.Command(p),
 		pipelinerun.Command(p),
 		task.Command(p),
 		taskrun.Command(p),
