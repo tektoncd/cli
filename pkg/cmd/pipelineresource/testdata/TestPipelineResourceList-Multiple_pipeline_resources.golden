@@ -1,6 +1,0 @@
-Command "list" is deprecated, PipelineResource commands are deprecated, they will be removed soon as it get removed from API.
-NAME     TYPE    DETAILS
-test     git     url: git@github.com:tektoncd/cli-new.git
-test-2   git     url: git@github.com:tektoncd/cli.git
-test-1   image   URL: quey.io/tekton/controller
-test-3   image   ---
