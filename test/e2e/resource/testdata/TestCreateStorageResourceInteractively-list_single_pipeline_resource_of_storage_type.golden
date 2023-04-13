@@ -1,2 +1,0 @@
-NAME         TYPE      DETAILS
-my-storage   storage   location: gs://build-crd-tests/archive.zip
