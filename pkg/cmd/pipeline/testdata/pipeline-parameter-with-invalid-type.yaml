@@ -19,11 +19,6 @@ metadata:
 spec:
   params:
     - name: test-param
-  resources:
-    - name: source-repo
-      type: git
-    - name: web-image
-      type: image
   tasks:
     - name: build-skaffold-web
       taskRef:
@@ -33,24 +28,9 @@ spec:
           value: Dockerfile
         - name: pathToContext
           value: /workspace/docker-source/examples/microservices/leeroy-web
-      resources:
-        inputs:
-          - name: docker-source
-            resource: source-repo
-        outputs:
-          - name: builtImage
-            resource: web-image
     - name: deploy-web
       taskRef:
         name: deploy-using-kubectl
-      resources:
-        inputs:
-          - name: source
-            resource: source-repo
-          - name: image
-            resource: web-image
-            from:
-              - build-skaffold-web
       params:
         - name: path
           value: /workspace/source/examples/microservices/leeroy-web/kubernetes/deployment.yaml

@@ -1,4 +1,3 @@
-Flag --resource has been deprecated, pipelineresources have been deprecated, this flag will be removed soon
 Flag --timeout has been deprecated, please use --pipeline-timeout flag instead
 apiVersion: tekton.dev/v1beta1
 kind: PipelineRun
@@ -16,10 +15,6 @@ spec:
     value: value2
   pipelineRef:
     name: test-pipeline
-  resources:
-  - name: source
-    resourceRef:
-      name: scaffold-git
   serviceAccountName: svc1
   timeout: 1s
 status: {}
