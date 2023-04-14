@@ -19,7 +19,6 @@ import (
 	"strings"
 	"testing"
 
-	"github.com/jonboulle/clockwork"
 	"github.com/tektoncd/cli/pkg/test"
 	"github.com/tektoncd/pipeline/pkg/apis/resource/v1alpha1"
 	pipelinetest "github.com/tektoncd/pipeline/test"
@@ -157,7 +156,7 @@ func TestPipelineResourcesDescribe_custom_output(t *testing.T) {
 	name := "pipeline-resource"
 	expected := "Command \"describe\" is deprecated, PipelineResource commands are deprecated, they will be removed soon as it get removed from API.\npipelineresource.tekton.dev/" + name
 
-	clock := clockwork.NewFakeClock()
+	clock := test.FakeClock()
 
 	prs := []*v1alpha1.PipelineResource{
 		{

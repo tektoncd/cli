@@ -136,7 +136,7 @@ func (p *Params) Clients(config ...*rest.Config) (*cli.Clients, error) {
 
 func (p *Params) Time() clockwork.Clock {
 	if p.Clock == nil {
-		p.Clock = clockwork.NewFakeClock()
+		p.Clock = FakeClock()
 	}
 	return p.Clock
 }

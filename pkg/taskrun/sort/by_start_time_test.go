@@ -18,13 +18,13 @@ import (
 	"testing"
 	"time"
 
-	"github.com/jonboulle/clockwork"
+	"github.com/tektoncd/cli/pkg/test"
 	v1 "github.com/tektoncd/pipeline/pkg/apis/pipeline/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 )
 
 func Test_TaskRunsByStartTime(t *testing.T) {
-	clock := clockwork.NewFakeClock()
+	clock := test.FakeClock()
 
 	tr0Started := clock.Now().Add(10 * time.Second)
 	tr1Started := clock.Now().Add(-2 * time.Hour)

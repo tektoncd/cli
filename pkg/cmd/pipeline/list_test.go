@@ -19,7 +19,6 @@ import (
 	"testing"
 	"time"
 
-	"github.com/jonboulle/clockwork"
 	"github.com/tektoncd/cli/pkg/test"
 	cb "github.com/tektoncd/cli/pkg/test/builder"
 	testDynamic "github.com/tektoncd/cli/pkg/test/dynamic"
@@ -86,7 +85,7 @@ func TestPipelinesList_empty_v1beta1(t *testing.T) {
 }
 
 func TestPipelineList_only_pipelines_v1beta1(t *testing.T) {
-	clock := clockwork.NewFakeClock()
+	clock := test.FakeClock()
 	version := "v1beta1"
 
 	pdata := []*v1beta1.Pipeline{
@@ -144,7 +143,7 @@ func TestPipelineList_only_pipelines_v1beta1(t *testing.T) {
 }
 
 func TestPipelineList_only_pipelines_no_headers_v1beta1(t *testing.T) {
-	clock := clockwork.NewFakeClock()
+	clock := test.FakeClock()
 	version := "v1beta1"
 
 	pdata := []*v1beta1.Pipeline{
@@ -202,7 +201,7 @@ func TestPipelineList_only_pipelines_no_headers_v1beta1(t *testing.T) {
 }
 
 func TestPipelineList_only_pipelines_all_namespaces_v1beta1(t *testing.T) {
-	clock := clockwork.NewFakeClock()
+	clock := test.FakeClock()
 
 	version := "v1beta1"
 
@@ -280,7 +279,7 @@ func TestPipelineList_only_pipelines_all_namespaces_v1beta1(t *testing.T) {
 
 func TestPipelineList_only_pipelines_all_namespaces_no_headers_v1beta1(t *testing.T) {
 
-	clock := clockwork.NewFakeClock()
+	clock := test.FakeClock()
 	version := "v1beta1"
 
 	pdata := []*v1beta1.Pipeline{
@@ -356,7 +355,7 @@ func TestPipelineList_only_pipelines_all_namespaces_no_headers_v1beta1(t *testin
 }
 
 func TestPipelinesList_with_single_run_v1beta1(t *testing.T) {
-	clock := clockwork.NewFakeClock()
+	clock := test.FakeClock()
 	version := "v1beta1"
 	pdata := []*v1beta1.Pipeline{
 		{
@@ -439,7 +438,7 @@ func TestPipelinesList_with_single_run_v1beta1(t *testing.T) {
 
 func TestPipelinesList_latest_run_v1beta1(t *testing.T) {
 	version := "v1beta1"
-	clock := clockwork.NewFakeClock()
+	clock := test.FakeClock()
 	//  Time --->
 	//  |---5m ---|------------ ││--││------------- ---│--│
 	//	now      pipeline       ││  │`secondRun stated │  `*first*RunCompleted
@@ -616,7 +615,7 @@ func TestPipelinesList_empty(t *testing.T) {
 }
 
 func TestPipelineList_only_pipelines(t *testing.T) {
-	clock := clockwork.NewFakeClock()
+	clock := test.FakeClock()
 	version := "v1"
 
 	pdata := []*v1.Pipeline{
@@ -674,7 +673,7 @@ func TestPipelineList_only_pipelines(t *testing.T) {
 }
 
 func TestPipelineList_only_pipelines_no_headers(t *testing.T) {
-	clock := clockwork.NewFakeClock()
+	clock := test.FakeClock()
 	version := "v1"
 
 	pdata := []*v1.Pipeline{
@@ -732,7 +731,7 @@ func TestPipelineList_only_pipelines_no_headers(t *testing.T) {
 }
 
 func TestPipelineList_only_pipelines_all_namespaces(t *testing.T) {
-	clock := clockwork.NewFakeClock()
+	clock := test.FakeClock()
 
 	version := "v1"
 
@@ -810,7 +809,7 @@ func TestPipelineList_only_pipelines_all_namespaces(t *testing.T) {
 
 func TestPipelineList_only_pipelines_all_namespaces_no_headers(t *testing.T) {
 
-	clock := clockwork.NewFakeClock()
+	clock := test.FakeClock()
 	version := "v1"
 
 	pdata := []*v1.Pipeline{
@@ -886,7 +885,7 @@ func TestPipelineList_only_pipelines_all_namespaces_no_headers(t *testing.T) {
 }
 
 func TestPipelinesList_with_single_run(t *testing.T) {
-	clock := clockwork.NewFakeClock()
+	clock := test.FakeClock()
 	version := "v1"
 	pdata := []*v1.Pipeline{
 		{
@@ -969,7 +968,7 @@ func TestPipelinesList_with_single_run(t *testing.T) {
 
 func TestPipelinesList_latest_run(t *testing.T) {
 	version := "v1"
-	clock := clockwork.NewFakeClock()
+	clock := test.FakeClock()
 	//  Time --->
 	//  |---5m ---|------------ ││--││------------- ---│--│
 	//	now      pipeline       ││  │`secondRun stated │  `*first*RunCompleted
@@ -1094,7 +1093,7 @@ func TestPipelinesList_latest_run(t *testing.T) {
 
 func TestPipelineList_in_all_namespaces_with_output_yaml_flag(t *testing.T) {
 
-	clock := clockwork.NewFakeClock()
+	clock := test.FakeClock()
 	version := "v1"
 
 	pdata := []*v1.Pipeline{

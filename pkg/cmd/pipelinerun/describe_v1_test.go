@@ -20,7 +20,6 @@ import (
 	"testing"
 	"time"
 
-	"github.com/jonboulle/clockwork"
 	"github.com/tektoncd/cli/pkg/test"
 	cb "github.com/tektoncd/cli/pkg/test/builder"
 	testDynamic "github.com/tektoncd/cli/pkg/test/dynamic"
@@ -83,7 +82,7 @@ func TestPipelineRunDescribe_not_found(t *testing.T) {
 }
 
 func TestPipelineRunDescribe_only_taskrun(t *testing.T) {
-	clock := clockwork.NewFakeClock()
+	clock := test.FakeClock()
 
 	trs := []*v1.TaskRun{
 		{
@@ -183,7 +182,7 @@ func TestPipelineRunDescribe_only_taskrun(t *testing.T) {
 }
 
 func TestPipelineRunDescribe_multiple_taskrun_ordering(t *testing.T) {
-	clock := clockwork.NewFakeClock()
+	clock := test.FakeClock()
 
 	trs := []*v1.TaskRun{
 		{
@@ -312,7 +311,7 @@ func TestPipelineRunDescribe_multiple_taskrun_ordering(t *testing.T) {
 }
 
 func TestPipelineRunDescribe_multiple_taskrun_without_status(t *testing.T) {
-	clock := clockwork.NewFakeClock()
+	clock := test.FakeClock()
 
 	trs := []*v1.TaskRun{
 		{
@@ -427,7 +426,7 @@ func TestPipelineRunDescribe_multiple_taskrun_without_status(t *testing.T) {
 }
 
 func TestPipelineRunDescribe_failed(t *testing.T) {
-	clock := clockwork.NewFakeClock()
+	clock := test.FakeClock()
 
 	trs := []*v1.TaskRun{
 		{
@@ -562,7 +561,7 @@ func TestPipelineRunDescribe_last_no_PipelineRun_present(t *testing.T) {
 }
 
 func TestPipelineRunDescribe_failed_withoutTRCondition(t *testing.T) {
-	clock := clockwork.NewFakeClock()
+	clock := test.FakeClock()
 
 	trs := []*v1.TaskRun{
 		{
@@ -658,7 +657,7 @@ func TestPipelineRunDescribe_failed_withoutTRCondition(t *testing.T) {
 }
 
 func TestPipelineRunDescribe_failed_withoutPRCondition(t *testing.T) {
-	clock := clockwork.NewFakeClock()
+	clock := test.FakeClock()
 
 	trs := []*v1.TaskRun{
 		{
@@ -745,7 +744,7 @@ func TestPipelineRunDescribe_failed_withoutPRCondition(t *testing.T) {
 }
 
 func TestPipelineRunDescribe_with_resources_taskrun(t *testing.T) {
-	clock := clockwork.NewFakeClock()
+	clock := test.FakeClock()
 
 	trs := []*v1.TaskRun{
 		{
@@ -857,7 +856,7 @@ func TestPipelineRunDescribe_with_resources_taskrun(t *testing.T) {
 }
 
 func TestPipelineRunDescribe_without_start_time(t *testing.T) {
-	clock := clockwork.NewFakeClock()
+	clock := test.FakeClock()
 
 	pipelineRuns := []*v1.PipelineRun{
 		{
@@ -908,7 +907,7 @@ func TestPipelineRunDescribe_without_start_time(t *testing.T) {
 }
 
 func TestPipelineRunDescribe_without_pipelineref(t *testing.T) {
-	clock := clockwork.NewFakeClock()
+	clock := test.FakeClock()
 
 	pipelineRuns := []*v1.PipelineRun{
 		{
@@ -951,7 +950,7 @@ func TestPipelineRunDescribe_without_pipelineref(t *testing.T) {
 }
 
 func TestPipelineRunDescribe_withoutNameOfOnlyOnePipelineRunPresent(t *testing.T) {
-	clock := clockwork.NewFakeClock()
+	clock := test.FakeClock()
 
 	pipelineRuns := []*v1.PipelineRun{
 		{
@@ -994,7 +993,7 @@ func TestPipelineRunDescribe_withoutNameOfOnlyOnePipelineRunPresent(t *testing.T
 }
 
 func TestPipelineRunDescribe_no_resourceref(t *testing.T) {
-	clock := clockwork.NewFakeClock()
+	clock := test.FakeClock()
 
 	trs := []*v1.TaskRun{
 		{
@@ -1106,7 +1105,7 @@ func TestPipelineRunDescribe_no_resourceref(t *testing.T) {
 }
 
 func TestPipelineRunDescribe_cancelled_pipelinerun(t *testing.T) {
-	clock := clockwork.NewFakeClock()
+	clock := test.FakeClock()
 
 	trs := []*v1.TaskRun{
 		{
@@ -1207,7 +1206,7 @@ func TestPipelineRunDescribe_cancelled_pipelinerun(t *testing.T) {
 }
 
 func TestPipelineRunDescribe_without_tr_start_time(t *testing.T) {
-	clock := clockwork.NewFakeClock()
+	clock := test.FakeClock()
 
 	trs := []*v1.TaskRun{
 		{
@@ -1390,7 +1389,7 @@ func TestPipelineRunDescribe_custom_output(t *testing.T) {
 }
 
 func TestPipelineRunDescribe(t *testing.T) {
-	clock := clockwork.NewFakeClock()
+	clock := test.FakeClock()
 	pipelinerunname := "pipeline-run"
 	taskRuns := []*v1.TaskRun{
 		{
@@ -1539,7 +1538,7 @@ func TestPipelineRunDescribe(t *testing.T) {
 }
 
 func TestPipelineRunDescribe_taskrun_with_no_status(t *testing.T) {
-	clock := clockwork.NewFakeClock()
+	clock := test.FakeClock()
 	pipelinerunname := "pipeline-run"
 	taskRuns := []*v1.TaskRun{
 		{
@@ -1674,7 +1673,7 @@ func TestPipelineRunDescribe_taskrun_with_no_status(t *testing.T) {
 }
 
 func TestPipelineRunDescribe_last(t *testing.T) {
-	clock := clockwork.NewFakeClock()
+	clock := test.FakeClock()
 	pipelinerunname1 := "pipeline-run"
 	pipelinerunname2 := "pipeline-run2"
 	taskRuns := []*v1.TaskRun{
@@ -1883,7 +1882,7 @@ func TestPipelineRunDescribe_last(t *testing.T) {
 }
 
 func TestPipelineRunDescribe_with_results(t *testing.T) {
-	clock := clockwork.NewFakeClock()
+	clock := test.FakeClock()
 	pipelinerunname := "pipeline-run"
 	taskRuns := []*v1.TaskRun{
 		{
@@ -2055,7 +2054,7 @@ func TestPipelineRunDescribe_zero_timeout(t *testing.T) {
 }
 
 func TestPipelineRunDescribe_with_workspaces(t *testing.T) {
-	clock := clockwork.NewFakeClock()
+	clock := test.FakeClock()
 	pipelinerunname := "pipeline-run"
 	taskRuns := []*v1.TaskRun{
 		{
@@ -2199,7 +2198,7 @@ func TestPipelineRunDescribe_with_workspaces(t *testing.T) {
 }
 
 func TestPipelineRunDescribeWithSkippedTasks(t *testing.T) {
-	clock := clockwork.NewFakeClock()
+	clock := test.FakeClock()
 	pipelinerunname := "pipeline-run"
 	taskRuns := []*v1.TaskRun{
 		{
@@ -2380,7 +2379,7 @@ func TestPipelineRunDescribeWithSkippedTasks(t *testing.T) {
 }
 
 func TestPipelineRunDescribe_cancelled_pipelinerun_multiple_taskrun(t *testing.T) {
-	clock := clockwork.NewFakeClock()
+	clock := test.FakeClock()
 
 	trs := []*v1.TaskRun{
 		{
@@ -2513,7 +2512,7 @@ func TestPipelineRunDescribe_cancelled_pipelinerun_multiple_taskrun(t *testing.T
 }
 
 func TestPipelineRunDescribeWithTimeouts(t *testing.T) {
-	clock := clockwork.NewFakeClock()
+	clock := test.FakeClock()
 	pipelinerunname := "pipeline-run"
 	taskRuns := []*v1.TaskRun{
 		{

@@ -18,7 +18,6 @@ import (
 	"testing"
 	"time"
 
-	"github.com/jonboulle/clockwork"
 	"github.com/tektoncd/cli/pkg/actions"
 	"github.com/tektoncd/cli/pkg/cli"
 	"github.com/tektoncd/cli/pkg/test"
@@ -31,7 +30,7 @@ import (
 
 func TestClusterTask_GetAllTaskNames(t *testing.T) {
 	version := "v1beta1"
-	clock := clockwork.NewFakeClock()
+	clock := test.FakeClock()
 	ctdata := []*v1beta1.ClusterTask{
 		{
 			ObjectMeta: metav1.ObjectMeta{
@@ -125,7 +124,7 @@ func TestClusterTask_GetAllTaskNames(t *testing.T) {
 
 func TestClusterTask_List(t *testing.T) {
 	version := "v1beta1"
-	clock := clockwork.NewFakeClock()
+	clock := test.FakeClock()
 	ctdata := []*v1beta1.ClusterTask{
 		{
 			ObjectMeta: metav1.ObjectMeta{
@@ -218,7 +217,7 @@ func TestClusterTask_List(t *testing.T) {
 
 func TestClusterTask_Get(t *testing.T) {
 	version := "v1beta1"
-	clock := clockwork.NewFakeClock()
+	clock := test.FakeClock()
 	ctdata := []*v1beta1.ClusterTask{
 		{
 			ObjectMeta: metav1.ObjectMeta{
@@ -260,7 +259,7 @@ func TestClusterTask_Get(t *testing.T) {
 
 func TestClusterTask_Create(t *testing.T) {
 	version := "v1beta1"
-	clock := clockwork.NewFakeClock()
+	clock := test.FakeClock()
 	ctdata := []*v1beta1.ClusterTask{
 		{
 			ObjectMeta: metav1.ObjectMeta{

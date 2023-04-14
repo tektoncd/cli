@@ -34,7 +34,7 @@ import (
 
 func TestPipelineRunsList_v1beta1(t *testing.T) {
 	version := "v1beta1"
-	clock := clockwork.NewFakeClock()
+	clock := test.FakeClock()
 	pr1Started := clock.Now().Add(10 * time.Second)
 	runDuration := 1 * time.Minute
 	prdata := []*v1beta1.PipelineRun{
@@ -199,7 +199,7 @@ func TestPipelineRunsList_v1beta1(t *testing.T) {
 
 func TestPipelineRunsList(t *testing.T) {
 	version := "v1"
-	clock := clockwork.NewFakeClock()
+	clock := test.FakeClock()
 	pr1Started := clock.Now().Add(10 * time.Second)
 	runDuration := 1 * time.Minute
 	prdata := []*v1.PipelineRun{
@@ -364,7 +364,7 @@ func TestPipelineRunsList(t *testing.T) {
 
 func TestPipelineRunGet_v1beta1(t *testing.T) {
 	version := "v1beta1"
-	clock := clockwork.NewFakeClock()
+	clock := test.FakeClock()
 	pr1Started := clock.Now().Add(10 * time.Second)
 	runDuration := 1 * time.Minute
 
@@ -451,7 +451,7 @@ func TestPipelineRunGet_v1beta1(t *testing.T) {
 
 func TestPipelineRunGet(t *testing.T) {
 	version := "v1"
-	clock := clockwork.NewFakeClock()
+	clock := test.FakeClock()
 	pr1Started := clock.Now().Add(10 * time.Second)
 	runDuration := 1 * time.Minute
 

@@ -21,7 +21,6 @@ import (
 	"testing"
 	"time"
 
-	"github.com/jonboulle/clockwork"
 	"github.com/tektoncd/cli/pkg/test"
 	cb "github.com/tektoncd/cli/pkg/test/builder"
 	testDynamic "github.com/tektoncd/cli/pkg/test/dynamic"
@@ -539,7 +538,7 @@ func TestTaskDescribe_custom_output_v1beta1(t *testing.T) {
 	name := "task"
 	expected := "task.tekton.dev/" + name
 
-	clock := clockwork.NewFakeClock()
+	clock := test.FakeClock()
 
 	tasks := []*v1beta1.Task{
 		{
@@ -586,7 +585,7 @@ func TestTaskDescribe_custom_output(t *testing.T) {
 	name := "task"
 	expected := "task.tekton.dev/" + name
 
-	clock := clockwork.NewFakeClock()
+	clock := test.FakeClock()
 
 	tasks := []*v1.Task{
 		{
@@ -708,7 +707,7 @@ func TestTaskDescribe_WithoutNameIfOnlyOneTaskPresent(t *testing.T) {
 }
 
 func TestTaskDescribe_Full_v1beta1(t *testing.T) {
-	clock := clockwork.NewFakeClock()
+	clock := test.FakeClock()
 	tasks := []*v1beta1.Task{
 		{
 			ObjectMeta: metav1.ObjectMeta{
@@ -912,7 +911,7 @@ func TestTaskDescribe_Full_v1beta1(t *testing.T) {
 }
 
 func TestTaskDescribe_Full(t *testing.T) {
-	clock := clockwork.NewFakeClock()
+	clock := test.FakeClock()
 	tasks := []*v1.Task{
 		{
 			ObjectMeta: metav1.ObjectMeta{

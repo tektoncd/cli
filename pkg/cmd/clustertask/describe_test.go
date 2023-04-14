@@ -22,7 +22,6 @@ import (
 	"testing"
 	"time"
 
-	"github.com/jonboulle/clockwork"
 	"github.com/tektoncd/cli/pkg/test"
 	cb "github.com/tektoncd/cli/pkg/test/builder"
 	testDynamic "github.com/tektoncd/cli/pkg/test/dynamic"
@@ -37,7 +36,7 @@ import (
 )
 
 func Test_ClusterTaskDescribe(t *testing.T) {
-	clock := clockwork.NewFakeClock()
+	clock := test.FakeClock()
 
 	clustertasks := []*v1beta1.ClusterTask{
 		{
@@ -483,7 +482,7 @@ func TestClusterTask_custom_output(t *testing.T) {
 	name := "clustertask"
 	expected := "Command \"describe\" is deprecated, ClusterTasks are deprecated, this command will be removed in future releases.\nclustertask.tekton.dev/" + name
 
-	clock := clockwork.NewFakeClock()
+	clock := test.FakeClock()
 
 	cstasks := []*v1beta1.ClusterTask{
 		{
@@ -531,7 +530,7 @@ func TestClusterTaskV1beta1_custom_output(t *testing.T) {
 	name := "clustertask"
 	expected := "Command \"describe\" is deprecated, ClusterTasks are deprecated, this command will be removed in future releases.\nclustertask.tekton.dev/" + name
 
-	clock := clockwork.NewFakeClock()
+	clock := test.FakeClock()
 
 	cstasks := []*v1beta1.ClusterTask{
 		{
@@ -574,7 +573,7 @@ func TestClusterTaskV1beta1_custom_output(t *testing.T) {
 }
 
 func TestClusterTaskDescribe_With_Results(t *testing.T) {
-	clock := clockwork.NewFakeClock()
+	clock := test.FakeClock()
 
 	clustertasks := []*v1beta1.ClusterTask{
 		{
@@ -628,7 +627,7 @@ func TestClusterTaskDescribe_With_Results(t *testing.T) {
 }
 
 func TestClusterTaskDescribe_With_Workspaces(t *testing.T) {
-	clock := clockwork.NewFakeClock()
+	clock := test.FakeClock()
 
 	clustertasks := []*v1beta1.ClusterTask{
 		{

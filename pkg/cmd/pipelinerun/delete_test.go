@@ -20,7 +20,6 @@ import (
 	"testing"
 	"time"
 
-	"github.com/jonboulle/clockwork"
 	"github.com/tektoncd/cli/pkg/test"
 	cb "github.com/tektoncd/cli/pkg/test/builder"
 	testDynamic "github.com/tektoncd/cli/pkg/test/dynamic"
@@ -36,7 +35,7 @@ import (
 func TestPipelineRunDelete_v1beta1(t *testing.T) {
 
 	version := "v1beta1"
-	clock := clockwork.NewFakeClock()
+	clock := test.FakeClock()
 
 	ns := []*corev1.Namespace{
 		{
@@ -659,7 +658,7 @@ func TestPipelineRunDelete_v1beta1(t *testing.T) {
 
 func TestPipelineRunDelete(t *testing.T) {
 	version := "v1"
-	clock := clockwork.NewFakeClock()
+	clock := test.FakeClock()
 
 	ns := []*corev1.Namespace{
 		{

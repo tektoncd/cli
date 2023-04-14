@@ -22,7 +22,6 @@ import (
 	"testing"
 	"time"
 
-	"github.com/jonboulle/clockwork"
 	"github.com/tektoncd/cli/pkg/actions"
 	"github.com/tektoncd/cli/pkg/test"
 	cb "github.com/tektoncd/cli/pkg/test/builder"
@@ -114,7 +113,7 @@ func newDynamicClientOpt(version, taskRunName string, objs ...runtime.Object) te
 }
 
 func Test_ClusterTask_Start(t *testing.T) {
-	clock := clockwork.NewFakeClock()
+	clock := test.FakeClock()
 	type clients struct {
 		pipelineClient pipelinev1beta1test.Clients
 		dynamicClient  dynamic.Interface

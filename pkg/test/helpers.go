@@ -18,8 +18,10 @@ import (
 	"reflect"
 	"strings"
 	"testing"
+	"time"
 
 	"github.com/google/go-cmp/cmp"
+	"github.com/jonboulle/clockwork"
 	ttesting "github.com/tektoncd/pipeline/pkg/reconciler/testing"
 	pipelinetest "github.com/tektoncd/pipeline/test"
 	triggerstest "github.com/tektoncd/triggers/test"
@@ -91,4 +93,8 @@ func Contains(t *testing.T, container interface{}, obj interface{}) {
 		diffs = append(diffs, diff)
 	}
 	t.Errorf("no matches found in: %s", strings.Join(diffs, "\n"))
+}
+
+func FakeClock() clockwork.FakeClock {
+	return clockwork.NewFakeClockAt(time.Date(1984, time.April, 4, 0, 0, 0, 0, time.UTC))
 }

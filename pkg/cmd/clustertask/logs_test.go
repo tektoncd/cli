@@ -19,7 +19,6 @@ import (
 	"time"
 
 	"github.com/AlecAivazis/survey/v2/core"
-	"github.com/jonboulle/clockwork"
 	"github.com/tektoncd/cli/pkg/options"
 	"github.com/tektoncd/cli/pkg/test"
 	cb "github.com/tektoncd/cli/pkg/test/builder"
@@ -38,7 +37,7 @@ func init() {
 }
 
 func TestClusterTaskLog(t *testing.T) {
-	clock := clockwork.NewFakeClock()
+	clock := test.FakeClock()
 	clustertask1 := []*v1beta1.ClusterTask{
 		{
 			ObjectMeta: metav1.ObjectMeta{
@@ -128,7 +127,7 @@ func TestClusterTaskLog(t *testing.T) {
 func TestLogs_Auto_Select_FirstClusterTask(t *testing.T) {
 	taskName := "dummyTask"
 	ns := "dummyNamespaces"
-	clock := clockwork.NewFakeClock()
+	clock := test.FakeClock()
 
 	ctdata := []*v1beta1.ClusterTask{
 		{

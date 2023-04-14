@@ -22,7 +22,6 @@ import (
 	"github.com/AlecAivazis/survey/v2/core"
 	"github.com/AlecAivazis/survey/v2/terminal"
 	goexpect "github.com/Netflix/go-expect"
-	"github.com/jonboulle/clockwork"
 	"github.com/tektoncd/cli/pkg/cli"
 	"github.com/tektoncd/cli/pkg/options"
 	"github.com/tektoncd/cli/pkg/test"
@@ -56,7 +55,7 @@ const (
 )
 
 func TestPipelineLog_v1beta1(t *testing.T) {
-	clock := clockwork.NewFakeClock()
+	clock := test.FakeClock()
 	pdata := []*v1beta1.Pipeline{
 		{
 			ObjectMeta: metav1.ObjectMeta{
@@ -293,7 +292,7 @@ func TestPipelineLog_v1beta1(t *testing.T) {
 }
 
 func TestPipelineLog(t *testing.T) {
-	clock := clockwork.NewFakeClock()
+	clock := test.FakeClock()
 	pdata := []*v1.Pipeline{
 		{
 			ObjectMeta: metav1.ObjectMeta{
@@ -532,7 +531,7 @@ func TestPipelineLog(t *testing.T) {
 func TestPipelineLog_Interactive_v1beta1(t *testing.T) {
 	t.Skip("Skipping due of flakiness")
 
-	clock := clockwork.NewFakeClock()
+	clock := test.FakeClock()
 
 	cs, _ := test.SeedV1beta1TestData(t, pipelinetest.Data{
 		Pipelines: []*v1beta1.Pipeline{
@@ -934,7 +933,7 @@ func TestPipelineLog_Interactive_v1beta1(t *testing.T) {
 func TestPipelineLog_Interactive(t *testing.T) {
 	t.Skip("Skipping due of flakiness")
 
-	clock := clockwork.NewFakeClock()
+	clock := test.FakeClock()
 
 	cs, _ := test.SeedTestData(t, test.Data{
 		Pipelines: []*v1.Pipeline{
@@ -1336,7 +1335,7 @@ func TestPipelineLog_Interactive(t *testing.T) {
 func TestLogs_Auto_Select_FirstPipeline(t *testing.T) {
 	pipelineName := "blahblah"
 	ns := "chouchou"
-	clock := clockwork.NewFakeClock()
+	clock := test.FakeClock()
 
 	pdata := []*v1beta1.Pipeline{
 		{

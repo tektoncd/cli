@@ -18,7 +18,6 @@ import (
 	"testing"
 	"time"
 
-	"github.com/jonboulle/clockwork"
 	"github.com/tektoncd/cli/pkg/test"
 	cb "github.com/tektoncd/cli/pkg/test/builder"
 	testDynamic "github.com/tektoncd/cli/pkg/test/dynamic"
@@ -29,7 +28,7 @@ import (
 )
 
 func TestTriggerTemplate_GetAllTriggerTemplate(t *testing.T) {
-	clock := clockwork.NewFakeClock()
+	clock := test.FakeClock()
 
 	tt := []*v1beta1.TriggerTemplate{
 		{
@@ -132,7 +131,7 @@ func TestTriggerTemplate_GetAllTriggerTemplate(t *testing.T) {
 }
 
 func TestTriggerTemplate_List(t *testing.T) {
-	clock := clockwork.NewFakeClock()
+	clock := test.FakeClock()
 
 	tt := []*v1beta1.TriggerTemplate{
 		{
@@ -235,7 +234,7 @@ func TestTriggerTemplate_List(t *testing.T) {
 }
 
 func TestTriggerTemplate_Get(t *testing.T) {
-	clock := clockwork.NewFakeClock()
+	clock := test.FakeClock()
 
 	tt := []*v1beta1.TriggerTemplate{
 		{

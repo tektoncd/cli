@@ -18,7 +18,7 @@ import (
 	"testing"
 	"time"
 
-	"github.com/jonboulle/clockwork"
+	"github.com/tektoncd/cli/pkg/test"
 	v1 "github.com/tektoncd/pipeline/pkg/apis/pipeline/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 )
@@ -65,7 +65,7 @@ func Test_TaskRunsByNamespace(t *testing.T) {
 
 func Test_TaskRunsByNamespaceWithStartTime(t *testing.T) {
 
-	clock := clockwork.NewFakeClock()
+	clock := test.FakeClock()
 
 	tr00Started := clock.Now().Add(10 * time.Second)
 	tr01Started := clock.Now().Add(-1 * time.Hour)

@@ -18,7 +18,6 @@ import (
 	"testing"
 	"time"
 
-	"github.com/jonboulle/clockwork"
 	"github.com/tektoncd/cli/pkg/actions"
 	"github.com/tektoncd/cli/pkg/test"
 	cb "github.com/tektoncd/cli/pkg/test/builder"
@@ -33,7 +32,7 @@ import (
 
 func TestTaskRunGet_v1beta1(t *testing.T) {
 	version := "v1beta1"
-	clock := clockwork.NewFakeClock()
+	clock := test.FakeClock()
 	tr1Started := clock.Now().Add(10 * time.Second)
 	runDuration := 1 * time.Minute
 
@@ -121,7 +120,7 @@ func TestTaskRunGet_v1beta1(t *testing.T) {
 
 func TestTaskRunGet(t *testing.T) {
 	version := "v1"
-	clock := clockwork.NewFakeClock()
+	clock := test.FakeClock()
 	tr1Started := clock.Now().Add(10 * time.Second)
 	runDuration := 1 * time.Minute
 

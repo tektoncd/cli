@@ -21,7 +21,6 @@ import (
 	"github.com/AlecAivazis/survey/v2/core"
 	"github.com/AlecAivazis/survey/v2/terminal"
 	goexpect "github.com/Netflix/go-expect"
-	"github.com/jonboulle/clockwork"
 	"github.com/tektoncd/cli/pkg/cli"
 	"github.com/tektoncd/cli/pkg/options"
 	"github.com/tektoncd/cli/pkg/pods/fake"
@@ -49,7 +48,7 @@ const (
 )
 
 func TestTaskLog_v1beta1(t *testing.T) {
-	clock := clockwork.NewFakeClock()
+	clock := test.FakeClock()
 
 	task1 := []*v1beta1.Task{
 		{
@@ -185,7 +184,7 @@ func TestTaskLog_v1beta1(t *testing.T) {
 }
 
 func TestTaskLog(t *testing.T) {
-	clock := clockwork.NewFakeClock()
+	clock := test.FakeClock()
 
 	task1 := []*v1.Task{
 		{
@@ -323,7 +322,7 @@ func TestTaskLog(t *testing.T) {
 func TestTaskLogInteractive_v1beta1(t *testing.T) {
 	t.Skip("Skipping due of flakiness")
 
-	clock := clockwork.NewFakeClock()
+	clock := test.FakeClock()
 	taskCreated := clock.Now()
 
 	cs, _ := test.SeedV1beta1TestData(t, pipelinetest.Data{
@@ -795,7 +794,7 @@ func TestTaskLogInteractive_v1beta1(t *testing.T) {
 func TestTaskLogInteractive(t *testing.T) {
 	t.Skip("Skipping due of flakiness")
 
-	clock := clockwork.NewFakeClock()
+	clock := test.FakeClock()
 	taskCreated := clock.Now()
 
 	cs, _ := test.SeedTestData(t, test.Data{
@@ -1267,7 +1266,7 @@ func TestTaskLogInteractive(t *testing.T) {
 func TestLogs_Auto_Select_FirstTask_v1beta1(t *testing.T) {
 	taskName := "dummyTask"
 	ns := "dummyNamespaces"
-	clock := clockwork.NewFakeClock()
+	clock := test.FakeClock()
 
 	tdata := []*v1beta1.Task{
 		{
@@ -1354,7 +1353,7 @@ func TestLogs_Auto_Select_FirstTask_v1beta1(t *testing.T) {
 func TestLogs_Auto_Select_FirstTask(t *testing.T) {
 	taskName := "dummyTask"
 	ns := "dummyNamespaces"
-	clock := clockwork.NewFakeClock()
+	clock := test.FakeClock()
 
 	tdata := []*v1.Task{
 		{

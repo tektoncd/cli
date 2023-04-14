@@ -18,7 +18,6 @@ import (
 	"testing"
 	"time"
 
-	"github.com/jonboulle/clockwork"
 	"github.com/tektoncd/cli/pkg/test"
 	cb "github.com/tektoncd/cli/pkg/test/builder"
 	testDynamic "github.com/tektoncd/cli/pkg/test/dynamic"
@@ -28,7 +27,7 @@ import (
 )
 
 func TestTrigger_GetAllClusterTriggerBinding(t *testing.T) {
-	clock := clockwork.NewFakeClock()
+	clock := test.FakeClock()
 
 	ctb := []*v1beta1.ClusterTriggerBinding{
 		{
@@ -112,7 +111,7 @@ func TestTrigger_GetAllClusterTriggerBinding(t *testing.T) {
 }
 
 func TestClusterTriggerBinding_List(t *testing.T) {
-	clock := clockwork.NewFakeClock()
+	clock := test.FakeClock()
 
 	ctb := []*v1beta1.ClusterTriggerBinding{
 		{
@@ -201,7 +200,7 @@ func TestClusterTriggerBinding_List(t *testing.T) {
 }
 
 func TestClusterTriggerBinding_Get(t *testing.T) {
-	clock := clockwork.NewFakeClock()
+	clock := test.FakeClock()
 
 	ctb := []*v1beta1.ClusterTriggerBinding{
 		{

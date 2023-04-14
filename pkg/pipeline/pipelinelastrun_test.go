@@ -18,7 +18,6 @@ import (
 	"testing"
 	"time"
 
-	"github.com/jonboulle/clockwork"
 	"github.com/tektoncd/cli/pkg/test"
 	cb "github.com/tektoncd/cli/pkg/test/builder"
 	testDynamic "github.com/tektoncd/cli/pkg/test/dynamic"
@@ -29,7 +28,7 @@ import (
 )
 
 func TestPipelineRunLastName_two_run(t *testing.T) {
-	clock := clockwork.NewFakeClock()
+	clock := test.FakeClock()
 	//  Time --->
 	//  |---5m ---|------------ ││--││------------- ---│--│
 	//	now      pipeline       ││  │`secondRun stated │  `*first*RunCompleted
@@ -151,7 +150,7 @@ func TestPipelineRunLastName_two_run(t *testing.T) {
 }
 
 func TestPipelineRunLast_two_run(t *testing.T) {
-	clock := clockwork.NewFakeClock()
+	clock := test.FakeClock()
 	//  Time --->
 	//  |---5m ---|------------ ││--││------------- ---│--│
 	//	now      pipeline       ││  │`secondRun stated │  `*first*RunCompleted
@@ -273,7 +272,7 @@ func TestPipelineRunLast_two_run(t *testing.T) {
 }
 
 func TestPipelinerunLatest_no_run(t *testing.T) {
-	clock := clockwork.NewFakeClock()
+	clock := test.FakeClock()
 	version := "v1"
 
 	pdata := []*v1.Pipeline{

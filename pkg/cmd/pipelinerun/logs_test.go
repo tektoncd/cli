@@ -20,7 +20,6 @@ import (
 	"testing"
 	"time"
 
-	"github.com/jonboulle/clockwork"
 	"github.com/tektoncd/cli/pkg/cli"
 	"github.com/tektoncd/cli/pkg/options"
 	"github.com/tektoncd/cli/pkg/pods/fake"
@@ -184,7 +183,7 @@ func TestLog_no_pipelinerun_argument(t *testing.T) {
 }
 
 func TestLog_run_found_v1beta1(t *testing.T) {
-	clock := clockwork.NewFakeClock()
+	clock := test.FakeClock()
 	pdata := []*v1beta1.Pipeline{
 		{
 			ObjectMeta: metav1.ObjectMeta{
@@ -250,7 +249,7 @@ func TestLog_run_found_v1beta1(t *testing.T) {
 }
 
 func TestLog_run_found(t *testing.T) {
-	clock := clockwork.NewFakeClock()
+	clock := test.FakeClock()
 	pdata := []*v1.Pipeline{
 		{
 			ObjectMeta: metav1.ObjectMeta{
@@ -411,7 +410,7 @@ func TestPipelinerunLogs_v1beta1(t *testing.T) {
 	var (
 		pipelineName = "output-pipeline"
 		prName       = "output-pipeline-1"
-		prstart      = clockwork.NewFakeClock()
+		prstart      = test.FakeClock()
 		ns           = "namespace"
 
 		task1Name    = "output-task"
@@ -752,7 +751,7 @@ func TestPipelinerunLogs(t *testing.T) {
 	var (
 		pipelineName = "output-pipeline"
 		prName       = "output-pipeline-1"
-		prstart      = clockwork.NewFakeClock()
+		prstart      = test.FakeClock()
 		ns           = "namespace"
 
 		task1Name    = "output-task"
@@ -1111,7 +1110,7 @@ func TestPipelinerunLog_completed_taskrun_only_v1beta1(t *testing.T) {
 	var (
 		pipelineName = "output-pipeline"
 		prName       = "output-pipeline-1"
-		prstart      = clockwork.NewFakeClock()
+		prstart      = test.FakeClock()
 		ns           = "namespace"
 
 		task1Name    = "output-task"
@@ -1296,7 +1295,7 @@ func TestPipelinerunLog_completed_taskrun_only_v1beta1(t *testing.T) {
 			ObjectMeta: metav1.ObjectMeta{
 				Namespace:         "ns",
 				Name:              "output-task2",
-				CreationTimestamp: metav1.Time{Time: clockwork.NewFakeClock().Now()},
+				CreationTimestamp: metav1.Time{Time: test.FakeClock().Now()},
 			},
 		},
 	}
@@ -1324,7 +1323,7 @@ func TestPipelinerunLog_completed_taskrun_only_v1beta1(t *testing.T) {
 					},
 				},
 				TaskRunStatusFields: v1beta1.TaskRunStatusFields{
-					StartTime: &metav1.Time{Time: clockwork.NewFakeClock().Now()},
+					StartTime: &metav1.Time{Time: test.FakeClock().Now()},
 					PodName:   "output-task-pod-embedded",
 					Steps: []v1beta1.StepState{
 						{
@@ -1508,7 +1507,7 @@ func TestPipelinerunLog_follow_mode_v1beta1(t *testing.T) {
 	var (
 		pipelineName = "output-pipeline"
 		prName       = "output-pipeline-1"
-		prstart      = clockwork.NewFakeClock()
+		prstart      = test.FakeClock()
 		ns           = "namespace"
 
 		task1Name    = "output-task"
@@ -1697,7 +1696,7 @@ func TestPipelinerunLog_follow_mode(t *testing.T) {
 	var (
 		pipelineName = "output-pipeline"
 		prName       = "output-pipeline-1"
-		prstart      = clockwork.NewFakeClock()
+		prstart      = test.FakeClock()
 		ns           = "namespace"
 
 		task1Name    = "output-task"
@@ -3274,7 +3273,7 @@ func TestPipelinerunLog_finally_v1beta1(t *testing.T) {
 	var (
 		pipelineName = "output-pipeline"
 		prName       = "output-pipeline-1"
-		prstart      = clockwork.NewFakeClock()
+		prstart      = test.FakeClock()
 		ns           = "namespace"
 
 		task1Name    = "output-task"
@@ -3524,7 +3523,7 @@ func TestPipelinerunLog_finally(t *testing.T) {
 	var (
 		pipelineName = "output-pipeline"
 		prName       = "output-pipeline-1"
-		prstart      = clockwork.NewFakeClock()
+		prstart      = test.FakeClock()
 		ns           = "namespace"
 
 		task1Name    = "output-task"

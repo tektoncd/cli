@@ -20,7 +20,6 @@ import (
 	"testing"
 	"time"
 
-	"github.com/jonboulle/clockwork"
 	"github.com/tektoncd/cli/pkg/actions"
 	"github.com/tektoncd/cli/pkg/cli"
 	"github.com/tektoncd/cli/pkg/test"
@@ -36,7 +35,7 @@ import (
 )
 
 func TestTaskRunDelete_v1beta1(t *testing.T) {
-	clock := clockwork.NewFakeClock()
+	clock := test.FakeClock()
 
 	ns := []*corev1.Namespace{
 		{
@@ -893,7 +892,7 @@ func TestTaskRunDelete_v1beta1(t *testing.T) {
 }
 
 func TestTaskRunDelete(t *testing.T) {
-	clock := clockwork.NewFakeClock()
+	clock := test.FakeClock()
 
 	ns := []*corev1.Namespace{
 		{
@@ -2222,7 +2221,7 @@ tr0-1   ---       ---        Succeeded
 }
 
 func Test_TaskRuns_Delete_With_Running_PipelineRun_v1beta1(t *testing.T) {
-	clock := clockwork.NewFakeClock()
+	clock := test.FakeClock()
 
 	ns := []*corev1.Namespace{
 		{
@@ -2446,7 +2445,7 @@ func Test_TaskRuns_Delete_With_Running_PipelineRun_v1beta1(t *testing.T) {
 }
 
 func Test_TaskRuns_Delete_With_Running_PipelineRun(t *testing.T) {
-	clock := clockwork.NewFakeClock()
+	clock := test.FakeClock()
 
 	ns := []*corev1.Namespace{
 		{
@@ -2670,7 +2669,7 @@ func Test_TaskRuns_Delete_With_Running_PipelineRun(t *testing.T) {
 }
 
 func Test_TaskRuns_Delete_With_Successful_PipelineRun(t *testing.T) {
-	clock := clockwork.NewFakeClock()
+	clock := test.FakeClock()
 
 	ns := []*corev1.Namespace{
 		{

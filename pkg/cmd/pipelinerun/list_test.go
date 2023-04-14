@@ -37,7 +37,7 @@ import (
 
 func TestListPipelineRuns_v1beta1(t *testing.T) {
 	version := "v1beta1"
-	clock := clockwork.NewFakeClock()
+	clock := test.FakeClock()
 	runDuration := 1 * time.Minute
 
 	pr1Started := clock.Now().Add(10 * time.Second)
@@ -285,7 +285,7 @@ func TestListPipelineRuns_v1beta1(t *testing.T) {
 
 func TestListPipelineRuns(t *testing.T) {
 	version := "v1"
-	clock := clockwork.NewFakeClock()
+	clock := test.FakeClock()
 	runDuration := 1 * time.Minute
 
 	pr1Started := clock.Now().Add(10 * time.Second)

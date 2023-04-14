@@ -24,7 +24,6 @@ import (
 	"github.com/AlecAivazis/survey/v2/terminal"
 	"github.com/Netflix/go-expect"
 	"github.com/google/go-cmp/cmp"
-	"github.com/jonboulle/clockwork"
 	"github.com/tektoncd/cli/pkg/actions"
 	"github.com/tektoncd/cli/pkg/cli"
 	"github.com/tektoncd/cli/pkg/pipeline"
@@ -117,7 +116,7 @@ func newV1beta1PipelineClient(objs ...runtime.Object) (*fakepipelineclientset.Cl
 }
 
 func TestPipelineStart_ExecuteCommand_v1beta1(t *testing.T) {
-	clock := clockwork.NewFakeClock()
+	clock := test.FakeClock()
 	namespaces := []*corev1.Namespace{
 		{
 			ObjectMeta: metav1.ObjectMeta{
@@ -2696,7 +2695,7 @@ func Test_start_pipeline_with_prefix_name_v1beta1(t *testing.T) {
 }
 
 func Test_lastPipelineRun_v1beta1(t *testing.T) {
-	clock := clockwork.NewFakeClock()
+	clock := test.FakeClock()
 
 	pr1Started := clock.Now().Add(10 * time.Second)
 	pr2Started := clock.Now().Add(-2 * time.Hour)

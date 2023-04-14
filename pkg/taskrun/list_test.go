@@ -32,7 +32,7 @@ import (
 )
 
 func TestPipelinesList_GetAllTaskRuns_v1beta1(t *testing.T) {
-	clock := clockwork.NewFakeClock()
+	clock := test.FakeClock()
 	trStarted := clock.Now().Add(10 * time.Second)
 	runDuration1 := 1 * time.Minute
 	runDuration2 := 1 * time.Minute
@@ -169,7 +169,7 @@ func TestPipelinesList_GetAllTaskRuns_v1beta1(t *testing.T) {
 }
 
 func TestPipelinesList_GetAllTaskRuns(t *testing.T) {
-	clock := clockwork.NewFakeClock()
+	clock := test.FakeClock()
 	trStarted := clock.Now().Add(10 * time.Second)
 	runDuration1 := 1 * time.Minute
 	runDuration2 := 1 * time.Minute

@@ -131,7 +131,7 @@ func TestLog_no_taskrun_arg_v1beta1(t *testing.T) {
 			ObjectMeta: metav1.ObjectMeta{
 				Name:              "task",
 				Namespace:         "ns",
-				CreationTimestamp: metav1.Time{Time: clockwork.NewFakeClock().Now()},
+				CreationTimestamp: metav1.Time{Time: test.FakeClock().Now()},
 			},
 		},
 	}
@@ -271,7 +271,7 @@ func TestLog_no_taskrun_arg(t *testing.T) {
 			ObjectMeta: metav1.ObjectMeta{
 				Name:              "task",
 				Namespace:         "ns",
-				CreationTimestamp: metav1.Time{Time: clockwork.NewFakeClock().Now()},
+				CreationTimestamp: metav1.Time{Time: test.FakeClock().Now()},
 			},
 		},
 	}
@@ -551,7 +551,7 @@ func TestLog_taskrun_logs_v1beta1(t *testing.T) {
 		ns          = "namespace"
 		taskName    = "output-task"
 		trName      = "output-task-1"
-		trStartTime = clockwork.NewFakeClock().Now().Add(20 * time.Second)
+		trStartTime = test.FakeClock().Now().Add(20 * time.Second)
 		trPod       = "output-task-pod-123456"
 		trStep1Name = "writefile-step"
 		nopStep     = "nop"
@@ -679,7 +679,7 @@ func TestLog_taskrun_logs(t *testing.T) {
 		ns          = "namespace"
 		taskName    = "output-task"
 		trName      = "output-task-1"
-		trStartTime = clockwork.NewFakeClock().Now().Add(20 * time.Second)
+		trStartTime = test.FakeClock().Now().Add(20 * time.Second)
 		trPod       = "output-task-pod-123456"
 		trStep1Name = "writefile-step"
 		nopStep     = "nop"
@@ -807,7 +807,7 @@ func TestLog_taskrun_logs_no_pod_name_v1beta1(t *testing.T) {
 		ns          = "namespace"
 		taskName    = "output-task"
 		trName      = "output-task-1"
-		trStartTime = clockwork.NewFakeClock().Now().Add(20 * time.Second)
+		trStartTime = test.FakeClock().Now().Add(20 * time.Second)
 		trStep1Name = "writefile-step"
 		nopStep     = "nop"
 	)
@@ -894,7 +894,7 @@ func TestLog_taskrun_logs_no_pod_name(t *testing.T) {
 		ns          = "namespace"
 		taskName    = "output-task"
 		trName      = "output-task-1"
-		trStartTime = clockwork.NewFakeClock().Now().Add(20 * time.Second)
+		trStartTime = test.FakeClock().Now().Add(20 * time.Second)
 		trStep1Name = "writefile-step"
 		nopStep     = "nop"
 	)
@@ -978,7 +978,7 @@ func TestLog_taskrun_logs_no_pod_name(t *testing.T) {
 
 func TestLog_taskrun_all_steps_v1beta1(t *testing.T) {
 	var (
-		prstart  = clockwork.NewFakeClock()
+		prstart  = test.FakeClock()
 		ns       = "namespace"
 		taskName = "output-task"
 
@@ -1123,7 +1123,7 @@ func TestLog_taskrun_all_steps_v1beta1(t *testing.T) {
 
 func TestLog_taskrun_all_steps(t *testing.T) {
 	var (
-		prstart  = clockwork.NewFakeClock()
+		prstart  = test.FakeClock()
 		ns       = "namespace"
 		taskName = "output-task"
 
@@ -1272,7 +1272,7 @@ func TestLog_taskrun_given_steps_v1beta1(t *testing.T) {
 		taskName = "output-task"
 
 		trName      = "output-task-run"
-		trStartTime = clockwork.NewFakeClock().Now().Add(20 * time.Second)
+		trStartTime = test.FakeClock().Now().Add(20 * time.Second)
 		trPod       = "output-task-pod-123456"
 		trInitStep1 = "credential-initializer-mdzbr"
 		trInitStep2 = "place-tools"
@@ -1413,7 +1413,7 @@ func TestLog_taskrun_given_steps(t *testing.T) {
 		taskName = "output-task"
 
 		trName      = "output-task-run"
-		trStartTime = clockwork.NewFakeClock().Now().Add(20 * time.Second)
+		trStartTime = test.FakeClock().Now().Add(20 * time.Second)
 		trPod       = "output-task-pod-123456"
 		trInitStep1 = "credential-initializer-mdzbr"
 		trInitStep2 = "place-tools"
@@ -1550,7 +1550,7 @@ func TestLog_taskrun_given_steps(t *testing.T) {
 
 func TestLog_taskrun_follow_mode_v1beta1(t *testing.T) {
 	var (
-		prstart     = clockwork.NewFakeClock()
+		prstart     = test.FakeClock()
 		ns          = "namespace"
 		taskName    = "output-task"
 		trName      = "output-task-run"
@@ -1693,7 +1693,7 @@ func TestLog_taskrun_follow_mode_v1beta1(t *testing.T) {
 
 func TestLog_taskrun_follow_mode(t *testing.T) {
 	var (
-		prstart     = clockwork.NewFakeClock()
+		prstart     = test.FakeClock()
 		ns          = "namespace"
 		taskName    = "output-task"
 		trName      = "output-task-run"
@@ -1841,7 +1841,7 @@ func TestLog_taskrun_last_v1beta1(t *testing.T) {
 		taskName     = "task"
 		trName1      = "taskrun1"
 		trName2      = "taskrun2"
-		prstart      = clockwork.NewFakeClock()
+		prstart      = test.FakeClock()
 		tr1StartTime = prstart.Now().Add(30 * time.Second)
 		tr2StartTime = prstart.Now().Add(20 * time.Second)
 		trStepName   = "writefile-step"
@@ -1981,7 +1981,7 @@ func TestLog_taskrun_last(t *testing.T) {
 		taskName     = "task"
 		trName1      = "taskrun1"
 		trName2      = "taskrun2"
-		prstart      = clockwork.NewFakeClock()
+		prstart      = test.FakeClock()
 		tr1StartTime = prstart.Now().Add(30 * time.Second)
 		tr2StartTime = prstart.Now().Add(20 * time.Second)
 		trStepName   = "writefile-step"
@@ -2116,7 +2116,7 @@ func TestLog_taskrun_last(t *testing.T) {
 
 func TestLog_taskrun_follow_mode_no_pod_name_v1beta1(t *testing.T) {
 	var (
-		prstart     = clockwork.NewFakeClock()
+		prstart     = test.FakeClock()
 		ns          = "namespace"
 		taskName    = "output-task"
 		trName      = "output-task-run"
@@ -2256,7 +2256,7 @@ func TestLog_taskrun_follow_mode_no_pod_name_v1beta1(t *testing.T) {
 
 func TestLog_taskrun_follow_mode_no_pod_name(t *testing.T) {
 	var (
-		prstart     = clockwork.NewFakeClock()
+		prstart     = test.FakeClock()
 		ns          = "namespace"
 		taskName    = "output-task"
 		trName      = "output-task-run"
@@ -2396,7 +2396,7 @@ func TestLog_taskrun_follow_mode_no_pod_name(t *testing.T) {
 
 func TestLog_taskrun_follow_mode_update_pod_name_v1beta1(t *testing.T) {
 	var (
-		prstart     = clockwork.NewFakeClock()
+		prstart     = test.FakeClock()
 		ns          = "namespace"
 		taskName    = "output-task"
 		trName      = "output-task-run"
@@ -2549,7 +2549,7 @@ func TestLog_taskrun_follow_mode_update_pod_name_v1beta1(t *testing.T) {
 
 func TestLog_taskrun_follow_mode_update_pod_name(t *testing.T) {
 	var (
-		prstart     = clockwork.NewFakeClock()
+		prstart     = test.FakeClock()
 		ns          = "namespace"
 		taskName    = "output-task"
 		trName      = "output-task-run"
@@ -2702,7 +2702,7 @@ func TestLog_taskrun_follow_mode_update_pod_name(t *testing.T) {
 
 func TestLog_taskrun_follow_mode_update_timeout_v1beta1(t *testing.T) {
 	var (
-		prstart     = clockwork.NewFakeClock()
+		prstart     = test.FakeClock()
 		ns          = "namespace"
 		taskName    = "output-task"
 		trName      = "output-task-run"
@@ -2850,7 +2850,7 @@ func TestLog_taskrun_follow_mode_update_timeout_v1beta1(t *testing.T) {
 
 func TestLog_taskrun_follow_mode_update_timeout(t *testing.T) {
 	var (
-		prstart     = clockwork.NewFakeClock()
+		prstart     = test.FakeClock()
 		ns          = "namespace"
 		taskName    = "output-task"
 		trName      = "output-task-run"
@@ -2998,7 +2998,7 @@ func TestLog_taskrun_follow_mode_update_timeout(t *testing.T) {
 
 func TestLog_taskrun_follow_mode_no_output_provided_v1beta1(t *testing.T) {
 	var (
-		prstart     = clockwork.NewFakeClock()
+		prstart     = test.FakeClock()
 		ns          = "namespace"
 		taskName    = "output-task"
 		trName      = "output-task-run"
@@ -3137,7 +3137,7 @@ func TestLog_taskrun_follow_mode_no_output_provided_v1beta1(t *testing.T) {
 
 func TestLog_taskrun_follow_mode_no_output_provided(t *testing.T) {
 	var (
-		prstart     = clockwork.NewFakeClock()
+		prstart     = test.FakeClock()
 		ns          = "namespace"
 		taskName    = "output-task"
 		trName      = "output-task-run"

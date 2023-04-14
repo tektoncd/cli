@@ -20,7 +20,6 @@ import (
 	"testing"
 	"time"
 
-	"github.com/jonboulle/clockwork"
 	"github.com/tektoncd/cli/pkg/test"
 	cb "github.com/tektoncd/cli/pkg/test/builder"
 	testDynamic "github.com/tektoncd/cli/pkg/test/dynamic"
@@ -76,7 +75,7 @@ func TestPipelineDescribe_invalid_pipeline(t *testing.T) {
 }
 
 func TestPipelineDescribe_empty(t *testing.T) {
-	clock := clockwork.NewFakeClock()
+	clock := test.FakeClock()
 
 	pipelines := []*v1.Pipeline{
 		{
@@ -118,7 +117,7 @@ func TestPipelineDescribe_empty(t *testing.T) {
 }
 
 func TestPipelineDescribe_with_run_v1beta1(t *testing.T) {
-	clock := clockwork.NewFakeClock()
+	clock := test.FakeClock()
 
 	pipelines := []*v1beta1.Pipeline{
 		{
@@ -197,7 +196,7 @@ func TestPipelineDescribe_with_run_v1beta1(t *testing.T) {
 }
 
 func TestPipelineDescribe_with_spec_run_v1beta1(t *testing.T) {
-	clock := clockwork.NewFakeClock()
+	clock := test.FakeClock()
 
 	pipelines := []*v1beta1.Pipeline{
 		{
@@ -294,7 +293,7 @@ func TestPipelineDescribe_with_spec_run_v1beta1(t *testing.T) {
 }
 
 func TestPipelineDescribe_with_spec_resource_param_run_v1beta1(t *testing.T) {
-	clock := clockwork.NewFakeClock()
+	clock := test.FakeClock()
 	pipelines := []*v1beta1.Pipeline{
 		{
 			ObjectMeta: metav1.ObjectMeta{
@@ -407,7 +406,7 @@ func TestPipelineDescribe_with_spec_resource_param_run_v1beta1(t *testing.T) {
 }
 
 func TestPipelineDescribe_with_multiple_pipelineruns_v1beta1(t *testing.T) {
-	clock := clockwork.NewFakeClock()
+	clock := test.FakeClock()
 	pipelines := []*v1beta1.Pipeline{
 
 		{
@@ -576,7 +575,7 @@ func TestPipelineDescribe_with_multiple_pipelineruns_v1beta1(t *testing.T) {
 }
 
 func TestPipelineDescribe_with_taskSpec_v1beta1(t *testing.T) {
-	clock := clockwork.NewFakeClock()
+	clock := test.FakeClock()
 	pipelines := []*v1beta1.Pipeline{
 		{
 			ObjectMeta: metav1.ObjectMeta{
@@ -627,7 +626,7 @@ func TestPipelineDescribe_with_taskSpec_v1beta1(t *testing.T) {
 }
 
 func TestPipelineDescribe_with_spec_multiple_resource_param_run_v1beta1(t *testing.T) {
-	clock := clockwork.NewFakeClock()
+	clock := test.FakeClock()
 	pipelines := []*v1beta1.Pipeline{
 		{
 			ObjectMeta: metav1.ObjectMeta{
@@ -770,7 +769,7 @@ func TestPipelineDescribe_with_spec_multiple_resource_param_run_v1beta1(t *testi
 }
 
 func TestPipelineDescribe_with_spec_multiple_resource_param_run_output_v1beta1(t *testing.T) {
-	clock := clockwork.NewFakeClock()
+	clock := test.FakeClock()
 	pipelines := []*v1beta1.Pipeline{
 		{
 			ObjectMeta: metav1.ObjectMeta{
@@ -913,7 +912,7 @@ func TestPipelineDescribe_with_spec_multiple_resource_param_run_output_v1beta1(t
 }
 
 func TestPipelineDescribe_custom_output_v1beta1(t *testing.T) {
-	clock := clockwork.NewFakeClock()
+	clock := test.FakeClock()
 	pipelines := []*v1beta1.Pipeline{
 		{
 			ObjectMeta: metav1.ObjectMeta{
@@ -963,7 +962,7 @@ func TestPipelineDescribe_custom_output_v1beta1(t *testing.T) {
 }
 
 func TestPipelineDescribe_WithoutNameIfOnlyOnePipelinePresent_v1beta1(t *testing.T) {
-	clock := clockwork.NewFakeClock()
+	clock := test.FakeClock()
 	pipelines := []*v1beta1.Pipeline{
 		{
 			ObjectMeta: metav1.ObjectMeta{
@@ -1024,7 +1023,7 @@ func TestPipelineDescribe_WithoutNameIfOnlyOnePipelinePresent_v1beta1(t *testing
 }
 
 func TestPipelineDescribe_with_results_v1beta1(t *testing.T) {
-	clock := clockwork.NewFakeClock()
+	clock := test.FakeClock()
 	pipelines := []*v1beta1.Pipeline{
 		{
 			ObjectMeta: metav1.ObjectMeta{
@@ -1109,7 +1108,7 @@ func TestPipelineDescribe_with_results_v1beta1(t *testing.T) {
 }
 
 func TestPipelineDescribe_with_workspaces_v1beta1(t *testing.T) {
-	clock := clockwork.NewFakeClock()
+	clock := test.FakeClock()
 	pipelines := []*v1beta1.Pipeline{
 		{
 			ObjectMeta: metav1.ObjectMeta{
@@ -1242,7 +1241,7 @@ func TestPipelineDescribe_with_annotations_v1beta1(t *testing.T) {
 }
 
 func TestPipelineDescribe_with_OptionalWorkspaces_v1beta1(t *testing.T) {
-	clock := clockwork.NewFakeClock()
+	clock := test.FakeClock()
 	pipelines := []*v1beta1.Pipeline{
 		{
 			ObjectMeta: metav1.ObjectMeta{
@@ -1338,7 +1337,7 @@ func TestPipelineDescribe_with_OptionalWorkspaces_v1beta1(t *testing.T) {
 }
 
 func TestPipelineDescribe_with_run(t *testing.T) {
-	clock := clockwork.NewFakeClock()
+	clock := test.FakeClock()
 
 	pipelines := []*v1.Pipeline{
 		{
@@ -1417,7 +1416,7 @@ func TestPipelineDescribe_with_run(t *testing.T) {
 }
 
 func TestPipelineDescribe_with_spec_run(t *testing.T) {
-	clock := clockwork.NewFakeClock()
+	clock := test.FakeClock()
 
 	pipelines := []*v1.Pipeline{
 		{
@@ -1514,7 +1513,7 @@ func TestPipelineDescribe_with_spec_run(t *testing.T) {
 }
 
 func TestPipelineDescribe_with_multiple_pipelineruns(t *testing.T) {
-	clock := clockwork.NewFakeClock()
+	clock := test.FakeClock()
 	pipelines := []*v1.Pipeline{
 
 		{
@@ -1677,7 +1676,7 @@ func TestPipelineDescribe_with_multiple_pipelineruns(t *testing.T) {
 }
 
 func TestPipelineDescribe_with_taskSpec(t *testing.T) {
-	clock := clockwork.NewFakeClock()
+	clock := test.FakeClock()
 	pipelines := []*v1.Pipeline{
 		{
 			ObjectMeta: metav1.ObjectMeta{
@@ -1728,7 +1727,7 @@ func TestPipelineDescribe_with_taskSpec(t *testing.T) {
 }
 
 func TestPipelineDescribe_with_spec_multiple_param_run(t *testing.T) {
-	clock := clockwork.NewFakeClock()
+	clock := test.FakeClock()
 	pipelines := []*v1.Pipeline{
 		{
 			ObjectMeta: metav1.ObjectMeta{
@@ -1849,7 +1848,7 @@ func TestPipelineDescribe_with_spec_multiple_param_run(t *testing.T) {
 }
 
 func TestPipelineDescribe_with_spec_multiple_param_run_output(t *testing.T) {
-	clock := clockwork.NewFakeClock()
+	clock := test.FakeClock()
 	pipelines := []*v1.Pipeline{
 		{
 			ObjectMeta: metav1.ObjectMeta{
@@ -1970,7 +1969,7 @@ func TestPipelineDescribe_with_spec_multiple_param_run_output(t *testing.T) {
 }
 
 func TestPipelineDescribe_custom_output(t *testing.T) {
-	clock := clockwork.NewFakeClock()
+	clock := test.FakeClock()
 	pipelines := []*v1.Pipeline{
 		{
 			ObjectMeta: metav1.ObjectMeta{
@@ -2059,7 +2058,7 @@ func TestPipelineDescribe_custom_output(t *testing.T) {
 }
 
 func TestPipelineDescribe_WithoutNameIfOnlyOnePipelinePresent(t *testing.T) {
-	clock := clockwork.NewFakeClock()
+	clock := test.FakeClock()
 	pipelines := []*v1.Pipeline{
 		{
 			ObjectMeta: metav1.ObjectMeta{
@@ -2114,7 +2113,7 @@ func TestPipelineDescribe_WithoutNameIfOnlyOnePipelinePresent(t *testing.T) {
 }
 
 func TestPipelineDescribe_with_results(t *testing.T) {
-	clock := clockwork.NewFakeClock()
+	clock := test.FakeClock()
 	pipelines := []*v1.Pipeline{
 		{
 			ObjectMeta: metav1.ObjectMeta{
@@ -2193,7 +2192,7 @@ func TestPipelineDescribe_with_results(t *testing.T) {
 }
 
 func TestPipelineDescribe_with_workspaces(t *testing.T) {
-	clock := clockwork.NewFakeClock()
+	clock := test.FakeClock()
 	pipelines := []*v1.Pipeline{
 		{
 			ObjectMeta: metav1.ObjectMeta{
@@ -2320,7 +2319,7 @@ func TestPipelineDescribe_with_annotations(t *testing.T) {
 }
 
 func TestPipelineDescribe_with_OptionalWorkspaces(t *testing.T) {
-	clock := clockwork.NewFakeClock()
+	clock := test.FakeClock()
 	pipelines := []*v1.Pipeline{
 		{
 			ObjectMeta: metav1.ObjectMeta{
