@@ -16,7 +16,6 @@ package clustertask
 
 import (
 	"fmt"
-	"sort"
 	"text/tabwriter"
 	"text/template"
 
@@ -44,27 +43,6 @@ const describeTemplate = `{{decorate "bold" "Name"}}:	{{ .ClusterTask.Name }}
 {{- range $k, $v := $annotations }}
  {{ $k }}={{ $v }}
 {{- end }}
-{{- end }}
-
-{{- if .ClusterTask.Spec.Resources }}
-
-{{decorate "inputresources" ""}}{{decorate "underline bold" "Input Resources\n"}}
-{{- if ne (len .ClusterTask.Spec.Resources.Inputs) 0 }}
- NAME	TYPE
-{{- range $ir := .ClusterTask.Spec.Resources.Inputs }}
- {{decorate "bullet" $ir.Name }}	{{ $ir.Type }}
-{{- end }}
-{{- end }}
-
-{{- if ne (len .ClusterTask.Spec.Resources.Outputs) 0 }}
-
-{{decorate "outputresources" ""}}{{decorate "underline bold" "Output Resources\n"}}
- NAME	TYPE
-{{- range $or := .ClusterTask.Spec.Resources.Outputs }}
- {{decorate "bullet" $or.Name }}	{{ $or.Type }}
-{{- end }}
-{{- end }}
-
 {{- end }}
 
 {{- if ne (len .ClusterTask.Spec.Params) 0 }}
@@ -197,11 +175,6 @@ func printClusterTaskDescription(s *cli.Stream, cs *cli.Clients, ctname, namespa
 		return fmt.Errorf("failed to get ClusterTask %s", ctname)
 	}
 
-	if clustertask.Spec.Resources != nil {
-		clustertask.Spec.Resources.Inputs = sortResourcesByTypeAndName(clustertask.Spec.Resources.Inputs)
-		clustertask.Spec.Resources.Outputs = sortResourcesByTypeAndName(clustertask.Spec.Resources.Outputs)
-	}
-
 	opts := metav1.ListOptions{
 		LabelSelector: fmt.Sprintf("tekton.dev/clusterTask=%s", ctname),
 	}
@@ -240,23 +213,6 @@ func printClusterTaskDescription(s *cli.Stream, cs *cli.Clients, ctname, namespa
 		return fmt.Errorf("failed to execute template")
 	}
 	return w.Flush()
-}
-
-// this will sort the ClusterTask Resource by Type and then by Name
-func sortResourcesByTypeAndName(tres []v1beta1.TaskResource) []v1beta1.TaskResource {
-	sort.Slice(tres, func(i, j int) bool {
-		if tres[j].Type < tres[i].Type {
-			return false
-		}
-
-		if tres[j].Type > tres[i].Type {
-			return true
-		}
-
-		return tres[j].Name > tres[i].Name
-	})
-
-	return tres
 }
 
 func askClusterTaskName(opts *options.DescribeOptions, clusterTaskNames []string) error {
