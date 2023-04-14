@@ -25,7 +25,6 @@ import (
 
 	"github.com/AlecAivazis/survey/v2"
 	"github.com/AlecAivazis/survey/v2/terminal"
-	"github.com/ghodss/yaml"
 	"github.com/spf13/cobra"
 	"github.com/tektoncd/cli/pkg/actions"
 	"github.com/tektoncd/cli/pkg/cli"
@@ -42,6 +41,7 @@ import (
 	v1 "github.com/tektoncd/pipeline/pkg/apis/pipeline/v1"
 	"github.com/tektoncd/pipeline/pkg/apis/pipeline/v1beta1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+	"sigs.k8s.io/yaml"
 )
 
 var (
@@ -137,7 +137,7 @@ For passing the workspaces via flags:
        storage: 1Gi
 - In case of binding a CSI workspace, you can pass it like -w name=my-csi,csiFile=csi.yaml
   but you need to create a csi.yaml file before hand. Sample contents of the file are as follows:
-  
+
   driver: secrets-store.csi.k8s.io
   readOnly: true
   volumeAttributes:

@@ -21,10 +21,10 @@ import (
 	"strings"
 	"testing"
 
-	"github.com/ghodss/yaml"
 	"github.com/google/go-cmp/cmp"
 	"github.com/tektoncd/pipeline/pkg/apis/pipeline/v1beta1"
 	"gotest.tools/v3/assert"
+	"sigs.k8s.io/yaml"
 )
 
 func TestLoadLocalFile(t *testing.T) {
