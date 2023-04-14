@@ -11,7 +11,6 @@ import (
 	"path"
 	"testing"
 
-	"github.com/ghodss/yaml"
 	"github.com/google/go-cmp/cmp"
 	"github.com/google/go-containerregistry/pkg/registry"
 	v1 "github.com/google/go-containerregistry/pkg/v1"
@@ -19,6 +18,7 @@ import (
 	"github.com/tektoncd/cli/pkg/bundle"
 	"github.com/tektoncd/cli/pkg/cli"
 	tkremote "github.com/tektoncd/pipeline/pkg/remote/oci"
+	"sigs.k8s.io/yaml"
 )
 
 type expected struct {

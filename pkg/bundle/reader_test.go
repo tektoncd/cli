@@ -7,7 +7,6 @@ import (
 	"strings"
 	"testing"
 
-	"github.com/ghodss/yaml"
 	v1 "github.com/google/go-containerregistry/pkg/v1"
 	"github.com/google/go-containerregistry/pkg/v1/empty"
 	"github.com/google/go-containerregistry/pkg/v1/mutate"
@@ -17,6 +16,7 @@ import (
 	tkremote "github.com/tektoncd/pipeline/pkg/remote/oci"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime"
+	"sigs.k8s.io/yaml"
 )
 
 func writeTarLayer(t *testing.T, img v1.Image, obj runtime.Object) (v1.Image, error) {
