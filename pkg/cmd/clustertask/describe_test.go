@@ -45,30 +45,6 @@ func Test_ClusterTaskDescribe(t *testing.T) {
 				CreationTimestamp: metav1.Time{Time: clock.Now().Add(1 * time.Minute)},
 			},
 			Spec: v1beta1.TaskSpec{
-				Resources: &v1beta1.TaskResources{
-					Inputs: []v1beta1.TaskResource{
-						{
-							ResourceDeclaration: v1beta1.ResourceDeclaration{
-								Name: "my-repo",
-								Type: v1beta1.PipelineResourceTypeGit,
-							},
-						},
-						{
-							ResourceDeclaration: v1beta1.ResourceDeclaration{
-								Name: "my-image",
-								Type: v1beta1.PipelineResourceTypeImage,
-							},
-						},
-					},
-					Outputs: []v1beta1.TaskResource{
-						{
-							ResourceDeclaration: v1beta1.ResourceDeclaration{
-								Name: "code-image",
-								Type: v1beta1.PipelineResourceTypeImage,
-							},
-						},
-					},
-				},
 				Params: []v1beta1.ParamSpec{
 					{
 						Name:        "myarg",
@@ -108,24 +84,6 @@ func Test_ClusterTaskDescribe(t *testing.T) {
 			},
 			Spec: v1beta1.TaskSpec{
 				Description: "a test description",
-				Resources: &v1beta1.TaskResources{
-					Inputs: []v1beta1.TaskResource{
-						{
-							ResourceDeclaration: v1beta1.ResourceDeclaration{
-								Name: "my-repo",
-								Type: v1beta1.PipelineResourceTypeGit,
-							},
-						},
-					},
-					Outputs: []v1beta1.TaskResource{
-						{
-							ResourceDeclaration: v1beta1.ResourceDeclaration{
-								Name: "code-image",
-								Type: v1beta1.PipelineResourceTypeImage,
-							},
-						},
-					},
-				},
 				Params: []v1beta1.ParamSpec{
 					{
 						Name: "myarg",
@@ -179,28 +137,6 @@ func Test_ClusterTaskDescribe(t *testing.T) {
 						},
 					},
 				},
-				Resources: &v1beta1.TaskRunResources{
-					Inputs: []v1beta1.TaskResourceBinding{
-						{
-							PipelineResourceBinding: v1beta1.PipelineResourceBinding{
-								Name: "my-repo",
-								ResourceRef: &v1beta1.PipelineResourceRef{
-									Name: "git",
-								},
-							},
-						},
-					},
-					Outputs: []v1beta1.TaskResourceBinding{
-						{
-							PipelineResourceBinding: v1beta1.PipelineResourceBinding{
-								Name: "my-image",
-								ResourceRef: &v1beta1.PipelineResourceRef{
-									Name: "image",
-								},
-							},
-						},
-					},
-				},
 			},
 			Status: v1beta1.TaskRunStatus{
 				Status: duckv1.Status{
@@ -237,18 +173,6 @@ func Test_ClusterTaskDescribe(t *testing.T) {
 						Value: v1beta1.ArrayOrString{
 							Type:      v1beta1.ParamTypeString,
 							StringVal: "value",
-						},
-					},
-				},
-				Resources: &v1beta1.TaskRunResources{
-					Inputs: []v1beta1.TaskResourceBinding{
-						{
-							PipelineResourceBinding: v1beta1.PipelineResourceBinding{
-								Name: "my-repo",
-								ResourceRef: &v1beta1.PipelineResourceRef{
-									Name: "git",
-								},
-							},
 						},
 					},
 				},
@@ -295,28 +219,6 @@ func Test_ClusterTaskDescribe(t *testing.T) {
 						Value: v1beta1.ArrayOrString{
 							Type:     v1beta1.ParamTypeArray,
 							ArrayVal: []string{"booms", "booms", "booms"},
-						},
-					},
-				},
-				Resources: &v1beta1.TaskRunResources{
-					Inputs: []v1beta1.TaskResourceBinding{
-						{
-							PipelineResourceBinding: v1beta1.PipelineResourceBinding{
-								Name: "my-repo",
-								ResourceRef: &v1beta1.PipelineResourceRef{
-									Name: "git",
-								},
-							},
-						},
-					},
-					Outputs: []v1beta1.TaskResourceBinding{
-						{
-							PipelineResourceBinding: v1beta1.PipelineResourceBinding{
-								Name: "my-image",
-								ResourceRef: &v1beta1.PipelineResourceRef{
-									Name: "image",
-								},
-							},
 						},
 					},
 				},

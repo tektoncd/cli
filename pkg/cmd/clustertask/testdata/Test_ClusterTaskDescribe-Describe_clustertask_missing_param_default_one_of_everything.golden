@@ -2,16 +2,6 @@ Command "describe" is deprecated, ClusterTasks are deprecated, this command will
 Name:          clustertask-one-everything
 Description:   a test description
 
-Input Resources
-
- NAME      TYPE
- my-repo   git
-
-Output Resources
-
- NAME         TYPE
- code-image   image
-
 Params
 
  NAME    TYPE     DESCRIPTION   DEFAULT VALUE
