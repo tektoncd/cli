@@ -19,7 +19,6 @@ import (
 	"testing"
 	"time"
 
-	"github.com/jonboulle/clockwork"
 	"github.com/tektoncd/cli/pkg/test"
 	cb "github.com/tektoncd/cli/pkg/test/builder"
 	testDynamic "github.com/tektoncd/cli/pkg/test/dynamic"
@@ -80,7 +79,7 @@ func TestTaskList_Empty_v1beta1(t *testing.T) {
 }
 
 func TestTaskList_Only_Tasks_v1beta1(t *testing.T) {
-	clock := clockwork.NewFakeClock()
+	clock := test.FakeClock()
 
 	tasks := []*v1beta1.Task{
 		{
@@ -172,7 +171,7 @@ func TestTaskList_Only_Tasks_v1beta1(t *testing.T) {
 }
 
 func TestTaskList_Only_Tasks_no_headers_v1beta1(t *testing.T) {
-	clock := clockwork.NewFakeClock()
+	clock := test.FakeClock()
 
 	tasks := []*v1beta1.Task{
 		{
@@ -264,7 +263,7 @@ func TestTaskList_Only_Tasks_no_headers_v1beta1(t *testing.T) {
 }
 
 func TestTaskList_Only_Tasks_all_namespaces_v1beta1(t *testing.T) {
-	clock := clockwork.NewFakeClock()
+	clock := test.FakeClock()
 
 	tasks := []*v1beta1.Task{
 		{
@@ -405,7 +404,7 @@ func TestTaskList_Only_Tasks_all_namespaces_v1beta1(t *testing.T) {
 }
 
 func TestTaskList_Only_Tasks_all_namespaces_no_headers_v1beta1(t *testing.T) {
-	clock := clockwork.NewFakeClock()
+	clock := test.FakeClock()
 	tasks := []*v1beta1.Task{
 		{
 			ObjectMeta: metav1.ObjectMeta{
@@ -593,7 +592,7 @@ func TestTaskList_Empty(t *testing.T) {
 }
 
 func TestTaskList_Only_Tasks(t *testing.T) {
-	clock := clockwork.NewFakeClock()
+	clock := test.FakeClock()
 
 	tasks := []*v1.Task{
 		{
@@ -685,7 +684,7 @@ func TestTaskList_Only_Tasks(t *testing.T) {
 }
 
 func TestTaskList_Only_Tasks_no_headers(t *testing.T) {
-	clock := clockwork.NewFakeClock()
+	clock := test.FakeClock()
 
 	tasks := []*v1.Task{
 		{
@@ -777,7 +776,7 @@ func TestTaskList_Only_Tasks_no_headers(t *testing.T) {
 }
 
 func TestTaskList_Only_Tasks_all_namespaces(t *testing.T) {
-	clock := clockwork.NewFakeClock()
+	clock := test.FakeClock()
 
 	tasks := []*v1.Task{
 		{
@@ -918,7 +917,7 @@ func TestTaskList_Only_Tasks_all_namespaces(t *testing.T) {
 }
 
 func TestTaskList_Only_Tasks_all_namespaces_no_headers(t *testing.T) {
-	clock := clockwork.NewFakeClock()
+	clock := test.FakeClock()
 	tasks := []*v1.Task{
 		{
 			ObjectMeta: metav1.ObjectMeta{
@@ -1058,7 +1057,7 @@ func TestTaskList_Only_Tasks_all_namespaces_no_headers(t *testing.T) {
 }
 
 func TestTaskList_in_all_namespaces_with_output_yaml_flag(t *testing.T) {
-	clock := clockwork.NewFakeClock()
+	clock := test.FakeClock()
 
 	tasks := []*v1.Task{
 		{

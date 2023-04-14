@@ -18,7 +18,6 @@ import (
 	"testing"
 	"time"
 
-	"github.com/jonboulle/clockwork"
 	"github.com/tektoncd/cli/pkg/test"
 	cb "github.com/tektoncd/cli/pkg/test/builder"
 	testDynamic "github.com/tektoncd/cli/pkg/test/dynamic"
@@ -29,7 +28,7 @@ import (
 )
 
 func TestEventListener_GetAllEventListenerNames(t *testing.T) {
-	clock := clockwork.NewFakeClock()
+	clock := test.FakeClock()
 
 	els := []*v1beta1.EventListener{
 		{
@@ -131,7 +130,7 @@ func TestEventListener_GetAllEventListenerNames(t *testing.T) {
 }
 
 func TestEventListener_List(t *testing.T) {
-	clock := clockwork.NewFakeClock()
+	clock := test.FakeClock()
 
 	els := []*v1beta1.EventListener{
 		{
@@ -229,7 +228,7 @@ func TestEventListener_List(t *testing.T) {
 }
 
 func TestEventListener_Get(t *testing.T) {
-	clock := clockwork.NewFakeClock()
+	clock := test.FakeClock()
 
 	els := []*v1beta1.EventListener{
 		{
@@ -278,7 +277,7 @@ func TestEventListener_Get(t *testing.T) {
 }
 
 func TestEventListener_GetError(t *testing.T) {
-	clock := clockwork.NewFakeClock()
+	clock := test.FakeClock()
 
 	els := []*v1beta1.EventListener{
 		{

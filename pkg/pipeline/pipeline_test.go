@@ -17,7 +17,6 @@ package pipeline
 import (
 	"testing"
 
-	"github.com/jonboulle/clockwork"
 	"github.com/tektoncd/cli/pkg/actions"
 	"github.com/tektoncd/cli/pkg/cli"
 	"github.com/tektoncd/cli/pkg/test"
@@ -30,7 +29,7 @@ import (
 )
 
 func TestPipelinesList_v1beta1(t *testing.T) {
-	clock := clockwork.NewFakeClock()
+	clock := test.FakeClock()
 
 	pdata := []*v1beta1.Pipeline{
 		{
@@ -138,7 +137,7 @@ func TestPipelinesList_v1beta1(t *testing.T) {
 }
 
 func TestPipelinesList(t *testing.T) {
-	clock := clockwork.NewFakeClock()
+	clock := test.FakeClock()
 
 	pdata := []*v1.Pipeline{
 		{
@@ -246,7 +245,7 @@ func TestPipelinesList(t *testing.T) {
 }
 
 func TestPipelineGet_v1beta1(t *testing.T) {
-	clock := clockwork.NewFakeClock()
+	clock := test.FakeClock()
 
 	pdata := []*v1beta1.Pipeline{
 		{
@@ -291,7 +290,7 @@ func TestPipelineGet_v1beta1(t *testing.T) {
 }
 
 func TestPipelineGet(t *testing.T) {
-	clock := clockwork.NewFakeClock()
+	clock := test.FakeClock()
 
 	pdata := []*v1.Pipeline{
 		{

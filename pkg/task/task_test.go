@@ -19,7 +19,6 @@ import (
 	"testing"
 	"time"
 
-	"github.com/jonboulle/clockwork"
 	"github.com/tektoncd/cli/pkg/actions"
 	"github.com/tektoncd/cli/pkg/cli"
 	"github.com/tektoncd/cli/pkg/test"
@@ -33,7 +32,7 @@ import (
 
 func TestTask_GetAllTaskNames_v1beta1(t *testing.T) {
 	version := "v1beta1"
-	clock := clockwork.NewFakeClock()
+	clock := test.FakeClock()
 	tdata := []*v1beta1.Task{
 		{
 			ObjectMeta: metav1.ObjectMeta{
@@ -146,7 +145,7 @@ func TestTask_GetAllTaskNames_v1beta1(t *testing.T) {
 
 func TestTask_GetAllTaskNames(t *testing.T) {
 	version := "v1"
-	clock := clockwork.NewFakeClock()
+	clock := test.FakeClock()
 	tdata := []*v1.Task{
 		{
 			ObjectMeta: metav1.ObjectMeta{
@@ -259,7 +258,7 @@ func TestTask_GetAllTaskNames(t *testing.T) {
 
 func TestTask_List_v1beta1(t *testing.T) {
 	version := "v1beta1"
-	clock := clockwork.NewFakeClock()
+	clock := test.FakeClock()
 	tdata := []*v1beta1.Task{
 		{
 			ObjectMeta: metav1.ObjectMeta{
@@ -355,7 +354,7 @@ func TestTask_List_v1beta1(t *testing.T) {
 
 func TestTask_List(t *testing.T) {
 	version := "v1"
-	clock := clockwork.NewFakeClock()
+	clock := test.FakeClock()
 	tdata := []*v1.Task{
 		{
 			ObjectMeta: metav1.ObjectMeta{
@@ -452,7 +451,7 @@ func TestTask_List(t *testing.T) {
 
 func TestTask_Get_v1beta1(t *testing.T) {
 	version := "v1beta1"
-	clock := clockwork.NewFakeClock()
+	clock := test.FakeClock()
 	tdata := []*v1beta1.Task{
 		{
 			ObjectMeta: metav1.ObjectMeta{
@@ -496,7 +495,7 @@ func TestTask_Get_v1beta1(t *testing.T) {
 
 func TestTask_Get(t *testing.T) {
 	version := "v1"
-	clock := clockwork.NewFakeClock()
+	clock := test.FakeClock()
 	tdata := []*v1.Task{
 		{
 			ObjectMeta: metav1.ObjectMeta{
@@ -541,7 +540,7 @@ func TestTask_Get(t *testing.T) {
 
 func TestTask_Create(t *testing.T) {
 	version := "v1beta1"
-	clock := clockwork.NewFakeClock()
+	clock := test.FakeClock()
 	tdata := []*v1beta1.Task{
 		{
 			ObjectMeta: metav1.ObjectMeta{

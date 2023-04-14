@@ -18,7 +18,6 @@ import (
 	"testing"
 	"time"
 
-	"github.com/jonboulle/clockwork"
 	"github.com/tektoncd/cli/pkg/test"
 	cb "github.com/tektoncd/cli/pkg/test/builder"
 	testDynamic "github.com/tektoncd/cli/pkg/test/dynamic"
@@ -31,7 +30,7 @@ import (
 )
 
 func TestTaskrunLatestName_two_run_v1beta1(t *testing.T) {
-	clock := clockwork.NewFakeClock()
+	clock := test.FakeClock()
 
 	var (
 		firstRunCreated   = clock.Now().Add(10 * time.Minute)
@@ -153,7 +152,7 @@ func TestTaskrunLatestName_two_run_v1beta1(t *testing.T) {
 }
 
 func TestTaskrunLatest_two_run_v1beta1(t *testing.T) {
-	clock := clockwork.NewFakeClock()
+	clock := test.FakeClock()
 
 	var (
 		firstRunCreated   = clock.Now().Add(10 * time.Minute)
@@ -276,7 +275,7 @@ func TestTaskrunLatest_two_run_v1beta1(t *testing.T) {
 
 func TestTaskrunLatest_no_run_v1beta1(t *testing.T) {
 
-	clock := clockwork.NewFakeClock()
+	clock := test.FakeClock()
 	cs, _ := test.SeedV1beta1TestData(t, pipelinetest.Data{})
 	cs.Pipeline.Resources = cb.APIResourceList("v1beta1", []string{"taskrun"})
 	tdc := testDynamic.Options{}
@@ -297,7 +296,7 @@ func TestTaskrunLatest_no_run_v1beta1(t *testing.T) {
 }
 
 func TestTaskrunLatestForClusterTask_two_run_v1beta1(t *testing.T) {
-	clock := clockwork.NewFakeClock()
+	clock := test.FakeClock()
 
 	var (
 		firstRunCreated   = clock.Now().Add(10 * time.Minute)
@@ -419,7 +418,7 @@ func TestTaskrunLatestForClusterTask_two_run_v1beta1(t *testing.T) {
 }
 
 func TestTaskrunLatestName_two_run(t *testing.T) {
-	clock := clockwork.NewFakeClock()
+	clock := test.FakeClock()
 
 	var (
 		firstRunCreated   = clock.Now().Add(10 * time.Minute)
@@ -541,7 +540,7 @@ func TestTaskrunLatestName_two_run(t *testing.T) {
 }
 
 func TestTaskrunLatest_two_run(t *testing.T) {
-	clock := clockwork.NewFakeClock()
+	clock := test.FakeClock()
 
 	var (
 		firstRunCreated   = clock.Now().Add(10 * time.Minute)
@@ -664,7 +663,7 @@ func TestTaskrunLatest_two_run(t *testing.T) {
 
 func TestTaskrunLatest_no_run(t *testing.T) {
 
-	clock := clockwork.NewFakeClock()
+	clock := test.FakeClock()
 	cs, _ := test.SeedTestData(t, test.Data{})
 	cs.Pipeline.Resources = cb.APIResourceList("v1", []string{"taskrun"})
 	tdc := testDynamic.Options{}
@@ -685,7 +684,7 @@ func TestTaskrunLatest_no_run(t *testing.T) {
 }
 
 func TestTaskrunLatestForClusterTask_two_run(t *testing.T) {
-	clock := clockwork.NewFakeClock()
+	clock := test.FakeClock()
 
 	var (
 		firstRunCreated   = clock.Now().Add(10 * time.Minute)
@@ -807,7 +806,7 @@ func TestTaskrunLatestForClusterTask_two_run(t *testing.T) {
 }
 
 func TestFilterByRef(t *testing.T) {
-	clock := clockwork.NewFakeClock()
+	clock := test.FakeClock()
 
 	var (
 		firstRunCreated   = clock.Now().Add(10 * time.Minute)

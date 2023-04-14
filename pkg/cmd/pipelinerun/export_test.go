@@ -19,7 +19,6 @@ import (
 	"testing"
 	"time"
 
-	"github.com/jonboulle/clockwork"
 	"github.com/tektoncd/cli/pkg/test"
 	cb "github.com/tektoncd/cli/pkg/test/builder"
 	testDynamic "github.com/tektoncd/cli/pkg/test/dynamic"
@@ -33,7 +32,7 @@ import (
 )
 
 func TestPipelineRunExport_v1beta1(t *testing.T) {
-	clock := clockwork.NewFakeClock()
+	clock := test.FakeClock()
 	pipelineruns := []*v1beta1.PipelineRun{
 		{
 			ObjectMeta: metav1.ObjectMeta{
@@ -101,7 +100,7 @@ func TestPipelineRunExport_v1beta1(t *testing.T) {
 }
 
 func TestPipelineRunExport(t *testing.T) {
-	clock := clockwork.NewFakeClock()
+	clock := test.FakeClock()
 	pipelineruns := []*v1.PipelineRun{
 		{
 			ObjectMeta: metav1.ObjectMeta{

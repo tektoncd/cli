@@ -18,7 +18,6 @@ import (
 	"testing"
 	"time"
 
-	"github.com/jonboulle/clockwork"
 	"github.com/tektoncd/cli/pkg/test"
 	cb "github.com/tektoncd/cli/pkg/test/builder"
 	testDynamic "github.com/tektoncd/cli/pkg/test/dynamic"
@@ -29,7 +28,7 @@ import (
 )
 
 func TestTrigger_GetAllTriggerBinding(t *testing.T) {
-	clock := clockwork.NewFakeClock()
+	clock := test.FakeClock()
 
 	tb := []*v1beta1.TriggerBinding{
 		{
@@ -132,7 +131,7 @@ func TestTrigger_GetAllTriggerBinding(t *testing.T) {
 }
 
 func TestTriggerBinding_List(t *testing.T) {
-	clock := clockwork.NewFakeClock()
+	clock := test.FakeClock()
 
 	tb := []*v1beta1.TriggerBinding{
 		{
@@ -235,7 +234,7 @@ func TestTriggerBinding_List(t *testing.T) {
 }
 
 func TestTriggerBinding_Get(t *testing.T) {
-	clock := clockwork.NewFakeClock()
+	clock := test.FakeClock()
 
 	tb := []*v1beta1.TriggerBinding{
 		{

@@ -20,7 +20,6 @@ import (
 	"testing"
 	"time"
 
-	"github.com/jonboulle/clockwork"
 	"github.com/tektoncd/cli/pkg/test"
 	cb "github.com/tektoncd/cli/pkg/test/builder"
 	testDynamic "github.com/tektoncd/cli/pkg/test/dynamic"
@@ -94,7 +93,7 @@ func TestTaskRunDescribe_not_found(t *testing.T) {
 }
 
 func TestTaskRunDescribe_empty_taskrun_v1beta1(t *testing.T) {
-	clock := clockwork.NewFakeClock()
+	clock := test.FakeClock()
 
 	trs := []*v1beta1.TaskRun{
 		{
@@ -155,7 +154,7 @@ func TestTaskRunDescribe_empty_taskrun_v1beta1(t *testing.T) {
 }
 
 func TestTaskRunDescribe_only_taskrun_v1beta1(t *testing.T) {
-	clock := clockwork.NewFakeClock()
+	clock := test.FakeClock()
 
 	trs := []*v1beta1.TaskRun{
 		{
@@ -165,7 +164,7 @@ func TestTaskRunDescribe_only_taskrun_v1beta1(t *testing.T) {
 			},
 			Status: v1beta1.TaskRunStatus{
 				TaskRunStatusFields: v1beta1.TaskRunStatusFields{
-					StartTime: &metav1.Time{Time: clockwork.NewFakeClock().Now().Add(20 * time.Second)},
+					StartTime: &metav1.Time{Time: test.FakeClock().Now().Add(20 * time.Second)},
 					Steps: []v1beta1.StepState{
 						{
 							Name: "step1",
@@ -285,7 +284,7 @@ func TestTaskRunDescribe_only_taskrun_v1beta1(t *testing.T) {
 }
 
 func TestTaskRunDescribe_failed_v1beta1(t *testing.T) {
-	clock := clockwork.NewFakeClock()
+	clock := test.FakeClock()
 
 	trs := []*v1beta1.TaskRun{
 		{
@@ -351,7 +350,7 @@ func TestTaskRunDescribe_failed_v1beta1(t *testing.T) {
 }
 
 func TestTaskRunDescribe_no_taskref_v1beta1(t *testing.T) {
-	clock := clockwork.NewFakeClock()
+	clock := test.FakeClock()
 
 	trs := []*v1beta1.TaskRun{
 		{
@@ -444,7 +443,7 @@ func TestTaskRunDescribe_last_no_taskrun_present_v1beta1(t *testing.T) {
 }
 
 func TestTaskRunDescribe_no_resourceref_v1beta1(t *testing.T) {
-	clock := clockwork.NewFakeClock()
+	clock := test.FakeClock()
 
 	trs := []*v1beta1.TaskRun{
 		{
@@ -454,7 +453,7 @@ func TestTaskRunDescribe_no_resourceref_v1beta1(t *testing.T) {
 			},
 			Status: v1beta1.TaskRunStatus{
 				TaskRunStatusFields: v1beta1.TaskRunStatusFields{
-					StartTime: &metav1.Time{Time: clockwork.NewFakeClock().Now().Add(20 * time.Second)},
+					StartTime: &metav1.Time{Time: test.FakeClock().Now().Add(20 * time.Second)},
 					Steps: []v1beta1.StepState{
 						{
 							Name: "step1",
@@ -565,7 +564,7 @@ func TestTaskRunDescribe_no_resourceref_v1beta1(t *testing.T) {
 }
 
 func TestTaskRunDescribe_step_sidecar_status_defaults_and_failures_v1beta1(t *testing.T) {
-	clock := clockwork.NewFakeClock()
+	clock := test.FakeClock()
 
 	trs := []*v1beta1.TaskRun{
 		{
@@ -575,7 +574,7 @@ func TestTaskRunDescribe_step_sidecar_status_defaults_and_failures_v1beta1(t *te
 			},
 			Status: v1beta1.TaskRunStatus{
 				TaskRunStatusFields: v1beta1.TaskRunStatusFields{
-					StartTime: &metav1.Time{Time: clockwork.NewFakeClock().Now().Add(20 * time.Second)},
+					StartTime: &metav1.Time{Time: test.FakeClock().Now().Add(20 * time.Second)},
 					Steps: []v1beta1.StepState{
 						{
 							Name: "step1",
@@ -694,7 +693,7 @@ func TestTaskRunDescribe_step_sidecar_status_defaults_and_failures_v1beta1(t *te
 }
 
 func TestTaskRunDescribe_step_status_pending_one_sidecar_v1beta1(t *testing.T) {
-	clock := clockwork.NewFakeClock()
+	clock := test.FakeClock()
 
 	trs := []*v1beta1.TaskRun{
 		{
@@ -704,7 +703,7 @@ func TestTaskRunDescribe_step_status_pending_one_sidecar_v1beta1(t *testing.T) {
 			},
 			Status: v1beta1.TaskRunStatus{
 				TaskRunStatusFields: v1beta1.TaskRunStatusFields{
-					StartTime: &metav1.Time{Time: clockwork.NewFakeClock().Now().Add(20 * time.Second)},
+					StartTime: &metav1.Time{Time: test.FakeClock().Now().Add(20 * time.Second)},
 					Steps: []v1beta1.StepState{
 						{
 							Name: "step1",
@@ -826,7 +825,7 @@ func TestTaskRunDescribe_step_status_pending_one_sidecar_v1beta1(t *testing.T) {
 }
 
 func TestTaskRunDescribe_step_status_running_multiple_sidecars_v1beta1(t *testing.T) {
-	clock := clockwork.NewFakeClock()
+	clock := test.FakeClock()
 
 	trs := []*v1beta1.TaskRun{
 		{
@@ -836,7 +835,7 @@ func TestTaskRunDescribe_step_status_running_multiple_sidecars_v1beta1(t *testin
 			},
 			Status: v1beta1.TaskRunStatus{
 				TaskRunStatusFields: v1beta1.TaskRunStatusFields{
-					StartTime: &metav1.Time{Time: clockwork.NewFakeClock().Now().Add(20 * time.Second)},
+					StartTime: &metav1.Time{Time: test.FakeClock().Now().Add(20 * time.Second)},
 					Steps: []v1beta1.StepState{
 						{
 							Name: "step1",
@@ -966,7 +965,7 @@ func TestTaskRunDescribe_step_status_running_multiple_sidecars_v1beta1(t *testin
 }
 
 func TestTaskRunDescribe_cancel_taskrun_v1beta1(t *testing.T) {
-	clock := clockwork.NewFakeClock()
+	clock := test.FakeClock()
 
 	trs := []*v1beta1.TaskRun{
 		{
@@ -1029,7 +1028,7 @@ func TestTaskRunDescribe_custom_output_v1beta1(t *testing.T) {
 	name := "task-run"
 	expected := "taskrun.tekton.dev/" + name
 
-	clock := clockwork.NewFakeClock()
+	clock := test.FakeClock()
 
 	trs := []*v1beta1.TaskRun{
 		{
@@ -1122,7 +1121,7 @@ func TestTaskRunDescribe_WithSpec_custom_timeout_v1beta1(t *testing.T) {
 }
 
 func TestTaskRunDescribe_last_v1beta1(t *testing.T) {
-	clock := clockwork.NewFakeClock()
+	clock := test.FakeClock()
 	taskRuns := []*v1beta1.TaskRun{
 		{
 			ObjectMeta: metav1.ObjectMeta{
@@ -1207,7 +1206,7 @@ func TestTaskRunDescribe_last_v1beta1(t *testing.T) {
 }
 
 func TestTaskRunDescribe_With_Results_v1beta1(t *testing.T) {
-	clock := clockwork.NewFakeClock()
+	clock := test.FakeClock()
 	taskRuns := []*v1beta1.TaskRun{
 		{
 			ObjectMeta: metav1.ObjectMeta{
@@ -1325,7 +1324,7 @@ func TestTaskRunDescribe_zero_timeout_v1beta1(t *testing.T) {
 }
 
 func TestTaskRunDescribe_With_Workspaces_v1beta1(t *testing.T) {
-	clock := clockwork.NewFakeClock()
+	clock := test.FakeClock()
 	taskRuns := []*v1beta1.TaskRun{
 		{
 			ObjectMeta: metav1.ObjectMeta{
@@ -1420,7 +1419,7 @@ func TestTaskRunDescribe_With_Workspaces_v1beta1(t *testing.T) {
 }
 
 func TestTaskRunDescribe_WithoutNameIfOnlyOneTaskRunPresent_v1beta1(t *testing.T) {
-	clock := clockwork.NewFakeClock()
+	clock := test.FakeClock()
 	taskRuns := []*v1beta1.TaskRun{
 		{
 			ObjectMeta: metav1.ObjectMeta{
@@ -1521,7 +1520,7 @@ func TestTaskRunDescribe_with_annotations_v1beta1(t *testing.T) {
 }
 
 func TestTaskRunDescribe_empty_taskrun(t *testing.T) {
-	clock := clockwork.NewFakeClock()
+	clock := test.FakeClock()
 
 	trs := []*v1.TaskRun{
 		{
@@ -1582,7 +1581,7 @@ func TestTaskRunDescribe_empty_taskrun(t *testing.T) {
 }
 
 func TestTaskRunDescribe_only_taskrun(t *testing.T) {
-	clock := clockwork.NewFakeClock()
+	clock := test.FakeClock()
 
 	trs := []*v1.TaskRun{
 		{
@@ -1592,7 +1591,7 @@ func TestTaskRunDescribe_only_taskrun(t *testing.T) {
 			},
 			Status: v1.TaskRunStatus{
 				TaskRunStatusFields: v1.TaskRunStatusFields{
-					StartTime: &metav1.Time{Time: clockwork.NewFakeClock().Now().Add(20 * time.Second)},
+					StartTime: &metav1.Time{Time: test.FakeClock().Now().Add(20 * time.Second)},
 					Steps: []v1.StepState{
 						{
 							Name: "step1",
@@ -1674,7 +1673,7 @@ func TestTaskRunDescribe_only_taskrun(t *testing.T) {
 }
 
 func TestTaskRunDescribe_failed(t *testing.T) {
-	clock := clockwork.NewFakeClock()
+	clock := test.FakeClock()
 
 	trs := []*v1.TaskRun{
 		{
@@ -1740,7 +1739,7 @@ func TestTaskRunDescribe_failed(t *testing.T) {
 }
 
 func TestTaskRunDescribe_no_taskref(t *testing.T) {
-	clock := clockwork.NewFakeClock()
+	clock := test.FakeClock()
 
 	trs := []*v1.TaskRun{
 		{
@@ -1833,7 +1832,7 @@ func TestTaskRunDescribe_last_no_taskrun_present(t *testing.T) {
 }
 
 func TestTaskRunDescribe_no_resourceref(t *testing.T) {
-	clock := clockwork.NewFakeClock()
+	clock := test.FakeClock()
 
 	trs := []*v1.TaskRun{
 		{
@@ -1843,7 +1842,7 @@ func TestTaskRunDescribe_no_resourceref(t *testing.T) {
 			},
 			Status: v1.TaskRunStatus{
 				TaskRunStatusFields: v1.TaskRunStatusFields{
-					StartTime: &metav1.Time{Time: clockwork.NewFakeClock().Now().Add(20 * time.Second)},
+					StartTime: &metav1.Time{Time: test.FakeClock().Now().Add(20 * time.Second)},
 					Steps: []v1.StepState{
 						{
 							Name: "step1",
@@ -1925,7 +1924,7 @@ func TestTaskRunDescribe_no_resourceref(t *testing.T) {
 }
 
 func TestTaskRunDescribe_step_sidecar_status_defaults_and_failures(t *testing.T) {
-	clock := clockwork.NewFakeClock()
+	clock := test.FakeClock()
 
 	trs := []*v1.TaskRun{
 		{
@@ -1935,7 +1934,7 @@ func TestTaskRunDescribe_step_sidecar_status_defaults_and_failures(t *testing.T)
 			},
 			Status: v1.TaskRunStatus{
 				TaskRunStatusFields: v1.TaskRunStatusFields{
-					StartTime: &metav1.Time{Time: clockwork.NewFakeClock().Now().Add(20 * time.Second)},
+					StartTime: &metav1.Time{Time: test.FakeClock().Now().Add(20 * time.Second)},
 					Steps: []v1.StepState{
 						{
 							Name: "step1",
@@ -2025,7 +2024,7 @@ func TestTaskRunDescribe_step_sidecar_status_defaults_and_failures(t *testing.T)
 }
 
 func TestTaskRunDescribe_step_status_pending_one_sidecar(t *testing.T) {
-	clock := clockwork.NewFakeClock()
+	clock := test.FakeClock()
 
 	trs := []*v1.TaskRun{
 		{
@@ -2035,7 +2034,7 @@ func TestTaskRunDescribe_step_status_pending_one_sidecar(t *testing.T) {
 			},
 			Status: v1.TaskRunStatus{
 				TaskRunStatusFields: v1.TaskRunStatusFields{
-					StartTime: &metav1.Time{Time: clockwork.NewFakeClock().Now().Add(20 * time.Second)},
+					StartTime: &metav1.Time{Time: test.FakeClock().Now().Add(20 * time.Second)},
 					Steps: []v1.StepState{
 						{
 							Name: "step1",
@@ -2128,7 +2127,7 @@ func TestTaskRunDescribe_step_status_pending_one_sidecar(t *testing.T) {
 }
 
 func TestTaskRunDescribe_step_status_running_multiple_sidecars(t *testing.T) {
-	clock := clockwork.NewFakeClock()
+	clock := test.FakeClock()
 
 	trs := []*v1.TaskRun{
 		{
@@ -2138,7 +2137,7 @@ func TestTaskRunDescribe_step_status_running_multiple_sidecars(t *testing.T) {
 			},
 			Status: v1.TaskRunStatus{
 				TaskRunStatusFields: v1.TaskRunStatusFields{
-					StartTime: &metav1.Time{Time: clockwork.NewFakeClock().Now().Add(20 * time.Second)},
+					StartTime: &metav1.Time{Time: test.FakeClock().Now().Add(20 * time.Second)},
 					Steps: []v1.StepState{
 						{
 							Name: "step1",
@@ -2239,7 +2238,7 @@ func TestTaskRunDescribe_step_status_running_multiple_sidecars(t *testing.T) {
 }
 
 func TestTaskRunDescribe_cancel_taskrun(t *testing.T) {
-	clock := clockwork.NewFakeClock()
+	clock := test.FakeClock()
 
 	trs := []*v1.TaskRun{
 		{
@@ -2302,7 +2301,7 @@ func TestTaskRunDescribe_custom_output(t *testing.T) {
 	name := "task-run"
 	expected := "taskrun.tekton.dev/" + name
 
-	clock := clockwork.NewFakeClock()
+	clock := test.FakeClock()
 
 	trs := []*v1.TaskRun{
 		{
@@ -2395,7 +2394,7 @@ func TestTaskRunDescribe_WithSpec_custom_timeout(t *testing.T) {
 }
 
 func TestTaskRunDescribe_last(t *testing.T) {
-	clock := clockwork.NewFakeClock()
+	clock := test.FakeClock()
 	taskRuns := []*v1.TaskRun{
 		{
 			ObjectMeta: metav1.ObjectMeta{
@@ -2480,7 +2479,7 @@ func TestTaskRunDescribe_last(t *testing.T) {
 }
 
 func TestTaskRunDescribe_With_Results(t *testing.T) {
-	clock := clockwork.NewFakeClock()
+	clock := test.FakeClock()
 	taskRuns := []*v1.TaskRun{
 		{
 			ObjectMeta: metav1.ObjectMeta{
@@ -2598,7 +2597,7 @@ func TestTaskRunDescribe_zero_timeout(t *testing.T) {
 }
 
 func TestTaskRunDescribe_With_Workspaces(t *testing.T) {
-	clock := clockwork.NewFakeClock()
+	clock := test.FakeClock()
 	taskRuns := []*v1.TaskRun{
 		{
 			ObjectMeta: metav1.ObjectMeta{
@@ -2693,7 +2692,7 @@ func TestTaskRunDescribe_With_Workspaces(t *testing.T) {
 }
 
 func TestTaskRunDescribe_WithoutNameIfOnlyOneTaskRunPresent(t *testing.T) {
-	clock := clockwork.NewFakeClock()
+	clock := test.FakeClock()
 	taskRuns := []*v1.TaskRun{
 		{
 			ObjectMeta: metav1.ObjectMeta{

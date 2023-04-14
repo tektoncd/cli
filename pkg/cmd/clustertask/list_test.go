@@ -19,7 +19,6 @@ import (
 	"testing"
 	"time"
 
-	"github.com/jonboulle/clockwork"
 	"github.com/tektoncd/cli/pkg/test"
 	cb "github.com/tektoncd/cli/pkg/test/builder"
 	testDynamic "github.com/tektoncd/cli/pkg/test/dynamic"
@@ -50,7 +49,7 @@ func TestClusterTaskList_Empty(t *testing.T) {
 }
 
 func TestClusterTaskListOnlyClusterTasksv1beta1(t *testing.T) {
-	clock := clockwork.NewFakeClock()
+	clock := test.FakeClock()
 
 	clustertasks := []*v1beta1.ClusterTask{
 		{
@@ -120,7 +119,7 @@ func TestClusterTaskListOnlyClusterTasksv1beta1(t *testing.T) {
 }
 
 func TestClusterTaskListNoHeadersv1beta1(t *testing.T) {
-	clock := clockwork.NewFakeClock()
+	clock := test.FakeClock()
 
 	clustertasks := []*v1beta1.ClusterTask{
 		{
