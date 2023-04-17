@@ -16,27 +16,10 @@ package builder
 
 import (
 	"sort"
-	"strings"
 
 	"github.com/tektoncd/pipeline/pkg/apis/pipeline/v1beta1"
-	"github.com/tektoncd/pipeline/pkg/apis/resource/v1alpha1"
 	corev1 "k8s.io/api/core/v1"
 )
-
-func Details(pre v1alpha1.PipelineResource) string {
-	var key = "url"
-	if pre.Spec.Type == v1beta1.PipelineResourceTypeStorage {
-		key = "location"
-	}
-
-	for _, p := range pre.Spec.Params {
-		if strings.ToLower(p.Name) == key {
-			return p.Name + ": " + p.Value
-		}
-	}
-
-	return "---"
-}
 
 func TaskRunHasFailed(tr *v1beta1.TaskRun) string {
 	if len(tr.Status.Conditions) == 0 {

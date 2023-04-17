@@ -193,14 +193,6 @@ func getCRDYaml(cs *Clients, ns string) ([]byte, error) {
 		printOrAdd("Pipeline", i.Name, i)
 	}
 
-	prs, err := cs.PipelineResourceClient.List(context.Background(), metav1.ListOptions{})
-	if err != nil {
-		return nil, fmt.Errorf("could not get pipelinerun resource: %w", err)
-	}
-	for _, i := range prs.Items {
-		printOrAdd("PipelineResource", i.Name, i)
-	}
-
 	prrs, err := cs.PipelineRunClient.List(context.Background(), metav1.ListOptions{})
 	if err != nil {
 		return nil, fmt.Errorf("could not get pipelinerun: %w", err)

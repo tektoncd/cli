@@ -132,7 +132,7 @@ func TestPipelineStart_ExecuteCommand_v1beta1(t *testing.T) {
 	if err != nil {
 		t.Errorf("unable to create dynamic client: %v", err)
 	}
-	c1 := &test.Params{Tekton: cs.Pipeline, Kube: cs.Kube, Dynamic: dc, Clock: clock, Resource: cs.Resource}
+	c1 := &test.Params{Tekton: cs.Pipeline, Kube: cs.Kube, Dynamic: dc, Clock: clock}
 
 	pipeline := []*v1beta1.Pipeline{
 		{
@@ -199,7 +199,7 @@ func TestPipelineStart_ExecuteCommand_v1beta1(t *testing.T) {
 	if err != nil {
 		t.Errorf("unable to create dynamic client: %v", err)
 	}
-	c2 := &test.Params{Tekton: cs2.Pipeline, Kube: cs2.Kube, Dynamic: dc2, Clock: clock, Resource: cs2.Resource}
+	c2 := &test.Params{Tekton: cs2.Pipeline, Kube: cs2.Kube, Dynamic: dc2, Clock: clock}
 
 	// With list error mocking
 	cs3, _ := test.SeedV1beta1TestData(t, pipelinetest.Data{Pipelines: pipeline, Namespaces: namespaces})
@@ -221,7 +221,7 @@ func TestPipelineStart_ExecuteCommand_v1beta1(t *testing.T) {
 	if err != nil {
 		t.Errorf("unable to create dynamic client: %v", err)
 	}
-	c3 := &test.Params{Tekton: cs3.Pipeline, Kube: cs3.Kube, Dynamic: dc3, Clock: clock, Resource: cs3.Resource}
+	c3 := &test.Params{Tekton: cs3.Pipeline, Kube: cs3.Kube, Dynamic: dc3, Clock: clock}
 
 	// With create error mocking
 	cs4, _ := test.SeedV1beta1TestData(t, pipelinetest.Data{Pipelines: pipeline2, Namespaces: namespaces})
@@ -243,7 +243,7 @@ func TestPipelineStart_ExecuteCommand_v1beta1(t *testing.T) {
 	if err != nil {
 		t.Errorf("unable to create dynamic client: %v", err)
 	}
-	c4 := &test.Params{Tekton: cs4.Pipeline, Kube: cs4.Kube, Dynamic: dc4, Clock: clock, Resource: cs4.Resource}
+	c4 := &test.Params{Tekton: cs4.Pipeline, Kube: cs4.Kube, Dynamic: dc4, Clock: clock}
 
 	// Without related pipelinerun
 	objs := []runtime.Object{
@@ -265,7 +265,7 @@ func TestPipelineStart_ExecuteCommand_v1beta1(t *testing.T) {
 	if err != nil {
 		t.Errorf("unable to create dynamic client: %v", err)
 	}
-	c5 := &test.Params{Tekton: cs5.Pipeline, Kube: cs5.Kube, Dynamic: dc5, Clock: clock, Resource: cs5.Resource}
+	c5 := &test.Params{Tekton: cs5.Pipeline, Kube: cs5.Kube, Dynamic: dc5, Clock: clock}
 
 	// pipelineresources data for tests with --filename
 	objs2 := []runtime.Object{}
@@ -283,7 +283,7 @@ func TestPipelineStart_ExecuteCommand_v1beta1(t *testing.T) {
 	if err != nil {
 		t.Errorf("unable to create dynamic client: %v", err)
 	}
-	c6 := &test.Params{Tekton: cs6.Pipeline, Kube: cs6.Kube, Dynamic: dc6, Clock: clock, Resource: cs6.Resource}
+	c6 := &test.Params{Tekton: cs6.Pipeline, Kube: cs6.Kube, Dynamic: dc6, Clock: clock}
 
 	cs7, _ := test.SeedV1beta1TestData(t, pipelinetest.Data{Pipelines: pipeline, Namespaces: namespaces})
 	cs7.Pipeline.Resources = cb.APIResourceList(versionv1beta1, []string{"pipeline", "pipelinerun"})
@@ -294,7 +294,7 @@ func TestPipelineStart_ExecuteCommand_v1beta1(t *testing.T) {
 	if err != nil {
 		t.Errorf("unable to create dynamic client: %v", err)
 	}
-	c7 := &test.Params{Tekton: cs7.Pipeline, Kube: cs7.Kube, Dynamic: dc7, Clock: clock, Resource: cs7.Resource}
+	c7 := &test.Params{Tekton: cs7.Pipeline, Kube: cs7.Kube, Dynamic: dc7, Clock: clock}
 
 	testParams := []struct {
 		name       string
@@ -1212,9 +1212,8 @@ func TestPipelineStart_Interactive_v1beta1(t *testing.T) {
 	for _, tp := range testParams {
 		t.Run(tp.name, func(t *testing.T) {
 			p := test.Params{
-				Kube:     tp.input.Kube,
-				Tekton:   tp.input.Pipeline,
-				Resource: tp.input.Resource,
+				Kube:   tp.input.Kube,
+				Tekton: tp.input.Pipeline,
 			}
 			p.SetNamespace(tp.namespace)
 
@@ -1293,7 +1292,7 @@ func Test_start_pipeline_v1beta1(t *testing.T) {
 	if err != nil {
 		t.Errorf("unable to create dynamic client: %v", err)
 	}
-	p := &test.Params{Tekton: cs.Pipeline, Kube: cs.Kube, Dynamic: dc, Resource: cs.Resource}
+	p := &test.Params{Tekton: cs.Pipeline, Kube: cs.Kube, Dynamic: dc}
 	c := Command(p)
 
 	got, _ := test.ExecuteCommand(c, "start", pipelineName,
@@ -1455,7 +1454,7 @@ func Test_start_pipeline_last_v1beta1(t *testing.T) {
 	if err != nil {
 		t.Errorf("unable to create dynamic client: %v", err)
 	}
-	p := &test.Params{Tekton: cs.Pipeline, Kube: cs.Kube, Dynamic: dc, Resource: cs.Resource}
+	p := &test.Params{Tekton: cs.Pipeline, Kube: cs.Kube, Dynamic: dc}
 
 	pipeline := Command(p)
 	got, _ := test.ExecuteCommand(pipeline, "start", pipelineName,
@@ -1610,7 +1609,7 @@ func Test_start_pipeline_last_override_timeout_deprecated_v1beta1(t *testing.T) 
 	if err != nil {
 		t.Errorf("unable to create dynamic client: %v", err)
 	}
-	p := &test.Params{Tekton: cs.Pipeline, Kube: cs.Kube, Dynamic: dc, Resource: cs.Resource}
+	p := &test.Params{Tekton: cs.Pipeline, Kube: cs.Kube, Dynamic: dc}
 
 	pipeline := Command(p)
 	// Specify new timeout value to override previous value
@@ -1742,7 +1741,7 @@ func Test_start_pipeline_last_without_res_param_v1beta1(t *testing.T) {
 	if err != nil {
 		t.Errorf("unable to create dynamic client: %v", err)
 	}
-	p := &test.Params{Tekton: cs.Pipeline, Kube: cs.Kube, Dynamic: dc, Resource: cs.Resource}
+	p := &test.Params{Tekton: cs.Pipeline, Kube: cs.Kube, Dynamic: dc}
 
 	pipeline := Command(p)
 	got, _ := test.ExecuteCommand(pipeline, "start", pipelineName,
@@ -1886,7 +1885,7 @@ func Test_start_pipeline_last_merge_v1beta1(t *testing.T) {
 	if err != nil {
 		t.Errorf("unable to create dynamic client: %v", err)
 	}
-	p := &test.Params{Tekton: cs.Pipeline, Kube: cs.Kube, Dynamic: dc, Resource: cs.Resource}
+	p := &test.Params{Tekton: cs.Pipeline, Kube: cs.Kube, Dynamic: dc}
 
 	pipeline := Command(p)
 	got, _ := test.ExecuteCommand(pipeline, "start", pipelineName,
@@ -2049,7 +2048,7 @@ func Test_start_pipeline_use_pipelinerun_v1beta1(t *testing.T) {
 	if err != nil {
 		t.Errorf("unable to create dynamic client: %v", err)
 	}
-	p := &test.Params{Tekton: cs.Pipeline, Kube: cs.Kube, Dynamic: dc, Resource: cs.Resource}
+	p := &test.Params{Tekton: cs.Pipeline, Kube: cs.Kube, Dynamic: dc}
 
 	pipeline := Command(p)
 	// There is no point to checkout otuput since we would be checking if our testdata works!
@@ -2171,7 +2170,7 @@ func Test_start_pipeline_use_pipelinerun_cancelled_status_v1beta1(t *testing.T) 
 	if err != nil {
 		t.Errorf("unable to create dynamic client: %v", err)
 	}
-	p := &test.Params{Tekton: cs.Pipeline, Kube: cs.Kube, Dynamic: dc, Resource: cs.Resource}
+	p := &test.Params{Tekton: cs.Pipeline, Kube: cs.Kube, Dynamic: dc}
 
 	pipeline := Command(p)
 	_, _ = test.ExecuteCommand(pipeline, "start", pipelineName,
@@ -2253,7 +2252,7 @@ func Test_start_pipeline_allkindparam_v1beta1(t *testing.T) {
 	if err != nil {
 		t.Errorf("unable to create dynamic client: %v", err)
 	}
-	p := &test.Params{Tekton: cs.Pipeline, Kube: cs.Kube, Resource: cs.Resource, Dynamic: dc}
+	p := &test.Params{Tekton: cs.Pipeline, Kube: cs.Kube, Dynamic: dc}
 	pipeline := Command(p)
 
 	got, _ := test.ExecuteCommand(pipeline, "start", pipelineName,
@@ -2405,7 +2404,7 @@ func Test_start_pipeline_last_generate_name_v1beta1(t *testing.T) {
 	if err != nil {
 		t.Errorf("unable to create dynamic client: %v", err)
 	}
-	p := &test.Params{Tekton: cs.Pipeline, Kube: cs.Kube, Dynamic: dc, Resource: cs.Resource}
+	p := &test.Params{Tekton: cs.Pipeline, Kube: cs.Kube, Dynamic: dc}
 
 	pipeline := Command(p)
 	got, _ := test.ExecuteCommand(pipeline, "start", pipelineName,
@@ -2536,7 +2535,7 @@ func Test_start_pipeline_last_with_prefix_name_v1beta1(t *testing.T) {
 	if err != nil {
 		t.Errorf("unable to create dynamic client: %v", err)
 	}
-	p := &test.Params{Tekton: cs.Pipeline, Kube: cs.Kube, Dynamic: dc, Resource: cs.Resource}
+	p := &test.Params{Tekton: cs.Pipeline, Kube: cs.Kube, Dynamic: dc}
 
 	pipeline := Command(p)
 	got, _ := test.ExecuteCommand(pipeline, "start", pipelineName,
@@ -2669,7 +2668,7 @@ func Test_start_pipeline_with_prefix_name_v1beta1(t *testing.T) {
 	if err != nil {
 		t.Errorf("unable to create dynamic client: %v", err)
 	}
-	p := &test.Params{Tekton: cs.Pipeline, Kube: cs.Kube, Dynamic: dc, Resource: cs.Resource}
+	p := &test.Params{Tekton: cs.Pipeline, Kube: cs.Kube, Dynamic: dc}
 
 	pipeline := Command(p)
 	got, _ := test.ExecuteCommand(pipeline, "start", pipelineName,
@@ -2809,7 +2808,7 @@ func Test_lastPipelineRun_v1beta1(t *testing.T) {
 					if err != nil {
 						t.Errorf("unable to create dynamic client: %v", err)
 					}
-					p := &test.Params{Tekton: cs.Pipeline, Kube: cs.Kube, Dynamic: dc, Clock: clock, Resource: cs.Resource}
+					p := &test.Params{Tekton: cs.Pipeline, Kube: cs.Kube, Dynamic: dc, Clock: clock}
 					p.SetNamespace("namespace")
 					return p
 				}(),
@@ -2829,7 +2828,7 @@ func Test_lastPipelineRun_v1beta1(t *testing.T) {
 					if err != nil {
 						t.Errorf("unable to create dynamic client: %v", err)
 					}
-					p := &test.Params{Tekton: cs.Pipeline, Kube: cs.Kube, Dynamic: dc, Resource: cs.Resource}
+					p := &test.Params{Tekton: cs.Pipeline, Kube: cs.Kube, Dynamic: dc}
 					p.SetNamespace("namespace")
 					return p
 				}(),
@@ -2928,7 +2927,7 @@ func Test_start_pipeline_with_skip_optional_workspace_flag_v1beta1(t *testing.T)
 	if err != nil {
 		t.Errorf("unable to create dynamic client: %v", err)
 	}
-	p := &test.Params{Tekton: cs.Pipeline, Kube: cs.Kube, Dynamic: dc, Resource: cs.Resource}
+	p := &test.Params{Tekton: cs.Pipeline, Kube: cs.Kube, Dynamic: dc}
 
 	pipeline := Command(p)
 	got, _ := test.ExecuteCommand(pipeline, "start", pipelineName,
