@@ -143,8 +143,6 @@ function install_pipeline_crd() {
     # If for whatever reason the nightly release wasnt there (nightly ci failure?), try the released version
     [[ -n ${latestreleaseyaml} ]] || latestreleaseyaml=https://storage.googleapis.com/tekton-releases/pipeline/latest/release.yaml
   fi
-  # TODO: to remove this pinning of pipeline version after v1 support of Pipeline CRDs in cli, as this is done to make CI green till then
-  latestreleaseyaml="https://github.com/tektoncd/pipeline/releases/download/v0.44.0/release.yaml"
   [[ -z ${latestreleaseyaml} ]] && fail_test "Could not get latest released release.yaml"
   kubectl apply -f ${latestreleaseyaml} ||
     fail_test "Build pipeline installation failed"

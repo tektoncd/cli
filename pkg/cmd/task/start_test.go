@@ -1165,7 +1165,7 @@ func Test_start_task_with_prefix_name_v1beta1(t *testing.T) {
 	dc, _ := tdc.Client(
 		cb.UnstructuredV1beta1T(tasks[0], versionv1beta1),
 		cb.UnstructuredV1beta1TR(taskruns[0], versionv1beta1))
-	p := &test.Params{Tekton: cs.Pipeline, Kube: cs.Kube, Resource: cs.Resource, Dynamic: dc}
+	p := &test.Params{Tekton: cs.Pipeline, Kube: cs.Kube, Dynamic: dc}
 
 	task := Command(p)
 	got, _ := test.ExecuteCommand(task, "start", "task",
@@ -1435,7 +1435,7 @@ func Test_start_task_client_error_v1beta1(t *testing.T) {
 		cb.UnstructuredV1beta1T(tasks[0], versionv1beta1),
 	)
 
-	p := &test.Params{Tekton: cs.Pipeline, Kube: cs.Kube, Resource: cs.Resource, Dynamic: dc}
+	p := &test.Params{Tekton: cs.Pipeline, Kube: cs.Kube, Dynamic: dc}
 
 	task := Command(p)
 	got, _ := test.ExecuteCommand(task,
@@ -1490,7 +1490,7 @@ func Test_start_task_invalid_workspace_v1beta1(t *testing.T) {
 	dc, _ := tdc.Client(
 		cb.UnstructuredV1beta1T(tasks[0], versionv1beta1),
 	)
-	p := &test.Params{Tekton: cs.Pipeline, Kube: cs.Kube, Resource: cs.Resource, Dynamic: dc}
+	p := &test.Params{Tekton: cs.Pipeline, Kube: cs.Kube, Dynamic: dc}
 
 	task := Command(p)
 	got, _ := test.ExecuteCommand(task, "start", "task-1",
@@ -1547,7 +1547,7 @@ func Test_start_task_invalid_param_v1beta1(t *testing.T) {
 	dc, _ := tdc.Client(
 		cb.UnstructuredV1beta1T(tasks[0], versionv1beta1),
 	)
-	p := &test.Params{Tekton: cs.Pipeline, Kube: cs.Kube, Resource: cs.Resource, Dynamic: dc}
+	p := &test.Params{Tekton: cs.Pipeline, Kube: cs.Kube, Dynamic: dc}
 
 	task := Command(p)
 	got, _ := test.ExecuteCommand(task, "start", "task-1",
@@ -1604,7 +1604,7 @@ func Test_start_task_invalid_label_v1beta1(t *testing.T) {
 	dc, _ := tdc.Client(
 		cb.UnstructuredV1beta1T(tasks[0], versionv1beta1),
 	)
-	p := &test.Params{Tekton: cs.Pipeline, Kube: cs.Kube, Resource: cs.Resource, Dynamic: dc}
+	p := &test.Params{Tekton: cs.Pipeline, Kube: cs.Kube, Dynamic: dc}
 
 	task := Command(p)
 	got, _ := test.ExecuteCommand(task, "start", "task-1",

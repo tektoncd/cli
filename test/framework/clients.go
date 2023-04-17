@@ -20,21 +20,18 @@ import (
 	"github.com/tektoncd/pipeline/pkg/client/clientset/versioned"
 	v1 "github.com/tektoncd/pipeline/pkg/client/clientset/versioned/typed/pipeline/v1"
 	"github.com/tektoncd/pipeline/pkg/client/clientset/versioned/typed/pipeline/v1beta1"
-	resourceversioned "github.com/tektoncd/pipeline/pkg/client/resource/clientset/versioned"
-	resourcev1alpha1 "github.com/tektoncd/pipeline/pkg/client/resource/clientset/versioned/typed/resource/v1alpha1"
 	"k8s.io/client-go/kubernetes"
 	knativetest "knative.dev/pkg/test"
 )
 
 // clients holds instances of interfaces for making requests to the Pipeline controllers.
 type Clients struct {
-	KubeClient             kubernetes.Interface
-	PipelineClient         v1.PipelineInterface
-	TaskClient             v1.TaskInterface
-	ClusterTaskClient      v1beta1.ClusterTaskInterface
-	TaskRunClient          v1.TaskRunInterface
-	PipelineRunClient      v1.PipelineRunInterface
-	PipelineResourceClient resourcev1alpha1.PipelineResourceInterface
+	KubeClient        kubernetes.Interface
+	PipelineClient    v1.PipelineInterface
+	TaskClient        v1.TaskInterface
+	ClusterTaskClient v1beta1.ClusterTaskInterface
+	TaskRunClient     v1.TaskRunInterface
+	PipelineRunClient v1.PipelineRunInterface
 }
 
 // newClients instantiates and returns several clientsets required for making requests to the
@@ -61,16 +58,11 @@ func NewClients(configPath, clusterName, namespace string) *Clients {
 		log.Fatalf("failed to create pipeline clientset from config file at %s: %s", configPath, err)
 	}
 
-	rcs, err := resourceversioned.NewForConfig(cfg)
-	if err != nil {
-		log.Fatalf("failed to create pipeline clientset from config file at %s: %s", configPath, err)
-	}
 	c.PipelineClient = cs.TektonV1().Pipelines(namespace)
 	c.TaskClient = cs.TektonV1().Tasks(namespace)
 	c.ClusterTaskClient = cs.TektonV1beta1().ClusterTasks()
 	c.TaskRunClient = cs.TektonV1().TaskRuns(namespace)
 	c.PipelineRunClient = cs.TektonV1().PipelineRuns(namespace)
-	c.PipelineResourceClient = rcs.TektonV1alpha1().PipelineResources(namespace)
 	return c
 }
 

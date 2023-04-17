@@ -36,7 +36,6 @@ import (
 	"github.com/tektoncd/cli/test/framework"
 	v1 "github.com/tektoncd/pipeline/pkg/apis/pipeline/v1"
 	"github.com/tektoncd/pipeline/pkg/apis/pipeline/v1beta1"
-	"github.com/tektoncd/pipeline/pkg/apis/resource/v1alpha1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 )
 
@@ -96,28 +95,6 @@ func GetTaskRunList(c *framework.Clients) *v1.TaskRunList {
 	}
 
 	return taskRunlist
-}
-
-func GetPipelineResource(c *framework.Clients, name string) *v1alpha1.PipelineResource {
-
-	pipelineResource, err := c.PipelineResourceClient.Get(context.Background(), name, metav1.GetOptions{})
-
-	if err != nil {
-		log.Fatalf("Couldn't get expected pipelineResource  %s", err)
-	}
-
-	return pipelineResource
-}
-
-func GetPipelineResourceList(c *framework.Clients) *v1alpha1.PipelineResourceList {
-
-	pipelineResourceList, err := c.PipelineResourceClient.List(context.Background(), metav1.ListOptions{})
-
-	if err != nil {
-		log.Fatalf("Couldn't get expected pipelineResourceList  %s", err)
-	}
-
-	return pipelineResourceList
 }
 
 func GetPipeline(c *framework.Clients, name string) *v1.Pipeline {
@@ -262,18 +239,6 @@ func ListResourceNamesForJSONPath(obj interface{}) string {
 		return tmplBytes.String()
 
 	case *v1.PipelineRunList:
-		if len(obj.Items) == 0 {
-			return emptyMsg
-		}
-
-		for _, r := range obj.Items {
-			fmt.Fprintf(w, body,
-				r.Name,
-			)
-		}
-		w.Flush()
-		return tmplBytes.String()
-	case *v1alpha1.PipelineResourceList:
 		if len(obj.Items) == 0 {
 			return emptyMsg
 		}
