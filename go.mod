@@ -9,7 +9,7 @@ require (
 	github.com/cenkalti/backoff/v3 v3.2.2
 	github.com/cpuguy83/go-md2man v1.0.10
 	github.com/creack/pty v1.1.18
-	github.com/docker/cli v23.0.3+incompatible
+	github.com/docker/cli v23.0.4+incompatible
 	github.com/docker/docker v23.0.3+incompatible
 	github.com/fatih/color v1.15.0
 	github.com/google/go-cmp v0.5.9
