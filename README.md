@@ -206,7 +206,6 @@ The following commands help you understand and effectively use the Tekton CLI:
  * [`tkn hub:`](docs/cmd/tkn_hub.md) Search and install Tekton Resources from [Hub](https://hub.tekton.dev)
  * [`tkn pipeline:`](docs/cmd/tkn_pipeline.md) Parent command of the Pipeline command group.
  * [`tkn pipelinerun:`](docs/cmd/tkn_pipelinerun.md) Parent command of the Pipelinerun command group.
- * [`tkn resource:`](docs/cmd/tkn_resource.md) Parent command of the Resource command group.
  * [`tkn task:`](docs/cmd/tkn_task.md) Parent command of the Task command group.
  * [`tkn taskrun:`](docs/cmd/tkn_taskrun.md) Parent command of the Taskrun command group.
  * [`tkn triggerbinding:`](docs/cmd/tkn_triggerbinding.md) Parent command of the Triggerbinding command group.
