@@ -32,6 +32,7 @@ const (
 	PayloadTypeSimpleSigning config.PayloadType = "simplesigning"
 	PayloadTypeInTotoIte6    config.PayloadType = "in-toto"
 	PayloadTypeSlsav1        config.PayloadType = "slsa/v1"
+	PayloadTypeSlsav2        config.PayloadType = "slsa/v2alpha1"
 )
 
 var (

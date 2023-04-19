@@ -23,7 +23,7 @@ import (
 	"encoding/json"
 	"fmt"
 
-	cosignsignature "github.com/sigstore/cosign/pkg/signature"
+	cosignsignature "github.com/sigstore/cosign/v2/pkg/signature"
 	"github.com/sigstore/sigstore/pkg/signature"
 	"github.com/sigstore/sigstore/pkg/signature/kms"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"

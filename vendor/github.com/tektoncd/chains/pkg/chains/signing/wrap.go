@@ -67,7 +67,7 @@ type sslAdapter struct {
 	pk      crypto.PublicKey
 }
 
-func (w *sslAdapter) Sign(data []byte) ([]byte, error) {
+func (w *sslAdapter) Sign(ctx context.Context, data []byte) ([]byte, error) {
 	sig, err := w.wrapped.SignMessage(bytes.NewReader(data))
 	return sig, err
 }
@@ -80,7 +80,7 @@ func (w *sslAdapter) Public() crypto.PublicKey {
 	return w.pk
 }
 
-func (w *sslAdapter) Verify(data, sig []byte) error {
+func (w *sslAdapter) Verify(_ context.Context, data, sig []byte) error {
 	panic("unimplemented")
 }
 
@@ -101,7 +101,7 @@ func (w *sslSigner) PublicKey(opts ...signature.PublicKeyOption) (crypto.PublicK
 }
 
 func (w *sslSigner) Sign(ctx context.Context, payload []byte) ([]byte, []byte, error) {
-	env, err := w.wrapper.SignPayload(in_toto.PayloadType, payload)
+	env, err := w.wrapper.SignPayload(ctx, in_toto.PayloadType, payload)
 	if err != nil {
 		return nil, nil, err
 	}
@@ -117,7 +117,7 @@ func (w *sslSigner) SignMessage(payload io.Reader, opts ...signature.SignOption)
 	if err != nil {
 		return nil, err
 	}
-	env, err := w.wrapper.SignPayload(in_toto.PayloadType, m)
+	env, err := w.wrapper.SignPayload(context.TODO(), in_toto.PayloadType, m)
 	if err != nil {
 		return nil, err
 	}

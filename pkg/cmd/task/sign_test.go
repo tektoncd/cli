@@ -20,7 +20,7 @@ import (
 	"path/filepath"
 	"testing"
 
-	cosignsignature "github.com/sigstore/cosign/pkg/signature"
+	cosignsignature "github.com/sigstore/cosign/v2/pkg/signature"
 	"github.com/tektoncd/cli/pkg/test"
 	"github.com/tektoncd/cli/pkg/trustedresources"
 )

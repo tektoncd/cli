@@ -194,6 +194,7 @@ func (o *ObjectSigner) Sign(ctx context.Context, tektonObj objects.TektonObject)
 
 				entry, err := rekorClient.UploadTlog(ctx, signer, signature, rawPayload, signer.Cert(), string(payloadFormat))
 				if err != nil {
+					logger.Warnf("error uploading entry to tlog: %v", err)
 					merr = multierror.Append(merr, err)
 				} else {
 					logger.Infof("Uploaded entry to %s with index %d", cfg.Transparency.URL, *entry.LogIndex)
@@ -205,6 +206,7 @@ func (o *ObjectSigner) Sign(ctx context.Context, tektonObj objects.TektonObject)
 		}
 		if merr.ErrorOrNil() != nil {
 			if err := HandleRetry(ctx, tektonObj, o.Pipelineclientset, extraAnnotations); err != nil {
+				logger.Warnf("error handling retry: %v", err)
 				merr = multierror.Append(merr, err)
 			}
 			return merr

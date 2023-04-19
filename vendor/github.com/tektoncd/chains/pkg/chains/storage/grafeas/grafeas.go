@@ -24,7 +24,7 @@ import (
 	pb "github.com/grafeas/grafeas/proto/v1/grafeas_go_proto"
 	intoto "github.com/in-toto/in-toto-golang/in_toto"
 	"github.com/pkg/errors"
-	"github.com/sigstore/cosign/pkg/types"
+	"github.com/sigstore/cosign/v2/pkg/types"
 	"github.com/tektoncd/chains/pkg/chains/formats"
 	"github.com/tektoncd/chains/pkg/chains/formats/slsa/extract"
 	"github.com/tektoncd/chains/pkg/chains/objects"

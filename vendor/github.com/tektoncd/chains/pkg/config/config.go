@@ -21,6 +21,7 @@ import (
 	"strconv"
 	"strings"
 
+	"github.com/sigstore/sigstore/pkg/tuf"
 	corev1 "k8s.io/api/core/v1"
 	"k8s.io/apimachinery/pkg/util/sets"
 	cm "knative.dev/pkg/configmap"
@@ -69,10 +70,12 @@ type BuilderConfig struct {
 }
 
 type X509Signer struct {
-	FulcioEnabled    bool
-	FulcioAddr       string
-	FulcioOIDCIssuer string
-	FulcioProvider   string
+	FulcioEnabled     bool
+	FulcioAddr        string
+	FulcioOIDCIssuer  string
+	FulcioProvider    string
+	IdentityTokenFile string
+	TUFMirrorURL      string
 }
 
 type KMSSigner struct {
@@ -163,10 +166,6 @@ const (
 	grafeasNoteIDKey         = "storage.grafeas.noteid"
 	grafeasNoteHint          = "storage.grafeas.notehint"
 
-	// No config needed for Tekton object storage
-
-	// No config needed for x509 signer
-
 	// PubSub - General
 	pubsubProvider = "storage.pubsub.provider"
 	pubsubTopic    = "storage.pubsub.topic"
@@ -186,10 +185,12 @@ const (
 	kmsAuthSpireAudience = "signers.kms.auth.spire.audience"
 
 	// Fulcio
-	x509SignerFulcioEnabled    = "signers.x509.fulcio.enabled"
-	x509SignerFulcioAddr       = "signers.x509.fulcio.address"
-	x509SignerFulcioOIDCIssuer = "signers.x509.fulcio.issuer"
-	x509SignerFulcioProvider   = "signers.x509.fulcio.provider"
+	x509SignerFulcioEnabled     = "signers.x509.fulcio.enabled"
+	x509SignerFulcioAddr        = "signers.x509.fulcio.address"
+	x509SignerFulcioOIDCIssuer  = "signers.x509.fulcio.issuer"
+	x509SignerFulcioProvider    = "signers.x509.fulcio.provider"
+	x509SignerIdentityTokenFile = "signers.x509.identity.token.file"
+	x509SignerTUFMirrorURL      = "signers.x509.tuf.mirror.url"
 
 	// Builder config
 	builderIDKey = "builder.id"
@@ -230,6 +231,7 @@ func defaultConfig() *Config {
 			X509: X509Signer{
 				FulcioAddr:       "https://fulcio.sigstore.dev",
 				FulcioOIDCIssuer: "https://oauth2.sigstore.dev/auth",
+				TUFMirrorURL:     tuf.DefaultRemoteRoot,
 			},
 		},
 		Storage: StorageConfigs{
@@ -250,7 +252,7 @@ func NewConfigFromMap(data map[string]string) (*Config, error) {
 	if err := cm.Parse(data,
 		// Artifact-specific configs
 		// TaskRuns
-		asString(taskrunFormatKey, &cfg.Artifacts.TaskRuns.Format, "in-toto", "slsa/v1"),
+		asString(taskrunFormatKey, &cfg.Artifacts.TaskRuns.Format, "in-toto", "slsa/v1", "slsa/v2alpha1"),
 		asStringSet(taskrunStorageKey, &cfg.Artifacts.TaskRuns.StorageBackend, sets.NewString("tekton", "oci", "gcs", "docdb", "grafeas", "kafka")),
 		asString(taskrunSignerKey, &cfg.Artifacts.TaskRuns.Signer, "x509", "kms"),
 
@@ -297,6 +299,8 @@ func NewConfigFromMap(data map[string]string) (*Config, error) {
 		asString(x509SignerFulcioAddr, &cfg.Signers.X509.FulcioAddr),
 		asString(x509SignerFulcioOIDCIssuer, &cfg.Signers.X509.FulcioOIDCIssuer),
 		asString(x509SignerFulcioProvider, &cfg.Signers.X509.FulcioProvider),
+		asString(x509SignerIdentityTokenFile, &cfg.Signers.X509.IdentityTokenFile),
+		asString(x509SignerTUFMirrorURL, &cfg.Signers.X509.TUFMirrorURL),
 
 		// Build config
 		asString(builderIDKey, &cfg.Builder.ID),
