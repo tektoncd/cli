@@ -15,9 +15,10 @@ package chains
 
 import (
 	"context"
+	"crypto/sha256"
 
 	"github.com/pkg/errors"
-	"github.com/sigstore/cosign/pkg/cosign"
+	"github.com/sigstore/cosign/v2/pkg/cosign"
 	rc "github.com/sigstore/rekor/pkg/client"
 	"github.com/sigstore/rekor/pkg/generated/client"
 	"github.com/sigstore/rekor/pkg/generated/models"
@@ -50,7 +51,12 @@ func (r *rekor) UploadTlog(ctx context.Context, signer signing.Signer, signature
 	if _, ok := formats.IntotoAttestationSet[config.PayloadType(payloadFormat)]; ok {
 		return cosign.TLogUploadInTotoAttestation(ctx, r.c, signature, pkoc)
 	}
-	return cosign.TLogUpload(ctx, r.c, signature, rawPayload, pkoc)
+
+	h := sha256.New()
+	if _, err := h.Write(rawPayload); err != nil {
+		return nil, errors.Wrap(err, "error checksuming payload")
+	}
+	return cosign.TLogUpload(ctx, r.c, signature, h, pkoc)
 }
 
 // return the cert if we have it, otherwise return public key

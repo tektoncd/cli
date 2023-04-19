@@ -22,7 +22,6 @@ import (
 	"github.com/tektoncd/pipeline/pkg/apis/pipeline/v1beta1"
 	"github.com/tektoncd/pipeline/pkg/client/clientset/versioned"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
-	v1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/apimachinery/pkg/types"
 	"knative.dev/pkg/apis"
@@ -94,7 +93,7 @@ func (tro *TaskRunObject) GetGVK() string {
 
 // Get the latest annotations on the TaskRun
 func (tro *TaskRunObject) GetLatestAnnotations(ctx context.Context, clientSet versioned.Interface) (map[string]string, error) {
-	tr, err := clientSet.TektonV1beta1().TaskRuns(tro.Namespace).Get(ctx, tro.Name, v1.GetOptions{})
+	tr, err := clientSet.TektonV1beta1().TaskRuns(tro.Namespace).Get(ctx, tro.Name, metav1.GetOptions{})
 	return tr.Annotations, err
 }
 
@@ -106,7 +105,7 @@ func (tro *TaskRunObject) GetObject() interface{} {
 // Patch the original TaskRun object
 func (tro *TaskRunObject) Patch(ctx context.Context, clientSet versioned.Interface, patchBytes []byte) error {
 	_, err := clientSet.TektonV1beta1().TaskRuns(tro.Namespace).Patch(
-		ctx, tro.Name, types.MergePatchType, patchBytes, v1.PatchOptions{})
+		ctx, tro.Name, types.MergePatchType, patchBytes, metav1.PatchOptions{})
 	return err
 }
 
@@ -155,7 +154,7 @@ func (pro *PipelineRunObject) GetGVK() string {
 
 // Request the current annotations on the PipelineRun object
 func (pro *PipelineRunObject) GetLatestAnnotations(ctx context.Context, clientSet versioned.Interface) (map[string]string, error) {
-	pr, err := clientSet.TektonV1beta1().PipelineRuns(pro.Namespace).Get(ctx, pro.Name, v1.GetOptions{})
+	pr, err := clientSet.TektonV1beta1().PipelineRuns(pro.Namespace).Get(ctx, pro.Name, metav1.GetOptions{})
 	return pr.Annotations, err
 }
 
@@ -167,7 +166,7 @@ func (pro *PipelineRunObject) GetObject() interface{} {
 // Patch the original PipelineRun object
 func (pro *PipelineRunObject) Patch(ctx context.Context, clientSet versioned.Interface, patchBytes []byte) error {
 	_, err := clientSet.TektonV1beta1().PipelineRuns(pro.Namespace).Patch(
-		ctx, pro.Name, types.MergePatchType, patchBytes, v1.PatchOptions{})
+		ctx, pro.Name, types.MergePatchType, patchBytes, metav1.PatchOptions{})
 	return err
 }
 

@@ -22,6 +22,7 @@ import (
 	"github.com/tektoncd/chains/pkg/chains/objects"
 	"github.com/tektoncd/chains/pkg/patch"
 	versioned "github.com/tektoncd/pipeline/pkg/client/clientset/versioned"
+	"knative.dev/pkg/logging"
 )
 
 const (
@@ -32,9 +33,26 @@ const (
 	MaxRetries                   = 3
 )
 
-// Reconciled determines whether a Tekton object has already passed through the reconcile loops, up to 3x
-func Reconciled(obj objects.TektonObject) bool {
-	annotations := obj.GetAnnotations()
+// Reconciled determines whether a Tekton object has already been reconciled.
+// It first inspects the state of the given TektonObject. If that indicates it
+// has not been reconciled, then Reconciled fetches the latest version of the
+// TektonObject from the cluster and inspects that version as well. This aims
+// to avoid creating multiple attestations due to a stale cached TektonObject.
+func Reconciled(ctx context.Context, client versioned.Interface, obj objects.TektonObject) bool {
+	if reconciledFromAnnotations(obj.GetAnnotations()) {
+		return true
+	}
+
+	logger := logging.FromContext(ctx)
+	annotations, err := obj.GetLatestAnnotations(ctx, client)
+	if err != nil {
+		logger.Warnf("Ignoring error when fetching latest annotations: %s", err)
+		return false
+	}
+	return reconciledFromAnnotations(annotations)
+}
+
+func reconciledFromAnnotations(annotations map[string]string) bool {
 	val, ok := annotations[ChainsAnnotation]
 	if !ok {
 		return false
