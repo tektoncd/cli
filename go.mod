@@ -58,7 +58,7 @@ require (
 	gopkg.in/yaml.v3 v3.0.1
 	gotest.tools v2.2.0+incompatible
 	gotest.tools/v3 v3.4.0
-	k8s.io/api v0.26.1
+	k8s.io/api v0.26.4
 	k8s.io/apimachinery v0.26.4
 	k8s.io/cli-runtime v0.25.9
 	k8s.io/client-go v0.25.9
