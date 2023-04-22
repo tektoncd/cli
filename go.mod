@@ -33,7 +33,7 @@ require (
 	github.com/mitchellh/mapstructure v1.5.0
 	github.com/pkg/errors v0.9.1
 	github.com/ryanuber/go-glob v1.0.0
-	github.com/sigstore/cosign/v2 v2.0.1-0.20230323140840-42c4b8d9016a
+	github.com/sigstore/cosign/v2 v2.0.1
 	github.com/sigstore/sigstore v1.6.3
 	github.com/spf13/cobra v1.7.0
 	github.com/spf13/pflag v1.0.5
@@ -61,7 +61,7 @@ require (
 	k8s.io/api v0.26.4
 	k8s.io/apimachinery v0.26.4
 	k8s.io/cli-runtime v0.25.9
-	k8s.io/client-go v0.25.9
+	k8s.io/client-go v0.26.1
 	knative.dev/pkg v0.0.0-20230412013349-d3d7625d8e1e
 	sigs.k8s.io/yaml v1.3.0
 )
@@ -257,7 +257,7 @@ require (
 	github.com/segmentio/ksuid v1.0.4 // indirect
 	github.com/shibumi/go-pathspec v1.3.0 // indirect
 	github.com/sigstore/fulcio v1.2.0 // indirect
-	github.com/sigstore/rekor v1.0.1 // indirect
+	github.com/sigstore/rekor v1.1.0 // indirect
 	github.com/sigstore/timestamp-authority v1.0.0 // indirect
 	github.com/sirupsen/logrus v1.9.0 // indirect
 	github.com/skratchdot/open-golang v0.0.0-20200116055534-eef842397966 // indirect
@@ -288,7 +288,7 @@ require (
 	go.step.sm/crypto v0.28.0 // indirect
 	go.uber.org/atomic v1.10.0 // indirect
 	goa.design/goa/v3 v3.11.1 // indirect
-	gocloud.dev v0.28.0 // indirect
+	gocloud.dev v0.29.0 // indirect
 	gocloud.dev/docstore/mongodocstore v0.28.0 // indirect
 	gocloud.dev/pubsub/kafkapubsub v0.28.0 // indirect
 	golang.org/x/exp v0.0.0-20230124195608-d38c7dcee874 // indirect
