@@ -140,20 +140,6 @@ func Test_cancel_pipelinerun_v1beta1(t *testing.T) {
 					Name: "pipelineName",
 				},
 				ServiceAccountName: "test-sa",
-				Resources: []v1beta1.PipelineResourceBinding{
-					{
-						Name: "git-repo",
-						ResourceRef: &v1beta1.PipelineResourceRef{
-							Name: "some-repo",
-						},
-					},
-					{
-						Name: "build-image",
-						ResourceRef: &v1beta1.PipelineResourceRef{
-							Name: "some-image",
-						},
-					},
-				},
 				Params: []v1beta1.Param{
 					{
 						Name: "pipeline-param-1",
@@ -226,20 +212,6 @@ func Test_cancel_pipelinerun_client_err_v1beta1(t *testing.T) {
 					Name: "pipelineName",
 				},
 				ServiceAccountName: "test-sa",
-				Resources: []v1beta1.PipelineResourceBinding{
-					{
-						Name: "git-repo",
-						ResourceRef: &v1beta1.PipelineResourceRef{
-							Name: "some-repo",
-						},
-					},
-					{
-						Name: "build-image",
-						ResourceRef: &v1beta1.PipelineResourceRef{
-							Name: "some-image",
-						},
-					},
-				},
 				Params: []v1beta1.Param{
 					{
 						Name: "pipeline-param-1",
@@ -375,20 +347,6 @@ func Test_finished_pipelinerun_success_v1beta1(t *testing.T) {
 					Name: "pipelineName",
 				},
 				ServiceAccountName: "test-sa",
-				Resources: []v1beta1.PipelineResourceBinding{
-					{
-						Name: "git-repo",
-						ResourceRef: &v1beta1.PipelineResourceRef{
-							Name: "some-repo",
-						},
-					},
-					{
-						Name: "build-image",
-						ResourceRef: &v1beta1.PipelineResourceRef{
-							Name: "some-image",
-						},
-					},
-				},
 				Params: []v1beta1.Param{
 					{
 						Name: "pipeline-param-1",
@@ -530,20 +488,6 @@ func Test_finished_pipelinerun_failure_v1beta1(t *testing.T) {
 					Name: "pipelineName",
 				},
 				ServiceAccountName: "test-sa",
-				Resources: []v1beta1.PipelineResourceBinding{
-					{
-						Name: "git-repo",
-						ResourceRef: &v1beta1.PipelineResourceRef{
-							Name: "some-repo",
-						},
-					},
-					{
-						Name: "build-image",
-						ResourceRef: &v1beta1.PipelineResourceRef{
-							Name: "some-image",
-						},
-					},
-				},
 				Params: []v1beta1.Param{
 					{
 						Name: "pipeline-param-1",
@@ -684,20 +628,6 @@ func Test_finished_pipelinerun_cancel_v1beta1(t *testing.T) {
 					Name: "pipelineName",
 				},
 				ServiceAccountName: "test-sa",
-				Resources: []v1beta1.PipelineResourceBinding{
-					{
-						Name: "git-repo",
-						ResourceRef: &v1beta1.PipelineResourceRef{
-							Name: "some-repo",
-						},
-					},
-					{
-						Name: "build-image",
-						ResourceRef: &v1beta1.PipelineResourceRef{
-							Name: "some-image",
-						},
-					},
-				},
 				Params: []v1beta1.Param{
 					{
 						Name: "pipeline-param-1",
@@ -839,20 +769,6 @@ func Test_finished_pipelinerun_timeout_v1beta1(t *testing.T) {
 					Name: "pipelineName",
 				},
 				ServiceAccountName: "test-sa",
-				Resources: []v1beta1.PipelineResourceBinding{
-					{
-						Name: "git-repo",
-						ResourceRef: &v1beta1.PipelineResourceRef{
-							Name: "some-repo",
-						},
-					},
-					{
-						Name: "build-image",
-						ResourceRef: &v1beta1.PipelineResourceRef{
-							Name: "some-image",
-						},
-					},
-				},
 				Params: []v1beta1.Param{
 					{
 						Name: "pipeline-param-1",
@@ -994,20 +910,6 @@ func Test_finished_pipelinerun_cancelled_v1beta1(t *testing.T) {
 					Name: "pipelineName",
 				},
 				ServiceAccountName: "test-sa",
-				Resources: []v1beta1.PipelineResourceBinding{
-					{
-						Name: "git-repo",
-						ResourceRef: &v1beta1.PipelineResourceRef{
-							Name: "some-repo",
-						},
-					},
-					{
-						Name: "build-image",
-						ResourceRef: &v1beta1.PipelineResourceRef{
-							Name: "some-image",
-						},
-					},
-				},
 				Params: []v1beta1.Param{
 					{
 						Name: "pipeline-param-1",
@@ -1148,20 +1050,6 @@ func Test_cancel_pipelinerun_with_grace_stopped_v1beta1(t *testing.T) {
 					Name: "pipelineName",
 				},
 				ServiceAccountName: "test-sa",
-				Resources: []v1beta1.PipelineResourceBinding{
-					{
-						Name: "git-repo",
-						ResourceRef: &v1beta1.PipelineResourceRef{
-							Name: "some-repo",
-						},
-					},
-					{
-						Name: "build-image",
-						ResourceRef: &v1beta1.PipelineResourceRef{
-							Name: "some-image",
-						},
-					},
-				},
 				Params: []v1beta1.Param{
 					{
 						Name: "pipeline-param-1",
@@ -1302,20 +1190,6 @@ func Test_cancel_pipelinerun_with_grace_cancelled_v1bea1(t *testing.T) {
 					Name: "pipelineName",
 				},
 				ServiceAccountName: "test-sa",
-				Resources: []v1beta1.PipelineResourceBinding{
-					{
-						Name: "git-repo",
-						ResourceRef: &v1beta1.PipelineResourceRef{
-							Name: "some-repo",
-						},
-					},
-					{
-						Name: "build-image",
-						ResourceRef: &v1beta1.PipelineResourceRef{
-							Name: "some-image",
-						},
-					},
-				},
 				Params: []v1beta1.Param{
 					{
 						Name: "pipeline-param-1",

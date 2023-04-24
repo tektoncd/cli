@@ -48,12 +48,6 @@ func TestPipelineExport_v1beta1(t *testing.T) {
 				UID:          "f54b8b67-ce52-4509-8a4a-f245b093b62e",
 			},
 			Spec: v1beta1.PipelineSpec{
-				Resources: []v1beta1.PipelineDeclaredResource{
-					{
-						Name: "name",
-						Type: v1beta1.PipelineResourceTypeGit,
-					},
-				},
 				Tasks: []v1beta1.PipelineTask{
 					{
 						Name: "task-1",

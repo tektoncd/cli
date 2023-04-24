@@ -123,7 +123,7 @@ run_test  "describe eventlistener" tkn eventlistener describe github-listener-in
 run_test  "show logs" tkn pipelinerun logs output-pipeline-run
 run_test  "show logs" tkn taskrun logs test-template-volume
 
-# delete pipeline, pipelinerun, task, taskrun, and pipelineresource
+# delete pipeline, pipelinerun, task, taskrun, and eventlistener
 run_test  "delete pipeline" tkn pipeline delete output-pipeline -f
 run_test  "delete pipelinerun" tkn pipelinerun delete output-pipeline-run -f
 run_test  "delete task" tkn task delete create-file-verify -f

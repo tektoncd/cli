@@ -33,7 +33,6 @@ type DescribeOptions struct {
 	Params                    cli.Params
 	PipelineName              string
 	PipelineRunName           string
-	PipelineResourceName      string
 	ClusterTaskName           string
 	TaskName                  string
 	TaskrunName               string
@@ -90,8 +89,6 @@ func (opts *DescribeOptions) Ask(resource string, options []string) error {
 		opts.PipelineName = ans
 	case ResourceNamePipelineRun:
 		opts.PipelineRunName = strings.Fields(ans)[0]
-	case ResourceNamePipelineResource:
-		opts.PipelineResourceName = ans
 	case ResourceNameClusterTask:
 		opts.ClusterTaskName = ans
 	case ResourceNameTask:

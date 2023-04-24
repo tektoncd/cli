@@ -2,8 +2,6 @@ Name:        tr-1
 Namespace:   ns
 Task Ref:    t1
 Timeout:     1h0m0s
-Annotations:
- tekton.dev/v1beta1Resources={"inputs":[{"name":"git"},{"name":"image-input","resourceRef":{"name":"image"}}],"outputs":[{"name":"image-output"},{"name":"image-output2"}]}
 
 Status
 

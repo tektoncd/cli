@@ -32,10 +32,7 @@ import (
 var simpleResourceTemplate = runtime.RawExtension{
 	Raw: []byte(`{"kind":"PipelineRun","apiVersion":"tekton.dev/v1beta1","metadata":{"generateName":"ex2", "creationTimestamp":null},"spec":{},"status":{}}`),
 }
-var pipelineResources = runtime.RawExtension{
-	Raw: []byte(`{"kind":"PipelineResource","apiVersion":"tekton.dev/v1alpha1","metadata":{"name":"ex1", "creationTimestamp":null},"spec":{},"status":{}}`),
-}
-var v1beta1ResourceTemplate = runtime.RawExtension{
+var v1beta1PipelineRunTemplate = runtime.RawExtension{
 	Raw: []byte(`{"kind":"PipelineRun","apiVersion":"tekton.dev/v1beta1","metadata":{"name":"ex1", "generateName":"ex2", "creationTimestamp":null},"spec":{},"status":{}}`),
 }
 var paramResourceTemplate = runtime.RawExtension{
@@ -282,7 +279,7 @@ func TestTriggerTemplateDescribe_WithMultipleParams(t *testing.T) {
 				},
 				ResourceTemplates: []v1beta1.TriggerResourceTemplate{
 					{
-						RawExtension: v1beta1ResourceTemplate,
+						RawExtension: v1beta1PipelineRunTemplate,
 					},
 				},
 			},
@@ -325,10 +322,7 @@ func TestTriggerTemplateDescribe_WithMultipleResourceTemplate(t *testing.T) {
 				},
 				ResourceTemplates: []v1beta1.TriggerResourceTemplate{
 					{
-						RawExtension: v1beta1ResourceTemplate,
-					},
-					{
-						RawExtension: pipelineResources,
+						RawExtension: v1beta1PipelineRunTemplate,
 					},
 				},
 			},

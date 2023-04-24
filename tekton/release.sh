@@ -24,7 +24,7 @@ kubectl version 2>/dev/null >/dev/null || {
     exit 1
 }
 
-kubectl get pipelineresource 2>/dev/null >/dev/null || {
+kubectl get pipeline 2>/dev/null >/dev/null || {
     echo "you need to have tekton install onto the cluster"
     exit 1
 }

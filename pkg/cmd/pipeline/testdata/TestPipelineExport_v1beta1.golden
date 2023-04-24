@@ -5,9 +5,6 @@ metadata:
     pipeline.dev: cli
   generateName: generate-name
 spec:
-  resources:
-  - name: name
-    type: git
   results:
   - description: This is a description for result 1
     name: result-1

@@ -745,14 +745,6 @@ func TestPipelineRunDescribe_with_resources_taskrun_v1beta1(t *testing.T) {
 					Name: "pipeline",
 				},
 				ServiceAccountName: "test-sa",
-				Resources: []v1beta1.PipelineResourceBinding{
-					{
-						Name: "test-resource",
-						ResourceRef: &v1beta1.PipelineResourceRef{
-							Name: "test-resource-ref",
-						},
-					},
-				},
 				Params: []v1beta1.Param{
 					{
 						Name: "test-param",
@@ -996,11 +988,6 @@ func TestPipelineRunDescribe_no_resourceref_v1beta1(t *testing.T) {
 					Name: "pipeline",
 				},
 				ServiceAccountName: "test-sa",
-				Resources: []v1beta1.PipelineResourceBinding{
-					{
-						Name: "test-resource",
-					},
-				},
 				Params: []v1beta1.Param{
 					{
 						Name: "test-param",
@@ -1417,20 +1404,6 @@ func TestPipelineRunDescribe_v1beta1(t *testing.T) {
 				PipelineRef: &v1beta1.PipelineRef{
 					Name: "pipeline",
 				},
-				Resources: []v1beta1.PipelineResourceBinding{
-					{
-						Name: "res-1",
-						ResourceRef: &v1beta1.PipelineResourceRef{
-							Name: "test-res",
-						},
-					},
-					{
-						Name: "res-2",
-						ResourceRef: &v1beta1.PipelineResourceRef{
-							Name: "test-res2",
-						},
-					},
-				},
 				Params: []v1beta1.Param{
 					{
 						Name: "p-1",
@@ -1565,20 +1538,6 @@ func TestPipelineRunDescribe_taskrun_with_no_status_v1beta1(t *testing.T) {
 			Spec: v1beta1.PipelineRunSpec{
 				PipelineRef: &v1beta1.PipelineRef{
 					Name: "pipeline",
-				},
-				Resources: []v1beta1.PipelineResourceBinding{
-					{
-						Name: "res-1",
-						ResourceRef: &v1beta1.PipelineResourceRef{
-							Name: "test-res",
-						},
-					},
-					{
-						Name: "res-2",
-						ResourceRef: &v1beta1.PipelineResourceRef{
-							Name: "test-res2",
-						},
-					},
 				},
 				Params: []v1beta1.Param{
 					{
@@ -1730,20 +1689,6 @@ func TestPipelineRunDescribe_last_v1beta1(t *testing.T) {
 				PipelineRef: &v1beta1.PipelineRef{
 					Name: "pipeline",
 				},
-				Resources: []v1beta1.PipelineResourceBinding{
-					{
-						Name: "res-1",
-						ResourceRef: &v1beta1.PipelineResourceRef{
-							Name: "test-res",
-						},
-					},
-					{
-						Name: "res-2",
-						ResourceRef: &v1beta1.PipelineResourceRef{
-							Name: "test-res2",
-						},
-					},
-				},
 				Params: []v1beta1.Param{
 					{
 						Name: "p-1",
@@ -1801,20 +1746,6 @@ func TestPipelineRunDescribe_last_v1beta1(t *testing.T) {
 			Spec: v1beta1.PipelineRunSpec{
 				PipelineRef: &v1beta1.PipelineRef{
 					Name: "pipeline2",
-				},
-				Resources: []v1beta1.PipelineResourceBinding{
-					{
-						Name: "res-1x",
-						ResourceRef: &v1beta1.PipelineResourceRef{
-							Name: "test-res",
-						},
-					},
-					{
-						Name: "res-2x",
-						ResourceRef: &v1beta1.PipelineResourceRef{
-							Name: "test-res2",
-						},
-					},
 				},
 				Params: []v1beta1.Param{
 					{
@@ -1939,14 +1870,6 @@ func TestPipelineRunDescribe_with_results_v1beta1(t *testing.T) {
 			Spec: v1beta1.PipelineRunSpec{
 				PipelineRef: &v1beta1.PipelineRef{
 					Name: "pipeline",
-				},
-				Resources: []v1beta1.PipelineResourceBinding{
-					{
-						Name: "res-1",
-						ResourceRef: &v1beta1.PipelineResourceRef{
-							Name: "test-res",
-						},
-					},
 				},
 				Params: []v1beta1.Param{
 					{
@@ -2120,14 +2043,6 @@ func TestPipelineRunDescribe_with_workspaces_v1beta1(t *testing.T) {
 				PipelineRef: &v1beta1.PipelineRef{
 					Name: "pipeline",
 				},
-				Resources: []v1beta1.PipelineResourceBinding{
-					{
-						Name: "res-1",
-						ResourceRef: &v1beta1.PipelineResourceRef{
-							Name: "test-res",
-						},
-					},
-				},
 				Params: []v1beta1.Param{
 					{
 						Name: "p-1",
@@ -2297,20 +2212,6 @@ func TestPipelineRunDescribeWithSkippedTasks_v1beta1(t *testing.T) {
 			Spec: v1beta1.PipelineRunSpec{
 				PipelineRef: &v1beta1.PipelineRef{
 					Name: "pipeline",
-				},
-				Resources: []v1beta1.PipelineResourceBinding{
-					{
-						Name: "res-1",
-						ResourceRef: &v1beta1.PipelineResourceRef{
-							Name: "test-res",
-						},
-					},
-					{
-						Name: "res-2",
-						ResourceRef: &v1beta1.PipelineResourceRef{
-							Name: "test-res2",
-						},
-					},
 				},
 				Params: []v1beta1.Param{
 					{
@@ -2627,20 +2528,6 @@ func TestPipelineRunDescribeWithTimeouts_v1beta1(t *testing.T) {
 				Timeouts: &v1beta1.TimeoutFields{
 					Tasks:    &metav1.Duration{Duration: 50 * time.Minute},
 					Pipeline: &metav1.Duration{Duration: 1 * time.Hour},
-				},
-				Resources: []v1beta1.PipelineResourceBinding{
-					{
-						Name: "res-1",
-						ResourceRef: &v1beta1.PipelineResourceRef{
-							Name: "test-res",
-						},
-					},
-					{
-						Name: "res-2",
-						ResourceRef: &v1beta1.PipelineResourceRef{
-							Name: "test-res2",
-						},
-					},
 				},
 				Params: []v1beta1.Param{
 					{

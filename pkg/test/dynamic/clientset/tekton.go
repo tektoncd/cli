@@ -22,9 +22,8 @@ import (
 )
 
 var allowedTektonTypes = map[string][]string{
-	"v1alpha1": {"pipelineresources"},
-	"v1beta1":  {"pipelineresources", "pipelineruns", "taskruns", "pipelines", "clustertasks", "tasks", "conditions"},
-	"v1":       {"pipelineruns", "taskruns", "pipelines", "tasks"},
+	"v1beta1": {"pipelineruns", "taskruns", "pipelines", "clustertasks", "tasks", "conditions"},
+	"v1":      {"pipelineruns", "taskruns", "pipelines", "tasks"},
 }
 
 var allowedTriggerTektonTypes = map[string][]string{

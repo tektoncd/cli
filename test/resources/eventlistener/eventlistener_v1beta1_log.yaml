@@ -121,5 +121,5 @@ rules:
     verbs: ["get", "list", "watch"]
   # Permissions to create resources in associated TriggerTemplates
   - apiGroups: ["tekton.dev"]
-    resources: ["pipelineruns", "pipelineresources", "taskruns"]
+    resources: ["pipelineruns", "taskruns"]
     verbs: ["create"]
