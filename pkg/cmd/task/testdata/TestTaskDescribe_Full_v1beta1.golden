@@ -2,8 +2,6 @@ Name:          task-1
 Namespace:     ns
 Description:   a test description
 Version:       0.1
-Annotations:
- tekton.dev/v1beta1Resources={"inputs":[{"name":"my-repo","type":"git"},{"name":"my-image","type":"image"},{"name":"source-repo","type":"git"}],"outputs":[{"name":"code-image","type":"image"},{"name":"artifact-image","type":"image"}]}
 
 Params
 

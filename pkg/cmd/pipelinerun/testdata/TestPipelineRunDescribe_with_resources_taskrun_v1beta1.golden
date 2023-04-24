@@ -4,8 +4,6 @@ Pipeline Ref:      pipeline
 Service Account:   test-sa
 Labels:
  tekton.dev/pipeline=pipeline
-Annotations:
- tekton.dev/v1beta1Resources=[{"name":"test-resource","resourceRef":{"name":"test-resource-ref"}}]
 
 Status
 

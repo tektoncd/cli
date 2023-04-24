@@ -1,7 +1,5 @@
 Name:        pipeline
 Namespace:   ns
-Annotations:
- tekton.dev/v1beta1Resources=[{"name":"name","type":"git"},{"name":"code","type":"git"},{"name":"code-image","type":"image"},{"name":"artifact-image","type":"image"},{"name":"repo","type":"git"}]
 
 Params
 

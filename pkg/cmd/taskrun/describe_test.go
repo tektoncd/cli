@@ -198,44 +198,6 @@ func TestTaskRunDescribe_only_taskrun_v1beta1(t *testing.T) {
 					Name: "t1",
 				},
 				Timeout: &metav1.Duration{Duration: 1 * time.Hour},
-				Resources: &v1beta1.TaskRunResources{
-					Inputs: []v1beta1.TaskResourceBinding{
-						{
-							PipelineResourceBinding: v1beta1.PipelineResourceBinding{
-								Name: "git",
-								ResourceRef: &v1beta1.PipelineResourceRef{
-									Name: "git",
-								},
-							},
-						},
-						{
-							PipelineResourceBinding: v1beta1.PipelineResourceBinding{
-								Name: "image-input",
-								ResourceRef: &v1beta1.PipelineResourceRef{
-									Name: "image",
-								},
-							},
-						},
-					},
-					Outputs: []v1beta1.TaskResourceBinding{
-						{
-							PipelineResourceBinding: v1beta1.PipelineResourceBinding{
-								Name: "image-output",
-								ResourceRef: &v1beta1.PipelineResourceRef{
-									Name: "image",
-								},
-							},
-						},
-						{
-							PipelineResourceBinding: v1beta1.PipelineResourceBinding{
-								Name: "image-output2",
-								ResourceRef: &v1beta1.PipelineResourceRef{
-									Name: "image",
-								},
-							},
-						},
-					},
-				},
 				Params: []v1beta1.Param{
 					{
 						Name:  "input",
@@ -487,35 +449,6 @@ func TestTaskRunDescribe_no_resourceref_v1beta1(t *testing.T) {
 					Name: "t1",
 				},
 				Timeout: &metav1.Duration{Duration: 1 * time.Hour},
-				Resources: &v1beta1.TaskRunResources{
-					Inputs: []v1beta1.TaskResourceBinding{
-						{
-							PipelineResourceBinding: v1beta1.PipelineResourceBinding{
-								Name: "git",
-							},
-						},
-						{
-							PipelineResourceBinding: v1beta1.PipelineResourceBinding{
-								Name: "image-input",
-								ResourceRef: &v1beta1.PipelineResourceRef{
-									Name: "image",
-								},
-							},
-						},
-					},
-					Outputs: []v1beta1.TaskResourceBinding{
-						{
-							PipelineResourceBinding: v1beta1.PipelineResourceBinding{
-								Name: "image-output",
-							},
-						},
-						{
-							PipelineResourceBinding: v1beta1.PipelineResourceBinding{
-								Name: "image-output2",
-							},
-						},
-					},
-				},
 				Params: []v1beta1.Param{
 					{
 						Name:  "input",
@@ -616,35 +549,6 @@ func TestTaskRunDescribe_step_sidecar_status_defaults_and_failures_v1beta1(t *te
 					Name: "t1",
 				},
 				Timeout: &metav1.Duration{Duration: 1 * time.Hour},
-				Resources: &v1beta1.TaskRunResources{
-					Inputs: []v1beta1.TaskResourceBinding{
-						{
-							PipelineResourceBinding: v1beta1.PipelineResourceBinding{
-								Name: "git",
-							},
-						},
-						{
-							PipelineResourceBinding: v1beta1.PipelineResourceBinding{
-								Name: "image-input",
-								ResourceRef: &v1beta1.PipelineResourceRef{
-									Name: "image",
-								},
-							},
-						},
-					},
-					Outputs: []v1beta1.TaskResourceBinding{
-						{
-							PipelineResourceBinding: v1beta1.PipelineResourceBinding{
-								Name: "image-output",
-							},
-						},
-						{
-							PipelineResourceBinding: v1beta1.PipelineResourceBinding{
-								Name: "image-output2",
-							},
-						},
-					},
-				},
 				Params: []v1beta1.Param{
 					{
 						Name:  "input",
@@ -748,35 +652,6 @@ func TestTaskRunDescribe_step_status_pending_one_sidecar_v1beta1(t *testing.T) {
 					Name: "t1",
 				},
 				Timeout: &metav1.Duration{Duration: 1 * time.Hour},
-				Resources: &v1beta1.TaskRunResources{
-					Inputs: []v1beta1.TaskResourceBinding{
-						{
-							PipelineResourceBinding: v1beta1.PipelineResourceBinding{
-								Name: "git",
-							},
-						},
-						{
-							PipelineResourceBinding: v1beta1.PipelineResourceBinding{
-								Name: "image-input",
-								ResourceRef: &v1beta1.PipelineResourceRef{
-									Name: "image",
-								},
-							},
-						},
-					},
-					Outputs: []v1beta1.TaskResourceBinding{
-						{
-							PipelineResourceBinding: v1beta1.PipelineResourceBinding{
-								Name: "image-output",
-							},
-						},
-						{
-							PipelineResourceBinding: v1beta1.PipelineResourceBinding{
-								Name: "image-output2",
-							},
-						},
-					},
-				},
 				Params: []v1beta1.Param{
 					{
 						Name:  "input",
@@ -888,35 +763,6 @@ func TestTaskRunDescribe_step_status_running_multiple_sidecars_v1beta1(t *testin
 					Name: "t1",
 				},
 				Timeout: &metav1.Duration{Duration: 1 * time.Hour},
-				Resources: &v1beta1.TaskRunResources{
-					Inputs: []v1beta1.TaskResourceBinding{
-						{
-							PipelineResourceBinding: v1beta1.PipelineResourceBinding{
-								Name: "git",
-							},
-						},
-						{
-							PipelineResourceBinding: v1beta1.PipelineResourceBinding{
-								Name: "image-input",
-								ResourceRef: &v1beta1.PipelineResourceRef{
-									Name: "image",
-								},
-							},
-						},
-					},
-					Outputs: []v1beta1.TaskResourceBinding{
-						{
-							PipelineResourceBinding: v1beta1.PipelineResourceBinding{
-								Name: "image-output",
-							},
-						},
-						{
-							PipelineResourceBinding: v1beta1.PipelineResourceBinding{
-								Name: "image-output2",
-							},
-						},
-					},
-				},
 				Params: []v1beta1.Param{
 					{
 						Name:  "input",
