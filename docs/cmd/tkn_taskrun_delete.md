@@ -33,8 +33,8 @@ or
       --clustertask string            The name of a ClusterTask whose TaskRuns should be deleted (does not delete the ClusterTask)
   -f, --force                         Whether to force deletion (default: false)
   -h, --help                          help for delete
-  -i, --ignore-running                ignore running TaskRun (default: true) (default true)
-      --ignore-running-pipelinerun    ignore deleting taskruns of a running PipelineRun (default: true) (default true)
+  -i, --ignore-running                ignore running TaskRun (default true)
+      --ignore-running-pipelinerun    ignore deleting taskruns of a running PipelineRun (default true)
       --keep int                      Keep n most recent number of TaskRuns
       --keep-since int                When deleting all TaskRuns keep the ones that has been completed since n minutes
   -o, --output string                 Output format. One of: (json, yaml, name, go-template, go-template-file, template, templatefile, jsonpath, jsonpath-as-json, jsonpath-file).
