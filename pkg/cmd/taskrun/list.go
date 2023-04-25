@@ -135,7 +135,7 @@ List all TaskRuns of Task 'foo' in namespace 'bar':
 	}
 
 	f.AddFlags(c)
-	c.Flags().IntVarP(&opts.Limit, "limit", "", 0, "limit TaskRuns listed (default: return all TaskRuns)")
+	c.Flags().IntVarP(&opts.Limit, "limit", "", 0, "Limits the number of TaskRuns. If the limit value is 0 returns all")
 	c.Flags().StringVarP(&opts.LabelSelector, "label", "", opts.LabelSelector, "A selector (label query) to filter on, supports '=', '==', and '!='")
 	c.Flags().BoolVarP(&opts.Reverse, "reverse", "", opts.Reverse, "list TaskRuns in reverse order")
 	c.Flags().BoolVarP(&opts.AllNamespaces, "all-namespaces", "A", opts.AllNamespaces, "list TaskRuns from all namespaces")

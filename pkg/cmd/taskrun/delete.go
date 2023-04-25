@@ -147,8 +147,8 @@ or
 	c.Flags().BoolVarP(&opts.DeleteAllNs, "all", "", false, "Delete all TaskRuns in a namespace (default: false)")
 	c.Flags().IntVarP(&opts.Keep, "keep", "", 0, "Keep n most recent number of TaskRuns")
 	c.Flags().IntVarP(&opts.KeepSince, "keep-since", "", 0, "When deleting all TaskRuns keep the ones that has been completed since n minutes")
-	c.Flags().BoolVarP(&opts.IgnoreRunning, "ignore-running", "i", true, "ignore running TaskRun (default: true)")
-	c.Flags().BoolVarP(&opts.IgnoreRunningPipelinerun, "ignore-running-pipelinerun", "", true, "ignore deleting taskruns of a running PipelineRun (default: true)")
+	c.Flags().BoolVarP(&opts.IgnoreRunning, "ignore-running", "i", true, "ignore running TaskRun")
+	c.Flags().BoolVarP(&opts.IgnoreRunningPipelinerun, "ignore-running-pipelinerun", "", true, "ignore deleting taskruns of a running PipelineRun")
 
 	return c
 }

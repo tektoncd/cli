@@ -131,7 +131,7 @@ List all PipelineRuns in a namespace 'foo':
 	}
 
 	f.AddFlags(c)
-	c.Flags().IntVarP(&opts.Limit, "limit", "", 0, "limit PipelineRuns listed (default: return all PipelineRuns)")
+	c.Flags().IntVarP(&opts.Limit, "limit", "", 0, "Limits the number of PipelineRuns. If the limit value is 0 returns all")
 	c.Flags().StringVarP(&opts.LabelSelector, "label", "", opts.LabelSelector, "A selector (label query) to filter on, supports '=', '==', and '!='")
 	c.Flags().BoolVarP(&opts.Reverse, "reverse", "", opts.Reverse, "list PipelineRuns in reverse order")
 	c.Flags().BoolVarP(&opts.AllNamespaces, "all-namespaces", "A", opts.AllNamespaces, "list PipelineRuns from all namespaces")

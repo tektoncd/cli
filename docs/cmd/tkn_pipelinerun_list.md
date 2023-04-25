@@ -32,7 +32,7 @@ List all PipelineRuns in a namespace 'foo':
       --allow-missing-template-keys   If true, ignore any errors in templates when a field or map key is missing in the template. Only applies to golang and jsonpath output formats. (default true)
   -h, --help                          help for list
       --label string                  A selector (label query) to filter on, supports '=', '==', and '!='
-      --limit int                     limit PipelineRuns listed (default: return all PipelineRuns)
+      --limit int                     Limits the number of PipelineRuns. If the limit value is 0 returns all
       --no-headers                    do not print column headers with output (default print column headers with output)
   -o, --output string                 Output format. One of: (json, yaml, name, go-template, go-template-file, template, templatefile, jsonpath, jsonpath-as-json, jsonpath-file).
       --reverse                       list PipelineRuns in reverse order
