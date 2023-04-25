@@ -1,5 +1,5 @@
 /*
-Copyright 2022 The Tekton Authors
+Copyright 2023 The Tekton Authors
 
 Licensed under the Apache License, Version 2.0 (the "License");
 you may not use this file except in compliance with the License.
@@ -14,7 +14,7 @@ See the License for the specific language governing permissions and
 limitations under the License.
 */
 
-package resource
+package common
 
 import (
 	"context"
@@ -44,7 +44,7 @@ type Requester interface {
 type Request interface {
 	Name() string
 	Namespace() string
-	Params() []pipelinev1beta1.Param
+	Params() pipelinev1beta1.Params
 }
 
 // OwnedRequest is implemented by any type implementing Request that also needs
@@ -59,5 +59,5 @@ type OwnedRequest interface {
 type ResolvedResource interface {
 	Data() ([]byte, error)
 	Annotations() map[string]string
-	Source() *pipelinev1beta1.ConfigSource
+	RefSource() *pipelinev1beta1.RefSource
 }

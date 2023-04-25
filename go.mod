@@ -39,7 +39,7 @@ require (
 	github.com/spf13/pflag v1.0.5
 	github.com/tektoncd/chains v0.15.1-0.20230406140737-50a40c019838
 	github.com/tektoncd/hub v1.12.1
-	github.com/tektoncd/pipeline v0.45.0
+	github.com/tektoncd/pipeline v0.47.0
 	github.com/tektoncd/plumbing v0.0.0-20221102182345-5dbcfda657d7
 	github.com/tektoncd/triggers v0.23.1
 	github.com/theupdateframework/go-tuf v0.5.2
@@ -131,7 +131,7 @@ require (
 	github.com/cespare/xxhash/v2 v2.2.0 // indirect
 	github.com/chrismellard/docker-credential-acr-env v0.0.0-20221002210726-e883f69e0206 // indirect
 	github.com/clbanning/mxj/v2 v2.5.6 // indirect
-	github.com/cloudevents/sdk-go/v2 v2.13.0 // indirect
+	github.com/cloudevents/sdk-go/v2 v2.14.0 // indirect
 	github.com/cloudflare/circl v1.1.0 // indirect
 	github.com/common-nighthawk/go-figure v0.0.0-20210622060536-734e95fb86be // indirect
 	github.com/containerd/stargz-snapshotter/estargz v0.14.3 // indirect
@@ -162,8 +162,8 @@ require (
 	github.com/go-logr/stdr v1.2.2 // indirect
 	github.com/go-openapi/analysis v0.21.4 // indirect
 	github.com/go-openapi/errors v0.20.3 // indirect
-	github.com/go-openapi/jsonpointer v0.19.5 // indirect
-	github.com/go-openapi/jsonreference v0.20.0 // indirect
+	github.com/go-openapi/jsonpointer v0.19.6 // indirect
+	github.com/go-openapi/jsonreference v0.20.1 // indirect
 	github.com/go-openapi/loads v0.21.2 // indirect
 	github.com/go-openapi/runtime v0.25.0 // indirect
 	github.com/go-openapi/spec v0.20.8 // indirect
@@ -291,7 +291,7 @@ require (
 	gocloud.dev v0.28.0 // indirect
 	gocloud.dev/docstore/mongodocstore v0.28.0 // indirect
 	gocloud.dev/pubsub/kafkapubsub v0.28.0 // indirect
-	golang.org/x/exp v0.0.0-20230124195608-d38c7dcee874 // indirect
+	golang.org/x/exp v0.0.0-20230307190834-24139beb5833 // indirect
 	golang.org/x/mod v0.9.0 // indirect
 	golang.org/x/oauth2 v0.7.0 // indirect
 	golang.org/x/sync v0.1.0 // indirect
@@ -306,9 +306,9 @@ require (
 	gopkg.in/inf.v0 v0.9.1 // indirect
 	gopkg.in/ini.v1 v1.67.0 // indirect
 	k8s.io/apiextensions-apiserver v0.25.4 // indirect
-	k8s.io/klog/v2 v2.90.0 // indirect
-	k8s.io/kube-openapi v0.0.0-20221207184640-f3cff1453715 // indirect
-	k8s.io/utils v0.0.0-20230115233650-391b47cb4029 // indirect
+	k8s.io/klog/v2 v2.90.1 // indirect
+	k8s.io/kube-openapi v0.0.0-20230308215209-15aac26d736a // indirect
+	k8s.io/utils v0.0.0-20230209194617-a36077c30491 // indirect
 	knative.dev/eventing v0.30.1-0.20220407170245-58865afba92c // indirect
 	knative.dev/networking v0.0.0-20220404212543-dde40b019aff // indirect
 	knative.dev/serving v0.30.1-0.20220402124840-21c05dc9d9a4 // indirect

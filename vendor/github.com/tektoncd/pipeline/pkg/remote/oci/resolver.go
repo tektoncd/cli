@@ -19,6 +19,7 @@ package oci
 import (
 	"archive/tar"
 	"context"
+	"errors"
 	"fmt"
 	"io"
 	"strings"
@@ -89,7 +90,7 @@ func (o *Resolver) List(ctx context.Context) ([]remote.ResolvedObject, error) {
 }
 
 // Get retrieves a specific object with the given Kind and name
-func (o *Resolver) Get(ctx context.Context, kind, name string) (runtime.Object, *v1beta1.ConfigSource, error) {
+func (o *Resolver) Get(ctx context.Context, kind, name string) (runtime.Object, *v1beta1.RefSource, error) {
 	timeoutCtx, cancel := context.WithTimeout(ctx, o.timeout)
 	defer cancel()
 	img, err := o.retrieveImage(timeoutCtx)
@@ -192,7 +193,7 @@ func readTarLayer(layer v1.Layer) (runtime.Object, error) {
 	}
 
 	contents := make([]byte, header.Size)
-	if _, err := treader.Read(contents); err != nil && err != io.EOF {
+	if _, err := treader.Read(contents); err != nil && !errors.Is(err, io.EOF) {
 		// We only allow 1 resource per layer so this tar bundle should have one and only one file.
 		return nil, fmt.Errorf("failed to read tar bundle: %w", err)
 	}
