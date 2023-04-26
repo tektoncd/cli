@@ -44,7 +44,7 @@ type Object interface {
 type Result struct {
 	Name  string
 	Type  v1beta1.ResultsType
-	Value v1beta1.ArrayOrString
+	Value v1beta1.ParamValue
 }
 
 // Tekton object is an extended Kubernetes object with operations specific

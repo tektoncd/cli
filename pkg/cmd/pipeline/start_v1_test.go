@@ -691,23 +691,6 @@ func TestPipelineStart_ExecuteCommand(t *testing.T) {
 			want:      "cannot use --last option with --filename option",
 		},
 		{
-			name: "Dry Run with --timeout specified (deprecated)",
-			command: []string{
-				"start", "test-pipeline",
-				"-s=svc1",
-				"-p=pipeline-param=value1",
-				"-p=rev-param=value2",
-				"-l=jemange=desfrites",
-				"-n", "ns",
-				"--dry-run",
-				"--timeout", "1s",
-			},
-			namespace:  "",
-			input:      c2,
-			wantError:  false,
-			goldenFile: true,
-		},
-		{
 			name: "Dry Run with --pipeline-timeout specified",
 			command: []string{
 				"start", "test-pipeline",

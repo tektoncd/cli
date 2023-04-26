@@ -581,7 +581,7 @@ func TestEventListenerDescribe_WithWebhookInterceptorsWithParams(t *testing.T) {
 									Header: []v1beta1.Param{
 										{
 											Name: "header",
-											Value: v1beta1.ArrayOrString{
+											Value: v1beta1.ParamValue{
 												Type:     "array",
 												ArrayVal: []string{"value"},
 											},
@@ -648,7 +648,7 @@ func TestEventListenerDescribe_MultipleTriggerWithTriggerRefAndTriggerSpec(t *te
 									Header: []v1beta1.Param{
 										{
 											Name: "header",
-											Value: v1beta1.ArrayOrString{
+											Value: v1beta1.ParamValue{
 												Type:     "array",
 												ArrayVal: []string{"value"},
 											},

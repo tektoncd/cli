@@ -20,8 +20,8 @@ import (
 
 	"github.com/tektoncd/chains/pkg/chains/objects"
 	"github.com/tektoncd/chains/pkg/config"
-	"go.uber.org/zap"
 	"gocloud.dev/pubsub/kafkapubsub"
+	"knative.dev/pkg/logging"
 
 	"gocloud.dev/pubsub"
 	_ "gocloud.dev/pubsub/mempubsub"
@@ -36,15 +36,13 @@ const (
 // Backend is a storage backend that stores signed payloads in the TaskRun metadata as an annotation.
 // It is stored as base64 encoded JSON.
 type Backend struct {
-	logger *zap.SugaredLogger
-	cfg    config.Config
+	cfg config.Config
 }
 
 // NewStorageBackend returns a new Tekton StorageBackend that stores signatures on a TaskRun
-func NewStorageBackend(ctx context.Context, logger *zap.SugaredLogger, cfg config.Config) (*Backend, error) {
+func NewStorageBackend(ctx context.Context, cfg config.Config) (*Backend, error) {
 	return &Backend{
-		logger: logger,
-		cfg:    cfg,
+		cfg: cfg,
 	}, nil
 }
 
@@ -53,16 +51,17 @@ func (b *Backend) Type() string {
 }
 
 func (b *Backend) StorePayload(ctx context.Context, obj objects.TektonObject, rawPayload []byte, signature string, opts config.StorageOpts) error {
-	b.logger.Infof("Storing payload on Object %s/%s", obj.GetNamespace(), obj.GetName())
+	logger := logging.FromContext(ctx)
+	logger.Infof("Storing payload on Object %s/%s", obj.GetNamespace(), obj.GetName())
 
 	// Construct a *pubsub.Topic.
-	topic, err := b.NewTopic()
+	topic, err := b.NewTopic(ctx)
 	if err != nil {
 		return err
 	}
 	defer func() {
 		if err := topic.Shutdown(ctx); err != nil {
-			b.logger.Error(err)
+			logger.Error(err)
 		}
 	}()
 
@@ -89,21 +88,22 @@ func (b *Backend) RetrieveSignatures(ctx context.Context, _ objects.TektonObject
 	return nil, fmt.Errorf("not implemented for this storage backend: %s", b.Type())
 }
 
-func (b *Backend) NewTopic() (*pubsub.Topic, error) {
+func (b *Backend) NewTopic(ctx context.Context) (*pubsub.Topic, error) {
+	logger := logging.FromContext(ctx)
 	provider := b.cfg.Storage.PubSub.Provider
 	topic := b.cfg.Storage.PubSub.Topic
-	b.logger.Infof("Creating new %q pubsub producer for %q topic", provider, topic)
+	logger.Infof("Creating new %q pubsub producer for %q topic", provider, topic)
 	switch provider {
 	case PubSubProviderKafka:
 		// The set of brokers in the Kafka cluster.
 		addrs := []string{b.cfg.Storage.PubSub.Kafka.BootstrapServers}
-		b.logger.Infof("Configuring Kafka brokers: %s", addrs)
+		logger.Infof("Configuring Kafka brokers: %s", addrs)
 		// The Kafka client configuration to use.
 		config := kafkapubsub.MinimalConfig()
 		return kafkapubsub.OpenTopic(addrs, config, topic, nil)
 	case PubSubProviderInMemory:
 		addr := fmt.Sprintf("mem://%s", b.cfg.Storage.PubSub.Topic)
-		b.logger.Infof("Configuring in-memory producer: %s", addr)
+		logger.Infof("Configuring in-memory producer: %s", addr)
 		return pubsub.OpenTopic(context.TODO(), addr)
 	default:
 		return nil, fmt.Errorf("invalid provider: %q", provider)

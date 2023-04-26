@@ -27,7 +27,7 @@ cloud.google.com/go/kms/internal
 # cloud.google.com/go/longrunning v0.4.1
 ## explicit; go 1.19
 cloud.google.com/go/longrunning/autogen/longrunningpb
-# cloud.google.com/go/storage v1.29.0
+# cloud.google.com/go/storage v1.30.1
 ## explicit; go 1.19
 cloud.google.com/go/storage
 cloud.google.com/go/storage/internal
@@ -351,7 +351,7 @@ github.com/chrismellard/docker-credential-acr-env/pkg/token
 # github.com/clbanning/mxj/v2 v2.5.6
 ## explicit; go 1.15
 github.com/clbanning/mxj/v2
-# github.com/cloudevents/sdk-go/v2 v2.13.0
+# github.com/cloudevents/sdk-go/v2 v2.14.0
 ## explicit; go 1.17
 github.com/cloudevents/sdk-go/v2
 github.com/cloudevents/sdk-go/v2/binding
@@ -539,10 +539,10 @@ github.com/go-openapi/analysis/internal/flatten/sortref
 # github.com/go-openapi/errors v0.20.3
 ## explicit; go 1.14
 github.com/go-openapi/errors
-# github.com/go-openapi/jsonpointer v0.19.5
+# github.com/go-openapi/jsonpointer v0.19.6
 ## explicit; go 1.13
 github.com/go-openapi/jsonpointer
-# github.com/go-openapi/jsonreference v0.20.0
+# github.com/go-openapi/jsonreference v0.20.1
 ## explicit; go 1.13
 github.com/go-openapi/jsonreference
 github.com/go-openapi/jsonreference/internal
@@ -1220,8 +1220,9 @@ github.com/syndtr/goleveldb/leveldb/opt
 github.com/syndtr/goleveldb/leveldb/storage
 github.com/syndtr/goleveldb/leveldb/table
 github.com/syndtr/goleveldb/leveldb/util
-# github.com/tektoncd/chains v0.15.1-0.20230406140737-50a40c019838
+# github.com/tektoncd/chains v0.15.1-0.20230426145251-865c4be64b4d
 ## explicit; go 1.19
+github.com/tektoncd/chains/internal/backport
 github.com/tektoncd/chains/pkg/artifacts
 github.com/tektoncd/chains/pkg/chains
 github.com/tektoncd/chains/pkg/chains/formats
@@ -1267,8 +1268,8 @@ github.com/tektoncd/hub/api/v1/gen/http/catalog/client
 github.com/tektoncd/hub/api/v1/gen/http/resource/client
 github.com/tektoncd/hub/api/v1/gen/resource
 github.com/tektoncd/hub/api/v1/gen/resource/views
-# github.com/tektoncd/pipeline v0.45.0
-## explicit; go 1.18
+# github.com/tektoncd/pipeline v0.47.0
+## explicit; go 1.19
 github.com/tektoncd/pipeline/pkg/apis/config
 github.com/tektoncd/pipeline/pkg/apis/config/resolver
 github.com/tektoncd/pipeline/pkg/apis/pipeline
@@ -1311,8 +1312,6 @@ github.com/tektoncd/pipeline/pkg/client/injection/informers/pipeline/v1/task
 github.com/tektoncd/pipeline/pkg/client/injection/informers/pipeline/v1/task/fake
 github.com/tektoncd/pipeline/pkg/client/injection/informers/pipeline/v1/taskrun
 github.com/tektoncd/pipeline/pkg/client/injection/informers/pipeline/v1/taskrun/fake
-github.com/tektoncd/pipeline/pkg/client/injection/informers/pipeline/v1alpha1/run
-github.com/tektoncd/pipeline/pkg/client/injection/informers/pipeline/v1alpha1/run/fake
 github.com/tektoncd/pipeline/pkg/client/injection/informers/pipeline/v1alpha1/verificationpolicy
 github.com/tektoncd/pipeline/pkg/client/injection/informers/pipeline/v1alpha1/verificationpolicy/fake
 github.com/tektoncd/pipeline/pkg/client/injection/informers/pipeline/v1beta1/clustertask
@@ -1350,22 +1349,6 @@ github.com/tektoncd/pipeline/pkg/client/resolution/injection/informers/resolutio
 github.com/tektoncd/pipeline/pkg/client/resolution/injection/informers/resolution/v1beta1/resolutionrequest/fake
 github.com/tektoncd/pipeline/pkg/client/resolution/listers/resolution/v1alpha1
 github.com/tektoncd/pipeline/pkg/client/resolution/listers/resolution/v1beta1
-github.com/tektoncd/pipeline/pkg/client/resource/clientset/versioned
-github.com/tektoncd/pipeline/pkg/client/resource/clientset/versioned/fake
-github.com/tektoncd/pipeline/pkg/client/resource/clientset/versioned/scheme
-github.com/tektoncd/pipeline/pkg/client/resource/clientset/versioned/typed/resource/v1alpha1
-github.com/tektoncd/pipeline/pkg/client/resource/clientset/versioned/typed/resource/v1alpha1/fake
-github.com/tektoncd/pipeline/pkg/client/resource/informers/externalversions
-github.com/tektoncd/pipeline/pkg/client/resource/informers/externalversions/internalinterfaces
-github.com/tektoncd/pipeline/pkg/client/resource/informers/externalversions/resource
-github.com/tektoncd/pipeline/pkg/client/resource/informers/externalversions/resource/v1alpha1
-github.com/tektoncd/pipeline/pkg/client/resource/injection/client
-github.com/tektoncd/pipeline/pkg/client/resource/injection/client/fake
-github.com/tektoncd/pipeline/pkg/client/resource/injection/informers/factory
-github.com/tektoncd/pipeline/pkg/client/resource/injection/informers/factory/fake
-github.com/tektoncd/pipeline/pkg/client/resource/injection/informers/resource/v1alpha1/pipelineresource
-github.com/tektoncd/pipeline/pkg/client/resource/injection/informers/resource/v1alpha1/pipelineresource/fake
-github.com/tektoncd/pipeline/pkg/client/resource/listers/resource/v1alpha1
 github.com/tektoncd/pipeline/pkg/list
 github.com/tektoncd/pipeline/pkg/names
 github.com/tektoncd/pipeline/pkg/reconciler/events/cache
@@ -1375,7 +1358,7 @@ github.com/tektoncd/pipeline/pkg/reconciler/testing
 github.com/tektoncd/pipeline/pkg/remote
 github.com/tektoncd/pipeline/pkg/remote/oci
 github.com/tektoncd/pipeline/pkg/resolution/common
-github.com/tektoncd/pipeline/pkg/resolution/resource
+github.com/tektoncd/pipeline/pkg/result
 github.com/tektoncd/pipeline/pkg/spire/config
 github.com/tektoncd/pipeline/pkg/substitution
 github.com/tektoncd/pipeline/test
@@ -1383,7 +1366,7 @@ github.com/tektoncd/pipeline/test/diff
 # github.com/tektoncd/plumbing v0.0.0-20221102182345-5dbcfda657d7
 ## explicit; go 1.13
 github.com/tektoncd/plumbing/scripts
-# github.com/tektoncd/triggers v0.23.1
+# github.com/tektoncd/triggers v0.23.1-0.20230420080448-bf603123cc0f
 ## explicit; go 1.17
 github.com/tektoncd/triggers/pkg/apis/config
 github.com/tektoncd/triggers/pkg/apis/triggers
@@ -1483,7 +1466,7 @@ github.com/youmark/pkcs8
 # github.com/zeebo/errs v1.3.0
 ## explicit; go 1.12
 github.com/zeebo/errs
-# go.mongodb.org/mongo-driver v1.11.3
+# go.mongodb.org/mongo-driver v1.11.4
 ## explicit; go 1.13
 go.mongodb.org/mongo-driver/bson
 go.mongodb.org/mongo-driver/bson/bsoncodec
@@ -1656,9 +1639,10 @@ golang.org/x/crypto/sha3
 golang.org/x/crypto/ssh
 golang.org/x/crypto/ssh/internal/bcrypt_pbkdf
 golang.org/x/crypto/ssh/terminal
-# golang.org/x/exp v0.0.0-20230124195608-d38c7dcee874
+# golang.org/x/exp v0.0.0-20230307190834-24139beb5833
 ## explicit; go 1.18
 golang.org/x/exp/constraints
+golang.org/x/exp/maps
 golang.org/x/exp/slices
 # golang.org/x/mod v0.9.0
 ## explicit; go 1.17
@@ -1789,7 +1773,6 @@ google.golang.org/genproto/googleapis/api/expr/v1alpha1
 google.golang.org/genproto/googleapis/api/httpbody
 google.golang.org/genproto/googleapis/cloud/location
 google.golang.org/genproto/googleapis/firestore/v1
-google.golang.org/genproto/googleapis/iam/v1
 google.golang.org/genproto/googleapis/longrunning
 google.golang.org/genproto/googleapis/rpc/code
 google.golang.org/genproto/googleapis/rpc/errdetails
@@ -2338,7 +2321,7 @@ k8s.io/client-go/util/jsonpath
 k8s.io/client-go/util/keyutil
 k8s.io/client-go/util/retry
 k8s.io/client-go/util/workqueue
-# k8s.io/klog/v2 v2.90.0
+# k8s.io/klog/v2 v2.90.1
 ## explicit; go 1.13
 k8s.io/klog/v2
 k8s.io/klog/v2/internal/buffer
@@ -2346,13 +2329,13 @@ k8s.io/klog/v2/internal/clock
 k8s.io/klog/v2/internal/dbg
 k8s.io/klog/v2/internal/serialize
 k8s.io/klog/v2/internal/severity
-# k8s.io/kube-openapi v0.0.0-20221207184640-f3cff1453715
+# k8s.io/kube-openapi v0.0.0-20230308215209-15aac26d736a
 ## explicit; go 1.18
 k8s.io/kube-openapi/pkg/builder3/util
+k8s.io/kube-openapi/pkg/cached
 k8s.io/kube-openapi/pkg/common
 k8s.io/kube-openapi/pkg/handler3
 k8s.io/kube-openapi/pkg/internal
-k8s.io/kube-openapi/pkg/internal/handler
 k8s.io/kube-openapi/pkg/internal/third_party/go-json-experiment/json
 k8s.io/kube-openapi/pkg/openapiconv
 k8s.io/kube-openapi/pkg/schemaconv
@@ -2360,7 +2343,7 @@ k8s.io/kube-openapi/pkg/schemamutation
 k8s.io/kube-openapi/pkg/spec3
 k8s.io/kube-openapi/pkg/util/proto
 k8s.io/kube-openapi/pkg/validation/spec
-# k8s.io/utils v0.0.0-20230115233650-391b47cb4029
+# k8s.io/utils v0.0.0-20230209194617-a36077c30491
 ## explicit; go 1.18
 k8s.io/utils/buffer
 k8s.io/utils/clock

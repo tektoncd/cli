@@ -1,3 +1,19 @@
+/*
+Copyright 2023 The Tekton Authors
+
+Licensed under the Apache License, Version 2.0 (the "License");
+you may not use this file except in compliance with the License.
+You may obtain a copy of the License at
+
+	http://www.apache.org/licenses/LICENSE-2.0
+
+Unless required by applicable law or agreed to in writing, software
+distributed under the License is distributed on an "AS IS" BASIS,
+WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+See the License for the specific language governing permissions and
+limitations under the License.
+*/
+
 package test
 
 import (
@@ -7,9 +23,8 @@ import (
 	"strings"
 
 	"github.com/google/go-cmp/cmp"
-	"github.com/tektoncd/pipeline/pkg/apis/pipeline/v1beta1"
 	pipelinev1beta1 "github.com/tektoncd/pipeline/pkg/apis/pipeline/v1beta1"
-	resolution "github.com/tektoncd/pipeline/pkg/resolution/resource"
+	resolution "github.com/tektoncd/pipeline/pkg/resolution/common"
 	"github.com/tektoncd/pipeline/test/diff"
 )
 
@@ -28,11 +43,11 @@ func NewRequester(resource resolution.ResolvedResource, err error) *Requester {
 // NewResolvedResource creates a mock resolved resource that is
 // populated with the given data and annotations or returns the given
 // error from its Data() method.
-func NewResolvedResource(data []byte, annotations map[string]string, source *v1beta1.ConfigSource, dataErr error) *ResolvedResource {
+func NewResolvedResource(data []byte, annotations map[string]string, source *pipelinev1beta1.RefSource, dataErr error) *ResolvedResource {
 	return &ResolvedResource{
 		ResolvedData:        data,
 		ResolvedAnnotations: annotations,
-		ResolvedSource:      source,
+		ResolvedRefSource:   source,
 		DataErr:             dataErr,
 	}
 }
@@ -86,8 +101,8 @@ type ResolvedResource struct {
 	DataErr error
 	// Annotations to return when resolution is complete.
 	ResolvedAnnotations map[string]string
-	// ResolvedSource to return the source reference of the remote data
-	ResolvedSource *pipelinev1beta1.ConfigSource
+	// ResolvedRefSource to return the source reference of the remote data
+	ResolvedRefSource *pipelinev1beta1.RefSource
 }
 
 // Data implements resolution.ResolvedResource and returns the mock
@@ -102,8 +117,62 @@ func (r *ResolvedResource) Annotations() map[string]string {
 	return r.ResolvedAnnotations
 }
 
-// Source is the source reference of the remote data that records where the remote
+// RefSource is the source reference of the remote data that records where the remote
 // file came from including the url, digest and the entrypoint.
-func (r *ResolvedResource) Source() *pipelinev1beta1.ConfigSource {
-	return r.ResolvedSource
+func (r *ResolvedResource) RefSource() *pipelinev1beta1.RefSource {
+	return r.ResolvedRefSource
+}
+
+// RawRequest stores the raw request data
+type RawRequest struct {
+	// the request name
+	Name string
+	// the request namespace
+	Namespace string
+	// the params for the request
+	Params []pipelinev1beta1.Param
+}
+
+// Request returns a Request interface based on the RawRequest.
+func (r *RawRequest) Request() resolution.Request {
+	if r == nil {
+		r = &RawRequest{}
+	}
+	return &Request{
+		RawRequest: *r,
+	}
+}
+
+// Request implements resolution.Request and makes it easier to mock input for submit
+// Using inline structs is to avoid conflicts between field names and method names.
+type Request struct {
+	RawRequest
+}
+
+var _ resolution.Request = &Request{}
+
+// NewRequest creates a mock request that is populated with the given name namespace and params
+func NewRequest(name, namespace string, params []pipelinev1beta1.Param) *Request {
+	return &Request{
+		RawRequest: RawRequest{
+			Name:      name,
+			Namespace: namespace,
+			Params:    params,
+		},
+	}
+}
+
+// Name implements resolution.Request and returns the mock name given to it on initialization.
+func (r *Request) Name() string {
+	return r.RawRequest.Name
+}
+
+// Namespace implements resolution.Request and returns the mock namespace given to it on initialization.
+func (r *Request) Namespace() string {
+	return r.RawRequest.Namespace
+}
+
+// Params implements resolution.Request and returns the mock params given to it on initialization.
+func (r *Request) Params() pipelinev1beta1.Params {
+	return r.RawRequest.Params
 }

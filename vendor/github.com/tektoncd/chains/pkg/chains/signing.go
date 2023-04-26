@@ -30,7 +30,7 @@ import (
 	"github.com/tektoncd/chains/pkg/config"
 	"github.com/tektoncd/pipeline/pkg/apis/pipeline/v1beta1"
 	versioned "github.com/tektoncd/pipeline/pkg/client/clientset/versioned"
-	"go.uber.org/zap"
+	"k8s.io/apimachinery/pkg/util/sets"
 	"knative.dev/pkg/logging"
 )
 
@@ -47,7 +47,8 @@ type ObjectSigner struct {
 	Pipelineclientset versioned.Interface
 }
 
-func allSigners(ctx context.Context, sp string, cfg config.Config, l *zap.SugaredLogger) map[string]signing.Signer {
+func allSigners(ctx context.Context, sp string, cfg config.Config) map[string]signing.Signer {
+	l := logging.FromContext(ctx)
 	all := map[string]signing.Signer{}
 	neededSigners := map[string]struct{}{
 		cfg.Artifacts.OCI.Signer:          {},
@@ -61,14 +62,14 @@ func allSigners(ctx context.Context, sp string, cfg config.Config, l *zap.Sugare
 		}
 		switch s {
 		case signing.TypeX509:
-			signer, err := x509.NewSigner(ctx, sp, cfg, l)
+			signer, err := x509.NewSigner(ctx, sp, cfg)
 			if err != nil {
 				l.Warnf("error configuring x509 signer: %s", err)
 				continue
 			}
 			all[s] = signer
 		case signing.TypeKMS:
-			signer, err := kms.NewSigner(ctx, cfg.Signers.KMS, l)
+			signer, err := kms.NewSigner(ctx, cfg.Signers.KMS)
 			if err != nil {
 				l.Warnf("error configuring kms signer with config %v: %s", cfg.Signers.KMS, err)
 				continue
@@ -83,16 +84,16 @@ func allSigners(ctx context.Context, sp string, cfg config.Config, l *zap.Sugare
 }
 
 // TODO: Hook this up to config.
-func getSignableTypes(obj objects.TektonObject, logger *zap.SugaredLogger) ([]artifacts.Signable, error) {
+func getSignableTypes(ctx context.Context, obj objects.TektonObject) ([]artifacts.Signable, error) {
 	switch v := obj.GetObject().(type) {
 	case *v1beta1.TaskRun:
 		return []artifacts.Signable{
-			&artifacts.TaskRunArtifact{Logger: logger},
-			&artifacts.OCIArtifact{Logger: logger},
+			&artifacts.TaskRunArtifact{},
+			&artifacts.OCIArtifact{},
 		}, nil
 	case *v1beta1.PipelineRun:
 		return []artifacts.Signable{
-			&artifacts.PipelineRunArtifact{Logger: logger},
+			&artifacts.PipelineRunArtifact{},
 		}, nil
 	default:
 		return nil, fmt.Errorf("unsupported type of object to be signed: %s", v)
@@ -105,12 +106,12 @@ func (o *ObjectSigner) Sign(ctx context.Context, tektonObj objects.TektonObject)
 	cfg := *config.FromContext(ctx)
 	logger := logging.FromContext(ctx)
 
-	signableTypes, err := getSignableTypes(tektonObj, logger)
+	signableTypes, err := getSignableTypes(ctx, tektonObj)
 	if err != nil {
 		return err
 	}
 
-	signers := allSigners(ctx, o.SecretPath, cfg, logger)
+	signers := allSigners(ctx, o.SecretPath, cfg)
 
 	var merr *multierror.Error
 	extraAnnotations := map[string]string{}
@@ -128,7 +129,7 @@ func (o *ObjectSigner) Sign(ctx context.Context, tektonObj objects.TektonObject)
 
 		// Extract all the "things" to be signed.
 		// We might have a few of each type (several binaries, or images)
-		objects := signableType.ExtractObjects(tektonObj)
+		objects := signableType.ExtractObjects(ctx, tektonObj)
 
 		// Go through each object one at a time.
 		for _, obj := range objects {
@@ -171,7 +172,7 @@ func (o *ObjectSigner) Sign(ctx context.Context, tektonObj objects.TektonObject)
 			}
 
 			// Now store those!
-			for _, backend := range signableType.StorageBackend(cfg).List() {
+			for _, backend := range sets.List[string](signableType.StorageBackend(cfg)) {
 				b := o.Backends[backend]
 				storageOpts := config.StorageOpts{
 					ShortKey:      signableType.ShortKey(obj),
@@ -187,7 +188,7 @@ func (o *ObjectSigner) Sign(ctx context.Context, tektonObj objects.TektonObject)
 			}
 
 			if shouldUploadTlog(cfg, tektonObj) {
-				rekorClient, err := getRekor(cfg.Transparency.URL, logger)
+				rekorClient, err := getRekor(cfg.Transparency.URL)
 				if err != nil {
 					return err
 				}

@@ -45,7 +45,7 @@ type ArtifactConfigs struct {
 // Artifact contains the configuration for how to sign/store/format the signatures for a single artifact
 type Artifact struct {
 	Format         string
-	StorageBackend sets.String
+	StorageBackend sets.Set[string]
 	Signer         string
 }
 
@@ -210,17 +210,17 @@ func defaultConfig() *Config {
 		Artifacts: ArtifactConfigs{
 			TaskRuns: Artifact{
 				Format:         "in-toto",
-				StorageBackend: sets.NewString("tekton"),
+				StorageBackend: sets.New[string]("tekton"),
 				Signer:         "x509",
 			},
 			PipelineRuns: Artifact{
 				Format:         "in-toto",
-				StorageBackend: sets.NewString("tekton"),
+				StorageBackend: sets.New[string]("tekton"),
 				Signer:         "x509",
 			},
 			OCI: Artifact{
 				Format:         "simplesigning",
-				StorageBackend: sets.NewString("oci"),
+				StorageBackend: sets.New[string]("oci"),
 				Signer:         "x509",
 			},
 		},
@@ -253,17 +253,17 @@ func NewConfigFromMap(data map[string]string) (*Config, error) {
 		// Artifact-specific configs
 		// TaskRuns
 		asString(taskrunFormatKey, &cfg.Artifacts.TaskRuns.Format, "in-toto", "slsa/v1", "slsa/v2alpha1"),
-		asStringSet(taskrunStorageKey, &cfg.Artifacts.TaskRuns.StorageBackend, sets.NewString("tekton", "oci", "gcs", "docdb", "grafeas", "kafka")),
+		asStringSet(taskrunStorageKey, &cfg.Artifacts.TaskRuns.StorageBackend, sets.New[string]("tekton", "oci", "gcs", "docdb", "grafeas", "kafka")),
 		asString(taskrunSignerKey, &cfg.Artifacts.TaskRuns.Signer, "x509", "kms"),
 
 		// PipelineRuns
 		asString(pipelinerunFormatKey, &cfg.Artifacts.PipelineRuns.Format, "in-toto", "slsa/v1"),
-		asStringSet(pipelinerunStorageKey, &cfg.Artifacts.PipelineRuns.StorageBackend, sets.NewString("tekton", "oci", "grafeas")),
+		asStringSet(pipelinerunStorageKey, &cfg.Artifacts.PipelineRuns.StorageBackend, sets.New[string]("tekton", "oci", "grafeas")),
 		asString(pipelinerunSignerKey, &cfg.Artifacts.PipelineRuns.Signer, "x509", "kms"),
 
 		// OCI
 		asString(ociFormatKey, &cfg.Artifacts.OCI.Format, "simplesigning"),
-		asStringSet(ociStorageKey, &cfg.Artifacts.OCI.StorageBackend, sets.NewString("tekton", "oci", "gcs", "docdb", "grafeas", "kafka")),
+		asStringSet(ociStorageKey, &cfg.Artifacts.OCI.StorageBackend, sets.New[string]("tekton", "oci", "gcs", "docdb", "grafeas", "kafka")),
 		asString(ociSignerKey, &cfg.Artifacts.OCI.Signer, "x509", "kms"),
 
 		// PubSub - General
@@ -361,9 +361,9 @@ func asString(key string, target *string, values ...string) cm.ParseFunc {
 			return nil
 		}
 		if len(values) > 0 {
-			vals := sets.NewString(values...)
+			vals := sets.New[string](values...)
 			if !vals.Has(raw) {
-				return fmt.Errorf("invalid value %q wanted one of %v", raw, vals.List())
+				return fmt.Errorf("invalid value %q wanted one of %v", raw, sets.List[string](vals))
 			}
 		}
 		*target = raw
@@ -371,12 +371,12 @@ func asString(key string, target *string, values ...string) cm.ParseFunc {
 	}
 }
 
-// asStringSet parses the value at key as a sets.String (split by ',') into the target, if it exists.
-func asStringSet(key string, target *sets.String, allowed sets.String) cm.ParseFunc {
+// asStringSet parses the value at key as a sets.Set[string] (split by ',') into the target, if it exists.
+func asStringSet(key string, target *sets.Set[string], allowed sets.Set[string]) cm.ParseFunc {
 	return func(data map[string]string) error {
 		if raw, ok := data[key]; ok {
 			if raw == "" {
-				*target = sets.NewString("")
+				*target = sets.New[string]("")
 				return nil
 			}
 			splitted := strings.Split(raw, ",")
@@ -384,11 +384,11 @@ func asStringSet(key string, target *sets.String, allowed sets.String) cm.ParseF
 				for i, v := range splitted {
 					splitted[i] = strings.TrimSpace(v)
 					if !allowed.Has(splitted[i]) {
-						return fmt.Errorf("invalid value %q wanted one of %v", splitted[i], allowed.List())
+						return fmt.Errorf("invalid value %q wanted one of %v", splitted[i], sets.List[string](allowed))
 					}
 				}
 			}
-			*target = sets.NewString(splitted...)
+			*target = sets.New[string](splitted...)
 		}
 		return nil
 	}

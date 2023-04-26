@@ -31,17 +31,15 @@ import (
 	"github.com/spiffe/go-spiffe/v2/svid/jwtsvid"
 	"github.com/spiffe/go-spiffe/v2/workloadapi"
 	"github.com/tektoncd/chains/pkg/chains/signing"
-	"go.uber.org/zap"
 )
 
 // Signer exposes methods to sign payloads using a KMS
 type Signer struct {
 	signature.SignerVerifier
-	logger *zap.SugaredLogger
 }
 
 // NewSigner returns a configured Signer
-func NewSigner(ctx context.Context, cfg config.KMSSigner, logger *zap.SugaredLogger) (*Signer, error) {
+func NewSigner(ctx context.Context, cfg config.KMSSigner) (*Signer, error) {
 	kmsOpts := []signature.RPCOption{}
 	// pass through configuration options to RPCAuth used by KMS in sigstore
 	rpcAuth := options.RPCAuth{
@@ -54,7 +52,7 @@ func NewSigner(ctx context.Context, cfg config.KMSSigner, logger *zap.SugaredLog
 	}
 	// get token from spire
 	if cfg.Auth.Spire.Sock != "" {
-		token, err := newSpireToken(ctx, cfg, logger)
+		token, err := newSpireToken(ctx, cfg)
 		if err != nil {
 			return nil, err
 		}
@@ -68,12 +66,11 @@ func NewSigner(ctx context.Context, cfg config.KMSSigner, logger *zap.SugaredLog
 	}
 	return &Signer{
 		SignerVerifier: k,
-		logger:         logger,
 	}, nil
 }
 
 // newSpireToken retrieves an SVID token from Spire
-func newSpireToken(ctx context.Context, cfg config.KMSSigner, logger *zap.SugaredLogger) (string, error) {
+func newSpireToken(ctx context.Context, cfg config.KMSSigner) (string, error) {
 	jwtSource, err := workloadapi.NewJWTSource(
 		ctx,
 		workloadapi.WithClientOptions(workloadapi.WithAddr(cfg.Auth.Spire.Sock)),

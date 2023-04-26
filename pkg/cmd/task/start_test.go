@@ -454,11 +454,11 @@ func Test_start_task_last_v1beta1(t *testing.T) {
 				Params: []v1beta1.Param{
 					{
 						Name:  "myarg",
-						Value: v1beta1.ArrayOrString{Type: v1beta1.ParamTypeString, StringVal: "value"},
+						Value: v1beta1.ParamValue{Type: v1beta1.ParamTypeString, StringVal: "value"},
 					},
 					{
 						Name:  "print",
-						Value: v1beta1.ArrayOrString{Type: v1beta1.ParamTypeArray, ArrayVal: []string{"booms", "booms", "booms"}},
+						Value: v1beta1.ParamValue{Type: v1beta1.ParamTypeArray, ArrayVal: []string{"booms", "booms", "booms"}},
 					},
 				},
 				ServiceAccountName: "svc",
@@ -516,11 +516,11 @@ func Test_start_task_last_v1beta1(t *testing.T) {
 
 	for _, v := range tr.Spec.Params {
 		if v.Name == "my-arg" {
-			test.AssertOutput(t, v1beta1.ArrayOrString{Type: v1beta1.ParamTypeString, StringVal: "value"}, v.Value)
+			test.AssertOutput(t, v1beta1.ParamValue{Type: v1beta1.ParamTypeString, StringVal: "value"}, v.Value)
 		}
 
 		if v.Name == "print" {
-			test.AssertOutput(t, v1beta1.ArrayOrString{Type: v1beta1.ParamTypeArray, ArrayVal: []string{"booms", "booms", "booms"}}, v.Value)
+			test.AssertOutput(t, v1beta1.ParamValue{Type: v1beta1.ParamTypeArray, ArrayVal: []string{"booms", "booms", "booms"}}, v.Value)
 		}
 	}
 
@@ -887,11 +887,11 @@ func Test_start_task_last_generate_name_v1beta1(t *testing.T) {
 				Params: []v1beta1.Param{
 					{
 						Name:  "myarg",
-						Value: v1beta1.ArrayOrString{Type: v1beta1.ParamTypeString, StringVal: "value"},
+						Value: v1beta1.ParamValue{Type: v1beta1.ParamTypeString, StringVal: "value"},
 					},
 					{
 						Name:  "print",
-						Value: v1beta1.ArrayOrString{Type: v1beta1.ParamTypeArray, ArrayVal: []string{"booms", "booms", "booms"}},
+						Value: v1beta1.ParamValue{Type: v1beta1.ParamTypeArray, ArrayVal: []string{"booms", "booms", "booms"}},
 					},
 				},
 				ServiceAccountName: "svc",
@@ -1005,11 +1005,11 @@ func Test_start_task_last_with_prefix_name_v1beta1(t *testing.T) {
 				Params: []v1beta1.Param{
 					{
 						Name:  "myarg",
-						Value: v1beta1.ArrayOrString{Type: v1beta1.ParamTypeString, StringVal: "value"},
+						Value: v1beta1.ParamValue{Type: v1beta1.ParamTypeString, StringVal: "value"},
 					},
 					{
 						Name:  "print",
-						Value: v1beta1.ArrayOrString{Type: v1beta1.ParamTypeArray, ArrayVal: []string{"booms", "booms", "booms"}},
+						Value: v1beta1.ParamValue{Type: v1beta1.ParamTypeArray, ArrayVal: []string{"booms", "booms", "booms"}},
 					},
 				},
 				ServiceAccountName: "svc",
@@ -1122,11 +1122,11 @@ func Test_start_task_with_prefix_name_v1beta1(t *testing.T) {
 				Params: []v1beta1.Param{
 					{
 						Name:  "myarg",
-						Value: v1beta1.ArrayOrString{Type: v1beta1.ParamTypeString, StringVal: "value"},
+						Value: v1beta1.ParamValue{Type: v1beta1.ParamTypeString, StringVal: "value"},
 					},
 					{
 						Name:  "print",
-						Value: v1beta1.ArrayOrString{Type: v1beta1.ParamTypeArray, ArrayVal: []string{"booms", "booms", "booms"}},
+						Value: v1beta1.ParamValue{Type: v1beta1.ParamTypeArray, ArrayVal: []string{"booms", "booms", "booms"}},
 					},
 				},
 				ServiceAccountName: "svc",
@@ -1159,7 +1159,6 @@ func Test_start_task_with_prefix_name_v1beta1(t *testing.T) {
 	cs := pipelinetest.Clients{
 		Pipeline: seedData.Pipeline,
 		Kube:     seedData.Kube,
-		Resource: seedData.Resource,
 	}
 	cs.Pipeline.Resources = cb.APIResourceList(versionv1beta1, []string{"task", "taskrun"})
 	dc, _ := tdc.Client(
@@ -1239,11 +1238,11 @@ func Test_start_task_last_with_inputs_v1beta1(t *testing.T) {
 				Params: []v1beta1.Param{
 					{
 						Name:  "myarg",
-						Value: v1beta1.ArrayOrString{Type: v1beta1.ParamTypeString, StringVal: "value"},
+						Value: v1beta1.ParamValue{Type: v1beta1.ParamTypeString, StringVal: "value"},
 					},
 					{
 						Name:  "print",
-						Value: v1beta1.ArrayOrString{Type: v1beta1.ParamTypeArray, ArrayVal: []string{"booms", "booms", "booms"}},
+						Value: v1beta1.ParamValue{Type: v1beta1.ParamTypeArray, ArrayVal: []string{"booms", "booms", "booms"}},
 					},
 				},
 				ServiceAccountName: "svc",
@@ -1304,11 +1303,11 @@ func Test_start_task_last_with_inputs_v1beta1(t *testing.T) {
 
 	for _, v := range tr.Spec.Params {
 		if v.Name == "my-arg" {
-			test.AssertOutput(t, v1beta1.ArrayOrString{Type: v1beta1.ParamTypeString, StringVal: "value1"}, v.Value)
+			test.AssertOutput(t, v1beta1.ParamValue{Type: v1beta1.ParamTypeString, StringVal: "value1"}, v.Value)
 		}
 
 		if v.Name == "print" {
-			test.AssertOutput(t, v1beta1.ArrayOrString{Type: v1beta1.ParamTypeArray, ArrayVal: []string{"boom", "boom"}}, v.Value)
+			test.AssertOutput(t, v1beta1.ParamValue{Type: v1beta1.ParamTypeArray, ArrayVal: []string{"boom", "boom"}}, v.Value)
 		}
 	}
 	test.AssertOutput(t, "svc1", tr.Spec.ServiceAccountName)
@@ -1797,7 +1796,7 @@ func TestTaskStart_ExecuteCommand_v1beta1(t *testing.T) {
 					{
 						Name: "myarg",
 						Type: v1beta1.ParamTypeString,
-						Default: &v1beta1.ArrayOrString{
+						Default: &v1beta1.ParamValue{
 							Type:      v1beta1.ParamTypeString,
 							StringVal: "arg1",
 						},
@@ -1805,7 +1804,7 @@ func TestTaskStart_ExecuteCommand_v1beta1(t *testing.T) {
 					{
 						Name: "task-param",
 						Type: v1beta1.ParamTypeString,
-						Default: &v1beta1.ArrayOrString{
+						Default: &v1beta1.ParamValue{
 							Type:      v1beta1.ParamTypeString,
 							StringVal: "my-param",
 						},

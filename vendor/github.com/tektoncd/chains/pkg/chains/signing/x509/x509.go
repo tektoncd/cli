@@ -32,12 +32,12 @@ import (
 	"github.com/sigstore/cosign/v2/cmd/cosign/cli/options"
 	"github.com/sigstore/cosign/v2/pkg/cosign"
 	"github.com/sigstore/cosign/v2/pkg/providers"
+	"knative.dev/pkg/logging"
 
 	"github.com/sigstore/sigstore/pkg/signature"
 	"github.com/sigstore/sigstore/pkg/tuf"
 	"github.com/tektoncd/chains/pkg/chains/signing"
 	"github.com/tektoncd/chains/pkg/config"
-	"go.uber.org/zap"
 )
 
 const (
@@ -49,25 +49,25 @@ type Signer struct {
 	cert  string
 	chain string
 	signature.SignerVerifier
-	logger *zap.SugaredLogger
 }
 
 // NewSigner returns a configured Signer
-func NewSigner(ctx context.Context, secretPath string, cfg config.Config, logger *zap.SugaredLogger) (*Signer, error) {
+func NewSigner(ctx context.Context, secretPath string, cfg config.Config) (*Signer, error) {
 	x509PrivateKeyPath := filepath.Join(secretPath, "x509.pem")
 	cosignPrivateKeypath := filepath.Join(secretPath, "cosign.key")
 
 	if cfg.Signers.X509.FulcioEnabled {
-		return fulcioSigner(ctx, cfg.Signers.X509, logger)
+		return fulcioSigner(ctx, cfg.Signers.X509)
 	} else if contents, err := os.ReadFile(x509PrivateKeyPath); err == nil {
-		return x509Signer(contents, logger)
+		return x509Signer(ctx, contents)
 	} else if contents, err := os.ReadFile(cosignPrivateKeypath); err == nil {
-		return cosignSigner(secretPath, contents, logger)
+		return cosignSigner(ctx, secretPath, contents)
 	}
 	return nil, errors.New("no valid private key found, looked for: [x509.pem, cosign.key]")
 }
 
-func fulcioSigner(ctx context.Context, cfg config.X509Signer, logger *zap.SugaredLogger) (*Signer, error) {
+func fulcioSigner(ctx context.Context, cfg config.X509Signer) (*Signer, error) {
+	logger := logging.FromContext(ctx)
 	if !providers.Enabled(ctx) && cfg.IdentityTokenFile != "" {
 		FilesystemTokenPath = cfg.IdentityTokenFile
 	}
@@ -77,7 +77,7 @@ func fulcioSigner(ctx context.Context, cfg config.X509Signer, logger *zap.Sugare
 	var tok string
 	var err error
 	if cfg.TUFMirrorURL != tuf.DefaultRemoteRoot {
-		if err = initializeTUF(ctx, cfg.TUFMirrorURL, logger); err != nil {
+		if err = initializeTUF(ctx, cfg.TUFMirrorURL); err != nil {
 			return nil, errors.Wrap(err, "initialize tuf")
 		}
 	}
@@ -131,13 +131,13 @@ func fulcioSigner(ctx context.Context, cfg config.X509Signer, logger *zap.Sugare
 		SignerVerifier: signer,
 		cert:           string(k.Cert),
 		chain:          string(k.Chain),
-		logger:         logger,
 	}, nil
 }
 
 // root: TUF_URL/root.json
 // mirror: TUF_URL
-func initializeTUF(ctx context.Context, mirror string, logger *zap.SugaredLogger) error {
+func initializeTUF(ctx context.Context, mirror string) error {
+	logger := logging.FromContext(ctx)
 	// Get the initial trusted root contents.
 	root, err := url.JoinPath(mirror, "root.json")
 	if err != nil {
@@ -171,7 +171,8 @@ func loadRootFromURL(root string) ([]byte, error) {
 	return io.ReadAll(resp.Body)
 }
 
-func x509Signer(privateKey []byte, logger *zap.SugaredLogger) (*Signer, error) {
+func x509Signer(ctx context.Context, privateKey []byte) (*Signer, error) {
+	logger := logging.FromContext(ctx)
 	logger.Info("Found x509 key...")
 
 	p, _ := pem.Decode(privateKey)
@@ -186,10 +187,11 @@ func x509Signer(privateKey []byte, logger *zap.SugaredLogger) (*Signer, error) {
 	if err != nil {
 		return nil, err
 	}
-	return &Signer{SignerVerifier: signer, logger: logger}, nil
+	return &Signer{SignerVerifier: signer}, nil
 }
 
-func cosignSigner(secretPath string, privateKey []byte, logger *zap.SugaredLogger) (*Signer, error) {
+func cosignSigner(ctx context.Context, secretPath string, privateKey []byte) (*Signer, error) {
+	logger := logging.FromContext(ctx)
 	logger.Info("Found cosign key...")
 	cosignPasswordPath := filepath.Join(secretPath, "cosign.password")
 	password, err := os.ReadFile(cosignPasswordPath)
@@ -200,7 +202,7 @@ func cosignSigner(secretPath string, privateKey []byte, logger *zap.SugaredLogge
 	if err != nil {
 		return nil, err
 	}
-	return &Signer{SignerVerifier: signer, logger: logger}, nil
+	return &Signer{SignerVerifier: signer}, nil
 }
 
 func (s *Signer) Type() string {

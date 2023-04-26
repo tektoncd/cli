@@ -95,30 +95,8 @@ func GetUnsignedPipeline(name string) *v1beta1.Pipeline {
 	}
 }
 
-// SetupTrustedResourceKeyConfig config the public keys keypath in config-trusted-resources
-// and resource-verification-mode feature flag by given resourceVerificationMode for testing
-func SetupTrustedResourceKeyConfig(ctx context.Context, keypath string, resourceVerificationMode string) context.Context {
-	store := config.NewStore(logging.FromContext(ctx).Named("config-store"))
-	cm := &corev1.ConfigMap{
-		TypeMeta: metav1.TypeMeta{
-			Kind:       "ConfigMap",
-			APIVersion: "v1",
-		},
-		ObjectMeta: metav1.ObjectMeta{
-			Namespace: namespace,
-			Name:      config.TrustedTaskConfig,
-		},
-		Data: map[string]string{
-			config.PublicKeys: keypath,
-		},
-	}
-	store.OnConfigChanged(cm)
-	ctx = SetupTrustedResourceConfig(ctx, resourceVerificationMode)
-	return store.ToContext(ctx)
-}
-
-// SetupTrustedResourceConfig config the resource-verification-mode feature flag by given mode for testing
-func SetupTrustedResourceConfig(ctx context.Context, resourceVerificationMode string) context.Context {
+// SetupTrustedResourceConfig configures the trusted-resources-verification-no-match-policy feature flag with the given mode for testing
+func SetupTrustedResourceConfig(ctx context.Context, verificationNoMatchPolicy string) context.Context {
 	store := config.NewStore(logging.FromContext(ctx).Named("config-store"))
 	featureflags := &corev1.ConfigMap{
 		ObjectMeta: metav1.ObjectMeta{
@@ -126,7 +104,7 @@ func SetupTrustedResourceConfig(ctx context.Context, resourceVerificationMode st
 			Name:      "feature-flags",
 		},
 		Data: map[string]string{
-			"resource-verification-mode": resourceVerificationMode,
+			"trusted-resources-verification-no-match-policy": verificationNoMatchPolicy,
 		},
 	}
 	store.OnConfigChanged(featureflags)
@@ -385,6 +363,7 @@ func getVerificationPolicy(name, namespace string, patterns []v1alpha1.ResourceP
 		Spec: v1alpha1.VerificationPolicySpec{
 			Resources:   patterns,
 			Authorities: authorities,
+			Mode:        v1alpha1.ModeEnforce,
 		},
 	}
 }

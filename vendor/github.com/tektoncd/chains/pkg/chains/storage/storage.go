@@ -25,7 +25,7 @@ import (
 	"github.com/tektoncd/chains/pkg/chains/storage/tekton"
 	"github.com/tektoncd/chains/pkg/config"
 	"github.com/tektoncd/pipeline/pkg/client/clientset/versioned"
-	"go.uber.org/zap"
+	"k8s.io/apimachinery/pkg/util/sets"
 	"k8s.io/client-go/kubernetes"
 )
 
@@ -41,17 +41,17 @@ type Backend interface {
 }
 
 // InitializeBackends creates and initializes every configured storage backend.
-func InitializeBackends(ctx context.Context, ps versioned.Interface, kc kubernetes.Interface, logger *zap.SugaredLogger, cfg config.Config) (map[string]Backend, error) {
+func InitializeBackends(ctx context.Context, ps versioned.Interface, kc kubernetes.Interface, cfg config.Config) (map[string]Backend, error) {
 	// Add an entry here for every configured backend
 	configuredBackends := []string{}
 	if cfg.Artifacts.TaskRuns.Enabled() {
-		configuredBackends = append(configuredBackends, cfg.Artifacts.TaskRuns.StorageBackend.List()...)
+		configuredBackends = append(configuredBackends, sets.List[string](cfg.Artifacts.TaskRuns.StorageBackend)...)
 	}
 	if cfg.Artifacts.OCI.Enabled() {
-		configuredBackends = append(configuredBackends, cfg.Artifacts.OCI.StorageBackend.List()...)
+		configuredBackends = append(configuredBackends, sets.List[string](cfg.Artifacts.OCI.StorageBackend)...)
 	}
 	if cfg.Artifacts.PipelineRuns.Enabled() {
-		configuredBackends = append(configuredBackends, cfg.Artifacts.PipelineRuns.StorageBackend.List()...)
+		configuredBackends = append(configuredBackends, sets.List[string](cfg.Artifacts.PipelineRuns.StorageBackend)...)
 	}
 
 	// Now only initialize and return the configured ones.
@@ -59,30 +59,30 @@ func InitializeBackends(ctx context.Context, ps versioned.Interface, kc kubernet
 	for _, backendType := range configuredBackends {
 		switch backendType {
 		case gcs.StorageBackendGCS:
-			gcsBackend, err := gcs.NewStorageBackend(ctx, logger, cfg)
+			gcsBackend, err := gcs.NewStorageBackend(ctx, cfg)
 			if err != nil {
 				return nil, err
 			}
 			backends[backendType] = gcsBackend
 		case tekton.StorageBackendTekton:
-			backends[backendType] = tekton.NewStorageBackend(ps, logger)
+			backends[backendType] = tekton.NewStorageBackend(ps)
 		case oci.StorageBackendOCI:
-			ociBackend := oci.NewStorageBackend(ctx, logger, kc, cfg)
+			ociBackend := oci.NewStorageBackend(ctx, kc, cfg)
 			backends[backendType] = ociBackend
 		case docdb.StorageTypeDocDB:
-			docdbBackend, err := docdb.NewStorageBackend(ctx, logger, cfg)
+			docdbBackend, err := docdb.NewStorageBackend(ctx, cfg)
 			if err != nil {
 				return nil, err
 			}
 			backends[backendType] = docdbBackend
 		case grafeas.StorageBackendGrafeas:
-			grafeasBackend, err := grafeas.NewStorageBackend(ctx, logger, cfg)
+			grafeasBackend, err := grafeas.NewStorageBackend(ctx, cfg)
 			if err != nil {
 				return nil, err
 			}
 			backends[backendType] = grafeasBackend
 		case pubsub.StorageBackendPubSub:
-			pubsubBackend, err := pubsub.NewStorageBackend(ctx, logger, cfg)
+			pubsubBackend, err := pubsub.NewStorageBackend(ctx, cfg)
 			if err != nil {
 				return nil, err
 			}
