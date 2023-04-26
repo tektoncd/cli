@@ -27,7 +27,6 @@ import (
 	"github.com/tektoncd/chains/pkg/chains/objects"
 	"github.com/tektoncd/chains/pkg/chains/signing"
 	"github.com/tektoncd/chains/pkg/config"
-	"go.uber.org/zap"
 )
 
 const (
@@ -35,8 +34,7 @@ const (
 )
 
 type rekor struct {
-	c      *client.Rekor
-	logger *zap.SugaredLogger
+	c *client.Rekor
 }
 
 type rekorClient interface {
@@ -75,14 +73,13 @@ func publicKeyOrCert(signer signing.Signer, cert string) ([]byte, error) {
 	return pem, nil
 }
 
-var getRekor = func(url string, l *zap.SugaredLogger) (rekorClient, error) {
+var getRekor = func(url string) (rekorClient, error) {
 	rekorClient, err := rc.GetRekorClient(url)
 	if err != nil {
 		return nil, err
 	}
 	return &rekor{
-		c:      rekorClient,
-		logger: l,
+		c: rekorClient,
 	}, nil
 }
 

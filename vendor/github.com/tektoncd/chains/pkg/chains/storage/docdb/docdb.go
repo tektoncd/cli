@@ -20,7 +20,6 @@ import (
 
 	"github.com/tektoncd/chains/pkg/chains/objects"
 	"github.com/tektoncd/chains/pkg/config"
-	"go.uber.org/zap"
 	"gocloud.dev/docstore"
 	_ "gocloud.dev/docstore/awsdynamodb"
 	_ "gocloud.dev/docstore/gcpfirestore"
@@ -34,8 +33,7 @@ const (
 // Backend is a storage backend that stores signed payloads in the TaskRun metadata as an annotation.
 // It is stored as base64 encoded JSON.
 type Backend struct {
-	logger *zap.SugaredLogger
-	coll   *docstore.Collection
+	coll *docstore.Collection
 }
 
 type SignedDocument struct {
@@ -48,7 +46,7 @@ type SignedDocument struct {
 }
 
 // NewStorageBackend returns a new Tekton StorageBackend that stores signatures on a TaskRun
-func NewStorageBackend(ctx context.Context, logger *zap.SugaredLogger, cfg config.Config) (*Backend, error) {
+func NewStorageBackend(ctx context.Context, cfg config.Config) (*Backend, error) {
 	url := cfg.Storage.DocDB.URL
 	coll, err := docstore.OpenCollection(ctx, url)
 	if err != nil {
@@ -56,8 +54,7 @@ func NewStorageBackend(ctx context.Context, logger *zap.SugaredLogger, cfg confi
 	}
 
 	return &Backend{
-		logger: logger,
-		coll:   coll,
+		coll: coll,
 	}, nil
 }
 

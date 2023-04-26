@@ -30,12 +30,12 @@ import (
 	"github.com/tektoncd/chains/pkg/chains/objects"
 	"github.com/tektoncd/chains/pkg/config"
 	"github.com/tektoncd/pipeline/pkg/apis/pipeline/v1beta1"
-	"go.uber.org/zap"
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/credentials"
 	"google.golang.org/grpc/credentials/oauth"
 	"google.golang.org/grpc/status"
+	"knative.dev/pkg/logging"
 )
 
 const (
@@ -50,13 +50,12 @@ const (
 // Backend is a storage backend that stores signed payloads in the storage that
 // is built on the top of grafeas i.e. container analysis.
 type Backend struct {
-	logger *zap.SugaredLogger
 	client pb.GrafeasClient
 	cfg    config.Config
 }
 
 // NewStorageBackend returns a new Grafeas StorageBackend that stores signatures in a Grafeas server
-func NewStorageBackend(ctx context.Context, logger *zap.SugaredLogger, cfg config.Config) (*Backend, error) {
+func NewStorageBackend(ctx context.Context, cfg config.Config) (*Backend, error) {
 	// build connection through grpc
 	// implicit uses Application Default Credentials to authenticate.
 	// Requires `gcloud auth application-default login` to work locally
@@ -81,7 +80,6 @@ func NewStorageBackend(ctx context.Context, logger *zap.SugaredLogger, cfg confi
 
 	// create backend instance
 	return &Backend{
-		logger: logger,
 		client: client,
 		cfg:    cfg,
 	}, nil
@@ -89,6 +87,7 @@ func NewStorageBackend(ctx context.Context, logger *zap.SugaredLogger, cfg confi
 
 // StorePayload implements the storage.Backend interface.
 func (b *Backend) StorePayload(ctx context.Context, obj objects.TektonObject, rawPayload []byte, signature string, opts config.StorageOpts) error {
+	logger := logging.FromContext(ctx)
 	// We only support simplesigning for OCI images, and in-toto for taskrun & pipelinerun.
 	if _, ok := formats.IntotoAttestationSet[opts.PayloadFormat]; !ok && opts.PayloadFormat != formats.PayloadTypeSimpleSigning {
 		return errors.New("Grafeas storage backend only supports simplesigning and intoto payload format.")
@@ -123,9 +122,9 @@ func (b *Backend) StorePayload(ctx context.Context, obj objects.TektonObject, ra
 	}
 
 	if len(occNames) == 0 {
-		b.logger.Infof("No occurrences created for payload of type %s for %s %s/%s", string(opts.PayloadFormat), obj.GetGVK(), obj.GetNamespace(), obj.GetName())
+		logger.Infof("No occurrences created for payload of type %s for %s %s/%s", string(opts.PayloadFormat), obj.GetGVK(), obj.GetNamespace(), obj.GetName())
 	} else {
-		b.logger.Infof("Successfully created grafeas occurrences %v for %s %s/%s", occNames, obj.GetGVK(), obj.GetNamespace(), obj.GetName())
+		logger.Infof("Successfully created grafeas occurrences %v for %s %s/%s", occNames, obj.GetGVK(), obj.GetNamespace(), obj.GetName())
 	}
 
 	return nil
@@ -265,7 +264,7 @@ func (b *Backend) createOccurrence(ctx context.Context, obj objects.TektonObject
 	}
 
 	// create Occurrence_Build for TaskRun
-	allURIs := extract.RetrieveAllArtifactURIs(obj, b.logger)
+	allURIs := extract.RetrieveAllArtifactURIs(ctx, obj)
 	for _, uri := range allURIs {
 		occ, err := b.createBuildOccurrence(ctx, obj, payload, signature, uri)
 		if err != nil {
@@ -383,7 +382,7 @@ func (b *Backend) getBuildNotePath(obj objects.TektonObject) string {
 func (b *Backend) getAllOccurrences(ctx context.Context, obj objects.TektonObject, opts config.StorageOpts) ([]*pb.Occurrence, error) {
 	result := []*pb.Occurrence{}
 	// step 1: get all resource URIs created under the taskrun
-	uriFilters := extract.RetrieveAllArtifactURIs(obj, b.logger)
+	uriFilters := extract.RetrieveAllArtifactURIs(ctx, obj)
 
 	// step 2: find all build occurrences
 	if _, ok := formats.IntotoAttestationSet[opts.PayloadFormat]; ok {

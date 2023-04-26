@@ -216,7 +216,7 @@ func TestPipelineDescribe_with_spec_run_v1beta1(t *testing.T) {
 						},
 						RunAfter: []string{"one", "two"},
 						Params: []v1beta1.Param{{
-							Name: "task-param", Value: v1beta1.ArrayOrString{Type: v1beta1.ParamTypeString, StringVal: "value"},
+							Name: "task-param", Value: v1beta1.ParamValue{Type: v1beta1.ParamTypeString, StringVal: "value"},
 						}},
 						Timeout: &metav1.Duration{
 							Duration: 5 * time.Minute,
@@ -312,7 +312,7 @@ func TestPipelineDescribe_with_spec_resource_param_run_v1beta1(t *testing.T) {
 						},
 						RunAfter: []string{"one", "two"},
 						Params: []v1beta1.Param{{
-							Name: "task-param", Value: v1beta1.ArrayOrString{Type: v1beta1.ParamTypeString, StringVal: "value"},
+							Name: "task-param", Value: v1beta1.ParamValue{Type: v1beta1.ParamTypeString, StringVal: "value"},
 						}},
 						Timeout: &metav1.Duration{
 							Duration: 5 * time.Minute,
@@ -324,7 +324,7 @@ func TestPipelineDescribe_with_spec_resource_param_run_v1beta1(t *testing.T) {
 						Name:        "pipeline-param",
 						Description: "param of type string",
 						Type:        v1beta1.ParamTypeString,
-						Default: &v1beta1.ArrayOrString{
+						Default: &v1beta1.ParamValue{
 							Type:      v1beta1.ParamTypeString,
 							StringVal: "somethingdifferent",
 						},
@@ -420,7 +420,7 @@ func TestPipelineDescribe_with_multiple_pipelineruns_v1beta1(t *testing.T) {
 						},
 						RunAfter: []string{"one", "two"},
 						Params: []v1beta1.Param{{
-							Name: "task-param", Value: v1beta1.ArrayOrString{Type: v1beta1.ParamTypeString, StringVal: "value"},
+							Name: "task-param", Value: v1beta1.ParamValue{Type: v1beta1.ParamTypeString, StringVal: "value"},
 						}},
 						Timeout: &metav1.Duration{
 							Duration: 5 * time.Minute,
@@ -431,7 +431,7 @@ func TestPipelineDescribe_with_multiple_pipelineruns_v1beta1(t *testing.T) {
 					{
 						Name: "pipeline-param",
 						Type: v1beta1.ParamTypeString,
-						Default: &v1beta1.ArrayOrString{
+						Default: &v1beta1.ParamValue{
 							Type:      v1beta1.ParamTypeString,
 							StringVal: "somethingdifferent",
 						},
@@ -634,7 +634,7 @@ func TestPipelineDescribe_with_spec_multiple_resource_param_run_v1beta1(t *testi
 							"two",
 						},
 						Params: []v1beta1.Param{{
-							Name: "param", Value: v1beta1.ArrayOrString{Type: v1beta1.ParamTypeString, StringVal: "value"},
+							Name: "param", Value: v1beta1.ParamValue{Type: v1beta1.ParamTypeString, StringVal: "value"},
 						}},
 						Timeout: &metav1.Duration{
 							Duration: 5 * time.Minute,
@@ -645,7 +645,7 @@ func TestPipelineDescribe_with_spec_multiple_resource_param_run_v1beta1(t *testi
 					{
 						Name: "pipeline-param",
 						Type: v1beta1.ParamTypeString,
-						Default: &v1beta1.ArrayOrString{
+						Default: &v1beta1.ParamValue{
 							Type:      v1beta1.ParamTypeString,
 							StringVal: "somethingdifferent",
 						},
@@ -653,7 +653,7 @@ func TestPipelineDescribe_with_spec_multiple_resource_param_run_v1beta1(t *testi
 					{
 						Name: "rev-param",
 						Type: v1beta1.ParamTypeArray,
-						Default: &v1beta1.ArrayOrString{
+						Default: &v1beta1.ParamValue{
 							Type:     v1beta1.ParamTypeArray,
 							ArrayVal: []string{"booms", "booms", "booms"},
 						},
@@ -755,7 +755,7 @@ func TestPipelineDescribe_with_spec_multiple_resource_param_run_output_v1beta1(t
 							"two",
 						},
 						Params: []v1beta1.Param{{
-							Name: "param", Value: v1beta1.ArrayOrString{Type: v1beta1.ParamTypeString, StringVal: "value"},
+							Name: "param", Value: v1beta1.ParamValue{Type: v1beta1.ParamTypeString, StringVal: "value"},
 						}},
 						Timeout: &metav1.Duration{
 							Duration: 5 * time.Minute,
@@ -766,7 +766,7 @@ func TestPipelineDescribe_with_spec_multiple_resource_param_run_output_v1beta1(t
 					{
 						Name: "pipeline-param",
 						Type: v1beta1.ParamTypeString,
-						Default: &v1beta1.ArrayOrString{
+						Default: &v1beta1.ParamValue{
 							Type:      v1beta1.ParamTypeString,
 							StringVal: "somethingdifferent",
 						},
@@ -774,7 +774,7 @@ func TestPipelineDescribe_with_spec_multiple_resource_param_run_output_v1beta1(t
 					{
 						Name: "rev-param",
 						Type: v1beta1.ParamTypeArray,
-						Default: &v1beta1.ArrayOrString{
+						Default: &v1beta1.ParamValue{
 							Type:     v1beta1.ParamTypeArray,
 							ArrayVal: []string{"booms", "booms", "booms"},
 						},
@@ -980,7 +980,7 @@ func TestPipelineDescribe_with_results_v1beta1(t *testing.T) {
 						Name:        "result-1",
 						Description: "This is a description for result 1",
 						Type:        v1beta1.ResultsTypeString,
-						Value: v1beta1.ArrayOrString{
+						Value: v1beta1.ParamValue{
 							Type: v1beta1.ParamTypeString,
 						},
 					},
@@ -988,14 +988,14 @@ func TestPipelineDescribe_with_results_v1beta1(t *testing.T) {
 						Name:        "result-2",
 						Description: "This is a description for result 2",
 						Type:        v1beta1.ResultsTypeString,
-						Value: v1beta1.ArrayOrString{
+						Value: v1beta1.ParamValue{
 							Type: v1beta1.ParamTypeString,
 						},
 					},
 					{
 						Name: "result-3",
 						Type: v1beta1.ResultsTypeString,
-						Value: v1beta1.ArrayOrString{
+						Value: v1beta1.ParamValue{
 							Type: v1beta1.ParamTypeString,
 						},
 					},
@@ -1059,7 +1059,7 @@ func TestPipelineDescribe_with_workspaces_v1beta1(t *testing.T) {
 						Name:        "result-1",
 						Description: "This is a description for result 1",
 						Type:        v1beta1.ResultsTypeString,
-						Value: v1beta1.ArrayOrString{
+						Value: v1beta1.ParamValue{
 							Type: v1beta1.ParamTypeString,
 						},
 					},
@@ -1067,14 +1067,14 @@ func TestPipelineDescribe_with_workspaces_v1beta1(t *testing.T) {
 						Name:        "result-2",
 						Description: "This is a description for result 2",
 						Type:        v1beta1.ResultsTypeString,
-						Value: v1beta1.ArrayOrString{
+						Value: v1beta1.ParamValue{
 							Type: v1beta1.ParamTypeString,
 						},
 					},
 					{
 						Name: "result-3",
 						Type: v1beta1.ResultsTypeString,
-						Value: v1beta1.ArrayOrString{
+						Value: v1beta1.ParamValue{
 							Type: v1beta1.ParamTypeString,
 						},
 					},
@@ -1186,7 +1186,7 @@ func TestPipelineDescribe_with_OptionalWorkspaces_v1beta1(t *testing.T) {
 						Name:        "result-1",
 						Description: "This is a description for result 1",
 						Type:        v1beta1.ResultsTypeString,
-						Value: v1beta1.ArrayOrString{
+						Value: v1beta1.ParamValue{
 							Type: v1beta1.ParamTypeString,
 						},
 					},
@@ -1194,14 +1194,14 @@ func TestPipelineDescribe_with_OptionalWorkspaces_v1beta1(t *testing.T) {
 						Name:        "result-2",
 						Description: "This is a description for result 2",
 						Type:        v1beta1.ResultsTypeString,
-						Value: v1beta1.ArrayOrString{
+						Value: v1beta1.ParamValue{
 							Type: v1beta1.ParamTypeString,
 						},
 					},
 					{
 						Name: "result-3",
 						Type: v1beta1.ResultsTypeString,
-						Value: v1beta1.ArrayOrString{
+						Value: v1beta1.ParamValue{
 							Type: v1beta1.ParamTypeString,
 						},
 					},

@@ -295,7 +295,7 @@ func (opt *startOptions) startPipeline(pipelineStart *v1beta1.Pipeline) error {
 		if err != nil {
 			return err
 		}
-		pr.Spec.Timeout = &metav1.Duration{Duration: timeoutDuration}
+		pr.Spec.Timeouts.Pipeline = &metav1.Duration{Duration: timeoutDuration}
 	}
 
 	if opt.TasksTimeOut != "" || opt.PipelineTimeOut != "" || opt.FinallyTimeOut != "" {

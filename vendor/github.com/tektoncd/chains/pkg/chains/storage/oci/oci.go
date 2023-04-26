@@ -21,6 +21,7 @@ import (
 
 	"github.com/tektoncd/chains/pkg/chains/formats"
 	"github.com/tektoncd/chains/pkg/chains/objects"
+	"knative.dev/pkg/logging"
 
 	"github.com/in-toto/in-toto-golang/in_toto"
 	"github.com/secure-systems-lab/go-securesystemslib/dsse"
@@ -37,23 +38,20 @@ import (
 	"github.com/tektoncd/chains/pkg/artifacts"
 	"github.com/tektoncd/chains/pkg/chains/formats/simple"
 	"github.com/tektoncd/chains/pkg/config"
-	"go.uber.org/zap"
 	"k8s.io/client-go/kubernetes"
 )
 
 const StorageBackendOCI = "oci"
 
 type Backend struct {
-	logger           *zap.SugaredLogger
 	cfg              config.Config
 	client           kubernetes.Interface
 	getAuthenticator func(ctx context.Context, obj objects.TektonObject, client kubernetes.Interface) (remote.Option, error)
 }
 
 // NewStorageBackend returns a new OCI StorageBackend that stores signatures in an OCI registry
-func NewStorageBackend(ctx context.Context, logger *zap.SugaredLogger, client kubernetes.Interface, cfg config.Config) *Backend {
+func NewStorageBackend(ctx context.Context, client kubernetes.Interface, cfg config.Config) *Backend {
 	return &Backend{
-		logger: logger,
 		cfg:    cfg,
 		client: client,
 		getAuthenticator: func(ctx context.Context, obj objects.TektonObject, client kubernetes.Interface) (remote.Option, error) {
@@ -73,19 +71,20 @@ func NewStorageBackend(ctx context.Context, logger *zap.SugaredLogger, client ku
 
 // StorePayload implements the storage.Backend interface.
 func (b *Backend) StorePayload(ctx context.Context, obj objects.TektonObject, rawPayload []byte, signature string, storageOpts config.StorageOpts) error {
+	logger := logging.FromContext(ctx)
 	auth, err := b.getAuthenticator(ctx, obj, b.client)
 	if err != nil {
 		return err
 	}
 
-	b.logger.Infof("Storing payload on %s/%s/%s", obj.GetGVK(), obj.GetNamespace(), obj.GetName())
+	logger.Infof("Storing payload on %s/%s/%s", obj.GetGVK(), obj.GetNamespace(), obj.GetName())
 
 	if storageOpts.PayloadFormat == formats.PayloadTypeSimpleSigning {
 		format := simple.SimpleContainerImage{}
 		if err := json.Unmarshal(rawPayload, &format); err != nil {
 			return errors.Wrap(err, "unmarshal simplesigning")
 		}
-		return b.uploadSignature(format, rawPayload, signature, storageOpts, auth)
+		return b.uploadSignature(ctx, format, rawPayload, signature, storageOpts, auth)
 	}
 
 	if _, ok := formats.IntotoAttestationSet[storageOpts.PayloadFormat]; ok {
@@ -98,22 +97,24 @@ func (b *Backend) StorePayload(ctx context.Context, obj objects.TektonObject, ra
 		// like *IMAGE_URL that would serve as hints. This may be intentional for a Task/TaskRun
 		// that is not intended to produce an image, e.g. git-clone.
 		if len(attestation.Subject) == 0 {
-			b.logger.Infof(
+			logger.Infof(
 				"No image subject to attest for %s/%s/%s. Skipping upload to registry", obj.GetGVK(), obj.GetNamespace(), obj.GetName())
 			return nil
 		}
 
-		return b.uploadAttestation(attestation, signature, storageOpts, auth)
+		return b.uploadAttestation(ctx, attestation, signature, storageOpts, auth)
 	}
 
 	// Fallback in case unsupported payload format is used or the deprecated "tekton" format
-	b.logger.Info("Skipping upload to OCI registry, OCI storage backend is only supported for OCI images and in-toto attestations")
+	logger.Info("Skipping upload to OCI registry, OCI storage backend is only supported for OCI images and in-toto attestations")
 	return nil
 }
 
-func (b *Backend) uploadSignature(format simple.SimpleContainerImage, rawPayload []byte, signature string, storageOpts config.StorageOpts, remoteOpts ...remote.Option) error {
+func (b *Backend) uploadSignature(ctx context.Context, format simple.SimpleContainerImage, rawPayload []byte, signature string, storageOpts config.StorageOpts, remoteOpts ...remote.Option) error {
+	logger := logging.FromContext(ctx)
+
 	imageName := format.ImageName()
-	b.logger.Infof("Uploading %s signature", imageName)
+	logger.Infof("Uploading %s signature", imageName)
 	var opts []name.Option
 	if b.cfg.Storage.OCI.Insecure {
 		opts = append(opts, name.Insecure)
@@ -153,16 +154,17 @@ func (b *Backend) uploadSignature(format simple.SimpleContainerImage, rawPayload
 	if err := ociremote.WriteSignatures(repo, newSE, ociremote.WithRemoteOptions(remoteOpts...)); err != nil {
 		return err
 	}
-	b.logger.Infof("Successfully uploaded signature for %s", imageName)
+	logger.Infof("Successfully uploaded signature for %s", imageName)
 	return nil
 }
 
-func (b *Backend) uploadAttestation(attestation in_toto.Statement, signature string, storageOpts config.StorageOpts, remoteOpts ...remote.Option) error {
+func (b *Backend) uploadAttestation(ctx context.Context, attestation in_toto.Statement, signature string, storageOpts config.StorageOpts, remoteOpts ...remote.Option) error {
+	logger := logging.FromContext(ctx)
 	// upload an attestation for each subject
-	b.logger.Info("Starting to upload attestations to OCI ...")
+	logger.Info("Starting to upload attestations to OCI ...")
 	for _, subj := range attestation.Subject {
 		imageName := fmt.Sprintf("%s@sha256:%s", subj.Name, subj.Digest["sha256"])
-		b.logger.Infof("Starting attestation upload to OCI for %s...", imageName)
+		logger.Infof("Starting attestation upload to OCI for %s...", imageName)
 		var opts []name.Option
 		if b.cfg.Storage.OCI.Insecure {
 			opts = append(opts, name.Insecure)
@@ -199,7 +201,7 @@ func (b *Backend) uploadAttestation(attestation in_toto.Statement, signature str
 		if err := ociremote.WriteAttestations(repo, newImage, ociremote.WithRemoteOptions(remoteOpts...)); err != nil {
 			return err
 		}
-		b.logger.Infof("Successfully uploaded attestation for %s", imageName)
+		logger.Infof("Successfully uploaded attestation for %s", imageName)
 	}
 	return nil
 }
@@ -282,7 +284,7 @@ func (b *Backend) RetrievePayloads(ctx context.Context, obj objects.TektonObject
 
 func (b *Backend) RetrieveArtifact(ctx context.Context, obj objects.TektonObject, opts config.StorageOpts) (map[string]oci.SignedImage, error) {
 	// Given the TaskRun, retrieve the OCI images.
-	images := artifacts.ExtractOCIImagesFromResults(obj, b.logger)
+	images := artifacts.ExtractOCIImagesFromResults(ctx, obj)
 	m := make(map[string]oci.SignedImage)
 
 	for _, image := range images {

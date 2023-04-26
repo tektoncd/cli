@@ -729,7 +729,7 @@ func TestTaskDescribe_Full_v1beta1(t *testing.T) {
 					{
 						Name: "print",
 						Type: v1beta1.ParamTypeString,
-						Default: &v1beta1.ArrayOrString{
+						Default: &v1beta1.ParamValue{
 							Type:      v1beta1.ParamTypeString,
 							StringVal: "somethingdifferent",
 						},
@@ -737,7 +737,7 @@ func TestTaskDescribe_Full_v1beta1(t *testing.T) {
 					{
 						Name: "output",
 						Type: v1beta1.ParamTypeArray,
-						Default: &v1beta1.ArrayOrString{
+						Default: &v1beta1.ParamValue{
 							Type:     v1beta1.ParamTypeArray,
 							ArrayVal: []string{"booms", "booms", "booms"},
 						},

@@ -15,41 +15,8 @@
 package builder
 
 import (
-	"sort"
-
 	"github.com/tektoncd/pipeline/pkg/apis/pipeline/v1beta1"
-	corev1 "k8s.io/api/core/v1"
 )
-
-func TaskRunHasFailed(tr *v1beta1.TaskRun) string {
-	if len(tr.Status.Conditions) == 0 {
-		return ""
-	}
-
-	if tr.Status.Conditions[0].Status == corev1.ConditionFalse {
-		return tr.Status.Conditions[0].Message
-	}
-	return ""
-}
-
-// this will sort the Resource by Type and then by Name
-func SortResourcesByTypeAndName(pres []v1beta1.PipelineDeclaredResource) []v1beta1.PipelineDeclaredResource {
-	sort.Slice(pres, func(i, j int) bool {
-		if pres[j].Type < pres[i].Type {
-			return false
-		}
-
-		if pres[j].Type > pres[i].Type {
-			return true
-		}
-
-		return pres[j].Name > pres[i].Name
-	})
-
-	return pres
-}
-
-// Pipeline Run Describe command
 
 type TaskrunList []tkr
 

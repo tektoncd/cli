@@ -190,7 +190,7 @@ func Test_ClusterTask_Start(t *testing.T) {
 					{
 						Name: "myarg",
 						Type: v1beta1.ParamTypeString,
-						Default: &v1beta1.ArrayOrString{
+						Default: &v1beta1.ParamValue{
 							Type:      v1beta1.ParamTypeString,
 							StringVal: "arg1",
 						},
@@ -198,7 +198,7 @@ func Test_ClusterTask_Start(t *testing.T) {
 					{
 						Name: "print",
 						Type: v1beta1.ParamTypeArray,
-						Default: &v1beta1.ArrayOrString{
+						Default: &v1beta1.ParamValue{
 							Type:     v1beta1.ParamTypeArray,
 							ArrayVal: []string{"boom", "boom"},
 						},
@@ -260,11 +260,11 @@ func Test_ClusterTask_Start(t *testing.T) {
 				Params: []v1beta1.Param{
 					{
 						Name:  "myarg",
-						Value: v1beta1.ArrayOrString{Type: v1beta1.ParamTypeString, StringVal: "value"},
+						Value: v1beta1.ParamValue{Type: v1beta1.ParamTypeString, StringVal: "value"},
 					},
 					{
 						Name:  "print",
-						Value: v1beta1.ArrayOrString{Type: v1beta1.ParamTypeArray, ArrayVal: []string{"booms", "booms", "booms"}},
+						Value: v1beta1.ParamValue{Type: v1beta1.ParamTypeArray, ArrayVal: []string{"booms", "booms", "booms"}},
 					},
 				},
 				ServiceAccountName: "svc",

@@ -19,11 +19,11 @@ import (
 	"io"
 
 	"cloud.google.com/go/storage"
+	"knative.dev/pkg/logging"
 
 	"github.com/tektoncd/chains/pkg/chains/objects"
 	"github.com/tektoncd/chains/pkg/config"
 	"github.com/tektoncd/pipeline/pkg/apis/pipeline/v1beta1"
-	"go.uber.org/zap"
 )
 
 const (
@@ -38,21 +38,19 @@ const (
 // Backend is a storage backend that stores signed payloads in the TaskRun metadata as an annotation.
 // It is stored as base64 encoded JSON.
 type Backend struct {
-	logger *zap.SugaredLogger
 	writer gcsWriter
 	reader gcsReader
 	cfg    config.Config
 }
 
 // NewStorageBackend returns a new Tekton StorageBackend that stores signatures on a TaskRun
-func NewStorageBackend(ctx context.Context, logger *zap.SugaredLogger, cfg config.Config) (*Backend, error) {
+func NewStorageBackend(ctx context.Context, cfg config.Config) (*Backend, error) {
 	client, err := storage.NewClient(ctx)
 	if err != nil {
 		return nil, err
 	}
 	bucket := cfg.Storage.GCS.Bucket
 	return &Backend{
-		logger: logger,
 		writer: &writer{client: client, bucket: bucket},
 		reader: &reader{client: client, bucket: bucket},
 		cfg:    cfg,
@@ -61,6 +59,7 @@ func NewStorageBackend(ctx context.Context, logger *zap.SugaredLogger, cfg confi
 
 // StorePayload implements the storage.Backend interface.
 func (b *Backend) StorePayload(ctx context.Context, obj objects.TektonObject, rawPayload []byte, signature string, opts config.StorageOpts) error {
+	logger := logging.FromContext(ctx)
 	// TODO: Handle unsupported type gracefully
 	tr := obj.GetObject().(*v1beta1.TaskRun)
 	// We need multiple objects: the signature and the payload. We want to make these unique to the UID, but easy to find based on the
@@ -68,7 +67,7 @@ func (b *Backend) StorePayload(ctx context.Context, obj objects.TektonObject, ra
 	// $bucket/taskrun-$namespace-$name/$key.signature
 	// $bucket/taskrun-$namespace-$name/$key.payload
 	sigName := sigName(tr, opts)
-	b.logger.Infof("Storing signature at %s", sigName)
+	logger.Infof("Storing signature at %s", sigName)
 
 	sigObj := b.writer.GetWriter(ctx, sigName)
 	if _, err := sigObj.Write([]byte(signature)); err != nil {

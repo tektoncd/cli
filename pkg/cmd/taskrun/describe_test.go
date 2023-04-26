@@ -201,11 +201,11 @@ func TestTaskRunDescribe_only_taskrun_v1beta1(t *testing.T) {
 				Params: []v1beta1.Param{
 					{
 						Name:  "input",
-						Value: v1beta1.ArrayOrString{Type: v1beta1.ParamTypeString, StringVal: "param"},
+						Value: v1beta1.ParamValue{Type: v1beta1.ParamTypeString, StringVal: "param"},
 					},
 					{
 						Name:  "input2",
-						Value: v1beta1.ArrayOrString{Type: v1beta1.ParamTypeString, StringVal: "param2"},
+						Value: v1beta1.ParamValue{Type: v1beta1.ParamTypeString, StringVal: "param2"},
 					},
 				},
 			},
@@ -452,11 +452,11 @@ func TestTaskRunDescribe_no_resourceref_v1beta1(t *testing.T) {
 				Params: []v1beta1.Param{
 					{
 						Name:  "input",
-						Value: v1beta1.ArrayOrString{Type: v1beta1.ParamTypeString, StringVal: "param"},
+						Value: v1beta1.ParamValue{Type: v1beta1.ParamTypeString, StringVal: "param"},
 					},
 					{
 						Name:  "input2",
-						Value: v1beta1.ArrayOrString{Type: v1beta1.ParamTypeString, StringVal: "param2"},
+						Value: v1beta1.ParamValue{Type: v1beta1.ParamTypeString, StringVal: "param2"},
 					},
 				},
 			},
@@ -552,11 +552,11 @@ func TestTaskRunDescribe_step_sidecar_status_defaults_and_failures_v1beta1(t *te
 				Params: []v1beta1.Param{
 					{
 						Name:  "input",
-						Value: v1beta1.ArrayOrString{Type: v1beta1.ParamTypeString, StringVal: "param"},
+						Value: v1beta1.ParamValue{Type: v1beta1.ParamTypeString, StringVal: "param"},
 					},
 					{
 						Name:  "input2",
-						Value: v1beta1.ArrayOrString{Type: v1beta1.ParamTypeString, StringVal: "param2"},
+						Value: v1beta1.ParamValue{Type: v1beta1.ParamTypeString, StringVal: "param2"},
 					},
 				},
 			},
@@ -655,11 +655,11 @@ func TestTaskRunDescribe_step_status_pending_one_sidecar_v1beta1(t *testing.T) {
 				Params: []v1beta1.Param{
 					{
 						Name:  "input",
-						Value: v1beta1.ArrayOrString{Type: v1beta1.ParamTypeString, StringVal: "param"},
+						Value: v1beta1.ParamValue{Type: v1beta1.ParamTypeString, StringVal: "param"},
 					},
 					{
 						Name:  "input2",
-						Value: v1beta1.ArrayOrString{Type: v1beta1.ParamTypeString, StringVal: "param2"},
+						Value: v1beta1.ParamValue{Type: v1beta1.ParamTypeString, StringVal: "param2"},
 					},
 				},
 			},
@@ -766,11 +766,11 @@ func TestTaskRunDescribe_step_status_running_multiple_sidecars_v1beta1(t *testin
 				Params: []v1beta1.Param{
 					{
 						Name:  "input",
-						Value: v1beta1.ArrayOrString{Type: v1beta1.ParamTypeString, StringVal: "param"},
+						Value: v1beta1.ParamValue{Type: v1beta1.ParamTypeString, StringVal: "param"},
 					},
 					{
 						Name:  "input2",
-						Value: v1beta1.ArrayOrString{Type: v1beta1.ParamTypeString, StringVal: "param2"},
+						Value: v1beta1.ParamValue{Type: v1beta1.ParamTypeString, StringVal: "param2"},
 					},
 				},
 			},
@@ -1080,14 +1080,14 @@ func TestTaskRunDescribe_With_Results_v1beta1(t *testing.T) {
 					TaskRunResults: []v1beta1.TaskRunResult{
 						{
 							Name: "result-1",
-							Value: v1beta1.ArrayOrString{
+							Value: v1beta1.ParamValue{
 								Type:      v1beta1.ParamTypeString,
 								StringVal: "value-1",
 							},
 						},
 						{
 							Name: "result-2",
-							Value: v1beta1.ArrayOrString{
+							Value: v1beta1.ParamValue{
 								Type:      v1beta1.ParamTypeString,
 								StringVal: "value-2",
 							},
@@ -1218,14 +1218,14 @@ func TestTaskRunDescribe_With_Workspaces_v1beta1(t *testing.T) {
 					TaskRunResults: []v1beta1.TaskRunResult{
 						{
 							Name: "result-1",
-							Value: v1beta1.ArrayOrString{
+							Value: v1beta1.ParamValue{
 								Type:      v1beta1.ParamTypeString,
 								StringVal: "value-1",
 							},
 						},
 						{
 							Name: "result-2",
-							Value: v1beta1.ArrayOrString{
+							Value: v1beta1.ParamValue{
 								Type:      v1beta1.ParamTypeString,
 								StringVal: "value-2",
 							},

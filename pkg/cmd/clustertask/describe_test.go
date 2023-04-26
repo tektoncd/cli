@@ -50,7 +50,7 @@ func Test_ClusterTaskDescribe(t *testing.T) {
 						Name:        "myarg",
 						Type:        v1beta1.ParamTypeString,
 						Description: "param type is string",
-						Default: &v1beta1.ArrayOrString{
+						Default: &v1beta1.ParamValue{
 							Type:      v1beta1.ParamTypeString,
 							StringVal: "default",
 						},
@@ -59,7 +59,7 @@ func Test_ClusterTaskDescribe(t *testing.T) {
 						Name:        "print",
 						Type:        v1beta1.ParamTypeArray,
 						Description: "param type is array",
-						Default: &v1beta1.ArrayOrString{
+						Default: &v1beta1.ParamValue{
 							Type:     v1beta1.ParamTypeArray,
 							ArrayVal: []string{"booms", "booms", "booms"},
 						},
@@ -124,14 +124,14 @@ func Test_ClusterTaskDescribe(t *testing.T) {
 				Params: []v1beta1.Param{
 					{
 						Name: "myarg",
-						Value: v1beta1.ArrayOrString{
+						Value: v1beta1.ParamValue{
 							Type:      v1beta1.ParamTypeString,
 							StringVal: "value",
 						},
 					},
 					{
 						Name: "print",
-						Value: v1beta1.ArrayOrString{
+						Value: v1beta1.ParamValue{
 							Type:     v1beta1.ParamTypeArray,
 							ArrayVal: []string{"booms", "booms", "booms"},
 						},
@@ -170,7 +170,7 @@ func Test_ClusterTaskDescribe(t *testing.T) {
 				Params: []v1beta1.Param{
 					{
 						Name: "myarg",
-						Value: v1beta1.ArrayOrString{
+						Value: v1beta1.ParamValue{
 							Type:      v1beta1.ParamTypeString,
 							StringVal: "value",
 						},
@@ -209,14 +209,14 @@ func Test_ClusterTaskDescribe(t *testing.T) {
 				Params: []v1beta1.Param{
 					{
 						Name: "myarg",
-						Value: v1beta1.ArrayOrString{
+						Value: v1beta1.ParamValue{
 							Type:      v1beta1.ParamTypeString,
 							StringVal: "value",
 						},
 					},
 					{
 						Name: "print",
-						Value: v1beta1.ArrayOrString{
+						Value: v1beta1.ParamValue{
 							Type:     v1beta1.ParamTypeArray,
 							ArrayVal: []string{"booms", "booms", "booms"},
 						},

@@ -748,7 +748,7 @@ func TestPipelineRunDescribe_with_resources_taskrun_v1beta1(t *testing.T) {
 				Params: []v1beta1.Param{
 					{
 						Name: "test-param",
-						Value: v1beta1.ArrayOrString{
+						Value: v1beta1.ParamValue{
 							Type:      v1beta1.ParamTypeString,
 							StringVal: "param-value",
 						},
@@ -991,7 +991,7 @@ func TestPipelineRunDescribe_no_resourceref_v1beta1(t *testing.T) {
 				Params: []v1beta1.Param{
 					{
 						Name: "test-param",
-						Value: v1beta1.ArrayOrString{
+						Value: v1beta1.ParamValue{
 							Type:      v1beta1.ParamTypeString,
 							StringVal: "param-value",
 						},
@@ -1407,14 +1407,14 @@ func TestPipelineRunDescribe_v1beta1(t *testing.T) {
 				Params: []v1beta1.Param{
 					{
 						Name: "p-1",
-						Value: v1beta1.ArrayOrString{
+						Value: v1beta1.ParamValue{
 							Type:      v1beta1.ParamTypeString,
 							StringVal: "somethingdifferent",
 						},
 					},
 					{
 						Name: "p-2",
-						Value: v1beta1.ArrayOrString{
+						Value: v1beta1.ParamValue{
 							Type:     v1beta1.ParamTypeArray,
 							ArrayVal: []string{"booms", "booms", "booms"},
 						},
@@ -1542,14 +1542,14 @@ func TestPipelineRunDescribe_taskrun_with_no_status_v1beta1(t *testing.T) {
 				Params: []v1beta1.Param{
 					{
 						Name: "p-1",
-						Value: v1beta1.ArrayOrString{
+						Value: v1beta1.ParamValue{
 							Type:      v1beta1.ParamTypeString,
 							StringVal: "somethingdifferent",
 						},
 					},
 					{
 						Name: "p-2",
-						Value: v1beta1.ArrayOrString{
+						Value: v1beta1.ParamValue{
 							Type:     v1beta1.ParamTypeArray,
 							ArrayVal: []string{"booms", "booms", "booms"},
 						},
@@ -1692,14 +1692,14 @@ func TestPipelineRunDescribe_last_v1beta1(t *testing.T) {
 				Params: []v1beta1.Param{
 					{
 						Name: "p-1",
-						Value: v1beta1.ArrayOrString{
+						Value: v1beta1.ParamValue{
 							Type:      v1beta1.ParamTypeString,
 							StringVal: "somethingdifferent",
 						},
 					},
 					{
 						Name: "p-2",
-						Value: v1beta1.ArrayOrString{
+						Value: v1beta1.ParamValue{
 							Type:     v1beta1.ParamTypeArray,
 							ArrayVal: []string{"booms", "booms", "booms"},
 						},
@@ -1750,14 +1750,14 @@ func TestPipelineRunDescribe_last_v1beta1(t *testing.T) {
 				Params: []v1beta1.Param{
 					{
 						Name: "p-1",
-						Value: v1beta1.ArrayOrString{
+						Value: v1beta1.ParamValue{
 							Type:      v1beta1.ParamTypeString,
 							StringVal: "somethingdifferent",
 						},
 					},
 					{
 						Name: "p-2",
-						Value: v1beta1.ArrayOrString{
+						Value: v1beta1.ParamValue{
 							Type:     v1beta1.ParamTypeArray,
 							ArrayVal: []string{"booms", "booms", "booms"},
 						},
@@ -1874,7 +1874,7 @@ func TestPipelineRunDescribe_with_results_v1beta1(t *testing.T) {
 				Params: []v1beta1.Param{
 					{
 						Name: "p-1",
-						Value: v1beta1.ArrayOrString{
+						Value: v1beta1.ParamValue{
 							Type:      v1beta1.ParamTypeString,
 							StringVal: "somethingdifferent",
 						},
@@ -1906,14 +1906,14 @@ func TestPipelineRunDescribe_with_results_v1beta1(t *testing.T) {
 					PipelineResults: []v1beta1.PipelineRunResult{
 						{
 							Name: "result-1",
-							Value: v1beta1.ArrayOrString{
+							Value: v1beta1.ParamValue{
 								Type:      v1beta1.ParamTypeString,
 								StringVal: "value-1",
 							},
 						},
 						{
 							Name: "result-2",
-							Value: v1beta1.ArrayOrString{
+							Value: v1beta1.ParamValue{
 								Type:      v1beta1.ParamTypeString,
 								StringVal: "value-2",
 							},
@@ -2046,7 +2046,7 @@ func TestPipelineRunDescribe_with_workspaces_v1beta1(t *testing.T) {
 				Params: []v1beta1.Param{
 					{
 						Name: "p-1",
-						Value: v1beta1.ArrayOrString{
+						Value: v1beta1.ParamValue{
 							Type:      v1beta1.ParamTypeString,
 							StringVal: "somethingdifferent",
 						},
@@ -2098,14 +2098,14 @@ func TestPipelineRunDescribe_with_workspaces_v1beta1(t *testing.T) {
 					PipelineResults: []v1beta1.PipelineRunResult{
 						{
 							Name: "result-1",
-							Value: v1beta1.ArrayOrString{
+							Value: v1beta1.ParamValue{
 								Type:      v1beta1.ParamTypeString,
 								StringVal: "value-1",
 							},
 						},
 						{
 							Name: "result-2",
-							Value: v1beta1.ArrayOrString{
+							Value: v1beta1.ParamValue{
 								Type:      v1beta1.ParamTypeString,
 								StringVal: "value-2",
 							},
@@ -2216,14 +2216,14 @@ func TestPipelineRunDescribeWithSkippedTasks_v1beta1(t *testing.T) {
 				Params: []v1beta1.Param{
 					{
 						Name: "p-1",
-						Value: v1beta1.ArrayOrString{
+						Value: v1beta1.ParamValue{
 							Type:      v1beta1.ParamTypeString,
 							StringVal: "somethingdifferent",
 						},
 					},
 					{
 						Name: "p-2",
-						Value: v1beta1.ArrayOrString{
+						Value: v1beta1.ParamValue{
 							Type:     v1beta1.ParamTypeArray,
 							ArrayVal: []string{"booms", "booms", "booms"},
 						},
@@ -2532,14 +2532,14 @@ func TestPipelineRunDescribeWithTimeouts_v1beta1(t *testing.T) {
 				Params: []v1beta1.Param{
 					{
 						Name: "p-1",
-						Value: v1beta1.ArrayOrString{
+						Value: v1beta1.ParamValue{
 							Type:      v1beta1.ParamTypeString,
 							StringVal: "somethingdifferent",
 						},
 					},
 					{
 						Name: "p-2",
-						Value: v1beta1.ArrayOrString{
+						Value: v1beta1.ParamValue{
 							Type:     v1beta1.ParamTypeArray,
 							ArrayVal: []string{"booms", "booms", "booms"},
 						},

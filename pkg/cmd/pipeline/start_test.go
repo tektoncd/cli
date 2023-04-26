@@ -153,7 +153,7 @@ func TestPipelineStart_ExecuteCommand_v1beta1(t *testing.T) {
 					{
 						Name: "pipeline-param",
 						Type: v1beta1.ParamTypeString,
-						Default: &v1beta1.ArrayOrString{
+						Default: &v1beta1.ParamValue{
 							Type:      v1beta1.ParamTypeString,
 							StringVal: "somethingdifferent",
 						},
@@ -161,7 +161,7 @@ func TestPipelineStart_ExecuteCommand_v1beta1(t *testing.T) {
 					{
 						Name: "rev-param",
 						Type: v1beta1.ParamTypeString,
-						Default: &v1beta1.ArrayOrString{
+						Default: &v1beta1.ParamValue{
 							Type:      v1beta1.ParamTypeString,
 							StringVal: "revision",
 						},
@@ -275,7 +275,6 @@ func TestPipelineStart_ExecuteCommand_v1beta1(t *testing.T) {
 	cs6 := pipelinetest.Clients{
 		Pipeline: seedData2.Pipeline,
 		Kube:     seedData2.Kube,
-		Resource: seedData2.Resource,
 	}
 	cs6.Pipeline.Resources = cb.APIResourceList("v1beta1", []string{"pipeline", "pipelinerun"})
 	_, tdc6 := newV1beta1PipelineClient(objs2...)
@@ -706,23 +705,6 @@ func TestPipelineStart_ExecuteCommand_v1beta1(t *testing.T) {
 			want:      "cannot use --last option with --filename option",
 		},
 		{
-			name: "Dry Run with --timeout specified (deprecated)",
-			command: []string{
-				"start", "test-pipeline",
-				"-s=svc1",
-				"-p=pipeline-param=value1",
-				"-p=rev-param=value2",
-				"-l=jemange=desfrites",
-				"-n", "ns",
-				"--dry-run",
-				"--timeout", "1s",
-			},
-			namespace:  "",
-			input:      c2,
-			wantError:  false,
-			goldenFile: true,
-		},
-		{
 			name: "Dry Run with --pipeline-timeout specified",
 			command: []string{
 				"start", "test-pipeline",
@@ -923,7 +905,7 @@ func TestPipelineStart_Interactive_v1beta1(t *testing.T) {
 						{
 							Name: "pipeline-param",
 							Type: v1beta1.ParamTypeString,
-							Default: &v1beta1.ArrayOrString{
+							Default: &v1beta1.ParamValue{
 								Type:      v1beta1.ParamTypeString,
 								StringVal: "somethingdifferent",
 							},
@@ -931,7 +913,7 @@ func TestPipelineStart_Interactive_v1beta1(t *testing.T) {
 						{
 							Name: "rev-param",
 							Type: v1beta1.ParamTypeString,
-							Default: &v1beta1.ArrayOrString{
+							Default: &v1beta1.ParamValue{
 								Type:      v1beta1.ParamTypeString,
 								StringVal: "revision",
 							},
@@ -939,7 +921,7 @@ func TestPipelineStart_Interactive_v1beta1(t *testing.T) {
 						{
 							Name: "array-param",
 							Type: v1beta1.ParamTypeArray,
-							Default: &v1beta1.ArrayOrString{
+							Default: &v1beta1.ParamValue{
 								Type:     v1beta1.ParamTypeString,
 								ArrayVal: []string{"revision1", "revision2"},
 							},
@@ -1257,7 +1239,7 @@ func Test_start_pipeline_v1beta1(t *testing.T) {
 					{
 						Name: "pipeline-param",
 						Type: v1beta1.ParamTypeString,
-						Default: &v1beta1.ArrayOrString{
+						Default: &v1beta1.ParamValue{
 							Type:      v1beta1.ParamTypeString,
 							StringVal: "somethingdifferent",
 						},
@@ -1265,7 +1247,7 @@ func Test_start_pipeline_v1beta1(t *testing.T) {
 					{
 						Name: "rev-param",
 						Type: v1beta1.ParamTypeArray,
-						Default: &v1beta1.ArrayOrString{
+						Default: &v1beta1.ParamValue{
 							Type:     v1beta1.ParamTypeArray,
 							ArrayVal: []string{"booms", "booms", "booms"},
 						},
@@ -1356,7 +1338,7 @@ func Test_start_pipeline_last_v1beta1(t *testing.T) {
 					{
 						Name: "pipeline-param-1",
 						Type: v1beta1.ParamTypeString,
-						Default: &v1beta1.ArrayOrString{
+						Default: &v1beta1.ParamValue{
 							Type:      v1beta1.ParamTypeString,
 							StringVal: "somethingdifferent-1",
 						},
@@ -1364,7 +1346,7 @@ func Test_start_pipeline_last_v1beta1(t *testing.T) {
 					{
 						Name: "rev-param",
 						Type: v1beta1.ParamTypeString,
-						Default: &v1beta1.ArrayOrString{
+						Default: &v1beta1.ParamValue{
 							Type:      v1beta1.ParamTypeString,
 							StringVal: "revision",
 						},
@@ -1395,14 +1377,14 @@ func Test_start_pipeline_last_v1beta1(t *testing.T) {
 				Params: []v1beta1.Param{
 					{
 						Name: "pipeline-param-1",
-						Value: v1beta1.ArrayOrString{
+						Value: v1beta1.ParamValue{
 							Type:      v1beta1.ParamTypeString,
 							StringVal: "somethingmorefun",
 						},
 					},
 					{
 						Name: "rev-param",
-						Value: v1beta1.ArrayOrString{
+						Value: v1beta1.ParamValue{
 							Type:      v1beta1.ParamTypeString,
 							StringVal: "revision1",
 						},
@@ -1413,7 +1395,7 @@ func Test_start_pipeline_last_v1beta1(t *testing.T) {
 						Name: "test-new",
 					},
 				},
-				Timeout: &metav1.Duration{Duration: timeoutDuration},
+				Timeouts: &v1beta1.TimeoutFields{Pipeline: &metav1.Duration{Duration: timeoutDuration}},
 			},
 			Status: v1beta1.PipelineRunStatus{
 				Status: duckv1.Status{
@@ -1442,7 +1424,6 @@ func Test_start_pipeline_last_v1beta1(t *testing.T) {
 	cs := pipelinetest.Clients{
 		Pipeline: seedData.Pipeline,
 		Kube:     seedData.Kube,
-		Resource: seedData.Resource,
 	}
 	cs.Pipeline.Resources = cb.APIResourceList("v1beta1", []string{"pipeline", "pipelinerun"})
 	objs := []runtime.Object{ps[0], prs[0]}
@@ -1474,13 +1455,13 @@ func Test_start_pipeline_last_v1beta1(t *testing.T) {
 	test.AssertOutput(t, 2, len(pr.Spec.Params))
 	for _, v := range pr.Spec.Params {
 		if v.Name == "rev-param" {
-			test.AssertOutput(t, v1beta1.ArrayOrString{Type: v1beta1.ParamTypeString, StringVal: "revision1"}, v.Value)
+			test.AssertOutput(t, v1beta1.ParamValue{Type: v1beta1.ParamTypeString, StringVal: "revision1"}, v.Value)
 		}
 	}
 
 	test.AssertOutput(t, "test-sa", pr.Spec.ServiceAccountName)
 	test.AssertOutput(t, "test-new", pr.Spec.Workspaces[0].Name)
-	test.AssertOutput(t, timeoutDuration, pr.Spec.Timeout.Duration)
+	test.AssertOutput(t, timeoutDuration, pr.Spec.Timeouts.Pipeline.Duration)
 }
 
 func Test_start_pipeline_last_override_timeout_deprecated_v1beta1(t *testing.T) {
@@ -1510,7 +1491,7 @@ func Test_start_pipeline_last_override_timeout_deprecated_v1beta1(t *testing.T) 
 					{
 						Name: "pipeline-param-1",
 						Type: v1beta1.ParamTypeString,
-						Default: &v1beta1.ArrayOrString{
+						Default: &v1beta1.ParamValue{
 							Type:      v1beta1.ParamTypeString,
 							StringVal: "somethingdifferent-1",
 						},
@@ -1518,7 +1499,7 @@ func Test_start_pipeline_last_override_timeout_deprecated_v1beta1(t *testing.T) 
 					{
 						Name: "rev-param",
 						Type: v1beta1.ParamTypeString,
-						Default: &v1beta1.ArrayOrString{
+						Default: &v1beta1.ParamValue{
 							Type:      v1beta1.ParamTypeString,
 							StringVal: "revision",
 						},
@@ -1550,14 +1531,14 @@ func Test_start_pipeline_last_override_timeout_deprecated_v1beta1(t *testing.T) 
 				Params: []v1beta1.Param{
 					{
 						Name: "pipeline-param-1",
-						Value: v1beta1.ArrayOrString{
+						Value: v1beta1.ParamValue{
 							Type:      v1beta1.ParamTypeString,
 							StringVal: "somethingmorefun",
 						},
 					},
 					{
 						Name: "rev-param",
-						Value: v1beta1.ArrayOrString{
+						Value: v1beta1.ParamValue{
 							Type:      v1beta1.ParamTypeString,
 							StringVal: "revision1",
 						},
@@ -1568,7 +1549,7 @@ func Test_start_pipeline_last_override_timeout_deprecated_v1beta1(t *testing.T) 
 						Name: "test-new",
 					},
 				},
-				Timeout: &metav1.Duration{Duration: timeoutDuration},
+				Timeouts: &v1beta1.TimeoutFields{Pipeline: &metav1.Duration{Duration: timeoutDuration}},
 			},
 			Status: v1beta1.PipelineRunStatus{
 				Status: duckv1.Status{
@@ -1597,7 +1578,6 @@ func Test_start_pipeline_last_override_timeout_deprecated_v1beta1(t *testing.T) 
 	cs := pipelinetest.Clients{
 		Pipeline: seedData.Pipeline,
 		Kube:     seedData.Kube,
-		Resource: seedData.Resource,
 	}
 	cs.Pipeline.Resources = cb.APIResourceList("v1beta1", []string{"pipeline", "pipelinerun"})
 	objs := []runtime.Object{ps[0], prs[0]}
@@ -1630,7 +1610,7 @@ func Test_start_pipeline_last_override_timeout_deprecated_v1beta1(t *testing.T) 
 
 	// Assert newly started PipelineRun has new timeout value
 	timeoutDuration, _ = time.ParseDuration("1s")
-	test.AssertOutput(t, timeoutDuration, pr.Spec.Timeout.Duration)
+	test.AssertOutput(t, timeoutDuration, pr.Spec.Timeouts.Pipeline.Duration)
 }
 
 func Test_start_pipeline_last_without_res_param_v1beta1(t *testing.T) {
@@ -1655,7 +1635,7 @@ func Test_start_pipeline_last_without_res_param_v1beta1(t *testing.T) {
 					{
 						Name: "pipeline-param-1",
 						Type: v1beta1.ParamTypeString,
-						Default: &v1beta1.ArrayOrString{
+						Default: &v1beta1.ParamValue{
 							Type:      v1beta1.ParamTypeString,
 							StringVal: "somethingdifferent-1",
 						},
@@ -1663,7 +1643,7 @@ func Test_start_pipeline_last_without_res_param_v1beta1(t *testing.T) {
 					{
 						Name: "rev-param",
 						Type: v1beta1.ParamTypeString,
-						Default: &v1beta1.ArrayOrString{
+						Default: &v1beta1.ParamValue{
 							Type:      v1beta1.ParamTypeString,
 							StringVal: "revision",
 						},
@@ -1688,14 +1668,14 @@ func Test_start_pipeline_last_without_res_param_v1beta1(t *testing.T) {
 				Params: []v1beta1.Param{
 					{
 						Name: "pipeline-param-1",
-						Value: v1beta1.ArrayOrString{
+						Value: v1beta1.ParamValue{
 							Type:      v1beta1.ParamTypeString,
 							StringVal: "somethingmorefun",
 						},
 					},
 					{
 						Name: "rev-param",
-						Value: v1beta1.ArrayOrString{
+						Value: v1beta1.ParamValue{
 							Type:      v1beta1.ParamTypeString,
 							StringVal: "revision1",
 						},
@@ -1729,7 +1709,6 @@ func Test_start_pipeline_last_without_res_param_v1beta1(t *testing.T) {
 	cs := pipelinetest.Clients{
 		Pipeline: seedData.Pipeline,
 		Kube:     seedData.Kube,
-		Resource: seedData.Resource,
 	}
 	cs.Pipeline.Resources = cb.APIResourceList("v1beta1", []string{"pipeline", "pipelinerun"})
 	objs := []runtime.Object{ps[0], prs[0]}
@@ -1761,7 +1740,7 @@ func Test_start_pipeline_last_without_res_param_v1beta1(t *testing.T) {
 
 	for _, v := range pr.Spec.Params {
 		if v.Name == "rev-param" {
-			test.AssertOutput(t, v1beta1.ArrayOrString{Type: v1beta1.ParamTypeString, StringVal: "revision1"}, v.Value)
+			test.AssertOutput(t, v1beta1.ParamValue{Type: v1beta1.ParamTypeString, StringVal: "revision1"}, v.Value)
 		}
 	}
 	test.AssertOutput(t, "test-sa", pr.Spec.ServiceAccountName)
@@ -1789,7 +1768,7 @@ func Test_start_pipeline_last_merge_v1beta1(t *testing.T) {
 					{
 						Name: "pipeline-param-1",
 						Type: v1beta1.ParamTypeString,
-						Default: &v1beta1.ArrayOrString{
+						Default: &v1beta1.ParamValue{
 							Type:      v1beta1.ParamTypeString,
 							StringVal: "somethingdifferent-1",
 						},
@@ -1797,7 +1776,7 @@ func Test_start_pipeline_last_merge_v1beta1(t *testing.T) {
 					{
 						Name: "rev-param",
 						Type: v1beta1.ParamTypeString,
-						Default: &v1beta1.ArrayOrString{
+						Default: &v1beta1.ParamValue{
 							Type:      v1beta1.ParamTypeString,
 							StringVal: "revision",
 						},
@@ -1832,14 +1811,14 @@ func Test_start_pipeline_last_merge_v1beta1(t *testing.T) {
 				Params: []v1beta1.Param{
 					{
 						Name: "pipeline-param-1",
-						Value: v1beta1.ArrayOrString{
+						Value: v1beta1.ParamValue{
 							Type:      v1beta1.ParamTypeString,
 							StringVal: "somethingmorefun",
 						},
 					},
 					{
 						Name: "rev-param",
-						Value: v1beta1.ArrayOrString{
+						Value: v1beta1.ParamValue{
 							Type:      v1beta1.ParamTypeString,
 							StringVal: "revision1",
 						},
@@ -1873,7 +1852,6 @@ func Test_start_pipeline_last_merge_v1beta1(t *testing.T) {
 	cs := pipelinetest.Clients{
 		Pipeline: seedData.Pipeline,
 		Kube:     seedData.Kube,
-		Resource: seedData.Resource,
 	}
 	cs.Pipeline.Resources = cb.APIResourceList("v1beta1", []string{"pipeline", "pipelinerun"})
 	objs := []runtime.Object{ps[0], prs[0]}
@@ -1909,7 +1887,7 @@ func Test_start_pipeline_last_merge_v1beta1(t *testing.T) {
 
 	for _, v := range pr.Spec.Params {
 		if v.Name == "rev-param" {
-			test.AssertOutput(t, v1beta1.ArrayOrString{Type: v1beta1.ParamTypeString, StringVal: "revision2"}, v.Value)
+			test.AssertOutput(t, v1beta1.ParamValue{Type: v1beta1.ParamTypeString, StringVal: "revision2"}, v.Value)
 		}
 	}
 
@@ -1946,7 +1924,7 @@ func Test_start_pipeline_use_pipelinerun_v1beta1(t *testing.T) {
 					{
 						Name: "pipeline-param-1",
 						Type: v1beta1.ParamTypeString,
-						Default: &v1beta1.ArrayOrString{
+						Default: &v1beta1.ParamValue{
 							Type:      v1beta1.ParamTypeString,
 							StringVal: "somethingdifferent-1",
 						},
@@ -1954,7 +1932,7 @@ func Test_start_pipeline_use_pipelinerun_v1beta1(t *testing.T) {
 					{
 						Name: "rev-param",
 						Type: v1beta1.ParamTypeString,
-						Default: &v1beta1.ArrayOrString{
+						Default: &v1beta1.ParamValue{
 							Type:      v1beta1.ParamTypeString,
 							StringVal: "revision",
 						},
@@ -2000,13 +1978,13 @@ func Test_start_pipeline_use_pipelinerun_v1beta1(t *testing.T) {
 				Params: []v1beta1.Param{
 					{
 						Name: "brush",
-						Value: v1beta1.ArrayOrString{
+						Value: v1beta1.ParamValue{
 							Type:      v1beta1.ParamTypeString,
 							StringVal: "teeth",
 						},
 					},
 				},
-				Timeout: &metav1.Duration{Duration: timeoutDuration},
+				Timeouts: &v1beta1.TimeoutFields{Pipeline: &metav1.Duration{Duration: timeoutDuration}},
 			},
 			Status: v1beta1.PipelineRunStatus{
 				Status: duckv1.Status{
@@ -2035,7 +2013,6 @@ func Test_start_pipeline_use_pipelinerun_v1beta1(t *testing.T) {
 	cs := pipelinetest.Clients{
 		Pipeline: seedData.Pipeline,
 		Kube:     seedData.Kube,
-		Resource: seedData.Resource,
 	}
 	cs.Pipeline.Resources = cb.APIResourceList("v1beta1", []string{"pipeline", "pipelinerun"})
 	objs := []runtime.Object{ps[0], prs[0], prs[1]}
@@ -2061,8 +2038,8 @@ func Test_start_pipeline_use_pipelinerun_v1beta1(t *testing.T) {
 		t.Errorf("Error getting pipelineruns %s", err.Error())
 	}
 	test.AssertOutput(t, pr.Spec.Params[0].Name, "brush")
-	test.AssertOutput(t, pr.Spec.Params[0].Value, v1beta1.ArrayOrString{Type: "string", StringVal: "teeth"})
-	test.AssertOutput(t, timeoutDuration, pr.Spec.Timeout.Duration)
+	test.AssertOutput(t, pr.Spec.Params[0].Value, v1beta1.ParamValue{Type: "string", StringVal: "teeth"})
+	test.AssertOutput(t, timeoutDuration, pr.Spec.Timeouts.Pipeline.Duration)
 }
 
 func Test_start_pipeline_use_pipelinerun_cancelled_status_v1beta1(t *testing.T) {
@@ -2089,7 +2066,7 @@ func Test_start_pipeline_use_pipelinerun_cancelled_status_v1beta1(t *testing.T) 
 					{
 						Name: "pipeline-param-1",
 						Type: v1beta1.ParamTypeString,
-						Default: &v1beta1.ArrayOrString{
+						Default: &v1beta1.ParamValue{
 							Type:      v1beta1.ParamTypeString,
 							StringVal: "somethingdifferent-1",
 						},
@@ -2097,7 +2074,7 @@ func Test_start_pipeline_use_pipelinerun_cancelled_status_v1beta1(t *testing.T) 
 					{
 						Name: "rev-param",
 						Type: v1beta1.ParamTypeString,
-						Default: &v1beta1.ArrayOrString{
+						Default: &v1beta1.ParamValue{
 							Type:      v1beta1.ParamTypeString,
 							StringVal: "revision",
 						},
@@ -2121,13 +2098,13 @@ func Test_start_pipeline_use_pipelinerun_cancelled_status_v1beta1(t *testing.T) 
 				Params: []v1beta1.Param{
 					{
 						Name: "brush",
-						Value: v1beta1.ArrayOrString{
+						Value: v1beta1.ParamValue{
 							Type:      v1beta1.ParamTypeString,
 							StringVal: "teeth",
 						},
 					},
 				},
-				Timeout: &metav1.Duration{Duration: timeoutDuration},
+				Timeouts: &v1beta1.TimeoutFields{Pipeline: &metav1.Duration{Duration: timeoutDuration}},
 				// nolint: staticcheck
 				Status: v1beta1.PipelineRunSpecStatus(v1beta1.PipelineRunSpecStatusCancelled),
 			},
@@ -2158,7 +2135,6 @@ func Test_start_pipeline_use_pipelinerun_cancelled_status_v1beta1(t *testing.T) 
 	cs := pipelinetest.Clients{
 		Pipeline: seedData.Pipeline,
 		Kube:     seedData.Kube,
-		Resource: seedData.Resource,
 	}
 	cs.Pipeline.Resources = cb.APIResourceList("v1beta1", []string{"pipeline", "pipelinerun"})
 	objs := []runtime.Object{ps[0], prs[0]}
@@ -2182,8 +2158,8 @@ func Test_start_pipeline_use_pipelinerun_cancelled_status_v1beta1(t *testing.T) 
 		t.Errorf("Error getting pipelineruns %s", err.Error())
 	}
 	test.AssertOutput(t, pr.Spec.Params[0].Name, "brush")
-	test.AssertOutput(t, pr.Spec.Params[0].Value, v1beta1.ArrayOrString{Type: "string", StringVal: "teeth"})
-	test.AssertOutput(t, timeoutDuration, pr.Spec.Timeout.Duration)
+	test.AssertOutput(t, pr.Spec.Params[0].Value, v1beta1.ParamValue{Type: "string", StringVal: "teeth"})
+	test.AssertOutput(t, timeoutDuration, pr.Spec.Timeouts.Pipeline.Duration)
 	// Assert that new PipelineRun does not contain cancelled status of previous run
 	test.AssertOutput(t, v1beta1.PipelineRunSpecStatus(""), pr.Spec.Status)
 }
@@ -2209,7 +2185,7 @@ func Test_start_pipeline_allkindparam_v1beta1(t *testing.T) {
 					{
 						Name: "pipeline-param",
 						Type: v1beta1.ParamTypeString,
-						Default: &v1beta1.ArrayOrString{
+						Default: &v1beta1.ParamValue{
 							Type:      v1beta1.ParamTypeString,
 							StringVal: "somethingdifferent",
 						},
@@ -2217,7 +2193,7 @@ func Test_start_pipeline_allkindparam_v1beta1(t *testing.T) {
 					{
 						Name: "rev-param",
 						Type: v1beta1.ParamTypeArray,
-						Default: &v1beta1.ArrayOrString{
+						Default: &v1beta1.ParamValue{
 							Type:     v1beta1.ParamTypeArray,
 							ArrayVal: []string{"booms", "booms", "booms"},
 						},
@@ -2225,7 +2201,7 @@ func Test_start_pipeline_allkindparam_v1beta1(t *testing.T) {
 					{
 						Name: "rev-param-new",
 						Type: v1beta1.ParamTypeArray,
-						Default: &v1beta1.ArrayOrString{
+						Default: &v1beta1.ParamValue{
 							Type:     v1beta1.ParamTypeArray,
 							ArrayVal: []string{"booms", "booms", "booms"},
 						},
@@ -2315,7 +2291,7 @@ func Test_start_pipeline_last_generate_name_v1beta1(t *testing.T) {
 					{
 						Name: "pipeline-param-1",
 						Type: v1beta1.ParamTypeString,
-						Default: &v1beta1.ArrayOrString{
+						Default: &v1beta1.ParamValue{
 							Type:      v1beta1.ParamTypeString,
 							StringVal: "somethingdifferent-1",
 						},
@@ -2323,7 +2299,7 @@ func Test_start_pipeline_last_generate_name_v1beta1(t *testing.T) {
 					{
 						Name: "rev-param",
 						Type: v1beta1.ParamTypeString,
-						Default: &v1beta1.ArrayOrString{
+						Default: &v1beta1.ParamValue{
 							Type:      v1beta1.ParamTypeString,
 							StringVal: "revision",
 						},
@@ -2348,14 +2324,14 @@ func Test_start_pipeline_last_generate_name_v1beta1(t *testing.T) {
 				Params: []v1beta1.Param{
 					{
 						Name: "pipeline-param-1",
-						Value: v1beta1.ArrayOrString{
+						Value: v1beta1.ParamValue{
 							Type:      v1beta1.ParamTypeString,
 							StringVal: "somethingmorefun",
 						},
 					},
 					{
 						Name: "rev-param",
-						Value: v1beta1.ArrayOrString{
+						Value: v1beta1.ParamValue{
 							Type:      v1beta1.ParamTypeString,
 							StringVal: "revision1",
 						},
@@ -2392,7 +2368,6 @@ func Test_start_pipeline_last_generate_name_v1beta1(t *testing.T) {
 	cs := pipelinetest.Clients{
 		Pipeline: seedData.Pipeline,
 		Kube:     seedData.Kube,
-		Resource: seedData.Resource,
 	}
 	cs.Pipeline.Resources = cb.APIResourceList("v1beta1", []string{"pipeline", "pipelinerun"})
 	objs := []runtime.Object{ps[0], prs[0]}
@@ -2449,7 +2424,7 @@ func Test_start_pipeline_last_with_prefix_name_v1beta1(t *testing.T) {
 					{
 						Name: "pipeline-param-1",
 						Type: v1beta1.ParamTypeString,
-						Default: &v1beta1.ArrayOrString{
+						Default: &v1beta1.ParamValue{
 							Type:      v1beta1.ParamTypeString,
 							StringVal: "somethingdifferent-1",
 						},
@@ -2457,7 +2432,7 @@ func Test_start_pipeline_last_with_prefix_name_v1beta1(t *testing.T) {
 					{
 						Name: "rev-param",
 						Type: v1beta1.ParamTypeString,
-						Default: &v1beta1.ArrayOrString{
+						Default: &v1beta1.ParamValue{
 							Type:      v1beta1.ParamTypeString,
 							StringVal: "revision",
 						},
@@ -2482,14 +2457,14 @@ func Test_start_pipeline_last_with_prefix_name_v1beta1(t *testing.T) {
 				Params: []v1beta1.Param{
 					{
 						Name: "pipeline-param-1",
-						Value: v1beta1.ArrayOrString{
+						Value: v1beta1.ParamValue{
 							Type:      v1beta1.ParamTypeString,
 							StringVal: "somethingmorefun",
 						},
 					},
 					{
 						Name: "rev-param",
-						Value: v1beta1.ArrayOrString{
+						Value: v1beta1.ParamValue{
 							Type:      v1beta1.ParamTypeString,
 							StringVal: "revision1",
 						},
@@ -2523,7 +2498,6 @@ func Test_start_pipeline_last_with_prefix_name_v1beta1(t *testing.T) {
 	cs := pipelinetest.Clients{
 		Pipeline: seedData.Pipeline,
 		Kube:     seedData.Kube,
-		Resource: seedData.Resource,
 	}
 	cs.Pipeline.Resources = cb.APIResourceList("v1beta1", []string{"pipeline", "pipelinerun"})
 	objs := []runtime.Object{ps[0], prs[0]}
@@ -2582,7 +2556,7 @@ func Test_start_pipeline_with_prefix_name_v1beta1(t *testing.T) {
 					{
 						Name: "pipeline-param-1",
 						Type: v1beta1.ParamTypeString,
-						Default: &v1beta1.ArrayOrString{
+						Default: &v1beta1.ParamValue{
 							Type:      v1beta1.ParamTypeString,
 							StringVal: "somethingdifferent-1",
 						},
@@ -2590,7 +2564,7 @@ func Test_start_pipeline_with_prefix_name_v1beta1(t *testing.T) {
 					{
 						Name: "rev-param",
 						Type: v1beta1.ParamTypeString,
-						Default: &v1beta1.ArrayOrString{
+						Default: &v1beta1.ParamValue{
 							Type:      v1beta1.ParamTypeString,
 							StringVal: "revision",
 						},
@@ -2615,14 +2589,14 @@ func Test_start_pipeline_with_prefix_name_v1beta1(t *testing.T) {
 				Params: []v1beta1.Param{
 					{
 						Name: "pipeline-param-1",
-						Value: v1beta1.ArrayOrString{
+						Value: v1beta1.ParamValue{
 							Type:      v1beta1.ParamTypeString,
 							StringVal: "somethingmorefun",
 						},
 					},
 					{
 						Name: "rev-param",
-						Value: v1beta1.ArrayOrString{
+						Value: v1beta1.ParamValue{
 							Type:      v1beta1.ParamTypeString,
 							StringVal: "revision1",
 						},
@@ -2656,7 +2630,6 @@ func Test_start_pipeline_with_prefix_name_v1beta1(t *testing.T) {
 	cs := pipelinetest.Clients{
 		Pipeline: seedData.Pipeline,
 		Kube:     seedData.Kube,
-		Resource: seedData.Resource,
 	}
 	cs.Pipeline.Resources = cb.APIResourceList("v1beta1", []string{"pipeline", "pipelinerun"})
 	objs := []runtime.Object{ps[0], prs[0]}
@@ -2878,7 +2851,7 @@ func Test_start_pipeline_with_skip_optional_workspace_flag_v1beta1(t *testing.T)
 					{
 						Name: "pipeline-param-1",
 						Type: v1beta1.ParamTypeString,
-						Default: &v1beta1.ArrayOrString{
+						Default: &v1beta1.ParamValue{
 							Type:      v1beta1.ParamTypeString,
 							StringVal: "somethingdifferent-1",
 						},
@@ -2886,7 +2859,7 @@ func Test_start_pipeline_with_skip_optional_workspace_flag_v1beta1(t *testing.T)
 					{
 						Name: "rev-param",
 						Type: v1beta1.ParamTypeString,
-						Default: &v1beta1.ArrayOrString{
+						Default: &v1beta1.ParamValue{
 							Type:      v1beta1.ParamTypeString,
 							StringVal: "revision",
 						},
@@ -2916,7 +2889,6 @@ func Test_start_pipeline_with_skip_optional_workspace_flag_v1beta1(t *testing.T)
 	cs := pipelinetest.Clients{
 		Pipeline: seedData.Pipeline,
 		Kube:     seedData.Kube,
-		Resource: seedData.Resource,
 	}
 	cs.Pipeline.Resources = cb.APIResourceList("v1beta1", []string{"pipeline", "pipelinerun"})
 	objs := []runtime.Object{ps[0]}

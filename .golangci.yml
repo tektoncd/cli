@@ -7,6 +7,9 @@ run:
 linters-settings:
   errcheck:
     exclude: .errcheck.txt
+  staticcheck:
+    checks:
+      - '-SA1019' # ignore ClusterTask warning
 linters:
   enable:
   - errcheck

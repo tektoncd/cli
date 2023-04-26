@@ -30,7 +30,7 @@ func (in *Artifact) DeepCopyInto(out *Artifact) {
 	*out = *in
 	if in.StorageBackend != nil {
 		in, out := &in.StorageBackend, &out.StorageBackend
-		*out = make(sets.String, len(*in))
+		*out = make(sets.Set[string], len(*in))
 		for key, val := range *in {
 			(*out)[key] = val
 		}

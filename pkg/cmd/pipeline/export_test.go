@@ -67,7 +67,7 @@ func TestPipelineExport_v1beta1(t *testing.T) {
 						Name:        "result-1",
 						Description: "This is a description for result 1",
 						Type:        v1beta1.ResultsTypeString,
-						Value: v1beta1.ArrayOrString{
+						Value: v1beta1.ParamValue{
 							Type: v1beta1.ParamTypeString,
 						},
 					},
@@ -75,14 +75,14 @@ func TestPipelineExport_v1beta1(t *testing.T) {
 						Name:        "result-2",
 						Description: "This is a description for result 2",
 						Type:        v1beta1.ResultsTypeString,
-						Value: v1beta1.ArrayOrString{
+						Value: v1beta1.ParamValue{
 							Type: v1beta1.ParamTypeString,
 						},
 					},
 					{
 						Name: "result-3",
 						Type: v1beta1.ResultsTypeString,
-						Value: v1beta1.ArrayOrString{
+						Value: v1beta1.ParamValue{
 							Type: v1beta1.ParamTypeString,
 						},
 					},

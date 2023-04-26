@@ -143,14 +143,14 @@ func Test_cancel_pipelinerun_v1beta1(t *testing.T) {
 				Params: []v1beta1.Param{
 					{
 						Name: "pipeline-param-1",
-						Value: v1beta1.ArrayOrString{
+						Value: v1beta1.ParamValue{
 							Type:      v1beta1.ParamTypeString,
 							StringVal: "somethingmorefun",
 						},
 					},
 					{
 						Name: "somethingmorefun",
-						Value: v1beta1.ArrayOrString{
+						Value: v1beta1.ParamValue{
 							Type:      v1beta1.ParamTypeString,
 							StringVal: "revision1",
 						},
@@ -215,14 +215,14 @@ func Test_cancel_pipelinerun_client_err_v1beta1(t *testing.T) {
 				Params: []v1beta1.Param{
 					{
 						Name: "pipeline-param-1",
-						Value: v1beta1.ArrayOrString{
+						Value: v1beta1.ParamValue{
 							Type:      v1beta1.ParamTypeString,
 							StringVal: "somethingmorefun",
 						},
 					},
 					{
 						Name: "rev-param",
-						Value: v1beta1.ArrayOrString{
+						Value: v1beta1.ParamValue{
 							Type:      v1beta1.ParamTypeString,
 							StringVal: "revision1",
 						},
@@ -350,14 +350,14 @@ func Test_finished_pipelinerun_success_v1beta1(t *testing.T) {
 				Params: []v1beta1.Param{
 					{
 						Name: "pipeline-param-1",
-						Value: v1beta1.ArrayOrString{
+						Value: v1beta1.ParamValue{
 							Type:      v1beta1.ParamTypeString,
 							StringVal: "somethingmorefun",
 						},
 					},
 					{
 						Name: "rev-param",
-						Value: v1beta1.ArrayOrString{
+						Value: v1beta1.ParamValue{
 							Type:      v1beta1.ParamTypeString,
 							StringVal: "revision1",
 						},
@@ -491,14 +491,14 @@ func Test_finished_pipelinerun_failure_v1beta1(t *testing.T) {
 				Params: []v1beta1.Param{
 					{
 						Name: "pipeline-param-1",
-						Value: v1beta1.ArrayOrString{
+						Value: v1beta1.ParamValue{
 							Type:      v1beta1.ParamTypeString,
 							StringVal: "somethingmorefun",
 						},
 					},
 					{
 						Name: "rev-param",
-						Value: v1beta1.ArrayOrString{
+						Value: v1beta1.ParamValue{
 							Type:      v1beta1.ParamTypeString,
 							StringVal: "revision1",
 						},
@@ -631,14 +631,14 @@ func Test_finished_pipelinerun_cancel_v1beta1(t *testing.T) {
 				Params: []v1beta1.Param{
 					{
 						Name: "pipeline-param-1",
-						Value: v1beta1.ArrayOrString{
+						Value: v1beta1.ParamValue{
 							Type:      v1beta1.ParamTypeString,
 							StringVal: "somethingmorefun",
 						},
 					},
 					{
 						Name: "rev-param",
-						Value: v1beta1.ArrayOrString{
+						Value: v1beta1.ParamValue{
 							Type:      v1beta1.ParamTypeString,
 							StringVal: "revision1",
 						},
@@ -772,14 +772,14 @@ func Test_finished_pipelinerun_timeout_v1beta1(t *testing.T) {
 				Params: []v1beta1.Param{
 					{
 						Name: "pipeline-param-1",
-						Value: v1beta1.ArrayOrString{
+						Value: v1beta1.ParamValue{
 							Type:      v1beta1.ParamTypeString,
 							StringVal: "somethingmorefun",
 						},
 					},
 					{
 						Name: "rev-param",
-						Value: v1beta1.ArrayOrString{
+						Value: v1beta1.ParamValue{
 							Type:      v1beta1.ParamTypeString,
 							StringVal: "revision1",
 						},
@@ -913,14 +913,14 @@ func Test_finished_pipelinerun_cancelled_v1beta1(t *testing.T) {
 				Params: []v1beta1.Param{
 					{
 						Name: "pipeline-param-1",
-						Value: v1beta1.ArrayOrString{
+						Value: v1beta1.ParamValue{
 							Type:      v1beta1.ParamTypeString,
 							StringVal: "somethingmorefun",
 						},
 					},
 					{
 						Name: "rev-param",
-						Value: v1beta1.ArrayOrString{
+						Value: v1beta1.ParamValue{
 							Type:      v1beta1.ParamTypeString,
 							StringVal: "revision1",
 						},
@@ -1053,14 +1053,14 @@ func Test_cancel_pipelinerun_with_grace_stopped_v1beta1(t *testing.T) {
 				Params: []v1beta1.Param{
 					{
 						Name: "pipeline-param-1",
-						Value: v1beta1.ArrayOrString{
+						Value: v1beta1.ParamValue{
 							Type:      v1beta1.ParamTypeString,
 							StringVal: "somethingmorefun",
 						},
 					},
 					{
 						Name: "somethingmorefun",
-						Value: v1beta1.ArrayOrString{
+						Value: v1beta1.ParamValue{
 							Type:      v1beta1.ParamTypeString,
 							StringVal: "revision1",
 						},
@@ -1193,14 +1193,14 @@ func Test_cancel_pipelinerun_with_grace_cancelled_v1bea1(t *testing.T) {
 				Params: []v1beta1.Param{
 					{
 						Name: "pipeline-param-1",
-						Value: v1beta1.ArrayOrString{
+						Value: v1beta1.ParamValue{
 							Type:      v1beta1.ParamTypeString,
 							StringVal: "somethingmorefun",
 						},
 					},
 					{
 						Name: "somethingmorefun",
-						Value: v1beta1.ArrayOrString{
+						Value: v1beta1.ParamValue{
 							Type:      v1beta1.ParamTypeString,
 							StringVal: "revision1",
 						},
