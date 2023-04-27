@@ -801,6 +801,15 @@ func TestTaskRunDelete_v1beta1(t *testing.T) {
 			want:        "taskruns.tekton.dev \"nonexistent\" not found",
 		},
 		{
+			name:        "Attempt to delete TaskRun by keeping equal to existing TaskRun for a Task",
+			command:     []string{"delete", "-i", "-f", "--keep", "1", "--task", "random", "-n", "ns"},
+			dynamic:     seeds[10].dynamicClient,
+			input:       seeds[10].pipelineClient,
+			inputStream: nil,
+			wantError:   false,
+			want:        "Associated TaskRun (1) for Task:random is/are equal to keep (1) \n",
+		},
+		{
 			name:        "Attempt to delete TaskRun by keeping more than existing TaskRun for a Task",
 			command:     []string{"delete", "-i", "-f", "--keep", "2", "--task", "random", "-n", "ns"},
 			dynamic:     seeds[10].dynamicClient,
@@ -1655,6 +1664,15 @@ func TestTaskRunDelete(t *testing.T) {
 			inputStream: nil,
 			wantError:   false,
 			want:        "There is/are only 1 TaskRun(s) associated for Task: random \n",
+		},
+		{
+			name:        "Attempt to delete TaskRun by keeping equal to existing TaskRun for a Task",
+			command:     []string{"delete", "-i", "-f", "--keep", "1", "--task", "random", "-n", "ns"},
+			dynamic:     seeds[10].dynamicClient,
+			input:       seeds[10].pipelineClient,
+			inputStream: nil,
+			wantError:   false,
+			want:        "Associated TaskRun (1) for Task:random is/are equal to keep (1) \n",
 		},
 		{
 			name:        "Delete all of task with default --ignore-running",

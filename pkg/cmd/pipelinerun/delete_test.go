@@ -584,6 +584,15 @@ func TestPipelineRunDelete_v1beta1(t *testing.T) {
 			want:        "There is/are only 2 PipelineRun(s) associated for Pipeline: pipeline \n",
 		},
 		{
+			name:        "Attempt to delete PieplineRun by keeping more than existing PipelineRun for a Pipeline",
+			command:     []string{"delete", "-i", "-f", "--keep", "2", "--pipeline", "pipeline", "-n", "ns"},
+			dynamic:     seeds[2].dynamicClient,
+			input:       seeds[2].pipelineClient,
+			inputStream: nil,
+			wantError:   false,
+			want:        "Associated PipelineRun (2) for Pipeline:pipeline is/are equal to keep (2) \n",
+		},
+		{
 			name:        "Delete all of a pipeline by default ignore-running",
 			command:     []string{"rm", "-p", "pipeline", "-n", "ns"},
 			dynamic:     seeds[12].dynamicClient,
@@ -1205,6 +1214,15 @@ func TestPipelineRunDelete(t *testing.T) {
 			inputStream: nil,
 			wantError:   false,
 			want:        "There is/are only 2 PipelineRun(s) associated for Pipeline: pipeline \n",
+		},
+		{
+			name:        "Attempt to delete PieplineRun by keeping more than existing PipelineRun for a Pipeline",
+			command:     []string{"delete", "-i", "-f", "--keep", "2", "--pipeline", "pipeline", "-n", "ns"},
+			dynamic:     seeds[2].dynamicClient,
+			input:       seeds[2].pipelineClient,
+			inputStream: nil,
+			wantError:   false,
+			want:        "Associated PipelineRun (2) for Pipeline:pipeline is/are equal to keep (2) \n",
 		},
 		{
 			name:        "Delete all of a pipeline by default ignore-running",
