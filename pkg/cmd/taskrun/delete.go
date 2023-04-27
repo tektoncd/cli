@@ -216,14 +216,19 @@ func deleteTaskRuns(s *cli.Stream, p cli.Params, trNames []string, opts *options
 		if err != nil {
 			return err
 		}
+
 		numberOfDeletedTr = len(trToDelete)
 		numberOfKeptTr = len(trToKeep)
-
 		// Delete the TaskRuns associated with a Task or ClusterTask
 		d.WithRelated("TaskRun", taskRunLister(p, opts.Keep, opts.KeepSince, opts.ParentResource, cs, opts.IgnoreRunning, opts.IgnoreRunningPipelinerun), func(taskRunName string) error {
 			return actions.Delete(taskrunGroupResource, cs.Dynamic, cs.Tekton.Discovery(), taskRunName, p.Namespace(), metav1.DeleteOptions{})
 		})
-		if len(trToDelete) == 0 && opts.Keep > len(trToKeep) {
+
+		if opts.Keep > 0 && opts.Keep == len(trToKeep) && len(trToDelete) == 0 {
+			fmt.Fprintf(s.Out, "Associated %s (%d) for Task:%s is/are equal to keep (%d) \n", opts.Resource, len(trToKeep), opts.ParentResourceName, opts.Keep)
+			return nil
+		}
+		if opts.Keep > len(trToKeep) {
 			fmt.Fprintf(s.Out, "There is/are only %d %s(s) associated for %s: %s \n", len(trToKeep), opts.Resource, opts.ParentResource, opts.ParentResourceName)
 			return nil
 		}
