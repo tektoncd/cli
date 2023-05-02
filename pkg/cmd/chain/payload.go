@@ -26,7 +26,6 @@ import (
 	"github.com/tektoncd/cli/pkg/cli"
 	"github.com/tektoncd/pipeline/pkg/apis/pipeline/v1beta1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
-	cliopts "k8s.io/cli-runtime/pkg/genericclioptions"
 )
 
 type PayloadOptions struct {
@@ -35,7 +34,6 @@ type PayloadOptions struct {
 
 func payloadCommand(p cli.Params) *cobra.Command {
 	opts := &PayloadOptions{}
-	f := cliopts.NewPrintFlags("chains")
 
 	c := &cobra.Command{
 		Use:   "payload",
@@ -70,7 +68,6 @@ func payloadCommand(p cli.Params) *cobra.Command {
 			return printPayloads(cs, chainsNamespace, taskrun, skipVerify)
 		},
 	}
-	f.AddFlags(c)
 	c.Flags().BoolVarP(&opts.SkipVerify, "skip-verify", "S", opts.SkipVerify, "Skip verifying the payload'signature")
 
 	return c
