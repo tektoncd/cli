@@ -26,6 +26,6 @@ func BaseCompletion(target string, args []string) ([]string, cobra.ShellCompDire
 }
 
 // ParentCompletion do completion of command to the Parent
-func ParentCompletion(cmd *cobra.Command, args []string, toComplete string) ([]string, cobra.ShellCompDirective) {
+func ParentCompletion(cmd *cobra.Command, args []string, _ string) ([]string, cobra.ShellCompDirective) {
 	return BaseCompletion(cmd.Parent().Name(), args)
 }

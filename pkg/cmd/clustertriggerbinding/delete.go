@@ -116,7 +116,7 @@ func deleteClusterTriggerBindings(s *cli.Stream, p cli.Params, ctbNames []string
 			return err
 		}
 	}
-	d.Delete(s, ctbNames)
+	d.Delete(ctbNames)
 
 	if !deleteAll {
 		d.PrintSuccesses(s)

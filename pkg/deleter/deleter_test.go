@@ -33,7 +33,7 @@ func TestDelete(t *testing.T) {
 			stderr := &strings.Builder{}
 			streams := &cli.Stream{Out: stdout, Err: stderr}
 			d := New("FooBar", tc.deleteFunc)
-			d.Delete(streams, tc.names)
+			d.Delete(tc.names)
 			d.PrintSuccesses(streams)
 			if err := d.Errors(); err != nil {
 				if tc.expectedErr == "" {
@@ -74,7 +74,7 @@ func TestDeleteRelated(t *testing.T) {
 			d := New("FooBar", successfulDeleteFunc())
 			if tc.relatedKind != "" {
 				d.WithRelated(tc.relatedKind, tc.listFunc, tc.deleteFunc)
-				d.DeleteRelated(streams, []string{"foo"})
+				d.DeleteRelated([]string{"foo"})
 			}
 			d.PrintSuccesses(streams)
 			if err := d.Errors(); err != nil {
@@ -121,8 +121,8 @@ func TestDeleteAndDeleteRelated(t *testing.T) {
 			streams := &cli.Stream{Out: stdout, Err: stderr}
 			d := New(tc.kind, tc.deleteFunc)
 			d.WithRelated(tc.relatedKind, tc.listRelatedFunc, tc.deleteRelatedFunc)
-			deletedNames := d.Delete(streams, tc.names)
-			d.DeleteRelated(streams, deletedNames)
+			deletedNames := d.Delete(tc.names)
+			d.DeleteRelated(deletedNames)
 			d.PrintSuccesses(streams)
 			if err := d.Errors(); err != nil {
 				if tc.expectedErr == "" {

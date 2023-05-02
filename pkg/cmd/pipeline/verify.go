@@ -32,7 +32,7 @@ type verifyOptions struct {
 	kmsKey  string
 }
 
-func verifyCommand(p cli.Params) *cobra.Command {
+func verifyCommand() *cobra.Command {
 	opts := &verifyOptions{}
 	f := cliopts.NewPrintFlags("trustedresources")
 	eg := `Verify a Pipeline signed.yaml:

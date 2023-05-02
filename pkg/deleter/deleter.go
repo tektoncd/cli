@@ -50,10 +50,10 @@ func (d *Deleter) WithRelated(kind string, listFunc func(string) ([]string, erro
 // the passed in streams struct and are also aggregated for later access
 // with d.Errors(). The names of successfully deleted resources are
 // returned.
-func (d *Deleter) Delete(streams *cli.Stream, resourceNames []string) []string {
+func (d *Deleter) Delete(resourceNames []string) []string {
 	for _, name := range resourceNames {
 		if err := d.delete(name); err != nil {
-			d.appendError(streams, fmt.Errorf("failed to delete %s %q: %s", d.kind, name, err))
+			d.appendError(fmt.Errorf("failed to delete %s %q: %s", d.kind, name, err))
 		} else {
 			d.successfulDeletes = append(d.successfulDeletes, name)
 		}
@@ -63,33 +63,33 @@ func (d *Deleter) Delete(streams *cli.Stream, resourceNames []string) []string {
 
 // DeleteRelated performs the deletion of resources related to d's kind. Errors are
 // aggregated and can be accessed with d.Errors().
-func (d *Deleter) DeleteRelated(streams *cli.Stream, resourceNames []string) {
+func (d *Deleter) DeleteRelated(resourceNames []string) {
 	if d.relatedKind != "" && d.listRelated != nil && d.deleteRelated != nil {
 		for _, name := range resourceNames {
-			d.deleteRelatedList(streams, name)
+			d.deleteRelatedList(name)
 		}
 	}
 }
 
 // deleteRelatedList gets the list of resources related to resourceName using the
 // provided listFunc and then calls the deleteRelated func for each relation.
-func (d *Deleter) deleteRelatedList(streams *cli.Stream, resourceName string) {
+func (d *Deleter) deleteRelatedList(resourceName string) {
 	if related, err := d.listRelated(resourceName); err != nil {
 		err = fmt.Errorf("failed to list %ss: %s", strings.ToLower(d.relatedKind), err)
-		d.appendError(streams, err)
+		d.appendError(err)
 	} else {
 		if len(related) > 0 {
 			for _, subresource := range related {
 				if err := d.deleteRelated(subresource); err != nil {
 					err = fmt.Errorf("failed to delete %s %q: %s", d.relatedKind, subresource, err)
-					d.appendError(streams, err)
+					d.appendError(err)
 				} else {
 					d.successfulRelatedDeletes = append(d.successfulRelatedDeletes, subresource)
 				}
 			}
 		} else {
 			err = fmt.Errorf("no %ss associated with %s %q", d.relatedKind, d.kind, resourceName)
-			d.appendError(streams, err)
+			d.appendError(err)
 		}
 	}
 }
@@ -106,7 +106,7 @@ func (d *Deleter) PrintSuccesses(streams *cli.Stream) {
 
 // appendError adds that error to the list of accumulated errors that
 // have occurred during execution.
-func (d *Deleter) appendError(streams *cli.Stream, err error) {
+func (d *Deleter) appendError(err error) {
 	d.errors = append(d.errors, err)
 }
 

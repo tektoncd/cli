@@ -132,7 +132,7 @@ func DeleteNamespace(namespace string, cs *Clients) {
 	}
 }
 
-func getDefaultSA(kubeClient kubernetes.Interface, namespace string) string {
+func getDefaultSA(kubeClient kubernetes.Interface) string {
 	configDefaultsCM, err := kubeClient.CoreV1().ConfigMaps(system.Namespace()).Get(context.Background(), config.GetDefaultsConfigName(), metav1.GetOptions{})
 	if err != nil {
 		log.Fatalf("Failed to get ConfigMap `%s`: %s", config.GetDefaultsConfigName(), err)
@@ -145,7 +145,7 @@ func getDefaultSA(kubeClient kubernetes.Interface, namespace string) string {
 }
 
 func VerifyServiceAccountExistence(namespace string, kubeClient kubernetes.Interface) {
-	defaultSA := getDefaultSA(kubeClient, namespace)
+	defaultSA := getDefaultSA(kubeClient)
 	log.Printf("Verify SA %q is created in namespace %q", defaultSA, namespace)
 
 	if err := wait.PollImmediate(Interval, Apitimeout, func() (bool, error) {

@@ -153,12 +153,12 @@ func deletePipelineRuns(s *cli.Stream, p cli.Params, prNames []string, opts *opt
 		}
 		numberOfDeletedPr = len(prtodelete)
 		numberOfKeptPr = len(prtokeep)
-		d.Delete(s, prtodelete)
+		d.Delete(prtodelete)
 	case opts.ParentResourceName == "":
 		d = deleter.New("PipelineRun", func(pipelineRunName string) error {
 			return actions.Delete(prGroupResource, cs.Dynamic, cs.Tekton.Discovery(), pipelineRunName, p.Namespace(), metav1.DeleteOptions{})
 		})
-		d.Delete(s, prNames)
+		d.Delete(prNames)
 	default:
 		d = deleter.New("Pipeline", func(_ string) error {
 			return errors.New("the Pipeline should not be deleted")
@@ -184,7 +184,7 @@ func deletePipelineRuns(s *cli.Stream, p cli.Params, prNames []string, opts *opt
 			fmt.Fprintf(s.Out, "There is/are only %d %s(s) associated for Pipeline: %s \n", len(prtokeep), opts.Resource, opts.ParentResourceName)
 			return nil
 		}
-		d.DeleteRelated(s, []string{opts.ParentResourceName})
+		d.DeleteRelated([]string{opts.ParentResourceName})
 	}
 
 	if !opts.DeleteAllNs {

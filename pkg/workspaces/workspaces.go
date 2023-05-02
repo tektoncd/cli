@@ -90,7 +90,7 @@ func parseWorkspace(w []string, httpClient http.Client) (map[string]v1beta1.Work
 		}
 
 		if vctFile, err := getPar(r, volumeClaimTemplateFile); err == nil {
-			err = setWorkspaceVCTemplate(r, &wB, vctFile, httpClient)
+			err = setWorkspaceVCTemplate(&wB, vctFile, httpClient)
 			if err != nil {
 				return nil, err
 			}
@@ -99,7 +99,7 @@ func parseWorkspace(w []string, httpClient http.Client) (map[string]v1beta1.Work
 		}
 
 		if csiFile, err := getPar(r, csiFile); err == nil {
-			err = setWorkspaceCSITemplate(r, &wB, csiFile, httpClient)
+			err = setWorkspaceCSITemplate(&wB, csiFile, httpClient)
 			if err != nil {
 				return nil, err
 			}
@@ -244,7 +244,7 @@ func setWorkspaceEmptyDir(r []string, wB *v1beta1.WorkspaceBinding) error {
 	return nil
 }
 
-func setWorkspaceVCTemplate(r []string, wB *v1beta1.WorkspaceBinding, vctFile string, httpClient http.Client) error {
+func setWorkspaceVCTemplate(wB *v1beta1.WorkspaceBinding, vctFile string, httpClient http.Client) error {
 	pvc, err := parseVolumeClaimTemplate(vctFile, httpClient)
 	if err != nil {
 		return err
@@ -254,7 +254,7 @@ func setWorkspaceVCTemplate(r []string, wB *v1beta1.WorkspaceBinding, vctFile st
 	return nil
 }
 
-func setWorkspaceCSITemplate(r []string, wB *v1beta1.WorkspaceBinding, vctFile string, httpClient http.Client) error {
+func setWorkspaceCSITemplate(wB *v1beta1.WorkspaceBinding, vctFile string, httpClient http.Client) error {
 	csi, err := parseCSITemplate(vctFile, httpClient)
 	if err != nil {
 		return err

@@ -33,7 +33,7 @@ type signOptions struct {
 	targetFile string
 }
 
-func signCommand(p cli.Params) *cobra.Command {
+func signCommand() *cobra.Command {
 	opts := &signOptions{}
 	f := cliopts.NewPrintFlags("trustedresources")
 	eg := `Sign a Pipeline pipeline.yaml:

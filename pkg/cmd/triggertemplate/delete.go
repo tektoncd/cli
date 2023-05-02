@@ -120,7 +120,7 @@ func deleteTriggerTemplates(s *cli.Stream, p cli.Params, ttNames []string, delet
 			return err
 		}
 	}
-	d.Delete(s, ttNames)
+	d.Delete(ttNames)
 
 	if !deleteAll {
 		d.PrintSuccesses(s)

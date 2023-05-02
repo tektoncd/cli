@@ -123,15 +123,15 @@ func deleteTask(opts *options.DeleteOptions, s *cli.Stream, p cli.Params, taskNa
 		if err != nil {
 			return err
 		}
-		d.Delete(s, taskNames)
+		d.Delete(taskNames)
 	case opts.DeleteRelated:
 		d.WithRelated("TaskRun", taskRunLister(cs, p.Namespace()), func(taskRunName string) error {
 			return actions.Delete(taskrunGroupResource, cs.Dynamic, cs.Tekton.Discovery(), taskRunName, p.Namespace(), metav1.DeleteOptions{})
 		})
-		deletedTaskNames := d.Delete(s, taskNames)
-		d.DeleteRelated(s, deletedTaskNames)
+		deletedTaskNames := d.Delete(taskNames)
+		d.DeleteRelated(deletedTaskNames)
 	default:
-		d.Delete(s, taskNames)
+		d.Delete(taskNames)
 	}
 	if !opts.DeleteAllNs {
 		d.PrintSuccesses(s)

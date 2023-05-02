@@ -49,10 +49,7 @@ func ListV1(gr schema.GroupVersionResource, c *cli.Clients, opts metav1.ListOpti
 		return err
 	}
 
-	if err := runtime.DefaultUnstructuredConverter.FromUnstructured(unstructuredObj.UnstructuredContent(), obj); err != nil {
-		return err
-	}
-	return nil
+	return runtime.DefaultUnstructuredConverter.FromUnstructured(unstructuredObj.UnstructuredContent(), obj)
 }
 
 // list takes a partial resource and fetches a list of that resource's objects in the cluster using the dynamic client.

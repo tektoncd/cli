@@ -35,8 +35,6 @@ type Params struct {
 	Dynamic              dynamic.Interface
 }
 
-var _ cli.Params = &Params{}
-
 func (p *Params) SetNamespace(ns string) {
 	p.ns = ns
 }
@@ -44,7 +42,7 @@ func (p *Params) Namespace() string {
 	return p.ns
 }
 
-func (p *Params) SetNoColour(b bool) {
+func (p *Params) SetNoColour(_ bool) {
 }
 
 func (p *Params) SetKubeConfigPath(path string) {
@@ -75,7 +73,7 @@ func (p *Params) KubeClient() (k8s.Interface, error) {
 	return p.Kube, nil
 }
 
-func (p *Params) Clients(config ...*rest.Config) (*cli.Clients, error) {
+func (p *Params) Clients(_ ...*rest.Config) (*cli.Clients, error) {
 	if p.Cls != nil {
 		return p.Cls, nil
 	}

@@ -171,7 +171,7 @@ func deleteTaskRuns(s *cli.Stream, p cli.Params, trNames []string, opts *options
 		}
 		numberOfDeletedTr = len(trToDelete)
 		numberOfKeptTr = len(trToKeep)
-		d.Delete(s, trToDelete)
+		d.Delete(trToDelete)
 	case opts.ParentResourceName == "":
 		d = deleter.New("TaskRun", func(taskRunName string) error {
 			return actions.Delete(taskrunGroupResource, cs.Dynamic, cs.Tekton.Discovery(), taskRunName, p.Namespace(), metav1.DeleteOptions{})
@@ -196,7 +196,7 @@ func deleteTaskRuns(s *cli.Stream, p cli.Params, trNames []string, opts *options
 			}
 			processedTrNames = append(processedTrNames, tr.Name)
 		}
-		d.Delete(s, processedTrNames)
+		d.Delete(processedTrNames)
 	default:
 		d = deleter.New(opts.ParentResource, func(_ string) error {
 			err := fmt.Sprintf("the %s should not be deleted", opts.ParentResource)
@@ -227,7 +227,7 @@ func deleteTaskRuns(s *cli.Stream, p cli.Params, trNames []string, opts *options
 			fmt.Fprintf(s.Out, "There is/are only %d %s(s) associated for %s: %s \n", len(trToKeep), opts.Resource, opts.ParentResource, opts.ParentResourceName)
 			return nil
 		}
-		d.DeleteRelated(s, []string{opts.ParentResourceName})
+		d.DeleteRelated([]string{opts.ParentResourceName})
 	}
 
 	if !opts.DeleteAllNs {

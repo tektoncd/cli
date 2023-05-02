@@ -116,7 +116,7 @@ func deleteEventListeners(s *cli.Stream, p cli.Params, elNames []string, deleteA
 			return err
 		}
 	}
-	d.Delete(s, elNames)
+	d.Delete(elNames)
 
 	if !deleteAll {
 		d.PrintSuccesses(s)

@@ -42,46 +42,46 @@ func (i errorResourceInterface) err() error {
 	return fmt.Errorf("resource %+v not supported", i.resource)
 }
 
-func (i errorResourceInterface) Create(ctx context.Context, obj *unstructured.Unstructured, options metav1.CreateOptions, subresources ...string) (*unstructured.Unstructured, error) {
+func (i errorResourceInterface) Create(_ context.Context, _ *unstructured.Unstructured, _ metav1.CreateOptions, _ ...string) (*unstructured.Unstructured, error) {
 	return nil, i.err()
 }
 
-func (i errorResourceInterface) Update(ctx context.Context, obj *unstructured.Unstructured, options metav1.UpdateOptions, subresources ...string) (*unstructured.Unstructured, error) {
+func (i errorResourceInterface) Update(_ context.Context, _ *unstructured.Unstructured, _ metav1.UpdateOptions, _ ...string) (*unstructured.Unstructured, error) {
 	return nil, i.err()
 }
 
-func (i errorResourceInterface) UpdateStatus(ctx context.Context, obj *unstructured.Unstructured, options metav1.UpdateOptions) (*unstructured.Unstructured, error) {
+func (i errorResourceInterface) UpdateStatus(_ context.Context, _ *unstructured.Unstructured, _ metav1.UpdateOptions) (*unstructured.Unstructured, error) {
 	return nil, i.err()
 }
 
-func (i errorResourceInterface) Delete(ctx context.Context, name string, options metav1.DeleteOptions, subresources ...string) error {
+func (i errorResourceInterface) Delete(_ context.Context, _ string, _ metav1.DeleteOptions, _ ...string) error {
 	return i.err()
 }
 
-func (i errorResourceInterface) DeleteCollection(ctx context.Context, options metav1.DeleteOptions, listOptions metav1.ListOptions) error {
+func (i errorResourceInterface) DeleteCollection(_ context.Context, _ metav1.DeleteOptions, _ metav1.ListOptions) error {
 	return i.err()
 }
 
-func (i errorResourceInterface) Get(ctx context.Context, name string, options metav1.GetOptions, subresources ...string) (*unstructured.Unstructured, error) {
+func (i errorResourceInterface) Get(_ context.Context, _ string, _ metav1.GetOptions, _ ...string) (*unstructured.Unstructured, error) {
 	return nil, i.err()
 }
 
-func (i errorResourceInterface) List(ctx context.Context, opts metav1.ListOptions) (*unstructured.UnstructuredList, error) {
+func (i errorResourceInterface) List(_ context.Context, _ metav1.ListOptions) (*unstructured.UnstructuredList, error) {
 	return nil, i.err()
 }
 
-func (i errorResourceInterface) Watch(ctx context.Context, opts metav1.ListOptions) (watch.Interface, error) {
+func (i errorResourceInterface) Watch(_ context.Context, _ metav1.ListOptions) (watch.Interface, error) {
 	return nil, i.err()
 }
 
-func (i errorResourceInterface) Patch(ctx context.Context, name string, pt types.PatchType, data []byte, options metav1.PatchOptions, subresources ...string) (*unstructured.Unstructured, error) {
+func (i errorResourceInterface) Patch(_ context.Context, _ string, _ types.PatchType, _ []byte, _ metav1.PatchOptions, _ ...string) (*unstructured.Unstructured, error) {
 	return nil, i.err()
 }
 
-func (i errorResourceInterface) Apply(ctx context.Context, name string, obj *unstructured.Unstructured, options metav1.ApplyOptions, subresources ...string) (*unstructured.Unstructured, error) {
+func (i errorResourceInterface) Apply(_ context.Context, _ string, _ *unstructured.Unstructured, _ metav1.ApplyOptions, _ ...string) (*unstructured.Unstructured, error) {
 	return nil, i.err()
 }
 
-func (i errorResourceInterface) ApplyStatus(ctx context.Context, name string, obj *unstructured.Unstructured, options metav1.ApplyOptions) (*unstructured.Unstructured, error) {
+func (i errorResourceInterface) ApplyStatus(_ context.Context, _ string, _ *unstructured.Unstructured, _ metav1.ApplyOptions) (*unstructured.Unstructured, error) {
 	return nil, i.err()
 }

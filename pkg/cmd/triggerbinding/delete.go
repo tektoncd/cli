@@ -117,7 +117,7 @@ func deleteTriggerBindings(s *cli.Stream, p cli.Params, tbNames []string, delete
 			return err
 		}
 	}
-	d.Delete(s, tbNames)
+	d.Delete(tbNames)
 
 	if !deleteAll {
 		d.PrintSuccesses(s)
