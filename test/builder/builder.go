@@ -147,7 +147,7 @@ func GetPipelineRunListWithName(c *framework.Clients, pname string, sortByStartT
 	return pipelineRunList
 }
 
-func GetTaskRunListByLabel(c *framework.Clients, tname string, sortByStartTime bool, label string) *v1.TaskRunList {
+func GetTaskRunListByLabel(c *framework.Clients, sortByStartTime bool, label string) *v1.TaskRunList {
 	opts := metav1.ListOptions{
 		LabelSelector: label,
 	}
@@ -168,12 +168,12 @@ func GetTaskRunListByLabel(c *framework.Clients, tname string, sortByStartTime b
 
 func GetTaskRunListWithTaskName(c *framework.Clients, tname string, sortByStartTime bool) *v1.TaskRunList {
 	label := fmt.Sprintf("tekton.dev/task=%s", tname)
-	return GetTaskRunListByLabel(c, tname, sortByStartTime, label)
+	return GetTaskRunListByLabel(c, sortByStartTime, label)
 }
 
 func GetTaskRunListWithClusterTaskName(c *framework.Clients, ctname string, sortByStartTime bool) *v1.TaskRunList {
 	label := fmt.Sprintf("tekton.dev/clusterTask=%s", ctname)
-	return GetTaskRunListByLabel(c, ctname, sortByStartTime, label)
+	return GetTaskRunListByLabel(c, sortByStartTime, label)
 }
 
 func GetPipelineRunList(c *framework.Clients) *v1.PipelineRunList {

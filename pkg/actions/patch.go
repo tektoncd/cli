@@ -38,9 +38,5 @@ func Patch(gr schema.GroupVersionResource, clients *cli.Clients, objName string,
 		return err
 	}
 
-	if err := runtime.DefaultUnstructuredConverter.FromUnstructured(unstructuredObj.UnstructuredContent(), obj); err != nil {
-		return err
-	}
-
-	return nil
+	return runtime.DefaultUnstructuredConverter.FromUnstructured(unstructuredObj.UnstructuredContent(), obj)
 }

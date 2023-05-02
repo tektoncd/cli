@@ -122,15 +122,15 @@ func deleteClusterTasks(opts *options.DeleteOptions, s *cli.Stream, p cli.Params
 		if err != nil {
 			return err
 		}
-		d.Delete(s, cts)
+		d.Delete(cts)
 	case opts.DeleteRelated:
 		d.WithRelated("TaskRun", taskRunLister(cs, p), func(taskRunName string) error {
 			return actions.Delete(trGroupResource, cs.Dynamic, cs.Tekton.Discovery(), taskRunName, p.Namespace(), metav1.DeleteOptions{})
 		})
-		deletedClusterTaskNames := d.Delete(s, ctNames)
-		d.DeleteRelated(s, deletedClusterTaskNames)
+		deletedClusterTaskNames := d.Delete(ctNames)
+		d.DeleteRelated(deletedClusterTaskNames)
 	default:
-		d.Delete(s, ctNames)
+		d.Delete(ctNames)
 
 	}
 

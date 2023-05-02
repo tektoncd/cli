@@ -122,15 +122,15 @@ func deletePipelines(opts *options.DeleteOptions, s *cli.Stream, p cli.Params, p
 		if err != nil {
 			return err
 		}
-		d.Delete(s, pNames)
+		d.Delete(pNames)
 	case opts.DeleteRelated:
 		d.WithRelated("PipelineRun", pipelineRunLister(cs, p.Namespace()), func(pipelineRunName string) error {
 			return actions.Delete(pipelinerunGroupResource, cs.Dynamic, cs.Tekton.Discovery(), pipelineRunName, p.Namespace(), metav1.DeleteOptions{})
 		})
-		deletedPipelineNames := d.Delete(s, pNames)
-		d.DeleteRelated(s, deletedPipelineNames)
+		deletedPipelineNames := d.Delete(pNames)
+		d.DeleteRelated(deletedPipelineNames)
 	default:
-		d.Delete(s, pNames)
+		d.Delete(pNames)
 	}
 	if !opts.DeleteAllNs {
 		d.PrintSuccesses(s)

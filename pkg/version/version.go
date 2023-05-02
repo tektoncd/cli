@@ -87,9 +87,8 @@ func getDeployments(c *cli.Clients, newLabel, oldLabel, ns string) (*v1.Deployme
 		if err != nil {
 			if strings.Contains(err.Error(), fmt.Sprintf(`cannot list resource "deployments" in API group "apps" in the namespace "%s"`, n)) {
 				continue
-			} else {
-				return nil, err
 			}
+			return nil, err
 		}
 		if len(deployments.Items) != 0 {
 			break

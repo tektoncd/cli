@@ -56,12 +56,7 @@ func GetV1(gr schema.GroupVersionResource, c *cli.Clients, objname, ns string, o
 	if err != nil {
 		return err
 	}
-
-	if err := runtime.DefaultUnstructuredConverter.FromUnstructured(unstructuredObj.UnstructuredContent(), obj); err != nil {
-		return err
-	}
-
-	return nil
+	return runtime.DefaultUnstructuredConverter.FromUnstructured(unstructuredObj.UnstructuredContent(), obj)
 }
 
 func GetUnstructured(gr schema.GroupVersionResource, c *cli.Clients, objname, ns string, op metav1.GetOptions) (*unstructured.Unstructured, error) {

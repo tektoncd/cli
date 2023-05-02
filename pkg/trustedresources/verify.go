@@ -76,10 +76,5 @@ func VerifyInterface(
 
 	h := sha256.New()
 	h.Write(ts)
-
-	if err := verifier.VerifySignature(bytes.NewReader(signature), bytes.NewReader(h.Sum(nil))); err != nil {
-		return err
-	}
-
-	return nil
+	return verifier.VerifySignature(bytes.NewReader(signature), bytes.NewReader(h.Sum(nil)))
 }

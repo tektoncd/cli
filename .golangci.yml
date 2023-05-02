@@ -16,4 +16,4 @@ linters:
   - gocritic
   - revive
   - misspell
-  - deadcode
+  - unused
