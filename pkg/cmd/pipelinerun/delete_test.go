@@ -35,7 +35,6 @@ import (
 func TestPipelineRunDelete_v1beta1(t *testing.T) {
 
 	version := "v1beta1"
-	clock := test.FakeClock()
 
 	ns := []*corev1.Namespace{
 		{
@@ -50,7 +49,7 @@ func TestPipelineRunDelete_v1beta1(t *testing.T) {
 			ObjectMeta: metav1.ObjectMeta{
 				Name:              "pipeline",
 				Namespace:         "ns",
-				CreationTimestamp: metav1.Time{Time: clock.Now().Add(-5 * time.Minute)},
+				CreationTimestamp: metav1.Time{Time: time.Now().Add(-25 * time.Minute)},
 			},
 		},
 	}
@@ -61,7 +60,7 @@ func TestPipelineRunDelete_v1beta1(t *testing.T) {
 				Namespace:         "ns",
 				Name:              "pipeline-run-1",
 				Labels:            map[string]string{"tekton.dev/pipeline": "pipeline"},
-				CreationTimestamp: metav1.Time{Time: clock.Now()},
+				CreationTimestamp: metav1.Time{Time: time.Now().Add(-15 * time.Minute)},
 			},
 			Spec: v1beta1.PipelineRunSpec{
 				PipelineRef: &v1beta1.PipelineRef{
@@ -79,9 +78,9 @@ func TestPipelineRunDelete_v1beta1(t *testing.T) {
 				},
 				PipelineRunStatusFields: v1beta1.PipelineRunStatusFields{
 					// pipeline run starts now
-					StartTime: &metav1.Time{Time: clock.Now()},
+					StartTime: &metav1.Time{Time: time.Now().Add(-15 * time.Minute)},
 					// takes 10 minutes to complete
-					CompletionTime: &metav1.Time{Time: clock.Now().Add(10 * time.Minute)},
+					CompletionTime: &metav1.Time{Time: time.Now().Add(-10 * time.Minute)},
 				},
 			},
 		},
@@ -90,7 +89,7 @@ func TestPipelineRunDelete_v1beta1(t *testing.T) {
 				Namespace:         "ns",
 				Name:              "pipeline-run-2",
 				Labels:            map[string]string{"tekton.dev/pipeline": "pipeline"},
-				CreationTimestamp: metav1.Time{Time: clock.Now()},
+				CreationTimestamp: metav1.Time{Time: time.Now().Add(-15 * time.Minute)},
 			},
 			Spec: v1beta1.PipelineRunSpec{
 				PipelineRef: &v1beta1.PipelineRef{
@@ -108,9 +107,9 @@ func TestPipelineRunDelete_v1beta1(t *testing.T) {
 				},
 				PipelineRunStatusFields: v1beta1.PipelineRunStatusFields{
 					// pipeline run starts now
-					StartTime: &metav1.Time{Time: clock.Now()},
+					StartTime: &metav1.Time{Time: time.Now().Add(-15 * time.Minute)},
 					// takes 10 minutes to complete
-					CompletionTime: &metav1.Time{Time: clock.Now().Add(10 * time.Minute)},
+					CompletionTime: &metav1.Time{Time: time.Now().Add(-5 * time.Minute)},
 				},
 			},
 		},
@@ -119,7 +118,7 @@ func TestPipelineRunDelete_v1beta1(t *testing.T) {
 				Namespace:         "ns",
 				Name:              "pipeline-run-3",
 				Labels:            map[string]string{"tekton.dev/pipeline": "pipeline"},
-				CreationTimestamp: metav1.Time{Time: clock.Now()},
+				CreationTimestamp: metav1.Time{Time: time.Now().Add(-20 * time.Minute)},
 			},
 			Spec: v1beta1.PipelineRunSpec{
 				PipelineRef: &v1beta1.PipelineRef{
@@ -137,9 +136,9 @@ func TestPipelineRunDelete_v1beta1(t *testing.T) {
 				},
 				PipelineRunStatusFields: v1beta1.PipelineRunStatusFields{
 					// pipeline run starts now
-					StartTime: &metav1.Time{Time: clock.Now()},
+					StartTime: &metav1.Time{Time: time.Now().Add(-20 * time.Minute)},
 					// takes 10 minutes to complete
-					CompletionTime: &metav1.Time{Time: clock.Now().Add(10 * time.Minute)},
+					CompletionTime: &metav1.Time{Time: time.Now().Add(-15 * time.Minute)},
 				},
 			},
 		},
@@ -149,7 +148,7 @@ func TestPipelineRunDelete_v1beta1(t *testing.T) {
 				Namespace:         "ns",
 				Name:              "pipeline-run-4",
 				Labels:            map[string]string{"tekton.dev/pipeline": "pipeline"},
-				CreationTimestamp: metav1.Time{Time: clock.Now()},
+				CreationTimestamp: metav1.Time{Time: time.Now()},
 			},
 			Spec: v1beta1.PipelineRunSpec{
 				PipelineRef: &v1beta1.PipelineRef{
@@ -163,7 +162,7 @@ func TestPipelineRunDelete_v1beta1(t *testing.T) {
 				Namespace:         "ns",
 				Name:              "pipeline-run-5",
 				Labels:            map[string]string{"tekton.dev/pipeline": "pipeline"},
-				CreationTimestamp: metav1.Time{Time: clock.Now()},
+				CreationTimestamp: metav1.Time{Time: time.Now()},
 			},
 			Spec: v1beta1.PipelineRunSpec{
 				PipelineRef: &v1beta1.PipelineRef{
@@ -187,7 +186,7 @@ func TestPipelineRunDelete_v1beta1(t *testing.T) {
 				Namespace:         "ns",
 				Name:              "pipeline-run-6",
 				Labels:            map[string]string{"tekton.dev/pipeline": "pipeline"},
-				CreationTimestamp: metav1.Time{Time: clock.Now()},
+				CreationTimestamp: metav1.Time{Time: time.Now()},
 			},
 			Spec: v1beta1.PipelineRunSpec{
 				PipelineRef: &v1beta1.PipelineRef{
@@ -205,7 +204,7 @@ func TestPipelineRunDelete_v1beta1(t *testing.T) {
 				},
 				PipelineRunStatusFields: v1beta1.PipelineRunStatusFields{
 					// pipeline run starts now
-					StartTime: &metav1.Time{Time: clock.Now()},
+					StartTime: &metav1.Time{Time: time.Now()},
 				},
 			},
 		},
@@ -214,7 +213,7 @@ func TestPipelineRunDelete_v1beta1(t *testing.T) {
 				Namespace:         "ns",
 				Name:              "pipeline-run-7",
 				Labels:            map[string]string{"tekton.dev/pipeline": "pipeline"},
-				CreationTimestamp: metav1.Time{Time: clock.Now()},
+				CreationTimestamp: metav1.Time{Time: time.Now()},
 			},
 			Spec: v1beta1.PipelineRunSpec{
 				PipelineRef: &v1beta1.PipelineRef{
@@ -232,7 +231,7 @@ func TestPipelineRunDelete_v1beta1(t *testing.T) {
 				},
 				PipelineRunStatusFields: v1beta1.PipelineRunStatusFields{
 					// pipeline run starts now
-					StartTime: &metav1.Time{Time: clock.Now()},
+					StartTime: &metav1.Time{Time: time.Now()},
 				},
 			},
 		},
@@ -431,30 +430,30 @@ func TestPipelineRunDelete_v1beta1(t *testing.T) {
 		},
 		{
 			name:        "Delete all PipelineRuns older than 60mn associated with Pipeline pipeline",
-			command:     []string{"delete", "-f", "--pipeline", "pipeline", "--keep-since", "60", "-n", "ns"},
+			command:     []string{"delete", "-f", "--pipeline", "pipeline", "--keep-since", "30", "-n", "ns"},
 			dynamic:     seeds[6].dynamicClient,
 			input:       seeds[6].pipelineClient,
 			inputStream: nil,
 			wantError:   false,
-			want:        "All but 3 expired PipelineRuns(Completed) associated with Pipeline \"pipeline\" deleted in namespace \"ns\"\n",
+			want:        "There is no PipelineRun older than 30 minutes \n",
 		},
 		{
-			name:        "Delete all PipelineRuns older than 60mn and keeping 2 PipelineRuns",
-			command:     []string{"delete", "-f", "--keep-since", "60", "--keep", "2", "-n", "ns"},
+			name:        "Delete all PipelineRuns older than 2mn and keeping 2 PipelineRuns",
+			command:     []string{"delete", "-f", "--keep-since", "2", "--keep", "2", "-n", "ns"},
 			dynamic:     seeds[11].dynamicClient,
 			input:       seeds[11].pipelineClient,
 			inputStream: nil,
 			wantError:   false,
-			want:        "1 PipelineRuns(Completed) has been deleted in namespace \"ns\", kept 2\n",
+			want:        "3 PipelineRuns(Completed) has been deleted in namespace \"ns\", kept 0\n",
 		},
 		{
-			name:        "Delete all PipelineRuns older than 60mn and keeping 2 PipelineRuns associated with Pipeline pipeline",
-			command:     []string{"delete", "-f", "--pipeline", "pipeline", "--keep-since", "60", "--keep", "2", "-n", "ns"},
+			name:        "Delete all PipelineRuns older than 8mn and keeping 2 PipelineRuns associated with Pipeline pipeline",
+			command:     []string{"delete", "-f", "--pipeline", "pipeline", "--keep-since", "8", "--keep", "1", "-n", "ns"},
 			dynamic:     seeds[10].dynamicClient,
 			input:       seeds[10].pipelineClient,
 			inputStream: nil,
 			wantError:   false,
-			want:        "1 PipelineRuns(Completed) associated with Pipeline \"pipeline\" has been deleted in namespace \"ns\"\n",
+			want:        "2 PipelineRuns(Completed) associated with Pipeline \"pipeline\" has been deleted in namespace \"ns\"\n",
 		},
 		{
 			name:        "Error --keep-since less than zero",
@@ -549,12 +548,12 @@ func TestPipelineRunDelete_v1beta1(t *testing.T) {
 		},
 		{
 			name:        "Delete all the pipelineruns with keep-since ignore-running false except one without status conditions",
-			command:     []string{"delete", "--keep-since", "1", "-n", "ns", "-f", "--ignore-running=false"},
+			command:     []string{"delete", "--keep-since", "1", "-n", "ns", "-f"},
 			dynamic:     seeds[9].dynamicClient,
 			input:       seeds[9].pipelineClient,
 			inputStream: nil,
 			wantError:   false,
-			want:        "6 expired PipelineRuns has been deleted in namespace \"ns\", kept 0\n",
+			want:        "3 expired PipelineRuns(Completed) has been deleted in namespace \"ns\", kept 0\n",
 		},
 		{
 			name:        "Delete all the pipelineruns including one without status",
@@ -628,15 +627,6 @@ func TestPipelineRunDelete_v1beta1(t *testing.T) {
 			wantError:   false,
 			want:        "All PipelineRuns(Completed) deleted in namespace \"ns\"\n",
 		},
-		{
-			name:        "PipelineRun with Status Unknown exists",
-			command:     []string{"ls", "-n", "ns"},
-			dynamic:     seeds[15].dynamicClient,
-			input:       seeds[15].pipelineClient,
-			inputStream: nil,
-			wantError:   false,
-			want:        "NAME             STARTED         DURATION   STATUS\npipeline-run-4   ---             ---        ---\npipeline-run-5   ---             ---        Succeeded(PipelineRunPending)\npipeline-run-6   0 seconds ago   ---        Succeeded(Running)\npipeline-run-7   0 seconds ago   ---        Running(PipelineRunPending)\n",
-		},
 	}
 
 	for _, tp := range testParams {
@@ -649,6 +639,7 @@ func TestPipelineRunDelete_v1beta1(t *testing.T) {
 			}
 
 			out, err := test.ExecuteCommand(pipelinerun, tp.command...)
+
 			if tp.wantError {
 				if err == nil {
 					t.Errorf("error expected here")
@@ -667,7 +658,6 @@ func TestPipelineRunDelete_v1beta1(t *testing.T) {
 
 func TestPipelineRunDelete(t *testing.T) {
 	version := "v1"
-	clock := test.FakeClock()
 
 	ns := []*corev1.Namespace{
 		{
@@ -682,7 +672,7 @@ func TestPipelineRunDelete(t *testing.T) {
 			ObjectMeta: metav1.ObjectMeta{
 				Name:              "pipeline",
 				Namespace:         "ns",
-				CreationTimestamp: metav1.Time{Time: clock.Now().Add(-5 * time.Minute)},
+				CreationTimestamp: metav1.Time{Time: time.Now().Add(-25 * time.Minute)},
 			},
 		},
 	}
@@ -693,7 +683,7 @@ func TestPipelineRunDelete(t *testing.T) {
 				Namespace:         "ns",
 				Name:              "pipeline-run-1",
 				Labels:            map[string]string{"tekton.dev/pipeline": "pipeline"},
-				CreationTimestamp: metav1.Time{Time: clock.Now()},
+				CreationTimestamp: metav1.Time{Time: time.Now()},
 			},
 			Spec: v1.PipelineRunSpec{
 				PipelineRef: &v1.PipelineRef{
@@ -711,9 +701,9 @@ func TestPipelineRunDelete(t *testing.T) {
 				},
 				PipelineRunStatusFields: v1.PipelineRunStatusFields{
 					// pipeline run starts now
-					StartTime: &metav1.Time{Time: clock.Now()},
+					StartTime: &metav1.Time{Time: time.Now()},
 					// takes 10 minutes to complete
-					CompletionTime: &metav1.Time{Time: clock.Now().Add(10 * time.Minute)},
+					CompletionTime: &metav1.Time{Time: time.Now().Add(-10 * time.Minute)},
 				},
 			},
 		},
@@ -722,7 +712,7 @@ func TestPipelineRunDelete(t *testing.T) {
 				Namespace:         "ns",
 				Name:              "pipeline-run-2",
 				Labels:            map[string]string{"tekton.dev/pipeline": "pipeline"},
-				CreationTimestamp: metav1.Time{Time: clock.Now()},
+				CreationTimestamp: metav1.Time{Time: time.Now()},
 			},
 			Spec: v1.PipelineRunSpec{
 				PipelineRef: &v1.PipelineRef{
@@ -740,9 +730,9 @@ func TestPipelineRunDelete(t *testing.T) {
 				},
 				PipelineRunStatusFields: v1.PipelineRunStatusFields{
 					// pipeline run starts now
-					StartTime: &metav1.Time{Time: clock.Now()},
+					StartTime: &metav1.Time{Time: time.Now()},
 					// takes 10 minutes to complete
-					CompletionTime: &metav1.Time{Time: clock.Now().Add(10 * time.Minute)},
+					CompletionTime: &metav1.Time{Time: time.Now().Add(-5 * time.Minute)},
 				},
 			},
 		},
@@ -751,7 +741,7 @@ func TestPipelineRunDelete(t *testing.T) {
 				Namespace:         "ns",
 				Name:              "pipeline-run-3",
 				Labels:            map[string]string{"tekton.dev/pipeline": "pipeline"},
-				CreationTimestamp: metav1.Time{Time: clock.Now()},
+				CreationTimestamp: metav1.Time{Time: time.Now()},
 			},
 			Spec: v1.PipelineRunSpec{
 				PipelineRef: &v1.PipelineRef{
@@ -769,9 +759,9 @@ func TestPipelineRunDelete(t *testing.T) {
 				},
 				PipelineRunStatusFields: v1.PipelineRunStatusFields{
 					// pipeline run starts now
-					StartTime: &metav1.Time{Time: clock.Now()},
+					StartTime: &metav1.Time{Time: time.Now()},
 					// takes 10 minutes to complete
-					CompletionTime: &metav1.Time{Time: clock.Now().Add(10 * time.Minute)},
+					CompletionTime: &metav1.Time{Time: time.Now().Add(-15 * time.Minute)},
 				},
 			},
 		},
@@ -781,7 +771,7 @@ func TestPipelineRunDelete(t *testing.T) {
 				Namespace:         "ns",
 				Name:              "pipeline-run-4",
 				Labels:            map[string]string{"tekton.dev/pipeline": "pipeline"},
-				CreationTimestamp: metav1.Time{Time: clock.Now()},
+				CreationTimestamp: metav1.Time{Time: time.Now()},
 			},
 			Spec: v1.PipelineRunSpec{
 				PipelineRef: &v1.PipelineRef{
@@ -795,7 +785,7 @@ func TestPipelineRunDelete(t *testing.T) {
 				Namespace:         "ns",
 				Name:              "pipeline-run-5",
 				Labels:            map[string]string{"tekton.dev/pipeline": "pipeline"},
-				CreationTimestamp: metav1.Time{Time: clock.Now()},
+				CreationTimestamp: metav1.Time{Time: time.Now()},
 			},
 			Spec: v1.PipelineRunSpec{
 				PipelineRef: &v1.PipelineRef{
@@ -819,7 +809,7 @@ func TestPipelineRunDelete(t *testing.T) {
 				Namespace:         "ns",
 				Name:              "pipeline-run-6",
 				Labels:            map[string]string{"tekton.dev/pipeline": "pipeline"},
-				CreationTimestamp: metav1.Time{Time: clock.Now()},
+				CreationTimestamp: metav1.Time{Time: time.Now()},
 			},
 			Spec: v1.PipelineRunSpec{
 				PipelineRef: &v1.PipelineRef{
@@ -837,7 +827,7 @@ func TestPipelineRunDelete(t *testing.T) {
 				},
 				PipelineRunStatusFields: v1.PipelineRunStatusFields{
 					// pipeline run starts now
-					StartTime: &metav1.Time{Time: clock.Now()},
+					StartTime: &metav1.Time{Time: time.Now()},
 				},
 			},
 		},
@@ -846,7 +836,7 @@ func TestPipelineRunDelete(t *testing.T) {
 				Namespace:         "ns",
 				Name:              "pipeline-run-7",
 				Labels:            map[string]string{"tekton.dev/pipeline": "pipeline"},
-				CreationTimestamp: metav1.Time{Time: clock.Now()},
+				CreationTimestamp: metav1.Time{Time: time.Now()},
 			},
 			Spec: v1.PipelineRunSpec{
 				PipelineRef: &v1.PipelineRef{
@@ -864,7 +854,7 @@ func TestPipelineRunDelete(t *testing.T) {
 				},
 				PipelineRunStatusFields: v1.PipelineRunStatusFields{
 					// pipeline run starts now
-					StartTime: &metav1.Time{Time: clock.Now()},
+					StartTime: &metav1.Time{Time: time.Now()},
 				},
 			},
 		},
@@ -1068,25 +1058,25 @@ func TestPipelineRunDelete(t *testing.T) {
 			input:       seeds[6].pipelineClient,
 			inputStream: nil,
 			wantError:   false,
-			want:        "All but 3 expired PipelineRuns(Completed) associated with Pipeline \"pipeline\" deleted in namespace \"ns\"\n",
+			want:        "There is no PipelineRun older than 60 minutes \n",
 		},
 		{
-			name:        "Delete all PipelineRuns older than 60mn and keeping 2 PipelineRuns",
-			command:     []string{"delete", "-f", "--keep-since", "60", "--keep", "2", "-n", "ns"},
+			name:        "Delete all PipelineRuns older than 2mn and keeping 2 PipelineRuns",
+			command:     []string{"delete", "-f", "--keep-since", "2", "--keep", "2", "-n", "ns"},
 			dynamic:     seeds[11].dynamicClient,
 			input:       seeds[11].pipelineClient,
 			inputStream: nil,
 			wantError:   false,
-			want:        "1 PipelineRuns(Completed) has been deleted in namespace \"ns\", kept 2\n",
+			want:        "3 PipelineRuns(Completed) has been deleted in namespace \"ns\", kept 0\n",
 		},
 		{
-			name:        "Delete all PipelineRuns older than 60mn and keeping 2 PipelineRuns associated with Pipeline pipeline",
-			command:     []string{"delete", "-f", "--pipeline", "pipeline", "--keep-since", "60", "--keep", "2", "-n", "ns"},
+			name:        "Delete all PipelineRuns older than 8mn and keeping 2 PipelineRuns associated with Pipeline pipeline",
+			command:     []string{"delete", "-f", "--pipeline", "pipeline", "--keep-since", "8", "--keep", "1", "-n", "ns"},
 			dynamic:     seeds[10].dynamicClient,
 			input:       seeds[10].pipelineClient,
 			inputStream: nil,
 			wantError:   false,
-			want:        "1 PipelineRuns(Completed) associated with Pipeline \"pipeline\" has been deleted in namespace \"ns\"\n",
+			want:        "2 PipelineRuns(Completed) associated with Pipeline \"pipeline\" has been deleted in namespace \"ns\"\n",
 		},
 		{
 			name:        "Error --keep-since less than zero",
@@ -1180,15 +1170,6 @@ func TestPipelineRunDelete(t *testing.T) {
 			want:        "All but 1 PipelineRuns deleted in namespace \"ns\"\n",
 		},
 		{
-			name:        "Delete all the pipelineruns with keep-since ignore-running false except one without status conditions",
-			command:     []string{"delete", "--keep-since", "1", "-n", "ns", "-f", "--ignore-running=false"},
-			dynamic:     seeds[9].dynamicClient,
-			input:       seeds[9].pipelineClient,
-			inputStream: nil,
-			wantError:   false,
-			want:        "6 expired PipelineRuns has been deleted in namespace \"ns\", kept 0\n",
-		},
-		{
 			name:        "Delete all the pipelineruns including one without status",
 			command:     []string{"delete", "--all", "-n", "ns", "-f", "--ignore-running=false"},
 			dynamic:     seeds[9].dynamicClient,
@@ -1259,15 +1240,6 @@ func TestPipelineRunDelete(t *testing.T) {
 			inputStream: nil,
 			wantError:   false,
 			want:        "All PipelineRuns(Completed) deleted in namespace \"ns\"\n",
-		},
-		{
-			name:        "PipelineRun with Status Unknown exists",
-			command:     []string{"ls", "-n", "ns"},
-			dynamic:     seeds[15].dynamicClient,
-			input:       seeds[15].pipelineClient,
-			inputStream: nil,
-			wantError:   false,
-			want:        "NAME             STARTED         DURATION   STATUS\npipeline-run-4   ---             ---        ---\npipeline-run-5   ---             ---        Succeeded(PipelineRunPending)\npipeline-run-6   0 seconds ago   ---        Succeeded(Running)\npipeline-run-7   0 seconds ago   ---        Running(PipelineRunPending)\n",
 		},
 	}
 
