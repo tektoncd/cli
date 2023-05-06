@@ -1,5 +1,5 @@
 //
-// Copyright 2021 The Sigstore Authors.
+// Copyright 2023 The Sigstore Authors.
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -13,23 +13,26 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-package options
+package now
 
 import (
-	"github.com/spf13/cobra"
+	"fmt"
+	"os"
+	"strconv"
+	"time"
 )
 
-const DefaultRekorURL = "https://rekor.sigstore.dev"
+// Now returns SOURCE_DATE_EPOCH or time.Now().
+func Now() (time.Time, error) {
+	// nolint
+	epoch := os.Getenv("SOURCE_DATE_EPOCH")
+	if epoch == "" {
+		return time.Now(), nil
+	}
 
-// RekorOptions is the wrapper for Rekor related options.
-type RekorOptions struct {
-	URL string
-}
-
-var _ Interface = (*RekorOptions)(nil)
-
-// AddFlags implements Interface
-func (o *RekorOptions) AddFlags(cmd *cobra.Command) {
-	cmd.Flags().StringVar(&o.URL, "rekor-url", DefaultRekorURL,
-		"address of rekor STL server")
+	seconds, err := strconv.ParseInt(epoch, 10, 64)
+	if err != nil {
+		return time.Now(), fmt.Errorf("SOURCE_DATE_EPOCH should be the number of seconds since January 1st 1970, 00:00 UTC, got: %w", err)
+	}
+	return time.Unix(seconds, 0), nil
 }
