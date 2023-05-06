@@ -55,6 +55,7 @@ const (
 	VariableSigstoreCTLogPublicKeyFile Variable = "SIGSTORE_CT_LOG_PUBLIC_KEY_FILE"
 	VariableSigstoreRootFile           Variable = "SIGSTORE_ROOT_FILE"
 	VariableSigstoreRekorPublicKey     Variable = "SIGSTORE_REKOR_PUBLIC_KEY"
+	VariableSigstoreIDToken            Variable = "SIGSTORE_ID_TOKEN" //nolint:gosec
 
 	// Other external environment variables
 	VariableGitHubHost                Variable = "GITHUB_HOST"
@@ -69,6 +70,7 @@ const (
 	VariableBuildkiteAgentEndpoint    Variable = "BUILDKITE_AGENT_ENDPOINT"
 	VariableBuildkiteJobID            Variable = "BUILDKITE_JOB_ID"
 	VariableBuildkiteAgentLogLevel    Variable = "BUILDKITE_AGENT_LOG_LEVEL"
+	VariableSourceDateEpoch           Variable = "SOURCE_DATE_EPOCH"
 )
 
 var (
@@ -194,6 +196,18 @@ var (
 		VariableBuildkiteAgentLogLevel: {
 			Description: "the log level for the Buildkite agent",
 			Expects:     "string with log level, either debug, notice, info, error, warn, fatal (default: notice)",
+			Sensitive:   false,
+			External:    true,
+		},
+		VariableSigstoreIDToken: {
+			Description: "is a OIDC token used to authenticate to Fulcio",
+			Expects:     "string with a OIDC token",
+			Sensitive:   true,
+			External:    true,
+		},
+		VariableSourceDateEpoch: {
+			Description: "overrides current time for reproducible builds, see https://reproducible-builds.org/docs/source-date-epoch/",
+			Expects:     "number of seconds since unix epoch",
 			Sensitive:   false,
 			External:    true,
 		},
