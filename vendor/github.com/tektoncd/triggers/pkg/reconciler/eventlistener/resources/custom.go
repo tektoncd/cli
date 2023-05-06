@@ -50,7 +50,9 @@ func MakeCustomObject(ctx context.Context, el *v1beta1.EventListener, configAcc 
 	container := MakeContainer(el, configAcc, c, func(c *corev1.Container) {
 		// handle env and resources for custom object
 		if len(original.Spec.Template.Spec.Containers) == 1 {
-			c.Env = append(c.Env, original.Spec.Template.Spec.Containers[0].Env...)
+			for i := range original.Spec.Template.Spec.Containers[0].Env {
+				c.Env = append(c.Env, original.Spec.Template.Spec.Containers[0].Env[i])
+			}
 			c.Resources = original.Spec.Template.Spec.Containers[0].Resources
 		}
 

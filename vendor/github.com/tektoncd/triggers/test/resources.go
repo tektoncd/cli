@@ -45,9 +45,10 @@ func ToUnstructured(t *testing.T, in interface{}) *unstructured.Unstructured {
 // expected to be able to interact with.
 func AddTektonResources(clientset *fakekubeclientset.Clientset) {
 	nameKind := map[string]string{
-		"triggertemplates": "TriggerTemplate",
-		"pipelineruns":     "PipelineRun",
-		"taskruns":         "TaskRun",
+		"triggertemplates":  "TriggerTemplate",
+		"pipelineruns":      "PipelineRun",
+		"taskruns":          "TaskRun",
+		"pipelineresources": "PipelineResource",
 	}
 	resources := make([]metav1.APIResource, 0, len(nameKind))
 	for name, kind := range nameKind {

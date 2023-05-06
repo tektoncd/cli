@@ -20,7 +20,5 @@ import (
 	"context"
 )
 
-// revive:disable:unused-parameter
-
 // SetDefaults initializes ClusterTriggerBinding ctb with its default values.
 func (ctb *ClusterTriggerBinding) SetDefaults(ctx context.Context) {}

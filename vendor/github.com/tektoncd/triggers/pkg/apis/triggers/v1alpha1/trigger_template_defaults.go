@@ -20,7 +20,5 @@ import (
 	"context"
 )
 
-// revive:disable:unused-parameter
-
 // SetDefaults initializes TriggerTemplate with default values.
 func (tt *TriggerTemplate) SetDefaults(ctx context.Context) {}

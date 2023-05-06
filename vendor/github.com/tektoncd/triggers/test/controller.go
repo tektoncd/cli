@@ -25,6 +25,8 @@ import (
 	logger "github.com/sirupsen/logrus"
 	fakepipelineclientset "github.com/tektoncd/pipeline/pkg/client/clientset/versioned/fake"
 	fakepipelineclient "github.com/tektoncd/pipeline/pkg/client/injection/client/fake"
+	fakeresourceclientset "github.com/tektoncd/pipeline/pkg/client/resource/clientset/versioned/fake"
+	fakeresourceclient "github.com/tektoncd/pipeline/pkg/client/resource/injection/client/fake"
 	"github.com/tektoncd/triggers/pkg/apis/triggers/v1alpha1"
 	"github.com/tektoncd/triggers/pkg/apis/triggers/v1beta1"
 	faketriggersclientset "github.com/tektoncd/triggers/pkg/client/clientset/versioned/fake"
@@ -91,6 +93,7 @@ type Clients struct {
 	Kube          *fakekubeclientset.Clientset
 	Triggers      *faketriggersclientset.Clientset
 	Pipeline      *fakepipelineclientset.Clientset
+	Resource      *fakeresourceclientset.Clientset
 	DynamicClient *fakedynamic.FakeDynamicClient
 }
 
@@ -127,6 +130,7 @@ func SeedResources(t *testing.T, ctx context.Context, r Resources) Clients {
 		Kube:          fakekubeclient.Get(ctx),
 		Triggers:      faketriggersclient.Get(ctx),
 		Pipeline:      fakepipelineclient.Get(ctx),
+		Resource:      fakeresourceclient.Get(ctx),
 		DynamicClient: fakedynamicclientset.Get(ctx),
 	}
 

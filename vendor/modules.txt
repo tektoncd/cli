@@ -1349,6 +1349,13 @@ github.com/tektoncd/pipeline/pkg/client/resolution/injection/informers/resolutio
 github.com/tektoncd/pipeline/pkg/client/resolution/injection/informers/resolution/v1beta1/resolutionrequest/fake
 github.com/tektoncd/pipeline/pkg/client/resolution/listers/resolution/v1alpha1
 github.com/tektoncd/pipeline/pkg/client/resolution/listers/resolution/v1beta1
+github.com/tektoncd/pipeline/pkg/client/resource/clientset/versioned
+github.com/tektoncd/pipeline/pkg/client/resource/clientset/versioned/fake
+github.com/tektoncd/pipeline/pkg/client/resource/clientset/versioned/scheme
+github.com/tektoncd/pipeline/pkg/client/resource/clientset/versioned/typed/resource/v1alpha1
+github.com/tektoncd/pipeline/pkg/client/resource/clientset/versioned/typed/resource/v1alpha1/fake
+github.com/tektoncd/pipeline/pkg/client/resource/injection/client
+github.com/tektoncd/pipeline/pkg/client/resource/injection/client/fake
 github.com/tektoncd/pipeline/pkg/list
 github.com/tektoncd/pipeline/pkg/names
 github.com/tektoncd/pipeline/pkg/reconciler/events/cache
@@ -1366,7 +1373,7 @@ github.com/tektoncd/pipeline/test/diff
 # github.com/tektoncd/plumbing v0.0.0-20221102182345-5dbcfda657d7
 ## explicit; go 1.13
 github.com/tektoncd/plumbing/scripts
-# github.com/tektoncd/triggers v0.23.1-0.20230420080448-bf603123cc0f
+# github.com/tektoncd/triggers v0.23.1
 ## explicit; go 1.17
 github.com/tektoncd/triggers/pkg/apis/config
 github.com/tektoncd/triggers/pkg/apis/triggers
