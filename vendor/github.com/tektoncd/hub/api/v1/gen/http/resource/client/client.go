@@ -55,6 +55,10 @@ type Client struct {
 	// requests to the GetRawYamlByCatalogKindNameVersion endpoint.
 	GetRawYamlByCatalogKindNameVersionDoer goahttp.Doer
 
+	// GetLatestRawYamlByCatalogKindName Doer is the HTTP client used to make
+	// requests to the GetLatestRawYamlByCatalogKindName endpoint.
+	GetLatestRawYamlByCatalogKindNameDoer goahttp.Doer
+
 	// CORS Doer is the HTTP client used to make requests to the  endpoint.
 	CORSDoer goahttp.Doer
 
@@ -88,6 +92,7 @@ func NewClient(
 		ByCatalogKindNameDoer:                  doer,
 		ByIDDoer:                               doer,
 		GetRawYamlByCatalogKindNameVersionDoer: doer,
+		GetLatestRawYamlByCatalogKindNameDoer:  doer,
 		CORSDoer:                               doer,
 		RestoreResponseBody:                    restoreBody,
 		scheme:                                 scheme,
@@ -304,5 +309,29 @@ func (c *Client) GetRawYamlByCatalogKindNameVersion() goa.Endpoint {
 			return nil, err
 		}
 		return &resource.GetRawYamlByCatalogKindNameVersionResponseData{Body: resp.Body}, nil
+	}
+}
+
+// GetLatestRawYamlByCatalogKindName returns an endpoint that makes HTTP
+// requests to the resource service GetLatestRawYamlByCatalogKindName server.
+func (c *Client) GetLatestRawYamlByCatalogKindName() goa.Endpoint {
+	var (
+		decodeResponse = DecodeGetLatestRawYamlByCatalogKindNameResponse(c.decoder, c.RestoreResponseBody)
+	)
+	return func(ctx context.Context, v interface{}) (interface{}, error) {
+		req, err := c.BuildGetLatestRawYamlByCatalogKindNameRequest(ctx, v)
+		if err != nil {
+			return nil, err
+		}
+		resp, err := c.GetLatestRawYamlByCatalogKindNameDoer.Do(req)
+		if err != nil {
+			return nil, goahttp.ErrRequestError("resource", "GetLatestRawYamlByCatalogKindName", err)
+		}
+		_, err = decodeResponse(resp)
+		if err != nil {
+			resp.Body.Close()
+			return nil, err
+		}
+		return &resource.GetLatestRawYamlByCatalogKindNameResponseData{Body: resp.Body}, nil
 	}
 }

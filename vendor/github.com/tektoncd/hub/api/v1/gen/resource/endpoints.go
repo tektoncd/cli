@@ -26,11 +26,19 @@ type Endpoints struct {
 	ByCatalogKindName                  goa.Endpoint
 	ByID                               goa.Endpoint
 	GetRawYamlByCatalogKindNameVersion goa.Endpoint
+	GetLatestRawYamlByCatalogKindName  goa.Endpoint
 }
 
 // GetRawYamlByCatalogKindNameVersionResponseData holds both the result and the
 // HTTP response body reader of the "GetRawYamlByCatalogKindNameVersion" method.
 type GetRawYamlByCatalogKindNameVersionResponseData struct {
+	// Body streams the HTTP response body.
+	Body io.ReadCloser
+}
+
+// GetLatestRawYamlByCatalogKindNameResponseData holds both the result and the
+// HTTP response body reader of the "GetLatestRawYamlByCatalogKindName" method.
+type GetLatestRawYamlByCatalogKindNameResponseData struct {
 	// Body streams the HTTP response body.
 	Body io.ReadCloser
 }
@@ -48,6 +56,7 @@ func NewEndpoints(s Service) *Endpoints {
 		ByCatalogKindName:                  NewByCatalogKindNameEndpoint(s),
 		ByID:                               NewByIDEndpoint(s),
 		GetRawYamlByCatalogKindNameVersion: NewGetRawYamlByCatalogKindNameVersionEndpoint(s),
+		GetLatestRawYamlByCatalogKindName:  NewGetLatestRawYamlByCatalogKindNameEndpoint(s),
 	}
 }
 
@@ -63,6 +72,7 @@ func (e *Endpoints) Use(m func(goa.Endpoint) goa.Endpoint) {
 	e.ByCatalogKindName = m(e.ByCatalogKindName)
 	e.ByID = m(e.ByID)
 	e.GetRawYamlByCatalogKindNameVersion = m(e.GetRawYamlByCatalogKindNameVersion)
+	e.GetLatestRawYamlByCatalogKindName = m(e.GetLatestRawYamlByCatalogKindName)
 }
 
 // NewQueryEndpoint returns an endpoint function that calls the method "Query"
@@ -202,5 +212,19 @@ func NewGetRawYamlByCatalogKindNameVersionEndpoint(s Service) goa.Endpoint {
 			return nil, err
 		}
 		return &GetRawYamlByCatalogKindNameVersionResponseData{Body: body}, nil
+	}
+}
+
+// NewGetLatestRawYamlByCatalogKindNameEndpoint returns an endpoint function
+// that calls the method "GetLatestRawYamlByCatalogKindName" of service
+// "resource".
+func NewGetLatestRawYamlByCatalogKindNameEndpoint(s Service) goa.Endpoint {
+	return func(ctx context.Context, req interface{}) (interface{}, error) {
+		p := req.(*GetLatestRawYamlByCatalogKindNamePayload)
+		body, err := s.GetLatestRawYamlByCatalogKindName(ctx, p)
+		if err != nil {
+			return nil, err
+		}
+		return &GetLatestRawYamlByCatalogKindNameResponseData{Body: body}, nil
 	}
 }

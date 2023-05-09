@@ -1087,16 +1087,106 @@ func DecodeGetRawYamlByCatalogKindNameVersionResponse(decoder func(*http.Respons
 	}
 }
 
+// BuildGetLatestRawYamlByCatalogKindNameRequest instantiates a HTTP request
+// object with method and path set to call the "resource" service
+// "GetLatestRawYamlByCatalogKindName" endpoint
+func (c *Client) BuildGetLatestRawYamlByCatalogKindNameRequest(ctx context.Context, v interface{}) (*http.Request, error) {
+	var (
+		catalog string
+		kind    string
+		name    string
+	)
+	{
+		p, ok := v.(*resource.GetLatestRawYamlByCatalogKindNamePayload)
+		if !ok {
+			return nil, goahttp.ErrInvalidType("resource", "GetLatestRawYamlByCatalogKindName", "*resource.GetLatestRawYamlByCatalogKindNamePayload", v)
+		}
+		catalog = p.Catalog
+		kind = p.Kind
+		name = p.Name
+	}
+	u := &url.URL{Scheme: c.scheme, Host: c.host, Path: GetLatestRawYamlByCatalogKindNameResourcePath(catalog, kind, name)}
+	req, err := http.NewRequest("GET", u.String(), nil)
+	if err != nil {
+		return nil, goahttp.ErrInvalidURL("resource", "GetLatestRawYamlByCatalogKindName", u.String(), err)
+	}
+	if ctx != nil {
+		req = req.WithContext(ctx)
+	}
+
+	return req, nil
+}
+
+// DecodeGetLatestRawYamlByCatalogKindNameResponse returns a decoder for
+// responses returned by the resource GetLatestRawYamlByCatalogKindName
+// endpoint. restoreBody controls whether the response body should be restored
+// after having been read.
+// DecodeGetLatestRawYamlByCatalogKindNameResponse may return the following
+// errors:
+//   - "internal-error" (type *goa.ServiceError): http.StatusInternalServerError
+//   - "not-found" (type *goa.ServiceError): http.StatusNotFound
+//   - error: internal error
+func DecodeGetLatestRawYamlByCatalogKindNameResponse(decoder func(*http.Response) goahttp.Decoder, restoreBody bool) func(*http.Response) (interface{}, error) {
+	return func(resp *http.Response) (interface{}, error) {
+		if restoreBody {
+			b, err := io.ReadAll(resp.Body)
+			if err != nil {
+				return nil, err
+			}
+			resp.Body = io.NopCloser(bytes.NewBuffer(b))
+			defer func() {
+				resp.Body = io.NopCloser(bytes.NewBuffer(b))
+			}()
+		}
+		switch resp.StatusCode {
+		case http.StatusOK:
+			return nil, nil
+		case http.StatusInternalServerError:
+			var (
+				body GetLatestRawYamlByCatalogKindNameInternalErrorResponseBody
+				err  error
+			)
+			err = decoder(resp).Decode(&body)
+			if err != nil {
+				return nil, goahttp.ErrDecodingError("resource", "GetLatestRawYamlByCatalogKindName", err)
+			}
+			err = ValidateGetLatestRawYamlByCatalogKindNameInternalErrorResponseBody(&body)
+			if err != nil {
+				return nil, goahttp.ErrValidationError("resource", "GetLatestRawYamlByCatalogKindName", err)
+			}
+			return nil, NewGetLatestRawYamlByCatalogKindNameInternalError(&body)
+		case http.StatusNotFound:
+			var (
+				body GetLatestRawYamlByCatalogKindNameNotFoundResponseBody
+				err  error
+			)
+			err = decoder(resp).Decode(&body)
+			if err != nil {
+				return nil, goahttp.ErrDecodingError("resource", "GetLatestRawYamlByCatalogKindName", err)
+			}
+			err = ValidateGetLatestRawYamlByCatalogKindNameNotFoundResponseBody(&body)
+			if err != nil {
+				return nil, goahttp.ErrValidationError("resource", "GetLatestRawYamlByCatalogKindName", err)
+			}
+			return nil, NewGetLatestRawYamlByCatalogKindNameNotFound(&body)
+		default:
+			body, _ := io.ReadAll(resp.Body)
+			return nil, goahttp.ErrInvalidResponse("resource", "GetLatestRawYamlByCatalogKindName", resp.StatusCode, string(body))
+		}
+	}
+}
+
 // unmarshalResourceDataResponseBodyToResourceviewsResourceDataView builds a
 // value of type *resourceviews.ResourceDataView from a value of type
 // *ResourceDataResponseBody.
 func unmarshalResourceDataResponseBodyToResourceviewsResourceDataView(v *ResourceDataResponseBody) *resourceviews.ResourceDataView {
 	res := &resourceviews.ResourceDataView{
-		ID:         v.ID,
-		Name:       v.Name,
-		Kind:       v.Kind,
-		HubURLPath: v.HubURLPath,
-		Rating:     v.Rating,
+		ID:            v.ID,
+		Name:          v.Name,
+		Kind:          v.Kind,
+		HubURLPath:    v.HubURLPath,
+		HubRawURLPath: v.HubRawURLPath,
+		Rating:        v.Rating,
 	}
 	res.Catalog = unmarshalCatalogResponseBodyToResourceviewsCatalogView(v.Catalog)
 	res.Categories = make([]*resourceviews.CategoryView, len(v.Categories))
@@ -1158,6 +1248,7 @@ func unmarshalResourceVersionDataResponseBodyToResourceviewsResourceVersionDataV
 		MinPipelinesVersion: v.MinPipelinesVersion,
 		RawURL:              v.RawURL,
 		WebURL:              v.WebURL,
+		HubRawURLPath:       v.HubRawURLPath,
 		UpdatedAt:           v.UpdatedAt,
 		HubURLPath:          v.HubURLPath,
 	}
