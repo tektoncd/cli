@@ -26,10 +26,11 @@ type Client struct {
 	ByCatalogKindNameEndpoint                  goa.Endpoint
 	ByIDEndpoint                               goa.Endpoint
 	GetRawYamlByCatalogKindNameVersionEndpoint goa.Endpoint
+	GetLatestRawYamlByCatalogKindNameEndpoint  goa.Endpoint
 }
 
 // NewClient initializes a "resource" service client given the endpoints.
-func NewClient(query, list, versionsByID, byCatalogKindNameVersion, byCatalogKindNameVersionReadme, byCatalogKindNameVersionYaml, byVersionID, byCatalogKindName, byID, getRawYamlByCatalogKindNameVersion goa.Endpoint) *Client {
+func NewClient(query, list, versionsByID, byCatalogKindNameVersion, byCatalogKindNameVersionReadme, byCatalogKindNameVersionYaml, byVersionID, byCatalogKindName, byID, getRawYamlByCatalogKindNameVersion, getLatestRawYamlByCatalogKindName goa.Endpoint) *Client {
 	return &Client{
 		QueryEndpoint:                              query,
 		ListEndpoint:                               list,
@@ -41,6 +42,7 @@ func NewClient(query, list, versionsByID, byCatalogKindNameVersion, byCatalogKin
 		ByCatalogKindNameEndpoint:                  byCatalogKindName,
 		ByIDEndpoint:                               byID,
 		GetRawYamlByCatalogKindNameVersionEndpoint: getRawYamlByCatalogKindNameVersion,
+		GetLatestRawYamlByCatalogKindNameEndpoint:  getLatestRawYamlByCatalogKindName,
 	}
 }
 
@@ -197,5 +199,22 @@ func (c *Client) GetRawYamlByCatalogKindNameVersion(ctx context.Context, p *GetR
 		return
 	}
 	o := ires.(*GetRawYamlByCatalogKindNameVersionResponseData)
+	return o.Body, nil
+}
+
+// GetLatestRawYamlByCatalogKindName calls the
+// "GetLatestRawYamlByCatalogKindName" endpoint of the "resource" service.
+// GetLatestRawYamlByCatalogKindName may return the following errors:
+//   - "internal-error" (type *goa.ServiceError): Internal Server Error
+//   - "not-found" (type *goa.ServiceError): Resource Not Found Error
+//   - "invalid-kind" (type *goa.ServiceError): Invalid Resource Kind
+//   - error: internal error
+func (c *Client) GetLatestRawYamlByCatalogKindName(ctx context.Context, p *GetLatestRawYamlByCatalogKindNamePayload) (resp io.ReadCloser, err error) {
+	var ires interface{}
+	ires, err = c.GetLatestRawYamlByCatalogKindNameEndpoint(ctx, p)
+	if err != nil {
+		return
+	}
+	o := ires.(*GetLatestRawYamlByCatalogKindNameResponseData)
 	return o.Body, nil
 }

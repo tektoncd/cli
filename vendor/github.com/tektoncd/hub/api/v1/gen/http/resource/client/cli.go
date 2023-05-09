@@ -365,3 +365,33 @@ func BuildGetRawYamlByCatalogKindNameVersionPayload(resourceGetRawYamlByCatalogK
 
 	return v, nil
 }
+
+// BuildGetLatestRawYamlByCatalogKindNamePayload builds the payload for the
+// resource GetLatestRawYamlByCatalogKindName endpoint from CLI flags.
+func BuildGetLatestRawYamlByCatalogKindNamePayload(resourceGetLatestRawYamlByCatalogKindNameCatalog string, resourceGetLatestRawYamlByCatalogKindNameKind string, resourceGetLatestRawYamlByCatalogKindNameName string) (*resource.GetLatestRawYamlByCatalogKindNamePayload, error) {
+	var err error
+	var catalog string
+	{
+		catalog = resourceGetLatestRawYamlByCatalogKindNameCatalog
+	}
+	var kind string
+	{
+		kind = resourceGetLatestRawYamlByCatalogKindNameKind
+		if !(kind == "task" || kind == "pipeline") {
+			err = goa.MergeErrors(err, goa.InvalidEnumValueError("kind", kind, []interface{}{"task", "pipeline"}))
+		}
+		if err != nil {
+			return nil, err
+		}
+	}
+	var name string
+	{
+		name = resourceGetLatestRawYamlByCatalogKindNameName
+	}
+	v := &resource.GetLatestRawYamlByCatalogKindNamePayload{}
+	v.Catalog = catalog
+	v.Kind = kind
+	v.Name = name
+
+	return v, nil
+}
