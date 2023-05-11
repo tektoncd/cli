@@ -1367,8 +1367,8 @@ github.com/tektoncd/pipeline/test/diff
 # github.com/tektoncd/plumbing v0.0.0-20221102182345-5dbcfda657d7
 ## explicit; go 1.13
 github.com/tektoncd/plumbing/scripts
-# github.com/tektoncd/triggers v0.23.1-0.20230420080448-bf603123cc0f
-## explicit; go 1.17
+# github.com/tektoncd/triggers v0.24.0
+## explicit; go 1.19
 github.com/tektoncd/triggers/pkg/apis/config
 github.com/tektoncd/triggers/pkg/apis/triggers
 github.com/tektoncd/triggers/pkg/apis/triggers/contexts
