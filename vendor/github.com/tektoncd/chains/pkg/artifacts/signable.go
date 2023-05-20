@@ -35,6 +35,8 @@ import (
 const (
 	ArtifactsInputsResultName  = "ARTIFACT_INPUTS"
 	ArtifactsOutputsResultName = "ARTIFACT_OUTPUTS"
+	OCIScheme                  = "oci://"
+	GitSchemePrefix            = "git+"
 )
 
 var (
@@ -249,7 +251,7 @@ func ExtractSignableTargetFromResults(ctx context.Context, obj objects.TektonObj
 		if s == nil || s.Digest == "" || s.URI == "" {
 			continue
 		}
-		if err := checkDigest(s.Digest); err != nil {
+		if _, _, err := ParseDigest(s.Digest); err != nil {
 			logger.Errorf("error getting digest %s: %v", s.Digest, err)
 			continue
 		}
@@ -308,13 +310,11 @@ func RetrieveMaterialsFromStructuredResults(ctx context.Context, obj objects.Tek
 	mats := []common.ProvenanceMaterial{}
 	ssts := ExtractStructuredTargetFromResults(ctx, obj, ArtifactsInputsResultName)
 	for _, s := range ssts {
-		if err := checkDigest(s.Digest); err != nil {
+		alg, digest, err := ParseDigest(s.Digest)
+		if err != nil {
 			logger.Debugf("Digest for %s not in the right format: %s, %v", s.URI, s.Digest, err)
 			continue
 		}
-		splits := strings.Split(s.Digest, ":")
-		alg := splits[0]
-		digest := splits[1]
 		mats = append(mats, common.ProvenanceMaterial{
 			URI:    s.URI,
 			Digest: map[string]string{alg: digest},
@@ -368,37 +368,38 @@ func isStructuredResult(res objects.Result, categoryMarker string) (bool, error)
 	if res.Value.ObjectVal["digest"] == "" {
 		return false, fmt.Errorf("%s should have digest field: %v", res.Name, res.Value.ObjectVal)
 	}
-	if err := checkDigest(res.Value.ObjectVal["digest"]); err != nil {
+	if _, _, err := ParseDigest(res.Value.ObjectVal["digest"]); err != nil {
 		return false, fmt.Errorf("error getting digest %s: %v", res.Value.ObjectVal["digest"], err)
 	}
 	return true, nil
 }
 
-func checkDigest(dig string) error {
+// ParseDigest parses the digest string and returns the algorithm and hex section of the digest.
+func ParseDigest(dig string) (algo_string string, hex string, err error) {
 	parts := strings.Split(dig, ":")
 	if len(parts) != 2 {
-		return fmt.Errorf("digest string %s, not in the format of <algorithm>:<digest>", dig)
+		return "", "", fmt.Errorf("digest string %s, not in the format of <algorithm>:<digest>", dig)
 	}
-	algo_string := strings.ToLower(strings.TrimSpace(parts[0]))
+	algo_string = strings.ToLower(strings.TrimSpace(parts[0]))
 	algo := digest.Algorithm(algo_string)
-	hex := strings.TrimSpace(parts[1])
+	hex = strings.TrimSpace(parts[1])
 
 	switch {
 	case algo.Available():
 		if err := algo.Validate(hex); err != nil {
-			return err
+			return "", "", err
 		}
 	case algo_string == "sha1":
 		// Version 1.0.0, which is the released version, of go_digest does not support SHA1,
 		// hence this has to be handled differently.
 		if !Sha1Regexp.MatchString(hex) {
-			return fmt.Errorf("sha1 digest %s does not match regexp %s", dig, Sha1Regexp.String())
+			return "", "", fmt.Errorf("sha1 digest %s does not match regexp %s", dig, Sha1Regexp.String())
 		}
 	default:
-		return fmt.Errorf("unsupported digest algorithm: %s", dig)
+		return "", "", fmt.Errorf("unsupported digest algorithm: %s", dig)
 
 	}
-	return nil
+	return algo_string, hex, nil
 }
 
 // split allows IMAGES to be separated either by commas (for backwards compatibility)
