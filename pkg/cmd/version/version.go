@@ -38,7 +38,7 @@ const (
 
 var (
 	// NOTE: use go build -ldflags "-X github.com/tektoncd/cli/pkg/cmd/version.clientVersion=$(git describe)"
-	clientVersion = devVersion
+	ClientVersion = devVersion
 	// flag to skip check flag in version cmd
 	skipCheckFlag = "false"
 	// NOTE: use go build -ldflags "-X github.com/tektoncd/cli/pkg/cmd/version.namespace=tekton-pipelines"
@@ -74,7 +74,7 @@ func Command(p cli.Params) *cobra.Command {
 			if err == nil {
 				switch component {
 				case "":
-					fmt.Fprintf(cmd.OutOrStdout(), "Client version: %s\n", clientVersion)
+					fmt.Fprintf(cmd.OutOrStdout(), "Client version: %s\n", ClientVersion)
 					chainsVersion, _ := version.GetChainsVersion(cs, namespace)
 					if chainsVersion != "" {
 						fmt.Fprintf(cmd.OutOrStdout(), "Chains version: %s\n", chainsVersion)
@@ -99,7 +99,7 @@ func Command(p cli.Params) *cobra.Command {
 						fmt.Fprintf(cmd.OutOrStdout(), "Operator version: %s\n", operatorVersion)
 					}
 				case "client":
-					fmt.Fprintf(cmd.OutOrStdout(), "%s\n", clientVersion)
+					fmt.Fprintf(cmd.OutOrStdout(), "%s\n", ClientVersion)
 				case "chains":
 					chainsVersion, _ := version.GetChainsVersion(cs, namespace)
 					if chainsVersion == "" {
@@ -136,9 +136,9 @@ func Command(p cli.Params) *cobra.Command {
 			} else {
 				switch component {
 				case "":
-					fmt.Fprintf(cmd.OutOrStdout(), "Client version: %s\n", clientVersion)
+					fmt.Fprintf(cmd.OutOrStdout(), "Client version: %s\n", ClientVersion)
 				case "client":
-					fmt.Fprintf(cmd.OutOrStdout(), "%s\n", clientVersion)
+					fmt.Fprintf(cmd.OutOrStdout(), "%s\n", ClientVersion)
 				case "chains", "pipeline", "triggers", "dashboard", "operator":
 					fmt.Fprintf(cmd.OutOrStdout(), "unknown\n")
 				default:
@@ -146,7 +146,7 @@ func Command(p cli.Params) *cobra.Command {
 				}
 			}
 
-			if !check || clientVersion == devVersion {
+			if !check || ClientVersion == devVersion {
 				return nil
 			}
 
@@ -245,7 +245,7 @@ func checkRelease(client *Client) (string, error) {
 		return "", err
 	}
 
-	current, err := parseVersion(clientVersion)
+	current, err := parseVersion(ClientVersion)
 	if err != nil {
 		return "", err
 	}

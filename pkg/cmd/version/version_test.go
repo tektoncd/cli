@@ -36,8 +36,8 @@ import (
 )
 
 func TestVersionGood(t *testing.T) {
-	v := clientVersion
-	defer func() { clientVersion = v }()
+	v := ClientVersion
+	defer func() { ClientVersion = v }()
 
 	scenarios := []struct {
 		name          string
@@ -60,7 +60,7 @@ func TestVersionGood(t *testing.T) {
 	}
 	for _, s := range scenarios {
 		t.Run(s.name, func(t *testing.T) {
-			clientVersion = s.clientVersion
+			ClientVersion = s.clientVersion
 			h := http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 				okResponse, _ := json.Marshal(GHVersion{
 					TagName: s.serverVersion,
@@ -79,7 +79,7 @@ func TestVersionGood(t *testing.T) {
 		})
 	}
 
-	clientVersion = "v1.2.3"
+	ClientVersion = "v1.2.3"
 
 	seedData, _ := test.SeedV1beta1TestData(t, pipelinetest.Data{})
 
@@ -172,8 +172,8 @@ func TestGetComponentVersions(t *testing.T) {
 }
 
 func TestVersionBad(t *testing.T) {
-	v := clientVersion
-	defer func() { clientVersion = v }()
+	v := ClientVersion
+	defer func() { ClientVersion = v }()
 
 	scenarios := []struct {
 		name          string
@@ -197,7 +197,7 @@ func TestVersionBad(t *testing.T) {
 
 	for _, s := range scenarios {
 		t.Run(s.name, func(t *testing.T) {
-			clientVersion = s.clientVersion
+			ClientVersion = s.clientVersion
 			h := http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 				okResponse, _ := json.Marshal(GHVersion{
 					TagName: s.serverVersion,
