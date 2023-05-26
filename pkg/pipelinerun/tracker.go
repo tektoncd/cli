@@ -16,6 +16,7 @@ package pipelinerun
 
 import (
 	"context"
+	"sync"
 	"time"
 
 	"github.com/tektoncd/cli/pkg/actions"
@@ -67,10 +68,9 @@ func (t *Tracker) Monitor(allowed []string) <-chan []taskrunpkg.Run {
 
 	genericInformer, _ := factory.ForResource(*gvr)
 	informer := genericInformer.Informer()
-
+	mu := &sync.Mutex{}
 	stopC := make(chan struct{})
 	trC := make(chan []taskrunpkg.Run)
-
 	go func() {
 		<-stopC
 		close(trC)
@@ -97,7 +97,6 @@ func (t *Tracker) Monitor(allowed []string) <-chan []taskrunpkg.Run {
 			return
 		}
 		pr.DeepCopyInto(&pipelinerunConverted)
-
 		trC <- t.findNewTaskruns(&pipelinerunConverted, allowed, trsMap)
 
 		if hasCompleted(&pipelinerunConverted) {
@@ -107,8 +106,38 @@ func (t *Tracker) Monitor(allowed []string) <-chan []taskrunpkg.Run {
 
 	informer.AddEventHandler(
 		cache.ResourceEventHandlerFuncs{
-			AddFunc:    eventHandler,
-			UpdateFunc: func(_, newObj interface{}) { eventHandler(newObj) },
+			AddFunc: func(obj interface{}) {
+				// To ensure synchonization and checks is the stopC channel has received a signal to stop
+				// If it receives a signal then return and does nothing
+				mu.Lock()
+				defer mu.Unlock()
+				select {
+				case <-stopC:
+					return
+				default:
+					eventHandler(obj)
+				}
+			},
+			UpdateFunc: func(_, newObj interface{}) {
+				mu.Lock()
+				defer mu.Unlock()
+				select {
+				case <-stopC:
+					return
+				default:
+					eventHandler(newObj)
+				}
+			},
+			DeleteFunc: func(obj interface{}) {
+				mu.Lock()
+				defer mu.Unlock()
+				select {
+				case <-stopC:
+					return
+				default:
+					eventHandler(obj)
+				}
+			},
 		},
 	)
 
