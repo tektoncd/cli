@@ -41,6 +41,18 @@ install_pipeline_crd
 
 failed=0
 
+function add_spire() {
+  local gate="$1"
+  if [ "$gate" == "alpha" ] ; then
+    DIR="$( cd -- "$( dirname -- "${BASH_SOURCE[0]}" )" &> /dev/null && pwd )"
+    printf "Setting up environment for alpha features"
+    install_spire
+    patch_pipeline_spire
+    kubectl apply -n tekton-pipelines -f "$DIR"/testdata/spire/config-spire.yaml
+    failed=0
+  fi
+}
+
 function set_feature_gate() {
   local gate="$1"
   local resolver="false"
@@ -57,7 +69,7 @@ function set_feature_gate() {
   kubectl patch configmap feature-flags -n tekton-pipelines -p "$jsonpatch"
   if [ "$gate" == "alpha" ]; then
     printf "enabling resolvers\n"
-    jsonpatch=$(printf "{\"data\": {\"enable-git-resolver\": \"true\", \"enable-hub-resolver\": \"true\", \"enable-bundles-resolver\": \"true\", \"enable-cluster-resolver\": \"true\", \"enable-provenance-in-status\": \"true\"}}")
+    jsonpatch=$(printf "{\"data\": {\"enable-git-resolver\": \"true\", \"enable-hub-resolver\": \"true\", \"enable-bundles-resolver\": \"true\", \"enable-cluster-resolver\": \"true\"}}")
     echo "resolvers-feature-flags ConfigMap patch: ${jsonpatch}"
     kubectl patch configmap resolvers-feature-flags -n tekton-pipelines-resolvers -p "$jsonpatch"
   fi
@@ -91,6 +103,7 @@ function run_e2e() {
   fi
 }
 
+add_spire "$PIPELINE_FEATURE_GATE"
 set_feature_gate "$PIPELINE_FEATURE_GATE"
 set_result_extraction_method "$RESULTS_FROM"
 run_e2e
