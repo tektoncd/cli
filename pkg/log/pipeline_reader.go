@@ -208,15 +208,23 @@ func (r *Reader) setUpTask(taskNumber int, tr taskrunpkg.Run) {
 // and return trh.Run after converted taskruns into trh.Run.
 func (r *Reader) getOrderedTasks(pr *v1.PipelineRun) ([]taskrunpkg.Run, error) {
 	var tasks []v1.PipelineTask
-
 	switch {
 	case pr.Spec.PipelineRef != nil:
-		pl, err := pipelinepkg.GetPipeline(pipelineGroupResource, r.clients, pr.Spec.PipelineRef.Name, r.ns)
-		if err != nil {
-			return nil, err
+		if pr.Spec.PipelineRef.ResolverRef.Resolver != "" {
+			pipelineTasks, err := getPipelineTasks(pr)
+			if err != nil {
+				return nil, err
+			}
+			tasks = append(tasks, pipelineTasks...)
+		} else {
+
+			pl, err := pipelinepkg.GetPipeline(pipelineGroupResource, r.clients, pr.Spec.PipelineRef.Name, r.ns)
+			if err != nil {
+				return nil, err
+			}
+			tasks = pl.Spec.Tasks
+			tasks = append(tasks, pl.Spec.Finally...)
 		}
-		tasks = pl.Spec.Tasks
-		tasks = append(tasks, pl.Spec.Finally...)
 	case pr.Spec.PipelineSpec != nil:
 		tasks = pr.Spec.PipelineSpec.Tasks
 		tasks = append(tasks, pr.Spec.PipelineSpec.Finally...)
@@ -264,4 +272,19 @@ func cast2pipelinerun(obj runtime.Object) (*v1.PipelineRun, error) {
 		return nil, err
 	}
 	return run, nil
+}
+
+func getPipelineTasks(pr *v1.PipelineRun) ([]v1.PipelineTask, error) {
+
+	var pipelineTask []v1.PipelineTask
+
+	switch pr.Spec.PipelineRef.ResolverRef.Resolver {
+	case "cluster":
+		pipelineTask = append(pipelineTask, pr.Status.PipelineSpec.Tasks...)
+		pipelineTask = append(pipelineTask, pr.Spec.PipelineSpec.Finally...)
+		return pipelineTask, nil
+	// ToDo: Needs to support other kinds of resolver e.g. git, hub
+	default:
+		return nil, fmt.Errorf("CLI does not support %s resolver", pr.Spec.PipelineRef.ResolverRef.Resolver)
+	}
 }

@@ -3768,6 +3768,119 @@ func TestPipelinerunLog_finally(t *testing.T) {
 	test.AssertOutput(t, expected, output)
 }
 
+func TestLog_pipelinerun_with_cluster_resolver(t *testing.T) {
+	var (
+		pipelineName = "pipeline1"
+		prName       = "pr1"
+		ns           = "namespaces"
+		taskName     = "task1"
+	)
+
+	namespaces := []*corev1.Namespace{
+		{
+			ObjectMeta: metav1.ObjectMeta{
+				Name: ns,
+			},
+		},
+	}
+
+	pipelines := []*v1.Pipeline{
+		{
+			ObjectMeta: metav1.ObjectMeta{
+				Name:      pipelineName,
+				Namespace: ns,
+			},
+			Spec: v1.PipelineSpec{
+				Tasks: []v1.PipelineTask{
+					{
+						Name: taskName,
+						TaskRef: &v1.TaskRef{
+							Name: taskName,
+						},
+					},
+				},
+			},
+		},
+	}
+
+	pipelineruns := []*v1.PipelineRun{
+		{
+			ObjectMeta: metav1.ObjectMeta{
+				Name:      prName,
+				Namespace: ns,
+				Labels:    map[string]string{"tekton.dev/pipeline": pipelineName},
+			},
+			Spec: v1.PipelineRunSpec{
+				PipelineRef: &v1.PipelineRef{
+					ResolverRef: v1.ResolverRef{
+						Resolver: "cluster",
+						Params: []v1.Param{
+							{
+								Name: "kind",
+								Value: v1.ParamValue{
+									StringVal: "pipeline",
+								},
+							},
+							{
+								Name: "name",
+								Value: v1.ParamValue{
+									StringVal: pipelineName,
+								},
+							},
+							{
+								Name: "namespace",
+								Value: v1.ParamValue{
+									StringVal: ns,
+								},
+							},
+						},
+					},
+				},
+			},
+			Status: v1.PipelineRunStatus{
+				Status: duckv1.Status{
+					Conditions: duckv1.Conditions{
+						{
+							Type:    apis.ConditionSucceeded,
+							Status:  corev1.ConditionTrue,
+							Message: "Completed",
+						},
+					},
+				},
+			},
+		},
+	}
+
+	cs, _ := test.SeedTestData(t, test.Data{PipelineRuns: pipelineruns, Pipelines: pipelines, Namespaces: namespaces})
+	cs.Pipeline.Resources = cb.APIResourceList(version, []string{"pipelinerun"})
+	tdc := testDynamic.Options{}
+	dc, err := tdc.Client(
+		cb.UnstructuredPR(pipelineruns[0], version),
+	)
+
+	if err != nil {
+		t.Errorf("unable to create dynamic client: %v", err)
+	}
+
+	p := test.Params{
+		Kube:    cs.Kube,
+		Tekton:  cs.Pipeline,
+		Dynamic: dc,
+	}
+	p.SetNamespace(ns)
+	lopt := options.LogOptions{
+		Params: &p,
+		// This code https://git.io/JvCMV seems buggy so have to set the upper
+		// Limit.. but I guess that's another fight for another day.
+		Limit: len(pipelineruns),
+	}
+	err = askRunName(&lopt)
+	if err != nil {
+		t.Errorf("Unexpected error: %v", err)
+	}
+	test.AssertOutput(t, prName, lopt.PipelineRunName)
+}
+
 func logOptsv1beta1(name string, ns string, cs pipelinev1beta1test.Clients, dc dynamic.Interface, streamer stream.NewStreamerFunc, allSteps bool, follow bool, prefixing bool, tasks ...string) *options.LogOptions {
 	p := test.Params{
 		Kube:    cs.Kube,
