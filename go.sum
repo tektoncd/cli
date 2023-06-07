@@ -2679,8 +2679,8 @@ github.com/tektoncd/pipeline v0.48.0 h1:ESGd3Y/kBh3eJUmrCrCS8Sr34+hX8jtuNg7zcJJV
 github.com/tektoncd/pipeline v0.48.0/go.mod h1:0Hy0SrI45Qyjven7b5P9oR9NWIl8c35xbKuC3i7zHIg=
 github.com/tektoncd/plumbing v0.0.0-20221102182345-5dbcfda657d7 h1:YsjQ83UBIIq4k/s2PzQ6pqe4tpPtm1hia3oyNBDDrDU=
 github.com/tektoncd/plumbing v0.0.0-20221102182345-5dbcfda657d7/go.mod h1:uJBaI0AL/kjPThiMYZcWRujEz7D401v643d6s/21GAg=
-github.com/tektoncd/triggers v0.24.0 h1:+yJpOjn88TcX0GSwYVle8Rm0Cq6W4nc1urZ9rD5lmwY=
-github.com/tektoncd/triggers v0.24.0/go.mod h1:yQcliUXLfIp0YijT30R0t/4hItCsznTpOxOlSIrKF78=
+github.com/tektoncd/triggers v0.24.1 h1:JOQonXtnsIar4P2/N1bAvUCX9561PCwh3oA1Bd6O64k=
+github.com/tektoncd/triggers v0.24.1/go.mod h1:yQcliUXLfIp0YijT30R0t/4hItCsznTpOxOlSIrKF78=
 github.com/tenntenn/modver v1.0.1/go.mod h1:bePIyQPb7UeioSRkw3Q0XeMhYZSMx9B8ePqg6SAMGH0=
 github.com/tenntenn/text/transform v0.0.0-20200319021203-7eef512accb3/go.mod h1:ON8b8w4BN/kE1EOhwT0o+d62W65a6aPw1nouo9LMgyY=
 github.com/tetafro/godot v1.4.11/go.mod h1:LR3CJpxDVGlYOWn3ZZg1PgNZdTUvzsZWu8xaEohUpn8=
