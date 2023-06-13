@@ -1608,6 +1608,153 @@ func Test_start_pipeline_last_override_timeout_deprecated(t *testing.T) {
 	test.AssertOutput(t, timeoutDuration, pr.Spec.Timeouts.Pipeline.Duration)
 }
 
+func Test_start_pipeline_timeout_deprecated(t *testing.T) {
+	pipelineName := "test-pipeline"
+	ps := []*v1.Pipeline{
+		{
+			ObjectMeta: metav1.ObjectMeta{
+				Name:      pipelineName,
+				Namespace: "ns",
+			},
+			Spec: v1.PipelineSpec{
+				Tasks: []v1.PipelineTask{
+					{
+						Name: "unit-test-1",
+						TaskRef: &v1.TaskRef{
+							Name: "unit-test-task",
+						},
+						Workspaces: []v1.WorkspacePipelineTaskBinding{
+							{
+								Name:      "task-test-workspace",
+								Workspace: "test-workspace",
+							},
+						},
+					},
+				},
+				Params: []v1.ParamSpec{
+					{
+						Name: "pipeline-param-1",
+						Type: v1.ParamTypeString,
+						Default: &v1.ParamValue{
+							Type:      v1.ParamTypeString,
+							StringVal: "somethingdifferent-1",
+						},
+					},
+					{
+						Name: "rev-param",
+						Type: v1.ParamTypeString,
+						Default: &v1.ParamValue{
+							Type:      v1.ParamTypeString,
+							StringVal: "revision",
+						},
+					},
+				},
+				Workspaces: []v1.PipelineWorkspaceDeclaration{
+					{
+						Name: "test-workspace",
+					},
+				},
+			},
+		},
+	}
+
+	prs := []*v1.PipelineRun{
+		{
+			ObjectMeta: metav1.ObjectMeta{
+				Name:      "test-pipeline-run-123",
+				Namespace: "ns",
+				Labels:    map[string]string{"tekton.dev/pipeline": pipelineName},
+			},
+			Spec: v1.PipelineRunSpec{
+				PipelineRef: &v1.PipelineRef{
+					Name: pipelineName,
+				},
+				TaskRunTemplate: v1.PipelineTaskRunTemplate{
+					ServiceAccountName: "test-sa",
+				},
+				Params: []v1.Param{
+					{
+						Name: "pipeline-param-1",
+						Value: v1.ParamValue{
+							Type:      v1.ParamTypeString,
+							StringVal: "somethingmorefun",
+						},
+					},
+					{
+						Name: "rev-param",
+						Value: v1.ParamValue{
+							Type:      v1.ParamTypeString,
+							StringVal: "revision1",
+						},
+					},
+				},
+				Workspaces: []v1.WorkspaceBinding{
+					{
+						Name: "test-new",
+					},
+				},
+			},
+			Status: v1.PipelineRunStatus{
+				Status: duckv1.Status{
+					Conditions: duckv1.Conditions{
+						{
+							Status: corev1.ConditionTrue,
+							Reason: v1.PipelineRunReasonSuccessful.String(),
+						},
+					},
+				},
+			},
+		},
+	}
+
+	ns := []*corev1.Namespace{
+		{
+			ObjectMeta: metav1.ObjectMeta{
+				Name: "ns",
+			},
+		},
+	}
+
+	seedData, _ := test.SeedTestData(t, test.Data{
+		Namespaces: ns,
+	})
+	cs := test.Clients{
+		Pipeline: seedData.Pipeline,
+		Kube:     seedData.Kube,
+	}
+	cs.Pipeline.Resources = cb.APIResourceList(version, []string{"pipeline", "pipelinerun"})
+	objs := []runtime.Object{ps[0], prs[0]}
+	_, tdc := newPipelineClient(objs...)
+	dc, err := tdc.Client(
+		cb.UnstructuredP(ps[0], version),
+		cb.UnstructuredPR(prs[0], version),
+	)
+	if err != nil {
+		t.Errorf("unable to create dynamic client: %v", err)
+	}
+	p := &test.Params{Tekton: cs.Pipeline, Kube: cs.Kube, Dynamic: dc}
+
+	pipeline := Command(p)
+	got, _ := test.ExecuteCommand(pipeline, "start", pipelineName,
+		"--last",
+		"--timeout", "1s",
+		"-n", "ns",
+	)
+
+	expected := "Flag --timeout has been deprecated, please use --pipeline-timeout flag instead\nPipelineRun started: random\n\nIn order to track the PipelineRun progress run:\ntkn pipelinerun logs random -f -n ns\n"
+	test.AssertOutput(t, expected, got)
+
+	cl, _ := p.Clients()
+	var pr *v1.PipelineRun
+	if err = actions.GetV1(pipelineRunGroupResource, cl, "random", "ns", metav1.GetOptions{}, &pr); err != nil {
+		t.Errorf("Error getting pipelineruns %s", err.Error())
+	}
+
+	// Assert newly started PipelineRun has new timeout value
+	timeoutDuration, _ := time.ParseDuration("1s")
+	test.AssertOutput(t, timeoutDuration, pr.Spec.Timeouts.Pipeline.Duration)
+}
+
 func Test_start_pipeline_last_without_param(t *testing.T) {
 	pipelineName := "test-pipeline"
 
