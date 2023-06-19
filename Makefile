@@ -11,7 +11,7 @@ M = $(shell printf "\033[34;1m🐱\033[0m")
 TIMEOUT_UNIT = 5m
 TIMEOUT_E2E  = 20m
 
-GOLANGCI_VERSION = v1.52.2
+GOLANGCI_VERSION = v1.53.3
 
 YAML_FILES := $(shell find . -type f -regex ".*y[a]ml" -print)
 
@@ -100,7 +100,7 @@ $(BIN)/golangci-lint: ; $(info $(M) getting golangci-lint $(GOLANGCI_VERSION))
 
 .PHONY: lint-go
 lint-go: | $(GOLANGCILINT) ; $(info $(M) running golangci-lint…) @ ## Run golangci-lint
-	$Q $(GOLANGCILINT) run --modules-download-mode=vendor --max-issues-per-linter=0 --max-same-issues=0 --deadline 5m
+	$Q $(GOLANGCILINT) run --modules-download-mode=vendor --max-issues-per-linter=0 --max-same-issues=0 --timeout 10m
 	@rm -f $(GOLANGCILINT)
 
 GOIMPORTS = $(BIN)/goimports
