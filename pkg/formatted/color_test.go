@@ -15,10 +15,9 @@ package formatted
 
 import (
 	"bytes"
-	"html/template"
 	"strconv"
-
 	"testing"
+	"text/template"
 
 	"github.com/fatih/color"
 	"github.com/tektoncd/cli/pkg/test"
