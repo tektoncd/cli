@@ -55,3 +55,26 @@ func TestPipelineRunLogE2E(t *testing.T) {
 		helper.AssertOutput(t, expected, res.Stdout())
 	})
 }
+
+func TestClusterResolverPipelineRunLogE2E(t *testing.T) {
+	t.Parallel()
+	c, namespace := framework.Setup(t)
+	knativetest.CleanupOnInterrupt(func() { framework.TearDown(t, c, namespace) }, t.Logf)
+	defer framework.TearDown(t, c, namespace)
+
+	kubectl := cli.NewKubectl(namespace)
+	tkn, err := cli.NewTknRunner(namespace)
+	assert.NilError(t, err)
+
+	t.Logf("Creating pipelinerun in namespace: %s", namespace)
+	kubectl.MustSucceed(t, "create", "-f", helper.GetResourcePath("pipelinerun-with-cluster-resolver.yaml"))
+
+	t.Run("Pipelinerun logs with resolver  "+namespace, func(t *testing.T) {
+		res := tkn.Run(t, "pipelinerun", "logs", "git-resolver-run", "-f")
+		s := []string{
+			"[echo : echo] Good Morning!\n",
+		}
+		expected := strings.Join(s, "\n") + "\n"
+		helper.AssertOutput(t, expected, res.Stdout())
+	})
+}
