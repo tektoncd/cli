@@ -208,15 +208,22 @@ func (r *Reader) setUpTask(taskNumber int, tr taskrunpkg.Run) {
 // and return trh.Run after converted taskruns into trh.Run.
 func (r *Reader) getOrderedTasks(pr *v1.PipelineRun) ([]taskrunpkg.Run, error) {
 	var tasks []v1.PipelineTask
-
 	switch {
 	case pr.Spec.PipelineRef != nil:
-		pl, err := pipelinepkg.GetPipeline(pipelineGroupResource, r.clients, pr.Spec.PipelineRef.Name, r.ns)
-		if err != nil {
-			return nil, err
+		if pr.Spec.PipelineRef.Resolver != "" {
+			if pr.Status.PipelineSpec != nil {
+				tasks = append(tasks, pr.Status.PipelineSpec.Tasks...)
+			} else {
+				return nil, fmt.Errorf("pipelinerun %s does not have the PipelineRunSpec", pr.Name)
+			}
+		} else {
+			pl, err := pipelinepkg.GetPipeline(pipelineGroupResource, r.clients, pr.Spec.PipelineRef.Name, r.ns)
+			if err != nil {
+				return nil, err
+			}
+			tasks = pl.Spec.Tasks
+			tasks = append(tasks, pl.Spec.Finally...)
 		}
-		tasks = pl.Spec.Tasks
-		tasks = append(tasks, pl.Spec.Finally...)
 	case pr.Spec.PipelineSpec != nil:
 		tasks = pr.Spec.PipelineSpec.Tasks
 		tasks = append(tasks, pr.Spec.PipelineSpec.Finally...)
