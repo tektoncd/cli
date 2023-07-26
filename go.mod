@@ -9,7 +9,7 @@ require (
 	github.com/cpuguy83/go-md2man v1.0.10
 	github.com/creack/pty v1.1.18
 	github.com/docker/cli v24.0.5+incompatible
-	github.com/docker/docker v24.0.4+incompatible
+	github.com/docker/docker v24.0.5+incompatible
 	github.com/fatih/color v1.15.0
 	github.com/google/go-cmp v0.5.9
 	github.com/google/go-containerregistry v0.15.2
