@@ -34,10 +34,10 @@ import (
 	"github.com/sigstore/sigstore/pkg/cryptoutils"
 	"github.com/sigstore/sigstore/pkg/signature"
 	"github.com/tektoncd/pipeline/pkg/apis/config"
+	v1 "github.com/tektoncd/pipeline/pkg/apis/pipeline/v1"
 	"github.com/tektoncd/pipeline/pkg/apis/pipeline/v1alpha1"
 	"github.com/tektoncd/pipeline/pkg/apis/pipeline/v1beta1"
 	corev1 "k8s.io/api/core/v1"
-	v1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	fakek8s "k8s.io/client-go/kubernetes/fake"
 	"knative.dev/pkg/logging"
@@ -113,10 +113,11 @@ func SetupTrustedResourceConfig(ctx context.Context, verificationNoMatchPolicy s
 }
 
 // SetupVerificationPolicies set verification policies and secrets to store public keys.
-// This function helps to setup 3 kinds of VerificationPolicies:
+// This function helps to setup 4 kinds of VerificationPolicies:
 // 1. One public key in inline data
 // 2. One public key in secret
-// 3. 2 authorities referring to the same secret. This is to test and make sure we don't have duplicate counts
+// 3. the policy pattern doesn't match any resources
+// 4. warn mode policy without keys
 // SignerVerifier is returned to sign resources
 // The k8s clientset is returned to fetch secret from it.
 // VerificationPolicies are returned to fetch public keys
@@ -131,7 +132,7 @@ func SetupVerificationPolicies(t *testing.T) (signature.SignerVerifier, *ecdsa.P
 		t.Fatalf("failed to generate keys %v", err)
 	}
 
-	secret := &v1.Secret{
+	secret := &corev1.Secret{
 		Data: map[string][]byte{"cosign.pub": pub},
 		ObjectMeta: metav1.ObjectMeta{
 			Name:      "verification-secrets",
@@ -151,7 +152,7 @@ func SetupVerificationPolicies(t *testing.T) (signature.SignerVerifier, *ecdsa.P
 					HashAlgorithm: "sha256",
 				},
 			},
-		})
+		}, v1alpha1.ModeEnforce)
 
 	keyInSecretVp := getVerificationPolicy(
 		"keyInSecretVp",
@@ -163,14 +164,14 @@ func SetupVerificationPolicies(t *testing.T) (signature.SignerVerifier, *ecdsa.P
 			{
 				Name: "pubkey",
 				Key: &v1alpha1.KeyRef{
-					SecretRef: &v1.SecretReference{
+					SecretRef: &corev1.SecretReference{
 						Name:      secret.Name,
 						Namespace: secret.Namespace,
 					},
 					HashAlgorithm: "sha256",
 				},
 			},
-		})
+		}, v1alpha1.ModeEnforce)
 
 	wrongKeyandPatternVp := getVerificationPolicy(
 		"wrongKeyInDataVp",
@@ -186,11 +187,30 @@ func SetupVerificationPolicies(t *testing.T) (signature.SignerVerifier, *ecdsa.P
 					HashAlgorithm: "sha256",
 				},
 			},
-		})
+		}, v1alpha1.ModeEnforce)
+
+	warnModeVP := getVerificationPolicy(
+		"warnModeVP",
+		namespace,
+		[]v1alpha1.ResourcePattern{{
+			Pattern: "warnVP"},
+		},
+		[]v1alpha1.Authority{
+			{
+				Name: "pubkey",
+				Key: &v1alpha1.KeyRef{
+					SecretRef: &corev1.SecretReference{
+						Name:      secret.Name,
+						Namespace: secret.Namespace,
+					},
+					HashAlgorithm: "sha256",
+				},
+			},
+		}, v1alpha1.ModeWarn)
 
 	k8sclient := fakek8s.NewSimpleClientset(secret)
 
-	return sv, keys, k8sclient, []*v1alpha1.VerificationPolicy{&keyInDataVp, &keyInSecretVp, &wrongKeyandPatternVp}
+	return sv, keys, k8sclient, []*v1alpha1.VerificationPolicy{&keyInDataVp, &keyInSecretVp, &wrongKeyandPatternVp, &warnModeVP}
 }
 
 // SetupMatchAllVerificationPolicies set verification policies with a Pattern to match all resources
@@ -204,7 +224,7 @@ func SetupMatchAllVerificationPolicies(t *testing.T, namespace string) (signatur
 		t.Fatalf("failed to generate keys %v", err)
 	}
 
-	secret := &v1.Secret{
+	secret := &corev1.Secret{
 		Data: map[string][]byte{"cosign.pub": pub},
 		ObjectMeta: metav1.ObjectMeta{
 			Name:      "verification-secrets",
@@ -224,7 +244,7 @@ func SetupMatchAllVerificationPolicies(t *testing.T, namespace string) (signatur
 					HashAlgorithm: "sha256",
 				},
 			},
-		})
+		}, v1alpha1.ModeEnforce)
 
 	k8sclient := fakek8s.NewSimpleClientset(secret)
 
@@ -304,8 +324,8 @@ func signInterface(signer signature.Signer, i interface{}) ([]byte, error) {
 	return sig, nil
 }
 
-// GetSignedPipeline signed the given pipeline and rename it with given name
-func GetSignedPipeline(unsigned *v1beta1.Pipeline, signer signature.Signer, name string) (*v1beta1.Pipeline, error) {
+// GetSignedV1beta1Pipeline signed the given pipeline and rename it with given name
+func GetSignedV1beta1Pipeline(unsigned *v1beta1.Pipeline, signer signature.Signer, name string) (*v1beta1.Pipeline, error) {
 	signedPipeline := unsigned.DeepCopy()
 	signedPipeline.Name = name
 	if signedPipeline.Annotations == nil {
@@ -319,8 +339,38 @@ func GetSignedPipeline(unsigned *v1beta1.Pipeline, signer signature.Signer, name
 	return signedPipeline, nil
 }
 
-// GetSignedTask signed the given task and rename it with given name
-func GetSignedTask(unsigned *v1beta1.Task, signer signature.Signer, name string) (*v1beta1.Task, error) {
+// GetSignedV1beta1Task signed the given task and rename it with given name
+func GetSignedV1beta1Task(unsigned *v1beta1.Task, signer signature.Signer, name string) (*v1beta1.Task, error) {
+	signedTask := unsigned.DeepCopy()
+	signedTask.Name = name
+	if signedTask.Annotations == nil {
+		signedTask.Annotations = map[string]string{}
+	}
+	signature, err := signInterface(signer, signedTask)
+	if err != nil {
+		return nil, err
+	}
+	signedTask.Annotations[signatureAnnotation] = base64.StdEncoding.EncodeToString(signature)
+	return signedTask, nil
+}
+
+// GetSignedV1Pipeline signed the given pipeline and rename it with given name
+func GetSignedV1Pipeline(unsigned *v1.Pipeline, signer signature.Signer, name string) (*v1.Pipeline, error) {
+	signedPipeline := unsigned.DeepCopy()
+	signedPipeline.Name = name
+	if signedPipeline.Annotations == nil {
+		signedPipeline.Annotations = map[string]string{}
+	}
+	signature, err := signInterface(signer, signedPipeline)
+	if err != nil {
+		return nil, err
+	}
+	signedPipeline.Annotations[signatureAnnotation] = base64.StdEncoding.EncodeToString(signature)
+	return signedPipeline, nil
+}
+
+// GetSignedV1Task signed the given task and rename it with given name
+func GetSignedV1Task(unsigned *v1.Task, signer signature.Signer, name string) (*v1.Task, error) {
 	signedTask := unsigned.DeepCopy()
 	signedTask.Name = name
 	if signedTask.Annotations == nil {
@@ -350,7 +400,7 @@ func readPasswordFn(confirm bool) func() ([]byte, error) {
 	}
 }
 
-func getVerificationPolicy(name, namespace string, patterns []v1alpha1.ResourcePattern, authorities []v1alpha1.Authority) v1alpha1.VerificationPolicy {
+func getVerificationPolicy(name, namespace string, patterns []v1alpha1.ResourcePattern, authorities []v1alpha1.Authority, mode v1alpha1.ModeType) v1alpha1.VerificationPolicy {
 	return v1alpha1.VerificationPolicy{
 		TypeMeta: metav1.TypeMeta{
 			Kind:       "VerificationPolicy",
@@ -363,7 +413,7 @@ func getVerificationPolicy(name, namespace string, patterns []v1alpha1.ResourceP
 		Spec: v1alpha1.VerificationPolicySpec{
 			Resources:   patterns,
 			Authorities: authorities,
-			Mode:        v1alpha1.ModeEnforce,
+			Mode:        mode,
 		},
 	}
 }

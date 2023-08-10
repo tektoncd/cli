@@ -176,8 +176,12 @@ func validateDeclaredWorkspaces(workspaces []WorkspaceDeclaration, steps []Step,
 // validateWorkspaceUsages checks that all WorkspaceUsage objects in Steps
 // refer to workspaces that are defined in the Task.
 //
-// This is an alpha feature and will fail validation if it's used by a step
-// or sidecar when the enable-api-fields feature gate is anything but "alpha".
+// This is a beta feature and will fail validation if it's used by a step
+// or sidecar when the enable-api-fields feature gate is anything but "beta".
+//
+// Note that this feature reached beta after the v1 API version has been released and
+// consequently it is *not* implicitly enabled on the v1beta1 API to avoid suffering
+// from the issues described in TEP-0138 https://github.com/tektoncd/community/pull/1034
 func validateWorkspaceUsages(ctx context.Context, ts *TaskSpec) (errs *apis.FieldError) {
 	workspaces := ts.Workspaces
 	steps := ts.Steps
@@ -190,7 +194,7 @@ func validateWorkspaceUsages(ctx context.Context, ts *TaskSpec) (errs *apis.Fiel
 
 	for stepIdx, step := range steps {
 		if len(step.Workspaces) != 0 {
-			errs = errs.Also(version.ValidateEnabledAPIFields(ctx, "step workspaces", config.AlphaAPIFields).ViaIndex(stepIdx).ViaField("steps"))
+			errs = errs.Also(version.ValidateEnabledAPIFields(ctx, "step workspaces", config.BetaAPIFields).ViaIndex(stepIdx).ViaField("steps"))
 		}
 		for workspaceIdx, w := range step.Workspaces {
 			if !wsNames.Has(w.Name) {
@@ -201,7 +205,7 @@ func validateWorkspaceUsages(ctx context.Context, ts *TaskSpec) (errs *apis.Fiel
 
 	for sidecarIdx, sidecar := range sidecars {
 		if len(sidecar.Workspaces) != 0 {
-			errs = errs.Also(version.ValidateEnabledAPIFields(ctx, "sidecar workspaces", config.AlphaAPIFields).ViaIndex(sidecarIdx).ViaField("sidecars"))
+			errs = errs.Also(version.ValidateEnabledAPIFields(ctx, "sidecar workspaces", config.BetaAPIFields).ViaIndex(sidecarIdx).ViaField("sidecars"))
 		}
 		for workspaceIdx, w := range sidecar.Workspaces {
 			if !wsNames.Has(w.Name) {
@@ -574,23 +578,6 @@ func validateStepVariables(ctx context.Context, step Step, prefix string, vars s
 // This is useful to make sure the specified value looks like a Parameter Reference before performing any strict validation
 func isParamRefs(s string) bool {
 	return strings.HasPrefix(s, "$("+ParamsPrefix)
-}
-
-// ValidateParamArrayIndex validates if the param reference to an array param is out of bound.
-// error is returned when the array indexing reference is out of bound of the array param
-// e.g. if a param reference of $(params.array-param[2]) and the array param is of length 2.
-// - `trParams` are params from taskrun.
-// - `taskSpec` contains params declarations.
-// TODO(#6616): Move this functionality to the reconciler, as it is only used there
-func (ts *TaskSpec) ValidateParamArrayIndex(ctx context.Context, params Params) error {
-	// Collect all array params lengths
-	arrayParamsLengths := ts.Params.extractParamArrayLengths()
-	for k, v := range params.extractParamArrayLengths() {
-		arrayParamsLengths[k] = v
-	}
-	// extract all array indexing references, for example []{"$(params.array-params[1])"}
-	arrayIndexParamRefs := ts.GetIndexingReferencesToArrayParams().List()
-	return validateOutofBoundArrayParams(arrayIndexParamRefs, arrayParamsLengths)
 }
 
 // GetIndexingReferencesToArrayParams returns all strings referencing indices of TaskRun array parameters

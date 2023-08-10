@@ -18,7 +18,8 @@
 # and deploy Tekton Pipelines to it for running upgrading tests. There are
 # two scenarios we need to cover in this script:
 
-# Scenario 1: install the previous release, upgrade to the current release, and
+# Scenario 1: install the previous release, test compatibility with
+# the current clients, and then upgrade to the current release, and
 # validate whether the Tekton pipeline works.
 
 # Scenario 2: install the previous release, create the pipelines and tasks, upgrade
@@ -37,27 +38,36 @@ fi
 
 header "Setting up environment"
 
-# Handle failures ourselves, so we can dump useful info.
-set +o errexit
-set +o pipefail
+# Exit if any failures occur or any unbound variables are referenced
+set -o errexit
+set -o pipefail
+set -o nounset
+
+export SYSTEM_NAMESPACE=tekton-pipelines
 
 # First, we will verify if Scenario 1 works.
 # Install the previous release.
 header "Install the previous release of Tekton pipeline $PREVIOUS_PIPELINE_VERSION"
 install_pipeline_crd_version $PREVIOUS_PIPELINE_VERSION
 
+failed=0
+# Run upgrade tests for the old server version to prevent regressions where a new client
+# is incompatible with an old server (e.g. https://github.com/tektoncd/pipeline/issues/4913)
+go_test_e2e -timeout=20m ./test -run ^TestSimpleTaskRun || failed=1
+go_test_e2e -timeout=20m ./test -run ^TestSimplePipelineRun || failed=1
+
 # Upgrade to the current release.
 header "Upgrade to the current release of Tekton pipeline"
 install_pipeline_crd
 
 # Run the integration tests.
-failed=0
 go_test_e2e -timeout=20m ./test || failed=1
 
 # Run the post-integration tests.
 go_test_e2e -tags=examples -timeout=20m ./test/ || failed=1
 
 # Remove all the pipeline CRDs, and clean up the environment for next Scenario.
+delete_tekton_resources
 uninstall_pipeline_crd
 uninstall_pipeline_crd_version $PREVIOUS_PIPELINE_VERSION
 
@@ -66,24 +76,31 @@ uninstall_pipeline_crd_version $PREVIOUS_PIPELINE_VERSION
 header "Install the previous release of Tekton pipeline $PREVIOUS_PIPELINE_VERSION"
 install_pipeline_crd_version $PREVIOUS_PIPELINE_VERSION
 
-# Create the resources of taskrun and pipelinerun, under the directories example/taskrun
-# and example/pipelinerun.
-for test in taskrun pipelinerun; do
-  header "Applying the resources ${test}s"
-  apply_resources ${test}
-done
+header "Create resources at previous release version"
+kubectl create namespace upgrade
+trap "kubectl delete namespace upgrade" EXIT
+kubectl create -f ./test/upgrade/simpleResources.yaml || fail_test
 
 # Upgrade to the current release.
 header "Upgrade to the current release of Tekton pipeline"
 install_pipeline_crd
 
-# Run the integration tests.
-go_test_e2e -timeout=20m ./test || failed=1
+# Create runs from the Task and Pipeline resources created at the previous release version
+header "Creating TaskRuns and PipelineRuns referencing existing Tasks and Pipelines"
+kubectl create -f ./test/upgrade/simpleRuns.yaml || fail_test
 
 # Run the post-integration tests. We do not need to install the resources again, since
 # they are installed before the upgrade. We verify if they still work, after going through
 # the upgrade.
-go_test_e2e -tags=examples -timeout=20m ./test/ || failed=1
+for test in taskrun pipelinerun; do
+  header "Running YAML e2e tests for ${test}s"
+  if ! run_tests ${test}; then
+    echo "ERROR: one or more YAML tests failed"
+    output_yaml_test_results ${test}
+    output_pods_logs ${test}
+    failed=1
+  fi
+done
 
 (( failed )) && fail_test
 
