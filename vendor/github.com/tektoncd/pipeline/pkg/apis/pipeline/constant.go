@@ -1,5 +1,5 @@
 /*
-Copyright 2019 The Tekton Authors
+Copyright 2023 The Tekton Authors
 
 Licensed under the Apache License, Version 2.0 (the "License");
 you may not use this file except in compliance with the License.
@@ -17,9 +17,6 @@ limitations under the License.
 package pipeline
 
 const (
-	// ArtifactStorageBucketType holds the name of the PipelineResource type for a bucket
-	ArtifactStorageBucketType = "bucket"
-
-	// ArtifactStoragePVCType holds the name of the PipelineResource type for a pvc
-	ArtifactStoragePVCType = "pvc"
+	// TektonReservedAnnotationExpr is the expression we use to filter out reserved key in annotation
+	TektonReservedAnnotationExpr = "(results.tekton.dev|chains.tekton.dev)/.*"
 )
