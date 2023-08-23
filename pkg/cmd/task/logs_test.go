@@ -58,7 +58,7 @@ func TestTaskLog_v1beta1(t *testing.T) {
 			},
 		},
 	}
-	cs, _ := test.SeedV1beta1TestData(t, pipelinetest.Data{
+	cs, _ := test.SeedV1beta1TestData(t, test.Data{
 		Tasks: task1,
 		Namespaces: []*corev1.Namespace{
 			{
@@ -85,7 +85,7 @@ func TestTaskLog_v1beta1(t *testing.T) {
 			},
 		},
 	}
-	cs2, _ := test.SeedV1beta1TestData(t, pipelinetest.Data{
+	cs2, _ := test.SeedV1beta1TestData(t, test.Data{
 		Tasks: task2,
 		Namespaces: []*corev1.Namespace{
 			{
@@ -107,7 +107,7 @@ func TestTaskLog_v1beta1(t *testing.T) {
 	testParams := []struct {
 		name      string
 		command   []string
-		input     pipelinetest.Clients
+		input     test.Clients
 		dc        dynamic.Interface
 		wantError bool
 		want      string
@@ -194,7 +194,7 @@ func TestTaskLog(t *testing.T) {
 			},
 		},
 	}
-	cs, _ := test.SeedTestData(t, test.Data{
+	cs, _ := test.SeedTestData(t, pipelinetest.Data{
 		Tasks: task1,
 		Namespaces: []*corev1.Namespace{
 			{
@@ -221,7 +221,7 @@ func TestTaskLog(t *testing.T) {
 			},
 		},
 	}
-	cs2, _ := test.SeedTestData(t, test.Data{
+	cs2, _ := test.SeedTestData(t, pipelinetest.Data{
 		Tasks: task2,
 		Namespaces: []*corev1.Namespace{
 			{
@@ -243,7 +243,7 @@ func TestTaskLog(t *testing.T) {
 	testParams := []struct {
 		name      string
 		command   []string
-		input     test.Clients
+		input     pipelinetest.Clients
 		dc        dynamic.Interface
 		wantError bool
 		want      string
@@ -325,7 +325,7 @@ func TestTaskLogInteractive_v1beta1(t *testing.T) {
 	clock := test.FakeClock()
 	taskCreated := clock.Now()
 
-	cs, _ := test.SeedV1beta1TestData(t, pipelinetest.Data{
+	cs, _ := test.SeedV1beta1TestData(t, test.Data{
 		Tasks: []*v1beta1.Task{
 			{
 				ObjectMeta: metav1.ObjectMeta{
@@ -442,7 +442,7 @@ func TestTaskLogInteractive_v1beta1(t *testing.T) {
 		},
 	})
 
-	cs2, _ := test.SeedV1beta1TestData(t, pipelinetest.Data{
+	cs2, _ := test.SeedV1beta1TestData(t, test.Data{
 		Tasks: []*v1beta1.Task{
 			{
 				ObjectMeta: metav1.ObjectMeta{
@@ -534,7 +534,7 @@ func TestTaskLogInteractive_v1beta1(t *testing.T) {
 		limit     int
 		last      bool
 		namespace string
-		input     pipelinetest.Clients
+		input     test.Clients
 		prompt    prompt.Prompt
 	}{
 		{
@@ -797,7 +797,7 @@ func TestTaskLogInteractive(t *testing.T) {
 	clock := test.FakeClock()
 	taskCreated := clock.Now()
 
-	cs, _ := test.SeedTestData(t, test.Data{
+	cs, _ := test.SeedTestData(t, pipelinetest.Data{
 		Tasks: []*v1.Task{
 			{
 				ObjectMeta: metav1.ObjectMeta{
@@ -914,7 +914,7 @@ func TestTaskLogInteractive(t *testing.T) {
 		},
 	})
 
-	cs2, _ := test.SeedTestData(t, test.Data{
+	cs2, _ := test.SeedTestData(t, pipelinetest.Data{
 		Tasks: []*v1.Task{
 			{
 				ObjectMeta: metav1.ObjectMeta{
@@ -1006,7 +1006,7 @@ func TestTaskLogInteractive(t *testing.T) {
 		limit     int
 		last      bool
 		namespace string
-		input     test.Clients
+		input     pipelinetest.Clients
 		prompt    prompt.Prompt
 	}{
 		{
@@ -1307,7 +1307,7 @@ func TestLogs_Auto_Select_FirstTask_v1beta1(t *testing.T) {
 		},
 	}
 
-	cs, _ := test.SeedV1beta1TestData(t, pipelinetest.Data{
+	cs, _ := test.SeedV1beta1TestData(t, test.Data{
 		Tasks:    tdata,
 		TaskRuns: trdata,
 		Namespaces: []*corev1.Namespace{
@@ -1394,7 +1394,7 @@ func TestLogs_Auto_Select_FirstTask(t *testing.T) {
 		},
 	}
 
-	cs, _ := test.SeedTestData(t, test.Data{
+	cs, _ := test.SeedTestData(t, pipelinetest.Data{
 		Tasks:    tdata,
 		TaskRuns: trdata,
 		Namespaces: []*corev1.Namespace{

@@ -39,7 +39,7 @@ func TestPipelinesList_v1beta1(t *testing.T) {
 			},
 		},
 	}
-	cs, _ := test.SeedV1beta1TestData(t, pipelinetest.Data{
+	cs, _ := test.SeedV1beta1TestData(t, test.Data{
 		Pipelines: pdata,
 	})
 	version := "v1beta1"
@@ -66,7 +66,7 @@ func TestPipelinesList_v1beta1(t *testing.T) {
 			},
 		},
 	}
-	cs2, _ := test.SeedV1beta1TestData(t, pipelinetest.Data{
+	cs2, _ := test.SeedV1beta1TestData(t, test.Data{
 		Pipelines: pdata2,
 	})
 	cs2.Pipeline.Resources = cb.APIResourceList(version, []string{"pipeline"})
@@ -147,7 +147,7 @@ func TestPipelinesList(t *testing.T) {
 			},
 		},
 	}
-	cs, _ := test.SeedTestData(t, test.Data{
+	cs, _ := test.SeedTestData(t, pipelinetest.Data{
 		Pipelines: pdata,
 	})
 	version := "v1"
@@ -174,7 +174,7 @@ func TestPipelinesList(t *testing.T) {
 			},
 		},
 	}
-	cs2, _ := test.SeedTestData(t, test.Data{
+	cs2, _ := test.SeedTestData(t, pipelinetest.Data{
 		Pipelines: pdata2,
 	})
 	cs2.Pipeline.Resources = cb.APIResourceList(version, []string{"pipeline"})
@@ -262,7 +262,7 @@ func TestPipelineGet_v1beta1(t *testing.T) {
 		},
 	}
 	version := "v1beta1"
-	cs, _ := test.SeedV1beta1TestData(t, pipelinetest.Data{
+	cs, _ := test.SeedV1beta1TestData(t, test.Data{
 		Pipelines: pdata,
 	})
 	cs.Pipeline.Resources = cb.APIResourceList(version, []string{"pipeline"})
@@ -307,7 +307,7 @@ func TestPipelineGet(t *testing.T) {
 		},
 	}
 	version := "v1"
-	cs, _ := test.SeedTestData(t, test.Data{
+	cs, _ := test.SeedTestData(t, pipelinetest.Data{
 		Pipelines: pdata,
 	})
 	cs.Pipeline.Resources = cb.APIResourceList(version, []string{"pipeline"})

@@ -19,7 +19,6 @@ import (
 
 	"github.com/tektoncd/cli/pkg/pods/fake"
 	"github.com/tektoncd/cli/pkg/test"
-	pipelinetest "github.com/tektoncd/pipeline/test"
 	corev1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 )
@@ -58,7 +57,7 @@ func TestContainer_fetch_logs(t *testing.T) {
 		),
 	)
 
-	cs, _ := test.SeedV1beta1TestData(t, pipelinetest.Data{Pods: ps})
+	cs, _ := test.SeedV1beta1TestData(t, test.Data{Pods: ps})
 
 	pod := New(podName, ns, cs.Kube, fake.Streamer(logs))
 

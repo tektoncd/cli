@@ -160,7 +160,7 @@ func TestTaskRunCancel_v1beta1(t *testing.T) {
 		},
 	}
 	type clients struct {
-		pipelineClient pipelinetest.Clients
+		pipelineClient test.Clients
 		dynamicClient  dynamic.Interface
 	}
 
@@ -168,7 +168,7 @@ func TestTaskRunCancel_v1beta1(t *testing.T) {
 	failures := make([]clients, 0)
 	cancels := make([]clients, 0)
 
-	cs, _ := test.SeedV1beta1TestData(t, pipelinetest.Data{TaskRuns: trs, Namespaces: ns})
+	cs, _ := test.SeedV1beta1TestData(t, test.Data{TaskRuns: trs, Namespaces: ns})
 	cs.Pipeline.Resources = cb.APIResourceList(versionv1beta1, []string{"task", "taskrun"})
 	tdc := testDynamic.Options{}
 	dc, err := tdc.Client(
@@ -180,7 +180,7 @@ func TestTaskRunCancel_v1beta1(t *testing.T) {
 		t.Errorf("unable to create dynamic client: %v", err)
 	}
 
-	cs2, _ := test.SeedV1beta1TestData(t, pipelinetest.Data{TaskRuns: trs2, Namespaces: ns})
+	cs2, _ := test.SeedV1beta1TestData(t, test.Data{TaskRuns: trs2, Namespaces: ns})
 	cs2.Pipeline.Resources = cb.APIResourceList(versionv1beta1, []string{"task", "taskrun"})
 	tdc2 := testDynamic.Options{PrependReactors: []testDynamic.PrependOpt{
 		{Verb: "patch",
@@ -195,7 +195,7 @@ func TestTaskRunCancel_v1beta1(t *testing.T) {
 		t.Errorf("unable to create dynamic client: %v", err)
 	}
 
-	cs3, _ := test.SeedV1beta1TestData(t, pipelinetest.Data{TaskRuns: trs3, Namespaces: ns})
+	cs3, _ := test.SeedV1beta1TestData(t, test.Data{TaskRuns: trs3, Namespaces: ns})
 	cs3.Pipeline.Resources = cb.APIResourceList(versionv1beta1, []string{"task", "taskrun"})
 	tdc3 := testDynamic.Options{}
 	dc3, err := tdc3.Client(
@@ -213,7 +213,7 @@ func TestTaskRunCancel_v1beta1(t *testing.T) {
 		name      string
 		command   []string
 		dynamic   dynamic.Interface
-		input     pipelinetest.Clients
+		input     test.Clients
 		wantError bool
 		want      string
 	}{
@@ -424,7 +424,7 @@ func TestTaskRunCancel(t *testing.T) {
 		},
 	}
 	type clients struct {
-		pipelineClient test.Clients
+		pipelineClient pipelinetest.Clients
 		dynamicClient  dynamic.Interface
 	}
 
@@ -432,7 +432,7 @@ func TestTaskRunCancel(t *testing.T) {
 	failures := make([]clients, 0)
 	cancels := make([]clients, 0)
 
-	cs, _ := test.SeedTestData(t, test.Data{TaskRuns: trs, Namespaces: ns})
+	cs, _ := test.SeedTestData(t, pipelinetest.Data{TaskRuns: trs, Namespaces: ns})
 	cs.Pipeline.Resources = cb.APIResourceList(version, []string{"task", "taskrun"})
 	tdc := testDynamic.Options{}
 	dc, err := tdc.Client(
@@ -444,7 +444,7 @@ func TestTaskRunCancel(t *testing.T) {
 		t.Errorf("unable to create dynamic client: %v", err)
 	}
 
-	cs2, _ := test.SeedTestData(t, test.Data{TaskRuns: trs2, Namespaces: ns})
+	cs2, _ := test.SeedTestData(t, pipelinetest.Data{TaskRuns: trs2, Namespaces: ns})
 	cs2.Pipeline.Resources = cb.APIResourceList(version, []string{"task", "taskrun"})
 	tdc2 := testDynamic.Options{PrependReactors: []testDynamic.PrependOpt{
 		{Verb: "patch",
@@ -459,7 +459,7 @@ func TestTaskRunCancel(t *testing.T) {
 		t.Errorf("unable to create dynamic client: %v", err)
 	}
 
-	cs3, _ := test.SeedTestData(t, test.Data{TaskRuns: trs3, Namespaces: ns})
+	cs3, _ := test.SeedTestData(t, pipelinetest.Data{TaskRuns: trs3, Namespaces: ns})
 	cs3.Pipeline.Resources = cb.APIResourceList(version, []string{"task", "taskrun"})
 	tdc3 := testDynamic.Options{}
 	dc3, err := tdc3.Client(
@@ -477,7 +477,7 @@ func TestTaskRunCancel(t *testing.T) {
 		name      string
 		command   []string
 		dynamic   dynamic.Interface
-		input     test.Clients
+		input     pipelinetest.Clients
 		wantError bool
 		want      string
 	}{

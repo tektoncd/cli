@@ -92,7 +92,7 @@ func TestTaskRunGet_v1beta1(t *testing.T) {
 			},
 		},
 	}
-	cs, _ := test.SeedV1beta1TestData(t, pipelinetest.Data{
+	cs, _ := test.SeedV1beta1TestData(t, test.Data{
 		TaskRuns: trdata,
 	})
 	cs.Pipeline.Resources = cb.APIResourceList(version, []string{"taskrun"})
@@ -180,7 +180,7 @@ func TestTaskRunGet(t *testing.T) {
 			},
 		},
 	}
-	cs, _ := test.SeedTestData(t, test.Data{
+	cs, _ := test.SeedTestData(t, pipelinetest.Data{
 		TaskRuns: trdata,
 	})
 	cs.Pipeline.Resources = cb.APIResourceList(version, []string{"taskrun"})

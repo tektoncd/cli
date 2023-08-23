@@ -28,6 +28,7 @@ import (
 	cb "github.com/tektoncd/cli/pkg/test/builder"
 	testDynamic "github.com/tektoncd/cli/pkg/test/dynamic"
 	v1 "github.com/tektoncd/pipeline/pkg/apis/pipeline/v1"
+	pipelinetest "github.com/tektoncd/pipeline/test"
 	"github.com/tektoncd/pipeline/test/diff"
 	corev1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
@@ -184,7 +185,7 @@ func TestTracker_pipelinerun_complete(t *testing.T) {
 			},
 		}
 
-		tc := startPipelineRun(t, test.Data{PipelineRuns: initialPR, TaskRuns: taskruns}, pr.Status)
+		tc := startPipelineRun(t, pipelinetest.Data{PipelineRuns: initialPR, TaskRuns: taskruns}, pr.Status)
 		tracker := NewTracker(pipelineName, ns, tc)
 		if err := actions.InitializeAPIGroupRes(tc.Tekton.Discovery()); err != nil {
 			t.Errorf("failed to initialize APIGroup Resource")
@@ -206,7 +207,7 @@ func taskRunsFor(onlyTasks []string, tracker *Tracker) []trh.Run {
 	return output
 }
 
-func startPipelineRun(t *testing.T, data test.Data, prStatus ...v1.PipelineRunStatus) *cli.Clients {
+func startPipelineRun(t *testing.T, data pipelinetest.Data, prStatus ...v1.PipelineRunStatus) *cli.Clients {
 	cs, _ := test.SeedTestData(t, data)
 
 	// to keep pushing the taskrun over the period(simulate watch)

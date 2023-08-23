@@ -21,7 +21,6 @@ import (
 	cb "github.com/tektoncd/cli/pkg/test/builder"
 	testDynamic "github.com/tektoncd/cli/pkg/test/dynamic"
 	"github.com/tektoncd/pipeline/pkg/apis/pipeline/v1beta1"
-	pipelinev1beta1test "github.com/tektoncd/pipeline/test"
 	corev1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 )
@@ -47,7 +46,7 @@ func TestCreate_TaskNotExist(t *testing.T) {
 		t.Errorf("unable to create dynamic client: %v", err)
 	}
 
-	cs, _ := test.SeedV1beta1TestData(t, pipelinev1beta1test.Data{Tasks: tasks})
+	cs, _ := test.SeedV1beta1TestData(t, test.Data{Tasks: tasks})
 	p := &test.Params{Tekton: cs.Pipeline, Kube: cs.Kube, Dynamic: dynamic}
 	p.SetNamespace("default")
 	cs.Pipeline.Resources = cb.APIResourceList(version, []string{"task"})
@@ -84,7 +83,7 @@ func TestCreate(t *testing.T) {
 		t.Errorf("unable to create dynamic client: %v", err)
 	}
 
-	cs, _ := test.SeedV1beta1TestData(t, pipelinev1beta1test.Data{Tasks: tasks})
+	cs, _ := test.SeedV1beta1TestData(t, test.Data{Tasks: tasks})
 	p := &test.Params{Tekton: cs.Pipeline, Kube: cs.Kube, Dynamic: dynamic}
 	p.SetNamespace("default")
 	cs.Pipeline.Resources = cb.APIResourceList(version, []string{"task", "clustertask"})
@@ -129,7 +128,7 @@ func TestCreate_InNamespace(t *testing.T) {
 		t.Errorf("unable to create dynamic client: %v", err)
 	}
 
-	cs, _ := test.SeedV1beta1TestData(t, pipelinev1beta1test.Data{Tasks: tasks, Namespaces: namespaces})
+	cs, _ := test.SeedV1beta1TestData(t, test.Data{Tasks: tasks, Namespaces: namespaces})
 	p := &test.Params{Tekton: cs.Pipeline, Kube: cs.Kube, Dynamic: dynamic}
 	cs.Pipeline.Resources = cb.APIResourceList(version, []string{"task", "clustertask"})
 
@@ -164,7 +163,7 @@ func TestCreate_WithoutFlag(t *testing.T) {
 		t.Errorf("unable to create dynamic client: %v", err)
 	}
 
-	cs, _ := test.SeedV1beta1TestData(t, pipelinev1beta1test.Data{Tasks: tasks})
+	cs, _ := test.SeedV1beta1TestData(t, test.Data{Tasks: tasks})
 	p := &test.Params{Tekton: cs.Pipeline, Kube: cs.Kube, Dynamic: dynamic}
 	cs.Pipeline.Resources = cb.APIResourceList(version, []string{"task", "clustertask"})
 

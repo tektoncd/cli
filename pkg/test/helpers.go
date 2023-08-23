@@ -27,12 +27,12 @@ import (
 	triggerstest "github.com/tektoncd/triggers/test"
 )
 
-func SeedV1beta1TestData(t *testing.T, d pipelinetest.Data) (pipelinetest.Clients, pipelinetest.Informers) {
+func SeedTestData(t *testing.T, d pipelinetest.Data) (pipelinetest.Clients, pipelinetest.Informers) {
 	ctx, _ := ttesting.SetupFakeContext(t)
 	return pipelinetest.SeedTestData(t, ctx, d)
 }
 
-func SeedTestData(t *testing.T, d Data) (Clients, Informers) {
+func SeedV1beta1TestData(t *testing.T, d Data) (Clients, Informers) {
 	ctx, _ := ttesting.SetupFakeContext(t)
 	return seedTestData(t, ctx, d)
 }

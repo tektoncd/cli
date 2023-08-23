@@ -81,7 +81,7 @@ func TestVersionGood(t *testing.T) {
 
 	clientVersion = "v1.2.3"
 
-	seedData, _ := test.SeedV1beta1TestData(t, pipelinetest.Data{})
+	seedData, _ := test.SeedV1beta1TestData(t, test.Data{})
 
 	cs := pipelinetest.Clients{Kube: seedData.Kube}
 	p := &test.Params{Kube: cs.Kube}
@@ -148,7 +148,7 @@ func TestGetComponentVersions(t *testing.T) {
 	for _, tp := range testParams {
 		t.Run(tp.name, func(t *testing.T) {
 			for i, c := range components {
-				seedData, _ := test.SeedV1beta1TestData(t, pipelinetest.Data{})
+				seedData, _ := test.SeedV1beta1TestData(t, test.Data{})
 				cs := pipelinetest.Clients{Kube: seedData.Kube}
 				p := &test.Params{Kube: cs.Kube}
 				version := Command(p)
@@ -314,7 +314,7 @@ func TestGetVersions(t *testing.T) {
 	}}
 	for _, tp := range testParams {
 		t.Run(tp.name, func(t *testing.T) {
-			seedData, _ := test.SeedV1beta1TestData(t, pipelinetest.Data{})
+			seedData, _ := test.SeedV1beta1TestData(t, test.Data{})
 			cs := pipelinetest.Clients{Kube: seedData.Kube}
 			p := &test.Params{Kube: cs.Kube}
 			version := Command(p)

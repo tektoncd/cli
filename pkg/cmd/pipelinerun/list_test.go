@@ -27,7 +27,7 @@ import (
 	testDynamic "github.com/tektoncd/cli/pkg/test/dynamic"
 	v1 "github.com/tektoncd/pipeline/pkg/apis/pipeline/v1"
 	"github.com/tektoncd/pipeline/pkg/apis/pipeline/v1beta1"
-	pipelinev1beta1test "github.com/tektoncd/pipeline/test"
+	pipelinetest "github.com/tektoncd/pipeline/test"
 	"gotest.tools/v3/golden"
 	corev1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
@@ -540,7 +540,7 @@ func TestListPipeline_empty(t *testing.T) {
 		},
 	}
 
-	cs, _ := test.SeedTestData(t, test.Data{Namespaces: ns})
+	cs, _ := test.SeedTestData(t, pipelinetest.Data{Namespaces: ns})
 	cs.Pipeline.Resources = cb.APIResourceList(version, []string{"pipelinerun"})
 	tdc := testDynamic.Options{}
 	dc, err := tdc.Client()
@@ -563,7 +563,7 @@ func commandV1beta1(t *testing.T, prs []*v1beta1.PipelineRun, now time.Time, ns 
 	clock := clockwork.NewFakeClockAt(now)
 	clock.Advance(time.Duration(60) * time.Minute)
 
-	cs, _ := test.SeedV1beta1TestData(t, pipelinev1beta1test.Data{PipelineRuns: prs, Namespaces: ns})
+	cs, _ := test.SeedV1beta1TestData(t, test.Data{PipelineRuns: prs, Namespaces: ns})
 	cs.Pipeline.Resources = cb.APIResourceList(version, []string{"pipelinerun"})
 
 	p := &test.Params{Tekton: cs.Pipeline, Clock: clock, Kube: cs.Kube, Dynamic: dc}
@@ -576,7 +576,7 @@ func command(t *testing.T, prs []*v1.PipelineRun, now time.Time, ns []*corev1.Na
 	clock := clockwork.NewFakeClockAt(now)
 	clock.Advance(time.Duration(60) * time.Minute)
 
-	cs, _ := test.SeedTestData(t, test.Data{PipelineRuns: prs, Namespaces: ns})
+	cs, _ := test.SeedTestData(t, pipelinetest.Data{PipelineRuns: prs, Namespaces: ns})
 	cs.Pipeline.Resources = cb.APIResourceList(version, []string{"pipelinerun"})
 
 	p := &test.Params{Tekton: cs.Pipeline, Clock: clock, Kube: cs.Kube, Dynamic: dc}

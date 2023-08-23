@@ -55,7 +55,7 @@ func TestTaskDelete_v1beta1(t *testing.T) {
 	}
 
 	type clients struct {
-		pipelineClient pipelinetest.Clients
+		pipelineClient test.Clients
 		dynamicClient  dynamic.Interface
 	}
 
@@ -137,7 +137,7 @@ func TestTaskDelete_v1beta1(t *testing.T) {
 	seeds := make([]clients, 0)
 	for i := 0; i < 9; i++ {
 
-		cs, _ := test.SeedV1beta1TestData(t, pipelinetest.Data{
+		cs, _ := test.SeedV1beta1TestData(t, test.Data{
 			Tasks:    tdata,
 			TaskRuns: trdata,
 			Namespaces: []*corev1.Namespace{
@@ -169,7 +169,7 @@ func TestTaskDelete_v1beta1(t *testing.T) {
 		name        string
 		command     []string
 		dynamic     dynamic.Interface
-		input       pipelinetest.Clients
+		input       test.Clients
 		inputStream io.Reader
 		wantError   bool
 		want        string
@@ -368,7 +368,7 @@ func TestTaskDelete(t *testing.T) {
 	}
 
 	type clients struct {
-		pipelineClient test.Clients
+		pipelineClient pipelinetest.Clients
 		dynamicClient  dynamic.Interface
 	}
 
@@ -450,7 +450,7 @@ func TestTaskDelete(t *testing.T) {
 	seeds := make([]clients, 0)
 	for i := 0; i < 9; i++ {
 
-		cs, _ := test.SeedTestData(t, test.Data{
+		cs, _ := test.SeedTestData(t, pipelinetest.Data{
 			Tasks:    tdata,
 			TaskRuns: trdata,
 			Namespaces: []*corev1.Namespace{
@@ -482,7 +482,7 @@ func TestTaskDelete(t *testing.T) {
 		name        string
 		command     []string
 		dynamic     dynamic.Interface
-		input       test.Clients
+		input       pipelinetest.Clients
 		inputStream io.Reader
 		wantError   bool
 		want        string

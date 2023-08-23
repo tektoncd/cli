@@ -24,7 +24,6 @@ import (
 	cb "github.com/tektoncd/cli/pkg/test/builder"
 	testDynamic "github.com/tektoncd/cli/pkg/test/dynamic"
 	"github.com/tektoncd/pipeline/pkg/apis/pipeline/v1beta1"
-	pipelinev1beta1test "github.com/tektoncd/pipeline/test"
 	corev1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/client-go/dynamic"
@@ -45,7 +44,7 @@ func TestClusterTaskLog(t *testing.T) {
 			},
 		},
 	}
-	cs, _ := test.SeedV1beta1TestData(t, pipelinev1beta1test.Data{
+	cs, _ := test.SeedV1beta1TestData(t, test.Data{
 		ClusterTasks: clustertask1,
 	})
 	cs.Pipeline.Resources = cb.APIResourceList(versionB1, []string{"clustertask", "taskrun"})
@@ -64,7 +63,7 @@ func TestClusterTaskLog(t *testing.T) {
 	testParams := []struct {
 		name      string
 		command   []string
-		input     pipelinev1beta1test.Clients
+		input     test.Clients
 		dc        dynamic.Interface
 		wantError bool
 		want      string
@@ -167,7 +166,7 @@ func TestLogs_Auto_Select_FirstClusterTask(t *testing.T) {
 		},
 	}
 
-	cs, _ := test.SeedV1beta1TestData(t, pipelinev1beta1test.Data{
+	cs, _ := test.SeedV1beta1TestData(t, test.Data{
 		ClusterTasks: ctdata,
 		TaskRuns:     trdata,
 	})

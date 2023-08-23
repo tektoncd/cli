@@ -24,7 +24,6 @@ import (
 	cb "github.com/tektoncd/cli/pkg/test/builder"
 	testDynamic "github.com/tektoncd/cli/pkg/test/dynamic"
 	"github.com/tektoncd/pipeline/pkg/apis/pipeline/v1beta1"
-	pipelinetest "github.com/tektoncd/pipeline/test"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 )
 
@@ -40,7 +39,7 @@ func TestClusterTask_GetAllTaskNames(t *testing.T) {
 			},
 		},
 	}
-	cs, _ := test.SeedV1beta1TestData(t, pipelinetest.Data{
+	cs, _ := test.SeedV1beta1TestData(t, test.Data{
 		ClusterTasks: ctdata,
 	})
 	cs.Pipeline.Resources = cb.APIResourceList(version, []string{"clustertask"})
@@ -68,7 +67,7 @@ func TestClusterTask_GetAllTaskNames(t *testing.T) {
 			},
 		},
 	}
-	cs2, _ := test.SeedV1beta1TestData(t, pipelinetest.Data{
+	cs2, _ := test.SeedV1beta1TestData(t, test.Data{
 		ClusterTasks: ctdata2,
 	})
 	cs2.Pipeline.Resources = cb.APIResourceList(version, []string{"clustertask"})
@@ -132,7 +131,7 @@ func TestClusterTask_List(t *testing.T) {
 			},
 		},
 	}
-	cs, _ := test.SeedV1beta1TestData(t, pipelinetest.Data{
+	cs, _ := test.SeedV1beta1TestData(t, test.Data{
 		ClusterTasks: ctdata,
 	})
 	cs.Pipeline.Resources = cb.APIResourceList(version, []string{"clustertask"})
@@ -156,7 +155,7 @@ func TestClusterTask_List(t *testing.T) {
 			},
 		},
 	}
-	cs2, _ := test.SeedV1beta1TestData(t, pipelinetest.Data{
+	cs2, _ := test.SeedV1beta1TestData(t, test.Data{
 		ClusterTasks: ctdata2,
 	})
 	cs2.Pipeline.Resources = cb.APIResourceList(version, []string{"clustertask"})
@@ -230,7 +229,7 @@ func TestClusterTask_Get(t *testing.T) {
 			},
 		},
 	}
-	cs, _ := test.SeedV1beta1TestData(t, pipelinetest.Data{
+	cs, _ := test.SeedV1beta1TestData(t, test.Data{
 		ClusterTasks: ctdata,
 	})
 	cs.Pipeline.Resources = cb.APIResourceList(version, []string{"clustertask"})
@@ -267,7 +266,7 @@ func TestClusterTask_Create(t *testing.T) {
 			},
 		},
 	}
-	cs, _ := test.SeedV1beta1TestData(t, pipelinetest.Data{})
+	cs, _ := test.SeedV1beta1TestData(t, test.Data{})
 	cs.Pipeline.Resources = cb.APIResourceList(version, []string{"clustertask"})
 	tdc := testDynamic.Options{}
 	dc, err := tdc.Client()

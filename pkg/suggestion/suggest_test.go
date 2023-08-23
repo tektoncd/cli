@@ -22,7 +22,6 @@ import (
 	"github.com/tektoncd/cli/pkg/test"
 	cb "github.com/tektoncd/cli/pkg/test/builder"
 	testDynamic "github.com/tektoncd/cli/pkg/test/dynamic"
-	pipelinetest "github.com/tektoncd/pipeline/test"
 	corev1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 )
@@ -35,7 +34,7 @@ func TestSuggestion(t *testing.T) {
 			},
 		},
 	}
-	cs, _ := test.SeedV1beta1TestData(t, pipelinetest.Data{Namespaces: ns})
+	cs, _ := test.SeedV1beta1TestData(t, test.Data{Namespaces: ns})
 	cs.Pipeline.Resources = cb.APIResourceList("v1beta1", []string{"task"})
 	tdc := testDynamic.Options{}
 	dynamic, err := tdc.Client()

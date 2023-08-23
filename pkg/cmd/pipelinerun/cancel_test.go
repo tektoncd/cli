@@ -24,7 +24,7 @@ import (
 	testDynamic "github.com/tektoncd/cli/pkg/test/dynamic"
 	v1 "github.com/tektoncd/pipeline/pkg/apis/pipeline/v1"
 	"github.com/tektoncd/pipeline/pkg/apis/pipeline/v1beta1"
-	pipelinev1beta1test "github.com/tektoncd/pipeline/test"
+	pipelinetest "github.com/tektoncd/pipeline/test"
 	corev1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime"
@@ -44,7 +44,7 @@ func Test_cancel_invalid_namespace_v1beta1(t *testing.T) {
 
 	prName := "test-pipeline-run-123"
 
-	cs, _ := test.SeedV1beta1TestData(t, pipelinev1beta1test.Data{Namespaces: ns})
+	cs, _ := test.SeedV1beta1TestData(t, test.Data{Namespaces: ns})
 	p := &tu.Params{Tekton: cs.Pipeline, Kube: cs.Kube}
 
 	pRun := Command(p)
@@ -65,7 +65,7 @@ func Test_cancel_invalid_namespace(t *testing.T) {
 
 	prName := "test-pipeline-run-123"
 
-	cs, _ := test.SeedTestData(t, test.Data{Namespaces: ns})
+	cs, _ := test.SeedTestData(t, pipelinetest.Data{Namespaces: ns})
 	p := &tu.Params{Tekton: cs.Pipeline, Kube: cs.Kube}
 
 	pRun := Command(p)
@@ -86,7 +86,7 @@ func Test_cancel_pipelinerun_not_found_v1beta1(t *testing.T) {
 
 	prName := "test-pipeline-run-123"
 
-	cs, _ := test.SeedV1beta1TestData(t, pipelinev1beta1test.Data{Namespaces: ns})
+	cs, _ := test.SeedV1beta1TestData(t, test.Data{Namespaces: ns})
 	p := &tu.Params{Tekton: cs.Pipeline, Kube: cs.Kube}
 
 	pRun := Command(p)
@@ -107,7 +107,7 @@ func Test_cancel_pipelinerun_not_found(t *testing.T) {
 
 	prName := "test-pipeline-run-123"
 
-	cs, _ := test.SeedTestData(t, test.Data{Namespaces: ns})
+	cs, _ := test.SeedTestData(t, pipelinetest.Data{Namespaces: ns})
 	p := &tu.Params{Tekton: cs.Pipeline, Kube: cs.Kube}
 
 	pRun := Command(p)
@@ -170,7 +170,7 @@ func Test_cancel_pipelinerun_v1beta1(t *testing.T) {
 		},
 	}
 
-	cs, _ := test.SeedV1beta1TestData(t, pipelinev1beta1test.Data{PipelineRuns: prs, Namespaces: ns})
+	cs, _ := test.SeedV1beta1TestData(t, test.Data{PipelineRuns: prs, Namespaces: ns})
 	cs.Pipeline.Resources = cb.APIResourceList(versionv1beta1, []string{"pipeline", "pipelinerun"})
 	tdc := testDynamic.Options{}
 	dc, err := tdc.Client(
@@ -232,7 +232,7 @@ func Test_cancel_pipelinerun_client_err_v1beta1(t *testing.T) {
 		},
 	}
 
-	cs, _ := test.SeedV1beta1TestData(t, pipelinev1beta1test.Data{PipelineRuns: prs, Namespaces: ns})
+	cs, _ := test.SeedV1beta1TestData(t, test.Data{PipelineRuns: prs, Namespaces: ns})
 	cs.Pipeline.Resources = cb.APIResourceList(versionv1beta1, []string{"pipeline", "pipelinerun"})
 	tdc := testDynamic.Options{
 		PrependReactors: []testDynamic.PrependOpt{
@@ -299,7 +299,7 @@ func Test_cancel_pipelinerun_client_err(t *testing.T) {
 		},
 	}
 
-	cs, _ := test.SeedTestData(t, test.Data{PipelineRuns: prs, Namespaces: ns})
+	cs, _ := test.SeedTestData(t, pipelinetest.Data{PipelineRuns: prs, Namespaces: ns})
 	cs.Pipeline.Resources = cb.APIResourceList(version, []string{"pipeline", "pipelinerun"})
 	tdc := testDynamic.Options{
 		PrependReactors: []testDynamic.PrependOpt{
@@ -377,7 +377,7 @@ func Test_finished_pipelinerun_success_v1beta1(t *testing.T) {
 		},
 	}
 
-	cs, _ := test.SeedV1beta1TestData(t, pipelinev1beta1test.Data{PipelineRuns: prs, Namespaces: ns})
+	cs, _ := test.SeedV1beta1TestData(t, test.Data{PipelineRuns: prs, Namespaces: ns})
 	cs.Pipeline.Resources = cb.APIResourceList(versionv1beta1, []string{"pipeline", "pipelinerun"})
 	tdc := testDynamic.Options{}
 	dc, err := tdc.Client(
@@ -447,7 +447,7 @@ func Test_finished_pipelinerun_success(t *testing.T) {
 		},
 	}
 
-	cs, _ := test.SeedTestData(t, test.Data{PipelineRuns: prs, Namespaces: ns})
+	cs, _ := test.SeedTestData(t, pipelinetest.Data{PipelineRuns: prs, Namespaces: ns})
 	cs.Pipeline.Resources = cb.APIResourceList(version, []string{"pipeline", "pipelinerun"})
 	tdc := testDynamic.Options{}
 	dc, err := tdc.Client(
@@ -518,7 +518,7 @@ func Test_finished_pipelinerun_failure_v1beta1(t *testing.T) {
 		},
 	}
 
-	cs, _ := test.SeedV1beta1TestData(t, pipelinev1beta1test.Data{PipelineRuns: prs, Namespaces: ns})
+	cs, _ := test.SeedV1beta1TestData(t, test.Data{PipelineRuns: prs, Namespaces: ns})
 	cs.Pipeline.Resources = cb.APIResourceList(versionv1beta1, []string{"pipeline", "pipelinerun"})
 	tdc := testDynamic.Options{}
 	dc, err := tdc.Client(
@@ -587,7 +587,7 @@ func Test_finished_pipelinerun_failure(t *testing.T) {
 		},
 	}
 
-	cs, _ := test.SeedTestData(t, test.Data{PipelineRuns: prs, Namespaces: ns})
+	cs, _ := test.SeedTestData(t, pipelinetest.Data{PipelineRuns: prs, Namespaces: ns})
 	cs.Pipeline.Resources = cb.APIResourceList(version, []string{"pipeline", "pipelinerun"})
 	tdc := testDynamic.Options{}
 	dc, err := tdc.Client(
@@ -658,7 +658,7 @@ func Test_finished_pipelinerun_cancel_v1beta1(t *testing.T) {
 		},
 	}
 
-	cs, _ := test.SeedV1beta1TestData(t, pipelinev1beta1test.Data{PipelineRuns: prs, Namespaces: ns})
+	cs, _ := test.SeedV1beta1TestData(t, test.Data{PipelineRuns: prs, Namespaces: ns})
 	cs.Pipeline.Resources = cb.APIResourceList(versionv1beta1, []string{"pipeline", "pipelinerun"})
 	tdc := testDynamic.Options{}
 	dc, err := tdc.Client(
@@ -728,7 +728,7 @@ func Test_finished_pipelinerun_cancel(t *testing.T) {
 		},
 	}
 
-	cs, _ := test.SeedTestData(t, test.Data{PipelineRuns: prs, Namespaces: ns})
+	cs, _ := test.SeedTestData(t, pipelinetest.Data{PipelineRuns: prs, Namespaces: ns})
 	cs.Pipeline.Resources = cb.APIResourceList(version, []string{"pipeline", "pipelinerun"})
 	tdc := testDynamic.Options{}
 	dc, err := tdc.Client(
@@ -799,7 +799,7 @@ func Test_finished_pipelinerun_timeout_v1beta1(t *testing.T) {
 		},
 	}
 
-	cs, _ := test.SeedV1beta1TestData(t, pipelinev1beta1test.Data{PipelineRuns: prs, Namespaces: ns})
+	cs, _ := test.SeedV1beta1TestData(t, test.Data{PipelineRuns: prs, Namespaces: ns})
 	cs.Pipeline.Resources = cb.APIResourceList(versionv1beta1, []string{"pipeline", "pipelinerun"})
 	tdc := testDynamic.Options{}
 	dc, err := tdc.Client(
@@ -869,7 +869,7 @@ func Test_finished_pipelinerun_timeout(t *testing.T) {
 		},
 	}
 
-	cs, _ := test.SeedTestData(t, test.Data{PipelineRuns: prs, Namespaces: ns})
+	cs, _ := test.SeedTestData(t, pipelinetest.Data{PipelineRuns: prs, Namespaces: ns})
 	cs.Pipeline.Resources = cb.APIResourceList(version, []string{"pipeline", "pipelinerun"})
 	tdc := testDynamic.Options{}
 	dc, err := tdc.Client(
@@ -940,7 +940,7 @@ func Test_finished_pipelinerun_cancelled_v1beta1(t *testing.T) {
 		},
 	}
 
-	cs, _ := test.SeedV1beta1TestData(t, pipelinev1beta1test.Data{PipelineRuns: prs, Namespaces: ns})
+	cs, _ := test.SeedV1beta1TestData(t, test.Data{PipelineRuns: prs, Namespaces: ns})
 	cs.Pipeline.Resources = cb.APIResourceList(versionv1beta1, []string{"pipeline", "pipelinerun"})
 	tdc := testDynamic.Options{}
 	dc, err := tdc.Client(
@@ -1009,7 +1009,7 @@ func Test_finished_pipelinerun_cancelled(t *testing.T) {
 		},
 	}
 
-	cs, _ := test.SeedTestData(t, test.Data{PipelineRuns: prs, Namespaces: ns})
+	cs, _ := test.SeedTestData(t, pipelinetest.Data{PipelineRuns: prs, Namespaces: ns})
 	cs.Pipeline.Resources = cb.APIResourceList(version, []string{"pipeline", "pipelinerun"})
 	tdc := testDynamic.Options{}
 	dc, err := tdc.Client(
@@ -1080,7 +1080,7 @@ func Test_cancel_pipelinerun_with_grace_stopped_v1beta1(t *testing.T) {
 		},
 	}
 
-	cs, _ := test.SeedV1beta1TestData(t, pipelinev1beta1test.Data{PipelineRuns: prs, Namespaces: ns})
+	cs, _ := test.SeedV1beta1TestData(t, test.Data{PipelineRuns: prs, Namespaces: ns})
 	cs.Pipeline.Resources = cb.APIResourceList(versionv1beta1, []string{"pipeline", "pipelinerun"})
 	tdc := testDynamic.Options{}
 	dc, err := tdc.Client(
@@ -1149,7 +1149,7 @@ func Test_cancel_pipelinerun_with_grace_stopped1(t *testing.T) {
 		},
 	}
 
-	cs, _ := test.SeedTestData(t, test.Data{PipelineRuns: prs, Namespaces: ns})
+	cs, _ := test.SeedTestData(t, pipelinetest.Data{PipelineRuns: prs, Namespaces: ns})
 	cs.Pipeline.Resources = cb.APIResourceList(version, []string{"pipeline", "pipelinerun"})
 	tdc := testDynamic.Options{}
 	dc, err := tdc.Client(
@@ -1220,7 +1220,7 @@ func Test_cancel_pipelinerun_with_grace_cancelled_v1bea1(t *testing.T) {
 		},
 	}
 
-	cs, _ := test.SeedV1beta1TestData(t, pipelinev1beta1test.Data{PipelineRuns: prs, Namespaces: ns})
+	cs, _ := test.SeedV1beta1TestData(t, test.Data{PipelineRuns: prs, Namespaces: ns})
 	cs.Pipeline.Resources = cb.APIResourceList(versionv1beta1, []string{"pipeline", "pipelinerun"})
 	tdc := testDynamic.Options{}
 	dc, err := tdc.Client(
@@ -1290,7 +1290,7 @@ func Test_cancel_pipelinerun_with_grace_cancelled(t *testing.T) {
 		},
 	}
 
-	cs, _ := test.SeedTestData(t, test.Data{PipelineRuns: prs, Namespaces: ns})
+	cs, _ := test.SeedTestData(t, pipelinetest.Data{PipelineRuns: prs, Namespaces: ns})
 	cs.Pipeline.Resources = cb.APIResourceList(version, []string{"pipeline", "pipelinerun"})
 	tdc := testDynamic.Options{}
 	dc, err := tdc.Client(
@@ -1360,7 +1360,7 @@ func Test_cancel_pipelinerun(t *testing.T) {
 		},
 	}
 
-	cs, _ := test.SeedTestData(t, test.Data{PipelineRuns: prs, Namespaces: ns})
+	cs, _ := test.SeedTestData(t, pipelinetest.Data{PipelineRuns: prs, Namespaces: ns})
 	cs.Pipeline.Resources = cb.APIResourceList(version, []string{"pipeline", "pipelinerun"})
 	tdc := testDynamic.Options{}
 	dc, err := tdc.Client(
