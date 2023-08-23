@@ -29,7 +29,7 @@ import (
 	testDynamic "github.com/tektoncd/cli/pkg/test/dynamic"
 	v1 "github.com/tektoncd/pipeline/pkg/apis/pipeline/v1"
 	"github.com/tektoncd/pipeline/pkg/apis/pipeline/v1beta1"
-	pipelinev1beta1test "github.com/tektoncd/pipeline/test"
+	pipelinetest "github.com/tektoncd/pipeline/test"
 	corev1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime"
@@ -54,7 +54,7 @@ func TestLog_invalid_namespace_v1beta1(t *testing.T) {
 	}
 	tdc := testDynamic.Options{}
 	dc, _ := tdc.Client()
-	cs, _ := test.SeedV1beta1TestData(t, pipelinev1beta1test.Data{Namespaces: ns})
+	cs, _ := test.SeedV1beta1TestData(t, test.Data{Namespaces: ns})
 	p := &test.Params{Tekton: cs.Pipeline, Kube: cs.Kube, Dynamic: dc}
 	cs.Pipeline.Resources = cb.APIResourceList(versionv1beta1, []string{"pipelinerun"})
 	c := Command(p)
@@ -79,7 +79,7 @@ func TestLog_invalid_namespace(t *testing.T) {
 	}
 	tdc := testDynamic.Options{}
 	dc, _ := tdc.Client()
-	cs, _ := test.SeedTestData(t, test.Data{Namespaces: ns})
+	cs, _ := test.SeedTestData(t, pipelinetest.Data{Namespaces: ns})
 	p := &test.Params{Tekton: cs.Pipeline, Kube: cs.Kube, Dynamic: dc}
 	cs.Pipeline.Resources = cb.APIResourceList(version, []string{"pipelinerun"})
 	c := Command(p)
@@ -103,7 +103,7 @@ func TestLog_invalid_limit_v1beta1(t *testing.T) {
 		},
 	}
 
-	cs, _ := test.SeedV1beta1TestData(t, pipelinev1beta1test.Data{Namespaces: ns})
+	cs, _ := test.SeedV1beta1TestData(t, test.Data{Namespaces: ns})
 	p := &test.Params{Tekton: cs.Pipeline, Kube: cs.Kube}
 	c := Command(p)
 
@@ -127,7 +127,7 @@ func TestLog_invalid_limit(t *testing.T) {
 		},
 	}
 
-	cs, _ := test.SeedTestData(t, test.Data{Namespaces: ns})
+	cs, _ := test.SeedTestData(t, pipelinetest.Data{Namespaces: ns})
 	p := &test.Params{Tekton: cs.Pipeline, Kube: cs.Kube}
 	c := Command(p)
 
@@ -151,7 +151,7 @@ func TestLog_no_pipelinerun_argument_v1beta1(t *testing.T) {
 		},
 	}
 
-	cs, _ := test.SeedV1beta1TestData(t, pipelinev1beta1test.Data{Namespaces: ns})
+	cs, _ := test.SeedV1beta1TestData(t, test.Data{Namespaces: ns})
 	p := &test.Params{Tekton: cs.Pipeline, Kube: cs.Kube}
 	c := Command(p)
 
@@ -171,7 +171,7 @@ func TestLog_no_pipelinerun_argument(t *testing.T) {
 		},
 	}
 
-	cs, _ := test.SeedTestData(t, test.Data{Namespaces: ns})
+	cs, _ := test.SeedTestData(t, pipelinetest.Data{Namespaces: ns})
 	p := &test.Params{Tekton: cs.Pipeline, Kube: cs.Kube}
 	c := Command(p)
 
@@ -218,7 +218,7 @@ func TestLog_run_found_v1beta1(t *testing.T) {
 			},
 		},
 	}
-	cs, _ := test.SeedV1beta1TestData(t, pipelinev1beta1test.Data{
+	cs, _ := test.SeedV1beta1TestData(t, test.Data{
 		Pipelines:    pdata,
 		PipelineRuns: prdata,
 		Namespaces: []*corev1.Namespace{
@@ -284,7 +284,7 @@ func TestLog_run_found(t *testing.T) {
 			},
 		},
 	}
-	cs, _ := test.SeedTestData(t, test.Data{
+	cs, _ := test.SeedTestData(t, pipelinetest.Data{
 		Pipelines:    pdata,
 		PipelineRuns: prdata,
 		Namespaces: []*corev1.Namespace{
@@ -343,7 +343,7 @@ func TestLog_run_not_found_v1beta1(t *testing.T) {
 		},
 	}
 
-	cs, _ := test.SeedV1beta1TestData(t, pipelinev1beta1test.Data{PipelineRuns: pr, Namespaces: ns})
+	cs, _ := test.SeedV1beta1TestData(t, test.Data{PipelineRuns: pr, Namespaces: ns})
 	cs.Pipeline.Resources = cb.APIResourceList(versionv1beta1, []string{"pipelinerun"})
 	tdc := testDynamic.Options{}
 	dc, err := tdc.Client(
@@ -389,7 +389,7 @@ func TestLog_run_not_found(t *testing.T) {
 		},
 	}
 
-	cs, _ := test.SeedTestData(t, test.Data{PipelineRuns: pr, Namespaces: ns})
+	cs, _ := test.SeedTestData(t, pipelinetest.Data{PipelineRuns: pr, Namespaces: ns})
 	cs.Pipeline.Resources = cb.APIResourceList(version, []string{"pipelinerun"})
 	tdc := testDynamic.Options{}
 	dc, err := tdc.Client(
@@ -725,7 +725,7 @@ func TestPipelinerunLogs_v1beta1(t *testing.T) {
 
 	for _, s := range scenarios {
 		t.Run(s.name, func(t *testing.T) {
-			cs, _ := test.SeedV1beta1TestData(t, pipelinev1beta1test.Data{PipelineRuns: prs, Pipelines: pps, TaskRuns: trs, Pods: p, Namespaces: nsList})
+			cs, _ := test.SeedV1beta1TestData(t, test.Data{PipelineRuns: prs, Pipelines: pps, TaskRuns: trs, Pods: p, Namespaces: nsList})
 			cs.Pipeline.Resources = cb.APIResourceList(versionv1beta1, []string{"task", "taskrun", "pipeline", "pipelinerun"})
 			tdc := testDynamic.Options{}
 			dc, err := tdc.Client(
@@ -1066,7 +1066,7 @@ func TestPipelinerunLogs(t *testing.T) {
 
 	for _, s := range scenarios {
 		t.Run(s.name, func(t *testing.T) {
-			cs, _ := test.SeedTestData(t, test.Data{PipelineRuns: prs, Pipelines: pps, TaskRuns: trs, Pods: p, Namespaces: nsList})
+			cs, _ := test.SeedTestData(t, pipelinetest.Data{PipelineRuns: prs, Pipelines: pps, TaskRuns: trs, Pods: p, Namespaces: nsList})
 			cs.Pipeline.Resources = cb.APIResourceList(version, []string{"task", "taskrun", "pipeline", "pipelinerun"})
 			tdc := testDynamic.Options{}
 			dc, err := tdc.Client(
@@ -1246,7 +1246,7 @@ func TestPipelinerunLog_completed_taskrun_only_v1beta1(t *testing.T) {
 	}
 
 	// define pipeline in pipelineRef
-	cs, _ := test.SeedV1beta1TestData(t, pipelinev1beta1test.Data{
+	cs, _ := test.SeedV1beta1TestData(t, test.Data{
 		TaskRuns:     trdata,
 		Pipelines:    pdata,
 		PipelineRuns: prdata,
@@ -1381,7 +1381,7 @@ func TestPipelinerunLog_completed_taskrun_only_v1beta1(t *testing.T) {
 		},
 	}
 	// define embedded pipeline
-	cs2, _ := test.SeedV1beta1TestData(t, pipelinev1beta1test.Data{
+	cs2, _ := test.SeedV1beta1TestData(t, test.Data{
 		Tasks:        tdata2,
 		TaskRuns:     trdata2,
 		PipelineRuns: prdata2,
@@ -1432,7 +1432,7 @@ func TestPipelinerunLog_completed_taskrun_only_v1beta1(t *testing.T) {
 		pipelineRunName string
 		namespace       string
 		dynamic         dynamic.Interface
-		input           pipelinev1beta1test.Clients
+		input           test.Clients
 		logs            []fake.Log
 		want            []string
 		prefixing       bool
@@ -1665,7 +1665,7 @@ func TestPipelinerunLog_follow_mode_v1beta1(t *testing.T) {
 		),
 	)
 
-	cs, _ := test.SeedV1beta1TestData(t, pipelinev1beta1test.Data{PipelineRuns: prs, Pipelines: pps, TaskRuns: trs, Pods: p, Namespaces: nsList})
+	cs, _ := test.SeedV1beta1TestData(t, test.Data{PipelineRuns: prs, Pipelines: pps, TaskRuns: trs, Pods: p, Namespaces: nsList})
 	cs.Pipeline.Resources = cb.APIResourceList(versionv1beta1, []string{"task", "taskrun", "pipeline", "pipelinerun"})
 	tdc := testDynamic.Options{}
 	dc, err := tdc.Client(
@@ -1854,7 +1854,7 @@ func TestPipelinerunLog_follow_mode(t *testing.T) {
 		),
 	)
 
-	cs, _ := test.SeedTestData(t, test.Data{PipelineRuns: prs, Pipelines: pps, TaskRuns: trs, Pods: p, Namespaces: nsList})
+	cs, _ := test.SeedTestData(t, pipelinetest.Data{PipelineRuns: prs, Pipelines: pps, TaskRuns: trs, Pods: p, Namespaces: nsList})
 	cs.Pipeline.Resources = cb.APIResourceList(version, []string{"task", "taskrun", "pipeline", "pipelinerun"})
 	tdc := testDynamic.Options{}
 	dc, err := tdc.Client(
@@ -1951,7 +1951,7 @@ func TestLogs_error_log_v1beta1(t *testing.T) {
 		},
 	}
 
-	cs, _ := test.SeedV1beta1TestData(t, pipelinev1beta1test.Data{PipelineRuns: prs, Pipelines: ps, Tasks: ts, Namespaces: nsList})
+	cs, _ := test.SeedV1beta1TestData(t, test.Data{PipelineRuns: prs, Pipelines: ps, Tasks: ts, Namespaces: nsList})
 	cs.Pipeline.Resources = cb.APIResourceList(versionv1beta1, []string{"task", "pipeline", "pipelinerun"})
 	tdc := testDynamic.Options{}
 	dc, err := tdc.Client(
@@ -2040,7 +2040,7 @@ func TestLogs_error_log(t *testing.T) {
 		},
 	}
 
-	cs, _ := test.SeedTestData(t, test.Data{PipelineRuns: prs, Pipelines: ps, Tasks: ts, Namespaces: nsList})
+	cs, _ := test.SeedTestData(t, pipelinetest.Data{PipelineRuns: prs, Pipelines: ps, Tasks: ts, Namespaces: nsList})
 	cs.Pipeline.Resources = cb.APIResourceList(version, []string{"task", "pipeline", "pipelinerun"})
 	tdc := testDynamic.Options{}
 	dc, err := tdc.Client(
@@ -2119,7 +2119,7 @@ func TestLogs_nologs_v1beta1(t *testing.T) {
 		},
 	}
 
-	cs, _ := test.SeedV1beta1TestData(t, pipelinev1beta1test.Data{PipelineRuns: prs, Pipelines: ps, Namespaces: nsList})
+	cs, _ := test.SeedV1beta1TestData(t, test.Data{PipelineRuns: prs, Pipelines: ps, Namespaces: nsList})
 	cs.Pipeline.Resources = cb.APIResourceList(versionv1beta1, []string{"pipeline", "pipelinerun"})
 	tdc := testDynamic.Options{}
 	dc, err := tdc.Client(
@@ -2197,7 +2197,7 @@ func TestLogs_nologs(t *testing.T) {
 		},
 	}
 
-	cs, _ := test.SeedTestData(t, test.Data{PipelineRuns: prs, Pipelines: ps, Namespaces: nsList})
+	cs, _ := test.SeedTestData(t, pipelinetest.Data{PipelineRuns: prs, Pipelines: ps, Namespaces: nsList})
 	cs.Pipeline.Resources = cb.APIResourceList(version, []string{"pipeline", "pipelinerun"})
 	tdc := testDynamic.Options{}
 	dc, err := tdc.Client(
@@ -2277,7 +2277,7 @@ func TestLog_run_failed_with_and_without_follow_v1beta1(t *testing.T) {
 		},
 	}
 
-	cs, _ := test.SeedV1beta1TestData(t, pipelinev1beta1test.Data{PipelineRuns: prs, Pipelines: ps, Namespaces: nsList})
+	cs, _ := test.SeedV1beta1TestData(t, test.Data{PipelineRuns: prs, Pipelines: ps, Namespaces: nsList})
 	cs.Pipeline.Resources = cb.APIResourceList(versionv1beta1, []string{"pipeline", "pipelinerun"})
 	tdc := testDynamic.Options{}
 	dc, err := tdc.Client(
@@ -2366,7 +2366,7 @@ func TestLog_run_failed_with_and_without_follow(t *testing.T) {
 		},
 	}
 
-	cs, _ := test.SeedTestData(t, test.Data{PipelineRuns: prs, Pipelines: ps, Namespaces: nsList})
+	cs, _ := test.SeedTestData(t, pipelinetest.Data{PipelineRuns: prs, Pipelines: ps, Namespaces: nsList})
 	cs.Pipeline.Resources = cb.APIResourceList(version, []string{"pipeline", "pipelinerun"})
 	tdc := testDynamic.Options{}
 	dc, err := tdc.Client(
@@ -2501,7 +2501,7 @@ func TestLog_pipelinerun_still_running_v1beta1(t *testing.T) {
 		},
 	}
 
-	cs, _ := test.SeedV1beta1TestData(t, pipelinev1beta1test.Data{PipelineRuns: initialPRs, Pipelines: ps, Namespaces: nsList})
+	cs, _ := test.SeedV1beta1TestData(t, test.Data{PipelineRuns: initialPRs, Pipelines: ps, Namespaces: nsList})
 	watcher := watch.NewFake()
 	cs.Pipeline.Resources = cb.APIResourceList(versionv1beta1, []string{"taskrun", "pipeline", "pipelinerun"})
 	tdc := testDynamic.Options{WatchResource: "pipelineruns", Watcher: watcher}
@@ -2632,7 +2632,7 @@ func TestLog_pipelinerun_still_running(t *testing.T) {
 		},
 	}
 
-	cs, _ := test.SeedTestData(t, test.Data{PipelineRuns: initialPRs, Pipelines: ps, Namespaces: nsList})
+	cs, _ := test.SeedTestData(t, pipelinetest.Data{PipelineRuns: initialPRs, Pipelines: ps, Namespaces: nsList})
 	watcher := watch.NewFake()
 	cs.Pipeline.Resources = cb.APIResourceList(version, []string{"taskrun", "pipeline", "pipelinerun"})
 	tdc := testDynamic.Options{WatchResource: "pipelineruns", Watcher: watcher}
@@ -2716,7 +2716,7 @@ func TestLog_pipelinerun_status_done_v1beta1(t *testing.T) {
 		},
 	}
 
-	cs, _ := test.SeedV1beta1TestData(t, pipelinev1beta1test.Data{PipelineRuns: prs, Pipelines: ps, Namespaces: nsList})
+	cs, _ := test.SeedV1beta1TestData(t, test.Data{PipelineRuns: prs, Pipelines: ps, Namespaces: nsList})
 	cs.Pipeline.Resources = cb.APIResourceList(versionv1beta1, []string{"pipeline", "pipelinerun"})
 	watcher := watch.NewFake()
 	tdc := testDynamic.Options{WatchResource: "pipelineruns", Watcher: watcher}
@@ -2812,7 +2812,7 @@ func TestLog_pipelinerun_status_done(t *testing.T) {
 		},
 	}
 
-	cs, _ := test.SeedTestData(t, test.Data{PipelineRuns: prs, Pipelines: ps, Namespaces: nsList})
+	cs, _ := test.SeedTestData(t, pipelinetest.Data{PipelineRuns: prs, Pipelines: ps, Namespaces: nsList})
 	cs.Pipeline.Resources = cb.APIResourceList(version, []string{"pipeline", "pipelinerun"})
 	watcher := watch.NewFake()
 	tdc := testDynamic.Options{WatchResource: "pipelineruns", Watcher: watcher}
@@ -2940,7 +2940,7 @@ func TestLog_pipelinerun_last_v1beta1(t *testing.T) {
 		},
 	}
 
-	cs, _ := test.SeedV1beta1TestData(t, pipelinev1beta1test.Data{PipelineRuns: pipelineruns, Pipelines: pipelines, Namespaces: namespaces})
+	cs, _ := test.SeedV1beta1TestData(t, test.Data{PipelineRuns: pipelineruns, Pipelines: pipelines, Namespaces: namespaces})
 	cs.Pipeline.Resources = cb.APIResourceList(versionv1beta1, []string{"pipelinerun"})
 	tdc := testDynamic.Options{}
 	dc, err := tdc.Client(
@@ -3061,7 +3061,7 @@ func TestLog_pipelinerun_last(t *testing.T) {
 		},
 	}
 
-	cs, _ := test.SeedTestData(t, test.Data{PipelineRuns: pipelineruns, Pipelines: pipelines, Namespaces: namespaces})
+	cs, _ := test.SeedTestData(t, pipelinetest.Data{PipelineRuns: pipelineruns, Pipelines: pipelines, Namespaces: namespaces})
 	cs.Pipeline.Resources = cb.APIResourceList(version, []string{"pipelinerun"})
 	tdc := testDynamic.Options{}
 	dc, err := tdc.Client(
@@ -3150,7 +3150,7 @@ func TestLog_pipelinerun_only_one_v1beta1(t *testing.T) {
 		},
 	}
 
-	cs, _ := test.SeedV1beta1TestData(t, pipelinev1beta1test.Data{PipelineRuns: pipelineruns, Pipelines: pipelines, Namespaces: namespaces})
+	cs, _ := test.SeedV1beta1TestData(t, test.Data{PipelineRuns: pipelineruns, Pipelines: pipelines, Namespaces: namespaces})
 	cs.Pipeline.Resources = cb.APIResourceList(versionv1beta1, []string{"pipelinerun"})
 	tdc := testDynamic.Options{}
 	dc, err := tdc.Client(
@@ -3240,7 +3240,7 @@ func TestLog_pipelinerun_only_one(t *testing.T) {
 		},
 	}
 
-	cs, _ := test.SeedTestData(t, test.Data{PipelineRuns: pipelineruns, Pipelines: pipelines, Namespaces: namespaces})
+	cs, _ := test.SeedTestData(t, pipelinetest.Data{PipelineRuns: pipelineruns, Pipelines: pipelines, Namespaces: namespaces})
 	cs.Pipeline.Resources = cb.APIResourceList(version, []string{"pipelinerun"})
 	tdc := testDynamic.Options{}
 	dc, err := tdc.Client(
@@ -3492,7 +3492,7 @@ func TestPipelinerunLog_finally_v1beta1(t *testing.T) {
 		),
 	)
 
-	cs, _ := test.SeedV1beta1TestData(t, pipelinev1beta1test.Data{PipelineRuns: prs, Pipelines: pps, TaskRuns: trs, Pods: p, Namespaces: nsList})
+	cs, _ := test.SeedV1beta1TestData(t, test.Data{PipelineRuns: prs, Pipelines: pps, TaskRuns: trs, Pods: p, Namespaces: nsList})
 	cs.Pipeline.Resources = cb.APIResourceList(versionv1beta1, []string{"task", "taskrun", "pipeline", "pipelinerun"})
 
 	tdc := testDynamic.Options{}
@@ -3742,7 +3742,7 @@ func TestPipelinerunLog_finally(t *testing.T) {
 		),
 	)
 
-	cs, _ := test.SeedTestData(t, test.Data{PipelineRuns: prs, Pipelines: pps, TaskRuns: trs, Pods: p, Namespaces: nsList})
+	cs, _ := test.SeedTestData(t, pipelinetest.Data{PipelineRuns: prs, Pipelines: pps, TaskRuns: trs, Pods: p, Namespaces: nsList})
 	cs.Pipeline.Resources = cb.APIResourceList(version, []string{"task", "taskrun", "pipeline", "pipelinerun"})
 
 	tdc := testDynamic.Options{}
@@ -3927,7 +3927,7 @@ func TestLogs_Cluster_Resolver(t *testing.T) {
 		},
 	}
 
-	cs, _ := test.SeedTestData(t, test.Data{PipelineRuns: prs, Pipelines: ps, Pods: p, Namespaces: nsList})
+	cs, _ := test.SeedTestData(t, pipelinetest.Data{PipelineRuns: prs, Pipelines: ps, Pods: p, Namespaces: nsList})
 	cs.Pipeline.Resources = cb.APIResourceList(version, []string{"task", "taskrun", "pipelinerun"})
 	tdc := testDynamic.Options{}
 	dc, err := tdc.Client(
@@ -4113,7 +4113,7 @@ func TestLogs_Git_Resolver(t *testing.T) {
 		},
 	}
 
-	cs, _ := test.SeedTestData(t, test.Data{PipelineRuns: prs, Pipelines: ps, Pods: p, Namespaces: nsList})
+	cs, _ := test.SeedTestData(t, pipelinetest.Data{PipelineRuns: prs, Pipelines: ps, Pods: p, Namespaces: nsList})
 	cs.Pipeline.Resources = cb.APIResourceList(version, []string{"task", "taskrun", "pipelinerun"})
 	tdc := testDynamic.Options{}
 	dc, err := tdc.Client(
@@ -4299,7 +4299,7 @@ func TestLogs_Bundle_Resolver(t *testing.T) {
 		},
 	}
 
-	cs, _ := test.SeedTestData(t, test.Data{PipelineRuns: prs, Pipelines: ps, Pods: p, Namespaces: nsList})
+	cs, _ := test.SeedTestData(t, pipelinetest.Data{PipelineRuns: prs, Pipelines: ps, Pods: p, Namespaces: nsList})
 	cs.Pipeline.Resources = cb.APIResourceList(version, []string{"task", "taskrun", "pipelinerun"})
 	tdc := testDynamic.Options{}
 	dc, err := tdc.Client(
@@ -4485,7 +4485,7 @@ func TestLogs_Hub_Resolver(t *testing.T) {
 		},
 	}
 
-	cs, _ := test.SeedTestData(t, test.Data{PipelineRuns: prs, Pipelines: ps, Pods: p, Namespaces: nsList})
+	cs, _ := test.SeedTestData(t, pipelinetest.Data{PipelineRuns: prs, Pipelines: ps, Pods: p, Namespaces: nsList})
 	cs.Pipeline.Resources = cb.APIResourceList(version, []string{"task", "taskrun", "pipelinerun"})
 	tdc := testDynamic.Options{}
 	dc, err := tdc.Client(
@@ -4512,7 +4512,7 @@ func TestLogs_Hub_Resolver(t *testing.T) {
 	test.AssertOutput(t, "task-1 completed\n\n", output)
 }
 
-func logOptsv1beta1(name string, ns string, cs pipelinev1beta1test.Clients, dc dynamic.Interface, streamer stream.NewStreamerFunc, allSteps bool, follow bool, prefixing bool, tasks ...string) *options.LogOptions {
+func logOptsv1beta1(name string, ns string, cs test.Clients, dc dynamic.Interface, streamer stream.NewStreamerFunc, allSteps bool, follow bool, prefixing bool, tasks ...string) *options.LogOptions {
 	p := test.Params{
 		Kube:    cs.Kube,
 		Tekton:  cs.Pipeline,
@@ -4533,7 +4533,7 @@ func logOptsv1beta1(name string, ns string, cs pipelinev1beta1test.Clients, dc d
 	return &logOptions
 }
 
-func logOpts(name string, ns string, cs test.Clients, dc dynamic.Interface, streamer stream.NewStreamerFunc, allSteps bool, follow bool, prefixing bool, tasks ...string) *options.LogOptions {
+func logOpts(name string, ns string, cs pipelinetest.Clients, dc dynamic.Interface, streamer stream.NewStreamerFunc, allSteps bool, follow bool, prefixing bool, tasks ...string) *options.LogOptions {
 	p := test.Params{
 		Kube:    cs.Kube,
 		Tekton:  cs.Pipeline,

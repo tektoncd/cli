@@ -117,7 +117,7 @@ func TestPipelineRunsList_v1beta1(t *testing.T) {
 			},
 		},
 	}
-	cs, _ := test.SeedV1beta1TestData(t, pipelinetest.Data{
+	cs, _ := test.SeedV1beta1TestData(t, test.Data{
 		PipelineRuns: prdata,
 	})
 	cs.Pipeline.Resources = cb.APIResourceList(version, []string{"pipelinerun"})
@@ -282,7 +282,7 @@ func TestPipelineRunsList(t *testing.T) {
 			},
 		},
 	}
-	cs, _ := test.SeedTestData(t, test.Data{
+	cs, _ := test.SeedTestData(t, pipelinetest.Data{
 		PipelineRuns: prdata,
 	})
 	cs.Pipeline.Resources = cb.APIResourceList(version, []string{"pipelinerun"})
@@ -422,7 +422,7 @@ func TestPipelineRunGet_v1beta1(t *testing.T) {
 			},
 		},
 	}
-	cs, _ := test.SeedV1beta1TestData(t, pipelinetest.Data{
+	cs, _ := test.SeedV1beta1TestData(t, test.Data{
 		PipelineRuns: prdata,
 	})
 	cs.Pipeline.Resources = cb.APIResourceList(version, []string{"pipelinerun"})
@@ -509,7 +509,7 @@ func TestPipelineRunGet(t *testing.T) {
 			},
 		},
 	}
-	cs, _ := test.SeedTestData(t, test.Data{
+	cs, _ := test.SeedTestData(t, pipelinetest.Data{
 		PipelineRuns: prdata,
 	})
 	cs.Pipeline.Resources = cb.APIResourceList(version, []string{"pipelinerun"})
@@ -551,7 +551,7 @@ func TestPipelineRunCreate(t *testing.T) {
 		},
 	}
 
-	cs, _ := test.SeedV1beta1TestData(t, pipelinetest.Data{})
+	cs, _ := test.SeedV1beta1TestData(t, test.Data{})
 	cs.Pipeline.Resources = cb.APIResourceList(version, []string{"pipelinerun"})
 	tdc := testDynamic.Options{}
 	dc, err := tdc.Client()

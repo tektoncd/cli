@@ -22,6 +22,7 @@ import (
 	cb "github.com/tektoncd/cli/pkg/test/builder"
 	testDynamic "github.com/tektoncd/cli/pkg/test/dynamic"
 	v1 "github.com/tektoncd/pipeline/pkg/apis/pipeline/v1"
+	pipelinetest "github.com/tektoncd/pipeline/test"
 	corev1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	duckv1 "knative.dev/pkg/apis/duck/v1"
@@ -119,7 +120,7 @@ func TestPipelineRunLastName_two_run(t *testing.T) {
 		},
 	}
 
-	cs, _ := test.SeedTestData(t, test.Data{
+	cs, _ := test.SeedTestData(t, pipelinetest.Data{
 		Pipelines:    pdata,
 		PipelineRuns: prdata,
 	})
@@ -241,7 +242,7 @@ func TestPipelineRunLast_two_run(t *testing.T) {
 		},
 	}
 
-	cs, _ := test.SeedTestData(t, test.Data{
+	cs, _ := test.SeedTestData(t, pipelinetest.Data{
 		Pipelines:    pdata,
 		PipelineRuns: prdata,
 	})
@@ -285,7 +286,7 @@ func TestPipelinerunLatest_no_run(t *testing.T) {
 		},
 	}
 
-	cs, _ := test.SeedTestData(t, test.Data{
+	cs, _ := test.SeedTestData(t, pipelinetest.Data{
 		Pipelines: pdata,
 	})
 

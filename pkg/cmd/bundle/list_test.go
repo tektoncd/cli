@@ -12,7 +12,6 @@ import (
 	"github.com/tektoncd/cli/pkg/bundle"
 	"github.com/tektoncd/cli/pkg/test"
 	testDynamic "github.com/tektoncd/cli/pkg/test/dynamic"
-	pipelinetest "github.com/tektoncd/pipeline/test"
 	"gotest.tools/assert"
 )
 
@@ -113,7 +112,7 @@ func TestListCommand(t *testing.T) {
 				t.Fatal(err)
 			}
 
-			cs, _ := test.SeedV1beta1TestData(t, pipelinetest.Data{})
+			cs, _ := test.SeedV1beta1TestData(t, test.Data{})
 			tdc := testDynamic.Options{}
 			dc, _ := tdc.Client()
 

@@ -38,7 +38,7 @@ func TestTaskList_Invalid_Namespace_v1beta1(t *testing.T) {
 			},
 		},
 	}
-	cs, _ := test.SeedV1beta1TestData(t, pipelinetest.Data{Namespaces: ns})
+	cs, _ := test.SeedV1beta1TestData(t, test.Data{Namespaces: ns})
 	tdc := testDynamic.Options{}
 	dc, _ := tdc.Client()
 
@@ -62,7 +62,7 @@ func TestTaskList_Empty_v1beta1(t *testing.T) {
 			},
 		},
 	}
-	cs, _ := test.SeedV1beta1TestData(t, pipelinetest.Data{Namespaces: ns})
+	cs, _ := test.SeedV1beta1TestData(t, test.Data{Namespaces: ns})
 	cs.Pipeline.Resources = cb.APIResourceList("v1beta1", []string{"task"})
 	tdc := testDynamic.Options{}
 	dynamic, err := tdc.Client()
@@ -157,7 +157,7 @@ func TestTaskList_Only_Tasks_v1beta1(t *testing.T) {
 		t.Errorf("unable to create dynamic client: %v", err)
 	}
 
-	cs, _ := test.SeedV1beta1TestData(t, pipelinetest.Data{Tasks: tasks, Namespaces: ns})
+	cs, _ := test.SeedV1beta1TestData(t, test.Data{Tasks: tasks, Namespaces: ns})
 	p := &test.Params{Tekton: cs.Pipeline, Clock: clock, Kube: cs.Kube, Dynamic: dynamic}
 	cs.Pipeline.Resources = cb.APIResourceList(version, []string{"task"})
 	task := Command(p)
@@ -249,7 +249,7 @@ func TestTaskList_Only_Tasks_no_headers_v1beta1(t *testing.T) {
 		t.Errorf("unable to create dynamic client: %v", err)
 	}
 
-	cs, _ := test.SeedV1beta1TestData(t, pipelinetest.Data{Tasks: tasks, Namespaces: ns})
+	cs, _ := test.SeedV1beta1TestData(t, test.Data{Tasks: tasks, Namespaces: ns})
 	p := &test.Params{Tekton: cs.Pipeline, Clock: clock, Kube: cs.Kube, Dynamic: dynamic}
 	cs.Pipeline.Resources = cb.APIResourceList(version, []string{"task"})
 	task := Command(p)
@@ -390,7 +390,7 @@ func TestTaskList_Only_Tasks_all_namespaces_v1beta1(t *testing.T) {
 		t.Errorf("unable to create dynamic client: %v", err)
 	}
 
-	cs, _ := test.SeedV1beta1TestData(t, pipelinetest.Data{Tasks: tasks})
+	cs, _ := test.SeedV1beta1TestData(t, test.Data{Tasks: tasks})
 	p := &test.Params{Tekton: cs.Pipeline, Clock: clock, Kube: cs.Kube, Dynamic: dynamic}
 	cs.Pipeline.Resources = cb.APIResourceList(version, []string{"task"})
 	task := Command(p)
@@ -530,7 +530,7 @@ func TestTaskList_Only_Tasks_all_namespaces_no_headers_v1beta1(t *testing.T) {
 		t.Errorf("unable to create dynamic client: %v", err)
 	}
 
-	cs, _ := test.SeedV1beta1TestData(t, pipelinetest.Data{Tasks: tasks})
+	cs, _ := test.SeedV1beta1TestData(t, test.Data{Tasks: tasks})
 	p := &test.Params{Tekton: cs.Pipeline, Clock: clock, Kube: cs.Kube, Dynamic: dynamic}
 	cs.Pipeline.Resources = cb.APIResourceList(version, []string{"task"})
 	task := Command(p)
@@ -551,7 +551,7 @@ func TestTaskList_Invalid_Namespace(t *testing.T) {
 			},
 		},
 	}
-	cs, _ := test.SeedTestData(t, test.Data{Namespaces: ns})
+	cs, _ := test.SeedTestData(t, pipelinetest.Data{Namespaces: ns})
 	tdc := testDynamic.Options{}
 	dc, _ := tdc.Client()
 
@@ -575,7 +575,7 @@ func TestTaskList_Empty(t *testing.T) {
 			},
 		},
 	}
-	cs, _ := test.SeedTestData(t, test.Data{Namespaces: ns})
+	cs, _ := test.SeedTestData(t, pipelinetest.Data{Namespaces: ns})
 	cs.Pipeline.Resources = cb.APIResourceList("v1", []string{"task"})
 	tdc := testDynamic.Options{}
 	dynamic, err := tdc.Client()
@@ -670,7 +670,7 @@ func TestTaskList_Only_Tasks(t *testing.T) {
 		t.Errorf("unable to create dynamic client: %v", err)
 	}
 
-	cs, _ := test.SeedTestData(t, test.Data{Tasks: tasks, Namespaces: ns})
+	cs, _ := test.SeedTestData(t, pipelinetest.Data{Tasks: tasks, Namespaces: ns})
 	p := &test.Params{Tekton: cs.Pipeline, Clock: clock, Kube: cs.Kube, Dynamic: dynamic}
 	cs.Pipeline.Resources = cb.APIResourceList(version, []string{"task"})
 	task := Command(p)
@@ -762,7 +762,7 @@ func TestTaskList_Only_Tasks_no_headers(t *testing.T) {
 		t.Errorf("unable to create dynamic client: %v", err)
 	}
 
-	cs, _ := test.SeedTestData(t, test.Data{Tasks: tasks, Namespaces: ns})
+	cs, _ := test.SeedTestData(t, pipelinetest.Data{Tasks: tasks, Namespaces: ns})
 	p := &test.Params{Tekton: cs.Pipeline, Clock: clock, Kube: cs.Kube, Dynamic: dynamic}
 	cs.Pipeline.Resources = cb.APIResourceList(version, []string{"task"})
 	task := Command(p)
@@ -903,7 +903,7 @@ func TestTaskList_Only_Tasks_all_namespaces(t *testing.T) {
 		t.Errorf("unable to create dynamic client: %v", err)
 	}
 
-	cs, _ := test.SeedTestData(t, test.Data{Tasks: tasks})
+	cs, _ := test.SeedTestData(t, pipelinetest.Data{Tasks: tasks})
 	p := &test.Params{Tekton: cs.Pipeline, Clock: clock, Kube: cs.Kube, Dynamic: dynamic}
 	cs.Pipeline.Resources = cb.APIResourceList(version, []string{"task"})
 	task := Command(p)
@@ -1043,7 +1043,7 @@ func TestTaskList_Only_Tasks_all_namespaces_no_headers(t *testing.T) {
 		t.Errorf("unable to create dynamic client: %v", err)
 	}
 
-	cs, _ := test.SeedTestData(t, test.Data{Tasks: tasks})
+	cs, _ := test.SeedTestData(t, pipelinetest.Data{Tasks: tasks})
 	p := &test.Params{Tekton: cs.Pipeline, Clock: clock, Kube: cs.Kube, Dynamic: dynamic}
 	cs.Pipeline.Resources = cb.APIResourceList(version, []string{"task"})
 	task := Command(p)
@@ -1140,7 +1140,7 @@ func TestTaskList_in_all_namespaces_with_output_yaml_flag(t *testing.T) {
 		t.Errorf("unable to create dynamic client: %v", err)
 	}
 
-	cs, _ := test.SeedTestData(t, test.Data{Tasks: tasks})
+	cs, _ := test.SeedTestData(t, pipelinetest.Data{Tasks: tasks})
 	p := &test.Params{Tekton: cs.Pipeline, Clock: clock, Kube: cs.Kube, Dynamic: dynamic}
 	cs.Pipeline.Resources = cb.APIResourceList(version, []string{"task"})
 	task := Command(p)

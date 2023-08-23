@@ -92,7 +92,7 @@ func TestPipelinesList_GetAllTaskRuns_v1beta1(t *testing.T) {
 		},
 	}
 
-	cs, _ := test.SeedV1beta1TestData(t, pipelinetest.Data{TaskRuns: trs})
+	cs, _ := test.SeedV1beta1TestData(t, test.Data{TaskRuns: trs})
 	cs.Pipeline.Resources = cb.APIResourceList("v1beta1", []string{"taskrun"})
 	tdc := testDynamic.Options{}
 	dynamic, err := tdc.Client(
@@ -229,7 +229,7 @@ func TestPipelinesList_GetAllTaskRuns(t *testing.T) {
 		},
 	}
 
-	cs, _ := test.SeedTestData(t, test.Data{TaskRuns: trs})
+	cs, _ := test.SeedTestData(t, pipelinetest.Data{TaskRuns: trs})
 	cs.Pipeline.Resources = cb.APIResourceList("v1", []string{"taskrun"})
 	tdc := testDynamic.Options{}
 	dynamic, err := tdc.Client(

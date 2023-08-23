@@ -127,7 +127,7 @@ func TestTaskrunLatestName_two_run_v1beta1(t *testing.T) {
 			},
 		},
 	}
-	cs, _ := test.SeedV1beta1TestData(t, pipelinetest.Data{
+	cs, _ := test.SeedV1beta1TestData(t, test.Data{
 		TaskRuns: taskruns,
 	})
 	cs.Pipeline.Resources = cb.APIResourceList("v1beta1", []string{"taskrun"})
@@ -249,7 +249,7 @@ func TestTaskrunLatest_two_run_v1beta1(t *testing.T) {
 			},
 		},
 	}
-	cs, _ := test.SeedV1beta1TestData(t, pipelinetest.Data{
+	cs, _ := test.SeedV1beta1TestData(t, test.Data{
 		TaskRuns: taskruns,
 	})
 	cs.Pipeline.Resources = cb.APIResourceList("v1beta1", []string{"taskrun"})
@@ -276,7 +276,7 @@ func TestTaskrunLatest_two_run_v1beta1(t *testing.T) {
 func TestTaskrunLatest_no_run_v1beta1(t *testing.T) {
 
 	clock := test.FakeClock()
-	cs, _ := test.SeedV1beta1TestData(t, pipelinetest.Data{})
+	cs, _ := test.SeedV1beta1TestData(t, test.Data{})
 	cs.Pipeline.Resources = cb.APIResourceList("v1beta1", []string{"taskrun"})
 	tdc := testDynamic.Options{}
 	dc, _ := tdc.Client()
@@ -393,7 +393,7 @@ func TestTaskrunLatestForClusterTask_two_run_v1beta1(t *testing.T) {
 			},
 		},
 	}
-	cs, _ := test.SeedV1beta1TestData(t, pipelinetest.Data{
+	cs, _ := test.SeedV1beta1TestData(t, test.Data{
 		TaskRuns: taskruns,
 	})
 	cs.Pipeline.Resources = cb.APIResourceList("v1beta1", []string{"taskrun"})
@@ -515,7 +515,7 @@ func TestTaskrunLatestName_two_run(t *testing.T) {
 			},
 		},
 	}
-	cs, _ := test.SeedTestData(t, test.Data{
+	cs, _ := test.SeedTestData(t, pipelinetest.Data{
 		TaskRuns: taskruns,
 	})
 	cs.Pipeline.Resources = cb.APIResourceList("v1", []string{"taskrun"})
@@ -637,7 +637,7 @@ func TestTaskrunLatest_two_run(t *testing.T) {
 			},
 		},
 	}
-	cs, _ := test.SeedTestData(t, test.Data{
+	cs, _ := test.SeedTestData(t, pipelinetest.Data{
 		TaskRuns: taskruns,
 	})
 	cs.Pipeline.Resources = cb.APIResourceList("v1", []string{"taskrun"})
@@ -664,7 +664,7 @@ func TestTaskrunLatest_two_run(t *testing.T) {
 func TestTaskrunLatest_no_run(t *testing.T) {
 
 	clock := test.FakeClock()
-	cs, _ := test.SeedTestData(t, test.Data{})
+	cs, _ := test.SeedTestData(t, pipelinetest.Data{})
 	cs.Pipeline.Resources = cb.APIResourceList("v1", []string{"taskrun"})
 	tdc := testDynamic.Options{}
 	dc, _ := tdc.Client()
@@ -781,7 +781,7 @@ func TestTaskrunLatestForClusterTask_two_run(t *testing.T) {
 			},
 		},
 	}
-	cs, _ := test.SeedTestData(t, test.Data{
+	cs, _ := test.SeedTestData(t, pipelinetest.Data{
 		TaskRuns: taskruns,
 	})
 	cs.Pipeline.Resources = cb.APIResourceList("v1", []string{"taskrun"})

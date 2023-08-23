@@ -23,13 +23,12 @@ import (
 	cb "github.com/tektoncd/cli/pkg/test/builder"
 	testDynamic "github.com/tektoncd/cli/pkg/test/dynamic"
 	"github.com/tektoncd/pipeline/pkg/apis/pipeline/v1beta1"
-	pipelinev1beta1test "github.com/tektoncd/pipeline/test"
 	"gotest.tools/v3/golden"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 )
 
 func TestClusterTaskList_Empty(t *testing.T) {
-	cs, _ := test.SeedV1beta1TestData(t, pipelinev1beta1test.Data{})
+	cs, _ := test.SeedV1beta1TestData(t, test.Data{})
 	cs.Pipeline.Resources = cb.APIResourceList("v1beta1", []string{"clustertask"})
 	tdc := testDynamic.Options{}
 	dynamic, err := tdc.Client()
@@ -106,7 +105,7 @@ func TestClusterTaskListOnlyClusterTasksv1beta1(t *testing.T) {
 		t.Errorf("unable to create dynamic client: %v", err)
 	}
 
-	cs, _ := test.SeedV1beta1TestData(t, pipelinev1beta1test.Data{ClusterTasks: clustertasks})
+	cs, _ := test.SeedV1beta1TestData(t, test.Data{ClusterTasks: clustertasks})
 	p := &test.Params{Tekton: cs.Pipeline, Kube: cs.Kube, Clock: clock, Dynamic: dynamic}
 	cs.Pipeline.Resources = cb.APIResourceList(version, []string{"clustertask"})
 
@@ -146,7 +145,7 @@ func TestClusterTaskListNoHeadersv1beta1(t *testing.T) {
 		t.Errorf("unable to create dynamic client: %v", err)
 	}
 
-	cs, _ := test.SeedV1beta1TestData(t, pipelinev1beta1test.Data{ClusterTasks: clustertasks})
+	cs, _ := test.SeedV1beta1TestData(t, test.Data{ClusterTasks: clustertasks})
 	p := &test.Params{Tekton: cs.Pipeline, Kube: cs.Kube, Clock: clock, Dynamic: dynamic}
 	cs.Pipeline.Resources = cb.APIResourceList(version, []string{"clustertask"})
 

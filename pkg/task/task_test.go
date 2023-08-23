@@ -43,7 +43,7 @@ func TestTask_GetAllTaskNames_v1beta1(t *testing.T) {
 			},
 		},
 	}
-	cs, _ := test.SeedV1beta1TestData(t, pipelinetest.Data{
+	cs, _ := test.SeedV1beta1TestData(t, test.Data{
 		Tasks: tdata,
 	})
 	cs.Pipeline.Resources = cb.APIResourceList(version, []string{"task"})
@@ -73,7 +73,7 @@ func TestTask_GetAllTaskNames_v1beta1(t *testing.T) {
 			},
 		},
 	}
-	cs2, _ := test.SeedV1beta1TestData(t, pipelinetest.Data{
+	cs2, _ := test.SeedV1beta1TestData(t, test.Data{
 		Tasks: tdata2,
 	})
 	cs2.Pipeline.Resources = cb.APIResourceList(version, []string{"task"})
@@ -156,7 +156,7 @@ func TestTask_GetAllTaskNames(t *testing.T) {
 			},
 		},
 	}
-	cs, _ := test.SeedTestData(t, test.Data{
+	cs, _ := test.SeedTestData(t, pipelinetest.Data{
 		Tasks: tdata,
 	})
 	cs.Pipeline.Resources = cb.APIResourceList(version, []string{"task"})
@@ -186,7 +186,7 @@ func TestTask_GetAllTaskNames(t *testing.T) {
 			},
 		},
 	}
-	cs2, _ := test.SeedTestData(t, test.Data{
+	cs2, _ := test.SeedTestData(t, pipelinetest.Data{
 		Tasks: tdata2,
 	})
 	cs2.Pipeline.Resources = cb.APIResourceList(version, []string{"task"})
@@ -267,7 +267,7 @@ func TestTask_List_v1beta1(t *testing.T) {
 			},
 		},
 	}
-	cs, _ := test.SeedV1beta1TestData(t, pipelinetest.Data{
+	cs, _ := test.SeedV1beta1TestData(t, test.Data{
 		Tasks: tdata,
 	})
 	cs.Pipeline.Resources = cb.APIResourceList(version, []string{"task"})
@@ -293,7 +293,7 @@ func TestTask_List_v1beta1(t *testing.T) {
 			},
 		},
 	}
-	cs2, _ := test.SeedV1beta1TestData(t, pipelinetest.Data{
+	cs2, _ := test.SeedV1beta1TestData(t, test.Data{
 		Tasks: tdata2,
 	})
 	cs2.Pipeline.Resources = cb.APIResourceList(version, []string{"task"})
@@ -363,7 +363,7 @@ func TestTask_List(t *testing.T) {
 			},
 		},
 	}
-	cs, _ := test.SeedTestData(t, test.Data{
+	cs, _ := test.SeedTestData(t, pipelinetest.Data{
 		Tasks: tdata,
 	})
 	cs.Pipeline.Resources = cb.APIResourceList(version, []string{"task"})
@@ -389,7 +389,7 @@ func TestTask_List(t *testing.T) {
 			},
 		},
 	}
-	cs2, _ := test.SeedTestData(t, test.Data{
+	cs2, _ := test.SeedTestData(t, pipelinetest.Data{
 		Tasks: tdata2,
 	})
 	cs2.Pipeline.Resources = cb.APIResourceList(version, []string{"task"})
@@ -466,7 +466,7 @@ func TestTask_Get_v1beta1(t *testing.T) {
 			},
 		},
 	}
-	cs, _ := test.SeedV1beta1TestData(t, pipelinetest.Data{
+	cs, _ := test.SeedV1beta1TestData(t, test.Data{
 		Tasks: tdata,
 	})
 	cs.Pipeline.Resources = cb.APIResourceList(version, []string{"task"})
@@ -510,7 +510,7 @@ func TestTask_Get(t *testing.T) {
 			},
 		},
 	}
-	cs, _ := test.SeedTestData(t, test.Data{
+	cs, _ := test.SeedTestData(t, pipelinetest.Data{
 		Tasks: tdata,
 	})
 	cs.Pipeline.Resources = cb.APIResourceList(version, []string{"task"})
@@ -549,7 +549,7 @@ func TestTask_Create(t *testing.T) {
 			},
 		},
 	}
-	cs, _ := test.SeedV1beta1TestData(t, pipelinetest.Data{})
+	cs, _ := test.SeedV1beta1TestData(t, test.Data{})
 	cs.Pipeline.Resources = cb.APIResourceList(version, []string{"task"})
 	tdc := testDynamic.Options{}
 	dc, err := tdc.Client()

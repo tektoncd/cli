@@ -25,7 +25,7 @@ import (
 	testDynamic "github.com/tektoncd/cli/pkg/test/dynamic"
 	v1 "github.com/tektoncd/pipeline/pkg/apis/pipeline/v1"
 	"github.com/tektoncd/pipeline/pkg/apis/pipeline/v1beta1"
-	pipelinev1beta1test "github.com/tektoncd/pipeline/test"
+	pipelinetest "github.com/tektoncd/pipeline/test"
 	corev1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/client-go/dynamic"
@@ -239,13 +239,13 @@ func TestPipelineRunDelete_v1beta1(t *testing.T) {
 	}
 
 	type clients struct {
-		pipelineClient pipelinev1beta1test.Clients
+		pipelineClient test.Clients
 		dynamicClient  dynamic.Interface
 	}
 
 	seeds := make([]clients, 0)
 	for i := 0; i < 16; i++ {
-		cs, _ := test.SeedV1beta1TestData(t, pipelinev1beta1test.Data{
+		cs, _ := test.SeedV1beta1TestData(t, test.Data{
 			Pipelines:    pdata,
 			PipelineRuns: prdata,
 			Namespaces:   ns,
@@ -271,7 +271,7 @@ func TestPipelineRunDelete_v1beta1(t *testing.T) {
 		name        string
 		command     []string
 		dynamic     dynamic.Interface
-		input       pipelinev1beta1test.Clients
+		input       test.Clients
 		inputStream io.Reader
 		wantError   bool
 		want        string
@@ -871,13 +871,13 @@ func TestPipelineRunDelete(t *testing.T) {
 	}
 
 	type clients struct {
-		pipelineClient test.Clients
+		pipelineClient pipelinetest.Clients
 		dynamicClient  dynamic.Interface
 	}
 
 	seeds := make([]clients, 0)
 	for i := 0; i < 16; i++ {
-		cs, _ := test.SeedTestData(t, test.Data{
+		cs, _ := test.SeedTestData(t, pipelinetest.Data{
 			Pipelines:    pdata,
 			PipelineRuns: prdata,
 			Namespaces:   ns,
@@ -903,7 +903,7 @@ func TestPipelineRunDelete(t *testing.T) {
 		name        string
 		command     []string
 		dynamic     dynamic.Interface
-		input       test.Clients
+		input       pipelinetest.Clients
 		inputStream io.Reader
 		wantError   bool
 		want        string

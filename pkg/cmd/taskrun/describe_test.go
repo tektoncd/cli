@@ -41,7 +41,7 @@ var (
 )
 
 func TestTaskRunDescribe_invalid_namespace(t *testing.T) {
-	cs, _ := test.SeedTestData(t, test.Data{
+	cs, _ := test.SeedTestData(t, pipelinetest.Data{
 		Namespaces: []*corev1.Namespace{
 			{
 				ObjectMeta: metav1.ObjectMeta{
@@ -65,7 +65,7 @@ func TestTaskRunDescribe_invalid_namespace(t *testing.T) {
 }
 
 func TestTaskRunDescribe_not_found(t *testing.T) {
-	cs, _ := test.SeedTestData(t, test.Data{
+	cs, _ := test.SeedTestData(t, pipelinetest.Data{
 		Namespaces: []*corev1.Namespace{
 			{
 				ObjectMeta: metav1.ObjectMeta{
@@ -121,7 +121,7 @@ func TestTaskRunDescribe_empty_taskrun_v1beta1(t *testing.T) {
 		},
 	}
 
-	cs, _ := test.SeedV1beta1TestData(t, pipelinetest.Data{
+	cs, _ := test.SeedV1beta1TestData(t, test.Data{
 		TaskRuns: trs,
 		Namespaces: []*corev1.Namespace{
 			{
@@ -212,7 +212,7 @@ func TestTaskRunDescribe_only_taskrun_v1beta1(t *testing.T) {
 		},
 	}
 
-	cs, _ := test.SeedV1beta1TestData(t, pipelinetest.Data{
+	cs, _ := test.SeedV1beta1TestData(t, test.Data{
 		TaskRuns: trs,
 		Namespaces: []*corev1.Namespace{
 			{
@@ -278,7 +278,7 @@ func TestTaskRunDescribe_failed_v1beta1(t *testing.T) {
 		},
 	}
 
-	cs, _ := test.SeedV1beta1TestData(t, pipelinetest.Data{
+	cs, _ := test.SeedV1beta1TestData(t, test.Data{
 		TaskRuns: trs,
 		Namespaces: []*corev1.Namespace{
 			{
@@ -338,7 +338,7 @@ func TestTaskRunDescribe_no_taskref_v1beta1(t *testing.T) {
 		},
 	}
 
-	cs, _ := test.SeedV1beta1TestData(t, pipelinetest.Data{
+	cs, _ := test.SeedV1beta1TestData(t, test.Data{
 		TaskRuns: trs,
 		Namespaces: []*corev1.Namespace{
 			{
@@ -373,7 +373,7 @@ func TestTaskRunDescribe_no_taskref_v1beta1(t *testing.T) {
 
 func TestTaskRunDescribe_last_no_taskrun_present_v1beta1(t *testing.T) {
 	var trs []*v1beta1.TaskRun
-	cs, _ := test.SeedV1beta1TestData(t, pipelinetest.Data{
+	cs, _ := test.SeedV1beta1TestData(t, test.Data{
 		TaskRuns: trs,
 		Namespaces: []*corev1.Namespace{
 			{
@@ -463,7 +463,7 @@ func TestTaskRunDescribe_no_resourceref_v1beta1(t *testing.T) {
 		},
 	}
 
-	cs, _ := test.SeedV1beta1TestData(t, pipelinetest.Data{
+	cs, _ := test.SeedV1beta1TestData(t, test.Data{
 		TaskRuns: trs,
 		Namespaces: []*corev1.Namespace{
 			{
@@ -563,7 +563,7 @@ func TestTaskRunDescribe_step_sidecar_status_defaults_and_failures_v1beta1(t *te
 		},
 	}
 
-	cs, _ := test.SeedV1beta1TestData(t, pipelinetest.Data{
+	cs, _ := test.SeedV1beta1TestData(t, test.Data{
 		TaskRuns: trs,
 		Namespaces: []*corev1.Namespace{
 			{
@@ -666,7 +666,7 @@ func TestTaskRunDescribe_step_status_pending_one_sidecar_v1beta1(t *testing.T) {
 		},
 	}
 
-	cs, _ := test.SeedV1beta1TestData(t, pipelinetest.Data{
+	cs, _ := test.SeedV1beta1TestData(t, test.Data{
 		TaskRuns: trs,
 		Namespaces: []*corev1.Namespace{
 			{
@@ -777,7 +777,7 @@ func TestTaskRunDescribe_step_status_running_multiple_sidecars_v1beta1(t *testin
 		},
 	}
 
-	cs, _ := test.SeedV1beta1TestData(t, pipelinetest.Data{
+	cs, _ := test.SeedV1beta1TestData(t, test.Data{
 		TaskRuns: trs,
 		Namespaces: []*corev1.Namespace{
 			{
@@ -837,7 +837,7 @@ func TestTaskRunDescribe_cancel_taskrun_v1beta1(t *testing.T) {
 		},
 	}
 
-	cs, _ := test.SeedV1beta1TestData(t, pipelinetest.Data{
+	cs, _ := test.SeedV1beta1TestData(t, test.Data{
 		TaskRuns: trs,
 		Namespaces: []*corev1.Namespace{
 			{
@@ -885,7 +885,7 @@ func TestTaskRunDescribe_custom_output_v1beta1(t *testing.T) {
 		},
 	}
 
-	cs, _ := test.SeedV1beta1TestData(t, pipelinetest.Data{
+	cs, _ := test.SeedV1beta1TestData(t, test.Data{
 		TaskRuns: trs,
 		Namespaces: []*corev1.Namespace{
 			{
@@ -934,7 +934,7 @@ func TestTaskRunDescribe_WithSpec_custom_timeout_v1beta1(t *testing.T) {
 		},
 	}
 
-	cs, _ := test.SeedV1beta1TestData(t, pipelinetest.Data{
+	cs, _ := test.SeedV1beta1TestData(t, test.Data{
 		TaskRuns: trs,
 		Namespaces: []*corev1.Namespace{
 			{
@@ -1039,7 +1039,7 @@ func TestTaskRunDescribe_last_v1beta1(t *testing.T) {
 	if err != nil {
 		t.Errorf("unable to create dynamic client: %v", err)
 	}
-	cs, _ := test.SeedV1beta1TestData(t, pipelinetest.Data{Namespaces: namespaces, TaskRuns: taskRuns})
+	cs, _ := test.SeedV1beta1TestData(t, test.Data{Namespaces: namespaces, TaskRuns: taskRuns})
 	cs.Pipeline.Resources = cb.APIResourceList(versionv1beta1, []string{"taskrun"})
 	p := &test.Params{Tekton: cs.Pipeline, Kube: cs.Kube, Dynamic: dynamic}
 	taskrun := Command(p)
@@ -1113,7 +1113,7 @@ func TestTaskRunDescribe_With_Results_v1beta1(t *testing.T) {
 	if err != nil {
 		t.Errorf("unable to create dynamic client: %v", err)
 	}
-	cs, _ := test.SeedV1beta1TestData(t, pipelinetest.Data{Namespaces: namespaces, TaskRuns: taskRuns})
+	cs, _ := test.SeedV1beta1TestData(t, test.Data{Namespaces: namespaces, TaskRuns: taskRuns})
 	cs.Pipeline.Resources = cb.APIResourceList(versionv1beta1, []string{"taskrun"})
 	p := &test.Params{Tekton: cs.Pipeline, Kube: cs.Kube, Dynamic: dynamic}
 	p.SetNamespace("ns")
@@ -1139,7 +1139,7 @@ func TestTaskRunDescribe_zero_timeout_v1beta1(t *testing.T) {
 		},
 	}
 
-	cs, _ := test.SeedV1beta1TestData(t, pipelinetest.Data{
+	cs, _ := test.SeedV1beta1TestData(t, test.Data{
 		TaskRuns: trs,
 		Namespaces: []*corev1.Namespace{
 			{
@@ -1251,7 +1251,7 @@ func TestTaskRunDescribe_With_Workspaces_v1beta1(t *testing.T) {
 	if err != nil {
 		t.Errorf("unable to create dynamic client: %v", err)
 	}
-	cs, _ := test.SeedV1beta1TestData(t, pipelinetest.Data{Namespaces: namespaces, TaskRuns: taskRuns})
+	cs, _ := test.SeedV1beta1TestData(t, test.Data{Namespaces: namespaces, TaskRuns: taskRuns})
 	cs.Pipeline.Resources = cb.APIResourceList(versionv1beta1, []string{"taskrun"})
 	p := &test.Params{Tekton: cs.Pipeline, Kube: cs.Kube, Dynamic: dynamic}
 	p.SetNamespace("ns")
@@ -1311,7 +1311,7 @@ func TestTaskRunDescribe_WithoutNameIfOnlyOneTaskRunPresent_v1beta1(t *testing.T
 		t.Errorf("unable to create dynamic client: %v", err)
 	}
 
-	cs, _ := test.SeedV1beta1TestData(t, pipelinetest.Data{Namespaces: namespaces, TaskRuns: taskRuns})
+	cs, _ := test.SeedV1beta1TestData(t, test.Data{Namespaces: namespaces, TaskRuns: taskRuns})
 	cs.Pipeline.Resources = cb.APIResourceList(versionv1beta1, []string{"taskrun"})
 	p := &test.Params{Tekton: cs.Pipeline, Kube: cs.Kube, Dynamic: dynamic}
 	p.SetNamespace("ns")
@@ -1352,7 +1352,7 @@ func TestTaskRunDescribe_with_annotations_v1beta1(t *testing.T) {
 	if err != nil {
 		t.Errorf("unable to create dynamic client: %v", err)
 	}
-	cs, _ := test.SeedV1beta1TestData(t, pipelinetest.Data{Namespaces: namespaces, TaskRuns: taskRuns})
+	cs, _ := test.SeedV1beta1TestData(t, test.Data{Namespaces: namespaces, TaskRuns: taskRuns})
 	cs.Pipeline.Resources = cb.APIResourceList(versionv1beta1, []string{"taskrun"})
 	p := &test.Params{Tekton: cs.Pipeline, Kube: cs.Kube, Dynamic: dynamic}
 	p.SetNamespace("ns")
@@ -1394,7 +1394,7 @@ func TestTaskRunDescribe_empty_taskrun(t *testing.T) {
 		},
 	}
 
-	cs, _ := test.SeedTestData(t, test.Data{
+	cs, _ := test.SeedTestData(t, pipelinetest.Data{
 		TaskRuns: trs,
 		Namespaces: []*corev1.Namespace{
 			{
@@ -1485,7 +1485,7 @@ func TestTaskRunDescribe_only_taskrun(t *testing.T) {
 		},
 	}
 
-	cs, _ := test.SeedTestData(t, test.Data{
+	cs, _ := test.SeedTestData(t, pipelinetest.Data{
 		TaskRuns: trs,
 		Namespaces: []*corev1.Namespace{
 			{
@@ -1551,7 +1551,7 @@ func TestTaskRunDescribe_failed(t *testing.T) {
 		},
 	}
 
-	cs, _ := test.SeedTestData(t, test.Data{
+	cs, _ := test.SeedTestData(t, pipelinetest.Data{
 		TaskRuns: trs,
 		Namespaces: []*corev1.Namespace{
 			{
@@ -1611,7 +1611,7 @@ func TestTaskRunDescribe_no_taskref(t *testing.T) {
 		},
 	}
 
-	cs, _ := test.SeedTestData(t, test.Data{
+	cs, _ := test.SeedTestData(t, pipelinetest.Data{
 		TaskRuns: trs,
 		Namespaces: []*corev1.Namespace{
 			{
@@ -1646,7 +1646,7 @@ func TestTaskRunDescribe_no_taskref(t *testing.T) {
 
 func TestTaskRunDescribe_last_no_taskrun_present(t *testing.T) {
 	var trs []*v1.TaskRun
-	cs, _ := test.SeedTestData(t, test.Data{
+	cs, _ := test.SeedTestData(t, pipelinetest.Data{
 		TaskRuns: trs,
 		Namespaces: []*corev1.Namespace{
 			{
@@ -1736,7 +1736,7 @@ func TestTaskRunDescribe_no_resourceref(t *testing.T) {
 		},
 	}
 
-	cs, _ := test.SeedTestData(t, test.Data{
+	cs, _ := test.SeedTestData(t, pipelinetest.Data{
 		TaskRuns: trs,
 		Namespaces: []*corev1.Namespace{
 			{
@@ -1836,7 +1836,7 @@ func TestTaskRunDescribe_step_sidecar_status_defaults_and_failures(t *testing.T)
 		},
 	}
 
-	cs, _ := test.SeedTestData(t, test.Data{
+	cs, _ := test.SeedTestData(t, pipelinetest.Data{
 		TaskRuns: trs,
 		Namespaces: []*corev1.Namespace{
 			{
@@ -1939,7 +1939,7 @@ func TestTaskRunDescribe_step_status_pending_one_sidecar(t *testing.T) {
 		},
 	}
 
-	cs, _ := test.SeedTestData(t, test.Data{
+	cs, _ := test.SeedTestData(t, pipelinetest.Data{
 		TaskRuns: trs,
 		Namespaces: []*corev1.Namespace{
 			{
@@ -2050,7 +2050,7 @@ func TestTaskRunDescribe_step_status_running_multiple_sidecars(t *testing.T) {
 		},
 	}
 
-	cs, _ := test.SeedTestData(t, test.Data{
+	cs, _ := test.SeedTestData(t, pipelinetest.Data{
 		TaskRuns: trs,
 		Namespaces: []*corev1.Namespace{
 			{
@@ -2110,7 +2110,7 @@ func TestTaskRunDescribe_cancel_taskrun(t *testing.T) {
 		},
 	}
 
-	cs, _ := test.SeedTestData(t, test.Data{
+	cs, _ := test.SeedTestData(t, pipelinetest.Data{
 		TaskRuns: trs,
 		Namespaces: []*corev1.Namespace{
 			{
@@ -2158,7 +2158,7 @@ func TestTaskRunDescribe_custom_output(t *testing.T) {
 		},
 	}
 
-	cs, _ := test.SeedTestData(t, test.Data{
+	cs, _ := test.SeedTestData(t, pipelinetest.Data{
 		TaskRuns: trs,
 		Namespaces: []*corev1.Namespace{
 			{
@@ -2207,7 +2207,7 @@ func TestTaskRunDescribe_WithSpec_custom_timeout(t *testing.T) {
 		},
 	}
 
-	cs, _ := test.SeedTestData(t, test.Data{
+	cs, _ := test.SeedTestData(t, pipelinetest.Data{
 		TaskRuns: trs,
 		Namespaces: []*corev1.Namespace{
 			{
@@ -2312,7 +2312,7 @@ func TestTaskRunDescribe_last(t *testing.T) {
 	if err != nil {
 		t.Errorf("unable to create dynamic client: %v", err)
 	}
-	cs, _ := test.SeedTestData(t, test.Data{Namespaces: namespaces, TaskRuns: taskRuns})
+	cs, _ := test.SeedTestData(t, pipelinetest.Data{Namespaces: namespaces, TaskRuns: taskRuns})
 	cs.Pipeline.Resources = cb.APIResourceList(version, []string{"taskrun"})
 	p := &test.Params{Tekton: cs.Pipeline, Kube: cs.Kube, Dynamic: dynamic}
 	taskrun := Command(p)
@@ -2386,7 +2386,7 @@ func TestTaskRunDescribe_With_Results(t *testing.T) {
 	if err != nil {
 		t.Errorf("unable to create dynamic client: %v", err)
 	}
-	cs, _ := test.SeedTestData(t, test.Data{Namespaces: namespaces, TaskRuns: taskRuns})
+	cs, _ := test.SeedTestData(t, pipelinetest.Data{Namespaces: namespaces, TaskRuns: taskRuns})
 	cs.Pipeline.Resources = cb.APIResourceList(version, []string{"taskrun"})
 	p := &test.Params{Tekton: cs.Pipeline, Kube: cs.Kube, Dynamic: dynamic}
 	p.SetNamespace("ns")
@@ -2412,7 +2412,7 @@ func TestTaskRunDescribe_zero_timeout(t *testing.T) {
 		},
 	}
 
-	cs, _ := test.SeedTestData(t, test.Data{
+	cs, _ := test.SeedTestData(t, pipelinetest.Data{
 		TaskRuns: trs,
 		Namespaces: []*corev1.Namespace{
 			{
@@ -2524,7 +2524,7 @@ func TestTaskRunDescribe_With_Workspaces(t *testing.T) {
 	if err != nil {
 		t.Errorf("unable to create dynamic client: %v", err)
 	}
-	cs, _ := test.SeedTestData(t, test.Data{Namespaces: namespaces, TaskRuns: taskRuns})
+	cs, _ := test.SeedTestData(t, pipelinetest.Data{Namespaces: namespaces, TaskRuns: taskRuns})
 	cs.Pipeline.Resources = cb.APIResourceList(version, []string{"taskrun"})
 	p := &test.Params{Tekton: cs.Pipeline, Kube: cs.Kube, Dynamic: dynamic}
 	p.SetNamespace("ns")
@@ -2584,7 +2584,7 @@ func TestTaskRunDescribe_WithoutNameIfOnlyOneTaskRunPresent(t *testing.T) {
 		t.Errorf("unable to create dynamic client: %v", err)
 	}
 
-	cs, _ := test.SeedTestData(t, test.Data{Namespaces: namespaces, TaskRuns: taskRuns})
+	cs, _ := test.SeedTestData(t, pipelinetest.Data{Namespaces: namespaces, TaskRuns: taskRuns})
 	cs.Pipeline.Resources = cb.APIResourceList(version, []string{"taskrun"})
 	p := &test.Params{Tekton: cs.Pipeline, Kube: cs.Kube, Dynamic: dynamic}
 	p.SetNamespace("ns")
@@ -2625,7 +2625,7 @@ func TestTaskRunDescribe_with_annotations(t *testing.T) {
 	if err != nil {
 		t.Errorf("unable to create dynamic client: %v", err)
 	}
-	cs, _ := test.SeedTestData(t, test.Data{Namespaces: namespaces, TaskRuns: taskRuns})
+	cs, _ := test.SeedTestData(t, pipelinetest.Data{Namespaces: namespaces, TaskRuns: taskRuns})
 	cs.Pipeline.Resources = cb.APIResourceList(version, []string{"taskrun"})
 	p := &test.Params{Tekton: cs.Pipeline, Kube: cs.Kube, Dynamic: dynamic}
 	p.SetNamespace("ns")

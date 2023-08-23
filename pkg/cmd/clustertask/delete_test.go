@@ -24,7 +24,6 @@ import (
 	cb "github.com/tektoncd/cli/pkg/test/builder"
 	testDynamic "github.com/tektoncd/cli/pkg/test/dynamic"
 	"github.com/tektoncd/pipeline/pkg/apis/pipeline/v1beta1"
-	pipelinev1beta1test "github.com/tektoncd/pipeline/test"
 	corev1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/client-go/dynamic"
@@ -37,7 +36,7 @@ func TestClusterTaskDelete(t *testing.T) {
 	taskCreated := clock.Now().Add(-1 * time.Minute)
 
 	type clients struct {
-		pipelineClient pipelinev1beta1test.Clients
+		pipelineClient test.Clients
 		dynamicClient  dynamic.Interface
 	}
 
@@ -138,7 +137,7 @@ func TestClusterTaskDelete(t *testing.T) {
 
 	seeds := make([]clients, 0)
 	for i := 0; i < 6; i++ {
-		cs, _ := test.SeedV1beta1TestData(t, pipelinev1beta1test.Data{
+		cs, _ := test.SeedV1beta1TestData(t, test.Data{
 			ClusterTasks: clusterTaskData,
 			TaskRuns:     taskRunData,
 		})
@@ -162,7 +161,7 @@ func TestClusterTaskDelete(t *testing.T) {
 		name        string
 		command     []string
 		dynamic     dynamic.Interface
-		input       pipelinev1beta1test.Clients
+		input       test.Clients
 		inputStream io.Reader
 		wantError   bool
 		want        string

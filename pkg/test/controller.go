@@ -18,14 +18,15 @@ import (
 	"context"
 	"testing"
 
-	v1 "github.com/tektoncd/pipeline/pkg/apis/pipeline/v1"
+	v1beta1 "github.com/tektoncd/pipeline/pkg/apis/pipeline/v1beta1"
 	fakepipelineclientset "github.com/tektoncd/pipeline/pkg/client/clientset/versioned/fake"
-	informersv1 "github.com/tektoncd/pipeline/pkg/client/informers/externalversions/pipeline/v1"
+	informersv1beta1 "github.com/tektoncd/pipeline/pkg/client/informers/externalversions/pipeline/v1beta1"
 	fakepipelineclient "github.com/tektoncd/pipeline/pkg/client/injection/client/fake"
-	fakepipelineinformer "github.com/tektoncd/pipeline/pkg/client/injection/informers/pipeline/v1/pipeline/fake"
-	fakepipelineruninformer "github.com/tektoncd/pipeline/pkg/client/injection/informers/pipeline/v1/pipelinerun/fake"
-	faketaskinformer "github.com/tektoncd/pipeline/pkg/client/injection/informers/pipeline/v1/task/fake"
-	faketaskruninformer "github.com/tektoncd/pipeline/pkg/client/injection/informers/pipeline/v1/taskrun/fake"
+	fakeclustertaskinformer "github.com/tektoncd/pipeline/pkg/client/injection/informers/pipeline/v1beta1/clustertask/fake"
+	fakepipelineinformer "github.com/tektoncd/pipeline/pkg/client/injection/informers/pipeline/v1beta1/pipeline/fake"
+	fakepipelineruninformer "github.com/tektoncd/pipeline/pkg/client/injection/informers/pipeline/v1beta1/pipelinerun/fake"
+	faketaskinformer "github.com/tektoncd/pipeline/pkg/client/injection/informers/pipeline/v1beta1/task/fake"
+	faketaskruninformer "github.com/tektoncd/pipeline/pkg/client/injection/informers/pipeline/v1beta1/taskrun/fake"
 	"github.com/tektoncd/pipeline/test"
 	corev1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
@@ -36,10 +37,11 @@ import (
 )
 
 type Data struct {
-	PipelineRuns []*v1.PipelineRun
-	Pipelines    []*v1.Pipeline
-	TaskRuns     []*v1.TaskRun
-	Tasks        []*v1.Task
+	PipelineRuns []*v1beta1.PipelineRun
+	Pipelines    []*v1beta1.Pipeline
+	TaskRuns     []*v1beta1.TaskRun
+	Tasks        []*v1beta1.Task
+	ClusterTasks []*v1beta1.ClusterTask
 	Namespaces   []*corev1.Namespace
 	Pods         []*corev1.Pod
 }
@@ -52,10 +54,11 @@ type Clients struct {
 
 // Informers holds references to informers which are useful for reconciler tests.
 type Informers struct {
-	PipelineRun informersv1.PipelineRunInformer
-	Pipeline    informersv1.PipelineInformer
-	TaskRun     informersv1.TaskRunInformer
-	Task        informersv1.TaskInformer
+	PipelineRun informersv1beta1.PipelineRunInformer
+	Pipeline    informersv1beta1.PipelineInformer
+	TaskRun     informersv1beta1.TaskRunInformer
+	Task        informersv1beta1.TaskInformer
+	ClusterTask informersv1beta1.ClusterTaskInformer
 	Pod         coreinformers.PodInformer
 }
 
@@ -76,7 +79,8 @@ func seedTestData(t *testing.T, ctx context.Context, d Data) (Clients, Informers
 		Pipeline:    fakepipelineinformer.Get(ctx),
 		TaskRun:     faketaskruninformer.Get(ctx),
 		Task:        faketaskinformer.Get(ctx),
-		Pod:         fakefilteredpodinformer.Get(ctx, v1.ManagedByLabelKey),
+		ClusterTask: fakeclustertaskinformer.Get(ctx),
+		Pod:         fakefilteredpodinformer.Get(ctx, v1beta1.ManagedByLabelKey),
 	}
 
 	// Attach reactors that add resource mutations to the appropriate
@@ -85,28 +89,35 @@ func seedTestData(t *testing.T, ctx context.Context, d Data) (Clients, Informers
 	c.Pipeline.PrependReactor("*", "pipelineruns", test.AddToInformer(t, i.PipelineRun.Informer().GetIndexer()))
 	for _, pr := range d.PipelineRuns {
 		pr := pr.DeepCopy() // Avoid assumptions that the informer's copy is modified.
-		if _, err := c.Pipeline.TektonV1().PipelineRuns(pr.Namespace).Create(ctx, pr, metav1.CreateOptions{}); err != nil {
+		if _, err := c.Pipeline.TektonV1beta1().PipelineRuns(pr.Namespace).Create(ctx, pr, metav1.CreateOptions{}); err != nil {
 			t.Fatal(err)
 		}
 	}
 	c.Pipeline.PrependReactor("*", "pipelines", test.AddToInformer(t, i.Pipeline.Informer().GetIndexer()))
 	for _, p := range d.Pipelines {
 		p := p.DeepCopy() // Avoid assumptions that the informer's copy is modified.
-		if _, err := c.Pipeline.TektonV1().Pipelines(p.Namespace).Create(ctx, p, metav1.CreateOptions{}); err != nil {
+		if _, err := c.Pipeline.TektonV1beta1().Pipelines(p.Namespace).Create(ctx, p, metav1.CreateOptions{}); err != nil {
 			t.Fatal(err)
 		}
 	}
 	c.Pipeline.PrependReactor("*", "taskruns", test.AddToInformer(t, i.TaskRun.Informer().GetIndexer()))
 	for _, tr := range d.TaskRuns {
 		tr := tr.DeepCopy() // Avoid assumptions that the informer's copy is modified.
-		if _, err := c.Pipeline.TektonV1().TaskRuns(tr.Namespace).Create(ctx, tr, metav1.CreateOptions{}); err != nil {
+		if _, err := c.Pipeline.TektonV1beta1().TaskRuns(tr.Namespace).Create(ctx, tr, metav1.CreateOptions{}); err != nil {
 			t.Fatal(err)
 		}
 	}
 	c.Pipeline.PrependReactor("*", "tasks", test.AddToInformer(t, i.Task.Informer().GetIndexer()))
 	for _, ta := range d.Tasks {
 		ta := ta.DeepCopy() // Avoid assumptions that the informer's copy is modified.
-		if _, err := c.Pipeline.TektonV1().Tasks(ta.Namespace).Create(ctx, ta, metav1.CreateOptions{}); err != nil {
+		if _, err := c.Pipeline.TektonV1beta1().Tasks(ta.Namespace).Create(ctx, ta, metav1.CreateOptions{}); err != nil {
+			t.Fatal(err)
+		}
+	}
+	c.Pipeline.PrependReactor("*", "clustertasks", test.AddToInformer(t, i.ClusterTask.Informer().GetIndexer()))
+	for _, cta := range d.ClusterTasks {
+		cta := cta.DeepCopy() // Avoid assumptions that the informer's copy is modified.
+		if _, err := c.Pipeline.TektonV1beta1().ClusterTasks().Create(ctx, cta, metav1.CreateOptions{}); err != nil {
 			t.Fatal(err)
 		}
 	}

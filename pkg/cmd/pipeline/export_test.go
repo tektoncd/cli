@@ -112,7 +112,7 @@ func TestPipelineExport_v1beta1(t *testing.T) {
 	if err != nil {
 		t.Errorf("unable to create dynamic client: %v", err)
 	}
-	cs, _ := test.SeedV1beta1TestData(t, pipelinetest.Data{Namespaces: namespaces, Pipelines: pipelines})
+	cs, _ := test.SeedV1beta1TestData(t, test.Data{Namespaces: namespaces, Pipelines: pipelines})
 	cs.Pipeline.Resources = cb.APIResourceList(version, []string{"pipeline"})
 	p := &test.Params{Tekton: cs.Pipeline, Clock: clock, Kube: cs.Kube, Dynamic: dynamic}
 	pipeline := Command(p)
@@ -238,7 +238,7 @@ func TestPipelineExport(t *testing.T) {
 	if err != nil {
 		t.Errorf("unable to create dynamic client: %v", err)
 	}
-	cs, _ := test.SeedTestData(t, test.Data{Namespaces: namespaces, Pipelines: pipelines})
+	cs, _ := test.SeedTestData(t, pipelinetest.Data{Namespaces: namespaces, Pipelines: pipelines})
 	cs.Pipeline.Resources = cb.APIResourceList(version, []string{"pipeline"})
 	p := &test.Params{Tekton: cs.Pipeline, Clock: clock, Kube: cs.Kube, Dynamic: dynamic}
 

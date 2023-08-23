@@ -923,7 +923,7 @@ func commandV1beta1(t *testing.T, trs []*v1beta1.TaskRun, now time.Time, ns []*c
 	// fake clock advanced by 1 hour
 	clock := clockwork.NewFakeClockAt(now)
 	clock.Advance(time.Duration(60) * time.Minute)
-	cs, _ := test.SeedV1beta1TestData(t, pipelinetest.Data{TaskRuns: trs, Namespaces: ns})
+	cs, _ := test.SeedV1beta1TestData(t, test.Data{TaskRuns: trs, Namespaces: ns})
 	cs.Pipeline.Resources = cb.APIResourceList(versionv1beta1, []string{"taskrun"})
 	p := &test.Params{Tekton: cs.Pipeline, Clock: clock, Kube: cs.Kube, Dynamic: dc}
 
@@ -934,7 +934,7 @@ func command(t *testing.T, trs []*v1.TaskRun, now time.Time, ns []*corev1.Namesp
 	// fake clock advanced by 1 hour
 	clock := clockwork.NewFakeClockAt(now)
 	clock.Advance(time.Duration(60) * time.Minute)
-	cs, _ := test.SeedTestData(t, test.Data{TaskRuns: trs, Namespaces: ns})
+	cs, _ := test.SeedTestData(t, pipelinetest.Data{TaskRuns: trs, Namespaces: ns})
 	cs.Pipeline.Resources = cb.APIResourceList(version, []string{"taskrun"})
 	p := &test.Params{Tekton: cs.Pipeline, Clock: clock, Kube: cs.Kube, Dynamic: dc}
 

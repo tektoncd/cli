@@ -34,6 +34,7 @@ import (
 	v1 "github.com/tektoncd/pipeline/pkg/apis/pipeline/v1"
 	"github.com/tektoncd/pipeline/pkg/apis/pipeline/v1beta1"
 	fakepipelineclientset "github.com/tektoncd/pipeline/pkg/client/clientset/versioned/fake"
+	pipelinetest "github.com/tektoncd/pipeline/test"
 	"gotest.tools/v3/golden"
 	corev1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
@@ -124,7 +125,7 @@ func TestPipelineStart_ExecuteCommand(t *testing.T) {
 		},
 	}
 
-	cs, _ := test.SeedTestData(t, test.Data{})
+	cs, _ := test.SeedTestData(t, pipelinetest.Data{})
 	cs.Pipeline.Resources = cb.APIResourceList(version, []string{"pipeline", "pipelinerun"})
 	tdc := testDynamic.Options{}
 	dc, err := tdc.Client()
@@ -189,7 +190,7 @@ func TestPipelineStart_ExecuteCommand(t *testing.T) {
 		},
 	}
 
-	cs2, _ := test.SeedTestData(t, test.Data{Pipelines: pipeline, Namespaces: namespaces})
+	cs2, _ := test.SeedTestData(t, pipelinetest.Data{Pipelines: pipeline, Namespaces: namespaces})
 	cs2.Pipeline.Resources = cb.APIResourceList(version, []string{"pipeline", "pipelinerun"})
 	tdc2 := testDynamic.Options{}
 	dc2, err := tdc2.Client(
@@ -201,7 +202,7 @@ func TestPipelineStart_ExecuteCommand(t *testing.T) {
 	c2 := &test.Params{Tekton: cs2.Pipeline, Kube: cs2.Kube, Dynamic: dc2, Clock: clock}
 
 	// With list error mocking
-	cs3, _ := test.SeedTestData(t, test.Data{Pipelines: pipeline, Namespaces: namespaces})
+	cs3, _ := test.SeedTestData(t, pipelinetest.Data{Pipelines: pipeline, Namespaces: namespaces})
 	cs3.Pipeline.Resources = cb.APIResourceList(version, []string{"pipeline", "pipelinerun"})
 	tdc3 := testDynamic.Options{
 		PrependReactors: []testDynamic.PrependOpt{
@@ -223,7 +224,7 @@ func TestPipelineStart_ExecuteCommand(t *testing.T) {
 	c3 := &test.Params{Tekton: cs3.Pipeline, Kube: cs3.Kube, Dynamic: dc3, Clock: clock}
 
 	// With create error mocking
-	cs4, _ := test.SeedTestData(t, test.Data{Pipelines: pipeline2, Namespaces: namespaces})
+	cs4, _ := test.SeedTestData(t, pipelinetest.Data{Pipelines: pipeline2, Namespaces: namespaces})
 	cs4.Pipeline.Resources = cb.APIResourceList(version, []string{"pipeline", "pipelinerun"})
 	tdc4 := testDynamic.Options{
 		PrependReactors: []testDynamic.PrependOpt{
@@ -248,7 +249,7 @@ func TestPipelineStart_ExecuteCommand(t *testing.T) {
 	objs := []runtime.Object{
 		pipeline[0],
 	}
-	seedData, _ := test.SeedTestData(t, test.Data{
+	seedData, _ := test.SeedTestData(t, pipelinetest.Data{
 		Pipelines:  pipeline,
 		Namespaces: namespaces,
 	})
@@ -268,7 +269,7 @@ func TestPipelineStart_ExecuteCommand(t *testing.T) {
 
 	// pipelineresources data for tests with --filename
 	objs2 := []runtime.Object{}
-	seedData2, _ := test.SeedTestData(t, test.Data{
+	seedData2, _ := test.SeedTestData(t, pipelinetest.Data{
 		Namespaces: namespaces,
 	})
 	cs6 := test.Clients{
@@ -283,7 +284,7 @@ func TestPipelineStart_ExecuteCommand(t *testing.T) {
 	}
 	c6 := &test.Params{Tekton: cs6.Pipeline, Kube: cs6.Kube, Dynamic: dc6, Clock: clock}
 
-	cs7, _ := test.SeedTestData(t, test.Data{Pipelines: pipeline, Namespaces: namespaces})
+	cs7, _ := test.SeedTestData(t, pipelinetest.Data{Pipelines: pipeline, Namespaces: namespaces})
 	cs7.Pipeline.Resources = cb.APIResourceList(version, []string{"pipeline", "pipelinerun"})
 	tdc7 := testDynamic.Options{}
 	dc7, err := tdc7.Client(
@@ -871,7 +872,7 @@ func TestPipelineStart_ExecuteCommand(t *testing.T) {
 func TestPipelineStart_Interactive(t *testing.T) {
 	t.Skip("Skipping due of flakiness")
 
-	cs, _ := test.SeedTestData(t, test.Data{
+	cs, _ := test.SeedTestData(t, pipelinetest.Data{
 		Pipelines: []*v1.Pipeline{
 			{
 				ObjectMeta: metav1.ObjectMeta{
@@ -925,7 +926,7 @@ func TestPipelineStart_Interactive(t *testing.T) {
 		},
 	})
 
-	cs2, _ := test.SeedTestData(t, test.Data{
+	cs2, _ := test.SeedTestData(t, pipelinetest.Data{
 		Pipelines: []*v1.Pipeline{
 			{
 				ObjectMeta: metav1.ObjectMeta{
@@ -956,7 +957,7 @@ func TestPipelineStart_Interactive(t *testing.T) {
 	testParams := []struct {
 		name               string
 		namespace          string
-		input              test.Clients
+		input              pipelinetest.Clients
 		last               bool
 		serviceAccountName string
 		serviceAccounts    []string
@@ -1252,7 +1253,7 @@ func Test_start_pipeline(t *testing.T) {
 		},
 	}
 
-	cs, _ := test.SeedTestData(t, test.Data{Pipelines: pipeline, Namespaces: ns})
+	cs, _ := test.SeedTestData(t, pipelinetest.Data{Pipelines: pipeline, Namespaces: ns})
 	cs.Pipeline.Resources = cb.APIResourceList(version, []string{"pipeline", "pipelinerun"})
 	tdc := testDynamic.Options{}
 	dc, err := tdc.Client(
@@ -1409,7 +1410,7 @@ func Test_start_pipeline_last(t *testing.T) {
 		},
 	}
 
-	seedData, _ := test.SeedTestData(t, test.Data{
+	seedData, _ := test.SeedTestData(t, pipelinetest.Data{
 		Namespaces: ns,
 	})
 	cs := test.Clients{
@@ -1567,7 +1568,7 @@ func Test_start_pipeline_last_override_timeout_deprecated(t *testing.T) {
 		},
 	}
 
-	seedData, _ := test.SeedTestData(t, test.Data{
+	seedData, _ := test.SeedTestData(t, pipelinetest.Data{
 		Namespaces: ns,
 	})
 	cs := test.Clients{
@@ -1715,7 +1716,7 @@ func Test_start_pipeline_timeout_deprecated(t *testing.T) {
 		},
 	}
 
-	seedData, _ := test.SeedTestData(t, test.Data{
+	seedData, _ := test.SeedTestData(t, pipelinetest.Data{
 		Namespaces: ns,
 	})
 	cs := test.Clients{
@@ -1847,7 +1848,7 @@ func Test_start_pipeline_last_without_param(t *testing.T) {
 		},
 	}
 
-	seedData, _ := test.SeedTestData(t, test.Data{
+	seedData, _ := test.SeedTestData(t, pipelinetest.Data{
 		Namespaces: ns,
 	})
 	cs := test.Clients{
@@ -1992,7 +1993,7 @@ func Test_start_pipeline_last_merge(t *testing.T) {
 		},
 	}
 
-	seedData, _ := test.SeedTestData(t, test.Data{
+	seedData, _ := test.SeedTestData(t, pipelinetest.Data{
 		Namespaces: ns,
 	})
 	cs := test.Clients{
@@ -2155,7 +2156,7 @@ func Test_start_pipeline_use_pipelinerun(t *testing.T) {
 		},
 	}
 
-	seedData, _ := test.SeedTestData(t, test.Data{
+	seedData, _ := test.SeedTestData(t, pipelinetest.Data{
 		Namespaces: ns,
 	})
 	cs := test.Clients{
@@ -2279,7 +2280,7 @@ func Test_start_pipeline_use_pipelinerun_cancelled_status(t *testing.T) {
 		},
 	}
 
-	seedData, _ := test.SeedTestData(t, test.Data{
+	seedData, _ := test.SeedTestData(t, pipelinetest.Data{
 		Namespaces: ns,
 	})
 	cs := test.Clients{
@@ -2377,7 +2378,7 @@ func Test_start_pipeline_allkindparam(t *testing.T) {
 		},
 	}
 
-	cs, _ := test.SeedTestData(t, test.Data{Pipelines: ps, Namespaces: ns})
+	cs, _ := test.SeedTestData(t, pipelinetest.Data{Pipelines: ps, Namespaces: ns})
 	cs.Pipeline.Resources = cb.APIResourceList(version, []string{"pipeline", "pipelinerun"})
 	tdc := testDynamic.Options{}
 	dc, err := tdc.Client(
@@ -2527,7 +2528,7 @@ func Test_start_pipeline_last_generate_name(t *testing.T) {
 		},
 	}
 
-	seedData, _ := test.SeedTestData(t, test.Data{
+	seedData, _ := test.SeedTestData(t, pipelinetest.Data{
 		Namespaces: ns,
 	})
 	cs := test.Clients{
@@ -2659,7 +2660,7 @@ func Test_start_pipeline_last_with_prefix_name(t *testing.T) {
 		},
 	}
 
-	seedData, _ := test.SeedTestData(t, test.Data{
+	seedData, _ := test.SeedTestData(t, pipelinetest.Data{
 		Namespaces: ns,
 	})
 	cs := test.Clients{
@@ -2793,7 +2794,7 @@ func Test_start_pipeline_with_prefix_name(t *testing.T) {
 		},
 	}
 
-	seedData, _ := test.SeedTestData(t, test.Data{
+	seedData, _ := test.SeedTestData(t, pipelinetest.Data{
 		Namespaces: ns,
 	})
 	cs := test.Clients{
@@ -2980,7 +2981,7 @@ func Test_lastPipelineRun(t *testing.T) {
 				p: func() *test.Params {
 					clock.Advance(time.Duration(60) * time.Minute)
 
-					cs, _ := test.SeedTestData(t, test.Data{PipelineRuns: prs, Namespaces: ns})
+					cs, _ := test.SeedTestData(t, pipelinetest.Data{PipelineRuns: prs, Namespaces: ns})
 					cs.Pipeline.Resources = cb.APIResourceList(version, []string{"pipeline", "pipelinerun"})
 					tdc := testDynamic.Options{}
 					dc, err := tdc.Client(
@@ -3004,7 +3005,7 @@ func Test_lastPipelineRun(t *testing.T) {
 			args: args{
 				pipeline: "test",
 				p: func() *test.Params {
-					cs, _ := test.SeedTestData(t, test.Data{Namespaces: ns})
+					cs, _ := test.SeedTestData(t, pipelinetest.Data{Namespaces: ns})
 					cs.Pipeline.Resources = cb.APIResourceList(version, []string{"pipeline", "pipelinerun"})
 					tdc := testDynamic.Options{}
 					dc, err := tdc.Client()
@@ -3093,7 +3094,7 @@ func Test_start_pipeline_with_skip_optional_workspace_flag(t *testing.T) {
 		},
 	}
 
-	seedData, _ := test.SeedTestData(t, test.Data{
+	seedData, _ := test.SeedTestData(t, pipelinetest.Data{
 		Namespaces: ns,
 	})
 	cs := test.Clients{

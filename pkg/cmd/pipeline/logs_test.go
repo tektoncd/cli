@@ -64,7 +64,7 @@ func TestPipelineLog_v1beta1(t *testing.T) {
 			},
 		},
 	}
-	cs, _ := test.SeedV1beta1TestData(t, pipelinetest.Data{
+	cs, _ := test.SeedV1beta1TestData(t, test.Data{
 		Pipelines: pdata,
 		Namespaces: []*corev1.Namespace{
 			{
@@ -82,7 +82,7 @@ func TestPipelineLog_v1beta1(t *testing.T) {
 		t.Errorf("unable to create dynamic client: %v", err)
 	}
 
-	cs2, _ := test.SeedV1beta1TestData(t, pipelinetest.Data{
+	cs2, _ := test.SeedV1beta1TestData(t, test.Data{
 		Pipelines: pdata,
 		Namespaces: []*corev1.Namespace{
 			{
@@ -171,7 +171,7 @@ func TestPipelineLog_v1beta1(t *testing.T) {
 		},
 	}
 
-	cs3, _ := test.SeedV1beta1TestData(t, pipelinetest.Data{
+	cs3, _ := test.SeedV1beta1TestData(t, test.Data{
 		Pipelines:    pdata3,
 		PipelineRuns: prdata3,
 		Namespaces: []*corev1.Namespace{
@@ -188,243 +188,6 @@ func TestPipelineLog_v1beta1(t *testing.T) {
 		cb.UnstructuredV1beta1P(pdata3[0], versionv1beta1),
 		cb.UnstructuredV1beta1PR(prdata3[0], versionv1beta1),
 		cb.UnstructuredV1beta1PR(prdata3[1], versionv1beta1),
-	)
-	if err != nil {
-		t.Errorf("unable to create dynamic client: %v", err)
-	}
-
-	testParams := []struct {
-		name      string
-		command   []string
-		namespace string
-		dynamic   dynamic.Interface
-		input     pipelinetest.Clients
-		wantError bool
-		want      string
-	}{
-		{
-			name:      "Invalid namespace",
-			command:   []string{"logs", "-n", "invalid"},
-			namespace: "",
-			dynamic:   dc,
-			input:     cs,
-			wantError: false,
-			want:      "No Pipelines found in namespace invalid",
-		},
-		{
-			name:      "Found no pipelines",
-			command:   []string{"logs", "-n", "ns"},
-			namespace: "",
-			dynamic:   dc,
-			input:     cs,
-			wantError: false,
-			want:      "No Pipelines found in namespace ns",
-		},
-		{
-			name:      "Found no pipelineruns",
-			command:   []string{"logs", pipelineName, "-n", ns},
-			namespace: "",
-			dynamic:   dc2,
-			input:     cs2,
-			wantError: false,
-			want:      "No PipelineRuns found for Pipeline output-pipeline",
-		},
-		{
-			name:      "Pipeline does not exist",
-			command:   []string{"logs", "pipeline", "-n", ns},
-			namespace: "",
-			dynamic:   dc2,
-			input:     cs2,
-			wantError: true,
-			want:      "pipelines.tekton.dev \"pipeline\" not found",
-		},
-		{
-			name:      "Pipelinerun does not exist",
-			command:   []string{"logs", "pipeline", "pipelinerun", "-n", "ns"},
-			namespace: "ns",
-			dynamic:   dc,
-			input:     cs,
-			wantError: true,
-			want:      "pipelineruns.tekton.dev \"pipelinerun\" not found",
-		},
-		{
-			name:      "Invalid limit number",
-			command:   []string{"logs", pipelineName, "-n", ns, "--limit", "-1"},
-			namespace: "",
-			dynamic:   dc2,
-			input:     cs2,
-			wantError: true,
-			want:      "limit was -1 but must be a positive number",
-		},
-		{
-			name:      "Specify last flag",
-			command:   []string{"logs", pipelineName, "-n", ns, "-L"},
-			namespace: "default",
-			dynamic:   dc3,
-			input:     cs3,
-			wantError: false,
-			want:      "",
-		},
-	}
-
-	for _, tp := range testParams {
-		t.Run(tp.name, func(t *testing.T) {
-			p := &test.Params{Tekton: tp.input.Pipeline, Clock: clock, Kube: tp.input.Kube, Dynamic: tp.dynamic}
-			if tp.namespace != "" {
-				p.SetNamespace(tp.namespace)
-			}
-			c := Command(p)
-
-			out, err := test.ExecuteCommand(c, tp.command...)
-			if tp.wantError {
-				if err == nil {
-					t.Errorf("error expected here")
-				}
-				test.AssertOutput(t, tp.want, err.Error())
-			} else {
-				if err != nil {
-					t.Errorf("unexpected Error")
-				}
-				test.AssertOutput(t, tp.want, out)
-			}
-		})
-	}
-}
-
-func TestPipelineLog(t *testing.T) {
-	clock := test.FakeClock()
-	pdata := []*v1.Pipeline{
-		{
-			ObjectMeta: metav1.ObjectMeta{
-				Name:      pipelineName,
-				Namespace: ns,
-			},
-		},
-	}
-	cs, _ := test.SeedTestData(t, test.Data{
-		Pipelines: pdata,
-		Namespaces: []*corev1.Namespace{
-			{
-				ObjectMeta: metav1.ObjectMeta{
-					Name: "ns",
-				},
-			},
-		},
-	})
-	cs.Pipeline.Resources = cb.APIResourceList(version, []string{"pipeline", "pipelinerun"})
-	tdc := testDynamic.Options{}
-	dc, err := tdc.Client(
-		cb.UnstructuredP(pdata[0], version))
-	if err != nil {
-		t.Errorf("unable to create dynamic client: %v", err)
-	}
-
-	cs2, _ := test.SeedTestData(t, test.Data{
-		Pipelines: pdata,
-		Namespaces: []*corev1.Namespace{
-			{
-				ObjectMeta: metav1.ObjectMeta{
-					Name: ns,
-				},
-			},
-		},
-	})
-	cs2.Pipeline.Resources = cb.APIResourceList(version, []string{"pipeline", "pipelinerun"})
-	tdc2 := testDynamic.Options{}
-	dc2, err := tdc2.Client(
-		cb.UnstructuredP(pdata[0], version),
-	)
-	if err != nil {
-		t.Errorf("unable to create dynamic client: %v", err)
-	}
-
-	pdata3 := []*v1.Pipeline{
-		{
-			ObjectMeta: metav1.ObjectMeta{
-				Name:              pipelineName,
-				Namespace:         ns,
-				CreationTimestamp: metav1.Time{Time: clock.Now().Add(-15 * time.Minute)},
-			},
-		},
-	}
-	prdata3 := []*v1.PipelineRun{
-		{
-			ObjectMeta: metav1.ObjectMeta{
-				Name:              prName,
-				Namespace:         ns,
-				Labels:            map[string]string{"tekton.dev/pipeline": pipelineName},
-				CreationTimestamp: metav1.Time{Time: clock.Now().Add(-10 * time.Minute)},
-			},
-			Spec: v1.PipelineRunSpec{
-				PipelineRef: &v1.PipelineRef{
-					Name: pipelineName,
-				},
-			},
-			Status: v1.PipelineRunStatus{
-				Status: duckv1.Status{
-					Conditions: duckv1.Conditions{
-						{
-							Status: corev1.ConditionTrue,
-							Reason: v1.PipelineRunReasonSuccessful.String(),
-						},
-					},
-				},
-				PipelineRunStatusFields: v1.PipelineRunStatusFields{
-					// pipeline run started 5 minutes ago
-					StartTime: &metav1.Time{Time: clock.Now().Add(-5 * time.Minute)},
-					// takes 10 minutes to complete
-					CompletionTime: &metav1.Time{Time: clock.Now().Add(10 * time.Minute)},
-				},
-			},
-		},
-		{
-			ObjectMeta: metav1.ObjectMeta{
-				Name:              prName2,
-				Namespace:         ns,
-				Labels:            map[string]string{"tekton.dev/pipeline": pipelineName},
-				CreationTimestamp: metav1.Time{Time: clock.Now().Add(-8 * time.Minute)},
-			},
-			Spec: v1.PipelineRunSpec{
-				PipelineRef: &v1.PipelineRef{
-					Name: pipelineName,
-				},
-			},
-			Status: v1.PipelineRunStatus{
-				Status: duckv1.Status{
-					Conditions: duckv1.Conditions{
-						{
-							Status: corev1.ConditionTrue,
-							Reason: v1.PipelineRunReasonSuccessful.String(),
-						},
-					},
-				},
-				PipelineRunStatusFields: v1.PipelineRunStatusFields{
-					// pipeline run started 3 minutes ago
-					StartTime: &metav1.Time{Time: clock.Now().Add(-3 * time.Minute)},
-					// takes 10 minutes to complete
-					CompletionTime: &metav1.Time{Time: clock.Now().Add(10 * time.Minute)},
-				},
-			},
-		},
-	}
-
-	cs3, _ := test.SeedTestData(t, test.Data{
-		Pipelines:    pdata3,
-		PipelineRuns: prdata3,
-		Namespaces: []*corev1.Namespace{
-			{
-				ObjectMeta: metav1.ObjectMeta{
-					Name: ns,
-				},
-			},
-		},
-	})
-	cs3.Pipeline.Resources = cb.APIResourceList(version, []string{"pipeline", "pipelinerun"})
-	tdc3 := testDynamic.Options{}
-	dc3, err := tdc3.Client(
-		cb.UnstructuredP(pdata3[0], version),
-		cb.UnstructuredPR(prdata3[0], version),
-		cb.UnstructuredPR(prdata3[1], version),
 	)
 	if err != nil {
 		t.Errorf("unable to create dynamic client: %v", err)
@@ -528,12 +291,249 @@ func TestPipelineLog(t *testing.T) {
 	}
 }
 
+func TestPipelineLog(t *testing.T) {
+	clock := test.FakeClock()
+	pdata := []*v1.Pipeline{
+		{
+			ObjectMeta: metav1.ObjectMeta{
+				Name:      pipelineName,
+				Namespace: ns,
+			},
+		},
+	}
+	cs, _ := test.SeedTestData(t, pipelinetest.Data{
+		Pipelines: pdata,
+		Namespaces: []*corev1.Namespace{
+			{
+				ObjectMeta: metav1.ObjectMeta{
+					Name: "ns",
+				},
+			},
+		},
+	})
+	cs.Pipeline.Resources = cb.APIResourceList(version, []string{"pipeline", "pipelinerun"})
+	tdc := testDynamic.Options{}
+	dc, err := tdc.Client(
+		cb.UnstructuredP(pdata[0], version))
+	if err != nil {
+		t.Errorf("unable to create dynamic client: %v", err)
+	}
+
+	cs2, _ := test.SeedTestData(t, pipelinetest.Data{
+		Pipelines: pdata,
+		Namespaces: []*corev1.Namespace{
+			{
+				ObjectMeta: metav1.ObjectMeta{
+					Name: ns,
+				},
+			},
+		},
+	})
+	cs2.Pipeline.Resources = cb.APIResourceList(version, []string{"pipeline", "pipelinerun"})
+	tdc2 := testDynamic.Options{}
+	dc2, err := tdc2.Client(
+		cb.UnstructuredP(pdata[0], version),
+	)
+	if err != nil {
+		t.Errorf("unable to create dynamic client: %v", err)
+	}
+
+	pdata3 := []*v1.Pipeline{
+		{
+			ObjectMeta: metav1.ObjectMeta{
+				Name:              pipelineName,
+				Namespace:         ns,
+				CreationTimestamp: metav1.Time{Time: clock.Now().Add(-15 * time.Minute)},
+			},
+		},
+	}
+	prdata3 := []*v1.PipelineRun{
+		{
+			ObjectMeta: metav1.ObjectMeta{
+				Name:              prName,
+				Namespace:         ns,
+				Labels:            map[string]string{"tekton.dev/pipeline": pipelineName},
+				CreationTimestamp: metav1.Time{Time: clock.Now().Add(-10 * time.Minute)},
+			},
+			Spec: v1.PipelineRunSpec{
+				PipelineRef: &v1.PipelineRef{
+					Name: pipelineName,
+				},
+			},
+			Status: v1.PipelineRunStatus{
+				Status: duckv1.Status{
+					Conditions: duckv1.Conditions{
+						{
+							Status: corev1.ConditionTrue,
+							Reason: v1.PipelineRunReasonSuccessful.String(),
+						},
+					},
+				},
+				PipelineRunStatusFields: v1.PipelineRunStatusFields{
+					// pipeline run started 5 minutes ago
+					StartTime: &metav1.Time{Time: clock.Now().Add(-5 * time.Minute)},
+					// takes 10 minutes to complete
+					CompletionTime: &metav1.Time{Time: clock.Now().Add(10 * time.Minute)},
+				},
+			},
+		},
+		{
+			ObjectMeta: metav1.ObjectMeta{
+				Name:              prName2,
+				Namespace:         ns,
+				Labels:            map[string]string{"tekton.dev/pipeline": pipelineName},
+				CreationTimestamp: metav1.Time{Time: clock.Now().Add(-8 * time.Minute)},
+			},
+			Spec: v1.PipelineRunSpec{
+				PipelineRef: &v1.PipelineRef{
+					Name: pipelineName,
+				},
+			},
+			Status: v1.PipelineRunStatus{
+				Status: duckv1.Status{
+					Conditions: duckv1.Conditions{
+						{
+							Status: corev1.ConditionTrue,
+							Reason: v1.PipelineRunReasonSuccessful.String(),
+						},
+					},
+				},
+				PipelineRunStatusFields: v1.PipelineRunStatusFields{
+					// pipeline run started 3 minutes ago
+					StartTime: &metav1.Time{Time: clock.Now().Add(-3 * time.Minute)},
+					// takes 10 minutes to complete
+					CompletionTime: &metav1.Time{Time: clock.Now().Add(10 * time.Minute)},
+				},
+			},
+		},
+	}
+
+	cs3, _ := test.SeedTestData(t, pipelinetest.Data{
+		Pipelines:    pdata3,
+		PipelineRuns: prdata3,
+		Namespaces: []*corev1.Namespace{
+			{
+				ObjectMeta: metav1.ObjectMeta{
+					Name: ns,
+				},
+			},
+		},
+	})
+	cs3.Pipeline.Resources = cb.APIResourceList(version, []string{"pipeline", "pipelinerun"})
+	tdc3 := testDynamic.Options{}
+	dc3, err := tdc3.Client(
+		cb.UnstructuredP(pdata3[0], version),
+		cb.UnstructuredPR(prdata3[0], version),
+		cb.UnstructuredPR(prdata3[1], version),
+	)
+	if err != nil {
+		t.Errorf("unable to create dynamic client: %v", err)
+	}
+
+	testParams := []struct {
+		name      string
+		command   []string
+		namespace string
+		dynamic   dynamic.Interface
+		input     pipelinetest.Clients
+		wantError bool
+		want      string
+	}{
+		{
+			name:      "Invalid namespace",
+			command:   []string{"logs", "-n", "invalid"},
+			namespace: "",
+			dynamic:   dc,
+			input:     cs,
+			wantError: false,
+			want:      "No Pipelines found in namespace invalid",
+		},
+		{
+			name:      "Found no pipelines",
+			command:   []string{"logs", "-n", "ns"},
+			namespace: "",
+			dynamic:   dc,
+			input:     cs,
+			wantError: false,
+			want:      "No Pipelines found in namespace ns",
+		},
+		{
+			name:      "Found no pipelineruns",
+			command:   []string{"logs", pipelineName, "-n", ns},
+			namespace: "",
+			dynamic:   dc2,
+			input:     cs2,
+			wantError: false,
+			want:      "No PipelineRuns found for Pipeline output-pipeline",
+		},
+		{
+			name:      "Pipeline does not exist",
+			command:   []string{"logs", "pipeline", "-n", ns},
+			namespace: "",
+			dynamic:   dc2,
+			input:     cs2,
+			wantError: true,
+			want:      "pipelines.tekton.dev \"pipeline\" not found",
+		},
+		{
+			name:      "Pipelinerun does not exist",
+			command:   []string{"logs", "pipeline", "pipelinerun", "-n", "ns"},
+			namespace: "ns",
+			dynamic:   dc,
+			input:     cs,
+			wantError: true,
+			want:      "pipelineruns.tekton.dev \"pipelinerun\" not found",
+		},
+		{
+			name:      "Invalid limit number",
+			command:   []string{"logs", pipelineName, "-n", ns, "--limit", "-1"},
+			namespace: "",
+			dynamic:   dc2,
+			input:     cs2,
+			wantError: true,
+			want:      "limit was -1 but must be a positive number",
+		},
+		{
+			name:      "Specify last flag",
+			command:   []string{"logs", pipelineName, "-n", ns, "-L"},
+			namespace: "default",
+			dynamic:   dc3,
+			input:     cs3,
+			wantError: false,
+			want:      "",
+		},
+	}
+
+	for _, tp := range testParams {
+		t.Run(tp.name, func(t *testing.T) {
+			p := &test.Params{Tekton: tp.input.Pipeline, Clock: clock, Kube: tp.input.Kube, Dynamic: tp.dynamic}
+			if tp.namespace != "" {
+				p.SetNamespace(tp.namespace)
+			}
+			c := Command(p)
+
+			out, err := test.ExecuteCommand(c, tp.command...)
+			if tp.wantError {
+				if err == nil {
+					t.Errorf("error expected here")
+				}
+				test.AssertOutput(t, tp.want, err.Error())
+			} else {
+				if err != nil {
+					t.Errorf("unexpected Error")
+				}
+				test.AssertOutput(t, tp.want, out)
+			}
+		})
+	}
+}
+
 func TestPipelineLog_Interactive_v1beta1(t *testing.T) {
 	t.Skip("Skipping due of flakiness")
 
 	clock := test.FakeClock()
 
-	cs, _ := test.SeedV1beta1TestData(t, pipelinetest.Data{
+	cs, _ := test.SeedV1beta1TestData(t, test.Data{
 		Pipelines: []*v1beta1.Pipeline{
 			{
 				ObjectMeta: metav1.ObjectMeta{
@@ -613,7 +613,7 @@ func TestPipelineLog_Interactive_v1beta1(t *testing.T) {
 		},
 	})
 
-	cs2, _ := test.SeedV1beta1TestData(t, pipelinetest.Data{
+	cs2, _ := test.SeedV1beta1TestData(t, test.Data{
 		Pipelines: []*v1beta1.Pipeline{
 			{
 				ObjectMeta: metav1.ObjectMeta{
@@ -669,7 +669,7 @@ func TestPipelineLog_Interactive_v1beta1(t *testing.T) {
 		limit     int
 		last      bool
 		namespace string
-		input     pipelinetest.Clients
+		input     test.Clients
 		prompt    prompt.Prompt
 	}{
 		{
@@ -935,7 +935,7 @@ func TestPipelineLog_Interactive(t *testing.T) {
 
 	clock := test.FakeClock()
 
-	cs, _ := test.SeedTestData(t, test.Data{
+	cs, _ := test.SeedTestData(t, pipelinetest.Data{
 		Pipelines: []*v1.Pipeline{
 			{
 				ObjectMeta: metav1.ObjectMeta{
@@ -1015,7 +1015,7 @@ func TestPipelineLog_Interactive(t *testing.T) {
 		},
 	})
 
-	cs2, _ := test.SeedTestData(t, test.Data{
+	cs2, _ := test.SeedTestData(t, pipelinetest.Data{
 		Pipelines: []*v1.Pipeline{
 			{
 				ObjectMeta: metav1.ObjectMeta{
@@ -1071,7 +1071,7 @@ func TestPipelineLog_Interactive(t *testing.T) {
 		limit     int
 		last      bool
 		namespace string
-		input     test.Clients
+		input     pipelinetest.Clients
 		prompt    prompt.Prompt
 	}{
 		{
@@ -1378,7 +1378,7 @@ func TestLogs_Auto_Select_FirstPipeline(t *testing.T) {
 		},
 	}
 
-	cs, _ := test.SeedV1beta1TestData(t, pipelinetest.Data{
+	cs, _ := test.SeedV1beta1TestData(t, test.Data{
 		Pipelines:    pdata,
 		PipelineRuns: prdata,
 		Namespaces: []*corev1.Namespace{
