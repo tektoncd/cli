@@ -246,15 +246,51 @@ func Test_parseParam(t *testing.T) {
 }
 
 func Test_ParseParams(t *testing.T) {
+	t.Run("happy day", func(t *testing.T) {
+		pass := []string{"abc=bcd", "one=two"}
+		got, err := ParseParams(pass)
+		if err != nil {
+			t.Errorf("unexpected error: %v", err)
+		}
+		if len(got) != 2 {
+			t.Errorf("expected two elements, got: %v", got)
+		}
+		test.AssertOutput(t, "bcd", got["abc"])
+		test.AssertOutput(t, "two", got["one"])
+	})
 
-	pass := []string{"abc=bcd", "one=two"}
-	got, _ := ParseParams(pass)
-	test.AssertOutput(t, "bcd", got["abc"])
+	t.Run("missing =", func(t *testing.T) {
+		pass := []string{"abc"}
+		_, err := ParseParams(pass)
+		if err == nil {
+			t.Errorf("Expected error")
+		}
+		test.AssertOutput(t, "invalid input format for param parameter: abc", err.Error())
+	})
 
-	pass = []string{"abc"}
-	_, err := ParseParams(pass)
-	if err == nil {
-		t.Errorf("Expected error")
-	}
-	test.AssertOutput(t, "invalid input format for param parameter: abc", err.Error())
+	t.Run("missing key and value", func(t *testing.T) {
+		pass := []string{"="}
+		_, err := ParseParams(pass)
+		if err == nil {
+			t.Errorf("Expected error")
+		}
+		test.AssertOutput(t, "invalid input format for param parameter: =", err.Error())
+	})
+
+	t.Run("missing key", func(t *testing.T) {
+		pass := []string{"=val"}
+		_, err := ParseParams(pass)
+		if err == nil {
+			t.Errorf("Expected error")
+		}
+		test.AssertOutput(t, "invalid input format for param parameter: =val", err.Error())
+	})
+
+	t.Run("empty value", func(t *testing.T) {
+		got, err := ParseParams([]string{"key="})
+		if err != nil {
+			t.Errorf("unexpected error: %v", err)
+		}
+		test.AssertOutput(t, "", got["key"])
+	})
 }

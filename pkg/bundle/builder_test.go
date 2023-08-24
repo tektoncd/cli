@@ -34,7 +34,8 @@ func TestBuildTektonBundle(t *testing.T) {
 		return
 	}
 
-	img, err := BuildTektonBundle([]string{string(raw)}, &bytes.Buffer{})
+	annotations := map[string]string{"org.opencontainers.image.license": "Apache-2.0", "org.opencontainers.image.url": "https://example.org"}
+	img, err := BuildTektonBundle([]string{string(raw)}, annotations, &bytes.Buffer{})
 	if err != nil {
 		t.Error(err)
 	}
@@ -52,6 +53,11 @@ func TestBuildTektonBundle(t *testing.T) {
 	if err != nil {
 		t.Error(err)
 		return
+	}
+
+	ann := manifest.Annotations
+	if len(ann) != len(annotations) || fmt.Sprint(ann) != fmt.Sprint(annotations) {
+		t.Errorf("Requested annotations were not set wanted: %s, got %s", annotations, ann)
 	}
 
 	if len(manifest.Layers) != 1 {
@@ -123,7 +129,7 @@ func TestBadObj(t *testing.T) {
 		t.Error(err)
 		return
 	}
-	_, err = BuildTektonBundle([]string{string(raw)}, &bytes.Buffer{})
+	_, err = BuildTektonBundle([]string{string(raw)}, nil, &bytes.Buffer{})
 	noNameErr := errors.New("kubernetes resources should have a name")
 	if err == nil {
 		t.Errorf("expected error: %v", noNameErr)
@@ -146,7 +152,7 @@ func TestLessThenMaxBundle(t *testing.T) {
 		return
 	}
 	// no error for less then max
-	_, err = BuildTektonBundle([]string{string(raw)}, &bytes.Buffer{})
+	_, err = BuildTektonBundle([]string{string(raw)}, nil, &bytes.Buffer{})
 	if err != nil {
 		t.Error(err)
 	}
@@ -174,7 +180,7 @@ func TestJustEnoughBundleSize(t *testing.T) {
 		justEnoughObj = append(justEnoughObj, string(raw))
 	}
 	// no error for the max
-	_, err := BuildTektonBundle(justEnoughObj, &bytes.Buffer{})
+	_, err := BuildTektonBundle(justEnoughObj, nil, &bytes.Buffer{})
 	if err != nil {
 		t.Error(err)
 	}
@@ -203,7 +209,7 @@ func TestTooManyInBundle(t *testing.T) {
 	}
 
 	// expect error when we hit the max
-	_, err := BuildTektonBundle(toMuchObj, &bytes.Buffer{})
+	_, err := BuildTektonBundle(toMuchObj, nil, &bytes.Buffer{})
 	if err == nil {
 		t.Errorf("expected error: %v", toManyObjErr)
 	}

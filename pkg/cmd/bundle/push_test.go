@@ -51,10 +51,12 @@ var (
 
 func TestPushCommand(t *testing.T) {
 	testcases := []struct {
-		name             string
-		files            map[string]string
-		stdin            string
-		expectedContents map[string]expected
+		name                string
+		files               map[string]string
+		stdin               string
+		annotations         []string
+		expectedContents    map[string]expected
+		expectedAnnotations map[string]string
 	}{
 		{
 			name: "single-input",
@@ -70,6 +72,18 @@ func TestPushCommand(t *testing.T) {
 			},
 			stdin:            exampleTask,
 			expectedContents: map[string]expected{exampleTaskExpected.name: exampleTaskExpected},
+		},
+		{
+			name: "with-annotations",
+			files: map[string]string{
+				"simple.yaml": exampleTask,
+			},
+			annotations:      []string{"org.opencontainers.image.license=Apache-2.0", "org.opencontainers.image.url = https://example.org"},
+			expectedContents: map[string]expected{exampleTaskExpected.name: exampleTaskExpected},
+			expectedAnnotations: map[string]string{
+				"org.opencontainers.image.license": "Apache-2.0",
+				"org.opencontainers.image.url":     "https://example.org",
+			},
 		},
 	}
 
@@ -112,6 +126,7 @@ func TestPushCommand(t *testing.T) {
 					Err: &bytes.Buffer{},
 				},
 				bundleContentPaths: paths,
+				annotationParams:   tc.annotations,
 				remoteOptions:      bundle.RemoteOptions{},
 			}
 			if err := opts.Run([]string{ref}); err != nil {
@@ -136,6 +151,10 @@ func TestPushCommand(t *testing.T) {
 
 			if len(manifest.Layers) != len(tc.expectedContents) {
 				t.Errorf("Expected %d layers but found %d", len(tc.expectedContents), len(manifest.Layers))
+			}
+
+			if len(manifest.Annotations) != len(tc.expectedAnnotations) || fmt.Sprint(manifest.Annotations) != fmt.Sprint(tc.expectedAnnotations) {
+				t.Errorf("Requested annotations were not set wanted: %s, got %s", tc.expectedAnnotations, manifest.Annotations)
 			}
 
 			for i, l := range manifest.Layers {
