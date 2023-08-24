@@ -29,6 +29,7 @@ Input:
 ### Options
 
 ```
+      --annotate strings         OCI Manifest annotation in the form of key=value to be added to the OCI image. Can be provided multiple times to add multiple annotations.
   -f, --filenames strings        List of fully-qualified file paths containing YAML or JSON defined Tekton objects to include in this bundle
   -h, --help                     help for push
       --remote-bearer string     A Bearer token to authenticate against the repository

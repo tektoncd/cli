@@ -22,6 +22,7 @@ import (
 	"github.com/spf13/cobra"
 	"github.com/tektoncd/cli/pkg/bundle"
 	"github.com/tektoncd/cli/pkg/cli"
+	"github.com/tektoncd/cli/pkg/params"
 )
 
 type pushOptions struct {
@@ -31,6 +32,8 @@ type pushOptions struct {
 	bundleContents     []string
 	bundleContentPaths []string
 	remoteOptions      bundle.RemoteOptions
+	annotationParams   []string
+	annotations        map[string]string
 }
 
 func pushCommand(_ cli.Params) *cobra.Command {
@@ -80,6 +83,7 @@ Input:
 		},
 	}
 	c.Flags().StringSliceVarP(&opts.bundleContentPaths, "filenames", "f", []string{}, "List of fully-qualified file paths containing YAML or JSON defined Tekton objects to include in this bundle")
+	c.Flags().StringSliceVarP(&opts.annotationParams, "annotate", "", []string{}, "OCI Manifest annotation in the form of key=value to be added to the OCI image. Can be provided multiple times to add multiple annotations.")
 	bundle.AddRemoteFlags(c.Flags(), &opts.remoteOptions)
 
 	return c
@@ -87,7 +91,7 @@ Input:
 
 // Reads the positional arguments and the `-f` flag to fill in the `bunldeContents` parameter with all of the raw Tekton
 // contents.
-func (p *pushOptions) parseArgsAndFlags(args []string) error {
+func (p *pushOptions) parseArgsAndFlags(args []string) (err error) {
 	p.ref, _ = name.ParseReference(args[0], name.StrictValidation, name.Insecure)
 
 	// If there are file paths specified, then read them and include their contents.
@@ -109,7 +113,9 @@ func (p *pushOptions) parseArgsAndFlags(args []string) error {
 		p.bundleContents = append(p.bundleContents, string(contents))
 	}
 
-	return nil
+	p.annotations, err = params.ParseParams(p.annotationParams)
+
+	return err
 }
 
 // Run performs the principal logic of reading and parsing the input, creating the bundle, and publishing it.
@@ -118,7 +124,7 @@ func (p *pushOptions) Run(args []string) error {
 		return err
 	}
 
-	img, err := bundle.BuildTektonBundle(p.bundleContents, p.stream.Out)
+	img, err := bundle.BuildTektonBundle(p.bundleContents, p.annotations, p.stream.Out)
 	if err != nil {
 		return err
 	}

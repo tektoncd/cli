@@ -21,8 +21,8 @@ import (
 
 // BuildTektonBundle will return a complete OCI Image usable as a Tekton Bundle built by parsing, decoding, and
 // compressing the provided contents as Tekton objects.
-func BuildTektonBundle(contents []string, log io.Writer) (v1.Image, error) {
-	img := empty.Image
+func BuildTektonBundle(contents []string, annotations map[string]string, log io.Writer) (v1.Image, error) {
+	img := mutate.Annotations(empty.Image, annotations).(v1.Image)
 
 	if len(contents) > tkremote.MaximumBundleObjects {
 		return nil, fmt.Errorf("bundle contains more than the maximum %d allow objects", tkremote.MaximumBundleObjects)

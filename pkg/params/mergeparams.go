@@ -121,7 +121,12 @@ func ParseParams(params []string) (map[string]string, error) {
 		if len(r) != 2 {
 			return nil, errors.New(invalidParam + p)
 		}
-		parsedParams[r[0]] = r[1]
+		key := strings.TrimSpace(r[0])
+		val := strings.TrimSpace(r[1])
+		if key == "" {
+			return nil, errors.New(invalidParam + p)
+		}
+		parsedParams[key] = val
 	}
 	return parsedParams, nil
 }
