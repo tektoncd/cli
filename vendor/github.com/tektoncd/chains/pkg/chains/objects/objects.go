@@ -17,6 +17,7 @@ import (
 	"context"
 	"errors"
 	"fmt"
+	"strings"
 
 	"github.com/tektoncd/pipeline/pkg/apis/pipeline/pod"
 	"github.com/tektoncd/pipeline/pkg/apis/pipeline/v1beta1"
@@ -52,6 +53,7 @@ type Result struct {
 type TektonObject interface {
 	Object
 	GetGVK() string
+	GetKindName() string
 	GetObject() interface{}
 	GetLatestAnnotations(ctx context.Context, clientSet versioned.Interface) (map[string]string, error)
 	Patch(ctx context.Context, clientSet versioned.Interface, patchBytes []byte) error
@@ -60,6 +62,9 @@ type TektonObject interface {
 	GetPullSecrets() []string
 	IsDone() bool
 	IsSuccessful() bool
+	SupportsTaskRunArtifact() bool
+	SupportsPipelineRunArtifact() bool
+	SupportsOCIArtifact() bool
 }
 
 func NewTektonObject(i interface{}) (TektonObject, error) {
@@ -89,6 +94,10 @@ func NewTaskRunObject(tr *v1beta1.TaskRun) *TaskRunObject {
 // Get the TaskRun GroupVersionKind
 func (tro *TaskRunObject) GetGVK() string {
 	return fmt.Sprintf("%s/%s", tro.GetGroupVersionKind().GroupVersion().String(), tro.GetGroupVersionKind().Kind)
+}
+
+func (tro *TaskRunObject) GetKindName() string {
+	return strings.ToLower(tro.GetGroupVersionKind().Kind)
 }
 
 // Get the latest annotations on the TaskRun
@@ -131,6 +140,18 @@ func (tro *TaskRunObject) GetPullSecrets() []string {
 	return getPodPullSecrets(tro.Spec.PodTemplate)
 }
 
+func (tro *TaskRunObject) SupportsTaskRunArtifact() bool {
+	return true
+}
+
+func (tro *TaskRunObject) SupportsPipelineRunArtifact() bool {
+	return false
+}
+
+func (tro *TaskRunObject) SupportsOCIArtifact() bool {
+	return true
+}
+
 // PipelineRunObject extends v1beta1.PipelineRun with additional functions.
 type PipelineRunObject struct {
 	// The base PipelineRun
@@ -150,6 +171,10 @@ func NewPipelineRunObject(pr *v1beta1.PipelineRun) *PipelineRunObject {
 // Get the PipelineRun GroupVersionKind
 func (pro *PipelineRunObject) GetGVK() string {
 	return fmt.Sprintf("%s/%s", pro.GetGroupVersionKind().GroupVersion().String(), pro.GetGroupVersionKind().Kind)
+}
+
+func (pro *PipelineRunObject) GetKindName() string {
+	return strings.ToLower(pro.GetGroupVersionKind().Kind)
 }
 
 // Request the current annotations on the PipelineRun object
@@ -211,6 +236,18 @@ func (pro *PipelineRunObject) GetTaskRunFromTask(taskName string) *v1beta1.TaskR
 // Get the imgPullSecrets from the pod template
 func (pro *PipelineRunObject) GetPullSecrets() []string {
 	return getPodPullSecrets(pro.Spec.PodTemplate)
+}
+
+func (pro *PipelineRunObject) SupportsTaskRunArtifact() bool {
+	return false
+}
+
+func (pro *PipelineRunObject) SupportsPipelineRunArtifact() bool {
+	return true
+}
+
+func (pro *PipelineRunObject) SupportsOCIArtifact() bool {
+	return false
 }
 
 // Get the imgPullSecrets from a pod template, if they exist

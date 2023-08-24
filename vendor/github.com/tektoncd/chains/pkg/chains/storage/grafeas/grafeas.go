@@ -29,7 +29,6 @@ import (
 	"github.com/tektoncd/chains/pkg/chains/formats/slsa/extract"
 	"github.com/tektoncd/chains/pkg/chains/objects"
 	"github.com/tektoncd/chains/pkg/config"
-	"github.com/tektoncd/pipeline/pkg/apis/pipeline/v1beta1"
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/credentials"
@@ -39,12 +38,11 @@ import (
 )
 
 const (
-	StorageBackendGrafeas          = "grafeas"
-	projectPathFormat              = "projects/%s"
-	notePathFormat                 = "projects/%s/notes/%s"
-	attestationNoteNameFormat      = "%s-simplesigning"
-	pipelinerunBuildNoteNameFormat = "%s-pipelinerun-intoto"
-	taskrunBuildNoteNameFormat     = "%s-taskrun-intoto"
+	StorageBackendGrafeas     = "grafeas"
+	projectPathFormat         = "projects/%s"
+	notePathFormat            = "projects/%s/notes/%s"
+	attestationNoteNameFormat = "%s-simplesigning"
+	buildNoteNameFormat       = "%s-%s-intoto"
 )
 
 // Backend is a storage backend that stores signed payloads in the storage that
@@ -212,16 +210,7 @@ func (b *Backend) createNote(ctx context.Context, obj objects.TektonObject, opts
 		)
 	}
 
-	switch obj.GetObject().(type) {
-	case *v1beta1.PipelineRun:
-		// create the build note for pipelinerun attestations
-		return b.createBuildNote(ctx, fmt.Sprintf(pipelinerunBuildNoteNameFormat, notePrefix), obj)
-	case *v1beta1.TaskRun:
-		// create the build note for taskrun attestations
-		return b.createBuildNote(ctx, fmt.Sprintf(taskrunBuildNoteNameFormat, notePrefix), obj)
-	default:
-		return nil, errors.New("Tried to create build note for unsupported type of object")
-	}
+	return b.createBuildNote(ctx, fmt.Sprintf(buildNoteNameFormat, notePrefix, obj.GetKindName()), obj)
 }
 
 func (b *Backend) createBuildNote(ctx context.Context, noteid string, obj objects.TektonObject) (*pb.Note, error) {
@@ -368,14 +357,7 @@ func (b *Backend) getAttestationNotePath() string {
 func (b *Backend) getBuildNotePath(obj objects.TektonObject) string {
 	projectID := b.cfg.Storage.Grafeas.ProjectID
 	noteID := b.cfg.Storage.Grafeas.NoteID
-
-	switch obj.GetObject().(type) {
-	case *v1beta1.PipelineRun:
-		return fmt.Sprintf(notePathFormat, projectID, fmt.Sprintf(pipelinerunBuildNoteNameFormat, noteID))
-	case *v1beta1.TaskRun:
-		return fmt.Sprintf(notePathFormat, projectID, fmt.Sprintf(taskrunBuildNoteNameFormat, noteID))
-	}
-	return ""
+	return fmt.Sprintf(notePathFormat, projectID, fmt.Sprintf(buildNoteNameFormat, noteID, obj.GetKindName()))
 }
 
 // getAllOccurrences retrieves back all occurrences created for a taskrun

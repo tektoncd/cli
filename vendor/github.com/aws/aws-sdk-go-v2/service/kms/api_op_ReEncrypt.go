@@ -139,6 +139,11 @@ type ReEncryptInput struct {
 	// in the Key Management Service Developer Guide.
 	DestinationEncryptionContext map[string]string
 
+	// Checks if your request will succeed. DryRun is an optional parameter. To learn
+	// more about how to use this parameter, see Testing your KMS API calls (https://docs.aws.amazon.com/kms/latest/developerguide/programming-dryrun.html)
+	// in the Key Management Service Developer Guide.
+	DryRun *bool
+
 	// A list of grant tokens. Use a grant token when your permission to call this
 	// operation comes from a new grant that has not yet achieved eventual consistency.
 	// For more information, see Grant token (https://docs.aws.amazon.com/kms/latest/developerguide/grants.html#grant_token)
@@ -251,7 +256,7 @@ func (c *Client) addOperationReEncryptMiddlewares(stack *middleware.Stack, optio
 	if err = awsmiddleware.AddRecordResponseTiming(stack); err != nil {
 		return err
 	}
-	if err = addClientUserAgent(stack); err != nil {
+	if err = addClientUserAgent(stack, options); err != nil {
 		return err
 	}
 	if err = smithyhttp.AddErrorCloseResponseBodyMiddleware(stack); err != nil {

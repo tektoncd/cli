@@ -18,7 +18,10 @@ import (
 	"encoding/base64"
 	"fmt"
 
+	"github.com/in-toto/in-toto-golang/in_toto"
 	"github.com/tektoncd/chains/pkg/chains/objects"
+	"github.com/tektoncd/chains/pkg/chains/signing"
+	"github.com/tektoncd/chains/pkg/chains/storage/api"
 	"github.com/tektoncd/chains/pkg/config"
 	"knative.dev/pkg/logging"
 
@@ -36,6 +39,7 @@ const (
 
 // Backend is a storage backend that stores signed payloads in the TaskRun metadata as an annotation.
 // It is stored as base64 encoded JSON.
+// Deprecated: use Storer instead.
 type Backend struct {
 	pipelineclientset versioned.Interface
 }
@@ -50,23 +54,25 @@ func NewStorageBackend(ps versioned.Interface) *Backend {
 // StorePayload implements the Payloader interface.
 func (b *Backend) StorePayload(ctx context.Context, obj objects.TektonObject, rawPayload []byte, signature string, opts config.StorageOpts) error {
 	logger := logging.FromContext(ctx)
-	logger.Infof("Storing payload on %s/%s/%s", obj.GetGVK(), obj.GetNamespace(), obj.GetName())
 
-	// Use patch instead of update to prevent race conditions.
-	patchBytes, err := patch.GetAnnotationsPatch(map[string]string{
-		// Base64 encode both the signature and the payload
-		fmt.Sprintf(PayloadAnnotationFormat, opts.ShortKey):   base64.StdEncoding.EncodeToString(rawPayload),
-		fmt.Sprintf(SignatureAnnotationFormat, opts.ShortKey): base64.StdEncoding.EncodeToString([]byte(signature)),
-		fmt.Sprintf(CertAnnotationsFormat, opts.ShortKey):     base64.StdEncoding.EncodeToString([]byte(opts.Cert)),
-		fmt.Sprintf(ChainAnnotationFormat, opts.ShortKey):     base64.StdEncoding.EncodeToString([]byte(opts.Chain)),
-	})
-	if err != nil {
-		return err
+	store := &Storer{
+		client: b.pipelineclientset,
+		key:    opts.ShortKey,
 	}
-
-	patchErr := obj.Patch(ctx, b.pipelineclientset, patchBytes)
-	if patchErr != nil {
-		return patchErr
+	if _, err := store.Store(ctx, &api.StoreRequest[objects.TektonObject, *in_toto.Statement]{
+		Object:   obj,
+		Artifact: obj,
+		// We don't actually use payload - we store the raw bundle values directly.
+		Payload: nil,
+		Bundle: &signing.Bundle{
+			Content:   rawPayload,
+			Signature: []byte(signature),
+			Cert:      []byte(opts.Cert),
+			Chain:     []byte(opts.Chain),
+		},
+	}); err != nil {
+		logger.Errorf("error writing to Tekton object: %w", err)
+		return err
 	}
 	return nil
 }
@@ -138,4 +144,44 @@ func sigName(opts config.StorageOpts) string {
 
 func payloadName(opts config.StorageOpts) string {
 	return fmt.Sprintf(PayloadAnnotationFormat, opts.ShortKey)
+}
+
+type Storer struct {
+	client versioned.Interface
+	// optional key override. If not specified, the UID of the object is used.
+	key string
+}
+
+var (
+	_ api.Storer[objects.TektonObject, *in_toto.Statement] = &Storer{}
+)
+
+// Store stores the statement in the TaskRun metadata as an annotation.
+func (s *Storer) Store(ctx context.Context, req *api.StoreRequest[objects.TektonObject, *in_toto.Statement]) (*api.StoreResponse, error) {
+	logger := logging.FromContext(ctx)
+
+	obj := req.Object
+	logger.Infof("Storing payload on %s/%s/%s", obj.GetGVK(), obj.GetNamespace(), obj.GetName())
+
+	// Use patch instead of update to prevent race conditions.
+	key := s.key
+	if key == "" {
+		key = string(obj.GetUID())
+	}
+	patchBytes, err := patch.GetAnnotationsPatch(map[string]string{
+		// Base64 encode both the signature and the payload
+		fmt.Sprintf(PayloadAnnotationFormat, key):   base64.StdEncoding.EncodeToString(req.Bundle.Content),
+		fmt.Sprintf(SignatureAnnotationFormat, key): base64.StdEncoding.EncodeToString(req.Bundle.Signature),
+		fmt.Sprintf(CertAnnotationsFormat, key):     base64.StdEncoding.EncodeToString(req.Bundle.Cert),
+		fmt.Sprintf(ChainAnnotationFormat, key):     base64.StdEncoding.EncodeToString(req.Bundle.Chain),
+	})
+	if err != nil {
+		return nil, err
+	}
+
+	patchErr := obj.Patch(ctx, s.client, patchBytes)
+	if patchErr != nil {
+		return nil, patchErr
+	}
+	return &api.StoreResponse{}, nil
 }

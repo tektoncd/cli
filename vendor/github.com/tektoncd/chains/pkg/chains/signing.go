@@ -28,7 +28,6 @@ import (
 	"github.com/tektoncd/chains/pkg/chains/signing/x509"
 	"github.com/tektoncd/chains/pkg/chains/storage"
 	"github.com/tektoncd/chains/pkg/config"
-	"github.com/tektoncd/pipeline/pkg/apis/pipeline/v1beta1"
 	versioned "github.com/tektoncd/pipeline/pkg/client/clientset/versioned"
 	"k8s.io/apimachinery/pkg/util/sets"
 	"knative.dev/pkg/logging"
@@ -85,19 +84,25 @@ func allSigners(ctx context.Context, sp string, cfg config.Config) map[string]si
 
 // TODO: Hook this up to config.
 func getSignableTypes(ctx context.Context, obj objects.TektonObject) ([]artifacts.Signable, error) {
-	switch v := obj.GetObject().(type) {
-	case *v1beta1.TaskRun:
-		return []artifacts.Signable{
-			&artifacts.TaskRunArtifact{},
-			&artifacts.OCIArtifact{},
-		}, nil
-	case *v1beta1.PipelineRun:
-		return []artifacts.Signable{
-			&artifacts.PipelineRunArtifact{},
-		}, nil
-	default:
-		return nil, fmt.Errorf("unsupported type of object to be signed: %s", v)
+	var types []artifacts.Signable
+
+	if obj.SupportsTaskRunArtifact() {
+		types = append(types, &artifacts.TaskRunArtifact{})
 	}
+
+	if obj.SupportsPipelineRunArtifact() {
+		types = append(types, &artifacts.PipelineRunArtifact{})
+	}
+
+	if obj.SupportsOCIArtifact() {
+		types = append(types, &artifacts.OCIArtifact{})
+	}
+
+	if len(types) == 0 {
+		return nil, fmt.Errorf("no signable artifacts found for %v", obj)
+	}
+
+	return types, nil
 }
 
 // Signs TaskRun and PipelineRun objects, as well as generates attesations for each
