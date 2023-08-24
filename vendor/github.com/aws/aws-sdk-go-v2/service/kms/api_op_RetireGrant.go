@@ -48,6 +48,11 @@ func (c *Client) RetireGrant(ctx context.Context, params *RetireGrantInput, optF
 
 type RetireGrantInput struct {
 
+	// Checks if your request will succeed. DryRun is an optional parameter. To learn
+	// more about how to use this parameter, see Testing your KMS API calls (https://docs.aws.amazon.com/kms/latest/developerguide/programming-dryrun.html)
+	// in the Key Management Service Developer Guide.
+	DryRun *bool
+
 	// Identifies the grant to retire. To get the grant ID, use CreateGrant ,
 	// ListGrants , or ListRetirableGrants .
 	//   - Grant ID Example -
@@ -112,7 +117,7 @@ func (c *Client) addOperationRetireGrantMiddlewares(stack *middleware.Stack, opt
 	if err = awsmiddleware.AddRecordResponseTiming(stack); err != nil {
 		return err
 	}
-	if err = addClientUserAgent(stack); err != nil {
+	if err = addClientUserAgent(stack, options); err != nil {
 		return err
 	}
 	if err = smithyhttp.AddErrorCloseResponseBodyMiddleware(stack); err != nil {

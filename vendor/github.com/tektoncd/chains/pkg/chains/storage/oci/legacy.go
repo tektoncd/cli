@@ -21,6 +21,9 @@ import (
 
 	"github.com/tektoncd/chains/pkg/chains/formats"
 	"github.com/tektoncd/chains/pkg/chains/objects"
+	"github.com/tektoncd/chains/pkg/chains/signing"
+	"github.com/tektoncd/chains/pkg/chains/storage/api"
+
 	"knative.dev/pkg/logging"
 
 	"github.com/in-toto/in-toto-golang/in_toto"
@@ -31,10 +34,7 @@ import (
 	"github.com/google/go-containerregistry/pkg/v1/remote"
 	"github.com/pkg/errors"
 	"github.com/sigstore/cosign/v2/pkg/oci"
-	"github.com/sigstore/cosign/v2/pkg/oci/mutate"
 	ociremote "github.com/sigstore/cosign/v2/pkg/oci/remote"
-	"github.com/sigstore/cosign/v2/pkg/oci/static"
-	"github.com/sigstore/cosign/v2/pkg/types"
 	"github.com/tektoncd/chains/pkg/artifacts"
 	"github.com/tektoncd/chains/pkg/chains/formats/simple"
 	"github.com/tektoncd/chains/pkg/config"
@@ -43,6 +43,8 @@ import (
 
 const StorageBackendOCI = "oci"
 
+// Backend implements a storage backend for OCI artifacts.
+// Deprecated: Use SimpleStorer and AttestationStorer instead.
 type Backend struct {
 	cfg              config.Config
 	client           kubernetes.Interface
@@ -60,6 +62,7 @@ func NewStorageBackend(ctx context.Context, client kubernetes.Interface, cfg con
 					Namespace:          obj.GetNamespace(),
 					ServiceAccountName: obj.GetServiceAccountName(),
 					ImagePullSecrets:   obj.GetPullSecrets(),
+					UseMountSecrets:    true,
 				})
 			if err != nil {
 				return nil, err
@@ -115,46 +118,31 @@ func (b *Backend) uploadSignature(ctx context.Context, format simple.SimpleConta
 
 	imageName := format.ImageName()
 	logger.Infof("Uploading %s signature", imageName)
-	var opts []name.Option
-	if b.cfg.Storage.OCI.Insecure {
-		opts = append(opts, name.Insecure)
-	}
-	ref, err := name.NewDigest(imageName, opts...)
+
+	ref, err := newDigest(b.cfg, imageName)
 	if err != nil {
 		return errors.Wrap(err, "getting digest")
 	}
-	se, err := ociremote.SignedEntity(ref, ociremote.WithRemoteOptions(remoteOpts...))
-	if err != nil {
-		return errors.Wrap(err, "getting signed image")
-	}
 
-	sigOpts := []static.Option{}
-	if storageOpts.Cert != "" {
-		sigOpts = append(sigOpts, static.WithCertChain([]byte(storageOpts.Cert), []byte(storageOpts.Chain)))
-	}
-	// Create the new signature for this entity.
-	b64sig := base64.StdEncoding.EncodeToString([]byte(signature))
-	sig, err := static.NewSignature(rawPayload, b64sig, sigOpts...)
+	store, err := NewSimpleStorerFromConfig(WithTargetRepository(ref.Repository))
 	if err != nil {
 		return err
 	}
-	// Attach the signature to the entity.
-	newSE, err := mutate.AttachSignatureToEntity(se, sig)
-	if err != nil {
+	// TODO: make these creation opts.
+	store.remoteOpts = remoteOpts
+	if _, err := store.Store(ctx, &api.StoreRequest[name.Digest, simple.SimpleContainerImage]{
+		Object:   nil,
+		Artifact: ref,
+		Payload:  format,
+		Bundle: &signing.Bundle{
+			Content:   rawPayload,
+			Signature: []byte(signature),
+			Cert:      []byte(storageOpts.Cert),
+			Chain:     []byte(storageOpts.Chain),
+		},
+	}); err != nil {
 		return err
 	}
-	repo := ref.Repository
-	if b.cfg.Storage.OCI.Repository != "" {
-		repo, err = name.NewRepository(b.cfg.Storage.OCI.Repository)
-		if err != nil {
-			return errors.Wrapf(err, "%s is not a valid repository", b.cfg.Storage.OCI.Repository)
-		}
-	}
-	// Publish the signatures associated with this entity
-	if err := ociremote.WriteSignatures(repo, newSE, ociremote.WithRemoteOptions(remoteOpts...)); err != nil {
-		return err
-	}
-	logger.Infof("Successfully uploaded signature for %s", imageName)
 	return nil
 }
 
@@ -165,43 +153,31 @@ func (b *Backend) uploadAttestation(ctx context.Context, attestation in_toto.Sta
 	for _, subj := range attestation.Subject {
 		imageName := fmt.Sprintf("%s@sha256:%s", subj.Name, subj.Digest["sha256"])
 		logger.Infof("Starting attestation upload to OCI for %s...", imageName)
-		var opts []name.Option
-		if b.cfg.Storage.OCI.Insecure {
-			opts = append(opts, name.Insecure)
-		}
-		ref, err := name.NewDigest(imageName, opts...)
+
+		ref, err := newDigest(b.cfg, imageName)
 		if err != nil {
 			return errors.Wrapf(err, "getting digest for subj %s", imageName)
 		}
-		repo := ref.Repository
-		if b.cfg.Storage.OCI.Repository != "" {
-			repo, err = name.NewRepository(b.cfg.Storage.OCI.Repository)
-			if err != nil {
-				return errors.Wrapf(err, "%s is not a valid repository", b.cfg.Storage.OCI.Repository)
-			}
-		}
-		se, err := ociremote.SignedEntity(ref, ociremote.WithRemoteOptions(remoteOpts...))
-		if err != nil {
-			return errors.Wrap(err, "getting signed image")
-		}
-		// Create the new attestation for this entity.
-		attOpts := []static.Option{static.WithLayerMediaType(types.DssePayloadType)}
-		if storageOpts.Cert != "" {
-			attOpts = append(attOpts, static.WithCertChain([]byte(storageOpts.Cert), []byte(storageOpts.Chain)))
-		}
-		att, err := static.NewAttestation([]byte(signature), attOpts...)
+
+		store, err := NewAttestationStorer(WithTargetRepository(ref.Repository))
 		if err != nil {
 			return err
 		}
-		newImage, err := mutate.AttachAttestationToEntity(se, att)
-		if err != nil {
+		// TODO: make these creation opts.
+		store.remoteOpts = remoteOpts
+		if _, err := store.Store(ctx, &api.StoreRequest[name.Digest, in_toto.Statement]{
+			Object:   nil,
+			Artifact: ref,
+			Payload:  attestation,
+			Bundle: &signing.Bundle{
+				Content:   nil,
+				Signature: []byte(signature),
+				Cert:      []byte(storageOpts.Cert),
+				Chain:     []byte(storageOpts.Chain),
+			},
+		}); err != nil {
 			return err
 		}
-		// Publish the signatures associated with this entity
-		if err := ociremote.WriteAttestations(repo, newImage, ociremote.WithRemoteOptions(remoteOpts...)); err != nil {
-			return err
-		}
-		logger.Infof("Successfully uploaded attestation for %s", imageName)
 	}
 	return nil
 }
@@ -300,4 +276,18 @@ func (b *Backend) RetrieveArtifact(ctx context.Context, obj objects.TektonObject
 	}
 
 	return m, nil
+}
+
+func newDigest(cfg config.Config, imageName string) (name.Digest, error) {
+	// Override image name from config if set.
+	if r := cfg.Storage.OCI.Repository; r != "" {
+		imageName = r
+	}
+
+	var opts []name.Option
+	if cfg.Storage.OCI.Insecure {
+		opts = append(opts, name.Insecure)
+	}
+
+	return name.NewDigest(imageName, opts...)
 }

@@ -13,7 +13,9 @@ limitations under the License.
 
 package signing
 
-import "github.com/sigstore/sigstore/pkg/signature"
+import (
+	"github.com/sigstore/sigstore/pkg/signature"
+)
 
 type Signer interface {
 	signature.SignerVerifier
@@ -28,3 +30,15 @@ const (
 )
 
 var AllSigners = []string{TypeX509, TypeKMS}
+
+// Bundle represents the output of a signing operation.
+type Bundle struct {
+	// Content is the raw content that was signed.
+	Content []byte
+	// Signature is the content signature.
+	Signature []byte
+	// Cert is an optional PEM encoded x509 certificate, if one was used for signing.
+	Cert []byte
+	// Cert is an optional PEM encoded x509 certificate chain, if one was used for signing.
+	Chain []byte
+}
