@@ -20,7 +20,6 @@ import (
 	"reflect"
 
 	"github.com/google/cel-go/common/types/ref"
-	"github.com/google/cel-go/common/types/traits"
 
 	anypb "google.golang.org/protobuf/types/known/anypb"
 	structpb "google.golang.org/protobuf/types/known/structpb"
@@ -32,15 +31,6 @@ import (
 type Double float64
 
 var (
-	// DoubleType singleton.
-	DoubleType = NewTypeValue("double",
-		traits.AdderType,
-		traits.ComparerType,
-		traits.DividerType,
-		traits.MultiplierType,
-		traits.NegatorType,
-		traits.SubtractorType)
-
 	// doubleWrapperType reflected type for protobuf double wrapper type.
 	doubleWrapperType = reflect.TypeOf(&wrapperspb.DoubleValue{})
 
@@ -134,13 +124,13 @@ func (d Double) ConvertToType(typeVal ref.Type) ref.Val {
 	case IntType:
 		i, err := doubleToInt64Checked(float64(d))
 		if err != nil {
-			return wrapErr(err)
+			return WrapErr(err)
 		}
 		return Int(i)
 	case UintType:
 		i, err := doubleToUint64Checked(float64(d))
 		if err != nil {
-			return wrapErr(err)
+			return WrapErr(err)
 		}
 		return Uint(i)
 	case DoubleType:

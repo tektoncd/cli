@@ -23,6 +23,7 @@ import (
 	testDynamic "github.com/tektoncd/cli/pkg/test/dynamic"
 	"github.com/tektoncd/pipeline/pkg/apis/pipeline/v1beta1"
 	triggersv1beta1 "github.com/tektoncd/triggers/pkg/apis/triggers/v1beta1"
+	"github.com/tektoncd/triggers/pkg/interceptors/cel"
 	triggertest "github.com/tektoncd/triggers/test"
 	"gotest.tools/v3/golden"
 	corev1 "k8s.io/api/core/v1"
@@ -713,7 +714,7 @@ func TestEventListenerDescribe_WithCELInterceptors(t *testing.T) {
 									},
 									{
 										Name: "overlays",
-										Value: triggertest.ToV1JSON(t, []triggersv1beta1.CELOverlay{{
+										Value: triggertest.ToV1JSON(t, []cel.Overlay{{
 											Key:        "value",
 											Expression: "'testing'",
 										}}),
@@ -783,7 +784,7 @@ func TestEventListenerDescribe_WithMultipleBindingAndInterceptors(t *testing.T) 
 									},
 									{
 										Name: "overlays",
-										Value: triggertest.ToV1JSON(t, []triggersv1beta1.CELOverlay{{
+										Value: triggertest.ToV1JSON(t, []cel.Overlay{{
 											Key:        "value",
 											Expression: "'testing'",
 										}}),
@@ -834,7 +835,7 @@ func TestEventListenerDescribe_WithMultipleBindingAndInterceptors(t *testing.T) 
 									},
 									{
 										Name: "overlays",
-										Value: triggertest.ToV1JSON(t, []triggersv1beta1.CELOverlay{{
+										Value: triggertest.ToV1JSON(t, []cel.Overlay{{
 											Key:        "value",
 											Expression: "'testing'",
 										}}),
@@ -898,7 +899,7 @@ func TestEventListenerDescribe_OutputYAMLWithMultipleBindingAndInterceptors(t *t
 									},
 									{
 										Name: "overlays",
-										Value: triggertest.ToV1JSON(t, []triggersv1beta1.CELOverlay{{
+										Value: triggertest.ToV1JSON(t, []cel.Overlay{{
 											Key:        "value",
 											Expression: "'testing'",
 										}}),
@@ -949,7 +950,7 @@ func TestEventListenerDescribe_OutputYAMLWithMultipleBindingAndInterceptors(t *t
 									},
 									{
 										Name: "overlays",
-										Value: triggertest.ToV1JSON(t, []triggersv1beta1.CELOverlay{{
+										Value: triggertest.ToV1JSON(t, []cel.Overlay{{
 											Key:        "value",
 											Expression: "'testing'",
 										}}),
