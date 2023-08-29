@@ -23,7 +23,6 @@ import (
 
 	"github.com/google/cel-go/common/overloads"
 	"github.com/google/cel-go/common/types/ref"
-	"github.com/google/cel-go/common/types/traits"
 
 	anypb "google.golang.org/protobuf/types/known/anypb"
 	structpb "google.golang.org/protobuf/types/known/structpb"
@@ -51,15 +50,6 @@ const (
 	minUnixTime int64 = -62135596800
 	// Number of seconds between `9999-12-31T23:59:59.999999999Z` and the Unix epoch.
 	maxUnixTime int64 = 253402300799
-)
-
-var (
-	// TimestampType singleton.
-	TimestampType = NewTypeValue("google.protobuf.Timestamp",
-		traits.AdderType,
-		traits.ComparerType,
-		traits.ReceiverType,
-		traits.SubtractorType)
 )
 
 // Add implements traits.Adder.Add.
@@ -165,14 +155,14 @@ func (t Timestamp) Subtract(subtrahend ref.Val) ref.Val {
 		dur := subtrahend.(Duration)
 		val, err := subtractTimeDurationChecked(t.Time, dur.Duration)
 		if err != nil {
-			return wrapErr(err)
+			return WrapErr(err)
 		}
 		return timestampOf(val)
 	case TimestampType:
 		t2 := subtrahend.(Timestamp).Time
 		val, err := subtractTimeChecked(t.Time, t2)
 		if err != nil {
-			return wrapErr(err)
+			return WrapErr(err)
 		}
 		return durationOf(val)
 	}
@@ -293,7 +283,7 @@ func timeZone(tz ref.Val, visitor timestampVisitor) timestampVisitor {
 		if ind == -1 {
 			loc, err := time.LoadLocation(val)
 			if err != nil {
-				return wrapErr(err)
+				return WrapErr(err)
 			}
 			return visitor(t.In(loc))
 		}
@@ -302,11 +292,11 @@ func timeZone(tz ref.Val, visitor timestampVisitor) timestampVisitor {
 		// in the format ^(+|-)(0[0-9]|1[0-4]):[0-5][0-9]$. The numerical input is parsed in terms of hours and minutes.
 		hr, err := strconv.Atoi(string(val[0:ind]))
 		if err != nil {
-			return wrapErr(err)
+			return WrapErr(err)
 		}
 		min, err := strconv.Atoi(string(val[ind+1:]))
 		if err != nil {
-			return wrapErr(err)
+			return WrapErr(err)
 		}
 		var offset int
 		if string(val[0]) == "-" {

@@ -16,14 +16,12 @@ package interpreter
 
 import (
 	"fmt"
-	"math"
+	"strings"
 
 	"github.com/google/cel-go/common/containers"
 	"github.com/google/cel-go/common/types"
 	"github.com/google/cel-go/common/types/ref"
 	"github.com/google/cel-go/common/types/traits"
-
-	exprpb "google.golang.org/genproto/googleapis/api/expr/v1alpha1"
 )
 
 // AttributeFactory provides methods creating Attribute and Qualifier values.
@@ -61,7 +59,7 @@ type AttributeFactory interface {
 	// The qualifier may consider the object type being qualified, if present. If absent, the
 	// qualification should be considered dynamic and the qualification should still work, though
 	// it may be sub-optimal.
-	NewQualifier(objType *exprpb.Type, qualID int64, val any, opt bool) (Qualifier, error)
+	NewQualifier(objType *types.Type, qualID int64, val any, opt bool) (Qualifier, error)
 }
 
 // Qualifier marker interface for designating different qualifier values and where they appear
@@ -131,7 +129,7 @@ type NamespacedAttribute interface {
 // NewAttributeFactory returns a default AttributeFactory which is produces Attribute values
 // capable of resolving types by simple names and qualify the values using the supported qualifier
 // types: bool, int, string, and uint.
-func NewAttributeFactory(cont *containers.Container, a ref.TypeAdapter, p ref.TypeProvider) AttributeFactory {
+func NewAttributeFactory(cont *containers.Container, a types.Adapter, p types.Provider) AttributeFactory {
 	return &attrFactory{
 		container: cont,
 		adapter:   a,
@@ -141,8 +139,8 @@ func NewAttributeFactory(cont *containers.Container, a ref.TypeAdapter, p ref.Ty
 
 type attrFactory struct {
 	container *containers.Container
-	adapter   ref.TypeAdapter
-	provider  ref.TypeProvider
+	adapter   types.Adapter
+	provider  types.Provider
 }
 
 // AbsoluteAttribute refers to a variable value and an optional qualifier path.
@@ -199,13 +197,13 @@ func (r *attrFactory) RelativeAttribute(id int64, operand Interpretable) Attribu
 }
 
 // NewQualifier is an implementation of the AttributeFactory interface.
-func (r *attrFactory) NewQualifier(objType *exprpb.Type, qualID int64, val any, opt bool) (Qualifier, error) {
+func (r *attrFactory) NewQualifier(objType *types.Type, qualID int64, val any, opt bool) (Qualifier, error) {
 	// Before creating a new qualifier check to see if this is a protobuf message field access.
 	// If so, use the precomputed GetFrom qualification method rather than the standard
 	// stringQualifier.
 	str, isStr := val.(string)
-	if isStr && objType != nil && objType.GetMessageType() != "" {
-		ft, found := r.provider.FindFieldType(objType.GetMessageType(), str)
+	if isStr && objType != nil && objType.Kind() == types.StructKind {
+		ft, found := r.provider.FindStructFieldType(objType.TypeName(), str)
 		if found && ft.IsSet != nil && ft.GetFrom != nil {
 			return &fieldQualifier{
 				id:        qualID,
@@ -225,14 +223,18 @@ type absoluteAttribute struct {
 	// (package) of the expression.
 	namespaceNames []string
 	qualifiers     []Qualifier
-	adapter        ref.TypeAdapter
-	provider       ref.TypeProvider
+	adapter        types.Adapter
+	provider       types.Provider
 	fac            AttributeFactory
 }
 
 // ID implements the Attribute interface method.
 func (a *absoluteAttribute) ID() int64 {
-	return a.id
+	qualCount := len(a.qualifiers)
+	if qualCount == 0 {
+		return a.id
+	}
+	return a.qualifiers[qualCount-1].ID()
 }
 
 // IsOptional returns trivially false for an attribute as the attribute represents a fully
@@ -240,18 +242,6 @@ func (a *absoluteAttribute) ID() int64 {
 // is created and marks the attribute as optional.
 func (a *absoluteAttribute) IsOptional() bool {
 	return false
-}
-
-// Cost implements the Coster interface method.
-func (a *absoluteAttribute) Cost() (min, max int64) {
-	for _, q := range a.qualifiers {
-		minQ, maxQ := estimateCost(q)
-		min += minQ
-		max += maxQ
-	}
-	min++ // For object retrieval.
-	max++
-	return
 }
 
 // AddQualifier implements the Attribute interface method.
@@ -302,7 +292,11 @@ func (a *absoluteAttribute) Resolve(vars Activation) (any, error) {
 				return nil, err
 			}
 			if isOpt {
-				return types.OptionalOf(a.adapter.NativeToValue(obj)), nil
+				val := a.adapter.NativeToValue(obj)
+				if types.IsUnknown(val) {
+					return val, nil
+				}
+				return types.OptionalOf(val), nil
 			}
 			return obj, nil
 		}
@@ -314,7 +308,14 @@ func (a *absoluteAttribute) Resolve(vars Activation) (any, error) {
 			}
 		}
 	}
-	return nil, missingAttribute(a.String())
+	var attrNames strings.Builder
+	for i, nm := range a.namespaceNames {
+		if i != 0 {
+			attrNames.WriteString(", ")
+		}
+		attrNames.WriteString(nm)
+	}
+	return nil, missingAttribute(attrNames.String())
 }
 
 type conditionalAttribute struct {
@@ -322,12 +323,17 @@ type conditionalAttribute struct {
 	expr    Interpretable
 	truthy  Attribute
 	falsy   Attribute
-	adapter ref.TypeAdapter
+	adapter types.Adapter
 	fac     AttributeFactory
 }
 
 // ID is an implementation of the Attribute interface method.
 func (a *conditionalAttribute) ID() int64 {
+	// There's a field access after the conditional.
+	if a.truthy.ID() == a.falsy.ID() {
+		return a.truthy.ID()
+	}
+	// Otherwise return the conditional id as the consistent id being tracked.
 	return a.id
 }
 
@@ -336,16 +342,6 @@ func (a *conditionalAttribute) ID() int64 {
 // is created and marks the attribute as optional.
 func (a *conditionalAttribute) IsOptional() bool {
 	return false
-}
-
-// Cost provides the heuristic cost of a ternary operation <expr> ? <t> : <f>.
-// The cost is computed as cost(expr) plus the min/max costs of evaluating either
-// `t` or `f`.
-func (a *conditionalAttribute) Cost() (min, max int64) {
-	tMin, tMax := estimateCost(a.truthy)
-	fMin, fMax := estimateCost(a.falsy)
-	eMin, eMax := estimateCost(a.expr)
-	return eMin + findMin(tMin, fMin), eMax + findMax(tMax, fMax)
 }
 
 // AddQualifier appends the same qualifier to both sides of the conditional, in effect managing
@@ -395,14 +391,14 @@ func (a *conditionalAttribute) String() string {
 type maybeAttribute struct {
 	id       int64
 	attrs    []NamespacedAttribute
-	adapter  ref.TypeAdapter
-	provider ref.TypeProvider
+	adapter  types.Adapter
+	provider types.Provider
 	fac      AttributeFactory
 }
 
 // ID is an implementation of the Attribute interface method.
 func (a *maybeAttribute) ID() int64 {
-	return a.id
+	return a.attrs[0].ID()
 }
 
 // IsOptional returns trivially false for an attribute as the attribute represents a fully
@@ -410,18 +406,6 @@ func (a *maybeAttribute) ID() int64 {
 // is created and marks the attribute as optional.
 func (a *maybeAttribute) IsOptional() bool {
 	return false
-}
-
-// Cost implements the Coster interface method. The min cost is computed as the minimal cost among
-// all the possible attributes, the max cost ditto.
-func (a *maybeAttribute) Cost() (min, max int64) {
-	min, max = math.MaxInt64, 0
-	for _, a := range a.attrs {
-		minA, maxA := estimateCost(a)
-		min = findMin(min, minA)
-		max = findMax(max, maxA)
-	}
-	return
 }
 
 // AddQualifier adds a qualifier to each possible attribute variant, and also creates
@@ -471,7 +455,9 @@ func (a *maybeAttribute) AddQualifier(qual Qualifier) (Attribute, error) {
 		}
 	}
 	// Next, ensure the most specific variable / type reference is searched first.
-	a.attrs = append([]NamespacedAttribute{a.fac.AbsoluteAttribute(qual.ID(), augmentedNames...)}, a.attrs...)
+	if len(augmentedNames) != 0 {
+		a.attrs = append([]NamespacedAttribute{a.fac.AbsoluteAttribute(qual.ID(), augmentedNames...)}, a.attrs...)
+	}
 	return a, nil
 }
 
@@ -523,13 +509,17 @@ type relativeAttribute struct {
 	id         int64
 	operand    Interpretable
 	qualifiers []Qualifier
-	adapter    ref.TypeAdapter
+	adapter    types.Adapter
 	fac        AttributeFactory
 }
 
 // ID is an implementation of the Attribute interface method.
 func (a *relativeAttribute) ID() int64 {
-	return a.id
+	qualCount := len(a.qualifiers)
+	if qualCount == 0 {
+		return a.id
+	}
+	return a.qualifiers[qualCount-1].ID()
 }
 
 // IsOptional returns trivially false for an attribute as the attribute represents a fully
@@ -537,17 +527,6 @@ func (a *relativeAttribute) ID() int64 {
 // is created and marks the attribute as optional.
 func (a *relativeAttribute) IsOptional() bool {
 	return false
-}
-
-// Cost implements the Coster interface method.
-func (a *relativeAttribute) Cost() (min, max int64) {
-	min, max = estimateCost(a.operand)
-	for _, qual := range a.qualifiers {
-		minQ, maxQ := estimateCost(qual)
-		min += minQ
-		max += maxQ
-	}
-	return
 }
 
 // AddQualifier implements the Attribute interface method.
@@ -581,7 +560,11 @@ func (a *relativeAttribute) Resolve(vars Activation) (any, error) {
 		return nil, err
 	}
 	if isOpt {
-		return types.OptionalOf(a.adapter.NativeToValue(obj)), nil
+		val := a.adapter.NativeToValue(obj)
+		if types.IsUnknown(val) {
+			return val, nil
+		}
+		return types.OptionalOf(val), nil
 	}
 	return obj, nil
 }
@@ -591,7 +574,7 @@ func (a *relativeAttribute) String() string {
 	return fmt.Sprintf("id: %v, operand: %v", a.id, a.operand)
 }
 
-func newQualifier(adapter ref.TypeAdapter, id int64, v any, opt bool) (Qualifier, error) {
+func newQualifier(adapter types.Adapter, id int64, v any, opt bool) (Qualifier, error) {
 	var qual Qualifier
 	switch val := v.(type) {
 	case Attribute:
@@ -672,7 +655,7 @@ func newQualifier(adapter ref.TypeAdapter, id int64, v any, opt bool) (Qualifier
 		qual = &doubleQualifier{
 			id: id, value: float64(val), celValue: val, adapter: adapter, optional: opt,
 		}
-	case types.Unknown:
+	case *types.Unknown:
 		qual = &unknownQualifier{id: id, value: val}
 	default:
 		if q, ok := v.(Qualifier); ok {
@@ -700,16 +683,11 @@ func (q *attrQualifier) IsOptional() bool {
 	return q.optional
 }
 
-// Cost returns zero for constant field qualifiers
-func (q *attrQualifier) Cost() (min, max int64) {
-	return estimateCost(q.Attribute)
-}
-
 type stringQualifier struct {
 	id       int64
 	value    string
 	celValue ref.Val
-	adapter  ref.TypeAdapter
+	adapter  types.Adapter
 	optional bool
 }
 
@@ -806,16 +784,11 @@ func (q *stringQualifier) Value() ref.Val {
 	return q.celValue
 }
 
-// Cost returns zero for constant field qualifiers
-func (q *stringQualifier) Cost() (min, max int64) {
-	return 0, 0
-}
-
 type intQualifier struct {
 	id       int64
 	value    int64
 	celValue ref.Val
-	adapter  ref.TypeAdapter
+	adapter  types.Adapter
 	optional bool
 }
 
@@ -938,16 +911,11 @@ func (q *intQualifier) Value() ref.Val {
 	return q.celValue
 }
 
-// Cost returns zero for constant field qualifiers
-func (q *intQualifier) Cost() (min, max int64) {
-	return 0, 0
-}
-
 type uintQualifier struct {
 	id       int64
 	value    uint64
 	celValue ref.Val
-	adapter  ref.TypeAdapter
+	adapter  types.Adapter
 	optional bool
 }
 
@@ -1008,16 +976,11 @@ func (q *uintQualifier) Value() ref.Val {
 	return q.celValue
 }
 
-// Cost returns zero for constant field qualifiers
-func (q *uintQualifier) Cost() (min, max int64) {
-	return 0, 0
-}
-
 type boolQualifier struct {
 	id       int64
 	value    bool
 	celValue ref.Val
-	adapter  ref.TypeAdapter
+	adapter  types.Adapter
 	optional bool
 }
 
@@ -1064,19 +1027,14 @@ func (q *boolQualifier) Value() ref.Val {
 	return q.celValue
 }
 
-// Cost returns zero for constant field qualifiers
-func (q *boolQualifier) Cost() (min, max int64) {
-	return 0, 0
-}
-
 // fieldQualifier indicates that the qualification is a well-defined field with a known
 // field type. When the field type is known this can be used to improve the speed and
 // efficiency of field resolution.
 type fieldQualifier struct {
 	id        int64
 	Name      string
-	FieldType *ref.FieldType
-	adapter   ref.TypeAdapter
+	FieldType *types.FieldType
+	adapter   types.Adapter
 	optional  bool
 }
 
@@ -1125,11 +1083,6 @@ func (q *fieldQualifier) Value() ref.Val {
 	return types.String(q.Name)
 }
 
-// Cost returns zero for constant field qualifiers
-func (q *fieldQualifier) Cost() (min, max int64) {
-	return 0, 0
-}
-
 // doubleQualifier qualifies a CEL object, map, or list using a double value.
 //
 // This qualifier is used for working with dynamic data like JSON or protobuf.Any where the value
@@ -1139,7 +1092,7 @@ type doubleQualifier struct {
 	id       int64
 	value    float64
 	celValue ref.Val
-	adapter  ref.TypeAdapter
+	adapter  types.Adapter
 	optional bool
 }
 
@@ -1176,7 +1129,7 @@ func (q *doubleQualifier) Value() ref.Val {
 // for any value subject to qualification. This is consistent with CEL's unknown handling elsewhere.
 type unknownQualifier struct {
 	id    int64
-	value types.Unknown
+	value *types.Unknown
 }
 
 // ID is an implementation of the Qualifier interface method.
@@ -1224,6 +1177,9 @@ func applyQualifiers(vars Activation, obj any, qualifiers []Qualifier) (any, boo
 				return nil, false, err
 			}
 			if !present {
+				// We return optional none here with a presence of 'false' as the layers
+				// above will attempt to call types.OptionalOf() on a present value if any
+				// of the qualifiers is optional.
 				return types.OptionalNone, false, nil
 			}
 		} else {
@@ -1267,15 +1223,17 @@ func attrQualifyIfPresent(fac AttributeFactory, vars Activation, obj any, qualAt
 
 // refQualify attempts to convert the value to a CEL value and then uses reflection methods to try and
 // apply the qualifier with the option to presence test field accesses before retrieving field values.
-func refQualify(adapter ref.TypeAdapter, obj any, idx ref.Val, presenceTest, presenceOnly bool) (ref.Val, bool, error) {
+func refQualify(adapter types.Adapter, obj any, idx ref.Val, presenceTest, presenceOnly bool) (ref.Val, bool, error) {
 	celVal := adapter.NativeToValue(obj)
 	switch v := celVal.(type) {
-	case types.Unknown:
+	case *types.Unknown:
 		return v, true, nil
 	case *types.Err:
 		return nil, false, v
 	case traits.Mapper:
 		val, found := v.Find(idx)
+		// If the index is of the wrong type for the map, then it is possible
+		// for the Find call to produce an error.
 		if types.IsError(val) {
 			return nil, false, val.(*types.Err)
 		}
@@ -1287,6 +1245,8 @@ func refQualify(adapter ref.TypeAdapter, obj any, idx ref.Val, presenceTest, pre
 		}
 		return nil, false, missingKey(idx)
 	case traits.Lister:
+		// If the index argument is not a valid numeric type, then it is possible
+		// for the index operation to produce an error.
 		i, err := types.IndexOrError(idx)
 		if err != nil {
 			return nil, false, err
@@ -1307,6 +1267,8 @@ func refQualify(adapter ref.TypeAdapter, obj any, idx ref.Val, presenceTest, pre
 				if types.IsError(presence) {
 					return nil, false, presence.(*types.Err)
 				}
+				// If not found or presence only test, then return.
+				// Otherwise, if found, obtain the value later on.
 				if presenceOnly || presence == types.False {
 					return nil, presence == types.True, nil
 				}
@@ -1364,7 +1326,7 @@ func (e *resolutionError) Error() string {
 		return fmt.Sprintf("index out of bounds: %v", e.missingIndex)
 	}
 	if e.missingAttribute != "" {
-		return fmt.Sprintf("no such attribute: %s", e.missingAttribute)
+		return fmt.Sprintf("no such attribute(s): %s", e.missingAttribute)
 	}
 	return "invalid attribute"
 }
@@ -1372,18 +1334,4 @@ func (e *resolutionError) Error() string {
 // Is implements the errors.Is() method used by more recent versions of Go.
 func (e *resolutionError) Is(err error) bool {
 	return err.Error() == e.Error()
-}
-
-func findMin(x, y int64) int64 {
-	if x < y {
-		return x
-	}
-	return y
-}
-
-func findMax(x, y int64) int64 {
-	if x > y {
-		return x
-	}
-	return y
 }

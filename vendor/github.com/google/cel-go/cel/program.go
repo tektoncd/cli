@@ -17,14 +17,12 @@ package cel
 import (
 	"context"
 	"fmt"
-	"math"
 	"sync"
 
+	celast "github.com/google/cel-go/common/ast"
 	"github.com/google/cel-go/common/types"
 	"github.com/google/cel-go/common/types/ref"
 	"github.com/google/cel-go/interpreter"
-
-	exprpb "google.golang.org/genproto/googleapis/api/expr/v1alpha1"
 )
 
 // Program is an evaluable view of an Ast.
@@ -62,6 +60,9 @@ func NoVars() interpreter.Activation {
 
 // PartialVars returns a PartialActivation which contains variables and a set of AttributePattern
 // values that indicate variables or parts of variables whose value are not yet known.
+//
+// This method relies on manually configured sets of missing attribute patterns. For a method which
+// infers the missing variables from the input and the configured environment, use Env.PartialVars().
 //
 // The `vars` value may either be an interpreter.Activation or any valid input to the
 // interpreter.NewActivation call.
@@ -170,7 +171,7 @@ func newProgram(e *Env, ast *Ast, opts []ProgramOption) (Program, error) {
 
 	// Add the function bindings created via Function() options.
 	for _, fn := range e.functions {
-		bindings, err := fn.bindings()
+		bindings, err := fn.Bindings()
 		if err != nil {
 			return nil, err
 		}
@@ -207,13 +208,44 @@ func newProgram(e *Env, ast *Ast, opts []ProgramOption) (Program, error) {
 	if len(p.regexOptimizations) > 0 {
 		decorators = append(decorators, interpreter.CompileRegexConstants(p.regexOptimizations...))
 	}
+	// Enable compile-time checking of syntax/cardinality for string.format calls.
+	if p.evalOpts&OptCheckStringFormat == OptCheckStringFormat {
+		var isValidType func(id int64, validTypes ...ref.Type) (bool, error)
+		if ast.IsChecked() {
+			isValidType = func(id int64, validTypes ...ref.Type) (bool, error) {
+				t := ast.typeMap[id]
+				if t.Kind() == DynKind {
+					return true, nil
+				}
+				for _, vt := range validTypes {
+					k, err := typeValueToKind(vt)
+					if err != nil {
+						return false, err
+					}
+					if t.Kind() == k {
+						return true, nil
+					}
+				}
+				return false, nil
+			}
+		} else {
+			// if the AST isn't type-checked, short-circuit validation
+			isValidType = func(id int64, validTypes ...ref.Type) (bool, error) {
+				return true, nil
+			}
+		}
+		decorators = append(decorators, interpreter.InterpolateFormattedString(isValidType))
+	}
 
 	// Enable exhaustive eval, state tracking and cost tracking last since they require a factory.
 	if p.evalOpts&(OptExhaustiveEval|OptTrackState|OptTrackCost) != 0 {
 		factory := func(state interpreter.EvalState, costTracker *interpreter.CostTracker) (Program, error) {
 			costTracker.Estimator = p.callCostEstimator
 			costTracker.Limit = p.costLimit
-			decs := decorators
+			// Limit capacity to guarantee a reallocation when calling 'append(decs, ...)' below. This
+			// prevents the underlying memory from being shared between factory function calls causing
+			// undesired mutations.
+			decs := decorators[:len(decorators):len(decorators)]
 			var observers []interpreter.EvalObserver
 
 			if p.evalOpts&(OptExhaustiveEval|OptTrackState) != 0 {
@@ -251,10 +283,11 @@ func (p *prog) initInterpretable(ast *Ast, decs []interpreter.InterpretableDecor
 	}
 
 	// When the AST has been checked it contains metadata that can be used to speed up program execution.
-	var checked *exprpb.CheckedExpr
-	checked, err := AstToCheckedExpr(ast)
-	if err != nil {
-		return nil, err
+	checked := &celast.CheckedAST{
+		Expr:         ast.Expr(),
+		SourceInfo:   ast.SourceInfo(),
+		TypeMap:      ast.typeMap,
+		ReferenceMap: ast.refMap,
 	}
 	interpretable, err := p.interpreter.NewInterpretable(checked, decs...)
 	if err != nil {
@@ -324,11 +357,6 @@ func (p *prog) ContextEval(ctx context.Context, input any) (ref.Val, *EvalDetail
 		return nil, nil, fmt.Errorf("invalid input, wanted Activation or map[string]any, got: (%T)%v", input, input)
 	}
 	return p.Eval(vars)
-}
-
-// Cost implements the Coster interface method.
-func (p *prog) Cost() (min, max int64) {
-	return estimateCost(p.interpretable)
 }
 
 // progFactory is a helper alias for marking a program creation factory function.
@@ -403,29 +431,6 @@ func (gen *progGen) ContextEval(ctx context.Context, input any) (ref.Val, *EvalD
 	return v, det, nil
 }
 
-// Cost implements the Coster interface method.
-func (gen *progGen) Cost() (min, max int64) {
-	// Use an empty state value since no evaluation is performed.
-	p, err := gen.factory(emptyEvalState, nil)
-	if err != nil {
-		return 0, math.MaxInt64
-	}
-	return estimateCost(p)
-}
-
-// EstimateCost returns the heuristic cost interval for the program.
-func EstimateCost(p Program) (min, max int64) {
-	return estimateCost(p)
-}
-
-func estimateCost(i any) (min, max int64) {
-	c, ok := i.(interpreter.Coster)
-	if !ok {
-		return 0, math.MaxInt64
-	}
-	return c.Cost()
-}
-
 type ctxEvalActivation struct {
 	parent                  interpreter.Activation
 	interrupt               <-chan struct{}
@@ -493,7 +498,7 @@ type evalActivation struct {
 // The lazy binding will only be invoked once per evaluation.
 //
 // Values which are not represented as ref.Val types on input may be adapted to a ref.Val using
-// the ref.TypeAdapter configured in the environment.
+// the types.Adapter configured in the environment.
 func (a *evalActivation) ResolveName(name string) (any, bool) {
 	v, found := a.vars[name]
 	if !found {
