@@ -22,6 +22,12 @@ import (
 	"github.com/google/cel-go/common/types/ref"
 )
 
+// Error interface which allows types types.Err values to be treated as error values.
+type Error interface {
+	error
+	ref.Val
+}
+
 // Err type which extends the built-in go error and implements ref.Val.
 type Err struct {
 	error
@@ -29,7 +35,7 @@ type Err struct {
 
 var (
 	// ErrType singleton.
-	ErrType = NewTypeValue("error")
+	ErrType = NewOpaqueType("error")
 
 	// errDivideByZero is an error indicating a division by zero of an integer value.
 	errDivideByZero = errors.New("division by zero")
@@ -81,8 +87,8 @@ func ValOrErr(val ref.Val, format string, args ...any) ref.Val {
 	return val
 }
 
-// wrapErr wraps an existing Go error value into a CEL Err value.
-func wrapErr(err error) ref.Val {
+// WrapErr wraps an existing Go error value into a CEL Err value.
+func WrapErr(err error) ref.Val {
 	return &Err{error: err}
 }
 
@@ -121,6 +127,11 @@ func (e *Err) Value() any {
 // Is implements errors.Is.
 func (e *Err) Is(target error) bool {
 	return e.error.Error() == target.Error()
+}
+
+// Unwrap implements errors.Unwrap.
+func (e *Err) Unwrap() error {
+	return e.error
 }
 
 // IsError returns whether the input element ref.Type or ref.Val is equal to

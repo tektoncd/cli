@@ -21,7 +21,6 @@ import (
 	"strconv"
 
 	"github.com/google/cel-go/common/types/ref"
-	"github.com/google/cel-go/common/types/traits"
 
 	anypb "google.golang.org/protobuf/types/known/anypb"
 	structpb "google.golang.org/protobuf/types/known/structpb"
@@ -32,15 +31,6 @@ import (
 type Uint uint64
 
 var (
-	// UintType singleton.
-	UintType = NewTypeValue("uint",
-		traits.AdderType,
-		traits.ComparerType,
-		traits.DividerType,
-		traits.ModderType,
-		traits.MultiplierType,
-		traits.SubtractorType)
-
 	uint32WrapperType = reflect.TypeOf(&wrapperspb.UInt32Value{})
 
 	uint64WrapperType = reflect.TypeOf(&wrapperspb.UInt64Value{})
@@ -59,7 +49,7 @@ func (i Uint) Add(other ref.Val) ref.Val {
 	}
 	val, err := addUint64Checked(uint64(i), uint64(otherUint))
 	if err != nil {
-		return wrapErr(err)
+		return WrapErr(err)
 	}
 	return Uint(val)
 }
@@ -149,7 +139,7 @@ func (i Uint) ConvertToType(typeVal ref.Type) ref.Val {
 	case IntType:
 		v, err := uint64ToInt64Checked(uint64(i))
 		if err != nil {
-			return wrapErr(err)
+			return WrapErr(err)
 		}
 		return Int(v)
 	case UintType:
@@ -172,7 +162,7 @@ func (i Uint) Divide(other ref.Val) ref.Val {
 	}
 	div, err := divideUint64Checked(uint64(i), uint64(otherUint))
 	if err != nil {
-		return wrapErr(err)
+		return WrapErr(err)
 	}
 	return Uint(div)
 }
@@ -207,7 +197,7 @@ func (i Uint) Modulo(other ref.Val) ref.Val {
 	}
 	mod, err := moduloUint64Checked(uint64(i), uint64(otherUint))
 	if err != nil {
-		return wrapErr(err)
+		return WrapErr(err)
 	}
 	return Uint(mod)
 }
@@ -220,7 +210,7 @@ func (i Uint) Multiply(other ref.Val) ref.Val {
 	}
 	val, err := multiplyUint64Checked(uint64(i), uint64(otherUint))
 	if err != nil {
-		return wrapErr(err)
+		return WrapErr(err)
 	}
 	return Uint(val)
 }
@@ -233,7 +223,7 @@ func (i Uint) Subtract(subtrahend ref.Val) ref.Val {
 	}
 	val, err := subtractUint64Checked(uint64(i), uint64(subtraUint))
 	if err != nil {
-		return wrapErr(err)
+		return WrapErr(err)
 	}
 	return Uint(val)
 }

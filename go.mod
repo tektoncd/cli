@@ -25,9 +25,9 @@ require (
 	github.com/spf13/pflag v1.0.5
 	github.com/tektoncd/chains v0.17.0
 	github.com/tektoncd/hub v1.13.0
-	github.com/tektoncd/pipeline v0.50.0
+	github.com/tektoncd/pipeline v0.50.1
 	github.com/tektoncd/plumbing v0.0.0-20221102182345-5dbcfda657d7
-	github.com/tektoncd/triggers v0.24.1
+	github.com/tektoncd/triggers v0.25.0
 	github.com/theupdateframework/go-tuf v0.6.1
 	go.opencensus.io v0.24.0
 	go.uber.org/multierr v1.11.0
@@ -86,7 +86,7 @@ require (
 	github.com/alibabacloud-go/tea-utils v1.4.4 // indirect
 	github.com/alibabacloud-go/tea-xml v1.1.2 // indirect
 	github.com/aliyun/credentials-go v1.2.3 // indirect
-	github.com/antlr/antlr4/runtime/Go/antlr v1.4.10 // indirect
+	github.com/antlr/antlr4/runtime/Go/antlr/v4 v4.0.0-20230305170008-8188dc5388df // indirect
 	github.com/asaskevich/govalidator v0.0.0-20230301143203-a9d515a09cc2 // indirect
 	github.com/aws/aws-sdk-go v1.44.303 // indirect
 	github.com/aws/aws-sdk-go-v2 v1.19.0 // indirect
@@ -162,7 +162,7 @@ require (
 	github.com/golang/protobuf v1.5.3 // indirect
 	github.com/golang/snappy v0.0.4 // indirect
 	github.com/google/btree v1.1.2 // indirect
-	github.com/google/cel-go v0.13.0 // indirect
+	github.com/google/cel-go v0.17.1 // indirect
 	github.com/google/certificate-transparency-go v1.1.6 // indirect
 	github.com/google/gnostic v0.6.9 // indirect
 	github.com/google/go-containerregistry/pkg/authn/k8schain v0.0.0-20230625233257-b8504803389b // indirect
