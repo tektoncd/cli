@@ -149,7 +149,7 @@ github.com/Microsoft/go-winio/pkg/guid
 # github.com/Netflix/go-expect v0.0.0-20220104043353-73e0943537d2
 ## explicit; go 1.13
 github.com/Netflix/go-expect
-# github.com/ProtonMail/go-crypto v0.0.0-20230518184743-7afd39499903
+# github.com/ProtonMail/go-crypto v0.0.0-20230717121422-5aa5874ade95
 ## explicit; go 1.13
 github.com/ProtonMail/go-crypto/bitcurves
 github.com/ProtonMail/go-crypto/brainpool
@@ -856,7 +856,7 @@ github.com/hashicorp/go-sockaddr
 # github.com/hashicorp/go-uuid v1.0.3
 ## explicit
 github.com/hashicorp/go-uuid
-# github.com/hashicorp/golang-lru v0.6.0
+# github.com/hashicorp/golang-lru v1.0.2
 ## explicit; go 1.12
 github.com/hashicorp/golang-lru
 github.com/hashicorp/golang-lru/simplelru
@@ -1363,11 +1363,12 @@ github.com/tektoncd/hub/api/v1/gen/http/catalog/client
 github.com/tektoncd/hub/api/v1/gen/http/resource/client
 github.com/tektoncd/hub/api/v1/gen/resource
 github.com/tektoncd/hub/api/v1/gen/resource/views
-# github.com/tektoncd/pipeline v0.50.1
+# github.com/tektoncd/pipeline v0.51.0
 ## explicit; go 1.19
 github.com/tektoncd/pipeline/pkg/apis/config
 github.com/tektoncd/pipeline/pkg/apis/config/resolver
 github.com/tektoncd/pipeline/pkg/apis/pipeline
+github.com/tektoncd/pipeline/pkg/apis/pipeline/internal/checksum
 github.com/tektoncd/pipeline/pkg/apis/pipeline/pod
 github.com/tektoncd/pipeline/pkg/apis/pipeline/v1
 github.com/tektoncd/pipeline/pkg/apis/pipeline/v1alpha1
@@ -2484,7 +2485,7 @@ knative.dev/eventing/pkg/reconciler/source
 ## explicit; go 1.16
 knative.dev/networking/pkg/apis/networking
 knative.dev/networking/pkg/apis/networking/v1alpha1
-# knative.dev/pkg v0.0.0-20230612155445-74c4be5e935e => knative.dev/pkg v0.0.0-20230518105712-dfb4bf04635d
+# knative.dev/pkg v0.0.0-20230718152110-aef227e72ead => knative.dev/pkg v0.0.0-20230518105712-dfb4bf04635d
 ## explicit; go 1.18
 knative.dev/pkg/apis
 knative.dev/pkg/apis/duck

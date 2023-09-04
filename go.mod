@@ -25,7 +25,7 @@ require (
 	github.com/spf13/pflag v1.0.5
 	github.com/tektoncd/chains v0.17.0
 	github.com/tektoncd/hub v1.13.0
-	github.com/tektoncd/pipeline v0.50.1
+	github.com/tektoncd/pipeline v0.51.0
 	github.com/tektoncd/plumbing v0.0.0-20221102182345-5dbcfda657d7
 	github.com/tektoncd/triggers v0.25.0
 	github.com/theupdateframework/go-tuf v0.6.1
@@ -39,7 +39,7 @@ require (
 	k8s.io/apimachinery v0.27.3
 	k8s.io/cli-runtime v0.25.13
 	k8s.io/client-go v0.27.3
-	knative.dev/pkg v0.0.0-20230612155445-74c4be5e935e
+	knative.dev/pkg v0.0.0-20230718152110-aef227e72ead
 	sigs.k8s.io/yaml v1.3.0
 )
 
@@ -72,7 +72,7 @@ require (
 	github.com/Azure/go-autorest/tracing v0.6.0 // indirect
 	github.com/AzureAD/microsoft-authentication-library-for-go v1.0.0 // indirect
 	github.com/Microsoft/go-winio v0.6.1 // indirect
-	github.com/ProtonMail/go-crypto v0.0.0-20230518184743-7afd39499903 // indirect
+	github.com/ProtonMail/go-crypto v0.0.0-20230717121422-5aa5874ade95 // indirect
 	github.com/Shopify/sarama v1.38.1 // indirect
 	github.com/ThalesIgnite/crypto11 v1.2.5 // indirect
 	github.com/alibabacloud-go/alibabacloud-gateway-spi v0.0.4 // indirect
@@ -189,7 +189,7 @@ require (
 	github.com/hashicorp/go-secure-stdlib/strutil v0.1.2 // indirect
 	github.com/hashicorp/go-sockaddr v1.0.2 // indirect
 	github.com/hashicorp/go-uuid v1.0.3 // indirect
-	github.com/hashicorp/golang-lru v0.6.0 // indirect
+	github.com/hashicorp/golang-lru v1.0.2 // indirect
 	github.com/hashicorp/hcl v1.0.0 // indirect
 	github.com/hashicorp/vault/api v1.9.2 // indirect
 	github.com/imdario/mergo v0.3.15 // indirect
