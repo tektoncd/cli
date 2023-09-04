@@ -1,4 +1,4 @@
-// Copyright © 2020 The Tekton Authors.
+// Copyright © 2023 The Tekton 	Authors.
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -12,7 +12,7 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-package installer
+package gvr
 
 import (
 	"sync"
@@ -27,11 +27,11 @@ var (
 	apiGroupRes []*restmapper.APIGroupResources
 )
 
-func getVersionList(gr schema.GroupVersionResource, discovery discovery.DiscoveryInterface) ([]string, error) {
+func GetVersionList(gr schema.GroupVersionResource, discovery discovery.DiscoveryInterface) ([]string, error) {
 	var err error
 
 	doOnce.Do(func() {
-		err = initializeAPIGroupRes(discovery)
+		err = InitializeAPIGroupRes(discovery)
 	})
 	if err != nil {
 		return nil, err
@@ -52,7 +52,7 @@ func getVersionList(gr schema.GroupVersionResource, discovery discovery.Discover
 	return versions, err
 }
 
-func initializeAPIGroupRes(discovery discovery.DiscoveryInterface) error {
+func InitializeAPIGroupRes(discovery discovery.DiscoveryInterface) error {
 	var err error
 	apiGroupRes, err = restmapper.GetAPIGroupResources(discovery)
 
