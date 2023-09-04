@@ -15,15 +15,15 @@ Upgrade a Task by its name
 ### Examples
 
 
-Upgrade a Task of name 'foo':
+Upgrade a Task of name 'gvr':
 
-    tkn hub upgrade task foo
+    tkn hub upgrade task gvr
 
 or
 
-Upgrade a Task of name 'foo' to version '0.3':
+Upgrade a Task of name 'gvr' to version '0.3':
 
-    tkn hub upgrade task foo --to 0.3
+    tkn hub upgrade task gvr --to 0.3
 
 
 ### Options

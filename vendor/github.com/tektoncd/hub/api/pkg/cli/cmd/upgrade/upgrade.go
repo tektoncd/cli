@@ -48,15 +48,15 @@ type options struct {
 }
 
 var cmdExamples string = `
-Upgrade a %S of name 'foo':
+Upgrade a %S of name 'gvr':
 
-    tkn hub upgrade %s foo
+    tkn hub upgrade %s gvr
 
 or
 
-Upgrade a %S of name 'foo' to version '0.3':
+Upgrade a %S of name 'gvr' to version '0.3':
 
-    tkn hub upgrade %s foo --to 0.3
+    tkn hub upgrade %s gvr --to 0.3
 `
 
 func Command(cli app.CLI) *cobra.Command {

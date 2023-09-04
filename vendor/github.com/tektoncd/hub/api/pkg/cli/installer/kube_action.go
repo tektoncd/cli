@@ -19,6 +19,7 @@ import (
 	"fmt"
 	"strings"
 
+	gvrRes "github.com/tektoncd/hub/api/pkg/cli/gvr"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
 	"k8s.io/apimachinery/pkg/runtime/schema"
@@ -29,7 +30,7 @@ const tektonGroup = "tekton.dev"
 func (i *Installer) create(object *unstructured.Unstructured, namespace string, op metav1.CreateOptions) (*unstructured.Unstructured, error) {
 
 	grObj := schema.GroupVersionResource{Group: tektonGroup, Resource: object.GetKind()}
-	versions, err := getVersionList(grObj, i.cs.Tekton().Discovery())
+	versions, err := gvrRes.GetVersionList(grObj, i.cs.Tekton().Discovery())
 	if err != nil {
 		return nil, err
 	}
@@ -55,7 +56,7 @@ func (i *Installer) create(object *unstructured.Unstructured, namespace string, 
 func (i *Installer) get(objectName, kind, namespace string, op metav1.GetOptions) (*unstructured.Unstructured, error) {
 
 	grObj := schema.GroupVersionResource{Group: tektonGroup, Resource: kind}
-	versions, err := getVersionList(grObj, i.cs.Tekton().Discovery())
+	versions, err := gvrRes.GetVersionList(grObj, i.cs.Tekton().Discovery())
 	if err != nil {
 		return nil, err
 	}
@@ -75,7 +76,7 @@ func (i *Installer) get(objectName, kind, namespace string, op metav1.GetOptions
 func (i *Installer) update(object *unstructured.Unstructured, namespace string, op metav1.UpdateOptions) (*unstructured.Unstructured, error) {
 
 	grObj := schema.GroupVersionResource{Group: tektonGroup, Resource: object.GetKind()}
-	versions, err := getVersionList(grObj, i.cs.Tekton().Discovery())
+	versions, err := gvrRes.GetVersionList(grObj, i.cs.Tekton().Discovery())
 	if err != nil {
 		return nil, err
 	}
@@ -99,7 +100,7 @@ func (i *Installer) update(object *unstructured.Unstructured, namespace string, 
 func (i *Installer) list(kind, namespace string, op metav1.ListOptions) (*unstructured.UnstructuredList, error) {
 
 	grObj := schema.GroupVersionResource{Group: tektonGroup, Resource: strings.ToLower(kind) + "s"}
-	versions, err := getVersionList(grObj, i.cs.Tekton().Discovery())
+	versions, err := gvrRes.GetVersionList(grObj, i.cs.Tekton().Discovery())
 	if err != nil {
 		return nil, err
 	}
