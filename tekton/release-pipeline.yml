@@ -68,7 +68,7 @@ spec:
         - name: packages
           value: ./pkg/... ./cmd/...
         - name: version
-          value: 1.19.9
+          value: 1.20.7
         - name: flags
           value: -v -mod=vendor
       workspaces:
@@ -82,7 +82,7 @@ spec:
         - name: package
           value: $(params.package)
         - name: version
-          value: 1.19.9
+          value: 1.20.7
         - name: flags
           value: -v -mod=vendor
       workspaces:
