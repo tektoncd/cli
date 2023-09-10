@@ -59,4 +59,5 @@ items:
   spec: {}
 kind: TaskList
 metadata:
+  continue: ""
   resourceVersion: ""

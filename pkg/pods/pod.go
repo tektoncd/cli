@@ -106,7 +106,7 @@ func (p *Pod) watcher(stopC <-chan struct{}, eventC chan<- interface{}, mu *sync
 		informers.WithNamespace(p.Ns),
 		informers.WithTweakListOptions(podOpts(p.Name)))
 
-	factory.Core().V1().Pods().Informer().AddEventHandler(
+	_, err := factory.Core().V1().Pods().Informer().AddEventHandler(
 		cache.ResourceEventHandlerFuncs{
 			AddFunc: func(obj interface{}) {
 				mu.Lock()
@@ -140,6 +140,9 @@ func (p *Pod) watcher(stopC <-chan struct{}, eventC chan<- interface{}, mu *sync
 				}
 			},
 		})
+	if err != nil {
+		return
+	}
 
 	factory.Start(stopC)
 	factory.WaitForCacheSync(stopC)
