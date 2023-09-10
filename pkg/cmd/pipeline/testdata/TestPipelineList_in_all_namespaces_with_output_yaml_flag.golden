@@ -44,4 +44,5 @@ items:
   spec: {}
 kind: PipelineList
 metadata:
+  continue: ""
   resourceVersion: ""

@@ -104,7 +104,7 @@ func (t *Tracker) Monitor(allowed []string) <-chan []taskrunpkg.Run {
 		}
 	}
 
-	informer.AddEventHandler(
+	_, err := informer.AddEventHandler(
 		cache.ResourceEventHandlerFuncs{
 			AddFunc: func(obj interface{}) {
 				// To ensure synchonization and checks is the stopC channel has received a signal to stop
@@ -140,6 +140,9 @@ func (t *Tracker) Monitor(allowed []string) <-chan []taskrunpkg.Run {
 			},
 		},
 	)
+	if err != nil {
+		return nil
+	}
 
 	factory.Start(stopC)
 	factory.WaitForCacheSync(stopC)
