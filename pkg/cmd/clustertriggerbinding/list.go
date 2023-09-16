@@ -115,10 +115,13 @@ func printFormatted(s *cli.Stream, tbs *v1beta1.ClusterTriggerBindingList, p cli
 	if !noHeaders {
 		fmt.Fprintln(w, "NAME\tAGE")
 	}
-	for _, tb := range tbs.Items {
+
+	clusterTriggerBindings := tbs.Items
+
+	for idx := range clusterTriggerBindings {
 		fmt.Fprintf(w, "%s\t%s\n",
-			tb.Name,
-			formatted.Age(&tb.CreationTimestamp, p.Time()),
+			clusterTriggerBindings[idx].Name,
+			formatted.Age(&clusterTriggerBindings[idx].CreationTimestamp, p.Time()),
 		)
 	}
 

@@ -101,11 +101,13 @@ func printClusterTaskDetails(s *cli.Stream, p cli.Params, noHeaders bool) error 
 		fmt.Fprintln(w, header)
 	}
 
-	for _, clustertask := range clustertasks.Items {
+	clusterTaskItems := clustertasks.Items
+
+	for idx := range clusterTaskItems {
 		fmt.Fprintf(w, body,
-			clustertask.Name,
-			formatted.FormatDesc(clustertask.Spec.Description),
-			formatted.Age(&clustertask.CreationTimestamp, p.Time()),
+			clusterTaskItems[idx].Name,
+			formatted.FormatDesc(clusterTaskItems[idx].Spec.Description),
+			formatted.Age(&clusterTaskItems[idx].CreationTimestamp, p.Time()),
 		)
 	}
 	return w.Flush()

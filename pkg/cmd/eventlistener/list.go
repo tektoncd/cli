@@ -121,26 +121,29 @@ func printFormatted(s *cli.Stream, els *v1beta1.EventListenerList, p cli.Params,
 	if !noHeaders {
 		fmt.Fprintln(w, headers)
 	}
-	for _, el := range els.Items {
+
+	eventListeners := els.Items
+
+	for idx := range eventListeners {
 
 		status := corev1.ConditionStatus("---")
-		if len(el.Status.Conditions) > 0 && len(el.Status.Conditions[0].Status) > 0 {
-			status = el.Status.Conditions[0].Status
+		if len(eventListeners[idx].Status.Conditions) > 0 && len(eventListeners[idx].Status.Conditions[0].Status) > 0 {
+			status = eventListeners[idx].Status.Conditions[0].Status
 		}
 
 		if allNamespaces {
 			fmt.Fprintf(w, "%s\t%s\t%s\t%s\t%s\n",
-				el.Namespace,
-				el.Name,
-				formatted.Age(&el.CreationTimestamp, p.Time()),
-				formatted.FormatAddress(getURL(el)),
+				eventListeners[idx].Namespace,
+				eventListeners[idx].Name,
+				formatted.Age(&eventListeners[idx].CreationTimestamp, p.Time()),
+				formatted.FormatAddress(getURL(eventListeners[idx])),
 				status,
 			)
 		} else {
 			fmt.Fprintf(w, "%s\t%s\t%s\t%s\n",
-				el.Name,
-				formatted.Age(&el.CreationTimestamp, p.Time()),
-				formatted.FormatAddress(getURL(el)),
+				eventListeners[idx].Name,
+				formatted.Age(&eventListeners[idx].CreationTimestamp, p.Time()),
+				formatted.FormatAddress(getURL(eventListeners[idx])),
 				status,
 			)
 		}

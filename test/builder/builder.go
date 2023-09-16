@@ -294,11 +294,13 @@ func ListAllTasksOutput(t *testing.T, cs *framework.Clients, td map[int]interfac
 	}
 	fmt.Fprintln(w, header)
 
-	for _, task := range task.Items {
+	tasks := task.Items
+
+	for idx := range tasks {
 		fmt.Fprintf(w, body,
-			task.Name,
-			formatted.FormatDesc(task.Spec.Description),
-			formatted.Age(&task.CreationTimestamp, clock),
+			tasks[idx].Name,
+			formatted.FormatDesc(tasks[idx].Spec.Description),
+			formatted.Age(&tasks[idx].CreationTimestamp, clock),
 		)
 	}
 	w.Flush()
@@ -327,11 +329,13 @@ func ListAllClusterTasksOutput(t *testing.T, cs *framework.Clients, td map[int]i
 	}
 	fmt.Fprintln(w, header)
 
-	for _, clustertask := range clustertask.Items {
+	clusterTasks := clustertask.Items
+
+	for idx := range clusterTasks {
 		fmt.Fprintf(w, body,
-			clustertask.Name,
-			formatted.FormatDesc(clustertask.Spec.Description),
-			formatted.Age(&clustertask.CreationTimestamp, clock),
+			clusterTasks[idx].Name,
+			formatted.FormatDesc(clusterTasks[idx].Spec.Description),
+			formatted.Age(&clusterTasks[idx].CreationTimestamp, clock),
 		)
 	}
 	w.Flush()
