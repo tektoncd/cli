@@ -1,3 +1,10 @@
+issues:
+  exclude-rules:
+    # Exclude some linters from running on tests files.
+    # temporarily disabling G602 due to https://github.com/securego/gosec/issues/1005
+    - path: _test\.go
+      linters:
+        - gosec
 run:
   issues-exit-code: 1
   build-tags:

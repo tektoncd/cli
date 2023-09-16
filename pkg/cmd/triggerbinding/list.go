@@ -130,17 +130,20 @@ func printFormatted(s *cli.Stream, tbs *v1beta1.TriggerBindingList, p cli.Params
 	if !noHeaders {
 		fmt.Fprintln(w, headers)
 	}
-	for _, tb := range tbs.Items {
+
+	triggerBindings := tbs.Items
+
+	for idx := range triggerBindings {
 		if allNamespaces {
 			fmt.Fprintf(w, "%s\t%s\t%s\n",
-				tb.Namespace,
-				tb.Name,
-				formatted.Age(&tb.CreationTimestamp, p.Time()),
+				triggerBindings[idx].Namespace,
+				triggerBindings[idx].Name,
+				formatted.Age(&triggerBindings[idx].CreationTimestamp, p.Time()),
 			)
 		} else {
 			fmt.Fprintf(w, "%s\t%s\n",
-				tb.Name,
-				formatted.Age(&tb.CreationTimestamp, p.Time()),
+				triggerBindings[idx].Name,
+				formatted.Age(&triggerBindings[idx].CreationTimestamp, p.Time()),
 			)
 		}
 	}

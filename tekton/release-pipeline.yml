@@ -54,7 +54,7 @@ spec:
         - name: flags
           value: "-v --timeout 20m"
         - name: version
-          value: v1.53.3
+          value: v1.54.2
       workspaces:
         - name: source
           workspace: shared-workspace

@@ -120,17 +120,20 @@ func printFormatted(s *cli.Stream, tts *v1beta1.TriggerTemplateList, p cli.Param
 	if !noHeaders {
 		fmt.Fprintln(w, headers)
 	}
-	for _, tt := range tts.Items {
+
+	triggerTemplates := tts.Items
+
+	for idx := range triggerTemplates {
 		if allNamespaces {
 			fmt.Fprintf(w, "%s\t%s\t%s\n",
-				tt.Namespace,
-				tt.Name,
-				formatted.Age(&tt.CreationTimestamp, p.Time()),
+				triggerTemplates[idx].Namespace,
+				triggerTemplates[idx].Name,
+				formatted.Age(&triggerTemplates[idx].CreationTimestamp, p.Time()),
 			)
 		} else {
 			fmt.Fprintf(w, "%s\t%s\n",
-				tt.Name,
-				formatted.Age(&tt.CreationTimestamp, p.Time()),
+				triggerTemplates[idx].Name,
+				formatted.Age(&triggerTemplates[idx].CreationTimestamp, p.Time()),
 			)
 		}
 	}

@@ -46,11 +46,11 @@ func TestTracker_pipelinerun_complete(t *testing.T) {
 
 		task1Name = "output-task-1"
 		tr1Name   = "output-task-1"
-		tr1Pod    = "output-task-1-pod-123456"
+		tr1Pods   = "output-task-1-pods-123456"
 
 		task2Name = "output-task-2"
 		tr2Name   = "output-task-2"
-		tr2Pod    = "output-task-2-pod-123456"
+		tr2Pods   = "output-task-2-pods-123456"
 
 		allTasks  = []string{task1Name, task2Name}
 		onlyTask1 = []string{task1Name}
@@ -99,7 +99,7 @@ func TestTracker_pipelinerun_complete(t *testing.T) {
 				},
 				Status: v1.TaskRunStatus{
 					TaskRunStatusFields: v1.TaskRunStatusFields{
-						PodName: tr1Pod,
+						PodName: tr1Pods,
 					},
 				},
 			},
@@ -115,7 +115,7 @@ func TestTracker_pipelinerun_complete(t *testing.T) {
 				},
 				Status: v1.TaskRunStatus{
 					TaskRunStatusFields: v1.TaskRunStatusFields{
-						PodName: tr2Pod,
+						PodName: tr2Pods,
 					},
 				},
 			},
