@@ -100,7 +100,7 @@ spec:
         - name: github-token-secret-key
           value: $(params.github-token-secret-key)
         - name: image
-          value: goreleaser/goreleaser:v1.11.5
+          value: goreleaser/goreleaser:v1.20.0
       workspaces:
         - name: source
           workspace: shared-workspace
