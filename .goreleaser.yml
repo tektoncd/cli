@@ -17,14 +17,14 @@ builds:
   ldflags:
   - -w -X github.com/tektoncd/cli/pkg/cmd/version.clientVersion={{.Version}}
 archives:
-- name_template: "{{ .Binary }}_{{ .Version }}_{{ .Os }}_{{ .Arch }}"
-  replacements:
-    darwin: Darwin
-    linux: Linux
-    windows: Windows
-    386: i386
-    amd64: x86_64
-    arm64: aarch64
+- name_template: >-
+    {{- .Binary }}_
+    {{- .Version }}_
+    {{- title .Os }}_
+    {{- if eq .Arch "amd64" }}x86_64
+    {{- else if eq .Arch "386" }}i386
+    {{- else if eq .Arch "arm64" }}aarch64
+    {{- else }}{{ .Arch }}{{ end }}
   format_overrides:
     - goos: windows
       format: zip
@@ -41,11 +41,10 @@ changelog:
     - Merge pull request
     - Merge branch
 release:
-  prerelease: true
+  prerelease: "true"
 brews:
-  -
-    name: tektoncd-cli
-    tap:
+  - name: tektoncd-cli
+    repository:
       owner: tektoncd
       name: homebrew-tools
     folder: Formula
@@ -62,7 +61,15 @@ brews:
       (zsh_completion/"_tkn").write output
       prefix.install_metafiles
 nfpms:
-  - file_name_template: "tektoncd-cli-{{.Version}}_{{.Os}}-{{.Arch}}"
+  - file_name_template: >-
+      tektoncd-cli-
+      {{- .Version }}_
+      {{- title .Os }}-
+      {{- if eq .Arch "amd64" }}64bit
+      {{- else if eq .Arch "386" }}32bit
+      {{- else if eq .Arch "arm" }}ARM
+      {{- else if eq .Arch "arm64" }}ARM64
+      {{- else }}{{ .Arch }}{{ end }}
     homepage: https://github.com/tektoncd/cli/
     description: A command line interface for interacting with Tekton
     maintainer: Tekton Developers <tekton@tekton.dev>
@@ -72,15 +79,6 @@ nfpms:
     - deb
     - rpm
     bindir: /usr/bin
-    replacements:
-      amd64: 64bit
-      386: 32bit
-      arm: ARM
-      arm64: ARM64
-      darwin: macOS
-      linux: Linux
-      windows: Windows
-
 universal_binaries:
 - replace: true
   name_template: 'tkn'
