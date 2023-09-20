@@ -19,7 +19,6 @@ package extract
 import (
 	"context"
 	"fmt"
-	"sort"
 	"strings"
 
 	"github.com/google/go-containerregistry/pkg/name"
@@ -27,6 +26,7 @@ import (
 	"github.com/in-toto/in-toto-golang/in_toto/slsa_provenance/common"
 	"github.com/tektoncd/chains/internal/backport"
 	"github.com/tektoncd/chains/pkg/artifacts"
+	"github.com/tektoncd/chains/pkg/chains/formats/slsa/internal/slsaconfig"
 	"github.com/tektoncd/chains/pkg/chains/objects"
 	"github.com/tektoncd/pipeline/pkg/apis/pipeline/v1beta1"
 	"knative.dev/pkg/logging"
@@ -39,7 +39,98 @@ import (
 //   - have suffix `IMAGE_URL` & `IMAGE_DIGEST` or `ARTIFACT_URI` & `ARTIFACT_DIGEST` pair.
 //   - the `*_DIGEST` field must be in the format of "<algorithm>:<actual-sha>" where the algorithm must be "sha256" and actual sha must be valid per https://github.com/opencontainers/image-spec/blob/main/descriptor.md#sha-256.
 //   - the `*_URL` or `*_URI` fields cannot be empty.
-func SubjectDigests(ctx context.Context, obj objects.TektonObject) []intoto.Subject {
+//
+//nolint:all
+func SubjectDigests(ctx context.Context, obj objects.TektonObject, slsaconfig *slsaconfig.SlsaConfig) []intoto.Subject {
+	var subjects []intoto.Subject
+
+	switch obj.GetObject().(type) {
+	case *v1beta1.PipelineRun:
+		subjects = subjectsFromPipelineRun(ctx, obj, slsaconfig)
+	case *v1beta1.TaskRun:
+		subjects = subjectsFromTektonObject(ctx, obj)
+	}
+
+	return subjects
+}
+
+func subjectsFromPipelineRun(ctx context.Context, obj objects.TektonObject, slsaconfig *slsaconfig.SlsaConfig) []intoto.Subject {
+	prSubjects := subjectsFromTektonObject(ctx, obj)
+
+	// If deep inspection is not enabled, just return subjects observed on the pipelinerun level
+	if !slsaconfig.DeepInspectionEnabled {
+		return prSubjects
+	}
+
+	logger := logging.FromContext(ctx)
+	// If deep inspection is enabled, collect subjects from child taskruns
+	var result []intoto.Subject
+
+	pro := obj.(*objects.PipelineRunObject)
+
+	pSpec := pro.Status.PipelineSpec
+	if pSpec != nil {
+		pipelineTasks := append(pSpec.Tasks, pSpec.Finally...)
+		for _, t := range pipelineTasks {
+			tr := pro.GetTaskRunFromTask(t.Name)
+			// Ignore Tasks that did not execute during the PipelineRun.
+			if tr == nil || tr.Status.CompletionTime == nil {
+				logger.Infof("taskrun status not found for task %s", t.Name)
+				continue
+			}
+
+			trSubjects := subjectsFromTektonObject(ctx, tr)
+			for _, s := range trSubjects {
+				result = addSubject(result, s)
+			}
+		}
+	}
+
+	// also add subjects observed from pipelinerun level with duplication removed
+	for _, s := range prSubjects {
+		result = addSubject(result, s)
+	}
+
+	return result
+}
+
+// addSubject adds a new subject item to the original slice.
+func addSubject(original []intoto.Subject, item intoto.Subject) []intoto.Subject {
+
+	for i, s := range original {
+		// if there is an equivalent entry in the original slice, merge item's DigestSet
+		// into the existing entry's DigestSet.
+		if subjectEqual(s, item) {
+			mergeMaps(original[i].Digest, item.Digest)
+			return original
+		}
+	}
+
+	original = append(original, item)
+	return original
+}
+
+// two subjects are equal if and only if they have same name and have at least
+// one common algorithm and hex value.
+func subjectEqual(x, y intoto.Subject) bool {
+	if x.Name != y.Name {
+		return false
+	}
+	for algo, hex := range x.Digest {
+		if y.Digest[algo] == hex {
+			return true
+		}
+	}
+	return false
+}
+
+func mergeMaps(m1 map[string]string, m2 map[string]string) {
+	for k, v := range m2 {
+		m1[k] = v
+	}
+}
+
+func subjectsFromTektonObject(ctx context.Context, obj objects.TektonObject) []intoto.Subject {
 	logger := logging.FromContext(ctx)
 	var subjects []intoto.Subject
 
@@ -121,9 +212,7 @@ func SubjectDigests(ctx context.Context, obj objects.TektonObject) []intoto.Subj
 			})
 		}
 	}
-	sort.Slice(subjects, func(i, j int) bool {
-		return subjects[i].Name <= subjects[j].Name
-	})
+
 	return subjects
 }
 
@@ -131,9 +220,9 @@ func SubjectDigests(ctx context.Context, obj objects.TektonObject) []intoto.Subj
 // - It first extracts intoto subjects from run object results and converts the subjects
 // to a slice of string URIs in the format of "NAME" + "@" + "ALGORITHM" + ":" + "DIGEST".
 // - If no subjects could be extracted from results, then an empty slice is returned.
-func RetrieveAllArtifactURIs(ctx context.Context, obj objects.TektonObject) []string {
+func RetrieveAllArtifactURIs(ctx context.Context, obj objects.TektonObject, deepInspectionEnabled bool) []string {
 	result := []string{}
-	subjects := SubjectDigests(ctx, obj)
+	subjects := SubjectDigests(ctx, obj, &slsaconfig.SlsaConfig{DeepInspectionEnabled: deepInspectionEnabled})
 
 	for _, s := range subjects {
 		for algo, digest := range s.Digest {

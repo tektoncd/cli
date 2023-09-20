@@ -58,6 +58,7 @@ type TektonObject interface {
 	GetLatestAnnotations(ctx context.Context, clientSet versioned.Interface) (map[string]string, error)
 	Patch(ctx context.Context, clientSet versioned.Interface, patchBytes []byte) error
 	GetResults() []Result
+	GetProvenance() *v1beta1.Provenance
 	GetServiceAccountName() string
 	GetPullSecrets() []string
 	IsDone() bool
@@ -65,6 +66,8 @@ type TektonObject interface {
 	SupportsTaskRunArtifact() bool
 	SupportsPipelineRunArtifact() bool
 	SupportsOCIArtifact() bool
+	GetRemoteProvenance() *v1beta1.Provenance
+	IsRemote() bool
 }
 
 func NewTektonObject(i interface{}) (TektonObject, error) {
@@ -100,6 +103,10 @@ func (tro *TaskRunObject) GetKindName() string {
 	return strings.ToLower(tro.GetGroupVersionKind().Kind)
 }
 
+func (tro *TaskRunObject) GetProvenance() *v1beta1.Provenance {
+	return tro.Status.Provenance
+}
+
 // Get the latest annotations on the TaskRun
 func (tro *TaskRunObject) GetLatestAnnotations(ctx context.Context, clientSet versioned.Interface) (map[string]string, error) {
 	tr, err := clientSet.TektonV1beta1().TaskRuns(tro.Namespace).Get(ctx, tro.Name, metav1.GetOptions{})
@@ -130,6 +137,22 @@ func (tro *TaskRunObject) GetResults() []Result {
 	return res
 }
 
+func (tro *TaskRunObject) GetStepImages() []string {
+	images := []string{}
+	for _, stepState := range tro.Status.Steps {
+		images = append(images, stepState.ImageID)
+	}
+	return images
+}
+
+func (tro *TaskRunObject) GetSidecarImages() []string {
+	images := []string{}
+	for _, sidecarState := range tro.Status.Sidecars {
+		images = append(images, sidecarState.ImageID)
+	}
+	return images
+}
+
 // Get the ServiceAccount declared in the TaskRun
 func (tro *TaskRunObject) GetServiceAccountName() string {
 	return tro.Spec.ServiceAccountName
@@ -150,6 +173,23 @@ func (tro *TaskRunObject) SupportsPipelineRunArtifact() bool {
 
 func (tro *TaskRunObject) SupportsOCIArtifact() bool {
 	return true
+}
+
+func (tro *TaskRunObject) GetRemoteProvenance() *v1beta1.Provenance {
+	if t := tro.Status.Provenance; t != nil && t.RefSource != nil && tro.IsRemote() {
+		return tro.Status.Provenance
+	}
+	return nil
+}
+
+func (tro *TaskRunObject) IsRemote() bool {
+	isRemoteTask := false
+	if tro.Spec.TaskRef != nil {
+		if tro.Spec.TaskRef.Resolver != "" && tro.Spec.TaskRef.Resolver != "Cluster" {
+			isRemoteTask = true
+		}
+	}
+	return isRemoteTask
 }
 
 // PipelineRunObject extends v1beta1.PipelineRun with additional functions.
@@ -195,6 +235,10 @@ func (pro *PipelineRunObject) Patch(ctx context.Context, clientSet versioned.Int
 	return err
 }
 
+func (pro *PipelineRunObject) GetProvenance() *v1beta1.Provenance {
+	return pro.Status.Provenance
+}
+
 // Get the resolved Pipelinerun results
 func (pro *PipelineRunObject) GetResults() []Result {
 	res := []Result{}
@@ -223,11 +267,11 @@ func (pro *PipelineRunObject) AppendTaskRun(tr *v1beta1.TaskRun) {
 }
 
 // Get the associated TaskRun via the Task name
-func (pro *PipelineRunObject) GetTaskRunFromTask(taskName string) *v1beta1.TaskRun {
+func (pro *PipelineRunObject) GetTaskRunFromTask(taskName string) *TaskRunObject {
 	for _, tr := range pro.taskRuns {
 		val, ok := tr.Labels[PipelineTaskLabel]
 		if ok && val == taskName {
-			return tr
+			return NewTaskRunObject(tr)
 		}
 	}
 	return nil
@@ -248,6 +292,23 @@ func (pro *PipelineRunObject) SupportsPipelineRunArtifact() bool {
 
 func (pro *PipelineRunObject) SupportsOCIArtifact() bool {
 	return false
+}
+
+func (pro *PipelineRunObject) GetRemoteProvenance() *v1beta1.Provenance {
+	if p := pro.Status.Provenance; p != nil && p.RefSource != nil && pro.IsRemote() {
+		return pro.Status.Provenance
+	}
+	return nil
+}
+
+func (pro *PipelineRunObject) IsRemote() bool {
+	isRemotePipeline := false
+	if pro.Spec.PipelineRef != nil {
+		if pro.Spec.PipelineRef.Resolver != "" && pro.Spec.PipelineRef.Resolver != "Cluster" {
+			isRemotePipeline = true
+		}
+	}
+	return isRemotePipeline
 }
 
 // Get the imgPullSecrets from a pod template, if they exist
