@@ -28,11 +28,12 @@ import (
 )
 
 type Config struct {
-	Artifacts    ArtifactConfigs
-	Storage      StorageConfigs
-	Signers      SignerConfigs
-	Builder      BuilderConfig
-	Transparency TransparencyConfig
+	Artifacts       ArtifactConfigs
+	Storage         StorageConfigs
+	Signers         SignerConfigs
+	Builder         BuilderConfig
+	Transparency    TransparencyConfig
+	BuildDefinition BuildDefinitionConfig
 }
 
 // ArtifactConfigs contains the configuration for how to sign/store/format the signatures for each artifact type
@@ -44,9 +45,10 @@ type ArtifactConfigs struct {
 
 // Artifact contains the configuration for how to sign/store/format the signatures for a single artifact
 type Artifact struct {
-	Format         string
-	StorageBackend sets.Set[string]
-	Signer         string
+	Format                string
+	StorageBackend        sets.Set[string]
+	Signer                string
+	DeepInspectionEnabled bool
 }
 
 // StorageConfigs contains the configuration to instantiate different storage providers
@@ -67,6 +69,10 @@ type SignerConfigs struct {
 
 type BuilderConfig struct {
 	ID string
+}
+
+type BuildDefinitionConfig struct {
+	BuildType string
 }
 
 type X509Signer struct {
@@ -150,9 +156,10 @@ const (
 	taskrunStorageKey = "artifacts.taskrun.storage"
 	taskrunSignerKey  = "artifacts.taskrun.signer"
 
-	pipelinerunFormatKey  = "artifacts.pipelinerun.format"
-	pipelinerunStorageKey = "artifacts.pipelinerun.storage"
-	pipelinerunSignerKey  = "artifacts.pipelinerun.signer"
+	pipelinerunFormatKey               = "artifacts.pipelinerun.format"
+	pipelinerunStorageKey              = "artifacts.pipelinerun.storage"
+	pipelinerunSignerKey               = "artifacts.pipelinerun.signer"
+	pipelinerunEnableDeepInspectionKey = "artifacts.pipelinerun.enable-deep-inspection"
 
 	ociFormatKey  = "artifacts.oci.format"
 	ociStorageKey = "artifacts.oci.storage"
@@ -198,6 +205,9 @@ const (
 	transparencyEnabledKey = "transparency.enabled"
 	transparencyURLKey     = "transparency.url"
 
+	// Build type
+	buildTypeKey = "builddefinition.buildtype"
+
 	ChainsConfig = "chains-config"
 )
 
@@ -214,9 +224,10 @@ func defaultConfig() *Config {
 				Signer:         "x509",
 			},
 			PipelineRuns: Artifact{
-				Format:         "in-toto",
-				StorageBackend: sets.New[string]("tekton"),
-				Signer:         "x509",
+				Format:                "in-toto",
+				StorageBackend:        sets.New[string]("tekton"),
+				Signer:                "x509",
+				DeepInspectionEnabled: false,
 			},
 			OCI: Artifact{
 				Format:         "simplesigning",
@@ -242,6 +253,9 @@ func defaultConfig() *Config {
 		Builder: BuilderConfig{
 			ID: "https://tekton.dev/chains/v2",
 		},
+		BuildDefinition: BuildDefinitionConfig{
+			BuildType: "https://tekton.dev/chains/v2/slsa",
+		},
 	}
 }
 
@@ -260,6 +274,7 @@ func NewConfigFromMap(data map[string]string) (*Config, error) {
 		asString(pipelinerunFormatKey, &cfg.Artifacts.PipelineRuns.Format, "in-toto", "slsa/v1", "slsa/v2alpha2"),
 		asStringSet(pipelinerunStorageKey, &cfg.Artifacts.PipelineRuns.StorageBackend, sets.New[string]("tekton", "oci", "docdb", "grafeas")),
 		asString(pipelinerunSignerKey, &cfg.Artifacts.PipelineRuns.Signer, "x509", "kms"),
+		asBool(pipelinerunEnableDeepInspectionKey, &cfg.Artifacts.PipelineRuns.DeepInspectionEnabled),
 
 		// OCI
 		asString(ociFormatKey, &cfg.Artifacts.OCI.Format, "simplesigning"),
@@ -304,6 +319,9 @@ func NewConfigFromMap(data map[string]string) (*Config, error) {
 
 		// Build config
 		asString(builderIDKey, &cfg.Builder.ID),
+
+		// Build type
+		asString(buildTypeKey, &cfg.BuildDefinition.BuildType, "https://tekton.dev/chains/v2/slsa", "https://tekton.dev/chains/v2/slsa-tekton"),
 	); err != nil {
 		return nil, fmt.Errorf("failed to parse data: %w", err)
 	}

@@ -148,14 +148,6 @@ type image struct {
 	digest string
 }
 
-// StructuredSignable contains info for signable targets to become either subjects or materials in intoto Statements.
-// URI is the resource uri for the target needed iff the target is a material.
-// Digest is the target's SHA digest.
-type StructuredSignable struct {
-	URI    string
-	Digest string
-}
-
 func (oa *OCIArtifact) ExtractObjects(ctx context.Context, obj objects.TektonObject) []interface{} {
 	log := logging.FromContext(ctx)
 	objs := []interface{}{}
@@ -204,11 +196,13 @@ func (oa *OCIArtifact) ExtractObjects(ctx context.Context, obj objects.TektonObj
 func ExtractOCIImagesFromResults(ctx context.Context, obj objects.TektonObject) []interface{} {
 	logger := logging.FromContext(ctx)
 	objs := []interface{}{}
-	ss := extractTargetFromResults(ctx, obj, "IMAGE_URL", "IMAGE_DIGEST")
-	for _, s := range ss {
-		if s == nil || s.Digest == "" || s.URI == "" {
-			continue
-		}
+
+	extractor := structuredSignableExtractor{
+		uriSuffix:    "IMAGE_URL",
+		digestSuffix: "IMAGE_DIGEST",
+		isValid:      hasImageRequirements,
+	}
+	for _, s := range extractor.extract(ctx, obj) {
 		dgst, err := name.NewDigest(fmt.Sprintf("%s@%s", s.URI, s.Digest))
 		if err != nil {
 			logger.Errorf("error getting digest: %v", err)
@@ -217,6 +211,7 @@ func ExtractOCIImagesFromResults(ctx context.Context, obj objects.TektonObject) 
 
 		objs = append(objs, dgst)
 	}
+
 	// look for a comma separated list of images
 	for _, key := range obj.GetResults() {
 		if key.Name != "IMAGES" {
@@ -242,65 +237,28 @@ func ExtractOCIImagesFromResults(ctx context.Context, obj objects.TektonObject) 
 }
 
 // ExtractSignableTargetFromResults extracts signable targets that aim to generate intoto provenance as materials within TaskRun results and store them as StructuredSignable.
-func ExtractSignableTargetFromResults(ctx context.Context, obj objects.TektonObject) []*StructuredSignable {
+func ExtractSignableTargetFromResults(ctx context.Context, obj objects.TektonObject) []StructuredSignable {
 	logger := logging.FromContext(ctx)
-	objs := []*StructuredSignable{}
-	ss := extractTargetFromResults(ctx, obj, "ARTIFACT_URI", "ARTIFACT_DIGEST")
-	// Only add it if we got both the signable URI and digest.
-	for _, s := range ss {
-		if s == nil || s.Digest == "" || s.URI == "" {
-			continue
-		}
-		if _, _, err := ParseDigest(s.Digest); err != nil {
-			logger.Errorf("error getting digest %s: %v", s.Digest, err)
-			continue
-		}
-
-		objs = append(objs, s)
+	extractor := structuredSignableExtractor{
+		uriSuffix:    "ARTIFACT_URI",
+		digestSuffix: "ARTIFACT_DIGEST",
+		isValid: func(s StructuredSignable) bool {
+			if !hasImageRequirements(s) {
+				return false
+			}
+			if _, _, err := ParseDigest(s.Digest); err != nil {
+				logger.Errorf("error getting digest %s: %v", s.Digest, err)
+				return false
+			}
+			return true
+		},
 	}
-
-	return objs
+	return extractor.extract(ctx, obj)
 }
 
 // FullRef returns the full reference of the signable artifact in the format of URI@DIGEST
 func (s *StructuredSignable) FullRef() string {
 	return fmt.Sprintf("%s@%s", s.URI, s.Digest)
-}
-
-func extractTargetFromResults(ctx context.Context, obj objects.TektonObject, identifierSuffix string, digestSuffix string) map[string]*StructuredSignable {
-	logger := logging.FromContext(ctx)
-	ss := map[string]*StructuredSignable{}
-
-	for _, res := range obj.GetResults() {
-		if strings.HasSuffix(res.Name, identifierSuffix) {
-			if res.Value.StringVal == "" {
-				logger.Debugf("error getting string value for %s", res.Name)
-				continue
-			}
-			marker := strings.TrimSuffix(res.Name, identifierSuffix)
-			if v, ok := ss[marker]; ok {
-				v.URI = strings.TrimSpace(res.Value.StringVal)
-
-			} else {
-				ss[marker] = &StructuredSignable{URI: strings.TrimSpace(res.Value.StringVal)}
-			}
-			// TODO: add logic for Intoto signable target as input.
-		}
-		if strings.HasSuffix(res.Name, digestSuffix) {
-			if res.Value.StringVal == "" {
-				logger.Debugf("error getting string value for %s", res.Name)
-				continue
-			}
-			marker := strings.TrimSuffix(res.Name, digestSuffix)
-			if v, ok := ss[marker]; ok {
-				v.Digest = strings.TrimSpace(res.Value.StringVal)
-			} else {
-				ss[marker] = &StructuredSignable{Digest: strings.TrimSpace(res.Value.StringVal)}
-			}
-		}
-
-	}
-	return ss
 }
 
 // RetrieveMaterialsFromStructuredResults retrieves structured results from Tekton Object, and convert them into materials.
@@ -436,4 +394,8 @@ func (oa *OCIArtifact) FullKey(obj interface{}) string {
 
 func (oa *OCIArtifact) Enabled(cfg config.Config) bool {
 	return cfg.Artifacts.OCI.Enabled()
+}
+
+func hasImageRequirements(s StructuredSignable) bool {
+	return s.URI != "" && s.Digest != ""
 }

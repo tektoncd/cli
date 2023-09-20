@@ -16,12 +16,13 @@
 package ssh
 
 import (
-	"bytes"
 	"fmt"
 	"io"
 	"net/http"
 
 	"github.com/asaskevich/govalidator"
+	"github.com/sigstore/rekor/pkg/pki/identity"
+	"github.com/sigstore/sigstore/pkg/cryptoutils"
 	sigsig "github.com/sigstore/sigstore/pkg/signature"
 	"golang.org/x/crypto/ssh"
 )
@@ -108,25 +109,28 @@ func (k PublicKey) CanonicalValue() ([]byte, error) {
 
 // EmailAddresses implements the pki.PublicKey interface
 func (k PublicKey) EmailAddresses() []string {
+	if govalidator.IsEmail(k.comment) {
+		return []string{k.comment}
+	}
 	return nil
 }
 
 // Subjects implements the pki.PublicKey interface
 func (k PublicKey) Subjects() []string {
-	return nil
+	return k.EmailAddresses()
 }
 
 // Identities implements the pki.PublicKey interface
-func (k PublicKey) Identities() ([]string, error) {
-	var identities []string
-
-	// an authorized key format
-	authorizedKey := string(bytes.TrimSpace(ssh.MarshalAuthorizedKey(k.key)))
-	identities = append(identities, authorizedKey)
-
-	if govalidator.IsEmail(k.comment) {
-		identities = append(identities, k.comment)
+func (k PublicKey) Identities() ([]identity.Identity, error) {
+	key := k.key.(ssh.CryptoPublicKey).CryptoPublicKey()
+	pkixKey, err := cryptoutils.MarshalPublicKeyToDER(key)
+	if err != nil {
+		return nil, err
 	}
-
-	return identities, nil
+	fp := ssh.FingerprintSHA256(k.key)
+	return []identity.Identity{{
+		Crypto:      k.key,
+		Raw:         pkixKey,
+		Fingerprint: fp,
+	}}, nil
 }

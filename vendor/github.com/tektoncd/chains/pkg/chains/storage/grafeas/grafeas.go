@@ -253,7 +253,7 @@ func (b *Backend) createOccurrence(ctx context.Context, obj objects.TektonObject
 	}
 
 	// create Occurrence_Build for TaskRun
-	allURIs := extract.RetrieveAllArtifactURIs(ctx, obj)
+	allURIs := extract.RetrieveAllArtifactURIs(ctx, obj, b.cfg.Artifacts.PipelineRuns.DeepInspectionEnabled)
 	for _, uri := range allURIs {
 		occ, err := b.createBuildOccurrence(ctx, obj, payload, signature, uri)
 		if err != nil {
@@ -364,7 +364,7 @@ func (b *Backend) getBuildNotePath(obj objects.TektonObject) string {
 func (b *Backend) getAllOccurrences(ctx context.Context, obj objects.TektonObject, opts config.StorageOpts) ([]*pb.Occurrence, error) {
 	result := []*pb.Occurrence{}
 	// step 1: get all resource URIs created under the taskrun
-	uriFilters := extract.RetrieveAllArtifactURIs(ctx, obj)
+	uriFilters := extract.RetrieveAllArtifactURIs(ctx, obj, b.cfg.Artifacts.PipelineRuns.DeepInspectionEnabled)
 
 	// step 2: find all build occurrences
 	if _, ok := formats.IntotoAttestationSet[opts.PayloadFormat]; ok {
