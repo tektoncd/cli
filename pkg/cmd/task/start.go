@@ -18,11 +18,16 @@ import (
 	"context"
 	"encoding/json"
 	"errors"
-	"fmt"
-	"net/http"
 	"os"
 	"strings"
 	"time"
+
+	"github.com/google/go-containerregistry/pkg/name"
+	remoteimg "github.com/google/go-containerregistry/pkg/v1/remote"
+	"github.com/tektoncd/cli/pkg/bundle"
+	"k8s.io/apimachinery/pkg/runtime"
+
+	"fmt"
 
 	"github.com/AlecAivazis/survey/v2"
 	"github.com/AlecAivazis/survey/v2/terminal"
@@ -61,6 +66,7 @@ type startOptions struct {
 	Labels                []string
 	ShowLog               bool
 	Filename              string
+	Image                 string
 	TimeOut               string
 	DryRun                bool
 	Output                string
@@ -73,6 +79,7 @@ type startOptions struct {
 	UseParamDefaults      bool
 	PodTemplate           string
 	SkipOptionalWorkspace bool
+	remoteOptions         bundle.RemoteOptions
 }
 
 // NameArg validates that the first argument is a valid task name
@@ -123,8 +130,14 @@ func startCommand(p cli.Params) *cobra.Command {
 
     tkn task start foo -s ServiceAccountName -n bar
 
-The Task can either be specified by reference in a cluster using the positional argument
-or in a file using the --filename argument.
+The Task can either be specified by reference in a cluster using the positional argument, 
+an oci bundle using the --image argument and the positional argument or in a file using the --filename argument
+
+Authentication:
+	There are three ways to authenticate against your registry when using the --image argument.
+	1. By default, your docker.config in your home directory and podman's auth.json are used.
+	2. Additionally, you can supply a Bearer Token via --remote-bearer
+	3. Additionally, you can use Basic auth via --remote-username and --remote-password
 
 For params values, if you want to provide multiple values, provide them comma separated
 like cat,foo,bar
@@ -167,16 +180,26 @@ For passing the workspaces via flags:
 			if format != "" && opt.ShowLog {
 				return errors.New("cannot use --output option with --showlog option")
 			}
-			if len(args) != 0 {
+			// classic with no image
+			if len(args) != 0 && opt.Image == "" {
 				return NameArg(args, p, &opt)
 			}
-			if opt.Filename == "" {
+			// image but no task name
+			if len(args) == 0 && opt.Image != "" {
+				return errors.New("task name required with --image option")
+			}
+			// trying to use a file and image
+			if opt.Filename != "" && opt.Image != "" {
+				return errors.New("cannot use --filename option with --image option")
+			}
+			// not passing enough
+			if opt.Filename == "" && len(args) == 0 {
 				return errors.New("either a Task name or a --filename argument must be supplied")
 			}
-			if opt.Filename != "" && opt.Last {
-				return errors.New("cannot use --last option with --filename option")
+			// cant mix image/file with --last ( I think this is true? )
+			if (opt.Filename != "" || opt.Image != "") && opt.Last {
+				return errors.New("cannot use --last option with --filename or --image option")
 			}
-
 			return nil
 		},
 		RunE: func(cmd *cobra.Command, args []string) error {
@@ -212,6 +235,8 @@ For passing the workspaces via flags:
 	c.Flags().StringArrayVarP(&opt.Workspaces, "workspace", "w", []string{}, "pass one or more workspaces to map to the corresponding physical volumes")
 	c.Flags().BoolVarP(&opt.ShowLog, "showlog", "", false, "show logs right after starting the Task")
 	c.Flags().StringVarP(&opt.Filename, "filename", "f", "", "local or remote file name containing a Task definition to start a TaskRun")
+	c.Flags().StringVarP(&opt.Image, "image", "i", "", "use an oci bundle")
+
 	c.Flags().StringVarP(&opt.TimeOut, "timeout", "", "", "timeout for TaskRun")
 	c.Flags().BoolVarP(&opt.DryRun, "dry-run", "", false, "preview TaskRun without running it")
 	c.Flags().StringVarP(&opt.Output, "output", "", "", "format of TaskRun (yaml or json)")
@@ -219,17 +244,15 @@ For passing the workspaces via flags:
 	c.Flags().BoolVarP(&opt.UseParamDefaults, "use-param-defaults", "", false, "use default parameter values without prompting for input")
 	c.Flags().StringVar(&opt.PodTemplate, "pod-template", "", "local or remote file containing a PodTemplate definition")
 	c.Flags().BoolVarP(&opt.SkipOptionalWorkspace, "skip-optional-workspace", "", false, "skips the prompt for optional workspaces")
+	bundle.AddRemoteFlags(c.Flags(), &opt.remoteOptions)
+
 	return c
 }
 
-func parseTask(taskLocation string, httpClient http.Client) (*v1beta1.Task, error) {
-	b, err := file.LoadFileContent(httpClient, taskLocation, file.IsYamlFile(), fmt.Errorf("invalid file format for %s: .yaml or .yml file extension and format required", taskLocation))
-	if err != nil {
-		return nil, err
-	}
+func parseTask(b []byte) (*v1beta1.Task, error) {
 
 	m := map[string]interface{}{}
-	err = yaml.UnmarshalStrict(b, &m)
+	err := yaml.UnmarshalStrict(b, &m)
 	if err != nil {
 		return nil, err
 	}
@@ -277,27 +300,58 @@ func startTask(opt startOptions, args []string) error {
 			Namespace: opt.cliparams.Namespace(),
 		},
 	}
-
 	var tname string
-	if len(args) > 0 {
+
+	switch {
+	case len(args) > 0 && opt.Image == "":
 		tname = args[0]
 		tr.Spec = v1beta1.TaskRunSpec{
 			TaskRef: &v1beta1.TaskRef{Name: tname},
 		}
-	} else {
-		task, err := parseTask(opt.Filename, cs.HTTPClient)
+	case opt.Filename != "":
+		b, err := file.LoadFileContent(cs.HTTPClient, opt.Filename, file.IsYamlFile(), fmt.Errorf("invalid file format for %s: .yaml or .yml file extension and format required", opt.Filename))
+		if err != nil {
+			return err
+		}
+		task, err := parseTask(b)
 		if err != nil {
 			return err
 		}
 		opt.task = task
 		tname = task.ObjectMeta.Name
-
 		if task.Spec.Params != nil {
 			params.FilterParamsByType(task.Spec.Params)
 		}
-
 		tr.Spec = v1beta1.TaskRunSpec{
 			TaskSpec: &task.Spec,
+		}
+	case opt.Image != "":
+		ref, err := name.ParseReference(opt.Image)
+		if err != nil {
+			return err
+		}
+		img, err := remoteimg.Image(ref, opt.remoteOptions.ToOptions()...)
+		if err != nil {
+			return err
+		}
+		err = bundle.Get(img, "task", args[0], func(_, _, _ string, element runtime.Object, b []byte) {
+			task, intErr := parseTask(b)
+			if intErr != nil {
+				err = intErr
+			}
+			opt.task = task
+			tname = task.ObjectMeta.Name
+
+			if task.Spec.Params != nil {
+				params.FilterParamsByType(task.Spec.Params)
+			}
+
+			tr.Spec = v1beta1.TaskRunSpec{
+				TaskSpec: &task.Spec,
+			}
+		})
+		if err != nil {
+			return err
 		}
 	}
 

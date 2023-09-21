@@ -138,7 +138,27 @@ func Test_start_has_filename_arg_with_last(t *testing.T) {
 	if err == nil {
 		t.Error("Expecting an error but it's empty")
 	}
-	test.AssertOutput(t, "cannot use --last option with --filename option", err.Error())
+	test.AssertOutput(t, "cannot use --last option with --filename or --image option", err.Error())
+}
+
+func Test_start_has_image_arg_no_taskname(t *testing.T) {
+	c := Command(&test.Params{})
+
+	_, err := test.ExecuteCommand(c, "start", "-n", "ns", "--image=oci.rad.com/task:0.1", "--last")
+	if err == nil {
+		t.Error("Expecting an error but it's empty")
+	}
+	test.AssertOutput(t, "task name required with --image option", err.Error())
+}
+
+func Test_start_has_image_arg_with_last(t *testing.T) {
+	c := Command(&test.Params{})
+
+	_, err := test.ExecuteCommand(c, "start", "rad-task", "-n", "ns", "--image=oci.rad.com/task:0.1", "--last")
+	if err == nil {
+		t.Error("Expecting an error but it's empty")
+	}
+	test.AssertOutput(t, "cannot use --last option with --filename or --image option", err.Error())
 }
 
 func Test_start_has_task_filename(t *testing.T) {
