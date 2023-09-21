@@ -18,8 +18,14 @@ Start Task foo by creating a TaskRun named "foo-run-xyz123" from namespace 'bar'
 
     tkn task start foo -s ServiceAccountName -n bar
 
-The Task can either be specified by reference in a cluster using the positional argument
-or in a file using the --filename argument.
+The Task can either be specified by reference in a cluster using the positional argument, 
+an oci bundle using the --image argument and the positional argument or in a file using the --filename argument
+
+Authentication:
+	There are three ways to authenticate against your registry when using the --image argument.
+	1. By default, your docker.config in your home directory and podman's auth.json are used.
+	2. Additionally, you can supply a Bearer Token via --remote-bearer
+	3. Additionally, you can use Basic auth via --remote-username and --remote-password
 
 For params values, if you want to provide multiple values, provide them comma separated
 like cat,foo,bar
@@ -53,12 +59,17 @@ For passing the workspaces via flags:
       --dry-run                   preview TaskRun without running it
   -f, --filename string           local or remote file name containing a Task definition to start a TaskRun
   -h, --help                      help for start
+  -i, --image string              use an oci bundle
   -l, --labels strings            pass labels as label=value.
   -L, --last                      re-run the Task using last TaskRun values
       --output string             format of TaskRun (yaml or json)
   -p, --param stringArray         pass the param as key=value for string type, or key=value1,value2,... for array type, or key="key1:value1, key2:value2" for object type
       --pod-template string       local or remote file containing a PodTemplate definition
       --prefix-name string        specify a prefix for the TaskRun name (must be lowercase alphanumeric characters)
+      --remote-bearer string      A Bearer token to authenticate against the repository
+      --remote-password string    A password to pass to the registry for basic auth. Must be used with --remote-username
+      --remote-skip-tls           If set to true, skips TLS check when connecting to the registry
+      --remote-username string    A username to pass to the registry for basic auth. Must be used with --remote-password
   -s, --serviceaccount string     pass the serviceaccount name
       --showlog                   show logs right after starting the Task
       --skip-optional-workspace   skips the prompt for optional workspaces

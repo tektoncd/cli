@@ -32,6 +32,10 @@ Start Tasks
     help for start
 
 .PP
+\fB\-i\fP, \fB\-\-image\fP=""
+    use an oci bundle
+
+.PP
 \fB\-l\fP, \fB\-\-labels\fP=[]
     pass labels as label=value.
 
@@ -54,6 +58,22 @@ Start Tasks
 .PP
 \fB\-\-prefix\-name\fP=""
     specify a prefix for the TaskRun name (must be lowercase alphanumeric characters)
+
+.PP
+\fB\-\-remote\-bearer\fP=""
+    A Bearer token to authenticate against the repository
+
+.PP
+\fB\-\-remote\-password\fP=""
+    A password to pass to the registry for basic auth. Must be used with \-\-remote\-username
+
+.PP
+\fB\-\-remote\-skip\-tls\fP[=false]
+    If set to true, skips TLS check when connecting to the registry
+
+.PP
+\fB\-\-remote\-username\fP=""
+    A username to pass to the registry for basic auth. Must be used with \-\-remote\-password
 
 .PP
 \fB\-s\fP, \fB\-\-serviceaccount\fP=""
@@ -116,8 +136,15 @@ tkn task start foo \-s ServiceAccountName \-n bar
 .RE
 
 .PP
-The Task can either be specified by reference in a cluster using the positional argument
-or in a file using the \-\-filename argument.
+The Task can either be specified by reference in a cluster using the positional argument,
+an oci bundle using the \-\-image argument and the positional argument or in a file using the \-\-filename argument
+
+.PP
+Authentication:
+    There are three ways to authenticate against your registry when using the \-\-image argument.
+    1. By default, your docker.config in your home directory and podman's auth.json are used.
+    2. Additionally, you can supply a Bearer Token via \-\-remote\-bearer
+    3. Additionally, you can use Basic auth via \-\-remote\-username and \-\-remote\-password
 
 .PP
 For params values, if you want to provide multiple values, provide them comma separated
