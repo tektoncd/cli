@@ -177,6 +177,7 @@ github.com/Microsoft/hcsshim v0.8.14/go.mod h1:NtVKoYxQuTLx6gEq0L96c9Ju4JbRJ4nY2
 github.com/Microsoft/hcsshim v0.8.15/go.mod h1:x38A4YbHbdxJtc0sF6oIz+RG0npwSCAvn69iY6URG00=
 github.com/Microsoft/hcsshim v0.8.16/go.mod h1:o5/SZqmR7x9JNKsW3pu+nqHm0MF8vbA+VxGOoXdC600=
 github.com/Microsoft/hcsshim v0.8.23/go.mod h1:4zegtUJth7lAvFyc6cH2gGQ5B3OFQim01nnU2M8jKDg=
+github.com/Microsoft/hcsshim v0.11.0 h1:7EFNIY4igHEXUdj1zXgAyU3fLc7QfOKHbkldRVTBdiM=
 github.com/Microsoft/hcsshim/test v0.0.0-20201218223536-d3e5debf77da/go.mod h1:5hlzMzRKMLyo42nCZ9oml8AdTlq/0cvIaBv6tK1RehU=
 github.com/Microsoft/hcsshim/test v0.0.0-20210227013316-43a75bb4edd3/go.mod h1:mw7qgWloBUl75W/gVH3cQszUg1+gUITj7D6NY7ywVnY=
 github.com/NYTimes/gziphandler v0.0.0-20170623195520-56545f4a5d46/go.mod h1:3wb06e3pkSAbeQ52E9H9iFoQsEEwGN64994WTCIhntQ=
@@ -478,7 +479,7 @@ github.com/containerd/containerd v1.5.0-beta.4/go.mod h1:GmdgZd2zA2GYIBZ0w09Zvgq
 github.com/containerd/containerd v1.5.0-rc.0/go.mod h1:V/IXoMqNGgBlabz3tHD2TWDoTJseu1FGOKuoA4nNb2s=
 github.com/containerd/containerd v1.5.8/go.mod h1:YdFSv5bTFLpG2HIYmfqDpSYYTDX+mc5qtSuYx1YUb/s=
 github.com/containerd/containerd v1.5.9/go.mod h1:fvQqCfadDGga5HZyn3j4+dx56qj2I9YwBrlSdalvJYQ=
-github.com/containerd/containerd v1.7.3 h1:cKwYKkP1eTj54bP3wCdXXBymmKRQMrWjkLSWZZJDa8o=
+github.com/containerd/containerd v1.7.6 h1:oNAVsnhPoy4BTPQivLgTzI9Oleml9l/+eYIDYXRCYo8=
 github.com/containerd/continuity v0.0.0-20190426062206-aaeac12a7ffc/go.mod h1:GL3xCUCBDV3CZiTSEKksMWbLE66hEyuu9qyDOOqM47Y=
 github.com/containerd/continuity v0.0.0-20190815185530-f2a389ac0a02/go.mod h1:GL3xCUCBDV3CZiTSEKksMWbLE66hEyuu9qyDOOqM47Y=
 github.com/containerd/continuity v0.0.0-20191127005431-f65d91d395eb/go.mod h1:GL3xCUCBDV3CZiTSEKksMWbLE66hEyuu9qyDOOqM47Y=
@@ -1209,7 +1210,7 @@ github.com/jedisct1/go-minisign v0.0.0-20211028175153-1c139d1cc84b h1:ZGiXF8sz7P
 github.com/jedisct1/go-minisign v0.0.0-20211028175153-1c139d1cc84b/go.mod h1:hQmNrgofl+IY/8L+n20H6E6PWBBTokdsv+q49j0QhsU=
 github.com/jellydator/ttlcache/v3 v3.1.0 h1:0gPFG0IHHP6xyUyXq+JaD8fwkDCqgqwohXNJBcYE71g=
 github.com/jellydator/ttlcache/v3 v3.1.0/go.mod h1:hi7MGFdMAwZna5n2tuvh63DvFLzVKySzCVW6+0gA2n4=
-github.com/jenkins-x/go-scm v1.13.13 h1:QEUDWwaLMMGuf8b82SUR8AZpXETEu9U5J7eC4fU7HSM=
+github.com/jenkins-x/go-scm v1.14.14 h1:a4c3z4+FVPMWMl59hgdLZNbnbc0Z0/Ln6fHXS0hLAyY=
 github.com/jessevdk/go-flags v1.4.0/go.mod h1:4FA24M0QyGHXBuZZK/XkWh8h0e1EYbRYJSGM75WSRxI=
 github.com/jgautheron/goconst v1.5.1/go.mod h1:aAosetZ5zaeC/2EfMeRswtxUFBpe2Hr7HzkgX4fanO4=
 github.com/jhump/protoreflect v1.6.1/go.mod h1:RZQ/lnuN+zqeRVpQigTwO6o0AJUkxbnSnpuG7toUTG4=
@@ -1781,7 +1782,7 @@ github.com/spf13/viper v1.16.0 h1:rGGH0XDZhdUOryiDWjmIvUSWpbNqisK8Wk0Vyefw8hc=
 github.com/spf13/viper v1.16.0/go.mod h1:yg78JgCJcbrQOvV9YLXgkLaZqUidkY9K+Dd1FofRzQg=
 github.com/spiffe/go-spiffe/v2 v2.1.6 h1:4SdizuQieFyL9eNU+SPiCArH4kynzaKOOj0VvM8R7Xo=
 github.com/spiffe/go-spiffe/v2 v2.1.6/go.mod h1:eVDqm9xFvyqao6C+eQensb9ZPkyNEeaUbqbBpOhBnNk=
-github.com/spiffe/spire-api-sdk v1.7.1 h1:i/X23zWJtk8G6gy1QYXkWBldruAzRdzxH6icgjMJjUs=
+github.com/spiffe/spire-api-sdk v1.7.2 h1:F4rdMnEVBHZYxttXAEER5Rhs2Mm9ugn4S5j1tWpDHnQ=
 github.com/sqs/goreturns v0.0.0-20181028201513-538ac6014518/go.mod h1:CKI4AZ4XmGV240rTHfO0hfE83S6/a3/Q1siZJ/vXf7A=
 github.com/ssgreg/nlreturn/v2 v2.2.1/go.mod h1:E/iiPB78hV7Szg2YfRgyIrk1AD6JVMTRkkxBiELzh2I=
 github.com/stefanberger/go-pkcs11uri v0.0.0-20201008174630-78d3cae3a980/go.mod h1:AO3tvPzVZ/ayst6UlUKUv6rcPQInYe3IknH3jYhAKu8=
@@ -1827,8 +1828,8 @@ github.com/tektoncd/chains v0.18.0 h1:ObN5b4W8YFSpl2P4MBvxkDtp/atJlfVjBdqBWG4hjW
 github.com/tektoncd/chains v0.18.0/go.mod h1:9JYn5Ak+1V+unvDDIgIPyswa7Zxm7QyEoeuKxzVZ7YI=
 github.com/tektoncd/hub v1.14.0 h1:H41drEhEsGTCxpZCskLjkTw2xSQTZZvNitcjCLj2Tjk=
 github.com/tektoncd/hub v1.14.0/go.mod h1:/usZ9mFUEIzgT4VOoQ7jxT6EOfwLkL+NI2gwPXVAU4w=
-github.com/tektoncd/pipeline v0.51.0 h1:n2i/AJPXkTwcv9uc9xRJCtMeAHF1c1NkF7cNQ5zEf+0=
-github.com/tektoncd/pipeline v0.51.0/go.mod h1:P9xePA0fqYIhaw4fllmX2LtMneyWqj60EjsZp5qqq9U=
+github.com/tektoncd/pipeline v0.52.0 h1:R5SLf4wQYc2eCVQh1UyCNbPTDdIUQz5MisyBRngQ068=
+github.com/tektoncd/pipeline v0.52.0/go.mod h1:27wryvb8VIPIZ2u5evUphOPgM8Z7hGgzp00E8/3DCls=
 github.com/tektoncd/plumbing v0.0.0-20230907180608-5625252a2de1 h1:9paprRIBXQgcvdhGq3wKiSspXP0JIFSY52ru3sIMjKM=
 github.com/tektoncd/plumbing v0.0.0-20230907180608-5625252a2de1/go.mod h1:7eWs1XNkmReggow7ggRbRyRuHi7646B8b2XipCZ3VOw=
 github.com/tektoncd/triggers v0.25.0 h1:HaHZ0w8RpeIvB/7DoIZz+KhIOAVzPiFIPZOrDtvEPbM=
@@ -1996,6 +1997,7 @@ go.opentelemetry.io/contrib/instrumentation/net/http/otelhttp v0.20.0/go.mod h1:
 go.opentelemetry.io/otel v0.20.0/go.mod h1:Y3ugLH2oa81t5QO+Lty+zXf8zC9L26ax4Nzoxm/dooo=
 go.opentelemetry.io/otel v1.16.0 h1:Z7GVAX/UkAXPKsy94IU+i6thsQS4nb7LviLpnaNeW8s=
 go.opentelemetry.io/otel v1.16.0/go.mod h1:vl0h9NUa1D5s1nv3A5vZOYWn8av4K8Ml6JDeHrT/bx4=
+go.opentelemetry.io/otel/exporters/jaeger v1.16.0 h1:YhxxmXZ011C0aDZKoNw+juVWAmEfv/0W2XBOv9aHTaA=
 go.opentelemetry.io/otel/exporters/otlp v0.20.0/go.mod h1:YIieizyaN77rtLJra0buKiNBOm9XQfkPEKBeuhoMwAM=
 go.opentelemetry.io/otel/metric v0.20.0/go.mod h1:598I5tYlH1vzBjn+BTuhzTCSb/9debfNp6R3s7Pr1eU=
 go.opentelemetry.io/otel/metric v1.16.0 h1:RbrpwVG1Hfv85LgnZ7+txXioPDoh6EdbZHo26Q3hqOo=
