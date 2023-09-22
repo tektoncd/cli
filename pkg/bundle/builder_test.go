@@ -6,6 +6,8 @@ import (
 	"errors"
 	"fmt"
 	"io"
+	"math/rand"
+	"sort"
 	"testing"
 
 	"github.com/google/go-cmp/cmp"
@@ -213,4 +215,67 @@ func TestTooManyInBundle(t *testing.T) {
 	if err == nil {
 		t.Errorf("expected error: %v", toManyObjErr)
 	}
+}
+
+func TestDeterministicLayers(t *testing.T) {
+	contents := []string{
+		`apiVersion: tekton.dev/v1
+kind: Task
+metadata:
+  name: task1
+spec:
+  description: task1
+`,
+		`apiVersion: tekton.dev/v1
+kind: Task
+metadata:
+  name: task2
+spec:
+  description: task2
+`,
+		`apiVersion: tekton.dev/v1
+kind: Task
+metadata:
+  name: task3
+spec:
+  description: task3
+`,
+	}
+
+	// shuffle the contents
+	sort.Slice(contents, func(i, j int) bool {
+		return rand.Intn(2) == 0
+	})
+
+	t.Log(contents)
+
+	img, err := BuildTektonBundle(contents, nil, &bytes.Buffer{})
+	if err != nil {
+		t.Errorf("unexpected error: %v", err)
+	}
+
+	layers, err := img.Layers()
+	if err != nil {
+		t.Errorf("unexpected error: %v", err)
+	}
+
+	if l := len(layers); l != 3 {
+		t.Errorf("expecting 3 layers got: %d", l)
+	}
+
+	compare := func(n int, expected string) {
+		digest, err := layers[n].Digest()
+		if err != nil {
+			t.Errorf("unexpected error: %v", err)
+		}
+
+		got := digest.String()
+		if got != expected {
+			t.Errorf("unexpected digest for layer %d: %s, expecting %s", n, got, expected)
+		}
+	}
+
+	compare(0, "sha256:561b99bf08733028cbc799caf7f8b74e1f633d3acb7c6d25d880bae4b32cd0b5")
+	compare(1, "sha256:bd941a3b5d1618820ba5283fd0dd4138379fef0e927864d35629cfdc1bdd2f3f")
+	compare(2, "sha256:751deb7e696b6a4f30a2e23f25f97a886cbff22fe832a0c7ed956598ec489f58")
 }

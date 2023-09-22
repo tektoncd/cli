@@ -3,9 +3,11 @@ package bundle
 import (
 	"archive/tar"
 	"bytes"
+	"crypto/sha256"
 	"errors"
 	"fmt"
 	"io"
+	"sort"
 	"strings"
 	"time"
 
@@ -29,6 +31,15 @@ func BuildTektonBundle(contents []string, annotations map[string]string, log io.
 	}
 
 	fmt.Fprint(log, "Creating Tekton Bundle:\n")
+
+	// sort the contens based on the digest of the content, this keeps the layer
+	// order in the image manifest deterministic
+	sort.Slice(contents, func(i, j int) bool {
+		iDigest := sha256.Sum256([]byte(contents[i]))
+		jDigest := sha256.Sum256([]byte(contents[j]))
+
+		return bytes.Compare(iDigest[:], jDigest[:]) < 0
+	})
 
 	// For each block of input, attempt to parse all of the YAML/JSON objects as Tekton objects and compress them into
 	// the OCI image as a tar layer.

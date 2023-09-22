@@ -47,15 +47,15 @@ func TestListCommand(t *testing.T) {
 		{
 			name:           "no-format",
 			format:         "",
-			expectedStdout: "*Warning*: This is an experimental command, it's usage and behavior can change in the next release(s)\ntask.tekton.dev/foobar\npipeline.tekton.dev/foobar\n",
+			expectedStdout: "*Warning*: This is an experimental command, it's usage and behavior can change in the next release(s)\npipeline.tekton.dev/foobar\ntask.tekton.dev/foobar\n",
 		}, {
 			name:           "name-format",
 			format:         "name",
-			expectedStdout: "*Warning*: This is an experimental command, it's usage and behavior can change in the next release(s)\ntask.tekton.dev/foobar\npipeline.tekton.dev/foobar\n",
+			expectedStdout: "*Warning*: This is an experimental command, it's usage and behavior can change in the next release(s)\npipeline.tekton.dev/foobar\ntask.tekton.dev/foobar\n",
 		}, {
 			name:           "yaml-format",
 			format:         "yaml",
-			expectedStdout: "*Warning*: This is an experimental command, it's usage and behavior can change in the next release(s)\n" + examplePullTask + examplePullPipeline,
+			expectedStdout: "*Warning*: This is an experimental command, it's usage and behavior can change in the next release(s)\n" + examplePullPipeline + examplePullTask,
 		}, {
 			name:           "specify-kind-task",
 			format:         "name",
