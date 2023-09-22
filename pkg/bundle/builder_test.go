@@ -9,6 +9,7 @@ import (
 	"math/rand"
 	"sort"
 	"testing"
+	"time"
 
 	"github.com/google/go-cmp/cmp"
 	"github.com/tektoncd/pipeline/pkg/apis/pipeline/v1beta1"
@@ -17,6 +18,37 @@ import (
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"sigs.k8s.io/yaml"
 )
+
+var threeTasks = []string{
+	`apiVersion: tekton.dev/v1
+kind: Task
+metadata:
+  name: task1
+spec:
+  description: task1
+`,
+	`apiVersion: tekton.dev/v1
+kind: Task
+metadata:
+  name: task2
+spec:
+  description: task2
+`,
+	`apiVersion: tekton.dev/v1
+kind: Task
+metadata:
+  name: task3
+spec:
+  description: task3
+`,
+}
+
+func init() {
+	// shuffle the test tasks
+	sort.Slice(threeTasks, func(i, j int) bool {
+		return rand.Intn(2) == 0
+	})
+}
 
 // Note, that for this test we are only using one object type to precisely test the image contents. The
 // #TestDecodeFromRaw tests the general parsing logic.
@@ -37,7 +69,7 @@ func TestBuildTektonBundle(t *testing.T) {
 	}
 
 	annotations := map[string]string{"org.opencontainers.image.license": "Apache-2.0", "org.opencontainers.image.url": "https://example.org"}
-	img, err := BuildTektonBundle([]string{string(raw)}, annotations, &bytes.Buffer{})
+	img, err := BuildTektonBundle([]string{string(raw)}, annotations, time.Now(), &bytes.Buffer{})
 	if err != nil {
 		t.Error(err)
 	}
@@ -131,7 +163,7 @@ func TestBadObj(t *testing.T) {
 		t.Error(err)
 		return
 	}
-	_, err = BuildTektonBundle([]string{string(raw)}, nil, &bytes.Buffer{})
+	_, err = BuildTektonBundle([]string{string(raw)}, nil, time.Now(), &bytes.Buffer{})
 	noNameErr := errors.New("kubernetes resources should have a name")
 	if err == nil {
 		t.Errorf("expected error: %v", noNameErr)
@@ -154,7 +186,7 @@ func TestLessThenMaxBundle(t *testing.T) {
 		return
 	}
 	// no error for less then max
-	_, err = BuildTektonBundle([]string{string(raw)}, nil, &bytes.Buffer{})
+	_, err = BuildTektonBundle([]string{string(raw)}, nil, time.Now(), &bytes.Buffer{})
 	if err != nil {
 		t.Error(err)
 	}
@@ -182,7 +214,7 @@ func TestJustEnoughBundleSize(t *testing.T) {
 		justEnoughObj = append(justEnoughObj, string(raw))
 	}
 	// no error for the max
-	_, err := BuildTektonBundle(justEnoughObj, nil, &bytes.Buffer{})
+	_, err := BuildTektonBundle(justEnoughObj, nil, time.Now(), &bytes.Buffer{})
 	if err != nil {
 		t.Error(err)
 	}
@@ -211,45 +243,14 @@ func TestTooManyInBundle(t *testing.T) {
 	}
 
 	// expect error when we hit the max
-	_, err := BuildTektonBundle(toMuchObj, nil, &bytes.Buffer{})
+	_, err := BuildTektonBundle(toMuchObj, nil, time.Now(), &bytes.Buffer{})
 	if err == nil {
 		t.Errorf("expected error: %v", toManyObjErr)
 	}
 }
 
 func TestDeterministicLayers(t *testing.T) {
-	contents := []string{
-		`apiVersion: tekton.dev/v1
-kind: Task
-metadata:
-  name: task1
-spec:
-  description: task1
-`,
-		`apiVersion: tekton.dev/v1
-kind: Task
-metadata:
-  name: task2
-spec:
-  description: task2
-`,
-		`apiVersion: tekton.dev/v1
-kind: Task
-metadata:
-  name: task3
-spec:
-  description: task3
-`,
-	}
-
-	// shuffle the contents
-	sort.Slice(contents, func(i, j int) bool {
-		return rand.Intn(2) == 0
-	})
-
-	t.Log(contents)
-
-	img, err := BuildTektonBundle(contents, nil, &bytes.Buffer{})
+	img, err := BuildTektonBundle(threeTasks, nil, time.Now(), &bytes.Buffer{})
 	if err != nil {
 		t.Errorf("unexpected error: %v", err)
 	}
@@ -278,4 +279,20 @@ spec:
 	compare(0, "sha256:561b99bf08733028cbc799caf7f8b74e1f633d3acb7c6d25d880bae4b32cd0b5")
 	compare(1, "sha256:bd941a3b5d1618820ba5283fd0dd4138379fef0e927864d35629cfdc1bdd2f3f")
 	compare(2, "sha256:751deb7e696b6a4f30a2e23f25f97a886cbff22fe832a0c7ed956598ec489f58")
+}
+
+func TestDeterministicManifest(t *testing.T) {
+	img, err := BuildTektonBundle(threeTasks, nil, time.Time{}, &bytes.Buffer{})
+	if err != nil {
+		t.Errorf("unexpected error: %v", err)
+	}
+
+	digest, err := img.Digest()
+	if err != nil {
+		t.Errorf("unexpected error: %v", err)
+	}
+
+	if expected, got := "sha256:7a4f604555b84cdb06cbfebda3fb599cd7485ef2c9c9375ab589f192a3addb4c", digest.String(); expected != got {
+		t.Errorf("unexpected image digest: %s, expecting %s", got, expected)
+	}
 }

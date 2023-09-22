@@ -17,6 +17,7 @@ import (
 	"fmt"
 	"io"
 	"os"
+	"time"
 
 	"github.com/google/go-containerregistry/pkg/name"
 	"github.com/spf13/cobra"
@@ -34,6 +35,7 @@ type pushOptions struct {
 	remoteOptions      bundle.RemoteOptions
 	annotationParams   []string
 	annotations        map[string]string
+	ctime              time.Time
 }
 
 func pushCommand(_ cli.Params) *cobra.Command {
@@ -55,6 +57,8 @@ Input:
 	Valid input in any form is valid Tekton YAML or JSON with a fully-specified "apiVersion" and "kind". To pass multiple objects in a single input, use "---" separators in YAML or a top-level "[]" in JSON.
 `
 
+	var ctime string
+
 	c := &cobra.Command{
 		Use:   "push",
 		Short: "Create or replace a Tekton bundle",
@@ -69,8 +73,16 @@ Input:
 				return errInvalidRef
 			}
 
-			_, err := name.ParseReference(args[0], name.StrictValidation, name.Insecure)
-			return err
+			if _, err := name.ParseReference(args[0], name.StrictValidation, name.Insecure); err != nil {
+				return err
+			}
+
+			var err error
+			if opts.ctime, err = parseTime(ctime); err != nil {
+				return err
+			}
+
+			return nil
 		},
 		RunE: func(cmd *cobra.Command, args []string) error {
 			opts.stream = &cli.Stream{
@@ -84,6 +96,7 @@ Input:
 	}
 	c.Flags().StringSliceVarP(&opts.bundleContentPaths, "filenames", "f", []string{}, "List of fully-qualified file paths containing YAML or JSON defined Tekton objects to include in this bundle")
 	c.Flags().StringSliceVarP(&opts.annotationParams, "annotate", "", []string{}, "OCI Manifest annotation in the form of key=value to be added to the OCI image. Can be provided multiple times to add multiple annotations.")
+	c.Flags().StringVar(&ctime, "ctime", "", "YYYY-MM-DD, YYYY-MM-DDTHH:MM:SS or RFC3339 formatted created time to set, defaults to current time. In non RFC3339 syntax dates are in UTC timezone.")
 	bundle.AddRemoteFlags(c.Flags(), &opts.remoteOptions)
 
 	return c
@@ -124,7 +137,7 @@ func (p *pushOptions) Run(args []string) error {
 		return err
 	}
 
-	img, err := bundle.BuildTektonBundle(p.bundleContents, p.annotations, p.stream.Out)
+	img, err := bundle.BuildTektonBundle(p.bundleContents, p.annotations, p.ctime, p.stream.Out)
 	if err != nil {
 		return err
 	}
@@ -135,4 +148,29 @@ func (p *pushOptions) Run(args []string) error {
 	}
 	fmt.Fprintf(p.stream.Out, "\nPushed Tekton Bundle to %s\n", outputDigest)
 	return err
+}
+
+// to help with testing
+var now = time.Now
+
+func parseTime(t string) (parsed time.Time, err error) {
+	if t == "" {
+		return now(), nil
+	}
+
+	parsed, err = time.Parse(time.DateOnly, t)
+
+	if err != nil {
+		parsed, err = time.Parse("2006-01-02T15:04:05", t)
+	}
+
+	if err != nil {
+		parsed, err = time.Parse(time.RFC3339, t)
+	}
+
+	if err != nil {
+		return parsed, fmt.Errorf("unable to parse provided time %q: %w", t, err)
+	}
+
+	return parsed, nil
 }

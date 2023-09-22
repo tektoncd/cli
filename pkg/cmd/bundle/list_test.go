@@ -6,6 +6,7 @@ import (
 	"net/http/httptest"
 	"net/url"
 	"testing"
+	"time"
 
 	"github.com/google/go-containerregistry/pkg/name"
 	"github.com/google/go-containerregistry/pkg/registry"
@@ -104,7 +105,7 @@ func TestListCommand(t *testing.T) {
 				t.Fatal(err)
 			}
 
-			img, err := bundle.BuildTektonBundle([]string{examplePullTask, examplePullPipeline}, nil, &bytes.Buffer{})
+			img, err := bundle.BuildTektonBundle([]string{examplePullTask, examplePullPipeline}, nil, time.Now(), &bytes.Buffer{})
 			if err != nil {
 				t.Fatal(err)
 			}
