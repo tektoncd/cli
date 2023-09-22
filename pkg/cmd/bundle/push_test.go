@@ -10,6 +10,7 @@ import (
 	"os"
 	"path"
 	"testing"
+	"time"
 
 	"github.com/google/go-cmp/cmp"
 	"github.com/google/go-containerregistry/pkg/registry"
@@ -57,6 +58,7 @@ func TestPushCommand(t *testing.T) {
 		annotations         []string
 		expectedContents    map[string]expected
 		expectedAnnotations map[string]string
+		ctime               time.Time
 	}{
 		{
 			name: "single-input",
@@ -84,6 +86,14 @@ func TestPushCommand(t *testing.T) {
 				"org.opencontainers.image.license": "Apache-2.0",
 				"org.opencontainers.image.url":     "https://example.org",
 			},
+		},
+		{
+			name: "with-ctime",
+			files: map[string]string{
+				"simple.yaml": exampleTask,
+			},
+			expectedContents: map[string]expected{exampleTaskExpected.name: exampleTaskExpected},
+			ctime:            time.Now(),
 		},
 	}
 
@@ -128,6 +138,7 @@ func TestPushCommand(t *testing.T) {
 				bundleContentPaths: paths,
 				annotationParams:   tc.annotations,
 				remoteOptions:      bundle.RemoteOptions{},
+				ctime:              tc.ctime,
 			}
 			if err := opts.Run([]string{ref}); err != nil {
 				t.Errorf("Unexpected failure calling run: %v", err)
@@ -142,6 +153,14 @@ func TestPushCommand(t *testing.T) {
 			manifest, err := img.Manifest()
 			if err != nil {
 				t.Fatal(err)
+			}
+
+			config, err := img.ConfigFile()
+			if err != nil {
+				t.Fatal(err)
+			}
+			if config.Created.Time.Unix() != tc.ctime.Unix() {
+				t.Errorf("Expected created time to be %s, but it was %s", tc.ctime, config.Created.Time)
 			}
 
 			layers, err := img.Layers()
@@ -210,4 +229,41 @@ func readTarLayer(t *testing.T, layer v1.Layer) string {
 		t.Errorf("failed to read tar bundle: %v", err)
 	}
 	return string(contents)
+}
+
+func TestParseTime(t *testing.T) {
+	now = func() time.Time {
+		return time.Date(2023, 9, 22, 1, 2, 3, 0, time.UTC)
+	}
+
+	cases := []struct {
+		name     string
+		given    string
+		err      string
+		expected time.Time
+	}{
+		{name: "now", expected: now()},
+		{name: "date", given: "2023-09-22", expected: time.Date(2023, 9, 22, 0, 0, 0, 0, time.UTC)},
+		{name: "date and time", given: "2023-09-22T01:02:03", expected: time.Date(2023, 9, 22, 1, 2, 3, 0, time.UTC)},
+		{name: "utc with fraction", given: "2023-09-22T01:02:03.45Z", expected: time.Date(2023, 9, 22, 1, 2, 3, 45, time.UTC)},
+		{name: "full", given: "2023-09-22T01:02:03+04:30", expected: time.Date(2023, 9, 22, 1, 2, 3, 0, time.FixedZone("", 16200))},
+	}
+
+	for _, c := range cases {
+		t.Run(c.name, func(t *testing.T) {
+			got, err := parseTime(c.given)
+
+			if err != nil {
+				if err.Error() != c.err {
+					t.Errorf("expected error %q, got %q", c.err, err)
+				} else {
+					t.Fatalf("unexpected error: %v", err)
+				}
+			}
+
+			if got.Unix() != c.expected.Unix() {
+				t.Errorf("expected parsed time to be %s, got %s", c.expected, got)
+			}
+		})
+	}
 }

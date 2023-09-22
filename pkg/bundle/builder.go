@@ -23,7 +23,7 @@ import (
 
 // BuildTektonBundle will return a complete OCI Image usable as a Tekton Bundle built by parsing, decoding, and
 // compressing the provided contents as Tekton objects.
-func BuildTektonBundle(contents []string, annotations map[string]string, log io.Writer) (v1.Image, error) {
+func BuildTektonBundle(contents []string, annotations map[string]string, ctime time.Time, log io.Writer) (v1.Image, error) {
 	img := mutate.Annotations(empty.Image, annotations).(v1.Image)
 
 	if len(contents) > tkremote.MaximumBundleObjects {
@@ -32,7 +32,7 @@ func BuildTektonBundle(contents []string, annotations map[string]string, log io.
 
 	fmt.Fprint(log, "Creating Tekton Bundle:\n")
 
-	// sort the contens based on the digest of the content, this keeps the layer
+	// sort the contents based on the digest of the content, this keeps the layer
 	// order in the image manifest deterministic
 	sort.Slice(contents, func(i, j int) bool {
 		iDigest := sha256.Sum256([]byte(contents[i]))
@@ -96,7 +96,7 @@ func BuildTektonBundle(contents []string, annotations map[string]string, log io.
 	}
 
 	// Set created time for bundle image
-	img, err := mutate.CreatedAt(img, v1.Time{Time: time.Now()})
+	img, err := mutate.CreatedAt(img, v1.Time{Time: ctime})
 	if err != nil {
 		return nil, fmt.Errorf("failed to add created time to image: %w", err)
 	}
