@@ -152,10 +152,10 @@ nix-env --install tektoncd-cli
 ```
 ### Arch / Manjaro
 
-You can install [`tektoncd-cli`](https://archlinux.org/packages/extra/x86_64/tekton-cli/) from the official arch package repository :
+You can install [`tekton-cli`](https://archlinux.org/packages/extra/x86_64/tekton-cli/) from the official arch package repository :
 
 ```shell
-pacman -S tektoncd-cli
+pacman -S tekton-cli
 ```
 
 ### Homebrew on Linux
