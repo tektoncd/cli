@@ -50,6 +50,13 @@ var (
 	}
 )
 
+func init() {
+	// fixed time to ease testing
+	now = func() time.Time {
+		return time.Date(2023, 9, 22, 1, 2, 3, 0, time.UTC)
+	}
+}
+
 func TestPushCommand(t *testing.T) {
 	testcases := []struct {
 		name                string
@@ -58,7 +65,8 @@ func TestPushCommand(t *testing.T) {
 		annotations         []string
 		expectedContents    map[string]expected
 		expectedAnnotations map[string]string
-		ctime               time.Time
+		ctime               string
+		expectedCTime       time.Time
 	}{
 		{
 			name: "single-input",
@@ -66,6 +74,7 @@ func TestPushCommand(t *testing.T) {
 				"simple.yaml": exampleTask,
 			},
 			expectedContents: map[string]expected{exampleTaskExpected.name: exampleTaskExpected},
+			expectedCTime:    now(),
 		},
 		{
 			name: "stdin-input",
@@ -74,6 +83,7 @@ func TestPushCommand(t *testing.T) {
 			},
 			stdin:            exampleTask,
 			expectedContents: map[string]expected{exampleTaskExpected.name: exampleTaskExpected},
+			expectedCTime:    now(),
 		},
 		{
 			name: "with-annotations",
@@ -86,6 +96,7 @@ func TestPushCommand(t *testing.T) {
 				"org.opencontainers.image.license": "Apache-2.0",
 				"org.opencontainers.image.url":     "https://example.org",
 			},
+			expectedCTime: now(),
 		},
 		{
 			name: "with-ctime",
@@ -93,7 +104,8 @@ func TestPushCommand(t *testing.T) {
 				"simple.yaml": exampleTask,
 			},
 			expectedContents: map[string]expected{exampleTaskExpected.name: exampleTaskExpected},
-			ctime:            time.Now(),
+			ctime:            now().Format(time.RFC3339),
+			expectedCTime:    now(),
 		},
 	}
 
@@ -138,7 +150,7 @@ func TestPushCommand(t *testing.T) {
 				bundleContentPaths: paths,
 				annotationParams:   tc.annotations,
 				remoteOptions:      bundle.RemoteOptions{},
-				ctime:              tc.ctime,
+				ctimeParam:         tc.ctime,
 			}
 			if err := opts.Run([]string{ref}); err != nil {
 				t.Errorf("Unexpected failure calling run: %v", err)
@@ -159,8 +171,8 @@ func TestPushCommand(t *testing.T) {
 			if err != nil {
 				t.Fatal(err)
 			}
-			if config.Created.Time.Unix() != tc.ctime.Unix() {
-				t.Errorf("Expected created time to be %s, but it was %s", tc.ctime, config.Created.Time)
+			if config.Created.Time.Unix() != tc.expectedCTime.Unix() {
+				t.Errorf("Expected created time to be %s, but it was %s", tc.expectedCTime, config.Created.Time)
 			}
 
 			layers, err := img.Layers()
@@ -232,10 +244,6 @@ func readTarLayer(t *testing.T, layer v1.Layer) string {
 }
 
 func TestParseTime(t *testing.T) {
-	now = func() time.Time {
-		return time.Date(2023, 9, 22, 1, 2, 3, 0, time.UTC)
-	}
-
 	cases := []struct {
 		name     string
 		given    string
@@ -263,6 +271,45 @@ func TestParseTime(t *testing.T) {
 
 			if got.Unix() != c.expected.Unix() {
 				t.Errorf("expected parsed time to be %s, got %s", c.expected, got)
+			}
+		})
+	}
+}
+
+func TestPreRunE(t *testing.T) {
+	cases := []struct {
+		name  string
+		args  []string
+		ctime time.Time
+		err   string
+	}{
+		{
+			name: "valid reference",
+			args: []string{"registry.io/repository:tag"},
+		},
+		{
+			name: "invalid reference",
+			args: []string{"registry.io/repository"},
+			err:  "could not parse reference: registry.io/repository",
+		},
+		{
+			name: "no reference",
+			args: []string{},
+			err:  errInvalidRef.Error(),
+		},
+	}
+
+	for _, c := range cases {
+		t.Run(c.name, func(t *testing.T) {
+			p := cli.TektonParams{}
+			cmd := pushCommand(&p)
+
+			if err := cmd.PreRunE(cmd, c.args); err != nil {
+				if err.Error() != c.err {
+					t.Errorf("unexpected error, expecting %q, got: %q", c.err, err)
+				}
+			} else if c.err != "" {
+				t.Errorf("expected an error %q", c.err)
 			}
 		})
 	}

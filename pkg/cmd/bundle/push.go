@@ -35,6 +35,7 @@ type pushOptions struct {
 	remoteOptions      bundle.RemoteOptions
 	annotationParams   []string
 	annotations        map[string]string
+	ctimeParam         string
 	ctime              time.Time
 }
 
@@ -57,8 +58,6 @@ Input:
 	Valid input in any form is valid Tekton YAML or JSON with a fully-specified "apiVersion" and "kind". To pass multiple objects in a single input, use "---" separators in YAML or a top-level "[]" in JSON.
 `
 
-	var ctime string
-
 	c := &cobra.Command{
 		Use:   "push",
 		Short: "Create or replace a Tekton bundle",
@@ -77,11 +76,6 @@ Input:
 				return err
 			}
 
-			var err error
-			if opts.ctime, err = parseTime(ctime); err != nil {
-				return err
-			}
-
 			return nil
 		},
 		RunE: func(cmd *cobra.Command, args []string) error {
@@ -96,7 +90,7 @@ Input:
 	}
 	c.Flags().StringSliceVarP(&opts.bundleContentPaths, "filenames", "f", []string{}, "List of fully-qualified file paths containing YAML or JSON defined Tekton objects to include in this bundle")
 	c.Flags().StringSliceVarP(&opts.annotationParams, "annotate", "", []string{}, "OCI Manifest annotation in the form of key=value to be added to the OCI image. Can be provided multiple times to add multiple annotations.")
-	c.Flags().StringVar(&ctime, "ctime", "", "YYYY-MM-DD, YYYY-MM-DDTHH:MM:SS or RFC3339 formatted created time to set, defaults to current time. In non RFC3339 syntax dates are in UTC timezone.")
+	c.Flags().StringVar(&opts.ctimeParam, "ctime", "", "YYYY-MM-DD, YYYY-MM-DDTHH:MM:SS or RFC3339 formatted created time to set, defaults to current time. In non RFC3339 syntax dates are in UTC timezone.")
 	bundle.AddRemoteFlags(c.Flags(), &opts.remoteOptions)
 
 	return c
@@ -126,9 +120,15 @@ func (p *pushOptions) parseArgsAndFlags(args []string) (err error) {
 		p.bundleContents = append(p.bundleContents, string(contents))
 	}
 
-	p.annotations, err = params.ParseParams(p.annotationParams)
+	if p.annotations, err = params.ParseParams(p.annotationParams); err != nil {
+		return err
+	}
 
-	return err
+	if p.ctime, err = parseTime(p.ctimeParam); err != nil {
+		return err
+	}
+
+	return nil
 }
 
 // Run performs the principal logic of reading and parsing the input, creating the bundle, and publishing it.
