@@ -92,7 +92,7 @@ check: lint test
 test: test-unit ## run all tests
 
 .PHONY: lint
-lint: lint-go lint-yaml ## run all linters
+lint: lint-go goimports lint-yaml  ## run all linters
 
 GOLANGCILINT = $(BIN)/golangci-lint
 $(BIN)/golangci-lint: ; $(info $(M) getting golangci-lint $(GOLANGCI_VERSION))
@@ -104,12 +104,13 @@ lint-go: | $(GOLANGCILINT) ; $(info $(M) running golangci-lint…) @ ## Run gola
 	@rm -f $(GOLANGCILINT)
 
 GOIMPORTS = $(BIN)/goimports
-$(BIN)/goimports: PACKAGE=golang.org/x/tools/cmd/goimports
+$(GOIMPORTS): ; $(info $(M) getting goimports )
+	GOBIN=$(BIN) $(GO) install -mod=mod golang.org/x/tools/cmd/goimports
 
 .PHONY: goimports
 goimports: | $(GOIMPORTS) ; $(info $(M) running goimports…) ## Run goimports
 	$Q $(GOIMPORTS) -l -e -w pkg cmd test
-
+	@rm -f $(GOIMPORTS)
 
 .PHONY: lint-yaml
 lint-yaml: ${YAML_FILES}  ; $(info $(M) running yamllint…) ## runs yamllint on all yaml files
