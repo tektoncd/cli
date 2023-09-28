@@ -14,9 +14,11 @@
 package bundle
 
 import (
+	"errors"
 	"fmt"
 	"io"
 	"os"
+	"strconv"
 	"time"
 
 	"github.com/google/go-containerregistry/pkg/name"
@@ -25,6 +27,8 @@ import (
 	"github.com/tektoncd/cli/pkg/cli"
 	"github.com/tektoncd/cli/pkg/params"
 )
+
+const sourceDateEpochEnv = "SOURCE_DATE_EPOCH"
 
 type pushOptions struct {
 	cliparams          cli.Params
@@ -56,6 +60,9 @@ Authentication:
 
 Input:
 	Valid input in any form is valid Tekton YAML or JSON with a fully-specified "apiVersion" and "kind". To pass multiple objects in a single input, use "---" separators in YAML or a top-level "[]" in JSON.
+
+Created time:
+	Setting created time of the OCI Image Configuration layer can be done by either providing it via --ctime parameter or setting the SOURCE_DATE_EPOCH environment variable.
 `
 
 	c := &cobra.Command{
@@ -106,8 +113,11 @@ func (p *pushOptions) parseArgsAndFlags(args []string) (err error) {
 		if path == "-" {
 			// If this flag's value is '-', assume the user has piped input into stdin.
 			stdinContents, err := io.ReadAll(p.stream.In)
-			if err != nil || len(stdinContents) == 0 {
+			if err != nil {
 				return fmt.Errorf("failed to read bundle contents from stdin: %w", err)
+			}
+			if len(stdinContents) == 0 {
+				return errors.New("failed to read bundle contents from stdin: empty input")
 			}
 			p.bundleContents = append(p.bundleContents, string(stdinContents))
 			continue
@@ -124,7 +134,7 @@ func (p *pushOptions) parseArgsAndFlags(args []string) (err error) {
 		return err
 	}
 
-	if p.ctime, err = parseTime(p.ctimeParam); err != nil {
+	if p.ctime, err = determineCTime(p.ctimeParam); err != nil {
 		return err
 	}
 
@@ -153,7 +163,20 @@ func (p *pushOptions) Run(args []string) error {
 // to help with testing
 var now = time.Now
 
-func parseTime(t string) (parsed time.Time, err error) {
+func determineCTime(t string) (parsed time.Time, err error) {
+	// if given the parameter don't lookup the SOURCE_DATE_EPOCH env var
+	if t == "" {
+		if sourceDateEpoch, found := os.LookupEnv(sourceDateEpochEnv); found && sourceDateEpoch != "" {
+			timestamp, err := strconv.ParseInt(sourceDateEpoch, 10, 64)
+			if err != nil {
+				// rather than ignore, report that SOURCE_DATE_EPOCH cannot be
+				// parsed, given that it is set seems like the best option
+				return time.Time{}, err
+			}
+			return time.Unix(timestamp, 0), nil
+		}
+	}
+
 	if t == "" {
 		return now(), nil
 	}

@@ -111,6 +111,9 @@ func TestPushCommand(t *testing.T) {
 
 	for _, tc := range testcases {
 		t.Run(tc.name, func(t *testing.T) {
+			// remove SOURCE_DATE_EPOCH if set externally
+			t.Setenv("SOURCE_DATE_EPOCH", "")
+
 			s := httptest.NewServer(registry.New())
 			defer s.Close()
 			u, err := url.Parse(s.URL)
@@ -259,7 +262,10 @@ func TestParseTime(t *testing.T) {
 
 	for _, c := range cases {
 		t.Run(c.name, func(t *testing.T) {
-			got, err := parseTime(c.given)
+			// remove SOURCE_DATE_EPOCH if set externally
+			t.Setenv("SOURCE_DATE_EPOCH", "")
+
+			got, err := determineCTime(c.given)
 
 			if err != nil {
 				if err.Error() != c.err {
@@ -310,6 +316,125 @@ func TestPreRunE(t *testing.T) {
 				}
 			} else if c.err != "" {
 				t.Errorf("expected an error %q", c.err)
+			}
+		})
+	}
+}
+
+func TestParseArgsAndFlags(t *testing.T) {
+	cases := []struct {
+		name                string
+		refArg              string
+		bundleContent       map[string]string
+		annotationsParams   []string
+		ctimeParam          string
+		sourceDateEpoch     string
+		expectedRef         string
+		expectedAnnotations map[string]string
+		expectedCTime       time.Time
+		err                 string
+	}{
+		{
+			name:                "default",
+			refArg:              "registry.io/repository:tag",
+			bundleContent:       map[string]string{"task1.yaml": "task1", "task2.yaml": "task2", "-": "stdin"},
+			annotationsParams:   []string{"a=b", "c=d"},
+			expectedRef:         "registry.io/repository:tag",
+			expectedAnnotations: map[string]string{"a": "b", "c": "d"},
+			expectedCTime:       now(),
+		},
+		{
+			name:          "ctime param",
+			refArg:        "registry.io/repository:tag",
+			expectedRef:   "registry.io/repository:tag",
+			ctimeParam:    "1990-01-01",
+			expectedCTime: time.Date(1990, 1, 1, 0, 0, 0, 0, time.UTC),
+		},
+		{
+			name:            "SOURCE_DATE_EPOCH",
+			refArg:          "registry.io/repository:tag",
+			sourceDateEpoch: "315529200",
+			expectedRef:     "registry.io/repository:tag",
+			expectedCTime:   time.Unix(315529200, 0),
+		},
+		{
+			name:          "empty stdin",
+			refArg:        "registry.io/repository:tag",
+			bundleContent: map[string]string{"-": ""},
+			expectedRef:   "registry.io/repository:tag",
+			expectedCTime: now(),
+			err:           "failed to read bundle contents from stdin: empty input",
+		},
+	}
+
+	for _, c := range cases {
+		t.Run(c.name, func(t *testing.T) {
+			dir := t.TempDir()
+
+			expectedContent := make([]string, 0, len(c.bundleContent))
+
+			opts := pushOptions{
+				bundleContentPaths: make([]string, 0, len(c.bundleContent)),
+				annotationParams:   c.annotationsParams,
+				ctimeParam:         c.ctimeParam,
+			}
+
+			if c.sourceDateEpoch != "" {
+				t.Setenv(sourceDateEpochEnv, c.sourceDateEpoch)
+			} else {
+				// remove SOURCE_DATE_EPOCH if set externally
+				t.Setenv("SOURCE_DATE_EPOCH", "")
+			}
+
+			for p, c := range c.bundleContent {
+				name := p
+				content := []byte(c)
+				if name == "-" {
+					opts.stream = &cli.Stream{
+						In: bytes.NewBuffer(content),
+					}
+				} else {
+					name = path.Join(dir, p)
+					if err := os.WriteFile(name, content, 0o400); err != nil {
+						t.Fatalf("unable to write test file: %s", err)
+					}
+				}
+
+				opts.bundleContentPaths = append(opts.bundleContentPaths, name)
+				expectedContent = append(expectedContent, c)
+			}
+
+			if err := opts.parseArgsAndFlags([]string{c.refArg}); err != nil {
+				if err.Error() != c.err {
+					t.Errorf("unexpected error, expecting %q, got: %q", c.err, err)
+				}
+
+				// no need to test any further
+				return
+			} else if c.err != "" {
+				t.Errorf("expected an error %q", c.err)
+			}
+
+			if expected, got := c.expectedRef, opts.ref.String(); expected != got {
+				t.Errorf("expected parsed reference to be %q, but it was %q", expected, got)
+			}
+
+			if expected, got := len(c.bundleContent), len(opts.bundleContents); expected != got {
+				t.Errorf("expected %d files to be read for the bundle, but it was %d", expected, got)
+			}
+
+			for i, expected := range expectedContent {
+				if opts.bundleContents[i] != expected {
+					t.Errorf("bundle content at %d (%q) is not as expected", i, opts.bundleContentPaths[i])
+				}
+			}
+
+			if expected, got := fmt.Sprint(c.expectedAnnotations), fmt.Sprint(opts.annotations); expected != got {
+				t.Errorf("expected annotations %q differ from parsed: %q", expected, got)
+			}
+
+			if expected, got := c.expectedCTime, opts.ctime; expected.Unix() != got.Unix() {
+				t.Errorf("expected ctime %s differs from parsed: %s", expected, got)
 			}
 		})
 	}

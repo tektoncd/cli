@@ -25,6 +25,9 @@ Authentication:
 Input:
 	Valid input in any form is valid Tekton YAML or JSON with a fully-specified "apiVersion" and "kind". To pass multiple objects in a single input, use "---" separators in YAML or a top-level "[]" in JSON.
 
+Created time:
+	Setting created time of the OCI Image Configuration layer can be done by either providing it via --ctime parameter or setting the SOURCE_DATE_EPOCH environment variable.
+
 
 ### Options
 
