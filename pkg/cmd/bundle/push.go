@@ -14,6 +14,7 @@
 package bundle
 
 import (
+	"context"
 	"errors"
 	"fmt"
 	"io"
@@ -22,6 +23,7 @@ import (
 	"time"
 
 	"github.com/google/go-containerregistry/pkg/name"
+	"github.com/jonboulle/clockwork"
 	"github.com/spf13/cobra"
 	"github.com/tektoncd/cli/pkg/bundle"
 	"github.com/tektoncd/cli/pkg/cli"
@@ -92,7 +94,7 @@ Created time:
 				Err: cmd.OutOrStderr(),
 			}
 
-			return opts.Run(args)
+			return opts.Run(cmd.Context(), args)
 		},
 	}
 	c.Flags().StringSliceVarP(&opts.bundleContentPaths, "filenames", "f", []string{}, "List of fully-qualified file paths containing YAML or JSON defined Tekton objects to include in this bundle")
@@ -105,7 +107,7 @@ Created time:
 
 // Reads the positional arguments and the `-f` flag to fill in the `bunldeContents` parameter with all of the raw Tekton
 // contents.
-func (p *pushOptions) parseArgsAndFlags(args []string) (err error) {
+func (p *pushOptions) parseArgsAndFlags(ctx context.Context, args []string) (err error) {
 	p.ref, _ = name.ParseReference(args[0], name.StrictValidation, name.Insecure)
 
 	// If there are file paths specified, then read them and include their contents.
@@ -134,7 +136,7 @@ func (p *pushOptions) parseArgsAndFlags(args []string) (err error) {
 		return err
 	}
 
-	if p.ctime, err = determineCTime(p.ctimeParam); err != nil {
+	if p.ctime, err = determineCTime(p.ctimeParam, clockwork.FromContext(ctx)); err != nil {
 		return err
 	}
 
@@ -142,8 +144,8 @@ func (p *pushOptions) parseArgsAndFlags(args []string) (err error) {
 }
 
 // Run performs the principal logic of reading and parsing the input, creating the bundle, and publishing it.
-func (p *pushOptions) Run(args []string) error {
-	if err := p.parseArgsAndFlags(args); err != nil {
+func (p *pushOptions) Run(ctx context.Context, args []string) error {
+	if err := p.parseArgsAndFlags(ctx, args); err != nil {
 		return err
 	}
 
@@ -160,10 +162,7 @@ func (p *pushOptions) Run(args []string) error {
 	return err
 }
 
-// to help with testing
-var now = time.Now
-
-func determineCTime(t string) (parsed time.Time, err error) {
+func determineCTime(t string, clock clockwork.Clock) (parsed time.Time, err error) {
 	// if given the parameter don't lookup the SOURCE_DATE_EPOCH env var
 	if t == "" {
 		if sourceDateEpoch, found := os.LookupEnv(sourceDateEpochEnv); found && sourceDateEpoch != "" {
@@ -178,7 +177,7 @@ func determineCTime(t string) (parsed time.Time, err error) {
 	}
 
 	if t == "" {
-		return now(), nil
+		return clock.Now(), nil
 	}
 
 	parsed, err = time.Parse(time.DateOnly, t)
