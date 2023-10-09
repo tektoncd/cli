@@ -14,7 +14,6 @@
 package bundle
 
 import (
-	"context"
 	"errors"
 	"fmt"
 	"io"
@@ -23,14 +22,16 @@ import (
 	"time"
 
 	"github.com/google/go-containerregistry/pkg/name"
-	"github.com/jonboulle/clockwork"
 	"github.com/spf13/cobra"
 	"github.com/tektoncd/cli/pkg/bundle"
 	"github.com/tektoncd/cli/pkg/cli"
 	"github.com/tektoncd/cli/pkg/params"
 )
 
-const sourceDateEpochEnv = "SOURCE_DATE_EPOCH"
+const (
+	sourceDateEpochEnv = "SOURCE_DATE_EPOCH"
+	defaultTimestamp   = 0
+)
 
 type pushOptions struct {
 	cliparams          cli.Params
@@ -64,7 +65,7 @@ Input:
 	Valid input in any form is valid Tekton YAML or JSON with a fully-specified "apiVersion" and "kind". To pass multiple objects in a single input, use "---" separators in YAML or a top-level "[]" in JSON.
 
 Created time:
-	Setting created time of the OCI Image Configuration layer can be done by either providing it via --ctime parameter or setting the SOURCE_DATE_EPOCH environment variable.
+	The default created time of the OCI Image Configuration layer is set to 1970-01-01T00:00:00Z. Changing it can be done by either providing it via --ctime parameter or setting the SOURCE_DATE_EPOCH environment variable.
 `
 
 	c := &cobra.Command{
@@ -94,7 +95,7 @@ Created time:
 				Err: cmd.OutOrStderr(),
 			}
 
-			return opts.Run(cmd.Context(), args)
+			return opts.Run(args)
 		},
 	}
 	c.Flags().StringSliceVarP(&opts.bundleContentPaths, "filenames", "f", []string{}, "List of fully-qualified file paths containing YAML or JSON defined Tekton objects to include in this bundle")
@@ -107,7 +108,7 @@ Created time:
 
 // Reads the positional arguments and the `-f` flag to fill in the `bunldeContents` parameter with all of the raw Tekton
 // contents.
-func (p *pushOptions) parseArgsAndFlags(ctx context.Context, args []string) (err error) {
+func (p *pushOptions) parseArgsAndFlags(args []string) (err error) {
 	p.ref, _ = name.ParseReference(args[0], name.StrictValidation, name.Insecure)
 
 	// If there are file paths specified, then read them and include their contents.
@@ -136,7 +137,7 @@ func (p *pushOptions) parseArgsAndFlags(ctx context.Context, args []string) (err
 		return err
 	}
 
-	if p.ctime, err = determineCTime(p.ctimeParam, clockwork.FromContext(ctx)); err != nil {
+	if p.ctime, err = determineCTime(p.ctimeParam); err != nil {
 		return err
 	}
 
@@ -144,8 +145,8 @@ func (p *pushOptions) parseArgsAndFlags(ctx context.Context, args []string) (err
 }
 
 // Run performs the principal logic of reading and parsing the input, creating the bundle, and publishing it.
-func (p *pushOptions) Run(ctx context.Context, args []string) error {
-	if err := p.parseArgsAndFlags(ctx, args); err != nil {
+func (p *pushOptions) Run(args []string) error {
+	if err := p.parseArgsAndFlags(args); err != nil {
 		return err
 	}
 
@@ -162,7 +163,7 @@ func (p *pushOptions) Run(ctx context.Context, args []string) error {
 	return err
 }
 
-func determineCTime(t string, clock clockwork.Clock) (parsed time.Time, err error) {
+func determineCTime(t string) (parsed time.Time, err error) {
 	// if given the parameter don't lookup the SOURCE_DATE_EPOCH env var
 	if t == "" {
 		if sourceDateEpoch, found := os.LookupEnv(sourceDateEpochEnv); found && sourceDateEpoch != "" {
@@ -177,7 +178,7 @@ func determineCTime(t string, clock clockwork.Clock) (parsed time.Time, err erro
 	}
 
 	if t == "" {
-		return clock.Now(), nil
+		return time.Unix(defaultTimestamp, 0), nil
 	}
 
 	parsed, err = time.Parse(time.DateOnly, t)

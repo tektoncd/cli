@@ -3,7 +3,6 @@ package bundle
 import (
 	"archive/tar"
 	"bytes"
-	"context"
 	"fmt"
 	"io"
 	"net/http/httptest"
@@ -17,7 +16,6 @@ import (
 	"github.com/google/go-containerregistry/pkg/registry"
 	v1 "github.com/google/go-containerregistry/pkg/v1"
 	"github.com/google/go-containerregistry/pkg/v1/remote"
-	"github.com/jonboulle/clockwork"
 	"github.com/tektoncd/cli/pkg/bundle"
 	"github.com/tektoncd/cli/pkg/cli"
 	tkremote "github.com/tektoncd/pipeline/pkg/remote/oci"
@@ -71,7 +69,7 @@ func TestPushCommand(t *testing.T) {
 				"simple.yaml": exampleTask,
 			},
 			expectedContents: map[string]expected{exampleTaskExpected.name: exampleTaskExpected},
-			expectedCTime:    fixedTime,
+			expectedCTime:    time.Unix(defaultTimestamp, 0),
 		},
 		{
 			name: "stdin-input",
@@ -80,7 +78,7 @@ func TestPushCommand(t *testing.T) {
 			},
 			stdin:            exampleTask,
 			expectedContents: map[string]expected{exampleTaskExpected.name: exampleTaskExpected},
-			expectedCTime:    fixedTime,
+			expectedCTime:    time.Unix(defaultTimestamp, 0),
 		},
 		{
 			name: "with-annotations",
@@ -93,7 +91,7 @@ func TestPushCommand(t *testing.T) {
 				"org.opencontainers.image.license": "Apache-2.0",
 				"org.opencontainers.image.url":     "https://example.org",
 			},
-			expectedCTime: fixedTime,
+			expectedCTime: time.Unix(defaultTimestamp, 0),
 		},
 		{
 			name: "with-ctime",
@@ -153,10 +151,7 @@ func TestPushCommand(t *testing.T) {
 				ctimeParam:         tc.ctime,
 			}
 
-			ctx := context.Background()
-			ctx = clockwork.AddToContext(ctx, clockwork.NewFakeClockAt(fixedTime))
-
-			if err := opts.Run(ctx, []string{ref}); err != nil {
+			if err := opts.Run([]string{ref}); err != nil {
 				t.Errorf("Unexpected failure calling run: %v", err)
 			}
 
@@ -254,7 +249,7 @@ func TestParseTime(t *testing.T) {
 		err      string
 		expected time.Time
 	}{
-		{name: "now", expected: fixedTime},
+		{name: "now", expected: time.Unix(defaultTimestamp, 0)},
 		{name: "date", given: "2023-09-22", expected: time.Date(2023, 9, 22, 0, 0, 0, 0, time.UTC)},
 		{name: "date and time", given: "2023-09-22T01:02:03", expected: time.Date(2023, 9, 22, 1, 2, 3, 0, time.UTC)},
 		{name: "utc with fraction", given: "2023-09-22T01:02:03.45Z", expected: time.Date(2023, 9, 22, 1, 2, 3, 45, time.UTC)},
@@ -266,7 +261,7 @@ func TestParseTime(t *testing.T) {
 			// remove SOURCE_DATE_EPOCH if set externally
 			t.Setenv("SOURCE_DATE_EPOCH", "")
 
-			got, err := determineCTime(c.given, clockwork.NewFakeClockAt(fixedTime))
+			got, err := determineCTime(c.given)
 
 			if err != nil {
 				if err.Error() != c.err {
@@ -342,7 +337,7 @@ func TestParseArgsAndFlags(t *testing.T) {
 			annotationsParams:   []string{"a=b", "c=d"},
 			expectedRef:         "registry.io/repository:tag",
 			expectedAnnotations: map[string]string{"a": "b", "c": "d"},
-			expectedCTime:       fixedTime,
+			expectedCTime:       time.Unix(defaultTimestamp, 0),
 		},
 		{
 			name:          "ctime param",
@@ -405,10 +400,7 @@ func TestParseArgsAndFlags(t *testing.T) {
 				expectedContent = append(expectedContent, c)
 			}
 
-			ctx := context.Background()
-			ctx = clockwork.AddToContext(ctx, clockwork.NewFakeClockAt(fixedTime))
-
-			if err := opts.parseArgsAndFlags(ctx, []string{c.refArg}); err != nil {
+			if err := opts.parseArgsAndFlags([]string{c.refArg}); err != nil {
 				if err.Error() != c.err {
 					t.Errorf("unexpected error, expecting %q, got: %q", c.err, err)
 				}
