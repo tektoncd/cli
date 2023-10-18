@@ -2885,8 +2885,8 @@ github.com/syndtr/goleveldb v1.0.1-0.20220721030215-126854af5e6d/go.mod h1:RRCYJ
 github.com/tchap/go-patricia v2.2.6+incompatible/go.mod h1:bmLyhP68RS6kStMGxByiQ23RP/odRBOTVjwp2cDyi6I=
 github.com/tdakkota/asciicheck v0.0.0-20200416200610-e657995f937b/go.mod h1:yHp0ai0Z9gUljN3o0xMhYJnH/IcvkdTBOX2fmJ93JEM=
 github.com/tedsuo/ifrit v0.0.0-20180802180643-bea94bb476cc/go.mod h1:eyZnKCc955uh98WQvzOm0dgAeLnf2O0Rz0LPoC5ze+0=
-github.com/tektoncd/chains v0.17.0 h1:iUcZA6ZMtuKmigcbJ/GqoKWR1YTCHZjGlREMAo5kg84=
-github.com/tektoncd/chains v0.17.0/go.mod h1:xnn91ocomJeb4QNMFr4Rw5nrQ8MuJqWrvivINFhjJJI=
+github.com/tektoncd/chains v0.17.1 h1:xHtdkm5VKJe215Upz2lcyHryZXAqZpZYbRN1K6yaR0s=
+github.com/tektoncd/chains v0.17.1/go.mod h1:T/o5gyFl/b96ZEo5MTz/5gaf1WsT6bHcETuBBLC2Puw=
 github.com/tektoncd/hub v1.14.1 h1:EOrP7cxPg+Q/CR0M/a/1leoYaA877EizqaODqN6ml6A=
 github.com/tektoncd/hub v1.14.1/go.mod h1:6nFe8mXCJjl7t/Sun5ZcEsHT/8kX8WVZrvrx2LkWfvw=
 github.com/tektoncd/pipeline v0.50.2 h1:4uxwjXK71ai9U/ff2DZQ41rR8vObssjAxN8C1exI7cI=
