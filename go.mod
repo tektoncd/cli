@@ -25,21 +25,21 @@ require (
 	github.com/spf13/pflag v1.0.5
 	github.com/tektoncd/chains v0.17.0
 	github.com/tektoncd/hub v1.14.0
-	github.com/tektoncd/pipeline v0.50.1
+	github.com/tektoncd/pipeline v0.50.2
 	github.com/tektoncd/plumbing v0.0.0-20221102182345-5dbcfda657d7
 	github.com/tektoncd/triggers v0.25.0
 	github.com/theupdateframework/go-tuf v0.6.1
 	go.opencensus.io v0.24.0
 	go.uber.org/multierr v1.11.0
 	go.uber.org/zap v1.25.0
-	golang.org/x/term v0.12.0
+	golang.org/x/term v0.13.0
 	gotest.tools v2.2.0+incompatible
 	gotest.tools/v3 v3.5.0
 	k8s.io/api v0.27.3
 	k8s.io/apimachinery v0.27.3
 	k8s.io/cli-runtime v0.25.13
 	k8s.io/client-go v0.27.3
-	knative.dev/pkg v0.0.0-20230612155445-74c4be5e935e
+	knative.dev/pkg v0.0.0-20231011201526-df28feae6d34
 	sigs.k8s.io/yaml v1.3.0
 )
 
@@ -298,13 +298,13 @@ require (
 	gocloud.dev v0.32.0 // indirect
 	gocloud.dev/docstore/mongodocstore v0.30.0 // indirect
 	gocloud.dev/pubsub/kafkapubsub v0.32.0 // indirect
-	golang.org/x/crypto v0.12.0 // indirect
+	golang.org/x/crypto v0.14.0 // indirect
 	golang.org/x/exp v0.0.0-20230510235704-dd950f8aeaea // indirect
 	golang.org/x/mod v0.12.0 // indirect
-	golang.org/x/net v0.14.0 // indirect
+	golang.org/x/net v0.17.0 // indirect
 	golang.org/x/oauth2 v0.11.0 // indirect
 	golang.org/x/sync v0.3.0 // indirect
-	golang.org/x/sys v0.12.0 // indirect
+	golang.org/x/sys v0.13.0 // indirect
 	golang.org/x/text v0.13.0 // indirect
 	golang.org/x/time v0.3.0 // indirect
 	golang.org/x/tools v0.12.0 // indirect
