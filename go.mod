@@ -27,7 +27,7 @@ require (
 	github.com/tektoncd/hub v1.14.1
 	github.com/tektoncd/pipeline v0.52.0
 	github.com/tektoncd/plumbing v0.0.0-20230907180608-5625252a2de1
-	github.com/tektoncd/triggers v0.25.0
+	github.com/tektoncd/triggers v0.25.1
 	github.com/theupdateframework/go-tuf v0.6.1
 	go.opencensus.io v0.24.0
 	go.uber.org/multierr v1.11.0
