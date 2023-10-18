@@ -1338,7 +1338,7 @@ github.com/tektoncd/chains/pkg/chains/storage/pubsub
 github.com/tektoncd/chains/pkg/chains/storage/tekton
 github.com/tektoncd/chains/pkg/config
 github.com/tektoncd/chains/pkg/patch
-# github.com/tektoncd/hub v1.14.0
+# github.com/tektoncd/hub v1.14.1
 ## explicit; go 1.20
 github.com/tektoncd/hub/api/pkg/cli/app
 github.com/tektoncd/hub/api/pkg/cli/cmd
@@ -2520,7 +2520,7 @@ knative.dev/eventing/pkg/reconciler/source
 ## explicit; go 1.16
 knative.dev/networking/pkg/apis/networking
 knative.dev/networking/pkg/apis/networking/v1alpha1
-# knative.dev/pkg v0.0.0-20230718152110-aef227e72ead => knative.dev/pkg v0.0.0-20230518105712-dfb4bf04635d
+# knative.dev/pkg v0.0.0-20231011201526-df28feae6d34 => knative.dev/pkg v0.0.0-20230518105712-dfb4bf04635d
 ## explicit; go 1.18
 knative.dev/pkg/apis
 knative.dev/pkg/apis/duck

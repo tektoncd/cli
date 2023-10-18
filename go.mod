@@ -24,7 +24,7 @@ require (
 	github.com/spf13/cobra v1.7.0
 	github.com/spf13/pflag v1.0.5
 	github.com/tektoncd/chains v0.18.1
-	github.com/tektoncd/hub v1.14.0
+	github.com/tektoncd/hub v1.14.1
 	github.com/tektoncd/pipeline v0.52.0
 	github.com/tektoncd/plumbing v0.0.0-20230907180608-5625252a2de1
 	github.com/tektoncd/triggers v0.25.0
@@ -39,7 +39,7 @@ require (
 	k8s.io/apimachinery v0.27.3
 	k8s.io/cli-runtime v0.26.9
 	k8s.io/client-go v0.27.3
-	knative.dev/pkg v0.0.0-20230718152110-aef227e72ead
+	knative.dev/pkg v0.0.0-20231011201526-df28feae6d34
 	sigs.k8s.io/yaml v1.3.0
 )
 
