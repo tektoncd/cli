@@ -1825,8 +1825,8 @@ github.com/syndtr/goleveldb v1.0.1-0.20220721030215-126854af5e6d h1:vfofYNRScrDd
 github.com/syndtr/goleveldb v1.0.1-0.20220721030215-126854af5e6d/go.mod h1:RRCYJbIwD5jmqPI9XoAFR0OcDxqUctll6zUj/+B4S48=
 github.com/tchap/go-patricia v2.2.6+incompatible/go.mod h1:bmLyhP68RS6kStMGxByiQ23RP/odRBOTVjwp2cDyi6I=
 github.com/tdakkota/asciicheck v0.0.0-20200416200610-e657995f937b/go.mod h1:yHp0ai0Z9gUljN3o0xMhYJnH/IcvkdTBOX2fmJ93JEM=
-github.com/tektoncd/chains v0.18.0 h1:ObN5b4W8YFSpl2P4MBvxkDtp/atJlfVjBdqBWG4hjWk=
-github.com/tektoncd/chains v0.18.0/go.mod h1:9JYn5Ak+1V+unvDDIgIPyswa7Zxm7QyEoeuKxzVZ7YI=
+github.com/tektoncd/chains v0.18.1 h1:Hiee7hi3n8jfPakAG0IDzjeVV2nxQ0+fhdaiQaLrR0I=
+github.com/tektoncd/chains v0.18.1/go.mod h1:K4+QYHbC8KuDKkBZKnSr8sSU/VPo0xKuRJyM+f1Khjo=
 github.com/tektoncd/hub v1.14.0 h1:H41drEhEsGTCxpZCskLjkTw2xSQTZZvNitcjCLj2Tjk=
 github.com/tektoncd/hub v1.14.0/go.mod h1:/usZ9mFUEIzgT4VOoQ7jxT6EOfwLkL+NI2gwPXVAU4w=
 github.com/tektoncd/pipeline v0.52.0 h1:R5SLf4wQYc2eCVQh1UyCNbPTDdIUQz5MisyBRngQ068=
