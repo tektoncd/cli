@@ -40,7 +40,7 @@ require (
 	github.com/spf13/pflag v1.0.5
 	github.com/tektoncd/chains v0.15.0
 	github.com/tektoncd/hub v1.12.1
-	github.com/tektoncd/pipeline v0.44.0
+	github.com/tektoncd/pipeline v0.44.5
 	github.com/tektoncd/plumbing v0.0.0-20221102182345-5dbcfda657d7
 	github.com/tektoncd/triggers v0.23.0
 	github.com/theupdateframework/go-tuf v0.5.2
@@ -48,9 +48,9 @@ require (
 	go.opencensus.io v0.24.0
 	go.uber.org/multierr v1.9.0
 	go.uber.org/zap v1.24.0
-	golang.org/x/crypto v0.7.0
-	golang.org/x/net v0.8.0
-	golang.org/x/term v0.6.0
+	golang.org/x/crypto v0.14.0
+	golang.org/x/net v0.17.0
+	golang.org/x/term v0.13.0
 	golang.org/x/time v0.3.0
 	google.golang.org/grpc v1.54.0
 	google.golang.org/protobuf v1.30.0
@@ -63,7 +63,7 @@ require (
 	k8s.io/apimachinery v0.26.3
 	k8s.io/cli-runtime v0.25.8
 	k8s.io/client-go v0.25.8
-	knative.dev/pkg v0.0.0-20221123011842-b78020c16606
+	knative.dev/pkg v0.0.0-20230221152827-2d84369c105d
 	sigs.k8s.io/yaml v1.3.0
 )
 
@@ -336,8 +336,8 @@ require (
 	golang.org/x/mod v0.9.0 // indirect
 	golang.org/x/oauth2 v0.6.0 // indirect
 	golang.org/x/sync v0.1.0 // indirect
-	golang.org/x/sys v0.6.0 // indirect
-	golang.org/x/text v0.8.0 // indirect
+	golang.org/x/sys v0.13.0 // indirect
+	golang.org/x/text v0.13.0 // indirect
 	golang.org/x/tools v0.7.0 // indirect
 	golang.org/x/xerrors v0.0.0-20220907171357-04be3eba64a2 // indirect
 	gomodules.xyz/jsonpatch/v2 v2.2.0 // indirect
