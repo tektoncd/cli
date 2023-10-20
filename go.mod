@@ -24,10 +24,10 @@ require (
 	github.com/spf13/cobra v1.7.0
 	github.com/spf13/pflag v1.0.5
 	github.com/tektoncd/chains v0.17.1
-	github.com/tektoncd/hub v1.14.1
-	github.com/tektoncd/pipeline v0.50.2
+	github.com/tektoncd/hub v1.14.2
+	github.com/tektoncd/pipeline v0.50.3
 	github.com/tektoncd/plumbing v0.0.0-20221102182345-5dbcfda657d7
-	github.com/tektoncd/triggers v0.25.1
+	github.com/tektoncd/triggers v0.25.2
 	github.com/theupdateframework/go-tuf v0.6.1
 	go.opencensus.io v0.24.0
 	go.uber.org/multierr v1.11.0
@@ -315,7 +315,7 @@ require (
 	google.golang.org/genproto v0.0.0-20230803162519-f966b187b2e5 // indirect
 	google.golang.org/genproto/googleapis/api v0.0.0-20230803162519-f966b187b2e5 // indirect
 	google.golang.org/genproto/googleapis/rpc v0.0.0-20230807174057-1744710a1577 // indirect
-	google.golang.org/grpc v1.57.0 // indirect
+	google.golang.org/grpc v1.57.2 // indirect
 	google.golang.org/protobuf v1.31.0 // indirect
 	gopkg.in/inf.v0 v0.9.1 // indirect
 	gopkg.in/ini.v1 v1.67.0 // indirect

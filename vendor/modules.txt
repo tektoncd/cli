@@ -1336,7 +1336,7 @@ github.com/tektoncd/chains/pkg/chains/storage/pubsub
 github.com/tektoncd/chains/pkg/chains/storage/tekton
 github.com/tektoncd/chains/pkg/config
 github.com/tektoncd/chains/pkg/patch
-# github.com/tektoncd/hub v1.14.1
+# github.com/tektoncd/hub v1.14.2
 ## explicit; go 1.20
 github.com/tektoncd/hub/api/pkg/cli/app
 github.com/tektoncd/hub/api/pkg/cli/cmd
@@ -1364,7 +1364,7 @@ github.com/tektoncd/hub/api/v1/gen/http/catalog/client
 github.com/tektoncd/hub/api/v1/gen/http/resource/client
 github.com/tektoncd/hub/api/v1/gen/resource
 github.com/tektoncd/hub/api/v1/gen/resource/views
-# github.com/tektoncd/pipeline v0.50.2
+# github.com/tektoncd/pipeline v0.50.3
 ## explicit; go 1.19
 github.com/tektoncd/pipeline/pkg/apis/config
 github.com/tektoncd/pipeline/pkg/apis/config/resolver
@@ -1462,7 +1462,7 @@ github.com/tektoncd/pipeline/test/diff
 # github.com/tektoncd/plumbing v0.0.0-20221102182345-5dbcfda657d7
 ## explicit; go 1.13
 github.com/tektoncd/plumbing/scripts
-# github.com/tektoncd/triggers v0.25.1
+# github.com/tektoncd/triggers v0.25.2
 ## explicit; go 1.19
 github.com/tektoncd/triggers/pkg/apis/config
 github.com/tektoncd/triggers/pkg/apis/triggers
@@ -1905,7 +1905,7 @@ google.golang.org/genproto/googleapis/api/httpbody
 google.golang.org/genproto/googleapis/rpc/code
 google.golang.org/genproto/googleapis/rpc/errdetails
 google.golang.org/genproto/googleapis/rpc/status
-# google.golang.org/grpc v1.57.0
+# google.golang.org/grpc v1.57.2
 ## explicit; go 1.17
 google.golang.org/grpc
 google.golang.org/grpc/attributes
