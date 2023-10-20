@@ -25,14 +25,14 @@ require (
 	github.com/spf13/pflag v1.0.5
 	github.com/tektoncd/chains v0.16.0
 	github.com/tektoncd/hub v1.13.0
-	github.com/tektoncd/pipeline v0.47.0
+	github.com/tektoncd/pipeline v0.47.5
 	github.com/tektoncd/plumbing v0.0.0-20221102182345-5dbcfda657d7
 	github.com/tektoncd/triggers v0.23.1-0.20230420080448-bf603123cc0f
 	github.com/theupdateframework/go-tuf v0.5.2
 	go.opencensus.io v0.24.0
 	go.uber.org/multierr v1.9.0
 	go.uber.org/zap v1.24.0
-	golang.org/x/term v0.8.0
+	golang.org/x/term v0.13.0
 	gopkg.in/yaml.v2 v2.4.0
 	gotest.tools v2.2.0+incompatible
 	gotest.tools/v3 v3.4.0
@@ -46,7 +46,7 @@ require (
 
 require (
 	cloud.google.com/go v0.110.0 // indirect
-	cloud.google.com/go/compute v1.19.0 // indirect
+	cloud.google.com/go/compute v1.19.1 // indirect
 	cloud.google.com/go/compute/metadata v0.2.3 // indirect
 	cloud.google.com/go/firestore v1.9.0 // indirect
 	cloud.google.com/go/iam v0.13.0 // indirect
@@ -284,14 +284,14 @@ require (
 	gocloud.dev v0.29.0 // indirect
 	gocloud.dev/docstore/mongodocstore v0.28.0 // indirect
 	gocloud.dev/pubsub/kafkapubsub v0.28.0 // indirect
-	golang.org/x/crypto v0.8.0 // indirect
+	golang.org/x/crypto v0.14.0 // indirect
 	golang.org/x/exp v0.0.0-20230307190834-24139beb5833 // indirect
 	golang.org/x/mod v0.9.0 // indirect
-	golang.org/x/net v0.9.0 // indirect
+	golang.org/x/net v0.17.0 // indirect
 	golang.org/x/oauth2 v0.7.0 // indirect
 	golang.org/x/sync v0.1.0 // indirect
-	golang.org/x/sys v0.8.0 // indirect
-	golang.org/x/text v0.9.0 // indirect
+	golang.org/x/sys v0.13.0 // indirect
+	golang.org/x/text v0.13.0 // indirect
 	golang.org/x/time v0.3.0 // indirect
 	golang.org/x/tools v0.7.0 // indirect
 	golang.org/x/xerrors v0.0.0-20220907171357-04be3eba64a2 // indirect
@@ -299,8 +299,8 @@ require (
 	google.golang.org/api v0.119.0 // indirect
 	google.golang.org/appengine v1.6.7 // indirect
 	google.golang.org/genproto v0.0.0-20230410155749-daa745c078e1 // indirect
-	google.golang.org/grpc v1.54.0 // indirect
-	google.golang.org/protobuf v1.30.0 // indirect
+	google.golang.org/grpc v1.56.3 // indirect
+	google.golang.org/protobuf v1.31.0 // indirect
 	gopkg.in/inf.v0 v0.9.1 // indirect
 	gopkg.in/ini.v1 v1.67.0 // indirect
 	gopkg.in/square/go-jose.v2 v2.6.0 // indirect

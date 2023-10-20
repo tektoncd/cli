@@ -4,7 +4,7 @@ cloud.google.com/go/internal
 cloud.google.com/go/internal/optional
 cloud.google.com/go/internal/trace
 cloud.google.com/go/internal/version
-# cloud.google.com/go/compute v1.19.0
+# cloud.google.com/go/compute v1.19.1
 ## explicit; go 1.19
 cloud.google.com/go/compute/internal
 # cloud.google.com/go/compute/metadata v0.2.3
@@ -1269,7 +1269,7 @@ github.com/tektoncd/hub/api/v1/gen/http/catalog/client
 github.com/tektoncd/hub/api/v1/gen/http/resource/client
 github.com/tektoncd/hub/api/v1/gen/resource
 github.com/tektoncd/hub/api/v1/gen/resource/views
-# github.com/tektoncd/pipeline v0.47.0
+# github.com/tektoncd/pipeline v0.47.5
 ## explicit; go 1.19
 github.com/tektoncd/pipeline/pkg/apis/config
 github.com/tektoncd/pipeline/pkg/apis/config/resolver
@@ -1606,7 +1606,7 @@ gocloud.dev/docstore/mongodocstore
 # gocloud.dev/pubsub/kafkapubsub v0.28.0
 ## explicit; go 1.12
 gocloud.dev/pubsub/kafkapubsub
-# golang.org/x/crypto v0.8.0
+# golang.org/x/crypto v0.14.0
 ## explicit; go 1.17
 golang.org/x/crypto/blake2b
 golang.org/x/crypto/blowfish
@@ -1649,7 +1649,7 @@ golang.org/x/exp/slices
 ## explicit; go 1.17
 golang.org/x/mod/semver
 golang.org/x/mod/sumdb/note
-# golang.org/x/net v0.9.0
+# golang.org/x/net v0.17.0
 ## explicit; go 1.17
 golang.org/x/net/context
 golang.org/x/net/http/httpguts
@@ -1675,18 +1675,17 @@ golang.org/x/oauth2/jwt
 golang.org/x/sync/errgroup
 golang.org/x/sync/semaphore
 golang.org/x/sync/singleflight
-# golang.org/x/sys v0.8.0
+# golang.org/x/sys v0.13.0
 ## explicit; go 1.17
 golang.org/x/sys/cpu
 golang.org/x/sys/execabs
-golang.org/x/sys/internal/unsafeheader
 golang.org/x/sys/plan9
 golang.org/x/sys/unix
 golang.org/x/sys/windows
-# golang.org/x/term v0.8.0
+# golang.org/x/term v0.13.0
 ## explicit; go 1.17
 golang.org/x/term
-# golang.org/x/text v0.9.0
+# golang.org/x/text v0.13.0
 ## explicit; go 1.17
 golang.org/x/text/cases
 golang.org/x/text/encoding
@@ -1782,7 +1781,7 @@ google.golang.org/genproto/googleapis/type/date
 google.golang.org/genproto/googleapis/type/expr
 google.golang.org/genproto/googleapis/type/latlng
 google.golang.org/genproto/protobuf/field_mask
-# google.golang.org/grpc v1.54.0
+# google.golang.org/grpc v1.56.3
 ## explicit; go 1.17
 google.golang.org/grpc
 google.golang.org/grpc/attributes
@@ -1845,7 +1844,7 @@ google.golang.org/grpc/serviceconfig
 google.golang.org/grpc/stats
 google.golang.org/grpc/status
 google.golang.org/grpc/tap
-# google.golang.org/protobuf v1.30.0
+# google.golang.org/protobuf v1.31.0
 ## explicit; go 1.11
 google.golang.org/protobuf/encoding/protojson
 google.golang.org/protobuf/encoding/prototext
