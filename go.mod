@@ -39,7 +39,7 @@ require (
 	github.com/spf13/cobra v1.7.0
 	github.com/spf13/pflag v1.0.5
 	github.com/tektoncd/chains v0.15.0
-	github.com/tektoncd/hub v1.12.1
+	github.com/tektoncd/hub v1.12.4
 	github.com/tektoncd/pipeline v0.44.5
 	github.com/tektoncd/plumbing v0.0.0-20221102182345-5dbcfda657d7
 	github.com/tektoncd/triggers v0.23.0
