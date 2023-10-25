@@ -40,7 +40,7 @@ require (
 	k8s.io/cli-runtime v0.26.10
 	k8s.io/client-go v0.27.3
 	knative.dev/pkg v0.0.0-20231011201526-df28feae6d34
-	sigs.k8s.io/yaml v1.3.0
+	sigs.k8s.io/yaml v1.4.0
 )
 
 require (
