@@ -17,8 +17,10 @@ package kms
 import (
 	"context"
 	"crypto"
-
-	"github.com/tektoncd/chains/pkg/config"
+	"fmt"
+	"net"
+	"net/url"
+	"time"
 
 	"github.com/sigstore/sigstore/pkg/signature"
 	"github.com/sigstore/sigstore/pkg/signature/kms"
@@ -27,6 +29,7 @@ import (
 	_ "github.com/sigstore/sigstore/pkg/signature/kms/gcp"
 	_ "github.com/sigstore/sigstore/pkg/signature/kms/hashivault"
 	"github.com/sigstore/sigstore/pkg/signature/options"
+	"github.com/tektoncd/chains/pkg/config"
 
 	"github.com/spiffe/go-spiffe/v2/svid/jwtsvid"
 	"github.com/spiffe/go-spiffe/v2/workloadapi"
@@ -41,6 +44,54 @@ type Signer struct {
 // NewSigner returns a configured Signer
 func NewSigner(ctx context.Context, cfg config.KMSSigner) (*Signer, error) {
 	kmsOpts := []signature.RPCOption{}
+
+	// Checks if the vault address provide by the user is a valid address or not
+	if cfg.Auth.Address != "" {
+		vaultAddress, err := url.Parse(cfg.Auth.Address)
+		if err != nil {
+			return nil, err
+		}
+
+		var vaultUrl *url.URL
+		switch {
+		case vaultAddress.Port() != "":
+			vaultUrl = vaultAddress
+		case vaultAddress.Scheme == "http":
+			vaultUrl = &url.URL{
+				Scheme: vaultAddress.Scheme,
+				Host:   vaultAddress.Host + ":80",
+			}
+		case vaultAddress.Scheme == "https":
+			vaultUrl = &url.URL{
+				Scheme: vaultAddress.Scheme,
+				Host:   vaultAddress.Host + ":443",
+			}
+		case vaultAddress.Scheme == "":
+			vaultUrl = &url.URL{
+				Scheme: "http",
+				Host:   cfg.Auth.Address + ":80",
+			}
+		case vaultAddress.Scheme != "" && vaultAddress.Scheme != "http" && vaultAddress.Scheme != "https":
+			vaultUrl = &url.URL{
+				Scheme: "http",
+				Host:   cfg.Auth.Address,
+			}
+			if vaultUrl.Port() == "" {
+				vaultUrl.Host = cfg.Auth.Address + ":80"
+			}
+		}
+
+		if vaultUrl != nil {
+			conn, err := net.DialTimeout("tcp", vaultUrl.Host, 5*time.Second)
+			if err != nil {
+				return nil, err
+			}
+			defer conn.Close()
+		} else {
+			return nil, fmt.Errorf("Error connecting to URL %s\n", cfg.Auth.Address)
+		}
+	}
+
 	// pass through configuration options to RPCAuth used by KMS in sigstore
 	rpcAuth := options.RPCAuth{
 		Address: cfg.Auth.Address,

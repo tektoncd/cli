@@ -26,6 +26,7 @@ import (
 	"github.com/in-toto/in-toto-golang/in_toto/slsa_provenance/common"
 	"github.com/tektoncd/chains/internal/backport"
 	"github.com/tektoncd/chains/pkg/artifacts"
+	"github.com/tektoncd/chains/pkg/chains/formats/slsa/internal/artifact"
 	"github.com/tektoncd/chains/pkg/chains/formats/slsa/internal/slsaconfig"
 	"github.com/tektoncd/chains/pkg/chains/objects"
 	"github.com/tektoncd/pipeline/pkg/apis/pipeline/v1beta1"
@@ -80,54 +81,14 @@ func subjectsFromPipelineRun(ctx context.Context, obj objects.TektonObject, slsa
 			}
 
 			trSubjects := subjectsFromTektonObject(ctx, tr)
-			for _, s := range trSubjects {
-				result = addSubject(result, s)
-			}
+			result = artifact.AppendSubjects(result, trSubjects...)
 		}
 	}
 
 	// also add subjects observed from pipelinerun level with duplication removed
-	for _, s := range prSubjects {
-		result = addSubject(result, s)
-	}
+	result = artifact.AppendSubjects(result, prSubjects...)
 
 	return result
-}
-
-// addSubject adds a new subject item to the original slice.
-func addSubject(original []intoto.Subject, item intoto.Subject) []intoto.Subject {
-
-	for i, s := range original {
-		// if there is an equivalent entry in the original slice, merge item's DigestSet
-		// into the existing entry's DigestSet.
-		if subjectEqual(s, item) {
-			mergeMaps(original[i].Digest, item.Digest)
-			return original
-		}
-	}
-
-	original = append(original, item)
-	return original
-}
-
-// two subjects are equal if and only if they have same name and have at least
-// one common algorithm and hex value.
-func subjectEqual(x, y intoto.Subject) bool {
-	if x.Name != y.Name {
-		return false
-	}
-	for algo, hex := range x.Digest {
-		if y.Digest[algo] == hex {
-			return true
-		}
-	}
-	return false
-}
-
-func mergeMaps(m1 map[string]string, m2 map[string]string) {
-	for k, v := range m2 {
-		m1[k] = v
-	}
 }
 
 func subjectsFromTektonObject(ctx context.Context, obj objects.TektonObject) []intoto.Subject {
@@ -137,7 +98,7 @@ func subjectsFromTektonObject(ctx context.Context, obj objects.TektonObject) []i
 	imgs := artifacts.ExtractOCIImagesFromResults(ctx, obj)
 	for _, i := range imgs {
 		if d, ok := i.(name.Digest); ok {
-			subjects = append(subjects, intoto.Subject{
+			subjects = artifact.AppendSubjects(subjects, intoto.Subject{
 				Name: d.Repository.Name(),
 				Digest: common.DigestSet{
 					"sha256": strings.TrimPrefix(d.DigestStr(), "sha256:"),
@@ -153,7 +114,7 @@ func subjectsFromTektonObject(ctx context.Context, obj objects.TektonObject) []i
 			logger.Errorf("Digest %s should be in the format of: algorthm:abc", obj.Digest)
 			continue
 		}
-		subjects = append(subjects, intoto.Subject{
+		subjects = artifact.AppendSubjects(subjects, intoto.Subject{
 			Name: obj.URI,
 			Digest: common.DigestSet{
 				splits[0]: splits[1],
@@ -166,7 +127,7 @@ func subjectsFromTektonObject(ctx context.Context, obj objects.TektonObject) []i
 		splits := strings.Split(s.Digest, ":")
 		alg := splits[0]
 		digest := splits[1]
-		subjects = append(subjects, intoto.Subject{
+		subjects = artifact.AppendSubjects(subjects, intoto.Subject{
 			Name: s.URI,
 			Digest: common.DigestSet{
 				alg: digest,
@@ -204,7 +165,7 @@ func subjectsFromTektonObject(ctx context.Context, obj objects.TektonObject) []i
 					}
 				}
 			}
-			subjects = append(subjects, intoto.Subject{
+			subjects = artifact.AppendSubjects(subjects, intoto.Subject{
 				Name: url,
 				Digest: common.DigestSet{
 					"sha256": strings.TrimPrefix(digest, "sha256:"),

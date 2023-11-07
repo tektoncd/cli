@@ -155,7 +155,7 @@ func (o *ObjectSigner) Sign(ctx context.Context, tektonObj objects.TektonObject)
 			}
 
 			if payloader.Wrap() {
-				wrapped, err := signing.Wrap(ctx, signer)
+				wrapped, err := signing.Wrap(signer)
 				if err != nil {
 					return err
 				}
