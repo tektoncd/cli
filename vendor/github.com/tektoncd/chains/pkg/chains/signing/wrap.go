@@ -28,7 +28,7 @@ import (
 	"golang.org/x/crypto/ssh"
 )
 
-func Wrap(ctx context.Context, s Signer) (Signer, error) {
+func Wrap(s Signer) (Signer, error) {
 	pub, err := s.PublicKey()
 	if err != nil {
 		return nil, err
