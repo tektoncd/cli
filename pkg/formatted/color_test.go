@@ -88,6 +88,6 @@ func TestDecoration(t *testing.T) {
 	if err := processed.Execute(buf, nil); err != nil {
 		t.Error("Could not process the template.")
 	}
-	test.AssertOutput(t, "⏱  ⏭️  ∙ Foo ✔ ️📦 ⚓ 📝 📂 🗒  ⛩  🌡️  📨 📡 🦶 💌 🗂  🚗 \x1b[91mRed\x1b[0m \x1b[4mFoo\x1b[0m", buf.String())
+	test.AssertOutput(t, "⏱  ⏭️  ∙ Foo ✔ ️📦 ⚓ 📝 📂 🗒  ⛩  🌡️  📨 📡 🦶 💌 🗂  🚗 \x1b[91mRed\x1b[0m \x1b[4mFoo\x1b[24m", buf.String())
 
 }
