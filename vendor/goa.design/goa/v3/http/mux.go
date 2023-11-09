@@ -4,9 +4,10 @@ import (
 	"context"
 	"fmt"
 	"net/http"
+	"net/url"
 	"regexp"
 
-	"github.com/dimfeld/httptreemux/v5"
+	chi "github.com/go-chi/chi/v5"
 )
 
 type (
@@ -59,49 +60,116 @@ type (
 		Use(func(http.Handler) http.Handler)
 	}
 
-	// mux is the default Muxer implementation. It leverages the
-	// httptreemux router and simply substitutes the syntax used to define
-	// wildcards from ":wildcard" and "*wildcard" to "{wildcard}" and
-	// "{*wildcard}" respectively.
+	// ResolverMuxer is a MiddlewareMuxer that can resolve the route pattern used
+	// to register the handler for the given request.
+	ResolverMuxer interface {
+		MiddlewareMuxer
+		ResolvePattern(*http.Request) string
+	}
+
+	// mux is the default Muxer implementation.
 	mux struct {
-		*httptreemux.ContextMux
+		chi.Router
+		// wildcards maps a method and a pattern to the name of the wildcard
+		// this is needed because chi does not expose the name of the wildcard
+		wildcards map[string]string
 	}
 )
 
-// NewMuxer returns a Muxer implementation based on the httptreemux router.
-func NewMuxer() MiddlewareMuxer {
-	r := httptreemux.NewContextMux()
-	r.EscapeAddedRoutes = true
-	r.NotFoundHandler = func(w http.ResponseWriter, req *http.Request) {
+// NewMuxer returns a Muxer implementation based on a Chi router.
+func NewMuxer() ResolverMuxer {
+	r := chi.NewRouter()
+	r.NotFound(http.HandlerFunc(func(w http.ResponseWriter, req *http.Request) {
 		ctx := context.WithValue(req.Context(), AcceptTypeKey, req.Header.Get("Accept"))
 		enc := ResponseEncoder(ctx, w)
 		w.WriteHeader(http.StatusNotFound)
-		enc.Encode(NewErrorResponse(ctx, fmt.Errorf("404 page not found")))
-	}
-	return &mux{r}
+		enc.Encode(NewErrorResponse(ctx, fmt.Errorf("404 page not found"))) // nolint:errcheck
+	}))
+	return &mux{Router: r, wildcards: make(map[string]string)}
 }
 
-// Handle maps the wildcard format used by goa to the one used by httptreemux.
+// wildPath matches a wildcard path segment.
+var wildPath = regexp.MustCompile(`/{\*([a-zA-Z0-9_]+)}`)
+
+// Handle registers the handler function for the given method and pattern.
 func (m *mux) Handle(method, pattern string, handler http.HandlerFunc) {
-	m.ContextMux.Handle(method, treemuxify(pattern), handler)
+	if wildcards := wildPath.FindStringSubmatch(pattern); len(wildcards) > 0 {
+		if len(wildcards) > 2 {
+			panic("too many wildcards")
+		}
+		pattern = wildPath.ReplaceAllString(pattern, "/*")
+		m.wildcards[method+"::"+pattern] = wildcards[1]
+	}
+	m.Method(method, pattern, handler)
 }
 
 // Vars extracts the path variables from the request context.
 func (m *mux) Vars(r *http.Request) map[string]string {
-	return httptreemux.ContextParams(r.Context())
+	ctx := m.ensureContext(r)
+	if ctx == nil {
+		return nil
+	}
+	params := ctx.URLParams
+	if len(params.Keys) == 0 {
+		return nil
+	}
+	vars := make(map[string]string, len(params.Keys))
+	for i, k := range params.Keys {
+		if k == "*" {
+			wildcard := m.wildcards[r.Method+"::"+ctx.RoutePattern()]
+			vars[wildcard] = unescape(params.Values[i])
+			continue
+		}
+		vars[k] = unescape(params.Values[i])
+	}
+	return vars
+}
+
+func unescape(s string) string {
+	u, err := url.PathUnescape(s)
+	if err != nil {
+		return s
+	}
+	return u
 }
 
 // Use appends a middleware to the list of middlewares to be applied
 // downstream the Muxer.
 func (m *mux) Use(f func(http.Handler) http.Handler) {
-	m.ContextMux.UseHandler(f)
+	m.Router.Use(f)
 }
 
-var wildSeg = regexp.MustCompile(`/{([a-zA-Z0-9_]+)}`)
-var wildPath = regexp.MustCompile(`/{\*([a-zA-Z0-9_]+)}`)
+// ResolvePattern returns the route pattern used to register the handler for the
+// given method and path.
+func (m *mux) ResolvePattern(r *http.Request) string {
+	ctx := m.ensureContext(r)
+	if ctx == nil {
+		return ""
+	}
+	return m.resolveWildcard(r.Method, ctx.RoutePattern())
+}
 
-func treemuxify(pattern string) string {
-	pattern = wildSeg.ReplaceAllString(pattern, "/:$1")
-	pattern = wildPath.ReplaceAllString(pattern, "/*$1")
+// resolveWildcard returns the route pattern with the wildcard replaced by the
+// name of the wildcard.
+func (m *mux) resolveWildcard(method, pattern string) string {
+	if wildcard, ok := m.wildcards[method+"::"+pattern]; ok {
+		return pattern[:len(pattern)-2] + "/{*" + wildcard + "}"
+	}
 	return pattern
+}
+
+// ensureContext makes sure chi has initialized the request context if it
+// handles it, otherwise it returns nil.
+func (m *mux) ensureContext(r *http.Request) *chi.Context {
+	ctx := chi.RouteContext(r.Context())
+	if ctx == nil {
+		return nil // request not handled by chi
+	}
+	if ctx.RoutePattern() != "" {
+		return ctx // already initialized
+	}
+	if !m.Router.Match(ctx, r.Method, r.URL.Path) {
+		return nil // route not handled by chi
+	}
+	return ctx
 }
