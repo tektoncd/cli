@@ -1,0 +1,38 @@
+# See https://pre-commit.com for more information
+# See https://pre-commit.com/hooks.html for more hooks
+default_install_hook_types: ["pre-push"]
+exclude: '(^vendor|.*golden$)'
+repos:
+- repo: https://github.com/pre-commit/pre-commit-hooks
+  rev: v4.2.0
+  hooks:
+  - id: check-added-large-files
+  - id: check-toml
+  - id: check-shebang-scripts-are-executable
+  - id: check-json
+  - id: check-vcs-permalinks
+  - id: detect-private-key
+    exclude: ".*_test.go"
+- repo: local
+  hooks:
+  - id: lint-go
+    name: "Lint GO"
+    entry: make
+    args: ["lint-go"]
+    language: system
+    types: [go]
+    pass_filenames: false
+  - id: test
+    name: "Unit testing"
+    entry: make
+    args: ["test"]
+    language: system
+    types: [go]
+    pass_filenames: false
+  - id: lint-yaml
+    name: "Lint YAML"
+    entry: make
+    args: ["lint-yaml"]
+    language: system
+    types: [yaml]
+    pass_filenames: false
