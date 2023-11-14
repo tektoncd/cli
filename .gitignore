@@ -47,3 +47,4 @@ tags
 *.nupkg
 
 .bin
+.env
