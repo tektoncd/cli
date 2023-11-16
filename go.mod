@@ -27,7 +27,7 @@ require (
 	github.com/tektoncd/hub v1.15.0
 	github.com/tektoncd/pipeline v0.53.1
 	github.com/tektoncd/plumbing v0.0.0-20230907180608-5625252a2de1
-	github.com/tektoncd/triggers v0.25.2
+	github.com/tektoncd/triggers v0.25.3
 	github.com/theupdateframework/go-tuf v0.6.1
 	go.opencensus.io v0.24.0
 	go.uber.org/multierr v1.11.0
@@ -39,7 +39,7 @@ require (
 	k8s.io/apimachinery v0.27.3
 	k8s.io/cli-runtime v0.26.10
 	k8s.io/client-go v0.27.3
-	knative.dev/pkg v0.0.0-20231011201526-df28feae6d34
+	knative.dev/pkg v0.0.0-20231023160942-0c39ce4b3a7f
 	sigs.k8s.io/yaml v1.4.0
 )
 

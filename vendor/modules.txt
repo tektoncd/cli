@@ -1475,7 +1475,7 @@ github.com/tektoncd/pipeline/test/diff
 # github.com/tektoncd/plumbing v0.0.0-20230907180608-5625252a2de1
 ## explicit; go 1.19
 github.com/tektoncd/plumbing/scripts
-# github.com/tektoncd/triggers v0.25.2
+# github.com/tektoncd/triggers v0.25.3
 ## explicit; go 1.19
 github.com/tektoncd/triggers/pkg/apis/config
 github.com/tektoncd/triggers/pkg/apis/triggers
@@ -2531,7 +2531,7 @@ knative.dev/eventing/pkg/reconciler/source
 ## explicit; go 1.16
 knative.dev/networking/pkg/apis/networking
 knative.dev/networking/pkg/apis/networking/v1alpha1
-# knative.dev/pkg v0.0.0-20231011201526-df28feae6d34 => knative.dev/pkg v0.0.0-20230518105712-dfb4bf04635d
+# knative.dev/pkg v0.0.0-20231023160942-0c39ce4b3a7f => knative.dev/pkg v0.0.0-20230518105712-dfb4bf04635d
 ## explicit; go 1.18
 knative.dev/pkg/apis
 knative.dev/pkg/apis/duck
