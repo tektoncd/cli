@@ -121,8 +121,8 @@ for task in ${CATALOG_TASKS};do
   fi
 done
 
-tkn -n ${TARGET_NAMESPACE} install task git-clone
-tkn -n ${TARGET_NAMESPACE} install task goreleaser
+tkn -n ${TARGET_NAMESPACE} hub install task git-clone
+tkn -n ${TARGET_NAMESPACE} hub install task goreleaser
 
 kubectl -n ${TARGET_NAMESPACE} apply -f ./tekton/get-version.yaml
 kubectl -n ${TARGET_NAMESPACE} apply -f ./tekton/publish.yaml
