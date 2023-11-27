@@ -1838,8 +1838,8 @@ github.com/tchap/go-patricia v2.2.6+incompatible/go.mod h1:bmLyhP68RS6kStMGxByiQ
 github.com/tdakkota/asciicheck v0.0.0-20200416200610-e657995f937b/go.mod h1:yHp0ai0Z9gUljN3o0xMhYJnH/IcvkdTBOX2fmJ93JEM=
 github.com/tektoncd/chains v0.19.0 h1:kS5MP9RhKmbpwtdWG7c1r3IDBKpu5x4Tq+Z7zhgyWmQ=
 github.com/tektoncd/chains v0.19.0/go.mod h1:w7XdpEKDgBnUtLBhQsgwYcuyjKawqxih9VZuT7VtIOY=
-github.com/tektoncd/hub v1.15.0 h1:3tv/DH+87avOmrMKAU9NWCKUPDDV42v/5RgsnVAchiM=
-github.com/tektoncd/hub v1.15.0/go.mod h1:QrqfcSb37jMLhrRaLr8mER7hEjgLqEJV43Iy37Jrpes=
+github.com/tektoncd/hub v1.15.1 h1:Guk2OJqtkd9c6oyFtGFEtzxd115hRE4nsJJQYSCI3i8=
+github.com/tektoncd/hub v1.15.1/go.mod h1:QrqfcSb37jMLhrRaLr8mER7hEjgLqEJV43Iy37Jrpes=
 github.com/tektoncd/pipeline v0.53.2 h1:NEULiwVKlCQVNNMLE7MJ5csb13dWfkkObtSiVJwMPzc=
 github.com/tektoncd/pipeline v0.53.2/go.mod h1:tO7iI+L4+kO+CrAYiM9FlXQYveyjyMDCYmy+7VLiwjk=
 github.com/tektoncd/plumbing v0.0.0-20230907180608-5625252a2de1 h1:9paprRIBXQgcvdhGq3wKiSspXP0JIFSY52ru3sIMjKM=
