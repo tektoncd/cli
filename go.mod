@@ -25,7 +25,7 @@ require (
 	github.com/spf13/pflag v1.0.5
 	github.com/tektoncd/chains v0.19.0
 	github.com/tektoncd/hub v1.15.1
-	github.com/tektoncd/pipeline v0.53.2
+	github.com/tektoncd/pipeline v0.54.0
 	github.com/tektoncd/plumbing v0.0.0-20230907180608-5625252a2de1
 	github.com/tektoncd/triggers v0.25.3
 	github.com/theupdateframework/go-tuf v0.6.1
@@ -36,7 +36,7 @@ require (
 	gotest.tools v2.2.0+incompatible
 	gotest.tools/v3 v3.5.1
 	k8s.io/api v0.27.6
-	k8s.io/apimachinery v0.27.6
+	k8s.io/apimachinery v0.28.3
 	k8s.io/cli-runtime v0.26.11
 	k8s.io/client-go v0.27.6
 	knative.dev/pkg v0.0.0-20231023160942-0c39ce4b3a7f
@@ -162,7 +162,7 @@ require (
 	github.com/golang/protobuf v1.5.3 // indirect
 	github.com/golang/snappy v0.0.4 // indirect
 	github.com/google/btree v1.1.2 // indirect
-	github.com/google/cel-go v0.17.1 // indirect
+	github.com/google/cel-go v0.18.1 // indirect
 	github.com/google/certificate-transparency-go v1.1.6 // indirect
 	github.com/google/gnostic v0.6.9 // indirect
 	github.com/google/go-containerregistry/pkg/authn/k8schain v0.0.0-20230625233257-b8504803389b // indirect
