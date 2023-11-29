@@ -1524,7 +1524,7 @@ github.com/tektoncd/triggers/test
 # github.com/thales-e-security/pool v0.0.2
 ## explicit; go 1.12
 github.com/thales-e-security/pool
-# github.com/theupdateframework/go-tuf v0.6.1
+# github.com/theupdateframework/go-tuf v0.7.0
 ## explicit; go 1.20
 github.com/theupdateframework/go-tuf
 github.com/theupdateframework/go-tuf/client
@@ -1738,8 +1738,8 @@ gocloud.dev/docstore/mongodocstore
 # gocloud.dev/pubsub/kafkapubsub v0.34.0
 ## explicit; go 1.20
 gocloud.dev/pubsub/kafkapubsub
-# golang.org/x/crypto v0.14.0
-## explicit; go 1.17
+# golang.org/x/crypto v0.16.0
+## explicit; go 1.18
 golang.org/x/crypto/argon2
 golang.org/x/crypto/blake2b
 golang.org/x/crypto/blowfish
