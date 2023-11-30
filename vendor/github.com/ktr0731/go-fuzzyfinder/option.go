@@ -1,6 +1,9 @@
 package fuzzyfinder
 
-import "sync"
+import (
+	"context"
+	"sync"
+)
 
 type opt struct {
 	mode          mode
@@ -11,6 +14,9 @@ type opt struct {
 	promptString  string
 	header        string
 	beginAtTop    bool
+	context       context.Context
+	query         string
+	selectOne     bool
 }
 
 type mode int
@@ -27,7 +33,7 @@ const (
 )
 
 var defaultOption = opt{
-	promptString: "> ",
+	promptString:  "> ",
 	hotReloadLock: &sync.Mutex{}, // this won't resolve the race condition but avoid nil panic
 }
 
@@ -69,7 +75,7 @@ func WithHotReload() Option {
 // The caller must pass a pointer of the slice instead of the slice itself.
 // The caller must pass a RLock which is used to synchronize access to the slice.
 // The caller MUST NOT lock in the itemFunc passed to Find / FindMulti because it will be locked by the fuzzyfinder.
-// If used together with WithPreviewWindow, the caller MUST use the RLock only in the previewFunc passed to WithPreviewWindow. 
+// If used together with WithPreviewWindow, the caller MUST use the RLock only in the previewFunc passed to WithPreviewWindow.
 func WithHotReloadLock(lock sync.Locker) Option {
 	return func(o *opt) {
 		o.hotReload = true
@@ -114,5 +120,26 @@ func withMulti() Option {
 func WithHeader(s string) Option {
 	return func(o *opt) {
 		o.header = s
+	}
+}
+
+// WithContext enables closing the fuzzy finder from parent.
+func WithContext(ctx context.Context) Option {
+	return func(o *opt) {
+		o.context = ctx
+	}
+}
+
+// WithQuery enables to set the initial query.
+func WithQuery(s string) Option {
+	return func(o *opt) {
+		o.query = s
+	}
+}
+
+// WithQuery enables to set the initial query.
+func WithSelectOne() Option {
+	return func(o *opt) {
+		o.selectOne = true
 	}
 }
