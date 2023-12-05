@@ -405,12 +405,12 @@ func CreateRequest(r io.Reader, opts *RequestOptions) ([]byte, error) {
 	return req.Marshal()
 }
 
-// CreateResponse returns a DER-encoded timestamp response with the specified contents.
+// CreateResponseWithOpts returns a DER-encoded timestamp response with the specified contents.
 // The fields in the response are populated as follows:
 //
 // The responder cert is used to populate the responder's name field, and the
 // certificate itself is provided alongside the timestamp response signature.
-func (t *Timestamp) CreateResponse(signingCert *x509.Certificate, priv crypto.Signer) ([]byte, error) {
+func (t *Timestamp) CreateResponseWithOpts(signingCert *x509.Certificate, priv crypto.Signer, opts crypto.SignerOpts) ([]byte, error) {
 	messageImprint := getMessageImprint(t.HashAlgorithm, t.HashedMessage)
 
 	tsaSerialNumber, err := generateTSASerialNumber()
@@ -421,7 +421,7 @@ func (t *Timestamp) CreateResponse(signingCert *x509.Certificate, priv crypto.Si
 	if err != nil {
 		return nil, err
 	}
-	signature, err := t.generateSignedData(tstInfo, priv, signingCert)
+	signature, err := t.generateSignedData(tstInfo, priv, signingCert, opts)
 	if err != nil {
 		return nil, err
 	}
@@ -436,6 +436,19 @@ func (t *Timestamp) CreateResponse(signingCert *x509.Certificate, priv crypto.Si
 		return nil, err
 	}
 	return tspResponseBytes, nil
+}
+
+// CreateResponse returns a DER-encoded timestamp response with the specified contents.
+// The fields in the response are populated as follows:
+//
+// The responder cert is used to populate the responder's name field, and the
+// certificate itself is provided alongside the timestamp response signature.
+//
+// This function is equivalent to CreateResponseWithOpts, using a SHA256 hash.
+//
+// Deprecated: Use CreateResponseWithOpts instead.
+func (t *Timestamp) CreateResponse(signingCert *x509.Certificate, priv crypto.Signer) ([]byte, error) {
+	return t.CreateResponseWithOpts(signingCert, priv, crypto.SHA256)
 }
 
 // CreateErrorResponse is used to create response other than granted and granted with mod status
@@ -591,18 +604,33 @@ func (t *Timestamp) populateSigningCertificateV2Ext(certificate *x509.Certificat
 	return signingCertV2Bytes, nil
 }
 
-func (t *Timestamp) generateSignedData(tstInfo []byte, signer crypto.Signer, certificate *x509.Certificate) ([]byte, error) {
+// digestAlgorithmToOID converts the hash func to the corresponding OID.
+// This should have parity with [pkcs7.getHashForOID].
+func digestAlgorithmToOID(hash crypto.Hash) (asn1.ObjectIdentifier, error) {
+	switch hash {
+	case crypto.SHA1:
+		return pkcs7.OIDDigestAlgorithmSHA1, nil
+	case crypto.SHA256:
+		return pkcs7.OIDDigestAlgorithmSHA256, nil
+	case crypto.SHA384:
+		return pkcs7.OIDDigestAlgorithmSHA384, nil
+	case crypto.SHA512:
+		return pkcs7.OIDDigestAlgorithmSHA512, nil
+	}
+	return nil, pkcs7.ErrUnsupportedAlgorithm
+}
+
+func (t *Timestamp) generateSignedData(tstInfo []byte, signer crypto.Signer, certificate *x509.Certificate, opts crypto.SignerOpts) ([]byte, error) {
 	signedData, err := pkcs7.NewSignedData(tstInfo)
 	if err != nil {
 		return nil, err
 	}
 
-	digestAlgOID, err := pkcs7.GetDigestOIDForSignatureAlgorithm(certificate.SignatureAlgorithm)
+	alg, err := digestAlgorithmToOID(opts.HashFunc())
 	if err != nil {
 		return nil, err
 	}
-
-	signedData.SetDigestAlgorithm(digestAlgOID)
+	signedData.SetDigestAlgorithm(alg)
 	signedData.SetContentType(asn1.ObjectIdentifier{1, 2, 840, 113549, 1, 9, 16, 1, 4})
 
 	signingCertV2Bytes, err := t.populateSigningCertificateV2Ext(certificate)
