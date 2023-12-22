@@ -27,7 +27,6 @@ import (
 	"github.com/google/cel-go/cel"
 	"github.com/google/cel-go/common/types"
 	"github.com/google/cel-go/common/types/ref"
-	"github.com/google/cel-go/common/types/traits"
 	"github.com/google/cel-go/interpreter/functions"
 	"github.com/tektoncd/triggers/pkg/interceptors"
 	"sigs.k8s.io/yaml"
@@ -188,12 +187,6 @@ func (t triggersLib) CompileOptions() []cel.EnvOption {
 				cel.UnaryBinding(marshalJSON)),
 			cel.MemberOverload("marshalJSON_list", []*cel.Type{listStrDyn}, cel.StringType,
 				cel.UnaryBinding(marshalJSON))),
-		cel.Function("last",
-			cel.MemberOverload("last_list", []*cel.Type{listStrDyn}, cel.DynType,
-				cel.UnaryBinding(listLast))),
-		cel.Function("first",
-			cel.MemberOverload("first_list", []*cel.Type{listStrDyn}, cel.DynType,
-				cel.UnaryBinding(listFirst))),
 	}
 }
 
@@ -329,28 +322,6 @@ func marshalJSON(val ref.Val) ref.Val {
 	}
 
 	return types.String(marshaledVal)
-}
-
-func listLast(val ref.Val) ref.Val {
-	l := val.(traits.Lister)
-	sz := l.Size().Value().(int64)
-
-	if sz == 0 {
-		return types.NullValue
-	}
-
-	return l.Get(types.Int(sz - 1))
-}
-
-func listFirst(val ref.Val) ref.Val {
-	l := val.(traits.Lister)
-	sz := l.Size().Value().(int64)
-
-	if sz == 0 {
-		return types.NullValue
-	}
-
-	return l.Get(types.Int(0))
 }
 
 func max(x, y types.Int) types.Int {

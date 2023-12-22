@@ -35,7 +35,8 @@ type Interface interface {
 	TriggersV1beta1() triggersv1beta1.TriggersV1beta1Interface
 }
 
-// Clientset contains the clients for groups.
+// Clientset contains the clients for groups. Each group has exactly one
+// version included in a Clientset.
 type Clientset struct {
 	*discovery.DiscoveryClient
 	triggersV1alpha1 *triggersv1alpha1.TriggersV1alpha1Client
