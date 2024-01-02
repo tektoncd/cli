@@ -98,6 +98,10 @@ func Command(p cli.Params) *cobra.Command {
 					if operatorVersion != "" {
 						fmt.Fprintf(cmd.OutOrStdout(), "Operator version: %s\n", operatorVersion)
 					}
+					hubVersion, _ := version.GetHubVersion(cs, namespace)
+					if hubVersion != "" {
+						fmt.Fprintf(cmd.OutOrStdout(), "Hub version: %s\n", hubVersion)
+					}
 				case "client":
 					fmt.Fprintf(cmd.OutOrStdout(), "%s\n", clientVersion)
 				case "chains":
@@ -130,6 +134,12 @@ func Command(p cli.Params) *cobra.Command {
 						operatorVersion = "unknown"
 					}
 					fmt.Fprintf(cmd.OutOrStdout(), "%s\n", operatorVersion)
+				case "hub":
+					hubVersion, _ := version.GetHubVersion(cs, namespace)
+					if hubVersion == "" {
+						hubVersion = "unknown"
+					}
+					fmt.Fprintf(cmd.OutOrStdout(), "%s\n", hubVersion)
 				default:
 					fmt.Fprintf(cmd.OutOrStdout(), "Invalid component value\n")
 				}
