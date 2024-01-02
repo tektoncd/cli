@@ -260,6 +260,7 @@ func TestGetVersions(t *testing.T) {
 	triggersConfigMap := getConfigMapData("triggers-info", "v0.5.0", map[string]string{"app.kubernetes.io/part-of": "tekton-pipelines"})
 	dashboardConfigMap := getConfigMapData("dashboard-info", "v0.7.0", map[string]string{"app.kubernetes.io/part-of": "tekton-pipelines"})
 	operatorConfigMap := getConfigMapData("tekton-operator-info", "v0.54.0", map[string]string{"app.kubernetes.io/part-of": "tekton-pipelines"})
+	hubConfigMap := getConfigMapData("hub-info", "v1.14.0", map[string]string{"app.kubernetes.io/part-of": "tekton-pipelines"})
 
 	testParams := []struct {
 		name                  string
@@ -305,11 +306,11 @@ func TestGetVersions(t *testing.T) {
 		configMap:             []*corev1.ConfigMap{pipelineConfigMap, triggersConfigMap, dashboardConfigMap, operatorConfigMap},
 		goldenFile:            true,
 	}, {
-		name:                  "deployment with pipeline, chains, triggers, dashboard and operator installed",
+		name:                  "deployment with pipeline, chains, triggers, dashboard, hub and operator installed",
 		namespace:             "test",
 		userProvidedNamespace: "test",
 		deployment:            []*v1.Deployment{},
-		configMap:             []*corev1.ConfigMap{pipelineConfigMap, chainsConfigMap, triggersConfigMap, dashboardConfigMap, operatorConfigMap},
+		configMap:             []*corev1.ConfigMap{pipelineConfigMap, chainsConfigMap, triggersConfigMap, dashboardConfigMap, operatorConfigMap, hubConfigMap},
 		goldenFile:            true,
 	}}
 	for _, tp := range testParams {
