@@ -68,7 +68,7 @@ spec:
         - name: packages
           value: ./pkg/... ./cmd/...
         - name: version
-          value: 1.20.10
+          value: 1.20
         - name: flags
           value: -v -mod=vendor
       workspaces:
@@ -82,7 +82,7 @@ spec:
         - name: package
           value: $(params.package)
         - name: version
-          value: 1.20.10
+          value: 1.20
         - name: flags
           value: -v -mod=vendor
       workspaces:
@@ -100,7 +100,7 @@ spec:
         - name: github-token-secret-key
           value: $(params.github-token-secret-key)
         - name: image
-          value: goreleaser/goreleaser:v1.20.0
+          value: goreleaser/goreleaser:v1.23.0
       workspaces:
         - name: source
           workspace: shared-workspace
