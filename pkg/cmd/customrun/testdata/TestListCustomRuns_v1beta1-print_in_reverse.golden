@@ -1,0 +1,7 @@
+NAME    STARTED          DURATION   STATUS
+cr2-1   1 hour ago       ---        Running
+cr1-1   1 hour ago       1m0s       Succeeded
+cr2-2   59 minutes ago   1m0s       Failed
+cr4-1   ---              ---        Failed
+cr3-1   ---              ---        Failed
+cr0-1   ---              ---        Succeeded

@@ -10,6 +10,7 @@ Available Commands:
   chain                 Manage Chains
   clustertask           Manage ClusterTasks
   clustertriggerbinding Manage ClusterTriggerBindings
+  customrun             Manage CustomRuns
   eventlistener         Manage EventListeners
   hub                   Interact with tekton hub
   pipeline              Manage pipelines
