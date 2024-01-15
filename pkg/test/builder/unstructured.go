@@ -85,6 +85,15 @@ func UnstructuredV1beta1TR(taskrun *v1beta1.TaskRun, version string) *unstructur
 	}
 }
 
+func UnstructuredV1beta1CustomRun(customrun *v1beta1.CustomRun, version string) *unstructured.Unstructured {
+	customrun.APIVersion = "tekton.dev/" + version
+	customrun.Kind = "customrun"
+	object, _ := runtime.DefaultUnstructuredConverter.ToUnstructured(customrun)
+	return &unstructured.Unstructured{
+		Object: object,
+	}
+}
+
 func UnstructuredV1beta1T(task *v1beta1.Task, version string) *unstructured.Unstructured {
 	task.APIVersion = "tekton.dev/" + version
 	task.Kind = "task"
