@@ -22,7 +22,9 @@ import (
 	"github.com/spf13/cobra"
 	"github.com/tektoncd/cli/pkg/cli"
 	"github.com/tektoncd/cli/pkg/trustedresources"
+	v1 "github.com/tektoncd/pipeline/pkg/apis/pipeline/v1"
 	"github.com/tektoncd/pipeline/pkg/apis/pipeline/v1beta1"
+	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	cliopts "k8s.io/cli-runtime/pkg/genericclioptions"
 	"sigs.k8s.io/yaml"
 )
@@ -31,6 +33,7 @@ type signOptions struct {
 	keyfile    string
 	kmsKey     string
 	targetFile string
+	apiVersion string
 }
 
 func signCommand() *cobra.Command {
@@ -70,7 +73,13 @@ or using kms
 				return err
 			}
 
-			crd := &v1beta1.Pipeline{}
+			var crd metav1.Object
+			if opts.apiVersion == "v1beta1" {
+				crd = &v1beta1.Pipeline{}
+			} else {
+				crd = &v1.Pipeline{}
+			}
+
 			if err := yaml.Unmarshal(b, &crd); err != nil {
 				return fmt.Errorf("error unmarshalling Pipeline: %v", err)
 			}
@@ -87,7 +96,7 @@ or using kms
 	c.Flags().StringVarP(&opts.keyfile, "key-file", "K", "", "Key file")
 	c.Flags().StringVarP(&opts.kmsKey, "kms-key", "m", "", "KMS key url")
 	c.Flags().StringVarP(&opts.targetFile, "file-name", "f", "", "Fle name of the signed pipeline, using the original file name will overwrite the file")
-
+	c.Flags().StringVarP(&opts.apiVersion, "api-version", "", "v1", "apiVersion of the Pipeline to be signed")
 	return c
 }
 
