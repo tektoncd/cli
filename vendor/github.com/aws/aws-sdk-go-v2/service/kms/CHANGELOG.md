@@ -1,3 +1,31 @@
+# v1.27.9 (2024-01-05)
+
+* **Documentation**: Documentation updates for AWS Key Management Service (KMS).
+
+# v1.27.8 (2024-01-04)
+
+* **Dependency Update**: Updated to the latest SDK module versions
+
+# v1.27.7 (2023-12-20)
+
+* No change notes available for this release.
+
+# v1.27.6 (2023-12-15)
+
+* **Documentation**: Documentation updates for AWS Key Management Service
+
+# v1.27.5 (2023-12-08)
+
+* **Bug Fix**: Reinstate presence of default Retryer in functional options, but still respect max attempts set therein.
+
+# v1.27.4 (2023-12-07)
+
+* **Dependency Update**: Updated to the latest SDK module versions
+
+# v1.27.3 (2023-12-06)
+
+* **Bug Fix**: Restore pre-refactor auth behavior where all operations could technically be performed anonymously.
+
 # v1.27.2 (2023-12-01)
 
 * **Bug Fix**: Correct wrapping of errors in authentication workflow.
