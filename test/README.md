@@ -1,17 +1,5 @@
 # Tests
 
-To run tests:
-
-```shell
-# Unit tests
-go test $(go list ./... | grep -v third_party/)
-# or
-make test-unit
-
-# Integration tests (against your current kube cluster)
-go test -v -count=1 -tags=e2e ./test/...
-```
-
 ## Unit tests
 
 Unit tests live side by side with the code they are testing and can be run with:
@@ -22,33 +10,49 @@ go test $(go list ./... | grep -v third_party/)
 make test-unit
 ```
 
-By default `go test` will not run [the end to end tests](#end-to-end-tests),
-which need `-tags=e2e` to be enabled.
-
 ## End to end tests
 
-### prerequisite
+### Some prerequisites to run tests:
+
+1. Spin up a kind/minikube cluster.
+
+2. To run end to end tests, you will need to have a running Tekton pipeline deployed on your cluster, see [Install Pipeline](../DEVELOPMENT.md#install-pipeline).
+
+3. Next install Tekton Triggers in the cluster, see [Install Triggers](https://github.com/tektoncd/triggers/blob/main/docs/install.md#installation)
+
+Set environment variable `TEST_CLUSTERTASK_LIST_EMPTY` to any value if tests are run in an environment which contains `clustertasks`. 
+
+```shell
+export TEST_CLUSTERTASK_LIST_EMPTY=empty
+```
+
+Set `SYSTEM_NAMESPACE` variable to appropriate value (say tekton-pipelines) based on the namespace where Tekton Pipelines system components reside within the Kubernetes cluster.
+
+```shell 
+export SYSTEM_NAMESPACE=<namespace-name> (eg: export SYSTEM_NAMESPACE=tekton-pipelines)
+```
+
+### Running
+
+End to end tests live in [this](../test/e2e/) directory. By default `go test` will not run [the end to end tests](#end-to-end-tests),
+it need `-tags=e2e` to be enabled in order to run these tests, hence you must provide `go` with `-tags=e2e`. 
+
 ```shell
 go build -o tkn github.com/tektoncd/cli/cmd/tkn
 export TEST_CLIENT_BINARY=<path-to-tkn-binary-directory>/tkn ( eg: export TEST_CLIENT_BINARY=$PWD/tkn ) 
 ```
-Set environment variable `TEST_CLUSTERTASK_LIST_EMPTY` to any value if tests are run in an environment which contains `clustertasks`
-### Running
-
-To run end to end tests, you will need to have a running Tekton
-pipeline deployed on your cluster, see [Install Pipeline](../DEVELOPMENT.md#install-pipeline).
-
-End to end tests live in this directory. To run these tests, you must provide
-`go` with `-tags=e2e`. By default the tests run against your current kubeconfig
-context, but you can change that and other settings with [the flags](#flags):
+By default the tests run against your current kubeconfig context:
 
 ```shell
 go test -v -count=1 -tags=e2e -timeout=20m ./test/e2e/...
+```
+You can change the kubeconfig context and other settings with [the flags](#flags).
+
+```shell
 go test -v -count=1 -tags=e2e -timeout=20m ./test/e2e/... --kubeconfig ~/special/kubeconfig --cluster myspecialcluster
 ```
 
-You can also use
-[all of flags defined in `knative/pkg/test`](https://github.com/knative/pkg/tree/master/test#flags).
+You can also use [all of flags defined in `knative/pkg/test`](https://github.com/knative/pkg/tree/master/test#flags).
 
 ### Flags
 
@@ -74,10 +78,21 @@ go test -v -count=1 ./test/e2e/... --kubeconfig ~/special/kubeconfig --cluster m
 
 ### One test case
 
-To run one e2e test case, e.g. TestTaskRun, use
+To run one e2e test case, e.g. TestPipelinesE2E test, use
 the `-run` flag with `go test`
 
 ```bash
-go test -v -count=1 ./test/e2e/... -run ^TestPipelinesE2E$
+go test -v ./test/... -tags=e2e -run ^TestPipelinesE2E
 ```
 
+### Prerequisite to run make check and make generated 
+
+Ensure that golangci-lint and yamllint are installed on your development machine. If not then install them following [golangci-lint](https://golangci-lint.run/usage/install/) and [yamllint](https://yamllint.readthedocs.io/en/stable/quickstart.html).
+
+Next step will be to run
+```bash
+# For linting the golang and YAML files 
+make check
+# To check diff in goldenfile and [docs](https://github.com/tektoncd/cli/tree/main/docs), update and autogenerate them
+make generated
+```
