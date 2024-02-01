@@ -51,7 +51,7 @@ func (c *collection) newDocIterator(ctx context.Context, q *driver.Query) (*docI
 		}
 	}
 	ctx, cancel := context.WithCancel(ctx)
-	sc, err := c.client.RunQuery(ctx, req)
+	sc, err := c.client.RunQuery(withResourceHeader(ctx, c.dbPath), req)
 	if err != nil {
 		cancel()
 		return nil, err
@@ -65,7 +65,7 @@ func (c *collection) newDocIterator(ctx context.Context, q *driver.Query) (*docI
 	}, nil
 }
 
-////////////////////////////////////////////////////////////////
+// //////////////////////////////////////////////////////////////
 // The code below is adapted from cloud.google.com/go/firestore.
 
 type docIterator struct {
@@ -293,8 +293,7 @@ func (c *collection) filterToProto(f driver.Filter) (*pb.StructuredQuery_Filter,
 			FilterType: &pb.StructuredQuery_Filter_UnaryFilter{
 				UnaryFilter: &pb.StructuredQuery_UnaryFilter{
 					OperandType: &pb.StructuredQuery_UnaryFilter_Field{
-						Field: fieldRef(f.FieldPath),
-					},
+						Field: fieldRef(f.FieldPath)},
 					Op: uop,
 				},
 			},
@@ -346,6 +345,10 @@ func newFieldFilter(fp []string, op string, val *pb.Value) (*pb.StructuredQuery_
 		fop = pb.StructuredQuery_FieldFilter_GREATER_THAN_OR_EQUAL
 	case driver.EqualOp:
 		fop = pb.StructuredQuery_FieldFilter_EQUAL
+	case "in":
+		fop = pb.StructuredQuery_FieldFilter_IN
+	case "not-in":
+		fop = pb.StructuredQuery_FieldFilter_NOT_IN
 	// TODO(jba): can we support array-contains portably?
 	// case "array-contains":
 	// 	fop = pb.StructuredQuery_FieldFilter_ARRAY_CONTAINS
