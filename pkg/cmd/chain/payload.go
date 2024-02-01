@@ -24,7 +24,7 @@ import (
 	"github.com/tektoncd/cli/pkg/actions"
 	"github.com/tektoncd/cli/pkg/chain"
 	"github.com/tektoncd/cli/pkg/cli"
-	"github.com/tektoncd/pipeline/pkg/apis/pipeline/v1beta1"
+	v1 "github.com/tektoncd/pipeline/pkg/apis/pipeline/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 )
 
@@ -60,7 +60,7 @@ func payloadCommand(p cli.Params) *cobra.Command {
 			}
 
 			// Retrieve the taskrun.
-			var taskrun *v1beta1.TaskRun
+			var taskrun *v1.TaskRun
 			if err = actions.GetV1(taskrunGroupResource, cs, taskName, p.Namespace(), metav1.GetOptions{}, &taskrun); err != nil {
 				return fmt.Errorf("failed to get TaskRun %s: %v", taskName, err)
 			}
@@ -73,7 +73,7 @@ func payloadCommand(p cli.Params) *cobra.Command {
 	return c
 }
 
-func printPayloads(cs *cli.Clients, namespace string, tr *v1beta1.TaskRun, skipVerify bool) error {
+func printPayloads(cs *cli.Clients, namespace string, tr *v1.TaskRun, skipVerify bool) error {
 	// Get the storage backend.
 	backends, opts, err := chain.GetTaskRunBackends(cs, namespace, tr)
 	if err != nil {
@@ -93,7 +93,7 @@ func printPayloads(cs *cli.Clients, namespace string, tr *v1beta1.TaskRun, skipV
 		}
 
 		// Fetch the payload.
-		trObj := objects.NewTaskRunObject(tr)
+		trObj := objects.NewTaskRunObjectV1(tr)
 		payloads, err := backend.RetrievePayloads(context.Background(), trObj, opts)
 		if err != nil {
 			return fmt.Errorf("error retrieving the payloads: %s", err)
