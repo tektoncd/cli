@@ -37,6 +37,10 @@ type Signer interface {
 	Sign(ctx context.Context, obj objects.TektonObject) error
 }
 
+type MetricsRecorder interface {
+	RecordCountMetrics(ctx context.Context, MetricType string)
+}
+
 type ObjectSigner struct {
 	// Backends: store payload and signature
 	// The keys are different storage option's name. {docdb, gcs, grafeas, oci, tekton}
@@ -44,6 +48,8 @@ type ObjectSigner struct {
 	Backends          map[string]storage.Backend
 	SecretPath        string
 	Pipelineclientset versioned.Interface
+	// Metrics Recorder config
+	Recorder MetricsRecorder
 }
 
 func allSigners(ctx context.Context, sp string, cfg config.Config) map[string]signing.Signer {
@@ -135,7 +141,6 @@ func (o *ObjectSigner) Sign(ctx context.Context, tektonObj objects.TektonObject)
 		// Extract all the "things" to be signed.
 		// We might have a few of each type (several binaries, or images)
 		objects := signableType.ExtractObjects(ctx, tektonObj)
-
 		// Go through each object one at a time.
 		for _, obj := range objects {
 
@@ -175,6 +180,7 @@ func (o *ObjectSigner) Sign(ctx context.Context, tektonObj objects.TektonObject)
 				logger.Error(err)
 				continue
 			}
+			measureMetrics(ctx, SignedMessagesCount, o.Recorder)
 
 			// Now store those!
 			for _, backend := range sets.List[string](signableType.StorageBackend(cfg)) {
@@ -189,6 +195,8 @@ func (o *ObjectSigner) Sign(ctx context.Context, tektonObj objects.TektonObject)
 				if err := b.StorePayload(ctx, tektonObj, rawPayload, string(signature), storageOpts); err != nil {
 					logger.Error(err)
 					merr = multierror.Append(merr, err)
+				} else {
+					measureMetrics(ctx, SignsStoredCount, o.Recorder)
 				}
 			}
 
@@ -204,8 +212,8 @@ func (o *ObjectSigner) Sign(ctx context.Context, tektonObj objects.TektonObject)
 					merr = multierror.Append(merr, err)
 				} else {
 					logger.Infof("Uploaded entry to %s with index %d", cfg.Transparency.URL, *entry.LogIndex)
-
 					extraAnnotations[ChainsTransparencyAnnotation] = fmt.Sprintf("%s/api/v1/log/entries?logIndex=%d", cfg.Transparency.URL, *entry.LogIndex)
+					measureMetrics(ctx, PayloadUploadeCount, o.Recorder)
 				}
 			}
 
@@ -223,8 +231,15 @@ func (o *ObjectSigner) Sign(ctx context.Context, tektonObj objects.TektonObject)
 	if err := MarkSigned(ctx, tektonObj, o.Pipelineclientset, extraAnnotations); err != nil {
 		return err
 	}
-
+	measureMetrics(ctx, MarkedAsSignedCount, o.Recorder)
 	return nil
+}
+
+func measureMetrics(ctx context.Context, metrictype string, mtr MetricsRecorder) {
+	if mtr != nil {
+		mtr.RecordCountMetrics(ctx, metrictype)
+	}
+
 }
 
 func HandleRetry(ctx context.Context, obj objects.TektonObject, ps versioned.Interface, annotations map[string]string) error {

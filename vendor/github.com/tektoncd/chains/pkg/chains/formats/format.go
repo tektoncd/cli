@@ -34,6 +34,7 @@ const (
 	PayloadTypeSlsav1        config.PayloadType = "slsa/v1"
 	PayloadTypeSlsav2alpha1  config.PayloadType = "slsa/v2alpha1"
 	PayloadTypeSlsav2alpha2  config.PayloadType = "slsa/v2alpha2"
+	PayloadTypeSlsav2alpha3  config.PayloadType = "slsa/v2alpha3"
 )
 
 var (
@@ -42,6 +43,7 @@ var (
 		PayloadTypeSlsav1:       {},
 		PayloadTypeSlsav2alpha1: {},
 		PayloadTypeSlsav2alpha2: {},
+		PayloadTypeSlsav2alpha3: {},
 	}
 	payloaderMap = map[config.PayloadType]PayloaderInit{}
 )

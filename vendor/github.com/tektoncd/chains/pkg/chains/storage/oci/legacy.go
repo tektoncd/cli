@@ -54,7 +54,8 @@ type Backend struct {
 // NewStorageBackend returns a new OCI StorageBackend that stores signatures in an OCI registry
 func NewStorageBackend(ctx context.Context, client kubernetes.Interface, cfg config.Config) *Backend {
 	return &Backend{
-		cfg:    cfg,
+		cfg: cfg,
+
 		client: client,
 		getAuthenticator: func(ctx context.Context, obj objects.TektonObject, client kubernetes.Interface) (remote.Option, error) {
 			kc, err := k8schain.New(ctx, client,
@@ -119,12 +120,17 @@ func (b *Backend) uploadSignature(ctx context.Context, format simple.SimpleConta
 	imageName := format.ImageName()
 	logger.Infof("Uploading %s signature", imageName)
 
-	ref, err := newDigest(b.cfg, imageName)
+	ref, err := name.NewDigest(imageName)
 	if err != nil {
 		return errors.Wrap(err, "getting digest")
 	}
 
-	store, err := NewSimpleStorerFromConfig(WithTargetRepository(ref.Repository))
+	repo, err := newRepo(b.cfg, ref)
+	if err != nil {
+		return errors.Wrapf(err, "getting storage repo for sub %s", imageName)
+	}
+
+	store, err := NewSimpleStorerFromConfig(WithTargetRepository(repo))
 	if err != nil {
 		return err
 	}
@@ -154,12 +160,17 @@ func (b *Backend) uploadAttestation(ctx context.Context, attestation in_toto.Sta
 		imageName := fmt.Sprintf("%s@sha256:%s", subj.Name, subj.Digest["sha256"])
 		logger.Infof("Starting attestation upload to OCI for %s...", imageName)
 
-		ref, err := newDigest(b.cfg, imageName)
+		ref, err := name.NewDigest(imageName)
 		if err != nil {
 			return errors.Wrapf(err, "getting digest for subj %s", imageName)
 		}
 
-		store, err := NewAttestationStorer(WithTargetRepository(ref.Repository))
+		repo, err := newRepo(b.cfg, ref)
+		if err != nil {
+			return errors.Wrapf(err, "getting storage repo for sub %s", imageName)
+		}
+
+		store, err := NewAttestationStorer(WithTargetRepository(repo))
 		if err != nil {
 			return err
 		}
@@ -278,16 +289,14 @@ func (b *Backend) RetrieveArtifact(ctx context.Context, obj objects.TektonObject
 	return m, nil
 }
 
-func newDigest(cfg config.Config, imageName string) (name.Digest, error) {
-	// Override image name from config if set.
-	if r := cfg.Storage.OCI.Repository; r != "" {
-		imageName = r
-	}
-
+func newRepo(cfg config.Config, imageName name.Digest) (name.Repository, error) {
 	var opts []name.Option
 	if cfg.Storage.OCI.Insecure {
 		opts = append(opts, name.Insecure)
 	}
 
-	return name.NewDigest(imageName, opts...)
+	if storageOCIRepository := cfg.Storage.OCI.Repository; storageOCIRepository != "" {
+		return name.NewRepository(storageOCIRepository, opts...)
+	}
+	return name.NewRepository(imageName.Repository.Name(), opts...)
 }
