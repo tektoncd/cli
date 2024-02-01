@@ -23,7 +23,7 @@ import (
 	"github.com/tektoncd/cli/pkg/actions"
 	"github.com/tektoncd/cli/pkg/chain"
 	"github.com/tektoncd/cli/pkg/cli"
-	"github.com/tektoncd/pipeline/pkg/apis/pipeline/v1beta1"
+	v1 "github.com/tektoncd/pipeline/pkg/apis/pipeline/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 )
 
@@ -50,7 +50,7 @@ func signatureCommand(p cli.Params) *cobra.Command {
 				return fmt.Errorf("failed to create tekton client")
 			}
 
-			var taskrun *v1beta1.TaskRun
+			var taskrun *v1.TaskRun
 			if err = actions.GetV1(taskrunGroupResource, cs, taskName, p.Namespace(), metav1.GetOptions{}, &taskrun); err != nil {
 				return fmt.Errorf("failed to get TaskRun %s: %v", taskName, err)
 			}
@@ -62,7 +62,7 @@ func signatureCommand(p cli.Params) *cobra.Command {
 	return c
 }
 
-func printSignatures(cs *cli.Clients, namespace string, tr *v1beta1.TaskRun) error {
+func printSignatures(cs *cli.Clients, namespace string, tr *v1.TaskRun) error {
 	// Get the storage backend.
 	backends, opts, err := chain.GetTaskRunBackends(cs, namespace, tr)
 	if err != nil {
@@ -77,7 +77,7 @@ func printSignatures(cs *cli.Clients, namespace string, tr *v1beta1.TaskRun) err
 		}
 
 		// Fetch the signature.
-		trObj := objects.NewTaskRunObject(tr)
+		trObj := objects.NewTaskRunObjectV1(tr)
 		signatures, err := backend.RetrieveSignatures(context.Background(), trObj, opts)
 		if err != nil {
 			return fmt.Errorf("error retrieving the signatures: %s", err)

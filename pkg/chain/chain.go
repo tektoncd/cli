@@ -24,7 +24,7 @@ import (
 	"github.com/tektoncd/chains/pkg/chains/storage"
 	"github.com/tektoncd/chains/pkg/config"
 	"github.com/tektoncd/cli/pkg/cli"
-	"github.com/tektoncd/pipeline/pkg/apis/pipeline/v1beta1"
+	v1 "github.com/tektoncd/pipeline/pkg/apis/pipeline/v1"
 	"go.uber.org/zap"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 )
@@ -38,7 +38,7 @@ func ConfigMapToContext(cs *cli.Clients, namespace string) (context.Context, err
 	return config.ToContext(context.Background(), cfg), nil
 }
 
-func GetTaskRunBackends(cs *cli.Clients, namespace string, tr *v1beta1.TaskRun) (map[string]storage.Backend, config.StorageOpts, error) {
+func GetTaskRunBackends(cs *cli.Clients, namespace string, tr *v1.TaskRun) (map[string]storage.Backend, config.StorageOpts, error) {
 	// Prepare the logger.
 	encoderCfg := zapcore.EncoderConfig{
 		MessageKey: "msg",
