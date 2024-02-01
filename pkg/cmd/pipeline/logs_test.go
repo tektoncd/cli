@@ -200,7 +200,8 @@ func TestPipelineLog_v1beta1(t *testing.T) {
 		dynamic   dynamic.Interface
 		input     test.Clients
 		wantError bool
-		want      string
+		prefixing bool
+		want      string              
 	}{
 		{
 			name:      "Invalid namespace",
@@ -209,6 +210,7 @@ func TestPipelineLog_v1beta1(t *testing.T) {
 			dynamic:   dc,
 			input:     cs,
 			wantError: false,
+			prefixing: true,
 			want:      "No Pipelines found in namespace invalid",
 		},
 		{
@@ -218,6 +220,7 @@ func TestPipelineLog_v1beta1(t *testing.T) {
 			dynamic:   dc,
 			input:     cs,
 			wantError: false,
+			prefixing: true,
 			want:      "No Pipelines found in namespace ns",
 		},
 		{
@@ -227,6 +230,7 @@ func TestPipelineLog_v1beta1(t *testing.T) {
 			dynamic:   dc2,
 			input:     cs2,
 			wantError: false,
+			prefixing: true,
 			want:      "No PipelineRuns found for Pipeline output-pipeline",
 		},
 		{
@@ -236,6 +240,7 @@ func TestPipelineLog_v1beta1(t *testing.T) {
 			dynamic:   dc2,
 			input:     cs2,
 			wantError: true,
+			prefixing: true,
 			want:      "pipelines.tekton.dev \"pipeline\" not found",
 		},
 		{
@@ -245,6 +250,7 @@ func TestPipelineLog_v1beta1(t *testing.T) {
 			dynamic:   dc,
 			input:     cs,
 			wantError: true,
+			prefixing: true,
 			want:      "pipelineruns.tekton.dev \"pipelinerun\" not found",
 		},
 		{
@@ -254,6 +260,7 @@ func TestPipelineLog_v1beta1(t *testing.T) {
 			dynamic:   dc2,
 			input:     cs2,
 			wantError: true,
+			prefixing: true,
 			want:      "limit was -1 but must be a positive number",
 		},
 		{
@@ -263,12 +270,34 @@ func TestPipelineLog_v1beta1(t *testing.T) {
 			dynamic:   dc3,
 			input:     cs3,
 			wantError: false,
+			prefixing: true,
 			want:      "",
+		},
+		{
+			name:      "Prefixing enabled for Pipelines",
+			command:   []string{"logs", prName, "--prefix=true"},
+			namespace: "",
+			dynamic:   dc3,
+			input:     cs3,
+			wantError: false,
+			prefixing: true,
+			want:      "[output-pipeline-run] No logs available\n",
+		},
+		{
+			name:      "Prefixing disabled for Pipelines",
+			command:   []string{"logs", prName, "--prefix=false"},
+			namespace: "",	
+			dynamic:   dc3,
+			input:     cs3,
+			wantError: false,
+			prefixing: false,
+			want:      "No logs available\n",
 		},
 	}
 
 	for _, tp := range testParams {
 		t.Run(tp.name, func(t *testing.T) {
+
 			p := &test.Params{Tekton: tp.input.Pipeline, Clock: clock, Kube: tp.input.Kube, Dynamic: tp.dynamic}
 			if tp.namespace != "" {
 				p.SetNamespace(tp.namespace)
@@ -437,6 +466,7 @@ func TestPipelineLog(t *testing.T) {
 		dynamic   dynamic.Interface
 		input     pipelinetest.Clients
 		wantError bool
+		prefixing bool
 		want      string
 	}{
 		{
@@ -446,6 +476,7 @@ func TestPipelineLog(t *testing.T) {
 			dynamic:   dc,
 			input:     cs,
 			wantError: false,
+			prefixing: true,
 			want:      "No Pipelines found in namespace invalid",
 		},
 		{
@@ -455,6 +486,7 @@ func TestPipelineLog(t *testing.T) {
 			dynamic:   dc,
 			input:     cs,
 			wantError: false,
+			prefixing: true,
 			want:      "No Pipelines found in namespace ns",
 		},
 		{
@@ -464,6 +496,7 @@ func TestPipelineLog(t *testing.T) {
 			dynamic:   dc2,
 			input:     cs2,
 			wantError: false,
+			prefixing: true,
 			want:      "No PipelineRuns found for Pipeline output-pipeline",
 		},
 		{
@@ -473,6 +506,7 @@ func TestPipelineLog(t *testing.T) {
 			dynamic:   dc2,
 			input:     cs2,
 			wantError: true,
+			prefixing: true,
 			want:      "pipelines.tekton.dev \"pipeline\" not found",
 		},
 		{
@@ -482,6 +516,7 @@ func TestPipelineLog(t *testing.T) {
 			dynamic:   dc,
 			input:     cs,
 			wantError: true,
+			prefixing: true,
 			want:      "pipelineruns.tekton.dev \"pipelinerun\" not found",
 		},
 		{
@@ -491,6 +526,7 @@ func TestPipelineLog(t *testing.T) {
 			dynamic:   dc2,
 			input:     cs2,
 			wantError: true,
+			prefixing: true,
 			want:      "limit was -1 but must be a positive number",
 		},
 		{
@@ -500,7 +536,28 @@ func TestPipelineLog(t *testing.T) {
 			dynamic:   dc3,
 			input:     cs3,
 			wantError: false,
+			prefixing: true,
 			want:      "",
+		},
+		{
+			name:      "Prefixing enabled for Pipelines",
+			command:   []string{"logs", prName2, "--prefix=true"},
+			namespace: "",
+			dynamic:   dc3,
+			input:     cs3,
+			wantError: false,
+			prefixing: true,
+			want:      "[output-pipeline-run] No logs available",
+		},
+		{
+			name:      "Prefixing disabled for Pipelines",
+			command:   []string{"logs", prName2, "--prefix=false"},
+			namespace: "",
+			dynamic:   dc3,
+			input:     cs3,
+			wantError: false,
+			prefixing: false,
+			want:      "No logs available",
 		},
 	}
 
@@ -510,6 +567,7 @@ func TestPipelineLog(t *testing.T) {
 			if tp.namespace != "" {
 				p.SetNamespace(tp.namespace)
 			}
+
 			c := Command(p)
 
 			out, err := test.ExecuteCommand(c, tp.command...)
@@ -1410,6 +1468,15 @@ func TestLogs_Auto_Select_FirstPipeline(t *testing.T) {
 		Limit:  5,
 		Params: &p,
 	}
+
+	// Set the prefixing flag to true or false as needed
+	prefixing := true
+
+	// Set the prefix flag based on the prefixing flag
+	if prefixing {
+		lopt.Prefixing = true
+	}
+
 	err = getAllInputs(lopt)
 	if err != nil {
 		t.Errorf("Unexpected error: %v", err)

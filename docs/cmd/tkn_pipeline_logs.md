@@ -40,6 +40,7 @@ Show logs for given Pipeline and PipelineRun:
   -h, --help         help for logs
   -L, --last         show logs for last PipelineRun
       --limit int    lists number of PipelineRuns (default 5)
+      --prefix       prefix each log line with the log source (task name and step name) (default true)
   -t, --timestamps   show logs with timestamp
 ```
 
