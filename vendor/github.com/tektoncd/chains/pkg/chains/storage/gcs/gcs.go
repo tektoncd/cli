@@ -26,14 +26,18 @@ import (
 	"github.com/tektoncd/chains/pkg/chains/signing"
 	"github.com/tektoncd/chains/pkg/chains/storage/api"
 	"github.com/tektoncd/chains/pkg/config"
+	v1 "github.com/tektoncd/pipeline/pkg/apis/pipeline/v1"
 	"github.com/tektoncd/pipeline/pkg/apis/pipeline/v1beta1"
 )
 
 const (
 	StorageBackendGCS = "gcs"
 	// taskrun-$namespace-$name/$key.<type>
-	SignatureNameFormat = "taskrun-%s-%s/%s.signature"
-	PayloadNameFormat   = "taskrun-%s-%s/%s.payload"
+	SignatureNameFormatTaskRun = "taskrun-%s-%s/%s.signature"
+	PayloadNameFormatTaskRun   = "taskrun-%s-%s/%s.payload"
+	// pipelinerun-$namespace-$name/$key.<type>
+	SignatureNameFormatPipelineRun = "pipelinerun-%s-%s/%s.signature"
+	PayloadNameFormatPipelineRun   = "pipelinerun-%s-%s/%s.payload"
 )
 
 // Backend is a storage backend that stores signed payloads in the TaskRun metadata as an annotation.
@@ -59,34 +63,57 @@ func NewStorageBackend(ctx context.Context, cfg config.Config) (*Backend, error)
 	}, nil
 }
 
-// StorePayload implements the storage.Backend interface.
+// StorePayload implements the storage.Backend interface.  As of chains v0.20.0+,
+// this method has been updated to use Tekton v1 objects (previously v1beta1) and
+// it's error messages have been updated to reflect this.
+//
+//nolint:staticcheck
 func (b *Backend) StorePayload(ctx context.Context, obj objects.TektonObject, rawPayload []byte, signature string, opts config.StorageOpts) error {
 	logger := logging.FromContext(ctx)
 
-	// TODO(https://github.com/tektoncd/chains/issues/852): Support PipelineRuns
-	tr, ok := obj.GetObject().(*v1beta1.TaskRun)
-	if !ok {
-		return fmt.Errorf("type %T not supported - supported types: [*v1beta1.TaskRun]", obj.GetObject())
-	}
-
-	store := &TaskRunStorer{
-		writer: b.writer,
-		key:    opts.ShortKey,
-	}
-	if _, err := store.Store(ctx, &api.StoreRequest[*v1beta1.TaskRun, *in_toto.Statement]{
-		Object:   obj,
-		Artifact: tr,
-		// We don't actually use payload - we store the raw bundle values directly.
-		Payload: nil,
-		Bundle: &signing.Bundle{
-			Content:   rawPayload,
-			Signature: []byte(signature),
-			Cert:      []byte(opts.Cert),
-			Chain:     []byte(opts.Chain),
-		},
-	}); err != nil {
-		logger.Errorf("error writing to GCS: %w", err)
-		return err
+	if tr, isTaskRun := obj.GetObject().(*v1.TaskRun); isTaskRun {
+		store := &TaskRunStorer{
+			writer: b.writer,
+			key:    opts.ShortKey,
+		}
+		if _, err := store.Store(ctx, &api.StoreRequest[*v1.TaskRun, *in_toto.Statement]{
+			Object:   obj,
+			Artifact: tr,
+			// We don't actually use payload - we store the raw bundle values directly.
+			Payload: nil,
+			Bundle: &signing.Bundle{
+				Content:   rawPayload,
+				Signature: []byte(signature),
+				Cert:      []byte(opts.Cert),
+				Chain:     []byte(opts.Chain),
+			},
+		}); err != nil {
+			logger.Errorf("error writing to GCS: %w", err)
+			return err
+		}
+	} else if pr, isPipelineRun := obj.GetObject().(*v1.PipelineRun); isPipelineRun {
+		store := &PipelineRunStorer{
+			writer: b.writer,
+			key:    opts.ShortKey,
+		}
+		// TODO(https://github.com/tektoncd/chains/issues/665) currently using deprecated v1beta1 APIs until we add full v1 support
+		if _, err := store.Store(ctx, &api.StoreRequest[*v1.PipelineRun, *in_toto.Statement]{
+			Object:   obj,
+			Artifact: pr,
+			// We don't actually use payload - we store the raw bundle values directly.
+			Payload: nil,
+			Bundle: &signing.Bundle{
+				Content:   rawPayload,
+				Signature: []byte(signature),
+				Cert:      []byte(opts.Cert),
+				Chain:     []byte(opts.Chain),
+			},
+		}); err != nil {
+			logger.Errorf("error writing to GCS: %w", err)
+			return err
+		}
+	} else {
+		return fmt.Errorf("type %T not supported - supported types: [*v1.TaskRun, *v1.PipelineRun]", obj.GetObject())
 	}
 	return nil
 }
@@ -121,10 +148,23 @@ func (r *reader) GetReader(ctx context.Context, object string) (io.ReadCloser, e
 	return r.client.Bucket(r.bucket).Object(object).NewReader(ctx)
 }
 
+//nolint:staticcheck
 func (b *Backend) RetrieveSignatures(ctx context.Context, obj objects.TektonObject, opts config.StorageOpts) (map[string][]string, error) {
-	// TODO: Handle unsupported type gracefully
-	tr := obj.GetObject().(*v1beta1.TaskRun)
-	object := sigName(tr, opts)
+	var object string
+
+	switch t := obj.GetObject().(type) {
+	case *v1.TaskRun:
+		object = taskRunSigNameV1(t, opts)
+	case *v1.PipelineRun:
+		object = pipelineRunSignameV1(t, opts)
+	case *v1beta1.TaskRun:
+		object = taskRunSigNameV1Beta1(t, opts)
+	case *v1beta1.PipelineRun:
+		object = pipelineRunSignameV1Beta1(t, opts)
+	default:
+		return nil, fmt.Errorf("unsupported TektonObject type: %T", t)
+	}
+
 	signature, err := b.retrieveObject(ctx, object)
 	if err != nil {
 		return nil, err
@@ -135,16 +175,29 @@ func (b *Backend) RetrieveSignatures(ctx context.Context, obj objects.TektonObje
 	return m, nil
 }
 
+//nolint:staticcheck
 func (b *Backend) RetrievePayloads(ctx context.Context, obj objects.TektonObject, opts config.StorageOpts) (map[string]string, error) {
-	// TODO: Handle unsupported type gracefully
-	tr := obj.GetObject().(*v1beta1.TaskRun)
-	object := payloadName(tr, opts)
-	m := make(map[string]string)
+	var object string
+
+	switch t := obj.GetObject().(type) {
+	case *v1.TaskRun:
+		object = taskRunPayloadNameV1(t, opts)
+	case *v1.PipelineRun:
+		object = pipelineRunPayloadNameV1(t, opts)
+	case *v1beta1.TaskRun:
+		object = taskRunPayloadNameV1Beta1(t, opts)
+	case *v1beta1.PipelineRun:
+		object = pipelineRunPayloadNameV1Beta1(t, opts)
+	default:
+		return nil, fmt.Errorf("unsupported TektonObject type: %T", t)
+	}
+
 	payload, err := b.retrieveObject(ctx, object)
 	if err != nil {
 		return nil, err
 	}
 
+	m := make(map[string]string)
 	m[object] = payload
 	return m, nil
 }
@@ -163,20 +216,53 @@ func (b *Backend) retrieveObject(ctx context.Context, object string) (string, er
 	return string(payload), nil
 }
 
-func sigName(tr *v1beta1.TaskRun, opts config.StorageOpts) string {
-	return fmt.Sprintf(SignatureNameFormat, tr.Namespace, tr.Name, opts.ShortKey)
+//nolint:staticcheck
+func taskRunSigNameV1(tr *v1.TaskRun, opts config.StorageOpts) string {
+	return fmt.Sprintf(SignatureNameFormatTaskRun, tr.Namespace, tr.Name, opts.ShortKey)
 }
 
-func payloadName(tr *v1beta1.TaskRun, opts config.StorageOpts) string {
-	return fmt.Sprintf(PayloadNameFormat, tr.Namespace, tr.Name, opts.ShortKey)
+//nolint:staticcheck
+func taskRunPayloadNameV1(tr *v1.TaskRun, opts config.StorageOpts) string {
+	return fmt.Sprintf(PayloadNameFormatTaskRun, tr.Namespace, tr.Name, opts.ShortKey)
 }
 
+//nolint:staticcheck
+func pipelineRunSignameV1(pr *v1.PipelineRun, opts config.StorageOpts) string {
+	return fmt.Sprintf(SignatureNameFormatPipelineRun, pr.Namespace, pr.Name, opts.ShortKey)
+}
+
+//nolint:staticcheck
+func pipelineRunPayloadNameV1(pr *v1.PipelineRun, opts config.StorageOpts) string {
+	return fmt.Sprintf(PayloadNameFormatPipelineRun, pr.Namespace, pr.Name, opts.ShortKey)
+}
+
+//nolint:staticcheck
+func taskRunSigNameV1Beta1(tr *v1beta1.TaskRun, opts config.StorageOpts) string {
+	return fmt.Sprintf(SignatureNameFormatTaskRun, tr.Namespace, tr.Name, opts.ShortKey)
+}
+
+//nolint:staticcheck
+func taskRunPayloadNameV1Beta1(tr *v1beta1.TaskRun, opts config.StorageOpts) string {
+	return fmt.Sprintf(PayloadNameFormatTaskRun, tr.Namespace, tr.Name, opts.ShortKey)
+}
+
+//nolint:staticcheck
+func pipelineRunSignameV1Beta1(pr *v1beta1.PipelineRun, opts config.StorageOpts) string {
+	return fmt.Sprintf(SignatureNameFormatPipelineRun, pr.Namespace, pr.Name, opts.ShortKey)
+}
+
+//nolint:staticcheck
+func pipelineRunPayloadNameV1Beta1(pr *v1beta1.PipelineRun, opts config.StorageOpts) string {
+	return fmt.Sprintf(PayloadNameFormatPipelineRun, pr.Namespace, pr.Name, opts.ShortKey)
+}
+
+//nolint:staticcheck
 var (
-	_ api.Storer[*v1beta1.TaskRun, *in_toto.Statement] = &TaskRunStorer{}
+	_ api.Storer[*v1.TaskRun, *in_toto.Statement]     = &TaskRunStorer{}
+	_ api.Storer[*v1.PipelineRun, *in_toto.Statement] = &PipelineRunStorer{}
 )
 
 // TaskRunStorer stores TaskRuns in GCS.
-// TODO(https://github.com/tektoncd/chains/issues/852): implement PipelineRun support (nothing in here is particularly TaskRun specific, but needs tests).
 type TaskRunStorer struct {
 	writer gcsWriter
 
@@ -185,41 +271,73 @@ type TaskRunStorer struct {
 	key string
 }
 
-// Store stores the
-func (s *TaskRunStorer) Store(ctx context.Context, req *api.StoreRequest[*v1beta1.TaskRun, *in_toto.Statement]) (*api.StoreResponse, error) {
-	logger := logging.FromContext(ctx)
-
+// Store stores the TaskRun chains information in GCS
+//
+//nolint:staticcheck
+func (s *TaskRunStorer) Store(ctx context.Context, req *api.StoreRequest[*v1.TaskRun, *in_toto.Statement]) (*api.StoreResponse, error) {
 	tr := req.Artifact
-	// We need multiple objects: the signature and the payload. We want to make these unique to the UID, but easy to find based on the
-	// name/namespace as well.
-	// $bucket/taskrun-$namespace-$name/$key.signature
-	// $bucket/taskrun-$namespace-$name/$key.payload
 	key := s.key
 	if key == "" {
 		key = string(tr.GetUID())
 	}
-	prefix := fmt.Sprintf("taskrun-%s-%s/%s", tr.GetNamespace(), tr.GetName(), key)
+	prefix := fmt.Sprintf("%s-%s-%s/%s", "taskrun", tr.GetNamespace(), tr.GetName(), key)
+
+	return store(ctx, s.writer, prefix,
+		req.Bundle.Signature, req.Bundle.Content, req.Bundle.Cert, req.Bundle.Chain)
+}
+
+// PipelineRunStorer stores PipelineRuns in GCS.
+type PipelineRunStorer struct {
+	writer gcsWriter
+
+	// Optional key to store objects as. If not set, the object UID will be used.
+	// The resulting name will look like: $bucket/pipelinerun-$namespace-$name/$key.signature
+	key string
+}
+
+// Store stores the PipelineRun chains information in GCS
+//
+//nolint:staticcheck
+func (s *PipelineRunStorer) Store(ctx context.Context, req *api.StoreRequest[*v1.PipelineRun, *in_toto.Statement]) (*api.StoreResponse, error) {
+	pr := req.Artifact
+	key := s.key
+	if key == "" {
+		key = string(pr.GetUID())
+	}
+	prefix := fmt.Sprintf("%s-%s-%s/%s", "pipelinerun", pr.GetNamespace(), pr.GetName(), key)
+
+	return store(ctx, s.writer, prefix,
+		req.Bundle.Signature, req.Bundle.Content, req.Bundle.Cert, req.Bundle.Chain)
+}
+
+func store(ctx context.Context, writer gcsWriter, prefix string,
+	signature, content, cert, chain []byte) (*api.StoreResponse, error) {
+	logger := logging.FromContext(ctx)
 
 	// Write signature
 	sigName := prefix + ".signature"
 	logger.Infof("Storing signature at %s", sigName)
-	if _, err := write(ctx, s.writer, sigName, req.Bundle.Signature); err != nil {
+	if _, err := write(ctx, writer, sigName, signature); err != nil {
 		return nil, err
 	}
 
 	// Write payload
-	if _, err := write(ctx, s.writer, prefix+".payload", req.Bundle.Content); err != nil {
+	payloadName := prefix + ".payload"
+	if _, err := write(ctx, writer, payloadName, content); err != nil {
 		return nil, err
 	}
 
 	// Only write cert+chain if it is present.
-	if req.Bundle.Cert == nil {
+	if cert == nil {
 		return nil, nil
 	}
-	if _, err := write(ctx, s.writer, prefix+".cert", req.Bundle.Cert); err != nil {
+	certName := prefix + ".cert"
+	if _, err := write(ctx, writer, certName, cert); err != nil {
 		return nil, err
 	}
-	if _, err := write(ctx, s.writer, prefix+".chain", req.Bundle.Chain); err != nil {
+
+	chainName := prefix + ".chain"
+	if _, err := write(ctx, writer, chainName, chain); err != nil {
 		return nil, err
 	}
 
