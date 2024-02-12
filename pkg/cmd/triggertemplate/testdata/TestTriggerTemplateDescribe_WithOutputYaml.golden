@@ -9,7 +9,7 @@ spec:
   - default: value
     description: test with one param
     name: key
-  resourceTemplates:
+  resourcetemplates:
   - apiVersion: tekton.dev/v1beta1
     kind: PipelineRun
     metadata:
