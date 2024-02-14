@@ -2853,8 +2853,8 @@ knative.dev/pkg v0.0.0-20220325200448-1f7514acd0c2/go.mod h1:5xt0nzCwxvQ2N4w71sm
 knative.dev/pkg v0.0.0-20231103161548-f5b42e8dea44 h1:2gjHbqg8K9k1KJtLgxsTvzxovXOhozcrk3AzzJmjsA0=
 knative.dev/pkg v0.0.0-20231103161548-f5b42e8dea44/go.mod h1:g+UCgSKQ2f15kHYu/V3CPtoKo5F1x/2Y1ot0NSK7gA0=
 knative.dev/reconciler-test v0.0.0-20220328072550-7d32310c9b3a/go.mod h1:wlz1lGyn5fjJYL5PTSL/SOI4xgVpU+q6D4eaa19NsDA=
-knative.dev/serving v0.38.6 h1:G4N2dYuMggJf4Cc4ycen/dYjEF1IlyX3zoRpkou/7zI=
-knative.dev/serving v0.38.6/go.mod h1:5JIK94q75k2Y09CKpFRMe6Rs12bgCGv25wInPor/XCk=
+knative.dev/serving v0.39.0 h1:NVt8WthHmFFMWZ3qpBblXt47del8qqrbCegqwGBVSwk=
+knative.dev/serving v0.39.0/go.mod h1:0QIp5mvgWa1oUC2MxMf+Q/JWgG8JhAsSdJKc6iTRlvE=
 lukechampine.com/uint128 v1.1.1/go.mod h1:c4eWIwlEGaxC/+H1VguhU4PHXNWDCDMUlWdIWl2j1gk=
 lukechampine.com/uint128 v1.2.0/go.mod h1:c4eWIwlEGaxC/+H1VguhU4PHXNWDCDMUlWdIWl2j1gk=
 modernc.org/cc/v3 v3.36.0/go.mod h1:NFUHyPn4ekoC/JHeZFfZurN6ixxawE1BnVonP/oahEI=
