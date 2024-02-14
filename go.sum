@@ -1814,8 +1814,8 @@ github.com/tektoncd/chains v0.20.0 h1:5bVkz5VPinkuabfjS49fCENmUsnC5PSYQ8nUGlRwiI
 github.com/tektoncd/chains v0.20.0/go.mod h1:yCEaOIPaVsjc6pCG40EknJpfiQEf6fJk4mlmRVujsvg=
 github.com/tektoncd/hub v1.16.0 h1:INDmGoFjW1nWekPcdbUESaiOcXsQ8ORd23iRbf4h974=
 github.com/tektoncd/hub v1.16.0/go.mod h1:k1//VaIf/Ic+2MrqlgvzKT22SNY03C+ePIeiyouLLVY=
-github.com/tektoncd/pipeline v0.56.0 h1:Gyti3F5u1ADjI08hG3mGtWgpaaiOfeaxnznL/U/N7tM=
-github.com/tektoncd/pipeline v0.56.0/go.mod h1:npl5qTu+yU74zqKIkTVnFfu/1pMhJFZjvnCrH6DlfLM=
+github.com/tektoncd/pipeline v0.56.1 h1:jAc5R+UYgNprSae8XdkIBemXpmUzQzdvrj6fXS4DlEo=
+github.com/tektoncd/pipeline v0.56.1/go.mod h1:npl5qTu+yU74zqKIkTVnFfu/1pMhJFZjvnCrH6DlfLM=
 github.com/tektoncd/plumbing v0.0.0-20230907180608-5625252a2de1 h1:9paprRIBXQgcvdhGq3wKiSspXP0JIFSY52ru3sIMjKM=
 github.com/tektoncd/plumbing v0.0.0-20230907180608-5625252a2de1/go.mod h1:7eWs1XNkmReggow7ggRbRyRuHi7646B8b2XipCZ3VOw=
 github.com/tektoncd/triggers v0.26.1 h1:zP49d0FX5Yfvu7ExD48WEB00S3KNMMVXMMNYh96csj4=
