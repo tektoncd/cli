@@ -25,7 +25,7 @@ spec:
   steps:
   - name: create-new-file
     image: ubuntu
-    script: touch $(workspaces.shared-data.path)/$(params.filename)
+    script: sleep 30s;touch $(workspaces.shared-data.path)/$(params.filename)
   - name: write-new-stuff
     image: ubuntu
     script: echo $(params.message) > $(workspaces.shared-data.path)/$(params.filename)
