@@ -52,7 +52,7 @@ func (r *Reader) readTaskLog() (<-chan Log, <-chan error, error) {
 
 	r.formTaskName(tr)
 
-	if !isDone(tr, r.retries) && r.follow {
+	if !tr.IsDone() && r.follow {
 		return r.readLiveTaskLogs(tr)
 	}
 	return r.readAvailableTaskLogs(tr)
@@ -91,7 +91,7 @@ func (r *Reader) readAvailableTaskLogs(tr *v1.TaskRun) (<-chan Log, <-chan error
 	}
 
 	// Check if taskrun failed on start up
-	if err := hasTaskRunFailed(tr, r.task, r.retries); err != nil {
+	if err := hasTaskRunFailed(tr, r.task); err != nil {
 		if r.stream != nil {
 			fmt.Fprintf(r.stream.Err, "%s\n", err.Error())
 		} else {
@@ -262,24 +262,24 @@ func (r *Reader) getTaskRunPodNames(run *v1.TaskRun) (<-chan string, <-chan erro
 				}
 				if run.Status.PodName != "" {
 					addPod(run.Status.PodName)
-					if areRetriesScheduled(run, r.retries) {
+					if !areRetriesScheduled(run, r.retries) {
 						return
 					}
 				}
 			case <-timeout:
 				// Check if taskrun failed on start up
-				if err := hasTaskRunFailed(run, r.task, r.retries); err != nil {
+				if err := hasTaskRunFailed(run, r.task); err != nil {
 					errC <- err
 					return
 				}
 				// check if pod has been started and has a name
 				if run.HasStarted() && run.Status.PodName != "" {
-					if !areRetriesScheduled(run, r.retries) {
+					if areRetriesScheduled(run, r.retries) {
 						continue
 					}
 					return
 				}
-				errC <- fmt.Errorf("task %s create has not started yet or pod for task not yet available", r.task)
+				errC <- fmt.Errorf("task %s has not started yet or pod for task not yet available", r.task)
 				return
 			}
 		}
@@ -351,8 +351,8 @@ func getSteps(pod *corev1.Pod) []*step {
 	return steps
 }
 
-func hasTaskRunFailed(tr *v1.TaskRun, taskName string, retries int) error {
-	if isFailure(tr, retries) {
+func hasTaskRunFailed(tr *v1.TaskRun, taskName string) error {
+	if isFailure(tr) {
 		return fmt.Errorf("task %s has failed: %s", taskName, tr.Status.Conditions[0].Message)
 	}
 	return nil
@@ -370,16 +370,15 @@ func cast2taskrun(obj runtime.Object) (*v1.TaskRun, error) {
 	return run, nil
 }
 
-func isDone(tr *v1.TaskRun, retries int) bool {
-	return tr.IsDone() || !areRetriesScheduled(tr, retries)
-}
-
-func isFailure(tr *v1.TaskRun, retries int) bool {
+func isFailure(tr *v1.TaskRun) bool {
 	conditions := tr.Status.Conditions
-	return len(conditions) != 0 && conditions[0].Status == corev1.ConditionFalse && areRetriesScheduled(tr, retries)
+	return len(conditions) != 0 && conditions[0].Status == corev1.ConditionFalse
 }
 
 func areRetriesScheduled(tr *v1.TaskRun, retries int) bool {
+	if tr.IsDone() {
+		return false
+	}
 	retriesDone := len(tr.Status.RetriesStatus)
-	return retriesDone >= retries
+	return retriesDone < retries
 }
