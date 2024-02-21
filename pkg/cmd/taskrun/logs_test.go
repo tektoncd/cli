@@ -2844,7 +2844,7 @@ func TestLog_taskrun_follow_mode_update_timeout_v1beta1(t *testing.T) {
 		t.Errorf("Unexpected error: %v", err)
 	}
 
-	expectedOut := "task output-task create has not started yet or pod for task not yet available\n"
+	expectedOut := "task output-task has not started yet or pod for task not yet available\n"
 	test.AssertOutput(t, expectedOut, output)
 }
 
@@ -2992,7 +2992,7 @@ func TestLog_taskrun_follow_mode_update_timeout(t *testing.T) {
 		t.Errorf("Unexpected error: %v", err)
 	}
 
-	expectedOut := "task output-task create has not started yet or pod for task not yet available\n"
+	expectedOut := "task output-task has not started yet or pod for task not yet available\n"
 	test.AssertOutput(t, expectedOut, output)
 }
 
