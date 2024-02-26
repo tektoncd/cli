@@ -42,6 +42,8 @@ type pushOptions struct {
 	remoteOptions      bundle.RemoteOptions
 	annotationParams   []string
 	annotations        map[string]string
+	labelParams        []string
+	labels             map[string]string
 	ctimeParam         string
 	ctime              time.Time
 }
@@ -101,6 +103,7 @@ Created time:
 	c.Flags().StringSliceVarP(&opts.bundleContentPaths, "filenames", "f", []string{}, "List of fully-qualified file paths containing YAML or JSON defined Tekton objects to include in this bundle")
 	c.Flags().StringSliceVarP(&opts.annotationParams, "annotate", "", []string{}, "OCI Manifest annotation in the form of key=value to be added to the OCI image. Can be provided multiple times to add multiple annotations.")
 	c.Flags().StringVar(&opts.ctimeParam, "ctime", "", "YYYY-MM-DD, YYYY-MM-DDTHH:MM:SS or RFC3339 formatted created time to set, defaults to current time. In non RFC3339 syntax dates are in UTC timezone.")
+	c.Flags().StringSliceVarP(&opts.labelParams, "label", "", []string{}, "OCI Config labels in the form of key=value to be added to the OCI image. Can be provided multiple times to add multiple labels.")
 	bundle.AddRemoteFlags(c.Flags(), &opts.remoteOptions)
 
 	return c
@@ -137,6 +140,10 @@ func (p *pushOptions) parseArgsAndFlags(args []string) (err error) {
 		return err
 	}
 
+	if p.labels, err = params.ParseParams(p.labelParams); err != nil {
+		return err
+	}
+
 	if p.ctime, err = determineCTime(p.ctimeParam); err != nil {
 		return err
 	}
@@ -150,7 +157,7 @@ func (p *pushOptions) Run(args []string) error {
 		return err
 	}
 
-	img, err := bundle.BuildTektonBundle(p.bundleContents, p.annotations, p.ctime, p.stream.Out)
+	img, err := bundle.BuildTektonBundle(p.bundleContents, p.annotations, p.labels, p.ctime, p.stream.Out)
 	if err != nil {
 		return err
 	}

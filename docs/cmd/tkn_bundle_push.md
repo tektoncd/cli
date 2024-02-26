@@ -36,6 +36,7 @@ Created time:
       --ctime string             YYYY-MM-DD, YYYY-MM-DDTHH:MM:SS or RFC3339 formatted created time to set, defaults to current time. In non RFC3339 syntax dates are in UTC timezone.
   -f, --filenames strings        List of fully-qualified file paths containing YAML or JSON defined Tekton objects to include in this bundle
   -h, --help                     help for push
+      --label strings            OCI Config labels in the form of key=value to be added to the OCI image. Can be provided multiple times to add multiple labels.
       --remote-bearer string     A Bearer token to authenticate against the repository
       --remote-password string   A password to pass to the registry for basic auth. Must be used with --remote-username
       --remote-skip-tls          If set to true, skips TLS check when connecting to the registry

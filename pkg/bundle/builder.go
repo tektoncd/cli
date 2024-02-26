@@ -23,8 +23,14 @@ import (
 
 // BuildTektonBundle will return a complete OCI Image usable as a Tekton Bundle built by parsing, decoding, and
 // compressing the provided contents as Tekton objects.
-func BuildTektonBundle(contents []string, annotations map[string]string, ctime time.Time, log io.Writer) (v1.Image, error) {
+func BuildTektonBundle(contents []string, annotations, labels map[string]string, ctime time.Time, log io.Writer) (v1.Image, error) {
 	img := mutate.Annotations(empty.Image, annotations).(v1.Image)
+	img, err := mutate.Config(img, v1.Config{
+		Labels: labels,
+	})
+	if err != nil {
+		return nil, fmt.Errorf("setting labels: %w", err)
+	}
 
 	if len(contents) > tkremote.MaximumBundleObjects {
 		return nil, fmt.Errorf("bundle contains more than the maximum %d allow objects", tkremote.MaximumBundleObjects)
@@ -96,7 +102,7 @@ func BuildTektonBundle(contents []string, annotations map[string]string, ctime t
 	}
 
 	// Set created time for bundle image
-	img, err := mutate.CreatedAt(img, v1.Time{Time: ctime})
+	img, err = mutate.CreatedAt(img, v1.Time{Time: ctime})
 	if err != nil {
 		return nil, fmt.Errorf("failed to add created time to image: %w", err)
 	}

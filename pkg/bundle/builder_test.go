@@ -69,7 +69,8 @@ func TestBuildTektonBundle(t *testing.T) {
 	}
 
 	annotations := map[string]string{"org.opencontainers.image.license": "Apache-2.0", "org.opencontainers.image.url": "https://example.org"}
-	img, err := BuildTektonBundle([]string{string(raw)}, annotations, time.Now(), &bytes.Buffer{})
+	labels := map[string]string{"version": "1.0", "quay.expires-after": "7d"}
+	img, err := BuildTektonBundle([]string{string(raw)}, annotations, labels, time.Now(), &bytes.Buffer{})
 	if err != nil {
 		t.Error(err)
 	}
@@ -81,6 +82,9 @@ func TestBuildTektonBundle(t *testing.T) {
 	}
 	if cfg.Created.IsZero() {
 		t.Error("Created time of image was not set")
+	}
+	if !cmp.Equal(cfg.Config.Labels, labels) {
+		t.Errorf("Expected labels were not set got: %+v", cfg.Config.Labels)
 	}
 
 	manifest, err := img.Manifest()
@@ -163,7 +167,7 @@ func TestBadObj(t *testing.T) {
 		t.Error(err)
 		return
 	}
-	_, err = BuildTektonBundle([]string{string(raw)}, nil, time.Now(), &bytes.Buffer{})
+	_, err = BuildTektonBundle([]string{string(raw)}, nil, nil, time.Now(), &bytes.Buffer{})
 	noNameErr := errors.New("kubernetes resources should have a name")
 	if err == nil {
 		t.Errorf("expected error: %v", noNameErr)
@@ -186,7 +190,7 @@ func TestLessThenMaxBundle(t *testing.T) {
 		return
 	}
 	// no error for less then max
-	_, err = BuildTektonBundle([]string{string(raw)}, nil, time.Now(), &bytes.Buffer{})
+	_, err = BuildTektonBundle([]string{string(raw)}, nil, nil, time.Now(), &bytes.Buffer{})
 	if err != nil {
 		t.Error(err)
 	}
@@ -214,7 +218,7 @@ func TestJustEnoughBundleSize(t *testing.T) {
 		justEnoughObj = append(justEnoughObj, string(raw))
 	}
 	// no error for the max
-	_, err := BuildTektonBundle(justEnoughObj, nil, time.Now(), &bytes.Buffer{})
+	_, err := BuildTektonBundle(justEnoughObj, nil, nil, time.Now(), &bytes.Buffer{})
 	if err != nil {
 		t.Error(err)
 	}
@@ -243,14 +247,14 @@ func TestTooManyInBundle(t *testing.T) {
 	}
 
 	// expect error when we hit the max
-	_, err := BuildTektonBundle(toMuchObj, nil, time.Now(), &bytes.Buffer{})
+	_, err := BuildTektonBundle(toMuchObj, nil, nil, time.Now(), &bytes.Buffer{})
 	if err == nil {
 		t.Errorf("expected error: %v", toManyObjErr)
 	}
 }
 
 func TestDeterministicLayers(t *testing.T) {
-	img, err := BuildTektonBundle(threeTasks, nil, time.Now(), &bytes.Buffer{})
+	img, err := BuildTektonBundle(threeTasks, nil, nil, time.Now(), &bytes.Buffer{})
 	if err != nil {
 		t.Errorf("unexpected error: %v", err)
 	}
@@ -282,7 +286,7 @@ func TestDeterministicLayers(t *testing.T) {
 }
 
 func TestDeterministicManifest(t *testing.T) {
-	img, err := BuildTektonBundle(threeTasks, nil, time.Time{}, &bytes.Buffer{})
+	img, err := BuildTektonBundle(threeTasks, nil, nil, time.Time{}, &bytes.Buffer{})
 	if err != nil {
 		t.Errorf("unexpected error: %v", err)
 	}

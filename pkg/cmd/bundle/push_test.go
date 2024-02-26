@@ -62,6 +62,8 @@ func TestPushCommand(t *testing.T) {
 		expectedAnnotations map[string]string
 		ctime               string
 		expectedCTime       time.Time
+		labels              []string
+		expectedLabels      map[string]string
 	}{
 		{
 			name: "single-input",
@@ -101,6 +103,16 @@ func TestPushCommand(t *testing.T) {
 			expectedContents: map[string]expected{exampleTaskExpected.name: exampleTaskExpected},
 			ctime:            fixedTime.Format(time.RFC3339),
 			expectedCTime:    fixedTime,
+		},
+		{
+			name: "with-labels",
+			files: map[string]string{
+				"simple.yaml": exampleTask,
+			},
+			expectedContents: map[string]expected{exampleTaskExpected.name: exampleTaskExpected},
+			labels:           []string{"version=1.0", "quay.expires-after=7d"},
+			expectedLabels:   map[string]string{"version": "1.0", "quay.expires-after": "7d"},
+			expectedCTime:    time.Unix(defaultTimestamp, 0),
 		},
 	}
 
@@ -149,6 +161,7 @@ func TestPushCommand(t *testing.T) {
 				annotationParams:   tc.annotations,
 				remoteOptions:      bundle.RemoteOptions{},
 				ctimeParam:         tc.ctime,
+				labelParams:        tc.labels,
 			}
 
 			if err := opts.Run([]string{ref}); err != nil {
@@ -172,6 +185,10 @@ func TestPushCommand(t *testing.T) {
 			}
 			if config.Created.Time.Unix() != tc.expectedCTime.Unix() {
 				t.Errorf("Expected created time to be %s, but it was %s", tc.expectedCTime, config.Created.Time)
+			}
+
+			if !cmp.Equal(config.Config.Labels, tc.expectedLabels) {
+				t.Errorf("Expected labels to be %+v, but it was %+v", tc.expectedLabels, config.Config.Labels)
 			}
 
 			layers, err := img.Layers()

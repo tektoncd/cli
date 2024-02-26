@@ -105,7 +105,7 @@ func TestListCommand(t *testing.T) {
 				t.Fatal(err)
 			}
 
-			img, err := bundle.BuildTektonBundle([]string{examplePullTask, examplePullPipeline}, nil, time.Now(), &bytes.Buffer{})
+			img, err := bundle.BuildTektonBundle([]string{examplePullTask, examplePullPipeline}, nil, nil, time.Now(), &bytes.Buffer{})
 			if err != nil {
 				t.Fatal(err)
 			}
