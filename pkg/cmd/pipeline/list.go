@@ -75,7 +75,7 @@ func listCommand(p cli.Params) *cobra.Command {
 			"commandType": "main",
 		},
 		SilenceUsage: true,
-		RunE: func(cmd *cobra.Command, args []string) error {
+		RunE: func(cmd *cobra.Command, _ []string) error {
 			cs, err := p.Clients()
 			if err != nil {
 				return err

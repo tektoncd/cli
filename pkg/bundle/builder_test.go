@@ -45,7 +45,7 @@ spec:
 
 func init() {
 	// shuffle the test tasks
-	sort.Slice(threeTasks, func(i, j int) bool {
+	sort.Slice(threeTasks, func(_, _ int) bool {
 		return rand.Intn(2) == 0
 	})
 }

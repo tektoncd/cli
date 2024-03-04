@@ -119,7 +119,7 @@ func (p *Pod) watcher(stopC <-chan struct{}, eventC chan<- interface{}, mu *sync
 					eventC <- obj
 				}
 			},
-			UpdateFunc: func(oldObj, newObj interface{}) {
+			UpdateFunc: func(_, newObj interface{}) {
 				mu.Lock()
 				defer mu.Unlock()
 				select {

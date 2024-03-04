@@ -220,14 +220,14 @@ For passing the workspaces via flags:
 	c.Flags().StringArrayVarP(&opt.Params, "param", "p", []string{}, "pass the param as key=value for string type, or key=value1,value2,... for array type, or key=\"key1:value1, key2:value2\" for object type")
 	c.Flags().StringVarP(&opt.ServiceAccountName, "serviceaccount", "s", "", "pass the serviceaccount name")
 	_ = c.RegisterFlagCompletionFunc("serviceaccount",
-		func(cmd *cobra.Command, args []string, toComplete string) ([]string, cobra.ShellCompDirective) {
+		func(_ *cobra.Command, args []string, _ string) ([]string, cobra.ShellCompDirective) {
 			return formatted.BaseCompletion("serviceaccount", args)
 		},
 	)
 	c.Flags().BoolVarP(&opt.Last, "last", "L", false, "re-run the Task using last TaskRun values")
 	c.Flags().StringVarP(&opt.UseTaskRun, "use-taskrun", "", "", "specify a TaskRun name to use its values to re-run the TaskRun")
 	_ = c.RegisterFlagCompletionFunc("use-taskrun",
-		func(cmd *cobra.Command, args []string, toComplete string) ([]string, cobra.ShellCompDirective) {
+		func(_ *cobra.Command, args []string, _ string) ([]string, cobra.ShellCompDirective) {
 			return formatted.BaseCompletion("taskrun", args)
 		},
 	)
@@ -334,7 +334,7 @@ func startTask(opt startOptions, args []string) error {
 		if err != nil {
 			return err
 		}
-		err = bundle.Get(img, "task", args[0], func(_, _, _ string, element runtime.Object, b []byte) {
+		err = bundle.Get(img, "task", args[0], func(_, _, _ string, _ runtime.Object, b []byte) {
 			task, intErr := parseTask(b)
 			if intErr != nil {
 				err = intErr

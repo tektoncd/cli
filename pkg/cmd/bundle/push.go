@@ -79,7 +79,7 @@ Created time:
 			"kubernetes":  "false",
 		},
 		Args: cobra.ExactArgs(1),
-		PreRunE: func(cmd *cobra.Command, args []string) error {
+		PreRunE: func(_ *cobra.Command, args []string) error {
 			if len(args) != 1 {
 				return errInvalidRef
 			}

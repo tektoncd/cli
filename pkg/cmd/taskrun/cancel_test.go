@@ -185,7 +185,7 @@ func TestTaskRunCancel_v1beta1(t *testing.T) {
 	tdc2 := testDynamic.Options{PrependReactors: []testDynamic.PrependOpt{
 		{Verb: "patch",
 			Resource: "taskruns",
-			Action: func(action k8stest.Action) (bool, runtime.Object, error) {
+			Action: func(_ k8stest.Action) (bool, runtime.Object, error) {
 				return true, nil, errors.New("test error")
 			}}}}
 	dc2, err := tdc2.Client(
@@ -449,7 +449,7 @@ func TestTaskRunCancel(t *testing.T) {
 	tdc2 := testDynamic.Options{PrependReactors: []testDynamic.PrependOpt{
 		{Verb: "patch",
 			Resource: "taskruns",
-			Action: func(action k8stest.Action) (bool, runtime.Object, error) {
+			Action: func(_ k8stest.Action) (bool, runtime.Object, error) {
 				return true, nil, errors.New("test error")
 			}}}}
 	dc2, err := tdc2.Client(

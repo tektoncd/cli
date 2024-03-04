@@ -239,7 +239,7 @@ func Test_cancel_pipelinerun_client_err_v1beta1(t *testing.T) {
 			{
 				Verb:     "patch",
 				Resource: "pipelineruns",
-				Action: func(action k8stest.Action) (bool, runtime.Object, error) {
+				Action: func(_ k8stest.Action) (bool, runtime.Object, error) {
 					return true, nil, errors.New(errStr)
 				}}}}
 	dc, err := tdc.Client(
@@ -306,7 +306,7 @@ func Test_cancel_pipelinerun_client_err(t *testing.T) {
 			{
 				Verb:     "patch",
 				Resource: "pipelineruns",
-				Action: func(action k8stest.Action) (bool, runtime.Object, error) {
+				Action: func(_ k8stest.Action) (bool, runtime.Object, error) {
 					return true, nil, errors.New(errStr)
 				}}}}
 	dc, err := tdc.Client(

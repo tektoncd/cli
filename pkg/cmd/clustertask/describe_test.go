@@ -268,7 +268,7 @@ func Test_ClusterTaskDescribe(t *testing.T) {
 		PrependReactors: []testDynamic.PrependOpt{{
 			Verb:     "list",
 			Resource: "taskruns",
-			Action: func(action k8stest.Action) (bool, runtime.Object, error) {
+			Action: func(_ k8stest.Action) (bool, runtime.Object, error) {
 				return true, nil, errors.New("fake list taskrun error")
 			}}}}
 	dynamic2, err := tdc2.Client(

@@ -58,7 +58,7 @@ or
 			"commandType": "main",
 		},
 		Example: eg,
-		RunE: func(cmd *cobra.Command, args []string) error {
+		RunE: func(cmd *cobra.Command, _ []string) error {
 			cs, err := p.Clients()
 			if err != nil {
 				return err
