@@ -52,7 +52,7 @@ func AddTektonOptions(cmd *cobra.Command) {
 		namespace, "n", "",
 		"namespace to use (default: from $KUBECONFIG)")
 	_ = cmd.RegisterFlagCompletionFunc(namespace,
-		func(cmd *cobra.Command, args []string, toComplete string) ([]string, cobra.ShellCompDirective) {
+		func(_ *cobra.Command, args []string, _ string) ([]string, cobra.ShellCompDirective) {
 			return formatted.BaseCompletion("namespace", args)
 		},
 	)

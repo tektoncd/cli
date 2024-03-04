@@ -61,7 +61,7 @@ func TestVersionGood(t *testing.T) {
 	for _, s := range scenarios {
 		t.Run(s.name, func(t *testing.T) {
 			clientVersion = s.clientVersion
-			h := http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+			h := http.HandlerFunc(func(w http.ResponseWriter, _ *http.Request) {
 				okResponse, _ := json.Marshal(GHVersion{
 					TagName: s.serverVersion,
 					HTMLURL: "https://github.com/tektoncd/cli/releases/tag/" + s.serverVersion,
@@ -198,7 +198,7 @@ func TestVersionBad(t *testing.T) {
 	for _, s := range scenarios {
 		t.Run(s.name, func(t *testing.T) {
 			clientVersion = s.clientVersion
-			h := http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+			h := http.HandlerFunc(func(w http.ResponseWriter, _ *http.Request) {
 				okResponse, _ := json.Marshal(GHVersion{
 					TagName: s.serverVersion,
 					HTMLURL: "https://github.com/tektoncd/cli/releases/tag/" + s.serverVersion,

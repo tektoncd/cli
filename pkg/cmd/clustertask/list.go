@@ -49,7 +49,7 @@ func listCommand(p cli.Params) *cobra.Command {
 		Annotations: map[string]string{
 			"commandType": "main",
 		},
-		RunE: func(cmd *cobra.Command, args []string) error {
+		RunE: func(cmd *cobra.Command, _ []string) error {
 
 			output, err := cmd.LocalFlags().GetString("output")
 			if err != nil {

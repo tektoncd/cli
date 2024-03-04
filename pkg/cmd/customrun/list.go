@@ -75,7 +75,7 @@ func listCommand(p cli.Params) *cobra.Command {
 			"commandType": "main",
 		},
 		Example: eg,
-		RunE: func(cmd *cobra.Command, args []string) error {
+		RunE: func(cmd *cobra.Command, _ []string) error {
 			if opts.Limit < 0 {
 				return fmt.Errorf("limit was %d but must be a positive number", opts.Limit)
 			}

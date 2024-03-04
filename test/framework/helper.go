@@ -176,7 +176,7 @@ func VerifyServiceAccountExistenceForSecrets(namespace string, kubeClient kubern
 
 func getCRDYaml(cs *Clients, ns string) ([]byte, error) {
 	var output []byte
-	printOrAdd := func(kind, name string, i interface{}) {
+	printOrAdd := func(_, _ string, i interface{}) {
 		bs, err := yaml.Marshal(i)
 		if err != nil {
 			return

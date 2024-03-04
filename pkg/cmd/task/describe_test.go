@@ -452,7 +452,7 @@ func TestTaskDescribe_TaskRunError_v1beta1(t *testing.T) {
 	tdc := testDynamic.Options{
 		PrependReactors: []testDynamic.PrependOpt{
 			{Verb: "list", Resource: "taskruns",
-				Action: func(action k8stest.Action) (bool, runtime.Object, error) {
+				Action: func(_ k8stest.Action) (bool, runtime.Object, error) {
 					return true, nil, errors.New("fake list taskrun error")
 				}}}}
 	dynamic, err := tdc.Client(
@@ -509,7 +509,7 @@ func TestTaskDescribe_TaskRunError(t *testing.T) {
 	tdc := testDynamic.Options{
 		PrependReactors: []testDynamic.PrependOpt{
 			{Verb: "list", Resource: "taskruns",
-				Action: func(action k8stest.Action) (bool, runtime.Object, error) {
+				Action: func(_ k8stest.Action) (bool, runtime.Object, error) {
 					return true, nil, errors.New("fake list taskrun error")
 				}}}}
 	dynamic, err := tdc.Client(

@@ -9,7 +9,7 @@ import (
 )
 
 func PersistentPreRunE(p cli.Params) func(*cobra.Command, []string) error {
-	return func(cmd *cobra.Command, args []string) error {
+	return func(cmd *cobra.Command, _ []string) error {
 		if err := WarnExperimental(cmd); err != nil {
 			return err
 		}

@@ -120,7 +120,7 @@ func (opts *DescribeOptions) FuzzyAsk(resource string, options []string) error {
 		func(i int) string {
 			return strings.Fields(options[i])[0]
 		},
-		fuzzyfinder.WithPreviewWindow(func(i, w, h int) string {
+		fuzzyfinder.WithPreviewWindow(func(i, _, _ int) string {
 			if i == -1 {
 				return ""
 			}

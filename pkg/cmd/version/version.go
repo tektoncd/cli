@@ -57,7 +57,7 @@ func Command(p cli.Params) *cobra.Command {
 		Annotations: map[string]string{
 			"commandType": "utility",
 		},
-		PersistentPreRunE: func(cmd *cobra.Command, args []string) error {
+		PersistentPreRunE: func(cmd *cobra.Command, _ []string) error {
 			if err := flags.InitParams(p, cmd); err != nil {
 				// this check allows tkn version to be run without
 				// a kubeconfig so users can verify the tkn version
@@ -69,7 +69,7 @@ func Command(p cli.Params) *cobra.Command {
 			}
 			return nil
 		},
-		RunE: func(cmd *cobra.Command, args []string) error {
+		RunE: func(cmd *cobra.Command, _ []string) error {
 			cs, err := p.Clients()
 			if err == nil {
 				switch component {

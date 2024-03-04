@@ -133,7 +133,7 @@ For passing the workspaces via flags:
 		SilenceUsage: true,
 
 		ValidArgsFunction: formatted.ParentCompletion,
-		Args: func(cmd *cobra.Command, args []string) error {
+		Args: func(cmd *cobra.Command, _ []string) error {
 			if err := flags.InitParams(p, cmd); err != nil {
 				return err
 			}
@@ -176,7 +176,7 @@ For passing the workspaces via flags:
 	c.Flags().BoolVarP(&opt.Last, "last", "L", false, "re-run the Pipeline using last PipelineRun values")
 	c.Flags().StringVarP(&opt.UsePipelineRun, "use-pipelinerun", "", "", "use this pipelinerun values to re-run the pipeline. ")
 	_ = c.RegisterFlagCompletionFunc("use-pipelinerun",
-		func(cmd *cobra.Command, args []string, toComplete string) ([]string, cobra.ShellCompDirective) {
+		func(_ *cobra.Command, args []string, _ string) ([]string, cobra.ShellCompDirective) {
 			return formatted.BaseCompletion("pipelinerun", args)
 		},
 	)
@@ -198,14 +198,14 @@ For passing the workspaces via flags:
 
 	c.Flags().StringVarP(&opt.ServiceAccountName, "serviceaccount", "s", "", "pass the serviceaccount name")
 	_ = c.RegisterFlagCompletionFunc("serviceaccount",
-		func(cmd *cobra.Command, args []string, toComplete string) ([]string, cobra.ShellCompDirective) {
+		func(_ *cobra.Command, args []string, _ string) ([]string, cobra.ShellCompDirective) {
 			return formatted.BaseCompletion("serviceaccount", args)
 		},
 	)
 
 	c.Flags().StringSliceVar(&opt.ServiceAccounts, "task-serviceaccount", []string{}, "pass the service account corresponding to the task")
 	_ = c.RegisterFlagCompletionFunc("task-serviceaccount",
-		func(cmd *cobra.Command, args []string, toComplete string) ([]string, cobra.ShellCompDirective) {
+		func(_ *cobra.Command, args []string, _ string) ([]string, cobra.ShellCompDirective) {
 			return formatted.BaseCompletion("serviceaccount", args)
 		},
 	)
