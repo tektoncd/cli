@@ -37,7 +37,7 @@ require (
 	gotest.tools/v3 v3.5.1
 	k8s.io/api v0.28.3
 	k8s.io/apimachinery v0.29.0
-	k8s.io/cli-runtime v0.26.14
+	k8s.io/cli-runtime v0.26.15
 	k8s.io/client-go v0.28.3
 	knative.dev/pkg v0.0.0-20231103161548-f5b42e8dea44
 	sigs.k8s.io/yaml v1.4.0
@@ -157,7 +157,7 @@ require (
 	github.com/golang-jwt/jwt/v4 v4.5.0 // indirect
 	github.com/golang-jwt/jwt/v5 v5.1.0 // indirect
 	github.com/golang/groupcache v0.0.0-20210331224755-41bb18bfe9da // indirect
-	github.com/golang/protobuf v1.5.3 // indirect
+	github.com/golang/protobuf v1.5.4 // indirect
 	github.com/golang/snappy v0.0.4 // indirect
 	github.com/google/btree v1.1.2 // indirect
 	github.com/google/cel-go v0.20.0 // indirect
