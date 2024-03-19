@@ -15,7 +15,10 @@
 package pipeline
 
 import (
+	//"bytes"
+	"bytes"
 	"errors"
+
 	"testing"
 	"time"
 
@@ -23,7 +26,10 @@ import (
 	"github.com/AlecAivazis/survey/v2/terminal"
 	goexpect "github.com/Netflix/go-expect"
 	"github.com/tektoncd/cli/pkg/cli"
+	"github.com/tektoncd/cli/pkg/cmd/pipelinerun"
 	"github.com/tektoncd/cli/pkg/options"
+	//"github.com/tektoncd/cli/pkg/pods/fake"
+	"github.com/tektoncd/cli/pkg/pods/stream"
 	"github.com/tektoncd/cli/pkg/test"
 	cb "github.com/tektoncd/cli/pkg/test/builder"
 	testDynamic "github.com/tektoncd/cli/pkg/test/dynamic"
@@ -33,7 +39,9 @@ import (
 	pipelinetest "github.com/tektoncd/pipeline/test"
 	corev1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/client-go/dynamic"
+	"knative.dev/pkg/apis"
 	duckv1 "knative.dev/pkg/apis/duck/v1"
 )
 
@@ -55,7 +63,275 @@ const (
 )
 
 func TestPipelineLog_v1beta1(t *testing.T) {
+
 	clock := test.FakeClock()
+	var (
+		//pipelineName = "output-pipeline"
+		//prName       = "output-pipeline-1"
+		prstart = test.FakeClock()
+		//ns           = "namespace"
+
+		task1Name    = "output-task"
+		tr1Name      = "output-task-1"
+		tr1StartTime = prstart.Now().Add(20 * time.Second)
+		tr1Pod       = "output-task-pod-123456"
+		tr1Step1Name = "writefile-step"
+		tr1InitStep1 = "credential-initializer-mdzbr"
+		tr1InitStep2 = "place-tools"
+
+		task2Name    = "read-task"
+		tr2Name      = "read-task-1"
+		tr2StartTime = prstart.Now().Add(2 * time.Minute)
+		tr2Pod       = "read-task-pod-123456"
+		tr2Step1Name = "readfile-step"
+
+		nopStep = "nop"
+	)
+
+	/*nsList := []*corev1.Namespace{
+		{
+			ObjectMeta: metav1.ObjectMeta{
+				Name: ns,
+			},
+		},
+	}*/
+
+	trs := []*v1beta1.TaskRun{
+		{
+			ObjectMeta: metav1.ObjectMeta{
+				Namespace: ns,
+				Name:      tr1Name,
+			},
+			Spec: v1beta1.TaskRunSpec{
+				TaskRef: &v1beta1.TaskRef{
+					Name: task1Name,
+				},
+			},
+			Status: v1beta1.TaskRunStatus{
+				Status: duckv1.Status{
+					Conditions: duckv1.Conditions{
+						{
+							Status: corev1.ConditionTrue,
+							Type:   apis.ConditionSucceeded,
+						},
+					},
+				},
+				TaskRunStatusFields: v1beta1.TaskRunStatusFields{
+					StartTime: &metav1.Time{Time: tr1StartTime},
+					PodName:   tr1Pod,
+					Steps: []v1beta1.StepState{
+						{
+							Name: tr1Step1Name,
+							ContainerState: corev1.ContainerState{
+								Terminated: &corev1.ContainerStateTerminated{
+									ExitCode: 0,
+								},
+							},
+						},
+						{
+							Name: nopStep,
+							ContainerState: corev1.ContainerState{
+								Terminated: &corev1.ContainerStateTerminated{
+									ExitCode: 0,
+								},
+							},
+						},
+					},
+				},
+			},
+		},
+		{
+			ObjectMeta: metav1.ObjectMeta{
+				Namespace: ns,
+				Name:      tr2Name,
+			},
+			Spec: v1beta1.TaskRunSpec{
+				TaskRef: &v1beta1.TaskRef{
+					Name: task2Name,
+				},
+			},
+			Status: v1beta1.TaskRunStatus{
+				Status: duckv1.Status{
+					Conditions: duckv1.Conditions{
+						{
+							Status: corev1.ConditionTrue,
+							Type:   apis.ConditionSucceeded,
+						},
+					},
+				},
+				TaskRunStatusFields: v1beta1.TaskRunStatusFields{
+					StartTime: &metav1.Time{Time: tr2StartTime},
+					PodName:   tr2Pod,
+					Steps: []v1beta1.StepState{
+						{
+							Name: tr2Step1Name,
+							ContainerState: corev1.ContainerState{
+								Terminated: &corev1.ContainerStateTerminated{
+									ExitCode: 0,
+								},
+							},
+						},
+						{
+							Name: nopStep,
+							ContainerState: corev1.ContainerState{
+								Terminated: &corev1.ContainerStateTerminated{
+									ExitCode: 0,
+								},
+							},
+						},
+					},
+				},
+			},
+		},
+	}
+
+	prs := []*v1beta1.PipelineRun{
+		{
+			ObjectMeta: metav1.ObjectMeta{
+				Name:      prName,
+				Namespace: ns,
+				Labels:    map[string]string{"tekton.dev/pipeline": pipelineName},
+			},
+			Spec: v1beta1.PipelineRunSpec{
+				PipelineRef: &v1beta1.PipelineRef{
+					Name: pipelineName,
+				},
+			},
+			Status: v1beta1.PipelineRunStatus{
+				PipelineRunStatusFields: v1beta1.PipelineRunStatusFields{
+					ChildReferences: []v1beta1.ChildStatusReference{
+						{
+							Name:             tr1Name,
+							PipelineTaskName: task1Name,
+							TypeMeta: runtime.TypeMeta{
+								APIVersion: "tekton.dev/v1beta1",
+								Kind:       "TaskRun",
+							},
+						}, {
+							Name:             tr2Name,
+							PipelineTaskName: task2Name,
+							TypeMeta: runtime.TypeMeta{
+								APIVersion: "tekton.dev/v1beta1",
+								Kind:       "TaskRun",
+							},
+						},
+					},
+				},
+				Status: duckv1.Status{
+					Conditions: duckv1.Conditions{
+						{
+							Status: corev1.ConditionTrue,
+							Reason: v1beta1.PipelineRunReasonSuccessful.String(),
+						},
+					},
+				},
+			},
+		},
+	}
+	pps := []*v1beta1.Pipeline{
+		{
+			ObjectMeta: metav1.ObjectMeta{
+				Name:      pipelineName,
+				Namespace: ns,
+			},
+			Spec: v1beta1.PipelineSpec{
+				Tasks: []v1beta1.PipelineTask{
+					{
+						Name: task1Name,
+						TaskRef: &v1beta1.TaskRef{
+							Name: task1Name,
+						},
+					},
+					{
+						Name: task2Name,
+						TaskRef: &v1beta1.TaskRef{
+							Name: task2Name,
+						},
+					},
+				},
+			},
+		},
+	}
+
+	p := []*corev1.Pod{
+		{
+			ObjectMeta: metav1.ObjectMeta{
+				Name:      tr1Pod,
+				Namespace: ns,
+				Labels:    map[string]string{"tekton.dev/task": task1Name},
+			},
+			Spec: corev1.PodSpec{
+				InitContainers: []corev1.Container{
+					{
+						Name:  tr1InitStep1,
+						Image: "override-with-creds:latest",
+					},
+					{
+						Name:  tr1InitStep2,
+						Image: "override-with-tools:latest",
+					},
+				},
+				Containers: []corev1.Container{
+					{
+						Name:  tr1Step1Name,
+						Image: tr1Step1Name + ":latest",
+					},
+					{
+						Name:  nopStep,
+						Image: "override-with-nop:latest",
+					},
+				},
+			},
+			Status: corev1.PodStatus{
+				Phase: corev1.PodPhase(corev1.PodSucceeded),
+				InitContainerStatuses: []corev1.ContainerStatus{
+					{
+						Name:  tr1InitStep1,
+						Image: "override-with-creds:latest",
+					},
+					{
+						Name:  tr1InitStep2,
+						Image: "override-with-tools:latest",
+					},
+				},
+			},
+		},
+		{
+			ObjectMeta: metav1.ObjectMeta{
+				Name:      tr2Pod,
+				Namespace: ns,
+				Labels:    map[string]string{"tekton.dev/task": task2Name},
+			},
+			Spec: corev1.PodSpec{
+				Containers: []corev1.Container{
+					{
+						Name:  tr2Step1Name,
+						Image: tr1Step1Name + ":latest",
+					},
+					{
+						Name:  nopStep,
+						Image: "override-with-nop:latest",
+					},
+				},
+			},
+		},
+	}
+
+	/*fakeLogs := fake.Logs(
+		fake.Task(tr1Pod,
+			fake.Step(tr1InitStep1, "initialized the credentials"),
+			fake.Step(tr1InitStep2, "place tools log"),
+			fake.Step(tr1Step1Name, "written a file"),
+			fake.Step(nopStep, "Build successful"),
+		),
+		fake.Task(tr2Pod,
+			fake.Step(tr2Step1Name, "able to read a file"),
+			fake.Step(nopStep, "Build successful"),
+		),
+	)*/
+	
+
+	//clock := test.FakeClock()
 	pdata := []*v1beta1.Pipeline{
 		{
 			ObjectMeta: metav1.ObjectMeta{
@@ -69,11 +345,12 @@ func TestPipelineLog_v1beta1(t *testing.T) {
 		Namespaces: []*corev1.Namespace{
 			{
 				ObjectMeta: metav1.ObjectMeta{
-					Name: "ns",
+					Name: "ns", ////"ns"
 				},
 			},
 		},
 	})
+
 	cs.Pipeline.Resources = cb.APIResourceList(versionv1beta1, []string{"pipeline", "pipelinerun"})
 	tdc := testDynamic.Options{}
 	dc, err := tdc.Client(
@@ -95,7 +372,7 @@ func TestPipelineLog_v1beta1(t *testing.T) {
 	cs2.Pipeline.Resources = cb.APIResourceList(versionv1beta1, []string{"pipeline", "pipelinerun"})
 	tdc2 := testDynamic.Options{}
 	dc2, err := tdc2.Client(
-		cb.UnstructuredV1beta1P(pdata[0], versionv1beta1),
+		cb.UnstructuredV1beta1P(pps[0], versionv1beta1),
 	)
 	if err != nil {
 		t.Errorf("unable to create dynamic client: %v", err)
@@ -193,6 +470,36 @@ func TestPipelineLog_v1beta1(t *testing.T) {
 		t.Errorf("unable to create dynamic client: %v", err)
 	}
 
+	// Seed test data
+	cs4, _ := test.SeedV1beta1TestData(t, test.Data{
+		Pipelines:    pps,
+		PipelineRuns: prs,
+		TaskRuns:     trs,
+		Pods:         p,
+		Namespaces: []*corev1.Namespace{
+			{
+				ObjectMeta: metav1.ObjectMeta{
+					Name: ns,
+				},
+			},
+		},
+	})
+
+	// Define resources for the dynamic client
+	cs4.Pipeline.Resources = cb.APIResourceList(versionv1beta1, []string{"pipeline", "pipelinerun", "task", "taskrun", "pod"})
+
+	// Create dynamic client
+	tdc4 := testDynamic.Options{}
+	dc4, err := tdc4.Client(
+		cb.UnstructuredV1beta1P(pps[0], versionv1beta1),
+		cb.UnstructuredV1beta1PR(prs[0], versionv1beta1),
+		cb.UnstructuredV1beta1TR(trs[0], versionv1beta1),
+		cb.UnstructuredV1beta1TR(trs[1], versionv1beta1),
+	)
+	if err != nil {
+		t.Errorf("unable to create dynamic client: %v", err)
+	}
+
 	testParams := []struct {
 		name      string
 		command   []string
@@ -201,7 +508,7 @@ func TestPipelineLog_v1beta1(t *testing.T) {
 		input     test.Clients
 		wantError bool
 		prefixing bool
-		want      string              
+		want      string
 	}{
 		{
 			name:      "Invalid namespace",
@@ -275,23 +582,23 @@ func TestPipelineLog_v1beta1(t *testing.T) {
 		},
 		{
 			name:      "Prefixing enabled for Pipelines",
-			command:   []string{"logs", prName, "--prefix=true"},
+			command:   []string{"logs", pipelineName, "--prefix=true", "-n", ns}, 
 			namespace: "",
-			dynamic:   dc3,
-			input:     cs3,
+			dynamic:   dc4,
+			input:     cs4,
 			wantError: false,
 			prefixing: true,
-			want:      "[output-pipeline-run] No logs available\n",
+			want:      "[output-task : writefile-step] written a file\n\nBuild Successful\n\n[read-task : readfile-step] able to read a file\n\nBuild Successful\n\n",
 		},
 		{
 			name:      "Prefixing disabled for Pipelines",
-			command:   []string{"logs", prName, "--prefix=false"},
-			namespace: "",	
-			dynamic:   dc3,
-			input:     cs3,
+			command:   []string{"logs", pipelineName, "--prefix=false", "-n", ns},
+			namespace: "",
+			dynamic:   dc4,
+			input:     cs4,
 			wantError: false,
 			prefixing: false,
-			want:      "No logs available\n",
+			want:      "written a file\n\nBuild Successful\n\nable to read a file \n\nBuild Successful\n\n",
 		},
 	}
 
@@ -304,7 +611,17 @@ func TestPipelineLog_v1beta1(t *testing.T) {
 			}
 			c := Command(p)
 
+			//prlo := logOptsv1beta1(prName, tp.namespace, cs, dc, fake.Streamer(fakeLogs), false, tp.prefixing)           /// ns
+			//output, _ := fetchLogs(prlo)
+
+			//expected := strings.Join(tp.want, "\n") + "\n"
+
+			//test.AssertOutput(t, tp.want, output)
+
+
 			out, err := test.ExecuteCommand(c, tp.command...)
+			//test.AssertOutput(t, tp.want, output)
+
 			if tp.wantError {
 				if err == nil {
 					t.Errorf("error expected here")
@@ -322,6 +639,272 @@ func TestPipelineLog_v1beta1(t *testing.T) {
 
 func TestPipelineLog(t *testing.T) {
 	clock := test.FakeClock()
+
+	var (
+		//pipelineName = "output-pipeline"
+		//prrName       = "output-pipeline-1"
+		prstart = test.FakeClock()
+		//ns      = "namespace"
+
+		task1Name    = "output-task"
+		tr1Name      = "output-task-1"
+		tr1StartTime = prstart.Now().Add(20 * time.Second)
+		tr1Pod       = "output-task-pod-123456"
+		tr1Step1Name = "writefile-step"
+		tr1InitStep1 = "credential-initializer-mdzbr"
+		tr1InitStep2 = "place-tools"
+
+		task2Name    = "read-task"
+		tr2Name      = "read-task-1"
+		tr2StartTime = prstart.Now().Add(2 * time.Minute)
+		tr2Pod       = "read-task-pod-123456"
+		tr2Step1Name = "readfile-step"
+
+		nopStep = "nop"
+	)
+
+	/*nsList := []*corev1.Namespace{
+		{
+			ObjectMeta: metav1.ObjectMeta{
+				Name: ns,
+			},
+		},
+	}*/
+
+	tr := []*v1.TaskRun{
+		{
+			ObjectMeta: metav1.ObjectMeta{
+				Namespace: ns,
+				Name:      tr1Name,
+			},
+			Spec: v1.TaskRunSpec{
+				TaskRef: &v1.TaskRef{
+					Name: task1Name,
+				},
+			},
+			Status: v1.TaskRunStatus{
+				Status: duckv1.Status{
+					Conditions: duckv1.Conditions{
+						{
+							Status: corev1.ConditionTrue,
+							Type:   apis.ConditionSucceeded,
+						},
+					},
+				},
+				TaskRunStatusFields: v1.TaskRunStatusFields{
+					StartTime: &metav1.Time{Time: tr1StartTime},
+					PodName:   tr1Pod,
+					Steps: []v1.StepState{
+						{
+							Name: tr1Step1Name,
+							ContainerState: corev1.ContainerState{
+								Terminated: &corev1.ContainerStateTerminated{
+									ExitCode: 0,
+								},
+							},
+						},
+						{
+							Name: nopStep,
+							ContainerState: corev1.ContainerState{
+								Terminated: &corev1.ContainerStateTerminated{
+									ExitCode: 0,
+								},
+							},
+						},
+					},
+				},
+			},
+		},
+		{
+			ObjectMeta: metav1.ObjectMeta{
+				Namespace: ns,
+				Name:      tr2Name,
+			},
+			Spec: v1.TaskRunSpec{
+				TaskRef: &v1.TaskRef{
+					Name: task2Name,
+				},
+			},
+			Status: v1.TaskRunStatus{
+				Status: duckv1.Status{
+					Conditions: duckv1.Conditions{
+						{
+							Status: corev1.ConditionTrue,
+							Type:   apis.ConditionSucceeded,
+						},
+					},
+				},
+				TaskRunStatusFields: v1.TaskRunStatusFields{
+					StartTime: &metav1.Time{Time: tr2StartTime},
+					PodName:   tr2Pod,
+					Steps: []v1.StepState{
+						{
+							Name: tr2Step1Name,
+							ContainerState: corev1.ContainerState{
+								Terminated: &corev1.ContainerStateTerminated{
+									ExitCode: 0,
+								},
+							},
+						},
+						{
+							Name: nopStep,
+							ContainerState: corev1.ContainerState{
+								Terminated: &corev1.ContainerStateTerminated{
+									ExitCode: 0,
+								},
+							},
+						},
+					},
+				},
+			},
+		},
+	}
+
+	pr := []*v1.PipelineRun{
+		{
+			ObjectMeta: metav1.ObjectMeta{
+				Name:      prName,
+				Namespace: ns,
+				Labels:    map[string]string{"tekton.dev/pipeline": pipelineName},
+			},
+			Spec: v1.PipelineRunSpec{
+				PipelineRef: &v1.PipelineRef{
+					Name: pipelineName,
+				},
+			},
+			Status: v1.PipelineRunStatus{
+				PipelineRunStatusFields: v1.PipelineRunStatusFields{
+					ChildReferences: []v1.ChildStatusReference{
+						{
+							Name:             tr1Name,
+							PipelineTaskName: task1Name,
+							TypeMeta: runtime.TypeMeta{
+								APIVersion: "tekton.dev/v1",                           
+								Kind:       "TaskRun",
+							},
+						}, {
+							Name:             tr2Name,
+							PipelineTaskName: task2Name,
+							TypeMeta: runtime.TypeMeta{
+								APIVersion: "tekton.dev/v1",                        
+								Kind:       "TaskRun",
+							},
+						},
+					},
+				},
+				Status: duckv1.Status{
+					Conditions: duckv1.Conditions{
+						{
+							Status: corev1.ConditionTrue,
+							Reason: v1beta1.PipelineRunReasonSuccessful.String(),
+						},
+					},
+				},
+			},
+		},
+	}
+	pp := []*v1.Pipeline{
+		{
+			ObjectMeta: metav1.ObjectMeta{
+				Name:      pipelineName,
+				Namespace: ns,
+			},
+			Spec: v1.PipelineSpec{
+				Tasks: []v1.PipelineTask{
+					{
+						Name: task1Name,
+						TaskRef: &v1.TaskRef{
+							Name: task1Name,
+						},
+					},
+					{
+						Name: task2Name,
+						TaskRef: &v1.TaskRef{
+							Name: task2Name,
+						},
+					},
+				},
+			},
+		},
+	}
+
+	p := []*corev1.Pod{
+		{
+			ObjectMeta: metav1.ObjectMeta{
+				Name:      tr1Pod,
+				Namespace: ns,
+				Labels:    map[string]string{"tekton.dev/task": task1Name},
+			},
+			Spec: corev1.PodSpec{
+				InitContainers: []corev1.Container{
+					{
+						Name:  tr1InitStep1,
+						Image: "override-with-creds:latest",
+					},
+					{
+						Name:  tr1InitStep2,
+						Image: "override-with-tools:latest",
+					},
+				},
+				Containers: []corev1.Container{
+					{
+						Name:  tr1Step1Name,
+						Image: tr1Step1Name + ":latest",
+					},
+					{
+						Name:  nopStep,
+						Image: "override-with-nop:latest",
+					},
+				},
+			},
+			Status: corev1.PodStatus{
+				Phase: corev1.PodPhase(corev1.PodSucceeded),
+				InitContainerStatuses: []corev1.ContainerStatus{
+					{
+						Name:  tr1InitStep1,
+						Image: "override-with-creds:latest",
+					},
+					{
+						Name:  tr1InitStep2,
+						Image: "override-with-tools:latest",
+					},
+				},
+			},
+		},
+		{
+			ObjectMeta: metav1.ObjectMeta{
+				Name:      tr2Pod,
+				Namespace: ns,
+				Labels:    map[string]string{"tekton.dev/task": task2Name},
+			},
+			Spec: corev1.PodSpec{
+				Containers: []corev1.Container{
+					{
+						Name:  tr2Step1Name,
+						Image: tr1Step1Name + ":latest",
+					},
+					{
+						Name:  nopStep,
+						Image: "override-with-nop:latest",
+					},
+				},
+			},
+		},
+	}
+
+	/*fakeLogs := fake.Logs(
+		fake.Task(tr1Pod,
+			fake.Step(tr1InitStep1, "initialized the credentials"),
+			fake.Step(tr1InitStep2, "place tools log"),
+			fake.Step(tr1Step1Name, "written a file"),
+			fake.Step(nopStep, "Build successful"),
+		),
+		fake.Task(tr2Pod,
+			fake.Step(tr2Step1Name, "able to read a file"),
+			fake.Step(nopStep, "Build successful"),
+		),
+	)*/
+
 	pdata := []*v1.Pipeline{
 		{
 			ObjectMeta: metav1.ObjectMeta{
@@ -459,6 +1042,36 @@ func TestPipelineLog(t *testing.T) {
 		t.Errorf("unable to create dynamic client: %v", err)
 	}
 
+	// Seed test data
+	cs4, _ := test.SeedTestData(t, pipelinetest.Data{
+		Pipelines:    pp,
+		PipelineRuns: pr,
+		TaskRuns:     tr,
+		Pods:         p,
+		Namespaces: []*corev1.Namespace{
+			{
+				ObjectMeta: metav1.ObjectMeta{
+					Name: ns,
+				},
+			},
+		},
+	})
+
+	// Define resources for the dynamic client
+	cs4.Pipeline.Resources = cb.APIResourceList(version, []string{"pipeline", "pipelinerun", "task", "taskrun", "pod"})
+
+	// Create dynamic client
+	tdc4 := testDynamic.Options{}
+	dc4, err := tdc4.Client(
+		cb.UnstructuredP(pp[0], version),
+		cb.UnstructuredPR(pr[0], version),
+		cb.UnstructuredTR(tr[0], version),
+		cb.UnstructuredTR(tr[1], version),
+	)
+	if err != nil {
+		t.Errorf("unable to create dynamic client: %v", err)
+	}
+
 	testParams := []struct {
 		name      string
 		command   []string
@@ -541,23 +1154,23 @@ func TestPipelineLog(t *testing.T) {
 		},
 		{
 			name:      "Prefixing enabled for Pipelines",
-			command:   []string{"logs", prName2, "--prefix=true"},
+			command:   []string{"logs", pipelineName, "--prefix=true"},
 			namespace: "",
-			dynamic:   dc3,
-			input:     cs3,
+			dynamic:   dc4,
+			input:     cs4,
 			wantError: false,
 			prefixing: true,
-			want:      "[output-pipeline-run] No logs available",
+			want:      "[output-task : writefile-step] written a file\n\nBuild Successful\n\n[read-task : readfile-step] able to read a file\n\nBuild Successful\n\n",
 		},
 		{
 			name:      "Prefixing disabled for Pipelines",
-			command:   []string{"logs", prName2, "--prefix=false"},
+			command:   []string{"logs", pipelineName, "--prefix=false"},
 			namespace: "",
-			dynamic:   dc3,
-			input:     cs3,
+			dynamic:   dc4,
+			input:     cs4,
 			wantError: false,
 			prefixing: false,
-			want:      "No logs available",
+			want:      "written a file\n\nBuild Successful\n\nable to read a file \n\nBuild Successful\n\n",
 		},
 	}
 
@@ -1485,4 +2098,48 @@ func TestLogs_Auto_Select_FirstPipeline(t *testing.T) {
 	if lopt.PipelineName != pipelineName {
 		t.Error("No auto selection of the first pipeline when we have only one")
 	}
+}
+
+func logOpts(name string, ns string, cs pipelinetest.Clients, dc dynamic.Interface, streamer stream.NewStreamerFunc, follow bool, prefixing bool) *options.LogOptions {
+	p := test.Params{
+		Kube:    cs.Kube,
+		Tekton:  cs.Pipeline,
+		Dynamic: dc,
+	}
+	p.SetNamespace(ns)
+
+	logOptions := options.LogOptions{
+		PipelineRunName: name,
+		Follow:          follow,
+		Params:          &p,
+		Streamer:        streamer,
+		Prefixing:       prefixing,
+	}
+
+	return &logOptions
+}
+
+func fetchLogs(lo *options.LogOptions) (string, error) {
+	out := new(bytes.Buffer)
+	lo.Stream = &cli.Stream{Out: out, Err: out}
+	err := pipelinerun.Run(lo)
+	return out.String(), err
+}
+func logOptsv1beta1(name string, ns string, cs test.Clients, dc dynamic.Interface, streamer stream.NewStreamerFunc, follow bool, prefixing bool) *options.LogOptions {
+	p := test.Params{
+		Kube:    cs.Kube,
+		Tekton:  cs.Pipeline,
+		Dynamic: dc,
+	}
+	p.SetNamespace(ns)
+
+	logOptions := options.LogOptions{
+		PipelineRunName: name,
+		Follow:          follow,
+		Params:          &p,
+		Streamer:        streamer,
+		Prefixing:       prefixing,
+	}
+
+	return &logOptions
 }
