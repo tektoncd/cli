@@ -124,6 +124,7 @@ type Client struct {
 	Deployments                  *DeploymentsService
 	Discussions                  *DiscussionsService
 	DockerfileTemplate           *DockerfileTemplatesService
+	DraftNotes                   *DraftNotesService
 	Environments                 *EnvironmentsService
 	EpicIssues                   *EpicIssuesService
 	Epics                        *EpicsService
@@ -147,6 +148,7 @@ type Client struct {
 	GroupMilestones              *GroupMilestonesService
 	GroupProtectedEnvironments   *GroupProtectedEnvironmentsService
 	GroupRepositoryStorageMove   *GroupRepositoryStorageMoveService
+	GroupSSHCertificates         *GroupSSHCertificatesService
 	GroupVariables               *GroupVariablesService
 	GroupWikis                   *GroupWikisService
 	Groups                       *GroupsService
@@ -356,6 +358,7 @@ func newClient(options ...ClientOptionFunc) (*Client, error) {
 	c.Deployments = &DeploymentsService{client: c}
 	c.Discussions = &DiscussionsService{client: c}
 	c.DockerfileTemplate = &DockerfileTemplatesService{client: c}
+	c.DraftNotes = &DraftNotesService{client: c}
 	c.Environments = &EnvironmentsService{client: c}
 	c.EpicIssues = &EpicIssuesService{client: c}
 	c.Epics = &EpicsService{client: c}
@@ -379,6 +382,7 @@ func newClient(options ...ClientOptionFunc) (*Client, error) {
 	c.GroupMilestones = &GroupMilestonesService{client: c}
 	c.GroupProtectedEnvironments = &GroupProtectedEnvironmentsService{client: c}
 	c.GroupRepositoryStorageMove = &GroupRepositoryStorageMoveService{client: c}
+	c.GroupSSHCertificates = &GroupSSHCertificatesService{client: c}
 	c.GroupVariables = &GroupVariablesService{client: c}
 	c.GroupWikis = &GroupWikisService{client: c}
 	c.Groups = &GroupsService{client: c}
@@ -532,6 +536,11 @@ func (c *Client) configureLimiter(ctx context.Context, headers http.Header) {
 			// prevent hitting the rate limit.
 			limit := rate.Limit(rateLimit * 0.66)
 			burst := int(rateLimit * 0.33)
+
+			// Need at least one allowed to burst or x/time will throw an error
+			if burst == 0 {
+				burst = 1
+			}
 
 			// Create a new limiter using the calculated values.
 			c.limiter = rate.NewLimiter(limit, burst)
