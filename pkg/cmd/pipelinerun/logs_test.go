@@ -182,6 +182,65 @@ func TestLog_no_pipelinerun_argument(t *testing.T) {
 	}
 }
 
+func TestLog_PrStatusToUnixStatus(t *testing.T) {
+	testCases := []struct {
+		name     string
+		pr       *v1.PipelineRun
+		expected int
+	}{
+		{
+			name: "No conditions",
+			pr: &v1.PipelineRun{
+				Status: v1.PipelineRunStatus{
+					Status: duckv1.Status{
+						Conditions: duckv1.Conditions{},
+					},
+				},
+			},
+			expected: 2,
+		},
+		{
+			name: "Condition status is false",
+			pr: &v1.PipelineRun{
+				Status: v1.PipelineRunStatus{
+					Status: duckv1.Status{
+						Conditions: duckv1.Conditions{
+							{
+								Status: corev1.ConditionFalse,
+							},
+						},
+					},
+				},
+			},
+			expected: 1,
+		},
+		{
+			name: "Condition status true",
+			pr: &v1.PipelineRun{
+				Status: v1.PipelineRunStatus{
+					Status: duckv1.Status{
+						Conditions: duckv1.Conditions{
+							{
+								Status: corev1.ConditionTrue,
+							},
+						},
+					},
+				},
+			},
+			expected: 0,
+		},
+	}
+
+	for _, tc := range testCases {
+		t.Run(tc.name, func(t *testing.T) {
+			result := prStatusToUnixStatus(tc.pr)
+			if result != tc.expected {
+				t.Errorf("Expected %d, got %d", tc.expected, result)
+			}
+		})
+	}
+}
+
 func TestLog_run_found_v1beta1(t *testing.T) {
 	clock := test.FakeClock()
 	pdata := []*v1beta1.Pipeline{
@@ -1673,7 +1732,6 @@ func TestPipelinerunLog_follow_mode_v1beta1(t *testing.T) {
 		cb.UnstructuredV1beta1PR(prs[0], versionv1beta1),
 		cb.UnstructuredV1beta1P(pps[0], versionv1beta1),
 	)
-
 	if err != nil {
 		t.Errorf("unable to create dynamic client: %v", err)
 	}
@@ -1862,7 +1920,6 @@ func TestPipelinerunLog_follow_mode(t *testing.T) {
 		cb.UnstructuredPR(prs[0], version),
 		cb.UnstructuredP(pps[0], version),
 	)
-
 	if err != nil {
 		t.Errorf("unable to create dynamic client: %v", err)
 	}
@@ -2517,7 +2574,6 @@ func TestLog_pipelinerun_still_running_v1beta1(t *testing.T) {
 	updatePRv1beta1(finalPRs, watcher)
 
 	output, err := fetchLogs(prlo)
-
 	if err != nil {
 		t.Errorf("Unexpected error: %v", err)
 	}
@@ -2648,7 +2704,6 @@ func TestLog_pipelinerun_still_running(t *testing.T) {
 	updatePR(finalPRs, watcher)
 
 	output, err := fetchLogs(prlo)
-
 	if err != nil {
 		t.Errorf("Unexpected error: %v", err)
 	}
@@ -3502,7 +3557,6 @@ func TestPipelinerunLog_finally_v1beta1(t *testing.T) {
 		cb.UnstructuredV1beta1PR(prs[0], versionv1beta1),
 		cb.UnstructuredV1beta1P(pps[0], versionv1beta1),
 	)
-
 	if err != nil {
 		t.Errorf("unable to create dynamic client: %v", err)
 	}
@@ -3752,7 +3806,6 @@ func TestPipelinerunLog_finally(t *testing.T) {
 		cb.UnstructuredPR(prs[0], version),
 		cb.UnstructuredP(pps[0], version),
 	)
-
 	if err != nil {
 		t.Errorf("unable to create dynamic client: %v", err)
 	}

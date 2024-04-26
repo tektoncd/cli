@@ -68,6 +68,7 @@ type startOptions struct {
 	Labels                []string
 	ShowLog               bool
 	DryRun                bool
+	ExitWithPrError       bool
 	Output                string
 	PrefixName            string
 	TimeOut               string
@@ -195,6 +196,7 @@ For passing the workspaces via flags:
 	c.Flags().BoolVarP(&opt.UseParamDefaults, "use-param-defaults", "", false, "use default parameter values without prompting for input")
 	c.Flags().StringVar(&opt.PodTemplate, "pod-template", "", "local or remote file containing a PodTemplate definition")
 	c.Flags().BoolVarP(&opt.SkipOptionalWorkspace, "skip-optional-workspace", "", false, "skips the prompt for optional workspaces")
+	c.Flags().BoolVarP(&opt.ExitWithPrError, "exit-with-pipelinerun-error", "E", false, "when using --showlog, exit with pipelinerun to the unix shell, 0 if success, 1 if error, 2 on unknown status")
 
 	c.Flags().StringVarP(&opt.ServiceAccountName, "serviceaccount", "s", "", "pass the serviceaccount name")
 	_ = c.RegisterFlagCompletionFunc("serviceaccount",
@@ -413,6 +415,7 @@ func (opt *startOptions) startPipeline(pipelineStart *v1beta1.Pipeline) error {
 		Prefixing:       true,
 		Params:          opt.cliparams,
 		AllSteps:        false,
+		ExitWithPrError: opt.ExitWithPrError,
 	}
 	return prcmd.Run(runLogOpts)
 }
