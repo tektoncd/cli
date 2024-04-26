@@ -25,6 +25,8 @@ import (
 	"github.com/tektoncd/cli/pkg/log"
 	"github.com/tektoncd/cli/pkg/options"
 	pipelinerunpkg "github.com/tektoncd/cli/pkg/pipelinerun"
+	tektonv1 "github.com/tektoncd/pipeline/pkg/apis/pipeline/v1"
+	corev1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 )
 
@@ -82,6 +84,7 @@ Show the logs of PipelineRun named 'microservice-1' for all Tasks and steps (inc
 	c.Flags().BoolVarP(&opts.Follow, "follow", "f", false, "stream live logs")
 	c.Flags().BoolVarP(&opts.Timestamps, "timestamps", "", false, "show logs with timestamp")
 	c.Flags().BoolVarP(&opts.Prefixing, "prefix", "", true, "prefix each log line with the log source (task name and step name)")
+	c.Flags().BoolVarP(&opts.ExitWithPrError, "exit-with-pipelinerun-error", "E", false, "exit with pipelinerun to the unix shell, 0 if success, 1 if error, 2 on unknown status")
 	c.Flags().StringSliceVarP(&opts.Tasks, "task", "t", []string{}, "show logs for mentioned Tasks only")
 	c.Flags().IntVarP(&opts.Limit, "limit", "", defaultLimit, "lists number of PipelineRuns")
 	return c
@@ -109,7 +112,30 @@ func Run(opts *options.LogOptions) error {
 
 	log.NewWriter(log.LogTypePipeline, opts.Prefixing).Write(opts.Stream, logC, errC)
 
+	// get pipelinerun status
+	if opts.ExitWithPrError {
+		clients, err := opts.Params.Clients()
+		if err != nil {
+			return err
+		}
+		pr, err := pipelinerunpkg.GetPipelineRun(pipelineRunGroupResource, clients, opts.PipelineRunName, opts.Params.Namespace())
+		if err != nil {
+			return err
+		}
+		os.Exit(prStatusToUnixStatus(pr))
+	}
+
 	return nil
+}
+
+func prStatusToUnixStatus(pr *tektonv1.PipelineRun) int {
+	if len(pr.Status.Conditions) == 0 {
+		return 2
+	}
+	if pr.Status.Conditions[0].Status == corev1.ConditionFalse {
+		return 1
+	}
+	return 0
 }
 
 func askRunName(opts *options.LogOptions) error {
