@@ -37,7 +37,7 @@ require (
 	gotest.tools/v3 v3.5.1
 	k8s.io/api v0.28.5
 	k8s.io/apimachinery v0.29.0
-	k8s.io/cli-runtime v0.26.15
+	k8s.io/cli-runtime v0.28.5
 	k8s.io/client-go v0.28.5
 	knative.dev/pkg v0.0.0-20240116073220-b488e7be5902
 	sigs.k8s.io/yaml v1.4.0
@@ -164,7 +164,6 @@ require (
 	github.com/google/btree v1.1.2 // indirect
 	github.com/google/cel-go v0.20.1 // indirect
 	github.com/google/certificate-transparency-go v1.1.8 // indirect
-	github.com/google/gnostic v0.7.0 // indirect
 	github.com/google/gnostic-models v0.6.9-0.20230804172637-c7be7c783f49 // indirect
 	github.com/google/go-containerregistry/pkg/authn/k8schain v0.0.0-20240108195214-a0658aa1d0cc // indirect
 	github.com/google/go-containerregistry/pkg/authn/kubernetes v0.0.0-20240108195214-a0658aa1d0cc // indirect
@@ -294,7 +293,7 @@ require (
 	go.opentelemetry.io/otel v1.26.0 // indirect
 	go.opentelemetry.io/otel/metric v1.26.0 // indirect
 	go.opentelemetry.io/otel/trace v1.26.0 // indirect
-	go.starlark.net v0.0.0-20200306205701-8dd3e2ee1dd5 // indirect
+	go.starlark.net v0.0.0-20230525235612-a134d8f9ddca // indirect
 	go.step.sm/crypto v0.44.2 // indirect
 	goa.design/goa/v3 v3.14.6 // indirect
 	gocloud.dev v0.37.0 // indirect
@@ -331,15 +330,10 @@ require (
 	knative.dev/networking v0.0.0-20231017124814-2a7676e912b7 // indirect
 	knative.dev/serving v0.39.0 // indirect
 	sigs.k8s.io/json v0.0.0-20221116044647-bc3834ca7abd // indirect
-	sigs.k8s.io/kustomize/api v0.12.1 // indirect
-	sigs.k8s.io/kustomize/kyaml v0.13.9 // indirect
+	sigs.k8s.io/kustomize/api v0.13.5-0.20230601165947-6ce0bf390ce3 // indirect
+	sigs.k8s.io/kustomize/kyaml v0.14.3-0.20230601165947-6ce0bf390ce3 // indirect
 	sigs.k8s.io/release-utils v0.7.7 // indirect
 	sigs.k8s.io/structured-merge-diff/v4 v4.4.1 // indirect
 )
 
-// replacing k8s deps to 0.26 as knative is still using this
-replace (
-	k8s.io/api => k8s.io/api v0.26.12
-	k8s.io/apimachinery => k8s.io/apimachinery v0.26.12
-	k8s.io/client-go => k8s.io/client-go v0.26.12
-)
+replace k8s.io/apimachinery => k8s.io/apimachinery v0.28.5
