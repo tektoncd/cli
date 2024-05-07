@@ -12,6 +12,10 @@ updates:
     ignore:
     - dependency-name: "k8s.io/*"
       update-types: ["version-update:semver-major", "version-update:semver-minor"]
+    groups:
+      go-docker-dependencies:
+        patterns:
+          - "github.com/docker/*"
   - package-ecosystem: "gomod"
     directory: "/tools"
     schedule:
