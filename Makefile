@@ -1,5 +1,5 @@
 GO   = go
-PKGS = $(or $(PKG),$(shell env GO111MODULE=on $(GO) list ./... | grep -v 'github\.com\/tektoncd\/cli\/third_party\/'))
+PKGS = $(or $(PKG),$(shell env GO111MODULE=on $(GO) list ./... | grep -v 'github.com/tektoncd/cli/third_party/'))
 BIN  = $(CURDIR)/.bin
 
 export GO111MODULE=on
@@ -11,7 +11,7 @@ M = $(shell printf "\033[34;1m🐱\033[0m")
 TIMEOUT_UNIT = 5m
 TIMEOUT_E2E  = 20m
 
-GOLANGCI_VERSION = v1.56.2
+GOLANGCI_VERSION = v1.58.0
 
 YAML_FILES := $(shell find . -type f -regex ".*y[a]ml" -print)
 

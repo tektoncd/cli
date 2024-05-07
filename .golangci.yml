@@ -5,15 +5,23 @@ issues:
     - path: _test\.go
       linters:
         - gosec
+  exclude-dirs:
+    - vendor
 run:
   issues-exit-code: 1
   build-tags:
     - e2e
-  skip-dirs:
-    - vendor
 linters-settings:
   errcheck:
-    exclude: .errcheck.txt
+    exclude-functions:
+      - (*github.com/tektoncd/pipeline/vendor/go.uber.org/zap.SugaredLogger).Sync
+      - flag.Set
+      - os.Setenv
+      - logger.Sync
+      - fmt.Fprintf
+      - fmt.Fprintln
+      - (io.Closer).Close
+      - updateConfigMap
   staticcheck:
     checks:
       - '-SA1019' # ignore ClusterTask warning
