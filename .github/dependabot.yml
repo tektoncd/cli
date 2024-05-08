@@ -16,6 +16,9 @@ updates:
       go-docker-dependencies:
         patterns:
           - "github.com/docker/*"
+      go-k8s-dependencies:
+        patterns:
+          - "k8s.io/*"
   - package-ecosystem: "gomod"
     directory: "/tools"
     schedule:
