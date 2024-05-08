@@ -336,4 +336,4 @@ require (
 	sigs.k8s.io/structured-merge-diff/v4 v4.4.1 // indirect
 )
 
-replace k8s.io/apimachinery => k8s.io/apimachinery v0.28.5
+replace k8s.io/apimachinery => k8s.io/apimachinery v0.28.9
