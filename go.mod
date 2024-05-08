@@ -35,7 +35,7 @@ require (
 	golang.org/x/term v0.20.0
 	gotest.tools v2.2.0+incompatible
 	gotest.tools/v3 v3.5.1
-	k8s.io/api v0.28.5
+	k8s.io/api v0.28.9
 	k8s.io/apimachinery v0.29.0
 	k8s.io/cli-runtime v0.28.5
 	k8s.io/client-go v0.28.5
