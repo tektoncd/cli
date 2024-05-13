@@ -10,7 +10,7 @@ require (
 	github.com/creack/pty v1.1.21
 	github.com/docker/cli v26.1.2+incompatible
 	github.com/docker/docker v26.1.2+incompatible
-	github.com/fatih/color v1.16.0
+	github.com/fatih/color v1.17.0
 	github.com/google/go-cmp v0.6.0
 	github.com/google/go-containerregistry v0.19.1
 	github.com/hako/durafmt v0.0.0-20210608085754-5c1018a4e16b
