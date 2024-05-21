@@ -36,7 +36,7 @@ Further documentation available:
 
 ## Releases
 
-### v0.37
+### v0.37 (LTS)
 
 - **Latest Release**: [v0.37.0][v0-37-0] (2024-05-13) ([docs][v0-37-0-docs])
 - **Initial Release**: [v0.37.0][v0-37-0] (2024-05-13) ([docs][v0-37-0-docs])
