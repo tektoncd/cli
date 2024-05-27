@@ -19,7 +19,7 @@ import (
 
 	"github.com/google/go-containerregistry/pkg/name"
 	"github.com/google/go-containerregistry/pkg/v1/remote"
-	"github.com/in-toto/in-toto-golang/in_toto"
+	intoto "github.com/in-toto/attestation/go/v1"
 	"github.com/pkg/errors"
 	"github.com/sigstore/cosign/v2/pkg/oci/mutate"
 	ociremote "github.com/sigstore/cosign/v2/pkg/oci/remote"
@@ -30,7 +30,7 @@ import (
 )
 
 var (
-	_ api.Storer[name.Digest, in_toto.Statement] = &AttestationStorer{}
+	_ api.Storer[name.Digest, *intoto.Statement] = &AttestationStorer{}
 )
 
 // AttestationStorer stores in-toto Attestation payloads in OCI registries.
@@ -52,7 +52,8 @@ func NewAttestationStorer(opts ...AttestationStorerOption) (*AttestationStorer, 
 	return s, nil
 }
 
-func (s *AttestationStorer) Store(ctx context.Context, req *api.StoreRequest[name.Digest, in_toto.Statement]) (*api.StoreResponse, error) {
+// Store saves the given statement.
+func (s *AttestationStorer) Store(ctx context.Context, req *api.StoreRequest[name.Digest, *intoto.Statement]) (*api.StoreResponse, error) {
 	logger := logging.FromContext(ctx)
 
 	repo := req.Artifact.Repository
