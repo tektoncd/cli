@@ -22,7 +22,7 @@ import (
 	"strings"
 
 	"github.com/google/go-containerregistry/pkg/name"
-	intoto "github.com/in-toto/in-toto-golang/in_toto"
+	intoto "github.com/in-toto/attestation/go/v1"
 	"github.com/in-toto/in-toto-golang/in_toto/slsa_provenance/common"
 	"github.com/tektoncd/chains/internal/backport"
 	"github.com/tektoncd/chains/pkg/artifacts"
@@ -42,8 +42,8 @@ import (
 //   - the `*_URL` or `*_URI` fields cannot be empty.
 //
 //nolint:all
-func SubjectDigests(ctx context.Context, obj objects.TektonObject, slsaconfig *slsaconfig.SlsaConfig) []intoto.Subject {
-	var subjects []intoto.Subject
+func SubjectDigests(ctx context.Context, obj objects.TektonObject, slsaconfig *slsaconfig.SlsaConfig) []*intoto.ResourceDescriptor {
+	var subjects []*intoto.ResourceDescriptor
 
 	switch obj.GetObject().(type) {
 	case *v1beta1.PipelineRun:
@@ -55,7 +55,8 @@ func SubjectDigests(ctx context.Context, obj objects.TektonObject, slsaconfig *s
 	return subjects
 }
 
-func SubjectsFromPipelineRunV1Beta1(ctx context.Context, obj objects.TektonObject, slsaconfig *slsaconfig.SlsaConfig) []intoto.Subject {
+// SubjectsFromPipelineRunV1Beta1 returns software artifacts produced from the PipelineRun object.
+func SubjectsFromPipelineRunV1Beta1(ctx context.Context, obj objects.TektonObject, slsaconfig *slsaconfig.SlsaConfig) []*intoto.ResourceDescriptor {
 	prSubjects := SubjectsFromTektonObjectV1Beta1(ctx, obj)
 
 	// If deep inspection is not enabled, just return subjects observed on the pipelinerun level
@@ -65,7 +66,7 @@ func SubjectsFromPipelineRunV1Beta1(ctx context.Context, obj objects.TektonObjec
 
 	logger := logging.FromContext(ctx)
 	// If deep inspection is enabled, collect subjects from child taskruns
-	var result []intoto.Subject
+	var result []*intoto.ResourceDescriptor
 
 	pro := obj.(*objects.PipelineRunObjectV1Beta1)
 
@@ -90,14 +91,15 @@ func SubjectsFromPipelineRunV1Beta1(ctx context.Context, obj objects.TektonObjec
 	return result
 }
 
-func SubjectsFromTektonObjectV1Beta1(ctx context.Context, obj objects.TektonObject) []intoto.Subject {
+// SubjectsFromTektonObjectV1Beta1 returns software artifacts produced from the Tekton object.
+func SubjectsFromTektonObjectV1Beta1(ctx context.Context, obj objects.TektonObject) []*intoto.ResourceDescriptor {
 	logger := logging.FromContext(ctx)
-	var subjects []intoto.Subject
+	var subjects []*intoto.ResourceDescriptor
 
-	imgs := artifacts.ExtractOCIImagesFromResults(ctx, obj)
+	imgs := artifacts.ExtractOCIImagesFromResults(ctx, obj.GetResults())
 	for _, i := range imgs {
 		if d, ok := i.(name.Digest); ok {
-			subjects = artifact.AppendSubjects(subjects, intoto.Subject{
+			subjects = artifact.AppendSubjects(subjects, &intoto.ResourceDescriptor{
 				Name: d.Repository.Name(),
 				Digest: common.DigestSet{
 					"sha256": strings.TrimPrefix(d.DigestStr(), "sha256:"),
@@ -113,7 +115,7 @@ func SubjectsFromTektonObjectV1Beta1(ctx context.Context, obj objects.TektonObje
 			logger.Errorf("Digest %s should be in the format of: algorthm:abc", obj.Digest)
 			continue
 		}
-		subjects = artifact.AppendSubjects(subjects, intoto.Subject{
+		subjects = artifact.AppendSubjects(subjects, &intoto.ResourceDescriptor{
 			Name: obj.URI,
 			Digest: common.DigestSet{
 				splits[0]: splits[1],
@@ -121,12 +123,12 @@ func SubjectsFromTektonObjectV1Beta1(ctx context.Context, obj objects.TektonObje
 		})
 	}
 
-	ssts := artifacts.ExtractStructuredTargetFromResults(ctx, obj, artifacts.ArtifactsOutputsResultName)
+	ssts := artifacts.ExtractStructuredTargetFromResults(ctx, obj.GetResults(), artifacts.ArtifactsOutputsResultName)
 	for _, s := range ssts {
 		splits := strings.Split(s.Digest, ":")
 		alg := splits[0]
 		digest := splits[1]
-		subjects = artifact.AppendSubjects(subjects, intoto.Subject{
+		subjects = artifact.AppendSubjects(subjects, &intoto.ResourceDescriptor{
 			Name: s.URI,
 			Digest: common.DigestSet{
 				alg: digest,
@@ -164,7 +166,7 @@ func SubjectsFromTektonObjectV1Beta1(ctx context.Context, obj objects.TektonObje
 					}
 				}
 			}
-			subjects = artifact.AppendSubjects(subjects, intoto.Subject{
+			subjects = artifact.AppendSubjects(subjects, &intoto.ResourceDescriptor{
 				Name: url,
 				Digest: common.DigestSet{
 					"sha256": strings.TrimPrefix(digest, "sha256:"),

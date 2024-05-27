@@ -68,10 +68,14 @@ func NewSigner(ctx context.Context, secretPath string, cfg config.Config) (*Sign
 
 func fulcioSigner(ctx context.Context, cfg config.X509Signer) (*Signer, error) {
 	logger := logging.FromContext(ctx)
-	if !providers.Enabled(ctx) && cfg.IdentityTokenFile != "" {
+
+	providersEnabled := providers.Enabled(ctx)
+
+	if cfg.IdentityTokenFile != "" {
 		FilesystemTokenPath = cfg.IdentityTokenFile
+		providersEnabled = true
 	}
-	if !providers.Enabled(ctx) {
+	if !providersEnabled {
 		return nil, fmt.Errorf("no auth provider for fulcio is enabled")
 	}
 	var tok string

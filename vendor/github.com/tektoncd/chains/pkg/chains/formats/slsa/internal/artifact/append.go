@@ -16,13 +16,13 @@ limitations under the License.
 package artifact
 
 import (
-	intoto "github.com/in-toto/in-toto-golang/in_toto"
+	intoto "github.com/in-toto/attestation/go/v1"
 	"github.com/in-toto/in-toto-golang/in_toto/slsa_provenance/common"
 )
 
 // AppendSubjects adds new subject(s) to the original slice.
 // It merges the new item with an existing entry if they are duplicate instead of append.
-func AppendSubjects(original []intoto.Subject, items ...intoto.Subject) []intoto.Subject {
+func AppendSubjects(original []*intoto.ResourceDescriptor, items ...*intoto.ResourceDescriptor) []*intoto.ResourceDescriptor {
 	var artifacts []artifact
 	for _, s := range original {
 		artifacts = append(artifacts, subjectToArtifact(s))
@@ -32,7 +32,7 @@ func AppendSubjects(original []intoto.Subject, items ...intoto.Subject) []intoto
 		artifacts = addArtifact(artifacts, subjectToArtifact(s))
 	}
 
-	var result []intoto.Subject
+	var result []*intoto.ResourceDescriptor
 	for _, a := range artifacts {
 		result = append(result, artifactToSubject(a))
 	}
@@ -99,15 +99,15 @@ func mergeMaps(m1 map[string]string, m2 map[string]string) {
 	}
 }
 
-func subjectToArtifact(s intoto.Subject) artifact {
+func subjectToArtifact(s *intoto.ResourceDescriptor) artifact {
 	return artifact{
 		name:      s.Name,
 		digestSet: s.Digest,
 	}
 }
 
-func artifactToSubject(a artifact) intoto.Subject {
-	return intoto.Subject{
+func artifactToSubject(a artifact) *intoto.ResourceDescriptor {
+	return &intoto.ResourceDescriptor{
 		Name:   a.name,
 		Digest: a.digestSet,
 	}

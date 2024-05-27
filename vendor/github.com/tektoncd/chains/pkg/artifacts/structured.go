@@ -36,7 +36,7 @@ type structuredSignableExtractor struct {
 	isValid      func(StructuredSignable) bool
 }
 
-func (b *structuredSignableExtractor) extract(ctx context.Context, obj objects.TektonObject) []StructuredSignable {
+func (b *structuredSignableExtractor) extract(ctx context.Context, results []objects.Result) []StructuredSignable {
 	logger := logging.FromContext(ctx)
 	partials := map[string]StructuredSignable{}
 
@@ -51,7 +51,7 @@ func (b *structuredSignableExtractor) extract(ctx context.Context, obj objects.T
 		},
 	}
 
-	for _, res := range obj.GetResults() {
+	for _, res := range results {
 		for suffix, setFn := range suffixes {
 			if suffix == "" {
 				continue
