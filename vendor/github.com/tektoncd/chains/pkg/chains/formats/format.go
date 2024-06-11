@@ -25,6 +25,7 @@ type Payloader interface {
 	CreatePayload(ctx context.Context, obj interface{}) (interface{}, error)
 	Type() config.PayloadType
 	Wrap() bool
+	RetrieveAllArtifactURIs(ctx context.Context, obj interface{}) ([]string, error)
 }
 
 const (
