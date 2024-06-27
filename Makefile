@@ -105,7 +105,7 @@ lint-go: | $(GOLANGCILINT) ; $(info $(M) running golangci-lint…) @ ## Run gola
 
 GOIMPORTS = $(BIN)/goimports
 $(GOIMPORTS): ; $(info $(M) getting goimports )
-	GOBIN=$(BIN) $(GO) install -mod=mod golang.org/x/tools/cmd/goimports
+	GOBIN=$(BIN) $(GO) install -mod=mod golang.org/x/tools/cmd/goimports@latest
 
 .PHONY: goimports
 goimports: | $(GOIMPORTS) ; $(info $(M) running goimports…) ## Run goimports
