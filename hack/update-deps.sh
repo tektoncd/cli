@@ -56,4 +56,6 @@ fi
 go mod tidy
 go mod vendor
 
-update_licenses third_party/VENDOR-LICENSE "./cmd/*"
+# update_licenses third_party/VENDOR-LICENSE "./cmd/*"
+go-license save ./... --save_path=third_party/VENDOR-LICENSE --force \
+	    --ignore github.com/alibabacloud-go/cr-20160607

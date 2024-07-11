@@ -126,6 +126,8 @@ function build_tests() {
   fi
   # Check that we don't have any forbidden licenses in our images.
   subheader "Checking for forbidden licenses"
+  # install 1.1.0 as 1.0.0 is failing
+  go install github.com/google/go-licenses@v1.1.0
   check_licenses ${go_pkg_dirs} || failed=1
   return ${failed}
 }
