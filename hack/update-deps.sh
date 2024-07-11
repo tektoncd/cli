@@ -57,3 +57,4 @@ go mod tidy
 go mod vendor
 
 update_licenses third_party/VENDOR-LICENSE "./cmd/*"
+

@@ -5,15 +5,16 @@
 package client
 
 import (
-	openapi "github.com/alibabacloud-go/darabonba-openapi/client"
+	openapi "github.com/alibabacloud-go/darabonba-openapi/v2/client"
 	endpointutil "github.com/alibabacloud-go/endpoint-util/service"
 	openapiutil "github.com/alibabacloud-go/openapi-util/service"
-	util "github.com/alibabacloud-go/tea-utils/service"
+	util "github.com/alibabacloud-go/tea-utils/v2/service"
 	"github.com/alibabacloud-go/tea/tea"
 )
 
 type CancelRepoBuildResponse struct {
-	Headers map[string]*string `json:"headers,omitempty" xml:"headers,omitempty" require:"true"`
+	Headers    map[string]*string `json:"headers,omitempty" xml:"headers,omitempty" require:"true"`
+	StatusCode *int32             `json:"statusCode,omitempty" xml:"statusCode,omitempty" require:"true"`
 }
 
 func (s CancelRepoBuildResponse) String() string {
@@ -29,8 +30,14 @@ func (s *CancelRepoBuildResponse) SetHeaders(v map[string]*string) *CancelRepoBu
 	return s
 }
 
+func (s *CancelRepoBuildResponse) SetStatusCode(v int32) *CancelRepoBuildResponse {
+	s.StatusCode = &v
+	return s
+}
+
 type CreateNamespaceResponse struct {
-	Headers map[string]*string `json:"headers,omitempty" xml:"headers,omitempty" require:"true"`
+	Headers    map[string]*string `json:"headers,omitempty" xml:"headers,omitempty" require:"true"`
+	StatusCode *int32             `json:"statusCode,omitempty" xml:"statusCode,omitempty" require:"true"`
 }
 
 func (s CreateNamespaceResponse) String() string {
@@ -46,8 +53,14 @@ func (s *CreateNamespaceResponse) SetHeaders(v map[string]*string) *CreateNamesp
 	return s
 }
 
+func (s *CreateNamespaceResponse) SetStatusCode(v int32) *CreateNamespaceResponse {
+	s.StatusCode = &v
+	return s
+}
+
 type CreateRepoResponse struct {
-	Headers map[string]*string `json:"headers,omitempty" xml:"headers,omitempty" require:"true"`
+	Headers    map[string]*string `json:"headers,omitempty" xml:"headers,omitempty" require:"true"`
+	StatusCode *int32             `json:"statusCode,omitempty" xml:"statusCode,omitempty" require:"true"`
 }
 
 func (s CreateRepoResponse) String() string {
@@ -63,8 +76,14 @@ func (s *CreateRepoResponse) SetHeaders(v map[string]*string) *CreateRepoRespons
 	return s
 }
 
+func (s *CreateRepoResponse) SetStatusCode(v int32) *CreateRepoResponse {
+	s.StatusCode = &v
+	return s
+}
+
 type CreateRepoBuildRuleResponse struct {
-	Headers map[string]*string `json:"headers,omitempty" xml:"headers,omitempty" require:"true"`
+	Headers    map[string]*string `json:"headers,omitempty" xml:"headers,omitempty" require:"true"`
+	StatusCode *int32             `json:"statusCode,omitempty" xml:"statusCode,omitempty" require:"true"`
 }
 
 func (s CreateRepoBuildRuleResponse) String() string {
@@ -80,8 +99,14 @@ func (s *CreateRepoBuildRuleResponse) SetHeaders(v map[string]*string) *CreateRe
 	return s
 }
 
+func (s *CreateRepoBuildRuleResponse) SetStatusCode(v int32) *CreateRepoBuildRuleResponse {
+	s.StatusCode = &v
+	return s
+}
+
 type CreateRepoWebhookResponse struct {
-	Headers map[string]*string `json:"headers,omitempty" xml:"headers,omitempty" require:"true"`
+	Headers    map[string]*string `json:"headers,omitempty" xml:"headers,omitempty" require:"true"`
+	StatusCode *int32             `json:"statusCode,omitempty" xml:"statusCode,omitempty" require:"true"`
 }
 
 func (s CreateRepoWebhookResponse) String() string {
@@ -97,8 +122,14 @@ func (s *CreateRepoWebhookResponse) SetHeaders(v map[string]*string) *CreateRepo
 	return s
 }
 
+func (s *CreateRepoWebhookResponse) SetStatusCode(v int32) *CreateRepoWebhookResponse {
+	s.StatusCode = &v
+	return s
+}
+
 type CreateUserInfoResponse struct {
-	Headers map[string]*string `json:"headers,omitempty" xml:"headers,omitempty" require:"true"`
+	Headers    map[string]*string `json:"headers,omitempty" xml:"headers,omitempty" require:"true"`
+	StatusCode *int32             `json:"statusCode,omitempty" xml:"statusCode,omitempty" require:"true"`
 }
 
 func (s CreateUserInfoResponse) String() string {
@@ -114,8 +145,14 @@ func (s *CreateUserInfoResponse) SetHeaders(v map[string]*string) *CreateUserInf
 	return s
 }
 
+func (s *CreateUserInfoResponse) SetStatusCode(v int32) *CreateUserInfoResponse {
+	s.StatusCode = &v
+	return s
+}
+
 type DeleteImageResponse struct {
-	Headers map[string]*string `json:"headers,omitempty" xml:"headers,omitempty" require:"true"`
+	Headers    map[string]*string `json:"headers,omitempty" xml:"headers,omitempty" require:"true"`
+	StatusCode *int32             `json:"statusCode,omitempty" xml:"statusCode,omitempty" require:"true"`
 }
 
 func (s DeleteImageResponse) String() string {
@@ -131,8 +168,14 @@ func (s *DeleteImageResponse) SetHeaders(v map[string]*string) *DeleteImageRespo
 	return s
 }
 
+func (s *DeleteImageResponse) SetStatusCode(v int32) *DeleteImageResponse {
+	s.StatusCode = &v
+	return s
+}
+
 type DeleteNamespaceResponse struct {
-	Headers map[string]*string `json:"headers,omitempty" xml:"headers,omitempty" require:"true"`
+	Headers    map[string]*string `json:"headers,omitempty" xml:"headers,omitempty" require:"true"`
+	StatusCode *int32             `json:"statusCode,omitempty" xml:"statusCode,omitempty" require:"true"`
 }
 
 func (s DeleteNamespaceResponse) String() string {
@@ -148,8 +191,14 @@ func (s *DeleteNamespaceResponse) SetHeaders(v map[string]*string) *DeleteNamesp
 	return s
 }
 
+func (s *DeleteNamespaceResponse) SetStatusCode(v int32) *DeleteNamespaceResponse {
+	s.StatusCode = &v
+	return s
+}
+
 type DeleteRepoResponse struct {
-	Headers map[string]*string `json:"headers,omitempty" xml:"headers,omitempty" require:"true"`
+	Headers    map[string]*string `json:"headers,omitempty" xml:"headers,omitempty" require:"true"`
+	StatusCode *int32             `json:"statusCode,omitempty" xml:"statusCode,omitempty" require:"true"`
 }
 
 func (s DeleteRepoResponse) String() string {
@@ -165,8 +214,14 @@ func (s *DeleteRepoResponse) SetHeaders(v map[string]*string) *DeleteRepoRespons
 	return s
 }
 
+func (s *DeleteRepoResponse) SetStatusCode(v int32) *DeleteRepoResponse {
+	s.StatusCode = &v
+	return s
+}
+
 type DeleteRepoBuildRuleResponse struct {
-	Headers map[string]*string `json:"headers,omitempty" xml:"headers,omitempty" require:"true"`
+	Headers    map[string]*string `json:"headers,omitempty" xml:"headers,omitempty" require:"true"`
+	StatusCode *int32             `json:"statusCode,omitempty" xml:"statusCode,omitempty" require:"true"`
 }
 
 func (s DeleteRepoBuildRuleResponse) String() string {
@@ -182,8 +237,14 @@ func (s *DeleteRepoBuildRuleResponse) SetHeaders(v map[string]*string) *DeleteRe
 	return s
 }
 
+func (s *DeleteRepoBuildRuleResponse) SetStatusCode(v int32) *DeleteRepoBuildRuleResponse {
+	s.StatusCode = &v
+	return s
+}
+
 type DeleteRepoWebhookResponse struct {
-	Headers map[string]*string `json:"headers,omitempty" xml:"headers,omitempty" require:"true"`
+	Headers    map[string]*string `json:"headers,omitempty" xml:"headers,omitempty" require:"true"`
+	StatusCode *int32             `json:"statusCode,omitempty" xml:"statusCode,omitempty" require:"true"`
 }
 
 func (s DeleteRepoWebhookResponse) String() string {
@@ -199,8 +260,14 @@ func (s *DeleteRepoWebhookResponse) SetHeaders(v map[string]*string) *DeleteRepo
 	return s
 }
 
+func (s *DeleteRepoWebhookResponse) SetStatusCode(v int32) *DeleteRepoWebhookResponse {
+	s.StatusCode = &v
+	return s
+}
+
 type GetAuthorizationTokenResponse struct {
-	Headers map[string]*string `json:"headers,omitempty" xml:"headers,omitempty" require:"true"`
+	Headers    map[string]*string `json:"headers,omitempty" xml:"headers,omitempty" require:"true"`
+	StatusCode *int32             `json:"statusCode,omitempty" xml:"statusCode,omitempty" require:"true"`
 }
 
 func (s GetAuthorizationTokenResponse) String() string {
@@ -216,8 +283,14 @@ func (s *GetAuthorizationTokenResponse) SetHeaders(v map[string]*string) *GetAut
 	return s
 }
 
+func (s *GetAuthorizationTokenResponse) SetStatusCode(v int32) *GetAuthorizationTokenResponse {
+	s.StatusCode = &v
+	return s
+}
+
 type GetImageLayerResponse struct {
-	Headers map[string]*string `json:"headers,omitempty" xml:"headers,omitempty" require:"true"`
+	Headers    map[string]*string `json:"headers,omitempty" xml:"headers,omitempty" require:"true"`
+	StatusCode *int32             `json:"statusCode,omitempty" xml:"statusCode,omitempty" require:"true"`
 }
 
 func (s GetImageLayerResponse) String() string {
@@ -230,6 +303,11 @@ func (s GetImageLayerResponse) GoString() string {
 
 func (s *GetImageLayerResponse) SetHeaders(v map[string]*string) *GetImageLayerResponse {
 	s.Headers = v
+	return s
+}
+
+func (s *GetImageLayerResponse) SetStatusCode(v int32) *GetImageLayerResponse {
+	s.StatusCode = &v
 	return s
 }
 
@@ -251,7 +329,8 @@ func (s *GetImageManifestRequest) SetSchemaVersion(v int32) *GetImageManifestReq
 }
 
 type GetImageManifestResponse struct {
-	Headers map[string]*string `json:"headers,omitempty" xml:"headers,omitempty" require:"true"`
+	Headers    map[string]*string `json:"headers,omitempty" xml:"headers,omitempty" require:"true"`
+	StatusCode *int32             `json:"statusCode,omitempty" xml:"statusCode,omitempty" require:"true"`
 }
 
 func (s GetImageManifestResponse) String() string {
@@ -267,8 +346,14 @@ func (s *GetImageManifestResponse) SetHeaders(v map[string]*string) *GetImageMan
 	return s
 }
 
+func (s *GetImageManifestResponse) SetStatusCode(v int32) *GetImageManifestResponse {
+	s.StatusCode = &v
+	return s
+}
+
 type GetNamespaceResponse struct {
-	Headers map[string]*string `json:"headers,omitempty" xml:"headers,omitempty" require:"true"`
+	Headers    map[string]*string `json:"headers,omitempty" xml:"headers,omitempty" require:"true"`
+	StatusCode *int32             `json:"statusCode,omitempty" xml:"statusCode,omitempty" require:"true"`
 }
 
 func (s GetNamespaceResponse) String() string {
@@ -281,6 +366,11 @@ func (s GetNamespaceResponse) GoString() string {
 
 func (s *GetNamespaceResponse) SetHeaders(v map[string]*string) *GetNamespaceResponse {
 	s.Headers = v
+	return s
+}
+
+func (s *GetNamespaceResponse) SetStatusCode(v int32) *GetNamespaceResponse {
+	s.StatusCode = &v
 	return s
 }
 
@@ -308,7 +398,8 @@ func (s *GetNamespaceListRequest) SetStatus(v string) *GetNamespaceListRequest {
 }
 
 type GetNamespaceListResponse struct {
-	Headers map[string]*string `json:"headers,omitempty" xml:"headers,omitempty" require:"true"`
+	Headers    map[string]*string `json:"headers,omitempty" xml:"headers,omitempty" require:"true"`
+	StatusCode *int32             `json:"statusCode,omitempty" xml:"statusCode,omitempty" require:"true"`
 }
 
 func (s GetNamespaceListResponse) String() string {
@@ -324,42 +415,14 @@ func (s *GetNamespaceListResponse) SetHeaders(v map[string]*string) *GetNamespac
 	return s
 }
 
-type GetRegionRequest struct {
-	Domain *string `json:"Domain,omitempty" xml:"Domain,omitempty"`
-}
-
-func (s GetRegionRequest) String() string {
-	return tea.Prettify(s)
-}
-
-func (s GetRegionRequest) GoString() string {
-	return s.String()
-}
-
-func (s *GetRegionRequest) SetDomain(v string) *GetRegionRequest {
-	s.Domain = &v
-	return s
-}
-
-type GetRegionResponse struct {
-	Headers map[string]*string `json:"headers,omitempty" xml:"headers,omitempty" require:"true"`
-}
-
-func (s GetRegionResponse) String() string {
-	return tea.Prettify(s)
-}
-
-func (s GetRegionResponse) GoString() string {
-	return s.String()
-}
-
-func (s *GetRegionResponse) SetHeaders(v map[string]*string) *GetRegionResponse {
-	s.Headers = v
+func (s *GetNamespaceListResponse) SetStatusCode(v int32) *GetNamespaceListResponse {
+	s.StatusCode = &v
 	return s
 }
 
 type GetRegionListResponse struct {
-	Headers map[string]*string `json:"headers,omitempty" xml:"headers,omitempty" require:"true"`
+	Headers    map[string]*string `json:"headers,omitempty" xml:"headers,omitempty" require:"true"`
+	StatusCode *int32             `json:"statusCode,omitempty" xml:"statusCode,omitempty" require:"true"`
 }
 
 func (s GetRegionListResponse) String() string {
@@ -375,8 +438,14 @@ func (s *GetRegionListResponse) SetHeaders(v map[string]*string) *GetRegionListR
 	return s
 }
 
+func (s *GetRegionListResponse) SetStatusCode(v int32) *GetRegionListResponse {
+	s.StatusCode = &v
+	return s
+}
+
 type GetRepoResponse struct {
-	Headers map[string]*string `json:"headers,omitempty" xml:"headers,omitempty" require:"true"`
+	Headers    map[string]*string `json:"headers,omitempty" xml:"headers,omitempty" require:"true"`
+	StatusCode *int32             `json:"statusCode,omitempty" xml:"statusCode,omitempty" require:"true"`
 }
 
 func (s GetRepoResponse) String() string {
@@ -389,6 +458,11 @@ func (s GetRepoResponse) GoString() string {
 
 func (s *GetRepoResponse) SetHeaders(v map[string]*string) *GetRepoResponse {
 	s.Headers = v
+	return s
+}
+
+func (s *GetRepoResponse) SetStatusCode(v int32) *GetRepoResponse {
+	s.StatusCode = &v
 	return s
 }
 
@@ -416,7 +490,8 @@ func (s *GetRepoBuildListRequest) SetPageSize(v int32) *GetRepoBuildListRequest 
 }
 
 type GetRepoBuildListResponse struct {
-	Headers map[string]*string `json:"headers,omitempty" xml:"headers,omitempty" require:"true"`
+	Headers    map[string]*string `json:"headers,omitempty" xml:"headers,omitempty" require:"true"`
+	StatusCode *int32             `json:"statusCode,omitempty" xml:"statusCode,omitempty" require:"true"`
 }
 
 func (s GetRepoBuildListResponse) String() string {
@@ -432,8 +507,14 @@ func (s *GetRepoBuildListResponse) SetHeaders(v map[string]*string) *GetRepoBuil
 	return s
 }
 
+func (s *GetRepoBuildListResponse) SetStatusCode(v int32) *GetRepoBuildListResponse {
+	s.StatusCode = &v
+	return s
+}
+
 type GetRepoBuildRuleListResponse struct {
-	Headers map[string]*string `json:"headers,omitempty" xml:"headers,omitempty" require:"true"`
+	Headers    map[string]*string `json:"headers,omitempty" xml:"headers,omitempty" require:"true"`
+	StatusCode *int32             `json:"statusCode,omitempty" xml:"statusCode,omitempty" require:"true"`
 }
 
 func (s GetRepoBuildRuleListResponse) String() string {
@@ -449,8 +530,14 @@ func (s *GetRepoBuildRuleListResponse) SetHeaders(v map[string]*string) *GetRepo
 	return s
 }
 
+func (s *GetRepoBuildRuleListResponse) SetStatusCode(v int32) *GetRepoBuildRuleListResponse {
+	s.StatusCode = &v
+	return s
+}
+
 type GetRepoBuildStatusResponse struct {
-	Headers map[string]*string `json:"headers,omitempty" xml:"headers,omitempty" require:"true"`
+	Headers    map[string]*string `json:"headers,omitempty" xml:"headers,omitempty" require:"true"`
+	StatusCode *int32             `json:"statusCode,omitempty" xml:"statusCode,omitempty" require:"true"`
 }
 
 func (s GetRepoBuildStatusResponse) String() string {
@@ -463,6 +550,11 @@ func (s GetRepoBuildStatusResponse) GoString() string {
 
 func (s *GetRepoBuildStatusResponse) SetHeaders(v map[string]*string) *GetRepoBuildStatusResponse {
 	s.Headers = v
+	return s
+}
+
+func (s *GetRepoBuildStatusResponse) SetStatusCode(v int32) *GetRepoBuildStatusResponse {
+	s.StatusCode = &v
 	return s
 }
 
@@ -496,7 +588,8 @@ func (s *GetRepoListRequest) SetStatus(v string) *GetRepoListRequest {
 }
 
 type GetRepoListResponse struct {
-	Headers map[string]*string `json:"headers,omitempty" xml:"headers,omitempty" require:"true"`
+	Headers    map[string]*string `json:"headers,omitempty" xml:"headers,omitempty" require:"true"`
+	StatusCode *int32             `json:"statusCode,omitempty" xml:"statusCode,omitempty" require:"true"`
 }
 
 func (s GetRepoListResponse) String() string {
@@ -509,6 +602,11 @@ func (s GetRepoListResponse) GoString() string {
 
 func (s *GetRepoListResponse) SetHeaders(v map[string]*string) *GetRepoListResponse {
 	s.Headers = v
+	return s
+}
+
+func (s *GetRepoListResponse) SetStatusCode(v int32) *GetRepoListResponse {
+	s.StatusCode = &v
 	return s
 }
 
@@ -542,7 +640,8 @@ func (s *GetRepoListByNamespaceRequest) SetStatus(v string) *GetRepoListByNamesp
 }
 
 type GetRepoListByNamespaceResponse struct {
-	Headers map[string]*string `json:"headers,omitempty" xml:"headers,omitempty" require:"true"`
+	Headers    map[string]*string `json:"headers,omitempty" xml:"headers,omitempty" require:"true"`
+	StatusCode *int32             `json:"statusCode,omitempty" xml:"statusCode,omitempty" require:"true"`
 }
 
 func (s GetRepoListByNamespaceResponse) String() string {
@@ -555,6 +654,11 @@ func (s GetRepoListByNamespaceResponse) GoString() string {
 
 func (s *GetRepoListByNamespaceResponse) SetHeaders(v map[string]*string) *GetRepoListByNamespaceResponse {
 	s.Headers = v
+	return s
+}
+
+func (s *GetRepoListByNamespaceResponse) SetStatusCode(v int32) *GetRepoListByNamespaceResponse {
+	s.StatusCode = &v
 	return s
 }
 
@@ -618,8 +722,9 @@ func (s *GetRepoTagResponseBody) SetTag(v string) *GetRepoTagResponseBody {
 }
 
 type GetRepoTagResponse struct {
-	Headers map[string]*string      `json:"headers,omitempty" xml:"headers,omitempty" require:"true"`
-	Body    *GetRepoTagResponseBody `json:"body,omitempty" xml:"body,omitempty" require:"true"`
+	Headers    map[string]*string      `json:"headers,omitempty" xml:"headers,omitempty" require:"true"`
+	StatusCode *int32                  `json:"statusCode,omitempty" xml:"statusCode,omitempty" require:"true"`
+	Body       *GetRepoTagResponseBody `json:"body,omitempty" xml:"body,omitempty" require:"true"`
 }
 
 func (s GetRepoTagResponse) String() string {
@@ -632,6 +737,11 @@ func (s GetRepoTagResponse) GoString() string {
 
 func (s *GetRepoTagResponse) SetHeaders(v map[string]*string) *GetRepoTagResponse {
 	s.Headers = v
+	return s
+}
+
+func (s *GetRepoTagResponse) SetStatusCode(v int32) *GetRepoTagResponse {
+	s.StatusCode = &v
 	return s
 }
 
@@ -670,7 +780,8 @@ func (s *GetRepoTagScanListRequest) SetSeverity(v string) *GetRepoTagScanListReq
 }
 
 type GetRepoTagScanListResponse struct {
-	Headers map[string]*string `json:"headers,omitempty" xml:"headers,omitempty" require:"true"`
+	Headers    map[string]*string `json:"headers,omitempty" xml:"headers,omitempty" require:"true"`
+	StatusCode *int32             `json:"statusCode,omitempty" xml:"statusCode,omitempty" require:"true"`
 }
 
 func (s GetRepoTagScanListResponse) String() string {
@@ -686,8 +797,14 @@ func (s *GetRepoTagScanListResponse) SetHeaders(v map[string]*string) *GetRepoTa
 	return s
 }
 
+func (s *GetRepoTagScanListResponse) SetStatusCode(v int32) *GetRepoTagScanListResponse {
+	s.StatusCode = &v
+	return s
+}
+
 type GetRepoTagScanStatusResponse struct {
-	Headers map[string]*string `json:"headers,omitempty" xml:"headers,omitempty" require:"true"`
+	Headers    map[string]*string `json:"headers,omitempty" xml:"headers,omitempty" require:"true"`
+	StatusCode *int32             `json:"statusCode,omitempty" xml:"statusCode,omitempty" require:"true"`
 }
 
 func (s GetRepoTagScanStatusResponse) String() string {
@@ -703,8 +820,14 @@ func (s *GetRepoTagScanStatusResponse) SetHeaders(v map[string]*string) *GetRepo
 	return s
 }
 
+func (s *GetRepoTagScanStatusResponse) SetStatusCode(v int32) *GetRepoTagScanStatusResponse {
+	s.StatusCode = &v
+	return s
+}
+
 type GetRepoTagScanSummaryResponse struct {
-	Headers map[string]*string `json:"headers,omitempty" xml:"headers,omitempty" require:"true"`
+	Headers    map[string]*string `json:"headers,omitempty" xml:"headers,omitempty" require:"true"`
+	StatusCode *int32             `json:"statusCode,omitempty" xml:"statusCode,omitempty" require:"true"`
 }
 
 func (s GetRepoTagScanSummaryResponse) String() string {
@@ -717,6 +840,11 @@ func (s GetRepoTagScanSummaryResponse) GoString() string {
 
 func (s *GetRepoTagScanSummaryResponse) SetHeaders(v map[string]*string) *GetRepoTagScanSummaryResponse {
 	s.Headers = v
+	return s
+}
+
+func (s *GetRepoTagScanSummaryResponse) SetStatusCode(v int32) *GetRepoTagScanSummaryResponse {
+	s.StatusCode = &v
 	return s
 }
 
@@ -744,7 +872,8 @@ func (s *GetRepoTagsRequest) SetPageSize(v int32) *GetRepoTagsRequest {
 }
 
 type GetRepoTagsResponse struct {
-	Headers map[string]*string `json:"headers,omitempty" xml:"headers,omitempty" require:"true"`
+	Headers    map[string]*string `json:"headers,omitempty" xml:"headers,omitempty" require:"true"`
+	StatusCode *int32             `json:"statusCode,omitempty" xml:"statusCode,omitempty" require:"true"`
 }
 
 func (s GetRepoTagsResponse) String() string {
@@ -760,8 +889,14 @@ func (s *GetRepoTagsResponse) SetHeaders(v map[string]*string) *GetRepoTagsRespo
 	return s
 }
 
+func (s *GetRepoTagsResponse) SetStatusCode(v int32) *GetRepoTagsResponse {
+	s.StatusCode = &v
+	return s
+}
+
 type GetRepoWebhookResponse struct {
-	Headers map[string]*string `json:"headers,omitempty" xml:"headers,omitempty" require:"true"`
+	Headers    map[string]*string `json:"headers,omitempty" xml:"headers,omitempty" require:"true"`
+	StatusCode *int32             `json:"statusCode,omitempty" xml:"statusCode,omitempty" require:"true"`
 }
 
 func (s GetRepoWebhookResponse) String() string {
@@ -777,25 +912,14 @@ func (s *GetRepoWebhookResponse) SetHeaders(v map[string]*string) *GetRepoWebhoo
 	return s
 }
 
-type GetResourceQuotaResponse struct {
-	Headers map[string]*string `json:"headers,omitempty" xml:"headers,omitempty" require:"true"`
-}
-
-func (s GetResourceQuotaResponse) String() string {
-	return tea.Prettify(s)
-}
-
-func (s GetResourceQuotaResponse) GoString() string {
-	return s.String()
-}
-
-func (s *GetResourceQuotaResponse) SetHeaders(v map[string]*string) *GetResourceQuotaResponse {
-	s.Headers = v
+func (s *GetRepoWebhookResponse) SetStatusCode(v int32) *GetRepoWebhookResponse {
+	s.StatusCode = &v
 	return s
 }
 
 type StartImageScanResponse struct {
-	Headers map[string]*string `json:"headers,omitempty" xml:"headers,omitempty" require:"true"`
+	Headers    map[string]*string `json:"headers,omitempty" xml:"headers,omitempty" require:"true"`
+	StatusCode *int32             `json:"statusCode,omitempty" xml:"statusCode,omitempty" require:"true"`
 }
 
 func (s StartImageScanResponse) String() string {
@@ -811,8 +935,14 @@ func (s *StartImageScanResponse) SetHeaders(v map[string]*string) *StartImageSca
 	return s
 }
 
+func (s *StartImageScanResponse) SetStatusCode(v int32) *StartImageScanResponse {
+	s.StatusCode = &v
+	return s
+}
+
 type StartRepoBuildByRuleResponse struct {
-	Headers map[string]*string `json:"headers,omitempty" xml:"headers,omitempty" require:"true"`
+	Headers    map[string]*string `json:"headers,omitempty" xml:"headers,omitempty" require:"true"`
+	StatusCode *int32             `json:"statusCode,omitempty" xml:"statusCode,omitempty" require:"true"`
 }
 
 func (s StartRepoBuildByRuleResponse) String() string {
@@ -828,8 +958,14 @@ func (s *StartRepoBuildByRuleResponse) SetHeaders(v map[string]*string) *StartRe
 	return s
 }
 
+func (s *StartRepoBuildByRuleResponse) SetStatusCode(v int32) *StartRepoBuildByRuleResponse {
+	s.StatusCode = &v
+	return s
+}
+
 type UpdateNamespaceResponse struct {
-	Headers map[string]*string `json:"headers,omitempty" xml:"headers,omitempty" require:"true"`
+	Headers    map[string]*string `json:"headers,omitempty" xml:"headers,omitempty" require:"true"`
+	StatusCode *int32             `json:"statusCode,omitempty" xml:"statusCode,omitempty" require:"true"`
 }
 
 func (s UpdateNamespaceResponse) String() string {
@@ -845,8 +981,14 @@ func (s *UpdateNamespaceResponse) SetHeaders(v map[string]*string) *UpdateNamesp
 	return s
 }
 
+func (s *UpdateNamespaceResponse) SetStatusCode(v int32) *UpdateNamespaceResponse {
+	s.StatusCode = &v
+	return s
+}
+
 type UpdateRepoResponse struct {
-	Headers map[string]*string `json:"headers,omitempty" xml:"headers,omitempty" require:"true"`
+	Headers    map[string]*string `json:"headers,omitempty" xml:"headers,omitempty" require:"true"`
+	StatusCode *int32             `json:"statusCode,omitempty" xml:"statusCode,omitempty" require:"true"`
 }
 
 func (s UpdateRepoResponse) String() string {
@@ -862,8 +1004,14 @@ func (s *UpdateRepoResponse) SetHeaders(v map[string]*string) *UpdateRepoRespons
 	return s
 }
 
+func (s *UpdateRepoResponse) SetStatusCode(v int32) *UpdateRepoResponse {
+	s.StatusCode = &v
+	return s
+}
+
 type UpdateRepoBuildRuleResponse struct {
-	Headers map[string]*string `json:"headers,omitempty" xml:"headers,omitempty" require:"true"`
+	Headers    map[string]*string `json:"headers,omitempty" xml:"headers,omitempty" require:"true"`
+	StatusCode *int32             `json:"statusCode,omitempty" xml:"statusCode,omitempty" require:"true"`
 }
 
 func (s UpdateRepoBuildRuleResponse) String() string {
@@ -879,8 +1027,14 @@ func (s *UpdateRepoBuildRuleResponse) SetHeaders(v map[string]*string) *UpdateRe
 	return s
 }
 
+func (s *UpdateRepoBuildRuleResponse) SetStatusCode(v int32) *UpdateRepoBuildRuleResponse {
+	s.StatusCode = &v
+	return s
+}
+
 type UpdateRepoWebhookResponse struct {
-	Headers map[string]*string `json:"headers,omitempty" xml:"headers,omitempty" require:"true"`
+	Headers    map[string]*string `json:"headers,omitempty" xml:"headers,omitempty" require:"true"`
+	StatusCode *int32             `json:"statusCode,omitempty" xml:"statusCode,omitempty" require:"true"`
 }
 
 func (s UpdateRepoWebhookResponse) String() string {
@@ -896,8 +1050,14 @@ func (s *UpdateRepoWebhookResponse) SetHeaders(v map[string]*string) *UpdateRepo
 	return s
 }
 
+func (s *UpdateRepoWebhookResponse) SetStatusCode(v int32) *UpdateRepoWebhookResponse {
+	s.StatusCode = &v
+	return s
+}
+
 type UpdateUserInfoResponse struct {
-	Headers map[string]*string `json:"headers,omitempty" xml:"headers,omitempty" require:"true"`
+	Headers    map[string]*string `json:"headers,omitempty" xml:"headers,omitempty" require:"true"`
+	StatusCode *int32             `json:"statusCode,omitempty" xml:"statusCode,omitempty" require:"true"`
 }
 
 func (s UpdateUserInfoResponse) String() string {
@@ -910,6 +1070,11 @@ func (s UpdateUserInfoResponse) GoString() string {
 
 func (s *UpdateUserInfoResponse) SetHeaders(v map[string]*string) *UpdateUserInfoResponse {
 	s.Headers = v
+	return s
+}
+
+func (s *UpdateUserInfoResponse) SetStatusCode(v int32) *UpdateUserInfoResponse {
+	s.StatusCode = &v
 	return s
 }
 
@@ -973,9 +1138,6 @@ func (client *Client) CancelRepoBuild(RepoNamespace *string, RepoName *string, B
 }
 
 func (client *Client) CancelRepoBuildWithOptions(RepoNamespace *string, RepoName *string, BuildId *string, headers map[string]*string, runtime *util.RuntimeOptions) (_result *CancelRepoBuildResponse, _err error) {
-	RepoNamespace = openapiutil.GetEncodeParam(RepoNamespace)
-	RepoName = openapiutil.GetEncodeParam(RepoName)
-	BuildId = openapiutil.GetEncodeParam(BuildId)
 	req := &openapi.OpenApiRequest{
 		Headers: headers,
 	}
@@ -983,7 +1145,7 @@ func (client *Client) CancelRepoBuildWithOptions(RepoNamespace *string, RepoName
 		Action:      tea.String("CancelRepoBuild"),
 		Version:     tea.String("2016-06-07"),
 		Protocol:    tea.String("HTTPS"),
-		Pathname:    tea.String("/repos/" + tea.StringValue(RepoNamespace) + "/" + tea.StringValue(RepoName) + "/build/" + tea.StringValue(BuildId) + "/cancel"),
+		Pathname:    tea.String("/repos/" + tea.StringValue(openapiutil.GetEncodeParam(RepoNamespace)) + "/" + tea.StringValue(openapiutil.GetEncodeParam(RepoName)) + "/build/" + tea.StringValue(openapiutil.GetEncodeParam(BuildId)) + "/cancel"),
 		Method:      tea.String("POST"),
 		AuthType:    tea.String("AK"),
 		Style:       tea.String("ROA"),
@@ -1084,8 +1246,6 @@ func (client *Client) CreateRepoBuildRule(RepoNamespace *string, RepoName *strin
 }
 
 func (client *Client) CreateRepoBuildRuleWithOptions(RepoNamespace *string, RepoName *string, headers map[string]*string, runtime *util.RuntimeOptions) (_result *CreateRepoBuildRuleResponse, _err error) {
-	RepoNamespace = openapiutil.GetEncodeParam(RepoNamespace)
-	RepoName = openapiutil.GetEncodeParam(RepoName)
 	req := &openapi.OpenApiRequest{
 		Headers: headers,
 	}
@@ -1093,7 +1253,7 @@ func (client *Client) CreateRepoBuildRuleWithOptions(RepoNamespace *string, Repo
 		Action:      tea.String("CreateRepoBuildRule"),
 		Version:     tea.String("2016-06-07"),
 		Protocol:    tea.String("HTTPS"),
-		Pathname:    tea.String("/repos/" + tea.StringValue(RepoNamespace) + "/" + tea.StringValue(RepoName) + "/rules"),
+		Pathname:    tea.String("/repos/" + tea.StringValue(openapiutil.GetEncodeParam(RepoNamespace)) + "/" + tea.StringValue(openapiutil.GetEncodeParam(RepoName)) + "/rules"),
 		Method:      tea.String("PUT"),
 		AuthType:    tea.String("AK"),
 		Style:       tea.String("ROA"),
@@ -1122,8 +1282,6 @@ func (client *Client) CreateRepoWebhook(RepoNamespace *string, RepoName *string)
 }
 
 func (client *Client) CreateRepoWebhookWithOptions(RepoNamespace *string, RepoName *string, headers map[string]*string, runtime *util.RuntimeOptions) (_result *CreateRepoWebhookResponse, _err error) {
-	RepoNamespace = openapiutil.GetEncodeParam(RepoNamespace)
-	RepoName = openapiutil.GetEncodeParam(RepoName)
 	req := &openapi.OpenApiRequest{
 		Headers: headers,
 	}
@@ -1131,7 +1289,7 @@ func (client *Client) CreateRepoWebhookWithOptions(RepoNamespace *string, RepoNa
 		Action:      tea.String("CreateRepoWebhook"),
 		Version:     tea.String("2016-06-07"),
 		Protocol:    tea.String("HTTPS"),
-		Pathname:    tea.String("/repos/" + tea.StringValue(RepoNamespace) + "/" + tea.StringValue(RepoName) + "/webhooks"),
+		Pathname:    tea.String("/repos/" + tea.StringValue(openapiutil.GetEncodeParam(RepoNamespace)) + "/" + tea.StringValue(openapiutil.GetEncodeParam(RepoName)) + "/webhooks"),
 		Method:      tea.String("PUT"),
 		AuthType:    tea.String("AK"),
 		Style:       tea.String("ROA"),
@@ -1196,9 +1354,6 @@ func (client *Client) DeleteImage(RepoNamespace *string, RepoName *string, Tag *
 }
 
 func (client *Client) DeleteImageWithOptions(RepoNamespace *string, RepoName *string, Tag *string, headers map[string]*string, runtime *util.RuntimeOptions) (_result *DeleteImageResponse, _err error) {
-	RepoNamespace = openapiutil.GetEncodeParam(RepoNamespace)
-	RepoName = openapiutil.GetEncodeParam(RepoName)
-	Tag = openapiutil.GetEncodeParam(Tag)
 	req := &openapi.OpenApiRequest{
 		Headers: headers,
 	}
@@ -1206,7 +1361,7 @@ func (client *Client) DeleteImageWithOptions(RepoNamespace *string, RepoName *st
 		Action:      tea.String("DeleteImage"),
 		Version:     tea.String("2016-06-07"),
 		Protocol:    tea.String("HTTPS"),
-		Pathname:    tea.String("/repos/" + tea.StringValue(RepoNamespace) + "/" + tea.StringValue(RepoName) + "/tags/" + tea.StringValue(Tag)),
+		Pathname:    tea.String("/repos/" + tea.StringValue(openapiutil.GetEncodeParam(RepoNamespace)) + "/" + tea.StringValue(openapiutil.GetEncodeParam(RepoName)) + "/tags/" + tea.StringValue(openapiutil.GetEncodeParam(Tag))),
 		Method:      tea.String("DELETE"),
 		AuthType:    tea.String("AK"),
 		Style:       tea.String("ROA"),
@@ -1235,7 +1390,6 @@ func (client *Client) DeleteNamespace(Namespace *string) (_result *DeleteNamespa
 }
 
 func (client *Client) DeleteNamespaceWithOptions(Namespace *string, headers map[string]*string, runtime *util.RuntimeOptions) (_result *DeleteNamespaceResponse, _err error) {
-	Namespace = openapiutil.GetEncodeParam(Namespace)
 	req := &openapi.OpenApiRequest{
 		Headers: headers,
 	}
@@ -1243,7 +1397,7 @@ func (client *Client) DeleteNamespaceWithOptions(Namespace *string, headers map[
 		Action:      tea.String("DeleteNamespace"),
 		Version:     tea.String("2016-06-07"),
 		Protocol:    tea.String("HTTPS"),
-		Pathname:    tea.String("/namespace/" + tea.StringValue(Namespace)),
+		Pathname:    tea.String("/namespace/" + tea.StringValue(openapiutil.GetEncodeParam(Namespace))),
 		Method:      tea.String("DELETE"),
 		AuthType:    tea.String("AK"),
 		Style:       tea.String("ROA"),
@@ -1272,8 +1426,6 @@ func (client *Client) DeleteRepo(RepoNamespace *string, RepoName *string) (_resu
 }
 
 func (client *Client) DeleteRepoWithOptions(RepoNamespace *string, RepoName *string, headers map[string]*string, runtime *util.RuntimeOptions) (_result *DeleteRepoResponse, _err error) {
-	RepoNamespace = openapiutil.GetEncodeParam(RepoNamespace)
-	RepoName = openapiutil.GetEncodeParam(RepoName)
 	req := &openapi.OpenApiRequest{
 		Headers: headers,
 	}
@@ -1281,7 +1433,7 @@ func (client *Client) DeleteRepoWithOptions(RepoNamespace *string, RepoName *str
 		Action:      tea.String("DeleteRepo"),
 		Version:     tea.String("2016-06-07"),
 		Protocol:    tea.String("HTTPS"),
-		Pathname:    tea.String("/repos/" + tea.StringValue(RepoNamespace) + "/" + tea.StringValue(RepoName)),
+		Pathname:    tea.String("/repos/" + tea.StringValue(openapiutil.GetEncodeParam(RepoNamespace)) + "/" + tea.StringValue(openapiutil.GetEncodeParam(RepoName))),
 		Method:      tea.String("DELETE"),
 		AuthType:    tea.String("AK"),
 		Style:       tea.String("ROA"),
@@ -1310,9 +1462,6 @@ func (client *Client) DeleteRepoBuildRule(RepoNamespace *string, RepoName *strin
 }
 
 func (client *Client) DeleteRepoBuildRuleWithOptions(RepoNamespace *string, RepoName *string, BuildRuleId *string, headers map[string]*string, runtime *util.RuntimeOptions) (_result *DeleteRepoBuildRuleResponse, _err error) {
-	RepoNamespace = openapiutil.GetEncodeParam(RepoNamespace)
-	RepoName = openapiutil.GetEncodeParam(RepoName)
-	BuildRuleId = openapiutil.GetEncodeParam(BuildRuleId)
 	req := &openapi.OpenApiRequest{
 		Headers: headers,
 	}
@@ -1320,7 +1469,7 @@ func (client *Client) DeleteRepoBuildRuleWithOptions(RepoNamespace *string, Repo
 		Action:      tea.String("DeleteRepoBuildRule"),
 		Version:     tea.String("2016-06-07"),
 		Protocol:    tea.String("HTTPS"),
-		Pathname:    tea.String("/repos/" + tea.StringValue(RepoNamespace) + "/" + tea.StringValue(RepoName) + "/rules/" + tea.StringValue(BuildRuleId)),
+		Pathname:    tea.String("/repos/" + tea.StringValue(openapiutil.GetEncodeParam(RepoNamespace)) + "/" + tea.StringValue(openapiutil.GetEncodeParam(RepoName)) + "/rules/" + tea.StringValue(openapiutil.GetEncodeParam(BuildRuleId))),
 		Method:      tea.String("DELETE"),
 		AuthType:    tea.String("AK"),
 		Style:       tea.String("ROA"),
@@ -1349,9 +1498,6 @@ func (client *Client) DeleteRepoWebhook(RepoNamespace *string, RepoName *string,
 }
 
 func (client *Client) DeleteRepoWebhookWithOptions(RepoNamespace *string, RepoName *string, WebhookId *string, headers map[string]*string, runtime *util.RuntimeOptions) (_result *DeleteRepoWebhookResponse, _err error) {
-	RepoNamespace = openapiutil.GetEncodeParam(RepoNamespace)
-	RepoName = openapiutil.GetEncodeParam(RepoName)
-	WebhookId = openapiutil.GetEncodeParam(WebhookId)
 	req := &openapi.OpenApiRequest{
 		Headers: headers,
 	}
@@ -1359,7 +1505,7 @@ func (client *Client) DeleteRepoWebhookWithOptions(RepoNamespace *string, RepoNa
 		Action:      tea.String("DeleteRepoWebhook"),
 		Version:     tea.String("2016-06-07"),
 		Protocol:    tea.String("HTTPS"),
-		Pathname:    tea.String("/repos/" + tea.StringValue(RepoNamespace) + "/" + tea.StringValue(RepoName) + "/webhooks/" + tea.StringValue(WebhookId)),
+		Pathname:    tea.String("/repos/" + tea.StringValue(openapiutil.GetEncodeParam(RepoNamespace)) + "/" + tea.StringValue(openapiutil.GetEncodeParam(RepoName)) + "/webhooks/" + tea.StringValue(openapiutil.GetEncodeParam(WebhookId))),
 		Method:      tea.String("DELETE"),
 		AuthType:    tea.String("AK"),
 		Style:       tea.String("ROA"),
@@ -1424,9 +1570,6 @@ func (client *Client) GetImageLayer(RepoNamespace *string, RepoName *string, Tag
 }
 
 func (client *Client) GetImageLayerWithOptions(RepoNamespace *string, RepoName *string, Tag *string, headers map[string]*string, runtime *util.RuntimeOptions) (_result *GetImageLayerResponse, _err error) {
-	RepoNamespace = openapiutil.GetEncodeParam(RepoNamespace)
-	RepoName = openapiutil.GetEncodeParam(RepoName)
-	Tag = openapiutil.GetEncodeParam(Tag)
 	req := &openapi.OpenApiRequest{
 		Headers: headers,
 	}
@@ -1434,7 +1577,7 @@ func (client *Client) GetImageLayerWithOptions(RepoNamespace *string, RepoName *
 		Action:      tea.String("GetImageLayer"),
 		Version:     tea.String("2016-06-07"),
 		Protocol:    tea.String("HTTPS"),
-		Pathname:    tea.String("/repos/" + tea.StringValue(RepoNamespace) + "/" + tea.StringValue(RepoName) + "/tags/" + tea.StringValue(Tag) + "/layers"),
+		Pathname:    tea.String("/repos/" + tea.StringValue(openapiutil.GetEncodeParam(RepoNamespace)) + "/" + tea.StringValue(openapiutil.GetEncodeParam(RepoName)) + "/tags/" + tea.StringValue(openapiutil.GetEncodeParam(Tag)) + "/layers"),
 		Method:      tea.String("GET"),
 		AuthType:    tea.String("AK"),
 		Style:       tea.String("ROA"),
@@ -1467,9 +1610,6 @@ func (client *Client) GetImageManifestWithOptions(RepoNamespace *string, RepoNam
 	if _err != nil {
 		return _result, _err
 	}
-	RepoNamespace = openapiutil.GetEncodeParam(RepoNamespace)
-	RepoName = openapiutil.GetEncodeParam(RepoName)
-	Tag = openapiutil.GetEncodeParam(Tag)
 	query := map[string]interface{}{}
 	if !tea.BoolValue(util.IsUnset(request.SchemaVersion)) {
 		query["SchemaVersion"] = request.SchemaVersion
@@ -1483,7 +1623,7 @@ func (client *Client) GetImageManifestWithOptions(RepoNamespace *string, RepoNam
 		Action:      tea.String("GetImageManifest"),
 		Version:     tea.String("2016-06-07"),
 		Protocol:    tea.String("HTTPS"),
-		Pathname:    tea.String("/repos/" + tea.StringValue(RepoNamespace) + "/" + tea.StringValue(RepoName) + "/tags/" + tea.StringValue(Tag) + "/manifest"),
+		Pathname:    tea.String("/repos/" + tea.StringValue(openapiutil.GetEncodeParam(RepoNamespace)) + "/" + tea.StringValue(openapiutil.GetEncodeParam(RepoName)) + "/tags/" + tea.StringValue(openapiutil.GetEncodeParam(Tag)) + "/manifest"),
 		Method:      tea.String("GET"),
 		AuthType:    tea.String("AK"),
 		Style:       tea.String("ROA"),
@@ -1512,7 +1652,6 @@ func (client *Client) GetNamespace(Namespace *string) (_result *GetNamespaceResp
 }
 
 func (client *Client) GetNamespaceWithOptions(Namespace *string, headers map[string]*string, runtime *util.RuntimeOptions) (_result *GetNamespaceResponse, _err error) {
-	Namespace = openapiutil.GetEncodeParam(Namespace)
 	req := &openapi.OpenApiRequest{
 		Headers: headers,
 	}
@@ -1520,7 +1659,7 @@ func (client *Client) GetNamespaceWithOptions(Namespace *string, headers map[str
 		Action:      tea.String("GetNamespace"),
 		Version:     tea.String("2016-06-07"),
 		Protocol:    tea.String("HTTPS"),
-		Pathname:    tea.String("/namespace/" + tea.StringValue(Namespace)),
+		Pathname:    tea.String("/namespace/" + tea.StringValue(openapiutil.GetEncodeParam(Namespace))),
 		Method:      tea.String("GET"),
 		AuthType:    tea.String("AK"),
 		Style:       tea.String("ROA"),
@@ -1586,52 +1725,6 @@ func (client *Client) GetNamespaceListWithOptions(request *GetNamespaceListReque
 	return _result, _err
 }
 
-func (client *Client) GetRegion(request *GetRegionRequest) (_result *GetRegionResponse, _err error) {
-	runtime := &util.RuntimeOptions{}
-	headers := make(map[string]*string)
-	_result = &GetRegionResponse{}
-	_body, _err := client.GetRegionWithOptions(request, headers, runtime)
-	if _err != nil {
-		return _result, _err
-	}
-	_result = _body
-	return _result, _err
-}
-
-func (client *Client) GetRegionWithOptions(request *GetRegionRequest, headers map[string]*string, runtime *util.RuntimeOptions) (_result *GetRegionResponse, _err error) {
-	_err = util.ValidateModel(request)
-	if _err != nil {
-		return _result, _err
-	}
-	query := map[string]interface{}{}
-	if !tea.BoolValue(util.IsUnset(request.Domain)) {
-		query["Domain"] = request.Domain
-	}
-
-	req := &openapi.OpenApiRequest{
-		Headers: headers,
-		Query:   openapiutil.Query(query),
-	}
-	params := &openapi.Params{
-		Action:      tea.String("GetRegion"),
-		Version:     tea.String("2016-06-07"),
-		Protocol:    tea.String("HTTPS"),
-		Pathname:    tea.String("/regions"),
-		Method:      tea.String("GET"),
-		AuthType:    tea.String("AK"),
-		Style:       tea.String("ROA"),
-		ReqBodyType: tea.String("json"),
-		BodyType:    tea.String("none"),
-	}
-	_result = &GetRegionResponse{}
-	_body, _err := client.CallApi(params, req, runtime)
-	if _err != nil {
-		return _result, _err
-	}
-	_err = tea.Convert(_body, &_result)
-	return _result, _err
-}
-
 func (client *Client) GetRegionList() (_result *GetRegionListResponse, _err error) {
 	runtime := &util.RuntimeOptions{}
 	headers := make(map[string]*string)
@@ -1681,8 +1774,6 @@ func (client *Client) GetRepo(RepoNamespace *string, RepoName *string) (_result 
 }
 
 func (client *Client) GetRepoWithOptions(RepoNamespace *string, RepoName *string, headers map[string]*string, runtime *util.RuntimeOptions) (_result *GetRepoResponse, _err error) {
-	RepoNamespace = openapiutil.GetEncodeParam(RepoNamespace)
-	RepoName = openapiutil.GetEncodeParam(RepoName)
 	req := &openapi.OpenApiRequest{
 		Headers: headers,
 	}
@@ -1690,7 +1781,7 @@ func (client *Client) GetRepoWithOptions(RepoNamespace *string, RepoName *string
 		Action:      tea.String("GetRepo"),
 		Version:     tea.String("2016-06-07"),
 		Protocol:    tea.String("HTTPS"),
-		Pathname:    tea.String("/repos/" + tea.StringValue(RepoNamespace) + "/" + tea.StringValue(RepoName)),
+		Pathname:    tea.String("/repos/" + tea.StringValue(openapiutil.GetEncodeParam(RepoNamespace)) + "/" + tea.StringValue(openapiutil.GetEncodeParam(RepoName))),
 		Method:      tea.String("GET"),
 		AuthType:    tea.String("AK"),
 		Style:       tea.String("ROA"),
@@ -1723,8 +1814,6 @@ func (client *Client) GetRepoBuildListWithOptions(RepoNamespace *string, RepoNam
 	if _err != nil {
 		return _result, _err
 	}
-	RepoNamespace = openapiutil.GetEncodeParam(RepoNamespace)
-	RepoName = openapiutil.GetEncodeParam(RepoName)
 	query := map[string]interface{}{}
 	if !tea.BoolValue(util.IsUnset(request.Page)) {
 		query["Page"] = request.Page
@@ -1742,7 +1831,7 @@ func (client *Client) GetRepoBuildListWithOptions(RepoNamespace *string, RepoNam
 		Action:      tea.String("GetRepoBuildList"),
 		Version:     tea.String("2016-06-07"),
 		Protocol:    tea.String("HTTPS"),
-		Pathname:    tea.String("/repos/" + tea.StringValue(RepoNamespace) + "/" + tea.StringValue(RepoName) + "/build"),
+		Pathname:    tea.String("/repos/" + tea.StringValue(openapiutil.GetEncodeParam(RepoNamespace)) + "/" + tea.StringValue(openapiutil.GetEncodeParam(RepoName)) + "/build"),
 		Method:      tea.String("GET"),
 		AuthType:    tea.String("AK"),
 		Style:       tea.String("ROA"),
@@ -1771,8 +1860,6 @@ func (client *Client) GetRepoBuildRuleList(RepoNamespace *string, RepoName *stri
 }
 
 func (client *Client) GetRepoBuildRuleListWithOptions(RepoNamespace *string, RepoName *string, headers map[string]*string, runtime *util.RuntimeOptions) (_result *GetRepoBuildRuleListResponse, _err error) {
-	RepoNamespace = openapiutil.GetEncodeParam(RepoNamespace)
-	RepoName = openapiutil.GetEncodeParam(RepoName)
 	req := &openapi.OpenApiRequest{
 		Headers: headers,
 	}
@@ -1780,7 +1867,7 @@ func (client *Client) GetRepoBuildRuleListWithOptions(RepoNamespace *string, Rep
 		Action:      tea.String("GetRepoBuildRuleList"),
 		Version:     tea.String("2016-06-07"),
 		Protocol:    tea.String("HTTPS"),
-		Pathname:    tea.String("/repos/" + tea.StringValue(RepoNamespace) + "/" + tea.StringValue(RepoName) + "/rules"),
+		Pathname:    tea.String("/repos/" + tea.StringValue(openapiutil.GetEncodeParam(RepoNamespace)) + "/" + tea.StringValue(openapiutil.GetEncodeParam(RepoName)) + "/rules"),
 		Method:      tea.String("GET"),
 		AuthType:    tea.String("AK"),
 		Style:       tea.String("ROA"),
@@ -1809,9 +1896,6 @@ func (client *Client) GetRepoBuildStatus(RepoNamespace *string, RepoName *string
 }
 
 func (client *Client) GetRepoBuildStatusWithOptions(RepoNamespace *string, RepoName *string, BuildId *string, headers map[string]*string, runtime *util.RuntimeOptions) (_result *GetRepoBuildStatusResponse, _err error) {
-	RepoNamespace = openapiutil.GetEncodeParam(RepoNamespace)
-	RepoName = openapiutil.GetEncodeParam(RepoName)
-	BuildId = openapiutil.GetEncodeParam(BuildId)
 	req := &openapi.OpenApiRequest{
 		Headers: headers,
 	}
@@ -1819,7 +1903,7 @@ func (client *Client) GetRepoBuildStatusWithOptions(RepoNamespace *string, RepoN
 		Action:      tea.String("GetRepoBuildStatus"),
 		Version:     tea.String("2016-06-07"),
 		Protocol:    tea.String("HTTPS"),
-		Pathname:    tea.String("/repos/" + tea.StringValue(RepoNamespace) + "/" + tea.StringValue(RepoName) + "/build/" + tea.StringValue(BuildId) + "/status"),
+		Pathname:    tea.String("/repos/" + tea.StringValue(openapiutil.GetEncodeParam(RepoNamespace)) + "/" + tea.StringValue(openapiutil.GetEncodeParam(RepoName)) + "/build/" + tea.StringValue(openapiutil.GetEncodeParam(BuildId)) + "/status"),
 		Method:      tea.String("GET"),
 		AuthType:    tea.String("AK"),
 		Style:       tea.String("ROA"),
@@ -1906,7 +1990,6 @@ func (client *Client) GetRepoListByNamespaceWithOptions(RepoNamespace *string, r
 	if _err != nil {
 		return _result, _err
 	}
-	RepoNamespace = openapiutil.GetEncodeParam(RepoNamespace)
 	query := map[string]interface{}{}
 	if !tea.BoolValue(util.IsUnset(request.Page)) {
 		query["Page"] = request.Page
@@ -1928,7 +2011,7 @@ func (client *Client) GetRepoListByNamespaceWithOptions(RepoNamespace *string, r
 		Action:      tea.String("GetRepoListByNamespace"),
 		Version:     tea.String("2016-06-07"),
 		Protocol:    tea.String("HTTPS"),
-		Pathname:    tea.String("/repos/" + tea.StringValue(RepoNamespace)),
+		Pathname:    tea.String("/repos/" + tea.StringValue(openapiutil.GetEncodeParam(RepoNamespace))),
 		Method:      tea.String("GET"),
 		AuthType:    tea.String("AK"),
 		Style:       tea.String("ROA"),
@@ -1957,9 +2040,6 @@ func (client *Client) GetRepoTag(RepoNamespace *string, RepoName *string, Tag *s
 }
 
 func (client *Client) GetRepoTagWithOptions(RepoNamespace *string, RepoName *string, Tag *string, headers map[string]*string, runtime *util.RuntimeOptions) (_result *GetRepoTagResponse, _err error) {
-	RepoNamespace = openapiutil.GetEncodeParam(RepoNamespace)
-	RepoName = openapiutil.GetEncodeParam(RepoName)
-	Tag = openapiutil.GetEncodeParam(Tag)
 	req := &openapi.OpenApiRequest{
 		Headers: headers,
 	}
@@ -1967,7 +2047,7 @@ func (client *Client) GetRepoTagWithOptions(RepoNamespace *string, RepoName *str
 		Action:      tea.String("GetRepoTag"),
 		Version:     tea.String("2016-06-07"),
 		Protocol:    tea.String("HTTPS"),
-		Pathname:    tea.String("/repos/" + tea.StringValue(RepoNamespace) + "/" + tea.StringValue(RepoName) + "/tags/" + tea.StringValue(Tag)),
+		Pathname:    tea.String("/repos/" + tea.StringValue(openapiutil.GetEncodeParam(RepoNamespace)) + "/" + tea.StringValue(openapiutil.GetEncodeParam(RepoName)) + "/tags/" + tea.StringValue(openapiutil.GetEncodeParam(Tag))),
 		Method:      tea.String("GET"),
 		AuthType:    tea.String("AK"),
 		Style:       tea.String("ROA"),
@@ -2000,9 +2080,6 @@ func (client *Client) GetRepoTagScanListWithOptions(RepoNamespace *string, RepoN
 	if _err != nil {
 		return _result, _err
 	}
-	RepoNamespace = openapiutil.GetEncodeParam(RepoNamespace)
-	RepoName = openapiutil.GetEncodeParam(RepoName)
-	Tag = openapiutil.GetEncodeParam(Tag)
 	query := map[string]interface{}{}
 	if !tea.BoolValue(util.IsUnset(request.Page)) {
 		query["Page"] = request.Page
@@ -2024,7 +2101,7 @@ func (client *Client) GetRepoTagScanListWithOptions(RepoNamespace *string, RepoN
 		Action:      tea.String("GetRepoTagScanList"),
 		Version:     tea.String("2016-06-07"),
 		Protocol:    tea.String("HTTPS"),
-		Pathname:    tea.String("/repos/" + tea.StringValue(RepoNamespace) + "/" + tea.StringValue(RepoName) + "/tags/" + tea.StringValue(Tag) + "/scanResult"),
+		Pathname:    tea.String("/repos/" + tea.StringValue(openapiutil.GetEncodeParam(RepoNamespace)) + "/" + tea.StringValue(openapiutil.GetEncodeParam(RepoName)) + "/tags/" + tea.StringValue(openapiutil.GetEncodeParam(Tag)) + "/scanResult"),
 		Method:      tea.String("GET"),
 		AuthType:    tea.String("AK"),
 		Style:       tea.String("ROA"),
@@ -2053,9 +2130,6 @@ func (client *Client) GetRepoTagScanStatus(RepoNamespace *string, RepoName *stri
 }
 
 func (client *Client) GetRepoTagScanStatusWithOptions(RepoNamespace *string, RepoName *string, Tag *string, headers map[string]*string, runtime *util.RuntimeOptions) (_result *GetRepoTagScanStatusResponse, _err error) {
-	RepoNamespace = openapiutil.GetEncodeParam(RepoNamespace)
-	RepoName = openapiutil.GetEncodeParam(RepoName)
-	Tag = openapiutil.GetEncodeParam(Tag)
 	req := &openapi.OpenApiRequest{
 		Headers: headers,
 	}
@@ -2063,7 +2137,7 @@ func (client *Client) GetRepoTagScanStatusWithOptions(RepoNamespace *string, Rep
 		Action:      tea.String("GetRepoTagScanStatus"),
 		Version:     tea.String("2016-06-07"),
 		Protocol:    tea.String("HTTPS"),
-		Pathname:    tea.String("/repos/" + tea.StringValue(RepoNamespace) + "/" + tea.StringValue(RepoName) + "/tags/" + tea.StringValue(Tag) + "/scanStatus"),
+		Pathname:    tea.String("/repos/" + tea.StringValue(openapiutil.GetEncodeParam(RepoNamespace)) + "/" + tea.StringValue(openapiutil.GetEncodeParam(RepoName)) + "/tags/" + tea.StringValue(openapiutil.GetEncodeParam(Tag)) + "/scanStatus"),
 		Method:      tea.String("GET"),
 		AuthType:    tea.String("AK"),
 		Style:       tea.String("ROA"),
@@ -2092,9 +2166,6 @@ func (client *Client) GetRepoTagScanSummary(RepoNamespace *string, RepoName *str
 }
 
 func (client *Client) GetRepoTagScanSummaryWithOptions(RepoNamespace *string, RepoName *string, Tag *string, headers map[string]*string, runtime *util.RuntimeOptions) (_result *GetRepoTagScanSummaryResponse, _err error) {
-	RepoNamespace = openapiutil.GetEncodeParam(RepoNamespace)
-	RepoName = openapiutil.GetEncodeParam(RepoName)
-	Tag = openapiutil.GetEncodeParam(Tag)
 	req := &openapi.OpenApiRequest{
 		Headers: headers,
 	}
@@ -2102,7 +2173,7 @@ func (client *Client) GetRepoTagScanSummaryWithOptions(RepoNamespace *string, Re
 		Action:      tea.String("GetRepoTagScanSummary"),
 		Version:     tea.String("2016-06-07"),
 		Protocol:    tea.String("HTTPS"),
-		Pathname:    tea.String("/repos/" + tea.StringValue(RepoNamespace) + "/" + tea.StringValue(RepoName) + "/tags/" + tea.StringValue(Tag) + "/scanCount"),
+		Pathname:    tea.String("/repos/" + tea.StringValue(openapiutil.GetEncodeParam(RepoNamespace)) + "/" + tea.StringValue(openapiutil.GetEncodeParam(RepoName)) + "/tags/" + tea.StringValue(openapiutil.GetEncodeParam(Tag)) + "/scanCount"),
 		Method:      tea.String("GET"),
 		AuthType:    tea.String("AK"),
 		Style:       tea.String("ROA"),
@@ -2135,8 +2206,6 @@ func (client *Client) GetRepoTagsWithOptions(RepoNamespace *string, RepoName *st
 	if _err != nil {
 		return _result, _err
 	}
-	RepoNamespace = openapiutil.GetEncodeParam(RepoNamespace)
-	RepoName = openapiutil.GetEncodeParam(RepoName)
 	query := map[string]interface{}{}
 	if !tea.BoolValue(util.IsUnset(request.Page)) {
 		query["Page"] = request.Page
@@ -2154,7 +2223,7 @@ func (client *Client) GetRepoTagsWithOptions(RepoNamespace *string, RepoName *st
 		Action:      tea.String("GetRepoTags"),
 		Version:     tea.String("2016-06-07"),
 		Protocol:    tea.String("HTTPS"),
-		Pathname:    tea.String("/repos/" + tea.StringValue(RepoNamespace) + "/" + tea.StringValue(RepoName) + "/tags"),
+		Pathname:    tea.String("/repos/" + tea.StringValue(openapiutil.GetEncodeParam(RepoNamespace)) + "/" + tea.StringValue(openapiutil.GetEncodeParam(RepoName)) + "/tags"),
 		Method:      tea.String("GET"),
 		AuthType:    tea.String("AK"),
 		Style:       tea.String("ROA"),
@@ -2183,8 +2252,6 @@ func (client *Client) GetRepoWebhook(RepoNamespace *string, RepoName *string) (_
 }
 
 func (client *Client) GetRepoWebhookWithOptions(RepoNamespace *string, RepoName *string, headers map[string]*string, runtime *util.RuntimeOptions) (_result *GetRepoWebhookResponse, _err error) {
-	RepoNamespace = openapiutil.GetEncodeParam(RepoNamespace)
-	RepoName = openapiutil.GetEncodeParam(RepoName)
 	req := &openapi.OpenApiRequest{
 		Headers: headers,
 	}
@@ -2192,7 +2259,7 @@ func (client *Client) GetRepoWebhookWithOptions(RepoNamespace *string, RepoName 
 		Action:      tea.String("GetRepoWebhook"),
 		Version:     tea.String("2016-06-07"),
 		Protocol:    tea.String("HTTPS"),
-		Pathname:    tea.String("/repos/" + tea.StringValue(RepoNamespace) + "/" + tea.StringValue(RepoName) + "/webhooks"),
+		Pathname:    tea.String("/repos/" + tea.StringValue(openapiutil.GetEncodeParam(RepoNamespace)) + "/" + tea.StringValue(openapiutil.GetEncodeParam(RepoName)) + "/webhooks"),
 		Method:      tea.String("GET"),
 		AuthType:    tea.String("AK"),
 		Style:       tea.String("ROA"),
@@ -2200,43 +2267,6 @@ func (client *Client) GetRepoWebhookWithOptions(RepoNamespace *string, RepoName 
 		BodyType:    tea.String("none"),
 	}
 	_result = &GetRepoWebhookResponse{}
-	_body, _err := client.CallApi(params, req, runtime)
-	if _err != nil {
-		return _result, _err
-	}
-	_err = tea.Convert(_body, &_result)
-	return _result, _err
-}
-
-func (client *Client) GetResourceQuota(ResourceName *string) (_result *GetResourceQuotaResponse, _err error) {
-	runtime := &util.RuntimeOptions{}
-	headers := make(map[string]*string)
-	_result = &GetResourceQuotaResponse{}
-	_body, _err := client.GetResourceQuotaWithOptions(ResourceName, headers, runtime)
-	if _err != nil {
-		return _result, _err
-	}
-	_result = _body
-	return _result, _err
-}
-
-func (client *Client) GetResourceQuotaWithOptions(ResourceName *string, headers map[string]*string, runtime *util.RuntimeOptions) (_result *GetResourceQuotaResponse, _err error) {
-	ResourceName = openapiutil.GetEncodeParam(ResourceName)
-	req := &openapi.OpenApiRequest{
-		Headers: headers,
-	}
-	params := &openapi.Params{
-		Action:      tea.String("GetResourceQuota"),
-		Version:     tea.String("2016-06-07"),
-		Protocol:    tea.String("HTTPS"),
-		Pathname:    tea.String("/resource/" + tea.StringValue(ResourceName)),
-		Method:      tea.String("GET"),
-		AuthType:    tea.String("AK"),
-		Style:       tea.String("ROA"),
-		ReqBodyType: tea.String("json"),
-		BodyType:    tea.String("none"),
-	}
-	_result = &GetResourceQuotaResponse{}
 	_body, _err := client.CallApi(params, req, runtime)
 	if _err != nil {
 		return _result, _err
@@ -2258,9 +2288,6 @@ func (client *Client) StartImageScan(RepoNamespace *string, RepoName *string, Ta
 }
 
 func (client *Client) StartImageScanWithOptions(RepoNamespace *string, RepoName *string, Tag *string, headers map[string]*string, runtime *util.RuntimeOptions) (_result *StartImageScanResponse, _err error) {
-	RepoNamespace = openapiutil.GetEncodeParam(RepoNamespace)
-	RepoName = openapiutil.GetEncodeParam(RepoName)
-	Tag = openapiutil.GetEncodeParam(Tag)
 	req := &openapi.OpenApiRequest{
 		Headers: headers,
 	}
@@ -2268,7 +2295,7 @@ func (client *Client) StartImageScanWithOptions(RepoNamespace *string, RepoName 
 		Action:      tea.String("StartImageScan"),
 		Version:     tea.String("2016-06-07"),
 		Protocol:    tea.String("HTTPS"),
-		Pathname:    tea.String("/repos/" + tea.StringValue(RepoNamespace) + "/" + tea.StringValue(RepoName) + "/tags/" + tea.StringValue(Tag) + "/scan"),
+		Pathname:    tea.String("/repos/" + tea.StringValue(openapiutil.GetEncodeParam(RepoNamespace)) + "/" + tea.StringValue(openapiutil.GetEncodeParam(RepoName)) + "/tags/" + tea.StringValue(openapiutil.GetEncodeParam(Tag)) + "/scan"),
 		Method:      tea.String("PUT"),
 		AuthType:    tea.String("AK"),
 		Style:       tea.String("ROA"),
@@ -2297,9 +2324,6 @@ func (client *Client) StartRepoBuildByRule(RepoNamespace *string, RepoName *stri
 }
 
 func (client *Client) StartRepoBuildByRuleWithOptions(RepoNamespace *string, RepoName *string, BuildRuleId *string, headers map[string]*string, runtime *util.RuntimeOptions) (_result *StartRepoBuildByRuleResponse, _err error) {
-	RepoNamespace = openapiutil.GetEncodeParam(RepoNamespace)
-	RepoName = openapiutil.GetEncodeParam(RepoName)
-	BuildRuleId = openapiutil.GetEncodeParam(BuildRuleId)
 	req := &openapi.OpenApiRequest{
 		Headers: headers,
 	}
@@ -2307,7 +2331,7 @@ func (client *Client) StartRepoBuildByRuleWithOptions(RepoNamespace *string, Rep
 		Action:      tea.String("StartRepoBuildByRule"),
 		Version:     tea.String("2016-06-07"),
 		Protocol:    tea.String("HTTPS"),
-		Pathname:    tea.String("/repos/" + tea.StringValue(RepoNamespace) + "/" + tea.StringValue(RepoName) + "/rules/" + tea.StringValue(BuildRuleId) + "/build"),
+		Pathname:    tea.String("/repos/" + tea.StringValue(openapiutil.GetEncodeParam(RepoNamespace)) + "/" + tea.StringValue(openapiutil.GetEncodeParam(RepoName)) + "/rules/" + tea.StringValue(openapiutil.GetEncodeParam(BuildRuleId)) + "/build"),
 		Method:      tea.String("PUT"),
 		AuthType:    tea.String("AK"),
 		Style:       tea.String("ROA"),
@@ -2336,7 +2360,6 @@ func (client *Client) UpdateNamespace(Namespace *string) (_result *UpdateNamespa
 }
 
 func (client *Client) UpdateNamespaceWithOptions(Namespace *string, headers map[string]*string, runtime *util.RuntimeOptions) (_result *UpdateNamespaceResponse, _err error) {
-	Namespace = openapiutil.GetEncodeParam(Namespace)
 	req := &openapi.OpenApiRequest{
 		Headers: headers,
 	}
@@ -2344,7 +2367,7 @@ func (client *Client) UpdateNamespaceWithOptions(Namespace *string, headers map[
 		Action:      tea.String("UpdateNamespace"),
 		Version:     tea.String("2016-06-07"),
 		Protocol:    tea.String("HTTPS"),
-		Pathname:    tea.String("/namespace/" + tea.StringValue(Namespace)),
+		Pathname:    tea.String("/namespace/" + tea.StringValue(openapiutil.GetEncodeParam(Namespace))),
 		Method:      tea.String("POST"),
 		AuthType:    tea.String("AK"),
 		Style:       tea.String("ROA"),
@@ -2373,8 +2396,6 @@ func (client *Client) UpdateRepo(RepoNamespace *string, RepoName *string) (_resu
 }
 
 func (client *Client) UpdateRepoWithOptions(RepoNamespace *string, RepoName *string, headers map[string]*string, runtime *util.RuntimeOptions) (_result *UpdateRepoResponse, _err error) {
-	RepoNamespace = openapiutil.GetEncodeParam(RepoNamespace)
-	RepoName = openapiutil.GetEncodeParam(RepoName)
 	req := &openapi.OpenApiRequest{
 		Headers: headers,
 	}
@@ -2382,7 +2403,7 @@ func (client *Client) UpdateRepoWithOptions(RepoNamespace *string, RepoName *str
 		Action:      tea.String("UpdateRepo"),
 		Version:     tea.String("2016-06-07"),
 		Protocol:    tea.String("HTTPS"),
-		Pathname:    tea.String("/repos/" + tea.StringValue(RepoNamespace) + "/" + tea.StringValue(RepoName)),
+		Pathname:    tea.String("/repos/" + tea.StringValue(openapiutil.GetEncodeParam(RepoNamespace)) + "/" + tea.StringValue(openapiutil.GetEncodeParam(RepoName))),
 		Method:      tea.String("POST"),
 		AuthType:    tea.String("AK"),
 		Style:       tea.String("ROA"),
@@ -2411,9 +2432,6 @@ func (client *Client) UpdateRepoBuildRule(RepoNamespace *string, RepoName *strin
 }
 
 func (client *Client) UpdateRepoBuildRuleWithOptions(RepoNamespace *string, RepoName *string, BuildRuleId *string, headers map[string]*string, runtime *util.RuntimeOptions) (_result *UpdateRepoBuildRuleResponse, _err error) {
-	RepoNamespace = openapiutil.GetEncodeParam(RepoNamespace)
-	RepoName = openapiutil.GetEncodeParam(RepoName)
-	BuildRuleId = openapiutil.GetEncodeParam(BuildRuleId)
 	req := &openapi.OpenApiRequest{
 		Headers: headers,
 	}
@@ -2421,7 +2439,7 @@ func (client *Client) UpdateRepoBuildRuleWithOptions(RepoNamespace *string, Repo
 		Action:      tea.String("UpdateRepoBuildRule"),
 		Version:     tea.String("2016-06-07"),
 		Protocol:    tea.String("HTTPS"),
-		Pathname:    tea.String("/repos/" + tea.StringValue(RepoNamespace) + "/" + tea.StringValue(RepoName) + "/rules/" + tea.StringValue(BuildRuleId)),
+		Pathname:    tea.String("/repos/" + tea.StringValue(openapiutil.GetEncodeParam(RepoNamespace)) + "/" + tea.StringValue(openapiutil.GetEncodeParam(RepoName)) + "/rules/" + tea.StringValue(openapiutil.GetEncodeParam(BuildRuleId))),
 		Method:      tea.String("POST"),
 		AuthType:    tea.String("AK"),
 		Style:       tea.String("ROA"),
@@ -2450,9 +2468,6 @@ func (client *Client) UpdateRepoWebhook(RepoNamespace *string, RepoName *string,
 }
 
 func (client *Client) UpdateRepoWebhookWithOptions(RepoNamespace *string, RepoName *string, WebhookId *string, headers map[string]*string, runtime *util.RuntimeOptions) (_result *UpdateRepoWebhookResponse, _err error) {
-	RepoNamespace = openapiutil.GetEncodeParam(RepoNamespace)
-	RepoName = openapiutil.GetEncodeParam(RepoName)
-	WebhookId = openapiutil.GetEncodeParam(WebhookId)
 	req := &openapi.OpenApiRequest{
 		Headers: headers,
 	}
@@ -2460,7 +2475,7 @@ func (client *Client) UpdateRepoWebhookWithOptions(RepoNamespace *string, RepoNa
 		Action:      tea.String("UpdateRepoWebhook"),
 		Version:     tea.String("2016-06-07"),
 		Protocol:    tea.String("HTTPS"),
-		Pathname:    tea.String("/repos/" + tea.StringValue(RepoNamespace) + "/" + tea.StringValue(RepoName) + "/webhooks/" + tea.StringValue(WebhookId)),
+		Pathname:    tea.String("/repos/" + tea.StringValue(openapiutil.GetEncodeParam(RepoNamespace)) + "/" + tea.StringValue(openapiutil.GetEncodeParam(RepoName)) + "/webhooks/" + tea.StringValue(openapiutil.GetEncodeParam(WebhookId))),
 		Method:      tea.String("POST"),
 		AuthType:    tea.String("AK"),
 		Style:       tea.String("ROA"),
