@@ -43,6 +43,8 @@ require (
 	sigs.k8s.io/yaml v1.4.0
 )
 
+replace github.com/alibabacloud-go/cr-20160607 => github.com/vdemeester/cr-20160607 v1.0.1
+
 require (
 	cloud.google.com/go v0.113.0 // indirect
 	cloud.google.com/go/auth v0.4.1 // indirect
