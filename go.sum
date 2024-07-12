@@ -189,8 +189,6 @@ github.com/alecthomas/units v0.0.0-20211218093645-b94a6e3cc137/go.mod h1:OMCwj8V
 github.com/alibabacloud-go/alibabacloud-gateway-spi v0.0.2/go.mod h1:sCavSAvdzOjul4cEqeVtvlSaSScfNsTQ+46HwlTL1hc=
 github.com/alibabacloud-go/alibabacloud-gateway-spi v0.0.4 h1:iC9YFYKDGEy3n/FtqJnOkZsene9olVspKmkX5A2YBEo=
 github.com/alibabacloud-go/alibabacloud-gateway-spi v0.0.4/go.mod h1:sCavSAvdzOjul4cEqeVtvlSaSScfNsTQ+46HwlTL1hc=
-github.com/alibabacloud-go/cr-20160607 v1.0.1 h1:WEnP1iPFKJU74ryUKh/YDPHoxMZawqlPajOymyNAkts=
-github.com/alibabacloud-go/cr-20160607 v1.0.1/go.mod h1:QHeKZtZ3F3FOE+/uIXCBAp8POwnUYekpLwr1dtQa5r0=
 github.com/alibabacloud-go/cr-20181201 v1.0.10 h1:B60f6S1imsgn2fgC6X6FrVNrONDrbCT0NwYhsJ0C9/c=
 github.com/alibabacloud-go/cr-20181201 v1.0.10/go.mod h1:VN9orB/w5G20FjytoSpZROqu9ZqxwycASmGqYUJSoDc=
 github.com/alibabacloud-go/darabonba-openapi v0.1.12/go.mod h1:sTAjsFJmVsmcVeklL9d9uDBlFsgl43wZ6jhI6BHqHqU=
@@ -1344,6 +1342,8 @@ github.com/valyala/bytebufferpool v1.0.0 h1:GqA5TC/0021Y/b9FG4Oi9Mr3q7XYx6Kllzaw
 github.com/valyala/bytebufferpool v1.0.0/go.mod h1:6bBcMArwyJ5K/AmCkWv1jt77kVWyCJ6HpOuEn7z0Csc=
 github.com/vbatts/tar-split v0.12.2 h1:w/Y6tjxpeiFMR47yzZPlPj/FcPLpXbTUi/9H7d3CPa4=
 github.com/vbatts/tar-split v0.12.2/go.mod h1:eF6B6i6ftWQcDqEn3/iGFRFRo8cBIMSJVOpnNdfTMFA=
+github.com/vdemeester/cr-20160607 v1.0.1 h1:nHyI7BZNR04QFtgItJFVAr8SLeoVIFd8co+DODxnPKE=
+github.com/vdemeester/cr-20160607 v1.0.1/go.mod h1:QHeKZtZ3F3FOE+/uIXCBAp8POwnUYekpLwr1dtQa5r0=
 github.com/wavesoftware/go-ensure v1.0.0/go.mod h1:K2UAFSwMTvpiRGay/M3aEYYuurcR8S4A6HkQlJPV8k4=
 github.com/x448/float16 v0.8.4 h1:qLwI1I70+NjRFUR3zs1JPUCgaCXSh3SW62uAKT1mSBM=
 github.com/x448/float16 v0.8.4/go.mod h1:14CWIYCyZA/cWjXOioeEpHeN/83MdbZDRQHoFcYsOfg=

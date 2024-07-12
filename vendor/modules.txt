@@ -205,7 +205,7 @@ github.com/ThalesIgnite/crypto11
 # github.com/alibabacloud-go/alibabacloud-gateway-spi v0.0.4
 ## explicit; go 1.14
 github.com/alibabacloud-go/alibabacloud-gateway-spi/client
-# github.com/alibabacloud-go/cr-20160607 v1.0.1
+# github.com/alibabacloud-go/cr-20160607 v1.0.1 => github.com/vdemeester/cr-20160607 v1.0.1
 ## explicit; go 1.15
 github.com/alibabacloud-go/cr-20160607/client
 # github.com/alibabacloud-go/cr-20181201 v1.0.10
@@ -3042,3 +3042,4 @@ sigs.k8s.io/structured-merge-diff/v6/value
 # sigs.k8s.io/yaml v1.6.0
 ## explicit; go 1.22
 sigs.k8s.io/yaml
+# github.com/alibabacloud-go/cr-20160607 => github.com/vdemeester/cr-20160607 v1.0.1
