@@ -15,4 +15,5 @@ spec:
     name: task-1
   timeout: 1s
 status:
+  artifacts: {}
   podName: ""

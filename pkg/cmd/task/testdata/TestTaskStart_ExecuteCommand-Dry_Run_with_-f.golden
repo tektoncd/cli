@@ -32,4 +32,5 @@ spec:
   - emptyDir: {}
     name: temporary
 status:
+  artifacts: {}
   podName: ""
