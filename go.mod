@@ -1,6 +1,7 @@
 module github.com/tektoncd/cli
 
-go 1.22.0
+go 1.22.5
+
 require (
 	github.com/AlecAivazis/survey/v2 v2.3.7
 	github.com/Netflix/go-expect v0.0.0-20220104043353-73e0943537d2
