@@ -25,7 +25,6 @@ import (
 	"github.com/tektoncd/cli/pkg/cli"
 	"github.com/tektoncd/cli/pkg/formatted"
 	prsort "github.com/tektoncd/cli/pkg/pipelinerun/sort"
-	"github.com/tektoncd/cli/pkg/printer"
 	v1 "github.com/tektoncd/pipeline/pkg/apis/pipeline/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	cliopts "k8s.io/cli-runtime/pkg/genericclioptions"
@@ -112,7 +111,11 @@ List all PipelineRuns in a namespace 'foo':
 				}
 				return nil
 			} else if output != "" && prs != nil {
-				return printer.PrintObject(cmd.OutOrStdout(), prs, f)
+				p, err := f.ToPrinter()
+				if err != nil {
+					return err
+				}
+				return p.PrintObj(prs, cmd.OutOrStdout())
 			}
 			stream := &cli.Stream{
 				Out: cmd.OutOrStdout(),

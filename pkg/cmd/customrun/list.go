@@ -26,7 +26,6 @@ import (
 	"github.com/tektoncd/cli/pkg/cli"
 	crsort "github.com/tektoncd/cli/pkg/customrun/sort"
 	"github.com/tektoncd/cli/pkg/formatted"
-	"github.com/tektoncd/cli/pkg/printer"
 	"github.com/tektoncd/pipeline/pkg/apis/pipeline/v1beta1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	cliopts "k8s.io/cli-runtime/pkg/genericclioptions"
@@ -103,7 +102,11 @@ func listCommand(p cli.Params) *cobra.Command {
 				}
 				return nil
 			} else if output != "" && crs != nil {
-				return printer.PrintObject(cmd.OutOrStdout(), crs, f)
+				p, err := f.ToPrinter()
+				if err != nil {
+					return err
+				}
+				return p.PrintObj(crs, cmd.OutOrStdout())
 			}
 
 			stream := &cli.Stream{

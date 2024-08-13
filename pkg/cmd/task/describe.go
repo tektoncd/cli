@@ -163,7 +163,11 @@ or
 
 			if output != "" {
 				taskGroupResource := schema.GroupVersionResource{Group: "tekton.dev", Resource: "tasks"}
-				return actions.PrintObjectV1(taskGroupResource, opts.TaskName, cmd.OutOrStdout(), cs, f, p.Namespace())
+				printer, err := f.ToPrinter()
+				if err != nil {
+					return err
+				}
+				return actions.PrintObjectV1(taskGroupResource, opts.TaskName, cmd.OutOrStdout(), cs, printer, p.Namespace())
 			}
 
 			return printTaskDescription(s, p, opts.TaskName)

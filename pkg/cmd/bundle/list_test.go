@@ -56,7 +56,7 @@ func TestListCommand(t *testing.T) {
 		}, {
 			name:           "yaml-format",
 			format:         "yaml",
-			expectedStdout: "*Warning*: This is an experimental command, it's usage and behavior can change in the next release(s)\n" + examplePullPipeline + examplePullTask,
+			expectedStdout: "*Warning*: This is an experimental command, it's usage and behavior can change in the next release(s)\n" + examplePullPipeline + "---\n" + examplePullTask,
 		}, {
 			name:           "specify-kind-task",
 			format:         "name",
