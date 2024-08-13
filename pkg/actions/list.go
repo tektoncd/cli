@@ -21,24 +21,23 @@ import (
 	"os"
 
 	"github.com/tektoncd/cli/pkg/cli"
-	"github.com/tektoncd/cli/pkg/printer"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
 	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/apimachinery/pkg/runtime/schema"
-	cliopts "k8s.io/cli-runtime/pkg/genericclioptions"
+	"k8s.io/cli-runtime/pkg/printers"
 	"k8s.io/client-go/discovery"
 	"k8s.io/client-go/dynamic"
 )
 
 // PrintObjects takes a partial resource, fetches a list of that resource's objects in the cluster using the dynamic client, and prints out the objects.
-func PrintObjects(groupResource schema.GroupVersionResource, w io.Writer, dynamic dynamic.Interface, discovery discovery.DiscoveryInterface, f *cliopts.PrintFlags, ns string) error {
+func PrintObjects(groupResource schema.GroupVersionResource, w io.Writer, dynamic dynamic.Interface, discovery discovery.DiscoveryInterface, p printers.ResourcePrinter, ns string) error {
 	allres, err := list(groupResource, dynamic, discovery, ns, metav1.ListOptions{})
 	if err != nil {
 		return err
 	}
 
-	return printer.PrintObject(w, allres, f)
+	return p.PrintObj(allres, w)
 }
 
 // List fetches the resource and convert it to respective object

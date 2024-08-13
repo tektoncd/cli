@@ -108,7 +108,11 @@ or
 			}
 
 			if output != "" {
-				return actions.PrintObjectV1(pipelineRunGroupResource, opts.PipelineRunName, cmd.OutOrStdout(), cs, f, p.Namespace())
+				printer, err := f.ToPrinter()
+				if err != nil {
+					return err
+				}
+				return actions.PrintObjectV1(pipelineRunGroupResource, opts.PipelineRunName, cmd.OutOrStdout(), cs, printer, p.Namespace())
 			}
 
 			return pipelinerunpkg.PrintPipelineRunDescription(s.Out, cs, opts.Params.Namespace(), opts.PipelineRunName, opts.Params.Time())

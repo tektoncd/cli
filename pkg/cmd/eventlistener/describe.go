@@ -187,7 +187,11 @@ or
 				if strings.ToLower(output) == "url" {
 					return describeEventListenerOutputURL(cmd.OutOrStdout(), p, args[0])
 				}
-				return actions.PrintObject(eventlistenerGroupResource, opts.EventListenerName, cmd.OutOrStdout(), cs.Dynamic, cs.Triggers.Discovery(), f, p.Namespace())
+				printer, err := f.ToPrinter()
+				if err != nil {
+					return err
+				}
+				return actions.PrintObject(eventlistenerGroupResource, opts.EventListenerName, cmd.OutOrStdout(), cs.Dynamic, cs.Triggers.Discovery(), printer, p.Namespace())
 			}
 			return printEventListenerDescription(s, p, opts.EventListenerName)
 		},

@@ -46,7 +46,7 @@ NAME	AGE	LAST RUN	STARTED	DURATION	STATUS
 {{ $p.Namespace }}	{{ $p.Name }}	{{ formatAge $p.CreationTimestamp $.Params.Time }}	{{ $pr.Name }}	{{ formatAge $pr.Status.StartTime $.Params.Time }}	{{ formatDuration $pr.Status.StartTime $pr.Status.CompletionTime }}	{{ formatCondition $pr.Status.Conditions }}
 {{ else -}}
 {{ $p.Name }}	{{ formatAge $p.CreationTimestamp $.Params.Time }}	{{ $pr.Name }}	{{ formatAge $pr.Status.StartTime $.Params.Time }}	{{ formatDuration $pr.Status.StartTime $pr.Status.CompletionTime }}	{{ formatCondition $pr.Status.Conditions }}
-{{ end }}	
+{{ end }}
 {{- else }}
 {{- if $.AllNamespaces -}}
 {{ $p.Namespace }}	{{ $p.Name }}	{{ formatAge $p.CreationTimestamp $.Params.Time }}	---	---	---	---
@@ -92,7 +92,11 @@ func listCommand(p cli.Params) *cobra.Command {
 			}
 
 			if output != "" {
-				return actions.PrintObjects(pipelineGroupResource, cmd.OutOrStdout(), cs.Dynamic, cs.Tekton.Discovery(), f, ns)
+				p, err := f.ToPrinter()
+				if err != nil {
+					return err
+				}
+				return actions.PrintObjects(pipelineGroupResource, cmd.OutOrStdout(), cs.Dynamic, cs.Tekton.Discovery(), p, ns)
 			}
 			stream := &cli.Stream{
 				Out: cmd.OutOrStdout(),
