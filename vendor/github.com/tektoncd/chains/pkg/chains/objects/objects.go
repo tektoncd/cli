@@ -315,14 +315,15 @@ func (pro *PipelineRunObjectV1) GetTaskRuns() []*v1.TaskRun {
 }
 
 // Get the associated TaskRun via the Task name
-func (pro *PipelineRunObjectV1) GetTaskRunFromTask(taskName string) *TaskRunObjectV1 {
+func (pro *PipelineRunObjectV1) GetTaskRunsFromTask(taskName string) []*TaskRunObjectV1 {
+	var taskRuns []*TaskRunObjectV1
 	for _, tr := range pro.taskRuns {
 		val, ok := tr.Labels[PipelineTaskLabel]
 		if ok && val == taskName {
-			return NewTaskRunObjectV1(tr)
+			taskRuns = append(taskRuns, NewTaskRunObjectV1(tr))
 		}
 	}
-	return nil
+	return taskRuns
 }
 
 // Get the imgPullSecrets from the pod template
@@ -388,13 +389,17 @@ func (pro *PipelineRunObjectV1) GetExecutedTasks() (tro []*TaskRunObjectV1) {
 	tasks := pSpec.Tasks
 	tasks = append(tasks, pSpec.Finally...)
 	for _, task := range tasks {
-		tr := pro.GetTaskRunFromTask(task.Name)
-
-		if tr == nil || tr.Status.CompletionTime == nil {
+		taskRuns := pro.GetTaskRunsFromTask(task.Name)
+		if len(taskRuns) == 0 {
 			continue
 		}
+		for _, tr := range taskRuns {
+			if tr == nil || tr.Status.CompletionTime == nil {
+				continue
+			}
 
-		tro = append(tro, tr)
+			tro = append(tro, tr)
+		}
 	}
 
 	return
@@ -514,14 +519,15 @@ func (pro *PipelineRunObjectV1Beta1) AppendTaskRun(tr *v1beta1.TaskRun) { //noli
 }
 
 // Get the associated TaskRun via the Task name
-func (pro *PipelineRunObjectV1Beta1) GetTaskRunFromTask(taskName string) *TaskRunObjectV1Beta1 {
+func (pro *PipelineRunObjectV1Beta1) GetTaskRunsFromTask(taskName string) []*TaskRunObjectV1Beta1 {
+	var taskRuns []*TaskRunObjectV1Beta1
 	for _, tr := range pro.taskRuns {
 		val, ok := tr.Labels[PipelineTaskLabel]
 		if ok && val == taskName {
-			return NewTaskRunObjectV1Beta1(tr)
+			taskRuns = append(taskRuns, NewTaskRunObjectV1Beta1(tr))
 		}
 	}
-	return nil
+	return taskRuns
 }
 
 // Get the imgPullSecrets from the pod template

@@ -15,6 +15,7 @@ package storage
 
 import (
 	"context"
+	"errors"
 
 	"github.com/tektoncd/chains/pkg/chains/objects"
 	"github.com/tektoncd/chains/pkg/chains/storage/docdb"
@@ -25,8 +26,10 @@ import (
 	"github.com/tektoncd/chains/pkg/chains/storage/tekton"
 	"github.com/tektoncd/chains/pkg/config"
 	"github.com/tektoncd/pipeline/pkg/client/clientset/versioned"
+	"golang.org/x/exp/maps"
 	"k8s.io/apimachinery/pkg/util/sets"
 	"k8s.io/client-go/kubernetes"
+	"knative.dev/pkg/logging"
 )
 
 // Backend is an interface to store a chains Payload
@@ -42,6 +45,8 @@ type Backend interface {
 
 // InitializeBackends creates and initializes every configured storage backend.
 func InitializeBackends(ctx context.Context, ps versioned.Interface, kc kubernetes.Interface, cfg config.Config) (map[string]Backend, error) {
+	logger := logging.FromContext(ctx)
+
 	// Add an entry here for every configured backend
 	configuredBackends := []string{}
 	if cfg.Artifacts.TaskRuns.Enabled() {
@@ -53,6 +58,7 @@ func InitializeBackends(ctx context.Context, ps versioned.Interface, kc kubernet
 	if cfg.Artifacts.PipelineRuns.Enabled() {
 		configuredBackends = append(configuredBackends, sets.List[string](cfg.Artifacts.PipelineRuns.StorageBackend)...)
 	}
+	logger.Infof("configured backends from config: %v", configuredBackends)
 
 	// Now only initialize and return the configured ones.
 	backends := map[string]Backend{}
@@ -90,5 +96,55 @@ func InitializeBackends(ctx context.Context, ps versioned.Interface, kc kubernet
 		}
 
 	}
+
+	logger.Infof("successfully initialized backends: %v", maps.Keys(backends))
 	return backends, nil
+}
+
+// WatchBackends watches backends for any update and keeps them up to date.
+func WatchBackends(ctx context.Context, watcherStop chan bool, backends map[string]Backend, cfg config.Config) error {
+	logger := logging.FromContext(ctx)
+	for backend := range backends {
+		switch backend {
+		case docdb.StorageTypeDocDB:
+			docdbWatcherStop := make(chan bool)
+			backendChan, err := docdb.WatchBackend(ctx, cfg, docdbWatcherStop)
+			if err != nil {
+				if errors.Is(err, docdb.ErrNothingToWatch) {
+					logger.Info(err)
+					continue
+				}
+				return err
+			}
+			go func() {
+				for {
+					select {
+					case newBackend := <-backendChan:
+						if newBackend == nil {
+							logger.Errorf("removing backend %s from backends", docdb.StorageTypeDocDB)
+							delete(backends, docdb.StorageTypeDocDB)
+							continue
+						}
+						logger.Infof("adding to backends: %s", docdb.StorageTypeDocDB)
+						backends[docdb.StorageTypeDocDB] = newBackend
+					case <-watcherStop:
+						// Stop the DocDB watcher first
+						select {
+						case docdbWatcherStop <- true:
+							logger.Info("sent close event to docdb.WatchBackend()...")
+						default:
+							logger.Info("could not send close event to docdb.WatchBackend()...")
+						}
+
+						// Now stop this backend
+						logger.Info("stop watching backends...")
+						return
+					}
+				}
+			}()
+		default:
+			logger.Debugf("no backends to watch...")
+		}
+	}
+	return nil
 }
