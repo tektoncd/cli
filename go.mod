@@ -23,7 +23,7 @@ require (
 	github.com/sigstore/sigstore v1.8.8
 	github.com/spf13/cobra v1.8.1
 	github.com/spf13/pflag v1.0.5
-	github.com/tektoncd/chains v0.21.1
+	github.com/tektoncd/chains v0.22.0
 	github.com/tektoncd/hub v1.17.0
 	github.com/tektoncd/pipeline v0.62.1
 	github.com/tektoncd/plumbing v0.0.0-20230907180608-5625252a2de1
@@ -292,9 +292,9 @@ require (
 	github.com/xdg-go/scram v1.1.2 // indirect
 	github.com/xdg-go/stringprep v1.0.4 // indirect
 	github.com/xlab/treeprint v1.2.0 // indirect
-	github.com/youmark/pkcs8 v0.0.0-20201027041543-1326539a0a0a // indirect
+	github.com/youmark/pkcs8 v0.0.0-20240424034433-3c2c7870ae76 // indirect
 	github.com/zeebo/errs v1.3.0 // indirect
-	go.mongodb.org/mongo-driver v1.14.0 // indirect
+	go.mongodb.org/mongo-driver v1.15.0 // indirect
 	go.opentelemetry.io/contrib/instrumentation/google.golang.org/grpc/otelgrpc v0.52.0 // indirect
 	go.opentelemetry.io/contrib/instrumentation/net/http/otelhttp v0.53.0 // indirect
 	go.opentelemetry.io/otel v1.28.0 // indirect
@@ -304,7 +304,7 @@ require (
 	go.step.sm/crypto v0.51.1 // indirect
 	goa.design/goa/v3 v3.16.1 // indirect
 	gocloud.dev v0.37.0 // indirect
-	gocloud.dev/docstore/mongodocstore v0.37.0 // indirect
+	gocloud.dev/docstore/mongodocstore v0.37.1-0.20240501181211-d8b9c9401f18 // indirect
 	gocloud.dev/pubsub/kafkapubsub v0.37.0 // indirect
 	golang.org/x/crypto v0.25.0 // indirect
 	golang.org/x/exp v0.0.0-20240112132812-db7319d0e0e3 // indirect

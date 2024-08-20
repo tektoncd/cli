@@ -80,15 +80,20 @@ func subjectsFromPipelineRun(ctx context.Context, obj objects.TektonObject, slsa
 		pipelineTasks := pSpec.Tasks
 		pipelineTasks = append(pipelineTasks, pSpec.Finally...)
 		for _, t := range pipelineTasks {
-			tr := pro.GetTaskRunFromTask(t.Name)
-			// Ignore Tasks that did not execute during the PipelineRun.
-			if tr == nil || tr.Status.CompletionTime == nil {
-				logger.Infof("taskrun status not found for task %s", t.Name)
+			taskRuns := pro.GetTaskRunsFromTask(t.Name)
+			if len(taskRuns) == 0 {
+				logger.Infof("no taskruns found for task %s", t.Name)
 				continue
 			}
-
-			trSubjects := subjectsFromTektonObject(ctx, tr)
-			result = artifact.AppendSubjects(result, trSubjects...)
+			for _, tr := range taskRuns {
+				// Ignore Tasks that did not execute during the PipelineRun.
+				if tr == nil || tr.Status.CompletionTime == nil {
+					logger.Infof("taskrun status not found for task %s", t.Name)
+					continue
+				}
+				trSubjects := subjectsFromTektonObject(ctx, tr)
+				result = artifact.AppendSubjects(result, trSubjects...)
+			}
 		}
 	}
 

@@ -91,10 +91,11 @@ type KMSSigner struct {
 
 // KMSAuth configures authentication to the KMS server
 type KMSAuth struct {
-	Address string
-	Token   string
-	OIDC    KMSAuthOIDC
-	Spire   KMSAuthSpire
+	Address   string
+	Token     string
+	TokenPath string
+	OIDC      KMSAuthOIDC
+	Spire     KMSAuthSpire
 }
 
 // KMSAuthOIDC configures settings to authenticate with OIDC
@@ -122,7 +123,9 @@ type TektonStorageConfig struct {
 }
 
 type DocDBStorageConfig struct {
-	URL string
+	URL               string
+	MongoServerURL    string
+	MongoServerURLDir string
 }
 
 type GrafeasConfig struct {
@@ -165,13 +168,16 @@ const (
 	ociStorageKey = "artifacts.oci.storage"
 	ociSignerKey  = "artifacts.oci.signer"
 
-	gcsBucketKey             = "storage.gcs.bucket"
-	ociRepositoryKey         = "storage.oci.repository"
-	ociRepositoryInsecureKey = "storage.oci.repository.insecure"
-	docDBUrlKey              = "storage.docdb.url"
-	grafeasProjectIDKey      = "storage.grafeas.projectid"
-	grafeasNoteIDKey         = "storage.grafeas.noteid"
-	grafeasNoteHint          = "storage.grafeas.notehint"
+	gcsBucketKey              = "storage.gcs.bucket"
+	ociRepositoryKey          = "storage.oci.repository"
+	ociRepositoryInsecureKey  = "storage.oci.repository.insecure"
+	docDBUrlKey               = "storage.docdb.url"
+	docDBMongoServerURLKey    = "storage.docdb.mongo-server-url"
+	docDBMongoServerURLDirKey = "storage.docdb.mongo-server-url-dir"
+
+	grafeasProjectIDKey = "storage.grafeas.projectid"
+	grafeasNoteIDKey    = "storage.grafeas.noteid"
+	grafeasNoteHint     = "storage.grafeas.notehint"
 
 	// PubSub - General
 	pubsubProvider = "storage.pubsub.provider"
@@ -187,6 +193,7 @@ const (
 	kmsAuthAddress       = "signers.kms.auth.address"
 	kmsAuthToken         = "signers.kms.auth.token"
 	kmsAuthOIDCPath      = "signers.kms.auth.oidc.path"
+	kmsAuthTokenPath     = "signers.kms.auth.token-path" // #nosec G101
 	kmsAuthOIDCRole      = "signers.kms.auth.oidc.role"
 	kmsAuthSpireSock     = "signers.kms.auth.spire.sock"
 	kmsAuthSpireAudience = "signers.kms.auth.spire.audience"
@@ -293,6 +300,8 @@ func NewConfigFromMap(data map[string]string) (*Config, error) {
 		asString(ociRepositoryKey, &cfg.Storage.OCI.Repository),
 		asBool(ociRepositoryInsecureKey, &cfg.Storage.OCI.Insecure),
 		asString(docDBUrlKey, &cfg.Storage.DocDB.URL),
+		asString(docDBMongoServerURLKey, &cfg.Storage.DocDB.MongoServerURL),
+		asString(docDBMongoServerURLDirKey, &cfg.Storage.DocDB.MongoServerURLDir),
 		asString(grafeasProjectIDKey, &cfg.Storage.Grafeas.ProjectID),
 		asString(grafeasNoteIDKey, &cfg.Storage.Grafeas.NoteID),
 		asString(grafeasNoteHint, &cfg.Storage.Grafeas.NoteHint),
@@ -304,6 +313,7 @@ func NewConfigFromMap(data map[string]string) (*Config, error) {
 		asString(kmsSignerKMSRef, &cfg.Signers.KMS.KMSRef),
 		asString(kmsAuthAddress, &cfg.Signers.KMS.Auth.Address),
 		asString(kmsAuthToken, &cfg.Signers.KMS.Auth.Token),
+		asString(kmsAuthTokenPath, &cfg.Signers.KMS.Auth.TokenPath),
 		asString(kmsAuthOIDCPath, &cfg.Signers.KMS.Auth.OIDC.Path),
 		asString(kmsAuthOIDCRole, &cfg.Signers.KMS.Auth.OIDC.Role),
 		asString(kmsAuthSpireSock, &cfg.Signers.KMS.Auth.Spire.Sock),

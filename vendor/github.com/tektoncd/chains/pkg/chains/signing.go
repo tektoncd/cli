@@ -30,6 +30,7 @@ import (
 	"github.com/tektoncd/chains/pkg/chains/storage"
 	"github.com/tektoncd/chains/pkg/config"
 	versioned "github.com/tektoncd/pipeline/pkg/client/clientset/versioned"
+	"golang.org/x/exp/maps"
 	"google.golang.org/protobuf/encoding/protojson"
 	"k8s.io/apimachinery/pkg/util/sets"
 	"knative.dev/pkg/logging"
@@ -186,7 +187,14 @@ func (o *ObjectSigner) Sign(ctx context.Context, tektonObj objects.TektonObject)
 
 			// Now store those!
 			for _, backend := range sets.List[string](signableType.StorageBackend(cfg)) {
-				b := o.Backends[backend]
+				b, ok := o.Backends[backend]
+				if !ok {
+					backendErr := fmt.Errorf("could not find backend '%s' in configured backends (%v) while trying sign: %s/%s", backend, maps.Keys(o.Backends), tektonObj.GetKindName(), tektonObj.GetName())
+					logger.Error(backendErr)
+					merr = multierror.Append(merr, backendErr)
+					continue
+				}
+
 				storageOpts := config.StorageOpts{
 					ShortKey:      signableType.ShortKey(obj),
 					FullKey:       signableType.FullKey(obj),
