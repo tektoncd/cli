@@ -77,7 +77,7 @@ func (r *Reader) readLivePipelineLogs(pr *v1.PipelineRun) (<-chan Log, <-chan er
 		wg.Wait()
 
 		if !empty(pr.Status) && pr.Status.Conditions[0].Status == corev1.ConditionFalse {
-			errC <- fmt.Errorf(pr.Status.Conditions[0].Message)
+			errC <- fmt.Errorf("%s", pr.Status.Conditions[0].Message)
 		}
 	}()
 
@@ -118,7 +118,7 @@ func (r *Reader) readAvailablePipelineLogs(pr *v1.PipelineRun) (<-chan Log, <-ch
 		}
 
 		if !empty(pr.Status) && pr.Status.Conditions[0].Status == corev1.ConditionFalse {
-			errC <- fmt.Errorf(pr.Status.Conditions[0].Message)
+			errC <- fmt.Errorf("%s", pr.Status.Conditions[0].Message)
 		}
 	}()
 

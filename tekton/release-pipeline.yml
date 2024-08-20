@@ -54,7 +54,7 @@ spec:
         - name: flags
           value: "-v --timeout 20m"
         - name: version
-          value: v1.58.0
+          value: v1.60.1
       workspaces:
         - name: source
           workspace: shared-workspace
@@ -68,7 +68,7 @@ spec:
         - name: packages
           value: ./pkg/... ./cmd/...
         - name: version
-          value: "1.22"
+          value: "1.22.5"
         - name: flags
           value: -v -mod=vendor
       workspaces:
@@ -82,7 +82,7 @@ spec:
         - name: package
           value: $(params.package)
         - name: version
-          value: "1.22"
+          value: "1.22.5"
         - name: flags
           value: -v -mod=vendor
       workspaces:
