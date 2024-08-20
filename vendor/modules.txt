@@ -600,7 +600,7 @@ github.com/gdamore/tcell/v2/terminfo/x/xterm_termite
 ## explicit
 github.com/go-chi/chi
 github.com/go-chi/chi/middleware
-# github.com/go-chi/chi/v5 v5.0.12
+# github.com/go-chi/chi/v5 v5.1.0
 ## explicit; go 1.14
 github.com/go-chi/chi/v5
 # github.com/go-errors/errors v1.4.2
@@ -843,8 +843,8 @@ github.com/googleapis/gax-go/v2/apierror
 github.com/googleapis/gax-go/v2/apierror/internal/proto
 github.com/googleapis/gax-go/v2/callctx
 github.com/googleapis/gax-go/v2/internal
-# github.com/gorilla/websocket v1.5.1
-## explicit; go 1.20
+# github.com/gorilla/websocket v1.5.3
+## explicit; go 1.12
 github.com/gorilla/websocket
 # github.com/grafeas/grafeas v0.2.3
 ## explicit; go 1.20
@@ -1391,7 +1391,7 @@ github.com/tektoncd/chains/pkg/chains/storage/pubsub
 github.com/tektoncd/chains/pkg/chains/storage/tekton
 github.com/tektoncd/chains/pkg/config
 github.com/tektoncd/chains/pkg/patch
-# github.com/tektoncd/hub v1.17.0
+# github.com/tektoncd/hub v1.18.0
 ## explicit; go 1.22
 github.com/tektoncd/hub/api/pkg/cli/app
 github.com/tektoncd/hub/api/pkg/cli/cmd
@@ -1415,6 +1415,7 @@ github.com/tektoncd/hub/api/pkg/cli/version
 github.com/tektoncd/hub/api/pkg/git
 github.com/tektoncd/hub/api/pkg/parser
 github.com/tektoncd/hub/api/v1/gen/catalog
+github.com/tektoncd/hub/api/v1/gen/catalog/views
 github.com/tektoncd/hub/api/v1/gen/http/catalog/client
 github.com/tektoncd/hub/api/v1/gen/http/resource/client
 github.com/tektoncd/hub/api/v1/gen/resource
@@ -1773,8 +1774,8 @@ go.uber.org/zap/internal/stacktrace
 go.uber.org/zap/internal/ztest
 go.uber.org/zap/zapcore
 go.uber.org/zap/zaptest
-# goa.design/goa/v3 v3.16.1
-## explicit; go 1.20
+# goa.design/goa/v3 v3.18.2
+## explicit; go 1.21.0
 goa.design/goa/v3/http
 goa.design/goa/v3/pkg
 # gocloud.dev v0.37.0
@@ -1885,7 +1886,7 @@ golang.org/x/sys/windows/registry
 # golang.org/x/term v0.23.0
 ## explicit; go 1.18
 golang.org/x/term
-# golang.org/x/text v0.16.0
+# golang.org/x/text v0.17.0
 ## explicit; go 1.18
 golang.org/x/text/cases
 golang.org/x/text/encoding
