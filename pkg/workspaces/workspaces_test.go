@@ -47,7 +47,7 @@ func TestMerge(t *testing.T) {
 	optWS := []string{}
 	outWS, err := Merge(ws, optWS, httpClient)
 	if err != nil {
-		t.Errorf("Not expected error: " + err.Error())
+		t.Errorf("Not expected error: %s", err.Error())
 	}
 	test.AssertOutput(t, ws, outWS)
 
@@ -110,14 +110,14 @@ func TestMerge(t *testing.T) {
 	}
 	outWS, err = Merge(ws, optWS, httpClient)
 	if err != nil {
-		t.Errorf("Not expected error: " + err.Error())
+		t.Errorf("Not expected error: %s", err.Error())
 	}
 	test.AssertOutput(t, 7, len(outWS))
 
 	optWS = []string{"name=volumeclaimtemplatews,volumeClaimTemplateFile=./testdata/pvc.yaml"}
 	_, err = Merge(ws, optWS, httpClient)
 	if err != nil {
-		t.Errorf("Not expected error: " + err.Error())
+		t.Errorf("Not expected error: %s", err.Error())
 	}
 
 	optWS = []string{"name=volumeclaimtemplatews,volumeClaimTemplateFile=./testdata/pvc-typo.yaml"}
@@ -130,7 +130,7 @@ func TestMerge(t *testing.T) {
 	optWS = []string{"name=csiws,csiFile=./testdata/csi.yaml"}
 	outWS, err = Merge(ws, optWS, httpClient)
 	if err != nil {
-		t.Errorf("Not expected error: " + err.Error())
+		t.Errorf("Not expected error: %s", err.Error())
 	}
 
 	optWS = []string{"name=csiws,csiFile=./testdata/csi-typo.yaml"}
