@@ -10,9 +10,9 @@ const (
 	// Major version number
 	Major = 3
 	// Minor version number
-	Minor = 16
+	Minor = 18
 	// Build number
-	Build = 1
+	Build = 2
 	// Suffix - set to empty string in release tag commits.
 	Suffix = ""
 )
@@ -39,7 +39,7 @@ func Compatible(v string) (bool, error) {
 	}
 	mj, err := strconv.Atoi(matches[1])
 	if err != nil {
-		return false, fmt.Errorf("invalid major version number %#v, must be number, %v", matches[1], err)
+		return false, fmt.Errorf("invalid major version number %#v, must be number, %w", matches[1], err)
 	}
 	return mj == Major, nil
 }
