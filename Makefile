@@ -11,7 +11,8 @@ M = $(shell printf "\033[34;1m🐱\033[0m")
 TIMEOUT_UNIT = 5m
 TIMEOUT_E2E  = 20m
 
-GOLANGCI_VERSION = v1.60.1
+# Get golangci_version from tools/go.mod to eliminate the manual bump
+GOLANGCI_VERSION = $(shell cat tools/go.mod | grep golangci-lint | awk '{ print $$3 }')
 
 YAML_FILES := $(shell find . -type f -regex ".*y[a]ml" -print)
 

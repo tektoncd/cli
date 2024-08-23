@@ -12,6 +12,9 @@ CATALOG_TASKS="lint build test"
 
 BINARIES="kubectl jq tkn git"
 
+GOLANGCI_VERSION="$(cat tools/go.mod | grep golangci-lint | awk '{ print $3 }')"
+GO_VERSION="$(cat go.mod | grep "go" | awk 'NR==1{ print $2 }')"
+
 set -e
 
 for b in ${BINARIES};do
@@ -147,6 +150,8 @@ URL=$(git remote get-url "${PUSH_REMOTE}" | sed 's,git@github.com:,https://githu
 tkn -n ${TARGET_NAMESPACE} pipeline start cli-release-pipeline \
   -p revision="${RELEASE_VERSION}" \
   -p url="${URL}" \
+  -p golangci-lint-version="${GOLANGCI_VERSION}" \
+  -p go-version="${GO_VERSION}" \
   -w name=shared-workspace,volumeClaimTemplateFile=./tekton/volume-claim-template.yml
 
 tkn -n ${TARGET_NAMESPACE} pipeline logs cli-release-pipeline -f --last
