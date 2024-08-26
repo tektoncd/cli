@@ -135,6 +135,8 @@ func InitParams(p cli.Params, cmd *cobra.Command) error {
 	p.SetNoColour(nocolourFlag)
 
 	// Make sure we set as Nocolour if we don't have a terminal (ie redirection)
+	// nolint
+	// this conversion is throwing error for golangci-lint G115
 	if !term.IsTerminal(int(os.Stdout.Fd())) {
 		p.SetNoColour(true)
 	}
