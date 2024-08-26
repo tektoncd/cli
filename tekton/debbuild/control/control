@@ -3,9 +3,11 @@ Maintainer: Chmouel Boudjnah <chmouel@redhat.com>
 Section: misc
 Priority: optional
 Standards-Version: 4.3.0
-Build-Depends: debhelper (>= 11),
-               dh-golang (>= 1.34~),
-               golang-any (>= 2:1.12~)
+Build-Depends: debhelper (>= 13),
+               dh-sequence-golang,
+               golang-any,
+               curl,
+               python3
 Vcs-Git: https://github.com/tektoncd/cli.git
 
 Package: tektoncd-cli
