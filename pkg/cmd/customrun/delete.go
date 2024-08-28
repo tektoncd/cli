@@ -17,42 +17,26 @@ package customrun
 import (
 	"context"
 	"fmt"
-	"os"
 
 	"github.com/spf13/cobra"
 	"github.com/tektoncd/cli/pkg/actions"
 	"github.com/tektoncd/cli/pkg/cli"
 	"github.com/tektoncd/pipeline/pkg/apis/pipeline/v1beta1"
-	"go.uber.org/multierr"
 	"k8s.io/apimachinery/pkg/api/errors"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/cli-runtime/pkg/genericclioptions"
 )
 
-func crExists(args []string, p cli.Params) ([]string, error) {
-	availableCrs := make([]string, 0)
-	c, err := p.Clients()
+func customRunExists(client *cli.Clients, namespace string, crName string) error {
+	var cr *v1beta1.CustomRun
+	err := actions.GetV1(customrunGroupResource, client, crName, namespace, metav1.GetOptions{}, &cr)
 	if err != nil {
-		return availableCrs, err
-	}
-	var errorList error
-	ns := p.Namespace()
-	for _, name := range args {
-		var cr *v1beta1.CustomRun
-		err := actions.GetV1(customrunGroupResource, c, name, ns, metav1.GetOptions{}, &cr)
-		if err != nil {
-			errorList = multierr.Append(errorList, err)
-			if !errors.IsNotFound(err) {
-				fmt.Fprintf(os.Stderr, "Error checking CustomRun %s in namespace %s: %v\n", name, ns, err)
-				continue
-			}
-			// CustomRun not found, skip to the next
-			fmt.Fprintf(os.Stderr, "CustomRun %s not found in namespace %s\n", name, ns)
-			continue
+		if !errors.IsNotFound(err) {
+			return err
 		}
-		availableCrs = append(availableCrs, name)
+		return fmt.Errorf("CustomRun %s not found in namespace %s", crName, namespace)
 	}
-	return availableCrs, nil
+	return nil
 }
 
 func deleteCommand(p cli.Params) *cobra.Command {
@@ -100,14 +84,14 @@ func deleteCustomRuns(s *cli.Stream, p cli.Params, crNames []string) error {
 	namespace := p.Namespace()
 	for _, crName := range crNames {
 		// Check if CustomRun exists before attempting deletion
-		exists, _ := crExists([]string{crName}, p)
-		if len(exists) == 0 {
+		err := customRunExists(cs, namespace, crName)
+		if err != nil {
 			fmt.Fprintf(s.Err, "CustomRun %s not found in namespace %s\n", crName, namespace)
 			continue
 		}
 
 		// Proceed with deletion
-		err := deleteCustomRun(cs, namespace, crName)
+		err = deleteCustomRun(cs, namespace, crName)
 		if err == nil {
 			fmt.Fprintf(s.Out, "CustomRun '%s' deleted successfully from namespace '%s'\n", crName, namespace)
 		} else {
