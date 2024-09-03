@@ -14,5 +14,4 @@ spec:
   taskRef:
     name: task-1
 status:
-  artifacts: {}
   podName: ""

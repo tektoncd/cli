@@ -54,7 +54,6 @@
 		]
 	},
 	"status": {
-		"podName": "",
-		"artifacts": {}
+		"podName": ""
 	}
 }
