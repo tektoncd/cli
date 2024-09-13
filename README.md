@@ -183,6 +183,10 @@ After installing tkn, create a link as kubectl-tkn
   ```shell
 ln -s /usr/local/bin/tkn /usr/local/bin/kubectl-tkn
   ```
+For Mac OS X with Homebrew
+  ```shell
+ln -s $(brew --prefix)/opt/tektoncd-cli/bin/tkn /usr/local/bin/kubectl-tkn
+  ```
 Run the following to confirm tkn is available as a plugin:
   ```shell
 kubectl plugin list
