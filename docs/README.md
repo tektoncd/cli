@@ -28,6 +28,10 @@ it from the source, or set it up as a [`kubectl` plugin](https://kubernetes.io/d
 ```bash
 brew install tektoncd-cli
 ```
+For Mac OS X with Homebrew
+```bash
+ln -s $(brew --prefix)/opt/tektoncd-cli/bin/tkn /usr/local/bin/kubectl-tkn
+```
 
 You can also download it as a tarball from the [`tkn` Releases page](https://github.com/tektoncd/cli/releases).
 After downloading the file, extract it to your `PATH`:
@@ -140,11 +144,18 @@ To add `tkn` as a `kubectl` plugin, run the following commands:
 # The following commands assumes that your `tkn` executable is available
 # at /usr/local/bin/tkn. You may need to use a different value on your
 # system.
-ln -s /usr/local/bin/tkn /usr/local/bin/kubectl-tkn
-kubectl plugin list
+ln -s /usr/local/bin/tkn /usr/local/bin/kubectl-tkn 
 ```
 
+For Mac OS X with Homebrew
+  ```bash
+ln -s $(brew --prefix)/opt/tektoncd-cli/bin/tkn /usr/local/bin/kubectl-tkn
+  ```
+
 If configured correctly, you should see `tkn` listed in the output.
+  ```bash
+kubectl plugin list
+  ```
 
 ## Usage
 
