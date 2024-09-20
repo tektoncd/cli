@@ -8,8 +8,8 @@ require (
 	github.com/blang/semver v3.5.1+incompatible
 	github.com/cpuguy83/go-md2man v1.0.10
 	github.com/creack/pty v1.1.23
-	github.com/docker/cli v27.2.1+incompatible
-	github.com/docker/docker v27.2.1+incompatible
+	github.com/docker/cli v27.3.0+incompatible
+	github.com/docker/docker v27.3.0+incompatible
 	github.com/fatih/color v1.17.0
 	github.com/google/go-cmp v0.6.0
 	github.com/google/go-containerregistry v0.20.2
