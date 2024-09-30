@@ -1282,8 +1282,8 @@ github.com/syndtr/goleveldb v1.0.1-0.20220721030215-126854af5e6d h1:vfofYNRScrDd
 github.com/syndtr/goleveldb v1.0.1-0.20220721030215-126854af5e6d/go.mod h1:RRCYJbIwD5jmqPI9XoAFR0OcDxqUctll6zUj/+B4S48=
 github.com/tchap/go-patricia/v2 v2.3.1 h1:6rQp39lgIYZ+MHmdEq4xzuk1t7OdC35z/xm0BGhTkes=
 github.com/tchap/go-patricia/v2 v2.3.1/go.mod h1:VZRHKAb53DLaG+nA9EaYYiaEx6YztwDlLElMsnSHD4k=
-github.com/tektoncd/chains v0.22.1 h1:e6uvTjSQrd0beqPksRpeBYU72hIVQ9rWlLorl6Onlmk=
-github.com/tektoncd/chains v0.22.1/go.mod h1:5FsO4gIKUIlJ4ohmmMXep0GPMWN1oEwRLXiETmU7XhY=
+github.com/tektoncd/chains v0.22.2 h1:OjlEUyVw1kWBewVrZ3GRYipN8w8cLU2nMCCz0lZMG9Y=
+github.com/tektoncd/chains v0.22.2/go.mod h1:5FsO4gIKUIlJ4ohmmMXep0GPMWN1oEwRLXiETmU7XhY=
 github.com/tektoncd/hub v1.18.0 h1:q9EN0gBKYyHsa9SnyT0LbFP47IG8nH7g1oqzKlObAww=
 github.com/tektoncd/hub v1.18.0/go.mod h1:pPiMmCE7ORjL+S+ZYkqRGgaaUpRIkdzSFvv/numhO54=
 github.com/tektoncd/pipeline v0.63.0 h1:QLkhYr970jgs6vmHopXz8pcXbz5c3i0a0FX7ggGtn94=
