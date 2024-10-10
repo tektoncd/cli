@@ -290,6 +290,9 @@ func (r *Reader) getTaskRunPodNames(run *v1.TaskRun) (<-chan string, <-chan erro
 
 func filterSteps(pod *corev1.Pod, allSteps bool, stepsGiven []string) []*step {
 	steps := []*step{}
+	if pod == nil {
+		return steps
+	}
 	stepsInPod := getSteps(pod)
 
 	if allSteps {
