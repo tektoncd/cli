@@ -102,7 +102,7 @@ or
 	f.AddFlags(c)
 	c.Flags().BoolVarP(&opts.ForceDelete, "force", "f", false, "Whether to force deletion (default: false)")
 	c.Flags().BoolVarP(&opts.DeleteRelated, "trs", "", false, "Whether to delete Task(s) and related resources (TaskRuns) (default: false)")
-	c.Flags().BoolVarP(&opts.DeleteAllNs, "all", "", false, "Delete all Tasks in a namespace (default: false)")
+	c.Flags().BoolVarP(&opts.DeleteAllNs, "all", "a", false, "Delete all Tasks in a namespace (default: false)")
 
 	return c
 }

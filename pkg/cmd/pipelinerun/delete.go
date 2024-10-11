@@ -128,7 +128,7 @@ or
 	c.Flags().IntVarP(&opts.Keep, "keep", "", 0, "Keep n most recent number of PipelineRuns")
 	c.Flags().IntVarP(&opts.KeepSince, "keep-since", "", 0, "When deleting all PipelineRuns keep the ones that has been completed since n minutes")
 	c.Flags().BoolVarP(&opts.IgnoreRunning, "ignore-running", "i", true, "ignore running PipelineRun")
-	c.Flags().BoolVarP(&opts.DeleteAllNs, "all", "", false, "Delete all PipelineRuns in a namespace (default: false)")
+	c.Flags().BoolVarP(&opts.DeleteAllNs, "all", "a", false, "Delete all PipelineRuns in a namespace (default: false)")
 	c.Flags().StringVarP(&opts.LabelSelector, "label", "", opts.LabelSelector, "A selector (label query) to filter on when running with --all, supports '=', '==', and '!='")
 	return c
 }

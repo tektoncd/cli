@@ -144,7 +144,7 @@ or
 	c.Flags().BoolVarP(&opts.ForceDelete, "force", "f", false, "Whether to force deletion (default: false)")
 	c.Flags().StringVarP(&deleteOpts.TaskName, "task", "t", "", "The name of a Task whose TaskRuns should be deleted (does not delete the task)")
 	c.Flags().StringVarP(&deleteOpts.ClusterTaskName, "clustertask", "", "", "The name of a ClusterTask whose TaskRuns should be deleted (does not delete the ClusterTask)")
-	c.Flags().BoolVarP(&opts.DeleteAllNs, "all", "", false, "Delete all TaskRuns in a namespace (default: false)")
+	c.Flags().BoolVarP(&opts.DeleteAllNs, "all", "a", false, "Delete all TaskRuns in a namespace (default: false)")
 	c.Flags().IntVarP(&opts.Keep, "keep", "", 0, "Keep n most recent number of TaskRuns")
 	c.Flags().IntVarP(&opts.KeepSince, "keep-since", "", 0, "When deleting all TaskRuns keep the ones that has been completed since n minutes")
 	c.Flags().BoolVarP(&opts.IgnoreRunning, "ignore-running", "i", true, "ignore running TaskRun")

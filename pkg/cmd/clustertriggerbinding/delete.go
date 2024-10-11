@@ -96,7 +96,7 @@ or
 	}
 	f.AddFlags(c)
 	c.Flags().BoolVarP(&opts.ForceDelete, "force", "f", false, "Whether to force deletion (default: false)")
-	c.Flags().BoolVarP(&opts.DeleteAll, "all", "", false, "Delete all ClusterTriggerBindings (default: false)")
+	c.Flags().BoolVarP(&opts.DeleteAll, "all", "a", false, "Delete all ClusterTriggerBindings (default: false)")
 
 	return c
 }

@@ -97,7 +97,7 @@ or
 	}
 	f.AddFlags(c)
 	c.Flags().BoolVarP(&opts.ForceDelete, "force", "f", false, "Whether to force deletion (default: false)")
-	c.Flags().BoolVarP(&opts.DeleteAllNs, "all", "", false, "Delete all TriggerBindings in a namespace (default: false)")
+	c.Flags().BoolVarP(&opts.DeleteAllNs, "all", "a", false, "Delete all TriggerBindings in a namespace (default: false)")
 
 	return c
 }
