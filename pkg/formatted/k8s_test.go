@@ -74,6 +74,15 @@ func TestCondition(t *testing.T) {
 			want: "Running",
 		},
 		{
+			name: "PipelineRunCompleted status reason",
+			condition: []apis.Condition{{
+				Type:   apis.ConditionSucceeded,
+				Status: corev1.ConditionTrue,
+				Reason: "Completed",
+			}},
+			want: "Succeeded",
+		},
+		{
 			name: "PipelineRunCanceled status reason",
 			condition: []apis.Condition{{
 				Type:   apis.ConditionSucceeded,
