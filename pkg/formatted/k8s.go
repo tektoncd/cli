@@ -67,7 +67,9 @@ func Condition(c v1.Conditions) string {
 		status = "Running"
 	}
 
-	if c[0].Reason != "" && c[0].Reason != status {
+	if c[0].Reason == "Completed" && status == "Succeeded" {
+		return ColorStatus(status)
+	} else if c[0].Reason != "" && c[0].Reason != status {
 		switch c[0].Reason {
 		case "PipelineRunCancelled", "TaskRunCancelled", "Cancelled":
 			return ColorStatus("Cancelled") + "(" + c[0].Reason + ")"
