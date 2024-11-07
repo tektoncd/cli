@@ -19,29 +19,39 @@ import (
 )
 
 func RemoveFieldForExport(obj *unstructured.Unstructured) error {
+	content := obj.UnstructuredContent()
+
 	// remove the status from pipelinerun and taskrun
-	unstructured.RemoveNestedField(obj.UnstructuredContent(), "status")
+	unstructured.RemoveNestedField(content, "status")
 
 	// remove some metadata information of previous resource
-	unstructured.RemoveNestedField(obj.UnstructuredContent(), "metadata", "managedFields")
-	unstructured.RemoveNestedField(obj.UnstructuredContent(), "metadata", "resourceVersion")
-	unstructured.RemoveNestedField(obj.UnstructuredContent(), "metadata", "uid")
-	unstructured.RemoveNestedField(obj.UnstructuredContent(), "metadata", "generation")
-	unstructured.RemoveNestedField(obj.UnstructuredContent(), "metadata", "namespace")
-	unstructured.RemoveNestedField(obj.UnstructuredContent(), "metadata", "creationTimestamp")
-	unstructured.RemoveNestedField(obj.UnstructuredContent(), "metadata", "ownerReferences")
-	unstructured.RemoveNestedField(obj.UnstructuredContent(), "metadata", "annotations", "kubectl.kubernetes.io/last-applied-configuration")
-	_, exist, err := unstructured.NestedString(obj.UnstructuredContent(), "metadata", "generateName")
-	if err != nil {
-		return err
+	metadataFields := []string{
+		"managedFields",
+		"resourceVersion",
+		"uid",
+		"finalizers",
+		"generation",
+		"namespace",
+		"creationTimestamp",
+		"ownerReferences",
 	}
-	if exist {
-		unstructured.RemoveNestedField(obj.UnstructuredContent(), "metadata", "name")
+	for _, field := range metadataFields {
+		unstructured.RemoveNestedField(content, "metadata", field)
+	}
+	unstructured.RemoveNestedField(content, "metadata", "annotations", "kubectl.kubernetes.io/last-applied-configuration")
+
+	// check if generateName exists and remove name if it does
+	if _, exist, err := unstructured.NestedString(content, "metadata", "generateName"); err != nil {
+		return err
+	} else if exist {
+		unstructured.RemoveNestedField(content, "metadata", "name")
 	}
 
 	// remove the status from spec which are related to status
-	unstructured.RemoveNestedField(obj.UnstructuredContent(), "spec", "status")
-	unstructured.RemoveNestedField(obj.UnstructuredContent(), "spec", "statusMessage")
+	specFields := []string{"status", "statusMessage"}
+	for _, field := range specFields {
+		unstructured.RemoveNestedField(content, "spec", field)
+	}
 
 	return nil
 }
