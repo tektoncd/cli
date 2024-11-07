@@ -705,7 +705,7 @@ github.com/golang/snappy
 # github.com/google/btree v1.1.2
 ## explicit; go 1.18
 github.com/google/btree
-# github.com/google/cel-go v0.20.1
+# github.com/google/cel-go v0.21.0
 ## explicit; go 1.18
 github.com/google/cel-go/cel
 github.com/google/cel-go/checker
@@ -1528,7 +1528,7 @@ github.com/tektoncd/pipeline/test/diff
 # github.com/tektoncd/plumbing v0.0.0-20230907180608-5625252a2de1
 ## explicit; go 1.19
 github.com/tektoncd/plumbing/scripts
-# github.com/tektoncd/triggers v0.29.1
+# github.com/tektoncd/triggers v0.30.0
 ## explicit; go 1.22
 github.com/tektoncd/triggers/pkg/apis/config
 github.com/tektoncd/triggers/pkg/apis/triggers
