@@ -66,6 +66,7 @@ package pubsub // import "gocloud.dev/pubsub"
 
 import (
 	"context"
+	"errors"
 	"fmt"
 	"log"
 	"math"
@@ -225,11 +226,6 @@ type Topic struct {
 	cancel func()
 }
 
-type msgErrChan struct {
-	msg     *Message
-	errChan chan error
-}
-
 // Send publishes a message. It only returns after the message has been
 // sent, or failed to be sent. Send can be called from multiple goroutines
 // at once.
@@ -276,7 +272,7 @@ func (t *Topic) Shutdown(ctx context.Context) (err error) {
 	defer func() { t.tracer.End(ctx, err) }()
 
 	t.mu.Lock()
-	if t.err == errTopicShutdown {
+	if errors.Is(t.err, errTopicShutdown) {
 		defer t.mu.Unlock()
 		return t.err
 	}
@@ -319,7 +315,6 @@ var NewTopic = newTopic
 
 // newSendBatcher creates a batcher for topics, for use with NewTopic.
 func newSendBatcher(ctx context.Context, t *Topic, dt driver.Topic, opts *batcher.Options) *batcher.Batcher {
-	const maxHandlers = 1
 	handler := func(items interface{}) error {
 		dms := items.([]*driver.Message)
 		err := retry.Call(ctx, gax.Backoff{}, dt.IsRetryable, func() (err error) {
@@ -486,10 +481,10 @@ func (s *Subscription) updateBatchSize() int {
 		// We first combine the previous value and the new value, with weighting
 		// based on decay, and then cap the growth/shrinkage.
 		newBatchSize := s.runningBatchSize*(1-decay) + idealBatchSize*decay
-		if max := s.runningBatchSize * maxGrowthFactor; newBatchSize > max {
-			s.runningBatchSize = max
-		} else if min := s.runningBatchSize * maxShrinkFactor; newBatchSize < min {
-			s.runningBatchSize = min
+		if maxSize := s.runningBatchSize * maxGrowthFactor; newBatchSize > maxSize {
+			s.runningBatchSize = maxSize
+		} else if minSize := s.runningBatchSize * maxShrinkFactor; newBatchSize < minSize {
+			s.runningBatchSize = minSize
 		} else {
 			s.runningBatchSize = newBatchSize
 		}
@@ -565,17 +560,28 @@ func (s *Subscription) Receive(ctx context.Context) (_ *Message, err error) {
 				if s.preReceiveBatchHook != nil {
 					s.preReceiveBatchHook(batchSize)
 				}
-				msgs, err := s.getNextBatch(batchSize)
-				s.mu.Lock()
-				defer s.mu.Unlock()
-				if err != nil {
-					// Non-retryable error from ReceiveBatch -> permanent error.
-					s.err = err
-				} else if len(msgs) > 0 {
-					s.q = append(s.q, msgs...)
+				resultChannel := s.getNextBatch(batchSize)
+				for msgsOrError := range resultChannel {
+					if msgsOrError.msgs != nil && len(msgsOrError.msgs) > 0 {
+						// messages received from channel
+						s.mu.Lock()
+						s.q = append(s.q, msgsOrError.msgs...)
+						s.mu.Unlock()
+						// notify that queue should now have messages
+						s.waitc <- struct{}{}
+					} else if msgsOrError.err != nil {
+						// err can receive message only after batch group completes
+						// Non-retryable error from ReceiveBatch -> permanent error
+						s.mu.Lock()
+						s.err = msgsOrError.err
+						s.mu.Unlock()
+					}
 				}
+				// batch reception finished
+				s.mu.Lock()
 				close(s.waitc)
 				s.waitc = nil
+				s.mu.Unlock()
 			}()
 		}
 		if len(s.q) > 0 {
@@ -625,11 +631,11 @@ func (s *Subscription) Receive(ctx context.Context) (_ *Message, err error) {
 		}
 		// A call to ReceiveBatch must be in flight. Wait for it.
 		waitc := s.waitc
-		s.mu.Unlock()
+		s.mu.Unlock() // unlock to allow message or error processing from background goroutine
 		select {
 		case <-waitc:
-			s.mu.Lock()
 			// Continue to top of loop.
+			s.mu.Lock()
 		case <-ctx.Done():
 			s.mu.Lock()
 			return nil, ctx.Err()
@@ -637,16 +643,19 @@ func (s *Subscription) Receive(ctx context.Context) (_ *Message, err error) {
 	}
 }
 
-// getNextBatch gets the next batch of messages from the server and returns it.
-func (s *Subscription) getNextBatch(nMessages int) ([]*driver.Message, error) {
-	var mu sync.Mutex
-	var q []*driver.Message
+type msgsOrError struct {
+	msgs []*driver.Message
+	err  error
+}
 
+// getNextBatch gets the next batch of messages from the server. It will return a channel that will itself return the
+// messages as they come from each independent batch, or an operation error
+func (s *Subscription) getNextBatch(nMessages int) chan msgsOrError {
 	// Split nMessages into batches based on recvBatchOpts; we'll make a
 	// separate ReceiveBatch call for each batch, and aggregate the results in
 	// msgs.
 	batches := batcher.Split(nMessages, s.recvBatchOpts)
-
+	result := make(chan msgsOrError, len(batches))
 	g, ctx := errgroup.WithContext(s.backgroundCtx)
 	for _, maxMessagesInBatch := range batches {
 		// Make a copy of the loop variable since it will be used by a goroutine.
@@ -663,16 +672,18 @@ func (s *Subscription) getNextBatch(nMessages int) ([]*driver.Message, error) {
 			if err != nil {
 				return wrapError(s.driver, err)
 			}
-			mu.Lock()
-			defer mu.Unlock()
-			q = append(q, msgs...)
+			result <- msgsOrError{msgs: msgs}
 			return nil
 		})
 	}
-	if err := g.Wait(); err != nil {
-		return nil, err
-	}
-	return q, nil
+	go func() {
+		// wait on group completion on the background and proper channel closing
+		if err := g.Wait(); err != nil {
+			result <- msgsOrError{err: err}
+		}
+		close(result)
+	}()
+	return result
 }
 
 var errSubscriptionShutdown = gcerr.Newf(gcerr.FailedPrecondition, nil, "pubsub: Subscription has been Shutdown")
@@ -683,7 +694,7 @@ func (s *Subscription) Shutdown(ctx context.Context) (err error) {
 	defer func() { s.tracer.End(ctx, err) }()
 
 	s.mu.Lock()
-	if s.err == errSubscriptionShutdown {
+	if errors.Is(s.err, errSubscriptionShutdown) {
 		// Already Shutdown.
 		defer s.mu.Unlock()
 		return s.err
@@ -758,7 +769,6 @@ func newSubscription(ds driver.Subscription, recvBatchOpts, ackBatcherOpts *batc
 }
 
 func newAckBatcher(ctx context.Context, s *Subscription, ds driver.Subscription, opts *batcher.Options) *batcher.Batcher {
-	const maxHandlers = 1
 	handler := func(items interface{}) error {
 		var acks, nacks []driver.AckID
 		for _, a := range items.([]*driver.AckInfo) {
