@@ -150,6 +150,17 @@ func evaluateFilter(f driver.Filter, doc driver.Document) bool {
 		return applyComparison(f.Op, strings.Compare(lhs.String(), rhs.String()))
 	}
 
+	if lhs.Kind() == reflect.Bool {
+		if rhs.Kind() != reflect.Bool {
+			return false
+		}
+		cmp := 0
+		if lhs.Bool() != rhs.Bool() {
+			cmp = -1
+		}
+		return applyComparison(f.Op, cmp)
+	}
+
 	cmp, err := driver.CompareNumbers(lhs, rhs)
 	if err != nil {
 		return false
@@ -298,7 +309,8 @@ func (c *collection) filterToProto(f driver.Filter) (*pb.StructuredQuery_Filter,
 			FilterType: &pb.StructuredQuery_Filter_UnaryFilter{
 				UnaryFilter: &pb.StructuredQuery_UnaryFilter{
 					OperandType: &pb.StructuredQuery_UnaryFilter_Field{
-						Field: fieldRef(f.FieldPath)},
+						Field: fieldRef(f.FieldPath),
+					},
 					Op: uop,
 				},
 			},
