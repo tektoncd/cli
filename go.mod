@@ -1,7 +1,6 @@
 module github.com/tektoncd/cli
 
-go 1.22.7
-toolchain go1.22.9
+go 1.22.8
 
 require (
 	github.com/AlecAivazis/survey/v2 v2.3.7
