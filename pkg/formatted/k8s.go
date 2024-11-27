@@ -72,10 +72,19 @@ func Condition(c v1.Conditions) string {
 	} else if c[0].Reason != "" && c[0].Reason != status {
 		switch c[0].Reason {
 		case "PipelineRunCancelled", "TaskRunCancelled", "Cancelled":
+			if c[0].Reason == "Cancelled" {
+				return ColorStatus("Cancelled")
+			}
 			return ColorStatus("Cancelled") + "(" + c[0].Reason + ")"
 		case "PipelineRunStopping", "TaskRunStopping":
+			if c[0].Reason == "Failed" {
+				return ColorStatus("Failed")
+			}
 			return ColorStatus("Failed") + "(" + c[0].Reason + ")"
 		case "CreateContainerConfigError", "ExceededNodeResources", "ExceededResourceQuota":
+			if c[0].Reason == "Pending" {
+				return ColorStatus("Pending")
+			}
 			return ColorStatus("Pending") + "(" + c[0].Reason + ")"
 		default:
 			return ColorStatus(status) + "(" + c[0].Reason + ")"
