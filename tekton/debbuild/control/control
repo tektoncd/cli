@@ -4,7 +4,7 @@ Section: misc
 Priority: optional
 Standards-Version: 4.3.0
 Build-Depends: debhelper (>= 13),
-               dh-sequence-golang,
+               dh-golang,
                golang-any,
                curl,
                python3
