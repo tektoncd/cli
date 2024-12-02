@@ -2,7 +2,7 @@
 <package xmlns="http://schemas.microsoft.com/packaging/2015/06/nuspec.xsd">
   <metadata>
     <id>tektoncd-cli</id>
-    <version>0.38.1</version>
+    <version>0.39.0</version>
     <title>Tekton CLI (tkn)</title>
     <authors>Tekton authors, see https://github.com/tektoncd/cli/graphs/contributors</authors>
     <projectUrl>https://github.com/tektoncd/cli</projectUrl>
