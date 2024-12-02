@@ -32,6 +32,6 @@ To update this package to a newer version of `tkn`, the following updates should
 
 * Edit the version property in [tektoncd-cli.nuspec](./tektoncd-cli.nuspec#L5) to the latest available version of `tkn`. 
 * Change the [version in the download url for the Windows `tkn` zip](./tools/chocolateyinstall.ps1#L4) to the latest available version of `tkn`. 
-* Update the [checksum for the package](./tools/chocolateyinstall.ps1#L11) by getting the sha256 of the zip file. Example: `Get-FileHash '.\tkn_0.38.1_Windows_x86_64.zip'`. The zip can be downloaded using the release download url from GitHub; just remember to change the version numbers in the url: https://github.com/tektoncd/cli/releases/download/v0.38.1/tkn_0.38.1_Windows_x86_64.zip.
+* Update the [checksum for the package](./tools/chocolateyinstall.ps1#L11) by getting the sha256 of the zip file. Example: `Get-FileHash '.\tkn_0.39.0_Windows_x86_64.zip'`. The zip can be downloaded using the release download url from GitHub; just remember to change the version numbers in the url: https://github.com/tektoncd/cli/releases/download/v0.39.0/tkn_0.39.0_Windows_x86_64.zip.
 * Run `choco pack` in the `choco` directory to build the package
 * Run `choco push` to push the built package and make it available for download (NOTE: You will need permissions to push the package/to be authenticated. Reach out to [@danielhelfand](https://github.com/danielhelfand) for more details.)
