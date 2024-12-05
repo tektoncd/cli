@@ -29,6 +29,7 @@ or using kms
 
 ```
       --allow-missing-template-keys   If true, ignore any errors in templates when a field or map key is missing in the template. Only applies to golang and jsonpath output formats. (default true)
+      --api-version string            apiVersion of the Task to be signed (default "v1")
   -f, --file-name string              file name of the signed task, using the original file name will overwrite the file
   -h, --help                          help for sign
   -K, --key-file string               Key file
