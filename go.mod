@@ -32,7 +32,7 @@ require (
 	go.opencensus.io v0.24.0
 	go.uber.org/multierr v1.11.0
 	go.uber.org/zap v1.27.0
-	golang.org/x/term v0.23.0
+	golang.org/x/term v0.27.0
 	gotest.tools v2.2.0+incompatible
 	gotest.tools/v3 v3.5.1
 	k8s.io/api v0.29.8
@@ -306,14 +306,14 @@ require (
 	gocloud.dev v0.37.0 // indirect
 	gocloud.dev/docstore/mongodocstore v0.37.1-0.20240501181211-d8b9c9401f18 // indirect
 	gocloud.dev/pubsub/kafkapubsub v0.37.0 // indirect
-	golang.org/x/crypto v0.25.0 // indirect
+	golang.org/x/crypto v0.31.0 // indirect
 	golang.org/x/exp v0.0.0-20240112132812-db7319d0e0e3 // indirect
 	golang.org/x/mod v0.19.0 // indirect
 	golang.org/x/net v0.27.0 // indirect
 	golang.org/x/oauth2 v0.22.0 // indirect
-	golang.org/x/sync v0.8.0 // indirect
-	golang.org/x/sys v0.23.0 // indirect
-	golang.org/x/text v0.17.0 // indirect
+	golang.org/x/sync v0.10.0 // indirect
+	golang.org/x/sys v0.28.0 // indirect
+	golang.org/x/text v0.21.0 // indirect
 	golang.org/x/time v0.5.0 // indirect
 	golang.org/x/xerrors v0.0.0-20231012003039-104605ab7028 // indirect
 	gomodules.xyz/jsonpatch/v2 v2.4.0 // indirect
