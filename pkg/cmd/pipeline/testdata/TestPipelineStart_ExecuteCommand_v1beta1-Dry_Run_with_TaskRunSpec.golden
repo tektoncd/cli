@@ -1,0 +1,30 @@
+Flag --resource has been deprecated, pipelineresources have been deprecated, this flag will be removed soon
+apiVersion: tekton.dev/v1beta1
+kind: PipelineRun
+metadata:
+  creationTimestamp: null
+  generateName: test-pipeline-run-
+  labels:
+    jemange: desfrites
+  namespace: ns
+spec:
+  params:
+  - name: pipeline-param
+    value: value1
+  - name: rev-param
+    value: value2
+  pipelineRef:
+    name: test-pipeline
+  resources:
+  - name: source
+    resourceRef:
+      name: scaffold-git
+  serviceAccountName: svc1
+  taskRunSpecs:
+  - pipelineTaskName: unit-test-task
+    taskPodTemplate:
+      schedulerName: SchedulerName
+      securityContext:
+        runAsNonRoot: true
+        runAsUser: 1001
+status: {}
