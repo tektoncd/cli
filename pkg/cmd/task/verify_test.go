@@ -15,6 +15,7 @@
 package task
 
 import (
+	"fmt"
 	"os"
 	"testing"
 
@@ -23,15 +24,30 @@ import (
 
 func TestVerify(t *testing.T) {
 	p := &test.Params{}
-
 	task := Command(p)
-
 	os.Setenv("PRIVATE_PASSWORD", "1234")
 
-	out, err := test.ExecuteCommand(task, "verify", "testdata/signed.yaml", "-K", "testdata/cosign.pub")
-	if err != nil {
-		t.Errorf("Unexpected error: %v", err)
+	testcases := []struct {
+		name       string
+		taskFile   string
+		apiVersion string
+	}{{
+		name:       "verify v1beta1 Task",
+		taskFile:   "testdata/signed.yaml",
+		apiVersion: "v1beta1",
+	}, {
+		name:       "verify v1 Task",
+		taskFile:   "testdata/signed-v1.yaml",
+		apiVersion: "v1",
+	}}
+	for _, tc := range testcases {
+		t.Run(tc.name, func(t *testing.T) {
+			out, err := test.ExecuteCommand(task, "verify", tc.taskFile, "-K", "testdata/cosign.pub", "--api-version", tc.apiVersion)
+			if err != nil {
+				t.Errorf("Unexpected error: %v", err)
+			}
+			expected := fmt.Sprintf("*Warning*: This is an experimental command, it's usage and behavior can change in the next release(s)\nTask %s passes verification \n", tc.taskFile)
+			test.AssertOutput(t, expected, out)
+		})
 	}
-	expected := "*Warning*: This is an experimental command, it's usage and behavior can change in the next release(s)\nTask testdata/signed.yaml passes verification \n"
-	test.AssertOutput(t, expected, out)
 }
