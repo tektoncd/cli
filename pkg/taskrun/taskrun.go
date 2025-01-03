@@ -23,6 +23,7 @@ import (
 
 type Run struct {
 	Name           string
+	DisplayName    string
 	Task           string
 	Retries        int
 	StartTime      *metav1.Time
@@ -92,6 +93,7 @@ func SortTasksBySpecOrder(pipelineTasks []v1.PipelineTask, pipelinesTaskRuns map
 			trs = append(trs, Run{
 				Task:           ts.Name,
 				Name:           n,
+				DisplayName:    ts.DisplayName,
 				Retries:        ts.Retries,
 				StartTime:      trStatusFields.StartTime,
 				CompletionTime: trStatusFields.CompletionTime,
