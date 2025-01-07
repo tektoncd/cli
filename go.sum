@@ -1320,8 +1320,8 @@ github.com/tchap/go-patricia/v2 v2.3.1 h1:6rQp39lgIYZ+MHmdEq4xzuk1t7OdC35z/xm0BG
 github.com/tchap/go-patricia/v2 v2.3.1/go.mod h1:VZRHKAb53DLaG+nA9EaYYiaEx6YztwDlLElMsnSHD4k=
 github.com/tektoncd/chains v0.23.0 h1:zRhzSUlAPxL/dUH0AXWcW8AtJbF2FrqM2yTyR3J8A5U=
 github.com/tektoncd/chains v0.23.0/go.mod h1:Bhyomb/vr0cnI4+VJmjeukRCyti4XGWb9GPWSttAFIs=
-github.com/tektoncd/hub v1.19.0 h1:UXl/jPB9uoa4ULyh64SN1VuKMMIZvXq6bkRGI8ATU+g=
-github.com/tektoncd/hub v1.19.0/go.mod h1:JJvxZ37nPygZOaUgDIQddihWnD+hSKExPs261FXmttc=
+github.com/tektoncd/hub v1.19.1 h1:Y4SUhlxEyb9GpUlUiXZC6LskBnX1rWesWT/aS5uCTz8=
+github.com/tektoncd/hub v1.19.1/go.mod h1:7Y3Gh9RWMG2aUe7mB4Ulgd8SC5zEQIQaqVhUpNT8oSw=
 github.com/tektoncd/pipeline v0.66.0 h1:WLL98YEgWzblSAD2mPbpZN97tkOC50wiftaW+8+6zTY=
 github.com/tektoncd/pipeline v0.66.0/go.mod h1:V3cyfxxc7b3GLT2a13GX2mWA86qmxWhh4mOp4gfFQwQ=
 github.com/tektoncd/plumbing v0.0.0-20230907180608-5625252a2de1 h1:9paprRIBXQgcvdhGq3wKiSspXP0JIFSY52ru3sIMjKM=
