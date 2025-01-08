@@ -10,6 +10,7 @@ License:        ASL 2.0
 URL:            https://%{repo}
 Source0:        https://%{repo}/archive/tkn_%{version}_Linux_x86_64.tar.gz
 Source1:        manpages.tar.gz
+Recommends:     bash-completion
 
 %description
 The Tekton Pipelines cli project provides a CLI for interacting with Tekton !
@@ -24,9 +25,6 @@ and not compiling from the sources.
 %install
 install -D -m 0755 tkn %{buildroot}%{_bindir}/tkn
 
-install -d %{buildroot}%{_datadir}/bash-completion/completions
-./tkn completion bash > %{buildroot}%{_datadir}/bash-completion/completions/_tkn
-
 install -d %{buildroot}%{_datadir}/zsh/site-functions
 ./tkn completion zsh > %{buildroot}%{_datadir}/zsh/site-functions/_tkn
 
@@ -37,10 +35,13 @@ mkdir -p %{buildroot}%{_mandir} && cp -a man1 %{buildroot}%{_mandir}
 %license LICENSE
 %{_bindir}/tkn
 %{_datadir}/zsh/site-functions/*
-%{_datadir}/bash-completion/completions/*
 %{_mandir}/*
 
 %changelog
+* Mon Jan 08 2022 Chmouel Boudjnah <chmouel@chmouel.com> 0.25.1
+- Don't generate bash completion since included by bash-completion package. Add
+  package as Recommends.
+
 * Mon Jun 13 2022 Chmouel Boudjnah <chmouel@chmouel.com> 0.24.0
 - Don't compile, use binary from releases.
 
