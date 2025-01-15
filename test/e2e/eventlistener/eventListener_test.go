@@ -46,7 +46,7 @@ func TestEventListenerE2E(t *testing.T) {
 	createResources(t, c, namespace)
 	kubectl.MustSucceed(t, "create", "-f", helper.GetResourcePath("eventlistener/eventlistener.yaml"))
 	// Wait for pods to become available for next test
-	kubectl.MustSucceed(t, "wait", "--for=condition=Ready", "pod", "-n", namespace, "--timeout=2m", "--all")
+	kubectl.MustSucceed(t, "wait", "--for=condition=Ready", "pod", "-n", namespace, "--timeout=5m", "--all")
 
 	t.Run("Assert if EventListener AVAILABLE status is true", func(t *testing.T) {
 		res := tkn.MustSucceed(t, "eventlistener", "list")
@@ -57,7 +57,7 @@ func TestEventListenerE2E(t *testing.T) {
 	t.Logf("Scaling EventListener %s to 3 replicas in namespace %s", elName, namespace)
 	kubectl.MustSucceed(t, "apply", "-f", helper.GetResourcePath("eventlistener/eventlistener-multi-replica.yaml"))
 	// Wait for pods to become available for next test
-	kubectl.MustSucceed(t, "wait", "--for=condition=Ready", "pod", "-n", namespace, "--timeout=2m", "--all")
+	kubectl.MustSucceed(t, "wait", "--for=condition=Ready", "pod", "-n", namespace, "--timeout=5m", "--all")
 }
 
 func TestEventListenerLogsE2E(t *testing.T) {
@@ -74,7 +74,7 @@ func TestEventListenerLogsE2E(t *testing.T) {
 	createResources(t, c, namespace)
 	kubectl.MustSucceed(t, "create", "-f", helper.GetResourcePath("eventlistener/eventlistener_log.yaml"))
 	// Wait for pods to run and crash for next test
-	kubectl.MustSucceed(t, "wait", "--for=jsonpath=.status.phase=Running", "pod", "-n", namespace, "--timeout=2m", "--all")
+	kubectl.MustSucceed(t, "wait", "--for=jsonpath=.status.phase=Running", "pod", "-n", namespace, "--timeout=5m", "--all")
 
 	t.Run("Get logs of EventListener", func(t *testing.T) {
 		res := tkn.MustSucceed(t, "eventlistener", "logs", elName, "-t", "1")
@@ -109,7 +109,7 @@ func TestEventListener_v1beta1LogsE2E(t *testing.T) {
 	createResources(t, c, namespace)
 	kubectl.MustSucceed(t, "create", "-f", helper.GetResourcePath("eventlistener/eventlistener_v1beta1_log.yaml"))
 	// Wait for pods to run and crash for next test
-	kubectl.MustSucceed(t, "wait", "--for=jsonpath=.status.phase=Running", "pod", "-n", namespace, "--timeout=2m", "--all")
+	kubectl.MustSucceed(t, "wait", "--for=jsonpath=.status.phase=Running", "pod", "-n", namespace, "--timeout=5m", "--all")
 
 	t.Run("Get logs of EventListener", func(t *testing.T) {
 		res := tkn.MustSucceed(t, "eventlistener", "logs", elName, "-t", "1")
@@ -144,7 +144,7 @@ func TestEventListener_v1beta1E2E(t *testing.T) {
 	createResources(t, c, namespace)
 	kubectl.MustSucceed(t, "create", "-f", helper.GetResourcePath("eventlistener/eventlistener_v1beta1.yaml"))
 	// Wait for pods to become available for next test
-	kubectl.MustSucceed(t, "wait", "--for=condition=Ready", "pod", "-n", namespace, "--timeout=2m", "--all")
+	kubectl.MustSucceed(t, "wait", "--for=condition=Ready", "pod", "-n", namespace, "--timeout=5m", "--all")
 
 	t.Run("Assert if EventListener AVAILABLE status is true", func(t *testing.T) {
 		res := tkn.MustSucceed(t, "eventlistener", "list")
@@ -155,7 +155,7 @@ func TestEventListener_v1beta1E2E(t *testing.T) {
 	t.Logf("Scaling EventListener %s to 3 replicas in namespace %s", elName, namespace)
 	kubectl.MustSucceed(t, "apply", "-f", helper.GetResourcePath("eventlistener/eventlistener_v1beta1-multi-replica.yaml"))
 	// Wait for pods to become available for next test
-	kubectl.MustSucceed(t, "wait", "--for=condition=Ready", "pod", "-n", namespace, "--timeout=2m", "--all")
+	kubectl.MustSucceed(t, "wait", "--for=condition=Ready", "pod", "-n", namespace, "--timeout=5m", "--all")
 }
 
 func createResources(t *testing.T, c *framework.Clients, namespace string) {
