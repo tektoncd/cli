@@ -19,7 +19,6 @@ package eventlistener
 
 import (
 	"context"
-	"os"
 	"testing"
 
 	"github.com/tektoncd/cli/test/cli"
@@ -184,20 +183,6 @@ func createResources(t *testing.T, c *framework.Clients, namespace string) {
 		t.Fatalf("Error creating SA: %s", err)
 	}
 
-	// Create ClusterRole required by triggers
-	_, err = c.KubeClient.RbacV1().ClusterRoles().Create(context.Background(),
-		&rbacv1.ClusterRole{
-			ObjectMeta: metav1.ObjectMeta{Name: "sa-clusterrole"},
-			Rules: []rbacv1.PolicyRule{{
-				APIGroups: []string{"triggers.tekton.dev"},
-				Resources: []string{"clustertriggerbindings", "clusterinterceptors"},
-				Verbs:     []string{"get", "list", "watch"},
-			}},
-		}, metav1.CreateOptions{},
-	)
-	if err != nil {
-		t.Fatalf("Error creating ClusterRole: %s", err)
-	}
 	_, err = c.KubeClient.RbacV1().ClusterRoleBindings().Create(context.Background(),
 		&rbacv1.ClusterRoleBinding{
 			ObjectMeta: metav1.ObjectMeta{Name: "sa-clusterrolebinding"},
@@ -209,7 +194,7 @@ func createResources(t *testing.T, c *framework.Clients, namespace string) {
 			RoleRef: rbacv1.RoleRef{
 				APIGroup: "rbac.authorization.k8s.io",
 				Kind:     "ClusterRole",
-				Name:     "sa-clusterrole",
+				Name:     "tekton-triggers-eventlistener-clusterroles",
 			},
 		}, metav1.CreateOptions{},
 	)
@@ -222,14 +207,8 @@ func cleanupResources(t *testing.T, c *framework.Clients, namespace string) {
 	t.Helper()
 	framework.TearDown(t, c, namespace)
 
-	if os.Getenv("TEST_KEEP_NAMESPACES") == "" && !t.Failed() {
-		// Cleanup cluster-scoped resources
-		t.Logf("Deleting cluster-scoped resources")
-		if err := c.KubeClient.RbacV1().ClusterRoles().Delete(context.Background(), "sa-clusterrole", metav1.DeleteOptions{}); err != nil {
-			t.Errorf("Failed to delete clusterrole sa-clusterrole: %s", err)
-		}
-		if err := c.KubeClient.RbacV1().ClusterRoleBindings().Delete(context.Background(), "sa-clusterrolebinding", metav1.DeleteOptions{}); err != nil {
-			t.Errorf("Failed to delete clusterrolebinding sa-clusterrolebinding: %s", err)
-		}
+	// Cleanup cluster-scoped resources
+	if err := c.KubeClient.RbacV1().ClusterRoleBindings().Delete(context.Background(), "sa-clusterrolebinding", metav1.DeleteOptions{}); err != nil {
+		t.Errorf("Failed to delete clusterrolebinding sa-clusterrolebinding: %s", err)
 	}
 }
