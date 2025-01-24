@@ -19,6 +19,7 @@ package eventlistener
 
 import (
 	"context"
+	"fmt"
 	"testing"
 
 	"github.com/tektoncd/cli/test/cli"
@@ -72,8 +73,15 @@ func TestEventListenerLogsE2E(t *testing.T) {
 	t.Logf("Creating EventListener %s in namespace %s", elName, namespace)
 	createResources(t, c, namespace)
 	kubectl.MustSucceed(t, "create", "-f", helper.GetResourcePath("eventlistener/eventlistener_log.yaml"))
-	// Wait for pods to run and crash for next test
-	kubectl.MustSucceed(t, "wait", "--for=jsonpath=.status.phase=Running", "pod", "-n", namespace, "--timeout=2m", "--all")
+	// Wait for pods to run
+	kubectl.MustSucceed(t, "wait", "--for=condition=Ready", "pod", "-n", namespace, "--timeout=5m", "--all")
+	svcURL := fmt.Sprintf("http://el-github-listener-interceptor.%s.svc.cluster.local:8080", namespace)
+
+	// Send dummy event
+	kubectl.MustSucceed(t, "-n", namespace, "run", "curlrequest", "--image=curlimages/curl", "--restart=Never", "--",
+		"curl -v -H 'X-GitHub-Event: pull_request' -H 'X-Hub-Signature: sha1=ba0cdc263b3492a74b601d240c27efe81c4720cb' -H 'Content-Type: application/json' "+
+			"-d '{\"action\": \"opened\", \"pull_request\":{\"head\":{\"sha\": \"28911bbb5a3e2ea034daf1f6be0a822d50e31e73\"}},\"repository\":{\"clone_url\": \"https://github.com/tektoncd/triggers.git\"}}'",
+		svcURL)
 
 	t.Run("Get logs of EventListener", func(t *testing.T) {
 		res := tkn.MustSucceed(t, "eventlistener", "logs", elName, "-t", "1")
@@ -107,8 +115,15 @@ func TestEventListener_v1beta1LogsE2E(t *testing.T) {
 	t.Logf("Creating EventListener %s in namespace %s", elName, namespace)
 	createResources(t, c, namespace)
 	kubectl.MustSucceed(t, "create", "-f", helper.GetResourcePath("eventlistener/eventlistener_v1beta1_log.yaml"))
-	// Wait for pods to run and crash for next test
-	kubectl.MustSucceed(t, "wait", "--for=jsonpath=.status.phase=Running", "pod", "-n", namespace, "--timeout=2m", "--all")
+	// Wait for pods to run
+	kubectl.MustSucceed(t, "wait", "--for=condition=Ready", "pod", "-n", namespace, "--timeout=5m", "--all")
+	svcURL := fmt.Sprintf("http://el-github-listener-interceptor.%s.svc.cluster.local:8080", namespace)
+
+	// Send dummy event
+	kubectl.MustSucceed(t, "-n", namespace, "run", "curlrequest", "--image=curlimages/curl", "--restart=Never", "--",
+		"curl -v -H 'X-GitHub-Event: pull_request' -H 'X-Hub-Signature: sha1=ba0cdc263b3492a74b601d240c27efe81c4720cb' -H 'Content-Type: application/json' "+
+			"-d '{\"action\": \"opened\", \"pull_request\":{\"head\":{\"sha\": \"28911bbb5a3e2ea034daf1f6be0a822d50e31e73\"}},\"repository\":{\"clone_url\": \"https://github.com/tektoncd/triggers.git\"}}'",
+		svcURL)
 
 	t.Run("Get logs of EventListener", func(t *testing.T) {
 		res := tkn.MustSucceed(t, "eventlistener", "logs", elName, "-t", "1")
