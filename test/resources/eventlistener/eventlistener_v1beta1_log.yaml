@@ -18,7 +18,7 @@ kind: EventListener
 metadata:
   name: github-listener-interceptor
 spec:
-  serviceAccountName: tekton-triggers-github-log-sa
+  serviceAccountName: tekton-triggers-github-sa
   triggers:
     - name: github-listener
       interceptors:
@@ -89,18 +89,13 @@ spec:
                   - name: url
                     value: $(tt.params.gitrepositoryurl)
 ---
-apiVersion: v1
-kind: ServiceAccount
-metadata:
-  name: tekton-triggers-github-log-sa
----
 apiVersion: rbac.authorization.k8s.io/v1
 kind: RoleBinding
 metadata:
   name: tekton-triggers-github-binding
 subjects:
   - kind: ServiceAccount
-    name: tekton-triggers-github-log-sa
+    name: tekton-triggers-github-sa
 roleRef:
   apiGroup: rbac.authorization.k8s.io
   kind: Role
