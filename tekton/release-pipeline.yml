@@ -104,7 +104,7 @@ spec:
         - name: github-token-secret-key
           value: $(params.github-token-secret-key)
         - name: image
-          value: goreleaser/goreleaser:v2.1.0
+          value: goreleaser/goreleaser:v2.2.0
         - name: flags
           value: --timeout=60m
       workspaces:
