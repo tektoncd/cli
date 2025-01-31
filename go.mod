@@ -15,7 +15,7 @@ require (
 	github.com/google/go-containerregistry v0.20.2
 	github.com/hako/durafmt v0.0.0-20210608085754-5c1018a4e16b
 	github.com/hinshun/vt10x v0.0.0-20220228203356-1ab2cad5fd82
-	github.com/jonboulle/clockwork v0.4.0
+	github.com/jonboulle/clockwork v0.5.0
 	github.com/ktr0731/go-fuzzyfinder v0.8.0
 	github.com/mitchellh/go-homedir v1.1.0
 	github.com/pkg/errors v0.9.1
