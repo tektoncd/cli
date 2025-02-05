@@ -95,6 +95,6 @@ func Contains(t *testing.T, container interface{}, obj interface{}) {
 	t.Errorf("no matches found in: %s", strings.Join(diffs, "\n"))
 }
 
-func FakeClock() clockwork.FakeClock {
+func FakeClock() *clockwork.FakeClock {
 	return clockwork.NewFakeClockAt(time.Date(1984, time.April, 4, 0, 0, 0, 0, time.UTC))
 }
