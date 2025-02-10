@@ -34,7 +34,7 @@ require (
 	go.uber.org/zap v1.27.0
 	golang.org/x/term v0.29.0
 	gotest.tools v2.2.0+incompatible
-	gotest.tools/v3 v3.5.1
+	gotest.tools/v3 v3.5.2
 	k8s.io/api v0.31.5
 	k8s.io/apimachinery v0.31.5
 	k8s.io/cli-runtime v0.29.13
