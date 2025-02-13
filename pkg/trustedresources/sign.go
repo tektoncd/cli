@@ -29,6 +29,7 @@ import (
 
 	"github.com/sigstore/sigstore/pkg/signature"
 	"github.com/sigstore/sigstore/pkg/signature/kms"
+	v1 "github.com/tektoncd/pipeline/pkg/apis/pipeline/v1"
 	"github.com/tektoncd/pipeline/pkg/apis/pipeline/v1beta1"
 	"golang.org/x/term"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
@@ -114,20 +115,34 @@ func signInterface(signer signature.Signer, i interface{}) ([]byte, error) {
 }
 
 // UnmarshalCRD will get the task/pipeline from buffer and extract the signature.
-func UnmarshalCRD(buf []byte, kind string) (metav1.Object, []byte, error) {
+func UnmarshalCRD(buf []byte, kind string, version string) (metav1.Object, []byte, error) {
 	var resource metav1.Object
 	var signature []byte
 
 	switch kind {
 	case "Task":
-		resource = &v1beta1.Task{}
-		if err := yaml.Unmarshal(buf, &resource); err != nil {
-			return nil, nil, err
+		if version == "v1beta1" {
+			resource = &v1beta1.Task{}
+			if err := yaml.Unmarshal(buf, &resource); err != nil {
+				return nil, nil, err
+			}
+		} else {
+			resource = &v1.Task{}
+			if err := yaml.Unmarshal(buf, &resource); err != nil {
+				return nil, nil, err
+			}
 		}
 	case "Pipeline":
-		resource = &v1beta1.Pipeline{}
-		if err := yaml.Unmarshal(buf, &resource); err != nil {
-			return nil, nil, err
+		if version == "v1beta1" {
+			resource = &v1beta1.Pipeline{}
+			if err := yaml.Unmarshal(buf, &resource); err != nil {
+				return nil, nil, err
+			}
+		} else {
+			resource = &v1.Pipeline{}
+			if err := yaml.Unmarshal(buf, &resource); err != nil {
+				return nil, nil, err
+			}
 		}
 	}
 	annotations := resource.GetAnnotations()
