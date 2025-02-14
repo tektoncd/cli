@@ -383,10 +383,26 @@ func keepTaskRunsByNumber(taskRuns *v1.TaskRunList, keep int) ([]string, []strin
 func keepTaskRunsByAgeAndNumber(taskRuns *v1.TaskRunList, since int, keep int, ignoreRunning bool) ([]string, []string) {
 	var todelete, tokeep []string
 
-	todelete, tokeep = keepTaskRunsByAge(taskRuns, since, ignoreRunning)
+	// Sort the taskrun by time
+	trsort.SortByStartTime(taskRuns.Items)
 
-	if len(tokeep) != keep {
-		todelete, tokeep = keepTaskRunsByNumber(taskRuns, keep)
+	for _, run := range taskRuns.Items {
+		if run.Status.Conditions == nil {
+			continue
+		}
+		switch {
+		// for Taskruns in running status
+		case time.Since(run.Status.CompletionTime.Time) > time.Duration(since)*time.Minute &&
+			!ignoreRunning && run.Status.CompletionTime == nil:
+			todelete = append(todelete, run.Name)
+		case time.Since(run.Status.CompletionTime.Time) > time.Duration(since)*time.Minute:
+			todelete = append(todelete, run.Name)
+		case keep > 0:
+			tokeep = append(tokeep, run.Name)
+			keep--
+		default:
+			todelete = append(todelete, run.Name)
+		}
 	}
 	return todelete, tokeep
 }
