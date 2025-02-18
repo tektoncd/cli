@@ -19,10 +19,13 @@ package kms
 import (
 	"context"
 	"crypto"
+	"errors"
 	"fmt"
+	"os/exec"
 	"strings"
 
 	"github.com/sigstore/sigstore/pkg/signature"
+	"github.com/sigstore/sigstore/pkg/signature/kms/cliplugin"
 )
 
 // ProviderNotFoundError indicates that no matching KMS provider was found
@@ -48,15 +51,25 @@ func AddProvider(keyResourceID string, init ProviderInit) {
 var providersMap = map[string]ProviderInit{}
 
 // Get returns a KMS SignerVerifier for the given resource string and hash function.
-// If no matching provider is found, Get returns a ProviderNotFoundError. It
-// also returns an error if initializing the SignerVerifier fails.
+// If no matching built-in provider is found, it will try to use the plugin system as a provider.
+// If keyResourceID doesn't match any of our hard-coded providers' schemas, or the plugin program
+// can't be found, then it returns ProviderNotFoundError.
+// It also returns an error if initializing the SignerVerifier fails.
 func Get(ctx context.Context, keyResourceID string, hashFunc crypto.Hash, opts ...signature.RPCOption) (SignerVerifier, error) {
 	for ref, pi := range providersMap {
 		if strings.HasPrefix(keyResourceID, ref) {
-			return pi(ctx, keyResourceID, hashFunc, opts...)
+			sv, err := pi(ctx, keyResourceID, hashFunc, opts...)
+			if err != nil {
+				return nil, err
+			}
+			return sv, nil
 		}
 	}
-	return nil, &ProviderNotFoundError{ref: keyResourceID}
+	sv, err := cliplugin.LoadSignerVerifier(ctx, keyResourceID, hashFunc, opts...)
+	if errors.Is(err, exec.ErrNotFound) {
+		return nil, fmt.Errorf("%w: %w", &ProviderNotFoundError{ref: keyResourceID}, err)
+	}
+	return sv, err
 }
 
 // SupportedProviders returns list of initialized providers
