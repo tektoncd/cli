@@ -1,4 +1,4 @@
-// Copyright 2024 Google LLC
+// Copyright 2025 Google LLC
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -47,6 +47,12 @@ func (it *EkmConnectionIterator) All() iter.Seq2[*kmspb.EkmConnection, error] {
 // All returns an iterator. If an error is returned by the iterator, the
 // iterator will stop after that iteration.
 func (it *ImportJobIterator) All() iter.Seq2[*kmspb.ImportJob, error] {
+	return iterator.RangeAdapter(it.Next)
+}
+
+// All returns an iterator. If an error is returned by the iterator, the
+// iterator will stop after that iteration.
+func (it *KeyHandleIterator) All() iter.Seq2[*kmspb.KeyHandle, error] {
 	return iterator.RangeAdapter(it.Next)
 }
 
