@@ -78,6 +78,7 @@ my-csi-template and my-volume-claim-template)
       --showlog                       show logs right after starting the Pipeline
       --skip-optional-workspace       skips the prompt for optional workspaces
       --task-serviceaccount strings   pass the service account corresponding to the task
+      --taskrun-spec string           local or remote file containing a TaskRunSpec definition
       --tasks-timeout string          timeout for Pipeline TaskRuns
       --use-param-defaults            use default parameter values without prompting for input
       --use-pipelinerun string        use this pipelinerun values to re-run the pipeline. 
