@@ -136,7 +136,9 @@ const Scheme = "kafka"
 // URLOpener opens Kafka URLs like "kafka://mytopic" for topics and
 // "kafka://group?topic=mytopic" for subscriptions.
 //
-// For topics, the URL's host+path is used as the topic name.
+// For topics, the URL's host+path is used as the topic name,
+// and the "key_name" query parameter is used to extract the routing key
+// from metadata.
 //
 // For subscriptions, the URL's host+path is used as the group name,
 // and the "topic" query parameter(s) are used as the set of topics to
@@ -159,9 +161,19 @@ type URLOpener struct {
 
 // OpenTopicURL opens a pubsub.Topic based on u.
 func (o *URLOpener) OpenTopicURL(ctx context.Context, u *url.URL) (*pubsub.Topic, error) {
-	for param := range u.Query() {
-		return nil, fmt.Errorf("open topic %v: invalid query parameter %q", u, param)
+	for param, value := range u.Query() {
+		switch param {
+		case "key_name":
+			if len(value) != 1 || len(value[0]) == 0 {
+				return nil, fmt.Errorf("open topic %v: invalid query parameter %q", u, param)
+			}
+
+			o.TopicOptions.KeyName = value[0]
+		default:
+			return nil, fmt.Errorf("open topic %v: invalid query parameter %q", u, param)
+		}
 	}
+
 	topicName := path.Join(u.Host, u.Path)
 	return OpenTopic(o.Brokers, o.Config, topicName, &o.TopicOptions)
 }

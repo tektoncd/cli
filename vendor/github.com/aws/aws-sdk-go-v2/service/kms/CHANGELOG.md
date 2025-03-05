@@ -1,3 +1,74 @@
+# v1.35.3 (2024-07-10.2)
+
+* **Dependency Update**: Updated to the latest SDK module versions
+
+# v1.35.2 (2024-07-10)
+
+* **Dependency Update**: Updated to the latest SDK module versions
+
+# v1.35.1 (2024-06-28)
+
+* **Dependency Update**: Updated to the latest SDK module versions
+
+# v1.35.0 (2024-06-26)
+
+* **Feature**: Support list-of-string endpoint parameter.
+
+# v1.34.1 (2024-06-19)
+
+* **Dependency Update**: Updated to the latest SDK module versions
+
+# v1.34.0 (2024-06-18)
+
+* **Feature**: Track usage of various AWS SDK features in user-agent string.
+* **Dependency Update**: Updated to the latest SDK module versions
+
+# v1.33.1 (2024-06-17)
+
+* **Documentation**: Updating SDK example for KMS DeriveSharedSecret API.
+* **Dependency Update**: Updated to the latest SDK module versions
+
+# v1.33.0 (2024-06-13)
+
+* **Feature**: This feature allows customers to use their keys stored in KMS to derive a shared secret which can then be used to establish a secured channel for communication, provide proof of possession, or establish trust with other parties.
+
+# v1.32.3 (2024-06-07)
+
+* **Bug Fix**: Add clock skew correction on all service clients
+* **Dependency Update**: Updated to the latest SDK module versions
+
+# v1.32.2 (2024-06-03)
+
+* **Dependency Update**: Updated to the latest SDK module versions
+
+# v1.32.1 (2024-05-23)
+
+* No change notes available for this release.
+
+# v1.32.0 (2024-05-22)
+
+* **Feature**: This release includes feature to import customer's asymmetric (RSA, ECC and SM2) and HMAC keys into KMS in China.
+
+# v1.31.3 (2024-05-16)
+
+* **Dependency Update**: Updated to the latest SDK module versions
+
+# v1.31.2 (2024-05-15)
+
+* **Dependency Update**: Updated to the latest SDK module versions
+
+# v1.31.1 (2024-05-08)
+
+* **Bug Fix**: GoDoc improvement
+
+# v1.31.0 (2024-04-12)
+
+* **Feature**: This feature supports the ability to specify a custom rotation period for automatic key rotations, the ability to perform on-demand key rotations, and visibility into your key material rotations.
+
+# v1.30.1 (2024-03-29)
+
+* **Dependency Update**: Updated to the latest SDK module versions
+
 # v1.30.0 (2024-03-18)
 
 * **Feature**: Adds the ability to use the default policy name by omitting the policyName parameter in calls to PutKeyPolicy and GetKeyPolicy
