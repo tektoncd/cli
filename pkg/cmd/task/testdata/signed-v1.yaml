@@ -1,0 +1,26 @@
+apiVersion: tekton.dev/v1
+kind: Task
+metadata:
+  annotations:
+    tekton.dev/signature: MEUCIESVeQ7mC8hxSLrmcQhVsnc0ErIjZ9NLaKv2MifSrHYtAiEA1KfI181TCK2eJ8XH5fboBvbr2/YBVGqlgrkS7vfY9mw=
+  creationTimestamp: null
+  name: task-v1
+spec:
+  params:
+  - name: foobar
+    type: string
+  results:
+  - name: url
+  steps:
+  - computeResources: {}
+    env:
+    - name: PARAM_URL
+      value: $(params.foobar)
+    image: alpine
+    name: build-sources
+    script: |
+      #!/bin/sh
+
+      printf "%s" "${PARAM_URL}" > "$(results.url.path)"
+  workspaces:
+  - name: temporary
