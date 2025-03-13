@@ -305,6 +305,23 @@ Waiting for logs to be available...
 		}
 	})
 
+	t.Run("Start PipelineRun with --taskrun-spec", func(t *testing.T) {
+		tkn.MustSucceed(t, "pipeline", "start", tePipelineName,
+			"-p=filename=output",
+			"-w=name=shared-data,emptyDir=",
+			"--taskrun-spec="+helper.GetResourcePath("/taskrunspec.yaml"),
+			"--use-param-defaults",
+			"--showlog")
+
+		time.Sleep(1 * time.Second)
+
+		pipelineRunGeneratedName := builder.GetPipelineRunListWithName(c, tePipelineName, true).Items[0].Name
+		timeout := 5 * time.Minute
+		if err := wait.ForPipelineRunState(c, pipelineRunGeneratedName, timeout, wait.PipelineRunSucceed(pipelineRunGeneratedName), "PipelineRunSucceeded"); err != nil {
+			t.Errorf("Error waiting for PipelineRun to Succeed: %s", err)
+		}
+	})
+
 	t.Run("Cancel finished PipelineRun with tkn pipelinerun cancel", func(t *testing.T) {
 		// Get last PipelineRun for pipeline-with-workspace
 		pipelineRunLast := builder.GetPipelineRunListWithName(c, tePipelineName, true).Items[0]
