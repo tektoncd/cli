@@ -189,6 +189,10 @@ func deletePipelineRuns(s *cli.Stream, p cli.Params, prNames []string, opts *opt
 			fmt.Fprintf(s.Out, "There is/are only %d %s(s) associated for Pipeline: %s \n", len(prtokeep), opts.Resource, opts.ParentResourceName)
 			return nil
 		}
+		if len(prtodelete) == 0 && opts.KeepSince > 0 {
+			fmt.Fprintf(s.Out, "There is no PipelineRun older than %d minutes \n", opts.KeepSince)
+			return nil
+		}
 		d.DeleteRelated([]string{opts.ParentResourceName})
 	}
 
@@ -292,7 +296,7 @@ func allPipelineRunNames(cs *cli.Clients, keep, since int, ignoreRunning bool, l
 	return todelete, tokeep, nil
 }
 
-func keepPipelineRunsByAge(pipelineRuns *v1.PipelineRunList, keep int, ignoreRunning bool) ([]string, []string) {
+func keepPipelineRunsByAge(pipelineRuns *v1.PipelineRunList, since int, ignoreRunning bool) ([]string, []string) {
 	var todelete, tokeep []string
 	for _, run := range pipelineRuns.Items {
 		if run.Status.Conditions == nil {
@@ -302,7 +306,7 @@ func keepPipelineRunsByAge(pipelineRuns *v1.PipelineRunList, keep int, ignoreRun
 		// for PipelineRuns in running status
 		case !ignoreRunning && run.Status.CompletionTime == nil:
 			todelete = append(todelete, run.Name)
-		case time.Since(run.Status.CompletionTime.Time) > time.Duration(keep)*time.Minute:
+		case time.Since(run.Status.CompletionTime.Time) > time.Duration(since)*time.Minute:
 			todelete = append(todelete, run.Name)
 		default:
 			tokeep = append(tokeep, run.Name)
@@ -334,10 +338,26 @@ func keepPipelineRunsByNumber(pipelineRuns *v1.PipelineRunList, keep int) ([]str
 func keepPipelineRunsByAgeAndNumber(pipelineRuns *v1.PipelineRunList, since int, keep int, ignoreRunning bool) ([]string, []string) {
 	var todelete, tokeep []string
 
-	todelete, tokeep = keepPipelineRunsByAge(pipelineRuns, since, ignoreRunning)
+	// Sort PipelineRuns by time
+	prsort.SortByStartTime(pipelineRuns.Items)
 
-	if len(tokeep) != keep {
-		todelete, tokeep = keepPipelineRunsByNumber(pipelineRuns, keep)
+	for _, run := range pipelineRuns.Items {
+		if run.Status.Conditions == nil {
+			continue
+		}
+		switch {
+		// for PipelineRuns in running status
+		case time.Since(run.Status.CompletionTime.Time) > time.Duration(since)*time.Minute &&
+			!ignoreRunning && run.Status.CompletionTime == nil:
+			todelete = append(todelete, run.Name)
+		case time.Since(run.Status.CompletionTime.Time) > time.Duration(since)*time.Minute:
+			todelete = append(todelete, run.Name)
+		case keep > 0:
+			tokeep = append(tokeep, run.Name)
+			keep--
+		default:
+			todelete = append(todelete, run.Name)
+		}
 	}
 	return todelete, tokeep
 }
