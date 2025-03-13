@@ -26,7 +26,7 @@ require (
 	github.com/tektoncd/chains v0.24.0
 	github.com/tektoncd/hub v1.20.0
 	github.com/tektoncd/pipeline v0.68.0
-	github.com/tektoncd/plumbing v0.0.0-20250116154805-bf07e665a460
+	github.com/tektoncd/plumbing v0.0.0-20250313115811-582146ce551e
 	github.com/tektoncd/triggers v0.31.0
 	github.com/theupdateframework/go-tuf v0.7.0
 	go.opencensus.io v0.24.0
