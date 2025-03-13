@@ -11,12 +11,23 @@
 #
 name: "CodeQL"
 
+permissions:
+  contents: read
+
 on:
   push:
-    branches: [main]
+    branches: [ main ]
+    paths-ignore:
+      - '**/*.md'
+      - '**/*.txt'
+      - '**/*.yaml'
   pull_request:
     # The branches below must be a subset of the branches above
-    branches: [main]
+    branches: [ main ]
+    paths-ignore:
+      - '**/*.md'
+      - '**/*.txt'
+      - '**/*.yaml'
   schedule:
     - cron: '30 20 * * 2'
 
@@ -32,17 +43,26 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        language: ['go']
+        language: [ 'go' ]
         # CodeQL supports [ 'cpp', 'csharp', 'go', 'java', 'javascript', 'python', 'ruby' ]
         # Learn more about CodeQL language support at https://git.io/codeql-language-support
 
     steps:
+    - name: Harden Runner
+      uses: step-security/harden-runner@4d991eb9b905ef189e4c376166672c3f2f230481 # v2.11.0
+      with:
+        egress-policy: audit
+
     - name: Checkout repository
-      uses: actions/checkout@v4
+      uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4.2.2
+    - name: Setup go
+      uses: actions/setup-go@f111f3307d8850f501ac008e886eec1fd1932a34  # v5.3.0
+      with:
+        go-version-file: "go.mod"
 
     # Initializes the CodeQL tools for scanning.
     - name: Initialize CodeQL
-      uses: github/codeql-action/init@v3
+      uses: github/codeql-action/init@6bb031afdd8eb862ea3fc1848194185e076637e5 # v3.28.11
       with:
         languages: ${{ matrix.language }}
         # If you wish to specify custom queries, you can do so here or in a config file.
@@ -50,21 +70,10 @@ jobs:
         # Prefix the list here with "+" to use these queries and those in the config file.
         # queries: ./path/to/local/query, your-org/your-repo/queries@main
 
-    # setup cache to speed up the action
-    - uses: actions/cache@v4
-      with:
-        path: |
-          ~/.cache/go-build
-          ~/.cache/pip
-          ~/go/pkg/mod
-        key: ${{ runner.os }}-go-${{ hashFiles('**/go.sum') }}
-        restore-keys: |
-          ${{ runner.os }}-go-
-
     # Autobuild attempts to build any compiled languages  (C/C++, C#, or Java).
     # If this step fails, then you should remove it and run the build manually (see below)
     # - name: Autobuild
-    #   uses: github/codeql-action/autobuild@v3
+    #   uses: github/codeql-action/autobuild@1b1aada464948af03b950897e5eb522f92603cc2 # v3.24.9
 
     # ℹ️ Command-line programs to run using the OS shell.
     # 📚 https://git.io/JvXDl
@@ -81,4 +90,4 @@ jobs:
         make bin/tkn
 
     - name: Perform CodeQL Analysis
-      uses: github/codeql-action/analyze@v3
+      uses: github/codeql-action/analyze@6bb031afdd8eb862ea3fc1848194185e076637e5 # v3.28.11
