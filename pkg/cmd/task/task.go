@@ -43,7 +43,7 @@ func Command(p cli.Params) *cobra.Command {
 		listCommand(p),
 		logCommand(p),
 		startCommand(p),
-		createCommand(p),
+		// createCommand(p),
 		signCommand(),
 		verifyCommand(),
 	)

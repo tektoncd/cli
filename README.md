@@ -203,7 +203,6 @@ The following commands help you understand and effectively use the Tekton CLI:
 
  * `tkn help:` Displays a list of the commands with helpful information.
  * [`tkn bundle:`](docs/cmd/tkn_bundle.md) Manage Tekton [bundles](https://github.com/tektoncd/pipeline/blob/main/docs/tekton-bundle-contracts.md)
- * [`tkn clustertask:`](docs/cmd/tkn_clustertask.md) Parent command of the ClusterTask command group.
  * [`tkn clustertriggerbinding:`](docs/cmd/tkn_clustertriggerbinding.md) Parent command of the ClusterTriggerBinding command group.
  * [`tkn completion:`](docs/cmd/tkn_completion.md) Outputs a BASH, ZSH, Fish or PowerShell completion script for `tkn` to allow command completion with Tab.
  * [`tkn customrun:`](docs/cmd/tkn_customrun.md) Parent command of the Customrun command group.

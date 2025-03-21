@@ -22,7 +22,6 @@ import (
 	fakepipelineclientset "github.com/tektoncd/pipeline/pkg/client/clientset/versioned/fake"
 	informersv1beta1 "github.com/tektoncd/pipeline/pkg/client/informers/externalversions/pipeline/v1beta1"
 	fakepipelineclient "github.com/tektoncd/pipeline/pkg/client/injection/client/fake"
-	fakeclustertaskinformer "github.com/tektoncd/pipeline/pkg/client/injection/informers/pipeline/v1beta1/clustertask/fake"
 	fakepipelineinformer "github.com/tektoncd/pipeline/pkg/client/injection/informers/pipeline/v1beta1/pipeline/fake"
 	fakepipelineruninformer "github.com/tektoncd/pipeline/pkg/client/injection/informers/pipeline/v1beta1/pipelinerun/fake"
 	faketaskinformer "github.com/tektoncd/pipeline/pkg/client/injection/informers/pipeline/v1beta1/task/fake"
@@ -41,7 +40,6 @@ type Data struct {
 	Pipelines    []*v1beta1.Pipeline
 	TaskRuns     []*v1beta1.TaskRun
 	Tasks        []*v1beta1.Task
-	ClusterTasks []*v1beta1.ClusterTask
 	Namespaces   []*corev1.Namespace
 	Pods         []*corev1.Pod
 }
@@ -58,7 +56,6 @@ type Informers struct {
 	Pipeline    informersv1beta1.PipelineInformer
 	TaskRun     informersv1beta1.TaskRunInformer
 	Task        informersv1beta1.TaskInformer
-	ClusterTask informersv1beta1.ClusterTaskInformer
 	Pod         coreinformers.PodInformer
 }
 
@@ -79,7 +76,6 @@ func seedTestData(t *testing.T, ctx context.Context, d Data) (Clients, Informers
 		Pipeline:    fakepipelineinformer.Get(ctx),
 		TaskRun:     faketaskruninformer.Get(ctx),
 		Task:        faketaskinformer.Get(ctx),
-		ClusterTask: fakeclustertaskinformer.Get(ctx),
 		Pod:         fakefilteredpodinformer.Get(ctx, v1beta1.ManagedByLabelKey),
 	}
 
@@ -111,13 +107,6 @@ func seedTestData(t *testing.T, ctx context.Context, d Data) (Clients, Informers
 	for _, ta := range d.Tasks {
 		ta := ta.DeepCopy() // Avoid assumptions that the informer's copy is modified.
 		if _, err := c.Pipeline.TektonV1beta1().Tasks(ta.Namespace).Create(ctx, ta, metav1.CreateOptions{}); err != nil {
-			t.Fatal(err)
-		}
-	}
-	c.Pipeline.PrependReactor("*", "clustertasks", test.AddToInformer(t, i.ClusterTask.Informer().GetIndexer()))
-	for _, cta := range d.ClusterTasks {
-		cta := cta.DeepCopy() // Avoid assumptions that the informer's copy is modified.
-		if _, err := c.Pipeline.TektonV1beta1().ClusterTasks().Create(ctx, cta, metav1.CreateOptions{}); err != nil {
 			t.Fatal(err)
 		}
 	}
