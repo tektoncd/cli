@@ -22,7 +22,7 @@ import (
 )
 
 var allowedTektonTypes = map[string][]string{
-	"v1beta1": {"pipelineruns", "taskruns", "pipelines", "clustertasks", "tasks", "conditions", "customruns"},
+	"v1beta1": {"pipelineruns", "taskruns", "pipelines", "tasks", "conditions", "customruns"},
 	"v1":      {"pipelineruns", "taskruns", "pipelines", "tasks"},
 }
 
