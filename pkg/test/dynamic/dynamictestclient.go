@@ -44,7 +44,6 @@ func (opt *Options) Client(objects ...runtime.Object) (dynamic.Interface, error)
 	dynamicClient := fake.NewSimpleDynamicClientWithCustomListKinds(
 		runtime.NewScheme(),
 		map[schema.GroupVersionResource]string{
-			{Group: "tekton.dev", Version: "v1beta1", Resource: "clustertasks"}:                    "ClusterTaskList",
 			{Group: "tekton.dev", Version: "v1beta1", Resource: "tasks"}:                           "TaskList",
 			{Group: "tekton.dev", Version: "v1beta1", Resource: "taskruns"}:                        "TaskRunList",
 			{Group: "tekton.dev", Version: "v1beta1", Resource: "customruns"}:                      "CustomRunList",

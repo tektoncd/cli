@@ -1,4 +1,0 @@
-Command "describe" is deprecated, ClusterTasks are deprecated, this command will be removed in future releases.
-Name:   clustertask-1
-Annotations:
- tekton.dev/tags=testing

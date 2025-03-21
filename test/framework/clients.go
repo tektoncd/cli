@@ -19,7 +19,6 @@ import (
 
 	"github.com/tektoncd/pipeline/pkg/client/clientset/versioned"
 	v1 "github.com/tektoncd/pipeline/pkg/client/clientset/versioned/typed/pipeline/v1"
-	"github.com/tektoncd/pipeline/pkg/client/clientset/versioned/typed/pipeline/v1beta1"
 	"k8s.io/client-go/kubernetes"
 	knativetest "knative.dev/pkg/test"
 )
@@ -29,7 +28,6 @@ type Clients struct {
 	KubeClient        kubernetes.Interface
 	PipelineClient    v1.PipelineInterface
 	TaskClient        v1.TaskInterface
-	ClusterTaskClient v1beta1.ClusterTaskInterface
 	TaskRunClient     v1.TaskRunInterface
 	PipelineRunClient v1.PipelineRunInterface
 }
@@ -60,7 +58,6 @@ func NewClients(configPath, clusterName, namespace string) *Clients {
 
 	c.PipelineClient = cs.TektonV1().Pipelines(namespace)
 	c.TaskClient = cs.TektonV1().Tasks(namespace)
-	c.ClusterTaskClient = cs.TektonV1beta1().ClusterTasks()
 	c.TaskRunClient = cs.TektonV1().TaskRuns(namespace)
 	c.PipelineRunClient = cs.TektonV1().PipelineRuns(namespace)
 	return c

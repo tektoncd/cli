@@ -812,33 +812,6 @@ func TestTaskDescribe_Full_v1beta1(t *testing.T) {
 				},
 			},
 		},
-		{
-			ObjectMeta: metav1.ObjectMeta{
-				Namespace: "ns",
-				Name:      "tr-3",
-				Labels:    map[string]string{"tekton.dev/task": "task-1"},
-			},
-			Spec: v1beta1.TaskRunSpec{
-				TaskRef: &v1beta1.TaskRef{
-					Name: "task-1",
-					Kind: v1beta1.ClusterTaskKind,
-				},
-			},
-			Status: v1beta1.TaskRunStatus{
-				Status: duckv1.Status{
-					Conditions: duckv1.Conditions{
-						{
-							Status: corev1.ConditionFalse,
-							Reason: v1beta1.TaskRunReasonFailed.String(),
-						},
-					},
-				},
-				TaskRunStatusFields: v1beta1.TaskRunStatusFields{
-					StartTime:      &metav1.Time{Time: clock.Now()},
-					CompletionTime: &metav1.Time{Time: clock.Now().Add(5 * time.Minute)},
-				},
-			},
-		},
 	}
 
 	namespaces := []*corev1.Namespace{
@@ -855,7 +828,6 @@ func TestTaskDescribe_Full_v1beta1(t *testing.T) {
 		cb.UnstructuredV1beta1T(tasks[0], version),
 		cb.UnstructuredV1beta1TR(taskRuns[0], version),
 		cb.UnstructuredV1beta1TR(taskRuns[1], version),
-		cb.UnstructuredV1beta1TR(taskRuns[2], version),
 	)
 	if err != nil {
 		t.Errorf("unable to create dynamic client: %v", err)

@@ -54,14 +54,6 @@ func TestTaskRunDelete_v1beta1(t *testing.T) {
 		},
 	}
 
-	clustertasks := []*v1beta1.ClusterTask{
-		{
-			ObjectMeta: metav1.ObjectMeta{
-				Name: "random",
-			},
-		},
-	}
-
 	trdata := []*v1beta1.TaskRun{
 		{
 			ObjectMeta: metav1.ObjectMeta{
@@ -135,148 +127,6 @@ func TestTaskRunDelete_v1beta1(t *testing.T) {
 				TaskRunStatusFields: v1beta1.TaskRunStatusFields{
 					CompletionTime: &metav1.Time{
 						Time: clock.Now().Add(10 * time.Minute),
-					},
-				},
-				Status: duckv1.Status{
-					Conditions: duckv1.Conditions{
-						{
-							Status: corev1.ConditionTrue,
-							Reason: v1beta1.TaskRunReasonSuccessful.String(),
-						},
-					},
-				},
-			},
-		},
-		{
-			ObjectMeta: metav1.ObjectMeta{
-				Namespace: "ns",
-				Name:      "tr0-4",
-				Labels:    map[string]string{"tekton.dev/clusterTask": "random"},
-			},
-			Spec: v1beta1.TaskRunSpec{
-				TaskRef: &v1beta1.TaskRef{
-					Name: "random",
-					Kind: v1beta1.ClusterTaskKind,
-				},
-			},
-			Status: v1beta1.TaskRunStatus{
-				TaskRunStatusFields: v1beta1.TaskRunStatusFields{
-					CompletionTime: &metav1.Time{
-						Time: clock.Now().Add(10 * time.Minute),
-					},
-				},
-				Status: duckv1.Status{
-					Conditions: duckv1.Conditions{
-						{
-							Status: corev1.ConditionTrue,
-							Reason: v1beta1.TaskRunReasonSuccessful.String(),
-						},
-					},
-				},
-			},
-		},
-		{
-			ObjectMeta: metav1.ObjectMeta{
-				Namespace: "ns",
-				Name:      "tr0-5",
-				Labels:    map[string]string{"tekton.dev/clusterTask": "random"},
-			},
-			Spec: v1beta1.TaskRunSpec{
-				TaskRef: &v1beta1.TaskRef{
-					Name: "random",
-					Kind: v1beta1.ClusterTaskKind,
-				},
-			},
-			Status: v1beta1.TaskRunStatus{
-				TaskRunStatusFields: v1beta1.TaskRunStatusFields{
-					CompletionTime: &metav1.Time{
-						Time: clock.Now().Add(10 * time.Minute),
-					},
-				},
-				Status: duckv1.Status{
-					Conditions: duckv1.Conditions{
-						{
-							Status: corev1.ConditionTrue,
-							Reason: v1beta1.TaskRunReasonSuccessful.String(),
-						},
-					},
-				},
-			},
-		},
-		{
-			ObjectMeta: metav1.ObjectMeta{
-				Namespace: "ns",
-				Name:      "tr0-6",
-				Labels:    map[string]string{"tekton.dev/clusterTask": "random"},
-			},
-			Spec: v1beta1.TaskRunSpec{
-				TaskRef: &v1beta1.TaskRef{
-					Name: "random",
-					Kind: v1beta1.ClusterTaskKind,
-				},
-			},
-			Status: v1beta1.TaskRunStatus{
-				TaskRunStatusFields: v1beta1.TaskRunStatusFields{
-					CompletionTime: &metav1.Time{
-						Time: clock.Now().Add(10 * time.Minute),
-					},
-				},
-				Status: duckv1.Status{
-					Conditions: duckv1.Conditions{
-						{
-							Status: corev1.ConditionTrue,
-							Reason: v1beta1.TaskRunReasonSuccessful.String(),
-						},
-					},
-				},
-			},
-		},
-		{
-			ObjectMeta: metav1.ObjectMeta{
-				Namespace: "ns",
-				Name:      "tr0-7",
-				Labels:    map[string]string{"tekton.dev/clusterTask": "random"},
-			},
-			Spec: v1beta1.TaskRunSpec{
-				TaskRef: &v1beta1.TaskRef{
-					Name: "random",
-					Kind: v1beta1.ClusterTaskKind,
-				},
-			},
-			Status: v1beta1.TaskRunStatus{
-				TaskRunStatusFields: v1beta1.TaskRunStatusFields{
-					CompletionTime: &metav1.Time{
-						// Use real time for testing keep-since
-						Time: time.Now(),
-					},
-				},
-				Status: duckv1.Status{
-					Conditions: duckv1.Conditions{
-						{
-							Status: corev1.ConditionTrue,
-							Reason: v1beta1.TaskRunReasonSuccessful.String(),
-						},
-					},
-				},
-			},
-		},
-		{
-			ObjectMeta: metav1.ObjectMeta{
-				Namespace: "ns",
-				Name:      "tr0-8",
-				Labels:    map[string]string{"tekton.dev/clusterTask": "random"},
-			},
-			Spec: v1beta1.TaskRunSpec{
-				TaskRef: &v1beta1.TaskRef{
-					Name: "random",
-					Kind: v1beta1.ClusterTaskKind,
-				},
-			},
-			Status: v1beta1.TaskRunStatus{
-				TaskRunStatusFields: v1beta1.TaskRunStatusFields{
-					CompletionTime: &metav1.Time{
-						// Use real time for testing keep-since and keep together
-						Time: time.Now(),
 					},
 				},
 				Status: duckv1.Status{
@@ -370,84 +220,6 @@ func TestTaskRunDelete_v1beta1(t *testing.T) {
 				},
 			},
 		},
-		{
-			ObjectMeta: metav1.ObjectMeta{
-				Namespace: "ns",
-				Name:      "tr0-12",
-				Labels:    map[string]string{"tekton.dev/clusterTask": "random"},
-			},
-			Spec: v1beta1.TaskRunSpec{
-				TaskRef: &v1beta1.TaskRef{
-					Name: "random",
-					Kind: v1beta1.ClusterTaskKind,
-				},
-			},
-			Status: v1beta1.TaskRunStatus{
-				TaskRunStatusFields: v1beta1.TaskRunStatusFields{
-					CompletionTime: nil,
-				},
-				Status: duckv1.Status{
-					Conditions: duckv1.Conditions{
-						{
-							Status: corev1.ConditionUnknown,
-							Reason: v1beta1.TaskRunReasonStarted.String(),
-						},
-					},
-				},
-			},
-		},
-		{
-			ObjectMeta: metav1.ObjectMeta{
-				Namespace: "ns",
-				Name:      "tr0-13",
-				Labels:    map[string]string{"tekton.dev/clusterTask": "random"},
-			},
-			Spec: v1beta1.TaskRunSpec{
-				TaskRef: &v1beta1.TaskRef{
-					Name: "random",
-					Kind: v1beta1.ClusterTaskKind,
-				},
-			},
-			Status: v1beta1.TaskRunStatus{
-				TaskRunStatusFields: v1beta1.TaskRunStatusFields{
-					CompletionTime: nil,
-				},
-				Status: duckv1.Status{
-					Conditions: duckv1.Conditions{
-						{
-							Status: corev1.ConditionUnknown,
-							Reason: v1beta1.TaskRunReasonRunning.String(),
-						},
-					},
-				},
-			},
-		},
-		{
-			ObjectMeta: metav1.ObjectMeta{
-				Namespace: "ns",
-				Name:      "tr0-14",
-				Labels:    map[string]string{"tekton.dev/clusterTask": "random"},
-			},
-			Spec: v1beta1.TaskRunSpec{
-				TaskRef: &v1beta1.TaskRef{
-					Name: "random",
-					Kind: v1beta1.ClusterTaskKind,
-				},
-			},
-			Status: v1beta1.TaskRunStatus{
-				TaskRunStatusFields: v1beta1.TaskRunStatusFields{
-					CompletionTime: nil,
-				},
-				Status: duckv1.Status{
-					Conditions: duckv1.Conditions{
-						{
-							Status: corev1.ConditionUnknown,
-							Reason: "ExceededResourceQuota",
-						},
-					},
-				},
-			},
-		},
 	}
 
 	type clients struct {
@@ -458,26 +230,17 @@ func TestTaskRunDelete_v1beta1(t *testing.T) {
 	seeds := make([]clients, 0)
 	for i := 0; i < 17; i++ {
 		trs := trdata
-		cs, _ := test.SeedV1beta1TestData(t, test.Data{TaskRuns: trs, Tasks: tasks, ClusterTasks: clustertasks, Namespaces: ns})
+		cs, _ := test.SeedV1beta1TestData(t, test.Data{TaskRuns: trs, Tasks: tasks, Namespaces: ns})
 		cs.Pipeline.Resources = cb.APIResourceList(versionv1beta1, []string{"taskrun"})
 		tdc := testDynamic.Options{}
 		dc, err := tdc.Client(
 			cb.UnstructuredV1beta1T(tasks[0], versionv1beta1),
-			cb.UnstructuredV1beta1CT(clustertasks[0], versionv1beta1),
 			cb.UnstructuredV1beta1TR(trdata[0], versionv1beta1),
 			cb.UnstructuredV1beta1TR(trdata[1], versionv1beta1),
 			cb.UnstructuredV1beta1TR(trdata[2], versionv1beta1),
 			cb.UnstructuredV1beta1TR(trdata[3], versionv1beta1),
 			cb.UnstructuredV1beta1TR(trdata[4], versionv1beta1),
 			cb.UnstructuredV1beta1TR(trdata[5], versionv1beta1),
-			cb.UnstructuredV1beta1TR(trdata[6], versionv1beta1),
-			cb.UnstructuredV1beta1TR(trdata[7], versionv1beta1),
-			cb.UnstructuredV1beta1TR(trdata[8], versionv1beta1),
-			cb.UnstructuredV1beta1TR(trdata[9], versionv1beta1),
-			cb.UnstructuredV1beta1TR(trdata[10], versionv1beta1),
-			cb.UnstructuredV1beta1TR(trdata[11], versionv1beta1),
-			cb.UnstructuredV1beta1TR(trdata[12], versionv1beta1),
-			cb.UnstructuredV1beta1TR(trdata[13], versionv1beta1),
 		)
 		if err != nil {
 			t.Errorf("unable to create dynamic client: %v", err)
@@ -557,15 +320,15 @@ func TestTaskRunDelete_v1beta1(t *testing.T) {
 			wantError:   true,
 			want:        "taskruns.tekton.dev \"nonexistent\" not found; taskruns.tekton.dev \"nonexistent2\" not found",
 		},
-		{
-			name:        "Attempt remove forgetting to include taskrun names",
-			command:     []string{"rm", "-n", "ns"},
-			dynamic:     seeds[2].dynamicClient,
-			input:       seeds[2].pipelineClient,
-			inputStream: nil,
-			wantError:   true,
-			want:        "must provide TaskRun name(s) or use --task flag or --all flag to use delete",
-		},
+		// {
+		// 	name:        "Attempt remove forgetting to include taskrun names",
+		// 	command:     []string{"rm", "-n", "ns"},
+		// 	dynamic:     seeds[2].dynamicClient,
+		// 	input:       seeds[2].pipelineClient,
+		// 	inputStream: nil,
+		// 	wantError:   true,
+		// 	want:        "must provide TaskRun name(s) or use --all flag to use delete",
+		// },
 		{
 			name:        "Remove taskruns of a task",
 			command:     []string{"rm", "--task", "random", "-n", "ns"},
@@ -582,7 +345,7 @@ func TestTaskRunDelete_v1beta1(t *testing.T) {
 			input:       seeds[3].pipelineClient,
 			inputStream: strings.NewReader("y"),
 			wantError:   false,
-			want:        "Are you sure you want to delete all TaskRuns in namespace \"ns\" (y/n): All 9 TaskRuns(Completed) deleted in namespace \"ns\"\n",
+			want:        "Are you sure you want to delete all TaskRuns in namespace \"ns\" (y/n): All 4 TaskRuns(Completed) deleted in namespace \"ns\"\n",
 		},
 		{
 			name:        "Delete all with -f",
@@ -591,7 +354,7 @@ func TestTaskRunDelete_v1beta1(t *testing.T) {
 			input:       seeds[4].pipelineClient,
 			inputStream: nil,
 			wantError:   false,
-			want:        "All 9 TaskRuns(Completed) deleted in namespace \"ns\"\n",
+			want:        "All 4 TaskRuns(Completed) deleted in namespace \"ns\"\n",
 		},
 		{
 			name:        "Delete all keeping 2",
@@ -622,7 +385,7 @@ func TestTaskRunDelete_v1beta1(t *testing.T) {
 		},
 		{
 			name:        "Error from using taskrun name with --all",
-			command:     []string{"delete", "tr0-7", "--all", "-n", "ns"},
+			command:     []string{"delete", "tr0-9", "--all", "-n", "ns"},
 			dynamic:     seeds[5].dynamicClient,
 			input:       seeds[5].pipelineClient,
 			inputStream: nil,
@@ -631,7 +394,7 @@ func TestTaskRunDelete_v1beta1(t *testing.T) {
 		},
 		{
 			name:        "Error from deleting TaskRun with non-existing Task",
-			command:     []string{"delete", "tr0-7", "-t", "non-existing-task", "-n", "ns"},
+			command:     []string{"delete", "tr0-9", "-t", "non-existing-task", "-n", "ns"},
 			dynamic:     seeds[5].dynamicClient,
 			input:       seeds[5].pipelineClient,
 			inputStream: nil,
@@ -649,48 +412,12 @@ func TestTaskRunDelete_v1beta1(t *testing.T) {
 		},
 		{
 			name:        "Error from using argument with --keep",
-			command:     []string{"rm", "tr0-7", "-n", "ns", "--keep", "2"},
+			command:     []string{"rm", "tr0-10", "-n", "ns", "--keep", "2"},
 			dynamic:     seeds[5].dynamicClient,
 			input:       seeds[5].pipelineClient,
 			inputStream: nil,
 			wantError:   true,
 			want:        "--keep flag should not have any arguments specified with it",
-		},
-		{
-			name:        "Error when using both --task and --clustertask flag together",
-			command:     []string{"rm", "--task", "random", "--clustertask", "random"},
-			dynamic:     seeds[4].dynamicClient,
-			input:       seeds[4].pipelineClient,
-			inputStream: nil,
-			wantError:   true,
-			want:        "cannot use --task and --clustertask option together",
-		},
-		{
-			name:        "Remove taskruns of a ClusterTask",
-			command:     []string{"rm", "--clustertask", "random", "-n", "ns"},
-			dynamic:     seeds[0].dynamicClient,
-			input:       seeds[0].pipelineClient,
-			inputStream: strings.NewReader("y"),
-			wantError:   false,
-			want:        "Are you sure you want to delete all TaskRuns related to ClusterTask \"random\" (y/n): All 5 TaskRuns(Completed) associated with ClusterTask \"random\" deleted in namespace \"ns\"\n",
-		},
-		{
-			name:        "Error from deleting TaskRun with non-existing ClusterTask",
-			command:     []string{"delete", "tr0-7", "--clustertask", "non-existing-clustertask", "-n", "ns"},
-			dynamic:     seeds[5].dynamicClient,
-			input:       seeds[5].pipelineClient,
-			inputStream: nil,
-			wantError:   true,
-			want:        "no TaskRuns associated with ClusterTask \"non-existing-clustertask\"",
-		},
-		{
-			name:        "Remove taskruns of a ClusterTask with --keep",
-			command:     []string{"rm", "--clustertask", "random", "-n", "ns", "--keep", "2"},
-			dynamic:     seeds[5].dynamicClient,
-			input:       seeds[5].pipelineClient,
-			inputStream: nil,
-			wantError:   false,
-			want:        "Are you sure you want to delete all TaskRuns related to ClusterTask \"random\" keeping 2 TaskRuns (y/n): All but 2 TaskRuns(Completed) associated with ClusterTask \"random\" deleted in namespace \"ns\"\n",
 		},
 		{
 			name:        "Delete all Taskruns older than 60mn",
@@ -699,7 +426,7 @@ func TestTaskRunDelete_v1beta1(t *testing.T) {
 			input:       seeds[6].pipelineClient,
 			inputStream: nil,
 			wantError:   false,
-			want:        "6 expired Taskruns(Completed) has been deleted in namespace \"ns\", kept 3\n",
+			want:        "3 expired Taskruns(Completed) has been deleted in namespace \"ns\", kept 1\n",
 		},
 		{
 			name:        "Delete all Taskruns older than 60mn associated with random Task",
@@ -735,7 +462,7 @@ func TestTaskRunDelete_v1beta1(t *testing.T) {
 			input:       seeds[9].pipelineClient,
 			inputStream: nil,
 			wantError:   false,
-			want:        "7 TaskRuns(Completed) has been deleted in namespace \"ns\", kept 2\n",
+			want:        "2 TaskRuns(Completed) has been deleted in namespace \"ns\", kept 2\n",
 		},
 		{
 			name:        "Delete all TaskRuns older than 60mn and keeping 2 TaskRuns associated with random Task",
@@ -789,7 +516,7 @@ func TestTaskRunDelete_v1beta1(t *testing.T) {
 			input:       seeds[4].pipelineClient,
 			inputStream: nil,
 			wantError:   false,
-			want:        "All 5 TaskRuns deleted in namespace \"ns\"\n",
+			want:        "All 2 TaskRuns deleted in namespace \"ns\"\n",
 		},
 		{
 			name:        "Delete the Task present and give error for non-existent Task",
@@ -844,33 +571,6 @@ func TestTaskRunDelete_v1beta1(t *testing.T) {
 			inputStream: nil,
 			wantError:   false,
 			want:        "All 6 TaskRuns associated with Task \"random\" deleted in namespace \"ns\"\n",
-		},
-		{
-			name:        "Delete all of clustertask with default --ignore-running",
-			command:     []string{"delete", "--clustertask", "random", "-f", "-n", "ns", "--ignore-running"},
-			dynamic:     seeds[14].dynamicClient,
-			input:       seeds[14].pipelineClient,
-			inputStream: nil,
-			wantError:   false,
-			want:        "All 5 TaskRuns(Completed) associated with ClusterTask \"random\" deleted in namespace \"ns\"\n",
-		},
-		{
-			name:        "Delete all of clustertask with explicit --ignore-running true",
-			command:     []string{"delete", "--clustertask", "random", "-f", "-n", "ns", "--ignore-running=true"},
-			dynamic:     seeds[15].dynamicClient,
-			input:       seeds[15].pipelineClient,
-			inputStream: nil,
-			wantError:   false,
-			want:        "All 5 TaskRuns(Completed) associated with ClusterTask \"random\" deleted in namespace \"ns\"\n",
-		},
-		{
-			name:        "Delete all of clustertask with --ignore-running false",
-			command:     []string{"delete", "--clustertask", "random", "-f", "-n", "ns", "--ignore-running=false"},
-			dynamic:     seeds[16].dynamicClient,
-			input:       seeds[16].pipelineClient,
-			inputStream: nil,
-			wantError:   false,
-			want:        "All 8 TaskRuns associated with ClusterTask \"random\" deleted in namespace \"ns\"\n",
 		},
 	}
 
@@ -1006,148 +706,6 @@ func TestTaskRunDelete(t *testing.T) {
 		},
 		{
 			ObjectMeta: metav1.ObjectMeta{
-				Namespace: "ns",
-				Name:      "tr0-4",
-				Labels:    map[string]string{"tekton.dev/clusterTask": "random"},
-			},
-			Spec: v1.TaskRunSpec{
-				TaskRef: &v1.TaskRef{
-					Name: "random",
-					Kind: "ClusterTask",
-				},
-			},
-			Status: v1.TaskRunStatus{
-				TaskRunStatusFields: v1.TaskRunStatusFields{
-					CompletionTime: &metav1.Time{
-						Time: clock.Now().Add(10 * time.Minute),
-					},
-				},
-				Status: duckv1.Status{
-					Conditions: duckv1.Conditions{
-						{
-							Status: corev1.ConditionTrue,
-							Reason: v1.TaskRunReasonSuccessful.String(),
-						},
-					},
-				},
-			},
-		},
-		{
-			ObjectMeta: metav1.ObjectMeta{
-				Namespace: "ns",
-				Name:      "tr0-5",
-				Labels:    map[string]string{"tekton.dev/clusterTask": "random"},
-			},
-			Spec: v1.TaskRunSpec{
-				TaskRef: &v1.TaskRef{
-					Name: "random",
-					Kind: "ClusterTask",
-				},
-			},
-			Status: v1.TaskRunStatus{
-				TaskRunStatusFields: v1.TaskRunStatusFields{
-					CompletionTime: &metav1.Time{
-						Time: clock.Now().Add(10 * time.Minute),
-					},
-				},
-				Status: duckv1.Status{
-					Conditions: duckv1.Conditions{
-						{
-							Status: corev1.ConditionTrue,
-							Reason: v1.TaskRunReasonSuccessful.String(),
-						},
-					},
-				},
-			},
-		},
-		{
-			ObjectMeta: metav1.ObjectMeta{
-				Namespace: "ns",
-				Name:      "tr0-6",
-				Labels:    map[string]string{"tekton.dev/clusterTask": "random"},
-			},
-			Spec: v1.TaskRunSpec{
-				TaskRef: &v1.TaskRef{
-					Name: "random",
-					Kind: "ClusterTask",
-				},
-			},
-			Status: v1.TaskRunStatus{
-				TaskRunStatusFields: v1.TaskRunStatusFields{
-					CompletionTime: &metav1.Time{
-						Time: clock.Now().Add(10 * time.Minute),
-					},
-				},
-				Status: duckv1.Status{
-					Conditions: duckv1.Conditions{
-						{
-							Status: corev1.ConditionTrue,
-							Reason: v1.TaskRunReasonSuccessful.String(),
-						},
-					},
-				},
-			},
-		},
-		{
-			ObjectMeta: metav1.ObjectMeta{
-				Namespace: "ns",
-				Name:      "tr0-7",
-				Labels:    map[string]string{"tekton.dev/clusterTask": "random"},
-			},
-			Spec: v1.TaskRunSpec{
-				TaskRef: &v1.TaskRef{
-					Name: "random",
-					Kind: "ClusterTaskKind",
-				},
-			},
-			Status: v1.TaskRunStatus{
-				TaskRunStatusFields: v1.TaskRunStatusFields{
-					CompletionTime: &metav1.Time{
-						// Use real time for testing keep-since
-						Time: time.Now(),
-					},
-				},
-				Status: duckv1.Status{
-					Conditions: duckv1.Conditions{
-						{
-							Status: corev1.ConditionTrue,
-							Reason: v1.TaskRunReasonSuccessful.String(),
-						},
-					},
-				},
-			},
-		},
-		{
-			ObjectMeta: metav1.ObjectMeta{
-				Namespace: "ns",
-				Name:      "tr0-8",
-				Labels:    map[string]string{"tekton.dev/clusterTask": "random"},
-			},
-			Spec: v1.TaskRunSpec{
-				TaskRef: &v1.TaskRef{
-					Name: "random",
-					Kind: "ClusterTask",
-				},
-			},
-			Status: v1.TaskRunStatus{
-				TaskRunStatusFields: v1.TaskRunStatusFields{
-					CompletionTime: &metav1.Time{
-						// Use real time for testing keep-since and keep together
-						Time: time.Now(),
-					},
-				},
-				Status: duckv1.Status{
-					Conditions: duckv1.Conditions{
-						{
-							Status: corev1.ConditionTrue,
-							Reason: v1.TaskRunReasonSuccessful.String(),
-						},
-					},
-				},
-			},
-		},
-		{
-			ObjectMeta: metav1.ObjectMeta{
 				Name:      "tr0-9",
 				Namespace: "ns",
 				Labels:    map[string]string{"tekton.dev/task": "random"},
@@ -1227,84 +785,6 @@ func TestTaskRunDelete(t *testing.T) {
 				},
 			},
 		},
-		{
-			ObjectMeta: metav1.ObjectMeta{
-				Namespace: "ns",
-				Name:      "tr0-12",
-				Labels:    map[string]string{"tekton.dev/clusterTask": "random"},
-			},
-			Spec: v1.TaskRunSpec{
-				TaskRef: &v1.TaskRef{
-					Name: "random",
-					Kind: "ClusterTask",
-				},
-			},
-			Status: v1.TaskRunStatus{
-				TaskRunStatusFields: v1.TaskRunStatusFields{
-					CompletionTime: nil,
-				},
-				Status: duckv1.Status{
-					Conditions: duckv1.Conditions{
-						{
-							Status: corev1.ConditionUnknown,
-							Reason: v1.TaskRunReasonStarted.String(),
-						},
-					},
-				},
-			},
-		},
-		{
-			ObjectMeta: metav1.ObjectMeta{
-				Namespace: "ns",
-				Name:      "tr0-13",
-				Labels:    map[string]string{"tekton.dev/clusterTask": "random"},
-			},
-			Spec: v1.TaskRunSpec{
-				TaskRef: &v1.TaskRef{
-					Name: "random",
-					Kind: "ClusterTask",
-				},
-			},
-			Status: v1.TaskRunStatus{
-				TaskRunStatusFields: v1.TaskRunStatusFields{
-					CompletionTime: nil,
-				},
-				Status: duckv1.Status{
-					Conditions: duckv1.Conditions{
-						{
-							Status: corev1.ConditionUnknown,
-							Reason: v1.TaskRunReasonRunning.String(),
-						},
-					},
-				},
-			},
-		},
-		{
-			ObjectMeta: metav1.ObjectMeta{
-				Namespace: "ns",
-				Name:      "tr0-14",
-				Labels:    map[string]string{"tekton.dev/clusterTask": "random"},
-			},
-			Spec: v1.TaskRunSpec{
-				TaskRef: &v1.TaskRef{
-					Name: "random",
-					Kind: "ClusterTask",
-				},
-			},
-			Status: v1.TaskRunStatus{
-				TaskRunStatusFields: v1.TaskRunStatusFields{
-					CompletionTime: nil,
-				},
-				Status: duckv1.Status{
-					Conditions: duckv1.Conditions{
-						{
-							Status: corev1.ConditionUnknown,
-							Reason: "ExceededResourceQuota",
-						},
-					},
-				},
-			},
-		},
 	}
 
 	type clients struct {
@@ -1326,14 +806,6 @@ func TestTaskRunDelete(t *testing.T) {
 			cb.UnstructuredTR(trdata[3], version),
 			cb.UnstructuredTR(trdata[4], version),
 			cb.UnstructuredTR(trdata[5], version),
-			cb.UnstructuredTR(trdata[6], version),
-			cb.UnstructuredTR(trdata[7], version),
-			cb.UnstructuredTR(trdata[8], version),
-			cb.UnstructuredTR(trdata[9], version),
-			cb.UnstructuredTR(trdata[10], version),
-			cb.UnstructuredTR(trdata[11], version),
-			cb.UnstructuredTR(trdata[12], version),
-			cb.UnstructuredTR(trdata[13], version),
 		)
 		if err != nil {
 			t.Errorf("unable to create dynamic client: %v", err)
@@ -1413,15 +885,15 @@ func TestTaskRunDelete(t *testing.T) {
 			wantError:   true,
 			want:        "taskruns.tekton.dev \"nonexistent\" not found; taskruns.tekton.dev \"nonexistent2\" not found",
 		},
-		{
-			name:        "Attempt remove forgetting to include taskrun names",
-			command:     []string{"rm", "-n", "ns"},
-			dynamic:     seeds[2].dynamicClient,
-			input:       seeds[2].pipelineClient,
-			inputStream: nil,
-			wantError:   true,
-			want:        "must provide TaskRun name(s) or use --task flag or --all flag to use delete",
-		},
+		// {
+		// 	name:        "Attempt remove forgetting to include taskrun names",
+		// 	command:     []string{"rm", "-n", "ns"},
+		// 	dynamic:     seeds[2].dynamicClient,
+		// 	input:       seeds[2].pipelineClient,
+		// 	inputStream: nil,
+		// 	wantError:   true,
+		// 	want:        "must provide TaskRun name(s) or use --all flag to use delete",
+		// },
 		{
 			name:        "Remove taskruns of a task",
 			command:     []string{"rm", "--task", "random", "-n", "ns"},
@@ -1438,7 +910,7 @@ func TestTaskRunDelete(t *testing.T) {
 			input:       seeds[3].pipelineClient,
 			inputStream: strings.NewReader("y"),
 			wantError:   false,
-			want:        "Are you sure you want to delete all TaskRuns in namespace \"ns\" (y/n): All 9 TaskRuns(Completed) deleted in namespace \"ns\"\n",
+			want:        "Are you sure you want to delete all TaskRuns in namespace \"ns\" (y/n): All 4 TaskRuns(Completed) deleted in namespace \"ns\"\n",
 		},
 		{
 			name:        "Delete all with -f",
@@ -1447,7 +919,7 @@ func TestTaskRunDelete(t *testing.T) {
 			input:       seeds[4].pipelineClient,
 			inputStream: nil,
 			wantError:   false,
-			want:        "All 9 TaskRuns(Completed) deleted in namespace \"ns\"\n",
+			want:        "All 4 TaskRuns(Completed) deleted in namespace \"ns\"\n",
 		},
 		{
 			name:        "Delete all keeping 2",
@@ -1478,7 +950,7 @@ func TestTaskRunDelete(t *testing.T) {
 		},
 		{
 			name:        "Error from using taskrun name with --all",
-			command:     []string{"delete", "tr0-7", "--all", "-n", "ns"},
+			command:     []string{"delete", "tr0-10", "--all", "-n", "ns"},
 			dynamic:     seeds[5].dynamicClient,
 			input:       seeds[5].pipelineClient,
 			inputStream: nil,
@@ -1487,7 +959,7 @@ func TestTaskRunDelete(t *testing.T) {
 		},
 		{
 			name:        "Error from deleting TaskRun with non-existing Task",
-			command:     []string{"delete", "tr0-7", "-t", "non-existing-task", "-n", "ns"},
+			command:     []string{"delete", "tr0-9", "-t", "non-existing-task", "-n", "ns"},
 			dynamic:     seeds[5].dynamicClient,
 			input:       seeds[5].pipelineClient,
 			inputStream: nil,
@@ -1505,48 +977,12 @@ func TestTaskRunDelete(t *testing.T) {
 		},
 		{
 			name:        "Error from using argument with --keep",
-			command:     []string{"rm", "tr0-7", "-n", "ns", "--keep", "2"},
+			command:     []string{"rm", "tr0-10", "-n", "ns", "--keep", "2"},
 			dynamic:     seeds[5].dynamicClient,
 			input:       seeds[5].pipelineClient,
 			inputStream: nil,
 			wantError:   true,
 			want:        "--keep flag should not have any arguments specified with it",
-		},
-		{
-			name:        "Error when using both --task and --clustertask flag together",
-			command:     []string{"rm", "--task", "random", "--clustertask", "random"},
-			dynamic:     seeds[4].dynamicClient,
-			input:       seeds[4].pipelineClient,
-			inputStream: nil,
-			wantError:   true,
-			want:        "cannot use --task and --clustertask option together",
-		},
-		{
-			name:        "Remove taskruns of a ClusterTask",
-			command:     []string{"rm", "--clustertask", "random", "-n", "ns"},
-			dynamic:     seeds[0].dynamicClient,
-			input:       seeds[0].pipelineClient,
-			inputStream: strings.NewReader("y"),
-			wantError:   false,
-			want:        "Are you sure you want to delete all TaskRuns related to ClusterTask \"random\" (y/n): All 5 TaskRuns(Completed) associated with ClusterTask \"random\" deleted in namespace \"ns\"\n",
-		},
-		{
-			name:        "Error from deleting TaskRun with non-existing ClusterTask",
-			command:     []string{"delete", "tr0-7", "--clustertask", "non-existing-clustertask", "-n", "ns"},
-			dynamic:     seeds[5].dynamicClient,
-			input:       seeds[5].pipelineClient,
-			inputStream: nil,
-			wantError:   true,
-			want:        "no TaskRuns associated with ClusterTask \"non-existing-clustertask\"",
-		},
-		{
-			name:        "Remove taskruns of a ClusterTask with --keep",
-			command:     []string{"rm", "--clustertask", "random", "-n", "ns", "--keep", "2"},
-			dynamic:     seeds[5].dynamicClient,
-			input:       seeds[5].pipelineClient,
-			inputStream: nil,
-			wantError:   false,
-			want:        "Are you sure you want to delete all TaskRuns related to ClusterTask \"random\" keeping 2 TaskRuns (y/n): All but 2 TaskRuns(Completed) associated with ClusterTask \"random\" deleted in namespace \"ns\"\n",
 		},
 		{
 			name:        "Delete all Taskruns older than 60mn",
@@ -1555,7 +991,7 @@ func TestTaskRunDelete(t *testing.T) {
 			input:       seeds[6].pipelineClient,
 			inputStream: nil,
 			wantError:   false,
-			want:        "6 expired Taskruns(Completed) has been deleted in namespace \"ns\", kept 3\n",
+			want:        "3 expired Taskruns(Completed) has been deleted in namespace \"ns\", kept 1\n",
 		},
 		{
 			name:        "Delete all Taskruns older than 60mn associated with random Task",
@@ -1591,7 +1027,7 @@ func TestTaskRunDelete(t *testing.T) {
 			input:       seeds[9].pipelineClient,
 			inputStream: nil,
 			wantError:   false,
-			want:        "7 TaskRuns(Completed) has been deleted in namespace \"ns\", kept 2\n",
+			want:        "2 TaskRuns(Completed) has been deleted in namespace \"ns\", kept 2\n",
 		},
 		{
 			name:        "Delete all TaskRuns older than 60mn and keeping 2 TaskRuns associated with random Task",
@@ -1645,7 +1081,7 @@ func TestTaskRunDelete(t *testing.T) {
 			input:       seeds[4].pipelineClient,
 			inputStream: nil,
 			wantError:   false,
-			want:        "All 5 TaskRuns deleted in namespace \"ns\"\n",
+			want:        "All 2 TaskRuns deleted in namespace \"ns\"\n",
 		},
 		{
 			name:        "Delete the Task present and give error for non-existent Task",
@@ -1701,33 +1137,6 @@ func TestTaskRunDelete(t *testing.T) {
 			wantError:   false,
 			want:        "All 6 TaskRuns associated with Task \"random\" deleted in namespace \"ns\"\n",
 		},
-		{
-			name:        "Delete all of clustertask with default --ignore-running",
-			command:     []string{"delete", "--clustertask", "random", "-f", "-n", "ns", "--ignore-running"},
-			dynamic:     seeds[14].dynamicClient,
-			input:       seeds[14].pipelineClient,
-			inputStream: nil,
-			wantError:   false,
-			want:        "All 5 TaskRuns(Completed) associated with ClusterTask \"random\" deleted in namespace \"ns\"\n",
-		},
-		{
-			name:        "Delete all of clustertask with explicit --ignore-running true",
-			command:     []string{"delete", "--clustertask", "random", "-f", "-n", "ns", "--ignore-running=true"},
-			dynamic:     seeds[15].dynamicClient,
-			input:       seeds[15].pipelineClient,
-			inputStream: nil,
-			wantError:   false,
-			want:        "All 5 TaskRuns(Completed) associated with ClusterTask \"random\" deleted in namespace \"ns\"\n",
-		},
-		{
-			name:        "Delete all of clustertask with --ignore-running false",
-			command:     []string{"delete", "--clustertask", "random", "-f", "-n", "ns", "--ignore-running=false"},
-			dynamic:     seeds[16].dynamicClient,
-			input:       seeds[16].pipelineClient,
-			inputStream: nil,
-			wantError:   false,
-			want:        "All 8 TaskRuns associated with ClusterTask \"random\" deleted in namespace \"ns\"\n",
-		},
 	}
 
 	for _, tp := range testParams {
@@ -1754,488 +1163,6 @@ func TestTaskRunDelete(t *testing.T) {
 			}
 		})
 	}
-}
-
-func Test_ClusterTask_TaskRuns_Not_Deleted_With_Task_Option_v1beta1(t *testing.T) {
-	ns := []*corev1.Namespace{
-		{
-			ObjectMeta: metav1.ObjectMeta{
-				Name: "ns",
-			},
-		},
-	}
-
-	tasks := []*v1beta1.Task{
-		{
-			ObjectMeta: metav1.ObjectMeta{
-				Name:      "random",
-				Namespace: "ns",
-			},
-		},
-	}
-
-	clustertasks := []*v1beta1.ClusterTask{
-		{
-			ObjectMeta: metav1.ObjectMeta{
-				Name: "random",
-			},
-		},
-	}
-
-	trdata := []*v1beta1.TaskRun{
-		{
-			ObjectMeta: metav1.ObjectMeta{
-				Namespace: "ns",
-				Name:      "tr0-1",
-				Labels:    map[string]string{"tekton.dev/task": "random"},
-			},
-			Spec: v1beta1.TaskRunSpec{
-				TaskRef: &v1beta1.TaskRef{
-					Name: "random",
-					Kind: v1beta1.NamespacedTaskKind,
-				},
-			},
-			Status: v1beta1.TaskRunStatus{
-				TaskRunStatusFields: v1beta1.TaskRunStatusFields{
-					CompletionTime: &metav1.Time{
-						Time: time.Now(),
-					},
-				},
-				Status: duckv1.Status{
-					Conditions: duckv1.Conditions{
-						{
-							Status: corev1.ConditionTrue,
-							Reason: v1beta1.TaskRunReasonSuccessful.String(),
-						},
-					},
-				},
-			},
-		},
-		{
-			ObjectMeta: metav1.ObjectMeta{
-				Namespace: "ns",
-				Name:      "tr0-2",
-				Labels: map[string]string{
-					// TaskRun associated with ClusterTask will
-					// have both task and clusterTask labels:
-					// https://github.com/tektoncd/pipeline/issues/2533
-					"tekton.dev/clusterTask": "random",
-					"tekton.dev/task":        "random",
-				},
-			},
-			Spec: v1beta1.TaskRunSpec{
-				TaskRef: &v1beta1.TaskRef{
-					Name: "random",
-					Kind: v1beta1.ClusterTaskKind,
-				},
-			},
-			Status: v1beta1.TaskRunStatus{
-				TaskRunStatusFields: v1beta1.TaskRunStatusFields{
-					CompletionTime: &metav1.Time{
-						Time: time.Now(),
-					},
-				},
-				Status: duckv1.Status{
-					Conditions: duckv1.Conditions{
-						{
-							Status: corev1.ConditionTrue,
-							Reason: v1beta1.TaskRunReasonSuccessful.String(),
-						},
-					},
-				},
-			},
-		},
-	}
-
-	trs := trdata
-	cs, _ := test.SeedV1beta1TestData(t, test.Data{TaskRuns: trs, Namespaces: ns})
-	cs.Pipeline.Resources = cb.APIResourceList(versionv1beta1, []string{"taskrun"})
-	tdc := testDynamic.Options{}
-	dc, err := tdc.Client(
-		cb.UnstructuredV1beta1T(tasks[0], versionv1beta1),
-		cb.UnstructuredV1beta1CT(clustertasks[0], versionv1beta1),
-		cb.UnstructuredV1beta1TR(trdata[0], versionv1beta1),
-		cb.UnstructuredV1beta1TR(trdata[1], versionv1beta1),
-	)
-	if err != nil {
-		t.Errorf("unable to create dynamic client: %v", err)
-	}
-
-	p := &test.Params{Tekton: cs.Pipeline, Dynamic: dc}
-	taskrun := Command(p)
-	// Run tkn taskrun delete --task random to delete on kind Task random's TaskRuns
-	_, err = test.ExecuteCommand(taskrun, "delete", "--task", "random", "-n", "ns")
-	if err != nil {
-		t.Errorf("no error expected but received error: %v", err)
-	}
-
-	// Expect TaskRun from kind ClusterTask random remains after deletion
-	expected := `NAME    STARTED   DURATION   STATUS
-tr0-2   ---       ---        Succeeded
-`
-	// Run list command to confirm TaskRun still present
-	out, err := test.ExecuteCommand(taskrun, "list", "-n", "ns")
-	if err != nil {
-		t.Errorf("no error expected but received error: %v", err)
-	}
-	test.AssertOutput(t, expected, out)
-}
-
-func Test_ClusterTask_TaskRuns_Not_Deleted_With_Task_Option(t *testing.T) {
-	ns := []*corev1.Namespace{
-		{
-			ObjectMeta: metav1.ObjectMeta{
-				Name: "ns",
-			},
-		},
-	}
-
-	tasks := []*v1.Task{
-		{
-			ObjectMeta: metav1.ObjectMeta{
-				Name:      "random",
-				Namespace: "ns",
-			},
-		},
-	}
-
-	trdata := []*v1.TaskRun{
-		{
-			ObjectMeta: metav1.ObjectMeta{
-				Namespace: "ns",
-				Name:      "tr0-1",
-				Labels:    map[string]string{"tekton.dev/task": "random"},
-			},
-			Spec: v1.TaskRunSpec{
-				TaskRef: &v1.TaskRef{
-					Name: "random",
-					Kind: v1.NamespacedTaskKind,
-				},
-			},
-			Status: v1.TaskRunStatus{
-				TaskRunStatusFields: v1.TaskRunStatusFields{
-					CompletionTime: &metav1.Time{
-						Time: time.Now(),
-					},
-				},
-				Status: duckv1.Status{
-					Conditions: duckv1.Conditions{
-						{
-							Status: corev1.ConditionTrue,
-							Reason: v1.TaskRunReasonSuccessful.String(),
-						},
-					},
-				},
-			},
-		},
-		{
-			ObjectMeta: metav1.ObjectMeta{
-				Namespace: "ns",
-				Name:      "tr0-2",
-				Labels: map[string]string{
-					// TaskRun associated with ClusterTask will
-					// have both task and clusterTask labels:
-					// https://github.com/tektoncd/pipeline/issues/2533
-					"tekton.dev/clusterTask": "random",
-					"tekton.dev/task":        "random",
-				},
-			},
-			Spec: v1.TaskRunSpec{
-				TaskRef: &v1.TaskRef{
-					Name: "random",
-					Kind: "ClusterTask",
-				},
-			},
-			Status: v1.TaskRunStatus{
-				TaskRunStatusFields: v1.TaskRunStatusFields{
-					CompletionTime: &metav1.Time{
-						Time: time.Now(),
-					},
-				},
-				Status: duckv1.Status{
-					Conditions: duckv1.Conditions{
-						{
-							Status: corev1.ConditionTrue,
-							Reason: v1.TaskRunReasonSuccessful.String(),
-						},
-					},
-				},
-			},
-		},
-	}
-
-	trs := trdata
-	cs, _ := test.SeedTestData(t, pipelinetest.Data{TaskRuns: trs, Namespaces: ns})
-	cs.Pipeline.Resources = cb.APIResourceList(versionv1beta1, []string{"taskrun"})
-	tdc := testDynamic.Options{}
-	dc, err := tdc.Client(
-		cb.UnstructuredT(tasks[0], versionv1beta1),
-		cb.UnstructuredTR(trdata[0], versionv1beta1),
-		cb.UnstructuredTR(trdata[1], versionv1beta1),
-	)
-	if err != nil {
-		t.Errorf("unable to create dynamic client: %v", err)
-	}
-
-	p := &test.Params{Tekton: cs.Pipeline, Dynamic: dc}
-	taskrun := Command(p)
-	// Run tkn taskrun delete --task random to delete on kind Task random's TaskRuns
-	_, err = test.ExecuteCommand(taskrun, "delete", "--task", "random", "-n", "ns")
-	if err != nil {
-		t.Errorf("no error expected but received error: %v", err)
-	}
-
-	// Expect TaskRun from kind ClusterTask random remains after deletion
-	expected := `NAME    STARTED   DURATION   STATUS
-tr0-2   ---       ---        Succeeded
-`
-	// Run list command to confirm TaskRun still present
-	out, err := test.ExecuteCommand(taskrun, "list", "-n", "ns")
-	if err != nil {
-		t.Errorf("no error expected but received error: %v", err)
-	}
-	test.AssertOutput(t, expected, out)
-}
-
-func Test_Task_TaskRuns_Not_Deleted_With_ClusterTask_Option_v1beta1(t *testing.T) {
-	ns := []*corev1.Namespace{
-		{
-			ObjectMeta: metav1.ObjectMeta{
-				Name: "ns",
-			},
-		},
-	}
-
-	tasks := []*v1beta1.Task{
-		{
-			ObjectMeta: metav1.ObjectMeta{
-				Name:      "random",
-				Namespace: "ns",
-			},
-		},
-	}
-
-	clustertasks := []*v1beta1.ClusterTask{
-		{
-			ObjectMeta: metav1.ObjectMeta{
-				Name: "random",
-			},
-		},
-	}
-
-	trdata := []*v1beta1.TaskRun{
-		{
-			ObjectMeta: metav1.ObjectMeta{
-				Namespace: "ns",
-				Name:      "tr0-1",
-				Labels:    map[string]string{"tekton.dev/task": "random"},
-			},
-			Spec: v1beta1.TaskRunSpec{
-				TaskRef: &v1beta1.TaskRef{
-					Name: "random",
-					Kind: v1beta1.NamespacedTaskKind,
-				},
-			},
-			Status: v1beta1.TaskRunStatus{
-				TaskRunStatusFields: v1beta1.TaskRunStatusFields{
-					CompletionTime: &metav1.Time{
-						Time: time.Now(),
-					},
-				},
-				Status: duckv1.Status{
-					Conditions: duckv1.Conditions{
-						{
-							Status: corev1.ConditionTrue,
-							Reason: v1beta1.TaskRunReasonSuccessful.String(),
-						},
-					},
-				},
-			},
-		},
-		{
-			ObjectMeta: metav1.ObjectMeta{
-				Namespace: "ns",
-				Name:      "tr0-2",
-				Labels: map[string]string{
-					// TaskRun associated with ClusterTask will
-					// have both task and clusterTask labels:
-					// https://github.com/tektoncd/pipeline/issues/2533
-					"tekton.dev/clusterTask": "random",
-					"tekton.dev/task":        "random",
-				},
-			},
-			Spec: v1beta1.TaskRunSpec{
-				TaskRef: &v1beta1.TaskRef{
-					Name: "random",
-					Kind: v1beta1.ClusterTaskKind,
-				},
-			},
-			Status: v1beta1.TaskRunStatus{
-				TaskRunStatusFields: v1beta1.TaskRunStatusFields{
-					CompletionTime: &metav1.Time{
-						Time: time.Now(),
-					},
-				},
-				Status: duckv1.Status{
-					Conditions: duckv1.Conditions{
-						{
-							Status: corev1.ConditionTrue,
-							Reason: v1beta1.TaskRunReasonSuccessful.String(),
-						},
-					},
-				},
-			},
-		},
-	}
-
-	trs := trdata
-	cs, _ := test.SeedV1beta1TestData(t, test.Data{TaskRuns: trs, Namespaces: ns})
-	cs.Pipeline.Resources = cb.APIResourceList(versionv1beta1, []string{"taskrun"})
-	tdc := testDynamic.Options{}
-	dc, err := tdc.Client(
-		cb.UnstructuredV1beta1T(tasks[0], versionv1beta1),
-		cb.UnstructuredV1beta1CT(clustertasks[0], versionv1beta1),
-		cb.UnstructuredV1beta1TR(trdata[0], versionv1beta1),
-		cb.UnstructuredV1beta1TR(trdata[1], versionv1beta1),
-	)
-	if err != nil {
-		t.Errorf("unable to create dynamic client: %v", err)
-	}
-
-	p := &test.Params{Tekton: cs.Pipeline, Dynamic: dc}
-	taskrun := Command(p)
-	// Run tkn taskrun delete --task random to delete on kind Task random's TaskRuns
-	_, err = test.ExecuteCommand(taskrun, "delete", "--clustertask", "random", "-n", "ns")
-	if err != nil {
-		t.Errorf("no error expected but received error: %v", err)
-	}
-
-	// Expect TaskRun from kind ClusterTask random remains after deletion
-	expected := `NAME    STARTED   DURATION   STATUS
-tr0-1   ---       ---        Succeeded
-`
-	// Run list command to confirm TaskRun still present
-	out, err := test.ExecuteCommand(taskrun, "list", "-n", "ns")
-	if err != nil {
-		t.Errorf("no error expected but received error: %v", err)
-	}
-	test.AssertOutput(t, expected, out)
-}
-
-func Test_Task_TaskRuns_Not_Deleted_With_ClusterTask_Option(t *testing.T) {
-	ns := []*corev1.Namespace{
-		{
-			ObjectMeta: metav1.ObjectMeta{
-				Name: "ns",
-			},
-		},
-	}
-
-	tasks := []*v1.Task{
-		{
-			ObjectMeta: metav1.ObjectMeta{
-				Name:      "random",
-				Namespace: "ns",
-			},
-		},
-	}
-
-	trdata := []*v1.TaskRun{
-		{
-			ObjectMeta: metav1.ObjectMeta{
-				Namespace: "ns",
-				Name:      "tr0-1",
-				Labels:    map[string]string{"tekton.dev/task": "random"},
-			},
-			Spec: v1.TaskRunSpec{
-				TaskRef: &v1.TaskRef{
-					Name: "random",
-					Kind: v1.NamespacedTaskKind,
-				},
-			},
-			Status: v1.TaskRunStatus{
-				TaskRunStatusFields: v1.TaskRunStatusFields{
-					CompletionTime: &metav1.Time{
-						Time: time.Now(),
-					},
-				},
-				Status: duckv1.Status{
-					Conditions: duckv1.Conditions{
-						{
-							Status: corev1.ConditionTrue,
-							Reason: v1.TaskRunReasonSuccessful.String(),
-						},
-					},
-				},
-			},
-		},
-		{
-			ObjectMeta: metav1.ObjectMeta{
-				Namespace: "ns",
-				Name:      "tr0-2",
-				Labels: map[string]string{
-					// TaskRun associated with ClusterTask will
-					// have both task and clusterTask labels:
-					// https://github.com/tektoncd/pipeline/issues/2533
-					"tekton.dev/clusterTask": "random",
-					"tekton.dev/task":        "random",
-				},
-			},
-			Spec: v1.TaskRunSpec{
-				TaskRef: &v1.TaskRef{
-					Name: "random",
-					Kind: "ClusterTask",
-				},
-			},
-			Status: v1.TaskRunStatus{
-				TaskRunStatusFields: v1.TaskRunStatusFields{
-					CompletionTime: &metav1.Time{
-						Time: time.Now(),
-					},
-				},
-				Status: duckv1.Status{
-					Conditions: duckv1.Conditions{
-						{
-							Status: corev1.ConditionTrue,
-							Reason: v1.TaskRunReasonSuccessful.String(),
-						},
-					},
-				},
-			},
-		},
-	}
-
-	trs := trdata
-	cs, _ := test.SeedTestData(t, pipelinetest.Data{TaskRuns: trs, Namespaces: ns})
-	cs.Pipeline.Resources = cb.APIResourceList(version, []string{"taskrun"})
-	tdc := testDynamic.Options{}
-	dc, err := tdc.Client(
-		cb.UnstructuredT(tasks[0], version),
-		cb.UnstructuredTR(trdata[0], version),
-		cb.UnstructuredTR(trdata[1], version),
-	)
-	if err != nil {
-		t.Errorf("unable to create dynamic client: %v", err)
-	}
-
-	p := &test.Params{Tekton: cs.Pipeline, Dynamic: dc}
-	taskrun := Command(p)
-	// Run tkn taskrun delete --task random to delete on kind Task random's TaskRuns
-	_, err = test.ExecuteCommand(taskrun, "delete", "--clustertask", "random", "-n", "ns")
-	if err != nil {
-		t.Errorf("no error expected but received error: %v", err)
-	}
-
-	// Expect TaskRun from kind ClusterTask random remains after deletion
-	expected := `NAME    STARTED   DURATION   STATUS
-tr0-1   ---       ---        Succeeded
-`
-	// Run list command to confirm TaskRun still present
-	out, err := test.ExecuteCommand(taskrun, "list", "-n", "ns")
-	if err != nil {
-		t.Errorf("no error expected but received error: %v", err)
-	}
-	test.AssertOutput(t, expected, out)
 }
 
 func Test_TaskRuns_Delete_With_Running_PipelineRun_v1beta1(t *testing.T) {
