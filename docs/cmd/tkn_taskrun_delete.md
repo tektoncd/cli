@@ -30,7 +30,6 @@ or
 ```
       --all                           Delete all TaskRuns in a namespace (default: false)
       --allow-missing-template-keys   If true, ignore any errors in templates when a field or map key is missing in the template. Only applies to golang and jsonpath output formats. (default true)
-      --clustertask string            The name of a ClusterTask whose TaskRuns should be deleted (does not delete the ClusterTask)
   -f, --force                         Whether to force deletion (default: false)
   -h, --help                          help for delete
   -i, --ignore-running                ignore running TaskRun (default true)
