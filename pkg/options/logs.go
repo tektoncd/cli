@@ -100,8 +100,6 @@ func (opts *LogOptions) Ask(resource string, options []string) error {
 		opts.PipelineRunName = strings.Fields(ans)[0]
 	case ResourceNameTask:
 		opts.TaskName = ans
-	case ResourceNameClusterTask:
-		opts.ClusterTaskName = ans
 	case ResourceNameTaskRun:
 		opts.TaskrunName = strings.Fields(ans)[0]
 	}
@@ -161,8 +159,6 @@ func (opts *LogOptions) FuzzyAsk(resource string, options []string) error {
 		opts.PipelineRunName = strings.Fields(ans)[0]
 	case ResourceNameTask:
 		opts.TaskName = ans
-	case ResourceNameClusterTask:
-		opts.ClusterTaskName = ans
 	case ResourceNameTaskRun:
 		opts.TaskrunName = strings.Fields(ans)[0]
 	}

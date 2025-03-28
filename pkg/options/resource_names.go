@@ -5,7 +5,6 @@ const (
 	ResourceNamePipelineRun           = "pipelinerun"
 	ResourceNameTask                  = "task"
 	ResourceNameTaskRun               = "taskrun"
-	ResourceNameClusterTask           = "clustertask"
 	ResourceNameTriggerTemplate       = "triggertemplate"
 	ResourceNameTriggerBinding        = "triggerbinding"
 	ResourceNameClusterTriggerBinding = "clustertriggerbinding"

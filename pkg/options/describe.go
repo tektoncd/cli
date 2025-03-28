@@ -89,8 +89,6 @@ func (opts *DescribeOptions) Ask(resource string, options []string) error {
 		opts.PipelineName = ans
 	case ResourceNamePipelineRun:
 		opts.PipelineRunName = strings.Fields(ans)[0]
-	case ResourceNameClusterTask:
-		opts.ClusterTaskName = ans
 	case ResourceNameTask:
 		opts.TaskName = ans
 	case ResourceNameTaskRun:
