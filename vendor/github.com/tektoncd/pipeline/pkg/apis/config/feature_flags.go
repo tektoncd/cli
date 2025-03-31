@@ -17,13 +17,10 @@ limitations under the License.
 package config
 
 import (
-	"context"
 	"fmt"
 	"os"
 	"strconv"
 	"strings"
-
-	corev1 "k8s.io/api/core/v1"
 )
 
 const (
@@ -125,6 +122,7 @@ const (
 	awaitSidecarReadinessKey            = "await-sidecar-readiness"
 	requireGitSSHSecretKnownHostsKey    = "require-git-ssh-secret-known-hosts" //nolint:gosec
 	// enableTektonOCIBundles              = "enable-tekton-oci-bundles"
+
 	enableAPIFields                             = "enable-api-fields"
 	sendCloudEventsForRuns                      = "send-cloudevents-for-runs"
 	enforceNonfalsifiability                    = "enforce-nonfalsifiability"
@@ -187,36 +185,37 @@ var (
 // FeatureFlags holds the features configurations
 // +k8s:deepcopy-gen=true
 type FeatureFlags struct {
-	DisableAffinityAssistant         bool
-	DisableCredsInit                 bool
-	RunningInEnvWithInjectedSidecars bool
-	RequireGitSSHSecretKnownHosts    bool
+	DisableAffinityAssistant         bool `json:"disableAffinityAssistant,omitempty"`
+	DisableCredsInit                 bool `json:"disableCredsInit,omitempty"`
+	RunningInEnvWithInjectedSidecars bool `json:"runningInEnvWithInjectedSidecars,omitempty"`
+	RequireGitSSHSecretKnownHosts    bool `json:"requireGitSSHSecretKnownHosts,omitempty"`
 	// EnableTektonOCIBundles           bool // Deprecated: this is now ignored
 	// ScopeWhenExpressionsToTask       bool // Deprecated: this is now ignored
-	EnableAPIFields          string
-	SendCloudEventsForRuns   bool
-	AwaitSidecarReadiness    bool
-	EnforceNonfalsifiability string
-	EnableKeepPodOnCancel    bool
+
+	EnableAPIFields          string `json:"enableAPIFields,omitempty"`
+	SendCloudEventsForRuns   bool   `json:"sendCloudEventsForRuns,omitempty"`
+	AwaitSidecarReadiness    bool   `json:"awaitSidecarReadiness,omitempty"`
+	EnforceNonfalsifiability string `json:"enforceNonfalsifiability,omitempty"`
+	EnableKeepPodOnCancel    bool   `json:"enableKeepPodOnCancel,omitempty"`
 	// VerificationNoMatchPolicy is the feature flag for "trusted-resources-verification-no-match-policy"
 	// VerificationNoMatchPolicy can be set to "ignore", "warn" and "fail" values.
 	// ignore: skip trusted resources verification when no matching verification policies found
 	// warn: skip trusted resources verification when no matching verification policies found and log a warning
 	// fail: fail the taskrun or pipelines run if no matching verification policies found
-	VerificationNoMatchPolicy                string
-	EnableProvenanceInStatus                 bool
-	ResultExtractionMethod                   string
-	MaxResultSize                            int
-	SetSecurityContext                       bool
-	SetSecurityContextReadOnlyRootFilesystem bool
-	Coschedule                               string
-	EnableCELInWhenExpression                bool
-	EnableStepActions                        bool
-	EnableParamEnum                          bool
-	EnableArtifacts                          bool
-	DisableInlineSpec                        string
-	EnableConciseResolverSyntax              bool
-	EnableKubernetesSidecar                  bool
+	VerificationNoMatchPolicy                string `json:"verificationNoMatchPolicy,omitempty"`
+	EnableProvenanceInStatus                 bool   `json:"enableProvenanceInStatus,omitempty"`
+	ResultExtractionMethod                   string `json:"resultExtractionMethod,omitempty"`
+	MaxResultSize                            int    `json:"maxResultSize,omitempty"`
+	SetSecurityContext                       bool   `json:"setSecurityContext,omitempty"`
+	SetSecurityContextReadOnlyRootFilesystem bool   `json:"setSecurityContextReadOnlyRootFilesystem,omitempty"`
+	Coschedule                               string `json:"coschedule,omitempty"`
+	EnableCELInWhenExpression                bool   `json:"enableCELInWhenExpression,omitempty"`
+	EnableStepActions                        bool   `json:"enableStepActions,omitempty"`
+	EnableParamEnum                          bool   `json:"enableParamEnum,omitempty"`
+	EnableArtifacts                          bool   `json:"enableArtifacts,omitempty"`
+	DisableInlineSpec                        string `json:"disableInlineSpec,omitempty"`
+	EnableConciseResolverSyntax              bool   `json:"enableConciseResolverSyntax,omitempty"`
+	EnableKubernetesSidecar                  bool   `json:"enableKubernetesSidecar,omitempty"`
 }
 
 // GetFeatureFlagsConfigName returns the name of the configmap containing all
@@ -446,21 +445,6 @@ func setVerificationNoMatchPolicy(cfgMap map[string]string, defaultValue string,
 		return fmt.Errorf("invalid value for feature flag %q: %q", verificationNoMatchPolicy, value)
 	}
 	return nil
-}
-
-// NewFeatureFlagsFromConfigMap returns a Config for the given configmap
-func NewFeatureFlagsFromConfigMap(config *corev1.ConfigMap) (*FeatureFlags, error) {
-	return NewFeatureFlagsFromMap(config.Data)
-}
-
-// GetVerificationNoMatchPolicy returns the "trusted-resources-verification-no-match-policy" value
-func GetVerificationNoMatchPolicy(ctx context.Context) string {
-	return FromContextOrDefaults(ctx).FeatureFlags.VerificationNoMatchPolicy
-}
-
-// IsSpireEnabled checks if non-falsifiable provenance is enforced through SPIRE
-func IsSpireEnabled(ctx context.Context) bool {
-	return FromContextOrDefaults(ctx).FeatureFlags.EnforceNonfalsifiability == EnforceNonfalsifiabilityWithSpire
 }
 
 type PerFeatureFlag struct {
