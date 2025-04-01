@@ -97,6 +97,7 @@ Show logs for given Pipeline and PipelineRun:
 	c.Flags().BoolVarP(&opts.Follow, "follow", "f", false, "stream live logs")
 	c.Flags().BoolVarP(&opts.Timestamps, "timestamps", "t", false, "show logs with timestamp")
 	c.Flags().IntVarP(&opts.Limit, "limit", "", 5, "lists number of PipelineRuns")
+	c.Flags().BoolVarP(&opts.Prefixing, "prefix", "", true, "prefix each log line with the log source (task name and step name)")
 
 	return c
 }
