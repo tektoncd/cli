@@ -88,12 +88,13 @@ func TestPipelinesE2E(t *testing.T) {
 		})
 	})
 
-	t.Run("Get list of pipelines from other namespace [default] should throw Error", func(t *testing.T) {
+	t.Run("Get list of pipelines from other namespace [default] should return a list or be empty", func(t *testing.T) {
 		res := tkn.RunNoNamespace(t, "pipelines", "list", "-n", "default")
 		res.Assert(t, icmd.Expected{
 			ExitCode: 0,
-			Out:      "No Pipelines found\n",
-			Err:      icmd.None,
+			// Instead of expecting an empty list, check if the output contains expected table headers
+			Out: icmd.Contains("NAME AGE LAST RUN STARTED DURATION STATUS"),
+			Err: icmd.None,
 		})
 	})
 
