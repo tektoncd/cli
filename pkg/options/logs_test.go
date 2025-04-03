@@ -86,12 +86,6 @@ func TestLogOptions_Ask(t *testing.T) {
 		"sample-task-run2 started 2 minutes ago",
 		"sample-task-run3 started 3 minutes ago",
 	}
-	options5 := []string{
-		"clustertask1",
-		"clustertask2",
-		"clustertask3",
-	}
-
 	testParams := []struct {
 		name     string
 		resource string
@@ -119,7 +113,6 @@ func TestLogOptions_Ask(t *testing.T) {
 				PipelineName:    "pipeline1",
 				PipelineRunName: "",
 				TaskName:        "",
-				ClusterTaskName: "",
 				TaskrunName:     "",
 			},
 		},
@@ -143,7 +136,6 @@ func TestLogOptions_Ask(t *testing.T) {
 				PipelineName:    "",
 				PipelineRunName: "sample-pipeline-run1",
 				TaskName:        "",
-				ClusterTaskName: "",
 				TaskrunName:     "",
 			},
 		},
@@ -167,7 +159,6 @@ func TestLogOptions_Ask(t *testing.T) {
 				PipelineName:    "",
 				PipelineRunName: "",
 				TaskName:        "task1",
-				ClusterTaskName: "",
 				TaskrunName:     "",
 			},
 		},
@@ -191,32 +182,7 @@ func TestLogOptions_Ask(t *testing.T) {
 				PipelineName:    "",
 				PipelineRunName: "",
 				TaskName:        "",
-				ClusterTaskName: "",
 				TaskrunName:     "sample-task-run1",
-			},
-		},
-		{
-			name:     "select clustertask name",
-			resource: ResourceNameClusterTask,
-			prompt: prompt.Prompt{
-				CmdArgs: []string{},
-				Procedure: func(c *goexpect.Console) error {
-					if _, err := c.ExpectString("Select clustertask:"); err != nil {
-						return err
-					}
-					if _, err := c.SendLine(options5[0]); err != nil {
-						return err
-					}
-					return nil
-				},
-			},
-			options: options5,
-			want: LogOptions{
-				PipelineName:    "",
-				PipelineRunName: "",
-				TaskName:        "",
-				ClusterTaskName: "clustertask1",
-				TaskrunName:     "",
 			},
 		},
 	}
@@ -239,9 +205,6 @@ func TestLogOptions_Ask(t *testing.T) {
 			}
 			if opts.TaskrunName != tp.want.TaskrunName {
 				t.Errorf("Unexpected TaskRun Name")
-			}
-			if opts.ClusterTaskName != tp.want.ClusterTaskName {
-				t.Errorf("Unexpected ClusterTask Name")
 			}
 		})
 	}

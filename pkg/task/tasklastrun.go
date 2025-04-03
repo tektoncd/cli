@@ -26,7 +26,7 @@ import (
 
 var taskrunGroupResource = schema.GroupVersionResource{Group: "tekton.dev", Resource: "taskruns"}
 
-// LastRun returns the name of last taskrun for a given task/clustertask
+// LastRun returns the name of last taskrun for a given task
 func LastRunName(cs *cli.Clients, resourceName, ns, kind string) (string, error) {
 	latest, err := LastRun(cs, resourceName, ns, kind)
 	if err != nil {
@@ -35,15 +35,11 @@ func LastRunName(cs *cli.Clients, resourceName, ns, kind string) (string, error)
 	return latest.Name, nil
 }
 
-// LastRun returns the last taskrun for a given task/clustertask
+// LastRun returns the last taskrun for a given task
 func LastRun(cs *cli.Clients, resourceName, ns, kind string) (*v1.TaskRun, error) {
 	options := metav1.ListOptions{}
 
-	// change the label value to clusterTask if the resource is ClusterTask
 	label := "task"
-	if kind == "ClusterTask" {
-		label = "clusterTask"
-	}
 
 	if resourceName != "" {
 		options = metav1.ListOptions{
@@ -74,7 +70,7 @@ func LastRun(cs *cli.Clients, resourceName, ns, kind string) (*v1.TaskRun, error
 	return &latest, nil
 }
 
-// this will filter the taskrun which have reference to Task or ClusterTask
+// this will filter the taskrun which have reference to Task
 func FilterByRef(taskruns []v1.TaskRun, kind string) []v1.TaskRun {
 	var filtered []v1.TaskRun
 	for _, taskrun := range taskruns {

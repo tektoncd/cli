@@ -1,6 +1,6 @@
 ## tkn task create
 
-Create a Task from ClusterTask
+Create a Task
 
 ### Usage
 
@@ -8,21 +8,9 @@ Create a Task from ClusterTask
 tkn task create
 ```
 
-### Synopsis
-
-Create a Task from ClusterTask
-
-### Examples
-
-Create a Task from ClusterTask 'foo' in namespace 'ns':
-	tkn task create --from foo
-or
-	tkn task create foobar --from=foo -n ns
-
 ### Options
 
 ```
-      --from string   Create a ClusterTask from Task in a particular namespace
   -h, --help          help for create
 ```
 

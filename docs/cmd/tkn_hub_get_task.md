@@ -14,7 +14,6 @@ Get Task by name, catalog and version
 
 ### Examples
 
-
 Get a Task of name 'foo':
 
     tkn hub get task foo
@@ -25,11 +24,9 @@ Get a Task of name 'foo' of version '0.3':
 
     tkn hub get task foo --version 0.3
 
-
 ### Options
 
 ```
-      --as-clustertask   Get the Task as ClusterTask
   -h, --help             help for task
 ```
 
