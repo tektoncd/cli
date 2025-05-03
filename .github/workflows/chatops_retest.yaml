@@ -1,0 +1,14 @@
+name: Rerun Failed Actions
+
+permissions:
+  contents: read
+
+on:
+  repository_dispatch:
+    types: [retest-command]
+
+jobs:
+  retest:
+    name: Rerun Failed Actions
+    uses: tektoncd/plumbing/.github/workflows/_chatops_retest.yml@8441d6ffad5bf64f631ed0e67e46192fdedaca47
+    secrets: inherit
