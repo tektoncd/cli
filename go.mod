@@ -1,6 +1,7 @@
 module github.com/tektoncd/cli
 
 go 1.23.4
+toolchain go1.24.1
 
 require (
 	github.com/AlecAivazis/survey/v2 v2.3.7
@@ -16,7 +17,7 @@ require (
 	github.com/hako/durafmt v0.0.0-20210608085754-5c1018a4e16b
 	github.com/hinshun/vt10x v0.0.0-20220228203356-1ab2cad5fd82
 	github.com/jonboulle/clockwork v0.5.0
-	github.com/ktr0731/go-fuzzyfinder v0.8.0
+	github.com/ktr0731/go-fuzzyfinder v0.9.0
 	github.com/mitchellh/go-homedir v1.1.0
 	github.com/pkg/errors v0.9.1
 	github.com/sigstore/cosign/v2 v2.5.0
@@ -146,7 +147,7 @@ require (
 	github.com/felixge/httpsnoop v1.0.4 // indirect
 	github.com/fsnotify/fsnotify v1.8.0 // indirect
 	github.com/fxamacker/cbor/v2 v2.7.0 // indirect
-	github.com/gdamore/encoding v1.0.0 // indirect
+	github.com/gdamore/encoding v1.0.1 // indirect
 	github.com/gdamore/tcell/v2 v2.6.0 // indirect
 	github.com/go-chi/chi v4.1.2+incompatible // indirect
 	github.com/go-chi/chi/v5 v5.1.0 // indirect
