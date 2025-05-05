@@ -29,8 +29,7 @@ Get a Task of name 'foo' of version '0.3':
 ### Options
 
 ```
-      --as-clustertask   Get the Task as ClusterTask
-  -h, --help             help for task
+  -h, --help   help for task
 ```
 
 ### Options inherited from parent commands
