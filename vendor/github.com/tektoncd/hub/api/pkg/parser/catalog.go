@@ -418,9 +418,6 @@ func typeForKind(kind string) (tektonKind, error) {
 	switch kind {
 	case "Task":
 		return &v1beta1.Task{}, nil
-	// ClusterTasks are deprecated in Pipeline 0.44.0 and will be removed in future releases
-	case "ClusterTask":
-		return &v1beta1.ClusterTask{}, nil
 	case "Pipeline":
 		return &v1beta1.Pipeline{}, nil
 	}
