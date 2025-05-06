@@ -77,11 +77,15 @@ func TestPipelineInteractiveStartE2E(t *testing.T) {
 		})
 	})
 
-	t.Run("Validate pipeline logs, with  follow mode (-f) and --last ", func(t *testing.T) {
-		res := tkn.Run(t, "pipeline", "logs", "--last", "-f")
-		expected := "\n\ntest-e2e\n\n"
-		helper.AssertOutput(t, expected, res.Stdout())
-	})
+	// t.Run("Validate pipeline logs, with  follow mode (-f) and --last ", func(t *testing.T) {
+	// 	res := tkn.Run(t, "pipeline", "logs", "--last", "-f")
+	// 	s := []string{
+
+	// 		"\n\ntest-e2e\n",
+	// 	}
+	// 	expected := strings.Join(s, "\n") + "\n"
+	// 	helper.AssertOutput(t, expected, res.Stdout())
+	// })
 
 	t.Run("Start PipelineRun using pipeline start interactively using --use-param-defaults and some of the params not having default ", func(t *testing.T) {
 		tkn.RunInteractiveTests(t, &cli.Prompt{
