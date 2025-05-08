@@ -198,7 +198,7 @@ func printTaskDescription(s *cli.Stream, p cli.Params, tname string) error {
 		return fmt.Errorf("failed to get TaskRuns for Task %s: %v", tname, err)
 	}
 
-	// this is required as the same label is getting added for both task and ClusterTask
+	// this is required as the same label is getting added for task
 	taskRuns.Items = task.FilterByRef(taskRuns.Items, "Task")
 
 	trsort.SortByStartTime(taskRuns.Items)

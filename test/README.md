@@ -20,32 +20,28 @@ make test-unit
 
 3. Next install Tekton Triggers in the cluster, see [Install Triggers](https://github.com/tektoncd/triggers/blob/main/docs/install.md#installation)
 
-Set environment variable `TEST_CLUSTERTASK_LIST_EMPTY` to any value if tests are run in an environment which contains `clustertasks`. 
-
-```shell
-export TEST_CLUSTERTASK_LIST_EMPTY=empty
-```
-
 Set `SYSTEM_NAMESPACE` variable to appropriate value (say tekton-pipelines) based on the namespace where Tekton Pipelines system components reside within the Kubernetes cluster.
 
-```shell 
+```shell
 export SYSTEM_NAMESPACE=<namespace-name> (eg: export SYSTEM_NAMESPACE=tekton-pipelines)
 ```
 
 ### Running
 
 End to end tests live in [this](../test/e2e/) directory. By default `go test` will not run [the end to end tests](#end-to-end-tests),
-it need `-tags=e2e` to be enabled in order to run these tests, hence you must provide `go` with `-tags=e2e`. 
+it need `-tags=e2e` to be enabled in order to run these tests, hence you must provide `go` with `-tags=e2e`.
 
 ```shell
 go build -o tkn github.com/tektoncd/cli/cmd/tkn
-export TEST_CLIENT_BINARY=<path-to-tkn-binary-directory>/tkn ( eg: export TEST_CLIENT_BINARY=$PWD/tkn ) 
+export TEST_CLIENT_BINARY=<path-to-tkn-binary-directory>/tkn ( eg: export TEST_CLIENT_BINARY=$PWD/tkn )
 ```
+
 By default the tests run against your current kubeconfig context:
 
 ```shell
 go test -v -count=1 -tags=e2e -timeout=20m ./test/e2e/...
 ```
+
 You can change the kubeconfig context and other settings with [the flags](#flags).
 
 ```shell
@@ -85,13 +81,14 @@ the `-run` flag with `go test`
 go test -v ./test/... -tags=e2e -run ^TestPipelinesE2E
 ```
 
-### Prerequisite to run make check and make generated 
+### Prerequisite to run make check and make generated
 
-Ensure that golangci-lint and yamllint are installed on your development machine. If not then install them following [golangci-lint](https://golangci-lint.run/usage/install/) and [yamllint](https://yamllint.readthedocs.io/en/stable/quickstart.html).
+Ensure that golangci-lint and yamllint are installed on your development machine. If not then install them following [golangci-lint](https://golangci-lint.run/welcome/install/) and [yamllint](https://github.com/adrienverge/yamllint/).
 
 Next step will be to run
+
 ```bash
-# For linting the golang and YAML files 
+# For linting the golang and YAML files
 make check
 # To check diff in goldenfile and [docs](https://github.com/tektoncd/cli/tree/main/docs), update and autogenerate them
 make generated
