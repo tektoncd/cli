@@ -456,3 +456,85 @@ func TestGetOperatorVersionViaConfigMap(t *testing.T) {
 		})
 	}
 }
+
+func TestGetRedHatOpenShiftPipelinesVersion(t *testing.T) {
+	testParams := []struct {
+		name      string
+		namespace string
+		configMap *corev1.ConfigMap
+		want      string
+	}{
+		{
+			name:      "option 1: get version from rhProduct field",
+			namespace: "openshift-pipelines",
+			configMap: &corev1.ConfigMap{
+				ObjectMeta: metav1.ObjectMeta{
+					Name: "tekton-operator-info",
+				},
+				Data: map[string]string{
+					"version":   "0.55.1",
+					"rhProduct": "1.7.0",
+				},
+			},
+			want: "1.7.0",
+		},
+		{
+			name:      "option 2: get version from version field with suffix",
+			namespace: "openshift-pipelines",
+			configMap: &corev1.ConfigMap{
+				ObjectMeta: metav1.ObjectMeta{
+					Name: "tekton-operator-info",
+				},
+				Data: map[string]string{
+					"version": "0.55.1 (Red Hat OpenShift Pipelines 1.7.0)",
+				},
+			},
+			want: "1.7.0",
+		},
+		{
+			name:      "option 3: get version from product field",
+			namespace: "openshift-pipelines",
+			configMap: &corev1.ConfigMap{
+				ObjectMeta: metav1.ObjectMeta{
+					Name: "tekton-operator-info",
+				},
+				Data: map[string]string{
+					"version": "0.55.1",
+					"product": "1.7.0",
+				},
+			},
+			want: "1.7.0",
+		},
+		{
+			name:      "option 2 with different format",
+			namespace: "openshift-pipelines",
+			configMap: &corev1.ConfigMap{
+				ObjectMeta: metav1.ObjectMeta{
+					Name: "tekton-operator-info",
+				},
+				Data: map[string]string{
+					"version": "0.55.1 (1.7.0)",
+				},
+			},
+			want: "1.7.0",
+		},
+	}
+
+	for _, tp := range testParams {
+		t.Run(tp.name, func(t *testing.T) {
+			cs, _ := test.SeedV1beta1TestData(t, test.Data{})
+			p := &test.Params{Kube: cs.Kube}
+			cls, err := p.Clients()
+			if err != nil {
+				t.Errorf("failed to get client: %v", err)
+			}
+
+			if _, err := cls.Kube.CoreV1().ConfigMaps(tp.namespace).Create(context.Background(), tp.configMap, metav1.CreateOptions{}); err != nil {
+				t.Errorf("failed to create configmap: %v", err)
+			}
+
+			v, _ := GetRedHatOpenShiftPipelinesVersion(cls, tp.namespace)
+			test.AssertOutput(t, tp.want, v)
+		})
+	}
+}
