@@ -74,6 +74,10 @@ func Command(p cli.Params) *cobra.Command {
 			if err == nil {
 				switch component {
 				case "":
+					productVersion, _ := version.GetRedHatOpenShiftPipelinesVersion(cs, namespace)
+					if productVersion != "" {
+						fmt.Fprintf(cmd.OutOrStdout(), "Red Hat OpenShift Pipelines: %s\n", productVersion)
+					}
 					fmt.Fprintf(cmd.OutOrStdout(), "Client version: %s\n", clientVersion)
 					chainsVersion, _ := version.GetChainsVersion(cs, namespace)
 					if chainsVersion != "" {
@@ -140,6 +144,12 @@ func Command(p cli.Params) *cobra.Command {
 						hubVersion = "unknown"
 					}
 					fmt.Fprintf(cmd.OutOrStdout(), "%s\n", hubVersion)
+				case "openshift":
+					productVersion, _ := version.GetRedHatOpenShiftPipelinesVersion(cs, namespace)
+					if productVersion == "" {
+						productVersion = "unknown"
+					}
+					fmt.Fprintf(cmd.OutOrStdout(), "%s\n", productVersion)
 				default:
 					fmt.Fprintf(cmd.OutOrStdout(), "Invalid component value\n")
 				}
