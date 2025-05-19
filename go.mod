@@ -35,10 +35,10 @@ require (
 	golang.org/x/term v0.31.0
 	gotest.tools v2.2.0+incompatible
 	gotest.tools/v3 v3.5.2
-	k8s.io/api v0.32.3
-	k8s.io/apimachinery v0.32.3
+	k8s.io/api v0.32.5
+	k8s.io/apimachinery v0.32.5
 	k8s.io/cli-runtime v0.29.15
-	k8s.io/client-go v0.32.3
+	k8s.io/client-go v0.32.5
 	knative.dev/pkg v0.0.0-20250117084104-c43477f0052b
 	sigs.k8s.io/yaml v1.4.0
 )
