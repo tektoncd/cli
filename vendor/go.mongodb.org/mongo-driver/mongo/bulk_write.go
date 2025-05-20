@@ -39,6 +39,7 @@ type bulkWrite struct {
 	writeConcern             *writeconcern.WriteConcern
 	result                   BulkWriteResult
 	let                      interface{}
+	bypassEmptyTsReplacement *bool
 }
 
 func (bw *bulkWrite) execute(ctx context.Context) error {
@@ -186,7 +187,7 @@ func (bw *bulkWrite) runInsert(ctx context.Context, batch bulkWriteBatch) (opera
 		Database(bw.collection.db.name).Collection(bw.collection.name).
 		Deployment(bw.collection.client.deployment).Crypt(bw.collection.client.cryptFLE).
 		ServerAPI(bw.collection.client.serverAPI).Timeout(bw.collection.client.timeout).
-		Logger(bw.collection.client.logger)
+		Logger(bw.collection.client.logger).Authenticator(bw.collection.client.authenticator)
 	if bw.comment != nil {
 		comment, err := marshalValue(bw.comment, bw.collection.bsonOpts, bw.collection.registry)
 		if err != nil {
@@ -206,6 +207,10 @@ func (bw *bulkWrite) runInsert(ctx context.Context, batch bulkWriteBatch) (opera
 		retry = driver.RetryOncePerCommand
 	}
 	op = op.Retry(retry)
+
+	if bw.bypassEmptyTsReplacement != nil {
+		op.BypassEmptyTsReplacement(*bw.bypassEmptyTsReplacement)
+	}
 
 	err := op.Execute(ctx)
 
@@ -256,7 +261,7 @@ func (bw *bulkWrite) runDelete(ctx context.Context, batch bulkWriteBatch) (opera
 		Database(bw.collection.db.name).Collection(bw.collection.name).
 		Deployment(bw.collection.client.deployment).Crypt(bw.collection.client.cryptFLE).Hint(hasHint).
 		ServerAPI(bw.collection.client.serverAPI).Timeout(bw.collection.client.timeout).
-		Logger(bw.collection.client.logger)
+		Logger(bw.collection.client.logger).Authenticator(bw.collection.client.authenticator)
 	if bw.comment != nil {
 		comment, err := marshalValue(bw.comment, bw.collection.bsonOpts, bw.collection.registry)
 		if err != nil {
@@ -387,7 +392,8 @@ func (bw *bulkWrite) runUpdate(ctx context.Context, batch bulkWriteBatch) (opera
 		Database(bw.collection.db.name).Collection(bw.collection.name).
 		Deployment(bw.collection.client.deployment).Crypt(bw.collection.client.cryptFLE).Hint(hasHint).
 		ArrayFilters(hasArrayFilters).ServerAPI(bw.collection.client.serverAPI).
-		Timeout(bw.collection.client.timeout).Logger(bw.collection.client.logger)
+		Timeout(bw.collection.client.timeout).Logger(bw.collection.client.logger).
+		Authenticator(bw.collection.client.authenticator)
 	if bw.comment != nil {
 		comment, err := marshalValue(bw.comment, bw.collection.bsonOpts, bw.collection.registry)
 		if err != nil {
@@ -413,6 +419,10 @@ func (bw *bulkWrite) runUpdate(ctx context.Context, batch bulkWriteBatch) (opera
 		retry = driver.RetryOncePerCommand
 	}
 	op = op.Retry(retry)
+
+	if bw.bypassEmptyTsReplacement != nil {
+		op.BypassEmptyTsReplacement(*bw.bypassEmptyTsReplacement)
+	}
 
 	err := op.Execute(ctx)
 
