@@ -110,7 +110,7 @@ func (b *Backend) retrieveAnnotationValue(ctx context.Context, obj objects.Tekto
 	return annotationValue, nil
 }
 
-// RetrieveSignature retrieve the signature stored in the taskrun.
+// RetrieveSignatures retrieve the signature stored in the taskrun.
 func (b *Backend) RetrieveSignatures(ctx context.Context, obj objects.TektonObject, opts config.StorageOpts) (map[string][]string, error) {
 	logger := logging.FromContext(ctx)
 	logger.Infof("Retrieving signature on %s/%s/%s", obj.GetGVK(), obj.GetNamespace(), obj.GetName())

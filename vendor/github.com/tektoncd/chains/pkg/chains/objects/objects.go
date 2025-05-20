@@ -21,7 +21,6 @@ import (
 	"time"
 
 	"github.com/tektoncd/pipeline/pkg/apis/config"
-	"github.com/tektoncd/pipeline/pkg/apis/pipeline/pod"
 	v1 "github.com/tektoncd/pipeline/pkg/apis/pipeline/v1"
 	"github.com/tektoncd/pipeline/pkg/apis/pipeline/v1beta1"
 	"github.com/tektoncd/pipeline/pkg/client/clientset/versioned"
@@ -63,7 +62,6 @@ type TektonObject interface {
 	GetResults() []Result
 	GetProvenance() *v1.Provenance
 	GetServiceAccountName() string
-	GetPullSecrets() []string
 	IsDone() bool
 	IsSuccessful() bool
 	SupportsTaskRunArtifact() bool
@@ -179,11 +177,6 @@ func (tro *TaskRunObjectV1) GetSidecarImages() []string {
 // Get the ServiceAccount declared in the TaskRun
 func (tro *TaskRunObjectV1) GetServiceAccountName() string {
 	return tro.Spec.ServiceAccountName
-}
-
-// Get the imgPullSecrets from the pod template
-func (tro *TaskRunObjectV1) GetPullSecrets() []string {
-	return getPodPullSecrets(tro.Spec.PodTemplate)
 }
 
 func (tro *TaskRunObjectV1) SupportsTaskRunArtifact() bool {
@@ -326,11 +319,6 @@ func (pro *PipelineRunObjectV1) GetTaskRunsFromTask(taskName string) []*TaskRunO
 	return taskRuns
 }
 
-// Get the imgPullSecrets from the pod template
-func (pro *PipelineRunObjectV1) GetPullSecrets() []string {
-	return getPodPullSecrets(pro.Spec.TaskRunTemplate.PodTemplate)
-}
-
 func (pro *PipelineRunObjectV1) SupportsTaskRunArtifact() bool {
 	return false
 }
@@ -403,17 +391,6 @@ func (pro *PipelineRunObjectV1) GetExecutedTasks() (tro []*TaskRunObjectV1) {
 	}
 
 	return
-}
-
-// Get the imgPullSecrets from a pod template, if they exist
-func getPodPullSecrets(podTemplate *pod.Template) []string {
-	imgPullSecrets := []string{}
-	if podTemplate != nil {
-		for _, secret := range podTemplate.ImagePullSecrets {
-			imgPullSecrets = append(imgPullSecrets, secret.Name)
-		}
-	}
-	return imgPullSecrets
 }
 
 // PipelineRunObjectV1Beta1 extends v1.PipelineRun with additional functions.
@@ -528,11 +505,6 @@ func (pro *PipelineRunObjectV1Beta1) GetTaskRunsFromTask(taskName string) []*Tas
 		}
 	}
 	return taskRuns
-}
-
-// Get the imgPullSecrets from the pod template
-func (pro *PipelineRunObjectV1Beta1) GetPullSecrets() []string {
-	return getPodPullSecrets(pro.Spec.PodTemplate)
 }
 
 func (pro *PipelineRunObjectV1Beta1) SupportsTaskRunArtifact() bool {
@@ -690,11 +662,6 @@ func (tro *TaskRunObjectV1Beta1) GetSidecarImages() []string {
 // Get the ServiceAccount declared in the TaskRun
 func (tro *TaskRunObjectV1Beta1) GetServiceAccountName() string {
 	return tro.Spec.ServiceAccountName
-}
-
-// Get the imgPullSecrets from the pod template
-func (tro *TaskRunObjectV1Beta1) GetPullSecrets() []string {
-	return getPodPullSecrets(tro.Spec.PodTemplate)
 }
 
 func (tro *TaskRunObjectV1Beta1) SupportsTaskRunArtifact() bool {

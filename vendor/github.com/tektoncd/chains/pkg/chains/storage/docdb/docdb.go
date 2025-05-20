@@ -347,7 +347,7 @@ func getMongoServerURLFromDir(dir string) (string, error) {
 	return fileDataNormalized, nil
 }
 
-// getMongoServerUrlFromPath retreives token from the given mount path
+// getMongoServerURLFromPath retreives token from the given mount path
 func getMongoServerURLFromPath(path string) (string, error) {
 	fileData, err := os.ReadFile(path)
 	if err != nil {
