@@ -47,5 +47,6 @@ func Command(p cli.Params) *cobra.Command {
 		payloadCommand(p),
 		signatureCommand(p),
 	)
+	cmd.Deprecated = "The Chain command is deprecated and will be removed in future releases."
 	return cmd
 }

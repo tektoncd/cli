@@ -58,6 +58,7 @@ func signatureCommand(p cli.Params) *cobra.Command {
 			return printSignatures(cs, chainsNamespace, taskrun)
 		},
 	}
+	c.Deprecated = "The Chain command is deprecated and will be removed in future releases."
 
 	return c
 }
