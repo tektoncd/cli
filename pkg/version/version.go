@@ -303,3 +303,39 @@ func GetHubVersion(c *cli.Clients, ns string) (string, error) {
 	version := configMap.Data["version"]
 	return version, nil
 }
+
+func GetRedHatOpenShiftPipelinesVersion(c *cli.Clients, ns string) (string, error) {
+	configMap, err := getConfigMap(c, operatorInfo, ns)
+	if err != nil {
+		return "", nil // Not found or inaccessible, return no version
+	}
+
+	// 1. Check for a dedicated "product" field
+	if product, exists := configMap.Data["product"]; exists && product != "" {
+		return product, nil
+	}
+
+	// 2. Check for embedded version in the "version" field
+	if version, exists := configMap.Data["version"]; exists && version != "" {
+		if strings.Contains(version, "(") && strings.Contains(version, ")") {
+			parts := strings.SplitN(version, "(", 2)
+			if len(parts) > 1 {
+				productVersion := strings.TrimSuffix(strings.TrimSpace(parts[1]), ")")
+				if strings.HasPrefix(productVersion, "Red Hat OpenShift Pipelines") {
+					productVersion = strings.TrimSpace(
+						strings.TrimPrefix(productVersion, "Red Hat OpenShift Pipelines"),
+					)
+					return productVersion, nil
+				}
+				return productVersion, nil
+			}
+		}
+	}
+
+	// 3. Fallback to "rhProduct" field
+	if rhProduct, exists := configMap.Data["rhProduct"]; exists && rhProduct != "" {
+		return rhProduct, nil
+	}
+
+	return "", nil
+}
