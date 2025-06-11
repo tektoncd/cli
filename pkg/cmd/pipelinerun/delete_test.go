@@ -635,7 +635,7 @@ func TestPipelineRunDelete_v1beta1(t *testing.T) {
 			input:       seeds[15].pipelineClient,
 			inputStream: nil,
 			wantError:   false,
-			want:        "NAME             STARTED         DURATION   STATUS\npipeline-run-4   ---             ---        ---\npipeline-run-5   ---             ---        Succeeded(PipelineRunPending)\npipeline-run-6   0 seconds ago   ---        Succeeded(Running)\npipeline-run-7   0 seconds ago   ---        Running(PipelineRunPending)\n",
+			want:        "NAME             STARTED         DURATION   STATUS\npipeline-run-4   ---             ---        ---\npipeline-run-5   ---             ---        Pending\npipeline-run-6   0 seconds ago   ---        Succeeded(Running)\npipeline-run-7   0 seconds ago   ---        Pending\n",
 		},
 	}
 
@@ -1267,7 +1267,7 @@ func TestPipelineRunDelete(t *testing.T) {
 			input:       seeds[15].pipelineClient,
 			inputStream: nil,
 			wantError:   false,
-			want:        "NAME             STARTED         DURATION   STATUS\npipeline-run-4   ---             ---        ---\npipeline-run-5   ---             ---        Succeeded(PipelineRunPending)\npipeline-run-6   0 seconds ago   ---        Succeeded(Running)\npipeline-run-7   0 seconds ago   ---        Running(PipelineRunPending)\n",
+			want:        "NAME             STARTED         DURATION   STATUS\npipeline-run-4   ---             ---        ---\npipeline-run-5   ---             ---        Pending\npipeline-run-6   0 seconds ago   ---        Succeeded(Running)\npipeline-run-7   0 seconds ago   ---        Pending\n",
 		},
 	}
 
