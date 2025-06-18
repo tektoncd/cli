@@ -1,3 +1,11 @@
+# v1.30.2 (2025-06-10)
+
+* **Dependency Update**: Updated to the latest SDK module versions
+
+# v1.30.1 (2025-04-03)
+
+* No change notes available for this release.
+
 # v1.30.0 (2025-03-27)
 
 * **Feature**: This release adds AwsAdditionalDetails in the CreateTokenWithIAM API response.
