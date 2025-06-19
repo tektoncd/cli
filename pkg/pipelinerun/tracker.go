@@ -71,9 +71,22 @@ func (t *Tracker) Monitor(allowed []string) <-chan []taskrunpkg.Run {
 	mu := &sync.Mutex{}
 	stopC := make(chan struct{})
 	trC := make(chan []taskrunpkg.Run)
+
+	// Add timeout protection - close channels after 10 minutes if not closed already
 	go func() {
-		<-stopC
-		close(trC)
+		select {
+		case <-stopC:
+			close(trC)
+		case <-time.After(10 * time.Minute):
+			// Timeout protection - ensure channels are closed
+			select {
+			case <-stopC:
+				// stopC already closed
+			default:
+				close(stopC)
+			}
+			close(trC)
+		}
 	}()
 
 	eventHandler := func(obj interface{}) {
@@ -97,10 +110,21 @@ func (t *Tracker) Monitor(allowed []string) <-chan []taskrunpkg.Run {
 			return
 		}
 		pr.DeepCopyInto(&pipelinerunConverted)
-		trC <- t.findNewTaskruns(&pipelinerunConverted, allowed, trsMap)
+
+		// Only send to trC if it's still open
+		select {
+		case <-stopC:
+			return
+		case trC <- t.findNewTaskruns(&pipelinerunConverted, allowed, trsMap):
+		}
 
 		if hasCompleted(&pipelinerunConverted) {
-			close(stopC) // should close trC
+			select {
+			case <-stopC:
+				// Already closed
+			default:
+				close(stopC) // should close trC
+			}
 		}
 	}
 
@@ -190,7 +214,21 @@ func hasCompleted(pr *v1.PipelineRun) bool {
 	if len(pr.Status.Conditions) == 0 {
 		return false
 	}
-	return pr.Status.Conditions[0].Status != corev1.ConditionUnknown
+
+	// Check if PipelineRun is in a terminal state
+	condition := pr.Status.Conditions[0]
+
+	// Explicitly check for terminal states
+	if condition.Status == corev1.ConditionTrue || condition.Status == corev1.ConditionFalse {
+		return true
+	}
+
+	// Also check using the built-in IsDone() method which is more reliable
+	if pr.IsDone() {
+		return true
+	}
+
+	return false
 }
 
 func (t *Tracker) loggingInProgress(tr string) bool {
