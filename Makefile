@@ -97,7 +97,7 @@ lint: lint-go goimports lint-yaml  ## run all linters
 
 GOLANGCILINT = $(BIN)/golangci-lint
 $(BIN)/golangci-lint: ; $(info $(M) getting golangci-lint $(GOLANGCI_VERSION))
-	cd tools; GOBIN=$(BIN) $(GO) install -mod=mod github.com/golangci/golangci-lint/cmd/golangci-lint@$(GOLANGCI_VERSION)
+	cd tools; GOBIN=$(BIN) $(GO) install -mod=mod github.com/golangci/golangci-lint/v2/cmd/golangci-lint@$(GOLANGCI_VERSION)
 
 .PHONY: lint-go
 lint-go: | $(GOLANGCILINT) ; $(info $(M) running golangci-lint…) @ ## Run golangci-lint
