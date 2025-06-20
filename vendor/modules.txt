@@ -680,7 +680,7 @@ github.com/gdamore/tcell/v2/terminfo/x/xterm_termite
 ## explicit
 github.com/go-chi/chi
 github.com/go-chi/chi/middleware
-# github.com/go-chi/chi/v5 v5.2.1
+# github.com/go-chi/chi/v5 v5.2.2
 ## explicit; go 1.20
 github.com/go-chi/chi/v5
 # github.com/go-errors/errors v1.4.2
