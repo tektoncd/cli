@@ -36,9 +36,9 @@ linters:
         path: _test\.go
     paths:
       - vendor
-      - third_party$
-      - builtin$
-      - examples$
+      - third_party
+      - builtin
+      - examples
 formatters:
   enable:
     - gofmt
@@ -47,6 +47,6 @@ formatters:
     generated: lax
     paths:
       - vendor
-      - third_party$
-      - builtin$
-      - examples$
+      - third_party
+      - builtin
+      - examples
