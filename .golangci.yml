@@ -2,6 +2,7 @@ version: "2"
 run:
   build-tags:
     - e2e
+  modules-download-mode: vendor
   issues-exit-code: 1
 linters:
   enable:
@@ -36,9 +37,9 @@ linters:
         path: _test\.go
     paths:
       - vendor
-      - third_party$
-      - builtin$
-      - examples$
+      - third_party
+      - builtin
+      - examples
 formatters:
   enable:
     - gofmt
@@ -47,6 +48,6 @@ formatters:
     generated: lax
     paths:
       - vendor
-      - third_party$
-      - builtin$
-      - examples$
+      - third_party
+      - builtin
+      - examples
