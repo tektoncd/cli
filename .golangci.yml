@@ -1,37 +1,52 @@
-issues:
-  exclude-rules:
-    # Exclude some linters from running on tests files.
-    # temporarily disabling G602 due to https://github.com/securego/gosec/issues/1005
-    - path: _test\.go
-      linters:
-        - gosec
-  exclude-dirs:
-    - vendor
+version: "2"
 run:
-  issues-exit-code: 1
   build-tags:
     - e2e
-linters-settings:
-  errcheck:
-    exclude-functions:
-      - (*github.com/tektoncd/pipeline/vendor/go.uber.org/zap.SugaredLogger).Sync
-      - flag.Set
-      - os.Setenv
-      - logger.Sync
-      - fmt.Fprintf
-      - fmt.Fprintln
-      - (io.Closer).Close
-      - updateConfigMap
-  staticcheck:
-    checks:
-      - '-SA1019' # ignore ClusterTask warning
+  issues-exit-code: 1
 linters:
   enable:
-  - errcheck
-  - gofmt
-  - goimports
-  - gosec
-  - gocritic
-  - revive
-  - misspell
-  - unused
+    - gocritic
+    - gosec
+    - misspell
+    - revive
+  settings:
+    errcheck:
+      exclude-functions:
+        - (*github.com/tektoncd/pipeline/vendor/go.uber.org/zap.SugaredLogger).Sync
+        - flag.Set
+        - os.Setenv
+        - logger.Sync
+        - fmt.Fprintf
+        - fmt.Fprintln
+        - (io.Closer).Close
+        - updateConfigMap
+    staticcheck:
+      checks:
+        - -SA1019
+  exclusions:
+    generated: lax
+    presets:
+      - comments
+      - common-false-positives
+      - legacy
+      - std-error-handling
+    rules:
+      - linters:
+          - gosec
+        path: _test\.go
+    paths:
+      - vendor
+      - third_party
+      - builtin
+      - examples
+formatters:
+  enable:
+    - gofmt
+    - goimports
+  exclusions:
+    generated: lax
+    paths:
+      - vendor
+      - third_party
+      - builtin
+      - examples
