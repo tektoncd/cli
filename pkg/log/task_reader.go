@@ -138,10 +138,10 @@ func (r *Reader) readStepsLogs(logC chan<- Log, errC chan<- error, steps []*step
 			case l, ok := <-containerLogC:
 				if !ok {
 					containerLogC = nil
-					logC <- Log{Task: r.task, Step: step.name, Log: "EOFLOG"}
+					logC <- Log{Task: r.task, TaskDisplayName: r.displayName, Step: step.name, Log: "EOFLOG"}
 					continue
 				}
-				logC <- Log{Task: r.task, Step: step.name, Log: l.Log}
+				logC <- Log{Task: r.task, TaskDisplayName: r.displayName, Step: step.name, Log: l.Log}
 
 			case e, ok := <-containerLogErrC:
 				if !ok {
