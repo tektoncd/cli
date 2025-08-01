@@ -56,6 +56,9 @@ const (
 	InvalidRange = "invalid_range"
 	// InvalidLength is the error name for invalid length errors.
 	InvalidLength = "invalid_length"
+	// UnsupportedMediaType is the error name returned by the Goa decoder
+	// when the content type of the HTTP request body is not supported.
+	UnsupportedMediaType = "unsupported_media_type"
 )
 
 // NewServiceError creates an error.
@@ -113,7 +116,13 @@ func MissingPayloadError() error {
 // DecodePayloadError is the error produced by the generated code when a request
 // body cannot be decoded successfully.
 func DecodePayloadError(msg string) error {
-	return PermanentError("decode_payload", msg)
+	return PermanentError("decode_payload", "%s", msg)
+}
+
+// UnsupportedMediaTypeError is the error produced by the Goa decoder when the
+// content type of the HTTP request body is not supported.
+func UnsupportedMediaTypeError(ct string) error {
+	return PermanentError(UnsupportedMediaType, "unsupported media type %s", ct)
 }
 
 // InvalidFieldTypeError is the error produced by the generated code when the
@@ -153,7 +162,7 @@ func InvalidFormatError(name, target string, format Format, formatError error) e
 // InvalidPatternError is the error produced by the generated code when the
 // value of a payload field does not match the pattern validation defined in the
 // design.
-func InvalidPatternError(name, target string, pattern string) error {
+func InvalidPatternError(name, target, pattern string) error {
 	return withField(name, PermanentError(
 		InvalidPattern, "%s must match the regexp %q but got value %q", name, pattern, target))
 }
@@ -161,7 +170,7 @@ func InvalidPatternError(name, target string, pattern string) error {
 // InvalidRangeError is the error produced by the generated code when the value
 // of a payload field does not match the range validation defined in the design.
 // value may be an int or a float64.
-func InvalidRangeError(name string, target any, value any, min bool) error {
+func InvalidRangeError(name string, target, value any, min bool) error {
 	comp := "greater or equal"
 	if !min {
 		comp = "lesser or equal"
@@ -276,8 +285,8 @@ func newError(name string, timeout, temporary, fault bool, format string, v ...a
 }
 
 func asError(err error) *ServiceError {
-	e, ok := err.(*ServiceError)
-	if !ok {
+	var e *ServiceError
+	if !errors.As(err, &e) {
 		return &ServiceError{
 			Name:    "error",
 			ID:      NewErrorID(),
