@@ -1,0 +1,6 @@
+- pipelineTaskName: first-create-file
+  taskPodTemplate:
+    schedulerName: SchedulerName
+    securityContext:
+      runAsNonRoot: true
+      runAsUser: 1001
