@@ -69,6 +69,7 @@ func payloadCommand(p cli.Params) *cobra.Command {
 		},
 	}
 	c.Flags().BoolVarP(&opts.SkipVerify, "skip-verify", "S", opts.SkipVerify, "Skip verifying the payload'signature")
+	c.Deprecated = "The Chain command is deprecated and will be removed in future releases."
 
 	return c
 }
