@@ -1104,8 +1104,8 @@ github.com/klauspost/compress/zstd/internal/xxhash
 # github.com/ktr0731/go-ansisgr v0.1.0
 ## explicit; go 1.19
 github.com/ktr0731/go-ansisgr
-# github.com/ktr0731/go-fuzzyfinder v0.8.0
-## explicit; go 1.13
+# github.com/ktr0731/go-fuzzyfinder v0.9.0
+## explicit; go 1.24
 github.com/ktr0731/go-fuzzyfinder
 github.com/ktr0731/go-fuzzyfinder/matching
 github.com/ktr0731/go-fuzzyfinder/scoring
