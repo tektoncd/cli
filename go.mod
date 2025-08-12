@@ -22,7 +22,7 @@ require (
 	github.com/sigstore/cosign/v2 v2.5.3
 	github.com/sigstore/sigstore v1.9.5
 	github.com/spf13/cobra v1.9.1
-	github.com/spf13/pflag v1.0.6
+	github.com/spf13/pflag v1.0.7
 	github.com/tektoncd/chains v0.25.1
 	github.com/tektoncd/hub v1.21.0
 	github.com/tektoncd/pipeline v1.2.0
