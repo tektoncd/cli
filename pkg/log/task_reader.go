@@ -199,8 +199,13 @@ func (r *Reader) readPodLogs(podC <-chan string, podErrC <-chan error, follow, t
 			}
 			if err != nil {
 				errC <- fmt.Errorf("task %s failed: %s. Run tkn tr desc %s for more details", r.task, strings.TrimSpace(err.Error()), r.run)
+				continue
 			}
 			steps := filterSteps(pod, r.allSteps, r.steps)
+			if len(steps) == 0 {
+				errC <- fmt.Errorf("no steps found for task %s", r.task)
+				continue
+			}
 			r.readStepsLogs(logC, errC, steps, p, follow, timestamps)
 		}
 	}()
@@ -291,6 +296,7 @@ func (r *Reader) getTaskRunPodNames(run *v1.TaskRun) (<-chan string, <-chan erro
 func filterSteps(pod *corev1.Pod, allSteps bool, stepsGiven []string) []*step {
 	steps := []*step{}
 	if pod == nil {
+		fmt.Printf("pod not found")
 		return steps
 	}
 	stepsInPod := getSteps(pod)
