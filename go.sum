@@ -1943,8 +1943,8 @@ github.com/tchap/go-patricia/v2 v2.3.2 h1:xTHFutuitO2zqKAQ5rCROYgUb7Or/+IC3fts9/
 github.com/tchap/go-patricia/v2 v2.3.2/go.mod h1:VZRHKAb53DLaG+nA9EaYYiaEx6YztwDlLElMsnSHD4k=
 github.com/tektoncd/chains v0.25.1 h1:FBALaY1uGVDFbS198eUUfbLCSQ2PI5i98Ft2UnEw6vg=
 github.com/tektoncd/chains v0.25.1/go.mod h1:NtobmZ8Sn8XPWnY+CNtVBSqJtxk2RrEiabILD7pe0M0=
-github.com/tektoncd/hub v1.22.2 h1:YqGs+c1umB7mZ3TlAiiwXNUxCBgn8zrIbHtNTMJlu0E=
-github.com/tektoncd/hub v1.22.2/go.mod h1:ZDTBuF/etOTcNBb2TNKhhLfTUErND6hd258owacg1sM=
+github.com/tektoncd/hub v1.22.3 h1:uCJiDNkpY4rV9qn8/HxnePuJgh4qdkZ2ah/hqMrvKog=
+github.com/tektoncd/hub v1.22.3/go.mod h1:ZDTBuF/etOTcNBb2TNKhhLfTUErND6hd258owacg1sM=
 github.com/tektoncd/pipeline v1.3.1 h1:GOp49pAMPCXYX1E/cSc2JAm7j4vEB68DOOhGkSoaAmI=
 github.com/tektoncd/pipeline v1.3.1/go.mod h1:924mFZJC0FXYruna4kDisnfFnRowJQgRgLpJuGbjNPQ=
 github.com/tektoncd/plumbing v0.0.0-20250430145243-3b7cd59879c1 h1:nv7BsOAZ1ifQX9Lw1hYFo1f7e62dTDyyVPJBuljgZKw=
