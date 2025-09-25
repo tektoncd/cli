@@ -74,6 +74,7 @@ my-csi-template and my-volume-claim-template)
       --pipeline-timeout string       timeout for PipelineRun
       --pod-template string           local or remote file containing a PodTemplate definition
       --prefix-name string            specify a prefix for the PipelineRun name (must be lowercase alphanumeric characters)
+      --resolvertype string           resolver type for remote pipelines (hub, git, http, cluster, bundle, remote)
   -s, --serviceaccount string         pass the serviceaccount name
       --showlog                       show logs right after starting the Pipeline
       --skip-optional-workspace       skips the prompt for optional workspaces
