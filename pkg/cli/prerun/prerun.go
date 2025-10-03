@@ -19,7 +19,7 @@ func PersistentPreRunE(p cli.Params) func(*cobra.Command, []string) error {
 
 func WarnExperimental(cmd *cobra.Command) error {
 	if IsExperimental(cmd) {
-		fmt.Fprintf(cmd.OutOrStderr(), "*Warning*: This is an experimental command, it's usage and behavior can change in the next release(s)\n")
+		fmt.Fprintf(cmd.OutOrStderr(), "*Warning*: This is an experimental command, its usage and behavior can change in the next release(s)\n")
 	}
 	return nil
 }

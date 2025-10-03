@@ -32,6 +32,6 @@ func TestVerify(t *testing.T) {
 	if err != nil {
 		t.Errorf("Unexpected error: %v", err)
 	}
-	expected := "*Warning*: This is an experimental command, it's usage and behavior can change in the next release(s)\nTask testdata/signed.yaml passes verification \n"
+	expected := "*Warning*: This is an experimental command, its usage and behavior can change in the next release(s)\nTask testdata/signed.yaml passes verification \n"
 	test.AssertOutput(t, expected, out)
 }
