@@ -258,10 +258,10 @@ For passing the workspaces via flags:
 		},
 	)
 
-	c.Flags().StringVar(&opt.ResolverType, "resolvertype", "", "resolver type for remote pipelines (hub, git, http, cluster, bundles, remote)")
+	c.Flags().StringVar(&opt.ResolverType, "resolvertype", "", "resolver type for remote pipelines (hub, git, http, cluster, bundle, remote)")
 	_ = c.RegisterFlagCompletionFunc("resolvertype",
 		func(_ *cobra.Command, _ []string, _ string) ([]string, cobra.ShellCompDirective) {
-			return []string{"hub", "git", "http", "cluster", "bundles", "remote"}, cobra.ShellCompDirectiveNoFileComp
+			return []string{"hub", "git", "http", "cluster", "bundle", "remote"}, cobra.ShellCompDirectiveNoFileComp
 		},
 	)
 
@@ -304,11 +304,8 @@ func (opt *startOptions) runWithResolver(args []string) error {
 }
 
 func (opt *startOptions) runWithResolverOnly(_ *cli.Clients, pipelineName string) error {
-	// Create PipelineRun with resolver reference
-	objMeta := metav1.ObjectMeta{
-		Namespace:    opt.cliparams.Namespace(),
-		GenerateName: pipelineName + "-run-",
-	}
+	// Create ObjectMeta using helper function
+	objMeta := opt.createObjectMeta(nil, pipelineName)
 
 	pr := &v1beta1.PipelineRun{
 		TypeMeta: metav1.TypeMeta{
@@ -331,7 +328,7 @@ func (opt *startOptions) runWithResolverOnly(_ *cli.Clients, pipelineName string
 		},
 	}
 
-	return opt.createAndRunPipelineRun(pr)
+	return opt.createAndRunPipelineRun(pr, pipelineName)
 }
 
 func (opt *startOptions) runWithResolverAndLast(cs *cli.Clients, pipelineName string) error {
@@ -361,19 +358,8 @@ func (opt *startOptions) runWithResolverAndLast(cs *cli.Clients, pipelineName st
 		return errors.New("last PipelineRun did not use a resolver")
 	}
 
-	// Create new PipelineRun based on the last one
-	objMeta := metav1.ObjectMeta{
-		Namespace: opt.cliparams.Namespace(),
-	}
-
-	switch {
-	case len(lastPipelineRun.ObjectMeta.GenerateName) > 0 && opt.PrefixName == "":
-		objMeta.GenerateName = lastPipelineRun.ObjectMeta.GenerateName
-	case opt.PrefixName == "":
-		objMeta.GenerateName = lastPipelineRun.ObjectMeta.Name + "-"
-	default:
-		objMeta.GenerateName = opt.PrefixName + "-"
-	}
+	// Create ObjectMeta using helper function
+	objMeta := opt.createObjectMeta(lastPipelineRun, pipelineName)
 
 	pr := &v1beta1.PipelineRun{
 		TypeMeta: metav1.TypeMeta{
@@ -387,7 +373,13 @@ func (opt *startOptions) runWithResolverAndLast(cs *cli.Clients, pipelineName st
 	// Reapply blank status in case PipelineRun used was cancelled
 	pr.Spec.Status = ""
 
-	return opt.createAndRunPipelineRun(pr)
+	// Extract pipeline name for logging
+	logPipelineName := pipelineName
+	if logPipelineName == "" && lastPipelineRun.Spec.PipelineRef != nil && lastPipelineRun.Spec.PipelineRef.Name != "" {
+		logPipelineName = lastPipelineRun.Spec.PipelineRef.Name
+	}
+
+	return opt.createAndRunPipelineRun(pr, logPipelineName)
 }
 
 func (opt *startOptions) getLastPipelineRunWithResolver(cs *cli.Clients) (*v1beta1.PipelineRun, error) {
@@ -445,19 +437,8 @@ func (opt *startOptions) runWithRemoteResolver(cs *cli.Clients, pipelineName str
 		return err
 	}
 
-	// Create new PipelineRun based on the last one
-	objMeta := metav1.ObjectMeta{
-		Namespace: opt.cliparams.Namespace(),
-	}
-
-	switch {
-	case len(lastPipelineRun.ObjectMeta.GenerateName) > 0 && opt.PrefixName == "":
-		objMeta.GenerateName = lastPipelineRun.ObjectMeta.GenerateName
-	case opt.PrefixName == "":
-		objMeta.GenerateName = lastPipelineRun.ObjectMeta.Name + "-"
-	default:
-		objMeta.GenerateName = opt.PrefixName + "-"
-	}
+	// Create ObjectMeta using helper function
+	objMeta := opt.createObjectMeta(lastPipelineRun, pipelineName)
 
 	pr := &v1beta1.PipelineRun{
 		TypeMeta: metav1.TypeMeta{
@@ -471,7 +452,15 @@ func (opt *startOptions) runWithRemoteResolver(cs *cli.Clients, pipelineName str
 	// Reapply blank status in case PipelineRun used was cancelled
 	pr.Spec.Status = ""
 
-	return opt.createAndRunPipelineRun(pr)
+	// Extract pipeline name for logging
+	logPipelineName := pipelineName
+	if logPipelineName == "" && lastPipelineRun.Spec.PipelineRef != nil && lastPipelineRun.Spec.PipelineRef.Name != "" {
+		logPipelineName = lastPipelineRun.Spec.PipelineRef.Name
+	} else if logPipelineName == "" {
+		logPipelineName = "remote-pipeline" // fallback for remote pipelines
+	}
+
+	return opt.createAndRunPipelineRun(pr, logPipelineName)
 }
 
 // Get Latest Pipelinerun with any resolver type
@@ -540,17 +529,32 @@ func (opt *startOptions) getLastPipelineRunWithAnyResolver(cs *cli.Clients, pipe
 	return &pipelinerunBeta, nil
 }
 
-func (opt *startOptions) createAndRunPipelineRun(pr *v1beta1.PipelineRun) error {
-	cs, err := opt.cliparams.Clients()
-	if err != nil {
-		return err
+// createObjectMeta creates ObjectMeta for PipelineRun with appropriate GenerateName
+func (opt *startOptions) createObjectMeta(lastPipelineRun *v1beta1.PipelineRun, pipelineName string) metav1.ObjectMeta {
+	objMeta := metav1.ObjectMeta{
+		Namespace: opt.cliparams.Namespace(),
 	}
 
-	// Apply common configurations
-	if opt.PrefixName != "" {
-		pr.ObjectMeta.GenerateName = opt.PrefixName + "-"
+	// Handle GenerateName based on different scenarios
+	switch {
+	case opt.PrefixName != "":
+		objMeta.GenerateName = opt.PrefixName + "-"
+	case lastPipelineRun != nil && len(lastPipelineRun.ObjectMeta.GenerateName) > 0:
+		objMeta.GenerateName = lastPipelineRun.ObjectMeta.GenerateName
+	case lastPipelineRun != nil:
+		objMeta.GenerateName = lastPipelineRun.ObjectMeta.Name + "-"
+	case pipelineName != "":
+		objMeta.GenerateName = pipelineName + "-run-"
+	default:
+		objMeta.GenerateName = "pipeline-run-"
 	}
 
+	return objMeta
+}
+
+// configurePipelineRun applies common configurations to a PipelineRun
+func (opt *startOptions) configurePipelineRun(pr *v1beta1.PipelineRun, cs *cli.Clients) error {
+	// Apply timeouts
 	if opt.TimeOut != "" {
 		timeoutDuration, err := time.ParseDuration(opt.TimeOut)
 		if err != nil {
@@ -567,24 +571,28 @@ func (opt *startOptions) createAndRunPipelineRun(pr *v1beta1.PipelineRun) error 
 		}
 	}
 
+	// Apply labels
 	labels, err := labels.MergeLabels(pr.ObjectMeta.Labels, opt.Labels)
 	if err != nil {
 		return err
 	}
 	pr.ObjectMeta.Labels = labels
 
+	// Apply params
 	param, err := params.MergeParam(pr.Spec.Params, opt.Params)
 	if err != nil {
 		return err
 	}
 	pr.Spec.Params = param
 
+	// Apply workspaces
 	workspaces, err := workspaces.Merge(pr.Spec.Workspaces, opt.Workspaces, cs.HTTPClient)
 	if err != nil {
 		return err
 	}
 	pr.Spec.Workspaces = workspaces
 
+	// Apply service accounts
 	if err := mergeSvc(pr, opt.ServiceAccounts); err != nil {
 		return err
 	}
@@ -593,6 +601,7 @@ func (opt *startOptions) createAndRunPipelineRun(pr *v1beta1.PipelineRun) error 
 		pr.Spec.ServiceAccountName = opt.ServiceAccountName
 	}
 
+	// Apply pod template
 	podTemplateLocation := opt.PodTemplate
 	if podTemplateLocation != "" {
 		podTemplate, err := pods.ParsePodTemplate(cs.HTTPClient, podTemplateLocation, file.IsYamlFile(), fmt.Errorf("invalid file format for %s: .yaml or .yml file extension and format required", podTemplateLocation))
@@ -602,6 +611,12 @@ func (opt *startOptions) createAndRunPipelineRun(pr *v1beta1.PipelineRun) error 
 		pr.Spec.PodTemplate = &podTemplate
 	}
 
+	return nil
+}
+
+// executePipelineRun handles dry-run, creation, and logging for a PipelineRun
+func (opt *startOptions) executePipelineRun(pr *v1beta1.PipelineRun, cs *cli.Clients, pipelineName string) error {
+	// Handle dry run
 	if opt.DryRun {
 		format := strings.ToLower(opt.Output)
 		if format == "name" {
@@ -625,11 +640,13 @@ func (opt *startOptions) createAndRunPipelineRun(pr *v1beta1.PipelineRun) error 
 		return printPipelineRun(opt.Output, opt.stream, pr)
 	}
 
+	// Create the PipelineRun
 	prCreated, err := pipelinerun.Create(cs, pr, metav1.CreateOptions{}, opt.cliparams.Namespace())
 	if err != nil {
 		return err
 	}
 
+	// Handle output formatting
 	if opt.Output != "" {
 		format := strings.ToLower(opt.Output)
 		if format == "name" {
@@ -653,6 +670,7 @@ func (opt *startOptions) createAndRunPipelineRun(pr *v1beta1.PipelineRun) error 
 		return printPipelineRun(opt.Output, opt.stream, prCreated)
 	}
 
+	// Show success message and logs if requested
 	fmt.Fprintf(opt.stream.Out, "PipelineRun started: %s\n", prCreated.Name)
 	if !opt.ShowLog {
 		inOrderString := "\nIn order to track the PipelineRun progress run:\ntkn pipelinerun "
@@ -667,6 +685,7 @@ func (opt *startOptions) createAndRunPipelineRun(pr *v1beta1.PipelineRun) error 
 
 	fmt.Fprintf(opt.stream.Out, "Waiting for logs to be available...\n")
 	runLogOpts := &options.LogOptions{
+		PipelineName:    pipelineName,
 		PipelineRunName: prCreated.Name,
 		Stream:          opt.stream,
 		Follow:          true,
@@ -678,16 +697,57 @@ func (opt *startOptions) createAndRunPipelineRun(pr *v1beta1.PipelineRun) error 
 	return prcmd.Run(runLogOpts)
 }
 
+// createAndRunPipelineRun is a streamlined function that uses helper functions
+func (opt *startOptions) createAndRunPipelineRun(pr *v1beta1.PipelineRun, pipelineName string) error {
+	cs, err := opt.cliparams.Clients()
+	if err != nil {
+		return err
+	}
+
+	// Configure the PipelineRun with common settings
+	if err := opt.configurePipelineRun(pr, cs); err != nil {
+		return err
+	}
+
+	// Execute the PipelineRun (dry-run, create, and log)
+	return opt.executePipelineRun(pr, cs, pipelineName)
+}
+
 func (opt *startOptions) startPipeline(pipelineStart *v1beta1.Pipeline) error {
 	cs, err := opt.cliparams.Clients()
 	if err != nil {
 		return err
 	}
 
-	objMeta := metav1.ObjectMeta{
-		Namespace: opt.cliparams.Namespace(),
-	}
+	// Initialize PipelineRun with basic structure
 	var pr *v1beta1.PipelineRun
+	var lastPipelineRun *v1beta1.PipelineRun
+
+	// Handle --last or --use-pipelinerun options
+	if opt.Last || opt.UsePipelineRun != "" {
+		var usepr *v1beta1.PipelineRun
+		if opt.Last {
+			name, err := pipelinepkg.LastRunName(cs, pipelineStart.ObjectMeta.Name, opt.cliparams.Namespace())
+			if err != nil {
+				return err
+			}
+			usepr, err = getPipelineRunV1beta1(pipelineRunGroupResource, cs, name, opt.cliparams.Namespace())
+			if err != nil {
+				return err
+			}
+		} else {
+			usepr, err = getPipelineRunV1beta1(pipelineRunGroupResource, cs, opt.UsePipelineRun, opt.cliparams.Namespace())
+			if err != nil {
+				return err
+			}
+		}
+		lastPipelineRun = usepr
+	}
+
+	// Create ObjectMeta using helper function
+	objMeta := opt.createObjectMeta(lastPipelineRun, pipelineStart.ObjectMeta.Name)
+
+	// Create PipelineRun based on filename or pipeline reference
 	if opt.Filename == "" {
 		pr = &v1beta1.PipelineRun{
 			TypeMeta: metav1.TypeMeta{
@@ -712,168 +772,20 @@ func (opt *startOptions) startPipeline(pipelineStart *v1beta1.Pipeline) error {
 		}
 	}
 
-	if opt.Last || opt.UsePipelineRun != "" {
-		var usepr *v1beta1.PipelineRun
-		if opt.Last {
-			name, err := pipelinepkg.LastRunName(cs, pipelineStart.ObjectMeta.Name, opt.cliparams.Namespace())
-			if err != nil {
-				return err
-			}
-			usepr, err = getPipelineRunV1beta1(pipelineRunGroupResource, cs, name, opt.cliparams.Namespace())
-			if err != nil {
-				return err
-			}
-		} else {
-			usepr, err = getPipelineRunV1beta1(pipelineRunGroupResource, cs, opt.UsePipelineRun, opt.cliparams.Namespace())
-			if err != nil {
-				return err
-			}
-		}
-
-		if len(usepr.ObjectMeta.GenerateName) > 0 && opt.PrefixName == "" {
-			pr.ObjectMeta.GenerateName = usepr.ObjectMeta.GenerateName
-		} else if opt.PrefixName == "" {
-			pr.ObjectMeta.GenerateName = usepr.ObjectMeta.Name + "-"
-		}
-
-		// Copy over spec from last or previous PipelineRun to use same values for this PipelineRun
-		pr.Spec = usepr.Spec
+	// Copy spec from last/previous PipelineRun if using --last or --use-pipelinerun
+	if lastPipelineRun != nil {
+		pr.Spec = lastPipelineRun.Spec
 		// Reapply blank status in case PipelineRun used was cancelled
 		pr.Spec.Status = ""
 	}
 
-	if opt.PrefixName == "" && !opt.Last && opt.UsePipelineRun == "" {
-		pr.ObjectMeta.GenerateName = pipelineStart.ObjectMeta.Name + "-run-"
-	} else if opt.PrefixName != "" {
-		pr.ObjectMeta.GenerateName = opt.PrefixName + "-"
-	}
-
-	if opt.TimeOut != "" {
-		timeoutDuration, err := time.ParseDuration(opt.TimeOut)
-		if err != nil {
-			return err
-		}
-		pr.Spec.Timeouts = &v1beta1.TimeoutFields{
-			Pipeline: &metav1.Duration{Duration: timeoutDuration},
-		}
-	}
-
-	if opt.TasksTimeOut != "" || opt.PipelineTimeOut != "" || opt.FinallyTimeOut != "" {
-		if err := opt.getTimeouts(pr); err != nil {
-			return err
-		}
-	}
-
-	labels, err := labels.MergeLabels(pr.ObjectMeta.Labels, opt.Labels)
-	if err != nil {
-		return err
-	}
-	pr.ObjectMeta.Labels = labels
-
-	param, err := params.MergeParam(pr.Spec.Params, opt.Params)
-	if err != nil {
-		return err
-	}
-	pr.Spec.Params = param
-
-	workspaces, err := workspaces.Merge(pr.Spec.Workspaces, opt.Workspaces, cs.HTTPClient)
-	if err != nil {
-		return err
-	}
-	pr.Spec.Workspaces = workspaces
-
-	if err := mergeSvc(pr, opt.ServiceAccounts); err != nil {
+	// Configure the PipelineRun with common settings
+	if err := opt.configurePipelineRun(pr, cs); err != nil {
 		return err
 	}
 
-	if len(opt.ServiceAccountName) > 0 {
-		pr.Spec.ServiceAccountName = opt.ServiceAccountName
-	}
-
-	podTemplateLocation := opt.PodTemplate
-	if podTemplateLocation != "" {
-		podTemplate, err := pods.ParsePodTemplate(cs.HTTPClient, podTemplateLocation, file.IsYamlFile(), fmt.Errorf("invalid file format for %s: .yaml or .yml file extension and format required", podTemplateLocation))
-		if err != nil {
-			return err
-		}
-		pr.Spec.PodTemplate = &podTemplate
-	}
-
-	if opt.DryRun {
-		format := strings.ToLower(opt.Output)
-		if format == "name" {
-			fmt.Fprintf(opt.stream.Out, "%s\n", pr.GetName())
-			return nil
-		}
-		gvr, err := actions.GetGroupVersionResource(pipelineRunGroupResource, cs.Tekton.Discovery())
-		if err != nil {
-			return err
-		}
-		if gvr.Version == "v1" {
-			var prv1 v1.PipelineRun
-			err = pr.ConvertTo(context.Background(), &prv1)
-			if err != nil {
-				return err
-			}
-			prv1.Kind = "PipelineRun"
-			prv1.APIVersion = "tekton.dev/v1"
-			return printPipelineRun(opt.Output, opt.stream, &prv1)
-		}
-		return printPipelineRun(opt.Output, opt.stream, pr)
-	}
-
-	prCreated, err := pipelinerun.Create(cs, pr, metav1.CreateOptions{}, opt.cliparams.Namespace())
-	if err != nil {
-		return err
-	}
-
-	if opt.Output != "" {
-		format := strings.ToLower(opt.Output)
-		if format == "name" {
-			fmt.Fprintf(opt.stream.Out, "%s\n", prCreated.GetName())
-			return nil
-		}
-		gvr, err := actions.GetGroupVersionResource(pipelineRunGroupResource, cs.Tekton.Discovery())
-		if err != nil {
-			return err
-		}
-		if gvr.Version == "v1" {
-			var prv1 v1.PipelineRun
-			err = prCreated.ConvertTo(context.Background(), &prv1)
-			if err != nil {
-				return err
-			}
-			prv1.Kind = "PipelineRun"
-			prv1.APIVersion = "tekton.dev/v1"
-			return printPipelineRun(opt.Output, opt.stream, &prv1)
-		}
-		return printPipelineRun(opt.Output, opt.stream, prCreated)
-	}
-
-	fmt.Fprintf(opt.stream.Out, "PipelineRun started: %s\n", prCreated.Name)
-	if !opt.ShowLog {
-		inOrderString := "\nIn order to track the PipelineRun progress run:\ntkn pipelinerun "
-		if opt.TektonOptions.Context != "" {
-			inOrderString += fmt.Sprintf("--context=%s ", opt.TektonOptions.Context)
-		}
-		inOrderString += fmt.Sprintf("logs %s -f -n %s\n", prCreated.Name, prCreated.Namespace)
-
-		fmt.Fprint(opt.stream.Out, inOrderString)
-		return nil
-	}
-
-	fmt.Fprintf(opt.stream.Out, "Waiting for logs to be available...\n")
-	runLogOpts := &options.LogOptions{
-		PipelineName:    pipelineStart.ObjectMeta.Name,
-		PipelineRunName: prCreated.Name,
-		Stream:          opt.stream,
-		Follow:          true,
-		Prefixing:       true,
-		Params:          opt.cliparams,
-		AllSteps:        false,
-		ExitWithPrError: opt.ExitWithPrError,
-	}
-	return prcmd.Run(runLogOpts)
+	// Execute the PipelineRun (dry-run, create, and log)
+	return opt.executePipelineRun(pr, cs, pipelineStart.ObjectMeta.Name)
 }
 
 func (opt *startOptions) getInput(pipeline *v1beta1.Pipeline) error {

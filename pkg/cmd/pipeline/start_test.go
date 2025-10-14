@@ -2913,7 +2913,7 @@ func Test_start_pipeline_with_skip_optional_workspace_flag_v1beta1(t *testing.T)
 	test.AssertOutput(t, expected, got)
 }
 
-func TestPipelineStart_WithResolver(t *testing.T) {
+func TestPipelineStart_WithGitResolver(t *testing.T) {
 	pipelineName := "test-pipeline"
 
 	seedData, _ := test.SeedV1beta1TestData(t, test.Data{})
