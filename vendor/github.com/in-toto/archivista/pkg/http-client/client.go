@@ -29,9 +29,29 @@ import (
 )
 
 type ArchivistaClient struct {
-	BaseURL    string
-	GraphQLURL string
+	BaseURL        string
+	GraphQLURL     string
+	requestHeaders http.Header
 	*http.Client
+}
+
+type Option func(*ArchivistaClient)
+
+func WithHeaders(h http.Header) Option {
+	return func(ac *ArchivistaClient) {
+		if h != nil {
+			ac.requestHeaders = h.Clone()
+		}
+	}
+}
+
+func (ac *ArchivistaClient) requestOptions() []api.RequestOption {
+	opts := []api.RequestOption{}
+	if ac.requestHeaders != nil {
+		opts = append(opts, api.WithHeaders(ac.requestHeaders))
+	}
+
+	return opts
 }
 
 type HttpClienter interface {
@@ -47,24 +67,31 @@ type HttpClienter interface {
 	GraphQLQueryReadCloser(ctx context.Context, query string, variables interface{}) (io.ReadCloser, error)
 }
 
-func CreateArchivistaClient(httpClient *http.Client, baseURL string) (*ArchivistaClient, error) {
-	client := ArchivistaClient{
+func CreateArchivistaClient(httpClient *http.Client, baseURL string, opts ...Option) (*ArchivistaClient, error) {
+	client := &ArchivistaClient{
 		BaseURL: baseURL,
 		Client:  http.DefaultClient,
 	}
+
 	if httpClient != nil {
 		client.Client = httpClient
 	}
+
+	for _, opt := range opts {
+		opt(client)
+	}
+
 	var err error
 	client.GraphQLURL, err = url.JoinPath(client.BaseURL, "query")
 	if err != nil {
 		return nil, err
 	}
-	return &client, nil
+
+	return client, nil
 }
 
 func (ac *ArchivistaClient) DownloadDSSE(ctx context.Context, gitoid string) (dsse.Envelope, error) {
-	reader, err := api.DownloadReadCloserWithHTTPClient(ctx, ac.Client, ac.BaseURL, gitoid)
+	reader, err := api.DownloadReadCloserWithHTTPClient(ctx, ac.Client, ac.BaseURL, gitoid, ac.requestOptions()...)
 	if err != nil {
 		return dsse.Envelope{}, err
 	}
@@ -76,19 +103,19 @@ func (ac *ArchivistaClient) DownloadDSSE(ctx context.Context, gitoid string) (ds
 }
 
 func (ac *ArchivistaClient) DownloadReadCloser(ctx context.Context, gitoid string) (io.ReadCloser, error) {
-	return api.DownloadReadCloserWithHTTPClient(ctx, ac.Client, ac.BaseURL, gitoid)
+	return api.DownloadReadCloserWithHTTPClient(ctx, ac.Client, ac.BaseURL, gitoid, ac.requestOptions()...)
 }
 
 func (ac *ArchivistaClient) DownloadWithWriter(ctx context.Context, gitoid string, dst io.Writer) error {
-	return api.DownloadWithWriterWithHTTPClient(ctx, ac.Client, ac.BaseURL, gitoid, dst)
+	return api.DownloadWithWriterWithHTTPClient(ctx, ac.Client, ac.BaseURL, gitoid, dst, ac.requestOptions()...)
 }
 
 func (ac *ArchivistaClient) Store(ctx context.Context, envelope dsse.Envelope) (api.UploadResponse, error) {
-	return api.Store(ctx, ac.BaseURL, envelope)
+	return api.Store(ctx, ac.BaseURL, envelope, ac.requestOptions()...)
 }
 
 func (ac *ArchivistaClient) StoreWithReader(ctx context.Context, r io.Reader) (api.UploadResponse, error) {
-	return api.StoreWithReader(ctx, ac.BaseURL, r)
+	return api.StoreWithReader(ctx, ac.BaseURL, r, ac.requestOptions()...)
 }
 
 type GraphQLRequestBodyInterface struct {
@@ -111,6 +138,7 @@ func (ac *ArchivistaClient) GraphQLRetrieveSubjectResults(
 		ac.BaseURL,
 		api.RetrieveSubjectsQuery,
 		api.RetrieveSubjectVars{Gitoid: gitoid},
+		ac.requestOptions()...,
 	)
 }
 
@@ -125,6 +153,7 @@ func (ac *ArchivistaClient) GraphQLRetrieveSearchResults(
 		ac.BaseURL,
 		api.SearchQuery,
 		api.SearchVars{Algorithm: algo, Digest: digest},
+		ac.requestOptions()...,
 	)
 }
 
@@ -191,19 +220,27 @@ func (ac *ArchivistaClient) GraphQLQueryReadCloser(
 		Query:     query,
 		Variables: variables,
 	}
+
 	requestBodyJSON, err := json.Marshal(requestBodyMap)
 	if err != nil {
 		return nil, err
 	}
+
 	req, err := http.NewRequestWithContext(ctx, http.MethodPost, ac.GraphQLURL, bytes.NewReader(requestBodyJSON))
 	if err != nil {
 		return nil, err
 	}
+
+	if ac.requestHeaders != nil {
+		req.Header = ac.requestHeaders
+	}
+
 	req.Header.Set("Content-Type", "application/json")
 	res, err := ac.Do(req)
 	if err != nil {
 		return nil, err
 	}
+
 	if res.StatusCode != http.StatusOK {
 		defer res.Body.Close()
 		errMsg, err := io.ReadAll(res.Body)
@@ -212,5 +249,6 @@ func (ac *ArchivistaClient) GraphQLQueryReadCloser(
 		}
 		return nil, errors.New(string(errMsg))
 	}
+
 	return res.Body, nil
 }
