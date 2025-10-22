@@ -38,7 +38,7 @@ func TestSign(t *testing.T) {
 	if err != nil {
 		t.Errorf("Unexpected error: %v", err)
 	}
-	expected := "*Warning*: This is an experimental command, it's usage and behavior can change in the next release(s)\nTask testdata/task.yaml is signed successfully \n"
+	expected := "*Warning*: This is an experimental command, its usage and behavior can change in the next release(s)\nTask testdata/task.yaml is signed successfully \n"
 	test.AssertOutput(t, expected, out)
 
 	// verify the signed task
