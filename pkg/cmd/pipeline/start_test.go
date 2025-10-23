@@ -2912,3 +2912,513 @@ func Test_start_pipeline_with_skip_optional_workspace_flag_v1beta1(t *testing.T)
 	expected := "PipelineRun started: random\n\nIn order to track the PipelineRun progress run:\ntkn pipelinerun logs random -f -n ns\n"
 	test.AssertOutput(t, expected, got)
 }
+
+func TestPipelineStart_WithGitResolver(t *testing.T) {
+	pipelineName := "test-pipeline"
+
+	// Create test pipeline data
+	pipelines := []*v1beta1.Pipeline{
+		{
+			ObjectMeta: metav1.ObjectMeta{
+				Name:      pipelineName,
+				Namespace: "ns",
+			},
+			Spec: v1beta1.PipelineSpec{
+				Tasks: []v1beta1.PipelineTask{
+					{
+						Name: "unit-test-1",
+						TaskRef: &v1beta1.TaskRef{
+							Name: "unit-test-task",
+						},
+					},
+				},
+			},
+		},
+	}
+
+	// Create namespace data
+	ns := []*corev1.Namespace{
+		{
+			ObjectMeta: metav1.ObjectMeta{
+				Name: "ns",
+			},
+		},
+	}
+
+	cs, _ := test.SeedV1beta1TestData(t, test.Data{Pipelines: pipelines, Namespaces: ns})
+	cs.Pipeline.Resources = cb.APIResourceList("v1beta1", []string{"pipeline", "pipelinerun"})
+	cs.Pipeline.PrependReactor("create", "pipelineruns", func(action k8stest.Action) (bool, runtime.Object, error) {
+		create := action.(k8stest.CreateAction)
+		pr := create.GetObject().(*v1beta1.PipelineRun)
+
+		// Verify that the PipelineRun has the correct resolver configuration
+		if pr.Spec.PipelineRef == nil {
+			t.Errorf("Expected PipelineRef to be set")
+		}
+		if pr.Spec.PipelineRef.ResolverRef.Resolver != "git" {
+			t.Errorf("Expected resolver to be 'git', got %s", pr.Spec.PipelineRef.ResolverRef.Resolver)
+		}
+
+		// Check that the name parameter is set correctly
+		found := false
+		for _, param := range pr.Spec.PipelineRef.ResolverRef.Params {
+			if param.Name == "name" && param.Value.StringVal == pipelineName {
+				found = true
+				break
+			}
+		}
+		if !found {
+			t.Errorf("Expected name parameter to be set to %s", pipelineName)
+		}
+
+		pr.Name = "random"
+		pr.Namespace = "ns"
+		return true, pr, nil
+	})
+
+	objs := []runtime.Object{pipelines[0]}
+	_, tdc := newV1beta1PipelineClient(objs...)
+	dc, err := tdc.Client(
+		cb.UnstructuredV1beta1P(pipelines[0], "v1beta1"),
+	)
+	if err != nil {
+		t.Errorf("unable to create dynamic client: %v", err)
+	}
+	p := &test.Params{Tekton: cs.Pipeline, Kube: cs.Kube, Dynamic: dc}
+
+	pipeline := Command(p)
+	got, _ := test.ExecuteCommand(pipeline, "start", pipelineName,
+		"--resolvertype=git",
+		"-n", "ns",
+	)
+
+	expected := "PipelineRun started: random\n\nIn order to track the PipelineRun progress run:\ntkn pipelinerun logs random -f -n ns\n"
+	test.AssertOutput(t, expected, got)
+}
+
+func TestPipelineStart_WithRemoteResolver(t *testing.T) {
+	pipelineName := "test-pipeline"
+
+	// The remote resolver now looks for existing PipelineRuns with resolvers
+	// So we expect it to fail when no such PipelineRuns exist
+	seedData, _ := test.SeedV1beta1TestData(t, test.Data{})
+	cs := pipelinetest.Clients{
+		Pipeline: seedData.Pipeline,
+		Kube:     seedData.Kube,
+	}
+	cs.Pipeline.Resources = cb.APIResourceList("v1beta1", []string{"pipeline", "pipelinerun"})
+
+	objs := []runtime.Object{}
+	_, tdc := newV1beta1PipelineClient(objs...)
+	dc, err := tdc.Client()
+	if err != nil {
+		t.Errorf("unable to create dynamic client: %v", err)
+	}
+	p := &test.Params{Tekton: cs.Pipeline, Kube: cs.Kube, Dynamic: dc}
+
+	pipeline := Command(p)
+	_, err = test.ExecuteCommand(pipeline, "start", pipelineName,
+		"--resolvertype=remote",
+		"-n", "ns",
+	)
+
+	// Should fail because no PipelineRuns with resolvers exist for the specified pipeline
+	if err == nil {
+		t.Errorf("Expected error but got none")
+	}
+	expectedErr := "no pipelineruns found for pipeline test-pipeline in namespace ns"
+	if !strings.Contains(err.Error(), expectedErr) {
+		t.Errorf("Expected error to contain '%s', got '%s'", expectedErr, err.Error())
+	}
+}
+
+func TestPipelineStart_ComprehensiveResolverValidation(t *testing.T) {
+	tests := []struct {
+		name        string
+		args        []string
+		expectedErr string
+		description string
+	}{
+		// Invalid resolver type validation
+		{
+			name:        "invalid resolver type",
+			args:        []string{"start", "--resolvertype=invalid"},
+			expectedErr: "invalid resolvertype 'invalid'. Valid values are: hub, git, http, cluster, bundle, remote",
+			description: "Should reject invalid resolver types",
+		},
+
+		// No flags scenarios
+		{
+			name:        "no flags without pipeline name",
+			args:        []string{"start"},
+			expectedErr: "missing Pipeline name",
+			description: "Should require pipeline name when no flags are provided",
+		},
+		{
+			name:        "no flags with pipeline name should work",
+			args:        []string{"start", "test-pipeline"},
+			expectedErr: "Pipeline name test-pipeline does not exist in namespace",
+			description: "Should work with pipeline name and no flags (normal behavior)",
+		},
+
+		// --resolvertype only scenarios (without --last)
+		{
+			name:        "hub resolver without pipeline name",
+			args:        []string{"start", "--resolvertype=hub"},
+			expectedErr: "pipeline name is required when using --resolvertype flag",
+			description: "Hub resolver should require pipeline name",
+		},
+		{
+			name:        "git resolver without pipeline name",
+			args:        []string{"start", "--resolvertype=git"},
+			expectedErr: "pipeline name is required when using --resolvertype flag",
+			description: "Git resolver should require pipeline name",
+		},
+		{
+			name:        "http resolver without pipeline name",
+			args:        []string{"start", "--resolvertype=http"},
+			expectedErr: "pipeline name is required when using --resolvertype flag",
+			description: "HTTP resolver should require pipeline name",
+		},
+		{
+			name:        "cluster resolver without pipeline name",
+			args:        []string{"start", "--resolvertype=cluster"},
+			expectedErr: "pipeline name is required when using --resolvertype flag",
+			description: "Cluster resolver should require pipeline name",
+		},
+		{
+			name:        "bundle resolver without pipeline name",
+			args:        []string{"start", "--resolvertype=bundle"},
+			expectedErr: "pipeline name is required when using --resolvertype flag",
+			description: "bundle resolver should require pipeline name",
+		},
+		{
+			name:        "remote resolver without pipeline name should work",
+			args:        []string{"start", "--resolvertype=remote"},
+			expectedErr: "no pipelineruns found in namespace",
+			description: "Remote resolver should NOT require pipeline name (special case)",
+		},
+
+		// --resolvertype with pipeline name (without --last)
+		{
+			name:        "hub resolver with pipeline name",
+			args:        []string{"start", "test-pipeline", "--resolvertype=hub"},
+			expectedErr: "Pipeline name test-pipeline does not exist in namespace", // Should fail early due to pipeline validation
+			description: "Hub resolver with pipeline name should validate pipeline existence",
+		},
+		{
+			name:        "git resolver with pipeline name",
+			args:        []string{"start", "test-pipeline", "--resolvertype=git"},
+			expectedErr: "Pipeline name test-pipeline does not exist in namespace", // Should fail early due to pipeline validation
+			description: "Git resolver with pipeline name should validate pipeline existence",
+		},
+		{
+			name:        "remote resolver with pipeline name",
+			args:        []string{"start", "test-pipeline", "--resolvertype=remote"},
+			expectedErr: "no pipelineruns found for pipeline test-pipeline",
+			description: "Remote resolver with pipeline name should look for existing runs",
+		},
+		{
+			name:        "http resolver with non-existent pipeline name",
+			args:        []string{"start", "non-existent-pipeline", "--resolvertype=http"},
+			expectedErr: "Pipeline name non-existent-pipeline does not exist in namespace",
+			description: "HTTP resolver should fail early when pipeline doesn't exist",
+		},
+
+		// --last only scenarios (without --resolvertype)
+		{
+			name:        "last flag without pipeline name",
+			args:        []string{"start", "--last"},
+			expectedErr: "missing Pipeline name",
+			description: "Last flag without pipeline name requires pipeline name in current implementation",
+		},
+		{
+			name:        "last flag with pipeline name",
+			args:        []string{"start", "test-pipeline", "--last"},
+			expectedErr: "Pipeline name test-pipeline does not exist in namespace",
+			description: "Last flag with pipeline name should work",
+		},
+
+		// --resolvertype and --last together
+		{
+			name:        "hub resolver with last flag without pipeline name",
+			args:        []string{"start", "--resolvertype=hub", "--last"},
+			expectedErr: "no pipelineruns found in namespace",
+			description: "Resolver + last without pipeline name should work (optional pipeline name)",
+		},
+		{
+			name:        "git resolver with last flag and pipeline name",
+			args:        []string{"start", "test-pipeline", "--resolvertype=git", "--last"},
+			expectedErr: "Pipeline name test-pipeline does not exist in namespace",
+			description: "Resolver + last with pipeline name should validate pipeline existence first",
+		},
+		{
+			name:        "remote resolver with last flag without pipeline name",
+			args:        []string{"start", "--resolvertype=remote", "--last"},
+			expectedErr: "no pipelineruns found in namespace",
+			description: "Remote resolver + last without pipeline name should work",
+		},
+		{
+			name:        "remote resolver with last flag and pipeline name",
+			args:        []string{"start", "test-pipeline", "--resolvertype=remote", "--last"},
+			expectedErr: "no pipelineruns found for pipeline test-pipeline",
+			description: "Remote resolver + last with pipeline name should work",
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			t.Logf("Testing: %s", tt.description)
+
+			seedData, _ := test.SeedV1beta1TestData(t, test.Data{})
+			cs := pipelinetest.Clients{
+				Pipeline: seedData.Pipeline,
+				Kube:     seedData.Kube,
+			}
+			cs.Pipeline.Resources = cb.APIResourceList("v1beta1", []string{"pipeline", "pipelinerun"})
+
+			// Add reactor for successful PipelineRun creation cases
+			cs.Pipeline.PrependReactor("create", "pipelineruns", func(action k8stest.Action) (bool, runtime.Object, error) {
+				create := action.(k8stest.CreateAction)
+				pr := create.GetObject().(*v1beta1.PipelineRun)
+				pr.Name = "random"
+				return true, pr, nil
+			})
+
+			objs := []runtime.Object{}
+			_, tdc := newV1beta1PipelineClient(objs...)
+			dc, err := tdc.Client()
+			if err != nil {
+				t.Errorf("unable to create dynamic client: %v", err)
+			}
+			p := &test.Params{Tekton: cs.Pipeline, Kube: cs.Kube, Dynamic: dc}
+
+			pipeline := Command(p)
+			got, err := test.ExecuteCommand(pipeline, tt.args...)
+
+			// Check if this is a success case (expectedErr contains "PipelineRun started:")
+			if strings.Contains(tt.expectedErr, "PipelineRun started:") {
+				// This should succeed
+				if err != nil {
+					t.Errorf("Expected success but got error: %s", err.Error())
+				}
+				if !strings.Contains(got, tt.expectedErr) {
+					t.Errorf("Expected output to contain '%s', got '%s'", tt.expectedErr, got)
+				}
+			} else {
+				// This should fail with specific error
+				if err == nil {
+					t.Errorf("Expected error but got none. Output: %s", got)
+				} else if !strings.Contains(err.Error(), tt.expectedErr) {
+					t.Errorf("Expected error to contain '%s', got '%s'", tt.expectedErr, err.Error())
+				}
+			}
+		})
+	}
+}
+
+func TestPipelineStart_RemoteResolverFindsLatestAcrossAllPipelines(t *testing.T) {
+	// Test that remote resolver attempts to find PipelineRuns with resolvers
+	// This test verifies the error case when no PipelineRuns with resolvers exist
+	cs, _ := test.SeedV1beta1TestData(t, test.Data{})
+	cs.Pipeline.Resources = cb.APIResourceList("v1beta1", []string{"pipeline", "pipelinerun"})
+
+	objs := []runtime.Object{}
+	_, tdc := newV1beta1PipelineClient(objs...)
+	dc, err := tdc.Client()
+	if err != nil {
+		t.Errorf("unable to create dynamic client: %v", err)
+	}
+	p := &test.Params{Tekton: cs.Pipeline, Kube: cs.Kube, Dynamic: dc}
+
+	pipeline := Command(p)
+	_, err = test.ExecuteCommand(pipeline, "start",
+		"--resolvertype=remote",
+		"-n", "ns",
+	)
+
+	// Should fail because no PipelineRuns exist
+	if err == nil {
+		t.Errorf("Expected error but got none")
+	}
+	expectedErr := "no pipelineruns found in namespace ns"
+	if !strings.Contains(err.Error(), expectedErr) {
+		t.Errorf("Expected error to contain '%s', got '%s'", expectedErr, err.Error())
+	}
+}
+
+func TestPipelineStart_RemoteResolverIgnoresNonResolverRuns(t *testing.T) {
+	// Test that remote resolver ignores PipelineRuns that don't use resolvers
+	prs := []*v1beta1.PipelineRun{
+		{
+			ObjectMeta: metav1.ObjectMeta{
+				Name:              "direct-pipeline-run",
+				Namespace:         "ns",
+				Labels:            map[string]string{"tekton.dev/pipeline": "direct-pipeline"},
+				CreationTimestamp: metav1.Time{Time: time.Now().Add(-1 * time.Hour)},
+			},
+			Spec: v1beta1.PipelineRunSpec{
+				PipelineRef: &v1beta1.PipelineRef{
+					Name: "direct-pipeline", // No resolver
+				},
+			},
+		},
+		{
+			ObjectMeta: metav1.ObjectMeta{
+				Name:              "inline-pipeline-run",
+				Namespace:         "ns",
+				CreationTimestamp: metav1.Time{Time: time.Now().Add(-30 * time.Minute)},
+			},
+			Spec: v1beta1.PipelineRunSpec{
+				PipelineSpec: &v1beta1.PipelineSpec{}, // Inline spec, no resolver
+			},
+		},
+	}
+
+	cs, _ := test.SeedV1beta1TestData(t, test.Data{
+		PipelineRuns: prs,
+	})
+	cs.Pipeline.Resources = cb.APIResourceList("v1beta1", []string{"pipeline", "pipelinerun"})
+
+	objs := []runtime.Object{}
+	_, tdc := newV1beta1PipelineClient(objs...)
+	dc, err := tdc.Client()
+	if err != nil {
+		t.Errorf("unable to create dynamic client: %v", err)
+	}
+	p := &test.Params{Tekton: cs.Pipeline, Kube: cs.Kube, Dynamic: dc}
+
+	pipeline := Command(p)
+	_, err = test.ExecuteCommand(pipeline, "start",
+		"--resolvertype=remote",
+		"-n", "ns",
+	)
+
+	// Should fail because no PipelineRuns with resolvers exist
+	if err == nil {
+		t.Errorf("Expected error but got none")
+	}
+	expectedErr := "no pipelineruns found in namespace ns"
+	if !strings.Contains(err.Error(), expectedErr) {
+		t.Errorf("Expected error to contain '%s', got '%s'", expectedErr, err.Error())
+	}
+}
+func TestPipelineStart_RemoteResolverValidationLogic(t *testing.T) {
+	// Test that remote resolver validation logic works correctly
+	tests := []struct {
+		name        string
+		args        []string
+		expectError bool
+		errorMsg    string
+	}{
+		{
+			name:        "remote resolver without pipeline name should not error in validation",
+			args:        []string{"start", "--resolvertype=remote"},
+			expectError: true, // Will error later when no PipelineRuns found, not in validation
+			errorMsg:    "no pipelineruns found",
+		},
+		{
+			name:        "remote resolver with pipeline name should work",
+			args:        []string{"start", "test-pipeline", "--resolvertype=remote"},
+			expectError: true, // Will error when no PipelineRuns found for pipeline
+			errorMsg:    "no pipelineruns found for pipeline test-pipeline",
+		},
+		{
+			name:        "remote resolver with last flag should work",
+			args:        []string{"start", "--resolvertype=remote", "--last"},
+			expectError: true, // Will error when no PipelineRuns found
+			errorMsg:    "no pipelineruns found",
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			cs, _ := test.SeedV1beta1TestData(t, test.Data{})
+			cs.Pipeline.Resources = cb.APIResourceList("v1beta1", []string{"pipeline", "pipelinerun"})
+			objs := []runtime.Object{}
+			_, tdc := newV1beta1PipelineClient(objs...)
+			dc, err := tdc.Client()
+			if err != nil {
+				t.Errorf("unable to create dynamic client: %v", err)
+			}
+			p := &test.Params{Tekton: cs.Pipeline, Kube: cs.Kube, Dynamic: dc}
+
+			pipeline := Command(p)
+			_, err = test.ExecuteCommand(pipeline, tt.args...)
+
+			if tt.expectError {
+				if err == nil {
+					t.Errorf("Expected error but got none")
+				} else if !strings.Contains(err.Error(), tt.errorMsg) {
+					t.Errorf("Expected error to contain '%s', got '%s'", tt.errorMsg, err.Error())
+				}
+			} else {
+				if err != nil {
+					t.Errorf("Expected no error but got: %s", err.Error())
+				}
+			}
+		})
+	}
+}
+
+func TestPipelineStart_RemoteResolverVsOtherResolvers(t *testing.T) {
+	// Test that remote resolver behaves differently from other resolvers
+	tests := []struct {
+		name         string
+		resolverType string
+		args         []string
+		expectError  bool
+		errorMsg     string
+	}{
+		{
+			name:         "git resolver requires pipeline name",
+			resolverType: "git",
+			args:         []string{"start", "--resolvertype=git"},
+			expectError:  true,
+			errorMsg:     "pipeline name is required when using --resolvertype flag",
+		},
+		{
+			name:         "hub resolver requires pipeline name",
+			resolverType: "hub",
+			args:         []string{"start", "--resolvertype=hub"},
+			expectError:  true,
+			errorMsg:     "pipeline name is required when using --resolvertype flag",
+		},
+		{
+			name:         "remote resolver does not require pipeline name",
+			resolverType: "remote",
+			args:         []string{"start", "--resolvertype=remote"},
+			expectError:  true, // Different error - no PipelineRuns found
+			errorMsg:     "no pipelineruns found",
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			cs, _ := test.SeedV1beta1TestData(t, test.Data{})
+			cs.Pipeline.Resources = cb.APIResourceList("v1beta1", []string{"pipeline", "pipelinerun"})
+			objs := []runtime.Object{}
+			_, tdc := newV1beta1PipelineClient(objs...)
+			dc, err := tdc.Client()
+			if err != nil {
+				t.Errorf("unable to create dynamic client: %v", err)
+			}
+			p := &test.Params{Tekton: cs.Pipeline, Kube: cs.Kube, Dynamic: dc}
+
+			pipeline := Command(p)
+			_, err = test.ExecuteCommand(pipeline, tt.args...)
+
+			if tt.expectError {
+				if err == nil {
+					t.Errorf("Expected error but got none")
+				} else if !strings.Contains(err.Error(), tt.errorMsg) {
+					t.Errorf("Expected error to contain '%s', got '%s'", tt.errorMsg, err.Error())
+				}
+			} else {
+				if err != nil {
+					t.Errorf("Expected no error but got: %s", err.Error())
+				}
+			}
+		})
+	}
+}

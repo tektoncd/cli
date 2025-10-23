@@ -81,6 +81,7 @@ type startOptions struct {
 	TektonOptions         flags.TektonOptions
 	PodTemplate           string
 	SkipOptionalWorkspace bool
+	ResolverType          string
 }
 
 func startCommand(p cli.Params) *cobra.Command {
@@ -105,6 +106,18 @@ func startCommand(p cli.Params) *cobra.Command {
 		Example: `Start Pipeline foo by creating a PipelineRun named "foo-run-xyz123" from namespace 'bar':
 
     tkn pipeline start foo -s ServiceAccountName -n bar
+
+ Re-run the last PipelineRun for a specific pipeline
+
+    tkn pipeline start foo --last -n bar
+
+ Re-run the last PipelineRun that used any remote resolver
+
+    tkn pipeline start --last --resolvertype=remote -n bar
+
+ Re-run the last PipelineRun that used git resolver
+ 
+    tkn pipeline start --last --resolvertype=git -n bar
 
 For params value, if you want to provide multiple values, provide them comma separated
 like cat,foo,bar
@@ -134,7 +147,7 @@ For passing the workspaces via flags:
 		SilenceUsage: true,
 
 		ValidArgsFunction: formatted.ParentCompletion,
-		Args: func(cmd *cobra.Command, _ []string) error {
+		Args: func(cmd *cobra.Command, args []string) error {
 			if err := flags.InitParams(p, cmd); err != nil {
 				return err
 			}
@@ -147,6 +160,34 @@ For passing the workspaces via flags:
 			if opt.UseParamDefaults && (opt.Last || opt.UsePipelineRun != "") {
 				return errors.New("cannot use --last or --use-pipelinerun options with --use-param-defaults option")
 			}
+
+			// Validate resolvertype values
+			if opt.ResolverType != "" {
+				validResolvers := []string{"hub", "git", "http", "cluster", "bundle", "remote"}
+				isValid := false
+				for _, valid := range validResolvers {
+					if opt.ResolverType == valid {
+						isValid = true
+						break
+					}
+				}
+				if !isValid {
+					return fmt.Errorf("invalid resolvertype '%s'. Valid values are: %s", opt.ResolverType, strings.Join(validResolvers, ", "))
+				}
+			}
+
+			// Validate flag combinations according to requirements
+			if opt.ResolverType != "" && !opt.Last {
+				// Case: --resolvertype only
+				// Special case: remote resolver doesn't require pipeline name (it finds latest with any resolver)
+				if opt.ResolverType != "remote" && len(args) == 0 && opt.Filename == "" {
+					return errors.New("pipeline name is required when using --resolvertype flag")
+				}
+			}
+
+			// Case: --resolvertype and --last (pipeline name is optional)
+			// Case: --last only (pipeline name is optional) - already handled by existing logic
+
 			format := strings.ToLower(opt.Output)
 			if format != "" && format != "json" && format != "yaml" && format != "name" {
 				return fmt.Errorf("output format specified is %s but must be yaml or json", opt.Output)
@@ -161,6 +202,11 @@ For passing the workspaces via flags:
 			opt.stream = &cli.Stream{
 				Out: cmd.OutOrStdout(),
 				Err: cmd.OutOrStderr(),
+			}
+
+			// Handle different scenarios based on flags
+			if opt.ResolverType != "" {
+				return opt.runWithResolver(args)
 			}
 
 			pipeline, err := NameArg(args, p, opt.Filename)
@@ -211,6 +257,14 @@ For passing the workspaces via flags:
 			return formatted.BaseCompletion("serviceaccount", args)
 		},
 	)
+
+	c.Flags().StringVar(&opt.ResolverType, "resolvertype", "", "resolver type for remote pipelines (hub, git, http, cluster, bundle, remote)")
+	_ = c.RegisterFlagCompletionFunc("resolvertype",
+		func(_ *cobra.Command, _ []string, _ string) ([]string, cobra.ShellCompDirective) {
+			return []string{"hub", "git", "http", "cluster", "bundle", "remote"}, cobra.ShellCompDirectiveNoFileComp
+		},
+	)
+
 	return c
 }
 
@@ -222,16 +276,497 @@ func (opt *startOptions) run(pipeline *v1beta1.Pipeline) error {
 	return opt.startPipeline(pipeline)
 }
 
+func (opt *startOptions) runWithResolver(args []string) error {
+	cs, err := opt.cliparams.Clients()
+	if err != nil {
+		return err
+	}
+
+	var pipelineName string
+	if len(args) > 0 {
+		pipelineName = args[0]
+	}
+
+	// Special case: if resolvertype is "remote", find and rerun the latest PipelineRun with any resolver
+	if opt.ResolverType == "remote" {
+		return opt.runWithRemoteResolver(cs, pipelineName)
+	}
+
+	if opt.Last && opt.ResolverType != "" {
+		// Case: --resolvertype and --last
+		return opt.runWithResolverAndLast(cs, pipelineName)
+	}
+	// Case: --resolvertype only
+	if pipelineName == "" {
+		return errors.New("pipeline name is required when using --resolvertype flag")
+	}
+	return opt.runWithResolverOnly(cs, pipelineName)
+}
+
+// validatePipelineExists checks if a pipeline exists in the namespace
+func (opt *startOptions) validatePipelineExists(cs *cli.Clients, pipelineName string) error {
+	_, err := getPipelineV1beta1(pipelineGroupResource, cs, pipelineName, opt.cliparams.Namespace())
+	if err != nil {
+		return fmt.Errorf(errInvalidPipeline, pipelineName, opt.cliparams.Namespace())
+	}
+	return nil
+}
+
+func (opt *startOptions) runWithResolverOnly(cs *cli.Clients, pipelineName string) error {
+	// Validate that the pipeline exists locally before proceeding
+	if err := opt.validatePipelineExists(cs, pipelineName); err != nil {
+		return err
+	}
+
+	// Create ObjectMeta using helper function
+	objMeta := opt.createObjectMeta(nil, pipelineName)
+
+	pr := &v1beta1.PipelineRun{
+		TypeMeta: metav1.TypeMeta{
+			APIVersion: "tekton.dev/v1beta1",
+			Kind:       "PipelineRun",
+		},
+		ObjectMeta: objMeta,
+		Spec: v1beta1.PipelineRunSpec{
+			PipelineRef: &v1beta1.PipelineRef{
+				ResolverRef: v1beta1.ResolverRef{
+					Resolver: v1beta1.ResolverName(opt.ResolverType),
+					Params: []v1beta1.Param{
+						{
+							Name:  "name",
+							Value: v1beta1.ParamValue{StringVal: pipelineName},
+						},
+					},
+				},
+			},
+		},
+	}
+
+	return opt.createAndRunPipelineRun(pr, pipelineName)
+}
+
+func (opt *startOptions) runWithResolverAndLast(cs *cli.Clients, pipelineName string) error {
+	var lastPipelineRun *v1beta1.PipelineRun
+	var err error
+
+	if pipelineName != "" {
+		// Validate that the pipeline exists locally before proceeding
+		if err := opt.validatePipelineExists(cs, pipelineName); err != nil {
+			return err
+		}
+
+		// Get last run for specific pipeline
+		name, err := pipelinepkg.LastRunName(cs, pipelineName, opt.cliparams.Namespace())
+		if err != nil {
+			return err
+		}
+		lastPipelineRun, err = getPipelineRunV1beta1(pipelineRunGroupResource, cs, name, opt.cliparams.Namespace())
+		if err != nil {
+			return err
+		}
+	} else {
+		// Get last run from any pipeline with resolver
+		lastPipelineRun, err = opt.getLastPipelineRunWithResolver(cs)
+		if err != nil {
+			return err
+		}
+	}
+
+	// Check if the last run used a resolver
+	if lastPipelineRun.Spec.PipelineRef == nil || lastPipelineRun.Spec.PipelineRef.ResolverRef.Resolver == "" {
+		return errors.New("last PipelineRun did not use a resolver")
+	}
+
+	// Create ObjectMeta using helper function
+	objMeta := opt.createObjectMeta(lastPipelineRun, pipelineName)
+
+	pr := &v1beta1.PipelineRun{
+		TypeMeta: metav1.TypeMeta{
+			APIVersion: "tekton.dev/v1beta1",
+			Kind:       "PipelineRun",
+		},
+		ObjectMeta: objMeta,
+		Spec:       lastPipelineRun.Spec,
+	}
+
+	// Reapply blank status in case PipelineRun used was cancelled
+	pr.Spec.Status = ""
+
+	// Extract pipeline name for logging
+	logPipelineName := pipelineName
+	if logPipelineName == "" && lastPipelineRun.Spec.PipelineRef != nil && lastPipelineRun.Spec.PipelineRef.Name != "" {
+		logPipelineName = lastPipelineRun.Spec.PipelineRef.Name
+	}
+
+	return opt.createAndRunPipelineRun(pr, logPipelineName)
+}
+
+func (opt *startOptions) getLastPipelineRunWithResolver(cs *cli.Clients) (*v1beta1.PipelineRun, error) {
+	options := metav1.ListOptions{}
+
+	var runs *v1.PipelineRunList
+	err := actions.ListV1(pipelineRunGroupResource, cs, options, opt.cliparams.Namespace(), &runs)
+	if err != nil {
+		return nil, err
+	}
+
+	if len(runs.Items) == 0 {
+		return nil, fmt.Errorf("no pipelineruns found in namespace %s", opt.cliparams.Namespace())
+	}
+
+	// Filter runs that use resolvers and find the latest
+	var filteredRuns []v1.PipelineRun
+	for _, run := range runs.Items {
+		if run.Spec.PipelineRef != nil && run.Spec.PipelineRef.ResolverRef.Resolver != "" {
+			// If resolvertype is specified, filter by that resolver type
+			if opt.ResolverType == "" || string(run.Spec.PipelineRef.ResolverRef.Resolver) == opt.ResolverType {
+				filteredRuns = append(filteredRuns, run)
+			}
+		}
+	}
+
+	if len(filteredRuns) == 0 {
+		if opt.ResolverType != "" {
+			return nil, fmt.Errorf("no pipelineruns with resolver type '%s' found in namespace %s", opt.ResolverType, opt.cliparams.Namespace())
+		}
+		return nil, fmt.Errorf("no pipelineruns with resolvers found in namespace %s", opt.cliparams.Namespace())
+	}
+
+	latest := filteredRuns[0]
+	for _, run := range filteredRuns {
+		if run.CreationTimestamp.Time.After(latest.CreationTimestamp.Time) {
+			latest = run
+		}
+	}
+
+	// Convert v1 to v1beta1
+	var pipelinerunBeta v1beta1.PipelineRun
+	err = pipelinerunBeta.ConvertFrom(context.Background(), &latest)
+	if err != nil {
+		return nil, err
+	}
+
+	return &pipelinerunBeta, nil
+}
+
+func (opt *startOptions) runWithRemoteResolver(cs *cli.Clients, pipelineName string) error {
+	// Find the latest PipelineRun with any resolver type
+	lastPipelineRun, err := opt.getLastPipelineRunWithAnyResolver(cs, pipelineName)
+	if err != nil {
+		return err
+	}
+
+	// Create ObjectMeta using helper function
+	objMeta := opt.createObjectMeta(lastPipelineRun, pipelineName)
+
+	pr := &v1beta1.PipelineRun{
+		TypeMeta: metav1.TypeMeta{
+			APIVersion: "tekton.dev/v1beta1",
+			Kind:       "PipelineRun",
+		},
+		ObjectMeta: objMeta,
+		Spec:       lastPipelineRun.Spec,
+	}
+
+	// Reapply blank status in case PipelineRun used was cancelled
+	pr.Spec.Status = ""
+
+	// Extract pipeline name for logging
+	logPipelineName := pipelineName
+	if logPipelineName == "" && lastPipelineRun.Spec.PipelineRef != nil && lastPipelineRun.Spec.PipelineRef.Name != "" {
+		logPipelineName = lastPipelineRun.Spec.PipelineRef.Name
+	} else if logPipelineName == "" {
+		logPipelineName = "remote-pipeline" // fallback for remote pipelines
+	}
+
+	return opt.createAndRunPipelineRun(pr, logPipelineName)
+}
+
+// Get Latest Pipelinerun with any resolver type
+// If pipeline name find then first it filters
+// pipelinrun by give pipeline name and will return latest pipelinerun
+func (opt *startOptions) getLastPipelineRunWithAnyResolver(cs *cli.Clients, pipelineName string) (*v1beta1.PipelineRun, error) {
+	options := metav1.ListOptions{}
+
+	// If pipeline name is provided, filter by that pipeline
+	if pipelineName != "" {
+		options = metav1.ListOptions{
+			LabelSelector: fmt.Sprintf("tekton.dev/pipeline=%s", pipelineName),
+		}
+	}
+
+	var runs *v1.PipelineRunList
+	err := actions.ListV1(pipelineRunGroupResource, cs, options, opt.cliparams.Namespace(), &runs)
+	if err != nil {
+		return nil, err
+	}
+
+	if len(runs.Items) == 0 {
+		if pipelineName != "" {
+			return nil, fmt.Errorf("no pipelineruns found for pipeline %s in namespace %s", pipelineName, opt.cliparams.Namespace())
+		}
+		return nil, fmt.Errorf("no pipelineruns found in namespace %s", opt.cliparams.Namespace())
+	}
+
+	// Filter runs that use any resolver (hub, git, http, cluster, bundles)
+	validResolvers := []string{"hub", "git", "http", "cluster", "bundles"}
+	var filteredRuns []v1.PipelineRun
+	for _, run := range runs.Items {
+		if run.Spec.PipelineRef != nil && run.Spec.PipelineRef.ResolverRef.Resolver != "" {
+			resolverType := string(run.Spec.PipelineRef.ResolverRef.Resolver)
+			for _, validResolver := range validResolvers {
+				if resolverType == validResolver {
+					filteredRuns = append(filteredRuns, run)
+					break
+				}
+			}
+		}
+	}
+
+	if len(filteredRuns) == 0 {
+		if pipelineName != "" {
+			return nil, fmt.Errorf("no pipelineruns with resolvers found for pipeline %s in namespace %s", pipelineName, opt.cliparams.Namespace())
+		}
+		return nil, fmt.Errorf("no pipelineruns with resolvers found in namespace %s", opt.cliparams.Namespace())
+	}
+
+	// Find the latest one
+	latest := filteredRuns[0]
+	for _, run := range filteredRuns {
+		if run.CreationTimestamp.Time.After(latest.CreationTimestamp.Time) {
+			latest = run
+		}
+	}
+
+	// Convert v1 to v1beta1
+	var pipelinerunBeta v1beta1.PipelineRun
+	err = pipelinerunBeta.ConvertFrom(context.Background(), &latest)
+	if err != nil {
+		return nil, err
+	}
+
+	return &pipelinerunBeta, nil
+}
+
+// createObjectMeta creates ObjectMeta for PipelineRun with appropriate GenerateName
+func (opt *startOptions) createObjectMeta(lastPipelineRun *v1beta1.PipelineRun, pipelineName string) metav1.ObjectMeta {
+	objMeta := metav1.ObjectMeta{
+		Namespace: opt.cliparams.Namespace(),
+	}
+
+	// Handle GenerateName based on different scenarios
+	switch {
+	case opt.PrefixName != "":
+		objMeta.GenerateName = opt.PrefixName + "-"
+	case lastPipelineRun != nil && len(lastPipelineRun.ObjectMeta.GenerateName) > 0:
+		objMeta.GenerateName = lastPipelineRun.ObjectMeta.GenerateName
+	case lastPipelineRun != nil:
+		objMeta.GenerateName = lastPipelineRun.ObjectMeta.Name + "-"
+	case pipelineName != "":
+		objMeta.GenerateName = pipelineName + "-run-"
+	default:
+		objMeta.GenerateName = "pipeline-run-"
+	}
+
+	return objMeta
+}
+
+// configurePipelineRun applies common configurations to a PipelineRun
+func (opt *startOptions) configurePipelineRun(pr *v1beta1.PipelineRun, cs *cli.Clients) error {
+	// Apply timeouts
+	if opt.TimeOut != "" {
+		timeoutDuration, err := time.ParseDuration(opt.TimeOut)
+		if err != nil {
+			return err
+		}
+		pr.Spec.Timeouts = &v1beta1.TimeoutFields{
+			Pipeline: &metav1.Duration{Duration: timeoutDuration},
+		}
+	}
+
+	if opt.TasksTimeOut != "" || opt.PipelineTimeOut != "" || opt.FinallyTimeOut != "" {
+		if err := opt.getTimeouts(pr); err != nil {
+			return err
+		}
+	}
+
+	// Apply labels
+	labels, err := labels.MergeLabels(pr.ObjectMeta.Labels, opt.Labels)
+	if err != nil {
+		return err
+	}
+	pr.ObjectMeta.Labels = labels
+
+	// Apply params
+	param, err := params.MergeParam(pr.Spec.Params, opt.Params)
+	if err != nil {
+		return err
+	}
+	pr.Spec.Params = param
+
+	// Apply workspaces
+	workspaces, err := workspaces.Merge(pr.Spec.Workspaces, opt.Workspaces, cs.HTTPClient)
+	if err != nil {
+		return err
+	}
+	pr.Spec.Workspaces = workspaces
+
+	// Apply service accounts
+	if err := mergeSvc(pr, opt.ServiceAccounts); err != nil {
+		return err
+	}
+
+	if len(opt.ServiceAccountName) > 0 {
+		pr.Spec.ServiceAccountName = opt.ServiceAccountName
+	}
+
+	// Apply pod template
+	podTemplateLocation := opt.PodTemplate
+	if podTemplateLocation != "" {
+		podTemplate, err := pods.ParsePodTemplate(cs.HTTPClient, podTemplateLocation, file.IsYamlFile(), fmt.Errorf("invalid file format for %s: .yaml or .yml file extension and format required", podTemplateLocation))
+		if err != nil {
+			return err
+		}
+		pr.Spec.PodTemplate = &podTemplate
+	}
+
+	return nil
+}
+
+// executePipelineRun handles dry-run, creation, and logging for a PipelineRun
+func (opt *startOptions) executePipelineRun(pr *v1beta1.PipelineRun, cs *cli.Clients, pipelineName string) error {
+	// Handle dry run
+	if opt.DryRun {
+		format := strings.ToLower(opt.Output)
+		if format == "name" {
+			fmt.Fprintf(opt.stream.Out, "%s\n", pr.GetName())
+			return nil
+		}
+		gvr, err := actions.GetGroupVersionResource(pipelineRunGroupResource, cs.Tekton.Discovery())
+		if err != nil {
+			return err
+		}
+		if gvr.Version == "v1" {
+			var prv1 v1.PipelineRun
+			err = pr.ConvertTo(context.Background(), &prv1)
+			if err != nil {
+				return err
+			}
+			prv1.Kind = "PipelineRun"
+			prv1.APIVersion = "tekton.dev/v1"
+			return printPipelineRun(opt.Output, opt.stream, &prv1)
+		}
+		return printPipelineRun(opt.Output, opt.stream, pr)
+	}
+
+	// Create the PipelineRun
+	prCreated, err := pipelinerun.Create(cs, pr, metav1.CreateOptions{}, opt.cliparams.Namespace())
+	if err != nil {
+		return err
+	}
+
+	// Handle output formatting
+	if opt.Output != "" {
+		format := strings.ToLower(opt.Output)
+		if format == "name" {
+			fmt.Fprintf(opt.stream.Out, "%s\n", prCreated.GetName())
+			return nil
+		}
+		gvr, err := actions.GetGroupVersionResource(pipelineRunGroupResource, cs.Tekton.Discovery())
+		if err != nil {
+			return err
+		}
+		if gvr.Version == "v1" {
+			var prv1 v1.PipelineRun
+			err = prCreated.ConvertTo(context.Background(), &prv1)
+			if err != nil {
+				return err
+			}
+			prv1.Kind = "PipelineRun"
+			prv1.APIVersion = "tekton.dev/v1"
+			return printPipelineRun(opt.Output, opt.stream, &prv1)
+		}
+		return printPipelineRun(opt.Output, opt.stream, prCreated)
+	}
+
+	// Show success message and logs if requested
+	fmt.Fprintf(opt.stream.Out, "PipelineRun started: %s\n", prCreated.Name)
+	if !opt.ShowLog {
+		inOrderString := "\nIn order to track the PipelineRun progress run:\ntkn pipelinerun "
+		if opt.TektonOptions.Context != "" {
+			inOrderString += fmt.Sprintf("--context=%s ", opt.TektonOptions.Context)
+		}
+		inOrderString += fmt.Sprintf("logs %s -f -n %s\n", prCreated.Name, prCreated.Namespace)
+
+		fmt.Fprint(opt.stream.Out, inOrderString)
+		return nil
+	}
+
+	fmt.Fprintf(opt.stream.Out, "Waiting for logs to be available...\n")
+	runLogOpts := &options.LogOptions{
+		PipelineName:    pipelineName,
+		PipelineRunName: prCreated.Name,
+		Stream:          opt.stream,
+		Follow:          true,
+		Prefixing:       true,
+		Params:          opt.cliparams,
+		AllSteps:        false,
+		ExitWithPrError: opt.ExitWithPrError,
+	}
+	return prcmd.Run(runLogOpts)
+}
+
+// createAndRunPipelineRun is a streamlined function that uses helper functions
+func (opt *startOptions) createAndRunPipelineRun(pr *v1beta1.PipelineRun, pipelineName string) error {
+	cs, err := opt.cliparams.Clients()
+	if err != nil {
+		return err
+	}
+
+	// Configure the PipelineRun with common settings
+	if err := opt.configurePipelineRun(pr, cs); err != nil {
+		return err
+	}
+
+	// Execute the PipelineRun (dry-run, create, and log)
+	return opt.executePipelineRun(pr, cs, pipelineName)
+}
+
 func (opt *startOptions) startPipeline(pipelineStart *v1beta1.Pipeline) error {
 	cs, err := opt.cliparams.Clients()
 	if err != nil {
 		return err
 	}
 
-	objMeta := metav1.ObjectMeta{
-		Namespace: opt.cliparams.Namespace(),
-	}
+	// Initialize PipelineRun with basic structure
 	var pr *v1beta1.PipelineRun
+	var lastPipelineRun *v1beta1.PipelineRun
+
+	// Handle --last or --use-pipelinerun options
+	if opt.Last || opt.UsePipelineRun != "" {
+		var usepr *v1beta1.PipelineRun
+		if opt.Last {
+			name, err := pipelinepkg.LastRunName(cs, pipelineStart.ObjectMeta.Name, opt.cliparams.Namespace())
+			if err != nil {
+				return err
+			}
+			usepr, err = getPipelineRunV1beta1(pipelineRunGroupResource, cs, name, opt.cliparams.Namespace())
+			if err != nil {
+				return err
+			}
+		} else {
+			usepr, err = getPipelineRunV1beta1(pipelineRunGroupResource, cs, opt.UsePipelineRun, opt.cliparams.Namespace())
+			if err != nil {
+				return err
+			}
+		}
+		lastPipelineRun = usepr
+	}
+
+	// Create ObjectMeta using helper function
+	objMeta := opt.createObjectMeta(lastPipelineRun, pipelineStart.ObjectMeta.Name)
+
+	// Create PipelineRun based on filename or pipeline reference
 	if opt.Filename == "" {
 		pr = &v1beta1.PipelineRun{
 			TypeMeta: metav1.TypeMeta{
@@ -256,168 +791,20 @@ func (opt *startOptions) startPipeline(pipelineStart *v1beta1.Pipeline) error {
 		}
 	}
 
-	if opt.Last || opt.UsePipelineRun != "" {
-		var usepr *v1beta1.PipelineRun
-		if opt.Last {
-			name, err := pipelinepkg.LastRunName(cs, pipelineStart.ObjectMeta.Name, opt.cliparams.Namespace())
-			if err != nil {
-				return err
-			}
-			usepr, err = getPipelineRunV1beta1(pipelineRunGroupResource, cs, name, opt.cliparams.Namespace())
-			if err != nil {
-				return err
-			}
-		} else {
-			usepr, err = getPipelineRunV1beta1(pipelineRunGroupResource, cs, opt.UsePipelineRun, opt.cliparams.Namespace())
-			if err != nil {
-				return err
-			}
-		}
-
-		if len(usepr.ObjectMeta.GenerateName) > 0 && opt.PrefixName == "" {
-			pr.ObjectMeta.GenerateName = usepr.ObjectMeta.GenerateName
-		} else if opt.PrefixName == "" {
-			pr.ObjectMeta.GenerateName = usepr.ObjectMeta.Name + "-"
-		}
-
-		// Copy over spec from last or previous PipelineRun to use same values for this PipelineRun
-		pr.Spec = usepr.Spec
+	// Copy spec from last/previous PipelineRun if using --last or --use-pipelinerun
+	if lastPipelineRun != nil {
+		pr.Spec = lastPipelineRun.Spec
 		// Reapply blank status in case PipelineRun used was cancelled
 		pr.Spec.Status = ""
 	}
 
-	if opt.PrefixName == "" && !opt.Last && opt.UsePipelineRun == "" {
-		pr.ObjectMeta.GenerateName = pipelineStart.ObjectMeta.Name + "-run-"
-	} else if opt.PrefixName != "" {
-		pr.ObjectMeta.GenerateName = opt.PrefixName + "-"
-	}
-
-	if opt.TimeOut != "" {
-		timeoutDuration, err := time.ParseDuration(opt.TimeOut)
-		if err != nil {
-			return err
-		}
-		pr.Spec.Timeouts = &v1beta1.TimeoutFields{
-			Pipeline: &metav1.Duration{Duration: timeoutDuration},
-		}
-	}
-
-	if opt.TasksTimeOut != "" || opt.PipelineTimeOut != "" || opt.FinallyTimeOut != "" {
-		if err := opt.getTimeouts(pr); err != nil {
-			return err
-		}
-	}
-
-	labels, err := labels.MergeLabels(pr.ObjectMeta.Labels, opt.Labels)
-	if err != nil {
-		return err
-	}
-	pr.ObjectMeta.Labels = labels
-
-	param, err := params.MergeParam(pr.Spec.Params, opt.Params)
-	if err != nil {
-		return err
-	}
-	pr.Spec.Params = param
-
-	workspaces, err := workspaces.Merge(pr.Spec.Workspaces, opt.Workspaces, cs.HTTPClient)
-	if err != nil {
-		return err
-	}
-	pr.Spec.Workspaces = workspaces
-
-	if err := mergeSvc(pr, opt.ServiceAccounts); err != nil {
+	// Configure the PipelineRun with common settings
+	if err := opt.configurePipelineRun(pr, cs); err != nil {
 		return err
 	}
 
-	if len(opt.ServiceAccountName) > 0 {
-		pr.Spec.ServiceAccountName = opt.ServiceAccountName
-	}
-
-	podTemplateLocation := opt.PodTemplate
-	if podTemplateLocation != "" {
-		podTemplate, err := pods.ParsePodTemplate(cs.HTTPClient, podTemplateLocation, file.IsYamlFile(), fmt.Errorf("invalid file format for %s: .yaml or .yml file extension and format required", podTemplateLocation))
-		if err != nil {
-			return err
-		}
-		pr.Spec.PodTemplate = &podTemplate
-	}
-
-	if opt.DryRun {
-		format := strings.ToLower(opt.Output)
-		if format == "name" {
-			fmt.Fprintf(opt.stream.Out, "%s\n", pr.GetName())
-			return nil
-		}
-		gvr, err := actions.GetGroupVersionResource(pipelineRunGroupResource, cs.Tekton.Discovery())
-		if err != nil {
-			return err
-		}
-		if gvr.Version == "v1" {
-			var prv1 v1.PipelineRun
-			err = pr.ConvertTo(context.Background(), &prv1)
-			if err != nil {
-				return err
-			}
-			prv1.Kind = "PipelineRun"
-			prv1.APIVersion = "tekton.dev/v1"
-			return printPipelineRun(opt.Output, opt.stream, &prv1)
-		}
-		return printPipelineRun(opt.Output, opt.stream, pr)
-	}
-
-	prCreated, err := pipelinerun.Create(cs, pr, metav1.CreateOptions{}, opt.cliparams.Namespace())
-	if err != nil {
-		return err
-	}
-
-	if opt.Output != "" {
-		format := strings.ToLower(opt.Output)
-		if format == "name" {
-			fmt.Fprintf(opt.stream.Out, "%s\n", prCreated.GetName())
-			return nil
-		}
-		gvr, err := actions.GetGroupVersionResource(pipelineRunGroupResource, cs.Tekton.Discovery())
-		if err != nil {
-			return err
-		}
-		if gvr.Version == "v1" {
-			var prv1 v1.PipelineRun
-			err = prCreated.ConvertTo(context.Background(), &prv1)
-			if err != nil {
-				return err
-			}
-			prv1.Kind = "PipelineRun"
-			prv1.APIVersion = "tekton.dev/v1"
-			return printPipelineRun(opt.Output, opt.stream, &prv1)
-		}
-		return printPipelineRun(opt.Output, opt.stream, prCreated)
-	}
-
-	fmt.Fprintf(opt.stream.Out, "PipelineRun started: %s\n", prCreated.Name)
-	if !opt.ShowLog {
-		inOrderString := "\nIn order to track the PipelineRun progress run:\ntkn pipelinerun "
-		if opt.TektonOptions.Context != "" {
-			inOrderString += fmt.Sprintf("--context=%s ", opt.TektonOptions.Context)
-		}
-		inOrderString += fmt.Sprintf("logs %s -f -n %s\n", prCreated.Name, prCreated.Namespace)
-
-		fmt.Fprint(opt.stream.Out, inOrderString)
-		return nil
-	}
-
-	fmt.Fprintf(opt.stream.Out, "Waiting for logs to be available...\n")
-	runLogOpts := &options.LogOptions{
-		PipelineName:    pipelineStart.ObjectMeta.Name,
-		PipelineRunName: prCreated.Name,
-		Stream:          opt.stream,
-		Follow:          true,
-		Prefixing:       true,
-		Params:          opt.cliparams,
-		AllSteps:        false,
-		ExitWithPrError: opt.ExitWithPrError,
-	}
-	return prcmd.Run(runLogOpts)
+	// Execute the PipelineRun (dry-run, create, and log)
+	return opt.executePipelineRun(pr, cs, pipelineStart.ObjectMeta.Name)
 }
 
 func (opt *startOptions) getInput(pipeline *v1beta1.Pipeline) error {
