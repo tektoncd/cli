@@ -835,6 +835,24 @@ func TestPipelineStart_ExecuteCommand(t *testing.T) {
 			wantError:  false,
 			goldenFile: true,
 		},
+
+		{
+			name: "Dry Run with TaskRunSpec",
+			command: []string{
+				"start", "test-pipeline",
+				"-s=svc1",
+				"-p=pipeline-param=value1",
+				"-p=rev-param=value2",
+				"-l=jemange=desfrites",
+				"-n", "ns",
+				"--dry-run",
+				"--taskrun-spec", "./testdata/taskrunspec.yaml",
+			},
+			namespace:  "",
+			input:      c2,
+			wantError:  false,
+			goldenFile: true,
+		},
 	}
 
 	for _, tp := range testParams {
