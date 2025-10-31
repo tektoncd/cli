@@ -1,0 +1,25 @@
+apiVersion: tekton.dev/v1
+kind: Pipeline
+metadata:
+  annotations:
+    tekton.dev/signature: MEUCIQD3tcptnk2F+9ru5gNUi91K2NPe59Dk28lwaHEQzScnOQIgL+KpDuGBf67FHGrh34cZRHVmPuYzOzPUbmvealAJPvE=
+  creationTimestamp: null
+  name: test-pipeline
+spec:
+  tasks:
+  - name: build-skaffold-web
+    params:
+    - name: pathToDockerFile
+      value: Dockerfile
+    - name: pathToContext
+      value: /workspace/docker-source/examples/microservices/leeroy-web
+    taskRef:
+      name: build-docker-image-from-git-source
+  - name: deploy-web
+    params:
+    - name: path
+      value: /workspace/source/examples/microservices/leeroy-web/kubernetes/deployment.yaml
+    - name: yamlPathToImage
+      value: spec.template.spec.containers[0].image
+    taskRef:
+      name: deploy-using-kubectl

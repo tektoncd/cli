@@ -78,16 +78,19 @@ func TestSign(t *testing.T) {
 		resource   metav1.Object
 		kind       string
 		targetFile string
+		apiVersion string
 	}{{
 		name:       "Task Sign and pass verification",
 		resource:   getTask(),
 		kind:       "Task",
 		targetFile: "signed-task.yaml",
+		apiVersion: "v1beta1",
 	}, {
 		name:       "Pipeline Sign and pass verification",
 		resource:   getPipeline(),
 		kind:       "Pipeline",
 		targetFile: "signed-pipeline.yaml",
+		apiVersion: "v1beta1",
 	},
 	}
 
@@ -101,7 +104,7 @@ func TestSign(t *testing.T) {
 				t.Fatalf("error reading file: %v", err)
 			}
 
-			target, signature, err := UnmarshalCRD(signed, tc.kind)
+			target, signature, err := UnmarshalCRD(signed, tc.kind, tc.apiVersion)
 			if err != nil {
 				t.Fatalf("error unmarshalling crd: %v", err)
 			}

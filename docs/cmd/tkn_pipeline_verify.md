@@ -29,6 +29,7 @@ or using kms
 
 ```
       --allow-missing-template-keys   If true, ignore any errors in templates when a field or map key is missing in the template. Only applies to golang and jsonpath output formats. (default true)
+      --api-version string            apiVersion of the Pipeline to be verified (default "v1")
   -h, --help                          help for verify
   -K, --key-file string               Key file
   -m, --kms-key string                KMS key url

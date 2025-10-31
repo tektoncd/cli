@@ -16,6 +16,7 @@ package pipeline
 
 import (
 	"context"
+	"fmt"
 	"os"
 	"path/filepath"
 	"testing"
@@ -28,37 +29,52 @@ import (
 func TestSign(t *testing.T) {
 	ctx := context.Background()
 	p := &test.Params{}
-
-	task := Command(p)
-
+	pipeline := Command(p)
 	os.Setenv("PRIVATE_PASSWORD", "1234")
-	tmpDir := t.TempDir()
-	targetFile := filepath.Join(tmpDir, "signed.yaml")
-	out, err := test.ExecuteCommand(task, "sign", "testdata/pipeline.yaml", "-K", "testdata/cosign.key", "-f", targetFile)
-	if err != nil {
-		t.Errorf("Unexpected error: %v", err)
-	}
-	expected := "*Warning*: This is an experimental command, it's usage and behavior can change in the next release(s)\nPipeline testdata/pipeline.yaml is signed successfully \n"
-	test.AssertOutput(t, expected, out)
 
-	// verify the signed task
-	verifier, err := cosignsignature.LoadPublicKey(ctx, "testdata/cosign.pub")
-	if err != nil {
-		t.Errorf("error getting verifier from key file: %v", err)
-	}
+	testcases := []struct {
+		name       string
+		taskFile   string
+		apiVersion string
+	}{{
+		name:       "sign and verify v1beta1 Pipeline",
+		taskFile:   "testdata/pipeline.yaml",
+		apiVersion: "v1beta1",
+	}, {
+		name:       "sign and verify v1 Pipeline",
+		taskFile:   "testdata/pipeline-v1.yaml",
+		apiVersion: "v1",
+	}}
+	for _, tc := range testcases {
+		t.Run(tc.name, func(t *testing.T) {
+			tmpDir := t.TempDir()
+			targetFile := filepath.Join(tmpDir, "signed.yaml")
+			out, err := test.ExecuteCommand(pipeline, "sign", tc.taskFile, "-K", "testdata/cosign.key", "-f", targetFile, "--api-version", tc.apiVersion)
+			if err != nil {
+				t.Errorf("Unexpected error: %v", err)
+			}
+			expected := fmt.Sprintf("*Warning*: This is an experimental command, it's usage and behavior can change in the next release(s)\nPipeline %s is signed successfully \n", tc.taskFile)
+			test.AssertOutput(t, expected, out)
 
-	signed, err := os.ReadFile(targetFile)
-	if err != nil {
-		t.Fatalf("error reading file: %v", err)
-	}
+			// verify the signed task
+			verifier, err := cosignsignature.LoadPublicKey(ctx, "testdata/cosign.pub")
+			if err != nil {
+				t.Errorf("error getting verifier from key file: %v", err)
+			}
 
-	target, signature, err := trustedresources.UnmarshalCRD(signed, "Pipeline")
-	if err != nil {
-		t.Fatalf("error unmarshalling crd: %v", err)
-	}
+			signed, err := os.ReadFile(targetFile)
+			if err != nil {
+				t.Fatalf("error reading file: %v", err)
+			}
 
-	if err := trustedresources.VerifyInterface(target, verifier, signature); err != nil {
-		t.Fatalf("VerifyInterface get error: %v", err)
-	}
+			target, signature, err := trustedresources.UnmarshalCRD(signed, "Pipeline", tc.apiVersion)
+			if err != nil {
+				t.Fatalf("error unmarshalling crd: %v", err)
+			}
 
+			if err := trustedresources.VerifyInterface(target, verifier, signature); err != nil {
+				t.Fatalf("VerifyInterface get error: %v", err)
+			}
+		})
+	}
 }
