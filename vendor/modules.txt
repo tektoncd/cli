@@ -684,7 +684,7 @@ github.com/go-jose/go-jose/v3
 github.com/go-jose/go-jose/v3/cipher
 github.com/go-jose/go-jose/v3/json
 github.com/go-jose/go-jose/v3/jwt
-# github.com/go-jose/go-jose/v4 v4.1.1
+# github.com/go-jose/go-jose/v4 v4.1.2
 ## explicit; go 1.23.0
 github.com/go-jose/go-jose/v4
 github.com/go-jose/go-jose/v4/cipher
@@ -1450,8 +1450,8 @@ github.com/spf13/viper/internal/encoding/json
 github.com/spf13/viper/internal/encoding/toml
 github.com/spf13/viper/internal/encoding/yaml
 github.com/spf13/viper/internal/features
-# github.com/spiffe/go-spiffe/v2 v2.5.0
-## explicit; go 1.22.11
+# github.com/spiffe/go-spiffe/v2 v2.6.0
+## explicit; go 1.24.0
 github.com/spiffe/go-spiffe/v2/bundle/jwtbundle
 github.com/spiffe/go-spiffe/v2/bundle/spiffebundle
 github.com/spiffe/go-spiffe/v2/bundle/x509bundle
@@ -1540,7 +1540,7 @@ github.com/tektoncd/hub/api/v1/gen/http/catalog/client
 github.com/tektoncd/hub/api/v1/gen/http/resource/client
 github.com/tektoncd/hub/api/v1/gen/resource
 github.com/tektoncd/hub/api/v1/gen/resource/views
-# github.com/tektoncd/pipeline v1.5.0
+# github.com/tektoncd/pipeline v1.6.0
 ## explicit; go 1.24.0
 github.com/tektoncd/pipeline/internal/artifactref
 github.com/tektoncd/pipeline/pkg/apis/config
@@ -1627,18 +1627,22 @@ github.com/tektoncd/pipeline/pkg/client/resolution/listers/resolution/v1beta1
 github.com/tektoncd/pipeline/pkg/internal/resultref
 github.com/tektoncd/pipeline/pkg/list
 github.com/tektoncd/pipeline/pkg/names
+github.com/tektoncd/pipeline/pkg/reconciler/apiserver
 github.com/tektoncd/pipeline/pkg/reconciler/events/cache
 github.com/tektoncd/pipeline/pkg/reconciler/events/cloudevent
 github.com/tektoncd/pipeline/pkg/reconciler/pipeline/dag
 github.com/tektoncd/pipeline/pkg/reconciler/testing
 github.com/tektoncd/pipeline/pkg/remote
 github.com/tektoncd/pipeline/pkg/remote/oci
+github.com/tektoncd/pipeline/pkg/remoteresolution/resolver/framework/cache
 github.com/tektoncd/pipeline/pkg/resolution/common
+github.com/tektoncd/pipeline/pkg/resolution/resolver/framework
 github.com/tektoncd/pipeline/pkg/result
 github.com/tektoncd/pipeline/pkg/spire/config
 github.com/tektoncd/pipeline/pkg/substitution
 github.com/tektoncd/pipeline/test
 github.com/tektoncd/pipeline/test/diff
+github.com/tektoncd/pipeline/test/parse
 # github.com/tektoncd/plumbing v0.0.0-20250430145243-3b7cd59879c1
 ## explicit; go 1.23
 github.com/tektoncd/plumbing/scripts
@@ -1774,9 +1778,6 @@ github.com/xlab/treeprint
 # github.com/youmark/pkcs8 v0.0.0-20240726163527-a2c0da244d78
 ## explicit; go 1.17
 github.com/youmark/pkcs8
-# github.com/zeebo/errs v1.4.0
-## explicit; go 1.12
-github.com/zeebo/errs
 # gitlab.com/gitlab-org/api/client-go v0.134.0
 ## explicit; go 1.23.0
 gitlab.com/gitlab-org/api/client-go
@@ -1977,8 +1978,8 @@ gocloud.dev/docstore/mongodocstore
 # gocloud.dev/pubsub/kafkapubsub v0.40.0
 ## explicit; go 1.21.0
 gocloud.dev/pubsub/kafkapubsub
-# golang.org/x/crypto v0.41.0
-## explicit; go 1.23.0
+# golang.org/x/crypto v0.43.0
+## explicit; go 1.24.0
 golang.org/x/crypto/blake2b
 golang.org/x/crypto/blowfish
 golang.org/x/crypto/cast5
@@ -2014,13 +2015,13 @@ golang.org/x/crypto/ssh/terminal
 ## explicit; go 1.23.0
 golang.org/x/exp/maps
 golang.org/x/exp/slices
-# golang.org/x/mod v0.26.0
-## explicit; go 1.23.0
+# golang.org/x/mod v0.28.0
+## explicit; go 1.24.0
 golang.org/x/mod/semver
 golang.org/x/mod/sumdb/dirhash
 golang.org/x/mod/sumdb/note
-# golang.org/x/net v0.42.0
-## explicit; go 1.23.0
+# golang.org/x/net v0.45.0
+## explicit; go 1.24.0
 golang.org/x/net/http/httpguts
 golang.org/x/net/http2
 golang.org/x/net/http2/h2c
@@ -2043,8 +2044,8 @@ golang.org/x/oauth2/google/internal/stsexchange
 golang.org/x/oauth2/internal
 golang.org/x/oauth2/jws
 golang.org/x/oauth2/jwt
-# golang.org/x/sync v0.16.0
-## explicit; go 1.23.0
+# golang.org/x/sync v0.17.0
+## explicit; go 1.24.0
 golang.org/x/sync/errgroup
 golang.org/x/sync/semaphore
 golang.org/x/sync/singleflight
@@ -2058,8 +2059,8 @@ golang.org/x/sys/windows/registry
 # golang.org/x/term v0.36.0
 ## explicit; go 1.24.0
 golang.org/x/term
-# golang.org/x/text v0.28.0
-## explicit; go 1.23.0
+# golang.org/x/text v0.30.0
+## explicit; go 1.24.0
 golang.org/x/text/cases
 golang.org/x/text/encoding
 golang.org/x/text/encoding/internal
