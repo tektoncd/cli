@@ -212,6 +212,13 @@
 //
 //	iter := coll.Query().Where("Author.Last", "=", "Bulgakov").Limit(3).Get(ctx)
 //
+// Dot-separated paths work as you'd expect for nested structs and maps, addressing
+// the nested struct field or map key. For nested slices, some providers (notably
+// MongoDB) treat s.f, where s is a sequence, as the slice of e.f for each e in s.
+// However, others do not support field selectors inside slices, so docstore does
+// not support them -- while you may find that they work with some providers, you
+// cannot rely on that if you need fully portable code.
+//
 // You can make multiple Where calls. In some cases, parts of a Where clause may be
 // processed in the driver rather than natively by the backing service, which may have
 // performance implications for large result sets. See the driver package
@@ -246,12 +253,12 @@
 // the returned error. See the specific driver's package doc for the supported
 // types.
 //
-// # OpenCensus Integration
+// # OpenTelemetry Integration
 //
-// OpenCensus supports tracing and metric collection for multiple languages and
-// backend providers. See https://opencensus.io.
+// OpenTelemetry supports tracing, metrics, and logs collection for multiple languages and
+// backend providers. See https://opentelemetry.io.
 //
-// This API collects OpenCensus traces and metrics for the following methods:
+// This API collects OpenTelemetry traces and metrics for the following methods:
 //   - ActionList.Do
 //   - Query.Get (for the first query only; drivers may make additional calls while iterating over results)
 //
@@ -263,10 +270,10 @@
 // by driver and method.
 // For example, "gocloud.dev/docstore/latency".
 //
-// To enable trace collection in your application, see "Configure Exporter" at
-// https://opencensus.io/quickstart/go/tracing.
-// To enable metric collection in your application, see "Exporting stats" at
-// https://opencensus.io/quickstart/go/metrics.
+// To enable trace collection in your application, see the documentation at
+// https://opentelemetry.io/docs/instrumentation/go/getting-started/.
+// To enable metric collection in your application, see the documentation at
+// https://opentelemetry.io/docs/instrumentation/go/manual/.
 //
 // # GORM-like Code Generation
 //
