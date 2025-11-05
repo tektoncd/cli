@@ -22,7 +22,6 @@ import (
 	"github.com/tektoncd/chains/pkg/chains/storage"
 	"github.com/tektoncd/chains/pkg/config"
 	v1 "github.com/tektoncd/pipeline/pkg/apis/pipeline/v1"
-	"github.com/tektoncd/pipeline/pkg/apis/pipeline/v1beta1"
 	versioned "github.com/tektoncd/pipeline/pkg/client/clientset/versioned"
 	"k8s.io/apimachinery/pkg/util/sets"
 	"k8s.io/client-go/kubernetes"
@@ -51,16 +50,7 @@ func (tv *TaskRunVerifier) VerifyTaskRun(ctx context.Context, tr *v1.TaskRun) er
 		&artifacts.OCIArtifact{},
 	}
 
-	var trObj objects.TektonObject
-	if cfg.Artifacts.TaskRuns.Format == "v2alpha3" {
-		trObj = objects.NewTaskRunObjectV1(tr)
-	} else {
-		trV1Beta1 := &v1beta1.TaskRun{} //nolint:staticcheck
-		if err := trV1Beta1.ConvertFrom(ctx, tr); err != nil {
-			return err
-		}
-		trObj = objects.NewTaskRunObjectV1Beta1(trV1Beta1)
-	}
+	trObj := objects.NewTaskRunObjectV1(tr)
 
 	// Storage
 	allBackends, err := storage.InitializeBackends(ctx, tv.Pipelineclientset, tv.KubeClient, cfg)
