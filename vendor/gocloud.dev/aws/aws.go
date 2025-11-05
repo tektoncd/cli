@@ -25,7 +25,6 @@ import (
 	"github.com/aws/aws-sdk-go-v2/aws/ratelimit"
 	"github.com/aws/aws-sdk-go-v2/aws/retry"
 	"github.com/aws/aws-sdk-go-v2/config"
-	awsv2cfg "github.com/aws/aws-sdk-go-v2/config"
 	"github.com/aws/aws-sdk-go/aws"
 	"github.com/aws/aws-sdk-go/aws/client"
 	"github.com/aws/aws-sdk-go/aws/credentials"
@@ -180,7 +179,7 @@ func UseV2(q url.Values) bool {
 
 // NewDefaultV2Config returns a aws.Config for AWS SDK v2, using the default options.
 func NewDefaultV2Config(ctx context.Context) (awsv2.Config, error) {
-	return awsv2cfg.LoadDefaultConfig(ctx)
+	return config.LoadDefaultConfig(ctx)
 }
 
 // V2ConfigFromURLParams returns an aws.Config for AWS SDK v2 initialized based on the URL
@@ -195,6 +194,7 @@ func NewDefaultV2Config(ctx context.Context) (awsv2.Config, error) {
 //
 // The following query options are supported:
 //   - region: The AWS region for requests; sets WithRegion.
+//   - anonymous: A value of "true" forces use of anonymous credentials.
 //   - profile: The shared config profile to use; sets SharedConfigProfile.
 //   - endpoint: The AWS service endpoint to send HTTP request.
 //   - hostname_immutable: Make the hostname immutable, only works if endpoint is also set.
@@ -207,7 +207,7 @@ func V2ConfigFromURLParams(ctx context.Context, q url.Values) (awsv2.Config, err
 	var endpoint string
 	var hostnameImmutable bool
 	var rateLimitCapacity int64
-	var opts []func(*awsv2cfg.LoadOptions) error
+	var opts []func(*config.LoadOptions) error
 	for param, values := range q {
 		value := values[0]
 		switch param {
@@ -218,18 +218,18 @@ func V2ConfigFromURLParams(ctx context.Context, q url.Values) (awsv2.Config, err
 				return awsv2.Config{}, fmt.Errorf("invalid value for hostname_immutable: %w", err)
 			}
 		case "region":
-			opts = append(opts, awsv2cfg.WithRegion(value))
+			opts = append(opts, config.WithRegion(value))
 		case "endpoint":
 			endpoint = value
 		case "profile":
-			opts = append(opts, awsv2cfg.WithSharedConfigProfile(value))
+			opts = append(opts, config.WithSharedConfigProfile(value))
 		case "dualstack":
 			dualStack, err := strconv.ParseBool(value)
 			if err != nil {
 				return awsv2.Config{}, fmt.Errorf("invalid value for dualstack: %w", err)
 			}
 			if dualStack {
-				opts = append(opts, awsv2cfg.WithUseDualStackEndpoint(awsv2.DualStackEndpointStateEnabled))
+				opts = append(opts, config.WithUseDualStackEndpoint(awsv2.DualStackEndpointStateEnabled))
 			}
 		case "fips":
 			fips, err := strconv.ParseBool(value)
@@ -237,13 +237,21 @@ func V2ConfigFromURLParams(ctx context.Context, q url.Values) (awsv2.Config, err
 				return awsv2.Config{}, fmt.Errorf("invalid value for fips: %w", err)
 			}
 			if fips {
-				opts = append(opts, awsv2cfg.WithUseFIPSEndpoint(awsv2.FIPSEndpointStateEnabled))
+				opts = append(opts, config.WithUseFIPSEndpoint(awsv2.FIPSEndpointStateEnabled))
 			}
 		case "rate_limiter_capacity":
 			var err error
 			rateLimitCapacity, err = strconv.ParseInt(value, 10, 32)
 			if err != nil {
 				return awsv2.Config{}, fmt.Errorf("invalid value for capacity: %w", err)
+			}
+		case "anonymous":
+			anon, err := strconv.ParseBool(value)
+			if err != nil {
+				return awsv2.Config{}, fmt.Errorf("invalid value for anonymous: %w", err)
+			}
+			if anon {
+				opts = append(opts, config.WithCredentialsProvider(awsv2.AnonymousCredentials{}))
 			}
 		case "awssdk":
 			// ignore, should be handled before this
@@ -253,7 +261,7 @@ func V2ConfigFromURLParams(ctx context.Context, q url.Values) (awsv2.Config, err
 	}
 	if endpoint != "" {
 		customResolver := awsv2.EndpointResolverWithOptionsFunc(
-			func(service, region string, options ...interface{}) (awsv2.Endpoint, error) {
+			func(service, region string, options ...any) (awsv2.Endpoint, error) {
 				return awsv2.Endpoint{
 					PartitionID:       "aws",
 					URL:               endpoint,
@@ -261,7 +269,7 @@ func V2ConfigFromURLParams(ctx context.Context, q url.Values) (awsv2.Config, err
 					HostnameImmutable: hostnameImmutable,
 				}, nil
 			})
-		opts = append(opts, awsv2cfg.WithEndpointResolverWithOptions(customResolver))
+		opts = append(opts, config.WithEndpointResolverWithOptions(customResolver))
 	}
 
 	var rateLimiter retry.RateLimiter
@@ -275,5 +283,5 @@ func V2ConfigFromURLParams(ctx context.Context, q url.Values) (awsv2.Config, err
 		})
 	}))
 
-	return awsv2cfg.LoadDefaultConfig(ctx, opts...)
+	return config.LoadDefaultConfig(ctx, opts...)
 }

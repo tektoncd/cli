@@ -14,22 +14,57 @@
 
 package patch
 
-import "encoding/json"
+import (
+	"encoding/json"
+	"fmt"
+	"strings"
+)
+
+// TektonObject interface to get GVK information needed for server-side apply
+type TektonObject interface {
+	GetName() string
+	GetNamespace() string
+	GetGVK() string // Returns GroupVersionKind as "group/version/kind" string
+}
 
 // GetAnnotationsPatch returns patch bytes that can be used with kubectl patch
-func GetAnnotationsPatch(newAnnotations map[string]string) ([]byte, error) {
-	p := patch{
-		Metadata: metadata{
+func GetAnnotationsPatch(newAnnotations map[string]string, obj TektonObject) ([]byte, error) {
+	// Get GVK using the TektonObject interface method (more reliable than runtime.Object)
+	gvkStr := obj.GetGVK()
+	if gvkStr == "" {
+		return nil, fmt.Errorf("unable to determine GroupVersionKind for object %s/%s", obj.GetNamespace(), obj.GetName())
+	}
+
+	// Parse the string format "group/version/kind"
+	parts := strings.Split(gvkStr, "/")
+	if len(parts) != 3 {
+		return nil, fmt.Errorf("invalid GVK format: %s", gvkStr)
+	}
+	apiVersion := parts[0] + "/" + parts[1]
+	kind := parts[2]
+
+	// For server-side apply, we need to create a structured patch with metadata
+	p := serverSideApplyPatch{
+		APIVersion: apiVersion,
+		Kind:       kind,
+		Metadata: serverSideApplyMetadata{
+			Name:        obj.GetName(),
+			Namespace:   obj.GetNamespace(),
 			Annotations: newAnnotations,
 		},
 	}
 	return json.Marshal(p)
 }
 
-// These are used to get proper json formatting
-type patch struct {
-	Metadata metadata `json:"metadata,omitempty"`
+// These are used to get proper json formatting for server-side apply
+type serverSideApplyPatch struct {
+	APIVersion string                  `json:"apiVersion"`
+	Kind       string                  `json:"kind"`
+	Metadata   serverSideApplyMetadata `json:"metadata"`
 }
-type metadata struct {
+
+type serverSideApplyMetadata struct {
+	Name        string            `json:"name"`
+	Namespace   string            `json:"namespace,omitempty"`
 	Annotations map[string]string `json:"annotations,omitempty"`
 }
