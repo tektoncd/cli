@@ -83,7 +83,7 @@ func Sign(o metav1.Object, keyfile, kmsKey, targetFile string) error {
 	}
 
 	// save signed file
-	f, err := os.OpenFile(targetFile, os.O_WRONLY|os.O_CREATE, 0600)
+	f, err := os.OpenFile(targetFile, os.O_WRONLY|os.O_CREATE|os.O_TRUNC, 0600)
 	if err != nil {
 		return fmt.Errorf("error opening output file: %v", err)
 	}

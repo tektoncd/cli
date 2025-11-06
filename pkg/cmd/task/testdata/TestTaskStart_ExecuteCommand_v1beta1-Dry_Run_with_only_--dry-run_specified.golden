@@ -1,7 +1,6 @@
 apiVersion: tekton.dev/v1beta1
 kind: TaskRun
 metadata:
-  creationTimestamp: null
   generateName: task-1-run-
   namespace: ns
 spec:
