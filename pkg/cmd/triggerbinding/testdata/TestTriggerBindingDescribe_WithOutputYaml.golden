@@ -1,7 +1,6 @@
 apiVersion: triggers.tekton.dev/v1beta1
 kind: TriggerBinding
 metadata:
-  creationTimestamp: null
   name: tb1
   namespace: ns
 spec:

@@ -16,7 +16,6 @@ package task
 
 import (
 	"fmt"
-	"log"
 	"os"
 
 	"github.com/spf13/cobra"
@@ -64,19 +63,16 @@ or using kms
 			}
 			b, err := os.ReadFile(args[0])
 			if err != nil {
-				log.Fatalf("error reading file: %v", err)
-				return err
+				return fmt.Errorf("error reading file: %v", err)
 			}
 
 			crd := &v1beta1.Task{}
 			if err := yaml.Unmarshal(b, &crd); err != nil {
-				log.Fatalf("error unmarshalling Task: %v", err)
-				return err
+				return fmt.Errorf("error unmarshalling Task: %v", err)
 			}
 
 			if err := trustedresources.Verify(crd, opts.keyfile, opts.kmsKey); err != nil {
-				log.Fatalf("error signing Task: %v", err)
-				return err
+				return fmt.Errorf("error verifying Task: %v", err)
 			}
 			fmt.Fprintf(s.Out, "Task %s passes verification \n", args[0])
 			return nil

@@ -20,7 +20,6 @@ const (
 	examplePullTask = `apiVersion: tekton.dev/v1beta1
 kind: Task
 metadata:
-  creationTimestamp: null
   name: foobar
 spec:
   params:
@@ -29,7 +28,6 @@ spec:
 	examplePullPipeline = `apiVersion: tekton.dev/v1beta1
 kind: Pipeline
 metadata:
-  creationTimestamp: null
   name: foobar
 spec:
   params:
@@ -48,15 +46,15 @@ func TestListCommand(t *testing.T) {
 		{
 			name:           "no-format",
 			format:         "",
-			expectedStdout: "*Warning*: This is an experimental command, its usage and behavior can change in the next release(s)\npipeline.tekton.dev/foobar\ntask.tekton.dev/foobar\n",
+			expectedStdout: "*Warning*: This is an experimental command, its usage and behavior can change in the next release(s)\ntask.tekton.dev/foobar\npipeline.tekton.dev/foobar\n",
 		}, {
 			name:           "name-format",
 			format:         "name",
-			expectedStdout: "*Warning*: This is an experimental command, its usage and behavior can change in the next release(s)\npipeline.tekton.dev/foobar\ntask.tekton.dev/foobar\n",
+			expectedStdout: "*Warning*: This is an experimental command, its usage and behavior can change in the next release(s)\ntask.tekton.dev/foobar\npipeline.tekton.dev/foobar\n",
 		}, {
 			name:           "yaml-format",
 			format:         "yaml",
-			expectedStdout: "*Warning*: This is an experimental command, its usage and behavior can change in the next release(s)\n" + examplePullPipeline + "---\n" + examplePullTask,
+			expectedStdout: "*Warning*: This is an experimental command, its usage and behavior can change in the next release(s)\n" + examplePullTask + "---\n" + examplePullPipeline,
 		}, {
 			name:           "specify-kind-task",
 			format:         "name",

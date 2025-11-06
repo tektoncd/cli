@@ -1,7 +1,6 @@
 apiVersion: triggers.tekton.dev/v1beta1
 kind: EventListener
 metadata:
-  creationTimestamp: null
   name: el1
   namespace: ns
 spec:

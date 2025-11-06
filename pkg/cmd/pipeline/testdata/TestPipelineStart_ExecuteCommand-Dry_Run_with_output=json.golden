@@ -4,7 +4,6 @@
 	"metadata": {
 		"generateName": "test-pipeline-run-",
 		"namespace": "ns",
-		"creationTimestamp": null,
 		"labels": {
 			"jemange": "desfrites"
 		}

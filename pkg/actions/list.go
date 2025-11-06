@@ -16,9 +16,7 @@ package actions
 
 import (
 	"context"
-	"fmt"
 	"io"
-	"os"
 
 	"github.com/tektoncd/cli/pkg/cli"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
@@ -44,7 +42,6 @@ func PrintObjects(groupResource schema.GroupVersionResource, w io.Writer, dynami
 func ListV1(gr schema.GroupVersionResource, c *cli.Clients, opts metav1.ListOptions, ns string, obj interface{}) error {
 	unstructuredObj, err := list(gr, c.Dynamic, c.Tekton.Discovery(), ns, opts)
 	if err != nil {
-		fmt.Fprintf(os.Stderr, "Failed to list objects from %s namespace \n", ns)
 		return err
 	}
 
