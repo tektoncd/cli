@@ -1,7 +1,6 @@
 apiVersion: triggers.tekton.dev/v1beta1
 kind: ClusterTriggerBinding
 metadata:
-  creationTimestamp: null
   name: ctb1
 spec:
   params:
