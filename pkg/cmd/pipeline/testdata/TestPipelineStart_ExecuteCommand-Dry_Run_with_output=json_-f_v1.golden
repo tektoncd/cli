@@ -3,8 +3,7 @@
 	"apiVersion": "tekton.dev/v1",
 	"metadata": {
 		"generateName": "test-pipeline-run-",
-		"namespace": "ns",
-		"creationTimestamp": null
+		"namespace": "ns"
 	},
 	"spec": {
 		"pipelineSpec": {

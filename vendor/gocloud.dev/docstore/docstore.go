@@ -26,10 +26,11 @@ import (
 	"sync"
 	"unicode/utf8"
 
+	"go.opentelemetry.io/otel/trace"
 	"gocloud.dev/docstore/driver"
 	"gocloud.dev/gcerrors"
 	"gocloud.dev/internal/gcerr"
-	"gocloud.dev/internal/oc"
+	gcdkotel "gocloud.dev/internal/otel"
 )
 
 // A Document is a set of field-value pairs. One or more fields, called the key
@@ -46,7 +47,7 @@ type Document = interface{}
 // To create a Collection, use constructors found in driver subpackages.
 type Collection struct {
 	driver driver.Collection
-	tracer *oc.Tracer
+	tracer *gcdkotel.Tracer
 	mu     sync.Mutex
 	closed bool
 }
@@ -54,12 +55,11 @@ type Collection struct {
 const pkgName = "gocloud.dev/docstore"
 
 var (
-	latencyMeasure = oc.LatencyMeasure(pkgName)
 
-	// OpenCensusViews are predefined views for OpenCensus metrics.
+	// OpenTelemetryViews are predefined views for OpenTelemetry metrics.
 	// The views include counts and latency distributions for API method calls.
-	// See the example at https://godoc.org/go.opencensus.io/stats/view for usage.
-	OpenCensusViews = oc.Views(pkgName, latencyMeasure)
+	// See the explanations at https://opentelemetry.io/docs/specs/otel/metrics/data-model/ for usage.
+	OpenTelemetryViews = gcdkotel.Views(pkgName)
 )
 
 // NewCollection is intended for use by drivers only. Do not use in application code.
@@ -67,13 +67,10 @@ var NewCollection = newCollection
 
 // newCollection makes a Collection.
 func newCollection(d driver.Collection) *Collection {
+	providerName := gcdkotel.ProviderName(d)
 	c := &Collection{
 		driver: d,
-		tracer: &oc.Tracer{
-			Package:        pkgName,
-			Provider:       oc.ProviderName(d),
-			LatencyMeasure: latencyMeasure,
-		},
+		tracer: gcdkotel.NewTracer(pkgName, providerName),
 	}
 	_, file, lineno, ok := runtime.Caller(1)
 	runtime.SetFinalizer(c, func(c *Collection) {
@@ -135,18 +132,20 @@ func (c *Collection) Actions() *ActionList {
 // document; a Get after the write will see the new value if the service is strongly
 // consistent, but may see the old value if the service is eventually consistent.
 type ActionList struct {
-	coll     *Collection
-	actions  []*Action
-	beforeDo func(asFunc func(interface{}) bool) error
+	coll               *Collection
+	actions            []*Action
+	enableAtomicWrites bool
+	beforeDo           func(asFunc func(interface{}) bool) error
 }
 
 // An Action is a read or write on a single document.
 // Use the methods of ActionList to create and execute Actions.
 type Action struct {
-	kind       driver.ActionKind
-	doc        Document
-	fieldpaths []FieldPath // paths to retrieve, for Get
-	mods       Mods        // modifications to make, for Update
+	kind          driver.ActionKind
+	doc           Document
+	fieldpaths    []FieldPath // paths to retrieve, for Get
+	mods          Mods        // modifications to make, for Update
+	inAtomicWrite bool        // if this action is a part of atomic writes
 }
 
 func (l *ActionList) add(a *Action) *ActionList {
@@ -170,7 +169,7 @@ func (l *ActionList) add(a *Action) *ActionList {
 // Except for setting the revision field and possibly setting the key fields, the doc
 // argument is not modified.
 func (l *ActionList) Create(doc Document) *ActionList {
-	return l.add(&Action{kind: driver.Create, doc: doc})
+	return l.add(&Action{kind: driver.Create, doc: doc, inAtomicWrite: l.enableAtomicWrites})
 }
 
 // Replace adds an action that replaces a document to the given ActionList, and
@@ -182,7 +181,7 @@ func (l *ActionList) Create(doc Document) *ActionList {
 // See the Revisions section of the package documentation for how revisions are
 // handled.
 func (l *ActionList) Replace(doc Document) *ActionList {
-	return l.add(&Action{kind: driver.Replace, doc: doc})
+	return l.add(&Action{kind: driver.Replace, doc: doc, inAtomicWrite: l.enableAtomicWrites})
 }
 
 // Put adds an action that adds or replaces a document to the given ActionList, and returns the ActionList.
@@ -195,7 +194,7 @@ func (l *ActionList) Replace(doc Document) *ActionList {
 // See the Revisions section of the package documentation for how revisions are
 // handled.
 func (l *ActionList) Put(doc Document) *ActionList {
-	return l.add(&Action{kind: driver.Put, doc: doc})
+	return l.add(&Action{kind: driver.Put, doc: doc, inAtomicWrite: l.enableAtomicWrites})
 }
 
 // Delete adds an action that deletes a document to the given ActionList, and returns
@@ -210,7 +209,7 @@ func (l *ActionList) Delete(doc Document) *ActionList {
 	// semantics of an action list are to stop at first error, then we might abort a
 	// list of Deletes just because one of the docs was not present, and that seems
 	// wrong, or at least something you'd want to turn off.
-	return l.add(&Action{kind: driver.Delete, doc: doc})
+	return l.add(&Action{kind: driver.Delete, doc: doc, inAtomicWrite: l.enableAtomicWrites})
 }
 
 // Get adds an action that retrieves a document to the given ActionList, and
@@ -252,9 +251,10 @@ func (l *ActionList) Get(doc Document, fps ...FieldPath) *ActionList {
 // the updated document, call Get after calling Update.
 func (l *ActionList) Update(doc Document, mods Mods) *ActionList {
 	return l.add(&Action{
-		kind: driver.Update,
-		doc:  doc,
-		mods: mods,
+		kind:          driver.Update,
+		doc:           doc,
+		mods:          mods,
+		inAtomicWrite: l.enableAtomicWrites,
 	})
 }
 
@@ -335,15 +335,16 @@ func (l *ActionList) Do(ctx context.Context) error {
 	return l.do(ctx, true)
 }
 
-// do implements Do with optional OpenCensus tracing, so it can be used internally.
-func (l *ActionList) do(ctx context.Context, oc bool) (err error) {
+// do implements Do with optional OpenTelemetry tracing, so it can be used internally.
+func (l *ActionList) do(ctx context.Context, withTracing bool) (err error) {
 	if err := l.coll.checkClosed(); err != nil {
 		return ActionListError{{-1, errClosed}}
 	}
 
-	if oc {
-		ctx = l.coll.tracer.Start(ctx, "ActionList.Do")
-		defer func() { l.coll.tracer.End(ctx, err) }()
+	if withTracing {
+		var span trace.Span
+		ctx, span = l.coll.tracer.Start(ctx, "ActionList.Do")
+		defer func() { l.coll.tracer.End(ctx, span, err) }()
 	}
 
 	das, err := l.toDriverActions()
@@ -430,7 +431,7 @@ func (c *Collection) toDriverAction(a *Action) (*driver.Action, error) {
 		// A Put with a revision field is equivalent to a Replace.
 		kind = driver.Replace
 	}
-	d := &driver.Action{Kind: kind, Doc: ddoc, Key: key}
+	d := &driver.Action{Kind: kind, Doc: ddoc, Key: key, InAtomicWrite: a.inAtomicWrite}
 	if a.fieldpaths != nil {
 		d.FieldPaths, err = parseFieldPaths(a.fieldpaths)
 		if err != nil {
@@ -532,6 +533,12 @@ func (l *ActionList) String() string {
 		as = append(as, a.String())
 	}
 	return "[" + strings.Join(as, ", ") + "]"
+}
+
+// AtomicWrites causes all following writes in the list to execute as a single atomic operation.
+func (l *ActionList) AtomicWrites() *ActionList {
+	l.enableAtomicWrites = true
+	return l
 }
 
 func (a *Action) String() string {

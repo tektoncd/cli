@@ -24,14 +24,11 @@ import (
 	"github.com/google/go-containerregistry/pkg/name"
 	intoto "github.com/in-toto/attestation/go/v1"
 	"github.com/in-toto/in-toto-golang/in_toto/slsa_provenance/common"
-	"github.com/tektoncd/chains/internal/backport"
 	"github.com/tektoncd/chains/pkg/artifacts"
-	extractv1beta1 "github.com/tektoncd/chains/pkg/chains/formats/slsa/extract/v1beta1"
 	"github.com/tektoncd/chains/pkg/chains/formats/slsa/internal/artifact"
 	"github.com/tektoncd/chains/pkg/chains/formats/slsa/internal/slsaconfig"
 	"github.com/tektoncd/chains/pkg/chains/objects"
 	v1 "github.com/tektoncd/pipeline/pkg/apis/pipeline/v1"
-	"github.com/tektoncd/pipeline/pkg/apis/pipeline/v1beta1"
 	"knative.dev/pkg/logging"
 )
 
@@ -52,10 +49,9 @@ func SubjectDigests(ctx context.Context, obj objects.TektonObject, slsaconfig *s
 		subjects = subjectsFromPipelineRun(ctx, obj, slsaconfig)
 	case *v1.TaskRun:
 		subjects = subjectsFromTektonObject(ctx, obj)
-	case *v1beta1.PipelineRun:
-		subjects = extractv1beta1.SubjectsFromPipelineRunV1Beta1(ctx, obj, slsaconfig)
-	case *v1beta1.TaskRun:
-		subjects = extractv1beta1.SubjectsFromTektonObjectV1Beta1(ctx, obj)
+	default:
+		logger := logging.FromContext(ctx)
+		logger.Warnf("object type %T not supported", obj.GetObject())
 	}
 
 	return subjects
@@ -145,49 +141,6 @@ func subjectsFromTektonObject(ctx context.Context, obj objects.TektonObject) []*
 				alg: digest,
 			},
 		})
-	}
-
-	if trV1, ok := obj.GetObject().(*v1.TaskRun); ok {
-		trV1Beta1 := &v1beta1.TaskRun{} //nolint:staticcheck
-		if err := trV1Beta1.ConvertFrom(ctx, trV1); err == nil {
-			// Check if object is a Taskrun, if so search for images used in PipelineResources
-			// Otherwise object is a PipelineRun, where Pipelineresources are not relevant.
-			// PipelineResources have been deprecated so their support has been left out of
-			// the POC for TEP-84
-			// More info: https://tekton.dev/docs/pipelines/resources/
-			if !ok || trV1Beta1.Spec.Resources == nil { //nolint:staticcheck
-				return subjects
-			}
-
-			// go through resourcesResult
-			for _, output := range trV1Beta1.Spec.Resources.Outputs { //nolint:staticcheck
-				name := output.Name
-				if output.PipelineResourceBinding.ResourceSpec == nil {
-					continue
-				}
-				// similarly, we could do this for other pipeline resources or whatever thing replaces them
-				if output.PipelineResourceBinding.ResourceSpec.Type == backport.PipelineResourceTypeImage {
-					// get the url and digest, and save as a subject
-					var url, digest string
-					for _, s := range trV1Beta1.Status.ResourcesResult {
-						if s.ResourceName == name {
-							if s.Key == "url" {
-								url = s.Value
-							}
-							if s.Key == "digest" {
-								digest = s.Value
-							}
-						}
-					}
-					subjects = artifact.AppendSubjects(subjects, &intoto.ResourceDescriptor{
-						Name: url,
-						Digest: common.DigestSet{
-							"sha256": strings.TrimPrefix(digest, "sha256:"),
-						},
-					})
-				}
-			}
-		}
 	}
 
 	return subjects

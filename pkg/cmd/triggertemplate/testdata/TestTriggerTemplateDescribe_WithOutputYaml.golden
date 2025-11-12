@@ -1,7 +1,6 @@
 apiVersion: triggers.tekton.dev/v1beta1
 kind: TriggerTemplate
 metadata:
-  creationTimestamp: null
   name: tt1
   namespace: ns
 spec:

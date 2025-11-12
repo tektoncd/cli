@@ -230,6 +230,10 @@ const (
 )
 
 func (artifact *Artifact) Enabled() bool {
+	// If signer is "none", signing is disabled
+	if artifact.Signer == "none" {
+		return false
+	}
 	return !(artifact.StorageBackend.Len() == 1 && artifact.StorageBackend.Has(""))
 }
 
@@ -286,18 +290,18 @@ func NewConfigFromMap(data map[string]string) (*Config, error) {
 		// TaskRuns
 		asString(taskrunFormatKey, &cfg.Artifacts.TaskRuns.Format, "in-toto", "slsa/v1", "slsa/v2alpha3", "slsa/v2alpha4"),
 		asStringSet(taskrunStorageKey, &cfg.Artifacts.TaskRuns.StorageBackend, sets.New[string]("tekton", "oci", "gcs", "docdb", "grafeas", "kafka", "archivista")),
-		asString(taskrunSignerKey, &cfg.Artifacts.TaskRuns.Signer, "x509", "kms"),
+		asString(taskrunSignerKey, &cfg.Artifacts.TaskRuns.Signer, "x509", "kms", "none"),
 
 		// PipelineRuns
 		asString(pipelinerunFormatKey, &cfg.Artifacts.PipelineRuns.Format, "in-toto", "slsa/v1", "slsa/v2alpha3", "slsa/v2alpha4"),
 		asStringSet(pipelinerunStorageKey, &cfg.Artifacts.PipelineRuns.StorageBackend, sets.New[string]("tekton", "oci", "gcs", "docdb", "grafeas", "archivista")),
-		asString(pipelinerunSignerKey, &cfg.Artifacts.PipelineRuns.Signer, "x509", "kms"),
+		asString(pipelinerunSignerKey, &cfg.Artifacts.PipelineRuns.Signer, "x509", "kms", "none"),
 		asBool(pipelinerunEnableDeepInspectionKey, &cfg.Artifacts.PipelineRuns.DeepInspectionEnabled),
 
 		// OCI
 		asString(ociFormatKey, &cfg.Artifacts.OCI.Format, "simplesigning"),
 		asStringSet(ociStorageKey, &cfg.Artifacts.OCI.StorageBackend, sets.New[string]("tekton", "oci", "gcs", "docdb", "grafeas", "kafka", "archivista")),
-		asString(ociSignerKey, &cfg.Artifacts.OCI.Signer, "x509", "kms"),
+		asString(ociSignerKey, &cfg.Artifacts.OCI.Signer, "x509", "kms", "none"),
 
 		// PubSub - General
 		asString(pubsubProvider, &cfg.Storage.PubSub.Provider, "inmemory", "kafka"),
