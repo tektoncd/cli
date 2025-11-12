@@ -27,7 +27,6 @@ import (
 	"github.com/tektoncd/chains/pkg/chains/storage/api"
 	"github.com/tektoncd/chains/pkg/config"
 	v1 "github.com/tektoncd/pipeline/pkg/apis/pipeline/v1"
-	"github.com/tektoncd/pipeline/pkg/apis/pipeline/v1beta1"
 )
 
 const (
@@ -63,11 +62,7 @@ func NewStorageBackend(ctx context.Context, cfg config.Config) (*Backend, error)
 	}, nil
 }
 
-// StorePayload implements the storage.Backend interface.  As of chains v0.20.0+,
-// this method has been updated to use Tekton v1 objects (previously v1beta1) and
-// it's error messages have been updated to reflect this.
-//
-//nolint:staticcheck
+// StorePayload implements the storage.Backend interface.
 func (b *Backend) StorePayload(ctx context.Context, obj objects.TektonObject, rawPayload []byte, signature string, opts config.StorageOpts) error {
 	logger := logging.FromContext(ctx)
 
@@ -96,8 +91,7 @@ func (b *Backend) StorePayload(ctx context.Context, obj objects.TektonObject, ra
 			writer: b.writer,
 			key:    opts.ShortKey,
 		}
-		// TODO(https://github.com/tektoncd/chains/issues/665) currently using deprecated v1beta1 APIs until we add full v1 support
-		if _, err := store.Store(ctx, &api.StoreRequest[*v1.PipelineRun, *in_toto.Statement]{
+		if _, err := store.Store(ctx, &api.StoreRequest[*v1.PipelineRun, *in_toto.Statement]{ //nolint:staticcheck
 			Object:   obj,
 			Artifact: pr,
 			// We don't actually use payload - we store the raw bundle values directly.
@@ -148,7 +142,6 @@ func (r *reader) GetReader(ctx context.Context, object string) (io.ReadCloser, e
 	return r.client.Bucket(r.bucket).Object(object).NewReader(ctx)
 }
 
-//nolint:staticcheck
 func (b *Backend) RetrieveSignatures(ctx context.Context, obj objects.TektonObject, opts config.StorageOpts) (map[string][]string, error) {
 	var object string
 
@@ -157,10 +150,6 @@ func (b *Backend) RetrieveSignatures(ctx context.Context, obj objects.TektonObje
 		object = taskRunSigNameV1(t, opts)
 	case *v1.PipelineRun:
 		object = pipelineRunSignameV1(t, opts)
-	case *v1beta1.TaskRun:
-		object = taskRunSigNameV1Beta1(t, opts)
-	case *v1beta1.PipelineRun:
-		object = pipelineRunSignameV1Beta1(t, opts)
 	default:
 		return nil, fmt.Errorf("unsupported TektonObject type: %T", t)
 	}
@@ -175,7 +164,6 @@ func (b *Backend) RetrieveSignatures(ctx context.Context, obj objects.TektonObje
 	return m, nil
 }
 
-//nolint:staticcheck
 func (b *Backend) RetrievePayloads(ctx context.Context, obj objects.TektonObject, opts config.StorageOpts) (map[string]string, error) {
 	var object string
 
@@ -184,10 +172,6 @@ func (b *Backend) RetrievePayloads(ctx context.Context, obj objects.TektonObject
 		object = taskRunPayloadNameV1(t, opts)
 	case *v1.PipelineRun:
 		object = pipelineRunPayloadNameV1(t, opts)
-	case *v1beta1.TaskRun:
-		object = taskRunPayloadNameV1Beta1(t, opts)
-	case *v1beta1.PipelineRun:
-		object = pipelineRunPayloadNameV1Beta1(t, opts)
 	default:
 		return nil, fmt.Errorf("unsupported TektonObject type: %T", t)
 	}
@@ -216,43 +200,19 @@ func (b *Backend) retrieveObject(ctx context.Context, object string) (string, er
 	return string(payload), nil
 }
 
-//nolint:staticcheck
 func taskRunSigNameV1(tr *v1.TaskRun, opts config.StorageOpts) string {
 	return fmt.Sprintf(SignatureNameFormatTaskRun, tr.Namespace, tr.Name, opts.ShortKey)
 }
 
-//nolint:staticcheck
 func taskRunPayloadNameV1(tr *v1.TaskRun, opts config.StorageOpts) string {
 	return fmt.Sprintf(PayloadNameFormatTaskRun, tr.Namespace, tr.Name, opts.ShortKey)
 }
 
-//nolint:staticcheck
 func pipelineRunSignameV1(pr *v1.PipelineRun, opts config.StorageOpts) string {
 	return fmt.Sprintf(SignatureNameFormatPipelineRun, pr.Namespace, pr.Name, opts.ShortKey)
 }
 
-//nolint:staticcheck
 func pipelineRunPayloadNameV1(pr *v1.PipelineRun, opts config.StorageOpts) string {
-	return fmt.Sprintf(PayloadNameFormatPipelineRun, pr.Namespace, pr.Name, opts.ShortKey)
-}
-
-//nolint:staticcheck
-func taskRunSigNameV1Beta1(tr *v1beta1.TaskRun, opts config.StorageOpts) string {
-	return fmt.Sprintf(SignatureNameFormatTaskRun, tr.Namespace, tr.Name, opts.ShortKey)
-}
-
-//nolint:staticcheck
-func taskRunPayloadNameV1Beta1(tr *v1beta1.TaskRun, opts config.StorageOpts) string {
-	return fmt.Sprintf(PayloadNameFormatTaskRun, tr.Namespace, tr.Name, opts.ShortKey)
-}
-
-//nolint:staticcheck
-func pipelineRunSignameV1Beta1(pr *v1beta1.PipelineRun, opts config.StorageOpts) string {
-	return fmt.Sprintf(SignatureNameFormatPipelineRun, pr.Namespace, pr.Name, opts.ShortKey)
-}
-
-//nolint:staticcheck
-func pipelineRunPayloadNameV1Beta1(pr *v1beta1.PipelineRun, opts config.StorageOpts) string {
 	return fmt.Sprintf(PayloadNameFormatPipelineRun, pr.Namespace, pr.Name, opts.ShortKey)
 }
 

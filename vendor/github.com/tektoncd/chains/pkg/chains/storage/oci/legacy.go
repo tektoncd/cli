@@ -65,7 +65,7 @@ func NewStorageBackend(ctx context.Context, client kubernetes.Interface, cfg con
 					UseMountSecrets:    true,
 				})
 			if err != nil {
-				return nil, err
+				return nil, errors.Wrapf(err, "creating new keychain from serviceaccount %s/%s", obj.GetNamespace(), obj.GetServiceAccountName())
 			}
 			return remote.WithAuthFromKeychain(kc), nil
 		},
@@ -77,7 +77,7 @@ func (b *Backend) StorePayload(ctx context.Context, obj objects.TektonObject, ra
 	logger := logging.FromContext(ctx)
 	auth, err := b.getAuthenticator(ctx, obj, b.client)
 	if err != nil {
-		return err
+		return errors.Wrap(err, "getting oci authenticator")
 	}
 
 	logger.Infof("Storing payload on %s/%s/%s", obj.GetGVK(), obj.GetNamespace(), obj.GetName())
