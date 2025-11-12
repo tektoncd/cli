@@ -22,7 +22,7 @@ import (
 	"github.com/pkg/errors"
 	"golang.org/x/crypto/ssh"
 
-	"go.step.sm/crypto/internal/utils"
+	fileutils "go.step.sm/crypto/internal/utils/file"
 	"go.step.sm/crypto/keyutil"
 	"go.step.sm/crypto/x25519"
 )
@@ -46,7 +46,7 @@ var PromptPassword PasswordPrompter
 // WriteFile is a method used to write a file, by default it uses a wrapper over
 // ioutil.WriteFile, but it can be set to a custom method, that for example can
 // check if a file exists and prompts the user if it should be overwritten.
-var WriteFile FileWriter = utils.WriteFile
+var WriteFile FileWriter = fileutils.WriteFile
 
 // PEMBlockHeader is the expected header for any PEM formatted block.
 var PEMBlockHeader = []byte("-----BEGIN ")
@@ -155,7 +155,7 @@ func WithPassword(pass []byte) Options {
 // WithPasswordFile is a method that adds the password in a file to the context.
 func WithPasswordFile(filename string) Options {
 	return func(ctx *context) error {
-		b, err := utils.ReadPasswordFromFile(filename)
+		b, err := fileutils.ReadPasswordFromFile(filename)
 		if err != nil {
 			return err
 		}
@@ -416,7 +416,7 @@ func ReadCertificate(filename string, opts ...Options) (*x509.Certificate, error
 // - supports PEM and DER certificate formats
 //   - If a DER-formatted file is given only one certificate will be returned.
 func ReadCertificateBundle(filename string) ([]*x509.Certificate, error) {
-	b, err := utils.ReadFile(filename)
+	b, err := fileutils.ReadFile(filename)
 	if err != nil {
 		return nil, err
 	}
@@ -434,7 +434,7 @@ func ReadCertificateBundle(filename string) ([]*x509.Certificate, error) {
 // - supports PEM and DER Certificate formats.
 // - supports reading from STDIN with filename `-`.
 func ReadCertificateRequest(filename string) (*x509.CertificateRequest, error) {
-	b, err := utils.ReadFile(filename)
+	b, err := fileutils.ReadFile(filename)
 	if err != nil {
 		return nil, err
 	}
@@ -537,7 +537,7 @@ func ParseKey(b []byte, opts ...Options) (interface{}, error) {
 // keys are PKCS#1, PKCS#8, RFC5915 for EC, and base64-encoded DER for
 // certificates and public keys.
 func Read(filename string, opts ...Options) (interface{}, error) {
-	b, err := utils.ReadFile(filename)
+	b, err := fileutils.ReadFile(filename)
 	if err != nil {
 		return nil, err
 	}
