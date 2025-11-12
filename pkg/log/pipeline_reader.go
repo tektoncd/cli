@@ -192,7 +192,7 @@ func (r *Reader) pipeLogs(logC chan<- Log, errC chan<- error) {
 				tlogC = nil
 				continue
 			}
-			logC <- Log{Task: l.Task, Step: l.Step, Log: l.Log}
+			logC <- Log{Task: l.Task, TaskDisplayName: l.TaskDisplayName, Step: l.Step, Log: l.Log}
 
 		case e, ok := <-terrC:
 			if !ok {
@@ -208,6 +208,7 @@ func (r *Reader) setUpTask(taskNumber int, tr taskrunpkg.Run) {
 	r.setNumber(taskNumber)
 	r.setRun(tr.Name)
 	r.setTask(tr.Task)
+	r.setDisplayName(tr.DisplayName)
 	r.setRetries(tr.Retries)
 }
 
