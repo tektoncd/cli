@@ -24,11 +24,8 @@ import (
 	"github.com/google/go-containerregistry/pkg/name"
 	"github.com/in-toto/in-toto-golang/in_toto/slsa_provenance/common"
 	"github.com/opencontainers/go-digest"
-	"github.com/tektoncd/chains/internal/backport"
 	"github.com/tektoncd/chains/pkg/chains/objects"
 	"github.com/tektoncd/chains/pkg/config"
-	v1 "github.com/tektoncd/pipeline/pkg/apis/pipeline/v1"
-	"github.com/tektoncd/pipeline/pkg/apis/pipeline/v1beta1"
 	"k8s.io/apimachinery/pkg/util/sets"
 	"knative.dev/pkg/logging"
 )
@@ -154,45 +151,7 @@ type image struct {
 }
 
 func (oa *OCIArtifact) ExtractObjects(ctx context.Context, obj objects.TektonObject) []interface{} {
-	logger := logging.FromContext(ctx)
 	objs := []interface{}{}
-
-	// TODO: Not applicable to PipelineRuns, should look into a better way to separate this out
-	if trV1, ok := obj.GetObject().(*v1.TaskRun); ok {
-		trV1Beta1 := &v1beta1.TaskRun{} //nolint:staticcheck
-		if err := trV1Beta1.ConvertFrom(ctx, trV1); err == nil {
-			imageResourceNames := map[string]*image{}
-			if trV1Beta1.Status.TaskSpec != nil && trV1Beta1.Status.TaskSpec.Resources != nil { //nolint:staticcheck
-				for _, output := range trV1Beta1.Status.TaskSpec.Resources.Outputs { //nolint:staticcheck
-					if output.Type == backport.PipelineResourceTypeImage {
-						imageResourceNames[output.Name] = &image{}
-					}
-				}
-			}
-			for _, rr := range trV1Beta1.Status.ResourcesResult {
-				img, ok := imageResourceNames[rr.ResourceName]
-				if !ok {
-					continue
-				}
-				// We have a result for an image!
-				if rr.Key == "url" {
-					img.url = rr.Value
-				} else if rr.Key == "digest" {
-					img.digest = rr.Value
-				}
-			}
-
-			for _, image := range imageResourceNames {
-				dgst, err := name.NewDigest(fmt.Sprintf("%s@%s", image.url, image.digest))
-				if err != nil {
-					logger.Error(err)
-					continue
-				}
-
-				objs = append(objs, dgst)
-			}
-		}
-	}
 
 	// Now check TaskResults
 	resultImages := ExtractOCIImagesFromResults(ctx, obj.GetResults())
