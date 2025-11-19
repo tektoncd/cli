@@ -2,8 +2,7 @@ apiVersion: tekton.dev/v1beta1
 kind: Task
 metadata:
   annotations:
-    tekton.dev/signature: MEUCIQDM8TgHdpKgQXT2glSw7QbJ9zVoSIGX/4sZcLD195AoKQIgLhDMkr6SVLrHqFmB6ltDqxXfsKws1NfTsJhMPokK5N8=
-  creationTimestamp: null
+    tekton.dev/signature: MEUCIC7NdCATw/xl3XynsYS3X2id2LPVXGPIfgv8MvzbVyOQAiEAqfAGkk/70apI/Bhvn1glgrjiH3JF+Alt/Kdan+sYuSg=
   name: test-task
 spec:
   params:
@@ -15,13 +14,6 @@ spec:
     description: The build context used by Kaniko (https://github.com/GoogleContainerTools/kaniko#kaniko-build-contexts)
     name: pathToContext
     type: string
-  resources:
-    inputs:
-    - name: docker-source
-      type: git
-    outputs:
-    - name: builtImage
-      type: image
   steps:
   - args:
     - --dockerfile=$(inputs.params.pathToDockerFile)

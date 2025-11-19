@@ -3,8 +3,7 @@
 	"apiVersion": "tekton.dev/v1",
 	"metadata": {
 		"generateName": "task-1-run-",
-		"namespace": "ns",
-		"creationTimestamp": null
+		"namespace": "ns"
 	},
 	"spec": {
 		"params": [
