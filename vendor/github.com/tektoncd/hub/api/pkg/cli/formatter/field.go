@@ -210,10 +210,10 @@ func DecorateAttr(attrString, message string) string {
 	attr := color.Reset
 	switch attrString {
 	case "underline bold":
-		return color.New(color.Underline).Add(color.Bold).Sprintf("%s", message)
+		return color.New(color.Underline).Add(color.Bold).Sprintf(message)
 	case "bold":
 		attr = color.Bold
 	}
 
-	return color.New(attr).Sprintf("%s", message)
+	return color.New(attr).Sprintf(message)
 }
