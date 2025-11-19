@@ -70,6 +70,9 @@ func Sign(o metav1.Object, keyfile, kmsKey, targetFile string) error {
 		a = map[string]string{}
 	}
 
+	// Normalize object so digest is deterministic (e.g. creationTimestamp round-trip)
+	normalizeObjectForDigest(o)
+
 	// Sign object
 	sig, err := signInterface(signer, o)
 	if err != nil {
@@ -82,8 +85,8 @@ func Sign(o metav1.Object, keyfile, kmsKey, targetFile string) error {
 		return err
 	}
 
-	// save signed file
-	f, err := os.OpenFile(targetFile, os.O_WRONLY|os.O_CREATE, 0600)
+	// save signed file (O_TRUNC so we overwrite any existing content)
+	f, err := os.OpenFile(targetFile, os.O_WRONLY|os.O_CREATE|os.O_TRUNC, 0600)
 	if err != nil {
 		return fmt.Errorf("error opening output file: %v", err)
 	}
@@ -137,7 +140,21 @@ func UnmarshalCRD(buf []byte, kind string) (metav1.Object, []byte, error) {
 	}
 	delete(annotations, SignatureAnnotation)
 
+	// Normalize so digest matches what was signed (e.g. creationTimestamp)
+	normalizeObjectForDigest(resource)
+
 	return resource, signature, nil
+}
+
+// normalizeObjectForDigest clears fields that can differ after YAML round-trip
+// so that JSON digest for signing and verification match.
+func normalizeObjectForDigest(o metav1.Object) {
+	switch obj := o.(type) {
+	case *v1beta1.Task:
+		obj.ObjectMeta.CreationTimestamp = metav1.Time{}
+	case *v1beta1.Pipeline:
+		obj.ObjectMeta.CreationTimestamp = metav1.Time{}
+	}
 }
 
 func getPass(confirm bool) ([]byte, error) {

@@ -2,7 +2,6 @@ Command "start" is deprecated, ClusterTasks are deprecated, this command will be
 apiVersion: tekton.dev/v1beta1
 kind: TaskRun
 metadata:
-  creationTimestamp: null
   generateName: clustertask-2-run-
   labels:
     key: value

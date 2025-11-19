@@ -198,7 +198,7 @@ func cosignSigner(ctx context.Context, secretPath string, privateKey []byte) (*S
 	if err != nil {
 		return nil, errors.Wrap(err, "reading cosign.password file")
 	}
-	signer, err := cosign.LoadPrivateKey(privateKey, password)
+	signer, err := cosign.LoadPrivateKey(privateKey, password, nil)
 	if err != nil {
 		return nil, err
 	}
