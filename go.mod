@@ -31,7 +31,7 @@ require (
 	github.com/theupdateframework/go-tuf v0.7.0
 	go.opencensus.io v0.24.0
 	go.uber.org/multierr v1.11.0
-	go.uber.org/zap v1.27.0
+	go.uber.org/zap v1.27.1
 	golang.org/x/term v0.37.0
 	gotest.tools v2.2.0+incompatible
 	gotest.tools/v3 v3.5.2
