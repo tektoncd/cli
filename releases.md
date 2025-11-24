@@ -10,13 +10,13 @@ as follows:
 - Four releases a year are chosen for [long term support (LTS)](https://github.com/tektoncd/community/blob/main/releases.md#support-policy).
   All remaining releases are supported for approximately 1 month (until the next
   release is produced)
-    - LTS releases take place in January, April, July and October every year
-    - The first Tekton CLI LTS release will be **v0.30.0** in January 2023
-    - Releases happen towards the middle of the month, but the exact date may vary,
-      depending on week-ends and readiness
+  - LTS releases take place in January, April, July and October every year
+  - The first Tekton CLI LTS release will be **v0.30.0** in January 2023
+  - Releases happen towards the middle of the month, but the exact date may vary,
+    depending on week-ends and readiness
 
 Tekton CLI produces nightly builds, publicly available on
-`gcr.io/tekton-nightly`. 
+`gcr.io/tekton-nightly`.
 
 ### Transition Process
 
@@ -35,6 +35,12 @@ Further documentation available:
 - Standard for [release notes][release-notes-standards]
 
 ## Releases
+
+### v0.43 (LTS)
+
+- **Latest Release**: [v0.43.0][v0-43-0] (2025-11-21) ([docs][v0-43-0-docs])
+- **Initial Release**: [v0.43.0][v0-43-0] (2025-11-21) ([docs][v0-43-0-docs])
+- **End of Life**: 2026-11-20
 
 ### v0.42 (LTS)
 
@@ -153,15 +159,13 @@ Further documentation available:
 
 Older releases are EOL and available on [GitHub][tekton-cli-releases].
 
-
 [release-policy]: https://github.com/tektoncd/community/blob/main/releases.md
 [tekton-chains]: https://github.com/tektoncd/chains
 [tekton-cli-releases]: https://github.com/tektoncd/cli/releases
 [tekton-releases-docs]: tekton/README.md
-[release-notes-standards]:
-    https://github.com/tektoncd/community/blob/main/standards.md#release-notes
+[release-notes-standards]: https://github.com/tektoncd/community/blob/main/standards.md#release-notes
 [tekton-release-process]: RELEASE_PROCESS.md
-
+[v0-43-0]: https://github.com/tektoncd/cli/releases/tag/v0.43.0
 [v0-42-0]: https://github.com/tektoncd/cli/releases/tag/v0.42.0
 [v0-41-1]: https://github.com/tektoncd/cli/releases/tag/v0.41.1
 [v0-41-0]: https://github.com/tektoncd/cli/releases/tag/v0.41.0
@@ -190,7 +194,7 @@ Older releases are EOL and available on [GitHub][tekton-cli-releases].
 [v0-27-0]: https://github.com/tektoncd/cli/releases/tag/v0.27.0
 [v0-26-0]: https://github.com/tektoncd/cli/releases/tag/v0.26.0
 [v0-25-0]: https://github.com/tektoncd/cli/releases/tag/v0.25.0
-
+[v0-43-0-docs]: https://github.com/tektoncd/cli/tree/v0.43.0/docs
 [v0-42-0-docs]: https://github.com/tektoncd/cli/tree/v0.42.0/docs
 [v0-41-1-docs]: https://github.com/tektoncd/cli/tree/v0.41.1/docs
 [v0-41-0-docs]: https://github.com/tektoncd/cli/tree/v0.41.0/docs
