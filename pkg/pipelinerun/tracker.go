@@ -16,6 +16,7 @@ package pipelinerun
 
 import (
 	"context"
+	"errors"
 	"sync"
 	"time"
 
@@ -68,6 +69,11 @@ func (t *Tracker) Monitor(allowed []string) <-chan []taskrunpkg.Run {
 
 	genericInformer, _ := factory.ForResource(*gvr)
 	informer := genericInformer.Informer()
+
+	// Set a custom watch error handler that ignores context.Canceled errors
+	// to prevent "Failed to watch" log messages when the informer is stopped intentionally
+	_ = informer.SetWatchErrorHandlerWithContext(watchErrorHandler)
+
 	mu := &sync.Mutex{}
 	stopC := make(chan struct{})
 	trC := make(chan []taskrunpkg.Run)
@@ -154,7 +160,15 @@ func pipelinerunOpts(name string) func(opts *metav1.ListOptions) {
 	return func(opts *metav1.ListOptions) {
 		opts.FieldSelector = fields.OneTermEqualSelector("metadata.name", name).String()
 	}
+}
 
+// watchErrorHandler is a custom watch error handler that filters out context.Canceled errors
+// to prevent "Failed to watch" log messages when the informer is stopped intentionally.
+// Other errors are passed to the default handler.
+func watchErrorHandler(ctx context.Context, r *cache.Reflector, err error) {
+	if !errors.Is(err, context.Canceled) {
+		cache.DefaultWatchErrorHandler(ctx, r, err)
+	}
 }
 
 // handles changes to pipelinerun and pushes the Run information to the
