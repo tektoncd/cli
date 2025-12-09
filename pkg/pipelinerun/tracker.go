@@ -16,6 +16,7 @@ package pipelinerun
 
 import (
 	"context"
+	"errors"
 	"sync"
 	"time"
 
@@ -28,7 +29,7 @@ import (
 	corev1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/fields"
-	"k8s.io/client-go/tools/cache"
+	k8scache "k8s.io/client-go/tools/cache"
 )
 
 // Tracker tracks the progress of a PipelineRun
@@ -68,6 +69,11 @@ func (t *Tracker) Monitor(allowed []string) <-chan []taskrunpkg.Run {
 
 	genericInformer, _ := factory.ForResource(*gvr)
 	informer := genericInformer.Informer()
+
+	// Set a custom watch error handler that ignores context.Canceled errors
+	// to prevent "Failed to watch" log messages when the informer is stopped intentionally
+	_ = informer.SetWatchErrorHandlerWithContext(watchErrorHandler)
+
 	mu := &sync.Mutex{}
 	stopC := make(chan struct{})
 	trC := make(chan []taskrunpkg.Run)
@@ -105,7 +111,7 @@ func (t *Tracker) Monitor(allowed []string) <-chan []taskrunpkg.Run {
 	}
 
 	_, err := informer.AddEventHandler(
-		cache.ResourceEventHandlerFuncs{
+		k8scache.ResourceEventHandlerFuncs{
 			AddFunc: func(obj interface{}) {
 				// To ensure synchonization and checks is the stopC channel has received a signal to stop
 				// If it receives a signal then return and does nothing
@@ -154,7 +160,15 @@ func pipelinerunOpts(name string) func(opts *metav1.ListOptions) {
 	return func(opts *metav1.ListOptions) {
 		opts.FieldSelector = fields.OneTermEqualSelector("metadata.name", name).String()
 	}
+}
 
+// watchErrorHandler is a custom watch error handler that filters out context.Canceled errors
+// to prevent "Failed to watch" log messages when the informer is stopped intentionally.
+// Other errors are passed to the default handler.
+func watchErrorHandler(ctx context.Context, r *k8scache.Reflector, err error) {
+	if !errors.Is(err, context.Canceled) {
+		k8scache.DefaultWatchErrorHandler(ctx, r, err)
+	}
 }
 
 // handles changes to pipelinerun and pushes the Run information to the
