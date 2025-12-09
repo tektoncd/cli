@@ -1,3 +1,71 @@
+# v1.48.2 (2025-11-12)
+
+* **Bug Fix**: Further reduce allocation overhead when the metrics system isn't in-use.
+* **Bug Fix**: Reduce allocation overhead when the client doesn't have any HTTP interceptors configured.
+* **Bug Fix**: Remove blank trace spans towards the beginning of the request that added no additional information. This conveys a slight reduction in overall allocations.
+
+# v1.48.1 (2025-11-11)
+
+* **Bug Fix**: Return validation error if input region is not a valid host label.
+
+# v1.48.0 (2025-11-07)
+
+* **Feature**: Added support for new ECC_NIST_EDWARDS25519 AWS KMS key spec
+
+# v1.47.1 (2025-11-04)
+
+* **Dependency Update**: Updated to the latest SDK module versions
+* **Dependency Update**: Upgrade to smithy-go v1.23.2 which should convey some passive reduction of overall allocations, especially when not using the metrics system.
+
+# v1.47.0 (2025-10-30)
+
+* **Feature**: Add cross account VPC endpoint service connectivity support to CustomKeyStore.
+* **Dependency Update**: Updated to the latest SDK module versions
+
+# v1.46.2 (2025-10-23)
+
+* **Dependency Update**: Updated to the latest SDK module versions
+
+# v1.46.1 (2025-10-22)
+
+* No change notes available for this release.
+
+# v1.46.0 (2025-10-16)
+
+* **Feature**: Update endpoint ruleset parameters casing
+* **Dependency Update**: Bump minimum Go version to 1.23.
+* **Dependency Update**: Updated to the latest SDK module versions
+
+# v1.45.6 (2025-09-26)
+
+* **Dependency Update**: Updated to the latest SDK module versions
+
+# v1.45.5 (2025-09-24)
+
+* **Documentation**: Documentation only updates for KMS.
+
+# v1.45.4 (2025-09-23)
+
+* **Dependency Update**: Updated to the latest SDK module versions
+
+# v1.45.3 (2025-09-10)
+
+* No change notes available for this release.
+
+# v1.45.2 (2025-09-08)
+
+* **Dependency Update**: Updated to the latest SDK module versions
+
+# v1.45.1 (2025-08-29)
+
+* **Dependency Update**: Updated to the latest SDK module versions
+
+# v1.45.0 (2025-08-27)
+
+* **Feature**: Remove incorrect endpoint tests
+* **Dependency Update**: Update to smithy-go v1.23.0.
+* **Dependency Update**: Updated to the latest SDK module versions
+
 # v1.44.2 (2025-08-21)
 
 * **Dependency Update**: Updated to the latest SDK module versions
