@@ -15,6 +15,8 @@
 package pods
 
 import (
+	"context"
+	"errors"
 	"testing"
 	"time"
 
@@ -211,4 +213,29 @@ func simulateDeleteWatch(t *testing.T, initial *corev1.Pod, later *corev1.Pod) k
 	}()
 
 	return clients.Kube
+}
+
+func Test_watchErrorHandler(t *testing.T) {
+	tests := []struct {
+		name string
+		err  error
+	}{
+		{
+			name: "context.Canceled should be filtered",
+			err:  context.Canceled,
+		},
+		{
+			name: "wrapped context.Canceled should be filtered",
+			err:  errors.Join(errors.New("watch failed"), context.Canceled),
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(_ *testing.T) {
+			// Call watchErrorHandler with context.Canceled errors
+			// These should be filtered (not passed to DefaultWatchErrorHandler)
+			// so passing nil reflector is safe
+			watchErrorHandler(context.Background(), nil, tt.err)
+		})
+	}
 }
