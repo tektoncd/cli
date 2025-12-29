@@ -24,10 +24,6 @@ Show the logs of a PipelineRun
     show all logs including init steps injected by tekton
 
 .PP
-\fB\-\-display\-name\fP[=false]
-    show logs with task display name (display name and step name)
-
-.PP
 \fB\-E\fP, \fB\-\-exit\-with\-pipelinerun\-error\fP[=false]
     exit with pipelinerun to the unix shell, 0 if success, 1 if error, 2 on unknown status
 
@@ -50,6 +46,10 @@ Show the logs of a PipelineRun
 .PP
 \fB\-\-limit\fP=5
     lists number of PipelineRuns
+
+.PP
+\fB\-\-long\fP[=false]
+    show logs with task display name (display name and step name)
 
 .PP
 \fB\-\-prefix\fP[=true]

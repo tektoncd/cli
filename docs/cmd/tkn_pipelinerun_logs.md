@@ -31,13 +31,13 @@ Show the logs of PipelineRun named 'microservice-1' for all Tasks and steps (inc
 
 ```
   -a, --all                           show all logs including init steps injected by tekton
-      --display-name                  show logs with task display name (display name and step name)
   -E, --exit-with-pipelinerun-error   exit with pipelinerun to the unix shell, 0 if success, 1 if error, 2 on unknown status
   -f, --follow                        stream live logs
   -F, --fzf                           use fzf to select a PipelineRun
   -h, --help                          help for logs
   -L, --last                          show logs for last PipelineRun
       --limit int                     lists number of PipelineRuns (default 5)
+      --long                          show logs with task display name (display name and step name)
       --prefix                        prefix each log line with the log source (task name and step name) (default true)
   -t, --task strings                  show logs for mentioned Tasks only
       --timestamps                    show logs with timestamp
