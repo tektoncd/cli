@@ -27,8 +27,9 @@ var pipelineGroupResource = schema.GroupVersionResource{Group: "tekton.dev", Res
 
 // Log represents data to write on log channel
 type Log struct {
-	Pipeline string
-	Task     string
-	Step     string
-	Log      string
+	Pipeline        string
+	Task            string
+	TaskDisplayName string
+	Step            string
+	Log             string
 }
