@@ -30,15 +30,13 @@ import (
 	"sort"
 	"strings"
 
-	"github.com/in-toto/in-toto-golang/in_toto"
-	"github.com/secure-systems-lab/go-securesystemslib/dsse"
-
 	"github.com/go-openapi/strfmt"
 	"github.com/go-openapi/swag/conv"
-
+	"github.com/in-toto/in-toto-golang/in_toto"
+	"github.com/secure-systems-lab/go-securesystemslib/dsse"
 	"github.com/sigstore/rekor/pkg/generated/models"
-	"github.com/sigstore/rekor/pkg/log"
-	"github.com/sigstore/rekor/pkg/pki"
+	"github.com/sigstore/rekor/pkg/internal/log"
+	pkitypes "github.com/sigstore/rekor/pkg/pki/pkitypes"
 	"github.com/sigstore/rekor/pkg/pki/x509"
 	"github.com/sigstore/rekor/pkg/types"
 	dsseType "github.com/sigstore/rekor/pkg/types/dsse"
@@ -294,6 +292,9 @@ func (v *V001Entry) Unmarshal(pe models.ProposedEntry) error {
 	}
 
 	env := &dsse.Envelope{}
+	if dsseObj.ProposedContent.Envelope == nil {
+		return errors.New("proposed content envelope is missing")
+	}
 	if err := json.Unmarshal([]byte(*dsseObj.ProposedContent.Envelope), env); err != nil {
 		return err
 	}
@@ -376,7 +377,7 @@ func (v *V001Entry) Canonicalize(_ context.Context) ([]byte, error) {
 	}
 
 	for _, s := range canonicalEntry.Signatures {
-		if s.Signature == nil {
+		if s == nil || s.Signature == nil {
 			return nil, errors.New("canonical entry missing required signature")
 		}
 	}
@@ -508,12 +509,12 @@ func verifyEnvelope(allPubKeyBytes [][]byte, env *dsse.Envelope) (map[string]*x5
 	return verifierBySig, nil
 }
 
-func (v V001Entry) Verifiers() ([]pki.PublicKey, error) {
+func (v V001Entry) Verifiers() ([]pkitypes.PublicKey, error) {
 	if len(v.DSSEObj.Signatures) == 0 {
 		return nil, errors.New("dsse v0.0.1 entry not initialized")
 	}
 
-	var keys []pki.PublicKey
+	var keys []pkitypes.PublicKey
 	for _, s := range v.DSSEObj.Signatures {
 		key, err := x509.NewPublicKey(bytes.NewReader(*s.Verifier))
 		if err != nil {
