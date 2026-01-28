@@ -1,0 +1,12 @@
+Name:         cr-cancelled
+Namespace:    ns
+Custom Ref:   mytask
+
+Status
+
+STARTED         DURATION   STATUS
+8 minutes ago   3m0s       Failed(CustomRunCancelled)
+
+Message
+
+CustomRun "cr-cancelled" was cancelled
