@@ -1,0 +1,8 @@
+Name:         cr-1
+Namespace:    ns
+Custom Ref:   mytask
+
+Status
+
+STARTED          DURATION   STATUS
+10 minutes ago   5m0s       Succeeded

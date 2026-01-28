@@ -35,6 +35,7 @@ type DescribeOptions struct {
 	PipelineRunName           string
 	TaskName                  string
 	TaskrunName               string
+	CustomRunName             string
 	Tasks                     []string
 	TriggerTemplateName       string
 	TriggerBindingName        string
@@ -92,6 +93,8 @@ func (opts *DescribeOptions) Ask(resource string, options []string) error {
 		opts.TaskName = ans
 	case ResourceNameTaskRun:
 		opts.TaskrunName = strings.Fields(ans)[0]
+	case ResourceNameCustomRun:
+		opts.CustomRunName = strings.Fields(ans)[0]
 	case ResourceNameTriggerTemplate:
 		opts.TriggerTemplateName = ans
 	case ResourceNameTriggerBinding:
@@ -160,6 +163,8 @@ func (opts *DescribeOptions) FuzzyAsk(resource string, options []string) error {
 		opts.TaskName = ans
 	case ResourceNameTaskRun:
 		opts.TaskrunName = strings.Fields(ans)[0]
+	case ResourceNameCustomRun:
+		opts.CustomRunName = strings.Fields(ans)[0]
 	case ResourceNameTriggerTemplate:
 		opts.TriggerTemplateName = ans
 	case ResourceNameTriggerBinding:
