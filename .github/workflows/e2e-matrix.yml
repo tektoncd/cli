@@ -30,6 +30,7 @@ jobs:
       KO_DOCKER_REPO: registry.local:5000/tekton
       CLUSTER_DOMAIN: c${{ github.run_id }}.local
       ARTIFACTS: ${{ github.workspace }}/artifacts
+      GOTOOLCHAIN: auto
 
     steps:
     - uses: actions/checkout@8e8c483db84b4bee98b60c0593521ed34d9990e8  # v6.0.1
