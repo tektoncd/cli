@@ -61,7 +61,7 @@ type Collection interface {
 	//
 	// Implementations can choose to execute the Query as one single request or
 	// multiple ones, depending on their service offerings. The portable type
-	// exposes OpenCensus metrics for the call to RunGetQuery (but not for
+	// exposes OpenTelemetry metrics for the call to RunGetQuery (but not for
 	// subsequent calls to DocumentIterator.Next), so drivers should prefer to
 	// make at least one RPC during RunGetQuery itself instead of lazily waiting
 	// for the first call to Next.
@@ -125,14 +125,14 @@ const (
 
 //go:generate stringer -type=ActionKind
 
-// An Action describes a single operation on a single document.
 type Action struct {
-	Kind       ActionKind  // the kind of action
-	Doc        Document    // the document on which to perform the action
-	Key        interface{} // the document key returned by Collection.Key, to avoid recomputing it
-	FieldPaths [][]string  // field paths to retrieve, for Get only
-	Mods       []Mod       // modifications to make, for Update only
-	Index      int         // the index of the action in the original action list
+	Kind          ActionKind  // the kind of action
+	Doc           Document    // the document on which to perform the action
+	Key           interface{} // the document key returned by Collection.Key, to avoid recomputing it
+	FieldPaths    [][]string  // field paths to retrieve, for Get only
+	Mods          []Mod       // modifications to make, for Update only
+	Index         int         // the index of the action in the original action list
+	InAtomicWrite bool        // if this action is a part of transaction
 }
 
 // A Mod is a modification to a field path in a document.
