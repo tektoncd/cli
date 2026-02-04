@@ -3,6 +3,7 @@ PKGS = $(or $(PKG),$(shell env GO111MODULE=on $(GO) list ./... | grep -v 'github
 BIN  = $(CURDIR)/.bin
 
 export GO111MODULE=on
+export GOTOOLCHAIN=auto
 
 V = 0
 Q = $(if $(filter 1,$V),,@)

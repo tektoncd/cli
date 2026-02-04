@@ -26,6 +26,9 @@ cd $(dirname $(readlink -f $0))/../
 
 E2E_SKIP_CLUSTER_CREATION=${E2E_SKIP_CLUSTER_CREATION:="false"}
 
+ # Allow Go to automatically download the required toolchain version from go.mod
+export GOTOOLCHAIN=auto
+
 ci_run && {
     header "Setting up environment"
     if [ "${E2E_SKIP_CLUSTER_CREATION}" != "true" ]; then
