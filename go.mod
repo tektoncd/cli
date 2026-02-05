@@ -1,6 +1,6 @@
 module github.com/tektoncd/cli
 
-go 1.25.0
+go 1.25.5
 
 require (
 	github.com/AlecAivazis/survey/v2 v2.3.7
@@ -278,7 +278,7 @@ require (
 	github.com/ryanuber/go-glob v1.0.0 // indirect
 	github.com/sagikazarmark/locafero v0.11.0 // indirect
 	github.com/sassoftware/relic v7.2.1+incompatible // indirect
-	github.com/secure-systems-lab/go-securesystemslib v0.9.1 // indirect
+	github.com/secure-systems-lab/go-securesystemslib v0.10.0 // indirect
 	github.com/shibumi/go-pathspec v1.3.0 // indirect
 	github.com/sigstore/fulcio v1.8.5 // indirect
 	github.com/sigstore/protobuf-specs v0.5.0 // indirect
@@ -300,7 +300,7 @@ require (
 	github.com/subosito/gotenv v1.6.0 // indirect
 	github.com/syndtr/goleveldb v1.0.1-0.20220721030215-126854af5e6d // indirect
 	github.com/thales-e-security/pool v0.0.2 // indirect
-	github.com/theupdateframework/go-tuf/v2 v2.3.0 // indirect
+	github.com/theupdateframework/go-tuf/v2 v2.4.1 // indirect
 	github.com/tidwall/gjson v1.14.2 // indirect
 	github.com/tidwall/match v1.1.1 // indirect
 	github.com/tidwall/pretty v1.2.0 // indirect
