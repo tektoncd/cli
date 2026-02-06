@@ -1,0 +1,13 @@
+Name:         cr-with-labels
+Namespace:    ns
+Custom Ref:   mytask
+Labels:
+ app=myapp
+ tekton.dev/customTask=mytask
+Annotations:
+ tekton.dev/tags=testing
+
+Status
+
+STARTED   DURATION   STATUS
+---       ---        Succeeded

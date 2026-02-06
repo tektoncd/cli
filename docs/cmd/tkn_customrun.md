@@ -28,5 +28,6 @@ Manage CustomRuns
 
 * [tkn](tkn.md)	 - CLI for tekton pipelines
 * [tkn customrun delete](tkn_customrun_delete.md)	 - Delete CustomRuns in a namespace
+* [tkn customrun describe](tkn_customrun_describe.md)	 - Describe a CustomRun in a namespace
 * [tkn customrun list](tkn_customrun_list.md)	 - Lists CustomRuns in a namespace
 

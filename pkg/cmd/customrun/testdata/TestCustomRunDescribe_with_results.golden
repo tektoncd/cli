@@ -1,0 +1,14 @@
+Name:         cr-with-results
+Namespace:    ns
+Custom Ref:   mytask
+
+Status
+
+STARTED          DURATION   STATUS
+10 minutes ago   5m0s       Succeeded
+
+Results
+
+ NAME       VALUE
+ result-1   value-1
+ result-2   value-2

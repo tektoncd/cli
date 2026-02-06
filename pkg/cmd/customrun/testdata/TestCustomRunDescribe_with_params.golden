@@ -1,0 +1,15 @@
+Name:         cr-1
+Namespace:    ns
+Custom Ref:   mytask
+Timeout:      1h0m0s
+
+Status
+
+STARTED          DURATION   STATUS
+10 minutes ago   5m0s       Succeeded
+
+Params
+
+ NAME     VALUE
+ param1   value1
+ param2   [a b c]
