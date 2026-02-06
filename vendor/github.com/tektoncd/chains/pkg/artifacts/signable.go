@@ -326,7 +326,7 @@ func isValidArtifactOutput(res objects.Result) (bool, error) {
 		return false, fmt.Errorf("%s should have digest field: %v", res.Name, res.Value.ObjectVal)
 	}
 	if _, _, err := ParseDigest(res.Value.ObjectVal["digest"]); err != nil {
-		return false, fmt.Errorf("error getting digest %s: %v", res.Value.ObjectVal["digest"], err)
+		return false, fmt.Errorf("error getting digest %s: %w", res.Value.ObjectVal["digest"], err)
 	}
 	return true, nil
 }
