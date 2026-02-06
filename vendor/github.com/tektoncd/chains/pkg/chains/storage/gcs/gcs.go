@@ -41,6 +41,7 @@ const (
 
 // Backend is a storage backend that stores signed payloads in the TaskRun metadata as an annotation.
 // It is stored as base64 encoded JSON.
+//
 // Deprecated: Use TaskRunStorer instead.
 type Backend struct {
 	writer gcsWriter

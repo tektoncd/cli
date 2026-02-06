@@ -23,7 +23,7 @@ require (
 	github.com/sigstore/sigstore v1.10.4
 	github.com/spf13/cobra v1.10.2
 	github.com/spf13/pflag v1.0.10
-	github.com/tektoncd/chains v0.26.0
+	github.com/tektoncd/chains v0.26.2
 	github.com/tektoncd/hub v1.23.6
 	github.com/tektoncd/pipeline v1.9.0
 	github.com/tektoncd/plumbing v0.0.0-20250430145243-3b7cd59879c1
