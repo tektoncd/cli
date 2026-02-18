@@ -12,6 +12,7 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
+//nolint:revive // package name matches stdlib by design
 package version
 
 import (
@@ -216,6 +217,7 @@ func (cli *Client) getRelease(url string) (ghversion GHVersion, err error) {
 		return ghversion, errors.Wrap(err, "failed to fetch the latest version")
 	}
 
+	// #nosec G704 -- URL is from our release API, not user-controlled
 	res, err := cli.httpClient.Do(req)
 	defer func() {
 		err := res.Body.Close()
