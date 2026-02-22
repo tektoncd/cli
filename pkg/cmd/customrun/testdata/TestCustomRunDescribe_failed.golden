@@ -1,0 +1,13 @@
+Name:         cr-1
+Namespace:    ns
+Custom Ref:   mytask
+Timeout:      1h0m0s
+
+Status
+
+STARTED         DURATION   STATUS
+8 minutes ago   3m0s       Failed
+
+Message
+
+CustomRun failed because of some error

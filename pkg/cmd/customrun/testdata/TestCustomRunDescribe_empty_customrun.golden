@@ -1,0 +1,11 @@
+Name:         cr-1
+Namespace:    ns
+Custom Ref:   mytask
+Timeout:      1h0m0s
+Labels:
+ tekton.dev/customTask=mytask
+
+Status
+
+STARTED   DURATION   STATUS
+---       ---        Succeeded
