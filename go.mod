@@ -45,6 +45,8 @@ require (
 
 replace github.com/alibabacloud-go/cr-20160607 => github.com/vdemeester/cr-20160607 v1.0.1
 
+replace github.com/tektoncd/hub => github.com/openshift-pipelines/hub v1.23.7
+
 require (
 	cel.dev/expr v0.24.0 // indirect
 	cloud.google.com/go v0.121.6 // indirect
@@ -81,6 +83,7 @@ require (
 	github.com/GoogleCloudPlatform/opentelemetry-operations-go/exporter/metric v0.54.0 // indirect
 	github.com/GoogleCloudPlatform/opentelemetry-operations-go/internal/resourcemapping v0.54.0 // indirect
 	github.com/IBM/sarama v1.45.2 // indirect
+	github.com/Masterminds/semver/v3 v3.4.0 // indirect
 	github.com/Microsoft/go-winio v0.6.2 // indirect
 	github.com/ThalesIgnite/crypto11 v1.2.5 // indirect
 	github.com/alibabacloud-go/alibabacloud-gateway-spi v0.0.4 // indirect
