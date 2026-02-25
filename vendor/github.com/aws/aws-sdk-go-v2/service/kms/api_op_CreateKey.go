@@ -23,9 +23,9 @@ import (
 // Use the parameters of CreateKey to specify the type of KMS key, the source of
 // its key material, its key policy, description, tags, and other properties.
 //
-// KMS has replaced the term customer master key (CMK) with KMS key and KMS key.
-// The concept has not changed. To prevent breaking changes, KMS is keeping some
-// variations of this term.
+// KMS has replaced the term customer master key (CMK) with Key Management Service
+// key and KMS key. The concept has not changed. To prevent breaking changes, KMS
+// is keeping some variations of this term.
 //
 // To create different types of KMS keys, use the following guidance:
 //
@@ -57,7 +57,7 @@ import (
 // operation to download the public key so it can be used outside of KMS. Each KMS
 // key can have only one key usage. KMS keys with RSA key pairs can be used to
 // encrypt and decrypt data or sign and verify messages (but not both). KMS keys
-// with NIST-recommended ECC key pairs can be used to sign and verify messages or
+// with NIST-standard ECC key pairs can be used to sign and verify messages or
 // derive shared secrets (but not both). KMS keys with ECC_SECG_P256K1 can be used
 // only to sign and verify messages. KMS keys with ML-DSA key pairs can be used to
 // sign and verify messages. KMS keys with SM2 key pairs (China Regions only) can
@@ -290,14 +290,20 @@ type CreateKeyInput struct {
 	//
 	//   - RSA_4096
 	//
-	//   - Asymmetric NIST-recommended elliptic curve key pairs (signing and
-	//   verification -or- deriving shared secrets)
+	//   - Asymmetric NIST-standard elliptic curve key pairs (signing and verification
+	//   -or- deriving shared secrets)
 	//
 	//   - ECC_NIST_P256 (secp256r1)
 	//
 	//   - ECC_NIST_P384 (secp384r1)
 	//
 	//   - ECC_NIST_P521 (secp521r1)
+	//
+	//   - ECC_NIST_EDWARDS25519 (ed25519) - signing and verification only
+	//
+	//   - Note: For ECC_NIST_EDWARDS25519 KMS keys, the ED25519_SHA_512 signing
+	//   algorithm requires MessageType:RAWMessageType:RAW , while ED25519_PH_SHA_512 requires MessageType:DIGEST
+	//   MessageType:DIGEST . These message types cannot be used interchangeably.
 	//
 	//   - Other asymmetric elliptic curve key pairs (signing and verification)
 	//
@@ -326,8 +332,9 @@ type CreateKeyInput struct {
 
 	// Determines the [cryptographic operations] for which you can use the KMS key. The default value is
 	// ENCRYPT_DECRYPT . This parameter is optional when you are creating a symmetric
-	// encryption KMS key; otherwise, it is required. You can't change the KeyUsage
-	// value after the KMS key is created.
+	// encryption KMS key; otherwise, it is required. You can't change the [KeyUsage]KeyUsage
+	// value after the KMS key is created. Each KMS key can have only one key usage.
+	// This follows key usage best practices according to [NIST SP 800-57 Recommendations for Key Management], section 5.2, Key usage.
 	//
 	// Select only one valid value.
 	//
@@ -339,7 +346,7 @@ type CreateKeyInput struct {
 	//   - For asymmetric KMS keys with RSA key pairs, specify ENCRYPT_DECRYPT or
 	//   SIGN_VERIFY .
 	//
-	//   - For asymmetric KMS keys with NIST-recommended elliptic curve key pairs,
+	//   - For asymmetric KMS keys with NIST-standard elliptic curve key pairs,
 	//   specify SIGN_VERIFY or KEY_AGREEMENT .
 	//
 	//   - For asymmetric KMS keys with ECC_SECG_P256K1 key pairs, specify SIGN_VERIFY .
@@ -350,6 +357,8 @@ type CreateKeyInput struct {
 	//   ENCRYPT_DECRYPT , SIGN_VERIFY , or KEY_AGREEMENT .
 	//
 	// [cryptographic operations]: https://docs.aws.amazon.com/kms/latest/developerguide/kms-cryptography.html#cryptographic-operations
+	// [NIST SP 800-57 Recommendations for Key Management]: https://csrc.nist.gov/pubs/sp/800/57/pt1/r5/final
+	// [KeyUsage]: https://docs.aws.amazon.com/kms/latest/developerguide/create-keys.html#key-usage
 	KeyUsage types.KeyUsageType
 
 	// Creates a multi-Region primary key that you can replicate into other Amazon Web
@@ -599,16 +608,13 @@ func (c *Client) addOperationCreateKeyMiddlewares(stack *middleware.Stack, optio
 	if err = addDisableHTTPSMiddleware(stack, options); err != nil {
 		return err
 	}
-	if err = addSpanInitializeStart(stack); err != nil {
+	if err = addInterceptBeforeRetryLoop(stack, options); err != nil {
 		return err
 	}
-	if err = addSpanInitializeEnd(stack); err != nil {
+	if err = addInterceptAttempt(stack, options); err != nil {
 		return err
 	}
-	if err = addSpanBuildRequestStart(stack); err != nil {
-		return err
-	}
-	if err = addSpanBuildRequestEnd(stack); err != nil {
+	if err = addInterceptors(stack, options); err != nil {
 		return err
 	}
 	return nil

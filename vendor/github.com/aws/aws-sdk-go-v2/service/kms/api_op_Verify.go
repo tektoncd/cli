@@ -159,6 +159,12 @@ type VerifyInput struct {
 	// parameter is a message digest. If you use the DIGEST value with an unhashed
 	// message, the security of the signing operation can be compromised.
 	//
+	// When using ECC_NIST_EDWARDS25519 KMS keys:
+	//
+	//   - ED25519_SHA_512 signing algorithm requires KMS MessageType:RAW
+	//
+	//   - ED25519_PH_SHA_512 signing algorithm requires KMS MessageType:DIGEST
+	//
 	// When the value of MessageType is DIGEST , the length of the Message value must
 	// match the length of hashed messages for the specified signing algorithm.
 	//
@@ -300,16 +306,13 @@ func (c *Client) addOperationVerifyMiddlewares(stack *middleware.Stack, options 
 	if err = addDisableHTTPSMiddleware(stack, options); err != nil {
 		return err
 	}
-	if err = addSpanInitializeStart(stack); err != nil {
+	if err = addInterceptBeforeRetryLoop(stack, options); err != nil {
 		return err
 	}
-	if err = addSpanInitializeEnd(stack); err != nil {
+	if err = addInterceptAttempt(stack, options); err != nil {
 		return err
 	}
-	if err = addSpanBuildRequestStart(stack); err != nil {
-		return err
-	}
-	if err = addSpanBuildRequestEnd(stack); err != nil {
+	if err = addInterceptors(stack, options); err != nil {
 		return err
 	}
 	return nil

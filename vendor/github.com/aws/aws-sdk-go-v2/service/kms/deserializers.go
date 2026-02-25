@@ -20,16 +20,7 @@ import (
 	"io"
 	"io/ioutil"
 	"strings"
-	"time"
 )
-
-func deserializeS3Expires(v string) (*time.Time, error) {
-	t, err := smithytime.ParseHTTPDate(v)
-	if err != nil {
-		return nil, nil
-	}
-	return &t, nil
-}
 
 type awsAwsjson11_deserializeOpCancelKeyDeletion struct {
 }
@@ -11389,6 +11380,15 @@ func awsAwsjson11_deserializeDocumentXksProxyConfigurationType(v **types.XksProx
 					return fmt.Errorf("expected XksProxyVpcEndpointServiceNameType to be of type string, got %T instead", value)
 				}
 				sv.VpcEndpointServiceName = ptr.String(jtv)
+			}
+
+		case "VpcEndpointServiceOwner":
+			if value != nil {
+				jtv, ok := value.(string)
+				if !ok {
+					return fmt.Errorf("expected AccountIdType to be of type string, got %T instead", value)
+				}
+				sv.VpcEndpointServiceOwner = ptr.String(jtv)
 			}
 
 		default:

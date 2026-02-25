@@ -94,7 +94,7 @@ type CreateAliasInput struct {
 	// The alias name cannot begin with alias/aws/ . The alias/aws/ prefix is reserved
 	// for [Amazon Web Services managed keys].
 	//
-	// [Amazon Web Services managed keys]: https://docs.aws.amazon.com/kms/latest/developerguide/concepts.html#aws-managed-cmk
+	// [Amazon Web Services managed keys]: https://docs.aws.amazon.com/kms/latest/developerguide/concepts.html#aws-managed-key
 	//
 	// This member is required.
 	AliasName *string
@@ -119,7 +119,7 @@ type CreateAliasInput struct {
 	//
 	// To get the key ID and key ARN for a KMS key, use ListKeys or DescribeKey.
 	//
-	// [customer managed key]: https://docs.aws.amazon.com/kms/latest/developerguide/concepts.html#customer-cmk
+	// [customer managed key]: https://docs.aws.amazon.com/kms/latest/developerguide/concepts.html#customer-mgn-key
 	// [Find the key ID and key ARN]: https://docs.aws.amazon.com/kms/latest/developerguide/find-cmk-id-arn.html
 	//
 	// This member is required.
@@ -223,16 +223,13 @@ func (c *Client) addOperationCreateAliasMiddlewares(stack *middleware.Stack, opt
 	if err = addDisableHTTPSMiddleware(stack, options); err != nil {
 		return err
 	}
-	if err = addSpanInitializeStart(stack); err != nil {
+	if err = addInterceptBeforeRetryLoop(stack, options); err != nil {
 		return err
 	}
-	if err = addSpanInitializeEnd(stack); err != nil {
+	if err = addInterceptAttempt(stack, options); err != nil {
 		return err
 	}
-	if err = addSpanBuildRequestStart(stack); err != nil {
-		return err
-	}
-	if err = addSpanBuildRequestEnd(stack); err != nil {
+	if err = addInterceptors(stack, options); err != nil {
 		return err
 	}
 	return nil

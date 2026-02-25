@@ -266,6 +266,12 @@ type CreateCustomKeyStoreInput struct {
 	// [fulfill all requirements]: https://docs.aws.amazon.com/kms/latest/developerguide/create-xks-keystore.html#xks-requirements
 	XksProxyVpcEndpointServiceName *string
 
+	// Specifies the Amazon Web Services account ID that owns the Amazon VPC service
+	// endpoint for the interface that is used to communicate with your external key
+	// store proxy (XKS proxy). This parameter is optional. If not provided, the Amazon
+	// Web Services account ID calling the action will be used.
+	XksProxyVpcEndpointServiceOwner *string
+
 	noSmithyDocumentSerde
 }
 
@@ -368,16 +374,13 @@ func (c *Client) addOperationCreateCustomKeyStoreMiddlewares(stack *middleware.S
 	if err = addDisableHTTPSMiddleware(stack, options); err != nil {
 		return err
 	}
-	if err = addSpanInitializeStart(stack); err != nil {
+	if err = addInterceptBeforeRetryLoop(stack, options); err != nil {
 		return err
 	}
-	if err = addSpanInitializeEnd(stack); err != nil {
+	if err = addInterceptAttempt(stack, options); err != nil {
 		return err
 	}
-	if err = addSpanBuildRequestStart(stack); err != nil {
-		return err
-	}
-	if err = addSpanBuildRequestEnd(stack); err != nil {
+	if err = addInterceptors(stack, options); err != nil {
 		return err
 	}
 	return nil
