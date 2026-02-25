@@ -367,11 +367,10 @@ type KeyMetadata struct {
 	CreationDate *time.Time
 
 	// Identifies the current key material. This value is present for symmetric
-	// encryption keys with AWS_KMS origin and single-Region, symmetric encryption
-	// keys with EXTERNAL origin. These KMS keys support automatic or on-demand key
-	// rotation and can have multiple key materials associated with them. KMS uses the
-	// current key material for both encryption and decryption, and the non-current key
-	// material for decryption operations only.
+	// encryption keys with AWS_KMS or EXTERNAL origin. These KMS keys support
+	// automatic or on-demand key rotation and can have multiple key materials
+	// associated with them. KMS uses the current key material for both encryption and
+	// decryption, and the non-current key material for decryption operations only.
 	CurrentKeyMaterialId *string
 
 	// A unique identifier for the [custom key store] that contains the KMS key. This field is present
@@ -554,21 +553,22 @@ type MultiRegionKey struct {
 // Contains information about the party that receives the response from the API
 // operation.
 //
-// This data type is designed to support Amazon Web Services Nitro Enclaves, which
-// lets you create an isolated compute environment in Amazon EC2. For information
-// about the interaction between KMS and Amazon Web Services Nitro Enclaves, see [How Amazon Web Services Nitro Enclaves uses KMS]
-// in the Key Management Service Developer Guide.
+// This data type is designed to support Amazon Web Services Nitro Enclaves and
+// Amazon Web Services NitroTPM, which lets you create an attested environment in
+// Amazon EC2. For information about the interaction between KMS and Amazon Web
+// Services Nitro Enclaves or Amazon Web Services NitroTPM, see [Cryptographic attestation support in KMS]in the Key
+// Management Service Developer Guide.
 //
-// [How Amazon Web Services Nitro Enclaves uses KMS]: https://docs.aws.amazon.com/kms/latest/developerguide/services-nitro-enclaves.html
+// [Cryptographic attestation support in KMS]: https://docs.aws.amazon.com/kms/latest/developerguide/cryptographic-attestation.html
 type RecipientInfo struct {
 
-	// The attestation document for an Amazon Web Services Nitro Enclave. This
-	// document includes the enclave's public key.
+	// The attestation document for an Amazon Web Services Nitro Enclave or a
+	// NitroTPM. This document includes the enclave's public key.
 	AttestationDocument []byte
 
 	// The encryption algorithm that KMS should use with the public key for an Amazon
-	// Web Services Nitro Enclave to encrypt plaintext values for the response. The
-	// only valid value is RSAES_OAEP_SHA_256 .
+	// Web Services Nitro Enclave or NitroTPM to encrypt plaintext values for the
+	// response. The only valid value is RSAES_OAEP_SHA_256 .
 	KeyEncryptionAlgorithm KeyEncryptionMechanism
 
 	noSmithyDocumentSerde
@@ -600,13 +600,20 @@ type RotationsListEntry struct {
 	// Unique identifier of the key material.
 	KeyMaterialId *string
 
-	// There are three possible values for this field: CURRENT , NON_CURRENT and
-	// PENDING_ROTATION . KMS uses CURRENT key material for both encryption and
-	// decryption and NON_CURRENT key material only for decryption. PENDING_ROTATION
-	// identifies key material that has been imported for on-demand key rotation but
-	// the rotation hasn't completed. Key material in PENDING_ROTATION is not
-	// permanently associated with the KMS key. You can delete this key material and
-	// import different key material in its place. The PENDING_ROTATION value is only
+	// There are four possible values for this field: CURRENT , NON_CURRENT ,
+	// PENDING_MULTI_REGION_IMPORT_AND_ROTATION and PENDING_ROTATION . KMS uses CURRENT
+	// key material for both encryption and decryption and NON_CURRENT key material
+	// only for decryption. PENDING_ROTATION identifies key material that has been
+	// imported for on-demand key rotation but the rotation hasn't completed. The key
+	// material state PENDING_MULTI_REGION_IMPORT_AND_ROTATION is unique to
+	// multi-region, symmetric encryption keys with imported key material. It indicates
+	// key material that has been imported into the primary Region key but not all of
+	// the replica Region keys. When this key material is imported in to all of the
+	// replica Region keys, the key material state will change to PENDING_ROTATION .
+	// Key material in PENDING_MULTI_REGION_IMPORT_AND_ROTATION or PENDING_ROTATION
+	// state is not permanently associated with the KMS key. You can delete this key
+	// material and import different key material in its place. The
+	// PENDING_MULTI_REGION_IMPORT_AND_ROTATION and PENDING_ROTATION values are only
 	// used in symmetric encryption keys with imported key material. The other values,
 	// CURRENT and NON_CURRENT , are used for all KMS keys that support automatic or
 	// on-demand key rotation.
@@ -733,6 +740,11 @@ type XksProxyConfigurationType struct {
 	// proxy. This field appears only when the external key store proxy uses an Amazon
 	// VPC endpoint service to communicate with KMS.
 	VpcEndpointServiceName *string
+
+	// The Amazon Web Services account ID that owns the Amazon VPC endpoint service
+	// used to communicate with the external key store proxy (XKS). This field appears
+	// only when the XKS uses an VPC endpoint service to communicate with KMS.
+	VpcEndpointServiceOwner *string
 
 	noSmithyDocumentSerde
 }
