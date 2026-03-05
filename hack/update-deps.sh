@@ -56,4 +56,15 @@ fi
 go mod tidy
 go mod vendor
 
+# github.com/alibabacloud-go/cr-20160607@v1.0.1 ships without a LICENSE file
+# at the tagged release, but the source repo is Apache-2.0 licensed.
+# Copy from the sibling module which shares the same license.
+if [[ -f vendor/github.com/alibabacloud-go/cr-20181201/LICENSE ]] && \
+   [[ -d vendor/github.com/alibabacloud-go/cr-20160607/client ]]; then
+  cp vendor/github.com/alibabacloud-go/cr-20181201/LICENSE \
+     vendor/github.com/alibabacloud-go/cr-20160607/LICENSE
+  cp vendor/github.com/alibabacloud-go/cr-20181201/LICENSE \
+     vendor/github.com/alibabacloud-go/cr-20160607/client/LICENSE
+fi
+
 update_licenses third_party/VENDOR-LICENSE "./cmd/*"

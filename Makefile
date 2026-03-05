@@ -118,9 +118,10 @@ lint-yaml: ${YAML_FILES}  ; $(info $(M) running yamllint…) ## runs yamllint on
 	@yamllint -c .yamllint $(YAML_FILES)
 
 ## Tests
-TEST_UNIT_TARGETS := test-unit-verbose test-unit-race
+TEST_UNIT_TARGETS := test-unit-verbose test-unit-race test-unit-verbose-and-race
 test-unit-verbose: ARGS=-v
 test-unit-race:    ARGS=-race
+test-unit-verbose-and-race: ARGS=-v -race
 $(TEST_UNIT_TARGETS): test-unit
 .PHONY: $(TEST_UNIT_TARGETS) test-unit
 test-unit: ; $(info $(M) running unit tests…) ## Run unit tests

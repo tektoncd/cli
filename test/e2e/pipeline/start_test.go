@@ -19,12 +19,15 @@ package pipeline
 
 import (
 	"testing"
+	"time"
 
 	"github.com/AlecAivazis/survey/v2/terminal"
 	"github.com/Netflix/go-expect"
+	"github.com/tektoncd/cli/test/builder"
 	"github.com/tektoncd/cli/test/cli"
 	"github.com/tektoncd/cli/test/framework"
 	"github.com/tektoncd/cli/test/helper"
+	"github.com/tektoncd/cli/test/wait"
 	"gotest.tools/v3/assert"
 	knativetest "knative.dev/pkg/test"
 )
@@ -76,6 +79,12 @@ func TestPipelineInteractiveStartE2E(t *testing.T) {
 			},
 		})
 	})
+
+	// Wait for the PipelineRun started above to complete before checking logs
+	pipelineRunGeneratedName := builder.GetPipelineRunListWithName(c, "output-pipeline", true).Items[0].Name
+	if err := wait.ForPipelineRunState(c, pipelineRunGeneratedName, 5*time.Minute, wait.PipelineRunSucceed(pipelineRunGeneratedName), "PipelineRunSucceeded"); err != nil {
+		t.Fatalf("Error waiting for PipelineRun to Succeed: %s", err)
+	}
 
 	t.Run("Validate pipeline logs, with  follow mode (-f) and --last ", func(t *testing.T) {
 		res := tkn.Run(t, "pipeline", "logs", "--last", "-f")
