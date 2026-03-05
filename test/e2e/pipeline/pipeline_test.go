@@ -20,6 +20,7 @@ package pipeline
 import (
 	"context"
 	"encoding/json"
+	"regexp"
 	"strconv"
 	"strings"
 	"testing"
@@ -45,6 +46,22 @@ const (
 	TaskName       = "create-file-verify"
 	tePipelineName = "output-pipeline"
 )
+
+// normalizeAge replaces timing-dependent age strings (e.g. "1 second ago",
+// "40 seconds ago") with a fixed placeholder so that assertions don't flake
+// due to clock skew between generating expected output and running the command.
+var ageRegexp = regexp.MustCompile(`\d+ (?:second|minute|hour|day)s? ago`)
+
+func normalizeAge(s string) string {
+	return ageRegexp.ReplaceAllString(s, "--- ago")
+}
+
+func assertContainsNormalized(t *testing.T, actual, expected string) {
+	t.Helper()
+	if !strings.Contains(normalizeAge(actual), normalizeAge(expected)) {
+		t.Fatalf("expected stdout to contain (age-normalized):\n%s\ngot:\n%s", expected, actual)
+	}
+}
 
 func TestPipelinesE2E(t *testing.T) {
 	t.Parallel()
@@ -200,8 +217,8 @@ Waiting for logs to be available...
 		res.Assert(t, icmd.Expected{
 			ExitCode: 0,
 			Err:      icmd.None,
-			Out:      expected,
 		})
+		assertContainsNormalized(t, res.Stdout(), expected)
 	})
 
 	t.Run("Validate interactive pipeline logs, with  follow mode (-f) ", func(t *testing.T) {
@@ -472,8 +489,8 @@ Waiting for logs to be available...
 		res.Assert(t, icmd.Expected{
 			ExitCode: 0,
 			Err:      icmd.None,
-			Out:      expected,
 		})
+		assertContainsNormalized(t, res.Stdout(), expected)
 	})
 }
 
