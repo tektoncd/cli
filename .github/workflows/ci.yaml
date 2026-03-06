@@ -1,6 +1,10 @@
 name: ci
 
-on: [pull_request] # yamllint disable-line rule:truthy
+on:  # yamllint disable-line rule:truthy
+  push:
+    branches:
+      - main
+  pull_request:  # yamllint disable-line rule:empty-values
 
 concurrency:
   group: ${{ github.workflow }}-${{ github.event.pull-request.number || github.ref }}
