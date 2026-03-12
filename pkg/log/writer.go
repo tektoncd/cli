@@ -23,9 +23,10 @@ import (
 
 // Writer helps logging pod"s log
 type Writer struct {
-	fmt       *formatted.Color
-	logType   string
-	prefixing bool
+	fmt         *formatted.Color
+	logType     string
+	prefixing   bool
+	displayName bool
 }
 
 // NewWriter returns the new instance of LogWriter
@@ -35,6 +36,12 @@ func NewWriter(logType string, prefixing bool) *Writer {
 		logType:   logType,
 		prefixing: prefixing,
 	}
+}
+
+// WithDisplayName sets the display name
+func (lw *Writer) WithDisplayName(displayName bool) *Writer {
+	lw.displayName = displayName
+	return lw
 }
 
 // Write formatted pod's logs
@@ -50,6 +57,10 @@ func (lw *Writer) Write(s *cli.Stream, logC <-chan Log, errC <-chan error) {
 			if l.Log == "EOFLOG" {
 				fmt.Fprintf(s.Out, "\n")
 				continue
+			}
+
+			if lw.displayName && l.TaskDisplayName != "" {
+				l.Task = l.TaskDisplayName
 			}
 
 			if lw.prefixing {
