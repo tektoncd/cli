@@ -137,11 +137,11 @@ function install_pipeline_crd() {
 
     # First try to install latestreleaseyaml from nightly
     # TODO: re-enable this curl command once we are confident about nightly releases
-    # curl -o/dev/null -s -LI -f https://storage.googleapis.com/tekton-releases-nightly/pipeline/latest/release.yaml &&
-    #     latestreleaseyaml=https://storage.googleapis.com/tekton-releases-nightly/pipeline/latest/release.yaml
+    # curl -o/dev/null -s -LI -f https://infra.tekton.dev/tekton-releases-nightly/pipeline/latest/release.yaml &&
+    #     latestreleaseyaml=https://infra.tekton.dev/tekton-releases-nightly/pipeline/latest/release.yaml
 
     # If for whatever reason the nightly release wasnt there (nightly ci failure?), try the released version
-    [[ -n ${latestreleaseyaml} ]] || latestreleaseyaml=https://storage.googleapis.com/tekton-releases/pipeline/latest/release.yaml
+    [[ -n ${latestreleaseyaml} ]] || latestreleaseyaml=https://infra.tekton.dev/tekton-releases/pipeline/latest/release.yaml
   fi
   [[ -z ${latestreleaseyaml} ]] && fail_test "Could not get latest released release.yaml"
   kubectl apply -f ${latestreleaseyaml} ||
@@ -164,21 +164,21 @@ function install_triggers_crd() {
 	latestreleaseyaml=${RELEASE_YAML_TRIGGERS}
   else
     # First try to install latestreleaseyaml from nightly
-    curl -o/dev/null -s -LI -f https://storage.googleapis.com/tekton-releases-nightly/triggers/latest/release.yaml &&
-        latestreleaseyaml=https://storage.googleapis.com/tekton-releases-nightly/triggers/latest/release.yaml
+    curl -o/dev/null -s -LI -f https://infra.tekton.dev/tekton-releases-nightly/triggers/latest/release.yaml &&
+        latestreleaseyaml=https://infra.tekton.dev/tekton-releases-nightly/triggers/latest/release.yaml
 
     # If for whatever reason the nightly release wasnt there (nightly ci failure?), try the released version
-    [[ -z ${latestreleaseyaml} ]] && latestreleaseyaml="https://storage.googleapis.com/tekton-releases/triggers/latest/release.yaml"
+    [[ -z ${latestreleaseyaml} ]] && latestreleaseyaml="https://infra.tekton.dev/tekton-releases/triggers/latest/release.yaml"
   fi
   if [[ -n ${RELEASE_YAML_TRIGGERS_INTERCEPTORS} ]];then
 	latestinterceptorsyaml=${RELEASE_YAML_TRIGGERS_INTERCEPTORS}
   else
     # First try to install latest interceptors from nightly
-    curl -o/dev/null -s -LI -f https://storage.googleapis.com/tekton-releases-nightly/triggers/latest/interceptors.yaml &&
-        latestinterceptorsyaml=https://storage.googleapis.com/tekton-releases-nightly/triggers/latest/interceptors.yaml
+    curl -o/dev/null -s -LI -f https://infra.tekton.dev/tekton-releases-nightly/triggers/latest/interceptors.yaml &&
+        latestinterceptorsyaml=https://infra.tekton.dev/tekton-releases-nightly/triggers/latest/interceptors.yaml
 
     # If for whatever reason the nightly release wasnt there (nightly ci failure?), try the released version
-    [[ -z ${latestinterceptorsyaml} ]] && latestinterceptorsyaml="https://storage.googleapis.com/tekton-releases/triggers/latest/interceptors.yaml"
+    [[ -z ${latestinterceptorsyaml} ]] && latestinterceptorsyaml="https://infra.tekton.dev/tekton-releases/triggers/latest/interceptors.yaml"
   fi
   [[ -z ${latestreleaseyaml} ]] && fail_test "Could not get latest released release.yaml"
   [[ -z ${latestinterceptorsyaml} ]] && fail_test "Could not get latest released interceptors.yaml"
