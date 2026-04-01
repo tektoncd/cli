@@ -405,7 +405,11 @@ func (k *Key) loadKey(keyObj interface{}, pemData *pem.Block, scheme string, key
 		}
 	case ed25519.PrivateKey:
 		pubKeyBytes := key.Public()
-		if err := k.setKeyComponents(pubKeyBytes.(ed25519.PublicKey), key, ed25519KeyType, scheme, keyIDHashAlgorithms); err != nil {
+		publicKey, ok := pubKeyBytes.(ed25519.PublicKey)
+		if !ok {
+			return fmt.Errorf("pubKeyBytes must be ed25519.PublicKey")
+		}
+		if err := k.setKeyComponents(publicKey, key, ed25519KeyType, scheme, keyIDHashAlgorithms); err != nil {
 			return err
 		}
 	case *ecdsa.PrivateKey:
