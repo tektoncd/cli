@@ -109,8 +109,6 @@ func initializeLogsAndMetrics(t *testing.T) {
 		flag.Parse()
 		flag.Set("alsologtostderr", "true")
 		logging.InitializeLogger()
-
-		logging.InitializeMetricExporter(t.Name())
 	})
 }
 
