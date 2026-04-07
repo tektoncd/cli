@@ -1,0 +1,66 @@
+# Copyright 2026 The Tekton Authors
+#
+# Licensed under the Apache License, Version 2.0 (the "License");
+# you may not use this file except in compliance with the License.
+# You may obtain a copy of the License at
+#
+#     http://www.apache.org/licenses/LICENSE-2.0
+#
+# Unless required by applicable law or agreed to in writing, software
+# distributed under the License is distributed on an "AS IS" BASIS,
+# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+# See the License for the specific language governing permissions and
+# limitations under the License.
+
+# This PipelineRun is triggered via PAC incoming webhooks for releases.
+# It is invoked either manually (via GitHub Actions workflow_dispatch)
+# or on a cron schedule when new commits are detected on a release
+# branch since the last tag.
+#
+# The CLI release pipeline uses goreleaser to build cross-platform
+# binaries, create the GitHub release, and publish to Homebrew.
+#
+# Before triggering this PipelineRun, the caller (patch-release.yaml
+# workflow) must have created and pushed the version tag (e.g. v0.45.1)
+# so that goreleaser can detect it.
+---
+apiVersion: tekton.dev/v1
+kind: PipelineRun
+metadata:
+  name: cli-release
+  annotations:
+    pipelinesascode.tekton.dev/on-event: "[incoming]"
+    pipelinesascode.tekton.dev/on-target-branch: "[release-v*]"
+    pipelinesascode.tekton.dev/pipeline: "tekton/release-pipeline.yml"
+    pipelinesascode.tekton.dev/max-keep-runs: "5"
+    pipelinesascode.tekton.dev/task: "[git-clone, golangci-lint, golang-test, golang-build, goreleaser]"
+    pipelinesascode.tekton.dev/task-1: "tekton/get-version.yaml"
+spec:
+  pipelineRef:
+    name: cli-release-pipeline
+  params:
+    - name: url
+      value: "{{ repo_url }}"
+    - name: revision
+      value: "{{ version }}"
+    - name: package
+      value: github.com/tektoncd/cli
+    - name: github-token-secret
+      value: bot-token-github
+    - name: github-token-secret-key
+      value: bot-token
+    - name: golangci-lint-version
+      value: "{{ golangci_lint_version }}"
+    - name: go-version
+      value: "{{ go_version }}"
+  timeouts:
+    pipeline: 2h0m0s
+  workspaces:
+    - name: shared-workspace
+      volumeClaimTemplate:
+        spec:
+          accessModes:
+            - ReadWriteOnce
+          resources:
+            requests:
+              storage: 2Gi
