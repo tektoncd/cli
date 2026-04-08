@@ -22,7 +22,7 @@ import (
 
 	"github.com/tektoncd/cli/test/framework"
 	v1 "github.com/tektoncd/pipeline/pkg/apis/pipeline/v1"
-	"go.opencensus.io/trace"
+	"go.opentelemetry.io/otel"
 	corev1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/util/wait"
@@ -47,7 +47,7 @@ type PodRunStateFn func(r *corev1.Pod) (bool, error)
 // track how long it took for name to get into the state checked by inState.
 func ForTaskRunState(c *framework.Clients, name string, inState TaskRunStateFn, desc string) error {
 	metricName := fmt.Sprintf("WaitForTaskRunState/%s/%s", name, desc)
-	_, span := trace.StartSpan(context.Background(), metricName)
+	_, span := otel.Tracer("tektoncd/cli").Start(context.Background(), metricName)
 	defer span.End()
 
 	return wait.PollImmediate(framework.Interval, framework.Apitimeout, func() (bool, error) {
@@ -65,7 +65,7 @@ func ForTaskRunState(c *framework.Clients, name string, inState TaskRunStateFn, 
 // track how long it took for name to get into the state checked by inState.
 func ForPodState(c *framework.Clients, name string, namespace string, inState func(r *corev1.Pod) (bool, error), desc string) error {
 	metricName := fmt.Sprintf("WaitForPodState/%s/%s", name, desc)
-	_, span := trace.StartSpan(context.Background(), metricName)
+	_, span := otel.Tracer("tektoncd/cli").Start(context.Background(), metricName)
 	defer span.End()
 
 	return wait.PollImmediate(framework.Interval, framework.Apitimeout, func() (bool, error) {
@@ -86,7 +86,7 @@ func ForPodStateKube(c kubernetes.Interface, namespace string, inState PodRunSta
 
 	for _, v := range podlist.Items {
 		metricName := fmt.Sprintf("WaitForPodState/%s/%s", v.Name, desc)
-		_, span := trace.StartSpan(context.Background(), metricName)
+		_, span := otel.Tracer("tektoncd/cli").Start(context.Background(), metricName)
 		defer span.End()
 
 		err1 := wait.PollImmediate(framework.Interval, framework.Apitimeout, func() (bool, error) {
@@ -154,7 +154,7 @@ func PodStatus(respond chan<- string, watch watch.Interface) {
 // track how long it took for name to get into the state checked by inState.
 func ForPipelineRunState(c *framework.Clients, name string, polltimeout time.Duration, inState PipelineRunStateFn, desc string) error {
 	metricName := fmt.Sprintf("WaitForPipelineRunState/%s/%s", name, desc)
-	_, span := trace.StartSpan(context.Background(), metricName)
+	_, span := otel.Tracer("tektoncd/cli").Start(context.Background(), metricName)
 	defer span.End()
 
 	return wait.PollImmediate(framework.Interval, polltimeout, func() (bool, error) {
@@ -172,7 +172,7 @@ func ForPipelineRunState(c *framework.Clients, name string, polltimeout time.Dur
 // track how long it took for name to get into the state checked by inState.
 func ForServiceExternalIPState(c *framework.Clients, namespace, name string, inState func(s *corev1.Service) (bool, error), desc string) error {
 	metricName := fmt.Sprintf("WaitForServiceExternalIPState/%s/%s", name, desc)
-	_, span := trace.StartSpan(context.Background(), metricName)
+	_, span := otel.Tracer("tektoncd/cli").Start(context.Background(), metricName)
 	defer span.End()
 
 	return wait.PollImmediate(framework.Interval, framework.Apitimeout, func() (bool, error) {
