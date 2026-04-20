@@ -44,10 +44,10 @@ require (
 	google.golang.org/protobuf v1.36.11
 	gotest.tools v2.2.0+incompatible
 	gotest.tools/v3 v3.5.2
-	k8s.io/api v0.35.3
-	k8s.io/apimachinery v0.35.3
+	k8s.io/api v0.35.4
+	k8s.io/apimachinery v0.35.4
 	k8s.io/cli-runtime v0.29.15
-	k8s.io/client-go v0.35.3
+	k8s.io/client-go v0.35.4
 	knative.dev/pkg v0.0.0-20260329160701-396dbaacd652
 	sigs.k8s.io/yaml v1.6.0
 )
