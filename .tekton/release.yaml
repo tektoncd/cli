@@ -36,6 +36,8 @@ metadata:
     pipelinesascode.tekton.dev/task: "[git-clone, golangci-lint, golang-test, golang-build, goreleaser]"
     pipelinesascode.tekton.dev/task-1: "tekton/get-version.yaml"
 spec:
+  taskRunTemplate:
+    serviceAccountName: release
   pipelineRef:
     name: cli-release-pipeline
   params:
