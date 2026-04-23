@@ -1246,8 +1246,8 @@ github.com/syndtr/goleveldb/leveldb/opt
 github.com/syndtr/goleveldb/leveldb/storage
 github.com/syndtr/goleveldb/leveldb/table
 github.com/syndtr/goleveldb/leveldb/util
-# github.com/tektoncd/chains v0.26.2
-## explicit; go 1.25.0
+# github.com/tektoncd/chains v0.26.3
+## explicit; go 1.25.8
 github.com/tektoncd/chains/pkg/artifacts
 github.com/tektoncd/chains/pkg/chains/formats
 github.com/tektoncd/chains/pkg/chains/formats/simple
