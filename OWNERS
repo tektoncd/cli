@@ -1,13 +1,19 @@
 # The OWNERS file is used by prow to automatically merge approved PRs.
 
 approvers:
+- divyansh42
 - vdemeester
 - chmouel
-- piyush-garg
-- pradeepitm12
 - vinamra28
+- pratap0007
+
+reviewers:
+- pratap0007
+- divyansh42
+- pradeepitm12
 
 # Alumni ❤️
 # danielhelfand
 # hrishin
 # sthaha
+# piyush-garg
