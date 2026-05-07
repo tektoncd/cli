@@ -16,7 +16,7 @@ builds:
   - s390x
   - ppc64le
   ldflags:
-  - -w -X github.com/tektoncd/cli/pkg/cmd/version.clientVersion={{.Version}}
+  - -s -w -X github.com/tektoncd/cli/pkg/cmd/version.clientVersion={{.Version}}
 archives:
 - name_template: >-
     {{- .Binary }}_
