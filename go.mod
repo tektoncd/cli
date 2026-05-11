@@ -29,7 +29,7 @@ require (
 	github.com/spf13/cobra v1.10.2
 	github.com/spf13/pflag v1.0.10
 	github.com/tektoncd/chains v0.26.3
-	github.com/tektoncd/hub v1.23.6
+	github.com/tektoncd/hub v1.24.0
 	github.com/tektoncd/pipeline v1.12.0
 	github.com/tektoncd/plumbing v0.0.0-20250430145243-3b7cd59879c1
 	github.com/tektoncd/triggers v0.35.1-0.20260401091813-1aad8a1898ec
@@ -54,7 +54,7 @@ require (
 
 replace github.com/alibabacloud-go/cr-20160607 => github.com/vdemeester/cr-20160607 v1.0.1
 
-replace github.com/tektoncd/hub => github.com/openshift-pipelines/hub v1.23.7
+replace github.com/tektoncd/hub => github.com/openshift-pipelines/hub v1.24.0
 
 require (
 	cel.dev/expr v0.25.1 // indirect
