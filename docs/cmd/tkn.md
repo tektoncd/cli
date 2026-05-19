@@ -25,7 +25,7 @@ CLI for tekton pipelines
 * [tkn completion](tkn_completion.md)	 - Prints shell completion scripts
 * [tkn customrun](tkn_customrun.md)	 - Manage CustomRuns
 * [tkn eventlistener](tkn_eventlistener.md)	 - Manage EventListeners
-* [tkn hub](tkn_hub.md)	 - Interact with tekton hub
+* [tkn hub](tkn_hub.md)	 - Interact with artifacthub
 * [tkn pipeline](tkn_pipeline.md)	 - Manage pipelines
 * [tkn pipelinerun](tkn_pipelinerun.md)	 - Manage PipelineRuns
 * [tkn task](tkn_task.md)	 - Manage Tasks

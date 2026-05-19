@@ -27,10 +27,12 @@ Install Task from a catalog by its name and version
 .SH OPTIONS INHERITED FROM PARENT COMMANDS
 .PP
 \fB\-\-api\-server\fP=""
-    Hub API Server URL (default '
-\[la]https://api.hub.tekton.dev'\[ra] for 'tekton' type; default '
-\[la]https://artifacthub.io'\[ra] for 'artifact' type).
-URL can also be defined in a file '$HOME/.tekton/hub\-config' with a variable 'TEKTON\_HUB\_API\_SERVER'/'ARTIFACT\_HUB\_API\_SERVER'.
+    Hub API Server URL.
+For artifact type: default '
+\[la]https://artifacthub.io'\[ra] (env: ARTIFACT\_HUB\_API\_SERVER)
+For tekton type (DEPRECATED): default '
+\[la]https://api.hub.tekton.dev'\[ra] (env: TEKTON\_HUB\_API\_SERVER)
+Can also be set in '$HOME/.tekton/hub\-config'.
 
 .PP
 \fB\-c\fP, \fB\-\-context\fP=""
@@ -49,8 +51,8 @@ URL can also be defined in a file '$HOME/.tekton/hub\-config' with a variable 'T
     Namespace to use (default: from $KUBECONFIG)
 
 .PP
-\fB\-\-type\fP="tekton"
-    The type of Hub from where to pull the resource. Either 'artifact' or 'tekton'
+\fB\-\-type\fP="artifact"
+    The type of Hub from where to pull the resource. Either 'artifact' or 'tekton' (DEPRECATED: tekton type will be removed in a future release)
 
 .PP
 \fB\-\-version\fP=""
@@ -59,13 +61,13 @@ URL can also be defined in a file '$HOME/.tekton/hub\-config' with a variable 'T
 
 .SH EXAMPLE
 .PP
-Install a Task of name 'foo':
+Install a Task of name 'foo' from Artifact Hub:
 
 .PP
 .RS
 
 .nf
-tkn hub install task foo
+tkn hub install task foo \-\-type artifact \-\-from tekton\-catalog\-tasks \-\-version 0.3.0
 
 .fi
 .RE
@@ -74,7 +76,7 @@ tkn hub install task foo
 or
 
 .PP
-Install a Task of name 'foo' of version '0.3' from Catalog 'Tekton':
+Install a Task of name 'foo' from Tekton Hub (DEPRECATED):
 
 .PP
 .RS
@@ -86,8 +88,8 @@ tkn hub install task foo \-\-version 0.3 \-\-from tekton
 .RE
 
 .PP
-Note that the resources in Artifact Hub follow full SemVer \- <major>\&.<minor>\&.<patch> (e.g. 0.3.0),
-please double check the version used
+Note: Tekton Hub is deprecated. Use '\-\-type artifact' with Artifact Hub instead.
+Resources in Artifact Hub follow full SemVer \- <major>\&.<minor>\&.<patch> (e.g. 0.3.0).
 
 
 .SH SEE ALSO

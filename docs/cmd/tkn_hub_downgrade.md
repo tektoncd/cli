@@ -32,6 +32,6 @@ Downgrade an installed resource
 
 ### SEE ALSO
 
-* [tkn hub](tkn_hub.md)	 - Interact with tekton hub
+* [tkn hub](tkn_hub.md)	 - Interact with artifacthub
 * [tkn hub downgrade task](tkn_hub_downgrade_task.md)	 - Downgrade an installed Task by its name to a lower version
 

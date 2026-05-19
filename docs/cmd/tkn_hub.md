@@ -1,6 +1,6 @@
 ## tkn hub
 
-Interact with tekton hub
+Interact with artifacthub
 
 ### Usage
 
@@ -10,26 +10,38 @@ tkn hub
 
 ### Synopsis
 
-Interact with tekton hub
+Interact with artifacthub
+
+Deprecation Notice: Tekton Hub support in CLI is being deprecated in favor of Artifact Hub.
+The following commands currently only work with Tekton Hub and may support Artifact Hub in a future release:
+  - check-upgrade
+  - downgrade
+  - get
+  - info
+  - reinstall
+  - search
+  - upgrade
+
+Action Required: Users should migrate to Artifact Hub by using the '--type artifact' flag
+with the install command. For example:
+    tkn hub install task foo --type artifact --from tekton-catalog-tasks
+
+When using '--type tekton', a deprecation warning will now be displayed.
+Artifact Hub (https://artifacthub.io) will become the only supported hub in future releases.
 
 ### Options
 
 ```
-      --api-server string   Hub API Server URL (default 'https://api.hub.tekton.dev' for 'tekton' type; default 'https://artifacthub.io' for 'artifact' type).
-                            URL can also be defined in a file '$HOME/.tekton/hub-config' with a variable 'TEKTON_HUB_API_SERVER'/'ARTIFACT_HUB_API_SERVER'.
+      --api-server string   Hub API Server URL.
+                            For artifact type: default 'https://artifacthub.io' (env: ARTIFACT_HUB_API_SERVER)
+                            For tekton type (DEPRECATED): default 'https://api.hub.tekton.dev' (env: TEKTON_HUB_API_SERVER)
+                            Can also be set in '$HOME/.tekton/hub-config'.
   -h, --help                help for hub
-      --type string         The type of Hub from where to pull the resource. Either 'artifact' or 'tekton' (default "tekton")
+      --type string         The type of Hub from where to pull the resource. Either 'artifact' or 'tekton' (DEPRECATED: tekton type will be removed in a future release) (default "artifact")
 ```
 
 ### SEE ALSO
 
 * [tkn](tkn.md)	 - CLI for tekton pipelines
-* [tkn hub check-upgrade](tkn_hub_check-upgrade.md)	 - Check for upgrades of resources if present
-* [tkn hub downgrade](tkn_hub_downgrade.md)	 - Downgrade an installed resource
-* [tkn hub get](tkn_hub_get.md)	 - Get resource manifest by its name, kind, catalog, and version
-* [tkn hub info](tkn_hub_info.md)	 - Display info of resource by its name, kind, catalog, and version
 * [tkn hub install](tkn_hub_install.md)	 - Install a resource from a catalog by its kind, name and version
-* [tkn hub reinstall](tkn_hub_reinstall.md)	 - Reinstall a resource by its kind and name
-* [tkn hub search](tkn_hub_search.md)	 - Search resource by a combination of name, kind, categories, platforms, and tags
-* [tkn hub upgrade](tkn_hub_upgrade.md)	 - Upgrade an installed resource
 

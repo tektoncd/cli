@@ -1,0 +1,21 @@
+📦 Name: foo-bar
+
+📌 Version: 0.2
+
+📖 Description: Description for task foo-bar version 0.2
+
+🗒  Minimum Pipeline Version: 0.12
+
+⭐ ️Rating: 4
+
+🏷️  ️Categories
+  ∙ foo-bar
+
+🏷 Tags
+  ∙ foo
+
+💻 Platforms
+  ∙ linux/amd64
+
+⚒ Install Command:
+  tkn hub install task foo-bar --version 0.2

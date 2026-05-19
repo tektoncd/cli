@@ -1,0 +1,6 @@
+Upgrades Available
+
+NAME   CATALOG   CURRENT_VERSION   LATEST_VERSION
+foo    Tekton    0.1               0.2
+
+WARN: Pipelines version unknown. Check your pipelines version before upgrading.

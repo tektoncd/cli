@@ -31,6 +31,6 @@ Check for upgrades of resources if present
 
 ### SEE ALSO
 
-* [tkn hub](tkn_hub.md)	 - Interact with tekton hub
+* [tkn hub](tkn_hub.md)	 - Interact with artifacthub
 * [tkn hub check-upgrade task](tkn_hub_check-upgrade_task.md)	 - Check updates for Task installed via Hub CLI
 

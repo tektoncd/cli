@@ -1,0 +1,3 @@
+NAME            KIND       CATALOG   DESCRIPTION                                  PLATFORMS                  TAGS         CATEGORIES
+foo (0.1)       Task       Tekton    Description for task abc version 0.1         linux/amd64, linux/s390x   tag3, tag1   ---
+foo-bar (0.2)   Pipeline   Foo       Description for pipeline foo-bar versio...   ---                        ---          ---

@@ -5,7 +5,7 @@
 
 .SH NAME
 .PP
-tkn\-hub \- Interact with tekton hub
+tkn\-hub \- Interact with artifacthub
 
 
 .SH SYNOPSIS
@@ -15,26 +15,49 @@ tkn\-hub \- Interact with tekton hub
 
 .SH DESCRIPTION
 .PP
-Interact with tekton hub
+Interact with artifacthub
+
+.PP
+Deprecation Notice: Tekton Hub support in CLI is being deprecated in favor of Artifact Hub.
+The following commands currently only work with Tekton Hub and may support Artifact Hub in a future release:
+  \- check\-upgrade
+  \- downgrade
+  \- get
+  \- info
+  \- reinstall
+  \- search
+  \- upgrade
+
+.PP
+Action Required: Users should migrate to Artifact Hub by using the '\-\-type artifact' flag
+with the install command. For example:
+    tkn hub install task foo \-\-type artifact \-\-from tekton\-catalog\-tasks
+
+.PP
+When using '\-\-type tekton', a deprecation warning will now be displayed.
+Artifact Hub (
+\[la]https://artifacthub.io\[ra]) will become the only supported hub in future releases.
 
 
 .SH OPTIONS
 .PP
 \fB\-\-api\-server\fP=""
-    Hub API Server URL (default '
-\[la]https://api.hub.tekton.dev'\[ra] for 'tekton' type; default '
-\[la]https://artifacthub.io'\[ra] for 'artifact' type).
-URL can also be defined in a file '$HOME/.tekton/hub\-config' with a variable 'TEKTON\_HUB\_API\_SERVER'/'ARTIFACT\_HUB\_API\_SERVER'.
+    Hub API Server URL.
+For artifact type: default '
+\[la]https://artifacthub.io'\[ra] (env: ARTIFACT\_HUB\_API\_SERVER)
+For tekton type (DEPRECATED): default '
+\[la]https://api.hub.tekton.dev'\[ra] (env: TEKTON\_HUB\_API\_SERVER)
+Can also be set in '$HOME/.tekton/hub\-config'.
 
 .PP
 \fB\-h\fP, \fB\-\-help\fP[=false]
     help for hub
 
 .PP
-\fB\-\-type\fP="tekton"
-    The type of Hub from where to pull the resource. Either 'artifact' or 'tekton'
+\fB\-\-type\fP="artifact"
+    The type of Hub from where to pull the resource. Either 'artifact' or 'tekton' (DEPRECATED: tekton type will be removed in a future release)
 
 
 .SH SEE ALSO
 .PP
-\fBtkn(1)\fP, \fBtkn\-hub\-check\-upgrade(1)\fP, \fBtkn\-hub\-downgrade(1)\fP, \fBtkn\-hub\-get(1)\fP, \fBtkn\-hub\-info(1)\fP, \fBtkn\-hub\-install(1)\fP, \fBtkn\-hub\-reinstall(1)\fP, \fBtkn\-hub\-search(1)\fP, \fBtkn\-hub\-upgrade(1)\fP
+\fBtkn(1)\fP, \fBtkn\-hub\-install(1)\fP

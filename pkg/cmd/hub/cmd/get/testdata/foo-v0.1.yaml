@@ -1,0 +1,12 @@
+---
+apiVersion: tekton.dev/v1beta1
+kind: Task
+metadata:
+  name: foo
+  annotations:
+    tekton.dev/pipelines.minVersion: '0.12.1'
+    tekton.dev/tags: cli
+    tekton.dev/displayName: 'foo-bar'
+spec:
+  description: >-
+    v0.1 Task to run foo

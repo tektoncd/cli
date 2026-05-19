@@ -1,0 +1,24 @@
+📦 Name: foo-bar
+
+📌 Version: 0.2
+
+📖 Description: A Task is a collection of Steps that you define and arrange in
+ a specific order of execution as part of your continuous integration flow. A
+ Task executes as a Pod on your Kubernetes cluster. A Task is available within
+ a specific namespace.
+
+🗒  Minimum Pipeline Version: 0.12
+
+⭐ ️Rating: 4
+
+🏷️  ️Categories
+  ∙ foo-bar
+
+🏷 Tags
+  ∙ foo
+
+💻 Platforms
+  ∙ linux/amd64
+
+⚒ Install Command:
+  tkn hub install task foo-bar --version 0.2
