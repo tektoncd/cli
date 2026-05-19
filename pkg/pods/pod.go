@@ -19,14 +19,12 @@ import (
 	"errors"
 	"fmt"
 	"io"
-	"sync"
-	"time"
 
 	"github.com/tektoncd/cli/pkg/pods/stream"
 	corev1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/fields"
-	"k8s.io/client-go/informers"
+	"k8s.io/apimachinery/pkg/watch"
 	k8s "k8s.io/client-go/kubernetes"
 	typedv1 "k8s.io/client-go/kubernetes/typed/core/v1"
 	"k8s.io/client-go/tools/cache"
@@ -70,90 +68,48 @@ func NewWithDefaults(name, ns string, client k8s.Interface) *Pod {
 	}
 }
 
-// podResult holds the result of pod status check
-type podResult struct {
-	pod *corev1.Pod
-	err error
-}
-
 // Wait wait for the pod to get up and running
 func (p *Pod) Wait() (*corev1.Pod, error) {
-	// ensure pod exists before we actually check for it
-	if _, err := p.Get(); err != nil {
-		return nil, err
-	}
+	for {
+		pod, err := p.Get()
+		if err != nil {
+			return nil, err
+		}
 
-	stopC := make(chan struct{})
-	mu := sync.Mutex{}
+		if readyPod, err := checkPodStatus(pod); readyPod != nil || err != nil {
+			return readyPod, err
+		}
 
-	var result podResult
+		watcher, err := p.Kc.CoreV1().Pods(p.Ns).Watch(context.Background(), metav1.ListOptions{
+			FieldSelector:   fields.OneTermEqualSelector("metadata.name", p.Name).String(),
+			ResourceVersion: pod.ResourceVersion,
+		})
+		if err != nil {
+			return nil, err
+		}
 
-	// Start watcher in a goroutine
-	go func() {
-		p.watcher(stopC, &result, &mu)
-	}()
+		retry := false
+		for event := range watcher.ResultChan() {
+			updatedPod, ok, err := podFromWatchEvent(event)
+			if err != nil {
+				watcher.Stop()
+				return nil, err
+			}
+			if !ok {
+				retry = true
+				break
+			}
+			if readyPod, err := checkPodStatus(updatedPod); readyPod != nil || err != nil {
+				watcher.Stop()
+				return readyPod, err
+			}
+		}
+		watcher.Stop()
 
-	// Wait for stopC
-	<-stopC
-	return result.pod, result.err
-}
-
-func (p *Pod) watcher(stopC chan struct{}, result *podResult, mu *sync.Mutex) {
-	factory := informers.NewSharedInformerFactoryWithOptions(
-		p.Kc, time.Second*10,
-		informers.WithNamespace(p.Ns),
-		informers.WithTweakListOptions(podOpts(p.Name)))
-
-	updatePodStatus := func(obj interface{}) {
-		mu.Lock()
-		defer mu.Unlock()
-
-		pod, err := checkPodStatus(obj)
-		if pod != nil || err != nil {
-			result.pod = pod
-			result.err = err
-			close(stopC)
+		if retry {
+			continue
 		}
 	}
-
-	informer := factory.Core().V1().Pods().Informer()
-	// Set a custom watch error handler that ignores context.Canceled errors
-	// to prevent "Failed to watch" log messages when the informer is stopped intentionally
-	_ = informer.SetWatchErrorHandlerWithContext(watchErrorHandler)
-
-	_, err := informer.AddEventHandler(
-		cache.ResourceEventHandlerFuncs{
-			AddFunc: func(obj interface{}) {
-				select {
-				case <-stopC:
-					return
-				default:
-					updatePodStatus(obj)
-				}
-			},
-			UpdateFunc: func(_, newObj interface{}) {
-				select {
-				case <-stopC:
-					return
-				default:
-					updatePodStatus(newObj)
-				}
-			},
-			DeleteFunc: func(obj interface{}) {
-				select {
-				case <-stopC:
-					return
-				default:
-					updatePodStatus(obj)
-				}
-			},
-		})
-	if err != nil {
-		return
-	}
-
-	factory.Start(stopC)
-	factory.WaitForCacheSync(stopC)
 }
 
 func podOpts(name string) func(opts *metav1.ListOptions) {
@@ -197,6 +153,18 @@ func checkPodStatus(obj interface{}) (*corev1.Pod, error) {
 	}
 
 	return nil, nil
+}
+
+func podFromWatchEvent(event watch.Event) (*corev1.Pod, bool, error) {
+	if event.Type == watch.Error {
+		return nil, false, nil
+	}
+
+	pod, ok := event.Object.(*corev1.Pod)
+	if !ok {
+		return nil, false, nil
+	}
+	return pod, true, nil
 }
 
 // Get gets the pod
