@@ -49,5 +49,5 @@ Search resources using tag 'cli':
 
 ### SEE ALSO
 
-* [tkn hub](tkn_hub.md)	 - Interact with tekton hub
+* [tkn hub](tkn_hub.md)	 - Interact with artifacthub
 

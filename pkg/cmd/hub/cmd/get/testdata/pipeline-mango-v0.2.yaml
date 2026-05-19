@@ -1,0 +1,12 @@
+---
+apiVersion: tekton.dev/v1beta1
+kind: Pipeline
+metadata:
+  name: mango
+  annotations:
+    tekton.dev/pipelines.minVersion: '0.18'
+    tekton.dev/tags: fruit
+    tekton.dev/displayName: 'Alphanso'
+spec:
+  description: >-
+    v0.2 of Pipeline mango

@@ -32,6 +32,6 @@ Upgrade an installed resource
 
 ### SEE ALSO
 
-* [tkn hub](tkn_hub.md)	 - Interact with tekton hub
+* [tkn hub](tkn_hub.md)	 - Interact with artifacthub
 * [tkn hub upgrade task](tkn_hub_upgrade_task.md)	 - Upgrade a Task by its name
 

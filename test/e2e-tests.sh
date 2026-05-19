@@ -147,10 +147,9 @@ must_fail  "describe deleted eventlistener" tkn eventlistener describe github-li
 echo "Hub"
 echo "....................."
 run_test "hub command exists" tkn hub --help
-run_test "hub search exists" tkn hub search --help
-run_test "hub get exists" tkn hub get --help
-must_fail "hub search cli" tkn hub --api-server=api.nonexistent.server search cli
-must_fail "hub get task cli" tkn hub --api-server=api.nonexistent.server get task cli
+run_test "hub install exists" tkn hub install --help
+must_fail "hub search cli" tkn hub --type tekton --api-server=api.nonexistent.server search cli
+must_fail "hub get task cli" tkn hub --type tekton --api-server=api.nonexistent.server get task cli
 
 # Make sure that eveything is cleaned up in the current namespace.
 for res in tasks pipelines taskruns pipelineruns; do

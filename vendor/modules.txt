@@ -61,6 +61,9 @@ cloud.google.com/go/storage/internal/apiv2/storagepb
 ## explicit; go 1.24.0
 filippo.io/edwards25519
 filippo.io/edwards25519/field
+# github.com/ActiveState/vt10x v1.3.1
+## explicit; go 1.13
+github.com/ActiveState/vt10x
 # github.com/AlecAivazis/survey/v2 v2.3.7
 ## explicit; go 1.13
 github.com/AlecAivazis/survey/v2
@@ -827,6 +830,9 @@ github.com/grpc-ecosystem/grpc-gateway/v2/internal/httprule
 github.com/grpc-ecosystem/grpc-gateway/v2/protoc-gen-openapiv2/options
 github.com/grpc-ecosystem/grpc-gateway/v2/runtime
 github.com/grpc-ecosystem/grpc-gateway/v2/utilities
+# github.com/h2non/parth v0.0.0-20190131123155-b4df798d6542
+## explicit
+github.com/h2non/parth
 # github.com/hako/durafmt v0.0.0-20210608085754-5c1018a4e16b
 ## explicit; go 1.11
 github.com/hako/durafmt
@@ -957,6 +963,9 @@ github.com/klauspost/compress/internal/le
 github.com/klauspost/compress/internal/snapref
 github.com/klauspost/compress/zstd
 github.com/klauspost/compress/zstd/internal/xxhash
+# github.com/kr/pty v1.1.1
+## explicit
+github.com/kr/pty
 # github.com/ktr0731/go-ansisgr v0.1.0
 ## explicit; go 1.19
 github.com/ktr0731/go-ansisgr
@@ -1262,6 +1271,10 @@ github.com/spiffe/go-spiffe/v2/internal/jwtutil
 github.com/spiffe/go-spiffe/v2/internal/pemutil
 github.com/spiffe/go-spiffe/v2/internal/x509util
 github.com/spiffe/go-spiffe/v2/spiffeid
+# github.com/stretchr/testify v1.11.1
+## explicit; go 1.17
+github.com/stretchr/testify/assert
+github.com/stretchr/testify/assert/yaml
 # github.com/subosito/gotenv v1.6.0
 ## explicit; go 1.18
 github.com/subosito/gotenv
@@ -1300,35 +1313,6 @@ github.com/tektoncd/chains/pkg/chains/storage/pubsub
 github.com/tektoncd/chains/pkg/chains/storage/tekton
 github.com/tektoncd/chains/pkg/config
 github.com/tektoncd/chains/pkg/patch
-# github.com/tektoncd/hub v1.24.0 => github.com/openshift-pipelines/hub v1.24.0
-## explicit; go 1.25.8
-github.com/tektoncd/hub/api/pkg/cli/app
-github.com/tektoncd/hub/api/pkg/cli/cmd
-github.com/tektoncd/hub/api/pkg/cli/cmd/check_upgrade
-github.com/tektoncd/hub/api/pkg/cli/cmd/downgrade
-github.com/tektoncd/hub/api/pkg/cli/cmd/get
-github.com/tektoncd/hub/api/pkg/cli/cmd/info
-github.com/tektoncd/hub/api/pkg/cli/cmd/install
-github.com/tektoncd/hub/api/pkg/cli/cmd/reinstall
-github.com/tektoncd/hub/api/pkg/cli/cmd/search
-github.com/tektoncd/hub/api/pkg/cli/cmd/upgrade
-github.com/tektoncd/hub/api/pkg/cli/flag
-github.com/tektoncd/hub/api/pkg/cli/formatter
-github.com/tektoncd/hub/api/pkg/cli/gvr
-github.com/tektoncd/hub/api/pkg/cli/hub
-github.com/tektoncd/hub/api/pkg/cli/installer
-github.com/tektoncd/hub/api/pkg/cli/kube
-github.com/tektoncd/hub/api/pkg/cli/options
-github.com/tektoncd/hub/api/pkg/cli/printer
-github.com/tektoncd/hub/api/pkg/cli/version
-github.com/tektoncd/hub/api/pkg/git
-github.com/tektoncd/hub/api/pkg/parser
-github.com/tektoncd/hub/api/v1/gen/catalog
-github.com/tektoncd/hub/api/v1/gen/catalog/views
-github.com/tektoncd/hub/api/v1/gen/http/catalog/client
-github.com/tektoncd/hub/api/v1/gen/http/resource/client
-github.com/tektoncd/hub/api/v1/gen/resource
-github.com/tektoncd/hub/api/v1/gen/resource/views
 # github.com/tektoncd/pipeline v1.12.0
 ## explicit; go 1.25.7
 github.com/tektoncd/pipeline/internal/artifactref
@@ -1764,7 +1748,7 @@ go.yaml.in/yaml/v2
 # go.yaml.in/yaml/v3 v3.0.4
 ## explicit; go 1.16
 go.yaml.in/yaml/v3
-# goa.design/goa/v3 v3.23.4
+# goa.design/goa/v3 v3.26.0
 ## explicit; go 1.24.0
 goa.design/goa/v3/http
 goa.design/goa/v3/pkg
@@ -2158,12 +2142,18 @@ google.golang.org/protobuf/types/known/wrapperspb
 # gopkg.in/evanphx/json-patch.v4 v4.13.0
 ## explicit
 gopkg.in/evanphx/json-patch.v4
+# gopkg.in/h2non/gock.v1 v1.1.2
+## explicit; go 1.13
+gopkg.in/h2non/gock.v1
 # gopkg.in/inf.v0 v0.9.1
 ## explicit
 gopkg.in/inf.v0
 # gopkg.in/yaml.v2 v2.4.0
 ## explicit; go 1.15
 gopkg.in/yaml.v2
+# gopkg.in/yaml.v3 v3.0.1
+## explicit
+gopkg.in/yaml.v3
 # gotest.tools v2.2.0+incompatible
 ## explicit
 gotest.tools/assert
@@ -2902,4 +2892,3 @@ sigs.k8s.io/structured-merge-diff/v6/value
 ## explicit; go 1.22
 sigs.k8s.io/yaml
 # github.com/alibabacloud-go/cr-20160607 => github.com/vdemeester/cr-20160607 v1.0.1
-# github.com/tektoncd/hub => github.com/openshift-pipelines/hub v1.24.0

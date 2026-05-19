@@ -33,6 +33,6 @@ Reinstall a resource by its kind and name
 
 ### SEE ALSO
 
-* [tkn hub](tkn_hub.md)	 - Interact with tekton hub
+* [tkn hub](tkn_hub.md)	 - Interact with artifacthub
 * [tkn hub reinstall task](tkn_hub_reinstall_task.md)	 - Reinstall a Task by its name
 
