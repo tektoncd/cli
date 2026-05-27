@@ -221,6 +221,7 @@ func (r *Reader) getOrderedTasks(pr *v1.PipelineRun) ([]taskrunpkg.Run, error) {
 		if pr.Spec.PipelineRef.Resolver != "" {
 			if pr.Status.PipelineSpec != nil {
 				tasks = append(tasks, pr.Status.PipelineSpec.Tasks...)
+				tasks = append(tasks, pr.Status.PipelineSpec.Finally...)
 			} else {
 				return nil, fmt.Errorf("pipelinerun %s does not have the PipelineRunSpec", pr.Name)
 			}
@@ -238,14 +239,51 @@ func (r *Reader) getOrderedTasks(pr *v1.PipelineRun) ([]taskrunpkg.Run, error) {
 	default:
 		return nil, fmt.Errorf("pipelinerun %s did not provide PipelineRef or PipelineSpec", pr.Name)
 	}
-
 	trsMap, err := pipelinerunpkg.GetTaskRunsWithStatus(pr, r.clients, r.ns)
 	if err != nil {
 		return nil, err
 	}
-
-	// Sort taskruns, to display the taskrun logs as per pipeline tasks order
-	return taskrunpkg.SortTasksBySpecOrder(tasks, trsMap), nil
+	// Build child PipelineRun lookup
+	childPRs := map[string]*v1.PipelineRun{}
+	for _, cr := range pr.Status.ChildReferences {
+		if cr.Kind == "PipelineRun" {
+			childPR, err := pipelinerunpkg.GetPipelineRun(pipelineRunGroupResource, r.clients, cr.Name, r.ns)
+			if err != nil {
+				return nil, err
+			}
+			childPRs[cr.PipelineTaskName] = childPR
+		}
+	}
+	// Build PipelineTaskName -> TaskRun name lookup for direct TaskRun children
+	trNames := map[string]string{}
+	for name, t := range trsMap {
+		trNames[t.PipelineTaskName] = name
+	}
+	var ordered []taskrunpkg.Run
+	for _, pt := range tasks {
+		if _, ok := trNames[pt.Name]; ok {
+			// Direct TaskRun child — use existing sort logic
+			ordered = append(ordered, taskrunpkg.SortTasksBySpecOrder([]v1.PipelineTask{pt}, trsMap)...)
+		} else if childPR, ok := childPRs[pt.Name]; ok {
+			// PipelineRun child — recurse and prefix
+			childTasks, err := r.getChildOrderedTasks(childPR, pt.Name)
+			if err != nil {
+				return nil, err
+			}
+			ordered = append(ordered, childTasks...)
+		}
+	}
+	return ordered, nil
+}
+func (r *Reader) getChildOrderedTasks(childPR *v1.PipelineRun, parentTaskName string) ([]taskrunpkg.Run, error) {
+	childOrdered, err := r.getOrderedTasks(childPR)
+	if err != nil {
+		return nil, err
+	}
+	for i := range childOrdered {
+		childOrdered[i].Task = parentTaskName + " > " + childOrdered[i].Task
+	}
+	return childOrdered, nil
 }
 
 func empty(status v1.PipelineRunStatus) bool {

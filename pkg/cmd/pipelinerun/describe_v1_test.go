@@ -2743,3 +2743,131 @@ func TestPipelineRunDescribe_with_annotations(t *testing.T) {
 	}
 	golden.Assert(t, actual, fmt.Sprintf("%s.golden", t.Name()))
 }
+
+func TestPipelineRunDescribe_PinP(t *testing.T) {
+	clock := test.FakeClock()
+	greetTR := &v1.TaskRun{
+		ObjectMeta: metav1.ObjectMeta{
+			Name:      "pinp-run-call-child-greet",
+			Namespace: "ns",
+		},
+		Status: v1.TaskRunStatus{
+			TaskRunStatusFields: v1.TaskRunStatusFields{
+				StartTime:      &metav1.Time{Time: clock.Now().Add(2 * time.Minute)},
+				CompletionTime: &metav1.Time{Time: clock.Now().Add(5 * time.Minute)},
+			},
+			Status: duckv1.Status{
+				Conditions: duckv1.Conditions{
+					{
+						Status: corev1.ConditionTrue,
+						Type:   apis.ConditionSucceeded,
+					},
+				},
+			},
+		},
+	}
+	childPR := &v1.PipelineRun{
+		ObjectMeta: metav1.ObjectMeta{
+			Name:      "pinp-run-call-child",
+			Namespace: "ns",
+		},
+		Spec: v1.PipelineRunSpec{
+			PipelineSpec: &v1.PipelineSpec{
+				Tasks: []v1.PipelineTask{
+					{Name: "greet", TaskRef: &v1.TaskRef{Name: "greet"}},
+				},
+			},
+		},
+		Status: v1.PipelineRunStatus{
+			PipelineRunStatusFields: v1.PipelineRunStatusFields{
+				ChildReferences: []v1.ChildStatusReference{
+					{
+						Name:             "pinp-run-call-child-greet",
+						PipelineTaskName: "greet",
+						TypeMeta: runtime.TypeMeta{
+							Kind: "TaskRun",
+						},
+					},
+				},
+			},
+			Status: duckv1.Status{
+				Conditions: duckv1.Conditions{
+					{
+						Status: corev1.ConditionTrue,
+						Type:   apis.ConditionSucceeded,
+					},
+				},
+			},
+		},
+	}
+	parentPR := &v1.PipelineRun{
+		ObjectMeta: metav1.ObjectMeta{
+			Name:              "pinp-pipeline-run",
+			Namespace:         "ns",
+			CreationTimestamp: metav1.Time{Time: clock.Now()},
+			Labels:            map[string]string{"tekton.dev/pipeline": "pipeline"},
+		},
+		Spec: v1.PipelineRunSpec{
+			PipelineRef: &v1.PipelineRef{
+				Name: "pipeline",
+			},
+			Timeouts: &v1.TimeoutFields{
+				Pipeline: &metav1.Duration{Duration: 1 * time.Hour},
+			},
+		},
+		Status: v1.PipelineRunStatus{
+			PipelineRunStatusFields: v1.PipelineRunStatusFields{
+				StartTime:      &metav1.Time{Time: clock.Now()},
+				CompletionTime: &metav1.Time{Time: clock.Now().Add(5 * time.Minute)},
+				ChildReferences: []v1.ChildStatusReference{
+					{
+						Name:             "pinp-run-call-child",
+						PipelineTaskName: "call-child",
+						TypeMeta: runtime.TypeMeta{
+							Kind: "PipelineRun",
+						},
+					},
+				},
+			},
+			Status: duckv1.Status{
+				Conditions: duckv1.Conditions{
+					{
+						Status: corev1.ConditionTrue,
+						Type:   apis.ConditionSucceeded,
+					},
+				},
+			},
+		},
+	}
+	namespaces := []*corev1.Namespace{
+		{
+			ObjectMeta: metav1.ObjectMeta{
+				Name: "ns",
+			},
+		},
+	}
+	version := "v1"
+	tdc := testDynamic.Options{}
+	dynamic, err := tdc.Client(
+		cb.UnstructuredPR(parentPR, version),
+		cb.UnstructuredPR(childPR, version),
+		cb.UnstructuredTR(greetTR, version),
+	)
+	if err != nil {
+		t.Errorf("unable to create dynamic client: %v", err)
+	}
+	cs, _ := test.SeedTestData(t, pipelinetest.Data{
+		Namespaces:   namespaces,
+		PipelineRuns: []*v1.PipelineRun{parentPR, childPR},
+		TaskRuns:     []*v1.TaskRun{greetTR},
+	})
+	cs.Pipeline.Resources = cb.APIResourceList(version, []string{"pipelinerun", "taskrun"})
+	p := &test.Params{Tekton: cs.Pipeline, Kube: cs.Kube, Dynamic: dynamic, Clock: clock}
+	pipelinerun := Command(p)
+	clock.Advance(10 * time.Minute)
+	actual, err := test.ExecuteCommand(pipelinerun, "desc", "pinp-pipeline-run", "-n", "ns")
+	if err != nil {
+		t.Errorf("Unexpected error: %v", err)
+	}
+	golden.Assert(t, actual, fmt.Sprintf("%s.golden", t.Name()))
+}

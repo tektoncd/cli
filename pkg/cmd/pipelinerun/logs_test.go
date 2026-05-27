@@ -4613,3 +4613,596 @@ func fetchLogs(lo *options.LogOptions) (string, error) {
 	err := Run(lo)
 	return out.String(), err
 }
+
+func TestPipelineRunLogs_PinP_Available(t *testing.T) {
+	ns := "namespace"
+	pipelineName := "parent-pipeline"
+	prName := "parent-run"
+	childPRName := "parent-run-call-child"
+	childTRName := "parent-run-call-child-greet"
+	childTRPod := "parent-run-call-child-greet-pod"
+	childTR := &v1.TaskRun{
+		ObjectMeta: metav1.ObjectMeta{Name: childTRName, Namespace: ns},
+		Spec:       v1.TaskRunSpec{TaskRef: &v1.TaskRef{Name: "greet"}},
+		Status: v1.TaskRunStatus{
+			Status: duckv1.Status{Conditions: duckv1.Conditions{{
+				Status: corev1.ConditionTrue, Type: apis.ConditionSucceeded,
+			}}},
+			TaskRunStatusFields: v1.TaskRunStatusFields{
+				StartTime: &metav1.Time{Time: time.Now()},
+				PodName:   childTRPod,
+				Steps: []v1.StepState{{Name: "echo",
+					ContainerState: corev1.ContainerState{Terminated: &corev1.ContainerStateTerminated{ExitCode: 0}}}},
+			},
+		},
+	}
+	childPR := &v1.PipelineRun{
+		ObjectMeta: metav1.ObjectMeta{Name: childPRName, Namespace: ns},
+		Spec: v1.PipelineRunSpec{
+			PipelineSpec: &v1.PipelineSpec{
+				Tasks: []v1.PipelineTask{{Name: "greet", TaskSpec: &v1.EmbeddedTask{
+					TaskSpec: v1.TaskSpec{
+						Steps: []v1.Step{{Name: "echo", Image: "busybox", Script: "echo hello"}},
+					},
+				}}},
+			},
+		},
+		Status: v1.PipelineRunStatus{
+			Status: duckv1.Status{Conditions: duckv1.Conditions{{
+				Status: corev1.ConditionTrue, Type: apis.ConditionSucceeded,
+			}}},
+			PipelineRunStatusFields: v1.PipelineRunStatusFields{
+				ChildReferences: []v1.ChildStatusReference{{
+					Name: childTRName, PipelineTaskName: "greet",
+					TypeMeta: runtime.TypeMeta{Kind: "TaskRun"},
+				}},
+			},
+		},
+	}
+	parentPR := &v1.PipelineRun{
+		ObjectMeta: metav1.ObjectMeta{Name: prName, Namespace: ns,
+			Labels: map[string]string{"tekton.dev/pipeline": pipelineName}},
+		Spec: v1.PipelineRunSpec{PipelineRef: &v1.PipelineRef{Name: pipelineName}},
+		Status: v1.PipelineRunStatus{
+			Status: duckv1.Status{Conditions: duckv1.Conditions{{
+				Status: corev1.ConditionTrue, Type: apis.ConditionSucceeded,
+			}}},
+			PipelineRunStatusFields: v1.PipelineRunStatusFields{
+				ChildReferences: []v1.ChildStatusReference{{
+					Name: childPRName, PipelineTaskName: "call-child",
+					TypeMeta: runtime.TypeMeta{Kind: "PipelineRun"},
+				}},
+			},
+		},
+	}
+	parentPipeline := &v1.Pipeline{
+		ObjectMeta: metav1.ObjectMeta{Name: pipelineName, Namespace: ns},
+		Spec: v1.PipelineSpec{
+			Tasks: []v1.PipelineTask{{Name: "call-child", TaskSpec: &v1.EmbeddedTask{
+				TaskSpec: v1.TaskSpec{Steps: []v1.Step{{Name: "placeholder", Image: "busybox"}}},
+			}}},
+		},
+	}
+	nsList := []*corev1.Namespace{{ObjectMeta: metav1.ObjectMeta{Name: ns}}}
+	cs, _ := test.SeedTestData(t, pipelinetest.Data{
+		PipelineRuns: []*v1.PipelineRun{parentPR, childPR},
+		Pipelines:    []*v1.Pipeline{parentPipeline},
+		TaskRuns:     []*v1.TaskRun{childTR},
+		Pods: []*corev1.Pod{{ObjectMeta: metav1.ObjectMeta{Name: childTRPod, Namespace: ns},
+			Spec: corev1.PodSpec{Containers: []corev1.Container{{Name: "echo", Image: "busybox"}}},
+		}},
+		Namespaces: nsList,
+	})
+	cs.Pipeline.Resources = cb.APIResourceList("v1", []string{"task", "taskrun", "pipeline", "pipelinerun"})
+	tdc := testDynamic.Options{}
+	dc, err := tdc.Client(
+		cb.UnstructuredPR(parentPR, "v1"),
+		cb.UnstructuredPR(childPR, "v1"),
+		cb.UnstructuredP(parentPipeline, "v1"),
+		cb.UnstructuredTR(childTR, "v1"),
+	)
+	if err != nil {
+		t.Fatal(err)
+	}
+	fakeLogStream := fake.Logs(
+		fake.Task(childTRPod, fake.Step("echo", "Hello from child\n")),
+	)
+	prlo := logOpts(prName, ns, cs, dc, fake.Streamer(fakeLogStream), false, false, true)
+	output, err := fetchLogs(prlo)
+	if err != nil {
+		t.Fatal(err)
+	}
+	test.AssertOutput(t, "[call-child > greet : echo] Hello from child\n\n", output)
+}
+func TestPipelineRunLogs_PinP_WithDirectTasks(t *testing.T) {
+	ns := "namespace"
+	pipelineName := "mix-pipeline"
+	prName := "mix-run"
+	// Build: task "build" (direct TaskRun) + task "deploy" (PinP child with task "greet")
+	// Expected: [build : step1] ... [deploy > greet : echo] ...
+	buildTRName := "mix-run-build"
+	buildTRPod := "mix-run-build-pod"
+	childPRName := "mix-run-deploy"
+	childTRName := "mix-run-deploy-greet"
+	childTRPod := "mix-run-deploy-greet-pod"
+	buildTR := &v1.TaskRun{
+		ObjectMeta: metav1.ObjectMeta{Name: buildTRName, Namespace: ns},
+		Status: v1.TaskRunStatus{
+			Status: duckv1.Status{Conditions: duckv1.Conditions{{
+				Status: corev1.ConditionTrue, Type: apis.ConditionSucceeded}}},
+			TaskRunStatusFields: v1.TaskRunStatusFields{
+				StartTime: &metav1.Time{Time: time.Now()}, PodName: buildTRPod,
+				Steps: []v1.StepState{{Name: "step1",
+					ContainerState: corev1.ContainerState{Terminated: &corev1.ContainerStateTerminated{ExitCode: 0}}}},
+			},
+		},
+	}
+	childTR := &v1.TaskRun{
+		ObjectMeta: metav1.ObjectMeta{Name: childTRName, Namespace: ns},
+		Status: v1.TaskRunStatus{
+			Status: duckv1.Status{Conditions: duckv1.Conditions{{
+				Status: corev1.ConditionTrue, Type: apis.ConditionSucceeded}}},
+			TaskRunStatusFields: v1.TaskRunStatusFields{
+				StartTime: &metav1.Time{Time: time.Now()}, PodName: childTRPod,
+				Steps: []v1.StepState{{Name: "echo",
+					ContainerState: corev1.ContainerState{Terminated: &corev1.ContainerStateTerminated{ExitCode: 0}}}},
+			},
+		},
+	}
+	childPR := &v1.PipelineRun{
+		ObjectMeta: metav1.ObjectMeta{Name: childPRName, Namespace: ns},
+		Spec: v1.PipelineRunSpec{PipelineSpec: &v1.PipelineSpec{
+			Tasks: []v1.PipelineTask{{Name: "greet", TaskSpec: &v1.EmbeddedTask{
+				TaskSpec: v1.TaskSpec{Steps: []v1.Step{{Name: "echo", Image: "busybox"}}}},
+			}},
+		}},
+		Status: v1.PipelineRunStatus{
+			Status: duckv1.Status{Conditions: duckv1.Conditions{{
+				Status: corev1.ConditionTrue, Type: apis.ConditionSucceeded}}},
+			PipelineRunStatusFields: v1.PipelineRunStatusFields{
+				ChildReferences: []v1.ChildStatusReference{{
+					Name: childTRName, PipelineTaskName: "greet",
+					TypeMeta: runtime.TypeMeta{Kind: "TaskRun"}}},
+			},
+		},
+	}
+	parentPR := &v1.PipelineRun{
+		ObjectMeta: metav1.ObjectMeta{Name: prName, Namespace: ns,
+			Labels: map[string]string{"tekton.dev/pipeline": pipelineName}},
+		Spec: v1.PipelineRunSpec{PipelineRef: &v1.PipelineRef{Name: pipelineName}},
+		Status: v1.PipelineRunStatus{
+			Status: duckv1.Status{Conditions: duckv1.Conditions{{
+				Status: corev1.ConditionTrue, Type: apis.ConditionSucceeded}}},
+			PipelineRunStatusFields: v1.PipelineRunStatusFields{
+				ChildReferences: []v1.ChildStatusReference{
+					{Name: buildTRName, PipelineTaskName: "build",
+						TypeMeta: runtime.TypeMeta{Kind: "TaskRun"}},
+					{Name: childPRName, PipelineTaskName: "deploy",
+						TypeMeta: runtime.TypeMeta{Kind: "PipelineRun"}},
+				},
+			},
+		},
+	}
+	parentPipeline := &v1.Pipeline{
+		ObjectMeta: metav1.ObjectMeta{Name: pipelineName, Namespace: ns},
+		Spec: v1.PipelineSpec{
+			Tasks: []v1.PipelineTask{
+				{Name: "build", TaskRef: &v1.TaskRef{Name: "build-task"}},
+				{Name: "deploy", TaskSpec: &v1.EmbeddedTask{
+					TaskSpec: v1.TaskSpec{Steps: []v1.Step{{Name: "p", Image: "busybox"}}}}},
+			},
+		},
+	}
+	cs, _ := test.SeedTestData(t, pipelinetest.Data{
+		PipelineRuns: []*v1.PipelineRun{parentPR, childPR},
+		Pipelines:    []*v1.Pipeline{parentPipeline},
+		TaskRuns:     []*v1.TaskRun{buildTR, childTR},
+		Pods: []*corev1.Pod{
+			{ObjectMeta: metav1.ObjectMeta{Name: buildTRPod, Namespace: ns},
+				Spec: corev1.PodSpec{Containers: []corev1.Container{{Name: "step1", Image: "alpine"}}}},
+			{ObjectMeta: metav1.ObjectMeta{Name: childTRPod, Namespace: ns},
+				Spec: corev1.PodSpec{Containers: []corev1.Container{{Name: "echo", Image: "busybox"}}}},
+		},
+		Namespaces: []*corev1.Namespace{{ObjectMeta: metav1.ObjectMeta{Name: ns}}},
+	})
+	cs.Pipeline.Resources = cb.APIResourceList("v1", []string{"task", "taskrun", "pipeline", "pipelinerun"})
+	tdc := testDynamic.Options{}
+	dc, err := tdc.Client(
+		cb.UnstructuredPR(parentPR, "v1"),
+		cb.UnstructuredPR(childPR, "v1"),
+		cb.UnstructuredP(parentPipeline, "v1"),
+		cb.UnstructuredTR(buildTR, "v1"),
+		cb.UnstructuredTR(childTR, "v1"),
+	)
+	if err != nil {
+		t.Fatal(err)
+	}
+	fakeLogStream := fake.Logs(
+		fake.Task(buildTRPod, fake.Step("step1", "building done\n")),
+		fake.Task(childTRPod, fake.Step("echo", "deploy done\n")),
+	)
+	prlo := logOpts(prName, ns, cs, dc, fake.Streamer(fakeLogStream), false, false, true)
+	output, err := fetchLogs(prlo)
+	if err != nil {
+		t.Fatal(err)
+	}
+	expected := "[build : step1] building done\n\n[deploy > greet : echo] deploy done"
+	test.AssertOutput(t, expected, strings.TrimSpace(output))
+}
+func TestPipelineRunLogs_PinP_DeepNesting(t *testing.T) {
+	ns := "namespace"
+	pipelineName := "deep-parent-pipeline"
+	prName := "deep-parent-run"
+	grandchildTRName := "deep-parent-run-call-greet"
+	grandchildTRPod := "deep-parent-run-call-greet-pod"
+	grandchildTR := &v1.TaskRun{
+		ObjectMeta: metav1.ObjectMeta{Name: grandchildTRName, Namespace: ns},
+		Spec:       v1.TaskRunSpec{TaskRef: &v1.TaskRef{Name: "greet"}},
+		Status: v1.TaskRunStatus{
+			Status: duckv1.Status{Conditions: duckv1.Conditions{{
+				Status: corev1.ConditionTrue, Type: apis.ConditionSucceeded,
+			}}},
+			TaskRunStatusFields: v1.TaskRunStatusFields{
+				StartTime: &metav1.Time{Time: time.Now()},
+				PodName:   grandchildTRPod,
+				Steps: []v1.StepState{{Name: "echo",
+					ContainerState: corev1.ContainerState{Terminated: &corev1.ContainerStateTerminated{ExitCode: 0}}}},
+			},
+		},
+	}
+	grandchildPRName := "deep-parent-run-call-grandchild"
+	grandchildPR := &v1.PipelineRun{
+		ObjectMeta: metav1.ObjectMeta{Name: grandchildPRName, Namespace: ns},
+		Spec: v1.PipelineRunSpec{
+			PipelineSpec: &v1.PipelineSpec{
+				Tasks: []v1.PipelineTask{{Name: "greet", TaskSpec: &v1.EmbeddedTask{
+					TaskSpec: v1.TaskSpec{
+						Steps: []v1.Step{{Name: "echo", Image: "busybox", Script: "echo hello"}},
+					},
+				}}},
+			},
+		},
+		Status: v1.PipelineRunStatus{
+			Status: duckv1.Status{Conditions: duckv1.Conditions{{
+				Status: corev1.ConditionTrue, Type: apis.ConditionSucceeded,
+			}}},
+			PipelineRunStatusFields: v1.PipelineRunStatusFields{
+				ChildReferences: []v1.ChildStatusReference{{
+					Name: grandchildTRName, PipelineTaskName: "greet",
+					TypeMeta: runtime.TypeMeta{Kind: "TaskRun"},
+				}},
+			},
+		},
+	}
+	childPRName := "deep-parent-run-call-child"
+	childPR := &v1.PipelineRun{
+		ObjectMeta: metav1.ObjectMeta{Name: childPRName, Namespace: ns},
+		Spec: v1.PipelineRunSpec{
+			PipelineSpec: &v1.PipelineSpec{
+				Tasks: []v1.PipelineTask{{Name: "call-grandchild", TaskSpec: &v1.EmbeddedTask{
+					TaskSpec: v1.TaskSpec{Steps: []v1.Step{{Name: "placeholder", Image: "busybox"}}},
+				}}},
+			},
+		},
+		Status: v1.PipelineRunStatus{
+			Status: duckv1.Status{Conditions: duckv1.Conditions{{
+				Status: corev1.ConditionTrue, Type: apis.ConditionSucceeded,
+			}}},
+			PipelineRunStatusFields: v1.PipelineRunStatusFields{
+				ChildReferences: []v1.ChildStatusReference{{
+					Name: grandchildPRName, PipelineTaskName: "call-grandchild",
+					TypeMeta: runtime.TypeMeta{Kind: "PipelineRun"},
+				}},
+			},
+		},
+	}
+	parentPR := &v1.PipelineRun{
+		ObjectMeta: metav1.ObjectMeta{Name: prName, Namespace: ns,
+			Labels: map[string]string{"tekton.dev/pipeline": pipelineName}},
+		Spec: v1.PipelineRunSpec{PipelineRef: &v1.PipelineRef{Name: pipelineName}},
+		Status: v1.PipelineRunStatus{
+			Status: duckv1.Status{Conditions: duckv1.Conditions{{
+				Status: corev1.ConditionTrue, Type: apis.ConditionSucceeded,
+			}}},
+			PipelineRunStatusFields: v1.PipelineRunStatusFields{
+				ChildReferences: []v1.ChildStatusReference{{
+					Name: childPRName, PipelineTaskName: "call-child",
+					TypeMeta: runtime.TypeMeta{Kind: "PipelineRun"},
+				}},
+			},
+		},
+	}
+	parentPipeline := &v1.Pipeline{
+		ObjectMeta: metav1.ObjectMeta{Name: pipelineName, Namespace: ns},
+		Spec: v1.PipelineSpec{
+			Tasks: []v1.PipelineTask{{Name: "call-child", TaskSpec: &v1.EmbeddedTask{
+				TaskSpec: v1.TaskSpec{Steps: []v1.Step{{Name: "placeholder", Image: "busybox"}}},
+			}}},
+		},
+	}
+	nsList := []*corev1.Namespace{{ObjectMeta: metav1.ObjectMeta{Name: ns}}}
+	cs, _ := test.SeedTestData(t, pipelinetest.Data{
+		PipelineRuns: []*v1.PipelineRun{parentPR, childPR, grandchildPR},
+		Pipelines:    []*v1.Pipeline{parentPipeline},
+		TaskRuns:     []*v1.TaskRun{grandchildTR},
+		Pods: []*corev1.Pod{{ObjectMeta: metav1.ObjectMeta{Name: grandchildTRPod, Namespace: ns},
+			Spec: corev1.PodSpec{Containers: []corev1.Container{{Name: "echo", Image: "busybox"}}},
+		}},
+		Namespaces: nsList,
+	})
+	cs.Pipeline.Resources = cb.APIResourceList("v1", []string{"task", "taskrun", "pipeline", "pipelinerun"})
+	tdc := testDynamic.Options{}
+	dc, err := tdc.Client(
+		cb.UnstructuredPR(parentPR, "v1"),
+		cb.UnstructuredPR(childPR, "v1"),
+		cb.UnstructuredPR(grandchildPR, "v1"),
+		cb.UnstructuredP(parentPipeline, "v1"),
+		cb.UnstructuredTR(grandchildTR, "v1"),
+	)
+	if err != nil {
+		t.Fatal(err)
+	}
+	fakeLogStream := fake.Logs(
+		fake.Task(grandchildTRPod, fake.Step("echo", "Hello from grandchild\n")),
+	)
+	prlo := logOpts(prName, ns, cs, dc, fake.Streamer(fakeLogStream), false, false, true)
+	output, err := fetchLogs(prlo)
+	if err != nil {
+		t.Fatal(err)
+	}
+	test.AssertOutput(t, "[call-child > call-grandchild > greet : echo] Hello from grandchild\n\n", output)
+}
+func TestPipelineRunLogs_PinP_Finally(t *testing.T) {
+	ns := "namespace"
+	pipelineName := "finally-pipeline"
+	prName := "finally-run"
+	childPRName := "finally-run-deploy"
+	greetTRName := "finally-run-deploy-greet"
+	greetTRPod := "finally-run-deploy-greet-pod"
+	cleanupTRName := "finally-run-deploy-cleanup"
+	cleanupTRPod := "finally-run-deploy-cleanup-pod"
+	greetTR := &v1.TaskRun{
+		ObjectMeta: metav1.ObjectMeta{Name: greetTRName, Namespace: ns},
+		Status: v1.TaskRunStatus{
+			Status: duckv1.Status{Conditions: duckv1.Conditions{{
+				Status: corev1.ConditionTrue, Type: apis.ConditionSucceeded}}},
+			TaskRunStatusFields: v1.TaskRunStatusFields{
+				StartTime: &metav1.Time{Time: time.Now()}, PodName: greetTRPod,
+				Steps: []v1.StepState{{Name: "echo",
+					ContainerState: corev1.ContainerState{Terminated: &corev1.ContainerStateTerminated{ExitCode: 0}}}},
+			},
+		},
+	}
+	cleanupTR := &v1.TaskRun{
+		ObjectMeta: metav1.ObjectMeta{Name: cleanupTRName, Namespace: ns},
+		Status: v1.TaskRunStatus{
+			Status: duckv1.Status{Conditions: duckv1.Conditions{{
+				Status: corev1.ConditionTrue, Type: apis.ConditionSucceeded}}},
+			TaskRunStatusFields: v1.TaskRunStatusFields{
+				StartTime: &metav1.Time{Time: time.Now()}, PodName: cleanupTRPod,
+				Steps: []v1.StepState{{Name: "echo",
+					ContainerState: corev1.ContainerState{Terminated: &corev1.ContainerStateTerminated{ExitCode: 0}}}},
+			},
+		},
+	}
+	childPR := &v1.PipelineRun{
+		ObjectMeta: metav1.ObjectMeta{Name: childPRName, Namespace: ns},
+		Spec: v1.PipelineRunSpec{PipelineSpec: &v1.PipelineSpec{
+			Tasks: []v1.PipelineTask{{Name: "greet", TaskSpec: &v1.EmbeddedTask{
+				TaskSpec: v1.TaskSpec{Steps: []v1.Step{{Name: "echo", Image: "busybox"}}}}},
+			},
+			Finally: []v1.PipelineTask{{Name: "cleanup", TaskSpec: &v1.EmbeddedTask{
+				TaskSpec: v1.TaskSpec{Steps: []v1.Step{{Name: "echo", Image: "busybox"}}}}},
+			},
+		}},
+		Status: v1.PipelineRunStatus{
+			Status: duckv1.Status{Conditions: duckv1.Conditions{{
+				Status: corev1.ConditionTrue, Type: apis.ConditionSucceeded}}},
+			PipelineRunStatusFields: v1.PipelineRunStatusFields{
+				ChildReferences: []v1.ChildStatusReference{
+					{Name: greetTRName, PipelineTaskName: "greet",
+						TypeMeta: runtime.TypeMeta{Kind: "TaskRun"}},
+					{Name: cleanupTRName, PipelineTaskName: "cleanup",
+						TypeMeta: runtime.TypeMeta{Kind: "TaskRun"}},
+				},
+			},
+		},
+	}
+	parentPR := &v1.PipelineRun{
+		ObjectMeta: metav1.ObjectMeta{Name: prName, Namespace: ns,
+			Labels: map[string]string{"tekton.dev/pipeline": pipelineName}},
+		Spec: v1.PipelineRunSpec{PipelineRef: &v1.PipelineRef{Name: pipelineName}},
+		Status: v1.PipelineRunStatus{
+			Status: duckv1.Status{Conditions: duckv1.Conditions{{
+				Status: corev1.ConditionTrue, Type: apis.ConditionSucceeded}}},
+			PipelineRunStatusFields: v1.PipelineRunStatusFields{
+				ChildReferences: []v1.ChildStatusReference{{
+					Name: childPRName, PipelineTaskName: "deploy",
+					TypeMeta: runtime.TypeMeta{Kind: "PipelineRun"}},
+				},
+			},
+		},
+	}
+	parentPipeline := &v1.Pipeline{
+		ObjectMeta: metav1.ObjectMeta{Name: pipelineName, Namespace: ns},
+		Spec: v1.PipelineSpec{
+			Tasks: []v1.PipelineTask{{Name: "deploy", TaskSpec: &v1.EmbeddedTask{
+				TaskSpec: v1.TaskSpec{Steps: []v1.Step{{Name: "p", Image: "busybox"}}}}},
+			},
+		},
+	}
+	cs, _ := test.SeedTestData(t, pipelinetest.Data{
+		PipelineRuns: []*v1.PipelineRun{parentPR, childPR},
+		Pipelines:    []*v1.Pipeline{parentPipeline},
+		TaskRuns:     []*v1.TaskRun{greetTR, cleanupTR},
+		Pods: []*corev1.Pod{
+			{ObjectMeta: metav1.ObjectMeta{Name: greetTRPod, Namespace: ns},
+				Spec: corev1.PodSpec{Containers: []corev1.Container{{Name: "echo", Image: "busybox"}}}},
+			{ObjectMeta: metav1.ObjectMeta{Name: cleanupTRPod, Namespace: ns},
+				Spec: corev1.PodSpec{Containers: []corev1.Container{{Name: "echo", Image: "busybox"}}}},
+		},
+		Namespaces: []*corev1.Namespace{{ObjectMeta: metav1.ObjectMeta{Name: ns}}},
+	})
+	cs.Pipeline.Resources = cb.APIResourceList("v1", []string{"task", "taskrun", "pipeline", "pipelinerun"})
+	tdc := testDynamic.Options{}
+	dc, err := tdc.Client(
+		cb.UnstructuredPR(parentPR, "v1"),
+		cb.UnstructuredPR(childPR, "v1"),
+		cb.UnstructuredP(parentPipeline, "v1"),
+		cb.UnstructuredTR(greetTR, "v1"),
+		cb.UnstructuredTR(cleanupTR, "v1"),
+	)
+	if err != nil {
+		t.Fatal(err)
+	}
+	fakeLogStream := fake.Logs(
+		fake.Task(greetTRPod, fake.Step("echo", "Hello from child\n")),
+		fake.Task(cleanupTRPod, fake.Step("echo", "Cleaning up\n")),
+	)
+	prlo := logOpts(prName, ns, cs, dc, fake.Streamer(fakeLogStream), false, false, true)
+	output, err := fetchLogs(prlo)
+	if err != nil {
+		t.Fatal(err)
+	}
+	expectedLogs := []string{
+		"[deploy > greet : echo] Hello from child\n",
+		"[deploy > cleanup : echo] Cleaning up\n",
+	}
+	test.AssertOutput(t, strings.Join(expectedLogs, "\n")+"\n", output)
+}
+func TestPipelineRunLogs_PinP_MultipleChildren(t *testing.T) {
+	ns := "namespace"
+	pipelineName := "multi-pipeline"
+	prName := "multi-run"
+	alphaPRName := "multi-run-alpha"
+	betaPRName := "multi-run-beta"
+	greetTRName := "multi-run-alpha-greet"
+	greetTRPod := "multi-run-alpha-greet-pod"
+	buildTRName := "multi-run-beta-build"
+	buildTRPod := "multi-run-beta-build-pod"
+	greetTR := &v1.TaskRun{
+		ObjectMeta: metav1.ObjectMeta{Name: greetTRName, Namespace: ns},
+		Status: v1.TaskRunStatus{
+			Status: duckv1.Status{Conditions: duckv1.Conditions{{
+				Status: corev1.ConditionTrue, Type: apis.ConditionSucceeded}}},
+			TaskRunStatusFields: v1.TaskRunStatusFields{
+				StartTime: &metav1.Time{Time: time.Now()}, PodName: greetTRPod,
+				Steps: []v1.StepState{{Name: "echo",
+					ContainerState: corev1.ContainerState{Terminated: &corev1.ContainerStateTerminated{ExitCode: 0}}}},
+			},
+		},
+	}
+	buildTR := &v1.TaskRun{
+		ObjectMeta: metav1.ObjectMeta{Name: buildTRName, Namespace: ns},
+		Status: v1.TaskRunStatus{
+			Status: duckv1.Status{Conditions: duckv1.Conditions{{
+				Status: corev1.ConditionTrue, Type: apis.ConditionSucceeded}}},
+			TaskRunStatusFields: v1.TaskRunStatusFields{
+				StartTime: &metav1.Time{Time: time.Now()}, PodName: buildTRPod,
+				Steps: []v1.StepState{{Name: "step1",
+					ContainerState: corev1.ContainerState{Terminated: &corev1.ContainerStateTerminated{ExitCode: 0}}}},
+			},
+		},
+	}
+	alphaPR := &v1.PipelineRun{
+		ObjectMeta: metav1.ObjectMeta{Name: alphaPRName, Namespace: ns},
+		Spec: v1.PipelineRunSpec{PipelineSpec: &v1.PipelineSpec{
+			Tasks: []v1.PipelineTask{{Name: "greet", TaskSpec: &v1.EmbeddedTask{
+				TaskSpec: v1.TaskSpec{Steps: []v1.Step{{Name: "echo", Image: "busybox"}}}}},
+			},
+		}},
+		Status: v1.PipelineRunStatus{
+			Status: duckv1.Status{Conditions: duckv1.Conditions{{
+				Status: corev1.ConditionTrue, Type: apis.ConditionSucceeded}}},
+			PipelineRunStatusFields: v1.PipelineRunStatusFields{
+				ChildReferences: []v1.ChildStatusReference{{
+					Name: greetTRName, PipelineTaskName: "greet",
+					TypeMeta: runtime.TypeMeta{Kind: "TaskRun"}}},
+			},
+		},
+	}
+	betaPR := &v1.PipelineRun{
+		ObjectMeta: metav1.ObjectMeta{Name: betaPRName, Namespace: ns},
+		Spec: v1.PipelineRunSpec{PipelineSpec: &v1.PipelineSpec{
+			Tasks: []v1.PipelineTask{{Name: "build", TaskSpec: &v1.EmbeddedTask{
+				TaskSpec: v1.TaskSpec{Steps: []v1.Step{{Name: "step1", Image: "alpine"}}}}},
+			},
+		}},
+		Status: v1.PipelineRunStatus{
+			Status: duckv1.Status{Conditions: duckv1.Conditions{{
+				Status: corev1.ConditionTrue, Type: apis.ConditionSucceeded}}},
+			PipelineRunStatusFields: v1.PipelineRunStatusFields{
+				ChildReferences: []v1.ChildStatusReference{{
+					Name: buildTRName, PipelineTaskName: "build",
+					TypeMeta: runtime.TypeMeta{Kind: "TaskRun"}}},
+			},
+		},
+	}
+	parentPR := &v1.PipelineRun{
+		ObjectMeta: metav1.ObjectMeta{Name: prName, Namespace: ns,
+			Labels: map[string]string{"tekton.dev/pipeline": pipelineName}},
+		Spec: v1.PipelineRunSpec{PipelineRef: &v1.PipelineRef{Name: pipelineName}},
+		Status: v1.PipelineRunStatus{
+			Status: duckv1.Status{Conditions: duckv1.Conditions{{
+				Status: corev1.ConditionTrue, Type: apis.ConditionSucceeded}}},
+			PipelineRunStatusFields: v1.PipelineRunStatusFields{
+				ChildReferences: []v1.ChildStatusReference{
+					{Name: alphaPRName, PipelineTaskName: "call-alpha",
+						TypeMeta: runtime.TypeMeta{Kind: "PipelineRun"}},
+					{Name: betaPRName, PipelineTaskName: "call-beta",
+						TypeMeta: runtime.TypeMeta{Kind: "PipelineRun"}},
+				},
+			},
+		},
+	}
+	parentPipeline := &v1.Pipeline{
+		ObjectMeta: metav1.ObjectMeta{Name: pipelineName, Namespace: ns},
+		Spec: v1.PipelineSpec{
+			Tasks: []v1.PipelineTask{
+				{Name: "call-alpha", TaskSpec: &v1.EmbeddedTask{
+					TaskSpec: v1.TaskSpec{Steps: []v1.Step{{Name: "p", Image: "busybox"}}}}},
+				{Name: "call-beta", TaskSpec: &v1.EmbeddedTask{
+					TaskSpec: v1.TaskSpec{Steps: []v1.Step{{Name: "p", Image: "busybox"}}}}},
+			},
+		},
+	}
+	cs, _ := test.SeedTestData(t, pipelinetest.Data{
+		PipelineRuns: []*v1.PipelineRun{parentPR, alphaPR, betaPR},
+		Pipelines:    []*v1.Pipeline{parentPipeline},
+		TaskRuns:     []*v1.TaskRun{greetTR, buildTR},
+		Pods: []*corev1.Pod{
+			{ObjectMeta: metav1.ObjectMeta{Name: greetTRPod, Namespace: ns},
+				Spec: corev1.PodSpec{Containers: []corev1.Container{{Name: "echo", Image: "busybox"}}}},
+			{ObjectMeta: metav1.ObjectMeta{Name: buildTRPod, Namespace: ns},
+				Spec: corev1.PodSpec{Containers: []corev1.Container{{Name: "step1", Image: "alpine"}}}},
+		},
+		Namespaces: []*corev1.Namespace{{ObjectMeta: metav1.ObjectMeta{Name: ns}}},
+	})
+	cs.Pipeline.Resources = cb.APIResourceList("v1", []string{"task", "taskrun", "pipeline", "pipelinerun"})
+	tdc := testDynamic.Options{}
+	dc, err := tdc.Client(
+		cb.UnstructuredPR(parentPR, "v1"),
+		cb.UnstructuredPR(alphaPR, "v1"),
+		cb.UnstructuredPR(betaPR, "v1"),
+		cb.UnstructuredP(parentPipeline, "v1"),
+		cb.UnstructuredTR(greetTR, "v1"),
+		cb.UnstructuredTR(buildTR, "v1"),
+	)
+	if err != nil {
+		t.Fatal(err)
+	}
+	fakeLogStream := fake.Logs(
+		fake.Task(greetTRPod, fake.Step("echo", "Hello from alpha\n")),
+		fake.Task(buildTRPod, fake.Step("step1", "Hello from beta\n")),
+	)
+	prlo := logOpts(prName, ns, cs, dc, fake.Streamer(fakeLogStream), false, false, true)
+	output, err := fetchLogs(prlo)
+	if err != nil {
+		t.Fatal(err)
+	}
+	expectedLogs := []string{
+		"[call-alpha > greet : echo] Hello from alpha\n",
+		"[call-beta > build : step1] Hello from beta\n",
+	}
+	test.AssertOutput(t, strings.Join(expectedLogs, "\n")+"\n", output)
+}
