@@ -102,8 +102,8 @@ $(BIN)/golangci-lint: ; $(info $(M) getting golangci-lint $(GOLANGCI_VERSION))
 	GOTOOLCHAIN=go$$(grep '^go ' go.mod | awk '{print $$2}') GOBIN=$(BIN) $(GO) install -mod=mod github.com/golangci/golangci-lint/v2/cmd/golangci-lint@$(GOLANGCI_VERSION)
 
 .PHONY: lint-go
-lint-go: | $(GOLANGCILINT) ; $(info $(M) running golangci-lint…) @ ## Run golangci-lint
-	$Q $(GOLANGCILINT) run --modules-download-mode=vendor --max-issues-per-linter=0 --max-same-issues=0 --timeout 10m
+lint-go: | $(GOLANGCILINT) ; $(info $(M) running golangci-lint…) @ ## Run golangci-lint (PKG=./pkg/pods/... for single package)
+	$Q $(GOLANGCILINT) run --modules-download-mode=vendor --max-issues-per-linter=0 --max-same-issues=0 --timeout 10m $(PKG)
 
 GOIMPORTS = $(BIN)/goimports
 $(GOIMPORTS): ; $(info $(M) getting goimports )
@@ -125,8 +125,8 @@ test-unit-race:    ARGS=-race
 test-unit-verbose-and-race: ARGS=-v -race
 $(TEST_UNIT_TARGETS): test-unit
 .PHONY: $(TEST_UNIT_TARGETS) test-unit
-test-unit: ; $(info $(M) running unit tests…) ## Run unit tests
-	$(GO) test -timeout $(TIMEOUT_UNIT) $(ARGS) $(shell go list ./... | grep -v third_party/)
+test-unit: ; $(info $(M) running unit tests…) ## Run unit tests (PKG=./pkg/pods/... for single package)
+	$(GO) test -timeout $(TIMEOUT_UNIT) $(ARGS) $(PKGS)
 
 .PHONY: update-golden
 update-golden: ./vendor ; $(info $(M) Running unit tests to update golden files…) ## run unit tests (updating golden files)
