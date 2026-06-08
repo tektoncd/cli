@@ -17,8 +17,11 @@ package pipelinerun
 import (
 	"context"
 	"errors"
+	"strings"
 	"sync"
 	"time"
+
+	apierrors "k8s.io/apimachinery/pkg/api/errors"
 
 	"github.com/tektoncd/cli/pkg/actions"
 	"github.com/tektoncd/cli/pkg/cli"
@@ -31,6 +34,9 @@ import (
 	"k8s.io/apimachinery/pkg/fields"
 	"k8s.io/client-go/tools/cache"
 )
+
+// ChildTaskSeparator separates parent and child pipeline task names in Pipelines-in-Pipelines describe/logs output.
+const ChildTaskSeparator = " > "
 
 // Tracker tracks the progress of a PipelineRun
 type Tracker struct {
@@ -178,7 +184,25 @@ func (t *Tracker) findNewTaskruns(pr *v1.PipelineRun, allowed []string, trStatus
 	ret := []taskrunpkg.Run{}
 	for tr, trs := range trStatuses {
 		retries := 0
-		if pr.Status.PipelineSpec != nil {
+		if strings.Contains(trs.PipelineTaskName, ChildTaskSeparator) {
+			segments := strings.SplitN(trs.PipelineTaskName, ChildTaskSeparator, 2)
+			parentTaskName := segments[0]
+			childTaskName := segments[1]
+			for _, cr := range pr.Status.ChildReferences {
+				if cr.Kind == "PipelineRun" && cr.PipelineTaskName == parentTaskName {
+					childPR, err := GetPipelineRun(pipelineRunGroupResource, t.Client, cr.Name, t.Ns)
+					if err == nil && childPR.Status.PipelineSpec != nil {
+						for _, pt := range childPR.Status.PipelineSpec.Tasks {
+							if pt.Name == childTaskName {
+								retries = pt.Retries
+								break
+							}
+						}
+					}
+					break
+				}
+			}
+		} else if pr.Status.PipelineSpec != nil {
 			for _, pipelineTask := range pr.Status.PipelineSpec.Tasks {
 				if trs.PipelineTaskName == pipelineTask.Name {
 					retries = pipelineTask.Retries
@@ -233,7 +257,7 @@ func getTaskRunsWithStatusRecursive(pr *v1.PipelineRun, c *cli.Clients, ns strin
 			}
 			taskName := cr.PipelineTaskName
 			if prefix != "" {
-				taskName = prefix + " > " + taskName
+				taskName = prefix + ChildTaskSeparator + taskName
 			}
 			trStatuses[cr.Name] = &v1.PipelineRunTaskRunStatus{
 				PipelineTaskName: taskName,
@@ -242,11 +266,14 @@ func getTaskRunsWithStatusRecursive(pr *v1.PipelineRun, c *cli.Clients, ns strin
 		case "PipelineRun":
 			childPR, err := GetPipelineRun(pipelineRunGroupResource, c, cr.Name, ns)
 			if err != nil {
+				if apierrors.IsNotFound(err) {
+					continue
+				}
 				return nil, err
 			}
 			childPrefix := cr.PipelineTaskName
 			if prefix != "" {
-				childPrefix = prefix + " > " + childPrefix
+				childPrefix = prefix + ChildTaskSeparator + childPrefix
 			}
 			childTRs, err := getTaskRunsWithStatusRecursive(childPR, c, ns, childPrefix)
 			if err != nil {

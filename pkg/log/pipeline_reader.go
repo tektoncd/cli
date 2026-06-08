@@ -25,6 +25,7 @@ import (
 	taskrunpkg "github.com/tektoncd/cli/pkg/taskrun"
 	v1 "github.com/tektoncd/pipeline/pkg/apis/pipeline/v1"
 	corev1 "k8s.io/api/core/v1"
+	apierrors "k8s.io/apimachinery/pkg/api/errors"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/fields"
 	"k8s.io/apimachinery/pkg/runtime"
@@ -243,15 +244,11 @@ func (r *Reader) getOrderedTasks(pr *v1.PipelineRun) ([]taskrunpkg.Run, error) {
 	if err != nil {
 		return nil, err
 	}
-	// Build child PipelineRun lookup
-	childPRs := map[string]*v1.PipelineRun{}
+	// Build PipelineTaskName -> child PipelineRun name lookup
+	childPRNames := map[string]string{}
 	for _, cr := range pr.Status.ChildReferences {
 		if cr.Kind == "PipelineRun" {
-			childPR, err := pipelinerunpkg.GetPipelineRun(pipelineRunGroupResource, r.clients, cr.Name, r.ns)
-			if err != nil {
-				return nil, err
-			}
-			childPRs[cr.PipelineTaskName] = childPR
+			childPRNames[cr.PipelineTaskName] = cr.Name
 		}
 	}
 	// Build PipelineTaskName -> TaskRun name lookup for direct TaskRun children
@@ -264,8 +261,15 @@ func (r *Reader) getOrderedTasks(pr *v1.PipelineRun) ([]taskrunpkg.Run, error) {
 		if _, ok := trNames[pt.Name]; ok {
 			// Direct TaskRun child — use existing sort logic
 			ordered = append(ordered, taskrunpkg.SortTasksBySpecOrder([]v1.PipelineTask{pt}, trsMap)...)
-		} else if childPR, ok := childPRs[pt.Name]; ok {
-			// PipelineRun child — recurse and prefix
+
+		} else if childPRName, ok := childPRNames[pt.Name]; ok {
+			childPR, err := pipelinerunpkg.GetPipelineRun(pipelineRunGroupResource, r.clients, childPRName, r.ns)
+			if err != nil {
+				if apierrors.IsNotFound(err) {
+					continue
+				}
+				return nil, err
+			}
 			childTasks, err := r.getChildOrderedTasks(childPR, pt.Name)
 			if err != nil {
 				return nil, err
@@ -275,13 +279,17 @@ func (r *Reader) getOrderedTasks(pr *v1.PipelineRun) ([]taskrunpkg.Run, error) {
 	}
 	return ordered, nil
 }
+
 func (r *Reader) getChildOrderedTasks(childPR *v1.PipelineRun, parentTaskName string) ([]taskrunpkg.Run, error) {
 	childOrdered, err := r.getOrderedTasks(childPR)
 	if err != nil {
 		return nil, err
 	}
 	for i := range childOrdered {
-		childOrdered[i].Task = parentTaskName + " > " + childOrdered[i].Task
+		childOrdered[i].Task = parentTaskName + pipelinerunpkg.ChildTaskSeparator + childOrdered[i].Task
+		if childOrdered[i].DisplayName != "" {
+			childOrdered[i].DisplayName = parentTaskName + pipelinerunpkg.ChildTaskSeparator + childOrdered[i].DisplayName
+		}
 	}
 	return childOrdered, nil
 }
