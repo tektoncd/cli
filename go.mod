@@ -45,7 +45,7 @@ require (
 
 replace github.com/alibabacloud-go/cr-20160607 => github.com/vdemeester/cr-20160607 v1.0.1
 
-replace github.com/tektoncd/hub => github.com/openshift-pipelines/hub v1.23.7
+replace github.com/tektoncd/hub => github.com/openshift-pipelines/hub v1.23.12
 
 require (
 	cel.dev/expr v0.25.1 // indirect
