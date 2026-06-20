@@ -1,6 +1,6 @@
 module github.com/tektoncd/cli
 
-go 1.25.8
+go 1.25.11
 
 require (
 	github.com/ActiveState/vt10x v1.3.1
