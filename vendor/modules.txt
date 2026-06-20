@@ -1533,7 +1533,7 @@ github.com/youmark/pkcs8
 # gitlab.com/gitlab-org/api/client-go v0.143.3
 ## explicit; go 1.23.0
 gitlab.com/gitlab-org/api/client-go
-# go.mongodb.org/mongo-driver v1.17.6
+# go.mongodb.org/mongo-driver v1.17.7
 ## explicit; go 1.18
 go.mongodb.org/mongo-driver/bson
 go.mongodb.org/mongo-driver/bson/bsoncodec
