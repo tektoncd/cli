@@ -35,9 +35,6 @@ import (
 	"k8s.io/client-go/tools/cache"
 )
 
-// ChildTaskSeparator separates parent and child pipeline task names in Pipelines-in-Pipelines describe/logs output.
-const ChildTaskSeparator = " > "
-
 // Tracker tracks the progress of a PipelineRun
 type Tracker struct {
 	Name         string
@@ -184,22 +181,34 @@ func (t *Tracker) findNewTaskruns(pr *v1.PipelineRun, allowed []string, trStatus
 	ret := []taskrunpkg.Run{}
 	for tr, trs := range trStatuses {
 		retries := 0
-		if strings.Contains(trs.PipelineTaskName, ChildTaskSeparator) {
-			segments := strings.SplitN(trs.PipelineTaskName, ChildTaskSeparator, 2)
-			parentTaskName := segments[0]
-			childTaskName := segments[1]
-			for _, cr := range pr.Status.ChildReferences {
-				if cr.Kind == "PipelineRun" && cr.PipelineTaskName == parentTaskName {
-					childPR, err := GetPipelineRun(pipelineRunGroupResource, t.Client, cr.Name, t.Ns)
-					if err == nil && childPR.Status.PipelineSpec != nil {
-						for _, pt := range childPR.Status.PipelineSpec.Tasks {
-							if pt.Name == childTaskName {
-								retries = pt.Retries
-								break
-							}
+		if strings.Contains(trs.PipelineTaskName, taskrunpkg.ChildTaskSeparator) {
+			segments := strings.Split(trs.PipelineTaskName, taskrunpkg.ChildTaskSeparator)
+			currentPR := pr
+			for i := 0; i < len(segments)-1; i++ {
+				for _, cr := range currentPR.Status.ChildReferences {
+					if cr.Kind == "PipelineRun" && cr.PipelineTaskName == segments[i] {
+						childPR, err := GetPipelineRun(pipelineRunGroupResource, t.Client, cr.Name, t.Ns)
+						if err == nil {
+							currentPR = childPR
+						}
+						break
+					}
+				}
+			}
+			leafTaskName := segments[len(segments)-1]
+			if currentPR != pr && currentPR.Status.PipelineSpec != nil {
+				for _, pt := range currentPR.Status.PipelineSpec.Tasks {
+					if pt.Name == leafTaskName {
+						retries = pt.Retries
+						break
+					}
+				}
+				if retries == 0 {
+					for _, pt := range currentPR.Status.PipelineSpec.Finally {
+						if pt.Name == leafTaskName {
+							retries = pt.Retries
 						}
 					}
-					break
 				}
 			}
 		} else if pr.Status.PipelineSpec != nil {
@@ -257,7 +266,7 @@ func getTaskRunsWithStatusRecursive(pr *v1.PipelineRun, c *cli.Clients, ns strin
 			}
 			taskName := cr.PipelineTaskName
 			if prefix != "" {
-				taskName = prefix + ChildTaskSeparator + taskName
+				taskName = prefix + taskrunpkg.ChildTaskSeparator + taskName
 			}
 			trStatuses[cr.Name] = &v1.PipelineRunTaskRunStatus{
 				PipelineTaskName: taskName,
@@ -273,7 +282,7 @@ func getTaskRunsWithStatusRecursive(pr *v1.PipelineRun, c *cli.Clients, ns strin
 			}
 			childPrefix := cr.PipelineTaskName
 			if prefix != "" {
-				childPrefix = prefix + ChildTaskSeparator + childPrefix
+				childPrefix = prefix + taskrunpkg.ChildTaskSeparator + childPrefix
 			}
 			childTRs, err := getTaskRunsWithStatusRecursive(childPR, c, ns, childPrefix)
 			if err != nil {

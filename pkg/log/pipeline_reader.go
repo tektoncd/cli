@@ -286,9 +286,9 @@ func (r *Reader) getChildOrderedTasks(childPR *v1.PipelineRun, parentTaskName st
 		return nil, err
 	}
 	for i := range childOrdered {
-		childOrdered[i].Task = parentTaskName + pipelinerunpkg.ChildTaskSeparator + childOrdered[i].Task
+		childOrdered[i].Task = parentTaskName + taskrunpkg.ChildTaskSeparator + childOrdered[i].Task
 		if childOrdered[i].DisplayName != "" {
-			childOrdered[i].DisplayName = parentTaskName + pipelinerunpkg.ChildTaskSeparator + childOrdered[i].DisplayName
+			childOrdered[i].DisplayName = parentTaskName + taskrunpkg.ChildTaskSeparator + childOrdered[i].DisplayName
 		}
 	}
 	return childOrdered, nil

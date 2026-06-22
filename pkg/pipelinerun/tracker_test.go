@@ -730,12 +730,137 @@ func TestFindNewTaskruns_PinP_RetryCount(t *testing.T) {
 		t.Fatalf("expected 1 run, got %d: %v", len(runs), runs)
 	}
 
-	expectedTask := parentTaskName + ChildTaskSeparator + childTaskName
+	expectedTask := parentTaskName + trh.ChildTaskSeparator + childTaskName
 	if runs[0].Task != expectedTask {
 		t.Errorf("expected task %q, got %q", expectedTask, runs[0].Task)
 	}
 	if runs[0].Retries != 2 {
 		t.Errorf("expected retries 2, got %d", runs[0].Retries)
+	}
+}
+
+func TestFindNewTaskruns_PinP_DeepNestingWithRetry(t *testing.T) {
+	ns := "namespace"
+	leafTRName := "leaf-taskrun"
+	leafTRPod := "leaf-taskrun-pod"
+	middlePRName := "middle-pr"
+	leafPRName := "leaf-pr"
+
+	trs := []*v1.TaskRun{
+		{
+			ObjectMeta: metav1.ObjectMeta{Name: leafTRName, Namespace: ns},
+			Spec:       v1.TaskRunSpec{TaskRef: &v1.TaskRef{Name: "leaf"}},
+			Status: v1.TaskRunStatus{
+				Status: duckv1.Status{
+					Conditions: duckv1.Conditions{{Status: corev1.ConditionTrue}},
+				},
+				TaskRunStatusFields: v1.TaskRunStatusFields{
+					StartTime: &metav1.Time{Time: time.Now()},
+					PodName:   leafTRPod,
+				},
+			},
+		},
+	}
+
+	leafPR := &v1.PipelineRun{
+		ObjectMeta: metav1.ObjectMeta{Name: leafPRName, Namespace: ns},
+		Status: v1.PipelineRunStatus{
+			PipelineRunStatusFields: v1.PipelineRunStatusFields{
+				PipelineSpec: &v1.PipelineSpec{
+					Tasks: []v1.PipelineTask{
+						{Name: "leaf", TaskRef: &v1.TaskRef{Name: "leaf"}, Retries: 3},
+					},
+				},
+				ChildReferences: []v1.ChildStatusReference{
+					{
+						Name:             leafTRName,
+						PipelineTaskName: "leaf",
+						TypeMeta:         runtime.TypeMeta{APIVersion: "tekton.dev/v1", Kind: "TaskRun"},
+					},
+				},
+			},
+		},
+	}
+
+	middlePR := &v1.PipelineRun{
+		ObjectMeta: metav1.ObjectMeta{Name: middlePRName, Namespace: ns},
+		Status: v1.PipelineRunStatus{
+			PipelineRunStatusFields: v1.PipelineRunStatusFields{
+				PipelineSpec: &v1.PipelineSpec{
+					Tasks: []v1.PipelineTask{
+						{Name: "middle", TaskRef: &v1.TaskRef{Name: "middle"}},
+					},
+				},
+				ChildReferences: []v1.ChildStatusReference{
+					{
+						Name:             leafPRName,
+						PipelineTaskName: "middle",
+						TypeMeta:         runtime.TypeMeta{APIVersion: "tekton.dev/v1", Kind: "PipelineRun"},
+					},
+				},
+			},
+		},
+	}
+
+	parentPR := &v1.PipelineRun{
+		ObjectMeta: metav1.ObjectMeta{Name: "parent-pr", Namespace: ns},
+		Status: v1.PipelineRunStatus{
+			PipelineRunStatusFields: v1.PipelineRunStatusFields{
+				ChildReferences: []v1.ChildStatusReference{
+					{
+						Name:             middlePRName,
+						PipelineTaskName: "parent",
+						TypeMeta:         runtime.TypeMeta{APIVersion: "tekton.dev/v1", Kind: "PipelineRun"},
+					},
+				},
+			},
+		},
+	}
+
+	tdc := testDynamic.Options{}
+	dynamic, err := tdc.Client(
+		cb.UnstructuredPR(parentPR, "v1"),
+		cb.UnstructuredPR(middlePR, "v1"),
+		cb.UnstructuredPR(leafPR, "v1"),
+		cb.UnstructuredTR(trs[0], "v1"),
+	)
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	cs, _ := test.SeedTestData(t, pipelinetest.Data{
+		Namespaces:   []*corev1.Namespace{{ObjectMeta: metav1.ObjectMeta{Name: ns}}},
+		PipelineRuns: []*v1.PipelineRun{parentPR, middlePR, leafPR},
+		TaskRuns:     trs,
+	})
+	cs.Pipeline.Resources = cb.APIResourceList("v1", []string{"pipelinerun", "taskrun"})
+
+	tc := &cli.Clients{
+		Tekton:  cs.Pipeline,
+		Kube:    cs.Kube,
+		Dynamic: dynamic,
+	}
+	if err := actions.InitializeAPIGroupRes(tc.Tekton.Discovery()); err != nil {
+		t.Fatal(err)
+	}
+
+	tracker := NewTracker("parent-pr", ns, tc)
+	trStatuses, err := GetTaskRunsWithStatus(parentPR, tc, ns)
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	runs := tracker.findNewTaskruns(parentPR, nil, trStatuses)
+	if len(runs) != 1 {
+		t.Fatalf("expected 1 run, got %d: %v", len(runs), runs)
+	}
+
+	expectedTask := "parent" + trh.ChildTaskSeparator + "middle" + trh.ChildTaskSeparator + "leaf"
+	if runs[0].Task != expectedTask {
+		t.Errorf("expected task %q, got %q", expectedTask, runs[0].Task)
+	}
+	if runs[0].Retries != 3 {
+		t.Errorf("expected retries 3, got %d", runs[0].Retries)
 	}
 }
 
