@@ -21,7 +21,6 @@ import (
 	"net/url"
 	"os"
 	"path/filepath"
-	"slices"
 	"strings"
 
 	"github.com/fsnotify/fsnotify"
@@ -124,7 +123,15 @@ func WatchBackend(ctx context.Context, cfg config.Config, watcherStop chan bool)
 					continue
 				}
 
-				if !slices.Contains(pathsToWatch, event.Name) {
+				// Checking if the event.name matches ANY of the pathsToWatch
+				matched := false
+				for _, p := range pathsToWatch {
+					if strings.HasPrefix(event.Name, p) {
+						matched = true
+						break
+					}
+				}
+				if !matched {
 					continue
 				}
 
@@ -134,12 +141,14 @@ func WatchBackend(ctx context.Context, cfg config.Config, watcherStop chan bool)
 					if err != nil {
 						logger.Error(err)
 						backendChan <- nil
+						continue
 					}
 				} else if cfg.Storage.DocDB.MongoServerURLDir != "" {
 					updatedEnv, err = getMongoServerURLFromDir(cfg.Storage.DocDB.MongoServerURLDir)
 					if err != nil {
 						logger.Error(err)
 						backendChan <- nil
+						continue
 					}
 				}
 
