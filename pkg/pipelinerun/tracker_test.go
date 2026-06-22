@@ -37,6 +37,7 @@ import (
 	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/apimachinery/pkg/watch"
 	k8stest "k8s.io/client-go/testing"
+	"knative.dev/pkg/apis"
 	duckv1 "knative.dev/pkg/apis/duck/v1"
 )
 
@@ -264,5 +265,681 @@ func TestTracker_watchErrorHandler(t *testing.T) {
 			// so passing nil reflector is safe
 			watchErrorHandler(context.Background(), nil, tt.err)
 		})
+	}
+}
+
+func TestGetTaskRunsWithStatus_DirectTaskRuns(t *testing.T) {
+	ns := "namespace"
+	trName := "tr-1"
+	taskName := "task-1"
+	tr := &v1.TaskRun{
+		ObjectMeta: metav1.ObjectMeta{Name: trName, Namespace: ns},
+		Status: v1.TaskRunStatus{
+			TaskRunStatusFields: v1.TaskRunStatusFields{
+				PodName:   "pod-1",
+				StartTime: &metav1.Time{Time: time.Now()},
+			},
+			Status: duckv1.Status{
+				Conditions: duckv1.Conditions{{
+					Status: corev1.ConditionTrue,
+					Type:   apis.ConditionSucceeded,
+				}},
+			},
+		},
+	}
+	pr := &v1.PipelineRun{
+		ObjectMeta: metav1.ObjectMeta{Name: "pr", Namespace: ns},
+		Status: v1.PipelineRunStatus{
+			PipelineRunStatusFields: v1.PipelineRunStatusFields{
+				ChildReferences: []v1.ChildStatusReference{{
+					Name:             trName,
+					PipelineTaskName: taskName,
+					TypeMeta:         runtime.TypeMeta{Kind: "TaskRun"},
+				}},
+			},
+		},
+	}
+	cs, _ := test.SeedTestData(t, pipelinetest.Data{
+		PipelineRuns: []*v1.PipelineRun{pr},
+		TaskRuns:     []*v1.TaskRun{tr},
+		Namespaces:   []*corev1.Namespace{{ObjectMeta: metav1.ObjectMeta{Name: ns}}},
+	})
+	cs.Pipeline.Resources = cb.APIResourceList("v1", []string{"taskrun", "pipelinerun"})
+	tdc := testDynamic.Options{}
+	dc, err := tdc.Client(
+		cb.UnstructuredPR(pr, "v1"),
+		cb.UnstructuredTR(tr, "v1"),
+	)
+	if err != nil {
+		t.Fatal(err)
+	}
+	clients := &cli.Clients{Tekton: cs.Pipeline, Kube: cs.Kube, Dynamic: dc}
+	if err := actions.InitializeAPIGroupRes(clients.Tekton.Discovery()); err != nil {
+		t.Fatal(err)
+	}
+	result, err := GetTaskRunsWithStatus(pr, clients, ns)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if len(result) != 1 {
+		t.Fatalf("expected 1 TaskRun, got %d", len(result))
+	}
+	trs, ok := result[trName]
+	if !ok {
+		t.Fatalf("expected TaskRun %q in result", trName)
+	}
+	if trs.PipelineTaskName != taskName {
+		t.Errorf("expected PipelineTaskName %q, got %q", taskName, trs.PipelineTaskName)
+	}
+}
+func TestGetTaskRunsWithStatus_ChildPipelineRun(t *testing.T) {
+	ns := "namespace"
+	childTRName := "parent-run-call-child-greet"
+	childTaskName := "greet"
+	parentTaskName := "call-child"
+	childTR := &v1.TaskRun{
+		ObjectMeta: metav1.ObjectMeta{Name: childTRName, Namespace: ns},
+		Status: v1.TaskRunStatus{
+			TaskRunStatusFields: v1.TaskRunStatusFields{
+				PodName:   "pod-greet",
+				StartTime: &metav1.Time{Time: time.Now()},
+			},
+			Status: duckv1.Status{
+				Conditions: duckv1.Conditions{{
+					Status: corev1.ConditionTrue,
+					Type:   apis.ConditionSucceeded,
+				}},
+			},
+		},
+	}
+	childPR := &v1.PipelineRun{
+		ObjectMeta: metav1.ObjectMeta{Name: "parent-run-call-child", Namespace: ns},
+		Status: v1.PipelineRunStatus{
+			PipelineRunStatusFields: v1.PipelineRunStatusFields{
+				ChildReferences: []v1.ChildStatusReference{{
+					Name:             childTRName,
+					PipelineTaskName: childTaskName,
+					TypeMeta:         runtime.TypeMeta{Kind: "TaskRun"},
+				}},
+			},
+		},
+	}
+	parentPR := &v1.PipelineRun{
+		ObjectMeta: metav1.ObjectMeta{Name: "parent-run", Namespace: ns},
+		Status: v1.PipelineRunStatus{
+			PipelineRunStatusFields: v1.PipelineRunStatusFields{
+				ChildReferences: []v1.ChildStatusReference{{
+					Name:             "parent-run-call-child",
+					PipelineTaskName: parentTaskName,
+					TypeMeta:         runtime.TypeMeta{Kind: "PipelineRun"},
+				}},
+			},
+		},
+	}
+	cs, _ := test.SeedTestData(t, pipelinetest.Data{
+		PipelineRuns: []*v1.PipelineRun{parentPR, childPR},
+		TaskRuns:     []*v1.TaskRun{childTR},
+		Namespaces:   []*corev1.Namespace{{ObjectMeta: metav1.ObjectMeta{Name: ns}}},
+	})
+	cs.Pipeline.Resources = cb.APIResourceList("v1", []string{"taskrun", "pipelinerun"})
+	tdc := testDynamic.Options{}
+	dc, err := tdc.Client(
+		cb.UnstructuredPR(parentPR, "v1"),
+		cb.UnstructuredPR(childPR, "v1"),
+		cb.UnstructuredTR(childTR, "v1"),
+	)
+	if err != nil {
+		t.Fatal(err)
+	}
+	clients := &cli.Clients{Tekton: cs.Pipeline, Kube: cs.Kube, Dynamic: dc}
+	if err := actions.InitializeAPIGroupRes(clients.Tekton.Discovery()); err != nil {
+		t.Fatal(err)
+	}
+	result, err := GetTaskRunsWithStatus(parentPR, clients, ns)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if len(result) != 1 {
+		t.Fatalf("expected 1 TaskRun, got %d", len(result))
+	}
+	trs, ok := result[childTRName]
+	if !ok {
+		t.Fatalf("expected TaskRun %q in result", childTRName)
+	}
+	expectedTaskName := parentTaskName + " > " + childTaskName
+	if trs.PipelineTaskName != expectedTaskName {
+		t.Errorf("expected PipelineTaskName %q, got %q", expectedTaskName, trs.PipelineTaskName)
+	}
+}
+func TestGetTaskRunsWithStatus_DeepNesting(t *testing.T) {
+	ns := "namespace"
+	grandchildPR := &v1.PipelineRun{
+		ObjectMeta: metav1.ObjectMeta{Name: "a-b-c", Namespace: ns},
+		Status: v1.PipelineRunStatus{
+			PipelineRunStatusFields: v1.PipelineRunStatusFields{
+				ChildReferences: []v1.ChildStatusReference{{
+					Name:             "tr-c",
+					PipelineTaskName: "c-task",
+					TypeMeta:         runtime.TypeMeta{Kind: "TaskRun"},
+				}},
+			},
+		},
+	}
+	trC := &v1.TaskRun{
+		ObjectMeta: metav1.ObjectMeta{Name: "tr-c", Namespace: ns},
+		Status: v1.TaskRunStatus{
+			TaskRunStatusFields: v1.TaskRunStatusFields{PodName: "pod-c",
+				StartTime: &metav1.Time{Time: time.Now()}},
+			Status: duckv1.Status{Conditions: duckv1.Conditions{{
+				Status: corev1.ConditionTrue, Type: apis.ConditionSucceeded}}},
+		},
+	}
+	childPR := &v1.PipelineRun{
+		ObjectMeta: metav1.ObjectMeta{Name: "a-b", Namespace: ns},
+		Status: v1.PipelineRunStatus{
+			PipelineRunStatusFields: v1.PipelineRunStatusFields{
+				ChildReferences: []v1.ChildStatusReference{{
+					Name:             "a-b-c",
+					PipelineTaskName: "b-task",
+					TypeMeta:         runtime.TypeMeta{Kind: "PipelineRun"},
+				}},
+			},
+		},
+	}
+	parentPR := &v1.PipelineRun{
+		ObjectMeta: metav1.ObjectMeta{Name: "a", Namespace: ns},
+		Status: v1.PipelineRunStatus{
+			PipelineRunStatusFields: v1.PipelineRunStatusFields{
+				ChildReferences: []v1.ChildStatusReference{{
+					Name:             "a-b",
+					PipelineTaskName: "a-task",
+					TypeMeta:         runtime.TypeMeta{Kind: "PipelineRun"},
+				}},
+			},
+		},
+	}
+	cs, _ := test.SeedTestData(t, pipelinetest.Data{
+		PipelineRuns: []*v1.PipelineRun{parentPR, childPR, grandchildPR},
+		TaskRuns:     []*v1.TaskRun{trC},
+		Namespaces:   []*corev1.Namespace{{ObjectMeta: metav1.ObjectMeta{Name: ns}}},
+	})
+	cs.Pipeline.Resources = cb.APIResourceList("v1", []string{"taskrun", "pipelinerun"})
+	tdc := testDynamic.Options{}
+	dc, err := tdc.Client(
+		cb.UnstructuredPR(parentPR, "v1"),
+		cb.UnstructuredPR(childPR, "v1"),
+		cb.UnstructuredPR(grandchildPR, "v1"),
+		cb.UnstructuredTR(trC, "v1"),
+	)
+	if err != nil {
+		t.Fatal(err)
+	}
+	clients := &cli.Clients{Tekton: cs.Pipeline, Kube: cs.Kube, Dynamic: dc}
+	if err := actions.InitializeAPIGroupRes(clients.Tekton.Discovery()); err != nil {
+		t.Fatal(err)
+	}
+	result, err := GetTaskRunsWithStatus(parentPR, clients, ns)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if len(result) != 1 {
+		t.Fatalf("expected 1 TaskRun, got %d", len(result))
+	}
+	trs := result["tr-c"]
+	expected := "a-task > b-task > c-task"
+	if trs.PipelineTaskName != expected {
+		t.Errorf("expected %q, got %q", expected, trs.PipelineTaskName)
+	}
+}
+func TestGetTaskRunsWithStatus_Mixed(t *testing.T) {
+	ns := "namespace"
+	trDirect := &v1.TaskRun{
+		ObjectMeta: metav1.ObjectMeta{Name: "tr-build", Namespace: ns},
+		Status: v1.TaskRunStatus{
+			TaskRunStatusFields: v1.TaskRunStatusFields{PodName: "pod-build",
+				StartTime: &metav1.Time{Time: time.Now()}},
+			Status: duckv1.Status{Conditions: duckv1.Conditions{{
+				Status: corev1.ConditionTrue, Type: apis.ConditionSucceeded}}},
+		},
+	}
+	trChild := &v1.TaskRun{
+		ObjectMeta: metav1.ObjectMeta{Name: "tr-child-greet", Namespace: ns},
+		Status: v1.TaskRunStatus{
+			TaskRunStatusFields: v1.TaskRunStatusFields{PodName: "pod-greet",
+				StartTime: &metav1.Time{Time: time.Now()}},
+			Status: duckv1.Status{Conditions: duckv1.Conditions{{
+				Status: corev1.ConditionTrue, Type: apis.ConditionSucceeded}}},
+		},
+	}
+	childPR := &v1.PipelineRun{
+		ObjectMeta: metav1.ObjectMeta{Name: "pr-child", Namespace: ns},
+		Status: v1.PipelineRunStatus{
+			PipelineRunStatusFields: v1.PipelineRunStatusFields{
+				ChildReferences: []v1.ChildStatusReference{{
+					Name: "tr-child-greet", PipelineTaskName: "greet",
+					TypeMeta: runtime.TypeMeta{Kind: "TaskRun"},
+				}},
+			},
+		},
+	}
+	parentPR := &v1.PipelineRun{
+		ObjectMeta: metav1.ObjectMeta{Name: "pr-parent", Namespace: ns},
+		Status: v1.PipelineRunStatus{
+			PipelineRunStatusFields: v1.PipelineRunStatusFields{
+				ChildReferences: []v1.ChildStatusReference{
+					{
+						Name: "tr-build", PipelineTaskName: "build",
+						TypeMeta: runtime.TypeMeta{Kind: "TaskRun"},
+					},
+					{
+						Name: "pr-child", PipelineTaskName: "deploy",
+						TypeMeta: runtime.TypeMeta{Kind: "PipelineRun"},
+					},
+				},
+			},
+		},
+	}
+	cs, _ := test.SeedTestData(t, pipelinetest.Data{
+		PipelineRuns: []*v1.PipelineRun{parentPR, childPR},
+		TaskRuns:     []*v1.TaskRun{trDirect, trChild},
+		Namespaces:   []*corev1.Namespace{{ObjectMeta: metav1.ObjectMeta{Name: ns}}},
+	})
+	cs.Pipeline.Resources = cb.APIResourceList("v1", []string{"taskrun", "pipelinerun"})
+	tdc := testDynamic.Options{}
+	dc, err := tdc.Client(
+		cb.UnstructuredPR(parentPR, "v1"),
+		cb.UnstructuredPR(childPR, "v1"),
+		cb.UnstructuredTR(trDirect, "v1"),
+		cb.UnstructuredTR(trChild, "v1"),
+	)
+	if err != nil {
+		t.Fatal(err)
+	}
+	clients := &cli.Clients{Tekton: cs.Pipeline, Kube: cs.Kube, Dynamic: dc}
+	if err := actions.InitializeAPIGroupRes(clients.Tekton.Discovery()); err != nil {
+		t.Fatal(err)
+	}
+	result, err := GetTaskRunsWithStatus(parentPR, clients, ns)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if len(result) != 2 {
+		t.Fatalf("expected 2 TaskRuns, got %d", len(result))
+	}
+	// Direct TaskRun — no prefix
+	trs, ok := result["tr-build"]
+	if !ok {
+		t.Fatal("expected tr-build in result")
+	}
+	if trs.PipelineTaskName != "build" {
+		t.Errorf("expected 'build', got %q", trs.PipelineTaskName)
+	}
+	// Child PipelineRun TaskRun — prefixed
+	trs, ok = result["tr-child-greet"]
+	if !ok {
+		t.Fatal("expected tr-child-greet in result")
+	}
+	if trs.PipelineTaskName != "deploy > greet" {
+		t.Errorf("expected 'deploy > greet', got %q", trs.PipelineTaskName)
+	}
+}
+func TestGetTaskRunsWithStatus_Empty(t *testing.T) {
+	ns := "namespace"
+	pr := &v1.PipelineRun{
+		ObjectMeta: metav1.ObjectMeta{Name: "pr", Namespace: ns},
+	}
+	cs, _ := test.SeedTestData(t, pipelinetest.Data{
+		PipelineRuns: []*v1.PipelineRun{pr},
+		Namespaces:   []*corev1.Namespace{{ObjectMeta: metav1.ObjectMeta{Name: ns}}},
+	})
+	cs.Pipeline.Resources = cb.APIResourceList("v1", []string{"pipelinerun"})
+	tdc := testDynamic.Options{}
+	dc, err := tdc.Client(cb.UnstructuredPR(pr, "v1"))
+	if err != nil {
+		t.Fatal(err)
+	}
+	clients := &cli.Clients{Tekton: cs.Pipeline, Kube: cs.Kube, Dynamic: dc}
+	if err := actions.InitializeAPIGroupRes(clients.Tekton.Discovery()); err != nil {
+		t.Fatal(err)
+	}
+	result, err := GetTaskRunsWithStatus(pr, clients, ns)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if len(result) != 0 {
+		t.Errorf("expected empty map, got %d entries", len(result))
+	}
+}
+func TestGetTaskRunsWithStatus_NilPR(t *testing.T) {
+	result, err := GetTaskRunsWithStatus(nil, nil, "ns")
+	if err != nil {
+		t.Fatal(err)
+	}
+	if result != nil {
+		t.Errorf("expected nil, got %v", result)
+	}
+}
+
+func TestFindNewTaskruns_PinP_RetryCount(t *testing.T) {
+	ns := "namespace"
+	childTaskName := "greet"
+	childTRName := "child-taskrun"
+	childPRName := "child-pr"
+	parentPRName := "parent-pr"
+	parentTaskName := "call-child"
+
+	trs := []*v1.TaskRun{
+		{
+			ObjectMeta: metav1.ObjectMeta{Name: childTRName, Namespace: ns},
+			Spec:       v1.TaskRunSpec{TaskRef: &v1.TaskRef{Name: childTaskName}},
+			Status: v1.TaskRunStatus{
+				Status: duckv1.Status{
+					Conditions: duckv1.Conditions{{Status: corev1.ConditionTrue}},
+				},
+				TaskRunStatusFields: v1.TaskRunStatusFields{
+					StartTime: &metav1.Time{Time: time.Now()},
+					PodName:   childTRName + "-pod",
+				},
+			},
+		},
+	}
+
+	childPR := &v1.PipelineRun{
+		ObjectMeta: metav1.ObjectMeta{Name: childPRName, Namespace: ns},
+		Spec: v1.PipelineRunSpec{
+			PipelineSpec: &v1.PipelineSpec{
+				Tasks: []v1.PipelineTask{
+					{Name: childTaskName, TaskRef: &v1.TaskRef{Name: childTaskName}, Retries: 2},
+				},
+			},
+		},
+		Status: v1.PipelineRunStatus{
+			PipelineRunStatusFields: v1.PipelineRunStatusFields{
+				PipelineSpec: &v1.PipelineSpec{
+					Tasks: []v1.PipelineTask{
+						{Name: childTaskName, TaskRef: &v1.TaskRef{Name: childTaskName}, Retries: 2},
+					},
+				},
+				ChildReferences: []v1.ChildStatusReference{
+					{
+						Name:             childTRName,
+						PipelineTaskName: childTaskName,
+						TypeMeta:         runtime.TypeMeta{APIVersion: "tekton.dev/v1", Kind: "TaskRun"},
+					},
+				},
+			},
+		},
+	}
+
+	parentPR := &v1.PipelineRun{
+		ObjectMeta: metav1.ObjectMeta{Name: parentPRName, Namespace: ns},
+		Spec: v1.PipelineRunSpec{
+			PipelineSpec: &v1.PipelineSpec{
+				Tasks: []v1.PipelineTask{
+					{Name: parentTaskName, TaskRef: &v1.TaskRef{Name: parentTaskName}},
+				},
+			},
+		},
+		Status: v1.PipelineRunStatus{
+			PipelineRunStatusFields: v1.PipelineRunStatusFields{
+				ChildReferences: []v1.ChildStatusReference{
+					{
+						Name:             childPRName,
+						PipelineTaskName: parentTaskName,
+						TypeMeta:         runtime.TypeMeta{APIVersion: "tekton.dev/v1", Kind: "PipelineRun"},
+					},
+				},
+			},
+		},
+	}
+
+	tdc := testDynamic.Options{}
+	dynamic, err := tdc.Client(
+		cb.UnstructuredPR(parentPR, "v1"),
+		cb.UnstructuredPR(childPR, "v1"),
+		cb.UnstructuredTR(trs[0], "v1"),
+	)
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	cs, _ := test.SeedTestData(t, pipelinetest.Data{
+		Namespaces:   []*corev1.Namespace{{ObjectMeta: metav1.ObjectMeta{Name: ns}}},
+		PipelineRuns: []*v1.PipelineRun{parentPR, childPR},
+		TaskRuns:     trs,
+	})
+	cs.Pipeline.Resources = cb.APIResourceList("v1", []string{"pipelinerun", "taskrun"})
+
+	tc := &cli.Clients{
+		Tekton:  cs.Pipeline,
+		Kube:    cs.Kube,
+		Dynamic: dynamic,
+	}
+	if err := actions.InitializeAPIGroupRes(tc.Tekton.Discovery()); err != nil {
+		t.Fatal(err)
+	}
+
+	tracker := NewTracker(parentPRName, ns, tc)
+	trStatuses, err := GetTaskRunsWithStatus(parentPR, tc, ns)
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	runs := tracker.findNewTaskruns(parentPR, nil, trStatuses)
+	if len(runs) != 1 {
+		t.Fatalf("expected 1 run, got %d: %v", len(runs), runs)
+	}
+
+	expectedTask := parentTaskName + trh.ChildTaskSeparator + childTaskName
+	if runs[0].Task != expectedTask {
+		t.Errorf("expected task %q, got %q", expectedTask, runs[0].Task)
+	}
+	if runs[0].Retries != 2 {
+		t.Errorf("expected retries 2, got %d", runs[0].Retries)
+	}
+}
+
+func TestFindNewTaskruns_PinP_DeepNestingWithRetry(t *testing.T) {
+	ns := "namespace"
+	leafTRName := "leaf-taskrun"
+	leafTRPod := "leaf-taskrun-pod"
+	middlePRName := "middle-pr"
+	leafPRName := "leaf-pr"
+
+	trs := []*v1.TaskRun{
+		{
+			ObjectMeta: metav1.ObjectMeta{Name: leafTRName, Namespace: ns},
+			Spec:       v1.TaskRunSpec{TaskRef: &v1.TaskRef{Name: "leaf"}},
+			Status: v1.TaskRunStatus{
+				Status: duckv1.Status{
+					Conditions: duckv1.Conditions{{Status: corev1.ConditionTrue}},
+				},
+				TaskRunStatusFields: v1.TaskRunStatusFields{
+					StartTime: &metav1.Time{Time: time.Now()},
+					PodName:   leafTRPod,
+				},
+			},
+		},
+	}
+
+	leafPR := &v1.PipelineRun{
+		ObjectMeta: metav1.ObjectMeta{Name: leafPRName, Namespace: ns},
+		Status: v1.PipelineRunStatus{
+			PipelineRunStatusFields: v1.PipelineRunStatusFields{
+				PipelineSpec: &v1.PipelineSpec{
+					Tasks: []v1.PipelineTask{
+						{Name: "leaf", TaskRef: &v1.TaskRef{Name: "leaf"}, Retries: 3},
+					},
+				},
+				ChildReferences: []v1.ChildStatusReference{
+					{
+						Name:             leafTRName,
+						PipelineTaskName: "leaf",
+						TypeMeta:         runtime.TypeMeta{APIVersion: "tekton.dev/v1", Kind: "TaskRun"},
+					},
+				},
+			},
+		},
+	}
+
+	middlePR := &v1.PipelineRun{
+		ObjectMeta: metav1.ObjectMeta{Name: middlePRName, Namespace: ns},
+		Status: v1.PipelineRunStatus{
+			PipelineRunStatusFields: v1.PipelineRunStatusFields{
+				PipelineSpec: &v1.PipelineSpec{
+					Tasks: []v1.PipelineTask{
+						{Name: "middle", TaskRef: &v1.TaskRef{Name: "middle"}},
+					},
+				},
+				ChildReferences: []v1.ChildStatusReference{
+					{
+						Name:             leafPRName,
+						PipelineTaskName: "middle",
+						TypeMeta:         runtime.TypeMeta{APIVersion: "tekton.dev/v1", Kind: "PipelineRun"},
+					},
+				},
+			},
+		},
+	}
+
+	parentPR := &v1.PipelineRun{
+		ObjectMeta: metav1.ObjectMeta{Name: "parent-pr", Namespace: ns},
+		Status: v1.PipelineRunStatus{
+			PipelineRunStatusFields: v1.PipelineRunStatusFields{
+				ChildReferences: []v1.ChildStatusReference{
+					{
+						Name:             middlePRName,
+						PipelineTaskName: "parent",
+						TypeMeta:         runtime.TypeMeta{APIVersion: "tekton.dev/v1", Kind: "PipelineRun"},
+					},
+				},
+			},
+		},
+	}
+
+	tdc := testDynamic.Options{}
+	dynamic, err := tdc.Client(
+		cb.UnstructuredPR(parentPR, "v1"),
+		cb.UnstructuredPR(middlePR, "v1"),
+		cb.UnstructuredPR(leafPR, "v1"),
+		cb.UnstructuredTR(trs[0], "v1"),
+	)
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	cs, _ := test.SeedTestData(t, pipelinetest.Data{
+		Namespaces:   []*corev1.Namespace{{ObjectMeta: metav1.ObjectMeta{Name: ns}}},
+		PipelineRuns: []*v1.PipelineRun{parentPR, middlePR, leafPR},
+		TaskRuns:     trs,
+	})
+	cs.Pipeline.Resources = cb.APIResourceList("v1", []string{"pipelinerun", "taskrun"})
+
+	tc := &cli.Clients{
+		Tekton:  cs.Pipeline,
+		Kube:    cs.Kube,
+		Dynamic: dynamic,
+	}
+	if err := actions.InitializeAPIGroupRes(tc.Tekton.Discovery()); err != nil {
+		t.Fatal(err)
+	}
+
+	tracker := NewTracker("parent-pr", ns, tc)
+	trStatuses, err := GetTaskRunsWithStatus(parentPR, tc, ns)
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	runs := tracker.findNewTaskruns(parentPR, nil, trStatuses)
+	if len(runs) != 1 {
+		t.Fatalf("expected 1 run, got %d: %v", len(runs), runs)
+	}
+
+	expectedTask := "parent" + trh.ChildTaskSeparator + "middle" + trh.ChildTaskSeparator + "leaf"
+	if runs[0].Task != expectedTask {
+		t.Errorf("expected task %q, got %q", expectedTask, runs[0].Task)
+	}
+	if runs[0].Retries != 3 {
+		t.Errorf("expected retries 3, got %d", runs[0].Retries)
+	}
+}
+
+func TestGetTaskRunsWithStatus_ChildPR_NotFound(t *testing.T) {
+	ns := "namespace"
+	directTaskName := "build"
+	directTRName := "build-taskrun"
+	childPRTaskName := "call-child"
+	childPRName := "missing-child"
+
+	trs := []*v1.TaskRun{
+		{
+			ObjectMeta: metav1.ObjectMeta{Name: directTRName, Namespace: ns},
+			Spec:       v1.TaskRunSpec{TaskRef: &v1.TaskRef{Name: directTaskName}},
+			Status: v1.TaskRunStatus{
+				Status: duckv1.Status{
+					Conditions: duckv1.Conditions{{Status: corev1.ConditionTrue}},
+				},
+				TaskRunStatusFields: v1.TaskRunStatusFields{
+					StartTime: &metav1.Time{Time: time.Now()},
+					PodName:   directTRName + "-pod",
+				},
+			},
+		},
+	}
+
+	pr := &v1.PipelineRun{
+		ObjectMeta: metav1.ObjectMeta{Name: "pr", Namespace: ns},
+		Status: v1.PipelineRunStatus{
+			PipelineRunStatusFields: v1.PipelineRunStatusFields{
+				ChildReferences: []v1.ChildStatusReference{
+					{
+						Name:             directTRName,
+						PipelineTaskName: directTaskName,
+						TypeMeta:         runtime.TypeMeta{APIVersion: "tekton.dev/v1", Kind: "TaskRun"},
+					},
+					{
+						Name:             childPRName,
+						PipelineTaskName: childPRTaskName,
+						TypeMeta:         runtime.TypeMeta{APIVersion: "tekton.dev/v1", Kind: "PipelineRun"},
+					},
+				},
+			},
+		},
+	}
+
+	tdc := testDynamic.Options{}
+	dynamic, err := tdc.Client(
+		cb.UnstructuredPR(pr, "v1"),
+		cb.UnstructuredTR(trs[0], "v1"),
+	)
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	cs, _ := test.SeedTestData(t, pipelinetest.Data{
+		Namespaces:   []*corev1.Namespace{{ObjectMeta: metav1.ObjectMeta{Name: ns}}},
+		PipelineRuns: []*v1.PipelineRun{pr},
+		TaskRuns:     trs,
+	})
+	cs.Pipeline.Resources = cb.APIResourceList("v1", []string{"pipelinerun", "taskrun"})
+
+	tc := &cli.Clients{
+		Tekton:  cs.Pipeline,
+		Kube:    cs.Kube,
+		Dynamic: dynamic,
+	}
+	if err := actions.InitializeAPIGroupRes(tc.Tekton.Discovery()); err != nil {
+		t.Fatal(err)
+	}
+
+	result, err := GetTaskRunsWithStatus(pr, tc, ns)
+	if err != nil {
+		t.Fatalf("expected no error despite missing child PR, got: %v", err)
+	}
+	if len(result) != 1 {
+		t.Fatalf("expected 1 taskrun (direct only), got %d", len(result))
+	}
+	if result[directTRName].PipelineTaskName != directTaskName {
+		t.Errorf("expected PipelineTaskName %q, got %q", directTaskName, result[directTRName].PipelineTaskName)
 	}
 }
