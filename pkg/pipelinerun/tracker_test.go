@@ -33,6 +33,7 @@ import (
 	pipelinetest "github.com/tektoncd/pipeline/test"
 	"github.com/tektoncd/pipeline/test/diff"
 	corev1 "k8s.io/api/core/v1"
+	apierrors "k8s.io/apimachinery/pkg/api/errors"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/apimachinery/pkg/watch"
@@ -264,5 +265,77 @@ func TestTracker_watchErrorHandler(t *testing.T) {
 			// so passing nil reflector is safe
 			watchErrorHandler(context.Background(), nil, tt.err)
 		})
+	}
+}
+
+func TestGetTaskRunsWithStatus_fallsBackWhenListForbidden(t *testing.T) {
+	const (
+		ns     = "namespace"
+		prName = "output-pipeline-1"
+		trName = "output-task-1"
+		task   = "output-task-1"
+		pod    = "output-task-1-pod"
+	)
+
+	pr := &v1.PipelineRun{
+		ObjectMeta: metav1.ObjectMeta{
+			Name:      prName,
+			Namespace: ns,
+		},
+		Status: v1.PipelineRunStatus{
+			PipelineRunStatusFields: v1.PipelineRunStatusFields{
+				ChildReferences: []v1.ChildStatusReference{{
+					Name:             trName,
+					PipelineTaskName: task,
+					TypeMeta: runtime.TypeMeta{
+						APIVersion: "tekton.dev/v1",
+						Kind:       "TaskRun",
+					},
+				}},
+			},
+		},
+	}
+	tr := &v1.TaskRun{
+		ObjectMeta: metav1.ObjectMeta{
+			Name:      trName,
+			Namespace: ns,
+		},
+		Status: v1.TaskRunStatus{
+			TaskRunStatusFields: v1.TaskRunStatusFields{
+				PodName: pod,
+			},
+		},
+	}
+
+	cs, _ := test.SeedTestData(t, pipelinetest.Data{TaskRuns: []*v1.TaskRun{tr}})
+	cs.Pipeline.Resources = cb.APIResourceList("v1", []string{"taskrun", "pipelinerun"})
+
+	tdc := testDynamic.Options{
+		PrependReactors: []testDynamic.PrependOpt{{
+			Verb:     "list",
+			Resource: "taskruns",
+			Action: func(_ k8stest.Action) (bool, runtime.Object, error) {
+				return true, nil, apierrors.NewForbidden(taskrunGroupResource.GroupResource(), "", errors.New("forbidden"))
+			},
+		}},
+	}
+	dynamic, err := tdc.Client(cb.UnstructuredTR(tr, "v1"))
+	if err != nil {
+		t.Fatalf("unable to create dynamic client: %v", err)
+	}
+
+	clients := &cli.Clients{
+		Tekton:  cs.Pipeline,
+		Kube:    cs.Kube,
+		Dynamic: dynamic,
+	}
+
+	trStatuses, err := GetTaskRunsWithStatus(pr, clients, ns)
+	if err != nil {
+		t.Fatalf("unexpected error: %v", err)
+	}
+
+	if trStatuses[trName] == nil || trStatuses[trName].Status == nil || trStatuses[trName].Status.PodName != pod {
+		t.Fatalf("unexpected taskrun statuses: %#v", trStatuses)
 	}
 }

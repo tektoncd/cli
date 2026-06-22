@@ -17,6 +17,7 @@ package pipelinerun
 import (
 	"context"
 	"errors"
+	"fmt"
 	"sync"
 	"time"
 
@@ -27,6 +28,7 @@ import (
 	"github.com/tektoncd/pipeline/pkg/apis/pipeline/v1beta1"
 	informers "github.com/tektoncd/pipeline/pkg/client/informers/externalversions"
 	corev1 "k8s.io/api/core/v1"
+	apierrors "k8s.io/apimachinery/pkg/api/errors"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/fields"
 	"k8s.io/client-go/tools/cache"
@@ -223,13 +225,21 @@ func GetTaskRunsWithStatus(pr *v1.PipelineRun, c *cli.Clients, ns string) (map[s
 		return map[string]*v1.PipelineRunTaskRunStatus{}, nil
 	}
 
+	taskRunsByName, err := getTaskRunsByPipelineRun(pr.Name, c, ns)
+	if err != nil && !canFallbackToTaskRunGet(err) {
+		return nil, err
+	}
+
 	trStatuses := make(map[string]*v1.PipelineRunTaskRunStatus)
 	for _, cr := range pr.Status.ChildReferences {
 		//TODO: Needs to handle Run, CustomRun later
 		if cr.Kind == "TaskRun" {
-			tr, err := taskrunpkg.GetTaskRun(taskrunGroupResource, c, cr.Name, ns)
-			if err != nil {
-				return nil, err
+			tr, ok := taskRunsByName[cr.Name]
+			if !ok {
+				tr, err = taskrunpkg.GetTaskRun(taskrunGroupResource, c, cr.Name, ns)
+				if err != nil {
+					return nil, err
+				}
 			}
 
 			trStatuses[cr.Name] = &v1.PipelineRunTaskRunStatus{
@@ -241,4 +251,24 @@ func GetTaskRunsWithStatus(pr *v1.PipelineRun, c *cli.Clients, ns string) (map[s
 	}
 
 	return trStatuses, nil
+}
+
+func getTaskRunsByPipelineRun(prName string, c *cli.Clients, ns string) (map[string]*v1.TaskRun, error) {
+	var taskRuns v1.TaskRunList
+	if err := actions.ListV1(taskrunGroupResource, c, metav1.ListOptions{
+		LabelSelector: fmt.Sprintf("tekton.dev/pipelineRun=%s", prName),
+	}, ns, &taskRuns); err != nil {
+		return nil, err
+	}
+
+	taskRunsByName := make(map[string]*v1.TaskRun, len(taskRuns.Items))
+	for i := range taskRuns.Items {
+		taskRunsByName[taskRuns.Items[i].Name] = &taskRuns.Items[i]
+	}
+
+	return taskRunsByName, nil
+}
+
+func canFallbackToTaskRunGet(err error) bool {
+	return apierrors.IsForbidden(err) || apierrors.IsUnauthorized(err)
 }

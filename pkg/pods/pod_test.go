@@ -100,6 +100,91 @@ func Test_wait_pod_success(t *testing.T) {
 	}
 }
 
+func Test_wait_pod_ready_without_watch(t *testing.T) {
+	podname := "test"
+	ns := "ns"
+
+	clients, _ := test.SeedV1beta1TestData(t, test.Data{Pods: []*corev1.Pod{
+		{
+			ObjectMeta: metav1.ObjectMeta{
+				Name:      podname,
+				Namespace: ns,
+			},
+			Status: corev1.PodStatus{
+				Phase: corev1.PodRunning,
+			},
+		},
+	}})
+
+	pod := NewWithDefaults(podname, ns, clients.Kube)
+	p, err := pod.Wait()
+	if err != nil {
+		t.Fatalf("unexpected error: %v", err)
+	}
+	if p == nil || p.Name != podname {
+		t.Fatalf("unexpected pod result: %#v", p)
+	}
+}
+
+func Test_wait_pod_retries_when_watch_closes(t *testing.T) {
+	podname := "test"
+	ns := "ns"
+
+	initial := &corev1.Pod{
+		ObjectMeta: metav1.ObjectMeta{
+			Name:            podname,
+			Namespace:       ns,
+			ResourceVersion: "1",
+		},
+		Status: corev1.PodStatus{
+			Phase: corev1.PodPending,
+		},
+	}
+	running := &corev1.Pod{
+		ObjectMeta: metav1.ObjectMeta{
+			Name:            podname,
+			Namespace:       ns,
+			ResourceVersion: "2",
+		},
+		Status: corev1.PodStatus{
+			Phase: corev1.PodRunning,
+		},
+	}
+
+	clients, _ := test.SeedV1beta1TestData(t, test.Data{Pods: []*corev1.Pod{initial}})
+	firstWatch := watch.NewFake()
+	secondWatch := watch.NewFake()
+	watchCalls := 0
+	clients.Kube.PrependWatchReactor("pods", func(_ k8stest.Action) (bool, watch.Interface, error) {
+		watchCalls++
+		if watchCalls == 1 {
+			go func() {
+				time.Sleep(50 * time.Millisecond)
+				firstWatch.Stop()
+			}()
+			return true, firstWatch, nil
+		}
+
+		go func() {
+			time.Sleep(50 * time.Millisecond)
+			secondWatch.Modify(running)
+		}()
+		return true, secondWatch, nil
+	})
+
+	pod := NewWithDefaults(podname, ns, clients.Kube)
+	p, err := pod.Wait()
+	if err != nil {
+		t.Fatalf("unexpected error: %v", err)
+	}
+	if p == nil || p.Status.Phase != corev1.PodRunning {
+		t.Fatalf("unexpected pod result: %#v", p)
+	}
+	if watchCalls < 2 {
+		t.Fatalf("expected Wait to retry watch, got %d watch calls", watchCalls)
+	}
+}
+
 func Test_wait_pod_fail(t *testing.T) {
 	podname := "test"
 	ns := "ns"
