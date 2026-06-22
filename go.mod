@@ -1,6 +1,6 @@
 module github.com/tektoncd/cli
 
-go 1.25.8
+go 1.25.11
 
 require (
 	github.com/ActiveState/vt10x v1.3.1
@@ -294,7 +294,7 @@ require (
 	gocloud.dev/pubsub/kafkapubsub v0.43.0 // indirect
 	golang.org/x/exp v0.0.0-20250620022241-b7579e27df2b // indirect
 	golang.org/x/mod v0.36.0 // indirect
-	golang.org/x/net v0.54.0 // indirect
+	golang.org/x/net v0.55.0 // indirect
 	golang.org/x/oauth2 v0.36.0 // indirect
 	golang.org/x/sync v0.20.0 // indirect
 	golang.org/x/sys v0.45.0 // indirect
