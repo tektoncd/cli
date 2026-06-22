@@ -15,9 +15,11 @@ package oci
 
 import (
 	"context"
+	"crypto/tls"
 	"encoding/base64"
 	"encoding/json"
 	"fmt"
+	"net/http"
 
 	"github.com/tektoncd/chains/pkg/chains/formats"
 	"github.com/tektoncd/chains/pkg/chains/objects"
@@ -44,7 +46,6 @@ import (
 const StorageBackendOCI = "oci"
 
 // Backend implements a storage backend for OCI artifacts.
-//
 // Deprecated: Use SimpleStorer and AttestationStorer instead.
 type Backend struct {
 	cfg              config.Config
@@ -76,7 +77,7 @@ func NewStorageBackend(ctx context.Context, client kubernetes.Interface, cfg con
 // StorePayload implements the storage.Backend interface.
 func (b *Backend) StorePayload(ctx context.Context, obj objects.TektonObject, rawPayload []byte, signature string, storageOpts config.StorageOpts) error {
 	logger := logging.FromContext(ctx)
-	auth, err := b.getAuthenticator(ctx, obj, b.client)
+	remoteOpts, err := b.buildRemoteOptions(ctx, obj)
 	if err != nil {
 		return errors.Wrap(err, "getting oci authenticator")
 	}
@@ -88,7 +89,7 @@ func (b *Backend) StorePayload(ctx context.Context, obj objects.TektonObject, ra
 		if err := json.Unmarshal(rawPayload, &format); err != nil {
 			return errors.Wrap(err, "unmarshal simplesigning")
 		}
-		return b.uploadSignature(ctx, format, rawPayload, signature, storageOpts, auth)
+		return b.uploadSignature(ctx, format, rawPayload, signature, storageOpts, remoteOpts...)
 	}
 
 	if _, ok := formats.IntotoAttestationSet[storageOpts.PayloadFormat]; ok {
@@ -106,12 +107,34 @@ func (b *Backend) StorePayload(ctx context.Context, obj objects.TektonObject, ra
 			return nil
 		}
 
-		return b.uploadAttestation(ctx, &attestation, signature, storageOpts, auth)
+		return b.uploadAttestation(ctx, &attestation, signature, storageOpts, remoteOpts...)
 	}
 
 	// Fallback in case unsupported payload format is used or the deprecated "tekton" format
 	logger.Info("Skipping upload to OCI registry, OCI storage backend is only supported for OCI images and in-toto attestations")
 	return nil
+}
+
+// buildRemoteOptions build remote options for OCI storage backend
+func (b *Backend) buildRemoteOptions(ctx context.Context, obj objects.TektonObject) ([]remote.Option, error) {
+	opts := []remote.Option{}
+	auth, err := b.getAuthenticator(ctx, obj, b.client)
+	if err != nil {
+		return nil, err
+	}
+	opts = append(opts, auth)
+	if b.cfg.Storage.OCI.Insecure {
+		logger := logging.FromContext(ctx)
+		logger.Warn("Using insecure OCI registry connection. This skips TLS certificate verification and poses security risks. Only use this in testing or development environments.")
+		// InsecureSkipVerify is used only when explicitly configured for testing or development environments
+		// This is controlled by the user through configuration and should not be used in production
+		opts = append(opts, remote.WithTransport(&http.Transport{
+			TLSClientConfig: &tls.Config{
+				InsecureSkipVerify: true, // #nosec G402
+			},
+		}))
+	}
+	return opts, nil
 }
 
 func (b *Backend) uploadSignature(ctx context.Context, format simple.SimpleContainerImage, rawPayload []byte, signature string, storageOpts config.StorageOpts, remoteOpts ...remote.Option) error {
@@ -252,13 +275,13 @@ func (b *Backend) RetrievePayloads(ctx context.Context, obj objects.TektonObject
 			if payload, err := s.Payload(); err == nil {
 				envelope := dsse.Envelope{}
 				if err := json.Unmarshal(payload, &envelope); err != nil {
-					return nil, fmt.Errorf("cannot decode the envelope: %w", err)
+					return nil, fmt.Errorf("cannot decode the envelope: %s", err)
 				}
 
 				var decodedPayload []byte
 				decodedPayload, err = base64.StdEncoding.DecodeString(envelope.Payload)
 				if err != nil {
-					return nil, fmt.Errorf("error decoding the payload: %w", err)
+					return nil, fmt.Errorf("error decoding the payload: %s", err)
 				}
 
 				m[ref] = string(decodedPayload)
