@@ -34,7 +34,7 @@ Further documentation available:
 - [Tekton resources][tekton-releases-docs]
 - Standard for [release notes][release-notes-standards]
 
-## Releases
+## Release
 
 ### v0.45 (LTS)
 
@@ -59,6 +59,10 @@ Further documentation available:
 - **Latest Release**: [v0.42.0][v0-42-0] (2025-08-22) ([docs][v0-42-0-docs])
 - **Initial Release**: [v0.42.0][v0-42-0] (2025-08-22) ([docs][v0-42-0-docs])
 - **End of Life**: 2026-08-21
+
+## End of Life Releases
+
+Older releases are EOL and available on [GitHub][tekton-cli-releases].
 
 ### v0.41 (LTS)
 
@@ -166,10 +170,6 @@ Further documentation available:
 - **Initial Release**: [v0.25.0][v0-25-0] (2022-07-22)
 - **End of Life**: 2022-11-21
 - **Patch Releases**: [v0.25.0][v0-25-0]
-
-## End of Life Releases
-
-Older releases are EOL and available on [GitHub][tekton-cli-releases].
 
 [release-policy]: https://github.com/tektoncd/community/blob/main/releases.md
 [tekton-chains]: https://github.com/tektoncd/chains
