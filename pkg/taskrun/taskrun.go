@@ -18,6 +18,7 @@ import (
 	"sort"
 
 	v1 "github.com/tektoncd/pipeline/pkg/apis/pipeline/v1"
+	corev1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 )
 
@@ -76,6 +77,23 @@ func Filter(trs []Run, ts []string) []Run {
 		}
 	}
 
+	return filtered
+}
+
+func FilterByStatus(trs []Run, trsMap map[string]*v1.PipelineRunTaskRunStatus, failed bool) []Run {
+	if !failed {
+		return trs
+	}
+	filtered := []Run{}
+	for _, tr := range trs {
+		if status, ok := trsMap[tr.Name]; ok {
+			if status.Status != nil &&
+				len(status.Status.Conditions) > 0 &&
+				status.Status.Conditions[0].Status == corev1.ConditionFalse {
+				filtered = append(filtered, tr)
+			}
+		}
+	}
 	return filtered
 }
 

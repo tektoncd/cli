@@ -37,7 +37,7 @@ func (r *Reader) readPipelineLog() (<-chan Log, <-chan error, error) {
 		return nil, nil, err
 	}
 
-	if !pr.IsDone() && r.follow {
+	if !pr.IsDone() && r.follow && !r.failed {
 		return r.readLivePipelineLogs(pr)
 	}
 	return r.readAvailablePipelineLogs(pr)
@@ -89,7 +89,7 @@ func (r *Reader) readAvailablePipelineLogs(pr *v1.PipelineRun) (<-chan Log, <-ch
 		return nil, nil, err
 	}
 
-	ordered, err := r.getOrderedTasks(pr)
+	ordered, trsMap, err := r.getOrderedTasks(pr)
 	if err != nil {
 		return nil, nil, err
 	}
@@ -101,6 +101,11 @@ func (r *Reader) readAvailablePipelineLogs(pr *v1.PipelineRun) (<-chan Log, <-ch
 			availTasks = append(availTasks, o.Task)
 		}
 		return nil, nil, fmt.Errorf("passed filtered tasks: %v is not available, available tasks are: %v", r.tasks, availTasks)
+	}
+
+	taskRuns = taskrunpkg.FilterByStatus(taskRuns, trsMap, r.failed)
+	if len(taskRuns) == 0 && r.failed {
+		return nil, nil, fmt.Errorf("no failed TaskRuns found in PipelineRun %s", r.run)
 	}
 
 	logC := make(chan Log)
@@ -212,9 +217,7 @@ func (r *Reader) setUpTask(taskNumber int, tr taskrunpkg.Run) {
 	r.setRetries(tr.Retries)
 }
 
-// getOrderedTasks get Tasks in order from Spec.PipelineRef or Spec.PipelineSpec
-// and return trh.Run after converted taskruns into trh.Run.
-func (r *Reader) getOrderedTasks(pr *v1.PipelineRun) ([]taskrunpkg.Run, error) {
+func (r *Reader) getOrderedTasks(pr *v1.PipelineRun) ([]taskrunpkg.Run, map[string]*v1.PipelineRunTaskRunStatus, error) {
 	var tasks []v1.PipelineTask
 	switch {
 	case pr.Spec.PipelineRef != nil:
@@ -222,12 +225,12 @@ func (r *Reader) getOrderedTasks(pr *v1.PipelineRun) ([]taskrunpkg.Run, error) {
 			if pr.Status.PipelineSpec != nil {
 				tasks = append(tasks, pr.Status.PipelineSpec.Tasks...)
 			} else {
-				return nil, fmt.Errorf("pipelinerun %s does not have the PipelineRunSpec", pr.Name)
+				return nil, nil, fmt.Errorf("pipelinerun %s does not have the PipelineRunSpec", pr.Name)
 			}
 		} else {
 			pl, err := pipelinepkg.GetPipeline(pipelineGroupResource, r.clients, pr.Spec.PipelineRef.Name, r.ns)
 			if err != nil {
-				return nil, err
+				return nil, nil, err
 			}
 			tasks = pl.Spec.Tasks
 			tasks = append(tasks, pl.Spec.Finally...)
@@ -236,16 +239,15 @@ func (r *Reader) getOrderedTasks(pr *v1.PipelineRun) ([]taskrunpkg.Run, error) {
 		tasks = pr.Spec.PipelineSpec.Tasks
 		tasks = append(tasks, pr.Spec.PipelineSpec.Finally...)
 	default:
-		return nil, fmt.Errorf("pipelinerun %s did not provide PipelineRef or PipelineSpec", pr.Name)
+		return nil, nil, fmt.Errorf("pipelinerun %s did not provide PipelineRef or PipelineSpec", pr.Name)
 	}
 
 	trsMap, err := pipelinerunpkg.GetTaskRunsWithStatus(pr, r.clients, r.ns)
 	if err != nil {
-		return nil, err
+		return nil, nil, err
 	}
 
-	// Sort taskruns, to display the taskrun logs as per pipeline tasks order
-	return taskrunpkg.SortTasksBySpecOrder(tasks, trsMap), nil
+	return taskrunpkg.SortTasksBySpecOrder(tasks, trsMap), trsMap, nil
 }
 
 func empty(status v1.PipelineRunStatus) bool {
