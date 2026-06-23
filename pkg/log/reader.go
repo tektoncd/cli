@@ -35,6 +35,7 @@ type Reader struct {
 	timestamps      bool
 	tasks           []string
 	steps           []string
+	failed          bool
 	logType         string
 	task            string
 	displayName     string
@@ -76,6 +77,7 @@ func NewReader(logType string, opts *options.LogOptions) (*Reader, error) {
 		follow:          opts.Follow,
 		timestamps:      opts.Timestamps,
 		allSteps:        opts.AllSteps,
+		failed:          opts.Failed,
 		tasks:           opts.Tasks,
 		steps:           opts.Steps,
 		logType:         logType,
