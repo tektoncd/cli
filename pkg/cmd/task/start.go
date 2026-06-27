@@ -18,6 +18,7 @@ import (
 	"context"
 	"encoding/json"
 	"errors"
+	"io"
 	"os"
 	"strings"
 	"time"
@@ -79,6 +80,59 @@ type startOptions struct {
 	PodTemplate           string
 	SkipOptionalWorkspace bool
 	remoteOptions         bundle.RemoteOptions
+	JSONSpec              string
+}
+
+// readJSONSpec resolves a --json flag value to raw bytes.
+// Supported forms:
+//   - "-"      read from stdin
+//   - "@path"  read from the file at path
+//   - anything else is treated as a literal JSON string
+func readJSONSpec(raw string, stdin io.Reader) ([]byte, error) {
+	switch {
+	case raw == "-":
+		b, err := io.ReadAll(stdin)
+		if err != nil {
+			return nil, fmt.Errorf("reading JSON spec from stdin: %w", err)
+		}
+		return b, nil
+	case strings.HasPrefix(raw, "@"):
+		path := raw[1:]
+		b, err := os.ReadFile(path)
+		if err != nil {
+			return nil, fmt.Errorf("reading JSON spec from file %q: %w", path, err)
+		}
+		return b, nil
+	default:
+		return []byte(raw), nil
+	}
+}
+
+func applyTaskRunJSONSpec(tr *v1beta1.TaskRun, raw string, stdin io.Reader) error {
+	b, err := readJSONSpec(raw, stdin)
+	if err != nil {
+		return err
+	}
+	var spec v1beta1.TaskRunSpec
+	if err := json.Unmarshal(b, &spec); err != nil {
+		return fmt.Errorf("invalid JSON spec: %w", err)
+	}
+	if spec.Params != nil {
+		tr.Spec.Params = append(spec.Params, tr.Spec.Params...)
+	}
+	if spec.Workspaces != nil {
+		tr.Spec.Workspaces = append(spec.Workspaces, tr.Spec.Workspaces...)
+	}
+	if spec.ServiceAccountName != "" && tr.Spec.ServiceAccountName == "" {
+		tr.Spec.ServiceAccountName = spec.ServiceAccountName
+	}
+	if spec.Timeout != nil && tr.Spec.Timeout == nil {
+		tr.Spec.Timeout = spec.Timeout
+	}
+	if spec.PodTemplate != nil && tr.Spec.PodTemplate == nil {
+		tr.Spec.PodTemplate = spec.PodTemplate
+	}
+	return nil
 }
 
 // NameArg validates that the first argument is a valid task name
@@ -243,6 +297,7 @@ For passing the workspaces via flags:
 	c.Flags().BoolVarP(&opt.UseParamDefaults, "use-param-defaults", "", false, "use default parameter values without prompting for input")
 	c.Flags().StringVar(&opt.PodTemplate, "pod-template", "", "local or remote file containing a PodTemplate definition")
 	c.Flags().BoolVarP(&opt.SkipOptionalWorkspace, "skip-optional-workspace", "", false, "skips the prompt for optional workspaces")
+	c.Flags().StringVar(&opt.JSONSpec, "json", "", "TaskRun spec as JSON (inline, '-' for stdin, or '@path' for a file)")
 	bundle.AddRemoteFlags(c.Flags(), &opt.remoteOptions)
 
 	return c
@@ -350,6 +405,12 @@ func startTask(opt startOptions, args []string) error {
 			}
 		})
 		if err != nil {
+			return err
+		}
+	}
+
+	if opt.JSONSpec != "" {
+		if err := applyTaskRunJSONSpec(tr, opt.JSONSpec, os.Stdin); err != nil {
 			return err
 		}
 	}
@@ -503,6 +564,10 @@ func printTaskRun(output string, s *cli.Stream, tr interface{}) error {
 }
 
 func (opt *startOptions) getInputs() error {
+	if opt.JSONSpec != "" {
+		return nil
+	}
+
 	if opt.Last && opt.UseTaskRun != "" {
 		fmt.Fprintf(opt.stream.Err, "option --last and option --use-taskrun are not compatible \n")
 		return nil
