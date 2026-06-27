@@ -67,6 +67,7 @@ my-csi-template and my-volume-claim-template)
   -f, --filename string               local or remote file name containing a Pipeline definition to start a PipelineRun
       --finally-timeout string        timeout for Finally TaskRuns
   -h, --help                          help for start
+      --json string                   PipelineRun spec as JSON (inline, '-' for stdin, or '@path' for a file)
   -l, --labels strings                pass labels as label=value.
   -L, --last                          re-run the Pipeline using last PipelineRun values
   -o, --output string                 format of PipelineRun (yaml, json or name)
