@@ -60,6 +60,7 @@ For passing the workspaces via flags:
   -f, --filename string           local or remote file name containing a Task definition to start a TaskRun
   -h, --help                      help for start
   -i, --image string              use an oci bundle
+      --json string               TaskRun spec as JSON (inline, '-' for stdin, or '@path' for a file)
   -l, --labels strings            pass labels as label=value.
   -L, --last                      re-run the Task using last TaskRun values
       --output string             format of TaskRun (yaml or json)
