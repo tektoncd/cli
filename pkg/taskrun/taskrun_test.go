@@ -1,4 +1,4 @@
-// Copyright © 2019 The Tekton Authors.
+// Copyright © 2026 The Tekton Authors.
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -18,93 +18,32 @@ import (
 	"testing"
 )
 
-func TestFilter_Empty_ReturnsAll(t *testing.T) {
-	trs := []Run{{Task: "build"}, {Task: "test"}}
-	result := Filter(trs, nil)
-	if len(result) != 2 {
-		t.Errorf("expected 2 results, got %d", len(result))
+func TestFilter(t *testing.T) {
+	tests := []struct {
+		name   string
+		trs    []Run
+		filter []string
+		want   int
+	}{
+		{name: "empty filter returns all", trs: []Run{{Task: "build"}, {Task: "test"}}, filter: nil, want: 2},
+		{name: "exact match", trs: []Run{{Task: "build"}, {Task: "test"}}, filter: []string{"build"}, want: 1},
+		{name: "no match", trs: []Run{{Task: "build"}}, filter: []string{"nonexistent"}, want: 0},
+		{name: "PinP exact", trs: []Run{{Task: "call-child" + ChildTaskSeparator + "greet"}}, filter: []string{"call-child" + ChildTaskSeparator + "greet"}, want: 1},
+		{name: "PinP parent prefix", trs: []Run{{Task: "call-child" + ChildTaskSeparator + "greet"}}, filter: []string{"call-child"}, want: 1},
+		{name: "PinP child suffix", trs: []Run{{Task: "call-child" + ChildTaskSeparator + "greet"}}, filter: []string{"greet"}, want: 1},
+		{name: "PinP deep nesting", trs: []Run{{Task: "a" + ChildTaskSeparator + "b" + ChildTaskSeparator + "c"}}, filter: []string{"c"}, want: 1},
+		{name: "PinP mixed direct and child", trs: []Run{{Task: "build"}, {Task: "deploy" + ChildTaskSeparator + "greet"}, {Task: "test"}}, filter: []string{"build", "greet"}, want: 2},
+		{name: "PinP multiple filters", trs: []Run{{Task: "a" + ChildTaskSeparator + "x"}, {Task: "b" + ChildTaskSeparator + "y"}, {Task: "c" + ChildTaskSeparator + "z"}}, filter: []string{"x", "y"}, want: 2},
+		{name: "partial prefix does not match", trs: []Run{{Task: "call-child" + ChildTaskSeparator + "greet"}}, filter: []string{"child"}, want: 0},
+		{name: "filter with separator exact only", trs: []Run{{Task: "a" + ChildTaskSeparator + "b" + ChildTaskSeparator + "c"}}, filter: []string{"a" + ChildTaskSeparator + "b"}, want: 0},
 	}
-}
-
-func TestFilter_ExactMatch(t *testing.T) {
-	trs := []Run{{Task: "build"}, {Task: "test"}}
-	result := Filter(trs, []string{"build"})
-	if len(result) != 1 || result[0].Task != "build" {
-		t.Errorf("expected [build], got %v", result)
-	}
-}
-
-func TestFilter_NoMatch(t *testing.T) {
-	trs := []Run{{Task: "build"}}
-	result := Filter(trs, []string{"nonexistent"})
-	if len(result) != 0 {
-		t.Errorf("expected 0 results, got %d", len(result))
-	}
-}
-
-func TestFilter_PinP_Exact(t *testing.T) {
-	trs := []Run{{Task: "call-child" + ChildTaskSeparator + "greet"}}
-	result := Filter(trs, []string{"call-child" + ChildTaskSeparator + "greet"})
-	if len(result) != 1 {
-		t.Errorf("expected 1 result, got %d", len(result))
-	}
-}
-
-func TestFilter_PinP_ParentPrefix(t *testing.T) {
-	trs := []Run{{Task: "call-child" + ChildTaskSeparator + "greet"}}
-	result := Filter(trs, []string{"call-child"})
-	if len(result) != 1 {
-		t.Errorf("expected 1 result, got %d", len(result))
-	}
-}
-
-func TestFilter_PinP_ChildSuffix(t *testing.T) {
-	trs := []Run{{Task: "call-child" + ChildTaskSeparator + "greet"}}
-	result := Filter(trs, []string{"greet"})
-	if len(result) != 1 {
-		t.Errorf("expected 1 result, got %d", len(result))
-	}
-}
-
-func TestFilter_PinP_DeepNesting(t *testing.T) {
-	trs := []Run{{Task: "a" + ChildTaskSeparator + "b" + ChildTaskSeparator + "c"}}
-	result := Filter(trs, []string{"c"})
-	if len(result) != 1 {
-		t.Errorf("expected 1 result, got %d", len(result))
-	}
-}
-
-func TestFilter_PinP_MixedDirectAndChild(t *testing.T) {
-	trs := []Run{{Task: "build"}, {Task: "deploy" + ChildTaskSeparator + "greet"}, {Task: "test"}}
-	result := Filter(trs, []string{"build", "greet"})
-	if len(result) != 2 {
-		t.Errorf("expected 2 results, got %d", len(result))
-	}
-}
-
-func TestFilter_PinP_MultipleFilters(t *testing.T) {
-	trs := []Run{{Task: "a" + ChildTaskSeparator + "x"}, {Task: "b" + ChildTaskSeparator + "y"}, {Task: "c" + ChildTaskSeparator + "z"}}
-	result := Filter(trs, []string{"x", "y"})
-	if len(result) != 2 {
-		t.Errorf("expected 2 results, got %d", len(result))
-	}
-}
-
-func TestFilter_PinP_PrefixDoesNotMatchPartial(t *testing.T) {
-	// "child" should NOT match "call-child>greet" (partial prefix)
-	trs := []Run{{Task: "call-child" + ChildTaskSeparator + "greet"}}
-	result := Filter(trs, []string{"child"})
-	if len(result) != 0 {
-		t.Errorf("expected 0 results for partial prefix match, got %d", len(result))
-	}
-}
-
-func TestFilter_PinP_FilterWithSeparatorExactOnly(t *testing.T) {
-	// filter value containing ChildTaskSeparator should only match exact
-	trs := []Run{{Task: "a" + ChildTaskSeparator + "b" + ChildTaskSeparator + "c"}}
-	result := Filter(trs, []string{"a" + ChildTaskSeparator + "b"})
-	if len(result) != 0 {
-		t.Errorf("expected 0 results (exact only for filter with >), got %d", len(result))
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			result := Filter(tt.trs, tt.filter)
+			if len(result) != tt.want {
+				t.Errorf("expected %d results, got %d", tt.want, len(result))
+			}
+		})
 	}
 }
 
