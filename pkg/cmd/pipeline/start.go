@@ -633,11 +633,6 @@ func (opt *startOptions) applyJSONSpec(pr *v1beta1.PipelineRun, stdin io.Reader)
 }
 
 func (opt *startOptions) configurePipelineRun(pr *v1beta1.PipelineRun, cs *cli.Clients) error {
-
-	if err := opt.applyJSONSpec(pr, os.Stdin); err != nil {
-		return err
-	}
-
 	// Apply timeouts
 	if opt.TimeOut != "" {
 		timeoutDuration, err := time.ParseDuration(opt.TimeOut)
@@ -788,6 +783,10 @@ func (opt *startOptions) createAndRunPipelineRun(pr *v1beta1.PipelineRun, pipeli
 		return err
 	}
 
+	if err := opt.applyJSONSpec(pr, os.Stdin); err != nil {
+		return err
+	}
+
 	// Configure the PipelineRun with common settings
 	if err := opt.configurePipelineRun(pr, cs); err != nil {
 		return err
@@ -861,6 +860,10 @@ func (opt *startOptions) startPipeline(pipelineStart *v1beta1.Pipeline) error {
 		pr.Spec = lastPipelineRun.Spec
 		// Reapply blank status in case PipelineRun used was cancelled
 		pr.Spec.Status = ""
+	}
+
+	if err := opt.applyJSONSpec(pr, os.Stdin); err != nil {
+		return err
 	}
 
 	// Configure the PipelineRun with common settings

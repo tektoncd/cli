@@ -409,12 +409,6 @@ func startTask(opt startOptions, args []string) error {
 		}
 	}
 
-	if opt.JSONSpec != "" {
-		if err := applyTaskRunJSONSpec(tr, opt.JSONSpec, os.Stdin); err != nil {
-			return err
-		}
-	}
-
 	if err := opt.getInputs(); err != nil {
 		return err
 	}
@@ -428,6 +422,12 @@ func startTask(opt startOptions, args []string) error {
 		}
 		err := taskRunOpts.UseTaskRunFrom(tr, cs, tname, "Task")
 		if err != nil {
+			return err
+		}
+	}
+
+	if opt.JSONSpec != "" {
+		if err := applyTaskRunJSONSpec(tr, opt.JSONSpec, os.Stdin); err != nil {
 			return err
 		}
 	}
