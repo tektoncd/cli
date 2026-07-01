@@ -1,0 +1,254 @@
+name: Patch Release
+
+"on":
+  workflow_dispatch:
+    inputs:
+      branch:
+        description: "Release branch (e.g. release-v0.45.0)"
+        required: true
+        type: string
+      version:
+        description: "Version to release (e.g. v0.45.1)"
+        required: true
+        type: string
+      release_as_latest:
+        description: "Publish as latest release"
+        required: false
+        type: boolean
+        default: true
+  schedule:
+    # Weekly on Thursday at 10:00 UTC
+    - cron: "0 10 * * 4"
+
+permissions: {}
+
+env:
+  PAC_CONTROLLER_URL: "https://pac.infra.tekton.dev"
+  PAC_REPOSITORY_NAME: "tektoncd-cli"
+  # Ignore release branches older than this (major.minor)
+  MIN_RELEASE_VERSION: "0.40"
+
+jobs:
+  scan-release-branches:
+    name: Scan for unreleased commits
+    if: github.event_name == 'schedule' && github.repository_owner == 'tektoncd'
+    runs-on: ubuntu-latest
+    outputs:
+      matrix: ${{ steps.scan.outputs.matrix }}
+      has_releases: ${{ steps.scan.outputs.has_releases }}
+    steps:
+      - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
+        with:
+          fetch-depth: 0
+          persist-credentials: false
+
+      - name: Scan release branches for new commits
+        id: scan
+        run: |
+          # CLI uses release-vX.Y.Z branch naming
+          latest_branch=""
+          latest_major=0
+          latest_minor=0
+          for ref in $(git branch -r --list 'origin/release-v*'); do
+            branch="${ref#origin/}"
+            if [[ "$branch" =~ release-v([0-9]+)\.([0-9]+)\.[0-9]+ ]]; then
+              major="${BASH_REMATCH[1]}"
+              minor="${BASH_REMATCH[2]}"
+              if [ "$major" -gt "$latest_major" ] || { [ "$major" -eq "$latest_major" ] && [ "$minor" -gt "$latest_minor" ]; }; then
+                latest_major=$major
+                latest_minor=$minor
+                latest_branch=$branch
+              fi
+            fi
+          done
+          echo "::notice::Latest release branch: ${latest_branch}"
+
+          MIN_MAJOR="${MIN_RELEASE_VERSION%%.*}"
+          MIN_MINOR="${MIN_RELEASE_VERSION##*.}"
+
+          releases=()
+          for ref in $(git branch -r --list 'origin/release-v*'); do
+            branch="${ref#origin/}"
+
+            # Skip branches older than MIN_RELEASE_VERSION
+            if [[ "$branch" =~ release-v([0-9]+)\.([0-9]+)\.[0-9]+ ]]; then
+              major="${BASH_REMATCH[1]}"
+              minor="${BASH_REMATCH[2]}"
+              if [ "$major" -lt "$MIN_MAJOR" ] || { [ "$major" -eq "$MIN_MAJOR" ] && [ "$minor" -lt "$MIN_MINOR" ]; }; then
+                echo "::notice::Branch ${branch} is older than v${MIN_RELEASE_VERSION} — skipping"
+                continue
+              fi
+            fi
+
+            # Find the latest tag on this branch
+            last_tag=$(git describe --tags --abbrev=0 --match 'v*' "$ref" 2>/dev/null || echo "")
+            if [ -z "$last_tag" ]; then
+              echo "::notice::Branch ${branch} has no tags — skipping"
+              continue
+            fi
+
+            # Count commits since last tag
+            new_commits=$(git rev-list "${last_tag}..${ref}" --count)
+            if [ "$new_commits" -eq 0 ]; then
+              echo "::notice::Branch ${branch} has no new commits since ${last_tag}"
+              continue
+            fi
+
+            # Calculate next patch version: v0.44.0 → v0.44.1
+            next_version=$(echo "$last_tag" | awk -F. '{printf "%s.%s.%d", $1, $2, $3+1}')
+
+            # Read tool versions from the branch
+            go_version=$(git show "${ref}:go.mod" | grep "^go " | awk '{ print $2 }')
+            golangci_version=$(git show "${ref}:tools/go.mod" | grep golangci-lint | awk '{ print $3 }')
+
+            # Only the latest release branch publishes as latest
+            is_latest="false"
+            if [ "$branch" = "$latest_branch" ]; then
+              is_latest="true"
+            fi
+
+            echo "::notice::Branch ${branch}: ${new_commits} new commits since ${last_tag} → ${next_version} (latest=${is_latest}, go=${go_version}, lint=${golangci_version})"
+            releases+=("{\"branch\":\"${branch}\",\"version\":\"${next_version}\",\"release_as_latest\":\"${is_latest}\",\"go_version\":\"${go_version}\",\"golangci_lint_version\":\"${golangci_version}\"}")
+          done
+
+          if [ ${#releases[@]} -eq 0 ]; then
+            echo "matrix=[]" >> "$GITHUB_OUTPUT"
+            echo "has_releases=false" >> "$GITHUB_OUTPUT"
+          else
+            echo "matrix=[$(IFS=,; echo "${releases[*]}")]" >> "$GITHUB_OUTPUT"
+            echo "has_releases=true" >> "$GITHUB_OUTPUT"
+          fi
+
+  create-tag-and-trigger:
+    name: "Release ${{ matrix.release.version }} (${{ matrix.release.branch }})"
+    needs: scan-release-branches
+    if: needs.scan-release-branches.outputs.has_releases == 'true'
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+    strategy:
+      matrix:
+        release: ${{ fromJson(needs.scan-release-branches.outputs.matrix) }}
+      max-parallel: 1
+    steps:
+      - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
+        with:
+          ref: ${{ matrix.release.branch }}
+
+      - name: Create and push version tag
+        env:
+          RELEASE_VERSION: ${{ matrix.release.version }}
+        run: |
+          # Write version to VERSION file (goreleaser reads from git tag,
+          # but the Makefile uses this file)
+          echo "${RELEASE_VERSION#v}" > VERSION
+          git config user.name "tekton-robot"
+          git config user.email "tekton-robot@tektoncd.com"
+          git add VERSION
+          git commit -sm "New version ${RELEASE_VERSION}" || echo "No VERSION changes"
+          git tag -a "${RELEASE_VERSION}" -m "Release ${RELEASE_VERSION}"
+          git push origin "${RELEASE_VERSION}"
+          git push origin "HEAD:${{ matrix.release.branch }}"
+
+      - name: Trigger PAC incoming webhook
+        env:
+          PAC_INCOMING_SECRET: ${{ secrets.PAC_INCOMING_SECRET }}
+          RELEASE_BRANCH: ${{ matrix.release.branch }}
+          RELEASE_VERSION: ${{ matrix.release.version }}
+          RELEASE_AS_LATEST: ${{ matrix.release.release_as_latest }}
+          GO_VERSION: ${{ matrix.release.go_version }}
+          GOLANGCI_LINT_VERSION: ${{ matrix.release.golangci_lint_version }}
+        run: |
+          echo "::notice::Triggering release ${RELEASE_VERSION} on ${RELEASE_BRANCH} (latest=${RELEASE_AS_LATEST})"
+          curl -sf -X POST "${PAC_CONTROLLER_URL}/incoming" \
+            -H "Content-Type: application/json" \
+            -d '{
+              "repository": "'"${PAC_REPOSITORY_NAME}"'",
+              "branch": "'"${RELEASE_BRANCH}"'",
+              "pipelinerun": "cli-release",
+              "secret": "'"${PAC_INCOMING_SECRET}"'",
+              "params": {
+                "version": "'"${RELEASE_VERSION}"'",
+                "release_as_latest": "'"${RELEASE_AS_LATEST}"'",
+                "go_version": "'"${GO_VERSION}"'",
+                "golangci_lint_version": "'"${GOLANGCI_LINT_VERSION}"'"
+              }
+            }'
+          echo "✅ Release triggered successfully"
+
+  trigger-manual-release:
+    name: "Trigger ${{ inputs.version }} (${{ inputs.branch }})"
+    if: github.event_name == 'workflow_dispatch' && github.repository_owner == 'tektoncd'
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+    steps:
+      - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
+        with:
+          ref: ${{ inputs.branch }}
+
+      - name: Validate inputs
+        env:
+          INPUT_BRANCH: ${{ inputs.branch }}
+          INPUT_VERSION: ${{ inputs.version }}
+        run: |
+          # Validate branch format (CLI uses release-vX.Y.Z)
+          if [[ ! "${INPUT_BRANCH}" =~ ^release-v[0-9]+\.[0-9]+\.[0-9]+$ ]]; then
+            echo "::error::Invalid branch format: ${INPUT_BRANCH}. Expected: release-vX.Y.Z"
+            exit 1
+          fi
+          # Validate version format
+          if [[ ! "${INPUT_VERSION}" =~ ^v[0-9]+\.[0-9]+\.[0-9]+$ ]]; then
+            echo "::error::Invalid version format: ${INPUT_VERSION}. Expected: vX.Y.Z"
+            exit 1
+          fi
+
+      - name: Read tool versions
+        id: versions
+        run: |
+          GO_VERSION=$(head -3 go.mod | grep "^go " | awk '{ print $2 }')
+          GOLANGCI_VERSION=$(grep golangci-lint tools/go.mod | awk '{ print $3 }')
+          echo "go_version=${GO_VERSION}" >> "$GITHUB_OUTPUT"
+          echo "golangci_lint_version=${GOLANGCI_VERSION}" >> "$GITHUB_OUTPUT"
+          echo "::notice::Go version: ${GO_VERSION}, golangci-lint: ${GOLANGCI_VERSION}"
+
+      - name: Create and push version tag
+        env:
+          INPUT_VERSION: ${{ inputs.version }}
+          INPUT_BRANCH: ${{ inputs.branch }}
+        run: |
+          # Write version to VERSION file
+          echo "${INPUT_VERSION#v}" > VERSION
+          git config user.name "tekton-robot"
+          git config user.email "tekton-robot@tektoncd.com"
+          git add VERSION
+          git commit -sm "New version ${INPUT_VERSION}" || echo "No VERSION changes"
+          git tag -a "${INPUT_VERSION}" -m "Release ${INPUT_VERSION}"
+          git push origin "${INPUT_VERSION}"
+          git push origin "HEAD:${INPUT_BRANCH}"
+
+      - name: Trigger PAC incoming webhook
+        env:
+          PAC_INCOMING_SECRET: ${{ secrets.PAC_INCOMING_SECRET }}
+          INPUT_BRANCH: ${{ inputs.branch }}
+          INPUT_VERSION: ${{ inputs.version }}
+          INPUT_RELEASE_AS_LATEST: ${{ inputs.release_as_latest }}
+          GO_VERSION: ${{ steps.versions.outputs.go_version }}
+          GOLANGCI_LINT_VERSION: ${{ steps.versions.outputs.golangci_lint_version }}
+        run: |
+          echo "::notice::Triggering release ${INPUT_VERSION} on ${INPUT_BRANCH} (latest=${INPUT_RELEASE_AS_LATEST})"
+          curl -sf -X POST "${PAC_CONTROLLER_URL}/incoming" \
+            -H "Content-Type: application/json" \
+            -d '{
+              "repository": "'"${PAC_REPOSITORY_NAME}"'",
+              "branch": "'"${INPUT_BRANCH}"'",
+              "pipelinerun": "cli-release",
+              "secret": "'"${PAC_INCOMING_SECRET}"'",
+              "params": {
+                "version": "'"${INPUT_VERSION}"'",
+                "release_as_latest": "'"${INPUT_RELEASE_AS_LATEST}"'",
+                "go_version": "'"${GO_VERSION}"'",
+                "golangci_lint_version": "'"${GOLANGCI_LINT_VERSION}"'"
+              }
+            }'
+          echo "✅ Release triggered successfully"
