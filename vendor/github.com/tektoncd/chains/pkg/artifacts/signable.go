@@ -164,6 +164,7 @@ func (oa *OCIArtifact) ExtractObjects(ctx context.Context, obj objects.TektonObj
 func ExtractOCIImagesFromResults(ctx context.Context, results []objects.Result) []interface{} {
 	logger := logging.FromContext(ctx)
 	objs := []interface{}{}
+	seen := map[string]bool{}
 
 	extractor := structuredSignableExtractor{
 		uriSuffix:    OCIImageURLResultName,
@@ -176,6 +177,11 @@ func ExtractOCIImagesFromResults(ctx context.Context, results []objects.Result) 
 			logger.Errorf("error getting digest: %v", err)
 			continue
 		}
+		if seen[dgst.Name()] {
+			logger.Debugf("skipping duplicate image %s", dgst.Name())
+			continue
+		}
+		seen[dgst.Name()] = true
 		objs = append(objs, dgst)
 	}
 
@@ -196,8 +202,32 @@ func ExtractOCIImagesFromResults(ctx context.Context, results []objects.Result) 
 				logger.Errorf("error getting digest for img %s: %v", trimmed, err)
 				continue
 			}
+			if seen[dgst.Name()] {
+				logger.Debugf("skipping duplicate image %s", dgst.Name())
+				continue
+			}
+			seen[dgst.Name()] = true
 			objs = append(objs, dgst)
 		}
+	}
+
+	// Also check structured ARTIFACT_OUTPUTS for OCI artifacts that are marked as build artifacts
+	// These are results that contain object values with "uri", "digest" and isBuildArtifact=="true"
+	for _, s := range ExtractBuildArtifactsFromResults(ctx, results) {
+		if !hasImageRequirements(*s) {
+			continue
+		}
+		dgst, err := name.NewDigest(fmt.Sprintf("%s@%s", s.URI, s.Digest))
+		if err != nil {
+			logger.Errorf("error getting digest for structured output %s@%s: %v", s.URI, s.Digest, err)
+			continue
+		}
+		if seen[dgst.Name()] {
+			logger.Debugf("skipping duplicate image %s", dgst.Name())
+			continue
+		}
+		seen[dgst.Name()] = true
+		objs = append(objs, dgst)
 	}
 
 	return objs
@@ -326,7 +356,7 @@ func isValidArtifactOutput(res objects.Result) (bool, error) {
 		return false, fmt.Errorf("%s should have digest field: %v", res.Name, res.Value.ObjectVal)
 	}
 	if _, _, err := ParseDigest(res.Value.ObjectVal["digest"]); err != nil {
-		return false, fmt.Errorf("error getting digest %s: %w", res.Value.ObjectVal["digest"], err)
+		return false, fmt.Errorf("error getting digest %s: %v", res.Value.ObjectVal["digest"], err)
 	}
 	return true, nil
 }
