@@ -1,0 +1,69 @@
+# Human-editable Dependabot configuration source of truth.
+# Edit this file to add/remove release branches or ecosystems.
+# Then run: ./hack/generate-dependabot.sh to regenerate .github/dependabot.yml
+#
+# release-branches is updated automatically by hack/generate-dependabot.sh
+# by parsing the active LTS entries from releases.md.
+
+release-branches:
+  - release-v0.45.x
+  - release-v0.44.x
+  - release-v0.43.x
+  - release-v0.42.x
+ecosystems:
+  - package-ecosystem: gomod
+    directory: /
+    schedule:
+      interval: weekly
+    labels:
+      - ok-to-test
+      - dependencies
+      - release-note-none
+      - kind/misc
+    ignore:
+      - dependency-name: "k8s.io/*"
+        update-types:
+          - version-update:semver-major
+          - version-update:semver-minor
+    groups:
+      go-docker-dependencies:
+        patterns:
+          - "github.com/docker/*"
+      go-k8s-dependencies:
+        patterns:
+          - "k8s.io/*"
+    cooldown:
+      default-days: 7
+      semver-major-days: 30
+      semver-minor-days: 7
+      semver-patch-days: 3
+
+  - package-ecosystem: gomod
+    directory: /tools
+    schedule:
+      interval: weekly
+    labels:
+      - ok-to-test
+      - dependencies
+      - release-note-none
+      - kind/misc
+    cooldown:
+      default-days: 7
+      semver-major-days: 30
+      semver-minor-days: 7
+      semver-patch-days: 3
+
+  - package-ecosystem: github-actions
+    directory: /
+    schedule:
+      interval: weekly
+    labels:
+      - ok-to-test
+      - dependencies
+      - release-note-none
+      - kind/misc
+    cooldown:
+      default-days: 7
+      semver-major-days: 30
+      semver-minor-days: 7
+      semver-patch-days: 3
