@@ -120,13 +120,13 @@ func (r *Reader) readAvailableTaskLogs(tr *v1.TaskRun) (<-chan Log, <-chan error
 	return logC, errC, nil
 }
 
-func (r *Reader) readStepsLogs(logC chan<- Log, errC chan<- error, steps []*step, pod *pods.Pod, follow, timestamps bool) {
+func (r *Reader) readStepsLogs(logC chan<- Log, errC chan<- error, steps []*step, podRef *pods.Pod, pod *corev1.Pod, follow, timestamps bool) {
 	for _, step := range steps {
 		if !follow && !step.hasStarted() {
 			continue
 		}
 
-		container := pod.Container(step.container)
+		container := podRef.Container(step.container)
 		containerLogC, containerLogErrC, err := container.LogReader(follow, timestamps).Read()
 		if err != nil {
 			errC <- fmt.Errorf("error in getting logs for step %s: %s", step.name, err)
@@ -153,10 +153,16 @@ func (r *Reader) readStepsLogs(logC chan<- Log, errC chan<- error, steps []*step
 			}
 		}
 
-		if err := container.Status(); err != nil {
-			errC <- err
-			return
+		err = pods.CheckFailedContainers(pod, []string{step.container})
+		if follow {
+			err = podRef.CheckFailedContainers([]string{step.container})
 		}
+		if err == nil {
+			continue
+		}
+
+		errC <- err
+		return
 	}
 }
 
@@ -206,7 +212,7 @@ func (r *Reader) readPodLogs(podC <-chan string, podErrC <-chan error, follow, t
 				errC <- fmt.Errorf("no steps found for task %s", r.task)
 				continue
 			}
-			r.readStepsLogs(logC, errC, steps, p, follow, timestamps)
+			r.readStepsLogs(logC, errC, steps, p, pod, follow, timestamps)
 		}
 	}()
 

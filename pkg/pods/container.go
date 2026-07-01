@@ -30,43 +30,7 @@ type Container struct {
 }
 
 func (c *Container) Status() error {
-	pod, err := c.pod.Get()
-	if err != nil {
-		return err
-	}
-
-	container := c.name
-	for _, cs := range pod.Status.ContainerStatuses {
-		if cs.Name != container {
-			continue
-		}
-
-		if cs.State.Terminated != nil && cs.State.Terminated.ExitCode == 1 {
-			msg := ""
-
-			if cs.State.Terminated.Reason != "" && cs.State.Terminated.Reason != "Error" {
-				msg = msg + " : " + cs.State.Terminated.Reason
-			}
-
-			if cs.State.Terminated.Message != "" && cs.State.Terminated.Message != "Error" {
-				msg = msg + " : " + cs.State.Terminated.Message
-			}
-
-			return fmt.Errorf("container %s has failed %s", container, msg)
-		}
-	}
-
-	for _, cs := range pod.Status.InitContainerStatuses {
-		if cs.Name != container {
-			continue
-		}
-
-		if cs.State.Terminated != nil && cs.State.Terminated.ExitCode == 1 {
-			return fmt.Errorf("container %s has failed: %s", container, cs.State.Terminated.Reason)
-		}
-	}
-
-	return nil
+	return c.pod.CheckFailedContainers([]string{c.name})
 }
 
 // Log represents one log message from a pod
@@ -127,4 +91,52 @@ func (lr *LogReader) Read() (<-chan Log, <-chan error, error) {
 	}()
 
 	return logC, errC, nil
+}
+
+func (p *Pod) CheckFailedContainers(containerNames []string) error {
+	pod, err := p.Get()
+	if err != nil {
+		return err
+	}
+
+	return CheckFailedContainers(pod, containerNames)
+}
+
+func CheckFailedContainers(pod *corev1.Pod, containerNames []string) error {
+	containerSet := map[string]struct{}{}
+	for _, containerName := range containerNames {
+		containerSet[containerName] = struct{}{}
+	}
+
+	for _, cs := range pod.Status.ContainerStatuses {
+		if _, ok := containerSet[cs.Name]; !ok {
+			continue
+		}
+
+		if cs.State.Terminated != nil && cs.State.Terminated.ExitCode != 0 {
+			msg := ""
+
+			if cs.State.Terminated.Reason != "" && cs.State.Terminated.Reason != "Error" {
+				msg += " : " + cs.State.Terminated.Reason
+			}
+
+			if cs.State.Terminated.Message != "" && cs.State.Terminated.Message != "Error" {
+				msg += " : " + cs.State.Terminated.Message
+			}
+
+			return fmt.Errorf("container %s has failed %s", cs.Name, msg)
+		}
+	}
+
+	for _, cs := range pod.Status.InitContainerStatuses {
+		if _, ok := containerSet[cs.Name]; !ok {
+			continue
+		}
+
+		if cs.State.Terminated != nil && cs.State.Terminated.ExitCode != 0 {
+			return fmt.Errorf("container %s has failed: %s", cs.Name, cs.State.Terminated.Reason)
+		}
+	}
+
+	return nil
 }

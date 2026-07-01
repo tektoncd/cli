@@ -15,6 +15,7 @@
 package pods
 
 import (
+	"strings"
 	"testing"
 
 	"github.com/tektoncd/cli/pkg/pods/fake"
@@ -98,6 +99,56 @@ func TestContainer_fetch_logs(t *testing.T) {
 		}
 
 		test.AssertOutput(t, d.expected, output)
+	}
+}
+
+func TestCheckFailedContainers(t *testing.T) {
+	pod := &corev1.Pod{
+		Status: corev1.PodStatus{
+			ContainerStatuses: []corev1.ContainerStatus{
+				{
+					Name: "step-success",
+					State: corev1.ContainerState{
+						Terminated: &corev1.ContainerStateTerminated{ExitCode: 0},
+					},
+				},
+				{
+					Name: "step-failed",
+					State: corev1.ContainerState{
+						Terminated: &corev1.ContainerStateTerminated{
+							ExitCode: 137,
+							Reason:   "CrashLoopBackOff",
+							Message:  "boom",
+						},
+					},
+				},
+			},
+			InitContainerStatuses: []corev1.ContainerStatus{
+				{
+					Name: "step-init-failed",
+					State: corev1.ContainerState{
+						Terminated: &corev1.ContainerStateTerminated{
+							ExitCode: 143,
+							Reason:   "InitError",
+						},
+					},
+				},
+			},
+		},
+	}
+
+	if err := CheckFailedContainers(pod, []string{"step-success"}); err != nil {
+		t.Fatalf("unexpected error for successful container: %v", err)
+	}
+
+	err := CheckFailedContainers(pod, []string{"step-failed"})
+	if err == nil || !strings.Contains(err.Error(), "step-failed") {
+		t.Fatalf("expected failed container error, got %v", err)
+	}
+
+	err = CheckFailedContainers(pod, []string{"step-init-failed"})
+	if err == nil || !strings.Contains(err.Error(), "InitError") {
+		t.Fatalf("expected init container failure, got %v", err)
 	}
 }
 
