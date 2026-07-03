@@ -135,7 +135,7 @@ func TryParsePEMBlockWithPassword(block *pem.Block, password []byte) (interface{
 	}
 
 	if isSigstorePEMType(block.Type) && password == nil {
-		return nil, fmt.Errorf("encrypted sigstore private key requires a non-empty passphrase (use --key-passphrase, --key-passphrase-path, or WITNESS_KEY_PASSPHRASE)")
+		return nil, fmt.Errorf("encrypted sigstore private key requires a passphrase (use --key-passphrase, --key-passphrase-path, or WITNESS_KEY_PASSPHRASE)")
 	}
 
 	// If no password, only attempt unencrypted formats and return.
