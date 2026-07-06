@@ -48,7 +48,7 @@ type ProvenanceBuildDefinition struct {
 
 	// The parameters that are under external control, such as those set by a
 	// user or tenant of the build system. They MUST be complete at SLSA Build
-	// L3, meaning that that there is no additional mechanism for an external
+	// L3, meaning that there is no additional mechanism for an external
 	// party to influence the build. (At lower SLSA Build levels, the
 	// completeness MAY be best effort.)
 
@@ -173,7 +173,7 @@ type BuildMetadata struct {
 	// finding associated logs or other ad-hoc analysis. The exact meaning and
 	// format is defined by builder.id; by default it is treated as opaque and
 	// case-sensitive. The value SHOULD be globally unique.
-	InvocationID string `json:"invocationID,omitempty"`
+	InvocationID string `json:"invocationId,omitempty"`
 
 	// The timestamp of when the build started.
 	StartedOn *time.Time `json:"startedOn,omitempty"`
