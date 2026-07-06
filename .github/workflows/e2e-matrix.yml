@@ -32,7 +32,7 @@ jobs:
       ARTIFACTS: ${{ github.workspace }}/artifacts
 
     steps:
-    - uses: actions/checkout@08c6903cd8c0fde910a37f88322edcfb5dd907a8  # v5.0.0
+    - uses: actions/checkout@93cb6efe18208431cddfb8368fd83d5badbf9bfd  # v5.0.1
     - uses: actions/setup-go@d35c59abb061a4a6fb18e82ac0862c26744d6ab5  # v5.5.0
       with:
         go-version-file: "go.mod"
@@ -66,7 +66,7 @@ jobs:
         name: ${{ matrix.k8s-version }}-${{ matrix.feature-flags }}
         path: ${{ env.ARTIFACTS }}
 
-    - uses: chainguard-dev/actions/kind-diag@0cf1221da92242205c2d9f8a63add344ebd6b304 # v1.6.1
+    - uses: chainguard-dev/actions/kind-diag@f0be69916b439d0fcced2451b23d0f27cd46d545 # v1.6.26
       if: ${{ failure() }}
       with:
         artifact-name: ${{ matrix.k8s-version }}-${{ matrix.feature-flags }}-logs
