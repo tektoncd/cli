@@ -326,10 +326,10 @@ github.com/aws/aws-sdk-go-v2/internal/shareddefaults
 github.com/aws/aws-sdk-go-v2/internal/strings
 github.com/aws/aws-sdk-go-v2/internal/sync/singleflight
 github.com/aws/aws-sdk-go-v2/internal/timeconv
-# github.com/aws/aws-sdk-go-v2/config v1.32.5
+# github.com/aws/aws-sdk-go-v2/config v1.32.6
 ## explicit; go 1.23
 github.com/aws/aws-sdk-go-v2/config
-# github.com/aws/aws-sdk-go-v2/credentials v1.19.5
+# github.com/aws/aws-sdk-go-v2/credentials v1.19.6
 ## explicit; go 1.23
 github.com/aws/aws-sdk-go-v2/credentials
 github.com/aws/aws-sdk-go-v2/credentials/ec2rolecreds
@@ -378,7 +378,7 @@ github.com/aws/aws-sdk-go-v2/service/kms/types
 github.com/aws/aws-sdk-go-v2/service/signin
 github.com/aws/aws-sdk-go-v2/service/signin/internal/endpoints
 github.com/aws/aws-sdk-go-v2/service/signin/types
-# github.com/aws/aws-sdk-go-v2/service/sso v1.30.7
+# github.com/aws/aws-sdk-go-v2/service/sso v1.30.8
 ## explicit; go 1.23
 github.com/aws/aws-sdk-go-v2/service/sso
 github.com/aws/aws-sdk-go-v2/service/sso/internal/endpoints
@@ -1132,7 +1132,7 @@ github.com/ktr0731/go-fuzzyfinder/scoring
 ## explicit; go 1.11
 github.com/kylelemons/godebug/diff
 github.com/kylelemons/godebug/pretty
-# github.com/letsencrypt/boulder v0.20251110.0
+# github.com/letsencrypt/boulder v0.20260309.0
 ## explicit; go 1.25.0
 github.com/letsencrypt/boulder/core
 github.com/letsencrypt/boulder/core/proto
@@ -1289,8 +1289,8 @@ github.com/sagikazarmark/locafero
 ## explicit
 github.com/sassoftware/relic/lib/pkcs7
 github.com/sassoftware/relic/lib/x509tools
-# github.com/secure-systems-lab/go-securesystemslib v0.10.0
-## explicit; go 1.24.0
+# github.com/secure-systems-lab/go-securesystemslib v0.11.0
+## explicit; go 1.25.0
 github.com/secure-systems-lab/go-securesystemslib/cjson
 github.com/secure-systems-lab/go-securesystemslib/dsse
 github.com/secure-systems-lab/go-securesystemslib/encrypted
@@ -1386,7 +1386,7 @@ github.com/sigstore/rekor-tiles/v2/pkg/generated/protobuf
 github.com/sigstore/rekor-tiles/v2/pkg/note
 github.com/sigstore/rekor-tiles/v2/pkg/types/verifier
 github.com/sigstore/rekor-tiles/v2/pkg/verify
-# github.com/sigstore/sigstore v1.10.4
+# github.com/sigstore/sigstore v1.10.8
 ## explicit; go 1.25.0
 github.com/sigstore/sigstore/pkg/cryptoutils
 github.com/sigstore/sigstore/pkg/cryptoutils/goodkey
