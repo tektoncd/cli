@@ -24,6 +24,7 @@ import (
 	"fmt"
 	"time"
 
+	pipelineapi "github.com/tektoncd/pipeline/pkg/apis/pipeline"
 	pipelinev1 "github.com/tektoncd/pipeline/pkg/apis/pipeline/v1"
 	pipelinev1beta1 "github.com/tektoncd/pipeline/pkg/apis/pipeline/v1beta1"
 	"github.com/tektoncd/pipeline/pkg/apis/resolution/v1beta1"
@@ -70,6 +71,18 @@ var _ reconciler.LeaderAware = &Reconciler{}
 // Resolve() may take. It can be overridden by a resolver implementing
 // the framework.TimedResolution interface.
 const defaultMaximumResolutionDuration = time.Minute
+
+// allowedResourceKinds lists the kinds of resources which
+// are allowed to be resolved by resolvers
+var allowedResourceKinds = []string{
+	pipelineapi.PipelineRunControllerName,
+	pipelineapi.PipelineControllerName,
+	pipelineapi.TaskRunControllerName,
+	pipelineapi.TaskControllerName,
+	pipelineapi.RunControllerName,
+	pipelineapi.CustomRunControllerName,
+	pipelinev1beta1.StepActionKind,
+}
 
 // Reconcile receives the string key of a ResolutionRequest object, looks
 // it up, checks it for common errors, and then delegates
@@ -144,6 +157,14 @@ func (r *Reconciler) resolve(ctx context.Context, key string, rr *v1beta1.Resolu
 				ResolverName: r.resolver.GetName(resolutionCtx),
 				Key:          key,
 				Original:     resolveErr,
+			}
+			return
+		}
+		if err := ValidateResolvedResource(resource); err != nil {
+			errChan <- &resolutioncommon.GetResourceError{
+				ResolverName: r.resolver.GetName(resolutionCtx),
+				Key:          key,
+				Original:     fmt.Errorf("resolved resource validation error: %w", err),
 			}
 			return
 		}
