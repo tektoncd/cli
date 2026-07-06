@@ -21,6 +21,7 @@ import (
 	"sort"
 	"strings"
 
+	"github.com/Masterminds/semver/v3"
 	rclient "github.com/tektoncd/hub/api/v1/gen/http/resource/client"
 )
 
@@ -231,9 +232,8 @@ func (t *tektonHubClient) GetResourceVersionslist(r ResourceOption) ([]string, e
 	for i := range opts.hubResVersions.Versions {
 		ver = append(ver, *opts.hubResVersions.Versions[i].Version)
 	}
-	sort.Sort(sort.Reverse(sort.StringSlice(ver)))
 
-	return ver, nil
+	return sortVersionsSemanticaly(ver), nil
 }
 
 // Endpoint computes the endpoint url using input provided
@@ -484,7 +484,58 @@ func findArtifactHubResourceVersions(data []byte) ([]string, error) {
 	for _, r := range resp.AvailableVersions {
 		versions = append(versions, r.Version)
 	}
-	sort.Sort(sort.Reverse(sort.StringSlice(versions)))
 
-	return versions, nil
+	return sortVersionsSemanticaly(versions), nil
+}
+
+// sortVersionsSemanticaly sorts version strings using semantic versioning rules
+// Returns versions in descending order (latest first), preserving original format
+func sortVersionsSemanticaly(versions []string) []string {
+	if len(versions) <= 1 {
+		return versions
+	}
+
+	// Create a struct to hold both original string and parsed version
+	type versionPair struct {
+		original string
+		semver   *semver.Version
+	}
+
+	var validVersions []versionPair
+	var invalidVersions []string
+
+	// Parse versions, keeping original strings and invalid ones separate
+	for _, v := range versions {
+		// Try to parse as semantic version
+		version, err := semver.NewVersion(v)
+		if err != nil {
+			// If it's not a valid semver, keep it as string for fallback sorting
+			invalidVersions = append(invalidVersions, v)
+		} else {
+			validVersions = append(validVersions, versionPair{
+				original: v,
+				semver:   version,
+			})
+		}
+	}
+
+	// Sort valid versions by their semver objects in descending order (latest first)
+	sort.Slice(validVersions, func(i, j int) bool {
+		return validVersions[i].semver.GreaterThan(validVersions[j].semver)
+	})
+
+	// Sort invalid versions alphabetically in descending order as fallback
+	sort.Sort(sort.Reverse(sort.StringSlice(invalidVersions)))
+
+	// Convert back to original strings and combine results
+	var result []string
+
+	// Add properly sorted semantic versions first (in original format)
+	for _, vp := range validVersions {
+		result = append(result, vp.original)
+	}
+
+	result = append(result, invalidVersions...)
+
+	return result
 }
