@@ -313,6 +313,7 @@ func EncryptPKCS8PrivateKey(rand io.Reader, data, password []byte, alg x509.PEMC
 	copy(encrypted, data)
 	// See RFC 1423, section 1.1
 	for i := 0; i < pad; i++ {
+		//nolint:gosec // pad is bounded by blockSize which is at most 16 (AES block size)
 		encrypted = append(encrypted, byte(pad))
 	}
 	enc.CryptBlocks(encrypted, encrypted)

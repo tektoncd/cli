@@ -355,8 +355,14 @@ func validateArtifacts(artifacts map[string]HashObj) error {
 	for artifactName, artifact := range artifacts {
 		artifactValue := reflect.ValueOf(artifact).MapRange()
 		for artifactValue.Next() {
-			value := artifactValue.Value().Interface().(string)
-			hashType := artifactValue.Key().Interface().(string)
+			value, ok := artifactValue.Value().Interface().(string)
+			if !ok {
+				return fmt.Errorf("value is not string")
+			}
+			hashType, ok := artifactValue.Key().Interface().(string)
+			if !ok {
+				return fmt.Errorf("hash type is not string")
+			}
 			if err := validateHexString(value); err != nil {
 				return fmt.Errorf("in artifact '%s', %s hash value: %s",
 					artifactName, hashType, err.Error())
