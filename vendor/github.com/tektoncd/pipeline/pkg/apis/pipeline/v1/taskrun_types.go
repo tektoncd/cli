@@ -85,6 +85,12 @@ type TaskRunSpec struct {
 	SidecarSpecs []TaskRunSidecarSpec `json:"sidecarSpecs,omitempty"`
 	// Compute resources to use for this TaskRun
 	ComputeResources *corev1.ResourceRequirements `json:"computeResources,omitempty"`
+	// ManagedBy indicates which controller is responsible for reconciling
+	// this resource. If unset or set to "tekton.dev/pipeline", the default
+	// Tekton controller will manage this resource.
+	// This field is immutable.
+	// +optional
+	ManagedBy *string `json:"managedBy,omitempty"`
 }
 
 // TaskRunSpecStatus defines the TaskRun spec status the user can provide
@@ -206,6 +212,10 @@ const (
 	TaskRunReasonResolvingStepActionRef = "ResolvingStepActionRef"
 	// TaskRunReasonImagePullFailed is the reason set when the step of a task fails due to image not being pulled
 	TaskRunReasonImagePullFailed TaskRunReason = "TaskRunImagePullFailed"
+	// TaskRunReasonCreateContainerConfigError is the reason set when the step of a task fails due to config error (e.g., missing ConfigMap or Secret)
+	TaskRunReasonCreateContainerConfigError TaskRunReason = "CreateContainerConfigError"
+	// TaskRunReasonPodCreationFailed is the reason set when the pod backing the TaskRun fails to be created (e.g., CreateContainerError)
+	TaskRunReasonPodCreationFailed TaskRunReason = "PodCreationFailed"
 	// TaskRunReasonResultLargerThanAllowedLimit is the reason set when one of the results exceeds its maximum allowed limit of 1 KB
 	TaskRunReasonResultLargerThanAllowedLimit TaskRunReason = "TaskRunResultLargerThanAllowedLimit"
 	// TaskRunReasonStopSidecarFailed indicates that the sidecar is not properly stopped.
