@@ -107,15 +107,14 @@ func (ts *TaskRunSpec) Validate(ctx context.Context) (errs *apis.FieldError) {
 		}
 	}
 
-	if ts.Timeout != nil {
-		// timeout should be a valid duration of at least 0.
-		if ts.Timeout.Duration < 0 {
-			errs = errs.Also(apis.ErrInvalidValue(ts.Timeout.Duration.String()+" should be >= 0", "timeout"))
-		}
-	}
 	if ts.PodTemplate != nil {
 		errs = errs.Also(validatePodTemplateEnv(ctx, *ts.PodTemplate))
 	}
+
+	if ts.Timeout != nil && ts.Timeout.Duration < 0 {
+		errs = errs.Also(apis.ErrInvalidValue(ts.Timeout.Duration.String()+" should be >= 0", "timeout"))
+	}
+
 	if ts.Resources != nil {
 		errs = errs.Also(apis.ErrDisallowedFields("resources"))
 	}
@@ -131,6 +130,11 @@ func (ts *TaskRunSpec) ValidateUpdate(ctx context.Context) (errs *apis.FieldErro
 	if !ok || oldObj == nil {
 		return
 	}
+
+	if (oldObj.Spec.ManagedBy == nil) != (ts.ManagedBy == nil) || (oldObj.Spec.ManagedBy != nil && *oldObj.Spec.ManagedBy != *ts.ManagedBy) {
+		errs = errs.Also(apis.ErrInvalidValue("managedBy is immutable", "spec.managedBy"))
+	}
+
 	if oldObj.IsDone() {
 		// try comparing without any copying first
 		// this handles the common case where only finalizers changed
@@ -156,6 +160,7 @@ func (ts *TaskRunSpec) ValidateUpdate(ctx context.Context) (errs *apis.FieldErro
 	old := oldObj.Spec.DeepCopy()
 	old.Status = ts.Status
 	old.StatusMessage = ts.StatusMessage
+	old.ManagedBy = ts.ManagedBy // Already tested before
 	if !equality.Semantic.DeepEqual(old, ts) {
 		errs = errs.Also(apis.ErrInvalidValue("Once the TaskRun has started, only status and statusMessage updates are allowed", ""))
 	}
