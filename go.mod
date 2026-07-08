@@ -25,7 +25,7 @@ require (
 	github.com/spf13/pflag v1.0.10
 	github.com/tektoncd/chains v0.26.5
 	github.com/tektoncd/hub v1.23.6
-	github.com/tektoncd/pipeline v1.9.3
+	github.com/tektoncd/pipeline v1.9.6
 	github.com/tektoncd/plumbing v0.0.0-20250430145243-3b7cd59879c1
 	github.com/tektoncd/triggers v0.35.0
 	github.com/theupdateframework/go-tuf v0.7.0
@@ -353,7 +353,7 @@ require (
 	gopkg.in/inf.v0 v0.9.1 // indirect
 	gopkg.in/ini.v1 v1.67.1 // indirect
 	gopkg.in/yaml.v2 v2.4.0 // indirect
-	k8s.io/apiextensions-apiserver v0.32.11 // indirect
+	k8s.io/apiextensions-apiserver v0.32.13 // indirect
 	k8s.io/klog/v2 v2.130.1 // indirect
 	k8s.io/kube-openapi v0.0.0-20250710124328-f3f2b991d03b // indirect
 	k8s.io/utils v0.0.0-20250820121507-0af2bda4dd1d // indirect
