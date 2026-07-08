@@ -423,9 +423,9 @@ func InTotoRecordStart(name string, materialPaths []string, key Key, hashAlgorit
 }
 
 /*
-InTotoRecordStop ends the creation of a metatadata link file created by
+InTotoRecordStop ends the creation of a metadata link file created by
 InTotoRecordStart. InTotoRecordStop takes in a signed unfinished link metablock
-created by InTotoRecordStart and records the hashes of any products creted by
+created by InTotoRecordStart and records the hashes of any products created by
 commands run between InTotoRecordStart and InTotoRecordStop.  The resultant
 finished link metablock is then signed by the provided key and returned.
 */

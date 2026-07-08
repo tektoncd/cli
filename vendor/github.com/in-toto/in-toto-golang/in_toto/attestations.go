@@ -69,7 +69,7 @@ of the predicate. This struct represents a generic statement.
 // https://github.com/in-toto/attestation/tree/main/go/v1.
 type Statement struct {
 	StatementHeader
-	// Predicate contains type speficic metadata.
+	// Predicate contains type specific metadata.
 	Predicate interface{} `json:"predicate"`
 }
 

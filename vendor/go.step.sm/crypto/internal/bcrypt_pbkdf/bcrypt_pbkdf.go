@@ -93,6 +93,7 @@ func bcryptHash(out, shapass, shasalt []byte) {
 	}
 	// Swap bytes due to different endianness.
 	for i := 0; i < 32; i += 4 {
+		//nolint:gosec // i+3 is guaranteed to be in bounds since i < 32 and i increments by 4
 		out[i+3], out[i+2], out[i+1], out[i] = out[i], out[i+1], out[i+2], out[i+3]
 	}
 }
