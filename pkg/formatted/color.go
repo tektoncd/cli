@@ -115,6 +115,8 @@ type atomicCounter struct {
 func (c *atomicCounter) next() int {
 	v := atomic.AddUint32(&c.value, 1)
 	next := int(v-1) % c.threshold
+	// nolint
+	// this conversion is throwing error for golangci-lint G115
 	atomic.CompareAndSwapUint32(&c.value, uint32(c.threshold), 0)
 	return next
 
