@@ -63,7 +63,7 @@ func (s *AttestationStorer) Store(ctx context.Context, req *api.StoreRequest[nam
 	se, err := ociremote.SignedEntity(req.Artifact, ociremote.WithRemoteOptions(s.remoteOpts...))
 	var entityNotFoundError *ociremote.EntityNotFoundError
 	if errors.As(err, &entityNotFoundError) {
-		se = ociremote.SignedUnknown(req.Artifact)
+		se = ociremote.SignedUnknown(req.Artifact, ociremote.WithRemoteOptions(s.remoteOpts...))
 	} else if err != nil {
 		return nil, errors.Wrap(err, "getting signed image")
 	}
@@ -77,6 +77,25 @@ func (s *AttestationStorer) Store(ctx context.Context, req *api.StoreRequest[nam
 	if err != nil {
 		return nil, err
 	}
+
+	// Check if an attestation with the same digest already exists.
+	newDigest, err := att.Digest()
+	if err != nil {
+		return nil, errors.Wrap(err, "getting new attestation digest")
+	}
+	if existingAtts, err := se.Attestations(); err != nil {
+		logger.Debugf("Could not fetch existing attestations for %s, skipping dedup check: %v", req.Artifact.String(), err)
+	} else if layers, err := existingAtts.Get(); err != nil {
+		logger.Debugf("Could not get attestation layers for %s, skipping dedup check: %v", req.Artifact.String(), err)
+	} else {
+		for _, l := range layers {
+			if d, err := l.Digest(); err == nil && d == newDigest {
+				logger.Infof("Attestation with digest %s already exists for %s, skipping", newDigest, req.Artifact.String())
+				return &api.StoreResponse{}, nil
+			}
+		}
+	}
+
 	newImage, err := mutate.AttachAttestationToEntity(se, att)
 	if err != nil {
 		return nil, err
