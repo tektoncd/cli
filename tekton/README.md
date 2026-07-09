@@ -20,13 +20,15 @@ that needs to be done for the release.
 The first argument to `release.sh` is the release version. It
 needs to be in a format like `v1.2.3`, which is basically SEMVER.
 
-If it detects that you are doing a minor release, it will ask you for some
-commits to be cherry-picked in this release. Alternatively, you can provide the
-commits separated by a space to the second argument of the script. You do need to
-make sure to provide them in order from the oldest to the newest.
+Release branches use the `release-vX.Y.x` naming convention (e.g.,
+`release-v0.43.x`). The script automatically determines the branch name from
+the release version.
 
-If you give the `*` argument for the commits to pick up, it would apply all the new
-commits.
+- **New minor release** (e.g., `v0.46.0`): The script creates a new
+  `release-v0.46.x` branch from `main`.
+- **Patch release** (e.g., `v0.43.3`): The script checks out the existing
+  `release-v0.43.x` branch. All patch fixes should already be merged into
+  the `.x` branch via pull requests before running the release.
 
 The release script will ask you to provide a GitHub token with appropriate priviledges as 
 documented under the [release process prerequisites](../RELEASE_PROCESS.md#Prerequisites).

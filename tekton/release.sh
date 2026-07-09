@@ -1,6 +1,5 @@
 #!/usr/bin/env bash
 RELEASE_VERSION="${1}"
-COMMITS="${2}"
 
 UPSTREAM_REMOTE=upstream
 DEFAULT_BRANCH="main"
@@ -38,12 +37,17 @@ kubectl get pipeline 2>/dev/null >/dev/null || {
 }
 
 [[ ${RELEASE_VERSION} =~ v[0-9]+\.[0-9]*\.[0-9]+ ]] || { echo "invalid version provided, need to match v\d+\.\d+\.\d+"; exit 1 ;}
+
+RELEASE_BRANCH="release-${RELEASE_VERSION%.*}.x"
+
 git fetch -a --tags ${UPSTREAM_REMOTE} >/dev/null
 lasttag=$(git describe --tags `git rev-list --tags --max-count=1`)
-echo ${lasttag}|sed 's/\.[0-9]*$//'|grep -q ${RELEASE_VERSION%.*} && {
-    echo "Minor version of ${RELEASE_VERSION%.*} detected, previous ${lasttag}"; minor_version=true ;
+
+git ls-remote --exit-code ${UPSTREAM_REMOTE} refs/heads/${RELEASE_BRANCH} >/dev/null 2>&1 && {
+    echo "Patch release detected: ${RELEASE_BRANCH} exists on ${UPSTREAM_REMOTE}, previous tag ${lasttag}"
+    patch_release=true
 } || {
-    echo "Major version for ${RELEASE_VERSION%.*} detected, previous ${lasttag}";
+    echo "New release detected: creating ${RELEASE_BRANCH} from ${DEFAULT_BRANCH}, previous tag ${lasttag}"
 }
 
 cd ${GOPATH}/src/github.com/tektoncd/cli
@@ -54,33 +58,14 @@ cd ${GOPATH}/src/github.com/tektoncd/cli
     exit 1
 }
 
-git checkout ${DEFAULT_BRANCH}
-git reset --hard ${UPSTREAM_REMOTE}/${DEFAULT_BRANCH}
-git checkout -B release-${RELEASE_VERSION}  ${DEFAULT_BRANCH} >/dev/null
-
-if [[ -n ${minor_version} ]];then
-    git reset --hard ${lasttag} >/dev/null
-
-    if [[ -z ${COMMITS} ]];then
-        echo "Showing commit between last minor tag '${lasttag} to '${DEFAULT_BRANCH}'"
-        echo
-        git log --reverse --no-merges --pretty=format:"%C(bold cyan)%h%Creset | %cd | %s | %ae" ${DEFAULT_BRANCH} --since "$(git log --pretty=format:%cd -1 ${lasttag})"
-        echo
-        read -e -p "Pick a list of ordered commits to cherry-pick space separated (* mean all of them): " COMMITS
-    fi
-    [[ -z ${COMMITS} ]] && { echo "no commits picked"; exit 1;}
-    if [[ ${COMMITS} == "*" ]];then
-        COMMITS=$(git log --reverse --no-merges --pretty=format:"%h" ${DEFAULT_BRANCH} \
-                      --since "$(git log --pretty=format:%cd -1 ${lasttag})")
-    fi
-    for commit in ${COMMITS};do
-        git branch --contains ${commit} >/dev/null || { echo "Invalid commit ${commit}" ; exit 1;}
-        echo "Cherry-picking commit: ${commit}"
-        git cherry-pick ${commit} >/dev/null
-    done
+if [[ -n ${patch_release} ]];then
+    echo "Checking out existing ${RELEASE_BRANCH} from ${UPSTREAM_REMOTE}"
+    git checkout -B ${RELEASE_BRANCH} ${UPSTREAM_REMOTE}/${RELEASE_BRANCH} >/dev/null
 else
-    echo "Major release ${RELEASE_VERSION%.*} detected: picking up ${UPSTREAM_REMOTE}/${DEFAULT_BRANCH}"
+    echo "New release ${RELEASE_VERSION%.*} detected: creating ${RELEASE_BRANCH} from ${UPSTREAM_REMOTE}/${DEFAULT_BRANCH}"
+    git checkout ${DEFAULT_BRANCH}
     git reset --hard ${UPSTREAM_REMOTE}/${DEFAULT_BRANCH}
+    git checkout -B ${RELEASE_BRANCH} ${DEFAULT_BRANCH} >/dev/null
 fi
 
 # HACK:! this is temporary to disable the upload to homebrew when we do our testing
@@ -91,9 +76,14 @@ fi
     git cherry-pick 052b0b4ce989fe9aee01027e67e61538b48e1179 >/dev/null
 }
 
+if [[ -n ${patch_release} ]];then
+    prev_tag=$(git describe --tags --abbrev=0 HEAD 2>/dev/null || echo "")
+else
+    prev_tag=${lasttag}
+fi
 COMMITS=$(git log --reverse --no-merges \
-              --pretty=format:'%H' ${DEFAULT_BRANCH} \
-              --since "$(git log --pretty=format:%cd -1 ${lasttag})")
+              --pretty=format:'%H' HEAD \
+              --since "$(git log --pretty=format:%cd -1 ${prev_tag})")
 
 changelog=""
 for c in ${COMMITS};do
@@ -112,7 +102,7 @@ git tag --sign -m \
     -m "${changelog}" --force ${RELEASE_VERSION}
 
 git push --force ${PUSH_REMOTE} ${RELEASE_VERSION}
-git push --force ${PUSH_REMOTE} release-${RELEASE_VERSION}
+git push --force ${PUSH_REMOTE} ${RELEASE_BRANCH}
 
 kubectl create namespace ${TARGET_NAMESPACE} 2>/dev/null || true
 
