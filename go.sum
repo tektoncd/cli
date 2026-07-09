@@ -1273,8 +1273,8 @@ github.com/syndtr/goleveldb v1.0.1-0.20220721030215-126854af5e6d h1:vfofYNRScrDd
 github.com/syndtr/goleveldb v1.0.1-0.20220721030215-126854af5e6d/go.mod h1:RRCYJbIwD5jmqPI9XoAFR0OcDxqUctll6zUj/+B4S48=
 github.com/tektoncd/chains v0.26.5 h1:X5W0oBsqK3wRz89IgY1kPIokhI6N1a1E1oreZgwJNwI=
 github.com/tektoncd/chains v0.26.5/go.mod h1:qUe7YfRPTJuEAwFFq3R7VPaOYCVNQRh5HCLqiIqO40I=
-github.com/tektoncd/pipeline v1.9.5 h1:WNgCcsuSrGjlpuBwfGgf2YGI1KkHMm4TwtoG+gPC0AE=
-github.com/tektoncd/pipeline v1.9.5/go.mod h1:6NHcPJCZAUhnWHK0ZcYvO0PXpBKD7kcer+oYdxPMGTU=
+github.com/tektoncd/pipeline v1.9.6 h1:j/yUWklZwuhF6HaM6jyjlf+pmLMcW8+WLksqhb2/j9I=
+github.com/tektoncd/pipeline v1.9.6/go.mod h1:4MjJtAih3kPpeV3a+LZyWk+Mz1XvM4os+9wOI4ksU3o=
 github.com/tektoncd/plumbing v0.0.0-20250430145243-3b7cd59879c1 h1:nv7BsOAZ1ifQX9Lw1hYFo1f7e62dTDyyVPJBuljgZKw=
 github.com/tektoncd/plumbing v0.0.0-20250430145243-3b7cd59879c1/go.mod h1:eDs4O8vTNkyKZ/+AEuo4nYDfpyn1AzbgIcQ1QMQaKJk=
 github.com/tektoncd/triggers v0.34.0 h1:CuhG1moThPGEMlxPUcoBDDplJ3FAczzF8MMAjGScRY0=
