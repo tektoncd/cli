@@ -59,7 +59,7 @@ func (s *SimpleStorer) Store(ctx context.Context, req *api.StoreRequest[name.Dig
 	se, err := ociremote.SignedEntity(req.Artifact, ociremote.WithRemoteOptions(s.remoteOpts...))
 	var entityNotFoundError *ociremote.EntityNotFoundError
 	if errors.As(err, &entityNotFoundError) {
-		se = ociremote.SignedUnknown(req.Artifact)
+		se = ociremote.SignedUnknown(req.Artifact, ociremote.WithRemoteOptions(s.remoteOpts...))
 	} else if err != nil {
 		return nil, errors.Wrap(err, "getting signed image")
 	}
@@ -74,6 +74,25 @@ func (s *SimpleStorer) Store(ctx context.Context, req *api.StoreRequest[name.Dig
 	if err != nil {
 		return nil, err
 	}
+
+	// Check if a signature with the same payload digest already exists.
+	newDigest, err := sig.Digest()
+	if err != nil {
+		return nil, errors.Wrap(err, "getting new signature digest")
+	}
+	if existingSigs, err := se.Signatures(); err != nil {
+		logger.Debugf("Could not fetch existing signatures for %s, skipping dedup check: %v", req.Artifact.String(), err)
+	} else if layers, err := existingSigs.Get(); err != nil {
+		logger.Debugf("Could not get signature layers for %s, skipping dedup check: %v", req.Artifact.String(), err)
+	} else {
+		for _, l := range layers {
+			if d, err := l.Digest(); err == nil && d == newDigest {
+				logger.Infof("Signature with digest %s already exists, skipping", newDigest)
+				return &api.StoreResponse{}, nil
+			}
+		}
+	}
+
 	// Attach the signature to the entity.
 	newSE, err := mutate.AttachSignatureToEntity(se, sig)
 	if err != nil {

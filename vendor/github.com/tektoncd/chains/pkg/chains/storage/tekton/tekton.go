@@ -17,32 +17,30 @@ import (
 	"context"
 	"encoding/base64"
 	"fmt"
-	"strings"
 
 	intoto "github.com/in-toto/attestation/go/v1"
+	"github.com/tektoncd/chains/pkg/chains/annotations"
 	"github.com/tektoncd/chains/pkg/chains/objects"
 	"github.com/tektoncd/chains/pkg/chains/signing"
 	"github.com/tektoncd/chains/pkg/chains/storage/api"
 	"github.com/tektoncd/chains/pkg/config"
 	"knative.dev/pkg/logging"
 
-	"github.com/tektoncd/chains/pkg/patch"
 	"github.com/tektoncd/pipeline/pkg/client/clientset/versioned"
 )
 
+//nolint:revive,exported
 const (
-	// ChainsAnnotationPrefix is the prefix for all Chains annotations
-	ChainsAnnotationPrefix    = "chains.tekton.dev/"
+	// StorageBackendTekton is the identifier for the Tekton storage backend
 	StorageBackendTekton      = "tekton"
-	PayloadAnnotationFormat   = "chains.tekton.dev/payload-%s"
-	SignatureAnnotationFormat = "chains.tekton.dev/signature-%s"
-	CertAnnotationsFormat     = "chains.tekton.dev/cert-%s"
-	ChainAnnotationFormat     = "chains.tekton.dev/chain-%s"
+	PayloadAnnotationFormat   = annotations.ChainsAnnotationPrefix + "payload-%s"
+	SignatureAnnotationFormat = annotations.ChainsAnnotationPrefix + "signature-%s"
+	CertAnnotationsFormat     = annotations.ChainsAnnotationPrefix + "cert-%s"
+	ChainAnnotationFormat     = annotations.ChainsAnnotationPrefix + "chain-%s"
 )
 
 // Backend is a storage backend that stores signed payloads in the TaskRun metadata as an annotation.
 // It is stored as base64 encoded JSON.
-//
 // Deprecated: use Storer instead.
 type Backend struct {
 	pipelineclientset versioned.Interface
@@ -167,45 +165,21 @@ func (s *Storer) Store(ctx context.Context, req *api.StoreRequest[objects.Tekton
 	obj := req.Object
 	logger.Infof("Storing payload on %s/%s/%s", obj.GetGVK(), obj.GetNamespace(), obj.GetName())
 
-	// Use patch instead of update to prevent race conditions.
 	key := s.key
 	if key == "" {
 		key = string(obj.GetUID())
 	}
 
-	// Get current annotations from API server to ensure we have the latest state
-	currentAnnotations, err := obj.GetLatestAnnotations(ctx, s.client)
-	if err != nil {
+	storedAnnotations := map[string]string{
+		fmt.Sprintf(PayloadAnnotationFormat, key):   base64.StdEncoding.EncodeToString(req.Bundle.Content),
+		fmt.Sprintf(SignatureAnnotationFormat, key): base64.StdEncoding.EncodeToString(req.Bundle.Signature),
+		fmt.Sprintf(CertAnnotationsFormat, key):     base64.StdEncoding.EncodeToString(req.Bundle.Cert),
+		fmt.Sprintf(ChainAnnotationFormat, key):     base64.StdEncoding.EncodeToString(req.Bundle.Chain),
+	}
+
+	if err := annotations.AddAnnotations(ctx, obj, s.client, storedAnnotations); err != nil {
 		return nil, err
 	}
-
-	// Merge existing annotations with new Chains annotations
-	mergedAnnotations := make(map[string]string)
-	for k, v := range currentAnnotations {
-		if strings.HasPrefix(k, ChainsAnnotationPrefix) {
-			mergedAnnotations[k] = v
-		}
-	}
-
-	// Add Chains-specific annotations
-	mergedAnnotations[fmt.Sprintf(PayloadAnnotationFormat, key)] = base64.StdEncoding.EncodeToString(req.Bundle.Content)
-	mergedAnnotations[fmt.Sprintf(SignatureAnnotationFormat, key)] = base64.StdEncoding.EncodeToString(req.Bundle.Signature)
-	mergedAnnotations[fmt.Sprintf(CertAnnotationsFormat, key)] = base64.StdEncoding.EncodeToString(req.Bundle.Cert)
-	mergedAnnotations[fmt.Sprintf(ChainAnnotationFormat, key)] = base64.StdEncoding.EncodeToString(req.Bundle.Chain)
-
-	patchBytes, err := patch.GetAnnotationsPatch(mergedAnnotations, obj)
-	if err != nil {
-		return nil, err
-	}
-
-	patchErr := obj.Patch(ctx, s.client, patchBytes)
-	if patchErr != nil {
-		return nil, patchErr
-	}
-
-	// Note: Ideally here we'll update the in-memory object to keep it consistent through
-	// the reconciliation loop. It hasn't been done to preserve the existing controller behavior
-	// and maintain compatibility with existing tests. This could be revisited in the future.
 
 	return &api.StoreResponse{}, nil
 }
