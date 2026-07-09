@@ -56,12 +56,18 @@ type DependabotConfig struct {
 	Updates []Update `yaml:"updates"`
 }
 
+// CommitMessage configures the prefix for Dependabot commit messages and PR titles
+type CommitMessage struct {
+	Prefix string `yaml:"prefix"`
+}
+
 // Update represents a single dependabot update configuration
 type Update struct {
 	PackageEcosystem string                   `yaml:"package-ecosystem"`
 	Directory        string                   `yaml:"directory"`
 	TargetBranch     string                   `yaml:"target-branch,omitempty"`
 	Schedule         map[string]interface{}   `yaml:"schedule"`
+	CommitMessage    *CommitMessage           `yaml:"commit-message,omitempty"`
 	Labels           []string                 `yaml:"labels"`
 	Ignore           []map[string]interface{} `yaml:"ignore,omitempty"`
 	Groups           map[string]interface{}   `yaml:"groups,omitempty"`
@@ -164,16 +170,17 @@ func generateDependabotConfig(config Config) DependabotConfig {
 				},
 			})
 
-			update := Update{
-				PackageEcosystem: ecosystem.PackageEcosystem,
-				Directory:        ecosystem.Directory,
-				TargetBranch:     branch,
-				Schedule:         ecosystem.Schedule,
-				Labels:           ecosystem.Labels,
-				Ignore:           ignore,
-				Groups:           ecosystem.Groups,
-				Cooldown:         ecosystem.Cooldown,
-			}
+		update := Update{
+			PackageEcosystem: ecosystem.PackageEcosystem,
+			Directory:        ecosystem.Directory,
+			TargetBranch:     branch,
+			Schedule:         ecosystem.Schedule,
+			CommitMessage:    &CommitMessage{Prefix: "[" + branch + "] "},
+			Labels:           ecosystem.Labels,
+			Ignore:           ignore,
+			Groups:           ecosystem.Groups,
+			Cooldown:         ecosystem.Cooldown,
+		}
 			dependabotConfig.Updates = append(dependabotConfig.Updates, update)
 		}
 	}
