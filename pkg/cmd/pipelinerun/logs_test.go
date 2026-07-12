@@ -2191,7 +2191,7 @@ func TestLogs_nologs_v1beta1(t *testing.T) {
 	if err != nil {
 		t.Errorf("Unexpected error: %v", err)
 	}
-	test.AssertOutput(t, "PipelineRun is still running: Running\n", output)
+	test.AssertOutput(t, "Pipeline still running ...\nPipelineRun is still running: Running\n", output)
 }
 
 func TestLogs_nologs(t *testing.T) {
@@ -2269,7 +2269,7 @@ func TestLogs_nologs(t *testing.T) {
 	if err != nil {
 		t.Errorf("Unexpected error: %v", err)
 	}
-	test.AssertOutput(t, "PipelineRun is still running: Running\n", output)
+	test.AssertOutput(t, "Pipeline still running ...\nPipelineRun is still running: Running\n", output)
 }
 
 func TestLog_run_failed_with_and_without_follow_v1beta1(t *testing.T) {

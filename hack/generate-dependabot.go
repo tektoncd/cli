@@ -170,17 +170,17 @@ func generateDependabotConfig(config Config) DependabotConfig {
 				},
 			})
 
-		update := Update{
-			PackageEcosystem: ecosystem.PackageEcosystem,
-			Directory:        ecosystem.Directory,
-			TargetBranch:     branch,
-			Schedule:         ecosystem.Schedule,
-			CommitMessage:    &CommitMessage{Prefix: "[" + branch + "] "},
-			Labels:           ecosystem.Labels,
-			Ignore:           ignore,
-			Groups:           ecosystem.Groups,
-			Cooldown:         ecosystem.Cooldown,
-		}
+			update := Update{
+				PackageEcosystem: ecosystem.PackageEcosystem,
+				Directory:        ecosystem.Directory,
+				TargetBranch:     branch,
+				Schedule:         ecosystem.Schedule,
+				CommitMessage:    &CommitMessage{Prefix: "[" + branch + "] "},
+				Labels:           ecosystem.Labels,
+				Ignore:           ignore,
+				Groups:           ecosystem.Groups,
+				Cooldown:         ecosystem.Cooldown,
+			}
 			dependabotConfig.Updates = append(dependabotConfig.Updates, update)
 		}
 	}
