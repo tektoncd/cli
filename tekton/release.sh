@@ -131,7 +131,7 @@ if ! kubectl -n ${TARGET_NAMESPACE} get secret ${SECRET_NAME} -o name >/dev/null
     kubectl -n ${TARGET_NAMESPACE} create secret generic ${SECRET_NAME} --from-literal=bot-token=${github_token}
 fi
 
-kubectl -n ${TARGET_NAMESPACE} apply -f ./tekton/release-pipeline.yml
+kubectl -n ${TARGET_NAMESPACE} apply -f ./tekton/release-pipeline.yaml
 
 sleep 2
 

@@ -12,13 +12,13 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-# This PipelineRun is triggered via PAC incoming webhooks for releases.
-# It is invoked either manually (via GitHub Actions workflow_dispatch)
-# or on a cron schedule when new commits are detected on a release
-# branch since the last tag.
+# This PipelineRun is triggered via PAC incoming webhooks for patch
+# releases on existing release branches. It is invoked either manually
+# (via GitHub Actions workflow_dispatch) or on a cron schedule when
+# new commits are detected on a release branch since the last tag.
 #
-# The CLI release pipeline uses goreleaser to build cross-platform
-# binaries, create the GitHub release, and publish to Homebrew.
+# The version, go_version, and golangci_lint_version parameters are
+# passed dynamically through the incoming webhook payload.
 #
 # Before triggering this PipelineRun, the caller (patch-release.yaml
 # workflow) must have created and pushed the version tag (e.g. v0.45.1)
@@ -27,11 +27,11 @@
 apiVersion: tekton.dev/v1
 kind: PipelineRun
 metadata:
-  name: cli-release
+  name: release-patch
   annotations:
     pipelinesascode.tekton.dev/on-event: "[incoming]"
     pipelinesascode.tekton.dev/on-target-branch: "[release-v*]"
-    pipelinesascode.tekton.dev/pipeline: "tekton/release-pipeline.yml"
+    pipelinesascode.tekton.dev/pipeline: "tekton/release-pipeline.yaml"
     pipelinesascode.tekton.dev/max-keep-runs: "5"
     pipelinesascode.tekton.dev/task: "[git-clone, golangci-lint, golang-test, golang-build, goreleaser]"
     pipelinesascode.tekton.dev/task-1: "tekton/get-version.yaml"
