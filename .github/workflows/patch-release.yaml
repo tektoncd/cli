@@ -4,7 +4,7 @@ name: Patch Release
   workflow_dispatch:
     inputs:
       branch:
-        description: "Release branch (e.g. release-v0.45.0)"
+        description: "Release branch (e.g. release-v0.45.x)"
         required: true
         type: string
       version:
@@ -37,7 +37,7 @@ jobs:
       matrix: ${{ steps.scan.outputs.matrix }}
       has_releases: ${{ steps.scan.outputs.has_releases }}
     steps:
-      - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
+      - uses: actions/checkout@9c091bb21b7c1c1d1991bb908d89e4e9dddfe3e0 # v7.0.0
         with:
           fetch-depth: 0
           persist-credentials: false
@@ -45,13 +45,14 @@ jobs:
       - name: Scan release branches for new commits
         id: scan
         run: |
-          # CLI uses release-vX.Y.Z branch naming
+          # Determine which release branch is the latest (highest version)
           latest_branch=""
           latest_major=0
           latest_minor=0
           for ref in $(git branch -r --list 'origin/release-v*'); do
             branch="${ref#origin/}"
-            if [[ "$branch" =~ release-v([0-9]+)\.([0-9]+)\.[0-9]+ ]]; then
+            # Extract major.minor from release-vX.Y.x
+            if [[ "$branch" =~ release-v([0-9]+)\.([0-9]+)\.x ]]; then
               major="${BASH_REMATCH[1]}"
               minor="${BASH_REMATCH[2]}"
               if [ "$major" -gt "$latest_major" ] || { [ "$major" -eq "$latest_major" ] && [ "$minor" -gt "$latest_minor" ]; }; then
@@ -70,20 +71,23 @@ jobs:
           for ref in $(git branch -r --list 'origin/release-v*'); do
             branch="${ref#origin/}"
 
+            # Only process release-vX.Y.x branches; skip old-style release-vX.Y.Z
+            if [[ ! "$branch" =~ release-v([0-9]+)\.([0-9]+)\.x ]]; then
+              continue
+            fi
+            major="${BASH_REMATCH[1]}"
+            minor="${BASH_REMATCH[2]}"
+
             # Skip branches older than MIN_RELEASE_VERSION
-            if [[ "$branch" =~ release-v([0-9]+)\.([0-9]+)\.[0-9]+ ]]; then
-              major="${BASH_REMATCH[1]}"
-              minor="${BASH_REMATCH[2]}"
-              if [ "$major" -lt "$MIN_MAJOR" ] || { [ "$major" -eq "$MIN_MAJOR" ] && [ "$minor" -lt "$MIN_MINOR" ]; }; then
-                echo "::notice::Branch ${branch} is older than v${MIN_RELEASE_VERSION} — skipping"
-                continue
-              fi
+            if [ "$major" -lt "$MIN_MAJOR" ] || { [ "$major" -eq "$MIN_MAJOR" ] && [ "$minor" -lt "$MIN_MINOR" ]; }; then
+              echo "::notice::Branch ${branch} is older than v${MIN_RELEASE_VERSION} — skipping"
+              continue
             fi
 
             # Find the latest tag on this branch
             last_tag=$(git describe --tags --abbrev=0 --match 'v*' "$ref" 2>/dev/null || echo "")
             if [ -z "$last_tag" ]; then
-              echo "::notice::Branch ${branch} has no tags — skipping"
+              echo "::notice::Branch ${branch} has no tags — skipping (initial release handled by branch creation)"
               continue
             fi
 
@@ -131,7 +135,7 @@ jobs:
         release: ${{ fromJson(needs.scan-release-branches.outputs.matrix) }}
       max-parallel: 1
     steps:
-      - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
+      - uses: actions/checkout@9c091bb21b7c1c1d1991bb908d89e4e9dddfe3e0 # v7.0.0
         with:
           ref: ${{ matrix.release.branch }}
 
@@ -165,7 +169,7 @@ jobs:
             -d '{
               "repository": "'"${PAC_REPOSITORY_NAME}"'",
               "branch": "'"${RELEASE_BRANCH}"'",
-              "pipelinerun": "cli-release",
+              "pipelinerun": "release-patch",
               "secret": "'"${PAC_INCOMING_SECRET}"'",
               "params": {
                 "version": "'"${RELEASE_VERSION}"'",
@@ -183,7 +187,7 @@ jobs:
     permissions:
       contents: write
     steps:
-      - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
+      - uses: actions/checkout@9c091bb21b7c1c1d1991bb908d89e4e9dddfe3e0 # v7.0.0
         with:
           ref: ${{ inputs.branch }}
 
@@ -192,9 +196,9 @@ jobs:
           INPUT_BRANCH: ${{ inputs.branch }}
           INPUT_VERSION: ${{ inputs.version }}
         run: |
-          # Validate branch format (CLI uses release-vX.Y.Z)
-          if [[ ! "${INPUT_BRANCH}" =~ ^release-v[0-9]+\.[0-9]+\.[0-9]+$ ]]; then
-            echo "::error::Invalid branch format: ${INPUT_BRANCH}. Expected: release-vX.Y.Z"
+          # Validate branch format
+          if [[ ! "${INPUT_BRANCH}" =~ ^release-v[0-9]+\.[0-9]+\.x$ ]]; then
+            echo "::error::Invalid branch format: ${INPUT_BRANCH}. Expected: release-vX.Y.x"
             exit 1
           fi
           # Validate version format
@@ -242,7 +246,7 @@ jobs:
             -d '{
               "repository": "'"${PAC_REPOSITORY_NAME}"'",
               "branch": "'"${INPUT_BRANCH}"'",
-              "pipelinerun": "cli-release",
+              "pipelinerun": "release-patch",
               "secret": "'"${PAC_INCOMING_SECRET}"'",
               "params": {
                 "version": "'"${INPUT_VERSION}"'",
