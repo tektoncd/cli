@@ -4,7 +4,7 @@
 [![CII Best Practices](https://bestpractices.coreinfrastructure.org/projects/6510/badge)](https://bestpractices.coreinfrastructure.org/projects/6510)
 
 <p align="center">
-<img width="250" height="175" src="https://github.com/cdfoundation/artwork/blob/main/tekton/additional-artwork/tekton-cli/color/tektoncli_color.svg" alt="Tekton logo"></img>
+<img width="250" height="175" src="https://github.com/cncf/artwork/blob/main/projects/tekton/icon/color/tekton-icon-color.svg" alt="Tekton logo"></img>
 </p>
 
 The _Tekton Pipelines CLI_ project provides a command-line interface (CLI) for interacting with [Tekton](https://tekton.dev/), an open-source framework for Continuous Integration and Delivery (CI/CD) systems.
