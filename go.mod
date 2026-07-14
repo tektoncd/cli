@@ -43,7 +43,7 @@ require (
 	go.uber.org/multierr v1.11.0
 	go.uber.org/zap v1.28.0
 	goa.design/goa/v3 v3.28.0
-	golang.org/x/crypto v0.52.0
+	golang.org/x/crypto v0.53.0
 	golang.org/x/term v0.44.0
 	golang.org/x/text v0.39.0
 	google.golang.org/grpc v1.82.0
