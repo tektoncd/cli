@@ -24,6 +24,7 @@ import (
 	"fmt"
 	"io"
 
+	"github.com/secure-systems-lab/go-securesystemslib/encrypted"
 	"go.step.sm/crypto/pemutil"
 )
 
@@ -35,6 +36,11 @@ const (
 	PublicKeyPEMType PEMType = "PUBLIC KEY"
 	// PKCS1PublicKeyPEMType is the string "RSA PUBLIC KEY" used to parse PKCS#1-encoded public keys
 	PKCS1PublicKeyPEMType PEMType = "RSA PUBLIC KEY"
+)
+
+const (
+	sigstoreEncryptedPEMType = "ENCRYPTED SIGSTORE PRIVATE KEY"
+	cosignEncryptedPEMType   = "ENCRYPTED COSIGN PRIVATE KEY"
 )
 
 type ErrUnsupportedPEM struct {
@@ -128,8 +134,12 @@ func TryParsePEMBlockWithPassword(block *pem.Block, password []byte) (interface{
 		return nil, ErrInvalidPemBlock{}
 	}
 
+	if isSigstorePEMType(block.Type) && password == nil {
+		return nil, fmt.Errorf("encrypted sigstore private key requires a non-empty passphrase (use --key-passphrase, --key-passphrase-path, or WITNESS_KEY_PASSPHRASE)")
+	}
+
 	// If no password, only attempt unencrypted formats and return.
-	if len(password) == 0 {
+	if password == nil {
 		// Unencrypted formats.
 		if key, err := x509.ParsePKCS8PrivateKey(block.Bytes); err == nil {
 			return key, nil
@@ -151,6 +161,18 @@ func TryParsePEMBlockWithPassword(block *pem.Block, password []byte) (interface{
 		}
 
 		return nil, ErrUnsupportedPEM{block.Type}
+	}
+
+	if isSigstorePEMType(block.Type) {
+		der, err := encrypted.Decrypt(block.Bytes, password)
+		if err != nil {
+			return nil, fmt.Errorf("failed to decrypt sigstore private key: %w", err)
+		}
+		key, err := x509.ParsePKCS8PrivateKey(der)
+		if err != nil {
+			return nil, fmt.Errorf("failed to parse decrypted sigstore private key: %w", err)
+		}
+		return key, nil
 	}
 
 	// Password provided: handle legacy-encrypted PEM, otherwise fall back to unencrypted parse.
@@ -212,15 +234,38 @@ func TryParseKeyFromReaderWithPassword(r io.Reader, password []byte) (interface{
 		return nil, err
 	}
 
-	if len(password) == 0 {
+	if pemBlock, _ := pem.Decode(bytes); pemBlock != nil && password != nil {
+		switch pemBlock.Type {
+		case "ENCRYPTED SIGSTORE PRIVATE KEY", "ENCRYPTED COSIGN PRIVATE KEY":
+			key, err := pemutil.ParseCosignPrivateKey(pemBlock.Bytes, password)
+			if err != nil {
+				return nil, err
+			}
+			return key, nil
+		}
+	}
+
+	if password == nil {
 		// We may want to handle files with multiple PEM blocks in them, but for now...
 		pemBlock, _ := pem.Decode(bytes)
 		return TryParsePEMBlockWithPassword(pemBlock, password)
 	}
 
+	if pemBlock, _ := pem.Decode(bytes); pemBlock != nil && isSigstorePEMType(pemBlock.Type) {
+		return TryParsePEMBlockWithPassword(pemBlock, password)
+	}
+
 	// Use smallstep's pemutil to parse and decrypt various PEM/DER key formats,
 	// including PKCS#8 EncryptedPrivateKeyInfo.
-	obj, err := pemutil.Parse(bytes, pemutil.WithPassword(password))
+	var opts []pemutil.Options
+	if len(password) == 0 {
+		opts = append(opts, pemutil.WithPasswordPrompt("", func(string) ([]byte, error) {
+			return []byte{}, nil
+		}))
+	} else {
+		opts = append(opts, pemutil.WithPassword(password))
+	}
+	obj, err := pemutil.Parse(bytes, opts...)
 	if err != nil {
 		return nil, err
 	}
@@ -263,4 +308,8 @@ func isSupportedAlg(alg crypto.Hash, supportedAlgs []crypto.Hash) bool {
 		}
 	}
 	return false
+}
+
+func isSigstorePEMType(t string) bool {
+	return t == sigstoreEncryptedPEMType || t == cosignEncryptedPEMType
 }
