@@ -17,8 +17,13 @@ Supported verbs per resource type:
 
 | Resource | Verbs |
 |---|---|
-| `pipeline`, `task` | `list`, `describe`, `start`, `logs`, `delete`, `export` |
-| `pipelinerun`, `taskrun` | `list`, `describe`, `logs`, `cancel`, `delete`, `export` |
+| `pipeline` | `list`, `describe`, `start`, `logs`, `delete` |
+| `task` | `list`, `describe`, `start`, `logs`, `delete` |
+| `pipelinerun`, `taskrun` | `list`, `describe`, `logs`, `cancel`, `delete` |
+
+Other resource types (`customrun`, `eventlistener`, `triggerbinding`,
+`triggertemplate`, `clustertriggerbinding`, `bundle`, and `hub`) support
+subsets of `list`, `describe`, and `delete`.
 
 ---
 
@@ -76,10 +81,10 @@ tkn taskrun delete <run-name> --force
 |---|---|---|
 | `list` | Yes | Supported on all resources |
 | `describe` | Yes | Supported on all resources |
+| `start` | Yes | Supported by `pipeline start` and `task start` |
 | `logs` | No | Plain text to stdout only |
-| `start` | No | Prints run name to stdout on success |
 | `delete` | No | Requires `--force` to skip confirmation |
-| `export` | No | Outputs YAML (Kubernetes manifest) |
+| `export` | No | Outputs YAML instead of JSON |
 
 `--output yaml` is available wherever `--output json` is supported.
 
@@ -107,7 +112,10 @@ command prompts regardless.
 
 ## Exit Codes
 
-`tkn pipelinerun logs` defines the following exit codes:
+By default, `tkn pipelinerun logs` exits 0 after streaming logs, regardless
+of run outcome.
+
+With `--exit-with-pipelinerun-error` (`-E`), the exit code reflects run status:
 
 | Code | Meaning |
 |---|---|
@@ -115,15 +123,16 @@ command prompts regardless.
 | 1 | PipelineRun failed |
 | 2 | No status conditions available |
 
-Exit code behavior is only documented for `pipelinerun logs`. Other commands
-do not define stable exit code semantics.
+`-E` is also available on `pipeline start` when used with `--showlog`.
+
+`taskrun logs` does not support this flag — it always exits 0.
 
 ---
 
 ## Behavioral Notes
 
-**`taskrun logs` exit code does not reflect run outcome.** A failed TaskRun
-exits 0. To check TaskRun outcome, inspect `.status.conditions[0].status`:
+**`taskrun logs` has no equivalent of `-E`.** To check TaskRun outcome,
+inspect `.status.conditions[0].status`:
 
 ```bash
 tkn taskrun describe <run-name> --output json
@@ -148,12 +157,13 @@ status inspection.
 
 | Flag | Commands | Purpose |
 |---|---|---|
-| `--output json` | `list`, `describe` | Machine-readable output |
-| `--last` | `logs`, `start`, `describe` | Target most recent run |
-| `--use-param-defaults` | `start` | Use schema defaults for unspecified params |
+| `--output json` | `list`, `describe`, `pipeline start` | Machine-readable output |
+| `--last` | `logs`, `start`, `pipelinerun describe`, `taskrun describe` | Target the most recent run |
+| `--use-param-defaults` | `start` | Use schema defaults for unspecified parameters |
 | `--skip-optional-workspace` | `start` | Skip prompts for optional workspaces |
 | `--force`, `-f` | `delete` | Skip confirmation prompt |
 | `--showlog` | `start` | Stream logs after starting |
-| `--namespace`, `-n` | all | Override kubeconfig namespace |
+| `--exit-with-pipelinerun-error`, `-E` | `pipelinerun logs`, `pipeline start` | Exit with PipelineRun status (0=success, 1=failed, 2=unknown) |
+| `--namespace`, `-n` | all | Override the kubeconfig namespace |
 | `--param`, `-p` | `start` | Pass parameter as `<key>=<value>` |
 | `--workspace`, `-w` | `start` | Pass workspace binding |
