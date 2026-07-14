@@ -24,8 +24,8 @@ require (
 	github.com/spf13/cobra v1.10.2
 	github.com/spf13/pflag v1.0.10
 	github.com/tektoncd/chains v0.20.2-0.20260203100940-9343090e50f3
-	github.com/tektoncd/hub v1.17.0
-	github.com/tektoncd/pipeline v0.59.0
+	github.com/tektoncd/hub v1.17.3
+	github.com/tektoncd/pipeline v0.59.5
 	github.com/tektoncd/plumbing v0.0.0-20230907180608-5625252a2de1
 	github.com/tektoncd/triggers v0.27.0
 	github.com/theupdateframework/go-tuf v0.7.0
