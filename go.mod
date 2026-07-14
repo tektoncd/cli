@@ -1,6 +1,6 @@
 module github.com/tektoncd/cli
 
-go 1.25.8
+go 1.25.10
 
 require (
 	github.com/AlecAivazis/survey/v2 v2.3.7
@@ -28,7 +28,7 @@ require (
 	github.com/sigstore/sigstore v1.10.8
 	github.com/spf13/cobra v1.10.2
 	github.com/spf13/pflag v1.0.10
-	github.com/tektoncd/chains v0.26.5
+	github.com/tektoncd/chains v0.26.6
 	github.com/tektoncd/hub v1.24.0
 	github.com/tektoncd/pipeline v1.12.2
 	github.com/tektoncd/plumbing v0.0.0-20250430145243-3b7cd59879c1
