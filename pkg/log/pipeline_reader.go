@@ -216,6 +216,13 @@ func (r *Reader) setUpTask(taskNumber int, tr taskrunpkg.Run) {
 // getOrderedTasks get Tasks in order from Spec.PipelineRef or Spec.PipelineSpec
 // and return trh.Run after converted taskruns into trh.Run.
 func (r *Reader) getOrderedTasks(pr *v1.PipelineRun) ([]taskrunpkg.Run, error) {
+	return r.getOrderedTasksRec(pr, nil)
+}
+
+// getOrderedTasksRec is like getOrderedTasks but accepts a pre-fetched cache of
+// child PipelineRun objects to avoid redundant API calls when recursing into
+// Pipelines-in-Pipelines children.
+func (r *Reader) getOrderedTasksRec(pr *v1.PipelineRun, childPRCache map[string]*v1.PipelineRun) ([]taskrunpkg.Run, error) {
 	var tasks []v1.PipelineTask
 	switch {
 	case pr.Spec.PipelineRef != nil:
@@ -256,20 +263,27 @@ func (r *Reader) getOrderedTasks(pr *v1.PipelineRun) ([]taskrunpkg.Run, error) {
 	for name, t := range trsMap {
 		trNames[t.PipelineTaskName] = name
 	}
-	var ordered []taskrunpkg.Run
-	for _, pt := range tasks {
-		if _, ok := trNames[pt.Name]; ok {
-			// Direct TaskRun child — use existing sort logic
-			ordered = append(ordered, taskrunpkg.SortTasksBySpecOrder([]v1.PipelineTask{pt}, trsMap)...)
-
-		} else if childPRName, ok := childPRNames[pt.Name]; ok {
-			childPR, err := pipelinerunpkg.GetPipelineRun(pipelineRunGroupResource, r.clients, childPRName, r.ns)
+	// Pre-fetch child PipelineRuns if not already cached
+	if childPRCache == nil {
+		childPRCache = map[string]*v1.PipelineRun{}
+		for ptName, crName := range childPRNames {
+			childPR, err := pipelinerunpkg.GetPipelineRun(pipelineRunGroupResource, r.clients, crName, r.ns)
 			if err != nil {
 				if apierrors.IsNotFound(err) {
 					continue
 				}
 				return nil, err
 			}
+			childPRCache[ptName] = childPR
+		}
+	}
+	var ordered []taskrunpkg.Run
+	for _, pt := range tasks {
+		if _, ok := trNames[pt.Name]; ok {
+			// Direct TaskRun child — use existing sort logic
+			ordered = append(ordered, taskrunpkg.SortTasksBySpecOrder([]v1.PipelineTask{pt}, trsMap)...)
+
+		} else if childPR, ok := childPRCache[pt.Name]; ok {
 			childTasks, err := r.getChildOrderedTasks(childPR, pt.Name)
 			if err != nil {
 				return nil, err
