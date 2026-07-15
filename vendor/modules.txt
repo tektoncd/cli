@@ -1292,7 +1292,7 @@ github.com/syndtr/goleveldb/leveldb/opt
 github.com/syndtr/goleveldb/leveldb/storage
 github.com/syndtr/goleveldb/leveldb/table
 github.com/syndtr/goleveldb/leveldb/util
-# github.com/tektoncd/chains v0.27.2
+# github.com/tektoncd/chains v0.27.3
 ## explicit; go 1.26.1
 github.com/tektoncd/chains/pkg/artifacts
 github.com/tektoncd/chains/pkg/chains/annotations
