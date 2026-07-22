@@ -24,7 +24,7 @@ import (
 	"strings"
 	"time"
 
-	"github.com/blang/semver"
+	"github.com/Masterminds/semver/v3"
 	"github.com/pkg/errors"
 	"github.com/spf13/cobra"
 	"github.com/tektoncd/cli/pkg/cli"
@@ -262,7 +262,7 @@ func checkRelease(client *Client) (string, error) {
 		return "", err
 	}
 
-	if current.LT(*latest) {
+	if current.LessThan(latest) {
 		return fmt.Sprintf("A newer version (v%s) of Tekton CLI is available, please check %s\n", latest, response.HTMLURL), nil
 	}
 
@@ -272,9 +272,9 @@ func checkRelease(client *Client) (string, error) {
 func parseVersion(version string) (*semver.Version, error) {
 	version = strings.TrimSpace(version)
 	// Strip the leading 'v' in the version strings
-	v, err := semver.Parse(strings.TrimLeft(version, "v"))
+	v, err := semver.NewVersion(strings.TrimLeft(version, "v"))
 	if err != nil {
 		return nil, errors.Wrap(err, "failed to parse version")
 	}
-	return &v, nil
+	return v, nil
 }
