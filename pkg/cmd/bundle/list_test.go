@@ -13,7 +13,7 @@ import (
 	"github.com/tektoncd/cli/pkg/bundle"
 	"github.com/tektoncd/cli/pkg/test"
 	testDynamic "github.com/tektoncd/cli/pkg/test/dynamic"
-	"gotest.tools/assert"
+	"gotest.tools/v3/assert"
 )
 
 const (
