@@ -27,7 +27,7 @@ dnf install tektoncd-cli
 USAGE
 =====
 
-Same as when you use the [release.pipeline.yaml](../release-pipeline.yml), you
+Same as when you use the [release.pipeline.yaml](../release-pipeline.yaml), you
 need to have a PipelineResource for your git repository. See
 [here](../release-pipeline-run.yml) for an example.
 
