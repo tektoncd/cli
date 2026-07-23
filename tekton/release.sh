@@ -41,7 +41,8 @@ kubectl get pipeline 2>/dev/null >/dev/null || {
 RELEASE_BRANCH="release-${RELEASE_VERSION%.*}.x"
 
 git fetch -a --tags ${UPSTREAM_REMOTE} >/dev/null
-lasttag=$(git describe --tags `git rev-list --tags --max-count=1`)
+lasttag=$(git tag --sort=-v:refname | grep -E '^v[0-9]+\.[0-9]+\.[0-9]+$' | grep -v "^${RELEASE_VERSION}$" | head -1)
+[[ -z ${lasttag} ]] && { echo "no previous release tag found for ${RELEASE_VERSION}"; exit 1; }
 
 git ls-remote --exit-code ${UPSTREAM_REMOTE} refs/heads/${RELEASE_BRANCH} >/dev/null 2>&1 && {
     echo "Patch release detected: ${RELEASE_BRANCH} exists on ${UPSTREAM_REMOTE}, previous tag ${lasttag}"
@@ -77,7 +78,9 @@ fi
 }
 
 if [[ -n ${patch_release} ]];then
-    prev_tag=$(git describe --tags --abbrev=0 HEAD 2>/dev/null || echo "")
+    version_prefix="${RELEASE_VERSION%.*}"
+    prev_tag=$(git tag --sort=-v:refname -l "${version_prefix}.*" | grep -E '^v[0-9]+\.[0-9]+\.[0-9]+$' | grep -v "^${RELEASE_VERSION}$" | head -1)
+    [[ -z ${prev_tag} ]] && { echo "no previous patch release tag found for ${version_prefix}"; exit 1; }
 else
     prev_tag=${lasttag}
 fi
