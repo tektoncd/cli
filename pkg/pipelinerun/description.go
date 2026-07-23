@@ -175,20 +175,17 @@ func PrintPipelineRunDescription(out io.Writer, c *cli.Clients, ns string, prNam
 		return fmt.Errorf("failed to find pipelinerun %q", prName)
 	}
 
+	trStatuses, err := GetTaskRunsWithStatus(pr, c, ns)
+	if err != nil {
+		return err
+	}
 	var taskRunList TaskRunWithStatusList
-	for _, child := range pr.Status.ChildReferences {
-		if child.Kind == "TaskRun" {
-			var tr *v1.TaskRun
-			err = actions.GetV1(taskrunGroupResource, c, child.Name, ns, metav1.GetOptions{}, &tr)
-			if err != nil {
-				return fmt.Errorf("failed to find get taskruns of the pipelineruns")
-			}
-			taskRunList = append(taskRunList, TaskRunWithStatus{
-				tr.Name,
-				child.PipelineTaskName,
-				&tr.Status,
-			})
-		}
+	for trName, trs := range trStatuses {
+		taskRunList = append(taskRunList, TaskRunWithStatus{
+			TaskRunName:      trName,
+			PipelineTaskName: trs.PipelineTaskName,
+			Status:           trs.Status,
+		})
 	}
 
 	if len(taskRunList) != 0 {

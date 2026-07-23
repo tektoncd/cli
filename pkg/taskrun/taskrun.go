@@ -16,10 +16,15 @@ package taskrun
 
 import (
 	"sort"
+	"strings"
 
 	v1 "github.com/tektoncd/pipeline/pkg/apis/pipeline/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 )
+
+// ChildTaskSeparator separates parent and child pipeline task names in
+// Pipelines-in-Pipelines describe/logs output (e.g. "call-child > greet").
+const ChildTaskSeparator = " > "
 
 type Run struct {
 	Name           string
@@ -63,19 +68,34 @@ func Filter(trs []Run, ts []string) []Run {
 	if len(ts) == 0 {
 		return trs
 	}
-
 	filter := map[string]bool{}
 	for _, t := range ts {
 		filter[t] = true
 	}
-
 	filtered := []Run{}
 	for _, tr := range trs {
 		if filter[tr.Task] {
 			filtered = append(filtered, tr)
+			continue
+		}
+		for _, t := range ts {
+			if strings.Contains(t, ChildTaskSeparator) {
+				continue
+			}
+			segments := strings.Split(tr.Task, ChildTaskSeparator)
+			if len(segments) <= 1 {
+				continue
+			}
+			if strings.HasPrefix(tr.Task, t+ChildTaskSeparator) {
+				filtered = append(filtered, tr)
+				break
+			}
+			if segments[len(segments)-1] == t {
+				filtered = append(filtered, tr)
+				break
+			}
 		}
 	}
-
 	return filtered
 }
 
