@@ -104,7 +104,8 @@ spec:
         - name: github-token-secret-key
           value: $(params.github-token-secret-key)
         - name: image
-          value: goreleaser/goreleaser:v2.15.4
+          # TODO: update the goreleaser image to latest once go v1.25.6 is supported in latest goreleaser image
+          value: goreleaser/goreleaser:v2.18.0-ae4debbe-nightly
         - name: flags
           value: --timeout=60m
       workspaces:
