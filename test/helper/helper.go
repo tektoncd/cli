@@ -28,7 +28,7 @@ import (
 	"github.com/creack/pty"
 	"github.com/google/go-cmp/cmp"
 	"github.com/hinshun/vt10x"
-	gotestcmp "gotest.tools/assert/cmp"
+	gotestcmp "gotest.tools/v3/assert/cmp"
 )
 
 func Process(t *template.Template, vars interface{}) string {
