@@ -28,7 +28,6 @@ import (
 	"testing"
 
 	"github.com/pkg/errors"
-	"github.com/sigstore/cosign/v2/pkg/cosign"
 	"github.com/sigstore/sigstore/pkg/cryptoutils"
 	"github.com/sigstore/sigstore/pkg/signature"
 	"github.com/tektoncd/pipeline/pkg/apis/pipeline/v1beta1"
@@ -39,6 +38,8 @@ import (
 const (
 	password  = "hello"
 	namespace = "test"
+	// PEM type used by cosign for encrypted private keys. Kept as a local string so tests can generate compatible key files without importing cosign.
+	encryptedCosignPrivateKeyPEMType = "ENCRYPTED COSIGN PRIVATE KEY"
 )
 
 func init() {
@@ -160,7 +161,7 @@ func GenerateKeyFile(dir string, privateKeyFile, pubkeyfile string) (signature.S
 
 	privBytes := pem.EncodeToMemory(&pem.Block{
 		Bytes: encBytes,
-		Type:  cosign.CosignPrivateKeyPemType,
+		Type:  encryptedCosignPrivateKeyPEMType,
 	})
 
 	if err := os.WriteFile(filepath.Join(dir, privateKeyFile), privBytes, 0600); err != nil {
