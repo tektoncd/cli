@@ -34,6 +34,7 @@ const (
 
 type listOptions struct {
 	NoHeaders bool
+	Fields    []string
 }
 
 func listCommand(p cli.Params) *cobra.Command {
@@ -78,7 +79,10 @@ or
 				Err: cmd.OutOrStderr(),
 			}
 
-			if output == "name" && tbs != nil {
+			switch {
+			case output == "ndjson":
+				return formatted.PrintNDJSON(stream.Out, tbs, opts.Fields)
+			case output == "name" && tbs != nil:
 				w := cmd.OutOrStdout()
 				for _, pr := range tbs.Items {
 					_, err := fmt.Fprintf(w, "clustertriggerbinding.triggers.tekton.dev/%s\n", pr.Name)
@@ -87,7 +91,7 @@ or
 					}
 				}
 				return nil
-			} else if output != "" {
+			case output != "":
 				p, err := f.ToPrinter()
 				if err != nil {
 					return err
@@ -105,6 +109,7 @@ or
 
 	f.AddFlags(c)
 	c.Flags().BoolVar(&opts.NoHeaders, "no-headers", opts.NoHeaders, "do not print column headers with output (default print column headers with output)")
+	c.Flags().StringSliceVar(&opts.Fields, "fields", opts.Fields, "Comma-separated list of fields to include in output (e.g. metadata.name,status.startTime); only used with --output ndjson")
 	return c
 }
 

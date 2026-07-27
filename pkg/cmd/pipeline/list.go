@@ -61,6 +61,7 @@ NAME	AGE	LAST RUN	STARTED	DURATION	STATUS
 type ListOptions struct {
 	AllNamespaces bool
 	NoHeaders     bool
+	Fields        []string
 }
 
 func listCommand(p cli.Params) *cobra.Command {
@@ -91,7 +92,13 @@ func listCommand(p cli.Params) *cobra.Command {
 				ns = ""
 			}
 
-			if output != "" {
+			if output == "ndjson" {
+				var pl *v1.PipelineList
+				if err := actions.ListV1(pipelineGroupResource, cs, metav1.ListOptions{}, ns, &pl); err != nil {
+					return fmt.Errorf("failed to list Pipelines from namespace %s: %v", ns, err)
+				}
+				return formatted.PrintNDJSON(cmd.OutOrStdout(), pl, opts.Fields)
+			} else if output != "" {
 				p, err := f.ToPrinter()
 				if err != nil {
 					return err
@@ -108,6 +115,7 @@ func listCommand(p cli.Params) *cobra.Command {
 	f.AddFlags(c)
 	c.Flags().BoolVarP(&opts.AllNamespaces, "all-namespaces", "A", opts.AllNamespaces, "list Pipelines from all namespaces")
 	c.Flags().BoolVarP(&opts.NoHeaders, "no-headers", "", opts.NoHeaders, "do not print column headers with output (default print column headers with output)")
+	c.Flags().StringSliceVar(&opts.Fields, "fields", opts.Fields, "Comma-separated list of fields to include in output (e.g. metadata.name,status.startTime); only used with --output ndjson")
 
 	return c
 }
