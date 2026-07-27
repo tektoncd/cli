@@ -56,6 +56,7 @@ type ListOptions struct {
 	Reverse       bool
 	AllNamespaces bool
 	NoHeaders     bool
+	Fields        []string
 }
 
 func listCommand(p cli.Params) *cobra.Command {
@@ -101,7 +102,10 @@ List CustomRuns as a YAML array:
 			if err != nil {
 				return fmt.Errorf("output option not set properly: %v", err)
 			}
-			if output == "name" && crs != nil {
+			switch {
+			case output == "ndjson" && crs != nil:
+				return formatted.PrintNDJSON(cmd.OutOrStdout(), crs, opts.Fields)
+			case output == "name" && crs != nil:
 				w := cmd.OutOrStdout()
 				for _, tr := range crs.Items {
 					_, err := fmt.Fprintf(w, "customrun.tekton.dev/%s\n", tr.Name)
@@ -110,7 +114,7 @@ List CustomRuns as a YAML array:
 					}
 				}
 				return nil
-			} else if output != "" && crs != nil {
+			case output != "" && crs != nil:
 				p, err := f.ToPrinter()
 				if err != nil {
 					return err
@@ -142,6 +146,7 @@ List CustomRuns as a YAML array:
 	c.Flags().BoolVarP(&opts.Reverse, "reverse", "", opts.Reverse, "list CustomRuns in reverse order")
 	c.Flags().BoolVarP(&opts.AllNamespaces, "all-namespaces", "A", opts.AllNamespaces, "list CustomRuns from all namespaces")
 	c.Flags().BoolVarP(&opts.NoHeaders, "no-headers", "", opts.NoHeaders, "do not print column headers with output (default print column headers with output)")
+	c.Flags().StringSliceVar(&opts.Fields, "fields", opts.Fields, "Comma-separated list of fields to include in output (e.g. metadata.name,status.startTime); only used with --output ndjson")
 	return c
 }
 

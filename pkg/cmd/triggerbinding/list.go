@@ -35,6 +35,7 @@ const (
 type listOptions struct {
 	AllNamespaces bool
 	NoHeaders     bool
+	Fields        []string
 }
 
 func listCommand(p cli.Params) *cobra.Command {
@@ -95,7 +96,10 @@ List TriggerBindings as a YAML array:
 				Err: cmd.OutOrStderr(),
 			}
 
-			if output == "name" && tbs != nil {
+			switch {
+			case output == "ndjson":
+				return formatted.PrintNDJSON(stream.Out, tbs, opts.Fields)
+			case output == "name" && tbs != nil:
 				w := cmd.OutOrStdout()
 				for _, pr := range tbs.Items {
 					_, err := fmt.Fprintf(w, "triggerbinding.triggers.tekton.dev/%s\n", pr.Name)
@@ -104,7 +108,7 @@ List TriggerBindings as a YAML array:
 					}
 				}
 				return nil
-			} else if output != "" {
+			case output != "":
 				p, err := f.ToPrinter()
 				if err != nil {
 					return err
@@ -123,6 +127,7 @@ List TriggerBindings as a YAML array:
 	f.AddFlags(c)
 	c.Flags().BoolVarP(&opts.AllNamespaces, "all-namespaces", "A", opts.AllNamespaces, "list TriggerBindings from all namespaces")
 	c.Flags().BoolVar(&opts.NoHeaders, "no-headers", opts.NoHeaders, "do not print column headers with output (default print column headers with output)")
+	c.Flags().StringSliceVar(&opts.Fields, "fields", opts.Fields, "Comma-separated list of fields to include in output (e.g. metadata.name,status.startTime); only used with --output ndjson")
 	return c
 }
 
