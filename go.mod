@@ -39,13 +39,13 @@ require (
 	golang.org/x/crypto v0.53.0
 	golang.org/x/term v0.44.0
 	google.golang.org/grpc v1.81.1
-	google.golang.org/protobuf v1.36.11
+	google.golang.org/protobuf v1.36.12-0.20260120151049-f2248ac996af
 	gotest.tools v2.2.0+incompatible
 	gotest.tools/v3 v3.5.2
-	k8s.io/api v0.35.6
-	k8s.io/apimachinery v0.35.6
+	k8s.io/api v0.35.7
+	k8s.io/apimachinery v0.35.7
 	k8s.io/cli-runtime v0.29.15
-	k8s.io/client-go v0.35.6
+	k8s.io/client-go v0.35.7
 	knative.dev/pkg v0.0.0-20260329160701-396dbaacd652
 	sigs.k8s.io/yaml v1.6.0
 )
