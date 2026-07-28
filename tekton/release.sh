@@ -11,7 +11,11 @@ CATALOG_TASKS="lint build test"
 
 BINARIES="kubectl jq tkn git"
 
-GOLANGCI_VERSION="$(cat tools/go.mod | grep golangci-lint | awk '{ print $3 }')"
+GOLANGCI_VERSION="$(grep -A2 'golangci-lint' .github/workflows/ci.yaml | grep 'version:' | awk '{ print $2 }')"
+[[ -z ${GOLANGCI_VERSION} ]] && {
+    echo "WARNING: unable to detect golangci-lint version from .github/workflows/ci.yaml, using 'latest'"
+    GOLANGCI_VERSION="latest"
+}
 GO_VERSION="$(cat go.mod | grep "go" | awk 'NR==1{ print $2 }')"
 
 set -e
@@ -38,18 +42,26 @@ kubectl get pipeline 2>/dev/null >/dev/null || {
 
 [[ ${RELEASE_VERSION} =~ v[0-9]+\.[0-9]*\.[0-9]+ ]] || { echo "invalid version provided, need to match v\d+\.\d+\.\d+"; exit 1 ;}
 
-RELEASE_BRANCH="release-${RELEASE_VERSION%.*}.x"
+MINOR_BRANCH="release-${RELEASE_VERSION%.*}.x"
 
 git fetch -a --tags ${UPSTREAM_REMOTE} >/dev/null
-lasttag=$(git tag --sort=-v:refname | grep -E '^v[0-9]+\.[0-9]+\.[0-9]+$' | grep -v "^${RELEASE_VERSION}$" | head -1)
-[[ -z ${lasttag} ]] && { echo "no previous release tag found for ${RELEASE_VERSION}"; exit 1; }
 
-git ls-remote --exit-code ${UPSTREAM_REMOTE} refs/heads/${RELEASE_BRANCH} >/dev/null 2>&1 && {
-    echo "Patch release detected: ${RELEASE_BRANCH} exists on ${UPSTREAM_REMOTE}, previous tag ${lasttag}"
+git ls-remote --exit-code ${UPSTREAM_REMOTE} refs/heads/${MINOR_BRANCH} >/dev/null 2>&1 && {
     patch_release=true
-} || {
-    echo "New release detected: creating ${RELEASE_BRANCH} from ${DEFAULT_BRANCH}, previous tag ${lasttag}"
-}
+} || true
+
+if [[ -n ${patch_release} ]];then
+    RELEASE_BRANCH="release-${RELEASE_VERSION}"
+    version_prefix="${RELEASE_VERSION%.*}"
+    prev_tag=$(git tag --sort=-v:refname -l "${version_prefix}.*" | grep -E '^v[0-9]+\.[0-9]+\.[0-9]+$' | grep -v "^${RELEASE_VERSION}$" | head -1)
+    [[ -z ${prev_tag} ]] && { echo "no previous patch release tag found for ${version_prefix}"; exit 1; }
+    echo "Patch release detected: creating ${RELEASE_BRANCH} from ${MINOR_BRANCH} on ${UPSTREAM_REMOTE}, previous tag ${prev_tag}"
+else
+    RELEASE_BRANCH="${MINOR_BRANCH}"
+    prev_tag=$(git tag --sort=-v:refname | grep -E '^v[0-9]+\.[0-9]+\.0$' | grep -v "^${RELEASE_VERSION}$" | head -1)
+    [[ -z ${prev_tag} ]] && { echo "no previous release tag found for ${RELEASE_VERSION}"; exit 1; }
+    echo "New minor release detected: creating ${RELEASE_BRANCH} from ${DEFAULT_BRANCH}, previous tag ${prev_tag}"
+fi
 
 cd ${GOPATH}/src/github.com/tektoncd/cli
 
@@ -60,13 +72,13 @@ cd ${GOPATH}/src/github.com/tektoncd/cli
 }
 
 if [[ -n ${patch_release} ]];then
-    echo "Checking out existing ${RELEASE_BRANCH} from ${UPSTREAM_REMOTE}"
-    git checkout -B ${RELEASE_BRANCH} ${UPSTREAM_REMOTE}/${RELEASE_BRANCH} >/dev/null
+    echo "Creating ${RELEASE_BRANCH} from ${UPSTREAM_REMOTE}/${MINOR_BRANCH}"
+    git checkout -B ${RELEASE_BRANCH} ${UPSTREAM_REMOTE}/${MINOR_BRANCH} >/dev/null
 else
     echo "New release ${RELEASE_VERSION%.*} detected: creating ${RELEASE_BRANCH} from ${UPSTREAM_REMOTE}/${DEFAULT_BRANCH}"
     git checkout ${DEFAULT_BRANCH}
     git reset --hard ${UPSTREAM_REMOTE}/${DEFAULT_BRANCH}
-    git checkout -B ${RELEASE_BRANCH} ${DEFAULT_BRANCH} >/dev/null
+    git checkout -B ${RELEASE_BRANCH} ${UPSTREAM_REMOTE}/${DEFAULT_BRANCH} >/dev/null
 fi
 
 # HACK:! this is temporary to disable the upload to homebrew when we do our testing
@@ -77,16 +89,9 @@ fi
     git cherry-pick 052b0b4ce989fe9aee01027e67e61538b48e1179 >/dev/null
 }
 
-if [[ -n ${patch_release} ]];then
-    version_prefix="${RELEASE_VERSION%.*}"
-    prev_tag=$(git tag --sort=-v:refname -l "${version_prefix}.*" | grep -E '^v[0-9]+\.[0-9]+\.[0-9]+$' | grep -v "^${RELEASE_VERSION}$" | head -1)
-    [[ -z ${prev_tag} ]] && { echo "no previous patch release tag found for ${version_prefix}"; exit 1; }
-else
-    prev_tag=${lasttag}
-fi
-COMMITS=$(git log --reverse --no-merges \
-              --pretty=format:'%H' HEAD \
-              --since "$(git log --pretty=format:%cd -1 ${prev_tag})")
+COMMITS=$(git log --reverse --no-merges --pretty=format:'%H' ${prev_tag}..HEAD)
+
+echo "Creating changelog for ${RELEASE_VERSION} from ${prev_tag}..HEAD"
 
 changelog=""
 for c in ${COMMITS};do
@@ -95,6 +100,8 @@ for c in ${COMMITS};do
     changelog+="${pr} | $(git log -1 --date=format:'%Y/%m/%d-%H:%M' --pretty=format:'[%an] %s | %cd' ${c})
 "
 done
+
+echo "${changelog}"
 
 # Add our VERSION so Makefile will pick it up when compiling
 echo ${RELEASE_VERSION#v} > VERSION
@@ -106,6 +113,9 @@ git tag --sign -m \
 
 git push --force ${PUSH_REMOTE} ${RELEASE_VERSION}
 git push --force ${PUSH_REMOTE} ${RELEASE_BRANCH}
+
+echo "Checkout to ${DEFAULT_BRANCH} to use the release pipeline"
+git reset --hard ${UPSTREAM_REMOTE}/${DEFAULT_BRANCH}
 
 kubectl create namespace ${TARGET_NAMESPACE} 2>/dev/null || true
 
