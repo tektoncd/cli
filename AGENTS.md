@@ -145,3 +145,7 @@ For complex workflows, use these repo-local skills:
 - **Release notes**: Gather PRs between tags, categorize, output formatted
   markdown, optionally update GitHub release. Trigger: "create release note",
   "generate release notes", "release changelog"
+- **Release**: Full CLI release workflow for minor and patch releases. Validates
+  prerequisites, guides running release.sh, and walks through post-release
+  steps (RPM, DEB, Homebrew, plumbing). Trigger: "do a release",
+  "cut a release", "create a patch release", "release vX.Y.Z"
