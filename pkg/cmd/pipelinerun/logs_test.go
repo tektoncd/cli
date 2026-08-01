@@ -36,6 +36,7 @@ import (
 	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/apimachinery/pkg/watch"
 	"k8s.io/client-go/dynamic"
+	k8stest "k8s.io/client-go/testing"
 	"knative.dev/pkg/apis"
 	duckv1 "knative.dev/pkg/apis/duck/v1"
 )
@@ -4622,6 +4623,8 @@ type pinPFixture struct {
 	logEntries  []fake.Log
 	expected    string
 	beforeFetch func(*options.LogOptions)
+
+	prGetCounts map[string]int
 }
 
 func newPinPFixture(t *testing.T, prName string) *pinPFixture {
@@ -4668,7 +4671,7 @@ func (f *pinPFixture) withBeforeFetch(fn func(*options.LogOptions)) *pinPFixture
 	return f
 }
 
-func (f *pinPFixture) run() {
+func (f *pinPFixture) run() *pinPFixture {
 	t := f.t
 
 	cs, _ := test.SeedTestData(t, pipelinetest.Data{
@@ -4691,7 +4694,17 @@ func (f *pinPFixture) run() {
 		uns = append(uns, cb.UnstructuredTR(tr, f.apiVersion))
 	}
 
-	tdc := testDynamic.Options{}
+	f.prGetCounts = map[string]int{}
+	tdc := testDynamic.Options{
+		PrependReactors: []testDynamic.PrependOpt{{
+			Resource: "pipelineruns",
+			Verb:     "get",
+			Action: func(action k8stest.Action) (bool, runtime.Object, error) {
+				f.prGetCounts[action.(k8stest.GetAction).GetName()]++
+				return false, nil, nil
+			},
+		}},
+	}
 	dc, err := tdc.Client(uns...)
 	if err != nil {
 		t.Fatal(err)
@@ -4708,6 +4721,15 @@ func (f *pinPFixture) run() {
 		t.Fatal(err)
 	}
 	test.AssertOutput(t, f.expected, output)
+	return f
+}
+
+func (f *pinPFixture) assertPRGetCounts(expected map[string]int) {
+	for name, want := range expected {
+		if got := f.prGetCounts[name]; got != want {
+			f.t.Errorf("pipelinerun %q fetched %d time(s), want %d", name, got, want)
+		}
+	}
 }
 
 func succeededTR(name, ns, pod, step string) *v1.TaskRun {
@@ -5009,6 +5031,57 @@ func fetchLogs(lo *options.LogOptions) (string, error) {
 	return out.String(), err
 }
 
+func TestPipelineRunLogs_CompletionOrder(t *testing.T) {
+	startTime := test.FakeClock().Now()
+	alphaTR := succeededTR("order-run-alpha", "namespace", "order-run-alpha-pod", "sa")
+	alphaTR.Status.TaskRunStatusFields.StartTime = &metav1.Time{Time: startTime}
+	alphaTR.Status.TaskRunStatusFields.CompletionTime = &metav1.Time{Time: startTime.Add(60 * time.Second)}
+	betaTR := succeededTR("order-run-beta", "namespace", "order-run-beta-pod", "sb")
+	betaTR.Status.TaskRunStatusFields.StartTime = &metav1.Time{Time: startTime}
+	betaTR.Status.TaskRunStatusFields.CompletionTime = &metav1.Time{Time: startTime.Add(10 * time.Second)}
+
+	parentPR := &v1.PipelineRun{
+		ObjectMeta: metav1.ObjectMeta{Name: "order-run", Namespace: "namespace",
+			Labels: map[string]string{"tekton.dev/pipeline": "order-pipeline"}},
+		Spec: v1.PipelineRunSpec{PipelineRef: &v1.PipelineRef{Name: "order-pipeline"}},
+		Status: v1.PipelineRunStatus{
+			Status: duckv1.Status{Conditions: duckv1.Conditions{{
+				Status: corev1.ConditionTrue, Type: apis.ConditionSucceeded}}},
+			PipelineRunStatusFields: v1.PipelineRunStatusFields{
+				ChildReferences: []v1.ChildStatusReference{
+					{Name: "order-run-alpha", PipelineTaskName: "alpha", TypeMeta: runtime.TypeMeta{Kind: "TaskRun"}},
+					{Name: "order-run-beta", PipelineTaskName: "beta", TypeMeta: runtime.TypeMeta{Kind: "TaskRun"}},
+				},
+			},
+		},
+	}
+	parentPipeline := &v1.Pipeline{
+		ObjectMeta: metav1.ObjectMeta{Name: "order-pipeline", Namespace: "namespace"},
+		Spec: v1.PipelineSpec{
+			Tasks: []v1.PipelineTask{
+				{Name: "alpha", TaskRef: &v1.TaskRef{Name: "alpha-task"}},
+				{Name: "beta", TaskRef: &v1.TaskRef{Name: "beta-task"}},
+			},
+		},
+	}
+	newPinPFixture(t, "order-run").
+		withPipelineRuns(parentPR).
+		withPipelines(parentPipeline).
+		withTaskRuns(alphaTR, betaTR).
+		withPods(
+			&corev1.Pod{ObjectMeta: metav1.ObjectMeta{Name: "order-run-alpha-pod", Namespace: "namespace"},
+				Spec: corev1.PodSpec{Containers: []corev1.Container{{Name: "sa", Image: "busybox"}}}},
+			&corev1.Pod{ObjectMeta: metav1.ObjectMeta{Name: "order-run-beta-pod", Namespace: "namespace"},
+				Spec: corev1.PodSpec{Containers: []corev1.Container{{Name: "sb", Image: "busybox"}}}},
+		).
+		withLogs(
+			fake.Task("order-run-alpha-pod", fake.Step("sa", "AAA\n")),
+			fake.Task("order-run-beta-pod", fake.Step("sb", "BBB\n")),
+		).
+		expect("[beta : sb] BBB\n\n[alpha : sa] AAA\n\n").
+		run()
+}
+
 func TestPipelineRunLogs_PinP_Available(t *testing.T) {
 	childTR := succeededTR("parent-run-call-child-greet", "namespace", "parent-run-call-child-greet-pod", "echo")
 	childPR := &v1.PipelineRun{
@@ -5061,8 +5134,13 @@ func TestPipelineRunLogs_PinP_Available(t *testing.T) {
 }
 
 func TestPipelineRunLogs_PinP_WithDirectTasks(t *testing.T) {
+	startTime := test.FakeClock().Now()
 	buildTR := succeededTR("mix-run-build", "namespace", "mix-run-build-pod", "step1")
+	buildTR.Status.TaskRunStatusFields.StartTime = &metav1.Time{Time: startTime}
+	buildTR.Status.TaskRunStatusFields.CompletionTime = &metav1.Time{Time: startTime.Add(60 * time.Second)}
 	childTR := succeededTR("mix-run-deploy-greet", "namespace", "mix-run-deploy-greet-pod", "echo")
+	childTR.Status.TaskRunStatusFields.StartTime = &metav1.Time{Time: startTime.Add(30 * time.Second)}
+	childTR.Status.TaskRunStatusFields.CompletionTime = &metav1.Time{Time: startTime.Add(120 * time.Second)}
 	childPR := &v1.PipelineRun{
 		ObjectMeta: metav1.ObjectMeta{Name: "mix-run-deploy", Namespace: "namespace"},
 		Spec: v1.PipelineRunSpec{PipelineSpec: &v1.PipelineSpec{
@@ -5119,6 +5197,73 @@ func TestPipelineRunLogs_PinP_WithDirectTasks(t *testing.T) {
 			fake.Task("mix-run-deploy-greet-pod", fake.Step("echo", "deploy done\n")),
 		).
 		expect("[build : step1] building done\n\n[deploy" + taskrunpkg.ChildTaskSeparator + "greet : echo] deploy done\n\n").
+		run()
+}
+
+func TestPipelineRunLogs_PinP_CompletionOrderInterleave(t *testing.T) {
+	startTime := test.FakeClock().Now()
+	buildTR := succeededTR("interleave-run-build", "namespace", "interleave-run-build-pod", "step1")
+	buildTR.Status.TaskRunStatusFields.StartTime = &metav1.Time{Time: startTime}
+	buildTR.Status.TaskRunStatusFields.CompletionTime = &metav1.Time{Time: startTime.Add(60 * time.Second)}
+	childTR := succeededTR("interleave-run-deploy-greet", "namespace", "interleave-run-deploy-greet-pod", "echo")
+	childTR.Status.TaskRunStatusFields.StartTime = &metav1.Time{Time: startTime}
+	childTR.Status.TaskRunStatusFields.CompletionTime = &metav1.Time{Time: startTime.Add(10 * time.Second)}
+	childPR := &v1.PipelineRun{
+		ObjectMeta: metav1.ObjectMeta{Name: "interleave-run-deploy", Namespace: "namespace"},
+		Spec: v1.PipelineRunSpec{PipelineSpec: &v1.PipelineSpec{
+			Tasks: []v1.PipelineTask{{Name: "greet", TaskSpec: &v1.EmbeddedTask{
+				TaskSpec: v1.TaskSpec{Steps: []v1.Step{{Name: "echo", Image: "busybox"}}}}}},
+		}},
+		Status: v1.PipelineRunStatus{
+			Status: duckv1.Status{Conditions: duckv1.Conditions{{
+				Status: corev1.ConditionTrue, Type: apis.ConditionSucceeded}}},
+			PipelineRunStatusFields: v1.PipelineRunStatusFields{
+				ChildReferences: []v1.ChildStatusReference{{
+					Name: "interleave-run-deploy-greet", PipelineTaskName: "greet",
+					TypeMeta: runtime.TypeMeta{Kind: "TaskRun"}}},
+			},
+		},
+	}
+	parentPR := &v1.PipelineRun{
+		ObjectMeta: metav1.ObjectMeta{Name: "interleave-run", Namespace: "namespace",
+			Labels: map[string]string{"tekton.dev/pipeline": "interleave-pipeline"}},
+		Spec: v1.PipelineRunSpec{PipelineRef: &v1.PipelineRef{Name: "interleave-pipeline"}},
+		Status: v1.PipelineRunStatus{
+			Status: duckv1.Status{Conditions: duckv1.Conditions{{
+				Status: corev1.ConditionTrue, Type: apis.ConditionSucceeded}}},
+			PipelineRunStatusFields: v1.PipelineRunStatusFields{
+				ChildReferences: []v1.ChildStatusReference{
+					{Name: "interleave-run-build", PipelineTaskName: "build", TypeMeta: runtime.TypeMeta{Kind: "TaskRun"}},
+					{Name: "interleave-run-deploy", PipelineTaskName: "deploy", TypeMeta: runtime.TypeMeta{Kind: "PipelineRun"}},
+				},
+			},
+		},
+	}
+	parentPipeline := &v1.Pipeline{
+		ObjectMeta: metav1.ObjectMeta{Name: "interleave-pipeline", Namespace: "namespace"},
+		Spec: v1.PipelineSpec{
+			Tasks: []v1.PipelineTask{
+				{Name: "build", TaskRef: &v1.TaskRef{Name: "build-task"}},
+				{Name: "deploy", TaskSpec: &v1.EmbeddedTask{
+					TaskSpec: v1.TaskSpec{Steps: []v1.Step{{Name: "p", Image: "busybox"}}}}},
+			},
+		},
+	}
+	newPinPFixture(t, "interleave-run").
+		withPipelineRuns(parentPR, childPR).
+		withPipelines(parentPipeline).
+		withTaskRuns(buildTR, childTR).
+		withPods(
+			&corev1.Pod{ObjectMeta: metav1.ObjectMeta{Name: "interleave-run-build-pod", Namespace: "namespace"},
+				Spec: corev1.PodSpec{Containers: []corev1.Container{{Name: "step1", Image: "alpine"}}}},
+			&corev1.Pod{ObjectMeta: metav1.ObjectMeta{Name: "interleave-run-deploy-greet-pod", Namespace: "namespace"},
+				Spec: corev1.PodSpec{Containers: []corev1.Container{{Name: "echo", Image: "busybox"}}}},
+		).
+		withLogs(
+			fake.Task("interleave-run-build-pod", fake.Step("step1", "building done\n")),
+			fake.Task("interleave-run-deploy-greet-pod", fake.Step("echo", "deploy done\n")),
+		).
+		expect("[deploy" + taskrunpkg.ChildTaskSeparator + "greet : echo] deploy done\n\n[build : step1] building done\n\n").
 		run()
 }
 func TestPipelineRunLogs_PinP_DeepNesting(t *testing.T) {
@@ -5186,7 +5331,11 @@ func TestPipelineRunLogs_PinP_DeepNesting(t *testing.T) {
 		}).
 		withLogs(fake.Task("deep-parent-run-call-greet-pod", fake.Step("echo", "Hello from grandchild\n"))).
 		expect("[call-child" + taskrunpkg.ChildTaskSeparator + "call-grandchild" + taskrunpkg.ChildTaskSeparator + "greet : echo] Hello from grandchild\n\n").
-		run()
+		run().
+		assertPRGetCounts(map[string]int{
+			"deep-parent-run-call-child":      1,
+			"deep-parent-run-call-grandchild": 1,
+		})
 }
 
 func TestPipelineRunLogs_PinP_PendingChild(t *testing.T) {
@@ -5475,4 +5624,59 @@ func TestPipelineRunLogs_PinP_ChildPR_NotFound(t *testing.T) {
 		withLogs(fake.Task("build-pod", fake.Step("step1", "build output\n"))).
 		expect("[build : step1] build output\n\n").
 		run()
+}
+
+func TestPipelineRunLogs_PinP_TaskRun_NotFound(t *testing.T) {
+	childTR := succeededTR("child-taskrun", "namespace", "child-pod", "deploy")
+	childPR := &v1.PipelineRun{
+		ObjectMeta: metav1.ObjectMeta{Name: "child-pr", Namespace: "namespace",
+			Labels: map[string]string{"tekton.dev/pipeline": "child-pipeline"}},
+		Spec: v1.PipelineRunSpec{PipelineSpec: &v1.PipelineSpec{
+			Tasks: []v1.PipelineTask{
+				{Name: "deploy", TaskRef: &v1.TaskRef{Name: "deploy"}},
+			},
+		}},
+		Status: v1.PipelineRunStatus{
+			Status: duckv1.Status{Conditions: duckv1.Conditions{{Status: corev1.ConditionTrue, Message: "Success"}}},
+			PipelineRunStatusFields: v1.PipelineRunStatusFields{
+				ChildReferences: []v1.ChildStatusReference{
+					{Name: "child-taskrun", PipelineTaskName: "deploy",
+						TypeMeta: runtime.TypeMeta{APIVersion: "tekton.dev/v1", Kind: "TaskRun"}},
+				},
+			},
+		},
+	}
+	parentPR := &v1.PipelineRun{
+		ObjectMeta: metav1.ObjectMeta{Name: "pipeline-run", Namespace: "namespace",
+			Labels: map[string]string{"tekton.dev/pipeline": "pipeline-run"}},
+		Spec: v1.PipelineRunSpec{PipelineSpec: &v1.PipelineSpec{
+			Tasks: []v1.PipelineTask{
+				{Name: "build", TaskRef: &v1.TaskRef{Name: "build"}},
+				{Name: "call-child", TaskRef: &v1.TaskRef{Name: "call-child"}},
+			},
+		}},
+		Status: v1.PipelineRunStatus{
+			Status: duckv1.Status{Conditions: duckv1.Conditions{{Status: corev1.ConditionTrue, Message: "Success"}}},
+			PipelineRunStatusFields: v1.PipelineRunStatusFields{
+				ChildReferences: []v1.ChildStatusReference{
+					{Name: "missing-build-taskrun", PipelineTaskName: "build",
+						TypeMeta: runtime.TypeMeta{APIVersion: "tekton.dev/v1", Kind: "TaskRun"}},
+					{Name: "child-pr", PipelineTaskName: "call-child",
+						TypeMeta: runtime.TypeMeta{APIVersion: "tekton.dev/v1", Kind: "PipelineRun"}},
+				},
+			},
+		},
+	}
+	newPinPFixture(t, "pipeline-run").
+		withPipelineRuns(parentPR, childPR).
+		withTaskRuns(childTR).
+		withPods(&corev1.Pod{
+			ObjectMeta: metav1.ObjectMeta{Name: "child-pod", Namespace: "namespace",
+				Labels: map[string]string{"tekton.dev/task": "deploy"}},
+			Spec: corev1.PodSpec{Containers: []corev1.Container{{Name: "deploy", Image: "deploy:latest"}}},
+		}).
+		withLogs(fake.Task("child-pod", fake.Step("deploy", "child output\n"))).
+		expect("[call-child" + taskrunpkg.ChildTaskSeparator + "deploy : deploy] child output\n\n").
+		run().
+		assertPRGetCounts(map[string]int{"child-pr": 1})
 }

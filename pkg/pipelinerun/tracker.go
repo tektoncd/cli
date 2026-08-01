@@ -101,7 +101,7 @@ func (t *Tracker) Monitor(allowed []string) <-chan []taskrunpkg.Run {
 			pr = &prv1
 		}
 
-		trsMap, err := GetTaskRunsWithStatus(pr, t.Client, t.Ns)
+		trsMap, _, err := GetTaskRunsWithStatus(pr, t.Client, t.Ns)
 		if err != nil {
 			return
 		}
@@ -184,13 +184,17 @@ func (t *Tracker) findNewTaskruns(pr *v1.PipelineRun, allowed []string, trStatus
 		if strings.Contains(trs.PipelineTaskName, taskrunpkg.ChildTaskSeparator) {
 			segments := strings.Split(trs.PipelineTaskName, taskrunpkg.ChildTaskSeparator)
 			currentPR := pr
+		chainLoop:
 			for i := 0; i < len(segments)-1; i++ {
 				for _, cr := range currentPR.Status.ChildReferences {
 					if cr.Kind == "PipelineRun" && cr.PipelineTaskName == segments[i] {
 						childPR, err := GetPipelineRun(pipelineRunGroupResource, t.Client, cr.Name, t.Ns)
-						if err == nil {
-							currentPR = childPR
+						if err != nil {
+							// Can't resolve the chain; leave retries at 0 rather than guessing.
+							currentPR = pr
+							break chainLoop
 						}
+						currentPR = childPR
 						break
 					}
 				}
@@ -245,11 +249,13 @@ func (t *Tracker) loggingInProgress(tr string) bool {
 	return ok
 }
 
-func GetTaskRunsWithStatus(pr *v1.PipelineRun, c *cli.Clients, ns string) (map[string]*v1.PipelineRunTaskRunStatus, error) {
-	return getTaskRunsWithStatusRecursive(pr, c, ns, "")
+func GetTaskRunsWithStatus(pr *v1.PipelineRun, c *cli.Clients, ns string) (map[string]*v1.PipelineRunTaskRunStatus, map[string]*v1.PipelineRun, error) {
+	childPRs := map[string]*v1.PipelineRun{}
+	trStatuses, err := getTaskRunsWithStatusRecursive(pr, c, ns, "", childPRs)
+	return trStatuses, childPRs, err
 }
 
-func getTaskRunsWithStatusRecursive(pr *v1.PipelineRun, c *cli.Clients, ns string, prefix string) (map[string]*v1.PipelineRunTaskRunStatus, error) {
+func getTaskRunsWithStatusRecursive(pr *v1.PipelineRun, c *cli.Clients, ns string, prefix string, childPRs map[string]*v1.PipelineRun) (map[string]*v1.PipelineRunTaskRunStatus, error) {
 	if pr == nil {
 		return nil, nil
 	}
@@ -262,6 +268,9 @@ func getTaskRunsWithStatusRecursive(pr *v1.PipelineRun, c *cli.Clients, ns strin
 		case "TaskRun":
 			tr, err := taskrunpkg.GetTaskRun(taskrunGroupResource, c, cr.Name, ns)
 			if err != nil {
+				if apierrors.IsNotFound(err) {
+					continue
+				}
 				return nil, err
 			}
 			taskName := cr.PipelineTaskName
@@ -280,11 +289,12 @@ func getTaskRunsWithStatusRecursive(pr *v1.PipelineRun, c *cli.Clients, ns strin
 				}
 				return nil, err
 			}
+			childPRs[cr.Name] = childPR
 			childPrefix := cr.PipelineTaskName
 			if prefix != "" {
 				childPrefix = prefix + taskrunpkg.ChildTaskSeparator + childPrefix
 			}
-			childTRs, err := getTaskRunsWithStatusRecursive(childPR, c, ns, childPrefix)
+			childTRs, err := getTaskRunsWithStatusRecursive(childPR, c, ns, childPrefix, childPRs)
 			if err != nil {
 				return nil, err
 			}

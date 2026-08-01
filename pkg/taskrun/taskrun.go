@@ -78,12 +78,12 @@ func Filter(trs []Run, ts []string) []Run {
 			filtered = append(filtered, tr)
 			continue
 		}
+		segments := strings.Split(tr.Task, ChildTaskSeparator)
+		if len(segments) <= 1 {
+			continue
+		}
 		for _, t := range ts {
 			if strings.Contains(t, ChildTaskSeparator) {
-				continue
-			}
-			segments := strings.Split(tr.Task, ChildTaskSeparator)
-			if len(segments) <= 1 {
 				continue
 			}
 			if strings.HasPrefix(tr.Task, t+ChildTaskSeparator) {
