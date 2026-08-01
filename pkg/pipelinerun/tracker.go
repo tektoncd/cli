@@ -17,8 +17,11 @@ package pipelinerun
 import (
 	"context"
 	"errors"
+	"strings"
 	"sync"
 	"time"
+
+	apierrors "k8s.io/apimachinery/pkg/api/errors"
 
 	"github.com/tektoncd/cli/pkg/actions"
 	"github.com/tektoncd/cli/pkg/cli"
@@ -98,7 +101,7 @@ func (t *Tracker) Monitor(allowed []string) <-chan []taskrunpkg.Run {
 			pr = &prv1
 		}
 
-		trsMap, err := GetTaskRunsWithStatus(pr, t.Client, t.Ns)
+		trsMap, _, err := GetTaskRunsWithStatus(pr, t.Client, t.Ns)
 		if err != nil {
 			return
 		}
@@ -178,7 +181,41 @@ func (t *Tracker) findNewTaskruns(pr *v1.PipelineRun, allowed []string, trStatus
 	ret := []taskrunpkg.Run{}
 	for tr, trs := range trStatuses {
 		retries := 0
-		if pr.Status.PipelineSpec != nil {
+		if strings.Contains(trs.PipelineTaskName, taskrunpkg.ChildTaskSeparator) {
+			segments := strings.Split(trs.PipelineTaskName, taskrunpkg.ChildTaskSeparator)
+			currentPR := pr
+		chainLoop:
+			for i := 0; i < len(segments)-1; i++ {
+				for _, cr := range currentPR.Status.ChildReferences {
+					if cr.Kind == "PipelineRun" && cr.PipelineTaskName == segments[i] {
+						childPR, err := GetPipelineRun(pipelineRunGroupResource, t.Client, cr.Name, t.Ns)
+						if err != nil {
+							// Can't resolve the chain; leave retries at 0 rather than guessing.
+							currentPR = pr
+							break chainLoop
+						}
+						currentPR = childPR
+						break
+					}
+				}
+			}
+			leafTaskName := segments[len(segments)-1]
+			if currentPR != pr && currentPR.Status.PipelineSpec != nil {
+				for _, pt := range currentPR.Status.PipelineSpec.Tasks {
+					if pt.Name == leafTaskName {
+						retries = pt.Retries
+						break
+					}
+				}
+				if retries == 0 {
+					for _, pt := range currentPR.Status.PipelineSpec.Finally {
+						if pt.Name == leafTaskName {
+							retries = pt.Retries
+						}
+					}
+				}
+			}
+		} else if pr.Status.PipelineSpec != nil {
 			for _, pipelineTask := range pr.Status.PipelineSpec.Tasks {
 				if trs.PipelineTaskName == pipelineTask.Name {
 					retries = pipelineTask.Retries
@@ -212,33 +249,59 @@ func (t *Tracker) loggingInProgress(tr string) bool {
 	return ok
 }
 
-func GetTaskRunsWithStatus(pr *v1.PipelineRun, c *cli.Clients, ns string) (map[string]*v1.PipelineRunTaskRunStatus, error) {
-	// If the PipelineRun is nil, just return
+func GetTaskRunsWithStatus(pr *v1.PipelineRun, c *cli.Clients, ns string) (map[string]*v1.PipelineRunTaskRunStatus, map[string]*v1.PipelineRun, error) {
+	childPRs := map[string]*v1.PipelineRun{}
+	trStatuses, err := getTaskRunsWithStatusRecursive(pr, c, ns, "", childPRs)
+	return trStatuses, childPRs, err
+}
+
+func getTaskRunsWithStatusRecursive(pr *v1.PipelineRun, c *cli.Clients, ns string, prefix string, childPRs map[string]*v1.PipelineRun) (map[string]*v1.PipelineRunTaskRunStatus, error) {
 	if pr == nil {
 		return nil, nil
 	}
-
-	// If there are no child references return the existing TaskRuns and Runs maps
 	if len(pr.Status.ChildReferences) == 0 {
 		return map[string]*v1.PipelineRunTaskRunStatus{}, nil
 	}
-
 	trStatuses := make(map[string]*v1.PipelineRunTaskRunStatus)
 	for _, cr := range pr.Status.ChildReferences {
-		//TODO: Needs to handle Run, CustomRun later
-		if cr.Kind == "TaskRun" {
+		switch cr.Kind {
+		case "TaskRun":
 			tr, err := taskrunpkg.GetTaskRun(taskrunGroupResource, c, cr.Name, ns)
+			if err != nil {
+				if apierrors.IsNotFound(err) {
+					continue
+				}
+				return nil, err
+			}
+			taskName := cr.PipelineTaskName
+			if prefix != "" {
+				taskName = prefix + taskrunpkg.ChildTaskSeparator + taskName
+			}
+			trStatuses[cr.Name] = &v1.PipelineRunTaskRunStatus{
+				PipelineTaskName: taskName,
+				Status:           &tr.Status,
+			}
+		case "PipelineRun":
+			childPR, err := GetPipelineRun(pipelineRunGroupResource, c, cr.Name, ns)
+			if err != nil {
+				if apierrors.IsNotFound(err) {
+					continue
+				}
+				return nil, err
+			}
+			childPRs[cr.Name] = childPR
+			childPrefix := cr.PipelineTaskName
+			if prefix != "" {
+				childPrefix = prefix + taskrunpkg.ChildTaskSeparator + childPrefix
+			}
+			childTRs, err := getTaskRunsWithStatusRecursive(childPR, c, ns, childPrefix, childPRs)
 			if err != nil {
 				return nil, err
 			}
-
-			trStatuses[cr.Name] = &v1.PipelineRunTaskRunStatus{
-				PipelineTaskName: cr.PipelineTaskName,
-				Status:           &tr.Status,
+			for k, v := range childTRs {
+				trStatuses[k] = v
 			}
-
 		}
 	}
-
 	return trStatuses, nil
 }
