@@ -3,9 +3,6 @@
 cel.dev/expr
 # cloud.google.com/go/kms v1.31.0
 ## explicit; go 1.25.0
-# github.com/ActiveState/vt10x v1.3.1
-## explicit; go 1.13
-github.com/ActiveState/vt10x
 # github.com/AlecAivazis/survey/v2 v2.3.7
 ## explicit; go 1.13
 github.com/AlecAivazis/survey/v2
@@ -367,9 +364,6 @@ github.com/klauspost/compress/internal/le
 github.com/klauspost/compress/internal/snapref
 github.com/klauspost/compress/zstd
 github.com/klauspost/compress/zstd/internal/xxhash
-# github.com/kr/pty v1.1.1
-## explicit
-github.com/kr/pty
 # github.com/ktr0731/go-ansisgr v0.1.0
 ## explicit; go 1.19
 github.com/ktr0731/go-ansisgr
