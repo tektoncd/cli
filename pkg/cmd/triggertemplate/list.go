@@ -34,6 +34,7 @@ const (
 type ListOptions struct {
 	AllNamespaces bool
 	NoHeaders     bool
+	Fields        []string
 }
 
 func listCommand(p cli.Params) *cobra.Command {
@@ -85,7 +86,9 @@ or
 				Err: cmd.OutOrStderr(),
 			}
 
-			if output != "" {
+			if output == "ndjson" {
+				return formatted.PrintNDJSON(stream.Out, tts, opts.Fields)
+			} else if output != "" {
 				p, err := f.ToPrinter()
 				if err != nil {
 					return err
@@ -105,6 +108,7 @@ or
 
 	c.Flags().BoolVarP(&opts.AllNamespaces, "all-namespaces", "A", opts.AllNamespaces, "list TriggerTemplates from all namespaces")
 	c.Flags().BoolVar(&opts.NoHeaders, "no-headers", opts.NoHeaders, "do not print column headers with output (default print column headers with output)")
+	c.Flags().StringSliceVar(&opts.Fields, "fields", opts.Fields, "Comma-separated list of fields to include in output (e.g. metadata.name,status.startTime); only used with --output ndjson")
 	return c
 }
 
