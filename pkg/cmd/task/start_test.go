@@ -16,6 +16,7 @@ package task
 
 import (
 	"fmt"
+	"os"
 	"reflect"
 	"strings"
 	"testing"
@@ -1841,15 +1842,16 @@ func TestTaskStart_ExecuteCommand_v1beta1(t *testing.T) {
 	)
 
 	testParams := []struct {
-		name       string
-		command    []string
-		namespace  string
-		dynamic    dynamic.Interface
-		input      test.Clients
-		wantError  bool
-		hasPrefix  bool
-		want       string
-		goldenFile bool
+		name         string
+		command      []string
+		namespace    string
+		dynamic      dynamic.Interface
+		input        test.Clients
+		wantError    bool
+		hasPrefix    bool
+		want         string
+		wantContains string
+		goldenFile   bool
 	}{
 		{
 			name: "Dry Run with invalid output",
@@ -2059,6 +2061,57 @@ func TestTaskStart_ExecuteCommand_v1beta1(t *testing.T) {
 			wantError:  false,
 			goldenFile: true,
 		},
+		{
+			name: "--json inline params appear in dry-run output",
+			command: []string{"start", "task-1",
+				"-n", "ns",
+				"--json", `{"params":[{"name":"myarg","value":"from-json"}]}`,
+				"--dry-run",
+				"--output", "yaml",
+			},
+			dynamic:      dc,
+			input:        cs,
+			wantContains: "from-json",
+		},
+		{
+			name: "--json with --param flag both apply",
+			command: []string{"start", "task-1",
+				"-n", "ns",
+				"--json", `{"params":[{"name":"myarg","value":"from-json"}]}`,
+				"-p=task-param=from-flag",
+				"--dry-run",
+				"--output", "yaml",
+			},
+			dynamic:      dc,
+			input:        cs,
+			wantContains: "from-flag",
+		},
+		{
+			name: "--json with malformed JSON returns error",
+			command: []string{"start", "task-1",
+				"-n", "ns",
+				"--json", `{broken`,
+				"--dry-run",
+			},
+			dynamic:   dc,
+			input:     cs,
+			wantError: true,
+			hasPrefix: true,
+			want:      "invalid JSON spec",
+		},
+		{
+			name: "--json with missing file returns error",
+			command: []string{"start", "task-1",
+				"-n", "ns",
+				"--json", "@/no/such/file.json",
+				"--dry-run",
+			},
+			dynamic:   dc,
+			input:     cs,
+			wantError: true,
+			hasPrefix: true,
+			want:      "reading JSON spec from file",
+		},
 	}
 
 	for _, tp := range testParams {
@@ -2083,6 +2136,10 @@ func TestTaskStart_ExecuteCommand_v1beta1(t *testing.T) {
 				}
 				if tp.goldenFile {
 					golden.Assert(t, got, strings.ReplaceAll(fmt.Sprintf("%s.golden", t.Name()), "/", "-"))
+				} else if tp.wantContains != "" {
+					if !strings.Contains(got, tp.wantContains) {
+						t.Errorf("expected output to contain %q, got:\n%s", tp.wantContains, got)
+					}
 				} else {
 					test.AssertOutput(t, tp.want, got)
 				}
@@ -2144,4 +2201,54 @@ func Test_start_task_with_skip_optional_workspace_flag_v1beta1(t *testing.T) {
 
 	expected := "TaskRun started: \n\nIn order to track the TaskRun progress run:\ntkn taskrun logs  -f -n ns\n"
 	test.AssertOutput(t, expected, got)
+}
+
+func TestReadJSONSpec(t *testing.T) {
+	const payload = `{"params":[{"name":"arg","value":"val"}]}`
+
+	t.Run("inline JSON", func(t *testing.T) {
+		b, err := readJSONSpec(payload, nil)
+		if err != nil {
+			t.Fatalf("unexpected error: %v", err)
+		}
+		if string(b) != payload {
+			t.Fatalf("got %q, want %q", b, payload)
+		}
+	})
+
+	t.Run("stdin (-)", func(t *testing.T) {
+		r := strings.NewReader(payload)
+		b, err := readJSONSpec("-", r)
+		if err != nil {
+			t.Fatalf("unexpected error: %v", err)
+		}
+		if string(b) != payload {
+			t.Fatalf("got %q, want %q", b, payload)
+		}
+	})
+
+	t.Run("file (@path)", func(t *testing.T) {
+		f, err := os.CreateTemp(t.TempDir(), "spec-*.json")
+		if err != nil {
+			t.Fatal(err)
+		}
+		if _, err := f.WriteString(payload); err != nil {
+			t.Fatal(err)
+		}
+		f.Close()
+		b, err := readJSONSpec("@"+f.Name(), nil)
+		if err != nil {
+			t.Fatalf("unexpected error: %v", err)
+		}
+		if string(b) != payload {
+			t.Fatalf("got %q, want %q", b, payload)
+		}
+	})
+
+	t.Run("missing file returns error", func(t *testing.T) {
+		_, err := readJSONSpec("@/nonexistent/path.json", nil)
+		if err == nil {
+			t.Fatal("expected error for missing file")
+		}
+	})
 }
