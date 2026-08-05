@@ -572,6 +572,26 @@ func TestTaskRunDelete_v1beta1(t *testing.T) {
 			wantError:   false,
 			want:        "All 6 TaskRuns associated with Task \"random\" deleted in namespace \"ns\"\n",
 		},
+		{
+			name:        "With JSON output",
+			command:     []string{"rm", "tr0-1", "-n", "ns", "-o", "json"},
+			dynamic:     seeds[15].dynamicClient,
+			input:       seeds[15].pipelineClient,
+			inputStream: nil,
+			wantError:   false,
+			want: `{"deleted":["tr0-1"]}
+`,
+		},
+		{
+			name:        "With JSON output for multiple TaskRuns",
+			command:     []string{"rm", "tr0-1", "tr0-2", "-n", "ns", "-o", "json"},
+			dynamic:     seeds[16].dynamicClient,
+			input:       seeds[16].pipelineClient,
+			inputStream: strings.NewReader("y\n"),
+			wantError:   false,
+			want: `{"deleted":["tr0-1","tr0-2"]}
+`,
+		},
 	}
 
 	for _, tp := range testParams {

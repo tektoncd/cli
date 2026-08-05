@@ -15,6 +15,7 @@
 package taskrun
 
 import (
+	"encoding/json"
 	"errors"
 	"fmt"
 	"strings"
@@ -92,6 +93,11 @@ or
 				Err: cmd.OutOrStderr(),
 			}
 
+			output, err := cmd.LocalFlags().GetString("output")
+			if err != nil {
+				return err
+			}
+
 			if deleteOpts.TaskName != "" {
 				opts.ParentResource = "Task"
 				opts.ParentResourceName = deleteOpts.TaskName
@@ -122,11 +128,13 @@ or
 				return errs
 			}
 
-			if err := opts.CheckOptions(s, availableTrs, p.Namespace()); err != nil {
-				return err
+			if output != "json" {
+				if err := opts.CheckOptions(s, availableTrs, p.Namespace()); err != nil {
+					return err
+				}
 			}
 
-			if err := deleteTaskRuns(s, p, availableTrs, opts); err != nil {
+			if err := deleteTaskRuns(s, p, availableTrs, opts, output); err != nil {
 				return err
 			}
 			return errs
@@ -144,7 +152,7 @@ or
 	return c
 }
 
-func deleteTaskRuns(s *cli.Stream, p cli.Params, trNames []string, opts *options.DeleteOptions) error {
+func deleteTaskRuns(s *cli.Stream, p cli.Params, trNames []string, opts *options.DeleteOptions, output string) error {
 	var numberOfDeletedTr, numberOfKeptTr int
 	cs, err := p.Clients()
 	if err != nil {
@@ -179,7 +187,7 @@ func deleteTaskRuns(s *cli.Stream, p cli.Params, trNames []string, opts *options
 			if !prFinished && opts.ForceDelete {
 				fmt.Fprintf(s.Out, "warning: Taskrun %s related pipelinerun still running.\n", tr.Name)
 			}
-			if !prFinished && !opts.ForceDelete {
+			if !prFinished && !opts.ForceDelete && output != "json" {
 				fmt.Fprintf(s.Out, "TaskRun(s): %s attached to PipelineRun is still running deleting will restart the completed taskrun. Proceed (y/n): ", tr.Name)
 				if err := opts.TakeInput(s, ""); err != nil {
 					continue
@@ -220,6 +228,16 @@ func deleteTaskRuns(s *cli.Stream, p cli.Params, trNames []string, opts *options
 			return nil
 		}
 		d.DeleteRelated([]string{opts.ParentResourceName})
+	}
+
+	if output == "json" {
+		result := struct {
+			Deleted []string `json:"deleted"`
+		}{
+			Deleted: d.SuccessfulDeletes(),
+		}
+
+		return json.NewEncoder(s.Out).Encode(result)
 	}
 
 	if !opts.DeleteAllNs {
