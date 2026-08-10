@@ -107,7 +107,11 @@ List Pipelines as a YAML array:
 			if output == "ndjson" {
 				var pl *v1.PipelineList
 				if err := actions.ListV1(pipelineGroupResource, cs, metav1.ListOptions{}, ns, &pl); err != nil {
-					return fmt.Errorf("failed to list Pipelines from namespace %s: %v", ns, err)
+					scope := fmt.Sprintf("namespace %q", ns)
+					if ns == "" {
+						scope = "all namespaces"
+					}
+					return fmt.Errorf("failed to list Pipelines from %s: %w", scope, err)
 				}
 				return formatted.PrintNDJSON(cmd.OutOrStdout(), pl, opts.Fields)
 			} else if output != "" {

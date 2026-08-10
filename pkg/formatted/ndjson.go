@@ -34,12 +34,13 @@ func PrintNDJSON(w io.Writer, obj runtime.Object, fields []string) error {
 	}
 
 	itemsVal, ok := raw["items"]
-	if !ok {
+	if !ok || itemsVal == nil {
+		// A missing or nil "items" field means an empty list — nothing to emit.
 		return nil
 	}
 	items, ok := itemsVal.([]any)
 	if !ok {
-		return nil
+		return fmt.Errorf("\"items\" field is not a slice (got %T): not a list type", itemsVal)
 	}
 
 	for _, item := range items {

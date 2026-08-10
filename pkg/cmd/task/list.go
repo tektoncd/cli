@@ -96,7 +96,11 @@ List Tasks as a YAML array:
 			if output == "ndjson" {
 				var tl *v1.TaskList
 				if err := actions.ListV1(taskGroupResource, cs, metav1.ListOptions{}, ns, &tl); err != nil {
-					return fmt.Errorf("failed to list Tasks from namespace %s: %v", ns, err)
+					scope := fmt.Sprintf("namespace %q", ns)
+					if ns == "" {
+						scope = "all namespaces"
+					}
+					return fmt.Errorf("failed to list Tasks from %s: %w", scope, err)
 				}
 				return formatted.PrintNDJSON(cmd.OutOrStdout(), tl, opts.Fields)
 			} else if output != "" {
