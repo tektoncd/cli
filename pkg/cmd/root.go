@@ -28,7 +28,6 @@ import (
 	"github.com/tektoncd/cli/pkg/cmd/completion"
 	"github.com/tektoncd/cli/pkg/cmd/customrun"
 	"github.com/tektoncd/cli/pkg/cmd/eventlistener"
-	"github.com/tektoncd/cli/pkg/exitcode"
 	hubApp "github.com/tektoncd/cli/pkg/cmd/hub/app"
 	hub "github.com/tektoncd/cli/pkg/cmd/hub/cmd"
 	"github.com/tektoncd/cli/pkg/cmd/pipeline"
@@ -38,6 +37,7 @@ import (
 	"github.com/tektoncd/cli/pkg/cmd/triggerbinding"
 	"github.com/tektoncd/cli/pkg/cmd/triggertemplate"
 	"github.com/tektoncd/cli/pkg/cmd/version"
+	"github.com/tektoncd/cli/pkg/exitcode"
 	"github.com/tektoncd/cli/pkg/plugins"
 	"github.com/tektoncd/cli/pkg/suggestion"
 )
