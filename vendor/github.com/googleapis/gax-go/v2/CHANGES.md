@@ -1,5 +1,33 @@
 # Changes
 
+## [2.23.0](https://github.com/googleapis/gax-go/compare/v2.22.0...v2.23.0) (2026-07-07)
+
+
+### Features
+
+* **v2:** add http.response.status_code to TransportTelemetryData ([#513](https://github.com/googleapis/gax-go/issues/513)) ([7d5554f](https://github.com/googleapis/gax-go/commit/7d5554f433f669fba3db5c5b64ed67a30813c568))
+
+
+### Bug Fixes
+
+* correct min go version ([#517](https://github.com/googleapis/gax-go/issues/517)) ([fc62896](https://github.com/googleapis/gax-go/commit/fc62896b04d04db85c48585b9311ec4bbee1d9bc))
+
+## [2.22.0](https://github.com/googleapis/google-cloud-go/releases/tag/v2.22.0) (2026-04-14)
+
+## [2.21.0](https://github.com/googleapis/google-cloud-go/releases/tag/v2.21.0) (2026-04-01)
+
+### Features
+
+* hook transport telemetry into gax.Invoke and record (#496) ([d531001](https://github.com/googleapis/google-cloud-go/commit/d5310019d6c635956b61558627b13c2c2419044e))
+* update IsFeatureEnabled to not require EXPERIMENTAL (#497) ([a2a329e](https://github.com/googleapis/google-cloud-go/commit/a2a329e31d8ef8348a1ef7bea1c7072f8abcc145))
+
+## [2.20.0](https://github.com/googleapis/google-cloud-go/releases/tag/v2.20.0) (2026-03-25)
+
+### Features
+
+* add TelemetryErrorInfo and ExtractTelemetryErrorInfo (#487) ([defdded](https://github.com/googleapis/google-cloud-go/commit/defdded3eac5d97e32243ef79216f1865f3250fb))
+* hook metric recording into gax.Invoke (#494) ([1f3e9ae](https://github.com/googleapis/google-cloud-go/commit/1f3e9aefd21a1a18a6e4da1e03ea84a0b46f2d49))
+
 ## [2.19.0](https://github.com/googleapis/google-cloud-go/releases/tag/v2.19.0) (2026-03-17)
 
 ### Features
