@@ -6,6 +6,7 @@
 # by parsing the active LTS entries from releases.md.
 
 release-branches:
+  - release-v0.46.x
   - release-v0.45.x
   - release-v0.44.x
   - release-v0.43.x
