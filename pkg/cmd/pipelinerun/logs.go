@@ -47,6 +47,10 @@ Show the logs of PipelineRun named 'microservice-1' for Task 'build' only from n
 Show the logs of PipelineRun named 'microservice-1' for all Tasks and steps (including init steps) from namespace 'foo':
 
     tkn pr logs microservice-1 -a -n foo
+
+Show the logs of PipelineRun named 'microservice-1' for failed Tasks only from namespace 'bar':
+
+    tkn pr logs microservice-1 --log-failed -n bar
    `
 
 	c := &cobra.Command{
@@ -86,6 +90,7 @@ Show the logs of PipelineRun named 'microservice-1' for all Tasks and steps (inc
 	c.Flags().BoolVarP(&opts.Prefixing, "prefix", "", true, "prefix each log line with the log source (task name and step name)")
 	c.Flags().BoolVarP(&opts.Long, "long", "", false, "show logs with task display name (display name and step name)")
 	c.Flags().BoolVarP(&opts.ExitWithPrError, "exit-with-pipelinerun-error", "E", false, "exit with pipelinerun to the unix shell, 0 if success, 1 if error, 2 on unknown status")
+	c.Flags().BoolVarP(&opts.Failed, "log-failed", "", false, "show logs for failed tasks only")
 	c.Flags().StringSliceVarP(&opts.Tasks, "task", "t", []string{}, "show logs for mentioned Tasks only")
 	c.Flags().IntVarP(&opts.Limit, "limit", "", defaultLimit, "lists number of PipelineRuns")
 	return c

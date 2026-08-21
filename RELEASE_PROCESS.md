@@ -23,6 +23,11 @@
 
 The steps below are meant to be followed in order. Some steps can be done in a different order, but it is generally recommended to follow the process outlined below without skipping steps.
 
+- Release branches use the `release-vX.Y.x` naming convention (e.g.,
+  `release-v0.43.x`). For new minor releases the script creates the `.x` branch
+  from `main`. For patch releases, merge your fixes into the existing `.x` branch
+  via pull requests before running the release script.
+
 - Start reading this [README](tekton/README.md), and you can start a new release
   with the [release.sh](tekton/release.sh) script.
 

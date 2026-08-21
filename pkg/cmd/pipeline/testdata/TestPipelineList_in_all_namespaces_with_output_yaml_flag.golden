@@ -45,4 +45,4 @@ items:
 kind: PipelineList
 metadata:
   continue: ""
-  resourceVersion: ""
+  resourceVersion: "7"

@@ -185,13 +185,13 @@ func TestVersionBad(t *testing.T) {
 			name:          "bad-server-version",
 			clientVersion: "v0.0.1",
 			serverVersion: "BAD",
-			expectederr:   "failed to parse version: No Major.Minor.Patch elements found",
+			expectederr:   "failed to parse version: invalid semantic version",
 		},
 		{
 			name:          "bad-client-version",
 			clientVersion: "BAD",
 			serverVersion: "v0.0.1",
-			expectederr:   "failed to parse version: No Major.Minor.Patch elements found",
+			expectederr:   "failed to parse version: invalid semantic version",
 		},
 	}
 

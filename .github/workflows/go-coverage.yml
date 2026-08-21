@@ -1,0 +1,54 @@
+name: Go coverage
+
+permissions:
+  contents: read
+
+on:
+  push:
+    branches: ["main"]
+  workflow_dispatch: {}
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.head_ref || github.run_id }}
+  cancel-in-progress: true
+
+defaults:
+  run:
+    shell: bash
+
+jobs:
+  go-coverage:
+    name: Go coverage
+    runs-on: ubuntu-latest
+    permissions:
+      id-token: write # Required to upload coverage to Codecov via OIDC
+
+    steps:
+      - name: Harden runner
+        uses: step-security/harden-runner@b09bb98e06d4d774595224525879c09bc6e98c40 # v2.20.1
+        with:
+          egress-policy: audit
+
+      - name: Checkout
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+
+      - name: Set up Go
+        uses: actions/setup-go@b7ad1dad31e06c5925ef5d2fc7ad053ef454303e # v7.0.0
+        with:
+          go-version-file: "go.mod"
+
+      - name: Generate coverage
+        run: |
+          go test -coverprofile=coverage.out -covermode=atomic $(go list ./... | grep -v 'github.com/tektoncd/cli/third_party/') || true
+          echo "Generated coverage profile"
+
+      - name: Upload coverage to Codecov
+        uses: codecov/codecov-action@fb8b3582c8e4def4969c97caa2f19720cb33a72f # v6.0.2
+        continue-on-error: true # job still "succeeds" even if this step fails
+        with:
+          files: coverage.out
+          flags: unit-tests
+          use_oidc: true
+          fail_ci_if_error: false

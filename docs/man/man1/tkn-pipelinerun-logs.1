@@ -48,6 +48,10 @@ Show the logs of a PipelineRun
     lists number of PipelineRuns
 
 .PP
+\fB\-\-log\-failed\fP[=false]
+    show logs for failed tasks only
+
+.PP
 \fB\-\-long\fP[=false]
     show logs with task display name (display name and step name)
 
@@ -115,6 +119,18 @@ Show the logs of PipelineRun named 'microservice\-1' for all Tasks and steps (in
 
 .nf
 tkn pr logs microservice\-1 \-a \-n foo
+
+.fi
+.RE
+
+.PP
+Show the logs of PipelineRun named 'microservice\-1' for failed Tasks only from namespace 'bar':
+
+.PP
+.RS
+
+.nf
+tkn pr logs microservice\-1 \-\-log\-failed \-n bar
 
 .fi
 .RE

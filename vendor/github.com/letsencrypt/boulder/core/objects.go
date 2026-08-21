@@ -163,6 +163,10 @@ type Challenge struct {
 	// by all challenges except dns-persist-01.
 	Token string `json:"token,omitempty"`
 
+	// AccountURI is the account URI the client includes during dns-persist-01
+	// challenge validation.
+	AccountURI string `json:"accounturi,omitempty"`
+
 	// IssuerDomainNames contains the list of issuer domain name values accepted
 	// during dns-persist-01 challenge validation.
 	IssuerDomainNames []string `json:"issuer-domain-names,omitempty"`
@@ -265,7 +269,7 @@ func (ch Challenge) StringID() string {
 type Authorization struct {
 	// An identifier for this authorization, unique across
 	// authorizations and certificates within this instance.
-	ID string `json:"-"`
+	ID int64 `json:"-"`
 
 	// The identifier for which authorization is being given
 	Identifier identifier.ACMEIdentifier `json:"identifier"`

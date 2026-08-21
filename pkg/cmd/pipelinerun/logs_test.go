@@ -1149,6 +1149,414 @@ func TestPipelinerunLogs(t *testing.T) {
 	}
 }
 
+func TestPipelinerunLogs_log_failed(t *testing.T) {
+	var (
+		pipelineName = "output-pipeline"
+		prName       = "output-pipeline-1"
+		prstart      = test.FakeClock()
+		ns           = "namespace"
+
+		task1Name    = "output-task"
+		tr1Name      = "output-task-1"
+		tr1StartTime = prstart.Now().Add(20 * time.Second)
+		tr1Pod       = "output-task-pod-123456"
+		tr1Step1Name = "writefile-step"
+
+		task2Name    = "read-task"
+		tr2Name      = "read-task-1"
+		tr2StartTime = prstart.Now().Add(2 * time.Minute)
+		tr2Pod       = "read-task-pod-123456"
+		tr2Step1Name = "readfile-step"
+
+		nopStep = "nop"
+	)
+
+	nsList := []*corev1.Namespace{
+		{
+			ObjectMeta: metav1.ObjectMeta{
+				Name: ns,
+			},
+		},
+	}
+
+	trs := []*v1.TaskRun{
+		{
+			ObjectMeta: metav1.ObjectMeta{
+				Namespace: ns,
+				Name:      tr1Name,
+			},
+			Spec: v1.TaskRunSpec{
+				TaskRef: &v1.TaskRef{
+					Name: task1Name,
+				},
+			},
+			Status: v1.TaskRunStatus{
+				Status: duckv1.Status{
+					Conditions: duckv1.Conditions{
+						{
+							Status: corev1.ConditionTrue,
+							Type:   apis.ConditionSucceeded,
+						},
+					},
+				},
+				TaskRunStatusFields: v1.TaskRunStatusFields{
+					StartTime: &metav1.Time{Time: tr1StartTime},
+					PodName:   tr1Pod,
+					Steps: []v1.StepState{
+						{
+							Name: tr1Step1Name,
+							ContainerState: corev1.ContainerState{
+								Terminated: &corev1.ContainerStateTerminated{
+									ExitCode: 0,
+								},
+							},
+						},
+						{
+							Name: nopStep,
+							ContainerState: corev1.ContainerState{
+								Terminated: &corev1.ContainerStateTerminated{
+									ExitCode: 0,
+								},
+							},
+						},
+					},
+				},
+			},
+		},
+		{
+			ObjectMeta: metav1.ObjectMeta{
+				Namespace: ns,
+				Name:      tr2Name,
+			},
+			Spec: v1.TaskRunSpec{
+				TaskRef: &v1.TaskRef{
+					Name: task2Name,
+				},
+			},
+			Status: v1.TaskRunStatus{
+				Status: duckv1.Status{
+					Conditions: duckv1.Conditions{
+						{
+							Status:  corev1.ConditionFalse,
+							Type:    apis.ConditionSucceeded,
+							Message: "task failed",
+						},
+					},
+				},
+				TaskRunStatusFields: v1.TaskRunStatusFields{
+					StartTime: &metav1.Time{Time: tr2StartTime},
+					PodName:   tr2Pod,
+					Steps: []v1.StepState{
+						{
+							Name: tr2Step1Name,
+							ContainerState: corev1.ContainerState{
+								Terminated: &corev1.ContainerStateTerminated{
+									ExitCode: 1,
+								},
+							},
+						},
+						{
+							Name: nopStep,
+							ContainerState: corev1.ContainerState{
+								Terminated: &corev1.ContainerStateTerminated{
+									ExitCode: 0,
+								},
+							},
+						},
+					},
+				},
+			},
+		},
+	}
+
+	prs := []*v1.PipelineRun{
+		{
+			ObjectMeta: metav1.ObjectMeta{
+				Name:      prName,
+				Namespace: ns,
+				Labels:    map[string]string{"tekton.dev/pipeline": prName},
+			},
+			Spec: v1.PipelineRunSpec{
+				PipelineRef: &v1.PipelineRef{
+					Name: pipelineName,
+				},
+			},
+			Status: v1.PipelineRunStatus{
+				PipelineRunStatusFields: v1.PipelineRunStatusFields{
+					ChildReferences: []v1.ChildStatusReference{
+						{
+							Name:             tr1Name,
+							PipelineTaskName: task1Name,
+							TypeMeta: runtime.TypeMeta{
+								APIVersion: "tekton.dev/v1",
+								Kind:       "TaskRun",
+							},
+						}, {
+							Name:             tr2Name,
+							PipelineTaskName: task2Name,
+							TypeMeta: runtime.TypeMeta{
+								APIVersion: "tekton.dev/v1",
+								Kind:       "TaskRun",
+							},
+						},
+					},
+				},
+				Status: duckv1.Status{
+					Conditions: duckv1.Conditions{
+						{
+							Status:  corev1.ConditionFalse,
+							Reason:  v1.PipelineRunReasonFailed.String(),
+							Message: "Tasks Completed: 1 (Failed: 1, Cancelled 0), Skipped: 0",
+						},
+					},
+				},
+			},
+		},
+	}
+	pps := []*v1.Pipeline{
+		{
+			ObjectMeta: metav1.ObjectMeta{
+				Name:      pipelineName,
+				Namespace: ns,
+			},
+			Spec: v1.PipelineSpec{
+				Tasks: []v1.PipelineTask{
+					{
+						Name: task1Name,
+						TaskRef: &v1.TaskRef{
+							Name: task1Name,
+						},
+					},
+					{
+						Name: task2Name,
+						TaskRef: &v1.TaskRef{
+							Name: task2Name,
+						},
+					},
+				},
+			},
+		},
+	}
+
+	p := []*corev1.Pod{
+		{
+			ObjectMeta: metav1.ObjectMeta{
+				Name:      tr1Pod,
+				Namespace: ns,
+				Labels:    map[string]string{"tekton.dev/task": pipelineName},
+			},
+			Spec: corev1.PodSpec{
+				Containers: []corev1.Container{
+					{
+						Name:  tr1Step1Name,
+						Image: tr1Step1Name + ":latest",
+					},
+					{
+						Name:  nopStep,
+						Image: "override-with-nop:latest",
+					},
+				},
+			},
+		},
+		{
+			ObjectMeta: metav1.ObjectMeta{
+				Name:      tr2Pod,
+				Namespace: ns,
+				Labels:    map[string]string{"tekton.dev/task": pipelineName},
+			},
+			Spec: corev1.PodSpec{
+				Containers: []corev1.Container{
+					{
+						Name:  tr2Step1Name,
+						Image: tr2Step1Name + ":latest",
+					},
+					{
+						Name:  nopStep,
+						Image: "override-with-nop:latest",
+					},
+				},
+			},
+		},
+	}
+
+	fakeLogs := fake.Logs(
+		fake.Task(tr1Pod,
+			fake.Step(tr1Step1Name, "written a file"),
+			fake.Step(nopStep, "Build successful"),
+		),
+		fake.Task(tr2Pod,
+			fake.Step(tr2Step1Name, "unable to read a file"),
+			fake.Step(nopStep, "Build failed"),
+		),
+	)
+
+	t.Run("shows only failed task logs", func(t *testing.T) {
+		cs, _ := test.SeedTestData(t, pipelinetest.Data{PipelineRuns: prs, Pipelines: pps, TaskRuns: trs, Pods: p, Namespaces: nsList})
+		cs.Pipeline.Resources = cb.APIResourceList(version, []string{"task", "taskrun", "pipeline", "pipelinerun"})
+		tdc := testDynamic.Options{}
+		dc, err := tdc.Client(
+			cb.UnstructuredP(pps[0], version),
+			cb.UnstructuredPR(prs[0], version),
+			cb.UnstructuredTR(trs[0], version),
+			cb.UnstructuredTR(trs[1], version),
+		)
+		if err != nil {
+			t.Errorf("unable to create dynamic client: %v", err)
+		}
+		prlo := logOpts(prName, ns, cs, dc, fake.Streamer(fakeLogs), false, false, true)
+		prlo.Failed = true
+		output, _ := fetchLogs(prlo)
+
+		expected := "task read-task has failed: task failed\n" +
+			"[read-task : readfile-step] unable to read a file\n\n" +
+			"[read-task : nop] Build failed\n\n" +
+			"Tasks Completed: 1 (Failed: 1, Cancelled 0), Skipped: 0\n"
+
+		test.AssertOutput(t, expected, output)
+	})
+
+	t.Run("no failed tasks returns error", func(t *testing.T) {
+		allSucceedTrs := []*v1.TaskRun{
+			{
+				ObjectMeta: metav1.ObjectMeta{
+					Namespace: ns,
+					Name:      tr1Name,
+				},
+				Spec: v1.TaskRunSpec{
+					TaskRef: &v1.TaskRef{
+						Name: task1Name,
+					},
+				},
+				Status: v1.TaskRunStatus{
+					Status: duckv1.Status{
+						Conditions: duckv1.Conditions{
+							{
+								Status: corev1.ConditionTrue,
+								Type:   apis.ConditionSucceeded,
+							},
+						},
+					},
+					TaskRunStatusFields: v1.TaskRunStatusFields{
+						StartTime: &metav1.Time{Time: tr1StartTime},
+						PodName:   tr1Pod,
+						Steps: []v1.StepState{
+							{
+								Name: tr1Step1Name,
+								ContainerState: corev1.ContainerState{
+									Terminated: &corev1.ContainerStateTerminated{
+										ExitCode: 0,
+									},
+								},
+							},
+						},
+					},
+				},
+			},
+			{
+				ObjectMeta: metav1.ObjectMeta{
+					Namespace: ns,
+					Name:      tr2Name,
+				},
+				Spec: v1.TaskRunSpec{
+					TaskRef: &v1.TaskRef{
+						Name: task2Name,
+					},
+				},
+				Status: v1.TaskRunStatus{
+					Status: duckv1.Status{
+						Conditions: duckv1.Conditions{
+							{
+								Status: corev1.ConditionTrue,
+								Type:   apis.ConditionSucceeded,
+							},
+						},
+					},
+					TaskRunStatusFields: v1.TaskRunStatusFields{
+						StartTime: &metav1.Time{Time: tr2StartTime},
+						PodName:   tr2Pod,
+						Steps: []v1.StepState{
+							{
+								Name: tr2Step1Name,
+								ContainerState: corev1.ContainerState{
+									Terminated: &corev1.ContainerStateTerminated{
+										ExitCode: 0,
+									},
+								},
+							},
+						},
+					},
+				},
+			},
+		}
+
+		allSucceedPrs := []*v1.PipelineRun{
+			{
+				ObjectMeta: metav1.ObjectMeta{
+					Name:      prName,
+					Namespace: ns,
+					Labels:    map[string]string{"tekton.dev/pipeline": prName},
+				},
+				Spec: v1.PipelineRunSpec{
+					PipelineRef: &v1.PipelineRef{
+						Name: pipelineName,
+					},
+				},
+				Status: v1.PipelineRunStatus{
+					PipelineRunStatusFields: v1.PipelineRunStatusFields{
+						ChildReferences: []v1.ChildStatusReference{
+							{
+								Name:             tr1Name,
+								PipelineTaskName: task1Name,
+								TypeMeta: runtime.TypeMeta{
+									APIVersion: "tekton.dev/v1",
+									Kind:       "TaskRun",
+								},
+							}, {
+								Name:             tr2Name,
+								PipelineTaskName: task2Name,
+								TypeMeta: runtime.TypeMeta{
+									APIVersion: "tekton.dev/v1",
+									Kind:       "TaskRun",
+								},
+							},
+						},
+					},
+					Status: duckv1.Status{
+						Conditions: duckv1.Conditions{
+							{
+								Status: corev1.ConditionTrue,
+								Reason: v1.PipelineRunReasonSuccessful.String(),
+							},
+						},
+					},
+				},
+			},
+		}
+
+		cs, _ := test.SeedTestData(t, pipelinetest.Data{PipelineRuns: allSucceedPrs, Pipelines: pps, TaskRuns: allSucceedTrs, Pods: p, Namespaces: nsList})
+		cs.Pipeline.Resources = cb.APIResourceList(version, []string{"task", "taskrun", "pipeline", "pipelinerun"})
+		tdc := testDynamic.Options{}
+		dc, err := tdc.Client(
+			cb.UnstructuredP(pps[0], version),
+			cb.UnstructuredPR(allSucceedPrs[0], version),
+			cb.UnstructuredTR(allSucceedTrs[0], version),
+			cb.UnstructuredTR(allSucceedTrs[1], version),
+		)
+		if err != nil {
+			t.Errorf("unable to create dynamic client: %v", err)
+		}
+		prlo := logOpts(prName, ns, cs, dc, fake.Streamer(fakeLogs), false, false, true)
+		prlo.Failed = true
+		_, err = fetchLogs(prlo)
+
+		if err == nil {
+			t.Errorf("expected error when no failed tasks found")
+		}
+		expected := "no failed TaskRuns found in PipelineRun " + prName
+		test.AssertOutput(t, expected, err.Error())
+	})
+}
+
 func updatePRv1beta1(finalRuns []*v1beta1.PipelineRun, watcher *watch.FakeWatcher) {
 	go func() {
 		for _, pr := range finalRuns {
@@ -2193,7 +2601,7 @@ func TestLogs_nologs_v1beta1(t *testing.T) {
 	if err != nil {
 		t.Errorf("Unexpected error: %v", err)
 	}
-	test.AssertOutput(t, "PipelineRun is still running: Running\n", output)
+	test.AssertOutput(t, "Pipeline still running ...\nPipelineRun is still running: Running\n", output)
 }
 
 func TestLogs_nologs(t *testing.T) {
@@ -2271,7 +2679,7 @@ func TestLogs_nologs(t *testing.T) {
 	if err != nil {
 		t.Errorf("Unexpected error: %v", err)
 	}
-	test.AssertOutput(t, "PipelineRun is still running: Running\n", output)
+	test.AssertOutput(t, "Pipeline still running ...\nPipelineRun is still running: Running\n", output)
 }
 
 func TestLog_run_failed_with_and_without_follow_v1beta1(t *testing.T) {
@@ -5197,6 +5605,78 @@ func TestPipelineRunLogs_PinP_WithDirectTasks(t *testing.T) {
 			fake.Task("mix-run-deploy-greet-pod", fake.Step("echo", "deploy done\n")),
 		).
 		expect("[build : step1] building done\n\n[deploy" + taskrunpkg.ChildTaskSeparator + "greet : echo] deploy done\n\n").
+		run()
+}
+
+func TestPipelineRunLogs_PinP_LogFailed(t *testing.T) {
+	startTime := test.FakeClock().Now()
+	buildTR := succeededTR("failed-mix-run-build", "namespace", "failed-mix-run-build-pod", "step1")
+	buildTR.Status.TaskRunStatusFields.StartTime = &metav1.Time{Time: startTime}
+	buildTR.Status.TaskRunStatusFields.CompletionTime = &metav1.Time{Time: startTime.Add(60 * time.Second)}
+	childTR := succeededTR("failed-mix-run-deploy-greet", "namespace", "failed-mix-run-deploy-greet-pod", "echo")
+	childTR.Status.TaskRunStatusFields.StartTime = &metav1.Time{Time: startTime.Add(30 * time.Second)}
+	childTR.Status.TaskRunStatusFields.CompletionTime = &metav1.Time{Time: startTime.Add(120 * time.Second)}
+	childTR.Status.Conditions[0].Status = corev1.ConditionFalse
+	childTR.Status.Conditions[0].Message = "deploy failed"
+	childTR.Status.Steps[0].ContainerState.Terminated.ExitCode = 1
+	childPR := &v1.PipelineRun{
+		ObjectMeta: metav1.ObjectMeta{Name: "failed-mix-run-deploy", Namespace: "namespace"},
+		Spec: v1.PipelineRunSpec{PipelineSpec: &v1.PipelineSpec{
+			Tasks: []v1.PipelineTask{{Name: "greet", TaskSpec: &v1.EmbeddedTask{
+				TaskSpec: v1.TaskSpec{Steps: []v1.Step{{Name: "echo", Image: "busybox"}}}}}},
+		}},
+		Status: v1.PipelineRunStatus{
+			Status: duckv1.Status{Conditions: duckv1.Conditions{{
+				Status: corev1.ConditionFalse, Type: apis.ConditionSucceeded}}},
+			PipelineRunStatusFields: v1.PipelineRunStatusFields{
+				ChildReferences: []v1.ChildStatusReference{{
+					Name: "failed-mix-run-deploy-greet", PipelineTaskName: "greet",
+					TypeMeta: runtime.TypeMeta{Kind: "TaskRun"}}},
+			},
+		},
+	}
+	parentPR := &v1.PipelineRun{
+		ObjectMeta: metav1.ObjectMeta{Name: "failed-mix-run", Namespace: "namespace",
+			Labels: map[string]string{"tekton.dev/pipeline": "failed-mix-pipeline"}},
+		Spec: v1.PipelineRunSpec{PipelineRef: &v1.PipelineRef{Name: "failed-mix-pipeline"}},
+		Status: v1.PipelineRunStatus{
+			Status: duckv1.Status{Conditions: duckv1.Conditions{{
+				Status: corev1.ConditionFalse, Type: apis.ConditionSucceeded}}},
+			PipelineRunStatusFields: v1.PipelineRunStatusFields{
+				ChildReferences: []v1.ChildStatusReference{
+					{Name: "failed-mix-run-build", PipelineTaskName: "build", TypeMeta: runtime.TypeMeta{Kind: "TaskRun"}},
+					{Name: "failed-mix-run-deploy", PipelineTaskName: "deploy", TypeMeta: runtime.TypeMeta{Kind: "PipelineRun"}},
+				},
+			},
+		},
+	}
+	parentPipeline := &v1.Pipeline{
+		ObjectMeta: metav1.ObjectMeta{Name: "failed-mix-pipeline", Namespace: "namespace"},
+		Spec: v1.PipelineSpec{
+			Tasks: []v1.PipelineTask{
+				{Name: "build", TaskRef: &v1.TaskRef{Name: "build-task"}},
+				{Name: "deploy", TaskSpec: &v1.EmbeddedTask{
+					TaskSpec: v1.TaskSpec{Steps: []v1.Step{{Name: "p", Image: "busybox"}}}}},
+			},
+		},
+	}
+	newPinPFixture(t, "failed-mix-run").
+		withPipelineRuns(parentPR, childPR).
+		withPipelines(parentPipeline).
+		withTaskRuns(buildTR, childTR).
+		withPods(
+			&corev1.Pod{ObjectMeta: metav1.ObjectMeta{Name: "failed-mix-run-build-pod", Namespace: "namespace"},
+				Spec: corev1.PodSpec{Containers: []corev1.Container{{Name: "step1", Image: "alpine"}}}},
+			&corev1.Pod{ObjectMeta: metav1.ObjectMeta{Name: "failed-mix-run-deploy-greet-pod", Namespace: "namespace"},
+				Spec: corev1.PodSpec{Containers: []corev1.Container{{Name: "echo", Image: "busybox"}}}},
+		).
+		withLogs(
+			fake.Task("failed-mix-run-build-pod", fake.Step("step1", "building done\n")),
+			fake.Task("failed-mix-run-deploy-greet-pod", fake.Step("echo", "deploy done\n")),
+		).
+		withBeforeFetch(func(lo *options.LogOptions) { lo.Failed = true }).
+		expect("task deploy" + taskrunpkg.ChildTaskSeparator + "greet has failed: deploy failed\n" +
+			"[deploy" + taskrunpkg.ChildTaskSeparator + "greet : echo] deploy done\n\n\n").
 		run()
 }
 

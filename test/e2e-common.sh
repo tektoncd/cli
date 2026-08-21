@@ -135,13 +135,10 @@ function install_pipeline_crd() {
 	latestreleaseyaml=${RELEASE_YAML_PIPELINE}
   else
 
-    # First try to install latestreleaseyaml from nightly
-    # TODO: re-enable this curl command once we are confident about nightly releases
-    # curl -o/dev/null -s -LI -f https://infra.tekton.dev/tekton-releases-nightly/pipeline/latest/release.yaml &&
-    #     latestreleaseyaml=https://infra.tekton.dev/tekton-releases-nightly/pipeline/latest/release.yaml
-
-    # If for whatever reason the nightly release wasnt there (nightly ci failure?), try the released version
-    [[ -n ${latestreleaseyaml} ]] || latestreleaseyaml=https://infra.tekton.dev/tekton-releases/pipeline/latest/release.yaml
+    # Pin to v1.12.0 to avoid spurious termination message WARN in step logs (tektoncd/pipeline#10159).
+    # The fix (tektoncd/pipeline#10160) is merged but not yet in a released version.
+    # TODO: switch back to latest once a pipeline release includes the fix.
+    latestreleaseyaml=https://infra.tekton.dev/tekton-releases/pipeline/previous/v1.12.0/release.yaml
   fi
   [[ -z ${latestreleaseyaml} ]] && fail_test "Could not get latest released release.yaml"
   kubectl apply -f ${latestreleaseyaml} ||

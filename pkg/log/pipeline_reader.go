@@ -39,7 +39,7 @@ func (r *Reader) readPipelineLog() (<-chan Log, <-chan error, error) {
 		return nil, nil, err
 	}
 
-	if !pr.IsDone() && r.follow {
+	if !pr.IsDone() && r.follow && !r.failed {
 		return r.readLivePipelineLogs(pr)
 	}
 	return r.readAvailablePipelineLogs(pr)
@@ -91,7 +91,7 @@ func (r *Reader) readAvailablePipelineLogs(pr *v1.PipelineRun) (<-chan Log, <-ch
 		return nil, nil, err
 	}
 
-	ordered, err := r.getOrderedTasks(pr)
+	ordered, trsMap, err := r.getOrderedTasks(pr)
 	if err != nil {
 		return nil, nil, err
 	}
@@ -103,6 +103,11 @@ func (r *Reader) readAvailablePipelineLogs(pr *v1.PipelineRun) (<-chan Log, <-ch
 			availTasks = append(availTasks, o.Task)
 		}
 		return nil, nil, fmt.Errorf("passed filtered tasks: %v is not available, available tasks are: %v", r.tasks, availTasks)
+	}
+
+	taskRuns = taskrunpkg.FilterByStatus(taskRuns, trsMap, r.failed)
+	if len(taskRuns) == 0 && r.failed {
+		return nil, nil, fmt.Errorf("no failed TaskRuns found in PipelineRun %s", r.run)
 	}
 
 	logC := make(chan Log)
@@ -216,17 +221,17 @@ func (r *Reader) setUpTask(taskNumber int, tr taskrunpkg.Run) {
 
 // getOrderedTasks get Tasks in order from Spec.PipelineRef or Spec.PipelineSpec
 // and return trh.Run after converted taskruns into trh.Run.
-func (r *Reader) getOrderedTasks(pr *v1.PipelineRun) ([]taskrunpkg.Run, error) {
+func (r *Reader) getOrderedTasks(pr *v1.PipelineRun) ([]taskrunpkg.Run, map[string]*v1.PipelineRunTaskRunStatus, error) {
 	trsMap, childPRs, err := pipelinerunpkg.GetTaskRunsWithStatus(pr, r.clients, r.ns)
 	if err != nil {
-		return nil, err
+		return nil, nil, err
 	}
 	ordered, err := r.getOrderedTasksRec(pr, trsMap, childPRs, "")
 	if err != nil {
-		return nil, err
+		return nil, nil, err
 	}
 	sort.Sort(taskrunpkg.Runs(ordered))
-	return ordered, nil
+	return ordered, trsMap, nil
 }
 
 // getOrderedTasksRec is like getOrderedTasks but receives the task runs and

@@ -15,18 +15,17 @@
 package pipeline
 
 import (
-	"context"
+	"crypto"
 	"os"
 	"path/filepath"
 	"testing"
 
-	cosignsignature "github.com/sigstore/cosign/v2/pkg/signature"
+	"github.com/sigstore/sigstore/pkg/signature"
 	"github.com/tektoncd/cli/pkg/test"
 	"github.com/tektoncd/cli/pkg/trustedresources"
 )
 
 func TestSign(t *testing.T) {
-	ctx := context.Background()
 	p := &test.Params{}
 
 	task := Command(p)
@@ -42,7 +41,7 @@ func TestSign(t *testing.T) {
 	test.AssertOutput(t, expected, out)
 
 	// verify the signed task
-	verifier, err := cosignsignature.LoadPublicKey(ctx, "testdata/cosign.pub")
+	verifier, err := signature.LoadVerifierFromPEMFile("testdata/cosign.pub", crypto.SHA256)
 	if err != nil {
 		t.Errorf("error getting verifier from key file: %v", err)
 	}

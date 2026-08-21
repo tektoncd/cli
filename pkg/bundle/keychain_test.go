@@ -11,7 +11,7 @@ import (
 
 	"github.com/google/go-containerregistry/pkg/authn"
 	"github.com/google/go-containerregistry/pkg/name"
-	"gotest.tools/assert"
+	"gotest.tools/v3/assert"
 )
 
 var testRegistry, _ = name.NewRegistry("test.io", name.WeakValidation)

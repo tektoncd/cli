@@ -23,7 +23,7 @@ import (
 
 	"github.com/tektoncd/cli/test/framework"
 	"github.com/tektoncd/cli/test/helper"
-	"gotest.tools/assert"
+	"gotest.tools/v3/assert"
 	knativetest "knative.dev/pkg/test"
 )
 
