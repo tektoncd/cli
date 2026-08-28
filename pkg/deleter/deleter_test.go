@@ -1,6 +1,7 @@
 package deleter
 
 import (
+	"reflect"
 	"strings"
 	"testing"
 
@@ -47,6 +48,29 @@ func TestDelete(t *testing.T) {
 				t.Errorf("expected stderr %q received %q", tc.expectedErr, stderr.String())
 			}
 		})
+	}
+}
+
+func TestSuccessfulDeletes(t *testing.T) {
+	d := New("FooBar", successfulDeleteFunc())
+	d.Delete([]string{"foo", "bar"})
+
+	expected := []string{"foo", "bar"}
+	if got := d.SuccessfulDeletes(); !reflect.DeepEqual(got, expected) {
+		t.Errorf("expected %v, received %v", expected, got)
+	}
+}
+
+func TestSuccessfulRelatedDeletes(t *testing.T) {
+	d := New("FooBar", successfulDeleteFunc())
+	d.WithRelated("FooBarRun", successfulListFunc("fbr1", "fbr2"), successfulDeleteFunc())
+
+	deletedNames := d.Delete([]string{"foo"})
+	d.DeleteRelated(deletedNames)
+
+	expected := []string{"fbr1", "fbr2"}
+	if got := d.SuccessfulRelatedDeletes(); !reflect.DeepEqual(got, expected) {
+		t.Errorf("expected %v, received %v", expected, got)
 	}
 }
 
