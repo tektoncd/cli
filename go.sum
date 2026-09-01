@@ -323,8 +323,8 @@ github.com/ktr0731/go-fuzzyfinder v0.9.0 h1:JV8S118RABzRl3Lh/RsPhXReJWc2q0rbuipz
 github.com/ktr0731/go-fuzzyfinder v0.9.0/go.mod h1:uybx+5PZFCgMCSDHJDQ9M3nNKx/vccPmGffsXPn2ad8=
 github.com/kylelemons/godebug v1.1.0 h1:RPNrshWIDI6G2gRW9EHilWtl7Z6Sb1BR0xunSBf0SNc=
 github.com/kylelemons/godebug v1.1.0/go.mod h1:9/0rRGxNHcop5bhtWyNeEfOS8JIWk580+fNqagV/RAw=
-github.com/letsencrypt/boulder v0.20260817.0 h1:PUBYVYDNJwX2Nfi8Ojkdb/aTANrSmxUorsC0Of5yTJc=
-github.com/letsencrypt/boulder v0.20260817.0/go.mod h1:ZnVUajYh/w/W9rZA5IaLGq7nXN7haSz14lQqtbCyiNQ=
+github.com/letsencrypt/boulder v0.20260825.0 h1:LBTHhA/mGv5RngYofgb3CHATfUAhO1g64IFPYFNTb1M=
+github.com/letsencrypt/boulder v0.20260825.0/go.mod h1:ZnVUajYh/w/W9rZA5IaLGq7nXN7haSz14lQqtbCyiNQ=
 github.com/liggitt/tabwriter v0.0.0-20181228230101-89fcab3d43de h1:9TO3cAIGXtEhnIaL+V+BEER86oLrvS+kWobKpbJuye0=
 github.com/liggitt/tabwriter v0.0.0-20181228230101-89fcab3d43de/go.mod h1:zAbeS9B/r2mtpb6U+EI2rYA5OAXxsYw6wTamcNW+zcE=
 github.com/lucasb-eyer/go-colorful v1.4.0 h1:UtrWVfLdarDgc44HcS7pYloGHJUjHV/4FwW4TvVgFr4=
