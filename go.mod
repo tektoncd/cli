@@ -42,7 +42,7 @@ require (
 	golang.org/x/crypto v0.55.0
 	golang.org/x/term v0.45.0
 	golang.org/x/text v0.41.0
-	google.golang.org/grpc v1.83.1
+	google.golang.org/grpc v1.83.2
 	google.golang.org/protobuf v1.36.12
 	gopkg.in/h2non/gock.v1 v1.1.2
 	gotest.tools/v3 v3.5.2
