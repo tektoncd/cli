@@ -1265,8 +1265,8 @@ github.com/syndtr/goleveldb v1.0.1-0.20220721030215-126854af5e6d h1:vfofYNRScrDd
 github.com/syndtr/goleveldb v1.0.1-0.20220721030215-126854af5e6d/go.mod h1:RRCYJbIwD5jmqPI9XoAFR0OcDxqUctll6zUj/+B4S48=
 github.com/tektoncd/chains v0.26.9 h1:PP4LriigURPTbReXnMAnnxtktKorvtwzTXn3ri8zQZc=
 github.com/tektoncd/chains v0.26.9/go.mod h1:PMEnSTJI/KdWhK7MBDxcsVbJ8YLGwuWp7D3AUSKuaqk=
-github.com/tektoncd/pipeline v1.9.6 h1:j/yUWklZwuhF6HaM6jyjlf+pmLMcW8+WLksqhb2/j9I=
-github.com/tektoncd/pipeline v1.9.6/go.mod h1:4MjJtAih3kPpeV3a+LZyWk+Mz1XvM4os+9wOI4ksU3o=
+github.com/tektoncd/pipeline v1.9.7 h1:0tP/dconIbDzw5USbhR7vfpzePGE1abzrHjB6JPEKN8=
+github.com/tektoncd/pipeline v1.9.7/go.mod h1:wBASNtCCNWeuRwQtfsbw7igSfiiC7be+L1aFZ2tkeno=
 github.com/tektoncd/plumbing v0.0.0-20250430145243-3b7cd59879c1 h1:nv7BsOAZ1ifQX9Lw1hYFo1f7e62dTDyyVPJBuljgZKw=
 github.com/tektoncd/plumbing v0.0.0-20250430145243-3b7cd59879c1/go.mod h1:eDs4O8vTNkyKZ/+AEuo4nYDfpyn1AzbgIcQ1QMQaKJk=
 github.com/tektoncd/triggers v0.35.0 h1:9Z5Cqn7RZTgyspWgWYFHz6AtWUUhd/awJeaisjZdF98=
@@ -1992,8 +1992,8 @@ google.golang.org/protobuf v1.26.0/go.mod h1:9q0QmTI4eRPtz6boOQmLYwt+qCgq0jsYwAQ
 google.golang.org/protobuf v1.27.1/go.mod h1:9q0QmTI4eRPtz6boOQmLYwt+qCgq0jsYwAQnmE0givc=
 google.golang.org/protobuf v1.28.0/go.mod h1:HV8QOd/L58Z+nl8r43ehVNZIU/HEI6OcFqwMG9pJV4I=
 google.golang.org/protobuf v1.28.1/go.mod h1:HV8QOd/L58Z+nl8r43ehVNZIU/HEI6OcFqwMG9pJV4I=
-google.golang.org/protobuf v1.36.12-0.20260120151049-f2248ac996af h1:+5/Sw3GsDNlEmu7TfklWKPdQ0Ykja5VEmq2i817+jbI=
-google.golang.org/protobuf v1.36.12-0.20260120151049-f2248ac996af/go.mod h1:HTf+CrKn2C3g5S8VImy6tdcUvCska2kB7j23XfzDpco=
+google.golang.org/protobuf v1.36.12 h1:pJOKDDOyeXErUroCihFAd5LQuwXBSpVnKGrj5o/fwxc=
+google.golang.org/protobuf v1.36.12/go.mod h1:HTf+CrKn2C3g5S8VImy6tdcUvCska2kB7j23XfzDpco=
 gopkg.in/alecthomas/kingpin.v2 v2.2.6/go.mod h1:FMv+mEhP44yOT+4EoQTLFTRgOQ1FBLkstjWtayDeSgw=
 gopkg.in/check.v1 v0.0.0-20161208181325-20d25e280405/go.mod h1:Co6ibVJAznAaIkqp8huTwlJQCZ016jof/cbN4VW5Yz0=
 gopkg.in/check.v1 v1.0.0-20180628173108-788fd7840127/go.mod h1:Co6ibVJAznAaIkqp8huTwlJQCZ016jof/cbN4VW5Yz0=
