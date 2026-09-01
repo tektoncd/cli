@@ -27,8 +27,6 @@ github.com/allegro/bigcache/v3/queue
 # github.com/antlr4-go/antlr/v4 v4.13.1
 ## explicit; go 1.22
 github.com/antlr4-go/antlr/v4
-# github.com/aws/aws-sdk-go-v2/service/kms v1.51.1
-## explicit; go 1.24
 # github.com/beorn7/perks v1.0.1
 ## explicit; go 1.11
 github.com/beorn7/perks/quantile
@@ -329,8 +327,6 @@ github.com/hashicorp/go-cleanhttp
 ## explicit; go 1.12
 github.com/hashicorp/golang-lru
 github.com/hashicorp/golang-lru/simplelru
-# github.com/hashicorp/vault/api v1.23.0
-## explicit; go 1.24.0
 # github.com/hinshun/vt10x v0.0.0-20220228203356-1ab2cad5fd82
 ## explicit; go 1.14
 github.com/hinshun/vt10x
@@ -528,7 +524,7 @@ github.com/stretchr/testify/internal/spew
 # github.com/subosito/gotenv v1.6.0
 ## explicit; go 1.18
 github.com/subosito/gotenv
-# github.com/tektoncd/pipeline v1.15.0
+# github.com/tektoncd/pipeline v1.15.1
 ## explicit; go 1.26.4
 github.com/tektoncd/pipeline/internal/artifactref
 github.com/tektoncd/pipeline/pkg/apis/config
