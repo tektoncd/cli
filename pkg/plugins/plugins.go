@@ -33,7 +33,14 @@ func getPluginDir() (string, error) {
 		return filepath.Join(xdgHome, "tkn", "plugins"), nil
 	}
 	// Fallback to default pluginDir (~/.config/tkn/plugins)
-	return homedir.Expand(pluginDir)
+	dir, err := homedir.Expand(pluginDir)
+	if err != nil {
+		return "", err
+	}
+	if !filepath.IsAbs(dir) {
+		return "", fmt.Errorf("plugin dir %q is not an absolute path", dir)
+	}
+	return dir, nil
 }
 
 // Find a binary in plugin homedir directory or user paths.
