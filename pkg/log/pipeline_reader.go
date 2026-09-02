@@ -16,6 +16,8 @@ package log
 
 import (
 	"fmt"
+	"sort"
+	"strings"
 	"sync"
 	"time"
 
@@ -217,20 +219,41 @@ func (r *Reader) setUpTask(taskNumber int, tr taskrunpkg.Run) {
 	r.setRetries(tr.Retries)
 }
 
+// getOrderedTasks get Tasks in order from Spec.PipelineRef or Spec.PipelineSpec
+// and return trh.Run after converted taskruns into trh.Run.
 func (r *Reader) getOrderedTasks(pr *v1.PipelineRun) ([]taskrunpkg.Run, map[string]*v1.PipelineRunTaskRunStatus, error) {
+	trsMap, childPRs, err := pipelinerunpkg.GetTaskRunsWithStatus(pr, r.clients, r.ns)
+	if err != nil {
+		return nil, nil, err
+	}
+	ordered, err := r.getOrderedTasksRec(pr, trsMap, childPRs, "")
+	if err != nil {
+		return nil, nil, err
+	}
+	sort.Sort(taskrunpkg.Runs(ordered))
+	return ordered, trsMap, nil
+}
+
+// getOrderedTasksRec is like getOrderedTasks but receives the task runs and
+// child PipelineRun objects that were fetched once for the whole tree, so that
+// recursing into Pipelines-in-Pipelines children does not trigger additional
+// API calls. prefix holds the chain of pipeline task names used to namespace
+// the entries of trsMap at the current nesting level.
+func (r *Reader) getOrderedTasksRec(pr *v1.PipelineRun, trsMap map[string]*v1.PipelineRunTaskRunStatus, childPRs map[string]*v1.PipelineRun, prefix string) ([]taskrunpkg.Run, error) {
 	var tasks []v1.PipelineTask
 	switch {
 	case pr.Spec.PipelineRef != nil:
 		if pr.Spec.PipelineRef.Resolver != "" {
 			if pr.Status.PipelineSpec != nil {
 				tasks = append(tasks, pr.Status.PipelineSpec.Tasks...)
+				tasks = append(tasks, pr.Status.PipelineSpec.Finally...)
 			} else {
-				return nil, nil, fmt.Errorf("pipelinerun %s does not have the PipelineRunSpec", pr.Name)
+				return nil, fmt.Errorf("pipelinerun %s does not have the PipelineRunSpec", pr.Name)
 			}
 		} else {
 			pl, err := pipelinepkg.GetPipeline(pipelineGroupResource, r.clients, pr.Spec.PipelineRef.Name, r.ns)
 			if err != nil {
-				return nil, nil, err
+				return nil, err
 			}
 			tasks = pl.Spec.Tasks
 			tasks = append(tasks, pl.Spec.Finally...)
@@ -239,15 +262,81 @@ func (r *Reader) getOrderedTasks(pr *v1.PipelineRun) ([]taskrunpkg.Run, map[stri
 		tasks = pr.Spec.PipelineSpec.Tasks
 		tasks = append(tasks, pr.Spec.PipelineSpec.Finally...)
 	default:
-		return nil, nil, fmt.Errorf("pipelinerun %s did not provide PipelineRef or PipelineSpec", pr.Name)
+		return nil, fmt.Errorf("pipelinerun %s did not provide PipelineRef or PipelineSpec", pr.Name)
 	}
-
-	trsMap, err := pipelinerunpkg.GetTaskRunsWithStatus(pr, r.clients, r.ns)
-	if err != nil {
-		return nil, nil, err
+	// Keep only the entries belonging to this nesting level, stripping the chain prefix
+	levelTRsMap := map[string]*v1.PipelineRunTaskRunStatus{}
+	sep := prefix + taskrunpkg.ChildTaskSeparator
+	for name, t := range trsMap {
+		if prefix == "" {
+			levelTRsMap[name] = t
+			continue
+		}
+		if strings.HasPrefix(t.PipelineTaskName, sep) {
+			stripped := *t
+			stripped.PipelineTaskName = strings.TrimPrefix(t.PipelineTaskName, sep)
+			if strings.Contains(stripped.PipelineTaskName, taskrunpkg.ChildTaskSeparator) {
+				continue // belongs to a deeper nesting level
+			}
+			levelTRsMap[name] = &stripped
+		}
 	}
-
-	return taskrunpkg.SortTasksBySpecOrder(tasks, trsMap), trsMap, nil
+	// Build PipelineTaskName -> child PipelineRun name lookup
+	childPRNames := map[string]string{}
+	for _, cr := range pr.Status.ChildReferences {
+		if cr.Kind == "PipelineRun" {
+			childPRNames[cr.PipelineTaskName] = cr.Name
+		}
+	}
+	// Build PipelineTaskName -> TaskRun name lookup for direct TaskRun children
+	trNames := map[string]string{}
+	for name, t := range levelTRsMap {
+		trNames[t.PipelineTaskName] = name
+	}
+	var ordered []taskrunpkg.Run
+	for _, pt := range tasks {
+		if _, ok := trNames[pt.Name]; ok {
+			// Direct TaskRun child — use existing sort logic. Default the
+			// leaf display name to the task name so hierarchical display
+			// names built by parent levels always have a base segment.
+			leafRuns := taskrunpkg.SortTasksBySpecOrder([]v1.PipelineTask{pt}, levelTRsMap)
+			for i := range leafRuns {
+				if leafRuns[i].DisplayName == "" {
+					leafRuns[i].DisplayName = leafRuns[i].Task
+				}
+			}
+			ordered = append(ordered, leafRuns...)
+		} else if childPRName, ok := childPRNames[pt.Name]; ok {
+			childPR, ok := childPRs[childPRName]
+			if !ok {
+				// child PipelineRun not found — skip
+				continue
+			}
+			childPrefix := pt.Name
+			if prefix != "" {
+				childPrefix = prefix + taskrunpkg.ChildTaskSeparator + pt.Name
+			}
+			childOrdered, err := r.getOrderedTasksRec(childPR, trsMap, childPRs, childPrefix)
+			if err != nil {
+				return nil, err
+			}
+			for i := range childOrdered {
+				childTaskName := childOrdered[i].Task
+				childOrdered[i].Task = pt.Name + taskrunpkg.ChildTaskSeparator + childTaskName
+				parentDisplayName := pt.DisplayName
+				if parentDisplayName == "" {
+					parentDisplayName = pt.Name
+				}
+				childDisplayName := childOrdered[i].DisplayName
+				if childDisplayName == "" {
+					childDisplayName = childTaskName
+				}
+				childOrdered[i].DisplayName = parentDisplayName + taskrunpkg.ChildTaskSeparator + childDisplayName
+			}
+			ordered = append(ordered, childOrdered...)
+		}
+	}
+	return ordered, nil
 }
 
 func empty(status v1.PipelineRunStatus) bool {

@@ -15,7 +15,9 @@
 package pipelinerun
 
 import (
+	"sort"
 	"testing"
+	"time"
 
 	"github.com/tektoncd/cli/pkg/test"
 	v1 "github.com/tektoncd/pipeline/pkg/apis/pipeline/v1"
@@ -124,4 +126,47 @@ func TestHasFailed_PipelineFailedMessage(t *testing.T) {
 
 	message := hasFailed(pipelineRuns[0], taskRunWithStatusList)
 	test.AssertOutput(t, "PipelineRun \"pipeline-run\" was cancelled", message)
+}
+
+func withStartTime(name string, start *metav1.Time) TaskRunWithStatus {
+	return TaskRunWithStatus{
+		TaskRunName: name,
+		Status: &v1.TaskRunStatus{
+			Status: duckv1.Status{Conditions: duckv1.Conditions{{
+				Status: corev1.ConditionTrue, Type: apis.ConditionSucceeded}}},
+			TaskRunStatusFields: v1.TaskRunStatusFields{StartTime: start},
+		},
+	}
+}
+
+func TestTaskRunWithStatusList_SortDeterministic(t *testing.T) {
+	start := test.FakeClock().Now().Add(2 * time.Minute)
+	// TaskRuns sharing an identical StartTime must order by name, regardless of
+	// the input order handed over from map iteration.
+	list := TaskRunWithStatusList{
+		withStartTime("tr-b", &metav1.Time{Time: start}),
+		withStartTime("tr-a", &metav1.Time{Time: start}),
+	}
+	sort.Sort(list)
+	test.AssertOutput(t, "tr-a", list[0].TaskRunName)
+	test.AssertOutput(t, "tr-b", list[1].TaskRunName)
+
+	// Distinct StartTimes keep the existing latest-first ordering.
+	later := test.FakeClock().Now().Add(5 * time.Minute)
+	list = TaskRunWithStatusList{
+		withStartTime("tr-a", &metav1.Time{Time: start}),
+		withStartTime("tr-b", &metav1.Time{Time: later}),
+	}
+	sort.Sort(list)
+	test.AssertOutput(t, "tr-b", list[0].TaskRunName)
+	test.AssertOutput(t, "tr-a", list[1].TaskRunName)
+
+	// Both TaskRuns without StartTime order by name as well.
+	list = TaskRunWithStatusList{
+		withStartTime("tr-b", nil),
+		withStartTime("tr-a", nil),
+	}
+	sort.Sort(list)
+	test.AssertOutput(t, "tr-a", list[0].TaskRunName)
+	test.AssertOutput(t, "tr-b", list[1].TaskRunName)
 }
