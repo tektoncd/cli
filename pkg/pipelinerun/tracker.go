@@ -85,68 +85,96 @@ func (t *Tracker) Monitor(allowed []string) <-chan []taskrunpkg.Run {
 		close(trC)
 	}()
 
+	// resolveRoot returns the root PipelineRun this tracker observes, fetching
+	// it from the informer cache. It is used for TaskRun events, which do not
+	// carry the PipelineRun object.
+	resolveRoot := func() *v1.PipelineRun {
+		obj, err := genericInformer.Lister().ByNamespace(t.Ns).Get(t.Name)
+		if err != nil {
+			return nil
+		}
+		return toPipelineRun(obj)
+	}
+
+	// eventHandler recomputes the full tree of task runs from the root
+	// PipelineRun. It is driven by both the root PipelineRun informer and the
+	// namespace-wide TaskRun informer, so child PipelineRun and TaskRun updates
+	// (not just root PR updates) surface newly scheduled tasks while following
+	// live logs. Emitting the same set repeatedly is harmless because
+	// findNewTaskruns de-duplicates tasks already in progress.
 	eventHandler := func(obj interface{}) {
-		var pipelinerunConverted v1.PipelineRun
-		pr, ok := obj.(*v1.PipelineRun)
-		if !ok || pr == nil {
-			prV1beta1, ok := obj.(*v1beta1.PipelineRun)
-			if !ok || prV1beta1 == nil {
+		var pr *v1.PipelineRun
+		if obj != nil {
+			if typed, ok := obj.(*v1.PipelineRun); ok && typed != nil {
+				pr = typed.DeepCopy()
+			} else if typed, ok := obj.(*v1beta1.PipelineRun); ok && typed != nil {
+				var prv1 v1.PipelineRun
+				if err := typed.ConvertTo(context.Background(), &prv1); err != nil {
+					return
+				}
+				pr = &prv1
+			}
+		}
+		if pr == nil {
+			pr = resolveRoot()
+			if pr == nil {
 				return
 			}
-			var prv1 v1.PipelineRun
-			err := prV1beta1.ConvertTo(context.Background(), &prv1)
-			if err != nil {
-				return
-			}
-			pr = &prv1
 		}
 
-		trsMap, _, err := GetTaskRunsWithStatus(pr, t.Client, t.Ns)
+		trsMap, childPRs, err := GetTaskRunsWithStatus(pr, t.Client, t.Ns)
 		if err != nil {
 			return
 		}
-		pr.DeepCopyInto(&pipelinerunConverted)
-		trC <- t.findNewTaskruns(&pipelinerunConverted, allowed, trsMap)
+		trC <- t.findNewTaskruns(pr, allowed, trsMap, childPRs)
 
-		if hasCompleted(&pipelinerunConverted) {
+		if hasCompleted(pr) {
 			close(stopC) // should close trC
+		}
+	}
+
+	// guarded calls eventHandler once while holding the lock, unless a stop
+	// signal has already been received.
+	guarded := func(obj interface{}) {
+		mu.Lock()
+		defer mu.Unlock()
+		select {
+		case <-stopC:
+			return
+		default:
+			eventHandler(obj)
 		}
 	}
 
 	_, err := informer.AddEventHandler(
 		cache.ResourceEventHandlerFuncs{
-			AddFunc: func(obj interface{}) {
-				// To ensure synchonization and checks is the stopC channel has received a signal to stop
-				// If it receives a signal then return and does nothing
-				mu.Lock()
-				defer mu.Unlock()
-				select {
-				case <-stopC:
-					return
-				default:
-					eventHandler(obj)
-				}
-			},
-			UpdateFunc: func(_, newObj interface{}) {
-				mu.Lock()
-				defer mu.Unlock()
-				select {
-				case <-stopC:
-					return
-				default:
-					eventHandler(newObj)
-				}
-			},
-			DeleteFunc: func(obj interface{}) {
-				mu.Lock()
-				defer mu.Unlock()
-				select {
-				case <-stopC:
-					return
-				default:
-					eventHandler(obj)
-				}
-			},
+			AddFunc:    func(obj interface{}) { guarded(obj) },
+			UpdateFunc: func(_, newObj interface{}) { guarded(newObj) },
+			DeleteFunc: func(obj interface{}) { guarded(obj) },
+		},
+	)
+	if err != nil {
+		return nil
+	}
+
+	// Watch TaskRuns in the namespace too. Child PipelineRuns/TaskRuns of a
+	// Pipelines-in-Pipelines hierarchy do not emit events on the root PR's
+	// field-selected informer, so without this, `logs -f` would stay silent
+	// while a long-running child progresses.
+	taskGVR, err := actions.GetGroupVersionResource(
+		taskrunGroupResource,
+		t.Client.Tekton.Discovery(),
+	)
+	if err != nil {
+		return nil
+	}
+	taskInformer, _ := factory.ForResource(*taskGVR)
+	_ = taskInformer.Informer().SetWatchErrorHandlerWithContext(watchErrorHandler)
+	_, err = taskInformer.Informer().AddEventHandler(
+		cache.ResourceEventHandlerFuncs{
+			AddFunc:    func(interface{}) { guarded(nil) },
+			UpdateFunc: func(_, _ interface{}) { guarded(nil) },
+			DeleteFunc: func(interface{}) { guarded(nil) },
 		},
 	)
 	if err != nil {
@@ -154,9 +182,32 @@ func (t *Tracker) Monitor(allowed []string) <-chan []taskrunpkg.Run {
 	}
 
 	factory.Start(stopC)
-	factory.WaitForCacheSync(stopC)
+	// Wait for the root PipelineRun informer to sync before returning so the
+	// initial task set is emitted promptly. The TaskRun informer is only used
+	// to surface child updates during live tailing; it runs in the background
+	// and is stopped with the factory once the run completes.
+	if !cache.WaitForCacheSync(stopC, informer.HasSynced) {
+		return nil
+	}
 
 	return trC
+}
+
+// toPipelineRun converts a cached informer object to a *v1.PipelineRun.
+func toPipelineRun(obj interface{}) *v1.PipelineRun {
+	pr, ok := obj.(*v1.PipelineRun)
+	if !ok || pr == nil {
+		prV1beta1, ok := obj.(*v1beta1.PipelineRun)
+		if !ok || prV1beta1 == nil {
+			return nil
+		}
+		var prv1 v1.PipelineRun
+		if err := prV1beta1.ConvertTo(context.Background(), &prv1); err != nil {
+			return nil
+		}
+		return &prv1
+	}
+	return pr.DeepCopy()
 }
 
 func pipelinerunOpts(name string) func(opts *metav1.ListOptions) {
@@ -177,7 +228,7 @@ func watchErrorHandler(ctx context.Context, r *cache.Reflector, err error) {
 // handles changes to pipelinerun and pushes the Run information to the
 // channel if the task is new and is in the allowed list of tasks
 // returns true if the pipelinerun has finished
-func (t *Tracker) findNewTaskruns(pr *v1.PipelineRun, allowed []string, trStatuses map[string]*v1.PipelineRunTaskRunStatus) []taskrunpkg.Run {
+func (t *Tracker) findNewTaskruns(pr *v1.PipelineRun, allowed []string, trStatuses map[string]*v1.PipelineRunTaskRunStatus, childPRs map[string]*v1.PipelineRun) []taskrunpkg.Run {
 	ret := []taskrunpkg.Run{}
 	for tr, trs := range trStatuses {
 		retries := 0
@@ -188,8 +239,11 @@ func (t *Tracker) findNewTaskruns(pr *v1.PipelineRun, allowed []string, trStatus
 			for i := 0; i < len(segments)-1; i++ {
 				for _, cr := range currentPR.Status.ChildReferences {
 					if cr.Kind == "PipelineRun" && cr.PipelineTaskName == segments[i] {
-						childPR, err := GetPipelineRun(pipelineRunGroupResource, t.Client, cr.Name, t.Ns)
-						if err != nil {
+						// Resolve the chain from the PRs already fetched while
+						// gathering the task run statuses, to avoid re-fetching
+						// each child PipelineRun on every event.
+						childPR, ok := childPRs[cr.Name]
+						if !ok {
 							// Can't resolve the chain; leave retries at 0 rather than guessing.
 							currentPR = pr
 							break chainLoop

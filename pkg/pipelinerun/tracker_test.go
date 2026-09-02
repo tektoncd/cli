@@ -34,7 +34,9 @@ import (
 	"github.com/tektoncd/pipeline/test/diff"
 	corev1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
 	"k8s.io/apimachinery/pkg/runtime"
+	"k8s.io/apimachinery/pkg/runtime/schema"
 	"k8s.io/apimachinery/pkg/watch"
 	k8stest "k8s.io/client-go/testing"
 	"knative.dev/pkg/apis"
@@ -241,6 +243,136 @@ func startPipelineRun(t *testing.T, data pipelinetest.Data, prStatus ...v1.Pipel
 		Kube:    cs.Kube,
 		Dynamic: dynamic,
 	}
+}
+
+// TestTracker_pipelinerun_complete_TaskRunUpdate verifies that a TaskRun watch
+// event (not a PipelineRun event) can surface a newly-scheduled task while the
+// tracker is already running. This covers the Pipelines-in-Pipelines live tail
+// gap where child TaskRun/PipelineRun updates previously never reached the
+// tracker because the root PipelineRun informer is field-selected by name.
+func TestTracker_pipelinerun_complete_TaskRunUpdate(t *testing.T) {
+	ns := "namespace"
+	prName := "output-pipeline-1"
+	taskName := "output-task-1"
+	trName := "output-task-1"
+
+	tr := &v1.TaskRun{
+		ObjectMeta: metav1.ObjectMeta{Name: trName, Namespace: ns},
+		Spec: v1.TaskRunSpec{
+			TaskRef: &v1.TaskRef{Name: taskName},
+		},
+		Status: v1.TaskRunStatus{},
+	}
+
+	initialPR := &v1.PipelineRun{
+		ObjectMeta: metav1.ObjectMeta{
+			Name:      prName,
+			Namespace: ns,
+			Labels:    map[string]string{"tekton.dev/pipeline": prName},
+		},
+		Status: v1.PipelineRunStatus{
+			Status: duckv1.Status{
+				Conditions: duckv1.Conditions{
+					{
+						Status: corev1.ConditionUnknown,
+						Reason: v1.PipelineRunReasonRunning.String(),
+					},
+				},
+			},
+			PipelineRunStatusFields: v1.PipelineRunStatusFields{
+				ChildReferences: []v1.ChildStatusReference{
+					{
+						Name:             trName,
+						PipelineTaskName: taskName,
+						TypeMeta: runtime.TypeMeta{
+							APIVersion: "tekton.dev/v1",
+							Kind:       "TaskRun",
+						},
+					},
+				},
+			},
+		},
+	}
+
+	cs, _ := test.SeedTestData(t, pipelinetest.Data{PipelineRuns: []*v1.PipelineRun{initialPR}, TaskRuns: []*v1.TaskRun{tr}})
+
+	prWatcher := watch.NewFake()
+	cs.Pipeline.PrependWatchReactor("pipelineruns", k8stest.DefaultWatchReactor(prWatcher, nil))
+	trWatcher := watch.NewFake()
+	cs.Pipeline.PrependWatchReactor("taskruns", k8stest.DefaultWatchReactor(trWatcher, nil))
+	cs.Pipeline.Resources = cb.APIResourceList("v1", []string{"task", "taskrun", "pipeline", "pipelinerun"})
+
+	tdc := testDynamic.Options{}
+	dynamic, err := tdc.Client(
+		cb.UnstructuredPR(initialPR, "v1"),
+		cb.UnstructuredTR(tr, "v1"),
+	)
+	if err != nil {
+		t.Fatalf("failed to create dynamic client: %v", err)
+	}
+
+	if err := actions.InitializeAPIGroupRes(cs.Pipeline.Discovery()); err != nil {
+		t.Fatalf("failed to initialize APIGroup Resource: %v", err)
+	}
+
+	tracker := NewTracker(prName, ns, &cli.Clients{Tekton: cs.Pipeline, Kube: cs.Kube, Dynamic: dynamic})
+
+	// Consume the tracker's stream directly. We assert on the first emission
+	// that surfaces our task (triggered by the TaskRun watch), then complete
+	// the root PipelineRun so the stream closes cleanly.
+	taskSeen := make(chan []trh.Run, 1)
+	go func() {
+		for ts := range tracker.Monitor([]string{taskName}) {
+			for _, r := range ts {
+				if r.Name == trName {
+					select {
+					case taskSeen <- ts:
+					default:
+					}
+					return
+				}
+			}
+		}
+	}()
+
+	// Give the pipelineruns informer time to sync. The TaskRun starts
+	// unscheduled, so the initial pipeline event does not surface it. Then
+	// schedule it by updating the dynamic store (what the tracker re-fetches)
+	// and notifying the TaskRun informer. The tracker should pick it up even
+	// though the root PipelineRun never changes.
+	time.Sleep(2 * time.Second)
+	trWithPod := tr.DeepCopy()
+	trWithPod.Status.PodName = "output-task-1-pods-123456"
+	unstructuredMap, err := runtime.DefaultUnstructuredConverter.ToUnstructured(trWithPod)
+	if err != nil {
+		t.Fatalf("failed to convert TaskRun: %v", err)
+	}
+	trUnstructured := &unstructured.Unstructured{Object: unstructuredMap}
+	if _, err := dynamic.Resource(schema.GroupVersionResource{Group: "tekton.dev", Version: "v1", Resource: "taskruns"}).Namespace(ns).Update(context.Background(), trUnstructured, metav1.UpdateOptions{}); err != nil {
+		t.Fatalf("failed to update TaskRun: %v", err)
+	}
+	trWatcher.Modify(trWithPod)
+
+	select {
+	case ts := <-taskSeen:
+		expected := []trh.Run{{Name: trName, Task: taskName}}
+		if d := cmp.Diff(expected, ts); d != "" {
+			t.Errorf("Unexpected output: %s", diff.PrintWantGot(d))
+		}
+	case <-time.After(15 * time.Second):
+		t.Fatal("tracker never surfaced the TaskRun update via the TaskRun watch")
+	}
+
+	// Complete the root PipelineRun so the monitor goroutine terminates.
+	completed := initialPR.DeepCopy()
+	completed.Status.Status.Conditions = duckv1.Conditions{
+		{
+			Status: corev1.ConditionTrue,
+			Reason: v1.PipelineRunReasonSuccessful.String(),
+		},
+	}
+	prWatcher.Modify(completed)
+	time.Sleep(200 * time.Millisecond)
 }
 
 func TestTracker_watchErrorHandler(t *testing.T) {
@@ -720,12 +852,12 @@ func TestFindNewTaskruns_PinP_RetryCount(t *testing.T) {
 	}
 
 	tracker := NewTracker(parentPRName, ns, tc)
-	trStatuses, _, err := GetTaskRunsWithStatus(parentPR, tc, ns)
+	trStatuses, childPRs, err := GetTaskRunsWithStatus(parentPR, tc, ns)
 	if err != nil {
 		t.Fatal(err)
 	}
 
-	runs := tracker.findNewTaskruns(parentPR, nil, trStatuses)
+	runs := tracker.findNewTaskruns(parentPR, nil, trStatuses, childPRs)
 	if len(runs) != 1 {
 		t.Fatalf("expected 1 run, got %d: %v", len(runs), runs)
 	}
@@ -845,12 +977,12 @@ func TestFindNewTaskruns_PinP_DeepNestingWithRetry(t *testing.T) {
 	}
 
 	tracker := NewTracker("parent-pr", ns, tc)
-	trStatuses, _, err := GetTaskRunsWithStatus(parentPR, tc, ns)
+	trStatuses, childPRs, err := GetTaskRunsWithStatus(parentPR, tc, ns)
 	if err != nil {
 		t.Fatal(err)
 	}
 
-	runs := tracker.findNewTaskruns(parentPR, nil, trStatuses)
+	runs := tracker.findNewTaskruns(parentPR, nil, trStatuses, childPRs)
 	if len(runs) != 1 {
 		t.Fatalf("expected 1 run, got %d: %v", len(runs), runs)
 	}
@@ -943,9 +1075,11 @@ func TestFindNewTaskruns_PinP_BrokenChainRetries(t *testing.T) {
 			},
 		},
 	}
+	// middle-pr is resolved while gathering statuses, but leaf-pr is missing.
+	childPRs := map[string]*v1.PipelineRun{middlePRName: middlePR}
 
 	tracker := NewTracker("parent-pr", ns, tc)
-	runs := tracker.findNewTaskruns(parentPR, nil, trStatuses)
+	runs := tracker.findNewTaskruns(parentPR, nil, trStatuses, childPRs)
 	if len(runs) != 1 {
 		t.Fatalf("expected 1 run, got %d: %v", len(runs), runs)
 	}
@@ -1210,12 +1344,12 @@ func TestFindNewTaskruns_DirectTaskRun_RetryCount(t *testing.T) {
 	}
 
 	tracker := NewTracker("my-pipeline-run", ns, tc)
-	trStatuses, _, err := GetTaskRunsWithStatus(pr, tc, ns)
+	trStatuses, childPRs, err := GetTaskRunsWithStatus(pr, tc, ns)
 	if err != nil {
 		t.Fatal(err)
 	}
 
-	runs := tracker.findNewTaskruns(pr, nil, trStatuses)
+	runs := tracker.findNewTaskruns(pr, nil, trStatuses, childPRs)
 	if len(runs) != 1 {
 		t.Fatalf("expected 1 run, got %d: %v", len(runs), runs)
 	}

@@ -6070,6 +6070,58 @@ func TestPipelineRunLogs_PinP_DisplayName(t *testing.T) {
 		run()
 }
 
+func TestPipelineRunLogs_PinP_DisplayName_ParentNamed(t *testing.T) {
+	childTR := succeededTR("parent-display-call-child-greet", "namespace", "parent-display-call-child-greet-pod", "echo")
+	childPR := &v1.PipelineRun{
+		ObjectMeta: metav1.ObjectMeta{Name: "parent-display-call-child", Namespace: "namespace"},
+		Spec: v1.PipelineRunSpec{PipelineSpec: &v1.PipelineSpec{
+			Tasks: []v1.PipelineTask{{Name: "greet", TaskSpec: &v1.EmbeddedTask{
+				TaskSpec: v1.TaskSpec{Steps: []v1.Step{{Name: "echo", Image: "busybox", Script: "echo hello"}}},
+			}}},
+		}},
+		Status: v1.PipelineRunStatus{
+			Status: duckv1.Status{Conditions: duckv1.Conditions{{
+				Status: corev1.ConditionTrue, Type: apis.ConditionSucceeded}}},
+			PipelineRunStatusFields: v1.PipelineRunStatusFields{
+				ChildReferences: []v1.ChildStatusReference{{
+					Name: "parent-display-call-child-greet", PipelineTaskName: "greet",
+					TypeMeta: runtime.TypeMeta{Kind: "TaskRun"}}},
+			},
+		},
+	}
+	parentPR := &v1.PipelineRun{
+		ObjectMeta: metav1.ObjectMeta{Name: "parent-display-run", Namespace: "namespace",
+			Labels: map[string]string{"tekton.dev/pipeline": "parent-display-pipeline"}},
+		Spec: v1.PipelineRunSpec{PipelineRef: &v1.PipelineRef{Name: "parent-display-pipeline"}},
+		Status: v1.PipelineRunStatus{
+			Status: duckv1.Status{Conditions: duckv1.Conditions{{
+				Status: corev1.ConditionTrue, Type: apis.ConditionSucceeded}}},
+			PipelineRunStatusFields: v1.PipelineRunStatusFields{
+				ChildReferences: []v1.ChildStatusReference{{
+					Name: "parent-display-call-child", PipelineTaskName: "call-child",
+					TypeMeta: runtime.TypeMeta{Kind: "PipelineRun"}}},
+			},
+		},
+	}
+	parentPipeline := &v1.Pipeline{
+		ObjectMeta: metav1.ObjectMeta{Name: "parent-display-pipeline", Namespace: "namespace"},
+		Spec: v1.PipelineSpec{Tasks: []v1.PipelineTask{{Name: "call-child", DisplayName: "Deploy", TaskSpec: &v1.EmbeddedTask{
+			TaskSpec: v1.TaskSpec{Steps: []v1.Step{{Name: "placeholder", Image: "busybox"}}}}}}},
+	}
+	newPinPFixture(t, "parent-display-run").
+		withPipelineRuns(parentPR, childPR).
+		withPipelines(parentPipeline).
+		withTaskRuns(childTR).
+		withPods(&corev1.Pod{
+			ObjectMeta: metav1.ObjectMeta{Name: "parent-display-call-child-greet-pod", Namespace: "namespace"},
+			Spec:       corev1.PodSpec{Containers: []corev1.Container{{Name: "echo", Image: "busybox"}}},
+		}).
+		withLogs(fake.Task("parent-display-call-child-greet-pod", fake.Step("echo", "Hello from child\n"))).
+		withBeforeFetch(func(lo *options.LogOptions) { lo.Long = true }).
+		expect("[Deploy" + taskrunpkg.ChildTaskSeparator + "greet : echo] Hello from child\n\n").
+		run()
+}
+
 func TestPipelineRunLogs_PinP_ChildPR_NotFound(t *testing.T) {
 	directTR := succeededTR("build-taskrun", "namespace", "build-pod", "step1")
 	parentPR := &v1.PipelineRun{

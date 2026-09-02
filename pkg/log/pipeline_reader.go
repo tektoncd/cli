@@ -296,8 +296,16 @@ func (r *Reader) getOrderedTasksRec(pr *v1.PipelineRun, trsMap map[string]*v1.Pi
 	var ordered []taskrunpkg.Run
 	for _, pt := range tasks {
 		if _, ok := trNames[pt.Name]; ok {
-			// Direct TaskRun child — use existing sort logic
-			ordered = append(ordered, taskrunpkg.SortTasksBySpecOrder([]v1.PipelineTask{pt}, levelTRsMap)...)
+			// Direct TaskRun child — use existing sort logic. Default the
+			// leaf display name to the task name so hierarchical display
+			// names built by parent levels always have a base segment.
+			leafRuns := taskrunpkg.SortTasksBySpecOrder([]v1.PipelineTask{pt}, levelTRsMap)
+			for i := range leafRuns {
+				if leafRuns[i].DisplayName == "" {
+					leafRuns[i].DisplayName = leafRuns[i].Task
+				}
+			}
+			ordered = append(ordered, leafRuns...)
 		} else if childPRName, ok := childPRNames[pt.Name]; ok {
 			childPR, ok := childPRs[childPRName]
 			if !ok {
@@ -313,10 +321,17 @@ func (r *Reader) getOrderedTasksRec(pr *v1.PipelineRun, trsMap map[string]*v1.Pi
 				return nil, err
 			}
 			for i := range childOrdered {
-				childOrdered[i].Task = pt.Name + taskrunpkg.ChildTaskSeparator + childOrdered[i].Task
-				if childOrdered[i].DisplayName != "" {
-					childOrdered[i].DisplayName = pt.Name + taskrunpkg.ChildTaskSeparator + childOrdered[i].DisplayName
+				childTaskName := childOrdered[i].Task
+				childOrdered[i].Task = pt.Name + taskrunpkg.ChildTaskSeparator + childTaskName
+				parentDisplayName := pt.DisplayName
+				if parentDisplayName == "" {
+					parentDisplayName = pt.Name
 				}
+				childDisplayName := childOrdered[i].DisplayName
+				if childDisplayName == "" {
+					childDisplayName = childTaskName
+				}
+				childOrdered[i].DisplayName = parentDisplayName + taskrunpkg.ChildTaskSeparator + childDisplayName
 			}
 			ordered = append(ordered, childOrdered...)
 		}
