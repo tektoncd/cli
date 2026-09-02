@@ -74,9 +74,10 @@ func TestFindPluginDoesNotFallBackToCwd(t *testing.T) {
 	defer os.Chdir(orig) //nolint:errcheck
 	assert.NilError(t, os.Chdir(nd.Path()))
 
-	// Force getPluginDir() to fail via a relative TKN_PLUGINS_DIR.
+	// Use "." as TKN_PLUGINS_DIR: the old code would resolve filepath.Join(".", "tkn-evil")
+	// against cwd and find the binary; the fixed code rejects "." as non-absolute.
 	// Keep nd off PATH so LookPath cannot find the binary either.
-	t.Setenv(pluginDirEnv, "relative/bad/path")
+	t.Setenv(pluginDirEnv, ".")
 	t.Setenv("PATH", "")
 
 	// The binary is only reachable via cwd — FindPlugin must not find it.
