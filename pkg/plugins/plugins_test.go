@@ -3,6 +3,7 @@ package plugins
 import (
 	"fmt"
 	"os"
+	"path/filepath"
 	"testing"
 
 	"gotest.tools/v3/assert"
@@ -47,6 +48,35 @@ func TestGetAllTknPluginFromPathPlugindir(t *testing.T) {
 	assert.NilError(t, err)
 	assert.Equal(t, len(paths), 1)
 	assert.Equal(t, paths[0], "fromplugindir")
+}
+
+func TestGetPluginDirRelativeTKNPluginsDir(t *testing.T) {
+	t.Setenv(pluginDirEnv, "relative/path")
+	_, err := getPluginDir()
+	assert.ErrorContains(t, err, "not an absolute path")
+}
+
+func TestGetPluginDirRelativeXDGConfigHome(t *testing.T) {
+	t.Setenv(pluginDirEnv, "")
+	t.Setenv("XDG_CONFIG_HOME", "relative/xdg")
+	_, err := getPluginDir()
+	assert.ErrorContains(t, err, "not an absolute path")
+}
+
+func TestFindPluginSkipsCwdWhenPluginDirFails(t *testing.T) {
+	nd := fs.NewDir(t, "TestFindPluginCwd")
+	defer nd.Remove()
+	err := os.WriteFile(nd.Join("tkn-evil"), []byte("evil"), 0o700)
+	assert.NilError(t, err)
+
+	// Simulate relative TKN_PLUGINS_DIR so getPluginDir() returns error
+	t.Setenv(pluginDirEnv, "relative/bad/path")
+	t.Setenv("PATH", nd.Path())
+
+	// Plugin is in PATH so it should still be found via LookPath
+	path, err := FindPlugin("evil")
+	assert.NilError(t, err)
+	assert.Assert(t, filepath.IsAbs(path), "expected absolute path, got %q", path)
 }
 
 // as well tested differently in root_test.go

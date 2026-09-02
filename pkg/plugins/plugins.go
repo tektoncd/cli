@@ -20,10 +20,16 @@ func getPluginDir() (string, error) {
 	dir := os.Getenv(pluginDirEnv)
 	// if TKN_PLUGINS_DIR is set, follow it
 	if dir != "" {
+		if !filepath.IsAbs(dir) {
+			return "", fmt.Errorf("plugin dir %q is not an absolute path", dir)
+		}
 		return dir, nil
 	}
 	// Respect XDG_CONFIG_HOME if set
 	if xdgHome := os.Getenv("XDG_CONFIG_HOME"); xdgHome != "" {
+		if !filepath.IsAbs(xdgHome) {
+			return "", fmt.Errorf("XDG_CONFIG_HOME %q is not an absolute path", xdgHome)
+		}
 		return filepath.Join(xdgHome, "tkn", "plugins"), nil
 	}
 	// Fallback to default pluginDir (~/.config/tkn/plugins)
@@ -33,15 +39,14 @@ func getPluginDir() (string, error) {
 // Find a binary in plugin homedir directory or user paths.
 func FindPlugin(pluginame string) (string, error) {
 	cmd := tknPrefix + pluginame
-	dir, _ := getPluginDir()
-	path := filepath.Join(dir, cmd)
-	_, err := os.Stat(path)
-	if err == nil {
-		// Found in dir
-		return path, nil
+	if dir, err := getPluginDir(); err == nil {
+		path := filepath.Join(dir, cmd)
+		if _, err := os.Stat(path); err == nil {
+			return path, nil
+		}
 	}
 
-	path, err = exec.LookPath(cmd)
+	path, err := exec.LookPath(cmd)
 	if err == nil {
 		return path, nil
 	}
