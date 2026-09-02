@@ -2,6 +2,7 @@
 
 [![Go Report Card](https://goreportcard.com/badge/tektoncd/cli)](https://goreportcard.com/report/tektoncd/cli)
 [![CII Best Practices](https://bestpractices.coreinfrastructure.org/projects/6510/badge)](https://bestpractices.coreinfrastructure.org/projects/6510)
+[![FOSSA Status](https://app.fossa.com/api/projects/git%2Bgithub.com%2Ftektoncd%2Fcli.svg?type=shield)](https://app.fossa.com/projects/git%2Bgithub.com%2Ftektoncd%2Fcli?ref=badge_shield)
 
 <p align="center">
 <img width="250" height="175" src="https://github.com/cncf/artwork/blob/main/projects/tekton/icon/color/tekton-icon-color.svg" alt="Tekton logo"></img>
@@ -267,3 +268,7 @@ We are so excited to have you!
   [good first issues](https://github.com/tektoncd/cli/issues?q=is%3Aissue+is%3Aopen+label%3A%22good+first+issue%22)
   and our
   [help wanted issues](https://github.com/tektoncd/cli/issues?q=is%3Aissue+is%3Aopen+label%3A%22help+wanted%22)
+
+
+## License
+[![FOSSA Status](https://app.fossa.com/api/projects/git%2Bgithub.com%2Ftektoncd%2Fcli.svg?type=large)](https://app.fossa.com/projects/git%2Bgithub.com%2Ftektoncd%2Fcli?ref=badge_large)
