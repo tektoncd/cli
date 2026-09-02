@@ -3,7 +3,6 @@ package plugins
 import (
 	"fmt"
 	"os"
-	"path/filepath"
 	"testing"
 
 	"gotest.tools/v3/assert"
@@ -63,20 +62,26 @@ func TestGetPluginDirRelativeXDGConfigHome(t *testing.T) {
 	assert.ErrorContains(t, err, "not an absolute path")
 }
 
-func TestFindPluginSkipsCwdWhenPluginDirFails(t *testing.T) {
+func TestFindPluginDoesNotFallBackToCwd(t *testing.T) {
 	nd := fs.NewDir(t, "TestFindPluginCwd")
 	defer nd.Remove()
 	err := os.WriteFile(nd.Join("tkn-evil"), []byte("evil"), 0o700)
 	assert.NilError(t, err)
 
-	// Simulate relative TKN_PLUGINS_DIR so getPluginDir() returns error
-	t.Setenv(pluginDirEnv, "relative/bad/path")
-	t.Setenv("PATH", nd.Path())
-
-	// Plugin is in PATH so it should still be found via LookPath
-	path, err := FindPlugin("evil")
+	// Change into the directory that contains the malicious binary.
+	orig, err := os.Getwd()
 	assert.NilError(t, err)
-	assert.Assert(t, filepath.IsAbs(path), "expected absolute path, got %q", path)
+	defer os.Chdir(orig) //nolint:errcheck
+	assert.NilError(t, os.Chdir(nd.Path()))
+
+	// Force getPluginDir() to fail via a relative TKN_PLUGINS_DIR.
+	// Keep nd off PATH so LookPath cannot find the binary either.
+	t.Setenv(pluginDirEnv, "relative/bad/path")
+	t.Setenv("PATH", "")
+
+	// The binary is only reachable via cwd — FindPlugin must not find it.
+	_, err = FindPlugin("evil")
+	assert.ErrorContains(t, err, "cannot find plugin")
 }
 
 // as well tested differently in root_test.go
