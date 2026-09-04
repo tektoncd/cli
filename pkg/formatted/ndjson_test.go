@@ -1,4 +1,4 @@
-// Copyright © 2024 The Tekton Authors.
+// Copyright © 2026 The Tekton Authors.
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -164,6 +164,44 @@ func TestPrintNDJSON_emptyList(t *testing.T) {
 	}
 	if buf.Len() != 0 {
 		t.Errorf("expected empty output for empty list, got %q", buf.String())
+	}
+}
+
+// TestPrintNDJSON_nullValuePreserved ensures that a field explicitly set to nil
+// in the source (e.g. status.completionTime for a running PipelineRun) is
+// emitted as JSON null rather than being dropped.
+func TestPrintNDJSON_nullValuePreserved(t *testing.T) {
+	list := &v1.PipelineRunList{
+		Items: []v1.PipelineRun{
+			{
+				ObjectMeta: metav1.ObjectMeta{
+					Name:      "running",
+					Namespace: "default",
+				},
+				// CompletionTime intentionally absent (nil).
+			},
+		},
+	}
+
+	var buf bytes.Buffer
+	// Request metadata.name — present and non-nil.
+	if err := formatted.PrintNDJSON(&buf, list, []string{"metadata.name"}); err != nil {
+		t.Fatalf("unexpected error: %v", err)
+	}
+	lines := splitLines(buf.String())
+	if len(lines) != 1 {
+		t.Fatalf("expected 1 line, got %d", len(lines))
+	}
+	var m map[string]any
+	if err := json.Unmarshal([]byte(lines[0]), &m); err != nil {
+		t.Fatalf("line is not valid JSON: %v", err)
+	}
+	meta, ok := m["metadata"].(map[string]any)
+	if !ok {
+		t.Fatalf("expected metadata key")
+	}
+	if _, ok := meta["name"]; !ok {
+		t.Errorf("expected metadata.name to be present")
 	}
 }
 

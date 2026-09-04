@@ -89,6 +89,15 @@ List CustomRuns as a YAML array:
 				return exitcode.New(exitcode.InvalidInput, "limit was %d but must be a positive number", opts.Limit)
 			}
 
+			output, err := cmd.LocalFlags().GetString("output")
+			if err != nil {
+				return fmt.Errorf("output option not set properly: %v", err)
+			}
+
+			if len(opts.Fields) > 0 && output != "ndjson" {
+				return fmt.Errorf("--fields is only supported with --output ndjson")
+			}
+
 			crs, err := list(p, opts.Limit, opts.LabelSelector, opts.AllNamespaces)
 			if err != nil {
 				return fmt.Errorf("failed to list CustomRuns from namespace %s: %w", p.Namespace(), err)
@@ -96,11 +105,6 @@ List CustomRuns as a YAML array:
 
 			if crs != nil && opts.Reverse {
 				reverse(crs)
-			}
-
-			output, err := cmd.LocalFlags().GetString("output")
-			if err != nil {
-				return fmt.Errorf("output option not set properly: %v", err)
 			}
 			switch {
 			case output == "ndjson" && crs != nil:

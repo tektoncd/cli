@@ -67,6 +67,15 @@ List TriggerTemplates as a YAML array:
 		},
 		Example: eg,
 		RunE: func(cmd *cobra.Command, _ []string) error {
+			output, err := cmd.LocalFlags().GetString("output")
+			if err != nil {
+				return fmt.Errorf("output option not set properly: %v", err)
+			}
+
+			if len(opts.Fields) > 0 && output != "ndjson" {
+				return fmt.Errorf("--fields is only supported with --output ndjson")
+			}
+
 			cs, err := p.Clients()
 			if err != nil {
 				return err
@@ -82,11 +91,6 @@ List TriggerTemplates as a YAML array:
 					return fmt.Errorf("failed to list TriggerTemplates from all namespaces: %w", err)
 				}
 				return fmt.Errorf("failed to list TriggerTemplates from %s namespace: %w", namespace, err)
-			}
-
-			output, err := cmd.LocalFlags().GetString("output")
-			if err != nil {
-				return fmt.Errorf("output option not set properly: %v", err)
 			}
 
 			stream := &cli.Stream{

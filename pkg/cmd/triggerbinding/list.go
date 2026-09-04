@@ -68,6 +68,15 @@ List TriggerBindings as a YAML array:
 		},
 		Example: eg,
 		RunE: func(cmd *cobra.Command, _ []string) error {
+			output, err := cmd.LocalFlags().GetString("output")
+			if err != nil {
+				return errors.New("output option not set properly")
+			}
+
+			if len(opts.Fields) > 0 && output != "ndjson" {
+				return fmt.Errorf("--fields is only supported with --output ndjson")
+			}
+
 			cs, err := p.Clients()
 			if err != nil {
 				return err
@@ -86,18 +95,13 @@ List TriggerBindings as a YAML array:
 				return fmt.Errorf("failed to list TriggerBindings from %s namespace: %w", namespace, err)
 			}
 
-			output, err := cmd.LocalFlags().GetString("output")
-			if err != nil {
-				return errors.New("output option not set properly")
-			}
-
 			stream := &cli.Stream{
 				Out: cmd.OutOrStdout(),
 				Err: cmd.OutOrStderr(),
 			}
 
 			switch {
-			case output == "ndjson":
+			case output == "ndjson" && tbs != nil:
 				return formatted.PrintNDJSON(stream.Out, tbs, opts.Fields)
 			case output == "name" && tbs != nil:
 				w := cmd.OutOrStdout()
