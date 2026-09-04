@@ -88,6 +88,15 @@ List all PipelineRuns in a namespace 'foo':
 				return fmt.Errorf("limit was %d but must be a positive number", opts.Limit)
 			}
 
+			output, err := cmd.LocalFlags().GetString("output")
+			if err != nil {
+				return fmt.Errorf("output option not set properly: %v", err)
+			}
+
+			if len(opts.Fields) > 0 && output != "ndjson" {
+				return fmt.Errorf("--fields is only supported with --output ndjson")
+			}
+
 			prs, err := list(p, pipeline, opts.Limit, opts.LabelSelector, opts.AllNamespaces)
 			if err != nil {
 				return fmt.Errorf("failed to list PipelineRuns from namespace %s: %v", p.Namespace(), err)
@@ -95,11 +104,6 @@ List all PipelineRuns in a namespace 'foo':
 
 			if prs != nil && opts.Reverse {
 				reverse(prs)
-			}
-
-			output, err := cmd.LocalFlags().GetString("output")
-			if err != nil {
-				return fmt.Errorf("output option not set properly: %v", err)
 			}
 
 			switch {

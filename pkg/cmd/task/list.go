@@ -66,14 +66,18 @@ func listCommand(p cli.Params) *cobra.Command {
 			"commandType": "main",
 		},
 		RunE: func(cmd *cobra.Command, _ []string) error {
-			cs, err := p.Clients()
-			if err != nil {
-				return err
-			}
-
 			output, err := cmd.LocalFlags().GetString("output")
 			if err != nil {
 				return fmt.Errorf("error: output option not set properly: %v", err)
+			}
+
+			if len(opts.Fields) > 0 && output != "ndjson" {
+				return fmt.Errorf("--fields is only supported with --output ndjson")
+			}
+
+			cs, err := p.Clients()
+			if err != nil {
+				return err
 			}
 
 			ns := p.Namespace()

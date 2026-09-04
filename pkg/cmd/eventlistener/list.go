@@ -61,6 +61,15 @@ or
 		},
 		Example: eg,
 		RunE: func(cmd *cobra.Command, _ []string) error {
+			output, err := cmd.LocalFlags().GetString("output")
+			if err != nil {
+				return errors.New(`output option not set properly \n`)
+			}
+
+			if len(opts.Fields) > 0 && output != "ndjson" {
+				return fmt.Errorf("--fields is only supported with --output ndjson")
+			}
+
 			cs, err := p.Clients()
 			if err != nil {
 				return err
@@ -77,11 +86,6 @@ or
 					return fmt.Errorf("failed to list EventListeners from all namespaces: %v", err)
 				}
 				return fmt.Errorf("failed to list EventListeners from %s namespace: %v", namespace, err)
-			}
-
-			output, err := cmd.LocalFlags().GetString("output")
-			if err != nil {
-				return errors.New(`output option not set properly \n`)
 			}
 
 			stream := &cli.Stream{
