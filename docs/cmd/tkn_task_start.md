@@ -68,7 +68,7 @@ For passing the workspaces via flags:
       --prefix-name string        specify a prefix for the TaskRun name (must be lowercase alphanumeric characters)
       --remote-bearer string      A Bearer token to authenticate against the repository
       --remote-password string    A password to pass to the registry for basic auth. Must be used with --remote-username
-      --remote-skip-tls           If set to true, skips TLS check when connecting to the registry
+      --remote-skip-tls           Skip TLS certificate verification and allow plain-HTTP connections to the registry (opt-in insecure mode)
       --remote-username string    A username to pass to the registry for basic auth. Must be used with --remote-password
   -s, --serviceaccount string     pass the serviceaccount name
       --showlog                   show logs right after starting the Task
