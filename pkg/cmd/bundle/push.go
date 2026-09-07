@@ -84,7 +84,7 @@ Created time:
 				return errInvalidRef
 			}
 
-			if _, err := name.ParseReference(args[0], name.StrictValidation, name.Insecure); err != nil {
+			if _, err := name.ParseReference(args[0], append([]name.Option{name.StrictValidation}, opts.remoteOptions.NameOptions()...)...); err != nil {
 				return err
 			}
 
@@ -112,7 +112,7 @@ Created time:
 // Reads the positional arguments and the `-f` flag to fill in the `bunldeContents` parameter with all of the raw Tekton
 // contents.
 func (p *pushOptions) parseArgsAndFlags(args []string) (err error) {
-	p.ref, _ = name.ParseReference(args[0], name.StrictValidation, name.Insecure)
+	p.ref, _ = name.ParseReference(args[0], append([]name.Option{name.StrictValidation}, p.remoteOptions.NameOptions()...)...)
 
 	// If there are file paths specified, then read them and include their contents.
 	for _, path := range p.bundleContentPaths {
