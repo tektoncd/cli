@@ -4,6 +4,7 @@ import (
 	"net/http"
 
 	"github.com/google/go-containerregistry/pkg/authn"
+	"github.com/google/go-containerregistry/pkg/name"
 	remoteimg "github.com/google/go-containerregistry/pkg/v1/remote"
 	"github.com/spf13/pflag"
 )
@@ -39,13 +40,24 @@ func (r *RemoteOptions) ToOptions() []remoteimg.Option {
 		opts = []remoteimg.Option{remoteimg.WithAuthFromKeychain(keychains)}
 	}
 
-	transport := http.DefaultTransport.(*http.Transport)
+	transport := http.DefaultTransport.(*http.Transport).Clone()
 	if r.skipTLS {
 		transport.TLSClientConfig.InsecureSkipVerify = r.skipTLS
 	}
 	// TODO: consider adding CA overrides for self-signed or private registries.
 	opts = append(opts, remoteimg.WithTransport(transport))
 	return opts
+}
+
+// NameOptions returns name-parsing options that reflect the current remote settings.
+// name.Insecure is only included when --remote-skip-tls is set, to prevent
+// unintentional plain-HTTP registry connections (CWE-319).
+// Callers that require strict reference validation should add name.StrictValidation themselves.
+func (r *RemoteOptions) NameOptions() []name.Option {
+	if r.skipTLS {
+		return []name.Option{name.Insecure}
+	}
+	return nil
 }
 
 // AddRemoteFlags will define a common set of flags that can be used to change how images are pushed/fetched from remote
@@ -56,7 +68,7 @@ func AddRemoteFlags(flags *pflag.FlagSet, opts *RemoteOptions) {
 	flags.StringVar(&opts.basicPassword, "remote-password", "", "A password to pass to the registry for basic auth. Must be used with --remote-username")
 
 	// TLS related flags.
-	flags.BoolVar(&opts.skipTLS, "remote-skip-tls", false, "If set to true, skips TLS check when connecting to the registry")
+	flags.BoolVar(&opts.skipTLS, "remote-skip-tls", false, "Skip TLS certificate verification and allow plain-HTTP connections to the registry (opt-in insecure mode)")
 }
 
 // PullOptions configure how an image is cached once it is fetched from the remote.

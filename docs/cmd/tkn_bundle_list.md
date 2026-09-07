@@ -42,7 +42,7 @@ Caching:
   -o, --output string                 Output format. One of: (json, yaml, name, go-template, go-template-file, template, templatefile, jsonpath, jsonpath-as-json, jsonpath-file).
       --remote-bearer string          A Bearer token to authenticate against the repository
       --remote-password string        A password to pass to the registry for basic auth. Must be used with --remote-username
-      --remote-skip-tls               If set to true, skips TLS check when connecting to the registry
+      --remote-skip-tls               Skip TLS certificate verification and allow plain-HTTP connections to the registry (opt-in insecure mode)
       --remote-username string        A username to pass to the registry for basic auth. Must be used with --remote-password
       --show-managed-fields           If true, keep the managedFields when printing objects in JSON or YAML format.
       --template string               Template string or path to template file to use when -o=go-template, -o=go-template-file. The template format is golang templates [http://golang.org/pkg/text/template/#pkg-overview].
