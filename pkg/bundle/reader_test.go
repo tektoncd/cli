@@ -4,6 +4,7 @@ import (
 	"archive/tar"
 	"bytes"
 	"fmt"
+	"io"
 	"strings"
 	"testing"
 
@@ -123,5 +124,35 @@ func TestReader(t *testing.T) {
 		test.Contains(t, []runtime.Object{&task1}, element)
 	}); err != nil {
 		t.Error(err)
+	}
+}
+
+func TestReadTarLayerExceedsMaxSize(t *testing.T) {
+	oversized := make([]byte, MaxLayerSize+1)
+
+	var buf bytes.Buffer
+	tw := tar.NewWriter(&buf)
+	_ = tw.WriteHeader(&tar.Header{
+		Name: "oversizedtask.yaml",
+		Size: int64(len(oversized)),
+	})
+	_, _ = tw.Write(oversized)
+	_ = tw.Close()
+
+	// Wrap as a fake v1.Layer via tarball.FromOpener
+	opener := func() (io.ReadCloser, error) {
+		return io.NopCloser(bytes.NewReader(buf.Bytes())), nil
+	}
+	layer, err := tarball.LayerFromOpener(opener)
+	if err != nil {
+		t.Fatalf("failed to create layer: %v", err)
+	}
+
+	_, err = readTarLayer(layer)
+	if err == nil {
+		t.Fatal("expected error for oversized layer, got nil")
+	}
+	if !strings.Contains(err.Error(), "layer exceeds maximum allowed size") {
+		t.Errorf("unexpected error message: %v", err)
 	}
 }
