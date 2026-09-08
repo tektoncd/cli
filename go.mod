@@ -12,7 +12,7 @@ require (
 	github.com/docker/cli v29.6.2+incompatible
 	github.com/docker/docker v28.5.2+incompatible
 	github.com/fatih/color v1.19.0
-	github.com/go-jose/go-jose/v4 v4.1.4
+	github.com/go-jose/go-jose/v4 v4.1.5
 	github.com/google/go-cmp v0.7.0
 	github.com/google/go-containerregistry v0.21.9
 	github.com/hako/durafmt v0.0.0-20210608085754-5c1018a4e16b
