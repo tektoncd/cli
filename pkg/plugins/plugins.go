@@ -48,7 +48,7 @@ func FindPlugin(pluginame string) (string, error) {
 	cmd := tknPrefix + pluginame
 	if dir, err := getPluginDir(); err == nil {
 		path := filepath.Join(dir, cmd)
-		if _, err := os.Stat(path); err == nil {
+		if info, err := os.Stat(path); err == nil && info.Mode().IsRegular() && info.Mode()&0o111 != 0 {
 			return path, nil
 		}
 	}
