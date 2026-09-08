@@ -33,6 +33,36 @@ func TestFindPluginInPath(t *testing.T) {
 	assert.Equal(t, path, nd.Join("tkn-testp"))
 }
 
+func TestFindPluginNonExecutable(t *testing.T) {
+	nd := fs.NewDir(t, "TestFindPluginNonExecutable")
+	defer nd.Remove()
+	err := os.WriteFile(nd.Join("tkn-test"), []byte("test"), 0o600)
+	assert.NilError(t, err)
+	t.Setenv(pluginDirEnv, nd.Path())
+	t.Setenv("PATH", "/non/existing/path")
+	_, err = FindPlugin("test")
+	assert.ErrorContains(t, err, "cannot find plugin")
+}
+
+func TestFindPluginNonExecutableFallsBackToPath(t *testing.T) {
+	pluginDir := fs.NewDir(t, "TestFindPluginNonExecPluginDir")
+	defer pluginDir.Remove()
+	err := os.WriteFile(pluginDir.Join("tkn-test"), []byte("nonexec"), 0o600)
+	assert.NilError(t, err)
+
+	pathDir := fs.NewDir(t, "TestFindPluginNonExecPath")
+	defer pathDir.Remove()
+	// nolint: gosec
+	err = os.WriteFile(pathDir.Join("tkn-test"), []byte("exec"), 0o700)
+	assert.NilError(t, err)
+
+	t.Setenv(pluginDirEnv, pluginDir.Path())
+	t.Setenv("PATH", pathDir.Path())
+	path, err := FindPlugin("test")
+	assert.NilError(t, err)
+	assert.Equal(t, path, pathDir.Join("tkn-test"))
+}
+
 func TestGetAllTknPluginFromPathPlugindir(t *testing.T) {
 	nd := fs.NewDir(t, "TestGetAllTknPluginFromPluginPath")
 	defer nd.Remove()
