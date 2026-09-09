@@ -1,17 +1,38 @@
 name: Slash Command Routing
 
-permissions:
-  contents: read
-
 on:
   issue_comment:
     types: [created]
 
+permissions:
+  contents: read
+
 jobs:
   check_comments:
-    if: ${{ github.event.issue.pull_request }}
-    permissions:
-      issues: write # for peter-evans/slash-command-dispatch to create issue reaction
-      pull-requests: write # for peter-evans/slash-command-dispatch to create PR reaction
-    uses: tektoncd/plumbing/.github/workflows/_slash.yml@8441d6ffad5bf64f631ed0e67e46192fdedaca47
-    secrets: inherit
+    runs-on: ubuntu-latest
+    steps:
+    - name: route-land
+      uses: peter-evans/slash-command-dispatch@9bdcd7914ec1b75590b790b844aa3b8eee7c683a # v5.0.2
+      with:
+        token: ${{ secrets.CHATOPS_TOKEN }}
+        config: >
+          [
+            {
+              "command": "retest",
+              "permission": "write",
+              "issue_type": "pull-request",
+              "repository": "tektoncd/cli"
+            },
+            {
+              "command": "cherry-pick",
+              "permission": "write",
+              "issue_type": "pull-request",
+              "repository": "tektoncd/cli"
+            },
+            {
+              "command": "rebase",
+              "permission": "write",
+              "issue_type": "pull-request",
+              "repository": "tektoncd/cli"
+            }
+          ]
