@@ -158,14 +158,19 @@ type TaskRunWithStatusList []TaskRunWithStatus
 func (trs TaskRunWithStatusList) Len() int      { return len(trs) }
 func (trs TaskRunWithStatusList) Swap(i, j int) { trs[i], trs[j] = trs[j], trs[i] }
 func (trs TaskRunWithStatusList) Less(i, j int) bool {
-	if trs[j].Status == nil || trs[j].Status.StartTime == nil {
+	iNil := trs[i].Status == nil || trs[i].Status.StartTime == nil
+	jNil := trs[j].Status == nil || trs[j].Status.StartTime == nil
+	switch {
+	case iNil && jNil:
+		return trs[i].TaskRunName < trs[j].TaskRunName
+	case jNil:
 		return false
-	}
-
-	if trs[i].Status == nil || trs[i].Status.StartTime == nil {
+	case iNil:
 		return true
 	}
-
+	if trs[i].Status.StartTime.Equal(trs[j].Status.StartTime) {
+		return trs[i].TaskRunName < trs[j].TaskRunName
+	}
 	return trs[j].Status.StartTime.Before(trs[i].Status.StartTime)
 }
 
@@ -175,20 +180,17 @@ func PrintPipelineRunDescription(out io.Writer, c *cli.Clients, ns string, prNam
 		return fmt.Errorf("failed to find pipelinerun %q", prName)
 	}
 
+	trStatuses, _, err := GetTaskRunsWithStatus(pr, c, ns)
+	if err != nil {
+		return err
+	}
 	var taskRunList TaskRunWithStatusList
-	for _, child := range pr.Status.ChildReferences {
-		if child.Kind == "TaskRun" {
-			var tr *v1.TaskRun
-			err = actions.GetV1(taskrunGroupResource, c, child.Name, ns, metav1.GetOptions{}, &tr)
-			if err != nil {
-				return fmt.Errorf("failed to find get taskruns of the pipelineruns")
-			}
-			taskRunList = append(taskRunList, TaskRunWithStatus{
-				tr.Name,
-				child.PipelineTaskName,
-				&tr.Status,
-			})
-		}
+	for trName, trs := range trStatuses {
+		taskRunList = append(taskRunList, TaskRunWithStatus{
+			TaskRunName:      trName,
+			PipelineTaskName: trs.PipelineTaskName,
+			Status:           trs.Status,
+		})
 	}
 
 	if len(taskRunList) != 0 {
