@@ -15,9 +15,11 @@
 package taskrun
 
 import (
+	"encoding/json"
 	"errors"
 	"testing"
 
+	"github.com/tektoncd/cli/pkg/formatted"
 	"github.com/tektoncd/cli/pkg/test"
 	cb "github.com/tektoncd/cli/pkg/test/builder"
 	testDynamic "github.com/tektoncd/cli/pkg/test/dynamic"
@@ -30,6 +32,7 @@ import (
 	"k8s.io/client-go/dynamic"
 	k8stest "k8s.io/client-go/testing"
 	duckv1 "knative.dev/pkg/apis/duck/v1"
+	"sigs.k8s.io/yaml"
 )
 
 func TestTaskRunCancel_v1beta1(t *testing.T) {
@@ -558,4 +561,225 @@ func TestTaskRunCancel(t *testing.T) {
 			}
 		})
 	}
+}
+func TestTaskRunCancel_OutputJSON(t *testing.T) {
+	trs := []*v1.TaskRun{
+		{
+			ObjectMeta: metav1.ObjectMeta{
+				Namespace: "ns",
+				Name:      "taskrun-1",
+				Labels:    map[string]string{"tekton.dev/task": "task"},
+			},
+			Spec: v1.TaskRunSpec{
+				TaskRef: &v1.TaskRef{
+					Name: "task",
+				},
+			},
+			Status: v1.TaskRunStatus{
+				Status: duckv1.Status{
+					Conditions: duckv1.Conditions{
+						{
+							Status: corev1.ConditionUnknown,
+							Reason: v1.TaskRunReasonRunning.String(),
+						},
+					},
+				},
+			},
+		},
+	}
+
+	ns := []*corev1.Namespace{
+		{
+			ObjectMeta: metav1.ObjectMeta{
+				Name: "ns",
+			},
+		},
+	}
+
+	cs, _ := test.SeedTestData(t, pipelinetest.Data{TaskRuns: trs, Namespaces: ns})
+	cs.Pipeline.Resources = cb.APIResourceList(version, []string{"task", "taskrun"})
+	tdc := testDynamic.Options{}
+	dc, err := tdc.Client(
+		cb.UnstructuredTR(trs[0], version),
+	)
+	if err != nil {
+		t.Errorf("unable to create dynamic client: %v", err)
+	}
+
+	p := &test.Params{Tekton: cs.Pipeline, Kube: cs.Kube, Dynamic: dc}
+	taskrun := Command(p)
+
+	got, err := test.ExecuteCommand(taskrun, "cancel", "taskrun-1", "-n", "ns", "-o", "json")
+	if err != nil {
+		t.Fatalf("unexpected error: %v", err)
+	}
+
+	var result formatted.CancelResult
+	if jsonErr := json.Unmarshal([]byte(got), &result); jsonErr != nil {
+		t.Fatalf("output is not valid json: %v\noutput: %s", jsonErr, got)
+	}
+	if len(result.Cancelled) != 1 {
+		t.Fatalf("expected 1 cancelled item, got %d", len(result.Cancelled))
+	}
+	item := result.Cancelled[0]
+	if item.Kind != "TaskRun" {
+		t.Errorf("expected kind %q, got %q", "TaskRun", item.Kind)
+	}
+	if item.Name != "taskrun-1" {
+		t.Errorf("expected name %q, got %q", "taskrun-1", item.Name)
+	}
+	if item.Namespace != "ns" {
+		t.Errorf("expected namespace %q, got %q", "ns", item.Namespace)
+	}
+	if item.RequestedStatus != formatted.CancelledStatus {
+		t.Errorf("expected requestedStatus %q, got %q", formatted.CancelledStatus, item.RequestedStatus)
+	}
+}
+
+func TestTaskRunCancel_OutputYAML(t *testing.T) {
+	trs := []*v1.TaskRun{
+		{
+			ObjectMeta: metav1.ObjectMeta{
+				Namespace: "ns",
+				Name:      "taskrun-1",
+				Labels:    map[string]string{"tekton.dev/task": "task"},
+			},
+			Spec: v1.TaskRunSpec{
+				TaskRef: &v1.TaskRef{
+					Name: "task",
+				},
+			},
+			Status: v1.TaskRunStatus{
+				Status: duckv1.Status{
+					Conditions: duckv1.Conditions{
+						{
+							Status: corev1.ConditionUnknown,
+							Reason: v1.TaskRunReasonRunning.String(),
+						},
+					},
+				},
+			},
+		},
+	}
+
+	ns := []*corev1.Namespace{
+		{
+			ObjectMeta: metav1.ObjectMeta{
+				Name: "ns",
+			},
+		},
+	}
+
+	cs, _ := test.SeedTestData(t, pipelinetest.Data{TaskRuns: trs, Namespaces: ns})
+	cs.Pipeline.Resources = cb.APIResourceList(version, []string{"task", "taskrun"})
+	tdc := testDynamic.Options{}
+	dc, err := tdc.Client(
+		cb.UnstructuredTR(trs[0], version),
+	)
+	if err != nil {
+		t.Errorf("unable to create dynamic client: %v", err)
+	}
+
+	p := &test.Params{Tekton: cs.Pipeline, Kube: cs.Kube, Dynamic: dc}
+	taskrun := Command(p)
+
+	got, err := test.ExecuteCommand(taskrun, "cancel", "taskrun-1", "-n", "ns", "-o", "yaml")
+	if err != nil {
+		t.Fatalf("unexpected error: %v", err)
+	}
+
+	var result formatted.CancelResult
+	if yamlErr := yaml.Unmarshal([]byte(got), &result); yamlErr != nil {
+		t.Fatalf("output is not valid yaml: %v\noutput: %s", yamlErr, got)
+	}
+	if len(result.Cancelled) != 1 {
+		t.Fatalf("expected 1 cancelled item, got %d", len(result.Cancelled))
+	}
+	item := result.Cancelled[0]
+	if item.Kind != "TaskRun" {
+		t.Errorf("expected kind %q, got %q", "TaskRun", item.Kind)
+	}
+	if item.Name != "taskrun-1" {
+		t.Errorf("expected name %q, got %q", "taskrun-1", item.Name)
+	}
+	if item.Namespace != "ns" {
+		t.Errorf("expected namespace %q, got %q", "ns", item.Namespace)
+	}
+	if item.RequestedStatus != formatted.CancelledStatus {
+		t.Errorf("expected requestedStatus %q, got %q", formatted.CancelledStatus, item.RequestedStatus)
+	}
+}
+
+func TestTaskRunCancel_OutputJSON_AlreadyFinished(t *testing.T) {
+	trs := []*v1.TaskRun{
+		{
+			ObjectMeta: metav1.ObjectMeta{
+				Namespace: "ns",
+				Name:      "taskrun-2",
+				Labels:    map[string]string{"tekton.dev/task": "success-task"},
+			},
+			Spec: v1.TaskRunSpec{
+				TaskRef: &v1.TaskRef{
+					Name: "success-task",
+				},
+			},
+			Status: v1.TaskRunStatus{
+				Status: duckv1.Status{
+					Conditions: duckv1.Conditions{
+						{
+							Status: corev1.ConditionTrue,
+							Reason: v1.TaskRunReasonSuccessful.String(),
+						},
+					},
+				},
+			},
+		},
+	}
+
+	ns := []*corev1.Namespace{
+		{
+			ObjectMeta: metav1.ObjectMeta{
+				Name: "ns",
+			},
+		},
+	}
+
+	cs, _ := test.SeedTestData(t, pipelinetest.Data{TaskRuns: trs, Namespaces: ns})
+	cs.Pipeline.Resources = cb.APIResourceList(version, []string{"task", "taskrun"})
+	tdc := testDynamic.Options{}
+	dc, err := tdc.Client(
+		cb.UnstructuredTR(trs[0], version),
+	)
+	if err != nil {
+		t.Errorf("unable to create dynamic client: %v", err)
+	}
+
+	p := &test.Params{Tekton: cs.Pipeline, Kube: cs.Kube, Dynamic: dc}
+	taskrun := Command(p)
+
+	got, _ := test.ExecuteCommand(taskrun, "cancel", "taskrun-2", "-n", "ns", "-o", "json")
+
+	expected := "Error: failed to cancel TaskRun taskrun-2: TaskRun has already finished execution\n"
+	test.AssertOutput(t, expected, got)
+}
+
+func TestTaskRunCancel_OutputInvalid(t *testing.T) {
+	ns := []*corev1.Namespace{
+		{
+			ObjectMeta: metav1.ObjectMeta{
+				Name: "ns",
+			},
+		},
+	}
+
+	cs, _ := test.SeedTestData(t, pipelinetest.Data{Namespaces: ns})
+	p := &test.Params{Tekton: cs.Pipeline, Kube: cs.Kube}
+	taskrun := Command(p)
+
+	_, err := test.ExecuteCommand(taskrun, "cancel", "taskrun-1", "-n", "ns", "-o", "csv")
+	if err == nil {
+		t.Fatal("expected error for invalid --output format, got nil")
+	}
+	expected := `invalid output format "csv": must be json or yaml`
+	test.AssertOutput(t, expected, err.Error())
 }

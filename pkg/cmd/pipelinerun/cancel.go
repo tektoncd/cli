@@ -32,6 +32,14 @@ func cancelCommand(p cli.Params) *cobra.Command {
 	eg := `Cancel the PipelineRun named 'foo' from namespace 'bar':
 
     tkn pipelinerun cancel foo -n bar
+
+Cancel a PipelineRun and print the result as JSON:
+
+    tkn pipelinerun cancel foo -n bar -o json
+
+Cancel a PipelineRun and print the result as YAML:
+
+    tkn pipelinerun cancel foo -n bar -o yaml
 `
 
 	graceCancelDescription := `Gracefully cancel a PipelineRun
@@ -41,7 +49,7 @@ Set to 'StoppedRunFinally' if you want to cancel the remaining non-final task an
 `
 
 	graceCancelStatus := ""
-
+	output := ""
 	c := &cobra.Command{
 		Use:     "cancel",
 		Short:   "Cancel a PipelineRun in a namespace",
@@ -61,15 +69,20 @@ Set to 'StoppedRunFinally' if you want to cancel the remaining non-final task an
 				Err: cmd.OutOrStderr(),
 			}
 
-			return cancelPipelineRun(p, s, pr, graceCancelStatus)
+			return cancelPipelineRun(p, s, pr, graceCancelStatus, output)
 		},
 	}
 
 	c.Flags().StringVarP(&graceCancelStatus, "grace", "", "", graceCancelDescription)
+	c.Flags().StringVarP(&output, "output", "o", "", formatted.OutputFlagUsage)
 	return c
 }
 
-func cancelPipelineRun(p cli.Params, s *cli.Stream, prName string, graceCancelStatus string) error {
+func cancelPipelineRun(p cli.Params, s *cli.Stream, prName string, graceCancelStatus string, output string) error {
+	if output != "" && !formatted.IsStructured(output) {
+		return fmt.Errorf("invalid output format %q: must be json or yaml", output)
+	}
+
 	cs, err := p.Clients()
 	if err != nil {
 		return fmt.Errorf("failed to create tekton client")
@@ -97,6 +110,12 @@ func cancelPipelineRun(p cli.Params, s *cli.Stream, prName string, graceCancelSt
 
 	if _, err = pipelinerunpkg.Cancel(cs, prName, metav1.PatchOptions{}, cancelStatus, p.Namespace()); err != nil {
 		return fmt.Errorf("failed to cancel PipelineRun: %s: %v", prName, err)
+	}
+
+	if formatted.IsStructured(output) {
+		return formatted.PrintStructuredOutput(s.Out, output, formatted.NewCancelResult(
+			"PipelineRun", pr.Name, p.Namespace(), string(cancelStatus),
+		))
 	}
 
 	fmt.Fprintf(s.Out, "PipelineRun cancelled: %s\n", pr.Name)

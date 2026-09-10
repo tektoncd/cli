@@ -18,11 +18,20 @@ Cancel the TaskRun named 'foo' from namespace 'bar':
 
     tkn taskrun cancel foo -n bar
 
+Cancel a TaskRun and print the result as JSON:
+
+    tkn taskrun cancel foo -n bar -o json
+
+Cancel a TaskRun and print the result as YAML:
+
+    tkn taskrun cancel foo -n bar -o yaml
+
 
 ### Options
 
 ```
-  -h, --help   help for cancel
+  -h, --help            help for cancel
+  -o, --output string   Output format. One of: json|yaml
 ```
 
 ### Options inherited from parent commands

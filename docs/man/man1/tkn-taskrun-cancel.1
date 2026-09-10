@@ -23,6 +23,10 @@ Cancel a TaskRun in a namespace
 \fB\-h\fP, \fB\-\-help\fP[=false]
     help for cancel
 
+.PP
+\fB\-o\fP, \fB\-\-output\fP=""
+    Output format. One of: json|yaml
+
 
 .SH OPTIONS INHERITED FROM PARENT COMMANDS
 .PP
@@ -51,6 +55,30 @@ Cancel the TaskRun named 'foo' from namespace 'bar':
 
 .nf
 tkn taskrun cancel foo \-n bar
+
+.fi
+.RE
+
+.PP
+Cancel a TaskRun and print the result as JSON:
+
+.PP
+.RS
+
+.nf
+tkn taskrun cancel foo \-n bar \-o json
+
+.fi
+.RE
+
+.PP
+Cancel a TaskRun and print the result as YAML:
+
+.PP
+.RS
+
+.nf
+tkn taskrun cancel foo \-n bar \-o yaml
 
 .fi
 .RE
