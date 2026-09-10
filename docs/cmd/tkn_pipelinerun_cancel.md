@@ -18,16 +18,25 @@ Cancel the PipelineRun named 'foo' from namespace 'bar':
 
     tkn pipelinerun cancel foo -n bar
 
+Cancel a PipelineRun and print the result as JSON:
+
+    tkn pipelinerun cancel foo -n bar -o json
+
+Cancel a PipelineRun and print the result as YAML:
+
+    tkn pipelinerun cancel foo -n bar -o yaml
+
 
 ### Options
 
 ```
-      --grace string   Gracefully cancel a PipelineRun
-                       To use this, you need to change the feature-flags configmap enable-api-fields to alpha instead of stable.
-                       Set to 'CancelledRunFinally' if you want to cancel the current running task and directly run the finally tasks.
-                       Set to 'StoppedRunFinally' if you want to cancel the remaining non-final task and directly run the finally tasks.
-                       
-  -h, --help           help for cancel
+      --grace string    Gracefully cancel a PipelineRun
+                        To use this, you need to change the feature-flags configmap enable-api-fields to alpha instead of stable.
+                        Set to 'CancelledRunFinally' if you want to cancel the current running task and directly run the finally tasks.
+                        Set to 'StoppedRunFinally' if you want to cancel the remaining non-final task and directly run the finally tasks.
+                        
+  -h, --help            help for cancel
+  -o, --output string   Output format. One of: json|yaml
 ```
 
 ### Options inherited from parent commands
