@@ -315,7 +315,8 @@ func (rr *TektonHubResourceResult) Manifest() ([]byte, error) {
 		return nil, err
 	}
 
-	data, status, err := httpGet(rawURL)
+	// Use secure fetch with URL validation and TLS enforcement
+	data, status, err := secureHTTPGet(rawURL)
 
 	if err != nil {
 		return nil, err
