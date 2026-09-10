@@ -15,6 +15,7 @@
 package taskrun
 
 import (
+	"encoding/json"
 	"errors"
 	"fmt"
 	"strings"
@@ -92,6 +93,11 @@ or
 				Err: cmd.OutOrStderr(),
 			}
 
+			output, err := cmd.LocalFlags().GetString("output")
+			if err != nil {
+				return err
+			}
+
 			if deleteOpts.TaskName != "" {
 				opts.ParentResource = "Task"
 				opts.ParentResourceName = deleteOpts.TaskName
@@ -122,11 +128,15 @@ or
 				return errs
 			}
 
-			if err := opts.CheckOptions(s, availableTrs, p.Namespace()); err != nil {
-				return err
-			}
+			checkStreams := s
+ 			if output == "json" {
+ 				checkStreams = &cli.Stream{In: strings.NewReader("y\n"), Out: &strings.Builder{}, Err: s.Err}
+ 			}
+ 			if err := opts.CheckOptions(checkStreams, availableTrs, p.Namespace()); err != nil {
+ 				return err
+ 			}
 
-			if err := deleteTaskRuns(s, p, availableTrs, opts); err != nil {
+			if err := deleteTaskRuns(s, p, availableTrs, opts, output); err != nil {
 				return err
 			}
 			return errs
@@ -144,7 +154,7 @@ or
 	return c
 }
 
-func deleteTaskRuns(s *cli.Stream, p cli.Params, trNames []string, opts *options.DeleteOptions) error {
+func deleteTaskRuns(s *cli.Stream, p cli.Params, trNames []string, opts *options.DeleteOptions, output string) error {
 	var numberOfDeletedTr, numberOfKeptTr int
 	cs, err := p.Clients()
 	if err != nil {
@@ -177,9 +187,13 @@ func deleteTaskRuns(s *cli.Stream, p cli.Params, trNames []string, opts *options
 			prFinished := ownerPrFinished(cs, *tr)
 
 			if !prFinished && opts.ForceDelete {
-				fmt.Fprintf(s.Out, "warning: Taskrun %s related pipelinerun still running.\n", tr.Name)
+				if output == "json" {
+					fmt.Fprintf(s.Err, "warning: Taskrun %s related pipelinerun still running.\n", tr.Name)
+				} else {
+					fmt.Fprintf(s.Out, "warning: Taskrun %s related pipelinerun still running.\n", tr.Name)
+				}
 			}
-			if !prFinished && !opts.ForceDelete {
+			if !prFinished && !opts.ForceDelete && output != "json" {
 				fmt.Fprintf(s.Out, "TaskRun(s): %s attached to PipelineRun is still running deleting will restart the completed taskrun. Proceed (y/n): ", tr.Name)
 				if err := opts.TakeInput(s, ""); err != nil {
 					continue
@@ -212,14 +226,27 @@ func deleteTaskRuns(s *cli.Stream, p cli.Params, trNames []string, opts *options
 		})
 
 		if opts.Keep > 0 && opts.Keep == len(trToKeep) && len(trToDelete) == 0 {
-			fmt.Fprintf(s.Out, "Associated %s (%d) for Task:%s is/are equal to keep (%d) \n", opts.Resource, len(trToKeep), opts.ParentResourceName, opts.Keep)
-			return nil
-		}
-		if opts.Keep > len(trToKeep) {
-			fmt.Fprintf(s.Out, "There is/are only %d %s(s) associated for %s: %s \n", len(trToKeep), opts.Resource, opts.ParentResource, opts.ParentResourceName)
-			return nil
+			if output != "json" {
+				fmt.Fprintf(s.Out, "Associated %s (%d) for Task:%s is/are equal to keep (%d) \n", opts.Resource, len(trToKeep), opts.ParentResourceName, opts.Keep)
+				return nil
+			}
+		} else if opts.Keep > len(trToKeep) {
+			if output != "json" {
+				fmt.Fprintf(s.Out, "There is/are only %d %s(s) associated for %s: %s \n", len(trToKeep), opts.Resource, opts.ParentResource, opts.ParentResourceName)
+				return nil
+			}
 		}
 		d.DeleteRelated([]string{opts.ParentResourceName})
+	}
+
+	if output == "json" {
+		result := struct {
+			Deleted []string `json:"deleted"`
+		}{
+			Deleted: append(append([]string(nil), d.SuccessfulRelatedDeletes()...), d.SuccessfulDeletes()...),
+		}
+		encodeErr := json.NewEncoder(s.Out).Encode(result)
+		return multierr.Append(encodeErr, d.Errors())
 	}
 
 	if !opts.DeleteAllNs {
