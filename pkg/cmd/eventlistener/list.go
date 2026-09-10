@@ -36,6 +36,7 @@ const (
 type listOptions struct {
 	AllNamespaces bool
 	NoHeaders     bool
+	Fields        []string
 }
 
 func listCommand(p cli.Params) *cobra.Command {
@@ -60,6 +61,15 @@ or
 		},
 		Example: eg,
 		RunE: func(cmd *cobra.Command, _ []string) error {
+			output, err := cmd.LocalFlags().GetString("output")
+			if err != nil {
+				return errors.New(`output option not set properly \n`)
+			}
+
+			if len(opts.Fields) > 0 && output != "ndjson" {
+				return fmt.Errorf("--fields is only supported with --output ndjson")
+			}
+
 			cs, err := p.Clients()
 			if err != nil {
 				return err
@@ -78,17 +88,14 @@ or
 				return fmt.Errorf("failed to list EventListeners from %s namespace: %v", namespace, err)
 			}
 
-			output, err := cmd.LocalFlags().GetString("output")
-			if err != nil {
-				return errors.New(`output option not set properly \n`)
-			}
-
 			stream := &cli.Stream{
 				Out: cmd.OutOrStdout(),
 				Err: cmd.OutOrStderr(),
 			}
 
-			if output != "" {
+			if output == "ndjson" {
+				return formatted.PrintNDJSON(stream.Out, els, opts.Fields)
+			} else if output != "" {
 				p, err := f.ToPrinter()
 				if err != nil {
 					return err
@@ -106,6 +113,7 @@ or
 	f.AddFlags(c)
 	c.Flags().BoolVarP(&opts.AllNamespaces, "all-namespaces", "A", opts.AllNamespaces, "list EventListeners from all namespaces")
 	c.Flags().BoolVar(&opts.NoHeaders, "no-headers", opts.NoHeaders, "do not print column headers with output (default print column headers with output)")
+	c.Flags().StringSliceVar(&opts.Fields, "fields", opts.Fields, "Comma-separated list of fields to include in output (e.g. metadata.name,status.startTime); only used with --output ndjson")
 	return c
 }
 
