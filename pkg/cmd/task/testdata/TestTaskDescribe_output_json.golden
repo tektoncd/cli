@@ -1,0 +1,24 @@
+{
+    "kind": "Task",
+    "apiVersion": "tekton.dev/v1",
+    "metadata": {
+        "name": "task-1",
+        "namespace": "ns"
+    },
+    "spec": {
+        "params": [
+            {
+                "name": "myarg",
+                "type": "string"
+            }
+        ],
+        "description": "a test task",
+        "steps": [
+            {
+                "name": "hello",
+                "image": "busybox",
+                "computeResources": {}
+            }
+        ]
+    }
+}

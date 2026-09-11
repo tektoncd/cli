@@ -1,0 +1,18 @@
+apiVersion: tekton.dev/v1beta1
+kind: CustomRun
+metadata:
+  name: custom-run-1
+  namespace: ns
+spec:
+  customRef:
+    apiVersion: example.dev/v0
+    kind: MyCustomTask
+    name: mytask
+  serviceAccountName: ""
+status:
+  conditions:
+  - lastTransitionTime: null
+    reason: Succeeded
+    status: "True"
+    type: ""
+  extraFields: null

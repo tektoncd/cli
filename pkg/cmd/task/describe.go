@@ -116,6 +116,14 @@ func describeCommand(p cli.Params) *cobra.Command {
 or
 
    tkn t desc foo -n bar
+
+Describe a Task of name 'foo' in namespace 'bar' in JSON format:
+
+    tkn task describe foo -n bar -o json
+
+Describe a Task of name 'foo' in namespace 'bar' in YAML format:
+
+    tkn task describe foo -n bar -o yaml
 `
 
 	c := &cobra.Command{
@@ -159,6 +167,20 @@ or
 				}
 			} else {
 				opts.TaskName = args[0]
+			}
+
+			if formatted.IsStructured(output) {
+				t, err := getTask(taskGroupResource, cs, opts.TaskName, p.Namespace())
+				if err != nil {
+					return err
+				}
+				items := []v1.Task{*t}
+				formatted.SetTypeMeta(items, v1.SchemeGroupVersion.WithKind("Task"))
+				obj := items[0]
+				if !f.JSONYamlPrintFlags.ShowManagedFields {
+					obj = formatted.StripManagedFields(obj)
+				}
+				return formatted.PrintStructuredOutput(cmd.OutOrStdout(), output, obj)
 			}
 
 			if output != "" {

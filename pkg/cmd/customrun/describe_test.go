@@ -601,3 +601,140 @@ func TestCustomRunDescribe_only_one_customrun_present(t *testing.T) {
 	}
 	golden.Assert(t, actual, fmt.Sprintf("%s.golden", t.Name()))
 }
+
+func TestCustomRunDescribe_output_json(t *testing.T) {
+	crs := []*v1beta1.CustomRun{
+		{
+			ObjectMeta: metav1.ObjectMeta{
+				Name:      "custom-run-1",
+				Namespace: "ns",
+			},
+			Spec: v1beta1.CustomRunSpec{
+				CustomRef: &v1beta1.TaskRef{
+					APIVersion: "example.dev/v0",
+					Kind:       "MyCustomTask",
+					Name:       "mytask",
+				},
+			},
+			Status: v1beta1.CustomRunStatus{
+				Status: duckv1.Status{
+					Conditions: duckv1.Conditions{
+						{
+							Status: corev1.ConditionTrue,
+							Reason: v1beta1.CustomRunReasonSuccessful.String(),
+						},
+					},
+				},
+			},
+		},
+	}
+
+	cs, _ := test.SeedTestData(t, pipelinetest.Data{
+		Namespaces: []*corev1.Namespace{
+			{
+				ObjectMeta: metav1.ObjectMeta{
+					Name: "ns",
+				},
+			},
+		},
+	})
+
+	tdc := testDynamic.Options{}
+	dynamic, err := tdc.Client(
+		cb.UnstructuredV1beta1CustomRun(crs[0], versionv1beta1),
+	)
+	if err != nil {
+		t.Errorf("unable to create dynamic client: %v", err)
+	}
+	cs.Pipeline.Resources = cb.APIResourceList(versionv1beta1, []string{"customrun"})
+	p := &test.Params{Tekton: cs.Pipeline, Kube: cs.Kube, Dynamic: dynamic}
+	p.SetNamespace("ns")
+	customrun := Command(p)
+	got, err := test.ExecuteCommand(customrun, "desc", "-o", "json", "-n", "ns", "custom-run-1")
+	if err != nil {
+		t.Errorf("Unexpected error: %v", err)
+	}
+	golden.Assert(t, got, fmt.Sprintf("%s.golden", t.Name()))
+}
+
+func TestCustomRunDescribe_output_yaml(t *testing.T) {
+	crs := []*v1beta1.CustomRun{
+		{
+			ObjectMeta: metav1.ObjectMeta{
+				Name:      "custom-run-1",
+				Namespace: "ns",
+			},
+			Spec: v1beta1.CustomRunSpec{
+				CustomRef: &v1beta1.TaskRef{
+					APIVersion: "example.dev/v0",
+					Kind:       "MyCustomTask",
+					Name:       "mytask",
+				},
+			},
+			Status: v1beta1.CustomRunStatus{
+				Status: duckv1.Status{
+					Conditions: duckv1.Conditions{
+						{
+							Status: corev1.ConditionTrue,
+							Reason: v1beta1.CustomRunReasonSuccessful.String(),
+						},
+					},
+				},
+			},
+		},
+	}
+
+	cs, _ := test.SeedTestData(t, pipelinetest.Data{
+		Namespaces: []*corev1.Namespace{
+			{
+				ObjectMeta: metav1.ObjectMeta{
+					Name: "ns",
+				},
+			},
+		},
+	})
+
+	tdc := testDynamic.Options{}
+	dynamic, err := tdc.Client(
+		cb.UnstructuredV1beta1CustomRun(crs[0], versionv1beta1),
+	)
+	if err != nil {
+		t.Errorf("unable to create dynamic client: %v", err)
+	}
+	cs.Pipeline.Resources = cb.APIResourceList(versionv1beta1, []string{"customrun"})
+	p := &test.Params{Tekton: cs.Pipeline, Kube: cs.Kube, Dynamic: dynamic}
+	p.SetNamespace("ns")
+	customrun := Command(p)
+	got, err := test.ExecuteCommand(customrun, "desc", "-o", "yaml", "-n", "ns", "custom-run-1")
+	if err != nil {
+		t.Errorf("Unexpected error: %v", err)
+	}
+	golden.Assert(t, got, fmt.Sprintf("%s.golden", t.Name()))
+}
+
+func TestCustomRunDescribe_last_no_customrun_present_output_json(t *testing.T) {
+	cs, _ := test.SeedTestData(t, pipelinetest.Data{
+		Namespaces: []*corev1.Namespace{
+			{
+				ObjectMeta: metav1.ObjectMeta{
+					Name: "ns",
+				},
+			},
+		},
+	})
+
+	tdc := testDynamic.Options{}
+	dynamic, err := tdc.Client()
+	if err != nil {
+		t.Errorf("unable to create dynamic client: %v", err)
+	}
+	cs.Pipeline.Resources = cb.APIResourceList(versionv1beta1, []string{"customrun"})
+	p := &test.Params{Tekton: cs.Pipeline, Kube: cs.Kube, Dynamic: dynamic}
+	p.SetNamespace("ns")
+
+	customrun := Command(p)
+	_, err = test.ExecuteCommand(customrun, "desc", "--last", "-o", "json", "-n", "ns")
+	if err == nil {
+		t.Errorf("Expected error when no CustomRuns present with -o json")
+	}
+}

@@ -24,6 +24,14 @@ or
 
    tkn el desc foo -n bar
 
+Describe an EventListener of name 'foo' in namespace 'bar' in JSON format:
+
+    tkn eventlistener describe foo -n bar -o json
+
+Describe an EventListener of name 'foo' in namespace 'bar' in YAML format:
+
+    tkn eventlistener describe foo -n bar -o yaml
+
 
 ### Options
 

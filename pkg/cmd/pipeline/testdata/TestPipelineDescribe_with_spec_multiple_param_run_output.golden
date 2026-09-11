@@ -1,5 +1,5 @@
 apiVersion: tekton.dev/v1
-kind: pipeline
+kind: Pipeline
 metadata:
   name: pipeline
   namespace: ns

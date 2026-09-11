@@ -1,0 +1,27 @@
+{
+    "kind": "CustomRun",
+    "apiVersion": "tekton.dev/v1beta1",
+    "metadata": {
+        "name": "custom-run-1",
+        "namespace": "ns"
+    },
+    "spec": {
+        "customRef": {
+            "name": "mytask",
+            "kind": "MyCustomTask",
+            "apiVersion": "example.dev/v0"
+        },
+        "serviceAccountName": ""
+    },
+    "status": {
+        "conditions": [
+            {
+                "type": "",
+                "status": "True",
+                "lastTransitionTime": null,
+                "reason": "Succeeded"
+            }
+        ],
+        "extraFields": null
+    }
+}

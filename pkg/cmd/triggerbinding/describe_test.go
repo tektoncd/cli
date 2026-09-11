@@ -241,6 +241,46 @@ func TestTriggerBindingDescribe_WithOutputYaml(t *testing.T) {
 	golden.Assert(t, out, fmt.Sprintf("%s.golden", t.Name()))
 }
 
+func TestTriggerBindingDescribe_WithOutputJson(t *testing.T) {
+	tbs := []*v1beta1.TriggerBinding{
+		{
+			ObjectMeta: metav1.ObjectMeta{
+				Name:      "tb1",
+				Namespace: "ns",
+			},
+			Spec: v1beta1.TriggerBindingSpec{
+				Params: []v1beta1.Param{
+					{
+						Name:  "key",
+						Value: "value",
+					},
+				},
+			},
+		},
+	}
+	cs := test.SeedTestResources(t, triggertest.Resources{TriggerBindings: tbs, Namespaces: []*corev1.Namespace{{
+		ObjectMeta: metav1.ObjectMeta{
+			Name: "ns",
+		},
+	}}})
+	cs.Triggers.Resources = cb.TriggersAPIResourceList("v1beta1", []string{"triggerbinding"})
+	tdc := testDynamic.Options{}
+	dc, err := tdc.Client(
+		cb.UnstructuredV1beta1TB(tbs[0], "v1beta1"),
+	)
+	if err != nil {
+		t.Errorf("unable to create dynamic client: %v", err)
+	}
+	p := &test.Params{Triggers: cs.Triggers, Kube: cs.Kube, Dynamic: dc}
+
+	triggerBinding := Command(p)
+	out, err := test.ExecuteCommand(triggerBinding, "desc", "-o", "json", "-n", "ns", "tb1")
+	if err != nil {
+		t.Errorf("Unexpected error: %v", err)
+	}
+	golden.Assert(t, out, fmt.Sprintf("%s.golden", t.Name()))
+}
+
 func TestTriggerBindingDescribe_WithMultipleParams(t *testing.T) {
 	tbs := []*v1beta1.TriggerBinding{
 		{

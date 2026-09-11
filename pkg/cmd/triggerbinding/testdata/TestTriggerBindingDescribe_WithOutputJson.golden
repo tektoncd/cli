@@ -1,0 +1,17 @@
+{
+    "kind": "TriggerBinding",
+    "apiVersion": "triggers.tekton.dev/v1beta1",
+    "metadata": {
+        "name": "tb1",
+        "namespace": "ns"
+    },
+    "spec": {
+        "params": [
+            {
+                "name": "key",
+                "value": "value"
+            }
+        ]
+    },
+    "status": {}
+}

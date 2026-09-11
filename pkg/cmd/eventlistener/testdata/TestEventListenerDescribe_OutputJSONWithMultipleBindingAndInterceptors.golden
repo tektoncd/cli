@@ -1,0 +1,118 @@
+{
+    "kind": "EventListener",
+    "apiVersion": "triggers.tekton.dev/v1beta1",
+    "metadata": {
+        "name": "el1",
+        "namespace": "ns"
+    },
+    "spec": {
+        "triggers": [
+            {
+                "bindings": [
+                    {
+                        "ref": "tb1",
+                        "kind": "TriggerBinding"
+                    },
+                    {
+                        "ref": "tb2",
+                        "kind": "ClusterTriggerBinding",
+                        "apiversion": "v1beta1"
+                    },
+                    {
+                        "ref": "tb3",
+                        "kind": "TriggerBinding",
+                        "apiversion": "v1beta1"
+                    }
+                ],
+                "template": {
+                    "ref": "tt1",
+                    "apiversion": "v1beta1"
+                },
+                "name": "foo-trig",
+                "interceptors": [
+                    {
+                        "ref": {
+                            "name": "cel",
+                            "kind": "ClusterInterceptor"
+                        },
+                        "params": [
+                            {
+                                "name": "filter",
+                                "value": "body.value == 'test'"
+                            },
+                            {
+                                "name": "overlays",
+                                "value": [
+                                    {
+                                        "expression": "'testing'",
+                                        "key": "value"
+                                    }
+                                ]
+                            }
+                        ]
+                    }
+                ]
+            },
+            {
+                "bindings": [
+                    {
+                        "ref": "tb4",
+                        "kind": "TriggerBinding"
+                    },
+                    {
+                        "ref": "tb5",
+                        "kind": "ClusterTriggerBinding",
+                        "apiversion": "v1beta1"
+                    }
+                ],
+                "template": {
+                    "ref": "tt2",
+                    "apiversion": "v1beta1"
+                },
+                "name": "foo-trig",
+                "interceptors": [
+                    {
+                        "ref": {},
+                        "webhook": {
+                            "objectRef": {
+                                "kind": "Service",
+                                "namespace": "namespace",
+                                "name": "webhookTest",
+                                "apiVersion": "v1"
+                            }
+                        }
+                    },
+                    {
+                        "ref": {
+                            "name": "cel",
+                            "kind": "ClusterInterceptor"
+                        },
+                        "params": [
+                            {
+                                "name": "filter",
+                                "value": "body.value == 'test'"
+                            },
+                            {
+                                "name": "overlays",
+                                "value": [
+                                    {
+                                        "expression": "'testing'",
+                                        "key": "value"
+                                    }
+                                ]
+                            }
+                        ]
+                    }
+                ],
+                "serviceAccountName": "sa1"
+            }
+        ],
+        "namespaceSelector": {},
+        "resources": {}
+    },
+    "status": {
+        "configuration": {
+            "generatedName": ""
+        }
+    }
+}
