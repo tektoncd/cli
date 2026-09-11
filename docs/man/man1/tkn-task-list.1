@@ -67,6 +67,44 @@ Lists Tasks in a namespace
     disable coloring (default: false)
 
 
+.SH EXAMPLE
+.PP
+List Tasks in namespace 'bar':
+
+.PP
+.RS
+
+.nf
+tkn task list \-n bar
+
+.fi
+.RE
+
+.PP
+List Tasks as a JSON array:
+
+.PP
+.RS
+
+.nf
+tkn task list \-o json
+
+.fi
+.RE
+
+.PP
+List Tasks as a YAML array:
+
+.PP
+.RS
+
+.nf
+tkn task list \-o yaml
+
+.fi
+.RE
+
+
 .SH SEE ALSO
 .PP
 \fBtkn\-task(1)\fP

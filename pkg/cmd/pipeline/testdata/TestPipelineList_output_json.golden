@@ -1,0 +1,22 @@
+[
+    {
+        "kind": "Pipeline",
+        "apiVersion": "tekton.dev/v1",
+        "metadata": {
+            "name": "mangoes",
+            "namespace": "namespace",
+            "creationTimestamp": "1984-04-03T23:59:40Z"
+        },
+        "spec": {}
+    },
+    {
+        "kind": "Pipeline",
+        "apiVersion": "tekton.dev/v1",
+        "metadata": {
+            "name": "tomatoes",
+            "namespace": "namespace",
+            "creationTimestamp": "1984-04-03T23:59:00Z"
+        },
+        "spec": {}
+    }
+]

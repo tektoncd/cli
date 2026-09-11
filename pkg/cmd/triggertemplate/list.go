@@ -47,6 +47,14 @@ func listCommand(p cli.Params) *cobra.Command {
 or
 
 	tkn tt ls -n bar
+
+List TriggerTemplates as a JSON array:
+
+	tkn triggertemplate list -o json
+
+List TriggerTemplates as a YAML array:
+
+	tkn triggertemplate list -o yaml
 `
 
 	c := &cobra.Command{
@@ -86,6 +94,14 @@ or
 			}
 
 			if output != "" {
+				if formatted.IsStructured(output) {
+					items := tts.Items
+					if items == nil {
+						items = []v1beta1.TriggerTemplate{}
+					}
+					formatted.SetTypeMeta(items, v1beta1.SchemeGroupVersion.WithKind("TriggerTemplate"))
+					return formatted.PrintStructuredOutput(cmd.OutOrStdout(), output, items)
+				}
 				p, err := f.ToPrinter()
 				if err != nil {
 					return err

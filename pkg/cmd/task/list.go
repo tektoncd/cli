@@ -64,6 +64,18 @@ func listCommand(p cli.Params) *cobra.Command {
 		Annotations: map[string]string{
 			"commandType": "main",
 		},
+		Example: `List Tasks in namespace 'bar':
+
+    tkn task list -n bar
+
+List Tasks as a JSON array:
+
+    tkn task list -o json
+
+List Tasks as a YAML array:
+
+    tkn task list -o yaml
+`,
 		RunE: func(cmd *cobra.Command, _ []string) error {
 			cs, err := p.Clients()
 			if err != nil {
@@ -81,6 +93,18 @@ func listCommand(p cli.Params) *cobra.Command {
 			}
 
 			if output != "" {
+				if formatted.IsStructured(output) {
+					var tasks *v1.TaskList
+					if err := actions.ListV1(taskGroupResource, cs, metav1.ListOptions{}, ns, &tasks); err != nil {
+						return err
+					}
+					items := tasks.Items
+					if items == nil {
+						items = []v1.Task{}
+					}
+					formatted.SetTypeMeta(items, v1.SchemeGroupVersion.WithKind("Task"))
+					return formatted.PrintStructuredOutput(cmd.OutOrStdout(), output, items)
+				}
 				p, err := f.ToPrinter()
 				if err != nil {
 					return err

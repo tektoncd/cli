@@ -47,6 +47,14 @@ func listCommand(p cli.Params) *cobra.Command {
 or
 
 	tkn ctb ls
+
+List ClusterTriggerBindings as a JSON array:
+
+	tkn clustertriggerbinding list -o json
+
+List ClusterTriggerBindings as a YAML array:
+
+	tkn clustertriggerbinding list -o yaml
 `
 
 	c := &cobra.Command{
@@ -88,6 +96,14 @@ or
 				}
 				return nil
 			} else if output != "" {
+				if formatted.IsStructured(output) {
+					items := tbs.Items
+					if items == nil {
+						items = []v1beta1.ClusterTriggerBinding{}
+					}
+					formatted.SetTypeMeta(items, v1beta1.SchemeGroupVersion.WithKind("ClusterTriggerBinding"))
+					return formatted.PrintStructuredOutput(cmd.OutOrStdout(), output, items)
+				}
 				p, err := f.ToPrinter()
 				if err != nil {
 					return err

@@ -67,6 +67,44 @@ Lists Pipelines in a namespace
     disable coloring (default: false)
 
 
+.SH EXAMPLE
+.PP
+List Pipelines in namespace 'bar':
+
+.PP
+.RS
+
+.nf
+tkn pipeline list \-n bar
+
+.fi
+.RE
+
+.PP
+List Pipelines as a JSON array:
+
+.PP
+.RS
+
+.nf
+tkn pipeline list \-o json
+
+.fi
+.RE
+
+.PP
+List Pipelines as a YAML array:
+
+.PP
+.RS
+
+.nf
+tkn pipeline list \-o yaml
+
+.fi
+.RE
+
+
 .SH SEE ALSO
 .PP
 \fBtkn\-pipeline(1)\fP

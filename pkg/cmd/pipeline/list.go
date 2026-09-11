@@ -74,6 +74,18 @@ func listCommand(p cli.Params) *cobra.Command {
 		Annotations: map[string]string{
 			"commandType": "main",
 		},
+		Example: `List Pipelines in namespace 'bar':
+
+    tkn pipeline list -n bar
+
+List Pipelines as a JSON array:
+
+    tkn pipeline list -o json
+
+List Pipelines as a YAML array:
+
+    tkn pipeline list -o yaml
+`,
 		SilenceUsage: true,
 		RunE: func(cmd *cobra.Command, _ []string) error {
 			cs, err := p.Clients()
@@ -92,15 +104,27 @@ func listCommand(p cli.Params) *cobra.Command {
 			}
 
 			if output != "" {
-				p, err := f.ToPrinter()
+				if formatted.IsStructured(output) {
+					var pipelines *v1.PipelineList
+					if err := actions.ListV1(pipelineGroupResource, cs, metav1.ListOptions{}, ns, &pipelines); err != nil {
+						return err
+					}
+					items := pipelines.Items
+					if items == nil {
+						items = []v1.Pipeline{}
+					}
+					formatted.SetTypeMeta(items, v1.SchemeGroupVersion.WithKind("Pipeline"))
+					return formatted.PrintStructuredOutput(cmd.OutOrStdout(), output, items)
+				}
+				printer, err := f.ToPrinter()
 				if err != nil {
 					return err
 				}
-				return actions.PrintObjects(pipelineGroupResource, cmd.OutOrStdout(), cs.Dynamic, cs.Tekton.Discovery(), p, ns)
+				return actions.PrintObjects(pipelineGroupResource, cmd.OutOrStdout(), cs.Dynamic, cs.Tekton.Discovery(), printer, ns)
 			}
 			stream := &cli.Stream{
 				Out: cmd.OutOrStdout(),
-				Err: cmd.OutOrStderr(),
+				Err: cmd.ErrOrStderr(),
 			}
 			return printPipelineDetails(stream, p, opts.AllNamespaces, opts.NoHeaders)
 		},
