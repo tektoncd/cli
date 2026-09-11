@@ -24,6 +24,14 @@ List all TaskRuns of Task 'foo' in namespace 'bar':
 
     tkn taskrun list foo -n bar
 
+List TaskRuns as a JSON array:
+
+    tkn taskrun list -o json
+
+List TaskRuns as a YAML array:
+
+    tkn taskrun list -o yaml
+
 
 ### Options
 

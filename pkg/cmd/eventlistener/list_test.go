@@ -15,6 +15,7 @@
 package eventlistener
 
 import (
+	"encoding/json"
 	"fmt"
 	"strings"
 	"testing"
@@ -33,6 +34,7 @@ import (
 	"knative.dev/pkg/apis"
 	duckv1 "knative.dev/pkg/apis/duck/v1"
 	duckv1beta1 "knative.dev/pkg/apis/duck/v1beta1"
+	"sigs.k8s.io/yaml"
 )
 
 func TestListEventListener(t *testing.T) {
@@ -285,4 +287,109 @@ func TestEventListenersList_empty(t *testing.T) {
 
 	out, _ := test.ExecuteCommand(Command(listEls), "list", "--all-namespaces")
 	test.AssertOutput(t, emptyMsg+"\n", out)
+}
+
+func TestListEventListener_structured_output(t *testing.T) {
+	now := time.Now()
+	ns := []*corev1.Namespace{
+		{
+			ObjectMeta: metav1.ObjectMeta{
+				Name: "foo",
+			},
+		},
+	}
+	els := []*v1beta1.EventListener{
+		{
+			ObjectMeta: metav1.ObjectMeta{
+				Name:      "el-a",
+				Namespace: "foo",
+			},
+		},
+		{
+			ObjectMeta: metav1.ObjectMeta{
+				Name:      "el-b",
+				Namespace: "foo",
+			},
+		},
+	}
+	p := command(t, els, now, ns)
+
+	jsonOut, err := test.ExecuteCommand(Command(p), "list", "-n", "foo", "-o", "json")
+	if err != nil {
+		t.Fatalf("Unexpected error: %v", err)
+	}
+	yamlOut, err := test.ExecuteCommand(Command(p), "list", "-n", "foo", "-o", "yaml")
+	if err != nil {
+		t.Fatalf("Unexpected error: %v", err)
+	}
+
+	var fromJSON, fromYAML []v1beta1.EventListener
+	if err := json.Unmarshal([]byte(jsonOut), &fromJSON); err != nil {
+		t.Fatalf("output is not a valid JSON array: %v\n%s", err, jsonOut)
+	}
+	if err := yaml.Unmarshal([]byte(yamlOut), &fromYAML); err != nil {
+		t.Fatalf("output is not a valid YAML sequence: %v\n%s", err, yamlOut)
+	}
+	if len(fromJSON) != 2 || len(fromYAML) != 2 {
+		t.Errorf("expected 2 eventlisteners, got json=%d yaml=%d", len(fromJSON), len(fromYAML))
+	}
+	if strings.Contains(jsonOut, "EventListenerList") {
+		t.Errorf("json output should be an array of EventListener objects, not an EventListenerList wrapper")
+	}
+}
+
+func TestListEventListener_empty_output_json(t *testing.T) {
+	now := time.Now()
+	ns := []*corev1.Namespace{
+		{
+			ObjectMeta: metav1.ObjectMeta{
+				Name: "foo",
+			},
+		},
+	}
+	p := command(t, []*v1beta1.EventListener{}, now, ns)
+	output, err := test.ExecuteCommand(Command(p), "list", "-n", "foo", "-o", "json")
+	if err != nil {
+		t.Fatalf("Unexpected error: %v", err)
+	}
+
+	var got []v1beta1.EventListener
+	if err := json.Unmarshal([]byte(output), &got); err != nil {
+		t.Fatalf("output is not a valid JSON array: %v\n%s", err, output)
+	}
+	if len(got) != 0 {
+		t.Errorf("expected empty JSON array, got %d items", len(got))
+	}
+	if strings.Contains(output, emptyMsg) {
+		t.Errorf("structured output should not include the empty table message")
+	}
+}
+
+func TestListEventListener_invalid_output(t *testing.T) {
+	now := time.Now()
+	ns := []*corev1.Namespace{
+		{
+			ObjectMeta: metav1.ObjectMeta{
+				Name: "foo",
+			},
+		},
+	}
+	p := command(t, []*v1beta1.EventListener{}, now, ns)
+	_, err := test.ExecuteCommand(Command(p), "list", "-n", "foo", "-o", "csv")
+	if err == nil {
+		t.Fatal("expected error for invalid output format")
+	}
+	if !strings.Contains(err.Error(), "csv") {
+		t.Errorf("expected error to mention csv, got %q", err.Error())
+	}
+}
+
+func TestListEventListener_help_shows_output_examples(t *testing.T) {
+	cmd := listCommand(&test.Params{})
+	if cmd.Flags().Lookup("output") == nil {
+		t.Fatal("expected --output flag")
+	}
+	if !strings.Contains(cmd.Example, "-o json") || !strings.Contains(cmd.Example, "-o yaml") {
+		t.Errorf("expected help examples for json and yaml output, got %q", cmd.Example)
+	}
 }

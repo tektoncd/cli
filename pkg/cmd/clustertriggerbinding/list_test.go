@@ -15,6 +15,7 @@
 package clustertriggerbinding
 
 import (
+	"encoding/json"
 	"fmt"
 	"strings"
 	"testing"
@@ -30,6 +31,7 @@ import (
 	"gotest.tools/v3/golden"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime"
+	"sigs.k8s.io/yaml"
 )
 
 func TestListClusterTriggerBinding(t *testing.T) {
@@ -128,4 +130,84 @@ func command(t *testing.T, ctbs []*v1beta1.ClusterTriggerBinding, now time.Time)
 	}
 	p := &test.Params{Triggers: cs.Triggers, Kube: cs.Kube, Dynamic: dc, Tekton: cs.Pipeline, Clock: clock}
 	return Command(p)
+}
+
+func TestListClusterTriggerBinding_structured_output(t *testing.T) {
+	now := time.Now()
+	ctbs := []*v1beta1.ClusterTriggerBinding{
+		{
+			ObjectMeta: metav1.ObjectMeta{
+				Name: "ctb-a",
+			},
+		},
+		{
+			ObjectMeta: metav1.ObjectMeta{
+				Name: "ctb-b",
+			},
+		},
+	}
+	cmd := command(t, ctbs, now)
+
+	jsonOut, err := test.ExecuteCommand(cmd, "list", "-o", "json")
+	if err != nil {
+		t.Fatalf("Unexpected error: %v", err)
+	}
+	yamlOut, err := test.ExecuteCommand(command(t, ctbs, now), "list", "-o", "yaml")
+	if err != nil {
+		t.Fatalf("Unexpected error: %v", err)
+	}
+
+	var fromJSON, fromYAML []v1beta1.ClusterTriggerBinding
+	if err := json.Unmarshal([]byte(jsonOut), &fromJSON); err != nil {
+		t.Fatalf("output is not a valid JSON array: %v\n%s", err, jsonOut)
+	}
+	if err := yaml.Unmarshal([]byte(yamlOut), &fromYAML); err != nil {
+		t.Fatalf("output is not a valid YAML sequence: %v\n%s", err, yamlOut)
+	}
+	if len(fromJSON) != 2 || len(fromYAML) != 2 {
+		t.Errorf("expected 2 clustertriggerbindings, got json=%d yaml=%d", len(fromJSON), len(fromYAML))
+	}
+	if strings.Contains(jsonOut, "ClusterTriggerBindingList") {
+		t.Errorf("json output should be an array of ClusterTriggerBinding objects, not a ClusterTriggerBindingList wrapper")
+	}
+}
+
+func TestListClusterTriggerBinding_empty_output_json(t *testing.T) {
+	now := time.Now()
+	output, err := test.ExecuteCommand(command(t, []*v1beta1.ClusterTriggerBinding{}, now), "list", "-o", "json")
+	if err != nil {
+		t.Fatalf("Unexpected error: %v", err)
+	}
+
+	var got []v1beta1.ClusterTriggerBinding
+	if err := json.Unmarshal([]byte(output), &got); err != nil {
+		t.Fatalf("output is not a valid JSON array: %v\n%s", err, output)
+	}
+	if len(got) != 0 {
+		t.Errorf("expected empty JSON array, got %d items", len(got))
+	}
+	if strings.Contains(output, emptyMsg) {
+		t.Errorf("structured output should not include the empty table message")
+	}
+}
+
+func TestListClusterTriggerBinding_invalid_output(t *testing.T) {
+	now := time.Now()
+	_, err := test.ExecuteCommand(command(t, []*v1beta1.ClusterTriggerBinding{}, now), "list", "-o", "csv")
+	if err == nil {
+		t.Fatal("expected error for invalid output format")
+	}
+	if !strings.Contains(err.Error(), "csv") {
+		t.Errorf("expected error to mention csv, got %q", err.Error())
+	}
+}
+
+func TestListClusterTriggerBinding_help_shows_output_examples(t *testing.T) {
+	cmd := listCommand(&test.Params{})
+	if cmd.Flags().Lookup("output") == nil {
+		t.Fatal("expected --output flag")
+	}
+	if !strings.Contains(cmd.Example, "-o json") || !strings.Contains(cmd.Example, "-o yaml") {
+		t.Errorf("expected help examples for json and yaml output, got %q", cmd.Example)
+	}
 }

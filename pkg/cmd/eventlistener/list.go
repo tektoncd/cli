@@ -49,6 +49,14 @@ func listCommand(p cli.Params) *cobra.Command {
 or
 
 	tkn el ls -n bar
+
+List EventListeners as a JSON array:
+
+	tkn eventlistener list -o json
+
+List EventListeners as a YAML array:
+
+	tkn eventlistener list -o yaml
 `
 
 	c := &cobra.Command{
@@ -89,6 +97,15 @@ or
 			}
 
 			if output != "" {
+				if formatted.IsStructured(output) {
+					items := els.Items
+					if items == nil {
+						items = []v1beta1.EventListener{}
+					}
+					formatted.SetTypeMeta(items, v1beta1.SchemeGroupVersion.WithKind("EventListener"))
+					items = formatted.StripManagedFieldsList(items, f.JSONYamlPrintFlags.ShowManagedFields)
+					return formatted.PrintStructuredOutput(cmd.OutOrStdout(), output, items)
+				}
 				p, err := f.ToPrinter()
 				if err != nil {
 					return err

@@ -15,6 +15,7 @@
 package pipelinerun
 
 import (
+	"encoding/json"
 	"fmt"
 	"strings"
 	"testing"
@@ -33,6 +34,7 @@ import (
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/client-go/dynamic"
 	duckv1 "knative.dev/pkg/apis/duck/v1"
+	"sigs.k8s.io/yaml"
 )
 
 func TestListPipelineRuns_v1beta1(t *testing.T) {
@@ -582,4 +584,125 @@ func command(t *testing.T, prs []*v1.PipelineRun, now time.Time, ns []*corev1.Na
 	p := &test.Params{Tekton: cs.Pipeline, Clock: clock, Kube: cs.Kube, Dynamic: dc}
 
 	return Command(p)
+}
+
+func TestListPipelineRuns_structured_output(t *testing.T) {
+	clock := test.FakeClock()
+	ns := []*corev1.Namespace{
+		{
+			ObjectMeta: metav1.ObjectMeta{
+				Name: "namespace",
+			},
+		},
+	}
+	prs := []*v1.PipelineRun{
+		{
+			ObjectMeta: metav1.ObjectMeta{
+				Namespace: "namespace",
+				Name:      "pr-a",
+			},
+		},
+		{
+			ObjectMeta: metav1.ObjectMeta{
+				Namespace: "namespace",
+				Name:      "pr-b",
+			},
+		},
+	}
+	tdc := testDynamic.Options{}
+	dc, err := tdc.Client(
+		cb.UnstructuredPR(prs[0], version),
+		cb.UnstructuredPR(prs[1], version),
+	)
+	if err != nil {
+		t.Fatalf("unable to create dynamic client: %v", err)
+	}
+
+	jsonOut, err := test.ExecuteCommand(command(t, prs, clock.Now(), ns, version, dc), "list", "-n", "namespace", "-o", "json")
+	if err != nil {
+		t.Fatalf("Unexpected error: %v", err)
+	}
+	yamlOut, err := test.ExecuteCommand(command(t, prs, clock.Now(), ns, version, dc), "list", "-n", "namespace", "-o", "yaml")
+	if err != nil {
+		t.Fatalf("Unexpected error: %v", err)
+	}
+
+	var fromJSON, fromYAML []v1.PipelineRun
+	if err := json.Unmarshal([]byte(jsonOut), &fromJSON); err != nil {
+		t.Fatalf("output is not a valid JSON array: %v\n%s", err, jsonOut)
+	}
+	if err := yaml.Unmarshal([]byte(yamlOut), &fromYAML); err != nil {
+		t.Fatalf("output is not a valid YAML sequence: %v\n%s", err, yamlOut)
+	}
+	if len(fromJSON) != 2 || len(fromYAML) != 2 {
+		t.Errorf("expected 2 pipelineruns, got json=%d yaml=%d", len(fromJSON), len(fromYAML))
+	}
+	if strings.Contains(jsonOut, "PipelineRunList") {
+		t.Errorf("json output should be an array of PipelineRun objects, not a PipelineRunList wrapper")
+	}
+}
+
+func TestListPipelineRuns_empty_output_json(t *testing.T) {
+	ns := []*corev1.Namespace{
+		{
+			ObjectMeta: metav1.ObjectMeta{
+				Name: "ns",
+			},
+		},
+	}
+	cs, _ := test.SeedTestData(t, pipelinetest.Data{Namespaces: ns})
+	cs.Pipeline.Resources = cb.APIResourceList(version, []string{"pipelinerun"})
+	tdc := testDynamic.Options{}
+	dc, err := tdc.Client()
+	if err != nil {
+		t.Fatalf("unable to create dynamic client: %v", err)
+	}
+	p := &test.Params{Tekton: cs.Pipeline, Kube: cs.Kube, Dynamic: dc}
+	output, err := test.ExecuteCommand(Command(p), "list", "-n", "ns", "-o", "json")
+	if err != nil {
+		t.Fatalf("Unexpected error: %v", err)
+	}
+
+	var got []v1.PipelineRun
+	if err := json.Unmarshal([]byte(output), &got); err != nil {
+		t.Fatalf("output is not a valid JSON array: %v\n%s", err, output)
+	}
+	if len(got) != 0 {
+		t.Errorf("expected empty JSON array, got %d items", len(got))
+	}
+}
+
+func TestListPipelineRuns_invalid_output(t *testing.T) {
+	ns := []*corev1.Namespace{
+		{
+			ObjectMeta: metav1.ObjectMeta{
+				Name: "ns",
+			},
+		},
+	}
+	cs, _ := test.SeedTestData(t, pipelinetest.Data{Namespaces: ns})
+	cs.Pipeline.Resources = cb.APIResourceList(version, []string{"pipelinerun"})
+	tdc := testDynamic.Options{}
+	dc, err := tdc.Client()
+	if err != nil {
+		t.Fatalf("unable to create dynamic client: %v", err)
+	}
+	p := &test.Params{Tekton: cs.Pipeline, Kube: cs.Kube, Dynamic: dc}
+	_, err = test.ExecuteCommand(Command(p), "list", "-n", "ns", "-o", "csv")
+	if err == nil {
+		t.Fatal("expected error for invalid output format")
+	}
+	if !strings.Contains(err.Error(), "csv") {
+		t.Errorf("expected error to mention csv, got %q", err.Error())
+	}
+}
+
+func TestListPipelineRuns_help_shows_output_examples(t *testing.T) {
+	cmd := listCommand(&test.Params{})
+	if cmd.Flags().Lookup("output") == nil {
+		t.Fatal("expected --output flag")
+	}
+	if !strings.Contains(cmd.Example, "-o json") || !strings.Contains(cmd.Example, "-o yaml") {
+		t.Errorf("expected help examples for json and yaml output, got %q", cmd.Example)
+	}
 }

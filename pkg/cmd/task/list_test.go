@@ -15,7 +15,9 @@
 package task
 
 import (
+	"encoding/json"
 	"fmt"
+	"strings"
 	"testing"
 	"time"
 
@@ -28,6 +30,7 @@ import (
 	"gotest.tools/v3/golden"
 	corev1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+	"sigs.k8s.io/yaml"
 )
 
 func TestTaskList_Invalid_Namespace_v1beta1(t *testing.T) {
@@ -1150,5 +1153,134 @@ func TestTaskList_in_all_namespaces_with_output_yaml_flag(t *testing.T) {
 		t.Errorf("Unexpected error: %v", err)
 	}
 
+	var got []v1.Task
+	if err := yaml.Unmarshal([]byte(output), &got); err != nil {
+		t.Fatalf("output is not valid YAML: %v\n%s", err, output)
+	}
+	if len(got) != 8 {
+		t.Errorf("expected 8 tasks, got %d", len(got))
+	}
+
 	golden.Assert(t, output, fmt.Sprintf("%s.golden", t.Name()))
+}
+
+func TestTaskList_output_json(t *testing.T) {
+	clock := test.FakeClock()
+	version := "v1"
+	tasks := []*v1.Task{
+		{
+			ObjectMeta: metav1.ObjectMeta{
+				Name:              "tomatoes",
+				Namespace:         "namespace",
+				CreationTimestamp: metav1.Time{Time: clock.Now().Add(-1 * time.Minute)},
+			},
+		},
+		{
+			ObjectMeta: metav1.ObjectMeta{
+				Name:              "mangoes",
+				Namespace:         "namespace",
+				CreationTimestamp: metav1.Time{Time: clock.Now().Add(-20 * time.Second)},
+			},
+		},
+	}
+	nsList := []*corev1.Namespace{
+		{
+			ObjectMeta: metav1.ObjectMeta{
+				Name: "namespace",
+			},
+		},
+	}
+
+	tdc := testDynamic.Options{}
+	dynamic, err := tdc.Client(
+		cb.UnstructuredT(tasks[0], version),
+		cb.UnstructuredT(tasks[1], version),
+	)
+	if err != nil {
+		t.Errorf("unable to create dynamic client: %v", err)
+	}
+	cs, _ := test.SeedTestData(t, pipelinetest.Data{Tasks: tasks, Namespaces: nsList})
+	p := &test.Params{Tekton: cs.Pipeline, Clock: clock, Kube: cs.Kube, Dynamic: dynamic}
+	cs.Pipeline.Resources = cb.APIResourceList(version, []string{"task"})
+
+	output, err := test.ExecuteCommand(Command(p), "list", "-n", "namespace", "-o", "json")
+	if err != nil {
+		t.Errorf("Unexpected error: %v", err)
+	}
+
+	var got []v1.Task
+	if err := json.Unmarshal([]byte(output), &got); err != nil {
+		t.Fatalf("output is not a valid JSON array: %v\n%s", err, output)
+	}
+	if len(got) != 2 {
+		t.Errorf("expected 2 tasks, got %d", len(got))
+	}
+	if strings.Contains(output, "TaskList") {
+		t.Errorf("json output should be an array of Task objects, not a TaskList wrapper")
+	}
+}
+
+func TestTaskList_empty_output_json(t *testing.T) {
+	ns := []*corev1.Namespace{
+		{
+			ObjectMeta: metav1.ObjectMeta{
+				Name: "foo",
+			},
+		},
+	}
+	cs, _ := test.SeedTestData(t, pipelinetest.Data{Namespaces: ns})
+	cs.Pipeline.Resources = cb.APIResourceList("v1", []string{"task"})
+	tdc := testDynamic.Options{}
+	dc, err := tdc.Client()
+	if err != nil {
+		t.Errorf("unable to create dynamic client: %v", err)
+	}
+	p := &test.Params{Tekton: cs.Pipeline, Kube: cs.Kube, Dynamic: dc}
+	output, err := test.ExecuteCommand(Command(p), "list", "-n", "foo", "-o", "json")
+	if err != nil {
+		t.Errorf("Unexpected error: %v", err)
+	}
+
+	var got []v1.Task
+	if err := json.Unmarshal([]byte(output), &got); err != nil {
+		t.Fatalf("output is not a valid JSON array: %v\n%s", err, output)
+	}
+	if len(got) != 0 {
+		t.Errorf("expected empty JSON array, got %d items", len(got))
+	}
+}
+
+func TestTaskList_invalid_output(t *testing.T) {
+	ns := []*corev1.Namespace{
+		{
+			ObjectMeta: metav1.ObjectMeta{
+				Name: "foo",
+			},
+		},
+	}
+	cs, _ := test.SeedTestData(t, pipelinetest.Data{Namespaces: ns})
+	cs.Pipeline.Resources = cb.APIResourceList("v1", []string{"task"})
+	tdc := testDynamic.Options{}
+	dc, err := tdc.Client()
+	if err != nil {
+		t.Errorf("unable to create dynamic client: %v", err)
+	}
+	p := &test.Params{Tekton: cs.Pipeline, Kube: cs.Kube, Dynamic: dc}
+	_, err = test.ExecuteCommand(Command(p), "list", "-n", "foo", "-o", "csv")
+	if err == nil {
+		t.Fatal("expected error for invalid output format")
+	}
+	if !strings.Contains(err.Error(), "csv") {
+		t.Errorf("expected error to mention csv, got %q", err.Error())
+	}
+}
+
+func TestTaskList_help_shows_output_examples(t *testing.T) {
+	cmd := listCommand(&test.Params{})
+	if cmd.Flags().Lookup("output") == nil {
+		t.Fatal("expected --output flag")
+	}
+	if !strings.Contains(cmd.Example, "-o json") || !strings.Contains(cmd.Example, "-o yaml") {
+		t.Errorf("expected help examples for json and yaml output, got %q", cmd.Example)
+	}
 }

@@ -48,6 +48,14 @@ func listCommand(p cli.Params) *cobra.Command {
 or
 
 	tkn tb ls -n bar
+
+List TriggerBindings as a JSON array:
+
+	tkn triggerbinding list -o json
+
+List TriggerBindings as a YAML array:
+
+	tkn triggerbinding list -o yaml
 `
 
 	c := &cobra.Command{
@@ -97,6 +105,15 @@ or
 				}
 				return nil
 			} else if output != "" {
+				if formatted.IsStructured(output) {
+					items := tbs.Items
+					if items == nil {
+						items = []v1beta1.TriggerBinding{}
+					}
+					formatted.SetTypeMeta(items, v1beta1.SchemeGroupVersion.WithKind("TriggerBinding"))
+					items = formatted.StripManagedFieldsList(items, f.JSONYamlPrintFlags.ShowManagedFields)
+					return formatted.PrintStructuredOutput(cmd.OutOrStdout(), output, items)
+				}
 				p, err := f.ToPrinter()
 				if err != nil {
 					return err

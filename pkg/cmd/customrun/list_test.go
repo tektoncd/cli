@@ -15,6 +15,7 @@
 package customrun
 
 import (
+	"encoding/json"
 	"fmt"
 	"strings"
 	"testing"
@@ -32,6 +33,7 @@ import (
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/client-go/dynamic"
 	duckv1 "knative.dev/pkg/apis/duck/v1"
+	"sigs.k8s.io/yaml"
 )
 
 const (
@@ -376,4 +378,121 @@ func commandV1beta1(t *testing.T, crs []*v1beta1.CustomRun, now time.Time, ns []
 	p := &test.Params{Tekton: cs.Pipeline, Clock: clock, Kube: cs.Kube, Dynamic: dc}
 
 	return Command(p)
+}
+
+func TestListCustomRuns_structured_output(t *testing.T) {
+	now := time.Now()
+	ns := []*corev1.Namespace{
+		{
+			ObjectMeta: metav1.ObjectMeta{
+				Name: "foo",
+			},
+		},
+	}
+	crs := []*v1beta1.CustomRun{
+		{
+			ObjectMeta: metav1.ObjectMeta{
+				Namespace: "foo",
+				Name:      "cr-a",
+			},
+		},
+		{
+			ObjectMeta: metav1.ObjectMeta{
+				Namespace: "foo",
+				Name:      "cr-b",
+			},
+		},
+	}
+	tdc := testDynamic.Options{}
+	dc, err := tdc.Client(
+		cb.UnstructuredV1beta1CustomRun(crs[0], versionv1beta1),
+		cb.UnstructuredV1beta1CustomRun(crs[1], versionv1beta1),
+	)
+	if err != nil {
+		t.Fatalf("unable to create dynamic client: %v", err)
+	}
+
+	jsonOut, err := test.ExecuteCommand(commandV1beta1(t, crs, now, ns, dc), "list", "-n", "foo", "-o", "json")
+	if err != nil {
+		t.Fatalf("Unexpected error: %v", err)
+	}
+	yamlOut, err := test.ExecuteCommand(commandV1beta1(t, crs, now, ns, dc), "list", "-n", "foo", "-o", "yaml")
+	if err != nil {
+		t.Fatalf("Unexpected error: %v", err)
+	}
+
+	var fromJSON, fromYAML []v1beta1.CustomRun
+	if err := json.Unmarshal([]byte(jsonOut), &fromJSON); err != nil {
+		t.Fatalf("output is not a valid JSON array: %v\n%s", err, jsonOut)
+	}
+	if err := yaml.Unmarshal([]byte(yamlOut), &fromYAML); err != nil {
+		t.Fatalf("output is not a valid YAML sequence: %v\n%s", err, yamlOut)
+	}
+	if len(fromJSON) != 2 || len(fromYAML) != 2 {
+		t.Errorf("expected 2 customruns, got json=%d yaml=%d", len(fromJSON), len(fromYAML))
+	}
+	if strings.Contains(jsonOut, "CustomRunList") {
+		t.Errorf("json output should be an array of CustomRun objects, not a CustomRunList wrapper")
+	}
+}
+
+func TestListCustomRuns_empty_output_json(t *testing.T) {
+	now := time.Now()
+	ns := []*corev1.Namespace{
+		{
+			ObjectMeta: metav1.ObjectMeta{
+				Name: "foo",
+			},
+		},
+	}
+	tdc := testDynamic.Options{}
+	dc, err := tdc.Client()
+	if err != nil {
+		t.Fatalf("unable to create dynamic client: %v", err)
+	}
+	output, err := test.ExecuteCommand(commandV1beta1(t, []*v1beta1.CustomRun{}, now, ns, dc), "list", "-n", "foo", "-o", "json")
+	if err != nil {
+		t.Fatalf("Unexpected error: %v", err)
+	}
+
+	var got []v1beta1.CustomRun
+	if err := json.Unmarshal([]byte(output), &got); err != nil {
+		t.Fatalf("output is not a valid JSON array: %v\n%s", err, output)
+	}
+	if len(got) != 0 {
+		t.Errorf("expected empty JSON array, got %d items", len(got))
+	}
+}
+
+func TestListCustomRuns_invalid_output(t *testing.T) {
+	now := time.Now()
+	ns := []*corev1.Namespace{
+		{
+			ObjectMeta: metav1.ObjectMeta{
+				Name: "foo",
+			},
+		},
+	}
+	tdc := testDynamic.Options{}
+	dc, err := tdc.Client()
+	if err != nil {
+		t.Fatalf("unable to create dynamic client: %v", err)
+	}
+	_, err = test.ExecuteCommand(commandV1beta1(t, []*v1beta1.CustomRun{}, now, ns, dc), "list", "-n", "foo", "-o", "csv")
+	if err == nil {
+		t.Fatal("expected error for invalid output format")
+	}
+	if !strings.Contains(err.Error(), "csv") {
+		t.Errorf("expected error to mention csv, got %q", err.Error())
+	}
+}
+
+func TestListCustomRuns_help_shows_output_examples(t *testing.T) {
+	cmd := listCommand(&test.Params{})
+	if cmd.Flags().Lookup("output") == nil {
+		t.Fatal("expected --output flag")
+	}
+	if !strings.Contains(cmd.Example, "-o json") || !strings.Contains(cmd.Example, "-o yaml") {
+		t.Errorf("expected help examples for json and yaml output, got %q", cmd.Example)
+	}
 }

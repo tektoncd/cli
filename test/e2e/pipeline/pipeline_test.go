@@ -115,7 +115,7 @@ func TestPipelinesE2E(t *testing.T) {
 
 	t.Run("Pipeline json Schema validation with -o (output) flag, as Json ", func(t *testing.T) {
 		res := tkn.MustSucceed(t, "pipelines", "list", "-o", "json")
-		assert.NilError(t, json.Unmarshal([]byte(res.Stdout()), &v1.PipelineList{}))
+		assertPipelineListJSONArray(t, res.Stdout())
 	})
 
 	t.Run("Validate Pipeline describe command in namespace "+namespace, func(t *testing.T) {
@@ -403,7 +403,7 @@ func TestPipelinesNegativeE2E(t *testing.T) {
 
 	t.Run("Pipeline json Schema validation with -o (output) flag, as Json ", func(t *testing.T) {
 		res := tkn.MustSucceed(t, "pipelines", "list", "-o", "json")
-		assert.NilError(t, json.Unmarshal([]byte(res.Stdout()), &v1.PipelineList{}))
+		assertPipelineListJSONArray(t, res.Stdout())
 	})
 
 	t.Run("Validate Pipeline describe command in namespace "+namespace, func(t *testing.T) {
@@ -537,6 +537,17 @@ func TestDeletePipelinesE2E(t *testing.T) {
 			Err:      icmd.None,
 		})
 	})
+}
+
+func assertPipelineListJSONArray(t *testing.T, stdout string) {
+	t.Helper()
+	var pipelines []v1.Pipeline
+	assert.NilError(t, json.Unmarshal([]byte(stdout), &pipelines))
+	assert.Assert(t, len(pipelines) > 0, "expected a JSON array of Pipeline objects, got %s", stdout)
+	for i, p := range pipelines {
+		assert.Equal(t, p.Kind, "Pipeline", "item %d missing canonical kind", i)
+		assert.Equal(t, p.APIVersion, "tekton.dev/v1", "item %d missing apiVersion", i)
+	}
 }
 
 func getPipeline(pipelineName string, namespace string, createFiletaskName string) *v1.Pipeline {
