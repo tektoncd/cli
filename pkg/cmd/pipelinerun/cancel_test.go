@@ -15,9 +15,11 @@
 package pipelinerun
 
 import (
+	"encoding/json"
 	"errors"
 	"testing"
 
+	"github.com/stretchr/testify/assert/yaml"
 	"github.com/tektoncd/cli/pkg/test"
 	tu "github.com/tektoncd/cli/pkg/test"
 	cb "github.com/tektoncd/cli/pkg/test/builder"
@@ -1376,4 +1378,250 @@ func Test_cancel_pipelinerun(t *testing.T) {
 
 	expected := "PipelineRun cancelled: " + prName + "\n"
 	tu.AssertOutput(t, expected, got)
+}
+
+func Test_cancel_pipelinerun_output_json(t *testing.T) {
+	ns := []*corev1.Namespace{
+		{
+			ObjectMeta: metav1.ObjectMeta{
+				Name: "ns",
+			},
+		},
+	}
+
+	prName := "test-pipeline-run-123"
+
+	prs := []*v1.PipelineRun{
+		{
+			ObjectMeta: metav1.ObjectMeta{
+				Name:      prName,
+				Namespace: "ns",
+				Labels:    map[string]string{"tekton.dev/pipeline": "pipelineName"},
+			},
+			Spec: v1.PipelineRunSpec{
+				PipelineRef: &v1.PipelineRef{
+					Name: "pipelineName",
+				},
+			},
+			Status: v1.PipelineRunStatus{
+				Status: duckv1.Status{
+					Conditions: duckv1.Conditions{
+						{
+							Status: corev1.ConditionUnknown,
+							Type:   apis.ConditionReady,
+						},
+					},
+				},
+			},
+		},
+	}
+
+	cs, _ := test.SeedTestData(t, pipelinetest.Data{PipelineRuns: prs, Namespaces: ns})
+	cs.Pipeline.Resources = cb.APIResourceList(version, []string{"pipeline", "pipelinerun"})
+	tdc := testDynamic.Options{}
+	dc, err := tdc.Client(
+		cb.UnstructuredPR(prs[0], version),
+	)
+	if err != nil {
+		t.Errorf("unable to create dynamic client: %v", err)
+	}
+	p := &tu.Params{Tekton: cs.Pipeline, Kube: cs.Kube, Dynamic: dc}
+
+	pRun := Command(p)
+	got, err := tu.ExecuteCommand(pRun, "cancel", prName, "-n", "ns", "-o", "json")
+	if err != nil {
+		t.Fatalf("unexpected error: %v", err)
+	}
+
+	var result CancelResult
+	if jsonErr := json.Unmarshal([]byte(got), &result); jsonErr != nil {
+		t.Fatalf("output is not valid json: %v\noutput: %s", jsonErr, got)
+	}
+	if result.Kind != "PipelineRun" {
+		t.Errorf("expected kind %q, got %q", "PipelineRun", result.Kind)
+	}
+	if result.Name != prName {
+		t.Errorf("expected name %q, got %q", prName, result.Name)
+	}
+	if result.Status != "cancelled" {
+		t.Errorf("expected status %q, got %q", "cancelled", result.Status)
+	}
+}
+
+func Test_cancel_pipelinerun_output_yaml(t *testing.T) {
+	ns := []*corev1.Namespace{
+		{
+			ObjectMeta: metav1.ObjectMeta{
+				Name: "ns",
+			},
+		},
+	}
+
+	prName := "test-pipeline-run-123"
+
+	prs := []*v1.PipelineRun{
+		{
+			ObjectMeta: metav1.ObjectMeta{
+				Name:      prName,
+				Namespace: "ns",
+				Labels:    map[string]string{"tekton.dev/pipeline": "pipelineName"},
+			},
+			Spec: v1.PipelineRunSpec{
+				PipelineRef: &v1.PipelineRef{
+					Name: "pipelineName",
+				},
+			},
+			Status: v1.PipelineRunStatus{
+				Status: duckv1.Status{
+					Conditions: duckv1.Conditions{
+						{
+							Status: corev1.ConditionUnknown,
+							Type:   apis.ConditionReady,
+						},
+					},
+				},
+			},
+		},
+	}
+
+	cs, _ := test.SeedTestData(t, pipelinetest.Data{PipelineRuns: prs, Namespaces: ns})
+	cs.Pipeline.Resources = cb.APIResourceList(version, []string{"pipeline", "pipelinerun"})
+	tdc := testDynamic.Options{}
+	dc, err := tdc.Client(
+		cb.UnstructuredPR(prs[0], version),
+	)
+	if err != nil {
+		t.Errorf("unable to create dynamic client: %v", err)
+	}
+	p := &tu.Params{Tekton: cs.Pipeline, Kube: cs.Kube, Dynamic: dc}
+
+	pRun := Command(p)
+	got, err := tu.ExecuteCommand(pRun, "cancel", prName, "-n", "ns", "-o", "yaml")
+	if err != nil {
+		t.Fatalf("unexpected error: %v", err)
+	}
+
+	var result CancelResult
+	if yamlErr := yaml.Unmarshal([]byte(got), &result); yamlErr != nil {
+		t.Fatalf("output is not valid yaml: %v\noutput: %s", yamlErr, got)
+	}
+	if result.Kind != "PipelineRun" {
+		t.Errorf("expected kind %q, got %q", "PipelineRun", result.Kind)
+	}
+	if result.Name != prName {
+		t.Errorf("expected name %q, got %q", prName, result.Name)
+	}
+	if result.Status != "cancelled" {
+		t.Errorf("expected status %q, got %q", "cancelled", result.Status)
+	}
+}
+
+func Test_cancel_pipelinerun_output_json_already_finished(t *testing.T) {
+	ns := []*corev1.Namespace{
+		{
+			ObjectMeta: metav1.ObjectMeta{
+				Name: "ns",
+			},
+		},
+	}
+
+	prName := "test-pipeline-run-123"
+
+	prs := []*v1.PipelineRun{
+		{
+			ObjectMeta: metav1.ObjectMeta{
+				Name:      prName,
+				Namespace: "ns",
+				Labels:    map[string]string{"tekton.dev/pipeline": "pipelineName"},
+			},
+			Spec: v1.PipelineRunSpec{
+				PipelineRef: &v1.PipelineRef{
+					Name: "pipelineName",
+				},
+			},
+			Status: v1.PipelineRunStatus{
+				Status: duckv1.Status{
+					Conditions: duckv1.Conditions{
+						{
+							Status: corev1.ConditionTrue,
+							Type:   apis.ConditionSucceeded,
+						},
+					},
+				},
+			},
+		},
+	}
+
+	cs, _ := test.SeedTestData(t, pipelinetest.Data{PipelineRuns: prs, Namespaces: ns})
+	cs.Pipeline.Resources = cb.APIResourceList(version, []string{"pipeline", "pipelinerun"})
+	tdc := testDynamic.Options{}
+	dc, err := tdc.Client(
+		cb.UnstructuredPR(prs[0], version),
+	)
+	if err != nil {
+		t.Errorf("unable to create dynamic client: %v", err)
+	}
+	p := &tu.Params{Tekton: cs.Pipeline, Kube: cs.Kube, Dynamic: dc}
+
+	pRun := Command(p)
+	got, _ := tu.ExecuteCommand(pRun, "cancel", prName, "-n", "ns", "-o", "json")
+
+	expected := "Error: failed to cancel PipelineRun " + prName + ": PipelineRun has already finished execution\n"
+	tu.AssertOutput(t, expected, got)
+}
+
+func Test_cancel_pipelinerun_output_invalid(t *testing.T) {
+	ns := []*corev1.Namespace{
+		{
+			ObjectMeta: metav1.ObjectMeta{
+				Name: "ns",
+			},
+		},
+	}
+
+	prName := "test-pipeline-run-123"
+
+	prs := []*v1.PipelineRun{
+		{
+			ObjectMeta: metav1.ObjectMeta{
+				Name:      prName,
+				Namespace: "ns",
+				Labels:    map[string]string{"tekton.dev/pipeline": "pipelineName"},
+			},
+			Spec: v1.PipelineRunSpec{
+				PipelineRef: &v1.PipelineRef{
+					Name: "pipelineName",
+				},
+			},
+			Status: v1.PipelineRunStatus{
+				Status: duckv1.Status{
+					Conditions: duckv1.Conditions{
+						{
+							Status: corev1.ConditionUnknown,
+							Type:   apis.ConditionReady,
+						},
+					},
+				},
+			},
+		},
+	}
+
+	cs, _ := test.SeedTestData(t, pipelinetest.Data{PipelineRuns: prs, Namespaces: ns})
+	cs.Pipeline.Resources = cb.APIResourceList(version, []string{"pipeline", "pipelinerun"})
+	tdc := testDynamic.Options{}
+	dc, err := tdc.Client(
+		cb.UnstructuredPR(prs[0], version),
+	)
+	if err != nil {
+		t.Errorf("unable to create dynamic client: %v", err)
+	}
+	p := &tu.Params{Tekton: cs.Pipeline, Kube: cs.Kube, Dynamic: dc}
+
+	pRun := Command(p)
+	_, err = tu.ExecuteCommand(pRun, "cancel", prName, "-n", "ns", "-o", "csv")
+	if err == nil {
+		t.Fatal("expected error for invalid --output format, got nil")
+	}
+	expected := `invalid output format "csv": must be json or yaml`
+	tu.AssertOutput(t, expected, err.Error())
 }
