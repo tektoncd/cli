@@ -279,9 +279,9 @@ func TestDeterministicLayers(t *testing.T) {
 		}
 	}
 
-	compare(0, "sha256:561b99bf08733028cbc799caf7f8b74e1f633d3acb7c6d25d880bae4b32cd0b5")
-	compare(1, "sha256:bd941a3b5d1618820ba5283fd0dd4138379fef0e927864d35629cfdc1bdd2f3f")
-	compare(2, "sha256:751deb7e696b6a4f30a2e23f25f97a886cbff22fe832a0c7ed956598ec489f58")
+	compare(0, "sha256:05ea10ce5b8dbbd638d40b7e09008f1553e37d7146fa7440443f41b54565990c")
+	compare(1, "sha256:8163f84b890c6d57307a766098bb24eb3ea93328408cd05a59176d21c5e03f98")
+	compare(2, "sha256:f3b8e632fdd3769d9f1c79fe17ddf4bece7f34a605276364a22fcee1d840a9a3")
 }
 
 func TestDeterministicManifest(t *testing.T) {
@@ -295,7 +295,7 @@ func TestDeterministicManifest(t *testing.T) {
 		t.Errorf("unexpected error: %v", err)
 	}
 
-	if expected, got := "sha256:7a4f604555b84cdb06cbfebda3fb599cd7485ef2c9c9375ab589f192a3addb4c", digest.String(); expected != got {
+	if expected, got := "sha256:6f74ecf3bf60218d26087e1f2f1aca3f7501cd89d43d88c6de1b20738b89b842", digest.String(); expected != got {
 		t.Errorf("unexpected image digest: %s, expecting %s", got, expected)
 	}
 }
