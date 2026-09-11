@@ -1,0 +1,19 @@
+{
+    "kind": "Pipeline",
+    "apiVersion": "tekton.dev/v1",
+    "metadata": {
+        "name": "pipeline-1",
+        "namespace": "ns"
+    },
+    "spec": {
+        "description": "a test pipeline",
+        "tasks": [
+            {
+                "name": "run-hello",
+                "taskRef": {
+                    "name": "hello"
+                }
+            }
+        ]
+    }
+}

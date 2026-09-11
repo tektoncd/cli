@@ -245,6 +245,54 @@ func TestTriggerTemplateDescribe_WithOutputYaml(t *testing.T) {
 	golden.Assert(t, out, fmt.Sprintf("%s.golden", t.Name()))
 }
 
+func TestTriggerTemplateDescribe_WithOutputJson(t *testing.T) {
+	var defaultValue = "value"
+
+	tts := []*v1beta1.TriggerTemplate{
+		{
+			ObjectMeta: metav1.ObjectMeta{
+				Name:      "tt1",
+				Namespace: "ns",
+			},
+			Spec: v1beta1.TriggerTemplateSpec{
+				Params: []v1beta1.ParamSpec{
+					{
+						Name:        "key",
+						Description: "test with one param",
+						Default:     &defaultValue,
+					},
+				},
+				ResourceTemplates: []v1beta1.TriggerResourceTemplate{
+					{
+						RawExtension: simpleResourceTemplate,
+					},
+				},
+			},
+		},
+	}
+	cs := test.SeedTestResources(t, triggertest.Resources{TriggerTemplates: tts, Namespaces: []*corev1.Namespace{{
+		ObjectMeta: metav1.ObjectMeta{
+			Name: "ns",
+		},
+	}}})
+	cs.Triggers.Resources = cb.TriggersAPIResourceList("v1beta1", []string{"triggertemplate"})
+	tdc := testDynamic.Options{}
+	dc, err := tdc.Client(
+		cb.UnstructuredV1beta1TT(tts[0], "v1beta1"),
+	)
+	if err != nil {
+		t.Errorf("unable to create dynamic client: %v", err)
+	}
+	p := &test.Params{Triggers: cs.Triggers, Kube: cs.Kube, Dynamic: dc}
+
+	triggerTemplate := Command(p)
+	out, err := test.ExecuteCommand(triggerTemplate, "desc", "tt1", "-o", "json", "-n", "ns")
+	if err != nil {
+		t.Errorf("Unexpected error: %v", err)
+	}
+	golden.Assert(t, out, fmt.Sprintf("%s.golden", t.Name()))
+}
+
 func TestTriggerTemplateDescribe_WithMultipleParams(t *testing.T) {
 	var defaultValue = []string{"value1", "value2", "value3", "value4"}
 

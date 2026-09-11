@@ -195,6 +195,41 @@ func TestClusterTriggerBindingDescribe_WithOutputYaml(t *testing.T) {
 	golden.Assert(t, out, fmt.Sprintf("%s.golden", t.Name()))
 }
 
+func TestClusterTriggerBindingDescribe_WithOutputJson(t *testing.T) {
+	ctbs := []*v1beta1.ClusterTriggerBinding{
+		{
+			ObjectMeta: metav1.ObjectMeta{
+				Name: "ctb1",
+			},
+			Spec: v1beta1.TriggerBindingSpec{
+				Params: []v1beta1.Param{
+					{
+						Name:  "key",
+						Value: "value",
+					},
+				},
+			},
+		},
+	}
+	cs := test.SeedTestResources(t, triggertest.Resources{ClusterTriggerBindings: ctbs})
+	cs.Triggers.Resources = cb.TriggersAPIResourceList("v1beta1", []string{"clustertriggerbinding"})
+	tdc := testDynamic.Options{}
+	dc, err := tdc.Client(
+		cb.UnstructuredV1beta1CTB(ctbs[0], "v1beta1"),
+	)
+	if err != nil {
+		t.Errorf("unable to create dynamic client: %v", err)
+	}
+	p := &test.Params{Triggers: cs.Triggers, Kube: cs.Kube, Dynamic: dc}
+
+	clusterTriggerBinding := Command(p)
+	out, err := test.ExecuteCommand(clusterTriggerBinding, "desc", "-o", "json", "ctb1")
+	if err != nil {
+		t.Errorf("Unexpected error: %v", err)
+	}
+	golden.Assert(t, out, fmt.Sprintf("%s.golden", t.Name()))
+}
+
 func TestClusterTriggerBindingDescribe_WithMultipleParams(t *testing.T) {
 	ctbs := []*v1beta1.ClusterTriggerBinding{
 		{

@@ -24,6 +24,14 @@ or
 
     tkn tr desc foo -n bar
 
+Describe a TaskRun of name 'foo' in namespace 'bar' in JSON format:
+
+    tkn taskrun describe foo -n bar -o json
+
+Describe a TaskRun of name 'foo' in namespace 'bar' in YAML format:
+
+    tkn taskrun describe foo -n bar -o yaml
+
 
 ### Options
 

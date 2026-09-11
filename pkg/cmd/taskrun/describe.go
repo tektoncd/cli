@@ -25,6 +25,7 @@ import (
 	"github.com/tektoncd/cli/pkg/formatted"
 	"github.com/tektoncd/cli/pkg/options"
 	taskrunpkg "github.com/tektoncd/cli/pkg/taskrun"
+	v1 "github.com/tektoncd/pipeline/pkg/apis/pipeline/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	cliopts "k8s.io/cli-runtime/pkg/genericclioptions"
 )
@@ -43,6 +44,14 @@ func describeCommand(p cli.Params) *cobra.Command {
 or
 
     tkn tr desc foo -n bar
+
+Describe a TaskRun of name 'foo' in namespace 'bar' in JSON format:
+
+    tkn taskrun describe foo -n bar -o json
+
+Describe a TaskRun of name 'foo' in namespace 'bar' in YAML format:
+
+    tkn taskrun describe foo -n bar -o yaml
 `
 
 	c := &cobra.Command{
@@ -98,6 +107,9 @@ or
 						return err
 					}
 					if len(trs) == 0 {
+						if formatted.IsStructured(output) {
+							return fmt.Errorf("no TaskRuns present in namespace %s", opts.Params.Namespace())
+						}
 						fmt.Fprintf(s.Out, "No TaskRuns present in namespace %s\n", opts.Params.Namespace())
 						return nil
 					}
@@ -105,6 +117,16 @@ or
 				}
 			} else {
 				opts.TaskrunName = args[0]
+			}
+
+			if formatted.IsStructured(output) {
+				tr, err := taskrunpkg.GetTaskRun(taskrunGroupResource, cs, opts.TaskrunName, p.Namespace())
+				if err != nil {
+					return err
+				}
+				items := []v1.TaskRun{*tr}
+				formatted.SetTypeMeta(items, v1.SchemeGroupVersion.WithKind("TaskRun"))
+				return formatted.PrintStructuredOutput(cmd.OutOrStdout(), output, items[0])
 			}
 
 			if output != "" {

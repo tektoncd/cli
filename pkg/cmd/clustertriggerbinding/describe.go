@@ -52,6 +52,14 @@ func describeCommand(p cli.Params) *cobra.Command {
 or
 
     tkn ctb desc foo
+
+Describe a ClusterTriggerBinding of name 'foo' in JSON format:
+
+    tkn clustertriggerbinding describe foo -o json
+
+Describe a ClusterTriggerBinding of name 'foo' in YAML format:
+
+    tkn clustertriggerbinding describe foo -o yaml
 `
 
 	c := &cobra.Command{
@@ -95,6 +103,16 @@ or
 				}
 			} else {
 				opts.ClusterTriggerBindingName = args[0]
+			}
+
+			if formatted.IsStructured(output) {
+				ctb, err := clustertriggerbinding.Get(cs, opts.ClusterTriggerBindingName, metav1.GetOptions{})
+				if err != nil {
+					return err
+				}
+				items := []v1beta1.ClusterTriggerBinding{*ctb}
+				formatted.SetTypeMeta(items, v1beta1.SchemeGroupVersion.WithKind("ClusterTriggerBinding"))
+				return formatted.PrintStructuredOutput(cmd.OutOrStdout(), output, items[0])
 			}
 
 			if output != "" {

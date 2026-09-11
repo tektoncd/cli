@@ -1,0 +1,16 @@
+apiVersion: tekton.dev/v1
+kind: TaskRun
+metadata:
+  name: task-run-1
+  namespace: ns
+spec:
+  serviceAccountName: ""
+  taskRef:
+    name: hello
+status:
+  conditions:
+  - lastTransitionTime: null
+    reason: Succeeded
+    status: "True"
+    type: ""
+  podName: ""

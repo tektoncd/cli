@@ -1,0 +1,15 @@
+apiVersion: tekton.dev/v1
+kind: PipelineRun
+metadata:
+  name: pipeline-run-1
+  namespace: ns
+spec:
+  pipelineRef:
+    name: hello-pipeline
+  taskRunTemplate: {}
+status:
+  conditions:
+  - lastTransitionTime: null
+    reason: Succeeded
+    status: "True"
+    type: ""

@@ -1,0 +1,25 @@
+{
+    "kind": "TaskRun",
+    "apiVersion": "tekton.dev/v1",
+    "metadata": {
+        "name": "task-run-1",
+        "namespace": "ns"
+    },
+    "spec": {
+        "serviceAccountName": "",
+        "taskRef": {
+            "name": "hello"
+        }
+    },
+    "status": {
+        "conditions": [
+            {
+                "type": "",
+                "status": "True",
+                "lastTransitionTime": null,
+                "reason": "Succeeded"
+            }
+        ],
+        "podName": ""
+    }
+}

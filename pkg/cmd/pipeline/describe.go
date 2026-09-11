@@ -114,6 +114,18 @@ func describeCommand(p cli.Params) *cobra.Command {
 		Annotations: map[string]string{
 			"commandType": "main",
 		},
+		Example: `Describe a Pipeline named 'foo' in namespace 'bar':
+
+    tkn pipeline describe foo -n bar
+
+Describe a Pipeline as JSON:
+
+    tkn pipeline describe foo -o json
+
+Describe a Pipeline as YAML:
+
+    tkn pipeline describe foo -o yaml
+`,
 		SilenceUsage:      true,
 		ValidArgsFunction: formatted.ParentCompletion,
 		RunE: func(cmd *cobra.Command, args []string) error {
@@ -142,6 +154,16 @@ func describeCommand(p cli.Params) *cobra.Command {
 				}
 			} else {
 				opts.PipelineName = args[0]
+			}
+
+			if formatted.IsStructured(output) {
+				pipeline, err := pipelinepkg.GetPipeline(pipelineGroupResource, cs, opts.PipelineName, p.Namespace())
+				if err != nil {
+					return err
+				}
+				items := []v1.Pipeline{*pipeline}
+				formatted.SetTypeMeta(items, v1.SchemeGroupVersion.WithKind("Pipeline"))
+				return formatted.PrintStructuredOutput(cmd.OutOrStdout(), output, items[0])
 			}
 
 			if output != "" {

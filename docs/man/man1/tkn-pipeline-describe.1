@@ -59,6 +59,44 @@ Describes a Pipeline in a namespace
     disable coloring (default: false)
 
 
+.SH EXAMPLE
+.PP
+Describe a Pipeline named 'foo' in namespace 'bar':
+
+.PP
+.RS
+
+.nf
+tkn pipeline describe foo \-n bar
+
+.fi
+.RE
+
+.PP
+Describe a Pipeline as JSON:
+
+.PP
+.RS
+
+.nf
+tkn pipeline describe foo \-o json
+
+.fi
+.RE
+
+.PP
+Describe a Pipeline as YAML:
+
+.PP
+.RS
+
+.nf
+tkn pipeline describe foo \-o yaml
+
+.fi
+.RE
+
+
 .SH SEE ALSO
 .PP
 \fBtkn\-pipeline(1)\fP
