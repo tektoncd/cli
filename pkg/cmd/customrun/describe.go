@@ -129,6 +129,14 @@ func describeCommand(p cli.Params) *cobra.Command {
 or
 
     tkn cr desc foo -n bar
+
+Describe a CustomRun of name 'foo' in namespace 'bar' in JSON format:
+
+    tkn customrun describe foo -n bar -o json
+
+Describe a CustomRun of name 'foo' in namespace 'bar' in YAML format:
+
+    tkn customrun describe foo -n bar -o yaml
 `
 
 	c := &cobra.Command{
@@ -184,6 +192,9 @@ or
 						return err
 					}
 					if len(crs) == 0 {
+						if formatted.IsStructured(output) {
+							return fmt.Errorf("no CustomRuns present in namespace %s", opts.Params.Namespace())
+						}
 						fmt.Fprintf(s.Out, "No CustomRuns present in namespace %s\n", opts.Params.Namespace())
 						return nil
 					}
@@ -191,6 +202,16 @@ or
 				}
 			} else {
 				opts.CustomRunName = args[0]
+			}
+
+			if formatted.IsStructured(output) {
+				cr, err := GetCustomRun(customrunGroupResource, cs, opts.CustomRunName, p.Namespace())
+				if err != nil {
+					return err
+				}
+				items := []v1beta1.CustomRun{*cr}
+				formatted.SetTypeMeta(items, v1beta1.SchemeGroupVersion.WithKind("CustomRun"))
+				return formatted.PrintStructuredOutput(cmd.OutOrStdout(), output, items[0])
 			}
 
 			if output != "" {

@@ -24,6 +24,14 @@ or
 
    tkn t desc foo -n bar
 
+Describe a Task of name 'foo' in namespace 'bar' in JSON format:
+
+    tkn task describe foo -n bar -o json
+
+Describe a Task of name 'foo' in namespace 'bar' in YAML format:
+
+    tkn task describe foo -n bar -o yaml
+
 
 ### Options
 

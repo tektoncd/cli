@@ -53,6 +53,14 @@ func describeCommand(p cli.Params) *cobra.Command {
 or
 
     tkn tb desc foo -n bar
+
+Describe a TriggerBinding of name 'foo' in namespace 'bar' in JSON format:
+
+    tkn triggerbinding describe foo -n bar -o json
+
+Describe a TriggerBinding of name 'foo' in namespace 'bar' in YAML format:
+
+    tkn triggerbinding describe foo -n bar -o yaml
 `
 
 	c := &cobra.Command{
@@ -96,6 +104,16 @@ or
 				}
 			} else {
 				opts.TriggerBindingName = args[0]
+			}
+
+			if formatted.IsStructured(output) {
+				tb, err := triggerbinding.Get(cs, opts.TriggerBindingName, metav1.GetOptions{}, p.Namespace())
+				if err != nil {
+					return err
+				}
+				items := []v1beta1.TriggerBinding{*tb}
+				formatted.SetTypeMeta(items, v1beta1.SchemeGroupVersion.WithKind("TriggerBinding"))
+				return formatted.PrintStructuredOutput(cmd.OutOrStdout(), output, items[0])
 			}
 
 			if output != "" {

@@ -24,6 +24,14 @@ or
 
     tkn cr desc foo -n bar
 
+Describe a CustomRun of name 'foo' in namespace 'bar' in JSON format:
+
+    tkn customrun describe foo -n bar -o json
+
+Describe a CustomRun of name 'foo' in namespace 'bar' in YAML format:
+
+    tkn customrun describe foo -n bar -o yaml
+
 
 ### Options
 

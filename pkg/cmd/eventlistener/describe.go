@@ -137,6 +137,14 @@ func describeCommand(p cli.Params) *cobra.Command {
 or
 
    tkn el desc foo -n bar
+
+Describe an EventListener of name 'foo' in namespace 'bar' in JSON format:
+
+    tkn eventlistener describe foo -n bar -o json
+
+Describe an EventListener of name 'foo' in namespace 'bar' in YAML format:
+
+    tkn eventlistener describe foo -n bar -o yaml
 `
 
 	c := &cobra.Command{
@@ -187,6 +195,17 @@ or
 				if strings.ToLower(output) == "url" {
 					return describeEventListenerOutputURL(cmd.OutOrStdout(), p, args[0])
 				}
+
+				if formatted.IsStructured(output) {
+					el, err := eventlistener.Get(cs, opts.EventListenerName, metav1.GetOptions{}, p.Namespace())
+					if err != nil {
+						return err
+					}
+					items := []v1beta1.EventListener{*el}
+					formatted.SetTypeMeta(items, v1beta1.SchemeGroupVersion.WithKind("EventListener"))
+					return formatted.PrintStructuredOutput(cmd.OutOrStdout(), output, items[0])
+				}
+
 				printer, err := f.ToPrinter()
 				if err != nil {
 					return err

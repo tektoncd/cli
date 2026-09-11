@@ -1,0 +1,24 @@
+{
+    "kind": "PipelineRun",
+    "apiVersion": "tekton.dev/v1",
+    "metadata": {
+        "name": "pipeline-run-1",
+        "namespace": "ns"
+    },
+    "spec": {
+        "pipelineRef": {
+            "name": "hello-pipeline"
+        },
+        "taskRunTemplate": {}
+    },
+    "status": {
+        "conditions": [
+            {
+                "type": "",
+                "status": "True",
+                "lastTransitionTime": null,
+                "reason": "Succeeded"
+            }
+        ]
+    }
+}

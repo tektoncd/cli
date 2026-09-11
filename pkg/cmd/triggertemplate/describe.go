@@ -73,6 +73,14 @@ func describeCommand(p cli.Params) *cobra.Command {
 or
 
    tkn tt desc foo -n bar
+
+Describe a TriggerTemplate of name 'foo' in namespace 'bar' in JSON format:
+
+    tkn triggertemplate describe foo -n bar -o json
+
+Describe a TriggerTemplate of name 'foo' in namespace 'bar' in YAML format:
+
+    tkn triggertemplate describe foo -n bar -o yaml
 `
 
 	c := &cobra.Command{
@@ -116,6 +124,16 @@ or
 				}
 			} else {
 				opts.TriggerTemplateName = args[0]
+			}
+
+			if formatted.IsStructured(output) {
+				tt, err := triggertemplate.Get(cs, opts.TriggerTemplateName, metav1.GetOptions{}, p.Namespace())
+				if err != nil {
+					return err
+				}
+				items := []v1beta1.TriggerTemplate{*tt}
+				formatted.SetTypeMeta(items, v1beta1.SchemeGroupVersion.WithKind("TriggerTemplate"))
+				return formatted.PrintStructuredOutput(cmd.OutOrStdout(), output, items[0])
 			}
 
 			if output != "" {

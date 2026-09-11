@@ -14,6 +14,21 @@ tkn pipeline describe
 
 Describes a Pipeline in a namespace
 
+### Examples
+
+Describe a Pipeline named 'foo' in namespace 'bar':
+
+    tkn pipeline describe foo -n bar
+
+Describe a Pipeline as JSON:
+
+    tkn pipeline describe foo -o json
+
+Describe a Pipeline as YAML:
+
+    tkn pipeline describe foo -o yaml
+
+
 ### Options
 
 ```

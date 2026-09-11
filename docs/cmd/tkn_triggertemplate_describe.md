@@ -24,6 +24,14 @@ or
 
    tkn tt desc foo -n bar
 
+Describe a TriggerTemplate of name 'foo' in namespace 'bar' in JSON format:
+
+    tkn triggertemplate describe foo -n bar -o json
+
+Describe a TriggerTemplate of name 'foo' in namespace 'bar' in YAML format:
+
+    tkn triggertemplate describe foo -n bar -o yaml
+
 
 ### Options
 

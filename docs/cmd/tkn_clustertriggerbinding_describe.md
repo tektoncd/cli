@@ -24,6 +24,14 @@ or
 
     tkn ctb desc foo
 
+Describe a ClusterTriggerBinding of name 'foo' in JSON format:
+
+    tkn clustertriggerbinding describe foo -o json
+
+Describe a ClusterTriggerBinding of name 'foo' in YAML format:
+
+    tkn clustertriggerbinding describe foo -o yaml
+
 
 ### Options
 
