@@ -69,6 +69,14 @@ func listCommand(p cli.Params) *cobra.Command {
 List all TaskRuns of Task 'foo' in namespace 'bar':
 
     tkn taskrun list foo -n bar
+
+List TaskRuns as a JSON array:
+
+    tkn taskrun list -o json
+
+List TaskRuns as a YAML array:
+
+    tkn taskrun list -o yaml
 `
 
 	c := &cobra.Command{
@@ -112,6 +120,14 @@ List all TaskRuns of Task 'foo' in namespace 'bar':
 				}
 				return nil
 			} else if output != "" && trs != nil {
+				if formatted.IsStructured(output) {
+					items := trs.Items
+					if items == nil {
+						items = []v1.TaskRun{}
+					}
+					formatted.SetTypeMeta(items, v1.SchemeGroupVersion.WithKind("TaskRun"))
+					return formatted.PrintStructuredOutput(cmd.OutOrStdout(), output, items)
+				}
 				p, err := f.ToPrinter()
 				if err != nil {
 					return err

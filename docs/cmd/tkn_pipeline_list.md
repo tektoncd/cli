@@ -14,6 +14,21 @@ tkn pipeline list
 
 Lists Pipelines in a namespace
 
+### Examples
+
+List Pipelines in namespace 'bar':
+
+    tkn pipeline list -n bar
+
+List Pipelines as a JSON array:
+
+    tkn pipeline list -o json
+
+List Pipelines as a YAML array:
+
+    tkn pipeline list -o yaml
+
+
 ### Options
 
 ```

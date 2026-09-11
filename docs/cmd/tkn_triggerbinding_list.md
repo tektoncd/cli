@@ -24,6 +24,14 @@ or
 
 	tkn tb ls -n bar
 
+List TriggerBindings as a JSON array:
+
+	tkn triggerbinding list -o json
+
+List TriggerBindings as a YAML array:
+
+	tkn triggerbinding list -o yaml
+
 
 ### Options
 

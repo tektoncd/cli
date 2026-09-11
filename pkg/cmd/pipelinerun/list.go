@@ -66,6 +66,14 @@ func listCommand(p cli.Params) *cobra.Command {
 List all PipelineRuns in a namespace 'foo':
 
     tkn pr list -n foo
+
+List PipelineRuns as a JSON array:
+
+    tkn pipelinerun list -o json
+
+List PipelineRuns as a YAML array:
+
+    tkn pipelinerun list -o yaml
 `
 
 	c := &cobra.Command{
@@ -111,6 +119,14 @@ List all PipelineRuns in a namespace 'foo':
 				}
 				return nil
 			} else if output != "" && prs != nil {
+				if formatted.IsStructured(output) {
+					items := prs.Items
+					if items == nil {
+						items = []v1.PipelineRun{}
+					}
+					formatted.SetTypeMeta(items, v1.SchemeGroupVersion.WithKind("PipelineRun"))
+					return formatted.PrintStructuredOutput(cmd.OutOrStdout(), output, items)
+				}
 				p, err := f.ToPrinter()
 				if err != nil {
 					return err

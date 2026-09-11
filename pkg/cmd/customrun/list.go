@@ -64,6 +64,14 @@ func listCommand(p cli.Params) *cobra.Command {
 	eg := `List all CustomRuns in namespace 'bar':
 
     tkn cr list -n bar
+
+List CustomRuns as a JSON array:
+
+    tkn customrun list -o json
+
+List CustomRuns as a YAML array:
+
+    tkn customrun list -o yaml
 `
 
 	c := &cobra.Command{
@@ -102,6 +110,14 @@ func listCommand(p cli.Params) *cobra.Command {
 				}
 				return nil
 			} else if output != "" && crs != nil {
+				if formatted.IsStructured(output) {
+					items := crs.Items
+					if items == nil {
+						items = []v1beta1.CustomRun{}
+					}
+					formatted.SetTypeMeta(items, v1beta1.SchemeGroupVersion.WithKind("CustomRun"))
+					return formatted.PrintStructuredOutput(cmd.OutOrStdout(), output, items)
+				}
 				p, err := f.ToPrinter()
 				if err != nil {
 					return err
