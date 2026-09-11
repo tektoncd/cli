@@ -36,7 +36,17 @@ const (
 	communitySupportTier        = "Community"
 	verifiedSupportTier         = "Verified"
 	verifiedCatOrg              = "tektoncd"
+	tektonAPIGroup              = "tekton.dev"
 )
+
+// installableKinds are catalog resource definitions. Runnable kinds such as
+// TaskRun or PipelineRun are rejected so a compromised Hub response cannot
+// execute workloads immediately.
+var installableKinds = map[string]struct{}{
+	"Task":       {},
+	"Pipeline":   {},
+	"StepAction": {},
+}
 
 // Errors
 var (
@@ -95,6 +105,11 @@ func (i *Installer) Install(data []byte, hubType, org, catalog, namespace string
 
 	newRes, err := toUnstructured(data)
 	if err != nil {
+		errors = append(errors, err)
+		return nil, errors
+	}
+
+	if err := validateInstallableResource(newRes); err != nil {
 		errors = append(errors, err)
 		return nil, errors
 	}
@@ -183,6 +198,11 @@ func (i *Installer) updateByAction(data []byte, catalog, namespace string, actio
 
 	newRes, err := toUnstructured(data)
 	if err != nil {
+		errors = append(errors, err)
+		return nil, errors
+	}
+
+	if err := validateInstallableResource(newRes); err != nil {
 		errors = append(errors, err)
 		return nil, errors
 	}
@@ -313,6 +333,24 @@ func (i *Installer) updateRes(existing, new *unstructured.Unstructured, catalog,
 		return nil, err
 	}
 	return res, nil
+}
+
+func validateInstallableResource(res *unstructured.Unstructured) error {
+	if res == nil {
+		return fmt.Errorf("refusing to install resource: empty manifest")
+	}
+
+	gvk := res.GroupVersionKind()
+	if gvk.Group != tektonAPIGroup {
+		return fmt.Errorf("refusing to install %s: hub can only install tekton.dev resources", gvk.String())
+	}
+	if gvk.Kind == "" {
+		return fmt.Errorf("refusing to install resource: missing kind")
+	}
+	if _, ok := installableKinds[gvk.Kind]; !ok {
+		return fmt.Errorf("refusing to install kind %s: hub can only install Task, Pipeline, or StepAction resources", gvk.Kind)
+	}
+	return nil
 }
 
 func toUnstructured(data []byte) (*unstructured.Unstructured, error) {

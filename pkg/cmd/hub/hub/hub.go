@@ -17,9 +17,12 @@ package hub
 import (
 	"fmt"
 	"io"
+	"net"
 	"net/http"
 	"net/url"
 	"os/user"
+	"strings"
+	"time"
 
 	"github.com/joho/godotenv"
 	"github.com/spf13/viper"
@@ -39,6 +42,9 @@ const (
 	artifactHubCatInfoEndpoint   = "/api/v1/packages/tekton"
 	artifactHubTaskType          = 7
 	artifactHubPipelineType      = 11
+
+	httpClientTimeout = 30 * time.Second
+	maxRedirects      = 10
 )
 
 type Client interface {
@@ -126,8 +132,7 @@ func (t *tektonHubClient) Get(endpoint string) ([]byte, int, error) {
 
 func resolveUrl(apiURL, envVariable, defaultUrl string) (string, error) {
 	if apiURL != "" {
-		_, err := url.ParseRequestURI(apiURL)
-		if err != nil {
+		if err := validateHubURLString(apiURL); err != nil {
 			return "", err
 		}
 
@@ -140,8 +145,7 @@ func resolveUrl(apiURL, envVariable, defaultUrl string) (string, error) {
 
 	viper.AutomaticEnv()
 	if apiURL := viper.GetString(envVariable); apiURL != "" {
-		_, err := url.ParseRequestURI(apiURL)
-		if err != nil {
+		if err := validateHubURLString(apiURL); err != nil {
 			return "", fmt.Errorf("invalid url set for %s: %s : %v", envVariable, apiURL, err)
 		}
 		return apiURL, nil
@@ -170,15 +174,20 @@ func get(url string) ([]byte, int, error) {
 	return data, status, err
 }
 
-// httpGet gets raw data given the url
-func httpGet(url string) ([]byte, int, error) {
+// httpGet gets raw data given the url.
+// Only https is allowed, except http to loopback addresses used by a local Hub.
+func httpGet(rawURL string) ([]byte, int, error) {
 
 	err := loadConfigFile()
 	if err != nil {
 		return nil, 0, err
 	}
 
-	resp, err := http.Get(url)
+	if err := validateHubURLString(rawURL); err != nil {
+		return nil, 0, err
+	}
+
+	resp, err := hubHTTPClient.Get(rawURL)
 	if err != nil {
 		return nil, 0, err
 	}
@@ -190,6 +199,53 @@ func httpGet(url string) ([]byte, int, error) {
 	}
 
 	return data, resp.StatusCode, err
+}
+
+var hubHTTPClient = &http.Client{
+	Timeout: httpClientTimeout,
+	CheckRedirect: func(req *http.Request, via []*http.Request) error {
+		if len(via) >= maxRedirects {
+			return fmt.Errorf("stopped after %d redirects", maxRedirects)
+		}
+		if !strings.EqualFold(req.URL.Scheme, "https") {
+			return fmt.Errorf("refusing non-HTTPS redirect to %q", req.URL.Redacted())
+		}
+		return validateHubURL(req.URL)
+	},
+}
+
+func validateHubURLString(rawURL string) error {
+	u, err := url.ParseRequestURI(rawURL)
+	if err != nil {
+		return err
+	}
+	return validateHubURL(u)
+}
+
+func validateHubURL(u *url.URL) error {
+	if u == nil {
+		return fmt.Errorf("invalid url")
+	}
+
+	switch strings.ToLower(u.Scheme) {
+	case "https":
+		return nil
+	case "http":
+		if isLoopbackHost(u.Hostname()) {
+			return nil
+		}
+		return fmt.Errorf("refusing insecure HTTP URL %q; use HTTPS", u.Redacted())
+	default:
+		return fmt.Errorf("unsupported URL scheme %q; only https is allowed", u.Scheme)
+	}
+}
+
+func isLoopbackHost(host string) bool {
+	if strings.EqualFold(host, "localhost") {
+		return true
+	}
+	ip := net.ParseIP(host)
+	return ip != nil && ip.IsLoopback()
 }
 
 // Looks for config file at $HOME/.tekton/hub-config and loads into

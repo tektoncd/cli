@@ -23,7 +23,7 @@ import (
 )
 
 // API is test URL
-const API string = "http://test.hub.cli"
+const API string = "https://test.hub.cli"
 
 type cli struct {
 	hub    hub.Client
