@@ -41,9 +41,9 @@ jobs:
         run: |
           gofmt_out=$(gofmt -d $(find * -name '*.go' ! -path 'vendor/*' ! -path 'third_party/*'))
           if [[ -n "$gofmt_out" ]]; then
-              failed=1
+              echo "$gofmt_out"
+              exit 1
           fi
-          echo "$gofmt_out"
       - name: golangci-lint
         uses: golangci/golangci-lint-action@ba0d7d2ec06a0ea1cb5fa41b2e4a3ab91d21278a # v9.3.0
         with:
@@ -83,6 +83,10 @@ jobs:
         run: |
           go install github.com/google/go-licenses@v1.0.0 # Not sure why it is needed here
           ./hack/verify-codegen.sh
+      - name: docs
+        run: |
+          ./hack/verify-generated.sh
+
   multi-arch-build:
     needs: [build]
     name: Multi-arch build
