@@ -76,7 +76,7 @@ or using kms
 			}
 
 			// Sign the Pipeline and save to file
-			if err := trustedresources.Sign(crd, opts.keyfile, opts.kmsKey, opts.targetFile); err != nil {
+			if err := trustedresources.Sign(crd, b, opts.keyfile, opts.kmsKey, opts.targetFile); err != nil {
 				return fmt.Errorf("error signing Pipeline: %v", err)
 			}
 			fmt.Fprintf(s.Out, "Pipeline %s is signed successfully \n", args[0])
@@ -105,7 +105,7 @@ func (s *signOptions) Run(args []string) error {
 	}
 
 	// Sign the Pipeline and write to target file
-	if err := trustedresources.Sign(crd, s.keyfile, s.kmsKey, s.targetFile); err != nil {
+	if err := trustedresources.Sign(crd, tsBuf, s.keyfile, s.kmsKey, s.targetFile); err != nil {
 		log.Fatalf("error signing Pipeline: %v", err)
 		return err
 	}
