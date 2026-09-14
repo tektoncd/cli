@@ -25,6 +25,7 @@ import (
 	"encoding/pem"
 	"os"
 	"path/filepath"
+	"strings"
 	"testing"
 
 	"github.com/pkg/errors"
@@ -33,6 +34,7 @@ import (
 	"github.com/tektoncd/pipeline/pkg/apis/pipeline/v1beta1"
 	"github.com/theupdateframework/go-tuf/encrypted"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+	"sigs.k8s.io/yaml"
 )
 
 const (
@@ -76,17 +78,39 @@ func TestSign(t *testing.T) {
 
 	tcs := []struct {
 		name       string
+		doc        string
 		resource   metav1.Object
 		kind       string
 		targetFile string
 	}{{
-		name:       "Task Sign and pass verification",
-		resource:   getTask(),
+		name: "Task Sign and pass verification",
+		doc: `apiVersion: tekton.dev/v1beta1
+kind: Task
+metadata:
+  name: test-task
+  namespace: test
+  annotations:
+    tekton.dev/displayName: example
+spec:
+  steps:
+    - name: echo
+      image: ubuntu
+`,
+		resource:   &v1beta1.Task{},
 		kind:       "Task",
 		targetFile: "signed-task.yaml",
 	}, {
-		name:       "Pipeline Sign and pass verification",
-		resource:   getPipeline(),
+		name: "Pipeline Sign and pass verification",
+		doc: `apiVersion: tekton.dev/v1beta1
+kind: Pipeline
+metadata:
+  name: test-Pipeline
+  namespace: test
+spec:
+  tasks:
+    - name: pipelinetask
+`,
+		resource:   &v1beta1.Pipeline{},
 		kind:       "Pipeline",
 		targetFile: "signed-pipeline.yaml",
 	},
@@ -94,20 +118,52 @@ func TestSign(t *testing.T) {
 
 	for _, tc := range tcs {
 		t.Run(tc.name, func(t *testing.T) {
-			if err := Sign(tc.resource, filepath.Join(tmpDir, privateKeyFile), "", filepath.Join(tmpDir, tc.targetFile)); err != nil {
+			if err := yaml.Unmarshal([]byte(tc.doc), tc.resource); err != nil {
+				t.Fatalf("error unmarshalling doc: %v", err)
+			}
+
+			target := filepath.Join(tmpDir, tc.targetFile)
+			if err := Sign(tc.resource, []byte(tc.doc), filepath.Join(tmpDir, privateKeyFile), "", target); err != nil {
 				t.Fatalf("Sign() get err %v", err)
 			}
-			signed, err := os.ReadFile(filepath.Join(tmpDir, tc.targetFile))
+			signed, err := os.ReadFile(target)
 			if err != nil {
 				t.Fatalf("error reading file: %v", err)
 			}
 
-			target, signature, err := UnmarshalCRD(signed, tc.kind)
+			resource, signature, err := UnmarshalCRD(signed, tc.kind)
 			if err != nil {
 				t.Fatalf("error unmarshalling crd: %v", err)
 			}
-			if err := VerifyInterface(target, signer, signature); err != nil {
+			if err := VerifyInterface(resource, signer, signature); err != nil {
 				t.Fatalf("VerifyTaskOCIBundle get error: %v", err)
+			}
+
+			// The signed file must differ from the input by the signature
+			// annotation, plus the annotations key itself when the document did
+			// not already have one.
+			added, removed := lineDiff(tc.doc, string(signed))
+			if len(removed) != 0 {
+				t.Errorf("signing removed lines from the document: %q", removed)
+			}
+			signatures := 0
+			for _, l := range added {
+				switch {
+				case strings.Contains(l, SignatureAnnotation):
+					signatures++
+				case strings.TrimSpace(l) == "annotations:":
+				default:
+					t.Errorf("signing added an unrelated line: %q", l)
+				}
+			}
+			if signatures != 1 {
+				t.Errorf("expected exactly one signature annotation line, but got %d in %q", signatures, added)
+			}
+
+			// Marshalling the resource used to emit zero valued fields of the
+			// embedded Kubernetes types, which Tekton rejects on apply.
+			if strings.Contains(string(signed), "resources: {}") {
+				t.Error("signed file contains `resources: {}`, which is not part of the Tekton API")
 			}
 		})
 	}
