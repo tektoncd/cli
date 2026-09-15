@@ -1265,8 +1265,8 @@ github.com/syndtr/goleveldb v1.0.1-0.20220721030215-126854af5e6d h1:vfofYNRScrDd
 github.com/syndtr/goleveldb v1.0.1-0.20220721030215-126854af5e6d/go.mod h1:RRCYJbIwD5jmqPI9XoAFR0OcDxqUctll6zUj/+B4S48=
 github.com/tektoncd/chains v0.26.9 h1:PP4LriigURPTbReXnMAnnxtktKorvtwzTXn3ri8zQZc=
 github.com/tektoncd/chains v0.26.9/go.mod h1:PMEnSTJI/KdWhK7MBDxcsVbJ8YLGwuWp7D3AUSKuaqk=
-github.com/tektoncd/pipeline v1.9.7 h1:0tP/dconIbDzw5USbhR7vfpzePGE1abzrHjB6JPEKN8=
-github.com/tektoncd/pipeline v1.9.7/go.mod h1:wBASNtCCNWeuRwQtfsbw7igSfiiC7be+L1aFZ2tkeno=
+github.com/tektoncd/pipeline v1.9.8 h1:WvMf57F+uIuaJN0n3x+Yc6qS42GmMtdfaoO+mFZDAJI=
+github.com/tektoncd/pipeline v1.9.8/go.mod h1:MGy8jy7YAQpbrlzn38cweF4rfgPkM40PIv/aMKD+ql8=
 github.com/tektoncd/plumbing v0.0.0-20250430145243-3b7cd59879c1 h1:nv7BsOAZ1ifQX9Lw1hYFo1f7e62dTDyyVPJBuljgZKw=
 github.com/tektoncd/plumbing v0.0.0-20250430145243-3b7cd59879c1/go.mod h1:eDs4O8vTNkyKZ/+AEuo4nYDfpyn1AzbgIcQ1QMQaKJk=
 github.com/tektoncd/triggers v0.34.0 h1:CuhG1moThPGEMlxPUcoBDDplJ3FAczzF8MMAjGScRY0=
@@ -1974,8 +1974,8 @@ google.golang.org/grpc v1.39.1/go.mod h1:PImNr+rS9TWYb2O4/emRugxiyHZ5JyHW5F+RPnD
 google.golang.org/grpc v1.40.0/go.mod h1:ogyxbiOoUXAkP+4+xa6PZSE9DZgIHtSpzjDTB9KAK34=
 google.golang.org/grpc v1.41.0/go.mod h1:U3l9uK9J0sini8mHphKoXyaqDA/8VyGnDee1zzIUK6k=
 google.golang.org/grpc v1.42.0/go.mod h1:k+4IHHFw41K8+bbowsex27ge2rCb65oeWqe4jJ590SU=
-google.golang.org/grpc v1.82.1 h1:NnAxzGRA0677vCa4BUkOAnO5+FfQqVl9iUXeD0IqcGE=
-google.golang.org/grpc v1.82.1/go.mod h1:yzTZ1TB1Z3SG+LIYaI+WiE8D5+PZ3ArnrSp8zF3+/ZA=
+google.golang.org/grpc v1.82.2 h1:2+rCCTC8esfgjDFhN+rIok0FVsBLw/y5vHzNX2FjRLw=
+google.golang.org/grpc v1.82.2/go.mod h1:yzTZ1TB1Z3SG+LIYaI+WiE8D5+PZ3ArnrSp8zF3+/ZA=
 google.golang.org/grpc/cmd/protoc-gen-go-grpc v1.1.0/go.mod h1:6Kw0yEErY5E/yWrBtf03jp27GLLJujG4z/JK95pnjjw=
 google.golang.org/protobuf v0.0.0-20200109180630-ec00e32a8dfd/go.mod h1:DFci5gLYBciE7Vtevhsrf46CRTquxDuWsQurQQe4oz8=
 google.golang.org/protobuf v0.0.0-20200221191635-4d8936d0db64/go.mod h1:kwYJMbMJ01Woi6D6+Kah6886xMZcty6N08ah7+eCXa0=
