@@ -1355,6 +1355,18 @@ func TestPipelinerunLogs_log_failed(t *testing.T) {
 					},
 				},
 			},
+			Status: corev1.PodStatus{
+				ContainerStatuses: []corev1.ContainerStatus{
+					{
+						Name:  tr1Step1Name,
+						State: terminated(0, ""),
+					},
+					{
+						Name:  nopStep,
+						State: terminated(0, ""),
+					},
+				},
+			},
 		},
 		{
 			ObjectMeta: metav1.ObjectMeta{
@@ -1374,6 +1386,18 @@ func TestPipelinerunLogs_log_failed(t *testing.T) {
 					},
 				},
 			},
+			Status: corev1.PodStatus{
+				ContainerStatuses: []corev1.ContainerStatus{
+					{
+						Name:  tr2Step1Name,
+						State: terminated(1, ""),
+					},
+					{
+						Name:  nopStep,
+						State: terminated(0, ""),
+					},
+				},
+			},
 		},
 	}
 
@@ -1388,7 +1412,7 @@ func TestPipelinerunLogs_log_failed(t *testing.T) {
 		),
 	)
 
-	t.Run("shows only failed task logs", func(t *testing.T) {
+	t.Run("shows only failed step logs of failed tasks", func(t *testing.T) {
 		cs, _ := test.SeedTestData(t, pipelinetest.Data{PipelineRuns: prs, Pipelines: pps, TaskRuns: trs, Pods: p, Namespaces: nsList})
 		cs.Pipeline.Resources = cb.APIResourceList(version, []string{"task", "taskrun", "pipeline", "pipelinerun"})
 		tdc := testDynamic.Options{}
@@ -1407,7 +1431,104 @@ func TestPipelinerunLogs_log_failed(t *testing.T) {
 
 		expected := "task read-task has failed: task failed\n" +
 			"[read-task : readfile-step] unable to read a file\n\n" +
-			"[read-task : nop] Build failed\n\n" +
+			"failed to get logs for task read-task : container readfile-step has failed \n" +
+			"Tasks Completed: 1 (Failed: 1, Cancelled 0), Skipped: 0\n"
+
+		test.AssertOutput(t, expected, output)
+	})
+
+	t.Run("continues through multiple failed steps in onError: continue mode", func(t *testing.T) {
+		multiFailedPod := p[1].DeepCopy()
+		multiFailedPod.Spec.Containers = []corev1.Container{
+			{
+				Name:  tr2Step1Name,
+				Image: tr2Step1Name + ":latest",
+			},
+			{
+				Name:  "step-second",
+				Image: "step-second:latest",
+			},
+			{
+				Name:  nopStep,
+				Image: "override-with-nop:latest",
+			},
+		}
+		multiFailedPod.Status.ContainerStatuses = []corev1.ContainerStatus{
+			{
+				Name:  tr2Step1Name,
+				State: terminated(1, ""),
+			},
+			{
+				Name:  "step-second",
+				State: terminated(1, ""),
+			},
+			{
+				Name:  nopStep,
+				State: terminated(0, ""),
+			},
+		}
+
+		multiFailedLogs := fake.Logs(
+			fake.Task(tr1Pod,
+				fake.Step(tr1Step1Name, "written a file"),
+				fake.Step(nopStep, "Build successful"),
+			),
+			fake.Task(tr2Pod,
+				fake.Step(tr2Step1Name, "unable to read a file"),
+				fake.Step("step-second", "second step failed"),
+				fake.Step(nopStep, "Build failed"),
+			),
+		)
+
+		cs, _ := test.SeedTestData(t, pipelinetest.Data{PipelineRuns: prs, Pipelines: pps, TaskRuns: trs, Pods: []*corev1.Pod{p[0], multiFailedPod}, Namespaces: nsList})
+		cs.Pipeline.Resources = cb.APIResourceList(version, []string{"task", "taskrun", "pipeline", "pipelinerun"})
+		tdc := testDynamic.Options{}
+		dc, err := tdc.Client(
+			cb.UnstructuredP(pps[0], version),
+			cb.UnstructuredPR(prs[0], version),
+			cb.UnstructuredTR(trs[0], version),
+			cb.UnstructuredTR(trs[1], version),
+		)
+		if err != nil {
+			t.Errorf("unable to create dynamic client: %v", err)
+		}
+		prlo := logOpts(prName, ns, cs, dc, fake.Streamer(multiFailedLogs), false, false, true)
+		prlo.Failed = true
+		output, _ := fetchLogs(prlo)
+
+		expected := "task read-task has failed: task failed\n" +
+			"[read-task : readfile-step] unable to read a file\n\n" +
+			"failed to get logs for task read-task : container readfile-step has failed \n" +
+			"[read-task : second] second step failed\n\n" +
+			"failed to get logs for task read-task : container step-second has failed \n" +
+			"Tasks Completed: 1 (Failed: 1, Cancelled 0), Skipped: 0\n"
+
+		test.AssertOutput(t, expected, output)
+	})
+
+	t.Run("skips steps tekton gave up on after an earlier failure", func(t *testing.T) {
+		skippedPods := []*corev1.Pod{p[0], p[1].DeepCopy()}
+		skippedPods[1].Status.ContainerStatuses[1].State = terminated(1, skippedTerminationMessage)
+
+		cs, _ := test.SeedTestData(t, pipelinetest.Data{PipelineRuns: prs, Pipelines: pps, TaskRuns: trs, Pods: skippedPods, Namespaces: nsList})
+		cs.Pipeline.Resources = cb.APIResourceList(version, []string{"task", "taskrun", "pipeline", "pipelinerun"})
+		tdc := testDynamic.Options{}
+		dc, err := tdc.Client(
+			cb.UnstructuredP(pps[0], version),
+			cb.UnstructuredPR(prs[0], version),
+			cb.UnstructuredTR(trs[0], version),
+			cb.UnstructuredTR(trs[1], version),
+		)
+		if err != nil {
+			t.Errorf("unable to create dynamic client: %v", err)
+		}
+		prlo := logOpts(prName, ns, cs, dc, fake.Streamer(fakeLogs), false, false, true)
+		prlo.Failed = true
+		output, _ := fetchLogs(prlo)
+
+		expected := "task read-task has failed: task failed\n" +
+			"[read-task : readfile-step] unable to read a file\n\n" +
+			"failed to get logs for task read-task : container readfile-step has failed \n" +
 			"Tasks Completed: 1 (Failed: 1, Cancelled 0), Skipped: 0\n"
 
 		test.AssertOutput(t, expected, output)
@@ -5020,4 +5141,17 @@ func fetchLogs(lo *options.LogOptions) (string, error) {
 	lo.Stream = &cli.Stream{Out: out, Err: out}
 	err := Run(lo)
 	return out.String(), err
+}
+
+// skippedTerminationMessage is what tekton writes for a step it gave up on
+// because an earlier step in the same task failed.
+const skippedTerminationMessage = `[{"key":"StartedAt","value":"2026-09-16T07:50:38.332Z","type":3},{"key":"Reason","value":"Skipped","type":3}]`
+
+func terminated(exitCode int32, message string) corev1.ContainerState {
+	return corev1.ContainerState{
+		Terminated: &corev1.ContainerStateTerminated{
+			ExitCode: exitCode,
+			Message:  message,
+		},
+	}
 }

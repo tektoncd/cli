@@ -15,6 +15,7 @@
 package log
 
 import (
+	"encoding/json"
 	"fmt"
 	"strings"
 	"sync"
@@ -24,6 +25,7 @@ import (
 	"github.com/tektoncd/cli/pkg/pods"
 	taskrunpkg "github.com/tektoncd/cli/pkg/taskrun"
 	v1 "github.com/tektoncd/pipeline/pkg/apis/pipeline/v1"
+	"github.com/tektoncd/pipeline/pkg/result"
 	corev1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/fields"
@@ -155,6 +157,11 @@ func (r *Reader) readStepsLogs(logC chan<- Log, errC chan<- error, steps []*step
 
 		if err := container.Status(); err != nil {
 			errC <- err
+			// Stopping at the first failure would hide the other failed
+			// steps, which are exactly the ones --log-failed asks for.
+			if r.failed {
+				continue
+			}
 			return
 		}
 	}
@@ -167,17 +174,13 @@ func (r *Reader) readPodLogs(podC <-chan string, podErrC <-chan error, follow, t
 
 	wg.Add(1)
 	go func() {
-		// forward pod error to error stream
-		if podErrC != nil {
-			for podErr := range podErrC {
-				errC <- podErr
-			}
+		defer wg.Done()
+		if podErrC == nil {
+			return
 		}
-		wg.Done()
-
-		// wait for all goroutines to close before closing errC channel
-		wg.Wait()
-		close(errC)
+		for podErr := range podErrC {
+			errC <- podErr
+		}
 	}()
 
 	wg.Add(1)
@@ -201,13 +204,23 @@ func (r *Reader) readPodLogs(podC <-chan string, podErrC <-chan error, follow, t
 				errC <- fmt.Errorf("task %s failed: %s. Run tkn tr desc %s for more details", r.task, strings.TrimSpace(err.Error()), r.run)
 				continue
 			}
-			steps := filterSteps(pod, r.allSteps, r.steps)
+			steps := filterSteps(pod, r.allSteps, r.steps, r.failed)
 			if len(steps) == 0 {
-				errC <- fmt.Errorf("no steps found for task %s", r.task)
+				// With --log-failed a task can fail without any step failing,
+				// e.g. a timeout or an evicted pod. The task failure message
+				// is already reported, so stay quiet here.
+				if !r.failed {
+					errC <- fmt.Errorf("no steps found for task %s", r.task)
+				}
 				continue
 			}
 			r.readStepsLogs(logC, errC, steps, p, follow, timestamps)
 		}
+	}()
+
+	go func() {
+		wg.Wait()
+		close(errC)
 	}()
 
 	return logC, errC
@@ -293,7 +306,7 @@ func (r *Reader) getTaskRunPodNames(run *v1.TaskRun) (<-chan string, <-chan erro
 	return podC, errC, nil
 }
 
-func filterSteps(pod *corev1.Pod, allSteps bool, stepsGiven []string) []*step {
+func filterSteps(pod *corev1.Pod, allSteps bool, stepsGiven []string, failedOnly bool) []*step {
 	steps := []*step{}
 	if pod == nil {
 		fmt.Printf("pod not found")
@@ -307,7 +320,7 @@ func filterSteps(pod *corev1.Pod, allSteps bool, stepsGiven []string) []*step {
 
 	if len(stepsGiven) == 0 {
 		steps = append(steps, stepsInPod...)
-		return steps
+		return filterFailedSteps(steps, failedOnly)
 	}
 
 	stepsToAdd := map[string]bool{}
@@ -321,7 +334,40 @@ func filterSteps(pod *corev1.Pod, allSteps bool, stepsGiven []string) []*step {
 		}
 	}
 
-	return steps
+	return filterFailedSteps(steps, failedOnly)
+}
+
+func filterFailedSteps(steps []*step, failedOnly bool) []*step {
+	if !failedOnly {
+		return steps
+	}
+
+	failed := []*step{}
+	for _, s := range steps {
+		term := s.state.Terminated
+		if term == nil || term.ExitCode == 0 || isSkippedStep(term) {
+			continue
+		}
+		failed = append(failed, s)
+	}
+	return failed
+}
+
+// Tekton starts every step container even when an earlier step fails. The ones
+// it gives up on also exit non-zero, and the only thing telling them apart from
+// a real failure is a "Skipped" reason in the termination message.
+func isSkippedStep(term *corev1.ContainerStateTerminated) bool {
+	var results []result.RunResult
+	if err := json.Unmarshal([]byte(term.Message), &results); err != nil {
+		return false
+	}
+
+	for _, r := range results {
+		if r.ResultType == result.InternalTektonResultType && strings.EqualFold(r.Key, "Reason") && strings.EqualFold(r.Value, "Skipped") {
+			return true
+		}
+	}
+	return false
 }
 
 func getInitSteps(pod *corev1.Pod) []*step {

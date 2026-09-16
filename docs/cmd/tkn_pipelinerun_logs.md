@@ -26,7 +26,7 @@ Show the logs of PipelineRun named 'microservice-1' for all Tasks and steps (inc
 
     tkn pr logs microservice-1 -a -n foo
 
-Show the logs of PipelineRun named 'microservice-1' for failed Tasks only from namespace 'bar':
+Show the logs of PipelineRun named 'microservice-1' for failed Tasks and steps only from namespace 'bar':
 
     tkn pr logs microservice-1 --log-failed -n bar
    
@@ -41,7 +41,7 @@ Show the logs of PipelineRun named 'microservice-1' for failed Tasks only from n
   -h, --help                          help for logs
   -L, --last                          show logs for last PipelineRun
       --limit int                     lists number of PipelineRuns (default 5)
-      --log-failed                    show logs for failed tasks only
+      --log-failed                    show logs for failed tasks and steps only
       --long                          show logs with task display name (display name and step name)
       --prefix                        prefix each log line with the log source (task name and step name) (default true)
   -t, --task strings                  show logs for mentioned Tasks only
