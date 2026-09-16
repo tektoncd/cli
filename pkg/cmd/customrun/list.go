@@ -64,6 +64,14 @@ func listCommand(p cli.Params) *cobra.Command {
 	eg := `List all CustomRuns in namespace 'bar':
 
     tkn cr list -n bar
+
+List CustomRuns as a JSON array:
+
+    tkn customrun list -o json
+
+List CustomRuns as a YAML array:
+
+    tkn customrun list -o yaml
 `
 
 	c := &cobra.Command{

@@ -74,6 +74,18 @@ func listCommand(p cli.Params) *cobra.Command {
 		Annotations: map[string]string{
 			"commandType": "main",
 		},
+		Example: `List Pipelines in namespace 'bar':
+
+    tkn pipeline list -n bar
+
+List Pipelines as a JSON array:
+
+    tkn pipeline list -o json
+
+List Pipelines as a YAML array:
+
+    tkn pipeline list -o yaml
+`,
 		SilenceUsage: true,
 		RunE: func(cmd *cobra.Command, _ []string) error {
 			cs, err := p.Clients()

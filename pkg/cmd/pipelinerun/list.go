@@ -66,6 +66,14 @@ func listCommand(p cli.Params) *cobra.Command {
 List all PipelineRuns in a namespace 'foo':
 
     tkn pr list -n foo
+
+List PipelineRuns as a JSON array:
+
+    tkn pipelinerun list -o json
+
+List PipelineRuns as a YAML array:
+
+    tkn pipelinerun list -o yaml
 `
 
 	c := &cobra.Command{

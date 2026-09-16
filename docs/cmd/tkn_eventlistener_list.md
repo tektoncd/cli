@@ -24,6 +24,14 @@ or
 
 	tkn el ls -n bar
 
+List EventListeners as a JSON array:
+
+	tkn eventlistener list -o json
+
+List EventListeners as a YAML array:
+
+	tkn eventlistener list -o yaml
+
 
 ### Options
 
