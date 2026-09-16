@@ -47,6 +47,14 @@ func listCommand(p cli.Params) *cobra.Command {
 or
 
 	tkn ctb ls
+
+List ClusterTriggerBindings as a JSON array:
+
+	tkn clustertriggerbinding list -o json
+
+List ClusterTriggerBindings as a YAML array:
+
+	tkn clustertriggerbinding list -o yaml
 `
 
 	c := &cobra.Command{

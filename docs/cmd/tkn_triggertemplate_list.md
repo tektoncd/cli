@@ -24,6 +24,14 @@ or
 
 	tkn tt ls -n bar
 
+List TriggerTemplates as a JSON array:
+
+	tkn triggertemplate list -o json
+
+List TriggerTemplates as a YAML array:
+
+	tkn triggertemplate list -o yaml
+
 
 ### Options
 

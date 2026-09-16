@@ -64,6 +64,18 @@ func listCommand(p cli.Params) *cobra.Command {
 		Annotations: map[string]string{
 			"commandType": "main",
 		},
+		Example: `List Tasks in namespace 'bar':
+
+    tkn task list -n bar
+
+List Tasks as a JSON array:
+
+    tkn task list -o json
+
+List Tasks as a YAML array:
+
+    tkn task list -o yaml
+`,
 		RunE: func(cmd *cobra.Command, _ []string) error {
 			cs, err := p.Clients()
 			if err != nil {
