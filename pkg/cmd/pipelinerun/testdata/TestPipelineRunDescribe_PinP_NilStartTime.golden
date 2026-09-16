@@ -1,0 +1,18 @@
+Name:           pinp-pipeline-run
+Namespace:      ns
+Pipeline Ref:   pipeline
+Labels:
+ tekton.dev/pipeline=pipeline
+
+Status
+
+STARTED          DURATION   STATUS
+10 minutes ago   5m0s       Succeeded
+
+Timeouts
+ Pipeline:   1h0m0s
+
+Taskruns
+
+ NAME                        TASK NAME            STARTED   DURATION   STATUS
+ pinp-run-call-child-greet   call-child > greet   ---       ---        ---

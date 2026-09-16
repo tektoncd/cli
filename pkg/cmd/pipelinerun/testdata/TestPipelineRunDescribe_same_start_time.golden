@@ -1,0 +1,19 @@
+Name:           pipeline-run
+Namespace:      ns
+Pipeline Ref:   pipeline
+Labels:
+ tekton.dev/pipeline=pipeline
+
+Status
+
+STARTED          DURATION   STATUS
+10 minutes ago   15m0s      Succeeded
+
+Timeouts
+ Pipeline:   1h0m0s
+
+Taskruns
+
+ NAME   TASK NAME   STARTED         DURATION   STATUS
+ tr-1   t-1         8 minutes ago   3m0s       Succeeded
+ tr-2   t-2         8 minutes ago   7m0s       Succeeded
