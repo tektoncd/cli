@@ -24,6 +24,14 @@ or
 
     tkn tb desc foo -n bar
 
+Describe a TriggerBinding as JSON:
+
+    tkn triggerbinding describe foo -n bar -o json
+
+Describe a TriggerBinding as YAML:
+
+    tkn triggerbinding describe foo -n bar -o yaml
+
 
 ### Options
 

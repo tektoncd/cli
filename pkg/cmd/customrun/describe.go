@@ -129,6 +129,14 @@ func describeCommand(p cli.Params) *cobra.Command {
 or
 
     tkn cr desc foo -n bar
+
+Describe a CustomRun as JSON:
+
+    tkn customrun describe foo -n bar -o json
+
+Describe a CustomRun as YAML:
+
+    tkn customrun describe foo -n bar -o yaml
 `
 
 	c := &cobra.Command{
