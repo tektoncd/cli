@@ -52,6 +52,14 @@ func describeCommand(p cli.Params) *cobra.Command {
 or
 
     tkn ctb desc foo
+
+Describe a ClusterTriggerBinding as JSON:
+
+    tkn clustertriggerbinding describe foo -o json
+
+Describe a ClusterTriggerBinding as YAML:
+
+    tkn clustertriggerbinding describe foo -o yaml
 `
 
 	c := &cobra.Command{

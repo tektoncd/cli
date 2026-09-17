@@ -24,6 +24,14 @@ or
 
    tkn el desc foo -n bar
 
+Describe an EventListener as JSON:
+
+    tkn eventlistener describe foo -n bar -o json
+
+Describe an EventListener as YAML:
+
+    tkn eventlistener describe foo -n bar -o yaml
+
 
 ### Options
 

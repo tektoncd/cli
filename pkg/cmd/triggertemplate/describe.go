@@ -72,7 +72,15 @@ func describeCommand(p cli.Params) *cobra.Command {
 
 or
 
-   tkn tt desc foo -n bar
+    tkn tt desc foo -n bar
+
+Describe a TriggerTemplate as JSON:
+
+    tkn triggertemplate describe foo -n bar -o json
+
+Describe a TriggerTemplate as YAML:
+
+    tkn triggertemplate describe foo -n bar -o yaml
 `
 
 	c := &cobra.Command{

@@ -24,6 +24,14 @@ or
 
     tkn pr desc foo -n bar
 
+Describe a PipelineRun as JSON:
+
+    tkn pipelinerun describe foo -n bar -o json
+
+Describe a PipelineRun as YAML:
+
+    tkn pipelinerun describe foo -n bar -o yaml
+
 
 ### Options
 

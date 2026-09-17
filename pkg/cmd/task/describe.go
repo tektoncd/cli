@@ -116,6 +116,14 @@ func describeCommand(p cli.Params) *cobra.Command {
 or
 
    tkn t desc foo -n bar
+
+Describe a Task as JSON:
+
+    tkn task describe foo -n bar -o json
+
+Describe a Task as YAML:
+
+    tkn task describe foo -n bar -o yaml
 `
 
 	c := &cobra.Command{

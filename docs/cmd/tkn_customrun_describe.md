@@ -24,6 +24,14 @@ or
 
     tkn cr desc foo -n bar
 
+Describe a CustomRun as JSON:
+
+    tkn customrun describe foo -n bar -o json
+
+Describe a CustomRun as YAML:
+
+    tkn customrun describe foo -n bar -o yaml
+
 
 ### Options
 
