@@ -17,6 +17,7 @@ package actions
 import (
 	"context"
 
+	"github.com/tektoncd/cli/pkg/exitcode"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime/schema"
 	"k8s.io/client-go/discovery"
@@ -32,7 +33,7 @@ func Delete(gr schema.GroupVersionResource, dynamic dynamic.Interface, discovery
 
 	err = dynamic.Resource(*gvr).Namespace(ns).Delete(context.Background(), objname, op)
 	if err != nil {
-		return err
+		return exitcode.FromAPIError(err)
 	}
 
 	return nil

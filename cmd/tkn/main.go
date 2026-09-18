@@ -20,18 +20,19 @@ import (
 	"syscall"
 
 	"github.com/tektoncd/cli/pkg/cli"
-	"github.com/tektoncd/cli/pkg/cmd"
+	tknCmd "github.com/tektoncd/cli/pkg/cmd"
+	"github.com/tektoncd/cli/pkg/exitcode"
 	"github.com/tektoncd/cli/pkg/plugins"
 	_ "k8s.io/client-go/plugin/pkg/client/auth"
 )
 
 func main() {
 	tp := &cli.TektonParams{}
-	tkn := cmd.Root(tp)
+	tkn := tknCmd.Root(tp)
 
 	args := os.Args[1:]
-	cmd, _, _ := tkn.Find(args)
-	if cmd != nil && cmd == tkn && len(args) > 0 {
+	found, _, _ := tkn.Find(args)
+	if found != nil && found == tkn && len(args) > 0 {
 		exCmd, err := plugins.FindPlugin(os.Args[1])
 		// if we can't find command then execute the normal tkn command.
 		if err != nil {
@@ -49,6 +50,7 @@ func main() {
 
 CoreTkn:
 	if err := tkn.Execute(); err != nil {
-		os.Exit(1)
+		tknCmd.PrintError(tkn, err, os.Stderr)
+		os.Exit(exitcode.CodeFrom(err))
 	}
 }
