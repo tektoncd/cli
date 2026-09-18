@@ -34,11 +34,28 @@ type patchStringValue struct {
 	Value string `json:"value"`
 }
 
+// CancelResult is the machine-readable result of a cancel operation.
+type CancelResult struct {
+	Kind   string `json:"kind"`
+	Name   string `json:"name"`
+	Status string `json:"status"`
+}
+
 func cancelCommand(p cli.Params) *cobra.Command {
 	eg := `Cancel the TaskRun named 'foo' from namespace 'bar':
 
     tkn taskrun cancel foo -n bar
+
+Cancel a TaskRun and print the result as JSON:
+
+    tkn taskrun cancel foo -n bar -o json
+
+Cancel a TaskRun and print the result as YAML:
+
+    tkn taskrun cancel foo -n bar -o yaml
 `
+
+	output := ""
 
 	c := &cobra.Command{
 		Use:               "cancel",
@@ -56,14 +73,19 @@ func cancelCommand(p cli.Params) *cobra.Command {
 				Err: cmd.OutOrStderr(),
 			}
 
-			return cancelTaskRun(p, s, args[0])
+			return cancelTaskRun(p, s, args[0], output)
 		},
 	}
 
+	c.Flags().StringVarP(&output, "output", "o", "", formatted.OutputFlagUsage)
 	return c
 }
 
-func cancelTaskRun(p cli.Params, s *cli.Stream, trName string) error {
+func cancelTaskRun(p cli.Params, s *cli.Stream, trName string, output string) error {
+	if output != "" && !formatted.IsStructured(output) {
+		return fmt.Errorf("invalid output format %q: must be json or yaml", output)
+	}
+
 	cs, err := p.Clients()
 	if err != nil {
 		return fmt.Errorf("failed to create tekton client")
@@ -83,6 +105,14 @@ func cancelTaskRun(p cli.Params, s *cli.Stream, trName string) error {
 
 	if _, err := patch(cs, trName, metav1.PatchOptions{}, p.Namespace()); err != nil {
 		return fmt.Errorf("failed to cancel TaskRun %s: %v", trName, err)
+	}
+
+	if formatted.IsStructured(output) {
+		return formatted.PrintStructuredOutput(s.Out, output, CancelResult{
+			Kind:   "TaskRun",
+			Name:   taskrun.Name,
+			Status: "cancelled",
+		})
 	}
 
 	fmt.Fprintf(s.Out, "TaskRun cancelled: %s\n", taskrun.Name)
