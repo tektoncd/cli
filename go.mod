@@ -1,6 +1,6 @@
 module github.com/tektoncd/cli
 
-go 1.26.6
+go 1.27.0
 
 require (
 	github.com/AlecAivazis/survey/v2 v2.3.7
@@ -25,7 +25,7 @@ require (
 	github.com/letsencrypt/boulder v0.20260908.0
 	github.com/mitchellh/go-homedir v1.1.0
 	github.com/pkg/errors v0.9.1
-	github.com/sigstore/sigstore v1.10.9
+	github.com/sigstore/sigstore v1.11.0
 	github.com/spf13/cobra v1.10.2
 	github.com/spf13/pflag v1.0.10
 	github.com/spf13/viper v1.21.0
@@ -139,9 +139,9 @@ require (
 	github.com/prometheus/procfs v0.21.0 // indirect
 	github.com/russross/blackfriday v1.6.0 // indirect
 	github.com/sagikazarmark/locafero v0.12.0 // indirect
-	github.com/secure-systems-lab/go-securesystemslib v0.11.0 // indirect
+	github.com/secure-systems-lab/go-securesystemslib v0.11.1 // indirect
 	github.com/sergi/go-diff v1.4.0 // indirect
-	github.com/sigstore/protobuf-specs v0.5.1 // indirect
+	github.com/sigstore/protobuf-specs v0.5.2 // indirect
 	github.com/sirupsen/logrus v1.9.4 // indirect
 	github.com/spf13/afero v1.15.0 // indirect
 	github.com/spf13/cast v1.10.0 // indirect
