@@ -66,8 +66,9 @@ Authentication:
 	3. Additionally, you can use Basic auth via --remote-username and --remote-password
 
 Caching:
-    By default, bundles will be cached in ~/.tekton/bundles. If you would like to use a different location, set
-"--cache-dir" and if you would like to skip the cache altogether, set "--no-cache".
+    Bundles are cached in ~/.tekton/bundles when ~/.tekton exists. Otherwise, the default is
+    $XDG_CACHE_HOME/tkn/bundles, or ~/.cache/tkn/bundles when XDG_CACHE_HOME is unset. XDG_CACHE_HOME
+    must be an absolute path. Use --cache-dir to select another location or --no-cache to skip caching.
 `
 
 	c := &cobra.Command{
