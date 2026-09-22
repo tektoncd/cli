@@ -37,11 +37,13 @@ spec:
 
 func TestListCommand(t *testing.T) {
 	testcases := []struct {
-		name           string
-		additionalArgs []string
-		format         string
-		expectedStdout string
-		expectedErr    string
+		name             string
+		additionalArgs   []string
+		format           string
+		expectedStdout   string
+		expectedErr      string
+		explicitCacheDir bool
+		emptyCacheDir    bool
 	}{
 		{
 			name:           "no-format",
@@ -85,11 +87,26 @@ func TestListCommand(t *testing.T) {
 			format:         "name",
 			expectedStdout: "*Warning*: This is an experimental command, its usage and behavior can change in the next release(s)\npipeline.tekton.dev/foobar\n",
 			additionalArgs: []string{"Pipeline", "foobar"},
+		}, {
+			name:             "explicit-cache-dir",
+			format:           "name",
+			expectedStdout:   "*Warning*: This is an experimental command, its usage and behavior can change in the next release(s)\ntask.tekton.dev/foobar\npipeline.tekton.dev/foobar\n",
+			explicitCacheDir: true,
+		}, {
+			name:          "empty-cache-dir",
+			expectedErr:   "--cache-dir cannot be empty",
+			emptyCacheDir: true,
 		},
 	}
 
 	for _, tc := range testcases {
 		t.Run(tc.name, func(t *testing.T) {
+			t.Setenv("HOME", t.TempDir())
+			t.Setenv("XDG_CACHE_HOME", "")
+			if tc.explicitCacheDir {
+				t.Setenv("XDG_CACHE_HOME", "relative/xdg-cache")
+			}
+
 			s := httptest.NewServer(registry.New())
 			defer s.Close()
 			u, err := url.Parse(s.URL)
@@ -122,6 +139,12 @@ func TestListCommand(t *testing.T) {
 			args = append(args, tc.additionalArgs...)
 			if tc.format != "" {
 				args = append(args, "-o", tc.format)
+			}
+			if tc.explicitCacheDir {
+				args = append(args, "--cache-dir", t.TempDir())
+			}
+			if tc.emptyCacheDir {
+				args = append(args, "--cache-dir", "")
 			}
 
 			output, err := test.ExecuteCommand(task, args...)

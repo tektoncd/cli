@@ -1,6 +1,7 @@
 package bundle
 
 import (
+	"errors"
 	"net/http"
 
 	"github.com/google/go-containerregistry/pkg/authn"
@@ -71,14 +72,36 @@ func AddRemoteFlags(flags *pflag.FlagSet, opts *RemoteOptions) {
 	flags.BoolVar(&opts.skipTLS, "remote-skip-tls", false, "Skip TLS certificate verification and allow plain-HTTP connections to the registry (opt-in insecure mode)")
 }
 
-// PullOptions configure how an image is cached once it is fetched from the remote.
+// CacheOptions configure how an image is cached once it is fetched from the remote.
 type CacheOptions struct {
-	cacheDir string
-	noCache  bool
+	cacheDir    string
+	cacheDirSet bool
+	noCache     bool
+}
+
+type cacheDirFlagValue struct {
+	options *CacheOptions
+}
+
+func (v *cacheDirFlagValue) Set(value string) error {
+	if value == "" {
+		return errors.New("--cache-dir cannot be empty")
+	}
+	v.options.cacheDir = value
+	v.options.cacheDirSet = true
+	return nil
+}
+
+func (v *cacheDirFlagValue) String() string {
+	return v.options.cacheDir
+}
+
+func (v *cacheDirFlagValue) Type() string {
+	return "string"
 }
 
 // AddCacheFlags will define a set of flags to control how Tekton Bundle caching is done.
 func AddCacheFlags(flags *pflag.FlagSet, opts *CacheOptions) {
-	flags.StringVar(&opts.cacheDir, "cache-dir", "~/.tekton/bundles", "A directory to cache Tekton bundles in.")
+	flags.Var(&cacheDirFlagValue{options: opts}, "cache-dir", "A directory to cache Tekton bundles in. The default follows XDG_CACHE_HOME unless ~/.tekton exists.")
 	flags.BoolVar(&opts.noCache, "no-cache", false, "If set to true, pulls a Tekton bundle from the remote even its exact digest is available in the cache.")
 }
