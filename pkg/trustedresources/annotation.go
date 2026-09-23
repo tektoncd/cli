@@ -21,8 +21,9 @@ import (
 	yaml "go.yaml.in/yaml/v3"
 )
 
-// insertAnnotation adds key: value to metadata.annotations in doc and returns
-// the result, leaving every other byte of the document untouched.
+// insertAnnotation sets key: value in metadata.annotations of doc, replacing an
+// existing entry for key, and returns the result, leaving every other byte of
+// the document untouched.
 //
 // The document is parsed only to locate the insertion point. Re-serializing the
 // parsed tree would be simpler, but it does not round-trip: a folded scalar
@@ -30,8 +31,8 @@ import (
 // exactly the kind of unrelated diff this is meant to avoid.
 //
 // An error is returned when the document is not a mapping with a metadata
-// mapping in it, or when either mapping is written in flow style, where there
-// is no line to insert.
+// mapping in it, when either mapping is written in flow style, where there
+// is no line to insert, or when an existing entry for key spans several lines.
 func insertAnnotation(doc []byte, key, value string) ([]byte, error) {
 	var root yaml.Node
 	if err := yaml.Unmarshal(doc, &root); err != nil {
@@ -67,6 +68,13 @@ func insertAnnotation(doc []byte, key, value string) ([]byte, error) {
 	// position is where a new line belongs.
 	case annotations != nil && annotations.Kind == yaml.MappingNode &&
 		annotations.Style != yaml.FlowStyle && len(annotations.Content) > 0:
+		// Re-signing: overwrite the old entry instead of adding a duplicate key.
+		if oldKey, oldValue := mappingEntry(annotations, key); oldKey != nil {
+			if !onOneLine(doc, oldKey, oldValue) {
+				return nil, fmt.Errorf("existing %s annotation spans several lines", key)
+			}
+			return replaceLine(doc, oldKey.Line, indentOf(oldKey)+key+": "+encoded)
+		}
 		first := annotations.Content[0]
 		return insertLine(doc, first.Line, indentOf(first)+key+": "+encoded)
 
@@ -104,6 +112,20 @@ func mappingEntry(mapping *yaml.Node, key string) (*yaml.Node, *yaml.Node) {
 	return nil, nil
 }
 
+// onOneLine reports whether the key: value entry is written entirely on the
+// key's line, so that rewriting that line rewrites the whole entry.
+func onOneLine(doc []byte, key, value *yaml.Node) bool {
+	if value.Kind != yaml.ScalarNode || value.Line != key.Line {
+		return false
+	}
+	lines := strings.SplitAfter(string(doc), "\n")
+	var entry map[string]string
+	if err := yaml.Unmarshal([]byte(lines[key.Line-1]), &entry); err != nil {
+		return false
+	}
+	return entry[key.Value] == value.Value
+}
+
 // isEmptyMapping reports whether n holds no entries, covering both `{}` and a
 // key written with nothing under it, which parses as null.
 func isEmptyMapping(n *yaml.Node) bool {
@@ -136,14 +158,15 @@ func insertLine(doc []byte, line int, text string) ([]byte, error) {
 		return nil, fmt.Errorf("line %d is outside the document", line)
 	}
 	at := line - 1
+	eol := lineEnding(lines[at])
 
 	var b strings.Builder
 	b.Grow(len(doc) + len(text) + 1)
 	for _, l := range lines[:at] {
 		b.WriteString(l)
 	}
-	b.WriteString(text)
-	b.WriteString("\n")
+	b.WriteString(strings.ReplaceAll(text, "\n", eol))
+	b.WriteString(eol)
 	for _, l := range lines[at:] {
 		b.WriteString(l)
 	}
@@ -158,17 +181,27 @@ func replaceLine(doc []byte, line int, text string) ([]byte, error) {
 		return nil, fmt.Errorf("line %d is outside the document", line)
 	}
 	at := line - 1
+	eol := lineEnding(lines[at])
 
 	var b strings.Builder
 	b.Grow(len(doc) + len(text))
 	for _, l := range lines[:at] {
 		b.WriteString(l)
 	}
-	b.WriteString(text)
-	b.WriteString("\n")
+	b.WriteString(strings.ReplaceAll(text, "\n", eol))
+	b.WriteString(eol)
 	for _, l := range lines[at+1:] {
 		b.WriteString(l)
 	}
 
 	return []byte(b.String()), nil
+}
+
+// lineEnding returns the terminator of l, so that written lines match a
+// document that uses CRLF.
+func lineEnding(l string) string {
+	if strings.HasSuffix(l, "\r\n") {
+		return "\r\n"
+	}
+	return "\n"
 }
