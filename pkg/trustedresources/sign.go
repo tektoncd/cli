@@ -75,6 +75,9 @@ func Sign(o metav1.Object, doc []byte, keyfile, kmsKey, targetFile string) error
 	if a == nil {
 		a = map[string]string{}
 	}
+	// Verify drops the signature before checking, so an old one must not be signed over.
+	delete(a, SignatureAnnotation)
+	o.SetAnnotations(a)
 
 	// Sign object
 	sig, err := signInterface(signer, o)

@@ -132,18 +132,44 @@ metadata:
 spec:
   steps: []
 `,
+	}, {
+		name: "existing signature",
+		doc: `apiVersion: tekton.dev/v1
+kind: Task
+metadata:
+  name: example
+  annotations:
+    tekton.dev/displayName: example
+    tekton.dev/signature: MEUCIQDvbGRzaWduYXR1cmU=
+spec:
+  steps: []
+`,
+		want: `apiVersion: tekton.dev/v1
+kind: Task
+metadata:
+  name: example
+  annotations:
+    tekton.dev/displayName: example
+    tekton.dev/signature: ` + signatureValue + `
+spec:
+  steps: []
+`,
 	}}
 
 	for _, tc := range tcs {
-		t.Run(tc.name, func(t *testing.T) {
-			got, err := insertAnnotation([]byte(tc.doc), SignatureAnnotation, signatureValue)
-			if err != nil {
-				t.Fatalf("insertAnnotation() got err %v", err)
-			}
-			if string(got) != tc.want {
-				t.Errorf("insertAnnotation() mismatch\ngot:\n%s\nwant:\n%s", got, tc.want)
-			}
-		})
+		for eolName, eol := range map[string]string{"LF": "\n", "CRLF": "\r\n"} {
+			t.Run(tc.name+" "+eolName, func(t *testing.T) {
+				doc := strings.ReplaceAll(tc.doc, "\n", eol)
+				want := strings.ReplaceAll(tc.want, "\n", eol)
+				got, err := insertAnnotation([]byte(doc), SignatureAnnotation, signatureValue)
+				if err != nil {
+					t.Fatalf("insertAnnotation() got err %v", err)
+				}
+				if string(got) != want {
+					t.Errorf("insertAnnotation() mismatch\ngot:\n%q\nwant:\n%q", got, want)
+				}
+			})
+		}
 	}
 }
 
@@ -180,13 +206,13 @@ spec:
 		t.Fatalf("insertAnnotation() got err %v", err)
 	}
 
-	added, removed := lineDiff(doc, string(got))
-	if len(removed) != 0 {
-		t.Errorf("expected no lines to be removed, but got %q", removed)
+	// Removing the signature line must give back the input exactly, line order included.
+	line := "    " + SignatureAnnotation + ": " + signatureValue + "\n"
+	if !strings.Contains(string(got), line) {
+		t.Fatalf("expected the signature line %q, but got:\n%s", line, got)
 	}
-	want := "    " + SignatureAnnotation + ": " + signatureValue
-	if len(added) != 1 || added[0] != want {
-		t.Errorf("expected exactly one added line %q, but got %q", want, added)
+	if rest := strings.Replace(string(got), line, "", 1); rest != doc {
+		t.Errorf("insertAnnotation() changed the document beyond the signature line:\n%s", rest)
 	}
 }
 
@@ -204,6 +230,12 @@ func TestInsertAnnotationErrors(t *testing.T) {
 		name: "flow style annotations with entries",
 		doc:  "apiVersion: tekton.dev/v1\nkind: Task\nmetadata:\n  annotations: {a: b}\n",
 	}, {
+		name: "existing signature as a block scalar",
+		doc:  "apiVersion: tekton.dev/v1\nkind: Task\nmetadata:\n  annotations:\n    tekton.dev/signature: >-\n      MEUCIQ\n",
+	}, {
+		name: "existing signature continued on the next line",
+		doc:  "apiVersion: tekton.dev/v1\nkind: Task\nmetadata:\n  annotations:\n    tekton.dev/signature: MEUC\n      IQ\n",
+	}, {
 		name: "empty document",
 		doc:  "",
 	}}
@@ -215,28 +247,4 @@ func TestInsertAnnotationErrors(t *testing.T) {
 			}
 		})
 	}
-}
-
-// lineDiff reports the lines present in only one of the two documents.
-func lineDiff(before, after string) (added, removed []string) {
-	count := map[string]int{}
-	for _, l := range strings.Split(before, "\n") {
-		count[l]++
-	}
-	for _, l := range strings.Split(after, "\n") {
-		count[l]--
-	}
-	for _, l := range strings.Split(after, "\n") {
-		if count[l] < 0 {
-			added = append(added, l)
-			count[l]++
-		}
-	}
-	for _, l := range strings.Split(before, "\n") {
-		if count[l] > 0 {
-			removed = append(removed, l)
-			count[l]--
-		}
-	}
-	return added, removed
 }

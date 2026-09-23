@@ -142,22 +142,22 @@ spec:
 			// The signed file must differ from the input by the signature
 			// annotation, plus the annotations key itself when the document did
 			// not already have one.
-			added, removed := lineDiff(tc.doc, string(signed))
-			if len(removed) != 0 {
-				t.Errorf("signing removed lines from the document: %q", removed)
-			}
+			var rest strings.Builder
 			signatures := 0
-			for _, l := range added {
+			for _, l := range strings.SplitAfter(string(signed), "\n") {
 				switch {
 				case strings.Contains(l, SignatureAnnotation):
 					signatures++
-				case strings.TrimSpace(l) == "annotations:":
+				case strings.TrimSpace(l) == "annotations:" && !strings.Contains(tc.doc, "annotations:"):
 				default:
-					t.Errorf("signing added an unrelated line: %q", l)
+					rest.WriteString(l)
 				}
 			}
 			if signatures != 1 {
-				t.Errorf("expected exactly one signature annotation line, but got %d in %q", signatures, added)
+				t.Errorf("expected exactly one signature annotation line, but got %d", signatures)
+			}
+			if rest.String() != tc.doc {
+				t.Errorf("signing changed the document beyond the signature:\n%s", rest.String())
 			}
 
 			// Marshalling the resource used to emit zero valued fields of the
@@ -166,6 +166,51 @@ spec:
 				t.Error("signed file contains `resources: {}`, which is not part of the Tekton API")
 			}
 		})
+	}
+}
+
+func TestSignAlreadySignedDocument(t *testing.T) {
+	tmpDir := t.TempDir()
+	signer, err := GenerateKeyFile(tmpDir, "cosign.key", "cosign.pub")
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	doc := `apiVersion: tekton.dev/v1beta1
+kind: Task
+metadata:
+  name: test-task
+  namespace: test
+spec:
+  steps:
+    - name: echo
+      image: ubuntu
+`
+	target := filepath.Join(tmpDir, "signed-task.yaml")
+	for range 2 {
+		task := &v1beta1.Task{}
+		if err := yaml.Unmarshal([]byte(doc), task); err != nil {
+			t.Fatalf("error unmarshalling doc: %v", err)
+		}
+		if err := Sign(task, []byte(doc), filepath.Join(tmpDir, "cosign.key"), "", target); err != nil {
+			t.Fatalf("Sign() get err %v", err)
+		}
+		signed, err := os.ReadFile(target)
+		if err != nil {
+			t.Fatalf("error reading file: %v", err)
+		}
+		doc = string(signed)
+	}
+
+	if n := strings.Count(doc, SignatureAnnotation); n != 1 {
+		t.Errorf("expected one signature annotation after signing twice, but got %d:\n%s", n, doc)
+	}
+	resource, signature, err := UnmarshalCRD([]byte(doc), "Task")
+	if err != nil {
+		t.Fatalf("error unmarshalling crd: %v", err)
+	}
+	if err := VerifyInterface(resource, signer, signature); err != nil {
+		t.Errorf("the re-signed document does not verify: %v", err)
 	}
 }
 
