@@ -103,6 +103,102 @@ func TestToUnstructuredAndAddLabel(t *testing.T) {
 	}
 }
 
+func TestValidateInstallableResource(t *testing.T) {
+	const catalogKindErr = "hub can only install Task, Pipeline, or StepAction resources"
+	tests := []struct {
+		name    string
+		data    string
+		wantErr string
+	}{
+		{
+			name: "allows Task",
+			data: res,
+		},
+		{
+			name: "allows Pipeline",
+			data: `apiVersion: tekton.dev/v1
+kind: Pipeline
+metadata:
+  name: foo
+spec: {}
+`,
+		},
+		{
+			name: "allows StepAction",
+			data: `apiVersion: tekton.dev/v1beta1
+kind: StepAction
+metadata:
+  name: git-clone
+spec:
+  image: alpine
+`,
+		},
+		{
+			name: "rejects ClusterTask",
+			data: `apiVersion: tekton.dev/v1beta1
+kind: ClusterTask
+metadata:
+  name: foo
+spec: {}
+`,
+			wantErr: "refusing to install kind ClusterTask: " + catalogKindErr,
+		},
+		{
+			name: "rejects TaskRun",
+			data: `apiVersion: tekton.dev/v1beta1
+kind: TaskRun
+metadata:
+  name: foo
+spec: {}
+`,
+			wantErr: "refusing to install kind TaskRun: " + catalogKindErr,
+		},
+		{
+			name: "rejects PipelineRun",
+			data: `apiVersion: tekton.dev/v1
+kind: PipelineRun
+metadata:
+  name: foo
+spec: {}
+`,
+			wantErr: "refusing to install kind PipelineRun: " + catalogKindErr,
+		},
+		{
+			name: "rejects core Secret",
+			data: `apiVersion: v1
+kind: Secret
+metadata:
+  name: evil
+`,
+			wantErr: "refusing to install /v1, Kind=Secret: hub can only install tekton.dev resources",
+		},
+	}
+
+	for _, tc := range tests {
+		t.Run(tc.name, func(t *testing.T) {
+			obj, err := toUnstructured([]byte(tc.data))
+			assert.NoError(t, err)
+			err = validateInstallableResource(obj)
+			if tc.wantErr == "" {
+				assert.NoError(t, err)
+				return
+			}
+			assert.EqualError(t, err, tc.wantErr)
+		})
+	}
+}
+
+func TestInstall_RejectsClusterTask(t *testing.T) {
+	clusterTask := `apiVersion: tekton.dev/v1beta1
+kind: ClusterTask
+metadata:
+  name: foo
+spec: {}
+`
+	_, errs := New(nil).Install([]byte(clusterTask), hub.TektonHubType, "", "tekton", "hub")
+	assert.EqualError(t, errs[0], "refusing to install kind ClusterTask: hub can only install Task, Pipeline, or StepAction resources")
+}
+
 func TestListInstalled(t *testing.T) {
 	existingTask := &v1beta1.Task{
 		ObjectMeta: metav1.ObjectMeta{
