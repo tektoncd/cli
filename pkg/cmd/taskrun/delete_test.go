@@ -572,6 +572,55 @@ func TestTaskRunDelete_v1beta1(t *testing.T) {
 			wantError:   false,
 			want:        "All 6 TaskRuns associated with Task \"random\" deleted in namespace \"ns\"\n",
 		},
+		{
+			name:        "With JSON output",
+			command:     []string{"rm", "tr0-1", "-n", "ns", "-o", "json"},
+			dynamic:     seeds[14].dynamicClient,
+			input:       seeds[14].pipelineClient,
+			inputStream: nil,
+			wantError:   false,
+			want: `{"deleted":["tr0-1"]}
+`,
+		},
+		{
+			name:        "Unsupported output format",
+			command:     []string{"rm", "tr0-1", "-n", "ns", "-o", "yaml"},
+			dynamic:     seeds[0].dynamicClient,
+			input:       seeds[0].pipelineClient,
+			inputStream: nil,
+			wantError:   true,
+			want:        "unsupported output format \"yaml\"; supported formats: json",
+		},
+		{
+			name:        "With JSON output for multiple TaskRuns",
+			command:     []string{"rm", "tr0-1", "tr0-2", "-n", "ns", "-o", "json"},
+			dynamic:     seeds[16].dynamicClient,
+			input:       seeds[16].pipelineClient,
+			inputStream: strings.NewReader("y\n"),
+			wantError:   false,
+			want: `{"deleted":["tr0-1","tr0-2"]}
+`,
+		},
+		{
+			name:        "Delete with JSON output for --task but keep meets or exceeds existing (no-op)",
+			command:     []string{"rm", "--task", "random", "-n", "ns", "--keep", "10", "-o", "json"},
+			dynamic:     seeds[15].dynamicClient,
+			input:       seeds[15].pipelineClient,
+			inputStream: nil,
+			wantError:   false,
+			want: `{"deleted":[]}
+`,
+		},
+		{
+			name:        "Delete with JSON output for --task",
+			command:     []string{"rm", "--task", "random", "-n", "ns", "-o", "json"},
+			dynamic:     seeds[15].dynamicClient,
+			input:       seeds[15].pipelineClient,
+			inputStream: nil,
+			wantError:   false,
+			want: `{"deleted":["tr0-1","tr0-2","tr0-3","tr0-9"]}
+`,
+		},
 	}
 
 	for _, tp := range testParams {
@@ -1326,6 +1375,15 @@ func Test_TaskRuns_Delete_With_Running_PipelineRun_v1beta1(t *testing.T) {
 		wantError   bool
 		want        string
 	}{
+		{
+			name:        "Taskrun with running pipelinerun JSON without force",
+			command:     []string{"rm", "tr0-1", "-n", "ns", "-o", "json"},
+			dynamic:     seeds[0].dynamicClient,
+			input:       seeds[0].pipelineClient,
+			inputStream: nil,
+			wantError:   true,
+			want:        "taskrun tr0-1 is owned by a running PipelineRun; use --force to delete",
+		},
 		{
 			name:        "Taskrun with running pipelinerun and answer y",
 			command:     []string{"rm", "tr0-1", "-n", "ns"},

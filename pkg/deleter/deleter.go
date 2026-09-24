@@ -104,6 +104,14 @@ func (d *Deleter) PrintSuccesses(streams *cli.Stream) {
 	}
 }
 
+func (d *Deleter) SuccessfulDeletes() []string {
+	return append([]string(nil), d.successfulDeletes...)
+}
+
+func (d *Deleter) SuccessfulRelatedDeletes() []string {
+	return append([]string(nil), d.successfulRelatedDeletes...)
+}
+
 // appendError adds that error to the list of accumulated errors that
 // have occurred during execution.
 func (d *Deleter) appendError(err error) {
