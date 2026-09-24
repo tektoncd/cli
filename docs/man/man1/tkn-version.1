@@ -47,6 +47,32 @@ Prints version information
 \fB\-C\fP, \fB\-\-no\-color\fP[=false]
     disable coloring (default: false)
 
+.PP
+\fB\-o\fP, \fB\-\-output\fP=""
+    Output format. One of: json|yaml
+
+
+.SH EXAMPLE
+.PP
+Print version information as JSON:
+
+.PP
+.RS
+
+.nf
+    tkn version \-o json
+
+Print version information as YAML:
+
+    tkn version \-o yaml
+
+Print the pipeline component version as JSON:
+
+    tkn version \-\-component pipeline \-o json
+
+.fi
+.RE
+
 
 .SH SEE ALSO
 .PP

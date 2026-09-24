@@ -33,6 +33,7 @@ import (
 	v1 "k8s.io/api/apps/v1"
 	corev1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+	"sigs.k8s.io/yaml"
 )
 
 func TestVersionGood(t *testing.T) {
@@ -336,6 +337,101 @@ func TestGetVersions(t *testing.T) {
 			}
 			got, _ := test.ExecuteCommand(version, "version", "-n", "test")
 			golden.Assert(t, got, strings.ReplaceAll(fmt.Sprintf("%s.golden", t.Name()), "/", "-"))
+		})
+	}
+}
+
+func TestVersionStructuredOutput(t *testing.T) {
+	pipelineConfigMap := getConfigMapData("pipelines-info", "v0.10.0", map[string]string{"app.kubernetes.io/part-of": "tekton-pipelines"})
+	triggersConfigMap := getConfigMapData("triggers-info", "v0.5.0", map[string]string{"app.kubernetes.io/part-of": "tekton-pipelines"})
+
+	testParams := []struct {
+		name    string
+		args    []string
+		format  string
+		want    map[string]string
+		wantErr string
+	}{{
+		name:   "json all components",
+		args:   []string{"version", "-n", "test", "-o", "json"},
+		format: "json",
+		want: map[string]string{
+			"client":   "dev",
+			"pipeline": "v0.10.0",
+			"triggers": "v0.5.0",
+		},
+	}, {
+		name:   "yaml all components",
+		args:   []string{"version", "-n", "test", "-o", "yaml"},
+		format: "yaml",
+		want: map[string]string{
+			"client":   "dev",
+			"pipeline": "v0.10.0",
+			"triggers": "v0.5.0",
+		},
+	}, {
+		name:   "json component pipeline",
+		args:   []string{"version", "-n", "test", "--component", "pipeline", "-o", "json"},
+		format: "json",
+		want:   map[string]string{"pipeline": "v0.10.0"},
+	}, {
+		name:   "yaml component pipeline",
+		args:   []string{"version", "-n", "test", "--component", "pipeline", "-o", "yaml"},
+		format: "yaml",
+		want:   map[string]string{"pipeline": "v0.10.0"},
+	}, {
+		name:   "json component client",
+		args:   []string{"version", "-n", "test", "--component", "client", "-o", "json"},
+		format: "json",
+		want:   map[string]string{"client": "dev"},
+	}, {
+		name:    "invalid output",
+		args:    []string{"version", "-n", "test", "-o", "csv"},
+		wantErr: `invalid output format "csv": must be json or yaml`,
+	}, {
+		name:    "invalid component",
+		args:    []string{"version", "-n", "test", "--component", "nope"},
+		wantErr: `invalid component value "nope"`,
+	}, {
+		name:    "invalid component json",
+		args:    []string{"version", "-n", "test", "--component", "nope", "-o", "json"},
+		wantErr: `invalid component value "nope"`,
+	}, {
+		name:    "check with json",
+		args:    []string{"version", "-n", "test", "-o", "json", "--check"},
+		wantErr: `--check cannot be used with --output`,
+	}}
+
+	for _, tp := range testParams {
+		t.Run(tp.name, func(t *testing.T) {
+			seedData, _ := test.SeedV1beta1TestData(t, test.Data{})
+			cs := pipelinetest.Clients{Kube: seedData.Kube}
+			p := &test.Params{Kube: cs.Kube}
+			version := Command(p)
+			cls, err := p.Clients()
+			if err != nil {
+				t.Errorf("failed to get client: %v", err)
+			}
+			for _, v := range []*corev1.ConfigMap{pipelineConfigMap, triggersConfigMap} {
+				if _, err := cls.Kube.CoreV1().ConfigMaps("test").Create(context.Background(), v, metav1.CreateOptions{}); err != nil {
+					t.Errorf("failed to create configMap")
+				}
+			}
+
+			got, err := test.ExecuteCommand(version, tp.args...)
+			if tp.wantErr != "" {
+				assert.ErrorContains(t, err, tp.wantErr)
+				return
+			}
+			assert.NilError(t, err)
+
+			var result map[string]string
+			if tp.format == "yaml" {
+				assert.NilError(t, yaml.Unmarshal([]byte(got), &result))
+			} else {
+				assert.NilError(t, json.Unmarshal([]byte(got), &result))
+			}
+			assert.DeepEqual(t, tp.want, result)
 		})
 	}
 }

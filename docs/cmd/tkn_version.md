@@ -12,6 +12,21 @@ tkn version
 
 Prints version information
 
+### Examples
+
+Print version information as JSON:
+
+		tkn version -o json
+	
+	Print version information as YAML:
+	
+		tkn version -o yaml
+	
+	Print the pipeline component version as JSON:
+	
+		tkn version --component pipeline -o json
+	
+
 ### Options
 
 ```
@@ -22,6 +37,7 @@ Prints version information
   -k, --kubeconfig string   kubectl config file (default: $HOME/.kube/config)
   -n, --namespace string    namespace to check installed controller version
   -C, --no-color            disable coloring (default: false)
+  -o, --output string       Output format. One of: json|yaml
 ```
 
 ### SEE ALSO

@@ -29,6 +29,7 @@ import (
 	"github.com/spf13/cobra"
 	"github.com/tektoncd/cli/pkg/cli"
 	"github.com/tektoncd/cli/pkg/flags"
+	"github.com/tektoncd/cli/pkg/formatted"
 	"github.com/tektoncd/cli/pkg/version"
 )
 
@@ -51,10 +52,23 @@ var (
 // Command returns version command
 func Command(p cli.Params) *cobra.Command {
 	var check bool
+	output := ""
 
 	var cmd = &cobra.Command{
 		Use:   "version",
 		Short: "Prints version information",
+		Example: `Print version information as JSON:
+
+		tkn version -o json
+	
+	Print version information as YAML:
+	
+		tkn version -o yaml
+	
+	Print the pipeline component version as JSON:
+	
+		tkn version --component pipeline -o json
+	`,
 		Annotations: map[string]string{
 			"commandType": "utility",
 		},
@@ -71,44 +85,84 @@ func Command(p cli.Params) *cobra.Command {
 			return nil
 		},
 		RunE: func(cmd *cobra.Command, _ []string) error {
+			if output != "" && !formatted.IsStructured(output) {
+				return fmt.Errorf("invalid output format %q: must be json or yaml", output)
+			}
+			if formatted.IsStructured(output) && check {
+				return fmt.Errorf("--check cannot be used with --output")
+			}
+			switch component {
+			case "", "client", "chains", "pipeline", "triggers", "dashboard", "operator", "hub":
+			default:
+				return fmt.Errorf("invalid component value %q", component)
+			}
+
 			cs, err := p.Clients()
 			if err == nil {
 				switch component {
 				case "":
-					fmt.Fprintf(cmd.OutOrStdout(), "Client version: %s\n", clientVersion)
 					chainsVersion, _ := version.GetChainsVersion(cs, namespace)
+					pipelineVersion, _ := version.GetPipelineVersion(cs, namespace)
+					triggersVersion, _ := version.GetTriggerVersion(cs, namespace)
+					dashboardVersion, _ := version.GetDashboardVersion(cs, namespace)
+					operatorVersion, _ := version.GetOperatorVersion(cs, namespace)
+					hubVersion, _ := version.GetHubVersion(cs, namespace)
+					if formatted.IsStructured(output) {
+						versions := map[string]string{"client": clientVersion}
+						if chainsVersion != "" {
+							versions["chains"] = chainsVersion
+						}
+						if pipelineVersion != "" {
+							versions["pipeline"] = pipelineVersion
+						}
+						if triggersVersion != "" {
+							versions["triggers"] = triggersVersion
+						}
+						if dashboardVersion != "" {
+							versions["dashboard"] = dashboardVersion
+						}
+						if operatorVersion != "" {
+							versions["operator"] = operatorVersion
+						}
+						if hubVersion != "" {
+							versions["hub"] = hubVersion
+						}
+						return formatted.PrintStructuredOutput(cmd.OutOrStdout(), output, versions)
+					}
+					fmt.Fprintf(cmd.OutOrStdout(), "Client version: %s\n", clientVersion)
 					if chainsVersion != "" {
 						fmt.Fprintf(cmd.OutOrStdout(), "Chains version: %s\n", chainsVersion)
 					}
-					pipelineVersion, _ := version.GetPipelineVersion(cs, namespace)
 					if pipelineVersion == "" {
 						pipelineVersion = "unknown, " +
 							"pipeline controller may be installed in another namespace please use tkn version -n {namespace}"
 					}
 
 					fmt.Fprintf(cmd.OutOrStdout(), "Pipeline version: %s\n", pipelineVersion)
-					triggersVersion, _ := version.GetTriggerVersion(cs, namespace)
 					if triggersVersion != "" {
 						fmt.Fprintf(cmd.OutOrStdout(), "Triggers version: %s\n", triggersVersion)
 					}
-					dashboardVersion, _ := version.GetDashboardVersion(cs, namespace)
 					if dashboardVersion != "" {
 						fmt.Fprintf(cmd.OutOrStdout(), "Dashboard version: %s\n", dashboardVersion)
 					}
-					operatorVersion, _ := version.GetOperatorVersion(cs, namespace)
 					if operatorVersion != "" {
 						fmt.Fprintf(cmd.OutOrStdout(), "Operator version: %s\n", operatorVersion)
 					}
-					hubVersion, _ := version.GetHubVersion(cs, namespace)
 					if hubVersion != "" {
 						fmt.Fprintf(cmd.OutOrStdout(), "Hub version: %s\n", hubVersion)
 					}
 				case "client":
+					if formatted.IsStructured(output) {
+						return formatted.PrintStructuredOutput(cmd.OutOrStdout(), output, map[string]string{"client": clientVersion})
+					}
 					fmt.Fprintf(cmd.OutOrStdout(), "%s\n", clientVersion)
 				case "chains":
 					chainsVersion, _ := version.GetChainsVersion(cs, namespace)
 					if chainsVersion == "" {
 						chainsVersion = "unknown"
+					}
+					if formatted.IsStructured(output) {
+						return formatted.PrintStructuredOutput(cmd.OutOrStdout(), output, map[string]string{"chains": chainsVersion})
 					}
 					fmt.Fprintf(cmd.OutOrStdout(), "%s\n", chainsVersion)
 				case "pipeline":
@@ -116,11 +170,17 @@ func Command(p cli.Params) *cobra.Command {
 					if pipelineVersion == "" {
 						pipelineVersion = "unknown"
 					}
+					if formatted.IsStructured(output) {
+						return formatted.PrintStructuredOutput(cmd.OutOrStdout(), output, map[string]string{"pipeline": pipelineVersion})
+					}
 					fmt.Fprintf(cmd.OutOrStdout(), "%s\n", pipelineVersion)
 				case "triggers":
 					triggersVersion, _ := version.GetTriggerVersion(cs, namespace)
 					if triggersVersion == "" {
 						triggersVersion = "unknown"
+					}
+					if formatted.IsStructured(output) {
+						return formatted.PrintStructuredOutput(cmd.OutOrStdout(), output, map[string]string{"triggers": triggersVersion})
 					}
 					fmt.Fprintf(cmd.OutOrStdout(), "%s\n", triggersVersion)
 				case "dashboard":
@@ -128,11 +188,17 @@ func Command(p cli.Params) *cobra.Command {
 					if dashboardVersion == "" {
 						dashboardVersion = "unknown"
 					}
+					if formatted.IsStructured(output) {
+						return formatted.PrintStructuredOutput(cmd.OutOrStdout(), output, map[string]string{"dashboard": dashboardVersion})
+					}
 					fmt.Fprintf(cmd.OutOrStdout(), "%s\n", dashboardVersion)
 				case "operator":
 					operatorVersion, _ := version.GetOperatorVersion(cs, namespace)
 					if operatorVersion == "" {
 						operatorVersion = "unknown"
+					}
+					if formatted.IsStructured(output) {
+						return formatted.PrintStructuredOutput(cmd.OutOrStdout(), output, map[string]string{"operator": operatorVersion})
 					}
 					fmt.Fprintf(cmd.OutOrStdout(), "%s\n", operatorVersion)
 				case "hub":
@@ -140,20 +206,28 @@ func Command(p cli.Params) *cobra.Command {
 					if hubVersion == "" {
 						hubVersion = "unknown"
 					}
+					if formatted.IsStructured(output) {
+						return formatted.PrintStructuredOutput(cmd.OutOrStdout(), output, map[string]string{"hub": hubVersion})
+					}
 					fmt.Fprintf(cmd.OutOrStdout(), "%s\n", hubVersion)
-				default:
-					fmt.Fprintf(cmd.OutOrStdout(), "Invalid component value\n")
 				}
 			} else {
 				switch component {
 				case "":
+					if formatted.IsStructured(output) {
+						return formatted.PrintStructuredOutput(cmd.OutOrStdout(), output, map[string]string{"client": clientVersion})
+					}
 					fmt.Fprintf(cmd.OutOrStdout(), "Client version: %s\n", clientVersion)
 				case "client":
+					if formatted.IsStructured(output) {
+						return formatted.PrintStructuredOutput(cmd.OutOrStdout(), output, map[string]string{"client": clientVersion})
+					}
 					fmt.Fprintf(cmd.OutOrStdout(), "%s\n", clientVersion)
-				case "chains", "pipeline", "triggers", "dashboard", "operator":
+				case "chains", "pipeline", "triggers", "dashboard", "operator", "hub":
+					if formatted.IsStructured(output) {
+						return formatted.PrintStructuredOutput(cmd.OutOrStdout(), output, map[string]string{component: "unknown"})
+					}
 					fmt.Fprintf(cmd.OutOrStdout(), "unknown\n")
-				default:
-					fmt.Fprintf(cmd.OutOrStdout(), "Invalid component value\n")
 				}
 			}
 
@@ -162,8 +236,8 @@ func Command(p cli.Params) *cobra.Command {
 			}
 
 			client := NewClient(time.Duration(3 * time.Second))
-			output, err := checkRelease(client)
-			fmt.Fprint(cmd.OutOrStdout(), output)
+			checkOutput, err := checkRelease(client)
+			fmt.Fprint(cmd.OutOrStdout(), checkOutput)
 			return err
 		},
 	}
@@ -173,6 +247,7 @@ func Command(p cli.Params) *cobra.Command {
 	flags.AddTektonOptions(cmd)
 
 	cmd.Flags().StringVarP(&component, "component", "", "", "provide a particular component name for its version (client|chains|pipeline|triggers|dashboard)")
+	cmd.Flags().StringVarP(&output, "output", "o", "", formatted.OutputFlagUsage)
 
 	if skipCheckFlag != "true" {
 		cmd.Flags().BoolVar(&check, "check", false, "check if a newer version is available")
