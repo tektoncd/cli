@@ -134,11 +134,8 @@ function install_pipeline_crd() {
   if [[ -n ${RELEASE_YAML_PIPELINE} ]];then
 	latestreleaseyaml=${RELEASE_YAML_PIPELINE}
   else
-
-    # Pin to v1.12.0 to avoid spurious termination message WARN in step logs (tektoncd/pipeline#10159).
-    # The fix (tektoncd/pipeline#10160) is merged but not yet in a released version.
-    # TODO: switch back to latest once a pipeline release includes the fix.
-    latestreleaseyaml=https://infra.tekton.dev/tekton-releases/pipeline/previous/v1.12.0/release.yaml
+    # Use latest release version
+    latestreleaseyaml="https://infra.tekton.dev/tekton-releases/pipeline/latest/release.yaml"
   fi
   [[ -z ${latestreleaseyaml} ]] && fail_test "Could not get latest released release.yaml"
   kubectl apply -f ${latestreleaseyaml} ||
@@ -160,33 +157,31 @@ function install_triggers_crd() {
   if [[ -n ${RELEASE_YAML_TRIGGERS} ]];then
 	latestreleaseyaml=${RELEASE_YAML_TRIGGERS}
   else
-    # First try to install latestreleaseyaml from nightly
-    curl -o/dev/null -s -LI -f https://infra.tekton.dev/tekton-releases-nightly/triggers/latest/release.yaml &&
-        latestreleaseyaml=https://infra.tekton.dev/tekton-releases-nightly/triggers/latest/release.yaml
-
-    # If for whatever reason the nightly release wasnt there (nightly ci failure?), try the released version
-    [[ -z ${latestreleaseyaml} ]] && latestreleaseyaml="https://infra.tekton.dev/tekton-releases/triggers/latest/release.yaml"
+    # Use latest release version (not nightly)
+    latestreleaseyaml="https://infra.tekton.dev/tekton-releases/triggers/latest/release.yaml"
   fi
   if [[ -n ${RELEASE_YAML_TRIGGERS_INTERCEPTORS} ]];then
 	latestinterceptorsyaml=${RELEASE_YAML_TRIGGERS_INTERCEPTORS}
   else
-    # First try to install latest interceptors from nightly
-    curl -o/dev/null -s -LI -f https://infra.tekton.dev/tekton-releases-nightly/triggers/latest/interceptors.yaml &&
-        latestinterceptorsyaml=https://infra.tekton.dev/tekton-releases-nightly/triggers/latest/interceptors.yaml
-
-    # If for whatever reason the nightly release wasnt there (nightly ci failure?), try the released version
-    [[ -z ${latestinterceptorsyaml} ]] && latestinterceptorsyaml="https://infra.tekton.dev/tekton-releases/triggers/latest/interceptors.yaml"
+    # Use latest release version (not nightly)
+    latestinterceptorsyaml="https://infra.tekton.dev/tekton-releases/triggers/latest/interceptors.yaml"
   fi
   [[ -z ${latestreleaseyaml} ]] && fail_test "Could not get latest released release.yaml"
   [[ -z ${latestinterceptorsyaml} ]] && fail_test "Could not get latest released interceptors.yaml"
+
+  # Apply release.yaml to install CRDs and controllers
   kubectl apply -f ${latestreleaseyaml} ||
     fail_test "Build triggers installation failed"
 
-  # Wait for pods to be running in the namespaces we are deploying to
-  wait_until_pods_running tekton-pipelines || fail_test "Tekton Triggers did not come up"
-
+  # Wait for CRD to be established before applying interceptors
   kubectl wait --for=condition=Established --timeout=30s crds/clusterinterceptors.triggers.tekton.dev || fail_test "cluster interceptors never established"
+
+  # Apply interceptors.yaml to create ConfigMap and ClusterInterceptor resources
   kubectl apply -f ${latestinterceptorsyaml} || fail_test "Interceptors installation failed"
+
+  # Wait for pods to be running AFTER applying interceptors (not before)
+  # This ensures the ConfigMap exists when the controller starts
+  wait_until_pods_running tekton-pipelines || fail_test "Tekton Triggers did not come up"
 
   # Make sure that eveything is cleaned up in the current namespace.
   for res in eventlistener triggertemplate triggerbinding clustertriggerbinding; do
