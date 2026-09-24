@@ -19,6 +19,7 @@ import (
 	"io"
 
 	"github.com/tektoncd/cli/pkg/cli"
+	"github.com/tektoncd/cli/pkg/exitcode"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
 	"k8s.io/apimachinery/pkg/runtime"
@@ -57,7 +58,7 @@ func list(gr schema.GroupVersionResource, dynamic dynamic.Interface, discovery d
 
 	allRes, err := dynamic.Resource(*gvr).Namespace(ns).List(context.Background(), op)
 	if err != nil {
-		return nil, err
+		return nil, exitcode.FromAPIError(err)
 	}
 
 	return allRes, nil
@@ -73,7 +74,7 @@ func List(gr schema.GroupVersionResource, dynamic dynamic.Interface, discovery d
 
 	allRes, err := dynamic.Resource(*gvr).Namespace(ns).List(context.Background(), op)
 	if err != nil {
-		return nil, err
+		return nil, exitcode.FromAPIError(err)
 	}
 
 	return allRes, nil

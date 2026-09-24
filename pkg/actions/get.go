@@ -19,6 +19,7 @@ import (
 	"io"
 
 	"github.com/tektoncd/cli/pkg/cli"
+	"github.com/tektoncd/cli/pkg/exitcode"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
 	"k8s.io/apimachinery/pkg/runtime"
@@ -66,7 +67,7 @@ func GetUnstructured(gr schema.GroupVersionResource, c *cli.Clients, objname, ns
 
 	unstructuredObj, err := c.Dynamic.Resource(*gvr).Namespace(ns).Get(context.Background(), objname, op)
 	if err != nil {
-		return nil, err
+		return nil, exitcode.FromAPIError(err)
 	}
 	return unstructuredObj, nil
 }
@@ -81,7 +82,7 @@ func Get(gr schema.GroupVersionResource, dynamic dynamic.Interface, discovery di
 
 	obj, err := dynamic.Resource(*gvr).Namespace(ns).Get(context.Background(), objname, op)
 	if err != nil {
-		return nil, err
+		return nil, exitcode.FromAPIError(err)
 	}
 
 	return obj, nil
