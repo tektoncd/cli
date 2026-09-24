@@ -34,6 +34,7 @@ const (
 type ListOptions struct {
 	AllNamespaces bool
 	NoHeaders     bool
+	Fields        []string
 }
 
 func listCommand(p cli.Params) *cobra.Command {
@@ -66,6 +67,15 @@ List TriggerTemplates as a YAML array:
 		},
 		Example: eg,
 		RunE: func(cmd *cobra.Command, _ []string) error {
+			output, err := cmd.LocalFlags().GetString("output")
+			if err != nil {
+				return fmt.Errorf("output option not set properly: %v", err)
+			}
+
+			if len(opts.Fields) > 0 && output != "ndjson" {
+				return fmt.Errorf("--fields is only supported with --output ndjson")
+			}
+
 			cs, err := p.Clients()
 			if err != nil {
 				return err
@@ -83,17 +93,14 @@ List TriggerTemplates as a YAML array:
 				return fmt.Errorf("failed to list TriggerTemplates from %s namespace: %v", namespace, err)
 			}
 
-			output, err := cmd.LocalFlags().GetString("output")
-			if err != nil {
-				return fmt.Errorf("output option not set properly: %v", err)
-			}
-
 			stream := &cli.Stream{
 				Out: cmd.OutOrStdout(),
 				Err: cmd.OutOrStderr(),
 			}
 
-			if output != "" {
+			if output == "ndjson" {
+				return formatted.PrintNDJSON(stream.Out, tts, opts.Fields)
+			} else if output != "" {
 				p, err := f.ToPrinter()
 				if err != nil {
 					return err
@@ -113,6 +120,7 @@ List TriggerTemplates as a YAML array:
 
 	c.Flags().BoolVarP(&opts.AllNamespaces, "all-namespaces", "A", opts.AllNamespaces, "list TriggerTemplates from all namespaces")
 	c.Flags().BoolVar(&opts.NoHeaders, "no-headers", opts.NoHeaders, "do not print column headers with output (default print column headers with output)")
+	c.Flags().StringSliceVar(&opts.Fields, "fields", opts.Fields, "Comma-separated list of fields to include in output (e.g. metadata.name,status.startTime); only used with --output ndjson")
 	return c
 }
 
