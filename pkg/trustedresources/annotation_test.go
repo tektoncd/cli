@@ -236,6 +236,18 @@ func TestInsertAnnotationErrors(t *testing.T) {
 		name: "existing signature continued on the next line",
 		doc:  "apiVersion: tekton.dev/v1\nkind: Task\nmetadata:\n  annotations:\n    tekton.dev/signature: MEUC\n      IQ\n",
 	}, {
+		name: "anchored metadata",
+		doc:  "apiVersion: tekton.dev/v1\nkind: Task\nmetadata: &meta\n  name: example\n",
+	}, {
+		name: "anchored annotations aliased by labels",
+		doc:  "apiVersion: tekton.dev/v1\nkind: Task\nmetadata:\n  name: example\n  annotations: &common\n    a: b\n  labels: *common\n",
+	}, {
+		name: "anchored empty annotations",
+		doc:  "apiVersion: tekton.dev/v1\nkind: Task\nmetadata:\n  name: example\n  annotations: &common {}\n  labels: *common\n",
+	}, {
+		name: "anchored existing signature",
+		doc:  "apiVersion: tekton.dev/v1\nkind: Task\nmetadata:\n  annotations:\n    tekton.dev/signature: &sig MEUC\n    copy: *sig\n",
+	}, {
 		name: "empty document",
 		doc:  "",
 	}}

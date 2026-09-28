@@ -214,6 +214,39 @@ spec:
 	}
 }
 
+func TestSignRejectsUnknownFields(t *testing.T) {
+	tmpDir := t.TempDir()
+	if _, err := GenerateKeyFile(tmpDir, "cosign.key", "cosign.pub"); err != nil {
+		t.Fatal(err)
+	}
+
+	// v1beta1.Step has no computeResources, so decoding drops it.
+	doc := `apiVersion: tekton.dev/v1
+kind: Task
+metadata:
+  name: test-task
+spec:
+  steps:
+    - name: echo
+      image: ubuntu
+      computeResources:
+        limits:
+          memory: 1Gi
+`
+	task := &v1beta1.Task{}
+	if err := yaml.Unmarshal([]byte(doc), task); err != nil {
+		t.Fatalf("error unmarshalling doc: %v", err)
+	}
+	target := filepath.Join(tmpDir, "signed-task.yaml")
+	err := Sign(task, []byte(doc), filepath.Join(tmpDir, "cosign.key"), "", target)
+	if err == nil || !strings.Contains(err.Error(), "computeResources") {
+		t.Fatalf("expected Sign to reject the dropped computeResources field, but got %v", err)
+	}
+	if _, err := os.Stat(target); !os.IsNotExist(err) {
+		t.Errorf("expected no signed file, but stat returned %v", err)
+	}
+}
+
 func getTask() *v1beta1.Task {
 	return &v1beta1.Task{
 		TypeMeta: metav1.TypeMeta{

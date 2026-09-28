@@ -25,6 +25,7 @@ import (
 	"fmt"
 	"io"
 	"os"
+	"reflect"
 	"syscall"
 
 	"github.com/sigstore/sigstore/pkg/signature"
@@ -52,7 +53,14 @@ var (
 // annotation. Marshalling o instead would rewrite the whole document: it
 // reorders keys and emits zero valued fields of the embedded Kubernetes types,
 // such as the `resources: {}` that Tekton then rejects when the file is applied.
+//
+// The signature covers o, so Sign refuses a doc holding fields that o's type
+// does not define: they would reach the signed file without being signed.
 func Sign(o metav1.Object, doc []byte, keyfile, kmsKey, targetFile string) error {
+	if err := yaml.UnmarshalStrict(doc, reflect.New(reflect.TypeOf(o).Elem()).Interface()); err != nil {
+		return fmt.Errorf("the signature would not cover the whole document: %w", err)
+	}
+
 	// Load signer
 	var signer signature.Signer
 	var err error
