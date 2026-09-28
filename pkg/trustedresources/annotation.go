@@ -32,7 +32,9 @@ import (
 //
 // An error is returned when the document is not a mapping with a metadata
 // mapping in it, when either mapping is written in flow style, where there
-// is no line to insert, or when an existing entry for key spans several lines.
+// is no line to insert, when an existing entry for key spans several lines,
+// or when a node it would edit carries a YAML anchor, since the edit would
+// then change every alias of that node too.
 func insertAnnotation(doc []byte, key, value string) ([]byte, error) {
 	var root yaml.Node
 	if err := yaml.Unmarshal(doc, &root); err != nil {
@@ -54,6 +56,9 @@ func insertAnnotation(doc []byte, key, value string) ([]byte, error) {
 	if metadata.Kind != yaml.MappingNode || metadata.Style == yaml.FlowStyle || len(metadata.Content) == 0 {
 		return nil, fmt.Errorf("metadata is not a non-empty block mapping")
 	}
+	if metadata.Anchor != "" {
+		return nil, fmt.Errorf("metadata has a YAML anchor")
+	}
 
 	encoded, err := encodeScalar(value)
 	if err != nil {
@@ -61,6 +66,9 @@ func insertAnnotation(doc []byte, key, value string) ([]byte, error) {
 	}
 
 	annotationsKey, annotations := mappingEntry(metadata, "annotations")
+	if annotations != nil && annotations.Anchor != "" {
+		return nil, fmt.Errorf("annotations has a YAML anchor")
+	}
 
 	switch {
 	// An existing block mapping: write the entry above the first one it has.
@@ -70,6 +78,9 @@ func insertAnnotation(doc []byte, key, value string) ([]byte, error) {
 		annotations.Style != yaml.FlowStyle && len(annotations.Content) > 0:
 		// Re-signing: overwrite the old entry instead of adding a duplicate key.
 		if oldKey, oldValue := mappingEntry(annotations, key); oldKey != nil {
+			if oldValue.Anchor != "" {
+				return nil, fmt.Errorf("existing %s annotation has a YAML anchor", key)
+			}
 			if !onOneLine(doc, oldKey, oldValue) {
 				return nil, fmt.Errorf("existing %s annotation spans several lines", key)
 			}
