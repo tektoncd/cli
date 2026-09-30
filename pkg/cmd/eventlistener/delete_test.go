@@ -220,3 +220,86 @@ func TestEventListenerDelete(t *testing.T) {
 		})
 	}
 }
+
+func TestEventListenerDeleteStructuredOutput(t *testing.T) {
+	ns := []*corev1.Namespace{
+		{
+			ObjectMeta: metav1.ObjectMeta{
+				Name: "ns",
+			},
+		},
+	}
+
+	seeds := make([]*test.Params, 0)
+	for i := 0; i < 3; i++ {
+		els := []*v1beta1.EventListener{
+			{
+				ObjectMeta: metav1.ObjectMeta{
+					Name:      "el-1",
+					Namespace: "ns",
+				},
+			},
+		}
+
+		cs := test.SeedTestResources(t, triggertest.Resources{EventListeners: els, Namespaces: ns})
+		cs.Triggers.Resources = cb.TriggersAPIResourceList("v1beta1", []string{"eventlistener"})
+		tdc := testDynamic.Options{}
+		dc, err := tdc.Client(
+			cb.UnstructuredV1beta1EL(els[0], "v1beta1"),
+		)
+		if err != nil {
+			t.Errorf("unable to create dynamic client: %v", err)
+		}
+		p := &test.Params{Triggers: cs.Triggers, Kube: cs.Kube, Dynamic: dc}
+		seeds = append(seeds, p)
+	}
+
+	testParams := []struct {
+		name      string
+		command   []string
+		input     *test.Params
+		wantError bool
+		want      string
+	}{
+		{
+			name:      "Delete eventlistener with output as json",
+			command:   []string{"rm", "el-1", "-n", "ns", "-o", "json"},
+			input:     seeds[0],
+			wantError: false,
+			want:      "{\n    \"deleted\": [\n        \"el-1\"\n    ]\n}\n",
+		},
+		{
+			name:      "Delete eventlistener with output as yaml",
+			command:   []string{"rm", "el-1", "-n", "ns", "-o", "yaml"},
+			input:     seeds[1],
+			wantError: false,
+			want:      "deleted:\n- el-1\n",
+		},
+		{
+			name:      "Delete eventlistener with invalid output format",
+			command:   []string{"rm", "el-1", "-n", "ns", "-o", "csv"},
+			input:     seeds[2],
+			wantError: true,
+			want:      "invalid output format \"csv\": must be json or yaml",
+		},
+	}
+
+	for _, tp := range testParams {
+		t.Run(tp.name, func(t *testing.T) {
+			el := Command(tp.input)
+
+			out, err := test.ExecuteCommand(el, tp.command...)
+			if tp.wantError {
+				if err == nil {
+					t.Errorf("error expected here")
+				}
+				test.AssertOutput(t, tp.want, err.Error())
+			} else {
+				if err != nil {
+					t.Errorf("unexpected Error")
+				}
+				test.AssertOutput(t, tp.want, out)
+			}
+		})
+	}
+}

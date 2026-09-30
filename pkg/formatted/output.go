@@ -30,6 +30,8 @@ const (
 	OutputYAML = "yaml"
 	// OutputFlagUsage is the shared --output flag help text for json/yaml commands.
 	OutputFlagUsage = "Output format. One of: json|yaml"
+	// DeleteOutputFlagUsage is --output help for delete commands that skip confirmation.
+	DeleteOutputFlagUsage = "Output format. One of: json|yaml. Skips the confirmation prompt"
 	// CancelledStatus is the user-facing requestedStatus for a cancel operation.
 	CancelledStatus = "Cancelled"
 )
@@ -45,6 +47,19 @@ type CancelItem struct {
 // CancelResult is the machine-readable result of a cancel operation.
 type CancelResult struct {
 	Cancelled []CancelItem `json:"cancelled"`
+}
+
+// DeleteResult is the machine-readable result of a delete operation.
+type DeleteResult struct {
+	Deleted []string `json:"deleted"`
+}
+
+// NewDeleteResult builds a DeleteResult from a list of successfully deleted names.
+func NewDeleteResult(names []string) DeleteResult {
+	if names == nil {
+		names = []string{}
+	}
+	return DeleteResult{Deleted: names}
 }
 
 // NewCancelResult builds a CancelResult for a single cancelled resource.

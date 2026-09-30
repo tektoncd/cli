@@ -21,10 +21,10 @@ import (
 	"github.com/spf13/cobra"
 	"github.com/tektoncd/cli/pkg/actions"
 	"github.com/tektoncd/cli/pkg/cli"
+	"github.com/tektoncd/cli/pkg/formatted"
 	"github.com/tektoncd/pipeline/pkg/apis/pipeline/v1beta1"
 	"k8s.io/apimachinery/pkg/api/errors"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
-	"k8s.io/cli-runtime/pkg/genericclioptions"
 )
 
 func customRunExists(client *cli.Clients, namespace string, crName string) error {
@@ -40,7 +40,6 @@ func customRunExists(client *cli.Clients, namespace string, crName string) error
 }
 
 func deleteCommand(p cli.Params) *cobra.Command {
-	f := genericclioptions.NewPrintFlags("delete")
 	eg := `Delete CustomRun with name 'foo' in namespace 'bar':
 
     tkn customrun delete foo -n bar
@@ -48,14 +47,24 @@ func deleteCommand(p cli.Params) *cobra.Command {
 or
 
     tkn cr rm foo -n bar
+
+Delete a CustomRun and print the result as JSON:
+
+    tkn customrun delete foo -n bar -o json
+
+Delete a CustomRun and print the result as YAML:
+
+    tkn customrun delete foo -n bar -o yaml
 `
+
+	output := ""
 
 	c := &cobra.Command{
 		Use:     "delete",
 		Aliases: []string{"rm"},
 		Short:   "Delete CustomRuns in a namespace",
 		Example: eg,
-		Args:    cobra.MinimumNArgs(1), // Requires at least one argument (customrun-name)
+		Args:    cobra.MinimumNArgs(1),
 		Annotations: map[string]string{
 			"commandType": "main",
 		},
@@ -67,39 +76,55 @@ or
 				Err: cmd.OutOrStderr(),
 			}
 
-			return deleteCustomRuns(s, p, crNames)
+			if output != "" {
+				output = formatted.NormalizeOutput(output)
+				if !formatted.IsStructured(output) {
+					return fmt.Errorf("invalid output format %q: must be json or yaml", output)
+				}
+			}
+
+			return deleteCustomRuns(s, p, crNames, output)
 
 		},
 	}
 
-	f.AddFlags(c)
+	c.Flags().StringVarP(&output, "output", "o", "", formatted.OutputFlagUsage)
 	return c
 }
 
-func deleteCustomRuns(s *cli.Stream, p cli.Params, crNames []string) error {
+func deleteCustomRuns(s *cli.Stream, p cli.Params, crNames []string, output string) error {
 	cs, err := p.Clients()
 	if err != nil {
 		return fmt.Errorf("failed to create tekton client: %w", err)
 	}
 	namespace := p.Namespace()
+	var deleted []string
+	var deleteErr error
 	for _, crName := range crNames {
-		// Check if CustomRun exists before attempting deletion
 		err := customRunExists(cs, namespace, crName)
 		if err != nil {
 			fmt.Fprintf(s.Err, "CustomRun %s not found in namespace %s\n", crName, namespace)
 			continue
 		}
 
-		// Proceed with deletion
 		err = deleteCustomRun(cs, namespace, crName)
-		if err == nil {
-			fmt.Fprintf(s.Out, "CustomRun '%s' deleted successfully from namespace '%s'\n", crName, namespace)
-		} else {
+		if err != nil {
 			fmt.Fprintf(s.Err, "failed to delete CustomRun %s: %v\n", crName, err)
+			deleteErr = err
+			continue
+		}
+		deleted = append(deleted, crName)
+		if !formatted.IsStructured(output) {
+			fmt.Fprintf(s.Out, "CustomRun '%s' deleted successfully from namespace '%s'\n", crName, namespace)
+		}
+	}
+
+	if formatted.IsStructured(output) {
+		if err := formatted.PrintStructuredOutput(s.Out, output, formatted.NewDeleteResult(deleted)); err != nil {
 			return err
 		}
 	}
-	return nil
+	return deleteErr
 }
 
 func deleteCustomRun(cs *cli.Clients, namespace, crName string) error {

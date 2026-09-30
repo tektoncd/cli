@@ -24,18 +24,25 @@ or
 
     tkn t rm foo bar -n quux
 
+Delete a Task and print the result as JSON:
+
+    tkn task delete foo -n quux -o json
+
+Delete a Task and print the result as YAML:
+
+    tkn task delete foo -n quux -o yaml
+
+Using -o json or -o yaml skips the confirmation prompt.
+
 
 ### Options
 
 ```
-      --all                           Delete all Tasks in a namespace (default: false)
-      --allow-missing-template-keys   If true, ignore any errors in templates when a field or map key is missing in the template. Only applies to golang and jsonpath output formats. (default true)
-  -f, --force                         Whether to force deletion (default: false)
-  -h, --help                          help for delete
-  -o, --output string                 Output format. One of: (json, yaml, name, go-template, go-template-file, template, templatefile, jsonpath, jsonpath-as-json, jsonpath-file).
-      --show-managed-fields           If true, keep the managedFields when printing objects in JSON or YAML format.
-      --template string               Template string or path to template file to use when -o=go-template, -o=go-template-file. The template format is golang templates [http://golang.org/pkg/text/template/#pkg-overview].
-      --trs                           Whether to delete Task(s) and related resources (TaskRuns) (default: false)
+      --all             Delete all Tasks in a namespace (default: false)
+  -f, --force           Whether to force deletion (default: false)
+  -h, --help            help for delete
+  -o, --output string   Output format. One of: json|yaml. Skips the confirmation prompt
+      --trs             Whether to delete Task(s) and related resources (TaskRuns) (default: false)
 ```
 
 ### Options inherited from parent commands

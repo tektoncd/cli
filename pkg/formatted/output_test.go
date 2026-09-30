@@ -162,3 +162,17 @@ func TestNormalizeOutput(t *testing.T) {
 		})
 	}
 }
+
+func TestNewDeleteResult(t *testing.T) {
+	t.Run("with names", func(t *testing.T) {
+		got := NewDeleteResult([]string{"foo", "bar"})
+		want := DeleteResult{Deleted: []string{"foo", "bar"}}
+		assert.DeepEqual(t, want, got)
+	})
+
+	t.Run("nil becomes empty slice", func(t *testing.T) {
+		got := NewDeleteResult(nil)
+		assert.Assert(t, got.Deleted != nil)
+		assert.Equal(t, len(got.Deleted), 0)
+	})
+}

@@ -15,6 +15,7 @@
 package pipelinerun
 
 import (
+	"errors"
 	"io"
 	"strings"
 	"testing"
@@ -28,7 +29,9 @@ import (
 	pipelinetest "github.com/tektoncd/pipeline/test"
 	corev1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/client-go/dynamic"
+	k8stest "k8s.io/client-go/testing"
 	duckv1 "knative.dev/pkg/apis/duck/v1"
 )
 
@@ -1294,5 +1297,212 @@ func TestPipelineRunDelete(t *testing.T) {
 				test.AssertOutput(t, tp.want, out)
 			}
 		})
+	}
+}
+
+func TestPipelineRunDeleteStructuredOutput(t *testing.T) {
+	version := "v1"
+	clock := test.FakeClock()
+
+	ns := []*corev1.Namespace{
+		{
+			ObjectMeta: metav1.ObjectMeta{
+				Name: "ns",
+			},
+		},
+	}
+
+	prdata := []*v1.PipelineRun{
+		{
+			ObjectMeta: metav1.ObjectMeta{
+				Namespace:         "ns",
+				Name:              "pipeline-run-1",
+				Labels:            map[string]string{"tekton.dev/pipeline": "pipeline"},
+				CreationTimestamp: metav1.Time{Time: clock.Now()},
+			},
+			Spec: v1.PipelineRunSpec{
+				PipelineRef: &v1.PipelineRef{
+					Name: "pipeline",
+				},
+			},
+			Status: v1.PipelineRunStatus{
+				Status: duckv1.Status{
+					Conditions: duckv1.Conditions{
+						{
+							Status: corev1.ConditionTrue,
+							Reason: v1.PipelineRunReasonSuccessful.String(),
+						},
+					},
+				},
+			},
+		},
+	}
+
+	type clients struct {
+		pipelineClient pipelinetest.Clients
+		dynamicClient  dynamic.Interface
+	}
+
+	seeds := make([]clients, 0)
+	for i := 0; i < 3; i++ {
+		cs, _ := test.SeedTestData(t, pipelinetest.Data{
+			PipelineRuns: prdata,
+			Namespaces:   ns,
+		})
+		cs.Pipeline.Resources = cb.APIResourceList(version, []string{"pipelinerun"})
+		tdc := testDynamic.Options{}
+		dc, err := tdc.Client(
+			cb.UnstructuredPR(prdata[0], version),
+		)
+		if err != nil {
+			t.Errorf("unable to create dynamic client: %v", err)
+		}
+		seeds = append(seeds, clients{cs, dc})
+	}
+
+	testParams := []struct {
+		name        string
+		command     []string
+		dynamic     dynamic.Interface
+		input       pipelinetest.Clients
+		inputStream io.Reader
+		wantError   bool
+		want        string
+	}{
+		{
+			name:      "Delete pipelinerun with output as json",
+			command:   []string{"rm", "pipeline-run-1", "-n", "ns", "-o", "json"},
+			dynamic:   seeds[0].dynamicClient,
+			input:     seeds[0].pipelineClient,
+			wantError: false,
+			want:      "{\n    \"deleted\": [\n        \"pipeline-run-1\"\n    ]\n}\n",
+		},
+		{
+			name:      "Delete pipelinerun with output as yaml",
+			command:   []string{"rm", "pipeline-run-1", "-n", "ns", "-o", "yaml"},
+			dynamic:   seeds[1].dynamicClient,
+			input:     seeds[1].pipelineClient,
+			wantError: false,
+			want:      "deleted:\n- pipeline-run-1\n",
+		},
+		{
+			name:      "Delete pipelinerun with invalid output format",
+			command:   []string{"rm", "pipeline-run-1", "-n", "ns", "-o", "csv"},
+			dynamic:   seeds[2].dynamicClient,
+			input:     seeds[2].pipelineClient,
+			wantError: true,
+			want:      "invalid output format \"csv\": must be json or yaml",
+		},
+	}
+
+	for _, tp := range testParams {
+		t.Run(tp.name, func(t *testing.T) {
+			p := &test.Params{Tekton: tp.input.Pipeline, Kube: tp.input.Kube, Dynamic: tp.dynamic}
+			pipelinerun := Command(p)
+
+			if tp.inputStream != nil {
+				pipelinerun.SetIn(tp.inputStream)
+			}
+
+			out, err := test.ExecuteCommand(pipelinerun, tp.command...)
+			if tp.wantError {
+				if err == nil {
+					t.Errorf("error expected here")
+				}
+				test.AssertOutput(t, tp.want, err.Error())
+			} else {
+				if err != nil {
+					t.Errorf("unexpected Error")
+				}
+				test.AssertOutput(t, tp.want, out)
+			}
+		})
+	}
+}
+
+func TestPipelineRunDeleteStructuredOutputPartialFailure(t *testing.T) {
+	version := "v1"
+	clock := test.FakeClock()
+
+	ns := []*corev1.Namespace{
+		{ObjectMeta: metav1.ObjectMeta{Name: "ns"}},
+	}
+
+	prdata := []*v1.PipelineRun{
+		{
+			ObjectMeta: metav1.ObjectMeta{
+				Namespace:         "ns",
+				Name:              "pipeline-run-1",
+				Labels:            map[string]string{"tekton.dev/pipeline": "pipeline"},
+				CreationTimestamp: metav1.Time{Time: clock.Now()},
+			},
+			Spec: v1.PipelineRunSpec{
+				PipelineRef: &v1.PipelineRef{Name: "pipeline"},
+			},
+			Status: v1.PipelineRunStatus{
+				Status: duckv1.Status{
+					Conditions: duckv1.Conditions{
+						{Status: corev1.ConditionTrue, Reason: v1.PipelineRunReasonSuccessful.String()},
+					},
+				},
+			},
+		},
+		{
+			ObjectMeta: metav1.ObjectMeta{
+				Namespace:         "ns",
+				Name:              "pipeline-run-2",
+				Labels:            map[string]string{"tekton.dev/pipeline": "pipeline"},
+				CreationTimestamp: metav1.Time{Time: clock.Now()},
+			},
+			Spec: v1.PipelineRunSpec{
+				PipelineRef: &v1.PipelineRef{Name: "pipeline"},
+			},
+			Status: v1.PipelineRunStatus{
+				Status: duckv1.Status{
+					Conditions: duckv1.Conditions{
+						{Status: corev1.ConditionTrue, Reason: v1.PipelineRunReasonSuccessful.String()},
+					},
+				},
+			},
+		},
+	}
+
+	cs, _ := test.SeedTestData(t, pipelinetest.Data{
+		PipelineRuns: prdata,
+		Namespaces:   ns,
+	})
+	cs.Pipeline.Resources = cb.APIResourceList(version, []string{"pipelinerun"})
+
+	tdc := testDynamic.Options{PrependReactors: []testDynamic.PrependOpt{
+		{
+			Verb:     "delete",
+			Resource: "pipelineruns",
+			Action: func(action k8stest.Action) (bool, runtime.Object, error) {
+				del := action.(k8stest.DeleteAction)
+				if del.GetName() == "pipeline-run-2" {
+					return true, nil, errors.New("delete failed")
+				}
+				return false, nil, nil
+			},
+		},
+	}}
+	dc, err := tdc.Client(
+		cb.UnstructuredPR(prdata[0], version),
+		cb.UnstructuredPR(prdata[1], version),
+	)
+	if err != nil {
+		t.Fatalf("unable to create dynamic client: %v", err)
+	}
+
+	p := &test.Params{Tekton: cs.Pipeline, Kube: cs.Kube, Dynamic: dc}
+	out, err := test.ExecuteCommand(Command(p), "rm", "pipeline-run-1", "pipeline-run-2", "-n", "ns", "-o", "json")
+	if err == nil {
+		t.Fatal("expected error when one delete fails")
+	}
+	if !strings.Contains(out, "\"pipeline-run-1\"") {
+		t.Fatalf("expected successful delete in structured output, got: %q", out)
+	}
+	if !strings.Contains(out, "\"deleted\"") {
+		t.Fatalf("expected deleted key in structured output, got: %q", out)
 	}
 }
