@@ -663,3 +663,179 @@ func TestPipelineDelete(t *testing.T) {
 		})
 	}
 }
+
+func TestPipelineDeleteStructuredOutput(t *testing.T) {
+	version := "v1"
+	clock := test.FakeClock()
+
+	pdata := []*v1.Pipeline{
+		{
+			ObjectMeta: metav1.ObjectMeta{
+				Name:              "pipeline",
+				Namespace:         "ns",
+				CreationTimestamp: metav1.Time{Time: clock.Now().Add(-5 * time.Minute)},
+			},
+		},
+	}
+
+	type clients struct {
+		pipelineClient pipelinetest.Clients
+		dynamicClient  dynamic.Interface
+	}
+
+	seeds := make([]clients, 0)
+	for i := 0; i < 3; i++ {
+		cs, _ := test.SeedTestData(t, pipelinetest.Data{
+			Pipelines: pdata,
+			Namespaces: []*corev1.Namespace{
+				{
+					ObjectMeta: metav1.ObjectMeta{
+						Name: "ns",
+					},
+				},
+			},
+		})
+		cs.Pipeline.Resources = cb.APIResourceList(version, []string{"pipeline", "pipelinerun"})
+		tdc := testDynamic.Options{}
+		dc, err := tdc.Client(
+			cb.UnstructuredP(pdata[0], version),
+		)
+		if err != nil {
+			t.Errorf("unable to create dynamic client: %v", err)
+		}
+		seeds = append(seeds, clients{cs, dc})
+	}
+
+	testParams := []struct {
+		name      string
+		command   []string
+		dynamic   dynamic.Interface
+		input     pipelinetest.Clients
+		wantError bool
+		want      string
+	}{
+		{
+			name:      "Delete pipeline with output as json",
+			command:   []string{"rm", "pipeline", "-n", "ns", "-o", "json"},
+			dynamic:   seeds[0].dynamicClient,
+			input:     seeds[0].pipelineClient,
+			wantError: false,
+			want:      "{\n    \"deleted\": [\n        \"pipeline\"\n    ]\n}\n",
+		},
+		{
+			name:      "Delete pipeline with output as yaml",
+			command:   []string{"rm", "pipeline", "-n", "ns", "-o", "yaml"},
+			dynamic:   seeds[1].dynamicClient,
+			input:     seeds[1].pipelineClient,
+			wantError: false,
+			want:      "deleted:\n- pipeline\n",
+		},
+		{
+			name:      "Delete pipeline with invalid output format",
+			command:   []string{"rm", "pipeline", "-n", "ns", "-o", "csv"},
+			dynamic:   seeds[2].dynamicClient,
+			input:     seeds[2].pipelineClient,
+			wantError: true,
+			want:      "invalid output format \"csv\": must be json or yaml",
+		},
+	}
+
+	for _, tp := range testParams {
+		t.Run(tp.name, func(t *testing.T) {
+			p := &test.Params{Tekton: tp.input.Pipeline, Kube: tp.input.Kube, Dynamic: tp.dynamic}
+			pipeline := Command(p)
+
+			out, err := test.ExecuteCommand(pipeline, tp.command...)
+			if tp.wantError {
+				if err == nil {
+					t.Errorf("error expected here")
+				}
+				test.AssertOutput(t, tp.want, err.Error())
+			} else {
+				if err != nil {
+					t.Errorf("unexpected Error")
+				}
+				test.AssertOutput(t, tp.want, out)
+			}
+		})
+	}
+}
+
+func TestPipelineDeleteStructuredOutputWithRelated(t *testing.T) {
+	version := "v1"
+	clock := test.FakeClock()
+
+	pdata := []*v1.Pipeline{
+		{
+			ObjectMeta: metav1.ObjectMeta{
+				Name:              "pipeline",
+				Namespace:         "ns",
+				CreationTimestamp: metav1.Time{Time: clock.Now().Add(-5 * time.Minute)},
+			},
+		},
+	}
+
+	prdata := []*v1.PipelineRun{
+		{
+			ObjectMeta: metav1.ObjectMeta{
+				Name:              "pipeline-run-1",
+				Namespace:         "ns",
+				Labels:            map[string]string{"tekton.dev/pipeline": "pipeline"},
+				CreationTimestamp: metav1.Time{Time: clock.Now()},
+			},
+			Spec: v1.PipelineRunSpec{
+				PipelineRef: &v1.PipelineRef{Name: "pipeline"},
+			},
+			Status: v1.PipelineRunStatus{
+				Status: duckv1.Status{
+					Conditions: duckv1.Conditions{
+						{Status: corev1.ConditionTrue, Reason: v1.PipelineRunReasonSuccessful.String()},
+					},
+				},
+			},
+		},
+		{
+			ObjectMeta: metav1.ObjectMeta{
+				Name:              "pipeline-run-2",
+				Namespace:         "ns",
+				Labels:            map[string]string{"tekton.dev/pipeline": "pipeline"},
+				CreationTimestamp: metav1.Time{Time: clock.Now()},
+			},
+			Spec: v1.PipelineRunSpec{
+				PipelineRef: &v1.PipelineRef{Name: "pipeline"},
+			},
+			Status: v1.PipelineRunStatus{
+				Status: duckv1.Status{
+					Conditions: duckv1.Conditions{
+						{Status: corev1.ConditionTrue, Reason: v1.PipelineRunReasonSuccessful.String()},
+					},
+				},
+			},
+		},
+	}
+
+	cs, _ := test.SeedTestData(t, pipelinetest.Data{
+		Pipelines:    pdata,
+		PipelineRuns: prdata,
+		Namespaces: []*corev1.Namespace{
+			{ObjectMeta: metav1.ObjectMeta{Name: "ns"}},
+		},
+	})
+	cs.Pipeline.Resources = cb.APIResourceList(version, []string{"pipeline", "pipelinerun"})
+	tdc := testDynamic.Options{}
+	dc, err := tdc.Client(
+		cb.UnstructuredP(pdata[0], version),
+		cb.UnstructuredPR(prdata[0], version),
+		cb.UnstructuredPR(prdata[1], version),
+	)
+	if err != nil {
+		t.Fatalf("unable to create dynamic client: %v", err)
+	}
+
+	p := &test.Params{Tekton: cs.Pipeline, Kube: cs.Kube, Dynamic: dc}
+	out, err := test.ExecuteCommand(Command(p), "rm", "pipeline", "-n", "ns", "--prs", "-o", "json")
+	if err != nil {
+		t.Fatalf("unexpected error: %v", err)
+	}
+	test.AssertOutput(t, "{\n    \"deleted\": [\n        \"pipeline-run-1\",\n        \"pipeline-run-2\",\n        \"pipeline\"\n    ]\n}\n", out)
+}

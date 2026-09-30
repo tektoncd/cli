@@ -16,6 +16,8 @@ package customrun
 
 import (
 	"context"
+	"errors"
+	"strings"
 	"testing"
 	"time"
 
@@ -27,6 +29,8 @@ import (
 	"github.com/tektoncd/pipeline/pkg/apis/pipeline/v1beta1"
 	corev1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+	"k8s.io/apimachinery/pkg/runtime"
+	k8stest "k8s.io/client-go/testing"
 	duckv1 "knative.dev/pkg/apis/duck/v1"
 )
 
@@ -381,5 +385,159 @@ func TestCustomRunDelete(t *testing.T) {
 				test.AssertOutput(t, td.want, got)
 			}
 		})
+	}
+}
+
+func TestCustomRunDeleteStructuredOutput(t *testing.T) {
+	now := time.Now()
+	crs := []*v1beta1.CustomRun{
+		{
+			ObjectMeta: metav1.ObjectMeta{
+				Name:      "customrun-1",
+				Namespace: "ns-1",
+			},
+			Spec: v1beta1.CustomRunSpec{},
+			Status: v1beta1.CustomRunStatus{
+				Status: duckv1.Status{
+					Conditions: duckv1.Conditions{
+						{
+							Status: corev1.ConditionTrue,
+							Reason: v1beta1.CustomRunReasonSuccessful.String(),
+						},
+					},
+				},
+			},
+		},
+	}
+
+	ns := []*corev1.Namespace{
+		{
+			ObjectMeta: metav1.ObjectMeta{
+				Name: "ns-1",
+			},
+		},
+	}
+
+	tdc := testDynamic.Options{}
+	dynamicClient, err := tdc.Client(
+		cb.UnstructuredV1beta1CustomRun(crs[0], versionv1beta1),
+	)
+	if err != nil {
+		t.Errorf("unable to create dynamic client: %v", err)
+	}
+
+	tests := []struct {
+		name      string
+		command   *cobra.Command
+		args      []string
+		wantError bool
+		want      string
+	}{
+		{
+			name:      "Delete customrun with output as json",
+			command:   commandV1beta1(t, crs, now, ns, dynamicClient),
+			args:      []string{"delete", "customrun-1", "-n", "ns-1", "-o", "json"},
+			wantError: false,
+			want:      "{\n    \"deleted\": [\n        \"customrun-1\"\n    ]\n}\n",
+		},
+		{
+			name:      "Delete customrun with invalid output format",
+			command:   commandV1beta1(t, crs, now, ns, dynamicClient),
+			args:      []string{"delete", "customrun-1", "-n", "ns-1", "-o", "csv"},
+			wantError: true,
+			want:      "invalid output format \"csv\": must be json or yaml",
+		},
+	}
+
+	for _, td := range tests {
+		t.Run(td.name, func(t *testing.T) {
+			got, err := test.ExecuteCommand(td.command, td.args...)
+
+			if err != nil && !td.wantError {
+				t.Errorf("Unexpected error: %v", err)
+			}
+
+			if td.wantError {
+				if err != nil {
+					test.AssertOutput(t, td.want, err.Error())
+				}
+			} else {
+				if err != nil {
+					t.Errorf("unexpected error: %v", err)
+				}
+				test.AssertOutput(t, td.want, got)
+			}
+		})
+	}
+}
+
+func TestCustomRunDeleteStructuredOutputPartialFailure(t *testing.T) {
+	now := time.Now()
+	crs := []*v1beta1.CustomRun{
+		{
+			ObjectMeta: metav1.ObjectMeta{
+				Name:      "customrun-1",
+				Namespace: "ns-1",
+			},
+			Spec: v1beta1.CustomRunSpec{},
+			Status: v1beta1.CustomRunStatus{
+				Status: duckv1.Status{
+					Conditions: duckv1.Conditions{
+						{Status: corev1.ConditionTrue, Reason: v1beta1.CustomRunReasonSuccessful.String()},
+					},
+				},
+			},
+		},
+		{
+			ObjectMeta: metav1.ObjectMeta{
+				Name:      "customrun-2",
+				Namespace: "ns-1",
+			},
+			Spec: v1beta1.CustomRunSpec{},
+			Status: v1beta1.CustomRunStatus{
+				Status: duckv1.Status{
+					Conditions: duckv1.Conditions{
+						{Status: corev1.ConditionTrue, Reason: v1beta1.CustomRunReasonSuccessful.String()},
+					},
+				},
+			},
+		},
+	}
+
+	ns := []*corev1.Namespace{
+		{ObjectMeta: metav1.ObjectMeta{Name: "ns-1"}},
+	}
+
+	tdc := testDynamic.Options{PrependReactors: []testDynamic.PrependOpt{
+		{
+			Verb:     "delete",
+			Resource: "customruns",
+			Action: func(action k8stest.Action) (bool, runtime.Object, error) {
+				del := action.(k8stest.DeleteAction)
+				if del.GetName() == "customrun-2" {
+					return true, nil, errors.New("delete failed")
+				}
+				return false, nil, nil
+			},
+		},
+	}}
+	dynamicClient, err := tdc.Client(
+		cb.UnstructuredV1beta1CustomRun(crs[0], versionv1beta1),
+		cb.UnstructuredV1beta1CustomRun(crs[1], versionv1beta1),
+	)
+	if err != nil {
+		t.Fatalf("unable to create dynamic client: %v", err)
+	}
+
+	out, err := test.ExecuteCommand(commandV1beta1(t, crs, now, ns, dynamicClient),
+		"delete", "customrun-1", "customrun-2", "-n", "ns-1", "-o", "json")
+	if err == nil {
+		t.Fatal("expected error when one delete fails")
+	}
+	if !strings.Contains(out, "\"customrun-1\"") {
+		t.Fatalf("expected successful delete in structured output, got: %q", out)
+	}
+	if !strings.Contains(out, "\"deleted\"") {
+		t.Fatalf("expected deleted key in structured output, got: %q", out)
 	}
 }

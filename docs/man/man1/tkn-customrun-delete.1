@@ -20,25 +20,12 @@ Delete CustomRuns in a namespace
 
 .SH OPTIONS
 .PP
-\fB\-\-allow\-missing\-template\-keys\fP[=true]
-    If true, ignore any errors in templates when a field or map key is missing in the template. Only applies to golang and jsonpath output formats.
-
-.PP
 \fB\-h\fP, \fB\-\-help\fP[=false]
     help for delete
 
 .PP
 \fB\-o\fP, \fB\-\-output\fP=""
-    Output format. One of: (json, yaml, name, go\-template, go\-template\-file, template, templatefile, jsonpath, jsonpath\-as\-json, jsonpath\-file).
-
-.PP
-\fB\-\-show\-managed\-fields\fP[=false]
-    If true, keep the managedFields when printing objects in JSON or YAML format.
-
-.PP
-\fB\-\-template\fP=""
-    Template string or path to template file to use when \-o=go\-template, \-o=go\-template\-file. The template format is golang templates [
-\[la]http://golang.org/pkg/text/template/#pkg-overview\[ra]].
+    Output format. One of: json|yaml
 
 
 .SH OPTIONS INHERITED FROM PARENT COMMANDS
@@ -80,6 +67,30 @@ or
 
 .nf
 tkn cr rm foo \-n bar
+
+.fi
+.RE
+
+.PP
+Delete a CustomRun and print the result as JSON:
+
+.PP
+.RS
+
+.nf
+tkn customrun delete foo \-n bar \-o json
+
+.fi
+.RE
+
+.PP
+Delete a CustomRun and print the result as YAML:
+
+.PP
+.RS
+
+.nf
+tkn customrun delete foo \-n bar \-o yaml
 
 .fi
 .RE
