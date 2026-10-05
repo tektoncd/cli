@@ -104,6 +104,30 @@ tkn eventlistener delete foo \-n quux \-o yaml
 .RE
 
 .PP
+Delete all EventListeners in a namespace and print the result as JSON:
+
+.PP
+.RS
+
+.nf
+tkn eventlistener delete \-\-all \-n quux \-o json
+
+.fi
+.RE
+
+.PP
+Delete all EventListeners in a namespace and print the result as YAML:
+
+.PP
+.RS
+
+.nf
+tkn eventlistener delete \-\-all \-n quux \-o yaml
+
+.fi
+.RE
+
+.PP
 Using \-o json or \-o yaml skips the confirmation prompt.
 
 

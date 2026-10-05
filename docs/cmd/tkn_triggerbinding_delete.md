@@ -32,6 +32,14 @@ Delete a TriggerBinding and print the result as YAML:
 
     tkn triggerbinding delete foo -n quux -o yaml
 
+Delete all TriggerBindings in a namespace and print the result as JSON:
+
+    tkn triggerbinding delete --all -n quux -o json
+
+Delete all TriggerBindings in a namespace and print the result as YAML:
+
+    tkn triggerbinding delete --all -n quux -o yaml
+
 Using -o json or -o yaml skips the confirmation prompt.
 
 

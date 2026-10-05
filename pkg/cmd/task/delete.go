@@ -70,6 +70,22 @@ Delete a Task and print the result as YAML:
 
     tkn task delete foo -n quux -o yaml
 
+Delete all Tasks in a namespace and print the result as JSON:
+
+    tkn task delete --all -n quux -o json
+
+Delete all Tasks in a namespace and print the result as YAML:
+
+    tkn task delete --all -n quux -o yaml
+
+Delete a Task and its TaskRuns and print the result as JSON:
+
+    tkn task delete foo -n quux --trs -o json
+
+Delete a Task and its TaskRuns and print the result as YAML:
+
+    tkn task delete foo -n quux --trs -o yaml
+
 Using -o json or -o yaml skips the confirmation prompt.
 `
 
@@ -98,10 +114,6 @@ Using -o json or -o yaml skips the confirmation prompt.
 				output = formatted.NormalizeOutput(output)
 				if !formatted.IsStructured(output) {
 					return fmt.Errorf("invalid output format %q: must be json or yaml", output)
-				}
-				// Temporary guard: drop this once bulk delete supports -o.
-				if opts.DeleteAllNs {
-					return fmt.Errorf("structured output is not supported with bulk delete flags")
 				}
 				opts.ForceDelete = true
 			}
@@ -165,6 +177,12 @@ func deleteTask(opts *options.DeleteOptions, s *cli.Stream, p cli.Params, taskNa
 		}
 		d.PrintSuccesses(s)
 	} else if opts.DeleteAllNs {
+		if formatted.IsStructured(output) {
+			if err := formatted.PrintStructuredOutput(s.Out, output, formatted.NewDeleteResult(d.SuccessfulDeletes())); err != nil {
+				return err
+			}
+			return d.Errors()
+		}
 		if d.Errors() == nil {
 			fmt.Fprintf(s.Out, "All Tasks deleted in namespace %q\n", p.Namespace())
 		}
