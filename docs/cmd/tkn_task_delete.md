@@ -32,6 +32,22 @@ Delete a Task and print the result as YAML:
 
     tkn task delete foo -n quux -o yaml
 
+Delete all Tasks in a namespace and print the result as JSON:
+
+    tkn task delete --all -n quux -o json
+
+Delete all Tasks in a namespace and print the result as YAML:
+
+    tkn task delete --all -n quux -o yaml
+
+Delete a Task and its TaskRuns and print the result as JSON:
+
+    tkn task delete foo -n quux --trs -o json
+
+Delete a Task and its TaskRuns and print the result as YAML:
+
+    tkn task delete foo -n quux --trs -o yaml
+
 Using -o json or -o yaml skips the confirmation prompt.
 
 

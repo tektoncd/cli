@@ -32,6 +32,22 @@ Delete a Pipeline and print the result as YAML:
 
     tkn pipeline delete foo -n quux -o yaml
 
+Delete all Pipelines in a namespace and print the result as JSON:
+
+    tkn pipeline delete --all -n quux -o json
+
+Delete all Pipelines in a namespace and print the result as YAML:
+
+    tkn pipeline delete --all -n quux -o yaml
+
+Delete a Pipeline and its PipelineRuns and print the result as JSON:
+
+    tkn pipeline delete foo -n quux --prs -o json
+
+Delete a Pipeline and its PipelineRuns and print the result as YAML:
+
+    tkn pipeline delete foo -n quux --prs -o yaml
+
 Using -o json or -o yaml skips the confirmation prompt.
 
 

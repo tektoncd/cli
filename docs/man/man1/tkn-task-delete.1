@@ -108,6 +108,54 @@ tkn task delete foo \-n quux \-o yaml
 .RE
 
 .PP
+Delete all Tasks in a namespace and print the result as JSON:
+
+.PP
+.RS
+
+.nf
+tkn task delete \-\-all \-n quux \-o json
+
+.fi
+.RE
+
+.PP
+Delete all Tasks in a namespace and print the result as YAML:
+
+.PP
+.RS
+
+.nf
+tkn task delete \-\-all \-n quux \-o yaml
+
+.fi
+.RE
+
+.PP
+Delete a Task and its TaskRuns and print the result as JSON:
+
+.PP
+.RS
+
+.nf
+tkn task delete foo \-n quux \-\-trs \-o json
+
+.fi
+.RE
+
+.PP
+Delete a Task and its TaskRuns and print the result as YAML:
+
+.PP
+.RS
+
+.nf
+tkn task delete foo \-n quux \-\-trs \-o yaml
+
+.fi
+.RE
+
+.PP
 Using \-o json or \-o yaml skips the confirmation prompt.
 
 

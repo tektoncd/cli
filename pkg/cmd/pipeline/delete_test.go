@@ -15,6 +15,7 @@
 package pipeline
 
 import (
+	"errors"
 	"io"
 	"strings"
 	"testing"
@@ -28,7 +29,9 @@ import (
 	pipelinetest "github.com/tektoncd/pipeline/test"
 	corev1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/client-go/dynamic"
+	k8stest "k8s.io/client-go/testing"
 	duckv1 "knative.dev/pkg/apis/duck/v1"
 )
 
@@ -838,4 +841,79 @@ func TestPipelineDeleteStructuredOutputWithRelated(t *testing.T) {
 		t.Fatalf("unexpected error: %v", err)
 	}
 	test.AssertOutput(t, "{\n    \"deleted\": [\n        \"pipeline-run-1\",\n        \"pipeline-run-2\",\n        \"pipeline\"\n    ]\n}\n", out)
+}
+
+func TestPipelineDeleteBulkStructuredOutput(t *testing.T) {
+	version := "v1"
+	pdata := []*v1.Pipeline{
+		{ObjectMeta: metav1.ObjectMeta{Name: "pipeline-a", Namespace: "ns"}},
+		{ObjectMeta: metav1.ObjectMeta{Name: "pipeline-b", Namespace: "ns"}},
+	}
+	ns := []*corev1.Namespace{{ObjectMeta: metav1.ObjectMeta{Name: "ns"}}}
+
+	newParams := func(t *testing.T, reactors []testDynamic.PrependOpt) *test.Params {
+		t.Helper()
+		cs, _ := test.SeedTestData(t, pipelinetest.Data{Pipelines: pdata, Namespaces: ns})
+		cs.Pipeline.Resources = cb.APIResourceList(version, []string{"pipeline"})
+		tdc := testDynamic.Options{PrependReactors: reactors}
+		dc, err := tdc.Client(
+			cb.UnstructuredP(pdata[0], version),
+			cb.UnstructuredP(pdata[1], version),
+		)
+		if err != nil {
+			t.Fatalf("unable to create dynamic client: %v", err)
+		}
+		return &test.Params{Tekton: cs.Pipeline, Kube: cs.Kube, Dynamic: dc}
+	}
+
+	t.Run("all json skips confirmation and lists deleted names", func(t *testing.T) {
+		out, err := test.ExecuteCommand(Command(newParams(t, nil)), "delete", "--all", "-n", "ns", "-o", "json")
+		if err != nil {
+			t.Fatalf("unexpected error: %v", err)
+		}
+		test.AssertOutput(t, "{\n    \"deleted\": [\n        \"pipeline-a\",\n        \"pipeline-b\"\n    ]\n}\n", out)
+	})
+
+	t.Run("all yaml is equivalent", func(t *testing.T) {
+		out, err := test.ExecuteCommand(Command(newParams(t, nil)), "delete", "--all", "-n", "ns", "-o", "yaml")
+		if err != nil {
+			t.Fatalf("unexpected error: %v", err)
+		}
+		test.AssertOutput(t, "deleted:\n- pipeline-a\n- pipeline-b\n", out)
+	})
+
+	t.Run("invalid format does not emit a success document", func(t *testing.T) {
+		out, err := test.ExecuteCommand(Command(newParams(t, nil)), "delete", "--all", "-n", "ns", "-o", "csv")
+		if err == nil {
+			t.Fatal("expected error")
+		}
+		test.AssertOutput(t, "invalid output format \"csv\": must be json or yaml", err.Error())
+		if strings.Contains(out, "\"deleted\"") || strings.Contains(out, "pipeline-a") {
+			t.Fatalf("unexpected success document: %q", out)
+		}
+	})
+
+	t.Run("mixed failure lists successes and exits non-zero", func(t *testing.T) {
+		reactors := []testDynamic.PrependOpt{{
+			Verb:     "delete",
+			Resource: "pipelines",
+			Action: func(action k8stest.Action) (bool, runtime.Object, error) {
+				del := action.(k8stest.DeleteAction)
+				if del.GetName() == "pipeline-b" {
+					return true, nil, errors.New("delete failed")
+				}
+				return false, nil, nil
+			},
+		}}
+		cmd := Command(newParams(t, reactors))
+		cmd.SilenceErrors = true
+		out, err := test.ExecuteCommand(cmd, "delete", "--all", "-n", "ns", "-o", "json")
+		if err == nil {
+			t.Fatal("expected error")
+		}
+		if !strings.Contains(err.Error(), "pipeline-b") {
+			t.Fatalf("expected pipeline-b in error, got %v", err)
+		}
+		test.AssertOutput(t, "{\n    \"deleted\": [\n        \"pipeline-a\"\n    ]\n}\n", out)
+	})
 }

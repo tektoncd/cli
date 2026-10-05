@@ -301,3 +301,38 @@ func TestTriggerTemplateDeleteStructuredOutput(t *testing.T) {
 		})
 	}
 }
+
+func TestTriggerTemplateDeleteBulkStructuredOutput(t *testing.T) {
+	ns := []*corev1.Namespace{{ObjectMeta: metav1.ObjectMeta{Name: "ns"}}}
+	tts := []*v1beta1.TriggerTemplate{
+		{ObjectMeta: metav1.ObjectMeta{Name: "tt-1", Namespace: "ns"}},
+		{ObjectMeta: metav1.ObjectMeta{Name: "tt-2", Namespace: "ns"}},
+	}
+
+	seed := func(t *testing.T) *test.Params {
+		t.Helper()
+		cs := test.SeedTestResources(t, triggertest.Resources{TriggerTemplates: tts, Namespaces: ns})
+		cs.Triggers.Resources = cb.TriggersAPIResourceList("v1beta1", []string{"triggertemplate"})
+		tdc := testDynamic.Options{}
+		dc, err := tdc.Client(
+			cb.UnstructuredV1beta1TT(tts[0], "v1beta1"),
+			cb.UnstructuredV1beta1TT(tts[1], "v1beta1"),
+		)
+		if err != nil {
+			t.Fatalf("unable to create dynamic client: %v", err)
+		}
+		return &test.Params{Triggers: cs.Triggers, Kube: cs.Kube, Dynamic: dc}
+	}
+
+	out, err := test.ExecuteCommand(Command(seed(t)), "delete", "--all", "-n", "ns", "-o", "json")
+	if err != nil {
+		t.Fatalf("unexpected error: %v", err)
+	}
+	test.AssertOutput(t, "{\n    \"deleted\": [\n        \"tt-1\",\n        \"tt-2\"\n    ]\n}\n", out)
+
+	out, err = test.ExecuteCommand(Command(seed(t)), "delete", "--all", "-n", "ns", "-o", "yaml")
+	if err != nil {
+		t.Fatalf("unexpected error: %v", err)
+	}
+	test.AssertOutput(t, "deleted:\n- tt-1\n- tt-2\n", out)
+}
