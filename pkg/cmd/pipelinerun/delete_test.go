@@ -1506,3 +1506,163 @@ func TestPipelineRunDeleteStructuredOutputPartialFailure(t *testing.T) {
 		t.Fatalf("expected deleted key in structured output, got: %q", out)
 	}
 }
+
+func completedPipelineRun(name, pipeline string, start time.Time, labels map[string]string) *v1.PipelineRun {
+	if labels == nil {
+		labels = map[string]string{"tekton.dev/pipeline": pipeline}
+	}
+	return &v1.PipelineRun{
+		ObjectMeta: metav1.ObjectMeta{
+			Namespace: "ns",
+			Name:      name,
+			Labels:    labels,
+		},
+		Spec: v1.PipelineRunSpec{
+			PipelineRef: &v1.PipelineRef{Name: pipeline},
+		},
+		Status: v1.PipelineRunStatus{
+			Status: duckv1.Status{
+				Conditions: duckv1.Conditions{
+					{Status: corev1.ConditionTrue, Reason: v1.PipelineRunReasonSuccessful.String()},
+				},
+			},
+			PipelineRunStatusFields: v1.PipelineRunStatusFields{
+				StartTime:      &metav1.Time{Time: start},
+				CompletionTime: &metav1.Time{Time: start.Add(time.Minute)},
+			},
+		},
+	}
+}
+
+func pipelineRunDeleteParams(t *testing.T, runs []*v1.PipelineRun, reactors []testDynamic.PrependOpt) *test.Params {
+	t.Helper()
+	version := "v1"
+	cs, _ := test.SeedTestData(t, pipelinetest.Data{
+		PipelineRuns: runs,
+		Namespaces:   []*corev1.Namespace{{ObjectMeta: metav1.ObjectMeta{Name: "ns"}}},
+	})
+	cs.Pipeline.Resources = cb.APIResourceList(version, []string{"pipelinerun"})
+	objs := make([]runtime.Object, 0, len(runs))
+	for _, run := range runs {
+		objs = append(objs, cb.UnstructuredPR(run, version))
+	}
+	tdc := testDynamic.Options{PrependReactors: reactors}
+	dc, err := tdc.Client(objs...)
+	if err != nil {
+		t.Fatalf("unable to create dynamic client: %v", err)
+	}
+	return &test.Params{Tekton: cs.Pipeline, Kube: cs.Kube, Dynamic: dc}
+}
+
+func TestPipelineRunDeleteBulkStructuredOutput(t *testing.T) {
+	older := time.Date(1984, time.April, 4, 0, 0, 0, 0, time.UTC)
+	newer := older.Add(time.Hour)
+	recent := time.Now()
+	expired := time.Now().Add(-2 * time.Hour)
+
+	t.Run("all json skips confirmation", func(t *testing.T) {
+		runs := []*v1.PipelineRun{
+			completedPipelineRun("pipeline-run-1", "pipeline", older, nil),
+			completedPipelineRun("pipeline-run-2", "pipeline", newer, nil),
+		}
+		out, err := test.ExecuteCommand(Command(pipelineRunDeleteParams(t, runs, nil)), "delete", "--all", "-n", "ns", "-o", "json")
+		if err != nil {
+			t.Fatalf("unexpected error: %v", err)
+		}
+		test.AssertOutput(t, "{\n    \"deleted\": [\n        \"pipeline-run-1\",\n        \"pipeline-run-2\"\n    ]\n}\n", out)
+	})
+
+	t.Run("all yaml is equivalent", func(t *testing.T) {
+		runs := []*v1.PipelineRun{
+			completedPipelineRun("pipeline-run-1", "pipeline", older, nil),
+			completedPipelineRun("pipeline-run-2", "pipeline", newer, nil),
+		}
+		out, err := test.ExecuteCommand(Command(pipelineRunDeleteParams(t, runs, nil)), "delete", "--all", "-n", "ns", "-o", "yaml")
+		if err != nil {
+			t.Fatalf("unexpected error: %v", err)
+		}
+		test.AssertOutput(t, "deleted:\n- pipeline-run-1\n- pipeline-run-2\n", out)
+	})
+
+	t.Run("keep omits retained runs", func(t *testing.T) {
+		runs := []*v1.PipelineRun{
+			completedPipelineRun("pipeline-run-old", "pipeline", older, nil),
+			completedPipelineRun("pipeline-run-new", "pipeline", newer, nil),
+		}
+		out, err := test.ExecuteCommand(Command(pipelineRunDeleteParams(t, runs, nil)), "delete", "--keep", "1", "-n", "ns", "-o", "json")
+		if err != nil {
+			t.Fatalf("unexpected error: %v", err)
+		}
+		test.AssertOutput(t, "{\n    \"deleted\": [\n        \"pipeline-run-old\"\n    ]\n}\n", out)
+	})
+
+	t.Run("keep-since omits recent runs", func(t *testing.T) {
+		runs := []*v1.PipelineRun{
+			completedPipelineRun("pipeline-run-expired", "pipeline", expired, nil),
+			completedPipelineRun("pipeline-run-recent", "pipeline", recent, nil),
+		}
+		out, err := test.ExecuteCommand(Command(pipelineRunDeleteParams(t, runs, nil)), "delete", "--keep-since", "60", "-n", "ns", "-o", "json")
+		if err != nil {
+			t.Fatalf("unexpected error: %v", err)
+		}
+		test.AssertOutput(t, "{\n    \"deleted\": [\n        \"pipeline-run-expired\"\n    ]\n}\n", out)
+	})
+
+	t.Run("pipeline selector", func(t *testing.T) {
+		runs := []*v1.PipelineRun{
+			completedPipelineRun("pipeline-run-1", "foo", older, nil),
+			completedPipelineRun("pipeline-run-2", "foo", newer, nil),
+			completedPipelineRun("pipeline-run-other", "bar", newer, map[string]string{"tekton.dev/pipeline": "bar"}),
+		}
+		out, err := test.ExecuteCommand(Command(pipelineRunDeleteParams(t, runs, nil)), "delete", "--pipeline", "foo", "-n", "ns", "-o", "json")
+		if err != nil {
+			t.Fatalf("unexpected error: %v", err)
+		}
+		test.AssertOutput(t, "{\n    \"deleted\": [\n        \"pipeline-run-1\",\n        \"pipeline-run-2\"\n    ]\n}\n", out)
+	})
+
+	t.Run("label selector omits non-matching runs", func(t *testing.T) {
+		runs := []*v1.PipelineRun{
+			completedPipelineRun("pipeline-run-demo", "pipeline", older, map[string]string{"app": "demo"}),
+			completedPipelineRun("pipeline-run-other", "pipeline", newer, map[string]string{"app": "other"}),
+		}
+		out, err := test.ExecuteCommand(Command(pipelineRunDeleteParams(t, runs, nil)), "delete", "--all", "--label", "app=demo", "-n", "ns", "-o", "yaml")
+		if err != nil {
+			t.Fatalf("unexpected error: %v", err)
+		}
+		test.AssertOutput(t, "deleted:\n- pipeline-run-demo\n", out)
+	})
+
+	t.Run("mixed failure", func(t *testing.T) {
+		runs := []*v1.PipelineRun{
+			completedPipelineRun("pipeline-run-1", "pipeline", older, nil),
+			completedPipelineRun("pipeline-run-2", "pipeline", newer, nil),
+		}
+		reactors := []testDynamic.PrependOpt{{
+			Verb:     "delete",
+			Resource: "pipelineruns",
+			Action: func(action k8stest.Action) (bool, runtime.Object, error) {
+				del := action.(k8stest.DeleteAction)
+				if del.GetName() == "pipeline-run-2" {
+					return true, nil, errors.New("delete failed")
+				}
+				return false, nil, nil
+			},
+		}}
+		cmd := Command(pipelineRunDeleteParams(t, runs, reactors))
+		cmd.SilenceErrors = true
+		out, err := test.ExecuteCommand(cmd, "delete", "--all", "-n", "ns", "-o", "json")
+		if err == nil {
+			t.Fatal("expected error")
+		}
+		test.AssertOutput(t, "{\n    \"deleted\": [\n        \"pipeline-run-1\"\n    ]\n}\n", out)
+	})
+
+	t.Run("invalid format", func(t *testing.T) {
+		_, err := test.ExecuteCommand(Command(&test.Params{}), "delete", "--all", "-n", "ns", "-o", "csv")
+		if err == nil {
+			t.Fatal("expected error")
+		}
+		test.AssertOutput(t, "invalid output format \"csv\": must be json or yaml", err.Error())
+	})
+}

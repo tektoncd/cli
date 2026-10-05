@@ -73,6 +73,30 @@ Delete a PipelineRun and print the result as YAML:
 
     tkn pipelinerun delete foo -n quux -o yaml
 
+Delete all PipelineRuns in a namespace and print the result as JSON:
+
+    tkn pipelinerun delete --all -n quux -o json
+
+Delete all PipelineRuns in a namespace and print the result as YAML:
+
+    tkn pipelinerun delete --all -n quux -o yaml
+
+Delete all but the 2 most recent PipelineRuns and print the result as JSON:
+
+    tkn pipelinerun delete --keep 2 -n quux -o json
+
+Delete all but the 2 most recent PipelineRuns and print the result as YAML:
+
+    tkn pipelinerun delete --keep 2 -n quux -o yaml
+
+Delete PipelineRuns for a Pipeline and print the result as JSON:
+
+    tkn pipelinerun delete --pipeline foo -n quux -o json
+
+Delete PipelineRuns for a Pipeline and print the result as YAML:
+
+    tkn pipelinerun delete --pipeline foo -n quux -o yaml
+
 Using -o json or -o yaml skips the confirmation prompt.
 `
 
@@ -101,10 +125,6 @@ Using -o json or -o yaml skips the confirmation prompt.
 				output = formatted.NormalizeOutput(output)
 				if !formatted.IsStructured(output) {
 					return fmt.Errorf("invalid output format %q: must be json or yaml", output)
-				}
-				// Temporary guard: drop this once bulk delete supports -o.
-				if opts.DeleteAllNs || opts.ParentResourceName != "" || opts.Keep > 0 || opts.KeepSince > 0 {
-					return fmt.Errorf("structured output is not supported with bulk delete flags")
 				}
 				opts.ForceDelete = true
 			}
@@ -214,14 +234,18 @@ func deletePipelineRuns(s *cli.Stream, p cli.Params, prNames []string, opts *opt
 		d.DeleteRelated([]string{opts.ParentResourceName})
 	}
 
-	if !opts.DeleteAllNs {
-		if opts.ParentResourceName == "" && opts.Keep == 0 && opts.KeepSince == 0 && formatted.IsStructured(output) {
-			if err := formatted.PrintStructuredOutput(s.Out, output, formatted.NewDeleteResult(d.SuccessfulDeletes())); err != nil {
-				return err
-			}
-			return d.Errors()
+	if formatted.IsStructured(output) {
+		deleted := d.SuccessfulDeletes()
+		if !opts.DeleteAllNs && opts.ParentResourceName != "" {
+			deleted = d.SuccessfulRelatedDeletes()
 		}
+		if err := formatted.PrintStructuredOutput(s.Out, output, formatted.NewDeleteResult(deleted)); err != nil {
+			return err
+		}
+		return d.Errors()
+	}
 
+	if !opts.DeleteAllNs {
 		if d.Errors() == nil {
 			switch {
 			case opts.Keep > 0 && opts.KeepSince > 0 && !opts.IgnoreRunning:

@@ -124,6 +124,78 @@ tkn pipelinerun delete foo \-n quux \-o yaml
 .RE
 
 .PP
+Delete all PipelineRuns in a namespace and print the result as JSON:
+
+.PP
+.RS
+
+.nf
+tkn pipelinerun delete \-\-all \-n quux \-o json
+
+.fi
+.RE
+
+.PP
+Delete all PipelineRuns in a namespace and print the result as YAML:
+
+.PP
+.RS
+
+.nf
+tkn pipelinerun delete \-\-all \-n quux \-o yaml
+
+.fi
+.RE
+
+.PP
+Delete all but the 2 most recent PipelineRuns and print the result as JSON:
+
+.PP
+.RS
+
+.nf
+tkn pipelinerun delete \-\-keep 2 \-n quux \-o json
+
+.fi
+.RE
+
+.PP
+Delete all but the 2 most recent PipelineRuns and print the result as YAML:
+
+.PP
+.RS
+
+.nf
+tkn pipelinerun delete \-\-keep 2 \-n quux \-o yaml
+
+.fi
+.RE
+
+.PP
+Delete PipelineRuns for a Pipeline and print the result as JSON:
+
+.PP
+.RS
+
+.nf
+tkn pipelinerun delete \-\-pipeline foo \-n quux \-o json
+
+.fi
+.RE
+
+.PP
+Delete PipelineRuns for a Pipeline and print the result as YAML:
+
+.PP
+.RS
+
+.nf
+tkn pipelinerun delete \-\-pipeline foo \-n quux \-o yaml
+
+.fi
+.RE
+
+.PP
 Using \-o json or \-o yaml skips the confirmation prompt.
 
 

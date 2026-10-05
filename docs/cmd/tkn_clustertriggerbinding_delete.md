@@ -32,6 +32,14 @@ Delete a ClusterTriggerBinding and print the result as YAML:
 
     tkn clustertriggerbinding delete foo -o yaml
 
+Delete all ClusterTriggerBindings and print the result as JSON:
+
+    tkn clustertriggerbinding delete --all -o json
+
+Delete all ClusterTriggerBindings and print the result as YAML:
+
+    tkn clustertriggerbinding delete --all -o yaml
+
 Using -o json or -o yaml skips the confirmation prompt.
 
 

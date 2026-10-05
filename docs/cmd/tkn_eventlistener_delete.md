@@ -32,6 +32,14 @@ Delete an EventListener and print the result as YAML:
 
     tkn eventlistener delete foo -n quux -o yaml
 
+Delete all EventListeners in a namespace and print the result as JSON:
+
+    tkn eventlistener delete --all -n quux -o json
+
+Delete all EventListeners in a namespace and print the result as YAML:
+
+    tkn eventlistener delete --all -n quux -o yaml
+
 Using -o json or -o yaml skips the confirmation prompt.
 
 
