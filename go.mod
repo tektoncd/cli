@@ -1,6 +1,6 @@
 module github.com/tektoncd/cli
 
-go 1.26.6
+go 1.27.0
 
 require (
 	github.com/AlecAivazis/survey/v2 v2.3.7
@@ -22,7 +22,7 @@ require (
 	github.com/joho/godotenv v1.5.1
 	github.com/jonboulle/clockwork v0.5.0
 	github.com/ktr0731/go-fuzzyfinder v0.9.0
-	github.com/letsencrypt/boulder v0.20260908.0
+	github.com/letsencrypt/boulder v0.20260928.1
 	github.com/mitchellh/go-homedir v1.1.0
 	github.com/pkg/errors v0.9.1
 	github.com/sigstore/sigstore v1.10.9
