@@ -38,7 +38,7 @@ require (
 	go.uber.org/multierr v1.11.0
 	golang.org/x/crypto v0.55.0
 	golang.org/x/term v0.45.0
-	google.golang.org/grpc v1.82.2
+	google.golang.org/grpc v1.83.1
 	google.golang.org/protobuf v1.36.12
 	gotest.tools v2.2.0+incompatible
 	gotest.tools/v3 v3.5.2
@@ -55,7 +55,7 @@ replace github.com/alibabacloud-go/cr-20160607 => github.com/vdemeester/cr-20160
 replace github.com/tektoncd/hub => github.com/openshift-pipelines/hub v1.24.2
 
 require (
-	cel.dev/expr v0.25.1 // indirect
+	cel.dev/expr v0.25.2 // indirect
 	github.com/Azure/go-ansiterm v0.0.0-20250102033503-faa5f7b0171c // indirect
 	github.com/Masterminds/semver/v3 v3.4.0 // indirect
 	github.com/ThalesIgnite/crypto11 v1.2.5 // indirect
