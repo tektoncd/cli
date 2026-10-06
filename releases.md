@@ -60,12 +60,6 @@ Further documentation available:
 - **Initial Release**: [v0.43.0][v0-43-0] (2025-11-21) ([docs][v0-43-0-docs])
 - **End of Life**: 2026-11-20
 
-### v0.42 (LTS)
-
-- **Latest Release**: [v0.42.0][v0-42-0] (2025-08-22) ([docs][v0-42-0-docs])
-- **Initial Release**: [v0.42.0][v0-42-0] (2025-08-22) ([docs][v0-42-0-docs])
-- **End of Life**: 2026-08-21
-
 ### v0.37 (LTS)
 
 - **Latest Release**: [v0.37.1][v0-37-1] (2025-02-10) ([docs][v0-37-1-docs])
@@ -75,6 +69,12 @@ Further documentation available:
 ## End of Life Releases
 
 Older releases are EOL and available on [GitHub][tekton-cli-releases].
+
+### v0.42 (LTS)
+
+- **Latest Release**: [v0.42.0][v0-42-0] (2025-08-22) ([docs][v0-42-0-docs])
+- **Initial Release**: [v0.42.0][v0-42-0] (2025-08-22) ([docs][v0-42-0-docs])
+- **End of Life**: 2026-08-21
 
 ### v0.41 (LTS)
 
