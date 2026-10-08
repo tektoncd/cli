@@ -197,7 +197,9 @@ func TestLog_PrStatusToUnixStatus(t *testing.T) {
 					},
 				},
 			},
-			expected: 2,
+			// No conditions means the PipelineRun has not yet been evaluated;
+			// this is treated as a general failure (1), not "resource not found" (2).
+			expected: 1,
 		},
 		{
 			name: "Condition status is false",
