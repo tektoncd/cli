@@ -15,6 +15,7 @@
 package pipelinerun
 
 import (
+	"encoding/json"
 	"fmt"
 	"strings"
 	"testing"
@@ -582,4 +583,111 @@ func command(t *testing.T, prs []*v1.PipelineRun, now time.Time, ns []*corev1.Na
 	p := &test.Params{Tekton: cs.Pipeline, Clock: clock, Kube: cs.Kube, Dynamic: dc}
 
 	return Command(p)
+}
+
+// TestListPipelineRuns_ndjson verifies the --output ndjson path in the list command.
+func TestListPipelineRuns_ndjson(t *testing.T) {
+	version := "v1"
+	clock := test.FakeClock()
+
+	prs := []*v1.PipelineRun{
+		{
+			ObjectMeta: metav1.ObjectMeta{
+				Namespace: "namespace",
+				Name:      "pr-a",
+				Labels:    map[string]string{"tekton.dev/pipeline": "p1"},
+			},
+		},
+		{
+			ObjectMeta: metav1.ObjectMeta{
+				Namespace: "namespace",
+				Name:      "pr-b",
+				Labels:    map[string]string{"tekton.dev/pipeline": "p1"},
+			},
+		},
+	}
+
+	ns := []*corev1.Namespace{
+		{ObjectMeta: metav1.ObjectMeta{Name: "namespace"}},
+	}
+
+	tdc := testDynamic.Options{}
+	dc, err := tdc.Client(
+		cb.UnstructuredPR(prs[0], version),
+		cb.UnstructuredPR(prs[1], version),
+	)
+	if err != nil {
+		t.Fatalf("unable to create dynamic client: %v", err)
+	}
+
+	cs, _ := test.SeedTestData(t, pipelinetest.Data{PipelineRuns: prs, Namespaces: ns})
+	cs.Pipeline.Resources = cb.APIResourceList(version, []string{"pipelinerun"})
+	p := &test.Params{Tekton: cs.Pipeline, Clock: clock, Kube: cs.Kube, Dynamic: dc}
+
+	t.Run("ndjson output produces valid JSON lines", func(t *testing.T) {
+		cmd := Command(p)
+		output, err := test.ExecuteCommand(cmd, "list", "-n", "namespace", "-o", "ndjson")
+		if err != nil {
+			t.Fatalf("unexpected error: %v", err)
+		}
+		lines := splitNonEmpty(output)
+		if len(lines) != 2 {
+			t.Fatalf("expected 2 lines, got %d:\n%s", len(lines), output)
+		}
+		for i, line := range lines {
+			var m map[string]any
+			if err := json.Unmarshal([]byte(line), &m); err != nil {
+				t.Errorf("line %d is not valid JSON: %v", i, err)
+			}
+		}
+	})
+
+	t.Run("ndjson with --fields narrows output", func(t *testing.T) {
+		cmd := Command(p)
+		output, err := test.ExecuteCommand(cmd, "list", "-n", "namespace", "-o", "ndjson", "--fields", "metadata.name")
+		if err != nil {
+			t.Fatalf("unexpected error: %v", err)
+		}
+		lines := splitNonEmpty(output)
+		if len(lines) != 2 {
+			t.Fatalf("expected 2 lines, got %d", len(lines))
+		}
+		for i, line := range lines {
+			var m map[string]any
+			if err := json.Unmarshal([]byte(line), &m); err != nil {
+				t.Errorf("line %d is not valid JSON: %v", i, err)
+				continue
+			}
+			meta, ok := m["metadata"].(map[string]any)
+			if !ok {
+				t.Errorf("line %d: expected metadata key", i)
+				continue
+			}
+			if _, ok := meta["name"]; !ok {
+				t.Errorf("line %d: expected metadata.name", i)
+			}
+			if len(m) != 1 {
+				t.Errorf("line %d: expected only metadata key, got %v", i, m)
+			}
+		}
+	})
+
+	t.Run("--fields without ndjson returns error", func(t *testing.T) {
+		cmd := Command(p)
+		_, err := test.ExecuteCommand(cmd, "list", "-n", "namespace", "--fields", "metadata.name")
+		if err == nil {
+			t.Error("expected error when --fields used without --output ndjson, got none")
+		}
+	})
+}
+
+// splitNonEmpty splits output by newline and returns non-empty lines.
+func splitNonEmpty(s string) []string {
+	var out []string
+	for _, line := range strings.Split(strings.TrimRight(s, "\n"), "\n") {
+		if line != "" {
+			out = append(out, line)
+		}
+	}
+	return out
 }
