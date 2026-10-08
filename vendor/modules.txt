@@ -366,8 +366,8 @@ github.com/ktr0731/go-ansisgr
 github.com/ktr0731/go-fuzzyfinder
 github.com/ktr0731/go-fuzzyfinder/matching
 github.com/ktr0731/go-fuzzyfinder/scoring
-# github.com/letsencrypt/boulder v0.20260908.0
-## explicit; go 1.26.0
+# github.com/letsencrypt/boulder v0.20260928.1
+## explicit; go 1.27.0
 github.com/letsencrypt/boulder/core
 github.com/letsencrypt/boulder/core/proto
 github.com/letsencrypt/boulder/identifier
