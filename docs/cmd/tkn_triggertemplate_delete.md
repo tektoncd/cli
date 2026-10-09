@@ -32,6 +32,14 @@ Delete a TriggerTemplate and print the result as YAML:
 
     tkn triggertemplate delete foo -n quux -o yaml
 
+Delete all TriggerTemplates in a namespace and print the result as JSON:
+
+    tkn triggertemplate delete --all -n quux -o json
+
+Delete all TriggerTemplates in a namespace and print the result as YAML:
+
+    tkn triggertemplate delete --all -n quux -o yaml
+
 Using -o json or -o yaml skips the confirmation prompt.
 
 

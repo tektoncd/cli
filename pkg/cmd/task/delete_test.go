@@ -815,3 +815,51 @@ func TestTaskDeleteStructuredOutputWithRelated(t *testing.T) {
 	}
 	test.AssertOutput(t, "{\n    \"deleted\": [\n        \"task-run-1\",\n        \"task-run-2\",\n        \"task\"\n    ]\n}\n", out)
 }
+
+func TestTaskDeleteBulkStructuredOutput(t *testing.T) {
+	version := "v1"
+	tdata := []*v1.Task{
+		{ObjectMeta: metav1.ObjectMeta{Name: "task-a", Namespace: "ns"}},
+		{ObjectMeta: metav1.ObjectMeta{Name: "task-b", Namespace: "ns"}},
+	}
+	ns := []*corev1.Namespace{{ObjectMeta: metav1.ObjectMeta{Name: "ns"}}}
+
+	newParams := func(t *testing.T) *test.Params {
+		t.Helper()
+		cs, _ := test.SeedTestData(t, pipelinetest.Data{Tasks: tdata, Namespaces: ns})
+		cs.Pipeline.Resources = cb.APIResourceList(version, []string{"task"})
+		tdc := testDynamic.Options{}
+		dc, err := tdc.Client(
+			cb.UnstructuredT(tdata[0], version),
+			cb.UnstructuredT(tdata[1], version),
+		)
+		if err != nil {
+			t.Fatalf("unable to create dynamic client: %v", err)
+		}
+		return &test.Params{Tekton: cs.Pipeline, Kube: cs.Kube, Dynamic: dc}
+	}
+
+	t.Run("all json skips confirmation", func(t *testing.T) {
+		out, err := test.ExecuteCommand(Command(newParams(t)), "delete", "--all", "-n", "ns", "-o", "json")
+		if err != nil {
+			t.Fatalf("unexpected error: %v", err)
+		}
+		test.AssertOutput(t, "{\n    \"deleted\": [\n        \"task-a\",\n        \"task-b\"\n    ]\n}\n", out)
+	})
+
+	t.Run("all yaml is equivalent", func(t *testing.T) {
+		out, err := test.ExecuteCommand(Command(newParams(t)), "delete", "--all", "-n", "ns", "-o", "yaml")
+		if err != nil {
+			t.Fatalf("unexpected error: %v", err)
+		}
+		test.AssertOutput(t, "deleted:\n- task-a\n- task-b\n", out)
+	})
+
+	t.Run("invalid format", func(t *testing.T) {
+		_, err := test.ExecuteCommand(Command(newParams(t)), "delete", "--all", "-n", "ns", "-o", "csv")
+		if err == nil {
+			t.Fatal("expected error")
+		}
+		test.AssertOutput(t, "invalid output format \"csv\": must be json or yaml", err.Error())
+	})
+}
