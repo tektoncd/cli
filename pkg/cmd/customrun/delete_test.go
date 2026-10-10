@@ -334,21 +334,21 @@ func TestCustomRunDelete(t *testing.T) {
 			command:   commandV1beta1(t, crs, now, ns, dynamicClient),
 			args:      []string{"delete", "customrun-xyz", "-n", "ns-1"},
 			wantError: true,
-			want:      "failed to delete CustomRun customrun-xyz: customruns.tekton.dev customrun-xyz not found\n",
+			want:      "CustomRun customrun-xyz not found in namespace ns-1",
 		},
 		{
 			name:      "Delete one customrun without namespace",
 			command:   commandV1beta1(t, crs, now, ns, dynamicClient),
 			args:      []string{"delete", "customrun-1"},
-			wantError: false,
-			want:      "CustomRun customrun-1 not found in namespace \n",
+			wantError: true,
+			want:      "CustomRun customrun-1 not found in namespace ",
 		},
 		{
 			name:      "Delete multiple customruns without namespace",
 			command:   commandV1beta1(t, crs, now, ns, dynamicClient),
 			args:      []string{"delete", "customrun-2", "customrun-3"},
-			wantError: false,
-			want:      "CustomRun customrun-2 not found in namespace \nCustomRun customrun-3 not found in namespace \n",
+			wantError: true,
+			want:      "CustomRun customrun-2 not found in namespace ; CustomRun customrun-3 not found in namespace ",
 		},
 		{
 			name:      "Delete one customrun with namespace",
@@ -375,7 +375,9 @@ func TestCustomRunDelete(t *testing.T) {
 			}
 
 			if td.wantError {
-				if err != nil {
+				if err == nil {
+					t.Errorf("Expected error but got none")
+				} else {
 					test.AssertOutput(t, td.want, err.Error())
 				}
 			} else {
@@ -539,5 +541,49 @@ func TestCustomRunDeleteStructuredOutputPartialFailure(t *testing.T) {
 	}
 	if !strings.Contains(out, "\"deleted\"") {
 		t.Fatalf("expected deleted key in structured output, got: %q", out)
+	}
+}
+
+func TestCustomRunDeleteResourceNotFound(t *testing.T) {
+	now := time.Now()
+	crs := []*v1beta1.CustomRun{
+		{
+			ObjectMeta: metav1.ObjectMeta{
+				Name:      "customrun-1",
+				Namespace: "ns-1",
+			},
+			Spec: v1beta1.CustomRunSpec{},
+			Status: v1beta1.CustomRunStatus{
+				Status: duckv1.Status{
+					Conditions: duckv1.Conditions{
+						{Status: corev1.ConditionTrue, Reason: v1beta1.CustomRunReasonSuccessful.String()},
+					},
+				},
+			},
+		},
+	}
+
+	ns := []*corev1.Namespace{
+		{ObjectMeta: metav1.ObjectMeta{Name: "ns-1"}},
+	}
+
+	tdc := testDynamic.Options{}
+	dynamicClient, err := tdc.Client(
+		cb.UnstructuredV1beta1CustomRun(crs[0], versionv1beta1),
+	)
+	if err != nil {
+		t.Fatalf("unable to create dynamic client: %v", err)
+	}
+
+	out, err := test.ExecuteCommand(commandV1beta1(t, crs, now, ns, dynamicClient),
+		"delete", "customrun-1", "nonexistent", "-n", "ns-1", "-o", "json")
+	if err == nil {
+		t.Fatal("expected error when a resource is not found")
+	}
+	if !strings.Contains(err.Error(), "CustomRun nonexistent not found in namespace ns-1") {
+		t.Fatalf("expected not found error, got: %v", err)
+	}
+	if !strings.Contains(out, "\"customrun-1\"") {
+		t.Fatalf("expected successful delete of existing resource in structured output, got: %q", out)
 	}
 }
