@@ -32,7 +32,6 @@ import (
 	v1 "github.com/tektoncd/pipeline/pkg/apis/pipeline/v1"
 	"go.uber.org/multierr"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
-	cliopts "k8s.io/cli-runtime/pkg/genericclioptions"
 )
 
 type deleteOptions struct {
@@ -64,7 +63,6 @@ func trExists(args []string, p cli.Params) ([]string, error) {
 func deleteCommand(p cli.Params) *cobra.Command {
 	opts := &options.DeleteOptions{Resource: "TaskRun", ForceDelete: false, DeleteAllNs: false}
 	deleteOpts := &deleteOptions{}
-	f := cliopts.NewPrintFlags("delete")
 	eg := `Delete TaskRuns with names 'foo' and 'bar' in namespace 'quux':
 
     tkn taskrun delete foo bar -n quux
@@ -90,6 +88,16 @@ or
 				In:  cmd.InOrStdin(),
 				Out: cmd.OutOrStdout(),
 				Err: cmd.OutOrStderr(),
+			}
+
+			output, err := cmd.LocalFlags().GetString("output")
+			if err != nil {
+				return err
+			}
+
+			output = formatted.NormalizeOutput(output)
+			if output != "" && !formatted.IsStructured(output) {
+				return fmt.Errorf("invalid output format %q: must be json or yaml", output)
 			}
 
 			if deleteOpts.TaskName != "" {
@@ -122,17 +130,21 @@ or
 				return errs
 			}
 
-			if err := opts.CheckOptions(s, availableTrs, p.Namespace()); err != nil {
+			checkStreams := s
+			if formatted.IsStructured(output) {
+				checkStreams = &cli.Stream{In: strings.NewReader("y\n"), Out: &strings.Builder{}, Err: s.Err}
+			}
+			if err := opts.CheckOptions(checkStreams, availableTrs, p.Namespace()); err != nil {
 				return err
 			}
 
-			if err := deleteTaskRuns(s, p, availableTrs, opts); err != nil {
+			if err := deleteTaskRuns(s, p, availableTrs, opts, output); err != nil {
 				return err
 			}
 			return errs
 		},
 	}
-	f.AddFlags(c)
+	c.Flags().StringP("output", "o", "", formatted.DeleteOutputFlagUsage)
 	c.Flags().BoolVarP(&opts.ForceDelete, "force", "f", false, "Whether to force deletion (default: false)")
 	c.Flags().StringVarP(&deleteOpts.TaskName, "task", "t", "", "The name of a Task whose TaskRuns should be deleted (does not delete the task)")
 	c.Flags().BoolVarP(&opts.DeleteAllNs, "all", "", false, "Delete all TaskRuns in a namespace (default: false)")
@@ -144,7 +156,7 @@ or
 	return c
 }
 
-func deleteTaskRuns(s *cli.Stream, p cli.Params, trNames []string, opts *options.DeleteOptions) error {
+func deleteTaskRuns(s *cli.Stream, p cli.Params, trNames []string, opts *options.DeleteOptions, output string) error {
 	var numberOfDeletedTr, numberOfKeptTr int
 	cs, err := p.Clients()
 	if err != nil {
@@ -177,9 +189,17 @@ func deleteTaskRuns(s *cli.Stream, p cli.Params, trNames []string, opts *options
 			prFinished := ownerPrFinished(cs, *tr)
 
 			if !prFinished && opts.ForceDelete {
-				fmt.Fprintf(s.Out, "warning: Taskrun %s related pipelinerun still running.\n", tr.Name)
+				if formatted.IsStructured(output) {
+					fmt.Fprintf(s.Err, "warning: Taskrun %s related pipelinerun still running.\n", tr.Name)
+				} else {
+					fmt.Fprintf(s.Out, "warning: Taskrun %s related pipelinerun still running.\n", tr.Name)
+				}
 			}
 			if !prFinished && !opts.ForceDelete {
+				if formatted.IsStructured(output) {
+					return fmt.Errorf("taskrun %s is owned by a running PipelineRun; use --force to delete", tr.Name)
+				}
+
 				fmt.Fprintf(s.Out, "TaskRun(s): %s attached to PipelineRun is still running deleting will restart the completed taskrun. Proceed (y/n): ", tr.Name)
 				if err := opts.TakeInput(s, ""); err != nil {
 					continue
@@ -212,14 +232,24 @@ func deleteTaskRuns(s *cli.Stream, p cli.Params, trNames []string, opts *options
 		})
 
 		if opts.Keep > 0 && opts.Keep == len(trToKeep) && len(trToDelete) == 0 {
-			fmt.Fprintf(s.Out, "Associated %s (%d) for Task:%s is/are equal to keep (%d) \n", opts.Resource, len(trToKeep), opts.ParentResourceName, opts.Keep)
-			return nil
+			if !formatted.IsStructured(output) {
+				fmt.Fprintf(s.Out, "Associated %s (%d) for Task:%s is/are equal to keep (%d) \n", opts.Resource, len(trToKeep), opts.ParentResourceName, opts.Keep)
+				return nil
+			}
+		} else if opts.Keep > len(trToKeep) {
+			if !formatted.IsStructured(output) {
+				fmt.Fprintf(s.Out, "There is/are only %d %s(s) associated for %s: %s \n", len(trToKeep), opts.Resource, opts.ParentResource, opts.ParentResourceName)
+				return nil
+			}
+		} else {
+			d.DeleteRelated([]string{opts.ParentResourceName})
 		}
-		if opts.Keep > len(trToKeep) {
-			fmt.Fprintf(s.Out, "There is/are only %d %s(s) associated for %s: %s \n", len(trToKeep), opts.Resource, opts.ParentResource, opts.ParentResourceName)
-			return nil
-		}
-		d.DeleteRelated([]string{opts.ParentResourceName})
+	}
+
+	if formatted.IsStructured(output) {
+		deleted := append(d.SuccessfulRelatedDeletes(), d.SuccessfulDeletes()...)
+		printErr := formatted.PrintStructuredOutput(s.Out, output, formatted.NewDeleteResult(deleted))
+		return multierr.Append(printErr, d.Errors())
 	}
 
 	if !opts.DeleteAllNs {
