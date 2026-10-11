@@ -35,7 +35,7 @@ or
       --ignore-running-pipelinerun   ignore deleting taskruns of a running PipelineRun (default true)
       --keep int                     Keep n most recent number of TaskRuns
       --keep-since int               When deleting all TaskRuns keep the ones that has been completed since n minutes
-  -o, --output string                Output format. Only "json" is supported
+  -o, --output string                Output format. One of: json|yaml. Skips the confirmation prompt
   -t, --task string                  The name of a Task whose TaskRuns should be deleted (does not delete the task)
 ```
 
