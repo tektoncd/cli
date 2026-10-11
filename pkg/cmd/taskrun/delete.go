@@ -15,7 +15,6 @@
 package taskrun
 
 import (
-	"encoding/json"
 	"errors"
 	"fmt"
 	"strings"
@@ -96,8 +95,9 @@ or
 				return err
 			}
 
-			if output != "" && output != "json" {
-				return fmt.Errorf("unsupported output format %q; supported formats: json", output)
+			output = formatted.NormalizeOutput(output)
+			if output != "" && !formatted.IsStructured(output) {
+				return fmt.Errorf("invalid output format %q: must be json or yaml", output)
 			}
 
 			if deleteOpts.TaskName != "" {
@@ -131,7 +131,7 @@ or
 			}
 
 			checkStreams := s
-			if output == "json" {
+			if formatted.IsStructured(output) {
 				checkStreams = &cli.Stream{In: strings.NewReader("y\n"), Out: &strings.Builder{}, Err: s.Err}
 			}
 			if err := opts.CheckOptions(checkStreams, availableTrs, p.Namespace()); err != nil {
@@ -144,7 +144,7 @@ or
 			return errs
 		},
 	}
-	c.Flags().StringP("output", "o", "", `Output format. Only "json" is supported`)
+	c.Flags().StringP("output", "o", "", formatted.DeleteOutputFlagUsage)
 	c.Flags().BoolVarP(&opts.ForceDelete, "force", "f", false, "Whether to force deletion (default: false)")
 	c.Flags().StringVarP(&deleteOpts.TaskName, "task", "t", "", "The name of a Task whose TaskRuns should be deleted (does not delete the task)")
 	c.Flags().BoolVarP(&opts.DeleteAllNs, "all", "", false, "Delete all TaskRuns in a namespace (default: false)")
@@ -189,14 +189,14 @@ func deleteTaskRuns(s *cli.Stream, p cli.Params, trNames []string, opts *options
 			prFinished := ownerPrFinished(cs, *tr)
 
 			if !prFinished && opts.ForceDelete {
-				if output == "json" {
+				if formatted.IsStructured(output) {
 					fmt.Fprintf(s.Err, "warning: Taskrun %s related pipelinerun still running.\n", tr.Name)
 				} else {
 					fmt.Fprintf(s.Out, "warning: Taskrun %s related pipelinerun still running.\n", tr.Name)
 				}
 			}
 			if !prFinished && !opts.ForceDelete {
-				if output == "json" {
+				if formatted.IsStructured(output) {
 					return fmt.Errorf("taskrun %s is owned by a running PipelineRun; use --force to delete", tr.Name)
 				}
 
@@ -232,12 +232,12 @@ func deleteTaskRuns(s *cli.Stream, p cli.Params, trNames []string, opts *options
 		})
 
 		if opts.Keep > 0 && opts.Keep == len(trToKeep) && len(trToDelete) == 0 {
-			if output != "json" {
+			if !formatted.IsStructured(output) {
 				fmt.Fprintf(s.Out, "Associated %s (%d) for Task:%s is/are equal to keep (%d) \n", opts.Resource, len(trToKeep), opts.ParentResourceName, opts.Keep)
 				return nil
 			}
 		} else if opts.Keep > len(trToKeep) {
-			if output != "json" {
+			if !formatted.IsStructured(output) {
 				fmt.Fprintf(s.Out, "There is/are only %d %s(s) associated for %s: %s \n", len(trToKeep), opts.Resource, opts.ParentResource, opts.ParentResourceName)
 				return nil
 			}
@@ -246,19 +246,10 @@ func deleteTaskRuns(s *cli.Stream, p cli.Params, trNames []string, opts *options
 		}
 	}
 
-	if output == "json" {
+	if formatted.IsStructured(output) {
 		deleted := append(d.SuccessfulRelatedDeletes(), d.SuccessfulDeletes()...)
-		if deleted == nil {
-			deleted = []string{}
-		}
-
-		result := struct {
-			Deleted []string `json:"deleted"`
-		}{
-			Deleted: deleted,
-		}
-		encodeErr := json.NewEncoder(s.Out).Encode(result)
-		return multierr.Append(encodeErr, d.Errors())
+		printErr := formatted.PrintStructuredOutput(s.Out, output, formatted.NewDeleteResult(deleted))
+		return multierr.Append(printErr, d.Errors())
 	}
 
 	if !opts.DeleteAllNs {

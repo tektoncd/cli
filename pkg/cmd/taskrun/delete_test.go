@@ -228,7 +228,7 @@ func TestTaskRunDelete_v1beta1(t *testing.T) {
 	}
 
 	seeds := make([]clients, 0)
-	for i := 0; i < 17; i++ {
+	for i := 0; i < 18; i++ {
 		trs := trdata
 		cs, _ := test.SeedV1beta1TestData(t, test.Data{TaskRuns: trs, Tasks: tasks, Namespaces: ns})
 		cs.Pipeline.Resources = cb.APIResourceList(versionv1beta1, []string{"taskrun"})
@@ -579,17 +579,30 @@ func TestTaskRunDelete_v1beta1(t *testing.T) {
 			input:       seeds[14].pipelineClient,
 			inputStream: nil,
 			wantError:   false,
-			want: `{"deleted":["tr0-1"]}
+			want: `{
+    "deleted": [
+        "tr0-1"
+    ]
+}
 `,
 		},
 		{
-			name:        "Unsupported output format",
+			name:        "With YAML output",
 			command:     []string{"rm", "tr0-1", "-n", "ns", "-o", "yaml"},
+			dynamic:     seeds[17].dynamicClient,
+			input:       seeds[17].pipelineClient,
+			inputStream: nil,
+			wantError:   false,
+			want:        "deleted:\n- tr0-1\n",
+		},
+		{
+			name:        "Unsupported output format",
+			command:     []string{"rm", "tr0-1", "-n", "ns", "-o", "table"},
 			dynamic:     seeds[0].dynamicClient,
 			input:       seeds[0].pipelineClient,
 			inputStream: nil,
 			wantError:   true,
-			want:        "unsupported output format \"yaml\"; supported formats: json",
+			want:        "invalid output format \"table\": must be json or yaml",
 		},
 		{
 			name:        "With JSON output for multiple TaskRuns",
@@ -598,7 +611,12 @@ func TestTaskRunDelete_v1beta1(t *testing.T) {
 			input:       seeds[16].pipelineClient,
 			inputStream: strings.NewReader("y\n"),
 			wantError:   false,
-			want: `{"deleted":["tr0-1","tr0-2"]}
+			want: `{
+    "deleted": [
+        "tr0-1",
+        "tr0-2"
+    ]
+}
 `,
 		},
 		{
@@ -608,7 +626,9 @@ func TestTaskRunDelete_v1beta1(t *testing.T) {
 			input:       seeds[15].pipelineClient,
 			inputStream: nil,
 			wantError:   false,
-			want: `{"deleted":[]}
+			want: `{
+    "deleted": []
+}
 `,
 		},
 		{
@@ -618,7 +638,14 @@ func TestTaskRunDelete_v1beta1(t *testing.T) {
 			input:       seeds[15].pipelineClient,
 			inputStream: nil,
 			wantError:   false,
-			want: `{"deleted":["tr0-1","tr0-2","tr0-3","tr0-9"]}
+			want: `{
+    "deleted": [
+        "tr0-1",
+        "tr0-2",
+        "tr0-3",
+        "tr0-9"
+    ]
+}
 `,
 		},
 	}
