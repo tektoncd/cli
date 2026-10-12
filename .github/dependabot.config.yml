@@ -10,7 +10,6 @@ release-branches:
   - release-v0.45.x
   - release-v0.44.x
   - release-v0.43.x
-  - release-v0.42.x
   - release-v0.37.x
 ecosystems:
   - package-ecosystem: gomod
