@@ -84,22 +84,28 @@ jobs:
               continue
             fi
 
-            # Find the latest tag on this branch
-            last_tag=$(git describe --tags --abbrev=0 --match 'v*' "$ref" 2>/dev/null || echo "")
-            if [ -z "$last_tag" ]; then
-              echo "::notice::Branch ${branch} has no tags — skipping (initial release handled by branch creation)"
+            # Latest release tag contained in this branch.
+            last_tag=$(git describe --tags --abbrev=0 --match "v${major}.${minor}.*" "$ref" 2>/dev/null || echo "")
+            if [[ ! "$last_tag" =~ ^v[0-9]+\.[0-9]+\.[0-9]+$ ]]; then
+              echo "::notice::Branch ${branch} has no release tag — skipping"
               continue
             fi
 
-            # Count commits since last tag
             new_commits=$(git rev-list "${last_tag}..${ref}" --count)
             if [ "$new_commits" -eq 0 ]; then
               echo "::notice::Branch ${branch} has no new commits since ${last_tag}"
               continue
             fi
 
-            # Calculate next patch version: v0.44.0 → v0.44.1
-            next_version=$(echo "$last_tag" | awk -F. '{printf "%s.%s.%d", $1, $2, $3+1}')
+            # Next patch is one above the highest vX.Y.Z tag for this line.
+            # Tags that were pushed but never merged are invisible to describe,
+            # so v0.45.2 still advances to v0.45.3.
+            highest_tag=$(git tag -l "v${major}.${minor}.*" --sort=-v:refname | grep -E '^v[0-9]+\.[0-9]+\.[0-9]+$' | head -1)
+            release_tag="$last_tag"
+            if [[ "$highest_tag" =~ ^v[0-9]+\.[0-9]+\.[0-9]+$ ]]; then
+              release_tag=$(printf '%s\n%s\n' "$last_tag" "$highest_tag" | sort -V | tail -1)
+            fi
+            next_version=$(echo "$release_tag" | awk -F. '{printf "%s.%s.%d", $1, $2, $3+1}')
 
             # Read tool versions from the branch
             go_version=$(git show "${ref}:go.mod" | grep "^go " | awk '{ print $2 }')
@@ -143,16 +149,11 @@ jobs:
         env:
           RELEASE_VERSION: ${{ matrix.release.version }}
         run: |
-          # Write version to VERSION file (goreleaser reads from git tag,
-          # but the Makefile uses this file)
-          echo "${RELEASE_VERSION#v}" > VERSION
           git config user.name "tekton-robot"
           git config user.email "tekton-robot@tektoncd.com"
-          git add VERSION
-          git commit -sm "New version ${RELEASE_VERSION}" || echo "No VERSION changes"
           git tag -a "${RELEASE_VERSION}" -m "Release ${RELEASE_VERSION}"
           git push origin "${RELEASE_VERSION}"
-          git push origin "HEAD:${{ matrix.release.branch }}"
+          git push origin "HEAD:release-${RELEASE_VERSION}"
 
       - name: Trigger PAC incoming webhook
         env:
@@ -218,18 +219,13 @@ jobs:
 
       - name: Create and push version tag
         env:
-          INPUT_VERSION: ${{ inputs.version }}
-          INPUT_BRANCH: ${{ inputs.branch }}
+          RELEASE_VERSION: ${{ inputs.version }}
         run: |
-          # Write version to VERSION file
-          echo "${INPUT_VERSION#v}" > VERSION
           git config user.name "tekton-robot"
           git config user.email "tekton-robot@tektoncd.com"
-          git add VERSION
-          git commit -sm "New version ${INPUT_VERSION}" || echo "No VERSION changes"
-          git tag -a "${INPUT_VERSION}" -m "Release ${INPUT_VERSION}"
-          git push origin "${INPUT_VERSION}"
-          git push origin "HEAD:${INPUT_BRANCH}"
+          git tag -a "${RELEASE_VERSION}" -m "Release ${RELEASE_VERSION}"
+          git push origin "${RELEASE_VERSION}"
+          git push origin "HEAD:release-${RELEASE_VERSION}"
 
       - name: Trigger PAC incoming webhook
         env:

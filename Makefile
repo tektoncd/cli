@@ -25,8 +25,19 @@ ifneq ($(SKIP_CHECK_FLAG),)
 	SKIPLDFLAG := -X github.com/tektoncd/cli/pkg/cmd/version.skipCheckFlag=$(SKIP_CHECK_FLAG)
 endif
 
+# clientVersion is injected with -X. A VERSION file is used when present.
+# Otherwise use the git tag: the exact tag on HEAD, or the latest vX.Y.*
+# tag on release-vX.Y.x. RELEASE_VERSION overrides both.
+GIT_VERSION := $(shell tag=$$(git describe --tags --exact-match --match 'v[0-9]*.[0-9]*.[0-9]*' 2>/dev/null); \
+	if [ -z "$$tag" ]; then \
+		line=$$(git rev-parse --abbrev-ref HEAD 2>/dev/null | sed -n 's/^release-v\([0-9][0-9]*\.[0-9][0-9]*\)\.x$$/\1/p'); \
+		if [ -n "$$line" ]; then tag=$$(git describe --tags --abbrev=0 --match "v$$line.*" HEAD 2>/dev/null); fi; \
+	fi; printf '%s' "$$tag" | sed 's/^v//')
+
 ifneq (,$(wildcard ./VERSION))
-	VERSIONLDFLAG := -X github.com/tektoncd/cli/pkg/cmd/version.clientVersion=`cat VERSION`
+	VERSIONLDFLAG := -X github.com/tektoncd/cli/pkg/cmd/version.clientVersion=$(shell cat VERSION)
+else ifneq ($(GIT_VERSION),)
+	VERSIONLDFLAG := -X github.com/tektoncd/cli/pkg/cmd/version.clientVersion=$(GIT_VERSION)
 endif
 
 ifneq ($(RELEASE_VERSION),)

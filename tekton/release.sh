@@ -103,10 +103,6 @@ done
 
 echo "${changelog}"
 
-# Add our VERSION so Makefile will pick it up when compiling
-echo ${RELEASE_VERSION#v} > VERSION
-git add VERSION
-git commit -sm "New version ${RELEASE_VERSION}" -m "${changelog}" VERSION
 git tag --sign -m \
     "New version ${RELEASE_VERSION}" \
     -m "${changelog}" --force ${RELEASE_VERSION}
