@@ -23,6 +23,7 @@ import (
 	"github.com/tektoncd/cli/pkg/cli"
 	"github.com/tektoncd/cli/pkg/formatted"
 	"github.com/tektoncd/pipeline/pkg/apis/pipeline/v1beta1"
+	"go.uber.org/multierr"
 	"k8s.io/apimachinery/pkg/api/errors"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 )
@@ -104,13 +105,14 @@ func deleteCustomRuns(s *cli.Stream, p cli.Params, crNames []string, output stri
 		err := customRunExists(cs, namespace, crName)
 		if err != nil {
 			fmt.Fprintf(s.Err, "CustomRun %s not found in namespace %s\n", crName, namespace)
+			deleteErr = multierr.Append(deleteErr, err)
 			continue
 		}
 
 		err = deleteCustomRun(cs, namespace, crName)
 		if err != nil {
 			fmt.Fprintf(s.Err, "failed to delete CustomRun %s: %v\n", crName, err)
-			deleteErr = err
+			deleteErr = multierr.Append(deleteErr, err)
 			continue
 		}
 		deleted = append(deleted, crName)
