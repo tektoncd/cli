@@ -303,3 +303,38 @@ func TestEventListenerDeleteStructuredOutput(t *testing.T) {
 		})
 	}
 }
+
+func TestEventListenerDeleteBulkStructuredOutput(t *testing.T) {
+	ns := []*corev1.Namespace{{ObjectMeta: metav1.ObjectMeta{Name: "ns"}}}
+	els := []*v1beta1.EventListener{
+		{ObjectMeta: metav1.ObjectMeta{Name: "el-1", Namespace: "ns"}},
+		{ObjectMeta: metav1.ObjectMeta{Name: "el-2", Namespace: "ns"}},
+	}
+
+	seed := func(t *testing.T) *test.Params {
+		t.Helper()
+		cs := test.SeedTestResources(t, triggertest.Resources{EventListeners: els, Namespaces: ns})
+		cs.Triggers.Resources = cb.TriggersAPIResourceList("v1beta1", []string{"eventlistener"})
+		tdc := testDynamic.Options{}
+		dc, err := tdc.Client(
+			cb.UnstructuredV1beta1EL(els[0], "v1beta1"),
+			cb.UnstructuredV1beta1EL(els[1], "v1beta1"),
+		)
+		if err != nil {
+			t.Fatalf("unable to create dynamic client: %v", err)
+		}
+		return &test.Params{Triggers: cs.Triggers, Kube: cs.Kube, Dynamic: dc}
+	}
+
+	out, err := test.ExecuteCommand(Command(seed(t)), "delete", "--all", "-n", "ns", "-o", "json")
+	if err != nil {
+		t.Fatalf("unexpected error: %v", err)
+	}
+	test.AssertOutput(t, "{\n    \"deleted\": [\n        \"el-1\",\n        \"el-2\"\n    ]\n}\n", out)
+
+	out, err = test.ExecuteCommand(Command(seed(t)), "delete", "--all", "-n", "ns", "-o", "yaml")
+	if err != nil {
+		t.Fatalf("unexpected error: %v", err)
+	}
+	test.AssertOutput(t, "deleted:\n- el-1\n- el-2\n", out)
+}

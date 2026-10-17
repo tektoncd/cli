@@ -66,6 +66,14 @@ Delete a ClusterTriggerBinding and print the result as YAML:
 
     tkn clustertriggerbinding delete foo -o yaml
 
+Delete all ClusterTriggerBindings and print the result as JSON:
+
+    tkn clustertriggerbinding delete --all -o json
+
+Delete all ClusterTriggerBindings and print the result as YAML:
+
+    tkn clustertriggerbinding delete --all -o yaml
+
 Using -o json or -o yaml skips the confirmation prompt.
 `
 
@@ -93,10 +101,6 @@ Using -o json or -o yaml skips the confirmation prompt.
 				output = formatted.NormalizeOutput(output)
 				if !formatted.IsStructured(output) {
 					return fmt.Errorf("invalid output format %q: must be json or yaml", output)
-				}
-				// Temporary guard: drop this once bulk delete supports -o.
-				if opts.DeleteAll {
-					return fmt.Errorf("structured output is not supported with bulk delete flags")
 				}
 				opts.ForceDelete = true
 			}
@@ -140,13 +144,13 @@ func deleteClusterTriggerBindings(s *cli.Stream, p cli.Params, ctbNames []string
 	}
 	d.Delete(ctbNames)
 
-	if !deleteAll {
-		if formatted.IsStructured(output) {
-			if err := formatted.PrintStructuredOutput(s.Out, output, formatted.NewDeleteResult(d.SuccessfulDeletes())); err != nil {
-				return err
-			}
-			return d.Errors()
+	if formatted.IsStructured(output) {
+		if err := formatted.PrintStructuredOutput(s.Out, output, formatted.NewDeleteResult(d.SuccessfulDeletes())); err != nil {
+			return err
 		}
+		return d.Errors()
+	}
+	if !deleteAll {
 		d.PrintSuccesses(s)
 	} else if deleteAll {
 		if d.Errors() == nil {

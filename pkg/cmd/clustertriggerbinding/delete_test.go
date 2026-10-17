@@ -274,3 +274,37 @@ func TestClusterTriggerBindingDeleteStructuredOutput(t *testing.T) {
 		})
 	}
 }
+
+func TestClusterTriggerBindingDeleteBulkStructuredOutput(t *testing.T) {
+	ctbs := []*v1beta1.ClusterTriggerBinding{
+		{ObjectMeta: metav1.ObjectMeta{Name: "ctb-1"}},
+		{ObjectMeta: metav1.ObjectMeta{Name: "ctb-2"}},
+	}
+
+	seed := func(t *testing.T) *test.Params {
+		t.Helper()
+		cs := test.SeedTestResources(t, triggertest.Resources{ClusterTriggerBindings: ctbs})
+		cs.Triggers.Resources = cb.TriggersAPIResourceList("v1beta1", []string{"clustertriggerbinding"})
+		tdc := testDynamic.Options{}
+		dc, err := tdc.Client(
+			cb.UnstructuredV1beta1CTB(ctbs[0], "v1beta1"),
+			cb.UnstructuredV1beta1CTB(ctbs[1], "v1beta1"),
+		)
+		if err != nil {
+			t.Fatalf("unable to create dynamic client: %v", err)
+		}
+		return &test.Params{Triggers: cs.Triggers, Kube: cs.Kube, Dynamic: dc}
+	}
+
+	out, err := test.ExecuteCommand(Command(seed(t)), "delete", "--all", "-o", "json")
+	if err != nil {
+		t.Fatalf("unexpected error: %v", err)
+	}
+	test.AssertOutput(t, "{\n    \"deleted\": [\n        \"ctb-1\",\n        \"ctb-2\"\n    ]\n}\n", out)
+
+	out, err = test.ExecuteCommand(Command(seed(t)), "delete", "--all", "-o", "yaml")
+	if err != nil {
+		t.Fatalf("unexpected error: %v", err)
+	}
+	test.AssertOutput(t, "deleted:\n- ctb-1\n- ctb-2\n", out)
+}
