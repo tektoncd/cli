@@ -26,6 +26,7 @@ import (
 	"github.com/spf13/cobra"
 	"github.com/tektoncd/cli/pkg/actions"
 	"github.com/tektoncd/cli/pkg/cli"
+	crsort "github.com/tektoncd/cli/pkg/customrun/sort"
 	"github.com/tektoncd/cli/pkg/formatted"
 	"github.com/tektoncd/cli/pkg/options"
 	"github.com/tektoncd/pipeline/pkg/apis/pipeline/v1beta1"
@@ -244,13 +245,15 @@ func askCustomRunName(opts *options.DescribeOptions, crs []string) error {
 	return nil
 }
 
-// GetAllCustomRuns returns all CustomRuns as a formatted string slice
+// GetAllCustomRuns returns CustomRuns as a formatted string slice, most recently
+// started first, keeping at most limit entries when limit is positive
 func GetAllCustomRuns(gr schema.GroupVersionResource, opts metav1.ListOptions, c *cli.Clients, ns string, limit int, time clockwork.Clock) ([]string, error) {
 	var customruns *v1beta1.CustomRunList
 	if err := actions.ListV1(gr, c, opts, ns, &customruns); err != nil {
 		return nil, fmt.Errorf("failed to list CustomRuns from namespace %s: %v", ns, err)
 	}
 
+	crsort.SortByStartTime(customruns.Items)
 	var ret []string
 	for i, cr := range customruns.Items {
 		if limit > 0 && i >= limit {
