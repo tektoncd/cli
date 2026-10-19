@@ -284,6 +284,85 @@ func TestCustomRunDescribe_last_no_customrun_present(t *testing.T) {
 	test.AssertOutput(t, expected, out)
 }
 
+func TestCustomRunDescribe_last_picks_most_recent(t *testing.T) {
+	clock := test.FakeClock()
+
+	newCustomRun := func(name string, started time.Time) *v1beta1.CustomRun {
+		return &v1beta1.CustomRun{
+			ObjectMeta: metav1.ObjectMeta{
+				Name:      name,
+				Namespace: "ns",
+			},
+			Spec: v1beta1.CustomRunSpec{
+				CustomRef: &v1beta1.TaskRef{
+					APIVersion: "example.dev/v0",
+					Kind:       "MyCustomTask",
+					Name:       "mytask",
+				},
+			},
+			Status: v1beta1.CustomRunStatus{
+				CustomRunStatusFields: v1beta1.CustomRunStatusFields{
+					StartTime: &metav1.Time{Time: started},
+				},
+			},
+		}
+	}
+
+	// The oldest run sorts first by name, so an unsorted list would put it
+	// in front of the newest one.
+	crs := []*v1beta1.CustomRun{
+		newCustomRun("cr-a", clock.Now().Add(-30*time.Minute)),
+		newCustomRun("cr-b", clock.Now().Add(-5*time.Minute)),
+		newCustomRun("cr-c", clock.Now().Add(-15*time.Minute)),
+	}
+
+	cs, _ := test.SeedTestData(t, pipelinetest.Data{
+		Namespaces: []*corev1.Namespace{
+			{
+				ObjectMeta: metav1.ObjectMeta{
+					Name: "ns",
+				},
+			},
+		},
+	})
+
+	tdc := testDynamic.Options{}
+	dynamic, err := tdc.Client(
+		cb.UnstructuredV1beta1CustomRun(crs[0], versionv1beta1),
+		cb.UnstructuredV1beta1CustomRun(crs[1], versionv1beta1),
+		cb.UnstructuredV1beta1CustomRun(crs[2], versionv1beta1),
+	)
+	if err != nil {
+		t.Errorf("unable to create dynamic client: %v", err)
+	}
+	cs.Pipeline.Resources = cb.APIResourceList(versionv1beta1, []string{"customrun"})
+	p := &test.Params{Tekton: cs.Pipeline, Kube: cs.Kube, Dynamic: dynamic, Clock: clock}
+
+	customrun := Command(p)
+	got, err := test.ExecuteCommand(customrun, "desc", "--last", "-o", "name", "-n", "ns")
+	if err != nil {
+		t.Errorf("Unexpected error: %v", err)
+	}
+	test.AssertOutput(t, "customrun.tekton.dev/cr-b", strings.TrimSpace(got))
+
+	cls, err := p.Clients()
+	if err != nil {
+		t.Fatalf("unable to get clients: %v", err)
+	}
+	names, err := GetAllCustomRuns(customrunGroupResource, metav1.ListOptions{}, cls, "ns", 2, clock)
+	if err != nil {
+		t.Fatalf("Unexpected error: %v", err)
+	}
+	if len(names) != 2 {
+		t.Fatalf("expected 2 CustomRuns, got %d: %v", len(names), names)
+	}
+	for i, want := range []string{"cr-b", "cr-c"} {
+		if got := strings.Fields(names[i])[0]; got != want {
+			t.Errorf("GetAllCustomRuns()[%d] = %q, want %q", i, got, want)
+		}
+	}
+}
+
 func TestCustomRunDescribe_custom_output(t *testing.T) {
 	name := "custom-run"
 	expected := "customrun.tekton.dev/" + name
