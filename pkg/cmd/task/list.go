@@ -51,6 +51,7 @@ NAME	DESCRIPTION	AGE
 type ListOptions struct {
 	AllNamespaces bool
 	NoHeaders     bool
+	Fields        []string
 }
 
 func listCommand(p cli.Params) *cobra.Command {
@@ -77,14 +78,18 @@ List Tasks as a YAML array:
     tkn task list -o yaml
 `,
 		RunE: func(cmd *cobra.Command, _ []string) error {
-			cs, err := p.Clients()
-			if err != nil {
-				return err
-			}
-
 			output, err := cmd.LocalFlags().GetString("output")
 			if err != nil {
 				return fmt.Errorf("error: output option not set properly: %v", err)
+			}
+
+			if len(opts.Fields) > 0 && output != "ndjson" {
+				return fmt.Errorf("--fields is only supported with --output ndjson")
+			}
+
+			cs, err := p.Clients()
+			if err != nil {
+				return err
 			}
 
 			ns := p.Namespace()
@@ -92,7 +97,17 @@ List Tasks as a YAML array:
 				ns = ""
 			}
 
-			if output != "" {
+			if output == "ndjson" {
+				var tl *v1.TaskList
+				if err := actions.ListV1(taskGroupResource, cs, metav1.ListOptions{}, ns, &tl); err != nil {
+					scope := fmt.Sprintf("namespace %q", ns)
+					if ns == "" {
+						scope = "all namespaces"
+					}
+					return fmt.Errorf("failed to list Tasks from %s: %w", scope, err)
+				}
+				return formatted.PrintNDJSON(cmd.OutOrStdout(), tl, opts.Fields)
+			} else if output != "" {
 				p, err := f.ToPrinter()
 				if err != nil {
 					return err
@@ -109,6 +124,7 @@ List Tasks as a YAML array:
 	f.AddFlags(c)
 	c.Flags().BoolVarP(&opts.AllNamespaces, "all-namespaces", "A", opts.AllNamespaces, "list Tasks from all namespaces")
 	c.Flags().BoolVarP(&opts.NoHeaders, "no-headers", "", opts.NoHeaders, "do not print column headers with output (default print column headers with output)")
+	c.Flags().StringSliceVar(&opts.Fields, "fields", opts.Fields, "Comma-separated list of fields to include in output (e.g. metadata.name,status.startTime); only used with --output ndjson")
 
 	return c
 }
