@@ -1462,15 +1462,6 @@ func Test_TaskRuns_Delete_With_Running_PipelineRun_v1beta1(t *testing.T) {
 			assertStreams: true,
 		},
 		{
-			name:          "Mixed TaskRuns JSON skips running PipelineRun owner",
-			command:       []string{"rm", "tr0-1", "tr0-3", "-n", "ns", "-o", "json"},
-			dynamic:       seeds[0].dynamicClient,
-			input:         seeds[0].pipelineClient,
-			wantError:     true,
-			want:          "taskrun tr0-1 is owned by a running PipelineRun; use --force to delete",
-			assertStreams: true,
-		},
-		{
 			name:        "Taskrun with running pipelinerun and answer y",
 			command:     []string{"rm", "tr0-1", "-n", "ns"},
 			dynamic:     seeds[0].dynamicClient,
@@ -1691,7 +1682,7 @@ func Test_TaskRuns_Delete_With_Running_PipelineRun(t *testing.T) {
 	}
 
 	seeds := make([]clients, 0)
-	for i := 0; i < 5; i++ {
+	for i := 0; i < 6; i++ {
 		trs := trdata
 		prs := prdata
 		cs, _ := test.SeedTestData(t, pipelinetest.Data{TaskRuns: trs, Tasks: tasks, PipelineRuns: prs, Namespaces: ns})
@@ -1746,6 +1737,15 @@ func Test_TaskRuns_Delete_With_Running_PipelineRun(t *testing.T) {
 			assertStreams: true,
 		},
 		{
+			name:          "Mixed TaskRuns JSON skips running PipelineRun owner",
+			command:       []string{"rm", "tr0-1", "tr0-3", "-n", "ns", "-o", "json"},
+			dynamic:       seeds[5].dynamicClient,
+			input:         seeds[5].pipelineClient,
+			wantError:     true,
+			want:          "taskrun tr0-1 is owned by a running PipelineRun; use --force to delete",
+			assertStreams: true,
+		},
+		{
 			name:        "All taskruns with running pipelinerun ",
 			command:     []string{"delete", "-n", "ns", "--all"},
 			dynamic:     seeds[3].dynamicClient,
@@ -1792,6 +1792,17 @@ func Test_TaskRuns_Delete_With_Running_PipelineRun(t *testing.T) {
 
 				if !json.Valid(stdout.Bytes()) {
 					t.Errorf("stdout is not valid JSON: %q", stdout.String())
+				}
+				if strings.Contains(tp.name, "Mixed TaskRuns JSON") {
+					var result struct {
+						Deleted []string `json:"deleted"`
+					}
+					if err := json.Unmarshal(stdout.Bytes(), &result); err != nil {
+						t.Fatalf("failed to decode JSON output: %v", err)
+					}
+					if len(result.Deleted) != 1 || result.Deleted[0] != "tr0-3" {
+						t.Errorf("expected deleted [tr0-3], got %v", result.Deleted)
+					}
 				}
 				if strings.Contains(stdout.String(), "warning:") {
 					t.Errorf("warning leaked into stdout: %q", stdout.String())
