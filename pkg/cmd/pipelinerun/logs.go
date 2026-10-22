@@ -136,7 +136,10 @@ func Run(opts *options.LogOptions) error {
 
 func prStatusToUnixStatus(pr *tektonv1.PipelineRun) int {
 	if len(pr.Status.Conditions) == 0 {
-		return 2
+		// PipelineRun has no conditions yet; treat as a general failure
+		// so the caller can distinguish from a successful run (0) without
+		// conflicting with the "resource not found" exit code (2).
+		return 1
 	}
 	if pr.Status.Conditions[0].Status == corev1.ConditionFalse {
 		return 1
