@@ -16,6 +16,7 @@ package taskrun
 
 import (
 	"bytes"
+	"context"
 	"encoding/json"
 	"io"
 	"strings"
@@ -31,7 +32,9 @@ import (
 	"github.com/tektoncd/pipeline/pkg/apis/pipeline/v1beta1"
 	pipelinetest "github.com/tektoncd/pipeline/test"
 	corev1 "k8s.io/api/core/v1"
+	apierrors "k8s.io/apimachinery/pkg/api/errors"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+	"k8s.io/apimachinery/pkg/runtime/schema"
 	"k8s.io/client-go/dynamic"
 	duckv1 "knative.dev/pkg/apis/duck/v1"
 )
@@ -230,7 +233,7 @@ func TestTaskRunDelete_v1beta1(t *testing.T) {
 	}
 
 	seeds := make([]clients, 0)
-	for i := 0; i < 18; i++ {
+	for i := 0; i < 24; i++ {
 		trs := trdata
 		cs, _ := test.SeedV1beta1TestData(t, test.Data{TaskRuns: trs, Tasks: tasks, Namespaces: ns})
 		cs.Pipeline.Resources = cb.APIResourceList(versionv1beta1, []string{"taskrun"})
@@ -248,6 +251,24 @@ func TestTaskRunDelete_v1beta1(t *testing.T) {
 			t.Errorf("unable to create dynamic client: %v", err)
 		}
 		seeds = append(seeds, clients{cs, dc})
+	}
+
+	emptyCS, _ := test.SeedV1beta1TestData(t, test.Data{
+		Tasks:      tasks,
+		Namespaces: ns,
+	})
+
+	emptyCS.Pipeline.Resources = cb.APIResourceList(
+		versionv1beta1,
+		[]string{"taskrun"},
+	)
+
+	emptyTDC := testDynamic.Options{}
+	emptyDC, err := emptyTDC.Client(
+		cb.UnstructuredV1beta1T(tasks[0], versionv1beta1),
+	)
+	if err != nil {
+		t.Fatalf("unable to create empty dynamic client: %v", err)
 	}
 
 	testParams := []struct {
@@ -649,6 +670,32 @@ func TestTaskRunDelete_v1beta1(t *testing.T) {
     ]
 }
 `,
+		},
+		{
+			name:        "Delete all TaskRuns with JSON output",
+			command:     []string{"delete", "-n", "ns", "--all", "-o", "json"},
+			dynamic:     seeds[18].dynamicClient,
+			input:       seeds[18].pipelineClient,
+			inputStream: nil,
+			wantError:   false,
+			want: `{
+    "deleted": [
+        "tr0-1",
+        "tr0-2",
+        "tr0-3",
+        "tr0-9"
+    ]
+}
+`,
+		},
+		{
+			name:        "Delete all with JSON output and no TaskRuns",
+			command:     []string{"delete", "-n", "ns", "--all", "-o", "json"},
+			dynamic:     emptyDC,
+			input:       emptyCS,
+			inputStream: nil,
+			wantError:   false,
+			want:        "{\n    \"deleted\": []\n}\n",
 		},
 	}
 
@@ -1406,13 +1453,22 @@ func Test_TaskRuns_Delete_With_Running_PipelineRun_v1beta1(t *testing.T) {
 		assertStreams bool
 	}{
 		{
-			name:        "Taskrun with running pipelinerun JSON without force",
-			command:     []string{"rm", "tr0-1", "-n", "ns", "-o", "json"},
-			dynamic:     seeds[0].dynamicClient,
-			input:       seeds[0].pipelineClient,
-			inputStream: nil,
-			wantError:   true,
-			want:        "taskrun tr0-1 is owned by a running PipelineRun; use --force to delete",
+			name:          "Taskrun with running pipelinerun JSON without force",
+			command:       []string{"rm", "tr0-1", "-n", "ns", "-o", "json"},
+			dynamic:       seeds[0].dynamicClient,
+			input:         seeds[0].pipelineClient,
+			wantError:     true,
+			want:          "taskrun tr0-1 is owned by a running PipelineRun; use --force to delete",
+			assertStreams: true,
+		},
+		{
+			name:          "Mixed TaskRuns JSON skips running PipelineRun owner",
+			command:       []string{"rm", "tr0-1", "tr0-3", "-n", "ns", "-o", "json"},
+			dynamic:       seeds[0].dynamicClient,
+			input:         seeds[0].pipelineClient,
+			wantError:     true,
+			want:          "taskrun tr0-1 is owned by a running PipelineRun; use --force to delete",
+			assertStreams: true,
 		},
 		{
 			name:        "Taskrun with running pipelinerun and answer y",
@@ -1574,6 +1630,29 @@ func Test_TaskRuns_Delete_With_Running_PipelineRun(t *testing.T) {
 				},
 			},
 		},
+		{
+			ObjectMeta: metav1.ObjectMeta{
+				Namespace: "ns",
+				Name:      "tr0-3",
+				Labels:    map[string]string{"tekton.dev/task": "random"},
+			},
+			Spec: v1.TaskRunSpec{
+				TaskRef: &v1.TaskRef{
+					Name: "random",
+					Kind: v1.NamespacedTaskKind,
+				},
+			},
+			Status: v1.TaskRunStatus{
+				Status: duckv1.Status{
+					Conditions: duckv1.Conditions{
+						{
+							Status: corev1.ConditionTrue,
+							Reason: v1.TaskRunReasonSuccessful.String(),
+						},
+					},
+				},
+			},
+		},
 	}
 
 	prdata := []*v1.PipelineRun{
@@ -1622,6 +1701,7 @@ func Test_TaskRuns_Delete_With_Running_PipelineRun(t *testing.T) {
 			cb.UnstructuredT(tasks[0], version),
 			cb.UnstructuredTR(trdata[0], version),
 			cb.UnstructuredTR(trdata[1], version),
+			cb.UnstructuredTR(trdata[2], version),
 			cb.UnstructuredPR(prs[0], version),
 		)
 		if err != nil {
@@ -1698,20 +1778,59 @@ func Test_TaskRuns_Delete_With_Running_PipelineRun(t *testing.T) {
 				taskrun.SetErr(&stderr)
 				taskrun.SetArgs(tp.command)
 
-				if err := taskrun.Execute(); err != nil {
+				err := taskrun.Execute()
+				if tp.wantError {
+					if err == nil {
+						t.Fatal("expected an error")
+					}
+					if !strings.Contains(err.Error(), tp.want) {
+						t.Errorf("expected error containing %q, got %q", tp.want, err.Error())
+					}
+				} else if err != nil {
 					t.Fatalf("unexpected error: %v", err)
 				}
 
 				if !json.Valid(stdout.Bytes()) {
 					t.Errorf("stdout is not valid JSON: %q", stdout.String())
 				}
-
 				if strings.Contains(stdout.String(), "warning:") {
 					t.Errorf("warning leaked into stdout: %q", stdout.String())
 				}
+				if strings.Contains(stdout.String(), "Proceed (y/n)") ||
+					strings.Contains(stdout.String(), "Are you sure") {
+					t.Errorf("confirmation prompt leaked into stdout: %q", stdout.String())
+				}
 
-				if !strings.Contains(stderr.String(), "warning:") {
+				if !tp.wantError && !strings.Contains(stderr.String(), "warning:") {
 					t.Errorf("expected warning on stderr, got: %q", stderr.String())
+				}
+
+				if strings.Contains(tp.name, "Mixed TaskRuns JSON") {
+					ctx := context.Background()
+
+					_, err := tp.dynamic.Resource(schema.GroupVersionResource{
+						Group:    "tekton.dev",
+						Version:  version,
+						Resource: "taskruns",
+					}).
+						Namespace("ns").
+						Get(ctx, "tr0-1", metav1.GetOptions{})
+					if err != nil {
+						t.Errorf("expected tr0-1 to remain, got error: %v", err)
+					}
+
+					_, err = tp.dynamic.Resource(schema.GroupVersionResource{
+						Group:    "tekton.dev",
+						Version:  version,
+						Resource: "taskruns",
+					}).
+						Namespace("ns").
+						Get(ctx, "tr0-3", metav1.GetOptions{})
+					if err == nil {
+						t.Error("expected tr0-3 to be deleted, but it still exists")
+					} else if !apierrors.IsNotFound(err) {
+						t.Errorf("unexpected error checking tr0-3: %v", err)
+					}
 				}
 
 				return

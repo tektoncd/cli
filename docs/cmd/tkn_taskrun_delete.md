@@ -20,10 +20,23 @@ Delete TaskRuns with names 'foo' and 'bar' in namespace 'quux':
 
     tkn taskrun delete foo bar -n quux
 
+Delete TaskRuns and print JSON:
+
+    tkn taskrun delete foo bar -n quux -o json
+
+Delete all TaskRuns and print JSON:
+
+    tkn taskrun delete --all -n quux -o json
+
+Delete TaskRuns associated with a Task:
+
+    tkn taskrun delete --task my-task -n quux -o json
+
 or
 
     tkn tr rm foo bar -n quux
 
+Deleting a TaskRun owned by a running PipelineRun requires --force when using structured output.
 
 ### Options
 
