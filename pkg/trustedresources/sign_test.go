@@ -17,12 +17,15 @@ limitations under the License.
 package trustedresources
 
 import (
+	"bytes"
 	"crypto"
 	"crypto/ecdsa"
 	"crypto/elliptic"
 	"crypto/rand"
 	"crypto/x509"
+	"encoding/base64"
 	"encoding/pem"
+	"fmt"
 	"os"
 	"path/filepath"
 	"testing"
@@ -30,9 +33,11 @@ import (
 	"github.com/pkg/errors"
 	"github.com/sigstore/sigstore/pkg/cryptoutils"
 	"github.com/sigstore/sigstore/pkg/signature"
+	v1 "github.com/tektoncd/pipeline/pkg/apis/pipeline/v1"
 	"github.com/tektoncd/pipeline/pkg/apis/pipeline/v1beta1"
 	"github.com/theupdateframework/go-tuf/encrypted"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+	"sigs.k8s.io/yaml"
 )
 
 const (
@@ -111,6 +116,173 @@ func TestSign(t *testing.T) {
 			}
 		})
 	}
+}
+
+const (
+	v1TaskYAML = `apiVersion: tekton.dev/v1
+kind: Task
+metadata:
+  name: test-task
+  namespace: test
+spec:
+  steps:
+  - name: build
+    image: golang
+    script: go build ./...
+    computeResources:
+      requests:
+        memory: 1Gi
+`
+	v1PipelineYAML = `apiVersion: tekton.dev/v1
+kind: Pipeline
+metadata:
+  name: test-pipeline
+  namespace: test
+spec:
+  tasks:
+  - name: build
+    taskSpec:
+      steps:
+      - name: build
+        image: golang
+        script: go build ./...
+`
+)
+
+func TestDecode(t *testing.T) {
+	tcs := []struct {
+		name string
+		yaml string
+		kind string
+		want metav1.Object
+	}{{
+		name: "v1 Task",
+		yaml: v1TaskYAML,
+		kind: "Task",
+		want: &v1.Task{},
+	}, {
+		name: "v1beta1 Task",
+		yaml: "apiVersion: tekton.dev/v1beta1\nkind: Task\nmetadata:\n  name: test-task\n",
+		kind: "Task",
+		want: &v1beta1.Task{},
+	}, {
+		name: "Task without apiVersion",
+		yaml: "kind: Task\nmetadata:\n  name: test-task\n",
+		kind: "Task",
+		want: &v1beta1.Task{},
+	}, {
+		name: "v1 Pipeline",
+		yaml: v1PipelineYAML,
+		kind: "Pipeline",
+		want: &v1.Pipeline{},
+	}, {
+		name: "v1beta1 Pipeline",
+		yaml: "apiVersion: tekton.dev/v1beta1\nkind: Pipeline\nmetadata:\n  name: test-pipeline\n",
+		kind: "Pipeline",
+		want: &v1beta1.Pipeline{},
+	}}
+	for _, tc := range tcs {
+		t.Run(tc.name, func(t *testing.T) {
+			got, err := Decode([]byte(tc.yaml), tc.kind)
+			if err != nil {
+				t.Fatalf("Decode() get err %v", err)
+			}
+			if gotType, wantType := reflectTypeName(got), reflectTypeName(tc.want); gotType != wantType {
+				t.Fatalf("Decode() returned %s, want %s", gotType, wantType)
+			}
+		})
+	}
+
+	if _, err := Decode([]byte(v1TaskYAML), "TaskRun"); err == nil {
+		t.Fatal("Decode() of an unsupported kind should fail")
+	}
+}
+
+// TestSignV1 checks that a signed tekton.dev/v1 resource is still a valid v1
+// resource and that its signature matches the checksum Tekton Pipelines verifies.
+func TestSignV1(t *testing.T) {
+	tmpDir := t.TempDir()
+	privateKeyFile := "cosign.key"
+	publicKeyFile := "cosign.pub"
+
+	signer, err := GenerateKeyFile(tmpDir, privateKeyFile, publicKeyFile)
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	tcs := []struct {
+		name    string
+		yaml    string
+		kind    string
+		decoded hashable
+		checkFn func(t *testing.T, o hashable)
+	}{{
+		name:    "Task",
+		yaml:    v1TaskYAML,
+		kind:    "Task",
+		decoded: &v1.Task{},
+		checkFn: func(t *testing.T, o hashable) {
+			task := o.(*v1.Task)
+			if got := task.Spec.Steps[0].ComputeResources.Requests.Memory().String(); got != "1Gi" {
+				t.Errorf("signed Task lost computeResources: memory request is %q", got)
+			}
+		},
+	}, {
+		name:    "Pipeline",
+		yaml:    v1PipelineYAML,
+		kind:    "Pipeline",
+		decoded: &v1.Pipeline{},
+		checkFn: func(*testing.T, hashable) {},
+	}}
+
+	for _, tc := range tcs {
+		t.Run(tc.name, func(t *testing.T) {
+			resource, err := Decode([]byte(tc.yaml), tc.kind)
+			if err != nil {
+				t.Fatalf("Decode() get err %v", err)
+			}
+			targetFile := filepath.Join(tmpDir, "signed-"+tc.kind+".yaml")
+			if err := Sign(resource, filepath.Join(tmpDir, privateKeyFile), "", targetFile); err != nil {
+				t.Fatalf("Sign() get err %v", err)
+			}
+			signed, err := os.ReadFile(targetFile)
+			if err != nil {
+				t.Fatalf("error reading file: %v", err)
+			}
+
+			// Tekton Pipelines decodes strictly, so a v1beta1-only field such as
+			// steps[].resources would be rejected.
+			if err := yaml.UnmarshalStrict(signed, tc.decoded); err != nil {
+				t.Fatalf("signed %s is not a valid v1 %s: %v", tc.kind, tc.kind, err)
+			}
+			tc.checkFn(t, tc.decoded)
+
+			annotations := tc.decoded.GetAnnotations()
+			sig, err := base64.StdEncoding.DecodeString(annotations[SignatureAnnotation])
+			if err != nil {
+				t.Fatalf("error decoding signature: %v", err)
+			}
+			delete(annotations, SignatureAnnotation)
+			tc.decoded.SetAnnotations(annotations)
+			checksum, err := tc.decoded.Checksum()
+			if err != nil {
+				t.Fatalf("Checksum() get err %v", err)
+			}
+			if err := signer.VerifySignature(bytes.NewReader(sig), bytes.NewReader(checksum)); err != nil {
+				t.Fatalf("signature does not match the Tekton Pipelines checksum: %v", err)
+			}
+		})
+	}
+}
+
+// hashable is a resource that Tekton Pipelines can compute a checksum for.
+type hashable interface {
+	metav1.Object
+	Checksum() ([]byte, error)
+}
+
+func reflectTypeName(o metav1.Object) string {
+	return fmt.Sprintf("%T", o)
 }
 
 func getTask() *v1beta1.Task {
