@@ -49,6 +49,18 @@ jobs:
         echo '::endgroup::'
         echo "${GOPATH}/bin" >> "$GITHUB_PATH"
 
+    - name: Increase inotify limits
+      run: |
+        # Workaround for actions/runner-images#15108: on the ubuntu-26.04
+        # runner image /etc/sysctl.conf is no longer applied at boot, so
+        # fs.inotify.max_user_instances falls back to the kernel default of
+        # 128 (instead of the image's intended 1280). inotify limits are not
+        # namespaced, so the 3-node kind cluster exhausts them and Tekton
+        # entrypoint pods fail with
+        # "failed to create fsnotify watcher: too many open files".
+        sudo sysctl -w fs.inotify.max_user_instances=1280
+        sudo sysctl -w fs.inotify.max_user_watches=655360
+
     - name: Run tests
       run: |
         curl -sSfL https://raw.githubusercontent.com/tektoncd/plumbing/main/tekton/images/kind-e2e/setup-kind.sh -o setup-kind.sh
