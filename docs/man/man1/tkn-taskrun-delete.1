@@ -88,6 +88,42 @@ tkn taskrun delete foo bar \-n quux
 .RE
 
 .PP
+Delete TaskRuns and print JSON:
+
+.PP
+.RS
+
+.nf
+tkn taskrun delete foo bar \-n quux \-o json
+
+.fi
+.RE
+
+.PP
+Delete all TaskRuns and print JSON:
+
+.PP
+.RS
+
+.nf
+tkn taskrun delete \-\-all \-n quux \-o json
+
+.fi
+.RE
+
+.PP
+Delete TaskRuns associated with a Task:
+
+.PP
+.RS
+
+.nf
+tkn taskrun delete \-\-task my\-task \-n quux \-o json
+
+.fi
+.RE
+
+.PP
 or
 
 .PP
@@ -98,6 +134,9 @@ tkn tr rm foo bar \-n quux
 
 .fi
 .RE
+
+.PP
+Deleting a TaskRun owned by a running PipelineRun requires \-\-force when using structured output.
 
 
 .SH SEE ALSO

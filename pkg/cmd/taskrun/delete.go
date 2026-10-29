@@ -67,10 +67,23 @@ func deleteCommand(p cli.Params) *cobra.Command {
 
     tkn taskrun delete foo bar -n quux
 
+Delete TaskRuns and print JSON:
+
+    tkn taskrun delete foo bar -n quux -o json
+
+Delete all TaskRuns and print JSON:
+
+    tkn taskrun delete --all -n quux -o json
+
+Delete TaskRuns associated with a Task:
+
+    tkn taskrun delete --task my-task -n quux -o json
+
 or
 
     tkn tr rm foo bar -n quux
-`
+
+Deleting a TaskRun owned by a running PipelineRun requires --force when using structured output.`
 
 	c := &cobra.Command{
 		Use:               "delete",
@@ -130,12 +143,16 @@ or
 				return errs
 			}
 
-			checkStreams := s
+			checkOpts := opts
 			if formatted.IsStructured(output) {
 				s.Err = cmd.ErrOrStderr()
-				checkStreams = &cli.Stream{In: strings.NewReader("y\n"), Out: &strings.Builder{}, Err: s.Err}
+
+				structuredOpts := *opts
+				structuredOpts.ForceDelete = true
+				checkOpts = &structuredOpts
 			}
-			if err := opts.CheckOptions(checkStreams, availableTrs, p.Namespace()); err != nil {
+
+			if err := checkOpts.CheckOptions(s, availableTrs, p.Namespace()); err != nil {
 				return err
 			}
 
@@ -159,6 +176,8 @@ or
 
 func deleteTaskRuns(s *cli.Stream, p cli.Params, trNames []string, opts *options.DeleteOptions, output string) error {
 	var numberOfDeletedTr, numberOfKeptTr int
+	var safetyErr error
+
 	cs, err := p.Clients()
 	if err != nil {
 		return fmt.Errorf("failed to create tekton client")
@@ -198,10 +217,21 @@ func deleteTaskRuns(s *cli.Stream, p cli.Params, trNames []string, opts *options
 			}
 			if !prFinished && !opts.ForceDelete {
 				if formatted.IsStructured(output) {
-					return fmt.Errorf("taskrun %s is owned by a running PipelineRun; use --force to delete", tr.Name)
+					safetyErr = multierr.Append(
+						safetyErr,
+						fmt.Errorf(
+							"taskrun %s is owned by a running PipelineRun; use --force to delete",
+							tr.Name,
+						),
+					)
+					continue
 				}
 
-				fmt.Fprintf(s.Out, "TaskRun(s): %s attached to PipelineRun is still running deleting will restart the completed taskrun. Proceed (y/n): ", tr.Name)
+				fmt.Fprintf(
+					s.Out,
+					"TaskRun(s): %s attached to PipelineRun is still running deleting will restart the completed taskrun. Proceed (y/n): ",
+					tr.Name,
+				)
 				if err := opts.TakeInput(s, ""); err != nil {
 					continue
 				}
@@ -250,8 +280,17 @@ func deleteTaskRuns(s *cli.Stream, p cli.Params, trNames []string, opts *options
 
 	if formatted.IsStructured(output) {
 		deleted := append(d.SuccessfulRelatedDeletes(), d.SuccessfulDeletes()...)
-		printErr := formatted.PrintStructuredOutput(s.Out, output, formatted.NewDeleteResult(deleted))
-		return multierr.Append(printErr, d.Errors())
+		if deleted == nil {
+			deleted = []string{}
+		}
+
+		printErr := formatted.PrintStructuredOutput(
+			s.Out,
+			output,
+			formatted.NewDeleteResult(deleted),
+		)
+
+		return multierr.Combine(printErr, d.Errors(), safetyErr)
 	}
 
 	if !opts.DeleteAllNs {
