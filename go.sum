@@ -474,8 +474,8 @@ github.com/tektoncd/pipeline v1.14.1 h1:yVv/yNkJ5bghhy2IZ9ScJPvqr8H48vyvXiuhBEzL
 github.com/tektoncd/pipeline v1.14.1/go.mod h1:02XVcI1djpd6APKLX7JdnUddiVuwulCTWamQxlNF5CI=
 github.com/tektoncd/plumbing v0.0.0-20250430145243-3b7cd59879c1 h1:nv7BsOAZ1ifQX9Lw1hYFo1f7e62dTDyyVPJBuljgZKw=
 github.com/tektoncd/plumbing v0.0.0-20250430145243-3b7cd59879c1/go.mod h1:eDs4O8vTNkyKZ/+AEuo4nYDfpyn1AzbgIcQ1QMQaKJk=
-github.com/tektoncd/triggers v0.36.4 h1:e5QSSXakZ5Nf+c3BcBM6yX+HUmxokjORafQlEbH5fJc=
-github.com/tektoncd/triggers v0.36.4/go.mod h1:O0u/q77jhBpFrkzUc63k9o75cHgPnRWsEEKT136k8lw=
+github.com/tektoncd/triggers v0.36.5 h1:3MvNUhSbZScWOndDGH5yK+GeG2owIPbM634rn1I66ps=
+github.com/tektoncd/triggers v0.36.5/go.mod h1:418COHqryw55diGo9dlpY/OHW7qy41uIgyPxywoWXDk=
 github.com/theupdateframework/go-tuf v0.7.0 h1:CqbQFrWo1ae3/I0UCblSbczevCCbS31Qvs5LdxRWqRI=
 github.com/theupdateframework/go-tuf v0.7.0/go.mod h1:uEB7WSY+7ZIugK6R1hiBMBjQftaFzn7ZCDJcp1tCUug=
 github.com/tidwall/gjson v1.14.2 h1:6BBkirS0rAHjumnjHF6qgy5d2YAJ1TLIaFE2lzfOLqo=
