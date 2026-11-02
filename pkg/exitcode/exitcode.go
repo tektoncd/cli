@@ -27,6 +27,7 @@
 package exitcode
 
 import (
+	"context"
 	"errors"
 	"fmt"
 
@@ -52,10 +53,20 @@ const (
 type Error struct {
 	Code    int
 	Message string
+	// Err is the underlying error, if any.  It is preserved so that helpers
+	// such as k8serrors.IsNotFound keep working through errors.Is/errors.As.
+	Err error
 }
 
 func (e *Error) Error() string {
 	return e.Message
+}
+
+// Unwrap returns the underlying error so that errors.Is and errors.As can
+// inspect the original error (for example a Kubernetes status error) behind
+// the exit code.
+func (e *Error) Unwrap() error {
+	return e.Err
 }
 
 // New creates an Error with an explicit code and formatted message.
@@ -64,26 +75,41 @@ func New(code int, format string, a ...interface{}) *Error {
 }
 
 // FromAPIError converts a Kubernetes API error into an Error with the
-// appropriate exit code.  If err is not a k8s status error it is returned
-// unchanged.
+// appropriate exit code.  If err cannot be classified it is returned
+// unchanged.  The original error is kept as the wrapped error so that
+// k8serrors helpers (IsNotFound, IsForbidden, ...) still match it.
 func FromAPIError(err error) error {
 	if err == nil {
 		return nil
 	}
+	if code, ok := classify(err); ok {
+		return &Error{Code: code, Message: err.Error(), Err: err}
+	}
+	return err
+}
+
+// classify maps a Kubernetes API or context error to its exit code.  The
+// second return value is false when err does not match any known category.
+func classify(err error) (int, bool) {
 	switch {
 	case k8serrors.IsNotFound(err):
-		return &Error{Code: NotFound, Message: err.Error()}
+		return NotFound, true
 	case k8serrors.IsUnauthorized(err), k8serrors.IsForbidden(err):
-		return &Error{Code: Unauthorized, Message: err.Error()}
-	case k8serrors.IsTimeout(err):
-		return &Error{Code: Timeout, Message: err.Error()}
+		return Unauthorized, true
+	case k8serrors.IsInvalid(err), k8serrors.IsBadRequest(err):
+		return InvalidInput, true
+	case k8serrors.IsTimeout(err), k8serrors.IsServerTimeout(err),
+		errors.Is(err, context.DeadlineExceeded):
+		return Timeout, true
 	default:
-		return err
+		return 0, false
 	}
 }
 
-// CodeFrom returns the exit code carried by err, or GeneralError if err
-// carries no code.
+// CodeFrom returns the exit code carried by err.  A typed exitcode.Error takes
+// precedence; otherwise an unclassified Kubernetes/context error is classified
+// here so codes still propagate through callers that preserve the cause.  Any
+// remaining error maps to GeneralError.
 func CodeFrom(err error) int {
 	if err == nil {
 		return Success
@@ -91,6 +117,9 @@ func CodeFrom(err error) int {
 	var e *Error
 	if errors.As(err, &e) {
 		return e.Code
+	}
+	if code, ok := classify(err); ok {
+		return code
 	}
 	return GeneralError
 }

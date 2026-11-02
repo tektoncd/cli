@@ -18,6 +18,7 @@ import (
 	"context"
 
 	"github.com/tektoncd/cli/pkg/cli"
+	"github.com/tektoncd/cli/pkg/exitcode"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime/schema"
 	"k8s.io/apimachinery/pkg/watch"
@@ -32,7 +33,7 @@ func Watch(gr schema.GroupVersionResource, clients *cli.Clients, ns string, op m
 
 	watch, err := clients.Dynamic.Resource(*gvr).Namespace(ns).Watch(context.Background(), op)
 	if err != nil {
-		return nil, err
+		return nil, exitcode.FromAPIError(err)
 	}
 
 	return watch, nil

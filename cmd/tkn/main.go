@@ -49,8 +49,12 @@ func main() {
 	}
 
 CoreTkn:
-	if err := tkn.Execute(); err != nil {
-		tknCmd.PrintError(tkn, err, os.Stderr)
+	// ExecuteC returns the command that actually ran so that PrintError can
+	// resolve the locally defined --output flag; tkn.Execute would only expose
+	// the root command, where --output is not registered.
+	executedCmd, err := tkn.ExecuteC()
+	if err != nil {
+		tknCmd.PrintError(executedCmd, err, os.Stderr)
 		os.Exit(exitcode.CodeFrom(err))
 	}
 }

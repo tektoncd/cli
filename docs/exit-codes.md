@@ -16,6 +16,12 @@ detect success or failure without parsing command output.
 
 Exit code `127` is reserved for plugin execution failures.
 
+> **Note on conventions:** Some shells (notably Bash) reserve exit code `2`
+> for "misuse of shell builtins". `tkn` instead uses `2` for "resource not
+> found" so that the most common failure mode has a dedicated, stable code.
+> Scripts should branch on the specific codes above rather than assuming the
+> Bash convention.
+
 ## Exit Code `2` – Resource Not Found
 
 `tkn` returns `2` whenever a Kubernetes API call returns an HTTP 404 (Not
