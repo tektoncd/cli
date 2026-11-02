@@ -28,6 +28,7 @@ import (
 	"github.com/pkg/errors"
 	"github.com/spf13/cobra"
 	"github.com/tektoncd/cli/pkg/cli"
+	"github.com/tektoncd/cli/pkg/exitcode"
 	"github.com/tektoncd/cli/pkg/flags"
 	"github.com/tektoncd/cli/pkg/formatted"
 	"github.com/tektoncd/cli/pkg/version"
@@ -86,7 +87,7 @@ func Command(p cli.Params) *cobra.Command {
 		},
 		RunE: func(cmd *cobra.Command, _ []string) error {
 			if output != "" && !formatted.IsStructured(output) {
-				return fmt.Errorf("invalid output format %q: must be json or yaml", output)
+				return exitcode.New(exitcode.InvalidInput, "invalid output format %q: must be json or yaml", output)
 			}
 			if formatted.IsStructured(output) && check {
 				return fmt.Errorf("--check cannot be used with --output")

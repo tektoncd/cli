@@ -31,6 +31,7 @@ import (
 	"github.com/tektoncd/cli/pkg/actions"
 	"github.com/tektoncd/cli/pkg/cli"
 	prcmd "github.com/tektoncd/cli/pkg/cmd/pipelinerun"
+	"github.com/tektoncd/cli/pkg/exitcode"
 	"github.com/tektoncd/cli/pkg/file"
 	"github.com/tektoncd/cli/pkg/flags"
 	"github.com/tektoncd/cli/pkg/formatted"
@@ -174,10 +175,10 @@ For passing the workspaces via flags:
 		SilenceUsage: true,
 
 		ValidArgsFunction: formatted.ParentCompletion,
+		PreRunE: func(cmd *cobra.Command, _ []string) error {
+			return flags.InitParams(p, cmd)
+		},
 		Args: func(cmd *cobra.Command, args []string) error {
-			if err := flags.InitParams(p, cmd); err != nil {
-				return err
-			}
 			if opt.Last && opt.UsePipelineRun != "" {
 				return errors.New("option --last and option --use-pipelinerun can't be specify together")
 			}
@@ -217,7 +218,7 @@ For passing the workspaces via flags:
 
 			format := strings.ToLower(opt.Output)
 			if format != "" && format != "json" && format != "yaml" && format != "name" {
-				return fmt.Errorf("output format specified is %s but must be yaml or json", opt.Output)
+				return exitcode.New(exitcode.InvalidInput, "output format specified is %s but must be yaml or json", opt.Output)
 			}
 			if format != "" && opt.ShowLog {
 				return errors.New("cannot use --output option with --showlog option")
@@ -269,7 +270,7 @@ For passing the workspaces via flags:
 	c.Flags().BoolVarP(&opt.UseParamDefaults, "use-param-defaults", "", false, "use default parameter values without prompting for input")
 	c.Flags().StringVar(&opt.PodTemplate, "pod-template", "", "local or remote file containing a PodTemplate definition")
 	c.Flags().BoolVarP(&opt.SkipOptionalWorkspace, "skip-optional-workspace", "", false, "skips the prompt for optional workspaces")
-	c.Flags().BoolVarP(&opt.ExitWithPrError, "exit-with-pipelinerun-error", "E", false, "when using --showlog, exit with pipelinerun to the unix shell, 0 if success, 1 if error, 2 on unknown status")
+	c.Flags().BoolVarP(&opt.ExitWithPrError, "exit-with-pipelinerun-error", "E", false, "when using --showlog, exit with pipelinerun to the unix shell, 0 if success, 1 if error or unknown status")
 
 	c.Flags().StringVarP(&opt.ServiceAccountName, "serviceaccount", "s", "", "pass the serviceaccount name")
 	_ = c.RegisterFlagCompletionFunc("serviceaccount",

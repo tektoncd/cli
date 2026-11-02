@@ -250,7 +250,7 @@ func askCustomRunName(opts *options.DescribeOptions, crs []string) error {
 func GetAllCustomRuns(gr schema.GroupVersionResource, opts metav1.ListOptions, c *cli.Clients, ns string, limit int, time clockwork.Clock) ([]string, error) {
 	var customruns *v1beta1.CustomRunList
 	if err := actions.ListV1(gr, c, opts, ns, &customruns); err != nil {
-		return nil, fmt.Errorf("failed to list CustomRuns from namespace %s: %v", ns, err)
+		return nil, fmt.Errorf("failed to list CustomRuns from namespace %s: %w", ns, err)
 	}
 
 	crsort.SortByStartTime(customruns.Items)
@@ -282,7 +282,7 @@ func GetCustomRun(gr schema.GroupVersionResource, c *cli.Clients, crName, ns str
 func PrintCustomRunDescription(out io.Writer, c *cli.Clients, ns string, crName string, time clockwork.Clock) error {
 	cr, err := GetCustomRun(customrunGroupResource, c, crName, ns)
 	if err != nil {
-		return fmt.Errorf("failed to get CustomRun %s: %v", crName, err)
+		return fmt.Errorf("failed to get CustomRun %s: %w", crName, err)
 	}
 
 	var data = struct {

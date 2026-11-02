@@ -22,6 +22,7 @@ import (
 
 	"github.com/jonboulle/clockwork"
 	"github.com/spf13/cobra"
+	"github.com/tektoncd/cli/pkg/exitcode"
 	"github.com/tektoncd/cli/pkg/test"
 	cb "github.com/tektoncd/cli/pkg/test/builder"
 	testDynamic "github.com/tektoncd/cli/pkg/test/dynamic"
@@ -569,6 +570,29 @@ func commandV1beta1(t *testing.T, prs []*v1beta1.PipelineRun, now time.Time, ns 
 	p := &test.Params{Tekton: cs.Pipeline, Clock: clock, Kube: cs.Kube, Dynamic: dc}
 
 	return Command(p)
+}
+
+// TestListPipelineRuns_negative_limit_exit_code verifies the client-side
+// --limit validator classifies the failure as InvalidInput, so the command
+// exits with the documented code rather than the generic error code.
+func TestListPipelineRuns_negative_limit_exit_code(t *testing.T) {
+	clock := test.FakeClock()
+	ns := []*corev1.Namespace{
+		{ObjectMeta: metav1.ObjectMeta{Name: "namespace"}},
+	}
+	tdc := testDynamic.Options{}
+	dc, err := tdc.Client()
+	if err != nil {
+		t.Fatalf("unable to create dynamic client: %v", err)
+	}
+	cmd := commandV1beta1(t, nil, clock.Now(), ns, "v1beta1", dc)
+	_, err = test.ExecuteCommand(cmd, "list", "-n", "namespace", "--limit", "-1")
+	if err == nil {
+		t.Fatal("expected an error for a negative --limit")
+	}
+	if got := exitcode.CodeFrom(err); got != exitcode.InvalidInput {
+		t.Errorf("CodeFrom(negative limit) = %d, want %d (%v)", got, exitcode.InvalidInput, err)
+	}
 }
 
 func command(t *testing.T, prs []*v1.PipelineRun, now time.Time, ns []*corev1.Namespace, version string, dc dynamic.Interface) *cobra.Command {

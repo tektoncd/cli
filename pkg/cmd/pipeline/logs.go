@@ -77,7 +77,8 @@ Show logs for given Pipeline and PipelineRun:
 			"commandType": "main",
 		},
 		ValidArgsFunction: formatted.ParentCompletion,
-		Args: func(cmd *cobra.Command, args []string) error {
+		Args:              cobra.MaximumNArgs(2),
+		PreRunE: func(cmd *cobra.Command, args []string) error {
 			if err := flags.InitParams(p, cmd); err != nil {
 				return err
 			}

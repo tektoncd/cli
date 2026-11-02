@@ -32,7 +32,7 @@ var pipelineRunGroupResource = schema.GroupVersionResource{Group: "tekton.dev", 
 func GetAllPipelineNames(gr schema.GroupVersionResource, c *cli.Clients, ns string) ([]string, error) {
 	var pipelines *v1.PipelineList
 	if err := actions.ListV1(gr, c, metav1.ListOptions{}, ns, &pipelines); err != nil {
-		return nil, fmt.Errorf("failed to list Tasks from namespace %s: %v", ns, err)
+		return nil, fmt.Errorf("failed to list Tasks from namespace %s: %w", ns, err)
 	}
 
 	ret := []string{}

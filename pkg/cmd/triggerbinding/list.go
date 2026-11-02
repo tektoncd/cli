@@ -80,9 +80,9 @@ List TriggerBindings as a YAML array:
 			tbs, err := triggerbinding.List(cs, metav1.ListOptions{}, namespace)
 			if err != nil {
 				if opts.AllNamespaces {
-					return fmt.Errorf("failed to list TriggerBindings from all namespaces: %v", err)
+					return fmt.Errorf("failed to list TriggerBindings from all namespaces: %w", err)
 				}
-				return fmt.Errorf("failed to list TriggerBindings from %s namespace: %v", namespace, err)
+				return fmt.Errorf("failed to list TriggerBindings from %s namespace: %w", namespace, err)
 			}
 
 			output, err := cmd.LocalFlags().GetString("output")

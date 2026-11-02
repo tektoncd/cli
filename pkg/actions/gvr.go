@@ -17,6 +17,7 @@ package actions
 import (
 	"sync"
 
+	"github.com/tektoncd/cli/pkg/exitcode"
 	"k8s.io/apimachinery/pkg/runtime/schema"
 	"k8s.io/client-go/discovery"
 	"k8s.io/client-go/restmapper"
@@ -34,13 +35,16 @@ func GetGroupVersionResource(gr schema.GroupVersionResource, discovery discovery
 		err = InitializeAPIGroupRes(discovery)
 	})
 	if err != nil {
-		return nil, err
+		// Discovery contacts the API server, so classify auth/timeout
+		// failures here rather than letting them fall through as a generic
+		// error; restmapper "no match" errors are passed through unchanged.
+		return nil, exitcode.FromAPIError(err)
 	}
 
 	rm := restmapper.NewDiscoveryRESTMapper(apiGroupRes)
 	gvr, err := rm.ResourceFor(gr)
 	if err != nil {
-		return nil, err
+		return nil, exitcode.FromAPIError(err)
 	}
 
 	return &gvr, nil

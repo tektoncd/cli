@@ -81,9 +81,9 @@ List EventListeners as a YAML array:
 			els, err := eventlistener.List(cs, metav1.ListOptions{}, namespace)
 			if err != nil {
 				if opts.AllNamespaces {
-					return fmt.Errorf("failed to list EventListeners from all namespaces: %v", err)
+					return fmt.Errorf("failed to list EventListeners from all namespaces: %w", err)
 				}
-				return fmt.Errorf("failed to list EventListeners from %s namespace: %v", namespace, err)
+				return fmt.Errorf("failed to list EventListeners from %s namespace: %w", namespace, err)
 			}
 
 			output, err := cmd.LocalFlags().GetString("output")

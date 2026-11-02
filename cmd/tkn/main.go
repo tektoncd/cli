@@ -21,7 +21,6 @@ import (
 
 	"github.com/tektoncd/cli/pkg/cli"
 	tknCmd "github.com/tektoncd/cli/pkg/cmd"
-	"github.com/tektoncd/cli/pkg/exitcode"
 	"github.com/tektoncd/cli/pkg/plugins"
 	_ "k8s.io/client-go/plugin/pkg/client/auth"
 )
@@ -49,8 +48,5 @@ func main() {
 	}
 
 CoreTkn:
-	if err := tkn.Execute(); err != nil {
-		tknCmd.PrintError(tkn, err, os.Stderr)
-		os.Exit(exitcode.CodeFrom(err))
-	}
+	os.Exit(tknCmd.Execute(tkn, os.Args[1:], os.Stderr))
 }

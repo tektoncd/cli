@@ -150,7 +150,7 @@ func printTriggerTemplateDescription(s *cli.Stream, p cli.Params, ttname string)
 
 	tt, err := triggertemplate.Get(cs, ttname, metav1.GetOptions{}, p.Namespace())
 	if err != nil {
-		return fmt.Errorf("failed to get TriggerTemplate %s from %s namespace: %v", ttname, p.Namespace(), err)
+		return fmt.Errorf("failed to get TriggerTemplate %s from %s namespace: %w", ttname, p.Namespace(), err)
 	}
 
 	var data = struct {

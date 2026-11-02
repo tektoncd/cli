@@ -130,7 +130,7 @@ func printTriggerBindingDescription(s *cli.Stream, p cli.Params, tbName string) 
 
 	tb, err := triggerbinding.Get(cs, tbName, metav1.GetOptions{}, p.Namespace())
 	if err != nil {
-		return fmt.Errorf("failed to get TriggerBinding %s from %s namespace: %v", tbName, p.Namespace(), err)
+		return fmt.Errorf("failed to get TriggerBinding %s from %s namespace: %w", tbName, p.Namespace(), err)
 	}
 
 	var data = struct {

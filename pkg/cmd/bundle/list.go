@@ -14,13 +14,13 @@
 package bundle
 
 import (
-	"fmt"
 	"strings"
 
 	"github.com/google/go-containerregistry/pkg/name"
 	"github.com/spf13/cobra"
 	"github.com/tektoncd/cli/pkg/bundle"
 	"github.com/tektoncd/cli/pkg/cli"
+	"github.com/tektoncd/cli/pkg/exitcode"
 	"k8s.io/apimachinery/pkg/runtime"
 	cliopts "k8s.io/cli-runtime/pkg/genericclioptions"
 )
@@ -100,7 +100,7 @@ Caching:
 				}
 
 				if !allowedKind {
-					return fmt.Errorf("second argument %s is not a valid kind: %q", args[1], allowedKinds)
+					return exitcode.New(exitcode.InvalidInput, "second argument %s is not a valid kind: %q", args[1], allowedKinds)
 				}
 			}
 

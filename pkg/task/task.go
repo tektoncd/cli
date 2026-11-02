@@ -33,7 +33,7 @@ var taskGroupResource = schema.GroupVersionResource{Group: "tekton.dev", Resourc
 func GetAllTaskNames(gr schema.GroupVersionResource, c *cli.Clients, ns string) ([]string, error) {
 	var tasks *v1.TaskList
 	if err := actions.ListV1(gr, c, metav1.ListOptions{}, ns, &tasks); err != nil {
-		return nil, fmt.Errorf("failed to list Tasks from namespace %s: %v", ns, err)
+		return nil, fmt.Errorf("failed to list Tasks from namespace %s: %w", ns, err)
 	}
 
 	ret := []string{}

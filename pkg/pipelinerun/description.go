@@ -26,6 +26,7 @@ import (
 	"github.com/jonboulle/clockwork"
 	"github.com/tektoncd/cli/pkg/actions"
 	"github.com/tektoncd/cli/pkg/cli"
+	"github.com/tektoncd/cli/pkg/exitcode"
 	"github.com/tektoncd/cli/pkg/formatted"
 	v1 "github.com/tektoncd/pipeline/pkg/apis/pipeline/v1"
 	"github.com/tektoncd/pipeline/pkg/apis/pipeline/v1beta1"
@@ -172,7 +173,7 @@ func (trs TaskRunWithStatusList) Less(i, j int) bool {
 func PrintPipelineRunDescription(out io.Writer, c *cli.Clients, ns string, prName string, time clockwork.Clock) error {
 	pr, err := GetPipelineRun(pipelineRunGroupResource, c, prName, ns)
 	if err != nil {
-		return fmt.Errorf("failed to find pipelinerun %q", prName)
+		return exitcode.New(exitcode.CodeFrom(err), "failed to find pipelinerun %q", prName)
 	}
 
 	var taskRunList TaskRunWithStatusList

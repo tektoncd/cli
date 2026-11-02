@@ -21,6 +21,7 @@ import (
 	"github.com/spf13/cobra"
 	"github.com/tektoncd/cli/pkg/actions"
 	"github.com/tektoncd/cli/pkg/cli"
+	"github.com/tektoncd/cli/pkg/exitcode"
 	"github.com/tektoncd/cli/pkg/formatted"
 	v1 "github.com/tektoncd/pipeline/pkg/apis/pipeline/v1"
 	corev1 "k8s.io/api/core/v1"
@@ -76,7 +77,7 @@ Cancel a TaskRun and print the result as YAML:
 
 func cancelTaskRun(p cli.Params, s *cli.Stream, trName string, output string) error {
 	if output != "" && !formatted.IsStructured(output) {
-		return fmt.Errorf("invalid output format %q: must be json or yaml", output)
+		return exitcode.New(exitcode.InvalidInput, "invalid output format %q: must be json or yaml", output)
 	}
 
 	cs, err := p.Clients()
@@ -87,7 +88,7 @@ func cancelTaskRun(p cli.Params, s *cli.Stream, trName string, output string) er
 	var taskrun *v1.TaskRun
 	err = actions.GetV1(taskrunGroupResource, cs, trName, p.Namespace(), metav1.GetOptions{}, &taskrun)
 	if err != nil {
-		return fmt.Errorf("failed to find TaskRun: %s", trName)
+		return exitcode.New(exitcode.CodeFrom(err), "failed to find TaskRun: %s", trName)
 	}
 
 	if len(taskrun.Status.Conditions) > 0 {
@@ -97,7 +98,7 @@ func cancelTaskRun(p cli.Params, s *cli.Stream, trName string, output string) er
 	}
 
 	if _, err := patch(cs, trName, metav1.PatchOptions{}, p.Namespace()); err != nil {
-		return fmt.Errorf("failed to cancel TaskRun %s: %v", trName, err)
+		return fmt.Errorf("failed to cancel TaskRun %s: %w", trName, err)
 	}
 
 	if formatted.IsStructured(output) {

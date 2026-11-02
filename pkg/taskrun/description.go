@@ -183,7 +183,7 @@ func sortStepStatesByStartTime(steps []v1.StepState) []v1.StepState {
 func PrintTaskRunDescription(out io.Writer, c *cli.Clients, ns string, trName string, time clockwork.Clock) error {
 	tr, err := GetTaskRun(taskrunGroupResource, c, trName, ns)
 	if err != nil {
-		return fmt.Errorf("failed to get TaskRun %s: %v", trName, err)
+		return fmt.Errorf("failed to get TaskRun %s: %w", trName, err)
 	}
 
 	var data = struct {
