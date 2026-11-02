@@ -120,7 +120,7 @@ func (b *Backend) uploadSignature(ctx context.Context, format simple.SimpleConta
 	imageName := format.ImageName()
 	logger.Infof("Uploading %s signature", imageName)
 
-	ref, err := name.NewDigest(imageName)
+	ref, err := name.NewDigest(imageName, nameOpts(b.cfg)...)
 	if err != nil {
 		return errors.Wrap(err, "getting digest")
 	}
@@ -160,7 +160,7 @@ func (b *Backend) uploadAttestation(ctx context.Context, attestation *intoto.Sta
 		imageName := fmt.Sprintf("%s@sha256:%s", subj.Name, subj.Digest["sha256"])
 		logger.Infof("Starting attestation upload to OCI for %s...", imageName)
 
-		ref, err := name.NewDigest(imageName)
+		ref, err := name.NewDigest(imageName, nameOpts(b.cfg)...)
 		if err != nil {
 			return errors.Wrapf(err, "getting digest for subj %s", imageName)
 		}
@@ -271,7 +271,7 @@ func (b *Backend) RetrievePayloads(ctx context.Context, obj objects.TektonObject
 
 func (b *Backend) RetrieveArtifact(ctx context.Context, obj objects.TektonObject, opts config.StorageOpts) (map[string]oci.SignedImage, error) {
 	// Given the TaskRun, retrieve the OCI images.
-	images := artifacts.ExtractOCIImagesFromResults(ctx, obj.GetResults())
+	images := artifacts.ExtractOCIImagesFromResults(ctx, obj.GetResults(), nameOpts(b.cfg)...)
 	m := make(map[string]oci.SignedImage)
 
 	for _, image := range images {
@@ -289,11 +289,15 @@ func (b *Backend) RetrieveArtifact(ctx context.Context, obj objects.TektonObject
 	return m, nil
 }
 
-func newRepo(cfg config.Config, imageName name.Digest) (name.Repository, error) {
-	var opts []name.Option
+func nameOpts(cfg config.Config) []name.Option {
 	if cfg.Storage.OCI.Insecure {
-		opts = append(opts, name.Insecure)
+		return []name.Option{name.Insecure}
 	}
+	return nil
+}
+
+func newRepo(cfg config.Config, imageName name.Digest) (name.Repository, error) {
+	opts := nameOpts(cfg)
 
 	if storageOCIRepository := cfg.Storage.OCI.Repository; storageOCIRepository != "" {
 		return name.NewRepository(storageOCIRepository, opts...)
