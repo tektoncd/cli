@@ -161,7 +161,8 @@ func (oa *OCIArtifact) ExtractObjects(ctx context.Context, obj objects.TektonObj
 }
 
 // ExtractOCIImagesFromResults returns all the results marked as OCIImage type-hint result.
-func ExtractOCIImagesFromResults(ctx context.Context, results []objects.Result) []interface{} {
+// Optional name.Option values (e.g. name.Insecure) are forwarded to every name.NewDigest call.
+func ExtractOCIImagesFromResults(ctx context.Context, results []objects.Result, opts ...name.Option) []interface{} {
 	logger := logging.FromContext(ctx)
 	objs := []interface{}{}
 
@@ -171,7 +172,7 @@ func ExtractOCIImagesFromResults(ctx context.Context, results []objects.Result) 
 		isValid:      hasImageRequirements,
 	}
 	for _, s := range extractor.extract(ctx, results) {
-		dgst, err := name.NewDigest(fmt.Sprintf("%s@%s", s.URI, s.Digest))
+		dgst, err := name.NewDigest(fmt.Sprintf("%s@%s", s.URI, s.Digest), opts...)
 		if err != nil {
 			logger.Errorf("error getting digest: %v", err)
 			continue
@@ -191,7 +192,7 @@ func ExtractOCIImagesFromResults(ctx context.Context, results []objects.Result) 
 			if trimmed == "" {
 				continue
 			}
-			dgst, err := name.NewDigest(trimmed)
+			dgst, err := name.NewDigest(trimmed, opts...)
 			if err != nil {
 				logger.Errorf("error getting digest for img %s: %v", trimmed, err)
 				continue
