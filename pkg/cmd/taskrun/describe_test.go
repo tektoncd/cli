@@ -20,6 +20,7 @@ import (
 	"testing"
 	"time"
 
+	"github.com/tektoncd/cli/pkg/exitcode"
 	"github.com/tektoncd/cli/pkg/test"
 	cb "github.com/tektoncd/cli/pkg/test/builder"
 	testDynamic "github.com/tektoncd/cli/pkg/test/dynamic"
@@ -90,6 +91,33 @@ func TestTaskRunDescribe_not_found(t *testing.T) {
 	}
 	expected := "Error: failed to get TaskRun bar: taskruns.tekton.dev \"bar\" not found\n"
 	test.AssertOutput(t, expected, out)
+}
+
+// TestTaskRunDescribe_not_found_exit_code guards against regressions where a
+// describe helper reformats the typed API error (e.g. with %v) and drops the
+// classified exit code, making a missing resource exit 1 instead of 2.
+func TestTaskRunDescribe_not_found_exit_code(t *testing.T) {
+	cs, _ := test.SeedTestData(t, pipelinetest.Data{
+		Namespaces: []*corev1.Namespace{
+			{ObjectMeta: metav1.ObjectMeta{Name: "ns"}},
+		},
+	})
+	cs.Pipeline.Resources = cb.APIResourceList(versionv1beta1, []string{"taskrun"})
+	tdc := testDynamic.Options{}
+	dynamic, err := tdc.Client()
+	if err != nil {
+		t.Fatal(err)
+	}
+	p := &test.Params{Tekton: cs.Pipeline, Kube: cs.Kube, Dynamic: dynamic}
+
+	taskrun := Command(p)
+	_, err = test.ExecuteCommand(taskrun, "desc", "bar", "-n", "ns")
+	if err == nil {
+		t.Fatal("Expected error but did not get one")
+	}
+	if got := exitcode.CodeFrom(err); got != exitcode.NotFound {
+		t.Errorf("CodeFrom(describe not-found) = %d, want %d", got, exitcode.NotFound)
+	}
 }
 
 func TestTaskRunDescribe_empty_taskrun_v1beta1(t *testing.T) {

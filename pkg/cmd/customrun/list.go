@@ -25,6 +25,7 @@ import (
 	"github.com/tektoncd/cli/pkg/actions"
 	"github.com/tektoncd/cli/pkg/cli"
 	crsort "github.com/tektoncd/cli/pkg/customrun/sort"
+	"github.com/tektoncd/cli/pkg/exitcode"
 	"github.com/tektoncd/cli/pkg/formatted"
 	"github.com/tektoncd/pipeline/pkg/apis/pipeline/v1beta1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
@@ -84,12 +85,12 @@ List CustomRuns as a YAML array:
 		Example: eg,
 		RunE: func(cmd *cobra.Command, _ []string) error {
 			if opts.Limit < 0 {
-				return fmt.Errorf("limit was %d but must be a positive number", opts.Limit)
+				return exitcode.New(exitcode.InvalidInput, "limit was %d but must be a positive number", opts.Limit)
 			}
 
 			crs, err := list(p, opts.Limit, opts.LabelSelector, opts.AllNamespaces)
 			if err != nil {
-				return fmt.Errorf("failed to list CustomRuns from namespace %s: %v", p.Namespace(), err)
+				return fmt.Errorf("failed to list CustomRuns from namespace %s: %w", p.Namespace(), err)
 			}
 
 			if crs != nil && opts.Reverse {

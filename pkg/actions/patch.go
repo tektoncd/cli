@@ -16,8 +16,6 @@ package actions
 
 import (
 	"context"
-	"fmt"
-	"os"
 
 	"github.com/tektoncd/cli/pkg/cli"
 	"github.com/tektoncd/cli/pkg/exitcode"
@@ -35,7 +33,6 @@ func Patch(gr schema.GroupVersionResource, clients *cli.Clients, objName string,
 	}
 	unstructuredObj, err := clients.Dynamic.Resource(*gvr).Namespace(ns).Patch(context.Background(), objName, types.JSONPatchType, data, opt)
 	if err != nil {
-		fmt.Fprintf(os.Stderr, "Failed to patch object from %s namespace \n", ns)
 		return exitcode.FromAPIError(err)
 	}
 

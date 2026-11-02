@@ -24,6 +24,7 @@ import (
 	"github.com/tektoncd/cli/pkg/actions"
 	"github.com/tektoncd/cli/pkg/cli"
 	"github.com/tektoncd/cli/pkg/deleter"
+	"github.com/tektoncd/cli/pkg/exitcode"
 	"github.com/tektoncd/cli/pkg/formatted"
 	"github.com/tektoncd/cli/pkg/options"
 	taskpkg "github.com/tektoncd/cli/pkg/task"
@@ -108,7 +109,7 @@ Using -o json or -o yaml skips the confirmation prompt.`
 
 			outputFormat := formatted.NormalizeOutput(output)
 			if outputFormat != "" && !formatted.IsStructured(outputFormat) {
-				return fmt.Errorf("invalid output format %q: must be json or yaml", outputFormat)
+				return exitcode.New(exitcode.InvalidInput, "invalid output format %q: must be json or yaml", outputFormat)
 			}
 
 			if deleteOpts.TaskName != "" {

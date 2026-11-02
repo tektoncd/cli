@@ -73,7 +73,7 @@ List ClusterTriggerBindings as a YAML array:
 
 			tbs, err := clustertriggerbinding.List(cs, metav1.ListOptions{})
 			if err != nil {
-				return fmt.Errorf("failed to list ClusterTriggerBindings: %v", err)
+				return fmt.Errorf("failed to list ClusterTriggerBindings: %w", err)
 			}
 
 			output, err := cmd.LocalFlags().GetString("output")

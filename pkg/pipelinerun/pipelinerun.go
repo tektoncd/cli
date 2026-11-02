@@ -39,7 +39,7 @@ var taskrunGroupResource = schema.GroupVersionResource{Group: "tekton.dev", Reso
 func GetAllPipelineRuns(gr schema.GroupVersionResource, opts metav1.ListOptions, c *cli.Clients, ns string, limit int, time clockwork.Clock) ([]string, error) {
 	var pipelineruns *v1.PipelineRunList
 	if err := actions.ListV1(gr, c, opts, ns, &pipelineruns); err != nil {
-		return nil, fmt.Errorf("failed to list PipelineRuns from namespace %s: %v", ns, err)
+		return nil, fmt.Errorf("failed to list PipelineRuns from namespace %s: %w", ns, err)
 	}
 
 	runslen := len(pipelineruns.Items)

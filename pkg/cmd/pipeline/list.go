@@ -137,7 +137,7 @@ func printPipelineDetails(s *cli.Stream, p cli.Params, allnamespaces bool, nohea
 	}
 	ps, prs, err := listPipelineDetails(cs, ns)
 	if err != nil {
-		return fmt.Errorf("failed to list Pipelines from namespace %s: %v", ns, err)
+		return fmt.Errorf("failed to list Pipelines from namespace %s: %w", ns, err)
 	}
 
 	var data = struct {

@@ -76,7 +76,8 @@ Show logs for given Task and associated TaskRun:
 			"commandType": "main",
 		},
 
-		Args: func(cmd *cobra.Command, args []string) error {
+		Args: cobra.MaximumNArgs(2),
+		PreRunE: func(cmd *cobra.Command, args []string) error {
 			if err := flags.InitParams(p, cmd); err != nil {
 				return err
 			}

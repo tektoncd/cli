@@ -21,6 +21,7 @@ import (
 	"github.com/spf13/cobra"
 	"github.com/tektoncd/cli/pkg/actions"
 	"github.com/tektoncd/cli/pkg/cli"
+	"github.com/tektoncd/cli/pkg/exitcode"
 	"github.com/tektoncd/cli/pkg/formatted"
 	pipelinerunpkg "github.com/tektoncd/cli/pkg/pipelinerun"
 	v1 "github.com/tektoncd/pipeline/pkg/apis/pipeline/v1"
@@ -80,7 +81,7 @@ Set to 'StoppedRunFinally' if you want to cancel the remaining non-final task an
 
 func cancelPipelineRun(p cli.Params, s *cli.Stream, prName string, graceCancelStatus string, output string) error {
 	if output != "" && !formatted.IsStructured(output) {
-		return fmt.Errorf("invalid output format %q: must be json or yaml", output)
+		return exitcode.New(exitcode.InvalidInput, "invalid output format %q: must be json or yaml", output)
 	}
 
 	cs, err := p.Clients()
@@ -91,7 +92,7 @@ func cancelPipelineRun(p cli.Params, s *cli.Stream, prName string, graceCancelSt
 	var pr *v1.PipelineRun
 	err = actions.GetV1(pipelineRunGroupResource, cs, prName, p.Namespace(), metav1.GetOptions{}, &pr)
 	if err != nil {
-		return fmt.Errorf("failed to find PipelineRun: %s", prName)
+		return exitcode.New(exitcode.CodeFrom(err), "failed to find PipelineRun: %s", prName)
 	}
 
 	if len(pr.Status.Conditions) > 0 {
@@ -109,7 +110,7 @@ func cancelPipelineRun(p cli.Params, s *cli.Stream, prName string, graceCancelSt
 	}
 
 	if _, err = pipelinerunpkg.Cancel(cs, prName, metav1.PatchOptions{}, cancelStatus, p.Namespace()); err != nil {
-		return fmt.Errorf("failed to cancel PipelineRun: %s: %v", prName, err)
+		return fmt.Errorf("failed to cancel PipelineRun: %s: %w", prName, err)
 	}
 
 	if formatted.IsStructured(output) {

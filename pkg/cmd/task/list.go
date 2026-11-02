@@ -126,7 +126,7 @@ func printTaskDetails(s *cli.Stream, p cli.Params, allnamespaces bool, noheaders
 
 	var tasks *v1.TaskList
 	if err := actions.ListV1(taskGroupResource, cs, metav1.ListOptions{}, ns, &tasks); err != nil {
-		return fmt.Errorf("failed to list Tasks from namespace %s: %v", ns, err)
+		return fmt.Errorf("failed to list Tasks from namespace %s: %w", ns, err)
 	}
 
 	var data = struct {

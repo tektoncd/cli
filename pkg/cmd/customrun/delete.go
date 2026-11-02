@@ -21,6 +21,7 @@ import (
 	"github.com/spf13/cobra"
 	"github.com/tektoncd/cli/pkg/actions"
 	"github.com/tektoncd/cli/pkg/cli"
+	"github.com/tektoncd/cli/pkg/exitcode"
 	"github.com/tektoncd/cli/pkg/formatted"
 	"github.com/tektoncd/pipeline/pkg/apis/pipeline/v1beta1"
 	"go.uber.org/multierr"
@@ -80,7 +81,7 @@ Delete a CustomRun and print the result as YAML:
 			if output != "" {
 				output = formatted.NormalizeOutput(output)
 				if !formatted.IsStructured(output) {
-					return fmt.Errorf("invalid output format %q: must be json or yaml", output)
+					return exitcode.New(exitcode.InvalidInput, "invalid output format %q: must be json or yaml", output)
 				}
 			}
 

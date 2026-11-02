@@ -235,7 +235,7 @@ func printEventListenerDescription(s *cli.Stream, p cli.Params, elName string) e
 
 	el, err := eventlistener.Get(cs, elName, metav1.GetOptions{}, p.Namespace())
 	if err != nil {
-		return fmt.Errorf("failed to get EventListener %s: %v", elName, err)
+		return fmt.Errorf("failed to get EventListener %s: %w", elName, err)
 	}
 
 	var data = struct {

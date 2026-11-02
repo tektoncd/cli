@@ -16,6 +16,12 @@ detect success or failure without parsing command output.
 
 Exit code `127` is reserved for plugin execution failures.
 
+> **Note on conventions:** Some shells (notably Bash) reserve exit code `2`
+> for "misuse of shell builtins". `tkn` instead uses `2` for "resource not
+> found" so that the most common failure mode has a dedicated, stable code.
+> Scripts should branch on the specific codes above rather than assuming the
+> Bash convention.
+
 ## Exit Code `2` – Resource Not Found
 
 `tkn` returns `2` whenever a Kubernetes API call returns an HTTP 404 (Not
@@ -44,18 +50,19 @@ written to **stderr** as a JSON object instead of a plain-text message:
 
 ```bash
 tkn pipelinerun describe missing-run --output json 2>err.json
+status=$?   # capture tkn's exit status before any other command overwrites $?
 cat err.json
 # {"error":"pipelineruns.tekton.dev \"missing-run\" not found","code":2}
-echo $?   # 2
+echo "$status"   # 2
 ```
 
 This allows programmatic consumers to parse both the error message and the
 category code without inspecting the human-readable output.
 
-## `--exit-with-error` and PipelineRun logs
+## `--exit-with-pipelinerun-error` and PipelineRun logs
 
-`tkn pipelinerun logs --exit-with-error` exits with the PipelineRun's Unix
-status after streaming logs:
+`tkn pipelinerun logs --exit-with-pipelinerun-error` (shorthand `-E`) exits
+with the PipelineRun's Unix status after streaming logs:
 
 | PipelineRun state          | Exit code |
 |----------------------------|-----------|

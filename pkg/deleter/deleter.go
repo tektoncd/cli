@@ -53,7 +53,7 @@ func (d *Deleter) WithRelated(kind string, listFunc func(string) ([]string, erro
 func (d *Deleter) Delete(resourceNames []string) []string {
 	for _, name := range resourceNames {
 		if err := d.delete(name); err != nil {
-			d.appendError(fmt.Errorf("failed to delete %s %q: %s", d.kind, name, err))
+			d.appendError(fmt.Errorf("failed to delete %s %q: %w", d.kind, name, err))
 		} else {
 			d.successfulDeletes = append(d.successfulDeletes, name)
 		}
@@ -75,13 +75,13 @@ func (d *Deleter) DeleteRelated(resourceNames []string) {
 // provided listFunc and then calls the deleteRelated func for each relation.
 func (d *Deleter) deleteRelatedList(resourceName string) {
 	if related, err := d.listRelated(resourceName); err != nil {
-		err = fmt.Errorf("failed to list %ss: %s", strings.ToLower(d.relatedKind), err)
+		err = fmt.Errorf("failed to list %ss: %w", strings.ToLower(d.relatedKind), err)
 		d.appendError(err)
 	} else {
 		if len(related) > 0 {
 			for _, subresource := range related {
 				if err := d.deleteRelated(subresource); err != nil {
-					err = fmt.Errorf("failed to delete %s %q: %s", d.relatedKind, subresource, err)
+					err = fmt.Errorf("failed to delete %s %q: %w", d.relatedKind, subresource, err)
 					d.appendError(err)
 				} else {
 					d.successfulRelatedDeletes = append(d.successfulRelatedDeletes, subresource)

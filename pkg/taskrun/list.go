@@ -32,7 +32,7 @@ var taskrunGroupResource = schema.GroupVersionResource{Group: "tekton.dev", Reso
 func GetAllTaskRuns(gr schema.GroupVersionResource, opts metav1.ListOptions, c *cli.Clients, ns string, limit int, time clockwork.Clock) ([]string, error) {
 	var taskruns *v1.TaskRunList
 	if err := actions.ListV1(gr, c, opts, ns, &taskruns); err != nil {
-		return nil, fmt.Errorf("failed to list TaskRuns from namespace %s: %v", ns, err)
+		return nil, fmt.Errorf("failed to list TaskRuns from namespace %s: %w", ns, err)
 	}
 
 	runslen := len(taskruns.Items)

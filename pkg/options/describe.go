@@ -25,6 +25,7 @@ import (
 	"github.com/fatih/color"
 	"github.com/ktr0731/go-fuzzyfinder"
 	"github.com/tektoncd/cli/pkg/cli"
+	"github.com/tektoncd/cli/pkg/exitcode"
 	pipelinerunpkg "github.com/tektoncd/cli/pkg/pipelinerun"
 	taskrunpkg "github.com/tektoncd/cli/pkg/taskrun"
 )
@@ -62,7 +63,7 @@ func NewDescribeOptions(p cli.Params) *DescribeOptions {
 
 func (opts *DescribeOptions) ValidateOpts() error {
 	if opts.Limit <= 0 {
-		return fmt.Errorf("limit was %d but must be a positive number", opts.Limit)
+		return exitcode.New(exitcode.InvalidInput, "limit was %d but must be a positive number", opts.Limit)
 	}
 	return nil
 }

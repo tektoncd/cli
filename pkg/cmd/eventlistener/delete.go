@@ -22,6 +22,7 @@ import (
 	"github.com/tektoncd/cli/pkg/cli"
 	"github.com/tektoncd/cli/pkg/deleter"
 	"github.com/tektoncd/cli/pkg/eventlistener"
+	"github.com/tektoncd/cli/pkg/exitcode"
 	"github.com/tektoncd/cli/pkg/formatted"
 	"github.com/tektoncd/cli/pkg/options"
 	"go.uber.org/multierr"
@@ -101,7 +102,7 @@ Using -o json or -o yaml skips the confirmation prompt.
 			if output != "" {
 				output = formatted.NormalizeOutput(output)
 				if !formatted.IsStructured(output) {
-					return fmt.Errorf("invalid output format %q: must be json or yaml", output)
+					return exitcode.New(exitcode.InvalidInput, "invalid output format %q: must be json or yaml", output)
 				}
 				opts.ForceDelete = true
 			}

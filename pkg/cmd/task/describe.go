@@ -194,7 +194,7 @@ func printTaskDescription(s *cli.Stream, p cli.Params, tname string) error {
 
 	t, err := getTask(taskGroupResource, cs, tname, p.Namespace())
 	if err != nil {
-		return fmt.Errorf("failed to get Task %s: %v", tname, err)
+		return fmt.Errorf("failed to get Task %s: %w", tname, err)
 	}
 
 	opts := metav1.ListOptions{
@@ -203,7 +203,7 @@ func printTaskDescription(s *cli.Stream, p cli.Params, tname string) error {
 
 	var taskRuns *v1.TaskRunList
 	if err := actions.ListV1(taskrunGroupResource, cs, opts, p.Namespace(), &taskRuns); err != nil {
-		return fmt.Errorf("failed to get TaskRuns for Task %s: %v", tname, err)
+		return fmt.Errorf("failed to get TaskRuns for Task %s: %w", tname, err)
 	}
 
 	// this is required as the same label is getting added for task

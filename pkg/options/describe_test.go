@@ -20,6 +20,7 @@ import (
 	"github.com/AlecAivazis/survey/v2/terminal"
 	goexpect "github.com/Netflix/go-expect"
 	"github.com/tektoncd/cli/pkg/cli"
+	"github.com/tektoncd/cli/pkg/exitcode"
 	"github.com/tektoncd/cli/pkg/test"
 	"github.com/tektoncd/cli/test/prompt"
 )
@@ -57,6 +58,9 @@ func TestDescribeOptions_ValidateOpts(t *testing.T) {
 					t.Errorf("Error expected here")
 				}
 				test.AssertOutput(t, tp.want, err.Error())
+				if got := exitcode.CodeFrom(err); got != exitcode.InvalidInput {
+					t.Errorf("exit code = %d, want %d", got, exitcode.InvalidInput)
+				}
 			} else if err != nil {
 				t.Errorf("unexpected Error")
 			}

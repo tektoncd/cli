@@ -16,10 +16,10 @@ package formatted
 
 import (
 	"encoding/json"
-	"fmt"
 	"io"
 	"strings"
 
+	"github.com/tektoncd/cli/pkg/exitcode"
 	"sigs.k8s.io/yaml"
 )
 
@@ -111,6 +111,6 @@ func PrintStructuredOutput(w io.Writer, format string, obj interface{}) error {
 		_, err = w.Write(data)
 		return err
 	default:
-		return fmt.Errorf("invalid structured output format %q: must be json or yaml", format)
+		return exitcode.New(exitcode.InvalidInput, "invalid structured output format %q: must be json or yaml", format)
 	}
 }

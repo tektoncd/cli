@@ -24,6 +24,7 @@ import (
 	"github.com/tektoncd/cli/pkg/actions"
 	"github.com/tektoncd/cli/pkg/cli"
 	"github.com/tektoncd/cli/pkg/deleter"
+	"github.com/tektoncd/cli/pkg/exitcode"
 	"github.com/tektoncd/cli/pkg/formatted"
 	"github.com/tektoncd/cli/pkg/options"
 	prsort "github.com/tektoncd/cli/pkg/pipelinerun/sort"
@@ -124,7 +125,7 @@ Using -o json or -o yaml skips the confirmation prompt.
 			if output != "" {
 				output = formatted.NormalizeOutput(output)
 				if !formatted.IsStructured(output) {
-					return fmt.Errorf("invalid output format %q: must be json or yaml", output)
+					return exitcode.New(exitcode.InvalidInput, "invalid output format %q: must be json or yaml", output)
 				}
 				opts.ForceDelete = true
 			}

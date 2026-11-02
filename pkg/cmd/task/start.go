@@ -26,6 +26,7 @@ import (
 	"github.com/google/go-containerregistry/pkg/name"
 	remoteimg "github.com/google/go-containerregistry/pkg/v1/remote"
 	"github.com/tektoncd/cli/pkg/bundle"
+	"github.com/tektoncd/cli/pkg/exitcode"
 	"k8s.io/apimachinery/pkg/runtime"
 
 	"fmt"
@@ -149,7 +150,11 @@ func NameArg(args []string, p cli.Params, opt *startOptions) error {
 	name, ns := args[0], p.Namespace()
 	t, err := getTaskV1beta1(taskGroupResource, c, name, ns)
 	if err != nil {
-		return fmt.Errorf(errInvalidTask, name, ns)
+		// Keep the friendly "does not exist" message but carry the lookup
+		// error's real exit code (not-found, forbidden, timeout, ...) via
+		// CodeFrom, matching the cancel/describe lookup paths rather than
+		// assuming every failure means the Task is missing.
+		return exitcode.New(exitcode.CodeFrom(err), errInvalidTask, name, ns)
 	}
 	opt.task = t
 	if t.Spec.Params != nil {
@@ -219,23 +224,29 @@ For passing the workspaces via flags:
 `,
 		SilenceUsage:      true,
 		ValidArgsFunction: formatted.ParentCompletion,
-		Args: func(cmd *cobra.Command, args []string) error {
+		PreRunE: func(cmd *cobra.Command, args []string) error {
 			if err := flags.InitParams(p, cmd); err != nil {
 				return err
 			}
+			// Resolving the Task by name requires a live client and the
+			// namespace populated by InitParams, so it runs here rather than in
+			// Args; a lookup failure keeps its real exit code instead of being
+			// blanket-classified as invalid input.
+			if len(args) != 0 && opt.Image == "" {
+				return NameArg(args, p, &opt)
+			}
+			return nil
+		},
+		Args: func(_ *cobra.Command, args []string) error {
 			if opt.UseParamDefaults && (opt.Last || opt.UseTaskRun != "") {
 				return errors.New("cannot use --last or --use-taskrun options with --use-param-defaults option")
 			}
 			format := strings.ToLower(opt.Output)
 			if format != "" && format != "json" && format != "yaml" {
-				return fmt.Errorf("output format specified is %s but must be yaml or json", opt.Output)
+				return exitcode.New(exitcode.InvalidInput, "output format specified is %s but must be yaml or json", opt.Output)
 			}
 			if format != "" && opt.ShowLog {
 				return errors.New("cannot use --output option with --showlog option")
-			}
-			// classic with no image
-			if len(args) != 0 && opt.Image == "" {
-				return NameArg(args, p, &opt)
 			}
 			// image but no task name
 			if len(args) == 0 && opt.Image != "" {

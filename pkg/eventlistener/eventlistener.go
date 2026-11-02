@@ -62,7 +62,7 @@ func List(c *cli.Clients, opts metav1.ListOptions, ns string) (*v1beta1.EventLis
 func Get(c *cli.Clients, elName string, opts metav1.GetOptions, ns string) (*v1beta1.EventListener, error) {
 	unstructuredEl, err := actions.Get(eventlistenerGroupResource, c.Dynamic, c.Triggers.Discovery(), elName, ns, opts)
 	if err != nil {
-		return nil, fmt.Errorf("failed to get EventListener %s: %v", elName, err)
+		return nil, fmt.Errorf("failed to get EventListener %s: %w", elName, err)
 	}
 
 	var el *v1beta1.EventListener

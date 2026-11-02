@@ -78,9 +78,9 @@ List TriggerTemplates as a YAML array:
 			tts, err := triggertemplate.List(cs, metav1.ListOptions{}, namespace)
 			if err != nil {
 				if opts.AllNamespaces {
-					return fmt.Errorf("failed to list TriggerTemplates from all namespaces: %v", err)
+					return fmt.Errorf("failed to list TriggerTemplates from all namespaces: %w", err)
 				}
-				return fmt.Errorf("failed to list TriggerTemplates from %s namespace: %v", namespace, err)
+				return fmt.Errorf("failed to list TriggerTemplates from %s namespace: %w", namespace, err)
 			}
 
 			output, err := cmd.LocalFlags().GetString("output")

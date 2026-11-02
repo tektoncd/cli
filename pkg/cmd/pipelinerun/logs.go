@@ -89,7 +89,7 @@ Show the logs of PipelineRun named 'microservice-1' for failed Tasks and steps o
 	c.Flags().BoolVarP(&opts.Timestamps, "timestamps", "", false, "show logs with timestamp")
 	c.Flags().BoolVarP(&opts.Prefixing, "prefix", "", true, "prefix each log line with the log source (task name and step name)")
 	c.Flags().BoolVarP(&opts.Long, "long", "", false, "show logs with task display name (display name and step name)")
-	c.Flags().BoolVarP(&opts.ExitWithPrError, "exit-with-pipelinerun-error", "E", false, "exit with pipelinerun to the unix shell, 0 if success, 1 if error, 2 on unknown status")
+	c.Flags().BoolVarP(&opts.ExitWithPrError, "exit-with-pipelinerun-error", "E", false, "exit with pipelinerun to the unix shell, 0 if success, 1 if error or unknown status")
 	c.Flags().BoolVarP(&opts.Failed, "log-failed", "", false, "show logs for failed tasks and steps only")
 	c.Flags().StringSliceVarP(&opts.Tasks, "task", "t", []string{}, "show logs for mentioned Tasks only")
 	c.Flags().IntVarP(&opts.Limit, "limit", "", defaultLimit, "lists number of PipelineRuns")
