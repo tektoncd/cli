@@ -1,6 +1,6 @@
 module github.com/tektoncd/cli
 
-go 1.26.10
+go 1.27.0
 
 require (
 	github.com/AlecAivazis/survey/v2 v2.3.7
@@ -22,7 +22,7 @@ require (
 	github.com/joho/godotenv v1.5.1
 	github.com/jonboulle/clockwork v0.5.0
 	github.com/ktr0731/go-fuzzyfinder v0.9.0
-	github.com/letsencrypt/boulder v0.20260908.0
+	github.com/letsencrypt/boulder v0.20261020.1
 	github.com/mitchellh/go-homedir v1.1.0
 	github.com/pkg/errors v0.9.1
 	github.com/sigstore/sigstore v1.10.9
@@ -172,7 +172,7 @@ require (
 	go.yaml.in/yaml/v2 v2.4.4 // indirect
 	go.yaml.in/yaml/v3 v3.0.5 // indirect
 	golang.org/x/exp v0.0.0-20260312153236-7ab1446f8b90 // indirect
-	golang.org/x/net v0.59.0 // indirect
+	golang.org/x/net v0.60.0 // indirect
 	golang.org/x/oauth2 v0.36.0 // indirect
 	golang.org/x/sync v0.24.0 // indirect
 	golang.org/x/sys v0.49.0 // indirect
