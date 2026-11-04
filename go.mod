@@ -1,6 +1,6 @@
 module github.com/tektoncd/cli
 
-go 1.26.10
+go 1.27.3
 
 require (
 	github.com/AlecAivazis/survey/v2 v2.3.7
@@ -29,7 +29,7 @@ require (
 	github.com/spf13/cobra v1.10.2
 	github.com/spf13/pflag v1.0.10
 	github.com/tektoncd/hub v0.0.0-00010101000000-000000000000
-	github.com/tektoncd/pipeline v1.12.2
+	github.com/tektoncd/pipeline v1.12.3
 	github.com/tektoncd/plumbing v0.0.0-20250430145243-3b7cd59879c1
 	github.com/tektoncd/triggers v0.35.1-0.20260401091813-1aad8a1898ec
 	github.com/theupdateframework/go-tuf v0.7.0
@@ -124,7 +124,6 @@ require (
 	github.com/gregjones/httpcache v0.0.0-20190611155906-901d90724c79 // indirect
 	github.com/grpc-ecosystem/grpc-gateway/v2 v2.29.0 // indirect
 	github.com/hashicorp/go-retryablehttp v0.7.8 // indirect
-	github.com/hashicorp/vault/api v1.23.0 // indirect
 	github.com/imdario/mergo v0.3.16 // indirect
 	github.com/in-toto/attestation v1.2.0 // indirect
 	github.com/in-toto/in-toto-golang v0.11.0 // indirect
@@ -226,7 +225,7 @@ require (
 	gopkg.in/evanphx/json-patch.v4 v4.13.0 // indirect
 	gopkg.in/inf.v0 v0.9.1 // indirect
 	gopkg.in/yaml.v2 v2.4.0 // indirect
-	k8s.io/apiextensions-apiserver v0.35.5 // indirect
+	k8s.io/apiextensions-apiserver v0.35.9 // indirect
 	k8s.io/klog/v2 v2.140.0 // indirect
 	k8s.io/kube-openapi v0.0.0-20250910181357-589584f1c912 // indirect
 	k8s.io/utils v0.0.0-20251002143259-bc988d571ff4 // indirect
