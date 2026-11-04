@@ -67,10 +67,26 @@ func deleteCommand(p cli.Params) *cobra.Command {
 
     tkn taskrun delete foo bar -n quux
 
+Delete TaskRuns and print JSON:
+
+    tkn taskrun delete foo bar -n quux -o json
+
+Delete all TaskRuns and print JSON:
+
+    tkn taskrun delete --all -n quux -o json
+
+Delete TaskRuns associated with a Task:
+
+    tkn taskrun delete --task my-task -n quux -o json
+
 or
 
     tkn tr rm foo bar -n quux
-`
+
+Deleting a TaskRun owned by a running PipelineRun requires --force when using structured output.
+
+Using -o json or -o yaml skips the confirmation prompt.`
+	var output string
 
 	c := &cobra.Command{
 		Use:               "delete",
@@ -87,17 +103,12 @@ or
 			s := &cli.Stream{
 				In:  cmd.InOrStdin(),
 				Out: cmd.OutOrStdout(),
-				Err: cmd.OutOrStderr(),
+				Err: cmd.ErrOrStderr(),
 			}
 
-			output, err := cmd.LocalFlags().GetString("output")
-			if err != nil {
-				return err
-			}
-
-			output = formatted.NormalizeOutput(output)
-			if output != "" && !formatted.IsStructured(output) {
-				return fmt.Errorf("invalid output format %q: must be json or yaml", output)
+			outputFormat := formatted.NormalizeOutput(output)
+			if outputFormat != "" && !formatted.IsStructured(outputFormat) {
+				return fmt.Errorf("invalid output format %q: must be json or yaml", outputFormat)
 			}
 
 			if deleteOpts.TaskName != "" {
@@ -130,28 +141,32 @@ or
 				return errs
 			}
 
-			checkStreams := s
+			checkOpts := opts
 			if formatted.IsStructured(output) {
 				s.Err = cmd.ErrOrStderr()
-				checkStreams = &cli.Stream{In: strings.NewReader("y\n"), Out: &strings.Builder{}, Err: s.Err}
+
+				structuredOpts := *opts
+				structuredOpts.ForceDelete = true
+				checkOpts = &structuredOpts
 			}
-			if err := opts.CheckOptions(checkStreams, availableTrs, p.Namespace()); err != nil {
+
+			if err := checkOpts.CheckOptions(s, availableTrs, p.Namespace()); err != nil {
 				return err
 			}
 
-			if err := deleteTaskRuns(s, p, availableTrs, opts, output); err != nil {
+			if err := deleteTaskRuns(s, p, availableTrs, opts, outputFormat); err != nil {
 				return err
 			}
 			return errs
 		},
 	}
-	c.Flags().StringP("output", "o", "", formatted.DeleteOutputFlagUsage)
 	c.Flags().BoolVarP(&opts.ForceDelete, "force", "f", false, "Whether to force deletion (default: false)")
 	c.Flags().StringVarP(&deleteOpts.TaskName, "task", "t", "", "The name of a Task whose TaskRuns should be deleted (does not delete the task)")
 	c.Flags().BoolVarP(&opts.DeleteAllNs, "all", "", false, "Delete all TaskRuns in a namespace (default: false)")
 	c.Flags().IntVarP(&opts.Keep, "keep", "", 0, "Keep n most recent number of TaskRuns")
 	c.Flags().IntVarP(&opts.KeepSince, "keep-since", "", 0, "When deleting all TaskRuns keep the ones that has been completed since n minutes")
 	c.Flags().BoolVarP(&opts.IgnoreRunning, "ignore-running", "i", true, "ignore running TaskRun")
+	c.Flags().StringVarP(&output, "output", "o", "", formatted.DeleteOutputFlagUsage)
 	c.Flags().BoolVarP(&opts.IgnoreRunningPipelinerun, "ignore-running-pipelinerun", "", true, "ignore deleting taskruns of a running PipelineRun")
 
 	return c
@@ -159,6 +174,8 @@ or
 
 func deleteTaskRuns(s *cli.Stream, p cli.Params, trNames []string, opts *options.DeleteOptions, output string) error {
 	var numberOfDeletedTr, numberOfKeptTr int
+	var safetyErr error
+
 	cs, err := p.Clients()
 	if err != nil {
 		return fmt.Errorf("failed to create tekton client")
@@ -198,10 +215,21 @@ func deleteTaskRuns(s *cli.Stream, p cli.Params, trNames []string, opts *options
 			}
 			if !prFinished && !opts.ForceDelete {
 				if formatted.IsStructured(output) {
-					return fmt.Errorf("taskrun %s is owned by a running PipelineRun; use --force to delete", tr.Name)
+					safetyErr = multierr.Append(
+						safetyErr,
+						fmt.Errorf(
+							"taskrun %s is owned by a running PipelineRun; use --force to delete",
+							tr.Name,
+						),
+					)
+					continue
 				}
 
-				fmt.Fprintf(s.Out, "TaskRun(s): %s attached to PipelineRun is still running deleting will restart the completed taskrun. Proceed (y/n): ", tr.Name)
+				fmt.Fprintf(
+					s.Out,
+					"TaskRun(s): %s attached to PipelineRun is still running deleting will restart the completed taskrun. Proceed (y/n): ",
+					tr.Name,
+				)
 				if err := opts.TakeInput(s, ""); err != nil {
 					continue
 				}
@@ -250,8 +278,17 @@ func deleteTaskRuns(s *cli.Stream, p cli.Params, trNames []string, opts *options
 
 	if formatted.IsStructured(output) {
 		deleted := append(d.SuccessfulRelatedDeletes(), d.SuccessfulDeletes()...)
-		printErr := formatted.PrintStructuredOutput(s.Out, output, formatted.NewDeleteResult(deleted))
-		return multierr.Append(printErr, d.Errors())
+		if deleted == nil {
+			deleted = []string{}
+		}
+
+		printErr := formatted.PrintStructuredOutput(
+			s.Out,
+			output,
+			formatted.NewDeleteResult(deleted),
+		)
+
+		return multierr.Combine(printErr, d.Errors(), safetyErr)
 	}
 
 	if !opts.DeleteAllNs {
