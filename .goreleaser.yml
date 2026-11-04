@@ -31,6 +31,16 @@ archives:
       format: zip
 checksum:
   name_template: 'checksums.txt'
+signs:
+  - cmd: cosign
+    artifacts: checksum
+    output: true
+    args:
+      - "sign-blob"
+      - "--output-signature=${signature}"
+      - "--output-certificate=${certificate}"
+      - "${artifact}"
+      - "--yes"
 snapshot:
   version_template: "{{ .Tag }}-next"
 changelog:
