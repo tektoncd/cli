@@ -18,6 +18,7 @@ import (
 	"context"
 
 	"github.com/tektoncd/cli/pkg/cli"
+	"github.com/tektoncd/cli/pkg/exitcode"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
 	"k8s.io/apimachinery/pkg/runtime/schema"
@@ -31,7 +32,7 @@ func Create(gr schema.GroupVersionResource, clients *cli.Clients, object *unstru
 	}
 	obj, err := clients.Dynamic.Resource(*gvr).Namespace(ns).Create(context.Background(), object, op)
 	if err != nil {
-		return nil, err
+		return nil, exitcode.FromAPIError(err)
 	}
 	return obj, nil
 }

@@ -15,7 +15,9 @@
 package cmd
 
 import (
+	"encoding/json"
 	"fmt"
+	"io"
 	"os"
 
 	"github.com/spf13/cobra"
@@ -36,6 +38,8 @@ import (
 	"github.com/tektoncd/cli/pkg/cmd/triggerbinding"
 	"github.com/tektoncd/cli/pkg/cmd/triggertemplate"
 	"github.com/tektoncd/cli/pkg/cmd/version"
+	"github.com/tektoncd/cli/pkg/exitcode"
+	"github.com/tektoncd/cli/pkg/formatted"
 	"github.com/tektoncd/cli/pkg/plugins"
 	"github.com/tektoncd/cli/pkg/suggestion"
 )
@@ -90,10 +94,11 @@ func Root(p cli.Params) *cobra.Command {
 	pflag.CommandLine = pflag.NewFlagSet(os.Args[0], pflag.ExitOnError)
 
 	cmd := &cobra.Command{
-		Use:          "tkn",
-		Short:        "CLI for tekton pipelines",
-		Long:         ``,
-		SilenceUsage: true,
+		Use:           "tkn",
+		Short:         "CLI for tekton pipelines",
+		Long:          ``,
+		SilenceUsage:  true,
+		SilenceErrors: true,
 	}
 	cobra.AddTemplateFunc("HasMainSubCommands", hasMainSubCommands)
 	cobra.AddTemplateFunc("HasUtilitySubCommands", hasUtilitySubCommands)
@@ -120,6 +125,29 @@ func Root(p cli.Params) *cobra.Command {
 	cobra.AddTemplateFunc("commandName", commandName)
 
 	return cmd
+}
+
+// PrintError writes err to errW.  When the resolved --output flag on cmd is
+// "json", the error is serialised as {"error":"<message>","code":<n>}.
+// Otherwise the standard "Error: <message>\n" format is used.
+//
+// cmd must be the command that actually ran (as returned by Execute), not the
+// root command, so that the locally defined --output flag resolves correctly.
+func PrintError(cmd *cobra.Command, err error, errW io.Writer) {
+	outputFlag, _ := cmd.Flags().GetString("output")
+	if formatted.NormalizeOutput(outputFlag) == formatted.OutputJSON {
+		payload := struct {
+			Error string `json:"error"`
+			Code  int    `json:"code"`
+		}{
+			Error: err.Error(),
+			Code:  exitcode.CodeFrom(err),
+		}
+		b, _ := json.Marshal(payload)
+		fmt.Fprintf(errW, "%s\n", b)
+	} else {
+		fmt.Fprintf(errW, "Error: %s\n", err)
+	}
 }
 
 func commandName(cmd *cobra.Command) string {

@@ -16,10 +16,9 @@ package actions
 
 import (
 	"context"
-	"fmt"
-	"os"
 
 	"github.com/tektoncd/cli/pkg/cli"
+	"github.com/tektoncd/cli/pkg/exitcode"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/apimachinery/pkg/runtime/schema"
@@ -34,8 +33,7 @@ func Patch(gr schema.GroupVersionResource, clients *cli.Clients, objName string,
 	}
 	unstructuredObj, err := clients.Dynamic.Resource(*gvr).Namespace(ns).Patch(context.Background(), objName, types.JSONPatchType, data, opt)
 	if err != nil {
-		fmt.Fprintf(os.Stderr, "Failed to patch object from %s namespace \n", ns)
-		return err
+		return exitcode.FromAPIError(err)
 	}
 
 	return runtime.DefaultUnstructuredConverter.FromUnstructured(unstructuredObj.UnstructuredContent(), obj)
