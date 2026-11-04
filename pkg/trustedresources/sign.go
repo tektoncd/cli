@@ -29,6 +29,7 @@ import (
 
 	"github.com/sigstore/sigstore/pkg/signature"
 	"github.com/sigstore/sigstore/pkg/signature/kms"
+	v1 "github.com/tektoncd/pipeline/pkg/apis/pipeline/v1"
 	"github.com/tektoncd/pipeline/pkg/apis/pipeline/v1beta1"
 	"golang.org/x/term"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
@@ -113,22 +114,43 @@ func signInterface(signer signature.Signer, i interface{}) ([]byte, error) {
 	return sig, nil
 }
 
+// Decode returns the Task or Pipeline in buf as the type of its apiVersion.
+// Tekton Pipelines computes the checksum it verifies with that type, and
+// decoding a tekton.dev/v1 resource as v1beta1 would add v1beta1-only fields
+// such as steps[].resources and drop v1-only ones such as
+// steps[].computeResources. Resources without a tekton.dev/v1 apiVersion are
+// decoded as v1beta1.
+func Decode(buf []byte, kind string) (metav1.Object, error) {
+	typeMeta := metav1.TypeMeta{}
+	if err := yaml.Unmarshal(buf, &typeMeta); err != nil {
+		return nil, err
+	}
+	isV1 := typeMeta.APIVersion == v1.SchemeGroupVersion.String()
+
+	var resource metav1.Object
+	switch {
+	case kind == "Task" && isV1:
+		resource = &v1.Task{}
+	case kind == "Task":
+		resource = &v1beta1.Task{}
+	case kind == "Pipeline" && isV1:
+		resource = &v1.Pipeline{}
+	case kind == "Pipeline":
+		resource = &v1beta1.Pipeline{}
+	default:
+		return nil, fmt.Errorf("unsupported kind %q", kind)
+	}
+	if err := yaml.Unmarshal(buf, resource); err != nil {
+		return nil, err
+	}
+	return resource, nil
+}
+
 // UnmarshalCRD will get the task/pipeline from buffer and extract the signature.
 func UnmarshalCRD(buf []byte, kind string) (metav1.Object, []byte, error) {
-	var resource metav1.Object
-	var signature []byte
-
-	switch kind {
-	case "Task":
-		resource = &v1beta1.Task{}
-		if err := yaml.Unmarshal(buf, &resource); err != nil {
-			return nil, nil, err
-		}
-	case "Pipeline":
-		resource = &v1beta1.Pipeline{}
-		if err := yaml.Unmarshal(buf, &resource); err != nil {
-			return nil, nil, err
-		}
+	resource, err := Decode(buf, kind)
+	if err != nil {
+		return nil, nil, err
 	}
 	annotations := resource.GetAnnotations()
 	signature, err := base64.StdEncoding.DecodeString(annotations[SignatureAnnotation])
