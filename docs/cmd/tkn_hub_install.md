@@ -26,9 +26,11 @@ Install a resource from a catalog by its kind, name and version
 ### Options inherited from parent commands
 
 ```
-      --api-server string   Hub API Server URL (default 'https://api.hub.tekton.dev' for 'tekton' type; default 'https://artifacthub.io' for 'artifact' type).
-                            URL can also be defined in a file '$HOME/.tekton/hub-config' with a variable 'TEKTON_HUB_API_SERVER'/'ARTIFACT_HUB_API_SERVER'.
-      --type string         The type of Hub from where to pull the resource. Either 'artifact' or 'tekton' (default "tekton")
+      --api-server string   Hub API Server URL.
+                            For artifact type: default 'https://artifacthub.io' (env: ARTIFACT_HUB_API_SERVER)
+                            For tekton type (DEPRECATED): default 'https://api.hub.tekton.dev' (env: TEKTON_HUB_API_SERVER)
+                            Can also be set in '$HOME/.tekton/hub-config'.
+      --type string         The type of Hub from where to pull the resource. Either 'artifact' or 'tekton' (DEPRECATED: tekton type will be removed in a future release) (default "tekton")
 ```
 
 ### SEE ALSO

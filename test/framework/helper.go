@@ -104,7 +104,7 @@ func TearDown(t *testing.T, cs *Clients, namespace string) {
 	}
 }
 
-func initializeLogsAndMetrics(t *testing.T) {
+func initializeLogsAndMetrics(_ *testing.T) {
 	initMetrics.Do(func() {
 		flag.Parse()
 		flag.Set("alsologtostderr", "true")
