@@ -25,7 +25,7 @@ require (
 	github.com/letsencrypt/boulder v0.20261027.0
 	github.com/mitchellh/go-homedir v1.1.0
 	github.com/pkg/errors v0.9.1
-	github.com/sigstore/sigstore v1.11.0
+	github.com/sigstore/sigstore v1.11.3
 	github.com/spf13/cobra v1.10.2
 	github.com/spf13/pflag v1.0.10
 	github.com/spf13/viper v1.21.0
