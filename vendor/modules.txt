@@ -1514,8 +1514,8 @@ github.com/tektoncd/chains/pkg/chains/storage/tekton
 github.com/tektoncd/chains/pkg/config
 github.com/tektoncd/chains/pkg/metrics
 github.com/tektoncd/chains/pkg/patch
-# github.com/tektoncd/hub v1.23.6 => github.com/openshift-pipelines/hub v1.23.7
-## explicit; go 1.24.0
+# github.com/tektoncd/hub v1.23.6 => github.com/openshift-pipelines/hub v1.23.14
+## explicit; go 1.25.13
 github.com/tektoncd/hub/api/pkg/cli/app
 github.com/tektoncd/hub/api/pkg/cli/cmd
 github.com/tektoncd/hub/api/pkg/cli/cmd/check_upgrade
@@ -1543,8 +1543,8 @@ github.com/tektoncd/hub/api/v1/gen/http/catalog/client
 github.com/tektoncd/hub/api/v1/gen/http/resource/client
 github.com/tektoncd/hub/api/v1/gen/resource
 github.com/tektoncd/hub/api/v1/gen/resource/views
-# github.com/tektoncd/pipeline v1.9.8
-## explicit; go 1.25.10
+# github.com/tektoncd/pipeline v1.9.9
+## explicit; go 1.27.3
 github.com/tektoncd/pipeline/internal/artifactref
 github.com/tektoncd/pipeline/pkg/apis/config
 github.com/tektoncd/pipeline/pkg/apis/config/resolver
@@ -3073,4 +3073,4 @@ sigs.k8s.io/structured-merge-diff/v6/value
 ## explicit; go 1.22
 sigs.k8s.io/yaml
 # github.com/alibabacloud-go/cr-20160607 => github.com/vdemeester/cr-20160607 v1.0.1
-# github.com/tektoncd/hub => github.com/openshift-pipelines/hub v1.23.7
+# github.com/tektoncd/hub => github.com/openshift-pipelines/hub v1.23.14
