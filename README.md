@@ -207,6 +207,34 @@ You should see the following after running kubectl plugin list if tkn is availab
 
 If the output above is shown, run kubectl-tkn to see the list of available tkn commands to run.
 
+## Verifying Release Signatures
+
+Tekton CLI releases are cryptographically signed using [Sigstore](https://www.sigstore.dev/) cosign for supply chain security. Each release includes signature files that allow you to verify the authenticity and integrity of the downloaded artifacts.
+
+To verify a release:
+
+```shell
+# Install cosign
+brew install cosign  # macOS
+# or download from https://github.com/sigstore/cosign/releases
+
+# Download release files
+VERSION=v0.46.0
+wget https://github.com/tektoncd/cli/releases/download/${VERSION}/checksums.txt
+wget https://github.com/tektoncd/cli/releases/download/${VERSION}/checksums.txt.sig
+wget https://github.com/tektoncd/cli/releases/download/${VERSION}/checksums.txt.pem
+
+# Verify the signature
+cosign verify-blob \
+  --signature checksums.txt.sig \
+  --certificate checksums.txt.pem \
+  --certificate-identity-regexp="^https://github.com/tektoncd/cli" \
+  --certificate-oidc-issuer="https://token.actions.githubusercontent.com" \
+  checksums.txt
+```
+
+For detailed verification instructions, see [docs/VERIFYING_RELEASES.md](docs/VERIFYING_RELEASES.md).
+
 ## Useful Commands
 
 The following commands help you understand and effectively use the Tekton CLI:

@@ -38,6 +38,9 @@ metadata:
 spec:
   taskRunTemplate:
     serviceAccountName: release
+    podTemplate:
+      securityContext:
+        fsGroup: 65532
   pipelineRef:
     name: cli-release-pipeline
   params:

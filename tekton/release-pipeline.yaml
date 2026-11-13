@@ -94,8 +94,9 @@ spec:
           workspace: shared-workspace
     - name: release
       runAfter: [build, unit-tests]
-      taskRef:
-        name: goreleaser
+      workspaces:
+        - name: source
+          workspace: shared-workspace
       params:
         - name: package
           value: $(params.package)
@@ -103,10 +104,34 @@ spec:
           value: $(params.github-token-secret)
         - name: github-token-secret-key
           value: $(params.github-token-secret-key)
-        - name: image
-          value: goreleaser/goreleaser:v2.18.0
-        - name: flags
-          value: --timeout=60m
-      workspaces:
-        - name: source
-          workspace: shared-workspace
+      taskSpec:
+        params:
+          - name: package
+          - name: github-token-secret
+          - name: github-token-secret-key
+        workspaces:
+          - name: source
+        steps:
+          - name: release-with-cosign
+            image: goreleaser/goreleaser:v2.18.0
+            workingDir: $(workspaces.source.path)
+            env:
+              - name: GITHUB_TOKEN
+                valueFrom:
+                  secretKeyRef:
+                    name: $(params.github-token-secret)
+                    key: $(params.github-token-secret-key)
+              - name: COSIGN_EXPERIMENTAL
+                value: "1"
+            script: |
+              #!/bin/sh
+              set -ex
+              # Install cosign for keyless signing
+              echo "Installing cosign..."
+              wget -q -O /tmp/cosign https://github.com/sigstore/cosign/releases/download/v2.4.1/cosign-linux-amd64
+              chmod +x /tmp/cosign
+              mv /tmp/cosign /usr/local/bin/cosign
+              cosign version
+              # Run goreleaser with cosign available
+              echo "Running goreleaser..."
+              goreleaser release --clean --timeout=60m
