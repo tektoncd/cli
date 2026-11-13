@@ -56,6 +56,7 @@ type ListOptions struct {
 	Reverse       bool
 	AllNamespaces bool
 	NoHeaders     bool
+	Fields        []string
 }
 
 func listCommand(p cli.Params) *cobra.Command {
@@ -97,6 +98,15 @@ List TaskRuns as a YAML array:
 				return fmt.Errorf("limit was %d but must be a positive number", opts.Limit)
 			}
 
+			output, err := cmd.LocalFlags().GetString("output")
+			if err != nil {
+				return fmt.Errorf("output option not set properly: %v", err)
+			}
+
+			if len(opts.Fields) > 0 && output != "ndjson" {
+				return fmt.Errorf("--fields is only supported with --output ndjson")
+			}
+
 			trs, err := list(p, task, opts.Limit, opts.LabelSelector, opts.AllNamespaces)
 			if err != nil {
 				return fmt.Errorf("failed to list TaskRuns from namespace %s: %v", p.Namespace(), err)
@@ -105,12 +115,10 @@ List TaskRuns as a YAML array:
 			if trs != nil && opts.Reverse {
 				reverse(trs)
 			}
-
-			output, err := cmd.LocalFlags().GetString("output")
-			if err != nil {
-				return fmt.Errorf("output option not set properly: %v", err)
-			}
-			if output == "name" && trs != nil {
+			switch {
+			case output == "ndjson" && trs != nil:
+				return formatted.PrintNDJSON(cmd.OutOrStdout(), trs, opts.Fields)
+			case output == "name" && trs != nil:
 				w := cmd.OutOrStdout()
 				for _, tr := range trs.Items {
 					_, err := fmt.Fprintf(w, "taskrun.tekton.dev/%s\n", tr.Name)
@@ -119,7 +127,7 @@ List TaskRuns as a YAML array:
 					}
 				}
 				return nil
-			} else if output != "" && trs != nil {
+			case output != "" && trs != nil:
 				p, err := f.ToPrinter()
 				if err != nil {
 					return err
@@ -151,6 +159,7 @@ List TaskRuns as a YAML array:
 	c.Flags().BoolVarP(&opts.Reverse, "reverse", "", opts.Reverse, "list TaskRuns in reverse order")
 	c.Flags().BoolVarP(&opts.AllNamespaces, "all-namespaces", "A", opts.AllNamespaces, "list TaskRuns from all namespaces")
 	c.Flags().BoolVarP(&opts.NoHeaders, "no-headers", "", opts.NoHeaders, "do not print column headers with output (default print column headers with output)")
+	c.Flags().StringSliceVar(&opts.Fields, "fields", opts.Fields, "Comma-separated list of fields to include in output (e.g. metadata.name,status.startTime); only used with --output ndjson")
 	return c
 }
 
