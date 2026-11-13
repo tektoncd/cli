@@ -46,21 +46,32 @@ MINOR_BRANCH="release-${RELEASE_VERSION%.*}.x"
 
 git fetch -a --tags ${UPSTREAM_REMOTE} >/dev/null
 
-git ls-remote --exit-code ${UPSTREAM_REMOTE} refs/heads/${MINOR_BRANCH} >/dev/null 2>&1 && {
-    patch_release=true
-} || true
+release_line=$(echo "${RELEASE_VERSION}" | sed -E 's/^v([0-9]+\.[0-9]+)\.[0-9]+$/\1/')
 
-if [[ -n ${patch_release} ]];then
-    RELEASE_BRANCH="release-${RELEASE_VERSION}"
-    version_prefix="${RELEASE_VERSION%.*}"
-    prev_tag=$(git tag --sort=-v:refname -l "${version_prefix}.*" | grep -E '^v[0-9]+\.[0-9]+\.[0-9]+$' | grep -v "^${RELEASE_VERSION}$" | head -1)
-    [[ -z ${prev_tag} ]] && { echo "no previous patch release tag found for ${version_prefix}"; exit 1; }
-    echo "Patch release detected: creating ${RELEASE_BRANCH} from ${MINOR_BRANCH} on ${UPSTREAM_REMOTE}, previous tag ${prev_tag}"
-else
+
+lasttag=$(git tag --sort=-v:refname  | grep -E "^v${release_line}\.[0-9]+$" | grep -v "^${RELEASE_VERSION}$"  | head -1)
+
+# For minor releases (x.y.0), if no tag found in current series, get latest tag overall
+ if [[ -z ${lasttag} && ${RELEASE_VERSION##*.} -eq 0 ]]; then
+    lasttag=$(git tag --sort=-v:refname | grep -E "^v[0-9]+\.[0-9]+\.[0-9]+$" | grep -Fvx -- "${RELEASE_VERSION}" | head -1)
+    echo "No previous tag in ${release_line} series, using latest overall tag: ${lasttag}"
+fi
+
+[[ -z ${lasttag} ]] && { echo "ERROR: no previous release tag found for ${RELEASE_VERSION}"; exit 1; }
+
+# Determine if patch or minor release based on version number (not branch existence)
+PATCH_VERSION="${RELEASE_VERSION##*.}"  # Extract the last digit (patch version)
+
+if [[ ${PATCH_VERSION} -eq 0 ]]; then
+    # Minor release (e.g., v0.47.0) - always create from main
+    echo "Minor release detected: ${RELEASE_VERSION} - will create ${MINOR_BRANCH} from ${DEFAULT_BRANCH}, previous tag ${lasttag}"
     RELEASE_BRANCH="${MINOR_BRANCH}"
-    prev_tag=$(git tag --sort=-v:refname | grep -E '^v[0-9]+\.[0-9]+\.0$' | grep -v "^${RELEASE_VERSION}$" | head -1)
-    [[ -z ${prev_tag} ]] && { echo "no previous release tag found for ${RELEASE_VERSION}"; exit 1; }
-    echo "New minor release detected: creating ${RELEASE_BRANCH} from ${DEFAULT_BRANCH}, previous tag ${prev_tag}"
+else
+    # Patch release (e.g., v0.43.4) - must use existing .x branch
+    echo "Patch release detected: ${RELEASE_VERSION} - will use existing ${MINOR_BRANCH}, previous tag ${lasttag}"
+    RELEASE_BRANCH="release-${RELEASE_VERSION}"
+
+    patch_release=true
 fi
 
 cd ${GOPATH}/src/github.com/tektoncd/cli
@@ -89,9 +100,9 @@ fi
     git cherry-pick 052b0b4ce989fe9aee01027e67e61538b48e1179 >/dev/null
 }
 
-COMMITS=$(git log --reverse --no-merges --pretty=format:'%H' ${prev_tag}..HEAD)
+COMMITS=$(git log --reverse --no-merges --pretty=format:'%H' ${lasttag}..HEAD)
 
-echo "Creating changelog for ${RELEASE_VERSION} from ${prev_tag}..HEAD"
+echo "Creating changelog for ${RELEASE_VERSION} from ${lasttag}..HEAD"
 
 changelog=""
 for c in ${COMMITS};do
@@ -114,7 +125,7 @@ git tag --sign -m \
 git push --force ${PUSH_REMOTE} ${RELEASE_VERSION}
 git push --force ${PUSH_REMOTE} ${RELEASE_BRANCH}
 
-echo "Checkout to ${DEFAULT_BRANCH} to use the release pipeline"
+echo "Checkout to ${DEFAULT_BRANCH} to use the release pipeline of main branch"
 git reset --hard ${UPSTREAM_REMOTE}/${DEFAULT_BRANCH}
 
 kubectl create namespace ${TARGET_NAMESPACE} 2>/dev/null || true
