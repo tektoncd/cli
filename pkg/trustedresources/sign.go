@@ -25,6 +25,7 @@ import (
 	"fmt"
 	"io"
 	"os"
+	"reflect"
 	"syscall"
 
 	"github.com/sigstore/sigstore/pkg/signature"
@@ -45,8 +46,21 @@ var (
 	read = readPasswordFn
 )
 
-// Sign the crd and output signed bytes to writer
-func Sign(o metav1.Object, keyfile, kmsKey, targetFile string) error {
+// Sign the crd and output signed bytes to writer.
+//
+// doc is the document o was read from. The signature annotation is inserted
+// into it directly, so the signed file differs from the input only by that
+// annotation. Marshalling o instead would rewrite the whole document: it
+// reorders keys and emits zero valued fields of the embedded Kubernetes types,
+// such as the `resources: {}` that Tekton then rejects when the file is applied.
+//
+// The signature covers o, so Sign refuses a doc holding fields that o's type
+// does not define: they would reach the signed file without being signed.
+func Sign(o metav1.Object, doc []byte, keyfile, kmsKey, targetFile string) error {
+	if err := yaml.UnmarshalStrict(doc, reflect.New(reflect.TypeOf(o).Elem()).Interface()); err != nil {
+		return fmt.Errorf("the signature would not cover the whole document: %w", err)
+	}
+
 	// Load signer
 	var signer signature.Signer
 	var err error
@@ -69,17 +83,22 @@ func Sign(o metav1.Object, keyfile, kmsKey, targetFile string) error {
 	if a == nil {
 		a = map[string]string{}
 	}
+	// Verify drops the signature before checking, so an old one must not be signed over.
+	delete(a, SignatureAnnotation)
+	o.SetAnnotations(a)
 
 	// Sign object
 	sig, err := signInterface(signer, o)
 	if err != nil {
 		return err
 	}
-	a[SignatureAnnotation] = base64.StdEncoding.EncodeToString(sig)
+	encoded := base64.StdEncoding.EncodeToString(sig)
+	a[SignatureAnnotation] = encoded
 	o.SetAnnotations(a)
-	signedBuf, err := yaml.Marshal(o)
+
+	signedBuf, err := insertAnnotation(doc, SignatureAnnotation, encoded)
 	if err != nil {
-		return err
+		return fmt.Errorf("error adding signature annotation: %w", err)
 	}
 
 	// save signed file

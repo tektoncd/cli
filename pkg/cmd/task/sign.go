@@ -80,7 +80,7 @@ or using kms
 				return fmt.Errorf("error unmarshalling Task: %v", err)
 			}
 			// Sign the task and save to file
-			if err := trustedresources.Sign(crd, opts.keyfile, opts.kmsKey, opts.targetFile); err != nil {
+			if err := trustedresources.Sign(crd, b, opts.keyfile, opts.kmsKey, opts.targetFile); err != nil {
 				return fmt.Errorf("error signing Task: %v", err)
 			}
 			fmt.Fprintf(s.Out, "Task %s is signed successfully \n", args[0])
