@@ -18,6 +18,7 @@ import (
 	"encoding/json"
 	"fmt"
 	"io"
+	"strconv"
 	"strings"
 
 	"k8s.io/apimachinery/pkg/api/meta"
@@ -28,6 +29,9 @@ import (
 // JSON line (NDJSON / JSON Lines).  When fields is non-empty only those
 // dot-separated paths are included in each output object.
 func PrintNDJSON(w io.Writer, obj runtime.Object, fields []string) error {
+	// Deduplicate fields
+	fields = deduplicateFields(fields)
+
 	return meta.EachListItem(obj, func(o runtime.Object) error {
 		raw, err := runtime.DefaultUnstructuredConverter.ToUnstructured(o)
 		if err != nil {
@@ -46,11 +50,146 @@ func PrintNDJSON(w io.Writer, obj runtime.Object, fields []string) error {
 	})
 }
 
+// PrintJSON serialises a Kubernetes list object as a JSON array.
+// When fields is non-empty only those dot-separated paths are included
+// in each output object.
+func PrintJSON(w io.Writer, obj runtime.Object, fields []string) error {
+	if len(fields) == 0 {
+		// No field projection - marshal the whole object
+		data, err := json.MarshalIndent(obj, "", "  ")
+		if err != nil {
+			return fmt.Errorf("failed to marshal object: %w", err)
+		}
+		_, err = fmt.Fprintf(w, "%s\n", data)
+		return err
+	}
+
+	// Deduplicate fields
+	fields = deduplicateFields(fields)
+
+	// Apply field projection to each item
+	items := []map[string]any{}
+	err := meta.EachListItem(obj, func(o runtime.Object) error {
+		raw, err := runtime.DefaultUnstructuredConverter.ToUnstructured(o)
+		if err != nil {
+			return fmt.Errorf("failed to convert item to unstructured: %w", err)
+		}
+		out := pickFields(raw, fields)
+		items = append(items, out)
+		return nil
+	})
+	if err != nil {
+		return err
+	}
+
+	// Marshal the items array
+	data, err := json.MarshalIndent(map[string]any{"items": items}, "", "  ")
+	if err != nil {
+		return fmt.Errorf("failed to marshal items: %w", err)
+	}
+	_, err = fmt.Fprintf(w, "%s\n", data)
+	return err
+}
+
 // fieldResult holds the outcome of a field lookup, distinguishing between
 // "path not found" and "path found with a nil value".
 type fieldResult struct {
 	found bool
 	value any
+}
+
+// ValidateFields validates the fields list and returns an error if invalid.
+// Checks for empty field list and validates field syntax.
+func ValidateFields(fields []string) error {
+	if len(fields) == 0 {
+		return nil
+	}
+
+	// Check if all fields are empty strings
+	hasNonEmpty := false
+	for _, f := range fields {
+		trimmed := strings.TrimSpace(f)
+		if trimmed != "" {
+			hasNonEmpty = true
+			// Basic syntax validation: field names should be alphanumeric with dots, brackets, and underscores
+			if err := validateFieldSyntax(trimmed); err != nil {
+				return fmt.Errorf("invalid field %q: %w", f, err)
+			}
+		}
+	}
+
+	if !hasNonEmpty {
+		return fmt.Errorf("at least one field required")
+	}
+
+	return nil
+}
+
+// validateFieldSyntax checks if a field path has valid syntax.
+// Valid: "metadata.name", "status.conditions[0].reason", "spec.params[1].value"
+// Invalid: "metadata..name", "status.[0]", "field[abc]"
+func validateFieldSyntax(field string) error {
+	if field == "" {
+		return fmt.Errorf("empty field path")
+	}
+
+	// Check for consecutive dots
+	if strings.Contains(field, "..") {
+		return fmt.Errorf("consecutive dots not allowed")
+	}
+
+	// Check for leading/trailing dots
+	if strings.HasPrefix(field, ".") || strings.HasSuffix(field, ".") {
+		return fmt.Errorf("field path cannot start or end with dot")
+	}
+
+	// Validate array indices if present
+	for i := 0; i < len(field); i++ {
+		if field[i] == '[' {
+			// Find the closing bracket
+			closeIdx := strings.IndexByte(field[i:], ']')
+			if closeIdx == -1 {
+				return fmt.Errorf("unclosed bracket")
+			}
+			closeIdx += i
+
+			// Check what's between brackets
+			indexStr := field[i+1 : closeIdx]
+			if indexStr == "" {
+				return fmt.Errorf("empty array index")
+			}
+
+			// Index must be a number
+			for _, c := range indexStr {
+				if c < '0' || c > '9' {
+					return fmt.Errorf("array index must be numeric, got %q", indexStr)
+				}
+			}
+
+			i = closeIdx
+		}
+	}
+
+	return nil
+}
+
+// deduplicateFields removes duplicate field names from the list while preserving order.
+func deduplicateFields(fields []string) []string {
+	seen := make(map[string]bool)
+	result := []string{}
+
+	for _, f := range fields {
+		f = strings.TrimSpace(f)
+		if f == "" {
+			continue
+		}
+		if !seen[f] {
+			seen[f] = true
+			result = append(result, f)
+		}
+	}
+
+	return result
 }
 
 // pickFields returns a new map containing only the requested dot-path fields.
@@ -74,20 +213,65 @@ func pickFields(src map[string]any, fields []string) map[string]any {
 }
 
 // getNestedField retrieves a value from a nested map using a dot-separated path.
+// Supports array indexing with bracket notation: "status.conditions[0].reason"
 // Returns a fieldResult with found=false if any segment of the path does not exist.
 func getNestedField(src map[string]any, path string) fieldResult {
 	parts := strings.SplitN(path, ".", 2)
-	val, ok := src[parts[0]]
-	if !ok {
-		return fieldResult{found: false}
+	currentPart := parts[0]
+
+	// Check for array indexing syntax: fieldName[index]
+	var val any
+	var ok bool
+
+	if idx := strings.Index(currentPart, "["); idx != -1 {
+		// Parse array syntax: "conditions[0]"
+		fieldName := currentPart[:idx]
+		indexStr := strings.TrimSuffix(currentPart[idx+1:], "]")
+
+		index, err := strconv.Atoi(indexStr)
+		if err != nil {
+			return fieldResult{found: false}
+		}
+
+		val, ok = src[fieldName]
+		if !ok {
+			return fieldResult{found: false}
+		}
+
+		// Handle slice access
+		switch v := val.(type) {
+		case []any:
+			if index < 0 || index >= len(v) {
+				return fieldResult{found: false}
+			}
+			val = v[index]
+		case []map[string]any:
+			if index < 0 || index >= len(v) {
+				return fieldResult{found: false}
+			}
+			val = v[index]
+		default:
+			return fieldResult{found: false}
+		}
+	} else {
+		// Regular map access
+		val, ok = src[currentPart]
+		if !ok {
+			return fieldResult{found: false}
+		}
 	}
+
+	// If this is the last part, return the value
 	if len(parts) == 1 {
 		return fieldResult{found: true, value: val}
 	}
-	// val is nil — path exists up to here but cannot descend further.
+
+	// val is nil — path exists up to here but cannot descend further
 	if val == nil {
 		return fieldResult{found: false}
 	}
+
+	// Continue traversing nested maps
 	child, ok := val.(map[string]any)
 	if !ok {
 		return fieldResult{found: false}

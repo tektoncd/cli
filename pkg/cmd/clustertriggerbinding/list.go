@@ -72,8 +72,14 @@ List ClusterTriggerBindings as a YAML array:
 				return errors.New("output option not set properly")
 			}
 
-			if len(opts.Fields) > 0 && output != "ndjson" {
-				return fmt.Errorf("--fields is only supported with --output ndjson")
+			// Validate fields if provided
+			if err := formatted.ValidateFields(opts.Fields); err != nil {
+				return err
+			}
+
+			// --fields is only used with json/ndjson output; silently ignored for other formats
+			if len(opts.Fields) > 0 && output != "ndjson" && output != "json" && output != "" {
+				opts.Fields = nil // Ignore fields for non-JSON outputs
 			}
 
 			cs, err := p.Clients()
@@ -94,6 +100,8 @@ List ClusterTriggerBindings as a YAML array:
 			switch {
 			case output == "ndjson" && tbs != nil:
 				return formatted.PrintNDJSON(stream.Out, tbs, opts.Fields)
+			case output == "json" && len(opts.Fields) > 0 && tbs != nil:
+				return formatted.PrintJSON(stream.Out, tbs, opts.Fields)
 			case output == "name" && tbs != nil:
 				w := cmd.OutOrStdout()
 				for _, pr := range tbs.Items {
@@ -121,7 +129,7 @@ List ClusterTriggerBindings as a YAML array:
 
 	f.AddFlags(c)
 	c.Flags().BoolVar(&opts.NoHeaders, "no-headers", opts.NoHeaders, "do not print column headers with output (default print column headers with output)")
-	c.Flags().StringSliceVar(&opts.Fields, "fields", opts.Fields, "Comma-separated list of fields to include in output (e.g. metadata.name,status.startTime); only used with --output ndjson")
+	c.Flags().StringSliceVar(&opts.Fields, "fields", opts.Fields, "Comma-separated list of fields to include in output (e.g. metadata.name,status.startTime); only used with --output json or --output ndjson")
 	return c
 }
 

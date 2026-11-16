@@ -38,6 +38,7 @@ List PipelineRuns as a YAML array:
 ```
   -A, --all-namespaces                list PipelineRuns from all namespaces
       --allow-missing-template-keys   If true, ignore any errors in templates when a field or map key is missing in the template. Only applies to golang and jsonpath output formats. (default true)
+      --fields strings                Comma-separated list of fields to include in output (e.g. metadata.name,status.startTime); only used with --output json or --output ndjson
   -h, --help                          help for list
       --label string                  A selector (label query) to filter on, supports '=', '==', and '!='
       --limit int                     Limits the number of PipelineRuns. If the limit value is 0 returns all

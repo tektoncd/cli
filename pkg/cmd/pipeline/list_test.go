@@ -1257,11 +1257,23 @@ func TestListPipelines_ndjson(t *testing.T) {
 		}
 	})
 
-	t.Run("--fields without ndjson returns error", func(t *testing.T) {
+	t.Run("--fields without ndjson is silently ignored", func(t *testing.T) {
 		cmd := Command(p)
-		_, err := test.ExecuteCommand(cmd, "list", "-n", "namespace", "--fields", "metadata.name")
-		if err == nil {
-			t.Error("expected error when --fields used without --output ndjson, got none")
+		output, err := test.ExecuteCommand(cmd, "list", "-n", "namespace", "--fields", "metadata.name")
+		if err != nil {
+			t.Errorf("unexpected error when --fields used with table output (should be ignored): %v", err)
+		}
+		// Should produce normal table output, not field-filtered output
+		if output == "" {
+			t.Error("expected table output, got empty string")
+		}
+		// Table output should include headers and pipeline names
+		if !strings.Contains(output, "pipe-a") || !strings.Contains(output, "pipe-b") {
+			t.Errorf("expected normal table output with pipeline names, got: %s", output)
+		}
+		// Should include table headers like "NAME" and "AGE"
+		if !strings.Contains(output, "NAME") {
+			t.Errorf("expected table headers in output, got: %s", output)
 		}
 	})
 }

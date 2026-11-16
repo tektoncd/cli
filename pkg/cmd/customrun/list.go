@@ -94,8 +94,14 @@ List CustomRuns as a YAML array:
 				return fmt.Errorf("output option not set properly: %v", err)
 			}
 
-			if len(opts.Fields) > 0 && output != "ndjson" {
-				return fmt.Errorf("--fields is only supported with --output ndjson")
+			// Validate fields if provided
+			if err := formatted.ValidateFields(opts.Fields); err != nil {
+				return err
+			}
+
+			// --fields is only used with json/ndjson output; silently ignored for other formats
+			if len(opts.Fields) > 0 && output != "ndjson" && output != "json" && output != "" {
+				opts.Fields = nil // Ignore fields for non-JSON outputs
 			}
 
 			crs, err := list(p, opts.Limit, opts.LabelSelector, opts.AllNamespaces)
@@ -109,6 +115,8 @@ List CustomRuns as a YAML array:
 			switch {
 			case output == "ndjson" && crs != nil:
 				return formatted.PrintNDJSON(cmd.OutOrStdout(), crs, opts.Fields)
+			case output == "json" && len(opts.Fields) > 0 && crs != nil:
+				return formatted.PrintJSON(cmd.OutOrStdout(), crs, opts.Fields)
 			case output == "name" && crs != nil:
 				w := cmd.OutOrStdout()
 				for _, tr := range crs.Items {
@@ -150,7 +158,7 @@ List CustomRuns as a YAML array:
 	c.Flags().BoolVarP(&opts.Reverse, "reverse", "", opts.Reverse, "list CustomRuns in reverse order")
 	c.Flags().BoolVarP(&opts.AllNamespaces, "all-namespaces", "A", opts.AllNamespaces, "list CustomRuns from all namespaces")
 	c.Flags().BoolVarP(&opts.NoHeaders, "no-headers", "", opts.NoHeaders, "do not print column headers with output (default print column headers with output)")
-	c.Flags().StringSliceVar(&opts.Fields, "fields", opts.Fields, "Comma-separated list of fields to include in output (e.g. metadata.name,status.startTime); only used with --output ndjson")
+	c.Flags().StringSliceVar(&opts.Fields, "fields", opts.Fields, "Comma-separated list of fields to include in output (e.g. metadata.name,status.startTime); only used with --output json or --output ndjson")
 	return c
 }
 

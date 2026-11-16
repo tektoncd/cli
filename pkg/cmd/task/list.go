@@ -83,8 +83,14 @@ List Tasks as a YAML array:
 				return fmt.Errorf("error: output option not set properly: %v", err)
 			}
 
-			if len(opts.Fields) > 0 && output != "ndjson" {
-				return fmt.Errorf("--fields is only supported with --output ndjson")
+			// Validate fields if provided
+			if err := formatted.ValidateFields(opts.Fields); err != nil {
+				return err
+			}
+
+			// --fields is only used with json/ndjson output; silently ignored for other formats
+			if len(opts.Fields) > 0 && output != "ndjson" && output != "json" && output != "" {
+				opts.Fields = nil // Ignore fields for non-JSON outputs
 			}
 
 			cs, err := p.Clients()
@@ -97,16 +103,19 @@ List Tasks as a YAML array:
 				ns = ""
 			}
 
-			if output == "ndjson" {
-				var tl *v1.TaskList
-				if err := actions.ListV1(taskGroupResource, cs, metav1.ListOptions{}, ns, &tl); err != nil {
+			if output == "ndjson" || (output == "json" && len(opts.Fields) > 0) {
+				tl, err := actions.List(taskGroupResource, cs.Dynamic, cs.Tekton.Discovery(), ns, metav1.ListOptions{})
+				if err != nil {
 					scope := fmt.Sprintf("namespace %q", ns)
 					if ns == "" {
 						scope = "all namespaces"
 					}
 					return fmt.Errorf("failed to list Tasks from %s: %w", scope, err)
 				}
-				return formatted.PrintNDJSON(cmd.OutOrStdout(), tl, opts.Fields)
+				if output == "ndjson" {
+					return formatted.PrintNDJSON(cmd.OutOrStdout(), tl, opts.Fields)
+				}
+				return formatted.PrintJSON(cmd.OutOrStdout(), tl, opts.Fields)
 			} else if output != "" {
 				p, err := f.ToPrinter()
 				if err != nil {
@@ -124,7 +133,7 @@ List Tasks as a YAML array:
 	f.AddFlags(c)
 	c.Flags().BoolVarP(&opts.AllNamespaces, "all-namespaces", "A", opts.AllNamespaces, "list Tasks from all namespaces")
 	c.Flags().BoolVarP(&opts.NoHeaders, "no-headers", "", opts.NoHeaders, "do not print column headers with output (default print column headers with output)")
-	c.Flags().StringSliceVar(&opts.Fields, "fields", opts.Fields, "Comma-separated list of fields to include in output (e.g. metadata.name,status.startTime); only used with --output ndjson")
+	c.Flags().StringSliceVar(&opts.Fields, "fields", opts.Fields, "Comma-separated list of fields to include in output (e.g. metadata.name,status.startTime); only used with --output json or --output ndjson")
 
 	return c
 }

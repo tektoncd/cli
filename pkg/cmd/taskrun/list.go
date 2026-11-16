@@ -76,9 +76,13 @@ List TaskRuns as a JSON array:
 
     tkn taskrun list -o json
 
-List TaskRuns as a YAML array:
+List TaskRuns with specific fields only (token-efficient for AI agents):
 
-    tkn taskrun list -o yaml
+    tkn taskrun list --fields metadata.name,status.startTime,status.completionTime -o json
+
+List TaskRuns as NDJSON with selected fields:
+
+    tkn taskrun list --fields metadata.name,status.conditions[0].reason -o ndjson
 `
 
 	c := &cobra.Command{
@@ -104,8 +108,14 @@ List TaskRuns as a YAML array:
 				return fmt.Errorf("output option not set properly: %v", err)
 			}
 
-			if len(opts.Fields) > 0 && output != "ndjson" {
-				return fmt.Errorf("--fields is only supported with --output ndjson")
+			// Validate fields if provided
+			if err := formatted.ValidateFields(opts.Fields); err != nil {
+				return err
+			}
+
+			// --fields is only used with json/ndjson output; silently ignored for other formats
+			if len(opts.Fields) > 0 && output != "ndjson" && output != "json" && output != "" {
+				opts.Fields = nil // Ignore fields for non-JSON outputs
 			}
 
 			trs, err := list(p, task, opts.Limit, opts.LabelSelector, opts.AllNamespaces)
@@ -119,6 +129,8 @@ List TaskRuns as a YAML array:
 			switch {
 			case output == "ndjson" && trs != nil:
 				return formatted.PrintNDJSON(cmd.OutOrStdout(), trs, opts.Fields)
+			case output == "json" && len(opts.Fields) > 0 && trs != nil:
+				return formatted.PrintJSON(cmd.OutOrStdout(), trs, opts.Fields)
 			case output == "name" && trs != nil:
 				w := cmd.OutOrStdout()
 				for _, tr := range trs.Items {
@@ -160,7 +172,7 @@ List TaskRuns as a YAML array:
 	c.Flags().BoolVarP(&opts.Reverse, "reverse", "", opts.Reverse, "list TaskRuns in reverse order")
 	c.Flags().BoolVarP(&opts.AllNamespaces, "all-namespaces", "A", opts.AllNamespaces, "list TaskRuns from all namespaces")
 	c.Flags().BoolVarP(&opts.NoHeaders, "no-headers", "", opts.NoHeaders, "do not print column headers with output (default print column headers with output)")
-	c.Flags().StringSliceVar(&opts.Fields, "fields", opts.Fields, "Comma-separated list of fields to include in output (e.g. metadata.name,status.startTime); only used with --output ndjson")
+	c.Flags().StringSliceVar(&opts.Fields, "fields", opts.Fields, "Select specific fields to reduce payload size (e.g. metadata.name,status.conditions[0].reason); optimizes token usage for AI agents; only used with --output json or --output ndjson")
 	return c
 }
 
