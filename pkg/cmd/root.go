@@ -34,6 +34,7 @@ import (
 	hub "github.com/tektoncd/cli/pkg/cmd/hub/cmd"
 	"github.com/tektoncd/cli/pkg/cmd/pipeline"
 	"github.com/tektoncd/cli/pkg/cmd/pipelinerun"
+	"github.com/tektoncd/cli/pkg/cmd/stepaction"
 	"github.com/tektoncd/cli/pkg/cmd/task"
 	"github.com/tektoncd/cli/pkg/cmd/taskrun"
 	"github.com/tektoncd/cli/pkg/cmd/triggerbinding"
@@ -117,6 +118,7 @@ func Root(p cli.Params) *cobra.Command {
 		eventlistener.Command(p),
 		pipeline.Command(p),
 		pipelinerun.Command(p),
+		stepaction.Command(p),
 		task.Command(p),
 		taskrun.Command(p),
 		customrun.Command(p),
