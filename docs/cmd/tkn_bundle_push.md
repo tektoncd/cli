@@ -34,6 +34,7 @@ Created time:
 ```
       --annotate strings         OCI Manifest annotation in the form of key=value to be added to the OCI image. Can be provided multiple times to add multiple annotations.
       --ctime string             YYYY-MM-DD, YYYY-MM-DDTHH:MM:SS or RFC3339 formatted created time to set, defaults to current time. In non RFC3339 syntax dates are in UTC timezone.
+      --dry-run                  Build and validate the bundle without pushing it to the registry
   -f, --filenames strings        List of fully-qualified file paths containing YAML or JSON defined Tekton objects to include in this bundle
   -h, --help                     help for push
       --label strings            OCI Config labels in the form of key=value to be added to the OCI image. Can be provided multiple times to add multiple labels.
