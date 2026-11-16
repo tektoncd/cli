@@ -98,26 +98,34 @@ func FilterByStatus(trs []Run, trsMap map[string]*v1.PipelineRunTaskRunStatus, f
 }
 
 func SortTasksBySpecOrder(pipelineTasks []v1.PipelineTask, pipelinesTaskRuns map[string]*v1.PipelineRunTaskRunStatus) []Run {
-	trNames := map[string]string{}
-
+	// A pipeline task can have several TaskRuns, e.g. one per combination of a
+	// matrix, so keep all of them instead of one per task name.
+	trNames := map[string][]string{}
 	for name, t := range pipelinesTaskRuns {
-		trNames[t.PipelineTaskName] = name
+		trNames[t.PipelineTaskName] = append(trNames[t.PipelineTaskName], name)
 	}
 	trs := Runs{}
 
 	for _, ts := range pipelineTasks {
-		if n, ok := trNames[ts.Name]; ok {
-			trStatusFields := pipelinesTaskRuns[n].Status.TaskRunStatusFields
+		names := trNames[ts.Name]
+		// map iteration order is random, sort so runs that tie on time keep a stable order
+		sort.Strings(names)
+		for _, n := range names {
+			var startTime, completionTime *metav1.Time
+			if status := pipelinesTaskRuns[n].Status; status != nil {
+				startTime = status.StartTime
+				completionTime = status.CompletionTime
+			}
 			trs = append(trs, Run{
 				Task:           ts.Name,
 				Name:           n,
 				DisplayName:    ts.DisplayName,
 				Retries:        ts.Retries,
-				StartTime:      trStatusFields.StartTime,
-				CompletionTime: trStatusFields.CompletionTime,
+				StartTime:      startTime,
+				CompletionTime: completionTime,
 			})
 		}
 	}
-	sort.Sort(trs)
+	sort.Stable(trs)
 	return trs
 }
