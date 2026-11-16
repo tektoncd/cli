@@ -38,6 +38,7 @@ import (
 	"github.com/tektoncd/cli/pkg/cmd/taskrun"
 	"github.com/tektoncd/cli/pkg/cmd/triggerbinding"
 	"github.com/tektoncd/cli/pkg/cmd/triggertemplate"
+	"github.com/tektoncd/cli/pkg/cmd/validate"
 	"github.com/tektoncd/cli/pkg/cmd/version"
 	"github.com/tektoncd/cli/pkg/exitcode"
 	"github.com/tektoncd/cli/pkg/formatted"
@@ -122,6 +123,7 @@ func Root(p cli.Params) *cobra.Command {
 		customrun.Command(p),
 		triggerbinding.Command(p),
 		triggertemplate.Command(p),
+		validate.Command(p),
 		version.Command(p),
 		hub.Root(hubApp.New()),
 	)
