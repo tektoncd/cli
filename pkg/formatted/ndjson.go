@@ -28,11 +28,19 @@ import (
 // PrintNDJSON serialises each item of a Kubernetes list object as a single
 // JSON line (NDJSON / JSON Lines).  When fields is non-empty only those
 // dot-separated paths are included in each output object.
-func PrintNDJSON(w io.Writer, obj runtime.Object, fields []string) error {
+// If showManagedFields is false, metadata.managedFields is filtered out before projection.
+func PrintNDJSON(w io.Writer, obj runtime.Object, fields []string, showManagedFields bool) error {
 	// Deduplicate fields
 	fields = deduplicateFields(fields)
 
 	return meta.EachListItem(obj, func(o runtime.Object) error {
+		// Filter out managedFields if needed
+		if !showManagedFields {
+			if accessor, err := meta.Accessor(o); err == nil {
+				accessor.SetManagedFields(nil)
+			}
+		}
+
 		raw, err := runtime.DefaultUnstructuredConverter.ToUnstructured(o)
 		if err != nil {
 			return fmt.Errorf("failed to convert item to unstructured: %w", err)
@@ -53,7 +61,8 @@ func PrintNDJSON(w io.Writer, obj runtime.Object, fields []string) error {
 // PrintJSON serialises a Kubernetes list object as a JSON array.
 // When fields is non-empty only those dot-separated paths are included
 // in each output object.
-func PrintJSON(w io.Writer, obj runtime.Object, fields []string) error {
+// If showManagedFields is false, metadata.managedFields is filtered out before projection.
+func PrintJSON(w io.Writer, obj runtime.Object, fields []string, showManagedFields bool) error {
 	if len(fields) == 0 {
 		// No field projection - marshal the whole object
 		data, err := json.MarshalIndent(obj, "", "  ")
@@ -70,6 +79,13 @@ func PrintJSON(w io.Writer, obj runtime.Object, fields []string) error {
 	// Apply field projection to each item
 	items := []map[string]any{}
 	err := meta.EachListItem(obj, func(o runtime.Object) error {
+		// Filter out managedFields if needed
+		if !showManagedFields {
+			if accessor, err := meta.Accessor(o); err == nil {
+				accessor.SetManagedFields(nil)
+			}
+		}
+
 		raw, err := runtime.DefaultUnstructuredConverter.ToUnstructured(o)
 		if err != nil {
 			return fmt.Errorf("failed to convert item to unstructured: %w", err)
@@ -127,7 +143,7 @@ func ValidateFields(fields []string) error {
 
 // validateFieldSyntax checks if a field path has valid syntax.
 // Valid: "metadata.name", "status.conditions[0].reason", "spec.params[1].value"
-// Invalid: "metadata..name", "status.[0]", "field[abc]"
+// Invalid: "metadata..name", "status.[0]", "field[abc]", "status.conditions[0]suffix", "status.conditions]"
 func validateFieldSyntax(field string) error {
 	if field == "" {
 		return fmt.Errorf("empty field path")
@@ -143,30 +159,55 @@ func validateFieldSyntax(field string) error {
 		return fmt.Errorf("field path cannot start or end with dot")
 	}
 
-	// Validate array indices if present
-	for i := 0; i < len(field); i++ {
-		if field[i] == '[' {
-			// Find the closing bracket
-			closeIdx := strings.IndexByte(field[i:], ']')
-			if closeIdx == -1 {
-				return fmt.Errorf("unclosed bracket")
+	// Validate each segment (split by dots)
+	segments := strings.Split(field, ".")
+	for _, segment := range segments {
+		if segment == "" {
+			continue // Already checked for ".." above
+		}
+
+		// Check for stray closing bracket without opening bracket
+		if strings.Contains(segment, "]") && !strings.Contains(segment, "[") {
+			return fmt.Errorf("unmatched closing bracket in %q", segment)
+		}
+
+		// If segment contains brackets, validate array indexing syntax
+		if strings.Contains(segment, "[") {
+			bracketIdx := strings.IndexByte(segment, '[')
+
+			// Must have a non-empty field name before the bracket
+			if bracketIdx == 0 {
+				return fmt.Errorf("empty field name before array index in %q", segment)
 			}
-			closeIdx += i
+
+			// Find the closing bracket
+			closeIdx := strings.IndexByte(segment, ']')
+			if closeIdx == -1 {
+				return fmt.Errorf("unclosed bracket in %q", segment)
+			}
+
+			// Check that closing bracket comes after opening bracket
+			if closeIdx <= bracketIdx {
+				return fmt.Errorf("closing bracket before opening bracket in %q", segment)
+			}
 
 			// Check what's between brackets
-			indexStr := field[i+1 : closeIdx]
+			indexStr := segment[bracketIdx+1 : closeIdx]
 			if indexStr == "" {
-				return fmt.Errorf("empty array index")
+				return fmt.Errorf("empty array index in %q", segment)
 			}
 
 			// Index must be a number
 			for _, c := range indexStr {
 				if c < '0' || c > '9' {
-					return fmt.Errorf("array index must be numeric, got %q", indexStr)
+					return fmt.Errorf("array index must be numeric, got %q in %q", indexStr, segment)
 				}
 			}
 
-			i = closeIdx
+			// The closing bracket must be at the end of the segment (no suffix allowed)
+			if closeIdx != len(segment)-1 {
+				return fmt.Errorf("unexpected characters after closing bracket in %q", segment)
+			}
 		}
 	}
 

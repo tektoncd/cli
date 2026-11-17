@@ -29,7 +29,7 @@ Lists TaskRuns in a namespace
 
 .PP
 \fB\-\-fields\fP=[]
-    Comma\-separated list of fields to include in output (e.g. metadata.name,status.startTime); only used with \-\-output json or \-\-output ndjson
+    Select specific fields to reduce payload size (e.g. metadata.name,status.conditions[0].reason); optimizes token usage for AI agents; only used with \-\-output json or \-\-output ndjson
 
 .PP
 \fB\-h\fP, \fB\-\-help\fP[=false]
@@ -121,13 +121,25 @@ tkn taskrun list \-o json
 .RE
 
 .PP
-List TaskRuns as a YAML array:
+List TaskRuns with specific fields only (token\-efficient for AI agents):
 
 .PP
 .RS
 
 .nf
-tkn taskrun list \-o yaml
+tkn taskrun list \-\-fields metadata.name,status.startTime,status.completionTime \-o json
+
+.fi
+.RE
+
+.PP
+List TaskRuns as NDJSON with selected fields:
+
+.PP
+.RS
+
+.nf
+tkn taskrun list \-\-fields metadata.name,status.conditions[0].reason \-o ndjson
 
 .fi
 .RE

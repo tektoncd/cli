@@ -135,9 +135,9 @@ List specific fields as NDJSON (optimized for token-efficient AI agent consumpti
 
 			switch {
 			case output == "ndjson" && prs != nil:
-				return formatted.PrintNDJSON(cmd.OutOrStdout(), prs, opts.Fields)
+				return formatted.PrintNDJSON(cmd.OutOrStdout(), prs, opts.Fields, f.JSONYamlPrintFlags.ShowManagedFields)
 			case output == "json" && len(opts.Fields) > 0 && prs != nil:
-				return formatted.PrintJSON(cmd.OutOrStdout(), prs, opts.Fields)
+				return formatted.PrintJSON(cmd.OutOrStdout(), prs, opts.Fields, f.JSONYamlPrintFlags.ShowManagedFields)
 			case output == "name" && prs != nil:
 				w := cmd.OutOrStdout()
 				for _, pr := range prs.Items {

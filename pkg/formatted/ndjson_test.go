@@ -54,7 +54,7 @@ func makePRList() *v1.PipelineRunList {
 
 func TestPrintNDJSON_allFields(t *testing.T) {
 	var buf bytes.Buffer
-	if err := formatted.PrintNDJSON(&buf, makePRList(), nil); err != nil {
+	if err := formatted.PrintNDJSON(&buf, makePRList(), nil, false); err != nil {
 		t.Fatalf("unexpected error: %v", err)
 	}
 
@@ -73,7 +73,7 @@ func TestPrintNDJSON_allFields(t *testing.T) {
 
 func TestPrintNDJSON_fieldSelection(t *testing.T) {
 	var buf bytes.Buffer
-	if err := formatted.PrintNDJSON(&buf, makePRList(), []string{"metadata.name", "metadata.namespace"}); err != nil {
+	if err := formatted.PrintNDJSON(&buf, makePRList(), []string{"metadata.name", "metadata.namespace"}, false); err != nil {
 		t.Fatalf("unexpected error: %v", err)
 	}
 
@@ -107,7 +107,7 @@ func TestPrintNDJSON_fieldSelection(t *testing.T) {
 
 func TestPrintNDJSON_singleTopLevelField(t *testing.T) {
 	var buf bytes.Buffer
-	if err := formatted.PrintNDJSON(&buf, makePRList(), []string{"metadata"}); err != nil {
+	if err := formatted.PrintNDJSON(&buf, makePRList(), []string{"metadata"}, false); err != nil {
 		t.Fatalf("unexpected error: %v", err)
 	}
 
@@ -132,7 +132,7 @@ func TestPrintNDJSON_singleTopLevelField(t *testing.T) {
 
 func TestPrintNDJSON_unknownFieldIgnored(t *testing.T) {
 	var buf bytes.Buffer
-	if err := formatted.PrintNDJSON(&buf, makePRList(), []string{"metadata.name", "does.not.exist"}); err != nil {
+	if err := formatted.PrintNDJSON(&buf, makePRList(), []string{"metadata.name", "does.not.exist"}, false); err != nil {
 		t.Fatalf("unexpected error: %v", err)
 	}
 
@@ -160,7 +160,7 @@ func TestPrintNDJSON_unknownFieldIgnored(t *testing.T) {
 func TestPrintNDJSON_emptyList(t *testing.T) {
 	var buf bytes.Buffer
 	empty := &v1.PipelineRunList{}
-	if err := formatted.PrintNDJSON(&buf, empty, nil); err != nil {
+	if err := formatted.PrintNDJSON(&buf, empty, nil, false); err != nil {
 		t.Fatalf("unexpected error: %v", err)
 	}
 	if buf.Len() != 0 {
@@ -186,7 +186,7 @@ func TestPrintNDJSON_nullValuePreserved(t *testing.T) {
 
 	var buf bytes.Buffer
 	// Request metadata.name — present and non-nil.
-	if err := formatted.PrintNDJSON(&buf, list, []string{"metadata.name"}); err != nil {
+	if err := formatted.PrintNDJSON(&buf, list, []string{"metadata.name"}, false); err != nil {
 		t.Fatalf("unexpected error: %v", err)
 	}
 	lines := splitLines(buf.String())
@@ -208,7 +208,7 @@ func TestPrintNDJSON_nullValuePreserved(t *testing.T) {
 
 func TestPrintJSON_allFields(t *testing.T) {
 	var buf bytes.Buffer
-	if err := formatted.PrintJSON(&buf, makePRList(), nil); err != nil {
+	if err := formatted.PrintJSON(&buf, makePRList(), nil, false); err != nil {
 		t.Fatalf("unexpected error: %v", err)
 	}
 
@@ -225,7 +225,7 @@ func TestPrintJSON_allFields(t *testing.T) {
 
 func TestPrintJSON_fieldSelection(t *testing.T) {
 	var buf bytes.Buffer
-	if err := formatted.PrintJSON(&buf, makePRList(), []string{"metadata.name", "metadata.namespace"}); err != nil {
+	if err := formatted.PrintJSON(&buf, makePRList(), []string{"metadata.name", "metadata.namespace"}, false); err != nil {
 		t.Fatalf("unexpected error: %v", err)
 	}
 
@@ -270,7 +270,7 @@ func TestPrintJSON_fieldSelection(t *testing.T) {
 func TestPrintJSON_emptyList(t *testing.T) {
 	var buf bytes.Buffer
 	empty := &v1.PipelineRunList{}
-	if err := formatted.PrintJSON(&buf, empty, []string{"metadata.name"}); err != nil {
+	if err := formatted.PrintJSON(&buf, empty, []string{"metadata.name"}, false); err != nil {
 		t.Fatalf("unexpected error: %v", err)
 	}
 
@@ -312,7 +312,7 @@ func TestPrintNDJSON_arrayIndexing(t *testing.T) {
 
 	var buf bytes.Buffer
 	// Request first condition's reason using array indexing
-	if err := formatted.PrintNDJSON(&buf, prList, []string{"metadata.name", "status.conditions[0].reason"}); err != nil {
+	if err := formatted.PrintNDJSON(&buf, prList, []string{"metadata.name", "status.conditions[0].reason"}, false); err != nil {
 		t.Fatalf("unexpected error: %v", err)
 	}
 
@@ -438,6 +438,30 @@ func TestValidateFields_syntax(t *testing.T) {
 			wantError: true,
 			errorMsg:  "array index must be numeric",
 		},
+		{
+			name:      "empty field name before bracket",
+			fields:    []string{"status.[0]"},
+			wantError: true,
+			errorMsg:  "empty field name before array index",
+		},
+		{
+			name:      "text after closing bracket",
+			fields:    []string{"status.conditions[0]suffix"},
+			wantError: true,
+			errorMsg:  "unexpected characters after closing bracket",
+		},
+		{
+			name:      "unmatched closing bracket",
+			fields:    []string{"status.conditions]"},
+			wantError: true,
+			errorMsg:  "unmatched closing bracket",
+		},
+		{
+			name:      "reversed brackets",
+			fields:    []string{"status.conditions]x[0]"},
+			wantError: true,
+			errorMsg:  "closing bracket before opening bracket",
+		},
 	}
 
 	for _, tt := range tests {
@@ -461,7 +485,7 @@ func TestValidateFields_syntax(t *testing.T) {
 func TestPrintNDJSON_deduplication(t *testing.T) {
 	var buf bytes.Buffer
 	// Request same field multiple times
-	if err := formatted.PrintNDJSON(&buf, makePRList(), []string{"metadata.name", "metadata.name", "metadata.namespace", "metadata.name"}); err != nil {
+	if err := formatted.PrintNDJSON(&buf, makePRList(), []string{"metadata.name", "metadata.name", "metadata.namespace", "metadata.name"}, false); err != nil {
 		t.Fatalf("unexpected error: %v", err)
 	}
 

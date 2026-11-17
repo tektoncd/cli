@@ -124,9 +124,9 @@ List Pipelines as a YAML array:
 					return fmt.Errorf("failed to list Pipelines from %s: %w", scope, err)
 				}
 				if output == "ndjson" {
-					return formatted.PrintNDJSON(cmd.OutOrStdout(), pl, opts.Fields)
+					return formatted.PrintNDJSON(cmd.OutOrStdout(), pl, opts.Fields, f.JSONYamlPrintFlags.ShowManagedFields)
 				}
-				return formatted.PrintJSON(cmd.OutOrStdout(), pl, opts.Fields)
+				return formatted.PrintJSON(cmd.OutOrStdout(), pl, opts.Fields, f.JSONYamlPrintFlags.ShowManagedFields)
 			} else if output != "" {
 				p, err := f.ToPrinter()
 				if err != nil {

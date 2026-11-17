@@ -108,9 +108,9 @@ List TriggerBindings as a YAML array:
 
 			switch {
 			case output == "ndjson" && tbs != nil:
-				return formatted.PrintNDJSON(stream.Out, tbs, opts.Fields)
+				return formatted.PrintNDJSON(stream.Out, tbs, opts.Fields, f.JSONYamlPrintFlags.ShowManagedFields)
 			case output == "json" && len(opts.Fields) > 0 && tbs != nil:
-				return formatted.PrintJSON(stream.Out, tbs, opts.Fields)
+				return formatted.PrintJSON(stream.Out, tbs, opts.Fields, f.JSONYamlPrintFlags.ShowManagedFields)
 			case output == "name" && tbs != nil:
 				w := cmd.OutOrStdout()
 				for _, pr := range tbs.Items {

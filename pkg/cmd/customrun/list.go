@@ -114,9 +114,9 @@ List CustomRuns as a YAML array:
 			}
 			switch {
 			case output == "ndjson" && crs != nil:
-				return formatted.PrintNDJSON(cmd.OutOrStdout(), crs, opts.Fields)
+				return formatted.PrintNDJSON(cmd.OutOrStdout(), crs, opts.Fields, f.JSONYamlPrintFlags.ShowManagedFields)
 			case output == "json" && len(opts.Fields) > 0 && crs != nil:
-				return formatted.PrintJSON(cmd.OutOrStdout(), crs, opts.Fields)
+				return formatted.PrintJSON(cmd.OutOrStdout(), crs, opts.Fields, f.JSONYamlPrintFlags.ShowManagedFields)
 			case output == "name" && crs != nil:
 				w := cmd.OutOrStdout()
 				for _, tr := range crs.Items {

@@ -28,9 +28,13 @@ List TaskRuns as a JSON array:
 
     tkn taskrun list -o json
 
-List TaskRuns as a YAML array:
+List TaskRuns with specific fields only (token-efficient for AI agents):
 
-    tkn taskrun list -o yaml
+    tkn taskrun list --fields metadata.name,status.startTime,status.completionTime -o json
+
+List TaskRuns as NDJSON with selected fields:
+
+    tkn taskrun list --fields metadata.name,status.conditions[0].reason -o ndjson
 
 
 ### Options
@@ -38,7 +42,7 @@ List TaskRuns as a YAML array:
 ```
   -A, --all-namespaces                list TaskRuns from all namespaces
       --allow-missing-template-keys   If true, ignore any errors in templates when a field or map key is missing in the template. Only applies to golang and jsonpath output formats. (default true)
-      --fields strings                Comma-separated list of fields to include in output (e.g. metadata.name,status.startTime); only used with --output json or --output ndjson
+      --fields strings                Select specific fields to reduce payload size (e.g. metadata.name,status.conditions[0].reason); optimizes token usage for AI agents; only used with --output json or --output ndjson
   -h, --help                          help for list
       --label string                  A selector (label query) to filter on, supports '=', '==', and '!='
       --limit int                     Limits the number of TaskRuns. If the limit value is 0 returns all

@@ -128,9 +128,9 @@ List TaskRuns as NDJSON with selected fields:
 			}
 			switch {
 			case output == "ndjson" && trs != nil:
-				return formatted.PrintNDJSON(cmd.OutOrStdout(), trs, opts.Fields)
+				return formatted.PrintNDJSON(cmd.OutOrStdout(), trs, opts.Fields, f.JSONYamlPrintFlags.ShowManagedFields)
 			case output == "json" && len(opts.Fields) > 0 && trs != nil:
-				return formatted.PrintJSON(cmd.OutOrStdout(), trs, opts.Fields)
+				return formatted.PrintJSON(cmd.OutOrStdout(), trs, opts.Fields, f.JSONYamlPrintFlags.ShowManagedFields)
 			case output == "name" && trs != nil:
 				w := cmd.OutOrStdout()
 				for _, tr := range trs.Items {

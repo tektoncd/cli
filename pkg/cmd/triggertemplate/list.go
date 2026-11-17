@@ -104,11 +104,12 @@ List TriggerTemplates as a YAML array:
 				Err: cmd.OutOrStderr(),
 			}
 
-			if output == "ndjson" {
-				return formatted.PrintNDJSON(stream.Out, tts, opts.Fields)
-			} else if output == "json" && len(opts.Fields) > 0 {
-				return formatted.PrintJSON(stream.Out, tts, opts.Fields)
-			} else if output != "" {
+			switch {
+			case output == "ndjson":
+				return formatted.PrintNDJSON(stream.Out, tts, opts.Fields, f.JSONYamlPrintFlags.ShowManagedFields)
+			case output == "json" && len(opts.Fields) > 0:
+				return formatted.PrintJSON(stream.Out, tts, opts.Fields, f.JSONYamlPrintFlags.ShowManagedFields)
+			case output != "":
 				p, err := f.ToPrinter()
 				if err != nil {
 					return err

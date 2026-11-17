@@ -29,7 +29,7 @@ Lists PipelineRuns in a namespace
 
 .PP
 \fB\-\-fields\fP=[]
-    Comma\-separated list of fields to include in output (e.g. metadata.name,status.startTime); only used with \-\-output json or \-\-output ndjson
+    Select specific fields to reduce payload size (e.g. metadata.name,status.conditions[0].reason); optimizes token usage for AI agents; only used with \-\-output json or \-\-output ndjson
 
 .PP
 \fB\-h\fP, \fB\-\-help\fP[=false]
@@ -128,6 +128,42 @@ List PipelineRuns as a YAML array:
 
 .nf
 tkn pipelinerun list \-o yaml
+
+.fi
+.RE
+
+.PP
+List PipelineRuns with specific fields only (reduces output size for AI agents):
+
+.PP
+.RS
+
+.nf
+tkn pipelinerun list \-\-fields metadata.name,status.conditions[0].reason \-o json
+
+.fi
+.RE
+
+.PP
+List PipelineRuns as NDJSON (newline\-delimited JSON, one object per line):
+
+.PP
+.RS
+
+.nf
+tkn pipelinerun list \-o ndjson
+
+.fi
+.RE
+
+.PP
+List specific fields as NDJSON (optimized for token\-efficient AI agent consumption):
+
+.PP
+.RS
+
+.nf
+tkn pipelinerun list \-\-fields metadata.name,status.startTime,status.completionTime \-o ndjson
 
 .fi
 .RE
