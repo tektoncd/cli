@@ -15,7 +15,11 @@
 //nolint:revive // package name matches stdlib by design
 package log
 
-import "k8s.io/apimachinery/pkg/runtime/schema"
+import (
+	"time"
+
+	"k8s.io/apimachinery/pkg/runtime/schema"
+)
 
 const (
 	LogTypePipeline = "pipeline"
@@ -33,4 +37,6 @@ type Log struct {
 	TaskDisplayName string
 	Step            string
 	Log             string
+	Timestamp       time.Time
+	EndOfStep       bool
 }

@@ -18,6 +18,7 @@ import (
 	"context"
 	"errors"
 	"fmt"
+	"sync"
 	"testing"
 	"time"
 
@@ -264,5 +265,239 @@ func TestTracker_watchErrorHandler(t *testing.T) {
 			// so passing nil reflector is safe
 			watchErrorHandler(context.Background(), nil, tt.err)
 		})
+	}
+}
+
+func TestTracker_cancellation_during_event_processing(t *testing.T) {
+	const (
+		pipelineName = "pr-tracker-test"
+		prName       = "pr-tracker-test"
+		taskName     = "task-1"
+		trName       = "task-1-run"
+		ns           = "test-ns"
+	)
+
+	initialPR := &v1.PipelineRun{
+		ObjectMeta: metav1.ObjectMeta{
+			Name:      prName,
+			Namespace: ns,
+			Labels:    map[string]string{"tekton.dev/pipeline": prName},
+		},
+		Status: v1.PipelineRunStatus{
+			Status: duckv1.Status{
+				Conditions: duckv1.Conditions{
+					{
+						Status: corev1.ConditionUnknown,
+						Reason: v1.PipelineRunReasonRunning.String(),
+					},
+				},
+			},
+		},
+	}
+
+	updatedPR := initialPR.DeepCopy()
+	updatedPR.Status.ChildReferences = []v1.ChildStatusReference{
+		{
+			Name:             trName,
+			PipelineTaskName: taskName,
+			TypeMeta: runtime.TypeMeta{
+				APIVersion: "tekton.dev/v1",
+				Kind:       "TaskRun",
+			},
+		},
+	}
+
+	tr := &v1.TaskRun{
+		ObjectMeta: metav1.ObjectMeta{
+			Name:      trName,
+			Namespace: ns,
+		},
+		Spec: v1.TaskRunSpec{
+			TaskRef: &v1.TaskRef{Name: taskName},
+		},
+		Status: v1.TaskRunStatus{
+			TaskRunStatusFields: v1.TaskRunStatusFields{
+				PodName: "pod-1",
+			},
+		},
+	}
+
+	cs, _ := test.SeedTestData(t, pipelinetest.Data{
+		PipelineRuns: []*v1.PipelineRun{initialPR},
+		TaskRuns:     []*v1.TaskRun{tr},
+	})
+
+	watcher := watch.NewFake()
+	cs.Pipeline.PrependWatchReactor("pipelineruns", k8stest.DefaultWatchReactor(watcher, nil))
+	cs.Pipeline.Resources = cb.APIResourceList("v1", []string{"task", "taskrun", "pipeline", "pipelinerun"})
+
+	inHandler := make(chan struct{}, 1)
+	releaseHandler := make(chan struct{})
+
+	tdc := testDynamic.Options{
+		PrependReactors: []testDynamic.PrependOpt{
+			{
+				Resource: "taskruns",
+				Verb:     "get",
+				Action: func(_ k8stest.Action) (bool, runtime.Object, error) {
+					select {
+					case inHandler <- struct{}{}:
+					default:
+					}
+					<-releaseHandler
+					return false, nil, nil
+				},
+			},
+		},
+	}
+
+	dynamic, err := tdc.Client(
+		cb.UnstructuredPR(initialPR, "v1"),
+		cb.UnstructuredTR(tr, "v1"),
+	)
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	clients := &cli.Clients{
+		Tekton:  cs.Pipeline,
+		Kube:    cs.Kube,
+		Dynamic: dynamic,
+	}
+
+	if err := actions.InitializeAPIGroupRes(clients.Tekton.Discovery()); err != nil {
+		t.Fatalf("failed to initialize APIGroup Resource: %v", err)
+	}
+
+	ctx, cancel := context.WithCancel(context.Background())
+	tracker := NewTracker(pipelineName, ns, clients)
+	trC := tracker.MonitorContext(ctx, nil)
+
+	// Consume the initial add event so informer processing proceeds to watch updates
+	<-trC
+
+	// Trigger informer event after cache sync
+	watcher.Modify(updatedPR)
+
+	// Wait deterministically until eventHandler is actively in flight inside taskrun resolution
+	<-inHandler
+
+	// Cancel context while eventHandler is actively executing
+	cancel()
+
+	// Release eventHandler so it attempts to proceed to send on trC
+	close(releaseHandler)
+
+	// Verify trC is closed and drains without panic, even with no active consumer
+	for range trC {
+	}
+}
+
+func TestTracker_cancellation_racing_with_informer_activity(t *testing.T) {
+	const (
+		pipelineName = "pr-race-test"
+		prName       = "pr-race-test-1"
+		taskName     = "task-1"
+		trName       = "task-1-run"
+		ns           = "test-ns"
+	)
+
+	for i := 0; i < 20; i++ {
+		pr := &v1.PipelineRun{
+			ObjectMeta: metav1.ObjectMeta{
+				Name:      prName,
+				Namespace: ns,
+				Labels:    map[string]string{"tekton.dev/pipeline": prName},
+			},
+			Status: v1.PipelineRunStatus{
+				Status: duckv1.Status{
+					Conditions: duckv1.Conditions{
+						{
+							Status: corev1.ConditionUnknown,
+							Reason: v1.PipelineRunReasonRunning.String(),
+						},
+					},
+				},
+				PipelineRunStatusFields: v1.PipelineRunStatusFields{
+					ChildReferences: []v1.ChildStatusReference{
+						{
+							Name:             trName,
+							PipelineTaskName: taskName,
+							TypeMeta: runtime.TypeMeta{
+								APIVersion: "tekton.dev/v1",
+								Kind:       "TaskRun",
+							},
+						},
+					},
+				},
+			},
+		}
+
+		tr := &v1.TaskRun{
+			ObjectMeta: metav1.ObjectMeta{
+				Name:      trName,
+				Namespace: ns,
+			},
+			Spec: v1.TaskRunSpec{
+				TaskRef: &v1.TaskRef{Name: taskName},
+			},
+			Status: v1.TaskRunStatus{
+				TaskRunStatusFields: v1.TaskRunStatusFields{
+					PodName: "pod-1",
+				},
+			},
+		}
+
+		cs, _ := test.SeedTestData(t, pipelinetest.Data{
+			PipelineRuns: []*v1.PipelineRun{pr},
+			TaskRuns:     []*v1.TaskRun{tr},
+		})
+
+		watcher := watch.NewRaceFreeFake()
+		cs.Pipeline.PrependWatchReactor("pipelineruns", k8stest.DefaultWatchReactor(watcher, nil))
+		cs.Pipeline.Resources = cb.APIResourceList("v1", []string{"task", "taskrun", "pipeline", "pipelinerun"})
+
+		tdc := testDynamic.Options{}
+		dynamic, err := tdc.Client(
+			cb.UnstructuredPR(pr, "v1"),
+			cb.UnstructuredTR(tr, "v1"),
+		)
+		if err != nil {
+			t.Fatal(err)
+		}
+
+		clients := &cli.Clients{
+			Tekton:  cs.Pipeline,
+			Kube:    cs.Kube,
+			Dynamic: dynamic,
+		}
+
+		if err := actions.InitializeAPIGroupRes(clients.Tekton.Discovery()); err != nil {
+			t.Fatalf("failed to initialize APIGroup Resource: %v", err)
+		}
+
+		ctx, cancel := context.WithCancel(context.Background())
+		tracker := NewTracker(pipelineName, ns, clients)
+		trC := tracker.MonitorContext(ctx, nil)
+
+		var wg sync.WaitGroup
+		wg.Add(2)
+
+		go func() {
+			defer wg.Done()
+			for j := 0; j < 5; j++ {
+				watcher.Modify(pr)
+			}
+		}()
+
+		go func() {
+			defer wg.Done()
+			cancel()
+		}()
+
+		for range trC {
+		}
+
+		wg.Wait()
 	}
 }

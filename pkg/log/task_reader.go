@@ -93,13 +93,21 @@ func (r *Reader) readAvailableTaskLogs(tr *v1.TaskRun) (<-chan Log, <-chan error
 	}
 
 	// Check if taskrun failed on start up
+	podErrC := make(chan error, 1)
 	if err := hasTaskRunFailed(tr, r.task); err != nil {
-		if r.stream != nil {
+		//nolint:gocritic
+		if r.output == "json" {
+			if tr.Status.PodName == "" {
+				return nil, nil, err
+			}
+			podErrC <- err
+		} else if r.stream != nil {
 			fmt.Fprintf(r.stream.Err, "%s\n", err.Error())
 		} else {
 			return nil, nil, err
 		}
 	}
+	close(podErrC)
 
 	if tr.Status.PodName == "" {
 		return nil, nil, fmt.Errorf("pod for taskrun %s not available yet", tr.Name)
@@ -111,15 +119,26 @@ func (r *Reader) readAvailableTaskLogs(tr *v1.TaskRun) (<-chan Log, <-chan error
 		if tr.Status.PodName != "" {
 			if len(tr.Status.RetriesStatus) != 0 {
 				for _, retryStatus := range tr.Status.RetriesStatus {
-					podC <- retryStatus.PodName
+					if !r.sendPod(podC, retryStatus.PodName) {
+						return
+					}
 				}
 			}
-			podC <- tr.Status.PodName
+			r.sendPod(podC, tr.Status.PodName)
 		}
 	}()
 
-	logC, errC := r.readPodLogs(podC, nil, false, r.timestamps)
+	logC, errC := r.readPodLogs(podC, podErrC, false, r.timestamps)
 	return logC, errC, nil
+}
+
+func (r *Reader) sendPod(podC chan<- string, pod string) bool {
+	select {
+	case podC <- pod:
+		return true
+	case <-r.ctx.Done():
+		return false
+	}
 }
 
 func (r *Reader) readStepsLogs(logC chan<- Log, errC chan<- error, steps []*step, pod *pods.Pod, follow, timestamps bool) {
@@ -129,34 +148,56 @@ func (r *Reader) readStepsLogs(logC chan<- Log, errC chan<- error, steps []*step
 		}
 
 		container := pod.Container(step.container)
-		containerLogC, containerLogErrC, err := container.LogReader(follow, timestamps).Read()
+		containerLogC, containerLogErrC, err := container.LogReader(follow, timestamps).ReadContext(r.ctx)
 		if err != nil {
-			errC <- fmt.Errorf("error in getting logs for step %s: %s", step.name, err)
+			if !r.sendError(errC, fmt.Errorf("error in getting logs for step %s: %s", step.name, err)) {
+				return
+			}
 			continue
 		}
 
 		for containerLogC != nil || containerLogErrC != nil {
 			select {
+			case <-r.ctx.Done():
+				return
 			case l, ok := <-containerLogC:
 				if !ok {
 					containerLogC = nil
-					logC <- Log{Task: r.task, TaskDisplayName: r.displayName, Step: step.name, Log: "EOFLOG"}
+					if !r.sendLog(logC, Log{
+						Task:            r.task,
+						TaskDisplayName: r.displayName,
+						Step:            step.name,
+						EndOfStep:       true,
+					}) {
+						return
+					}
 					continue
 				}
-				logC <- Log{Task: r.task, TaskDisplayName: r.displayName, Step: step.name, Log: l.Log}
+				if !r.sendLog(logC, Log{
+					Task:            r.task,
+					TaskDisplayName: r.displayName,
+					Step:            step.name,
+					Log:             l.Log,
+					Timestamp:       l.Timestamp,
+				}) {
+					return
+				}
 
 			case e, ok := <-containerLogErrC:
 				if !ok {
 					containerLogErrC = nil
 					continue
 				}
-
-				errC <- fmt.Errorf("failed to get logs for %s: %s", step.name, e)
+				if !r.sendError(errC, fmt.Errorf("failed to get logs for %s: %s", step.name, e)) {
+					return
+				}
 			}
 		}
 
 		if err := container.Status(); err != nil {
-			errC <- err
+			if !r.sendError(errC, err) {
+				return
+			}
 			// Stopping at the first failure would hide the other failed
 			// steps, which are exactly the ones --log-failed asks for.
 			if r.failed {
@@ -178,8 +219,20 @@ func (r *Reader) readPodLogs(podC <-chan string, podErrC <-chan error, follow, t
 		if podErrC == nil {
 			return
 		}
-		for podErr := range podErrC {
-			errC <- podErr
+		for {
+			var podErr error
+			var ok bool
+			select {
+			case podErr, ok = <-podErrC:
+			case <-r.ctx.Done():
+				return
+			}
+			if !ok {
+				return
+			}
+			if !r.sendError(errC, podErr) {
+				return
+			}
 		}
 	}()
 
@@ -190,7 +243,17 @@ func (r *Reader) readPodLogs(podC <-chan string, podErrC <-chan error, follow, t
 			wg.Done()
 		}()
 
-		for podName := range podC {
+		for {
+			var podName string
+			var ok bool
+			select {
+			case podName, ok = <-podC:
+			case <-r.ctx.Done():
+				return
+			}
+			if !ok {
+				return
+			}
 			p := pods.New(podName, r.ns, r.clients.Kube, r.streamer)
 			var pod *corev1.Pod
 			var err error
@@ -201,7 +264,9 @@ func (r *Reader) readPodLogs(podC <-chan string, podErrC <-chan error, follow, t
 				pod, err = p.Get()
 			}
 			if err != nil {
-				errC <- fmt.Errorf("task %s failed: %s. Run tkn tr desc %s for more details", r.task, strings.TrimSpace(err.Error()), r.run)
+				if !r.sendError(errC, fmt.Errorf("task %s failed: %s. Run tkn tr desc %s for more details", r.task, strings.TrimSpace(err.Error()), r.run)) {
+					return
+				}
 				continue
 			}
 			steps := filterSteps(pod, r.allSteps, r.steps, r.failed)
@@ -210,7 +275,9 @@ func (r *Reader) readPodLogs(podC <-chan string, podErrC <-chan error, follow, t
 				// e.g. a timeout or an evicted pod. The task failure message
 				// is already reported, so stay quiet here.
 				if !r.failed {
-					errC <- fmt.Errorf("no steps found for task %s", r.task)
+					if !r.sendError(errC, fmt.Errorf("no steps found for task %s", r.task)) {
+						return
+					}
 				}
 				continue
 			}
@@ -254,7 +321,7 @@ func (r *Reader) getTaskRunPodNames(run *v1.TaskRun) (<-chan string, <-chan erro
 		addPod := func(name string) {
 			if _, ok := podMap[name]; !ok {
 				podMap[name] = true
-				podC <- name
+				r.sendPod(podC, name)
 			}
 		}
 
@@ -271,11 +338,13 @@ func (r *Reader) getTaskRunPodNames(run *v1.TaskRun) (<-chan string, <-chan erro
 
 		for {
 			select {
+			case <-r.ctx.Done():
+				return
 			case event := <-watchRun.ResultChan():
 				var err error
 				run, err = cast2taskrun(event.Object)
 				if err != nil {
-					errC <- err
+					r.sendError(errC, err)
 					return
 				}
 				if run.Status.PodName != "" {
@@ -287,7 +356,7 @@ func (r *Reader) getTaskRunPodNames(run *v1.TaskRun) (<-chan string, <-chan erro
 			case <-timeout:
 				// Check if taskrun failed on start up
 				if err := hasTaskRunFailed(run, r.task); err != nil {
-					errC <- err
+					r.sendError(errC, err)
 					return
 				}
 				// check if pod has been started and has a name
@@ -297,7 +366,7 @@ func (r *Reader) getTaskRunPodNames(run *v1.TaskRun) (<-chan string, <-chan erro
 					}
 					return
 				}
-				errC <- fmt.Errorf("task %s has not started yet or pod for task not yet available", r.task)
+				r.sendError(errC, fmt.Errorf("task %s has not started yet or pod for task not yet available", r.task))
 				return
 			}
 		}

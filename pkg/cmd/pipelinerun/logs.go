@@ -75,7 +75,10 @@ Show the logs of PipelineRun named 'microservice-1' for failed Tasks and steps o
 
 			opts.Stream = &cli.Stream{
 				Out: cmd.OutOrStdout(),
-				Err: cmd.OutOrStderr(),
+				// In JSON mode Execute suppresses Cobra's advisory output by
+				// setting the leaf command's error writer to io.Discard. Runtime
+				// diagnostics must still use the root command's real stderr.
+				Err: cmd.Root().ErrOrStderr(),
 			}
 
 			return Run(opts)
@@ -88,6 +91,7 @@ Show the logs of PipelineRun named 'microservice-1' for failed Tasks and steps o
 	c.Flags().BoolVarP(&opts.Follow, "follow", "f", false, "stream live logs")
 	c.Flags().BoolVarP(&opts.Timestamps, "timestamps", "", false, "show logs with timestamp")
 	c.Flags().BoolVarP(&opts.Prefixing, "prefix", "", true, "prefix each log line with the log source (task name and step name)")
+	c.Flags().StringVarP(&opts.Output, "output", "o", "", "format of the output (e.g., json)")
 	c.Flags().BoolVarP(&opts.Long, "long", "", false, "show logs with task display name (display name and step name)")
 	c.Flags().BoolVarP(&opts.ExitWithPrError, "exit-with-pipelinerun-error", "E", false, "exit with pipelinerun to the unix shell, 0 if success, 1 if error or unknown status")
 	c.Flags().BoolVarP(&opts.Failed, "log-failed", "", false, "show logs for failed tasks and steps only")
@@ -97,6 +101,14 @@ Show the logs of PipelineRun named 'microservice-1' for failed Tasks and steps o
 }
 
 func Run(opts *options.LogOptions) error {
+	if err := opts.ValidateOutputFormat(); err != nil {
+		return err
+	}
+
+	if opts.Output == "json" && opts.PipelineRunName == "" && !opts.Last {
+		return fmt.Errorf("JSON output requires a PipelineRun name or --last")
+	}
+
 	if opts.PipelineRunName == "" {
 		if err := opts.ValidateOpts(); err != nil {
 			return err
@@ -106,7 +118,21 @@ func Run(opts *options.LogOptions) error {
 		}
 	}
 
-	lr, err := log.NewReader(log.LogTypePipeline, opts)
+	readerOpts := *opts
+
+	if opts.Output == "json" {
+		opts.Timestamps = true
+		opts.Prefixing = false
+
+		readerOpts = *opts
+
+		readerStream := *opts.Stream
+		readerStream.Out = readerStream.Err
+		readerOpts.Stream = &readerStream
+	}
+
+	lr, err := log.NewReader(log.LogTypePipeline, &readerOpts)
+
 	if err != nil {
 		return err
 	}
@@ -115,8 +141,11 @@ func Run(opts *options.LogOptions) error {
 	if err != nil {
 		return err
 	}
+	defer lr.Cancel()
 
-	log.NewWriter(log.LogTypePipeline, opts.Prefixing).WithDisplayName(opts.Long).Write(opts.Stream, logC, errC)
+	if err := log.NewWriter(log.LogTypePipeline, opts.Prefixing, opts.Output).WithDisplayName(opts.Long).Write(opts.Stream, logC, errC); err != nil {
+		return err
+	}
 
 	// get pipelinerun status
 	if opts.ExitWithPrError {
@@ -128,10 +157,15 @@ func Run(opts *options.LogOptions) error {
 		if err != nil {
 			return err
 		}
-		os.Exit(prStatusToUnixStatus(pr))
+		lr.Cancel()
+		exitWithPipelineRunStatus(pr)
 	}
 
 	return nil
+}
+
+func exitWithPipelineRunStatus(pr *tektonv1.PipelineRun) {
+	os.Exit(prStatusToUnixStatus(pr))
 }
 
 func prStatusToUnixStatus(pr *tektonv1.PipelineRun) int {
@@ -167,7 +201,11 @@ func askRunName(opts *options.LogOptions) error {
 	}
 
 	if len(prs) == 0 {
-		fmt.Fprint(os.Stdout, "No PipelineRuns found")
+		output := opts.Stream.Out
+		if opts.Output == "json" {
+			return fmt.Errorf("No PipelineRuns found")
+		}
+		fmt.Fprint(output, "No PipelineRuns found")
 		return nil
 	}
 
