@@ -61,7 +61,7 @@ func FormatDesc(desc string, num int) string {
 	return desc
 }
 
-// FormatTags returns list of tags seperated by comma
+// FormatTags returns list of tags separated by comma
 func FormatTags(tags []*client.TagResponseBody) string {
 	var sb strings.Builder
 	if len(tags) == 0 {
@@ -77,7 +77,7 @@ func FormatTags(tags []*client.TagResponseBody) string {
 	return sb.String()
 }
 
-// FormatCategories returns list of categories seperated by comma
+// FormatCategories returns list of categories separated by comma
 func FormatCategories(categories []*client.CategoryResponseBody) string {
 	var sb strings.Builder
 	if len(categories) == 0 {
@@ -93,7 +93,7 @@ func FormatCategories(categories []*client.CategoryResponseBody) string {
 	return sb.String()
 }
 
-// FormatPlatforms returns list of platforms seperated by comma
+// FormatPlatforms returns list of platforms separated by comma
 func FormatPlatforms(platforms []*client.PlatformResponseBody) string {
 	var sb strings.Builder
 	if len(platforms) == 0 {

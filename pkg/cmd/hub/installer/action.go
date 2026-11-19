@@ -55,7 +55,7 @@ var (
 	ErrVersionAndCatalogMissing = errors.New("version and catalog label missing")
 	ErrVersionMissing           = errors.New("version label missing")
 	ErrCatalogMissing           = errors.New("catalog label missing")
-	ErrSameVersion              = errors.New("resource already exists with the requested verion")
+	ErrSameVersion              = errors.New("resource already exists with the requested version")
 	ErrLowerVersion             = errors.New("cannot upgrade resource as requested version is lower than existing")
 	ErrHigherVersion            = errors.New("cannot downgrade resource as requested version is higher than existing")
 	ErrVersionIncompatible      = errors.New("requires compatible version")

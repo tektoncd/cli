@@ -27,7 +27,7 @@ should aim to integrate that cli directly into `tkn`.
 As a "possible next step", we could exploration transparent behavior
 between list (from cluster & results). This means, when listing
 Pipelines or Task, we would *transparently* query the k8s API as well
-as the result API to get informations.
+as the result API to get information.
 
 ### Operator integration (#1472)
 

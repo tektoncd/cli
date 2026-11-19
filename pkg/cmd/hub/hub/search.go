@@ -41,7 +41,7 @@ type SearchResponse = rclient.ResourceDataCollectionResponseBody
 // queryAPIResponse is the response from the API
 type queryAPIResponse = rclient.QueryResponseBody
 
-// SearchResult defines API raw response, unmarshalled reponse, and error
+// SearchResult defines API raw response, unmarshalled response, and error
 type SearchResult struct {
 	data      []byte
 	status    int
