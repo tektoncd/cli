@@ -44,7 +44,7 @@ func (r LocalRepo) Head() string {
 	return r.head
 }
 
-// ModifiedTime returns the modified (commited/changed) time of the file by
+// ModifiedTime returns the modified (committed/changed) time of the file by
 // querying the git history.
 func (r LocalRepo) ModifiedTime(path string) (time.Time, error) {
 	gitPath, err := r.RelPath(path)
