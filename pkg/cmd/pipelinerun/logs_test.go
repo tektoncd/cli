@@ -142,6 +142,31 @@ func TestLog_invalid_limit(t *testing.T) {
 	test.AssertOutput(t, expected, err.Error())
 }
 
+func TestRun_JSONWithoutPipelineRunName(t *testing.T) {
+	err := Run(&options.LogOptions{
+		Limit:  defaultLimit,
+		Output: "json",
+	})
+
+	if err == nil {
+		t.Fatal("expected an error")
+	}
+	test.AssertOutput(t, "JSON output requires a PipelineRun name or --last", err.Error())
+}
+
+func TestRun_UnsupportedOutputWithPipelineRunName(t *testing.T) {
+	err := Run(&options.LogOptions{
+		PipelineRunName: "pipelinerun",
+		Limit:           defaultLimit,
+		Output:          "yaml",
+	})
+
+	if err == nil {
+		t.Fatal("expected an error")
+	}
+	test.AssertOutput(t, `unsupported output format "yaml"; supported formats: json`, err.Error())
+}
+
 func TestLog_no_pipelinerun_argument_v1beta1(t *testing.T) {
 	ns := []*corev1.Namespace{
 		{
@@ -2801,6 +2826,20 @@ func TestLogs_nologs(t *testing.T) {
 		t.Errorf("Unexpected error: %v", err)
 	}
 	test.AssertOutput(t, "Pipeline still running ...\nPipelineRun is still running: Running\n", output)
+
+	jsonPRLO := logOpts(prName, ns, cs, dc, fake.Streamer([]fake.Log{}), false, false, true)
+	jsonPRLO.Output = "json"
+
+	stdout, stderr, err := fetchLogsWithStreams(jsonPRLO)
+	if err != nil {
+		t.Errorf("Unexpected error: %v", err)
+	}
+
+	test.AssertOutput(t, "", stderr)
+
+	if stdout != "" {
+		t.Errorf("Expected empty stdout for PipelineRun with no logs, got: %q", stdout)
+	}
 }
 
 func TestLog_run_failed_with_and_without_follow_v1beta1(t *testing.T) {
@@ -3431,6 +3470,52 @@ func TestLog_pipelinerun_status_done(t *testing.T) {
 		t.Errorf("Timed out")
 	}
 	test.AssertOutput(t, "", output)
+}
+
+func TestAskRunName_NoPipelineRuns_JSON(t *testing.T) {
+	ns := []*corev1.Namespace{
+		{
+			ObjectMeta: metav1.ObjectMeta{
+				Name: "ns",
+			},
+		},
+	}
+
+	cs, _ := test.SeedTestData(t, pipelinetest.Data{Namespaces: ns})
+	cs.Pipeline.Resources = cb.APIResourceList(version, []string{"pipelinerun"})
+
+	tdc := testDynamic.Options{}
+	dc, err := tdc.Client()
+	if err != nil {
+		t.Fatalf("unable to create dynamic client: %v", err)
+	}
+
+	p := test.Params{
+		Kube:    cs.Kube,
+		Tekton:  cs.Pipeline,
+		Dynamic: dc,
+	}
+	p.SetNamespace("ns")
+
+	stdout := new(bytes.Buffer)
+	stderr := new(bytes.Buffer)
+
+	opts := options.LogOptions{
+		Params: &p,
+		Limit:  defaultLimit,
+		Output: "json",
+		Stream: &cli.Stream{
+			Out: stdout,
+			Err: stderr,
+		},
+	}
+
+	if err := askRunName(&opts); err != nil {
+		t.Fatalf("unexpected error: %v", err)
+	}
+
+	test.AssertOutput(t, "", stdout.String())
+	test.AssertOutput(t, "No PipelineRuns found", stderr.String())
 }
 
 func TestLog_pipelinerun_last_v1beta1(t *testing.T) {
@@ -5143,6 +5228,19 @@ func fetchLogs(lo *options.LogOptions) (string, error) {
 	lo.Stream = &cli.Stream{Out: out, Err: out}
 	err := Run(lo)
 	return out.String(), err
+}
+
+func fetchLogsWithStreams(lo *options.LogOptions) (string, string, error) {
+	stdout := new(bytes.Buffer)
+	stderr := new(bytes.Buffer)
+
+	lo.Stream = &cli.Stream{
+		Out: stdout,
+		Err: stderr,
+	}
+
+	err := Run(lo)
+	return stdout.String(), stderr.String(), err
 }
 
 // skippedTerminationMessage is what tekton writes for a step it gave up on

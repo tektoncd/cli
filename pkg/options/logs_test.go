@@ -25,18 +25,28 @@ import (
 )
 
 func TestLogOptions_ValidateOpts(t *testing.T) {
-
 	testParams := []struct {
 		name      string
 		limit     int
+		output    string
 		wantError bool
 		want      string
 	}{
 		{
-			name:      "valid limit",
+			name:  "valid default output",
+			limit: 1,
+		},
+		{
+			name:   "valid json output",
+			limit:  1,
+			output: "json",
+		},
+		{
+			name:      "unsupported output",
 			limit:     1,
-			wantError: false,
-			want:      "",
+			output:    "yaml",
+			wantError: true,
+			want:      `unsupported output format "yaml"; supported formats: json`,
 		},
 		{
 			name:      "invalid limit",
@@ -50,15 +60,56 @@ func TestLogOptions_ValidateOpts(t *testing.T) {
 		t.Run(tp.name, func(t *testing.T) {
 			opts := NewLogOptions(&cli.TektonParams{})
 			opts.Limit = tp.limit
+			opts.Output = tp.output
 
 			err := opts.ValidateOpts()
 			if tp.wantError {
 				if err == nil {
-					t.Errorf("Error expected here")
+					t.Fatal("expected an error")
 				}
 				test.AssertOutput(t, tp.want, err.Error())
 			} else if err != nil {
-				t.Errorf("unexpected Error")
+				t.Errorf("unexpected error: %v", err)
+			}
+		})
+	}
+}
+
+func TestLogOptions_ValidateOutputFormat(t *testing.T) {
+	testParams := []struct {
+		name      string
+		output    string
+		wantError bool
+		want      string
+	}{
+		{
+			name: "valid default output",
+		},
+		{
+			name:   "valid json output",
+			output: "json",
+		},
+		{
+			name:      "unsupported output",
+			output:    "yaml",
+			wantError: true,
+			want:      `unsupported output format "yaml"; supported formats: json`,
+		},
+	}
+
+	for _, tp := range testParams {
+		t.Run(tp.name, func(t *testing.T) {
+			opts := NewLogOptions(&cli.TektonParams{})
+			opts.Output = tp.output
+
+			err := opts.ValidateOutputFormat()
+			if tp.wantError {
+				if err == nil {
+					t.Fatal("expected an error")
+				}
+				test.AssertOutput(t, tp.want, err.Error())
+			} else if err != nil {
+				t.Errorf("unexpected error: %v", err)
 			}
 		})
 	}

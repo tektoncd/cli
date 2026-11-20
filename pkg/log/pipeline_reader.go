@@ -52,12 +52,23 @@ func (r *Reader) readLivePipelineLogs(pr *v1.PipelineRun) (<-chan Log, <-chan er
 		defer close(errC)
 
 		prTracker := pipelinerunpkg.NewTracker(pr.Name, r.ns, r.clients)
-		trC := prTracker.Monitor(r.tasks)
+		trC := prTracker.MonitorContext(r.ctx, r.tasks)
 
 		wg := sync.WaitGroup{}
 		taskIndex := 0
 
-		for trs := range trC {
+		for {
+			var trs []taskrunpkg.Run
+			var ok bool
+			select {
+			case trs, ok = <-trC:
+			case <-r.ctx.Done():
+				wg.Wait()
+				return
+			}
+			if !ok {
+				break
+			}
 			wg.Add(len(trs))
 
 			for _, run := range trs {
@@ -77,7 +88,7 @@ func (r *Reader) readLivePipelineLogs(pr *v1.PipelineRun) (<-chan Log, <-chan er
 		wg.Wait()
 
 		if !empty(pr.Status) && pr.Status.Conditions[0].Status == corev1.ConditionFalse {
-			errC <- fmt.Errorf("%s", pr.Status.Conditions[0].Message)
+			r.sendError(errC, fmt.Errorf("%s", pr.Status.Conditions[0].Message))
 		}
 	}()
 
@@ -123,7 +134,7 @@ func (r *Reader) readAvailablePipelineLogs(pr *v1.PipelineRun) (<-chan Log, <-ch
 		}
 
 		if !empty(pr.Status) && pr.Status.Conditions[0].Status == corev1.ConditionFalse {
-			errC <- fmt.Errorf("%s", pr.Status.Conditions[0].Message)
+			r.sendError(errC, fmt.Errorf("%s", pr.Status.Conditions[0].Message))
 		}
 	}()
 
@@ -156,6 +167,9 @@ func (r *Reader) waitUntilAvailable() error {
 	}
 	for {
 		select {
+		case <-r.ctx.Done():
+			watchRun.Stop()
+			return r.ctx.Err()
 		case event := <-watchRun.ResultChan():
 			run, err := cast2pipelinerun(event.Object)
 			if err != nil {
@@ -167,12 +181,16 @@ func (r *Reader) waitUntilAvailable() error {
 			}
 			if first {
 				first = false
-				fmt.Fprintln(r.stream.Out, "Pipeline still running ...")
+				if r.output != "json" {
+					fmt.Fprintln(r.stream.Out, "Pipeline still running ...")
+				}
 			}
 		case <-time.After(r.activityTimeout):
 			watchRun.Stop()
 			if isPipelineRunRunning(run.Status.Conditions) {
-				fmt.Fprintln(r.stream.Out, "PipelineRun is still running:", run.Status.Conditions[0].Message)
+				if r.output != "json" {
+					fmt.Fprintln(r.stream.Out, "PipelineRun is still running:", run.Status.Conditions[0].Message)
+				}
 				return nil
 			}
 			if err = hasPipelineRunFailed(run.Status.Conditions); err != nil {
@@ -186,25 +204,37 @@ func (r *Reader) waitUntilAvailable() error {
 func (r *Reader) pipeLogs(logC chan<- Log, errC chan<- error) {
 	tlogC, terrC, err := r.readTaskLog()
 	if err != nil {
-		errC <- err
+		r.sendError(errC, err)
 		return
 	}
 
 	for tlogC != nil || terrC != nil {
 		select {
+		case <-r.ctx.Done():
+			return
 		case l, ok := <-tlogC:
 			if !ok {
 				tlogC = nil
 				continue
 			}
-			logC <- Log{Task: l.Task, TaskDisplayName: l.TaskDisplayName, Step: l.Step, Log: l.Log}
-
+			if !r.sendLog(logC, Log{
+				Task:            l.Task,
+				TaskDisplayName: l.TaskDisplayName,
+				Step:            l.Step,
+				Log:             l.Log,
+				Timestamp:       l.Timestamp,
+				EndOfStep:       l.EndOfStep,
+			}) {
+				return
+			}
 		case e, ok := <-terrC:
 			if !ok {
 				terrC = nil
 				continue
 			}
-			errC <- fmt.Errorf("failed to get logs for task %s : %s", r.task, e)
+			if !r.sendError(errC, fmt.Errorf("failed to get logs for task %s : %s", r.task, e)) {
+				return
+			}
 		}
 	}
 }
