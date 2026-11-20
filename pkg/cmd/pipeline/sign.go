@@ -22,9 +22,7 @@ import (
 	"github.com/spf13/cobra"
 	"github.com/tektoncd/cli/pkg/cli"
 	"github.com/tektoncd/cli/pkg/trustedresources"
-	"github.com/tektoncd/pipeline/pkg/apis/pipeline/v1beta1"
 	cliopts "k8s.io/cli-runtime/pkg/genericclioptions"
-	"sigs.k8s.io/yaml"
 )
 
 type signOptions struct {
@@ -70,8 +68,8 @@ or using kms
 				return err
 			}
 
-			crd := &v1beta1.Pipeline{}
-			if err := yaml.Unmarshal(b, &crd); err != nil {
+			crd, err := trustedresources.Decode(b, "Pipeline")
+			if err != nil {
 				return fmt.Errorf("error unmarshalling Pipeline: %v", err)
 			}
 
@@ -98,8 +96,8 @@ func (s *signOptions) Run(args []string) error {
 		return err
 	}
 
-	crd := &v1beta1.Pipeline{}
-	if err := yaml.Unmarshal(tsBuf, &crd); err != nil {
+	crd, err := trustedresources.Decode(tsBuf, "Pipeline")
+	if err != nil {
 		log.Fatalf("error unmarshalling Pipeline: %v", err)
 		return err
 	}
