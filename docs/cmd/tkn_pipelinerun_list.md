@@ -32,12 +32,25 @@ List PipelineRuns as a YAML array:
 
     tkn pipelinerun list -o yaml
 
+List PipelineRuns with specific fields only (reduces output size for AI agents):
+
+    tkn pipelinerun list --fields metadata.name,status.conditions[0].reason -o json
+
+List PipelineRuns as NDJSON (newline-delimited JSON, one object per line):
+
+    tkn pipelinerun list -o ndjson
+
+List specific fields as NDJSON (optimized for token-efficient AI agent consumption):
+
+    tkn pipelinerun list --fields metadata.name,status.startTime,status.completionTime -o ndjson
+
 
 ### Options
 
 ```
   -A, --all-namespaces                list PipelineRuns from all namespaces
       --allow-missing-template-keys   If true, ignore any errors in templates when a field or map key is missing in the template. Only applies to golang and jsonpath output formats. (default true)
+      --fields strings                Select specific fields to reduce payload size (e.g. metadata.name,status.conditions[0].reason); optimizes token usage for AI agents; only used with --output json or --output ndjson
   -h, --help                          help for list
       --label string                  A selector (label query) to filter on, supports '=', '==', and '!='
       --limit int                     Limits the number of PipelineRuns. If the limit value is 0 returns all
