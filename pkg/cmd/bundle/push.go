@@ -14,6 +14,7 @@
 package bundle
 
 import (
+	"context"
 	"errors"
 	"fmt"
 	"io"
@@ -46,6 +47,7 @@ type pushOptions struct {
 	labels             map[string]string
 	ctimeParam         string
 	ctime              time.Time
+	dryRun             bool
 }
 
 func pushCommand(_ cli.Params) *cobra.Command {
@@ -104,6 +106,7 @@ Created time:
 	c.Flags().StringSliceVarP(&opts.annotationParams, "annotate", "", []string{}, "OCI Manifest annotation in the form of key=value to be added to the OCI image. Can be provided multiple times to add multiple annotations.")
 	c.Flags().StringVar(&opts.ctimeParam, "ctime", "", "YYYY-MM-DD, YYYY-MM-DDTHH:MM:SS or RFC3339 formatted created time to set, defaults to current time. In non RFC3339 syntax dates are in UTC timezone.")
 	c.Flags().StringSliceVarP(&opts.labelParams, "label", "", []string{}, "OCI Config labels in the form of key=value to be added to the OCI image. Can be provided multiple times to add multiple labels.")
+	c.Flags().BoolVar(&opts.dryRun, "dry-run", false, "Build and validate the bundle without pushing it to the registry")
 	bundle.AddRemoteFlags(c.Flags(), &opts.remoteOptions)
 
 	return c
@@ -160,6 +163,18 @@ func (p *pushOptions) Run(args []string) error {
 	img, err := bundle.BuildTektonBundle(p.bundleContents, p.annotations, p.labels, p.ctime, p.stream.Out)
 	if err != nil {
 		return err
+	}
+
+	if p.dryRun {
+		if err := bundle.ValidateTektonObjects(context.Background(), p.bundleContents); err != nil {
+			return fmt.Errorf("tekton bundle is not valid: %w", err)
+		}
+		digest, err := img.Digest()
+		if err != nil {
+			return err
+		}
+		fmt.Fprintf(p.stream.Out, "\nTekton Bundle for %s is valid (%s), not pushed because of --dry-run\n", p.ref, digest)
+		return nil
 	}
 
 	outputDigest, err := bundle.Write(img, p.ref, p.remoteOptions.ToOptions()...)
