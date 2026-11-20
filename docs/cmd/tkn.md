@@ -28,6 +28,7 @@ CLI for tekton pipelines
 * [tkn hub](tkn_hub.md)	 - Interact with artifacthub
 * [tkn pipeline](tkn_pipeline.md)	 - Manage pipelines
 * [tkn pipelinerun](tkn_pipelinerun.md)	 - Manage PipelineRuns
+* [tkn stepaction](tkn_stepaction.md)	 - Manage StepActions
 * [tkn task](tkn_task.md)	 - Manage Tasks
 * [tkn taskrun](tkn_taskrun.md)	 - Manage TaskRuns
 * [tkn triggerbinding](tkn_triggerbinding.md)	 - Manage TriggerBindings
