@@ -43,6 +43,7 @@ Show the logs of PipelineRun named 'microservice-1' for failed Tasks and steps o
       --limit int                     lists number of PipelineRuns (default 5)
       --log-failed                    show logs for failed tasks and steps only
       --long                          show logs with task display name (display name and step name)
+  -o, --output string                 format of the output (e.g., json)
       --prefix                        prefix each log line with the log source (task name and step name) (default true)
   -t, --task strings                  show logs for mentioned Tasks only
       --timestamps                    show logs with timestamp

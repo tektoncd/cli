@@ -54,6 +54,7 @@ type LogOptions struct {
 	Long            bool
 	ExitWithPrError bool
 	Failed          bool
+	Output          string
 	// ActivityTimeout is the amount of time to wait for some activity
 	// (e.g. Pod ready) before giving up.
 	ActivityTimeout time.Duration
@@ -73,8 +74,18 @@ func NewLogOptions(p cli.Params) *LogOptions {
 }
 
 func (opts *LogOptions) ValidateOpts() error {
+	if err := opts.ValidateOutputFormat(); err != nil {
+		return err
+	}
 	if opts.Limit <= 0 {
 		return exitcode.New(exitcode.InvalidInput, "limit was %d but must be a positive number", opts.Limit)
+	}
+	return nil
+}
+
+func (opts *LogOptions) ValidateOutputFormat() error {
+	if opts.Output != "" && opts.Output != "json" {
+		return exitcode.New(exitcode.InvalidInput, "unsupported output format %q; supported formats: json", opts.Output)
 	}
 	return nil
 }

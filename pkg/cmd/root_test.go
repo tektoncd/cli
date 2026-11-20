@@ -27,10 +27,96 @@ import (
 	"github.com/spf13/pflag"
 	"github.com/tektoncd/cli/pkg/exitcode"
 	"github.com/tektoncd/cli/pkg/test"
+	cb "github.com/tektoncd/cli/pkg/test/builder"
+	testDynamic "github.com/tektoncd/cli/pkg/test/dynamic"
+	v1 "github.com/tektoncd/pipeline/pkg/apis/pipeline/v1"
+	pipelinetest "github.com/tektoncd/pipeline/test"
 	"gotest.tools/v3/assert"
 	"gotest.tools/v3/fs"
 	"gotest.tools/v3/golden"
+	corev1 "k8s.io/api/core/v1"
+	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+	"knative.dev/pkg/apis"
+	duckv1 "knative.dev/pkg/apis/duck/v1"
 )
+
+func TestExecuteJSONLogsKeepsRuntimeDiagnosticsOnRootStderr(t *testing.T) {
+	const ns = "logs-ns"
+	condition := apis.Condition{Status: corev1.ConditionFalse, Message: "runtime diagnostic"}
+	pr := &v1.PipelineRun{
+		ObjectMeta: metav1.ObjectMeta{Name: "pr", Namespace: ns},
+		Spec:       v1.PipelineRunSpec{PipelineSpec: &v1.PipelineSpec{}},
+		Status:     v1.PipelineRunStatus{Status: duckv1.Status{Conditions: duckv1.Conditions{condition}}},
+	}
+	now := metav1.Now()
+	tr := &v1.TaskRun{
+		ObjectMeta: metav1.ObjectMeta{Name: "tr", Namespace: ns},
+		Spec:       v1.TaskRunSpec{TaskSpec: &v1.TaskSpec{}},
+		Status: v1.TaskRunStatus{
+			Status: duckv1.Status{Conditions: duckv1.Conditions{{Status: corev1.ConditionTrue}}},
+			TaskRunStatusFields: v1.TaskRunStatusFields{
+				PodName:   "pod",
+				StartTime: &now,
+			},
+		},
+	}
+	pod := &corev1.Pod{ObjectMeta: metav1.ObjectMeta{Name: "pod", Namespace: ns}}
+	clients, _ := test.SeedTestData(t, pipelinetest.Data{
+		PipelineRuns: []*v1.PipelineRun{pr}, TaskRuns: []*v1.TaskRun{tr}, Pods: []*corev1.Pod{pod},
+		Namespaces: []*corev1.Namespace{{ObjectMeta: metav1.ObjectMeta{Name: ns}}},
+	})
+	clients.Pipeline.Resources = cb.APIResourceList("v1", []string{"pipelinerun", "taskrun"})
+	tdc := testDynamic.Options{}
+	dc, err := tdc.Client(cb.UnstructuredPR(pr, "v1"), cb.UnstructuredTR(tr, "v1"))
+	if err != nil {
+		t.Fatal(err)
+	}
+	p := &test.Params{Tekton: clients.Pipeline, Kube: clients.Kube, Dynamic: dc}
+	p.SetNamespace(ns)
+
+	tests := []struct {
+		name               string
+		args               []string
+		expectedDiagnostic string
+	}{
+		{
+			name:               "pipelinerun",
+			args:               []string{"pipelinerun", "logs", "pr", "-o", "json"},
+			expectedDiagnostic: "runtime diagnostic",
+		},
+		{
+			name:               "taskrun",
+			args:               []string{"taskrun", "logs", "tr", "-o", "json"},
+			expectedDiagnostic: "no steps found",
+		},
+	}
+
+	for _, tc := range tests {
+		t.Run(tc.name, func(t *testing.T) {
+			root := Root(p)
+			var stdout, stderr bytes.Buffer
+			root.SetOut(&stdout)
+			root.SetErr(&stderr)
+			if code := Execute(root, tc.args, &stderr); code != exitcode.GeneralError {
+				t.Fatalf("Execute(%v) = %d, want %d, stderr=%q", tc.args, code, exitcode.GeneralError, stderr.String())
+			}
+			if !strings.Contains(stderr.String(), tc.expectedDiagnostic) {
+				t.Fatalf("expected diagnostic %q was lost: %q", tc.expectedDiagnostic, stderr.String())
+			}
+			if !json.Valid(bytes.TrimSpace(stderr.Bytes())) {
+				t.Fatalf("stderr is not valid JSON: %q", stderr.String())
+			}
+			if strings.Contains(stdout.String(), tc.expectedDiagnostic) {
+				t.Fatalf("diagnostic %q leaked to stdout: %q", tc.expectedDiagnostic, stdout.String())
+			}
+			for _, line := range strings.Split(strings.TrimSpace(stdout.String()), "\n") {
+				if line != "" && !json.Valid([]byte(line)) {
+					t.Errorf("stdout record is not JSON: %q", line)
+				}
+			}
+		})
+	}
+}
 
 func TestCommand_no_global_flags(t *testing.T) {
 	unwantedflag := "OPTION-SHOULD-NOT-BE-HERE"

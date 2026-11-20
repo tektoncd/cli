@@ -546,6 +546,31 @@ func TestLog_invalid_limit(t *testing.T) {
 	test.AssertOutput(t, expected, err.Error())
 }
 
+func TestRun_JSONWithoutTaskRunName(t *testing.T) {
+	err := Run(&options.LogOptions{
+		Limit:  defaultLimit,
+		Output: "json",
+	})
+
+	if err == nil {
+		t.Fatal("expected an error")
+	}
+	test.AssertOutput(t, "JSON output requires a TaskRun name or --last", err.Error())
+}
+
+func TestRun_UnsupportedOutputWithTaskRunName(t *testing.T) {
+	err := Run(&options.LogOptions{
+		TaskrunName: "taskrun",
+		Limit:       defaultLimit,
+		Output:      "yaml",
+	})
+
+	if err == nil {
+		t.Fatal("expected an error")
+	}
+	test.AssertOutput(t, `unsupported output format "yaml"; supported formats: json`, err.Error())
+}
+
 func TestLog_taskrun_logs_v1beta1(t *testing.T) {
 	var (
 		ns          = "namespace"

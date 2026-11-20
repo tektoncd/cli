@@ -16,8 +16,11 @@ package pods
 
 import (
 	"bufio"
+	"context"
 	"fmt"
 	"io"
+	"strings"
+	"time"
 
 	"github.com/tektoncd/cli/pkg/pods/stream"
 	corev1 "k8s.io/api/core/v1"
@@ -74,6 +77,7 @@ type Log struct {
 	PodName       string
 	ContainerName string
 	Log           string
+	Timestamp     time.Time
 }
 type LogReader struct {
 	containerName string
@@ -87,6 +91,11 @@ func (c *Container) LogReader(follow, timestamps bool) *LogReader {
 }
 
 func (lr *LogReader) Read() (<-chan Log, <-chan error, error) {
+	return lr.ReadContext(context.Background())
+}
+
+// ReadContext reads container logs until the context is cancelled.
+func (lr *LogReader) ReadContext(ctx context.Context) (<-chan Log, <-chan error, error) {
 	pod := lr.pod
 	opts := &corev1.PodLogOptions{
 		Follow:     lr.follow,
@@ -106,22 +115,57 @@ func (lr *LogReader) Read() (<-chan Log, <-chan error, error) {
 		defer close(logC)
 		defer close(errC)
 		defer stream.Close()
+		done := make(chan struct{})
+		defer close(done)
 
 		r := bufio.NewReader(stream)
+		go func() {
+			select {
+			case <-ctx.Done():
+				_ = stream.Close()
+			case <-done:
+			}
+		}()
+
 		for {
-			line, _, err := r.ReadLine()
+			line, err := r.ReadString('\n')
+
+			if len(line) > 0 {
+				line = strings.TrimSuffix(line, "\n")
+				line = strings.TrimSuffix(line, "\r")
+
+				logEntry := Log{
+					PodName:       pod.Name,
+					ContainerName: lr.containerName,
+					Log:           line,
+				}
+
+				if lr.timestamps {
+					parts := strings.SplitN(line, " ", 2)
+
+					if len(parts) == 2 {
+						if t, parseErr := time.Parse(time.RFC3339Nano, parts[0]); parseErr == nil {
+							logEntry.Timestamp = t
+							logEntry.Log = parts[1]
+						}
+					}
+				}
+
+				select {
+				case logC <- logEntry:
+				case <-ctx.Done():
+					return
+				}
+			}
 
 			if err != nil {
 				if err != io.EOF {
-					errC <- err
+					select {
+					case errC <- err:
+					case <-ctx.Done():
+					}
 				}
 				return
-			}
-
-			logC <- Log{
-				PodName:       pod.Name,
-				ContainerName: lr.containerName,
-				Log:           string(line),
 			}
 		}
 	}()

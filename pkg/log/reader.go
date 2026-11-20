@@ -15,6 +15,7 @@
 package log
 
 import (
+	"context"
 	"fmt"
 	"time"
 
@@ -25,6 +26,8 @@ import (
 )
 
 type Reader struct {
+	ctx             context.Context
+	cancel          context.CancelFunc
 	run             string
 	ns              string
 	clients         *cli.Clients
@@ -42,9 +45,11 @@ type Reader struct {
 	number          int
 	activityTimeout time.Duration
 	retries         int
+	output          string
 }
 
 func NewReader(logType string, opts *options.LogOptions) (*Reader, error) {
+	ctx, cancel := context.WithCancel(context.Background())
 	streamer := pods.NewStream
 	if opts.Streamer != nil {
 		streamer = opts.Streamer
@@ -52,6 +57,7 @@ func NewReader(logType string, opts *options.LogOptions) (*Reader, error) {
 
 	cs, err := opts.Params.Clients()
 	if err != nil {
+		cancel()
 		return nil, err
 	}
 
@@ -69,6 +75,8 @@ func NewReader(logType string, opts *options.LogOptions) (*Reader, error) {
 	}
 
 	return &Reader{
+		ctx:             ctx,
+		cancel:          cancel,
 		run:             run,
 		ns:              opts.Params.Namespace(),
 		clients:         cs,
@@ -82,7 +90,31 @@ func NewReader(logType string, opts *options.LogOptions) (*Reader, error) {
 		steps:           opts.Steps,
 		logType:         logType,
 		activityTimeout: at,
+		output:          opts.Output,
 	}, nil
+}
+
+// Cancel stops log readers that are no longer needed.
+func (r *Reader) Cancel() {
+	r.cancel()
+}
+
+func (r *Reader) sendLog(logC chan<- Log, l Log) bool {
+	select {
+	case logC <- l:
+		return true
+	case <-r.ctx.Done():
+		return false
+	}
+}
+
+func (r *Reader) sendError(errC chan<- error, err error) bool {
+	select {
+	case errC <- err:
+		return true
+	case <-r.ctx.Done():
+		return false
+	}
 }
 
 func (r *Reader) Read() (<-chan Log, <-chan error, error) {
