@@ -23,14 +23,14 @@ func decodeObjects(contents string, handler decodedElementHandler) error {
 
 	// Scratch object to decode raw manifest into.
 	spec := runtime.RawExtension{}
-	for {
+	for doc := 1; ; doc++ {
 		// Note that the code below mostly mirrors
 		// https://github.com/kubernetes/cli-runtime/blob/b4586cbefd3668543b8b2b56845419e39ad1792f/pkg/resource/visitor.go#L572
 		if err := yamlDecoder.Decode(&spec); err != nil {
 			if err == io.EOF {
 				break
 			}
-			return fmt.Errorf("found a spec that isn't YAML or JSON parseable: %q", contents)
+			return fmt.Errorf("found a spec that isn't YAML or JSON parseable (document %d): %w", doc, err)
 		}
 
 		spec.Raw = bytes.TrimSpace(spec.Raw)
@@ -41,11 +41,11 @@ func decodeObjects(contents string, handler decodedElementHandler) error {
 		specInJSON := string(spec.Raw)
 		obj, gvr, err := tektonDecoder.Decode(spec.Raw, nil, nil)
 		if err != nil {
-			return fmt.Errorf("failed to parse string as a Tekton object: %q", specInJSON)
+			return fmt.Errorf("failed to parse string as a Tekton object (document %d): %w: %q", doc, err, truncate(specInJSON))
 		}
 
 		if gvr == nil {
-			return fmt.Errorf("failed to parse raw tekton object with no kind or apiVersion: %s", specInJSON)
+			return fmt.Errorf("failed to parse raw tekton object with no kind or apiVersion (document %d): %s", doc, truncate(specInJSON))
 		}
 
 		if err = handler(gvr, obj, spec.Raw); err != nil {
@@ -53,4 +53,14 @@ func decodeObjects(contents string, handler decodedElementHandler) error {
 		}
 	}
 	return nil
+}
+
+// maxErrorSnippet keeps error messages readable when a whole object is quoted
+const maxErrorSnippet = 200
+
+func truncate(s string) string {
+	if len(s) <= maxErrorSnippet {
+		return s
+	}
+	return s[:maxErrorSnippet] + "..."
 }

@@ -17,6 +17,7 @@ Available Commands:
   taskrun               Manage TaskRuns
   triggerbinding        Manage TriggerBindings
   triggertemplate       Manage TriggerTemplates
+  validate              Validate Tekton resources in files without a cluster
 
 Other Commands:
   completion            Prints shell completion scripts
