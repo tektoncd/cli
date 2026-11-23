@@ -171,3 +171,108 @@ func TestDecodeObjectsMissingKindOrVersionIsShort(t *testing.T) {
 		})
 	}
 }
+
+func TestValidateTektonObjectsStrictAndGenerateName(t *testing.T) {
+	misspelled := `apiVersion: tekton.dev/v1
+kind: Task
+metadata:
+  name: typo
+spec:
+  steps:
+    - name: hello
+      image: alpine
+      workngDir: /tmp
+`
+	duplicate := `apiVersion: tekton.dev/v1
+kind: Task
+metadata:
+  name: dup
+spec:
+  steps:
+    - name: hello
+      image: alpine
+      image: busybox
+`
+	generated := `apiVersion: tekton.dev/v1
+kind: PipelineRun
+metadata:
+  generateName: release-
+spec:
+  pipelineRef:
+    name: release
+`
+	generatedBad := `apiVersion: tekton.dev/v1
+kind: Task
+metadata:
+  generateName: bad-
+spec:
+  params:
+    - name: someparam
+`
+	unsupported := `apiVersion: v1
+kind: Pod
+metadata:
+  name: p
+`
+	jsonTask := `{"apiVersion":"tekton.dev/v1","kind":"Task","metadata":{"name":"j"},"spec":{"steps":[{"name":"a","image":"alpine","workngDir":"/"}]}}`
+
+	tests := []struct {
+		name     string
+		content  string
+		wantErrs []string
+		wantNot  []string
+	}{
+		{name: "misspelled optional field", content: misspelled, wantErrs: []string{"workngDir"}},
+		{name: "duplicate key", content: duplicate, wantErrs: []string{"image"}},
+		{name: "unknown field in json", content: jsonTask, wantErrs: []string{"workngDir"}},
+		{name: "generateName only is accepted", content: generated},
+		{name: "generateName only still gets its spec checked", content: generatedBad, wantErrs: []string{"Task bad-* is invalid"}, wantNot: []string{"should have a name"}},
+		{
+			name:     "later documents are still checked after an unsupported kind",
+			content:  unsupported + "---\n" + taskWithoutSteps,
+			wantErrs: []string{"(document 1)", "Task nosteps is invalid"},
+		},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			err := ValidateTektonObjects(context.Background(), []string{tt.content})
+			if len(tt.wantErrs) == 0 {
+				if err != nil {
+					t.Fatalf("unexpected error: %v", err)
+				}
+				return
+			}
+			if err == nil {
+				t.Fatalf("expected errors containing %q", tt.wantErrs)
+			}
+			for _, want := range tt.wantErrs {
+				if !strings.Contains(err.Error(), want) {
+					t.Errorf("error %q does not contain %q", err, want)
+				}
+			}
+			for _, not := range tt.wantNot {
+				if strings.Contains(err.Error(), not) {
+					t.Errorf("error %q should not contain %q", err, not)
+				}
+			}
+		})
+	}
+}
+
+func TestBuildStillRequiresName(t *testing.T) {
+	generated := `apiVersion: tekton.dev/v1
+kind: Task
+metadata:
+  generateName: gen-
+spec:
+  steps:
+    - name: hello
+      image: alpine
+`
+	if err := decodeObjects(generated, func(_ *schema.GroupVersionKind, obj runtime.Object, _ []byte) error {
+		_, err := getObjectName(obj)
+		return err
+	}); err == nil || !strings.Contains(err.Error(), "should have a name") {
+		t.Errorf("expected the explicit name requirement, got %v", err)
+	}
+}
