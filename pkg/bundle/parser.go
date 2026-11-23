@@ -2,6 +2,7 @@ package bundle
 
 import (
 	"bytes"
+	"errors"
 	"fmt"
 	"io"
 	"strings"
@@ -41,7 +42,7 @@ func decodeObjects(contents string, handler decodedElementHandler) error {
 		specInJSON := string(spec.Raw)
 		obj, gvr, err := tektonDecoder.Decode(spec.Raw, nil, nil)
 		if err != nil {
-			return fmt.Errorf("failed to parse string as a Tekton object (document %d): %w: %q", doc, err, truncate(specInJSON))
+			return fmt.Errorf("failed to parse string as a Tekton object (document %d): %w: %q", doc, sanitizeDecodeError(err), truncate(specInJSON))
 		}
 
 		if gvr == nil {
@@ -53,6 +54,18 @@ func decodeObjects(contents string, handler decodedElementHandler) error {
 		}
 	}
 	return nil
+}
+
+// sanitizeDecodeError replaces decoder errors that embed the whole manifest, like the
+// missing kind and apiVersion ones, so the snippet limit is not bypassed.
+func sanitizeDecodeError(err error) error {
+	switch {
+	case runtime.IsMissingKind(err):
+		return errors.New("object 'kind' is missing")
+	case runtime.IsMissingVersion(err):
+		return errors.New("object 'apiVersion' is missing")
+	}
+	return err
 }
 
 // maxErrorSnippet keeps error messages readable when a whole object is quoted
