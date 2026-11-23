@@ -137,3 +137,37 @@ func TestTruncate(t *testing.T) {
 		t.Errorf("truncate(long) = %q", got)
 	}
 }
+
+func TestDecodeObjectsMissingKindOrVersionIsShort(t *testing.T) {
+	filler := strings.Repeat("x", 5000)
+	tests := []struct {
+		name    string
+		content string
+		want    string
+	}{
+		{
+			name:    "missing kind",
+			content: strings.Join([]string{"apiVersion: tekton.dev/v1", "metadata:", "  name: " + filler, ""}, "\n"),
+			want:    "object 'kind' is missing",
+		},
+		{
+			name:    "missing apiVersion",
+			content: strings.Join([]string{"kind: Task", "metadata:", "  name: " + filler, ""}, "\n"),
+			want:    "object 'apiVersion' is missing",
+		},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			err := decodeObjects(tt.content, func(*schema.GroupVersionKind, runtime.Object, []byte) error { return nil })
+			if err == nil {
+				t.Fatal("expected an error")
+			}
+			if !strings.Contains(err.Error(), tt.want) {
+				t.Errorf("error %q does not contain %q", err, tt.want)
+			}
+			if len(err.Error()) > 2*maxErrorSnippet+200 {
+				t.Errorf("error is %d bytes, the manifest leaked into it", len(err.Error()))
+			}
+		})
+	}
+}

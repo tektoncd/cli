@@ -471,6 +471,23 @@ spec:
 		wantOut string
 	}{
 		{
+			name: "build and validation problems are all reported",
+			stdin: `apiVersion: tekton.dev/v1
+kind: Task
+metadata:
+  name: nosteps
+spec: {}
+---
+apiVersion: tekton.dev/v1
+kind: Task
+spec:
+  steps:
+    - name: hello
+      image: alpine
+`,
+			wantErr: "Task nosteps is invalid",
+		},
+		{
 			name:    "valid bundle is not pushed",
 			stdin:   validTask,
 			wantOut: "not pushed because of --dry-run",

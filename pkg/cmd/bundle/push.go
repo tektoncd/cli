@@ -160,15 +160,19 @@ func (p *pushOptions) Run(args []string) error {
 		return err
 	}
 
+	// validate first so a build failure on one file cannot hide problems in the others
+	if p.dryRun {
+		if err := bundle.ValidateTektonObjects(context.Background(), p.bundleContents); err != nil {
+			return fmt.Errorf("tekton bundle is not valid: %w", err)
+		}
+	}
+
 	img, err := bundle.BuildTektonBundle(p.bundleContents, p.annotations, p.labels, p.ctime, p.stream.Out)
 	if err != nil {
 		return err
 	}
 
 	if p.dryRun {
-		if err := bundle.ValidateTektonObjects(context.Background(), p.bundleContents); err != nil {
-			return fmt.Errorf("tekton bundle is not valid: %w", err)
-		}
 		digest, err := img.Digest()
 		if err != nil {
 			return err
