@@ -15,6 +15,8 @@
 package options
 
 import (
+	"io"
+	"os"
 	"testing"
 
 	"github.com/AlecAivazis/survey/v2/terminal"
@@ -482,5 +484,31 @@ func TestDescribeOptions_Ask(t *testing.T) {
 				t.Errorf("Unexpected EventListener Name")
 			}
 		})
+	}
+}
+
+func TestAnnounceSelectionWritesToStderr(t *testing.T) {
+	outR, outW, err := os.Pipe()
+	if err != nil {
+		t.Fatal(err)
+	}
+	errR, errW, err := os.Pipe()
+	if err != nil {
+		t.Fatal(err)
+	}
+	oldOut, oldErr := os.Stdout, os.Stderr
+	os.Stdout, os.Stderr = outW, errW
+	announceSelection("my-stepaction")
+	os.Stdout, os.Stderr = oldOut, oldErr
+	outW.Close()
+	errW.Close()
+
+	gotOut, _ := io.ReadAll(outR)
+	gotErr, _ := io.ReadAll(errR)
+	if len(gotOut) != 0 {
+		t.Errorf("expected nothing on stdout, got %q", gotOut)
+	}
+	if string(gotErr) != "my-stepaction\n" {
+		t.Errorf("expected selection on stderr, got %q", gotErr)
 	}
 }

@@ -157,7 +157,7 @@ func (opts *DescribeOptions) FuzzyAsk(resource string, options []string) error {
 		return err
 	}
 	ans := options[idx[0]]
-	fmt.Println(ans)
+	announceSelection(ans)
 	switch resource {
 	case ResourceNamePipeline:
 		opts.PipelineName = ans
@@ -182,4 +182,10 @@ func (opts *DescribeOptions) FuzzyAsk(resource string, options []string) error {
 	}
 
 	return nil
+}
+
+// announceSelection echoes the chosen name on stderr so that stdout only
+// carries the requested object (for example with -o json).
+func announceSelection(ans string) {
+	fmt.Fprintln(os.Stderr, ans)
 }
