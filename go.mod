@@ -30,7 +30,7 @@ require (
 	github.com/tektoncd/pipeline v1.14.1
 	github.com/tektoncd/plumbing v0.0.0-20250430145243-3b7cd59879c1
 	github.com/tektoncd/triggers v0.36.5
-	github.com/theupdateframework/go-tuf v0.7.0
+	github.com/theupdateframework/go-tuf v0.7.1
 	go.opentelemetry.io/otel v1.44.0
 	go.uber.org/multierr v1.11.0
 	go.uber.org/zap v1.28.0

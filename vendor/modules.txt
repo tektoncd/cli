@@ -667,7 +667,7 @@ github.com/tektoncd/triggers/pkg/interceptors
 github.com/tektoncd/triggers/pkg/interceptors/cel
 github.com/tektoncd/triggers/pkg/reconciler/eventlistener/resources
 github.com/tektoncd/triggers/test
-# github.com/theupdateframework/go-tuf v0.7.0
+# github.com/theupdateframework/go-tuf v0.7.1
 ## explicit; go 1.20
 github.com/theupdateframework/go-tuf/encrypted
 # github.com/tidwall/gjson v1.14.2
