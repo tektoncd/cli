@@ -603,8 +603,8 @@ github.com/tektoncd/triggers v0.35.1-0.20260401091813-1aad8a1898ec h1:Aipi80gVmf
 github.com/tektoncd/triggers v0.35.1-0.20260401091813-1aad8a1898ec/go.mod h1:ivDXe8xmMbVB4F0+MiUW0avU2o/me1mRsGh4shPKaUU=
 github.com/thales-e-security/pool v0.0.2 h1:RAPs4q2EbWsTit6tpzuvTFlgFRJ3S8Evf5gtvVDbmPg=
 github.com/thales-e-security/pool v0.0.2/go.mod h1:qtpMm2+thHtqhLzTwgDBj/OuNnMpupY8mv0Phz0gjhU=
-github.com/theupdateframework/go-tuf v0.7.0 h1:CqbQFrWo1ae3/I0UCblSbczevCCbS31Qvs5LdxRWqRI=
-github.com/theupdateframework/go-tuf v0.7.0/go.mod h1:uEB7WSY+7ZIugK6R1hiBMBjQftaFzn7ZCDJcp1tCUug=
+github.com/theupdateframework/go-tuf v0.7.1 h1:Aog4aeC0kMpZno/N16uSGP0yrJHB4ZH1uGuiICj7fQU=
+github.com/theupdateframework/go-tuf v0.7.1/go.mod h1:qp61mIYjcpISwN32wWs+mxc5F3TrtVMzFe/yap5grY8=
 github.com/theupdateframework/go-tuf/v2 v2.4.2-0.20260407074541-7e8f69f906ef h1:jJac5InhEfD0Z46/d5RayZjoavf/se7bPZpOgg8GLrM=
 github.com/theupdateframework/go-tuf/v2 v2.4.2-0.20260407074541-7e8f69f906ef/go.mod h1:cLUSJ2cgR194lNWfp+TJT4P8PX7qGleCXdudqlCMtOE=
 github.com/tidwall/gjson v1.14.2 h1:6BBkirS0rAHjumnjHF6qgy5d2YAJ1TLIaFE2lzfOLqo=
