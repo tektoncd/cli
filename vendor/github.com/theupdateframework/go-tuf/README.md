@@ -1,9 +1,21 @@
 # go-tuf
 
-[![build](https://github.com/theupdateframework/go-tuf/workflows/build/badge.svg)](https://github.com/theupdateframework/go-tuf/actions?query=workflow%3Abuild) [![Coverage Status](https://coveralls.io/repos/github/theupdateframework/go-tuf/badge.svg)](https://coveralls.io/github/theupdateframework/go-tuf) [![PkgGoDev](https://pkg.go.dev/badge/github.com/theupdateframework/go-tuf)](https://pkg.go.dev/github.com/theupdateframework/go-tuf) [![Go Report Card](https://goreportcard.com/badge/github.com/theupdateframework/go-tuf)](https://goreportcard.com/report/github.com/theupdateframework/go-tuf)
+![ci](https://github.com/theupdateframework/go-tuf/actions/workflows/ci.yml/badge.svg) [![Coverage Status](https://coveralls.io/repos/github/theupdateframework/go-tuf/badge.svg)](https://coveralls.io/github/theupdateframework/go-tuf) [![PkgGoDev](https://pkg.go.dev/badge/github.com/theupdateframework/go-tuf)](https://pkg.go.dev/github.com/theupdateframework/go-tuf) [![Go Report Card](https://goreportcard.com/badge/github.com/theupdateframework/go-tuf)](https://goreportcard.com/report/github.com/theupdateframework/go-tuf)
 
 This is a Go implementation of [The Update Framework (TUF)](http://theupdateframework.com/),
 a framework for securing software update systems.
+
+## Deprecation notice
+
+**The legacy go-tuf module (`github.com/theupdateframework/go-tuf`) is deprecated in favour of [go-tuf/v2](https://github.com/theupdateframework/go-tuf) (`github.com/theupdateframework/go-tuf/v2`).** New projects should use go-tuf/v2, and existing users are encouraged to migrate to it.
+
+## API instability
+
+**Note**: go-tuf's API is in flux and backwards compatibility with version 0.7.0 and earlier will _**not**_ be maintained.
+
+We recommend production users of go-tuf pin their dependency so that changes in main do not cause disruptions.
+
+For more details on the changes, and the rationale for making them, see [issue #485](https://github.com/theupdateframework/go-tuf/issues/485) and the v0.7.0 [release notes](https://github.com/theupdateframework/go-tuf/releases/tag/v0.7.0)
 
 ## Directory layout
 
