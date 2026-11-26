@@ -854,8 +854,8 @@ github.com/jackc/pgpassfile v1.0.0 h1:/6Hmqy13Ss2zCq62VdNG8tM1wchn8zjSGOBJ6icpsI
 github.com/jackc/pgpassfile v1.0.0/go.mod h1:CEx0iS5ambNFdcRtxPj5JhEz+xB6uRky5eyVu/W2HEg=
 github.com/jackc/pgservicefile v0.0.0-20240606120523-5a60cdf6a761 h1:iCEnooe7UlwOQYpKFhBabPMi4aNAfoODPEFNiAnClxo=
 github.com/jackc/pgservicefile v0.0.0-20240606120523-5a60cdf6a761/go.mod h1:5TJZWKEWniPve33vlWYSoGYefn3gLQRzjfDlhSJ9ZKM=
-github.com/jackc/pgx/v5 v5.7.5 h1:JHGfMnQY+IEtGM63d+NGMjoRpysB2JBwDr5fsngwmJs=
-github.com/jackc/pgx/v5 v5.7.5/go.mod h1:aruU7o91Tc2q2cFp5h4uP3f6ztExVpyVv88Xl/8Vl8M=
+github.com/jackc/pgx/v5 v5.9.2 h1:3ZhOzMWnR4yJ+RW1XImIPsD1aNSz4T4fyP7zlQb56hw=
+github.com/jackc/pgx/v5 v5.9.2/go.mod h1:mal1tBGAFfLHvZzaYh77YS/eC6IX9OWbRV1QIIM0Jn4=
 github.com/jackc/puddle/v2 v2.2.2 h1:PR8nw+E/1w0GLuRFSmiioY6UooMp6KJv0/61nB7icHo=
 github.com/jackc/puddle/v2 v2.2.2/go.mod h1:vriiEXHvEE654aYKXXjOvZM39qJ0q+azkZFrfEOc3H4=
 github.com/jcmturner/aescts/v2 v2.0.0 h1:9YKLH6ey7H4eDBXW8khjYslgyqG2xZikXP0EQFKrle8=
@@ -1054,8 +1054,8 @@ github.com/opencontainers/go-digest v1.0.0 h1:apOUWs51W5PlhuyGyz9FCeeBIOUDA/6nW8
 github.com/opencontainers/go-digest v1.0.0/go.mod h1:0JzlMkj0TRzQZfJkVvzbP0HBR3IKzErnv2BNG4W4MAM=
 github.com/opencontainers/image-spec v1.1.1 h1:y0fUlFfIZhPF1W537XOLg0/fcx6zcHCJwooC2xJA040=
 github.com/opencontainers/image-spec v1.1.1/go.mod h1:qpqAh3Dmcf36wStyyWU+kCeDgrGnAve2nCC8+7h8Q0M=
-github.com/openshift-pipelines/hub v1.23.7 h1:HvWfTlDCIqdjl8jNfMExN38aicjfsIqoLZ2TJYG4TmU=
-github.com/openshift-pipelines/hub v1.23.7/go.mod h1:avuMaqxKD3ihAOT6ttocG6DvHC3HxSWSalBm7p1dXKc=
+github.com/openshift-pipelines/hub v1.23.14 h1:JC4VSN2xRXznHBmT2opZa1vw5zkOj0h4F1IEiiIiRNA=
+github.com/openshift-pipelines/hub v1.23.14/go.mod h1:dUAJAwxq4Ft0zvi0G702BXWVhyLQOfERubL8mkB0EXI=
 github.com/opentracing/opentracing-go v1.1.0/go.mod h1:UkNAQd3GIcIGf0SeVgPpRdFStlNbqXla1AfSYxPUl2o=
 github.com/openzipkin/zipkin-go v0.2.2/go.mod h1:NaW6tEwdmWMaCDZzg8sh+IBNOxHMPnhQw8ySjnjRyN4=
 github.com/openzipkin/zipkin-go v0.3.0/go.mod h1:4c3sLeE8xjNqehmF5RpAFLPLJxXscc0R4l6Zg0P1tTQ=
@@ -1267,8 +1267,8 @@ github.com/syndtr/goleveldb v1.0.1-0.20220721030215-126854af5e6d h1:vfofYNRScrDd
 github.com/syndtr/goleveldb v1.0.1-0.20220721030215-126854af5e6d/go.mod h1:RRCYJbIwD5jmqPI9XoAFR0OcDxqUctll6zUj/+B4S48=
 github.com/tektoncd/chains v0.26.11 h1:uPcdbd9XFOxF1XfM3HlPM5yxygBNyxmx6gbS/GbDN2U=
 github.com/tektoncd/chains v0.26.11/go.mod h1:hb//wgUat4IFceoUhfyM2R7Hm7ySAsz00tS5TZSQqog=
-github.com/tektoncd/pipeline v1.9.8 h1:WvMf57F+uIuaJN0n3x+Yc6qS42GmMtdfaoO+mFZDAJI=
-github.com/tektoncd/pipeline v1.9.8/go.mod h1:MGy8jy7YAQpbrlzn38cweF4rfgPkM40PIv/aMKD+ql8=
+github.com/tektoncd/pipeline v1.9.9 h1:i2j2gz2omxJ4MPqhC5Eb7DsGXDp67hBceNz7kZFQAVE=
+github.com/tektoncd/pipeline v1.9.9/go.mod h1:WJ3bDsJVq+ymRDDj5CuXVQvj+EioxiKR4ySh1oaPN8A=
 github.com/tektoncd/plumbing v0.0.0-20250430145243-3b7cd59879c1 h1:nv7BsOAZ1ifQX9Lw1hYFo1f7e62dTDyyVPJBuljgZKw=
 github.com/tektoncd/plumbing v0.0.0-20250430145243-3b7cd59879c1/go.mod h1:eDs4O8vTNkyKZ/+AEuo4nYDfpyn1AzbgIcQ1QMQaKJk=
 github.com/tektoncd/triggers v0.35.3 h1:oAmW+IeB8a2R+pko9l5pTdA/eMghMEG9r34JLCxqHkU=
