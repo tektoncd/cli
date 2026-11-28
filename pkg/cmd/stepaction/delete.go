@@ -35,7 +35,7 @@ func stepActionExists(client *cli.Clients, namespace, name string) error {
 		if !errors.IsNotFound(err) {
 			return err
 		}
-		return fmt.Errorf("StepAction %s not found in namespace %s", name, namespace)
+		return &exitcode.Error{Code: exitcode.NotFound, Message: fmt.Sprintf("StepAction %s not found in namespace %s", name, namespace), Err: err}
 	}
 	return nil
 }

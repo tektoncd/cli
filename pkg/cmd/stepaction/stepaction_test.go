@@ -22,6 +22,7 @@ import (
 
 	"github.com/jonboulle/clockwork"
 	"github.com/spf13/cobra"
+	"github.com/tektoncd/cli/pkg/exitcode"
 	"github.com/tektoncd/cli/pkg/test"
 	cb "github.com/tektoncd/cli/pkg/test/builder"
 	testDynamic "github.com/tektoncd/cli/pkg/test/dynamic"
@@ -277,6 +278,9 @@ func TestStepActionDeleteMissing(t *testing.T) {
 	_, err := test.ExecuteCommand(newCommand(t, now, dc), "delete", "missing", "kaniko", "-n", "foo")
 	if err == nil || !strings.Contains(err.Error(), "StepAction missing not found in namespace foo") {
 		t.Errorf("unexpected error: %v", err)
+	}
+	if got := exitcode.CodeFrom(err); got != exitcode.NotFound {
+		t.Errorf("exit code = %d, want %d", got, exitcode.NotFound)
 	}
 	// the existing one is still deleted
 	if _, err := dc.Resource(stepactionGroupResource).Namespace("foo").Get(context.TODO(), "kaniko", metav1.GetOptions{}); err == nil {
