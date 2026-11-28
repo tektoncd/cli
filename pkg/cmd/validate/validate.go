@@ -68,10 +68,12 @@ Validate resources read from standard input:
 
 func validateFiles(ctx context.Context, in io.Reader, out io.Writer, files []string) error {
 	var errs []error
+	readFailed := false
 	for _, path := range files {
 		contents, err := readFile(in, path)
 		if err != nil {
 			errs = append(errs, err)
+			readFailed = true
 			continue
 		}
 		if err := bundle.ValidateTektonObjects(ctx, []string{contents}); err != nil {
@@ -79,7 +81,13 @@ func validateFiles(ctx context.Context, in io.Reader, out io.Writer, files []str
 		}
 	}
 	if len(errs) > 0 {
-		return errors.Join(errs...)
+		err := errors.Join(errs...)
+		// Invalid manifests exit with InvalidInput. A file that can't be read
+		// is an operational failure, so it keeps the general error code.
+		if readFailed {
+			return err
+		}
+		return &exitcode.Error{Code: exitcode.InvalidInput, Message: err.Error(), Err: err}
 	}
 
 	fmt.Fprintf(out, "All Tekton resources in %d file(s) are valid\n", len(files))

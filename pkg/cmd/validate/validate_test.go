@@ -20,6 +20,7 @@ import (
 	"strings"
 	"testing"
 
+	"github.com/tektoncd/cli/pkg/exitcode"
 	"github.com/tektoncd/cli/pkg/test"
 )
 
@@ -74,6 +75,7 @@ func TestValidate(t *testing.T) {
 		stdin    string
 		wantOut  string
 		wantErrs []string
+		wantCode int
 	}{
 		{
 			name:    "valid file",
@@ -84,11 +86,13 @@ func TestValidate(t *testing.T) {
 			name:     "invalid file",
 			args:     []string{"-f", invalid},
 			wantErrs: []string{"invalid.yaml: ", "Task nosteps is invalid"},
+			wantCode: exitcode.InvalidInput,
 		},
 		{
 			name:     "every file is checked",
 			args:     []string{"-f", invalid, "-f", valid, "-f", filepath.Join(dir, "missing.yaml")},
 			wantErrs: []string{"Task nosteps is invalid", "failed to read", "missing.yaml"},
+			wantCode: exitcode.GeneralError,
 		},
 		{
 			name:    "stdin",
@@ -101,10 +105,12 @@ func TestValidate(t *testing.T) {
 			args:     []string{"-f", "-"},
 			stdin:    invalidTask,
 			wantErrs: []string{"stdin: ", "Task nosteps is invalid"},
+			wantCode: exitcode.InvalidInput,
 		},
 		{
 			name:     "no files",
 			wantErrs: []string{"at least one file is required"},
+			wantCode: exitcode.InvalidInput,
 		},
 	}
 
@@ -121,6 +127,9 @@ func TestValidate(t *testing.T) {
 					if !strings.Contains(err.Error(), want) {
 						t.Errorf("error %q does not contain %q", err, want)
 					}
+				}
+				if got := exitcode.CodeFrom(err); got != tt.wantCode {
+					t.Errorf("exit code = %d, want %d", got, tt.wantCode)
 				}
 				return
 			}
