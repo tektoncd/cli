@@ -69,7 +69,9 @@ Show the logs of TaskRun named 'microservice-1' for step 'build' only from names
 
 			opts.Stream = &cli.Stream{
 				Out: cmd.OutOrStdout(),
-				Err: cmd.OutOrStderr(),
+				// See pipelinerun logs: use the root stderr so JSON-mode Cobra
+				// warning suppression cannot discard runtime diagnostics.
+				Err: cmd.Root().ErrOrStderr(),
 			}
 
 			if len(opts.Steps) > 0 && opts.AllSteps {
@@ -84,6 +86,7 @@ Show the logs of TaskRun named 'microservice-1' for step 'build' only from names
 	c.Flags().BoolVarP(&opts.AllSteps, "all", "a", false, "show all logs including init steps injected by tekton")
 	c.Flags().BoolVarP(&opts.Follow, "follow", "f", false, "stream live logs")
 	c.Flags().BoolVarP(&opts.Timestamps, "timestamps", "t", false, "show logs with timestamp")
+	c.Flags().StringVarP(&opts.Output, "output", "o", "", "format of the output (e.g., json)")
 	c.Flags().BoolVarP(&opts.Prefixing, "prefix", "", true, "prefix each log line with the log source (step name)")
 	c.Flags().IntVarP(&opts.Limit, "limit", "", defaultLimit, "lists number of TaskRuns")
 	c.Flags().BoolVarP(&opts.Fzf, "fzf", "F", false, "use fzf to select a TaskRun")
@@ -93,6 +96,14 @@ Show the logs of TaskRun named 'microservice-1' for step 'build' only from names
 }
 
 func Run(opts *options.LogOptions) error {
+	if err := opts.ValidateOutputFormat(); err != nil {
+		return err
+	}
+
+	if opts.Output == "json" && opts.TaskrunName == "" && !opts.Last {
+		return fmt.Errorf("JSON output requires a TaskRun name or --last")
+	}
+
 	if opts.TaskrunName == "" {
 		if err := opts.ValidateOpts(); err != nil {
 			return err
@@ -102,7 +113,17 @@ func Run(opts *options.LogOptions) error {
 		}
 	}
 
-	lr, err := log.NewReader(log.LogTypeTask, opts)
+	readerOpts := *opts
+	if opts.Output == "json" {
+		opts.Timestamps = true
+		opts.Prefixing = false
+		readerOpts = *opts
+		readerStream := *opts.Stream
+		readerStream.Out = readerStream.Err
+		readerOpts.Stream = &readerStream
+	}
+
+	lr, err := log.NewReader(log.LogTypeTask, &readerOpts)
 	if err != nil {
 		return err
 	}
@@ -111,9 +132,9 @@ func Run(opts *options.LogOptions) error {
 	if err != nil {
 		return err
 	}
+	defer lr.Cancel()
 
-	log.NewWriter(log.LogTypeTask, opts.Prefixing).Write(opts.Stream, logC, errC)
-	return nil
+	return log.NewWriter(log.LogTypeTask, opts.Prefixing, opts.Output).Write(opts.Stream, logC, errC)
 }
 
 func askRunName(opts *options.LogOptions) error {

@@ -15,11 +15,27 @@
 package log //nolint:revive
 
 import (
+	"encoding/json"
+	"errors"
 	"fmt"
+	"io"
+	"time"
 
 	"github.com/tektoncd/cli/pkg/cli"
 	"github.com/tektoncd/cli/pkg/formatted"
 )
+
+type fullWriter struct {
+	io.Writer
+}
+
+func (w fullWriter) Write(p []byte) (int, error) {
+	n, err := w.Writer.Write(p)
+	if err == nil && n != len(p) {
+		err = io.ErrShortWrite
+	}
+	return n, err
+}
 
 // Writer helps logging pod"s log
 type Writer struct {
@@ -27,14 +43,16 @@ type Writer struct {
 	logType     string
 	prefixing   bool
 	displayName bool
+	output      string
 }
 
 // NewWriter returns the new instance of LogWriter
-func NewWriter(logType string, prefixing bool) *Writer {
+func NewWriter(logType string, prefixing bool, output string) *Writer {
 	return &Writer{
 		fmt:       formatted.NewColor(),
 		logType:   logType,
 		prefixing: prefixing,
+		output:    output,
 	}
 }
 
@@ -45,7 +63,21 @@ func (lw *Writer) WithDisplayName(displayName bool) *Writer {
 }
 
 // Write formatted pod's logs
-func (lw *Writer) Write(s *cli.Stream, logC <-chan Log, errC <-chan error) {
+
+func (lw *Writer) Write(s *cli.Stream, logC <-chan Log, errC <-chan error) error {
+	type jsonLogEntry struct {
+		Pipeline  string `json:"pipeline,omitempty"`
+		Task      string `json:"task,omitempty"`
+		Step      string `json:"step,omitempty"`
+		Timestamp string `json:"timestamp"`
+		Message   string `json:"message"`
+	}
+
+	encoder := json.NewEncoder(fullWriter{Writer: s.Out})
+	encoder.SetEscapeHTML(false) // Prevents escaping <, >, & in log messages
+
+	var readerErr error
+
 	for logC != nil || errC != nil {
 		select {
 		case l, ok := <-logC:
@@ -54,8 +86,10 @@ func (lw *Writer) Write(s *cli.Stream, logC <-chan Log, errC <-chan error) {
 				continue
 			}
 
-			if l.Log == "EOFLOG" {
-				fmt.Fprintf(s.Out, "\n")
+			if l.EndOfStep {
+				if lw.output != "json" {
+					fmt.Fprintf(s.Out, "\n")
+				}
 				continue
 			}
 
@@ -63,22 +97,51 @@ func (lw *Writer) Write(s *cli.Stream, logC <-chan Log, errC <-chan error) {
 				l.Task = l.TaskDisplayName
 			}
 
-			if lw.prefixing {
-				switch lw.logType {
-				case LogTypePipeline:
-					lw.fmt.Rainbow.Fprintf(l.Step, s.Out, "[%s : %s] ", l.Task, l.Step)
-				case LogTypeTask:
-					lw.fmt.Rainbow.Fprintf(l.Step, s.Out, "[%s] ", l.Step)
+			if lw.output == "json" {
+				entry := jsonLogEntry{
+					Pipeline:  l.Pipeline,
+					Task:      l.Task,
+					Step:      l.Step,
+					Timestamp: l.Timestamp.Format(time.RFC3339Nano),
+					Message:   l.Log,
 				}
-			}
+				// Encode() automatically flushes and adds a newline (NDJSON)
+				if err := encoder.Encode(entry); err != nil {
+					return fmt.Errorf("failed to encode log entry: %w", err)
+				}
+			} else {
+				// Existing human-readable logic
+				if lw.prefixing {
+					switch lw.logType {
+					case LogTypePipeline:
+						lw.fmt.Rainbow.Fprintf(l.Step, s.Out, "[%s : %s] ", l.Task, l.Step)
+					case LogTypeTask:
+						lw.fmt.Rainbow.Fprintf(l.Step, s.Out, "[%s] ", l.Step)
+					}
+				}
 
-			fmt.Fprintf(s.Out, "%s\n", l.Log)
+				if !l.Timestamp.IsZero() {
+					fmt.Fprintf(s.Out, "%s ", l.Timestamp.Format(time.RFC3339Nano))
+				}
+
+				fmt.Fprintf(s.Out, "%s\n", l.Log)
+			}
 		case e, ok := <-errC:
 			if !ok {
 				errC = nil
 				continue
 			}
+
+			if lw.output == "json" {
+				if readerErr == nil {
+					readerErr = e
+				} else {
+					readerErr = errors.Join(readerErr, e)
+				}
+				continue
+			}
 			lw.fmt.Error(s.Err, "%s\n", e)
 		}
 	}
+	return readerErr
 }

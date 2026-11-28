@@ -25,18 +25,42 @@ import (
 )
 
 func TestLogOptions_ValidateOpts(t *testing.T) {
-
 	testParams := []struct {
-		name      string
-		limit     int
-		wantError bool
-		want      string
+		name       string
+		limit      int
+		output     string
+		wantOutput string
+		wantError  bool
+		want       string
 	}{
 		{
-			name:      "valid limit",
+			name:  "valid default output",
+			limit: 1,
+		},
+		{
+			name:       "valid json output",
+			limit:      1,
+			output:     "json",
+			wantOutput: "json",
+		},
+		{
+			name:       "valid JSON uppercase",
+			limit:      1,
+			output:     "JSON",
+			wantOutput: "json",
+		},
+		{
+			name:       "valid Json mixed case",
+			limit:      1,
+			output:     "Json",
+			wantOutput: "json",
+		},
+		{
+			name:      "unsupported output",
 			limit:     1,
-			wantError: false,
-			want:      "",
+			output:    "yaml",
+			wantError: true,
+			want:      `unsupported output format "yaml"; supported formats: json`,
 		},
 		{
 			name:      "invalid limit",
@@ -50,15 +74,100 @@ func TestLogOptions_ValidateOpts(t *testing.T) {
 		t.Run(tp.name, func(t *testing.T) {
 			opts := NewLogOptions(&cli.TektonParams{})
 			opts.Limit = tp.limit
+			opts.Output = tp.output
 
 			err := opts.ValidateOpts()
 			if tp.wantError {
 				if err == nil {
-					t.Errorf("Error expected here")
+					t.Fatal("expected an error")
 				}
 				test.AssertOutput(t, tp.want, err.Error())
-			} else if err != nil {
-				t.Errorf("unexpected Error")
+			} else {
+				if err != nil {
+					t.Errorf("unexpected error: %v", err)
+				}
+				if tp.wantOutput != "" && opts.Output != tp.wantOutput {
+					t.Errorf("opts.Output = %q, want %q", opts.Output, tp.wantOutput)
+				}
+			}
+		})
+	}
+}
+
+func TestLogOptions_ValidateOutputFormat(t *testing.T) {
+	testParams := []struct {
+		name       string
+		output     string
+		wantOutput string
+		wantError  bool
+		want       string
+	}{
+		{
+			name: "valid default output",
+		},
+		{
+			name:       "valid json output",
+			output:     "json",
+			wantOutput: "json",
+		},
+		{
+			name:       "valid JSON uppercase",
+			output:     "JSON",
+			wantOutput: "json",
+		},
+		{
+			name:       "valid Json mixed case",
+			output:     "Json",
+			wantOutput: "json",
+		},
+		{
+			name:       "valid json with whitespace",
+			output:     "  json  ",
+			wantOutput: "json",
+		},
+		{
+			name:       "valid JSON uppercase with whitespace",
+			output:     "\tJSON\n",
+			wantOutput: "json",
+		},
+		{
+			name:      "unsupported output yaml",
+			output:    "yaml",
+			wantError: true,
+			want:      `unsupported output format "yaml"; supported formats: json`,
+		},
+		{
+			name:      "unsupported output xml",
+			output:    "xml",
+			wantError: true,
+			want:      `unsupported output format "xml"; supported formats: json`,
+		},
+		{
+			name:      "unsupported output with whitespace",
+			output:    "  unsupported  ",
+			wantError: true,
+			want:      `unsupported output format "unsupported"; supported formats: json`,
+		},
+	}
+
+	for _, tp := range testParams {
+		t.Run(tp.name, func(t *testing.T) {
+			opts := NewLogOptions(&cli.TektonParams{})
+			opts.Output = tp.output
+
+			err := opts.ValidateOutputFormat()
+			if tp.wantError {
+				if err == nil {
+					t.Fatal("expected an error")
+				}
+				test.AssertOutput(t, tp.want, err.Error())
+			} else {
+				if err != nil {
+					t.Errorf("unexpected error: %v", err)
+				}
+				if tp.wantOutput != "" && opts.Output != tp.wantOutput {
+					t.Errorf("opts.Output = %q, want %q", opts.Output, tp.wantOutput)
+				}
 			}
 		})
 	}

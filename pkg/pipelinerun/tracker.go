@@ -55,6 +55,11 @@ func NewTracker(name string, ns string, client *cli.Clients) *Tracker {
 // allowed containers the name of the Pipeline tasks, which used as filter
 // limit the events to only those tasks
 func (t *Tracker) Monitor(allowed []string) <-chan []taskrunpkg.Run {
+	return t.MonitorContext(context.Background(), allowed)
+}
+
+// MonitorContext observes PipelineRun progress until the context is cancelled.
+func (t *Tracker) MonitorContext(ctx context.Context, allowed []string) <-chan []taskrunpkg.Run {
 
 	factory := informers.NewSharedInformerFactoryWithOptions(
 		t.Client.Tekton,
@@ -74,15 +79,18 @@ func (t *Tracker) Monitor(allowed []string) <-chan []taskrunpkg.Run {
 	// to prevent "Failed to watch" log messages when the informer is stopped intentionally
 	_ = informer.SetWatchErrorHandlerWithContext(watchErrorHandler)
 
-	mu := &sync.Mutex{}
 	stopC := make(chan struct{})
+	var stopOnce sync.Once
+	stop := func() { stopOnce.Do(func() { close(stopC) }) }
 	trC := make(chan []taskrunpkg.Run)
-	go func() {
-		<-stopC
-		close(trC)
-	}()
 
 	eventHandler := func(obj interface{}) {
+		select {
+		case <-stopC:
+			return
+		default:
+		}
+
 		var pipelinerunConverted v1.PipelineRun
 		pr, ok := obj.(*v1.PipelineRun)
 		if !ok || pr == nil {
@@ -103,20 +111,22 @@ func (t *Tracker) Monitor(allowed []string) <-chan []taskrunpkg.Run {
 			return
 		}
 		pr.DeepCopyInto(&pipelinerunConverted)
-		trC <- t.findNewTaskruns(&pipelinerunConverted, allowed, trsMap)
+
+		newRuns := t.findNewTaskruns(&pipelinerunConverted, allowed, trsMap)
+		select {
+		case trC <- newRuns:
+		case <-stopC:
+			return
+		}
 
 		if hasCompleted(&pipelinerunConverted) {
-			close(stopC) // should close trC
+			stop()
 		}
 	}
 
 	_, err := informer.AddEventHandler(
 		cache.ResourceEventHandlerFuncs{
 			AddFunc: func(obj interface{}) {
-				// To ensure synchonization and checks is the stopC channel has received a signal to stop
-				// If it receives a signal then return and does nothing
-				mu.Lock()
-				defer mu.Unlock()
 				select {
 				case <-stopC:
 					return
@@ -125,8 +135,6 @@ func (t *Tracker) Monitor(allowed []string) <-chan []taskrunpkg.Run {
 				}
 			},
 			UpdateFunc: func(_, newObj interface{}) {
-				mu.Lock()
-				defer mu.Unlock()
 				select {
 				case <-stopC:
 					return
@@ -135,8 +143,6 @@ func (t *Tracker) Monitor(allowed []string) <-chan []taskrunpkg.Run {
 				}
 			},
 			DeleteFunc: func(obj interface{}) {
-				mu.Lock()
-				defer mu.Unlock()
 				select {
 				case <-stopC:
 					return
@@ -151,6 +157,17 @@ func (t *Tracker) Monitor(allowed []string) <-chan []taskrunpkg.Run {
 	}
 
 	factory.Start(stopC)
+
+	go func() {
+		select {
+		case <-stopC:
+		case <-ctx.Done():
+			stop()
+		}
+		factory.Shutdown()
+		close(trC)
+	}()
+
 	factory.WaitForCacheSync(stopC)
 
 	return trC
