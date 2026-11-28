@@ -13,6 +13,7 @@ Available Commands:
   hub                   Interact with artifacthub
   pipeline              Manage pipelines
   pipelinerun           Manage PipelineRuns
+  stepaction            Manage StepActions
   task                  Manage Tasks
   taskrun               Manage TaskRuns
   triggerbinding        Manage TriggerBindings

@@ -37,6 +37,7 @@ type DescribeOptions struct {
 	TaskName                  string
 	TaskrunName               string
 	CustomRunName             string
+	StepActionName            string
 	Tasks                     []string
 	TriggerTemplateName       string
 	TriggerBindingName        string
@@ -96,6 +97,8 @@ func (opts *DescribeOptions) Ask(resource string, options []string) error {
 		opts.TaskrunName = strings.Fields(ans)[0]
 	case ResourceNameCustomRun:
 		opts.CustomRunName = strings.Fields(ans)[0]
+	case ResourceNameStepAction:
+		opts.StepActionName = ans
 	case ResourceNameTriggerTemplate:
 		opts.TriggerTemplateName = ans
 	case ResourceNameTriggerBinding:
@@ -154,7 +157,7 @@ func (opts *DescribeOptions) FuzzyAsk(resource string, options []string) error {
 		return err
 	}
 	ans := options[idx[0]]
-	fmt.Println(ans)
+	announceSelection(ans)
 	switch resource {
 	case ResourceNamePipeline:
 		opts.PipelineName = ans
@@ -166,6 +169,8 @@ func (opts *DescribeOptions) FuzzyAsk(resource string, options []string) error {
 		opts.TaskrunName = strings.Fields(ans)[0]
 	case ResourceNameCustomRun:
 		opts.CustomRunName = strings.Fields(ans)[0]
+	case ResourceNameStepAction:
+		opts.StepActionName = ans
 	case ResourceNameTriggerTemplate:
 		opts.TriggerTemplateName = ans
 	case ResourceNameTriggerBinding:
@@ -177,4 +182,10 @@ func (opts *DescribeOptions) FuzzyAsk(resource string, options []string) error {
 	}
 
 	return nil
+}
+
+// announceSelection echoes the chosen name on stderr so that stdout only
+// carries the requested object (for example with -o json).
+func announceSelection(ans string) {
+	fmt.Fprintln(os.Stderr, ans)
 }
