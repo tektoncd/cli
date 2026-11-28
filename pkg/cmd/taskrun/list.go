@@ -57,6 +57,7 @@ type ListOptions struct {
 	Reverse       bool
 	AllNamespaces bool
 	NoHeaders     bool
+	Fields        []string
 }
 
 func listCommand(p cli.Params) *cobra.Command {
@@ -75,9 +76,13 @@ List TaskRuns as a JSON array:
 
     tkn taskrun list -o json
 
-List TaskRuns as a YAML array:
+List TaskRuns with specific fields only (token-efficient for AI agents):
 
-    tkn taskrun list -o yaml
+    tkn taskrun list --fields metadata.name,status.startTime,status.completionTime -o json
+
+List TaskRuns as NDJSON with selected fields:
+
+    tkn taskrun list --fields metadata.name,status.conditions[0].reason -o ndjson
 `
 
 	c := &cobra.Command{
@@ -98,6 +103,21 @@ List TaskRuns as a YAML array:
 				return exitcode.New(exitcode.InvalidInput, "limit was %d but must be a positive number", opts.Limit)
 			}
 
+			output, err := cmd.LocalFlags().GetString("output")
+			if err != nil {
+				return fmt.Errorf("output option not set properly: %v", err)
+			}
+
+			// Validate fields if provided
+			if err := formatted.ValidateFields(opts.Fields); err != nil {
+				return err
+			}
+
+			// --fields is only used with json/ndjson output; silently ignored for other formats
+			if len(opts.Fields) > 0 && output != "ndjson" && output != "json" && output != "" {
+				opts.Fields = nil // Ignore fields for non-JSON outputs
+			}
+
 			trs, err := list(p, task, opts.Limit, opts.LabelSelector, opts.AllNamespaces)
 			if err != nil {
 				return fmt.Errorf("failed to list TaskRuns from namespace %s: %w", p.Namespace(), err)
@@ -106,12 +126,12 @@ List TaskRuns as a YAML array:
 			if trs != nil && opts.Reverse {
 				reverse(trs)
 			}
-
-			output, err := cmd.LocalFlags().GetString("output")
-			if err != nil {
-				return fmt.Errorf("output option not set properly: %v", err)
-			}
-			if output == "name" && trs != nil {
+			switch {
+			case output == "ndjson" && trs != nil:
+				return formatted.PrintNDJSON(cmd.OutOrStdout(), trs, opts.Fields, f.JSONYamlPrintFlags.ShowManagedFields)
+			case output == "json" && len(opts.Fields) > 0 && trs != nil:
+				return formatted.PrintJSON(cmd.OutOrStdout(), trs, opts.Fields, f.JSONYamlPrintFlags.ShowManagedFields)
+			case output == "name" && trs != nil:
 				w := cmd.OutOrStdout()
 				for _, tr := range trs.Items {
 					_, err := fmt.Fprintf(w, "taskrun.tekton.dev/%s\n", tr.Name)
@@ -120,7 +140,7 @@ List TaskRuns as a YAML array:
 					}
 				}
 				return nil
-			} else if output != "" && trs != nil {
+			case output != "" && trs != nil:
 				p, err := f.ToPrinter()
 				if err != nil {
 					return err
@@ -152,6 +172,7 @@ List TaskRuns as a YAML array:
 	c.Flags().BoolVarP(&opts.Reverse, "reverse", "", opts.Reverse, "list TaskRuns in reverse order")
 	c.Flags().BoolVarP(&opts.AllNamespaces, "all-namespaces", "A", opts.AllNamespaces, "list TaskRuns from all namespaces")
 	c.Flags().BoolVarP(&opts.NoHeaders, "no-headers", "", opts.NoHeaders, "do not print column headers with output (default print column headers with output)")
+	c.Flags().StringSliceVar(&opts.Fields, "fields", opts.Fields, "Select specific fields to reduce payload size (e.g. metadata.name,status.conditions[0].reason); optimizes token usage for AI agents; only used with --output json or --output ndjson")
 	return c
 }
 

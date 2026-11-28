@@ -54,6 +54,7 @@ type ListOptions struct {
 	Reverse       bool
 	AllNamespaces bool
 	NoHeaders     bool
+	Fields        []string
 }
 
 func listCommand(p cli.Params) *cobra.Command {
@@ -75,6 +76,18 @@ List PipelineRuns as a JSON array:
 List PipelineRuns as a YAML array:
 
     tkn pipelinerun list -o yaml
+
+List PipelineRuns with specific fields only (reduces output size for AI agents):
+
+    tkn pipelinerun list --fields metadata.name,status.conditions[0].reason -o json
+
+List PipelineRuns as NDJSON (newline-delimited JSON, one object per line):
+
+    tkn pipelinerun list -o ndjson
+
+List specific fields as NDJSON (optimized for token-efficient AI agent consumption):
+
+    tkn pipelinerun list --fields metadata.name,status.startTime,status.completionTime -o ndjson
 `
 
 	c := &cobra.Command{
@@ -96,6 +109,21 @@ List PipelineRuns as a YAML array:
 				return exitcode.New(exitcode.InvalidInput, "limit was %d but must be a positive number", opts.Limit)
 			}
 
+			output, err := cmd.LocalFlags().GetString("output")
+			if err != nil {
+				return fmt.Errorf("output option not set properly: %v", err)
+			}
+
+			// Validate fields if provided
+			if err := formatted.ValidateFields(opts.Fields); err != nil {
+				return err
+			}
+
+			// --fields is only used with json/ndjson output; silently ignored for other formats
+			if len(opts.Fields) > 0 && output != "ndjson" && output != "json" && output != "" {
+				opts.Fields = nil // Ignore fields for non-JSON outputs
+			}
+
 			prs, err := list(p, pipeline, opts.Limit, opts.LabelSelector, opts.AllNamespaces)
 			if err != nil {
 				return fmt.Errorf("failed to list PipelineRuns from namespace %s: %w", p.Namespace(), err)
@@ -105,12 +133,12 @@ List PipelineRuns as a YAML array:
 				reverse(prs)
 			}
 
-			output, err := cmd.LocalFlags().GetString("output")
-			if err != nil {
-				return fmt.Errorf("output option not set properly: %v", err)
-			}
-
-			if output == "name" && prs != nil {
+			switch {
+			case output == "ndjson" && prs != nil:
+				return formatted.PrintNDJSON(cmd.OutOrStdout(), prs, opts.Fields, f.JSONYamlPrintFlags.ShowManagedFields)
+			case output == "json" && len(opts.Fields) > 0 && prs != nil:
+				return formatted.PrintJSON(cmd.OutOrStdout(), prs, opts.Fields, f.JSONYamlPrintFlags.ShowManagedFields)
+			case output == "name" && prs != nil:
 				w := cmd.OutOrStdout()
 				for _, pr := range prs.Items {
 					_, err := fmt.Fprintf(w, "pipelinerun.tekton.dev/%s\n", pr.Name)
@@ -119,7 +147,7 @@ List PipelineRuns as a YAML array:
 					}
 				}
 				return nil
-			} else if output != "" && prs != nil {
+			case output != "" && prs != nil:
 				p, err := f.ToPrinter()
 				if err != nil {
 					return err
@@ -148,6 +176,7 @@ List PipelineRuns as a YAML array:
 	c.Flags().BoolVarP(&opts.Reverse, "reverse", "", opts.Reverse, "list PipelineRuns in reverse order")
 	c.Flags().BoolVarP(&opts.AllNamespaces, "all-namespaces", "A", opts.AllNamespaces, "list PipelineRuns from all namespaces")
 	c.Flags().BoolVarP(&opts.NoHeaders, "no-headers", "", opts.NoHeaders, "do not print column headers with output (default print column headers with output)")
+	c.Flags().StringSliceVar(&opts.Fields, "fields", opts.Fields, "Select specific fields to reduce payload size (e.g. metadata.name,status.conditions[0].reason); optimizes token usage for AI agents; only used with --output json or --output ndjson")
 	return c
 }
 

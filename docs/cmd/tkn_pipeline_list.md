@@ -34,6 +34,7 @@ List Pipelines as a YAML array:
 ```
   -A, --all-namespaces                list Pipelines from all namespaces
       --allow-missing-template-keys   If true, ignore any errors in templates when a field or map key is missing in the template. Only applies to golang and jsonpath output formats. (default true)
+      --fields strings                Comma-separated list of fields to include in output (e.g. metadata.name,status.startTime); only used with --output json or --output ndjson
   -h, --help                          help for list
       --no-headers                    do not print column headers with output (default print column headers with output)
   -o, --output string                 Output format. One of: (json, yaml, name, go-template, go-template-file, template, templatefile, jsonpath, jsonpath-as-json, jsonpath-file).

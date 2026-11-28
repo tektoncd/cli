@@ -24,6 +24,10 @@ Lists ClusterTriggerBindings in a namespace
     If true, ignore any errors in templates when a field or map key is missing in the template. Only applies to golang and jsonpath output formats.
 
 .PP
+\fB\-\-fields\fP=[]
+    Comma\-separated list of fields to include in output (e.g. metadata.name,status.startTime); only used with \-\-output json or \-\-output ndjson
+
+.PP
 \fB\-h\fP, \fB\-\-help\fP[=false]
     help for list
 
