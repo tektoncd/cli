@@ -35,6 +35,14 @@ The steps below are meant to be followed in order. Some steps can be done in a d
   release and change it from pre-release to released. Make sure to do this before
   the next step for the rpm package.
 
+- Verify that the release artifacts include cryptographic signatures:
+  - `checksums.txt` - SHA256 checksums of all release artifacts
+  - `checksums.txt.sig` - Cosign signature
+  - `checksums.txt.pem` - Signing certificate
+  
+  Users can verify the authenticity of the release using the instructions in
+  [docs/VERIFYING_RELEASES.md](docs/VERIFYING_RELEASES.md).
+
 - When it's released, you can build the rpm package according to this
   [README](tekton/rpmbuild/README.md). Make sure you have done the prerequisite to be
   able to upload it to the copr repository. This could take some time if copr
