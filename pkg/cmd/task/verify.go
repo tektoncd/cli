@@ -21,9 +21,7 @@ import (
 	"github.com/spf13/cobra"
 	"github.com/tektoncd/cli/pkg/cli"
 	"github.com/tektoncd/cli/pkg/trustedresources"
-	"github.com/tektoncd/pipeline/pkg/apis/pipeline/v1beta1"
 	cliopts "k8s.io/cli-runtime/pkg/genericclioptions"
-	"sigs.k8s.io/yaml"
 )
 
 type verifyOptions struct {
@@ -66,8 +64,8 @@ or using kms
 				return fmt.Errorf("error reading file: %v", err)
 			}
 
-			crd := &v1beta1.Task{}
-			if err := yaml.Unmarshal(b, &crd); err != nil {
+			crd, err := trustedresources.Decode(b, "Task")
+			if err != nil {
 				return fmt.Errorf("error unmarshalling Task: %v", err)
 			}
 
