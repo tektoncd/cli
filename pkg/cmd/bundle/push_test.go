@@ -9,6 +9,7 @@ import (
 	"net/url"
 	"os"
 	"path"
+	"strings"
 	"testing"
 	"time"
 
@@ -446,6 +447,89 @@ func TestParseArgsAndFlags(t *testing.T) {
 
 			if expected, got := c.expectedCTime, opts.ctime; expected.Unix() != got.Unix() {
 				t.Errorf("expected ctime %s differs from parsed: %s", expected, got)
+			}
+		})
+	}
+}
+
+func TestPushDryRun(t *testing.T) {
+	validTask := `
+apiVersion: tekton.dev/v1
+kind: Task
+metadata:
+  name: hello
+spec:
+  steps:
+    - name: hello
+      image: alpine
+      script: echo hello
+`
+	tests := []struct {
+		name    string
+		stdin   string
+		wantErr string
+		wantOut string
+	}{
+		{
+			name: "build and validation problems are all reported",
+			stdin: `apiVersion: tekton.dev/v1
+kind: Task
+metadata:
+  name: nosteps
+spec: {}
+---
+apiVersion: tekton.dev/v1
+kind: Task
+spec:
+  steps:
+    - name: hello
+      image: alpine
+`,
+			wantErr: "Task nosteps is invalid",
+		},
+		{
+			name:    "valid bundle is not pushed",
+			stdin:   validTask,
+			wantOut: "not pushed because of --dry-run",
+		},
+		{
+			name:    "invalid task is reported",
+			stdin:   exampleTask,
+			wantErr: "Task foobar is invalid",
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			t.Setenv("SOURCE_DATE_EPOCH", "")
+			out := &bytes.Buffer{}
+			opts := pushOptions{
+				stream: &cli.Stream{
+					In:  bytes.NewBufferString(tt.stdin),
+					Out: out,
+					Err: &bytes.Buffer{},
+				},
+				bundleContentPaths: []string{"-"},
+				remoteOptions:      bundle.RemoteOptions{},
+				dryRun:             true,
+			}
+
+			// nothing listens on this registry, so any push attempt would fail
+			err := opts.Run([]string{"127.0.0.1:1/test/dry-run:1.0"})
+			if tt.wantErr != "" {
+				if err == nil || !strings.Contains(err.Error(), tt.wantErr) {
+					t.Fatalf("expected error containing %q, got %v", tt.wantErr, err)
+				}
+				return
+			}
+			if err != nil {
+				t.Fatalf("unexpected error: %v", err)
+			}
+			if !strings.Contains(out.String(), tt.wantOut) {
+				t.Errorf("output %q does not contain %q", out.String(), tt.wantOut)
+			}
+			if !strings.Contains(out.String(), "sha256:") {
+				t.Errorf("output %q does not show the digest", out.String())
 			}
 		})
 	}
