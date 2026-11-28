@@ -224,6 +224,7 @@ The following commands help you understand and effectively use the Tekton CLI:
 - [`tkn taskrun:`](docs/cmd/tkn_taskrun.md) Parent command of the Taskrun command group.
 - [`tkn triggerbinding:`](docs/cmd/tkn_triggerbinding.md) Parent command of the Triggerbinding command group.
 - [`tkn triggertemplate:`](docs/cmd/tkn_triggertemplate.md) Parent command of the Triggertemplate command group.
+- [`tkn validate:`](docs/cmd/tkn_validate.md) Validates Tekton resources in YAML or JSON files locally, without a cluster.
 - [`tkn version:`](docs/cmd/tkn_version.md) Outputs the cli version.
 
 For every `tkn` command, you can use `-h` or `--help` flags to display specific help for that command.

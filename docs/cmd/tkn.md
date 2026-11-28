@@ -32,5 +32,6 @@ CLI for tekton pipelines
 * [tkn taskrun](tkn_taskrun.md)	 - Manage TaskRuns
 * [tkn triggerbinding](tkn_triggerbinding.md)	 - Manage TriggerBindings
 * [tkn triggertemplate](tkn_triggertemplate.md)	 - Manage TriggerTemplates
+* [tkn validate](tkn_validate.md)	 - Validate Tekton resources in files without a cluster
 * [tkn version](tkn_version.md)	 - Prints version information
 
