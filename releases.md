@@ -36,146 +36,55 @@ Further documentation available:
 
 ## Release
 
+### v0.47 (LTS)
+
+- **Latest Release**: [v0.47.0][v0-47-0] (2026-11-13) ([docs][v0-47-0-docs])
+- **Initial Release**: [v0.47.0][v0-47-0] (2026-11-13) ([docs][v0-47-0-docs])
+- **End of Life**: 2027-11-13
+
 ### v0.46 (LTS)
 
-- **Latest Release**: [v0.46.0][v0-46-0] (2026-08-05) ([docs][v0-46-0-docs])
+- **Latest Release**: [v0.46.3][v0-46-3] (2026-11-26) ([docs][v0-46-3-docs])
 - **Initial Release**: [v0.46.0][v0-46-0] (2026-08-05) ([docs][v0-46-0-docs])
 - **End of Life**: 2027-08-04
 
 ### v0.45 (LTS)
 
-- **Latest Release**: [v0.45.0][v0-45-0] (2026-05-12) ([docs][v0-45-0-docs])
+- **Latest Release**: [v0.45.4][v0-45-4] (2026-11-19) ([docs][v0-45-4-docs])
 - **Initial Release**: [v0.45.0][v0-45-0] (2026-05-12) ([docs][v0-45-0-docs])
 - **End of Life**: 2027-05-11
 
 ### v0.44 (LTS)
 
-- **Latest Release**: [v0.44.0][v0-44-0] (2026-02-23) ([docs][v0-44-0-docs])
+- **Latest Release**: [v0.44.2][v0-44-2] (2026-06-20) ([docs][v0-44-2-docs])
 - **Initial Release**: [v0.44.0][v0-44-0] (2026-02-23) ([docs][v0-44-0-docs])
 - **End of Life**: 2027-02-22
-
-### v0.43 (LTS)
-
-- **Latest Release**: [v0.43.0][v0-43-0] (2025-11-21) ([docs][v0-43-0-docs])
-- **Initial Release**: [v0.43.0][v0-43-0] (2025-11-21) ([docs][v0-43-0-docs])
-- **End of Life**: 2026-11-20
 
 ## End of Life Releases
 
 Older releases are EOL and available on [GitHub][tekton-cli-releases].
 
-### v0.42 (LTS)
-
-- **Latest Release**: [v0.42.0][v0-42-0] (2025-08-22) ([docs][v0-42-0-docs])
-- **Initial Release**: [v0.42.0][v0-42-0] (2025-08-22) ([docs][v0-42-0-docs])
-- **End of Life**: 2026-08-21
-
-### v0.41 (LTS)
-
-- **Latest Release**: [v0.41.1][v0-41-1] (2025-07-14) ([docs][v0-41-1-docs])
-- **Initial Release**: [v0.41.0][v0-41-0] (2025-05-20) ([docs][v0-41-0-docs])
-- **End of Life**: 2026-05-19
-
-### v0.40 (LTS)
-
-- **Latest Release**: [v0.40.0][v0-40-0] (2025-02-25) ([docs][v0-40-0-docs])
-- **Initial Release**: [v0.40.0][v0-40-0] (2025-02-26) ([docs][v0-40-0-docs])
-- **End of Life**: 2026-02-25
-
-### v0.39 (LTS)
-
-- **Latest Release**: [v0.39.1][v0-39-1] (2025-01-31) ([docs][v0-39-1-docs])
-- **Initial Release**: [v0.39.0][v0-39-0] (2024-11-26) ([docs][v0-39-0-docs])
-- **End of Life**: 2025-11-25
-
-### v0.38 (LTS)
-
-- **Latest Release**: [v0.38.2][v0-38-2] (2025-01-30) ([docs][v0-38-2-docs])
-- **Initial Release**: [v0.38.0][v0-38-0] (2024-08-21) ([docs][v0-38-0-docs])
-- **End of Life**: 2025-08-20
-
-### v0.37 (LTS)
-
-- **Latest Release**: [v0.37.1][v0-37-1] (2025-02-10) ([docs][v0-37-1-docs])
-- **Initial Release**: [v0.37.0][v0-37-0] (2024-05-13) ([docs][v0-37-0-docs])
-- **End of Life**: 2026-10-12
-
-### v0.36
-
-- **Latest Release**: [v0.36.0][v0-36-0] (2024-03-21) ([docs][v0-36-0-docs])
-- **Initial Release**: [v0.36.0][v0-36-0] (2024-03-21) ([docs][v0-36-0-docs])
-- **End of Life**: 2024-04-20
-
-### v0.35 (LTS)
-
-- **Latest Release**: [v0.35.3][v0-35-3] (2025-02-10) ([docs][v0-35-3-docs])
-- **Initial Release**: [v0.35.0][v0-35-0] (2024-02-07) ([docs][v0-35-0-docs])
-- **End of Life**: 2025-02-06
-
-### v0.34
-
-- **Latest Release**: [v0.34.0][v0-34-0] (2023-01-12) ([docs][v0-34-0-docs])
-- **Initial Release**: [v0.34.0][v0-34-0] (2024-01-12) ([docs][v0-34-0-docs])
-- **End of Life**: 2024-02-11
-
-### v0.33 (LTS)
-
-- **Latest Release**: [v0.33.0][v0-33-0] (2023-11-16) ([docs][v0-33-0-docs])
-- **Initial Release**: [v0.33.0][v0-33-0] (2023-11-16) ([docs][v0-33-0-docs])
-- **End of Life**: 2024-12-15
-
-### v0.32 (LTS)
-
-- **Latest Release**: [v0.32.2][v0-32-2] (2023-10-20) ([docs][v0-32-2-docs])
-- **Initial Release**: [v0.32.0][v0-32-0] (2023-09-08) ([docs][v0-32-0-docs])
-- **End of Life**: 2024-09-07
-
-### v0.31 (LTS)
-
-- **Latest Release**: [v0.31.3][v0-31-3] (2023-10-21) ([docs][v0-31-3-docs])
-- **Initial Release**: [v0.31.0][v0-31-0] (2023-05-10) ([docs][v0-31-0-docs])
-- **End of Life**: 2024-05-10
-
-### v0.30 (LTS)
-
-- **Latest Release**: [v0.30.2][v0-30-2] (2023-10-21) ([docs][v0-30-2-docs])
-- **Initial Release**: [v0.30.0][v0-30-0] (2023-03-27) ([docs][v0-30-0-docs])
-- **End of Life**: 2024-03-27
-
-### v0.29
-
-- **Latest Release**: [v0.29.1][v0-29-1] (2022-02-02) ([docs][v0-29-1-docs])
-- **Initial Release**: [v0.29.0][v0-29-0] (2022-01-05) ([docs][v0-29-0-docs])
-- **End of Life**: 2023-02-04
-- **Patch Releases**: [v0.29.1][v0-29-1]
-
-### v0.28
-
-- **Latest Release**: [v0.28.0][v0-28-0] (2022-11-25) ([docs][v0-28-0-docs])
-- **Initial Release**: [v0.28.0][v0-28-0] (2022-11-25)
-- **End of Life**: 2023-01-24
-- **Patch Releases**: [v0.28.0][v0-28-0]
-
-### v0.27
-
-- **Latest Release**: [v0.27.0][v0-27-0] (2022-10-11) ([docs][v0-27-0-docs])
-- **Initial Release**: [v0.27.0][v0-27-0] (2022-10-11)
-- **End of Life**: 2023-02-10
-- **Patch Releases**: [v0.27.0][v0-27-0]
-
-### v0.26
-
-- **Latest Release**: [v0.26.0][v0-26-0] (2022-09-02) ([docs][v0-26-0-docs])
-- **Initial Release**: [v0.26.0][v0-26-0] (2022-09-02)
-- **End of Life**: 2023-01-08
-- **Patch Releases**: [v0.26.0][v0-26-0]
-
-### v0.25
-
-- **Latest Release**: [v0.25.0][v0-25-0] (2022-07-22) ([docs][v0-25-0-docs])
-- **Initial Release**: [v0.25.0][v0-25-0] (2022-07-22)
-- **End of Life**: 2022-11-21
-- **Patch Releases**: [v0.25.0][v0-25-0]
+| Version                  | Release Date | End of Life |
+|--------------------------|--------------|-------------|
+| [v0.43.x LTS][v0-43-0]   | 2025-11-20   | 2026-11-20  |
+| [v0.42.x LTS][v0-42-0]   | 2025-08-22   | 2026-08-21  |
+| [v0.41.x LTS][v0-41-0]   | 2025-05-20   | 2026-05-19  |
+| [v0.40.x LTS][v0-40-0]   | 2025-02-26   | 2026-02-25  |
+| [v0.39.x LTS][v0-39-0]   | 2024-11-26   | 2025-11-25  |
+| [v0.38.x LTS][v0-38-0]   | 2024-08-21   | 2025-08-20  |
+| [v0.37.x LTS][v0-37-0]   | 2024-05-13   | 2026-10-12  |
+| [v0.36.x][v0-36-0]       | 2024-03-21   | 2024-04-20  |
+| [v0.35.x LTS][v0-35-0]   | 2024-02-07   | 2025-02-06  |
+| [v0.34.x][v0-34-0]       | 2024-01-12   | 2024-02-11  |
+| [v0.33.x LTS][v0-33-0]   | 2023-11-16   | 2024-12-15  |
+| [v0.32.x LTS][v0-32-0]   | 2023-09-08   | 2024-09-07  |
+| [v0.31.x LTS][v0-31-0]   | 2023-05-10   | 2024-05-10  |
+| [v0.30.x LTS][v0-30-0]   | 2023-03-27   | 2024-03-27  |
+| [v0.29.x][v0-29-0]       | 2022-01-05   | 2023-02-04  |
+| [v0.28.x][v0-28-0]       | 2022-11-25   | 2023-01-24  |
+| [v0.27.x][v0-27-0]       | 2022-10-11   | 2023-02-10  |
+| [v0.26.x][v0-26-0]       | 2022-09-02   | 2023-01-08  |
+| [v0.25.x][v0-25-0]       | 2022-07-22   | 2022-11-21  |
 
 [release-policy]: https://github.com/tektoncd/community/blob/main/releases.md
 [tekton-chains]: https://github.com/tektoncd/chains
@@ -183,8 +92,12 @@ Older releases are EOL and available on [GitHub][tekton-cli-releases].
 [tekton-releases-docs]: tekton/README.md
 [release-notes-standards]: https://github.com/tektoncd/community/blob/main/standards.md#release-notes
 [tekton-release-process]: RELEASE_PROCESS.md
+[v0-47-0]: https://github.com/tektoncd/cli/releases/tag/v0.47.0
+[v0-46-3]: https://github.com/tektoncd/cli/releases/tag/v0.46.3
 [v0-46-0]: https://github.com/tektoncd/cli/releases/tag/v0.46.0
+[v0-45-4]: https://github.com/tektoncd/cli/releases/tag/v0.45.4
 [v0-45-0]: https://github.com/tektoncd/cli/releases/tag/v0.45.0
+[v0-44-2]: https://github.com/tektoncd/cli/releases/tag/v0.44.2
 [v0-44-0]: https://github.com/tektoncd/cli/releases/tag/v0.44.0
 [v0-43-0]: https://github.com/tektoncd/cli/releases/tag/v0.43.0
 [v0-42-0]: https://github.com/tektoncd/cli/releases/tag/v0.42.0
@@ -215,8 +128,12 @@ Older releases are EOL and available on [GitHub][tekton-cli-releases].
 [v0-27-0]: https://github.com/tektoncd/cli/releases/tag/v0.27.0
 [v0-26-0]: https://github.com/tektoncd/cli/releases/tag/v0.26.0
 [v0-25-0]: https://github.com/tektoncd/cli/releases/tag/v0.25.0
+[v0-47-0-docs]: https://github.com/tektoncd/cli/tree/v0.47.0/docs
+[v0-46-3-docs]: https://github.com/tektoncd/cli/tree/v0.46.3/docs
 [v0-46-0-docs]: https://github.com/tektoncd/cli/tree/v0.46.0/docs
+[v0-45-4-docs]: https://github.com/tektoncd/cli/tree/v0.45.4/docs
 [v0-45-0-docs]: https://github.com/tektoncd/cli/tree/v0.45.0/docs
+[v0-44-2-docs]: https://github.com/tektoncd/cli/tree/v0.44.2/docs
 [v0-44-0-docs]: https://github.com/tektoncd/cli/tree/v0.44.0/docs
 [v0-43-0-docs]: https://github.com/tektoncd/cli/tree/v0.43.0/docs
 [v0-42-0-docs]: https://github.com/tektoncd/cli/tree/v0.42.0/docs
